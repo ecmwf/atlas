@@ -22,7 +22,7 @@ namespace nonlinear {
 
 struct MissingIfAllMissing : NonLinear {
     MissingIfAllMissing( const Config& );
-    bool treatment( NonLinear::Matrix&, const Field& ) const;
+    bool execute( NonLinear::Matrix&, const Field& ) const;
 };
 
 

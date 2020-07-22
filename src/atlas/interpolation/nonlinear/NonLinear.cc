@@ -46,11 +46,6 @@ NonLinear::NonLinear( const Config& config ) : missingValue_( new CompareNaN() )
 }
 
 
-bool NonLinear::missingValue( const double& value ) const {
-    return ( *missingValue_ )( value );
-}
-
-
 NonLinear::~NonLinear() = default;
 
 

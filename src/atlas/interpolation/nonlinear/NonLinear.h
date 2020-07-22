@@ -63,10 +63,7 @@ public:
      * @param [in] field with missing values information
      * @return if W was modified
      */
-    virtual bool treatment( Matrix& W, const Field& field ) const = 0;
-
-    /// Check if value represents a  missing value
-    virtual bool missingValue( const double& ) const;
+    virtual bool execute( Matrix& W, const Field& field ) const = 0;
 
 protected:
     /**
