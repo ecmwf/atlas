@@ -15,6 +15,8 @@
 #include "eckit/config/Parametrisation.h"
 #include "eckit/linalg/SparseMatrix.h"
 
+#include "atlas/interpolation/MissingValue.h"
+
 
 namespace atlas {
 class Field;
@@ -43,9 +45,7 @@ public:
      */
     NonLinear( const Config& config );
 
-    /**
-     * @brief NonLinear dtor
-     */
+    /// @brief NonLinear dtor
     virtual ~NonLinear();
 
     /**
@@ -56,16 +56,9 @@ public:
      */
     virtual bool execute( Matrix& W, const Field& f ) const = 0;
 
-    /**
-     * @brief Return if value is considered a missing value
-     * @param [in] value to evaluate
-     * @return if value is considered a missing value
-     */
-    bool missingValue( const double& ) const;
-
-private:
-    double missingValue_;
-    const bool missingValueIsNaN_;
+protected:
+    /// Evaluate if value is considered a missing value
+    interpolation::MissingValue missingValue_;
 };
 
 

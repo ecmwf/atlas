@@ -30,7 +30,8 @@ MissingIfHeaviestMissing::MissingIfHeaviestMissing( const Config& config ) : Non
 
 bool MissingIfHeaviestMissing::execute( NonLinear::Matrix& W, const Field& field ) const {
     // NOTE only for scalars (for now)
-    auto values = array::make_view<double, 1>( field );
+    auto values        = array::make_view<double, 1>( field );
+    auto& missingValue = missingValue_.ref();
 
     // correct matrix weigths for the missing values
     ATLAS_ASSERT( idx_t( W.cols() ) == values.size() );

@@ -22,9 +22,9 @@ namespace interpolation {
 
 
 namespace {
-std::string get_string( const eckit::Parametrisation& p, const std::string& name ) {
+std::string config_type( const eckit::Parametrisation& config ) {
     std::string value;
-    ATLAS_ASSERT_MSG( p.get( name, value ), "" );
+    ATLAS_ASSERT_MSG( config.get( "type", value ), "" );
     return value;
 }
 }  // namespace
@@ -34,7 +34,7 @@ NonLinear::NonLinear() : Handle( nullptr ) {}
 
 
 NonLinear::NonLinear( const NonLinear::Config& config ) :
-    Handle( nonlinear::NonLinearFactory::build( get_string( config, "type" ), config ) ) {}
+    Handle( nonlinear::NonLinearFactory::build( config_type( config ), config ) ) {}
 
 
 NonLinear::NonLinear( const std::string& type, const NonLinear::Config& config ) :
@@ -42,7 +42,7 @@ NonLinear::NonLinear( const std::string& type, const NonLinear::Config& config )
 
 
 bool NonLinear::execute( NonLinear::Matrix& W, const Field& f ) const {
-    ATLAS_ASSERT_MSG( this, "NonLinear: ObjectHandle<NonLinear> not setup" );
+    ATLAS_ASSERT_MSG( operator bool(), "NonLinear: ObjectHandle not setup" );
     return get()->execute( W, f );
 }
 

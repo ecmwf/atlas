@@ -12,9 +12,6 @@
 
 #include "atlas/interpolation/nonlinear/NonLinear.h"
 
-#include <cmath>
-#include <limits>
-
 #include "atlas/runtime/Exception.h"
 
 
@@ -23,18 +20,21 @@ namespace interpolation {
 namespace nonlinear {
 
 
-NonLinear::NonLinear( const Config& config ) :
-    missingValueIsNaN_( !config.get( "missing_value", missingValue_ = std::numeric_limits<double>::quiet_NaN() ) ) {
-    ATLAS_ASSERT( missingValueIsNaN_ != !std::isnan( missingValue_ ) );
+namespace {
+std::string config_missing_value( const MissingValue::Config& c ) {
+    std::string value;
+    ATLAS_ASSERT_MSG( c.get( "missing_value_compare", value ), "NonLinear: expecting 'missing_value_compare'" );
+    return value;
+}
+}  // namespace
+
+
+NonLinear::NonLinear( const Config& config ) : missingValue_( config_missing_value( config ), config ) {
+    ATLAS_ASSERT_MSG( missingValue_, "NonLinear: missingValue setup" );
 }
 
 
 NonLinear::~NonLinear() = default;
-
-
-bool NonLinear::missingValue( const double& value ) const {
-    return missingValueIsNaN_ ? std::isnan( value ) : missingValue_ == value;
-}
 
 
 }  // namespace nonlinear

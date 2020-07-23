@@ -28,7 +28,8 @@ MissingIfAnyMissing::MissingIfAnyMissing( const Config& config ) : NonLinear( co
 
 bool MissingIfAnyMissing::execute( NonLinear::Matrix& W, const Field& field ) const {
     // NOTE only for scalars (for now)
-    auto values = array::make_view<double, 1>( field );
+    auto values        = array::make_view<double, 1>( field );
+    auto& missingValue = missingValue_.ref();
 
     // correct matrix weigths for the missing values
     // (force a missing value only if any row values is missing)
