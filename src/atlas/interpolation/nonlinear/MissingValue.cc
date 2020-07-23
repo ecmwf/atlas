@@ -39,8 +39,8 @@ double config_value( const MissingValue::Config& c ) {
 
 
 double config_epsilon( const MissingValue::Config& c ) {
-    double value;
-    ATLAS_ASSERT( c.get( "missing_value_epsilon", value ) );
+    double value = 0.;
+    c.get( "missing_value_epsilon", value );
     return value;
 }
 
