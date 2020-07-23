@@ -475,6 +475,8 @@ list( APPEND atlas_interpolation_srcs
 interpolation.h
 interpolation/Interpolation.cc
 interpolation/Interpolation.h
+interpolation/MissingValue.cc
+interpolation/MissingValue.h
 interpolation/NonLinear.cc
 interpolation/NonLinear.h
 interpolation/Vector2D.cc
@@ -536,6 +538,8 @@ interpolation/nonlinear/MissingIfAnyMissing.cc
 interpolation/nonlinear/MissingIfAnyMissing.h
 interpolation/nonlinear/MissingIfHeaviestMissing.cc
 interpolation/nonlinear/MissingIfHeaviestMissing.h
+interpolation/nonlinear/MissingValue.cc
+interpolation/nonlinear/MissingValue.h
 interpolation/nonlinear/NonLinear.cc
 interpolation/nonlinear/NonLinear.h
 interpolation/nonlinear/NonLinearFactory.cc
