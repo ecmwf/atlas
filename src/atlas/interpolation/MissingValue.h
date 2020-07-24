@@ -30,22 +30,40 @@ namespace atlas {
 namespace interpolation {
 
 
-/// @brief Missing values indicator object
+/// @brief Missing values indicator
 struct MissingValue : DOXYGEN_HIDE( public util::ObjectHandle<nonlinear::MissingValue> ) {
     using Spec   = util::Config;
     using Config = nonlinear::MissingValue::Config;
 
+    // ctor
     using Handle::Handle;
     MissingValue();
     MissingValue( const Config& );
     MissingValue( const std::string& type, const Config& );
 
+    /**
+     * @brief bool operator
+     * @return if MissingValue object has been setup
+     */
     using Handle::operator bool;  // (ensure this exists)
 
-    bool operator()( const double& ) const;
+    /**
+     * @brief operator() on user-defined values
+     * @param [in] value user-defined value
+     * @return if user-defined value indicates a missing value
+     */
+    bool operator()( const double& value ) const;
 
+    /**
+     * @brief if missing value is represented by not-a-number
+     * @return if missing value is represented by not-a-number
+     */
     bool isnan() const;
 
+    /**
+     * @brief bool operator
+     * @return reference to internal implementation
+     */
     const nonlinear::MissingValue& ref() const;
 };
 
