@@ -5,16 +5,20 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation
- * nor does it submit to any jurisdiction. and Interpolation
+ * nor does it submit to any jurisdiction.
  */
 
+#include "atlas/interpolation/method/knn/NearestNeighbour.h"
+
+#include <limits>
+
 #include "eckit/log/Plural.h"
+#include "eckit/types/FloatCompare.h"
 
 #include "atlas/array.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid.h"
 #include "atlas/interpolation/method/MethodFactory.h"
-#include "atlas/interpolation/method/knn/NearestNeighbour.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/meshgenerator.h"
@@ -80,7 +84,10 @@ void NearestNeighbour::do_setup( const FunctionSpace& source, const FunctionSpac
         Trace timer( Here(), "atlas::interpolation::method::NearestNeighbour::do_setup()" );
         for ( size_t ip = 0; ip < out_npts; ++ip ) {
             if ( ip && ( ip % 1000 == 0 ) ) {
-                double rate = ip / timer.elapsed();
+                auto elapsed = timer.elapsed();
+                auto rate    = eckit::types::is_approximately_equal( elapsed, 0. )
+                                ? std::numeric_limits<double>::infinity()
+                                : ( ip / elapsed );
                 Log::debug() << eckit::BigNum( ip ) << " (at " << rate << " points/s)..." << std::endl;
             }
 

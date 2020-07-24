@@ -10,13 +10,14 @@
 
 #include "atlas/interpolation/method/knn/KNearestNeighbours.h"
 
+#include <limits>
+
 #include "eckit/log/Plural.h"
-#include "eckit/log/Timer.h"
+#include "eckit/types/FloatCompare.h"
 
 #include "atlas/array.h"
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/grid/Grid.h"
-#include "atlas/grid/StructuredGrid.h"
+#include "atlas/grid.h"
 #include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
@@ -92,7 +93,10 @@ void KNearestNeighbours::do_setup( const FunctionSpace& source, const FunctionSp
 
         for ( size_t ip = 0; ip < out_npts; ++ip ) {
             if ( ip && ( ip % 1000 == 0 ) ) {
-                double rate = ip / timer.elapsed();
+                auto elapsed = timer.elapsed();
+                auto rate    = eckit::types::is_approximately_equal( elapsed, 0. )
+                                ? std::numeric_limits<double>::infinity()
+                                : ( ip / elapsed );
                 Log::debug() << eckit::BigNum( ip ) << " (at " << rate << " points/s)..." << std::endl;
             }
 
