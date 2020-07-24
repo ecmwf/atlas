@@ -39,6 +39,7 @@ bool MissingIfAllMissing::execute( NonLinear::Matrix& W, const Field& field ) co
 
     auto data  = const_cast<Scalar*>( W.data() );
     bool modif = false;
+    bool zeros = false;
 
     Size i = 0;
     Matrix::iterator it( W );
@@ -76,12 +77,21 @@ bool MissingIfAllMissing::execute( NonLinear::Matrix& W, const Field& field ) co
             else {
                 const double factor = 1. / sum;
                 for ( Size j = k; j < k + N_entries; ++j, ++kt ) {
-                    const bool miss = missingValue( values[kt.col()] );
-                    data[j]         = miss ? 0. : ( factor * data[j] );
+                    if ( missingValue( values[kt.col()] ) ) {
+                        data[j] = 0.;
+                        zeros   = true;
+                    }
+                    else {
+                        data[j] *= factor;
+                    }
                 }
             }
             modif = true;
         }
+    }
+
+    if ( zeros && missingValue.isnan() ) {
+        W.prune( 0. );
     }
 
     return modif;
