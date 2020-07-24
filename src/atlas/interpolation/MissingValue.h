@@ -44,6 +44,8 @@ struct MissingValue : DOXYGEN_HIDE( public util::ObjectHandle<nonlinear::Missing
 
     bool operator()( const double& ) const;
 
+    bool isnan() const;
+
     const nonlinear::MissingValue& ref() const;
 };
 

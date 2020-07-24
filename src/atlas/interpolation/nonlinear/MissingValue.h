@@ -29,6 +29,7 @@ struct MissingValue {
     using Config = eckit::Parametrisation;
     virtual ~MissingValue();
     virtual bool operator()( const double& ) const = 0;
+    virtual bool isnan() const                     = 0;
 };
 
 

@@ -53,6 +53,12 @@ bool MissingValue::operator()( const double& value ) const {
 }
 
 
+bool MissingValue::isnan() const {
+    ATLAS_ASSERT_MSG( operator bool(), "MissingValue: ObjectHandle not setup" );
+    return get()->isnan();
+}
+
+
 const nonlinear::MissingValue& MissingValue::ref() const {
     ATLAS_ASSERT_MSG( operator bool(), "MissingValue: ObjectHandle not setup" );
     return *get();  // (one dereferencing level less)

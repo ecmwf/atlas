@@ -49,6 +49,7 @@ double config_epsilon( const MissingValue::Config& c ) {
 struct MissingValueNaN : MissingValue {
     MissingValueNaN( const Config& ) {}
     bool operator()( const double& value ) const override { return std::isnan( value ); }
+    bool isnan() const override { return true; }
 };
 
 
@@ -60,6 +61,8 @@ struct MissingValueEquals : MissingValue {
     }
 
     bool operator()( const double& value ) const override { return value == missingValue_; }
+
+    bool isnan() const override { return false; }
 
     const double missingValue_;
 };
@@ -77,6 +80,8 @@ struct MissingValueApprox : MissingValue {
     bool operator()( const double& value ) const override {
         return eckit::types::is_approximately_equal( value, missingValue_, epsilon_ );
     }
+
+    bool isnan() const override { return false; }
 
     const double missingValue_;
     const double epsilon_;
