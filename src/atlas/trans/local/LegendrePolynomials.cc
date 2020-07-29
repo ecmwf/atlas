@@ -55,9 +55,9 @@ void compute_legendre_polynomials_lat( const int trc,     // truncation (in)
         // --------------------
         // 1. First two columns
         // --------------------
-        double zdlx1   = ( M_PI_2 - lat );               // theta
-        double zdlx    = std::cos( zdlx1 );              // cos(theta)
-        double zdlsita = std::sqrt( 1. - zdlx * zdlx );  // sin(theta) (this is how trans library does it)
+        double zdlx1            = ( M_PI_2 - lat );               // theta
+        double zdlx             = std::cos( zdlx1 );              // cos(theta)
+        volatile double zdlsita = std::sqrt( 1. - zdlx * zdlx );  // sin(theta) (this is how trans library does it)
 
         legpol[idxmn( 0, 0 )] = 1.;
         double vsin[trc + 1], vcos[trc + 1];
