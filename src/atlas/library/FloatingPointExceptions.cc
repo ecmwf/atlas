@@ -17,6 +17,7 @@
 #include "eckit/config/LibEcKit.h"
 #include "eckit/config/Resource.h"
 #include "eckit/utils/StringTools.h"
+#include "eckit/utils/Translator.h"
 
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
@@ -202,7 +203,6 @@ void Signals::setSignalHandlers() {
     setSignalHandler( SIGILL );
     setSignalHandler( SIGABRT );
     setSignalHandler( SIGFPE );
-    setSignalHandler( SIGKILL );
     setSignalHandler( SIGSEGV );
     setSignalHandler( SIGTERM );
 }
@@ -235,10 +235,20 @@ Signal::Signal( int signum, signal_action_t signal_action ) : signum_( signum ),
     signal_action_.sa_flags     = SA_SIGINFO;
 }
 
-
 void enable_floating_point_exceptions() {
-    std::vector<std::string> floating_point_exceptions =
-        eckit::Resource<std::vector<std::string>>( "atlasFPE;$ATLAS_FPE", {"false"} );
+    // Following line gives runtime errors with Cray 8.6 due to compiler bug (but works with Cray 8.5 and Cray 8.7)
+    //   std::vector<std::string> floating_point_exceptions = eckit::Resource<std::vector<std::string>>( "atlasFPE;$ATLAS_FPE", {"false"} );
+    // Instead, manually access environment
+    std::vector<std::string> floating_point_exceptions{"false"};
+    if ( ::getenv( "ATLAS_FPE" ) ) {
+        std::string env( ::getenv( "ATLAS_FPE" ) );
+        std::vector<std::string> tmp = eckit::Translator<std::string, std::vector<std::string>>()( env );
+        floating_point_exceptions    = tmp;
+        // Above trick with "tmp" is what avoids the Cray 8.6 compiler bug
+    }
+    else {
+        floating_point_exceptions = eckit::Resource<std::vector<std::string>>( "atlasFPE", {"false"} );
+    }
     {
         bool _enable = false;
         int _excepts = 0;
