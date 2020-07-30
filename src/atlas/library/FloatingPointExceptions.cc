@@ -151,6 +151,7 @@ private:
         << "=========================================\n"
         << std::endl;
 
+    Signals::instance().restoreSignalHandler(signum);
     eckit::LibEcKit::instance().abort();
 
     // Just in case we end up here, which normally we shouldn't.
