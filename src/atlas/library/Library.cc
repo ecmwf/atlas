@@ -409,6 +409,8 @@ void Library::Information::print( std::ostream& out ) const {
     out << "  Build:" << std::endl;
     out << "    build type      : " << ATLAS_BUILD_TYPE << '\n'
         << "    timestamp       : " << ATLAS_BUILD_TIMESTAMP << '\n'
+        << "    source dir      : " << ATLAS_DEVELOPER_SRC_DIR << '\n'
+        << "    build dir       : " << ATLAS_DEVELOPER_BIN_DIR << '\n'
         << "    op. system      : " << ATLAS_OS_NAME << " (" << ATLAS_OS_STR << ")" << '\n'
         << "    processor       : " << ATLAS_SYS_PROCESSOR << std::endl
         << "    c compiler      : " << ATLAS_C_COMPILER_ID << " " << ATLAS_C_COMPILER_VERSION << '\n'
@@ -470,7 +472,7 @@ void Library::Information::print( std::ostream& out ) const {
     }
 
     out << "    \n  Dependencies: \n";
-
+    out << "    ecbuild version (" << ECBUILD_VERSION << ")" << '\n';
     if ( Library::exists( "eckit" ) ) {
         out << "    " << str( Library::lookup( "eckit" ) ) << '\n';
     }
