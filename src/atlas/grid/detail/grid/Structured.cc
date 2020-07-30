@@ -294,11 +294,15 @@ Structured::XSpace::Implementation::Implementation( const Spacing& spacing, idx_
 }
 
 Structured::XSpace::Implementation::Implementation( const std::vector<Spacing>& spacings ) :
-    ny_( spacings.size() ), nx_( ny_ ), xmin_( ny_ ), xmax_( ny_ ), dx_( ny_ ) {
-    nxmax_ = 0;
-    nxmin_ = std::numeric_limits<idx_t>::max();
-    min_   = std::numeric_limits<double>::max();
-    max_   = -std::numeric_limits<double>::max();
+    ny_( spacings.size() ),
+    nxmax_( 0 ),
+    nxmin_( std::numeric_limits<idx_t>::max() ),
+    nx_( ny_ ),
+    xmin_( ny_ ),
+    xmax_( ny_ ),
+    dx_( ny_ ),
+    min_( std::numeric_limits<double>::max() ),
+    max_( -std::numeric_limits<double>::max() ) {
     for ( idx_t j = 0; j < ny_; ++j ) {
         const spacing::LinearSpacing& linspace = dynamic_cast<const spacing::LinearSpacing&>( *spacings[j].get() );
 

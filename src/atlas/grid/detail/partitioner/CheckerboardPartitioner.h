@@ -57,8 +57,8 @@ private:
     void check() const;
 
 private:
-    idx_t nbands_;       // number of bands from configuration
-    bool checkerboard_;  // exact (true) or approximate (false) checkerboard
+    idx_t nbands_      = 0;     // number of bands from configuration
+    bool checkerboard_ = true;  // exact (true) or approximate (false) checkerboard
 };
 
 }  // namespace partitioner

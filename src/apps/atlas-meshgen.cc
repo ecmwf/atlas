@@ -126,7 +126,7 @@ Meshgen2Gmsh::Meshgen2Gmsh( int argc, char** argv ) : AtlasTool( argc, argv ) {
 
 //-----------------------------------------------------------------------------
 
-std::string get_arg( const AtlasTool::Args& args, const std::string& flag, const std::string default_value = "" ) {
+std::string get_arg( const AtlasTool::Args& args, const std::string& flag, const std::string& default_value = "" ) {
     for ( int i = 0; i < args.count() - 1; ++i ) {
         if ( args( i ) == flag ) {
             return args( i + 1 );

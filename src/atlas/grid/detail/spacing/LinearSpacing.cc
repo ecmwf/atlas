@@ -84,8 +84,8 @@ void LinearSpacing::setup( double start, double end, long N, bool endpoint ) {
     x_.resize( N );
 
     double step;
-    volatile double _N = N; // volatile keyword prevents agressive optimization by Cray compiler
-    if( start == end ) {
+    volatile double _N = N;  // volatile keyword prevents agressive optimization by Cray compiler
+    if ( start == end ) {
         step = 0.;
     }
     else if ( endpoint && N > 1 ) {

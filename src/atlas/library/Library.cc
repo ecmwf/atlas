@@ -91,7 +91,7 @@ int getEnv( const std::string& env, int default_value ) {
 }
 
 
-bool library_exists( const eckit::PathName& library_dir, const std::string library_name,
+bool library_exists( const eckit::PathName& library_dir, const std::string& library_name,
                      eckit::PathName& library_path ) {
     // WARNING: Mostly copy-paste from eckit develop before 1.13 release
     std::vector<std::string> library_file_names;
@@ -107,7 +107,7 @@ bool library_exists( const eckit::PathName& library_dir, const std::string libra
 }
 
 
-void load_library( const eckit::PathName& library_dir, const std::string library_name ) {
+void load_library( const eckit::PathName& library_dir, const std::string& library_name ) {
     // WARNING: Mostly copy-paste from eckit develop before 1.13 release
     std::vector<std::string> library_file_names;
     library_file_names.push_back( "lib" + library_name + ".so" );

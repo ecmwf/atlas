@@ -15,8 +15,7 @@
 namespace atlas {
 namespace grid {
 
-ComputeLower::ComputeLower( const Vertical& z ) {
-    nlev_ = z.size();
+ComputeLower::ComputeLower( const Vertical& z ) : nlev_{z.size()} {
     z_.resize( nlev_ );
     double dz            = std::numeric_limits<double>::max();
     constexpr double tol = 1.e-12;

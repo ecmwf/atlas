@@ -31,31 +31,18 @@ namespace grid {
 namespace detail {
 namespace partitioner {
 
-CheckerboardPartitioner::CheckerboardPartitioner() : Partitioner() {
-    nbands_       = 0;     // to be computed later
-    checkerboard_ = true;  // default
-}
+CheckerboardPartitioner::CheckerboardPartitioner() : Partitioner() {}
 
-CheckerboardPartitioner::CheckerboardPartitioner( int N ) : Partitioner( N ) {
-    nbands_       = 0;     // to be computed later
-    checkerboard_ = true;  // default
-}
+CheckerboardPartitioner::CheckerboardPartitioner( int N ) : Partitioner( N ) {}
 
 CheckerboardPartitioner::CheckerboardPartitioner( int N, const eckit::Parametrisation& config ) : Partitioner( N ) {
-    nbands_ = 0;  // to be computed later
     config.get( "bands", nbands_ );
-    checkerboard_ = true;  // default
 }
 
-CheckerboardPartitioner::CheckerboardPartitioner( int N, int nbands ) : Partitioner( N ) {
-    nbands_       = nbands;
-    checkerboard_ = true;  // default
-}
+CheckerboardPartitioner::CheckerboardPartitioner( int N, int nbands ) : Partitioner( N ), nbands_{nbands} {}
 
-CheckerboardPartitioner::CheckerboardPartitioner( int N, int nbands, bool checkerboard ) : Partitioner( N ) {
-    nbands_       = nbands;
-    checkerboard_ = checkerboard;
-}
+CheckerboardPartitioner::CheckerboardPartitioner( int N, int nbands, bool checkerboard ) :
+    Partitioner( N ), nbands_{nbands} {}
 
 CheckerboardPartitioner::Checkerboard CheckerboardPartitioner::checkerboard( const Grid& grid ) const {
     // grid dimensions
