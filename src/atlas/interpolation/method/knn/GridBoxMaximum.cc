@@ -87,7 +87,6 @@ void GridBoxMaximum::do_execute( const Field& source, Field& target ) const {
     functionspace::Points tgt = target_;
     ATLAS_ASSERT( tgt );
 
-    ATLAS_ASSERT( pTree_ != nullptr );
     ATLAS_ASSERT( searchRadius_ > 0. );
     ATLAS_ASSERT( !sourceBoxes_.empty() );
     ATLAS_ASSERT( !targetBoxes_.empty() );
@@ -101,7 +100,7 @@ void GridBoxMaximum::do_execute( const Field& source, Field& target ) const {
     for ( auto p : tgt.iterate().xyz() ) {
         ++progress;
 
-        if ( intersect( i, targetBoxes_.at( i ), pTree_->findInSphere( p, searchRadius_ ), triplets ) ) {
+        if ( intersect( i, targetBoxes_.at( i ), pTree_.closestPointsWithinRadius( p, searchRadius_ ), triplets ) ) {
             auto triplet =
                 std::max_element( triplets.begin(), triplets.end(), []( const Triplet& a, const Triplet& b ) {
                     return !eckit::types::is_approximately_greater_or_equal( a.value(), b.value() );

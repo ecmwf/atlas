@@ -48,8 +48,7 @@ void GridBoxMethod::do_setup( const FunctionSpace& /*source*/, const FunctionSpa
     ATLAS_NOTIMPLEMENTED;
 }
 
-
-bool GridBoxMethod::intersect( size_t i, const GridBox& box, const PointIndex3::NodeList& closest,
+bool GridBoxMethod::intersect( size_t i, const GridBox& box, const util::IndexKDTree::ValueList& closest,
                                std::vector<eckit::linalg::Triplet>& triplets ) const {
     ASSERT( !closest.empty() );
 
@@ -106,7 +105,6 @@ void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
     target_ = tgt;
 
     buildPointSearchTree( src );
-    ATLAS_ASSERT( pTree_ != nullptr );
 
     sourceBoxes_ = GridBoxes( source );
     targetBoxes_ = GridBoxes( target );
@@ -130,11 +128,10 @@ void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
         std::vector<Triplet> triplets;
         size_t i = 0;
         for ( auto p : tgt.iterate().xyz() ) {
-            if ( ++progress ) {
-                Log::info() << "GridBoxMethod: " << *pTree_ << std::endl;
-            }
+            ++progress;
 
-            if ( intersect( i, targetBoxes_.at( i ), pTree_->findInSphere( p, searchRadius_ ), triplets ) ) {
+            if ( intersect( i, targetBoxes_.at( i ), pTree_.closestPointsWithinRadius( p, searchRadius_ ),
+                            triplets ) ) {
                 std::copy( triplets.begin(), triplets.end(), std::back_inserter( allTriplets ) );
             }
 

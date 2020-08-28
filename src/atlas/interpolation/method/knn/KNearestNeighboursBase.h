@@ -12,9 +12,10 @@
 
 #include <memory>
 
-#include "atlas/interpolation/method/Method.h"
-#include "atlas/interpolation/method/PointIndex3.h"
 #include "atlas/functionspace/Points.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/interpolation/method/Method.h"
+#include "atlas/util/KDTree.h"
 
 namespace atlas {
 namespace interpolation {
@@ -29,7 +30,7 @@ protected:
     void buildPointSearchTree( Mesh& meshSource );
     void buildPointSearchTree( const functionspace::Points& );
 
-    std::unique_ptr<PointIndex3> pTree_;
+    util::IndexKDTree pTree_;
 };
 
 }  // namespace method

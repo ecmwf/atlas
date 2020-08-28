@@ -17,6 +17,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/runtime/Trace.h"
+#include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {
 namespace interpolation {
@@ -25,57 +26,37 @@ namespace method {
 void KNearestNeighboursBase::buildPointSearchTree( Mesh& meshSource ) {
     eckit::TraceTimer<Atlas> tim( "KNearestNeighboursBase::buildPointSearchTree()" );
 
+
+    array::ArrayView<double, 2> lonlat = array::make_view<double, 2>( meshSource.nodes().lonlat() );
+
+    static bool fastBuildKDTrees = eckit::Resource<bool>( "$ATLAS_FAST_BUILD_KDTREES", true );
+
+    if ( fastBuildKDTrees ) {
+        pTree_.reserve( lonlat.shape( 0 ) );
+    }
+    for ( idx_t ip = 0; ip < lonlat.shape( 0 ); ++ip ) {
+        pTree_.insert( PointLonLat( lonlat( ip, LON ), lonlat( ip, LAT ) ), ip );
+    }
+    pTree_.build();
+
+
     // generate 3D point coordinates
     mesh::actions::BuildXYZField( "xyz" )( meshSource );
-    array::ArrayView<double, 2> coords = array::make_view<double, 2>( meshSource.nodes().field( "xyz" ) );
-
-    // build point-search tree
-    pTree_.reset( new PointIndex3 );
-
-    static bool fastBuildKDTrees = eckit::Resource<bool>( "$ATLAS_FAST_BUILD_KDTREES", true );
-
-    if ( fastBuildKDTrees ) {
-        std::vector<PointIndex3::Value> pidx;
-        pidx.reserve( meshSource.nodes().size() );
-        for ( idx_t ip = 0; ip < meshSource.nodes().size(); ++ip ) {
-            PointIndex3::Point p{coords( ip, 0 ), coords( ip, 1 ), coords( ip, 2 )};
-            pidx.emplace_back( p, ip );
-        }
-        pTree_->build( pidx.begin(), pidx.end() );
-    }
-    else {
-        for ( idx_t ip = 0; ip < meshSource.nodes().size(); ++ip ) {
-            PointIndex3::Point p{coords( ip, 0 ), coords( ip, 1 ), coords( ip, 2 )};
-            pTree_->insert( PointIndex3::Value( p, ip ) );
-        }
-    }
 }
 
-void KNearestNeighboursBase::buildPointSearchTree(const functionspace::Points& points ) {
+void KNearestNeighboursBase::buildPointSearchTree( const functionspace::Points& points ) {
     eckit::TraceTimer<Atlas> tim( "KNearestNeighboursBase::buildPointSearchTree()" );
-
-    // build point-search tree
-    pTree_.reset( new PointIndex3 );
 
     static bool fastBuildKDTrees = eckit::Resource<bool>( "$ATLAS_FAST_BUILD_KDTREES", true );
 
     if ( fastBuildKDTrees ) {
-        std::vector<PointIndex3::Value> pidx;
-        pidx.reserve( points.size() );
-
-        idx_t ip = 0;
-        for ( auto p : points.iterate().xyz() ) {
-            pidx.emplace_back( p, ip++ );
-        }
-
-        pTree_->build( pidx.begin(), pidx.end() );
+        pTree_.reserve( points.size() );
     }
-    else {
-        idx_t ip = 0;
-        for ( auto p : points.iterate().xyz() ) {
-            pTree_->insert( PointIndex3::Value( p, ip++ ) );
-        }
+    size_t ip{0};
+    for ( auto p : points.iterate().lonlat() ) {
+        pTree_.insert( p, ip++ );
     }
+    pTree_.build();
 }
 
 }  // namespace method

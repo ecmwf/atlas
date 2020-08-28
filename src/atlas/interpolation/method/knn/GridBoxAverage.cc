@@ -61,7 +61,6 @@ void GridBoxAverage::do_execute( const Field& source, Field& target ) const {
     functionspace::Points tgt = target_;
     ATLAS_ASSERT( tgt );
 
-    ATLAS_ASSERT( pTree_ != nullptr );
     ATLAS_ASSERT( searchRadius_ > 0. );
     ATLAS_ASSERT( !sourceBoxes_.empty() );
     ATLAS_ASSERT( !targetBoxes_.empty() );
@@ -88,7 +87,7 @@ void GridBoxAverage::do_execute( const Field& source, Field& target ) const {
     for ( auto p : tgt.iterate().xyz() ) {
         ++progress;
 
-        if ( intersect( i, targetBoxes_.at( i ), pTree_->findInSphere( p, searchRadius_ ), triplets ) ) {
+        if ( intersect( i, targetBoxes_.at( i ), pTree_.closestPointsWithinRadius( p, searchRadius_ ), triplets ) ) {
             auto& y = yarray[i];
             for ( auto& t : triplets ) {
                 y += xarray[t.col()] * t.value();
