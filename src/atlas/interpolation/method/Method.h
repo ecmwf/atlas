@@ -26,6 +26,12 @@ class Grid;
 }  // namespace atlas
 
 namespace atlas {
+    namespace test {
+        class Access;
+    }
+}
+
+namespace atlas {
 namespace interpolation {
 
 class Method : public util::Object {
@@ -72,6 +78,7 @@ protected:
     // matrices,
     //        so do not expose here, even though only linear operators are now
     //        implemented.
+    friend class atlas::test::Access;
     Matrix matrix_;
 
     bool use_eckit_linalg_spmv_;
