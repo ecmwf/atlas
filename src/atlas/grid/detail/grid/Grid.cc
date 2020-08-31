@@ -148,6 +148,12 @@ Grid::Spec* atlas__grid__Grid__spec( Grid* This ) {
     return new Grid::Spec( This->spec() );
 }
 
+void atlas__grid__Grid__lonlatboundingbox( Grid* This, double & w, double & e, double & s, double & n ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Grid" );
+    auto d = This->lonlatBoundingBox ();
+    w = d.west (); e = d.east (); n = d.north (); s = d.south ();
+}
+
 void atlas__grid__Grid__uid( const Grid* This, char*& uid, int& size ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Projection" );
     eckit::MD5 md5;

@@ -52,6 +52,7 @@ TYPE, extends(fckit_owned_object) :: atlas_Grid
 contains
   procedure :: size => atlas_Grid__size
   procedure :: spec => atlas_Grid__spec
+  procedure :: lonlatBoundingBox => atlas_Grid__lonlatBoundingBox
   procedure :: uid
 
 #if FCKIT_FINAL_NOT_INHERITING
@@ -595,6 +596,14 @@ function atlas_Grid__spec(this) result(spec)
   type(atlas_Config) :: spec
   spec = atlas_Config( atlas__grid__Grid__spec(this%CPTR_PGIBUG_A) )
   call spec%return ()
+end function
+
+function atlas_Grid__lonlatBoundingBox (this) result (bb)
+  use, intrinsic :: iso_c_binding, only : c_double
+  use atlas_grid_Grid_c_binding
+  class(atlas_Grid), intent(in) :: this
+  real (kind=c_double) :: bb (4)
+  call atlas__grid__Grid__lonlatboundingbox (this%CPTR_PGIBUG_A, bb(1), bb(2), bb(3), bb(4))
 end function
 
 function uid(this)

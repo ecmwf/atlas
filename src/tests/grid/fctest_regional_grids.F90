@@ -97,6 +97,10 @@ TEST( test_regional_lonlat_grid_MF )
   FCTEST_CHECK_CLOSE( grid%lonlat(ilons,1),     ([ 0.1000000000E+02_dp, 0.1000000000E+02_dp]), tol)
   FCTEST_CHECK_CLOSE( grid%lonlat(1,2),         ([-0.2000000000E+02_dp, 0.1102564103E+02_dp]), tol)
   FCTEST_CHECK_CLOSE( grid%lonlat(ilons,ilats), ([ 0.1000000000E+02_dp, 0.5000000000E+02_dp]), tol)
+
+  FCTEST_CHECK_CLOSE( grid%lonlatBoundingBox (), ([-20.0_dp, +10.0_dp, +10.0_dp, +50.0_dp]), tol)
+
+  call grid%final ()
 #endif
 END_TEST
 
@@ -133,6 +137,9 @@ TEST( test_regional_lambert_grid_MF )
   FCTEST_CHECK_CLOSE( grid%lonlat(ndlon,1),     ([ 0.2142256121E+02_dp, 0.3258651702E+02_dp]), tol)
   FCTEST_CHECK_CLOSE( grid%lonlat(1,2),         ([-0.1187876836E+02_dp, 0.3402241700E+02_dp]), tol)
   FCTEST_CHECK_CLOSE( grid%lonlat(ndlon,ndglg), ([ 0.3452466369E+02_dp, 0.5925747619E+02_dp]), tol)
+
+  FCTEST_CHECK_CLOSE (grid%lonlatBoundingBox (), &
+                    & ([-21.5135043541029_dp, 34.5246641904548_dp, 32.5865165234826_dp, 62.5870026921863_dp]), tol)
 
   call grid%final()
 #endif

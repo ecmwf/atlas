@@ -927,6 +927,8 @@ TEST( arpege_t31c24 )
     enddo
   enddo
 
+  FCTEST_CHECK_CLOSE( grid%lonlatBoundingBox (), ([0._dp, 360._dp, -90.0_dp, +90._dp]), 1.e-10_dp );
+
   call grid%final()
 END_TEST
 
