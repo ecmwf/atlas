@@ -138,8 +138,7 @@ TEST( test_regional_lambert_grid_MF )
   FCTEST_CHECK_CLOSE( grid%lonlat(1,2),         ([-0.1187876836E+02_dp, 0.3402241700E+02_dp]), tol)
   FCTEST_CHECK_CLOSE( grid%lonlat(ndlon,ndglg), ([ 0.3452466369E+02_dp, 0.5925747619E+02_dp]), tol)
 
-  FCTEST_CHECK_CLOSE (grid%lonlatBoundingBox (), &
-                    & ([-21.5135043541029_dp, 34.5246641904548_dp, 32.5865165234826_dp, 62.5870026921863_dp]), tol)
+  FCTEST_CHECK_CLOSE (grid%lonlatBoundingBox (), ([-21.5135043541029_dp, 34.5246641904548_dp, 32.5865165234826_dp, 62.5870026921863_dp]), tol)
 
   call grid%final()
 #endif
