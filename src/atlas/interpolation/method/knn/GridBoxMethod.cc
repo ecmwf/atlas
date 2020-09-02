@@ -97,8 +97,8 @@ void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
     ATLAS_ASSERT( source );
     ATLAS_ASSERT( target );
 
-    functionspace::Points src( source );
-    functionspace::Points tgt( target );
+    functionspace::PointCloud src( source );
+    functionspace::PointCloud tgt( target );
     ATLAS_ASSERT( src );
     ATLAS_ASSERT( tgt );
     source_ = src;
@@ -127,7 +127,7 @@ void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
 
         std::vector<Triplet> triplets;
         size_t i = 0;
-        for ( auto p : tgt.iterate().xyz() ) {
+        for ( auto p : tgt.iterate().lonlat() ) {
             ++progress;
 
             if ( intersect( i, targetBoxes_.at( i ), pTree_.closestPointsWithinRadius( p, searchRadius_ ),

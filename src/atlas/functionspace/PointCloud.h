@@ -48,6 +48,8 @@ public:
     virtual Field createField( const eckit::Configuration& ) const override;
     virtual Field createField( const Field&, const eckit::Configuration& ) const override;
 
+    void haloExchange( const FieldSet&, bool /*on_device*/ = false ) const override {}
+    void haloExchange( const Field&, bool /*on_device*/ = false ) const override {}
 
     template <typename Point>
     class IteratorT {

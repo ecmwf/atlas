@@ -12,6 +12,8 @@
 #include "eckit/log/TraceTimer.h"
 
 #include "atlas/array.h"
+#include "atlas/functionspace/PointCloud.h"
+#include "atlas/functionspace/Points.h"
 #include "atlas/interpolation/method/knn/KNearestNeighboursBase.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Nodes.h"
@@ -44,17 +46,34 @@ void KNearestNeighboursBase::buildPointSearchTree( Mesh& meshSource ) {
     mesh::actions::BuildXYZField( "xyz" )( meshSource );
 }
 
-void KNearestNeighboursBase::buildPointSearchTree( const functionspace::Points& points ) {
+namespace {
+
+template <typename FunctionSpace_type>
+void insert_tree( util::IndexKDTree& tree, const FunctionSpace_type& functionspace ) {
+    size_t ip{0};
+    for ( auto p : functionspace.iterate().lonlat() ) {
+        tree.insert( p, ip++ );
+    }
+}
+
+}  // namespace
+
+void KNearestNeighboursBase::buildPointSearchTree( const FunctionSpace& functionspace ) {
     eckit::TraceTimer<Atlas> tim( "KNearestNeighboursBase::buildPointSearchTree()" );
 
     static bool fastBuildKDTrees = eckit::Resource<bool>( "$ATLAS_FAST_BUILD_KDTREES", true );
 
     if ( fastBuildKDTrees ) {
-        pTree_.reserve( points.size() );
+        pTree_.reserve( functionspace.size() );
     }
-    size_t ip{0};
-    for ( auto p : points.iterate().lonlat() ) {
-        pTree_.insert( p, ip++ );
+    if ( functionspace::Points fs = functionspace ) {
+        insert_tree( pTree_, fs );
+    }
+    else if ( functionspace::PointCloud fs = functionspace ) {
+        insert_tree( pTree_, fs );
+    }
+    else {
+        ATLAS_NOTIMPLEMENTED;
     }
     pTree_.build();
 }

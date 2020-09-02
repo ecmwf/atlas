@@ -12,9 +12,8 @@
 
 #include <memory>
 
-#include "atlas/functionspace/Points.h"
-#include "atlas/mesh/Mesh.h"
 #include "atlas/interpolation/method/Method.h"
+#include "atlas/mesh/Mesh.h"
 #include "atlas/util/KDTree.h"
 
 namespace atlas {
@@ -28,7 +27,7 @@ public:
 
 protected:
     void buildPointSearchTree( Mesh& meshSource );
-    void buildPointSearchTree( const functionspace::Points& );
+    void buildPointSearchTree( const FunctionSpace& );
 
     util::IndexKDTree pTree_;
 };

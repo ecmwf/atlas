@@ -16,7 +16,7 @@
 #include "eckit/log/ProgressTimer.h"
 
 #include "atlas/array.h"
-#include "atlas/functionspace/Points.h"
+#include "atlas/functionspace/PointCloud.h"
 #include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/runtime/Exception.h"
 
@@ -58,7 +58,7 @@ void GridBoxAverage::do_execute( const Field& source, Field& target ) const {
 
 
     // ensure GridBoxMethod::setup()
-    functionspace::Points tgt = target_;
+    functionspace::PointCloud tgt = target_;
     ATLAS_ASSERT( tgt );
 
     ATLAS_ASSERT( searchRadius_ > 0. );
@@ -84,7 +84,7 @@ void GridBoxAverage::do_execute( const Field& source, Field& target ) const {
 
     std::vector<Triplet> triplets;
     size_t i = 0;
-    for ( auto p : tgt.iterate().xyz() ) {
+    for ( auto p : tgt.iterate().lonlat() ) {
         ++progress;
 
         if ( intersect( i, targetBoxes_.at( i ), pTree_.closestPointsWithinRadius( p, searchRadius_ ), triplets ) ) {
