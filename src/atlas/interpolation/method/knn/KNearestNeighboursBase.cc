@@ -13,7 +13,6 @@
 
 #include "atlas/array.h"
 #include "atlas/functionspace/PointCloud.h"
-#include "atlas/functionspace/Points.h"
 #include "atlas/interpolation/method/knn/KNearestNeighboursBase.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Nodes.h"
@@ -66,10 +65,7 @@ void KNearestNeighboursBase::buildPointSearchTree( const FunctionSpace& function
     if ( fastBuildKDTrees ) {
         pTree_.reserve( functionspace.size() );
     }
-    if ( functionspace::Points fs = functionspace ) {
-        insert_tree( pTree_, fs );
-    }
-    else if ( functionspace::PointCloud fs = functionspace ) {
+    if ( functionspace::PointCloud fs = functionspace ) {
         insert_tree( pTree_, fs );
     }
     else {

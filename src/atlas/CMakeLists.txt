@@ -404,8 +404,6 @@ functionspace/Spectral.h
 functionspace/Spectral.cc
 functionspace/PointCloud.h
 functionspace/PointCloud.cc
-functionspace/Points.h
-functionspace/Points.cc
 functionspace/detail/FunctionSpaceImpl.h
 functionspace/detail/FunctionSpaceImpl.cc
 functionspace/detail/FunctionSpaceInterface.h
