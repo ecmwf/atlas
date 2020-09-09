@@ -129,7 +129,7 @@ install:
   - |
     ### Install PGI community edition
     if [[ "${PGI_VERSION:-notset}" == "CommunityEdition" ]]; then
-      install-pgi.sh --mpi --prefix ${DEPS_DIR}/pgi
+      install-pgi.sh --prefix ${DEPS_DIR}/pgi
       source ${DEPS_DIR}/pgi/env.sh
     fi
 
