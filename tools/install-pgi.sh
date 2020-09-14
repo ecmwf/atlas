@@ -57,10 +57,11 @@ if [ ! -z "${TRAVIS_REPO_SLUG}" ]; then
 else
 
   if [ ! -d "${TEMPORARY_FILES}/${FOLDER}" ]; then
-     echo "Downloading ${TEMPORARY_FILES}/${FOLDER} from URL [${URL}]"
-    	curl --location \
-    		--user-agent "pgi-travis (https://github.com/nemequ/pgi-travis)" \
-    		"${URL}" | tar zx -C "${TEMPORARY_FILES}"
+    echo "Downloading ${TEMPORARY_FILES}/${FOLDER} from URL [${URL}]"
+    mkdir -p ${TEMPORARY_FILES}
+    curl --location \
+         --user-agent "pgi-travis (https://github.com/nemequ/pgi-travis)" \
+         "${URL}" | tar zx -C "${TEMPORARY_FILES}"
   else
      echo "Download already present in ${TEMPORARY_FILES}/${FOLDER}"
   fi
