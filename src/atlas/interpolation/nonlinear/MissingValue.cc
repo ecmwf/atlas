@@ -55,16 +55,25 @@ struct MissingValueNaN : MissingValue {
 
 /// @brief Missing value if comparing equally to pre-defined value
 struct MissingValueEquals : MissingValue {
-    MissingValueEquals( const Config& config ) : missingValue_( config_value( config ) ) {}
-    MissingValueEquals( double missingValue ) : missingValue_( missingValue ) {
-        ATLAS_ASSERT( !std::isnan( missingValue_ ) );
+    MissingValueEquals( const Config& config ) :
+        missingValue_( config_value( config ) ), missingValue2_( missingValue_ ) {
+        ATLAS_ASSERT( missingValue_ == missingValue2_ );  // this succeeds
     }
 
-    bool operator()( const double& value ) const override { return value == missingValue_; }
+    MissingValueEquals( double missingValue ) : missingValue_( missingValue ), missingValue2_( missingValue_ ) {
+        ATLAS_ASSERT( !std::isnan( missingValue2_ ) );
+    }
+
+    bool operator()( const double& value ) const override {
+        // ATLAS_ASSERT(missingValue_ == missingValue2_);  // this fails when not using missingValue2_ (copy ellision
+        // problem on POD!?)
+        return value == missingValue2_;
+    }
 
     bool isnan() const override { return false; }
 
     const double missingValue_;
+    const double missingValue2_;
 };
 
 
