@@ -63,7 +63,7 @@ CASE( "test_interpolation_non_linear_missing_value" ) {
 
         EXPECT( mv( missingValue - 1 ) == false );
         EXPECT( mv( missingValue + 1 ) == false );
-        // EXPECT( mv( missingValue ) );  // (fails due to internal conversions -- a bug?)
+        EXPECT( mv( missingValue ) );
 
         config.set( "type", "equals" );
         mv = MissingValue( config );
@@ -71,7 +71,7 @@ CASE( "test_interpolation_non_linear_missing_value" ) {
 
         EXPECT( mv( missingValue - 1 ) == false );
         EXPECT( mv( missingValue + 1 ) == false );
-        // EXPECT( mv( missingValue ) );  // (fails due to internal conversions -- a bug?)
+        EXPECT( mv( missingValue ) );
     }
 
 
