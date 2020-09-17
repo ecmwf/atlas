@@ -9,15 +9,9 @@
 ############################################################################################
 # Atlas
 
-cmake_minimum_required( VERSION 3.6 FATAL_ERROR )
-if( POLICY CMP0074 )
-  cmake_policy( SET CMP0074 NEW )
-  # This policy allows to search for packages with <package>_ROOT variables
-  #                        (only supported with CMake 3.12 and above)
-  # This policy can be removed once cmake_minimum_required( VERSION 3.12 ) is used
-endif()
+cmake_minimum_required( VERSION 3.12 FATAL_ERROR )
 
-find_package( ecbuild 3.1.0 REQUIRED )
+find_package( ecbuild 3.4 REQUIRED HINTS ${CMAKE_CURRENT_SOURCE_DIR})
 
 ################################################################################
 # Initialise project Atlas
