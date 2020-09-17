@@ -15,12 +15,11 @@
 #include <string>
 #include <vector>
 
-#include "eckit/eckit_version.h"
-#include "eckit/log/JSON.h"
 
 #include "eckit/config/Resource.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/log/Bytes.h"
+#include "eckit/log/JSON.h"
 #include "eckit/log/Log.h"
 #include "eckit/types/FloatCompare.h"
 

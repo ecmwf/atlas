@@ -409,11 +409,11 @@ void Library::Information::print( std::ostream& out ) const {
         << "      flags         : " << ATLAS_C_FLAGS << '\n'
         << "    c++ compiler    : " << ATLAS_CXX_COMPILER_ID << " " << ATLAS_CXX_COMPILER_VERSION << '\n'
         << "      flags         : " << ATLAS_CXX_FLAGS << '\n'
-#ifndef EC_HAVE_FORTRAN
-        << "    fortran         : NO " << '\n'
-#else
+#ifdef ATLAS_Fortran_COMPILER
         << "    fortran compiler: " << ATLAS_Fortran_COMPILER_ID << " " << ATLAS_Fortran_COMPILER_VERSION << '\n'
         << "      flags         : " << ATLAS_Fortran_FLAGS << '\n'
+#else
+        << "    fortran         : NO " << '\n'
 #endif
         << " \n";
 
@@ -426,11 +426,11 @@ void Library::Information::print( std::ostream& out ) const {
     bool feature_BoundsChecking( ATLAS_ARRAYVIEW_BOUNDS_CHECKING );
     bool feature_Init_sNaN( ATLAS_INIT_SNAN );
     bool feature_MPI( false );
-#ifdef ECKIT_HAVE_MPI
+#if ECKIT_HAVE_MPI
     feature_MPI = true;
 #endif
     bool feature_MKL( false );
-#ifdef ECKIT_HAVE_MKL
+#if ECKIT_HAVE_MKL
     feature_MKL = true;
 #endif
     std::string array_data_store = "Native";
