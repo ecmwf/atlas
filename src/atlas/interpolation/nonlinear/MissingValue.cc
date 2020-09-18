@@ -24,13 +24,7 @@ namespace interpolation {
 namespace nonlinear {
 
 
-std::string config_type( const MissingValue::Config& c ) {
-    std::string value;
-    ATLAS_ASSERT( c.get( "type", value ) );
-    return value;
-}
-
-
+namespace {
 double config_value( const MissingValue::Config& c ) {
     double value;
     ATLAS_ASSERT( c.get( "missing_value", value ) );
@@ -43,6 +37,7 @@ double config_epsilon( const MissingValue::Config& c ) {
     c.get( "missing_value_epsilon", value );
     return value;
 }
+}  // namespace
 
 
 /// @brief Missing value if NaN
@@ -124,8 +119,7 @@ void force_link() {
 
 const MissingValue* MissingValueFactory::build( const std::string& builder, const Config& config ) {
     force_link();
-    auto factory = get( builder );
-    return factory->make( config );
+    return has( builder ) ? get( builder )->make( config ) : nullptr;
 }
 
 

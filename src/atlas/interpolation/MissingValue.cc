@@ -25,12 +25,9 @@ namespace interpolation {
 
 
 namespace {
-using Config = MissingValue::Config;
-
-
-std::string config_type( const Config& c ) {
+std::string config_type( const MissingValue::Config& c ) {
     std::string value;
-    ATLAS_ASSERT( c.get( "type", value ) );
+    c.get( "type", value );
     return value;
 }
 }  // namespace

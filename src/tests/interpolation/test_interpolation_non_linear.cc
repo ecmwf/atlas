@@ -37,20 +37,32 @@ CASE( "test_interpolation_non_linear_missing_value" ) {
     using interpolation::MissingValue;
 
 
+    SECTION( "not defined" ) {
+        util::Config config;
+
+        auto mv = MissingValue( config );
+        EXPECT( !bool( mv ) );
+
+        mv = MissingValue( "not defined", config );
+        EXPECT( !bool( mv ) );
+    }
+
+
     SECTION( "nan" ) {
         util::Config config;
-        auto mv_nan = MissingValue( "nan", config );
-        EXPECT( bool( mv_nan ) );
 
-        EXPECT( mv_nan( nan ) );
-        EXPECT( mv_nan( missingValue ) == false );
+        auto mv = MissingValue( "nan", config );
+        EXPECT( bool( mv ) );
+
+        EXPECT( mv( nan ) );
+        EXPECT( mv( missingValue ) == false );
 
         config.set( "type", "nan" );
-        mv_nan = MissingValue( config );
-        EXPECT( bool( mv_nan ) );
+        mv = MissingValue( config );
+        EXPECT( bool( mv ) );
 
-        EXPECT( mv_nan( nan ) );
-        EXPECT( mv_nan( missingValue ) == false );
+        EXPECT( mv( nan ) );
+        EXPECT( mv( missingValue ) == false );
     }
 
 
