@@ -20,6 +20,7 @@
 
 
 namespace atlas {
+class Field;
 namespace util {
 class Config;
 }
@@ -40,6 +41,8 @@ struct MissingValue : DOXYGEN_HIDE( public util::ObjectHandle<nonlinear::Missing
     MissingValue();
     MissingValue( const Config& );
     MissingValue( const std::string& type, const Config& );
+    MissingValue( const Field& );
+    MissingValue( const std::string& type, const Field& );
 
     /**
      * @brief bool operator

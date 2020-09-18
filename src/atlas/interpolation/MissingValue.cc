@@ -16,8 +16,10 @@
 
 #include "eckit/types/FloatCompare.h"
 
+#include "atlas/field/Field.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
+#include "atlas/util/Metadata.h"
 
 
 namespace atlas {
@@ -28,6 +30,13 @@ namespace {
 std::string config_type( const MissingValue::Config& c ) {
     std::string value;
     c.get( "type", value );
+    return value;
+}
+
+
+std::string field_type( const Field& f ) {
+    std::string value;
+    f.metadata().get( "missing_value_type", value );
     return value;
 }
 }  // namespace
@@ -42,6 +51,14 @@ MissingValue::MissingValue( const MissingValue::Config& config ) :
 
 MissingValue::MissingValue( const std::string& type, const MissingValue::Config& config ) :
     Handle( nonlinear::MissingValueFactory::build( type, config ) ) {}
+
+
+MissingValue::MissingValue( const Field& field ) :
+    Handle( nonlinear::MissingValueFactory::build( field_type( field ), field.metadata() ) ) {}
+
+
+MissingValue::MissingValue( const std::string& type, const Field& field ) :
+    Handle( nonlinear::MissingValueFactory::build( type, field.metadata() ) ) {}
 
 
 bool MissingValue::operator()( const double& value ) const {
