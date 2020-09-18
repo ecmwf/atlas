@@ -14,7 +14,7 @@ if( HAVE_FCTEST )
     LIBS            atlas_f
     ENVIRONMENT     ${ATLAS_TEST_ENVIRONMENT}
   )
-
+  
   add_fctest( TARGET atlas_fctest_field_wrap
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_field_wrap.F90
@@ -53,10 +53,4 @@ if( HAVE_FCTEST )
   endif()
 
 endif()
-
-ecbuild_add_test( TARGET atlas_test_field
-  SOURCES     test_field.cc
-  LIBS        atlas
-  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
-)
 
