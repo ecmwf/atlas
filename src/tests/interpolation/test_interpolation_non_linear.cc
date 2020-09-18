@@ -119,12 +119,16 @@ CASE( "test_interpolation_non_linear_field_missing_value" ) {
     using interpolation::MissingValue;
 
     std::vector<double> values{1., nan, missingValue, missingValue, missingValue + missingValueEps / 2., 6., 7.};
+    Field field( "field", values.data(), array::make_shape( values.size(), 1 ) );
+
+    field.metadata().set( "missing_value_type", "not defined" );
+    field.metadata().set( "missing_value", missingValue );
+    field.metadata().set( "missing_value_epsilon", missingValueEps );
+
+    EXPECT( !bool( MissingValue( field ) ) );
 
 
     SECTION( "nan" ) {
-        Field field( "field", values.data(), array::make_shape( values.size(), 1 ) );
-        EXPECT( !bool( MissingValue( field ) ) );
-
         // missing value type from user
         EXPECT( std::count_if( values.begin(), values.end(), MissingValue( "nan", field ) ) == 1 );
 
@@ -135,10 +139,6 @@ CASE( "test_interpolation_non_linear_field_missing_value" ) {
 
 
     SECTION( "equals" ) {
-        Field field( "field", values.data(), array::make_shape( values.size(), 1 ) );
-        field.metadata().set( "missing_value", missingValue );
-        EXPECT( !bool( MissingValue( field ) ) );
-
         // missing value type from user (value set from field)
         EXPECT( std::count_if( values.begin(), values.end(), MissingValue( "equals", field ) ) == 2 );
 
@@ -149,11 +149,6 @@ CASE( "test_interpolation_non_linear_field_missing_value" ) {
 
 
     SECTION( "approximately-equals" ) {
-        Field field( "field", values.data(), array::make_shape( values.size(), 1 ) );
-        field.metadata().set( "missing_value", missingValue );
-        field.metadata().set( "missing_value_epsilon", missingValueEps );
-        EXPECT( !bool( MissingValue( field ) ) );
-
         // missing value type from user (value set from field)
         EXPECT( std::count_if( values.begin(), values.end(), MissingValue( "approximately-equals", field ) ) == 3 );
 
