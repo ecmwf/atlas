@@ -52,6 +52,7 @@ include( features/CLANG_TIDY )
 include( features/INCLUDE_WHAT_YOU_USE )
 include( features/INIT_SNAN )
 include( features/DOCS )
+include( features/ATLAS_RUN )
 
 ################################################################################
 # sources
