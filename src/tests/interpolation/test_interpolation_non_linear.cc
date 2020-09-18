@@ -10,6 +10,7 @@
  */
 
 
+#include <algorithm>
 #include <limits>
 
 #include "atlas/array.h"
@@ -110,6 +111,55 @@ CASE( "test_interpolation_non_linear_missing_value" ) {
         EXPECT( mv( missingValue ) );
         EXPECT( mv( missingValue + missingValueEps / 2 ) );
         EXPECT( mv( missingValue + missingValueEps * 2 ) == false );
+    }
+}
+
+
+CASE( "test_interpolation_non_linear_field_missing_value" ) {
+    using interpolation::MissingValue;
+
+    std::vector<double> values{1., nan, missingValue, missingValue, missingValue + missingValueEps / 2., 6., 7.};
+
+
+    SECTION( "nan" ) {
+        Field field( "field", values.data(), array::make_shape( values.size(), 1 ) );
+        EXPECT( !bool( MissingValue( field ) ) );
+
+        // missing value type from user
+        EXPECT( std::count_if( values.begin(), values.end(), MissingValue( "nan", field ) ) == 1 );
+
+        // missing value type from field
+        field.metadata().set( "missing_value_type", "nan" );
+        EXPECT( std::count_if( values.begin(), values.end(), MissingValue( field ) ) == 1 );
+    }
+
+
+    SECTION( "equals" ) {
+        Field field( "field", values.data(), array::make_shape( values.size(), 1 ) );
+        field.metadata().set( "missing_value", missingValue );
+        EXPECT( !bool( MissingValue( field ) ) );
+
+        // missing value type from user (value set from field)
+        EXPECT( std::count_if( values.begin(), values.end(), MissingValue( "equals", field ) ) == 2 );
+
+        // missing value type from field
+        field.metadata().set( "missing_value_type", "equals" );
+        EXPECT( std::count_if( values.begin(), values.end(), MissingValue( field ) ) == 2 );
+    }
+
+
+    SECTION( "approximately-equals" ) {
+        Field field( "field", values.data(), array::make_shape( values.size(), 1 ) );
+        field.metadata().set( "missing_value", missingValue );
+        field.metadata().set( "missing_value_epsilon", missingValueEps );
+        EXPECT( !bool( MissingValue( field ) ) );
+
+        // missing value type from user (value set from field)
+        EXPECT( std::count_if( values.begin(), values.end(), MissingValue( "approximately-equals", field ) ) == 3 );
+
+        // missing value type from field
+        field.metadata().set( "missing_value_type", "approximately-equals" );
+        EXPECT( std::count_if( values.begin(), values.end(), MissingValue( field ) ) == 3 );
     }
 }
 
