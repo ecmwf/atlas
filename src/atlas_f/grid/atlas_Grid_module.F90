@@ -13,6 +13,7 @@ module atlas_Grid_module
 use fckit_owned_object_module, only: fckit_owned_object
 use atlas_Config_module, only: atlas_Config
 use atlas_Projection_module, only : atlas_Projection
+use atlas_Domain_module, only : atlas_LonLatRectangularDomain
 use atlas_kinds_module, only : ATLAS_KIND_IDX, ATLAS_KIND_GIDX
 use, intrinsic :: iso_c_binding, only : c_ptr
 
@@ -53,6 +54,7 @@ contains
   procedure :: size => atlas_Grid__size
   procedure :: spec => atlas_Grid__spec
   procedure :: uid
+  procedure :: lonlat_bounding_box
 
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_Grid__final_auto
@@ -609,6 +611,16 @@ function uid(this)
   uid = c_ptr_to_string(uid_c_str)
   call c_ptr_free(uid_c_str)
 end function
+
+function lonlat_bounding_box (this) result (bb)
+  use, intrinsic :: iso_c_binding, only : c_double
+  use atlas_grid_Grid_c_binding
+  class(atlas_Grid), intent(in) :: this
+  type(atlas_LonLatRectangularDomain) :: bb
+  bb = atlas_LonLatRectangularDomain(atlas__grid__Grid__lonlat_bounding_box (this%CPTR_PGIBUG_A))
+  call bb%return()
+end function
+
 
 function Gaussian__N(this) result(N)
   use, intrinsic :: iso_c_binding, only: c_long
