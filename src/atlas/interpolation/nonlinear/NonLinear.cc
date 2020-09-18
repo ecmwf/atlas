@@ -23,7 +23,7 @@ namespace nonlinear {
 namespace {
 std::string config_missing_value( const MissingValue::Config& c ) {
     std::string value;
-    ATLAS_ASSERT_MSG( c.get( "missing_value_compare", value ), "NonLinear: expecting 'missing_value_compare'" );
+    ATLAS_ASSERT_MSG( c.get( "missing_value_type", value ), "NonLinear: expecting 'missing_value_type'" );
     return value;
 }
 }  // namespace

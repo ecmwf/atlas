@@ -204,7 +204,7 @@ CASE( "test_interpolation_non_linear_matrix" ) {
             viewA( 4 ) = cmp == "nan" ? nan : missingValue;
 
             cfg.set( "non_linear", "missing-if-all-missing" );
-            cfg.set( "missing_value_compare", cmp );
+            cfg.set( "missing_value_type", cmp );
 
             Interpolation interpolation( cfg, fsA, fsB );
             interpolation.execute( fieldA, fieldB );
@@ -221,7 +221,7 @@ CASE( "test_interpolation_non_linear_matrix" ) {
             viewA( 4 ) = cmp == "nan" ? nan : missingValue;
 
             cfg.set( "non_linear", "missing-if-any-missing" );
-            cfg.set( "missing_value_compare", cmp );
+            cfg.set( "missing_value_type", cmp );
 
             Interpolation interpolation( cfg, fsA, fsB );
             interpolation.execute( fieldA, fieldB );
@@ -238,7 +238,7 @@ CASE( "test_interpolation_non_linear_matrix" ) {
             viewA( 4 ) = cmp == "nan" ? nan : missingValue;
 
             cfg.set( "non_linear", "missing-if-heaviest-missing" );
-            cfg.set( "missing_value_compare", cmp );
+            cfg.set( "missing_value_type", cmp );
 
             Interpolation interpolation( cfg, fsA, fsB );
             interpolation.execute( fieldA, fieldB );
