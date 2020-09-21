@@ -540,7 +540,6 @@ interpolation/nonlinear/MissingIfHeaviestMissing.cc
 interpolation/nonlinear/MissingIfHeaviestMissing.h
 interpolation/nonlinear/MissingValue.cc
 interpolation/nonlinear/MissingValue.h
-interpolation/nonlinear/NonLinear.cc
 interpolation/nonlinear/NonLinear.h
 interpolation/nonlinear/NonLinearFactory.cc
 interpolation/nonlinear/NonLinearFactory.h

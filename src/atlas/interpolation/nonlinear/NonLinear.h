@@ -41,12 +41,11 @@ public:
 
     /**
      * @brief NonLinear ctor
-     * @param [in] config with optional "missingValue", default NaN indicates missing value in field
      */
-    NonLinear( const Config& config );
+    NonLinear() = default;
 
     /// @brief NonLinear dtor
-    virtual ~NonLinear();
+    virtual ~NonLinear() = default;
 
     /**
      * @brief Apply non-linear corrections to interpolation matrix
@@ -55,10 +54,6 @@ public:
      * @return if W was modified
      */
     virtual bool execute( Matrix& W, const Field& f ) const = 0;
-
-protected:
-    /// Evaluate if value is considered a missing value
-    interpolation::MissingValue missingValue_;
 };
 
 

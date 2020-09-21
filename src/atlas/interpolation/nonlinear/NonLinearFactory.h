@@ -42,7 +42,7 @@ private:
 template <class T>
 class NonLinearFactoryBuilder : public NonLinearFactory {
 private:
-    virtual const NonLinear* make( const Config& config ) override { return new T( config ); }
+    virtual const NonLinear* make( const Config& /*config*/ ) override { return new T( /*config*/ ); }
 
 public:
     using NonLinearFactory::NonLinearFactory;
