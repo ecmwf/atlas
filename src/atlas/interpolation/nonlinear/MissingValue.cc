@@ -45,6 +45,7 @@ struct MissingValueNaN : MissingValue {
     MissingValueNaN( const Config& ) {}
     bool operator()( const double& value ) const override { return std::isnan( value ); }
     bool isnan() const override { return true; }
+    static std::string static_type() { return "nan"; }
 };
 
 
@@ -67,6 +68,8 @@ struct MissingValueEquals : MissingValue {
 
     bool isnan() const override { return false; }
 
+    static std::string static_type() { return "equals"; }
+
     const double missingValue_;
     const double missingValue2_;
 };
@@ -87,6 +90,8 @@ struct MissingValueApprox : MissingValue {
 
     bool isnan() const override { return false; }
 
+    static std::string static_type() { return "approximately-equals"; }
+
     const double missingValue_;
     const double epsilon_;
 };
@@ -96,29 +101,13 @@ MissingValue::~MissingValue() = default;
 
 
 namespace {
-
-
-static MissingValueFactoryBuilder<MissingValueNaN> __mv1( "nan" );
-static MissingValueFactoryBuilder<MissingValueEquals> __mv2( "equals" );
-static MissingValueFactoryBuilder<MissingValueApprox> __mv3( "approximately-equals" );
-
-
-void force_link() {
-    static struct Link {
-        Link() {
-            MissingValueFactoryBuilder<MissingValueNaN>();
-            MissingValueFactoryBuilder<MissingValueApprox>();
-            MissingValueFactoryBuilder<MissingValueEquals>();
-        }
-    } link;
-}
-
-
+MissingValueFactoryBuilder<MissingValueNaN> __mv1;
+MissingValueFactoryBuilder<MissingValueApprox> __mv2;
+MissingValueFactoryBuilder<MissingValueEquals> __mv3;
 }  // namespace
 
 
 const MissingValue* MissingValueFactory::build( const std::string& builder, const Config& config ) {
-    force_link();
     return has( builder ) ? get( builder )->make( config ) : nullptr;
 }
 

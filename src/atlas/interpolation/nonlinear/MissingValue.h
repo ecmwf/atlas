@@ -52,7 +52,7 @@ private:
     virtual const MissingValue* make( const Config& config ) override { return new T( config ); }
 
 public:
-    using MissingValueFactory::MissingValueFactory;
+    MissingValueFactoryBuilder() : MissingValueFactory( T::static_type() ) {}
 };
 
 
