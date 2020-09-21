@@ -485,15 +485,6 @@ void Structured::crop( const Domain& dom ) {
     // Cropping in X
     bool endpoint = true;
     {
-        bool do_normalise = false;
-        for ( idx_t j = jmin, jcropped = 0; j <= jmax; ++j, ++jcropped ) {
-            double x_first = x( 0, j );
-            double x_last  = x( nx( j ) - 1, j );
-            if ( normalise( x_first ) != x_first || normalise( x_last ) != x_last ) {
-                do_normalise = true;
-            }
-        }
-
         if ( rect_domain.zonal_band() ) {
             for ( idx_t j = jmin, jcropped = 0; j <= jmax; ++j, ++jcropped ) {
                 if ( is_regular && jcropped > 0 ) {
