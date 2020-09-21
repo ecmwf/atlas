@@ -25,13 +25,15 @@ namespace interpolation {
 namespace nonlinear {
 
 
-MissingIfHeaviestMissing::MissingIfHeaviestMissing( const Config& config ) : NonLinear( config ) {}
-
-
 bool MissingIfHeaviestMissing::execute( NonLinear::Matrix& W, const Field& field ) const {
+    interpolation::MissingValue mv( field );
+    if ( !mv ) {
+        return false;
+    }
+
     // NOTE only for scalars (for now)
     auto values        = array::make_view<double, 1>( field );
-    auto& missingValue = missingValue_.ref();
+    auto& missingValue = mv.ref();
 
     // correct matrix weigths for the missing values
     ATLAS_ASSERT( idx_t( W.cols() ) == values.size() );

@@ -21,7 +21,6 @@ namespace nonlinear {
 
 
 struct MissingIfAnyMissing : NonLinear {
-    MissingIfAnyMissing( const Config& );
     bool execute( NonLinear::Matrix&, const Field& ) const;
 };
 

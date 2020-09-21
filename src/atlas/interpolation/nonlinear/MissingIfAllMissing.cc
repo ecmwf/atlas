@@ -25,13 +25,15 @@ namespace interpolation {
 namespace nonlinear {
 
 
-MissingIfAllMissing::MissingIfAllMissing( const Config& config ) : NonLinear( config ) {}
-
-
 bool MissingIfAllMissing::execute( NonLinear::Matrix& W, const Field& field ) const {
+    interpolation::MissingValue mv( field );
+    if ( !mv ) {
+        return false;
+    }
+
     // NOTE only for scalars (for now)
     auto values        = array::make_view<double, 1>( field );
-    auto& missingValue = missingValue_.ref();
+    auto& missingValue = mv.ref();
 
     // correct matrix weigths for the missing values
     // (force a missing value only if all row values are missing)
