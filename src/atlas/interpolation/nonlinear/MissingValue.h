@@ -20,6 +20,11 @@
 
 
 namespace atlas {
+class Field;
+}
+
+
+namespace atlas {
 namespace interpolation {
 namespace nonlinear {
 
@@ -30,6 +35,7 @@ struct MissingValue {
     virtual ~MissingValue();
     virtual bool operator()( const double& ) const = 0;
     virtual bool isnan() const                     = 0;
+    virtual void metadata( Field& ) const          = 0;
 };
 
 

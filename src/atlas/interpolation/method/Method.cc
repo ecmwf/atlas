@@ -235,6 +235,12 @@ void Method::do_execute( const Field& src, Field& tgt ) const {
         ATLAS_NOTIMPLEMENTED;
     }
 
+    // carry over missing value metadata
+    MissingValue mv( src );
+    if ( mv ) {
+        mv.metadata( tgt );
+    }
+
     tgt.set_dirty();
 }
 

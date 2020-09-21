@@ -79,5 +79,11 @@ const nonlinear::MissingValue& MissingValue::ref() const {
 }
 
 
+void MissingValue::metadata( Field& field ) const {
+    ATLAS_ASSERT_MSG( operator bool(), "MissingValue: ObjectHandle not setup" );
+    get()->metadata( field );
+}
+
+
 }  // namespace interpolation
 }  // namespace atlas

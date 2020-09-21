@@ -16,7 +16,9 @@
 
 #include "eckit/types/FloatCompare.h"
 
+#include "atlas/field/Field.h"
 #include "atlas/runtime/Exception.h"
+#include "atlas/util/Metadata.h"
 
 
 namespace atlas {
@@ -25,16 +27,21 @@ namespace nonlinear {
 
 
 namespace {
+static const std::string type_key    = "missing_value_type";
+static const std::string value_key   = "missing_value";
+static const std::string epsilon_key = "missing_value_epsilon";
+
+
 double config_value( const MissingValue::Config& c ) {
     double value;
-    ATLAS_ASSERT( c.get( "missing_value", value ) );
+    ATLAS_ASSERT( c.get( value_key, value ) );
     return value;
 }
 
 
 double config_epsilon( const MissingValue::Config& c ) {
     double value = 0.;
-    c.get( "missing_value_epsilon", value );
+    c.get( epsilon_key, value );
     return value;
 }
 }  // namespace
@@ -45,6 +52,7 @@ struct MissingValueNaN : MissingValue {
     MissingValueNaN( const Config& ) {}
     bool operator()( const double& value ) const override { return std::isnan( value ); }
     bool isnan() const override { return true; }
+    void metadata( Field& field ) const override { field.metadata().set( type_key, static_type() ); }
     static std::string static_type() { return "nan"; }
 };
 
@@ -68,6 +76,11 @@ struct MissingValueEquals : MissingValue {
 
     bool isnan() const override { return false; }
 
+    void metadata( Field& field ) const override {
+        field.metadata().set( type_key, static_type() );
+        field.metadata().set( value_key, missingValue2_ );
+    }
+
     static std::string static_type() { return "equals"; }
 
     const double missingValue_;
@@ -89,6 +102,12 @@ struct MissingValueApprox : MissingValue {
     }
 
     bool isnan() const override { return false; }
+
+    void metadata( Field& field ) const override {
+        field.metadata().set( type_key, static_type() );
+        field.metadata().set( value_key, missingValue_ );
+        field.metadata().set( epsilon_key, epsilon_ );
+    }
 
     static std::string static_type() { return "approximately-equals"; }
 

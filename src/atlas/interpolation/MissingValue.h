@@ -64,10 +64,16 @@ struct MissingValue : DOXYGEN_HIDE( public util::ObjectHandle<nonlinear::Missing
     bool isnan() const;
 
     /**
-     * @brief bool operator
+     * @brief reference to internal implementation
      * @return reference to internal implementation
      */
     const nonlinear::MissingValue& ref() const;
+
+    /**
+     * @brief fill missing value metadata on Field
+     * @param [in] field field to set
+     */
+    void metadata( Field& field ) const;
 };
 
 
