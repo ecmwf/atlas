@@ -46,8 +46,8 @@ for name in authors:
   print("- "+name)
 
 print("")
-print("Thanks for conributions from")
-print("============================\n")
+print("Thanks for contributions from")
+print("=============================\n")
 
 for name in contributors():
   print("- "+name)
