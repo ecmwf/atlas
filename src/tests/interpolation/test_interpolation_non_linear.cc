@@ -179,6 +179,9 @@ CASE( "test_interpolation_non_linear_matrix" ) {
     functionspace::NodeColumns fsA( meshA );
     Field fieldA = fsA.createField<double>( option::name( "A" ) );
 
+    fieldA.metadata().set( "missing_value", missingValue );
+    fieldA.metadata().set( "missing_value_epsilon", missingValueEps );
+
     auto viewA = array::make_view<double, 1>( fieldA );
     for ( idx_t j = 0; j < fsA.nodes().size(); ++j ) {
         viewA( j ) = 1;
@@ -193,59 +196,59 @@ CASE( "test_interpolation_non_linear_matrix" ) {
     ATLAS_ASSERT( viewB.size() == 2 );
 
 
-    util::Config cfg( "type", "finite-element" );
-    cfg.set( "missing_value", missingValue );
-    cfg.set( "missing_value_epsilon", missingValueEps );
-
-
-    // NOTE: "equals" is not tested due to internal conversions
     SECTION( "missing-if-all-missing" ) {
-        for ( std::string cmp : {"approximately-equals", "nan"} ) {
-            viewA( 4 ) = cmp == "nan" ? nan : missingValue;
+        Interpolation interpolation(
+            util::Config( "type", "finite-element" ).set( "non_linear", "missing-if-all-missing" ), fsA, fsB );
 
-            cfg.set( "non_linear", "missing-if-all-missing" );
-            cfg.set( "missing_value_type", cmp );
+        for ( std::string type : {"equals", "approximately-equals", "nan"} ) {
+            fieldA.metadata().set( "missing_value_type", type );
+            viewA( 4 ) = type == "nan" ? nan : missingValue;
 
-            Interpolation interpolation( cfg, fsA, fsB );
+            EXPECT( interpolation::MissingValue( fieldA ) );
             interpolation.execute( fieldA, fieldB );
 
-            interpolation::MissingValue miss( cmp, cfg );
-            EXPECT( miss( viewB( 0 ) ) == false );
-            EXPECT( miss( viewB( 1 ) ) == false );
+            interpolation::MissingValue mv( fieldB );
+            EXPECT( mv );
+            EXPECT( mv( viewB( 0 ) ) == false );
+            EXPECT( mv( viewB( 1 ) ) == false );
         }
     }
 
 
     SECTION( "missing-if-any-missing" ) {
-        for ( std::string cmp : {"approximately-equals", "nan"} ) {
-            viewA( 4 ) = cmp == "nan" ? nan : missingValue;
+        Interpolation interpolation(
+            util::Config( "type", "finite-element" ).set( "non_linear", "missing-if-any-missing" ), fsA, fsB );
 
-            cfg.set( "non_linear", "missing-if-any-missing" );
-            cfg.set( "missing_value_type", cmp );
+        for ( std::string type : {"equals", "approximately-equals", "nan"} ) {
+            fieldA.metadata().set( "missing_value_type", type );
+            viewA( 4 ) = type == "nan" ? nan : missingValue;
 
-            Interpolation interpolation( cfg, fsA, fsB );
+            EXPECT( interpolation::MissingValue( fieldA ) );
             interpolation.execute( fieldA, fieldB );
 
-            interpolation::MissingValue miss( cmp, cfg );
-            EXPECT( miss( viewB( 0 ) ) );
-            EXPECT( miss( viewB( 1 ) ) );
+            interpolation::MissingValue mv( fieldB );
+            EXPECT( mv );
+            EXPECT( mv( viewB( 0 ) ) );
+            EXPECT( mv( viewB( 1 ) ) );
         }
     }
 
 
     SECTION( "missing-if-heaviest-missing" ) {
-        for ( std::string cmp : {"approximately-equals", "nan"} ) {
-            viewA( 4 ) = cmp == "nan" ? nan : missingValue;
+        Interpolation interpolation(
+            util::Config( "type", "finite-element" ).set( "non_linear", "missing-if-heaviest-missing" ), fsA, fsB );
 
-            cfg.set( "non_linear", "missing-if-heaviest-missing" );
-            cfg.set( "missing_value_type", cmp );
+        for ( std::string type : {"equals", "approximately-equals", "nan"} ) {
+            fieldA.metadata().set( "missing_value_type", type );
+            viewA( 4 ) = type == "nan" ? nan : missingValue;
 
-            Interpolation interpolation( cfg, fsA, fsB );
+            EXPECT( interpolation::MissingValue( fieldA ) );
             interpolation.execute( fieldA, fieldB );
 
-            interpolation::MissingValue miss( cmp, cfg );
-            EXPECT( miss( viewB( 0 ) ) == false );
-            EXPECT( miss( viewB( 1 ) ) );
+            interpolation::MissingValue mv( fieldB );
+            EXPECT( mv );
+            EXPECT( mv( viewB( 0 ) ) == false );
+            EXPECT( mv( viewB( 1 ) ) );
         }
     }
 }
