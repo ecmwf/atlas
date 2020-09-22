@@ -40,12 +40,10 @@ using util::Config;
 
 CASE( "test_interpolation_non_linear_missing_value" ) {
     SECTION( "not defined" ) {
-        Config config;
-
-        auto mv = MissingValue( config );
+        auto mv = MissingValue();
         EXPECT( !bool( mv ) );
 
-        mv = MissingValue( "not defined", config );
+        mv = MissingValue( "not defined", Config() );
         EXPECT( !bool( mv ) );
     }
 
@@ -76,16 +74,20 @@ CASE( "test_interpolation_non_linear_missing_value" ) {
         EXPECT( bool( mv ) );
 
         EXPECT( mv( missingValue - 1 ) == false );
-        EXPECT( mv( missingValue + 1 ) == false );
+        EXPECT( mv( missingValue - missingValueEps / 2 ) == false );
         EXPECT( mv( missingValue ) );
+        EXPECT( mv( missingValue + missingValueEps / 2 ) == false );
+        EXPECT( mv( missingValue + 1 ) == false );
 
         config.set( "type", "equals" );
         mv = MissingValue( config );
         EXPECT( bool( mv ) );
 
         EXPECT( mv( missingValue - 1 ) == false );
-        EXPECT( mv( missingValue + 1 ) == false );
+        EXPECT( mv( missingValue - missingValueEps / 2 ) == false );
         EXPECT( mv( missingValue ) );
+        EXPECT( mv( missingValue + missingValueEps / 2 ) == false );
+        EXPECT( mv( missingValue + 1 ) == false );
     }
 
 
@@ -131,7 +133,7 @@ CASE( "test_interpolation_non_linear_missing_value (DataType specialisations)" )
             EXPECT( bool( mv ) );
             EXPECT( mv( type == "nan" ? nan : n ) );
             EXPECT( mv( n ) != mv( nan ) );
-            EXPECT( !mv( n + 1 ) );
+            EXPECT( mv( n + 1 ) == false );
         }
     }
 
@@ -150,7 +152,7 @@ CASE( "test_interpolation_non_linear_missing_value (DataType specialisations)" )
             EXPECT( bool( mv ) );
             EXPECT( mv( type == "nan" ? nan : n ) );
             EXPECT( mv( n ) != mv( nan ) );
-            EXPECT( !mv( n + 1 ) );
+            EXPECT( mv( n + 1 ) == false );
         }
     }
 
@@ -160,7 +162,7 @@ CASE( "test_interpolation_non_linear_missing_value (DataType specialisations)" )
         auto mv = MissingValue( "equals-int32", Config( "missing_value", n ) );
         EXPECT( bool( mv ) );
         EXPECT( mv( n ) );
-        EXPECT( !mv( n + 1 ) );
+        EXPECT( mv( n + 1 ) == false );
     }
 
 
@@ -169,7 +171,7 @@ CASE( "test_interpolation_non_linear_missing_value (DataType specialisations)" )
         auto mv = MissingValue( "equals-int64", Config( "missing_value", n ) );
         EXPECT( bool( mv ) );
         EXPECT( mv( n ) );
-        EXPECT( !mv( n + 1 ) );
+        EXPECT( mv( n + 1 ) == false );
     }
 
 
@@ -178,7 +180,7 @@ CASE( "test_interpolation_non_linear_missing_value (DataType specialisations)" )
         auto mv = MissingValue( "equals-uint64", Config( "missing_value", n ) );
         EXPECT( bool( mv ) );
         EXPECT( mv( n ) );
-        EXPECT( !mv( n + 1 ) );
+        EXPECT( mv( n + 1 ) == false );
     }
 }
 
