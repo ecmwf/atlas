@@ -17,8 +17,8 @@
 #include "eckit/config/Parametrisation.h"
 
 #include "atlas/runtime/Exception.h"
-#include "atlas/util/Object.h"
 #include "atlas/util/Factory.h"
+#include "atlas/util/Object.h"
 
 
 namespace atlas {
