@@ -90,6 +90,10 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
         throw_Exception( "Grid is not a grid::Structured type", Here() );
     }
 
+    bool periodic_x = false, periodic_y = false;
+    config.get ("periodic_x", periodic_x);
+    config.get ("periodic_y", periodic_y);
+
     const double eps = 1.e-12;
 
     ny_                  = grid_->ny();
@@ -244,17 +248,28 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
     };
 
     std::function<idx_t( idx_t )> compute_j;
-    compute_j = [this, &compute_j]( idx_t j ) -> idx_t {
-        if ( j < 0 ) {
-            j = ( grid_->y( 0 ) == 90. ) ? -j : -j - 1;
-        }
-        else if ( j >= grid_->ny() ) {
-            idx_t jlast = grid_->ny() - 1;
-            j           = ( grid_->y( jlast ) == -90. ) ? jlast - 1 - ( j - grid_->ny() ) : jlast - ( j - grid_->ny() );
-        }
-        if ( j < 0 or j >= grid_->ny() ) {
-            j = compute_j( j );
-        }
+    compute_j = [this, &compute_j, &periodic_y]( idx_t j ) -> idx_t {
+        if (periodic_y)
+          {
+            const idx_t ny = grid_->ny();
+            while (j < 0)
+              j += ny;
+            while (j >= ny)
+              j -= ny;
+          }
+        else
+          {
+            if ( j < 0 ) {
+                j = ( grid_->y( 0 ) == 90. ) ? -j : -j - 1;
+            }
+            else if ( j >= grid_->ny() ) {
+                idx_t jlast = grid_->ny() - 1;
+                j           = ( grid_->y( jlast ) == -90. ) ? jlast - 1 - ( j - grid_->ny() ) : jlast - ( j - grid_->ny() );
+            }
+            if ( j < 0 or j >= grid_->ny() ) {
+                j = compute_j( j );
+            }
+          }
         return j;
     };
 
@@ -280,12 +295,19 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
         return i;
     };
 
-    auto compute_y = [this, &compute_j]( idx_t j ) -> double {
-        idx_t jj;
+    auto compute_y = [this, &compute_j, &periodic_y]( idx_t j ) -> double {
         double y;
+        idx_t jj;
         jj = compute_j( j );
-        y  = ( j < 0 ) ? 90. + ( 90. - grid_->y( jj ) )
-                      : ( j >= grid_->ny() ) ? -90. + ( -90. - grid_->y( jj ) ) : grid_->y( jj );
+        if (periodic_y)
+          {
+            y = grid_->y( jj );
+          }
+        else
+          {
+            y  = ( j < 0 ) ? 90. + ( 90. - grid_->y( jj ) )
+                          : ( j >= grid_->ny() ) ? -90. + ( -90. - grid_->y( jj ) ) : grid_->y( jj );
+          }
         return y;
     };
 
@@ -296,12 +318,14 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
         grid_idx += grid_->nx( j );
     }
 
-    auto compute_g = [this, &global_offsets, &compute_i, &compute_j]( idx_t i, idx_t j ) -> gidx_t {
+    auto compute_g = [this, &global_offsets, &compute_i, 
+                      &compute_j, &periodic_y]( idx_t i, idx_t j ) -> gidx_t {
         idx_t ii, jj;
         gidx_t g;
         jj = compute_j( j );
         ii = compute_i( i, jj );
-        if ( jj != j ) {
+        if (! periodic_y)
+        if (jj != j) {
             ATLAS_ASSERT( grid_->nx( jj ) % 2 == 0 );  // assert even number of points
             ii = ( ii < grid_->nx( jj ) / 2 ) ? ii + grid_->nx( jj ) / 2
                                               : ( ii >= grid_->nx( jj ) / 2 ) ? ii - grid_->nx( jj ) / 2 : ii;
@@ -310,18 +334,8 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
         return g;
     };
 
-    auto compute_p = [this, &global_offsets, &distribution, &compute_i, &compute_j]( idx_t i, idx_t j ) -> int {
-        idx_t ii, jj;
-        int p;
-        jj = compute_j( j );
-        ii = compute_i( i, jj );
-        if ( jj != j ) {
-            ATLAS_ASSERT( grid_->nx( jj ) % 2 == 0 );  // assert even number of points
-            ii = ( ii < grid_->nx( jj ) / 2 ) ? ii + grid_->nx( jj ) / 2
-                                              : ( ii >= grid_->nx( jj ) / 2 ) ? ii - grid_->nx( jj ) / 2 : ii;
-        }
-        p = distribution.partition( global_offsets[jj] + ii );
-        return p;
+    auto compute_p = [&compute_g, &distribution]( idx_t i, idx_t j ) -> int {
+        return distribution.partition (compute_g (i, j) - 1);
     };
 
     GridPointSet gridpoints;
