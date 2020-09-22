@@ -26,8 +26,8 @@ class Field;
 
 
 namespace atlas {
-namespace interpolation {
-namespace nonlinear {
+namespace field {
+namespace detail {
 
 
 /// @brief Missing values indicator base class
@@ -68,6 +68,6 @@ public:
 };
 
 
-}  // namespace nonlinear
-}  // namespace interpolation
+}  // namespace detail
+}  // namespace field
 }  // namespace atlas

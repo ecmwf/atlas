@@ -14,7 +14,7 @@
 
 #include <string>
 
-#include "atlas/interpolation/nonlinear/MissingValue.h"
+#include "atlas/field/detail/MissingValue.h"
 #include "atlas/library/config.h"
 #include "atlas/util/ObjectHandle.h"
 
@@ -28,13 +28,13 @@ class Config;
 
 
 namespace atlas {
-namespace interpolation {
+namespace field {
 
 
 /// @brief Missing values indicator
-struct MissingValue : DOXYGEN_HIDE( public util::ObjectHandle<nonlinear::MissingValue> ) {
+struct MissingValue : DOXYGEN_HIDE( public util::ObjectHandle<detail::MissingValue> ) {
     using Spec   = util::Config;
-    using Config = nonlinear::MissingValue::Config;
+    using Config = detail::MissingValue::Config;
 
     // ctor
     using Handle::Handle;
@@ -67,7 +67,7 @@ struct MissingValue : DOXYGEN_HIDE( public util::ObjectHandle<nonlinear::Missing
      * @brief reference to internal implementation
      * @return reference to internal implementation
      */
-    const nonlinear::MissingValue& ref() const;
+    const detail::MissingValue& ref() const;
 
     /**
      * @brief fill missing value metadata on Field
@@ -77,5 +77,5 @@ struct MissingValue : DOXYGEN_HIDE( public util::ObjectHandle<nonlinear::Missing
 };
 
 
-}  // namespace interpolation
+}  // namespace field
 }  // namespace atlas

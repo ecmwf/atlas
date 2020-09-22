@@ -10,7 +10,7 @@
  */
 
 
-#include "atlas/interpolation/MissingValue.h"
+#include "atlas/field/MissingValue.h"
 
 #include <cmath>
 
@@ -23,7 +23,7 @@
 
 
 namespace atlas {
-namespace interpolation {
+namespace field {
 
 
 namespace {
@@ -46,19 +46,19 @@ MissingValue::MissingValue() : Handle( nullptr ) {}
 
 
 MissingValue::MissingValue( const MissingValue::Config& config ) :
-    Handle( nonlinear::MissingValueFactory::build( config_type( config ), config ) ) {}
+    Handle( detail::MissingValueFactory::build( config_type( config ), config ) ) {}
 
 
 MissingValue::MissingValue( const std::string& type, const MissingValue::Config& config ) :
-    Handle( nonlinear::MissingValueFactory::build( type, config ) ) {}
+    Handle( detail::MissingValueFactory::build( type, config ) ) {}
 
 
 MissingValue::MissingValue( const Field& field ) :
-    Handle( nonlinear::MissingValueFactory::build( field_type( field ), field.metadata() ) ) {}
+    Handle( detail::MissingValueFactory::build( field_type( field ), field.metadata() ) ) {}
 
 
 MissingValue::MissingValue( const std::string& type, const Field& field ) :
-    Handle( nonlinear::MissingValueFactory::build( type, field.metadata() ) ) {}
+    Handle( detail::MissingValueFactory::build( type, field.metadata() ) ) {}
 
 
 bool MissingValue::operator()( const double& value ) const {
@@ -73,7 +73,7 @@ bool MissingValue::isnan() const {
 }
 
 
-const nonlinear::MissingValue& MissingValue::ref() const {
+const detail::MissingValue& MissingValue::ref() const {
     ATLAS_ASSERT_MSG( operator bool(), "MissingValue: ObjectHandle not setup" );
     return *get();  // (one dereferencing level less)
 }
@@ -85,5 +85,5 @@ void MissingValue::metadata( Field& field ) const {
 }
 
 
-}  // namespace interpolation
+}  // namespace field
 }  // namespace atlas

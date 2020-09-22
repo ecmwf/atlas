@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "atlas/field/MissingValue.h"
 #include "atlas/interpolation/nonlinear/NonLinear.h"
 
 #include "eckit/types/FloatCompare.h"
@@ -25,7 +26,7 @@ namespace nonlinear {
 template <typename T>
 struct MissingIfHeaviestMissing : NonLinear {
     bool execute( NonLinear::Matrix& W, const Field& field ) const {
-        interpolation::MissingValue mv( field );
+        field::MissingValue mv( field );
         if ( !mv ) {
             return false;
         }

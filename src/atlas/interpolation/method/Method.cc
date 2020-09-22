@@ -20,6 +20,7 @@
 #include "atlas/array.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
+#include "atlas/field/MissingValue.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/Exception.h"
@@ -236,7 +237,7 @@ void Method::do_execute( const Field& src, Field& tgt ) const {
     }
 
     // carry over missing value metadata
-    MissingValue mv( src );
+    field::MissingValue mv( src );
     if ( mv ) {
         mv.metadata( tgt );
     }

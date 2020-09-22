@@ -370,22 +370,26 @@ output/detail/PointCloudIO.h
 
 list( APPEND atlas_field_srcs
 field.h
-field/Field.h
 field/Field.cc
-field/FieldCreator.h
+field/Field.h
 field/FieldCreator.cc
-field/FieldCreatorArraySpec.h
+field/FieldCreator.h
 field/FieldCreatorArraySpec.cc
-field/FieldCreatorIFS.h
+field/FieldCreatorArraySpec.h
 field/FieldCreatorIFS.cc
-field/FieldSet.h
+field/FieldCreatorIFS.h
 field/FieldSet.cc
-field/State.h
+field/FieldSet.h
+field/MissingValue.cc
+field/MissingValue.h
 field/State.cc
-field/detail/FieldImpl.h
+field/State.h
 field/detail/FieldImpl.cc
-field/detail/FieldInterface.h
+field/detail/FieldImpl.h
 field/detail/FieldInterface.cc
+field/detail/FieldInterface.h
+field/detail/MissingValue.cc
+field/detail/MissingValue.h
 )
 
 list( APPEND atlas_functionspace_srcs
@@ -475,8 +479,6 @@ list( APPEND atlas_interpolation_srcs
 interpolation.h
 interpolation/Interpolation.cc
 interpolation/Interpolation.h
-interpolation/MissingValue.cc
-interpolation/MissingValue.h
 interpolation/NonLinear.cc
 interpolation/NonLinear.h
 interpolation/Vector2D.cc
@@ -535,8 +537,6 @@ interpolation/method/structured/kernels/QuasiCubicHorizontalKernel.h
 interpolation/nonlinear/MissingIfAllMissing.h
 interpolation/nonlinear/MissingIfAnyMissing.h
 interpolation/nonlinear/MissingIfHeaviestMissing.h
-interpolation/nonlinear/MissingValue.cc
-interpolation/nonlinear/MissingValue.h
 interpolation/nonlinear/NonLinear.h
 interpolation/nonlinear/NonLinearFactory.cc
 interpolation/nonlinear/NonLinearFactory.h

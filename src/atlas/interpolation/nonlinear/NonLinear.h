@@ -19,7 +19,6 @@
 
 #include "atlas/array.h"
 #include "atlas/field/Field.h"
-#include "atlas/interpolation/MissingValue.h"
 #include "atlas/runtime/Exception.h"
 
 

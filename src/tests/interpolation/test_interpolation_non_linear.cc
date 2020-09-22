@@ -14,6 +14,7 @@
 #include <limits>
 
 #include "atlas/array.h"
+#include "atlas/field/MissingValue.h"
 #include "atlas/functionspace.h"
 #include "atlas/grid.h"
 #include "atlas/interpolation.h"
@@ -35,7 +36,7 @@ const double nan             = std::numeric_limits<double>::quiet_NaN();
 
 
 CASE( "test_interpolation_non_linear_missing_value" ) {
-    using interpolation::MissingValue;
+    using field::MissingValue;
 
 
     SECTION( "not defined" ) {
@@ -116,7 +117,8 @@ CASE( "test_interpolation_non_linear_missing_value" ) {
 
 
 CASE( "test_interpolation_non_linear_field_missing_value" ) {
-    using interpolation::MissingValue;
+    using field::MissingValue;
+
 
     std::vector<double> values{1., nan, missingValue, missingValue, missingValue + missingValueEps / 2., 6., 7.};
     Field field( "field", values.data(), array::make_shape( values.size(), 1 ) );
@@ -160,6 +162,9 @@ CASE( "test_interpolation_non_linear_field_missing_value" ) {
 
 
 CASE( "test_interpolation_non_linear_matrix" ) {
+    using field::MissingValue;
+
+
     /*
        Set input field full of 1's, with 9 nodes
          1 ... 1 ... 1
@@ -204,10 +209,10 @@ CASE( "test_interpolation_non_linear_matrix" ) {
             fieldA.metadata().set( "missing_value_type", type );
             viewA( 4 ) = type == "nan" ? nan : missingValue;
 
-            EXPECT( interpolation::MissingValue( fieldA ) );
+            EXPECT( MissingValue( fieldA ) );
             interpolation.execute( fieldA, fieldB );
 
-            interpolation::MissingValue mv( fieldB );
+            MissingValue mv( fieldB );
             EXPECT( mv );
             EXPECT( mv( viewB( 0 ) ) == false );
             EXPECT( mv( viewB( 1 ) ) == false );
@@ -223,10 +228,10 @@ CASE( "test_interpolation_non_linear_matrix" ) {
             fieldA.metadata().set( "missing_value_type", type );
             viewA( 4 ) = type == "nan" ? nan : missingValue;
 
-            EXPECT( interpolation::MissingValue( fieldA ) );
+            EXPECT( MissingValue( fieldA ) );
             interpolation.execute( fieldA, fieldB );
 
-            interpolation::MissingValue mv( fieldB );
+            MissingValue mv( fieldB );
             EXPECT( mv );
             EXPECT( mv( viewB( 0 ) ) );
             EXPECT( mv( viewB( 1 ) ) );
@@ -242,10 +247,10 @@ CASE( "test_interpolation_non_linear_matrix" ) {
             fieldA.metadata().set( "missing_value_type", type );
             viewA( 4 ) = type == "nan" ? nan : missingValue;
 
-            EXPECT( interpolation::MissingValue( fieldA ) );
+            EXPECT( MissingValue( fieldA ) );
             interpolation.execute( fieldA, fieldB );
 
-            interpolation::MissingValue mv( fieldB );
+            MissingValue mv( fieldB );
             EXPECT( mv );
             EXPECT( mv( viewB( 0 ) ) == false );
             EXPECT( mv( viewB( 1 ) ) );

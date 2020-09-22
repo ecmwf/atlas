@@ -10,7 +10,7 @@
  */
 
 
-#include "atlas/interpolation/nonlinear/MissingValue.h"
+#include "atlas/field/detail/MissingValue.h"
 
 #include <cmath>
 #include <type_traits>
@@ -23,8 +23,8 @@
 
 
 namespace atlas {
-namespace interpolation {
-namespace nonlinear {
+namespace field {
+namespace detail {
 
 
 namespace {
@@ -156,6 +156,6 @@ static B<M3<float>> __mv12( M3<float>::static_type() + "-" + T<float>() );
 #undef B
 
 
-}  // namespace nonlinear
-}  // namespace interpolation
+}  // namespace detail
+}  // namespace field
 }  // namespace atlas
