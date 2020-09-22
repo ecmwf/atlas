@@ -34,13 +34,13 @@ const double missingValue    = 42.;
 const double missingValueEps = 1e-9;
 const double nan             = std::numeric_limits<double>::quiet_NaN();
 
+using field::MissingValue;
+using util::Config;
+
 
 CASE( "test_interpolation_non_linear_missing_value" ) {
-    using field::MissingValue;
-
-
     SECTION( "not defined" ) {
-        util::Config config;
+        Config config;
 
         auto mv = MissingValue( config );
         EXPECT( !bool( mv ) );
@@ -51,7 +51,7 @@ CASE( "test_interpolation_non_linear_missing_value" ) {
 
 
     SECTION( "nan" ) {
-        util::Config config;
+        Config config;
 
         auto mv = MissingValue( "nan", config );
         EXPECT( bool( mv ) );
@@ -69,7 +69,7 @@ CASE( "test_interpolation_non_linear_missing_value" ) {
 
 
     SECTION( "equals" ) {
-        util::Config config;
+        Config config;
         config.set( "missing_value", missingValue );
 
         auto mv = MissingValue( "equals", config );
@@ -90,7 +90,7 @@ CASE( "test_interpolation_non_linear_missing_value" ) {
 
 
     SECTION( "approximately-equals" ) {
-        util::Config config;
+        Config config;
         config.set( "missing_value", missingValue );
         config.set( "missing_value_epsilon", missingValueEps );
 
@@ -116,10 +116,74 @@ CASE( "test_interpolation_non_linear_missing_value" ) {
 }
 
 
+CASE( "test_interpolation_non_linear_missing_value (DataType specialisations)" ) {
+    SECTION( "real64" ) {
+        auto n   = static_cast<double>( missingValue );
+        auto eps = static_cast<double>( missingValueEps );
+        auto nan = std::numeric_limits<double>::quiet_NaN();
+
+        Config config;
+        config.set( "missing_value", n );
+        config.set( "missing_value_epsilon", eps );
+
+        for ( std::string type : {"nan", "equals", "approximately-equals"} ) {
+            auto mv = MissingValue( type + "-real64", config );
+            EXPECT( bool( mv ) );
+            EXPECT( mv( type == "nan" ? nan : n ) );
+            EXPECT( mv( n ) != mv( nan ) );
+            EXPECT( !mv( n + 1 ) );
+        }
+    }
+
+
+    SECTION( "real32" ) {
+        auto n   = static_cast<float>( missingValue );
+        auto eps = static_cast<float>( missingValueEps );
+        auto nan = std::numeric_limits<float>::quiet_NaN();
+
+        Config config;
+        config.set( "missing_value", n );
+        config.set( "missing_value_epsilon", eps );
+
+        for ( std::string type : {"nan", "equals", "approximately-equals"} ) {
+            auto mv = MissingValue( type + "-real32", config );
+            EXPECT( bool( mv ) );
+            EXPECT( mv( type == "nan" ? nan : n ) );
+            EXPECT( mv( n ) != mv( nan ) );
+            EXPECT( !mv( n + 1 ) );
+        }
+    }
+
+
+    SECTION( "int32" ) {
+        auto n  = static_cast<int>( missingValue );
+        auto mv = MissingValue( "equals-int32", Config( "missing_value", n ) );
+        EXPECT( bool( mv ) );
+        EXPECT( mv( n ) );
+        EXPECT( !mv( n + 1 ) );
+    }
+
+
+    SECTION( "int64" ) {
+        auto n  = static_cast<long>( missingValue );
+        auto mv = MissingValue( "equals-int64", Config( "missing_value", n ) );
+        EXPECT( bool( mv ) );
+        EXPECT( mv( n ) );
+        EXPECT( !mv( n + 1 ) );
+    }
+
+
+    SECTION( "uint64" ) {
+        auto n  = static_cast<unsigned long>( missingValue );
+        auto mv = MissingValue( "equals-uint64", Config( "missing_value", n ) );
+        EXPECT( bool( mv ) );
+        EXPECT( mv( n ) );
+        EXPECT( !mv( n + 1 ) );
+    }
+}
+
+
 CASE( "test_interpolation_non_linear_field_missing_value" ) {
-    using field::MissingValue;
-
-
     std::vector<double> values{1., nan, missingValue, missingValue, missingValue + missingValueEps / 2., 6., 7.};
     Field field( "field", values.data(), array::make_shape( values.size(), 1 ) );
 
@@ -162,9 +226,6 @@ CASE( "test_interpolation_non_linear_field_missing_value" ) {
 
 
 CASE( "test_interpolation_non_linear_matrix" ) {
-    using field::MissingValue;
-
-
     /*
        Set input field full of 1's, with 9 nodes
          1 ... 1 ... 1
@@ -202,8 +263,8 @@ CASE( "test_interpolation_non_linear_matrix" ) {
 
 
     SECTION( "missing-if-all-missing" ) {
-        Interpolation interpolation(
-            util::Config( "type", "finite-element" ).set( "non_linear", "missing-if-all-missing" ), fsA, fsB );
+        Interpolation interpolation( Config( "type", "finite-element" ).set( "non_linear", "missing-if-all-missing" ),
+                                     fsA, fsB );
 
         for ( std::string type : {"equals", "approximately-equals", "nan"} ) {
             fieldA.metadata().set( "missing_value_type", type );
@@ -221,8 +282,8 @@ CASE( "test_interpolation_non_linear_matrix" ) {
 
 
     SECTION( "missing-if-any-missing" ) {
-        Interpolation interpolation(
-            util::Config( "type", "finite-element" ).set( "non_linear", "missing-if-any-missing" ), fsA, fsB );
+        Interpolation interpolation( Config( "type", "finite-element" ).set( "non_linear", "missing-if-any-missing" ),
+                                     fsA, fsB );
 
         for ( std::string type : {"equals", "approximately-equals", "nan"} ) {
             fieldA.metadata().set( "missing_value_type", type );
@@ -241,7 +302,7 @@ CASE( "test_interpolation_non_linear_matrix" ) {
 
     SECTION( "missing-if-heaviest-missing" ) {
         Interpolation interpolation(
-            util::Config( "type", "finite-element" ).set( "non_linear", "missing-if-heaviest-missing" ), fsA, fsB );
+            Config( "type", "finite-element" ).set( "non_linear", "missing-if-heaviest-missing" ), fsA, fsB );
 
         for ( std::string type : {"equals", "approximately-equals", "nan"} ) {
             fieldA.metadata().set( "missing_value_type", type );
