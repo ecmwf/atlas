@@ -16,6 +16,7 @@
 
 #include "eckit/config/Parametrisation.h"
 
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/Factory.h"
 
 
@@ -31,11 +32,16 @@ namespace nonlinear {
 
 /// @brief Missing values indicator base class
 struct MissingValue {
-    using Config = eckit::Parametrisation;
-    virtual ~MissingValue();
-    virtual bool operator()( const double& ) const = 0;
-    virtual bool isnan() const                     = 0;
-    virtual void metadata( Field& ) const          = 0;
+    using Config                          = eckit::Parametrisation;
+    virtual ~MissingValue()               = default;
+    virtual bool isnan() const            = 0;
+    virtual void metadata( Field& ) const = 0;
+
+    virtual bool operator()( const double& ) const { ATLAS_NOTIMPLEMENTED; }
+    virtual bool operator()( const float& ) const { ATLAS_NOTIMPLEMENTED; }
+    virtual bool operator()( const int& ) const { ATLAS_NOTIMPLEMENTED; }
+    virtual bool operator()( const long& ) const { ATLAS_NOTIMPLEMENTED; }
+    virtual bool operator()( const unsigned long& ) const { ATLAS_NOTIMPLEMENTED; }
 };
 
 
@@ -58,7 +64,7 @@ private:
     virtual const MissingValue* make( const Config& config ) override { return new T( config ); }
 
 public:
-    MissingValueFactoryBuilder() : MissingValueFactory( T::static_type() ) {}
+    using MissingValueFactory::MissingValueFactory;
 };
 
 
