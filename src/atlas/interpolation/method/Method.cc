@@ -240,6 +240,7 @@ void Method::do_execute( const Field& src, Field& tgt ) const {
     field::MissingValue mv( src );
     if ( mv ) {
         mv.metadata( tgt );
+        ATLAS_ASSERT( field::MissingValue( tgt ) );
     }
 
     tgt.set_dirty();
