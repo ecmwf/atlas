@@ -532,11 +532,8 @@ interpolation/method/structured/kernels/LinearVerticalKernel.h
 interpolation/method/structured/kernels/QuasiCubic3DKernel.cc
 interpolation/method/structured/kernels/QuasiCubic3DKernel.h
 interpolation/method/structured/kernels/QuasiCubicHorizontalKernel.h
-interpolation/nonlinear/MissingIfAllMissing.cc
 interpolation/nonlinear/MissingIfAllMissing.h
-interpolation/nonlinear/MissingIfAnyMissing.cc
 interpolation/nonlinear/MissingIfAnyMissing.h
-interpolation/nonlinear/MissingIfHeaviestMissing.cc
 interpolation/nonlinear/MissingIfHeaviestMissing.h
 interpolation/nonlinear/MissingValue.cc
 interpolation/nonlinear/MissingValue.h

@@ -12,15 +12,15 @@
 
 #pragma once
 
+#include <type_traits>
+
 #include "eckit/config/Parametrisation.h"
 #include "eckit/linalg/SparseMatrix.h"
 
+#include "atlas/array.h"
+#include "atlas/field/Field.h"
 #include "atlas/interpolation/MissingValue.h"
-
-
-namespace atlas {
-class Field;
-}
+#include "atlas/runtime/Exception.h"
 
 
 namespace atlas {
@@ -54,6 +54,16 @@ public:
      * @return if W was modified
      */
     virtual bool execute( Matrix& W, const Field& f ) const = 0;
+
+protected:
+    template <typename Value, int Rank>
+    static array::ArrayView<typename std::add_const<Value>::type, Rank> make_view_field_values( const Field& field ) {
+        ATLAS_ASSERT( field );
+        ATLAS_ASSERT_MSG(
+            field.datatype().kind() == array::DataType::kind<Value>(),
+            "Field(name:" + field.name() + ",DataType:" + field.datatype().str() + ") is not of required DataType" );
+        return array::make_view<typename std::add_const<Value>::type, Rank>( field );
+    }
 };
 
 
