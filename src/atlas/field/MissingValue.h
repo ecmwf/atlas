@@ -58,6 +58,34 @@ struct MissingValue : DOXYGEN_HIDE( public util::ObjectHandle<detail::MissingVal
     bool operator()( const double& value ) const;
 
     /**
+     * @brief operator() on user-defined values
+     * @param [in] value user-defined value
+     * @return if user-defined value indicates a missing value
+     */
+    bool operator()( const float& value ) const;
+
+    /**
+     * @brief operator() on user-defined values
+     * @param [in] value user-defined value
+     * @return if user-defined value indicates a missing value
+     */
+    bool operator()( const int& value ) const;
+
+    /**
+     * @brief operator() on user-defined values
+     * @param [in] value user-defined value
+     * @return if user-defined value indicates a missing value
+     */
+    bool operator()( const long& value ) const;
+
+    /**
+     * @brief operator() on user-defined values
+     * @param [in] value user-defined value
+     * @return if user-defined value indicates a missing value
+     */
+    bool operator()( const unsigned long& value ) const;
+
+    /**
      * @brief if missing value is represented by not-a-number
      * @return if missing value is represented by not-a-number
      */

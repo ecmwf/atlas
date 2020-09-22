@@ -62,7 +62,31 @@ MissingValue::MissingValue( const std::string& type, const Field& field ) :
 
 
 bool MissingValue::operator()( const double& value ) const {
-    ATLAS_ASSERT_MSG( operator bool(), "MissingValue: ObjectHandle not setup" );
+    ATLAS_ASSERT_MSG( operator bool(), "MissingValue::operator()( const double& ) ObjectHandle not setup" );
+    return get()->operator()( value );
+}
+
+
+bool MissingValue::operator()( const float& value ) const {
+    ATLAS_ASSERT_MSG( operator bool(), "MissingValue::operator()( const float& ): ObjectHandle not setup" );
+    return get()->operator()( value );
+}
+
+
+bool MissingValue::operator()( const int& value ) const {
+    ATLAS_ASSERT_MSG( operator bool(), "MissingValue::operator()( const int& ): ObjectHandle not setup" );
+    return get()->operator()( value );
+}
+
+
+bool MissingValue::operator()( const long& value ) const {
+    ATLAS_ASSERT_MSG( operator bool(), "MissingValue::operator()( const long& ): ObjectHandle not setup" );
+    return get()->operator()( value );
+}
+
+
+bool MissingValue::operator()( const unsigned long& value ) const {
+    ATLAS_ASSERT_MSG( operator bool(), "MissingValue::operator()( const unsigned long& ): ObjectHandle not setup" );
     return get()->operator()( value );
 }
 
