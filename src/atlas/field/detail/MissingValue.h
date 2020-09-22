@@ -17,6 +17,7 @@
 #include "eckit/config/Parametrisation.h"
 
 #include "atlas/runtime/Exception.h"
+#include "atlas/util/Object.h"
 #include "atlas/util/Factory.h"
 
 
@@ -31,7 +32,7 @@ namespace detail {
 
 
 /// @brief Missing values indicator base class
-struct MissingValue {
+struct MissingValue : util::Object {
     using Config                          = eckit::Parametrisation;
     virtual ~MissingValue()               = default;
     virtual bool isnan() const            = 0;

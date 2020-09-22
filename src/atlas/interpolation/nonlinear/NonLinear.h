@@ -20,6 +20,7 @@
 #include "atlas/array.h"
 #include "atlas/field/Field.h"
 #include "atlas/runtime/Exception.h"
+#include "atlas/util/ObjectHandle.h"
 
 
 namespace atlas {
@@ -31,7 +32,7 @@ namespace nonlinear {
  * @brief NonLinear class applies non-linear corrections to an interpolation matrix, given a field with missing values.
  * The interpolatation are re-weighted to factor those values out of the resulting field.
  */
-class NonLinear {
+class NonLinear : public util::Object {
 public:
     using Config = eckit::Parametrisation;
     using Matrix = eckit::linalg::SparseMatrix;
