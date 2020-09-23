@@ -389,30 +389,6 @@ CASE( "test_interpolation_structured for vectors" ) {
     }
 }
 
-CASE ("test_multiple_fs") {
-
-  Grid grid1 ("L90x45");
-  Grid grid2 ("O8");
-
-  Mesh mesh1 = StructuredMeshGenerator ().generate (grid1);
-  Mesh mesh2 = StructuredMeshGenerator ().generate (grid2);
-
-  functionspace::NodeColumns fs11 (mesh1, option::halo (1));
-  functionspace::NodeColumns fs12 (mesh1, option::halo (2));
-
-  auto fs1 = fs11;
-  functionspace::NodeColumns fs2 (mesh2, option::halo (1));
-
-  Interpolation interpolation12 (util::Config ("type", "k-nearest-neighbours") | util::Config ("k-nearest-neighbours", 5), fs1, fs2);
-  
-  auto f1 = fs1.createField<double> (util::Config ("name", "source"));
-  auto f2 = fs2.createField<double> (util::Config ("name", "target"));
-  
-  interpolation12.execute (f1, f2);
-
-}
-
-
 }  // namespace test
 }  // namespace atlas
 

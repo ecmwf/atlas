@@ -22,32 +22,38 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
-void KNearestNeighboursBase::buildPointSearchTree( Mesh& meshSource ) {
+void KNearestNeighboursBase::buildPointSearchTree( Mesh& meshSource, const mesh::Halo& _halo ) {
     using namespace atlas;
     eckit::TraceTimer<Atlas> tim( "atlas::interpolation::method::KNearestNeighboursBase::setup()" );
 
     // generate 3D point coordinates
     mesh::actions::BuildXYZField( "xyz" )( meshSource );
-    array::ArrayView<double, 2> coords = array::make_view<double, 2>( meshSource.nodes().field( "xyz" ) );
+    auto coords = array::make_view<double, 2>( meshSource.nodes().field( "xyz" ) );
+    auto halo   = array::make_view<int, 1>( meshSource.nodes().halo() );
 
     // build point-search tree
     pTree_.reset( new PointIndex3 );
 
     static bool fastBuildKDTrees = eckit::Resource<bool>( "$ATLAS_FAST_BUILD_KDTREES", true );
 
+    int h = _halo.size();
     if ( fastBuildKDTrees ) {
         std::vector<PointIndex3::Value> pidx;
         pidx.reserve( meshSource.nodes().size() );
         for ( idx_t ip = 0; ip < meshSource.nodes().size(); ++ip ) {
-            PointIndex3::Point p{coords( ip, 0 ), coords( ip, 1 ), coords( ip, 2 )};
-            pidx.emplace_back( p, ip );
+            if ( halo( ip ) <= h ) {
+                PointIndex3::Point p{coords( ip, 0 ), coords( ip, 1 ), coords( ip, 2 )};
+                pidx.emplace_back( p, ip );
+            }
         }
         pTree_->build( pidx.begin(), pidx.end() );
     }
     else {
         for ( idx_t ip = 0; ip < meshSource.nodes().size(); ++ip ) {
-            PointIndex3::Point p{coords( ip, 0 ), coords( ip, 1 ), coords( ip, 2 )};
-            pTree_->insert( PointIndex3::Value( p, ip ) );
+            if ( halo( ip ) <= h ) {
+                PointIndex3::Point p{coords( ip, 0 ), coords( ip, 1 ), coords( ip, 2 )};
+                pTree_->insert( PointIndex3::Value( p, ip ) );
+            }
         }
     }
 }

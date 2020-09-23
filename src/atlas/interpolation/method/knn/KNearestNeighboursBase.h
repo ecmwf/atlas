@@ -14,6 +14,7 @@
 
 #include "atlas/interpolation/method/Method.h"
 #include "atlas/interpolation/method/PointIndex3.h"
+#include "atlas/mesh/Halo.h"
 
 namespace atlas {
 namespace interpolation {
@@ -25,7 +26,8 @@ public:
     virtual ~KNearestNeighboursBase() override {}
 
 protected:
-    void buildPointSearchTree( Mesh& meshSource );
+    void buildPointSearchTree( Mesh& meshSource ) { buildPointSearchTree( meshSource, mesh::Halo( meshSource ) ); }
+    void buildPointSearchTree( Mesh& meshSource, const mesh::Halo& );
 
     std::unique_ptr<PointIndex3> pTree_;
 };

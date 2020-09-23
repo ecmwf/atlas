@@ -73,7 +73,7 @@ void KNearestNeighbours::do_setup( const FunctionSpace& source, const FunctionSp
     Mesh meshTarget = tgt.mesh();
 
     // build point-search tree
-    buildPointSearchTree( meshSource );
+    buildPointSearchTree( meshSource, src.halo() );
     ATLAS_ASSERT( pTree_ != nullptr );
 
     // generate 3D point coordinates
@@ -81,6 +81,7 @@ void KNearestNeighbours::do_setup( const FunctionSpace& source, const FunctionSp
     array::ArrayView<double, 2> coords = array::make_view<double, 2>( meshTarget.nodes().field( "xyz" ) );
 
     size_t inp_npts = meshSource.nodes().size();
+    meshSource.metadata().get( "nb_nodes_including_halo[" + std::to_string( src.halo().size() ) + "]", inp_npts );
     size_t out_npts = meshTarget.nodes().size();
 
     // fill the sparse matrix
@@ -123,7 +124,8 @@ void KNearestNeighbours::do_setup( const FunctionSpace& source, const FunctionSp
             // insert weights into the matrix
             for ( size_t j = 0; j < npts; ++j ) {
                 size_t jp = nn[j].payload();
-                ATLAS_ASSERT( jp < inp_npts );
+                ATLAS_ASSERT( jp < inp_npts,
+                              "point found which is not covered within the halo of the source function space" );
                 weights_triplets.emplace_back( ip, jp, weights[j] / sum );
             }
         }

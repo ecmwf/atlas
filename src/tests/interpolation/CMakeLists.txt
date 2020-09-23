@@ -60,3 +60,8 @@ ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_to_unstructured
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_interpolation_k_nearest_neighbours
+  SOURCES  test_interpolation_k_nearest_neighbours.cc
+  LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
