@@ -36,7 +36,9 @@ std::string config_type( const MissingValue::Config& c ) {
 
 std::string field_type( const Field& f ) {
     std::string value;
-    f.metadata().get( "missing_value_type", value );
+    if ( f.metadata().get( "missing_value_type", value ) ) {
+        value += "-" + f.datatype().str();
+    }
     return value;
 }
 }  // namespace

@@ -38,7 +38,7 @@ using field::MissingValue;
 using util::Config;
 
 
-CASE( "test_interpolation_non_linear_missing_value" ) {
+CASE( "MissingValue (basic)" ) {
     SECTION( "not defined" ) {
         auto mv = MissingValue();
         EXPECT( !bool( mv ) );
@@ -118,7 +118,7 @@ CASE( "test_interpolation_non_linear_missing_value" ) {
 }
 
 
-CASE( "test_interpolation_non_linear_missing_value (DataType specialisations)" ) {
+CASE( "MissingValue (DataType specialisations)" ) {
     SECTION( "real64" ) {
         auto n   = static_cast<double>( missingValue );
         auto eps = static_cast<double>( missingValueEps );
@@ -185,7 +185,7 @@ CASE( "test_interpolation_non_linear_missing_value (DataType specialisations)" )
 }
 
 
-CASE( "test_interpolation_non_linear_field_missing_value" ) {
+CASE( "MissingValue from Field (basic)" ) {
     std::vector<double> values{1., nan, missingValue, missingValue, missingValue + missingValueEps / 2., 6., 7.};
     Field field( "field", values.data(), array::make_shape( values.size(), 1 ) );
 
@@ -227,7 +227,67 @@ CASE( "test_interpolation_non_linear_field_missing_value" ) {
 }
 
 
-CASE( "test_interpolation_non_linear_matrix" ) {
+CASE( "MissingValue from Field (DataType specialisations)" ) {
+    SECTION( "real64" ) {
+        std::vector<double> values( 3, 1. );
+        Field field( "field", array::make_datatype<double>(), array::make_shape( values.size(), 1 ) );
+        EXPECT( field.datatype().str() == array::DataType::real64().str() );
+        EXPECT( !MissingValue( field ) );
+
+        field.metadata().set( "missing_value_type", "nan" );
+        EXPECT( MissingValue( field ) );
+    }
+
+
+    SECTION( "real32" ) {
+        std::vector<float> values( 3, 1. );
+        Field field( "field", array::make_datatype<float>(), array::make_shape( values.size(), 1 ) );
+        EXPECT( field.datatype().str() == array::DataType::real32().str() );
+        EXPECT( !MissingValue( field ) );
+
+        field.metadata().set( "missing_value_type", "nan" );
+        EXPECT( MissingValue( field ) );
+    }
+
+
+    SECTION( "int32" ) {
+        std::vector<int> values( 3, 1 );
+        Field field( "field", array::make_datatype<int>(), array::make_shape( values.size(), 1 ) );
+        EXPECT( field.datatype().str() == array::DataType::int32().str() );
+        EXPECT( !MissingValue( field ) );
+
+        field.metadata().set( "missing_value_type", "equals" );
+        field.metadata().set( "missing_value", static_cast<int>( missingValue ) );
+        EXPECT( MissingValue( field ) );
+    }
+
+
+    SECTION( "int64" ) {
+        std::vector<long> values( 3, 1 );
+        Field field( "field", array::make_datatype<long>(), array::make_shape( values.size(), 1 ) );
+        EXPECT( field.datatype().str() == array::DataType::int64().str() );
+        EXPECT( !MissingValue( field ) );
+
+        field.metadata().set( "missing_value_type", "equals" );
+        field.metadata().set( "missing_value", static_cast<long>( missingValue ) );
+        EXPECT( MissingValue( field ) );
+    }
+
+
+    SECTION( "uint64" ) {
+        std::vector<unsigned long> values( 3, 1 );
+        Field field( "field", array::make_datatype<unsigned long>(), array::make_shape( values.size(), 1 ) );
+        EXPECT( field.datatype().str() == array::DataType::uint64().str() );
+        EXPECT( !MissingValue( field ) );
+
+        field.metadata().set( "missing_value_type", "equals" );
+        field.metadata().set( "missing_value", static_cast<unsigned long>( missingValue ) );
+        EXPECT( MissingValue( field ) );
+    }
+}
+
+
+CASE( "Interpolation with MissingValue" ) {
     /*
        Set input field full of 1's, with 9 nodes
          1 ... 1 ... 1
