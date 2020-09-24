@@ -33,6 +33,7 @@ namespace method {
 GridBoxMethod::GridBoxMethod( const Method::Config& config ) : KNearestNeighboursBase( config ) {
     config.get( "matrix_free", matrixFree_ = false );
     config.get( "fail_early", failEarly_ = true );
+    config.get( "gaussian_weighted_latitudes", gaussianWeightedLatitudes_ = true );
 }
 
 

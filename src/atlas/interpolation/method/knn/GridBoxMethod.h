@@ -63,6 +63,7 @@ protected:
 
     bool matrixFree_;
     bool failEarly_;
+    bool gaussianWeightedLatitudes_;
 };
 
 
