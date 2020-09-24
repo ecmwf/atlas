@@ -370,22 +370,26 @@ output/detail/PointCloudIO.h
 
 list( APPEND atlas_field_srcs
 field.h
-field/Field.h
 field/Field.cc
-field/FieldCreator.h
+field/Field.h
 field/FieldCreator.cc
-field/FieldCreatorArraySpec.h
+field/FieldCreator.h
 field/FieldCreatorArraySpec.cc
-field/FieldCreatorIFS.h
+field/FieldCreatorArraySpec.h
 field/FieldCreatorIFS.cc
-field/FieldSet.h
+field/FieldCreatorIFS.h
 field/FieldSet.cc
-field/State.h
+field/FieldSet.h
+field/MissingValue.cc
+field/MissingValue.h
 field/State.cc
-field/detail/FieldImpl.h
+field/State.h
 field/detail/FieldImpl.cc
-field/detail/FieldInterface.h
+field/detail/FieldImpl.h
 field/detail/FieldInterface.cc
+field/detail/FieldInterface.h
+field/detail/MissingValue.cc
+field/detail/MissingValue.h
 )
 
 list( APPEND atlas_functionspace_srcs
@@ -473,8 +477,10 @@ endif()
 
 list( APPEND atlas_interpolation_srcs
 interpolation.h
-interpolation/Interpolation.h
 interpolation/Interpolation.cc
+interpolation/Interpolation.h
+interpolation/NonLinear.cc
+interpolation/NonLinear.h
 interpolation/Vector2D.cc
 interpolation/Vector2D.h
 interpolation/Vector3D.cc
@@ -503,31 +509,38 @@ interpolation/method/knn/KNearestNeighboursBase.cc
 interpolation/method/knn/KNearestNeighboursBase.h
 interpolation/method/knn/NearestNeighbour.cc
 interpolation/method/knn/NearestNeighbour.h
-interpolation/method/structured/StructuredInterpolation2D.tcc
-interpolation/method/structured/StructuredInterpolation2D.h
-interpolation/method/structured/StructuredInterpolation3D.tcc
-interpolation/method/structured/StructuredInterpolation3D.h
-interpolation/method/structured/kernels/LinearHorizontalKernel.h
-interpolation/method/structured/kernels/Linear3DKernel.h
-interpolation/method/structured/kernels/LinearVerticalKernel.h
-interpolation/method/structured/kernels/CubicHorizontalKernel.h
-interpolation/method/structured/kernels/Cubic3DKernel.h
-interpolation/method/structured/kernels/CubicVerticalKernel.h
-interpolation/method/structured/kernels/QuasiCubicHorizontalKernel.h
-interpolation/method/structured/kernels/QuasiCubic3DKernel.cc
-interpolation/method/structured/kernels/QuasiCubic3DKernel.h
-interpolation/method/structured/Linear2D.cc
-interpolation/method/structured/Linear2D.h
-interpolation/method/structured/Linear3D.cc
-interpolation/method/structured/Linear3D.h
 interpolation/method/structured/Cubic2D.cc
 interpolation/method/structured/Cubic2D.h
 interpolation/method/structured/Cubic3D.cc
 interpolation/method/structured/Cubic3D.h
+interpolation/method/structured/Linear2D.cc
+interpolation/method/structured/Linear2D.h
+interpolation/method/structured/Linear3D.cc
+interpolation/method/structured/Linear3D.h
 interpolation/method/structured/QuasiCubic2D.cc
 interpolation/method/structured/QuasiCubic2D.h
 interpolation/method/structured/QuasiCubic3D.cc
 interpolation/method/structured/QuasiCubic3D.h
+interpolation/method/structured/StructuredInterpolation2D.h
+interpolation/method/structured/StructuredInterpolation2D.tcc
+interpolation/method/structured/StructuredInterpolation3D.h
+interpolation/method/structured/StructuredInterpolation3D.tcc
+interpolation/method/structured/kernels/Cubic3DKernel.h
+interpolation/method/structured/kernels/CubicHorizontalKernel.h
+interpolation/method/structured/kernels/CubicVerticalKernel.h
+interpolation/method/structured/kernels/Linear3DKernel.h
+interpolation/method/structured/kernels/LinearHorizontalKernel.h
+interpolation/method/structured/kernels/LinearVerticalKernel.h
+interpolation/method/structured/kernels/QuasiCubic3DKernel.cc
+interpolation/method/structured/kernels/QuasiCubic3DKernel.h
+interpolation/method/structured/kernels/QuasiCubicHorizontalKernel.h
+interpolation/nonlinear/Missing.h
+interpolation/nonlinear/MissingIfAllMissing.h
+interpolation/nonlinear/MissingIfAnyMissing.h
+interpolation/nonlinear/MissingIfHeaviestMissing.h
+interpolation/nonlinear/NonLinear.h
+interpolation/nonlinear/NonLinearFactory.cc
+interpolation/nonlinear/NonLinearFactory.h
 )
 
 
