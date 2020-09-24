@@ -14,6 +14,14 @@ ecbuild_add_test( TARGET atlas_test_haloexchange_adjoint
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_setcomm
+  MPI        3
+  CONDITION  eckit_HAVE_MPI
+  SOURCES    test_setcomm.cc
+  LIBS       atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_haloexchange
   MPI        3
   CONDITION  eckit_HAVE_MPI

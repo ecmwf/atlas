@@ -120,8 +120,8 @@ void load_library( const eckit::PathName& library_dir, const std::string& librar
             break;
         }
     }
-    void* plib;
-    if ( ( plib = ::dlopen( library_path.localPath(), RTLD_NOW | RTLD_GLOBAL ) ) == nullptr ) {
+    void* plib = ::dlopen( library_path.localPath(), RTLD_NOW | RTLD_GLOBAL );
+    if ( plib == nullptr ) {  // dlopen failed
         std::ostringstream ss;
         ss << "dlopen(" << library_path << ", ...)";
         throw eckit::FailedSystemCall( ss.str().c_str(), Here(), errno );

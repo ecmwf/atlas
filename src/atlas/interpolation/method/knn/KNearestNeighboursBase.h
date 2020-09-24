@@ -13,6 +13,7 @@
 #include <memory>
 
 #include "atlas/interpolation/method/Method.h"
+#include "atlas/mesh/Halo.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/util/KDTree.h"
 
@@ -26,7 +27,8 @@ public:
     virtual ~KNearestNeighboursBase() override {}
 
 protected:
-    void buildPointSearchTree( Mesh& meshSource );
+    void buildPointSearchTree( Mesh& meshSource ) { buildPointSearchTree( meshSource, mesh::Halo( meshSource ) ); }
+    void buildPointSearchTree( Mesh& meshSource, const mesh::Halo& );
     void buildPointSearchTree( const FunctionSpace& );
 
     util::IndexKDTree pTree_;

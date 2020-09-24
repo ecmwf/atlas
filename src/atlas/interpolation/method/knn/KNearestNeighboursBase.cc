@@ -24,11 +24,13 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
-void KNearestNeighboursBase::buildPointSearchTree( Mesh& meshSource ) {
+void KNearestNeighboursBase::buildPointSearchTree( Mesh& meshSource, const mesh::Halo& _halo ) {
     eckit::TraceTimer<Atlas> tim( "KNearestNeighboursBase::buildPointSearchTree()" );
 
 
-    array::ArrayView<double, 2> lonlat = array::make_view<double, 2>( meshSource.nodes().lonlat() );
+    auto lonlat = array::make_view<double, 2>( meshSource.nodes().lonlat() );
+    auto halo   = array::make_view<int, 1>( meshSource.nodes().halo() );
+    int h       = _halo.size();
 
     static bool fastBuildKDTrees = eckit::Resource<bool>( "$ATLAS_FAST_BUILD_KDTREES", true );
 
@@ -36,7 +38,9 @@ void KNearestNeighboursBase::buildPointSearchTree( Mesh& meshSource ) {
         pTree_.reserve( lonlat.shape( 0 ) );
     }
     for ( idx_t ip = 0; ip < lonlat.shape( 0 ); ++ip ) {
-        pTree_.insert( PointLonLat( lonlat( ip, LON ), lonlat( ip, LAT ) ), ip );
+        if ( halo( ip ) <= h ) {
+            pTree_.insert( PointLonLat( lonlat( ip, LON ), lonlat( ip, LAT ) ), ip );
+        }
     }
     pTree_.build();
 

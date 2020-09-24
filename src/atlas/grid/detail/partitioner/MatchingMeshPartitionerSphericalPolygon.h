@@ -28,6 +28,7 @@ public:
         MatchingMeshPartitioner( nb_partitions ) {}
     MatchingMeshPartitionerSphericalPolygon( const Mesh& mesh ) : MatchingMeshPartitioner( mesh ) {}
 
+    using MatchingMeshPartitioner::partition;
     /**
    * @brief Partition a grid, using the same partitions from a pre-partitioned
    * mesh.

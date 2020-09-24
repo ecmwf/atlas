@@ -52,6 +52,7 @@ private:
     // algorithm is used internally
     void partition( const Checkerboard& cb, int nb_nodes, NodeInt nodes[], int part[] ) const;
 
+    using Partitioner::partition;
     virtual void partition( const Grid&, int part[] ) const;
 
     void check() const;

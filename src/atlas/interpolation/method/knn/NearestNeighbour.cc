@@ -68,11 +68,12 @@ void NearestNeighbour::do_setup( const FunctionSpace& source, const FunctionSpac
     Mesh meshTarget = tgt.mesh();
 
     // build point-search tree
-    buildPointSearchTree( meshSource );
+    buildPointSearchTree( meshSource, src.halo() );
 
     array::ArrayView<double, 2> lonlat = array::make_view<double, 2>( meshTarget.nodes().lonlat() );
 
     size_t inp_npts = meshSource.nodes().size();
+    meshSource.metadata().get( "nb_nodes_including_halo[" + std::to_string( src.halo().size() ) + "]", inp_npts );
     size_t out_npts = meshTarget.nodes().size();
 
     // fill the sparse matrix
@@ -94,7 +95,8 @@ void NearestNeighbour::do_setup( const FunctionSpace& source, const FunctionSpac
             size_t jp = nn.payload();
 
             // insert the weights into the interpolant matrix
-            ATLAS_ASSERT( jp < inp_npts );
+            ATLAS_ASSERT( jp < inp_npts,
+                          "point found which is not covered within the halo of the source function space" );
             weights_triplets.emplace_back( ip, jp, 1 );
         }
     }

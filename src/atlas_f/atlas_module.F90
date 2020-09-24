@@ -56,6 +56,9 @@ use atlas_Connectivity_module, only: &
     & atlas_Connectivity, &
     & atlas_MultiBlockConnectivity, &
     & atlas_BlockConnectivity
+use atlas_Domain_module, only : &
+    & atlas_Domain, &
+    & atlas_LonLatRectangularDomain
 use atlas_mesh_Nodes_module, only: &
     & atlas_mesh_Nodes
 use atlas_HaloExchange_module, only: &
