@@ -13,7 +13,7 @@
 #pragma once
 
 #include "atlas/field/MissingValue.h"
-#include "atlas/interpolation/nonlinear/NonLinear.h"
+#include "atlas/interpolation/nonlinear/Missing.h"
 
 #include "eckit/types/FloatCompare.h"
 
@@ -24,18 +24,13 @@ namespace nonlinear {
 
 
 template <typename T>
-struct MissingIfHeaviestMissing : NonLinear {
+struct MissingIfHeaviestMissing : Missing {
     bool execute( NonLinear::Matrix& W, const Field& field ) const {
         field::MissingValue mv( field );
-        if ( !mv ) {
-            return false;
-        }
-
-        // NOTE only for scalars (for now)
-        auto values        = make_view_field_values<T, 1>( field );
         auto& missingValue = mv.ref();
 
-        // correct matrix weigths for the missing values
+        // NOTE only for scalars (for now)
+        auto values = make_view_field_values<T, 1>( field );
         ATLAS_ASSERT( idx_t( W.cols() ) == values.size() );
 
         auto data  = const_cast<Scalar*>( W.data() );

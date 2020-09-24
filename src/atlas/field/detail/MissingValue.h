@@ -31,7 +31,9 @@ namespace field {
 namespace detail {
 
 
-/// @brief Missing values indicator base class
+/**
+ * @brief Missing values indicator base class
+ */
 struct MissingValue : util::Object {
     using Config                          = eckit::Parametrisation;
     virtual ~MissingValue()               = default;
@@ -46,7 +48,9 @@ struct MissingValue : util::Object {
 };
 
 
-/// @brief Missing values indicator factory
+/**
+ * @brief Missing values indicator factory
+ */
 struct MissingValueFactory : util::Factory<MissingValueFactory> {
     using Config = MissingValue::Config;
     using Factory::Factory;
@@ -58,7 +62,9 @@ private:
 };
 
 
-/// @brief Missing values indicator builder for factory registration
+/**
+ * @brief Missing values indicator builder for factory registration
+ */
 template <class T>
 class MissingValueFactoryBuilder : public MissingValueFactory {
 private:

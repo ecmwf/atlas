@@ -219,7 +219,7 @@ void Method::do_execute( const Field& src, Field& tgt ) const {
 
     // non-linearities: a non-empty M matrix contains the corrections applied to matrix_
     Matrix M;
-    if ( !matrix_.empty() && nonLinear_ ) {
+    if ( !matrix_.empty() && nonLinear_( src ) ) {
         Matrix W( matrix_ );  // copy (a big penalty -- copy-on-write would definitely be better)
         if ( nonLinear_->execute( W, src ) ) {
             M.swap( W );

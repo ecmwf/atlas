@@ -50,7 +50,9 @@ T config_epsilon( const MissingValue::Config& c ) {
 }  // namespace
 
 
-/// @brief Missing value if NaN
+/**
+ * @brief Missing value if NaN
+ */
 template <typename T>
 struct MissingValueNaN : MissingValue {
     MissingValueNaN( const Config& ) { ATLAS_ASSERT( std::is_floating_point<T>::value ); }
@@ -61,7 +63,9 @@ struct MissingValueNaN : MissingValue {
 };
 
 
-/// @brief Missing value if comparing equally to pre-defined value
+/**
+ * @brief Missing value if comparing equally to pre-defined value
+ */
 template <typename T>
 struct MissingValueEquals : MissingValue {
     MissingValueEquals( const Config& config ) : MissingValueEquals( config_value<T>( config ) ) {}
@@ -90,7 +94,9 @@ struct MissingValueEquals : MissingValue {
 };
 
 
-/// @brief Missing value if comparing approximately to pre-defined value
+/**
+ * @brief Missing value if comparing approximately to pre-defined value
+ */
 template <typename T>
 struct MissingValueApprox : MissingValue {
     MissingValueApprox( const Config& config ) :

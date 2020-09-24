@@ -31,12 +31,16 @@ namespace atlas {
 namespace field {
 
 
-/// @brief Missing values indicator
+/**
+ * @brief Missing values indicator
+ */
 struct MissingValue : DOXYGEN_HIDE( public util::ObjectHandle<detail::MissingValue> ) {
     using Spec   = util::Config;
     using Config = detail::MissingValue::Config;
 
-    // ctor
+    /**
+     * @brief ctor
+     */
     using Handle::Handle;
     MissingValue();
     MissingValue( const Config& );

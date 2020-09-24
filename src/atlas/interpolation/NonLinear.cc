@@ -41,6 +41,11 @@ NonLinear::NonLinear( const std::string& type, const NonLinear::Config& config )
     Handle( nonlinear::NonLinearFactory::build( type, config ) ) {}
 
 
+bool NonLinear::operator()( const Field& f ) const {
+    return operator bool() && get()->applicable( f );
+}
+
+
 bool NonLinear::execute( NonLinear::Matrix& W, const Field& f ) const {
     ATLAS_ASSERT_MSG( operator bool(), "NonLinear: ObjectHandle not setup" );
     return get()->execute( W, f );

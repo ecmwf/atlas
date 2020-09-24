@@ -40,12 +40,21 @@ public:
     using Size   = eckit::linalg::Size;
 
     /**
-     * @brief NonLinear ctor
+     * @brief ctor
      */
     NonLinear() = default;
 
-    /// @brief NonLinear dtor
+    /**
+     * @brief dtor
+     */
     virtual ~NonLinear() = default;
+
+    /**
+     * @bried if NonLinear applies to field
+     * @param [in] f field
+     * @return if NonLinear applies to field
+     */
+    virtual bool applicable( const Field& f ) const = 0;
 
     /**
      * @brief Apply non-linear corrections to interpolation matrix

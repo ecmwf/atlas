@@ -20,6 +20,7 @@
 
 
 namespace atlas {
+class Field;
 namespace util {
 class Config;
 }
@@ -31,15 +32,16 @@ namespace interpolation {
 
 
 /**
- * @brief NonLinear class applies non-linear corrections to an interpolation matrix, given a field with missing values.
- * The interpolatation are re-weighted to factor those values out of the resulting field.
+ * @brief NonLinear class applies non-linear corrections to an interpolation matrix
  */
 struct NonLinear : DOXYGEN_HIDE( public util::ObjectHandle<nonlinear::NonLinear> ) {
     using Spec   = util::Config;
     using Config = nonlinear::NonLinear::Config;
     using Matrix = nonlinear::NonLinear::Matrix;
 
-    // ctor
+    /**
+     * @brief ctor
+     */
     using Handle::Handle;
     NonLinear();
     NonLinear( const Config& );
@@ -52,9 +54,16 @@ struct NonLinear : DOXYGEN_HIDE( public util::ObjectHandle<nonlinear::NonLinear>
     using Handle::operator bool;  // (ensure this exists)
 
     /**
+     * @bried if NonLinear applies to field
+     * @param [in] f field
+     * @return if NonLinear applies to field
+     */
+    bool operator()( const Field& f ) const;
+
+    /**
      * @brief Apply non-linear corrections to interpolation matrix
      * @param [inout] W interpolation matrix
-     * @param [in] f field with missing values information
+     * @param [in] f field
      * @return if W was modified
      */
     bool execute( Matrix& W, const Field& f ) const;
