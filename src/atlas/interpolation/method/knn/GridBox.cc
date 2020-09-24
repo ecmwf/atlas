@@ -48,10 +48,7 @@ namespace method {
 
 
 GridBox::GridBox( double north, double west, double south, double east ) :
-    north_( north ),
-    west_( west ),
-    south_( south ),
-    east_( east ) {
+    north_( north ), west_( west ), south_( south ), east_( east ) {
     ATLAS_ASSERT( SOUTH_POLE <= south_ && south_ <= north_ && north_ <= NORTH_POLE );
     ATLAS_ASSERT( west_ <= east_ && east_ <= west_ + GLOBE );
 }
@@ -106,7 +103,7 @@ void GridBox::print( std::ostream& out ) const {
 }
 
 
-GridBoxes::GridBoxes( const Grid& grid ) {
+GridBoxes::GridBoxes( const Grid& grid, bool gaussianWeightedLatitudes ) {
     StructuredGrid structured( grid );
     if ( !structured || grid.projection() ) {
         throw_NotImplemented( "GridBoxes only support structured, unprojected/unrotated grids", Here() );
@@ -133,8 +130,8 @@ GridBoxes::GridBoxes( const Grid& grid ) {
     std::vector<double> lat;
     lat.reserve( y.size() + 1 );
 
-    GaussianGrid gaussian( grid );
-    if ( gaussian ) {
+    GaussianGrid gaussian;
+    if ( gaussianWeightedLatitudes && ( gaussian = grid ) ) {
         auto N = gaussian.N();
         std::vector<double> latitudes( N * 2 );
         std::vector<double> weights( N * 2 );

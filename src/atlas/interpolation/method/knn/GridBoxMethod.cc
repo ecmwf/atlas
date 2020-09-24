@@ -107,8 +107,8 @@ void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
 
     buildPointSearchTree( src );
 
-    sourceBoxes_ = GridBoxes( source );
-    targetBoxes_ = GridBoxes( target );
+    sourceBoxes_ = GridBoxes( source, gaussianWeightedLatitudes_ );
+    targetBoxes_ = GridBoxes( target, gaussianWeightedLatitudes_ );
 
     searchRadius_ = sourceBoxes_.getLongestGridBoxDiagonal() + targetBoxes_.getLongestGridBoxDiagonal();
     failures_.clear();
