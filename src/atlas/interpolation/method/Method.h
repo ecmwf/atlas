@@ -26,10 +26,10 @@ class Grid;
 }  // namespace atlas
 
 namespace atlas {
-    namespace test {
-        class Access;
-    }
+namespace test {
+class Access;
 }
+}  // namespace atlas
 
 namespace atlas {
 namespace interpolation {
