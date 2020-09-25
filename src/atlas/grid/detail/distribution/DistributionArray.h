@@ -20,6 +20,8 @@
 
 namespace atlas {
 namespace grid {
+class Partitioner;
+
 namespace detail {
 namespace distribution {
 

@@ -12,8 +12,11 @@
 
 #include <algorithm>
 
+#include "atlas/grid/Distribution.h"
+#include "atlas/grid/Grid.h"
+#include "atlas/grid/Partitioner.h"
 #include "atlas/grid/detail/distribution/DistributionArray.h"
-
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace grid {
@@ -33,6 +36,34 @@ void atlas__GridDistribution__nb_pts( DistributionImpl* This, idx_t nb_pts[] ) {
 
 idx_t atlas__atlas__GridDistribution__nb_partitions( DistributionImpl* This ) {
     return This->nb_partitions();
+}
+
+DistributionImpl* atlas__GridDistribution__new__Grid_Config( const detail::grid::Grid* grid,
+                                                             const eckit::Parametrisation* config ) {
+    ATLAS_ASSERT( grid != nullptr, "grid is an invalid pointer" );
+    ATLAS_ASSERT( config != nullptr, "config is an invalid pointer" );
+    DistributionImpl* distribution;
+    {
+        Distribution d{Grid{grid}, *config};
+        distribution = d.get();
+        distribution->attach();
+    }
+    distribution->detach();
+    return distribution;
+}
+
+DistributionImpl* atlas__GridDistribution__new__Grid_Partitioner(
+    const detail::grid::Grid* grid, const detail::partitioner::Partitioner* partitioner ) {
+    ATLAS_ASSERT( grid != nullptr, "grid is an invalid pointer" );
+    ATLAS_ASSERT( partitioner != nullptr, "partitioner is an invalid pointer" );
+    DistributionImpl* distribution;
+    {
+        Distribution d{Grid{grid}, Partitioner{partitioner}};
+        distribution = d.get();
+        distribution->attach();
+    }
+    distribution->detach();
+    return distribution;
 }
 
 
