@@ -12,7 +12,7 @@
 
 #include "atlas/interpolation/NonLinear.h"
 
-#include "atlas/interpolation/nonlinear/NonLinearFactory.h"
+#include "atlas/interpolation/nonlinear/NonLinear.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 

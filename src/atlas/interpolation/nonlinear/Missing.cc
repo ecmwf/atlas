@@ -10,11 +10,7 @@
  */
 
 
-#include "atlas/interpolation/nonlinear/NonLinearFactory.h"
-
-#include "atlas/interpolation/nonlinear/MissingIfAllMissing.h"
-#include "atlas/interpolation/nonlinear/MissingIfAnyMissing.h"
-#include "atlas/interpolation/nonlinear/MissingIfHeaviestMissing.h"
+#include "atlas/interpolation/nonlinear/Missing.h"
 
 
 namespace atlas {
@@ -56,11 +52,6 @@ static B<M3<unsigned long>> __nl18( M3<unsigned long>::static_type() + "-" + T<u
 #undef M2
 #undef M1
 #undef B
-
-
-const NonLinear* NonLinearFactory::build( const std::string& builder, const Config& config ) {
-    return get( builder )->make( config );
-}
 
 
 }  // namespace nonlinear

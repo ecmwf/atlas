@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <string>
 #include <type_traits>
 
 #include "eckit/config/Parametrisation.h"
@@ -20,6 +21,7 @@
 #include "atlas/array.h"
 #include "atlas/field/Field.h"
 #include "atlas/runtime/Exception.h"
+#include "atlas/util/Factory.h"
 #include "atlas/util/ObjectHandle.h"
 
 
@@ -73,6 +75,29 @@ protected:
             "Field(name:" + field.name() + ",DataType:" + field.datatype().str() + ") is not of required DataType" );
         return array::make_view<typename std::add_const<Value>::type, Rank>( field );
     }
+};
+
+
+class NonLinearFactory : public util::Factory<NonLinearFactory> {
+public:
+    using Config = NonLinear::Config;
+
+    static std::string className() { return "NonLinearFactory"; }
+    static const NonLinear* build( const std::string&, const Config& );
+    using Factory::Factory;
+
+private:
+    virtual const NonLinear* make( const Config& ) = 0;
+};
+
+
+template <class T>
+class NonLinearFactoryBuilder : public NonLinearFactory {
+private:
+    virtual const NonLinear* make( const Config& /*config*/ ) override { return new T( /*config*/ ); }
+
+public:
+    using NonLinearFactory::NonLinearFactory;
 };
 
 
