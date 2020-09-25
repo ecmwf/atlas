@@ -42,6 +42,10 @@ TYPE, extends(fckit_owned_object) :: atlas_GridDistribution
 contains
   procedure :: nb_partitions => atlas_GridDistribution__nb_partitions
   procedure :: nb_pts => atlas_GridDistribution__nb_pts
+  procedure, private :: partition_int32
+  procedure, private :: partition_int64
+  generic :: partition => partition_int32, partition_int64
+
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_GridDistribution__final_auto
 #endif
@@ -109,6 +113,25 @@ function atlas_GridDistribution__ctor_Grid_Partitioner( grid, partitioner ) resu
   class(fckit_owned_object), intent(in) :: partitioner ! cannot use atlas_Partitioner as it would cause cyclic module dependencies
   call this%reset_c_ptr( atlas__GridDistribution__new__Grid_Partitioner(grid%CPTR_PGIBUG_A, partitioner%CPTR_PGIBUG_A) )
   call this%return()
+end function
+
+
+function partition_int32(this, i) result(partition)
+  use, intrinsic :: iso_c_binding, only: c_long, c_int
+  use atlas_distribution_c_binding
+  integer(c_int) :: partition
+  class(atlas_GridDistribution), intent(in) :: this
+  integer(c_int), intent(in) :: i
+  partition = atlas__GridDistribution__partition_int32(this%CPTR_PGIBUG_A, i-1)
+end function
+
+function partition_int64(this, i) result(partition)
+  use, intrinsic :: iso_c_binding, only: c_long, c_int
+  use atlas_distribution_c_binding
+  integer(c_int) :: partition
+  class(atlas_GridDistribution), intent(in) :: this
+  integer(c_long), intent(in) :: i
+  partition = atlas__GridDistribution__partition_int64(this%CPTR_PGIBUG_A, i-1)
 end function
 
 

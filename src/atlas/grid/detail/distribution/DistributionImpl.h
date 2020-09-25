@@ -73,6 +73,8 @@ DistributionImpl* atlas__GridDistribution__new__Grid_Config( const detail::grid:
                                                              const eckit::Parametrisation* config );
 DistributionImpl* atlas__GridDistribution__new__Grid_Partitioner( const detail::grid::Grid* grid,
                                                                   const detail::partitioner::Partitioner* partitioner );
+int atlas__GridDistribution__partition_int32( DistributionImpl* dist, int i );
+int atlas__GridDistribution__partition_int64( DistributionImpl* dist, long i );
 void atlas__GridDistribution__delete( DistributionImpl* This );
 void atlas__GridDistribution__nb_pts( DistributionImpl* This, idx_t nb_pts[] );
 idx_t atlas__atlas__GridDistribution__nb_partitions( DistributionImpl* This );

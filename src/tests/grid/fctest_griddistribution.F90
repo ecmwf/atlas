@@ -66,14 +66,18 @@ TEST( test_griddist )
   mesh = meshgenerator%generate(grid,griddistribution)
   FCTEST_CHECK_EQUAL( mesh%owners(), 1 )
 
-  call griddistribution%final()
+  deallocate(part)
 
   FCTEST_CHECK_EQUAL( grid%owners(), 2 )
 
   gmsh = atlas_output_Gmsh("testf3.msh")
   call gmsh%write(mesh)
 
-  deallocate(part)
+  do jnode=1,grid%size()
+    FCTEST_CHECK_EQUAL( griddistribution%partition(jnode), 0 )
+  enddo
+
+  call griddistribution%final()
 
   call mesh%final()
   FCTEST_CHECK_EQUAL( grid%owners(), 1 )
@@ -101,7 +105,9 @@ TEST( test_griddist_from_partitioner )
   FCTEST_CHECK_EQUAL( griddistribution%nb_partitions(), 1 )
   FCTEST_CHECK_EQUAL( griddistribution%nb_pts(), [ int(grid%size(),ATLAS_KIND_IDX) ] )
 
-  FCTEST_CHECK_EQUAL( grid%owners(), 1 )
+  do jnode=1,grid%size()
+    FCTEST_CHECK_EQUAL( griddistribution%partition(jnode), 0 )
+  enddo
 
   call griddistribution%final()
   call grid%final()

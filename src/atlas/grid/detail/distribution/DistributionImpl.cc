@@ -38,6 +38,14 @@ idx_t atlas__atlas__GridDistribution__nb_partitions( DistributionImpl* This ) {
     return This->nb_partitions();
 }
 
+int atlas__GridDistribution__partition_int32( DistributionImpl* dist, int i ) {
+    return dist->partition( i );
+}
+
+int atlas__GridDistribution__partition_int64( DistributionImpl* dist, long i ) {
+    return dist->partition( i );
+}
+
 DistributionImpl* atlas__GridDistribution__new__Grid_Config( const detail::grid::Grid* grid,
                                                              const eckit::Parametrisation* config ) {
     ATLAS_ASSERT( grid != nullptr, "grid is an invalid pointer" );
