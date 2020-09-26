@@ -45,8 +45,8 @@ protected:
 
     bool intersect( size_t i, const GridBox& iBox, const util::IndexKDTree::ValueList&, std::vector<Triplet>& ) const;
 
-    virtual void do_execute( const FieldSet& source, FieldSet& target ) const = 0;
-    virtual void do_execute( const Field& source, Field& target ) const       = 0;
+    virtual void do_execute( const FieldSet& source, FieldSet& target ) const override = 0;
+    virtual void do_execute( const Field& source, Field& target ) const override       = 0;
 
 protected:
     static void giveUp( const std::forward_list<size_t>& );
