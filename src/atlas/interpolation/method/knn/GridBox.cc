@@ -195,7 +195,8 @@ GridBoxes::GridBoxes( const Grid& grid, bool gaussianWeightedLatitudes ) {
         // On non-periodic grids, West- and East-most grid-boxes need clipping
         ATLAS_ASSERT( x.nx()[j] > 0 );
 
-        eckit::Fraction lon1 = ( n * dx ) - ( dx / 2 );
+        eckit::Fraction lon0 = ( n * dx ) - ( dx / 2 );
+        eckit::Fraction lon1 = lon0;
         for ( idx_t i = 0; i < x.nx()[j]; ++i ) {
             double lon0 = lon1;
             lon1 += dx;
@@ -208,7 +209,7 @@ GridBoxes::GridBoxes( const Grid& grid, bool gaussianWeightedLatitudes ) {
         }
 
         if ( periodic ) {
-            ATLAS_ASSERT( lon1 == xmin - ( dx / 2 ) + 360 );
+            ATLAS_ASSERT( lon1 == lon0 + 360 );
         }
     }
 
