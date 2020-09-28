@@ -91,35 +91,28 @@ int getEnv( const std::string& env, int default_value ) {
 }
 
 
-bool library_exists( const eckit::PathName& library_dir, const std::string& library_name,
-                     eckit::PathName& library_path ) {
+bool plugin_library_exists( const eckit::PathName& plugin_dir, const std::string& library_name,
+                            eckit::PathName& library_path ) {
     // WARNING: Mostly copy-paste from eckit develop before 1.13 release
     std::vector<std::string> library_file_names;
     library_file_names.push_back( "lib" + library_name + ".so" );
     library_file_names.push_back( "lib" + library_name + ".dylib" );
-    for ( const auto& library_file_name : library_file_names ) {
-        library_path = library_dir / library_file_name;
-        if ( library_path.exists() ) {
-            return true;
+    std::vector<eckit::PathName> library_dirs;
+    library_dirs.push_back( plugin_dir / "lib64" );
+    library_dirs.push_back( plugin_dir / "lib" );
+    for ( const auto& library_dir : library_dirs ) {
+        for ( const auto& library_file_name : library_file_names ) {
+            library_path = library_dir / library_file_name;
+            if ( library_path.exists() ) {
+                return true;
+            }
         }
     }
     return false;
 }
 
 
-void load_library( const eckit::PathName& library_dir, const std::string& library_name ) {
-    // WARNING: Mostly copy-paste from eckit develop before 1.13 release
-    std::vector<std::string> library_file_names;
-    library_file_names.push_back( "lib" + library_name + ".so" );
-    library_file_names.push_back( "lib" + library_name + ".dylib" );
-
-    eckit::PathName library_path;
-    for ( const auto& library_file_name : library_file_names ) {
-        library_path = library_dir / library_file_name;
-        if ( library_path.exists() ) {
-            break;
-        }
-    }
+void load_library( const eckit::PathName& library_path, const std::string& library_name ) {
     void* plib = ::dlopen( library_path.localPath(), RTLD_NOW | RTLD_GLOBAL );
     if ( plib == nullptr ) {  // dlopen failed
         std::ostringstream ss;
@@ -270,10 +263,9 @@ void Library::initialise( const eckit::Parametrisation& config ) {
                 ATLAS_ASSERT( plugin_config.get( "library", library_name ) );
                 bool library_loaded = eckit::system::Library::exists( library_name );
                 if ( not library_loaded ) {
-                    eckit::PathName library_dir = plugin_dir / "lib";
-                    ATLAS_ASSERT( library_exists( library_dir, library_name, library_path ) );
+                    ATLAS_ASSERT( plugin_library_exists( plugin_dir, library_name, library_path ) );
                     Log::debug() << "Loading plugin [" << plugin_name << "] library " << library_path << std::endl;
-                    load_library( library_dir, library_name );
+                    load_library( library_path, library_name );
                     library_loaded = true;
                 }
                 ATLAS_ASSERT( is_plugin_loaded( plugin_name ) );

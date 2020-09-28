@@ -23,6 +23,10 @@ Plugin::Plugin( const std::string& name, const std::string& libname ) :
     atlas::Library::instance().registerPlugin( *this );
 }
 
+const void* Plugin::addr() const {
+    return this;
+}
+
 //----------------------------------------------------------------------------------------------------------------------
 
 }  // namespace atlas
