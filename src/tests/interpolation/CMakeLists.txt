@@ -19,6 +19,18 @@ ecbuild_add_test( TARGET atlas_test_interpolation_finite_element
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_interpolation_grid_box_average
+  SOURCES   test_interpolation_grid_box_average.cc
+  LIBS      atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+ecbuild_add_test( TARGET atlas_test_interpolation_k_nearest_neighbours
+  SOURCES   test_interpolation_k_nearest_neighbours.cc
+  LIBS      atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_interpolation_cubic_prototype
   SOURCES  test_interpolation_cubic_prototype.cc CubicInterpolationPrototype.h
   LIBS     atlas
@@ -57,11 +69,5 @@ ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_to_unstructured
   LIBS     atlas
   MPI      2
   CONDITION eckit_HAVE_MPI
-  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
-)
-
-ecbuild_add_test( TARGET atlas_test_interpolation_k_nearest_neighbours
-  SOURCES  test_interpolation_k_nearest_neighbours.cc
-  LIBS     atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )

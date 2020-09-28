@@ -27,6 +27,12 @@ class Grid;
 }  // namespace atlas
 
 namespace atlas {
+namespace test {
+class Access;
+}
+}  // namespace atlas
+
+namespace atlas {
 namespace interpolation {
 
 class Method : public util::Object {
@@ -67,7 +73,8 @@ protected:
     void haloExchange( const FieldSet& ) const;
     void haloExchange( const Field& ) const;
 
-    // NOTE : Matrix-free operators do not have matrices (!), so do not expose here
+    // NOTE : Matrix-free or non-linear interpolation operators do not have matrices, so do not expose here
+    friend class atlas::test::Access;
     Matrix matrix_;
     NonLinear nonLinear_;
     bool use_eckit_linalg_spmv_;

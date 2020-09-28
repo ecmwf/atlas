@@ -26,6 +26,7 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
+#include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {
 namespace interpolation {
@@ -74,11 +75,8 @@ void KNearestNeighbours::do_setup( const FunctionSpace& source, const FunctionSp
 
     // build point-search tree
     buildPointSearchTree( meshSource, src.halo() );
-    ATLAS_ASSERT( pTree_ != nullptr );
 
-    // generate 3D point coordinates
-    mesh::actions::BuildXYZField( "xyz" )( meshTarget );
-    array::ArrayView<double, 2> coords = array::make_view<double, 2>( meshTarget.nodes().field( "xyz" ) );
+    array::ArrayView<double, 2> lonlat = array::make_view<double, 2>( meshTarget.nodes().lonlat() );
 
     size_t inp_npts = meshSource.nodes().size();
     meshSource.metadata().get( "nb_nodes_including_halo[" + std::to_string( src.halo().size() ) + "]", inp_npts );
@@ -92,6 +90,7 @@ void KNearestNeighbours::do_setup( const FunctionSpace& source, const FunctionSp
 
         std::vector<double> weights;
 
+        Log::debug() << "Computing interpolation weights for " << out_npts << " points." << std::endl;
         for ( size_t ip = 0; ip < out_npts; ++ip ) {
             if ( ip && ( ip % 1000 == 0 ) ) {
                 auto elapsed = timer.elapsed();
@@ -102,8 +101,7 @@ void KNearestNeighbours::do_setup( const FunctionSpace& source, const FunctionSp
             }
 
             // find the closest input points to the output point
-            PointIndex3::Point p{coords( ip, (size_t)0 ), coords( ip, (size_t)1 ), coords( ip, (size_t)2 )};
-            PointIndex3::NodeList nn = pTree_->kNearestNeighbours( p, k_ );
+            auto nn = pTree_.closestPoints( PointLonLat{lonlat( ip, LON ), lonlat( ip, LAT )}, k_ );
 
             // calculate weights (individual and total, to normalise) using distance
             // squared
@@ -113,8 +111,8 @@ void KNearestNeighbours::do_setup( const FunctionSpace& source, const FunctionSp
 
             double sum = 0;
             for ( size_t j = 0; j < npts; ++j ) {
-                PointIndex3::Point np = nn[j].point();
-                const double d2       = eckit::geometry::Point3::distance2( p, np );
+                const double d  = nn[j].distance();
+                const double d2 = d * d;
 
                 weights[j] = 1. / ( 1. + d2 );
                 sum += weights[j];

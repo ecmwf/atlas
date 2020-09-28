@@ -26,6 +26,7 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
+#include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {
 namespace interpolation {
@@ -68,11 +69,8 @@ void NearestNeighbour::do_setup( const FunctionSpace& source, const FunctionSpac
 
     // build point-search tree
     buildPointSearchTree( meshSource, src.halo() );
-    ATLAS_ASSERT( pTree_ != nullptr );
 
-    // generate 3D point coordinates
-    mesh::actions::BuildXYZField( "xyz" )( meshTarget );
-    array::ArrayView<double, 2> coords = array::make_view<double, 2>( meshTarget.nodes().field( "xyz" ) );
+    array::ArrayView<double, 2> lonlat = array::make_view<double, 2>( meshTarget.nodes().lonlat() );
 
     size_t inp_npts = meshSource.nodes().size();
     meshSource.metadata().get( "nb_nodes_including_halo[" + std::to_string( src.halo().size() ) + "]", inp_npts );
@@ -93,9 +91,8 @@ void NearestNeighbour::do_setup( const FunctionSpace& source, const FunctionSpac
             }
 
             // find the closest input point to the output point
-            PointIndex3::Point p{coords( ip, (size_t)0 ), coords( ip, (size_t)1 ), coords( ip, (size_t)2 )};
-            PointIndex3::NodeInfo nn = pTree_->nearestNeighbour( p );
-            size_t jp                = nn.payload();
+            auto nn   = pTree_.closestPoint( PointLonLat{lonlat( ip, LON ), lonlat( ip, LAT )} );
+            size_t jp = nn.payload();
 
             // insert the weights into the interpolant matrix
             ATLAS_ASSERT( jp < inp_npts,
