@@ -111,7 +111,7 @@ private:
 struct GridBoxes : std::vector<GridBox> {
     GridBoxes( const Grid&, bool gaussianWeightedLatitudes = true );
     GridBoxes();
-    using vector<GridBox>::vector;
+    using std::vector<GridBox>::vector;
     double getLongestGridBoxDiagonal() const;
 };
 
