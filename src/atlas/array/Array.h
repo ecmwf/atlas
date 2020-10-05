@@ -72,7 +72,7 @@ public:
 
     idx_t bytes() const { return sizeof_data() * spec().allocatedSize(); }
 
-    idx_t size() const { return spec_.size(); }
+    size_t size() const { return spec_.size(); }
 
     idx_t rank() const { return spec_.rank(); }
 

@@ -127,7 +127,7 @@ idx_t Field::stride( idx_t i ) const {
 }
 
 /// @brief Number of values stored in this field
-idx_t Field::size() const {
+size_t Field::size() const {
     return get()->size();
 }
 

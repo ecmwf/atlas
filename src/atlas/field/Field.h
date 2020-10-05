@@ -137,7 +137,7 @@ public:
     idx_t stride( idx_t i ) const;
 
     /// @brief Number of values stored in this field
-    idx_t size() const;
+    size_t size() const;
 
     /// @brief Rank of field
     idx_t rank() const;

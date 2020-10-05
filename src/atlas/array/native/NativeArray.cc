@@ -137,9 +137,9 @@ ArrayT<Value>::ArrayT( idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3, idx_t dim
 template <typename Value>
 ArrayT<Value>::ArrayT( const ArrayShape& shape ) {
     ATLAS_ASSERT( shape.size() > 0 );
-    idx_t size = 1;
+    size_t size = 1;
     for ( size_t j = 0; j < shape.size(); ++j ) {
-        size *= shape[j];
+        size *= size_t( shape[j] );
     }
     data_store_ = std::unique_ptr<ArrayDataStore>( new native::DataStore<Value>( size ) );
     spec_       = ArraySpec( shape );

@@ -130,7 +130,7 @@ public:  // Destructor
     idx_t stride( idx_t i ) const { return array_->stride( i ); }
 
     /// @brief Number of values stored in this field
-    idx_t size() const { return array_->size(); }
+    size_t size() const { return array_->size(); }
 
     /// @brief Rank of field
     idx_t rank() const { return array_->rank(); }
