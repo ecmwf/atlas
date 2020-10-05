@@ -118,7 +118,8 @@ private:
 //-----------------------------------------------------------------------------
 
 Meshgen2Gmsh::Meshgen2Gmsh( int argc, char** argv ) : AtlasTool( argc, argv ) {
-    add_option( new SimpleOption<bool>( "lonlat", "Output mesh in lon-lat coordinates" ) );
+    add_option( new SimpleOption<bool>( "lonlat", "Output mesh in lon,lat coordinates" ) );
+    add_option( new SimpleOption<bool>( "ij", "Output mesh in i,j coordinates" ) );
     add_option( new SimpleOption<bool>( "3d",
                                         "Output mesh as sphere, and generate "
                                         "mesh connecting East and West in "
@@ -303,12 +304,12 @@ int Meshgen2Gmsh::execute( const Args& args ) {
         }
     }
 
-    bool lonlat = false;
-    args.get( "lonlat", lonlat );
+    bool lonlat             = args.getBool( "lonlat", false );
+    bool ij                 = args.getBool( "ij", false );
+    std::string coordinates = dim_3d ? "xyz" : lonlat ? "lonlat" : ij ? "ij" : "xy";
 
     atlas::output::Gmsh gmsh(
-        path_out, Config( "info", info )( "ghost", ghost )( "coordinates", dim_3d ? "xyz" : lonlat ? "lonlat" : "xy" )(
-                      "edges", edges ) );
+        path_out, Config( "info", info )( "ghost", ghost )( "coordinates", coordinates )( "edges", edges ) );
     Log::info() << "Writing mesh to gmsh file \"" << path_out << "\" generated from grid \"" << grid.name() << "\""
                 << std::endl;
     gmsh.write( mesh );

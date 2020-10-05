@@ -815,10 +815,17 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
     std::string nodes_field = options.get<std::string>( "nodes" );
 
     const mesh::Nodes& nodes = mesh.nodes();
-    auto coords              = array::make_view<double, 2>( nodes.field( nodes_field ) );
-    auto glb_idx             = array::make_view<gidx_t, 1>( nodes.global_index() );
 
-    const idx_t surfdim = coords.shape( 1 );  // nb of variables in coords
+    const Field coords_field = nodes.field( nodes_field );
+    array::ArrayT<double> dummy_double( 1, 1 );
+    array::ArrayT<idx_t> dummy_idx( 1, 1 );
+    bool coords_is_idx = coords_field.datatype().kind() == array::make_datatype<idx_t>().kind();
+    auto coords        = array::make_view<const double, 2>( coords_is_idx ? dummy_double : coords_field.array() );
+    auto coords_idx    = array::make_view<const idx_t, 2>( coords_is_idx ? coords_field.array() : dummy_idx );
+
+    auto glb_idx = array::make_view<gidx_t, 1>( nodes.global_index() );
+
+    const idx_t surfdim = nodes.field( nodes_field ).shape( 1 );  // nb of variables in coords
 
     bool include_patch = ( surfdim == 3 );
 
@@ -851,8 +858,15 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
     for ( idx_t n = 0; n < nb_nodes; ++n ) {
         gidx_t g = glb_idx( n );
 
-        for ( idx_t d = 0; d < surfdim; ++d ) {
-            xyz[d] = coords( n, d );
+        if ( coords_is_idx ) {
+            for ( idx_t d = 0; d < surfdim; ++d ) {
+                xyz[d] = coords_idx( n, d );
+            }
+        }
+        else {
+            for ( idx_t d = 0; d < surfdim; ++d ) {
+                xyz[d] = coords( n, d );
+            }
         }
 
         if ( binary ) {
