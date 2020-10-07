@@ -195,6 +195,8 @@ int AtlasGrids::execute( const Args& args ) {
             }
             Log::info() << "   number of points:                   " << grid.size() << std::endl;
 
+            Log::info() << "   memory footprint of grid:           " << eckit::Bytes( grid.footprint() ) << std::endl;
+
 
             size_t memsize = grid.size() * sizeof( double );
 
