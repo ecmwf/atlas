@@ -669,6 +669,7 @@ mesh/IsGhostNode.h
 util/LonLatMicroDeg.h
 util/CoordinateEnums.h
 util/PeriodicTransform.h
+util/Topology.h
 util/Unique.h
 util/Unique.cc
 util/Allocate.h
