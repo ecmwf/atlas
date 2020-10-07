@@ -317,8 +317,9 @@ int Meshgen2Gmsh::execute( const Args& args ) {
         Log::info() << "Partitioning graph: \n" << mesh.partitionGraph() << std::endl;
         Log::info() << "Mesh partition footprint: " << eckit::Bytes( mesh.footprint() ) << std::endl;
         for ( idx_t jhalo = 0; jhalo <= halo; ++jhalo ) {
-            mesh.polygon( jhalo ).outputPythonScript( "polygon_halo" + std::to_string( jhalo ) + ".py",
-                                                      Config( "nodes", false ) );
+            mesh.polygon( jhalo ).outputPythonScript(
+                "polygon_halo" + std::to_string( jhalo ) + ".py",
+                Config( "nodes", false )( "coordinates", dim_3d ? "xy" : lonlat ? "lonlat" : "xy" ) );
         }
     }
     return success();

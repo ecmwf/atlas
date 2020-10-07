@@ -9,6 +9,7 @@
  */
 
 #include <fstream>
+#include <sstream>
 
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
@@ -70,9 +71,11 @@ void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, cons
     int mpi_rank                 = int( comm.rank() );
     int mpi_size                 = int( comm.size() );
 
-    auto points = this->xy();
+    std::string coordinates = config.getString( "coordinates", "xy" );
+    auto points             = coordinates == "xy" ? this->xy() : this->lonlat();
+
     ATLAS_ASSERT( points.size() == size() );
-    const auto nodes_xy = array::make_view<double, 2>( mesh_.nodes().xy() );
+    const auto nodes_xy = array::make_view<double, 2>( mesh_.nodes().field( coordinates ) );
     double xmin         = std::numeric_limits<double>::max();
     double xmax         = -std::numeric_limits<double>::max();
     for ( const auto& p : points ) {
@@ -187,20 +190,27 @@ void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, cons
             f << "\n"
                  "";
             if ( mpi_rank == mpi_size - 1 ) {
-                f << "\n"
-                     "ax.set_xlim( "
-                  << xmin << "-5, " << xmax
-                  << "+5)"
-                     "\n"
-                     "ax.set_ylim(-90-5,  90+5)"
-                     "\n"
-                     "ax.set_xticks([0,45,90,135,180,225,270,315,360])"
-                     "\n"
-                     "ax.set_yticks([-90,-45,0,45,90])"
-                     "\n"
-                     "plt.grid()"
-                     "\n"
-                     "plt.show()";
+                auto xticks = [&]() -> std::string {
+                    std::vector<int> xticks;
+                    xticks.push_back( std::floor( xmin - int( xmin ) % 45 ) );
+                    while ( xticks.back() < int( std::round( xmax ) ) ) {
+                        xticks.push_back( xticks.back() + 45 );
+                    }
+                    std::stringstream xticks_ss;
+                    for ( int i = 0; i < xticks.size(); ++i ) {
+                        xticks_ss << ( i == 0 ? "[" : "," ) << xticks[i];
+                    }
+                    xticks_ss << "]";
+                    return xticks_ss.str();
+                };
+                // clang-format off
+                f << "\n" "ax.set_xlim( " << xmin << "-5, " << xmax << "+5)"
+                     "\n" "ax.set_ylim(-90-5, 90+5)"
+                     "\n" "ax.set_xticks(" << xticks() << ")"
+                     "\n" "ax.set_yticks([-90,-45,0,45,90])"
+                     "\n" "plt.grid()"
+                     "\n" "plt.show()";
+                // clang-format on
             }
         }
         comm.barrier();
