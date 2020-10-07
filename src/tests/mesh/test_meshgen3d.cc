@@ -25,6 +25,12 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
+CASE( "test_create_mesh_simple" ) {
+    auto mesh = Mesh{Grid{"O32"}};
+    Gmsh{"O32.msh"}.write( mesh );
+}
+
+
 CASE( "test_create_mesh" ) {
     Mesh m;
 
