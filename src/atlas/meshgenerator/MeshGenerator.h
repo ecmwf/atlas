@@ -30,6 +30,7 @@ class Projection;
 namespace atlas {
 namespace grid {
 class Distribution;
+class Partitioner;
 }  // namespace grid
 }  // namespace atlas
 
@@ -52,9 +53,11 @@ public:
     void hash( eckit::Hash& ) const;
 
     Mesh generate( const Grid&, const grid::Distribution& ) const;
+    Mesh generate( const Grid&, const grid::Partitioner& ) const;
     Mesh generate( const Grid& ) const;
 
     Mesh operator()( const Grid&, const grid::Distribution& ) const;
+    Mesh operator()( const Grid&, const grid::Partitioner& ) const;
     Mesh operator()( const Grid& ) const;
 
     std::string type() const;
