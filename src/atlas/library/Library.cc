@@ -230,6 +230,14 @@ void Library::initialise( const eckit::Parametrisation& config ) {
         warning_channel_.reset();
     }
 
+    auto& out = [&]() -> eckit::Channel& {
+        if ( getEnv( "ATLAS_LOG_RANK", 0 ) == int( mpi::rank() ) ) {
+            return Log::debug();
+        }
+        static eckit::Channel sink;
+        return sink;
+    }();
+
     std::vector<std::string> plugin_names =
         eckit::Resource<std::vector<std::string>>( "atlasPlugins;$ATLAS_PLUGINS", {} );
 
@@ -264,7 +272,7 @@ void Library::initialise( const eckit::Parametrisation& config ) {
                 bool library_loaded = eckit::system::Library::exists( library_name );
                 if ( not library_loaded ) {
                     ATLAS_ASSERT( plugin_library_exists( plugin_dir, library_name, library_path ) );
-                    Log::debug() << "Loading plugin [" << plugin_name << "] library " << library_path << std::endl;
+                    out << "Loading plugin [" << plugin_name << "] library " << library_path << std::endl;
                     load_library( library_path, library_name );
                     library_loaded = true;
                 }
@@ -285,7 +293,6 @@ void Library::initialise( const eckit::Parametrisation& config ) {
 
     // Summary
     if ( getEnv( "ATLAS_LOG_RANK", 0 ) == int( mpi::rank() ) ) {
-        std::ostream& out = Log::debug();
         out << "Executable        [" << Main::instance().name() << "]\n";
         out << " \n";
         out << "  current dir     [" << PathName( LocalPathName::cwd() ).fullName() << "]\n";

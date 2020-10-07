@@ -20,9 +20,19 @@
 #include "eckit/utils/Translator.h"
 
 #include "atlas/library/config.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
+
+namespace {
+int getEnv( const std::string& env, int default_value ) {
+    if ( ::getenv( env.c_str() ) ) {
+        return eckit::Translator<std::string, int>()( ::getenv( env.c_str() ) );
+    }
+    return default_value;
+}
+}  // namespace
 
 static int atlas_feenableexcept( int excepts ) {
 #if ATLAS_HAVE_FEENABLEEXCEPT
@@ -96,7 +106,7 @@ class Signals {
     // Not sure if this should be made public (in header file) just yet
 
 private:
-    Signals() {}
+    Signals();
 
 public:
     static Signals& instance();
@@ -109,6 +119,7 @@ public:
 private:
     typedef std::map<int, Signal> registered_signals_t;
     registered_signals_t registered_signals_;
+    eckit::Channel& out_;
 };
 
 // ------------------------------------------------------------------------------------
@@ -161,6 +172,15 @@ private:
 //----------------------------------------------------------------------------------------------------------------------
 
 
+Signals::Signals() :
+    out_( [&]() -> eckit::Channel& {
+        if ( getEnv( "ATLAS_LOG_RANK", 0 ) == int( mpi::rank() ) ) {
+            return Log::debug();
+        }
+        static eckit::Channel sink;
+        return sink;
+    }() ) {}
+
 Signals& Signals::instance() {
     static Signals signals;
     return signals;
@@ -168,24 +188,24 @@ Signals& Signals::instance() {
 
 void Signals::restoreSignalHandler( int signum ) {
     if ( registered_signals_.find( signum ) != registered_signals_.end() ) {
-        Log::debug() << "\n";
+        out_ << "\n";
         std::signal( signum, SIG_DFL );
-        Log::debug() << "Atlas restored default signal handler for signal " << std::setw( 7 ) << std::left
-                     << registered_signals_[signum].code() << " [" << registered_signals_[signum] << "]\n";
-        Log::debug() << std::endl;
+        out_ << "Atlas restored default signal handler for signal " << std::setw( 7 ) << std::left
+             << registered_signals_[signum].code() << " [" << registered_signals_[signum] << "]\n";
+        out_ << std::endl;
         registered_signals_.erase( signum );
     }
 }
 
 void Signals::restoreAllSignalHandlers() {
-    Log::debug() << "\n";
+    out_ << "\n";
     for ( registered_signals_t::const_iterator it = registered_signals_.begin(); it != registered_signals_.end();
           ++it ) {
         std::signal( it->first, SIG_DFL );
-        Log::debug() << "Atlas restored default signal handler for signal " << std::setw( 7 ) << std::left
-                     << it->second.code() << " [" << it->second.str() << "]\n";
+        out_ << "Atlas restored default signal handler for signal " << std::setw( 7 ) << std::left << it->second.code()
+             << " [" << it->second.str() << "]\n";
     }
-    Log::debug() << std::endl;
+    out_ << std::endl;
     registered_signals_.clear();
 }
 
@@ -199,7 +219,6 @@ std::ostream& operator<<( std::ostream& out, const Signal& signal ) {
 }
 
 void Signals::setSignalHandlers() {
-    Log::debug() << "\n";
     setSignalHandler( SIGINT );
     setSignalHandler( SIGILL );
     setSignalHandler( SIGABRT );
@@ -211,8 +230,8 @@ void Signals::setSignalHandlers() {
 void Signals::setSignalHandler( const Signal& signal ) {
     registered_signals_[signal] = signal;
     sigaction( signal, signal.action(), nullptr );
-    Log::debug() << "Atlas registered signal handler for signal " << std::setw( 7 ) << std::left << signal.code()
-                 << " [" << signal << "]" << std::endl;
+    out_ << "Atlas registered signal handler for signal " << std::setw( 7 ) << std::left << signal.code() << " ["
+         << signal << "]" << std::endl;
 }
 
 
@@ -236,7 +255,16 @@ Signal::Signal( int signum, signal_action_t signal_action ) : signum_( signum ),
     signal_action_.sa_flags     = SA_SIGINFO;
 }
 
+
 void enable_floating_point_exceptions() {
+    auto& out = [&]() -> eckit::Channel& {
+        if ( getEnv( "ATLAS_LOG_RANK", 0 ) == int( mpi::rank() ) ) {
+            return Log::debug();
+        }
+        static eckit::Channel sink;
+        return sink;
+    }();
+
     // Following line gives runtime errors with Cray 8.6 due to compiler bug (but works with Cray 8.5 and Cray 8.7)
     //   std::vector<std::string> floating_point_exceptions = eckit::Resource<std::vector<std::string>>( "atlasFPE;$ATLAS_FPE", {"false"} );
     // Instead, manually access environment
@@ -256,7 +284,7 @@ void enable_floating_point_exceptions() {
         auto enable  = [&]( int except ) {
             _excepts |= except;
             _enable = true;
-            Log::debug() << "Atlas enabled floating point exception " << except_to_str[except] << std::endl;
+            out << "Atlas enabled floating point exception " << except_to_str[except] << std::endl;
         };
         bool skip_map = false;
         if ( floating_point_exceptions.size() == 1 ) {

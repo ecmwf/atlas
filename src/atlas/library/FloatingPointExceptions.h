@@ -9,6 +9,7 @@
  */
 
 #include <csignal>
+#include <iosfwd>
 #include <map>
 #include <string>
 
