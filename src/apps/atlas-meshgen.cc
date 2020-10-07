@@ -56,6 +56,35 @@ using eckit::PathName;
 
 //------------------------------------------------------------------------------
 
+MeshGenerator make_meshgenerator( const Grid& grid, const AtlasTool::Args& args ) {
+    auto config = grid.meshgenerator();  // recommended by the grid itself
+    if ( args.has( "generator" ) ) {
+        config.set( "type", args.getString( "generator" ) );
+    }
+
+    if ( mpi::comm().size() > 1 || args.getBool( "edges", false ) ) {
+        config.set( "3d", false );
+    }
+
+    config.set( "patch_pole", args.getBool( "patch_pole", false ) );
+
+    return MeshGenerator{config};
+}
+
+Partitioner make_partitioner( const Grid& grid, const AtlasTool::Args& args ) {
+    auto config = grid.partitioner();  // recommended by the grid itself
+    if ( args.has( "partitioner" ) ) {
+        config.set( "type", args.getString( "partitioner" ) );
+    }
+    if ( args.has( "regular" ) ) {
+        config.set( "regular", args.getBool( "regular" ) );
+    }
+
+    return Partitioner{config};
+}
+
+//------------------------------------------------------------------------------
+
 class Meshgen2Gmsh : public AtlasTool {
     int execute( const Args& args ) override;
     std::string briefDescription() override { return "Mesh generator and output to Gmsh format"; }
@@ -81,7 +110,6 @@ private:
     bool stats;
     bool info;
     bool ghost;
-    bool binary;
     std::string identifier;
     PathName path_in;
     PathName path_out;
@@ -90,38 +118,39 @@ private:
 //-----------------------------------------------------------------------------
 
 Meshgen2Gmsh::Meshgen2Gmsh( int argc, char** argv ) : AtlasTool( argc, argv ) {
+    add_option( new SimpleOption<bool>( "lonlat", "Output mesh in lon-lat coordinates" ) );
+    add_option( new SimpleOption<bool>( "3d",
+                                        "Output mesh as sphere, and generate "
+                                        "mesh connecting East and West in "
+                                        "case serial" ) );
+    add_option( new SimpleOption<bool>( "ghost", "Output ghost elements" ) );
     add_option( new SimpleOption<std::string>(
-        "grid.name", "Grid unique identifier\n" + indent() + "     Example values: N80, F40, O24, L32" ) );
-    add_option( new SimpleOption<PathName>( "grid.json", "Grid described by json file" ) );
-    add_option( new SimpleOption<double>( "angle", "Maximum element-edge slant deviation from meridian in degrees. \n" +
-                                                       indent() + "     Value range between 0 and 30\n" + indent() +
-                                                       "         0: Mostly triangular, with only perfect quads\n" +
-                                                       indent() +
-                                                       "        30: Mostly skewed quads with only triags when "
-                                                       "skewness becomes too large\n" +
-                                                       indent() + "        -1: Only triangles" ) );
+        "generator", "Mesh generator [structured,regular,delaunay] (default = structured)" ) );
+    add_option( new SimpleOption<std::string>(
+        "partitioner", "Mesh partitioner [equal_regions,checkerboard,equal_bands,regular_bands" ) );
 
+    add_option( new Separator( "Options for `--generator=structured`" ) );
     add_option( new SimpleOption<bool>( "include_pole", "Include pole point" ) );
     add_option( new SimpleOption<bool>( "patch_pole", "Patch poles with elements." ) );
-    add_option( new SimpleOption<bool>( "ghost", "Output ghost elements" ) );
+    add_option( new SimpleOption<double>(
+        "angle", "Maximum element-edge slant deviation from meridian in degrees. \n" + indent() +
+                     "     Value range between 0 and 30\n" + indent() +
+                     "         0: Mostly triangular, with only perfect quads (=default)\n" + indent() +
+                     "        30: Mostly skewed quads with only triags when skewness becomes too large\n" + indent() +
+                     "        -1: Only triangles" ) );
+
+    add_option( new Separator( "Options for `--partitioner=checkerboard`" ) );
+    add_option( new SimpleOption<bool>( "regular", "regular checkerboard partitioner" ) );
+
     add_option( new Separator( "Advanced" ) );
     add_option( new SimpleOption<long>( "halo", "Halo size" ) );
     add_option( new SimpleOption<bool>( "edges", "Build edge datastructure" ) );
     add_option( new SimpleOption<bool>( "brick", "Build brick dual mesh" ) );
     add_option( new SimpleOption<bool>( "stats", "Write statistics file" ) );
     add_option( new SimpleOption<bool>( "info", "Write Info" ) );
-    add_option( new SimpleOption<bool>( "binary", "Write binary file" ) );
-    add_option( new SimpleOption<std::string>(
-        "generator", "Mesh generator [structured,regular,delaunay] (default = structured)" ) );
-    add_option( new SimpleOption<std::string>( "partitioner", "Mesh partitioner" ) );
     add_option( new SimpleOption<bool>( "periodic_x", "periodic mesh in x-direction" ) );
     add_option( new SimpleOption<bool>( "periodic_y", "periodic mesh in y-direction" ) );
     add_option( new SimpleOption<bool>( "torus", "Output mesh as torus" ) );
-    add_option( new SimpleOption<bool>( "lonlat", "Output mesh in lon-lat coordinates" ) );
-    add_option( new SimpleOption<bool>( "3d",
-                                        "Output mesh as sphere, and generate "
-                                        "mesh connecting East and West in "
-                                        "case serial" ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -173,13 +202,6 @@ int Meshgen2Gmsh::execute( const Args& args ) {
     args.get( "brick", brick );
     ghost = false;
     args.get( "ghost", ghost );
-    binary = false;
-    args.get( "binary", binary );
-
-    std::string path_in_str = "";
-    if ( args.get( "grid.json", path_in_str ) ) {
-        path_in = path_in_str;
-    }
 
     key      = get_positional_arg( args, 0 );
     path_out = get_arg( args, "-o", args.count() > 1 ? get_positional_arg( args, 1 ) : "mesh.msh" );
@@ -231,22 +253,13 @@ int Meshgen2Gmsh::execute( const Args& args ) {
     }
     Log::debug() << "Spec: " << grid.spec() << std::endl;
 
-    std::string generator = ( StructuredGrid( grid ) ? "structured" : "delaunay" );
-    args.get( "generator", generator );
-    eckit::LocalConfiguration meshgenerator_config( args );
-    if ( mpi::comm().size() > 1 || edges ) {
-        meshgenerator_config.set( "3d", false );
-    }
-    bool patch_pole = false;
-    args.get( "patch_pole", patch_pole );
-    meshgenerator_config.set( "patch_pole", patch_pole );
-
-    MeshGenerator meshgenerator( generator, meshgenerator_config );
+    auto meshgenerator = make_meshgenerator( grid, args );
+    auto partitioner   = make_partitioner( grid, args );
 
     Mesh mesh;
     try {
-        Log::info() << "Generating mesh using " << generator << " generator" << std::endl;
-        mesh = meshgenerator.generate( grid );
+        Log::info() << "Generating mesh using " << meshgenerator.type() << " generator" << std::endl;
+        mesh = meshgenerator.generate( grid, partitioner );
     }
     catch ( eckit::Exception& e ) {
         Log::error() << e.what() << std::endl;
@@ -295,7 +308,7 @@ int Meshgen2Gmsh::execute( const Args& args ) {
 
     atlas::output::Gmsh gmsh(
         path_out, Config( "info", info )( "ghost", ghost )( "coordinates", dim_3d ? "xyz" : lonlat ? "lonlat" : "xy" )(
-                      "edges", edges )( "binary", binary ) );
+                      "edges", edges ) );
     Log::info() << "Writing mesh to gmsh file \"" << path_out << "\" generated from grid \"" << grid.name() << "\""
                 << std::endl;
     gmsh.write( mesh );
