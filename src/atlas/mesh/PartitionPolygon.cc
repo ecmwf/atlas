@@ -250,11 +250,13 @@ void PartitionPolygon::print( std::ostream& out ) const {
         << "halo:" << halo_ << ",size:" << size() << ",nodes:" << static_cast<const util::Polygon&>( *this ) << "}";
 }
 
-PartitionPolygon::PointsXY PartitionPolygon::xy() const {
-    PointsXY points_xy;
-    points_xy.reserve( size() );
+namespace {
+PartitionPolygon::PointsXY points( const Mesh::Implementation& mesh_, const Field& coords,
+                                   const std::vector<idx_t>& polygon ) {
+    PartitionPolygon::PointsXY points_xy;
+    points_xy.reserve( polygon.size() );
 
-    auto xy_view = array::make_view<double, 2>( mesh_.nodes().xy() );
+    auto xy_view = array::make_view<double, 2>( coords );
     auto flags   = array::make_view<int, 1>( mesh_.nodes().flags() );
 
     bool domain_includes_north_pole = false;
@@ -280,11 +282,27 @@ PartitionPolygon::PointsXY PartitionPolygon::xy() const {
         return false;
     };
 
-    for ( idx_t i : static_cast<const container_t&>( *this ) ) {
-        double y = bc_north( i ) ? 90. : bc_south( i ) ? -90. : xy_view( i, idx_t( YY ) );
-        points_xy.emplace_back( xy_view( i, idx_t( XX ) ), y );
+    if ( coords.name() == "xy" ) {
+        for ( idx_t i : polygon ) {
+            double y = bc_north( i ) ? 90. : bc_south( i ) ? -90. : xy_view( i, idx_t( YY ) );
+            points_xy.emplace_back( xy_view( i, idx_t( XX ) ), y );
+        }
+    }
+    else {
+        for ( idx_t i : polygon ) {
+            points_xy.emplace_back( xy_view( i, idx_t( XX ) ), xy_view( i, idx_t( YY ) ) );
+        }
     }
     return points_xy;
+}
+}  // namespace
+
+PartitionPolygon::PointsXY PartitionPolygon::xy() const {
+    return points( mesh_, mesh_.nodes().xy(), *this );
+}
+
+PartitionPolygon::PointsLonLat PartitionPolygon::lonlat() const {
+    return points( mesh_, mesh_.nodes().lonlat(), *this );
 }
 
 }  // namespace mesh

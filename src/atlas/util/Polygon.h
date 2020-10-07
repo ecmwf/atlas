@@ -116,6 +116,9 @@ public:
     /// @brief All (x,y) coordinates defining a polygon. Last point should match first.
     virtual PointsXY xy() const = 0;
 
+    /// @brief All (lon,lat) coordinates defining a polygon. Last point should match first.
+    virtual PointsLonLat lonlat() const = 0;
+
     virtual void allGather( PartitionPolygons& ) const = 0;
 };
 
@@ -132,6 +135,7 @@ public:
     }
 
     PointsXY xy() const override { return points_; }
+    PointsLonLat lonlat() const override { return points_; }
 
     void allGather( util::PartitionPolygons& ) const override;
 
