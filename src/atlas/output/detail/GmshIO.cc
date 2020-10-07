@@ -38,6 +38,7 @@
 
 using atlas::functionspace::NodeColumns;
 using atlas::util::Metadata;
+using atlas::util::Topology;
 using eckit::PathName;
 
 namespace atlas {
@@ -812,6 +813,10 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
     int part           = mesh.metadata().has( "part" ) ? mesh.metadata().get<size_t>( "part" ) : mpi::rank();
     bool include_ghost = options.get<bool>( "ghost" ) && options.get<bool>( "elements" );
 
+    bool land_water_flag = options.has( "water" ) || options.has( "land" );
+    bool include_water   = options.getBool( "water", false );
+    bool include_land    = options.getBool( "land", false );
+
     std::string nodes_field = options.get<std::string>( "nodes" );
 
     const mesh::Nodes& nodes = mesh.nodes();
@@ -898,11 +903,37 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
             nb_elements += hybrid->size();
             const auto hybrid_halo  = array::make_view<int, 1>( hybrid->halo() );
             const auto hybrid_flags = array::make_view<int, 1>( hybrid->flags() );
-            auto hybrid_patch       = [&]( idx_t e ) {
-                return mesh::Nodes::Topology::check( hybrid_flags( e ), mesh::Nodes::Topology::PATCH );
+            auto hybrid_patch       = [&]( idx_t e ) { return Topology::check( hybrid_flags( e ), Topology::PATCH ); };
+            auto hybrid_ghost_flag  = [&]( idx_t e ) { return Topology::check( hybrid_flags( e ), Topology::GHOST ); };
+
+            auto include = [&]( idx_t e ) {
+                auto topology = Topology::view( hybrid_flags( e ) );
+                if ( land_water_flag && not( include_water && include_land ) ) {
+                    if ( include_water && !topology.check( Topology::WATER ) ) {
+                        return false;
+                    }
+                    if ( include_land && !topology.check( Topology::LAND ) ) {
+                        return false;
+                    }
+                }
+                if ( not include_ghost ) {
+                    if ( topology.check( Topology::GHOST ) || hybrid_halo( e ) ) {
+                        return false;
+                    }
+                }
+                if ( not include_patch ) {
+                    if ( topology.check( Topology::PATCH ) ) {
+                        return false;
+                    }
+                }
+                return true;
             };
+
             auto exclude = [&]( idx_t e ) {
                 if ( !include_ghost && hybrid_halo( e ) ) {
+                    return true;
+                }
+                if ( !include_ghost && hybrid_ghost_flag( e ) ) {
                     return true;
                 }
                 if ( !include_patch && hybrid_patch( e ) ) {
@@ -911,7 +942,7 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
                 return false;
             };
             for ( idx_t e = 0; e < hybrid->size(); ++e ) {
-                if ( exclude( e ) ) {
+                if ( not include( e ) ) {
                     --nb_elements;
                 }
             }
@@ -941,8 +972,32 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
 
                 auto elems_glb_idx   = elements.view<gidx_t, 1>( elements.global_index() );
                 auto elems_partition = elements.view<int, 1>( elements.partition() );
-                auto elems_halo      = elements.view<int, 1>( elements.halo() );
 
+                auto elems_halo  = elements.view<int, 1>( elements.halo() );
+                auto elems_flags = elements.view<int, 1>( elements.flags() );
+
+                auto include = [&]( idx_t e ) {
+                    auto topology = Topology::view( elems_flags( e ) );
+                    if ( land_water_flag && not( include_water && include_land ) ) {
+                        if ( include_water && !topology.check( Topology::WATER ) ) {
+                            return false;
+                        }
+                        if ( include_land && !topology.check( Topology::LAND ) ) {
+                            return false;
+                        }
+                    }
+                    if ( not include_ghost ) {
+                        if ( topology.check( Topology::GHOST ) || elems_halo( e ) ) {
+                            return false;
+                        }
+                    }
+                    if ( not include_patch ) {
+                        if ( topology.check( Topology::PATCH ) ) {
+                            return false;
+                        }
+                    }
+                    return true;
+                };
                 if ( binary ) {
                     idx_t nb_elems = elements.size();
                     if ( !include_ghost ) {
@@ -979,7 +1034,7 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
                     ss_elem_info << " " << gmsh_elem_type << " 4 1 1 1 ";
                     std::string elem_info = ss_elem_info.str();
                     for ( idx_t elem = 0; elem < elements.size(); ++elem ) {
-                        if ( include_ghost || !elems_halo( elem ) ) {
+                        if ( include( elem ) ) {
                             file << elems_glb_idx( elem ) << elem_info << elems_partition( elem );
                             for ( idx_t n = 0; n < node_connectivity.cols(); ++n ) {
                                 file << " " << glb_idx( node_connectivity( elem, n ) );
@@ -1007,13 +1062,13 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
 
         write( nodes.partition(), function_space, mesh_info, std::ios_base::out );
 
-        if ( nodes.has_field( "dual_volumes" ) ) {
-            write( nodes.field( "dual_volumes" ), function_space, mesh_info, std::ios_base::app );
+        std::vector<std::string> extra_fields = {"dual_volumes", "dual_delta_sph", "lsm", "core", "ghost", "halo"};
+        for ( auto& f : extra_fields ) {
+            if ( nodes.has_field( f ) ) {
+                write( nodes.field( f ), function_space, mesh_info, std::ios_base::app );
+            }
         }
 
-        if ( nodes.has_field( "dual_delta_sph" ) ) {
-            write( nodes.field( "dual_delta_sph" ), function_space, mesh_info, std::ios_base::app );
-        }
 
         //[next] if( mesh.has_function_space("edges") )
         //[next] {

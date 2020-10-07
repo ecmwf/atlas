@@ -152,6 +152,10 @@ Meshgen2Gmsh::Meshgen2Gmsh( int argc, char** argv ) : AtlasTool( argc, argv ) {
     add_option( new SimpleOption<bool>( "periodic_x", "periodic mesh in x-direction" ) );
     add_option( new SimpleOption<bool>( "periodic_y", "periodic mesh in y-direction" ) );
     add_option( new SimpleOption<bool>( "torus", "Output mesh as torus" ) );
+    add_option( new SimpleOption<bool>(
+        "water", "Output elements containing water points (not specifying --water or --land enables both)" ) );
+    add_option( new SimpleOption<bool>(
+        "land", "Output elements containing land points (not specifying --water or --land enables both)" ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -304,12 +308,21 @@ int Meshgen2Gmsh::execute( const Args& args ) {
         }
     }
 
+
     bool lonlat             = args.getBool( "lonlat", false );
     bool ij                 = args.getBool( "ij", false );
     std::string coordinates = dim_3d ? "xyz" : lonlat ? "lonlat" : ij ? "ij" : "xy";
 
-    atlas::output::Gmsh gmsh(
-        path_out, Config( "info", info )( "ghost", ghost )( "coordinates", coordinates )( "edges", edges ) );
+    Config gmsh_config;
+    gmsh_config.set( "coordinates", coordinates );
+    gmsh_config.set( "edges", edges );
+    gmsh_config.set( "ghost", ghost );
+    gmsh_config.set( "info", info );
+    if ( args.has( "land" ) || args.has( "water" ) ) {
+        gmsh_config.set( "land", args.getBool( "land", false ) );
+        gmsh_config.set( "water", args.getBool( "water", false ) );
+    }
+    atlas::output::Gmsh gmsh( path_out, gmsh_config );
     Log::info() << "Writing mesh to gmsh file \"" << path_out << "\" generated from grid \"" << grid.name() << "\""
                 << std::endl;
     gmsh.write( mesh );
@@ -318,9 +331,8 @@ int Meshgen2Gmsh::execute( const Args& args ) {
         Log::info() << "Partitioning graph: \n" << mesh.partitionGraph() << std::endl;
         Log::info() << "Mesh partition footprint: " << eckit::Bytes( mesh.footprint() ) << std::endl;
         for ( idx_t jhalo = 0; jhalo <= halo; ++jhalo ) {
-            mesh.polygon( jhalo ).outputPythonScript(
-                "polygon_halo" + std::to_string( jhalo ) + ".py",
-                Config( "nodes", false )( "coordinates", dim_3d ? "xy" : lonlat ? "lonlat" : "xy" ) );
+            mesh.polygon( jhalo ).outputPythonScript( "polygon_halo" + std::to_string( jhalo ) + ".py",
+                                                      Config( "nodes", false )( "coordinates", coordinates ) );
         }
     }
     return success();

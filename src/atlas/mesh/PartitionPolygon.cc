@@ -72,7 +72,10 @@ void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, cons
     int mpi_size                 = int( comm.size() );
 
     std::string coordinates = config.getString( "coordinates", "xy" );
-    auto points             = coordinates == "xy" ? this->xy() : this->lonlat();
+    if ( coordinates == "ij" ) {
+        coordinates = "xy";
+    }
+    auto points = coordinates == "xy" ? this->xy() : this->lonlat();
 
     ATLAS_ASSERT( points.size() == size() );
     const auto nodes_xy = array::make_view<double, 2>( mesh_.nodes().field( coordinates ) );

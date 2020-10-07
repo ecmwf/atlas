@@ -446,9 +446,18 @@ void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node ) {
         if ( not inserted ) {
             int other = uid2node[uid];
             std::stringstream msg;
-            msg << "Node uid: " << uid << "   " << glb_idx( jnode ) << " (" << xy( jnode, XX ) << "," << xy( jnode, YY )
-                << ")  has already been added as node " << glb_idx( other ) << " (" << xy( other, XX ) << ","
+            msg << std::setprecision( 10 ) << std::fixed << "Node uid: " << uid << "   " << glb_idx( jnode ) << " xy("
+                << xy( jnode, XX ) << "," << xy( jnode, YY ) << ")";
+            if ( nodes.has_field( "ij" ) ) {
+                auto ij = array::make_view<idx_t, 2>( nodes.field( "ij" ) );
+                msg << " ij(" << ij( jnode, XX ) << "," << ij( jnode, YY ) << ")";
+            }
+            msg << " has already been added as node " << glb_idx( other ) << " (" << xy( other, XX ) << ","
                 << xy( other, YY ) << ")";
+            if ( nodes.has_field( "ij" ) ) {
+                auto ij = array::make_view<idx_t, 2>( nodes.field( "ij" ) );
+                msg << " ij(" << ij( other, XX ) << "," << ij( other, YY ) << ")";
+            }
             notes.add_error( msg.str() );
         }
     }
