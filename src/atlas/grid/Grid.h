@@ -99,6 +99,9 @@ public:
     size_t footprint() const;
 
     Spec spec() const;
+
+    Config meshgenerator() const;
+    Config partitioner() const;
 };
 
 //---------------------------------------------------------------------------------------------------------------------

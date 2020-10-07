@@ -127,6 +127,9 @@ public:  // methods
     void attachObserver( GridObserver& ) const;
     void detachObserver( GridObserver& ) const;
 
+    virtual Config meshgenerator() const;
+    virtual Config partitioner() const;
+
 protected:  // methods
     /// Fill provided me
     virtual void print( std::ostream& ) const = 0;

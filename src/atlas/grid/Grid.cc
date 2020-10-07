@@ -85,4 +85,12 @@ Grid::Spec Grid::spec() const {
     return get()->spec();
 }
 
+Grid::Config Grid::meshgenerator() const {
+    return get()->meshgenerator();
+}
+
+Grid::Config Grid::partitioner() const {
+    return get()->partitioner();
+}
+
 }  // namespace atlas

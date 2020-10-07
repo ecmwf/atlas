@@ -139,6 +139,14 @@ void Grid::detachObserver( GridObserver& observer ) const {
                            grid_observers_.end() );
 }
 
+Grid::Config Grid::meshgenerator() const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
+Grid::Config Grid::partitioner() const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
 idx_t atlas__grid__Grid__size( Grid* This ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Grid" );
     return This->size();

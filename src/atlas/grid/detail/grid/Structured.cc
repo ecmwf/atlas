@@ -24,6 +24,7 @@
 #include "atlas/grid/detail/grid/GridFactory.h"
 #include "atlas/grid/detail/spacing/CustomSpacing.h"
 #include "atlas/grid/detail/spacing/LinearSpacing.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
@@ -647,6 +648,24 @@ void Structured::print( std::ostream& os ) const {
 
 std::string Structured::type() const {
     return static_type();
+}
+
+Grid::Config Structured::meshgenerator() const {
+    return Config( "type", "structured" );
+}
+
+Grid::Config Structured::partitioner() const {
+    Config config;
+    if ( mpi::size() == 1 ) {
+        config.set( "type", "serial" );
+    }
+    else if ( reduced() ) {
+        config.set( "type", "equal_regions" );
+    }
+    else {
+        config.set( "type", "checkerboard" );
+    }
+    return config;
 }
 
 void Structured::hash( eckit::Hash& h ) const {
