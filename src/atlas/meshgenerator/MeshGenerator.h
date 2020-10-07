@@ -56,6 +56,8 @@ public:
 
     Mesh operator()( const Grid&, const grid::Distribution& ) const;
     Mesh operator()( const Grid& ) const;
+
+    std::string type() const;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

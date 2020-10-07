@@ -50,6 +50,8 @@ public:
 
     using MeshGenerator::Implementation::generate;
 
+    std::string type() const override { return "structured"; }
+
 private:
     virtual void hash( eckit::Hash& ) const override;
 

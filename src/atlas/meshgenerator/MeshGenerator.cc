@@ -57,6 +57,10 @@ Mesh MeshGenerator::operator()( const Grid& g ) const {
     return get()->operator()( g );
 }
 
+std::string MeshGenerator::type() const {
+    return get()->type();
+}
+
 //----------------------------------------------------------------------------------------------------------------------
 
 }  // namespace atlas

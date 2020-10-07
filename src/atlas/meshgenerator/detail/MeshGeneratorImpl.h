@@ -51,6 +51,8 @@ public:
     Mesh operator()( const Grid&, const grid::Distribution& ) const;
     Mesh operator()( const Grid& ) const;
 
+    virtual std::string type() const = 0;
+
 protected:
     void generateGlobalElementNumbering( Mesh& mesh ) const;
     void setProjection( Mesh&, const Projection& ) const;

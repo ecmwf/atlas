@@ -30,6 +30,8 @@ public:
 
     virtual ~DelaunayMeshGenerator() override;
 
+    std::string type() const override { return "delaunay"; }
+
 private:  // methods
     virtual void hash( eckit::Hash& ) const override;
 
