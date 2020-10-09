@@ -101,7 +101,7 @@ void KNearestNeighbours::do_setup( const FunctionSpace& source, const FunctionSp
             }
 
             // find the closest input points to the output point
-            auto nn = pTree_.closestPoints( PointLonLat{lonlat( ip, size_t(LON) ), lonlat( ip, size_t(LAT) )}, k_ );
+            auto nn = pTree_.closestPoints( PointLonLat{lonlat( ip, size_t( LON ) ), lonlat( ip, size_t( LAT ) )}, k_ );
 
             // calculate weights (individual and total, to normalise) using distance
             // squared

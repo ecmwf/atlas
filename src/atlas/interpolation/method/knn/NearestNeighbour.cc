@@ -91,7 +91,7 @@ void NearestNeighbour::do_setup( const FunctionSpace& source, const FunctionSpac
             }
 
             // find the closest input point to the output point
-            auto nn   = pTree_.closestPoint( PointLonLat{lonlat( ip, size_t(LON) ), lonlat( ip, size_t(LAT) )} );
+            auto nn   = pTree_.closestPoint( PointLonLat{lonlat( ip, size_t( LON ) ), lonlat( ip, size_t( LAT ) )} );
             size_t jp = nn.payload();
 
             // insert the weights into the interpolant matrix
