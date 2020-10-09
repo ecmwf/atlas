@@ -138,9 +138,24 @@ install:
   - |
     ### Install CMake
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
+      CMAKE_VERSION=3.18.4
       if [[ -z "$(ls -A ${DEPS_DIR}/cmake)" ]]; then
-        CMAKE_URL="https://cmake.org/files/v3.15.2/cmake-3.15.2-Linux-x86_64.tar.gz"
-        mkdir -p ${DEPS_DIR}/cmake && travis_retry wget --no-check-certificate --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C ${DEPS_DIR}/cmake
+        if [[ "${TRAVIS_ARCH}" == "amd64" ]]; then
+          CMAKE_URL="https://cmake.org/files/v${CMAKE_VERSION%.*}/cmake-${CMAKE_VERSION}-Linux-x86_64.tar.gz"
+          mkdir -p ${DEPS_DIR}/cmake && travis_retry wget --no-check-certificate --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C ${DEPS_DIR}/cmake
+        fi
+        if [[ "${TRAVIS_ARCH}" = "ppc64le" ]]; then
+          # Build from source
+          CMAKE_URL="https://cmake.org/files/v${CMAKE_VERSION%.*}/cmake-${CMAKE_VERSION}.tar.gz"
+          mkdir -p ${DEPS_DIR}/cmake-source && travis_retry wget --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C ${DEPS_DIR}/cmake-source
+          (
+            cd ${DEPS_DIR}/cmake-source
+            mkdir -p build && cd build
+            ../bootstrap --prefix=${DEPS_DIR}/cmake && make -j4 install
+          )
+        fi
+      else
+        echo "CMake already found in cache"
       fi
       export PATH=${DEPS_DIR}/cmake/bin:${PATH}
     else
