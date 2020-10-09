@@ -43,7 +43,7 @@ case "$(uname -m)" in
 		;;
 esac
 
-URL="$(curl -s 'https://developer.nvidia.com/nvidia-hpc-sdk-download' | grep -oP "https://developer.download.nvidia.com/hpc-sdk/nvhpc_([0-9]{4})_([0-9]+)_Linux_$(uname -m)_cuda_([0-9\.]+).tar.gz")"
+URL="$(curl -s 'https://developer.nvidia.com/nvidia-hpc-sdk-download' | grep -oP "https://developer.download.nvidia.com/hpc-sdk/([0-9]{2}\.[0-9]+)/nvhpc_([0-9]{4})_([0-9]+)_Linux_$(uname -m)_cuda_([0-9\.]+).tar.gz" | sort | tail -1)"
 FOLDER="$(basename "$(echo "${URL}" | grep -oP '[^/]+$')" .tar.gz)"
 
 if [ ! -z "${TRAVIS_REPO_SLUG}" ]; then
@@ -74,11 +74,11 @@ echo "+ ${TEMPORARY_FILES}/${FOLDER}/install"
 #comment out to cleanup
 #rm -rf "${TEMPORARY_FILES}/${FOLDER}"
 
-PGI_VERSION=$(basename "${NVHPC_INSTALL_DIR}"/Linux_x86_64/*.*/)
+PGI_VERSION=$(basename "${NVHPC_INSTALL_DIR}"/Linux_$(uname -m)/*.*/)
 
 # Use gcc which is available in PATH
-${NVHPC_INSTALL_DIR}/Linux_x86_64/${PGI_VERSION}/compilers/bin/makelocalrc \
-  -x ${NVHPC_INSTALL_DIR}/Linux_x86_64/${PGI_VERSION}/compilers/bin \
+${NVHPC_INSTALL_DIR}/Linux_$(uname -m)/${PGI_VERSION}/compilers/bin/makelocalrc \
+  -x ${NVHPC_INSTALL_DIR}/Linux_$(uname -m)/${PGI_VERSION}/compilers/bin \
   -gcc $(which gcc) \
   -gpp $(which g++) \
   -g77 $(which gfortran)
@@ -89,7 +89,7 @@ PGI_INSTALL_DIR=${NVHPC_INSTALL_DIR}
 PGI_VERSION=${PGI_VERSION}
 
 ### Compilers
-PGI_DIR=\${PGI_INSTALL_DIR}/Linux_x86_64/\${PGI_VERSION}
+PGI_DIR=\${PGI_INSTALL_DIR}/Linux_$(uname -m)/\${PGI_VERSION}
 export PATH=\${PGI_DIR}/compilers/bin:\${PATH}
 EOF
 
@@ -98,5 +98,6 @@ cat >> ${NVHPC_INSTALL_DIR}/env.sh << EOF
 ### MPI
 export MPI_HOME=\${PGI_DIR}/comm_libs/mpi
 export PATH=\${MPI_HOME}/bin:\${PATH}
+export LD_LIBRARY_PATH=\${PGI_DIR}/compilers/lib:\${LD_LIBRARY_PATH}
 EOF
 

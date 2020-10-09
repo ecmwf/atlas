@@ -84,8 +84,8 @@ matrix:
         - CXX_COMPILER='pgc++' C_COMPILER='pgcc' Fortran_COMPILER='pgfortran'
         - MPI='openmpi'
         - PGI_VERSION="CommunityEdition"
-        - ECKIT_CMAKE_OPTIONS="-DENABLE_ECKIT-395=OFF -DRT_LIB=/usr/lib/x86_64-linux-gnu/librt.so -DCURSES_LIBRARY=/usr/lib/x86_64-linux-gnu/libcurses.so"
-        - ATLAS_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=DEBUG"
+        - ECKIT_CMAKE_OPTIONS="-DENABLE_ECKIT-395=OFF -DRT_LIB=/usr/lib/x86_64-linux-gnu/librt.so -DCURSES_LIBRARY=/usr/lib/x86_64-linux-gnu/libcurses.so -DMPI_ARGS=--oversubscribe"
+        - ATLAS_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=DEBUG -DMPI_ARGS=--oversubscribe"
 
 before_install:
 
