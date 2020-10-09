@@ -140,7 +140,9 @@ if ! ${skip_install} ; then
   fi
   echo "+ cmake ${SET_CMAKE_MODULE_PATH} -DCMAKE_INSTALL_PREFIX=${PREFIX} ${CMAKE_OPTIONS} ${SOURCE_DIR}"
   cmake ${SET_CMAKE_MODULE_PATH} -DCMAKE_INSTALL_PREFIX=${PREFIX} ${CMAKE_OPTIONS} ${SOURCE_DIR}
-  make -j4 install
+  core_count=$(nproc || echo 4)
+  echo "+ make -j${core_count} install"
+  make -j${core_count} install
 
   # Store version information
   mkdir -p ${PREFIX}/sha

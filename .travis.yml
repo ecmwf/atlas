@@ -229,7 +229,7 @@ script:
   #################################################################
   - mkdir -p ${ATLAS_BUILD_DIR} && cd ${ATLAS_BUILD_DIR}
   - cmake -DCMAKE_MODULE_PATH=${ECBUILD_MODULE_PATH} ${ATLAS_CMAKE_OPTIONS} ${ATLAS_SOURCE_DIR}
-  - make -j4
+  - make -j$(nproc)
   - bin/atlas --info
 
   #################################################################
