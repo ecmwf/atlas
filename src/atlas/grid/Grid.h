@@ -79,6 +79,7 @@ public:
     using Handle::Handle;
     Grid() = default;
     Grid( const std::string& name, const Domain& = Domain() );
+    Grid( const std::string& name, const Projection&, const Domain& = Domain() );
     Grid( const Grid&, const Domain& );
     Grid( const Config& );
 

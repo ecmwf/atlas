@@ -41,6 +41,18 @@ Grid::Grid( const std::string& shortname, const Domain& domain ) :
         return Grid::Implementation::create( shortname, config );
     }() ) {}
 
+Grid::Grid( const std::string& shortname, const Projection& projection, const Domain& domain ) :
+    Handle( [&] {
+        Config config;
+        if ( projection ) {
+            config.set( "projection", projection.spec() );
+        }
+        if ( domain ) {
+            config.set( "domain", domain.spec() );
+        }
+        return Grid::Implementation::create( shortname, config );
+    }() ) {}
+
 Grid::Grid( const Grid& grid, const Grid::Domain& domain ) :
     Handle( [&] {
         ATLAS_ASSERT( grid );
