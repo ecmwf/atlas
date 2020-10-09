@@ -1,12 +1,5 @@
-sudo: false
 
 language: cpp
-
-
-# Workaround for https://github.com/travis-ci/travis-ci/issues/4681
-matrix:
-  - TRAVIS_EMPTY_JOB_WORKAROUND=true
-
 
 cache:
   directories:
@@ -17,11 +10,7 @@ cache:
     - ${HOME}/deps/fckit
 
 
-matrix:
-  exclude:
-
-    - env: TRAVIS_EMPTY_JOB_WORKAROUND
-
+jobs:
   include:
 
     - os: linux
@@ -68,14 +57,14 @@ matrix:
         - MPI=openmpi
         - ATLAS_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=DEBUG"
         - ATLAS_CTEST_OPTIONS="-E atlas_test_stencil_parallel_mpi16"
-      osx_image: xcode10.1
+      osx_image: xcode12
 
     - os: osx
       env:
         - CACHE_NAME=osx-clang-mpich
         - CXX_COMPILER='clang++' C_COMPILER='clang' Fortran_COMPILER='gfortran'
         - MPI=mpich
-      osx_image: xcode9
+      osx_image: xcode12
 
     - os: linux
       compiler: gcc
@@ -154,6 +143,10 @@ install:
         mkdir -p ${DEPS_DIR}/cmake && travis_retry wget --no-check-certificate --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C ${DEPS_DIR}/cmake
       fi
       export PATH=${DEPS_DIR}/cmake/bin:${PATH}
+    else
+      brew upgrade cmake || brew install cmake
+      brew install openssl
+      export OPENSSL_ROOT_DIR=/usr/local/opt/openssl
     fi
     cmake --version
 
