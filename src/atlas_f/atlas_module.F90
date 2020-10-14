@@ -110,7 +110,8 @@ use atlas_kinds_module, only: &
     & ATLAS_KIND_INT32
 use atlas_Partitioner_module, only: &
     & atlas_Partitioner, &
-    & atlas_MatchingMeshPartitioner
+    & atlas_MatchingPartitioner, &
+    & atlas_MatchingMeshPartitioner ! Deprecated ! use atlas_MatchingPartitioner instead
 use atlas_MeshGenerator_module, only: &
     & atlas_MeshGenerator
 use atlas_Method_module, only: &
