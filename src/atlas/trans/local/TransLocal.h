@@ -184,7 +184,7 @@ private:
     std::vector<idx_t> jlonMin_;
     idx_t jlatMin_;
     idx_t jlatMinLeg_;
-    idx_t nlonsMaxGlobal_;
+    int nlonsMaxGlobal_;
     std::vector<idx_t> nlonsGlobal_;
     std::vector<idx_t> nlat0_;
     idx_t nlatsGlobal_;

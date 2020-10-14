@@ -9,6 +9,7 @@
  */
 
 #include <fstream>
+#include <sstream>
 
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
@@ -70,9 +71,14 @@ void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, cons
     int mpi_rank                 = int( comm.rank() );
     int mpi_size                 = int( comm.size() );
 
-    auto points = this->xy();
+    std::string coordinates = config.getString( "coordinates", "xy" );
+    if ( coordinates == "ij" ) {
+        coordinates = "xy";
+    }
+    auto points = coordinates == "xy" ? this->xy() : this->lonlat();
+
     ATLAS_ASSERT( points.size() == size() );
-    const auto nodes_xy = array::make_view<double, 2>( mesh_.nodes().xy() );
+    const auto nodes_xy = array::make_view<double, 2>( mesh_.nodes().field( coordinates ) );
     double xmin         = std::numeric_limits<double>::max();
     double xmax         = -std::numeric_limits<double>::max();
     for ( const auto& p : points ) {
@@ -187,20 +193,27 @@ void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, cons
             f << "\n"
                  "";
             if ( mpi_rank == mpi_size - 1 ) {
-                f << "\n"
-                     "ax.set_xlim( "
-                  << xmin << "-5, " << xmax
-                  << "+5)"
-                     "\n"
-                     "ax.set_ylim(-90-5,  90+5)"
-                     "\n"
-                     "ax.set_xticks([0,45,90,135,180,225,270,315,360])"
-                     "\n"
-                     "ax.set_yticks([-90,-45,0,45,90])"
-                     "\n"
-                     "plt.grid()"
-                     "\n"
-                     "plt.show()";
+                auto xticks = [&]() -> std::string {
+                    std::vector<int> xticks;
+                    xticks.push_back( std::floor( xmin - int( xmin ) % 45 ) );
+                    while ( xticks.back() < int( std::round( xmax ) ) ) {
+                        xticks.push_back( xticks.back() + 45 );
+                    }
+                    std::stringstream xticks_ss;
+                    for ( int i = 0; i < xticks.size(); ++i ) {
+                        xticks_ss << ( i == 0 ? "[" : "," ) << xticks[i];
+                    }
+                    xticks_ss << "]";
+                    return xticks_ss.str();
+                };
+                // clang-format off
+                f << "\n" "ax.set_xlim( " << xmin << "-5, " << xmax << "+5)"
+                     "\n" "ax.set_ylim(-90-5, 90+5)"
+                     "\n" "ax.set_xticks(" << xticks() << ")"
+                     "\n" "ax.set_yticks([-90,-45,0,45,90])"
+                     "\n" "plt.grid()"
+                     "\n" "plt.show()";
+                // clang-format on
             }
         }
         comm.barrier();
@@ -250,11 +263,13 @@ void PartitionPolygon::print( std::ostream& out ) const {
         << "halo:" << halo_ << ",size:" << size() << ",nodes:" << static_cast<const util::Polygon&>( *this ) << "}";
 }
 
-PartitionPolygon::PointsXY PartitionPolygon::xy() const {
-    PointsXY points_xy;
-    points_xy.reserve( size() );
+namespace {
+PartitionPolygon::PointsXY points( const Mesh::Implementation& mesh_, const Field& coords,
+                                   const std::vector<idx_t>& polygon ) {
+    PartitionPolygon::PointsXY points_xy;
+    points_xy.reserve( polygon.size() );
 
-    auto xy_view = array::make_view<double, 2>( mesh_.nodes().xy() );
+    auto xy_view = array::make_view<double, 2>( coords );
     auto flags   = array::make_view<int, 1>( mesh_.nodes().flags() );
 
     bool domain_includes_north_pole = false;
@@ -280,11 +295,27 @@ PartitionPolygon::PointsXY PartitionPolygon::xy() const {
         return false;
     };
 
-    for ( idx_t i : static_cast<const container_t&>( *this ) ) {
-        double y = bc_north( i ) ? 90. : bc_south( i ) ? -90. : xy_view( i, idx_t( YY ) );
-        points_xy.emplace_back( xy_view( i, idx_t( XX ) ), y );
+    if ( coords.name() == "xy" ) {
+        for ( idx_t i : polygon ) {
+            double y = bc_north( i ) ? 90. : bc_south( i ) ? -90. : xy_view( i, idx_t( YY ) );
+            points_xy.emplace_back( xy_view( i, idx_t( XX ) ), y );
+        }
+    }
+    else {
+        for ( idx_t i : polygon ) {
+            points_xy.emplace_back( xy_view( i, idx_t( XX ) ), xy_view( i, idx_t( YY ) ) );
+        }
     }
     return points_xy;
+}
+}  // namespace
+
+PartitionPolygon::PointsXY PartitionPolygon::xy() const {
+    return points( mesh_, mesh_.nodes().xy(), *this );
+}
+
+PartitionPolygon::PointsLonLat PartitionPolygon::lonlat() const {
+    return points( mesh_, mesh_.nodes().lonlat(), *this );
 }
 
 }  // namespace mesh

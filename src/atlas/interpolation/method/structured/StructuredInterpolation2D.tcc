@@ -64,7 +64,7 @@ void StructuredInterpolation2D<Kernel>::do_setup( const Grid& source, const Grid
 
     ATLAS_ASSERT( StructuredGrid( source ) );
     FunctionSpace source_fs =
-        functionspace::StructuredColumns( source, option::halo( std::max( kernel_->stencil_halo(), 1 ) ) );
+        functionspace::StructuredColumns( source, option::halo( std::max<idx_t>( kernel_->stencil_halo(), 1 ) ) );
     // guarantee "1" halo for pole treatment!
     FunctionSpace target_fs = functionspace::PointCloud( target );
 

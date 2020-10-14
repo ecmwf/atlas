@@ -39,6 +39,114 @@ namespace detail {
 class ProjectionImpl : public util::Object {
 public:
     using Spec = atlas::util::Config;
+    class Jacobian : public std::array<std::array<double, 2>, 2> {
+    public:
+        static Jacobian identity() {
+            Jacobian id;
+            id[0] = {1.0, 0.0};
+            id[1] = {0.0, 1.0};
+            return id;
+        }
+
+        Jacobian inverse() const {
+            const Jacobian& jac = *this;
+            Jacobian inv;
+            double det = jac[0][0] * jac[1][1] - jac[0][1] * jac[1][0];
+            inv[0][0]  = +jac[1][1] / det;
+            inv[0][1]  = -jac[0][1] / det;
+            inv[1][0]  = -jac[1][0] / det;
+            inv[1][1]  = +jac[0][0] / det;
+            return inv;
+        };
+
+        Jacobian transpose() const {
+            Jacobian tra = *this;
+            std::swap( tra[0][1], tra[1][0] );
+            return tra;
+        };
+
+        Jacobian operator-( const Jacobian& jac2 ) const {
+            const Jacobian& jac1 = *this;
+            Jacobian jac;
+            jac[0][0] = jac1[0][0] - jac2[0][0];
+            jac[0][1] = jac1[0][1] - jac2[0][1];
+            jac[1][0] = jac1[1][0] - jac2[1][0];
+            jac[1][1] = jac1[1][1] - jac2[1][1];
+            return jac;
+        }
+
+        Jacobian operator+( const Jacobian& jac2 ) const {
+            const Jacobian& jac1 = *this;
+            Jacobian jac;
+            jac[0][0] = jac1[0][0] + jac2[0][0];
+            jac[0][1] = jac1[0][1] + jac2[0][1];
+            jac[1][0] = jac1[1][0] + jac2[1][0];
+            jac[1][1] = jac1[1][1] + jac2[1][1];
+            return jac;
+        }
+
+        double norm() const {
+            const Jacobian& jac = *this;
+            return sqrt( jac[0][0] * jac[0][0] + jac[0][1] * jac[0][1] + jac[1][0] * jac[1][0] +
+                         jac[1][1] * jac[1][1] );
+        }
+
+        Jacobian operator*( const Jacobian& jac2 ) const {
+            const Jacobian& jac1 = *this;
+            Jacobian jac;
+            jac[0][0] = jac1[0][0] * jac2[0][0] + jac1[0][1] * jac2[1][0];
+            jac[0][1] = jac1[0][0] * jac2[0][1] + jac1[0][1] * jac2[1][1];
+            jac[1][0] = jac1[1][0] * jac2[0][0] + jac1[1][1] * jac2[1][0];
+            jac[1][1] = jac1[1][0] * jac2[0][1] + jac1[1][1] * jac2[1][1];
+            return jac;
+        }
+
+        double dx_dlon() const {
+            const Jacobian& jac = *this;
+            return jac[JDX][JDLON];
+        }
+        double dy_dlon() const {
+            const Jacobian& jac = *this;
+            return jac[JDY][JDLON];
+        }
+        double dx_dlat() const {
+            const Jacobian& jac = *this;
+            return jac[JDX][JDLAT];
+        }
+        double dy_dlat() const {
+            const Jacobian& jac = *this;
+            return jac[JDY][JDLAT];
+        }
+
+        double dlon_dx() const {
+            const Jacobian& jac = *this;
+            return jac[JDLON][JDX];
+        }
+        double dlon_dy() const {
+            const Jacobian& jac = *this;
+            return jac[JDLON][JDY];
+        }
+        double dlat_dx() const {
+            const Jacobian& jac = *this;
+            return jac[JDLAT][JDX];
+        }
+        double dlat_dy() const {
+            const Jacobian& jac = *this;
+            return jac[JDLAT][JDY];
+        }
+
+    private:
+        enum
+        {
+            JDX = 0,
+            JDY = 1
+        };
+        enum
+        {
+            JDLON = 0,
+            JDLAT = 1
+        };
+    };
 
 public:
     static const ProjectionImpl* create( const eckit::Parametrisation& p );
@@ -51,6 +159,8 @@ public:
 
     virtual void xy2lonlat( double crd[] ) const = 0;
     virtual void lonlat2xy( double crd[] ) const = 0;
+
+    virtual Jacobian jacobian( const PointLonLat& ) const = 0;
 
     void xy2lonlat( Point2& ) const;
     void lonlat2xy( Point2& ) const;

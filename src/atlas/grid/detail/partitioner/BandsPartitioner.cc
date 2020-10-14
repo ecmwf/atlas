@@ -22,7 +22,7 @@ namespace grid {
 namespace detail {
 namespace partitioner {
 
-size_t BandsPartitioner::blocksize( const atlas::grid::detail::partitioner::Partitioner::Grid& grid ) const {
+size_t BandsPartitioner::blocksize( const Grid& grid ) const {
     if ( blocksize_ == BLOCKSIZE_NX ) {
         if ( auto regular = RegularGrid( grid ) ) {
             return regular.nx();

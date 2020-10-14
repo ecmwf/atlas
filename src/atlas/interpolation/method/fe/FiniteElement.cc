@@ -136,7 +136,7 @@ void FiniteElement::print( std::ostream& out ) const {
 
     auto stencil_points_loc  = array::make_view<gidx_t, 2>( field_stencil_points_loc );
     auto stencil_weights_loc = array::make_view<double, 2>( field_stencil_weigths_loc );
-    auto stencil_size_loc    = array::make_view<int, 1>( field_stencil_size_loc );
+    auto stencil_size_loc    = array::make_view<idx_t, 1>( field_stencil_size_loc );
     stencil_size_loc.assign( 0 );
 
     for ( Matrix::const_iterator it = matrix_.begin(); it != matrix_.end(); ++it ) {
@@ -154,12 +154,12 @@ void FiniteElement::print( std::ostream& out ) const {
         tgt.createField<gidx_t>( option::variables( Stencil::max_stencil_size ) | option::global( 0 ) );
     auto field_stencil_weights_glb =
         tgt.createField<double>( option::variables( Stencil::max_stencil_size ) | option::global( 0 ) );
-    auto field_stencil_size_glb = tgt.createField<int>( option::global( 0 ) );
+    auto field_stencil_size_glb = tgt.createField<idx_t>( option::global( 0 ) );
 
 
     auto stencil_points_glb  = array::make_view<gidx_t, 2>( field_stencil_points_glb );
     auto stencil_weights_glb = array::make_view<double, 2>( field_stencil_weights_glb );
-    auto stencil_size_glb    = array::make_view<int, 1>( field_stencil_size_glb );
+    auto stencil_size_glb    = array::make_view<idx_t, 1>( field_stencil_size_glb );
 
     tgt.gather().gather( stencil_size_loc, stencil_size_glb );
     tgt.gather().gather( stencil_points_loc, stencil_points_glb );

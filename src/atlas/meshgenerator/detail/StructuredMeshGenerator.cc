@@ -751,7 +751,7 @@ We need to connect to next region
     int nb_region_nodes = 0;
     for ( int jlat = region.north; jlat <= region.south; ++jlat ) {
         n                           = offset.at( jlat );
-        region.lat_begin.at( jlat ) = std::max( 0, region.lat_begin.at( jlat ) );
+        region.lat_begin.at( jlat ) = std::max<idx_t>( 0, region.lat_begin.at( jlat ) );
         for ( idx_t jlon = 0; jlon < rg.nx( jlat ); ++jlon ) {
             if ( distribution.partition( n ) == mypart ) {
                 region.lat_begin.at( jlat ) = std::min( region.lat_begin.at( jlat ), jlon );

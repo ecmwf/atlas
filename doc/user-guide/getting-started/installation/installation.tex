@@ -574,7 +574,7 @@ project(usage_example)
 include(ecbuild_system NO_POLICY_SCOPE)
 ecbuild_requires_macro_version(1.9)
 ecbuild_declare_project()
-ecbuild_use_package(PROJECT atlas REQUIRED)
+ecbuild_find_package(NAME atlas REQUIRED)
 ecbuild_add_executable(TARGET   atlas_c-usage_example
                        SOURCES  hello-world.cc 
                        INCLUDES ${ATLAS_INCLUDE_DIRS}
@@ -773,7 +773,7 @@ ecbuild_requires_macro_version(1.9)
 ecbuild_declare_project()
 ecbuild_enable_fortran(MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/module
                        REQUIRED)
-ecbuild_use_package(PROJECT atlas REQUIRED)
+ecbuild_find_package(NAME atlas REQUIRED)
 ecbuild_add_executable(TARGET  atlas_f-usage_example
                        SOURCES hello-world.F90 
                        INCLUDES ${ATLAS_INCLUDE_DIRS}

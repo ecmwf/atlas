@@ -77,8 +77,8 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
     //     and could receive different gidx for different tasks
 
     // unused // int mypart = mpi::rank();
-    int nparts = mpi::size();
-    idx_t root = 0;
+    int nparts  = mpi::size();
+    size_t root = 0;
 
     array::ArrayView<gidx_t, 1> nodes_glb_idx = array::make_view<gidx_t, 1>( nodes.global_index() );
     // nodes_glb_idx.dump( Log::info() );
@@ -105,7 +105,7 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
     }
 
     std::vector<gidx_t> glb_idx( points_to_edit.size() );
-    idx_t nb_nodes = static_cast<idx_t>( glb_idx.size() );
+    int nb_nodes = static_cast<int>( glb_idx.size() );
     for ( idx_t i = 0; i < nb_nodes; ++i ) {
         glb_idx[i] = nodes_glb_idx( points_to_edit[i] );
     }
@@ -135,7 +135,7 @@ void make_nodes_global_index_human_readable( const mesh::actions::BuildHalo& bui
     std::vector<int> recvdispls( mpi::size() );
 
     ATLAS_TRACE_MPI( GATHER ) { mpi::comm().gather( nb_nodes, recvcounts, root ); }
-    int glb_nb_nodes = std::accumulate( recvcounts.begin(), recvcounts.end(), 0 );
+    idx_t glb_nb_nodes = std::accumulate( recvcounts.begin(), recvcounts.end(), 0 );
 
     recvdispls[0] = 0;
     for ( int jpart = 1; jpart < nparts; ++jpart ) {  // start at 1
@@ -225,8 +225,8 @@ void make_cells_global_index_human_readable( const mesh::actions::BuildHalo& bui
     }
 
     std::vector<gidx_t> glb_idx( cells_to_edit.size() );
-    const idx_t nb_cells = static_cast<idx_t>( glb_idx.size() );
-    for ( idx_t i = 0; i < nb_cells; ++i ) {
+    const int nb_cells = static_cast<int>( glb_idx.size() );
+    for ( int i = 0; i < nb_cells; ++i ) {
         glb_idx[i] = cells_glb_idx( cells_to_edit[i] );
     }
 
@@ -333,10 +333,10 @@ void build_lookup_node2elem( const Mesh& mesh, Node2Elem& node2elem ) {
     }
 }
 
-void accumulate_partition_bdry_nodes_old( Mesh& mesh, std::vector<int>& bdry_nodes ) {
+void accumulate_partition_bdry_nodes_old( Mesh& mesh, std::vector<idx_t>& bdry_nodes ) {
     ATLAS_TRACE();
 
-    std::set<int> bdry_nodes_set;
+    std::set<idx_t> bdry_nodes_set;
 
     std::vector<idx_t> facet_nodes;
     std::vector<idx_t> connectivity_facet_to_elem;
@@ -364,10 +364,10 @@ void accumulate_partition_bdry_nodes_old( Mesh& mesh, std::vector<int>& bdry_nod
             }
         }
     }
-    bdry_nodes = std::vector<int>( bdry_nodes_set.begin(), bdry_nodes_set.end() );
+    bdry_nodes = std::vector<idx_t>( bdry_nodes_set.begin(), bdry_nodes_set.end() );
 }
 
-void accumulate_partition_bdry_nodes( Mesh& mesh, idx_t halo, std::vector<int>& bdry_nodes ) {
+void accumulate_partition_bdry_nodes( Mesh& mesh, idx_t halo, std::vector<idx_t>& bdry_nodes ) {
 #ifndef ATLAS_103
     /* deprecated */
     accumulate_partition_bdry_nodes_old( mesh, bdry_nodes );
@@ -384,10 +384,10 @@ void accumulate_partition_bdry_nodes( Mesh& mesh, idx_t halo, std::vector<int>& 
 }
 
 template <typename Predicate>
-std::vector<int> filter_nodes( std::vector<int> nodes, const Predicate& predicate ) {
-    std::vector<int> filtered;
+std::vector<idx_t> filter_nodes( std::vector<idx_t> nodes, const Predicate& predicate ) {
+    std::vector<idx_t> filtered;
     filtered.reserve( nodes.size() );
-    for ( int inode : nodes ) {
+    for ( idx_t inode : nodes ) {
         if ( predicate( inode ) ) {
             filtered.push_back( inode );
         }
@@ -446,9 +446,18 @@ void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node ) {
         if ( not inserted ) {
             int other = uid2node[uid];
             std::stringstream msg;
-            msg << "Node uid: " << uid << "   " << glb_idx( jnode ) << " (" << xy( jnode, XX ) << "," << xy( jnode, YY )
-                << ")  has already been added as node " << glb_idx( other ) << " (" << xy( other, XX ) << ","
+            msg << std::setprecision( 10 ) << std::fixed << "Node uid: " << uid << "   " << glb_idx( jnode ) << " xy("
+                << xy( jnode, XX ) << "," << xy( jnode, YY ) << ")";
+            if ( nodes.has_field( "ij" ) ) {
+                auto ij = array::make_view<idx_t, 2>( nodes.field( "ij" ) );
+                msg << " ij(" << ij( jnode, XX ) << "," << ij( jnode, YY ) << ")";
+            }
+            msg << " has already been added as node " << glb_idx( other ) << " (" << xy( other, XX ) << ","
                 << xy( other, YY ) << ")";
+            if ( nodes.has_field( "ij" ) ) {
+                auto ij = array::make_view<idx_t, 2>( nodes.field( "ij" ) );
+                msg << " ij(" << ij( other, XX ) << "," << ij( other, YY ) << ")";
+            }
             notes.add_error( msg.str() );
         }
     }
@@ -623,7 +632,7 @@ public:
     array::ArrayView<int, 1> elem_flags;
     array::ArrayView<gidx_t, 1> elem_glb_idx;
 
-    std::vector<int> bdry_nodes;
+    std::vector<idx_t> bdry_nodes;
     Node2Elem node_to_elem;
     Uid2Node uid2node;
     UniqueLonLat compute_uid;
@@ -1125,8 +1134,8 @@ void increase_halo_interior( BuildHaloHelper& helper ) {
     // 1) Find boundary nodes of this partition:
 
     accumulate_partition_bdry_nodes( helper.mesh, helper.halosize, helper.bdry_nodes );
-    const std::vector<int>& bdry_nodes = helper.bdry_nodes;
-    const idx_t nb_bdry_nodes          = static_cast<idx_t>( bdry_nodes.size() );
+    const std::vector<idx_t>& bdry_nodes = helper.bdry_nodes;
+    const idx_t nb_bdry_nodes            = static_cast<idx_t>( bdry_nodes.size() );
 
     // 2) Communicate uid of these boundary nodes to other partitions
 

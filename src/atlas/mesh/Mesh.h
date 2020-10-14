@@ -21,7 +21,8 @@
 
 namespace atlas {
 class Projection;
-}
+class Grid;
+}  // namespace atlas
 
 namespace atlas {
 namespace util {
@@ -65,13 +66,14 @@ public:
     using Handle::Handle;
     Mesh();
 
+    /// @brief Generate a mesh from a Grid with recommended mesh generator and partitioner strategy
+    Mesh( const Grid& );
+
     /// @brief Construct a mesh from a Stream (serialization)
     explicit Mesh( eckit::Stream& );
 
     /// @brief Serialization to Stream
     void encode( eckit::Stream& s ) const { return get()->encode( s ); }
-
-    void print( std::ostream& out ) const { get()->print( out ); }
 
     const util::Metadata& metadata() const { return get()->metadata(); }
     util::Metadata& metadata() { return get()->metadata(); }
@@ -124,6 +126,8 @@ public:
     const Grid grid() const { return get()->grid(); }
 
 private:  // methods
+    void print( std::ostream& out ) const { get()->print( out ); }
+
     friend std::ostream& operator<<( std::ostream& s, const Mesh& p ) {
         p.print( s );
         return s;

@@ -7,6 +7,28 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.22.0] - 2020-10-14
+### Fixed
+- Feature INIT_SNAN was not working
+- Support KNearestNeighbour interpolation for functionspace with
+  smaller halo than the mesh contains
+- Support array size up to size_t limit
+
+### Changed
+- Migration to use ecbuild 3.4
+- ATLAS_BITS_LOCAL can be configured to 32 or 64
+
+### Added
+- Fields can be created with given alignment, which adds padding in innermost dimension
+- Added conservative interpolation with "grid-box average" and "grid-box maximum"
+- Missing value definition for fields
+- Add support for missing values in matrix-based interpolation methods
+- Floating point trapping and signal handling mechanism
+- Fortran: GridDistribution constructors
+- Fortran: Domain access
+- Fortran: Get lonlat_bounding_box via domain
+- Possibility to access Jacobian of projections (with only some projections implemented)
+
 ## [0.21.0] - 2020-06-23
 ### Fixed
 - Fixed Rotation order of applying the rotation angle
@@ -223,6 +245,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.22.0]: https://github.com/ecmwf/atlas/compare/0.21.0...0.22.0
 [0.21.0]: https://github.com/ecmwf/atlas/compare/0.20.2...0.21.0
 [0.20.2]: https://github.com/ecmwf/atlas/compare/0.20.1...0.20.2
 [0.20.1]: https://github.com/ecmwf/atlas/compare/0.20.0...0.20.1

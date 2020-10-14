@@ -389,7 +389,6 @@ CASE( "test_interpolation_structured for vectors" ) {
     }
 }
 
-
 }  // namespace test
 }  // namespace atlas
 

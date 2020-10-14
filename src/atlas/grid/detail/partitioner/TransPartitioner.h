@@ -34,6 +34,7 @@ public:
 
     virtual ~TransPartitioner();
 
+    using Partitioner::partition;
     /// Warning: this function temporariliy allocates a new Trans, but without the
     /// computations
     /// of the spectral coefficients (LDGRIDONLY=TRUE)

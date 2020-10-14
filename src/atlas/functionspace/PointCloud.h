@@ -14,6 +14,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/detail/FunctionSpaceImpl.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Point.h"
 
@@ -28,9 +29,8 @@ namespace detail {
 
 class PointCloud : public functionspace::FunctionSpaceImpl {
 public:
-    PointCloud( const std::vector<PointXY>& );
-    PointCloud( PointXY, const std::vector<PointXY>& );
-    PointCloud( PointXYZ, const std::vector<PointXYZ>& );
+    template <typename Point>
+    PointCloud( const std::vector<Point>& );
     PointCloud( const Field& lonlat );
     PointCloud( const Field& lonlat, const Field& ghost );
     PointCloud( const Grid& );
@@ -48,82 +48,52 @@ public:
     virtual Field createField( const eckit::Configuration& ) const override;
     virtual Field createField( const Field&, const eckit::Configuration& ) const override;
 
+    void haloExchange( const FieldSet&, bool /*on_device*/ = false ) const override {}
+    void haloExchange( const Field&, bool /*on_device*/ = false ) const override {}
 
-    class IteratorXYZ {
+    template <typename Point>
+    class IteratorT {
     public:
-        IteratorXYZ( const PointCloud& fs, bool begin = true );
+        using difference_type   = std::ptrdiff_t;
+        using value_type        = Point;
+        using pointer           = Point*;
+        using reference         = Point&;
+        using iterator_category = std::output_iterator_tag;
 
-        bool next( PointXYZ& xyz );
+        IteratorT( const PointCloud& fs, bool begin = true );
 
-        const PointXYZ operator*() const;
+        bool next( Point& );
 
-        const IteratorXYZ& operator++() {
+        const Point operator*() const;
+
+        const IteratorT& operator++() {
             ++n_;
             return *this;
         }
 
-        bool operator==( const IteratorXYZ& other ) const { return n_ == static_cast<const IteratorXYZ&>( other ).n_; }
-
-        virtual bool operator!=( const IteratorXYZ& other ) const {
-            return n_ != static_cast<const IteratorXYZ&>( other ).n_;
-        }
+        bool operator==( const IteratorT& other ) const { return n_ == other.n_; }
+        bool operator!=( const IteratorT& other ) const { return n_ != other.n_; }
 
     private:
         const PointCloud& fs_;
         const array::ArrayView<const double, 2> xy_;
         const array::ArrayView<const double, 1> z_;
         idx_t n_;
+        idx_t size_;
     };
 
-
-    class IterateXYZ {
+    template <typename Point>
+    class IterateT {
     public:
-        using iterator       = IteratorXYZ;
+        using value_type     = Point;
+        using iterator       = IteratorT<Point>;
         using const_iterator = iterator;
 
     public:
-        IterateXYZ( const PointCloud& fs ) : fs_( fs ) {}
-        iterator begin() const { return IteratorXYZ( fs_ ); }
-        iterator end() const { return IteratorXYZ( fs_, false ); }
-
-    private:
-        const PointCloud& fs_;
-    };
-
-    class IteratorXY {
-    public:
-        IteratorXY( const PointCloud& fs, bool begin = true );
-
-        bool next( PointXY& xyz );
-
-        const PointXY operator*() const;
-
-        const IteratorXY& operator++() {
-            ++n_;
-            return *this;
-        }
-
-        bool operator==( const IteratorXY& other ) const { return n_ == static_cast<const IteratorXY&>( other ).n_; }
-
-        virtual bool operator!=( const IteratorXY& other ) const {
-            return n_ != static_cast<const IteratorXY&>( other ).n_;
-        }
-
-    private:
-        const PointCloud& fs_;
-        const array::ArrayView<const double, 2> xy_;
-        idx_t n_;
-    };
-
-    class IterateXY {
-    public:
-        using iterator       = IteratorXY;
-        using const_iterator = iterator;
-
-    public:
-        IterateXY( const PointCloud& fs ) : fs_( fs ) {}
-        iterator begin() const { return IteratorXY( fs_ ); }
-        iterator end() const { return IteratorXY( fs_, false ); }
+        IterateT( const PointCloud& fs ) : fs_( fs ) {}
+        iterator begin() const { return IteratorT<Point>( fs_ ); }
+        iterator end() const { return IteratorT<Point>( fs_, false ); }
+        idx_t size() const { return fs_.size(); }
 
     private:
         const PointCloud& fs_;
@@ -133,8 +103,12 @@ public:
     class Iterate {
     public:
         Iterate( const PointCloud& fs ) : fs_( fs ) {}
-        IterateXYZ xyz() const { return IterateXYZ( fs_ ); }
-        IterateXY xy() const { return IterateXY( fs_ ); }
+        IterateT<PointXYZ> xyz() const {
+            ATLAS_ASSERT( fs_.vertical() );
+            return IterateT<PointXYZ>{fs_};
+        }
+        IterateT<PointXY> xy() const { return IterateT<PointXY>{fs_}; }
+        IterateT<PointLonLat> lonlat() const { return IterateT<PointLonLat>{fs_}; }
 
     private:
         const PointCloud& fs_;
@@ -160,8 +134,8 @@ public:
     PointCloud( const FunctionSpace& );
     PointCloud( const Field& points );
     PointCloud( const std::vector<PointXY>& );
-    PointCloud( PointXY, const std::vector<PointXY>& );
-    PointCloud( PointXYZ, const std::vector<PointXYZ>& );
+    PointCloud( const std::vector<PointXYZ>& );
+    PointCloud( const std::initializer_list<std::initializer_list<double>>& );
     PointCloud( const Grid& grid );
 
     operator bool() const { return valid(); }

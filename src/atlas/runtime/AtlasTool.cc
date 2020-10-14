@@ -102,16 +102,15 @@ std::string getEnv( const std::string& env, const std::string& default_value ) {
 }
 
 void setEnv( const std::string& env, bool value ) {
-    ::setenv( env.c_str(), eckit::Translator<bool, std::string>()( value ).c_str(), 0 );
+    constexpr int DO_NOT_REPLACE_IF_EXISTS = 0;
+    ::setenv( env.c_str(), eckit::Translator<bool, std::string>()( value ).c_str(), DO_NOT_REPLACE_IF_EXISTS );
 }
+
 
 }  // namespace
 
 namespace atlas {
 
-static std::string exception_what;
-static eckit::CodeLocation exception_location;
-static std::string exception_callstack;
 static bool use_logfile;
 static std::string logfile_name;
 static std::string workdir;
@@ -147,9 +146,6 @@ static std::string workdir;
                 << exception.callStack() << "\n"
                 << "=========================================\n"
                 << std::endl;
-            exception_what      = exception.what();
-            exception_location  = exception.location();
-            exception_callstack = exception.callStack();
         }
         catch ( const eckit::Exception& exception ) {
             out << "\n"
@@ -169,9 +165,6 @@ static std::string workdir;
                 << exception.callStack() << "\n"
                 << "=========================================\n"
                 << std::endl;
-            exception_what      = exception.what();
-            exception_location  = exception.location();
-            exception_callstack = backtrace();
         }
         catch ( const std::exception& exception ) {
             out << "\n"
@@ -185,9 +178,6 @@ static std::string workdir;
                 << backtrace() << "\n"
                 << "=========================================\n"
                 << std::endl;
-            exception_what      = exception.what();
-            exception_location  = eckit::CodeLocation();
-            exception_callstack = backtrace();
         }
         catch ( ... ) {
             out << "\n"
@@ -198,9 +188,6 @@ static std::string workdir;
                 << "-----------------------------------------\n"
                 << backtrace() << "\n"
                 << "=========================================" << std::endl;
-            exception_what      = "Uncaught exception";
-            exception_location  = eckit::CodeLocation();
-            exception_callstack = backtrace();
         }
     }
 
@@ -269,6 +256,8 @@ atlas::AtlasTool::AtlasTool( int argc, char** argv ) : eckit::Tool( argc, argv )
     std::set_terminate( &atlas_terminate );
     setEnv( "ECKIT_EXCEPTION_IS_SILENT", true );
     setEnv( "ECKIT_ASSERT_FAILED_IS_SILENT", true );
+    setEnv( "ATLAS_FPE", true );
+    setEnv( "ATLAS_SIGNAL_HANDLER", true );
     add_option( new SimpleOption<bool>( "help", "Print this help" ) );
     add_option( new SimpleOption<long>( "debug", "Debug level" ) );
     taskID( eckit::mpi::comm( "world" ).rank() );
@@ -303,26 +292,6 @@ int atlas::AtlasTool::start() {
     catch ( ... ) {
         atlas_terminate();
     }
-    //    catch ( eckit::Exception& e ) {
-    //        status = 1;
-    //        Log::error() << "** " << e.what() << e.location() << std::endl;
-    //        Log::error() << "** Backtrace:\n" << e.callStack() << '\n';
-    //        Log::error() << "** Exception  caught in " << Here() << " terminates " << name() << std::endl;
-    //    }
-    //    catch ( std::exception& e ) {
-    //        status = 1;
-    //        Log::error() << "** " << e.what() << " caught in " << Here() << '\n';
-    //        Log::error() << "** Exception terminates " << name() << std::endl;
-    //    }
-    //    catch ( ... ) {
-    //        status = 1;
-    //        Log::error() << "** Exception caught in " << Here() << '\n';
-    //        Log::error() << "** Exception terminates " << name() << std::endl;
-    //    }
-    //    if ( status ) {
-    //        Log::error() << std::flush;
-    //        eckit::LibEcKit::instance().abort();
-    //    }
 }
 
 void atlas::AtlasTool::run() {}

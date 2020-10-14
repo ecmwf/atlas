@@ -28,6 +28,8 @@ public:
         MatchingMeshPartitioner( nb_partitions ) {}
     MatchingMeshPartitionerLonLatPolygon( const Mesh& mesh ) : MatchingMeshPartitioner( mesh ) {}
 
+    using Partitioner::partition;
+
     /**
    * @brief Partition a grid, using the same partitions from a pre-partitioned
    * mesh.

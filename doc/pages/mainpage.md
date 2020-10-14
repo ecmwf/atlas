@@ -28,10 +28,6 @@ What's new?                  {#mainpage-whats-new}
 Curious about what was added or improved recently? Check out the
 [Changelog](https://github.com/ecmwf/atlas/blob/master/CHANGELOG.md)
 
-Getting started             {#mainpage-getting-started}
----------------
-
-The best way to get started is to read the @ref getting-started guide.
 
 Contributing                {#mainpage-contributing}
 ------------

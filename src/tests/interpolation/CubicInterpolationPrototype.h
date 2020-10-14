@@ -8,6 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "eckit/linalg/SparseMatrix.h"
+#include "eckit/types/Types.h"
+
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/functionspace/StructuredColumns.h"
@@ -15,11 +18,7 @@
 #include "atlas/grid/Stencil.h"
 #include "atlas/grid/StencilComputer.h"
 #include "atlas/grid/Vertical.h"
-#include "eckit/linalg/SparseMatrix.h"
-
-
-#include "atlas/runtime/Log.h"
-#include "eckit/types/Types.h"
+#include "atlas/runtime/Exception.h"
 
 using namespace eckit;
 using namespace atlas::functionspace;
@@ -60,7 +59,6 @@ public:
     template <typename stencil_t, typename weights_t>
     void compute_weights( const double z, const stencil_t& stencil, weights_t& weights ) const {
         auto& w = weights.weights_k;
-
         std::array<double, 4> zvec;
         for ( idx_t k = 0; k < 4; ++k ) {
             zvec[k] = vertical_( stencil.k( k ) );
@@ -140,6 +138,10 @@ public:
         double d3 = z - zvec[3];
 
         w[0] = ( d1 * d2 * d3 ) / dc0;
+#if defined( _CRAYC ) && ATLAS_BUILD_TYPE_RELEASE
+        // prevents FE_INVALID somehow (tested with Cray 8.7)
+        ATLAS_ASSERT( !std::isnan( w[0] ) );
+#endif
         w[1] = ( d0 * d2 * d3 ) / dc1;
         w[2] = ( d0 * d1 * d3 ) / dc2;
         w[3] = 1. - w[0] - w[1] - w[2];
@@ -254,9 +256,13 @@ public:
 
         auto& weights_j = weights.weights_j;
         weights_j[0]    = ( dl2 * dl3 * dl4 ) / dcl1;
-        weights_j[1]    = ( dl1 * dl3 * dl4 ) / dcl2;
-        weights_j[2]    = ( dl1 * dl2 * dl4 ) / dcl3;
-        weights_j[3]    = 1. - weights_j[0] - weights_j[1] - weights_j[2];
+#if defined( _CRAYC ) && ATLAS_BUILD_TYPE_RELEASE
+        // prevents FE_INVALID somehow (tested with Cray 8.7)
+        ATLAS_ASSERT( !std::isnan( weights_j[0] ) );
+#endif
+        weights_j[1] = ( dl1 * dl3 * dl4 ) / dcl2;
+        weights_j[2] = ( dl1 * dl2 * dl4 ) / dcl3;
+        weights_j[3] = 1. - weights_j[0] - weights_j[1] - weights_j[2];
     }
 
     template <typename stencil_t, typename weights_t, typename array_t>

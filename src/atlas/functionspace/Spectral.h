@@ -127,7 +127,7 @@ public:
                 }
             }
             else {
-                const int nb_zonal_wavenumbers{zonal_wavenumbers.size()};
+                const int nb_zonal_wavenumbers{static_cast<int>( zonal_wavenumbers.size() )};
                 atlas_omp_parallel_for( int jm = 0; jm < nb_zonal_wavenumbers; ++jm ) {
                     const int m = zonal_wavenumbers( jm );
                     for ( int n = m; n <= truncation; ++n ) {
@@ -153,7 +153,7 @@ public:
                 }
             }
             else {
-                const int nb_zonal_wavenumbers{zonal_wavenumbers.size()};
+                const int nb_zonal_wavenumbers{static_cast<int>( zonal_wavenumbers.size() )};
                 atlas_omp_parallel_for( int jm = 0; jm < nb_zonal_wavenumbers; ++jm ) {
                     const int m = zonal_wavenumbers( jm );
                     for ( int n = m; n <= truncation; ++n ) {

@@ -414,6 +414,10 @@ util::PartitionPolygon::PointsXY StructuredPartitionPolygon::xy() const {
     return points_;
 }
 
+util::PartitionPolygon::PointsXY StructuredPartitionPolygon::lonlat() const {
+    return points_;
+}
+
 void StructuredPartitionPolygon::allGather( util::PartitionPolygons& polygons_ ) const {
     ATLAS_TRACE();
 

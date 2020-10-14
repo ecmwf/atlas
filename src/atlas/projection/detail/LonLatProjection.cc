@@ -36,6 +36,19 @@ template <>
 void LonLatProjectionT<NotRotated>::lonlat2xy( double[] ) const {}
 
 template <>
+ProjectionImpl::Jacobian LonLatProjectionT<NotRotated>::jacobian( const PointLonLat& ) const {
+    Jacobian jac;
+    jac[0] = {1.0, 0.0};
+    jac[1] = {0.0, 1.0};
+    return jac;
+}
+
+template <typename Rotation>
+ProjectionImpl::Jacobian LonLatProjectionT<Rotation>::jacobian( const PointLonLat& ) const {
+    throw_NotImplemented( "LonLatProjectionT::jacobian", Here() );
+}
+
+template <>
 RectangularLonLatDomain LonLatProjectionT<NotRotated>::lonlatBoundingBox( const Domain& domain ) const {
     return domain;
 }

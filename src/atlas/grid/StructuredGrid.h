@@ -64,6 +64,7 @@ public:
     StructuredGrid( const Grid& );
     StructuredGrid( const Grid::Implementation* );
     StructuredGrid( const std::string& name, const Domain& = Domain() );
+    StructuredGrid( const std::string& name, const Projection&, const Domain& = Domain() );
     StructuredGrid( const Config& );
     StructuredGrid( const XSpace&, const YSpace&, const Projection& = Projection(), const Domain& = Domain() );
     StructuredGrid( const Grid&, const Domain& );

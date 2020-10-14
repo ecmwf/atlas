@@ -16,6 +16,7 @@
 #include "atlas/field/FieldSet.h"
 #include "atlas/grid.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/option.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/ObjectHandle.h"
@@ -119,6 +120,30 @@ CASE( "test_wrap_rawdata_through_field" ) {
     Field field( "name", rawdata.data(), array::make_shape( 10, 2 ) );
 }
 
+CASE( "test_field_aligned" ) {
+    using namespace array;
+    auto check_field = []( const Field& field ) {
+        EXPECT_EQ( field.shape()[0], 10 );
+        EXPECT_EQ( field.shape()[1], 5 );
+        EXPECT_EQ( field.shape()[2], 3 );
+        EXPECT_EQ( field.size(), 10 * 5 * 3 );
+        EXPECT_EQ( field.contiguous(), false );
+        EXPECT_EQ( field.strides()[0], 5 * 4 );
+        EXPECT_EQ( field.strides()[1], 4 );
+        EXPECT_EQ( field.strides()[2], 1 );
+    };
+    SECTION( "field(name,datatype,spec)" ) {
+        Field field( "name", make_datatype<double>(), ArraySpec{make_shape( 10, 5, 3 ), ArrayAlignment( 4 )} );
+        check_field( field );
+    }
+    SECTION( "field(config)" ) {
+        Field field( util::Config( "creator", "ArraySpec" ) |                     //
+                     util::Config( "datatype", make_datatype<double>().str() ) |  //
+                     option::shape( {10, 5, 3} ) |                                //
+                     option::alignment( 4 ) );
+        check_field( field );
+    }
+}
 
 //-----------------------------------------------------------------------------
 

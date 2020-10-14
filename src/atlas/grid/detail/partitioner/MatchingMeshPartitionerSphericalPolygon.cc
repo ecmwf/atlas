@@ -48,7 +48,7 @@ void MatchingMeshPartitionerSphericalPolygon::partition( const Grid& grid, int p
     bool includesNorthPole = ( mpi_rank == 0 );
     bool includesSouthPole = ( mpi_rank == mpi_size - 1 );
 
-    if ( not prePartitionedMesh_.projection() ) {
+    if ( prePartitionedMesh_.projection() ) {
         ATLAS_NOTIMPLEMENTED;
     }
     const util::SphericalPolygon poly{prePartitionedMesh_.polygon( 0 )};

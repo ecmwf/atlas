@@ -63,6 +63,11 @@ public:
         bool gather;
         bool ghost;
         bool info;
+
+        bool configured_land_water;
+        bool land;
+        bool water;
+
         std::vector<long> levels;
         std::string nodes;
         std::string file;

@@ -82,6 +82,26 @@ Array* Array::create( DataType datatype, const ArrayShape& shape ) {
     }
 }
 
+Array* Array::create( DataType datatype, ArraySpec&& spec ) {
+    switch ( datatype.kind() ) {
+        case DataType::KIND_REAL64:
+            return new ArrayT<double>( std::move( spec ) );
+        case DataType::KIND_REAL32:
+            return new ArrayT<float>( std::move( spec ) );
+        case DataType::KIND_INT32:
+            return new ArrayT<int>( std::move( spec ) );
+        case DataType::KIND_INT64:
+            return new ArrayT<long>( std::move( spec ) );
+        case DataType::KIND_UINT64:
+            return new ArrayT<unsigned long>( std::move( spec ) );
+        default: {
+            std::stringstream err;
+            err << "data kind " << datatype.kind() << " not recognised.";
+            throw_NotImplemented( err.str(), Here() );
+        }
+    }
+}
+
 template <typename Value>
 ArrayT<Value>::ArrayT( ArrayDataStore* ds, const ArraySpec& spec ) {
     data_store_ = std::unique_ptr<ArrayDataStore>( ds );
@@ -117,12 +137,18 @@ ArrayT<Value>::ArrayT( idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3, idx_t dim
 template <typename Value>
 ArrayT<Value>::ArrayT( const ArrayShape& shape ) {
     ATLAS_ASSERT( shape.size() > 0 );
-    idx_t size = 1;
+    size_t size = 1;
     for ( size_t j = 0; j < shape.size(); ++j ) {
-        size *= shape[j];
+        size *= size_t( shape[j] );
     }
     data_store_ = std::unique_ptr<ArrayDataStore>( new native::DataStore<Value>( size ) );
     spec_       = ArraySpec( shape );
+}
+
+template <typename Value>
+ArrayT<Value>::ArrayT( const ArrayShape& shape, const ArrayAlignment& alignment ) {
+    spec_       = ArraySpec( shape, alignment );
+    data_store_ = std::unique_ptr<ArrayDataStore>( new native::DataStore<Value>( spec_.allocatedSize() ) );
 }
 
 template <typename Value>
@@ -135,12 +161,8 @@ ArrayT<Value>::ArrayT( const ArrayShape& shape, const ArrayLayout& layout ) {
 }
 
 template <typename Value>
-ArrayT<Value>::ArrayT( const ArraySpec& spec ) {
-    if ( not spec.contiguous() ) {
-        ATLAS_NOTIMPLEMENTED;
-    }
-    spec_       = spec;
-    data_store_ = std::unique_ptr<ArrayDataStore>( new native::DataStore<Value>( spec_.size() ) );
+ArrayT<Value>::ArrayT( ArraySpec&& spec ) : Array( std::move( spec ) ) {
+    data_store_ = std::unique_ptr<ArrayDataStore>( new native::DataStore<Value>( spec_.allocatedSize() ) );
 }
 
 template <typename Value>

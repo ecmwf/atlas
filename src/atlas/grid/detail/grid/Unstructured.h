@@ -187,6 +187,9 @@ public:  // methods
         return std::unique_ptr<Grid::IteratorLonLat>( new IteratorLonLat( *this, false ) );
     }
 
+    Config meshgenerator() const override;
+    Config partitioner() const override;
+
 private:  // methods
     virtual void print( std::ostream& ) const override;
 

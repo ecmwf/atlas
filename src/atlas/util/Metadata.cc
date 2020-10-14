@@ -14,9 +14,7 @@
 #include <sstream>
 #include <stdexcept>
 
-#include "eckit/eckit_version.h"
 #include "eckit/log/JSON.h"
-
 #include "eckit/parser/JSONParser.h"
 #include "eckit/utils/Hash.h"
 

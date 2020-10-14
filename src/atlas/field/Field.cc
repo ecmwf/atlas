@@ -29,6 +29,9 @@ Field::Field( const eckit::Parametrisation& config ) : Handle( Implementation::c
 Field::Field( const std::string& name, array::DataType datatype, const array::ArrayShape& shape ) :
     Handle( Implementation::create( name, datatype, shape ) ) {}
 
+Field::Field( const std::string& name, array::DataType datatype, array::ArraySpec&& spec ) :
+    Handle( Implementation::create( name, datatype, std::move( spec ) ) ) {}
+
 Field::Field( const std::string& name, array::Array* array ) : Handle( Implementation::create( name, array ) ) {}
 
 template <typename DATATYPE>
@@ -124,7 +127,7 @@ idx_t Field::stride( idx_t i ) const {
 }
 
 /// @brief Number of values stored in this field
-idx_t Field::size() const {
+size_t Field::size() const {
     return get()->size();
 }
 

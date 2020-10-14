@@ -71,6 +71,47 @@ public:
         array_.spec_       = make_spec( gt_storage, dims... );
     }
 
+    template <int Alignment, typename... UInts, typename = ::gridtools::is_all_integral<UInts...>>
+    void construct_aligned( UInts... dims ) {
+        static_assert( sizeof...( UInts ) > 0, "1" );
+        auto gt_storage    = create_gt_storage<Value, typename default_layout_t<sizeof...( dims )>::type,
+                                            ::gridtools::alignment<Alignment>>( dims... );
+        using data_store_t = typename std::remove_pointer<decltype( gt_storage )>::type;
+        array_.data_store_ = std::unique_ptr<ArrayDataStore>( new GridToolsDataStore<data_store_t>( gt_storage ) );
+        array_.spec_       = make_spec( gt_storage, dims... );
+    }
+
+    template <typename... UInts, typename = ::gridtools::is_all_integral<UInts...>>
+    void construct( ArrayAlignment alignment, UInts... dims ) {
+        static_assert( sizeof...( UInts ) > 0, "1" );
+        switch ( int( alignment ) ) {
+            case 1:
+                construct( dims... );
+                break;
+            case 2:
+                construct_aligned<2>( dims... );
+                break;
+            case 4:
+                construct_aligned<4>( dims... );
+                break;
+            case 8:
+                construct_aligned<8>( dims... );
+                break;
+            case 16:
+                construct_aligned<16>( dims... );
+                break;
+            case 32:
+                construct_aligned<32>( dims... );
+                break;
+            case 64:
+                construct_aligned<64>( dims... );
+                break;
+            default:
+                ATLAS_NOTIMPLEMENTED;
+        }
+    }
+
+
     void construct( const ArrayShape& shape ) {
         assert( shape.size() > 0 );
         switch ( shape.size() ) {
@@ -84,6 +125,28 @@ public:
                 return construct( shape[0], shape[1], shape[2], shape[3] );
             case 5:
                 return construct( shape[0], shape[1], shape[2], shape[3], shape[4] );
+            default: {
+                std::stringstream err;
+                err << "shape not recognized";
+                throw_Exception( err.str(), Here() );
+            }
+        }
+    }
+
+    void construct( const ArraySpec& spec ) {
+        auto& shape = spec.shape();
+        assert( shape.size() > 0 );
+        switch ( shape.size() ) {
+            case 1:
+                return construct( spec.alignment(), shape[0] );
+            case 2:
+                return construct( spec.alignment(), shape[0], shape[1] );
+            case 3:
+                return construct( spec.alignment(), shape[0], shape[1], shape[2] );
+            case 4:
+                return construct( spec.alignment(), shape[0], shape[1], shape[2], shape[3] );
+            case 5:
+                return construct( spec.alignment(), shape[0], shape[1], shape[2], shape[3], shape[4] );
             default: {
                 std::stringstream err;
                 err << "shape not recognized";
@@ -313,6 +376,26 @@ Array* Array::create( DataType datatype, const ArrayShape& shape, const ArrayLay
     }
 }
 
+Array* Array::create( DataType datatype, ArraySpec&& spec ) {
+    switch ( datatype.kind() ) {
+        case DataType::KIND_REAL64:
+            return new ArrayT<double>( std::move( spec ) );
+        case DataType::KIND_REAL32:
+            return new ArrayT<float>( std::move( spec ) );
+        case DataType::KIND_INT32:
+            return new ArrayT<int>( std::move( spec ) );
+        case DataType::KIND_INT64:
+            return new ArrayT<long>( std::move( spec ) );
+        case DataType::KIND_UINT64:
+            return new ArrayT<unsigned long>( std::move( spec ) );
+        default: {
+            std::stringstream err;
+            err << "data kind " << datatype.kind() << " not recognised.";
+            throw_NotImplemented( err.str(), Here() );
+        }
+    }
+}
+
 //------------------------------------------------------------------------------
 
 Array::~Array() {}
@@ -461,8 +544,7 @@ void ArrayT<Value>::resize( const ArrayShape& shape ) {
 template <typename Value>
 ArrayT<Value>::ArrayT( ArrayDataStore* ds, const ArraySpec& spec ) {
     data_store_ = std::unique_ptr<ArrayDataStore>( ds );
-
-    spec_ = spec;
+    spec_       = spec;
 }
 
 template <typename Value>
@@ -493,15 +575,18 @@ ArrayT<Value>::ArrayT( const ArrayShape& shape ) {
 }
 
 template <typename Value>
+ArrayT<Value>::ArrayT( const ArrayShape& shape, const ArrayAlignment& alignment ) {
+    ArrayT_impl<Value>( *this ).construct( ArraySpec( shape, alignment ) );
+}
+
+template <typename Value>
 ArrayT<Value>::ArrayT( const ArrayShape& shape, const ArrayLayout& layout ) {
     ArrayT_impl<Value>( *this ).construct( shape, layout );
 }
 
 template <typename Value>
-ArrayT<Value>::ArrayT( const ArraySpec& spec ) {
-    if ( not spec.contiguous() )
-        ATLAS_NOTIMPLEMENTED;
-    ArrayT_impl<Value>( *this ).construct( spec.shape(), spec.layout() );
+ArrayT<Value>::ArrayT( ArraySpec&& spec ) {
+    ArrayT_impl<Value>( *this ).construct( spec );
 }
 
 //------------------------------------------------------------------------------

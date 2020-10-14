@@ -8,11 +8,14 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "atlas/library/Library.h"
+
 #include <sstream>
 #include <string>
 
 #include <dlfcn.h>  // for dynamic loading (should be delegated to eckit)
 
+#include "eckit/config/LibEcKit.h"
 #include "eckit/config/Resource.h"
 #include "eckit/eckit.h"
 #include "eckit/filesystem/LocalPathName.h"
@@ -25,7 +28,7 @@
 #include "eckit/types/Types.h"
 #include "eckit/utils/Translator.h"
 
-#include "atlas/library/Library.h"
+#include "atlas/library/FloatingPointExceptions.h"
 #include "atlas/library/Plugin.h"
 #include "atlas/library/config.h"
 #include "atlas/library/git_sha1.h"
@@ -88,37 +91,30 @@ int getEnv( const std::string& env, int default_value ) {
 }
 
 
-bool library_exists( const eckit::PathName& library_dir, const std::string library_name,
-                     eckit::PathName& library_path ) {
+bool plugin_library_exists( const eckit::PathName& plugin_dir, const std::string& library_name,
+                            eckit::PathName& library_path ) {
     // WARNING: Mostly copy-paste from eckit develop before 1.13 release
     std::vector<std::string> library_file_names;
     library_file_names.push_back( "lib" + library_name + ".so" );
     library_file_names.push_back( "lib" + library_name + ".dylib" );
-    for ( const auto& library_file_name : library_file_names ) {
-        library_path = library_dir / library_file_name;
-        if ( library_path.exists() ) {
-            return true;
+    std::vector<eckit::PathName> library_dirs;
+    library_dirs.push_back( plugin_dir / "lib64" );
+    library_dirs.push_back( plugin_dir / "lib" );
+    for ( const auto& library_dir : library_dirs ) {
+        for ( const auto& library_file_name : library_file_names ) {
+            library_path = library_dir / library_file_name;
+            if ( library_path.exists() ) {
+                return true;
+            }
         }
     }
     return false;
 }
 
 
-void load_library( const eckit::PathName& library_dir, const std::string library_name ) {
-    // WARNING: Mostly copy-paste from eckit develop before 1.13 release
-    std::vector<std::string> library_file_names;
-    library_file_names.push_back( "lib" + library_name + ".so" );
-    library_file_names.push_back( "lib" + library_name + ".dylib" );
-
-    eckit::PathName library_path;
-    for ( const auto& library_file_name : library_file_names ) {
-        library_path = library_dir / library_file_name;
-        if ( library_path.exists() ) {
-            break;
-        }
-    }
-    void* plib;
-    if ( ( plib = ::dlopen( library_path.localPath(), RTLD_NOW | RTLD_GLOBAL ) ) == nullptr ) {
+void load_library( const eckit::PathName& library_path, const std::string& library_name ) {
+    void* plib = ::dlopen( library_path.localPath(), RTLD_NOW | RTLD_GLOBAL );
+    if ( plib == nullptr ) {  // dlopen failed
         std::ostringstream ss;
         ss << "dlopen(" << library_path << ", ...)";
         throw eckit::FailedSystemCall( ss.str().c_str(), Here(), errno );
@@ -129,7 +125,7 @@ void load_library( const eckit::PathName& library_dir, const std::string library
     if ( !eckit::system::Library::exists( library_name ) ) {
         std::ostringstream ss;
         ss << "Shared library " << library_path << " loaded but Library " << library_name << " not registered";
-        throw eckit::UnexpectedState( ss.str(), Here() );
+        throw eckit::UnexpectedState( ss.str() );
     }
 }
 
@@ -234,6 +230,13 @@ void Library::initialise( const eckit::Parametrisation& config ) {
         warning_channel_.reset();
     }
 
+    auto& out = [&]() -> eckit::Channel& {
+        if ( getEnv( "ATLAS_LOG_RANK", 0 ) == int( mpi::rank() ) ) {
+            return Log::debug();
+        }
+        static eckit::Channel sink;
+        return sink;
+    }();
 
     std::vector<std::string> plugin_names =
         eckit::Resource<std::vector<std::string>>( "atlasPlugins;$ATLAS_PLUGINS", {} );
@@ -268,10 +271,9 @@ void Library::initialise( const eckit::Parametrisation& config ) {
                 ATLAS_ASSERT( plugin_config.get( "library", library_name ) );
                 bool library_loaded = eckit::system::Library::exists( library_name );
                 if ( not library_loaded ) {
-                    eckit::PathName library_dir = plugin_dir / "lib";
-                    ATLAS_ASSERT( library_exists( library_dir, library_name, library_path ) );
-                    Log::debug() << "Loading plugin [" << plugin_name << "] library " << library_path << std::endl;
-                    load_library( library_dir, library_name );
+                    ATLAS_ASSERT( plugin_library_exists( plugin_dir, library_name, library_path ) );
+                    out << "Loading plugin [" << plugin_name << "] library " << library_path << std::endl;
+                    load_library( library_path, library_name );
                     library_loaded = true;
                 }
                 ATLAS_ASSERT( is_plugin_loaded( plugin_name ) );
@@ -286,10 +288,11 @@ void Library::initialise( const eckit::Parametrisation& config ) {
         }
     }
 
+    library::enable_floating_point_exceptions();
+    library::enable_atlas_signal_handler();
 
     // Summary
     if ( getEnv( "ATLAS_LOG_RANK", 0 ) == int( mpi::rank() ) ) {
-        std::ostream& out = Log::debug();
         out << "Executable        [" << Main::instance().name() << "]\n";
         out << " \n";
         out << "  current dir     [" << PathName( LocalPathName::cwd() ).fullName() << "]\n";
@@ -405,17 +408,19 @@ void Library::Information::print( std::ostream& out ) const {
     out << "  Build:" << std::endl;
     out << "    build type      : " << ATLAS_BUILD_TYPE << '\n'
         << "    timestamp       : " << ATLAS_BUILD_TIMESTAMP << '\n'
+        << "    source dir      : " << ATLAS_DEVELOPER_SRC_DIR << '\n'
+        << "    build dir       : " << ATLAS_DEVELOPER_BIN_DIR << '\n'
         << "    op. system      : " << ATLAS_OS_NAME << " (" << ATLAS_OS_STR << ")" << '\n'
         << "    processor       : " << ATLAS_SYS_PROCESSOR << std::endl
         << "    c compiler      : " << ATLAS_C_COMPILER_ID << " " << ATLAS_C_COMPILER_VERSION << '\n'
         << "      flags         : " << ATLAS_C_FLAGS << '\n'
         << "    c++ compiler    : " << ATLAS_CXX_COMPILER_ID << " " << ATLAS_CXX_COMPILER_VERSION << '\n'
         << "      flags         : " << ATLAS_CXX_FLAGS << '\n'
-#ifndef EC_HAVE_FORTRAN
-        << "    fortran         : NO " << '\n'
-#else
+#ifdef ATLAS_Fortran_COMPILER
         << "    fortran compiler: " << ATLAS_Fortran_COMPILER_ID << " " << ATLAS_Fortran_COMPILER_VERSION << '\n'
         << "      flags         : " << ATLAS_Fortran_FLAGS << '\n'
+#else
+        << "    fortran         : NO " << '\n'
 #endif
         << " \n";
 
@@ -428,11 +433,11 @@ void Library::Information::print( std::ostream& out ) const {
     bool feature_BoundsChecking( ATLAS_ARRAYVIEW_BOUNDS_CHECKING );
     bool feature_Init_sNaN( ATLAS_INIT_SNAN );
     bool feature_MPI( false );
-#ifdef ECKIT_HAVE_MPI
+#if ECKIT_HAVE_MPI
     feature_MPI = true;
 #endif
     bool feature_MKL( false );
-#ifdef ECKIT_HAVE_MKL
+#if ECKIT_HAVE_MKL
     feature_MKL = true;
 #endif
     std::string array_data_store = "Native";
@@ -466,7 +471,7 @@ void Library::Information::print( std::ostream& out ) const {
     }
 
     out << "    \n  Dependencies: \n";
-
+    out << "    ecbuild version (" << ECBUILD_VERSION << ")" << '\n';
     if ( Library::exists( "eckit" ) ) {
         out << "    " << str( Library::lookup( "eckit" ) ) << '\n';
     }

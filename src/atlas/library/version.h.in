@@ -10,35 +10,27 @@
 
 #pragma once
 
-#define ATLAS_VERSION_STR "@atlas_VERSION_STR@"
-#define ATLAS_VERSION     "@atlas_VERSION@"
-
-#define ATLAS_VERSION_STRIDE_MAJOR 10000000000
-#define ATLAS_VERSION_STRIDE_MINOR 100000000
-#define ATLAS_VERSION_STRIDE_PATCH 1
-
-#define ATLAS_VERSION_INT (                          \
-  ATLAS_VERSION_STRIDE_MAJOR*@atlas_VERSION_MAJOR@ + \
-  ATLAS_VERSION_STRIDE_MINOR*@atlas_VERSION_MINOR@ + \
-  ATLAS_VERSION_STRIDE_PATCH*@atlas_VERSION_PATCH@ )
-
-#define ATLAS_VERSION_MAJOR @atlas_VERSION_MAJOR@
-#define ATLAS_VERSION_MINOR @atlas_VERSION_MINOR@
-#define ATLAS_VERSION_PATCH @atlas_VERSION_PATCH@
-
 namespace atlas {
 namespace library {
 
 constexpr const char* version() {
-    return ATLAS_VERSION_STR;
+    return "@atlas_VERSION_STR@";
 }
 
 constexpr const char* semantic_version() {
-    return ATLAS_VERSION;
+    return "@atlas_VERSION@";
 }
 
-constexpr long semantic_version_int() {
-    return ATLAS_VERSION_INT;
+constexpr long semantic_version_major() {
+    return @atlas_VERSION_MAJOR@;
+}
+
+constexpr long semantic_version_minor() {
+    return @atlas_VERSION_MINOR@;
+}
+
+constexpr long semantic_version_patch() {
+    return @atlas_VERSION_PATCH@;
 }
 
 }

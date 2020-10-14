@@ -44,6 +44,7 @@ public:  // methods
     void outputPythonScript( const eckit::PathName&, const eckit::Configuration& = util::NoConfig() ) const override;
 
     PointsXY xy() const override;
+    PointsLonLat lonlat() const override;
 
     const RectangularDomain& inscribedDomain() const override { return inscribed_domain_; }
 

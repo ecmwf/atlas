@@ -67,6 +67,9 @@ public:
     /// @brief Create field with given name, Datatype and ArrayShape
     Field( const std::string& name, array::DataType, const array::ArrayShape& = array::ArrayShape() );
 
+    /// @brief Create field with given name, Datatype and ArraySpec
+    Field( const std::string& name, array::DataType, array::ArraySpec&& );
+
     /// @brief Create field with given name, and take ownership of given Array
     Field( const std::string& name, array::Array* );
 
@@ -134,7 +137,7 @@ public:
     idx_t stride( idx_t i ) const;
 
     /// @brief Number of values stored in this field
-    idx_t size() const;
+    size_t size() const;
 
     /// @brief Rank of field
     idx_t rank() const;

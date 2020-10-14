@@ -78,16 +78,16 @@ void deallocate_host( void* ptr ) {
 //------------------------------------------------------------------------------
 
 extern "C" {
-void atlas__allocate_managedmem_double( double*& a, int N ) {
+void atlas__allocate_managedmem_double( double*& a, size_t N ) {
     allocate_managedmem( a, N );
 }
-void atlas__allocate_managedmem_float( float*& a, int N ) {
+void atlas__allocate_managedmem_float( float*& a, size_t N ) {
     allocate_managedmem( a, N );
 }
-void atlas__allocate_managedmem_int( int*& a, int N ) {
+void atlas__allocate_managedmem_int( int*& a, size_t N ) {
     allocate_managedmem( a, N );
 }
-void atlas__allocate_managedmem_long( long*& a, int N ) {
+void atlas__allocate_managedmem_long( long*& a, size_t N ) {
     allocate_managedmem( a, N );
 }
 void atlas__deallocate_managedmem( void*& a ) {

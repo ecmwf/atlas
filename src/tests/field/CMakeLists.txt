@@ -6,6 +6,12 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+ecbuild_add_test( TARGET atlas_test_field_missingvalue
+    SOURCES     test_field_missingvalue.cc
+    LIBS        atlas
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 if( HAVE_FCTEST )
 
   add_fctest( TARGET atlas_fctest_field

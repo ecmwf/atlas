@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 
+#include "atlas/interpolation/NonLinear.h"
 #include "atlas/util/Object.h"
 #include "eckit/config/Configuration.h"
 #include "eckit/linalg/SparseMatrix.h"
@@ -23,6 +24,12 @@ class Field;
 class FieldSet;
 class FunctionSpace;
 class Grid;
+}  // namespace atlas
+
+namespace atlas {
+namespace test {
+class Access;
+}
 }  // namespace atlas
 
 namespace atlas {
@@ -36,10 +43,10 @@ public:
     virtual ~Method() {}
 
     /**
-   * @brief Setup the interpolator relating two functionspaces
-   * @param source functionspace containing source elements
-   * @param target functionspace containing target points
-   */
+     * @brief Setup the interpolator relating two functionspaces
+     * @param source functionspace containing source elements
+     * @param target functionspace containing target points
+     */
     void setup( const FunctionSpace& source, const FunctionSpace& target );
     void setup( const Grid& source, const Grid& target );
     void setup( const FunctionSpace& source, const Field& target );
@@ -66,14 +73,10 @@ protected:
     void haloExchange( const FieldSet& ) const;
     void haloExchange( const Field& ) const;
 
-    //const Config& config_;
-
-    // NOTE : Matrix-free or non-linear interpolation operators do not have
-    // matrices,
-    //        so do not expose here, even though only linear operators are now
-    //        implemented.
+    // NOTE : Matrix-free or non-linear interpolation operators do not have matrices, so do not expose here
+    friend class atlas::test::Access;
     Matrix matrix_;
-
+    NonLinear nonLinear_;
     bool use_eckit_linalg_spmv_;
 
 protected:
@@ -84,18 +87,18 @@ protected:
 
 private:
     template <typename Value>
-    void interpolate_field( const Field& src, Field& tgt ) const;
+    void interpolate_field( const Field& src, Field& tgt, const Matrix& ) const;
 
     template <typename Value>
-    void interpolate_field_rank1( const Field& src, Field& tgt ) const;
+    void interpolate_field_rank1( const Field& src, Field& tgt, const Matrix& ) const;
 
     template <typename Value>
-    void interpolate_field_rank2( const Field& src, Field& tgt ) const;
+    void interpolate_field_rank2( const Field& src, Field& tgt, const Matrix& ) const;
 
     template <typename Value>
-    void interpolate_field_rank3( const Field& src, Field& tgt ) const;
+    void interpolate_field_rank3( const Field& src, Field& tgt, const Matrix& ) const;
 
-    void check_compatibility( const Field& src, const Field& tgt ) const;
+    void check_compatibility( const Field& src, const Field& tgt, const Matrix& W ) const;
 };
 
 }  // namespace interpolation

@@ -72,5 +72,18 @@ public:
     virtual void hash( eckit::Hash& ) const = 0;
 };
 
+class RectangularDomain;
+
+extern "C" {
+const Domain* atlas__Domain__ctor_config( const eckit::Parametrisation* config );
+void atlas__Domain__type( const Domain* This, char*& type, int& size );
+void atlas__Domain__hash( const Domain* This, char*& hash, int& size );
+Domain::Spec* atlas__Domain__spec( const Domain* This );
+double atlas__LonLatRectangularDomain__north( const RectangularDomain* This );
+double atlas__LonLatRectangularDomain__west( const RectangularDomain* This );
+double atlas__LonLatRectangularDomain__south( const RectangularDomain* This );
+double atlas__LonLatRectangularDomain__east( const RectangularDomain* This );
+}
+
 }  // namespace domain
 }  // namespace atlas

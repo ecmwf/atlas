@@ -100,6 +100,38 @@ void LambertConformalConicProjection::xy2lonlat( double crd[] ) const {
             : util::Constants::radiansToDegrees() * 2. * std::atan( std::pow( radius_ * F_ / rho, inv_n_ ) ) - 90.;
 }
 
+ProjectionImpl::Jacobian LambertConformalConicProjection::jacobian( const PointLonLat& lonlat ) const {
+    ProjectionImpl::Jacobian jac;
+
+    const double deg2rad = util::Constants::degreesToRadians();
+
+    double lat = lonlat.lat(), lon = lonlat.lon();
+    double tanlat = tan_d( lat ), coslat = cos_d( 45. + lat * 0.5 );
+
+    double rho   = radius_ * F_ * std::pow( tanlat, -n_ );
+    double theta = n_ * normalise( lon - lon0_, -180, 360 );
+
+    double costheta = cos_d( theta ), sintheta = sin_d( theta );
+
+    double x = rho * sintheta;
+    double y = rho0_ - rho * costheta;
+
+    auto cpj = [&]( const double dlon, const double dlat, double& dx, double& dy ) {
+        double drho = deg2rad * radius_ * F_ * ( -n_ ) * std::pow( tanlat, -n_ - 1 ) / ( coslat * coslat ) * dlat * 0.5;
+        double dtheta = +n_ * dlon;
+        dx            = +drho * sintheta + rho * costheta * deg2rad * dtheta;
+        dy            = -drho * costheta + rho * sintheta * deg2rad * dtheta;
+    };
+
+    const double dlat = 1.0f;
+    const double dlon = 1.0f;
+
+    cpj( dlon, 0, jac[0][0], jac[1][0] );
+    cpj( 0, dlat, jac[0][1], jac[1][1] );
+
+    return jac;
+}
+
 LambertConformalConicProjection::Spec LambertConformalConicProjection::spec() const {
     Spec spec;
     spec.set( "type", static_type() );

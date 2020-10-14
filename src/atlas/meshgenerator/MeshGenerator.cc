@@ -44,7 +44,9 @@ void MeshGenerator::hash( eckit::Hash& h ) const {
 Mesh MeshGenerator::generate( const Grid& g, const grid::Distribution& d ) const {
     return get()->generate( g, d );
 }
-
+Mesh MeshGenerator::generate( const Grid& g, const grid::Partitioner& p ) const {
+    return get()->generate( g, p );
+}
 Mesh MeshGenerator::generate( const Grid& g ) const {
     return get()->generate( g );
 }
@@ -52,9 +54,15 @@ Mesh MeshGenerator::generate( const Grid& g ) const {
 Mesh MeshGenerator::operator()( const Grid& g, const grid::Distribution& d ) const {
     return get()->operator()( g, d );
 }
-
+Mesh MeshGenerator::operator()( const Grid& g, const grid::Partitioner& p ) const {
+    return get()->operator()( g, p );
+}
 Mesh MeshGenerator::operator()( const Grid& g ) const {
     return get()->operator()( g );
+}
+
+std::string MeshGenerator::type() const {
+    return get()->type();
 }
 
 //----------------------------------------------------------------------------------------------------------------------

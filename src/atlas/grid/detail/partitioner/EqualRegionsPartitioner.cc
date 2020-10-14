@@ -614,7 +614,7 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
             // construction
             // ATLAS_ASSERT to make sure.
             StructuredGrid structured_grid( grid );
-            ATLAS_ASSERT( structured_grid.y( 1 ) < structured_grid.y( 0 ) );
+            //ATLAS_ASSERT( structured_grid.y( 1 ) < structured_grid.y( 0 ) );
             ATLAS_ASSERT( structured_grid.x( 1, 0 ) > structured_grid.x( 0, 0 ) );
 
             ATLAS_TRACE( "Take shortcut" );

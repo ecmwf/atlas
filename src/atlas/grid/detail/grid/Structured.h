@@ -370,6 +370,9 @@ public:
         j = ja;
     }
 
+    Config meshgenerator() const override;
+    Config partitioner() const override;
+
 
 protected:  // methods
     virtual void print( std::ostream& ) const override;

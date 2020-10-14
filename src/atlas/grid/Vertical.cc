@@ -22,21 +22,24 @@ namespace {
 
 std::vector<double> linspace( double start, double end, idx_t N, bool endpoint ) {
     std::vector<double> x_;
-    x_.resize( N );
+    if ( N > 0 ) {
+        volatile double _N = N;  // volatile keyword prevents agressive optimization by Cray compiler
+        x_.resize( N );
 
-    double step;
-    if ( endpoint && N > 1 ) {
-        step = ( end - start ) / double( N - 1 );
-    }
-    else if ( N > 0 ) {
-        step = ( end - start ) / double( N );
-    }
-    else {
-        step = 0.;
-    }
+        double step;
+        if ( endpoint && N > 1 ) {
+            step = ( end - start ) / ( _N - 1 );
+        }
+        else if ( N > 0 ) {
+            step = ( end - start ) / _N;
+        }
+        else {
+            step = 0.;
+        }
 
-    for ( idx_t i = 0; i < N; ++i ) {
-        x_[i] = start + i * step;
+        for ( idx_t i = 0; i < N; ++i ) {
+            x_[i] = start + i * step;
+        }
     }
     return x_;
 }

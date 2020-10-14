@@ -149,8 +149,6 @@ void StructuredInterpolation3D<Kernel>::do_execute( const FieldSet& src_fields, 
         return;
     }
 
-    ATLAS_TRACE( "StructuredInterpolation<" + Kernel::className() + ">::do_execute()" );
-
     const idx_t N = src_fields.size();
     ATLAS_ASSERT( N == tgt_fields.size() );
 
@@ -159,6 +157,8 @@ void StructuredInterpolation3D<Kernel>::do_execute( const FieldSet& src_fields, 
 
     haloExchange( src_fields );
 
+    ATLAS_TRACE( "StructuredInterpolation<" + Kernel::className() + ">::do_execute()" );
+    
     array::DataType datatype = src_fields[0].datatype();
     int rank                 = src_fields[0].rank();
 

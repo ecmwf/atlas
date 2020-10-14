@@ -86,6 +86,7 @@ public:
     int nb_bands() const { return bands_.size(); }
     int nb_regions( int band ) const { return sectors_[band]; }
 
+    using Partitioner::partition;
     virtual void partition( const Grid&, int part[] ) const;
 
     virtual std::string type() const { return "equal_regions"; }
