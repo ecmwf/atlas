@@ -12,6 +12,8 @@
 # See <https://creativecommons.org/publicdomain/zero/1.0/> for
 # details.
 
+version=20.9
+
 TEMPORARY_FILES="${TMPDIR:-/tmp}"
 export NVHPC_INSTALL_DIR=$(pwd)/pgi-install
 export NVHPC_SILENT=true
@@ -25,6 +27,9 @@ while [ $# != 0 ]; do
         ;;
     "--verbose")
         export NVHPC_SILENT=false;
+        ;;
+    "--version")
+        version="$2"; shift
         ;;
     *)   
         echo "Unrecognized argument '$1'"
@@ -43,7 +48,11 @@ case "$(uname -m)" in
 		;;
 esac
 
-URL="$(curl -s 'https://developer.nvidia.com/nvidia-hpc-sdk-download' | grep -oP "https://developer.download.nvidia.com/hpc-sdk/([0-9]{2}\.[0-9]+)/nvhpc_([0-9]{4})_([0-9]+)_Linux_$(uname -m)_cuda_([0-9\.]+).tar.gz" | sort | tail -1)"
+# Example download URL for version 20.9
+#    https://developer.download.nvidia.com/hpc-sdk/20.9/nvhpc_2020_209_Linux_x86_64_cuda_11.0.tar.gz
+
+ver="$(echo $version | tr -d . )"
+URL=$(curl -s "https://developer.nvidia.com/nvidia-hpc-sdk-$ver-downloads" | grep -oP "https://developer.download.nvidia.com/hpc-sdk/([0-9]{2}\.[0-9]+)/nvhpc_([0-9]{4})_([0-9]+)_Linux_$(uname -m)_cuda_([0-9\.]+).tar.gz" | sort | tail -1)
 FOLDER="$(basename "$(echo "${URL}" | grep -oP '[^/]+$')" .tar.gz)"
 
 if [ ! -z "${TRAVIS_REPO_SLUG}" ]; then
