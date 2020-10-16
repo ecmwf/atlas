@@ -903,8 +903,6 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
             nb_elements += hybrid->size();
             const auto hybrid_halo  = array::make_view<int, 1>( hybrid->halo() );
             const auto hybrid_flags = array::make_view<int, 1>( hybrid->flags() );
-            auto hybrid_patch       = [&]( idx_t e ) { return Topology::check( hybrid_flags( e ), Topology::PATCH ); };
-            auto hybrid_ghost_flag  = [&]( idx_t e ) { return Topology::check( hybrid_flags( e ), Topology::GHOST ); };
 
             auto include = [&]( idx_t e ) {
                 auto topology = Topology::view( hybrid_flags( e ) );
@@ -929,18 +927,6 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
                 return true;
             };
 
-            auto exclude = [&]( idx_t e ) {
-                if ( !include_ghost && hybrid_halo( e ) ) {
-                    return true;
-                }
-                if ( !include_ghost && hybrid_ghost_flag( e ) ) {
-                    return true;
-                }
-                if ( !include_patch && hybrid_patch( e ) ) {
-                    return true;
-                }
-                return false;
-            };
             for ( idx_t e = 0; e < hybrid->size(); ++e ) {
                 if ( not include( e ) ) {
                     --nb_elements;
