@@ -23,8 +23,9 @@ if( atlas_HAVE_FORTRAN )
 endif()
 
 ## Eigen3
-if( atlas_HAVE_EIGEN )
-  find_dependency( Eigen3 HINTS @Eigen3_DIR@ )
+set( Eigen3_HINT @Eigen3_DIR@ )
+if( atlas_HAVE_EIGEN AND Eigen3_HINT )
+  find_dependency( Eigen3 HINTS ${Eigen3_HINT} )
 endif()
 
 ## gridtools_storage
