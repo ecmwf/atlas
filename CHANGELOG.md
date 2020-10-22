@@ -7,6 +7,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.22.1] - 2020-10-22
+### Fixed
+- Installation of PGI compilers via tools/install-pgi.sh
+- Allow dependency on older Eigen 3.2 which does not use CMake targets
+
 ## [0.22.0] - 2020-10-14
 ### Fixed
 - Feature INIT_SNAN was not working
@@ -245,6 +250,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.22.1]: https://github.com/ecmwf/atlas/compare/0.22.0...0.22.1
 [0.22.0]: https://github.com/ecmwf/atlas/compare/0.21.0...0.22.0
 [0.21.0]: https://github.com/ecmwf/atlas/compare/0.20.2...0.21.0
 [0.20.2]: https://github.com/ecmwf/atlas/compare/0.20.1...0.20.2
