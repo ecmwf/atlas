@@ -56,7 +56,7 @@ StructuredInterpolation2D<Kernel>::StructuredInterpolation2D( const Method::Conf
 
 
 template <typename Kernel>
-void StructuredInterpolation2D<Kernel>::do_setup( const Grid& source, const Grid& target ) {
+void StructuredInterpolation2D<Kernel>::do_setup( const Grid& source, const Grid& target, const Cache& ) {
     if ( mpi::size() > 1 ) {
         ATLAS_NOTIMPLEMENTED;
     }
@@ -186,7 +186,7 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source ) {
             }
             // fill sparse matrix and return
             Matrix A( out_npts, inp_npts, triplets );
-            matrix_.swap( A );
+            matrix_shared_->swap( A );
         }
     }
 }

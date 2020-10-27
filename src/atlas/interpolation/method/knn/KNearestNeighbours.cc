@@ -44,7 +44,7 @@ KNearestNeighbours::KNearestNeighbours( const Method::Config& config ) : KNeares
     ATLAS_ASSERT( k_ );
 }
 
-void KNearestNeighbours::do_setup( const Grid& source, const Grid& target ) {
+void KNearestNeighbours::do_setup( const Grid& source, const Grid& target, const Cache& ) {
     if ( mpi::size() > 1 ) {
         ATLAS_NOTIMPLEMENTED;
     }
@@ -131,7 +131,7 @@ void KNearestNeighbours::do_setup( const FunctionSpace& source, const FunctionSp
 
     // fill sparse matrix and return
     Matrix A( out_npts, inp_npts, weights_triplets );
-    matrix_.swap( A );
+    matrix_shared_->swap( A );
 }
 
 }  // namespace method

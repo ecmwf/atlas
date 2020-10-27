@@ -160,6 +160,9 @@ Method::Method( const Method::Config& config ) {
     if ( config.get( "non_linear", non_linear ) ) {
         nonLinear_ = NonLinear( non_linear, config );
     }
+    matrix_shared_ = std::make_shared<Matrix>();
+    matrix_cache_  = interpolation::MatrixCache( matrix_shared_ );
+    matrix_        = matrix_shared_.get();
 }
 
 void Method::setup( const FunctionSpace& source, const FunctionSpace& target ) {
@@ -169,7 +172,7 @@ void Method::setup( const FunctionSpace& source, const FunctionSpace& target ) {
 
 void Method::setup( const Grid& source, const Grid& target ) {
     ATLAS_TRACE( "atlas::interpolation::method::Method::setup(Grid, Grid)" );
-    this->do_setup( source, target );
+    this->do_setup( source, target, Cache() );
 }
 
 void Method::setup( const FunctionSpace& source, const Field& target ) {
@@ -180,6 +183,11 @@ void Method::setup( const FunctionSpace& source, const Field& target ) {
 void Method::setup( const FunctionSpace& source, const FieldSet& target ) {
     ATLAS_TRACE( "atlas::interpolation::method::Method::setup(FunctionSpace, FieldSet)" );
     this->do_setup( source, target );
+}
+
+void Method::setup( const Grid& source, const Grid& target, const Cache& cache ) {
+    ATLAS_TRACE( "atlas::interpolation::method::Method::setup(Grid, Grid, Cache)" );
+    this->do_setup( source, target, cache );
 }
 
 void Method::execute( const FieldSet& source, FieldSet& target ) const {
@@ -219,18 +227,18 @@ void Method::do_execute( const Field& src, Field& tgt ) const {
 
     // non-linearities: a non-empty M matrix contains the corrections applied to matrix_
     Matrix M;
-    if ( !matrix_.empty() && nonLinear_( src ) ) {
-        Matrix W( matrix_ );  // copy (a big penalty -- copy-on-write would definitely be better)
+    if ( !matrix_->empty() && nonLinear_( src ) ) {
+        Matrix W( *matrix_ );  // copy (a big penalty -- copy-on-write would definitely be better)
         if ( nonLinear_->execute( W, src ) ) {
             M.swap( W );
         }
     }
 
     if ( src.datatype().kind() == array::DataType::KIND_REAL64 ) {
-        interpolate_field<double>( src, tgt, M.empty() ? matrix_ : M );
+        interpolate_field<double>( src, tgt, M.empty() ? *matrix_ : M );
     }
     else if ( src.datatype().kind() == array::DataType::KIND_REAL32 ) {
-        interpolate_field<float>( src, tgt, M.empty() ? matrix_ : M );
+        interpolate_field<float>( src, tgt, M.empty() ? *matrix_ : M );
     }
     else {
         ATLAS_NOTIMPLEMENTED;
@@ -267,7 +275,7 @@ void Method::haloExchange( const FieldSet& fields ) const {
     }
 }
 void Method::haloExchange( const Field& field ) const {
-    if ( field.dirty() ) {
+    if ( field.dirty() && allow_halo_exchange_ ) {
         source().haloExchange( field );
     }
 }

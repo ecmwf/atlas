@@ -60,13 +60,14 @@ void GridBoxMaximum::do_execute( const Field& source, Field& target ) const {
 
 
     if ( !matrixFree_ ) {
-        Matrix::const_iterator k( matrix_ );
+        const Matrix& m = *matrix_;
+        Matrix::const_iterator k( m );
 
-        for ( decltype( matrix_.rows() ) i = 0, j = 0; i < matrix_.rows(); ++i ) {
+        for ( decltype( m.rows() ) i = 0, j = 0; i < m.rows(); ++i ) {
             double max = std::numeric_limits<double>::lowest();
             bool found = false;
 
-            for ( ; k != matrix_.end( i ); ++k ) {
+            for ( ; k != m.end( i ); ++k ) {
                 ATLAS_ASSERT( k.col() < size_t( xarray.shape( 0 ) ) );
                 auto value = xarray[k.col()];
                 if ( max < value ) {

@@ -481,6 +481,8 @@ endif()
 
 list( APPEND atlas_interpolation_srcs
 interpolation.h
+interpolation/Cache.cc
+interpolation/Cache.h
 interpolation/Interpolation.cc
 interpolation/Interpolation.h
 interpolation/NonLinear.cc

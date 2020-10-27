@@ -88,7 +88,7 @@ bool GridBoxMethod::intersect( size_t i, const GridBox& box, const util::IndexKD
 }
 
 
-void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
+void GridBoxMethod::do_setup( const Grid& source, const Grid& target, const Cache& ) {
     ATLAS_TRACE( "GridBoxMethod::setup()" );
 
     if ( mpi::size() > 1 ) {
@@ -115,7 +115,7 @@ void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
 
     if ( matrixFree_ ) {
         Matrix A;
-        matrix_.swap( A );
+        matrix_shared_->swap( A );
         return;
     }
 
@@ -147,7 +147,7 @@ void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
     {
         ATLAS_TRACE( "GridBoxMethod::setup: build interpolant matrix" );
         Matrix A( targetBoxes_.size(), sourceBoxes_.size(), allTriplets );
-        matrix_.swap( A );
+        matrix_shared_->swap( A );
     }
 }
 
