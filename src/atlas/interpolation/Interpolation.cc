@@ -100,6 +100,10 @@ const FunctionSpace& Interpolation::target() const {
     return get()->target();
 }
 
+Interpolation::Cache Interpolation::createCache() const {
+    return get()->createCache();
+}
+
 Interpolation::Interpolation( const Interpolation::Config& config, const Grid& source, const Grid& target,
                               const Interpolation::Cache& cache ) :
     Handle( [&]() -> Implementation* {

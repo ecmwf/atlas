@@ -48,6 +48,8 @@ protected:
     virtual void do_execute( const FieldSet& source, FieldSet& target ) const override = 0;
     virtual void do_execute( const Field& source, Field& target ) const override       = 0;
 
+    virtual Cache createCache() const override;
+
 protected:
     static void giveUp( const std::forward_list<size_t>& );
 

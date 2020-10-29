@@ -13,6 +13,20 @@
 namespace atlas {
 namespace interpolation {
 
+InterpolationCacheEntry::~InterpolationCacheEntry() = default;
+
+Cache::Cache( const Interpolation& interpolation ) : Cache( interpolation.createCache() ) {}
+
+Cache::~Cache() = default;
+
+void Cache::add( const Cache& other ) {
+    for ( auto& entry : other.cache_ ) {
+        cache_[entry.first] = entry.second;
+    }
+}
+
+MatrixCacheEntry::~MatrixCacheEntry() = default;
+
 class MatrixCacheEntryOwned : public MatrixCacheEntry {
 public:
     MatrixCacheEntryOwned( Matrix&& matrix ) : MatrixCacheEntry( &matrix_ ) {
@@ -21,11 +35,6 @@ public:
 
 private:
     const Matrix matrix_;
-};
-
-class MatrixCacheEntryEmpty : public MatrixCacheEntryOwned {
-public:
-    MatrixCacheEntryEmpty() : MatrixCacheEntryOwned( Matrix{} ) {}
 };
 
 class MatrixCacheEntryShared : public MatrixCacheEntry {
@@ -48,7 +57,7 @@ MatrixCache::MatrixCache( std::shared_ptr<const Matrix> m ) :
 
 MatrixCache::MatrixCache( const Matrix* m ) : MatrixCache( std::make_shared<MatrixCacheEntry>( m ) ) {}
 
-MatrixCache::MatrixCache( const Interpolation& interpolation ) : MatrixCache( interpolation.get()->matrix_shared_ ) {}
+MatrixCache::MatrixCache( const Interpolation& interpolation ) : MatrixCache( Cache( interpolation ) ) {}
 
 MatrixCache::operator bool() const {
     return matrix_ && !matrix().empty();
@@ -59,8 +68,49 @@ const MatrixCache::Matrix& MatrixCache::matrix() const {
     return matrix_->matrix();
 }
 
+size_t MatrixCache::footprint() const {
+    if ( matrix_ ) {
+        return matrix_->footprint();
+    }
+    return 0;
+}
+
 MatrixCache::MatrixCache( std::shared_ptr<InterpolationCacheEntry> entry ) :
     Cache( entry ), matrix_{dynamic_cast<const MatrixCacheEntry*>( entry.get() )} {}
+
+
+IndexKDTreeCacheEntry::~IndexKDTreeCacheEntry() = default;
+
+const IndexKDTreeCacheEntry::IndexKDTree& IndexKDTreeCacheEntry::tree() const {
+    ATLAS_ASSERT( tree_ );
+    return tree_;
+}
+
+IndexKDTreeCache::IndexKDTreeCache( const Cache& c ) :
+    Cache( c ), tree_{dynamic_cast<const IndexKDTreeCacheEntry*>( c.get( IndexKDTreeCacheEntry::static_type() ) )} {}
+
+IndexKDTreeCache::IndexKDTreeCache( const IndexKDTree& tree ) :
+    Cache( std::make_shared<IndexKDTreeCacheEntry>( tree ) ) {
+    tree_ = dynamic_cast<const IndexKDTreeCacheEntry*>( get( IndexKDTreeCacheEntry::static_type() ) );
+}
+
+IndexKDTreeCache::IndexKDTreeCache( const Interpolation& interpolation ) : IndexKDTreeCache( Cache( interpolation ) ) {}
+
+IndexKDTreeCache::operator bool() const {
+    return tree_;  //&& !tree().empty();
+}
+
+const IndexKDTreeCache::IndexKDTree& IndexKDTreeCache::tree() const {
+    ATLAS_ASSERT( tree_ );
+    return tree_->tree();
+}
+
+size_t IndexKDTreeCache::footprint() const {
+    if ( tree_ ) {
+        return tree_->footprint();
+    }
+    return 0;
+}
 
 
 }  // namespace interpolation

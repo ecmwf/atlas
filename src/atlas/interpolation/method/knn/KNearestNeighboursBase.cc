@@ -25,6 +25,7 @@ namespace interpolation {
 namespace method {
 
 void KNearestNeighboursBase::buildPointSearchTree( Mesh& meshSource, const mesh::Halo& _halo ) {
+    ATLAS_TRACE();
     eckit::TraceTimer<Atlas> tim( "KNearestNeighboursBase::buildPointSearchTree()" );
 
 
@@ -62,6 +63,7 @@ void insert_tree( util::IndexKDTree& tree, const FunctionSpace_type& functionspa
 }  // namespace
 
 void KNearestNeighboursBase::buildPointSearchTree( const FunctionSpace& functionspace ) {
+    ATLAS_TRACE();
     eckit::TraceTimer<Atlas> tim( "KNearestNeighboursBase::buildPointSearchTree()" );
 
     static bool fastBuildKDTrees = eckit::Resource<bool>( "$ATLAS_FAST_BUILD_KDTREES", true );
@@ -77,6 +79,16 @@ void KNearestNeighboursBase::buildPointSearchTree( const FunctionSpace& function
     }
     pTree_.build();
 }
+
+bool KNearestNeighboursBase::extractTreeFromCache( const Cache& c ) {
+    IndexKDTreeCache cache( c );
+    if ( cache ) {
+        pTree_ = cache.tree();
+        return true;
+    }
+    return false;
+}
+
 
 }  // namespace method
 }  // namespace interpolation

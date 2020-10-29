@@ -280,5 +280,10 @@ void Method::haloExchange( const Field& field ) const {
     }
 }
 
+interpolation::Cache Method::createCache() const {
+    return matrix_cache_;
+}
+
+
 }  // namespace interpolation
 }  // namespace atlas

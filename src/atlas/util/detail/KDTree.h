@@ -118,6 +118,10 @@ public:
 
     const Geometry& geometry() const { return geometry_; }
 
+    virtual size_t size() const = 0;
+
+    virtual size_t footprint() const = 0;
+
     /// @brief Reserve memory for building the kdtree in one shot (optional, at cost of extra memory)
     /// Implementation depends in derived classes
     virtual void reserve( idx_t /*size*/ ){};
@@ -303,6 +307,15 @@ public:
         static_asserts();
     }
 
+    size_t size() const override {
+        size_t size = 0;
+        for ( auto& it : *tree_ ) {
+            size++;
+        }
+        return size;
+    }
+
+    size_t footprint() const override { return size() * sizeof( typename Tree::Node ); }
 
     void reserve( idx_t size ) override;
 

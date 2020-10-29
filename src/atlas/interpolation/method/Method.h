@@ -36,9 +36,6 @@ class Access;
 namespace atlas {
 namespace interpolation {
 
-
-class MatrixCreator;
-
 class Method : public util::Object {
 public:
     typedef eckit::Parametrisation Config;
@@ -64,6 +61,8 @@ public:
 
     virtual const FunctionSpace& source() const = 0;
     virtual const FunctionSpace& target() const = 0;
+
+    virtual interpolation::Cache createCache() const;
 
 protected:
     virtual void do_execute( const FieldSet& source, FieldSet& target ) const;

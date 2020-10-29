@@ -61,6 +61,7 @@ public:
     const FunctionSpace& source() const;
     const FunctionSpace& target() const;
 
+    Cache createCache() const;
 
     Interpolation( const Config&, const Grid& source, const Grid& target, const Cache& ) noexcept( false );
 };

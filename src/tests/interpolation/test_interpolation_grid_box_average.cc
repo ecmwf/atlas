@@ -11,7 +11,7 @@
 
 #include <cmath>
 
-#include "eckit/types/FloatCompare.h"
+#include "eckit/log/Bytes.h"
 
 #include "atlas/array.h"
 #include "atlas/field.h"
@@ -219,6 +219,39 @@ CASE( "test_interpolation_grid_box_average" ) {
     }
 }
 
+CASE( "test_interpolation_grid_box_average matrix with cache" ) {
+    Grid gridA( "O32" );
+    Grid gridB( "O64" );
+
+    auto config = option::type( "grid-box-average" ).set( "matrix_free", false );
+
+    Field fieldA( create_field( "A", gridA.size(), 1. ) );
+    Field fieldB( create_field( "B", gridB.size() ) );
+
+    size_t i    = 0;
+    auto values = array::make_view<double, 1>( fieldA );
+    for ( auto& box : GridBoxes( gridA ) ) {
+        ATLAS_ASSERT( box.area() > 0. );
+        values( i++ ) = 1. / box.area();
+    }
+
+    interpolation::Cache cache;
+    ATLAS_TRACE_SCOPE( "Create cache" ) { cache = interpolation::Cache( Interpolation( config, gridA, gridB ) ); }
+    size_t size;
+    size_t footprint;
+    ATLAS_TRACE_SCOPE( "iterate tree" ) {
+        size      = interpolation::IndexKDTreeCache( cache ).tree().size();
+        footprint = interpolation::IndexKDTreeCache( cache ).tree().footprint();
+    }
+    ATLAS_DEBUG_VAR( size );
+    Log::info() << "kdtree footprint = " << eckit::Bytes( footprint ) << std::endl;
+
+    Log::info() << "all cache footprint = " << eckit::Bytes( cache.footprint() ) << std::endl;
+
+    ATLAS_TRACE_SCOPE( "Interpolate with cache" ) {
+        Interpolation( config, gridA, gridB, cache ).execute( fieldA, fieldB );
+    }
+}
 
 }  // namespace test
 }  // namespace atlas
