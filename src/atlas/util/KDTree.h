@@ -145,6 +145,8 @@ public:
     //--------------------------------------------------------------------------------------
     // Methods to access the KDTree
 
+    bool empty() const { return get()->empty(); }
+
     size_t size() const { return get()->size(); }
 
     size_t footprint() const { return get()->footprint(); }
@@ -198,6 +200,8 @@ void atlas__IndexKDTree__closestPointsWithinRadius( const IndexKDTree::Implement
                                                     const double plat, const double radius, size_t& k, double*& lon,
                                                     double*& lat, idx_t*& indices, double*& distances );
 const Geometry::Implementation* atlas__IndexKDTree__geometry( const IndexKDTree::Implementation* This );
+int atlas__IndexKDTree__empty( const IndexKDTree::Implementation* This );
+idx_t atlas__IndexKDTree__size( const IndexKDTree::Implementation* This );
 }
 
 //------------------------------------------------------------------------------------------------------

@@ -119,6 +119,16 @@ const Geometry::Implementation* atlas__IndexKDTree__geometry( const IndexKDTree:
     return This->geometry().get();
 }
 
+int atlas__IndexKDTree__empty( const IndexKDTree::Implementation* This ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_IndexKDTree" );
+    return bool( This->empty() );
+}
+
+idx_t atlas__IndexKDTree__size( const IndexKDTree::Implementation* This ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_IndexKDTree" );
+    return This->size();
+}
+
 // ------------------------------------------------------------------
 
 }  // namespace util
