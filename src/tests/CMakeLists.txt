@@ -122,6 +122,7 @@ add_subdirectory( io )
 add_subdirectory( numerics )
 add_subdirectory( trans )
 add_subdirectory( interpolation )
+add_subdirectory( linalg )
 
 add_subdirectory( acceptance_tests )
 add_subdirectory( export_tests )

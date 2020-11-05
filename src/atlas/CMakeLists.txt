@@ -552,6 +552,18 @@ interpolation/nonlinear/Missing.cc
 interpolation/nonlinear/Missing.h
 interpolation/nonlinear/NonLinear.cc
 interpolation/nonlinear/NonLinear.h
+
+linalg/Indexing.h
+linalg/Introspection.h
+linalg/View.h
+linalg/sparse.h
+linalg/sparse/Backend.h
+linalg/sparse/Backend.cc
+linalg/sparse/SparseMatrixMultiply.h
+linalg/sparse/SparseMatrixMultiply_EckitLinalg.h
+linalg/sparse/SparseMatrixMultiply_EckitLinalg.cc
+linalg/sparse/SparseMatrixMultiply_OpenMP.h
+linalg/sparse/SparseMatrixMultiply_OpenMP.cc
 )
 
 
