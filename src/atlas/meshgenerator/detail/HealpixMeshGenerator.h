@@ -22,7 +22,7 @@ class Parametrisation;
 }
 
 namespace atlas {
-class HealpixGrid;
+class StructuredGrid;
 class Mesh;
 template <typename T>
 class vector;

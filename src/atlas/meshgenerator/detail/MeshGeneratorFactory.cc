@@ -11,6 +11,7 @@
 #include <string>
 
 #include "atlas/meshgenerator/detail/DelaunayMeshGenerator.h"
+#include "atlas/meshgenerator/detail/HealpixMeshGenerator.h"
 #include "atlas/meshgenerator/detail/MeshGeneratorFactory.h"
 #include "atlas/meshgenerator/detail/StructuredMeshGenerator.h"
 
@@ -26,6 +27,7 @@ void force_link() {
         Link() {
             MeshGeneratorBuilder<meshgenerator::StructuredMeshGenerator>();
             MeshGeneratorBuilder<meshgenerator::DelaunayMeshGenerator>();
+            MeshGeneratorBuilder<meshgenerator::HealpixMeshGenerator>();
         }
     } link;
 }

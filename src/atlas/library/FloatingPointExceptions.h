@@ -54,8 +54,8 @@ void enable_atlas_signal_handler();
 
 // ------------------------------------------------------------------------------------
 
-typedef void ( *signal_handler_t )( int );
-typedef void ( *signal_action_t )( int, ::siginfo_t*, void* );
+using signal_handler_t = void ( * )( int );
+using signal_action_t  = void ( * )( int, ::siginfo_t*, void* );
 
 [[noreturn]] void atlas_signal_handler( int signum, ::siginfo_t* si, void* unused );
 
