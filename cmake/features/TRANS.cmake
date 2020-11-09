@@ -5,7 +5,10 @@ if( ENABLE_TRANS OR NOT DEFINED ENABLE_TRANS )
     if( TARGET transi_dp )
         set( transi_FOUND TRUE )
         if( NOT TARGET transi )
-            set_target_properties( transi_dp PROPERTIES IMPORTED_GLOBAL TRUE) # required for aliasing imports
+            get_target_property( transi_dp_IMPORTED transi_dp IMPORTED )
+            if( transi_dp_IMPORTED )
+                set_target_properties( transi_dp PROPERTIES IMPORTED_GLOBAL TRUE) # required for aliasing imports
+            endif()
             add_library( transi ALIAS transi_dp )
         endif()
     else()
