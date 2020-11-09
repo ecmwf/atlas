@@ -19,11 +19,13 @@ export PATH=$SCRIPT_DIR:$PATH
 PREFIX=$(pwd)/install
 CMAKE_OPTIONS=""
 with_gridtools=false
+with_trans=false
 with_fftw=false
 with_cgal=false
 with_deps=false
 WORK_DIR=$(pwd)
 BUILD_TYPE=RelWithDebInfo
+ifs_projects_GIT="git@git.ecmwf.int:~nawd/ifs-projects"
 
 function print_help {
     echo "Quick installer for Atlas and its dependencies"
@@ -32,17 +34,18 @@ function print_help {
     echo "Usage:"
     echo ""
     echo "  install.sh [--with-deps] [--prefix <prefix>] [--build-type <build-type>] [--cmake <cmake>] \\"
-    echo "             [--enable-gridtools] [--enable-fftw] [--enable-cgal] [--work-dir <work-dir>] [--help]"
+    echo "             [--enable-gridtools] [--enable-trans] [--enable-fftw] [--enable-cgal] [--work-dir <work-dir>] [--help]"
     echo ""
     echo "  "
     echo ""
     echo "Options:"
     echo ""
-    echo "  --with-deps                  Install dependencies together with Atlas: fftw, ecbuild, eckit, fckit"
+    echo "  --with-deps                  Install dependencies together with Atlas: fftw, cgal, ecbuild, eckit, fckit, trans"
     echo "  --prefix <prefix>            Install prefix for atlas (and its dependencies if requested with '--with-deps')"
     echo "  --build-type <build-type>    Build type for atlas (and its dependencies if requested with '--with-deps')"
     echo "                               Possible values are ( Release | RelWithDebInfo | Debug )"
     echo "  --cmake <cmake>              Extra CMake Options to configure atlas and its dependencies"
+    echo "  --enable-trans               Enable optional trans dependency"
     echo "  --enable-gridtools           Enable optional gridtools dependency (only has effect when '--with-deps' is also used)"
     echo "                               ! Requires Boost ! Specify Boost_ROOT environment variable to a fairly recent Boost installation"
     echo "  --enable-fftw                Enable optional fftw dependency required for spectral transforms"
@@ -73,6 +76,9 @@ while [ $# != 0 ]; do
         ;;
     "--enable-fftw")
         with_fftw=true;
+        ;;
+    "--enable-trans")
+        with_trans=true;
         ;;
     "--enable-gridtools")
         with_gridtools=true;
@@ -109,6 +115,8 @@ SOURCES_DIR=${WORK_DIR}/sources
 BUILDS_DIR=${WORK_DIR}/builds
 export PATH=${PREFIX}/bin:${PATH}
 
+export CMAKE_PREFIX_PATH=${PREFIX}
+
 mkdir -p ${SOURCES_DIR}
 mkdir -p ${BUILDS_DIR}
 
@@ -139,14 +147,12 @@ if ${with_deps}; then
   mkdir -p ${BUILDS_DIR}/ecbuild && cd ${BUILDS_DIR}/ecbuild
   cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} -- -DENABLE_TESTS=OFF ${SOURCES_DIR}/ecbuild
   make -j8 install
-  ECBUILD_MODULE_PATH="-DCMAKE_MODULE_PATH=${PREFIX}/share/ecbuild/cmake"
 
   ### Install eckit
   echo "Installing eckit"
   [[ -d ${SOURCES_DIR}/eckit ]] || git clone -b master https://github.com/ecmwf/eckit ${SOURCES_DIR}/eckit
   mkdir -p ${BUILDS_DIR}/eckit && cd ${BUILDS_DIR}/eckit
-  cmake ${ECBUILD_MODULE_PATH} \
-        -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+  cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
         -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
         -DENABLE_TESTS=OFF \
         -DENABLE_ECKIT_SQL=OFF \
@@ -170,13 +176,35 @@ if ${with_deps}; then
   echo "Installing fckit"
   [[ -d ${SOURCES_DIR}/fckit ]] || git clone -b master https://github.com/ecmwf/fckit ${SOURCES_DIR}/fckit
   mkdir -p ${BUILDS_DIR}/fckit && cd ${BUILDS_DIR}/fckit
-  cmake ${ECBUILD_MODULE_PATH} \
-        -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+  cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
         -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
         -DENABLE_TESTS=OFF \
         ${CMAKE_OPTIONS} \
         ${SOURCES_DIR}/fckit
   make -j8 install
+
+  ### Install faux + trans (optional, off by default)
+  if ${with_trans}; then
+    echo "Installing faux"
+    [[ -d ${SOURCES_DIR}/ifs-projects ]] || git clone -b develop ${ifs_projects_GIT} ${SOURCES_DIR}/ifs-projects
+    mkdir -p ${BUILDS_DIR}/faux && cd ${BUILDS_DIR}/faux
+    cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+          -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+          -DENABLE_TESTS=OFF \
+          ${CMAKE_OPTIONS} \
+          ${SOURCES_DIR}/ifs-projects/faux
+    make -j8 install
+
+    echo "Installing trans"
+    mkdir -p ${BUILDS_DIR}/trans && cd ${BUILDS_DIR}/trans
+    cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+          -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+          -DENABLE_TESTS=OFF \
+          ${CMAKE_OPTIONS} \
+          ${SOURCES_DIR}/ifs-projects/trans
+    make -j8 install
+  fi
+
 
   ### Install gridtools (optional, off by default)
   if ${with_gridtools}; then
@@ -193,20 +221,13 @@ if ${with_deps}; then
           ${CMAKE_OPTIONS} \
           ${SOURCES_DIR}/gridtools
     make -j8 install
+    ### Fix non-standard GridTools installation detection
+    if [[ -f ${PREFIX}/lib/cmake/GridToolsConfig.cmake ]]; then
     export GridTools_DIR=${PREFIX}/lib/cmake # see GridTools issue (https://github.com/GridTools/gridtools/issues/1395)
+    fi
   fi
-
 fi
 
-### Load ecbuild
-if [[ -f ${PREFIX}/share/ecbuild/cmake/ecbuild.cmake ]]; then
-ECBUILD_MODULE_PATH="-DCMAKE_MODULE_PATH=${PREFIX}/share/ecbuild/cmake"
-fi
-
-### Fix non-standard GridTools installation detection
-if [[ -f ${PREFIX}/lib/cmake/GridToolsConfig.cmake ]]; then
-export GridTools_DIR=${PREFIX}/lib/cmake # see GridTools issue (https://github.com/GridTools/gridtools/issues/1395)
-fi
 
 ### Install atlas
 echo "Installing atlas"
