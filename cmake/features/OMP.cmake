@@ -1,11 +1,5 @@
 ### OMP ...
-if( "${CMAKE_VERSION}" VERSION_LESS "3.11" )
-  if( ENABLE_OMP )
-    ecbuild_warn( "OpenMP only supported with CMake 3.11 onwards" )
-  endif()
-else()
-  find_package( OpenMP COMPONENTS CXX ${Fortran} )
-endif()
+find_package( OpenMP COMPONENTS CXX ${Fortran} )
 ecbuild_add_option( FEATURE OMP
                     DESCRIPTION "support for OpenMP shared memory parallelism"
                     CONDITION OpenMP_Fortran_FOUND OR OpenMP_CXX_FOUND )
