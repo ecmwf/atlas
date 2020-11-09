@@ -480,10 +480,18 @@ void Library::Information::print( std::ostream& out ) const {
     }
 
 #if ATLAS_HAVE_TRANS
+#ifdef TRANS_HAVE_FAUX
+    #warning here
+    out << "    trans version (" << trans_version_str() << "), "
+        << "git-sha1 " << trans_git_sha1_abbrev( 7 ) << '\n';
+    out << "    faux version (" << faux_version_str() << "), "
+        << "git-sha1 " << faux_git_sha1_abbrev( 7 ) << '\n';
+#else
     out << "    transi version (" << transi_version() << "), "
         << "git-sha1 " << transi_git_sha1_abbrev( 7 ) << '\n';
     out << "    trans version (" << trans_version() << "), "
         << "git-sha1 " << trans_git_sha1_abbrev( 7 ) << '\n';
+#endif
 #endif
 }
 
