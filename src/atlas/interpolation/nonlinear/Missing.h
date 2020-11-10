@@ -245,7 +245,6 @@ struct MissingIfHeaviestMissing : Missing {
     static std::string static_type() { return "missing-if-heaviest-missing"; }
 };
 
-
 }  // namespace nonlinear
 }  // namespace interpolation
 }  // namespace atlas

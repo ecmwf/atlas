@@ -20,7 +20,8 @@
 #include "structured/Linear3D.h"
 #include "structured/QuasiCubic2D.h"
 #include "structured/QuasiCubic3D.h"
-
+#include "knn/GridBoxAverage.h"
+#include "knn/GridBoxMaximum.h"
 
 namespace atlas {
 namespace interpolation {
@@ -39,6 +40,8 @@ void force_link() {
             MethodBuilder<method::Cubic3D>();
             MethodBuilder<method::QuasiCubic2D>();
             MethodBuilder<method::QuasiCubic3D>();
+            MethodBuilder<method::GridBoxAverage>();
+            MethodBuilder<method::GridBoxMaximum>();
         }
     } link;
 }

@@ -21,6 +21,10 @@
 #include "atlas/grid/detail/distribution/DistributionArray.h"
 #include "atlas/grid/detail/partitioner/CheckerboardPartitioner.h"
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
+#include "atlas/grid/detail/partitioner/BandsPartitioner.h"
+#include "atlas/grid/detail/partitioner/EqualBandsPartitioner.h"
+#include "atlas/grid/detail/partitioner/RegularBandsPartitioner.h"
+#include "atlas/grid/detail/partitioner/SerialPartitioner.h"
 #include "atlas/grid/detail/partitioner/MatchingFunctionSpacePartitionerLonLatPolygon.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitioner.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h"
@@ -78,6 +82,10 @@ struct force_link {
     force_link() {
         load_builder<EqualRegionsPartitioner>();
         load_builder<CheckerboardPartitioner>();
+        load_builder<BandsPartitioner>();
+        load_builder<EqualBandsPartitioner>();
+        load_builder<RegularBandsPartitioner>();
+        load_builder<SerialPartitioner>();
 #if ATLAS_HAVE_TRANS
         load_builder<TransPartitioner>();
 #endif
