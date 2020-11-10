@@ -24,6 +24,7 @@
 #include "eckit/linalg/Matrix.h"
 #include "eckit/linalg/Vector.h"
 
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace linalg {
