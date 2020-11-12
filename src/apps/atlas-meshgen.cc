@@ -66,7 +66,8 @@ MeshGenerator make_meshgenerator( const Grid& grid, const AtlasTool::Args& args 
         config.set( "3d", false );
     }
 
-    config.set( "patch_pole", args.getBool( "patch_pole", false ) );
+    config.set( "include_pole", args.getBool( "include-pole", false ) );
+    config.set( "patch_pole", args.getBool( "patch-pole", false ) );
 
     return MeshGenerator{config};
 }
@@ -131,8 +132,8 @@ Meshgen2Gmsh::Meshgen2Gmsh( int argc, char** argv ) : AtlasTool( argc, argv ) {
         "partitioner", "Mesh partitioner [equal_regions,checkerboard,equal_bands,regular_bands" ) );
 
     add_option( new Separator( "Options for `--generator=structured`" ) );
-    add_option( new SimpleOption<bool>( "include_pole", "Include pole point" ) );
-    add_option( new SimpleOption<bool>( "patch_pole", "Patch poles with elements." ) );
+    add_option( new SimpleOption<bool>( "include-pole", "Include pole point" ) );
+    add_option( new SimpleOption<bool>( "patch-pole", "Patch poles with elements." ) );
     add_option( new SimpleOption<double>(
         "angle", "Maximum element-edge slant deviation from meridian in degrees. \n" + indent() +
                      "     Value range between 0 and 30\n" + indent() +
