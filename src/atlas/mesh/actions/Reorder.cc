@@ -35,7 +35,7 @@ namespace actions {
 // ------------------------------------------------------------------
 
 struct force_link {
-    template< typename T>
+    template <typename T>
     void load_builder() {
         ReorderBuilder<T>( "tmp" );
     }

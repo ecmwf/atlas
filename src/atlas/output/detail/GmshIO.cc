@@ -817,8 +817,7 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
     bool include_water   = options.getBool( "water", false );
     bool include_land    = options.getBool( "land", false );
 
-    std::string nodes_field = options.get<std::string>( "nodes" );
-
+    std::string nodes_field  = options.get<std::string>( "nodes" );
     const mesh::Nodes& nodes = mesh.nodes();
 
     const Field coords_field = nodes.field( nodes_field );

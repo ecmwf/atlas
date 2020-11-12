@@ -159,7 +159,9 @@ private:
         return range.start() * view.stride( i_view++ );
     }
 
-    static idx_t offset_part( View& view, int& i_view, RangeTo range ) { return range.start() * view.stride( i_view++ ); }
+    static idx_t offset_part( View& view, int& i_view, RangeTo range ) {
+        return range.start() * view.stride( i_view++ );
+    }
 
     static idx_t offset_part( View& view, int& i_view, RangeFrom range ) {
         return range.start() * view.stride( i_view++ );

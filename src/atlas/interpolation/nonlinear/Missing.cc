@@ -72,7 +72,7 @@ struct force_link {
         load_builder<M3<unsigned long>>();
     }
 };
-}
+}  // namespace
 void force_link_missing() {
     static force_link static_linking;
 }
