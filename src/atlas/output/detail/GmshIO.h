@@ -104,6 +104,12 @@ private:
     void write_delegate( const FieldSet& fieldset, const functionspace::NodeColumns&, const eckit::PathName& file_path,
                          openmode mode = std::ios::out ) const;
 
+    /// Write fieldset to file using Nodes functionspace
+    ///  Depending on argument "mode", the fields will be appended,
+    ///  or existing file will be overwritten
+    void write_delegate( const FieldSet& fieldset, const functionspace::NoFunctionSpace&,
+                         const eckit::PathName& file_path, openmode mode = std::ios::out ) const;
+
     /// Write fieldset to file using Cells functionspace
     ///  Depending on argument "mode", the fields will be appended,
     ///  or existing file will be overwritten
@@ -120,6 +126,12 @@ private:
     ///  Depending on argument "mode", the fields will be appended,
     ///  or existing file will be overwritten
     void write_delegate( const Field& field, const functionspace::NodeColumns&, const eckit::PathName& file_path,
+                         openmode mode = std::ios::out ) const;
+
+    /// Write field to file using Nodes functionspace
+    ///  Depending on argument "mode", the fields will be appended,
+    ///  or existing file will be overwritten
+    void write_delegate( const Field& field, const functionspace::NoFunctionSpace&, const eckit::PathName& file_path,
                          openmode mode = std::ios::out ) const;
 
     /// Write field to file using StructuredColumns functionspace

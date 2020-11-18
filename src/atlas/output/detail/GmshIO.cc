@@ -125,8 +125,8 @@ array::LocalView<const T, 2> make_level_view( const Field& field, int ndata, int
     }
 }
 
-template <typename Value>
-void write_level( std::ostream& out, const array::ArrayView<gidx_t, 1>& gidx, const array::LocalView<Value, 2>& data ) {
+template <typename Value, typename GlobalIndex>
+void write_level( std::ostream& out, GlobalIndex gidx, const array::LocalView<Value, 2>& data ) {
     using value_type = typename std::remove_const<Value>::type;
     int ndata        = data.shape( 0 );
     int nvars        = data.shape( 1 );
@@ -285,6 +285,40 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::NodeC
         }
     }
 }
+
+// ----------------------------------------------------------------------------
+template <typename Value>
+void write_field_nodes( const Metadata& gmsh_options, const functionspace::NoFunctionSpace& function_space,
+                        const Field& field, std::ostream& out ) {
+    Log::debug() << "writing field " << field.name() << " defined without functionspace..." << std::endl;
+
+    // unused: bool binary( !gmsh_options.get<bool>( "ascii" ) );
+    idx_t nlev  = std::max<idx_t>( 1, field.levels() );
+    idx_t ndata = field.shape( 0 );
+    idx_t nvars = std::max<idx_t>( 1, field.variables() );
+    auto gidx   = []( idx_t inode ) { return inode + 1; };
+
+    std::vector<int> lev = get_levels( nlev, gmsh_options );
+    for ( size_t ilev = 0; ilev < lev.size(); ++ilev ) {
+        int jlev = lev[ilev];
+        out << "$NodeData\n";
+        out << "1\n";
+        out << "\"" << field.name() << field_lev( field, jlev ) << "\"\n";
+        out << "1\n";
+        out << field_time( field ) << "\n";
+        out << "4\n";
+        out << field_step( field ) << "\n";
+        out << field_vars( nvars ) << "\n";
+        out << ndata << "\n";
+        out << mpi::rank() << "\n";
+        auto data = make_level_view<Value>( field, ndata, jlev );
+        write_level( out, gidx, data );
+        out << "$EndNodeData\n";
+    }
+}
+// ----------------------------------------------------------------------------
+
+
 // ----------------------------------------------------------------------------
 
 void print_field_lev( char field_lev[], int jlev ) {
@@ -1081,13 +1115,12 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
 // ----------------------------------------------------------------------------
 void GmshIO::write( const Field& field, const PathName& file_path, openmode mode ) const {
     if ( !field.functionspace() ) {
-        std::stringstream msg;
-        msg << "Field [" << field.name() << "] has no functionspace";
-
-        throw_AssertionFailed( msg.str(), Here() );
+        FieldSet fieldset;
+        fieldset.add( field );
+        write( fieldset, field.functionspace(), file_path, mode );
     }
 
-    if ( functionspace::NodeColumns( field.functionspace() ) ) {
+    else if ( functionspace::NodeColumns( field.functionspace() ) ) {
         FieldSet fieldset;
         fieldset.add( field );
         write( fieldset, field.functionspace(), file_path, mode );
@@ -1120,6 +1153,16 @@ void GmshIO::write_delegate( const Field& field, const functionspace::NodeColumn
     fieldset.add( field );
     write_delegate( fieldset, functionspace, file_path, mode );
 }
+
+// ----------------------------------------------------------------------------
+
+void GmshIO::write_delegate( const Field& field, const functionspace::NoFunctionSpace& functionspace,
+                             const eckit::PathName& file_path, GmshIO::openmode mode ) const {
+    FieldSet fieldset;
+    fieldset.add( field );
+    write_delegate( fieldset, functionspace, file_path, mode );
+}
+
 // ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------
@@ -1134,6 +1177,44 @@ void GmshIO::write_delegate( const Field& field, const functionspace::Structured
 // ----------------------------------------------------------------------------
 void GmshIO::write_delegate( const FieldSet& fieldset, const functionspace::NodeColumns& functionspace,
                              const PathName& file_path, openmode mode ) const {
+    bool is_new_file = ( mode != std::ios_base::app || !file_path.exists() );
+    bool binary( !options.get<bool>( "ascii" ) );
+    if ( binary ) {
+        mode |= std::ios_base::binary;
+    }
+    bool gather = options.has( "gather" ) ? options.get<bool>( "gather" ) : false;
+    GmshFile file( file_path, mode, gather ? -1 : int( mpi::rank() ) );
+
+    // Header
+    if ( is_new_file ) {
+        write_header_ascii( file );
+    }
+
+    // field::Fields
+    for ( idx_t field_idx = 0; field_idx < fieldset.size(); ++field_idx ) {
+        const Field& field = fieldset[field_idx];
+        Log::debug() << "writing field " << field.name() << " to gmsh file " << file_path << std::endl;
+
+        if ( field.datatype() == array::DataType::int32() ) {
+            write_field_nodes<int>( options, functionspace, field, file );
+        }
+        else if ( field.datatype() == array::DataType::int64() ) {
+            write_field_nodes<long>( options, functionspace, field, file );
+        }
+        else if ( field.datatype() == array::DataType::real32() ) {
+            write_field_nodes<float>( options, functionspace, field, file );
+        }
+        else if ( field.datatype() == array::DataType::real64() ) {
+            write_field_nodes<double>( options, functionspace, field, file );
+        }
+
+        file << std::flush;
+    }
+    file.close();
+}
+
+void GmshIO::write_delegate( const FieldSet& fieldset, const functionspace::NoFunctionSpace& functionspace,
+                             const eckit::PathName& file_path, GmshIO::openmode mode ) const {
     bool is_new_file = ( mode != std::ios_base::app || !file_path.exists() );
     bool binary( !options.get<bool>( "ascii" ) );
     if ( binary ) {
@@ -1264,6 +1345,9 @@ void GmshIO::write( const FieldSet& fieldset, const FunctionSpace& funcspace, co
     }
     else if ( functionspace::CellColumns( funcspace ) ) {
         write_delegate( fieldset, functionspace::CellColumns( funcspace ), file_path, mode );
+    }
+    else if ( not funcspace ) {
+        write_delegate( fieldset, functionspace::NoFunctionSpace(), file_path, mode );
     }
     else {
         ATLAS_NOTIMPLEMENTED;
