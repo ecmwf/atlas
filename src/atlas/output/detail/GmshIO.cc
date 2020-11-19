@@ -35,6 +35,7 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/field/MissingValue.h"
 
 using atlas::functionspace::NodeColumns;
 using atlas::util::Metadata;
@@ -125,57 +126,65 @@ array::LocalView<const T, 2> make_level_view( const Field& field, int ndata, int
     }
 }
 
-template <typename Value, typename GlobalIndex>
-void write_level( std::ostream& out, GlobalIndex gidx, const array::LocalView<Value, 2>& data ) {
+template <typename Value, typename GlobalIndex, typename IncludeIndex>
+void write_level( std::ostream& out, GlobalIndex gidx, const array::LocalView<Value, 2>& data, IncludeIndex include  ) {
     using value_type = typename std::remove_const<Value>::type;
     int ndata        = data.shape( 0 );
     int nvars        = data.shape( 1 );
     if ( nvars == 1 ) {
         for ( idx_t n = 0; n < ndata; ++n ) {
-            out << gidx( n ) << " " << data( n, 0 ) << "\n";
+            if( include(n) ) {
+                out << gidx( n ) << " " << data(n,0) << "\n";
+            }
         }
     }
     else if ( nvars <= 3 ) {
-        std::vector<value_type> data_vec( 3, 0. );
+        std::array<value_type,3> data_vec;
         for ( idx_t n = 0; n < ndata; ++n ) {
-            out << gidx( n );
-            for ( idx_t v = 0; v < nvars; ++v ) {
-                data_vec[v] = data( n, v );
-            }
-            for ( int v = 0; v < 3; ++v ) {
-                out << " " << data_vec[v];
-            }
-            out << "\n";
-        }
-    }
-    else if ( nvars <= 9 ) {
-        std::vector<value_type> data_vec( 9, 0. );
-        if ( nvars == 4 ) {
-            for ( int n = 0; n < ndata; ++n ) {
-                for ( int i = 0; i < 2; ++i ) {
-                    for ( int j = 0; j < 2; ++j ) {
-                        data_vec[i * 3 + j] = data( n, i * 2 + j );
-                    }
+            if( include(n) ) {
+                for ( idx_t v = 0; v < nvars; ++v ) {
+                    data_vec[v] = data(n,v);
                 }
                 out << gidx( n );
-                for ( int v = 0; v < 9; ++v ) {
+                for ( int v = 0; v < 3; ++v ) {
                     out << " " << data_vec[v];
                 }
                 out << "\n";
+            }
+        }
+    }
+    else if ( nvars <= 9 ) {
+        std::array<value_type,9> data_vec;
+        if ( nvars == 4 ) {
+            for ( int n = 0; n < ndata; ++n ) {
+                if( include(n) ) {
+                    for ( int i = 0; i < 2; ++i ) {
+                        for ( int j = 0; j < 2; ++j ) {
+                            data_vec[i * 3 + j] = data( n, i * 2 + j );
+                        }
+                    }
+                    out << gidx( n );
+                    for ( int v = 0; v < 9; ++v ) {
+                        out << " " << data_vec[v];
+                    }
+                    out << "\n";
+                }
             }
         }
         else if ( nvars == 9 ) {
             for ( int n = 0; n < ndata; ++n ) {
-                for ( int i = 0; i < 3; ++i ) {
-                    for ( int j = 0; j < 3; ++j ) {
-                        data_vec[i * 3 + j] = data( n, i * 2 + j );
+                if( include(n) ) {
+                    for ( int i = 0; i < 3; ++i ) {
+                        for ( int j = 0; j < 3; ++j ) {
+                            data_vec[i * 3 + j] = data(n, i * 2 + j );
+                        }
                     }
+                    out << gidx( n );
+                    for ( int v = 0; v < 9; ++v ) {
+                        out << " " << data_vec[v];
+                    }
+                    out << "\n";
                 }
-                out << gidx( n );
-                for ( int v = 0; v < 9; ++v ) {
-                    out << " " << data_vec[v];
-                }
-                out << "\n";
             }
         }
         else {
@@ -185,6 +194,10 @@ void write_level( std::ostream& out, GlobalIndex gidx, const array::LocalView<Va
     else {
         ATLAS_NOTIMPLEMENTED;
     }
+}
+template <typename Value, typename GlobalIndex>
+void write_level( std::ostream& out, GlobalIndex gidx, const array::LocalView<Value, 2>& data ) {
+    write_level(out,gidx,data,[](idx_t){return true;});
 }
 
 std::vector<int> get_levels( int nlev, const Metadata& gmsh_options ) {
@@ -263,11 +276,32 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::NodeC
         function_space.gather( field, field_glb );
         ndata = std::min<idx_t>( function_space.nb_nodes_global(), field_glb.shape( 0 ) );
     }
+    auto missing = field::MissingValue(field);
 
     std::vector<int> lev = get_levels( nlev, gmsh_options );
     for ( size_t ilev = 0; ilev < lev.size(); ++ilev ) {
         int jlev = lev[ilev];
         if ( ( gather && mpi::rank() == 0 ) || !gather ) {
+
+            auto data = gather ? make_level_view<Value>( field_glb, ndata, jlev )
+                               : make_level_view<Value>( field, ndata, jlev );
+            auto include_idx = [&](idx_t n) {
+                for( idx_t v=0; v<nvars; ++v ) {
+                    if( missing( data(n,v)) ) { return false; }
+                }
+                return true;
+            };
+            idx_t ndata_nonmissing = [&]{
+                if( missing ) {
+                    idx_t c=0;
+                    for( idx_t n=0; n<ndata; ++n ) {
+                        c += include_idx(n);
+                    }
+                    return c;
+                }
+                return ndata;
+            }();
+
             out << "$NodeData\n";
             out << "1\n";
             out << "\"" << field.name() << field_lev( field, jlev ) << "\"\n";
@@ -276,11 +310,14 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::NodeC
             out << "4\n";
             out << field_step( field ) << "\n";
             out << field_vars( nvars ) << "\n";
-            out << ndata << "\n";
+            out << ndata_nonmissing << "\n";
             out << mpi::rank() << "\n";
-            auto data = gather ? make_level_view<Value>( field_glb, ndata, jlev )
-                               : make_level_view<Value>( field, ndata, jlev );
-            write_level( out, gidx, data );
+            if( missing ) {
+                write_level( out, gidx, data, include_idx );
+            }
+            else {
+                write_level( out, gidx, data );
+            }
             out << "$EndNodeData\n";
         }
     }
@@ -298,9 +335,30 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::NoFun
     idx_t nvars = std::max<idx_t>( 1, field.variables() );
     auto gidx   = []( idx_t inode ) { return inode + 1; };
 
+    auto missing = field::MissingValue(field);
+
     std::vector<int> lev = get_levels( nlev, gmsh_options );
     for ( size_t ilev = 0; ilev < lev.size(); ++ilev ) {
         int jlev = lev[ilev];
+
+        auto data = make_level_view<Value>( field, ndata, jlev );
+        auto include_idx = [&](idx_t n) {
+            for( idx_t v=0; v<nvars; ++v ) {
+                if( missing( data(n,v)) ) { return false; }
+            }
+            return true;
+        };
+        idx_t ndata_nonmissing = [&]{
+            if( missing ) {
+                idx_t c=0;
+                for( idx_t n=0; n<ndata; ++n ) {
+                    c += include_idx(n);
+                }
+                return c;
+            }
+            return ndata;
+        }();
+
         out << "$NodeData\n";
         out << "1\n";
         out << "\"" << field.name() << field_lev( field, jlev ) << "\"\n";
@@ -309,10 +367,14 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::NoFun
         out << "4\n";
         out << field_step( field ) << "\n";
         out << field_vars( nvars ) << "\n";
-        out << ndata << "\n";
+        out << ndata_nonmissing << "\n";
         out << mpi::rank() << "\n";
-        auto data = make_level_view<Value>( field, ndata, jlev );
-        write_level( out, gidx, data );
+        if( missing ) {
+            write_level( out, gidx, data, include_idx );
+        }
+        else {
+            write_level( out, gidx, data );
+        }
         out << "$EndNodeData\n";
     }
 }
