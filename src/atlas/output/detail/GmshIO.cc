@@ -552,25 +552,9 @@ void write_field_elems(const Metadata& gmsh_options, const FunctionSpace& functi
   }
 }
 #endif
-// ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------
-// Unused private function, in case for big-endian
-// ----------------------------------------------------------------------------
-#if 0
-void swap_bytes(char *array, int size, int n)
-{
-  char *x = new char[size];
-  for(int i = 0; i < n; i++) {
-    char *a = &array[i * size];
-    memcpy(x, a, size);
-    for(int c = 0; c < size; c++)
-      a[size - 1 - c] = x[c];
-  }
-  delete [] x;
-}
-#endif
-// ----------------------------------------------------------------------------
+
 }  // end anonymous namespace
 
 // ----------------------------------------------------------------------------
@@ -957,6 +941,9 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
                         return false;
                     }
                 }
+                if( topology.check( Topology::INVALID ) ) {
+                    return false;
+                }
                 return true;
             };
 
@@ -1014,6 +1001,9 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
                         if ( topology.check( Topology::PATCH ) ) {
                             return false;
                         }
+                    }
+                    if( topology.check( Topology::INVALID) ) {
+                        return false;
                     }
                     return true;
                 };
