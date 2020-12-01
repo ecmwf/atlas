@@ -16,6 +16,7 @@
 
 #include "eckit/filesystem/PathName.h"
 #include "eckit/system/Library.h"
+#include "eckit/system/Plugin.h"
 
 namespace eckit {
 class Parametrisation;
@@ -37,7 +38,6 @@ void finalise();
 void finalize();
 
 //----------------------------------------------------------------------------------------------------------------------
-class Plugin;
 
 class Library : public eckit::system::Library {
 public:
@@ -74,6 +74,9 @@ public:
 
     Library();
 
+    void registerPlugin( eckit::system::Plugin& );
+    const std::vector<eckit::system::Plugin*>& plugins() { return plugins_; }
+
 protected:
     virtual const void* addr() const override;
 
@@ -90,11 +93,7 @@ protected:
     mutable std::unique_ptr<eckit::Channel> debug_channel_;
 
 private:
-    const std::vector<Plugin*>& plugins() { return plugins_; }
-
-    friend class Plugin;
-    void registerPlugin( Plugin& );
-    std::vector<Plugin*> plugins_;
+    std::vector<eckit::system::Plugin*> plugins_;
 };
 
 using Atlas = Library;
