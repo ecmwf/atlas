@@ -70,6 +70,7 @@ public:
     virtual bool debug() const override { return debug_; }
 
     bool traceBarriers() const { return trace_barriers_; }
+    bool traceMemory() const { return trace_memory_; }
 
     Library();
 
@@ -80,6 +81,7 @@ protected:
     bool info_{true};
     bool warning_{true};
     bool trace_{false};
+    bool trace_memory_{false};
     bool trace_barriers_{false};
     bool trace_report_{false};
     mutable std::unique_ptr<eckit::Channel> info_channel_;

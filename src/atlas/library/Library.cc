@@ -161,6 +161,7 @@ Library::Library() :
     info_( getEnv( "ATLAS_INFO", true ) ),
     warning_( getEnv( "ATLAS_WARNING", true ) ),
     trace_( getEnv( "ATLAS_TRACE", false ) ),
+    trace_memory_( getEnv( "ATLAS_TRACE_MEMORY", false ) ),
     trace_barriers_( getEnv( "ATLAS_TRACE_BARRIERS", false ) ),
     trace_report_( getEnv( "ATLAS_TRACE_REPORT", false ) ) {}
 
@@ -215,6 +216,7 @@ void Library::initialise( const eckit::Parametrisation& config ) {
     if ( config.has( "trace" ) ) {
         config.get( "trace.barriers", trace_barriers_ );
         config.get( "trace.report", trace_report_ );
+        config.get( "trace.memory", trace_memory_ );
     }
 
     if ( not debug_ ) {
@@ -307,6 +309,7 @@ void Library::initialise( const eckit::Parametrisation& config ) {
         out << "  log.debug       [" << str( debug() ) << "] \n";
         out << "  trace.barriers  [" << str( traceBarriers() ) << "] \n";
         out << "  trace.report    [" << str( trace_report_ ) << "] \n";
+        out << "  trace.memory    [" << str( trace_memory_ ) << "] \n";
         out << " \n";
         out << atlas::Library::instance().information();
         out << std::flush;
