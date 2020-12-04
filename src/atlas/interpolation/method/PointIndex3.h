@@ -67,7 +67,7 @@ struct ElemIndex3TreeTrait {
 
 typedef PointKdTree<ElemIndex3TreeTrait> ElemIndex3;
 
-ElemIndex3* create_element_kdtree( const Field& field_centres );
+ElemIndex3* create_element_kdtree( const Mesh& mesh, const Field& field_centres );
 
 // TODO: remove this function, and use "create_element_kdtree(const Field&)"
 // instead.
