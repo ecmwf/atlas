@@ -26,6 +26,7 @@ PartitionedMesh::PartitionedMesh( const std::string& partitioner, const std::str
     generatorParams_.set( "include_pole", false );
     generatorParams_.set( "triangulate", generatorTriangulate );
     generatorParams_.set( "angle", generatorAngle );
+    generatorParams_.set( "fixup", true );
 }
 
 void PartitionedMesh::writeGmsh( const std::string& fileName, const FieldSet& fields ) {

@@ -228,6 +228,8 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
         }();
         array::ArrayView<double, 1> src_scalar_1 = array::make_view<double, 1>( src_fields[0] ),
                                     src_scalar_2 = array::make_view<double, 1>( src_fields[1] );
+
+        ATLAS_ASSERT( src_scalar_1.shape(0) == lonlat.shape(0) );
         for ( idx_t j = 0; j < lonlat.shape( 0 ); ++j ) {
             const double lon = deg2rad * lonlat( j, 0 );  // (lon)
             const double lat = deg2rad * lonlat( j, 1 );  // (lat)
