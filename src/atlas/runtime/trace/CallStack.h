@@ -47,6 +47,11 @@ public:
 public:
     CallStack() = default;
     CallStack( const CallStack& other ) : stack_( other.stack_ ) {}
+    CallStack& operator=( const CallStack& other ) {
+        stack_ = other.stack_;
+        hash_  = 0;
+        return *this;
+    }
 
 private:
     std::list<size_t> stack_;
