@@ -108,7 +108,7 @@ struct Introspect {
 
     template <typename T, typename std::enable_if<has_rank<T>::value, T>::type* = nullptr>
     static constexpr int rank() {
-        static_assert( has_RANK<T>::value , "workaround for Cray 8.7: we need to use T::RANK instead of T::rank()");
+        static_assert( has_RANK<T>::value, "workaround for Cray 8.7: we need to use T::RANK instead of T::rank()" );
         return T::RANK;
     }
     template <typename T, typename std::enable_if<not has_rank<T>::value, T>::type* = nullptr>
