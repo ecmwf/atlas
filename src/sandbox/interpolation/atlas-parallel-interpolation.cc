@@ -98,7 +98,7 @@ public:
                                             "Output forward interpolator's points and weights" ) );
         add_option( new SimpleOption<bool>( "backward-interpolator-output",
                                             "Output backward interpolator's points and weights" ) );
-        add_option( new SimpleOption<bool>( "skip-halo-exchange", "Skip halo exchange") );
+        add_option( new SimpleOption<bool>( "skip-halo-exchange", "Skip halo exchange" ) );
     }
 };
 
@@ -229,7 +229,7 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
         array::ArrayView<double, 1> src_scalar_1 = array::make_view<double, 1>( src_fields[0] ),
                                     src_scalar_2 = array::make_view<double, 1>( src_fields[1] );
 
-        ATLAS_ASSERT( src_scalar_1.shape(0) == lonlat.shape(0) );
+        ATLAS_ASSERT( src_scalar_1.shape( 0 ) == lonlat.shape( 0 ) );
         for ( idx_t j = 0; j < lonlat.shape( 0 ); ++j ) {
             const double lon = deg2rad * lonlat( j, 0 );  // (lon)
             const double lat = deg2rad * lonlat( j, 1 );  // (lat)
@@ -253,8 +253,8 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
         tgt_fields.add( tgt_functionspace.createField<double>( option::name( src_fields[i].name() ) ) );
     }
 
-    if( args.getBool("skip-halo-exchange",false) ) {
-        src_fields.set_dirty(false);
+    if ( args.getBool( "skip-halo-exchange", false ) ) {
+        src_fields.set_dirty( false );
     }
     else {
         src_functionspace.haloExchange( src_fields );
@@ -269,8 +269,8 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
     // necessary?)
     interpolator_forward.execute( src_fields, tgt_fields );
 
-    if( args.getBool("skip-halo-exchange",false) ) {
-        tgt_fields.set_dirty(false);
+    if ( args.getBool( "skip-halo-exchange", false ) ) {
+        tgt_fields.set_dirty( false );
     }
     else {
         tgt_functionspace.haloExchange( tgt_fields );
@@ -280,8 +280,8 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
         Log::info() << "Interpolate backward" << std::endl;
 
         interpolator_backward.execute( tgt_fields, src_fields );
-        if( args.getBool("skip-halo-exchange",false) ) {
-            src_fields.set_dirty(false);
+        if ( args.getBool( "skip-halo-exchange", false ) ) {
+            src_fields.set_dirty( false );
         }
         else {
             src_functionspace.haloExchange( src_fields );

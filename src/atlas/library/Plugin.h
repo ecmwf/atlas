@@ -19,6 +19,7 @@ namespace atlas {
 class Plugin : public eckit::system::Plugin {
 public:
     using eckit::system::Plugin::Plugin;
+
 protected:
     /// @brief Initialisation function called on loading the plugin dynamically
     void init() override;

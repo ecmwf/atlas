@@ -47,14 +47,14 @@ void PartitionedMesh::partition( const Grid& grid ) {
 
     auto meshgen_config = grid.meshgenerator();
     meshgen_config.set( generatorParams_ );
-    if( optionGenerator_ != "default" ) {
-        meshgen_config.set("type",optionGenerator_);
+    if ( optionGenerator_ != "default" ) {
+        meshgen_config.set( "type", optionGenerator_ );
     }
     MeshGenerator meshgen( meshgen_config );
 
     auto partitioner_config = grid.partitioner();
-    if( optionPartitioner_ != "default" ) {
-        partitioner_config.set("type",optionPartitioner_);
+    if ( optionPartitioner_ != "default" ) {
+        partitioner_config.set( "type", optionPartitioner_ );
     }
     partitioner_ = Partitioner( partitioner_config );
 
@@ -68,8 +68,8 @@ void PartitionedMesh::partition( const Grid& grid, const PartitionedMesh& other 
 
     auto meshgen_config = grid.meshgenerator();
     meshgen_config.set( generatorParams_ );
-    if( optionGenerator_ != "default" ) {
-        meshgen_config.set("type",optionGenerator_);
+    if ( optionGenerator_ != "default" ) {
+        meshgen_config.set( "type", optionGenerator_ );
     }
     MeshGenerator meshgen( meshgen_config );
 

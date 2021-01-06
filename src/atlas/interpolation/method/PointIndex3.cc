@@ -25,10 +25,10 @@ namespace method {
 ElemIndex3* create_element_kdtree( const Mesh& mesh, const Field& field_centres ) {
     ATLAS_TRACE();
     const array::ArrayView<const double, 2> centres = array::make_view<double, 2>( field_centres );
-    const array::ArrayView<const int, 1> flags = array::make_view<int,1>( mesh.cells().flags() );
-    auto include_element = [&](unsigned int e) {
+    const array::ArrayView<const int, 1> flags      = array::make_view<int, 1>( mesh.cells().flags() );
+    auto include_element                            = [&]( unsigned int e ) {
         using util::Topology;
-        return not Topology::view(flags(e)).check( Topology::INVALID );
+        return not Topology::view( flags( e ) ).check( Topology::INVALID );
     };
 
     static bool fastBuildKDTrees = eckit::Resource<bool>( "$ATLAS_FAST_BUILD_KDTREES", true );
@@ -41,7 +41,7 @@ ElemIndex3* create_element_kdtree( const Mesh& mesh, const Field& field_centres 
         p.reserve( nb_cells );
 
         for ( unsigned int j = 0; j < nb_cells; ++j ) {
-            if( include_element(j) ) {
+            if ( include_element( j ) ) {
                 p.emplace_back( ElemIndex3::Point( centres( j, XX ), centres( j, YY ), centres( j, ZZ ) ),
                                 ElemIndex3::Payload( j ) );
             }
@@ -51,9 +51,10 @@ ElemIndex3* create_element_kdtree( const Mesh& mesh, const Field& field_centres 
     }
     else {
         for ( unsigned int j = 0; j < nb_cells; ++j ) {
-            if( include_element(j) ) {
-                tree->insert( ElemIndex3::Value( ElemIndex3::Point( centres( j, XX ), centres( j, YY ), centres( j, ZZ ) ),
-                                                 ElemIndex3::Payload( j ) ) );
+            if ( include_element( j ) ) {
+                tree->insert(
+                    ElemIndex3::Value( ElemIndex3::Point( centres( j, XX ), centres( j, YY ), centres( j, ZZ ) ),
+                                       ElemIndex3::Payload( j ) ) );
             }
         }
     }

@@ -16,8 +16,7 @@ namespace atlas {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void Plugin::init()
-{
+void Plugin::init() {
     atlas::Library::instance().registerPlugin( *this );
 }
 

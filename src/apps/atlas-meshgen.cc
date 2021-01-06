@@ -68,8 +68,8 @@ MeshGenerator make_meshgenerator( const Grid& grid, const AtlasTool::Args& args 
 
     config.set( "include_pole", args.getBool( "include-pole", false ) );
     config.set( "patch_pole", args.getBool( "patch-pole", false ) );
-    if( args.has("fixup") ) {
-        config.set("fixup",args.getBool("fixup"));
+    if ( args.has( "fixup" ) ) {
+        config.set( "fixup", args.getBool( "fixup" ) );
     }
 
     return MeshGenerator{config};
@@ -161,7 +161,6 @@ Meshgen2Gmsh::Meshgen2Gmsh( int argc, char** argv ) : AtlasTool( argc, argv ) {
     add_option( new SimpleOption<bool>(
         "land", "Output elements containing land points (not specifying --water or --land enables both)" ) );
     add_option( new SimpleOption<bool>( "fixup", "Apply custom fixes to the mesh where it applies" ) );
-
 }
 
 //-----------------------------------------------------------------------------
