@@ -15,13 +15,23 @@ namespace interpolation {
 
 InterpolationCacheEntry::~InterpolationCacheEntry() = default;
 
+Cache::Cache( std::shared_ptr<InterpolationCacheEntry> cache ) {
+    auto& new_cache = cache_[cache->type()];
+    new_cache = cache;
+}
+
+Cache::Cache( const Cache& other ) {
+    add( other );
+}
+
 Cache::Cache( const Interpolation& interpolation ) : Cache( interpolation.createCache() ) {}
 
 Cache::~Cache() = default;
 
 void Cache::add( const Cache& other ) {
     for ( auto& entry : other.cache_ ) {
-        cache_[entry.first] = entry.second;
+        auto& new_cache = cache_[entry.first];
+        new_cache = entry.second;
     }
 }
 

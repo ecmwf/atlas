@@ -11,6 +11,8 @@
 #pragma once
 
 #include <memory>
+#include <map>
+#include <string>
 
 #include "eckit/filesystem/PathName.h"
 #include "eckit/io/Buffer.h"
@@ -46,7 +48,7 @@ public:
 class Cache {
 public:
     Cache()                     = default;
-    Cache( const Cache& other ) = default;
+    Cache( const Cache& other );
     Cache( const Interpolation& );
     operator bool() const { return not cache_.empty(); }
     virtual ~Cache();
@@ -60,7 +62,7 @@ public:
     void add( const Cache& );
 
 protected:
-    Cache( std::shared_ptr<InterpolationCacheEntry> cache ) : cache_{{cache->type(), cache}} {}
+    Cache( std::shared_ptr<InterpolationCacheEntry> cache );
 
 public:
     const InterpolationCacheEntry* get( const std::string& type ) const {
