@@ -7,6 +7,17 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.23.0] - 2021-01-19
+### Fixed
+- Structured interpolation method interpolating to area straddling Greenwich.
+- Fixes when compiling with ATLAS_BITS_LOCAL=64
+
+### Changed
+- Possibility to link to alternative open-source version of IFS trans library.
+
+### Added
+- Caching mechanism for interpolation
+
 ## [0.22.1] - 2020-10-22
 ### Fixed
 - Installation of PGI compilers via tools/install-pgi.sh
@@ -250,6 +261,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.23.0]: https://github.com/ecmwf/atlas/compare/0.22.1...0.23.0
 [0.22.1]: https://github.com/ecmwf/atlas/compare/0.22.0...0.22.1
 [0.22.0]: https://github.com/ecmwf/atlas/compare/0.21.0...0.22.0
 [0.21.0]: https://github.com/ecmwf/atlas/compare/0.20.2...0.21.0
