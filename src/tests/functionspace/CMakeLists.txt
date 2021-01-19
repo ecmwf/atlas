@@ -86,7 +86,7 @@ ecbuild_add_test( TARGET atlas_test_stencil_parallel_mpi16
   COMMAND atlas_test_stencil_parallel
   MPI 16
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
-  CONDITION eckit_HAVE_MPI
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 16
 )
 
 set( _WITH_MPI )

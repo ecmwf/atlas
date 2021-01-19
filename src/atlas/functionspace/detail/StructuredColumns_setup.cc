@@ -251,10 +251,12 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
     compute_j = [this, &compute_j, &periodic_y]( idx_t j ) -> idx_t {
         if ( periodic_y ) {
             const idx_t ny = grid_->ny();
-            while ( j < 0 )
+            while ( j < 0 ) {
                 j += ny;
-            while ( j >= ny )
+            }
+            while ( j >= ny ) {
                 j -= ny;
+            }
         }
         else {
             if ( j < 0 ) {
@@ -319,12 +321,13 @@ void StructuredColumns::setup( const grid::Distribution& distribution, const eck
         gidx_t g;
         jj = compute_j( j );
         ii = compute_i( i, jj );
-        if ( !periodic_y )
+        if ( !periodic_y ) {
             if ( jj != j ) {
                 ATLAS_ASSERT( grid_->nx( jj ) % 2 == 0 );  // assert even number of points
                 ii = ( ii < grid_->nx( jj ) / 2 ) ? ii + grid_->nx( jj ) / 2
                                                   : ( ii >= grid_->nx( jj ) / 2 ) ? ii - grid_->nx( jj ) / 2 : ii;
             }
+        }
         g = global_offsets[jj] + ii + 1;
         return g;
     };

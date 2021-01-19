@@ -65,11 +65,6 @@ void DelaunayMeshGenerator::generate( const Grid& grid, const grid::Distribution
 void DelaunayMeshGenerator::generate( const Grid& g, Mesh& mesh ) const {
     createNodes( g, mesh );
 
-    array::ArrayView<gidx_t, 1> gidx = array::make_view<gidx_t, 1>( mesh.nodes().global_index() );
-    for ( idx_t jnode = 0; jnode < mesh.nodes().size(); ++jnode ) {
-        gidx( jnode ) = jnode + 1;
-    }
-
     mesh::actions::BuildXYZField()( mesh );
     mesh::actions::ExtendNodesGlobal()( g,
                                         mesh );  ///< does nothing if global domain
@@ -82,17 +77,26 @@ void DelaunayMeshGenerator::createNodes( const Grid& grid, Mesh& mesh ) const {
     idx_t nb_nodes = grid.size();
     mesh.nodes().resize( nb_nodes );
 
-    array::ArrayView<double, 2> xy     = array::make_view<double, 2>( mesh.nodes().xy() );
-    array::ArrayView<double, 2> lonlat = array::make_view<double, 2>( mesh.nodes().lonlat() );
-    idx_t jnode( 0 );
+    auto xy     = array::make_view<double, 2>( mesh.nodes().xy() );
+    auto lonlat = array::make_view<double, 2>( mesh.nodes().lonlat() );
+    auto ghost  = array::make_view<int, 1>( mesh.nodes().ghost() );
+    auto gidx   = array::make_view<gidx_t, 1>( mesh.nodes().global_index() );
+
+    size_t jnode{0};
     Projection projection = grid.projection();
     PointLonLat Pll;
     for ( PointXY Pxy : grid.xy() ) {
-        xy( jnode, XX )      = Pxy.x();
-        xy( jnode, YY )      = Pxy.y();
-        Pll                  = projection.lonlat( Pxy );
-        lonlat( jnode, LON ) = Pll.lon();
-        lonlat( jnode, LAT ) = Pll.lat();
+        xy( jnode, size_t( XX ) ) = Pxy.x();
+        xy( jnode, size_t( YY ) ) = Pxy.y();
+
+        Pll                            = projection.lonlat( Pxy );
+        lonlat( jnode, size_t( LON ) ) = Pll.lon();
+        lonlat( jnode, size_t( LAT ) ) = Pll.lat();
+
+        ghost( jnode ) = false;
+
+        gidx( jnode ) = jnode + 1;
+
         ++jnode;
     }
 }

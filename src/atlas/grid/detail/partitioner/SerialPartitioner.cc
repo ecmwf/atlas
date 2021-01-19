@@ -15,3 +15,5 @@ namespace {
 atlas::grid::detail::partitioner::PartitionerBuilder<atlas::grid::detail::partitioner::SerialPartitioner> __Serial(
     atlas::grid::detail::partitioner::SerialPartitioner::static_type() );
 }
+
+atlas::grid::detail::partitioner::SerialPartitioner::SerialPartitioner() : Partitioner( 1 ) {}

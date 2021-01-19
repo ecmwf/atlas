@@ -90,46 +90,6 @@ int getEnv( const std::string& env, int default_value ) {
     return default_value;
 }
 
-
-bool plugin_library_exists( const eckit::PathName& plugin_dir, const std::string& library_name,
-                            eckit::PathName& library_path ) {
-    // WARNING: Mostly copy-paste from eckit develop before 1.13 release
-    std::vector<std::string> library_file_names;
-    library_file_names.push_back( "lib" + library_name + ".so" );
-    library_file_names.push_back( "lib" + library_name + ".dylib" );
-    std::vector<eckit::PathName> library_dirs;
-    library_dirs.push_back( plugin_dir / "lib64" );
-    library_dirs.push_back( plugin_dir / "lib" );
-    for ( const auto& library_dir : library_dirs ) {
-        for ( const auto& library_file_name : library_file_names ) {
-            library_path = library_dir / library_file_name;
-            if ( library_path.exists() ) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-
-void load_library( const eckit::PathName& library_path, const std::string& library_name ) {
-    void* plib = ::dlopen( library_path.localPath(), RTLD_NOW | RTLD_GLOBAL );
-    if ( plib == nullptr ) {  // dlopen failed
-        std::ostringstream ss;
-        ss << "dlopen(" << library_path << ", ...)";
-        throw eckit::FailedSystemCall( ss.str().c_str(), Here(), errno );
-    }
-
-    // If the library still doesn't exist after a successful call of dlopen, then
-    // we have managed to load something other than a (self-registering) eckit library
-    if ( !eckit::system::Library::exists( library_name ) ) {
-        std::ostringstream ss;
-        ss << "Shared library " << library_path << " loaded but Library " << library_name << " not registered";
-        throw eckit::UnexpectedState( ss.str() );
-    }
-}
-
-
 }  // namespace
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -161,10 +121,11 @@ Library::Library() :
     info_( getEnv( "ATLAS_INFO", true ) ),
     warning_( getEnv( "ATLAS_WARNING", true ) ),
     trace_( getEnv( "ATLAS_TRACE", false ) ),
+    trace_memory_( getEnv( "ATLAS_TRACE_MEMORY", false ) ),
     trace_barriers_( getEnv( "ATLAS_TRACE_BARRIERS", false ) ),
     trace_report_( getEnv( "ATLAS_TRACE_REPORT", false ) ) {}
 
-void Library::registerPlugin( Plugin& plugin ) {
+void Library::registerPlugin( eckit::system::Plugin& plugin ) {
     plugins_.push_back( &plugin );
 }
 
@@ -215,6 +176,7 @@ void Library::initialise( const eckit::Parametrisation& config ) {
     if ( config.has( "trace" ) ) {
         config.get( "trace.barriers", trace_barriers_ );
         config.get( "trace.report", trace_report_ );
+        config.get( "trace.memory", trace_memory_ );
     }
 
     if ( not debug_ ) {
@@ -238,56 +200,6 @@ void Library::initialise( const eckit::Parametrisation& config ) {
         return sink;
     }();
 
-    std::vector<std::string> plugin_names =
-        eckit::Resource<std::vector<std::string>>( "atlasPlugins;$ATLAS_PLUGINS", {} );
-
-    std::vector<std::string> plugins_search_paths =
-        eckit::Resource<std::vector<std::string>>( "atlasPluginsSearchPaths;$ATLAS_PLUGINS_SEARCH_PATHS", {} );
-    plugins_search_paths.emplace_back( "~atlas" );
-
-    auto is_plugin_loaded = [&]( const std::string& name ) {
-        for ( auto& plugin : plugins() ) {
-            if ( name == plugin->name() ) {
-                return true;
-            }
-        }
-        return false;
-    };
-
-    for ( auto& plugin_name : plugin_names ) {
-        if ( is_plugin_loaded( plugin_name ) ) {
-            continue;
-        }
-        bool plugin_loaded = false;
-        eckit::PathName library_path;
-
-        std::string plugin_file_path = "share/atlas/plugins/" + plugin_name + ".yml";
-        for ( eckit::PathName plugins_search_path : plugins_search_paths ) {
-            eckit::PathName plugin_file = plugins_search_path / plugin_file_path;
-            if ( plugin_file.exists() ) {
-                eckit::PathName plugin_dir = plugins_search_path;
-                util::Config plugin_config{plugin_file};
-                std::string library_name;
-                ATLAS_ASSERT( plugin_config.get( "library", library_name ) );
-                bool library_loaded = eckit::system::Library::exists( library_name );
-                if ( not library_loaded ) {
-                    ATLAS_ASSERT( plugin_library_exists( plugin_dir, library_name, library_path ) );
-                    out << "Loading plugin [" << plugin_name << "] library " << library_path << std::endl;
-                    load_library( library_path, library_name );
-                    library_loaded = true;
-                }
-                ATLAS_ASSERT( is_plugin_loaded( plugin_name ) );
-                plugin_loaded = true;
-            }
-        }
-        if ( not plugin_loaded ) {
-            std::ostringstream ss;
-            ss << "Plugin " << plugin_name << " could not be loaded as file " << plugin_file_path
-               << " could not be located within any of the ${ATLAS_PLUGINS_SEARCH_PATHS}";
-            throw_Exception( ss.str() );
-        }
-    }
-
     library::enable_floating_point_exceptions();
     library::enable_atlas_signal_handler();
 
@@ -307,6 +219,7 @@ void Library::initialise( const eckit::Parametrisation& config ) {
         out << "  log.debug       [" << str( debug() ) << "] \n";
         out << "  trace.barriers  [" << str( traceBarriers() ) << "] \n";
         out << "  trace.report    [" << str( trace_report_ ) << "] \n";
+        out << "  trace.memory    [" << str( trace_memory_ ) << "] \n";
         out << " \n";
         out << atlas::Library::instance().information();
         out << std::flush;
@@ -480,10 +393,17 @@ void Library::Information::print( std::ostream& out ) const {
     }
 
 #if ATLAS_HAVE_TRANS
+#ifdef TRANS_HAVE_FAUX
+    out << "    trans version (" << trans_version_str() << "), "
+        << "git-sha1 " << trans_git_sha1_abbrev( 7 ) << '\n';
+    out << "    faux version (" << trans_faux_version_str() << "), "
+        << "git-sha1 " << trans_faux_git_sha1_abbrev( 7 ) << '\n';
+#else
     out << "    transi version (" << transi_version() << "), "
         << "git-sha1 " << transi_git_sha1_abbrev( 7 ) << '\n';
     out << "    trans version (" << trans_version() << "), "
         << "git-sha1 " << trans_git_sha1_abbrev( 7 ) << '\n';
+#endif
 #endif
 }
 

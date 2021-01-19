@@ -14,6 +14,11 @@
 
 #include "atlas/mesh/actions/Reorder.h"
 
+// For static linking
+#include "atlas/mesh/actions/ReorderHilbert.h"
+#include "atlas/mesh/actions/ReorderReverseCuthillMckee.h"
+
+
 #include "atlas/array.h"
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/HybridElements.h"
@@ -29,7 +34,22 @@ namespace actions {
 
 // ------------------------------------------------------------------
 
+struct force_link {
+    template <typename T>
+    void load_builder() {
+        ReorderBuilder<T>( "tmp" );
+    }
+    force_link() {
+        load_builder<ReorderHilbert>();
+        load_builder<ReorderReverseCuthillMckee>();
+    }
+};
+
+
+// ------------------------------------------------------------------
+
 const ReorderImpl* ReorderFactory::build( const eckit::Parametrisation& config ) {
+    static force_link static_linking;
     std::string builder{"none"};
     config.get( "type", builder );
     auto factory = get( builder );

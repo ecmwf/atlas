@@ -22,7 +22,7 @@ namespace partitioner {
 
 class SerialPartitioner : public Partitioner {
 public:
-    SerialPartitioner() : Partitioner( 1 ) {}
+    SerialPartitioner();
     SerialPartitioner( int N, const eckit::Parametrisation& config ) : Partitioner( 1 ) {}
 
     SerialPartitioner( int N ) : Partitioner( N ) {}

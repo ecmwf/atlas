@@ -1,5 +1,5 @@
 
 Usage:
 
-    atlas_DIR=<path-to-install-or-build-tree> ./build_hello_world.sh
+    atlas_ROOT=<path-to-install-or-build-tree> ./build_hello_world.sh
 

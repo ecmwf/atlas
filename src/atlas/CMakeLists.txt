@@ -143,6 +143,8 @@ grid/detail/grid/LonLat.h
 grid/detail/grid/LonLat.cc
 grid/detail/grid/Regional.h
 grid/detail/grid/Regional.cc
+grid/detail/grid/Healpix.h
+grid/detail/grid/Healpix.cc
 
 grid/detail/distribution/DistributionImpl.h
 grid/detail/distribution/DistributionImpl.cc
@@ -350,6 +352,8 @@ meshgenerator/detail/MeshGeneratorImpl.cc
 meshgenerator/detail/MeshGeneratorImpl.h
 meshgenerator/detail/MeshGeneratorInterface.cc
 meshgenerator/detail/MeshGeneratorInterface.h
+meshgenerator/detail/HealpixMeshGenerator.h
+meshgenerator/detail/HealpixMeshGenerator.cc
 )
 
 list( APPEND atlas_output_srcs
@@ -477,6 +481,8 @@ endif()
 
 list( APPEND atlas_interpolation_srcs
 interpolation.h
+interpolation/Cache.cc
+interpolation/Cache.h
 interpolation/Interpolation.cc
 interpolation/Interpolation.h
 interpolation/NonLinear.cc
@@ -546,6 +552,18 @@ interpolation/nonlinear/Missing.cc
 interpolation/nonlinear/Missing.h
 interpolation/nonlinear/NonLinear.cc
 interpolation/nonlinear/NonLinear.h
+
+linalg/Indexing.h
+linalg/Introspection.h
+linalg/View.h
+linalg/sparse.h
+linalg/sparse/Backend.h
+linalg/sparse/Backend.cc
+linalg/sparse/SparseMatrixMultiply.h
+linalg/sparse/SparseMatrixMultiply_EckitLinalg.h
+linalg/sparse/SparseMatrixMultiply_EckitLinalg.cc
+linalg/sparse/SparseMatrixMultiply_OpenMP.h
+linalg/sparse/SparseMatrixMultiply_OpenMP.cc
 )
 
 

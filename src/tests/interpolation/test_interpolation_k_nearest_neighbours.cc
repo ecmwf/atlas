@@ -39,7 +39,7 @@ namespace test {
 class Access {
 public:
     Access( const Interpolation& interpolation ) : interpolation_{interpolation} {}
-    const Interpolation::Implementation::Matrix& matrix() const { return interpolation_.get()->matrix_; }
+    const Interpolation::Implementation::Matrix& matrix() const { return *interpolation_.get()->matrix_; }
     Interpolation interpolation_;
 
     std::string hash() {

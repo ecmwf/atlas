@@ -57,7 +57,7 @@ Partitioner::Partitioner( const std::string& type, const Config& config ) :
 Partitioner::Partitioner( const Config& config ) : Handle( partitioner_from_config( config ) ) {}
 
 void Partitioner::partition( const Grid& grid, int part[] ) const {
-    ATLAS_TRACE( "Partitioner::partition" );
+    ATLAS_TRACE( "Partitioner::partition [type=" + get()->type() + "]" );
     get()->partition( grid, part );
 }
 

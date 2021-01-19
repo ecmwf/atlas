@@ -48,7 +48,7 @@ protected:
     virtual const FunctionSpace& target() const override { return target_; }
 
 private:
-    virtual void do_setup( const Grid& source, const Grid& target ) override;
+    virtual void do_setup( const Grid& source, const Grid& target, const Cache& ) override;
 
     virtual void do_setup( const FunctionSpace& source, const FunctionSpace& target ) override;
 

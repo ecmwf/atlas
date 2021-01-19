@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 
+#include "atlas/interpolation/Cache.h"
 #include "atlas/interpolation/NonLinear.h"
 #include "atlas/util/Object.h"
 #include "eckit/config/Configuration.h"
@@ -51,6 +52,7 @@ public:
     void setup( const Grid& source, const Grid& target );
     void setup( const FunctionSpace& source, const Field& target );
     void setup( const FunctionSpace& source, const FieldSet& target );
+    void setup( const Grid& source, const Grid& target, const Cache& );
 
     void execute( const FieldSet& source, FieldSet& target ) const;
     void execute( const Field& source, Field& target ) const;
@@ -59,6 +61,8 @@ public:
 
     virtual const FunctionSpace& source() const = 0;
     virtual const FunctionSpace& target() const = 0;
+
+    virtual interpolation::Cache createCache() const;
 
 protected:
     virtual void do_execute( const FieldSet& source, FieldSet& target ) const;
@@ -75,13 +79,17 @@ protected:
 
     // NOTE : Matrix-free or non-linear interpolation operators do not have matrices, so do not expose here
     friend class atlas::test::Access;
-    Matrix matrix_;
+    friend class interpolation::MatrixCache;
+    const Matrix* matrix_;
+    std::shared_ptr<Matrix> matrix_shared_;
+    interpolation::MatrixCache matrix_cache_;
     NonLinear nonLinear_;
     bool use_eckit_linalg_spmv_;
+    bool allow_halo_exchange_{true};
 
 protected:
     virtual void do_setup( const FunctionSpace& source, const FunctionSpace& target ) = 0;
-    virtual void do_setup( const Grid& source, const Grid& target )                   = 0;
+    virtual void do_setup( const Grid& source, const Grid& target, const Cache& )     = 0;
     virtual void do_setup( const FunctionSpace& source, const Field& target );
     virtual void do_setup( const FunctionSpace& source, const FieldSet& target );
 

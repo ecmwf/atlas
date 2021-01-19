@@ -98,7 +98,7 @@ private:
 class Cache {
 public:
     Cache();
-    Cache( const Cache& other );
+    Cache( const Cache& other ) = default;
     operator bool() const;
     const TransImpl* trans() const { return trans_.get(); }
     const TransCacheEntry& legendre() const { return *legendre_; }

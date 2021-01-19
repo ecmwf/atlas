@@ -39,6 +39,8 @@ TYPE, extends(fckit_owned_object) :: atlas_IndexKDTree
 !------------------------------------------------------------------------------
 contains
   procedure, public :: delete => atlas_IndexKDTree__delete
+  procedure, public :: empty => atlas_IndexKDTree__empty
+  procedure, public :: size => atlas_IndexKDTree__size
   procedure :: reserve => IndexKDTree__reserve
   procedure :: insert_separate_coords => IndexKDTree__insert_separate_coords
   procedure :: insert_vectorized_coords => IndexKDTree__insert_vectorized_coords
@@ -106,6 +108,25 @@ subroutine atlas_IndexKDTree__delete(this)
   end if
   call this%reset_c_ptr()
 end subroutine atlas_IndexKDTree__delete
+
+function atlas_IndexKDTree__empty(this) result(empty)
+  use atlas_KDTree_c_binding
+  logical :: empty
+  class(atlas_IndexKDTree), intent(in) :: this
+  if( atlas__IndexKDTree__empty(this%CPTR_PGIBUG_A) == 0 ) then
+    empty = .False.
+  else
+    empty = .True.
+  endif
+endfunction
+
+function atlas_IndexKDTree__size(this) result(size)
+  use atlas_KDTree_c_binding
+  use atlas_kinds_module
+  integer(ATLAS_KIND_IDX) :: size
+  class(atlas_IndexKDTree), intent(in) :: this
+  size = atlas__IndexKDTree__size(this%CPTR_PGIBUG_A)
+endfunction
 
 subroutine IndexKDTree__reserve(this, size)
   use atlas_KDTree_c_binding

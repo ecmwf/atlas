@@ -88,7 +88,7 @@ bool GridBoxMethod::intersect( size_t i, const GridBox& box, const util::IndexKD
 }
 
 
-void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
+void GridBoxMethod::do_setup( const Grid& source, const Grid& target, const Cache& cache ) {
     ATLAS_TRACE( "GridBoxMethod::setup()" );
 
     if ( mpi::size() > 1 ) {
@@ -105,7 +105,17 @@ void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
     source_ = src;
     target_ = tgt;
 
-    buildPointSearchTree( src );
+    if ( not matrixFree_ && interpolation::MatrixCache( cache ) ) {
+        matrix_cache_ = cache;
+        matrix_       = &matrix_cache_.matrix();
+        ATLAS_ASSERT( matrix_cache_.matrix().rows() == target.size() );
+        ATLAS_ASSERT( matrix_cache_.matrix().cols() == source.size() );
+        return;
+    }
+
+    if ( not extractTreeFromCache( cache ) ) {
+        buildPointSearchTree( src );
+    }
 
     sourceBoxes_ = GridBoxes( source, gaussianWeightedLatitudes_ );
     targetBoxes_ = GridBoxes( target, gaussianWeightedLatitudes_ );
@@ -115,7 +125,7 @@ void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
 
     if ( matrixFree_ ) {
         Matrix A;
-        matrix_.swap( A );
+        matrix_shared_->swap( A );
         return;
     }
 
@@ -147,7 +157,7 @@ void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
     {
         ATLAS_TRACE( "GridBoxMethod::setup: build interpolant matrix" );
         Matrix A( targetBoxes_.size(), sourceBoxes_.size(), allTriplets );
-        matrix_.swap( A );
+        matrix_shared_->swap( A );
     }
 }
 
@@ -168,6 +178,14 @@ void GridBoxMethod::giveUp( const std::forward_list<size_t>& failures ) {
     throw_Exception( "Failed to intersect grid boxes" );
 }
 
+Cache GridBoxMethod::createCache() const {
+    Cache cache;
+    cache.add( interpolation::IndexKDTreeCache( pTree_ ) );
+    if ( not matrix_->empty() ) {
+        cache.add( Method::createCache() );
+    }
+    return cache;
+}
 
 }  // namespace method
 }  // namespace interpolation

@@ -153,17 +153,25 @@ static const IndexKDTree& search() {
 }  // namespace
 //------------------------------------------------------------------------------------------------
 
+static bool ECKIT_515_implemented = ( ATLAS_ECKIT_VERSION_INT >= 11302 );  // version 1.13.2
+// --> implements eckit::KDTree::size() and eckit::KDTree::empty()
 
 CASE( "test kdtree" ) {
     auto grid = Grid{"O32"};
 
     IndexKDTree search( geometry() );
+    EXPECT( search.empty() );
+
     search.reserve( grid.size() );
     idx_t n{0};
     for ( auto& point : grid.lonlat() ) {
         search.insert( point, n++ );
+        if ( ECKIT_515_implemented ) {
+            EXPECT( search.empty() );
+        }
     }
     search.build();
+    EXPECT_EQ( search.size(), grid.size() );
     EXPECT_NO_THROW( search.closestPoint( PointLonLat{180., 45.} ) );
     // ...
     // Search 4 nearest neighbours (k=4), sorted by shortest distance
@@ -191,10 +199,15 @@ CASE( "test no assertion" ) {
 
     IndexKDTree search( geometry() );
     // No search.reserve() --> build() will not be necessary.
+    EXPECT( search.empty() );
     idx_t n{0};
     for ( auto& point : grid.lonlat() ) {
         search.insert( point, n++ );
+        if ( ECKIT_515_implemented ) {
+            EXPECT_EQ( search.size(), n );
+        }
     }
+    EXPECT_EQ( search.size(), grid.size() );
     // search.build() Not required
     EXPECT_NO_THROW( search.closestPoint( PointLonLat{180., 45.} ) );
 }

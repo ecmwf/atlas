@@ -46,6 +46,36 @@ static B<M3<int>> __nl16( M3<int>::static_type() + "-" + T<int>() );
 static B<M3<long>> __nl17( M3<long>::static_type() + "-" + T<long>() );
 static B<M3<unsigned long>> __nl18( M3<unsigned long>::static_type() + "-" + T<unsigned long>() );
 
+namespace {
+struct force_link {
+    template <typename M>
+    void load_builder() {
+        B<M>( "tmp" );
+    }
+    force_link() {
+        load_builder<M1<double>>();
+        load_builder<M1<float>>();
+        load_builder<M1<int>>();
+        load_builder<M1<long>>();
+        load_builder<M1<unsigned long>>();
+
+        load_builder<M2<double>>();
+        load_builder<M2<float>>();
+        load_builder<M2<int>>();
+        load_builder<M2<long>>();
+        load_builder<M2<unsigned long>>();
+
+        load_builder<M3<double>>();
+        load_builder<M3<float>>();
+        load_builder<M3<int>>();
+        load_builder<M3<long>>();
+        load_builder<M3<unsigned long>>();
+    }
+};
+}  // namespace
+void force_link_missing() {
+    static force_link static_linking;
+}
 
 #undef T
 #undef M3

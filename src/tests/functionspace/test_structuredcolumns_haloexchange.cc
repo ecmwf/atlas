@@ -38,14 +38,14 @@ namespace test {
 atlas::FieldSet getIJ( const atlas::functionspace::StructuredColumns& fs ) {
     atlas::FieldSet ij;
 
-    auto vi0 = atlas::array::make_view<int, 1>( fs.index_i() );
-    auto vj0 = atlas::array::make_view<int, 1>( fs.index_j() );
+    auto vi0 = atlas::array::make_view<atlas::idx_t, 1>( fs.index_i() );
+    auto vj0 = atlas::array::make_view<atlas::idx_t, 1>( fs.index_j() );
 
-    auto fi = fs.createField<int>();
-    auto fj = fs.createField<int>();
+    auto fi = fs.createField<atlas::idx_t>();
+    auto fj = fs.createField<atlas::idx_t>();
 
-    auto vi1 = atlas::array::make_view<int, 1>( fi );
-    auto vj1 = atlas::array::make_view<int, 1>( fj );
+    auto vi1 = atlas::array::make_view<atlas::idx_t, 1>( fi );
+    auto vj1 = atlas::array::make_view<atlas::idx_t, 1>( fj );
 
     for ( int i = 0; i < fs.size(); i++ ) {
         vi1( i ) = vi0( i );

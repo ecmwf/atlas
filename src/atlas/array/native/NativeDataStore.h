@@ -17,6 +17,7 @@
 #include <sstream>
 
 #include "atlas/array/ArrayUtil.h"
+#include "atlas/library/Library.h"
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
@@ -39,14 +40,18 @@ struct MemoryHighWatermark {
     MemoryHighWatermark& operator+=( const size_t& bytes ) {
         bytes_ += bytes;
         update_maximum();
-        Log::trace() << "Memory: " << eckit::Bytes( double( bytes_ ) ) << "\t( +" << eckit::Bytes( double( bytes ) )
-                     << " \t| high watermark " << eckit::Bytes( double( high_ ) ) << "\t)" << std::endl;
+        if ( atlas::Library::instance().traceMemory() ) {
+            Log::trace() << "Memory: " << eckit::Bytes( double( bytes_ ) ) << "\t( +" << eckit::Bytes( double( bytes ) )
+                         << " \t| high watermark " << eckit::Bytes( double( high_ ) ) << "\t)" << std::endl;
+        }
         return *this;
     }
     MemoryHighWatermark& operator-=( const size_t& bytes ) {
         bytes_ -= bytes;
-        Log::trace() << "Memory: " << eckit::Bytes( double( bytes_ ) ) << "\t( -" << eckit::Bytes( double( bytes ) )
-                     << " \t| high watermark " << eckit::Bytes( double( high_ ) ) << "\t)" << std::endl;
+        if ( atlas::Library::instance().traceMemory() ) {
+            Log::trace() << "Memory: " << eckit::Bytes( double( bytes_ ) ) << "\t( -" << eckit::Bytes( double( bytes ) )
+                         << " \t| high watermark " << eckit::Bytes( double( high_ ) ) << "\t)" << std::endl;
+        }
         return *this;
     }
 
@@ -125,20 +130,27 @@ private:
     }
 
     void alloc_aligned( Value*& ptr, size_t n ) {
-        const size_t alignment = 64 * sizeof( Value );
-        size_t bytes           = sizeof( Value ) * n;
-        MemoryHighWatermark::instance() += bytes;
+        if ( n > 0 ) {
+            const size_t alignment = 64 * sizeof( Value );
+            size_t bytes           = sizeof( Value ) * n;
+            MemoryHighWatermark::instance() += bytes;
 
-        int err = posix_memalign( (void**)&ptr, alignment, bytes );
-        if ( err ) {
-            throw_AllocationFailed( bytes, Here() );
+            int err = posix_memalign( (void**)&ptr, alignment, bytes );
+            if ( err ) {
+                throw_AllocationFailed( bytes, Here() );
+            }
+        }
+        else {
+            ptr = nullptr;
         }
     }
 
     void free_aligned( Value*& ptr ) {
-        free( ptr );
-        ptr = nullptr;
-        MemoryHighWatermark::instance() -= footprint();
+        if ( size_ ) {
+            free( ptr );
+            ptr = nullptr;
+            MemoryHighWatermark::instance() -= footprint();
+        }
     }
 
     size_t footprint() const { return sizeof( Value ) * size_; }
