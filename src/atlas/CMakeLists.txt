@@ -568,6 +568,14 @@ linalg/sparse/SparseMatrixMultiply_OpenMP.cc
 )
 
 
+list (APPEND atlas_repartition_srcs
+repartition/Repartition.h
+repartition/Repartition.cc
+repartition/detail/RepartitionImpl.h
+repartition/detail/RepartitionImpl.cc
+repartition/detail/StructuredColumnsToStructuredColumns.h
+repartition/detail/StructuredColumnsToStructuredColumns.cc
+)
 
 list( APPEND atlas_array_srcs
 array.h
@@ -781,6 +789,7 @@ if( SHORTCUT_COMPILATION )
   unset( atlas_field_srcs )
   unset( atlas_functionspace_srcs )
   unset( atlas_interpolation_srcs )
+  unset( atlas_repartition_srcs )
   unset( atlas_numerics_srcs )
   unset( atlas_output_srcs )
   unset( atlas_util_srcs )
@@ -795,6 +804,7 @@ list( APPEND source_list
   ${atlas_field_srcs}
   ${atlas_functionspace_srcs}
   ${atlas_interpolation_srcs}
+  ${atlas_repartition_srcs}
   ${atlas_numerics_srcs}
   ${atlas_output_srcs}
   ${atlas_util_srcs}
