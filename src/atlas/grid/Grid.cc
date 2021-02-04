@@ -90,7 +90,7 @@ std::string Grid::uid() const {
 }
 
 void Grid::hash( eckit::Hash& h ) const {
-    return get()->hash( h );
+    get()->hash( h );
 }
 
 Grid::Spec Grid::spec() const {

@@ -122,7 +122,7 @@ void dispatch_sum( const NodeColumns& fs, const Field& field, T& result, idx_t& 
 template <typename T>
 void sum( const NodeColumns& fs, const Field& field, T& result, idx_t& N ) {
     if ( field.datatype() == array::DataType::kind<T>() ) {
-        return dispatch_sum( fs, field, result, N );
+        dispatch_sum( fs, field, result, N );
     }
     else {
         switch ( field.datatype().kind() ) {
@@ -192,7 +192,7 @@ void dispatch_sum( const NodeColumns& fs, const Field& field, std::vector<T>& re
 template <typename T>
 void sum( const NodeColumns& fs, const Field& field, std::vector<T>& result, idx_t& N ) {
     if ( field.datatype() == array::DataType::kind<T>() ) {
-        return dispatch_sum( fs, field, result, N );
+        dispatch_sum( fs, field, result, N );
     }
     else {
         switch ( field.datatype().kind() ) {
@@ -343,7 +343,7 @@ void dispatch_order_independent_sum( const NodeColumns& fs, const Field& field, 
 template <typename T>
 void order_independent_sum( const NodeColumns& fs, const Field& field, T& result, idx_t& N ) {
     if ( field.datatype() == array::DataType::kind<T>() ) {
-        return dispatch_order_independent_sum( fs, field, result, N );
+        dispatch_order_independent_sum( fs, field, result, N );
     }
     else {
         switch ( field.datatype().kind() ) {
@@ -437,7 +437,7 @@ void dispatch_order_independent_sum( const NodeColumns& fs, const Field& field, 
 template <typename T>
 void order_independent_sum( const NodeColumns& fs, const Field& field, std::vector<T>& result, idx_t& N ) {
     if ( field.datatype() == array::DataType::kind<T>() ) {
-        return dispatch_order_independent_sum( fs, field, result, N );
+        dispatch_order_independent_sum( fs, field, result, N );
     }
     else {
         switch ( field.datatype().kind() ) {
@@ -572,7 +572,7 @@ void dispatch_minimum( const NodeColumns& fs, const Field& field, std::vector<T>
 template <typename T>
 void minimum( const NodeColumns& fs, const Field& field, std::vector<T>& min ) {
     if ( field.datatype() == array::DataType::kind<T>() ) {
-        return dispatch_minimum( fs, field, min );
+        dispatch_minimum( fs, field, min );
     }
     else {
         switch ( field.datatype().kind() ) {
@@ -634,7 +634,7 @@ void dispatch_maximum( const NodeColumns& fs, const Field& field, std::vector<T>
 template <typename T>
 void maximum( const NodeColumns& fs, const Field& field, std::vector<T>& max ) {
     if ( field.datatype() == array::DataType::kind<T>() ) {
-        return dispatch_maximum( fs, field, max );
+        dispatch_maximum( fs, field, max );
     }
     else {
         switch ( field.datatype().kind() ) {
