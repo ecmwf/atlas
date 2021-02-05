@@ -106,8 +106,6 @@ domain/detail/DomainFactory.cc
 grid.h
 grid/Grid.cc
 grid/Grid.h
-grid/Spec.cc
-grid/Spec.h
 grid/StructuredGrid.cc
 grid/StructuredGrid.h
 grid/UnstructuredGrid.cc
@@ -661,6 +659,8 @@ util/Polygon.cc
 util/Polygon.h
 util/Rotation.cc
 util/Rotation.h
+util/Spec.cc
+util/Spec.h
 util/SphericalPolygon.cc
 util/SphericalPolygon.h
 util/UnitSphere.h
