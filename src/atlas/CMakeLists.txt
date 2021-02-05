@@ -106,6 +106,8 @@ domain/detail/DomainFactory.cc
 grid.h
 grid/Grid.cc
 grid/Grid.h
+grid/Spec.cc
+grid/Spec.h
 grid/StructuredGrid.cc
 grid/StructuredGrid.h
 grid/UnstructuredGrid.cc
