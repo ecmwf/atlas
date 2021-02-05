@@ -49,7 +49,7 @@ struct SpecFactory {
         auto i  = p.find( id );
         if ( i != p.end() ) {
             registration( id, std::move( Spec( i->second ) ) );
-            p.erase( id );
+            p.erase( i );
             return create( id );
         }
 
@@ -80,7 +80,7 @@ private:
     static std::string duplicate( const std::string& id ) { return "SpecFactory: duplicate '" + id + "'"; }
 
     std::map<std::string, const Spec> m_;
-    std::map<std::string, const std::string> p_;
+    std::map<std::string, const eckit::PathName> p_;
 };
 
 }  // namespace util
