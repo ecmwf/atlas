@@ -29,28 +29,28 @@ namespace util {
 using Spec = Config;
 
 template <typename T>
-struct SpecFactory {
-    struct Register {
-        Register( const std::string& id, const eckit::PathName& path ) { registration( id, path ); }
-        Register( const std::string& id, Spec&& spec ) { registration( id, std::move( spec ) ); }
+struct SpecRegistry {
+    struct Enregister {
+        Enregister( const std::string& id, const eckit::PathName& path ) { enregister( id, path ); }
+        Enregister( const std::string& id, Spec&& spec ) { enregister( id, std::move( spec ) ); }
     };
 
-    static void registration( const std::string& id, const eckit::PathName& path ) {
+    static void enregister( const std::string& id, const eckit::PathName& path ) {
         ATLAS_ASSERT_MSG( instance().m_.find( id ) == instance().m_.end(), duplicate( id ) );
         ATLAS_ASSERT_MSG( instance().p_.emplace( id, path ).second, duplicate( id ) );
     }
 
-    static void registration( const std::string& id, Spec&& spec ) {
+    static void enregister( const std::string& id, Spec&& spec ) {
         ATLAS_ASSERT_MSG( instance().m_.emplace( id, spec ).second, duplicate( id ) );
     }
 
-    static Spec create( const std::string& id ) {
+    static Spec lookup( const std::string& id ) {
         auto& p = instance().p_;
         auto i  = p.find( id );
         if ( i != p.end() ) {
-            registration( id, std::move( Spec( i->second ) ) );
+            enregister( id, std::move( Spec( i->second ) ) );
             p.erase( i );
-            return create( id );
+            return lookup( id );
         }
 
         auto& m = instance().m_;
@@ -72,8 +72,8 @@ struct SpecFactory {
     }
 
 private:
-    static SpecFactory& instance() {
-        static SpecFactory factory;
+    static SpecRegistry& instance() {
+        static SpecRegistry factory;
         return factory;
     }
 
