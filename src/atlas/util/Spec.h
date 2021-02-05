@@ -13,6 +13,7 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <utility>
 
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
@@ -25,18 +26,35 @@ class PathName;
 namespace atlas {
 namespace util {
 
-//---------------------------------------------------------------------------------------------------------------------
-
 using Spec = Config;
-
-//---------------------------------------------------------------------------------------------------------------------
 
 template <typename T>
 struct SpecFactory {
-    static Spec create( const std::string& id ) {
-        const auto& m = instance().m_;
+    struct Register {
+        Register( const std::string& id, const eckit::PathName& path ) { registration( id, path ); }
+        Register( const std::string& id, Spec&& spec ) { registration( id, std::move( spec ) ); }
+    };
 
-        auto j = m.find( id );
+    static void registration( const std::string& id, const eckit::PathName& path ) {
+        ATLAS_ASSERT_MSG( instance().m_.find( id ) == instance().m_.end(), duplicate( id ) );
+        ATLAS_ASSERT_MSG( instance().p_.emplace( id, path ).second, duplicate( id ) );
+    }
+
+    static void registration( const std::string& id, Spec&& spec ) {
+        ATLAS_ASSERT_MSG( instance().m_.emplace( id, spec ).second, duplicate( id ) );
+    }
+
+    static Spec create( const std::string& id ) {
+        auto& p = instance().p_;
+        auto i  = p.find( id );
+        if ( i != p.end() ) {
+            registration( id, std::move( Spec( i->second ) ) );
+            p.erase( id );
+            return create( id );
+        }
+
+        auto& m = instance().m_;
+        auto j  = m.find( id );
         if ( j != m.end() ) {
             return j->second;
         }
@@ -53,25 +71,16 @@ struct SpecFactory {
         }
     }
 
-    struct Register {
-        Register( const std::string& id, const eckit::PathName& path ) : Register( id, Spec( path ) ) {}
-        Register( const std::string& id, const Spec& spec ) {
-            ATLAS_ASSERT_MSG( instance().m_.emplace( id, spec ).second, "SpecFactory: duplicate '" + id + "'" );
-        }
-    };
-
 private:
-    SpecFactory() = default;
-
     static SpecFactory& instance() {
         static SpecFactory factory;
         return factory;
     }
 
-    SpecFactory( const SpecFactory& ) = delete;
-    SpecFactory& operator=( const SpecFactory& ) = delete;
+    static std::string duplicate( const std::string& id ) { return "SpecFactory: duplicate '" + id + "'"; }
 
     std::map<std::string, const Spec> m_;
+    std::map<std::string, const std::string> p_;
 };
 
 }  // namespace util
