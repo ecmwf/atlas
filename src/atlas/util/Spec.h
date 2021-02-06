@@ -39,6 +39,8 @@ struct SpecRegistry {
                           "SpecFactory: duplicate '" + id + "'" );
     }
 
+    static bool has( const std::string& id ) { return instance().m_.find( id ) != instance().m_.end(); }
+
     static Spec lookup( const std::string& id ) {
         auto j = instance().m_.find( id );
         if ( j != instance().m_.end() ) {
