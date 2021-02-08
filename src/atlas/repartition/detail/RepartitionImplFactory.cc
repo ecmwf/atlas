@@ -12,6 +12,7 @@ namespace atlas {
       if (sourceFunctionSpace->type() == StructuredColumns::type() &&
           targetFunctionSpace->type() == StructuredColumns::type()) {
 
+        std::cout << "Making StructuredColumnsToStructuredColumns" << std::endl;
         return new StructuredColumnsToStructuredColumns (
           sourceFunctionSpace, targetFunctionSpace);
       }
@@ -19,9 +20,9 @@ namespace atlas {
 
         std::cout << "Unknown source " + sourceFunctionSpace->type() << std::endl;
         std::cout << "Unknown target " + targetFunctionSpace->type() << std::endl;
+        return nullptr;
+
       }
-
-
     }
 
   }

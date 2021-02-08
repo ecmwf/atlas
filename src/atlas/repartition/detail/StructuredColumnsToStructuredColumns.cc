@@ -1,5 +1,6 @@
 #include "atlas/field.h"
 #include "atlas/field/FieldSet.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/repartition/detail/StructuredColumnsToStructuredColumns.h"
 
 namespace atlas {
@@ -10,11 +11,13 @@ namespace atlas {
       const FunctionSpace& targetFunctionSpace) :
       RepartitionImpl (sourceFunctionSpace, targetFunctionSpace),
       sourceStructuredColumns_ (
-        dynamic_cast<StructuredColumns&> (getSourceFunctionSpace ())),
+        dynamic_cast<StructuredColumns*> (&getSourceFunctionSpace ())),
       targetStructuredColumns_ (
-        dynamic_cast<StructuredColumns&> (getTargetFunctionSpace ())) {
+        dynamic_cast<StructuredColumns*> (&getTargetFunctionSpace ())) {
 
       std::cout << "Constructor on MPI rank " << mpi::rank () << std::endl;
+
+      // Communicate
 
       return;
     }

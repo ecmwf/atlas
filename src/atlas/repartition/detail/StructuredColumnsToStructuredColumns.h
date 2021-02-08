@@ -32,9 +32,18 @@ namespace atlas {
 
     private:
 
+      // Helper struct for function space intersections.
+      struct intersection {
+        idx_t jBegin;
+        idx_t jEnd;
+        std::vector<idx_t> iBegin;
+        std::vector<idx_t> iEnd;
+      };
+
       // FunctionSpaces recast to StructuredColumns.
-      StructuredColumns& sourceStructuredColumns_;
-      StructuredColumns& targetStructuredColumns_;
+      StructuredColumns* sourceStructuredColumns_;
+      StructuredColumns* targetStructuredColumns_;
+
 
     };
   }
