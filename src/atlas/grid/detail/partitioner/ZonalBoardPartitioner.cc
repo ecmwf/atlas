@@ -30,6 +30,11 @@ ZonalBoardPartitioner::ZonalBoardPartitioner( int N ) : Partitioner( N ) {
     zonalboard_ = true;  // default
 }
 
+ZonalBoardPartitioner::ZonalBoardPartitioner( int N, const eckit::Parametrisation& config ) : Partitioner( N ) {
+    config.get( "bands", nbands_ );
+    config.get( "zonalboard", zonalboard_ );
+}
+
 ZonalBoardPartitioner::ZonalBoardPartitioner( int N, int nbands ) : Partitioner( N ) {
     nbands_       = nbands;
     zonalboard_ = true;  // default

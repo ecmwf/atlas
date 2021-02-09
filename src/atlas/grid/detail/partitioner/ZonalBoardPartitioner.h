@@ -25,6 +25,7 @@ public:
     ZonalBoardPartitioner();
 
     ZonalBoardPartitioner( int N );  // N is the number of parts (aka MPI tasks)
+    ZonalBoardPartitioner( int N, const eckit::Parametrisation& );
 
     ZonalBoardPartitioner( int N, int nbands );
     ZonalBoardPartitioner( int N, int nbands, bool zonalboard );
