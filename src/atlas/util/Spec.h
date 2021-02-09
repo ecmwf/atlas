@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include <iostream>
+#include <ostream>
 #include <map>
 #include <string>
 #include <utility>
@@ -18,10 +18,6 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Config.h"
-
-namespace eckit {
-class PathName;
-}
 
 namespace atlas {
 namespace util {
