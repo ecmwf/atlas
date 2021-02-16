@@ -27,12 +27,15 @@ namespace atlas {
       atlas::util::Config funcSpaceOneConfig;
       funcSpaceOneConfig.set("halo", 1);
       funcSpaceOneConfig.set("periodic_points", true);
+      funcSpaceOneConfig.set("levels", 1);
 
       atlas::functionspace::StructuredColumns
               funcSpaceOne(gridOne, atlas::grid::Partitioner("equal_regions"), funcSpaceOneConfig);
 
       atlas::functionspace::StructuredColumns
              funcSpaceTwo(gridOne, atlas::grid::Partitioner("checkerboard"), funcSpaceOneConfig);
+
+      std::cout << "levels" << funcSpaceOne.levels() << std::endl;
 
       auto fieldOne = funcSpaceOne.createField<double>(atlas::option::name("field one"));
       auto fieldTwo = funcSpaceTwo.createField<double>(atlas::option::name("field two"));
