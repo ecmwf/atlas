@@ -1,5 +1,8 @@
 #pragma once
 
+#include <vector>
+
+#include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/repartition/detail/RepartitionImpl.h"
 
 namespace atlas {
@@ -15,6 +18,15 @@ namespace atlas {
 
 namespace atlas {
   namespace repartition {
+
+    using idxPair = std::pair<idx_t, idx_t>;
+    using idxPairVector = std::vector<idxPair>;
+
+    // Helper struct for function space intersections.
+    struct indexRange {
+      idxPair jBeginEnd{};
+      idxPairVector iBeginEnd{};
+    };
 
     using functionspace::StructuredColumns;
 
@@ -32,17 +44,19 @@ namespace atlas {
 
     private:
 
-      // Helper struct for function space intersections.
-      struct intersection {
-        idx_t jBegin;
-        idx_t jEnd;
-        std::vector<idx_t> iBegin;
-        std::vector<idx_t> iEnd;
-      };
-
       // FunctionSpaces recast to StructuredColumns.
-      StructuredColumns* sourceStructuredColumns_;
-      StructuredColumns* targetStructuredColumns_;
+      StructuredColumns sourceStructuredColumns_{};
+      StructuredColumns targetStructuredColumns_{};
+
+      // Function space intersection ranges.
+      std::vector<indexRange> sendIntersections_{};
+      std::vector<indexRange> receiveIntersections_{};
+
+      // MPI count and displacement arrays for send and receive buffers.
+      std::vector<int> sendCounts_{};
+      std::vector<int> sendDisplacements_{};
+      std::vector<int> receiveCounts_{};
+      std::vector<int> receiveDisplacements_{};
 
 
     };
