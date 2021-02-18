@@ -286,12 +286,12 @@ int Meshgen2Gmsh::execute( const Args& args ) {
                        << std::endl;
         Log::warning() << "units: " << grid.projection().units() << std::endl;
     }
+    if( brick ) {
+        build_brick_dual_mesh( grid, mesh );
+    }
     if ( edges && grid.projection().units() == "degrees" ) {
         functionspace::EdgeColumns edges_fs( mesh, option::halo( halo ) );
-        if ( brick ) {
-            build_brick_dual_mesh( grid, mesh );
-        }
-        else {
+        if( not brick ) {
             build_median_dual_mesh( mesh );
         }
     }
