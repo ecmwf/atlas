@@ -47,8 +47,9 @@ implicit none
   type(atlas_Geometry) :: geometry
   type(atlas_IndexKDTree) :: kdtree
   type(atlas_StructuredGrid) :: grid
-  integer(c_int) :: n, i, ix, iy, k, kk
-  integer(c_int), allocatable :: tree_indices(:), indices(:), indices_rad(:), result_indices(:)
+  integer(ATLAS_KIND_IDX) :: n, i, ix, iy
+  integer(c_int) :: k, kk
+  integer(ATLAS_KIND_IDX), allocatable :: tree_indices(:), indices(:), indices_rad(:), result_indices(:)
   real(c_double) :: lonlat(2), xyz(3), plonlat(2), pxyz(3)
   real(c_double), allocatable :: tree_lonlats(:,:), tree_distances(:)
   real(c_double), allocatable :: lonlats(:,:), distances(:)

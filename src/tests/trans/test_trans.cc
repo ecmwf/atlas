@@ -137,7 +137,7 @@ CASE( "test_trans_distribution_matches_atlas" ) {
         EXPECT( t->n_regions_EW == max_nb_regions_EW );
 
         EXPECT( distribution.nb_partitions() == idx_t( mpi::comm().size() ) );
-        EXPECT( idx_t( distribution.partition().size() ) == g.size() );
+        EXPECT( idx_t( distribution.size() ) == g.size() );
 
         std::vector<int> npts( distribution.nb_partitions(), 0 );
 

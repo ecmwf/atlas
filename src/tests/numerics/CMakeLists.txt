@@ -24,6 +24,16 @@ ecbuild_add_test( TARGET atlas_test_fvm_nabla_L5
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_fvm_nabla_validation
+  SOURCES test_fvm_nabla_validation.cc
+  LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+if( TEST atlas_test_fvm_nabla_validation )
+    set_tests_properties( atlas_test_fvm_nabla_validation PROPERTIES TIMEOUT 450 )
+      # For certain debug builds (e.g. with address-sanitizer)
+endif()
+
 if( HAVE_FCTEST)
   add_fctest( TARGET atlas_fctest_fvm_nabla
     LINKER_LANGUAGE Fortran

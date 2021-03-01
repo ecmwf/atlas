@@ -61,6 +61,7 @@ contains
   procedure, public :: strides_array => Field__strides_array
   procedure, public :: strides_idx   => Field__strides_idx
   generic :: strides => strides_array, strides_idx
+  generic :: stride => strides_idx
 
   procedure :: halo_exchange
   procedure :: dirty
@@ -311,13 +312,14 @@ end function
 !-------------------------------------------------------------------------------
 
 #:for dtype, ftype, ctype in integer_types
-function atlas_Field__create_name_kind_shape_${dtype}$(name,kind,shape) result(field)
+function atlas_Field__create_name_kind_shape_${dtype}$(name,kind,shape,alignment) result(field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_int, c_long
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   integer(c_int), intent(in) :: kind
   ${ftype}$, intent(in) :: shape(:)
+  integer(c_int), intent(in), optional :: alignment
 
   type(atlas_Config) :: params
 
@@ -325,8 +327,9 @@ function atlas_Field__create_name_kind_shape_${dtype}$(name,kind,shape) result(f
   call params%set("creator","ArraySpec")
   call params%set("shape",shape)
   call params%set("fortran",.True.)
-  call params%set("datatype",atlas_data_type(kind))
+  call params%set("kind",kind)
   call params%set("name",name)
+  if( present(alignment) ) call params%set("alignment",alignment)
 
   field = atlas_Field__cptr( atlas__Field__create(params%CPTR_PGIBUG_B) )
   call params%final()
@@ -335,12 +338,13 @@ end function
 
 !-------------------------------------------------------------------------------
 
-function atlas_Field__create_kind_shape_${dtype}$(kind,shape) result(field)
+function atlas_Field__create_kind_shape_${dtype}$(kind,shape,alignment) result(field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_int, c_long
   type(atlas_Field) :: field
   integer(c_int), intent(in) :: kind
   ${ftype}$, intent(in) :: shape(:)
+  integer(c_int), intent(in), optional :: alignment
 
   type(atlas_Config) :: params
 
@@ -348,7 +352,8 @@ function atlas_Field__create_kind_shape_${dtype}$(kind,shape) result(field)
   call params%set("creator","ArraySpec")
   call params%set("shape",shape)
   call params%set("fortran",.True.)
-  call params%set("datatype",atlas_data_type(kind))
+  call params%set("kind",kind)
+  if( present(alignment) ) call params%set("alignment",alignment)
 
   field = atlas_Field__cptr( atlas__Field__create(params%CPTR_PGIBUG_B) )
   call params%final()

@@ -54,27 +54,27 @@ Output::Output( const std::string& key, std::ostream& stream, const eckit::Param
 
 /// Write mesh file
 void Output::write( const Mesh& m, const eckit::Parametrisation& c ) const {
-    return get()->write( m, c );
+    get()->write( m, c );
 }
 
 /// Write field to file
 void Output::write( const Field& f, const eckit::Parametrisation& c ) const {
-    return get()->write( f, c );
+    get()->write( f, c );
 }
 
 /// Write fieldset to file using FunctionSpace
 void Output::write( const FieldSet& f, const eckit::Parametrisation& c ) const {
-    return get()->write( f, c );
+    get()->write( f, c );
 }
 
 /// Write field to file using Functionspace
 void Output::write( const Field& f, const FunctionSpace& fs, const eckit::Parametrisation& c ) const {
-    return get()->write( f, fs, c );
+    get()->write( f, fs, c );
 }
 
 /// Write fieldset to file using FunctionSpace
 void Output::write( const FieldSet& f, const FunctionSpace& fs, const eckit::Parametrisation& c ) const {
-    return get()->write( f, fs, c );
+    get()->write( f, fs, c );
 }
 
 namespace detail {

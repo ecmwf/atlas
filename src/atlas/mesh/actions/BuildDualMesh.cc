@@ -391,10 +391,10 @@ void build_brick_dual_mesh( const Grid& grid, Mesh& mesh ) {
         }
 
         mesh::Nodes& nodes                       = mesh.nodes();
-        array::ArrayView<double, 2> xy           = array::make_view<double, 2>( nodes.xy() );
-        array::ArrayView<double, 1> dual_volumes = array::make_view<double, 1>( nodes.add(
-            Field( "dual_volumes", array::make_datatype<double>(), array::make_shape( nodes.size(), 1 ) ) ) );
-        array::ArrayView<gidx_t, 1> gidx         = array::make_view<gidx_t, 1>( nodes.global_index() );
+        auto xy           = array::make_view<double, 2>( nodes.xy() );
+        auto dual_volumes = array::make_view<double, 1>( nodes.add(
+            Field( "dual_volumes", array::make_datatype<double>(), array::make_shape( nodes.size() ) ) ) );
+        auto gidx         = array::make_view<gidx_t, 1>( nodes.global_index() );
 
         int c = 0;
         int n = 0;

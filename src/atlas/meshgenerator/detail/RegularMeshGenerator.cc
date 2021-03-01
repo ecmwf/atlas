@@ -144,12 +144,12 @@ void RegularMeshGenerator::generate( const Grid& grid, const grid::Distribution&
 
     ATLAS_ASSERT( !mesh.generated() );
 
-    if ( grid.size() != static_cast<idx_t>( distribution.partition().size() ) ) {
+    if ( grid.size() != static_cast<idx_t>( distribution.size() ) ) {
         std::stringstream msg;
         msg << "Number of points in grid (" << grid.size()
             << ") different from "
                "number of points in grid distribution ("
-            << distribution.partition().size() << ")";
+            << distribution.size() << ")";
         throw_AssertionFailed( msg.str(), Here() );
     }
 
@@ -159,7 +159,7 @@ void RegularMeshGenerator::generate( const Grid& grid, const grid::Distribution&
     generate_mesh( rg, distribution, mesh );
 }
 
-void RegularMeshGenerator::generate_mesh( const RegularGrid& rg, const grid::Distribution::partition_t& parts,
+void RegularMeshGenerator::generate_mesh( const RegularGrid& rg, const grid::Distribution& distribution,
                                           // const Region& region,
                                           Mesh& mesh ) const {
     int mypart = options.get<size_t>( "part" );
@@ -230,10 +230,10 @@ void RegularMeshGenerator::generate_mesh( const RegularGrid& rg, const grid::Dis
     ii_glb = 0;
     for ( iy = 0; iy < ny; iy++ ) {
         for ( ix = 0; ix < nx; ix++ ) {
-            local_idx[ii_glb] = current_idx[parts[ii_glb]]++;  // store local index on
-                                                               // the local proc of
-                                                               // this point
-            if ( parts[ii_glb] == mypart ) {
+            local_idx[ii_glb] = current_idx[distribution.partition( ii_glb )]++;  // store local index on
+                                                                                  // the local proc of
+                                                                                  // this point
+            if ( distribution.partition( ii_glb ) == mypart ) {
                 ++nnodes_nonghost;  // non-ghost node: belongs to this part
                 ix_min = std::min( ix_min, ix );
                 ix_max = std::max( ix_max, ix );
@@ -272,25 +272,25 @@ void RegularMeshGenerator::generate_mesh( const RegularGrid& rg, const grid::Dis
             is_ghost_SR[ii] = !( ( parts_SR[ii] == mypart ) && ix < nxl - 1 && iy < nyl - 1 );
             if ( ix_glb < nx && iy_glb < ny ) {
                 ii_glb           = (iy_glb)*nx + ix_glb;  // global index
-                parts_SR[ii]     = parts[ii_glb];
+                parts_SR[ii]     = distribution.partition( ii_glb );
                 local_idx_SR[ii] = local_idx[ii_glb];
                 is_ghost_SR[ii]  = !( ( parts_SR[ii] == mypart ) && ix < nxl - 1 && iy < nyl - 1 );
             }
             else if ( ix_glb == nx && iy_glb < ny ) {
                 // take properties from the point to the left
-                parts_SR[ii]     = parts[iy_glb * nx + ix_glb - 1];
+                parts_SR[ii]     = distribution.partition( iy_glb * nx + ix_glb - 1 );
                 local_idx_SR[ii] = -1;
                 is_ghost_SR[ii]  = true;
             }
             else if ( iy_glb == ny && ix_glb < nx ) {
                 // take properties from the point below
-                parts_SR[ii]     = parts[( iy_glb - 1 ) * nx + ix_glb];
+                parts_SR[ii]     = distribution.partition( ( iy_glb - 1 ) * nx + ix_glb );
                 local_idx_SR[ii] = -1;
                 is_ghost_SR[ii]  = true;
             }
             else {
                 // take properties from the point belowleft
-                parts_SR[ii]     = parts[( iy_glb - 1 ) * nx + ix_glb - 1];
+                parts_SR[ii]     = distribution.partition( ( iy_glb - 1 ) * nx + ix_glb - 1 );
                 local_idx_SR[ii] = -1;
                 is_ghost_SR[ii]  = true;
             }

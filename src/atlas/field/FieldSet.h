@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <cstdlib>
 #include <iterator>
 #include <map>
 #include <string>
@@ -54,8 +55,11 @@ public:  // methods
     const std::string& name() const { return name_; }
     std::string& name() { return name_; }
 
-    const Field& operator[]( const idx_t& i ) const { return field( i ); }
-    Field& operator[]( const idx_t& i ) { return field( i ); }
+    const Field& operator[]( const std::int32_t& i ) const { return field( i ); }
+    Field& operator[]( const std::int32_t& i ) { return field( i ); }
+
+    const Field& operator[]( const std::int64_t& i ) const { return field( i ); }
+    Field& operator[]( const std::int64_t& i ) { return field( i ); }
 
     const Field& operator[]( const std::string& name ) const { return field( name ); }
     Field& operator[]( const std::string& name ) { return field( name ); }
@@ -138,8 +142,11 @@ public:  // methods
     const std::string& name() const { return get()->name(); }
     std::string& name() { return get()->name(); }
 
-    const Field& operator[]( const idx_t& i ) const { return get()->operator[]( i ); }
-    Field& operator[]( const idx_t& i ) { return get()->operator[]( i ); }
+    const Field& operator[]( const std::int32_t& i ) const { return get()->operator[]( i ); }
+    Field& operator[]( const std::int32_t& i ) { return get()->operator[]( i ); }
+
+    const Field& operator[]( const std::int64_t& i ) const { return get()->operator[]( i ); }
+    Field& operator[]( const std::int64_t& i ) { return get()->operator[]( i ); }
 
     const Field& operator[]( const std::string& name ) const { return get()->operator[]( name ); }
     Field& operator[]( const std::string& name ) { return get()->operator[]( name ); }

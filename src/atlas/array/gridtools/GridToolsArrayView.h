@@ -132,10 +132,10 @@ public:
     }
 
     static constexpr idx_t rank() { return Rank; }
-    idx_t size() const { return size_; }
+    size_t size() const { return size_; }
     bool valid() const;
 
-    bool contiguous() const { return ( size_ == shape_[0] * strides_[0] ? true : false ); }
+    bool contiguous() const { return ( size_ == size_t( shape_[0] ) * size_t( strides_[0] ) ? true : false ); }
 
     void dump( std::ostream& os ) const;
 
@@ -179,7 +179,7 @@ private:
     data_view_t gt_data_view_;
     idx_t shape_[Rank];
     idx_t strides_[Rank];
-    idx_t size_;
+    size_t size_;
     ArrayDataStore const* data_store_orig_;
     Array const* array_;
     bool is_device_view_{false};

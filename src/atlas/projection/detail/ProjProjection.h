@@ -55,6 +55,9 @@ public:
 
     void xy2lonlat( double[] ) const override;
     void lonlat2xy( double[] ) const override;
+
+    Jacobian jacobian( const PointLonLat& ) const override;
+
     PointXYZ xyz( const PointLonLat& ) const override;
 
     bool strictlyRegional() const override { return false; }

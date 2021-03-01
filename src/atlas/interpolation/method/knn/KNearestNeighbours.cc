@@ -10,13 +10,14 @@
 
 #include "atlas/interpolation/method/knn/KNearestNeighbours.h"
 
+#include <limits>
+
 #include "eckit/log/Plural.h"
-#include "eckit/log/Timer.h"
+#include "eckit/types/FloatCompare.h"
 
 #include "atlas/array.h"
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/grid/Grid.h"
-#include "atlas/grid/StructuredGrid.h"
+#include "atlas/grid.h"
 #include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
@@ -25,6 +26,7 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
+#include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {
 namespace interpolation {
@@ -42,7 +44,7 @@ KNearestNeighbours::KNearestNeighbours( const Method::Config& config ) : KNeares
     ATLAS_ASSERT( k_ );
 }
 
-void KNearestNeighbours::do_setup( const Grid& source, const Grid& target ) {
+void KNearestNeighbours::do_setup( const Grid& source, const Grid& target, const Cache& ) {
     if ( mpi::size() > 1 ) {
         ATLAS_NOTIMPLEMENTED;
     }
@@ -72,14 +74,12 @@ void KNearestNeighbours::do_setup( const FunctionSpace& source, const FunctionSp
     Mesh meshTarget = tgt.mesh();
 
     // build point-search tree
-    buildPointSearchTree( meshSource );
-    ATLAS_ASSERT( pTree_ != nullptr );
+    buildPointSearchTree( meshSource, src.halo() );
 
-    // generate 3D point coordinates
-    mesh::actions::BuildXYZField( "xyz" )( meshTarget );
-    array::ArrayView<double, 2> coords = array::make_view<double, 2>( meshTarget.nodes().field( "xyz" ) );
+    array::ArrayView<double, 2> lonlat = array::make_view<double, 2>( meshTarget.nodes().lonlat() );
 
     size_t inp_npts = meshSource.nodes().size();
+    meshSource.metadata().get( "nb_nodes_including_halo[" + std::to_string( src.halo().size() ) + "]", inp_npts );
     size_t out_npts = meshTarget.nodes().size();
 
     // fill the sparse matrix
@@ -90,15 +90,18 @@ void KNearestNeighbours::do_setup( const FunctionSpace& source, const FunctionSp
 
         std::vector<double> weights;
 
+        Log::debug() << "Computing interpolation weights for " << out_npts << " points." << std::endl;
         for ( size_t ip = 0; ip < out_npts; ++ip ) {
             if ( ip && ( ip % 1000 == 0 ) ) {
-                double rate = ip / timer.elapsed();
+                auto elapsed = timer.elapsed();
+                auto rate    = eckit::types::is_approximately_equal( elapsed, 0. )
+                                ? std::numeric_limits<double>::infinity()
+                                : ( ip / elapsed );
                 Log::debug() << eckit::BigNum( ip ) << " (at " << rate << " points/s)..." << std::endl;
             }
 
             // find the closest input points to the output point
-            PointIndex3::Point p{coords( ip, (size_t)0 ), coords( ip, (size_t)1 ), coords( ip, (size_t)2 )};
-            PointIndex3::NodeList nn = pTree_->kNearestNeighbours( p, k_ );
+            auto nn = pTree_.closestPoints( PointLonLat{lonlat( ip, size_t( LON ) ), lonlat( ip, size_t( LAT ) )}, k_ );
 
             // calculate weights (individual and total, to normalise) using distance
             // squared
@@ -108,8 +111,8 @@ void KNearestNeighbours::do_setup( const FunctionSpace& source, const FunctionSp
 
             double sum = 0;
             for ( size_t j = 0; j < npts; ++j ) {
-                PointIndex3::Point np = nn[j].point();
-                const double d2       = eckit::geometry::Point3::distance2( p, np );
+                const double d  = nn[j].distance();
+                const double d2 = d * d;
 
                 weights[j] = 1. / ( 1. + d2 );
                 sum += weights[j];
@@ -119,7 +122,8 @@ void KNearestNeighbours::do_setup( const FunctionSpace& source, const FunctionSp
             // insert weights into the matrix
             for ( size_t j = 0; j < npts; ++j ) {
                 size_t jp = nn[j].payload();
-                ATLAS_ASSERT( jp < inp_npts );
+                ATLAS_ASSERT( jp < inp_npts,
+                              "point found which is not covered within the halo of the source function space" );
                 weights_triplets.emplace_back( ip, jp, weights[j] / sum );
             }
         }
@@ -127,7 +131,7 @@ void KNearestNeighbours::do_setup( const FunctionSpace& source, const FunctionSp
 
     // fill sparse matrix and return
     Matrix A( out_npts, inp_npts, weights_triplets );
-    matrix_.swap( A );
+    matrix_shared_->swap( A );
 }
 
 }  // namespace method

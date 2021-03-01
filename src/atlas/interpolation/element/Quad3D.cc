@@ -92,7 +92,16 @@ double Quad3D::area() const {
 }
 
 void Quad3D::print( std::ostream& s ) const {
-    s << "Quad3D[v00=" << v00 << ",v10=" << v10 << ",v11=" << v11 << ",v01=" << v01 << "]";
+    auto printVector3D = [&s]( const Vector3D& v ) { s << "[" << v[0] << "," << v[1] << "," << v[2] << "]"; };
+    s << "Quad3D[";
+    printVector3D( v00 );
+    s << ", ";
+    printVector3D( v10 );
+    s << ", ";
+    printVector3D( v11 );
+    s << ", ";
+    printVector3D( v01 );
+    s << "]";
 }
 
 

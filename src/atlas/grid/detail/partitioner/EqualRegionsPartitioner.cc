@@ -434,7 +434,7 @@ void eq_regions( int N, double xmin[], double xmax[], double ymin[], double ymax
     ymax[N - 1] = 0.5 * M_PI - s_cap[s_cap.size() - 2];
 }
 
-EqualRegionsPartitioner::EqualRegionsPartitioner() : Partitioner(), N_( nb_partitions() ) {
+void EqualRegionsPartitioner::init() {
     std::vector<double> s_cap;
     eq_caps( N_, sectors_, s_cap );
     bands_.resize( s_cap.size() );
@@ -443,13 +443,17 @@ EqualRegionsPartitioner::EqualRegionsPartitioner() : Partitioner(), N_( nb_parti
     }
 }
 
+EqualRegionsPartitioner::EqualRegionsPartitioner() : Partitioner(), N_( nb_partitions() ) {
+    init();
+}
+
 EqualRegionsPartitioner::EqualRegionsPartitioner( int N ) : Partitioner( N ), N_( N ) {
-    std::vector<double> s_cap;
-    eq_caps( N_, sectors_, s_cap );
-    bands_.resize( s_cap.size() );
-    for ( size_t n = 0; n < s_cap.size(); ++n ) {
-        bands_[n] = 0.5 * M_PI - s_cap[n];
-    }
+    init();
+}
+
+EqualRegionsPartitioner::EqualRegionsPartitioner( int N, const eckit::Parametrisation& config ) :
+    Partitioner( N ), N_( N ) {
+    init();
 }
 
 int EqualRegionsPartitioner::partition( const double& x, const double& y ) const {
@@ -610,7 +614,7 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
             // construction
             // ATLAS_ASSERT to make sure.
             StructuredGrid structured_grid( grid );
-            ATLAS_ASSERT( structured_grid.y( 1 ) < structured_grid.y( 0 ) );
+            //ATLAS_ASSERT( structured_grid.y( 1 ) < structured_grid.y( 0 ) );
             ATLAS_ASSERT( structured_grid.x( 1, 0 ) > structured_grid.x( 0, 0 ) );
 
             ATLAS_TRACE( "Take shortcut" );

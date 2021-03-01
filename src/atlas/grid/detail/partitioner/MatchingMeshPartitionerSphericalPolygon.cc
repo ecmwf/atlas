@@ -18,6 +18,7 @@
 #include "atlas/grid/Iterator.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/omp/fill.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -41,14 +42,18 @@ void MatchingMeshPartitionerSphericalPolygon::partition( const Grid& grid, int p
 
     ATLAS_ASSERT( grid.domain().global() );
 
-    Log::debug() << "MatchingMeshPartitionerSphericalPolygon::partition" << std::endl;
+    if ( mpi_size == 1 ) {
+        Log::debug() << "MatchingMeshPartionerSphericalPolygon [mpi_size=0] --> trivial solution" << std::endl;
+        omp::fill( partitioning, partitioning + grid.size(), 0 );
+        return;
+    }
 
     // FIXME: THIS IS A HACK! the coordinates include North/South Pole (first/last
     // partitions only)
     bool includesNorthPole = ( mpi_rank == 0 );
     bool includesSouthPole = ( mpi_rank == mpi_size - 1 );
 
-    if ( not prePartitionedMesh_.projection() ) {
+    if ( prePartitionedMesh_.projection() ) {
         ATLAS_NOTIMPLEMENTED;
     }
     const util::SphericalPolygon poly{prePartitionedMesh_.polygon( 0 )};

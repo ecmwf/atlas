@@ -25,7 +25,7 @@ if( atlas_HAVE_ACC )
     set_property( TARGET atlas_acc_support PROPERTY IMPORTED_NO_SONAME TRUE )
     set_property( TARGET atlas_acc_support PROPERTY IMPORTED_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR} )
     add_dependencies( atlas_acc_support build-atlas_acc_support )
-    install( FILES ${CMAKE_BINARY_DIR}/lib/libatlas_acc_support.so DESTINATION lib/ )
+    install( FILES ${CMAKE_BINARY_DIR}/lib/libatlas_acc_support.so DESTINATION ${INSTALL_LIB_DIR}/ )
 
   else()
 

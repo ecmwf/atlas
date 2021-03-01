@@ -1,0 +1,102 @@
+/*
+ * (C) Copyright 2013 ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
+ */
+
+#pragma once
+
+#include "SparseMatrixMultiply.h"
+
+#include <type_traits>
+
+#include "atlas/linalg/Indexing.h"
+#include "atlas/linalg/Introspection.h"
+#include "atlas/linalg/View.h"
+#include "atlas/linalg/sparse/Backend.h"
+#include "atlas/runtime/Exception.h"
+
+namespace atlas {
+namespace linalg {
+
+namespace sparse {
+namespace {
+template <typename Backend, Indexing indexing>
+struct SparseMatrixMultiplyHelper {
+    template <typename SourceView, typename TargetView>
+    static void apply( const SparseMatrix& W, const SourceView& src, TargetView& tgt,
+                       const eckit::Configuration& config ) {
+        using SourceValue = const typename std::remove_const<typename SourceView::value_type>::type;
+        using TargetValue = typename std::remove_const<typename TargetView::value_type>::type;
+        constexpr int src_rank = introspection::rank<SourceView>();
+        constexpr int tgt_rank = introspection::rank<TargetView>();
+        static_assert( src_rank == tgt_rank, "src and tgt need same rank" );
+        SparseMatrixMultiply<Backend, indexing, src_rank, SourceValue, TargetValue>::apply( W, src, tgt, config );
+    }
+};
+
+template <typename Backend, typename Matrix, typename SourceView, typename TargetView>
+void dispatch_sparse_matrix_multiply( const Matrix& matrix, const SourceView& src, TargetView& tgt, Indexing indexing,
+                                      const eckit::Configuration& config ) {
+    auto src_v = make_view( src );
+    auto tgt_v = make_view( tgt );
+
+    if ( introspection::layout_right( src ) || introspection::layout_right( tgt ) ) {
+        ATLAS_ASSERT( introspection::layout_right( src ) && introspection::layout_right( tgt ) );
+        // Override layout with known layout given by introspection
+        SparseMatrixMultiplyHelper<Backend, linalg::Indexing::layout_right>::apply( matrix, src_v, tgt_v, config );
+    }
+    else {
+        if( indexing == Indexing::layout_left ) {
+            SparseMatrixMultiplyHelper<Backend, Indexing::layout_left>::apply( matrix, src_v, tgt_v, config );
+        }
+        else if( indexing == Indexing::layout_right ) {
+            SparseMatrixMultiplyHelper<Backend, Indexing::layout_right>::apply( matrix, src_v, tgt_v, config );
+        }
+        else {
+            throw_NotImplemented( "indexing not implemented", Here() );
+        }
+    }
+}
+}
+}
+
+template <typename Matrix, typename SourceView, typename TargetView>
+void sparse_matrix_multiply( const Matrix& matrix, const SourceView& src, TargetView& tgt, Indexing indexing,
+                             const eckit::Configuration& config ) {
+    std::string type = config.getString( "type", sparse::current_backend() );
+    if ( type == sparse::backend::omp::type() ) {
+        sparse::dispatch_sparse_matrix_multiply<sparse::backend::omp>( matrix, src, tgt, indexing, config );
+    }
+    else if ( type == sparse::backend::eckit_linalg::type() ) {
+        sparse::dispatch_sparse_matrix_multiply<sparse::backend::eckit_linalg>( matrix, src, tgt, indexing, config );
+    }
+    else {
+        throw_NotImplemented( "sparse_matrix_multiply cannot be performed with unsupported backend [" + type + "]",
+                              Here() );
+    }
+}
+
+template <typename Matrix, typename SourceView, typename TargetView>
+void sparse_matrix_multiply( const Matrix& matrix, const SourceView& src, TargetView& tgt, const eckit::Configuration& config ) {
+    sparse_matrix_multiply( matrix, src, tgt, Indexing::layout_left, config );
+}
+
+template <typename Matrix, typename SourceView, typename TargetView>
+void sparse_matrix_multiply( const Matrix& matrix, const SourceView& src, TargetView& tgt, Indexing indexing ) {
+    sparse_matrix_multiply( matrix, src, tgt, indexing, sparse::Backend() );
+}
+
+template <typename Matrix, typename SourceView, typename TargetView>
+void sparse_matrix_multiply( const Matrix& matrix, const SourceView& src, TargetView& tgt ) {
+    sparse_matrix_multiply( matrix, src, tgt, Indexing::layout_left );
+}
+
+}  // namespace linalg
+}  // namespace atlas
+
+#undef ATLAS_ENABLE_IF

@@ -106,6 +106,8 @@ public:  // methods
     /// @return parallel/meridian limits containing the grid
     virtual RectangularLonLatDomain lonlatBoundingBox() const = 0;
 
+    virtual size_t footprint() const { return 0; }
+
     /// @return projection (mapping between geographic coordinates and grid
     /// coordinates)
     const Projection& projection() const { return projection_; }
@@ -124,6 +126,9 @@ public:  // methods
 
     void attachObserver( GridObserver& ) const;
     void detachObserver( GridObserver& ) const;
+
+    virtual Config meshgenerator() const;
+    virtual Config partitioner() const;
 
 protected:  // methods
     /// Fill provided me
@@ -181,6 +186,7 @@ extern "C" {
 idx_t atlas__grid__Grid__size( Grid* This );
 Grid::Spec* atlas__grid__Grid__spec( Grid* This );
 void atlas__grid__Grid__uid( const Grid* This, char*& uid, int& size );
+Grid::Domain::Implementation* atlas__grid__Grid__lonlat_bounding_box( const Grid* This );
 }
 
 }  // namespace grid

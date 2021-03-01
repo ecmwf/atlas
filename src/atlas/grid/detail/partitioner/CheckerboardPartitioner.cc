@@ -31,25 +31,19 @@ namespace grid {
 namespace detail {
 namespace partitioner {
 
-CheckerboardPartitioner::CheckerboardPartitioner() : Partitioner() {
-    nbands_       = 0;     // to be computed later
-    checkerboard_ = true;  // default
+CheckerboardPartitioner::CheckerboardPartitioner() : Partitioner() {}
+
+CheckerboardPartitioner::CheckerboardPartitioner( int N ) : Partitioner( N ) {}
+
+CheckerboardPartitioner::CheckerboardPartitioner( int N, const eckit::Parametrisation& config ) : Partitioner( N ) {
+    config.get( "bands", nbands_ );
+    config.get( "regular", regular_ );
 }
 
-CheckerboardPartitioner::CheckerboardPartitioner( int N ) : Partitioner( N ) {
-    nbands_       = 0;     // to be computed later
-    checkerboard_ = true;  // default
-}
+CheckerboardPartitioner::CheckerboardPartitioner( int N, int nbands ) : Partitioner( N ), nbands_{nbands} {}
 
-CheckerboardPartitioner::CheckerboardPartitioner( int N, int nbands ) : Partitioner( N ) {
-    nbands_       = nbands;
-    checkerboard_ = true;  // default
-}
-
-CheckerboardPartitioner::CheckerboardPartitioner( int N, int nbands, bool checkerboard ) : Partitioner( N ) {
-    nbands_       = nbands;
-    checkerboard_ = checkerboard;
-}
+CheckerboardPartitioner::CheckerboardPartitioner( int N, int nbands, bool checkerboard ) :
+    Partitioner( N ), nbands_{nbands} {}
 
 CheckerboardPartitioner::Checkerboard CheckerboardPartitioner::checkerboard( const Grid& grid ) const {
     // grid dimensions
@@ -121,7 +115,7 @@ void CheckerboardPartitioner::partition( const Checkerboard& cb, int nb_nodes, N
     size_t nbands = cb.nbands;
     size_t nx     = cb.nx;
     size_t ny     = cb.ny;
-    size_t remainder;
+    long remainder;
 
     /*
 Sort nodes from south to north (increasing y), and west to east (increasing x).
@@ -144,12 +138,14 @@ Number of procs per band
         ++npartsb[iband];
     }
 
+    bool split_lons = not regular_;
+    bool split_lats = not regular_;
     /*
 Number of gridpoints per band
 */
     std::vector<size_t> ngpb( nbands, 0 );
     // split latitudes?
-    if ( true ) {
+    if ( split_lats ) {
         remainder = nb_nodes;
         for ( size_t iband = 0; iband < nbands; iband++ ) {
             ngpb[iband] = ( nb_nodes * npartsb[iband] ) / nparts;
@@ -172,13 +168,8 @@ Number of gridpoints per band
         }
     }
 
-    // for (int iband=0;iband<nbands; iband++ ) std::cout << "band " << iband << "
-    // : nparts = " << npartsb[iband] << "; ngpb = " << ngpb[iband] << std::endl;
-
     // sort nodes according to Y first, to determine bands
     std::sort( nodes, nodes + nb_nodes, compare_Y_X );
-
-    // std::cout << __LINE__ << ",  in " << __FUNCTION__ << std::endl;
 
     // for each band, select gridpoints belonging to that band, and sort them
     // according to X first
@@ -191,28 +182,36 @@ Number of gridpoints per band
         // number of gridpoints per task
         std::vector<int> ngpp( npartsb[iband], 0 );
         remainder = ngpb[iband];
-        // std::cout << "remainder = " << remainder << std::endl;
-        for ( size_t ipart = 0; ipart < npartsb[iband]; ipart++ ) {
-            ngpp[ipart] = ngpb[iband] / npartsb[iband];
-            remainder -= ngpp[ipart];
-            // std::cout << "remainder = " << remainder << std::endl;
-        }
-        // distribute remaining gridpoints over first parts
-        for ( size_t ipart = 0; ipart < remainder; ipart++ ) {
-            ++ngpp[ipart];
-        }
 
-        /*
-std::cout << "ngpb = " << ngpb[iband] << "\n";
-for (int ipart=0;ipart<npartsb[iband];ipart++) std::cout << "part " << ipart <<
-"; ngpp = " << ngpp[ipart] << ". ";
-std::cout << std::endl;
-*/
+        int part_ny = ngpb[iband] / cb.nx;
+        int part_nx = ngpb[iband] / npartsb[iband] / part_ny;
+
+        for ( size_t ipart = 0; ipart < npartsb[iband]; ipart++ ) {
+            if ( split_lons ) {
+                ngpp[ipart] = ngpb[iband] / npartsb[iband];
+            }
+            else {
+                ngpp[ipart] = part_nx * part_ny;
+            }
+            remainder -= ngpp[ipart];
+        }
+        if ( split_lons ) {
+            // distribute remaining gridpoints over first parts
+            for ( size_t ipart = 0; ipart < remainder; ipart++ ) {
+                ++ngpp[ipart];
+            }
+        }
+        else {
+            size_t ipart = 0;
+            while ( remainder > part_ny ) {
+                ngpp[ipart++] += part_ny;
+                remainder -= part_ny;
+            }
+            ngpp[npartsb[iband] - 1] += remainder;
+        }
 
         // set partition number for each part
         for ( size_t ipart = 0; ipart < npartsb[iband]; ipart++ ) {
-            // std::cout << "looping over points " << offset << " to " <<
-            // offset+ngpp[ipart] << std::endl;
             for ( size_t jj = offset; jj < offset + ngpp[ipart]; jj++ ) {
                 part[nodes[jj].n] = jpart;
             }

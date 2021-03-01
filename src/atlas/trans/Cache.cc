@@ -63,8 +63,6 @@ Cache::Cache( const TransImpl* trans ) :
 
 Cache::Cache() : trans_( nullptr ), legendre_( new EmptyCacheEntry() ), fft_( new EmptyCacheEntry() ) {}
 
-Cache::Cache( const Cache& other ) = default;
-
 Cache::operator bool() const {
     return trans_ || bool( legendre() );
 }

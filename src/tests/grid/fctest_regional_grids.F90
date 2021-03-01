@@ -84,6 +84,7 @@ TEST( test_regional_lonlat_grid_MF )
 #if 1
   ! Grid provided by Philippe Marguinaud, Meteo France
   type(atlas_StructuredGrid) :: grid
+  type(atlas_LonLatRectangularDomain) :: bounding_box
   real(c_double), parameter :: zlonw = -20., zlone = +10., zlats = 10., zlatn = 50.
   integer(c_int), parameter :: ilons = 30, ilats = 40
   real(c_double), parameter :: tol = 1.e-5_dp
@@ -97,6 +98,16 @@ TEST( test_regional_lonlat_grid_MF )
   FCTEST_CHECK_CLOSE( grid%lonlat(ilons,1),     ([ 0.1000000000E+02_dp, 0.1000000000E+02_dp]), tol)
   FCTEST_CHECK_CLOSE( grid%lonlat(1,2),         ([-0.2000000000E+02_dp, 0.1102564103E+02_dp]), tol)
   FCTEST_CHECK_CLOSE( grid%lonlat(ilons,ilats), ([ 0.1000000000E+02_dp, 0.5000000000E+02_dp]), tol)
+  
+  bounding_box = grid%lonlat_bounding_box()
+  FCTEST_CHECK_CLOSE( bounding_box%west(),  -20.0_dp, tol )
+  FCTEST_CHECK_CLOSE( bounding_box%east(),  +10.0_dp, tol )
+  FCTEST_CHECK_CLOSE( bounding_box%south(), +10.0_dp, tol )
+  FCTEST_CHECK_CLOSE( bounding_box%north(), +50.0_dp, tol )
+  FCTEST_CHECK_EQUAL( bounding_box%owners(), 2 )
+
+  call bounding_box%final()
+  call grid%final()
 #endif
 END_TEST
 
@@ -106,6 +117,7 @@ TEST( test_regional_lambert_grid_MF )
 #if 1
   ! Grid provided by Philippe Marguinaud, Meteo France
   type(atlas_StructuredGrid) :: grid
+  type(atlas_LonLatRectangularDomain) :: bounding_box
 
   integer(c_int), parameter :: ndlon=64
   integer(c_int), parameter :: ndglg=64
@@ -134,6 +146,14 @@ TEST( test_regional_lambert_grid_MF )
   FCTEST_CHECK_CLOSE( grid%lonlat(1,2),         ([-0.1187876836E+02_dp, 0.3402241700E+02_dp]), tol)
   FCTEST_CHECK_CLOSE( grid%lonlat(ndlon,ndglg), ([ 0.3452466369E+02_dp, 0.5925747619E+02_dp]), tol)
 
+  bounding_box = grid%lonlat_bounding_box()
+  FCTEST_CHECK_CLOSE( bounding_box%west(),  -21.513504_dp, tol )
+  FCTEST_CHECK_CLOSE( bounding_box%east(),  34.524664_dp, tol )
+  FCTEST_CHECK_CLOSE( bounding_box%south(), 32.586516_dp, tol )
+  FCTEST_CHECK_CLOSE( bounding_box%north(), 62.587002_dp, tol )
+  FCTEST_CHECK_EQUAL( bounding_box%owners(), 1 )
+
+  call bounding_box%final()
   call grid%final()
 #endif
 END_TEST

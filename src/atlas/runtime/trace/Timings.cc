@@ -22,6 +22,7 @@
 #include "eckit/filesystem/PathName.h"
 
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/trace/CallStack.h"
 #include "atlas/runtime/trace/CodeLocation.h"
@@ -66,6 +67,80 @@ public:
 
 private:
     std::string filter_filepath( const std::string& filepath ) const;
+
+    friend class Tree;
+    friend class Node;
+};
+
+struct Node {
+    Node() : index( -1 ) {}
+    Node( size_t _index ) : index( _index ) {
+        size_t _nest = TimingsRegistry::instance().nest_[index];
+
+
+        const auto& this_stack = TimingsRegistry::instance().stack_[index];
+        auto this_stack_hash   = TimingsRegistry::instance().stack_[index].hash();
+        auto is_child          = [&]( size_t i ) -> bool {
+            CallStack child_stack = TimingsRegistry::instance().stack_[i];
+            child_stack.pop_front();
+            auto child_stack_hash = child_stack.hash();
+            return child_stack_hash == this_stack_hash;
+        };
+
+
+        for ( size_t i = index + 1; i < TimingsRegistry::instance().size(); ++i ) {
+            if ( TimingsRegistry::instance().nest_[i] == _nest + 1 ) {
+                if ( is_child( i ) ) {
+                    children.emplace_back( new Node( i ) );
+                }
+            }
+        }
+    }
+    std::vector<std::unique_ptr<Node>> children;
+    std::unique_ptr<Node> parent;
+    long index;
+    void print( std::ostream& out ) {
+        if ( index >= 0 ) {
+            size_t _nest = nest();
+            for ( size_t i = 1; i < _nest; ++i ) {
+                out << "    ";
+            }
+            out << TimingsRegistry::instance().titles_[index] << std::endl;
+        }
+        for ( auto& child : children ) {
+            child->print( out );
+        }
+    }
+    size_t nest() const { return TimingsRegistry::instance().nest_[index]; }
+    void order( std::vector<size_t>& order ) const {
+        if ( index >= 0 ) {
+            order.emplace_back( index );
+        }
+        for ( auto& child : children ) {
+            child->order( order );
+        }
+    }
+};
+struct Tree {
+    Node root;
+    Tree() {
+        for ( size_t j = 0; j < TimingsRegistry::instance().size(); ++j ) {
+            auto& nest = TimingsRegistry::instance().nest_[j];
+            if ( nest == 1 ) {
+                auto& children = root.children;
+                children.emplace_back( new Node( j ) );
+            }
+        }
+    }
+    void print( std::ostream& out ) { root.print( out ); }
+    std::vector<size_t> order() const {
+        std::vector<size_t> order;
+        order.reserve( TimingsRegistry::instance().size() );
+        root.order( order );
+        ATLAS_ASSERT( order.size() == TimingsRegistry::instance().size(),
+                      "Likely a atlas_Trace has not finalised properly" );
+        return order;
+    }
 };
 
 size_t TimingsRegistry::add( const CodeLocation& loc, const CallStack& stack, const std::string& title,
@@ -139,6 +214,8 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
     std::vector<std::string> excluded_labels_vector = config.getStringVector( "exclude", std::vector<std::string>() );
     std::vector<std::string> include_back;
 
+    auto order = Tree().order();
+
     for ( auto& label : excluded_labels_vector ) {
         size_t found = label.find( "/*" );
         if ( found != std::string::npos ) {
@@ -175,7 +252,8 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
 
     std::vector<long> excluded_nest_stored( size() );
     long excluded_nest = size();
-    for ( size_t j = 0; j < size(); ++j ) {
+    for ( size_t jj = 0; jj < size(); ++jj ) {
+        size_t j = order[jj];
         if ( nest_[j] > excluded_nest ) {
             excluded_timers.insert( j );
         }
@@ -261,11 +339,19 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
     std::vector<std::string> prefix_( size() );
     if ( indent ) {
         std::vector<bool> active( max_nest, false );
-        for ( long k = long( size() ) - 1; k >= 0; --k ) {
+        for ( long kk = long( size() ) - 1; kk >= 0; --kk ) {
+            long k           = order[kk];
             const auto& nest = nest_[k];
 
             const CallStack& this_stack = stack_[k];
-            const CallStack& next_stack = ( k == long( size() ) - 1 ) ? this_stack : stack_[k + 1];
+            const CallStack* next_stack_ptr;
+            if ( kk == size() - 1 ) {
+                next_stack_ptr = &this_stack;
+            }
+            else {
+                next_stack_ptr = &stack_[order[kk + 1]];
+            }
+            const CallStack& next_stack = *next_stack_ptr;
 
             auto this_it = this_stack.rbegin();
             auto next_it = next_stack.rbegin();
@@ -308,7 +394,8 @@ void TimingsRegistry::report( std::ostream& out, const eckit::Configuration& con
         }
     }
 
-    for ( size_t j = 0; j < size(); ++j ) {
+    for ( size_t i = 0; i < size(); ++i ) {
+        size_t j    = order[i];
         auto& tot   = tot_timings_[j];
         auto& max   = max_timings_[j];
         auto& min   = std::min( max, min_timings_[j] );
@@ -387,7 +474,7 @@ std::string Timings::report() {
 }
 
 std::string Timings::report( const Configuration& config ) {
-    std::stringstream out;
+    std::ostringstream out;
     TimingsRegistry::instance().report( out, config );
     return out.str();
 }

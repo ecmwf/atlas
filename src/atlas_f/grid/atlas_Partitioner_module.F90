@@ -17,7 +17,8 @@ implicit none
 private :: fckit_owned_object
 
 public :: atlas_Partitioner
-public :: atlas_MatchingMeshPartitioner
+public :: atlas_MatchingPartitioner
+public :: atlas_MatchingMeshPartitioner ! use MatchingPartitioner instead!
 
 private
 
@@ -55,6 +56,11 @@ END TYPE atlas_Partitioner
 interface atlas_Partitioner
   module procedure atlas_Partitioner__ctor
   module procedure atlas_Partitioner__ctor_type
+end interface
+
+interface atlas_MatchingPartitioner
+  module procedure atlas_MatchingMeshPartitioner__ctor
+  module procedure atlas_MatchingFunctionSpacePartitioner__ctor
 end interface
 
 interface atlas_MatchingMeshPartitioner
@@ -102,6 +108,27 @@ function atlas_MatchingMeshPartitioner__ctor( mesh, config ) result(this)
     opt_config = atlas_Config()
     call this%reset_c_ptr( atlas__grid__MatchingMeshPartitioner__new( &
       mesh%CPTR_PGIBUG_A, opt_config%CPTR_PGIBUG_B ) )
+    call opt_config%final()
+  endif
+  call this%return()
+end function
+
+
+function atlas_MatchingFunctionSpacePartitioner__ctor( functionspace, config ) result(this)
+  use atlas_functionspace_module, only : atlas_FunctionSpace
+  use atlas_config_module, only : atlas_Config
+  use atlas_partitioner_c_binding
+  type(atlas_Partitioner) :: this
+  type(atlas_FunctionSpace)  , intent(in) :: functionspace
+  type(atlas_Config), intent(in), optional :: config
+  type(atlas_Config) :: opt_config
+  if( present(config) ) then
+    call this%reset_c_ptr( atlas__grid__MatchingFunctionSpacePartitioner__new( &
+      functionspace%CPTR_PGIBUG_A, config%CPTR_PGIBUG_B ) )
+  else
+    opt_config = atlas_Config()
+    call this%reset_c_ptr( atlas__grid__MatchingFunctionSpacePartitioner__new( &
+      functionspace%CPTR_PGIBUG_A, opt_config%CPTR_PGIBUG_B ) )
     call opt_config%final()
   endif
   call this%return()

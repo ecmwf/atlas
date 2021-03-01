@@ -147,5 +147,20 @@ namespace {
 static DomainBuilder<RectangularDomain> register_builder( RectangularDomain::static_type() );
 }
 
+extern "C" {
+double atlas__LonLatRectangularDomain__north( const RectangularDomain* This ) {
+    return This->ymax();
+}
+double atlas__LonLatRectangularDomain__west( const RectangularDomain* This ) {
+    return This->xmin();
+}
+double atlas__LonLatRectangularDomain__south( const RectangularDomain* This ) {
+    return This->ymin();
+}
+double atlas__LonLatRectangularDomain__east( const RectangularDomain* This ) {
+    return This->xmax();
+}
+}
+
 }  // namespace domain
 }  // namespace atlas

@@ -19,18 +19,6 @@
 #include "atlas/array/gridtools/GridToolsMakeView.h"
 #endif
 
-
-#ifdef ATLAS_HAVE_GRIDTOOLS_STORAGE
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-#define PADDED 1
-#else
-#define PADDED 0
-#endif
-#else
-#define PADDED 0
-#endif
-#define NOT_PADDED 1 - PADDED
-
 using namespace atlas::array;
 
 namespace atlas {
@@ -137,7 +125,7 @@ CASE( "test_array_shape" ) {
     EXPECT_EQ( ds->rank(), 2 );
     EXPECT_EQ( ds->stride( 0 ), gt_hv.storage_info().stride<0>() );
     EXPECT_EQ( ds->stride( 1 ), gt_hv.storage_info().stride<1>() );
-    EXPECT( ds->contiguous() == NOT_PADDED );
+    EXPECT( ds->contiguous() );
     delete ds;
 }
 #endif
@@ -153,11 +141,9 @@ CASE( "test_spec" ) {
     EXPECT( ds->spec().shapef()[1] == 5 );
     EXPECT( ds->spec().shapef()[2] == 4 );
 
-    if ( NOT_PADDED ) {
-        EXPECT_EQ( ds->spec().strides()[0], 6 * 5 );
-        EXPECT_EQ( ds->spec().strides()[1], 6 );
-        EXPECT_EQ( ds->spec().strides()[2], 1 );
-    }
+    EXPECT_EQ( ds->spec().strides()[0], 6 * 5 );
+    EXPECT_EQ( ds->spec().strides()[1], 6 );
+    EXPECT_EQ( ds->spec().strides()[2], 1 );
     EXPECT( ds->spec().hasDefaultLayout() == true );
 
     delete ds;
@@ -173,12 +159,10 @@ CASE( "test_spec_layout" ) {
     EXPECT( ds->spec().shapef()[0] == 6 );
     EXPECT( ds->spec().shapef()[1] == 5 );
     EXPECT( ds->spec().shapef()[2] == 4 );
-    if ( NOT_PADDED ) {
-        EXPECT( ds->spec().strides()[0] == 6 * 5 );
-        EXPECT( ds->spec().strides()[1] == 6 );
-        EXPECT( ds->spec().strides()[2] == 1 );
-        EXPECT( ds->spec().size() == ds->spec().allocatedSize() );
-    }
+    EXPECT( ds->spec().strides()[0] == 6 * 5 );
+    EXPECT( ds->spec().strides()[1] == 6 );
+    EXPECT( ds->spec().strides()[2] == 1 );
+    EXPECT( ds->spec().size() == ds->spec().allocatedSize() );
     EXPECT( ds->spec().hasDefaultLayout() == true );
     EXPECT( ds->spec().layout()[0] == 0 );
     EXPECT( ds->spec().layout()[1] == 1 );
@@ -198,11 +182,9 @@ CASE( "test_spec_layout_rev" ) {
     EXPECT( ds->spec().shapef()[0] == 4 );
     EXPECT( ds->spec().shapef()[1] == 5 );
     EXPECT( ds->spec().shapef()[2] == 6 );
-    if ( NOT_PADDED ) {
-        EXPECT( ds->spec().strides()[0] == 1 );
-        EXPECT( ds->spec().strides()[1] == 4 );
-        EXPECT( ds->spec().strides()[2] == 4 * 5 );
-    }
+    EXPECT( ds->spec().strides()[0] == 1 );
+    EXPECT( ds->spec().strides()[1] == 4 );
+    EXPECT( ds->spec().strides()[2] == 4 * 5 );
     EXPECT( ds->spec().hasDefaultLayout() == false );
     EXPECT( ds->spec().layout()[0] == 2 );
     EXPECT( ds->spec().layout()[1] == 1 );
@@ -252,11 +234,8 @@ CASE( "test_copy_gt_ctr" ) {
     EXPECT( hv2( 1, 1 ) == 7 );
 
     auto dims = hv.data_view().storage_info().total_lengths();
-    ATLAS_DEBUG_VAR( dims[0] );
-    ATLAS_DEBUG_VAR( dims[1] );
-    EXPECT( dims[0] == 3 );
-    if ( NOT_PADDED )
-        EXPECT( dims[1] == 2 );
+    EXPECT_EQ( dims[0], 3 );
+    EXPECT_EQ( dims[1], 2 );
     delete ds;
 }
 #endif
@@ -482,11 +461,9 @@ CASE( "test_ArrayT" ) {
         ArrayT<double> ds( 2, 3, 4 );
 
         EXPECT( ds.size() == 2 * 3 * 4 );
-        if ( NOT_PADDED ) {
-            EXPECT( ds.stride( 0 ) == 3 * 4 );
-            EXPECT( ds.stride( 1 ) == 4 );
-            EXPECT( ds.stride( 2 ) == 1 );
-        }
+        EXPECT( ds.stride( 0 ) == 3 * 4 );
+        EXPECT( ds.stride( 1 ) == 4 );
+        EXPECT( ds.stride( 2 ) == 1 );
         EXPECT( ds.shape( 0 ) == 2 );
         EXPECT( ds.shape( 1 ) == 3 );
         EXPECT( ds.shape( 2 ) == 4 );
@@ -496,11 +473,9 @@ CASE( "test_ArrayT" ) {
         ArrayT<double> ds( make_shape( 2, 3, 4 ) );
 
         EXPECT( ds.size() == 2 * 3 * 4 );
-        if ( NOT_PADDED ) {
-            EXPECT( ds.stride( 0 ) == 3 * 4 );
-            EXPECT( ds.stride( 1 ) == 4 );
-            EXPECT( ds.stride( 2 ) == 1 );
-        }
+        EXPECT( ds.stride( 0 ) == 3 * 4 );
+        EXPECT( ds.stride( 1 ) == 4 );
+        EXPECT( ds.stride( 2 ) == 1 );
         EXPECT( ds.shape( 0 ) == 2 );
         EXPECT( ds.shape( 1 ) == 3 );
         EXPECT( ds.shape( 2 ) == 4 );
@@ -510,11 +485,9 @@ CASE( "test_ArrayT" ) {
         ArrayT<double> ds( ArraySpec( make_shape( 2, 3, 4 ) ) );
 
         EXPECT( ds.size() == 2 * 3 * 4 );
-        if ( NOT_PADDED ) {
-            EXPECT( ds.stride( 0 ) == 3 * 4 );
-            EXPECT( ds.stride( 1 ) == 4 );
-            EXPECT( ds.stride( 2 ) == 1 );
-        }
+        EXPECT( ds.stride( 0 ) == 3 * 4 );
+        EXPECT( ds.stride( 1 ) == 4 );
+        EXPECT( ds.stride( 2 ) == 1 );
         EXPECT( ds.shape( 0 ) == 2 );
         EXPECT( ds.shape( 1 ) == 3 );
         EXPECT( ds.shape( 2 ) == 4 );
@@ -544,9 +517,7 @@ CASE( "test_valid" ) {
 CASE( "test_wrap" ) {
     array::ArrayT<int> arr_t( 3, 2 );
     EXPECT( arr_t.shape( 0 ) == 3 );
-    if ( NOT_PADDED ) {
-        EXPECT( arr_t.stride( 0 ) == 2 );
-    }
+    EXPECT( arr_t.stride( 0 ) == 2 );
     EXPECT( arr_t.shape( 1 ) == 2 );
     EXPECT( arr_t.stride( 1 ) == 1 );
     EXPECT( arr_t.rank() == 2 );
@@ -586,6 +557,43 @@ CASE( "test_acc_map" ) {
         EXPECT( ds->accMap() == false );
     }
     delete ds;
+}
+
+CASE( "test_aligned_ArraySpec" ) {
+    auto spec = ArraySpec( make_shape( 10, 5, 3 ), ArrayAlignment( 4 ) );
+    EXPECT_EQ( spec.shape()[0], 10 );
+    EXPECT_EQ( spec.shape()[1], 5 );
+    EXPECT_EQ( spec.shape()[2], 3 );
+    EXPECT_EQ( spec.size(), 10 * 5 * 3 );
+    EXPECT_EQ( spec.allocatedSize(), 10 * 5 * 4 );
+    EXPECT_EQ( spec.contiguous(), false );
+    EXPECT_EQ( spec.strides()[0], 5 * 4 );
+    EXPECT_EQ( spec.strides()[1], 4 );
+    EXPECT_EQ( spec.strides()[2], 1 );
+}
+
+CASE( "test_aligned_Array" ) {
+    auto shape       = make_shape( 10, 5, 3 );
+    auto alignment   = ArrayAlignment( 4 );
+    auto datatype    = make_datatype<double>();
+    auto check_array = []( const Array& array ) {
+        EXPECT_EQ( array.shape()[0], 10 );
+        EXPECT_EQ( array.shape()[1], 5 );
+        EXPECT_EQ( array.shape()[2], 3 );
+        EXPECT_EQ( array.size(), 10 * 5 * 3 );
+        EXPECT_EQ( array.contiguous(), false );
+        EXPECT_EQ( array.strides()[0], 5 * 4 );
+        EXPECT_EQ( array.strides()[1], 4 );
+        EXPECT_EQ( array.strides()[2], 1 );
+    };
+    SECTION( "ArrayT(shape,alignment)" ) {
+        ArrayT<double> array{shape, alignment};
+        check_array( array );
+    }
+    SECTION( "Array::create(spec)" ) {
+        std::unique_ptr<Array> array{Array::create( datatype, ArraySpec( shape, alignment ) )};
+        check_array( *array );
+    }
 }
 
 //-----------------------------------------------------------------------------

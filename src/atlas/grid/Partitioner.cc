@@ -36,26 +36,33 @@ Partitioner::Partitioner( const std::string& type, const idx_t nb_partitions ) :
     Handle( Factory::build( type, nb_partitions ) ) {}
 
 namespace {
+detail::partitioner::Partitioner* partitioner_from_config( const std::string& type,
+                                                           const Partitioner::Config& config ) {
+    long partitions = mpi::size();
+    config.get( "partitions", partitions );
+    return Factory::build( type, partitions, config );
+}
 detail::partitioner::Partitioner* partitioner_from_config( const Partitioner::Config& config ) {
     std::string type;
-    long partitions = mpi::size();
     if ( not config.get( "type", type ) ) {
         throw_Exception( "'type' missing in configuration for Partitioner", Here() );
     }
-    config.get( "partitions", partitions );
-    return Factory::build( type, partitions );
+    return partitioner_from_config( type, config );
 }
 }  // namespace
+
+Partitioner::Partitioner( const std::string& type, const Config& config ) :
+    Handle( partitioner_from_config( type, config ) ) {}
 
 Partitioner::Partitioner( const Config& config ) : Handle( partitioner_from_config( config ) ) {}
 
 void Partitioner::partition( const Grid& grid, int part[] ) const {
-    ATLAS_TRACE( "Partitioner::partition" );
+    ATLAS_TRACE( "Partitioner::partition [type=" + get()->type() + "]" );
     get()->partition( grid, part );
 }
 
 Distribution Partitioner::partition( const Grid& grid ) const {
-    return Distribution( grid, *this );
+    return get()->partition( grid );
 }
 
 idx_t Partitioner::nb_partitions() const {

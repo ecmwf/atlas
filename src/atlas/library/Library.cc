@@ -8,9 +8,15 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "atlas/library/Library.h"
+
 #include <sstream>
 #include <string>
 
+#include <dlfcn.h>  // for dynamic loading (should be delegated to eckit)
+
+#include "eckit/config/LibEcKit.h"
+#include "eckit/config/Resource.h"
 #include "eckit/eckit.h"
 #include "eckit/filesystem/LocalPathName.h"
 #include "eckit/filesystem/PathName.h"
@@ -18,13 +24,17 @@
 #include "eckit/log/OStreamTarget.h"
 #include "eckit/log/PrefixTarget.h"
 #include "eckit/runtime/Main.h"
+#include "eckit/system/SystemInfo.h"
+#include "eckit/types/Types.h"
 #include "eckit/utils/Translator.h"
 
-#include "atlas/library/Library.h"
+#include "atlas/library/FloatingPointExceptions.h"
+#include "atlas/library/Plugin.h"
 #include "atlas/library/config.h"
 #include "atlas/library/git_sha1.h"
 #include "atlas/library/version.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/Config.h"
@@ -47,6 +57,16 @@ std::string str( bool v ) {
 }
 
 std::string str( const eckit::system::Library& lib ) {
+    std::string gitsha1 = lib.gitsha1();
+    std::stringstream ss;
+    ss << lib.name() << " version (" << lib.version() << "),";
+    if ( lib.gitsha1() != "not available" ) {
+        ss << "  git-sha1 " << lib.gitsha1( 7 );
+    }
+    return ss.str();
+}
+
+std::string str( const Plugin& lib ) {
     std::string gitsha1 = lib.gitsha1();
     std::stringstream ss;
     ss << lib.name() << " version (" << lib.version() << "),";
@@ -101,8 +121,13 @@ Library::Library() :
     info_( getEnv( "ATLAS_INFO", true ) ),
     warning_( getEnv( "ATLAS_WARNING", true ) ),
     trace_( getEnv( "ATLAS_TRACE", false ) ),
+    trace_memory_( getEnv( "ATLAS_TRACE_MEMORY", false ) ),
     trace_barriers_( getEnv( "ATLAS_TRACE_BARRIERS", false ) ),
     trace_report_( getEnv( "ATLAS_TRACE_REPORT", false ) ) {}
+
+void Library::registerPlugin( eckit::system::Plugin& plugin ) {
+    plugins_.push_back( &plugin );
+}
 
 Library& Library::instance() {
     return libatlas;
@@ -151,6 +176,7 @@ void Library::initialise( const eckit::Parametrisation& config ) {
     if ( config.has( "trace" ) ) {
         config.get( "trace.barriers", trace_barriers_ );
         config.get( "trace.report", trace_report_ );
+        config.get( "trace.memory", trace_memory_ );
     }
 
     if ( not debug_ ) {
@@ -166,10 +192,19 @@ void Library::initialise( const eckit::Parametrisation& config ) {
         warning_channel_.reset();
     }
 
+    auto& out = [&]() -> eckit::Channel& {
+        if ( getEnv( "ATLAS_LOG_RANK", 0 ) == int( mpi::rank() ) ) {
+            return Log::debug();
+        }
+        static eckit::Channel sink;
+        return sink;
+    }();
+
+    library::enable_floating_point_exceptions();
+    library::enable_atlas_signal_handler();
 
     // Summary
     if ( getEnv( "ATLAS_LOG_RANK", 0 ) == int( mpi::rank() ) ) {
-        std::ostream& out = Log::debug();
         out << "Executable        [" << Main::instance().name() << "]\n";
         out << " \n";
         out << "  current dir     [" << PathName( LocalPathName::cwd() ).fullName() << "]\n";
@@ -184,6 +219,7 @@ void Library::initialise( const eckit::Parametrisation& config ) {
         out << "  log.debug       [" << str( debug() ) << "] \n";
         out << "  trace.barriers  [" << str( traceBarriers() ) << "] \n";
         out << "  trace.report    [" << str( trace_report_ ) << "] \n";
+        out << "  trace.memory    [" << str( trace_memory_ ) << "] \n";
         out << " \n";
         out << atlas::Library::instance().information();
         out << std::flush;
@@ -285,17 +321,19 @@ void Library::Information::print( std::ostream& out ) const {
     out << "  Build:" << std::endl;
     out << "    build type      : " << ATLAS_BUILD_TYPE << '\n'
         << "    timestamp       : " << ATLAS_BUILD_TIMESTAMP << '\n'
+        << "    source dir      : " << ATLAS_DEVELOPER_SRC_DIR << '\n'
+        << "    build dir       : " << ATLAS_DEVELOPER_BIN_DIR << '\n'
         << "    op. system      : " << ATLAS_OS_NAME << " (" << ATLAS_OS_STR << ")" << '\n'
         << "    processor       : " << ATLAS_SYS_PROCESSOR << std::endl
         << "    c compiler      : " << ATLAS_C_COMPILER_ID << " " << ATLAS_C_COMPILER_VERSION << '\n'
         << "      flags         : " << ATLAS_C_FLAGS << '\n'
         << "    c++ compiler    : " << ATLAS_CXX_COMPILER_ID << " " << ATLAS_CXX_COMPILER_VERSION << '\n'
         << "      flags         : " << ATLAS_CXX_FLAGS << '\n'
-#ifndef EC_HAVE_FORTRAN
-        << "    fortran         : NO " << '\n'
-#else
+#ifdef ATLAS_Fortran_COMPILER
         << "    fortran compiler: " << ATLAS_Fortran_COMPILER_ID << " " << ATLAS_Fortran_COMPILER_VERSION << '\n'
         << "      flags         : " << ATLAS_Fortran_FLAGS << '\n'
+#else
+        << "    fortran         : NO " << '\n'
 #endif
         << " \n";
 
@@ -308,11 +346,11 @@ void Library::Information::print( std::ostream& out ) const {
     bool feature_BoundsChecking( ATLAS_ARRAYVIEW_BOUNDS_CHECKING );
     bool feature_Init_sNaN( ATLAS_INIT_SNAN );
     bool feature_MPI( false );
-#ifdef ECKIT_HAVE_MPI
+#if ECKIT_HAVE_MPI
     feature_MPI = true;
 #endif
     bool feature_MKL( false );
-#ifdef ECKIT_HAVE_MKL
+#if ECKIT_HAVE_MKL
     feature_MKL = true;
 #endif
     std::string array_data_store = "Native";
@@ -335,12 +373,18 @@ void Library::Information::print( std::ostream& out ) const {
         << "    Tesselation    : " << str( feature_Tesselation ) << '\n'
         << "    ArrayDataStore : " << array_data_store << '\n'
         << "    idx_t          : " << ATLAS_BITS_LOCAL << " bit integer" << '\n'
-        << "    gidx_t         : " << ATLAS_BITS_GLOBAL << " bit integer" << '\n'
-        << " \n";
+        << "    gidx_t         : " << ATLAS_BITS_GLOBAL << " bit integer" << '\n';
 
-    out << "  Dependencies: "
-        << "\n";
+    auto& plugins = Library::instance().plugins();
+    if ( !plugins.empty() ) {
+        out << "    \n  Plugins: \n";
+        for ( auto& plugin : plugins ) {
+            out << "    " << str( *plugin ) << '\n';
+        }
+    }
 
+    out << "    \n  Dependencies: \n";
+    out << "    ecbuild version (" << ECBUILD_VERSION << ")" << '\n';
     if ( Library::exists( "eckit" ) ) {
         out << "    " << str( Library::lookup( "eckit" ) ) << '\n';
     }
@@ -349,10 +393,17 @@ void Library::Information::print( std::ostream& out ) const {
     }
 
 #if ATLAS_HAVE_TRANS
+#ifdef TRANS_HAVE_FAUX
+    out << "    trans version (" << trans_version_str() << "), "
+        << "git-sha1 " << trans_git_sha1_abbrev( 7 ) << '\n';
+    out << "    faux version (" << trans_faux_version_str() << "), "
+        << "git-sha1 " << trans_faux_git_sha1_abbrev( 7 ) << '\n';
+#else
     out << "    transi version (" << transi_version() << "), "
         << "git-sha1 " << transi_git_sha1_abbrev( 7 ) << '\n';
     out << "    trans version (" << trans_version() << "), "
         << "git-sha1 " << trans_git_sha1_abbrev( 7 ) << '\n';
+#endif
 #endif
 }
 

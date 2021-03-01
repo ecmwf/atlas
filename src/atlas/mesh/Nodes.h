@@ -21,8 +21,8 @@
 #include "atlas/util/ObjectHandle.h"
 
 #include "atlas/field/Field.h"
-#include "atlas/util/Bitflags.h"
 #include "atlas/util/Metadata.h"
+#include "atlas/util/Topology.h"
 
 namespace atlas {
 namespace mesh {
@@ -44,22 +44,7 @@ class Nodes : public util::Object {
 public:
     using Connectivity = IrregularConnectivity;
 
-    class Topology : public util::Bitflags {
-    public:
-        enum
-        {
-            NONE     = 0,
-            GHOST    = ( 1 << 1 ),
-            PERIODIC = ( 1 << 2 ),
-            BC       = ( 1 << 3 ),
-            WEST     = ( 1 << 4 ),
-            EAST     = ( 1 << 5 ),
-            NORTH    = ( 1 << 6 ),
-            SOUTH    = ( 1 << 7 ),
-            PATCH    = ( 1 << 8 ),
-            POLE     = ( 1 << 9 )
-        };
-    };
+    using Topology = util::Topology;
 
 public:  // methods
          //-- Constructors

@@ -21,6 +21,7 @@
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/grid/Stencil.h"
 #include "atlas/grid/StencilComputer.h"
+#include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Point.h"
@@ -134,9 +135,13 @@ public:
 
         auto& weights_j = weights.weights_j;
         weights_j[0]    = ( dl2 * dl3 * dl4 ) / dcl1;
-        weights_j[1]    = ( dl1 * dl3 * dl4 ) / dcl2;
-        weights_j[2]    = ( dl1 * dl2 * dl4 ) / dcl3;
-        weights_j[3]    = 1. - weights_j[0] - weights_j[1] - weights_j[2];
+#if defined( _CRAYC ) && ATLAS_BUILD_TYPE_RELEASE
+        // prevents FE_INVALID somehow (tested with Cray 8.7)
+        ATLAS_ASSERT( !std::isnan( weights_j[0] ) );
+#endif
+        weights_j[1] = ( dl1 * dl3 * dl4 ) / dcl2;
+        weights_j[2] = ( dl1 * dl2 * dl4 ) / dcl3;
+        weights_j[3] = 1. - weights_j[0] - weights_j[1] - weights_j[2];
     }
 
     template <typename stencil_t, typename weights_t, typename array_t>

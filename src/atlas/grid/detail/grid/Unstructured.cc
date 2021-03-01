@@ -220,6 +220,13 @@ Grid::Spec Unstructured::spec() const {
     return *cached_spec_;
 }
 
+Grid::Config Unstructured::meshgenerator() const {
+    return Config( "type", "delaunay" );
+}
+Grid::Config Unstructured::partitioner() const {
+    return Config( "type", "serial" );
+}
+
 void Unstructured::print( std::ostream& os ) const {
     os << "Unstructured(Npts:" << size() << ")";
 }

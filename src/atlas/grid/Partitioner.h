@@ -79,6 +79,7 @@ public:
     Partitioner( const std::string& type );
     Partitioner( const std::string& type, const idx_t nb_partitions );
     Partitioner( const Config& );
+    Partitioner( const std::string& type, const Config& );
 
     void partition( const Grid& grid, int part[] ) const;
 
@@ -126,7 +127,7 @@ Partitioner::Implementation* atlas__grid__Partitioner__new_type( const char* typ
 Partitioner::Implementation* atlas__grid__MatchingMeshPartitioner__new( const mesh::detail::MeshImpl* mesh,
                                                                         const Partitioner::Config* config );
 Partitioner::Implementation* atlas__grid__MatchingFunctionSpacePartitioner__new(
-    const functionspace::FunctionSpaceImpl* mesh, const Partitioner::Config* config );
+    const functionspace::FunctionSpaceImpl* functionspace, const Partitioner::Config* config );
 void atlas__grid__Partitioner__delete( Partitioner::Implementation* This );
 DistributionImpl* atlas__grid__Partitioner__partition( const Partitioner::Implementation* This, const GridImpl* grid );
 }

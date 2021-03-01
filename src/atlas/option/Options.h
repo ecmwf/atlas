@@ -79,6 +79,21 @@ public:
 
 // ----------------------------------------------------------------------------
 
+class shape : public util::Config {
+public:
+    template <typename T>
+    shape( const std::initializer_list<T>& list ) {
+        set( "shape", list );
+    }
+};
+
+class alignment : public util::Config {
+public:
+    alignment( int );
+};
+
+// ----------------------------------------------------------------------------
+
 class halo : public util::Config {
 public:
     halo( size_t size );

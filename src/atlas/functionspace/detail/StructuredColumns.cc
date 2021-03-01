@@ -105,17 +105,21 @@ public:
         registerGrid( *funcspace.grid().get() );
 
         creator_type creator = std::bind( &StructuredColumnsHaloExchangeCache::create, &funcspace );
-        return Base::get_or_create( key( *funcspace.grid().get(), funcspace.halo(), funcspace.periodic_points_ ),
-                                    remove_key( *funcspace.grid().get() ), creator );
+        return Base::get_or_create( key( funcspace ), remove_key( funcspace ), creator );
     }
     void onGridDestruction( grid::detail::grid::Grid& grid ) override { remove( remove_key( grid ) ); }
 
 private:
-    static Base::key_type key( const grid::detail::grid::Grid& grid, idx_t halo, bool periodic_points ) {
+    static Base::key_type key( const detail::StructuredColumns& funcspace ) {
         std::ostringstream key;
-        key << "grid[address=" << &grid << ",halo=" << halo << ",periodic_points=" << std::boolalpha << periodic_points
-            << "]";
+        key << "grid[address=" << funcspace.grid().get() << ",halo=" << funcspace.halo()
+            << ",periodic_points=" << std::boolalpha << funcspace.periodic_points_
+            << ",distribution=" << funcspace.distribution() << "]";
         return key.str();
+    }
+
+    static Base::key_type remove_key( const detail::StructuredColumns& funcspace ) {
+        return remove_key( *funcspace.grid().get() );
     }
 
     static Base::key_type remove_key( const grid::detail::grid::Grid& grid ) {
@@ -149,12 +153,24 @@ public:
     util::ObjectHandle<value_type> get_or_create( const detail::StructuredColumns& funcspace ) {
         registerGrid( *funcspace.grid().get() );
         creator_type creator = std::bind( &StructuredColumnsGatherScatterCache::create, &funcspace );
-        return Base::get_or_create( key( *funcspace.grid().get() ), creator );
+        return Base::get_or_create( key( funcspace ), remove_key( funcspace ), creator );
     }
-    void onGridDestruction( grid::detail::grid::Grid& grid ) override { remove( key( grid ) ); }
+    void onGridDestruction( grid::detail::grid::Grid& grid ) override { remove( remove_key( grid ) ); }
 
 private:
-    static Base::key_type key( const grid::detail::grid::Grid& grid ) {
+    static Base::key_type key( const detail::StructuredColumns& funcspace ) {
+        std::ostringstream key;
+        key << "grid[address=" << funcspace.grid().get() << ",halo=" << funcspace.halo()
+            << ",periodic_points=" << std::boolalpha << funcspace.periodic_points_
+            << ",distribution=" << funcspace.distribution() << "]";
+        return key.str();
+    }
+
+    static Base::key_type remove_key( const detail::StructuredColumns& funcspace ) {
+        return remove_key( *funcspace.grid().get() );
+    }
+
+    static Base::key_type remove_key( const grid::detail::grid::Grid& grid ) {
         std::ostringstream key;
         key << "grid[address=" << &grid << "]";
         return key.str();
@@ -185,12 +201,24 @@ public:
     util::ObjectHandle<value_type> get_or_create( const detail::StructuredColumns& funcspace ) {
         registerGrid( *funcspace.grid().get() );
         creator_type creator = std::bind( &StructuredColumnsChecksumCache::create, &funcspace );
-        return Base::get_or_create( key( *funcspace.grid().get() ), creator );
+        return Base::get_or_create( key( funcspace ), remove_key( funcspace ), creator );
     }
-    void onGridDestruction( grid::detail::grid::Grid& grid ) override { remove( key( grid ) ); }
+    void onGridDestruction( grid::detail::grid::Grid& grid ) override { remove( remove_key( grid ) ); }
 
 private:
-    static Base::key_type key( const grid::detail::grid::Grid& grid ) {
+    static Base::key_type key( const detail::StructuredColumns& funcspace ) {
+        std::ostringstream key;
+        key << "grid[address=" << funcspace.grid().get() << ",halo=" << funcspace.halo()
+            << ",periodic_points=" << std::boolalpha << funcspace.periodic_points_
+            << ",distribution=" << funcspace.distribution() << "]";
+        return key.str();
+    }
+
+    static Base::key_type remove_key( const detail::StructuredColumns& funcspace ) {
+        return remove_key( *funcspace.grid().get() );
+    }
+
+    static Base::key_type remove_key( const grid::detail::grid::Grid& grid ) {
         std::ostringstream key;
         key << "grid[address=" << &grid << "]";
         return key.str();
@@ -304,6 +332,17 @@ array::ArrayShape StructuredColumns::config_shape( const eckit::Configuration& c
 
     return shape;
 }
+
+array::ArrayAlignment StructuredColumns::config_alignment( const eckit::Configuration& config ) const {
+    int alignment( 1 );
+    config.get( "alignment", alignment );
+    return alignment;
+}
+
+array::ArraySpec StructuredColumns::config_spec( const eckit::Configuration& config ) const {
+    return array::ArraySpec( config_shape( config ), config_alignment( config ) );
+}
+
 size_t StructuredColumns::Map2to1::footprint() const {
     size_t size = sizeof( *this );
     size += data_.size() * sizeof( decltype( data_ )::value_type );
@@ -475,7 +514,7 @@ StructuredColumns::~StructuredColumns() {
 // Create Field
 // ----------------------------------------------------------------------------
 Field StructuredColumns::createField( const eckit::Configuration& options ) const {
-    Field field( config_name( options ), config_datatype( options ), config_shape( options ) );
+    Field field( config_name( options ), config_datatype( options ), config_spec( options ) );
     set_field_metadata( options, field );
     return field;
 }

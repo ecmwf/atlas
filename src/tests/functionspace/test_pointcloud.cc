@@ -23,7 +23,29 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-CASE( "test_functionspace_PointCloud" ) {
+std::vector<PointXY> ref_lonlat() {
+    static std::vector<PointXY> v = {{00., 0.}, {10., 0.}, {20., 0.}, {30., 0.}, {40., 0.},
+                                     {50., 0.}, {60., 0.}, {70., 0.}, {80., 0.}, {90., 0.}};
+    return v;
+}
+std::vector<PointXY> ref_xy() {
+    static std::vector<PointXY> v = {{00., 0.}, {10., 0.}, {20., 0.}, {30., 0.}, {40., 0.},
+                                     {50., 0.}, {60., 0.}, {70., 0.}, {80., 0.}, {90., 0.}};
+    return v;
+}
+std::vector<PointXYZ> ref_xyz() {
+    static std::vector<PointXYZ> v = {{00., 0., 1.}, {10., 0., 2.}, {20., 0., 3.}, {30., 0., 4.}, {40., 0., 5.},
+                                      {50., 0., 6.}, {60., 0., 7.}, {70., 0., 8.}, {80., 0., 9.}, {90., 0., 10.}};
+    return v;
+}
+
+template <typename C1, typename C2>
+bool equal( const C1& c1, const C2& c2 ) {
+    return c1.size() == c2.size() && std::equal( std::begin( c1 ), std::end( c1 ), std::begin( c2 ) );
+}
+
+
+CASE( "test_functionspace_PointCloud create from field" ) {
     Field points( "points", array::make_datatype<double>(), array::make_shape( 10, 2 ) );
     auto xy = array::make_view<double, 2>( points );
     xy.assign( {00., 0., 10., 0., 20., 0., 30., 0., 40., 0., 50., 0., 60., 0., 70., 0., 80., 0., 90., 0.} );
@@ -33,7 +55,70 @@ CASE( "test_functionspace_PointCloud" ) {
 
     points.dump( Log::info() );
     Log::info() << std::endl;
+
+    EXPECT_THROWS( pointcloud.iterate().xyz() );
+    EXPECT( equal( pointcloud.iterate().xy(), ref_xy() ) );
+    EXPECT( equal( pointcloud.iterate().lonlat(), ref_lonlat() ) );
 }
+
+CASE( "test_functionspace_PointCloud create from 2D vector" ) {
+    std::vector<PointXY> points{{00., 0.}, {10., 0.}, {20., 0.}, {30., 0.}, {40., 0.},
+                                {50., 0.}, {60., 0.}, {70., 0.}, {80., 0.}, {90., 0.}};
+
+    functionspace::PointCloud pointcloud( points );
+    EXPECT( pointcloud.size() == 10 );
+
+    pointcloud.lonlat().dump( Log::info() );
+    Log::info() << std::endl;
+
+    EXPECT_THROWS( pointcloud.iterate().xyz() );
+    EXPECT( equal( pointcloud.iterate().xy(), ref_xy() ) );
+    EXPECT( equal( pointcloud.iterate().lonlat(), ref_lonlat() ) );
+}
+
+CASE( "test_functionspace_PointCloud create from 3D vector" ) {
+    std::vector<PointXYZ> points{{00., 0., 1.}, {10., 0., 2.}, {20., 0., 3.}, {30., 0., 4.}, {40., 0., 5.},
+                                 {50., 0., 6.}, {60., 0., 7.}, {70., 0., 8.}, {80., 0., 9.}, {90., 0., 10.}};
+    functionspace::PointCloud pointcloud( points );
+    EXPECT( pointcloud.size() == 10 );
+
+    pointcloud.lonlat().dump( Log::info() );
+    Log::info() << std::endl;
+
+    EXPECT( equal( pointcloud.iterate().xyz(), ref_xyz() ) );
+    EXPECT( equal( pointcloud.iterate().xy(), ref_xy() ) );
+    EXPECT( equal( pointcloud.iterate().lonlat(), ref_lonlat() ) );
+}
+
+
+CASE( "test_functionspace_PointCloud create from 2D initializer list" ) {
+    functionspace::PointCloud pointcloud = {{00., 0.}, {10., 0.}, {20., 0.}, {30., 0.}, {40., 0.},
+                                            {50., 0.}, {60., 0.}, {70., 0.}, {80., 0.}, {90., 0.}};
+    EXPECT( pointcloud.size() == 10 );
+
+    pointcloud.lonlat().dump( Log::info() );
+    Log::info() << std::endl;
+
+    EXPECT_THROWS( pointcloud.iterate().xyz() );
+    EXPECT( equal( pointcloud.iterate().xy(), ref_xy() ) );
+    EXPECT( equal( pointcloud.iterate().lonlat(), ref_lonlat() ) );
+}
+
+CASE( "test_functionspace_PointCloud create from 3D initializer list" ) {
+    functionspace::PointCloud pointcloud = {{00., 0., 1.}, {10., 0., 2.}, {20., 0., 3.}, {30., 0., 4.}, {40., 0., 5.},
+                                            {50., 0., 6.}, {60., 0., 7.}, {70., 0., 8.}, {80., 0., 9.}, {90., 0., 10.}};
+    EXPECT( pointcloud.size() == 10 );
+
+    pointcloud.lonlat().dump( Log::info() );
+    Log::info() << std::endl;
+    pointcloud.vertical().dump( Log::info() );
+    Log::info() << std::endl;
+
+    EXPECT( equal( pointcloud.iterate().xyz(), ref_xyz() ) );
+    EXPECT( equal( pointcloud.iterate().xy(), ref_xy() ) );
+    EXPECT( equal( pointcloud.iterate().lonlat(), ref_lonlat() ) );
+}
+
 
 //-----------------------------------------------------------------------------
 

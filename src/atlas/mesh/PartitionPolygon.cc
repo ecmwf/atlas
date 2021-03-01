@@ -9,6 +9,7 @@
  */
 
 #include <fstream>
+#include <sstream>
 
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
@@ -23,9 +24,10 @@ namespace mesh {
 
 namespace {
 util::Polygon::edge_set_t compute_edges( const detail::MeshImpl& mesh, idx_t halo ) {
-    ATLAS_TRACE( "PartitionPolygon" );
+    ATLAS_TRACE( "PartitionPolygon [halo=" + std::to_string( halo ) + "]" );
     // extract partition boundary edges by always attempting first to`
     // remove a reversed edge from a neighbouring element, if any
+
     util::Polygon::edge_set_t edges;
     for ( idx_t t = 0; t < mesh.cells().nb_types(); ++t ) {
         const Elements& elements = mesh.cells().elements( t );
@@ -34,15 +36,26 @@ util::Polygon::edge_set_t compute_edges( const detail::MeshImpl& mesh, idx_t hal
         auto field_flags              = elements.view<int, 1>( elements.flags() );
         auto field_halo               = elements.view<int, 1>( elements.halo() );
 
-        auto patch = [&field_flags]( idx_t e ) {
-            using Topology = atlas::mesh::Nodes::Topology;
-            return Topology::check( field_flags( e ), Topology::PATCH );
+        constexpr bool include_patch = false;
+        auto include                 = [&]( idx_t e ) {
+            using util::Topology;
+            auto topology = Topology::view( field_flags( e ) );
+            if ( field_halo( e ) > halo ) {
+                return false;
+            }
+            if ( not include_patch ) {
+                if ( topology.check( Topology::PATCH ) ) {
+                    return false;
+                }
+            }
+            return true;
         };
+
 
         const idx_t nb_nodes = elements.nb_nodes();
 
         for ( idx_t j = 0; j < elements.size(); ++j ) {
-            if ( patch( j ) == 0 && field_halo( j ) <= halo ) {
+            if ( include( j ) ) {
                 for ( idx_t k = 0; k < nb_nodes; ++k ) {
                     util::Polygon::edge_t edge( conn( j, k ), conn( j, ( k + 1 ) % nb_nodes ) );
                     if ( !edges.erase( edge.reverse() ) ) {
@@ -70,9 +83,18 @@ void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, cons
     int mpi_rank                 = int( comm.rank() );
     int mpi_size                 = int( comm.size() );
 
-    auto points = this->xy();
+    std::string coordinates = config.getString( "coordinates", "xy" );
+    if ( coordinates == "ij" ) {
+        coordinates = "xy";
+    }
+    auto points =
+        coordinates == "xy" ? this->xy() :
+                            // coordinates == "ij" ? this->ij() : /* no member named `ij` in PartitionPolygon */
+            this->lonlat();
+
     ATLAS_ASSERT( points.size() == size() );
-    const auto nodes_xy = array::make_view<double, 2>( mesh_.nodes().xy() );
+    const auto nodes_xy = array::make_view<double, 2>( mesh_.nodes().field( coordinates ) );
+    const auto nodes_g  = array::make_view<gidx_t, 1>( mesh_.nodes().global_index() );
     double xmin         = std::numeric_limits<double>::max();
     double xmax         = -std::numeric_limits<double>::max();
     for ( const auto& p : points ) {
@@ -90,39 +112,37 @@ void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, cons
     for ( int r = 0; r < mpi_size; ++r ) {
         if ( mpi_rank == r ) {
             std::ofstream f( filepath.asString().c_str(), mpi_rank == 0 ? std::ios::trunc : std::ios::app );
-
+            //clang-format off
             if ( mpi_rank == 0 ) {
                 f << "\n"
                      "# Configuration option to plot nodes"
                      "\n"
                      "plot_nodes = " +
-                         std::string( plot_nodes ? "True" : "False" ) +
-                         "\n"
-                         "\n"
-                         "import matplotlib.pyplot as plt"
-                         "\n"
-                         "from matplotlib.path import Path"
-                         "\n"
-                         "import matplotlib.patches as patches"
-                         "\n"
-                         ""
-                         "\n"
-                         "from itertools import cycle"
-                         "\n"
-                         "import matplotlib.cm as cm"
-                         "\n"
-                         "import numpy as np"
-                         "\n"
-                         "cycol = cycle([cm.Paired(i) for i in "
-                         "np.linspace(0,1,12,endpoint=True)]).next"
-                         "\n"
-                         ""
-                         "\n"
-                         "fig = plt.figure()"
-                         "\n"
-                         "ax = fig.add_subplot(111,aspect='equal')"
-                         "\n"
-                         "";
+                         std::string( plot_nodes ? "True" : "False" )
+                  << "\n"
+                     "plot_node_numbers = False"
+                     "\n"
+                     "\n"
+                     "import matplotlib.pyplot as plt"
+                     "\n"
+                     "from matplotlib.path import Path"
+                     "\n"
+                     "import matplotlib.patches as patches"
+                     "\n"
+                     "\n"
+                     "from itertools import cycle"
+                     "\n"
+                     "import matplotlib.cm as cm"
+                     "\n"
+                     "import numpy as np"
+                     "\n"
+                     "colours = cycle([cm.Paired(i) for i in np.linspace(0,1,12,endpoint=True)])"
+                     "\n"
+                     "\n"
+                     "fig = plt.figure()"
+                     "\n"
+                     "ax = fig.add_subplot(111,aspect='equal')"
+                     "\n";
             }
             f << "\n"
                  "verts_"
@@ -132,7 +152,6 @@ void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, cons
             }
             f << "\n]"
                  "\n"
-                 ""
                  "\n"
                  "codes_"
               << r
@@ -146,17 +165,21 @@ void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, cons
               << r
               << ".extend([Path.CLOSEPOLY])"
                  "\n"
-                 ""
                  "\n"
                  "count_"
               << r << " = " << count
               << "\n"
                  "count_all_"
-              << r << " = " << count_all
-              << "\n"
-                 "";
+              << r << " = " << count_all << "\n";
             if ( plot_nodes ) {
                 f << "\n"
+                     "g_"
+                  << r << " = [";
+                for ( idx_t i = 0; i < count; ++i ) {
+                    f << nodes_g( i ) << ", ";
+                }
+                f << "]"
+                     "\n"
                      "x_"
                   << r << " = [";
                 for ( idx_t i = 0; i < count; ++i ) {
@@ -173,34 +196,50 @@ void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, cons
             }
             f << "\n"
                  "\n"
-                 "c = cycol()"
+                 "c = next(colours)"
                  "\n"
                  "ax.add_patch(patches.PathPatch(Path(verts_"
-              << r << ", codes_" << r << "), facecolor=c, color=c, alpha=0.3, lw=1))";
+              << r << ", codes_" << r << "), color=c, alpha=0.3, lw=1))";
             if ( plot_nodes ) {
                 f << "\n"
                      "if plot_nodes:"
                      "\n"
                      "    ax.scatter(x_"
-                  << r << ", y_" << r << ", color=c, marker='o')";
+                  << r << ", y_" << r
+                  << ", color=c, marker='o')"
+                     "\n"
+                     "    if plot_node_numbers:"
+                     "\n"
+                     "        for (g,x,y) in zip(g_"
+                  << r << ", x_" << r << ", y_" << r
+                  << "):"
+                     "\n"
+                     "            ax.text(x,y, str(g), color=c, fontsize=12)";
             }
-            f << "\n"
-                 "";
+            f << "\n";
+            // clang-format on
             if ( mpi_rank == mpi_size - 1 ) {
-                f << "\n"
-                     "ax.set_xlim( "
-                  << xmin << "-5, " << xmax
-                  << "+5)"
-                     "\n"
-                     "ax.set_ylim(-90-5,  90+5)"
-                     "\n"
-                     "ax.set_xticks([0,45,90,135,180,225,270,315,360])"
-                     "\n"
-                     "ax.set_yticks([-90,-45,0,45,90])"
-                     "\n"
-                     "plt.grid()"
-                     "\n"
-                     "plt.show()";
+                auto xticks = [&]() -> std::string {
+                    std::vector<int> xticks;
+                    xticks.push_back( std::floor( xmin - int( xmin ) % 45 ) );
+                    while ( xticks.back() < int( std::round( xmax ) ) ) {
+                        xticks.push_back( xticks.back() + 45 );
+                    }
+                    std::stringstream xticks_ss;
+                    for ( int i = 0; i < xticks.size(); ++i ) {
+                        xticks_ss << ( i == 0 ? "[" : "," ) << xticks[i];
+                    }
+                    xticks_ss << "]";
+                    return xticks_ss.str();
+                };
+                // clang-format off
+                f << "\n" "ax.set_xlim( " << xmin << "-5, " << xmax << "+5)"
+                     "\n" "ax.set_ylim(-90-5, 90+5)"
+                     "\n" "ax.set_xticks(" << xticks() << ")"
+                     "\n" "ax.set_yticks([-90,-45,0,45,90])"
+                     "\n" "plt.grid()"
+                     "\n" "plt.show()";
+                // clang-format on
             }
         }
         comm.barrier();
@@ -250,11 +289,13 @@ void PartitionPolygon::print( std::ostream& out ) const {
         << "halo:" << halo_ << ",size:" << size() << ",nodes:" << static_cast<const util::Polygon&>( *this ) << "}";
 }
 
-PartitionPolygon::PointsXY PartitionPolygon::xy() const {
-    PointsXY points_xy;
-    points_xy.reserve( size() );
+namespace {
+PartitionPolygon::PointsXY points( const Mesh::Implementation& mesh_, const Field& coords,
+                                   const std::vector<idx_t>& polygon ) {
+    PartitionPolygon::PointsXY points_xy;
+    points_xy.reserve( polygon.size() );
 
-    auto xy_view = array::make_view<double, 2>( mesh_.nodes().xy() );
+    auto xy_view = array::make_view<double, 2>( coords );
     auto flags   = array::make_view<int, 1>( mesh_.nodes().flags() );
 
     bool domain_includes_north_pole = false;
@@ -280,11 +321,27 @@ PartitionPolygon::PointsXY PartitionPolygon::xy() const {
         return false;
     };
 
-    for ( idx_t i : static_cast<const container_t&>( *this ) ) {
-        double y = bc_north( i ) ? 90. : bc_south( i ) ? -90. : xy_view( i, idx_t( YY ) );
-        points_xy.emplace_back( xy_view( i, idx_t( XX ) ), y );
+    if ( coords.name() == "xy" ) {
+        for ( idx_t i : polygon ) {
+            double y = bc_north( i ) ? 90. : bc_south( i ) ? -90. : xy_view( i, idx_t( YY ) );
+            points_xy.emplace_back( xy_view( i, idx_t( XX ) ), y );
+        }
+    }
+    else {
+        for ( idx_t i : polygon ) {
+            points_xy.emplace_back( xy_view( i, idx_t( XX ) ), xy_view( i, idx_t( YY ) ) );
+        }
     }
     return points_xy;
+}
+}  // namespace
+
+PartitionPolygon::PointsXY PartitionPolygon::xy() const {
+    return points( mesh_, mesh_.nodes().xy(), *this );
+}
+
+PartitionPolygon::PointsLonLat PartitionPolygon::lonlat() const {
+    return points( mesh_, mesh_.nodes().lonlat(), *this );
 }
 
 }  // namespace mesh

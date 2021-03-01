@@ -32,9 +32,9 @@ void deallocate_host( void* ptr );
 }  // namespace detail
 
 template <typename T>
-void allocate_managedmem( T*& data, idx_t N ) {
+void allocate_managedmem( T*& data, size_t N ) {
     if ( N != 0 ) {
-        detail::allocate_cudamanaged( reinterpret_cast<void**>( &data ), static_cast<size_t>( N ) * sizeof( T ) );
+        detail::allocate_cudamanaged( reinterpret_cast<void**>( &data ), N * sizeof( T ) );
     }
 }
 
@@ -47,9 +47,9 @@ void delete_managedmem( T*& data ) {
 }
 
 template <typename T>
-void allocate_devicemem( T*& data, idx_t N ) {
+void allocate_devicemem( T*& data, size_t N ) {
     if ( N != 0 ) {
-        detail::allocate_cuda( reinterpret_cast<void**>( &data ), static_cast<size_t>( N ) * sizeof( T ) );
+        detail::allocate_cuda( reinterpret_cast<void**>( &data ), N * sizeof( T ) );
     }
 }
 
@@ -62,9 +62,9 @@ void delete_devicemem( T*& data ) {
 }
 
 template <typename T>
-void allocate_hostmem( T*& data, idx_t N ) {
+void allocate_hostmem( T*& data, size_t N ) {
     if ( N != 0 ) {
-        detail::allocate_host( reinterpret_cast<void**>( &data ), static_cast<size_t>( N ) * sizeof( T ) );
+        detail::allocate_host( reinterpret_cast<void**>( &data ), N * sizeof( T ) );
     }
 }
 
@@ -80,10 +80,10 @@ void delete_hostmem( T*& data ) {
 //------------------------------------------------------------------------------
 
 extern "C" {
-void atlas__allocate_managedmem_double( double*& a, idx_t N );
-void atlas__allocate_managedmem_float( float*& a, idx_t N );
-void atlas__allocate_managedmem_int( int*& a, idx_t N );
-void atlas__allocate_managedmem_long( long*& a, idx_t N );
+void atlas__allocate_managedmem_double( double*& a, size_t N );
+void atlas__allocate_managedmem_float( float*& a, size_t N );
+void atlas__allocate_managedmem_int( int*& a, size_t N );
+void atlas__allocate_managedmem_long( long*& a, size_t N );
 void atlas__deallocate_managedmem( void*& a );
 }
 

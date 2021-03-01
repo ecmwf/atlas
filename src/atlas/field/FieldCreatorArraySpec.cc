@@ -18,6 +18,7 @@
 #include "atlas/array/DataType.h"
 #include "atlas/field/detail/FieldImpl.h"
 #include "atlas/runtime/Exception.h"
+#include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace field {
@@ -55,9 +56,20 @@ FieldImpl* FieldCreatorArraySpec::createField( const eckit::Parametrisation& par
         datatype = array::DataType( kind );
     }
 
+    int alignment = 1;
+    params.get( "alignment", alignment );
+
     std::string name;
     params.get( "name", name );
-    return FieldImpl::create( name, datatype, array::ArrayShape( std::move( s ) ) );
+    Log::trace() << "Create field " << name << "\t shape=[";
+    for ( size_t i = 0; i < s.size(); ++i ) {
+        Log::trace() << s[i] << ( i < s.size() - 1 ? "," : "" );
+    }
+    Log::trace() << "]" << std::endl;
+    auto field =
+        FieldImpl::create( name, datatype, array::ArraySpec( std::move( s ), array::ArrayAlignment( alignment ) ) );
+    field->callbackOnDestruction( [field]() { Log::trace() << "Destroy field " << field->name() << std::endl; } );
+    return field;
 }
 
 namespace {

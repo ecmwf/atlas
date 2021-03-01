@@ -18,6 +18,7 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
+#include "atlas/util/UnitSphere.h"
 
 namespace {
 static double D2R( const double x ) {
@@ -63,6 +64,53 @@ void SchmidtProjectionT<Rotation>::lonlat2xy( double crd[] ) const {
     // unstretch
     crd[1] =
         R2D( std::asin( std::cos( 2. * std::atan( c_ * std::tan( std::acos( std::sin( D2R( crd[1] ) ) ) * 0.5 ) ) ) ) );
+}
+
+template <>
+ProjectionImpl::Jacobian SchmidtProjectionT<NotRotated>::jacobian( const PointLonLat& ) const {
+    throw_NotImplemented( "SchmidtProjectionT<NotRotated>::jacobian", Here() );
+}
+
+template <typename Rotation>
+ProjectionImpl::Jacobian SchmidtProjectionT<Rotation>::jacobian( const PointLonLat& lonlat ) const {
+    double xy[2] = {lonlat.lon(), lonlat.lat()};
+
+    lonlat2xy( xy );
+
+    PointXYZ xyz, north1, north0( 0.0, 0.0, 1.0 );
+    atlas::util::UnitSphere::convertSphericalToCartesian( rotation_.northPole(), north1 );
+    atlas::util::UnitSphere::convertSphericalToCartesian( lonlat, xyz );
+
+    north1 = PointXYZ::normalize( north1 );
+
+    // Base vectors in unrotated frame
+    auto u0 = PointXYZ::normalize( PointXYZ::cross( north0, xyz ) );
+    auto v0 = PointXYZ::normalize( PointXYZ::cross( xyz, u0 ) );
+
+    // Base vectors in rotated frame
+    auto u1 = PointXYZ::normalize( PointXYZ::cross( north1, xyz ) );
+    auto v1 = PointXYZ::normalize( PointXYZ::cross( xyz, u1 ) );
+
+    double u0u1 = PointXYZ::dot( u0, u1 );
+    double v0u1 = PointXYZ::dot( v0, u1 );
+    double u0v1 = PointXYZ::dot( u0, v1 );
+    double v0v1 = PointXYZ::dot( v0, v1 );
+
+    Jacobian jac;
+
+    double zomc2 = 1.0 - 1.0 / ( c_ * c_ );
+    double zopc2 = 1.0 + 1.0 / ( c_ * c_ );
+
+    double zcosy = cos( D2R( xy[1] ) ), zsiny = sin( D2R( xy[1] ) );
+    double zcoslat = cos( D2R( lonlat.lat() ) );
+
+    double zfactor = sqrt( ( zopc2 + zsiny * zomc2 ) * ( zopc2 + zsiny * zomc2 ) / ( zopc2 * zopc2 - zomc2 * zomc2 ) );
+
+
+    jac[0] = {zcoslat * u0u1 * zfactor / zcosy, v0u1 * zfactor / zcosy};
+    jac[1] = {zcoslat * u0v1 * zfactor, v0v1 * zfactor};
+
+    return jac;
 }
 
 // specification

@@ -60,9 +60,9 @@ public:
     friend std::ostream& operator<<( std::ostream& os, const Vertical& v );
 
 private:
+    idx_t size_;
     idx_t k_begin_;
     idx_t k_end_;
-    idx_t size_;
     std::vector<double> z_;
     double min_;
     double max_;
@@ -80,10 +80,7 @@ Vertical::Vertical( idx_t levels, const vector_t& z, const Interval& interval, c
 //---------------------------------------------------------------------------------------------------------------------
 
 template <typename vector_t>
-Vertical::Vertical( idx_t levels, const vector_t& z, const util::Config& ) {
-    size_    = levels;
-    k_begin_ = 0;
-    k_end_   = size_;
+Vertical::Vertical( idx_t levels, const vector_t& z, const util::Config& ) : size_{levels}, k_begin_{0}, k_end_{size_} {
     assert( size_ == static_cast<idx_t>( z.size() ) );
     z_.resize( size_ );
     for ( idx_t k = 0; k < size_; ++k ) {

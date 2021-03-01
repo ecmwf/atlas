@@ -39,6 +39,9 @@ StructuredGrid::StructuredGrid( const Grid::Implementation* grid ) : Grid( grid 
 StructuredGrid::StructuredGrid( const std::string& grid, const Domain& domain ) :
     Grid( grid, domain ), grid_( structured_grid( get() ) ) {}
 
+StructuredGrid::StructuredGrid( const std::string& grid, const Projection& projection, const Domain& domain ) :
+    Grid( grid, projection, domain ), grid_( structured_grid( get() ) ) {}
+
 StructuredGrid::StructuredGrid( const Config& grid ) : Grid( grid ), grid_( structured_grid( get() ) ) {}
 
 StructuredGrid::StructuredGrid( const XSpace& xspace, const YSpace& yspace, const Projection& projection,
@@ -65,5 +68,14 @@ ReducedGaussianGrid::ReducedGaussianGrid( const std::initializer_list<idx_t>& nx
 
 RegularGaussianGrid::RegularGaussianGrid( int N, const Grid::Domain& domain ) :
     RegularGaussianGrid::grid_t( "F" + std::to_string( N ), domain ) {}
+
+
+inline const HealpixGrid::grid_t* healpix_grid( const Grid::Implementation* grid ) {
+    return dynamic_cast<const HealpixGrid::grid_t*>( grid );
+}
+
+HealpixGrid::HealpixGrid( const Grid& grid ) : StructuredGrid( grid ), grid_( healpix_grid( get() ) ) {}
+
+HealpixGrid::HealpixGrid( int N ) : HealpixGrid( Grid( new HealpixGrid::grid_t( N ) ) ) {}
 
 }  // namespace atlas

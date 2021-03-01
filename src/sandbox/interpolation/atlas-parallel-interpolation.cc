@@ -98,6 +98,7 @@ public:
                                             "Output forward interpolator's points and weights" ) );
         add_option( new SimpleOption<bool>( "backward-interpolator-output",
                                             "Output backward interpolator's points and weights" ) );
+        add_option( new SimpleOption<bool>( "skip-halo-exchange", "Skip halo exchange" ) );
     }
 };
 
@@ -138,8 +139,8 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
     idx_t source_mesh_halo = 0;
     args.get( "source-mesh-halo", source_mesh_halo );
 
-    interpolation::PartitionedMesh src( args.get( "source-mesh-partitioner", option ) ? option : "equal_regions",
-                                        args.get( "source-mesh-generator", option ) ? option : "structured",
+    interpolation::PartitionedMesh src( args.get( "source-mesh-partitioner", option ) ? option : "default",
+                                        args.get( "source-mesh-generator", option ) ? option : "default",
                                         args.get( "source-mesh-generator-triangulate", trigs ) ? trigs : false,
                                         args.get( "source-mesh-generator-angle", angle ) ? angle : 0. );
 
@@ -148,7 +149,7 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
     idx_t target_mesh_halo = args.getInt( "target-mesh-halo", 0 );
 
     interpolation::PartitionedMesh tgt( args.get( "target-mesh-partitioner", option ) ? option : "spherical-polygon",
-                                        args.get( "target-mesh-generator", option ) ? option : "structured",
+                                        args.get( "target-mesh-generator", option ) ? option : "default",
                                         args.get( "target-mesh-generator-triangulate", trigs ) ? trigs : false,
                                         args.get( "target-mesh-generator-angle", angle ) ? angle : 0. );
 
@@ -227,6 +228,8 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
         }();
         array::ArrayView<double, 1> src_scalar_1 = array::make_view<double, 1>( src_fields[0] ),
                                     src_scalar_2 = array::make_view<double, 1>( src_fields[1] );
+
+        ATLAS_ASSERT( src_scalar_1.shape( 0 ) == lonlat.shape( 0 ) );
         for ( idx_t j = 0; j < lonlat.shape( 0 ); ++j ) {
             const double lon = deg2rad * lonlat( j, 0 );  // (lon)
             const double lat = deg2rad * lonlat( j, 1 );  // (lat)
@@ -250,7 +253,12 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
         tgt_fields.add( tgt_functionspace.createField<double>( option::name( src_fields[i].name() ) ) );
     }
 
-    src_functionspace.haloExchange( src_fields );
+    if ( args.getBool( "skip-halo-exchange", false ) ) {
+        src_fields.set_dirty( false );
+    }
+    else {
+        src_functionspace.haloExchange( src_fields );
+    }
 
     Log::info() << "Writing input to interpolation to src.msh" << std::endl;
     src.writeGmsh( "src.msh", src_fields );
@@ -260,13 +268,24 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
     // interpolate (matrix-field vector multiply and  synchronize results) (FIXME:
     // necessary?)
     interpolator_forward.execute( src_fields, tgt_fields );
-    tgt_functionspace.haloExchange( tgt_fields );
+
+    if ( args.getBool( "skip-halo-exchange", false ) ) {
+        tgt_fields.set_dirty( false );
+    }
+    else {
+        tgt_functionspace.haloExchange( tgt_fields );
+    }
 
     if ( with_backward ) {
         Log::info() << "Interpolate backward" << std::endl;
 
         interpolator_backward.execute( tgt_fields, src_fields );
-        src_functionspace.haloExchange( src_fields );
+        if ( args.getBool( "skip-halo-exchange", false ) ) {
+            src_fields.set_dirty( false );
+        }
+        else {
+            src_functionspace.haloExchange( src_fields );
+        }
     }
 
     Log::info() << "Interpolations done" << std::endl;

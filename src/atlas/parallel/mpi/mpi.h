@@ -20,8 +20,7 @@ namespace mpi {
 using Comm = eckit::mpi::Comm;
 
 inline const Comm& comm() {
-    static const Comm& _comm = eckit::mpi::comm();
-    return _comm;
+    return eckit::mpi::comm();
 }
 
 inline idx_t rank() {

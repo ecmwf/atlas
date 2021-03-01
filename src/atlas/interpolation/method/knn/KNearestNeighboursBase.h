@@ -13,7 +13,9 @@
 #include <memory>
 
 #include "atlas/interpolation/method/Method.h"
-#include "atlas/interpolation/method/PointIndex3.h"
+#include "atlas/mesh/Halo.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/util/KDTree.h"
 
 namespace atlas {
 namespace interpolation {
@@ -25,9 +27,12 @@ public:
     virtual ~KNearestNeighboursBase() override {}
 
 protected:
-    void buildPointSearchTree( Mesh& meshSource );
+    void buildPointSearchTree( Mesh& meshSource ) { buildPointSearchTree( meshSource, mesh::Halo( meshSource ) ); }
+    void buildPointSearchTree( Mesh& meshSource, const mesh::Halo& );
+    void buildPointSearchTree( const FunctionSpace& );
+    bool extractTreeFromCache( const Cache& );
 
-    std::unique_ptr<PointIndex3> pTree_;
+    util::IndexKDTree pTree_;
 };
 
 }  // namespace method

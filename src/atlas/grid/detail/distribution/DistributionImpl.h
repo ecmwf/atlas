@@ -13,18 +13,29 @@
 #include <string>
 #include <vector>
 
-#include "atlas/util/Object.h"
-#include "atlas/util/vector.h"
-
 #include "atlas/library/config.h"
+#include "atlas/util/Config.h"
+#include "atlas/util/Object.h"
+
+
+namespace eckit {
+class Parametrisation;
+}
 
 namespace atlas {
 
 class Grid;
 namespace grid {
+namespace detail {
+
+namespace partitioner {
 class Partitioner;
 }
-
+namespace grid {
+class Grid;
+}
+}  // namespace detail
+}  // namespace grid
 }  // namespace atlas
 
 namespace atlas {
@@ -32,48 +43,38 @@ namespace grid {
 
 class DistributionImpl : public util::Object {
 public:
-    using partition_t = atlas::vector<int>;
+    using Config = atlas::util::Config;
+    virtual ~DistributionImpl() {}
+    virtual int partition( const gidx_t gidx ) const = 0;
+    virtual bool functional() const                  = 0;
+    virtual idx_t nb_partitions() const              = 0;
+    virtual gidx_t size() const                      = 0;
 
-    DistributionImpl( const Grid& );
+    virtual const std::vector<idx_t>& nb_pts() const = 0;
 
-    DistributionImpl( const Grid&, const Partitioner& );
+    virtual idx_t max_pts() const = 0;
+    virtual idx_t min_pts() const = 0;
 
-    DistributionImpl( int nb_partitions, idx_t npts, int partition[], int part0 = 0 );
+    virtual const std::string& type() const = 0;
 
-    DistributionImpl( int nb_partitions, partition_t&& partition );
+    virtual void print( std::ostream& ) const = 0;
 
-    virtual ~DistributionImpl();
+    virtual size_t footprint() const = 0;
 
-    int partition( const gidx_t gidx ) const { return part_[gidx]; }
+    virtual void hash( eckit::Hash& ) const = 0;
 
-    const partition_t& partition() const { return part_; }
-
-    idx_t nb_partitions() const { return nb_partitions_; }
-
-    operator const partition_t&() const { return part_; }
-
-    const int* data() const { return part_.data(); }
-
-    const std::vector<idx_t>& nb_pts() const { return nb_pts_; }
-
-    idx_t max_pts() const { return max_pts_; }
-    idx_t min_pts() const { return min_pts_; }
-
-    const std::string& type() const { return type_; }
-
-    void print( std::ostream& ) const;
-
-private:
-    idx_t nb_partitions_;
-    partition_t part_;
-    std::vector<idx_t> nb_pts_;
-    idx_t max_pts_;
-    idx_t min_pts_;
-    std::string type_;
+    virtual void partition( gidx_t begin, gidx_t end, int partitions[] ) const = 0;
 };
 
+
 extern "C" {
-DistributionImpl* atlas__GridDistribution__new( idx_t npts, int part[], int part0 );
+DistributionImpl* atlas__GridDistribution__new( idx_t size, int part[], int part0 );
+DistributionImpl* atlas__GridDistribution__new__Grid_Config( const detail::grid::Grid* grid,
+                                                             const eckit::Parametrisation* config );
+DistributionImpl* atlas__GridDistribution__new__Grid_Partitioner( const detail::grid::Grid* grid,
+                                                                  const detail::partitioner::Partitioner* partitioner );
+int atlas__GridDistribution__partition_int32( DistributionImpl* dist, int i );
+int atlas__GridDistribution__partition_int64( DistributionImpl* dist, long i );
 void atlas__GridDistribution__delete( DistributionImpl* This );
 void atlas__GridDistribution__nb_pts( DistributionImpl* This, idx_t nb_pts[] );
 idx_t atlas__atlas__GridDistribution__nb_partitions( DistributionImpl* This );

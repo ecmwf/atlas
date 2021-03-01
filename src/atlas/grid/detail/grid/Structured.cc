@@ -24,6 +24,7 @@
 #include "atlas/grid/detail/grid/GridFactory.h"
 #include "atlas/grid/detail/spacing/CustomSpacing.h"
 #include "atlas/grid/detail/spacing/LinearSpacing.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
@@ -76,8 +77,18 @@ Structured::Structured( const std::string& name, XSpace xspace, YSpace yspace, P
         nxmin_ = std::min( nx_[j], nxmin_ );
         nxmax_ = std::max( nx_[j], nxmax_ );
     }
+    size_t npts_size_t = 0;
+    for ( auto& nx : nx_ ) {
+        npts_size_t += size_t( nx );
+    }
     npts_ = std::accumulate( nx_.begin(), nx_.end(), idx_t{0} );
-
+    if ( size_t( npts_ ) != npts_size_t ) {
+        ATLAS_THROW_EXCEPTION(
+            "Cannot represent grid.size() with idx_t of "
+            << ATLAS_BITS_LOCAL
+            << " bits.\n"
+               "Recompile atlas with idx_t 64bits, or wait for pending development where grid index to become gidx_t" );
+    }
     crop( domain );
 
     computeTruePeriodicity();
@@ -284,11 +295,15 @@ Structured::XSpace::Implementation::Implementation( const Spacing& spacing, idx_
 }
 
 Structured::XSpace::Implementation::Implementation( const std::vector<Spacing>& spacings ) :
-    ny_( spacings.size() ), nx_( ny_ ), xmin_( ny_ ), xmax_( ny_ ), dx_( ny_ ) {
-    nxmax_ = 0;
-    nxmin_ = std::numeric_limits<idx_t>::max();
-    min_   = std::numeric_limits<double>::max();
-    max_   = -std::numeric_limits<double>::max();
+    ny_( spacings.size() ),
+    nxmax_( 0 ),
+    nxmin_( std::numeric_limits<idx_t>::max() ),
+    nx_( ny_ ),
+    xmin_( ny_ ),
+    xmax_( ny_ ),
+    dx_( ny_ ),
+    min_( std::numeric_limits<double>::max() ),
+    max_( -std::numeric_limits<double>::max() ) {
     for ( idx_t j = 0; j < ny_; ++j ) {
         const spacing::LinearSpacing& linspace = dynamic_cast<const spacing::LinearSpacing&>( *spacings[j].get() );
 
@@ -471,15 +486,6 @@ void Structured::crop( const Domain& dom ) {
     // Cropping in X
     bool endpoint = true;
     {
-        bool do_normalise = false;
-        for ( idx_t j = jmin, jcropped = 0; j <= jmax; ++j, ++jcropped ) {
-            double x_first = x( 0, j );
-            double x_last  = x( nx( j ) - 1, j );
-            if ( normalise( x_first ) != x_first || normalise( x_last ) != x_last ) {
-                do_normalise = true;
-            }
-        }
-
         if ( rect_domain.zonal_band() ) {
             for ( idx_t j = jmin, jcropped = 0; j <= jmax; ++j, ++jcropped ) {
                 if ( is_regular && jcropped > 0 ) {
@@ -551,7 +557,7 @@ void Structured::crop( const Domain& dom ) {
 
                 cropped_xmin[jcropped] = normalise( x( i_xmin, j ) );
                 cropped_xmax[jcropped] = normalise( x( i_xmax, j ) );
-                cropped_nx[jcropped]   = std::max( 1, n );
+                cropped_nx[jcropped]   = std::max<idx_t>( 1, n );
             }
         }
     }
@@ -642,6 +648,24 @@ void Structured::print( std::ostream& os ) const {
 
 std::string Structured::type() const {
     return static_type();
+}
+
+Grid::Config Structured::meshgenerator() const {
+    return Config( "type", "structured" );
+}
+
+Grid::Config Structured::partitioner() const {
+    Config config;
+    if ( mpi::size() == 1 ) {
+        config.set( "type", "serial" );
+    }
+    else if ( reduced() ) {
+        config.set( "type", "equal_regions" );
+    }
+    else {
+        config.set( "type", "checkerboard" );
+    }
+    return config;
 }
 
 void Structured::hash( eckit::Hash& h ) const {

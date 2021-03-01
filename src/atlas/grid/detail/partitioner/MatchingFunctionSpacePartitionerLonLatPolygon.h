@@ -28,6 +28,7 @@ public:
     MatchingFunctionSpacePartitionerLonLatPolygon( const FunctionSpace& FunctionSpace ) :
         MatchingFunctionSpacePartitioner( FunctionSpace ) {}
 
+    using MatchingFunctionSpacePartitioner::partition;
     /**
    * @brief Partition a grid, using the same partitions from a pre-partitioned
    * FunctionSpace.

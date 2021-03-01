@@ -56,6 +56,9 @@ namespace functionspace {
 namespace detail {
 
 class StructuredColumnsHaloExchangeCache;
+class StructuredColumnsGatherScatterCache;
+class StructuredColumnsChecksumCache;
+
 
 // -------------------------------------------------------------------
 
@@ -173,6 +176,8 @@ private:  // methods
     std::string config_name( const eckit::Configuration& ) const;
     idx_t config_levels( const eckit::Configuration& ) const;
     array::ArrayShape config_shape( const eckit::Configuration& ) const;
+    array::ArrayAlignment config_alignment( const eckit::Configuration& ) const;
+    array::ArraySpec config_spec( const eckit::Configuration& ) const;
     void set_field_metadata( const eckit::Configuration&, Field& ) const;
 
     void check_bounds( idx_t i, idx_t j ) const {
@@ -205,6 +210,8 @@ private:  // data
     idx_t halo_;
 
     friend class StructuredColumnsHaloExchangeCache;
+    friend class StructuredColumnsGatherScatterCache;
+    friend class StructuredColumnsChecksumCache;
     bool periodic_points_{false};
 
     const StructuredGrid* grid_;

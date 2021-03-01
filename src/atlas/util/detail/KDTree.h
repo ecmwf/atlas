@@ -118,9 +118,15 @@ public:
 
     const Geometry& geometry() const { return geometry_; }
 
+    bool empty() const { return size() == 0; }
+
+    virtual idx_t size() const = 0;
+
+    virtual size_t footprint() const = 0;
+
     /// @brief Reserve memory for building the kdtree in one shot (optional, at cost of extra memory)
     /// Implementation depends in derived classes
-    virtual void reserve( idx_t /*size*/ ){};
+    virtual void reserve( idx_t /*size*/ ) {}
 
     /// @brief Insert spherical point (lon,lat) or 3D cartesian point (x,y,z)
     /// If memory has been reserved with reserve(), insertion will be delayed until build() is called.
@@ -303,6 +309,25 @@ public:
         static_asserts();
     }
 
+    idx_t size() const override {
+#if ATLAS_ECKIT_VERSION_INT >= 11302  // v1.13.2
+        return static_cast<idx_t>( tree_->size() );
+#else
+        // Assume ECKIT-515 not implemented.
+        // Very bad implementation, with a workaround for empty tree
+        idx_t size{0};
+        try {
+            for ( const auto& item : *tree_ ) {
+                size++;
+            }
+        }
+        catch ( const eckit::AssertionFailed& ) {
+        }
+        return size;
+#endif
+    }
+
+    size_t footprint() const override { return size() * sizeof( typename Tree::Node ); }
 
     void reserve( idx_t size ) override;
 

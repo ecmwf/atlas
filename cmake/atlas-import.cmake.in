@@ -23,8 +23,9 @@ if( atlas_HAVE_FORTRAN )
 endif()
 
 ## Eigen3
-if( atlas_HAVE_EIGEN )
-  find_dependency( Eigen3 HINTS @Eigen3_DIR@ )
+set( Eigen3_HINT @Eigen3_DIR@ )
+if( atlas_HAVE_EIGEN AND Eigen3_HINT )
+  find_dependency( Eigen3 HINTS ${Eigen3_HINT} )
 endif()
 
 ## gridtools_storage
@@ -63,7 +64,12 @@ endif()
 
 ## transi
 if( atlas_HAVE_TRANS AND atlas_REQUIRES_PRIVATE_DEPENDENCIES )
-    find_dependency( transi HINTS ${CMAKE_CURRENT_LIST_DIR}/../transi @transi_DIR@ @transi_BINARY_DIR@ )
+    set( transi_DIR @transi_DIR@ )
+    if( transi_DIR )
+        find_dependency( transi HINTS ${CMAKE_CURRENT_LIST_DIR}/../transi @transi_DIR@ )
+    else()
+        find_dependency( trans COMPONENTS transi double HINTS ${CMAKE_CURRENT_LIST_DIR}/../trans @trans_DIR@ )
+    endif()
 endif()
 
 ## CGAL
@@ -80,3 +86,44 @@ elseif( atlas_FIND_REQUIRED_FORTRAN )
 endif()
 
 set( @PROJECT_NAME@_DIR ${CMAKE_CURRENT_LIST_DIR} CACHE STRING "" )
+
+
+function( atlas_create_plugin name )
+
+  set( options )
+  set( single_value_args VERSION LIBRARY URL NAMESPACE)
+  set( multi_value_args )
+  cmake_parse_arguments( _PAR "${options}" "${single_value_args}" "${multi_value_args}"  ${_FIRST_ARG} ${ARGN} )
+
+  set( _plugin_file share/plugins/${name}.yml )
+
+  if( NOT DEFINED _PAR_VERSION )
+    set( _version ${${PROJECT_NAME}_VERSION} )
+  else()
+    set( _version ${_PAR_VERSION} )
+  endif()
+  if( NOT DEFINED _PAR_LIBRARY )
+    set( _library "${name}" )
+  else()
+    set( _library "${_PAR_LIBRARY}" )
+  endif()
+  if( NOT DEFINED _PAR_URL )
+      set( _url "http://www.ecmwf.int" )
+  else()
+      set( _url ${_PAR_URL} )
+  endif()
+  if( NOT DEFINED _PAR_NAMESPACE )
+      set( _namespace "int.ecmwf" )
+  else()
+      set( _namespace ${_PAR_NAMESPACE} )
+  endif()
+
+  file( WRITE  ${CMAKE_BINARY_DIR}/${_plugin_file} "plugin:\n" )
+  file( APPEND ${CMAKE_BINARY_DIR}/${_plugin_file} "  name:      ${name}\n" )
+  file( APPEND ${CMAKE_BINARY_DIR}/${_plugin_file} "  namespace: ${_namespace}\n" )
+  file( APPEND ${CMAKE_BINARY_DIR}/${_plugin_file} "  url:       ${_url}\n" )
+  file( APPEND ${CMAKE_BINARY_DIR}/${_plugin_file} "  version:   ${_version}\n" )
+  file( APPEND ${CMAKE_BINARY_DIR}/${_plugin_file} "  library:   ${_library}\n" )
+
+  install( FILES ${CMAKE_BINARY_DIR}/${_plugin_file} DESTINATION share/plugins )
+endfunction()
