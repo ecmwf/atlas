@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -45,6 +46,9 @@ public:  // Static methods
     static FieldImpl* create( const std::string& name, array::DataType,
                               const array::ArrayShape& = array::ArrayShape() );
 
+    /// @brief Create field with given name, Datatype and ArrayShape
+    static FieldImpl* create( const std::string& name, array::DataType, array::ArraySpec&& );
+
     /// @brief Create field with given name, Datatype of template and ArrayShape
     template <typename DATATYPE>
     static FieldImpl* create( const std::string& name, const array::ArrayShape& = array::ArrayShape() );
@@ -65,6 +69,9 @@ public:  // Static methods
 private:  // Private constructors to force use of static create functions
     /// Allocate new Array internally
     FieldImpl( const std::string& name, array::DataType, const array::ArrayShape& );
+
+    /// Allocate new Array internally
+    FieldImpl( const std::string& name, array::DataType, array::ArraySpec&& );
 
     /// Transfer ownership of Array
     FieldImpl( const std::string& name, array::Array* );
@@ -123,7 +130,7 @@ public:  // Destructor
     idx_t stride( idx_t i ) const { return array_->stride( i ); }
 
     /// @brief Number of values stored in this field
-    idx_t size() const { return array_->size(); }
+    size_t size() const { return array_->size(); }
 
     /// @brief Rank of field
     idx_t rank() const { return array_->rank(); }
@@ -192,6 +199,9 @@ public:  // Destructor
     void haloExchange( bool on_device = false ) const;
     void adjointHaloExchange( bool on_device = false ) const;
 
+
+    void callbackOnDestruction( std::function<void()>&& f ) { callback_on_destruction_.emplace_back( std::move( f ) ); }
+
 private:  // methods
     void print( std::ostream& os, bool dump = false ) const;
 
@@ -200,6 +210,7 @@ private:  // members
     util::Metadata metadata_;
     array::Array* array_;
     FunctionSpace* functionspace_;
+    std::vector<std::function<void()>> callback_on_destruction_;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

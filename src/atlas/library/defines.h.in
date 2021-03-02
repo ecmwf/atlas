@@ -30,6 +30,11 @@
 #define ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST @ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST@
 #define ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA @ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA@
 #define ATLAS_HAVE_TRANS                     @atlas_HAVE_TRANS@
+#define ATLAS_HAVE_FEENABLEEXCEPT            @atlas_HAVE_FEENABLEEXCEPT@
+#define ATLAS_HAVE_FEDISABLEEXCEPT           @atlas_HAVE_FEDISABLEEXCEPT@
+#define ATLAS_BUILD_TYPE_DEBUG               @atlas_BUILD_TYPE_DEBUG@
+#define ATLAS_BUILD_TYPE_RELEASE             @atlas_BUILD_TYPE_RELEASE@
+#define ATLAS_ECKIT_VERSION_INT              @ATLAS_ECKIT_VERSION_INT@
 
 #ifdef __CUDACC__
 #define ATLAS_HOST_DEVICE __host__ __device__
@@ -43,10 +48,13 @@
 
 #define ATLAS_BITS_LOCAL @ATLAS_BITS_LOCAL@
 
-#if defined( __GNUC__ )
+#if defined( __GNUC__ ) || defined( __clang__ )
 #define ATLAS_MAYBE_UNUSED __attribute__( ( unused ) )
+#define ATLAS_ALWAYS_INLINE __attribute__( ( always_inline ) ) inline
 #else
 #define ATLAS_MAYBE_UNUSED
+#define ATLAS_ALWAYS_INLINE inline
 #endif
+
 
 #endif

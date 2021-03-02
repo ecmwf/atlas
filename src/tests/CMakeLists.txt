@@ -6,6 +6,10 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+if( NOT DEFINED MPI_SLOTS )
+  set( MPI_SLOTS 9999 )
+endif()
+
 ######################################################
 # Compiler bugs force us to disable some tests
 
@@ -47,7 +51,7 @@ macro( atlas_add_cuda_test )
     ecbuild_critical("Unknown keywords given to atlas_add_cuda_test(): \"${_PAR_UNPARSED_ARGUMENTS}\"")
   endif()
 
-  if( atlas_HAVE_GRIDTOOLS_STORAGE AND GRIDTOOLS_HAS_BACKEND_CUDA AND HAVE_TESTS )
+  if( HAVE_CUDA AND HAVE_TESTS )
 
     ecbuild_debug("atlas_add_cuda_test: Adding test ${_PAR_TARGET}")
 
@@ -100,7 +104,7 @@ if( NOT DEFINED transi_VERSION )
   endif()
 endif()
 
-if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
+if( HAVE_CUDA )
   set( ATLAS_TEST_ENVIRONMENT "ATLAS_RUN_NGPUS=1" )
 endif()
 
@@ -118,6 +122,7 @@ add_subdirectory( io )
 add_subdirectory( numerics )
 add_subdirectory( trans )
 add_subdirectory( interpolation )
+add_subdirectory( linalg )
 
 add_subdirectory( acceptance_tests )
 add_subdirectory( export_tests )

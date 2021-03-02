@@ -101,7 +101,7 @@ end function
 
 
 
-function create_field_args(this,kind,name,levels,variables,type,global,owner) result(field)
+function create_field_args(this,kind,name,levels,variables,type,alignment,global,owner) result(field)
   use atlas_functionspace_c_binding
   use, intrinsic :: iso_c_binding, only : c_int
   type(atlas_Field) :: field
@@ -111,6 +111,7 @@ function create_field_args(this,kind,name,levels,variables,type,global,owner) re
   integer(c_int),   intent(in), optional :: levels
   integer(c_int),   intent(in), optional :: variables
   character(len=*), intent(in), optional :: type
+  integer(c_int),   intent(in), optional :: alignment
   logical,          intent(in), optional :: global
   integer(c_int),   intent(in), optional :: owner
 
@@ -124,6 +125,7 @@ function create_field_args(this,kind,name,levels,variables,type,global,owner) re
   if( present(levels) )    call options%set("levels",levels)
   if( present(variables) ) call options%set("variables",variables)
   if( present(type) )      call options%set("type",type)
+  if( present(alignment) ) call options%set("alignment",alignment)
 
   field = atlas_Field( atlas__FunctionSpace__create_field( this%CPTR_PGIBUG_A, options%CPTR_PGIBUG_B ) )
 

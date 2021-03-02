@@ -8,12 +8,13 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "atlas/array.h"
 #include "atlas/grid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/meshgenerator.h"
+#include "atlas/option/Options.h"
 #include "atlas/output/Gmsh.h"
-
 #include "tests/AtlasTestEnvironment.h"
 
 using namespace atlas::output;
@@ -24,6 +25,12 @@ namespace atlas {
 namespace test {
 
 //-----------------------------------------------------------------------------
+
+CASE( "test_create_mesh_simple" ) {
+    auto mesh = Mesh{Grid{"O32"}};
+    Gmsh{"O32.msh"}.write( mesh );
+}
+
 
 CASE( "test_create_mesh" ) {
     Mesh m;
@@ -41,7 +48,22 @@ CASE( "test_create_mesh" ) {
     Grid grid = m.grid();
     std::cout << grid.spec() << std::endl;
 
-    Gmsh( "out.msh", util::Config( "coordinates", "xyz" ) ).write( m );
+    Gmsh gmsh( "out.msh", util::Config( "coordinates", "xyz" ) );
+    gmsh.write( m );
+
+    Field f1( "f1", array::make_datatype<double>(), array::make_shape( m.nodes().size() ) );
+    auto v1 = array::make_view<double, 1>( f1 );
+    for ( idx_t i = 0; i < v1.size(); ++i ) {
+        v1[i] = i + 1;
+    }
+    gmsh.write( f1 );
+
+    std::vector<double> v2( m.nodes().size() );
+    for ( size_t i = 0; i < v2.size(); ++i ) {
+        v2[i] = i + 1;
+    }
+    Field f2( "f2", v2.data(), array::make_shape( v2.size() ) );
+    gmsh.write( f2 );
 }
 
 //-----------------------------------------------------------------------------

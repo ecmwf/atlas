@@ -151,7 +151,7 @@ public:
         for ( int j = 0; j < Rank; ++j ) {
             shape_[j]   = shape[j];
             strides_[j] = strides[j];
-            size_ *= shape_[j];
+            size_ *= size_t( shape_[j] );
         }
     }
 #endif
@@ -227,7 +227,7 @@ public:
     }
 
     /// @brief Return total number of values (accumulated over all dimensions)
-    idx_t size() const { return size_; }
+    size_t size() const { return size_; }
 
     /// @brief Return the number of dimensions
     static constexpr idx_t rank() { return Rank; }
@@ -260,7 +260,7 @@ public:
     ///
     /// This means that if there is e.g. padding in the fastest dimension, or if
     /// the ArrayView represents a slice, the returned value will be false.
-    bool contiguous() const { return ( size_ == shape_[0] * strides_[0] ? true : false ); }
+    bool contiguous() const { return ( size_ == size_t( shape_[0] ) * size_t( strides_[0] ) ? true : false ); }
 
     ENABLE_IF_NON_CONST
     void assign( const value_type& value );
@@ -365,7 +365,7 @@ private:
     // -- Private data
 
     value_type* data_;
-    idx_t size_;
+    size_t size_;
     std::array<idx_t, Rank> shape_;
     std::array<idx_t, Rank> strides_;
 };

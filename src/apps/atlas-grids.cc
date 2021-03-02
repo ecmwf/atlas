@@ -15,12 +15,11 @@
 #include <string>
 #include <vector>
 
-#include "eckit/eckit_version.h"
-#include "eckit/log/JSON.h"
 
 #include "eckit/config/Resource.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/log/Bytes.h"
+#include "eckit/log/JSON.h"
 #include "eckit/log/Log.h"
 #include "eckit/types/FloatCompare.h"
 
@@ -198,6 +197,8 @@ int AtlasGrids::execute( const Args& args ) {
                 Log::info() << "   Cubedsphere faces:                   " << cubedsphere.GetCubeNx() << "x" << cubedsphere.GetCubeNx() << "x6" << std::endl;
             }
             Log::info() << "   number of points:                   " << grid.size() << std::endl;
+
+            Log::info() << "   memory footprint of grid:           " << eckit::Bytes( grid.footprint() ) << std::endl;
 
 
             size_t memsize = grid.size() * sizeof( double );

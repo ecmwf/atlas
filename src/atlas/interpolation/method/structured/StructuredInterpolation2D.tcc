@@ -56,7 +56,8 @@ StructuredInterpolation2D<Kernel>::StructuredInterpolation2D( const Method::Conf
 
 
 template <typename Kernel>
-void StructuredInterpolation2D<Kernel>::do_setup( const Grid& source, const Grid& target ) {
+void StructuredInterpolation2D<Kernel>::do_setup( const Grid& source, const Grid& target, const Cache& ) {
+    ATLAS_TRACE( "StructuredInterpolation2D<" + Kernel::className() + ">::do_setup(Grid source, Grid target)" );
     if ( mpi::size() > 1 ) {
         ATLAS_NOTIMPLEMENTED;
     }
@@ -64,7 +65,7 @@ void StructuredInterpolation2D<Kernel>::do_setup( const Grid& source, const Grid
 
     ATLAS_ASSERT( StructuredGrid( source ) );
     FunctionSpace source_fs =
-        functionspace::StructuredColumns( source, option::halo( std::max( kernel_->stencil_halo(), 1 ) ) );
+        functionspace::StructuredColumns( source, option::halo( std::max<idx_t>( kernel_->stencil_halo(), 1 ) ) );
     // guarantee "1" halo for pole treatment!
     FunctionSpace target_fs = functionspace::PointCloud( target );
 
@@ -74,7 +75,7 @@ void StructuredInterpolation2D<Kernel>::do_setup( const Grid& source, const Grid
 
 template <typename Kernel>
 void StructuredInterpolation2D<Kernel>::do_setup( const FunctionSpace& source, const FunctionSpace& target ) {
-    ATLAS_TRACE( "atlas::interpolation::method::StructuredInterpolation2D::do_setup()" );
+    ATLAS_TRACE( "StructuredInterpolation2D<" + Kernel::className() + ">::do_setup(FS source, FS target)" );
 
     source_ = source;
     target_ = target;
@@ -158,8 +159,10 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source ) {
 
         auto triplets = kernel_->allocate_triplets( out_npts );
 
-        constexpr util::NormaliseLongitude normalise;
-        //auto normalise = []( double x ) { return x; };
+        const auto src_fs = functionspace::StructuredColumns( source );
+        const auto src_dom = RectangularDomain( src_fs.grid().domain() );
+        const double src_west = src_dom ? src_dom.xmin() : 0.;
+        const util::NormaliseLongitude normalise( src_west );
 
         ATLAS_TRACE_SCOPE( "Precomputing interpolation matrix" ) {
             if ( target_ghost_ ) {
@@ -186,7 +189,7 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source ) {
             }
             // fill sparse matrix and return
             Matrix A( out_npts, inp_npts, triplets );
-            matrix_.swap( A );
+            matrix_shared_->swap( A );
         }
     }
 }
@@ -249,6 +252,11 @@ void StructuredInterpolation2D<Kernel>::execute_impl( const Kernel& kernel, cons
                                                       FieldSet& tgt_fields ) const {
     const idx_t N = src_fields.size();
 
+    const auto src_fs = functionspace::StructuredColumns( source() );
+    const auto src_dom = RectangularDomain( src_fs.grid().domain() );
+    const double src_west = src_dom ? src_dom.xmin() : 0.;
+    const util::NormaliseLongitude normalise( src_west );
+
     std::vector<array::ArrayView<const Value, Rank> > src_view;
     std::vector<array::ArrayView<Value, Rank> > tgt_view;
     src_view.reserve( N );
@@ -271,7 +279,7 @@ void StructuredInterpolation2D<Kernel>::execute_impl( const Kernel& kernel, cons
                 typename Kernel::Weights weights;
                 atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
                     if ( not ghost( n ) ) {
-                        PointLonLat p{lonlat( n, LON ) * convert_units, lonlat( n, LAT ) * convert_units};
+                        PointLonLat p{ normalise(lonlat( n, LON ) ) * convert_units, lonlat( n, LAT ) * convert_units};
                         kernel.compute_stencil( p.lon(), p.lat(), stencil );
                         kernel.compute_weights( p.lon(), p.lat(), stencil, weights );
                         for ( idx_t i = 0; i < N; ++i ) {
@@ -289,7 +297,7 @@ void StructuredInterpolation2D<Kernel>::execute_impl( const Kernel& kernel, cons
                 typename Kernel::Stencil stencil;
                 typename Kernel::Weights weights;
                 atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
-                    PointLonLat p{lonlat( n, LON ) * convert_units, lonlat( n, LAT ) * convert_units};
+                    PointLonLat p{ normalise(lonlat( n, LON )) * convert_units, lonlat( n, LAT ) * convert_units};
                     kernel.compute_stencil( p.lon(), p.lat(), stencil );
                     kernel.compute_weights( p.lon(), p.lat(), stencil, weights );
                     for ( idx_t i = 0; i < N; ++i ) {
@@ -309,7 +317,7 @@ void StructuredInterpolation2D<Kernel>::execute_impl( const Kernel& kernel, cons
             typename Kernel::Stencil stencil;
             typename Kernel::Weights weights;
             atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
-                PointLonLat p{lon( n ) * convert_units, lat( n ) * convert_units};
+                PointLonLat p{normalise(lon( n )) * convert_units, lat( n ) * convert_units};
                 kernel.compute_stencil( p.lon(), p.lat(), stencil );
                 kernel.compute_weights( p.lon(), p.lat(), stencil, weights );
                 for ( idx_t i = 0; i < N; ++i ) {

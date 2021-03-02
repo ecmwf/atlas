@@ -114,7 +114,7 @@ inline FunctionspaceT_const* FunctionSpaceImpl::cast() const {
 /// @brief Dummy Functionspace class that evaluates to false
 class NoFunctionSpace : public FunctionSpaceImpl {
 public:
-    NoFunctionSpace() {}
+    NoFunctionSpace() : FunctionSpaceImpl() {}
     virtual ~NoFunctionSpace() {}
     virtual std::string type() const { return "NoFunctionSpace"; }
     virtual operator bool() const { return false; }

@@ -22,6 +22,7 @@
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
+#include "atlas/field/MissingValue.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Elements.h"
@@ -38,6 +39,7 @@
 
 using atlas::functionspace::NodeColumns;
 using atlas::util::Metadata;
+using atlas::util::Topology;
 using eckit::PathName;
 
 namespace atlas {
@@ -124,57 +126,65 @@ array::LocalView<const T, 2> make_level_view( const Field& field, int ndata, int
     }
 }
 
-template <typename Value>
-void write_level( std::ostream& out, const array::ArrayView<gidx_t, 1>& gidx, const array::LocalView<Value, 2>& data ) {
+template <typename Value, typename GlobalIndex, typename IncludeIndex>
+void write_level( std::ostream& out, GlobalIndex gidx, const array::LocalView<Value, 2>& data, IncludeIndex include ) {
     using value_type = typename std::remove_const<Value>::type;
     int ndata        = data.shape( 0 );
     int nvars        = data.shape( 1 );
     if ( nvars == 1 ) {
         for ( idx_t n = 0; n < ndata; ++n ) {
-            out << gidx( n ) << " " << data( n, 0 ) << "\n";
+            if ( include( n ) ) {
+                out << gidx( n ) << " " << data( n, 0 ) << "\n";
+            }
         }
     }
     else if ( nvars <= 3 ) {
-        std::vector<value_type> data_vec( 3, 0. );
+        std::array<value_type, 3> data_vec;
         for ( idx_t n = 0; n < ndata; ++n ) {
-            out << gidx( n );
-            for ( idx_t v = 0; v < nvars; ++v ) {
-                data_vec[v] = data( n, v );
-            }
-            for ( int v = 0; v < 3; ++v ) {
-                out << " " << data_vec[v];
-            }
-            out << "\n";
-        }
-    }
-    else if ( nvars <= 9 ) {
-        std::vector<value_type> data_vec( 9, 0. );
-        if ( nvars == 4 ) {
-            for ( int n = 0; n < ndata; ++n ) {
-                for ( int i = 0; i < 2; ++i ) {
-                    for ( int j = 0; j < 2; ++j ) {
-                        data_vec[i * 3 + j] = data( n, i * 2 + j );
-                    }
+            if ( include( n ) ) {
+                for ( idx_t v = 0; v < nvars; ++v ) {
+                    data_vec[v] = data( n, v );
                 }
                 out << gidx( n );
-                for ( int v = 0; v < 9; ++v ) {
+                for ( int v = 0; v < 3; ++v ) {
                     out << " " << data_vec[v];
                 }
                 out << "\n";
+            }
+        }
+    }
+    else if ( nvars <= 9 ) {
+        std::array<value_type, 9> data_vec;
+        if ( nvars == 4 ) {
+            for ( int n = 0; n < ndata; ++n ) {
+                if ( include( n ) ) {
+                    for ( int i = 0; i < 2; ++i ) {
+                        for ( int j = 0; j < 2; ++j ) {
+                            data_vec[i * 3 + j] = data( n, i * 2 + j );
+                        }
+                    }
+                    out << gidx( n );
+                    for ( int v = 0; v < 9; ++v ) {
+                        out << " " << data_vec[v];
+                    }
+                    out << "\n";
+                }
             }
         }
         else if ( nvars == 9 ) {
             for ( int n = 0; n < ndata; ++n ) {
-                for ( int i = 0; i < 3; ++i ) {
-                    for ( int j = 0; j < 3; ++j ) {
-                        data_vec[i * 3 + j] = data( n, i * 2 + j );
+                if ( include( n ) ) {
+                    for ( int i = 0; i < 3; ++i ) {
+                        for ( int j = 0; j < 3; ++j ) {
+                            data_vec[i * 3 + j] = data( n, i * 2 + j );
+                        }
                     }
+                    out << gidx( n );
+                    for ( int v = 0; v < 9; ++v ) {
+                        out << " " << data_vec[v];
+                    }
+                    out << "\n";
                 }
-                out << gidx( n );
-                for ( int v = 0; v < 9; ++v ) {
-                    out << " " << data_vec[v];
-                }
-                out << "\n";
             }
         }
         else {
@@ -184,6 +194,10 @@ void write_level( std::ostream& out, const array::ArrayView<gidx_t, 1>& gidx, co
     else {
         ATLAS_NOTIMPLEMENTED;
     }
+}
+template <typename Value, typename GlobalIndex>
+void write_level( std::ostream& out, GlobalIndex gidx, const array::LocalView<Value, 2>& data ) {
+    write_level( out, gidx, data, []( idx_t ) { return true; } );
 }
 
 std::vector<int> get_levels( int nlev, const Metadata& gmsh_options ) {
@@ -262,11 +276,33 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::NodeC
         function_space.gather( field, field_glb );
         ndata = std::min<idx_t>( function_space.nb_nodes_global(), field_glb.shape( 0 ) );
     }
+    auto missing = field::MissingValue( field );
 
     std::vector<int> lev = get_levels( nlev, gmsh_options );
     for ( size_t ilev = 0; ilev < lev.size(); ++ilev ) {
         int jlev = lev[ilev];
         if ( ( gather && mpi::rank() == 0 ) || !gather ) {
+            auto data = gather ? make_level_view<Value>( field_glb, ndata, jlev )
+                               : make_level_view<Value>( field, ndata, jlev );
+            auto include_idx = [&]( idx_t n ) {
+                for ( idx_t v = 0; v < nvars; ++v ) {
+                    if ( missing( data( n, v ) ) ) {
+                        return false;
+                    }
+                }
+                return true;
+            };
+            idx_t ndata_nonmissing = [&] {
+                if ( missing ) {
+                    idx_t c = 0;
+                    for ( idx_t n = 0; n < ndata; ++n ) {
+                        c += include_idx( n );
+                    }
+                    return c;
+                }
+                return ndata;
+            }();
+
             out << "$NodeData\n";
             out << "1\n";
             out << "\"" << field.name() << field_lev( field, jlev ) << "\"\n";
@@ -275,15 +311,79 @@ void write_field_nodes( const Metadata& gmsh_options, const functionspace::NodeC
             out << "4\n";
             out << field_step( field ) << "\n";
             out << field_vars( nvars ) << "\n";
-            out << ndata << "\n";
+            out << ndata_nonmissing << "\n";
             out << mpi::rank() << "\n";
-            auto data = gather ? make_level_view<Value>( field_glb, ndata, jlev )
-                               : make_level_view<Value>( field, ndata, jlev );
-            write_level( out, gidx, data );
+            if ( missing ) {
+                write_level( out, gidx, data, include_idx );
+            }
+            else {
+                write_level( out, gidx, data );
+            }
             out << "$EndNodeData\n";
         }
     }
 }
+
+// ----------------------------------------------------------------------------
+template <typename Value>
+void write_field_nodes( const Metadata& gmsh_options, const functionspace::NoFunctionSpace& function_space,
+                        const Field& field, std::ostream& out ) {
+    Log::debug() << "writing field " << field.name() << " defined without functionspace..." << std::endl;
+
+    // unused: bool binary( !gmsh_options.get<bool>( "ascii" ) );
+    idx_t nlev  = std::max<idx_t>( 1, field.levels() );
+    idx_t ndata = field.shape( 0 );
+    idx_t nvars = std::max<idx_t>( 1, field.variables() );
+    auto gidx   = []( idx_t inode ) { return inode + 1; };
+
+    auto missing = field::MissingValue( field );
+
+    std::vector<int> lev = get_levels( nlev, gmsh_options );
+    for ( size_t ilev = 0; ilev < lev.size(); ++ilev ) {
+        int jlev = lev[ilev];
+
+        auto data        = make_level_view<Value>( field, ndata, jlev );
+        auto include_idx = [&]( idx_t n ) {
+            for ( idx_t v = 0; v < nvars; ++v ) {
+                if ( missing( data( n, v ) ) ) {
+                    return false;
+                }
+            }
+            return true;
+        };
+        idx_t ndata_nonmissing = [&] {
+            if ( missing ) {
+                idx_t c = 0;
+                for ( idx_t n = 0; n < ndata; ++n ) {
+                    c += include_idx( n );
+                }
+                return c;
+            }
+            return ndata;
+        }();
+
+        out << "$NodeData\n";
+        out << "1\n";
+        out << "\"" << field.name() << field_lev( field, jlev ) << "\"\n";
+        out << "1\n";
+        out << field_time( field ) << "\n";
+        out << "4\n";
+        out << field_step( field ) << "\n";
+        out << field_vars( nvars ) << "\n";
+        out << ndata_nonmissing << "\n";
+        out << mpi::rank() << "\n";
+        if ( missing ) {
+            write_level( out, gidx, data, include_idx );
+        }
+        else {
+            write_level( out, gidx, data );
+        }
+        out << "$EndNodeData\n";
+    }
+}
+// ----------------------------------------------------------------------------
+
+
 // ----------------------------------------------------------------------------
 
 void print_field_lev( char field_lev[], int jlev ) {
@@ -517,25 +617,9 @@ void write_field_elems(const Metadata& gmsh_options, const FunctionSpace& functi
   }
 }
 #endif
-// ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------
-// Unused private function, in case for big-endian
-// ----------------------------------------------------------------------------
-#if 0
-void swap_bytes(char *array, int size, int n)
-{
-  char *x = new char[size];
-  for(int i = 0; i < n; i++) {
-    char *a = &array[i * size];
-    memcpy(x, a, size);
-    for(int c = 0; c < size; c++)
-      a[size - 1 - c] = x[c];
-  }
-  delete [] x;
-}
-#endif
-// ----------------------------------------------------------------------------
+
 }  // end anonymous namespace
 
 // ----------------------------------------------------------------------------
@@ -812,13 +896,23 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
     int part           = mesh.metadata().has( "part" ) ? mesh.metadata().get<size_t>( "part" ) : mpi::rank();
     bool include_ghost = options.get<bool>( "ghost" ) && options.get<bool>( "elements" );
 
-    std::string nodes_field = options.get<std::string>( "nodes" );
+    bool land_water_flag = options.has( "water" ) || options.has( "land" );
+    bool include_water   = options.getBool( "water", false );
+    bool include_land    = options.getBool( "land", false );
 
+    std::string nodes_field  = options.get<std::string>( "nodes" );
     const mesh::Nodes& nodes = mesh.nodes();
-    auto coords              = array::make_view<double, 2>( nodes.field( nodes_field ) );
-    auto glb_idx             = array::make_view<gidx_t, 1>( nodes.global_index() );
 
-    const idx_t surfdim = coords.shape( 1 );  // nb of variables in coords
+    const Field coords_field = nodes.field( nodes_field );
+    array::ArrayT<double> dummy_double( 1, 1 );
+    array::ArrayT<idx_t> dummy_idx( 1, 1 );
+    bool coords_is_idx = coords_field.datatype().kind() == array::make_datatype<idx_t>().kind();
+    auto coords        = array::make_view<const double, 2>( coords_is_idx ? dummy_double : coords_field.array() );
+    auto coords_idx    = array::make_view<const idx_t, 2>( coords_is_idx ? coords_field.array() : dummy_idx );
+
+    auto glb_idx = array::make_view<gidx_t, 1>( nodes.global_index() );
+
+    const idx_t surfdim = nodes.field( nodes_field ).shape( 1 );  // nb of variables in coords
 
     bool include_patch = ( surfdim == 3 );
 
@@ -851,8 +945,15 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
     for ( idx_t n = 0; n < nb_nodes; ++n ) {
         gidx_t g = glb_idx( n );
 
-        for ( idx_t d = 0; d < surfdim; ++d ) {
-            xyz[d] = coords( n, d );
+        if ( coords_is_idx ) {
+            for ( idx_t d = 0; d < surfdim; ++d ) {
+                xyz[d] = coords_idx( n, d );
+            }
+        }
+        else {
+            for ( idx_t d = 0; d < surfdim; ++d ) {
+                xyz[d] = coords( n, d );
+            }
         }
 
         if ( binary ) {
@@ -884,20 +985,35 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
             nb_elements += hybrid->size();
             const auto hybrid_halo  = array::make_view<int, 1>( hybrid->halo() );
             const auto hybrid_flags = array::make_view<int, 1>( hybrid->flags() );
-            auto hybrid_patch       = [&]( idx_t e ) {
-                return mesh::Nodes::Topology::check( hybrid_flags( e ), mesh::Nodes::Topology::PATCH );
-            };
-            auto exclude = [&]( idx_t e ) {
-                if ( !include_ghost && hybrid_halo( e ) ) {
-                    return true;
+
+            auto include = [&]( idx_t e ) {
+                auto topology = Topology::view( hybrid_flags( e ) );
+                if ( land_water_flag && not( include_water && include_land ) ) {
+                    if ( include_water && !topology.check( Topology::WATER ) ) {
+                        return false;
+                    }
+                    if ( include_land && !topology.check( Topology::LAND ) ) {
+                        return false;
+                    }
                 }
-                if ( !include_patch && hybrid_patch( e ) ) {
-                    return true;
+                if ( not include_ghost ) {
+                    if ( topology.check( Topology::GHOST ) || hybrid_halo( e ) ) {
+                        return false;
+                    }
                 }
-                return false;
+                if ( not include_patch ) {
+                    if ( topology.check( Topology::PATCH ) ) {
+                        return false;
+                    }
+                }
+                if ( topology.check( Topology::INVALID ) ) {
+                    return false;
+                }
+                return true;
             };
+
             for ( idx_t e = 0; e < hybrid->size(); ++e ) {
-                if ( exclude( e ) ) {
+                if ( not include( e ) ) {
                     --nb_elements;
                 }
             }
@@ -927,8 +1043,35 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
 
                 auto elems_glb_idx   = elements.view<gidx_t, 1>( elements.global_index() );
                 auto elems_partition = elements.view<int, 1>( elements.partition() );
-                auto elems_halo      = elements.view<int, 1>( elements.halo() );
 
+                auto elems_halo  = elements.view<int, 1>( elements.halo() );
+                auto elems_flags = elements.view<int, 1>( elements.flags() );
+
+                auto include = [&]( idx_t e ) {
+                    auto topology = Topology::view( elems_flags( e ) );
+                    if ( land_water_flag && not( include_water && include_land ) ) {
+                        if ( include_water && !topology.check( Topology::WATER ) ) {
+                            return false;
+                        }
+                        if ( include_land && !topology.check( Topology::LAND ) ) {
+                            return false;
+                        }
+                    }
+                    if ( not include_ghost ) {
+                        if ( topology.check( Topology::GHOST ) || elems_halo( e ) ) {
+                            return false;
+                        }
+                    }
+                    if ( not include_patch ) {
+                        if ( topology.check( Topology::PATCH ) ) {
+                            return false;
+                        }
+                    }
+                    if ( topology.check( Topology::INVALID ) ) {
+                        return false;
+                    }
+                    return true;
+                };
                 if ( binary ) {
                     idx_t nb_elems = elements.size();
                     if ( !include_ghost ) {
@@ -965,7 +1108,7 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
                     ss_elem_info << " " << gmsh_elem_type << " 4 1 1 1 ";
                     std::string elem_info = ss_elem_info.str();
                     for ( idx_t elem = 0; elem < elements.size(); ++elem ) {
-                        if ( include_ghost || !elems_halo( elem ) ) {
+                        if ( include( elem ) ) {
                             file << elems_glb_idx( elem ) << elem_info << elems_partition( elem );
                             for ( idx_t n = 0; n < node_connectivity.cols(); ++n ) {
                                 file << " " << glb_idx( node_connectivity( elem, n ) );
@@ -993,13 +1136,13 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
 
         write( nodes.partition(), function_space, mesh_info, std::ios_base::out );
 
-        if ( nodes.has_field( "dual_volumes" ) ) {
-            write( nodes.field( "dual_volumes" ), function_space, mesh_info, std::ios_base::app );
+        std::vector<std::string> extra_fields = {"dual_volumes", "dual_delta_sph", "lsm", "core", "ghost", "halo"};
+        for ( auto& f : extra_fields ) {
+            if ( nodes.has_field( f ) ) {
+                write( nodes.field( f ), function_space, mesh_info, std::ios_base::app );
+            }
         }
 
-        if ( nodes.has_field( "dual_delta_sph" ) ) {
-            write( nodes.field( "dual_delta_sph" ), function_space, mesh_info, std::ios_base::app );
-        }
 
         //[next] if( mesh.has_function_space("edges") )
         //[next] {
@@ -1027,13 +1170,12 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
 // ----------------------------------------------------------------------------
 void GmshIO::write( const Field& field, const PathName& file_path, openmode mode ) const {
     if ( !field.functionspace() ) {
-        std::stringstream msg;
-        msg << "Field [" << field.name() << "] has no functionspace";
-
-        throw_AssertionFailed( msg.str(), Here() );
+        FieldSet fieldset;
+        fieldset.add( field );
+        write( fieldset, field.functionspace(), file_path, mode );
     }
 
-    if ( functionspace::NodeColumns( field.functionspace() ) ) {
+    else if ( functionspace::NodeColumns( field.functionspace() ) ) {
         FieldSet fieldset;
         fieldset.add( field );
         write( fieldset, field.functionspace(), file_path, mode );
@@ -1066,6 +1208,16 @@ void GmshIO::write_delegate( const Field& field, const functionspace::NodeColumn
     fieldset.add( field );
     write_delegate( fieldset, functionspace, file_path, mode );
 }
+
+// ----------------------------------------------------------------------------
+
+void GmshIO::write_delegate( const Field& field, const functionspace::NoFunctionSpace& functionspace,
+                             const eckit::PathName& file_path, GmshIO::openmode mode ) const {
+    FieldSet fieldset;
+    fieldset.add( field );
+    write_delegate( fieldset, functionspace, file_path, mode );
+}
+
 // ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------
@@ -1080,6 +1232,44 @@ void GmshIO::write_delegate( const Field& field, const functionspace::Structured
 // ----------------------------------------------------------------------------
 void GmshIO::write_delegate( const FieldSet& fieldset, const functionspace::NodeColumns& functionspace,
                              const PathName& file_path, openmode mode ) const {
+    bool is_new_file = ( mode != std::ios_base::app || !file_path.exists() );
+    bool binary( !options.get<bool>( "ascii" ) );
+    if ( binary ) {
+        mode |= std::ios_base::binary;
+    }
+    bool gather = options.has( "gather" ) ? options.get<bool>( "gather" ) : false;
+    GmshFile file( file_path, mode, gather ? -1 : int( mpi::rank() ) );
+
+    // Header
+    if ( is_new_file ) {
+        write_header_ascii( file );
+    }
+
+    // field::Fields
+    for ( idx_t field_idx = 0; field_idx < fieldset.size(); ++field_idx ) {
+        const Field& field = fieldset[field_idx];
+        Log::debug() << "writing field " << field.name() << " to gmsh file " << file_path << std::endl;
+
+        if ( field.datatype() == array::DataType::int32() ) {
+            write_field_nodes<int>( options, functionspace, field, file );
+        }
+        else if ( field.datatype() == array::DataType::int64() ) {
+            write_field_nodes<long>( options, functionspace, field, file );
+        }
+        else if ( field.datatype() == array::DataType::real32() ) {
+            write_field_nodes<float>( options, functionspace, field, file );
+        }
+        else if ( field.datatype() == array::DataType::real64() ) {
+            write_field_nodes<double>( options, functionspace, field, file );
+        }
+
+        file << std::flush;
+    }
+    file.close();
+}
+
+void GmshIO::write_delegate( const FieldSet& fieldset, const functionspace::NoFunctionSpace& functionspace,
+                             const eckit::PathName& file_path, GmshIO::openmode mode ) const {
     bool is_new_file = ( mode != std::ios_base::app || !file_path.exists() );
     bool binary( !options.get<bool>( "ascii" ) );
     if ( binary ) {
@@ -1211,6 +1401,9 @@ void GmshIO::write( const FieldSet& fieldset, const FunctionSpace& funcspace, co
     else if ( functionspace::CellColumns( funcspace ) ) {
         write_delegate( fieldset, functionspace::CellColumns( funcspace ), file_path, mode );
     }
+    else if ( not funcspace ) {
+        write_delegate( fieldset, functionspace::NoFunctionSpace(), file_path, mode );
+    }
     else {
         ATLAS_NOTIMPLEMENTED;
     }
@@ -1309,7 +1502,7 @@ Mesh::Implementation* atlas__Gmsh__read( GmshIO* This, char* file_path ) {
 }
 
 void atlas__Gmsh__write( GmshIO* This, Mesh::Implementation* mesh, char* file_path ) {
-    return GmshFortranInterface::atlas__Gmsh__write( This, mesh, file_path );
+    GmshFortranInterface::atlas__Gmsh__write( This, mesh, file_path );
 }
 
 Mesh::Implementation* atlas__read_gmsh( char* file_path ) {
@@ -1317,17 +1510,17 @@ Mesh::Implementation* atlas__read_gmsh( char* file_path ) {
 }
 
 void atlas__write_gmsh_mesh( const Mesh::Implementation* mesh, char* file_path ) {
-    return GmshFortranInterface::atlas__write_gmsh_mesh( mesh, file_path );
+    GmshFortranInterface::atlas__write_gmsh_mesh( mesh, file_path );
 }
 
 void atlas__write_gmsh_fieldset( const field::FieldSetImpl* fieldset, functionspace::FunctionSpaceImpl* functionspace,
                                  char* file_path, int mode ) {
-    return GmshFortranInterface::atlas__write_gmsh_fieldset( fieldset, functionspace, file_path, mode );
+    GmshFortranInterface::atlas__write_gmsh_fieldset( fieldset, functionspace, file_path, mode );
 }
 
 void atlas__write_gmsh_field( const field::FieldImpl* field, functionspace::FunctionSpaceImpl* functionspace,
                               char* file_path, int mode ) {
-    return GmshFortranInterface::atlas__write_gmsh_field( field, functionspace, file_path, mode );
+    GmshFortranInterface::atlas__write_gmsh_field( field, functionspace, file_path, mode );
 }
 }
 // ----------------------------------------------------------------------------

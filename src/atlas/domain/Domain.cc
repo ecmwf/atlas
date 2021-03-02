@@ -126,7 +126,7 @@ bool Domain::containsSouthPole() const {
 }
 
 void Domain::print( std::ostream& os ) const {
-    return get()->print( os );
+    get()->print( os );
 }
 
 std::ostream& operator<<( std::ostream& os, const Domain& d ) {

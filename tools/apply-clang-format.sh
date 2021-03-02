@@ -92,11 +92,11 @@ if ! [[ $(clang-format --version) =~ ${_REQUIRED_CLANG_VERSION} ]]; then
     fi
 fi
 
-SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd $SCRIPTDIR/../src
-
-
 if [[ $all =~ "yes" ]]; then
+
+    SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    cd $SCRIPTDIR/../src
+
     echo "Applying $(clang-format --version) to all files ..."
     if [[ $dryrun =~ "yes" ]]; then
         echo "+ find . -iname *.h -o -iname *.cc | xargs clang-format -i -style=file"
@@ -107,12 +107,22 @@ if [[ $all =~ "yes" ]]; then
 else
     echo "Applying $(clang-format --version) to files ..."
     while test $# -gt 0; do
-        if [[ $dryrun =~ "yes" ]]; then
-            echo "+ clang-format -i -style=file $1"
+
+        if [[ -d $1 ]]; then
+            cd $1
+            if [[ $dryrun =~ "yes" ]]; then
+                echo "+ find . -iname *.h -o -iname *.cc | xargs clang-format -i -style=file"
+            else
+                find . -iname *.h -o -iname *.cc | xargs clang-format -i -style=file
+            fi
         else
-            clang-format -i -style=file $1
+            if [[ $dryrun =~ "yes" ]]; then
+                echo "+ clang-format -i -style=file $1"
+            else
+                clang-format -i -style=file $1
+            fi
+            shift
         fi
-        shift
     done
 fi
 

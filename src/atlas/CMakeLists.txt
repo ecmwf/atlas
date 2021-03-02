@@ -27,8 +27,12 @@ install( FILES
 list( APPEND atlas_srcs
 library.h
 library/config.h
+library/FloatingPointExceptions.h
+library/FloatingPointExceptions.cc
 library/Library.h
 library/Library.cc
+library/Plugin.h
+library/Plugin.cc
 runtime/AtlasTool.h
 runtime/AtlasTool.cc
 runtime/Log.h
@@ -152,15 +156,32 @@ grid/detail/grid/LonLat.h
 grid/detail/grid/LonLat.cc
 grid/detail/grid/Regional.h
 grid/detail/grid/Regional.cc
+grid/detail/grid/Healpix.h
+grid/detail/grid/Healpix.cc
 
 grid/detail/distribution/DistributionImpl.h
 grid/detail/distribution/DistributionImpl.cc
+grid/detail/distribution/DistributionArray.cc
+grid/detail/distribution/DistributionArray.h
+grid/detail/distribution/DistributionFunction.cc
+grid/detail/distribution/DistributionFunction.h
+
+grid/detail/distribution/BandsDistribution.cc
+grid/detail/distribution/BandsDistribution.h
+grid/detail/distribution/SerialDistribution.cc
+grid/detail/distribution/SerialDistribution.h
+
 
 grid/detail/vertical/VerticalInterface.h
 grid/detail/vertical/VerticalInterface.cc
 
+
+grid/detail/partitioner/BandsPartitioner.cc
+grid/detail/partitioner/BandsPartitioner.h
 grid/detail/partitioner/CheckerboardPartitioner.cc
 grid/detail/partitioner/CheckerboardPartitioner.h
+grid/detail/partitioner/EqualBandsPartitioner.cc
+grid/detail/partitioner/EqualBandsPartitioner.h
 grid/detail/partitioner/EqualRegionsPartitioner.cc
 grid/detail/partitioner/EqualRegionsPartitioner.h
 grid/detail/partitioner/MatchingMeshPartitioner.h
@@ -177,6 +198,11 @@ grid/detail/partitioner/MatchingFunctionSpacePartitionerLonLatPolygon.cc
 grid/detail/partitioner/MatchingFunctionSpacePartitionerLonLatPolygon.h
 grid/detail/partitioner/Partitioner.cc
 grid/detail/partitioner/Partitioner.h
+grid/detail/partitioner/RegularBandsPartitioner.cc
+grid/detail/partitioner/RegularBandsPartitioner.h
+grid/detail/partitioner/SerialPartitioner.cc
+grid/detail/partitioner/SerialPartitioner.h
+
 
 grid/detail/spacing/Spacing.cc
 grid/detail/spacing/Spacing.h
@@ -341,6 +367,8 @@ meshgenerator/detail/MeshGeneratorImpl.cc
 meshgenerator/detail/MeshGeneratorImpl.h
 meshgenerator/detail/MeshGeneratorInterface.cc
 meshgenerator/detail/MeshGeneratorInterface.h
+meshgenerator/detail/HealpixMeshGenerator.h
+meshgenerator/detail/HealpixMeshGenerator.cc
 )
 
 list( APPEND atlas_output_srcs
@@ -361,22 +389,26 @@ output/detail/PointCloudIO.h
 
 list( APPEND atlas_field_srcs
 field.h
-field/Field.h
 field/Field.cc
-field/FieldCreator.h
+field/Field.h
 field/FieldCreator.cc
-field/FieldCreatorArraySpec.h
+field/FieldCreator.h
 field/FieldCreatorArraySpec.cc
-field/FieldCreatorIFS.h
+field/FieldCreatorArraySpec.h
 field/FieldCreatorIFS.cc
-field/FieldSet.h
+field/FieldCreatorIFS.h
 field/FieldSet.cc
-field/State.h
+field/FieldSet.h
+field/MissingValue.cc
+field/MissingValue.h
 field/State.cc
-field/detail/FieldImpl.h
+field/State.h
 field/detail/FieldImpl.cc
-field/detail/FieldInterface.h
+field/detail/FieldImpl.h
 field/detail/FieldInterface.cc
+field/detail/FieldInterface.h
+field/detail/MissingValue.cc
+field/detail/MissingValue.h
 )
 
 list( APPEND atlas_functionspace_srcs
@@ -464,8 +496,12 @@ endif()
 
 list( APPEND atlas_interpolation_srcs
 interpolation.h
-interpolation/Interpolation.h
+interpolation/Cache.cc
+interpolation/Cache.h
 interpolation/Interpolation.cc
+interpolation/Interpolation.h
+interpolation/NonLinear.cc
+interpolation/NonLinear.h
 interpolation/Vector2D.cc
 interpolation/Vector2D.h
 interpolation/Vector3D.cc
@@ -488,37 +524,61 @@ interpolation/method/Ray.cc
 interpolation/method/Ray.h
 interpolation/method/fe/FiniteElement.cc
 interpolation/method/fe/FiniteElement.h
+interpolation/method/knn/GridBox.cc
+interpolation/method/knn/GridBox.h
+interpolation/method/knn/GridBoxAverage.cc
+interpolation/method/knn/GridBoxAverage.h
+interpolation/method/knn/GridBoxMaximum.cc
+interpolation/method/knn/GridBoxMaximum.h
+interpolation/method/knn/GridBoxMethod.cc
+interpolation/method/knn/GridBoxMethod.h
 interpolation/method/knn/KNearestNeighbours.cc
 interpolation/method/knn/KNearestNeighbours.h
 interpolation/method/knn/KNearestNeighboursBase.cc
 interpolation/method/knn/KNearestNeighboursBase.h
 interpolation/method/knn/NearestNeighbour.cc
 interpolation/method/knn/NearestNeighbour.h
-interpolation/method/structured/StructuredInterpolation2D.tcc
-interpolation/method/structured/StructuredInterpolation2D.h
-interpolation/method/structured/StructuredInterpolation3D.tcc
-interpolation/method/structured/StructuredInterpolation3D.h
-interpolation/method/structured/kernels/LinearHorizontalKernel.h
-interpolation/method/structured/kernels/Linear3DKernel.h
-interpolation/method/structured/kernels/LinearVerticalKernel.h
-interpolation/method/structured/kernels/CubicHorizontalKernel.h
-interpolation/method/structured/kernels/Cubic3DKernel.h
-interpolation/method/structured/kernels/CubicVerticalKernel.h
-interpolation/method/structured/kernels/QuasiCubicHorizontalKernel.h
-interpolation/method/structured/kernels/QuasiCubic3DKernel.cc
-interpolation/method/structured/kernels/QuasiCubic3DKernel.h
-interpolation/method/structured/Linear2D.cc
-interpolation/method/structured/Linear2D.h
-interpolation/method/structured/Linear3D.cc
-interpolation/method/structured/Linear3D.h
 interpolation/method/structured/Cubic2D.cc
 interpolation/method/structured/Cubic2D.h
 interpolation/method/structured/Cubic3D.cc
 interpolation/method/structured/Cubic3D.h
+interpolation/method/structured/Linear2D.cc
+interpolation/method/structured/Linear2D.h
+interpolation/method/structured/Linear3D.cc
+interpolation/method/structured/Linear3D.h
 interpolation/method/structured/QuasiCubic2D.cc
 interpolation/method/structured/QuasiCubic2D.h
 interpolation/method/structured/QuasiCubic3D.cc
 interpolation/method/structured/QuasiCubic3D.h
+interpolation/method/structured/StructuredInterpolation2D.h
+interpolation/method/structured/StructuredInterpolation2D.tcc
+interpolation/method/structured/StructuredInterpolation3D.h
+interpolation/method/structured/StructuredInterpolation3D.tcc
+interpolation/method/structured/kernels/Cubic3DKernel.h
+interpolation/method/structured/kernels/CubicHorizontalKernel.h
+interpolation/method/structured/kernels/CubicVerticalKernel.h
+interpolation/method/structured/kernels/Linear3DKernel.h
+interpolation/method/structured/kernels/LinearHorizontalKernel.h
+interpolation/method/structured/kernels/LinearVerticalKernel.h
+interpolation/method/structured/kernels/QuasiCubic3DKernel.cc
+interpolation/method/structured/kernels/QuasiCubic3DKernel.h
+interpolation/method/structured/kernels/QuasiCubicHorizontalKernel.h
+interpolation/nonlinear/Missing.cc
+interpolation/nonlinear/Missing.h
+interpolation/nonlinear/NonLinear.cc
+interpolation/nonlinear/NonLinear.h
+
+linalg/Indexing.h
+linalg/Introspection.h
+linalg/View.h
+linalg/sparse.h
+linalg/sparse/Backend.h
+linalg/sparse/Backend.cc
+linalg/sparse/SparseMatrixMultiply.h
+linalg/sparse/SparseMatrixMultiply_EckitLinalg.h
+linalg/sparse/SparseMatrixMultiply_EckitLinalg.cc
+linalg/sparse/SparseMatrixMultiply_OpenMP.h
+linalg/sparse/SparseMatrixMultiply_OpenMP.cc
 )
 
 
@@ -614,6 +674,7 @@ util/Polygon.cc
 util/Polygon.h
 util/Rotation.cc
 util/Rotation.h
+util/Spec.h
 util/SphericalPolygon.cc
 util/SphericalPolygon.h
 util/UnitSphere.h
@@ -642,6 +703,7 @@ mesh/IsGhostNode.h
 util/LonLatMicroDeg.h
 util/CoordinateEnums.h
 util/PeriodicTransform.h
+util/Topology.h
 util/Unique.h
 util/Unique.cc
 util/Allocate.h

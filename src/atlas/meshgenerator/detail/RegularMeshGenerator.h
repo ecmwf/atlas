@@ -49,12 +49,14 @@ public:
 
     using MeshGenerator::Implementation::generate;
 
+    std::string type() const override { return "regular"; }
+
 private:
     virtual void hash( eckit::Hash& ) const override;
 
     void configure_defaults();
 
-    void generate_mesh( const RegularGrid&, const atlas::vector<int>& parts, Mesh& m ) const;
+    void generate_mesh( const RegularGrid&, const grid::Distribution& distribution, Mesh& m ) const;
 
 private:
     util::Metadata options;

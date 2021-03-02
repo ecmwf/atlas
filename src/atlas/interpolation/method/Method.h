@@ -14,6 +14,8 @@
 #include <string>
 #include <vector>
 
+#include "atlas/interpolation/Cache.h"
+#include "atlas/interpolation/NonLinear.h"
 #include "atlas/util/Object.h"
 #include "eckit/config/Configuration.h"
 #include "eckit/linalg/SparseMatrix.h"
@@ -23,6 +25,12 @@ class Field;
 class FieldSet;
 class FunctionSpace;
 class Grid;
+}  // namespace atlas
+
+namespace atlas {
+namespace test {
+class Access;
+}
 }  // namespace atlas
 
 namespace atlas {
@@ -36,14 +44,15 @@ public:
     virtual ~Method() {}
 
     /**
-   * @brief Setup the interpolator relating two functionspaces
-   * @param source functionspace containing source elements
-   * @param target functionspace containing target points
-   */
+     * @brief Setup the interpolator relating two functionspaces
+     * @param source functionspace containing source elements
+     * @param target functionspace containing target points
+     */
     void setup( const FunctionSpace& source, const FunctionSpace& target );
     void setup( const Grid& source, const Grid& target );
     void setup( const FunctionSpace& source, const Field& target );
     void setup( const FunctionSpace& source, const FieldSet& target );
+    void setup( const Grid& source, const Grid& target, const Cache& );
 
     void execute( const FieldSet& source, FieldSet& target ) const;
     void execute( const Field& source, Field& target ) const;
@@ -52,6 +61,8 @@ public:
 
     virtual const FunctionSpace& source() const = 0;
     virtual const FunctionSpace& target() const = 0;
+
+    virtual interpolation::Cache createCache() const;
 
 protected:
     virtual void do_execute( const FieldSet& source, FieldSet& target ) const;
@@ -66,36 +77,36 @@ protected:
     void haloExchange( const FieldSet& ) const;
     void haloExchange( const Field& ) const;
 
-    //const Config& config_;
-
-    // NOTE : Matrix-free or non-linear interpolation operators do not have
-    // matrices,
-    //        so do not expose here, even though only linear operators are now
-    //        implemented.
-    Matrix matrix_;
-
+    // NOTE : Matrix-free or non-linear interpolation operators do not have matrices, so do not expose here
+    friend class atlas::test::Access;
+    friend class interpolation::MatrixCache;
+    const Matrix* matrix_;
+    std::shared_ptr<Matrix> matrix_shared_;
+    interpolation::MatrixCache matrix_cache_;
+    NonLinear nonLinear_;
     bool use_eckit_linalg_spmv_;
+    bool allow_halo_exchange_{true};
 
 protected:
     virtual void do_setup( const FunctionSpace& source, const FunctionSpace& target ) = 0;
-    virtual void do_setup( const Grid& source, const Grid& target )                   = 0;
+    virtual void do_setup( const Grid& source, const Grid& target, const Cache& )     = 0;
     virtual void do_setup( const FunctionSpace& source, const Field& target );
     virtual void do_setup( const FunctionSpace& source, const FieldSet& target );
 
 private:
     template <typename Value>
-    void interpolate_field( const Field& src, Field& tgt ) const;
+    void interpolate_field( const Field& src, Field& tgt, const Matrix& ) const;
 
     template <typename Value>
-    void interpolate_field_rank1( const Field& src, Field& tgt ) const;
+    void interpolate_field_rank1( const Field& src, Field& tgt, const Matrix& ) const;
 
     template <typename Value>
-    void interpolate_field_rank2( const Field& src, Field& tgt ) const;
+    void interpolate_field_rank2( const Field& src, Field& tgt, const Matrix& ) const;
 
     template <typename Value>
-    void interpolate_field_rank3( const Field& src, Field& tgt ) const;
+    void interpolate_field_rank3( const Field& src, Field& tgt, const Matrix& ) const;
 
-    void check_compatibility( const Field& src, const Field& tgt ) const;
+    void check_compatibility( const Field& src, const Field& tgt, const Matrix& W ) const;
 };
 
 }  // namespace interpolation

@@ -40,6 +40,10 @@ void GmshImpl::defaults() {
     config_.info        = false;
     config_.openmode    = "w";
     config_.coordinates = "xy";
+
+    config_.configured_land_water = false;
+    config_.land                  = false;
+    config_.water                 = false;
 }
 
 // -----------------------------------------------------------------------------
@@ -60,6 +64,11 @@ void merge( GmshImpl::Configuration& present, const eckit::Parametrisation& upda
     update.get( "info", present.info );
     update.get( "openmode", present.openmode );
     update.get( "coordinates", present.coordinates );
+    if ( update.has( "water" ) || update.has( "land" ) ) {
+        update.get( "land", present.land );
+        update.get( "water", present.water );
+        present.configured_land_water = true;
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -102,6 +111,10 @@ void GmshImpl::setGmshConfiguration( detail::GmshIO& gmsh, const GmshImpl::Confi
     gmsh.options.set( "levels", c.levels );
     gmsh.options.set( "info", c.info );
     gmsh.options.set( "nodes", c.coordinates );
+    if ( c.configured_land_water ) {
+        gmsh.options.set( "land", c.land );
+        gmsh.options.set( "water", c.water );
+    }
 }
 
 // -----------------------------------------------------------------------------

@@ -79,6 +79,7 @@ public:
     using Handle::Handle;
     Grid() = default;
     Grid( const std::string& name, const Domain& = Domain() );
+    Grid( const std::string& name, const Projection&, const Domain& = Domain() );
     Grid( const Grid&, const Domain& );
     Grid( const Config& );
 
@@ -96,7 +97,12 @@ public:
     /// Adds to the hash the information that makes this Grid unique
     void hash( eckit::Hash& h ) const;
 
+    size_t footprint() const;
+
     Spec spec() const;
+
+    Config meshgenerator() const;
+    Config partitioner() const;
 };
 
 //---------------------------------------------------------------------------------------------------------------------

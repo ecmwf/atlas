@@ -8,6 +8,10 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <string>
+
+#include "eckit/utils/MD5.h"
+
 #include "atlas/domain/detail/Domain.h"
 #include "atlas/domain/detail/DomainFactory.h"
 #include "atlas/projection/Projection.h"
@@ -32,6 +36,35 @@ const Domain* Domain::create( const eckit::Parametrisation& p ) {
     // should return error here
     throw_Exception( "type missing in Params", Here() );
 }
+
+//---------------------------------------------------------------------------------------------------------------------
+
+extern "C" {
+const Domain* atlas__Domain__ctor_config( const eckit::Parametrisation* config ) {
+    return Domain::create( *config );
+}
+void atlas__Domain__type( const Domain* This, char*& type, int& size ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Domain" );
+    std::string s = This->type();
+    size          = static_cast<int>( s.size() + 1 );
+    type          = new char[size];
+    strcpy( type, s.c_str() );
+}
+void atlas__Domain__hash( const Domain* This, char*& hash, int& size ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Domain" );
+    eckit::MD5 md5;
+    This->hash( md5 );
+    std::string s = md5.digest();
+    size          = static_cast<int>( s.size() + 1 );
+    hash          = new char[size];
+    strcpy( hash, s.c_str() );
+}
+Domain::Spec* atlas__Domain__spec( const Domain* This ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Domain" );
+    return new Domain::Spec( This->spec() );
+}
+
+}  // extern "C"
 
 }  // namespace domain
 }  // namespace atlas

@@ -1,12 +1,5 @@
-sudo: false
 
 language: cpp
-
-
-# Workaround for https://github.com/travis-ci/travis-ci/issues/4681
-matrix:
-  - TRAVIS_EMPTY_JOB_WORKAROUND=true
-
 
 cache:
   directories:
@@ -17,11 +10,7 @@ cache:
     - ${HOME}/deps/fckit
 
 
-matrix:
-  exclude:
-
-    - env: TRAVIS_EMPTY_JOB_WORKAROUND
-
+jobs:
   include:
 
     - os: linux
@@ -68,20 +57,14 @@ matrix:
         - MPI=openmpi
         - ATLAS_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=DEBUG"
         - ATLAS_CTEST_OPTIONS="-E atlas_test_stencil_parallel_mpi16"
-      osx_image: xcode10.1
-      addons:
-        homebrew:
-          packages:
-          - openmpi
-          - cgal
-          - fftw
+      osx_image: xcode12
 
     - os: osx
       env:
         - CACHE_NAME=osx-clang-mpich
         - CXX_COMPILER='clang++' C_COMPILER='clang' Fortran_COMPILER='gfortran'
         - MPI=mpich
-      osx_image: xcode9
+      osx_image: xcode12
 
     - os: linux
       compiler: gcc
@@ -90,8 +73,8 @@ matrix:
         - CXX_COMPILER='pgc++' C_COMPILER='pgcc' Fortran_COMPILER='pgfortran'
         - MPI='openmpi'
         - PGI_VERSION="CommunityEdition"
-        - ECKIT_CMAKE_OPTIONS="-DENABLE_ECKIT-395=OFF -DRT_LIB=/usr/lib/x86_64-linux-gnu/librt.so -DCURSES_LIBRARY=/usr/lib/x86_64-linux-gnu/libcurses.so"
-        - ATLAS_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=DEBUG"
+        - ECKIT_CMAKE_OPTIONS="-DENABLE_ECKIT-395=OFF -DRT_LIB=/usr/lib/x86_64-linux-gnu/librt.so -DCURSES_LIBRARY=/usr/lib/x86_64-linux-gnu/libcurses.so -DMPI_ARGS=--oversubscribe"
+        - ATLAS_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=DEBUG -DMPI_ARGS=--oversubscribe"
 
 before_install:
 
@@ -135,7 +118,7 @@ install:
   - |
     ### Install PGI community edition
     if [[ "${PGI_VERSION:-notset}" == "CommunityEdition" ]]; then
-      install-pgi.sh --mpi --prefix ${DEPS_DIR}/pgi
+      install-pgi.sh --prefix ${DEPS_DIR}/pgi
       source ${DEPS_DIR}/pgi/env.sh
     fi
 
@@ -155,11 +138,30 @@ install:
   - |
     ### Install CMake
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
+      CMAKE_VERSION=3.18.4
       if [[ -z "$(ls -A ${DEPS_DIR}/cmake)" ]]; then
-        CMAKE_URL="https://cmake.org/files/v3.15.2/cmake-3.15.2-Linux-x86_64.tar.gz"
-        mkdir -p ${DEPS_DIR}/cmake && travis_retry wget --no-check-certificate --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C ${DEPS_DIR}/cmake
+        if [[ "${TRAVIS_ARCH}" == "amd64" ]]; then
+          CMAKE_URL="https://cmake.org/files/v${CMAKE_VERSION%.*}/cmake-${CMAKE_VERSION}-Linux-x86_64.tar.gz"
+          mkdir -p ${DEPS_DIR}/cmake && travis_retry wget --no-check-certificate --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C ${DEPS_DIR}/cmake
+        fi
+        if [[ "${TRAVIS_ARCH}" = "ppc64le" ]]; then
+          # Build from source
+          CMAKE_URL="https://cmake.org/files/v${CMAKE_VERSION%.*}/cmake-${CMAKE_VERSION}.tar.gz"
+          mkdir -p ${DEPS_DIR}/cmake-source && travis_retry wget --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C ${DEPS_DIR}/cmake-source
+          (
+            cd ${DEPS_DIR}/cmake-source
+            mkdir -p build && cd build
+            ../bootstrap --prefix=${DEPS_DIR}/cmake && make -j4 install
+          )
+        fi
+      else
+        echo "CMake already found in cache"
       fi
       export PATH=${DEPS_DIR}/cmake/bin:${PATH}
+    else
+      brew upgrade cmake || brew install cmake
+      brew install openssl
+      export OPENSSL_ROOT_DIR=/usr/local/opt/openssl
     fi
     cmake --version
 
@@ -227,13 +229,13 @@ script:
   #################################################################
   - mkdir -p ${ATLAS_BUILD_DIR} && cd ${ATLAS_BUILD_DIR}
   - cmake -DCMAKE_MODULE_PATH=${ECBUILD_MODULE_PATH} ${ATLAS_CMAKE_OPTIONS} ${ATLAS_SOURCE_DIR}
-  - make -j4
+  - make -j$(nproc)
   - bin/atlas --info
 
   #################################################################
   # Test Atlas
   #################################################################
-  - ctest ${ATLAS_CTEST_OPTIONS}
+  - ATLAS_TRACE=1 ATLAS_DEBUG=1 ctest --output-on-failure --timeout 300 ${ATLAS_CTEST_OPTIONS}
 
 after_success:
 
@@ -251,5 +253,5 @@ after_success:
 after_failure:
 
   - cd ${ATLAS_BUILD_DIR}
-  - ctest -VV --rerun-failed ${ATLAS_CTEST_OPTIONS}
+  - ATLAS_TRACE=1 ctest -VV --rerun-failed --timeout 60 ${ATLAS_CTEST_OPTIONS}
   - cat ecbuild.log

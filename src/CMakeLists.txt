@@ -60,6 +60,18 @@ else()
   set( atlas_HAVE_GRIDTOOLS_STORAGE 0 )
 endif()
 
+set( atlas_BUILD_TYPE_RELEASE 0 )
+set( atlas_BUILD_TYPE_DEBUG   0 )
+if( CMAKE_BUILD_TYPE MATCHES "Release" )
+  set( atlas_BUILD_TYPE_RELEASE 1 )
+endif()
+if( CMAKE_BUILD_TYPE MATCHES "Debug" )
+  set( atlas_BUILD_TYPE_DEBUG 1 )
+endif()
+
+ecbuild_parse_version( ${eckit_VERSION} PREFIX ATLAS_ECKIT )
+math( EXPR ATLAS_ECKIT_VERSION_INT "( 10000 * ${ATLAS_ECKIT_VERSION_MAJOR} ) + ( 100 * ${ATLAS_ECKIT_VERSION_MINOR} ) + ${ATLAS_ECKIT_VERSION_PATCH}" )
+
 add_subdirectory( atlas_acc_support )
 
 add_subdirectory( atlas )

@@ -14,6 +14,7 @@
 #include "atlas/grid/Stencil.h"
 #include "atlas/grid/StencilComputer.h"
 #include "atlas/grid/Vertical.h"
+#include "atlas/library/config.h"
 #include "atlas/util/Point.h"
 
 namespace atlas {
@@ -91,6 +92,10 @@ public:
             double d3 = z - zvec[3];
 
             w[0] = ( d1 * d2 * d3 ) / dc0;
+#if defined( _CRAYC ) && ATLAS_BUILD_TYPE_RELEASE
+            // prevents FE_INVALID somehow (tested with Cray 8.7)
+            ATLAS_ASSERT( !std::isnan( w[0] ) );
+#endif
             w[1] = ( d0 * d2 * d3 ) / dc1;
             w[2] = ( d0 * d1 * d3 ) / dc2;
             w[3] = 1. - w[0] - w[1] - w[2];

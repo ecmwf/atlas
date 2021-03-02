@@ -55,11 +55,21 @@ static const double parametricEpsilon = 1e-15;
 }  // namespace
 
 
-void FiniteElement::do_setup( const Grid& source, const Grid& target ) {
+void FiniteElement::do_setup( const Grid& source, const Grid& target, const Cache& cache ) {
+    allow_halo_exchange_ = false;
+    //  no halo_exchange because we don't have any halo with delaunay or 3d structured meshgenerator
+
+    if ( interpolation::MatrixCache( cache ) ) {
+        matrix_cache_ = cache;
+        matrix_       = &matrix_cache_.matrix();
+        ATLAS_ASSERT( matrix_cache_.matrix().rows() == target.size() );
+        ATLAS_ASSERT( matrix_cache_.matrix().cols() == source.size() );
+        return;
+    }
     if ( mpi::size() > 1 ) {
         ATLAS_NOTIMPLEMENTED;
     }
-    auto functionspace = []( const Grid& grid ) {
+    auto make_nodecolumns = []( const Grid& grid ) {
         Mesh mesh;
         if ( StructuredGrid{grid} ) {
             mesh = MeshGenerator( "structured", util::Config( "3d", true ) ).generate( grid );
@@ -70,7 +80,7 @@ void FiniteElement::do_setup( const Grid& source, const Grid& target ) {
         return functionspace::NodeColumns( mesh );
     };
 
-    do_setup( functionspace( source ), functionspace( target ) );
+    do_setup( make_nodecolumns( source ), functionspace::PointCloud{target} );
 }
 
 void FiniteElement::do_setup( const FunctionSpace& source, const FunctionSpace& target ) {
@@ -127,7 +137,7 @@ void FiniteElement::print( std::ostream& out ) const {
     }
     auto gidx_src = array::make_view<gidx_t, 1>( src.nodes().global_index() );
 
-    ATLAS_ASSERT( tgt.nodes().size() == idx_t( matrix_.rows() ) );
+    ATLAS_ASSERT( tgt.nodes().size() == idx_t( matrix_->rows() ) );
 
 
     auto field_stencil_points_loc  = tgt.createField<gidx_t>( option::variables( Stencil::max_stencil_size ) );
@@ -136,10 +146,10 @@ void FiniteElement::print( std::ostream& out ) const {
 
     auto stencil_points_loc  = array::make_view<gidx_t, 2>( field_stencil_points_loc );
     auto stencil_weights_loc = array::make_view<double, 2>( field_stencil_weigths_loc );
-    auto stencil_size_loc    = array::make_view<int, 1>( field_stencil_size_loc );
+    auto stencil_size_loc    = array::make_view<idx_t, 1>( field_stencil_size_loc );
     stencil_size_loc.assign( 0 );
 
-    for ( Matrix::const_iterator it = matrix_.begin(); it != matrix_.end(); ++it ) {
+    for ( Matrix::const_iterator it = matrix_->begin(); it != matrix_->end(); ++it ) {
         idx_t p                     = idx_t( it.row() );
         idx_t& i                    = stencil_size_loc( p );
         stencil_points_loc( p, i )  = gidx_src( it.col() );
@@ -154,12 +164,12 @@ void FiniteElement::print( std::ostream& out ) const {
         tgt.createField<gidx_t>( option::variables( Stencil::max_stencil_size ) | option::global( 0 ) );
     auto field_stencil_weights_glb =
         tgt.createField<double>( option::variables( Stencil::max_stencil_size ) | option::global( 0 ) );
-    auto field_stencil_size_glb = tgt.createField<int>( option::global( 0 ) );
+    auto field_stencil_size_glb = tgt.createField<idx_t>( option::global( 0 ) );
 
 
     auto stencil_points_glb  = array::make_view<gidx_t, 2>( field_stencil_points_glb );
     auto stencil_weights_glb = array::make_view<double, 2>( field_stencil_weights_glb );
-    auto stencil_size_glb    = array::make_view<int, 1>( field_stencil_size_glb );
+    auto stencil_size_glb    = array::make_view<idx_t, 1>( field_stencil_size_glb );
 
     tgt.gather().gather( stencil_size_loc, stencil_size_glb );
     tgt.gather().gather( stencil_points_loc, stencil_points_glb );
@@ -202,7 +212,7 @@ void FiniteElement::setup( const FunctionSpace& source ) {
     config.set( "flatten_virtual_elements", false );
     Field cell_centres = mesh::actions::BuildCellCentres( config )( meshSource );
 
-    std::unique_ptr<ElemIndex3> eTree( create_element_kdtree( cell_centres ) );
+    std::unique_ptr<ElemIndex3> eTree( create_element_kdtree( meshSource, cell_centres ) );
 
     trace_setup_source.stop();
 
@@ -291,7 +301,7 @@ void FiniteElement::setup( const FunctionSpace& source ) {
 
     // fill sparse matrix and return
     Matrix A( out_npts, inp_npts, weights_triplets );
-    matrix_.swap( A );
+    matrix_shared_->swap( A );
 }
 
 struct ElementEdge {

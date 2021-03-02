@@ -41,6 +41,18 @@ Grid::Grid( const std::string& shortname, const Domain& domain ) :
         return Grid::Implementation::create( shortname, config );
     }() ) {}
 
+Grid::Grid( const std::string& shortname, const Projection& projection, const Domain& domain ) :
+    Handle( [&] {
+        Config config;
+        if ( projection ) {
+            config.set( "projection", projection.spec() );
+        }
+        if ( domain ) {
+            config.set( "domain", domain.spec() );
+        }
+        return Grid::Implementation::create( shortname, config );
+    }() ) {}
+
 Grid::Grid( const Grid& grid, const Grid::Domain& domain ) :
     Handle( [&] {
         ATLAS_ASSERT( grid );
@@ -51,6 +63,10 @@ Grid::Grid( const Config& p ) : Handle( Grid::Implementation::create( p ) ) {}
 
 idx_t Grid::size() const {
     return get()->size();
+}
+
+size_t Grid::footprint() const {
+    return get()->footprint();
 }
 
 const Grid::Projection& Grid::projection() const {
@@ -74,11 +90,19 @@ std::string Grid::uid() const {
 }
 
 void Grid::hash( eckit::Hash& h ) const {
-    return get()->hash( h );
+    get()->hash( h );
 }
 
 Grid::Spec Grid::spec() const {
     return get()->spec();
+}
+
+Grid::Config Grid::meshgenerator() const {
+    return get()->meshgenerator();
+}
+
+Grid::Config Grid::partitioner() const {
+    return get()->partitioner();
 }
 
 }  // namespace atlas

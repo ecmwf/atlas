@@ -9,28 +9,22 @@
 ############################################################################################
 # Atlas
 
-cmake_minimum_required( VERSION 3.6 FATAL_ERROR )
-if( POLICY CMP0074 )
-  cmake_policy( SET CMP0074 NEW )
-  # This policy allows to search for packages with <package>_ROOT variables
-  #                        (only supported with CMake 3.12 and above)
-  # This policy can be removed once cmake_minimum_required( VERSION 3.12 ) is used
-endif()
+cmake_minimum_required( VERSION 3.12 FATAL_ERROR )
 
-find_package( ecbuild 3.1.0 REQUIRED )
+find_package( ecbuild 3.4 REQUIRED HINTS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../ecbuild )
 
 ################################################################################
 # Initialise project Atlas
 
 project( atlas LANGUAGES CXX )
 
-set( ATLAS_BITS_GLOBAL 64 ) # bits used to define a global index (atlas::gidx_t)
-set( ATLAS_BITS_LOCAL 32 )  # bits used to define a local index  (atlas::idx_t)
+set( ATLAS_BITS_GLOBAL 64 CACHE STRING "bits used to define a global index (atlas::gidx_t)" )
+set( ATLAS_BITS_LOCAL  32 CACHE STRING "bits used to define a local index (atlas::idx_t)" )
 
 ################################################################################
 # Required packages
 
-ecbuild_find_package( NAME eckit VERSION 1.4.0 REQUIRED )
+ecbuild_find_package( NAME eckit VERSION 1.15.0 REQUIRED )
 ecbuild_debug( "   eckit_FEATURES : [${eckit_FEATURES}]" )
 
 ################################################################################
@@ -50,7 +44,9 @@ include( features/PROJ )
 include( features/SANDBOX )
 include( features/CLANG_TIDY )
 include( features/INCLUDE_WHAT_YOU_USE )
+include( features/INIT_SNAN )
 include( features/DOCS )
+include( features/ATLAS_RUN )
 
 ################################################################################
 # sources

@@ -32,6 +32,7 @@ TEST( arpege_t31c24 )
   use atlas_module
   implicit none
   type(atlas_ReducedGaussianGrid) :: grid
+  type(atlas_LonLatRectangularDomain) :: bounding_box
 
   real(dp) :: lonlat(3376)
 
@@ -927,6 +928,13 @@ TEST( arpege_t31c24 )
     enddo
   enddo
 
+  bounding_box = grid%lonlat_bounding_box()
+  FCTEST_CHECK_CLOSE( bounding_box%west(),    0._dp, 1.e-10_dp )
+  FCTEST_CHECK_CLOSE( bounding_box%east(),  360._dp, 1.e-10_dp )
+  FCTEST_CHECK_CLOSE( bounding_box%south(), -90._dp, 1.e-10_dp )
+  FCTEST_CHECK_CLOSE( bounding_box%north(),  90._dp, 1.e-10_dp )
+
+  call bounding_box%final()
   call grid%final()
 END_TEST
 

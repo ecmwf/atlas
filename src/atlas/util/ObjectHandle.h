@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "atlas/library/config.h"
+
 namespace atlas {
 namespace util {
 
@@ -65,16 +67,22 @@ public:
     using Handle         = ObjectHandle<T>;
 
 public:
-    T* get() { return reinterpret_cast<T*>( object_ ); }
-    const T* get() const { return reinterpret_cast<const T*>( object_ ); }
     ObjectHandle() = default;
     ObjectHandle( const T* object ) : ObjectHandleBase( reinterpret_cast<const Object*>( object ) ) {}
     ObjectHandle( const ObjectHandle& handle ) : ObjectHandleBase( reinterpret_cast<const Object*>( handle.get() ) ) {}
-    const T* operator->() const { return get(); }
-    T* operator->() { return get(); }
-    const T& operator*() const { return *get(); }
-    T& operator*() { return *get(); }
-    void reset( const T* object ) { ObjectHandleBase::reset( reinterpret_cast<const Object*>( object ) ); }
+    ObjectHandle& operator=( const ObjectHandle& handle ) {
+        reset( handle.get() );
+        return *this;
+    }
+    ATLAS_ALWAYS_INLINE T* get() { return reinterpret_cast<T*>( object_ ); }
+    ATLAS_ALWAYS_INLINE const T* get() const { return reinterpret_cast<const T*>( object_ ); }
+    ATLAS_ALWAYS_INLINE const T* operator->() const { return get(); }
+    ATLAS_ALWAYS_INLINE T* operator->() { return get(); }
+    ATLAS_ALWAYS_INLINE const T& operator*() const { return *get(); }
+    ATLAS_ALWAYS_INLINE T& operator*() { return *get(); }
+    ATLAS_ALWAYS_INLINE void reset( const T* object ) {
+        ObjectHandleBase::reset( reinterpret_cast<const Object*>( object ) );
+    }
 };
 
 }  // namespace util

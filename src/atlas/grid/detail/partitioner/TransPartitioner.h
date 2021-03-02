@@ -30,10 +30,11 @@ public:
     /// @brief Constructor
     TransPartitioner();
 
-    TransPartitioner( const idx_t nb_partitions );
+    TransPartitioner( const idx_t nb_partitions, const eckit::Parametrisation& = util::NoConfig() );
 
     virtual ~TransPartitioner();
 
+    using Partitioner::partition;
     /// Warning: this function temporariliy allocates a new Trans, but without the
     /// computations
     /// of the spectral coefficients (LDGRIDONLY=TRUE)

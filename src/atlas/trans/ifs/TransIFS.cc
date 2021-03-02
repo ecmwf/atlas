@@ -8,7 +8,6 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/eckit_version.h"
 #include "eckit/log/JSON.h"
 
 #include "transi/trans.h"

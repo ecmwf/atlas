@@ -406,9 +406,9 @@ ASSERT(0);
             Log::error() << "node " << gid << " is not owned by anyone" << std::endl;
         }
     }
-    EXPECT( nb_owned == grid.size() );
+    EXPECT_EQ( nb_owned, grid.size() );
 
-    EXPECT( eckit::types::is_approximately_equal( area, check_area, 1e-10 ) );
+    EXPECT_APPROX_EQ( area, check_area, 1e-9 );
 }
 
 CASE( "test_meshgen_ghost_at_end" ) {

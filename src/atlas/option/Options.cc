@@ -77,6 +77,10 @@ pole_edges::pole_edges( bool _pole_edges ) {
     set( "pole_edges", _pole_edges );
 }
 
+alignment::alignment( int value ) {
+    set( "alignment", value );
+}
+
 // ----------------------------------------------------------------------------
 
 }  // namespace option

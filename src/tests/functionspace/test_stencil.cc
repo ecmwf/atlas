@@ -195,7 +195,7 @@ CASE( "test vertical stencil" ) {
         const double eps = 1.e-14;
 
         for ( idx_t k = 0; k < nlev; ++k ) {
-            idx_t k_expected = std::max( 0, std::min( nlev - 1, k ) );
+            idx_t k_expected = std::max<idx_t>( 0, std::min( nlev - 1, k ) );
             EXPECT( compute_lower( zcoord[k] ) == k_expected );
             EXPECT( compute_lower( zcoord[k] - eps ) == k_expected );
             EXPECT( compute_lower( zcoord[k] + eps ) == k_expected );

@@ -39,6 +39,12 @@ Mesh MeshGeneratorImpl::operator()( const Grid& grid ) const {
     return mesh;
 }
 
+Mesh MeshGeneratorImpl::operator()( const Grid& grid, const grid::Partitioner& partitioner ) const {
+    Mesh mesh;
+    generate( grid, partitioner, mesh );
+    return mesh;
+}
+
 Mesh MeshGeneratorImpl::operator()( const Grid& grid, const grid::Distribution& distribution ) const {
     Mesh mesh;
     generate( grid, distribution, mesh );
@@ -48,6 +54,16 @@ Mesh MeshGeneratorImpl::operator()( const Grid& grid, const grid::Distribution& 
 Mesh MeshGeneratorImpl::generate( const Grid& grid ) const {
     Mesh mesh;
     generate( grid, mesh );
+    return mesh;
+}
+
+void MeshGeneratorImpl::generate( const Grid& grid, const grid::Partitioner& partitioner, Mesh& mesh ) const {
+    generate( grid, grid::Distribution( grid, partitioner ), mesh );
+}
+
+Mesh MeshGeneratorImpl::generate( const Grid& grid, const grid::Partitioner& partitioner ) const {
+    Mesh mesh;
+    generate( grid, partitioner, mesh );
     return mesh;
 }
 

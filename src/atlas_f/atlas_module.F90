@@ -56,6 +56,9 @@ use atlas_Connectivity_module, only: &
     & atlas_Connectivity, &
     & atlas_MultiBlockConnectivity, &
     & atlas_BlockConnectivity
+use atlas_Domain_module, only : &
+    & atlas_Domain, &
+    & atlas_LonLatRectangularDomain
 use atlas_mesh_Nodes_module, only: &
     & atlas_mesh_Nodes
 use atlas_HaloExchange_module, only: &
@@ -107,7 +110,8 @@ use atlas_kinds_module, only: &
     & ATLAS_KIND_INT32
 use atlas_Partitioner_module, only: &
     & atlas_Partitioner, &
-    & atlas_MatchingMeshPartitioner
+    & atlas_MatchingPartitioner, &
+    & atlas_MatchingMeshPartitioner ! Deprecated ! use atlas_MatchingPartitioner instead
 use atlas_MeshGenerator_module, only: &
     & atlas_MeshGenerator
 use atlas_Method_module, only: &

@@ -39,6 +39,8 @@ TYPE, extends(fckit_owned_object) :: atlas_IndexKDTree
 !------------------------------------------------------------------------------
 contains
   procedure, public :: delete => atlas_IndexKDTree__delete
+  procedure, public :: empty => atlas_IndexKDTree__empty
+  procedure, public :: size => atlas_IndexKDTree__size
   procedure :: reserve => IndexKDTree__reserve
   procedure :: insert_separate_coords => IndexKDTree__insert_separate_coords
   procedure :: insert_vectorized_coords => IndexKDTree__insert_vectorized_coords
@@ -107,30 +109,52 @@ subroutine atlas_IndexKDTree__delete(this)
   call this%reset_c_ptr()
 end subroutine atlas_IndexKDTree__delete
 
+function atlas_IndexKDTree__empty(this) result(empty)
+  use atlas_KDTree_c_binding
+  logical :: empty
+  class(atlas_IndexKDTree), intent(in) :: this
+  if( atlas__IndexKDTree__empty(this%CPTR_PGIBUG_A) == 0 ) then
+    empty = .False.
+  else
+    empty = .True.
+  endif
+endfunction
+
+function atlas_IndexKDTree__size(this) result(size)
+  use atlas_KDTree_c_binding
+  use atlas_kinds_module
+  integer(ATLAS_KIND_IDX) :: size
+  class(atlas_IndexKDTree), intent(in) :: this
+  size = atlas__IndexKDTree__size(this%CPTR_PGIBUG_A)
+endfunction
+
 subroutine IndexKDTree__reserve(this, size)
   use atlas_KDTree_c_binding
   use fckit_c_interop_module
+  use atlas_kinds_module
   class(atlas_IndexKDTree), intent(in) :: this
-  integer(c_int), intent(in) :: size
+  integer(ATLAS_KIND_IDX), intent(in) :: size
   call atlas__IndexKDTree__reserve(this%CPTR_PGIBUG_A, size)
 end subroutine IndexKDTree__reserve
 
 subroutine IndexKDTree__insert_separate_coords(this, lon, lat, index)
   use atlas_KDTree_c_binding
   use fckit_c_interop_module
+  use atlas_kinds_module
   class(atlas_IndexKDTree), intent(in) :: this
   real(c_double), intent(in) :: lon
   real(c_double), intent(in) :: lat
-  integer(c_int), intent(in) :: index
+  integer(ATLAS_KIND_IDX), intent(in) :: index
   call atlas__IndexKDTree__insert(this%CPTR_PGIBUG_A, lon, lat, index)
 end subroutine IndexKDTree__insert_separate_coords
 
 subroutine IndexKDTree__insert_vectorized_coords(this, lonlat, index)
   use atlas_KDTree_c_binding
   use fckit_c_interop_module
+  use atlas_kinds_module
   class(atlas_IndexKDTree), intent(in) :: this
   real(c_double), intent(in) :: lonlat(2)
-  integer(c_int), intent(in) :: index
+  integer(ATLAS_KIND_IDX), intent(in) :: index
   call atlas__IndexKDTree__insert(this%CPTR_PGIBUG_A, lonlat(1), lonlat(2), index)
 end subroutine IndexKDTree__insert_vectorized_coords
 
@@ -141,16 +165,18 @@ subroutine IndexKDTree__build_only(this)
   call atlas__IndexKDTree__build(this%CPTR_PGIBUG_A)
 end subroutine IndexKDTree__build_only
 
-subroutine IndexKDTree__build_list_separate_coords(this, k, lons, lats, indices)
+subroutine IndexKDTree__build_list_separate_coords(this, n, lons, lats, indices)
   use atlas_KDTree_c_binding
   use fckit_c_interop_module
+  use atlas_kinds_module
   class(atlas_IndexKDTree), intent(in) :: this
-  integer(c_int), intent(in) :: k
-  real(c_double), intent(in) :: lons(k)
-  real(c_double), intent(in) :: lats(k)
-  integer(c_int), intent(in), optional :: indices(k)
-  integer(c_int) :: i, index
-  do i = 1, k
+  integer(ATLAS_KIND_IDX), intent(in) :: n
+  real(c_double), intent(in) :: lons(n)
+  real(c_double), intent(in) :: lats(n)
+  integer(ATLAS_KIND_IDX), intent(in), optional :: indices(n)
+  integer(ATLAS_KIND_IDX) :: i
+  integer(ATLAS_KIND_IDX) :: index
+  do i = 1, n
     if (present(indices)) then
       index = indices(i)
     else
@@ -161,15 +187,16 @@ subroutine IndexKDTree__build_list_separate_coords(this, k, lons, lats, indices)
   call this%build()
 end subroutine IndexKDTree__build_list_separate_coords
 
-subroutine IndexKDTree__build_list_vectorized_coords(this, k, lonlats, indices)
+subroutine IndexKDTree__build_list_vectorized_coords(this, n, lonlats, indices)
   use atlas_KDTree_c_binding
   use fckit_c_interop_module
+  use atlas_kinds_module
   class(atlas_IndexKDTree), intent(in) :: this
-  integer(c_int), intent(in) :: k  
-  real(c_double), intent(in) :: lonlats(k,2)
-  integer(c_int), intent(in), optional :: indices(k)
-  integer(c_int) :: i, index
-  do i = 1, k
+  integer(ATLAS_KIND_IDX), intent(in) :: n  
+  real(c_double), intent(in) :: lonlats(n,2)
+  integer(ATLAS_KIND_IDX), intent(in), optional :: indices(n)
+  integer(ATLAS_KIND_IDX) :: i, index
+  do i = 1, n
     if (present(indices)) then
       index = indices(i)
     else
@@ -184,11 +211,12 @@ subroutine IndexKDTree__closestPoints_separate_coords(this, plon, plat, k, indic
   use atlas_KDTree_c_binding
   use, intrinsic :: iso_c_binding, only : c_f_pointer
   use fckit_c_interop_module
+  use atlas_kinds_module
   class(atlas_IndexKDTree), intent(in) :: this
   real(c_double), intent(in) :: plon
   real(c_double), intent(in) :: plat
   integer(c_int), intent(in) :: k
-  integer(c_int), intent(out) :: indices(k)
+  integer(ATLAS_KIND_IDX), intent(out) :: indices(k)
   real(c_double), intent(out), optional :: distances(k)
   real(c_double), intent(out), optional :: lons(k)
   real(c_double), intent(out), optional :: lats(k)
@@ -196,7 +224,7 @@ subroutine IndexKDTree__closestPoints_separate_coords(this, plon, plat, k, indic
   type(c_ptr) :: distances_cptr
   type(c_ptr) :: lons_cptr
   type(c_ptr) :: lats_cptr
-  integer(c_int), pointer :: indices_fptr(:)
+  integer(ATLAS_KIND_IDX), pointer :: indices_fptr(:)
   real(c_double), pointer :: distances_fptr(:)
   real(c_double), pointer :: lons_fptr(:)
   real(c_double), pointer :: lats_fptr(:)
@@ -228,17 +256,18 @@ subroutine IndexKDTree__closestPoints_vectorized_coords(this, point, k, indices,
   use atlas_KDTree_c_binding
   use, intrinsic :: iso_c_binding, only : c_f_pointer
   use fckit_c_interop_module
+  use atlas_kinds_module
   class(atlas_IndexKDTree), intent(in) :: this
   real(c_double), intent(in) :: point(2)
   integer(c_int), intent(in) :: k
-  integer(c_int), intent(out) :: indices(k)
+  integer(ATLAS_KIND_IDX), intent(out) :: indices(k)
   real(c_double), intent(out), optional :: distances(k)
   real(c_double), intent(out), optional :: lonlats(k,2)
   type(c_ptr) :: indices_cptr
   type(c_ptr) :: distances_cptr
   type(c_ptr) :: lons_cptr
   type(c_ptr) :: lats_cptr
-  integer(c_int), pointer :: indices_fptr(:)
+  integer(ATLAS_KIND_IDX), pointer :: indices_fptr(:)
   real(c_double), pointer :: distances_fptr(:)
   real(c_double), pointer :: lons_fptr(:)
   real(c_double), pointer :: lats_fptr(:)
@@ -267,10 +296,11 @@ end subroutine IndexKDTree__closestPoints_vectorized_coords
 subroutine IndexKDTree__closestPoint_separate_coords(this, plon, plat, index, distance, lon, lat)
   use atlas_KDTree_c_binding
   use fckit_c_interop_module
+  use atlas_kinds_module
   class(atlas_IndexKDTree), intent(in) :: this
   real(c_double), intent(in) :: plon
   real(c_double), intent(in) :: plat
-  integer(c_int), intent(out) :: index
+  integer(ATLAS_KIND_IDX), intent(out) :: index
   real(c_double), intent(out), optional :: distance
   real(c_double), intent(out), optional :: lon
   real(c_double), intent(out), optional :: lat
@@ -284,9 +314,10 @@ end subroutine IndexKDTree__closestPoint_separate_coords
 subroutine IndexKDTree__closestPoint_vectorized_coords(this, point, index, distance, lonlat)
   use atlas_KDTree_c_binding
   use fckit_c_interop_module
+  use atlas_kinds_module
   class(atlas_IndexKDTree), intent(in) :: this
   real(c_double), intent(in) :: point(2)
-  integer(c_int), intent(out) :: index
+  integer(ATLAS_KIND_IDX), intent(out) :: index
   real(c_double), intent(out), optional :: distance
   real(c_double), intent(out), optional :: lonlat(2)
   real(c_double) :: distance_tmp, lon_tmp, lat_tmp
@@ -302,12 +333,13 @@ subroutine IndexKDTree__closestPointsWithinRadius_separate_coords(this, plon, pl
   use atlas_KDTree_c_binding
   use, intrinsic :: iso_c_binding, only : c_f_pointer
   use fckit_c_interop_module
+  use atlas_kinds_module
   class(atlas_IndexKDTree), intent(in) :: this
   real(c_double), intent(in) :: plon
   real(c_double), intent(in) :: plat
   real(c_double), intent(in) :: radius
   integer(c_int), intent(out) :: k
-  integer(c_int), allocatable, intent(inout), optional :: indices(:)
+  integer(ATLAS_KIND_IDX), allocatable, intent(inout), optional :: indices(:)
   real(c_double), allocatable, intent(inout), optional :: distances(:)
   real(c_double), allocatable, intent(inout), optional :: lons(:)
   real(c_double), allocatable, intent(inout), optional :: lats(:)
@@ -367,11 +399,12 @@ subroutine IndexKDTree__closestPointsWithinRadius_vectorized_coords(this, point,
   use atlas_KDTree_c_binding
   use, intrinsic :: iso_c_binding, only : c_f_pointer
   use fckit_c_interop_module
+  use atlas_kinds_module
   class(atlas_IndexKDTree), intent(in) :: this
   real(c_double), intent(in) :: point(2)
   real(c_double), intent(in) :: radius
   integer(c_int), intent(out) :: k
-  integer(c_int), allocatable, intent(inout), optional :: indices(:)
+  integer(ATLAS_KIND_IDX), allocatable, intent(inout), optional :: indices(:)
   real(c_double), allocatable, intent(inout), optional :: distances(:)
   real(c_double), allocatable, intent(inout), optional :: lonlats(:,:)
   integer(c_size_t) :: k_tmp
@@ -381,7 +414,7 @@ subroutine IndexKDTree__closestPointsWithinRadius_vectorized_coords(this, point,
   type(c_ptr) :: distances_cptr
   real(c_double), pointer :: lons_fptr(:)
   real(c_double), pointer :: lats_fptr(:)
-  integer(c_int), pointer :: indices_fptr(:)
+  integer(ATLAS_KIND_IDX), pointer :: indices_fptr(:)
   real(c_double), pointer :: distances_fptr(:)
   call atlas__IndexKDTree__closestPointsWithinRadius(this%CPTR_PGIBUG_A, point(1), point(2), radius, &
                                                    & k_tmp, lons_cptr, lats_cptr, indices_cptr, distances_cptr)

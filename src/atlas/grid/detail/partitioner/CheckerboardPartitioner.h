@@ -24,6 +24,7 @@ public:
     CheckerboardPartitioner();
 
     CheckerboardPartitioner( int N );  // N is the number of parts (aka MPI tasks)
+    CheckerboardPartitioner( int N, const eckit::Parametrisation& );
 
     CheckerboardPartitioner( int N, int nbands );
     CheckerboardPartitioner( int N, int nbands, bool checkerboard );
@@ -51,13 +52,15 @@ private:
     // algorithm is used internally
     void partition( const Checkerboard& cb, int nb_nodes, NodeInt nodes[], int part[] ) const;
 
+    using Partitioner::partition;
     virtual void partition( const Grid&, int part[] ) const;
 
     void check() const;
 
 private:
-    idx_t nbands_;       // number of bands from configuration
-    bool checkerboard_;  // exact (true) or approximate (false) checkerboard
+    idx_t nbands_      = 0;  // number of bands from configuration
+    bool regular_      = false;
+    bool checkerboard_ = true;  // exact (true) or approximate (false) checkerboard
 };
 
 }  // namespace partitioner

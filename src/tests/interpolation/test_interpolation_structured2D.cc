@@ -389,6 +389,24 @@ CASE( "test_interpolation_structured for vectors" ) {
     }
 }
 
+CASE( "ATLAS-315: Target grid with domain West of 0 degrees Lon" ) {
+    Grid input_grid( input_gridname( "O256" ) );
+    Grid output_grid( output_gridname( "L45" ), RectangularDomain( {-10, 10}, {20, 60} ) );
+
+    Interpolation interpolation( scheme() | Config( "matrix_free", true ), input_grid, output_grid );
+
+    auto field_src = interpolation.source().createField<double>( option::name( "src" ) );
+    auto field_tgt = interpolation.target().createField<double>( option::name( "tgt" ) );
+
+    auto lonlat        = array::make_view<double, 2>( StructuredColumns( interpolation.source() ).xy() );
+    auto source        = array::make_view<double, 1>( field_src );
+    constexpr double k = 1;
+    for ( idx_t n = 0; n < source.size(); ++n ) {
+        source( n ) = vortex_rollup( lonlat( n, LON ), lonlat( n, LAT ), 0.5 + double( k ) / 2 );
+    };
+
+    interpolation.execute( field_src, field_tgt );
+}
 
 }  // namespace test
 }  // namespace atlas

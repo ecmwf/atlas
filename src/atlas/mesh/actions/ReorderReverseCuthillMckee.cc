@@ -56,14 +56,14 @@ public:
     }
 
     // Cuthill-Mckee algorithm
-    std::vector<int> order() {
+    std::vector<idx_t> order() {
         auto degrees = computeDegrees( sparse_ );
 
-        std::queue<int> Q;
-        std::vector<int> R;
+        std::queue<idx_t> Q;
+        std::vector<idx_t> R;
         R.reserve( degrees.size() );
 
-        std::vector<int> sorted_row;
+        std::vector<idx_t> sorted_row;
         sorted_row.reserve( sparse_.cols() );
 
         NotVisited_t not_visited;
@@ -87,7 +87,7 @@ public:
 
             // Simple Breadth First Search
             while ( !Q.empty() ) {
-                int row = Q.front();
+                idx_t row = Q.front();
 
                 sorted_row.clear();
 
@@ -102,7 +102,7 @@ public:
                 }
 
                 std::sort( sorted_row.begin(), sorted_row.end(),
-                           [&]( int i, int j ) { return degrees[i] - degrees[j]; } );
+                           [&]( idx_t i, idx_t j ) { return degrees[i] - degrees[j]; } );
 
                 for ( size_t i = 0; i < sorted_row.size(); i++ ) {
                     Q.emplace( sorted_row[i] );
@@ -125,11 +125,11 @@ public:
     ReverseCuthillMckee( eckit::linalg::SparseMatrix&& m ) : cuthill_mckee_( std::move( m ) ) {}
 
     // Reverse Cuthill-Mckee algorithm
-    std::vector<int> order() {
-        std::vector<int> cuthill = cuthill_mckee_.order();
+    std::vector<idx_t> order() {
+        std::vector<idx_t> cuthill = cuthill_mckee_.order();
 
-        int size = static_cast<int>( cuthill.size() );
-        int n    = size;
+        idx_t size = static_cast<idx_t>( cuthill.size() );
+        idx_t n    = size;
 
         if ( n % 2 == 0 ) {
             n -= 1;
@@ -137,8 +137,8 @@ public:
 
         n = n / 2;
 
-        for ( int i = 0; i <= n; i++ ) {
-            int j                 = cuthill[size - 1 - i];
+        for ( idx_t i = 0; i <= n; i++ ) {
+            idx_t j               = cuthill[size - 1 - i];
             cuthill[size - 1 - i] = cuthill[i];
             cuthill[i]            = j;
         }

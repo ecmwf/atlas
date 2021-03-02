@@ -1,5 +1,5 @@
-Usage with CMake   {#cmake} 
-================
+Developer information   {#developer_information} 
+=====================
 
 Enabling AddressSanitizer (for debugging)
 -----------------------------------------

@@ -77,6 +77,9 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/Partitioner.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/projection/detail/ProjectionImpl.h
     MODULE atlas_projection_c_binding
     OUTPUT projection_c_binding.f90 )
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/domain/detail/Domain.h
+    MODULE atlas_domain_c_binding
+    OUTPUT domain_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/detail/MeshIntf.h
     MODULE    atlas_mesh_c_binding
     OUTPUT    atlas_mesh_c_binding.f90 )
@@ -161,6 +164,7 @@ ecbuild_add_library( TARGET atlas_f
         util/atlas_Metadata_module.F90
         util/atlas_allocate_module.F90
         output/atlas_output_module.F90
+        domain/atlas_Domain_module.F90
         functionspace/atlas_FunctionSpace_module.F90
         functionspace/atlas_functionspace_EdgeColumns_module.F90
         functionspace/atlas_functionspace_NodeColumns_module.fypp
@@ -195,7 +199,6 @@ ecbuild_add_library( TARGET atlas_f
         trans/atlas_Trans_module.F90
         internals/atlas_read_file.h
         internals/atlas_read_file.cc
-        internals/atlas_write_to_fortran_unit.F90
         internals/Library.h
         internals/Library.cc
         runtime/atlas_trace.cc

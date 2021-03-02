@@ -90,7 +90,7 @@ void HaloExchange::setup( const int part[], const idx_t remote_idx[], const int 
 
     atlas_omp_parallel_for( int jj = halo_begin; jj < parsize_; ++jj ) {
         if ( is_ghost( jj ) ) {
-            idx_t p = part[jj];
+            int p = part[jj];
             atlas_omp_critical {
                 ++recvcounts_[p];
                 ghost_points[nghost] = jj;
@@ -124,14 +124,18 @@ void HaloExchange::setup( const int part[], const idx_t remote_idx[], const int 
     std::vector<int> send_requests( recvcnt_ );
     std::vector<int> recv_requests( sendcnt_ );
     std::vector<int> cnt( nproc, 0 );
-
     recvmap_.resize( recvcnt_ );
+#ifdef __PGI
+    // No idea why PGI compiler (20.7) in Release build ( -fast -O3 ) decides to vectorize following loop
+#pragma loop novector
+#endif
     for ( idx_t jghost = 0; jghost < nghost; ++jghost ) {
-        const auto jj          = ghost_points[jghost];
-        const int req_idx      = recvdispls_[part[jj]] + cnt[part[jj]];
+        const idx_t jj         = ghost_points[jghost];
+        const int p            = part[jj];
+        const int req_idx      = recvdispls_[p] + cnt[p];
         send_requests[req_idx] = remote_idx[jj] - base;
         recvmap_[req_idx]      = jj;
-        ++cnt[part[jj]];
+        cnt[p]++;
     }
 
     /*

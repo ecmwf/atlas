@@ -12,6 +12,8 @@
 
 // for static linking
 #include "fe/FiniteElement.h"
+#include "knn/GridBoxAverage.h"
+#include "knn/GridBoxMaximum.h"
 #include "knn/KNearestNeighbours.h"
 #include "knn/NearestNeighbour.h"
 #include "structured/Cubic2D.h"
@@ -20,7 +22,6 @@
 #include "structured/Linear3D.h"
 #include "structured/QuasiCubic2D.h"
 #include "structured/QuasiCubic3D.h"
-
 
 namespace atlas {
 namespace interpolation {
@@ -39,6 +40,8 @@ void force_link() {
             MethodBuilder<method::Cubic3D>();
             MethodBuilder<method::QuasiCubic2D>();
             MethodBuilder<method::QuasiCubic3D>();
+            MethodBuilder<method::GridBoxAverage>();
+            MethodBuilder<method::GridBoxMaximum>();
         }
     } link;
 }

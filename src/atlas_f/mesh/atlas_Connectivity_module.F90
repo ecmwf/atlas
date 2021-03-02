@@ -245,8 +245,8 @@ pure function access_value(this,c,r) result(val)
 end function
 
 pure function access_rows(this) result(val)
-  use, intrinsic :: iso_c_binding, only : c_int
-  integer(c_int) :: val
+  use atlas_kinds_module
+  integer(ATLAS_KIND_IDX) :: val
   class(atlas_ConnectivityAccess), intent(in) :: this
   val = this%rows_
 end function

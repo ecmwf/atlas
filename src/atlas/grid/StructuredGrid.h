@@ -15,6 +15,7 @@
 #include <string>
 
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/detail/grid/Healpix.h"
 #include "atlas/grid/detail/grid/Structured.h"
 
 
@@ -28,21 +29,22 @@ class ReducedGaussianGrid;
 class RegularGaussianGrid;
 class RegularLonLatGrid;
 class ShiftedLonLatGrid;
+class HealpixGrid;
 
 /*
-                                             Grid
-                                               |
-                                    +----------+----------+
-                                    |                     |
-                             StructuredGrid        UnstructuredGrid
-                                    |
-               +--------------------+-----------------------+
-               |                    |                       |
-          ReducedGrid          GaussianGrid            RegularGrid
-               |                 |     |                 |     |
-               +--------+--------+     +--------+--------+     +-----+
-                        |                       |                    |
-               ReducedGaussianGrid     RegularGaussianGrid    RegularLonLatGrid
+                                                 Grid
+												   |
+                                        +----------+----------+
+                                        |                     |
+                                  StructuredGrid       UnstructuredGrid
+                                        |
+                   +--------------------+-----------------------+------------------+
+                   |                    |                       |                  |
+              ReducedGrid          GaussianGrid            RegularGrid        HealpixGrid
+                   |                 |     |                 |     |
+                   +--------+--------+     +--------+--------+     +-----+
+                            |                       |                    |
+                   ReducedGaussianGrid     RegularGaussianGrid    RegularLonLatGrid
 */
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -64,6 +66,7 @@ public:
     StructuredGrid( const Grid& );
     StructuredGrid( const Grid::Implementation* );
     StructuredGrid( const std::string& name, const Domain& = Domain() );
+    StructuredGrid( const std::string& name, const Projection&, const Domain& = Domain() );
     StructuredGrid( const Config& );
     StructuredGrid( const XSpace&, const YSpace&, const Projection& = Projection(), const Domain& = Domain() );
     StructuredGrid( const Grid&, const Domain& );
@@ -255,6 +258,24 @@ protected:
     bool shifted_lon() const { return x( 0 ) == 0.5 * 360. / nx(); }
 
     bool shifted_lat() const { return y( 0 ) == 90. - 0.5 * 180. / ny() && ny() % 2 == 0; }
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
+/// @class HealpixGrid
+/// @brief Specialization of StructuredGrid, assuming a global domain
+class HealpixGrid : public StructuredGrid {
+public:
+    using grid_t = grid::detail::grid::Healpix;
+
+public:
+    HealpixGrid( const Grid& );
+    HealpixGrid( int N );
+
+    bool valid() { return grid_; }
+
+private:
+    const grid_t* grid_;
 };
 
 //---------------------------------------------------------------------------------------------------------------------

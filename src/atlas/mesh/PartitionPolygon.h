@@ -55,6 +55,7 @@ public:  // methods
     void outputPythonScript( const eckit::PathName&, const eckit::Configuration& = util::NoConfig() ) const override;
 
     PointsXY xy() const override;
+    PointsXY lonlat() const override;
 
     void allGather( util::PartitionPolygons& ) const override;
 

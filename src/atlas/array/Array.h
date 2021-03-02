@@ -36,11 +36,14 @@ class ArrayT_impl;
 
 class Array : public util::Object {
 public:
+    Array() = default;
     virtual ~Array();
 
     static Array* create( array::DataType, const ArrayShape& );
 
     static Array* create( array::DataType, const ArrayShape&, const ArrayLayout& );
+
+    static Array* create( array::DataType, ArraySpec&& );
 
     virtual size_t footprint() const = 0;
 
@@ -69,7 +72,7 @@ public:
 
     idx_t bytes() const { return sizeof_data() * spec().allocatedSize(); }
 
-    idx_t size() const { return spec_.size(); }
+    size_t size() const { return spec_.size(); }
 
     idx_t rank() const { return spec_.rank(); }
 
@@ -158,6 +161,7 @@ public:
     ArrayDataStore const* data_store() const { return data_store_.get(); }
 
 protected:
+    Array( ArraySpec&& spec ) : spec_( std::move( spec ) ) {}
     ArraySpec spec_;
     std::unique_ptr<ArrayDataStore> data_store_;
 
@@ -178,9 +182,11 @@ public:
     ArrayT( idx_t size0, idx_t size1, idx_t size2, idx_t size3 );
     ArrayT( idx_t size0, idx_t size1, idx_t size2, idx_t size3, idx_t size4 );
 
-    ArrayT( const ArraySpec& );
+    ArrayT( ArraySpec&& );
 
     ArrayT( const ArrayShape& );
+
+    ArrayT( const ArrayShape&, const ArrayAlignment& );
 
     ArrayT( const ArrayShape&, const ArrayLayout& );
 

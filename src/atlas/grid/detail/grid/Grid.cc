@@ -14,6 +14,7 @@
 
 #include "eckit/utils/MD5.h"
 
+#include "atlas/domain/detail/Domain.h"
 #include "atlas/grid.h"
 #include "atlas/grid/detail/grid/CubedSphere.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
@@ -142,6 +143,14 @@ void Grid::detachObserver( GridObserver& observer ) const {
                            grid_observers_.end() );
 }
 
+Grid::Config Grid::meshgenerator() const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
+Grid::Config Grid::partitioner() const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
 idx_t atlas__grid__Grid__size( Grid* This ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Grid" );
     return This->size();
@@ -160,6 +169,17 @@ void atlas__grid__Grid__uid( const Grid* This, char*& uid, int& size ) {
     size          = static_cast<int>( s.size() + 1 );
     uid           = new char[size];
     strcpy( uid, s.c_str() );
+}
+
+Grid::Domain::Implementation* atlas__grid__Grid__lonlat_bounding_box( const Grid* This ) {
+    Grid::Domain::Implementation* lonlatboundingbox;
+    {
+        auto handle       = This->lonlatBoundingBox();
+        lonlatboundingbox = handle.get();
+        lonlatboundingbox->attach();
+    }
+    lonlatboundingbox->detach();
+    return lonlatboundingbox;
 }
 
 

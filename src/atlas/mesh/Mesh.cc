@@ -9,12 +9,25 @@
  */
 
 #include "atlas/mesh/Mesh.h"
+#include "atlas/grid/Grid.h"
+#include "atlas/grid/Partitioner.h"
+#include "atlas/meshgenerator/MeshGenerator.h"
 
 namespace atlas {
 
 //----------------------------------------------------------------------------------------------------------------------
 
 Mesh::Mesh() : Handle( new Implementation() ) {}
+
+Mesh::Mesh( const Grid& grid ) :
+    Handle( [&]() {
+        auto meshgenerator = MeshGenerator{grid.meshgenerator()};
+        auto mesh          = meshgenerator.generate( grid, grid::Partitioner( grid.partitioner() ) );
+        mesh.get()->attach();
+        return mesh.get();
+    }() ) {
+    get()->detach();
+}
 
 Mesh::Mesh( eckit::Stream& stream ) : Handle( new Implementation( stream ) ) {}
 
