@@ -1,3 +1,10 @@
+/*
+ * (C) British Crown Copyright 2021 Met Office
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ */
+
 #pragma once
 
 #include <vector>
@@ -12,7 +19,9 @@ namespace atlas {
   class FunctionSpace;
 
   namespace functionspace {
-    class StructuredColumns;
+    namespace detail {
+      class StructuredColumns;
+    }
   }
 }
 
@@ -22,41 +31,80 @@ namespace atlas {
     using idxPair = std::pair<idx_t, idx_t>;
     using idxPairVector = std::vector<idxPair>;
 
-    // Helper struct for function space intersections.
-    struct indexRange {
+    /// \brief Helper struct for function space intersections.
+    struct IndexRange {
+      idx_t levels;
       idxPair jBeginEnd{};
       idxPairVector iBeginEnd{};
     };
 
-    using functionspace::StructuredColumns;
+    using IndexRangeVector = std::vector<IndexRange>;
 
-    // Concrete implementation of StructuredColumns to StructuredColumns.
+    using functionspace::detail::StructuredColumns;
+
+    /// \brief    Concrete repartitioning class for StructuredColumns to
+    ///           StructuredColumns.
+    ///
+    /// \details  Class to map two function spaces with the same grid but
+    ///           different partitioners.
     class StructuredColumnsToStructuredColumns : public RepartitionImpl {
 
     public:
 
+      /// \brief    Constructs and initialises the repartitioner.
+      ///
+      /// \details  Performs MPI_Allgatherv to determine the (i, j, k) ranges of
+      ///           each source and target function space on each PE. Then
+      ///           calculates range intersections to determine what needs to be
+      ///           sent where via an MPI_Alltoallv. The grids of source and
+      ///           target function space must match.
+      ///
+      /// \param[in]  sourceFunctionSpace  Function space of source fields.
+      /// \param[in]  targetFunctionSpace  Function space of target fields.
       StructuredColumnsToStructuredColumns(
         const FunctionSpace& sourceFunctionSpace,
         const FunctionSpace& targetFunctionSpace);
 
-      void execute(const Field &source, Field &target) const override;
-      void execute(const FieldSet &source, FieldSet &target) const override;
+      /// \brief    Repartitions source field to target field.
+      ///
+      /// \details  Transfers source field to target field via an MPI_Alltoallv.
+      ///           Function space of source field must match
+      ///           sourceFunctionSpace supplied to the constructor. Same
+      ///           applies to target field.
+      ///
+      /// \param[in]  sourceField  input field matching sourceFunctionSpace.
+      /// \param[out] targetField  output field matching targetFunctionSpace.
+      void execute(const Field& sourceField, Field& targetField) const override;
+
+      /// \brief    Repartitions source field set to target fields set.
+      ///
+      /// \details  Transfers source field set to target field set via multiple
+      ///           invocations of execute(sourceField, targetField).
+      ///
+      /// \param[in]  sourceFieldSet  input field set.
+      /// \param[out] targetFieldSet  output field set.
+      void execute(const FieldSet& sourceFieldSet,
+        FieldSet& targetFieldSet) const override;
 
     private:
 
+      // Generic execute call to handle different field types.
+      template <typename fieldType>
+      void doExecute(const Field& sourceField, Field& targetField) const;
+
       // FunctionSpaces recast to StructuredColumns.
-      StructuredColumns sourceStructuredColumns_{};
-      StructuredColumns targetStructuredColumns_{};
+      const StructuredColumns* sourceStructuredColumnsPtr_;
+      const StructuredColumns* targetStructuredColumnsPtr_;
 
       // Function space intersection ranges.
-      std::vector<indexRange> sendIntersections_{};
-      std::vector<indexRange> receiveIntersections_{};
+      IndexRangeVector sendIntersections_{};
+      IndexRangeVector recvIntersections_{};
 
       // MPI count and displacement arrays for send and receive buffers.
       std::vector<int> sendCounts_{};
       std::vector<int> sendDisplacements_{};
-      std::vector<int> receiveCounts_{};
-      std::vector<int> receiveDisplacements_{};
+      std::vector<int> recvCounts_{};
+      std::vector<int> recvDisplacements_{};
 
 
     };

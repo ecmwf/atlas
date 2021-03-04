@@ -575,6 +575,7 @@ repartition/detail/RepartitionImpl.h
 repartition/detail/RepartitionImpl.cc
 repartition/detail/RepartitionImplFactory.h
 repartition/detail/RepartitionImplFactory.cc
+repartition/detail/RepartitionUtils.h
 repartition/detail/StructuredColumnsToStructuredColumns.h
 repartition/detail/StructuredColumnsToStructuredColumns.cc
 )
