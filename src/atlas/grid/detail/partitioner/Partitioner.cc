@@ -30,6 +30,7 @@
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerSphericalPolygon.h"
 #include "atlas/grid/detail/partitioner/RegularBandsPartitioner.h"
 #include "atlas/grid/detail/partitioner/SerialPartitioner.h"
+#include "atlas/grid/detail/partitioner/ZonalBoardPartitioner.h"
 #include "atlas/library/config.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
@@ -86,6 +87,7 @@ struct force_link {
         load_builder<EqualBandsPartitioner>();
         load_builder<RegularBandsPartitioner>();
         load_builder<SerialPartitioner>();
+        load_builder<ZonalBoardPartitioner>();
 #if ATLAS_HAVE_TRANS
         load_builder<TransPartitioner>();
 #endif
