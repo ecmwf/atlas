@@ -1,60 +1,82 @@
+/*
+ * (C) British Crown Copyright 2021 Met Office
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ */
+
 #include <algorithm>
 #include <numeric>
+#include <string>
 
 #include "atlas/array/MakeView.h"
 #include "atlas/field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/repartition/detail/StructuredColumnsToStructuredColumns.h"
+#include "atlas/repartition/detail/RepartitionUtils.h"
 
 namespace atlas {
   namespace repartition {
 
+    //==========================================================================
     // Helper function forward declarations.
+    //==========================================================================
+
     namespace  {
-      std::vector<indexRange>
-        getIndexRange(const StructuredColumns& functionSpace);
+      IndexRangeVector
+        getIndexRanges(const StructuredColumns* const structuredColumnsPtr);
 
-      indexRange getIntersection(const indexRange& indexRangeA,
-        const indexRange& indexRangeB);
+      IndexRange getIntersection(const IndexRange& indexRangeA,
+        const IndexRange& indexRangeB);
 
-      std::vector<indexRange> getIntersections(const indexRange& indexRangeA,
-        const std::vector<indexRange>& indexRangesB);
+      IndexRangeVector getIntersections(const IndexRange& indexRangeA,
+        const IndexRangeVector& indexRangesB);
 
       std::pair<std::vector<int>, std::vector<int>>
-        getCountsDisplacements(const std::vector<indexRange>& indexRanges);
+        getCountsDisplacements(const IndexRangeVector& indexRanges);
 
-      std::vector<indexRange> trimIntersections(
-        const std::vector<indexRange>& intersections,
+      void trimIntersections(IndexRangeVector& intersections,
         const std::vector<int>& counts);
 
-      template <typename fieldType>
-      void performAllToAll(const Field& sourceField, const Field& targetField);
+      template <typename Functor>
+      void indexRangeForEach(const IndexRange& indexRange, Functor functor);
+
     }
 
+    //==========================================================================
+    // Class public methods implementation.
+    //==========================================================================
 
     StructuredColumnsToStructuredColumns::StructuredColumnsToStructuredColumns(
       const FunctionSpace& sourceFunctionSpace,
       const FunctionSpace& targetFunctionSpace) :
       RepartitionImpl(sourceFunctionSpace, targetFunctionSpace),
-      sourceStructuredColumns_(getSourceFunctionSpace()),
-      targetStructuredColumns_(getTargetFunctionSpace()) {
+      sourceStructuredColumnsPtr_(
+        getSourceFunctionSpace()->cast<StructuredColumns>()),
+      targetStructuredColumnsPtr_(
+        getTargetFunctionSpace()->cast<StructuredColumns>()) {
+
+      // Check that grids match (will also check for bad casts).
+      checkGrids<StructuredColumns>(
+        sourceStructuredColumnsPtr_, targetStructuredColumnsPtr_,
+        "sourceStructuredColumnsPtr_", "targetStructuredColumnsPtr_");
 
       // Get MPI rank.
-      auto mpiRank = static_cast<size_t>(mpi::comm().rank());
+      const auto mpiRank = static_cast<size_t>(mpi::comm().rank());
 
       // Get ranges of source function spaces.
-      auto sourceRanges = getIndexRange(sourceStructuredColumns_);
+      const auto sourceRanges = getIndexRanges(sourceStructuredColumnsPtr_);
 
       // Get ranges of target function spaces.
-      auto targetRanges = getIndexRange(targetStructuredColumns_);
+      const auto targetRanges = getIndexRanges(targetStructuredColumnsPtr_);
 
       // Calculate intersection between this source range and all target ranges.
       sendIntersections_ =
         getIntersections(sourceRanges[mpiRank], targetRanges);
 
       // Calculate intersection between this target range and all source ranges.
-      receiveIntersections_ =
+      recvIntersections_ =
         getIntersections(targetRanges[mpiRank], sourceRanges);
 
       // Get send counts and displacements.
@@ -62,117 +84,222 @@ namespace atlas {
         getCountsDisplacements(sendIntersections_);
 
       // Get receive counts and displacements.
-      std::tie(receiveCounts_, receiveDisplacements_) =
-        getCountsDisplacements(receiveIntersections_);
+      std::tie(recvCounts_, recvDisplacements_) =
+        getCountsDisplacements(recvIntersections_);
 
       // Trim off empty send intersections.
-      sendIntersections_ =
-        trimIntersections(sendIntersections_, sendCounts_);
+      trimIntersections(sendIntersections_, sendCounts_);
 
-      // Trim off empty receive intersections.
-      receiveIntersections_ =
-        trimIntersections(receiveIntersections_, receiveCounts_);
+      // Trim off empty recv intersections.
+      trimIntersections(recvIntersections_, recvCounts_);
 
-      if (mpiRank == 0) {
+      return;
+    }
 
-          std::for_each(sendIntersections_.begin(), sendIntersections_.end(),
-            [&](indexRange& rangeElem){
-              std::cout << std::endl << "MPI rank " << mpiRank << std::endl;
-              std::cout << rangeElem.jBeginEnd.first << " " << rangeElem.jBeginEnd.second << std::endl;
-              std::cout << std::endl;
-              std::for_each(rangeElem.iBeginEnd.begin(),rangeElem.iBeginEnd.end(),
-                [](idxPair elem){
-                std::cout << elem.first << " " << elem.second << std::endl;
-              });
-            });
-        std::cout << sendCounts_ << std::endl;
+    void StructuredColumnsToStructuredColumns::execute(
+      const Field& sourceField, Field& targetField) const {
+
+      // Check source grids match.
+      checkGrids<StructuredColumns>(
+        sourceField.functionspace().get(), sourceStructuredColumnsPtr_,
+        "sourceField.functionspace()", "sourceStructuredColumnsPtr_");
+
+      // Check target grids match.
+      checkGrids<StructuredColumns>(
+        targetField.functionspace().get(), targetStructuredColumnsPtr_,
+        "targetField.functionspace()", "targetStructuredColumnsPtr_");
+
+      // Check data types match.
+      checkFieldDataType(sourceField, targetField,
+        "sourceField", "targetField");
+
+      // Determine data type of field and execute.
+      switch(sourceField.datatype().kind()){
+
+        case array::DataType::KIND_REAL64:
+          doExecute<double>(sourceField, targetField);
+          break;
+
+        case array::DataType::KIND_REAL32:
+          doExecute<float>(sourceField, targetField);
+          break;
+
+        case array::DataType::KIND_INT32:
+          doExecute<int>(sourceField, targetField);
+          break;
+
+        case array::DataType::KIND_INT64:
+          doExecute<long>(sourceField, targetField);
+          break;
+
+        case array::DataType::KIND_UINT64:
+          doExecute<unsigned long>(sourceField, targetField);
+          break;
+
+        default:
+          throw eckit::NotImplemented(
+            "No implementation for data type " +
+            sourceField.datatype().str(), Here());
+          break;
       }
 
       return;
     }
 
     void StructuredColumnsToStructuredColumns::execute(
-      const Field& sourceField, Field& targetField ) const {
+      const FieldSet& sourceFieldSet, FieldSet& targetFieldSet) const {
 
-      std::cout<< "Field execute on MPI rank " << mpi::rank()<< std::endl;
+      // Check that both FieldSets are the same size.
+      checkFieldSetSize(sourceFieldSet, targetFieldSet,
+        "sourceFieldSet", "targetFieldSet");
+
+      std::for_each(sourceFieldSet.begin(), sourceFieldSet.end(),
+        [&, i = idx_t{0}](const Field& sourceField) mutable {
+          execute(sourceField, targetFieldSet[i++]);
+          return;
+        });
 
       return;
     }
 
-    void StructuredColumnsToStructuredColumns::execute(
-      const FieldSet& sourceField, FieldSet& targetField) const {
+    //==========================================================================
+    // Class private methods implementation.
+    //==========================================================================
 
-      std::cout<< "FieldSet execute on MPI rank " << mpi::rank()<< std::endl;
+    template<typename fieldType>
+    void StructuredColumnsToStructuredColumns::doExecute(
+      const Field& sourceField, Field& targetField) const {
+
+      // Make Atlas view objects.
+      const auto sourceView = array::make_view<fieldType, 2>(sourceField);
+      auto targetView = array::make_view<fieldType, 2>(targetField);
+
+
+      // Allocate send buffer.
+      const auto nSend = static_cast<size_t>(
+        sendCounts_.back() + sendDisplacements_.back());
+      auto sendBuffer = std::vector<fieldType>(nSend);
+
+      // Allocate receive buffer
+      const auto nRecv = static_cast<size_t>(
+        recvCounts_.back() + recvDisplacements_.back());
+      auto recvBuffer = std::vector<fieldType>(nRecv);
+
+      // The constructor should have made sure that the intersections match up
+      // with counts and displacements vectors.
+
+      //Loop over send intersections and write to send buffer.
+      std::for_each(sendIntersections_.cbegin(), sendIntersections_.cend(),
+        [&, sendBufferIt = sendBuffer.begin()]
+        (const IndexRange& intersection) mutable {
+
+        indexRangeForEach(intersection,
+          [&](const idx_t i, const idx_t j, const idx_t k){
+            const auto iNode = sourceStructuredColumnsPtr_->index(i, j);
+            *sendBufferIt++ = sourceView(iNode, k);
+            return;
+          });
+
+        return;
+
+      });
+
+      // Perform all to all communication.
+      mpi::comm().allToAllv(sendBuffer.data(), sendCounts_.data(),
+        sendDisplacements_.data(), recvBuffer.data(), recvCounts_.data(),
+        recvDisplacements_.data());
+
+
+      //Loop over recv intersections and read from recv buffer.
+      std::for_each(recvIntersections_.cbegin(), recvIntersections_.cend(),
+        [&, recvBufferIt = recvBuffer.cbegin()]
+        (const IndexRange& intersection) mutable {
+
+        indexRangeForEach(intersection,
+          [&](const idx_t i, const idx_t j, const idx_t k){
+            const auto iNode = targetStructuredColumnsPtr_->index(i, j);
+            targetView(iNode, k) = *recvBufferIt++;
+            return;
+          });
+
+        return;
+
+      });
+
+      // By this point, everything should have worked.
 
       return;
     }
 
-
+    //==========================================================================
     // Helper function definitions.
+    //==========================================================================
+
     namespace  {
 
       // Communicate index range of function spaces to all PEs
-      std::vector<indexRange> getIndexRange(
-        const StructuredColumns& functionSpace) {
+      IndexRangeVector getIndexRanges(
+        const StructuredColumns* const structuredColumnsPtr) {
 
         // Get MPI communicator size.
-        auto mpiSize = static_cast<size_t>(mpi::comm().size());
+        const auto mpiSize = static_cast<size_t>(mpi::comm().size());
 
         // Set send buffer for j range.
-        auto jSendBuffer = idxPair(
-          functionSpace.j_begin(), functionSpace.j_end());
+        const auto jSendBuffer = std::make_pair(
+          structuredColumnsPtr->j_begin(), structuredColumnsPtr->j_end());
 
-        // Set receive buffer for j range.
-        auto jReceiveBuffer = idxPairVector(mpiSize);
+        // Set recv buffer for j range.
+        auto jRecvBuffer = idxPairVector(mpiSize);
 
         // Perform all gather.
         mpi::comm().allGather(
-          jSendBuffer, jReceiveBuffer.begin(), jReceiveBuffer.end());
+          jSendBuffer, jRecvBuffer.begin(), jRecvBuffer.end());
 
         // Set send buffer for i range.
-        auto iSendBuffer = idxPairVector();
+        auto iSendBuffer = idxPairVector{};
         std::generate_n(std::back_inserter(iSendBuffer),
           jSendBuffer.second - jSendBuffer.first,
-          [&, j = jSendBuffer.first]() mutable
-          {
-            auto iElem = idxPair(
-              functionSpace.i_begin(j), functionSpace.i_end(j));
+          [&, j = jSendBuffer.first]() mutable {
+            const auto iElem = std::make_pair(
+              structuredColumnsPtr->i_begin(j), structuredColumnsPtr->i_end(j));
             ++j;
             return iElem;
           });
 
-        // Set receive counts for i range.
-        auto iReceiveCounts = std::vector<int>{};
-        std::transform(jReceiveBuffer.begin(), jReceiveBuffer.end(),
-          std::back_inserter(iReceiveCounts),
+        // Set recv counts for i range.
+        auto irecvCounts = std::vector<int>{};
+        std::transform(jRecvBuffer.cbegin(), jRecvBuffer.cend(),
+          std::back_inserter(irecvCounts),
           [](const idxPair& jElem){
             return static_cast<int>(jElem.second - jElem.first);
           });
 
-        // Set receive displacements for i range.
-        auto iReceiveDisplacements = std::vector<int>{1};
-        std::partial_sum(iReceiveCounts.begin(), iReceiveCounts.end() - 1,
-          std::back_inserter(iReceiveDisplacements));
+        // Set recv displacements for i range.
+        auto irecvDisplacements = std::vector<int>{0};
+        std::partial_sum(irecvCounts.cbegin(), irecvCounts.cend() - 1,
+          std::back_inserter(irecvDisplacements));
 
-        // Set receive buffer for i range.
-        auto iReceiveBuffer = idxPairVector(static_cast<size_t>(
-          iReceiveDisplacements.back() + iReceiveCounts.back()));
+        // Set recv buffer for i range.
+        auto irecvBuffer = idxPairVector(static_cast<size_t>(
+          irecvDisplacements.back() + irecvCounts.back()));
 
         // Perform all gather.
         mpi::comm().allGatherv(
-          iSendBuffer.begin(), iSendBuffer.end(), iReceiveBuffer.begin(),
-          iReceiveCounts.data(), iReceiveDisplacements.data());
+          iSendBuffer.cbegin(), iSendBuffer.cend(), irecvBuffer.begin(),
+          irecvCounts.data(), irecvDisplacements.data());
 
         // Make vector of indexRange structs.
-        auto indexRanges = std::vector<indexRange>{};
+        auto indexRanges = IndexRangeVector{};
         std::generate_n(std::back_inserter(indexRanges), mpiSize,
           [&, i = size_t{0}]() mutable {
 
-            auto rangeElem = indexRange{};
-            rangeElem.jBeginEnd = jReceiveBuffer[i];
+            auto rangeElem = IndexRange{};
+            rangeElem.levels = structuredColumnsPtr->levels();
+            rangeElem.jBeginEnd = jRecvBuffer[i];
 
-            auto iBegin = iReceiveBuffer.begin() + iReceiveDisplacements[i];
-            auto iEnd = iBegin + iReceiveCounts[i];
+            const auto iBegin =
+              irecvBuffer.cbegin() + irecvDisplacements[i];
+            const auto iEnd = iBegin + irecvCounts[i];
             std::copy(iBegin, iEnd, std::back_inserter(rangeElem.iBeginEnd));
 
             ++i;
@@ -183,14 +310,17 @@ namespace atlas {
       }
 
       // Calculate the intersection between two index ranges.
-      indexRange getIntersection(const indexRange& indexRangeA,
-        const indexRange& indexRangeB) {
+      IndexRange getIntersection(const IndexRange& indexRangeA,
+        const IndexRange& indexRangeB) {
 
         // Declare result.
-        auto intersection = indexRange{};
+        auto intersection = IndexRange{};
+
+        // set number of levels.
+        intersection.levels = indexRangeA.levels;
 
         // get j intersection range.
-        intersection.jBeginEnd = idxPair(
+        intersection.jBeginEnd = std::make_pair(
           std::max(indexRangeA.jBeginEnd.first, indexRangeB.jBeginEnd.first),
           std::min(indexRangeA.jBeginEnd.second, indexRangeB.jBeginEnd.second));
 
@@ -198,17 +328,17 @@ namespace atlas {
         if (intersection.jBeginEnd.first < intersection.jBeginEnd.second) {
 
           // get iterators.
-          auto iBeginA = indexRangeA.iBeginEnd.begin()
+          const auto iBeginA = indexRangeA.iBeginEnd.cbegin()
             + intersection.jBeginEnd.first - indexRangeA.jBeginEnd.first;
-          auto iBeginB = indexRangeB.iBeginEnd.begin()
+          const auto iBeginB = indexRangeB.iBeginEnd.cbegin()
             + intersection.jBeginEnd.first - indexRangeB.jBeginEnd.first;
-          auto iEndA = indexRangeA.iBeginEnd.end()
+          const auto iEndA = indexRangeA.iBeginEnd.cend()
             + intersection.jBeginEnd.second - indexRangeA.jBeginEnd.second;
 
           std::transform(
             iBeginA, iEndA, iBeginB, std::back_inserter(intersection.iBeginEnd),
             [](const idxPair& iElemA, const idxPair& iElemB){
-              return idxPair(std::max(iElemA.first, iElemB.first),
+              return std::make_pair(std::max(iElemA.first, iElemB.first),
                 std::min(iElemA.second, iElemB.second));
             });
         }
@@ -217,19 +347,16 @@ namespace atlas {
 
       // Calculate the intersections between an index range and a vector of
       // index ranges.
-      std::vector<indexRange> getIntersections(const indexRange& indexRangeA,
-        const std::vector<indexRange>& indexRangesB) {
+      IndexRangeVector getIntersections(const IndexRange& indexRangeA,
+        const IndexRangeVector& indexRangesB) {
 
         // Declare result.
-        auto intersections = std::vector<indexRange>{};
-
-        // Get MPI comm size.
-        auto mpiSize = mpi::comm().size();
+        auto intersections = IndexRangeVector{};
 
         // Calculate intersection between index ranges.
-        std::generate_n(std::back_inserter(intersections), mpiSize,
-          [&, i = size_t{0}]() mutable {
-            return getIntersection(indexRangeA, indexRangesB[i++]);
+        std::transform(indexRangesB.cbegin(), indexRangesB.cend(),
+          std::back_inserter(intersections), [&](const IndexRange& indexRangeB){
+            return getIntersection(indexRangeA, indexRangeB);
           });
 
         return intersections;
@@ -238,52 +365,76 @@ namespace atlas {
       // Get the count and displacement arrays needed for an allToAll MPI
       // communication.
       std::pair<std::vector<int>, std::vector<int>>
-        getCountsDisplacements(const std::vector<indexRange>& indexRanges) {
+        getCountsDisplacements(const IndexRangeVector& indexRanges) {
 
         // Declare result.
-        auto countsDisplacements =
-          std::pair<std::vector<int>, std::vector<int>>{};
+        auto counts = std::vector<int>{};
+        auto displacements = std::vector<int>{};
 
         // Count the number of elements in each index range.
-        std::transform(indexRanges.begin(), indexRanges.end(),
-          std::back_inserter(countsDisplacements.first),
-          [](const indexRange& rangeElem){
+        std::transform(indexRanges.cbegin(), indexRanges.cend(),
+          std::back_inserter(counts),
+          [](const IndexRange& rangeElem){
 
             // Accumulate size of positive i range.
-            int count = std::accumulate(rangeElem.iBeginEnd.begin(),
-              rangeElem.iBeginEnd.end(), 0,
+            const int count = std::accumulate(rangeElem.iBeginEnd.cbegin(),
+              rangeElem.iBeginEnd.cend(), 0,
               [](const int& cumulant, const idxPair& iElem) -> int {
                 return cumulant + std::max(iElem.second - iElem.first, 0);
-              });
+              }) * rangeElem.levels;
 
             return count;
           });
 
         // Calculate displacements from counts.
-        countsDisplacements.second.push_back(0);
-        std::partial_sum(countsDisplacements.first.begin(),
-          countsDisplacements.first.end() - 1,
-          std::back_inserter(countsDisplacements.second));
+        displacements.push_back(0);
+        std::partial_sum(counts.cbegin(), counts.cend() - 1,
+          std::back_inserter(displacements));
 
-        return countsDisplacements;
+        return std::make_pair(counts, displacements);
       }
 
-      // Produce a trimmed vector of index ranges with no zero-sized ranges.
-      std::vector<indexRange> trimIntersections(
-        const std::vector<indexRange>& intersections,
+      // Trim off index ranges where counts equals zero.
+      void trimIntersections(IndexRangeVector& intersections,
         const std::vector<int>& counts) {
 
-        // Declare result.
-        auto trimmedIntersections = std::vector<indexRange>{};
+        intersections.erase(
+          std::remove_if(intersections.begin(), intersections.end(),
+          [&](const IndexRange& intersection) -> bool {
 
-        // Remove intersections with no elements.
-        std::for_each(intersections.begin(), intersections.end(),
-          [&, i = size_t{0}](const indexRange& intersection) mutable {
-            if (counts[i++]) trimmedIntersections.push_back(intersection);
-            return;
-          });
+            // Some pointer arithmetic to get element of counts vector.
+            const auto distance = &intersection - intersections.data();
 
-        return trimmedIntersections;
+            return !(*(counts.data() + distance));
+          }), intersections.end());
+        return;
+      }
+
+      // Visit all indices and call f(idx_t i, idx_t j, idx_t k).
+      template <typename functor>
+      void indexRangeForEach(const IndexRange& indexRange, functor f) {
+
+        idx_t jBegin, jEnd;
+        std::tie(jBegin, jEnd) = indexRange.jBeginEnd;
+
+        for (idx_t j = jBegin; j < jEnd; ++j) {
+
+          idx_t iBegin, iEnd;
+          std::tie(iBegin, iEnd) =
+            indexRange.iBeginEnd[static_cast<size_t>(j - jBegin)];
+
+          for (idx_t i = iBegin; i < iEnd; ++i){
+
+            for (idx_t k = 0; k < indexRange.levels; ++k) {
+
+              // Call functor.
+              f(i, j, k);
+
+            }
+          }
+        }
+
+        return;
       }
 
     }
