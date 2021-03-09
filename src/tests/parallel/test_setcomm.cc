@@ -11,13 +11,11 @@ namespace atlas {
 namespace test {
 
 CASE( "test_setcomm" ) {
-    printf( " eckit::mpi::comm () = 0x%p, eckit::mpi::comm ().size () = %8d\n", 
-        &eckit::mpi::comm(),
-        eckit::mpi::comm().size() );
+    printf( " eckit::mpi::comm () = 0x%p, eckit::mpi::comm ().size () = %8d\n", &eckit::mpi::comm(),
+            eckit::mpi::comm().size() );
     std::cout << eckit::mpi::comm().name() << std::endl;
-    printf( " atlas::mpi::comm () = 0x%p, atlas::mpi::comm ().size () = %8d\n", 
-        &atlas::mpi::comm(),
-        atlas::mpi::comm().size() );
+    printf( " atlas::mpi::comm () = 0x%p, atlas::mpi::comm ().size () = %8d\n", &atlas::mpi::comm(),
+            atlas::mpi::comm().size() );
     std::cout << atlas::mpi::comm().name() << std::endl;
 
     EXPECT_EQ( eckit::mpi::comm().size(), atlas::mpi::comm().size() );
