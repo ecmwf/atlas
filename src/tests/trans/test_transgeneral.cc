@@ -1460,7 +1460,7 @@ CASE( "test_trans_unstructured" ) {
 #endif
 
 //-----------------------------------------------------------------------------
-#if 1
+#if ATLAS_HAVE_TRANS
 CASE( "test_trans_levels" ) {
     Log::info() << "test_trans_levels" << std::endl;
 
