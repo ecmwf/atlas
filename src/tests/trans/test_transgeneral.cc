@@ -1484,6 +1484,7 @@ CASE( "test_trans_levels" ) {
     std::vector<int> n{2,3};  // total wavenumber on levels O and 1
     std::vector<int> m{1,2};  // meridional wavenumber on levels O and 1
     std::vector<int> imag{0 , 1};  // imaginary component or not
+    const std::vector<idx_t> level_sequence{0,1};
 
     functionspace::Spectral specFS( 2*N-1, atlas::option::levels( levels ) );
     functionspace::StructuredColumns gridFS( g, atlas::option::levels( levels ) );
@@ -1497,7 +1498,6 @@ CASE( "test_trans_levels" ) {
     for ( auto ll : g.lonlat() ) {
         pointsLonLat.push_back( ll );
     }
-
     atlas::Field gpf = gridFS.createField<double>( atlas::option::name( "gpf" ) );
     atlas::Field gpf2 = gridFS.createField<double>( atlas::option::name( "gpf2" ) );
     atlas::Field spf = specFS.createField<double>();
@@ -1506,7 +1506,7 @@ CASE( "test_trans_levels" ) {
     for (atlas::idx_t j = gridFS.j_begin(); j < gridFS.j_end(); ++j) {
       for (atlas::idx_t i = gridFS.i_begin(j); i < gridFS.i_end(j); ++i) {
         atlas::idx_t jn = gridFS.index(i, j);
-        for  (atlas::idx_t jl : {0,1}) {
+        for (atlas::idx_t jl : level_sequence) {
           view(jn, jl) = sphericalharmonics_analytic_point(n[jl], m[jl], imag[jl],
                               ((pointsLonLat[jn].lon() * M_PI)/180.),
                               ((pointsLonLat[jn].lat() * M_PI)/180.), 2, 2);
@@ -1525,7 +1525,7 @@ CASE( "test_trans_levels" ) {
 
     int imagSize = 2;
     std::vector<int> index;
-    for (int jl : {0, 1}) {
+    for (int jl : level_sequence) {
         int offset(0);
         for (int k = 0; k < m[jl]; ++k) {
             offset += (2 * N - k) * imagSize;
@@ -1534,7 +1534,7 @@ CASE( "test_trans_levels" ) {
     }
 
     for (int i = 0; i < transIFS.spectralCoefficients(); ++i) {
-        for (int jl : {0, 1}) {
+        for (int jl : level_sequence) {
             double value = ( i == index[jl] ? 1.0 : 0.0 );
             EXPECT( std::abs(spView(i, jl) - value) < 1e-14 );
         }
@@ -1548,7 +1548,7 @@ CASE( "test_trans_levels" ) {
     for (atlas::idx_t j = gridFS.j_begin(); j < gridFS.j_end(); ++j) {
       for (atlas::idx_t i = gridFS.i_begin(j); i < gridFS.i_end(j); ++i) {
         atlas::idx_t jn = gridFS.index(i, j);
-        for (int jl : {0, 1}) {
+        for (idx_t jl : level_sequence) {
           EXPECT( std::abs(view(jn, jl) - view2(jn,jl) ) < 1e-14);
         }
       }
