@@ -29,26 +29,51 @@ namespace atlas {
 namespace atlas {
   namespace repartition {
 
+    // Forward declarations.
+    class StructuredColumnsToStructuredColumns;
+    class FuncSpaceRange;
+
+    // Type aliases.
+    struct FuncSpaceRange;
     using idxPair = std::pair<idx_t, idx_t>;
     using idxPairVector = std::vector<idxPair>;
+    using FuncSpaceRangeVector = std::vector<FuncSpaceRange>;
+    using BlockData = std::pair<std::vector<int>, std::vector<int>>;
+    using BlockDataVector = std::vector<BlockData>;
 
-    /// \brief Helper struct for function space intersections.
-    struct IndexRange {
+    // Atlas to MPI type conversion.
+    template <typename T>
+    struct typeTraits {};
 
-      // Total number of elements.
-      idx_t nElem;
-
-      // Number of levels.
-      idx_t levels;
-
-      // Begin and end of j range.
-      idxPair jBeginEnd{};
-
-      // Begin and end of i range for each j.
-      idxPairVector iBeginEnd{};
+    template <>
+    struct typeTraits<double> {
+      static const auto atlasType = array::DataType::KIND_REAL64;
+      static const auto mpiType = MPI_DOUBLE;
     };
 
-    using IndexRangeVector = std::vector<IndexRange>;
+    template <>
+    struct typeTraits<float> {
+      static const auto atlasType = array::DataType::KIND_REAL32;
+      static const auto mpiType = MPI_FLOAT;
+    };
+
+    template <>
+    struct typeTraits<int> {
+      static const auto atlasType = array::DataType::KIND_INT32;
+      static const auto mpiType = MPI_INT;
+    };
+
+    template <>
+    struct typeTraits<long> {
+      static const auto atlasType = array::DataType::KIND_INT64;
+      static const auto mpiType = MPI_LONG;
+    };
+
+    template <>
+    struct typeTraits<unsigned long> {
+      static const auto atlasType = array::DataType::KIND_UINT64;
+      static const auto mpiType = MPI_UNSIGNED_LONG;
+    };
 
     using functionspace::detail::StructuredColumns;
 
@@ -122,16 +147,55 @@ namespace atlas {
       MPI_Comm graphComm_{};
 
       // Block lenghts and displacements for MPI indexed datatype.
-      std::vector<std::vector<int>> sendBlockLengths_{};
-      std::vector<std::vector<int>> sendBlockDisplacements_{};
-      std::vector<std::vector<int>> recvBlockLengths_{};
-      std::vector<std::vector<int>> recvBlockDisplacements_{};
+      BlockDataVector sendBlockDataVector_{};
+      BlockDataVector recvBlockDataVector_{};
 
       // Data counts and displacements.
       std::vector<int> sendCounts_{};
       std::vector<MPI_Aint> sendDisplacements_{};
       std::vector<int> recvCounts_{};
       std::vector<MPI_Aint> recvDisplacements_{};
+
+    };
+
+    // Helper class for function space intersections.
+    class FuncSpaceRange {
+
+    public:
+
+      // Default Constructor.
+      FuncSpaceRange() = default;
+
+      // Constructor.
+      FuncSpaceRange(const StructuredColumns* const structuredColumnsPtr);
+
+      // Get index ranges from all PEs.
+      FuncSpaceRangeVector getFuncSpaceRanges() const;
+
+      // Count number of elements.
+      idx_t getElemCount() const;
+
+      // Intersection operator.
+      FuncSpaceRange operator&(const FuncSpaceRange& indexRange) const;
+
+      // Get block lengths and displacements for index range.
+      BlockData
+        getBlockData(
+        const StructuredColumns* const structuredColumnsPtr) const;
+
+      // Return copy of rank.
+      int getRank() const {return rank_;}
+
+    private:
+
+      // MPI rank of range.
+      int rank_{};
+
+      // Begin and end of j range.
+      idxPair jBeginEnd_{};
+
+      // Begin and end of i range for each j.
+      idxPairVector iBeginEnd_{};
 
     };
   }

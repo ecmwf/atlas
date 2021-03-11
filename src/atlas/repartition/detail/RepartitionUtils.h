@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <mpi.h>
 #include <string>
 #include <typeinfo>
 
@@ -60,11 +61,22 @@ namespace atlas {
           varNameB + "->grid() is type " + gridNameB, Here());
       }
 
+      // Check levels match.
+      const auto levelsA = castPtrA->levels();
+      const auto levelsB = castPtrB->levels();
+
+      if (gridNameA != gridNameB) {
+
+        throw eckit::BadValue("Number of levels do not match.\n" +
+          varNameA + "->levels() = " + std::to_string(levelsA) + "\n" +
+          varNameB + "->levels() = " + std::to_string(levelsB), Here());
+      }
+
       return;
     }
 
     /// \brief  Check fields have the same data type.
-    void checkFieldDataType(const Field& fieldA, const Field& fieldB,
+    inline void checkFieldDataType(const Field& fieldA, const Field& fieldB,
       const std::string& varnameA, const std::string& varnameB) {
 
       // Check fields have the same data type.
@@ -78,7 +90,8 @@ namespace atlas {
     }
 
     /// \brief  Check field sets the same size.
-    void checkFieldSetSize(const FieldSet& fieldSetA, const FieldSet& fieldSetB,
+    inline void checkFieldSetSize(
+      const FieldSet& fieldSetA, const FieldSet& fieldSetB,
       const std::string& varnameA, const std::string& varnameB) {
 
       // Check fields have the same data type.
@@ -86,6 +99,19 @@ namespace atlas {
         throw eckit::BadValue("Field sets have different data types.\n" +
           varnameA + " has size " + std::to_string(fieldSetA.size()) + "\n" +
           varnameB + " has size " + std::to_string(fieldSetB.size()), Here());
+      }
+
+      return;
+    }
+
+    /// \brief Check if MPI routine succeeded.
+    inline void checkMPI(const int returnVal,
+    const std::string& functionName) {
+
+      // Check return value.
+      if (returnVal != MPI_SUCCESS) {
+        throw eckit::FailedLibraryCall("MPI " + std::string(MPICH_VERSION),
+          functionName, "Error code: " + std::to_string(returnVal), Here());
       }
 
       return;
