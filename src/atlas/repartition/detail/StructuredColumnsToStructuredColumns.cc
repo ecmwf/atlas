@@ -19,11 +19,51 @@
 namespace atlas {
   namespace repartition {
 
-    //==========================================================================
-    // Helper function forward declarations.
-    //==========================================================================
-
     namespace  {
+
+      //========================================================================
+      // Type traits structs.
+      //========================================================================
+
+      template <typename T>
+      struct typeTraits {};
+
+      template <>
+      struct typeTraits<double> {
+        static const auto atlasType = array::DataType::KIND_REAL64;
+        static const auto mpiType = MPI_DOUBLE;
+      };
+
+      template <>
+      struct typeTraits<float> {
+        static const auto atlasType = array::DataType::KIND_REAL32;
+        static const auto mpiType = MPI_FLOAT;
+      };
+
+      template <>
+      struct typeTraits<int> {
+        static const auto atlasType = array::DataType::KIND_INT32;
+        static const auto mpiType = MPI_INT;
+      };
+
+      template <>
+      struct typeTraits<long> {
+        static const auto atlasType = array::DataType::KIND_INT64;
+        static const auto mpiType = MPI_LONG;
+      };
+
+      template <>
+      struct typeTraits<unsigned long> {
+        static const auto atlasType = array::DataType::KIND_UINT64;
+        static const auto mpiType = MPI_UNSIGNED_LONG;
+      };
+
+      //========================================================================
+      // Helper function forward declarations.
+      //========================================================================
+
+      idx_t countElements(const IndexRange& indexRange);
+
       IndexRangeVector
         getIndexRanges(const StructuredColumns* const structuredColumnsPtr);
 
@@ -33,14 +73,19 @@ namespace atlas {
       IndexRangeVector getIntersections(const IndexRange& indexRangeA,
         const IndexRangeVector& indexRangesB);
 
-      std::pair<std::vector<int>, std::vector<int>>
-        getCountsDisplacements(const IndexRangeVector& indexRanges);
+      MPI_Comm getGraphComm(const IndexRangeVector& sendIntersections,
+        const IndexRangeVector& recvIntersections);
 
-      void trimIntersections(IndexRangeVector& intersections,
-        const std::vector<int>& counts);
+      std::pair<std::vector<std::vector<int>>, std::vector<std::vector<int>>>
+        getBlockLengthsDisplacements(const IndexRangeVector& intersections,
+        const StructuredColumns* const structuredColumnsPtr);
 
-      template <typename Functor>
-      void indexRangeForEach(const IndexRange& indexRange, Functor functor);
+      std::vector<MPI_Datatype> getDataTypes(
+        const std::vector<std::vector<int>>& blockLengths,
+        const std::vector<std::vector<int>>& blockDisplacements,
+        const MPI_Datatype elemDataType);
+
+      void freeDataTypes(std::vector<MPI_Datatype>& dataTypes);
 
     }
 
@@ -48,6 +93,7 @@ namespace atlas {
     // Class public methods implementation.
     //==========================================================================
 
+    // Constructor.
     StructuredColumnsToStructuredColumns::StructuredColumnsToStructuredColumns(
       const FunctionSpace& sourceFunctionSpace,
       const FunctionSpace& targetFunctionSpace) :
@@ -72,26 +118,41 @@ namespace atlas {
       const auto targetRanges = getIndexRanges(targetStructuredColumnsPtr_);
 
       // Calculate intersection between this source range and all target ranges.
-      sendIntersections_ =
+      const auto sendIntersections =
         getIntersections(sourceRanges[mpiRank], targetRanges);
 
       // Calculate intersection between this target range and all source ranges.
-      recvIntersections_ =
+      const auto recvIntersections =
         getIntersections(targetRanges[mpiRank], sourceRanges);
 
-      // Get send counts and displacements.
-      std::tie(sendCounts_, sendDisplacements_) =
-        getCountsDisplacements(sendIntersections_);
+      // Get distrubted graph communicator.
+      graphComm_ = getGraphComm(sendIntersections, recvIntersections);
 
-      // Get receive counts and displacements.
-      std::tie(recvCounts_, recvDisplacements_) =
-        getCountsDisplacements(recvIntersections_);
+      // Get send block lengths and displacements.
+      std::tie(sendBlockLengths_, sendBlockDisplacements_) =
+        getBlockLengthsDisplacements(sendIntersections,
+          sourceStructuredColumnsPtr_);
 
-      // Trim off empty send intersections.
-      trimIntersections(sendIntersections_, sendCounts_);
+      // Get receive block lengths and displacements.
+      std::tie(recvBlockLengths_, recvBlockDisplacements_) =
+        getBlockLengthsDisplacements(recvIntersections,
+          targetStructuredColumnsPtr_);
 
-      // Trim off empty recv intersections.
-      trimIntersections(recvIntersections_, recvCounts_);
+      // Set counts and displacement vectors.
+      sendCounts_ = std::vector<int>(sendBlockLengths_.size(), 1);
+      sendDisplacements_ = std::vector<MPI_Aint>(sendBlockLengths_.size(), 0);
+      recvCounts_ = std::vector<int>(recvBlockLengths_.size(), 1);
+      recvDisplacements_ = std::vector<MPI_Aint>(recvBlockLengths_.size(), 0);
+
+      return;
+    }
+
+    // Destructor.
+    StructuredColumnsToStructuredColumns::
+      ~StructuredColumnsToStructuredColumns() {
+
+      // Free graph
+      MPI_Comm_free(&graphComm_);
 
       return;
     }
@@ -116,23 +177,23 @@ namespace atlas {
       // Determine data type of field and execute.
       switch(sourceField.datatype().kind()){
 
-        case array::DataType::KIND_REAL64:
+        case typeTraits<double>::atlasType:
           doExecute<double>(sourceField, targetField);
           break;
 
-        case array::DataType::KIND_REAL32:
+        case typeTraits<float>::atlasType:
           doExecute<float>(sourceField, targetField);
           break;
 
-        case array::DataType::KIND_INT32:
+        case typeTraits<int>::atlasType:
           doExecute<int>(sourceField, targetField);
           break;
 
-        case array::DataType::KIND_INT64:
+        case typeTraits<long>::atlasType:
           doExecute<long>(sourceField, targetField);
           break;
 
-        case array::DataType::KIND_UINT64:
+        case typeTraits<unsigned long>::atlasType:
           doExecute<unsigned long>(sourceField, targetField);
           break;
 
@@ -140,7 +201,6 @@ namespace atlas {
           throw eckit::NotImplemented(
             "No implementation for data type " +
             sourceField.datatype().str(), Here());
-          break;
       }
 
       return;
@@ -153,9 +213,10 @@ namespace atlas {
       checkFieldSetSize(sourceFieldSet, targetFieldSet,
         "sourceFieldSet", "targetFieldSet");
 
-      std::for_each(sourceFieldSet.begin(), sourceFieldSet.end(),
-        [&, i = idx_t{0}](const Field& sourceField) mutable {
-          execute(sourceField, targetFieldSet[i++]);
+      std::for_each(sourceFieldSet.cbegin(), sourceFieldSet.cend(),
+        [&, targetFieldSetIt = targetFieldSet.begin()]
+        (const Field& sourceField) mutable {
+          execute(sourceField, *targetFieldSetIt++);
           return;
         });
 
@@ -174,59 +235,23 @@ namespace atlas {
       const auto sourceView = array::make_view<fieldType, 2>(sourceField);
       auto targetView = array::make_view<fieldType, 2>(targetField);
 
+      // Make vector of MPI send data types.
+      auto sendTypes = getDataTypes(sendBlockLengths_, sendBlockDisplacements_,
+        typeTraits<fieldType>::mpiType);
 
-      // Allocate send buffer.
-      const auto nSend = static_cast<size_t>(
-        sendCounts_.back() + sendDisplacements_.back());
-      auto sendBuffer = std::vector<fieldType>(nSend);
+      // Make vector of MPI recv data types.
+      auto recvTypes = getDataTypes(recvBlockLengths_, recvBlockDisplacements_,
+        typeTraits<fieldType>::mpiType);
 
-      // Allocate receive buffer
-      const auto nRecv = static_cast<size_t>(
-        recvCounts_.back() + recvDisplacements_.back());
-      auto recvBuffer = std::vector<fieldType>(nRecv);
+      // Call MPI_Alltoallw.
+      MPI_Neighbor_alltoallw(sourceView.data(), sendCounts_.data(),
+        sendDisplacements_.data(), sendTypes.data(), targetView.data(),
+        recvCounts_.data(), recvDisplacements_.data(), recvTypes.data(),
+        graphComm_);
 
-      // The constructor should have made sure that the intersections match up
-      // with counts and displacements vectors.
-
-      //Loop over send intersections and write to send buffer.
-      std::for_each(sendIntersections_.cbegin(), sendIntersections_.cend(),
-        [&, sendBufferIt = sendBuffer.begin()]
-        (const IndexRange& intersection) mutable {
-
-        indexRangeForEach(intersection,
-          [&](const idx_t i, const idx_t j, const idx_t k){
-            const auto iNode = sourceStructuredColumnsPtr_->index(i, j);
-            *sendBufferIt++ = sourceView(iNode, k);
-            return;
-          });
-
-        return;
-
-      });
-
-      // Perform all to all communication.
-      mpi::comm().allToAllv(sendBuffer.data(), sendCounts_.data(),
-        sendDisplacements_.data(), recvBuffer.data(), recvCounts_.data(),
-        recvDisplacements_.data());
-
-
-      //Loop over recv intersections and read from recv buffer.
-      std::for_each(recvIntersections_.cbegin(), recvIntersections_.cend(),
-        [&, recvBufferIt = recvBuffer.cbegin()]
-        (const IndexRange& intersection) mutable {
-
-        indexRangeForEach(intersection,
-          [&](const idx_t i, const idx_t j, const idx_t k){
-            const auto iNode = targetStructuredColumnsPtr_->index(i, j);
-            targetView(iNode, k) = *recvBufferIt++;
-            return;
-          });
-
-        return;
-
-      });
-
-      // By this point, everything should have worked.
+      // Free data types.
+      freeDataTypes(sendTypes);
+      freeDataTypes(recvTypes);
 
       return;
     }
@@ -236,6 +261,22 @@ namespace atlas {
     //==========================================================================
 
     namespace  {
+
+      // Count the number of elements in an indexRange
+      idx_t countElements(const IndexRange& indexRange) {
+
+        // Accumulate size of positive i range.
+        const idx_t count = std::accumulate(indexRange.iBeginEnd.cbegin(),
+          indexRange.iBeginEnd.cend(), 0,
+          [](const int& cumulant, const idxPair& iElem) -> idx_t {
+
+            // Only count positive differences.
+            return cumulant + std::max(iElem.second - iElem.first, 0);
+
+          }) * indexRange.levels;
+
+        return count;
+      }
 
       // Communicate index range of function spaces to all PEs
       IndexRangeVector getIndexRanges(
@@ -302,6 +343,9 @@ namespace atlas {
             const auto iEnd = iBegin + irecvCounts[i];
             std::copy(iBegin, iEnd, std::back_inserter(rangeElem.iBeginEnd));
 
+            // Count number of elements.
+            rangeElem.nElem = countElements(rangeElem);
+
             ++i;
             return rangeElem;
           });
@@ -342,6 +386,10 @@ namespace atlas {
                 std::min(iElemA.second, iElemB.second));
             });
         }
+
+        // Count number of elements.
+        intersection.nElem = countElements(intersection);
+
         return intersection;
       }
 
@@ -362,77 +410,139 @@ namespace atlas {
         return intersections;
       }
 
-      // Get the count and displacement arrays needed for an allToAll MPI
-      // communication.
-      std::pair<std::vector<int>, std::vector<int>>
-        getCountsDisplacements(const IndexRangeVector& indexRanges) {
+      // Returns a handle to an MPI directed graph for neighbourhood
+      // communications.
+      MPI_Comm getGraphComm(const IndexRangeVector& sendIntersections,
+        const IndexRangeVector& recvIntersections) {
 
-        // Declare result.
-        auto counts = std::vector<int>{};
-        auto displacements = std::vector<int>{};
+        // Declare result
+        MPI_Comm graphComm{};
 
-        // Count the number of elements in each index range.
-        std::transform(indexRanges.cbegin(), indexRanges.cend(),
-          std::back_inserter(counts),
-          [](const IndexRange& rangeElem){
+        // Get parent communicator.
+        const auto oldComm = mpi::comm().communicator();
 
-            // Accumulate size of positive i range.
-            const int count = std::accumulate(rangeElem.iBeginEnd.cbegin(),
-              rangeElem.iBeginEnd.cend(), 0,
-              [](const int& cumulant, const idxPair& iElem) -> int {
-                return cumulant + std::max(iElem.second - iElem.first, 0);
-              }) * rangeElem.levels;
-
-            return count;
+        // Get ranks of valid receive PEs.
+        std::vector<int> sources{};
+        std::for_each(recvIntersections.cbegin(), recvIntersections.cend(),
+          [&, i = int{0}](const IndexRange& intersection) mutable {
+            if (intersection.nElem) sources.push_back(i);
+            ++i;
+            return;
           });
 
-        // Calculate displacements from counts.
-        displacements.push_back(0);
-        std::partial_sum(counts.cbegin(), counts.cend() - 1,
-          std::back_inserter(displacements));
+        const auto inDegree = static_cast<int>(sources.size());
 
-        return std::make_pair(counts, displacements);
+        // Get ranks of valid send PEs.
+        std::vector<int> destinations{};
+        std::for_each(sendIntersections.cbegin(), sendIntersections.cend(),
+          [&, i = int{0}](const IndexRange& intersection) mutable {
+            if (intersection.nElem) destinations.push_back(i);
+            ++i;
+            return;
+          });
+
+        const auto outDegree = static_cast<int>(destinations.size());
+
+        // Create distributed graph communicator.
+        MPI_Dist_graph_create_adjacent(oldComm, inDegree, sources.data(),
+          MPI_UNWEIGHTED, outDegree, destinations.data(), MPI_UNWEIGHTED,
+          MPI_INFO_NULL, false, &graphComm);
+
+        return graphComm;
       }
 
-      // Trim off index ranges where counts equals zero.
-      void trimIntersections(IndexRangeVector& intersections,
-        const std::vector<int>& counts) {
+      std::pair<std::vector<std::vector<int>>, std::vector<std::vector<int>>>
+        getBlockLengthsDisplacements(const IndexRangeVector& intersections,
+        const StructuredColumns* const structuredColumnsPtr) {
 
-        intersections.erase(
-          std::remove_if(intersections.begin(), intersections.end(),
-          [&](const IndexRange& intersection) -> bool {
+        // Declare results.
+        auto blockLengths = std::vector<std::vector<int>>{};
+        auto blockDisplacements = std::vector<std::vector<int>>{};
 
-            // Some pointer arithmetic to get element of counts vector.
-            const auto distance = &intersection - intersections.data();
+        // Loop over all intersections.
+        std::for_each(intersections.cbegin(), intersections.cend(),
+          [&](const IndexRange& intersection){
 
-            return !(*(counts.data() + distance));
-          }), intersections.end());
-        return;
-      }
+            // Add block information if intersection is valid.
+            if (intersection.nElem) {
 
-      // Visit all indices and call f(idx_t i, idx_t j, idx_t k).
-      template <typename functor>
-      void indexRangeForEach(const IndexRange& indexRange, functor f) {
+              // Add length and displacement vectors.
+              blockLengths.push_back(std::vector<int>{});
+              blockDisplacements.push_back(std::vector<int>{});
 
-        idx_t jBegin, jEnd;
-        std::tie(jBegin, jEnd) = indexRange.jBeginEnd;
+              // Get reference to newly added vectors.
+              auto& blockLength = blockLengths.back();
+              auto& blockDisplacement = blockDisplacements.back();
 
-        for (idx_t j = jBegin; j < jEnd; ++j) {
+              // Loop over all i range pairs.
+              std::for_each(intersection.iBeginEnd.cbegin(),
+                intersection.iBeginEnd.cend(),
+                [&, j = intersection.jBeginEnd.first]
+                (const idxPair& iElem) mutable {
 
-          idx_t iBegin, iEnd;
-          std::tie(iBegin, iEnd) =
-            indexRange.iBeginEnd[static_cast<size_t>(j - jBegin)];
+                  auto iSize = iElem.second - iElem.first;
+                  if (iSize > 0) {
 
-          for (idx_t i = iBegin; i < iEnd; ++i){
+                    // Add block size.
+                    blockLength.push_back(iSize * intersection.levels);
 
-            for (idx_t k = 0; k < indexRange.levels; ++k) {
+                    // Add displacement.
+                    blockDisplacement.push_back(
+                      structuredColumnsPtr->index(iElem.first, j)
+                      * intersection.levels);
+                  }
 
-              // Call functor.
-              f(i, j, k);
+                  ++j;
+                  return;
+                });
 
             }
-          }
-        }
+
+            return;
+          });
+
+        return std::make_pair(blockLengths, blockDisplacements);
+      }
+
+      // Get a vector of data types from arrays of block lengths, displacements
+      // and an element data type.
+      std::vector<MPI_Datatype> getDataTypes(
+        const std::vector<std::vector<int>>& blockLengths,
+        const std::vector<std::vector<int>>& blockDisplacements,
+        const MPI_Datatype elemDataType) {
+
+        // Declare result.
+        auto dataTypes = std::vector<MPI_Datatype>(blockLengths.size());
+
+        // Generate data types.
+        std::for_each(dataTypes.begin(), dataTypes.end(),
+          [&, blockLengthIt = blockLengths.begin(),
+          blockDisplacementIt = blockDisplacements.begin()]
+          (MPI_Datatype& sendType) mutable {
+
+            // Create and commit MPI derived type.
+            auto blockCount = static_cast<int>(blockLengthIt->size());
+            MPI_Type_indexed(blockCount, blockLengthIt->data(),
+              blockDisplacementIt->data(), elemDataType,
+              &sendType);
+
+            MPI_Type_commit(&sendType);
+            ++blockLengthIt;
+            ++blockDisplacementIt;
+
+            return;
+          });
+
+        return dataTypes;
+      }
+
+      // Free a vector of data types.
+      void freeDataTypes(std::vector<MPI_Datatype>& dataTypes) {
+
+        std::for_each(dataTypes.begin(), dataTypes.end(),
+          [](MPI_Datatype& dataType){
+            MPI_Type_free(&dataType);
+          });
 
         return;
       }

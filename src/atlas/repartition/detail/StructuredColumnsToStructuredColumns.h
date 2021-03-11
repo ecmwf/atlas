@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <mpi.h>
 #include <vector>
 
 #include "atlas/functionspace/StructuredColumns.h"
@@ -33,8 +34,17 @@ namespace atlas {
 
     /// \brief Helper struct for function space intersections.
     struct IndexRange {
+
+      // Total number of elements.
+      idx_t nElem;
+
+      // Number of levels.
       idx_t levels;
+
+      // Begin and end of j range.
       idxPair jBeginEnd{};
+
+      // Begin and end of i range for each j.
       idxPairVector iBeginEnd{};
     };
 
@@ -46,7 +56,9 @@ namespace atlas {
     ///           StructuredColumns.
     ///
     /// \details  Class to map two function spaces with the same grid but
-    ///           different partitioners.
+    ///           different partitioners. Creates an MPI Graph communicator
+    ///           to perform an efficient, scalable Neighbor_Alltoallw
+    ///           communication.
     class StructuredColumnsToStructuredColumns : public RepartitionImpl {
 
     public:
@@ -56,7 +68,7 @@ namespace atlas {
       /// \details  Performs MPI_Allgatherv to determine the (i, j, k) ranges of
       ///           each source and target function space on each PE. Then
       ///           calculates range intersections to determine what needs to be
-      ///           sent where via an MPI_Alltoallv. The grids of source and
+      ///           sent where via an MPI_Alltoallw. The grids of source and
       ///           target function space must match.
       ///
       /// \param[in]  sourceFunctionSpace  Function space of source fields.
@@ -65,12 +77,15 @@ namespace atlas {
         const FunctionSpace& sourceFunctionSpace,
         const FunctionSpace& targetFunctionSpace);
 
+      /// \brief    Destructor.
+      ~StructuredColumnsToStructuredColumns() override;
+
       /// \brief    Repartitions source field to target field.
       ///
-      /// \details  Transfers source field to target field via an MPI_Alltoallv.
-      ///           Function space of source field must match
-      ///           sourceFunctionSpace supplied to the constructor. Same
-      ///           applies to target field.
+      /// \details  Transfers source field to target field via an
+      ///           MPI_Neighbor_Alltoallw. Function space of source field
+      ///           must match sourceFunctionSpace supplied to the constructor.
+      ///           Same applies to target field.
       ///
       /// \param[in]  sourceField  input field matching sourceFunctionSpace.
       /// \param[out] targetField  output field matching targetFunctionSpace.
@@ -86,6 +101,13 @@ namespace atlas {
       void execute(const FieldSet& sourceFieldSet,
         FieldSet& targetFieldSet) const override;
 
+      // Disable copying.
+      StructuredColumnsToStructuredColumns(
+        const StructuredColumnsToStructuredColumns&) = delete;
+      StructuredColumnsToStructuredColumns operator=(
+      const StructuredColumnsToStructuredColumns&) = delete;
+
+
     private:
 
       // Generic execute call to handle different field types.
@@ -93,19 +115,23 @@ namespace atlas {
       void doExecute(const Field& sourceField, Field& targetField) const;
 
       // FunctionSpaces recast to StructuredColumns.
-      const StructuredColumns* sourceStructuredColumnsPtr_;
-      const StructuredColumns* targetStructuredColumnsPtr_;
+      const StructuredColumns* sourceStructuredColumnsPtr_{};
+      const StructuredColumns* targetStructuredColumnsPtr_{};
 
-      // Function space intersection ranges.
-      IndexRangeVector sendIntersections_{};
-      IndexRangeVector recvIntersections_{};
+      // MPI distributed graph communicator.
+      MPI_Comm graphComm_{};
 
-      // MPI count and displacement arrays for send and receive buffers.
+      // Block lenghts and displacements for MPI indexed datatype.
+      std::vector<std::vector<int>> sendBlockLengths_{};
+      std::vector<std::vector<int>> sendBlockDisplacements_{};
+      std::vector<std::vector<int>> recvBlockLengths_{};
+      std::vector<std::vector<int>> recvBlockDisplacements_{};
+
+      // Data counts and displacements.
       std::vector<int> sendCounts_{};
-      std::vector<int> sendDisplacements_{};
+      std::vector<MPI_Aint> sendDisplacements_{};
       std::vector<int> recvCounts_{};
-      std::vector<int> recvDisplacements_{};
-
+      std::vector<MPI_Aint> recvDisplacements_{};
 
     };
   }
