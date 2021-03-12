@@ -2,11 +2,11 @@
 
 set(Boost_USE_MULTITHREADED      ON )
 
-ecbuild_find_package( NAME CGAL QUIET)
-ecbuild_find_package( NAME Boost VERSION 1.45.0 QUIET )
 ecbuild_add_option( FEATURE TESSELATION
                     DESCRIPTION "Support for unstructured mesh generation"
-                    CONDITION CGAL_FOUND AND Boost_FOUND )
+                    REQUIRED_PACKAGES
+                      "CGAL QUIET"
+                      "Boost VERSION 1.45.0 QUIET" )
 
 if( atlas_HAVE_TESSELATION )
     list( APPEND CGAL_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} )
