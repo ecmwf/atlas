@@ -17,7 +17,7 @@ InterpolationCacheEntry::~InterpolationCacheEntry() = default;
 
 Cache::Cache( std::shared_ptr<InterpolationCacheEntry> cache ) {
     auto& new_cache = cache_[cache->type()];
-    new_cache = cache;
+    new_cache       = cache;
 }
 
 Cache::Cache( const Cache& other ) {
@@ -31,7 +31,7 @@ Cache::~Cache() = default;
 void Cache::add( const Cache& other ) {
     for ( auto& entry : other.cache_ ) {
         auto& new_cache = cache_[entry.first];
-        new_cache = entry.second;
+        new_cache       = entry.second;
     }
 }
 

@@ -30,7 +30,7 @@ public:
     BandsDistribution( const Grid& grid, idx_t nb_partitions, const std::string& type, size_t blocksize = 1 );
 
     ATLAS_ALWAYS_INLINE int function( gidx_t index ) const {
-        Int iblock = static_cast<Int> (index / blocksize_);
+        Int iblock = static_cast<Int>( index / blocksize_ );
         return ( iblock * nb_partitions_Int_ ) / nb_blocks_;
     }
 

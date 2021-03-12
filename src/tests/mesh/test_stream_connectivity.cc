@@ -8,7 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "eckit/io/ResizableBuffer.h"
+#include "eckit/io/Buffer.h"
 #include "eckit/serialisation/ResizableMemoryStream.h"
 
 #include "atlas/mesh/Connectivity.h"
@@ -22,7 +22,7 @@ namespace test {
 //-----------------------------------------------------------------------------
 
 CASE( "test_stream_irregular_connectivity" ) {
-    eckit::ResizableBuffer b{0};
+    eckit::Buffer b{0};
     eckit::ResizableMemoryStream s{b};
 
     // Create stream
@@ -86,7 +86,7 @@ CASE( "test_stream_irregular_connectivity" ) {
 //-----------------------------------------------------------------------------
 
 CASE( "test_stream_block_connectivity" ) {
-    eckit::ResizableBuffer b{0};
+    eckit::Buffer b{0};
     eckit::ResizableMemoryStream s{b};
 
     // Create stream
@@ -128,7 +128,7 @@ CASE( "test_stream_block_connectivity" ) {
 }
 
 CASE( "test_stream_multiblock_connectivity" ) {
-    eckit::ResizableBuffer b{0};
+    eckit::Buffer b{0};
     eckit::ResizableMemoryStream s{b};
 
     // Create stream
