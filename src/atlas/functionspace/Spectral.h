@@ -234,6 +234,8 @@ public:
     void norm( const Field&, double norm_per_level[], int rank = 0 ) const;
     void norm( const Field&, std::vector<double>& norm_per_level, int rank = 0 ) const;
 
+    array::LocalView<const int, 1> zonal_wavenumbers() const;  // zero-based, OK
+
     idx_t nb_spectral_coefficients() const;
     idx_t nb_spectral_coefficients_global() const;
     int truncation() const;

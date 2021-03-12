@@ -47,11 +47,11 @@ std::string FunctionSpace::distribution() const {
 }
 
 void FunctionSpace::haloExchange( const Field& field, bool on_device ) const {
-    return get()->haloExchange( field, on_device );
+    get()->haloExchange( field, on_device );
 }
 
 void FunctionSpace::adjointHaloExchange( const Field& field, bool on_device ) const {
-    return get()->adjointHaloExchange( field, on_device );
+    get()->adjointHaloExchange( field, on_device );
 }
 
 
@@ -72,11 +72,11 @@ Field FunctionSpace::ghost() const {
 }
 
 void FunctionSpace::haloExchange( const FieldSet& fields, bool on_device ) const {
-    return get()->haloExchange( fields, on_device );
+    get()->haloExchange( fields, on_device );
 }
 
 void FunctionSpace::adjointHaloExchange( const FieldSet& fields, bool on_device ) const {
-    return get()->adjointHaloExchange( fields, on_device );
+    get()->adjointHaloExchange( fields, on_device );
 }
 
 const util::PartitionPolygon& FunctionSpace::polygon( idx_t halo ) const {

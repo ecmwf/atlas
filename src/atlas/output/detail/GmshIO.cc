@@ -1502,7 +1502,7 @@ Mesh::Implementation* atlas__Gmsh__read( GmshIO* This, char* file_path ) {
 }
 
 void atlas__Gmsh__write( GmshIO* This, Mesh::Implementation* mesh, char* file_path ) {
-    return GmshFortranInterface::atlas__Gmsh__write( This, mesh, file_path );
+    GmshFortranInterface::atlas__Gmsh__write( This, mesh, file_path );
 }
 
 Mesh::Implementation* atlas__read_gmsh( char* file_path ) {
@@ -1510,17 +1510,17 @@ Mesh::Implementation* atlas__read_gmsh( char* file_path ) {
 }
 
 void atlas__write_gmsh_mesh( const Mesh::Implementation* mesh, char* file_path ) {
-    return GmshFortranInterface::atlas__write_gmsh_mesh( mesh, file_path );
+    GmshFortranInterface::atlas__write_gmsh_mesh( mesh, file_path );
 }
 
 void atlas__write_gmsh_fieldset( const field::FieldSetImpl* fieldset, functionspace::FunctionSpaceImpl* functionspace,
                                  char* file_path, int mode ) {
-    return GmshFortranInterface::atlas__write_gmsh_fieldset( fieldset, functionspace, file_path, mode );
+    GmshFortranInterface::atlas__write_gmsh_fieldset( fieldset, functionspace, file_path, mode );
 }
 
 void atlas__write_gmsh_field( const field::FieldImpl* field, functionspace::FunctionSpaceImpl* functionspace,
                               char* file_path, int mode ) {
-    return GmshFortranInterface::atlas__write_gmsh_field( field, functionspace, file_path, mode );
+    GmshFortranInterface::atlas__write_gmsh_field( field, functionspace, file_path, mode );
 }
 }
 // ----------------------------------------------------------------------------

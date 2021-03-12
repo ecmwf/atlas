@@ -61,9 +61,10 @@ bool GridBoxMethod::intersect( size_t i, const GridBox& box, const util::IndexKD
 
     double sumSmallAreas = 0.;
     for ( auto& c : closest ) {
-        auto j        = c.payload();
-        auto smallBox = sourceBoxes_.at( j );
+        auto j = c.payload();
+        ASSERT( j >= 0 );
 
+        auto smallBox = sourceBoxes_.at( size_t( j ) );
         if ( box.intersects( smallBox ) ) {
             double smallArea = smallBox.area();
             ASSERT( smallArea > 0. );
@@ -134,7 +135,8 @@ void GridBoxMethod::do_setup( const Grid& source, const Grid& target, const Cach
     {
         ATLAS_TRACE( "GridBoxMethod::setup: intersecting grid boxes" );
 
-        eckit::ProgressTimer progress( "Intersecting", targetBoxes_.size(), "grid box", double( 5. ) );
+        constexpr double TIMED = 5.;
+        eckit::ProgressTimer progress( "Intersecting", targetBoxes_.size(), "grid box", TIMED );
 
         std::vector<Triplet> triplets;
         size_t i = 0;
@@ -165,10 +167,12 @@ void GridBoxMethod::do_setup( const Grid& source, const Grid& target, const Cach
 void GridBoxMethod::giveUp( const std::forward_list<size_t>& failures ) {
     Log::warning() << "Failed to intersect grid boxes: ";
 
-    size_t count = 0;
-    auto sep     = "";
+    constexpr int COUNTED = 10;
+
+    int count = 0;
+    auto sep  = "";
     for ( const auto& f : failures ) {
-        if ( count++ < 10 ) {
+        if ( count++ < COUNTED ) {
             Log::warning() << sep << f;
             sep = ", ";
         }

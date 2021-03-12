@@ -9,6 +9,7 @@
  */
 
 #include <algorithm>
+#include <cmath>
 #include <iomanip>
 
 #include "atlas/array/MakeView.h"
@@ -70,8 +71,8 @@ struct AtlasTransEnvironment : public AtlasTestEnvironment {
 // Andreas Mueller *ECMWF*
 //
 double sphericalharmonics_analytic_point(
-    const double n,       // total wave number (implemented so far for n<4
-    const double m,       // zonal wave number (implemented so far for m<4, m<n
+    const int n,          // total wave number (implemented so far for n<4
+    const int m,          // zonal wave number (implemented so far for m<4, m<n
     const int imag,       // 0: test real part, 1: test imaginary part
     const double lon,     // longitude in radians
     const double lat,     // latitude in radians
@@ -377,8 +378,8 @@ double sphericalharmonics_analytic_point(
 void spectral_transform_grid_analytic(
     const int trc,        // truncation (in)
     bool trcFT,           // truncation for Fourier transformation (in)
-    const double n,       // total wave number (implemented so far for n<4)
-    const double m,       // zonal wave number (implemented so far for m<4, m<n)
+    const int n,          // total wave number (implemented so far for n<4)
+    const int m,          // zonal wave number (implemented so far for m<4, m<n)
     const int imag,       // 0: test real part, 1: test imaginary part
     const Grid grid,      // call with something like Grid("O32")
     double rspecg[],      // spectral data, size (trc+1)*trc (out)
@@ -418,7 +419,7 @@ void spectral_transform_grid_analytic(
             for ( int jlat = 0; jlat < nlatsGlobal; jlat++ ) {
                 if ( gs_global.y( jlat ) > g.y( 0 ) ) {
                     jlatMin++;
-                };
+                }
             }
         }
 
@@ -1459,6 +1460,100 @@ CASE( "test_trans_unstructured" ) {
 #endif
 
 //-----------------------------------------------------------------------------
+#if ATLAS_HAVE_TRANS
+CASE( "test_trans_levels" ) {
+    Log::info() << "test_trans_levels" << std::endl;
+
+    // test trans_levels test puts
+    //   the real component of spherical harmonic (m=1, n=2) on level 0
+    //   and the imaginary component of spherical harmomic (m=2, n=3) on level 1
+    //   of a regular Gaussian field with two levels.
+
+    // it then runs directtrans and checks that the spectral coefficients are
+    //   correct.
+    //   (Note that this test is assuming we are running on 1PE.)
+
+    // it finally runs the inverse transform and checks that we end up where we
+    // started.
+
+    std::string grid_uid( "F2" );  // Regular Gaussian F ( 8 N^2)
+    StructuredGrid g( grid_uid );
+
+    auto N             = GaussianGrid( g ).N();  // -> cast to Gaussian grid and get the Gaussian number
+    std::size_t levels = 2;
+    std::vector<int> n{2, 3};     // total wavenumber on levels O and 1
+    std::vector<int> m{1, 2};     // meridional wavenumber on levels O and 1
+    std::vector<int> imag{0, 1};  // imaginary component or not
+    const std::vector<idx_t> level_sequence{0, 1};
+
+    functionspace::Spectral specFS( 2 * N - 1, atlas::option::levels( levels ) );
+    functionspace::StructuredColumns gridFS( g, atlas::option::levels( levels ) );
+
+    atlas::trans::Trans transIFS( gridFS, specFS );
+
+    Log::info() << "transIFS backend" << transIFS.backend() << std::endl;
+
+    std::vector<atlas::PointLonLat> pointsLonLat;
+    pointsLonLat.reserve( static_cast<std::size_t>( g.size() ) );
+    for ( auto ll : g.lonlat() ) {
+        pointsLonLat.push_back( ll );
+    }
+    atlas::Field gpf  = gridFS.createField<double>( atlas::option::name( "gpf" ) );
+    atlas::Field gpf2 = gridFS.createField<double>( atlas::option::name( "gpf2" ) );
+    atlas::Field spf  = specFS.createField<double>();
+
+    auto view = atlas::array::make_view<double, 2>( gpf );
+    for ( atlas::idx_t j = gridFS.j_begin(); j < gridFS.j_end(); ++j ) {
+        for ( atlas::idx_t i = gridFS.i_begin( j ); i < gridFS.i_end( j ); ++i ) {
+            atlas::idx_t jn = gridFS.index( i, j );
+            for ( atlas::idx_t jl : level_sequence ) {
+                view( jn, jl ) = sphericalharmonics_analytic_point(
+                    n[jl], m[jl], imag[jl], ( ( pointsLonLat[jn].lon() * M_PI ) / 180. ),
+                    ( ( pointsLonLat[jn].lat() * M_PI ) / 180. ), 2, 2 );
+            }
+        }
+    }
+
+    // transform fields to spectral and view
+    transIFS.dirtrans( gpf, spf );
+
+    auto spView = atlas::array::make_view<double, 2>( spf );
+
+    Log::info() << "trans spectral coefficients = " << transIFS.spectralCoefficients() << std::endl;
+    Log::info() << "checking the spectral coefficients are correct " << std::endl;
+
+    int imagSize = 2;
+    std::vector<int> index;
+    for ( int jl : level_sequence ) {
+        int offset( 0 );
+        for ( int k = 0; k < m[jl]; ++k ) {
+            offset += ( 2 * N - k ) * imagSize;
+        }
+        index.push_back( offset + imag[jl] + ( n[jl] - m[jl] ) * imagSize );
+    }
+
+    for ( int i = 0; i < transIFS.spectralCoefficients(); ++i ) {
+        for ( int jl : level_sequence ) {
+            double value = ( i == index[jl] ? 1.0 : 0.0 );
+            EXPECT( std::abs( spView( i, jl ) - value ) < 1e-14 );
+        }
+    }
+
+    transIFS.invtrans( spf, gpf2 );
+
+    Log::info() << "comparing going through direct and inverse transforms " << std::endl;
+
+    auto view2 = atlas::array::make_view<double, 2>( gpf2 );
+    for ( atlas::idx_t j = gridFS.j_begin(); j < gridFS.j_end(); ++j ) {
+        for ( atlas::idx_t i = gridFS.i_begin( j ); i < gridFS.i_end( j ); ++i ) {
+            atlas::idx_t jn = gridFS.index( i, j );
+            for ( idx_t jl : level_sequence ) {
+                EXPECT( std::abs( view( jn, jl ) - view2( jn, jl ) ) < 1e-14 );
+            }
+        }
+    }
+}
+#endif
 
 #if 0
 CASE( "test_trans_fourier_truncation" ) {

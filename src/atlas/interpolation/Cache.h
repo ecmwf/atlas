@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include <memory>
 #include <map>
+#include <memory>
 #include <string>
 
 #include "eckit/filesystem/PathName.h"
@@ -47,7 +47,7 @@ public:
 
 class Cache {
 public:
-    Cache()                     = default;
+    Cache() = default;
     Cache( const Cache& other );
     Cache( const Interpolation& );
     operator bool() const { return not cache_.empty(); }

@@ -38,7 +38,7 @@ MeshGenerator::MeshGenerator( const eckit::Parametrisation& config ) :
         config ) ) {}
 
 void MeshGenerator::hash( eckit::Hash& h ) const {
-    return get()->hash( h );
+    get()->hash( h );
 }
 
 Mesh MeshGenerator::generate( const Grid& g, const grid::Distribution& d ) const {

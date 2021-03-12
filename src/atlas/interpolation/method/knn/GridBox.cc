@@ -27,9 +27,10 @@
 #include "atlas/util/Point.h"
 
 
-static constexpr double GLOBE      = 360.;
-static constexpr double NORTH_POLE = 90.;
-static constexpr double SOUTH_POLE = -90.;
+static constexpr double GLOBE      = 360;
+static constexpr double NORTH_POLE = 90;
+static constexpr double SOUTH_POLE = -90;
+static constexpr double TWO        = 2;
 
 double normalise( double lon, double minimum ) {
     while ( lon < minimum ) {
@@ -41,6 +42,10 @@ double normalise( double lon, double minimum ) {
     return lon;
 }
 
+#define ASSERT_BOX( n, w, s, e )                                  \
+    ATLAS_ASSERT( SOUTH_POLE <= s && s <= n && n <= NORTH_POLE ); \
+    ATLAS_ASSERT( w <= e && e <= w + GLOBE )
+
 
 namespace atlas {
 namespace interpolation {
@@ -49,8 +54,7 @@ namespace method {
 
 GridBox::GridBox( double north, double west, double south, double east ) :
     north_( north ), west_( west ), south_( south ), east_( east ) {
-    ATLAS_ASSERT( SOUTH_POLE <= south_ && south_ <= north_ && north_ <= NORTH_POLE );
-    ATLAS_ASSERT( west_ <= east_ && east_ <= west_ + GLOBE );
+    ASSERT_BOX( north_, west_, south_, east_ );
 }
 
 
@@ -118,8 +122,7 @@ GridBoxes::GridBoxes( const Grid& grid, bool gaussianWeightedLatitudes ) {
     auto south = domain.ymin();
     auto west  = domain.xmin();
     auto east  = domain.xmax();
-    ATLAS_ASSERT( -90. <= south && south <= north && north <= 90. );
-    ATLAS_ASSERT( west <= east && east <= west + 360. );
+    ASSERT_BOX( north, west, south, east );
 
     bool periodic( ZonalBandDomain( structured.domain() ) );
 
@@ -132,7 +135,12 @@ GridBoxes::GridBoxes( const Grid& grid, bool gaussianWeightedLatitudes ) {
 
     GaussianGrid gaussian;
     if ( gaussianWeightedLatitudes && ( gaussian = grid ) ) {
-        auto N = gaussian.N();
+        auto N = [&]() {
+            auto N = gaussian.N();
+            ATLAS_ASSERT( N > 0 );
+            return size_t( N );
+        }();
+
         std::vector<double> latitudes( N * 2 );
         std::vector<double> weights( N * 2 );
         util::gaussian_quadrature_npole_spole( N, latitudes.data(), weights.data() );
@@ -140,12 +148,12 @@ GridBoxes::GridBoxes( const Grid& grid, bool gaussianWeightedLatitudes ) {
         std::vector<double> lat_global( N * 2 + 1 );
         auto b   = lat_global.rbegin();
         auto f   = lat_global.begin();
-        *( b++ ) = -90.;
-        *( f++ ) = 90.;
+        *( b++ ) = SOUTH_POLE;
+        *( f++ ) = NORTH_POLE;
 
         double wacc = -1.;
-        for ( idx_t j = 0; j < N; ++j, ++b, ++f ) {
-            wacc += 2. * weights[j];
+        for ( size_t j = 0; j < N; ++j, ++b, ++f ) {
+            wacc += TWO * weights[j];
             double deg = util::Constants::radiansToDegrees() * std::asin( wacc );
             *b         = deg;
             *f         = -( *b );
@@ -170,7 +178,7 @@ GridBoxes::GridBoxes( const Grid& grid, bool gaussianWeightedLatitudes ) {
         // non-Gaussian (but structured) grids
         lat.push_back( north );
         for ( auto b = y.begin(), a = b++; b != y.end(); a = b++ ) {
-            lat.push_back( ( *b + *a ) / 2. );
+            lat.push_back( ( *b + *a ) / TWO );
         }
         lat.push_back( south );
     }
@@ -181,8 +189,14 @@ GridBoxes::GridBoxes( const Grid& grid, bool gaussianWeightedLatitudes ) {
     ATLAS_ASSERT( x.nx().size() == x.dx().size() );
     ATLAS_ASSERT( x.nx().size() == x.xmin().size() );
 
+    auto gridSize = [&]() {
+        auto N = grid.size();
+        ATLAS_ASSERT( N >= 0 );
+        return size_t( N );
+    }();
+
     clear();
-    reserve( grid.size() );
+    reserve( gridSize );
     for ( size_t j = 0; j < x.nx().size(); ++j ) {
         eckit::Fraction dx( x.dx()[j] );
         eckit::Fraction xmin( x.xmin()[j] );
@@ -209,11 +223,11 @@ GridBoxes::GridBoxes( const Grid& grid, bool gaussianWeightedLatitudes ) {
         }
 
         if ( periodic ) {
-            ATLAS_ASSERT( lon1 == lon0 + 360 );
+            ATLAS_ASSERT( lon1 == lon0 + GLOBE );
         }
     }
 
-    ATLAS_ASSERT( idx_t( size() ) == grid.size() );
+    ATLAS_ASSERT( size() == gridSize );
 }
 
 

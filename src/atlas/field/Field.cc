@@ -183,7 +183,7 @@ bool Field::dirty() const {
 }
 
 void Field::set_dirty( bool value ) const {
-    return get()->set_dirty( value );
+    get()->set_dirty( value );
 }
 
 void Field::haloExchange( bool on_device ) const {

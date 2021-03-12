@@ -152,7 +152,7 @@ TransFactory::~TransFactory() {
 }
 
 void TransFactory::list( std::ostream& out ) {
-    return TransBackend::instance().list( out );
+    TransBackend::instance().list( out );
 }
 
 bool TransFactory::has( const std::string& backend ) {

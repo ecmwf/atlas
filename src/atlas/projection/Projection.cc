@@ -30,24 +30,24 @@ atlas::Projection::operator bool() const {
 }
 
 void Projection::hash( eckit::Hash& h ) const {
-    return get()->hash( h );
+    get()->hash( h );
 }
 
 void atlas::Projection::xy2lonlat( double crd[] ) const {
-    return get()->xy2lonlat( crd );
+    get()->xy2lonlat( crd );
 }
 
 void atlas::Projection::xy2lonlat( Point2& point ) const {
-    return get()->xy2lonlat( point );
+    get()->xy2lonlat( point );
 }
 
 
 void atlas::Projection::lonlat2xy( double crd[] ) const {
-    return get()->lonlat2xy( crd );
+    get()->lonlat2xy( crd );
 }
 
 void atlas::Projection::lonlat2xy( Point2& point ) const {
-    return get()->lonlat2xy( point );
+    get()->lonlat2xy( point );
 }
 
 atlas::Projection::Jacobian atlas::Projection::jacobian( const PointLonLat& p ) const {

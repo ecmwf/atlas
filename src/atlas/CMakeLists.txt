@@ -670,6 +670,7 @@ util/Polygon.cc
 util/Polygon.h
 util/Rotation.cc
 util/Rotation.h
+util/Spec.h
 util/SphericalPolygon.cc
 util/SphericalPolygon.h
 util/UnitSphere.h
