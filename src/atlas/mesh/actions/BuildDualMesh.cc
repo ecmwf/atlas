@@ -390,11 +390,11 @@ void build_brick_dual_mesh( const Grid& grid, Mesh& mesh ) {
             throw_Exception( "Cannot build_brick_dual_mesh with more than 1 task", Here() );
         }
 
-        mesh::Nodes& nodes                       = mesh.nodes();
-        auto xy           = array::make_view<double, 2>( nodes.xy() );
-        auto dual_volumes = array::make_view<double, 1>( nodes.add(
-            Field( "dual_volumes", array::make_datatype<double>(), array::make_shape( nodes.size() ) ) ) );
-        auto gidx         = array::make_view<gidx_t, 1>( nodes.global_index() );
+        mesh::Nodes& nodes = mesh.nodes();
+        auto xy            = array::make_view<double, 2>( nodes.xy() );
+        auto dual_volumes  = array::make_view<double, 1>(
+            nodes.add( Field( "dual_volumes", array::make_datatype<double>(), array::make_shape( nodes.size() ) ) ) );
+        auto gidx = array::make_view<gidx_t, 1>( nodes.global_index() );
 
         int c = 0;
         int n = 0;

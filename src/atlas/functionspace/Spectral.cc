@@ -500,6 +500,10 @@ void Spectral::norm( const Field& field, std::vector<double>& norm_per_level, in
     functionspace_->norm( field, norm_per_level, rank );
 }
 
+array::LocalView<const int, 1> Spectral::zonal_wavenumbers() const {
+    return functionspace_->zonal_wavenumbers();
+}
+
 // ----------------------------------------------------------------------
 
 }  // namespace functionspace
