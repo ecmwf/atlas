@@ -19,102 +19,103 @@
 
 namespace atlas {
   namespace repartition {
+    namespace detail {
 
-    using functionspace::FunctionSpaceImpl;
+      using functionspace::FunctionSpaceImpl;
 
-    /// \brief  Check function space can be cast to FunctionSpaceType.
-    template <typename FunctionSpaceType>
-    void tryCast(const FunctionSpaceImpl* const functionSpacePtr,
-      const std::string& varName) {
+      /// \brief  Check function space can be cast to FunctionSpaceType.
+      template <typename FunctionSpaceType>
+      void tryCast(const FunctionSpaceImpl* const functionSpacePtr,
+        const std::string& varName, eckit::CodeLocation location) {
 
-      // Check if cast failed.
-      if (!(functionSpacePtr->cast<FunctionSpaceType>())) {
-         throw eckit::BadCast("Cannot cast " + varName + " to " +
-         typeid(FunctionSpaceType).name() , Here());
+        // Check if cast failed.
+        if (!(functionSpacePtr->cast<FunctionSpaceType>())) {
+           throw eckit::BadCast("Cannot cast " + varName + " to " +
+           typeid(FunctionSpaceType).name() , location);
+        }
+
+        return;
       }
+      #define TRY_CAST(a, b) tryCast<a>(b, #b, Here())
 
-      return;
-    }
 
-    /// \brief  Check grids associated with two function spaces match.
-    template <typename FunctionSpaceType>
-    void checkGrids(const FunctionSpaceImpl* const functionSpacePtrA,
-      const FunctionSpaceImpl* const functionSpacePtrB,
-      const std::string& varNameA, const std::string& varNameB) {
+      /// \brief  Check grids associated with two function spaces match.
+      template <typename FunctionSpaceType>
+      void checkGrids(const FunctionSpaceImpl* const functionSpacePtrA,
+        const FunctionSpaceImpl* const functionSpacePtrB,
+        const std::string& varNameA, const std::string& varNameB,
+        eckit::CodeLocation location) {
 
-      // Cast function spaces.
-      const auto* const castPtrA = functionSpacePtrA->cast<FunctionSpaceType>();
-      const auto* const castPtrB = functionSpacePtrB->cast<FunctionSpaceType>();
+        // Cast function spaces.
+        const auto* const castPtrA =
+          functionSpacePtrA->cast<FunctionSpaceType>();
+        const auto* const castPtrB =
+          functionSpacePtrB->cast<FunctionSpaceType>();
 
-      // Check casts.
-      tryCast<FunctionSpaceType>(castPtrA, varNameA);
-      tryCast<FunctionSpaceType>(castPtrB, varNameB);
+        // Check casts.
+        TRY_CAST(FunctionSpaceType, castPtrA);
+        TRY_CAST(FunctionSpaceType, castPtrB);
 
-      // Check grids match.
-      const auto gridNameA = castPtrA->grid().name();
-      const auto gridNameB = castPtrB->grid().name();
+        // Check grids match.
+        const auto gridNameA = castPtrA->grid().name();
+        const auto gridNameB = castPtrB->grid().name();
 
-      if (gridNameA != gridNameB) {
+        if (gridNameA != gridNameB) {
 
-        throw eckit::BadValue("Grids do not match.\n" +
-          varNameA + "->grid() is type " + gridNameA + "\n" +
-          varNameB + "->grid() is type " + gridNameB, Here());
+          throw eckit::BadValue("Grids do not match.\n" +
+            varNameA + "->grid() is type " + gridNameA + "\n" +
+            varNameB + "->grid() is type " + gridNameB, location);
+        }
+
+        // Check levels match.
+        const auto levelsA = castPtrA->levels();
+        const auto levelsB = castPtrB->levels();
+
+        if (gridNameA != gridNameB) {
+
+          throw eckit::BadValue("Number of levels do not match.\n" +
+            varNameA + "->levels() = " + std::to_string(levelsA) + "\n" +
+            varNameB + "->levels() = " + std::to_string(levelsB), location);
+        }
+
+        return;
       }
+      #define CHECK_GRIDS(a, b, c) checkGrids<a>(b, c, #b, #c, Here())
 
-      // Check levels match.
-      const auto levelsA = castPtrA->levels();
-      const auto levelsB = castPtrB->levels();
+      /// \brief  Check fields have the same data type.
+      inline void checkFieldDataType(const Field& fieldA, const Field& fieldB,
+        const std::string& varnameA, const std::string& varnameB,
+        eckit::CodeLocation location) {
 
-      if (gridNameA != gridNameB) {
+        // Check fields have the same data type.
+        if (fieldA.datatype() != fieldB.datatype()) {
+          throw eckit::BadValue("Fields have different data types.\n" +
+            varnameA + " has data type " + fieldA.datatype().str() + "\n" +
+            varnameB + " has data type " + fieldB.datatype().str(), location);
+        }
 
-        throw eckit::BadValue("Number of levels do not match.\n" +
-          varNameA + "->levels() = " + std::to_string(levelsA) + "\n" +
-          varNameB + "->levels() = " + std::to_string(levelsB), Here());
+        return;
       }
+      #define CHECK_FIELD_DATA_TYPE(a, b) checkFieldDataType(a, b, #a, #b, Here())
 
-      return;
-    }
+      /// \brief  Check field sets the same size.
+      inline void checkFieldSetSize(
+        const FieldSet& fieldSetA, const FieldSet& fieldSetB,
+        const std::string& varnameA, const std::string& varnameB,
+        eckit::CodeLocation location) {
 
-    /// \brief  Check fields have the same data type.
-    inline void checkFieldDataType(const Field& fieldA, const Field& fieldB,
-      const std::string& varnameA, const std::string& varnameB) {
+        // Check fields have the same data type.
+        if (fieldSetA.size() != fieldSetB.size()) {
+          throw eckit::BadValue("Field sets have different data types.\n" +
+            varnameA + " has size " + std::to_string(fieldSetA.size()) + "\n" +
+            varnameB + " has size " + std::to_string(fieldSetB.size()),
+            location);
+        }
 
-      // Check fields have the same data type.
-      if (fieldA.datatype() != fieldB.datatype()) {
-        throw eckit::BadValue("Fields have different data types.\n" +
-          varnameA + " has data type " + fieldA.datatype().str() + "\n" +
-          varnameB + " has data type " + fieldB.datatype().str(), Here());
+        return;
       }
+      #define CHECK_FIELD_SET_SIZE(a, b) checkFieldSetSize(a, b, #a, #b, Here())
 
-      return;
-    }
-
-    /// \brief  Check field sets the same size.
-    inline void checkFieldSetSize(
-      const FieldSet& fieldSetA, const FieldSet& fieldSetB,
-      const std::string& varnameA, const std::string& varnameB) {
-
-      // Check fields have the same data type.
-      if (fieldSetA.size() != fieldSetB.size()) {
-        throw eckit::BadValue("Field sets have different data types.\n" +
-          varnameA + " has size " + std::to_string(fieldSetA.size()) + "\n" +
-          varnameB + " has size " + std::to_string(fieldSetB.size()), Here());
-      }
-
-      return;
-    }
-
-    /// \brief Check if MPI routine succeeded.
-    inline void checkMPI(const int returnVal,
-    const std::string& functionName) {
-
-      // Check return value.
-      if (returnVal != MPI_SUCCESS) {
-        throw eckit::FailedLibraryCall("MPI " + std::string(MPICH_VERSION),
-          functionName, "Error code: " + std::to_string(returnVal), Here());
-      }
-
-      return;
     }
   }
 }

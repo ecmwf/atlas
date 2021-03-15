@@ -23,7 +23,7 @@ namespace atlas {
   /// \details  Class to map two function spaces with the same grid but
   ///           different partitioners.
   class Repartition :
-    public util::ObjectHandle<repartition::RepartitionImpl> {
+    public util::ObjectHandle<repartition::detail::RepartitionImpl> {
 
   public:
 

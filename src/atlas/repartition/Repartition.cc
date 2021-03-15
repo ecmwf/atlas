@@ -17,7 +17,7 @@ namespace atlas {
   Repartition::Repartition (
     const FunctionSpace& sourceFunctionSpace,
     const FunctionSpace& targetFunctionSpace) :
-    Handle (repartition::RepartitionImplFactory::build (
+    Handle (repartition::detail::RepartitionImplFactory::build (
       sourceFunctionSpace, targetFunctionSpace)) {}
 
   void Repartition::execute(
