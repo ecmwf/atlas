@@ -65,9 +65,9 @@ namespace atlas {
         /// \brief    Repartitions source field to target field.
         ///
         /// \details  Transfers source field to target field via an
-        ///           MPI_Neighbor_Alltoallv. Function space of source field
-        ///           must match sourceFunctionSpace supplied to the
-        ///           constructor.Same applies to target field.
+        ///           MPI_Alltoallv. Function space of source field must match
+        ///           sourceFunctionSpace supplied to the constructor. Same
+        ///           applies to target field.
         ///
         /// \param[in]  sourceField  input field matching sourceFunctionSpace.
         /// \param[out] targetField  output field matching targetFunctionSpace.
@@ -128,7 +128,7 @@ namespace atlas {
 
         /// \brief    Iterate over all indices and do something with functor.
         template <typename functorType>
-        void forEach(functorType& functor) const;
+        void forEach(functorType functor) const;
 
       private:
 

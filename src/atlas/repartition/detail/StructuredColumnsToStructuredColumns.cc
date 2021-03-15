@@ -23,7 +23,7 @@ namespace atlas {
       namespace {
 
         // Transform a vector element-by-element with a functor.
-        template<typename outType, typename inType, typename functorType>
+        template <typename outType, typename inType, typename functorType>
         std::vector<outType> transformVector(
           const std::vector<inType>& inVector, functorType functor) {
 
@@ -37,6 +37,22 @@ namespace atlas {
 
           return outVector;
         }
+
+        // Visit each index in a FuncSpaceRangeVector.
+        template <typename functorType>
+        void forEachIndex(const FuncSpaceRangeVector& ranges,
+          functorType functor) {
+
+          // Loop over all ranges.
+          std::for_each(ranges.cbegin(), ranges.cend(),
+            [&](const FuncSpaceRange& range) {
+
+            range.forEach(functor);
+            return;
+          });
+          return;
+        }
+
       }
 
       //========================================================================
@@ -74,25 +90,26 @@ namespace atlas {
 
 
         // Get intersections between sourceRange and targetRanges.
-        auto getIntersections = [](const auto& range, const auto& ranges) {
+        auto getIntersections = [](const FuncSpaceRange& range,
+          const FuncSpaceRangeVector& ranges) {
 
-            return transformVector<FuncSpaceRange>(ranges,
-              [&](const auto& rangesElem) {
+          return transformVector<FuncSpaceRange>(ranges,
+            [&](const FuncSpaceRange& rangesElem) {
 
-              return range & rangesElem;
-            });
-          };
+            return range & rangesElem;
+          });
+        };
 
         sendIntersections_ = getIntersections(sourceRange, targetRanges);
         recvIntersections_ = getIntersections(targetRange, sourceRanges);
 
 
         // Get counts and displacements for MPI communication.
-        auto getCountsDisplacements = [](const auto& intersections,
-          const auto levels) {
+        auto getCountsDisplacements = [](
+          const FuncSpaceRangeVector& intersections, const idx_t levels) {
 
           const auto counts = transformVector<int>(intersections,
-            [&](const auto& intersection) {
+            [&](const FuncSpaceRange& intersection) {
 
             return static_cast<int>(intersection.getElemCount() * levels);
           });
@@ -114,11 +131,11 @@ namespace atlas {
 
 
         // Trim off invalid intersections.
-        auto trimIntersections = [](auto& intersections) {
+        auto trimIntersections = [](FuncSpaceRangeVector& intersections) {
 
           intersections.erase(
             std::remove_if(intersections.begin(), intersections.end(),
-              [](const auto& intersection) -> bool {
+              [](const FuncSpaceRange& intersection) {
 
               return !(intersection.getElemCount());
             }), intersections.end());
@@ -169,10 +186,6 @@ namespace atlas {
             doExecute<long>(sourceField, targetField);
             break;
 
-          case array::DataType::KIND_UINT64 :
-            doExecute<unsigned long>(sourceField, targetField);
-            break;
-
           default:
             throw eckit::NotImplemented(
               "No implementation for data type " +
@@ -188,9 +201,9 @@ namespace atlas {
         // Check that both FieldSets are the same size.
         CHECK_FIELD_SET_SIZE(sourceFieldSet, targetFieldSet);
 
+        auto targetFieldSetIt = targetFieldSet.begin();
         std::for_each(sourceFieldSet.cbegin(), sourceFieldSet.cend(),
-          [&, targetFieldSetIt = targetFieldSet.begin()]
-          (const auto& sourceField) mutable {
+          [&](const Field& sourceField) {
 
           execute(sourceField, *targetFieldSetIt++);
           return;
@@ -225,22 +238,9 @@ namespace atlas {
         auto recvBuffer = std::vector<fieldType>(static_cast<size_t>(nRecv));
 
 
-        // Visit all indices of all intersections.
-        auto forEachIndex = [](const auto intersections, auto& functor) {
-
-          std::for_each(intersections.cbegin(), intersections.cend(),
-            [&](const auto& intersection){
-
-            intersection.forEach(functor);
-            return;
-          });
-          return;
-        };
-
-
         // Set send functor.
-        auto sendFunctor = [&, sendBufferIt = sendBuffer.begin()]
-          (const auto i, const auto j) mutable {
+        auto sendBufferIt = sendBuffer.begin();
+        auto sendFunctor = [&] (const idx_t i, const idx_t j) {
 
           // Loop over levels
           auto iNode = sourceStructuredColumnsPtr_->index(i, j);
@@ -254,8 +254,8 @@ namespace atlas {
 
 
         // Set receive functor.
-        auto recvFunctor = [&, recvBufferIt = recvBuffer.cbegin()]
-          (const auto i, const auto j) mutable {
+        auto recvBufferIt = recvBuffer.cbegin();
+        auto recvFunctor = [&](const idx_t i, const idx_t j) {
 
           // Loop over levels
           auto iNode = targetStructuredColumnsPtr_->index(i, j);
@@ -316,7 +316,7 @@ namespace atlas {
 
         // Set i receive counts.
         auto iRecvCounts = transformVector<int>(jRecvBuffer,
-          [](const auto& jElem) {
+          [](const idxPair& jElem) {
 
           return static_cast<int>(jElem.second - jElem.first);
         });
@@ -357,10 +357,11 @@ namespace atlas {
         // Accumulate size of positive i range.
         const auto count =
           std::accumulate(iBeginEnd_.cbegin(), iBeginEnd_.cend(),
-          0, [](const auto& cumulant, const auto& iElem) {
+          0, [](const int cumulant, const idxPair iElem) {
 
           // Only count positive differences.
-          return cumulant + std::max(iElem.second - iElem.first, 0);
+          return cumulant +
+            static_cast<int>(std::max(iElem.second - iElem.first, 0));
         });
 
         return count;
@@ -392,7 +393,7 @@ namespace atlas {
 
           std::transform(iBeginA, iEndA, iBeginB,
             std::back_inserter(intersection.iBeginEnd_),
-            [](const auto& iElemA, const auto& iElemB) {
+            [](const idxPair iElemA, const idxPair iElemB) {
 
             return std::make_pair(std::max(iElemA.first, iElemB.first),
               std::min(iElemA.second, iElemB.second));
@@ -404,7 +405,7 @@ namespace atlas {
       // Loop over all indices. Functor should have signature
       // functor(const idx_t i, const idx_t j).
       template <typename functorType>
-      void FuncSpaceRange::forEach(functorType& functor) const {
+      void FuncSpaceRange::forEach(functorType functor) const {
 
         auto iBeginEndIt = iBeginEnd_.begin();
 
