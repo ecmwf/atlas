@@ -52,10 +52,6 @@ namespace atlas {
         const auto* const castPtrB =
           functionSpacePtrB->cast<FunctionSpaceType>();
 
-        // Check casts.
-        TRY_CAST(FunctionSpaceType, castPtrA);
-        TRY_CAST(FunctionSpaceType, castPtrB);
-
         // Check grids match.
         const auto gridNameA = castPtrA->grid().name();
         const auto gridNameB = castPtrB->grid().name();
