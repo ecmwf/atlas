@@ -23,16 +23,19 @@ namespace atlas {
 
 
     // Define test pattern for grid.
-    double testPattern(
-      const double lambda, const double phi,
+    template <typename T>
+    T testPattern(
+      const T lambda, const T phi,
       const idx_t field, const idx_t level) {
 
-      return (1 + field) * std::cos(lambda * (1 + level) * M_PI / 180.)
-        * std::cos(phi * (1 + level) * M_PI / 180.);
+      return static_cast<T>(100. * (1 + field)
+        * std::cos(lambda * (1 + level) * M_PI / 180.)
+        * std::cos(phi * (1 + level) * M_PI / 180.));
     }
 
     // Test repartitioner. Return true if test passed.
     // Output fields if gmshOutput == true.
+    template <typename T>
     bool testStructColsToStructCols(
       const atlas::Grid& grid, const idx_t nFields, const idx_t nLevels,
       const atlas::grid::Partitioner& sourcePartitioner,
@@ -55,13 +58,13 @@ namespace atlas {
       // Generate some field sets.
       auto sourceFieldSet = atlas::FieldSet{};
       for (idx_t field = 0; field < nFields; ++field){
-        sourceFieldSet.add(sourceFunctionSpace.createField<double>(
+        sourceFieldSet.add(sourceFunctionSpace.createField<T>(
           atlas::option::name("source_field_" + std::to_string(field))));
       }
 
       auto targetFieldSet = atlas::FieldSet{};
       for (idx_t field = 0; field < nFields; ++field){
-        targetFieldSet.add(targetFunctionSpace.createField<double>(
+        targetFieldSet.add(targetFunctionSpace.createField<T>(
           atlas::option::name("target_field_" + std::to_string(field))));
       }
 
@@ -69,7 +72,7 @@ namespace atlas {
       for (idx_t field = 0; field < sourceFieldSet.size(); ++field) {
 
         auto fieldView =
-          atlas::array::make_view<double, 2>(sourceFieldSet[field]);
+          atlas::array::make_view<T, 2>(sourceFieldSet[field]);
 
         for (idx_t j = sourceFunctionSpace.j_begin();
           j < sourceFunctionSpace.j_end(); ++j) {
@@ -85,7 +88,7 @@ namespace atlas {
               const auto lonLat = grid.projection().lonlat(xy);
               const auto lon = lonLat.lon();
               const auto lat = lonLat.lat();
-              const auto f = testPattern(lon, lat, field, level);
+              const auto f = testPattern<T>(lon, lat, field, level);
 
               // write f to field.
               const auto iNode = sourceFunctionSpace.index(i, j);
@@ -109,7 +112,7 @@ namespace atlas {
       for (idx_t field = 0; field < targetFieldSet.size(); ++field) {
 
         auto fieldView =
-          atlas::array::make_view<double, 2>(targetFieldSet[field]);
+          atlas::array::make_view<T, 2>(targetFieldSet[field]);
 
         for (idx_t j = targetFunctionSpace.j_begin();
           j < targetFunctionSpace.j_end(); ++j) {
@@ -125,7 +128,7 @@ namespace atlas {
               const auto lonLat = grid.projection().lonlat(xy);
               const auto lon = lonLat.lon();
               const auto lat = lonLat.lat();
-              const auto g = testPattern(lon, lat, field, level);
+              const auto g = testPattern<T>(lon, lat, field, level);
 
               // read f from field.
               const auto iNode = targetFunctionSpace.index(i, j);
@@ -195,7 +198,7 @@ namespace atlas {
         auto targetPartitioner = atlas::grid::Partitioner("equal_regions");
 
         // Check repartitioner.
-        EXPECT(testStructColsToStructCols(grid, nFields, nLevels,
+        EXPECT(testStructColsToStructCols<double>(grid, nFields, nLevels,
           sourcePartitioner, targetPartitioner));
 
         return;
@@ -214,7 +217,7 @@ namespace atlas {
         auto targetPartitioner = atlas::grid::Partitioner("checkerboard");
 
         // Check repartitioner.
-        EXPECT(testStructColsToStructCols(grid, nFields, nLevels,
+        EXPECT(testStructColsToStructCols<double>(grid, nFields, nLevels,
           sourcePartitioner, targetPartitioner));
 
         return;
@@ -233,7 +236,7 @@ namespace atlas {
         auto targetPartitioner = atlas::grid::Partitioner("equal_bands");
 
         // Check repartitioner.
-        EXPECT(testStructColsToStructCols(grid, nFields, nLevels,
+        EXPECT(testStructColsToStructCols<double>(grid, nFields, nLevels,
           sourcePartitioner, targetPartitioner));
 
         return;
@@ -252,7 +255,7 @@ namespace atlas {
         auto targetPartitioner = atlas::grid::Partitioner("equal_regions");
 
         // Check repartitioner.
-        EXPECT(testStructColsToStructCols(grid, nFields, nLevels,
+        EXPECT(testStructColsToStructCols<double>(grid, nFields, nLevels,
           sourcePartitioner, targetPartitioner));
 
         return;
@@ -271,8 +274,65 @@ namespace atlas {
         auto targetPartitioner = atlas::grid::Partitioner("equal_regions");
 
         // Check repartitioner.
-        EXPECT(testStructColsToStructCols(grid, nFields, nLevels,
+        EXPECT(testStructColsToStructCols<double>(grid, nFields, nLevels,
           sourcePartitioner, targetPartitioner, true, grid.name()));
+
+        return;
+      }
+
+      SECTION("gaussian: <float> datatype") {
+
+        idx_t nFields = 5;
+        idx_t nLevels = 10;
+
+        // Set grid.
+        auto grid = atlas::Grid("O16");
+
+        // Set partitioners.
+        auto sourcePartitioner = atlas::grid::Partitioner("equal_bands");
+        auto targetPartitioner = atlas::grid::Partitioner("equal_regions");
+
+        // Check repartitioner.
+        EXPECT(testStructColsToStructCols<float>(grid, nFields, nLevels,
+          sourcePartitioner, targetPartitioner));
+
+        return;
+      }
+
+      SECTION("gaussian: <int> datatype") {
+
+        idx_t nFields = 5;
+        idx_t nLevels = 10;
+
+        // Set grid.
+        auto grid = atlas::Grid("O16");
+
+        // Set partitioners.
+        auto sourcePartitioner = atlas::grid::Partitioner("equal_bands");
+        auto targetPartitioner = atlas::grid::Partitioner("equal_regions");
+
+        // Check repartitioner.
+        EXPECT(testStructColsToStructCols<int>(grid, nFields, nLevels,
+          sourcePartitioner, targetPartitioner));
+
+        return;
+      }
+
+      SECTION("gaussian: <long> datatype") {
+
+        idx_t nFields = 5;
+        idx_t nLevels = 10;
+
+        // Set grid.
+        auto grid = atlas::Grid("O16");
+
+        // Set partitioners.
+        auto sourcePartitioner = atlas::grid::Partitioner("equal_bands");
+        auto targetPartitioner = atlas::grid::Partitioner("equal_regions");
+
+        // Check repartitioner.
+        EXPECT(testStructColsToStructCols<long>(grid, nFields, nLevels,
+          sourcePartitioner, targetPartitioner));
 
         return;
       }
