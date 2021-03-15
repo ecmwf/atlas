@@ -7,11 +7,11 @@
 
 #pragma once
 
-#include <mpi.h>
 #include <vector>
 
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/repartition/detail/RepartitionImpl.h"
+#include "atlas/repartition/mpi/GraphComm.h"
 
 namespace atlas {
 
@@ -28,175 +28,128 @@ namespace atlas {
 
 namespace atlas {
   namespace repartition {
+    namespace detail {
 
-    // Forward declarations.
-    class StructuredColumnsToStructuredColumns;
-    class FuncSpaceRange;
+      // Forward declarations.
+      class StructuredColumnsToStructuredColumns;
+      class FuncSpaceRange;
 
-    // Type aliases.
-    struct FuncSpaceRange;
-    using idxPair = std::pair<idx_t, idx_t>;
-    using idxPairVector = std::vector<idxPair>;
-    using FuncSpaceRangeVector = std::vector<FuncSpaceRange>;
-    using BlockData = std::pair<std::vector<int>, std::vector<int>>;
-    using BlockDataVector = std::vector<BlockData>;
+      // Type aliases.
+      struct FuncSpaceRange;
+      using idxPair = std::pair<idx_t, idx_t>;
+      using idxPairVector = std::vector<idxPair>;
+      using FuncSpaceRangeVector = std::vector<FuncSpaceRange>;
+      using BlockData = std::pair<std::vector<int>, std::vector<int>>;
+      using BlockDataVector = std::vector<BlockData>;
 
-    // Atlas to MPI type conversion.
-    template <typename T>
-    struct typeTraits {};
+      using functionspace::detail::StructuredColumns;
 
-    template <>
-    struct typeTraits<double> {
-      static const auto atlasType = array::DataType::KIND_REAL64;
-      static const auto mpiType = MPI_DOUBLE;
-    };
-
-    template <>
-    struct typeTraits<float> {
-      static const auto atlasType = array::DataType::KIND_REAL32;
-      static const auto mpiType = MPI_FLOAT;
-    };
-
-    template <>
-    struct typeTraits<int> {
-      static const auto atlasType = array::DataType::KIND_INT32;
-      static const auto mpiType = MPI_INT;
-    };
-
-    template <>
-    struct typeTraits<long> {
-      static const auto atlasType = array::DataType::KIND_INT64;
-      static const auto mpiType = MPI_LONG;
-    };
-
-    template <>
-    struct typeTraits<unsigned long> {
-      static const auto atlasType = array::DataType::KIND_UINT64;
-      static const auto mpiType = MPI_UNSIGNED_LONG;
-    };
-
-    using functionspace::detail::StructuredColumns;
-
-    /// \brief    Concrete repartitioning class for StructuredColumns to
-    ///           StructuredColumns.
-    ///
-    /// \details  Class to map two function spaces with the same grid but
-    ///           different partitioners. Creates an MPI Graph communicator
-    ///           to perform an efficient, scalable Neighbor_Alltoallw
-    ///           communication.
-    class StructuredColumnsToStructuredColumns : public RepartitionImpl {
-
-    public:
-
-      /// \brief    Constructs and initialises the repartitioner.
+      /// \brief    Concrete repartitioning class for StructuredColumns to
+      ///           StructuredColumns.
       ///
-      /// \details  Performs MPI_Allgatherv to determine the (i, j, k) ranges of
-      ///           each source and target function space on each PE. Then
-      ///           calculates range intersections to determine what needs to be
-      ///           sent where via an MPI_Alltoallw. The grids of source and
-      ///           target function space must match.
-      ///
-      /// \param[in]  sourceFunctionSpace  Function space of source fields.
-      /// \param[in]  targetFunctionSpace  Function space of target fields.
-      StructuredColumnsToStructuredColumns(
-        const FunctionSpace& sourceFunctionSpace,
-        const FunctionSpace& targetFunctionSpace);
+      /// \details  Class to map two function spaces with the same grid but
+      ///           different partitioners. Creates an MPI Graph communicator
+      ///           to perform an efficient, scalable Neighbor_Alltoallw
+      ///           communication.
+      class StructuredColumnsToStructuredColumns : public RepartitionImpl {
 
-      /// \brief    Destructor.
-      ~StructuredColumnsToStructuredColumns() override;
+      public:
 
-      /// \brief    Repartitions source field to target field.
-      ///
-      /// \details  Transfers source field to target field via an
-      ///           MPI_Neighbor_Alltoallw. Function space of source field
-      ///           must match sourceFunctionSpace supplied to the constructor.
-      ///           Same applies to target field.
-      ///
-      /// \param[in]  sourceField  input field matching sourceFunctionSpace.
-      /// \param[out] targetField  output field matching targetFunctionSpace.
-      void execute(const Field& sourceField, Field& targetField) const override;
+        /// \brief    Constructs and initialises the repartitioner.
+        ///
+        /// \details  Performs MPI_Allgatherv to determine the (i, j, k) ranges
+        ///           of each source and target function space on each PE. Then
+        ///           calculates range intersections to determine what needs to
+        ///           be sent where via an MPI_Alltoallw. The grids of source
+        ///           and target function space must match.
+        ///
+        /// \param[in]  sourceFunctionSpace  Function space of source fields.
+        /// \param[in]  targetFunctionSpace  Function space of target fields.
+        StructuredColumnsToStructuredColumns(
+          const FunctionSpace& sourceFunctionSpace,
+          const FunctionSpace& targetFunctionSpace);
 
-      /// \brief    Repartitions source field set to target fields set.
-      ///
-      /// \details  Transfers source field set to target field set via multiple
-      ///           invocations of execute(sourceField, targetField).
-      ///
-      /// \param[in]  sourceFieldSet  input field set.
-      /// \param[out] targetFieldSet  output field set.
-      void execute(const FieldSet& sourceFieldSet,
-        FieldSet& targetFieldSet) const override;
+        /// \brief    Repartitions source field to target field.
+        ///
+        /// \details  Transfers source field to target field via an
+        ///           MPI_Neighbor_Alltoallw. Function space of source field
+        ///           must match sourceFunctionSpace supplied to the
+        ///           constructor.Same applies to target field.
+        ///
+        /// \param[in]  sourceField  input field matching sourceFunctionSpace.
+        /// \param[out] targetField  output field matching targetFunctionSpace.
+        void execute(
+          const Field& sourceField, Field& targetField) const override;
 
-      // Disable copying.
-      StructuredColumnsToStructuredColumns(
-        const StructuredColumnsToStructuredColumns&) = delete;
-      StructuredColumnsToStructuredColumns operator=(
-      const StructuredColumnsToStructuredColumns&) = delete;
+        /// \brief    Repartitions source field set to target fields set.
+        ///
+        /// \details  Transfers source field set to target field set via
+        ///           multiple invocations of execute(sourceField, targetField).
+        ///
+        /// \param[in]  sourceFieldSet  input field set.
+        /// \param[out] targetFieldSet  output field set.
+        void execute(const FieldSet& sourceFieldSet,
+          FieldSet& targetFieldSet) const override;
 
+      private:
 
-    private:
+        // Generic execute call to handle different field types.
+        template <typename fieldType>
+        void doExecute(const Field& sourceField, Field& targetField) const;
 
-      // Generic execute call to handle different field types.
-      template <typename fieldType>
-      void doExecute(const Field& sourceField, Field& targetField) const;
+        // FunctionSpaces recast to StructuredColumns.
+        const StructuredColumns* sourceStructuredColumnsPtr_{};
+        const StructuredColumns* targetStructuredColumnsPtr_{};
 
-      // FunctionSpaces recast to StructuredColumns.
-      const StructuredColumns* sourceStructuredColumnsPtr_{};
-      const StructuredColumns* targetStructuredColumnsPtr_{};
+        // MPI distributed graph communicator.
+        mpi::GraphComm graphComm_;
 
-      // MPI distributed graph communicator.
-      MPI_Comm graphComm_{};
+        // Block lenghts and displacements for MPI indexed datatype.
+        BlockDataVector sendBlockDataVector_{};
+        BlockDataVector recvBlockDataVector_{};
 
-      // Block lenghts and displacements for MPI indexed datatype.
-      BlockDataVector sendBlockDataVector_{};
-      BlockDataVector recvBlockDataVector_{};
+      };
 
-      // Data counts and displacements.
-      std::vector<int> sendCounts_{};
-      std::vector<MPI_Aint> sendDisplacements_{};
-      std::vector<int> recvCounts_{};
-      std::vector<MPI_Aint> recvDisplacements_{};
+      // Helper class for function space intersections.
+      class FuncSpaceRange {
 
-    };
+      public:
 
-    // Helper class for function space intersections.
-    class FuncSpaceRange {
+        // Default Constructor.
+        FuncSpaceRange() = default;
 
-    public:
+        // Constructor.
+        FuncSpaceRange(const StructuredColumns* const structuredColumnsPtr);
 
-      // Default Constructor.
-      FuncSpaceRange() = default;
+        // Get index ranges from all PEs.
+        FuncSpaceRangeVector getFuncSpaceRanges() const;
 
-      // Constructor.
-      FuncSpaceRange(const StructuredColumns* const structuredColumnsPtr);
+        // Count number of elements.
+        idx_t getElemCount() const;
 
-      // Get index ranges from all PEs.
-      FuncSpaceRangeVector getFuncSpaceRanges() const;
+        // Intersection operator.
+        FuncSpaceRange operator&(const FuncSpaceRange& indexRange) const;
 
-      // Count number of elements.
-      idx_t getElemCount() const;
+        // Get block lengths and displacements for index range.
+        BlockData
+          getBlockData(
+          const StructuredColumns* const structuredColumnsPtr) const;
 
-      // Intersection operator.
-      FuncSpaceRange operator&(const FuncSpaceRange& indexRange) const;
+        // Return copy of rank.
+        int getRank() const {return rank_;}
 
-      // Get block lengths and displacements for index range.
-      BlockData
-        getBlockData(
-        const StructuredColumns* const structuredColumnsPtr) const;
+      private:
 
-      // Return copy of rank.
-      int getRank() const {return rank_;}
+        // MPI rank of range.
+        int rank_{};
 
-    private:
+        // Begin and end of j range.
+        idxPair jBeginEnd_{};
 
-      // MPI rank of range.
-      int rank_{};
+        // Begin and end of i range for each j.
+        idxPairVector iBeginEnd_{};
 
-      // Begin and end of j range.
-      idxPair jBeginEnd_{};
-
-      // Begin and end of i range for each j.
-      idxPairVector iBeginEnd_{};
-
-    };
+      };
+    }
   }
 }

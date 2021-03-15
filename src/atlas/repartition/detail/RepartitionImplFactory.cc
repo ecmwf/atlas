@@ -13,31 +13,32 @@
 
 namespace atlas {
   namespace repartition {
+    namespace detail {
 
-    RepartitionImpl* RepartitionImplFactory::build (
-      const FunctionSpace& sourceFunctionSpace,
-      const FunctionSpace& targetFunctionSpace) {
+      RepartitionImpl* RepartitionImplFactory::build (
+        const FunctionSpace& sourceFunctionSpace,
+        const FunctionSpace& targetFunctionSpace) {
 
 
-      if (sourceFunctionSpace->type() ==
-        functionspace::StructuredColumns::type() &&
-        targetFunctionSpace->type() ==
-        functionspace::StructuredColumns::type()) {
+        if (sourceFunctionSpace->type() ==
+          functionspace::StructuredColumns::type() &&
+          targetFunctionSpace->type() ==
+          functionspace::StructuredColumns::type()) {
 
-        return new StructuredColumnsToStructuredColumns (
-          sourceFunctionSpace, targetFunctionSpace);
-      }
-      else {
+          return new StructuredColumnsToStructuredColumns (
+            sourceFunctionSpace, targetFunctionSpace);
+        }
+        else {
 
-        throw eckit::NotImplemented(
-          "No implementation for source function space " +
-          sourceFunctionSpace->type() + " and target functionspace " +
-          targetFunctionSpace->type(), Here());
-        return nullptr;
+          throw eckit::NotImplemented(
+            "No implementation for source function space " +
+            sourceFunctionSpace->type() + " and target functionspace " +
+            targetFunctionSpace->type(), Here());
+          return nullptr;
 
+        }
       }
     }
-
   }
 }
 
