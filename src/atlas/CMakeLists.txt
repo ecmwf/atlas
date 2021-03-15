@@ -577,11 +577,6 @@ repartition/detail/RepartitionImplFactory.cc
 repartition/detail/RepartitionUtils.h
 repartition/detail/StructuredColumnsToStructuredColumns.h
 repartition/detail/StructuredColumnsToStructuredColumns.cc
-repartition/mpi/call.h
-repartition/mpi/DataType.h
-repartition/mpi/DataType.cc
-repartition/mpi/GraphComm.h
-repartition/mpi/GraphComm.cc
 )
 
 list( APPEND atlas_array_srcs
