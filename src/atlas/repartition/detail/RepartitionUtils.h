@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <mpi.h>
 #include <string>
 #include <typeinfo>
 
