@@ -7,11 +7,11 @@
 
 #pragma once
 
+#include <mpi.h>
 #include <unordered_map>
 #include <vector>
 
 #include "atlas/array/DataType.h"
-#include "atlas/repartition/mpi/call.h"
 
 namespace atlas {
   namespace repartition {

@@ -7,6 +7,7 @@
 
 #include <algorithm>
 
+#include "atlas/repartition/mpi/call.h"
 #include "atlas/repartition/mpi/DataType.h"
 
 namespace atlas {

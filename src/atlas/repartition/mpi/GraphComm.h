@@ -7,8 +7,25 @@
 
 #pragma once
 
-#include "atlas/parallel/mpi/mpi.h"
-#include "atlas/repartition/mpi/DataType.h"
+#include <mpi.h>
+#include <vector>
+
+namespace eckit {
+  namespace mpi {
+    class Comm;
+  }
+}
+
+namespace atlas {
+  namespace mpi {
+    using Comm = eckit::mpi::Comm;
+  }
+  namespace repartition {
+    namespace mpi {
+      class DataType;
+    }
+  }
+}
 
 namespace atlas {
   namespace repartition {
