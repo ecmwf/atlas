@@ -53,7 +53,7 @@ struct TestRecord {
     Arrays data;
     TestRecord() = default;
     TestRecord( const std::function<void( Arrays& )>& initializer ) { initializer( data ); }
-    TestRecord( const io::Record::URI& _uri, const std::function<void( Arrays& )>& initializer ) : uri{_uri} {
+    TestRecord( const io::Record::URI& _uri, const std::function<void( Arrays& )>& initializer ) : uri{_uri.str()} {
         initializer( data );
     }
 };

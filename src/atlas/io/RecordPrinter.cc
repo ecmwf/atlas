@@ -34,7 +34,7 @@ RecordPrinter::RecordPrinter( const eckit::PathName& path, const std::uint64_t o
 //---------------------------------------------------------------------------------------------------------------------
 
 RecordPrinter::RecordPrinter( const Record::URI& ref, const util::Config& config ) :
-    uri_{ref}, record_( Session::record( ref.path, ref.offset ) ) {
+    uri_{ref.str()}, record_( Session::record( ref.path, ref.offset ) ) {
     if ( record_.empty() ) {
         auto in = InputFileStream( uri_.path );
         in.seek( uri_.offset );
