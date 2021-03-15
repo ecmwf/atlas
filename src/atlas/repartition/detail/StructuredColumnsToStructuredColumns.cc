@@ -54,7 +54,11 @@ namespace atlas {
           targetStructuredColumnsPtr_(
             getTargetFunctionSpace()->cast<StructuredColumns>()) {
 
-        // Check that grids match (will also check for bad casts).
+        // Check casts.
+        TRY_CAST(StructuredColumns, sourceStructuredColumnsPtr_);
+        TRY_CAST(StructuredColumns, targetStructuredColumnsPtr_);
+
+        // Check that grids match.
         CHECK_GRIDS(StructuredColumns,
           sourceStructuredColumnsPtr_, targetStructuredColumnsPtr_);
 
@@ -130,6 +134,10 @@ namespace atlas {
 
       void StructuredColumnsToStructuredColumns::execute(
         const Field& sourceField, Field& targetField) const {
+
+        // Check functionspace casts.
+        TRY_CAST(StructuredColumns, sourceField.functionspace().get());
+        TRY_CAST(StructuredColumns, targetField.functionspace().get());
 
         // Check source grids match.
         CHECK_GRIDS(StructuredColumns, sourceField.functionspace().get(),
