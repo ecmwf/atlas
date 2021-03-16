@@ -243,8 +243,8 @@ namespace atlas {
         auto sendFunctor = [&] (const idx_t i, const idx_t j) {
 
           // Loop over levels
-          auto iNode = sourceStructuredColumnsPtr_->index(i, j);
-          auto kEnd = sourceStructuredColumnsPtr_->levels();
+          const auto iNode = sourceStructuredColumnsPtr_->index(i, j);
+          const auto kEnd = sourceStructuredColumnsPtr_->levels();
           for (idx_t k = 0; k < kEnd; ++k) {
 
             *sendBufferIt++ = sourceView(iNode, k);
@@ -258,8 +258,8 @@ namespace atlas {
         auto recvFunctor = [&](const idx_t i, const idx_t j) {
 
           // Loop over levels
-          auto iNode = targetStructuredColumnsPtr_->index(i, j);
-          auto kEnd = targetStructuredColumnsPtr_->levels();
+          const auto iNode = targetStructuredColumnsPtr_->index(i, j);
+          const auto kEnd = targetStructuredColumnsPtr_->levels();
           for (idx_t k = 0; k < kEnd; ++k) {
 
             targetView(iNode, k) = *recvBufferIt++;
@@ -271,7 +271,7 @@ namespace atlas {
         // Write data to buffer.
         forEachIndex(sendIntersections_, sendFunctor);
 
-        // Perform allToAllv.
+        // Communicate.
         mpi::comm().allToAllv(
           sendBuffer.data(), sendCounts_.data(), sendDisplacements_.data(),
           recvBuffer.data(), recvCounts_.data(), recvDisplacements_.data());
@@ -368,7 +368,6 @@ namespace atlas {
       }
 
       // Return the intersection between two index ranges.
-      // Result takes the rank member of the right-hand argument.
       FuncSpaceRange FuncSpaceRange::operator&(
         const FuncSpaceRange& indexRange) const {
 
