@@ -227,10 +227,8 @@ namespace atlas {
 
 
         // Get buffer sizes.
-        const auto nSend = (sendCounts_.back() + sendDisplacements_.back()) *
-          sourceStructuredColumnsPtr_->levels();
-        const auto nRecv = (recvCounts_.back() + recvDisplacements_.back()) *
-          targetStructuredColumnsPtr_->levels();
+        const auto nSend = sendCounts_.back() + sendDisplacements_.back();
+        const auto nRecv = recvCounts_.back() + recvDisplacements_.back();
 
 
         // Allocate send and receive buffers.
@@ -240,7 +238,7 @@ namespace atlas {
 
         // Set send functor.
         auto sendBufferIt = sendBuffer.begin();
-        auto sendFunctor = [&] (const idx_t i, const idx_t j) {
+        auto sendFunctor = [&](const idx_t i, const idx_t j) {
 
           // Loop over levels
           const auto iNode = sourceStructuredColumnsPtr_->index(i, j);
