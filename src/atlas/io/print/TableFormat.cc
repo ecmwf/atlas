@@ -19,6 +19,7 @@
 #include "atlas/io/Session.h"
 #include "atlas/io/print/Bytes.h"
 #include "atlas/io/types/array/ArrayReference.h"
+#include "atlas/io/types/scalar.h"
 #include "atlas/runtime/Exception.h"
 
 namespace atlas {
@@ -64,12 +65,75 @@ private:
     Metadata metadata_;
 };
 
+class StringMetadataPrettyPrint : public MetadataPrettyPrintBase {
+public:
+    StringMetadataPrettyPrint( const Metadata& m ) : metadata_( m ) {}
+    void print( std::ostream& out ) const override {
+        std::string type = metadata_.getString( "type" );
+        ATLAS_ASSERT( type == "string" );
+        std::string value = metadata_.getString( "value" );
+        if ( value.size() <= 32 ) {
+            out << value;
+        }
+        else {
+            out << value.substr( 0, 32 ) << "...";
+        }
+    }
+
+private:
+    Metadata metadata_;
+};
+
+class ScalarMetadataPrettyPrint : public MetadataPrettyPrintBase {
+public:
+    ScalarMetadataPrettyPrint( const Metadata& m ) : metadata_( m ) {}
+    template <typename T>
+    T decode() const {
+        T value;
+        Data dummy;
+        atlas::io::decode( metadata_, dummy, value );
+        return value;
+    }
+    void print( std::ostream& out ) const override {
+        std::string type = metadata_.getString( "type" );
+        ATLAS_ASSERT( type == "scalar" );
+        std::string datatype = metadata_.getString( "datatype" );
+        std::string base64   = metadata_.getString( "base64" );
+        out << std::setw( 7 ) << std::left << datatype << ": ";
+        if ( datatype == array::DataType::str<double>() ) {
+            out << decode<double>();
+        }
+        else if ( datatype == array::DataType::str<float>() ) {
+            out << decode<float>();
+        }
+        else if ( datatype == array::DataType::str<size_t>() ) {
+            out << decode<size_t>();
+        }
+        else if ( datatype == array::DataType::str<std::int32_t>() ) {
+            out << decode<std::int32_t>();
+        }
+        else if ( datatype == array::DataType::str<std::int64_t>() ) {
+            out << decode<std::int64_t>();
+        }
+    }
+
+private:
+    Metadata metadata_;
+};
+
+
 MetadataPrettyPrint::MetadataPrettyPrint( const atlas::io::Metadata& m ) {
     std::string type = m.getString( "type" );
 
     // Poor man factory builder
     if ( type == "array" ) {
         impl_.reset( new ArrayMetadataPrettyPrint( m ) );
+    }
+    else if ( type == "scalar" ) {
+        impl_.reset( new ScalarMetadataPrettyPrint( m ) );
+    }
+    else if ( type == "string" ) {
+        impl_.reset( new StringMetadataPrettyPrint( m ) );
     }
     else {
         impl_.reset( new DefaultMetadataPrettyPrint( m ) );
@@ -197,10 +261,18 @@ void TableFormat::print( std::ostream& out ) const {
         table << MetadataPrettyPrint{item};
         if ( print_details_ ) {
             table << item.record.version();
-            table << item.data.compression();
-            table << Bytes{cbytes}.str() + ( item.data.compressed() ? " < " + Bytes{ubytes}.str() : "" );
-            table << Checksum{item.data.checksum()}.str( 8 );
-            table << endian;
+            if ( item.data.section() ) {
+                table << item.data.compression();
+                table << Bytes{cbytes}.str() + ( item.data.compressed() ? " < " + Bytes{ubytes}.str() : "" );
+                table << Checksum{item.data.checksum()}.str( 8 );
+                table << endian;
+            }
+            else {
+                table << ""
+                      << ""
+                      << ""
+                      << "";
+            }
             table << created;
         }
 

@@ -699,6 +699,8 @@ list( APPEND atlas_io_srcs
     io/atlas-io.h
     io/Data.cc
     io/Data.h
+    io/detail/Base64.cc
+    io/detail/Base64.h
     io/detail/Checksum.h
     io/detail/Checksum.cc
     io/detail/DataInfo.h
@@ -751,6 +753,7 @@ list( APPEND atlas_io_srcs
     io/Session.h
     io/Stream.cc
     io/Stream.h
+    io/types/array.h
     io/types/array/ArrayMetadata.cc
     io/types/array/ArrayMetadata.h
     io/types/array/ArrayReference.cc
@@ -759,6 +762,8 @@ list( APPEND atlas_io_srcs
     io/types/array/adaptors/ArrayAdaptor.h
     io/types/array/adaptors/StdVectorAdaptor.h
     io/types/array/adaptors/VectorAdaptor.h
+    io/types/string.h
+    io/types/scalar.h
 )
 
 ### atlas c++ library

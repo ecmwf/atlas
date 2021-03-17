@@ -28,10 +28,9 @@
 #include "atlas/io/Session.h"
 #include "atlas/io/Stream.h"
 
-#include "atlas/io/types/array/ArrayReference.h"
-#include "atlas/io/types/array/adaptors/ArrayAdaptor.h"
-#include "atlas/io/types/array/adaptors/StdVectorAdaptor.h"
-#include "atlas/io/types/array/adaptors/VectorAdaptor.h"
+#include "atlas/io/types/array.h"
+#include "atlas/io/types/scalar.h"
+#include "atlas/io/types/string.h"
 
 
 namespace atlas {
