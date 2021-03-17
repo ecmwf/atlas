@@ -12,13 +12,23 @@
 
 #include <string>
 
+//------------------------------------------------------------------------------------------------------
+
+// For type safety we want to use std::byte for the DataType "BYTE", but it is a C++17 feature.
+// Backport std::byte here without any operations
 #if __cplusplus >= 201703L
 #include <cstddef>
 #else
 namespace std {
+#ifdef _CRAYC
+struct byte {
+    unsigned char byte_;
+};
+#else
 enum class byte : unsigned char
 {
 };
+#endif
 }
 #endif
 
