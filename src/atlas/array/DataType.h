@@ -12,6 +12,15 @@
 
 #include <string>
 
+#if __cplusplus >= 201703L
+#include <cstddef>
+#else
+namespace std {
+enum class byte : unsigned char
+{
+};
+}
+#endif
 
 //------------------------------------------------------------------------------------------------------
 
@@ -21,6 +30,7 @@ namespace array {
 class DataType {
 public:
     typedef long kind_t;
+    static const kind_t KIND_BYTE   = 1;
     static const kind_t KIND_INT32  = -4;
     static const kind_t KIND_INT64  = -8;
     static const kind_t KIND_REAL32 = 4;
@@ -30,6 +40,7 @@ public:
     template <typename DATATYPE>
     static DataType create();
 
+    static DataType byte() { return DataType( KIND_BYTE ); }
     static DataType int32() { return DataType( KIND_INT32 ); }
     static DataType int64() { return DataType( KIND_INT64 ); }
     static DataType real32() { return DataType( KIND_REAL32 ); }
@@ -51,6 +62,7 @@ public:
     static bool kind_valid( kind_t );
 
 private:
+    static std::string byte_str() { return "byte"; }
     static std::string int32_str() { return "int32"; }
     static std::string int64_str() { return "int64"; }
     static std::string real32_str() { return "real32"; }
@@ -79,6 +91,14 @@ private:
     kind_t kind_;
 };
 
+template <>
+inline std::string DataType::str<std::byte>() {
+    return byte_str();
+}
+template <>
+inline std::string DataType::str<const std::byte>() {
+    return byte_str();
+}
 template <>
 inline std::string DataType::str<int>() {
     return int32_str();
@@ -138,6 +158,14 @@ inline std::string DataType::str( const float& ) {
 template <>
 inline std::string DataType::str( const double& ) {
     return real64_str();
+}
+template <>
+inline DataType::kind_t DataType::kind<std::byte>() {
+    return KIND_BYTE;
+}
+template <>
+inline DataType::kind_t DataType::kind<const std::byte>() {
+    return KIND_BYTE;
 }
 template <>
 inline DataType::kind_t DataType::kind<int>() {
@@ -211,6 +239,9 @@ inline DataType::kind_t DataType::str_to_kind( const std::string& datatype ) {
         return KIND_REAL32;
     else if ( datatype == "real64" )
         return KIND_REAL64;
+    else if ( datatype == "byte" ) {
+        return KIND_BYTE;
+    }
     else {
         throw_not_recognised( datatype );
     }
@@ -227,12 +258,15 @@ inline std::string DataType::kind_to_str( kind_t kind ) {
             return real32_str();
         case KIND_REAL64:
             return real64_str();
+        case KIND_BYTE:
+            return byte_str();
         default:
             throw_not_recognised( kind );
     }
 }
 inline bool DataType::kind_valid( kind_t kind ) {
     switch ( kind ) {
+        case KIND_BYTE:
         case KIND_INT32:
         case KIND_INT64:
         case KIND_UINT64:
