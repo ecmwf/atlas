@@ -41,10 +41,16 @@ bool Checksum::available() const {
 }
 
 std::string Checksum::str() const {
+    if ( algorithm_.empty() ) {
+        return "";
+    }
     return algorithm_ + ":" + checksum_;
 }
 
 std::string Checksum::str( size_t size ) const {
+    if ( algorithm_.empty() ) {
+        return "";
+    }
     return algorithm_ + ":" + checksum_.substr( 0, std::min( size, checksum_.size() ) );
 }
 

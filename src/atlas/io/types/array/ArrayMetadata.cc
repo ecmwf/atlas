@@ -20,10 +20,11 @@ namespace io {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void encode_metadata( const ArrayMetadata& value, atlas::io::Metadata& out ) {
+size_t encode_metadata( const ArrayMetadata& value, atlas::io::Metadata& out ) {
     out.set( "type", value.type() );
     out.set( "shape", value.shape_ );
     out.set( "datatype", value.datatype_.str() );
+    return value.bytes();
 }
 
 //---------------------------------------------------------------------------------------------------------------------

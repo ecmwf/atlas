@@ -24,10 +24,12 @@ struct Reference {
     const T* ref;
     Reference( const T& r ) : ref( &r ) {}
 
-    friend void encode_metadata( const Reference<T>& in, atlas::io::Metadata& metadata ) {
-        if ( not sfinae::encode_metadata( *in.ref, metadata ) ) {
+    friend size_t encode_metadata( const Reference<T>& in, atlas::io::Metadata& metadata ) {
+        size_t size{0};
+        if ( not sfinae::encode_metadata( *in.ref, metadata, size ) ) {
             throw NotEncodable( *in.ref );
         }
+        return size;
     }
 
     friend void encode_data( const Reference<T>& in, atlas::io::Data& out ) {

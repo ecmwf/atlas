@@ -86,10 +86,11 @@ public:
         out.assign( in.str.data(), in.str.size() );
     }
 
-    friend void encode_metadata( const EncodableType& in, atlas::io::Metadata& metadata ) {
+    friend size_t encode_metadata( const EncodableType& in, atlas::io::Metadata& metadata ) {
         in.ops->push_back( "encode_metadata" );
         metadata.set( "type", "EncodableType" );
         metadata.set( "bytes", in.str.size() );
+        return in.str.size();
     }
 
     friend void decode( const atlas::io::Metadata&, const atlas::io::Data& b, EncodableType& out ) {

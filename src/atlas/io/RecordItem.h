@@ -86,7 +86,7 @@ RecordItem::RecordItem( T&& x, tag::disable_static_assert ) {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void encode_metadata( const RecordItem& in, atlas::io::Metadata& metadata );
+size_t encode_metadata( const RecordItem& in, atlas::io::Metadata& metadata );
 
 //---------------------------------------------------------------------------------------------------------------------
 

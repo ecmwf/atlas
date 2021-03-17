@@ -116,8 +116,9 @@ void RecordItem::compress() {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void encode_metadata( const RecordItem& in, Metadata& metadata ) {
+size_t encode_metadata( const RecordItem& in, Metadata& metadata ) {
     metadata.set( in.metadata() );
+    return in.data().size();
 }
 
 //---------------------------------------------------------------------------------------------------------------------

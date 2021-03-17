@@ -166,10 +166,12 @@ void RecordWriter::set( const RecordWriter::Key& key, Link&& link, const util::C
 //---------------------------------------------------------------------------------------------------------------------
 
 void RecordWriter::set( const RecordWriter::Key& key, Encoder&& encoder, const util::Config& config ) {
-    ++nb_data_sections_;
     DataInfo info;
-    info.compression( config.getString( "compression", compression_ ) );
-    info.section( nb_data_sections_ );
+    if ( encoder.encodes_data() ) {
+        ++nb_data_sections_;
+        info.compression( config.getString( "compression", compression_ ) );
+        info.section( nb_data_sections_ );
+    }
     keys_.emplace_back( key );
     encoders_[key] = std::move( encoder );
     info_.emplace( key, std::move( info ) );
@@ -211,8 +213,7 @@ size_t RecordWriter::estimateMaximumSize() const {
         size += sizeof( RecordDataSection::Begin );
         {
             atlas::io::Metadata m;
-            encode_metadata( encoder, m );
-            size_t max_data_size = atlas::io::uncompressed_size( m );
+            size_t max_data_size = encode_metadata( encoder, m );
             if ( info.compression() != "none" ) {
                 max_data_size = size_t( 1.2 * max_data_size );
                 max_data_size = std::max<size_t>( max_data_size, 10 * 1024 );  // minimum 10KB
@@ -231,7 +232,6 @@ size_t RecordWriter::estimateMaximumSize() const {
 
 std::string RecordWriter::metadata() const {
     atlas::io::Metadata metadata;
-    size_t nb_data_sections{0};
     for ( auto& key : keys_ ) {
         auto& encoder = encoders_.at( key );
         auto& info    = info_.at( key );
@@ -244,7 +244,6 @@ std::string RecordWriter::metadata() const {
             }
         }
         metadata.set( key, m );
-        ++nb_data_sections;
     }
     std::stringstream ss;
     atlas::io::write( metadata, ss );

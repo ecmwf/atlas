@@ -54,7 +54,7 @@ public:
 
     size_t bytes() const { return size() * datatype_.size(); }
 
-    friend void encode_metadata( const ArrayMetadata& value, atlas::io::Metadata& out );
+    friend size_t encode_metadata( const ArrayMetadata& value, atlas::io::Metadata& out );
 
 private:
     ArrayShape shape_;
@@ -63,7 +63,7 @@ private:
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void encode_metadata( const ArrayMetadata& value, atlas::io::Metadata& out );
+size_t encode_metadata( const ArrayMetadata& value, atlas::io::Metadata& out );
 
 //---------------------------------------------------------------------------------------------------------------------
 

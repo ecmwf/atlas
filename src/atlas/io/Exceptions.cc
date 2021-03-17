@@ -46,7 +46,7 @@ NotEncodable::NotEncodable( const std::string& type_name ) :
                    "\n         void encode_data(const "
                 << type_name
                 << "&, atlas::io::Data& );"
-                   "\n         void encode_metadata(const "
+                   "\n         size_t encode_metadata(const "
                 << type_name
                 << "&, atlas::io::Metadata& );"
                    "\n"

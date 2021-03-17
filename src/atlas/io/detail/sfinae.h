@@ -29,8 +29,9 @@ inline void do_interprete( const T& in, A& interpreted ) {
 }
 
 template <typename T, enable_if_can_encode_metadata_t<T> = 0>
-inline void do_encode_metadata( const T& in, Metadata& out ) {
-    encode_metadata( in, out );
+inline size_t do_encode_metadata( const T& in, Metadata& out ) {
+    size_t size = encode_metadata( in, out );
+    return size;
 }
 
 template <typename T, enable_if_can_encode_data_t<T> = 0>
@@ -53,7 +54,7 @@ bool interprete( const T& in, A& interpreted ) {
 }
 
 template <typename T, typename A, disable_if_interpretable_t<T, A> = 0>
-bool interprete( const T& in, A& interpreted ) {
+bool interprete( const T& /*in*/, A& /*interpreted*/ ) {
     return false;
 }
 
@@ -80,6 +81,18 @@ bool encode_metadata( const T& in, Metadata& out ) {
 
 template <typename T, disable_if_can_encode_data_t<T> = 0>
 bool encode_metadata( const T&, Metadata& ) {
+    return false;
+}
+
+template <typename T, enable_if_can_encode_data_t<T> = 0>
+bool encode_metadata( const T& in, Metadata& out, size_t& data_size ) {
+    data_size = do_encode_metadata( in, out );
+    return true;
+}
+
+template <typename T, disable_if_can_encode_data_t<T> = 0>
+bool encode_metadata( const T&, Metadata&, size_t& data_size ) {
+    data_size = 0;
     return false;
 }
 

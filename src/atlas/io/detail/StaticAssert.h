@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <cstdlib>
 #include "atlas/io/detail/TypeTraits.h"
 
 namespace atlas {
@@ -34,7 +35,7 @@ void encode_data( const T& in, atlas::io::Data& out ) {
 
 
 template <typename T, disable_if_can_encode_metadata_t<T> = 0>
-void encode_metadata( const T& r, atlas::io::Metadata& metadata ) {
+size_t encode_metadata( const T&, atlas::io::Metadata& ) {
     static_assert(
         can_encode_metadata<T>(),
         "\n\n"
@@ -43,11 +44,12 @@ void encode_metadata( const T& r, atlas::io::Metadata& metadata ) {
         "\n"
         "\n     Values of template type T cannot be incoded into Metadata because following function is not defined:"
         "\n"
-        "\n         void encode_metadata(const T& value, atlas::io::Metadata& metadata);"
+        "\n         size_t encode_metadata(const T& value, atlas::io::Metadata& metadata);"
         "\n"
         "\n     Note that argument-dependent-lookup rules apply."
         "\n     --> The function must be declared in the namespace of type T"
         "\n\n" );
+    return 0;
 }
 
 

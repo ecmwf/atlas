@@ -28,10 +28,10 @@ void encode_data( const atlas::vector<T>& v, atlas::io::Data& out ) {
 //---------------------------------------------------------------------------------------------------------------------
 
 template <typename T>
-void encode_metadata( const atlas::vector<T>& v, atlas::io::Metadata& metadata ) {
+size_t encode_metadata( const atlas::vector<T>& v, atlas::io::Metadata& metadata ) {
     using atlas::io::ArrayMetadata;
     using DataType = ArrayMetadata::DataType;
-    encode_metadata( ArrayMetadata{DataType::create<T>(), {v.size()}}, metadata );
+    return encode_metadata( ArrayMetadata{DataType::create<T>(), {v.size()}}, metadata );
 }
 
 //---------------------------------------------------------------------------------------------------------------------
