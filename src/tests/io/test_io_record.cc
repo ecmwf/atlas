@@ -204,6 +204,8 @@ CASE( "Write records in nested subdirectories" ) {
         record.set( "v1", io::ref( globals::record1.data.v1 ) );
         record.set( "v2", io::ref( globals::record1.data.v2 ) );
         record.set( "v3", io::ref( globals::record1.data.v3 ) );
+        record.set( "s1", std::string("short string"));
+        record.set( "s2", double(1./3.));
         record.write( reference_path / "links" / "1" / "record.atlas" + suffix() );
     }
     {
@@ -213,6 +215,7 @@ CASE( "Write records in nested subdirectories" ) {
         record.set( "v1", io::ref( globals::record2.data.v1 ) );
         record.set( "v2", io::ref( globals::record2.data.v2 ) );
         record.set( "v3", io::ref( globals::record2.data.v3 ) );
+        record.set( "s1", size_t(10000000000));
         record.write( reference_path / "links" / "2" / "record.atlas" + suffix() );
     }
     {
@@ -223,6 +226,9 @@ CASE( "Write records in nested subdirectories" ) {
         record.set( "l4", io::link( "file:2/record.atlas" + suffix() + "?key=v1" ) );
         record.set( "l5", io::link( "file:2/record.atlas" + suffix() + "?key=v2" ) );
         record.set( "l6", io::link( "file:2/record.atlas" + suffix() + "?key=v3" ) );
+        record.set( "l7", io::link( "file:1/record.atlas" + suffix() + "?key=s1" ) );
+        record.set( "l8", io::link( "file:1/record.atlas" + suffix() + "?key=s2" ) );
+        record.set( "l9", io::link( "file:2/record.atlas" + suffix() + "?key=s1" ) );
         record.write( reference_path / "links" / "record.atlas" + suffix() );
     }
     {
@@ -233,6 +239,9 @@ CASE( "Write records in nested subdirectories" ) {
         record.set( "l4", io::link( "file:links/record.atlas" + suffix() + "?key=l4" ) );
         record.set( "l5", io::link( "file:links/record.atlas" + suffix() + "?key=l5" ) );
         record.set( "l6", io::link( "file:links/record.atlas" + suffix() + "?key=l6" ) );
+        record.set( "l7", io::link( "file:links/record.atlas" + suffix() + "?key=l7" ) );
+        record.set( "l8", io::link( "file:links/record.atlas" + suffix() + "?key=l8" ) );
+        record.set( "l9", io::link( "file:links/record.atlas" + suffix() + "?key=l9" ) );
         record.write( reference_path / "record.atlas" + suffix() );
     }
 }
@@ -417,8 +426,18 @@ CASE( "Recursive Write/read records in nested subdirectories" ) {
     record.read( "l5", data2.v2 ).wait();
     record.read( "l6", data2.v3 ).wait();
 
+    std::string l7;
+    double l8;
+    size_t l9;
+    record.read("l7", l7).wait();
+    record.read("l8", l8).wait();
+    record.read("l9", l9).wait();
+
     EXPECT( data1 == globals::record1.data );
     EXPECT( data2 == globals::record2.data );
+    EXPECT_EQ( l7, "short string");
+    EXPECT_EQ( l8, 1./3. );
+    EXPECT_EQ( l9, 10000000000ul );
 }
 
 //-----------------------------------------------------------------------------

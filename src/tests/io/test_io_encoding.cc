@@ -9,6 +9,7 @@
  */
 
 #include <cstring>
+#include <bitset>
 
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
@@ -166,17 +167,42 @@ CASE( "encoding atlas::vector" ) {
     assert_Vector<float>();
     assert_Vector<double>();
     assert_Vector<long>();
+    assert_Vector<std::byte>();
 
-    atlas::vector<double> in{1, 2, 3, 4, 5};
-    atlas::io::Data data;
-    atlas::io::Metadata metadata;
-    EXPECT_NO_THROW( encode( in, metadata, data ) );
 
-    using T = double;
-    EXPECT( data.size() == size_t( in.size() ) * sizeof( T ) );
-    EXPECT( ::memcmp( in.data(), data.data(), data.size() ) == 0 );
-    EXPECT( metadata.type() == "array" );
-    EXPECT( metadata.getString( "datatype" ) == atlas::array::DataType::str<T>() );
+    {
+        using T = double;
+        atlas::vector<T> in{1, 2, 3, 4, 5};
+        atlas::io::Data data;
+        atlas::io::Metadata metadata;
+        EXPECT_NO_THROW( encode( in, metadata, data ) );
+
+        EXPECT( data.size() == size_t( in.size() ) * sizeof( T ) );
+        EXPECT( ::memcmp( in.data(), data.data(), data.size() ) == 0 );
+        EXPECT( metadata.type() == "array" );
+        EXPECT( metadata.getString( "datatype" ) == atlas::array::DataType::str<T>() );
+    }
+    {
+        using T = std::byte;
+        std::bitset<8> bits;
+        atlas::vector<T> in;
+        in.resize(5);
+        size_t n{0};
+        for( auto& byte: in ) {
+            bits.set(n++,true);
+            byte = *reinterpret_cast<std::byte*>(&bits);
+        }
+        atlas::io::Data data;
+        atlas::io::Metadata metadata;
+        EXPECT_NO_THROW( encode( in, metadata, data ) );
+
+        EXPECT( data.size() == size_t( in.size() ) * sizeof( T ) );
+        EXPECT( ::memcmp( in.data(), data.data(), data.size() ) == 0 );
+        EXPECT( metadata.type() == "array" );
+        EXPECT( metadata.getString( "datatype" ) == atlas::array::DataType::str<T>() );
+    }
+
+
 }
 
 // -------------------------------------------------------------------------------------------------------
@@ -212,11 +238,38 @@ CASE( "encoding std::vector" ) {
     assert_StdVector<float>();
     assert_StdVector<double>();
     assert_StdVector<long>();
+    assert_StdVector<std::byte>();
 
     encode_StdVector<int>();
     encode_StdVector<float>();
     encode_StdVector<double>();
     encode_StdVector<long>();
+
+    {
+        using T = std::byte;
+        std::bitset<8> bits;
+        std::vector<T> in;
+        in.resize(5);
+        size_t n{0};
+        for( auto& byte: in ) {
+            bits.set(n++,true);
+            byte = *reinterpret_cast<std::byte*>(&bits);
+        }
+        ArrayReference interpreted;
+        interprete( in, interpreted );
+
+        atlas::io::Data data;
+        atlas::io::Metadata metadata;
+
+        encode( interpreted, metadata, data );
+
+        EXPECT( data.size() == in.size() * sizeof( T ) );
+        EXPECT( ::memcmp( in.data(), data.data(), data.size() ) == 0 );
+        EXPECT( metadata.type() == "array" );
+        EXPECT( metadata.getString( "datatype" ) == atlas::array::DataType::str<T>() );
+    }
+
+
 }
 
 // -------------------------------------------------------------------------------------------------------
@@ -472,7 +525,7 @@ struct EncodedArray {
     atlas::io::Metadata metadata;
 
     EncodedArray() : in( 4, 2 ) {
-        array::make_view<double, 2>( in ).assign( {1, 2, 3, 4, 5, 6, 7, 8} );
+        array::make_view<T, 2>( in ).assign( {1, 2, 3, 4, 5, 6, 7, 8} );
         encode( in, metadata, data );
     }
 
@@ -501,6 +554,41 @@ struct EncodedArray {
 private:
     atlas::array::ArrayT<T> in;
 };
+
+template<>
+struct EncodedArray<std::byte> {
+    using T = std::byte;
+    atlas::io::Data data;
+    atlas::io::Metadata metadata;
+
+    EncodedArray() {
+        std::bitset<8> bits;
+        in.resize(5);
+        size_t n{0};
+        for( auto& byte: in ) {
+            bits.set(n++,true);
+            byte = *reinterpret_cast<std::byte*>(&bits);
+        }
+        encode( in, metadata, data );
+    }
+
+    friend bool operator==( const std::vector<T>& lhs, const EncodedArray<T>& rhs ) {
+        if ( lhs.size() != rhs.in.size() ) {
+            return false;
+        }
+        return ::memcmp( lhs.data(), rhs.in.data(), rhs.in.size() * sizeof(T) ) == 0;
+    }
+    friend bool operator==( const atlas::vector<T>& lhs, const EncodedArray<T>& rhs ) {
+        if ( size_t( lhs.size() ) != rhs.in.size() ) {
+            return false;
+        }
+        return ::memcmp( lhs.data(), rhs.in.data(), rhs.in.size() * sizeof(T) ) == 0;
+    }
+
+private:
+    std::vector<std::byte> in;
+};
+
 
 // -------------------------------------------------------------------------------------------------------
 
@@ -589,6 +677,99 @@ CASE( "Decoding to atlas::array::Array" ) {
         io::Decoder decoder( out );
         EXPECT_NO_THROW( decode( encoded.metadata, encoded.data, io::Decoder( decoder ) ) );
         EXPECT( out == encoded );
+    }
+}
+
+// -------------------------------------------------------------------------------------------------------
+
+CASE( "Encode/Decode byte array" ) {
+    using T = std::byte;
+    EncodedArray<T> encoded;
+    atlas::vector<T> out;
+
+    auto validate = [&]() {
+        EXPECT( out == encoded );
+
+        auto str = [](std::byte byte) {
+            return reinterpret_cast<std::bitset<8>&>(byte).to_string();
+        };
+        EXPECT_EQ( str(out[0]), "00000001" );
+        EXPECT_EQ( str(out[1]), "00000011" );
+        EXPECT_EQ( str(out[2]), "00000111" );
+        EXPECT_EQ( str(out[3]), "00001111" );
+        EXPECT_EQ( str(out[4]), "00011111" );
+    };
+
+
+    SECTION( "decode directly" ) {
+        EXPECT_NO_THROW( decode( encoded.metadata, encoded.data, out ) );
+        validate();
+    }
+
+    SECTION( "decode using rvalue io::Decoder (type erasure)" ) {
+        EXPECT_NO_THROW( decode( encoded.metadata, encoded.data, io::Decoder( out ) ) );
+        validate();
+    }
+
+    SECTION( "decode using lvalue io::Decoder (type erasure)" ) {
+        io::Decoder decoder( out );
+        EXPECT_NO_THROW( decode( encoded.metadata, encoded.data, io::Decoder( out ) ) );
+        validate();
+    }
+
+    SECTION( "decode using decoder of decoder" ) {
+        io::Decoder decoder( out );
+        EXPECT_NO_THROW( decode( encoded.metadata, encoded.data, io::Decoder( decoder ) ) );
+        validate();
+    }
+
+}
+
+// -------------------------------------------------------------------------------------------------------
+
+CASE( "Encode/Decode string" ) {
+    std::string in{"short string"};
+    io::Metadata metadata;
+    io::Data data;
+    encode(in,metadata,data);
+    EXPECT_EQ(data.size(),0);
+
+    std::string out;
+    decode(metadata,data,out);
+    EXPECT_EQ(out,in);
+}
+
+// -------------------------------------------------------------------------------------------------------
+
+template< typename T >
+void test_encode_decode_scalar() {
+    T in{ std::numeric_limits<T>::max() }, out;
+    io::Metadata metadata;
+    io::Data data;
+    encode(in,metadata,data);
+    EXPECT_EQ(data.size(),0);
+
+    decode(metadata,data,out);
+    EXPECT_EQ(out,in);
+
+}
+
+CASE( "Encode/Decode scalar" ) {
+    // bit identical encoding via Base64 string within the metadata!
+    SECTION( "int32") {
+        test_encode_decode_scalar<std::int32_t>();
+    }
+    SECTION( "int64") {
+        test_encode_decode_scalar<std::int64_t>();
+    }
+    SECTION( "real32") {
+        test_encode_decode_scalar<float>();
+    }
+    SECTION( "real64") {
+        test_encode_decode_scalar<double>();
+    }
+    SECTION( "uint64") {
+        test_encode_decode_scalar<std::uint64_t>();
     }
 }
 
