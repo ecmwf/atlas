@@ -10,7 +10,7 @@
 
 #include "Time.h"
 
-#if __GNUC__ && __GNUC__ < 5
+// -------------------------------------------------------------------------------------------------------
 // Some older compilers, e.g. intel 17 rely on GCC 4, which does not have std::put_time implemented yet, even though it is in C++11.
 // So implement it here.
 
@@ -19,7 +19,9 @@
 #include <locale>    // std::use_facet, std::time_put
 #include <ostream>   // std::basic_ostream
 
-namespace std {
+namespace atlas_std {
+namespace {
+
 template <typename CharT>
 struct _put_time {
     const std::tm* time;
@@ -41,22 +43,25 @@ std::basic_ostream<CharT, Traits>& operator<<( std::basic_ostream<CharT, Traits>
 
     std::ios_base::iostate err = std::ios_base::goodbit;
     try {
-        if ( mp.put( Iter( os.rdbuf() ), os, os.fill(), f.time, f.fmt, fmt_end ).failed() )
+        if ( mp.put( Iter( os.rdbuf() ), os, os.fill(), f.time, f.fmt, fmt_end ).failed() ) {
             err |= std::ios_base::badbit;
+        }
     }
     catch ( ... ) {
         err |= std::ios_base::badbit;
     }
 
-    if ( err )
+    if ( err ) {
         os.setstate( err );
+    }
 
     return os;
 }
-}  // namespace std
 
-#endif
+}  // namespace
+}  // namespace atlas_std
 
+// -------------------------------------------------------------------------------------------------------
 
 #include <chrono>
 #include <ctime>
@@ -100,7 +105,9 @@ Time Time::now() {
 void Time::print( std::ostream& out ) const {
     // Will print time-date in ISO 8601 format: 1970-01-01T00:00:00.123456789Z
     auto time = to_time_t( *this );
-    out << std::put_time( ::gmtime( &time ), "%FT%T" ) << "." << tv_nsec << "Z";
+    out << atlas_std::put_time( ::gmtime( &time ), "%FT%T" ) << "." << tv_nsec << "Z";
+    // Note, normally we should be using std::put_time instead of above implemented
+    // atlas_std::put_time but some installations that we support don't implement it.
 }
 
 std::ostream& operator<<( std::ostream& out, const Time& time ) {
