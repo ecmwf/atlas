@@ -8,8 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include <cstring>
 #include <bitset>
+#include <cstring>
 
 #include "atlas/array/Array.h"
 #include "atlas/array/ArrayView.h"
@@ -186,11 +186,11 @@ CASE( "encoding atlas::vector" ) {
         using T = std::byte;
         std::bitset<8> bits;
         atlas::vector<T> in;
-        in.resize(5);
+        in.resize( 5 );
         size_t n{0};
-        for( auto& byte: in ) {
-            bits.set(n++,true);
-            byte = *reinterpret_cast<std::byte*>(&bits);
+        for ( auto& byte : in ) {
+            bits.set( n++, true );
+            byte = *reinterpret_cast<std::byte*>( &bits );
         }
         atlas::io::Data data;
         atlas::io::Metadata metadata;
@@ -201,8 +201,6 @@ CASE( "encoding atlas::vector" ) {
         EXPECT( metadata.type() == "array" );
         EXPECT( metadata.getString( "datatype" ) == atlas::array::DataType::str<T>() );
     }
-
-
 }
 
 // -------------------------------------------------------------------------------------------------------
@@ -249,11 +247,11 @@ CASE( "encoding std::vector" ) {
         using T = std::byte;
         std::bitset<8> bits;
         std::vector<T> in;
-        in.resize(5);
+        in.resize( 5 );
         size_t n{0};
-        for( auto& byte: in ) {
-            bits.set(n++,true);
-            byte = *reinterpret_cast<std::byte*>(&bits);
+        for ( auto& byte : in ) {
+            bits.set( n++, true );
+            byte = *reinterpret_cast<std::byte*>( &bits );
         }
         ArrayReference interpreted;
         interprete( in, interpreted );
@@ -268,8 +266,6 @@ CASE( "encoding std::vector" ) {
         EXPECT( metadata.type() == "array" );
         EXPECT( metadata.getString( "datatype" ) == atlas::array::DataType::str<T>() );
     }
-
-
 }
 
 // -------------------------------------------------------------------------------------------------------
@@ -555,7 +551,7 @@ private:
     atlas::array::ArrayT<T> in;
 };
 
-template<>
+template <>
 struct EncodedArray<std::byte> {
     using T = std::byte;
     atlas::io::Data data;
@@ -563,11 +559,11 @@ struct EncodedArray<std::byte> {
 
     EncodedArray() {
         std::bitset<8> bits;
-        in.resize(5);
+        in.resize( 5 );
         size_t n{0};
-        for( auto& byte: in ) {
-            bits.set(n++,true);
-            byte = *reinterpret_cast<std::byte*>(&bits);
+        for ( auto& byte : in ) {
+            bits.set( n++, true );
+            byte = *reinterpret_cast<std::byte*>( &bits );
         }
         encode( in, metadata, data );
     }
@@ -576,13 +572,13 @@ struct EncodedArray<std::byte> {
         if ( lhs.size() != rhs.in.size() ) {
             return false;
         }
-        return ::memcmp( lhs.data(), rhs.in.data(), rhs.in.size() * sizeof(T) ) == 0;
+        return ::memcmp( lhs.data(), rhs.in.data(), rhs.in.size() * sizeof( T ) ) == 0;
     }
     friend bool operator==( const atlas::vector<T>& lhs, const EncodedArray<T>& rhs ) {
         if ( size_t( lhs.size() ) != rhs.in.size() ) {
             return false;
         }
-        return ::memcmp( lhs.data(), rhs.in.data(), rhs.in.size() * sizeof(T) ) == 0;
+        return ::memcmp( lhs.data(), rhs.in.data(), rhs.in.size() * sizeof( T ) ) == 0;
     }
 
 private:
@@ -690,14 +686,12 @@ CASE( "Encode/Decode byte array" ) {
     auto validate = [&]() {
         EXPECT( out == encoded );
 
-        auto str = [](std::byte byte) {
-            return reinterpret_cast<std::bitset<8>&>(byte).to_string();
-        };
-        EXPECT_EQ( str(out[0]), "00000001" );
-        EXPECT_EQ( str(out[1]), "00000011" );
-        EXPECT_EQ( str(out[2]), "00000111" );
-        EXPECT_EQ( str(out[3]), "00001111" );
-        EXPECT_EQ( str(out[4]), "00011111" );
+        auto str = []( std::byte byte ) { return reinterpret_cast<std::bitset<8>&>( byte ).to_string(); };
+        EXPECT_EQ( str( out[0] ), "00000001" );
+        EXPECT_EQ( str( out[1] ), "00000011" );
+        EXPECT_EQ( str( out[2] ), "00000111" );
+        EXPECT_EQ( str( out[3] ), "00001111" );
+        EXPECT_EQ( str( out[4] ), "00011111" );
     };
 
 
@@ -722,7 +716,6 @@ CASE( "Encode/Decode byte array" ) {
         EXPECT_NO_THROW( decode( encoded.metadata, encoded.data, io::Decoder( decoder ) ) );
         validate();
     }
-
 }
 
 // -------------------------------------------------------------------------------------------------------
@@ -731,46 +724,35 @@ CASE( "Encode/Decode string" ) {
     std::string in{"short string"};
     io::Metadata metadata;
     io::Data data;
-    encode(in,metadata,data);
-    EXPECT_EQ(data.size(),0);
+    encode( in, metadata, data );
+    EXPECT_EQ( data.size(), 0 );
 
     std::string out;
-    decode(metadata,data,out);
-    EXPECT_EQ(out,in);
+    decode( metadata, data, out );
+    EXPECT_EQ( out, in );
 }
 
 // -------------------------------------------------------------------------------------------------------
 
-template< typename T >
+template <typename T>
 void test_encode_decode_scalar() {
-    T in{ std::numeric_limits<T>::max() }, out;
+    T in{std::numeric_limits<T>::max()}, out;
     io::Metadata metadata;
     io::Data data;
-    encode(in,metadata,data);
-    EXPECT_EQ(data.size(),0);
+    encode( in, metadata, data );
+    EXPECT_EQ( data.size(), 0 );
 
-    decode(metadata,data,out);
-    EXPECT_EQ(out,in);
-
+    decode( metadata, data, out );
+    EXPECT_EQ( out, in );
 }
 
 CASE( "Encode/Decode scalar" ) {
     // bit identical encoding via Base64 string within the metadata!
-    SECTION( "int32") {
-        test_encode_decode_scalar<std::int32_t>();
-    }
-    SECTION( "int64") {
-        test_encode_decode_scalar<std::int64_t>();
-    }
-    SECTION( "real32") {
-        test_encode_decode_scalar<float>();
-    }
-    SECTION( "real64") {
-        test_encode_decode_scalar<double>();
-    }
-    SECTION( "uint64") {
-        test_encode_decode_scalar<std::uint64_t>();
-    }
+    SECTION( "int32" ) { test_encode_decode_scalar<std::int32_t>(); }
+    SECTION( "int64" ) { test_encode_decode_scalar<std::int64_t>(); }
+    SECTION( "real32" ) { test_encode_decode_scalar<float>(); }
+    SECTION( "real64" ) { test_encode_decode_scalar<double>(); }
+    SECTION( "uint64" ) { test_encode_decode_scalar<std::uint64_t>(); }
 }
 
 // -------------------------------------------------------------------------------------------------------

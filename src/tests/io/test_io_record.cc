@@ -204,8 +204,8 @@ CASE( "Write records in nested subdirectories" ) {
         record.set( "v1", io::ref( globals::record1.data.v1 ) );
         record.set( "v2", io::ref( globals::record1.data.v2 ) );
         record.set( "v3", io::ref( globals::record1.data.v3 ) );
-        record.set( "s1", std::string("short string"));
-        record.set( "s2", double(1./3.));
+        record.set( "s1", std::string( "short string" ) );
+        record.set( "s2", double( 1. / 3. ) );
         record.write( reference_path / "links" / "1" / "record.atlas" + suffix() );
     }
     {
@@ -215,7 +215,7 @@ CASE( "Write records in nested subdirectories" ) {
         record.set( "v1", io::ref( globals::record2.data.v1 ) );
         record.set( "v2", io::ref( globals::record2.data.v2 ) );
         record.set( "v3", io::ref( globals::record2.data.v3 ) );
-        record.set( "s1", size_t(10000000000));
+        record.set( "s1", size_t( 10000000000 ) );
         record.write( reference_path / "links" / "2" / "record.atlas" + suffix() );
     }
     {
@@ -429,14 +429,14 @@ CASE( "Recursive Write/read records in nested subdirectories" ) {
     std::string l7;
     double l8;
     size_t l9;
-    record.read("l7", l7).wait();
-    record.read("l8", l8).wait();
-    record.read("l9", l9).wait();
+    record.read( "l7", l7 ).wait();
+    record.read( "l8", l8 ).wait();
+    record.read( "l9", l9 ).wait();
 
     EXPECT( data1 == globals::record1.data );
     EXPECT( data2 == globals::record2.data );
-    EXPECT_EQ( l7, "short string");
-    EXPECT_EQ( l8, 1./3. );
+    EXPECT_EQ( l7, "short string" );
+    EXPECT_EQ( l8, 1. / 3. );
     EXPECT_EQ( l9, 10000000000ul );
 }
 
