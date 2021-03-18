@@ -9,6 +9,7 @@
  */
 
 #pragma once
+#ifndef __clang_analyzer__
 
 #include <cstdlib>
 #include "atlas/io/detail/TypeTraits.h"
@@ -71,3 +72,5 @@ void decode( const atlas::io::Metadata&, const atlas::io::Data&, T& ) {
 
 }  // namespace io
 }  // namespace atlas
+
+#endif

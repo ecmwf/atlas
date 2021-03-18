@@ -23,7 +23,7 @@ namespace io {
 class Decoder {
 public:
     template <typename T, enable_if_decodable_t<T> = 0>
-    Decoder( T& value ) : self_( new DecodableItem<T>( value ) ) {}
+    explicit Decoder( T& value ) : self_( new DecodableItem<T>( value ) ) {}
 
     friend void decode( const atlas::io::Metadata& metadata, const atlas::io::Data& data, Decoder& );
     friend void decode( const atlas::io::Metadata& metadata, const atlas::io::Data& data, Decoder&& );
@@ -36,7 +36,7 @@ private:
 
     template <typename T>
     struct DecodableItem : Decodable {
-        DecodableItem( T& value ) : data_( value ) {}
+        explicit DecodableItem( T& value ) : data_( value ) {}
 
         void decode_( const atlas::io::Metadata& metadata, const atlas::io::Data& encoded ) override {
             decode( metadata, encoded, data_ );

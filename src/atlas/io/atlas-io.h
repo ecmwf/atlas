@@ -23,9 +23,9 @@
 #include "atlas/io/FileStream.h"
 #include "atlas/io/Record.h"
 #include "atlas/io/RecordItemReader.h"
+#include "atlas/io/RecordPrinter.h"
 #include "atlas/io/RecordReader.h"
 #include "atlas/io/RecordWriter.h"
-#include "atlas/io/RecordPrinter.h"
 #include "atlas/io/Session.h"
 #include "atlas/io/Stream.h"
 

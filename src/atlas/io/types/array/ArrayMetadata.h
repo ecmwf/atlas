@@ -32,11 +32,11 @@ public:
 public:
     ArrayMetadata();
 
-    ArrayMetadata( const Metadata& );
+    explicit ArrayMetadata( const Metadata& );
 
-    ArrayMetadata( const DataType&, const ArrayShape& );
+    explicit ArrayMetadata( const DataType&, const ArrayShape& );
 
-    ArrayMetadata( const ArrayMetadata& );
+    explicit ArrayMetadata( const ArrayMetadata& );
 
     ArrayMetadata( ArrayMetadata&& );
 

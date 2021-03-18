@@ -34,7 +34,7 @@ public:
     operator bool() const { return bool( self_ ); }
 
     template <typename T, enable_if_move_constructible_encodable_rvalue_t<T> = 0>
-    Encoder( T&& x ) : self_( new EncodableValue<T>( std::move( x ) ) ) {}
+    explicit Encoder( T&& x ) : self_( new EncodableValue<T>( std::move( x ) ) ) {}
 
     Encoder( const Link& link ) : self_( new EncodableLink( link ) ) {}
 

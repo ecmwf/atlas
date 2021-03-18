@@ -111,73 +111,73 @@ inline std::string DataType::str<const std::byte>() {
 }
 template <>
 inline std::string DataType::str<int>() {
-    static_assert(sizeof(int)==4,"");
+    static_assert( sizeof( int ) == 4, "" );
     return int32_str();
 }
 template <>
 inline std::string DataType::str<const int>() {
-    static_assert(sizeof(int)==4,"");
+    static_assert( sizeof( int ) == 4, "" );
     return int32_str();
 }
 template <>
 inline std::string DataType::str<long>() {
-    static_assert(sizeof(long)==8,"");
+    static_assert( sizeof( long ) == 8, "" );
     return int64_str();
 }
 template <>
 inline std::string DataType::str<const long>() {
-    static_assert(sizeof(long)==8,"");
+    static_assert( sizeof( long ) == 8, "" );
     return int64_str();
 }
 template <>
 inline std::string DataType::str<long long>() {
-    static_assert(sizeof(long long)==8,"");
+    static_assert( sizeof( long long ) == 8, "" );
     return int64_str();
 }
 template <>
 inline std::string DataType::str<const long long>() {
-    static_assert(sizeof(long long)==8,"");
+    static_assert( sizeof( long long ) == 8, "" );
     return int64_str();
 }
 template <>
 inline std::string DataType::str<float>() {
-    static_assert(sizeof(float)==4,"");
+    static_assert( sizeof( float ) == 4, "" );
     return real32_str();
 }
 template <>
 inline std::string DataType::str<const float>() {
-    static_assert(sizeof(float)==4,"");
+    static_assert( sizeof( float ) == 4, "" );
     return real32_str();
 }
 template <>
 inline std::string DataType::str<double>() {
-    static_assert(sizeof(double)==8,"");
+    static_assert( sizeof( double ) == 8, "" );
     return real64_str();
 }
 template <>
 inline std::string DataType::str<const double>() {
-    static_assert(sizeof(double)==8,"");
+    static_assert( sizeof( double ) == 8, "" );
     return real64_str();
 }
 template <>
 inline std::string DataType::str<unsigned long>() {
-    static_assert(sizeof(unsigned long)==8,"");
+    static_assert( sizeof( unsigned long ) == 8, "" );
     return uint64_str();
 }
 template <>
 inline std::string DataType::str<const unsigned long>() {
-    static_assert(sizeof(unsigned long)==8,"");
+    static_assert( sizeof( unsigned long ) == 8, "" );
     return uint64_str();
 }
 
 template <>
 inline std::string DataType::str<unsigned long long>() {
-    static_assert(sizeof(unsigned long long)==8,"");
+    static_assert( sizeof( unsigned long long ) == 8, "" );
     return uint64_str();
 }
 template <>
 inline std::string DataType::str<const unsigned long long>() {
-    static_assert(sizeof(unsigned long long)==8,"");
+    static_assert( sizeof( unsigned long long ) == 8, "" );
     return uint64_str();
 }
 template <>
@@ -210,82 +210,82 @@ inline std::string DataType::str( const double& ) {
 }
 template <>
 inline DataType::kind_t DataType::kind<std::byte>() {
-    static_assert(sizeof(std::byte)==1,"");
+    static_assert( sizeof( std::byte ) == 1, "" );
     return KIND_BYTE;
 }
 template <>
 inline DataType::kind_t DataType::kind<const std::byte>() {
-    static_assert(sizeof(std::byte)==1,"");
+    static_assert( sizeof( std::byte ) == 1, "" );
     return KIND_BYTE;
 }
 template <>
 inline DataType::kind_t DataType::kind<int>() {
-    static_assert(sizeof(int)==4,"");
+    static_assert( sizeof( int ) == 4, "" );
     return KIND_INT32;
 }
 template <>
 inline DataType::kind_t DataType::kind<const int>() {
-    static_assert(sizeof(int)==4,"");
+    static_assert( sizeof( int ) == 4, "" );
     return KIND_INT32;
 }
 template <>
 inline DataType::kind_t DataType::kind<long>() {
-    static_assert(sizeof(long)==8,"");
+    static_assert( sizeof( long ) == 8, "" );
     return KIND_INT64;
 }
 template <>
 inline DataType::kind_t DataType::kind<const long>() {
-    static_assert(sizeof(long)==8,"");
+    static_assert( sizeof( long ) == 8, "" );
     return KIND_INT64;
 }
 template <>
 inline DataType::kind_t DataType::kind<long long>() {
-    static_assert(sizeof(long long)==8,"");
+    static_assert( sizeof( long long ) == 8, "" );
     return KIND_INT64;
 }
 template <>
 inline DataType::kind_t DataType::kind<const long long>() {
-    static_assert(sizeof(long long)==8,"");
+    static_assert( sizeof( long long ) == 8, "" );
     return KIND_INT64;
 }
 template <>
 inline DataType::kind_t DataType::kind<unsigned long>() {
-    static_assert(sizeof(unsigned long)==8,"");
+    static_assert( sizeof( unsigned long ) == 8, "" );
     return KIND_UINT64;
 }
 template <>
 inline DataType::kind_t DataType::kind<const unsigned long>() {
-    static_assert(sizeof(unsigned long)==8,"");
+    static_assert( sizeof( unsigned long ) == 8, "" );
     return KIND_UINT64;
 }
 template <>
 inline DataType::kind_t DataType::kind<unsigned long long>() {
-    static_assert(sizeof(unsigned long long)==8,"");
+    static_assert( sizeof( unsigned long long ) == 8, "" );
     return KIND_UINT64;
 }
 template <>
 inline DataType::kind_t DataType::kind<const unsigned long long>() {
-    static_assert(sizeof(unsigned long long)==8,"");
+    static_assert( sizeof( unsigned long long ) == 8, "" );
     return KIND_UINT64;
 }
 template <>
 inline DataType::kind_t DataType::kind<float>() {
-    static_assert(sizeof(float)==4,"");
+    static_assert( sizeof( float ) == 4, "" );
     return KIND_REAL32;
 }
 template <>
 inline DataType::kind_t DataType::kind<const float>() {
-    static_assert(sizeof(float)==4,"");
+    static_assert( sizeof( float ) == 4, "" );
     return KIND_REAL32;
 }
 template <>
 inline DataType::kind_t DataType::kind<double>() {
-    static_assert(sizeof(double)==8,"");
+    static_assert( sizeof( double ) == 8, "" );
     return KIND_REAL64;
 }
 template <>
 inline DataType::kind_t DataType::kind<const double>() {
-    static_assert(sizeof(double)==8,"");
+    static_assert( sizeof( double ) == 8, "" );
     return KIND_REAL64;
 }
 template <>
