@@ -10,7 +10,6 @@
 
 #include "Base64.h"
 
-#include <arpa/inet.h>
 #include <array>
 
 namespace atlas {
@@ -20,56 +19,51 @@ namespace io {
 
 namespace {
 
-class Base64Tables {
-public:
-    std::array<unsigned char, 256> decode;
-    std::string encode{
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        "abcdefghijklmnopqrstuvwxyz"
-        "0123456789+/"};
-    static const Base64Tables& instance() {
-        static Base64Tables instance;
-        return instance;
-    }
+static std::array<unsigned char, 256> b64_decode_table{
+    /* ASCII table */
+    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 62, 64, 64, 64, 63,
+    52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 64, 64, 64, 64, 64, 64,
+    64,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
+    15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 64, 64, 64, 64, 64,
+    64, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+    41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 64, 64, 64, 64, 64,
+    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64
+    };
 
-private:
-    Base64Tables() {
-        std::array<unsigned char, 256> tmp;
-
-        const char* p = encode.data();
-
-        size_t i = 0;
-        while ( *p ) {
-            size_t j  = *p;
-            tmp[i]    = *p;
-            decode[j] = i;
-            p++;
-            i++;
-        }
-    }
-};
+static std::array<unsigned char, 256> b64_encode_table{
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+    'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
+    'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+    'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'
+    };
 
 }  // namespace
 
 //---------------------------------------------------------------------------------------------------------------------
 
 std::string Base64::encode( const void* data, size_t len ) {
-    const auto& table        = Base64Tables::instance().encode;
+    const auto& table        = b64_encode_table;
     const unsigned char* src = reinterpret_cast<const unsigned char*>( data );
     unsigned char *out, *pos;
     const unsigned char *end, *in;
 
-    size_t olen;
+    size_t out_len = 4 * ( ( len + 2 ) / 3 ); /* 3-byte blocks to 4-byte */
 
-    olen = 4 * ( ( len + 2 ) / 3 ); /* 3-byte blocks to 4-byte */
-
-    if ( olen < len ) {
+    if ( out_len < len )
         return std::string(); /* integer overflow */
-    }
 
-    std::string outStr;
-    outStr.resize( olen );
-    out = (unsigned char*)&outStr[0];
+    std::string str;
+    str.resize( out_len );
+    out = reinterpret_cast<unsigned char*>(const_cast<char*>(str.data()));
 
     end = src + len;
     in  = src;
@@ -94,15 +88,15 @@ std::string Base64::encode( const void* data, size_t len ) {
         }
         *pos++ = '=';
     }
-    return outStr;
+    return str;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
 std::string Base64::decode( const void* data, size_t len ) {
-    const auto& table = Base64Tables::instance().decode;
+    const auto& table = b64_decode_table;
 
-    unsigned char* p = (unsigned char*)data;
+    const unsigned char* p = reinterpret_cast<const unsigned char*>(data);
     int pad          = len > 0 && ( len % 4 || p[len - 1] == '=' );
     const size_t L   = ( ( len + 3 ) / 4 - pad ) * 4;
     std::string str( L / 4 * 3 + pad, '\0' );
@@ -113,6 +107,7 @@ std::string Base64::decode( const void* data, size_t len ) {
         str[j++] = n >> 8 & 0xFF;
         str[j++] = n & 0xFF;
     }
+
     if ( pad ) {
         int n               = table[p[L]] << 18 | table[p[L + 1]] << 12;
         str[str.size() - 1] = n >> 16;

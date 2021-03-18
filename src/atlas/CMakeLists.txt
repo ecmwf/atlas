@@ -764,6 +764,7 @@ list( APPEND atlas_io_srcs
     io/types/array/adaptors/VectorAdaptor.h
     io/types/string.h
     io/types/scalar.h
+    io/types/scalar.cc
 )
 
 ### atlas c++ library
