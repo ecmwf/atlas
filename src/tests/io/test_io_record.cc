@@ -49,30 +49,26 @@ std::string suffix() {
 
 namespace globals {
 struct TestRecord {
-    io::Record::URI uri;
     Arrays data;
     TestRecord() = default;
     TestRecord( const std::function<void( Arrays& )>& initializer ) { initializer( data ); }
-    TestRecord( const io::Record::URI& _uri, const std::function<void( Arrays& )>& initializer ) : uri{_uri.str()} {
-        initializer( data );
-    }
 };
 
-static TestRecord record1{io::Record::URI{}, []( Arrays& data ) {
+static TestRecord record1{ []( Arrays& data ) {
                               data.v1 = {0, 1, 2, 3, 4};
                               data.v2 = {3, 2, 1};
                               data.v3.resize( 3, 2 );
                               array::make_view<int, 2>( data.v3 ).assign( {11, 12, 21, 22, 31, 32} );
                           }};
 
-static TestRecord record2{io::Record::URI{}, []( Arrays& data ) {
+static TestRecord record2{ []( Arrays& data ) {
                               data.v1 = {0, 10, 20, 30, 40, 50};
                               data.v2 = {30, 20, 10, 40};
                               data.v3.resize( 2, 3 );
                               array::make_view<int, 2>( data.v3 ).assign( {11, 12, 13, 21, 22, 23} );
                           }};
 
-static TestRecord record3{io::Record::URI{}, []( Arrays& data ) {
+static TestRecord record3{  []( Arrays& data ) {
                               data.v1.assign( 1024 / 8 - 1, 2. );
                               data.v2.assign( 1023 * 1024 / 4 + 512 / 4, 1. );
                               data.v3.resize( 1024, 1024 );
@@ -524,6 +520,37 @@ CASE( "Write record to memory" ) {
 
         EXPECT( data_read == data_write );
     }
+}
+
+//-----------------------------------------------------------------------------//
+//                                                                             //
+//                               Reading tests                                 //
+//                                                                             //
+//-----------------------------------------------------------------------------//
+
+CASE( "RecordPrinter" ) {
+    SECTION( "table") {
+        util::Config table_with_details;
+        table_with_details.set("format","table");
+        table_with_details.set("details",true);
+
+        io::RecordPrinter record{ eckit::PathName("record1.atlas" + suffix() ), table_with_details };
+        std::stringstream out;
+        EXPECT_NO_THROW( out << record );
+        Log::debug() << out.str();
+    }
+
+    SECTION( "yaml") {
+        util::Config yaml_with_details;
+        yaml_with_details.set("format","yaml");
+        yaml_with_details.set("details",true);
+
+        io::RecordPrinter record{ eckit::PathName("record1.atlas" + suffix() ), yaml_with_details };
+        std::stringstream out;
+        EXPECT_NO_THROW( out << record );
+        Log::debug() << out.str();
+    }
+
 }
 
 //-----------------------------------------------------------------------------

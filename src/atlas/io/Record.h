@@ -34,6 +34,11 @@ public:
         std::string str() const;
         std::string path;
         std::uint64_t offset;
+        URI() = default;
+        URI(const std::string& _path, std::uint64_t _offset = 0) :
+            path(_path), offset(_offset) {}
+        URI(const URI& other) :
+            path(other.path), offset(other.offset) {}
     };
 
 private:
