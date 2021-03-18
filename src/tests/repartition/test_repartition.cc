@@ -145,38 +145,30 @@ namespace atlas {
       // Write mesh and fields to file.
       if (gmshOutput) {
 
-          // Generate meshes.
-          const auto meshGen = atlas::MeshGenerator("structured");
-          const auto sourceMesh = meshGen.generate(grid, sourcePartitioner);
-          const auto targetMesh = meshGen.generate(grid, targetPartitioner);
+        // Generate meshes.
+        const auto meshGen = atlas::MeshGenerator("structured");
+        const auto sourceMesh = meshGen.generate(grid, sourcePartitioner);
+        const auto targetMesh = meshGen.generate(grid, targetPartitioner);
 
-          // Set gmsh config.
-          auto gmshConfig = atlas::util::Config{};
-          gmshConfig.set("ghost", "true");
+        // Set gmsh config.
+        auto gmshConfig = atlas::util::Config{};
+        gmshConfig.set("ghost", "true");
 
-          // Write meshes.
-          const auto sourceMeshFile = fileId + "_source_mesh.msh";
-          atlas::output::Gmsh(sourceMeshFile, gmshConfig).write(sourceMesh);
+        // Set source gmsh object.
+        const auto sourceGmsh =
+          atlas::output::Gmsh(fileId + "_source_mesh.msh", gmshConfig);
 
-          const auto targetMeshFile = fileId + "_target_mesh.msh";
-          atlas::output::Gmsh(targetMeshFile, gmshConfig).write(targetMesh);
 
-          // Write fields.
-          for (idx_t field = 0; field < sourceFieldSet.size(); ++field) {
+        // Set target gmsh object
+        const auto targetGmsh =
+          atlas::output::Gmsh(fileId + "_target_mesh.msh", gmshConfig);
 
-            const auto sourceFieldFile =
-              fileId + sourceFieldSet[field].name() + ".msh";
+        // Write gmsh
+        sourceGmsh.write(sourceMesh);
+        sourceGmsh.write(sourceFieldSet);
+        targetGmsh.write(targetMesh);
+        targetGmsh.write(targetFieldSet);
 
-            atlas::output::Gmsh(sourceFieldFile, gmshConfig)
-              .write(sourceFieldSet[field], sourceFunctionSpace);
-
-            const auto targetFieldFile =
-              fileId + targetFieldSet[field].name() + ".msh";
-
-            atlas::output::Gmsh(targetFieldFile, gmshConfig)
-              .write(targetFieldSet[field], targetFunctionSpace);
-
-          }
       }
 
       return testPassed;
