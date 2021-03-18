@@ -12,6 +12,7 @@
 
 #include <cstdint>
 #include <string>
+#include <bitset>
 
 #include "eckit/utils/ByteSwap.h"
 
@@ -49,11 +50,22 @@ void decode_scalar_b64( const atlas::io::Metadata& metadata, T& value ) {
 //---------------------------------------------------------------------------------------------------------------------
 
 template <typename T>
-size_t encode_scalar_metadata( const T& value, atlas::io::Metadata& out ) {
+void encode_scalar_metadata( const T& value, atlas::io::Metadata& out ) {
     out.set( "type", "scalar" );
     out.set( "datatype", array::DataType::str<T>() );
     out.set( "value", value );
-    return 0;
+}
+
+inline void encode_scalar_metadata( const unsigned long& value, atlas::io::Metadata& out ) {
+    out.set( "type", "scalar" );
+    out.set( "datatype", array::DataType::str<size_t>() );
+    out.set( "value", size_t(value) );
+}
+
+inline void encode_scalar_metadata( const unsigned long long& value, atlas::io::Metadata& out ) {
+    out.set( "type", "scalar" );
+    out.set( "datatype", array::DataType::str<size_t>() );
+    out.set( "value", size_t(value) );
 }
 
 template <typename T>
@@ -69,15 +81,23 @@ size_t encode_scalar_metadata_b64( const T& value, atlas::io::Metadata& out ) {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-size_t encode_metadata( const std::int32_t& value, atlas::io::Metadata& out ) {
+size_t encode_metadata( const int& value, atlas::io::Metadata& out ) {
     return encode_scalar_metadata_b64( value, out );
 }
 
-size_t encode_metadata( const std::int64_t& value, atlas::io::Metadata& out ) {
+size_t encode_metadata( const long& value, atlas::io::Metadata& out ) {
     return encode_scalar_metadata_b64( value, out );
 }
 
-size_t encode_metadata( const size_t& value, atlas::io::Metadata& out ) {
+size_t encode_metadata( const long long& value, atlas::io::Metadata& out ) {
+    return encode_scalar_metadata_b64( value, out );
+}
+
+size_t encode_metadata( const unsigned long& value, atlas::io::Metadata& out ) {
+    return encode_scalar_metadata_b64( value, out );
+}
+
+size_t encode_metadata( const unsigned long long& value, atlas::io::Metadata& out ) {
     return encode_scalar_metadata_b64( value, out );
 }
 
@@ -91,21 +111,29 @@ size_t encode_metadata( const double& value, atlas::io::Metadata& out ) {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void encode_data( const std::int32_t&, atlas::io::Data& ) {}
-void encode_data( const std::int64_t&, atlas::io::Data& ) {}
+void encode_data( const int&, atlas::io::Data& ) {}
+void encode_data( const long&, atlas::io::Data& ) {}
+void encode_data( const long long&, atlas::io::Data& ) {}
+void encode_data( const unsigned long&, atlas::io::Data& ) {}
+void encode_data( const unsigned long long&, atlas::io::Data& ) {}
 void encode_data( const float&, atlas::io::Data& ) {}
 void encode_data( const double&, atlas::io::Data& ) {}
-void encode_data( const size_t&, atlas::io::Data& ) {}
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void decode( const atlas::io::Metadata& metadata, const atlas::io::Data&, std::int32_t& value ) {
+void decode( const atlas::io::Metadata& metadata, const atlas::io::Data&, int& value ) {
     decode_scalar_b64( metadata, value );
 }
-void decode( const atlas::io::Metadata& metadata, const atlas::io::Data&, std::int64_t& value ) {
+void decode( const atlas::io::Metadata& metadata, const atlas::io::Data&, long& value ) {
     decode_scalar_b64( metadata, value );
 }
-void decode( const atlas::io::Metadata& metadata, const atlas::io::Data&, size_t& value ) {
+void decode( const atlas::io::Metadata& metadata, const atlas::io::Data&, long long& value ) {
+    decode_scalar_b64( metadata, value );
+}
+void decode( const atlas::io::Metadata& metadata, const atlas::io::Data&, unsigned long& value ) {
+    decode_scalar_b64( metadata, value );
+}
+void decode( const atlas::io::Metadata& metadata, const atlas::io::Data&, unsigned long long& value ) {
     decode_scalar_b64( metadata, value );
 }
 void decode( const atlas::io::Metadata& metadata, const atlas::io::Data&, float& value ) {
