@@ -18,7 +18,6 @@
 
 #include <cstdint>
 #include <string>
-#include <bitset>
 
 #include "eckit/utils/ByteSwap.h"
 
@@ -69,13 +68,13 @@ void encode_scalar_metadata( const T& value, atlas::io::Metadata& out ) {
 inline void encode_scalar_metadata( const unsigned long& value, atlas::io::Metadata& out ) {
     out.set( "type", "scalar" );
     out.set( "datatype", array::DataType::str<size_t>() );
-    out.set( "value", size_t(value) );
+    out.set( "value", size_t( value ) );
 }
 
 inline void encode_scalar_metadata( const unsigned long long& value, atlas::io::Metadata& out ) {
     out.set( "type", "scalar" );
     out.set( "datatype", array::DataType::str<size_t>() );
-    out.set( "value", size_t(value) );
+    out.set( "value", size_t( value ) );
 }
 
 template <typename T>
