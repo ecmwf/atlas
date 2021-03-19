@@ -46,7 +46,7 @@ namespace util {
 /// The variable `neighbours` is now a container of indices (the payloads) of the 4 nearest points
 
 template <typename PayloadT, typename PointT = Point3>
-class KDTree : ObjectHandle<detail::KDTreeBase<PayloadT, PointT>> {
+class KDTree : public ObjectHandle<detail::KDTreeBase<PayloadT, PointT>> {
 public:
     using Handle         = ObjectHandle<detail::KDTreeBase<PayloadT, PointT>>;
     using Implementation = typename Handle::Implementation;
@@ -145,6 +145,12 @@ public:
     //--------------------------------------------------------------------------------------
     // Methods to access the KDTree
 
+    bool empty() const { return get()->empty(); }
+
+    size_t size() const { return get()->size(); }
+
+    size_t footprint() const { return get()->footprint(); }
+
     /// @brief Find k closest points given a 3D cartesian point (x,y,z) or 2D lonlat point(lon,lat)
     template <typename Point>
     ValueList closestPoints( const Point& p, size_t k ) const {
@@ -194,6 +200,8 @@ void atlas__IndexKDTree__closestPointsWithinRadius( const IndexKDTree::Implement
                                                     const double plat, const double radius, size_t& k, double*& lon,
                                                     double*& lat, idx_t*& indices, double*& distances );
 const Geometry::Implementation* atlas__IndexKDTree__geometry( const IndexKDTree::Implementation* This );
+int atlas__IndexKDTree__empty( const IndexKDTree::Implementation* This );
+idx_t atlas__IndexKDTree__size( const IndexKDTree::Implementation* This );
 }
 
 //------------------------------------------------------------------------------------------------------

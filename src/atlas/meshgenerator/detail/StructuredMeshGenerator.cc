@@ -246,7 +246,7 @@ void StructuredMeshGenerator::generate( const Grid& grid, const grid::Distributi
     Log::info() << "Partition : " << std::endl;
     for ( size_t ilat = 0; ilat < rg.ny(); ilat++ ) {
         for ( size_t ilon = 0; ilon < rg.nx( ilat ); ilon++ ) {
-            Log::info() << std::setw( 3 ) << parts[inode];
+            Log::info() << std::setw( 3 ) << distribution.partition( inode );
             inode++;
         }
         Log::info() << std::endl;

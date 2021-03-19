@@ -6,6 +6,10 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+if( NOT DEFINED MPI_SLOTS )
+  set( MPI_SLOTS 9999 )
+endif()
+
 ######################################################
 # Compiler bugs force us to disable some tests
 
@@ -115,9 +119,11 @@ add_subdirectory( grid )
 add_subdirectory( mesh )
 add_subdirectory( functionspace )
 add_subdirectory( io )
+add_subdirectory( output )
 add_subdirectory( numerics )
 add_subdirectory( trans )
 add_subdirectory( interpolation )
+add_subdirectory( linalg )
 
 add_subdirectory( acceptance_tests )
 add_subdirectory( export_tests )

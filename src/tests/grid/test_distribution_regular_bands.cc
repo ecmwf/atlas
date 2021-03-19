@@ -120,10 +120,10 @@ CASE( "test_regular_bands" ) {
                 EXPECT_EQ( fs_regularbands.size(), fs_checkerboard.size() );
                 EXPECT_EQ( fs_regularbands.sizeOwned(), fs_checkerboard.sizeOwned() );
 
-                auto i1 = array::make_view<int, 1>( ij1[0] );
-                auto j1 = array::make_view<int, 1>( ij1[1] );
-                auto i2 = array::make_view<int, 1>( ij2[0] );
-                auto j2 = array::make_view<int, 1>( ij2[1] );
+                auto i1 = array::make_view<idx_t, 1>( ij1[0] );
+                auto j1 = array::make_view<idx_t, 1>( ij1[1] );
+                auto i2 = array::make_view<idx_t, 1>( ij2[0] );
+                auto j2 = array::make_view<idx_t, 1>( ij2[1] );
 
                 for ( int k = 0; k < fs_checkerboard.sizeOwned(); k++ ) {
                     EXPECT_EQ( i1[k], i2[k] );
@@ -190,6 +190,11 @@ CASE( "test regular_bands performance test" ) {
             n += grid.nx( j );
         }
     }
+}
+
+CASE( "test regular_bands with a very large grid" ) {
+    auto grid = StructuredGrid( sizeof( atlas::idx_t ) == 4 ? "L40000x20000" : "L160000x80000" );
+    auto dist = grid::Distribution( grid, grid::Partitioner( "regular_bands" ) );
 }
 
 

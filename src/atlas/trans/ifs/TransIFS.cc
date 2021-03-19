@@ -1078,8 +1078,6 @@ void TransIFS::__dirtrans( const StructuredColumns& gp, const Field& gpfield, co
         transform.nscalar             = nfld;
         transform.rgp                 = rgp.data();
         transform.rspscalar           = rsp.data();
-        transform.ngpblks             = ngptot();
-        transform.nproma              = 1;
         TRANS_CHECK( ::trans_dirtrans( &transform ) );
     }
 
@@ -1323,8 +1321,6 @@ void TransIFS::__invtrans( const functionspace::Spectral& sp, const Field& spfie
         transform.nscalar             = nfld;
         transform.rgp                 = rgp.data();
         transform.rspscalar           = rsp.data();
-        transform.ngpblks             = ngptot();
-        transform.nproma              = 1;
         TRANS_CHECK( ::trans_invtrans( &transform ) );
     }
 

@@ -14,6 +14,8 @@
 #include "atlas/library/config.h"
 #include "atlas/util/ObjectHandle.h"
 
+#include "atlas/interpolation/Cache.h"
+
 namespace eckit {
 class Parametrisation;
 }
@@ -33,6 +35,7 @@ namespace atlas {
 class Interpolation : DOXYGEN_HIDE( public util::ObjectHandle<interpolation::Method> ) {
 public:
     using Config = eckit::Parametrisation;
+    using Cache  = interpolation::Cache;
 
     using Handle::Handle;
     Interpolation() = default;
@@ -57,8 +60,11 @@ public:
 
     const FunctionSpace& source() const;
     const FunctionSpace& target() const;
-};
 
+    Cache createCache() const;
+
+    Interpolation( const Config&, const Grid& source, const Grid& target, const Cache& ) noexcept( false );
+};
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 namespace functionspace {

@@ -90,7 +90,7 @@ CASE( "biperiodic_latlon" ) {
     };
 
     auto gv = atlas::array::make_view<atlas::gidx_t, 1>( fs.global_index() );
-    auto pv = atlas::array::make_view<atlas::idx_t, 1>( fs.partition() );
+    auto pv = atlas::array::make_view<int, 1>( fs.partition() );
 
     for ( int j = fs.j_begin_halo(); j < fs.j_end_halo(); j++ ) {
         for ( int i = fs.i_begin_halo( j ); i < fs.i_end_halo( j ); i++ ) {

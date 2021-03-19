@@ -70,6 +70,10 @@ public:
     ObjectHandle() = default;
     ObjectHandle( const T* object ) : ObjectHandleBase( reinterpret_cast<const Object*>( object ) ) {}
     ObjectHandle( const ObjectHandle& handle ) : ObjectHandleBase( reinterpret_cast<const Object*>( handle.get() ) ) {}
+    ObjectHandle& operator=( const ObjectHandle& handle ) {
+        reset( handle.get() );
+        return *this;
+    }
     ATLAS_ALWAYS_INLINE T* get() { return reinterpret_cast<T*>( object_ ); }
     ATLAS_ALWAYS_INLINE const T* get() const { return reinterpret_cast<const T*>( object_ ); }
     ATLAS_ALWAYS_INLINE const T* operator->() const { return get(); }

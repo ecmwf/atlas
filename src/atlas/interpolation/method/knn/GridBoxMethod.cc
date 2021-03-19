@@ -61,9 +61,10 @@ bool GridBoxMethod::intersect( size_t i, const GridBox& box, const util::IndexKD
 
     double sumSmallAreas = 0.;
     for ( auto& c : closest ) {
-        auto j        = c.payload();
-        auto smallBox = sourceBoxes_.at( j );
+        auto j = c.payload();
+        ASSERT( j >= 0 );
 
+        auto smallBox = sourceBoxes_.at( size_t( j ) );
         if ( box.intersects( smallBox ) ) {
             double smallArea = smallBox.area();
             ASSERT( smallArea > 0. );
@@ -88,7 +89,7 @@ bool GridBoxMethod::intersect( size_t i, const GridBox& box, const util::IndexKD
 }
 
 
-void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
+void GridBoxMethod::do_setup( const Grid& source, const Grid& target, const Cache& cache ) {
     ATLAS_TRACE( "GridBoxMethod::setup()" );
 
     if ( mpi::size() > 1 ) {
@@ -105,7 +106,17 @@ void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
     source_ = src;
     target_ = tgt;
 
-    buildPointSearchTree( src );
+    if ( not matrixFree_ && interpolation::MatrixCache( cache ) ) {
+        matrix_cache_ = cache;
+        matrix_       = &matrix_cache_.matrix();
+        ATLAS_ASSERT( matrix_cache_.matrix().rows() == target.size() );
+        ATLAS_ASSERT( matrix_cache_.matrix().cols() == source.size() );
+        return;
+    }
+
+    if ( not extractTreeFromCache( cache ) ) {
+        buildPointSearchTree( src );
+    }
 
     sourceBoxes_ = GridBoxes( source, gaussianWeightedLatitudes_ );
     targetBoxes_ = GridBoxes( target, gaussianWeightedLatitudes_ );
@@ -115,7 +126,7 @@ void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
 
     if ( matrixFree_ ) {
         Matrix A;
-        matrix_.swap( A );
+        matrix_shared_->swap( A );
         return;
     }
 
@@ -124,7 +135,8 @@ void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
     {
         ATLAS_TRACE( "GridBoxMethod::setup: intersecting grid boxes" );
 
-        eckit::ProgressTimer progress( "Intersecting", targetBoxes_.size(), "grid box", double( 5. ) );
+        constexpr double TIMED = 5.;
+        eckit::ProgressTimer progress( "Intersecting", targetBoxes_.size(), "grid box", TIMED );
 
         std::vector<Triplet> triplets;
         size_t i = 0;
@@ -147,7 +159,7 @@ void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
     {
         ATLAS_TRACE( "GridBoxMethod::setup: build interpolant matrix" );
         Matrix A( targetBoxes_.size(), sourceBoxes_.size(), allTriplets );
-        matrix_.swap( A );
+        matrix_shared_->swap( A );
     }
 }
 
@@ -155,10 +167,12 @@ void GridBoxMethod::do_setup( const Grid& source, const Grid& target ) {
 void GridBoxMethod::giveUp( const std::forward_list<size_t>& failures ) {
     Log::warning() << "Failed to intersect grid boxes: ";
 
-    size_t count = 0;
-    auto sep     = "";
+    constexpr int COUNTED = 10;
+
+    int count = 0;
+    auto sep  = "";
     for ( const auto& f : failures ) {
-        if ( count++ < 10 ) {
+        if ( count++ < COUNTED ) {
             Log::warning() << sep << f;
             sep = ", ";
         }
@@ -168,6 +182,14 @@ void GridBoxMethod::giveUp( const std::forward_list<size_t>& failures ) {
     throw_Exception( "Failed to intersect grid boxes" );
 }
 
+Cache GridBoxMethod::createCache() const {
+    Cache cache;
+    cache.add( interpolation::IndexKDTreeCache( pTree_ ) );
+    if ( not matrix_->empty() ) {
+        cache.add( Method::createCache() );
+    }
+    return cache;
+}
 
 }  // namespace method
 }  // namespace interpolation

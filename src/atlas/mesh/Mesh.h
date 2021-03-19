@@ -82,10 +82,7 @@ public:
     Nodes& nodes() { return get()->nodes(); }
 
     const Cells& cells() const { return get()->cells(); }
-    Cells& cells() {
-        return get()->cells();
-        ;
-    }
+    Cells& cells() { return get()->cells(); }
 
     const Edges& edges() const { return get()->edges(); }
     Edges& edges() { return get()->edges(); }

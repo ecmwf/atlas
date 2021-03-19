@@ -32,13 +32,14 @@ public:
 protected:
     virtual void print( std::ostream& ) const override;
 
+    using KNearestNeighboursBase::do_setup;
     /**
      * @brief Create an interpolant sparse matrix relating two functionspaces, using grid-box average method
      * @param source functionspace containing source points
      * @param target functionspace containing target points
      */
     virtual void do_setup( const FunctionSpace& source, const FunctionSpace& target ) override;
-    virtual void do_setup( const Grid& source, const Grid& target ) override;
+    virtual void do_setup( const Grid& source, const Grid& target, const Cache& ) override;
 
     virtual const FunctionSpace& source() const override { return source_; }
     virtual const FunctionSpace& target() const override { return target_; }
@@ -47,6 +48,8 @@ protected:
 
     virtual void do_execute( const FieldSet& source, FieldSet& target ) const override = 0;
     virtual void do_execute( const Field& source, Field& target ) const override       = 0;
+
+    virtual Cache createCache() const override;
 
 protected:
     static void giveUp( const std::forward_list<size_t>& );

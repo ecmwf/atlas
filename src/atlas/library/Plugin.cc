@@ -16,15 +16,8 @@ namespace atlas {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Plugin::Plugin( const std::string& name, const std::string& libname ) :
-    eckit::system::Library( libname.size() ? libname : name ),
-    name_( name ),
-    libname_( libname.size() ? libname : name ) {
+Plugin::Plugin( const std::string& name, const std::string& libname ) : eckit::system::Plugin( name, libname ) {
     atlas::Library::instance().registerPlugin( *this );
-}
-
-const void* Plugin::addr() const {
-    return this;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

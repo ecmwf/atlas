@@ -34,6 +34,7 @@
 #define ATLAS_HAVE_FEDISABLEEXCEPT           @atlas_HAVE_FEDISABLEEXCEPT@
 #define ATLAS_BUILD_TYPE_DEBUG               @atlas_BUILD_TYPE_DEBUG@
 #define ATLAS_BUILD_TYPE_RELEASE             @atlas_BUILD_TYPE_RELEASE@
+#define ATLAS_ECKIT_VERSION_INT              @ATLAS_ECKIT_VERSION_INT@
 
 #ifdef __CUDACC__
 #define ATLAS_HOST_DEVICE __host__ __device__

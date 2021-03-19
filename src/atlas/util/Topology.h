@@ -31,6 +31,7 @@ public:
         POLE     = ( 1 << 9 ),
         LAND     = ( 1 << 10 ),
         WATER    = ( 1 << 11 ),
+        INVALID  = ( 1 << 12 ),
     };
 };
 

@@ -382,8 +382,8 @@ CASE( "test_functionspace_StructuredColumns halo exchange adjoint test 1" ) {
 
     // Field setup  values 1 in interior and zeros in halos.
     auto view1   = atlas::array::make_view<long, 2>( fieldInit );
-    auto i_index = atlas::array::make_view<int, 1>( fs.index_i() );
-    auto j_index = atlas::array::make_view<int, 1>( fs.index_j() );
+    auto i_index = atlas::array::make_view<atlas::idx_t, 1>( fs.index_i() );
+    auto j_index = atlas::array::make_view<atlas::idx_t, 1>( fs.index_j() );
     for ( atlas::idx_t jn = 0; jn < fs.sizeOwned(); ++jn ) {
         for ( atlas::idx_t jl = 0; jl < fieldInit.levels(); ++jl ) {
             view1( jn, jl ) = 1;

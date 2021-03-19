@@ -10,32 +10,17 @@
 
 #pragma once
 
-#include <string>
-
-#include "eckit/system/Library.h"
+#include "eckit/system/Plugin.h"
 
 namespace atlas {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class Plugin : public eckit::system::Library {
+class Plugin : public eckit::system::Plugin {
 public:
     /// @param [in] name    Plugin name
     /// @param [in] libname Library name as will be used in file system
-    Plugin( const std::string& name, const std::string& libname = "" );
-
-    /// @brief Plugin name
-    const std::string& name() const { return name_; }
-
-    /// @brief Library name as will be used in file system
-    const std::string& libraryName() const { return libname_; }
-
-private:
-    const void* addr() const override;
-
-private:
-    std::string name_;
-    std::string libname_;
+    explicit Plugin( const std::string& name, const std::string& libname = "" );
 };
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -149,37 +149,39 @@ private:
     };
 
     template <typename Int>
-    static int offset_part( View& view, int& i_view, Int idx ) {
+    static idx_t offset_part( View& view, int& i_view, Int idx ) {
         return idx * view.stride( i_view++ );
     }
 
-    static int offset_part( View& view, int& i_view, Range range ) { return range.start() * view.stride( i_view++ ); }
+    static idx_t offset_part( View& view, int& i_view, Range range ) { return range.start() * view.stride( i_view++ ); }
 
-    static int offset_part( View& view, int& i_view, RangeAll range ) {
+    static idx_t offset_part( View& view, int& i_view, RangeAll range ) {
         return range.start() * view.stride( i_view++ );
     }
 
-    static int offset_part( View& view, int& i_view, RangeTo range ) { return range.start() * view.stride( i_view++ ); }
-
-    static int offset_part( View& view, int& i_view, RangeFrom range ) {
+    static idx_t offset_part( View& view, int& i_view, RangeTo range ) {
         return range.start() * view.stride( i_view++ );
     }
 
-    static int offset_part( View&, int& /*i_view*/, RangeDummy ) { return 0; }
+    static idx_t offset_part( View& view, int& i_view, RangeFrom range ) {
+        return range.start() * view.stride( i_view++ );
+    }
+
+    static idx_t offset_part( View&, int& /*i_view*/, RangeDummy ) { return 0; }
 
     template <int Dim, typename Int, typename... Ints>
-    static int offset_remaining( View& view, int& i_view, const Int idx, const Ints... next_idx ) {
-        const int p = offset_part( view, i_view, idx );
+    static idx_t offset_remaining( View& view, int& i_view, const Int idx, const Ints... next_idx ) {
+        const idx_t p = offset_part( view, i_view, idx );
         return p + offset_remaining<Dim + 1>( view, i_view, next_idx... );
     }
 
     template <int Dim, typename Int>
-    static int offset_remaining( View& view, int& i_view, const Int last_idx ) {
+    static idx_t offset_remaining( View& view, int& i_view, const Int last_idx ) {
         return offset_part( view, i_view, last_idx );
     }
 
     template <typename... Args>
-    static int offset( View& view, const Args... args ) {
+    static idx_t offset( View& view, const Args... args ) {
         int i_view( 0 );
         return offset_remaining<0>( view, i_view, args... );
     }

@@ -17,8 +17,10 @@ namespace atlas {
 namespace interpolation {
 namespace nonlinear {
 
+void force_link_missing();
 
 const NonLinear* NonLinearFactory::build( const std::string& builder, const NonLinearFactory::Config& config ) {
+    force_link_missing();
     return get( builder )->make( config );
 }
 

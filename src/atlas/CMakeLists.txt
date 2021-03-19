@@ -143,6 +143,8 @@ grid/detail/grid/LonLat.h
 grid/detail/grid/LonLat.cc
 grid/detail/grid/Regional.h
 grid/detail/grid/Regional.cc
+grid/detail/grid/Healpix.h
+grid/detail/grid/Healpix.cc
 
 grid/detail/distribution/DistributionImpl.h
 grid/detail/distribution/DistributionImpl.cc
@@ -350,6 +352,8 @@ meshgenerator/detail/MeshGeneratorImpl.cc
 meshgenerator/detail/MeshGeneratorImpl.h
 meshgenerator/detail/MeshGeneratorInterface.cc
 meshgenerator/detail/MeshGeneratorInterface.h
+meshgenerator/detail/HealpixMeshGenerator.h
+meshgenerator/detail/HealpixMeshGenerator.cc
 )
 
 list( APPEND atlas_output_srcs
@@ -477,6 +481,8 @@ endif()
 
 list( APPEND atlas_interpolation_srcs
 interpolation.h
+interpolation/Cache.cc
+interpolation/Cache.h
 interpolation/Interpolation.cc
 interpolation/Interpolation.h
 interpolation/NonLinear.cc
@@ -546,6 +552,18 @@ interpolation/nonlinear/Missing.cc
 interpolation/nonlinear/Missing.h
 interpolation/nonlinear/NonLinear.cc
 interpolation/nonlinear/NonLinear.h
+
+linalg/Indexing.h
+linalg/Introspection.h
+linalg/View.h
+linalg/sparse.h
+linalg/sparse/Backend.h
+linalg/sparse/Backend.cc
+linalg/sparse/SparseMatrixMultiply.h
+linalg/sparse/SparseMatrixMultiply_EckitLinalg.h
+linalg/sparse/SparseMatrixMultiply_EckitLinalg.cc
+linalg/sparse/SparseMatrixMultiply_OpenMP.h
+linalg/sparse/SparseMatrixMultiply_OpenMP.cc
 )
 
 
@@ -641,6 +659,7 @@ util/Polygon.cc
 util/Polygon.h
 util/Rotation.cc
 util/Rotation.h
+util/Spec.h
 util/SphericalPolygon.cc
 util/SphericalPolygon.h
 util/UnitSphere.h
@@ -674,7 +693,78 @@ util/Unique.h
 util/Unique.cc
 util/Allocate.h
 util/Allocate.cc
-#parallel/detail/MPLArrayView.h
+)
+
+list( APPEND atlas_io_srcs
+    io/atlas-io.h
+    io/Data.cc
+    io/Data.h
+    io/detail/Base64.cc
+    io/detail/Base64.h
+    io/detail/Checksum.h
+    io/detail/Checksum.cc
+    io/detail/DataInfo.h
+    io/detail/Decoder.cc
+    io/detail/Decoder.h
+    io/detail/Defaults.h
+    io/detail/Encoder.h
+    io/detail/Endian.h
+    io/detail/Link.cc
+    io/detail/Link.h
+    io/detail/ParsedRecord.h
+    io/detail/RecordInfo.h
+    io/detail/RecordSections.h
+    io/detail/Reference.h
+    io/detail/sfinae.h
+    io/detail/StaticAssert.h
+    io/detail/tag.h
+    io/detail/Time.cc
+    io/detail/Time.h
+    io/detail/Type.h
+    io/detail/TypeTraits.h
+    io/detail/Version.h
+    io/Exceptions.cc
+    io/Exceptions.h
+    io/FileStream.cc
+    io/FileStream.h
+    io/Metadata.cc
+    io/Metadata.h
+    io/print/TableFormat.cc
+    io/print/TableFormat.h
+    io/print/JSONFormat.cc
+    io/print/JSONFormat.h
+    io/print/Bytes.cc
+    io/print/Bytes.h
+    io/ReadRequest.cc
+    io/ReadRequest.h
+    io/Record.cc
+    io/Record.h
+    io/RecordItem.cc
+    io/RecordItem.h
+    io/RecordItemReader.cc
+    io/RecordItemReader.h
+    io/RecordPrinter.cc
+    io/RecordPrinter.h
+    io/RecordReader.cc
+    io/RecordReader.h
+    io/RecordWriter.cc
+    io/RecordWriter.h
+    io/Session.cc
+    io/Session.h
+    io/Stream.cc
+    io/Stream.h
+    io/types/array.h
+    io/types/array/ArrayMetadata.cc
+    io/types/array/ArrayMetadata.h
+    io/types/array/ArrayReference.cc
+    io/types/array/ArrayReference.h
+    io/types/array/adaptors/ArrayAdaptor.cc
+    io/types/array/adaptors/ArrayAdaptor.h
+    io/types/array/adaptors/StdVectorAdaptor.h
+    io/types/array/adaptors/VectorAdaptor.h
+    io/types/string.h
+    io/types/scalar.h
+    io/types/scalar.cc
 )
 
 ### atlas c++ library
@@ -707,6 +797,7 @@ list( APPEND source_list
   ${atlas_numerics_srcs}
   ${atlas_output_srcs}
   ${atlas_util_srcs}
+  ${atlas_io_srcs}
   ${atlas_internals_srcs}
   ${CMAKE_CURRENT_BINARY_DIR}/library/git_sha1.h
   ${CMAKE_CURRENT_BINARY_DIR}/library/defines.h

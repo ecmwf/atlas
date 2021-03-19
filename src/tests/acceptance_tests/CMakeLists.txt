@@ -33,25 +33,27 @@ function( atlas_atest_mgrids category case nprocs )
     unset( checksums )
     unset( case_tests )
     foreach( n ${nprocs} )
-        foreach( t 1 4 12 )
-            set( test_name  atlas_atest_${category}_mgrids_${gridA}_to_${gridB}_n${n}_t${t} )
-            ecbuild_add_test( TARGET ${test_name}
-                COMMAND atlas-atest-mgrids
-                ARGS    --gridA=${gridA}
-                        --gridB=${gridB}
-                        --haloA=3
-                        --haloB=3
-                        --display-name=${test_name}
-                        --checksum=${test_name}.checksum
-                        --matrix-free
-                        ${PARTITIONER}
-                MPI ${n}
-                OMP ${t}
-                ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
-            )
-            list( APPEND checksums ${test_name}.checksum )
-            list( APPEND case_tests ${test_name} )
-        endforeach()
+        if( MPI_SLOTS GREATER_EQUAL ${n} )
+            foreach( t 1 4 12 )
+                set( test_name  atlas_atest_${category}_mgrids_${gridA}_to_${gridB}_n${n}_t${t} )
+                ecbuild_add_test( TARGET ${test_name}
+                    COMMAND atlas-atest-mgrids
+                    ARGS    --gridA=${gridA}
+                            --gridB=${gridB}
+                            --haloA=3
+                            --haloB=3
+                            --display-name=${test_name}
+                            --checksum=${test_name}.checksum
+                            --matrix-free
+                            ${PARTITIONER}
+                    MPI ${n}
+                    OMP ${t}
+                    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+                )
+                list( APPEND checksums ${test_name}.checksum )
+                list( APPEND case_tests ${test_name} )
+            endforeach()
+        endif()
     endforeach()
     add_test(
         NAME atlas_atest_${category}_mgrids_${gridA}_to_${gridB}_BitReproducible
