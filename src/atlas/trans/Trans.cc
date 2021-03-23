@@ -125,6 +125,28 @@ void Trans::invtrans_vordiv2wind( const Field& spvor, const Field& spdiv, Field&
     get()->invtrans_vordiv2wind( spvor, spdiv, gpwind, options( config ) );
 }
 
+
+void Trans::invtransadj( const Field& gpfield, Field& spfield, const eckit::Configuration& config ) const {
+    get()->invtransadj( gpfield, spfield, options( config ) );
+}
+
+void Trans::invtransadj( const FieldSet& gpfields, FieldSet& spfields, const eckit::Configuration& config ) const {
+    get()->invtransadj( gpfields, spfields, options( config ) );
+}
+
+void Trans::invtransadj_grad( const Field& gradfield, Field& spfield, const eckit::Configuration& config ) const {
+    get()->invtransadj_grad( gradfield, spfield, options( config ) );
+}
+
+void Trans::invtransadj_grad( const FieldSet& gradfields, FieldSet& spfields, const eckit::Configuration& config ) const {
+    get()->invtransadj_grad( gradfields, spfields, options( config ) );
+}
+
+void Trans::invtransadj_vordiv2wind( const Field& gpwind, Field& spvor, Field& spdiv,
+                                     const eckit::Configuration& config ) const {
+    get()->invtransadj_vordiv2wind( gpwind, spvor, spdiv, options( config ) );
+}
+
 // -- IFS type fields --
 // These fields have special interpretation required. You need to know what
 // you're doing.
@@ -165,6 +187,44 @@ void Trans::invtrans( const int nb_vordiv_fields, const double vorticity_spectra
                       double gp_fields[], const eckit::Configuration& config ) const {
     get()->invtrans( nb_vordiv_fields, vorticity_spectra, divergence_spectra, gp_fields, options( config ) );
 }
+
+/*!
+ * @brief invtransadj
+ * @param nb_scalar_fields
+ * @param scalar_spectra
+ * @param nb_vordiv_fields
+ * @param vorticity_spectra
+ * @param divergence_spectra
+ * @param gp_fields
+ */
+void Trans::invtransadj( const int nb_scalar_fields, const double gp_fields[], const int nb_vordiv_fields,
+                         double vorticity_spectra[], double divergence_spectra[], double scalar_spectra[] ,
+                         const eckit::Configuration& config ) const {
+    get()->invtransadj( nb_scalar_fields, gp_fields, nb_vordiv_fields, vorticity_spectra, divergence_spectra,
+                        scalar_spectra, options( config ) );
+}
+
+/*!
+ * @brief invtransadj
+ * @param nb_fields
+ * @param scalar_spectra
+ * @param scalar_fields
+ */
+void Trans::invtransadj( const int nb_scalar_fields, const double gp_fields[], double scalar_spectra[],
+                         const eckit::Configuration& config ) const {
+    get()->invtransadj( nb_scalar_fields, gp_fields, scalar_spectra,  options( config ) );
+}
+
+/*!
+ * @brief Adjoint of Inverse transform of vorticity/divergence to wind(U/V)
+ * @param nb_fields [in] Number of fields ( both components of wind count as 1 )
+ */
+void Trans::invtransadj( const int nb_vordiv_fields, const  double gp_fields[],
+                         double vorticity_spectra[], double divergence_spectra[],
+                         const eckit::Configuration& config ) const {
+    get()->invtransadj( nb_vordiv_fields,  gp_fields, vorticity_spectra, divergence_spectra, options( config ) );
+}
+
 
 /*!
  * @brief Direct transform of scalar fields
