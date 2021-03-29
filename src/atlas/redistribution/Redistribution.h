@@ -29,7 +29,7 @@ namespace atlas {
 
     using Handle::Handle;
 
-    /// \brief    Constructs and initialises the redistributer.
+    /// \brief    Constructs and initialises the redistributor.
     ///
     /// \details  Initialises class to copy fields from a source function space
     ///           to fields from a target functionspace. The grids of source and
@@ -51,7 +51,7 @@ namespace atlas {
     /// \param[out] targetField  output field matching targetFunctionSpace.
     void execute(const Field& sourceField, Field& targetField) const;
 
-    /// \brief    Redistributions source field set to target fields set.
+    /// \brief    Redistributes source field set to target fields set.
     ///
     /// \details  Transfers source field set to target field set via multiple
     ///           invocations of execute(sourceField, targetField).

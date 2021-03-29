@@ -42,7 +42,7 @@ namespace atlas {
 
       using functionspace::detail::StructuredColumns;
 
-      /// \brief    Concrete redistributioning class for StructuredColumns to
+      /// \brief    Concrete redistributor class for StructuredColumns to
       ///           StructuredColumns.
       ///
       /// \details  Class to map two function spaces with the same grid but
@@ -51,7 +51,7 @@ namespace atlas {
 
       public:
 
-        /// \brief    Constructs and initialises the redistributer.
+        /// \brief    Constructs and initialises the redistributor.
         ///
         /// \details  Performs MPI_Allgatherv to determine the (i, j, k) ranges
         ///           of each source and target function space on each PE.
@@ -63,7 +63,7 @@ namespace atlas {
           const FunctionSpace& sourceFunctionSpace,
           const FunctionSpace& targetFunctionSpace);
 
-        /// \brief    Redistributions source field to target field.
+        /// \brief    Redistributes source field to target field.
         ///
         /// \details  Transfers source field to target field via an
         ///           MPI_Alltoallv. Function space of source field must match
@@ -75,7 +75,7 @@ namespace atlas {
         void execute(
           const Field& sourceField, Field& targetField) const override;
 
-        /// \brief    Redistributions source field set to target fields set.
+        /// \brief    Redistributes source field set to target fields set.
         ///
         /// \details  Transfers source field set to target field set via
         ///           multiple invocations of execute(sourceField, targetField).
