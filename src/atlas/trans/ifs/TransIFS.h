@@ -39,6 +39,7 @@ class Array;
 }
 }  // namespace atlas
 
+
 namespace atlas {
 namespace functionspace {
 class StructuredColumns;

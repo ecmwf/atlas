@@ -15,7 +15,7 @@
 #include "atlas/array.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/NodeColumns.h"
-//#include "atlas/functionspace/Spectral.h"
+#include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/IsGhostNode.h"
@@ -340,7 +340,7 @@ void TransIFS::invtransadj( const int nb_scalar_fields, const double gp_fields[]
                             const eckit::Configuration& config ) const {
     ATLAS_TRACE( "TransIFS::invtransadj" );
     TransParameters params( *this, config );
-    struct ::InvAdjTrans_t args = new_invadjtrans( trans_.get() );
+    struct ::InvTransAdj_t args = new_invtrans_adj( trans_.get() );
     args.nscalar             = nb_scalar_fields;
     args.rspscalar           = scalar_spectra;
     args.nvordiv             = nb_vordiv_fields;
@@ -353,7 +353,7 @@ void TransIFS::invtransadj( const int nb_scalar_fields, const double gp_fields[]
     args.lvordivgp           = params.vorticity_divergence_fields();
     args.nproma              = params.nproma();
     args.ngpblks             = params.ngpblks();
-    TRANS_CHECK( ::trans_invadjtrans( &args ) );
+    TRANS_CHECK( ::trans_invtrans_adj( &args ) );
 }
 
 
@@ -1387,13 +1387,13 @@ void TransIFS::__invtransadj_grad( const Spectral& sp, FieldSet& spfields,
 
     // Do transform
     {
-        struct ::InvAdjTrans_t transform = ::new_invadjtrans( trans_.get() );
+        struct ::InvTransAdj_t transform = ::new_invtrans_adj( trans_.get() );
         transform.nscalar             = nfld;
         transform.rgp                 = rgp.data();
         transform.rspscalar           = rsp.data();
         transform.lscalarders         = true;
 
-        TRANS_CHECK( ::trans_invadjtrans( &transform ) );
+        TRANS_CHECK( ::trans_invtrans_adj( &transform ) );
     }
 
     // Unpack the spectral fields
@@ -1511,12 +1511,12 @@ void TransIFS::__invtransadj( const Spectral& sp, FieldSet& spfields,
 
     // Do transform
     {
-        struct ::InvAdjTrans_t transform = ::new_invadjtrans( trans_.get() );
+        struct ::InvTransAdj_t transform = ::new_invtrans_adj( trans_.get() );
         transform.nscalar             = int( nfld );
         transform.rgp                 = rgp.data();
         transform.rspscalar           = rsp.data();
 
-        TRANS_CHECK( ::trans_invadjtrans( &transform ) );
+        TRANS_CHECK( ::trans_invtrans_adj( &transform ) );
     }
 
     // Unpack the spectral fields
@@ -1610,11 +1610,11 @@ void TransIFS::__invtransadj( const functionspace::Spectral& sp, Field& spfield,
 
     // Do transform
     {
-        struct ::InvAdjTrans_t transform = ::new_invadjtrans( trans_.get() );
+        struct ::InvTransAdj_t transform = ::new_invtrans_adj( trans_.get() );
         transform.nscalar             = nfld;
         transform.rgp                 = rgp.data();
         transform.rspscalar           = rsp.data();
-        TRANS_CHECK( ::trans_invadjtrans( &transform ) );
+        TRANS_CHECK( ::trans_invtrans_adj( &transform ) );
     }
 
     // Unpack spectral
@@ -1718,12 +1718,12 @@ void TransIFS::__invtransadj( const functionspace::Spectral& sp, FieldSet& spfie
 
     // Do transform
     {
-        struct ::InvAdjTrans_t transform = ::new_invadjtrans( trans_.get() );
+        struct ::InvTransAdj_t transform = ::new_invtrans_adj( trans_.get() );
         transform.nscalar             = int( nfld );
         transform.rgp                 = rgp.data();
         transform.rspscalar           = rsp.data();
 
-        TRANS_CHECK( ::trans_invadjtrans( &transform ) );
+        TRANS_CHECK( ::trans_invtrans_adj( &transform ) );
     }
 
     // Unpack the spectral fields
@@ -1925,7 +1925,7 @@ void TransIFS::__invtransadj_vordiv2wind( const Spectral& sp, Field& spvor, Fiel
 
     // Do transform
     {
-        struct ::InvAdjTrans_t transform = ::new_invadjtrans( trans_.get() );
+        struct ::InvTransAdj_t transform = ::new_invtrans_adj( trans_.get() );
         transform.nvordiv             = int( nfld );
         transform.rgp                 = rgp.data();
         transform.rspvor              = rspvor.data();
@@ -1933,7 +1933,7 @@ void TransIFS::__invtransadj_vordiv2wind( const Spectral& sp, Field& spvor, Fiel
 
         ATLAS_ASSERT( transform.rspvor );
         ATLAS_ASSERT( transform.rspdiv );
-        TRANS_CHECK( ::trans_invadjtrans( &transform ) );
+        TRANS_CHECK( ::trans_invtrans_adj( &transform ) );
     }
 
     // Pack spectral fields
