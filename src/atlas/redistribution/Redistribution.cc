@@ -8,50 +8,50 @@
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/repartition/Repartition.h"
-#include "atlas/repartition/detail/RepartitionImplFactory.h"
+#include "atlas/redistribution/Redistribution.h"
+#include "atlas/redistribution/detail/RedistributionImplFactory.h"
 
 namespace atlas {
 
-  // Use repartition implementation factory to make object.
-  Repartition::Repartition (
+  // Use redistribution implementation factory to make object.
+  Redistribution::Redistribution (
     const FunctionSpace& sourceFunctionSpace,
     const FunctionSpace& targetFunctionSpace) :
-    Handle (repartition::detail::RepartitionImplFactory::build (
+    Handle (redistribution::detail::RedistributionImplFactory::build (
       sourceFunctionSpace, targetFunctionSpace)) {}
 
-  void Repartition::execute(
+  void Redistribution::execute(
     const Field& sourceField, Field& targetField) const {
 
     get()->execute(sourceField, targetField);
     return;
   }
 
-  void Repartition::execute(
+  void Redistribution::execute(
     const FieldSet& sourceFieldSet, FieldSet& targetFieldSet) const {
 
     get()->execute(sourceFieldSet, targetFieldSet);
     return;
   }
 
-  FunctionSpace& Repartition::getSourceFunctionSpace () {
+  FunctionSpace& Redistribution::source() {
 
-    return get()->getSourceFunctionSpace();
+    return get()->source();
   }
 
-  const FunctionSpace& Repartition::getSourceFunctionSpace () const {
+  const FunctionSpace& Redistribution::source() const {
 
-    return get()->getSourceFunctionSpace();
+    return get()->source();
   }
 
-  FunctionSpace& Repartition::getTargetFunctionSpace () {
+  FunctionSpace& Redistribution::target() {
 
-    return get()->getTargetFunctionSpace();
+    return get()->target();
   }
 
-  const FunctionSpace& Repartition::getTargetFunctionSpace () const {
+  const FunctionSpace& Redistribution::target() const {
 
-    return get()->getTargetFunctionSpace();
+    return get()->target();
   }
 
 }

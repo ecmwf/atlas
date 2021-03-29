@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "atlas/repartition/detail/RepartitionImpl.h"
+#include "atlas/redistribution/detail/RedistributionImpl.h"
 #include "atlas/util/ObjectHandle.h"
 
 namespace atlas {
@@ -18,18 +18,18 @@ namespace atlas {
 
 namespace atlas {
 
-  /// \brief    Base repartitioner class.
+  /// \brief    Base redistributer class.
   ///
   /// \details  Class to map two function spaces with the same grid but
   ///           different partitioners.
-  class Repartition :
-    public util::ObjectHandle<repartition::detail::RepartitionImpl> {
+  class Redistribution :
+    public util::ObjectHandle<redistribution::detail::RedistributionImpl> {
 
   public:
 
     using Handle::Handle;
 
-    /// \brief    Constructs and initialises the repartitioner.
+    /// \brief    Constructs and initialises the redistributer.
     ///
     /// \details  Initialises class to copy fields from a source function space
     ///           to fields from a target functionspace. The grids of source and
@@ -37,7 +37,7 @@ namespace atlas {
     ///
     /// \param[in]  sourceFunctionSpace  Function space of source fields.
     /// \param[in]  targetFunctionSpace  Function space of target fields.
-    Repartition(
+    Redistribution(
       const FunctionSpace& sourceFunctionSpace,
       const FunctionSpace& targetFunctionSpace);
 
@@ -51,7 +51,7 @@ namespace atlas {
     /// \param[out] targetField  output field matching targetFunctionSpace.
     void execute(const Field& sourceField, Field& targetField) const;
 
-    /// \brief    Repartitions source field set to target fields set.
+    /// \brief    Redistributions source field set to target fields set.
     ///
     /// \details  Transfers source field set to target field set via multiple
     ///           invocations of execute(sourceField, targetField).
@@ -62,16 +62,16 @@ namespace atlas {
       const FieldSet& sourceFieldSet, FieldSet& targetFieldSet) const;
 
     /// \brief  Get reference to source function space.
-    FunctionSpace& getSourceFunctionSpace();
+    FunctionSpace& source();
 
     /// \brief  Get const reference to source function space.
-    const FunctionSpace& getSourceFunctionSpace() const;
+    const FunctionSpace& source() const;
 
     /// \brief  Get reference to taget function space.
-    FunctionSpace& getTargetFunctionSpace();
+    FunctionSpace& target();
 
     /// \brief  Get const reference to target function space.
-    const FunctionSpace& getTargetFunctionSpace() const;
+    const FunctionSpace& target() const;
 
   };
 

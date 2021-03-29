@@ -6,16 +6,16 @@
  */
 
 #include "atlas/functionspace/StructuredColumns.h"
-#include "atlas/repartition/detail/RepartitionImplFactory.h"
-#include "atlas/repartition/detail/StructuredColumnsToStructuredColumns.h"
+#include "atlas/redistribution/detail/RedistributionImplFactory.h"
+#include "atlas/redistribution/detail/StructuredColumnsToStructuredColumns.h"
 
 #include "eckit/exception/Exceptions.h"
 
 namespace atlas {
-  namespace repartition {
+  namespace redistribution {
     namespace detail {
 
-      RepartitionImpl* RepartitionImplFactory::build (
+      RedistributionImpl* RedistributionImplFactory::build (
         const FunctionSpace& sourceFunctionSpace,
         const FunctionSpace& targetFunctionSpace) {
 

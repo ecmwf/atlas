@@ -11,24 +11,24 @@ namespace atlas {
 
   class FunctionSpace;
 
-  namespace repartition {
+  namespace redistribution {
     namespace detail {
-      class RepartitionImpl;
+      class RedistributionImpl;
     }
   }
 }
 
 namespace atlas {
-  namespace repartition{
+  namespace redistribution{
     namespace detail {
 
-      /// \brief  Factory class to select correct concrete repartitioner.
-      class RepartitionImplFactory {
+      /// \brief  Factory class to select correct concrete redistributer.
+      class RedistributionImplFactory {
 
       public:
 
         /// \brief  Selection based on source and target function spaces.
-        static RepartitionImpl* build(
+        static RedistributionImpl* build(
           const FunctionSpace& sourceFunctionSpace,
           const FunctionSpace& targetFunctionSpace);
       };

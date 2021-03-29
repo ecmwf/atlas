@@ -5,8 +5,8 @@
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 #
 
-ecbuild_add_test( TARGET atlas_test_repartition
-  SOURCES   test_repartition.cc
+ecbuild_add_test( TARGET atlas_test_redistribution
+  SOURCES   test_redistribution.cc
   MPI       8
   LIBS      atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}

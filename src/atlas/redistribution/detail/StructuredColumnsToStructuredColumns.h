@@ -10,7 +10,8 @@
 #include <vector>
 
 #include "atlas/functionspace/StructuredColumns.h"
-#include "atlas/repartition/detail/RepartitionImpl.h"
+#include "atlas/redistribution/detail/RedistributionImpl.h"
+
 
 namespace atlas {
 
@@ -26,7 +27,7 @@ namespace atlas {
 }
 
 namespace atlas {
-  namespace repartition {
+  namespace redistribution {
     namespace detail {
 
       // Forward declarations.
@@ -41,16 +42,16 @@ namespace atlas {
 
       using functionspace::detail::StructuredColumns;
 
-      /// \brief    Concrete repartitioning class for StructuredColumns to
+      /// \brief    Concrete redistributioning class for StructuredColumns to
       ///           StructuredColumns.
       ///
       /// \details  Class to map two function spaces with the same grid but
       ///           different partitioners.
-      class StructuredColumnsToStructuredColumns : public RepartitionImpl {
+      class StructuredColumnsToStructuredColumns : public RedistributionImpl {
 
       public:
 
-        /// \brief    Constructs and initialises the repartitioner.
+        /// \brief    Constructs and initialises the redistributer.
         ///
         /// \details  Performs MPI_Allgatherv to determine the (i, j, k) ranges
         ///           of each source and target function space on each PE.
@@ -62,7 +63,7 @@ namespace atlas {
           const FunctionSpace& sourceFunctionSpace,
           const FunctionSpace& targetFunctionSpace);
 
-        /// \brief    Repartitions source field to target field.
+        /// \brief    Redistributions source field to target field.
         ///
         /// \details  Transfers source field to target field via an
         ///           MPI_Alltoallv. Function space of source field must match
@@ -74,7 +75,7 @@ namespace atlas {
         void execute(
           const Field& sourceField, Field& targetField) const override;
 
-        /// \brief    Repartitions source field set to target fields set.
+        /// \brief    Redistributions source field set to target fields set.
         ///
         /// \details  Transfers source field set to target field set via
         ///           multiple invocations of execute(sourceField, targetField).
@@ -128,7 +129,7 @@ namespace atlas {
 
         /// \brief    Iterate over all indices and do something with functor.
         template <typename functorType>
-        void forEach(functorType functor) const;
+        void forEach(const functorType& functor) const;
 
       private:
 
