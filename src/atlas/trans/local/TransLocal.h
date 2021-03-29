@@ -101,19 +101,19 @@ public:
     virtual void invtrans_vordiv2wind( const Field& spvor, const Field& spdiv, Field& gpwind,
                                        const eckit::Configuration& = util::NoConfig() ) const override;
 
-    virtual void invtransadj( const Field& gpfield, Field& spfield,
+    virtual void invtrans_adj( const Field& gpfield, Field& spfield,
                               const eckit::Configuration& = util::NoConfig() ) const override;
 
-    virtual void invtransadj( const FieldSet& gpfields, FieldSet& spfields,
+    virtual void invtrans_adj( const FieldSet& gpfields, FieldSet& spfields,
                               const eckit::Configuration& = util::NoConfig() ) const override;
 
-    virtual void invtransadj_grad( const Field& gradfield, Field& spfield,
+    virtual void invtrans_adj_grad( const Field& gradfield, Field& spfield,
                                    const eckit::Configuration& = util::NoConfig() ) const override;
 
-    virtual void invtransadj_grad( const FieldSet& spfields, FieldSet& gradfields,
+    virtual void invtrans_adj_grad( const FieldSet& spfields, FieldSet& gradfields,
                                    const eckit::Configuration& = util::NoConfig() ) const override;
 
-    virtual void invtransadj_vordiv2wind( const Field& gpwind, Field& spvor, Field& spdiv,
+    virtual void invtrans_adj_vordiv2wind( const Field& gpwind, Field& spvor, Field& spdiv,
                                           const eckit::Configuration& = util::NoConfig() ) const override;
 
     // -- IFS style API --
@@ -129,14 +129,14 @@ public:
                            const double divergence_spectra[], double gp_fields[],
                            const eckit::Configuration& = util::NoConfig() ) const override;
 
-    virtual void invtransadj( const int nb_scalar_fields, const double gp_fields[], const int nb_vordiv_fields,
+    virtual void invtrans_adj( const int nb_scalar_fields, const double gp_fields[], const int nb_vordiv_fields,
                               double vorticity_spectra[], double divergence_spectra[], double scalar_spectra[],
                               const eckit::Configuration& = util::NoConfig() ) const override;
 
-    virtual void invtransadj( const int nb_scalar_fields, const double gp_fields[], double scalar_spectra[],
+    virtual void invtrans_adj( const int nb_scalar_fields, const double gp_fields[], double scalar_spectra[],
                               const eckit::Configuration& = util::NoConfig() ) const override;
 
-    virtual void invtransadj( const int nb_vordiv_fields, const  double gp_fields[],
+    virtual void invtrans_adj( const int nb_vordiv_fields, const  double gp_fields[],
                               double vorticity_spectra[], double divergence_spectra[],
                               const eckit::Configuration& = util::NoConfig() ) const override;
 

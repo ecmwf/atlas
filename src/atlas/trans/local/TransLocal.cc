@@ -829,32 +829,32 @@ void TransLocal::invtrans_vordiv2wind( const Field& spvor, const Field& spdiv, F
     }
 }
 
-void TransLocal::invtransadj( const Field& gpfield, Field& spfield, const eckit::Configuration& config ) const {
+void TransLocal::invtrans_adj( const Field& gpfield, Field& spfield, const eckit::Configuration& config ) const {
     ATLAS_NOTIMPLEMENTED;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocal::invtransadj( const FieldSet& gpfields, FieldSet& spfields, const eckit::Configuration& config ) const {
+void TransLocal::invtrans_adj( const FieldSet& gpfields, FieldSet& spfields, const eckit::Configuration& config ) const {
     ATLAS_NOTIMPLEMENTED;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocal::invtransadj_grad( const Field& /*gradfield*/, Field& /*spfield*/, const eckit::Configuration& ) const {
+void TransLocal::invtrans_adj_grad( const Field& /*gradfield*/, Field& /*spfield*/, const eckit::Configuration& ) const {
     ATLAS_NOTIMPLEMENTED;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocal::invtransadj_grad( const FieldSet& /*gradfields*/, FieldSet& /*spfields*/,
+void TransLocal::invtrans_adj_grad( const FieldSet& /*gradfields*/, FieldSet& /*spfields*/,
                                    const eckit::Configuration& ) const {
     ATLAS_NOTIMPLEMENTED;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void TransLocal::invtransadj_vordiv2wind( const Field& gpwind, Field& spvor, Field& spdiv,
+void TransLocal::invtrans_adj_vordiv2wind( const Field& gpwind, Field& spvor, Field& spdiv,
                                           const eckit::Configuration& config ) const {
     ATLAS_NOTIMPLEMENTED;
 }
@@ -1562,14 +1562,14 @@ void TransLocal::invtrans( const int nb_scalar_fields, const double scalar_spect
     }
 }
 
-void TransLocal::invtransadj( const int nb_scalar_fields, const  double gp_fields[], double scalar_spectra[],
+void TransLocal::invtrans_adj( const int nb_scalar_fields, const  double gp_fields[], double scalar_spectra[],
                               const eckit::Configuration& config ) const {
     ATLAS_NOTIMPLEMENTED;
     // Not implemented and not planned.
     // Use the TransIFS implementation instead.
 }
 
-void TransLocal::invtransadj( const int nb_vordiv_fields, const double gp_fields[],
+void TransLocal::invtrans_adj( const int nb_vordiv_fields, const double gp_fields[],
                               double vorticity_spectra[], double divergence_spectra[],
                               const eckit::Configuration& config ) const {
     ATLAS_NOTIMPLEMENTED;
@@ -1577,7 +1577,7 @@ void TransLocal::invtransadj( const int nb_vordiv_fields, const double gp_fields
     // Use the TransIFS implementation instead.
 }
 
-void TransLocal::invtransadj( const int nb_scalar_fields, const double gp_fields[], const int nb_vordiv_fields,
+void TransLocal::invtrans_adj( const int nb_scalar_fields, const double gp_fields[], const int nb_vordiv_fields,
                               double vorticity_spectra[], double divergence_spectra[], double scalar_spectra[],
                               const eckit::Configuration& config ) const {
     ATLAS_NOTIMPLEMENTED;

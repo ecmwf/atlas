@@ -123,19 +123,19 @@ public:
     virtual void invtrans_vordiv2wind( const Field& spvor, const Field& spdiv, Field& gpwind,
                                        const eckit::Configuration& = util::NoConfig() ) const override;
 
-    virtual void invtransadj( const Field& gpfield, Field& spfield,
+    virtual void invtrans_adj( const Field& gpfield, Field& spfield,
                               const eckit::Configuration& = util::NoConfig() ) const override;
 
-    virtual void invtransadj( const FieldSet& gpfields, FieldSet& spfields,
+    virtual void invtrans_adj( const FieldSet& gpfields, FieldSet& spfields,
                               const eckit::Configuration& = util::NoConfig() ) const override;
 
-    virtual void invtransadj_grad( const Field& gradfield, Field& spfield,
+    virtual void invtrans_adj_grad( const Field& gradfield, Field& spfield,
                                    const eckit::Configuration& = util::NoConfig() ) const override;
 
-    virtual void invtransadj_grad( const FieldSet& spfields, FieldSet& gradfields,
+    virtual void invtrans_adj_grad( const FieldSet& spfields, FieldSet& gradfields,
                                    const eckit::Configuration& = util::NoConfig() ) const override;
 
-    virtual void invtransadj_vordiv2wind( const Field& gpwind, Field& spvor, Field& spdiv,
+    virtual void invtrans_adj_vordiv2wind( const Field& gpwind, Field& spvor, Field& spdiv,
                                           const eckit::Configuration& = util::NoConfig() ) const override;
 
     // -- IFS style API --
@@ -178,7 +178,7 @@ public:
 
 
     /*!
- * @brief invtransadj
+ * @brief invtrans_adj
  * @param nb_scalar_fields
  * @param scalar_spectra       [NSPEC2][nb_scalar_fields]
  * @param nb_vordiv_fields
@@ -188,23 +188,23 @@ public:
  *                             [NFLD][NGPTOTG] if global ( add option::global()
  * )
  */
-    virtual void invtransadj( const int nb_scalar_fields, const double gp_fields[], const int nb_vordiv_fields,
+    virtual void invtrans_adj( const int nb_scalar_fields, const double gp_fields[], const int nb_vordiv_fields,
                               double vorticity_spectra[], double divergence_spectra[], double scalar_spectra[],
                               const eckit::Configuration& = util::NoConfig() ) const override;
 
 
     /*!
- * @brief invtransadj
+ * @brief invtrans_adj
  * @param nb_fields
  * @param scalar_spectra
  * @param scalar_fields
  */
-    virtual void invtransadj( const int nb_scalar_fields, const double gp_fields[], double scalar_spectra[],
+    virtual void invtrans_adj( const int nb_scalar_fields, const double gp_fields[], double scalar_spectra[],
                               const eckit::Configuration& = util::NoConfig() ) const override;
 
 
     /*!
- * @brief invtransadj
+ * @brief invtrans_adj
  * @param nb_scalar_fields
  * @param scalar_spectra       [NSPEC2][nb_scalar_fields]
  * @param nb_vordiv_fields
@@ -214,7 +214,7 @@ public:
  *                             [NFLD][NGPTOTG] if global ( add option::global()
  * )
  */
-    virtual void invtransadj( const int nb_vordiv_fields, const  double gp_fields[],
+    virtual void invtrans_adj( const int nb_vordiv_fields, const  double gp_fields[],
                               double vorticity_spectra[], double divergence_spectra[],
                               const eckit::Configuration& = util::NoConfig() ) const override;
 
@@ -271,31 +271,31 @@ public:
                           const eckit::Configuration& = util::NoConfig() ) const;
 
 
-    void __invtransadj( const functionspace::Spectral&, Field& spfield,
+    void __invtrans_adj( const functionspace::Spectral&, Field& spfield,
                         const functionspace::StructuredColumns&, const Field& gpfield ,
                         const eckit::Configuration& = util::NoConfig() ) const;
 
-    void __invtransadj( const functionspace::Spectral&, FieldSet& spfields,
+    void __invtrans_adj( const functionspace::Spectral&, FieldSet& spfields,
                         const functionspace::StructuredColumns&, const  FieldSet& gpfields,
                         const eckit::Configuration& = util::NoConfig() ) const;
 
-    void __invtransadj( const functionspace::Spectral&, Field& spfield,
+    void __invtrans_adj( const functionspace::Spectral&, Field& spfield,
                         const functionspace::NodeColumns&, const Field& gpfield,
                         const eckit::Configuration& = util::NoConfig() ) const;
 
-    void __invtransadj( const functionspace::Spectral&, FieldSet& spfields,
+    void __invtrans_adj( const functionspace::Spectral&, FieldSet& spfields,
                         const functionspace::NodeColumns&, const FieldSet& gpfields,
                         const eckit::Configuration& = util::NoConfig() ) const;
 
-    void __invtransadj_vordiv2wind( const functionspace::Spectral&, Field& spvor, Field& spdiv,
+    void __invtrans_adj_vordiv2wind( const functionspace::Spectral&, Field& spvor, Field& spdiv,
                                     const functionspace::NodeColumns&, const Field& gpwind,
                                     const eckit::Configuration& = util::NoConfig() ) const;
 
-    void __invtransadj_grad( const functionspace::Spectral& sp, Field& spfield,
+    void __invtrans_adj_grad( const functionspace::Spectral& sp, Field& spfield,
                              const functionspace::NodeColumns& gp, const Field& gradfield,
                              const eckit::Configuration& = util::NoConfig() ) const;
 
-    void __invtransadj_grad( const functionspace::Spectral& sp, FieldSet& spfields,
+    void __invtrans_adj_grad( const functionspace::Spectral& sp, FieldSet& spfields,
                              const functionspace::NodeColumns& gp, const FieldSet& gradfields,
                              const eckit::Configuration& = util::NoConfig() ) const;
 

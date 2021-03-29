@@ -106,16 +106,16 @@ void atlas__Trans__invtrans_vordiv2wind( const TransImpl* t, int nb_fields, doub
     return t->invtrans( nb_fields, vorticity_spectra, divergence_spectra, wind_fields );
 }
 
-void atlas__Trans__invtransadj_scalar( const TransImpl* t, int nb_fields, double scalar_fields[],
+void atlas__Trans__invtrans_adj_scalar( const TransImpl* t, int nb_fields, double scalar_fields[],
                                     double scalar_spectra[] ) {
     ATLAS_ASSERT( t != nullptr );
-    return t->invtransadj( nb_fields, scalar_fields, scalar_spectra );
+    return t->invtrans_adj( nb_fields, scalar_fields, scalar_spectra );
 }
 
-void atlas__Trans__invtransadj_vordiv2wind( const TransImpl* t, int nb_fields, double wind_fields[],
+void atlas__Trans__invtrans_adj_vordiv2wind( const TransImpl* t, int nb_fields, double wind_fields[],
                                             double vorticity_spectra[], double divergence_spectra[] ) {
     ATLAS_ASSERT( t != nullptr );
-    return t->invtransadj( nb_fields, wind_fields,  vorticity_spectra, divergence_spectra );
+    return t->invtrans_adj( nb_fields, wind_fields,  vorticity_spectra, divergence_spectra );
 }
 
 void atlas__Trans__dirtrans_scalar( const TransImpl* t, int nb_fields, double scalar_fields[],
@@ -190,24 +190,24 @@ void atlas__Trans__invtrans_field( const TransImpl* This, const field::FieldImpl
 }
 
 
-void atlas__Trans__invtransadj_fieldset( const TransImpl* This, const field::FieldSetImpl* gpfields,
+void atlas__Trans__invtrans_adj_fieldset( const TransImpl* This, const field::FieldSetImpl* gpfields,
                                          field::FieldSetImpl* spfields, const eckit::Configuration* parameters ) {
     ATLAS_ASSERT( This != nullptr );
     ATLAS_ASSERT( spfields );
     ATLAS_ASSERT( gpfields );
     ATLAS_ASSERT( parameters );
     FieldSet fspfields( spfields );
-    This->invtransadj( gpfields, fspfields, *parameters );
+    This->invtrans_adj( gpfields, fspfields, *parameters );
 }
 
-void atlas__Trans__invtransadj_field( const TransImpl* This, const field::FieldImpl* spfield, field::FieldImpl* gpfield,
+void atlas__Trans__invtrans_adj_field( const TransImpl* This, const field::FieldImpl* spfield, field::FieldImpl* gpfield,
                                    const eckit::Configuration* parameters ) {
     ATLAS_ASSERT( This != nullptr );
     ATLAS_ASSERT( spfield );
     ATLAS_ASSERT( gpfield );
     ATLAS_ASSERT( parameters );
     Field fspfield( spfield );
-    This->invtransadj( gpfield, fspfield, *parameters );
+    This->invtrans_adj( gpfield, fspfield, *parameters );
 }
 
 
@@ -253,7 +253,7 @@ void atlas__Trans__invtrans_grad_field( const TransImpl* This, const field::Fiel
     This->invtrans_grad( spfield, fgpfield, *config );
 }
 
-void atlas__Trans__invtransadj_vordiv2wind_field( const TransImpl* This, const field::FieldImpl* gpwind,
+void atlas__Trans__invtrans_adj_vordiv2wind_field( const TransImpl* This, const field::FieldImpl* gpwind,
                                                   field::FieldImpl* spvor, field::FieldImpl* spdiv,
                                                   const eckit::Configuration* parameters ) {
     ATLAS_ASSERT( This != nullptr );
@@ -263,24 +263,24 @@ void atlas__Trans__invtransadj_vordiv2wind_field( const TransImpl* This, const f
     ATLAS_ASSERT( parameters );
     Field fspvor( spvor );
     Field fspdiv( spdiv );
-    This->invtransadj_vordiv2wind(gpwind, fspvor, fspdiv, *parameters );
+    This->invtrans_adj_vordiv2wind(gpwind, fspvor, fspdiv, *parameters );
 }
 
-void atlas__Trans__invtransadj( const TransImpl* This, int nb_scalar_fields, double gp_fields[],  int nb_vordiv_fields,
+void atlas__Trans__invtrans_adj( const TransImpl* This, int nb_scalar_fields, double gp_fields[],  int nb_vordiv_fields,
                                 double vorticity_spectra[], double divergence_spectra[], double scalar_spectra[],
                                 const eckit::Configuration* parameters ) {
     ATLAS_ASSERT( This != nullptr );
-    This->invtransadj( nb_scalar_fields,  gp_fields, nb_vordiv_fields, vorticity_spectra, divergence_spectra,
+    This->invtrans_adj( nb_scalar_fields,  gp_fields, nb_vordiv_fields, vorticity_spectra, divergence_spectra,
                        scalar_spectra, *parameters );
 }
 
-void atlas__Trans__invtransadj_grad_field( const TransImpl* This, const field::FieldImpl* gpfield,
+void atlas__Trans__invtrans_adj_grad_field( const TransImpl* This, const field::FieldImpl* gpfield,
                                         field::FieldImpl* spfield, const eckit::Configuration* config ) {
     ATLAS_ASSERT( This != nullptr );
     ATLAS_ASSERT( spfield );
     ATLAS_ASSERT( gpfield );
     Field fspfield( spfield );
-    This->invtransadj_grad( gpfield, fspfield, *config );
+    This->invtrans_adj_grad( gpfield, fspfield, *config );
 }
 }
 

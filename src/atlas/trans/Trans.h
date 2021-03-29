@@ -86,16 +86,16 @@ public:
     void invtrans_vordiv2wind( const Field& spvor, const Field& spdiv, Field& gpwind,
                                const eckit::Configuration& = util::NoConfig() ) const;
 
-    void invtransadj( const Field& gpfield, Field& spfield, const eckit::Configuration& = util::NoConfig() ) const;
+    void invtrans_adj( const Field& gpfield, Field& spfield, const eckit::Configuration& = util::NoConfig() ) const;
 
-    void invtransadj( const FieldSet& gpfields, FieldSet& spfields, const eckit::Configuration& = util::NoConfig() ) const;
+    void invtrans_adj( const FieldSet& gpfields, FieldSet& spfields, const eckit::Configuration& = util::NoConfig() ) const;
 
-    void invtransadj_grad( const Field& gradfield,  Field& spfield, const eckit::Configuration& = util::NoConfig() ) const;
+    void invtrans_adj_grad( const Field& gradfield,  Field& spfield, const eckit::Configuration& = util::NoConfig() ) const;
 
-    void invtransadj_grad( const FieldSet& gradfields, FieldSet& spfields,
+    void invtrans_adj_grad( const FieldSet& gradfields, FieldSet& spfields,
                            const eckit::Configuration& = util::NoConfig() ) const;
 
-    void invtransadj_vordiv2wind( const Field& gpwind, Field& spvor, Field& spdiv,
+    void invtrans_adj_vordiv2wind( const Field& gpwind, Field& spvor, Field& spdiv,
                                   const eckit::Configuration& = util::NoConfig() ) const;
 
     // -- IFS type fields --
@@ -135,7 +135,7 @@ public:
 
 
     /*!
-   * @brief invtransadj
+   * @brief invtrans_adj
    * @param nb_scalar_fields
    * @param scalar_spectra
    * @param nb_vordiv_fields
@@ -143,17 +143,17 @@ public:
    * @param divergence_spectra
    * @param gp_fields
    */
-    void invtransadj( const int nb_scalar_fields, const double gp_fields[], const int nb_vordiv_fields,
+    void invtrans_adj( const int nb_scalar_fields, const double gp_fields[], const int nb_vordiv_fields,
                       double vorticity_spectra[], double divergence_spectra[], double scalar_spectra[],
                       const eckit::Configuration& = util::NoConfig() ) const;
 
     /*!
-   * @brief invtransadj
+   * @brief invtrans_adj
    * @param nb_fields
    * @param scalar_spectra
    * @param scalar_fields
    */
-    void invtransadj( const int nb_scalar_fields, const double gp_fields[], double scalar_spectra[],
+    void invtrans_adj( const int nb_scalar_fields, const double gp_fields[], double scalar_spectra[],
                       const eckit::Configuration& = util::NoConfig() ) const;
 
     /*!
@@ -161,7 +161,7 @@ public:
    * @param nb_fields [in] Number of fields ( both components of wind count as 1
    * )
    */
-    void invtransadj( const int nb_vordiv_fields, const double gp_fields[], double vorticity_spectra[],
+    void invtrans_adj( const int nb_vordiv_fields, const double gp_fields[], double vorticity_spectra[],
                       double divergence_spectra[], const eckit::Configuration& = util::NoConfig() ) const;
 
     /*!

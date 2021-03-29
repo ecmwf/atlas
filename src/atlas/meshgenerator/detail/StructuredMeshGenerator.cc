@@ -66,7 +66,7 @@ struct Region {
 
 StructuredMeshGenerator::StructuredMeshGenerator( const eckit::Parametrisation& p ) {
 
-    std::cout << "StructuredMeshGenerator::config parameterisation" <<
+    Log::info() << "StructuredMeshGenerator::config parameterisation" <<
        dynamic_cast<const eckit::Configuration &>(p) << std::endl;
 
     configure_defaults();

@@ -1623,7 +1623,7 @@ CASE( "test_2level_adjoint_test_with_powerspectrum_convolution" ) {
     }
 
     // transform fields to spectral and view
-    transIFS.invtransadj(gpf, spf);
+    transIFS.invtrans_adj(gpf, spf);
 
     auto spfView = atlas::array::make_view<double, 2>( spf );
     const auto zonal_wavenumbers = specFS.zonal_wavenumbers();
