@@ -35,6 +35,7 @@ public:
 private:  // methods
     virtual void hash( eckit::Hash& ) const override;
 
+    using MeshGenerator::Implementation::generate;
     virtual void generate( const Grid&, const grid::Distribution&, Mesh& ) const override;
     virtual void generate( const Grid&, Mesh& ) const override;
 

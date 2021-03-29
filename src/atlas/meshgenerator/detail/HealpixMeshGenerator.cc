@@ -113,7 +113,7 @@ int idx_xy_to_x( const int xidx, const int yidx, const int ns ) {
                                 : ghostIdx( yidx ) );
     }
     else if ( yidx == 3 * ns + 1 && ns > 1 ) {
-        ATLAS_ASSERT( xidx < 4 * ( ns - 1 ) + 1 + xidx >= 0 );
+        ATLAS_ASSERT( xidx < 4 * ( ns - 1 ) + 1 && xidx >= 0 );
         return ( xidx != 4 * ( ns - 1 ) ? 2 * ns * ( 5 * ns + 1 ) + 4 * ns * ( yidx - 3 * ns - 1 ) + 8 + xidx
                                         : ghostIdx( yidx ) );
     }
@@ -147,7 +147,6 @@ int up_idx( const int xidx, const int yidx, const int ns ) {
     }
     else if ( yidx < ns ) {
         ATLAS_ASSERT( xidx < 4 * yidx );
-        int stg = yidx % 2;
         if ( xidx != 4 * yidx - 1 ) {
             ret = 2 * ( yidx - 2 ) * ( yidx - 1 ) + 8 + xidx - std::floor( xidx / (double)yidx );
         }
@@ -426,8 +425,7 @@ void HealpixMeshGenerator::generate_mesh( const StructuredGrid& grid, const grid
     const int nvertices = 12 * ns * ns + 16;
 
     int inode;
-    auto ghostIdx  = [ns]( int latid ) { return 12 * ns * ns + 16 + latid; };
-    auto latPoints = [ns, ny, grid]( int latid ) {
+    auto latPoints = [ny, &grid]( int latid ) {
         return ( latid == 0 ? 8 : ( latid == ny - 1 ? 8 : grid.nx()[latid - 1] ) );
     };
 

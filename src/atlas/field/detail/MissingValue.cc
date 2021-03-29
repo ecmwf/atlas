@@ -56,6 +56,7 @@ T config_epsilon( const MissingValue::Config& c ) {
 template <typename T>
 struct MissingValueNaN : MissingValue {
     MissingValueNaN( const Config& ) { ATLAS_ASSERT( std::is_floating_point<T>::value ); }
+    using MissingValue::operator();
     bool operator()( const T& value ) const override { return std::isnan( value ); }
     bool isnan() const override { return true; }
     void metadata( Field& field ) const override { field.metadata().set( type_key, static_type() ); }
@@ -75,6 +76,7 @@ struct MissingValueEquals : MissingValue {
         ATLAS_ASSERT( !std::isnan( missingValue2_ ) );
     }
 
+    using MissingValue::operator();
     bool operator()( const T& value ) const override {
         // ATLAS_ASSERT(missingValue_ == missingValue2_);  // FIXME this fails (copy ellision problem on POD!?)
         return value == missingValue2_;
@@ -108,6 +110,7 @@ struct MissingValueApprox : MissingValue {
         ATLAS_ASSERT( epsilon_ >= 0. );
     }
 
+    using MissingValue::operator();
     bool operator()( const T& value ) const override {
         return eckit::types::is_approximately_equal( value, missingValue_, epsilon_ );
     }

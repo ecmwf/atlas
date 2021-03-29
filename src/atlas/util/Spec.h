@@ -55,6 +55,14 @@ struct SpecRegistry {
         }
     }
 
+    static std::vector<std::string> list() {
+        std::vector<std::string> list;
+        for ( const auto& j : instance().m_ ) {
+            list.push_back( j.first );
+        }
+        return list;
+    }
+
 private:
     static SpecRegistry& instance() {
         static SpecRegistry factory;
