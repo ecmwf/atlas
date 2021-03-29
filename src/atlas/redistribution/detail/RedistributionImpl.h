@@ -17,16 +17,16 @@ namespace atlas {
 }
 
 namespace atlas {
-  namespace repartition {
+  namespace redistribution {
     namespace detail {
 
-      /// \brief  Abstract base class for repartitioner implementation.
-      class RepartitionImpl : public util::Object {
+      /// \brief  Abstract base class for redistributer implementation.
+      class RedistributionImpl : public util::Object {
 
       public:
 
         /// \brief  Virtual destructor.
-        virtual ~RepartitionImpl() = 0;
+        virtual ~RedistributionImpl() = 0;
 
         /// \brief  Maps source field to target field.
         virtual void execute(
@@ -37,20 +37,20 @@ namespace atlas {
           const FieldSet& sourceFieldSet, FieldSet& targetFieldSet) const = 0;
 
         /// \brief  Get reference to source function space.
-        FunctionSpace& getSourceFunctionSpace();
+        FunctionSpace& source();
 
         /// \brief  Get const reference to source function space.
-        const FunctionSpace& getSourceFunctionSpace() const;
+        const FunctionSpace& source() const;
 
         /// \brief  Get reference to target function space.
-        FunctionSpace& getTargetFunctionSpace();
+        FunctionSpace& target();
 
         /// \brief  Get const reference to target function space.
-        const FunctionSpace& getTargetFunctionSpace() const;
+        const FunctionSpace& target() const;
 
       protected:
 
-        RepartitionImpl (
+        RedistributionImpl (
           const FunctionSpace& source, const FunctionSpace& target);
 
       private:

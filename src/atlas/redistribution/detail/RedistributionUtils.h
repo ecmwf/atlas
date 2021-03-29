@@ -17,7 +17,7 @@
 #include "eckit/exception/Exceptions.h"
 
 namespace atlas {
-  namespace repartition {
+  namespace redistribution {
     namespace detail {
 
       using functionspace::FunctionSpaceImpl;
@@ -35,8 +35,6 @@ namespace atlas {
 
         return;
       }
-      #define TRY_CAST(a, b) tryCast<a>(b, #b, Here())
-
 
       /// \brief  Check grids associated with two function spaces match.
       template <typename FunctionSpaceType>
@@ -75,7 +73,6 @@ namespace atlas {
 
         return;
       }
-      #define CHECK_GRIDS(a, b, c) checkGrids<a>(b, c, #b, #c, Here())
 
       /// \brief  Check fields have the same data type.
       inline void checkFieldDataType(const Field& fieldA, const Field& fieldB,
@@ -91,7 +88,6 @@ namespace atlas {
 
         return;
       }
-      #define CHECK_FIELD_DATA_TYPE(a, b) checkFieldDataType(a, b, #a, #b, Here())
 
       /// \brief  Check field sets the same size.
       inline void checkFieldSetSize(
@@ -109,7 +105,6 @@ namespace atlas {
 
         return;
       }
-      #define CHECK_FIELD_SET_SIZE(a, b) checkFieldSetSize(a, b, #a, #b, Here())
 
     }
   }

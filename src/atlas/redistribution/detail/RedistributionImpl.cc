@@ -5,35 +5,35 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "atlas/repartition/detail/RepartitionImpl.h"
+#include "atlas/redistribution/detail/RedistributionImpl.h"
 
 namespace atlas {
-  namespace repartition {
+  namespace redistribution {
     namespace detail {
 
       // Constructors/destructors.
 
-      RepartitionImpl::RepartitionImpl (
+      RedistributionImpl::RedistributionImpl (
         const FunctionSpace& source, const FunctionSpace& target) :
         sourceFunctionSpace_(source), targetFunctionSpace_(target) {}
 
-      RepartitionImpl::~RepartitionImpl() {}
+      RedistributionImpl::~RedistributionImpl() {}
 
       // Getters.
 
-      FunctionSpace& RepartitionImpl::getSourceFunctionSpace() {
+      FunctionSpace& RedistributionImpl::source() {
         return sourceFunctionSpace_;
       }
 
-      const FunctionSpace& RepartitionImpl::getSourceFunctionSpace() const {
+      const FunctionSpace& RedistributionImpl::source() const {
         return sourceFunctionSpace_;
       }
 
-      FunctionSpace& RepartitionImpl::getTargetFunctionSpace() {
+      FunctionSpace& RedistributionImpl::target() {
         return targetFunctionSpace_;
       }
 
-      const FunctionSpace& RepartitionImpl::getTargetFunctionSpace() const {
+      const FunctionSpace& RedistributionImpl::target() const {
         return targetFunctionSpace_;
       }
 

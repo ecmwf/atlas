@@ -12,11 +12,17 @@
 #include "atlas/field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/repartition/detail/StructuredColumnsToStructuredColumns.h"
-#include "atlas/repartition/detail/RepartitionUtils.h"
+#include "atlas/redistribution/detail/StructuredColumnsToStructuredColumns.h"
+#include "atlas/redistribution/detail/RedistributionUtils.h"
+
+// Exception handling macros.
+#define TRY_CAST(a, b) tryCast<a>(b, #b, Here())
+#define CHECK_GRIDS(a, b, c) checkGrids<a>(b, c, #b, #c, Here())
+#define CHECK_FIELD_DATA_TYPE(a, b) checkFieldDataType(a, b, #a, #b, Here())
+#define CHECK_FIELD_SET_SIZE(a, b) checkFieldSetSize(a, b, #a, #b, Here())
 
 namespace atlas {
-  namespace repartition {
+  namespace redistribution {
     namespace detail {
 
       // Anonymous name space for helper functions.
@@ -25,7 +31,7 @@ namespace atlas {
         // Transform a vector element-by-element with a functor.
         template <typename outType, typename inType, typename functorType>
         std::vector<outType> transformVector(
-          const std::vector<inType>& inVector, functorType functor) {
+          const std::vector<inType>& inVector, const functorType& functor) {
 
           // Declare result.
           auto outVector = std::vector<outType>{};
@@ -41,7 +47,7 @@ namespace atlas {
         // Visit each index in a FuncSpaceRangeVector.
         template <typename functorType>
         void forEachIndex(const FuncSpaceRangeVector& ranges,
-          functorType functor) {
+          const functorType& functor) {
 
           // Loop over all ranges.
           std::for_each(ranges.cbegin(), ranges.cend(),
@@ -64,11 +70,11 @@ namespace atlas {
         StructuredColumnsToStructuredColumns(
           const FunctionSpace& sourceFunctionSpace,
           const FunctionSpace& targetFunctionSpace) :
-          RepartitionImpl(sourceFunctionSpace, targetFunctionSpace),
+          RedistributionImpl(sourceFunctionSpace, targetFunctionSpace),
           sourceStructuredColumnsPtr_(
-            getSourceFunctionSpace()->cast<StructuredColumns>()),
+            source()->cast<StructuredColumns>()),
           targetStructuredColumnsPtr_(
-            getTargetFunctionSpace()->cast<StructuredColumns>()) {
+            target()->cast<StructuredColumns>()) {
 
         // Check casts.
         TRY_CAST(StructuredColumns, sourceStructuredColumnsPtr_);
@@ -402,7 +408,7 @@ namespace atlas {
       // Loop over all indices. Functor should have signature
       // functor(const idx_t i, const idx_t j).
       template <typename functorType>
-      void FuncSpaceRange::forEach(functorType functor) const {
+      void FuncSpaceRange::forEach(const functorType& functor) const {
 
         auto iBeginEndIt = iBeginEnd_.begin();
 
