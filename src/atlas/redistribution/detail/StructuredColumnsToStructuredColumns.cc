@@ -46,12 +46,12 @@ namespace atlas {
 
         // Visit each index in a FuncSpaceRangeVector.
         template <typename functorType>
-        void forEachIndex(const FuncSpaceRangeVector& ranges,
+        void forEachIndex(const StructuredIndexRangeVector& ranges,
           const functorType& functor) {
 
           // Loop over all ranges.
           std::for_each(ranges.cbegin(), ranges.cend(),
-            [&](const FuncSpaceRange& range) {
+            [&](const StructuredIndexRange& range) {
 
             range.forEach(functor);
             return;
@@ -86,8 +86,10 @@ namespace atlas {
 
 
         // Get source and target range of this function space.
-        const auto sourceRange = FuncSpaceRange(sourceStructuredColumnsPtr_);
-        const auto targetRange = FuncSpaceRange(targetStructuredColumnsPtr_);
+        const auto sourceRange =
+          StructuredIndexRange(sourceStructuredColumnsPtr_);
+        const auto targetRange =
+          StructuredIndexRange(targetStructuredColumnsPtr_);
 
 
         // Get source and target ranges over all PEs.
@@ -96,11 +98,11 @@ namespace atlas {
 
 
         // Get intersections between sourceRange and targetRanges.
-        auto getIntersections = [](const FuncSpaceRange& range,
-          const FuncSpaceRangeVector& ranges) {
+        auto getIntersections = [](const StructuredIndexRange& range,
+          const StructuredIndexRangeVector& ranges) {
 
-          return transformVector<FuncSpaceRange>(ranges,
-            [&](const FuncSpaceRange& rangesElem) {
+          return transformVector<StructuredIndexRange>(ranges,
+            [&](const StructuredIndexRange& rangesElem) {
 
             return range & rangesElem;
           });
@@ -112,10 +114,10 @@ namespace atlas {
 
         // Get counts and displacements for MPI communication.
         auto getCountsDisplacements = [](
-          const FuncSpaceRangeVector& intersections, const idx_t levels) {
+          const StructuredIndexRangeVector& intersections, const idx_t levels) {
 
           const auto counts = transformVector<int>(intersections,
-            [&](const FuncSpaceRange& intersection) {
+            [&](const StructuredIndexRange& intersection) {
 
             return static_cast<int>(intersection.getElemCount() * levels);
           });
@@ -137,11 +139,11 @@ namespace atlas {
 
 
         // Trim off invalid intersections.
-        auto trimIntersections = [](FuncSpaceRangeVector& intersections) {
+        auto trimIntersections = [](StructuredIndexRangeVector& intersections) {
 
           intersections.erase(
             std::remove_if(intersections.begin(), intersections.end(),
-              [](const FuncSpaceRange& intersection) {
+              [](const StructuredIndexRange& intersection) {
 
               return !(intersection.getElemCount());
             }), intersections.end());
@@ -291,7 +293,7 @@ namespace atlas {
       //========================================================================
 
       // Constructor.
-      FuncSpaceRange::FuncSpaceRange(
+      StructuredIndexRange::StructuredIndexRange(
           const StructuredColumns* const structuredColumnsPtr) {
 
         jBeginEnd_ = std::make_pair(
@@ -306,7 +308,8 @@ namespace atlas {
       }
 
       // Get index ranges from all PEs.
-      FuncSpaceRangeVector FuncSpaceRange::getFuncSpaceRanges () const {
+      StructuredIndexRangeVector
+        StructuredIndexRange::getFuncSpaceRanges () const {
 
         // Get MPI communicator size.
         const auto mpiSize = static_cast<size_t>(atlas::mpi::comm().size());
@@ -340,10 +343,10 @@ namespace atlas {
           iRecvCounts.data(), iRecvDisplacements.data());
 
         // Make vector of indexRange structs.
-        auto indexRanges = FuncSpaceRangeVector{};
+        auto indexRanges = StructuredIndexRangeVector{};
         for (size_t i = 0; i < mpiSize; ++i) {
 
-          auto indexRange = FuncSpaceRange{};
+          auto indexRange = StructuredIndexRange{};
           indexRange.jBeginEnd_ = jRecvBuffer[i];
           const auto iBegin = irecvBuffer.cbegin() + iRecvDisplacements[i];
           const auto iEnd = iBegin + iRecvCounts[i];
@@ -356,7 +359,7 @@ namespace atlas {
       }
 
       // Count number of elements in index range.
-      idx_t FuncSpaceRange::getElemCount() const {
+      idx_t StructuredIndexRange::getElemCount() const {
 
         // Accumulate size of positive i range.
         const auto count =
@@ -372,11 +375,11 @@ namespace atlas {
       }
 
       // Return the intersection between two index ranges.
-      FuncSpaceRange FuncSpaceRange::operator&(
-        const FuncSpaceRange& indexRange) const {
+      StructuredIndexRange StructuredIndexRange::operator&(
+        const StructuredIndexRange& indexRange) const {
 
         // Declare result.
-        auto intersection = FuncSpaceRange{};
+        auto intersection = StructuredIndexRange{};
 
         // get j intersection range.
         intersection.jBeginEnd_ = std::make_pair(
@@ -408,7 +411,7 @@ namespace atlas {
       // Loop over all indices. Functor should have signature
       // functor(const idx_t i, const idx_t j).
       template <typename functorType>
-      void FuncSpaceRange::forEach(const functorType& functor) const {
+      void StructuredIndexRange::forEach(const functorType& functor) const {
 
         auto iBeginEndIt = iBeginEnd_.begin();
 
