@@ -32,13 +32,13 @@ namespace atlas {
 
       // Forward declarations.
       class StructuredColumnsToStructuredColumns;
-      class FuncSpaceRange;
+      class StructuredIndexRange;
 
       // Type aliases.
-      class FuncSpaceRange;
+      class StructuredIndexRange;
       using idxPair = std::pair<idx_t, idx_t>;
       using idxPairVector = std::vector<idxPair>;
-      using FuncSpaceRangeVector = std::vector<FuncSpaceRange>;
+      using StructuredIndexRangeVector = std::vector<StructuredIndexRange>;
 
       using functionspace::detail::StructuredColumns;
 
@@ -96,8 +96,8 @@ namespace atlas {
         const StructuredColumns* targetStructuredColumnsPtr_{};
 
         // Vectors of index range intersection objects.
-        FuncSpaceRangeVector sendIntersections_{};
-        FuncSpaceRangeVector recvIntersections_{};
+        StructuredIndexRangeVector sendIntersections_{};
+        StructuredIndexRangeVector recvIntersections_{};
 
         // Counts and displacements for MPI communications.
         std::vector<int> sendCounts_{};
@@ -108,24 +108,24 @@ namespace atlas {
       };
 
       /// \brief    Helper class for function space intersections.
-      class FuncSpaceRange {
+      class StructuredIndexRange {
 
       public:
 
         /// \brief    Default Constructor.
-        FuncSpaceRange() = default;
+        StructuredIndexRange() = default;
 
         /// \brief    Constructor.
-        FuncSpaceRange(const StructuredColumns* const structuredColumnsPtr);
+        StructuredIndexRange(const StructuredColumns* const structuredColumnsPtr);
 
         /// \brief    Get index ranges from all PEs.
-        FuncSpaceRangeVector getFuncSpaceRanges() const;
+        StructuredIndexRangeVector getFuncSpaceRanges() const;
 
         /// \brief    Count number of elements.
         idx_t getElemCount() const;
 
         /// \brief    Intersection operator.
-        FuncSpaceRange operator&(const FuncSpaceRange& indexRange) const;
+        StructuredIndexRange operator&(const StructuredIndexRange& indexRange) const;
 
         /// \brief    Iterate over all indices and do something with functor.
         template <typename functorType>
