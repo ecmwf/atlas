@@ -20,7 +20,7 @@ namespace atlas {
   namespace redistribution {
     namespace detail {
 
-      /// \brief  Abstract base class for redistributer implementation.
+      /// \brief  Abstract base class for redistributor implementation.
       class RedistributionImpl : public util::Object {
 
       public:

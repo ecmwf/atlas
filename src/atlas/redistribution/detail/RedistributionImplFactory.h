@@ -22,7 +22,7 @@ namespace atlas {
   namespace redistribution{
     namespace detail {
 
-      /// \brief  Factory class to select correct concrete redistributer.
+      /// \brief  Factory class to select correct concrete redistributor.
       class RedistributionImplFactory {
 
       public:
