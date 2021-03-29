@@ -119,7 +119,7 @@ namespace atlas {
         StructuredIndexRange(const StructuredColumns* const structuredColumnsPtr);
 
         /// \brief    Get index ranges from all PEs.
-        StructuredIndexRangeVector getFuncSpaceRanges() const;
+        StructuredIndexRangeVector getStructuredIndexRanges() const;
 
         /// \brief    Count number of elements.
         idx_t getElemCount() const;

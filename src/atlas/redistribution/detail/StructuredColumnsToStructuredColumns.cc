@@ -44,7 +44,7 @@ namespace atlas {
           return outVector;
         }
 
-        // Visit each index in a FuncSpaceRangeVector.
+        // Visit each index in a StructuredIndexRangeVector.
         template <typename functorType>
         void forEachIndex(const StructuredIndexRangeVector& ranges,
           const functorType& functor) {
@@ -93,8 +93,8 @@ namespace atlas {
 
 
         // Get source and target ranges over all PEs.
-        const auto sourceRanges = sourceRange.getFuncSpaceRanges();
-        const auto targetRanges = targetRange.getFuncSpaceRanges();
+        const auto sourceRanges = sourceRange.getStructuredIndexRanges();
+        const auto targetRanges = targetRange.getStructuredIndexRanges();
 
 
         // Get intersections between sourceRange and targetRanges.
@@ -309,7 +309,7 @@ namespace atlas {
 
       // Get index ranges from all PEs.
       StructuredIndexRangeVector
-        StructuredIndexRange::getFuncSpaceRanges () const {
+        StructuredIndexRange::getStructuredIndexRanges () const {
 
         // Get MPI communicator size.
         const auto mpiSize = static_cast<size_t>(atlas::mpi::comm().size());
