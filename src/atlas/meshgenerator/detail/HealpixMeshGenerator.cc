@@ -113,7 +113,7 @@ int idx_xy_to_x( const int xidx, const int yidx, const int ns ) {
                                 : ghostIdx( yidx ) );
     }
     else if ( yidx == 3 * ns + 1 && ns > 1 ) {
-        ATLAS_ASSERT( xidx < 4 * ( ns - 1 ) + 1 + xidx >= 0 );
+        ATLAS_ASSERT( xidx < 4 * ( ns - 1 ) + 1 && xidx >= 0 );
         return ( xidx != 4 * ( ns - 1 ) ? 2 * ns * ( 5 * ns + 1 ) + 4 * ns * ( yidx - 3 * ns - 1 ) + 8 + xidx
                                         : ghostIdx( yidx ) );
     }

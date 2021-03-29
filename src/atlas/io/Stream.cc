@@ -25,7 +25,7 @@ Stream::Stream( eckit::DataHandle* datahandle ) : shared_( datahandle ), ptr_( s
 
 Stream::Stream( std::shared_ptr<eckit::DataHandle> datahandle ) : shared_( datahandle ), ptr_( shared_.get() ) {}
 
-Stream::Stream( const Stream& other ) : shared_( other.shared_ ), ptr_( other.ptr_ ) {}
+Stream::Stream( const Stream& other ) = default;
 
 eckit::DataHandle& Stream::datahandle() {
     ATLAS_ASSERT( ptr_ != nullptr );

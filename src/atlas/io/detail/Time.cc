@@ -35,8 +35,8 @@ inline _put_time<CharT> put_time( const std::tm* time, const CharT* fmt ) {
 
 template <typename CharT, typename Traits>
 std::basic_ostream<CharT, Traits>& operator<<( std::basic_ostream<CharT, Traits>& os, _put_time<CharT> f ) {
-    typedef typename std::ostreambuf_iterator<CharT, Traits> Iter;
-    typedef std::time_put<CharT, Iter> TimePut;
+    using Iter    = typename std::ostreambuf_iterator<CharT, Traits>;
+    using TimePut = std::time_put<CharT, Iter>;
 
     const CharT* const fmt_end = f.fmt + Traits::length( f.fmt );
     const TimePut& mp          = std::use_facet<TimePut>( os.getloc() );

@@ -80,12 +80,12 @@ NotDecodable::NotDecodable( const std::string& type_name ) :
 
 //---------------------------------------------------------------------------------------------------------------------
 
-Exception::~Exception() {}
-NotEncodable::~NotEncodable() {}
-NotDecodable::~NotDecodable() {}
-InvalidRecord::~InvalidRecord() {}
-DataCorruption::~DataCorruption() {}
-WriteError::~WriteError() {}
+Exception::~Exception() = default;
+NotEncodable::~NotEncodable() = default;
+NotDecodable::~NotDecodable() = default;
+InvalidRecord::~InvalidRecord() = default;
+DataCorruption::~DataCorruption() = default;
+WriteError::~WriteError() = default;
 
 //---------------------------------------------------------------------------------------------------------------------
 
