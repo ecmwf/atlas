@@ -129,13 +129,13 @@ public:
     virtual void invtrans_adj( const FieldSet& gpfields, FieldSet& spfields,
                               const eckit::Configuration& = util::NoConfig() ) const override;
 
-    virtual void invtrans_adj_grad( const Field& gradfield, Field& spfield,
+    virtual void invtrans_grad_adj( const Field& gradfield, Field& spfield,
                                    const eckit::Configuration& = util::NoConfig() ) const override;
 
-    virtual void invtrans_adj_grad( const FieldSet& spfields, FieldSet& gradfields,
-                                   const eckit::Configuration& = util::NoConfig() ) const override;
+    virtual void invtrans_grad_adj( const FieldSet& spfields, FieldSet& gradfields,
+                                    const eckit::Configuration& = util::NoConfig() ) const override;
 
-    virtual void invtrans_adj_vordiv2wind( const Field& gpwind, Field& spvor, Field& spdiv,
+    virtual void invtrans_vordiv2wind_adj( const Field& gpwind, Field& spvor, Field& spdiv,
                                           const eckit::Configuration& = util::NoConfig() ) const override;
 
     // -- IFS style API --
@@ -287,15 +287,15 @@ public:
                         const functionspace::NodeColumns&, const FieldSet& gpfields,
                         const eckit::Configuration& = util::NoConfig() ) const;
 
-    void __invtrans_adj_vordiv2wind( const functionspace::Spectral&, Field& spvor, Field& spdiv,
+    void __invtrans_vordiv2wind_adj( const functionspace::Spectral&, Field& spvor, Field& spdiv,
                                     const functionspace::NodeColumns&, const Field& gpwind,
                                     const eckit::Configuration& = util::NoConfig() ) const;
 
-    void __invtrans_adj_grad( const functionspace::Spectral& sp, Field& spfield,
+    void __invtrans_grad_adj( const functionspace::Spectral& sp, Field& spfield,
                              const functionspace::NodeColumns& gp, const Field& gradfield,
                              const eckit::Configuration& = util::NoConfig() ) const;
 
-    void __invtrans_adj_grad( const functionspace::Spectral& sp, FieldSet& spfields,
+    void __invtrans_grad_adj( const functionspace::Spectral& sp, FieldSet& spfields,
                              const functionspace::NodeColumns& gp, const FieldSet& gradfields,
                              const eckit::Configuration& = util::NoConfig() ) const;
 

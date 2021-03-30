@@ -64,7 +64,7 @@ void atlas__Trans__invtrans_adj( const TransImpl* t, int nb_scalar_fields, doubl
                              const eckit::Configuration* parameters );
 void atlas__Trans__invtrans_adj_scalar( const TransImpl* t, int nb_fields,  double scalar_fields[],
                                        double scalar_spectra[]);
-void atlas__Trans__invtrans_adj_vordiv2wind( const TransImpl* t, int nb_fields, double wind_fields[],
+void atlas__Trans__invtrans_vordiv2wind_adj( const TransImpl* t, int nb_fields, double wind_fields[],
                                             double vorticity_spectra[], double divergence_spectra[]);
 
 void atlas__Trans__dirtrans_scalar( const TransImpl* t, int nb_fields, double scalar_fields[],
@@ -89,14 +89,14 @@ void atlas__Trans__invtrans_vordiv2wind_field( const TransImpl* This, const fiel
                                                const field::FieldImpl* spdiv, field::FieldImpl* gpwind,
                                                const eckit::Configuration* parameters );
 void atlas__Trans__invtrans_adj_fieldset( const TransImpl* This, const field::FieldSetImpl* gpfields,
-                                      field::FieldSetImpl* spfields, const eckit::Configuration* parameters );
+                                          field::FieldSetImpl* spfields, const eckit::Configuration* parameters );
 void atlas__Trans__invtrans_adj_field( const TransImpl* This, const field::FieldImpl* gpfield, field::FieldImpl* spfield,
-                                   const eckit::Configuration* parameters );
-void atlas__Trans__invtrans_adj_grad_field( const TransImpl* This, const field::FieldImpl* gpfield,
-                                        field::FieldImpl* spfield, const eckit::Configuration* parameters );
-void atlas__Trans__invtrans_adj_vordiv2wind_field( const TransImpl* This, const field::FieldImpl* gpwind,
-                                                  field::FieldImpl* spvor, field::FieldImpl* spdiv,
-                                                  const eckit::Configuration* parameters );
+                                       const eckit::Configuration* parameters );
+void atlas__Trans__invtrans_grad_adj_field( const TransImpl* This, const field::FieldImpl* gpfield,
+                                            field::FieldImpl* spfield, const eckit::Configuration* parameters );
+void atlas__Trans__invtrans_vordiv2wind_adj_field( const TransImpl* This, const field::FieldImpl* gpwind,
+                                                   field::FieldImpl* spvor, field::FieldImpl* spdiv,
+                                                    const eckit::Configuration* parameters );
 
 int atlas__Trans__handle( const TransImpl* trans );
 int atlas__Trans__truncation( const TransImpl* This );

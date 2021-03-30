@@ -134,17 +134,17 @@ void Trans::invtrans_adj( const FieldSet& gpfields, FieldSet& spfields, const ec
     get()->invtrans_adj( gpfields, spfields, options( config ) );
 }
 
-void Trans::invtrans_adj_grad( const Field& gradfield, Field& spfield, const eckit::Configuration& config ) const {
-    get()->invtrans_adj_grad( gradfield, spfield, options( config ) );
+void Trans::invtrans_grad_adj( const Field& gradfield, Field& spfield, const eckit::Configuration& config ) const {
+    get()->invtrans_grad_adj( gradfield, spfield, options( config ) );
 }
 
-void Trans::invtrans_adj_grad( const FieldSet& gradfields, FieldSet& spfields, const eckit::Configuration& config ) const {
-    get()->invtrans_adj_grad( gradfields, spfields, options( config ) );
+void Trans::invtrans_grad_adj( const FieldSet& gradfields, FieldSet& spfields, const eckit::Configuration& config ) const {
+    get()->invtrans_grad_adj( gradfields, spfields, options( config ) );
 }
 
-void Trans::invtrans_adj_vordiv2wind( const Field& gpwind, Field& spvor, Field& spdiv,
+void Trans::invtrans_vordiv2wind_adj( const Field& gpwind, Field& spvor, Field& spdiv,
                                      const eckit::Configuration& config ) const {
-    get()->invtrans_adj_vordiv2wind( gpwind, spvor, spdiv, options( config ) );
+    get()->invtrans_vordiv2wind_adj( gpwind, spvor, spdiv, options( config ) );
 }
 
 // -- IFS type fields --

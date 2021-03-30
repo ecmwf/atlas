@@ -76,19 +76,19 @@ public:
                                        const eckit::Configuration& = util::NoConfig() ) const = 0;
 
     virtual void invtrans_adj( const Field& gpfield, Field& spfield,
-                              const eckit::Configuration& = util::NoConfig() ) const = 0;
+                               const eckit::Configuration& = util::NoConfig() ) const = 0;
 
     virtual void invtrans_adj( const FieldSet& gpfields, FieldSet& spfields,
-                              const eckit::Configuration& = util::NoConfig() ) const = 0;
+                               const eckit::Configuration& = util::NoConfig() ) const = 0;
 
-    virtual void invtrans_adj_grad( const Field& gradfield, Field& gpfield,
-                                   const eckit::Configuration& = util::NoConfig() ) const = 0;
+    virtual void invtrans_grad_adj( const Field& gradfield, Field& gpfield,
+                                    const eckit::Configuration& = util::NoConfig() ) const = 0;
 
-    virtual void invtrans_adj_grad( const FieldSet& gradfields, FieldSet& spfields,
-                                   const eckit::Configuration& = util::NoConfig() ) const = 0;
+    virtual void invtrans_grad_adj( const FieldSet& gradfields, FieldSet& spfields,
+                                    const eckit::Configuration& = util::NoConfig() ) const = 0;
 
-    virtual void invtrans_adj_vordiv2wind( const Field& gpwind, Field& spvor, Field& spdiv,
-                                          const eckit::Configuration& = util::NoConfig() ) const = 0;
+    virtual void invtrans_vordiv2wind_adj( const Field& gpwind, Field& spvor, Field& spdiv,
+                                           const eckit::Configuration& = util::NoConfig() ) const = 0;
 
     // -- IFS type fields --
     // These fields have special interpretation required. You need to know what

@@ -107,13 +107,13 @@ public:
     virtual void invtrans_adj( const FieldSet& gpfields, FieldSet& spfields,
                               const eckit::Configuration& = util::NoConfig() ) const override;
 
-    virtual void invtrans_adj_grad( const Field& gradfield, Field& spfield,
+    virtual void invtrans_grad_adj( const Field& gradfield, Field& spfield,
                                    const eckit::Configuration& = util::NoConfig() ) const override;
 
-    virtual void invtrans_adj_grad( const FieldSet& spfields, FieldSet& gradfields,
-                                   const eckit::Configuration& = util::NoConfig() ) const override;
+    virtual void invtrans_grad_adj( const FieldSet& spfields, FieldSet& gradfields,
+                                    const eckit::Configuration& = util::NoConfig() ) const override;
 
-    virtual void invtrans_adj_vordiv2wind( const Field& gpwind, Field& spvor, Field& spdiv,
+    virtual void invtrans_vordiv2wind_adj( const Field& gpwind, Field& spvor, Field& spdiv,
                                           const eckit::Configuration& = util::NoConfig() ) const override;
 
     // -- IFS style API --

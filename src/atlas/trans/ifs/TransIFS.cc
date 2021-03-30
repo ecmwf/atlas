@@ -258,22 +258,22 @@ void TransIFS::invtrans_grad( const FieldSet& spfields, FieldSet& gradfields,
 
 // --------------------------------------------------------------------------------------------
 
-void TransIFS::invtrans_adj_grad( const Field& gradfield, Field& spfield,
+void TransIFS::invtrans_grad_adj( const Field& gradfield, Field& spfield,
                                  const eckit::Configuration& config ) const {
     ATLAS_ASSERT( Spectral( spfield.functionspace() ) );
     ATLAS_ASSERT( NodeColumns( gradfield.functionspace() ) );
-    __invtrans_adj_grad( Spectral( spfield.functionspace() ), spfield,
+    __invtrans_grad_adj( Spectral( spfield.functionspace() ), spfield,
                         NodeColumns( gradfield.functionspace() ), gradfield,
                         config );
 }
 
-void TransIFS::invtrans_adj_grad( const FieldSet& gradfields, FieldSet& spfields,
+void TransIFS::invtrans_grad_adj( const FieldSet& gradfields, FieldSet& spfields,
                                  const eckit::Configuration& config ) const {
     assert_spectral_functionspace( spfields );
     std::string functionspace( fieldset_functionspace( gradfields ) );
 
     if ( functionspace == NodeColumns::type() ) {
-        __invtrans_adj_grad( Spectral( spfields[0].functionspace() ), spfields,
+        __invtrans_grad_adj( Spectral( spfields[0].functionspace() ), spfields,
                             NodeColumns( gradfields[0].functionspace() ), gradfields,
                             config );
     }
@@ -303,12 +303,12 @@ void TransIFS::invtrans_vordiv2wind( const Field& spvor, const Field& spdiv, Fie
 }
 
 
-void TransIFS::invtrans_adj_vordiv2wind( const Field& gpwind, Field& spvor, Field& spdiv,
+void TransIFS::invtrans_vordiv2wind_adj( const Field& gpwind, Field& spvor, Field& spdiv,
                                         const eckit::Configuration& config ) const {
     ATLAS_ASSERT( Spectral( spvor.functionspace() ) );
     ATLAS_ASSERT( Spectral( spdiv.functionspace() ) );
     ATLAS_ASSERT( NodeColumns( gpwind.functionspace() ) );
-    __invtrans_adj_vordiv2wind( Spectral( spvor.functionspace() ), spvor, spdiv, NodeColumns( gpwind.functionspace() ),
+    __invtrans_vordiv2wind_adj( Spectral( spvor.functionspace() ), spvor, spdiv, NodeColumns( gpwind.functionspace() ),
                                gpwind, config );
 }
 
@@ -1343,17 +1343,17 @@ void TransIFS::__invtrans_grad( const Spectral& sp, const FieldSet& spfields, co
 
 //---------------------------------------------------------------------------------------------
 
-void TransIFS::__invtrans_adj_grad( const Spectral& sp, Field& spfield,
+void TransIFS::__invtrans_grad_adj( const Spectral& sp, Field& spfield,
                                    const functionspace::NodeColumns& gp,
                                    const Field& gradfield, const eckit::Configuration& config ) const {
     FieldSet spfields;
     spfields.add( spfield );
     FieldSet gradfields;
     gradfields.add( gradfield );
-    __invtrans_adj_grad( sp, spfields, gp, gradfields, config );
+    __invtrans_grad_adj( sp, spfields, gp, gradfields, config );
 }
 
-void TransIFS::__invtrans_adj_grad( const Spectral& sp, FieldSet& spfields,
+void TransIFS::__invtrans_grad_adj( const Spectral& sp, FieldSet& spfields,
                                    const functionspace::NodeColumns& gp, const FieldSet& gradfields,
                                    const eckit::Configuration& config ) const {
 
@@ -1875,7 +1875,7 @@ void TransIFS::__invtrans_vordiv2wind( const Spectral& sp, const Field& spvor, c
     }
 }
 
-void TransIFS::__invtrans_adj_vordiv2wind( const Spectral& sp, Field& spvor, Field& spdiv,
+void TransIFS::__invtrans_vordiv2wind_adj( const Spectral& sp, Field& spvor, Field& spdiv,
                                           const functionspace::NodeColumns& gp, const Field& gpwind,
                                           const eckit::Configuration& ) const {
     assertCompatibleDistributions( gp, sp );
@@ -1883,10 +1883,10 @@ void TransIFS::__invtrans_adj_vordiv2wind( const Spectral& sp, Field& spvor, Fie
     // Count total number of fields and do sanity checks
     const size_t nfld = compute_nfld( spvor );
     if ( spdiv.shape( 0 ) != spvor.shape( 0 ) ) {
-        throw_Exception( "invtrans_adj_vordiv2wind: vorticity not compatible with divergence.", Here() );
+        throw_Exception( "invtrans_vordiv2wind_adj: vorticity not compatible with divergence.", Here() );
     }
     if ( spdiv.shape( 1 ) != spvor.shape( 1 ) ) {
-        throw_Exception( "invtrans_adj_vordiv2wind: vorticity not compatible with divergence.", Here() );
+        throw_Exception( "invtrans_vordiv2wind_adj: vorticity not compatible with divergence.", Here() );
     }
     const size_t nwindfld = compute_nfld( gpwind );
     if ( nwindfld != 2 * nfld && nwindfld != 3 * nfld ) {
@@ -1895,17 +1895,17 @@ void TransIFS::__invtrans_adj_vordiv2wind( const Spectral& sp, Field& spvor, Fie
 
     if ( spdiv.shape( 0 ) != nspec2() ) {
         std::stringstream msg;
-        msg << "invtrans_adj_vordiv2wind: Spectral vorticity and divergence have wrong dimension: "
+        msg << "invtrans_vordiv2wind_adj: Spectral vorticity and divergence have wrong dimension: "
                "nspec2 "
             << spdiv.shape( 0 ) << " should be " << nspec2();
         throw_Exception( msg.str(), Here() );
     }
 
     if ( spvor.size() == 0 ) {
-        throw_Exception( "invtrans_adj_vordiv2wind: spectral vorticity field is empty." );
+        throw_Exception( "invtrans_vordiv2wind_adj: spectral vorticity field is empty." );
     }
     if ( spdiv.size() == 0 ) {
-        throw_Exception( "invtrans_adj_vordiv2wind: spectral divergence field is empty." );
+        throw_Exception( "invtrans_vordiv2wind_adj: spectral divergence field is empty." );
     }
 
     // Arrays Trans expects
