@@ -37,6 +37,7 @@ public:
     ArrayShape() {}
     ArrayShape( Base&& base ) : Base( std::forward<Base>( base ) ) {}
     ArrayShape( std::initializer_list<idx_t> list ) : Base( list ) {}
+    template <typename idx_t>
     ArrayShape( idx_t data[], size_t size ) : Base( data, data + size ) {}
 };
 

@@ -11,10 +11,10 @@ namespace atlas {
 namespace test {
 
 CASE( "test_setcomm" ) {
-    printf( " eckit::mpi::comm () = 0x%p, eckit::mpi::comm ().size () = %8d\n", &eckit::mpi::comm(),
+    printf( " eckit::mpi::comm () = 0x%p, eckit::mpi::comm ().size () = %8zu\n", &eckit::mpi::comm(),
             eckit::mpi::comm().size() );
     std::cout << eckit::mpi::comm().name() << std::endl;
-    printf( " atlas::mpi::comm () = 0x%p, atlas::mpi::comm ().size () = %8d\n", &atlas::mpi::comm(),
+    printf( " atlas::mpi::comm () = 0x%p, atlas::mpi::comm ().size () = %8zu\n", &atlas::mpi::comm(),
             atlas::mpi::comm().size() );
     std::cout << atlas::mpi::comm().name() << std::endl;
 
@@ -22,14 +22,14 @@ CASE( "test_setcomm" ) {
 
     int irank = eckit::mpi::comm().rank();
 
-    auto& comm = eckit::mpi::comm().split( irank, "SPLIT" );
+    eckit::mpi::comm().split( irank, "SPLIT" );
 
     eckit::mpi::setCommDefault( "SPLIT" );
 
-    printf( " eckit::mpi::comm () = 0x%llx, eckit::mpi::comm ().size () = %8d\n", &eckit::mpi::comm(),
+    printf( " eckit::mpi::comm () = 0x%p, eckit::mpi::comm ().size () = %8zu\n", &eckit::mpi::comm(),
             eckit::mpi::comm().size() );
     std::cout << eckit::mpi::comm().name() << std::endl;
-    printf( " atlas::mpi::comm () = 0x%llx, atlas::mpi::comm ().size () = %8d\n", &atlas::mpi::comm(),
+    printf( " atlas::mpi::comm () = 0x%p, atlas::mpi::comm ().size () = %8zu\n", &atlas::mpi::comm(),
             atlas::mpi::comm().size() );
     std::cout << atlas::mpi::comm().name() << std::endl;
 

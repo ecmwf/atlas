@@ -66,16 +66,6 @@ std::string str( const eckit::system::Library& lib ) {
     return ss.str();
 }
 
-std::string str( const Plugin& lib ) {
-    std::string gitsha1 = lib.gitsha1();
-    std::stringstream ss;
-    ss << lib.name() << " version (" << lib.version() << "),";
-    if ( lib.gitsha1() != "not available" ) {
-        ss << "  git-sha1 " << lib.gitsha1( 7 );
-    }
-    return ss.str();
-}
-
 bool getEnv( const std::string& env, bool default_value ) {
     if ( ::getenv( env.c_str() ) ) {
         return eckit::Translator<std::string, bool>()( ::getenv( env.c_str() ) );

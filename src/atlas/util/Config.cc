@@ -66,11 +66,19 @@ Config Config::operator|( const Config& other ) const {
 }
 
 Config& Config::set( const eckit::LocalConfiguration& other ) {
-    eckit::ValueMap otherval = other.get();
-    eckit::Value& root       = const_cast<eckit::Value&>( get() );
-    for ( eckit::ValueMap::const_iterator vit = otherval.begin(); vit != otherval.end(); ++vit ) {
-        root[vit->first] = vit->second;
+    eckit::Value& root = const_cast<eckit::Value&>( get() );
+    auto& other_root   = other.get();
+    std::vector<string> other_keys;
+    eckit::fromValue( other_keys, other_root.keys() );
+    for ( auto& key : other_keys ) {
+        root[key] = other_root[key];
     }
+    return *this;
+}
+
+Config& Config::remove( const std::string& name ) {
+    eckit::Value& root = const_cast<eckit::Value&>( get() );
+    root.remove( name );
     return *this;
 }
 
@@ -93,6 +101,12 @@ bool Config::get( const std::string& name, std::vector<Config>& value ) const {
         }
     }
     return found;
+}
+
+std::vector<std::string> Config::keys() const {
+    std::vector<std::string> result;
+    eckit::fromValue( result, get().keys() );
+    return result;
 }
 
 //==================================================================

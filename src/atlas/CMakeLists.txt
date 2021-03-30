@@ -704,7 +704,78 @@ util/Unique.h
 util/Unique.cc
 util/Allocate.h
 util/Allocate.cc
-#parallel/detail/MPLArrayView.h
+)
+
+list( APPEND atlas_io_srcs
+    io/atlas-io.h
+    io/Data.cc
+    io/Data.h
+    io/detail/Base64.cc
+    io/detail/Base64.h
+    io/detail/Checksum.h
+    io/detail/Checksum.cc
+    io/detail/DataInfo.h
+    io/detail/Decoder.cc
+    io/detail/Decoder.h
+    io/detail/Defaults.h
+    io/detail/Encoder.h
+    io/detail/Endian.h
+    io/detail/Link.cc
+    io/detail/Link.h
+    io/detail/ParsedRecord.h
+    io/detail/RecordInfo.h
+    io/detail/RecordSections.h
+    io/detail/Reference.h
+    io/detail/sfinae.h
+    io/detail/StaticAssert.h
+    io/detail/tag.h
+    io/detail/Time.cc
+    io/detail/Time.h
+    io/detail/Type.h
+    io/detail/TypeTraits.h
+    io/detail/Version.h
+    io/Exceptions.cc
+    io/Exceptions.h
+    io/FileStream.cc
+    io/FileStream.h
+    io/Metadata.cc
+    io/Metadata.h
+    io/print/TableFormat.cc
+    io/print/TableFormat.h
+    io/print/JSONFormat.cc
+    io/print/JSONFormat.h
+    io/print/Bytes.cc
+    io/print/Bytes.h
+    io/ReadRequest.cc
+    io/ReadRequest.h
+    io/Record.cc
+    io/Record.h
+    io/RecordItem.cc
+    io/RecordItem.h
+    io/RecordItemReader.cc
+    io/RecordItemReader.h
+    io/RecordPrinter.cc
+    io/RecordPrinter.h
+    io/RecordReader.cc
+    io/RecordReader.h
+    io/RecordWriter.cc
+    io/RecordWriter.h
+    io/Session.cc
+    io/Session.h
+    io/Stream.cc
+    io/Stream.h
+    io/types/array.h
+    io/types/array/ArrayMetadata.cc
+    io/types/array/ArrayMetadata.h
+    io/types/array/ArrayReference.cc
+    io/types/array/ArrayReference.h
+    io/types/array/adaptors/ArrayAdaptor.cc
+    io/types/array/adaptors/ArrayAdaptor.h
+    io/types/array/adaptors/StdVectorAdaptor.h
+    io/types/array/adaptors/VectorAdaptor.h
+    io/types/string.h
+    io/types/scalar.h
+    io/types/scalar.cc
 )
 
 ### atlas c++ library
@@ -739,6 +810,7 @@ list( APPEND source_list
   ${atlas_numerics_srcs}
   ${atlas_output_srcs}
   ${atlas_util_srcs}
+  ${atlas_io_srcs}
   ${atlas_internals_srcs}
   ${CMAKE_CURRENT_BINARY_DIR}/library/git_sha1.h
   ${CMAKE_CURRENT_BINARY_DIR}/library/defines.h

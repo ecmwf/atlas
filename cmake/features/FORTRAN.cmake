@@ -1,9 +1,8 @@
 ### Fortran ...
 
-ecbuild_find_package( NAME fckit VERSION 0.6.2 COMPONENTS ECKIT )
 ecbuild_add_option( FEATURE FORTRAN
                     DESCRIPTION "Provide Fortran bindings"
-                    CONDITION fckit_FOUND )
+                    REQUIRED_PACKAGES "fckit VERSION 0.6.2 COMPONENTS ECKIT" )
 
 if( atlas_HAVE_FORTRAN )
 

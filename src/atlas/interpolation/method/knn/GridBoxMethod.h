@@ -32,6 +32,7 @@ public:
 protected:
     virtual void print( std::ostream& ) const override;
 
+    using KNearestNeighboursBase::do_setup;
     /**
      * @brief Create an interpolant sparse matrix relating two functionspaces, using grid-box average method
      * @param source functionspace containing source points

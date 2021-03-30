@@ -31,3 +31,8 @@ ecbuild_add_executable(
   SOURCES     atlas-gaussian-latitudes.cc
   LIBS        atlas )
 
+ecbuild_add_executable(
+  TARGET      atlas-io-list
+  SOURCES     atlas-io-list.cc
+  LIBS        atlas )
+

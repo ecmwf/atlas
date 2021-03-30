@@ -68,10 +68,14 @@ public:
     template <typename T>
     Config& set( const std::string& name, std::initializer_list<T>&& value );
 
+    Config& remove( const std::string& name );
+
     // -- Accessors, overloaded from eckit::Parametrisation
 
     using eckit::LocalConfiguration::get;
     bool get( const std::string& name, std::vector<Config>& value ) const;
+
+    std::vector<std::string> keys() const;
 };
 
 // ------------------------------------------------------------------
