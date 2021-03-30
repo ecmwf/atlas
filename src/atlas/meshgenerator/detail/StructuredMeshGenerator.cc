@@ -65,10 +65,6 @@ struct Region {
 };
 
 StructuredMeshGenerator::StructuredMeshGenerator( const eckit::Parametrisation& p ) {
-
-    Log::info() << "StructuredMeshGenerator::config parameterisation" <<
-       dynamic_cast<const eckit::Configuration &>(p) << std::endl;
-
     configure_defaults();
 
     bool include_pole;
@@ -136,18 +132,13 @@ StructuredMeshGenerator::StructuredMeshGenerator( const eckit::Parametrisation& 
                            << "Defaulting to use partitioner EqualRegions" << std::endl;
             partitioner = "equal_regions";
         }
-        options.set( "partitioner", partitioner );
     }
      else if ( grid::Partitioner::exists( "trans" ) ) {
         partitioner = "trans";
     } else {
         partitioner = "equal_regions";
     }
-    std::cout << "StructuredMeshGenerator::partitioner = " << partitioner << std::endl;
     options.set( "partitioner", partitioner );
-
-
-    
 }
 
 void StructuredMeshGenerator::configure_defaults() {
