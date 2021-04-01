@@ -85,6 +85,7 @@ void LinearSpacing::setup( double start, double end, long N, bool endpoint ) {
 
     double step;
     volatile double _N = N;  // volatile keyword prevents agressive optimization by Cray compiler
+    //  deepcode ignore FloatingPointEquals: Expect possible bit-identical start and end
     if ( start == end ) {
         step = 0.;
     }

@@ -82,7 +82,8 @@ int Tool::execute( const Args& args ) {
         try {
             grid = Grid( key );
         }
-        catch ( eckit::Exception& e ) {
+        catch ( eckit::Exception& ) {
+            return failed();
         }
     }
     else if ( path_in.path().size() ) {
@@ -92,6 +93,7 @@ int Tool::execute( const Args& args ) {
             grid = Grid( Config( path_in ) );
         }
         catch ( eckit::Exception& e ) {
+            return failed();
         }
     }
     else {

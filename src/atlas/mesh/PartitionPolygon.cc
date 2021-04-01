@@ -11,6 +11,8 @@
 #include <fstream>
 #include <sstream>
 
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
 #include "atlas/mesh.h"
@@ -112,6 +114,9 @@ void PartitionPolygon::outputPythonScript( const eckit::PathName& filepath, cons
     for ( int r = 0; r < mpi_size; ++r ) {
         if ( mpi_rank == r ) {
             std::ofstream f( filepath.asString().c_str(), mpi_rank == 0 ? std::ios::trunc : std::ios::app );
+            if( !f.is_open() ) {
+                throw eckit::CantOpenFile(filepath);
+            }
             //clang-format off
             if ( mpi_rank == 0 ) {
                 f << "\n"

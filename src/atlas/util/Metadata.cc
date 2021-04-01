@@ -195,7 +195,7 @@ double atlas__Metadata__get_double( Metadata* This, const char* name ) {
 void atlas__Metadata__get_string( Metadata* This, const char* name, char* output_str, int max_len ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Metadata" );
     std::string s = This->get<std::string>( std::string( name ) );
-    if ( s.size() > size_t( max_len ) ) {
+    if ( s.size()+1 > size_t( max_len ) ) {
         std::stringstream msg;
         msg << "Cannot copy string `" << s << "` of metadata `" << name
             << "`"
@@ -203,7 +203,7 @@ void atlas__Metadata__get_string( Metadata* This, const char* name, char* output
             << max_len;
         throw_Exception( msg.str(), Here() );
     }
-    strcpy( output_str, s.c_str() );
+    std::strncpy( output_str, s.c_str(), max_len );
 }
 void atlas__Metadata__get_array_int( Metadata* This, const char* name, int*& value, int& size, int& allocated ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Metadata" );
@@ -263,10 +263,10 @@ void atlas__Metadata__json( Metadata* This, char*& json, int& size, int& allocat
     j.precision( 16 );
     j << *This;
     std::string json_str = s.str();
-    size                 = static_cast<int>( json_str.size() );
+    size                 = static_cast<int>( json_str.size());
     json                 = new char[size + 1];
     allocated            = true;
-    strcpy( json, json_str.c_str() );
+    std::strncpy( json, json_str.c_str(), size+1 );
     allocated = true;
 }
 
