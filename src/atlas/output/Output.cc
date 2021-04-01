@@ -9,6 +9,7 @@
  */
 
 #include <map>
+#include <memory>
 #include <string>
 
 #include "eckit/thread/AutoLock.h"
@@ -32,13 +33,13 @@ using atlas::field::FieldSetImpl;
 namespace atlas {
 namespace output {
 
-static eckit::Mutex* local_mutex                        = nullptr;
-static std::map<std::string, detail::OutputFactory*>* m = nullptr;
-static pthread_once_t once                              = PTHREAD_ONCE_INIT;
+static std::unique_ptr<eckit::Mutex> local_mutex;
+static std::unique_ptr<std::map<std::string, detail::OutputFactory*>> m;
+static pthread_once_t once = PTHREAD_ONCE_INIT;
 
 static void init() {
-    local_mutex = new eckit::Mutex();
-    m           = new std::map<std::string, detail::OutputFactory*>();
+    local_mutex.reset( new eckit::Mutex() );
+    m.reset( new std::map<std::string, detail::OutputFactory*>() );
 }
 
 namespace detail {
@@ -81,8 +82,9 @@ namespace detail {
 
 OutputFactory::OutputFactory( const std::string& name ) : name_( name ) {
     pthread_once( &once, init );
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    eckit::AutoLock<eckit::Mutex> lock( local_mutex.get() );
 
+    ATLAS_ASSERT( m );
     if ( m->find( name ) != m->end() ) {
         throw_Exception( "Duplicate OutputFactory entry " + name );
     }
@@ -92,14 +94,16 @@ OutputFactory::OutputFactory( const std::string& name ) : name_( name ) {
 
 OutputFactory::~OutputFactory() {
     pthread_once( &once, init );
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    eckit::AutoLock<eckit::Mutex> lock( local_mutex.get() );
+    ATLAS_ASSERT( m );
     m->erase( name_ );
 }
 
 void OutputFactory::list( std::ostream& out ) {
     pthread_once( &once, init );
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    eckit::AutoLock<eckit::Mutex> lock( local_mutex.get() );
 
+    ATLAS_ASSERT( m );
     const char* sep = "";
     for ( std::map<std::string, OutputFactory*>::const_iterator j = m->begin(); j != m->end(); ++j ) {
         out << sep << ( *j ).first;
@@ -109,8 +113,9 @@ void OutputFactory::list( std::ostream& out ) {
 
 const OutputImpl* OutputFactory::build( const std::string& name, std::ostream& stream ) {
     pthread_once( &once, init );
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    eckit::AutoLock<eckit::Mutex> lock( local_mutex.get() );
 
+    ATLAS_ASSERT( m );
     std::map<std::string, OutputFactory*>::const_iterator j = m->find( name );
 
     Log::debug() << "Looking for OutputFactory [" << name << "]" << std::endl;
@@ -130,8 +135,9 @@ const OutputImpl* OutputFactory::build( const std::string& name, std::ostream& s
 const OutputImpl* OutputFactory::build( const std::string& name, std::ostream& stream,
                                         const eckit::Parametrisation& param ) {
     pthread_once( &once, init );
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    eckit::AutoLock<eckit::Mutex> lock( local_mutex.get() );
 
+    ATLAS_ASSERT( m );
     std::map<std::string, OutputFactory*>::const_iterator j = m->find( name );
 
     Log::debug() << "Looking for OutputFactory [" << name << "]" << std::endl;

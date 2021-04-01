@@ -202,12 +202,12 @@ void gmsh_extract::run() {
                     field_name.assign( field_name, 0, field_name.size() - 5 );
                     lev = Translator<std::string, int>()( lev_str );
                 }
-                if ( search_fields.size() == 0 || search_fields.find( field_name ) != search_fields.end() ) {
+                if ( search_fields.empty() || search_fields.find( field_name ) != search_fields.end() ) {
                     if ( lev == -1 ) {
                         Log::debug() << "Extracting field " << field_name << std::endl;
                         extract = true;
                     }
-                    else if ( search_levels.size() == 0 || search_levels.find( lev ) != search_levels.end() ) {
+                    else if ( search_levels.empty() || search_levels.find( lev ) != search_levels.end() ) {
                         Log::debug() << "Extracting field " << field_name << "[" << lev << "]" << std::endl;
                         extract = true;
                     }

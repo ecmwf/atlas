@@ -274,7 +274,7 @@ int Meshgen2Gmsh::execute( const Args& args ) {
     catch ( eckit::Exception& e ) {
         Log::error() << e.what() << std::endl;
         Log::error() << e.callStack() << std::endl;
-        throw e;
+        throw;
     }
 
     if ( grid.projection().units() == "degrees" ) {

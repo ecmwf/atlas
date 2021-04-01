@@ -377,7 +377,7 @@ void atlas__Projection__type( const ProjectionImpl* This, char*& type, int& size
     std::string s = This->type();
     size          = static_cast<int>( s.size() + 1 );
     type          = new char[size];
-    strcpy( type, s.c_str() );
+    std::strncpy( type, s.c_str(), size );
 }
 void atlas__Projection__hash( const ProjectionImpl* This, char*& hash, int& size ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Projection" );
@@ -386,7 +386,7 @@ void atlas__Projection__hash( const ProjectionImpl* This, char*& hash, int& size
     std::string s = md5.digest();
     size          = static_cast<int>( s.size() + 1 );
     hash          = new char[size];
-    strcpy( hash, s.c_str() );
+    strncpy( hash, s.c_str(), size );
 }
 ProjectionImpl::Spec* atlas__Projection__spec( const ProjectionImpl* This ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Projection" );

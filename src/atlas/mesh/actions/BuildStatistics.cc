@@ -18,6 +18,7 @@
 #include <stdexcept>
 
 #include "eckit/filesystem/PathName.h"
+#include "eckit/exception/Exceptions.h"
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
@@ -139,19 +140,17 @@ void build_statistics( Mesh& mesh ) {
     int idt = 10;
     if ( mpi::size() == 1 ) {
         ofs.open( stats_path.localPath(), std::ofstream::out );
+        if( !ofs.is_open() ) {
+            throw eckit::CantOpenFile(stats_path);
+        }
         ofs << "# STATISTICS rho (min_length/max_length), eta (quality) \n";
         ofs << std::setw( idt ) << "# rho";
         ofs << std::setw( idt ) << "eta";
         ofs << "\n";
-        ofs.close();
     }
 
     // Cell statistics
     {
-        if ( mpi::size() == 1 ) {
-            ofs.open( stats_path.localPath(), std::ofstream::app );
-        }
-
         array::ArrayView<double, 1> rho = array::make_view<double, 1>( mesh.cells().add(
             Field( "stats_rho", array::make_datatype<double>(), array::make_shape( mesh.cells().size() ) ) ) );
         array::ArrayView<double, 1> eta = array::make_view<double, 1>( mesh.cells().add(
@@ -200,14 +199,10 @@ void build_statistics( Mesh& mesh ) {
                 }
             }
         }
-        if ( mpi::size() == 1 ) {
-            ofs.close();
-        }
     }
 
     eckit::PathName dual_stats_path( "dual_stats.txt" );
     if ( mpi::size() == 1 ) {
-        ofs.open( dual_stats_path.localPath(), std::ofstream::out );
         ofs << "# STATISTICS dual_area \n";
         ofs << std::setw( idt ) << "# area";
         ofs << "\n";
