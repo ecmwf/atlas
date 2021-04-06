@@ -162,9 +162,9 @@ void atlas__grid__Grid__uid( const Grid* This, char*& uid, int& size ) {
     eckit::MD5 md5;
     This->hash( md5 );
     std::string s = This->uid();
-    size          = static_cast<int>( s.size() + 1 );
-    uid           = new char[size];
-    strcpy( uid, s.c_str() );
+    size          = static_cast<int>( s.size() );
+    uid           = new char[size + 1];
+    std::strncpy( uid, s.c_str(), size + 1 );
 }
 
 Grid::Domain::Implementation* atlas__grid__Grid__lonlat_bounding_box( const Grid* This ) {

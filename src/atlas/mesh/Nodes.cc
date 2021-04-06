@@ -249,7 +249,7 @@ void atlas__mesh__Nodes__str( Nodes* This, char*& str, int& size ) {
     std::string s = ss.str();
     size          = static_cast<int>( s.size() );
     str           = new char[size + 1];
-    strcpy( str, s.c_str() );
+    std::strncpy( str, s.c_str(), size + 1 );
 }
 
 IrregularConnectivity* atlas__mesh__Nodes__edge_connectivity( Nodes* This ) {

@@ -263,10 +263,10 @@ void atlas__Metadata__json( Metadata* This, char*& json, int& size, int& allocat
     j.precision( 16 );
     j << *This;
     std::string json_str = s.str();
-    size                 = static_cast<int>( json_str.size());
+    size                 = static_cast<int>( json_str.size() );
     json                 = new char[size + 1];
     allocated            = true;
-    std::strncpy( json, json_str.c_str(), size+1 );
+    std::strncpy( json, json_str.c_str(), size + 1 );
     allocated = true;
 }
 

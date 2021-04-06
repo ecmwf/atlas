@@ -8,6 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
+//  deepcode ignore CppMemoryLeak: static pointers for global registry are OK and will be cleaned up at end
+
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 #include "eckit/utils/Hash.h"
