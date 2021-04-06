@@ -338,6 +338,7 @@ void TransIFS::invtrans( const int nb_scalar_fields, const double scalar_spectra
 void TransIFS::invtrans_adj( const int nb_scalar_fields, const double gp_fields[], const int nb_vordiv_fields,
                             double vorticity_spectra[], double divergence_spectra[], double scalar_spectra[] ,
                             const eckit::Configuration& config ) const {
+#ifdef TRANS_HAVE_INVTRANS_ADJ
     ATLAS_TRACE( "TransIFS::invtrans_adj" );
     TransParameters params( *this, config );
     struct ::InvTransAdj_t args = new_invtrans_adj( trans_.get() );
@@ -354,6 +355,9 @@ void TransIFS::invtrans_adj( const int nb_scalar_fields, const double gp_fields[
     args.nproma              = params.nproma();
     args.ngpblks             = params.ngpblks();
     TRANS_CHECK( ::trans_invtrans_adj( &args ) );
+#else
+    ATLAS_NOTIMPLEMENTED;
+#endif
 }
 
 
@@ -1356,7 +1360,7 @@ void TransIFS::__invtrans_grad_adj( const Spectral& sp, Field& spfield,
 void TransIFS::__invtrans_grad_adj( const Spectral& sp, FieldSet& spfields,
                                    const functionspace::NodeColumns& gp, const FieldSet& gradfields,
                                    const eckit::Configuration& config ) const {
-
+#ifdef TRANS_HAVE_INVTRANS_ADJ
     assertCompatibleDistributions( gp, sp );
 
     // Count total number of fields and do sanity checks
@@ -1403,6 +1407,9 @@ void TransIFS::__invtrans_grad_adj( const Spectral& sp, FieldSet& spfields,
             unpack( spfields[jfld] );
         }
     }
+#else
+    ATLAS_NOTIMPLEMENTED;
+#endif
 }
 
 // --------------------------------------------------------------------------------------------
@@ -1479,7 +1486,7 @@ void TransIFS::__invtrans( const Spectral& sp, const FieldSet& spfields, const f
 void TransIFS::__invtrans_adj( const Spectral& sp, FieldSet& spfields,
                               const functionspace::NodeColumns& gp, const FieldSet& gpfields,
                               const eckit::Configuration& config ) const {
-
+#ifdef TRANS_HAVE_INVTRANS_ADJ
 
     assertCompatibleDistributions( gp, sp );
 
@@ -1526,6 +1533,9 @@ void TransIFS::__invtrans_adj( const Spectral& sp, FieldSet& spfields,
             unpack( spfields[jfld] );
         }
     }
+#else
+    ATLAS_NOTIMPLEMENTED;
+#endif
 }
 
 
@@ -1582,6 +1592,7 @@ void TransIFS::__invtrans( const functionspace::Spectral& sp, const Field& spfie
 void TransIFS::__invtrans_adj( const functionspace::Spectral& sp, Field& spfield,
                               const functionspace::StructuredColumns& gp, const Field& gpfield,
                               const eckit::Configuration& config ) const {
+#ifdef TRANS_HAVE_INVTRANS_ADJ
 
     ATLAS_ASSERT( gpfield.functionspace() == 0 || functionspace::StructuredColumns( gpfield.functionspace() ) );
     ATLAS_ASSERT( spfield.functionspace() == 0 || functionspace::Spectral( spfield.functionspace() ) );
@@ -1622,6 +1633,10 @@ void TransIFS::__invtrans_adj( const functionspace::Spectral& sp, Field& spfield
         UnpackSpectral unpack( rspview );
         unpack( spfield );
     }
+
+#else
+    ATLAS_NOTIMPLEMENTED;
+#endif
 
 }
 
@@ -1686,6 +1701,7 @@ void TransIFS::__invtrans( const functionspace::Spectral& sp, const FieldSet& sp
 void TransIFS::__invtrans_adj( const functionspace::Spectral& sp, FieldSet& spfields,
                               const functionspace::StructuredColumns& gp, const FieldSet& gpfields,
                               const eckit::Configuration& config ) const {
+#ifdef TRANS_HAVE_INVTRANS_ADJ
 
     assertCompatibleDistributions( gp, sp );
 
@@ -1733,6 +1749,10 @@ void TransIFS::__invtrans_adj( const functionspace::Spectral& sp, FieldSet& spfi
             unpack( spfields[jfld] );
         }
     }
+
+#else
+    ATLAS_NOTIMPLEMENTED;
+#endif
 }
 
 
@@ -1878,6 +1898,8 @@ void TransIFS::__invtrans_vordiv2wind( const Spectral& sp, const Field& spvor, c
 void TransIFS::__invtrans_vordiv2wind_adj( const Spectral& sp, Field& spvor, Field& spdiv,
                                           const functionspace::NodeColumns& gp, const Field& gpwind,
                                           const eckit::Configuration& ) const {
+#ifdef TRANS_HAVE_INVTRANS_ADJ
+
     assertCompatibleDistributions( gp, sp );
 
     // Count total number of fields and do sanity checks
@@ -1942,7 +1964,9 @@ void TransIFS::__invtrans_vordiv2wind_adj( const Spectral& sp, Field& spvor, Fie
     UnpackSpectral unpack_div( rspdivview );
     unpack_div( spdiv );
 
-
+#else
+    ATLAS_NOTIMPLEMENTED;
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////

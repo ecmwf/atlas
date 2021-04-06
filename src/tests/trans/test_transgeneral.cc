@@ -1558,7 +1558,7 @@ CASE( "test_trans_levels" ) {
 #endif
 
 
-#if ATLAS_HAVE_TRANS
+#if ATLAS_HAVE_TRANS && defined( TRANS_HAVE_INVTRANS_ADJ )
 CASE( "test_2level_adjoint_test_with_powerspectrum_convolution" ) {
 
     std::string grid_uid( "F64" );  // Regular Gaussian F ( 8 N^2)
