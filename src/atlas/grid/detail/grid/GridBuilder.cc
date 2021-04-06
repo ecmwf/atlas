@@ -12,7 +12,6 @@
 
 #include <regex.h>
 #include <iomanip>
-#include <memory>
 
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
@@ -101,16 +100,16 @@ private:
     bool use_case_;
 };
 
-static std::unique_ptr<eckit::Mutex> local_mutex;
-static std::unique_ptr<GridBuilder::Registry> named_grids;
-static std::unique_ptr<GridBuilder::Registry> typed_grids;
+static eckit::Mutex* local_mutex          = nullptr;
+static GridBuilder::Registry* named_grids = nullptr;
+static GridBuilder::Registry* typed_grids = nullptr;
 
 static pthread_once_t once = PTHREAD_ONCE_INIT;
 
 static void init() {
-    local_mutex.reset( new eckit::Mutex() );
-    named_grids.reset( new GridBuilder::Registry() );
-    typed_grids.reset( new GridBuilder::Registry() );
+    local_mutex = new eckit::Mutex();
+    named_grids = new GridBuilder::Registry();
+    typed_grids = new GridBuilder::Registry();
 }
 
 }  // anonymous namespace
@@ -138,7 +137,7 @@ const GridBuilder::Registry& GridBuilder::typeRegistry() {
 
 GridBuilder::GridBuilder( const std::string& type ) : names_(), type_( type ) {
     pthread_once( &once, init );
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex.get() );
+    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
     ATLAS_ASSERT( typed_grids->find( type_ ) == typed_grids->end() );
     ( *typed_grids )[type] = this;
@@ -148,7 +147,7 @@ GridBuilder::GridBuilder( const std::string& type, const std::vector<std::string
                           const std::vector<std::string>& names ) :
     names_( regexes ), pretty_names_( names ), type_( type ) {
     pthread_once( &once, init );
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex.get() );
+    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
     for ( const std::string& name : names_ ) {
         ATLAS_ASSERT( named_grids->find( name ) == named_grids->end() );
@@ -161,7 +160,7 @@ GridBuilder::GridBuilder( const std::string& type, const std::vector<std::string
 
 GridBuilder::~GridBuilder() {
     pthread_once( &once, init );
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex.get() );
+    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
     for ( const std::string& name : names_ ) {
         ATLAS_ASSERT( named_grids->find( name ) != named_grids->end() );

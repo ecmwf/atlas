@@ -8,8 +8,6 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include <memory>
-
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 
@@ -32,13 +30,13 @@ LegendreCacheCreatorImpl::~LegendreCacheCreatorImpl() = default;
 
 namespace {
 
-static std::unique_ptr<eckit::Mutex> local_mutex;
-static std::unique_ptr<std::map<std::string, LegendreCacheCreatorFactory*>> m;
+static eckit::Mutex* local_mutex                              = nullptr;
+static std::map<std::string, LegendreCacheCreatorFactory*>* m = nullptr;
 static pthread_once_t once                                    = PTHREAD_ONCE_INIT;
 
 static void init() {
-    local_mutex.reset( new eckit::Mutex() );
-    m.reset( new std::map<std::string, LegendreCacheCreatorFactory*>() );
+    local_mutex = new eckit::Mutex();
+    m           = new std::map<std::string, LegendreCacheCreatorFactory*>();
 }
 
 template <typename T>
@@ -74,7 +72,7 @@ static LegendreCacheCreatorFactory& factory( const std::string& name ) {
 LegendreCacheCreatorFactory::LegendreCacheCreatorFactory( const std::string& name ) : name_( name ) {
     pthread_once( &once, init );
 
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex.get() );
+    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
     ATLAS_ASSERT( m );
     ATLAS_ASSERT( m->find( name ) == m->end() );
@@ -82,7 +80,7 @@ LegendreCacheCreatorFactory::LegendreCacheCreatorFactory( const std::string& nam
 }
 
 LegendreCacheCreatorFactory::~LegendreCacheCreatorFactory() {
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex.get() );
+    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
     ATLAS_ASSERT( m );
     m->erase( name_ );
 }
@@ -90,7 +88,7 @@ LegendreCacheCreatorFactory::~LegendreCacheCreatorFactory() {
 bool LegendreCacheCreatorFactory::has( const std::string& name ) {
     pthread_once( &once, init );
 
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex.get() );
+    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
     static force_link static_linking;
 
@@ -101,7 +99,7 @@ bool LegendreCacheCreatorFactory::has( const std::string& name ) {
 void LegendreCacheCreatorFactory::list( std::ostream& out ) {
     pthread_once( &once, init );
 
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex.get() );
+    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
     static force_link static_linking;
 
@@ -117,7 +115,7 @@ LegendreCacheCreator::Implementation* LegendreCacheCreatorFactory::build( const 
                                                                           const eckit::Configuration& config ) {
     pthread_once( &once, init );
 
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex.get() );
+    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
     static force_link static_linking;
 
