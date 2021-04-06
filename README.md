@@ -5,6 +5,7 @@ Atlas
 [![travis master](https://img.shields.io/travis/ecmwf/atlas/master.svg?label=master&logo=travis)](http://travis-ci.org/ecmwf/atlas "master")
 [![travis develop](https://img.shields.io/travis/ecmwf/atlas/develop.svg?label=develop&logo=travis)](http://travis-ci.org/ecmwf/atlas "develop")
 [![codecov](https://codecov.io/gh/ecmwf/atlas/branch/develop/graph/badge.svg)](https://codecov.io/gh/ecmwf/atlas)
+[![deepcode](https://www.deepcode.ai/api/gh/badge?key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwbGF0Zm9ybTEiOiJnaCIsIm93bmVyMSI6ImVjbXdmIiwicmVwbzEiOiJhdGxhcyIsImluY2x1ZGVMaW50IjpmYWxzZSwiYXV0aG9ySWQiOjI4NzA4LCJpYXQiOjE2MTc3MDk0NjR9.dzPznp_XHjk1qD3h--C0wFBJg0EA_dYYtFQWPS69p8k)](https://www.deepcode.ai/app/gh/ecmwf/atlas/_/dashboard?utm_content=gh%2Fecmwf%2Fatlas)
 
 Project home: https://confluence.ecmwf.int/display/ATLAS  
 Contact: Willem Deconinck (willem.deconinck@ecmwf.int)  
