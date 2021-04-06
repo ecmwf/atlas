@@ -247,13 +247,10 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes ) {
 
     UniqueLonLat compute_uid( nodes );
 
-    // This piece should be somewhere central ... could be NPROMA ?
-    // ---------->
     std::vector<idx_t> proc( nparts );
     for ( idx_t jpart = 0; jpart < nparts; ++jpart ) {
         proc[jpart] = jpart;
     }
-    // <---------
 
     auto ridx      = array::make_indexview<idx_t, 1>( nodes.remote_index() );
     auto part      = array::make_view<int, 1>( nodes.partition() );
@@ -297,10 +294,6 @@ Field& build_nodes_remote_idx( mesh::Nodes& nodes ) {
     for ( idx_t jpart = 0; jpart < nparts; ++jpart ) {
         const std::vector<uid_t>& recv_node = recv_needed[proc[jpart]];
         const idx_t nb_recv_nodes           = idx_t( recv_node.size() ) / varsize;
-        // array::ArrayView<uid_t,2> recv_node( make_view( Array::wrap(shape,
-        // recv_needed[ proc[jpart] ].data()) ),
-        //     array::make_shape(recv_needed[ proc[jpart] ].size()/varsize,varsize)
-        //     );
         for ( idx_t jnode = 0; jnode < nb_recv_nodes; ++jnode ) {
             uid_t uid = recv_node[jnode * varsize + 0];
             int inode = recv_node[jnode * varsize + 1];
