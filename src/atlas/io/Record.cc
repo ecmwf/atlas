@@ -73,7 +73,7 @@ std::string Record::URI::str() const {
 
 Record::Record() : record_( new ParsedRecord() ) {}
 
-Record::Record( const Record& other ) : record_( other.record_ ) {}
+Record::Record( const Record& other ) = default;
 
 //---------------------------------------------------------------------------------------------------------------------
 

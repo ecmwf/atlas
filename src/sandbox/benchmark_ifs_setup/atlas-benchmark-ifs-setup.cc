@@ -90,7 +90,8 @@ int Tool::execute( const Args& args ) {
         try {
             grid = Grid( key );
         }
-        catch ( eckit::Exception& e ) {
+        catch ( eckit::Exception& ) {
+            return failed();
         }
     }
     else {

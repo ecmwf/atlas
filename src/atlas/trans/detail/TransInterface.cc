@@ -48,9 +48,9 @@ void atlas__Trans__set_backend( const char* backend ) {
 }
 void atlas__Trans__backend( char*& backend, size_t& size ) {
     std::string s = Trans::backend();
-    size          = s.size() + 1;
-    backend       = new char[size];
-    strcpy( backend, s.c_str() );
+    size          = s.size();
+    backend       = new char[size + 1];
+    std::strncpy( backend, s.c_str(), size + 1 );
 }
 
 

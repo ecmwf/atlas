@@ -58,9 +58,9 @@ int atlas__read_file( const char* path, char*& content, int& size ) {
     std::stringstream ss;
     atlas::read_file( path, ss );
     std::string s = ss.str();
-    size          = s.size() + 1;
-    content       = new char[size];
-    strcpy( content, s.c_str() );
+    size          = static_cast<int>( s.size() );
+    content       = new char[size + 1];
+    std::strncpy( content, s.c_str(), size + 1 );
     return true;
 }
 

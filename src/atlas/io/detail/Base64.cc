@@ -48,8 +48,9 @@ std::string Base64::encode( const void* data, size_t len ) {
 
     size_t out_len = 4 * ( ( len + 2 ) / 3 ); /* 3-byte blocks to 4-byte */
 
-    if ( out_len < len )
+    if ( out_len < len ) {
         return std::string(); /* integer overflow */
+    }
 
     std::string str;
     str.resize( out_len );

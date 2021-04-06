@@ -69,25 +69,29 @@ const std::vector<std::string> fnames( test_arrays::fnames, test_arrays::fnames 
 
 }  // namespace test_vectors
 
-bool test_write_file( const std::string& file_path, const size_t& nb_pts, const size_t& nb_columns ) {
-    if ( !nb_pts ) {
-        return false;
-    }
+void test_write_file( const std::string& file_path, const size_t& nb_pts, const size_t& nb_columns ) {
+    REQUIRE( nb_pts > 0 );
     std::ofstream f( file_path.c_str() );
-    return ( f && f << "PointCloudIO " << nb_pts << "	" << nb_columns
-                    << "  lon	lat	f_1				"
-                       "__f3			more resilience	\n"
-                       "-31.233	39.467	1.	-0.1\n"
-                       "-28.717	38.583	2.	-0.2 even	more "
-                       "resilience\n"
-                       "-27.217	38.483	3.	-0.3\n"
-                       "-25.750	37.817	4.	-0.4\n"
-                       "-16.917	32.650	5.	-0.5\n" );
+    if( !f.is_open() ) {
+        throw eckit::CantOpenFile(file_path);
+    }
+    f << "PointCloudIO " << nb_pts << "	" << nb_columns
+      << "  lon	lat	f_1				"
+         "__f3			more resilience	\n"
+         "-31.233	39.467	1.	-0.1\n"
+         "-28.717	38.583	2.	-0.2 even	more "
+         "resilience\n"
+         "-27.217	38.483	3.	-0.3\n"
+         "-25.750	37.817	4.	-0.4\n"
+         "-16.917	32.650	5.	-0.5\n";
 }
 
-bool test_write_file_bad( const std::string& file_path ) {
+void test_write_file_bad( const std::string& file_path ) {
     std::ofstream f( file_path.c_str() );
-    return ( f && f << '?' );
+    if( !f.is_open() ) {
+        throw eckit::CantOpenFile(file_path);
+    }
+    f << '?';
 }
 
 }  // end anonymous namespace
@@ -104,13 +108,13 @@ CASE( "read_inexistent_file" ) {
 }
 
 CASE( "read_badly_formatted_file" ) {
-    EXPECT( test_write_file_bad( "pointcloud.txt" ) );
+    test_write_file_bad( "pointcloud.txt" );
     EXPECT_THROWS_AS( output::detail::PointCloudIO::read( "pointcloud.txt" ), eckit::Exception );
 }
 
 CASE( "read_grid_sample_file" ) {
     // test sample file, header properly formatted (some fluff is present)
-    EXPECT( test_write_file( "pointcloud.txt", test_arrays::nb_pts, test_arrays::nb_columns ) );
+    test_write_file( "pointcloud.txt", test_arrays::nb_pts, test_arrays::nb_columns );
 
     Log::info() << "pointcloud.txt created" << std::endl;
 
@@ -128,7 +132,7 @@ CASE( "read_grid_sample_file" ) {
 CASE( "read_grid_sample_file_header_less_rows" ) {
     Log::info() << "Creating Mesh..." << std::endl;
     // test sample file with (wrong) header with less rows
-    EXPECT( test_write_file( "pointcloud.txt", test_arrays::nb_pts - 2, test_arrays::nb_columns ) );
+    test_write_file( "pointcloud.txt", test_arrays::nb_pts - 2, test_arrays::nb_columns );
 
     Log::info() << "Creating Mesh..." << std::endl;
     Mesh mesh = output::detail::PointCloudIO::read( "pointcloud.txt" );
@@ -143,7 +147,7 @@ CASE( "read_grid_sample_file_header_less_rows" ) {
 
 CASE( "read_grid_sample_file_header_less_columns_1" ) {
     // test sample file with (wrong) header with one field less
-    EXPECT( test_write_file( "pointcloud.txt", test_arrays::nb_pts, test_arrays::nb_columns - 1 ) );
+    test_write_file( "pointcloud.txt", test_arrays::nb_pts, test_arrays::nb_columns - 1 );
 
     Mesh mesh = output::detail::PointCloudIO::read( "pointcloud.txt" );
     Grid grid( new grid::detail::grid::Unstructured( mesh ) );
@@ -156,7 +160,7 @@ CASE( "read_grid_sample_file_header_less_columns_1" ) {
 
 CASE( "read_grid_sample_file_header_less_columns_2" ) {
     // test sample file with (wrong) header with no fields
-    EXPECT( test_write_file( "pointcloud.txt", test_arrays::nb_pts, test_arrays::nb_columns - test_arrays::nb_fld ) );
+    test_write_file( "pointcloud.txt", test_arrays::nb_pts, test_arrays::nb_columns - test_arrays::nb_fld );
 
     Mesh mesh = output::detail::PointCloudIO::read( "pointcloud.txt" );
     Grid grid( new grid::detail::grid::Unstructured( mesh ) );
@@ -174,7 +178,7 @@ CASE( "write_array" ) {
 
     output::detail::PointCloudIO::write( "pointcloud.txt", test_arrays::nb_pts, test_arrays::lon, test_arrays::lat );
     f.open( "pointcloud.txt" );
-    EXPECT( f );
+    EXPECT( f.is_open() );
     f >> signature >> nb_pts >> nb_columns >> str_lon >> str_lat >> str_f1 >> str_f2;
     f.close();
 
@@ -195,7 +199,7 @@ CASE( "write_array_less_rows" ) {
                                          test_arrays::lat, test_arrays::nb_fld, test_arrays::fvalues,
                                          test_arrays::fnames );
     f.open( "pointcloud.txt" );
-    EXPECT( f );
+    EXPECT( f.is_open() );
     f >> signature >> nb_pts >> nb_columns >> str_lon >> str_lat >> str_f1 >> str_f2;
     f.close();
 
@@ -216,7 +220,7 @@ CASE( "write_array_less_columns" ) {
                                          test_arrays::nb_fld - 1 /* deliberate */, test_arrays::fvalues,
                                          test_arrays::fnames );
     f.open( "pointcloud.txt" );
-    EXPECT( f );
+    EXPECT( f.is_open() );
     f >> signature >> nb_pts >> nb_columns >> str_lon >> str_lat >> str_f1 >> str_f2;
     f.close();
 
@@ -236,7 +240,7 @@ CASE( "write_vector_all_fields" ) {
     output::detail::PointCloudIO::write( "pointcloud.txt", test_vectors::lon, test_vectors::lat, test_vectors::fvalues,
                                          test_vectors::fnames );
     f.open( "pointcloud.txt" );
-    EXPECT( f );
+    EXPECT( f.is_open() );
     f >> signature >> nb_pts >> nb_columns >> str_lon >> str_lat >> str_f1 >> str_f2;
     f.close();
 
@@ -255,7 +259,7 @@ CASE( "write_vector_no_fields" ) {
 
     output::detail::PointCloudIO::write( "pointcloud.txt", test_vectors::lon, test_vectors::lat );
     f.open( "pointcloud.txt" );
-    EXPECT( f );
+    EXPECT( f.is_open() );
     f >> signature >> nb_pts >> nb_columns >> str_lon >> str_lat >> str_f1 >> str_f2;
     f.close();
 
@@ -291,7 +295,7 @@ CASE( "write_read_write_field" ) {
                                          std::vector<std::vector<double>*>( 1, &field_values ),
                                          std::vector<std::string>( 1, field_name ) );
     f.open( "pointcloud.txt" );
-    EXPECT( f );
+    EXPECT( f.is_open() );
     f >> signature >> nb_pts >> nb_columns >> str_lon >> str_lat >> str_f;
     f.close();
 

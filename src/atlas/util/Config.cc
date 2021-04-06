@@ -256,9 +256,9 @@ int atlas__Config__get_string( Config* This, const char* name, char*& value, int
         value = nullptr;
         return false;
     }
-    size  = s.size() + 1;
-    value = new char[size];
-    strcpy( value, s.c_str() );
+    size  = static_cast<int>( s.size() );
+    value = new char[size + 1];
+    std::strncpy( value, s.c_str(), size + 1 );
     allocated = true;
     return true;
 }
@@ -332,10 +332,10 @@ void atlas__Config__json( Config* This, char*& json, int& size, int& allocated )
     j.precision( 16 );
     j << *This;
     std::string json_str = s.str();
-    size                 = json_str.size();
+    size                 = static_cast<int>( json_str.size() );
     json                 = new char[size + 1];
     allocated            = true;
-    strcpy( json, json_str.c_str() );
+    std::strncpy( json, json_str.c_str(), size + 1 );
     allocated = true;
 }
 

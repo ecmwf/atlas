@@ -686,7 +686,10 @@ CASE( "Encode/Decode byte array" ) {
     auto validate = [&]() {
         EXPECT( out == encoded );
 
-        auto str = []( std::byte byte ) { return reinterpret_cast<std::bitset<8>&>( byte ).to_string(); };
+        auto str = []( std::byte byte ) {
+            std::bitset<8> bitset( reinterpret_cast<unsigned char&>( byte ) );
+            return bitset.to_string();
+        };
         EXPECT_EQ( str( out[0] ), "00000001" );
         EXPECT_EQ( str( out[1] ), "00000011" );
         EXPECT_EQ( str( out[2] ), "00000111" );

@@ -213,7 +213,7 @@ public:
 
     /// @brief Rename this Connectivity
     void rename( const std::string& name ) {
-        strncpy( name_, name.c_str(), std::max( name.size(), MAX_STRING_SIZE() ) );
+        std::strncpy( name_, name.c_str(), std::max( name.size(), MAX_STRING_SIZE() ) );
     }
 
     /// @brief Number of rows in the connectivity table

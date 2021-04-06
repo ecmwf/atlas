@@ -105,7 +105,8 @@ void AtlasLoadbalance::run() {
     try {
         grid = Grid( key );
     }
-    catch ( eckit::Exception& err ) {
+    catch ( eckit::Exception& ) {
+        return;
     }
 
     if ( !grid ) {

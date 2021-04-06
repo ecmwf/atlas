@@ -113,7 +113,7 @@ int idx_xy_to_x( const int xidx, const int yidx, const int ns ) {
                                 : ghostIdx( yidx ) );
     }
     else if ( yidx == 3 * ns + 1 && ns > 1 ) {
-        ATLAS_ASSERT( xidx < 4 * ( ns - 1 ) + 1 + xidx >= 0 );
+        ATLAS_ASSERT( xidx < 4 * ( ns - 1 ) + 1 && xidx >= 0 );
         return ( xidx != 4 * ( ns - 1 ) ? 2 * ns * ( 5 * ns + 1 ) + 4 * ns * ( yidx - 3 * ns - 1 ) + 8 + xidx
                                         : ghostIdx( yidx ) );
     }
@@ -276,6 +276,9 @@ int down_idx( const int xidx, const int yidx, const int ns ) {
     else if ( yidx == 4 * ns ) {
         ATLAS_ASSERT( xidx < 8 );
         ret = ( xidx != 7 ? 12 * ns * ns + 8 + xidx + 1 : ghostIdx( yidx ) );
+    }
+    else {
+        throw_AssertionFailed("Invalid value of yidx",Here());
     }
     return ret;
 }
@@ -508,23 +511,35 @@ void HealpixMeshGenerator::generate_mesh( const StructuredGrid& grid, const grid
     // global starting node index for the partition
     int parts_sidx = idx_xy_to_x( 0, iy_min, ns );
 
+    auto compute_part = [&]( int ix, int iy, gidx_t ii_glb ) -> int {
+        if ( ii_glb < 8 ) {
+            // HACK! expects equal_regions partitioner. Better would be partition of attached element of which this node would be the North-West point.
+            return 0;
+        }
+        if( ii_glb > nvertices - 9 ) {
+            // HACK! expects equal_regions partitioner. Better would be partition of attached element of which this node would be the South-West point.
+            // Also, we should not have mpi here.
+            return mpi::comm().size() - 1;
+        }
+        return distribution.partition( idx_xy_to_x( ix, iy, ns ) - 8 );
+    };
+
     ii       = 0;  // index inside SB
     ii_ghost = nnodes_SB - ( iy_max - iy_min + 1 );
     for ( iy = iy_min; iy <= iy_max; iy++ ) {
         int nx = latPoints( iy ) + 1;
+        ii_glb = ii + parts_sidx;
+        int part0 = compute_part( 0, iy, ii_glb );
         for ( ix = 0; ix < nx; ix++ ) {
             if ( ix != nx - 1 ) {
                 ii_glb           = ii + parts_sidx;
-                parts_SB[ii]     = ( ii_glb < 8 ? 0
-                                            : ( ii_glb > nvertices - 9
-                                                    ? mpi::comm().size() - 1
-                                                    : distribution.partition( idx_xy_to_x( ix, iy, ns ) - 8 ) ) );
+                parts_SB[ii]     = compute_part( ix, iy, ii_glb );
                 local_idx_SB[ii] = ii;
                 is_ghost_SB[ii]  = !( ( parts_SB[ii] == mypart ) );
                 ++ii;
             }
             else {
-                parts_SB[ii_ghost]     = -1;
+                parts_SB[ii_ghost]     = part0;
                 local_idx_SB[ii_ghost] = ii_ghost;
                 is_ghost_SB[ii_ghost]  = true;
                 ++ii_ghost;
@@ -662,6 +677,10 @@ void HealpixMeshGenerator::generate_mesh( const StructuredGrid& grid, const grid
                 else {
                     inode = inode_nonghost++;
                 }
+
+                // flags
+                Topology::reset( flags( inode ) );
+
                 glb_idx( inode ) = idx_xy_to_x( ix, iy, ns ) + 1;
 
                 // grid coordinates
@@ -670,28 +689,48 @@ void HealpixMeshGenerator::generate_mesh( const StructuredGrid& grid, const grid
                 if ( iy == 0 ) {
                     _xy[0] = 45. * ix;
                     _xy[1] = 90.;
+                    Topology::set( flags( inode ), Topology::BC );
                 }
                 else if ( iy == ny - 1 ) {
                     _xy[0] = 45. * ix;
                     _xy[1] = -90.;
+                    Topology::set( flags( inode ), Topology::BC );
                 }
                 else if ( ix == nx - 1 ) {
                     grid.xy( ix - 1, iy - 1, xy1 );
                     grid.xy( ix - 2, iy - 1, xy2 );
                     _xy[0] = 1.5 * xy1[0] - 0.5 * xy2[0];
                     _xy[1] = xy1[1];
+                    Topology::set( flags( inode ), Topology::BC );
                 }
                 else if ( ix == 0 ) {
                     grid.xy( ix + 1, iy - 1, xy1 );
                     grid.xy( ix, iy - 1, xy2 );
                     _xy[0] = 1.5 * xy2[0] - 0.5 * xy1[0];
                     _xy[1] = xy1[1];
+                    Topology::set( flags( inode ), Topology::BC );
                 }
                 else {
                     grid.xy( ix, iy - 1, xy1 );
                     grid.xy( ix - 1, iy - 1, xy2 );
                     _xy[0] = 0.5 * ( xy1[0] + xy2[0] );
                     _xy[1] = xy1[1];
+                }
+
+                if( Topology::check( flags( inode ), Topology::BC ) ) {
+                    if( iy == 0 ) {
+                        Topology::set( flags( inode ), Topology::NORTH );
+                    }
+                    else if( iy == ny - 1 ) {
+                        Topology::set( flags( inode ), Topology::SOUTH );
+                    }
+                    if( ix == 0 ) {
+                        Topology::set( flags( inode ), Topology::WEST );
+                    }
+                    else if( ix == nx - 1 ) {
+                        Topology::set( flags( inode ), Topology::EAST | Topology::GHOST );
+                        ATLAS_ASSERT( is_ghost_SB[iil] );
+                    }
                 }
 
                 xy( inode, LON ) = _xy[LON];
@@ -704,8 +743,7 @@ void HealpixMeshGenerator::generate_mesh( const StructuredGrid& grid, const grid
 
                 part( inode )  = parts_SB[iil];
                 ghost( inode ) = is_ghost_SB[iil];
-                // flags
-                Topology::reset( flags( inode ) );
+
                 if ( ghost( inode ) ) {
                     Topology::set( flags( inode ), Topology::GHOST );
                     remote_idx( inode ) = local_idx_SB[iil];
@@ -782,9 +820,15 @@ void HealpixMeshGenerator::generate_mesh( const StructuredGrid& grid, const grid
     }
 #endif
 
-    generateGlobalElementNumbering( mesh );
+    mesh.metadata().set<size_t>( "nb_nodes_including_halo[0]", nodes.size() );
+    nodes.metadata().set<size_t>( "NbRealPts", size_t( nnodes ) );
+    nodes.metadata().set<size_t>( "NbVirtualPts", size_t( 0 ) );
+    nodes.global_index().metadata().set( "human_readable", true );
+    nodes.global_index().metadata().set( "min", 1 );
+    nodes.global_index().metadata().set( "max", nvertices + grid.ny() + 2 );
 
-    nodes.metadata().set( "parallel", true );
+
+    generateGlobalElementNumbering( mesh );
 
 }  // generate_mesh
 

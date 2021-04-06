@@ -9,7 +9,18 @@
  */
 
 #pragma once
-#ifndef __clang_analyzer__
+
+#ifndef ATLAS_IO_STATIC_ASSERT
+#if defined(__clang_analyzer__)
+#define ATLAS_IO_STATIC_ASSERT 0
+#elif defined(__clang__) && (__clang_major__ < 4)
+#define ATLAS_IO_STATIC_ASSERT 0
+#else
+#define ATLAS_IO_STATIC_ASSERT 1
+#endif
+#endif
+
+#if ATLAS_IO_STATIC_ASSERT
 
 #include <cstdlib>
 #include "atlas/io/detail/TypeTraits.h"
