@@ -52,7 +52,10 @@ public:
     virtual bool global() const override { return global_; }
     bool zonal_band() const { return is_zonal_band( {xmin_, xmax_}, units_ ); }
 
-    virtual bool empty() const override { return ( xmin_ == xmax_ ) or ( ymin_ == ymax_ ); }
+    virtual bool empty() const override {
+        //  deepcode ignore FloatingPointEquals: We want exact comparison
+        return ( xmin_ == xmax_ ) or ( ymin_ == ymax_ );
+    }
 
     virtual Spec spec() const override;
 

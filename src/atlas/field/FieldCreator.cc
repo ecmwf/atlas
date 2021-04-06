@@ -8,7 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
-//  deepcode ignore CppMemoryLeak: static pointers for global registry are OK and will be cleaned up at end
+// file deepcode ignore CppMemoryLeak: static pointers for global registry are OK and will be cleaned up at end
 
 #include "atlas/field/FieldCreator.h"
 

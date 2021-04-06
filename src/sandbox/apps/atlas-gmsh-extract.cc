@@ -8,6 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
+// file deepcode ignore MissingOpenCheckOnFile: False positive
+
 #include <cassert>
 #include <cmath>
 #include <fstream>
