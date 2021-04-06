@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iomanip>
+#include <numeric>
 
 #include "atlas/array/MakeView.h"
 #include "atlas/field/FieldSet.h"
@@ -29,6 +30,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/trans/Trans.h"
+#include "atlas/trans/ifs/TransIFS.h"
 #include "atlas/trans/local/TransLocal.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/Earth.h"
@@ -1554,6 +1556,129 @@ CASE( "test_trans_levels" ) {
     }
 }
 #endif
+
+
+#if ATLAS_HAVE_TRANS
+CASE( "test_2level_adjoint_test_with_powerspectrum_convolution" ) {
+
+    std::string grid_uid( "F64" );  // Regular Gaussian F ( 8 N^2)
+    atlas::StructuredGrid g2( grid_uid );
+
+    auto N = atlas::GaussianGrid(g2).N(); // -> cast to Gaussian grid and get the Gaussian number
+
+    auto levels = 2;
+    std::vector<int> n{2,3};  // total wavenumber on levels O and 1
+    std::vector<int> m{1,2};  // meridional wavenumber on levels O and 1
+    std::vector<int> imag{false, true};  // imaginary component or not
+
+    atlas::functionspace::Spectral specFS(2*N-1, atlas::option::levels(levels));
+
+    atlas::functionspace::StructuredColumns gridFS(g2,
+        atlas::grid::Partitioner(new atlas::grid::detail::partitioner::TransPartitioner() ),
+        atlas::option::levels(levels));
+
+    auto lonlatview = atlas::array::make_view<double, 2>( gridFS.lonlat() );
+
+    atlas::trans::Trans transIFS( gridFS, specFS );
+
+  //  Log::info() << "transIFS llatlon = "  << dynamic_cast<atlas::trans::TransIFS *>(transIFS.get())->trans()->llatlon << std::endl;
+
+    Log::info() << "transIFS backend"  << transIFS.backend() << std::endl;
+
+    std::vector<float> powerSpectrum(2*N, 0.0);
+    float i(1.0);
+    float t(0.0);
+
+    for (std::size_t w = 0; w < powerSpectrum.size(); ++w) {
+        powerSpectrum[w] = 1.0 / static_cast<float>(w+1);
+    }
+    float tot = std::accumulate(powerSpectrum.cbegin(), powerSpectrum.cend(), 0.0);
+    for (std::size_t w = 0; w < powerSpectrum.size(); ++w) {
+        powerSpectrum[w] = powerSpectrum[w]/tot;
+    }
+    Log::info() << "create a fictitous power spectrum"  << atlas::mpi::rank()
+                << " " << powerSpectrum[0] << " "<<  powerSpectrum[1]  << " " << tot << std::endl;
+
+    atlas::Field gpf = gridFS.createField<double>(atlas::option::name( "gpf" ) );
+    atlas::Field gpf2 = gridFS.createField<double>(atlas::option::name( "gpf2" ) );
+    atlas::Field spf = specFS.createField<double>(atlas::option::name( "spf" ) );
+    atlas::Field spfg = specFS.createField<double>(atlas::option::name( "spfg" ) | atlas::option::global() );
+
+    auto gpfView = atlas::array::make_view<double, 2>( gpf );
+    for (atlas::idx_t j = gridFS.j_begin(); j < gridFS.j_end(); ++j) {
+        for (atlas::idx_t i = gridFS.i_begin(j); i < gridFS.i_end(j); ++i) {
+            atlas::idx_t jn = gridFS.index(i, j);
+            for  (atlas::idx_t jl : {0,1}) {
+                gpfView(jn, jl) = 0.0;
+                if ((j == gridFS.j_end()-1) && (i == gridFS.i_end(gridFS.j_end()-1)-1) &&
+                        (jl == 0) && (atlas::mpi::rank() == 0 ) ) {
+                    gpfView(jn, jl) = 1.0;
+                }
+                if ((j == gridFS.j_end()-1) && (i == gridFS.i_end(gridFS.j_end()-1)-1) &&
+                        (jl == 1) && (atlas::mpi::rank() == 1 )) {
+                    gpfView(jn, jl) = 1.0;
+                }
+            }
+        }
+    }
+
+    // transform fields to spectral and view
+    transIFS.invtrans_adj(gpf, spf);
+
+    auto spfView = atlas::array::make_view<double, 2>( spf );
+    const auto zonal_wavenumbers = specFS.zonal_wavenumbers();
+    const int nb_zonal_wavenumbers = zonal_wavenumbers.size();
+    i = 0;
+    double adj_value(0.0);
+    for ( int jm = 0; jm < nb_zonal_wavenumbers; ++jm ) {
+        const std::size_t m1 = zonal_wavenumbers( jm );
+        for ( std::size_t n1 = m1; n1 <= static_cast<std::size_t>(2*N-1); ++n1 ) {
+            for ( int imag1 : {0, 1} ) {
+                for (int jl : {0, 1}) {
+                    // scale by the square root of the power spectrum
+                    // note here that we need the modal power spectrum
+                    // i.e. divide powerSpectra by (2n +1)
+                    spfView(i,jl) = spfView(i,jl) *
+                        std::sqrt( std::sqrt(static_cast<double>(powerSpectrum[n1]))) /
+                        std::sqrt(static_cast<double>(2 * n1 + 1));
+
+                    // adjoint at the heart
+                    double temp =  spfView(i, jl) * spfView(i, jl);
+                    adj_value += (m1 > 0 ? 2 * temp  : temp);  // to take account of -ve m.
+
+                    // scale by the square root of the power spectrum (again!)
+                    spfView(i,jl) = spfView(i,jl) *
+                        std::sqrt(std::sqrt(static_cast<double>(powerSpectrum[n1]))) /
+                        std::sqrt(static_cast<double>(2 * n1 + 1));
+
+                }
+                ++i;
+            }
+        }
+    }
+    atlas::mpi::comm().allReduceInPlace(adj_value, eckit::mpi::sum());
+
+    transIFS.invtrans(spf, gpf2);
+
+    Log::info() << "adjoint test transforms " << std::endl;
+    auto gpf2View = atlas::array::make_view<double, 2>( gpf2 );
+    double adj_value2(0.0);
+    for (atlas::idx_t j = gridFS.j_begin(); j < gridFS.j_end(); ++j) {
+        for (atlas::idx_t i = gridFS.i_begin(j); i < gridFS.i_end(j); ++i) {
+            atlas::idx_t jn = gridFS.index(i, j);
+            for  (atlas::idx_t jl : {0, 1}) {
+                adj_value2 +=  gpfView(jn,jl) * gpf2View(jn,jl);
+            }
+        }
+    }
+    atlas::mpi::comm().allReduceInPlace(adj_value2, eckit::mpi::sum());
+
+    Log::info() << "adjoint test "  <<
+                   " " << adj_value  << " " << adj_value2 << std::endl;
+    EXPECT(std::abs(adj_value - adj_value2) /adj_value < 1e-12 );
+}
+#endif
+
 
 #if 0
 CASE( "test_trans_fourier_truncation" ) {
