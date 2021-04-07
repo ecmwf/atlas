@@ -9,5 +9,6 @@ ecbuild_add_test( TARGET atlas_test_redistribution
   SOURCES   test_redistribution.cc
   MPI       8
   LIBS      atlas
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 8
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
