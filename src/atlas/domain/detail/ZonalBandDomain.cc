@@ -25,14 +25,25 @@ static bool _is_global( double ymin, double ymax ) {
 }
 
 static std::array<double, 2> get_interval_y( const eckit::Parametrisation& params ) {
-    double ymin, ymax;
+    constexpr double invalid = std::numeric_limits<double>::max();
+    auto is_valid = [](double y) {
+        //  deepcode ignore FloatingPointEquals: We want exact comparison
+        return (y != invalid);
+    };
+    double ymax = invalid;
+    double ymin = invalid;
 
-    if ( !params.get( "ymin", ymin ) ) {
-        throw_Exception( "ymin missing in Params", Here() );
+    if( params.get("south",ymin) || params.get("north",ymax) ) {
+        ymax = is_valid(ymax) ? ymax : 90.;
+        ymin = is_valid(ymin) ? ymin : -90.;
     }
-
-    if ( !params.get( "ymax", ymax ) ) {
-        throw_Exception( "ymax missing in Params", Here() );
+    else {
+        if ( !params.get( "ymin", ymin ) ) {
+            throw_Exception( "ymin missing in Params", Here() );
+        }
+        if ( !params.get( "ymax", ymax ) ) {
+            throw_Exception( "ymax missing in Params", Here() );
+        }
     }
 
     return {ymin, ymax};
