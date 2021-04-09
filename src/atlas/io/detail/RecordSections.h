@@ -47,20 +47,20 @@ struct RecordEnd {  // 32 bytes
 
 struct RecordHead {
     static constexpr size_t bytes    = 256;
-    static constexpr size_t padding_ = bytes - 16 * 3 - 8 * 4 - 64 - 8 * 2 - 4 - 1;
+    static constexpr size_t padding_ = bytes - 16 - 8 - 16 - 8 * 4 - 64 - 8 * 2 - 4 - 1;
 
     RecordBegin begin;                              ///< 16 beginning of record
-    Version version;                                ///< 16 version of this record
+    Version version;                                ///< 8  version of this record
     Time time;                                      ///< 16 time since system_clock epoch (1970-1-1 00:00)
     uint64_t record_length{0};                      ///<  8 length of entire record
-    eckit::FixedString<8> metadata_format{"yaml"};  ///<  8 version of this record
+    eckit::FixedString<8> metadata_format{"yaml"};  ///<  8 format of metadata section in this record
     std::uint64_t metadata_offset{bytes};           ///<  8 offset where metadata section starts
     std::uint64_t metadata_length{0};               ///<  8 length of metadata section
     eckit::FixedString<64> metadata_checksum;       ///< 64 checksum of metadata
     std::uint64_t index_offset{0};                  ///<  8  offset where data section starts
     std::uint64_t index_length;                     ///<  8 length of data section
-    std::uint32_t magic_number{1234};        ///<  4 number 1234 encoded in binary, used to detect encoded endianness
-    eckit::FixedString<padding_> padding__;  ///<  Extra padding to get to <bytes>
+    std::uint32_t magic_number{1234};               ///<  4 number 1234 encoded in binary, used to detect encoded endianness
+    eckit::FixedString<padding_> padding__;         ///<  Extra padding to get to <bytes>
     eckit::FixedString<1> eol{"\n"};
 
     static constexpr size_t size() { return bytes; }  ///< Size in bytes of this section

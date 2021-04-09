@@ -240,7 +240,7 @@ void TableFormat::print( std::ostream& out ) const {
     table.column( "type" );
     table.column( "description" );
     if ( print_details_ ) {
-        table.column( "version" );
+        table.column( "ver." );
         table.column( "comp." );
         table.column( "size" );
         table.column( "checksum[:8]" );

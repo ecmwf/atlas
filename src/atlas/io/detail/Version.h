@@ -17,23 +17,21 @@
 namespace atlas {
 namespace io {
 
-struct Version {             // 16 bytes
+struct Version {             // 8 bytes
     std::uint32_t major{0};  ///<  Major version
-    std::uint32_t minor{1};  ///<  Minor version
-    std::uint32_t patch{0};  ///<  Patch version
-    std::uint32_t tweak{0};  ///<  Tweak version
+    std::uint32_t minor{2};  ///<  Minor version
 
     std::string str() const {
-        return std::to_string( major ) + "." + std::to_string( minor ) + "." + std::to_string( patch );
+        return std::to_string( major ) + "." + std::to_string( minor );
     }
     operator std::string() const { return str(); }
-    operator eckit::SemanticVersion() const { return eckit::SemanticVersion{major, minor, patch}; }
+    operator eckit::SemanticVersion() const { return eckit::SemanticVersion{major, minor, 0}; }
 
     bool operator<( const Version& v ) const {
-        return eckit::SemanticVersion{major, minor, patch} < eckit::SemanticVersion{v.major, v.minor, v.patch};
+        return eckit::SemanticVersion{major, minor, 0} < eckit::SemanticVersion{v.major, v.minor, 0};
     }
     bool operator==( const Version& v ) const {
-        return eckit::SemanticVersion{major, minor, patch} == eckit::SemanticVersion{v.major, v.minor, v.patch};
+        return eckit::SemanticVersion{major, minor, 0} == eckit::SemanticVersion{v.major, v.minor, 0};
     }
     bool operator!=( const Version& v ) const { return !( *this == v ); }
     bool operator<=( const Version& v ) const { return ( *this < v ) or ( *this == v ); }
