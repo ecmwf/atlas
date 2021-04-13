@@ -36,9 +36,9 @@ void atlas__FunctionSpace__delete( FunctionSpaceImpl* This ) {
 void atlas__FunctionSpace__name( const FunctionSpaceImpl* This, char*& name, int& size ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_FunctionSpace" );
     std::string s = This->type();
-    size          = static_cast<int>( s.size() + 1 );
-    name          = new char[size];
-    strcpy( name, s.c_str() );
+    size          = static_cast<int>( s.size() );
+    name          = new char[size + 1];
+    std::strncpy( name, s.c_str(), size + 1 );
 }
 
 field::FieldImpl* atlas__FunctionSpace__create_field( const FunctionSpaceImpl* This,

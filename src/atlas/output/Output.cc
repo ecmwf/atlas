@@ -8,6 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
+// file deepcode ignore CppMemoryLeak: static pointers for global registry are OK and will be cleaned up at end
+
 #include <map>
 #include <string>
 
@@ -83,6 +85,7 @@ OutputFactory::OutputFactory( const std::string& name ) : name_( name ) {
     pthread_once( &once, init );
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
+    ATLAS_ASSERT( m );
     if ( m->find( name ) != m->end() ) {
         throw_Exception( "Duplicate OutputFactory entry " + name );
     }
@@ -93,6 +96,7 @@ OutputFactory::OutputFactory( const std::string& name ) : name_( name ) {
 OutputFactory::~OutputFactory() {
     pthread_once( &once, init );
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    ATLAS_ASSERT( m );
     m->erase( name_ );
 }
 
@@ -100,6 +104,7 @@ void OutputFactory::list( std::ostream& out ) {
     pthread_once( &once, init );
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
+    ATLAS_ASSERT( m );
     const char* sep = "";
     for ( std::map<std::string, OutputFactory*>::const_iterator j = m->begin(); j != m->end(); ++j ) {
         out << sep << ( *j ).first;
@@ -111,6 +116,7 @@ const OutputImpl* OutputFactory::build( const std::string& name, std::ostream& s
     pthread_once( &once, init );
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
+    ATLAS_ASSERT( m );
     std::map<std::string, OutputFactory*>::const_iterator j = m->find( name );
 
     Log::debug() << "Looking for OutputFactory [" << name << "]" << std::endl;
@@ -132,6 +138,7 @@ const OutputImpl* OutputFactory::build( const std::string& name, std::ostream& s
     pthread_once( &once, init );
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
+    ATLAS_ASSERT( m );
     std::map<std::string, OutputFactory*>::const_iterator j = m->find( name );
 
     Log::debug() << "Looking for OutputFactory [" << name << "]" << std::endl;

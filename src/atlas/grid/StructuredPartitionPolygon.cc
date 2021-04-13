@@ -8,6 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
+// file deepcode ignore MissingOpenCheckOnFile: False positive
+
 #include "atlas/grid/StructuredPartitionPolygon.h"
 
 #include <fstream>
@@ -339,7 +341,7 @@ void StructuredPartitionPolygon::outputPythonScript( const eckit::PathName& file
         // clang-format off
         if ( mpi_rank == r ) {
             std::ofstream f( filepath.asString().c_str(), mpi_rank == 0 ? std::ios::trunc : std::ios::app );
-
+            ATLAS_ASSERT( f.is_open() );
             if ( mpi_rank == 0 ) {
                 f << "\n" "import sys"
                      "\n"
