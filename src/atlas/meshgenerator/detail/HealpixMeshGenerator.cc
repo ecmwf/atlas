@@ -278,7 +278,7 @@ int down_idx( const int xidx, const int yidx, const int ns ) {
         ret = ( xidx != 7 ? 12 * ns * ns + 8 + xidx + 1 : ghostIdx( yidx ) );
     }
     else {
-        throw_AssertionFailed("Invalid value of yidx",Here());
+        throw_AssertionFailed( "Invalid value of yidx", Here() );
     }
     return ret;
 }
@@ -516,7 +516,7 @@ void HealpixMeshGenerator::generate_mesh( const StructuredGrid& grid, const grid
             // HACK! expects equal_regions partitioner. Better would be partition of attached element of which this node would be the North-West point.
             return 0;
         }
-        if( ii_glb > nvertices - 9 ) {
+        if ( ii_glb > nvertices - 9 ) {
             // HACK! expects equal_regions partitioner. Better would be partition of attached element of which this node would be the South-West point.
             // Also, we should not have mpi here.
             return mpi::comm().size() - 1;
@@ -527,8 +527,8 @@ void HealpixMeshGenerator::generate_mesh( const StructuredGrid& grid, const grid
     ii       = 0;  // index inside SB
     ii_ghost = nnodes_SB - ( iy_max - iy_min + 1 );
     for ( iy = iy_min; iy <= iy_max; iy++ ) {
-        int nx = latPoints( iy ) + 1;
-        ii_glb = ii + parts_sidx;
+        int nx    = latPoints( iy ) + 1;
+        ii_glb    = ii + parts_sidx;
         int part0 = compute_part( 0, iy, ii_glb );
         for ( ix = 0; ix < nx; ix++ ) {
             if ( ix != nx - 1 ) {
@@ -717,17 +717,17 @@ void HealpixMeshGenerator::generate_mesh( const StructuredGrid& grid, const grid
                     _xy[1] = xy1[1];
                 }
 
-                if( Topology::check( flags( inode ), Topology::BC ) ) {
-                    if( iy == 0 ) {
+                if ( Topology::check( flags( inode ), Topology::BC ) ) {
+                    if ( iy == 0 ) {
                         Topology::set( flags( inode ), Topology::NORTH );
                     }
-                    else if( iy == ny - 1 ) {
+                    else if ( iy == ny - 1 ) {
                         Topology::set( flags( inode ), Topology::SOUTH );
                     }
-                    if( ix == 0 ) {
+                    if ( ix == 0 ) {
                         Topology::set( flags( inode ), Topology::WEST );
                     }
-                    else if( ix == nx - 1 ) {
+                    else if ( ix == nx - 1 ) {
                         Topology::set( flags( inode ), Topology::EAST | Topology::GHOST );
                         ATLAS_ASSERT( is_ghost_SB[iil] );
                     }

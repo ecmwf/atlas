@@ -124,7 +124,7 @@ public:
    */
     virtual void invtrans( const int nb_vordiv_fields, const double vorticity_spectra[],
                            const double divergence_spectra[], double gp_fields[],
-                           const eckit::Configuration& = util::NoConfig() ) const = 0;  
+                           const eckit::Configuration& = util::NoConfig() ) const = 0;
 
     /*!
    * @brief invtrans_adj
@@ -136,8 +136,8 @@ public:
    * @param gp_fields
    */
     virtual void invtrans_adj( const int nb_scalar_fields, const double gp_fields[], const int nb_vordiv_fields,
-                              double vorticity_spectra[], double divergence_spectra[], double scalar_spectra[],
-                              const eckit::Configuration& = util::NoConfig() ) const = 0;
+                               double vorticity_spectra[], double divergence_spectra[], double scalar_spectra[],
+                               const eckit::Configuration& = util::NoConfig() ) const = 0;
 
     /*!
    * @brief invtrans_adj
@@ -146,17 +146,15 @@ public:
    * @param scalar_fields
    */
     virtual void invtrans_adj( const int nb_scalar_fields, const double gp_fields[], double scalar_spectra[],
-                              const eckit::Configuration& = util::NoConfig() ) const = 0;
+                               const eckit::Configuration& = util::NoConfig() ) const = 0;
 
     /*!
    * @brief Adjoint of Inverse transform of vorticity/divergence to wind(U/V)
    * @param nb_fields [in] Number of fields ( both components of wind count as 1
    * )
    */
-    virtual void invtrans_adj( const int nb_vordiv_fields, const double wind_fields[],
-                              double vorticity_spectra[], double divergence_spectra[],
-                              const eckit::Configuration& = util::NoConfig() ) const = 0;
-
+    virtual void invtrans_adj( const int nb_vordiv_fields, const double wind_fields[], double vorticity_spectra[],
+                               double divergence_spectra[], const eckit::Configuration& = util::NoConfig() ) const = 0;
 
 
     /*!

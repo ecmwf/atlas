@@ -135,7 +135,7 @@ protected:
 //------------------------------------------------------------------------------------------------------
 
 namespace geometry {
-using Earth      = Geometry;  // Sphere with util::Earth radius by default
+using Earth = Geometry;  // Sphere with util::Earth radius by default
 class UnitSphere : public Geometry {
 public:
     UnitSphere() : Geometry( /*radius*/ 1. ) {}

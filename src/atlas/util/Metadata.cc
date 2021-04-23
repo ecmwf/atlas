@@ -195,7 +195,7 @@ double atlas__Metadata__get_double( Metadata* This, const char* name ) {
 void atlas__Metadata__get_string( Metadata* This, const char* name, char* output_str, int max_len ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Metadata" );
     std::string s = This->get<std::string>( std::string( name ) );
-    if ( s.size()+1 > size_t( max_len ) ) {
+    if ( s.size() + 1 > size_t( max_len ) ) {
         std::stringstream msg;
         msg << "Cannot copy string `" << s << "` of metadata `" << name
             << "`"

@@ -15,131 +15,120 @@
 
 namespace atlas {
 
-  class Field;
-  class FieldSet;
-  class FunctionSpace;
+class Field;
+class FieldSet;
+class FunctionSpace;
 
-  namespace functionspace {
-    namespace detail {
-      class StructuredColumns;
-    }
-  }
+namespace functionspace {
+namespace detail {
+class StructuredColumns;
 }
+}  // namespace functionspace
+}  // namespace atlas
 
 namespace atlas {
-  namespace redistribution {
-    namespace detail {
+namespace redistribution {
+namespace detail {
 
-      // Forward declarations.
-      class StructuredColumnsToStructuredColumns;
-      class StructuredIndexRange;
+// Forward declarations.
+class StructuredColumnsToStructuredColumns;
+class StructuredIndexRange;
 
-      // Type aliases.
-      class StructuredIndexRange;
-      using idxPair = std::pair<idx_t, idx_t>;
-      using idxPairVector = std::vector<idxPair>;
-      using StructuredIndexRangeVector = std::vector<StructuredIndexRange>;
+// Type aliases.
+class StructuredIndexRange;
+using idxPair                    = std::pair<idx_t, idx_t>;
+using idxPairVector              = std::vector<idxPair>;
+using StructuredIndexRangeVector = std::vector<StructuredIndexRange>;
 
-      using functionspace::detail::StructuredColumns;
+using functionspace::detail::StructuredColumns;
 
-      /// \brief    Concrete redistributor class for StructuredColumns to
-      ///           StructuredColumns.
-      ///
-      /// \details  Class to map two function spaces with the same grid but
-      ///           different partitioners.
-      class StructuredColumnsToStructuredColumns : public RedistributionImpl {
+/// \brief    Concrete redistributor class for StructuredColumns to
+///           StructuredColumns.
+///
+/// \details  Class to map two function spaces with the same grid but
+///           different partitioners.
+class StructuredColumnsToStructuredColumns : public RedistributionImpl {
+public:
+    /// \brief    Constructs and initialises the redistributor.
+    ///
+    /// \details  Performs MPI_Allgatherv to determine the (i, j, k) ranges
+    ///           of each source and target function space on each PE.
+    ///           The grids of source and target function space must match.
+    ///
+    /// \param[in]  sourceFunctionSpace  Function space of source fields.
+    /// \param[in]  targetFunctionSpace  Function space of target fields.
+    StructuredColumnsToStructuredColumns( const FunctionSpace& sourceFunctionSpace,
+                                          const FunctionSpace& targetFunctionSpace );
 
-      public:
+    /// \brief    Redistributes source field to target field.
+    ///
+    /// \details  Transfers source field to target field via an
+    ///           MPI_Alltoallv. Function space of source field must match
+    ///           sourceFunctionSpace supplied to the constructor. Same
+    ///           applies to target field.
+    ///
+    /// \param[in]  sourceField  input field matching sourceFunctionSpace.
+    /// \param[out] targetField  output field matching targetFunctionSpace.
+    void execute( const Field& sourceField, Field& targetField ) const override;
 
-        /// \brief    Constructs and initialises the redistributor.
-        ///
-        /// \details  Performs MPI_Allgatherv to determine the (i, j, k) ranges
-        ///           of each source and target function space on each PE.
-        ///           The grids of source and target function space must match.
-        ///
-        /// \param[in]  sourceFunctionSpace  Function space of source fields.
-        /// \param[in]  targetFunctionSpace  Function space of target fields.
-        StructuredColumnsToStructuredColumns(
-          const FunctionSpace& sourceFunctionSpace,
-          const FunctionSpace& targetFunctionSpace);
+    /// \brief    Redistributes source field set to target fields set.
+    ///
+    /// \details  Transfers source field set to target field set via
+    ///           multiple invocations of execute(sourceField, targetField).
+    ///
+    /// \param[in]  sourceFieldSet  input field set.
+    /// \param[out] targetFieldSet  output field set.
+    void execute( const FieldSet& sourceFieldSet, FieldSet& targetFieldSet ) const override;
 
-        /// \brief    Redistributes source field to target field.
-        ///
-        /// \details  Transfers source field to target field via an
-        ///           MPI_Alltoallv. Function space of source field must match
-        ///           sourceFunctionSpace supplied to the constructor. Same
-        ///           applies to target field.
-        ///
-        /// \param[in]  sourceField  input field matching sourceFunctionSpace.
-        /// \param[out] targetField  output field matching targetFunctionSpace.
-        void execute(
-          const Field& sourceField, Field& targetField) const override;
+private:
+    // Generic execute call to handle different field types.
+    template <typename fieldType>
+    void doExecute( const Field& sourceField, Field& targetField ) const;
 
-        /// \brief    Redistributes source field set to target fields set.
-        ///
-        /// \details  Transfers source field set to target field set via
-        ///           multiple invocations of execute(sourceField, targetField).
-        ///
-        /// \param[in]  sourceFieldSet  input field set.
-        /// \param[out] targetFieldSet  output field set.
-        void execute(const FieldSet& sourceFieldSet,
-          FieldSet& targetFieldSet) const override;
+    // FunctionSpaces recast to StructuredColumns.
+    const StructuredColumns* sourceStructuredColumnsPtr_{};
+    const StructuredColumns* targetStructuredColumnsPtr_{};
 
-      private:
+    // Vectors of index range intersection objects.
+    StructuredIndexRangeVector sendIntersections_{};
+    StructuredIndexRangeVector recvIntersections_{};
 
-        // Generic execute call to handle different field types.
-        template <typename fieldType>
-        void doExecute(const Field& sourceField, Field& targetField) const;
+    // Counts and displacements for MPI communications.
+    std::vector<int> sendCounts_{};
+    std::vector<int> sendDisplacements_{};
+    std::vector<int> recvCounts_{};
+    std::vector<int> recvDisplacements_{};
+};
 
-        // FunctionSpaces recast to StructuredColumns.
-        const StructuredColumns* sourceStructuredColumnsPtr_{};
-        const StructuredColumns* targetStructuredColumnsPtr_{};
+/// \brief    Helper class for function space intersections.
+class StructuredIndexRange {
+public:
+    /// \brief    Default Constructor.
+    StructuredIndexRange() = default;
 
-        // Vectors of index range intersection objects.
-        StructuredIndexRangeVector sendIntersections_{};
-        StructuredIndexRangeVector recvIntersections_{};
+    /// \brief    Constructor.
+    StructuredIndexRange( const StructuredColumns* const structuredColumnsPtr );
 
-        // Counts and displacements for MPI communications.
-        std::vector<int> sendCounts_{};
-        std::vector<int> sendDisplacements_{};
-        std::vector<int> recvCounts_{};
-        std::vector<int> recvDisplacements_{};
+    /// \brief    Get index ranges from all PEs.
+    StructuredIndexRangeVector getStructuredIndexRanges() const;
 
-      };
+    /// \brief    Count number of elements.
+    idx_t getElemCount() const;
 
-      /// \brief    Helper class for function space intersections.
-      class StructuredIndexRange {
+    /// \brief    Intersection operator.
+    StructuredIndexRange operator&( const StructuredIndexRange& indexRange ) const;
 
-      public:
+    /// \brief    Iterate over all indices and do something with functor.
+    template <typename functorType>
+    void forEach( const functorType& functor ) const;
 
-        /// \brief    Default Constructor.
-        StructuredIndexRange() = default;
+private:
+    // Begin and end of j range.
+    idxPair jBeginEnd_{};
 
-        /// \brief    Constructor.
-        StructuredIndexRange(const StructuredColumns* const structuredColumnsPtr);
-
-        /// \brief    Get index ranges from all PEs.
-        StructuredIndexRangeVector getStructuredIndexRanges() const;
-
-        /// \brief    Count number of elements.
-        idx_t getElemCount() const;
-
-        /// \brief    Intersection operator.
-        StructuredIndexRange operator&(const StructuredIndexRange& indexRange) const;
-
-        /// \brief    Iterate over all indices and do something with functor.
-        template <typename functorType>
-        void forEach(const functorType& functor) const;
-
-      private:
-
-        // Begin and end of j range.
-        idxPair jBeginEnd_{};
-
-        // Begin and end of i range for each j.
-        idxPairVector iBeginEnd_{};
-
-      };
-    }
-  }
-}
+    // Begin and end of i range for each j.
+    idxPairVector iBeginEnd_{};
+};
+}  // namespace detail
+}  // namespace redistribution
+}  // namespace atlas

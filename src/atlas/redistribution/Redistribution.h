@@ -11,22 +11,19 @@
 #include "atlas/util/ObjectHandle.h"
 
 namespace atlas {
-  class Field;
-  class FieldSet;
-  class FunctionSpace;
-}
+class Field;
+class FieldSet;
+class FunctionSpace;
+}  // namespace atlas
 
 namespace atlas {
 
-  /// \brief    Base redistributer class.
-  ///
-  /// \details  Class to map two function spaces with the same grid but
-  ///           different partitioners.
-  class Redistribution :
-    public util::ObjectHandle<redistribution::detail::RedistributionImpl> {
-
-  public:
-
+/// \brief    Base redistributer class.
+///
+/// \details  Class to map two function spaces with the same grid but
+///           different partitioners.
+class Redistribution : public util::ObjectHandle<redistribution::detail::RedistributionImpl> {
+public:
     using Handle::Handle;
 
     /// \brief    Constructs and initialises the redistributor.
@@ -37,9 +34,7 @@ namespace atlas {
     ///
     /// \param[in]  sourceFunctionSpace  Function space of source fields.
     /// \param[in]  targetFunctionSpace  Function space of target fields.
-    Redistribution(
-      const FunctionSpace& sourceFunctionSpace,
-      const FunctionSpace& targetFunctionSpace);
+    Redistribution( const FunctionSpace& sourceFunctionSpace, const FunctionSpace& targetFunctionSpace );
 
     /// \brief    Maps source field to target field.
     ///
@@ -49,7 +44,7 @@ namespace atlas {
     ///
     /// \param[in]  sourceField  input field matching sourceFunctionSpace.
     /// \param[out] targetField  output field matching targetFunctionSpace.
-    void execute(const Field& sourceField, Field& targetField) const;
+    void execute( const Field& sourceField, Field& targetField ) const;
 
     /// \brief    Redistributes source field set to target fields set.
     ///
@@ -58,8 +53,7 @@ namespace atlas {
     ///
     /// \param[in]  sourceFieldSet  input field set.
     /// \param[out] targetFieldSet  output field set.
-    void execute(
-      const FieldSet& sourceFieldSet, FieldSet& targetFieldSet) const;
+    void execute( const FieldSet& sourceFieldSet, FieldSet& targetFieldSet ) const;
 
     /// \brief  Get reference to source function space.
     FunctionSpace& source();
@@ -72,7 +66,6 @@ namespace atlas {
 
     /// \brief  Get const reference to target function space.
     const FunctionSpace& target() const;
+};
 
-  };
-
-}
+}  // namespace atlas

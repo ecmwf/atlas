@@ -8,35 +8,34 @@
 #include "atlas/redistribution/detail/RedistributionImpl.h"
 
 namespace atlas {
-  namespace redistribution {
-    namespace detail {
+namespace redistribution {
+namespace detail {
 
-      // Constructors/destructors.
+// Constructors/destructors.
 
-      RedistributionImpl::RedistributionImpl (
-        const FunctionSpace& source, const FunctionSpace& target) :
-        sourceFunctionSpace_(source), targetFunctionSpace_(target) {}
+RedistributionImpl::RedistributionImpl( const FunctionSpace& source, const FunctionSpace& target ) :
+    sourceFunctionSpace_( source ), targetFunctionSpace_( target ) {}
 
-      RedistributionImpl::~RedistributionImpl() {}
+RedistributionImpl::~RedistributionImpl() {}
 
-      // Getters.
+// Getters.
 
-      FunctionSpace& RedistributionImpl::source() {
-        return sourceFunctionSpace_;
-      }
-
-      const FunctionSpace& RedistributionImpl::source() const {
-        return sourceFunctionSpace_;
-      }
-
-      FunctionSpace& RedistributionImpl::target() {
-        return targetFunctionSpace_;
-      }
-
-      const FunctionSpace& RedistributionImpl::target() const {
-        return targetFunctionSpace_;
-      }
-
-    }
-  }
+FunctionSpace& RedistributionImpl::source() {
+    return sourceFunctionSpace_;
 }
+
+const FunctionSpace& RedistributionImpl::source() const {
+    return sourceFunctionSpace_;
+}
+
+FunctionSpace& RedistributionImpl::target() {
+    return targetFunctionSpace_;
+}
+
+const FunctionSpace& RedistributionImpl::target() const {
+    return targetFunctionSpace_;
+}
+
+}  // namespace detail
+}  // namespace redistribution
+}  // namespace atlas

@@ -26,16 +26,16 @@ static bool _is_global( double ymin, double ymax ) {
 
 static std::array<double, 2> get_interval_y( const eckit::Parametrisation& params ) {
     constexpr double invalid = std::numeric_limits<double>::max();
-    auto is_valid = [](double y) {
+    auto is_valid            = []( double y ) {
         //  deepcode ignore FloatingPointEquals: We want exact comparison
-        return (y != invalid);
+        return ( y != invalid );
     };
     double ymax = invalid;
     double ymin = invalid;
 
-    if( params.get("south",ymin) || params.get("north",ymax) ) {
-        ymax = is_valid(ymax) ? ymax : 90.;
-        ymin = is_valid(ymin) ? ymin : -90.;
+    if ( params.get( "south", ymin ) || params.get( "north", ymax ) ) {
+        ymax = is_valid( ymax ) ? ymax : 90.;
+        ymin = is_valid( ymin ) ? ymin : -90.;
     }
     else {
         if ( !params.get( "ymin", ymin ) ) {
@@ -81,7 +81,7 @@ ZonalBandDomain::ZonalBandDomain( const Interval& interval_y, const double west 
     ymax_tol_ = ymax() + 1.e-6;
 }
 
-bool ZonalBandDomain::contains( double x, double y ) const {
+bool ZonalBandDomain::contains( double /*x*/, double y ) const {
     return contains_y( y );
 }
 
