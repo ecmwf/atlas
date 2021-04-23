@@ -21,15 +21,15 @@ namespace io {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-size_t encode_metadata( const std::string& value, atlas::io::Metadata& out ) {
+inline size_t encode_metadata( const std::string& value, atlas::io::Metadata& out ) {
     out.set( "type", "string" );
     out.set( "value", value );
     return 0;
 }
 
-void encode_data( const std::string&, atlas::io::Data& ) {}
+inline void encode_data( const std::string&, atlas::io::Data& ) {}
 
-void decode( const atlas::io::Metadata& metadata, const atlas::io::Data&, std::string& value ) {
+inline void decode( const atlas::io::Metadata& metadata, const atlas::io::Data&, std::string& value ) {
     ATLAS_ASSERT( metadata.getString( "type" ) == "string" );
     metadata.get( "value", value );
 }
