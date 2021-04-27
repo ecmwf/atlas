@@ -44,6 +44,20 @@ public:
 };
 
 class ArrayMetadataPrettyPrint : public MetadataPrettyPrintBase {
+    template <typename T>
+    void print_value( std::ostream& out ) const {
+        std::vector<T> value;
+        metadata_.get( "value", value );
+        out << "{";
+        for ( size_t i = 0; i < value.size(); ++i ) {
+            out << value[i];
+            if ( i < value.size() - 1 ) {
+                out << ",";
+            }
+        }
+        out << "}";
+    }
+
 public:
     ArrayMetadataPrettyPrint( const Metadata& m ) : metadata_( m ) {}
     void print( std::ostream& out ) const override {
@@ -51,14 +65,35 @@ public:
         ATLAS_ASSERT( type == "array" );
         ArrayMetadata array( metadata_ );
         out << std::setw( 7 ) << std::left << array.datatype().str();
-        out << "[";
-        for ( int i = 0; i < array.rank(); ++i ) {
-            out << array.shape( i );
-            if ( i < array.rank() - 1 ) {
-                out << ",";
+        if ( metadata_.has( "value" ) ) {
+            out << ": ";
+            std::string datatype = metadata_.getString( "datatype" );
+            if ( datatype == array::DataType::str<double>() ) {
+                print_value<double>( out );
+            }
+            else if ( datatype == array::DataType::str<float>() ) {
+                print_value<float>( out );
+            }
+            else if ( datatype == array::DataType::str<size_t>() ) {
+                print_value<size_t>( out );
+            }
+            else if ( datatype == array::DataType::str<std::int32_t>() ) {
+                print_value<std::int32_t>( out );
+            }
+            else if ( datatype == array::DataType::str<std::int64_t>() ) {
+                print_value<std::int64_t>( out );
             }
         }
-        out << "]";
+        else {
+            out << "[";
+            for ( int i = 0; i < array.rank(); ++i ) {
+                out << array.shape( i );
+                if ( i < array.rank() - 1 ) {
+                    out << ",";
+                }
+            }
+            out << "]";
+        }
     }
 
 private:
