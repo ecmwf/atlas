@@ -123,7 +123,7 @@ void Library::registerPlugin( eckit::system::Plugin& plugin ) {
 std::string Library::cachePath() const {
     auto resource = []() -> std::string {
         return eckit::LibResource<std::string, Library>( "atlas-cache-path;$ATLAS_CACHE_PATH",
-                                                         "{ENVVAR?TMPDIR}/cache" );
+                                                         "/tmp/cache" );
     };
     static std::string ATLAS_CACHE_PATH = eckit::PathExpander::expand( resource() );
     return ATLAS_CACHE_PATH;
