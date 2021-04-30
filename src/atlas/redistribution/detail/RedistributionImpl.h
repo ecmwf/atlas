@@ -24,7 +24,7 @@ namespace detail {
 class RedistributionImpl : public util::Object {
 public:
     /// \brief  Virtual destructor.
-    virtual ~RedistributionImpl() = 0;
+    virtual ~RedistributionImpl() = default;
 
     /// \brief  Maps source field to target field.
     virtual void execute( const Field& sourceField, Field& targetField ) const = 0;

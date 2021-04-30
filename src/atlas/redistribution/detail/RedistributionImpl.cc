@@ -16,8 +16,6 @@ namespace detail {
 RedistributionImpl::RedistributionImpl( const FunctionSpace& source, const FunctionSpace& target ) :
     sourceFunctionSpace_( source ), targetFunctionSpace_( target ) {}
 
-RedistributionImpl::~RedistributionImpl() {}
-
 // Getters.
 
 FunctionSpace& RedistributionImpl::source() {
