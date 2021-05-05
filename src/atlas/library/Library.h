@@ -77,6 +77,8 @@ public:
     void registerPlugin( eckit::system::Plugin& );
     const std::vector<eckit::system::Plugin*>& plugins() { return plugins_; }
 
+    std::string cachePath() const;
+
 protected:
     virtual const void* addr() const override;
 

@@ -1178,7 +1178,7 @@ void increase_halo_interior( BuildHaloHelper& helper ) {
 
 // 6) Adapt mesh
 #ifdef DEBUG_OUTPUT
-    Log::debug() << "recv: \n" << recvmesh << std::endl;
+    Log::debug() << "increase_halo_interior -- recv: \n" << recvmesh << std::endl;
 #endif
     helper.add_buffers( recvmesh );
 }
@@ -1290,7 +1290,7 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
 
 // 6) Adapt mesh
 #ifdef DEBUG_OUTPUT
-    Log::debug() << "recv: \n" << recvmesh << std::endl;
+    Log::debug() << "increase_halo_periodic -- recv: \n" << recvmesh << std::endl;
 #endif
     helper.add_buffers( recvmesh );
 }

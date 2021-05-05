@@ -66,11 +66,19 @@ Config Config::operator|( const Config& other ) const {
 }
 
 Config& Config::set( const eckit::LocalConfiguration& other ) {
-    eckit::ValueMap otherval = other.get();
-    eckit::Value& root       = const_cast<eckit::Value&>( get() );
-    for ( eckit::ValueMap::const_iterator vit = otherval.begin(); vit != otherval.end(); ++vit ) {
-        root[vit->first] = vit->second;
+    eckit::Value& root = const_cast<eckit::Value&>( get() );
+    auto& other_root   = other.get();
+    std::vector<string> other_keys;
+    eckit::fromValue( other_keys, other_root.keys() );
+    for ( auto& key : other_keys ) {
+        root[key] = other_root[key];
     }
+    return *this;
+}
+
+Config& Config::remove( const std::string& name ) {
+    eckit::Value& root = const_cast<eckit::Value&>( get() );
+    root.remove( name );
     return *this;
 }
 
@@ -93,6 +101,12 @@ bool Config::get( const std::string& name, std::vector<Config>& value ) const {
         }
     }
     return found;
+}
+
+std::vector<std::string> Config::keys() const {
+    std::vector<std::string> result;
+    eckit::fromValue( result, get().keys() );
+    return result;
 }
 
 //==================================================================
@@ -242,9 +256,9 @@ int atlas__Config__get_string( Config* This, const char* name, char*& value, int
         value = nullptr;
         return false;
     }
-    size  = s.size() + 1;
-    value = new char[size];
-    strcpy( value, s.c_str() );
+    size  = static_cast<int>( s.size() );
+    value = new char[size + 1];
+    std::strncpy( value, s.c_str(), size + 1 );
     allocated = true;
     return true;
 }
@@ -318,10 +332,10 @@ void atlas__Config__json( Config* This, char*& json, int& size, int& allocated )
     j.precision( 16 );
     j << *This;
     std::string json_str = s.str();
-    size                 = json_str.size();
+    size                 = static_cast<int>( json_str.size() );
     json                 = new char[size + 1];
     allocated            = true;
-    strcpy( json, json_str.c_str() );
+    std::strncpy( json, json_str.c_str(), size + 1 );
     allocated = true;
 }
 

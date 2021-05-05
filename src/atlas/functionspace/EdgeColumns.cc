@@ -740,10 +740,10 @@ void atlas__fs__EdgeColumns__checksum_fieldset( const EdgeColumns* This, const f
     ATLAS_ASSERT( This );
     ATLAS_ASSERT( fieldset );
     std::string checksum_str( This->checksum( fieldset ) );
-    size      = checksum_str.size();
+    size      = static_cast<int>( checksum_str.size() );
     checksum  = new char[size + 1];
     allocated = true;
-    strcpy( checksum, checksum_str.c_str() );
+    std::strncpy( checksum, checksum_str.c_str(), size + 1 );
 }
 
 // -----------------------------------------------------------------------------------
@@ -753,10 +753,10 @@ void atlas__fs__EdgeColumns__checksum_field( const EdgeColumns* This, const fiel
     ATLAS_ASSERT( This );
     ATLAS_ASSERT( field );
     std::string checksum_str( This->checksum( field ) );
-    size      = checksum_str.size();
+    size      = static_cast<int>( checksum_str.size() );
     checksum  = new char[size + 1];
     allocated = true;
-    strcpy( checksum, checksum_str.c_str() );
+    std::strncpy( checksum, checksum_str.c_str(), size + 1 );
 }
 }
 

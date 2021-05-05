@@ -117,6 +117,8 @@ grid/CubedSphereGrid.cc
 grid/CubedSphereGrid.h
 grid/Grid.cc
 grid/Grid.h
+grid/SpecRegistry.cc
+grid/SpecRegistry.h
 grid/StructuredGrid.cc
 grid/StructuredGrid.h
 grid/UnstructuredGrid.cc
@@ -202,6 +204,7 @@ grid/detail/partitioner/RegularBandsPartitioner.cc
 grid/detail/partitioner/RegularBandsPartitioner.h
 grid/detail/partitioner/SerialPartitioner.cc
 grid/detail/partitioner/SerialPartitioner.h
+
 
 
 grid/detail/spacing/Spacing.cc
@@ -582,6 +585,17 @@ linalg/sparse/SparseMatrixMultiply_OpenMP.cc
 )
 
 
+list (APPEND atlas_redistribution_srcs
+redistribution/Redistribution.h
+redistribution/Redistribution.cc
+redistribution/detail/RedistributionImpl.h
+redistribution/detail/RedistributionImpl.cc
+redistribution/detail/RedistributionImplFactory.h
+redistribution/detail/RedistributionImplFactory.cc
+redistribution/detail/RedistributionUtils.h
+redistribution/detail/StructuredColumnsToStructuredColumns.h
+redistribution/detail/StructuredColumnsToStructuredColumns.cc
+)
 
 list( APPEND atlas_array_srcs
 array.h
@@ -674,7 +688,7 @@ util/Polygon.cc
 util/Polygon.h
 util/Rotation.cc
 util/Rotation.h
-util/Spec.h
+util/Registry.h
 util/SphericalPolygon.cc
 util/SphericalPolygon.h
 util/UnitSphere.h
@@ -708,7 +722,78 @@ util/Unique.h
 util/Unique.cc
 util/Allocate.h
 util/Allocate.cc
-#parallel/detail/MPLArrayView.h
+)
+
+list( APPEND atlas_io_srcs
+    io/atlas-io.h
+    io/Data.cc
+    io/Data.h
+    io/detail/Base64.cc
+    io/detail/Base64.h
+    io/detail/Checksum.h
+    io/detail/Checksum.cc
+    io/detail/DataInfo.h
+    io/detail/Decoder.cc
+    io/detail/Decoder.h
+    io/detail/Defaults.h
+    io/detail/Encoder.h
+    io/detail/Endian.h
+    io/detail/Link.cc
+    io/detail/Link.h
+    io/detail/ParsedRecord.h
+    io/detail/RecordInfo.h
+    io/detail/RecordSections.h
+    io/detail/Reference.h
+    io/detail/sfinae.h
+    io/detail/StaticAssert.h
+    io/detail/tag.h
+    io/detail/Time.cc
+    io/detail/Time.h
+    io/detail/Type.h
+    io/detail/TypeTraits.h
+    io/detail/Version.h
+    io/Exceptions.cc
+    io/Exceptions.h
+    io/FileStream.cc
+    io/FileStream.h
+    io/Metadata.cc
+    io/Metadata.h
+    io/print/TableFormat.cc
+    io/print/TableFormat.h
+    io/print/JSONFormat.cc
+    io/print/JSONFormat.h
+    io/print/Bytes.cc
+    io/print/Bytes.h
+    io/ReadRequest.cc
+    io/ReadRequest.h
+    io/Record.cc
+    io/Record.h
+    io/RecordItem.cc
+    io/RecordItem.h
+    io/RecordItemReader.cc
+    io/RecordItemReader.h
+    io/RecordPrinter.cc
+    io/RecordPrinter.h
+    io/RecordReader.cc
+    io/RecordReader.h
+    io/RecordWriter.cc
+    io/RecordWriter.h
+    io/Session.cc
+    io/Session.h
+    io/Stream.cc
+    io/Stream.h
+    io/types/array.h
+    io/types/array/ArrayMetadata.cc
+    io/types/array/ArrayMetadata.h
+    io/types/array/ArrayReference.cc
+    io/types/array/ArrayReference.h
+    io/types/array/adaptors/ArrayAdaptor.cc
+    io/types/array/adaptors/ArrayAdaptor.h
+    io/types/array/adaptors/StdVectorAdaptor.h
+    io/types/array/adaptors/VectorAdaptor.h
+    io/types/string.h
+    io/types/scalar.h
+    io/types/scalar.cc
 )
 
 ### atlas c++ library
@@ -724,6 +809,7 @@ if( SHORTCUT_COMPILATION )
   unset( atlas_field_srcs )
   unset( atlas_functionspace_srcs )
   unset( atlas_interpolation_srcs )
+  unset( atlas_redistribution_srcs )
   unset( atlas_numerics_srcs )
   unset( atlas_output_srcs )
   unset( atlas_util_srcs )
@@ -738,9 +824,11 @@ list( APPEND source_list
   ${atlas_field_srcs}
   ${atlas_functionspace_srcs}
   ${atlas_interpolation_srcs}
+  ${atlas_redistribution_srcs}
   ${atlas_numerics_srcs}
   ${atlas_output_srcs}
   ${atlas_util_srcs}
+  ${atlas_io_srcs}
   ${atlas_internals_srcs}
   ${CMAKE_CURRENT_BINARY_DIR}/library/git_sha1.h
   ${CMAKE_CURRENT_BINARY_DIR}/library/defines.h

@@ -104,9 +104,9 @@ const char* atlas__Field__name( FieldImpl* This ) {
 void atlas__Field__datatype( FieldImpl* This, char*& datatype, int& size, int& allocated ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access datatype of uninitialised atlas_Field" );
     std::string s = This->datatype().str();
-    size          = s.size() + 1;
-    datatype      = new char[size];
-    strcpy( datatype, s.c_str() );
+    size          = static_cast<int>( s.size() );
+    datatype      = new char[size + 1];
+    std::strncpy( datatype, s.c_str(), size + 1 );
     allocated = true;
 }
 

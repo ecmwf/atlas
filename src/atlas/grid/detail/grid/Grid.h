@@ -92,7 +92,7 @@ public:  // methods
 
     /// Unique grid id
     /// Computed from the hash. Can be used to compare 2 grids.
-    uid_t uid() const;
+    virtual uid_t uid() const;
 
     /// Adds to the hash the information that makes this Grid unique
     virtual void hash( eckit::Hash& ) const = 0;

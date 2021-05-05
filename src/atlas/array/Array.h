@@ -70,7 +70,7 @@ public:
     template <typename Value>
     static Array* wrap( Value* data, const ArraySpec& spec );
 
-    idx_t bytes() const { return sizeof_data() * spec().allocatedSize(); }
+    idx_t bytes() const { return datatype().size() * spec().allocatedSize(); }
 
     size_t size() const { return spec_.size(); }
 
@@ -93,8 +93,6 @@ public:
     bool hasDefaultLayout() const { return spec_.hasDefaultLayout(); }
 
     virtual array::DataType datatype() const = 0;
-
-    virtual idx_t sizeof_data() const = 0;
 
     virtual void resize( const ArrayShape& shape ) = 0;
 
@@ -157,8 +155,10 @@ public:
     DATATYPE* data() {
         return data_store_->hostData<DATATYPE>();
     }
+    void const* data() const { return data<void>(); }
+    void* data() { return data<void>(); }
 
-    ArrayDataStore const* data_store() const { return data_store_.get(); }
+    const ArrayDataStore& data_store() const { return *data_store_; }
 
 protected:
     Array( ArraySpec&& spec ) : spec_( std::move( spec ) ) {}
@@ -201,8 +201,6 @@ public:
     virtual void resize( idx_t size0, idx_t size1, idx_t size2, idx_t size3, idx_t size4 );
 
     virtual array::DataType datatype() const { return array::DataType::create<Value>(); }
-
-    virtual idx_t sizeof_data() const { return sizeof( Value ); }
 
     virtual void dump( std::ostream& os ) const;
 

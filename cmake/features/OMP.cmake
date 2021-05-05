@@ -1,5 +1,9 @@
 ### OMP ...
-find_package( OpenMP COMPONENTS CXX ${Fortran} )
+
+if( ENABLE_OMP OR NOT DEFINED ENABLE_OMP )
+    find_package( OpenMP COMPONENTS CXX ${Fortran} )
+endif()
+
 ecbuild_add_option( FEATURE OMP
                     DESCRIPTION "support for OpenMP shared memory parallelism"
                     CONDITION OpenMP_Fortran_FOUND OR OpenMP_CXX_FOUND )

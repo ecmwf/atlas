@@ -105,6 +105,7 @@ void MercatorProjectionT<Rotation>::lonlat2xy( double crd[] ) const {
 template <typename Rotation>
 void MercatorProjectionT<Rotation>::xy2lonlat( double crd[] ) const {
     auto compute_lat = [&]( double y ) -> double {
+        //  deepcode ignore FloatingPointEquals: We want exact comparison
         if ( eccentricity_ == 0. ) {
             return 90. - 2. * R2D( std::atan( std::exp( -y * inv_k_radius_ ) ) );
         }

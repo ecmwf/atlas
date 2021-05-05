@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <type_traits>
 #include <utility>  // std::swap
 
 #include "atlas/library/config.h"
@@ -29,12 +30,12 @@ public:
 public:
     vector() = default;
 
-    template <typename size_t>
+    template <typename size_t, typename std::enable_if<std::is_integral<size_t>::value, int>::type = 0>
     vector( size_t size ) {
         resize( size );
     }
 
-    template <typename size_t>
+    template <typename size_t, typename std::enable_if<std::is_integral<size_t>::value, int>::type = 0>
     vector( size_t size, const value_type& value ) : vector( size ) {
         assign( size, value );
     }
@@ -54,13 +55,18 @@ public:
         return *this;
     }
 
+    template <typename T2>
+    vector( const std::initializer_list<T2>& list ) {
+        assign( list.begin(), list.end() );
+    }
+
     ~vector() {
         if ( data_ ) {
             delete[] data_;
         }
     }
 
-    template <typename idx_t>
+    template <typename idx_t, typename std::enable_if<std::is_integral<idx_t>::value, int>::type = 0>
     T& at( idx_t i ) noexcept( false ) {
         if ( i >= size_ ) {
             throw_OutOfRange( "atlas::vector", i, size_ );
@@ -68,7 +74,7 @@ public:
         return data_[i];
     }
 
-    template <typename idx_t>
+    template <typename idx_t, typename std::enable_if<std::is_integral<idx_t>::value, int>::type = 0>
     T const& at( idx_t i ) const noexcept( false ) {
         if ( i >= size_ ) {
             throw_OutOfRange( "atlas::vector", i, size_ );
@@ -76,7 +82,7 @@ public:
         return data_[i];
     }
 
-    template <typename idx_t>
+    template <typename idx_t, typename std::enable_if<std::is_integral<idx_t>::value, int>::type = 0>
     T& operator[]( idx_t i ) {
 #if ATLAS_VECTOR_BOUNDS_CHECKING
         return at( i );
@@ -85,7 +91,7 @@ public:
 #endif
     }
 
-    template <typename idx_t>
+    template <typename idx_t, typename std::enable_if<std::is_integral<idx_t>::value, int>::type = 0>
     T const& operator[]( idx_t i ) const {
 #if ATLAS_VECTOR_BOUNDS_CHECKING
         return at( i );
@@ -100,26 +106,27 @@ public:
 
     idx_t size() const { return size_; }
 
-    void assign( idx_t n, const value_type& value ) {
+    template <typename Size, typename std::enable_if<std::is_integral<Size>::value, int>::type = 0>
+    void assign( Size n, const value_type& value ) {
         resize( n );
         omp::fill( begin(), begin() + n, value );
     }
 
-    template <typename Iter>
+    template <typename Iter, typename std::enable_if<!std::is_integral<Iter>::value, int>::type = 0>
     void assign( const Iter& first, const Iter& last ) {
         size_t size = std::distance( first, last );
         resize( size );
         omp::copy( first, last, begin() );
     }
 
-    template <typename Size>
+    template <typename Size, typename std::enable_if<std::is_integral<Size>::value, int>::type = 0>
     void reserve( Size size ) {
         if ( capacity_ != 0 )
             ATLAS_NOTIMPLEMENTED;
         data_     = new T[size];
         capacity_ = size;
     }
-    template <typename size_t>
+    template <typename size_t, typename std::enable_if<std::is_integral<size_t>::value, int>::type = 0>
     void resize( size_t size ) {
         if ( static_cast<idx_t>( size ) > 0 ) {
             if ( capacity_ == 0 ) {

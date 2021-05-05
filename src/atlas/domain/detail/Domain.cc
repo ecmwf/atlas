@@ -46,18 +46,18 @@ const Domain* atlas__Domain__ctor_config( const eckit::Parametrisation* config )
 void atlas__Domain__type( const Domain* This, char*& type, int& size ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Domain" );
     std::string s = This->type();
-    size          = static_cast<int>( s.size() + 1 );
-    type          = new char[size];
-    strcpy( type, s.c_str() );
+    size          = static_cast<int>( s.size() );
+    type          = new char[size + 1];
+    std::strncpy( type, s.c_str(), size + 1 );
 }
 void atlas__Domain__hash( const Domain* This, char*& hash, int& size ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Domain" );
     eckit::MD5 md5;
     This->hash( md5 );
     std::string s = md5.digest();
-    size          = static_cast<int>( s.size() + 1 );
-    hash          = new char[size];
-    strcpy( hash, s.c_str() );
+    size          = static_cast<int>( s.size() );
+    hash          = new char[size + 1];
+    std::strncpy( hash, s.c_str(), size + 1 );
 }
 Domain::Spec* atlas__Domain__spec( const Domain* This ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Domain" );

@@ -11,6 +11,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <array>
 #include <vector>
 #include "atlas/library/config.h"
 
@@ -37,7 +38,10 @@ public:
     ArrayShape() {}
     ArrayShape( Base&& base ) : Base( std::forward<Base>( base ) ) {}
     ArrayShape( std::initializer_list<idx_t> list ) : Base( list ) {}
+    template <typename idx_t>
     ArrayShape( idx_t data[], size_t size ) : Base( data, data + size ) {}
+    template <typename idx_t, std::size_t N>
+    ArrayShape( const std::array<idx_t, N>& list ) : Base( list.begin(), list.end() ) {}
 };
 
 namespace detail {

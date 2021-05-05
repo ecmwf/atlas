@@ -14,6 +14,8 @@
 #include <sstream>
 #include <string>
 
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/output/Gmsh.h"
 #include "atlas/output/detail/GmshImpl.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -50,6 +52,9 @@ GmshFileStream::GmshFileStream( const eckit::PathName& file_path, const char* mo
         if ( mpi::rank() == 0 ) {
             eckit::PathName par_path( file_path );
             std::ofstream par_file( par_path.localPath(), std::ios_base::out );
+            if ( !par_file.is_open() ) {
+                throw eckit::CantOpenFile( par_path );
+            }
             for ( idx_t p = 0; p < mpi::size(); ++p ) {
                 par_file << "Merge \"" << parallelPathName( file_path, p ) << "\";" << std::endl;
             }

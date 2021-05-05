@@ -74,7 +74,7 @@ template <typename Value, int Rank>
 ArrayView<Value, Rank>::ArrayView( const Array& array, bool _device_view ) :
     gt_data_view_( _device_view ? gridtools::make_gt_device_view<Value, Rank>( array )
                                 : gridtools::make_gt_host_view<Value, Rank>( array ) ),
-    data_store_orig_( array.data_store() ),
+    data_store_orig_( &array.data_store() ),
     array_( &array ),
     is_device_view_( _device_view ) {
     if ( gt_data_view_.valid() ) {
@@ -111,7 +111,7 @@ ArrayView<Value, Rank>::ArrayView( const Array& array, bool _device_view ) :
 
 template <typename Value, int Rank>
 bool ArrayView<Value, Rank>::valid() const {
-    return gt_data_view_.valid() && ( array_->data_store() == data_store_orig_ );
+    return gt_data_view_.valid() && ( &array_->data_store() == data_store_orig_ );
 }
 
 

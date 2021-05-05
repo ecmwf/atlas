@@ -193,7 +193,7 @@ CASE( "test regular_bands performance test" ) {
 }
 
 CASE( "test regular_bands with a very large grid" ) {
-    auto grid = StructuredGrid( sizeof (atlas::idx_t) == 4 ?  "L40000x20000" : "L160000x80000" );  
+    auto grid = StructuredGrid( sizeof( atlas::idx_t ) == 4 ? "L40000x20000" : "L160000x80000" );
     auto dist = grid::Distribution( grid, grid::Partitioner( "regular_bands" ) );
 }
 

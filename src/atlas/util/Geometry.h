@@ -97,6 +97,7 @@ public:
 
     Geometry() : Handle( build<geometry::detail::GeometrySphereT<util::Earth>>() ) {}
     Geometry( const std::string& name ) : Handle( build( name ) ) {}
+    Geometry( const char* name ) : Handle( build( name ) ) {}
     Geometry( double radius ) : Handle( build<geometry::detail::GeometrySphere>( radius ) ) {}
 
     template <typename SphereT>
@@ -134,8 +135,11 @@ protected:
 //------------------------------------------------------------------------------------------------------
 
 namespace geometry {
-using Earth      = Geometry;  // Sphere with util::Earth radius by default
-using UnitSphere = Geometry( eckit::geometry::UnitSphere() );
+using Earth = Geometry;  // Sphere with util::Earth radius by default
+class UnitSphere : public Geometry {
+public:
+    UnitSphere() : Geometry( /*radius*/ 1. ) {}
+};
 
 }  // namespace geometry
 

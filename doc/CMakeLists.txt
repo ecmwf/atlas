@@ -57,8 +57,6 @@ if( PROJECT_NAME STREQUAL CMAKE_PROJECT_NAME )
 
 endif()
 
-endif()
-
 
 if( NOT DEFINED ATLAS_DOC_VERSION )
   set( ATLAS_DOC_VERSION ${ATLAS_VERSION_STR} )
@@ -100,3 +98,5 @@ add_custom_target(
 )
 
 set_property(TARGET atlas_doxygen PROPERTY EXCLUDE_FROM_ALL TRUE)
+
+endif()

@@ -8,6 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
+// file deepcode ignore CppMemoryLeak: static pointers for global registry are OK and will be cleaned up at end
+
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 
@@ -53,7 +55,8 @@ struct force_link {
     }
 };
 
-LegendreCacheCreatorFactory& factory( const std::string& name ) {
+static LegendreCacheCreatorFactory& factory( const std::string& name ) {
+    ATLAS_ASSERT( m );
     std::map<std::string, LegendreCacheCreatorFactory*>::const_iterator j = m->find( name );
     if ( j == m->end() ) {
         Log::error() << "No LegendreCacheCreatorFactory for [" << name << "]" << std::endl;
@@ -73,12 +76,14 @@ LegendreCacheCreatorFactory::LegendreCacheCreatorFactory( const std::string& nam
 
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
 
+    ATLAS_ASSERT( m );
     ATLAS_ASSERT( m->find( name ) == m->end() );
     ( *m )[name] = this;
 }
 
 LegendreCacheCreatorFactory::~LegendreCacheCreatorFactory() {
     eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    ATLAS_ASSERT( m );
     m->erase( name_ );
 }
 
@@ -89,6 +94,7 @@ bool LegendreCacheCreatorFactory::has( const std::string& name ) {
 
     static force_link static_linking;
 
+    ATLAS_ASSERT( m );
     return ( m->find( name ) != m->end() );
 }
 
@@ -99,6 +105,7 @@ void LegendreCacheCreatorFactory::list( std::ostream& out ) {
 
     static force_link static_linking;
 
+    ATLAS_ASSERT( m );
     const char* sep = "";
     for ( std::map<std::string, LegendreCacheCreatorFactory*>::const_iterator j = m->begin(); j != m->end(); ++j ) {
         out << sep << ( *j ).first;
