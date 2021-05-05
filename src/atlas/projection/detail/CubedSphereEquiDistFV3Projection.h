@@ -29,6 +29,8 @@ class CubedSphereEquiDistFV3Projection final : public ProjectionImpl, public Cub
     void xy2lonlat( double crd[] ) const override;
     void lonlat2xy( double crd[] ) const override;
 
+    Jacobian jacobian( const PointLonLat& ) const override;
+
     bool strictlyRegional() const override { return false; }
     RectangularLonLatDomain lonlatBoundingBox( const Domain& domain ) const override {
         return ProjectionImpl::lonlatBoundingBox( domain );

@@ -376,9 +376,9 @@ public:
 
 
     if (ijt[0] == CubeNx_-1 && ijt[1] == CubeNx_-1 && ijt[2] == nTiles_-1) {  // Final point
-      ijt[0] = 0;
-      ijt[1] = 0;
-      ijt[2] = 0;
+      ijt[0] = CubeNx_;
+      ijt[1] = CubeNx_;
+      ijt[2] = nTiles_-1;
     } else if (ijt[0] == CubeNx_-1 && ijt[1] == CubeNx_-1) {  // Corner
       ijt[0] = 0;
       ijt[1] = 0;

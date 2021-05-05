@@ -78,6 +78,14 @@ void CubedSphereEquiDistProjection::xy2lonlat( double crd[] ) const {
 
 // -------------------------------------------------------------------------------------------------
 
+ProjectionImpl::Jacobian CubedSphereEquiDistProjection::jacobian(const PointLonLat& ) const {
+  ATLAS_NOTIMPLEMENTED;
+}
+
+// -------------------------------------------------------------------------------------------------
+
+// -------------------------------------------------------------------------------------------------
+
 CubedSphereEquiDistProjection::Spec CubedSphereEquiDistProjection::spec() const {
   // Fill projection specification
   Spec proj;
