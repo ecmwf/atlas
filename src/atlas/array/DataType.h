@@ -67,7 +67,7 @@ public:
     template <typename DATATYPE>
     static std::string str( const DATATYPE );
 
-    static long str_to_kind( const std::string& );
+    static kind_t str_to_kind( const std::string& );
     static std::string kind_to_str( kind_t );
     static bool kind_valid( kind_t );
 

@@ -12,6 +12,7 @@
 #include <iomanip>
 #include <sstream>
 
+#include "atlas/functionspace/PointCloud.h"
 #include "atlas/grid.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
@@ -427,6 +428,38 @@ CASE( "test_structured_from_config" ) {
     EXPECT( not g.domain().global() );
 }
 
+CASE( "test_cubedsphere_from_config" ) {
+    Grid g{"CS-ED-2"};
+    std::cout << " grid created" << std::endl;
+
+    atlas::functionspace::PointCloud fs(g);
+    std::cout << " fs created" << std::endl;
+
+    atlas::util::Config config;
+    config.set( "name", "test_field" );
+    config.set( "datatype", 8);
+    config.set( "levels", 2);
+
+    atlas::Field testField = fs.createField(config);
+    std::cout << " field created" << std::endl;
+
+    std::cout << " checking lon lats" << std::endl;
+    std::vector<atlas::PointLonLat> pointsLonLat;
+
+    for ( auto ll : g.lonlat() ) {
+        pointsLonLat.push_back( ll );
+    }
+    auto view = atlas::array::make_view<double, 2>(testField);
+    for (atlas::idx_t jn = 0, i = 0; jn < testField.shape(0); ++jn) {
+        for (atlas::idx_t jl = 0; jl < testField.levels(); ++jl, ++i) {
+            view(jn, jl) = static_cast<double>(i);
+
+            std::cout << " cube index "  << view(jn, jl) <<  " "
+              << pointsLonLat[jn].lat() << " "
+              << pointsLonLat[jn].lon() << std::endl;
+        }
+    }
+}
 
 //-----------------------------------------------------------------------------
 
