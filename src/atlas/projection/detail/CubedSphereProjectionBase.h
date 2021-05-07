@@ -31,8 +31,8 @@ class CubedSphereProjectionBase {
     void hash( eckit::Hash& ) const;
 
     // projection and inverse projection
-    void xy2lonlat( double xytll[] ) const;
-    void lonlat2xy( double llxyt[] ) const;
+    void xy2lonlat( double crd[] ) const;
+    void lonlat2xy( double crd[] ) const;
 
     // Functions for xy to latlon on each tile
     void tile1Rotate( double[] ) const;
@@ -76,8 +76,8 @@ class CubedSphereProjectionBase {
     }
     ArrayViewLatLon_ getLonArray() const {
       ATLAS_TRACE( "CubedSphereProjectionBase::getLonArray" );
-      array::ArrayView<double, 2> tile1Lats = array::make_view<double, 2>( *tile1LonsArray_ );
-      return tile1Lats;
+      array::ArrayView<double, 2> tile1Lons = array::make_view<double, 2>( *tile1LonsArray_ );
+      return tile1Lons;
     }
 
     int getCubeNx() const { return cubeNx_; }
@@ -114,7 +114,7 @@ class CubedSphereProjectionBase {
       }
   }
 
-    void xyToxyt(const double xy[], double xyt[]) const {
+    void xy2xyt(const double xy[], double xyt[]) const {
         // xy is in degrees while xyt is in radians
         // (alpha, beta) and tiles.
         double normalisedX = xy[0]/90.;
@@ -124,7 +124,7 @@ class CubedSphereProjectionBase {
         xyt[2] = tile(xy);
     }
 
-    void xytToxy(const double xyt[], double xy[]) const {
+    void xyt2xy(const double xyt[], double xy[]) const {
         // xy is in degrees while xyt is in radians
         // (alpha, beta) and tiles.
         std::vector<double> xOffset{0., 90., 90., 180, 270, 270};
