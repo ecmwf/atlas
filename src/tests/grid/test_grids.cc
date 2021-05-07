@@ -12,7 +12,6 @@
 #include <iomanip>
 #include <sstream>
 
-#include "atlas/functionspace/PointCloud.h"
 #include "atlas/grid.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
@@ -428,36 +427,35 @@ CASE( "test_structured_from_config" ) {
     EXPECT( not g.domain().global() );
 }
 
-CASE( "test_cubedsphere_from_config" ) {
-    Grid g{"CS-ED-2"};
-    std::cout << " grid created" << std::endl;
-
-    atlas::functionspace::PointCloud fs(g);
-    std::cout << " fs created" << std::endl;
-
-    atlas::util::Config config;
-    config.set( "name", "test_field" );
-    config.set( "datatype", 8);
-    config.set( "levels", 2);
-
-    atlas::Field testField = fs.createField(config);
-    std::cout << " field created" << std::endl;
-
-    std::cout << " checking lon lats" << std::endl;
+CASE( "test_equiangular_cubedsphere" ) {
+    int resolution(2);
+    Grid g{"CS-EA-" + std::to_string(resolution) };
+    Log::info() << " grid created - grid spec = " <<  g.spec() << std::endl;
     std::vector<atlas::PointLonLat> pointsLonLat;
-
-    for ( auto ll : g.lonlat() ) {
+    for ( auto ll : g.lonlat() )
         pointsLonLat.push_back( ll );
-    }
-    auto view = atlas::array::make_view<double, 2>(testField);
-    for (atlas::idx_t jn = 0, i = 0; jn < testField.shape(0); ++jn) {
-        for (atlas::idx_t jl = 0; jl < testField.levels(); ++jl, ++i) {
-            view(jn, jl) = static_cast<double>(i);
+    EXPECT(pointsLonLat.size() == 6* resolution* resolution +2);
 
-            std::cout << " cube index "  << view(jn, jl) <<  " "
-              << pointsLonLat[jn].lat() << " "
-              << pointsLonLat[jn].lon() << std::endl;
-        }
+    const double rpi     = 2.0 * asin( 1.0 );
+    const double rad2deg = 180.0 / rpi;
+    double cornerLat = rad2deg * atan(sin(rpi/4.0));
+    double tolerance = 1e-13;
+    // Expected latitudes/longitude per tile
+    std::vector<std::pair<double, double>> expectedLatLon{
+        {-cornerLat, 315.0}, {-45.0, 0.0}, {0.0, 315.0}, {0.0,0.0}, {cornerLat, 315.0},
+        {-cornerLat, 45.0}, {-45.0, 90.0},  {-cornerLat, 135.0}, {0.0, 45.0}, {0.0, 90.0},
+        {cornerLat, 45.0}, { 45.0, 90.0}, { 45.0, 0.0}, { 90, 45},
+        {cornerLat, 135.0}, {0.0, 135.0}, { 45.0, 180.0}, { 0.0, 180.0},
+        {cornerLat, 225.0},  {0.0, 225.0}, {45.0, 270.0}, { 0.0, 270.0},
+        {-cornerLat, 225.0}, {-45.0, 180.0}, {-45.0, 270.0}, {-90.0, 0.0}
+    };
+
+    for (std::size_t jn = 0; jn < g.size(); ++jn) {
+        Log::info() << " cube:: global index :" << jn+1 <<  " "
+              << "actual/expected latitude :"  << pointsLonLat[jn].lat() <<  " " << expectedLatLon[jn].first << " "
+              << "actual/expected longitude :"  << pointsLonLat[jn].lon() <<  " " << expectedLatLon[jn].second << std::endl;
+        EXPECT(std::abs(pointsLonLat[jn].lat() - expectedLatLon[jn].first) <  tolerance);
+        EXPECT(std::abs(pointsLonLat[jn].lon() - expectedLatLon[jn].second) <  tolerance);
     }
 }
 
