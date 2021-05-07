@@ -125,6 +125,7 @@ add_subdirectory( trans )
 add_subdirectory( interpolation )
 add_subdirectory( linalg )
 add_subdirectory( redistribution )
+add_subdirectory( cubed_sphere )
 
 add_subdirectory( acceptance_tests )
 add_subdirectory( export_tests )
