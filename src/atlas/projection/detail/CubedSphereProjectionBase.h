@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <cmath>
 #include <functional>
 
 #include "eckit/config/Parametrisation.h"
@@ -82,6 +83,57 @@ class CubedSphereProjectionBase {
     int getCubeNx() const { return cubeNx_; }
 
     void schmidtTransform(double, double, double, double[]) const;
+
+  protected:
+    idx_t tile( const double xy[] ) const {
+      // Assume one face-edge is of length 90 degrees.
+      //
+      //   y ^
+      //     |
+      //    135           -------
+      //     |           |       |
+      //     |           |   2   |
+      //     |           |       |
+      //     45   ------- ------- ------- -------
+      //     |   |       |       |       |       |
+      //     |   |   0   |   1   |   3   |   4   |
+      //     |   |       |       |       |       |
+      //    -45   -------  ------ ------- -------
+      //     |                           |       |
+      //     |                           |   5   |
+      //     |                           |       |
+      //   -135                           -------
+      //     ----0-------90------180-----270----360--->  x
+      const double x = xy[0]/90.;
+      const double& y = xy[1];
+      if( x < 2. ) {
+        return  y > 45. ? 2 : std::floor(x);
+      }
+      else {
+        return y < -45. ? 5 : std::floor(x+1.);
+      }
+  }
+
+    void xyToxyt(const double xy[], double xyt[]) const {
+        // xy is in degrees while xyt is in radians
+        // (alpha, beta) and tiles.
+        double normalisedX = xy[0]/90.;
+        double normalisedY = (xy[1] + 135.)/90.;
+        xyt[0] = (normalisedX - std::floor(normalisedX))* M_PI_2 - M_PI_4;
+        xyt[1] = (normalisedY - std::floor(normalisedY))* M_PI_2 - M_PI_4;
+        xyt[2] = tile(xy);
+    }
+
+    void xytToxy(const double xyt[], double xy[]) const {
+        // xy is in degrees while xyt is in radians
+        // (alpha, beta) and tiles.
+        std::vector<double> xOffset{0., 90., 90., 180, 270, 270};
+        std::vector<double> yOffset{-45., -45, 45, -45, -45, -135};
+        double normalisedX = (xyt[0] + M_PI_4)/M_PI_2;
+        double normalisedY = (xyt[1] + M_PI_4)/M_PI_2;
+        xy[0] = normalisedX * 90. + xOffset[xyt[2]];
+        xy[1] = normalisedY * 90. + yOffset[xyt[2]];
+  }
 
   private:
     int cubeNx_;
