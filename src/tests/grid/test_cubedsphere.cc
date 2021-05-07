@@ -11,7 +11,10 @@ namespace atlas {
   namespace test {
 
 
-    CASE("Cubed-sphere test.") {
+    CASE("cubedsphere_grid_mesh_field_test") {
+
+      // THIS IS TEMPORARY!
+      // I expect this will be replaced by some more aggressive tests.
 
       // Set grid.
       const auto grid = atlas::Grid("CS-EA-24");
