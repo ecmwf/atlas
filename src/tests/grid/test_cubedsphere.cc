@@ -1,6 +1,13 @@
+/*
+ * (C) Crown Copyright 2021 Met Office
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ */
+
+#include "atlas/array/MakeView.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid.h"
-#include "atlas/grid/Partitioner.h"
 #include "atlas/mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
@@ -19,8 +26,8 @@ namespace atlas {
       // Set grid.
       const auto grid = atlas::Grid("CS-EA-24");
 
-      std::cout << grid->type() << std::endl;
-      std::cout << grid.size() << std::endl;
+      atlas::Log::info() << grid->type() << std::endl;
+      atlas::Log::info() << grid.size() << std::endl;
 
 
       // Set mesh.
