@@ -109,7 +109,7 @@ void CubedSphereEquiAnglProjection::lonlat2xy( double crd[] ) const {
 //
 void CubedSphereEquiAnglProjection::xy2lonlat( double crd[] ) const {
 
-   const double rsq3 = 1.0/sqrt(3.0);
+    const double rsq3 = 1.0/sqrt(3.0);
     double xyz[3];
     double ab[2]; // alpha-beta coordinate
     idx_t t;  // tile index
