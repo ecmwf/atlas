@@ -127,16 +127,50 @@ void CubedSphereProjectionBase::lonlat2xy( double llxytl[] ) const {
 
 // -------------------------------------------------------------------------------------------------
 
-void CubedSphereProjectionBase::xy2lonlat( double xytll[] ) const {
+void CubedSphereProjectionBase::xy2lonlat( double crd[] ) const {
 
-  double lonlat[2];
-  double xyz[3];
+    // For now I think I will write the equiangular version here first:
+    // 1) get tile.
+    // 2) xy2alphabeta
+    // 3) alphabeta2lonlat.
+    //  look at Ronchi first.
+
+
+  // double lonlat[2];
+ // double xyz[3];
 
   // Get lat/lon for this index but on tile 1
-  auto tile1Lats = getLatArray();
-  auto tile1Lons = getLonArray();
-  lonlat[LON] = tile1Lons(static_cast<int>(xytll[XX]), static_cast<int>(xytll[YY]));
-  lonlat[LAT] = tile1Lats(static_cast<int>(xytll[XX]), static_cast<int>(xytll[YY]));
+  // auto tile1Lats = getLatArray();
+  // auto tile1Lons = getLonArray();
+  // lonlat[LON] = tile1Lons(static_cast<int>(xytll[XX]), static_cast<int>(xytll[YY]));
+  // lonlat[LAT] = tile1Lats(static_cast<int>(xytll[XX]), static_cast<int>(xytll[YY]));
+
+  //cmw - we require a transformation here that converts Willem's xy to lonlat.
+  // the former method stored the lon lats for tile 1 -> converted to cartesian -> rotate grid
+  //         -> converted to spherical.
+
+  // xy2alphabetat
+  // set xyz
+
+
+   /*
+   const double rsq3 = 1.0/sqrt(3.0);
+   double xyz[3];
+   xyz[XX] = -rsq3;
+   xyz[YY] = -rsq3*tan(-0.25*M_PI+static_cast<double>(ix)*dp);
+   xyz[ZZ] = -rsq3*tan(-0.25*M_PI+static_cast<double>(iy)*dp);
+
+   ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
+
+   if (lonlat[LON] < 0.0) {
+      lonlat[LON] += 2.0*M_PI;
+   }
+
+    tile1Lons(ix, iy) = lonlat[LON] - M_PI;
+    tile1Lats(ix, iy) = lonlat[LAT];
+  */
+
+  /*
 
   // Convert to cartesian
   ProjectionUtilities::sphericalToCartesian(lonlat, xyz);
@@ -169,6 +203,7 @@ void CubedSphereProjectionBase::xy2lonlat( double xytll[] ) const {
   xytll[3+LON] = lonlat[LON] * atlas::util::Constants::radiansToDegrees();
   xytll[3+LAT] = lonlat[LAT] * atlas::util::Constants::radiansToDegrees();
 
+  */
 
 }
 
@@ -207,8 +242,10 @@ void CubedSphereProjectionBase::tile4Rotate( double xyz[] ) const {
   double angle;
   angle = -M_PI;
   ProjectionUtilities::rotate3dZ(angle, xyz);
-  angle = M_PI / 2.0;
-  ProjectionUtilities::rotate3dX(angle, xyz);
+  std::cout << "tile4 Rotate after 3dZ" << xyz[0]  << " " << xyz[1] << " " << xyz[2] << std::endl;
+ // angle = M_PI / 2.0;
+//  ProjectionUtilities::rotate3dX(angle, xyz);
+  std::cout << "tile4 Rotate after 3dX" << xyz[0]  << " " << xyz[1] << " " << xyz[2] << std::endl;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -219,17 +256,26 @@ void CubedSphereProjectionBase::tile5Rotate( double xyz[] ) const {
   double angle;
   angle = M_PI / 2.0;
   ProjectionUtilities::rotate3dZ(angle, xyz);
-  angle = M_PI / 2.0;
-  ProjectionUtilities::rotate3dY(angle, xyz);
+ // angle = M_PI / 2.0;
+ // ProjectionUtilities::rotate3dY(angle, xyz);
 }
 
 // -------------------------------------------------------------------------------------------------
 
 void CubedSphereProjectionBase::tile6Rotate( double xyz[] ) const {
   //  Face 6: rotate 90.0 degrees about y axis
+  // double angle;
+  // angle = M_PI / 2.0;
+  // ProjectionUtilities::rotate3dY(angle, xyz);
+
   double angle;
-  angle = M_PI / 2.0;
+// angle = - 3. * M_PI / 2.;
+//  ProjectionUtilities::rotate3dZ(angle, xyz);
+  angle =  M_PI /2. ;
   ProjectionUtilities::rotate3dY(angle, xyz);
+
+  angle =  M_PI / 2.;
+  ProjectionUtilities::rotate3dZ(angle, xyz);
 }
 
 // -------------------------------------------------------------------------------------------------

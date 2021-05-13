@@ -42,6 +42,12 @@ class CubedSphereEquiAnglProjection final : public ProjectionImpl, public CubedS
     std::string units() const override { return "degrees"; }
 
     void hash( eckit::Hash& ) const override;
+
+
+  private:
+    idx_t identityTileFromLonLat(const double crd[]) const;
+
+
 };
 
 }  // namespace detail

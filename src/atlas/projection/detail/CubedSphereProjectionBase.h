@@ -84,26 +84,58 @@ class CubedSphereProjectionBase {
 
     void schmidtTransform(double, double, double, double[]) const;
 
+    void xy2alphabetat(const double xy[], idx_t & t, double ab[]) const {
+        // xy is in degrees while ab is in radians
+        // ab are the  (alpha, beta) coordinates and t is the tile index.
+        t = tile(xy);
+        std::vector<double> xOffset{0., 1., 1., 2., 3., 3.};
+        std::vector<double> yOffset{1., 1., 2., 1., 1., 0.};
+
+        double normalisedX = xy[0]/90.;
+        double normalisedY = (xy[1] + 135.)/90.;
+        ab[0] = (normalisedX - xOffset[t])* M_PI_2 - M_PI_4;
+        ab[1] = (normalisedY - yOffset[t])* M_PI_2 - M_PI_4;
+
+    }
+
+    void alphabetatt2xy(const idx_t & t, const double ab[],  double xy[]) const {
+        // xy is in degrees while ab is in radians
+        // (alpha, beta) and tiles.
+        std::vector<double> xOffset{0., 90., 90., 180, 270, 270};
+        std::vector<double> yOffset{-45., -45, 45, -45, -45, -135};
+        double normalisedX = (ab[0] + M_PI_4)/M_PI_2;
+        double normalisedY = (ab[1] + M_PI_4)/M_PI_2;
+        xy[0] = normalisedX * 90. + xOffset[t];
+        xy[1] = normalisedY * 90. + yOffset[t];
+  }
+
   protected:
     idx_t tile( const double xy[] ) const {
       // Assume one face-edge is of length 90 degrees.
       //
       //   y ^
       //     |
-      //    135           -------
-      //     |           |       |
-      //     |           |   2   |
-      //     |           |       |
-      //     45   ------- ------- ------- -------
-      //     |   |       |       |       |       |
-      //     |   |   0   |   1   |   3   |   4   |
-      //     |   |       |       |       |       |
-      //    -45   -------  ------ ------- -------
-      //     |                           |       |
-      //     |                           |   5   |
-      //     |                           |       |
-      //   -135                           -------
-      //     ----0-------90------180-----270----360--->  x
+      //    135              ----------
+      //     |              |     ^    |
+      //     |              |          |
+      //     |              |=<   2   <|
+      //     |              |     v    |
+      //     |              |     =    |
+      //     45  0----------2----------3----------4----------
+      //     |   |    ^     |     ^    |    =     |     =    |
+      //     |   |          |          |    ^     |     ^    |
+      //     |   |=<  0    <|=<   1   <|=<  3    <|=<   4   <|
+      //     |   |    v     |     v    |          |          |
+      //     |   |    =     |     =    |    v     |     v    |
+      //    -45  0 ---------1----------1----------5----------
+      //     |                                    |     =    |
+      //     |                                    |     ^    |
+      //     |                                    |=<  5    <|
+      //     |                                    |          |
+      //     |                                    |    v     |
+      //   -135                                    ----------(5 for end iterator)
+      //     ----0---------90--------180--------270--------360--->  x
+      /*
       const double x = xy[0]/90.;
       const double& y = xy[1];
       if( x < 2. ) {
@@ -112,27 +144,32 @@ class CubedSphereProjectionBase {
       else {
         return y < -45. ? 5 : std::floor(x+1.);
       }
-  }
+      */
+      idx_t t{-1};
 
-    void xy2xyt(const double xy[], double xyt[]) const {
-        // xy is in degrees while xyt is in radians
-        // (alpha, beta) and tiles.
-        double normalisedX = xy[0]/90.;
-        double normalisedY = (xy[1] + 135.)/90.;
-        xyt[0] = (normalisedX - std::floor(normalisedX))* M_PI_2 - M_PI_4;
-        xyt[1] = (normalisedY - std::floor(normalisedY))* M_PI_2 - M_PI_4;
-        xyt[2] = tile(xy);
-    }
+      if ((xy[0] >= 0.) && ( xy[1] >= -45.) && (xy[0] < 90.) && (xy[1] < 45.)) {
+         t = 0;
+      } else if ((xy[0] >= 90.) && ( xy[1] >= -45.) && (xy[0] < 180.) && (xy[1] < 45.)) {
+         t = 1;
+      } else if ((xy[0] >= 90.) && ( xy[1] >= 45.) && (xy[0] < 180.) && (xy[1] < 135.)) {
+         t = 2;
+      } else if ((xy[0] >= 180.) && ( xy[1] > -45.) && (xy[0] < 270.) && (xy[1] <= 45.)) {
+         t = 3;
+      } else if ((xy[0] >= 270.) && ( xy[1] > -45.) && (xy[0] < 360.) && (xy[1] <= 45.)) {
+         t = 4;
+      } else if ((xy[0] >= 270.) && ( xy[1] > -135.) && (xy[0] < 360.) && (xy[1] <= -45.)) {
+         t = 5;
+      }
 
-    void xyt2xy(const double xyt[], double xy[]) const {
-        // xy is in degrees while xyt is in radians
-        // (alpha, beta) and tiles.
-        std::vector<double> xOffset{0., 90., 90., 180, 270, 270};
-        std::vector<double> yOffset{-45., -45, 45, -45, -45, -135};
-        double normalisedX = (xyt[0] + M_PI_4)/M_PI_2;
-        double normalisedY = (xyt[1] + M_PI_4)/M_PI_2;
-        xy[0] = normalisedX * 90. + xOffset[xyt[2]];
-        xy[1] = normalisedY * 90. + yOffset[xyt[2]];
+      // extra points
+      if ((xy[0] == 0.) && (xy[1] == 45.)) t = 0;
+      if ((xy[0] == 180.) && (xy[1] == -45.)) t = 1;
+
+      // for end iterator !!!!
+      if ((xy[0] == 360.) && (xy[1] == -135.)) t = 5;
+
+      return t;
+
   }
 
   private:

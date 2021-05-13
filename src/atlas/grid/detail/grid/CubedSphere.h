@@ -24,6 +24,8 @@
 #include "atlas/util/ObjectHandle.h"
 #include "atlas/util/Point.h"
 
+#include "atlas/projection/detail/CubedSphereProjectionBase.h"
+
 namespace atlas {
 namespace grid {
 namespace detail {
@@ -54,6 +56,7 @@ private:
   struct ComputePointLonLat {
     ComputePointLonLat( const CubedSphere& grid ) : grid_( grid ) {}
     void operator()( idx_t i, idx_t j, idx_t t, PointLonLat& point ) {
+      std::cout << "i,j,t,point.data" << i << " " << j << " " << t << " " << point << std::endl;
       grid_.lonlat( i, j, t, point.data() );
     }
     const CubedSphere& grid_;
@@ -208,6 +211,113 @@ public:
   // Return number of tiles
   inline idx_t GetNTiles() const { return nTiles_; }
 
+  inline idx_t tile(const double xy[] ) const {
+    // Assume one face-edge is of length 90 degrees.
+    //
+    //   y ^
+    //     |
+    //    135           -------
+    //     |           |       |
+    //     |           |   2   |
+    //     |           |       |
+    //     45   ------- ------- ------- -------
+    //     |   |       |       |       |       |
+    //     |   |   0   |   1   |   3   |   4   |
+    //     |   |       |       |       |       |
+    //    -45   -------  ------ ------- -------
+    //     |                           |       |
+    //     |                           |   5   |
+    //     |                           |       |
+    //   -135                           -------
+    //     ----0-------90------180-----270----360--->  x
+
+    /*
+    const double x = xy[0]/90.;
+    const double& y = xy[1];
+    if( x < 2. ) {
+      return  y > 45. ? 2 : std::floor(x);
+    }
+    else {
+      return y < -45. ? 5 : std::floor(x+1.);
+    }
+    */
+
+    idx_t t{-1};
+
+    if ((xy[0] >= 0.) && ( xy[1] >= -45.) && (xy[0] < 90.) && (xy[1] < 45.)) {
+       t = 0;
+    } else if ((xy[0] >= 90.) && ( xy[1] >= -45.) && (xy[0] < 180.) && (xy[1] < 45.)) {
+       t = 1;
+    } else if ((xy[0] >= 90.) && ( xy[1] >= 45.) && (xy[0] < 180.) && (xy[1] < 135.)) {
+       t = 2;
+    } else if ((xy[0] >= 180.) && ( xy[1] > -45.) && (xy[0] < 270.) && (xy[1] <= 45.)) {
+       t = 3;
+    } else if ((xy[0] >= 270.) && ( xy[1] > -45.) && (xy[0] < 360.) && (xy[1] <= 45.)) {
+       t = 4;
+    } else if ((xy[0] >= 270.) && ( xy[1] > -135.) && (xy[0] < 360.) && (xy[1] <= -45.)) {
+       t = 5;
+    }
+
+    // extra points
+    if ((xy[0] == 0.) && (xy[1] == 45.)) t = 0;
+    if ((xy[0] == 180.) && (xy[1] == -45.)) t = 1;
+
+    return t;
+
+  }
+
+  void xy2xyt(const double xy[], double xyt[]) const {
+      // xy is in degrees while xyt is in radians
+      // (alpha, beta) and tiles.
+
+      double normalisedX = xy[0]/90.;
+      double normalisedY = (xy[1] + 135.)/90.;
+
+      double CubeNxDouble = static_cast<double>(CubeNx_);
+
+      std::vector<double> yOffset{CubeNxDouble,
+                                  CubeNxDouble,
+                                  2. *  CubeNxDouble,
+                                  CubeNxDouble,
+                                  CubeNxDouble,
+                                  0};
+
+
+      //  xyt[0] = (normalisedX - std::floor(normalisedX))* M_PI_2 - M_PI_4;
+      //  xyt[1] = (normalisedY - std::floor(normalisedY))* M_PI_2 - M_PI_4;
+      xyt[0] =  (normalisedX - std::floor(normalisedX)) * static_cast<double>(CubeNx_)
+            +  xs_[static_cast<size_t>(xyt[2])];
+
+      xyt[1] = (normalisedY - std::floor(normalisedY)) * static_cast<double>(CubeNx_)
+            + yOffset[static_cast<size_t>(xyt[2])];
+
+      xyt[2] = tile(xy);
+  }
+
+  void xyt2xy(const double xyt[], double xy[]) const {
+      // xy is in degrees
+      // while xyt is in number of grid points
+      // (alpha, beta) and tiles.
+      std::vector<double> xOffsetDeg{0., 90., 90., 180, 270, 270};
+      std::vector<double> yOffsetDeg{-45., -45, 45, -45, -45, -135};
+
+
+      double N = static_cast<double>(CubeNx_);
+      std::vector<double> xOffsetIndex{0, N, N, 2*N, 3*N,  3*N};
+      std::vector<double> yOffsetIndex{N, N, 2*N, N,  N, 0};
+
+      double normalisedX =
+       (xyt[0] -  xOffsetIndex[static_cast<size_t>(xyt[2])])/N;
+      double normalisedY =
+       (xyt[1] - yOffsetIndex[static_cast<size_t>(xyt[2])])/N;
+      xy[0] = normalisedX * 90. + xOffsetDeg[xyt[2]];
+      xy[1] = normalisedY * 90. + yOffsetDeg[xyt[2]];
+      std::cout << "xyt xy xs_ ysr_ :: "  << xyt[0] << " " << xyt[1] << " " << xyt[2]
+                << " " << xy[0] << " " << xy[1] << " " << xs_[static_cast<size_t>(xyt[2])]
+                << " " << ysr_[static_cast<size_t>(xyt[2])]  << " "
+                << ys_[static_cast<size_t>(xyt[2])]   << std::endl;
+  }
+
   // Tile specific access to x and y locations
   // -----------------------------------------
 
@@ -243,29 +353,42 @@ public:
   // Functions for returning xy
   // --------------------------
 
-  inline void xy( idx_t i, idx_t j, idx_t t, double xyt[] ) const {
+  inline void xyt( idx_t i, idx_t j, idx_t t, double crd[] ) const {
     std::size_t tIndex = static_cast<std::size_t>(tileCases_ * t / nTiles_);
-    xyt[0] = xtile.at(tIndex)(i, j, t);
-    xyt[1] = ytile.at(tIndex)(i, j, t);
-    xyt[2] = static_cast<double>(t);
+    crd[0] = xtile.at(tIndex)(i, j, t);
+    crd[1] = ytile.at(tIndex)(i, j, t);
+    crd[2] = static_cast<double>(t);
+  }
+
+  PointXY xyt( idx_t i, idx_t j, idx_t t ) const {
+    std::size_t tIndex = static_cast<std::size_t>(tileCases_ * t / nTiles_);
+    return PointXY( xtile.at(tIndex)(i, j, t), ytile.at(tIndex)(i, j, t) );
+  }
+
+  inline void xy( idx_t i, idx_t j, idx_t t, double xy[] ) const {
+    double crd[3];
+    this->xyt(i,j,t,crd);
+    std::cout << "   " << std::endl;
+    std::cout <<"crd " << crd[0] << " " << crd[1]  << " " << crd[2] << std::endl;
+    this->xyt2xy(crd, xy);
   }
 
   PointXY xy( idx_t i, idx_t j, idx_t t ) const {
-    std::size_t tIndex = static_cast<std::size_t>(tileCases_ * t / nTiles_);
-    return PointXY( xtile.at(tIndex)(i, j, t), ytile.at(tIndex)(i, j, t) );
+    double crd[2];
+    this->xy(i,j,t,crd);
+    return PointXY(crd[0], crd[1]);
   }
 
   // Functions for returning lonlat, either as array or PointLonLat
   // --------------------------------------------------------------
 
   void lonlat( idx_t i, idx_t j, idx_t t, double lonlat[] ) const {
-    double xytll[5];
-    xytll[0] = i;
-    xytll[1] = j;
-    xytll[2] = t;
-    projection_.xy2lonlat( xytll );
-    lonlat[LON] = xytll[3+LON];
-    lonlat[LAT] = xytll[3+LAT];
+
+    this->xy(i, j, t, lonlat);  // outputing xy in lonlat C array
+    std::cout << "before proj lonlat i,j, t" << i << " " << j << " " << t << " " << lonlat[0] << " " << lonlat[1] << std::endl;
+    projection_.xy2lonlat( lonlat ); // converting xy to lonlat
+    std::cout << "after proj lonlat i,j, t" << i << " " << j << " " << t << " " <<  lonlat[0] << " " << lonlat[1] << std::endl;
+
   }
 
   PointLonLat lonlat( idx_t i, idx_t j, idx_t t ) const {
@@ -276,15 +399,9 @@ public:
 
   // Function for finding indices (xy) from lonlat (testing only)
   // ------------------------------------------------------------
-
-  void lonlat2xy( double lonlat[], idx_t ijt[] ) const {
-    double llxyt[5];
-    llxyt[0] = lonlat[0];
-    llxyt[1] = lonlat[1];
-    projection_.lonlat2xy( llxyt );
-    ijt[0] = static_cast<int>( llxyt[2] );
-    ijt[1] = static_cast<int>( llxyt[3] );
-    ijt[2] = static_cast<int>( llxyt[4] );
+  void lonlat2xy( double lonlat[], double xy[] ) const {
+    xy = lonlat;
+    projection_.lonlat2xy( xy );
   }
 
   // Check on whether i, j, t values are for extra point on tile 1
