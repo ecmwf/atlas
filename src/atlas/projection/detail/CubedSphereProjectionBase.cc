@@ -6,7 +6,9 @@
  */
 
 #include <cmath>
-
+#include <limits>
+#include <iostream>
+#include <iomanip>
 #include "CubedSphereProjectionBase.h"
 
 #include "atlas/projection/detail/ProjectionUtilities.h"
@@ -61,150 +63,6 @@ void CubedSphereProjectionBase::hash( eckit::Hash& h ) const {
   h.add(stretchFac_);
   h.add(targetLon_);
   h.add(targetLat_);
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void CubedSphereProjectionBase::lonlat2xy( double llxytl[] ) const {
-
-  double lonlat[2];
-  double lonlat_in[2];
-  double xyz[3];
-
-  // Get full tile 1 lonlat arrays
-  auto tile1Lats = getLatArray();
-  auto tile1Lons = getLonArray();
-
-  // Get lonlat point array
-  lonlat_in[LON] = llxytl[LON];
-  lonlat_in[LAT] = llxytl[LAT];
-
-  // To -180, 180
-  if (lonlat_in[LON] > 180.0) {
-    lonlat_in[LON] = lonlat_in[LON] - 360.0;
-  }
-
-  // To radians
-  lonlat_in[LON] = lonlat_in[LON] * atlas::util::Constants::degreesToRadians();
-  lonlat_in[LAT] = lonlat_in[LAT] * atlas::util::Constants::degreesToRadians();
-
-  // Loop over tiles
-  bool found = false;
-  for (int t = 0; t < 6; t++) {
-
-    if (!found) {
-
-      // Copy before overwriting
-      std::copy(lonlat_in, lonlat_in+2, lonlat);
-
-      // Convert to cartesian
-      ProjectionUtilities::sphericalToCartesian(lonlat, xyz);
-
-      // Perform tile specific rotations
-      tileRotateInverse.at(std::size_t(t))(xyz);
-
-      // Back to latlon
-      ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
-
-      // Loop over tile 1 array
-      for (int ix = 0; ix < cubeNx_; ix++) {
-        for (int iy = 0; iy < cubeNx_; iy++) {
-          double absLonDiff = std::abs(tile1Lons(ix, iy) - lonlat[LON]);
-          double absLatDiff = std::abs(tile1Lats(ix, iy) - lonlat[LAT]);
-          // Check if this rotation landed the point on tile 1
-          if (!found && absLonDiff < 1.0e-15 && absLatDiff < 1.0e-15) {
-            llxytl[2+XX] = ix;
-            llxytl[2+YY] = iy;
-            llxytl[4] = t;
-            found = true;
-          }
-        }
-      }
-    }
-  }
-  ATLAS_ASSERT(found, "CubedSphereProjectionBase::lonlat2xy, LonLat not found");
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void CubedSphereProjectionBase::xy2lonlat( double crd[] ) const {
-
-    // For now I think I will write the equiangular version here first:
-    // 1) get tile.
-    // 2) xy2alphabeta
-    // 3) alphabeta2lonlat.
-    //  look at Ronchi first.
-
-
-  // double lonlat[2];
- // double xyz[3];
-
-  // Get lat/lon for this index but on tile 1
-  // auto tile1Lats = getLatArray();
-  // auto tile1Lons = getLonArray();
-  // lonlat[LON] = tile1Lons(static_cast<int>(xytll[XX]), static_cast<int>(xytll[YY]));
-  // lonlat[LAT] = tile1Lats(static_cast<int>(xytll[XX]), static_cast<int>(xytll[YY]));
-
-  //cmw - we require a transformation here that converts Willem's xy to lonlat.
-  // the former method stored the lon lats for tile 1 -> converted to cartesian -> rotate grid
-  //         -> converted to spherical.
-
-  // xy2alphabetat
-  // set xyz
-
-
-   /*
-   const double rsq3 = 1.0/sqrt(3.0);
-   double xyz[3];
-   xyz[XX] = -rsq3;
-   xyz[YY] = -rsq3*tan(-0.25*M_PI+static_cast<double>(ix)*dp);
-   xyz[ZZ] = -rsq3*tan(-0.25*M_PI+static_cast<double>(iy)*dp);
-
-   ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
-
-   if (lonlat[LON] < 0.0) {
-      lonlat[LON] += 2.0*M_PI;
-   }
-
-    tile1Lons(ix, iy) = lonlat[LON] - M_PI;
-    tile1Lats(ix, iy) = lonlat[LAT];
-  */
-
-  /*
-
-  // Convert to cartesian
-  ProjectionUtilities::sphericalToCartesian(lonlat, xyz);
-
-  // Perform tile specific rotation
-  tileRotate.at(xytll[2])(xyz);
-
-  // Back to latlon
-  ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
-
-  // Shift longitude
-  if (shiftLon_ != 0.0) {
-    lonlat[LON] = lonlat[LON] + shiftLon_*atlas::util::Constants::degreesToRadians();
-    if (lonlat[LON] < -M_PI) {lonlat[LON] =  2*M_PI + lonlat[LON];}
-    if (lonlat[LON] >  M_PI) {lonlat[LON] = -2*M_PI + lonlat[LON];}
-  }
-
-  // To 0, 360
-  if (lonlat[LON] < 0.0) {
-    lonlat[LON] = 2*M_PI + lonlat[LON];
-  }
-
-  // Schmidt transform
-  if (doSchmidt_) {
-    this->schmidtTransform( stretchFac_, targetLon_*atlas::util::Constants::degreesToRadians(),
-                            targetLat_*atlas::util::Constants::degreesToRadians(), lonlat);
-  }
-
-  // Fill outputs and covert to degrees
-  xytll[3+LON] = lonlat[LON] * atlas::util::Constants::radiansToDegrees();
-  xytll[3+LAT] = lonlat[LAT] * atlas::util::Constants::radiansToDegrees();
-
-  */
-
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -382,9 +240,62 @@ void CubedSphereProjectionBase::schmidtTransform( double stretchFac, double targ
   }
 
 }
+
+idx_t CubedSphereProjectionBase::tileFromXY( const double xy[] ) const {
+  // Assume one face-edge is of length 90 degrees.
+  //
+  //   y ^
+  //     |
+  //    135              ----------
+  //     |              |     ^    |
+  //     |              |          |
+  //     |              |=<   2   <|
+  //     |              |     v    |
+  //     |              |     =    |
+  //     45  0----------2----------3----------4----------
+  //     |   |    ^     |     ^    |    =     |     =    |
+  //     |   |          |          |    ^     |     ^    |
+  //     |   |=<  0    <|=<   1   <|=<  3    <|=<   4   <|
+  //     |   |    v     |     v    |          |          |
+  //     |   |    =     |     =    |    v     |     v    |
+  //    -45  0 ---------1----------1----------5----------
+  //     |                                    |     =    |
+  //     |                                    |     ^    |
+  //     |                                    |=<   5   <|
+  //     |                                    |          |
+  //     |                                    |     v    |
+  //   -135                                    ----------(5 for end iterator)
+  //     ----0---------90--------180--------270--------360--->  x
+
+  idx_t t{-1};
+
+  if ((xy[0] >= 0.) && ( xy[1] >= -45.) && (xy[0] < 90.) && (xy[1] < 45.)) {
+     t = 0;
+  } else if ((xy[0] >= 90.) && ( xy[1] >= -45.) && (xy[0] < 180.) && (xy[1] < 45.)) {
+     t = 1;
+  } else if ((xy[0] >= 90.) && ( xy[1] >= 45.) && (xy[0] < 180.) && (xy[1] < 135.)) {
+     t = 2;
+  } else if ((xy[0] >= 180.) && ( xy[1] > -45.) && (xy[0] < 270.) && (xy[1] <= 45.)) {
+     t = 3;
+  } else if ((xy[0] >= 270.) && ( xy[1] > -45.) && (xy[0] < 360.) && (xy[1] <= 45.)) {
+     t = 4;
+  } else if ((xy[0] >= 270.) && ( xy[1] > -135.) && (xy[0] < 360.) && (xy[1] <= -45.)) {
+     t = 5;
+  }
+
+  // extra points
+  if ((std::abs(xy[0]) < 1e-13) && (std::abs(xy[1] - 45.) < 1e-13)) t = 0;
+  if ((std::abs(xy[0] - 180.) < 1e-13) && (std::abs(xy[1] + 45.) < 1e-13)) t = 1;
+
+  // for end iterator !!!!
+  if ((std::abs(xy[0] - 360.) < 1e-13) && (std::abs(xy[1] + 135.) < 1e-13)) t = 5;
+
+  return t;
+}
+
 // assuming that crd[] here holds the latitude/longitude in RADIANS.
 // expecting longitude range between 0 and 2* PI
-idx_t CubedSphereProjectionBase::identityTileFromLonLat(const double crd[]) const {
+idx_t CubedSphereProjectionBase::tileFromLonLat(const double crd[]) const {
     idx_t t(-1);
     double xyz[3];
 
@@ -402,7 +313,10 @@ idx_t CubedSphereProjectionBase::identityTileFromLonLat(const double crd[]) cons
     double zMinusAbsX = xyz[2] - abs(xyz[0]);
     double zMinusAbsY = xyz[2] - abs(xyz[1]);
 
-    std::cout << "lon lat radians " << lon << " " << lat  << " " << abs(lat - cornerLat) << std::endl;
+    if (abs(zPlusAbsX) < 4e-16) zPlusAbsX = 0.;
+    if (abs(zPlusAbsY) < 4e-16) zPlusAbsY = 0.;
+    if (abs(zMinusAbsX) < 4e-16) zMinusAbsX = 0.;
+    if (abs(zMinusAbsY) < 4e-16) zMinusAbsY = 0.;
 
     if (lon >= 1.75 * M_PI  || lon < 0.25 * M_PI) {
         if  ( (zPlusAbsX <= 0.) && (zPlusAbsY <= 0.) ) {
@@ -413,8 +327,7 @@ idx_t CubedSphereProjectionBase::identityTileFromLonLat(const double crd[]) cons
            t = 0;
         }
         // extra point corner point
-        std::cout << "first extra corner " << abs(lon - 1.75 * M_PI) << " " << abs(lat - cornerLat) << std::endl;
-        if ( (abs(lon - 1.75 * M_PI) < 1e-13) &&
+        if ( (abs(lon + 0.25 * M_PI) < 1e-13) &&
              (abs(lat - cornerLat) < 1e-13) ) t = 0;
     }
 
@@ -440,14 +353,13 @@ idx_t CubedSphereProjectionBase::identityTileFromLonLat(const double crd[]) cons
             t = 3;
         }
         // extra point corner point
-        std::cout << "second extra corner " << abs(lon - 0.75 * M_PI) << " " << abs(lat + cornerLat) << std::endl;
         if ( (abs(lon - 0.75 * M_PI) < 1e-13) &&
              (abs(lat + cornerLat) < 1e-13) ) t = 1;
     }
 
     if (lon >= 1.25 * M_PI  && lon < 1.75 * M_PI) {
         // interior
-        if  ( (zPlusAbsX < 0.) && (zPlusAbsY <=0.) ) {
+        if  ( (zPlusAbsX < 0.) && (zPlusAbsY < 0.) ) {
             t = 2;
         } else if  ( (zMinusAbsX >= 0.) && (zMinusAbsY >= 0.) ) {
             t = 5;
@@ -456,16 +368,14 @@ idx_t CubedSphereProjectionBase::identityTileFromLonLat(const double crd[]) cons
         }
     }
 
-    std::cout << "identifyTileFromLonLat:: lonlat  ...t " <<
-        crd[0] << " " << crd[1]  << " " <<  0.25 * M_PI  << " " << 1.75 * M_PI << " " << t << std::endl;
-    std::cout << "identifyTileFromLonLat::  xyz, zPlusAbsX ... " <<
-        xyz[0] << " " << xyz[1]  << " " << xyz[2] << " " <<
-        zPlusAbsX << " " << zPlusAbsY << " " <<
-        zMinusAbsX << " " << zMinusAbsY << " " <<  std::endl;
+    std::cout << "tileFromLonLat:: lonlat abs xyz t = " <<
+                 std::setprecision(std::numeric_limits<double>::digits10 + 1) <<
+        zPlusAbsX  << " " << zPlusAbsY << " " << zMinusAbsX << " " << zMinusAbsY << " " <<
+        crd[0] << " " << crd[1]  << " "  <<
+        xyz[0] << " " << xyz[1]  << " " << xyz[2] << " " << t << std::endl;
 
     return t;
 }
-
 
 // -------------------------------------------------------------------------------------------------
 

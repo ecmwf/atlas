@@ -385,9 +385,9 @@ public:
   void lonlat( idx_t i, idx_t j, idx_t t, double lonlat[] ) const {
 
     this->xy(i, j, t, lonlat);  // outputing xy in lonlat C array
-    std::cout << "before proj lonlat i,j, t" << i << " " << j << " " << t << " " << lonlat[0] << " " << lonlat[1] << std::endl;
+    std::cout << "detail::CubedSphere before xy2lonlat :: ijt xy = " << i << " " << j << " " << t << " " << lonlat[0] << " " << lonlat[1] << std::endl;
     projection_.xy2lonlat( lonlat ); // converting xy to lonlat
-    std::cout << "after proj lonlat i,j, t" << i << " " << j << " " << t << " " <<  lonlat[0] << " " << lonlat[1] << std::endl;
+    std::cout << "detail::CubedSphere after xy2lonlat :: ijt lonlat = " << i << " " << j << " " << t << " " <<  lonlat[0] << " " << lonlat[1] << std::endl;
 
   }
 

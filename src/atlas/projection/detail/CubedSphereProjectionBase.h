@@ -31,8 +31,8 @@ class CubedSphereProjectionBase {
     void hash( eckit::Hash& ) const;
 
     // projection and inverse projection
-    void xy2lonlat( double crd[] ) const;
-    void lonlat2xy( double crd[] ) const;
+    //void xy2lonlat( double crd[] ) const;
+    //void lonlat2xy( double crd[] ) const;
 
     // Functions for xy to latlon on each tile
     void tile1Rotate( double[] ) const;
@@ -87,7 +87,7 @@ class CubedSphereProjectionBase {
     void xy2alphabetat(const double xy[], idx_t & t, double ab[]) const {
         // xy is in degrees while ab is in radians
         // ab are the  (alpha, beta) coordinates and t is the tile index.
-        t = tile(xy);
+        t = tileFromXY(xy);
         std::vector<double> xOffset{0., 1., 1., 2., 3., 3.};
         std::vector<double> yOffset{1., 1., 2., 1., 1., 0.};
 
@@ -110,60 +110,9 @@ class CubedSphereProjectionBase {
   }
 
   protected:
-    idx_t tile( const double xy[] ) const {
-      // Assume one face-edge is of length 90 degrees.
-      //
-      //   y ^
-      //     |
-      //    135              ----------
-      //     |              |     ^    |
-      //     |              |          |
-      //     |              |=<   2   <|
-      //     |              |     v    |
-      //     |              |     =    |
-      //     45  0----------2----------3----------4----------
-      //     |   |    ^     |     ^    |    =     |     =    |
-      //     |   |          |          |    ^     |     ^    |
-      //     |   |=<  0    <|=<   1   <|=<  3    <|=<   4   <|
-      //     |   |    v     |     v    |          |          |
-      //     |   |    =     |     =    |    v     |     v    |
-      //    -45  0 ---------1----------1----------5----------
-      //     |                                    |     =    |
-      //     |                                    |     ^    |
-      //     |                                    |=<   5   <|
-      //     |                                    |          |
-      //     |                                    |     v    |
-      //   -135                                    ----------(5 for end iterator)
-      //     ----0---------90--------180--------270--------360--->  x
+     idx_t tileFromXY(const double xy[] ) const;
 
-      idx_t t{-1};
-
-      if ((xy[0] >= 0.) && ( xy[1] >= -45.) && (xy[0] < 90.) && (xy[1] < 45.)) {
-         t = 0;
-      } else if ((xy[0] >= 90.) && ( xy[1] >= -45.) && (xy[0] < 180.) && (xy[1] < 45.)) {
-         t = 1;
-      } else if ((xy[0] >= 90.) && ( xy[1] >= 45.) && (xy[0] < 180.) && (xy[1] < 135.)) {
-         t = 2;
-      } else if ((xy[0] >= 180.) && ( xy[1] > -45.) && (xy[0] < 270.) && (xy[1] <= 45.)) {
-         t = 3;
-      } else if ((xy[0] >= 270.) && ( xy[1] > -45.) && (xy[0] < 360.) && (xy[1] <= 45.)) {
-         t = 4;
-      } else if ((xy[0] >= 270.) && ( xy[1] > -135.) && (xy[0] < 360.) && (xy[1] <= -45.)) {
-         t = 5;
-      }
-
-      // extra points
-      if ((xy[0] == 0.) && (xy[1] == 45.)) t = 0;
-      if ((xy[0] == 180.) && (xy[1] == -45.)) t = 1;
-
-      // for end iterator !!!!
-      if ((xy[0] == 360.) && (xy[1] == -135.)) t = 5;
-
-      return t;
-
-  }
-
-  idx_t identityTileFromLonLat(const double crd[]) const;
+     idx_t tileFromLonLat(const double crd[]) const;
 
   private:
     int cubeNx_;

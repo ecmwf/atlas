@@ -259,13 +259,13 @@ CubedSphereEquiDistFV3Projection::CubedSphereEquiDistFV3Projection( const eckit:
 // -------------------------------------------------------------------------------------------------
 
 void CubedSphereEquiDistFV3Projection::lonlat2xy( double crd[] ) const {
-  CubedSphereProjectionBase::lonlat2xy(crd);
+ // CubedSphereProjectionBase::lonlat2xy(crd);
 }
 
 // -------------------------------------------------------------------------------------------------
 
 void CubedSphereEquiDistFV3Projection::xy2lonlat( double crd[] ) const {
-  CubedSphereProjectionBase::xy2lonlat(crd);
+//  CubedSphereProjectionBase::xy2lonlat(crd);
 }
 
 // -------------------------------------------------------------------------------------------------

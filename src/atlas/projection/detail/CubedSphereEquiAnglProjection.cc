@@ -72,29 +72,54 @@ CubedSphereEquiAnglProjection::CubedSphereEquiAnglProjection( const eckit::Param
 
 void CubedSphereEquiAnglProjection::lonlat2xy( double crd[] ) const {
 
-   const double rsq3 = 1.0/sqrt(3.0);
+   std::cout << "lonlat2xy start : lonlat = " << crd[0] << " " << crd[1] << std::endl;
+
+   if (std::abs(crd[LON]) < 1e-14) crd[LON] = 0.;
+   if (std::abs(crd[LAT]) < 1e-14) crd[LAT] = 0.;
+
    double xyz[3];
    double ab[2]; // alpha-beta coordinate
 
-   // convert degrees tp radians
+   // convert degrees to radians
    crd[0] *= M_PI/180.;
    crd[1] *= M_PI/180.;
 
-   // find tile which this lonlat is linked to
-   idx_t t = CubedSphereProjectionBase::identityTileFromLonLat(crd);
+   // To [-pi/4, 7/8 *pi]
+  if (crd[LON] >= 1.75 * M_PI) {
+    crd[LON] += -2.*M_PI;
+  }
 
-   //
-   ProjectionUtilities::sphericalToCartesian(crd, xyz);
+   // find tile which this lonlat is linked to
+   // works [0,2pi]
+   idx_t t = CubedSphereProjectionBase::tileFromLonLat(crd);
+
+   /*
+   if (crd[LON] < 0.0) {
+     crd[LON] += 2.0*M_PI;
+   }
+   crd[LON] = crd[LON] - M_PI;
+   */
+
+   /*
+
+   */
+
+   ProjectionUtilities::sphericalToCartesian(crd, xyz, false, true);
    tileRotateInverse.at(t)(xyz);
 
    //now should be tile 0 - now calculate (alpha, beta) in radians.
    // should be between - pi/4 and pi/4
-   ab[0] = - atan2(-xyz[YY], rsq3)/2.0;
-   ab[1] = atan2(-xyz[ZZ], rsq3)/2.0;
+   ab[0] = atan(xyz[1]/xyz[0]);
+   ab[1] = atan(-xyz[2]/xyz[0]);  // I think the minus is here due to the
+                                  // left coordinate system
 
-   std::cout << "lonlat2xy ab : " << ab[0] << " " << ab[1] << std::endl;
+   std::cout << "lonlat2xy xyz ab : "
+      << xyz[0] << " " << xyz[1]  << " " << xyz[2] << " "
+      << ab[0] << " " << ab[1] << std::endl;
 
    CubedSphereProjectionBase::alphabetatt2xy(t, ab, crd);
+
+   std::cout << "lonlat2xy end : xy = " << crd[0] << " " << crd[1] << std::endl;
 
 
 }
@@ -103,6 +128,8 @@ void CubedSphereEquiAnglProjection::lonlat2xy( double crd[] ) const {
 // input should be Willems xy coordinate in degrees
 //
 void CubedSphereEquiAnglProjection::xy2lonlat( double crd[] ) const {
+
+    std::cout << "xy2lonlat start xy = " << crd[LON] << " " << crd[LAT] <<std::endl;
 
     const double rsq3 = 1.0/sqrt(3.0);
     double xyz[3];
@@ -119,7 +146,7 @@ void CubedSphereEquiAnglProjection::xy2lonlat( double crd[] ) const {
     xyz[1] = -rsq3*tan(ab[0]);
     xyz[2] = -rsq3*tan(ab[1]);
 
-    ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
+    ProjectionUtilities::cartesianToSpherical(xyz, lonlat, false);
 
     if (lonlat[LON] < 0.0) {
       lonlat[LON] += 2.0*M_PI;
@@ -129,13 +156,13 @@ void CubedSphereEquiAnglProjection::xy2lonlat( double crd[] ) const {
     std::cout << "xy2lonlat:: lonlat before rotation : "  << lonlat[0] << " " << lonlat[1]  << std::endl;
 
     // Convert to cartesian
-    ProjectionUtilities::sphericalToCartesian(lonlat, xyz);
+    ProjectionUtilities::sphericalToCartesian(lonlat, xyz, false, true);
 
     // Perform tile specific rotation
     tileRotate.at(t)(xyz);
 
     // Back to latlon
-    ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
+    ProjectionUtilities::cartesianToSpherical(xyz, lonlat, false);
 
     // Shift longitude
     /*
@@ -147,7 +174,7 @@ void CubedSphereEquiAnglProjection::xy2lonlat( double crd[] ) const {
     */
     // To 0, 360
     if (lonlat[LON] < 0.0) {
-      lonlat[LON] = 2*M_PI + lonlat[LON];
+      lonlat[LON] = 2.*M_PI + lonlat[LON];
     }
 
     // longitude does not make sense at the poles - set to 0.
@@ -158,7 +185,7 @@ void CubedSphereEquiAnglProjection::xy2lonlat( double crd[] ) const {
     crd[LAT] = lonlat[LAT] * 180.0 / M_PI;
 
 
-    std::cout << "end of xy2lonlat" << std::endl;
+    std::cout << "end of xy2lonlat lonlat = " <<  crd[LON] << " " << crd[LAT] << std::endl;
 }
 
 
