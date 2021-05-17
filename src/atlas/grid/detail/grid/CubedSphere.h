@@ -397,12 +397,6 @@ public:
     return PointLonLat( lonlat[LON], lonlat[LAT] );
   }
 
-  // Function for finding indices (xy) from lonlat (testing only)
-  // ------------------------------------------------------------
-  void lonlat2xy( double lonlat[], double xy[] ) const {
-    xy = lonlat;
-    projection_.lonlat2xy( xy );
-  }
 
   // Check on whether i, j, t values are for extra point on tile 1
   // -------------------------------------------------------------

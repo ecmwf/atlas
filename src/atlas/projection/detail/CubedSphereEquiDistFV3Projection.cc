@@ -243,7 +243,7 @@ CubedSphereEquiDistFV3Projection::CubedSphereEquiDistFV3Projection( const eckit:
       tile1Lats(ix       , cubeNx-iy) = copysign(y1, tile1Lats(ix       , cubeNx-iy));
       tile1Lats(cubeNx-ix, cubeNx-iy) = copysign(y1, tile1Lats(cubeNx-ix, cubeNx-iy));
 
-      //  Force dateline/greenwich-meridion consitency
+      //  Force dateline/greenwich-meridion consistency
       if (cubeNx % 2 != 0) {
         if ( (ix==1+((cubeNx+1)-1)/2.0) ) {
           tile1Lons(ix, iy        ) = 0.0;

@@ -72,7 +72,6 @@ CubedSphereEquiAnglProjection::CubedSphereEquiAnglProjection( const eckit::Param
 
 void CubedSphereEquiAnglProjection::lonlat2xy( double crd[] ) const {
 
-
     const double rsq3 = 1.0/sqrt(3.0);
      double xyz[3];
      double ab[2]; // alpha-beta coordinate
@@ -86,19 +85,24 @@ void CubedSphereEquiAnglProjection::lonlat2xy( double crd[] ) const {
    //
    // then inverse tan to get alpha beta.
 
+   // convert degrees tp radians
+   crd[0] *= M_PI/180.;
+   crd[1] *= M_PI/180.;
+
    // find tile which this lonlat is linked to
    idx_t t = identityTileFromLonLat(crd);
 
-   //
    ProjectionUtilities::sphericalToCartesian(crd, xyz);
    tileRotateInverse.at(t)(xyz);
 
    //now should be tile 0 - now calculate (alpha, beta) in radians.
    // should be between - pi/4 and pi/4
-   ab[0] = atan(xyz[YY]) / rsq3;
-   ab[1] = atan(xyz[ZZ]) / rsq3;
+   ab[0] = - atan2(-xyz[YY], rsq3)/2.0;
+   ab[1] = atan2(-xyz[ZZ], rsq3)/2.0;
 
-   CubedSphereProjectionBase::alphabetatt2xy(t,ab,crd);
+   std::cout << "lonlat2xy ab : " << ab[0] << " " << ab[1] << std::endl;
+
+   CubedSphereProjectionBase::alphabetatt2xy(t, ab, crd);
 
   //CubedSphereProjectionBase::lonlat2xy(crd);
 
@@ -285,21 +289,98 @@ void CubedSphereEquiAnglProjection::hash( eckit::Hash& h ) const {
 
 
 
-
+// assuming that crd[] here holds the latitude/longitude in RADIANS.
+// expecting longitude range between 0 and 2* PI
 idx_t CubedSphereEquiAnglProjection::identityTileFromLonLat(const double crd[]) const {
     idx_t t(-1);
     double xyz[3];
-    ProjectionUtilities::sphericalToCartesian(crd, xyz);
 
-    // interior
-    if (xyz[2] <-abs(xyz[0]) && xyz[2] <-abs(xyz[1])) {
-        t = 2;
-    } else if (xyz[2] > abs(xyz[0]) && xyz[2] > abs(xyz[1])) {
-        t = 5;
-    } else {
+    ProjectionUtilities::sphericalToCartesian(crd, xyz, false, true);
+
+    const double cornerLat= std::asin(1./std::sqrt(3.0));
+      // the magnitude of the latitude at the corners of the cube (not including the sign)
+      // in radians.
+
+    const double & lon = crd[LON];
+    const double & lat = crd[LAT];
+
+    double zPlusAbsX = xyz[2] + abs(xyz[0]);
+    double zPlusAbsY = xyz[2] + abs(xyz[1]);
+    double zMinusAbsX = xyz[2] - abs(xyz[0]);
+    double zMinusAbsY = xyz[2] - abs(xyz[1]);
+
+    std::cout << "lon lat radians " << lon << " " << lat  << " " << abs(lat - cornerLat) << std::endl;
+
+    if (lon >= 1.75 * M_PI  || lon < 0.25 * M_PI) {
+        if  ( (zPlusAbsX <= 0.) && (zPlusAbsY <= 0.) ) {
+           t = 2;
+        } else if ( (zMinusAbsX > 0.) && (zMinusAbsY > 0.) ) {
+           t = 5;
+        } else {
+           t = 0;
+        }
+        // extra point corner point
+        std::cout << "first extra corner " << abs(lon - 1.75 * M_PI) << " " << abs(lat - cornerLat) << std::endl;
+        if ( (abs(lon - 1.75 * M_PI) < 1e-13) &&
+             (abs(lat - cornerLat) < 1e-13) ) t = 0;
+    }
+
+    if (lon >= 0.25 * M_PI  && lon < 0.75 * M_PI) {
+        // interior
+        if  ( (zPlusAbsX <= 0.) && (zPlusAbsY <= 0.) ) {
+            t = 2;
+        } else if  ( (zMinusAbsX > 0.) && (zMinusAbsY > 0.) ) {
+            t = 5;
+        } else {
+            t = 1;
+        }
+
+    }
+
+    if (lon >= 0.75 * M_PI  && lon < 1.25 * M_PI) {
+        // interior
+        if  ( (zPlusAbsX < 0.) && (zPlusAbsY < 0.) ) {
+            t = 2;
+        } else if  ( (zMinusAbsX >= 0.) && (zMinusAbsY >= 0.) ) {
+            t = 5;
+        } else {
+            t = 3;
+        }
+        // extra point corner point
+        std::cout << "second extra corner " << abs(lon - 0.75 * M_PI) << " " << abs(lat + cornerLat) << std::endl;
+        if ( (abs(lon - 0.75 * M_PI) < 1e-13) &&
+             (abs(lat + cornerLat) < 1e-13) ) t = 1;
+    }
+
+    if (lon >= 1.25 * M_PI  && lon < 1.75 * M_PI) {
+        // interior
+        if  ( (zPlusAbsX < 0.) && (zPlusAbsY <=0.) ) {
+            t = 2;
+        } else if  ( (zMinusAbsX >= 0.) && (zMinusAbsY >= 0.) ) {
+            t = 5;
+        } else {
+            t = 4;
+        }
+    }
+
+    std::cout << "identifyTileFromLonLat:: lonlat  ...t " <<
+        crd[0] << " " << crd[1]  << " " <<  0.25 * M_PI  << " " << 1.75 * M_PI << " " << t << std::endl;
+    std::cout << "identifyTileFromLonLat::  xyz, zPlusAbsX ... " <<
+        xyz[0] << " " << xyz[1]  << " " << xyz[2] << " " <<
+        zPlusAbsX << " " << zPlusAbsY << " " <<
+        zMinusAbsX << " " << zMinusAbsY << " " <<  std::endl;
+
+
+    /*
 
         // call xyz2llr(x, y, z, lon, lat, radius)
         const double & lon = crd[LON];
+
+        if (lon >= -M_PI_4 && lon< M_PI_4) {
+           t = 0;
+        } else if (lon >= M_PI_4 && lon< 3.0 * M_PI_4) {
+           t = 1;
+
 
         if ((lon > -5.0 * M_PI_4) && lon < -3.0 * M_PI_4) {
             t = 3;
@@ -321,6 +402,7 @@ idx_t CubedSphereEquiAnglProjection::identityTileFromLonLat(const double crd[]) 
 
 
     // corners
+   */
 
     return t;
 }

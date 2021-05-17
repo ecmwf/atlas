@@ -432,8 +432,13 @@ CASE( "test_equiangular_cubedsphere" ) {
     Grid g{"CS-EA-" + std::to_string(resolution) };
     Log::info() << " grid created - grid spec = " <<  g.spec() << std::endl;
     std::vector<atlas::PointLonLat> pointsLonLat;
-    for ( auto ll : g.lonlat() )
+    for ( auto ll : g.lonlat() ) {
         pointsLonLat.push_back( ll );
+        PointXY x{ll.lon(), ll.lat()};
+        g->projection().lonlat2xy(x);
+        std::cout << "test:: lonlat x y" << ll.lon() << " "
+                  << ll.lat() << " " << x.x() << " " << x.y() << std::endl;
+    }
     EXPECT(pointsLonLat.size() == 6* resolution* resolution +2);
 
     const double rpi     = 2.0 * asin( 1.0 );

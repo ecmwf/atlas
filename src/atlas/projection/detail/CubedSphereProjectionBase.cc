@@ -280,7 +280,7 @@ void CubedSphereProjectionBase::tile6Rotate( double xyz[] ) const {
 
 // -------------------------------------------------------------------------------------------------
 
-void CubedSphereProjectionBase::tile1RotateInverse( double llxyt[] ) const {
+void CubedSphereProjectionBase::tile1RotateInverse( double xyt[] ) const {
   //  Face 1, no rotation.
 }
 
@@ -311,8 +311,8 @@ void CubedSphereProjectionBase::tile4RotateInverse( double xyz[] ) const {
   //  Face 4: rotate   90.0 degrees about x axis
   //          rotate -180.0 degrees about z axis
   double angle;
-  angle = -M_PI / 2.0;
-  ProjectionUtilities::rotate3dX(angle, xyz);
+//  angle = -M_PI / 2.0;
+//  ProjectionUtilities::rotate3dX(angle, xyz);
   angle = M_PI;
   ProjectionUtilities::rotate3dZ(angle, xyz);
 }
@@ -323,9 +323,9 @@ void CubedSphereProjectionBase::tile5RotateInverse( double xyz[] ) const {
   //  Face 5: rotate -90.0 degrees about y axis
   //          rotate -90.0 degrees about z axis
   double angle;
-  angle = -M_PI / 2.0;
-  ProjectionUtilities::rotate3dY(angle, xyz);
-  angle = -M_PI / 2.0;
+//  angle = -M_PI / 2.0;
+//  ProjectionUtilities::rotate3dY(angle, xyz);
+  angle = - M_PI / 2.0;
   ProjectionUtilities::rotate3dZ(angle, xyz);
 }
 
@@ -334,8 +334,11 @@ void CubedSphereProjectionBase::tile5RotateInverse( double xyz[] ) const {
 void CubedSphereProjectionBase::tile6RotateInverse( double xyz[] ) const {
   //  Face 6: rotate -90.0 degrees about y axis
   double angle;
-  angle = -M_PI / 2.0;
+  angle = -M_PI / 2.;
+  ProjectionUtilities::rotate3dZ(angle, xyz);
+  angle = -M_PI / 2.;
   ProjectionUtilities::rotate3dY(angle, xyz);
+
 }
 
 // -------------------------------------------------------------------------------------------------
