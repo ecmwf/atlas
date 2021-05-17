@@ -436,8 +436,17 @@ CASE( "test_equiangular_cubedsphere" ) {
         pointsLonLat.push_back( ll );
         PointXY x{ll.lon(), ll.lat()};
         g->projection().lonlat2xy(x);
-        std::cout << "test:: lonlat x y" << ll.lon() << " "
-                  << ll.lat() << " " << x.x() << " " << x.y() << std::endl;
+        PointLonLat l{x.x(), x.y()};
+        g->projection().xy2lonlat(l);
+        PointXY x2{l.lon(), l.lat()};
+        g->projection().lonlat2xy(x2);
+        std::cout << std::endl;
+        std::cout << "test:: lon = " << ll.lon() << " " << l.lon() << std::endl;
+        std::cout << "test:: lat = " << ll.lat() << " " << l.lat() << std::endl;
+        std::cout << "test:: x = " << x.x() << " " << x2.x() << std::endl;
+        std::cout << "test:: y = " << x.y() << " " << x2.y() << std::endl;
+        EXPECT_APPROX_EQ(ll, l, 1e-4);
+        EXPECT_APPROX_EQ(x, x2, 1e-4);
     }
     EXPECT(pointsLonLat.size() == 6* resolution* resolution +2);
 

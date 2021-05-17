@@ -135,16 +135,7 @@ class CubedSphereProjectionBase {
       //     |                                    |     v    |
       //   -135                                    ----------(5 for end iterator)
       //     ----0---------90--------180--------270--------360--->  x
-      /*
-      const double x = xy[0]/90.;
-      const double& y = xy[1];
-      if( x < 2. ) {
-        return  y > 45. ? 2 : std::floor(x);
-      }
-      else {
-        return y < -45. ? 5 : std::floor(x+1.);
-      }
-      */
+
       idx_t t{-1};
 
       if ((xy[0] >= 0.) && ( xy[1] >= -45.) && (xy[0] < 90.) && (xy[1] < 45.)) {
@@ -171,6 +162,8 @@ class CubedSphereProjectionBase {
       return t;
 
   }
+
+  idx_t identityTileFromLonLat(const double crd[]) const;
 
   private:
     int cubeNx_;

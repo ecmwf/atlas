@@ -382,6 +382,90 @@ void CubedSphereProjectionBase::schmidtTransform( double stretchFac, double targ
   }
 
 }
+// assuming that crd[] here holds the latitude/longitude in RADIANS.
+// expecting longitude range between 0 and 2* PI
+idx_t CubedSphereProjectionBase::identityTileFromLonLat(const double crd[]) const {
+    idx_t t(-1);
+    double xyz[3];
+
+    ProjectionUtilities::sphericalToCartesian(crd, xyz, false, true);
+
+    const double cornerLat= std::asin(1./std::sqrt(3.0));
+      // the magnitude of the latitude at the corners of the cube (not including the sign)
+      // in radians.
+
+    const double & lon = crd[LON];
+    const double & lat = crd[LAT];
+
+    double zPlusAbsX = xyz[2] + abs(xyz[0]);
+    double zPlusAbsY = xyz[2] + abs(xyz[1]);
+    double zMinusAbsX = xyz[2] - abs(xyz[0]);
+    double zMinusAbsY = xyz[2] - abs(xyz[1]);
+
+    std::cout << "lon lat radians " << lon << " " << lat  << " " << abs(lat - cornerLat) << std::endl;
+
+    if (lon >= 1.75 * M_PI  || lon < 0.25 * M_PI) {
+        if  ( (zPlusAbsX <= 0.) && (zPlusAbsY <= 0.) ) {
+           t = 2;
+        } else if ( (zMinusAbsX > 0.) && (zMinusAbsY > 0.) ) {
+           t = 5;
+        } else {
+           t = 0;
+        }
+        // extra point corner point
+        std::cout << "first extra corner " << abs(lon - 1.75 * M_PI) << " " << abs(lat - cornerLat) << std::endl;
+        if ( (abs(lon - 1.75 * M_PI) < 1e-13) &&
+             (abs(lat - cornerLat) < 1e-13) ) t = 0;
+    }
+
+    if (lon >= 0.25 * M_PI  && lon < 0.75 * M_PI) {
+        // interior
+        if  ( (zPlusAbsX <= 0.) && (zPlusAbsY <= 0.) ) {
+            t = 2;
+        } else if  ( (zMinusAbsX > 0.) && (zMinusAbsY > 0.) ) {
+            t = 5;
+        } else {
+            t = 1;
+        }
+
+    }
+
+    if (lon >= 0.75 * M_PI  && lon < 1.25 * M_PI) {
+        // interior
+        if  ( (zPlusAbsX < 0.) && (zPlusAbsY < 0.) ) {
+            t = 2;
+        } else if  ( (zMinusAbsX >= 0.) && (zMinusAbsY >= 0.) ) {
+            t = 5;
+        } else {
+            t = 3;
+        }
+        // extra point corner point
+        std::cout << "second extra corner " << abs(lon - 0.75 * M_PI) << " " << abs(lat + cornerLat) << std::endl;
+        if ( (abs(lon - 0.75 * M_PI) < 1e-13) &&
+             (abs(lat + cornerLat) < 1e-13) ) t = 1;
+    }
+
+    if (lon >= 1.25 * M_PI  && lon < 1.75 * M_PI) {
+        // interior
+        if  ( (zPlusAbsX < 0.) && (zPlusAbsY <=0.) ) {
+            t = 2;
+        } else if  ( (zMinusAbsX >= 0.) && (zMinusAbsY >= 0.) ) {
+            t = 5;
+        } else {
+            t = 4;
+        }
+    }
+
+    std::cout << "identifyTileFromLonLat:: lonlat  ...t " <<
+        crd[0] << " " << crd[1]  << " " <<  0.25 * M_PI  << " " << 1.75 * M_PI << " " << t << std::endl;
+    std::cout << "identifyTileFromLonLat::  xyz, zPlusAbsX ... " <<
+        xyz[0] << " " << xyz[1]  << " " << xyz[2] << " " <<
+        zPlusAbsX << " " << zPlusAbsY << " " <<
+        zMinusAbsX << " " << zMinusAbsY << " " <<  std::endl;
+
+    return t;
+}
+
 
 // -------------------------------------------------------------------------------------------------
 
