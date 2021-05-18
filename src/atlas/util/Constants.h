@@ -23,7 +23,6 @@ namespace util {
 struct Constants {
     static constexpr double radiansToDegrees() { return 180. * M_1_PI; }
     static constexpr double degreesToRadians() { return M_PI / 180.; }
-    static constexpr double esl() { return 1.0e-10; }
 };
 
 //------------------------------------------------------------------------------------------------------

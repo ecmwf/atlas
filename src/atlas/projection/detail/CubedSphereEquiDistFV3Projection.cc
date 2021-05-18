@@ -27,6 +27,58 @@ namespace atlas {
 namespace projection {
 namespace detail {
 
+// Helper functions.
+namespace {
+
+// -------------------------------------------------------------------------------------------------
+
+void mirror_latlon(const double lonlat2[], const double lonlat3[], const double lonlat1[],
+                          double lonlat4[]) {
+
+  // This routine comes from FV3 and is specific to the projection used for that model.
+
+  using eckit::geometry::Sphere;
+  using util::Constants;
+
+  auto pointXyz1 = PointXYZ();
+  auto pointXyz2 = PointXYZ();
+  auto pointXyz3 = PointXYZ();
+
+  auto pointLonLat1 = PointLonLat(lonlat1) * Constants::radiansToDegrees();
+  auto pointLonLat2 = PointLonLat(lonlat2) * Constants::radiansToDegrees();
+  auto pointLonLat3 = PointLonLat(lonlat3) * Constants::radiansToDegrees();
+
+  Sphere::convertSphericalToCartesian(1.0, pointLonLat1, pointXyz1, 0.0);
+  Sphere::convertSphericalToCartesian(1.0, pointLonLat2, pointXyz2, 0.0);
+  Sphere::convertSphericalToCartesian(1.0, pointLonLat3, pointXyz3, 0.0);
+
+  // p2 cross p3
+  auto crossProd = PointXYZ::normalize(PointXYZ::cross(pointXyz2, pointXyz3));
+
+  // crossProd dot p1
+  auto dotProd = PointXYZ::dot(crossProd, pointXyz1);
+
+  // Output point
+  PointXYZ pointXyz4 = pointXyz1 - (crossProd * 2.0 * dotProd);
+  pointXyz4.z() *= -1;
+
+  // Output lon-lat
+  auto pointLonLat4 = PointLonLat();
+  Sphere::convertCartesianToSpherical(1.0, pointXyz4, pointLonLat4);
+
+  lonlat4[LON] = pointLonLat4.lon() * util::Constants::degreesToRadians();
+  lonlat4[LAT] = pointLonLat4.lat() * util::Constants::degreesToRadians();
+
+  if (lonlat4[LON] < 0.0) {
+    lonlat4[LON] += 2.0 * M_PI;
+  }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+}
+
+
 // -------------------------------------------------------------------------------------------------
 
 CubedSphereEquiDistFV3Projection::CubedSphereEquiDistFV3Projection( const eckit::Parametrisation& params )
@@ -93,7 +145,7 @@ CubedSphereEquiDistFV3Projection::CubedSphereEquiDistFV3Projection( const eckit:
     lonlat2[LAT] = tile1Lats(cubeNx, cubeNx);
     lonlat3[LON] = tile1Lons(0, ix);
     lonlat3[LAT] = tile1Lats(0, ix);
-    ProjectionUtilities::mirror_latlon(lonlat1, lonlat2, lonlat3, lonlat4);
+    mirror_latlon(lonlat1, lonlat2, lonlat3, lonlat4);
     tile1Lons(ix, 0) = lonlat4[LON];
     tile1Lats(ix, 0) = lonlat4[LAT];
     tile1Lons(ix, cubeNx) = lonlat4[LON];
