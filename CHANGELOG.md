@@ -7,6 +7,21 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.25.0] - 2021-05-18
+### Added
+- New concept Redistribution to redistribute field on same grid but with different partitioner
+- Support for Trans::invtrans_adj() and related methods
+- Introduce ~atlas/etc/atlas/config.yaml
+- atlas-io with support for encoding/decoding std::array
+- atlas-io print support for tiny arrays
+
+### Changed
+- atlas-io version 0.2
+- Move util::SpecRegistry<T> to non-templated grid::SpecRegistry
+
+### Fixed
+- minor bug fixes
+
 ## [0.24.1] - 2021-04-06
 ### Fixed
 - Periodic halo for HEALPix mesh
@@ -280,6 +295,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.25.0]: https://github.com/ecmwf/atlas/compare/0.24.1...0.25.0
 [0.24.1]: https://github.com/ecmwf/atlas/compare/0.24.0...0.24.1
 [0.24.0]: https://github.com/ecmwf/atlas/compare/0.23.0...0.24.0
 [0.23.0]: https://github.com/ecmwf/atlas/compare/0.22.1...0.23.0
