@@ -142,7 +142,7 @@ void atlas__NodesFunctionSpace__checksum_field( const NodeColumns* This, const f
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_functionspace_NodeColumns" );
     ATLAS_ASSERT( field != nullptr, "Cannot access uninitialised atlas_Field" );
     std::string checksum_str( This->checksum( field ) );
-    size      = static_cast<int>(checksum_str.size() );
+    size      = static_cast<int>( checksum_str.size() );
     checksum  = new char[size + 1];
     allocated = true;
     std::strncpy( checksum, checksum_str.c_str(), size + 1 );

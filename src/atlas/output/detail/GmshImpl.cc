@@ -42,8 +42,8 @@ void GmshImpl::defaults() {
     config_.coordinates = "xy";
 
     config_.configured_land_water = false;
-    config_.land                  = false;
-    config_.water                 = false;
+    config_.land                  = true;
+    config_.water                 = true;
 }
 
 // -----------------------------------------------------------------------------

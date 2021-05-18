@@ -43,6 +43,8 @@ private:
 
 //---------------------------------------------------------------------------------------------------------------------
 
+size_t encode_metadata( const ArrayReference& value, atlas::io::Metadata& out );
+
 void encode_data( const ArrayReference& value, atlas::io::Data& out );
 
 //---------------------------------------------------------------------------------------------------------------------

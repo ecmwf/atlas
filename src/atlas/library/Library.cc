@@ -19,6 +19,7 @@
 #include "eckit/config/Resource.h"
 #include "eckit/eckit.h"
 #include "eckit/filesystem/LocalPathName.h"
+#include "eckit/filesystem/PathExpander.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/log/Log.h"
 #include "eckit/log/OStreamTarget.h"
@@ -117,6 +118,15 @@ Library::Library() :
 
 void Library::registerPlugin( eckit::system::Plugin& plugin ) {
     plugins_.push_back( &plugin );
+}
+
+std::string Library::cachePath() const {
+    auto resource = []() -> std::string {
+        return eckit::LibResource<std::string, Library>( "atlas-cache-path;$ATLAS_CACHE_PATH",
+                                                         "/tmp/cache" );
+    };
+    static std::string ATLAS_CACHE_PATH = eckit::PathExpander::expand( resource() );
+    return ATLAS_CACHE_PATH;
 }
 
 Library& Library::instance() {

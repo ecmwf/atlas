@@ -39,7 +39,7 @@ namespace io {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-Link link( const std::string& uri ) {
+inline Link link( const std::string& uri ) {
     return Link{uri};
 }
 

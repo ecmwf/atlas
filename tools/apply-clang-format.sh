@@ -109,12 +109,17 @@ else
     while test $# -gt 0; do
 
         if [[ -d $1 ]]; then
+            if [[ $dryrun =~ "yes" ]]; then
+                echo "+ cd $1"
+            fi
             cd $1
             if [[ $dryrun =~ "yes" ]]; then
                 echo "+ find . -iname *.h -o -iname *.cc | xargs clang-format -i -style=file"
+                find . -iname *.h -o -iname *.cc | xargs echo
             else
                 find . -iname *.h -o -iname *.cc | xargs clang-format -i -style=file
             fi
+            shift
         else
             if [[ $dryrun =~ "yes" ]]; then
                 echo "+ clang-format -i -style=file $1"

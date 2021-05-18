@@ -63,10 +63,10 @@ inline void Assert( bool success, const char* code, const std::string& msg, cons
 #define __ATLAS_ASSERT_2 ATLAS_ASSERT_MSG
 
 #define ATLAS_THROW_EXCEPTION( WHAT )                 \
-    {                                                 \
+    do {                                              \
         std::ostringstream ss;                        \
         ss << WHAT;                                   \
         ::atlas::throw_Exception( ss.str(), Here() ); \
-    }
+    } while ( false )
 
 #endif

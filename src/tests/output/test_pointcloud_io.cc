@@ -72,8 +72,8 @@ const std::vector<std::string> fnames( test_arrays::fnames, test_arrays::fnames 
 void test_write_file( const std::string& file_path, const size_t& nb_pts, const size_t& nb_columns ) {
     REQUIRE( nb_pts > 0 );
     std::ofstream f( file_path.c_str() );
-    if( !f.is_open() ) {
-        throw eckit::CantOpenFile(file_path);
+    if ( !f.is_open() ) {
+        throw eckit::CantOpenFile( file_path );
     }
     f << "PointCloudIO " << nb_pts << "	" << nb_columns
       << "  lon	lat	f_1				"
@@ -88,8 +88,8 @@ void test_write_file( const std::string& file_path, const size_t& nb_pts, const 
 
 void test_write_file_bad( const std::string& file_path ) {
     std::ofstream f( file_path.c_str() );
-    if( !f.is_open() ) {
-        throw eckit::CantOpenFile(file_path);
+    if ( !f.is_open() ) {
+        throw eckit::CantOpenFile( file_path );
     }
     f << '?';
 }

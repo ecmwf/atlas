@@ -126,22 +126,20 @@ StructuredMeshGenerator::StructuredMeshGenerator( const eckit::Parametrisation& 
     }
 
     std::string partitioner;
-    if ( grid::Partitioner::exists( "trans" ) ) {
-        partitioner = "trans";
-    }
-    else {
-        partitioner = "equal_regions";
-    }
-    options.set( "partitioner", partitioner );
-
     if ( p.get( "partitioner", partitioner ) ) {
         if ( not grid::Partitioner::exists( partitioner ) ) {
             Log::warning() << "Atlas does not have support for partitioner " << partitioner << ". "
                            << "Defaulting to use partitioner EqualRegions" << std::endl;
             partitioner = "equal_regions";
         }
-        options.set( "partitioner", partitioner );
     }
+    else if ( grid::Partitioner::exists( "trans" ) ) {
+        partitioner = "trans";
+    }
+    else {
+        partitioner = "equal_regions";
+    }
+    options.set( "partitioner", partitioner );
 }
 
 void StructuredMeshGenerator::configure_defaults() {

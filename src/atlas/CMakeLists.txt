@@ -106,6 +106,8 @@ domain/detail/DomainFactory.cc
 grid.h
 grid/Grid.cc
 grid/Grid.h
+grid/SpecRegistry.cc
+grid/SpecRegistry.h
 grid/StructuredGrid.cc
 grid/StructuredGrid.h
 grid/UnstructuredGrid.cc
@@ -189,6 +191,7 @@ grid/detail/partitioner/RegularBandsPartitioner.cc
 grid/detail/partitioner/RegularBandsPartitioner.h
 grid/detail/partitioner/SerialPartitioner.cc
 grid/detail/partitioner/SerialPartitioner.h
+
 
 
 grid/detail/spacing/Spacing.cc
@@ -567,6 +570,17 @@ linalg/sparse/SparseMatrixMultiply_OpenMP.cc
 )
 
 
+list (APPEND atlas_redistribution_srcs
+redistribution/Redistribution.h
+redistribution/Redistribution.cc
+redistribution/detail/RedistributionImpl.h
+redistribution/detail/RedistributionImpl.cc
+redistribution/detail/RedistributionImplFactory.h
+redistribution/detail/RedistributionImplFactory.cc
+redistribution/detail/RedistributionUtils.h
+redistribution/detail/StructuredColumnsToStructuredColumns.h
+redistribution/detail/StructuredColumnsToStructuredColumns.cc
+)
 
 list( APPEND atlas_array_srcs
 array.h
@@ -659,7 +673,7 @@ util/Polygon.cc
 util/Polygon.h
 util/Rotation.cc
 util/Rotation.h
-util/Spec.h
+util/Registry.h
 util/SphericalPolygon.cc
 util/SphericalPolygon.h
 util/UnitSphere.h
@@ -780,6 +794,7 @@ if( SHORTCUT_COMPILATION )
   unset( atlas_field_srcs )
   unset( atlas_functionspace_srcs )
   unset( atlas_interpolation_srcs )
+  unset( atlas_redistribution_srcs )
   unset( atlas_numerics_srcs )
   unset( atlas_output_srcs )
   unset( atlas_util_srcs )
@@ -794,6 +809,7 @@ list( APPEND source_list
   ${atlas_field_srcs}
   ${atlas_functionspace_srcs}
   ${atlas_interpolation_srcs}
+  ${atlas_redistribution_srcs}
   ${atlas_numerics_srcs}
   ${atlas_output_srcs}
   ${atlas_util_srcs}
