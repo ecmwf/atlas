@@ -313,10 +313,15 @@ idx_t CubedSphereProjectionBase::tileFromLonLat(const double crd[]) const {
     double zMinusAbsX = xyz[2] - abs(xyz[0]);
     double zMinusAbsY = xyz[2] - abs(xyz[1]);
 
-    if (abs(zPlusAbsX) < 4e-16) zPlusAbsX = 0.;
-    if (abs(zPlusAbsY) < 4e-16) zPlusAbsY = 0.;
-    if (abs(zMinusAbsX) < 4e-16) zMinusAbsX = 0.;
-    if (abs(zMinusAbsY) < 4e-16) zMinusAbsY = 0.;
+    // Note that this method can lead to roundoff errors that can
+    // cause the tile selection to fail.
+    // To this end we enforce that tiny values close (in roundoff terms)
+    // to a boundary should end up exactly on the boundary.
+    double tolerance = 9e-16;
+    if (abs(zPlusAbsX) < tolerance) zPlusAbsX = 0.;
+    if (abs(zPlusAbsY) < tolerance) zPlusAbsY = 0.;
+    if (abs(zMinusAbsX) < tolerance) zMinusAbsX = 0.;
+    if (abs(zMinusAbsY) < tolerance) zMinusAbsY = 0.;
 
     if (lon >= 1.75 * M_PI  || lon < 0.25 * M_PI) {
         if  ( (zPlusAbsX <= 0.) && (zPlusAbsY <= 0.) ) {
@@ -340,7 +345,6 @@ idx_t CubedSphereProjectionBase::tileFromLonLat(const double crd[]) const {
         } else {
             t = 1;
         }
-
     }
 
     if (lon >= 0.75 * M_PI  && lon < 1.25 * M_PI) {
