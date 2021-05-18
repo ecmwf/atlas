@@ -32,7 +32,7 @@ namespace {
 
 // -------------------------------------------------------------------------------------------------
 
-static void mirror_latlon(const double lonlat2[], const double lonlat3[], const double lonlat1[],
+void mirror_latlon(const double lonlat2[], const double lonlat3[], const double lonlat1[],
                           double lonlat4[]) {
 
   // This routine comes from FV3 and is specific to the projection used for that model.
@@ -52,10 +52,10 @@ static void mirror_latlon(const double lonlat2[], const double lonlat3[], const 
   Sphere::convertSphericalToCartesian(1.0, pointLonLat2, pointXyz2, 0.0);
   Sphere::convertSphericalToCartesian(1.0, pointLonLat3, pointXyz3, 0.0);
 
-  // p1 cross p2
+  // p2 cross p3
   auto crossProd = PointXYZ::normalize(PointXYZ::cross(pointXyz2, pointXyz3));
 
-  // p3 dot p0
+  // crossProd dot p1
   auto dotProd = PointXYZ::dot(crossProd, pointXyz1);
 
   // Output point
