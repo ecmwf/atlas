@@ -43,11 +43,6 @@ class CubedSphereEquiAnglProjection final : public ProjectionImpl, public CubedS
 
     void hash( eckit::Hash& ) const override;
 
-
-  private:
-    idx_t identityTileFromLonLat(const double crd[]) const;
-
-
 };
 
 }  // namespace detail

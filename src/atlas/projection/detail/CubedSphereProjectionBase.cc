@@ -12,6 +12,7 @@
 #include "CubedSphereProjectionBase.h"
 
 #include "atlas/projection/detail/ProjectionUtilities.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
 
@@ -76,7 +77,7 @@ void CubedSphereProjectionBase::xy2lonlatpost( double xyz[], const idx_t & t, do
     if (crd[LON] < 0.0) crd[LON] += 2.0*M_PI;
     crd[LON] = crd[LON] - M_PI;
 
-    std::cout << "xy2lonlat:: lonlat before rotation : "  << crd[0] << " " << crd[1]  << std::endl;
+    Log::debug() << "xy2lonlat:: lonlat before rotation : "  << crd[0] << " " << crd[1]  << std::endl;
 
     // Convert to cartesian
     ProjectionUtilities::sphericalToCartesian(crd, xyz, false, true);
@@ -171,7 +172,6 @@ void CubedSphereProjectionBase::tile4Rotate( double xyz[] ) const {
   double angle;
   angle = -M_PI;
   ProjectionUtilities::rotate3dZ(angle, xyz);
-  std::cout << "tile4 Rotate after 3dZ" << xyz[0]  << " " << xyz[1] << " " << xyz[2] << std::endl;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -426,7 +426,7 @@ idx_t CubedSphereProjectionBase::tileFromLonLat(const double crd[]) const {
         }
     }
 
-    std::cout << "tileFromLonLat:: lonlat abs xyz t = " <<
+    Log::debug() << "tileFromLonLat:: lonlat abs xyz t = " <<
                  std::setprecision(std::numeric_limits<double>::digits10 + 1) <<
         zPlusAbsX  << " " << zPlusAbsY << " " << zMinusAbsX << " " << zMinusAbsY << " " <<
         crd[0] << " " << crd[1]  << " "  <<

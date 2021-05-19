@@ -17,16 +17,14 @@
 #include "atlas/projection/detail/ProjectionFactory.h"
 #include "atlas/projection/detail/ProjectionUtilities.h"
 #include "atlas/runtime/Exception.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "atlas/util/Earth.h"
 
 namespace atlas {
 namespace projection {
 namespace detail {
-
-using util::Constants;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -38,7 +36,7 @@ CubedSphereEquiDistProjection::CubedSphereEquiDistProjection( const eckit::Param
 
 void CubedSphereEquiDistProjection::lonlat2xy( double crd[] ) const {
 
-    std::cout << "lonlat2xy start : lonlat = " << crd[0] << " " << crd[1] << std::endl;
+    Log::info() << "lonlat2xy start : lonlat = " << crd[LON] << " " << crd[LAT] << std::endl;
 
     idx_t t;
     double ab[2]; // alpha-beta coordinate
@@ -51,13 +49,13 @@ void CubedSphereEquiDistProjection::lonlat2xy( double crd[] ) const {
     ab[0] =   M_PI_4 * xyz[YY] / xyz[XX] ;
     ab[1] = - M_PI_4 * xyz[ZZ] / xyz[XX];
 
-    std::cout << "lonlat2xy xyz ab : "
+    Log::debug() << "lonlat2xy xyz ab : "
        << xyz[0] << " " << xyz[1]  << " " << xyz[2] << " "
        << ab[0] << " " << ab[1] << std::endl;
 
     CubedSphereProjectionBase::alphabetatt2xy(t, ab, crd);
 
-    std::cout << "lonlat2xy end : xy = " << crd[0] << " " << crd[1] << std::endl;
+    Log::info() << "lonlat2xy end : xy = " << crd[LON] << " " << crd[LAT] << std::endl;
 
 }
 
@@ -74,7 +72,7 @@ void CubedSphereEquiDistProjection::xy2lonlat( double crd[] ) const {
     // calculate xy (in degrees) to alpha beta (in radians) and t - tile index.
     CubedSphereProjectionBase::xy2alphabetat(crd, t, ab);
 
-    std::cout << "xy2lonlat:: crd t ab  : "  << crd[0] << " " << crd[1] << " " << t << " " << ab[0] << " " << ab[1] << std::endl;
+    Log::info() << "xy2lonlat:: crd t ab  : "  << crd[LON] << " " << crd[1] << " " << t << " " << ab[0] << " " << ab[1] << std::endl;
 
     xyz[0] = -rsq3;
     xyz[1] = -rsq3 * ab[0] / M_PI_4;
@@ -82,7 +80,7 @@ void CubedSphereEquiDistProjection::xy2lonlat( double crd[] ) const {
 
     CubedSphereProjectionBase::xy2lonlatpost(xyz, t, crd);
 
-    std::cout << "end of equidistant xy2lonlat lonlat = " <<  crd[LON] << " " << crd[LAT] << std::endl;
+    Log::info() << "end of equidistant xy2lonlat lonlat = " << crd[LON] << " " << crd[LAT] << std::endl;
 }
 
 
