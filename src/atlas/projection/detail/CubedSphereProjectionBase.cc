@@ -77,7 +77,7 @@ void CubedSphereProjectionBase::xy2lonlatpost( double xyz[], const idx_t & t, do
     if (crd[LON] < 0.0) crd[LON] += 2.0*M_PI;
     crd[LON] = crd[LON] - M_PI;
 
-    Log::debug() << "xy2lonlat:: lonlat before rotation : "  << crd[0] << " " << crd[1]  << std::endl;
+    Log::debug() << "xy2lonlat:: lonlat before rotation : "  << crd[LON] << " " << crd[LAT]  << std::endl;
 
     // Convert to cartesian
     ProjectionUtilities::sphericalToCartesian(crd, xyz, false, true);
@@ -323,26 +323,26 @@ idx_t CubedSphereProjectionBase::tileFromXY( const double xy[] ) const {
 
   idx_t t{-1};
 
-  if ((xy[0] >= 0.) && ( xy[1] >= -45.) && (xy[0] < 90.) && (xy[1] < 45.)) {
+  if ((xy[LON] >= 0.) && ( xy[LAT] >= -45.) && (xy[LON] < 90.) && (xy[LAT] < 45.)) {
      t = 0;
-  } else if ((xy[0] >= 90.) && ( xy[1] >= -45.) && (xy[0] < 180.) && (xy[1] < 45.)) {
+  } else if ((xy[LON] >= 90.) && ( xy[LAT] >= -45.) && (xy[LON] < 180.) && (xy[LAT] < 45.)) {
      t = 1;
-  } else if ((xy[0] >= 90.) && ( xy[1] >= 45.) && (xy[0] < 180.) && (xy[1] < 135.)) {
+  } else if ((xy[LON] >= 90.) && ( xy[LAT] >= 45.) && (xy[LON] < 180.) && (xy[LAT] < 135.)) {
      t = 2;
-  } else if ((xy[0] >= 180.) && ( xy[1] > -45.) && (xy[0] < 270.) && (xy[1] <= 45.)) {
+  } else if ((xy[LON] >= 180.) && ( xy[LAT] > -45.) && (xy[LON] < 270.) && (xy[LAT] <= 45.)) {
      t = 3;
-  } else if ((xy[0] >= 270.) && ( xy[1] > -45.) && (xy[0] < 360.) && (xy[1] <= 45.)) {
+  } else if ((xy[LON] >= 270.) && ( xy[LAT] > -45.) && (xy[LON] < 360.) && (xy[LAT] <= 45.)) {
      t = 4;
-  } else if ((xy[0] >= 270.) && ( xy[1] > -135.) && (xy[0] < 360.) && (xy[1] <= -45.)) {
+  } else if ((xy[LON] >= 270.) && ( xy[LAT] > -135.) && (xy[LON] < 360.) && (xy[LAT] <= -45.)) {
      t = 5;
   }
 
   // extra points
-  if ((std::abs(xy[0]) < 1e-13) && (std::abs(xy[1] - 45.) < 1e-13)) t = 0;
-  if ((std::abs(xy[0] - 180.) < 1e-13) && (std::abs(xy[1] + 45.) < 1e-13)) t = 1;
+  if ((std::abs(xy[LON]) < 1e-13) && (std::abs(xy[LAT] - 45.) < 1e-13)) t = 0;
+  if ((std::abs(xy[LON] - 180.) < 1e-13) && (std::abs(xy[LAT] + 45.) < 1e-13)) t = 1;
 
   // for end iterator !!!!
-  if ((std::abs(xy[0] - 360.) < 1e-13) && (std::abs(xy[1] + 135.) < 1e-13)) t = 5;
+  if ((std::abs(xy[LON] - 360.) < 1e-13) && (std::abs(xy[LAT] + 135.) < 1e-13)) t = 5;
 
   return t;
 }
@@ -362,10 +362,10 @@ idx_t CubedSphereProjectionBase::tileFromLonLat(const double crd[]) const {
     const double & lon = crd[LON];
     const double & lat = crd[LAT];
 
-    double zPlusAbsX = xyz[2] + abs(xyz[0]);
-    double zPlusAbsY = xyz[2] + abs(xyz[1]);
-    double zMinusAbsX = xyz[2] - abs(xyz[0]);
-    double zMinusAbsY = xyz[2] - abs(xyz[1]);
+    double zPlusAbsX = xyz[ZZ] + abs(xyz[XX]);
+    double zPlusAbsY = xyz[ZZ] + abs(xyz[YY]);
+    double zMinusAbsX = xyz[ZZ] - abs(xyz[XX]);
+    double zMinusAbsY = xyz[ZZ] - abs(xyz[YY]);
 
     // Note that this method can lead to roundoff errors that can
     // cause the tile selection to fail.
@@ -429,8 +429,8 @@ idx_t CubedSphereProjectionBase::tileFromLonLat(const double crd[]) const {
     Log::debug() << "tileFromLonLat:: lonlat abs xyz t = " <<
                  std::setprecision(std::numeric_limits<double>::digits10 + 1) <<
         zPlusAbsX  << " " << zPlusAbsY << " " << zMinusAbsX << " " << zMinusAbsY << " " <<
-        crd[0] << " " << crd[1]  << " "  <<
-        xyz[0] << " " << xyz[1]  << " " << xyz[2] << " " << t << std::endl;
+        crd[LON] << " " << crd[LAT]  << " "  <<
+        xyz[XX] << " " << xyz[YY]  << " " << xyz[ZZ] << " " << t << std::endl;
 
     return t;
 }
