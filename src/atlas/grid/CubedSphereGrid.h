@@ -236,23 +236,13 @@ public:
   // Return the number of tiles
   inline int GetNTiles() const { return grid_->GetNTiles(); }
 
-  inline idx_t tile( const double xy[] ) const  { return grid_->tile(xy); }
+  inline idx_t tileFromXY( const double xy[] ) const  { return grid_->tileFromXY(xy); }
 
   void xy2xyt(const double xy[], double xyt[]) const {return grid_->xy2xyt(xy, xyt); }
 
   void xyt2xy(const double xyt[], double xy[]) const {return grid_->xyt2xy(xyt, xy); }
 
 private:
-
-  // origin = starting corner for each tile:
-  //          0 - top left; 1 -bottom left; 2 - bottom right; 3 - top right;
-  std::vector<idx_t> origin_{1,1,1,0,0,0};
-  // directionx = direction of fastest moving index on each tile.
-  //             in xy space: 0 = Down, 1 = Right, 2 = Up, 3 = Left
-  std::vector<idx_t> directionx{1,1,1,0,0,0};
-  // directiony = direction of slowest moving index on each tile.
-  //             in xy space: 0 = Down, 1 = Right, 2 = Up, 3 = Left
-  std::vector<idx_t> directiony{2,2,2,1,1,1};
 
   const grid_t* grid_;
 };
