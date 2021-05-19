@@ -40,21 +40,11 @@ void CubedSphereEquiDistProjection::lonlat2xy( double crd[] ) const {
 
     std::cout << "lonlat2xy start : lonlat = " << crd[0] << " " << crd[1] << std::endl;
 
-    double xyz[3];
+    idx_t t;
     double ab[2]; // alpha-beta coordinate
+    double xyz[3]; // on Cartesian grid
 
-    // convert degrees to radians
-    crd[0] *= M_PI/180.;
-    crd[1] *= M_PI/180.;
-
-    // To [-pi/4, 7/8 *pi)
-   if (crd[LON] >= 1.75 * M_PI) crd[LON] += -2.*M_PI;
-
-    // find tile which this lonlat is linked to
-    idx_t t =  CubedSphereProjectionBase::tileFromLonLat(crd);
-
-    ProjectionUtilities::sphericalToCartesian(crd, xyz,false, true);
-    tileRotateInverse.at(t)(xyz);
+    CubedSphereProjectionBase::lonlat2xypre(crd, t, xyz);
 
     //now should be tile 0 - now calculate (alpha, beta) in radians.
     // should be between - pi/4 and pi/4
@@ -90,38 +80,7 @@ void CubedSphereEquiDistProjection::xy2lonlat( double crd[] ) const {
     xyz[1] = -rsq3 * ab[0] / M_PI_4;
     xyz[2] = -rsq3 * ab[1] / M_PI_4;
 
-    ProjectionUtilities::cartesianToSpherical(xyz, crd, false);
-
-    if (crd[LON] < 0.0) crd[LON] += 2.0*M_PI;
-    crd[LON] = crd[LON] - M_PI;
-
-    std::cout << "xy2lonlat:: lonlat before rotation : "  << crd[0] << " " << crd[1]  << std::endl;
-
-    // Convert to cartesian
-    ProjectionUtilities::sphericalToCartesian(crd, xyz, false, true);
-
-    // Perform tile specific rotation
-    tileRotate.at(t)(xyz);
-
-    // Back to latlon
-    ProjectionUtilities::cartesianToSpherical(xyz, crd, false);
-
-    // Shift longitude
-    /*
-    if (shiftLon_ != 0.0) {
-      crd[LON] = crd[LON] + shiftLon_*atlas::util::Constants::degreesToRadians();
-      if (crd[LON] < -M_PI) {crd[LON] =  2*M_PI + crd[LON];}
-      if (crd[LON] >  M_PI) {crd[LON] = -2*M_PI + crd[LON];}
-    }
-    */
-    // To 0, 360
-    if (crd[LON] < 0.0) crd[LON] = 2*M_PI + crd[LON];
-
-    // longitude does not make sense at the poles - set to 0.
-    if ( std::abs(std::abs(crd[LAT]) - M_PI_2) < 1e-13) crd[LON] = 0.;
-
-    crd[LON] *= Constants::radiansToDegrees();
-    crd[LAT] *= Constants::radiansToDegrees();
+    CubedSphereProjectionBase::xy2lonlatpost(xyz, t, crd);
 
     std::cout << "end of equidistant xy2lonlat lonlat = " <<  crd[LON] << " " << crd[LAT] << std::endl;
 }
