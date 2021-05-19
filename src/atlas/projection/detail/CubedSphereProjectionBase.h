@@ -107,12 +107,13 @@ class CubedSphereProjectionBase {
         double normalisedY = (ab[1] + M_PI_4)/M_PI_2;
         xy[0] = normalisedX * 90. + xOffset[t];
         xy[1] = normalisedY * 90. + yOffset[t];
-  }
+   }
+
+   idx_t tileFromXY(const double xy[] ) const;
 
   protected:
-     idx_t tileFromXY(const double xy[] ) const;
 
-     idx_t tileFromLonLat(const double crd[]) const;
+   idx_t tileFromLonLat(const double crd[]) const;
 
   private:
     int cubeNx_;

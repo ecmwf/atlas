@@ -243,7 +243,6 @@ public:
   void xyt2xy(const double xyt[], double xy[]) const {return grid_->xyt2xy(xyt, xy); }
 
 private:
-
   const grid_t* grid_;
 };
 
