@@ -428,7 +428,7 @@ CASE( "test_structured_from_config" ) {
 }
 
 CASE( "test_equiangular_cubedsphere" ) {
-    int resolution(516);
+    int resolution(512);
     Grid g{"CS-EA-" + std::to_string(resolution) };
     Log::info() << " grid created - grid spec = " <<  g.spec() << std::endl;
     std::vector<atlas::PointLonLat> pointsLonLat;
@@ -441,13 +441,13 @@ CASE( "test_equiangular_cubedsphere" ) {
     for ( auto ll : g.lonlat() ) {
         pointsLonLat.push_back( ll );
         g->projection().lonlat2xy(ll);
-        EXPECT_APPROX_EQ(ll, pointsXY[i], 1e-12);
+        EXPECT_APPROX_EQ(ll, pointsXY[i], 1e-11);
         ++i;
     }
     i = 0;
     for ( auto xx : g.xy() ) {
        g->projection().xy2lonlat(xx);
-       EXPECT_APPROX_EQ(xx, pointsLonLat[i], 1e-12);
+       EXPECT_APPROX_EQ(xx, pointsLonLat[i], 1e-11);
        ++i;
     }
 

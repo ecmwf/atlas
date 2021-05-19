@@ -31,8 +31,8 @@ class CubedSphereProjectionBase {
     void hash( eckit::Hash& ) const;
 
     // projection and inverse projection
-    //void xy2lonlat( double crd[] ) const;
-    //void lonlat2xy( double crd[] ) const;
+    void xy2lonlatpost( double xyz[], const idx_t & t, double crd[] ) const;
+    void lonlat2xypre( double crd[], idx_t & t, double xyz[] ) const;
 
     // Functions for xy to latlon on each tile
     void tile1Rotate( double[] ) const;
