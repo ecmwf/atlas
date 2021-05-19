@@ -10,8 +10,6 @@
 #include <array>
 #include <functional>
 #include <iostream>
-#include <iomanip>
-#include <limits>
 #include <memory>
 #include <numeric>
 #include <vector>
@@ -20,7 +18,6 @@
 #include "atlas/grid/Spacing.h"
 #include "atlas/grid/detail/grid/Grid.h"
 #include "atlas/library/config.h"
-#include "atlas/projection/detail/ProjectionUtilities.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -270,8 +267,8 @@ public:
       // xy is in degrees while xyt is in radians
       // (alpha, beta) and tiles.
 
-      double normalisedX = xy[0]/90.;
-      double normalisedY = (xy[1] + 135.)/90.;
+      double normalisedX = xy[LON]/90.;
+      double normalisedY = (xy[LAT] + 135.)/90.;
 
       double CubeNxDouble = static_cast<double>(CubeNx_);
 
@@ -306,12 +303,8 @@ public:
        (xyt[0] - xOffsetIndex[static_cast<size_t>(xyt[2])])/N;
       double normalisedY =
        (xyt[1] - yOffsetIndex[static_cast<size_t>(xyt[2])])/N;
-      xy[0] = normalisedX * 90. + xOffsetDeg[xyt[2]];
-      xy[1] = normalisedY * 90. + yOffsetDeg[xyt[2]];
-      std::cout << "xyt xy xs_ ysr_ :: "  << xyt[0] << " " << xyt[1] << " " << xyt[2]
-                << " " << xy[0] << " " << xy[1] << " " << xs_[static_cast<size_t>(xyt[2])]
-                << " " << ysr_[static_cast<size_t>(xyt[2])]  << " "
-                << ys_[static_cast<size_t>(xyt[2])]   << std::endl;
+      xy[LON] = normalisedX * 90. + xOffsetDeg[xyt[2]];
+      xy[LAT] = normalisedY * 90. + yOffsetDeg[xyt[2]];
   }
 
   // Tile specific access to x and y locations

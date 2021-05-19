@@ -16,6 +16,7 @@
 #include "atlas/array.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
+#include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {
 namespace projection {
@@ -91,10 +92,10 @@ class CubedSphereProjectionBase {
         std::vector<double> xOffset{0., 1., 1., 2., 3., 3.};
         std::vector<double> yOffset{1., 1., 2., 1., 1., 0.};
 
-        double normalisedX = xy[0]/90.;
-        double normalisedY = (xy[1] + 135.)/90.;
-        ab[0] = (normalisedX - xOffset[t])* M_PI_2 - M_PI_4;
-        ab[1] = (normalisedY - yOffset[t])* M_PI_2 - M_PI_4;
+        double normalisedX = xy[LON]/90.;
+        double normalisedY = (xy[LAT] + 135.)/90.;
+        ab[LON] = (normalisedX - xOffset[t])* M_PI_2 - M_PI_4;
+        ab[LAT] = (normalisedY - yOffset[t])* M_PI_2 - M_PI_4;
 
     }
 
@@ -103,15 +104,14 @@ class CubedSphereProjectionBase {
         // (alpha, beta) and tiles.
         std::vector<double> xOffset{0., 90., 90., 180, 270, 270};
         std::vector<double> yOffset{-45., -45, 45, -45, -45, -135};
-        double normalisedX = (ab[0] + M_PI_4)/M_PI_2;
-        double normalisedY = (ab[1] + M_PI_4)/M_PI_2;
-        xy[0] = normalisedX * 90. + xOffset[t];
-        xy[1] = normalisedY * 90. + yOffset[t];
+        double normalisedX = (ab[LON] + M_PI_4)/M_PI_2;
+        double normalisedY = (ab[LAT] + M_PI_4)/M_PI_2;
+        xy[LON] = normalisedX * 90. + xOffset[t];
+        xy[LAT] = normalisedY * 90. + yOffset[t];
    }
 
+  protected:  
    idx_t tileFromXY(const double xy[] ) const;
-
-  protected:
 
    idx_t tileFromLonLat(const double crd[]) const;
 
