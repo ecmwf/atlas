@@ -323,26 +323,26 @@ idx_t CubedSphereProjectionBase::tileFromXY( const double xy[] ) const {
 
   idx_t t{-1};
 
-  if ((xy[LON] >= 0.) && ( xy[LAT] >= -45.) && (xy[LON] < 90.) && (xy[LAT] < 45.)) {
+  if ((xy[XX] >= 0.) && ( xy[YY] >= -45.) && (xy[XX] < 90.) && (xy[YY] < 45.)) {
      t = 0;
-  } else if ((xy[LON] >= 90.) && ( xy[LAT] >= -45.) && (xy[LON] < 180.) && (xy[LAT] < 45.)) {
+  } else if ((xy[XX] >= 90.) && ( xy[YY] >= -45.) && (xy[XX] < 180.) && (xy[YY] < 45.)) {
      t = 1;
-  } else if ((xy[LON] >= 90.) && ( xy[LAT] >= 45.) && (xy[LON] < 180.) && (xy[LAT] < 135.)) {
+  } else if ((xy[XX] >= 90.) && ( xy[YY] >= 45.) && (xy[XX] < 180.) && (xy[YY] < 135.)) {
      t = 2;
-  } else if ((xy[LON] >= 180.) && ( xy[LAT] > -45.) && (xy[LON] < 270.) && (xy[LAT] <= 45.)) {
+  } else if ((xy[XX] >= 180.) && ( xy[YY] > -45.) && (xy[XX] < 270.) && (xy[YY] <= 45.)) {
      t = 3;
-  } else if ((xy[LON] >= 270.) && ( xy[LAT] > -45.) && (xy[LON] < 360.) && (xy[LAT] <= 45.)) {
+  } else if ((xy[XX] >= 270.) && ( xy[YY] > -45.) && (xy[XX] < 360.) && (xy[YY] <= 45.)) {
      t = 4;
-  } else if ((xy[LON] >= 270.) && ( xy[LAT] > -135.) && (xy[LON] < 360.) && (xy[LAT] <= -45.)) {
+  } else if ((xy[XX] >= 270.) && ( xy[YY] > -135.) && (xy[XX] < 360.) && (xy[YY] <= -45.)) {
      t = 5;
   }
 
   // extra points
-  if ((std::abs(xy[LON]) < 1e-13) && (std::abs(xy[LAT] - 45.) < 1e-13)) t = 0;
-  if ((std::abs(xy[LON] - 180.) < 1e-13) && (std::abs(xy[LAT] + 45.) < 1e-13)) t = 1;
+  if ((std::abs(xy[XX]) < 1e-13) && (std::abs(xy[YY] - 45.) < 1e-13)) t = 0;
+  if ((std::abs(xy[XX] - 180.) < 1e-13) && (std::abs(xy[YY] + 45.) < 1e-13)) t = 1;
 
   // for end iterator !!!!
-  if ((std::abs(xy[LON] - 360.) < 1e-13) && (std::abs(xy[LAT] + 135.) < 1e-13)) t = 5;
+  if ((std::abs(xy[XX] - 360.) < 1e-13) && (std::abs(xy[YY] + 135.) < 1e-13)) t = 5;
 
   return t;
 }

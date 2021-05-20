@@ -92,8 +92,8 @@ class CubedSphereProjectionBase {
         std::vector<double> xOffset{0., 1., 1., 2., 3., 3.};
         std::vector<double> yOffset{1., 1., 2., 1., 1., 0.};
 
-        double normalisedX = xy[LON]/90.;
-        double normalisedY = (xy[LAT] + 135.)/90.;
+        double normalisedX = xy[XX]/90.;
+        double normalisedY = (xy[YY] + 135.)/90.;
         ab[LON] = (normalisedX - xOffset[t])* M_PI_2 - M_PI_4;
         ab[LAT] = (normalisedY - yOffset[t])* M_PI_2 - M_PI_4;
 
