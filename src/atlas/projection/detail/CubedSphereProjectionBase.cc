@@ -23,7 +23,8 @@ namespace detail {
 // -------------------------------------------------------------------------------------------------
 
 CubedSphereProjectionBase::CubedSphereProjectionBase( const eckit::Parametrisation& params )
-                                                            : tile1LonsArray_(), tile1LatsArray_() {
+                                                            : tile1LonsArray_(), tile1LatsArray_(),
+                                                             epsilon_{1e-15} {
   ATLAS_TRACE( "CubedSphereProjectionBase::CubedSphereProjectionBase" );
   // Get cube sphere face dimension
   params.get("CubeNx", cubeNx_);
@@ -323,6 +324,7 @@ idx_t CubedSphereProjectionBase::tileFromXY( const double xy[] ) const {
 
   idx_t t{-1};
 
+
   if ((xy[XX] >= 0.) && ( xy[YY] >= -45.) && (xy[XX] < 90.) && (xy[YY] < 45.)) {
      t = 0;
   } else if ((xy[XX] >= 90.) && ( xy[YY] >= -45.) && (xy[XX] < 180.) && (xy[YY] < 45.)) {
@@ -338,11 +340,11 @@ idx_t CubedSphereProjectionBase::tileFromXY( const double xy[] ) const {
   }
 
   // extra points
-  if ((std::abs(xy[XX]) < 1e-13) && (std::abs(xy[YY] - 45.) < 1e-13)) t = 0;
-  if ((std::abs(xy[XX] - 180.) < 1e-13) && (std::abs(xy[YY] + 45.) < 1e-13)) t = 1;
+  if ((std::abs(xy[XX]) < epsilon_) && (std::abs(xy[YY] - 45.) < epsilon_)) t = 0;
+  if ((std::abs(xy[XX] - 180.) < epsilon_) && (std::abs(xy[YY] + 45.) < epsilon_)) t = 1;
 
   // for end iterator !!!!
-  if ((std::abs(xy[XX] - 360.) < 1e-13) && (std::abs(xy[YY] + 135.) < 1e-13)) t = 5;
+  if ((std::abs(xy[XX] - 360.) < epsilon_) && (std::abs(xy[YY] + 135.) < epsilon_)) t = 5;
 
   return t;
 }
@@ -371,11 +373,10 @@ idx_t CubedSphereProjectionBase::tileFromLonLat(const double crd[]) const {
     // cause the tile selection to fail.
     // To this end we enforce that tiny values close (in roundoff terms)
     // to a boundary should end up exactly on the boundary.
-    double tolerance = 1e-15;
-    if (abs(zPlusAbsX) < tolerance) zPlusAbsX = 0.;
-    if (abs(zPlusAbsY) < tolerance) zPlusAbsY = 0.;
-    if (abs(zMinusAbsX) < tolerance) zMinusAbsX = 0.;
-    if (abs(zMinusAbsY) < tolerance) zMinusAbsY = 0.;
+    if (abs(zPlusAbsX) < epsilon_) zPlusAbsX = 0.;
+    if (abs(zPlusAbsY) < epsilon_) zPlusAbsY = 0.;
+    if (abs(zMinusAbsX) < epsilon_) zMinusAbsX = 0.;
+    if (abs(zMinusAbsY) < epsilon_) zMinusAbsY = 0.;
 
     if (lon >= 1.75 * M_PI  || lon < 0.25 * M_PI) {
         if  ( (zPlusAbsX <= 0.) && (zPlusAbsY <= 0.) ) {
@@ -386,8 +387,8 @@ idx_t CubedSphereProjectionBase::tileFromLonLat(const double crd[]) const {
            t = 0;
         }
         // extra point corner point
-        if ( (abs(lon + 0.25 * M_PI) < 1e-13) &&
-             (abs(lat - cornerLat) < 1e-13) ) t = 0;
+        if ( (abs(lon + 0.25 * M_PI) < epsilon_) &&
+             (abs(lat - cornerLat) < epsilon_) ) t = 0;
     }
 
     if (lon >= 0.25 * M_PI  && lon < 0.75 * M_PI) {
@@ -411,8 +412,8 @@ idx_t CubedSphereProjectionBase::tileFromLonLat(const double crd[]) const {
             t = 3;
         }
         // extra point corner point
-        if ( (abs(lon - 0.75 * M_PI) < 1e-13) &&
-             (abs(lat + cornerLat) < 1e-13) ) t = 1;
+        if ( (abs(lon - 0.75 * M_PI) < epsilon_) &&
+             (abs(lat + cornerLat) < epsilon_) ) t = 1;
     }
 
     if (lon >= 1.25 * M_PI  && lon < 1.75 * M_PI) {

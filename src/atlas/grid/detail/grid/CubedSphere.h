@@ -238,6 +238,7 @@ public:
     //     ----0---------90--------180--------270--------360--->  x
 
     idx_t t{-1};
+    const double epsilon{1e-15};
 
     if ((xy[XX] >= 0.) && ( xy[YY] >= -45.) && (xy[XX] < 90.) && (xy[YY] < 45.)) {
        t = 0;
@@ -254,11 +255,11 @@ public:
     }
 
     // extra points
-    if ((std::abs(xy[XX]) < 1e-15) && (std::abs(xy[YY] - 45.) < 1e-15)) t = 0;
-    if ((std::abs(xy[XX] - 180.) < 1e-15) && (std::abs(xy[YY] + 45.) < 1e-15)) t = 1;
+    if ((std::abs(xy[XX]) < epsilon) && (std::abs(xy[YY] - 45.) < epsilon)) t = 0;
+    if ((std::abs(xy[XX] - 180.) < epsilon) && (std::abs(xy[YY] + 45.) < epsilon)) t = 1;
 
     // for end iterator !!!!
-    if ((std::abs(xy[XX] - 360.) < 1e-15) && (std::abs(xy[YY] + 135.) < 1e-15)) t = 5;
+    if ((std::abs(xy[XX] - 360.) < epsilon) && (std::abs(xy[YY] + 135.) < epsilon)) t = 5;
 
     return t;
   }
