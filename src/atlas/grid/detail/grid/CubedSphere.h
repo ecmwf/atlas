@@ -254,11 +254,11 @@ public:
     }
 
     // extra points
-    if ((std::abs(xy[XX]) < 1e-13) && (std::abs(xy[YY] - 45.) < 1e-13)) t = 0;
-    if ((std::abs(xy[XX] - 180.) < 1e-13) && (std::abs(xy[YY] + 45.) < 1e-13)) t = 1;
+    if ((std::abs(xy[XX]) < 1e-15) && (std::abs(xy[YY] - 45.) < 1e-15)) t = 0;
+    if ((std::abs(xy[XX] - 180.) < 1e-15) && (std::abs(xy[YY] + 45.) < 1e-15)) t = 1;
 
     // for end iterator !!!!
-    if ((std::abs(xy[XX] - 360.) < 1e-13) && (std::abs(xy[YY] + 135.) < 1e-13)) t = 5;
+    if ((std::abs(xy[XX] - 360.) < 1e-15) && (std::abs(xy[YY] + 135.) < 1e-15)) t = 5;
 
     return t;
   }

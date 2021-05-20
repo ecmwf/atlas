@@ -236,10 +236,13 @@ public:
   // Return the number of tiles
   inline int GetNTiles() const { return grid_->GetNTiles(); }
 
+  // Derive tile number from xy space.
   inline idx_t tileFromXY( const double xy[] ) const  { return grid_->tileFromXY(xy); }
 
+  // Transform from xy space to xyt space that is a function of resolution.
   void xy2xyt(const double xy[], double xyt[]) const {return grid_->xy2xyt(xy, xyt); }
 
+  // Transform from xyt space to xy space
   void xyt2xy(const double xyt[], double xy[]) const {return grid_->xyt2xy(xyt, xy); }
 
 private:
