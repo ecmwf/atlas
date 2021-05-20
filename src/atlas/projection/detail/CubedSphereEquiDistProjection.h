@@ -16,10 +16,12 @@ namespace atlas {
 namespace projection {
 namespace detail {
 
-class CubedSphereEquiDistProjection final : public ProjectionImpl, public CubedSphereProjectionBase {
+class CubedSphereEquiDistProjection final : public CubedSphereProjectionBase {
   public:
     // constructor
     CubedSphereEquiDistProjection( const eckit::Parametrisation& );
+
+    virtual ~CubedSphereEquiDistProjection(){}
 
     // projection name
     static std::string static_type() { return "cubedsphere_equidistant"; }

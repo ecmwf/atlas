@@ -22,6 +22,7 @@
 #include "atlas/grid/detail/grid/GridFactory.h"
 #include "atlas/grid/detail/spacing/CustomSpacing.h"
 #include "atlas/grid/detail/spacing/LinearSpacing.h"
+#include "atlas/projection/detail/CubedSphereProjectionBase.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/NormaliseLongitude.h"
@@ -145,7 +146,55 @@ Grid::Spec CubedSphere::spec() const {
   return grid_spec;
 }
 
-// --------------------------------------------------------------------
+// Convert from xy space into resolution dependent xyt space.
+void CubedSphere::xy2xyt(const double xy[], double xyt[]) const {
+    // xy is in degrees while xyt is in radians
+    // (alpha, beta) and tiles.
+
+    double normalisedX = xy[XX]/90.;
+    double normalisedY = (xy[YY] + 135.)/90.;
+
+    double CubeNxDouble = static_cast<double>(CubeNx_);
+
+    std::vector<double> yOffset{CubeNxDouble,
+                                CubeNxDouble,
+                                2. *  CubeNxDouble,
+                                CubeNxDouble,
+                                CubeNxDouble,
+                                0};
+
+    xyt[0] = (normalisedX - std::floor(normalisedX)) * static_cast<double>(CubeNx_)
+          + xs_[static_cast<size_t>(xyt[2])];
+
+    xyt[1] = (normalisedY - std::floor(normalisedY)) * static_cast<double>(CubeNx_)
+          + yOffset[static_cast<size_t>(xyt[2])];
+
+    using atlas::projection::detail::CubedSphereProjectionBase;
+    xyt[2] =
+        dynamic_cast<const CubedSphereProjectionBase &>(projection_).tileFromXY(xy);
+}
+
+// Convert from xyt space into continuous xy space.
+void CubedSphere::xyt2xy(const double xyt[], double xy[]) const {
+    // xy is in degrees
+    // while xyt is in number of grid points
+    // (alpha, beta) and tiles.
+    std::vector<double> xOffsetDeg{0., 90., 90., 180, 270, 270};
+    std::vector<double> yOffsetDeg{-45., -45, 45, -45, -45, -135};
+
+    double N = static_cast<double>(CubeNx_);
+    std::vector<double> xOffsetIndex{0, N, N, 2*N, 3*N,  3*N};
+    std::vector<double> yOffsetIndex{N, N, 2*N, N,  N, 0};
+
+    double normalisedX =
+     (xyt[0] - xOffsetIndex[static_cast<size_t>(xyt[2])])/N;
+    double normalisedY =
+     (xyt[1] - yOffsetIndex[static_cast<size_t>(xyt[2])])/N;
+    xy[XX] = normalisedX * 90. + xOffsetDeg[xyt[2]];
+    xy[YY] = normalisedY * 90. + yOffsetDeg[xyt[2]];
+}
+
+// ------------------------------------------
 
 namespace {
   GridFactoryBuilder<CubedSphere> __register_CubedSphere( CubedSphere::static_type() );

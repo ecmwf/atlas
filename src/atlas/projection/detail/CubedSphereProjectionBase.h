@@ -14,6 +14,7 @@
 #include "eckit/utils/Hash.h"
 
 #include "atlas/array.h"
+#include "atlas/projection/detail/ProjectionImpl.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -22,7 +23,7 @@ namespace atlas {
 namespace projection {
 namespace detail {
 
-class CubedSphereProjectionBase {
+class CubedSphereProjectionBase : public ProjectionImpl {
   typedef array::ArrayT<double> ArrayLatLon_;
   typedef array::ArrayView<double, 2> ArrayViewLatLon_;
   public:
@@ -108,12 +109,13 @@ class CubedSphereProjectionBase {
         double normalisedY = (ab[LAT] + M_PI_4)/M_PI_2;
         xy[XX] = normalisedX * 90. + xOffset[t];
         xy[YY] = normalisedY * 90. + yOffset[t];
-   }
+    }
+
+    idx_t tileFromXY(const double xy[]) const;
 
   protected:  
-   idx_t tileFromXY(const double xy[] ) const;
 
-   idx_t tileFromLonLat(const double crd[]) const;
+    idx_t tileFromLonLat(const double crd[]) const;
 
   private:
     int cubeNx_;
