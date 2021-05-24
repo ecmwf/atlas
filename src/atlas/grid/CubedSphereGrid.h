@@ -26,9 +26,9 @@ class EquiAnglCubedSphereGrid;
                                     |                     |                               |
                              StructuredGrid        UnstructuredGrid                  CubedSphere
                                     |                                                     |
-               +--------------------+-----------------------+               +------+------+------+------+
-               |                    |                       |               |             |             |
-          ReducedGrid          GaussianGrid            RegularGrid       EquiDist      EquiAngl     EquiDistFV3
+               +--------------------+-----------------------+               +------+------+
+               |                    |                       |               |             |
+          ReducedGrid          GaussianGrid            RegularGrid       EquiDist      EquiAngl
                |                 |     |                 |     |
                +--------+--------+     +--------+--------+     +-----+
                         |                       |                    |
@@ -216,27 +216,31 @@ public:
   bool valid() const { return grid_; }
 
   using Grid::xy;
+  void xyt( idx_t i, idx_t j, idx_t t, double xyt[] ) const { grid_->xyt( i, j, t, xyt ); }
+  PointXY xyt( idx_t i, idx_t j, idx_t t) const { return grid_->xyt( i, j, t ); }
   // Given indexes in the array (i, j, t) return position array xyt
-  void xy( idx_t i, idx_t j, idx_t t, double xyt[] ) const { grid_->xy( i, j, t, xyt ); }
 
-  // Given indexes in the array (i, j, t) return position array as a PointXY object.
-  PointXY xy( idx_t i, idx_t j, idx_t t) const { return grid_->xy( i, j, t ); }
+  void xy( idx_t i, idx_t j, idx_t t, double xy[] ) const { grid_->xy( i, j, t, xy ); }
+  PointXY xy( idx_t i, idx_t j, idx_t t) const { return grid_->xy( i, j, t); }
 
   using Grid::lonlat;
-  // Given indexes in the array (i, j, t) return lat/lon array (via the projection)
+  // Given indexes in the array (i, j) return lat/lon array (via the projection)
   void lonlat( idx_t i, idx_t j, idx_t t, double lonlat[] ) const { grid_->lonlat( i, j, t, lonlat ); }
 
   // Given indexes in the array (i, j, t) return lat/lon as a PointLonLat object
   PointLonLat lonlat( idx_t i, idx_t j, idx_t t ) const { return grid_->lonlat( i, j, t ); }
-
-  // Convect lonlat array into indices array (via inverse projection)
-  void lonlat2xy( double lonlat[], idx_t ijt[] ) const { grid_->lonlat2xy( lonlat, ijt ); }
 
   // Return the size of the cubed sphere grid, where CubeNX is the number of grid boxes along the edge of a tile
   inline int GetCubeNx() const { return grid_->GetCubeNx(); }
 
   // Return the number of tiles
   inline int GetNTiles() const { return grid_->GetNTiles(); }
+
+  // Transform from xy space to xyt space that is a function of resolution.
+  void xy2xyt(const double xy[], double xyt[]) const {return grid_->xy2xyt(xy, xyt); }
+
+  // Transform from xyt space to xy space
+  void xyt2xy(const double xyt[], double xy[]) const {return grid_->xyt2xy(xyt, xy); }
 
 private:
   const grid_t* grid_;

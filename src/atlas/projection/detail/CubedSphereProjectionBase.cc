@@ -6,10 +6,13 @@
  */
 
 #include <cmath>
-
+#include <limits>
+#include <iostream>
+#include <iomanip>
 #include "CubedSphereProjectionBase.h"
 
 #include "atlas/projection/detail/ProjectionUtilities.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
 
@@ -20,7 +23,8 @@ namespace detail {
 // -------------------------------------------------------------------------------------------------
 
 CubedSphereProjectionBase::CubedSphereProjectionBase( const eckit::Parametrisation& params )
-                                                            : tile1LonsArray_(), tile1LatsArray_() {
+                                                            : tile1LonsArray_(), tile1LatsArray_(),
+                                                             epsilon_{1e-15} {
   ATLAS_TRACE( "CubedSphereProjectionBase::CubedSphereProjectionBase" );
   // Get cube sphere face dimension
   params.get("CubeNx", cubeNx_);
@@ -65,110 +69,73 @@ void CubedSphereProjectionBase::hash( eckit::Hash& h ) const {
 
 // -------------------------------------------------------------------------------------------------
 
-void CubedSphereProjectionBase::lonlat2xy( double llxytl[] ) const {
+void CubedSphereProjectionBase::xy2lonlatpost( double xyz[], const idx_t & t, double crd[] ) const {
 
-  double lonlat[2];
-  double lonlat_in[2];
-  double xyz[3];
+    using util::Constants;
 
-  // Get full tile 1 lonlat arrays
-  auto tile1Lats = getLatArray();
-  auto tile1Lons = getLonArray();
+    ProjectionUtilities::cartesianToSpherical(xyz, crd, false);
 
-  // Get lonlat point array
-  lonlat_in[LON] = llxytl[LON];
-  lonlat_in[LAT] = llxytl[LAT];
+    if (crd[LON] < 0.0) crd[LON] += 2.0*M_PI;
+    crd[LON] = crd[LON] - M_PI;
 
-  // To -180, 180
-  if (lonlat_in[LON] > 180.0) {
-    lonlat_in[LON] = lonlat_in[LON] - 360.0;
-  }
+    Log::debug() << "xy2lonlat:: lonlat before rotation : "  << crd[LON] << " " << crd[LAT]  << std::endl;
 
-  // To radians
-  lonlat_in[LON] = lonlat_in[LON] * atlas::util::Constants::degreesToRadians();
-  lonlat_in[LAT] = lonlat_in[LAT] * atlas::util::Constants::degreesToRadians();
+    // Convert to cartesian
+    ProjectionUtilities::sphericalToCartesian(crd, xyz, false, true);
 
-  // Loop over tiles
-  bool found = false;
-  for (int t = 0; t < 6; t++) {
+    // Perform tile specific rotation
+    tileRotate.at(t)(xyz);
 
-    if (!found) {
+    // Back to latlon
+    ProjectionUtilities::cartesianToSpherical(xyz, crd, false);
 
-      // Copy before overwriting
-      std::copy(lonlat_in, lonlat_in+2, lonlat);
-
-      // Convert to cartesian
-      ProjectionUtilities::sphericalToCartesian(lonlat, xyz);
-
-      // Perform tile specific rotations
-      tileRotateInverse.at(std::size_t(t))(xyz);
-
-      // Back to latlon
-      ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
-
-      // Loop over tile 1 array
-      for (int ix = 0; ix < cubeNx_; ix++) {
-        for (int iy = 0; iy < cubeNx_; iy++) {
-          double absLonDiff = std::abs(tile1Lons(ix, iy) - lonlat[LON]);
-          double absLatDiff = std::abs(tile1Lats(ix, iy) - lonlat[LAT]);
-          // Check if this rotation landed the point on tile 1
-          if (!found && absLonDiff < 1.0e-15 && absLatDiff < 1.0e-15) {
-            llxytl[2+XX] = ix;
-            llxytl[2+YY] = iy;
-            llxytl[4] = t;
-            found = true;
-          }
-        }
-      }
+    // Shift longitude
+    if (shiftLon_ != 0.0) {
+      crd[LON] = crd[LON] + shiftLon_*atlas::util::Constants::degreesToRadians();
+      if (crd[LON] < -M_PI) {crd[LON] =  2*M_PI + crd[LON];}
+      if (crd[LON] >  M_PI) {crd[LON] = -2*M_PI + crd[LON];}
     }
-  }
-  ATLAS_ASSERT(found, "CubedSphereProjectionBase::lonlat2xy, LonLat not found");
+
+    // To 0, 360
+    if (crd[LON] < 0.0) { crd[LON] = 2.*M_PI + crd[LON]; }
+
+    // Schmidt transform
+    if (doSchmidt_) {
+       this->schmidtTransform(stretchFac_,
+                              targetLon_*atlas::util::Constants::degreesToRadians(),
+                              targetLat_*atlas::util::Constants::degreesToRadians(),
+                              crd);
+    }
+
+    // longitude does not make sense at the poles - set to 0.
+    if (std::abs(std::abs(crd[LAT]) - M_PI_2) < 1e-15) crd[LON] = 0.;
+
+    crd[LON] *= Constants::radiansToDegrees();
+    crd[LAT] *= Constants::radiansToDegrees();
 }
 
 // -------------------------------------------------------------------------------------------------
 
-void CubedSphereProjectionBase::xy2lonlat( double xytll[] ) const {
+void CubedSphereProjectionBase::lonlat2xypre( double crd[], idx_t & t, double xyz[] ) const {
 
-  double lonlat[2];
-  double xyz[3];
+    using util::Constants;
 
-  // Get lat/lon for this index but on tile 1
-  auto tile1Lats = getLatArray();
-  auto tile1Lons = getLonArray();
-  lonlat[LON] = tile1Lons(static_cast<int>(xytll[XX]), static_cast<int>(xytll[YY]));
-  lonlat[LAT] = tile1Lats(static_cast<int>(xytll[XX]), static_cast<int>(xytll[YY]));
+    if (std::abs(crd[LON]) < 1e-15) crd[LON] = 0.;
+    if (std::abs(crd[LAT]) < 1e-15) crd[LAT] = 0.;
 
-  // Convert to cartesian
-  ProjectionUtilities::sphericalToCartesian(lonlat, xyz);
+    // convert degrees to radians
+    crd[LON] *= Constants::degreesToRadians();
+    crd[LAT] *= Constants::degreesToRadians();
 
-  // Perform tile specific rotation
-  tileRotate.at(xytll[2])(xyz);
+    // To [-pi/4, 7/4 * pi)
+    if (crd[LON] >= 1.75 * M_PI) crd[LON] += -2.*M_PI;
 
-  // Back to latlon
-  ProjectionUtilities::cartesianToSpherical(xyz, lonlat);
+    // find tile which this lonlat is linked to
+    // works [-pi/4, 7/4 * pi)
+    t = CubedSphereProjectionBase::tileFromLonLat(crd);
 
-  // Shift longitude
-  if (shiftLon_ != 0.0) {
-    lonlat[LON] = lonlat[LON] + shiftLon_*atlas::util::Constants::degreesToRadians();
-    if (lonlat[LON] < -M_PI) {lonlat[LON] =  2*M_PI + lonlat[LON];}
-    if (lonlat[LON] >  M_PI) {lonlat[LON] = -2*M_PI + lonlat[LON];}
-  }
-
-  // To 0, 360
-  if (lonlat[LON] < 0.0) {
-    lonlat[LON] = 2*M_PI + lonlat[LON];
-  }
-
-  // Schmidt transform
-  if (doSchmidt_) {
-    this->schmidtTransform( stretchFac_, targetLon_*atlas::util::Constants::degreesToRadians(),
-                            targetLat_*atlas::util::Constants::degreesToRadians(), lonlat);
-  }
-
-  // Fill outputs and covert to degrees
-  xytll[3+LON] = lonlat[LON] * atlas::util::Constants::radiansToDegrees();
-  xytll[3+LAT] = lonlat[LAT] * atlas::util::Constants::radiansToDegrees();
-
+    ProjectionUtilities::sphericalToCartesian(crd, xyz, false, true);
+    tileRotateInverse.at(t)(xyz);
 
 }
 
@@ -203,38 +170,35 @@ void CubedSphereProjectionBase::tile3Rotate( double xyz[] ) const {
 
 void CubedSphereProjectionBase::tile4Rotate( double xyz[] ) const {
   //  Face 4: rotate -180.0 degrees about z axis
-  //          rotate   90.0 degrees about x axis
   double angle;
   angle = -M_PI;
   ProjectionUtilities::rotate3dZ(angle, xyz);
-  angle = M_PI / 2.0;
-  ProjectionUtilities::rotate3dX(angle, xyz);
 }
 
 // -------------------------------------------------------------------------------------------------
 
 void CubedSphereProjectionBase::tile5Rotate( double xyz[] ) const {
   //  Face 5: rotate 90.0 degrees about z axis
-  //          rotate 90.0 degrees about y axis
   double angle;
   angle = M_PI / 2.0;
   ProjectionUtilities::rotate3dZ(angle, xyz);
-  angle = M_PI / 2.0;
-  ProjectionUtilities::rotate3dY(angle, xyz);
 }
 
 // -------------------------------------------------------------------------------------------------
 
 void CubedSphereProjectionBase::tile6Rotate( double xyz[] ) const {
-  //  Face 6: rotate 90.0 degrees about y axis
+  // Face 6: rotate 90.0 degrees about y axis
+  //         rotate 90.0 degrees about z axis
   double angle;
   angle = M_PI / 2.0;
   ProjectionUtilities::rotate3dY(angle, xyz);
+  angle = M_PI / 2.0;
+  ProjectionUtilities::rotate3dZ(angle, xyz);
 }
 
 // -------------------------------------------------------------------------------------------------
 
-void CubedSphereProjectionBase::tile1RotateInverse( double llxyt[] ) const {
+void CubedSphereProjectionBase::tile1RotateInverse( double xyt[] ) const {
   //  Face 1, no rotation.
 }
 
@@ -262,11 +226,8 @@ void CubedSphereProjectionBase::tile3RotateInverse( double xyz[] ) const {
 // -------------------------------------------------------------------------------------------------
 
 void CubedSphereProjectionBase::tile4RotateInverse( double xyz[] ) const {
-  //  Face 4: rotate   90.0 degrees about x axis
-  //          rotate -180.0 degrees about z axis
+  //  Face 4: rotate  180.0 degrees about z axis
   double angle;
-  angle = -M_PI / 2.0;
-  ProjectionUtilities::rotate3dX(angle, xyz);
   angle = M_PI;
   ProjectionUtilities::rotate3dZ(angle, xyz);
 }
@@ -275,11 +236,8 @@ void CubedSphereProjectionBase::tile4RotateInverse( double xyz[] ) const {
 
 void CubedSphereProjectionBase::tile5RotateInverse( double xyz[] ) const {
   //  Face 5: rotate -90.0 degrees about y axis
-  //          rotate -90.0 degrees about z axis
   double angle;
-  angle = -M_PI / 2.0;
-  ProjectionUtilities::rotate3dY(angle, xyz);
-  angle = -M_PI / 2.0;
+  angle = - M_PI / 2.0;
   ProjectionUtilities::rotate3dZ(angle, xyz);
 }
 
@@ -287,9 +245,13 @@ void CubedSphereProjectionBase::tile5RotateInverse( double xyz[] ) const {
 
 void CubedSphereProjectionBase::tile6RotateInverse( double xyz[] ) const {
   //  Face 6: rotate -90.0 degrees about y axis
+  //          rotate -90.0 degrees about z axis
   double angle;
-  angle = -M_PI / 2.0;
+  angle = -M_PI / 2.;
+  ProjectionUtilities::rotate3dZ(angle, xyz);
+  angle = -M_PI / 2.;
   ProjectionUtilities::rotate3dY(angle, xyz);
+
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -301,8 +263,8 @@ void CubedSphereProjectionBase::schmidtTransform( double stretchFac, double targ
   double c2p1 = 1.0 + stretchFac*stretchFac;
   double c2m1 = 1.0 - stretchFac*stretchFac;
 
-  double sin_p = sin(targetLat);
-  double cos_p = cos(targetLat);
+  double sin_p = std::sin(targetLat);
+  double cos_p = std::cos(targetLat);
 
   double sin_lat;
   double cos_lat;
@@ -310,13 +272,13 @@ void CubedSphereProjectionBase::schmidtTransform( double stretchFac, double targ
 
   if ( std::abs(c2m1) > 1.0e-7 ) {
     sin_lat = sin(lonlat[LAT]);
-    lat_t = asin( (c2m1+c2p1*sin_lat)/(c2p1+c2m1*sin_lat) );
+    lat_t = std::asin( (c2m1+c2p1*sin_lat)/(c2p1+c2m1*sin_lat) );
   } else {         // no stretching
     lat_t = lonlat[LAT];
   }
 
-  sin_lat = sin(lat_t);
-  cos_lat = cos(lat_t);
+  sin_lat = std::sin(lat_t);
+  cos_lat = std::cos(lat_t);
   double sin_o = -(sin_p*sin_lat + cos_p*cos_lat*cos(lonlat[LON]));
 
   if ( (1.-std::abs(sin_o)) < 1.0e-7 ) {    // poles
@@ -332,6 +294,146 @@ void CubedSphereProjectionBase::schmidtTransform( double stretchFac, double targ
     }
   }
 
+}
+
+idx_t CubedSphereProjectionBase::tileFromXY( const double xy[] ) const {
+  // Assume one face-edge is of length 90 degrees.
+  //
+  //   y ^
+  //     |
+  //    135              ----------
+  //     |              |     ^    |
+  //     |              |          |
+  //     |              |=<   2   <|
+  //     |              |     v    |
+  //     |              |     =    |
+  //     45  0----------2----------3----------4----------
+  //     |   |    ^     |     ^    |    =     |     =    |
+  //     |   |          |          |    ^     |     ^    |
+  //     |   |=<  0    <|=<   1   <|=<  3    <|=<   4   <|
+  //     |   |    v     |     v    |          |          |
+  //     |   |    =     |     =    |    v     |     v    |
+  //    -45  0 ---------1----------1----------5----------
+  //     |                                    |     =    |
+  //     |                                    |     ^    |
+  //     |                                    |=<   5   <|
+  //     |                                    |          |
+  //     |                                    |     v    |
+  //   -135                                    ----------(5 for end iterator)
+  //     ----0---------90--------180--------270--------360--->  x
+
+  idx_t t{-1};
+
+
+  if ((xy[XX] >= 0.) && ( xy[YY] >= -45.) && (xy[XX] < 90.) && (xy[YY] < 45.)) {
+     t = 0;
+  } else if ((xy[XX] >= 90.) && ( xy[YY] >= -45.) && (xy[XX] < 180.) && (xy[YY] < 45.)) {
+     t = 1;
+  } else if ((xy[XX] >= 90.) && ( xy[YY] >= 45.) && (xy[XX] < 180.) && (xy[YY] < 135.)) {
+     t = 2;
+  } else if ((xy[XX] >= 180.) && ( xy[YY] > -45.) && (xy[XX] < 270.) && (xy[YY] <= 45.)) {
+     t = 3;
+  } else if ((xy[XX] >= 270.) && ( xy[YY] > -45.) && (xy[XX] < 360.) && (xy[YY] <= 45.)) {
+     t = 4;
+  } else if ((xy[XX] >= 270.) && ( xy[YY] > -135.) && (xy[XX] < 360.) && (xy[YY] <= -45.)) {
+     t = 5;
+  }
+
+  // extra points
+  if ((std::abs(xy[XX]) < epsilon_) && (std::abs(xy[YY] - 45.) < epsilon_)) t = 0;
+  if ((std::abs(xy[XX] - 180.) < epsilon_) && (std::abs(xy[YY] + 45.) < epsilon_)) t = 1;
+
+  // for end iterator !!!!
+  if ((std::abs(xy[XX] - 360.) < epsilon_) && (std::abs(xy[YY] + 135.) < epsilon_)) t = 5;
+
+  return t;
+}
+
+// assuming that crd[] here holds the latitude/longitude in RADIANS.
+// expecting longitude range between 0 and 2* PI
+idx_t CubedSphereProjectionBase::tileFromLonLat(const double crd[]) const {
+    idx_t t(-1);
+    double xyz[3];
+
+    ProjectionUtilities::sphericalToCartesian(crd, xyz, false, true);
+
+    const double cornerLat= std::asin(1./std::sqrt(3.0));
+      // the magnitude of the latitude at the corners of the cube (not including the sign)
+      // in radians.
+
+    const double & lon = crd[LON];
+    const double & lat = crd[LAT];
+
+    double zPlusAbsX = xyz[ZZ] + abs(xyz[XX]);
+    double zPlusAbsY = xyz[ZZ] + abs(xyz[YY]);
+    double zMinusAbsX = xyz[ZZ] - abs(xyz[XX]);
+    double zMinusAbsY = xyz[ZZ] - abs(xyz[YY]);
+
+    // Note that this method can lead to roundoff errors that can
+    // cause the tile selection to fail.
+    // To this end we enforce that tiny values close (in roundoff terms)
+    // to a boundary should end up exactly on the boundary.
+    if (abs(zPlusAbsX) < epsilon_) zPlusAbsX = 0.;
+    if (abs(zPlusAbsY) < epsilon_) zPlusAbsY = 0.;
+    if (abs(zMinusAbsX) < epsilon_) zMinusAbsX = 0.;
+    if (abs(zMinusAbsY) < epsilon_) zMinusAbsY = 0.;
+
+    if (lon >= 1.75 * M_PI  || lon < 0.25 * M_PI) {
+        if  ( (zPlusAbsX <= 0.) && (zPlusAbsY <= 0.) ) {
+           t = 2;
+        } else if ( (zMinusAbsX > 0.) && (zMinusAbsY > 0.) ) {
+           t = 5;
+        } else {
+           t = 0;
+        }
+        // extra point corner point
+        if ( (abs(lon + 0.25 * M_PI) < epsilon_) &&
+             (abs(lat - cornerLat) < epsilon_) ) t = 0;
+    }
+
+    if (lon >= 0.25 * M_PI  && lon < 0.75 * M_PI) {
+        // interior
+        if  ( (zPlusAbsX <= 0.) && (zPlusAbsY <= 0.) ) {
+            t = 2;
+        } else if  ( (zMinusAbsX > 0.) && (zMinusAbsY > 0.) ) {
+            t = 5;
+        } else {
+            t = 1;
+        }
+    }
+
+    if (lon >= 0.75 * M_PI  && lon < 1.25 * M_PI) {
+        // interior
+        if  ( (zPlusAbsX < 0.) && (zPlusAbsY < 0.) ) {
+            t = 2;
+        } else if  ( (zMinusAbsX >= 0.) && (zMinusAbsY >= 0.) ) {
+            t = 5;
+        } else {
+            t = 3;
+        }
+        // extra point corner point
+        if ( (abs(lon - 0.75 * M_PI) < epsilon_) &&
+             (abs(lat + cornerLat) < epsilon_) ) t = 1;
+    }
+
+    if (lon >= 1.25 * M_PI  && lon < 1.75 * M_PI) {
+        // interior
+        if  ( (zPlusAbsX < 0.) && (zPlusAbsY < 0.) ) {
+            t = 2;
+        } else if  ( (zMinusAbsX >= 0.) && (zMinusAbsY >= 0.) ) {
+            t = 5;
+        } else {
+            t = 4;
+        }
+    }
+
+    Log::debug() << "tileFromLonLat:: lonlat abs xyz t = " <<
+                 std::setprecision(std::numeric_limits<double>::digits10 + 1) <<
+        zPlusAbsX  << " " << zPlusAbsY << " " << zMinusAbsX << " " << zMinusAbsY << " " <<
+        crd[LON] << " " << crd[LAT]  << " "  <<
+        xyz[XX] << " " << xyz[YY]  << " " << xyz[ZZ] << " " << t << std::endl;
+
+    return t;
 }
 
 // -------------------------------------------------------------------------------------------------

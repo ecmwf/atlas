@@ -428,34 +428,53 @@ CASE( "test_structured_from_config" ) {
 }
 
 CASE( "test_equiangular_cubedsphere" ) {
-    int resolution(2);
+    int resolution(512);
     Grid g{"CS-EA-" + std::to_string(resolution) };
     Log::info() << " grid created - grid spec = " <<  g.spec() << std::endl;
     std::vector<atlas::PointLonLat> pointsLonLat;
-    for ( auto ll : g.lonlat() )
+    std::vector<atlas::PointXY> pointsXY;
+
+    for ( auto xx : g.xy() ) {
+       pointsXY.push_back(xx);
+    }
+    std::size_t i{0};
+    for ( auto ll : g.lonlat() ) {
         pointsLonLat.push_back( ll );
+        g->projection().lonlat2xy(ll);
+        EXPECT_APPROX_EQ(ll, pointsXY[i], 1e-11);
+        ++i;
+    }
+    i = 0;
+    for ( auto xx : g.xy() ) {
+       g->projection().xy2lonlat(xx);
+       EXPECT_APPROX_EQ(xx, pointsLonLat[i], 1e-11);
+       ++i;
+    }
+
     EXPECT(pointsLonLat.size() == 6* resolution* resolution +2);
 
-    const double rpi     = 2.0 * asin( 1.0 );
-    const double rad2deg = 180.0 / rpi;
-    double cornerLat = rad2deg * atan(sin(rpi/4.0));
-    double tolerance = 1e-13;
-    // Expected latitudes/longitude per tile
-    std::vector<std::pair<double, double>> expectedLatLon{
-        {-cornerLat, 315.0}, {-45.0, 0.0}, {0.0, 315.0}, {0.0,0.0}, {cornerLat, 315.0},
-        {-cornerLat, 45.0}, {-45.0, 90.0},  {-cornerLat, 135.0}, {0.0, 45.0}, {0.0, 90.0},
-        {cornerLat, 45.0}, { 45.0, 90.0}, { 45.0, 0.0}, { 90, 45},
-        {cornerLat, 135.0}, {0.0, 135.0}, { 45.0, 180.0}, { 0.0, 180.0},
-        {cornerLat, 225.0},  {0.0, 225.0}, {45.0, 270.0}, { 0.0, 270.0},
-        {-cornerLat, 225.0}, {-45.0, 180.0}, {-45.0, 270.0}, {-90.0, 0.0}
-    };
+    if (resolution == 2) {
+        const double rpi     = 2.0 * asin( 1.0 );
+        const double rad2deg = 180.0 / rpi;
+        double cornerLat = rad2deg * atan(sin(rpi/4.0));
+        double tolerance = 1e-13;
+        // Expected latitudes/longitude per tile
+        std::vector<std::pair<double, double>> expectedLatLon{
+            {-cornerLat, 315.0}, {-45.0, 0.0}, {0.0, 315.0}, {0.0,0.0}, {cornerLat, 315.0},
+            {-cornerLat, 45.0}, {-45.0, 90.0},  {-cornerLat, 135.0}, {0.0, 45.0}, {0.0, 90.0},
+            {cornerLat, 45.0}, { 45.0, 90.0}, { 45.0, 0.0}, { 90, 0.0},
+            {cornerLat, 135.0}, {0.0, 135.0}, { 45.0, 180.0}, { 0.0, 180.0},
+            {cornerLat, 225.0},  {0.0, 225.0}, {45.0, 270.0}, { 0.0, 270.0},
+            {-cornerLat, 225.0}, {-45.0, 180.0}, {-45.0, 270.0}, {-90.0, 0.0}
+        };
 
-    for (std::size_t jn = 0; jn < g.size(); ++jn) {
-        Log::info() << " cube:: global index :" << jn+1 <<  " "
+        for (std::size_t jn = 0; jn < g.size(); ++jn) {
+            Log::info() << " cube:: global index :" << jn+1 <<  " "
               << "actual/expected latitude :"  << pointsLonLat[jn].lat() <<  " " << expectedLatLon[jn].first << " "
               << "actual/expected longitude :"  << pointsLonLat[jn].lon() <<  " " << expectedLatLon[jn].second << std::endl;
-        EXPECT(std::abs(pointsLonLat[jn].lat() - expectedLatLon[jn].first) <  tolerance);
-        EXPECT(std::abs(pointsLonLat[jn].lon() - expectedLatLon[jn].second) <  tolerance);
+            EXPECT(std::abs(pointsLonLat[jn].lat() - expectedLatLon[jn].first) <  tolerance);
+            EXPECT(std::abs(pointsLonLat[jn].lon() - expectedLatLon[jn].second) <  tolerance);
+        }
     }
 }
 

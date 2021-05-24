@@ -22,6 +22,7 @@
 #include "atlas/grid/detail/grid/GridFactory.h"
 #include "atlas/grid/detail/spacing/CustomSpacing.h"
 #include "atlas/grid/detail/spacing/LinearSpacing.h"
+#include "atlas/projection/detail/CubedSphereProjectionBase.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/NormaliseLongitude.h"
@@ -145,7 +146,55 @@ Grid::Spec CubedSphere::spec() const {
   return grid_spec;
 }
 
-// --------------------------------------------------------------------
+// Convert from xy space into resolution dependent xyt space.
+void CubedSphere::xy2xyt(const double xy[], double xyt[]) const {
+    // xy is in degrees while xyt is in radians
+    // (alpha, beta) and tiles.
+
+    double normalisedX = xy[XX]/90.;
+    double normalisedY = (xy[YY] + 135.)/90.;
+
+    double CubeNxDouble = static_cast<double>(CubeNx_);
+
+    std::vector<double> yOffset{CubeNxDouble,
+                                CubeNxDouble,
+                                2. *  CubeNxDouble,
+                                CubeNxDouble,
+                                CubeNxDouble,
+                                0};
+
+    xyt[0] = (normalisedX - std::floor(normalisedX)) * static_cast<double>(CubeNx_)
+          + xs_[static_cast<size_t>(xyt[2])];
+
+    xyt[1] = (normalisedY - std::floor(normalisedY)) * static_cast<double>(CubeNx_)
+          + yOffset[static_cast<size_t>(xyt[2])];
+
+    using atlas::projection::detail::CubedSphereProjectionBase;
+    xyt[2] =
+        dynamic_cast<const CubedSphereProjectionBase &>(projection_).tileFromXY(xy);
+}
+
+// Convert from xyt space into continuous xy space.
+void CubedSphere::xyt2xy(const double xyt[], double xy[]) const {
+    // xy is in degrees
+    // while xyt is in number of grid points
+    // (alpha, beta) and tiles.
+    std::vector<double> xOffsetDeg{0., 90., 90., 180, 270, 270};
+    std::vector<double> yOffsetDeg{-45., -45, 45, -45, -45, -135};
+
+    double N = static_cast<double>(CubeNx_);
+    std::vector<double> xOffsetIndex{0, N, N, 2*N, 3*N,  3*N};
+    std::vector<double> yOffsetIndex{N, N, 2*N, N,  N, 0};
+
+    double normalisedX =
+     (xyt[0] - xOffsetIndex[static_cast<size_t>(xyt[2])])/N;
+    double normalisedY =
+     (xyt[1] - yOffsetIndex[static_cast<size_t>(xyt[2])])/N;
+    xy[XX] = normalisedX * 90. + xOffsetDeg[xyt[2]];
+    xy[YY] = normalisedY * 90. + yOffsetDeg[xyt[2]];
+}
+
+// ------------------------------------------
 
 namespace {
   GridFactoryBuilder<CubedSphere> __register_CubedSphere( CubedSphere::static_type() );
@@ -282,72 +331,9 @@ public:
 
 // -------------------------------------------------------------------------------------------------
 
-static class cubedsphere_equidistant_fv3 : public GridBuilder {
-public:
-  cubedsphere_equidistant_fv3() : GridBuilder( "cubedsphere_equidistant_fv3", {"^[Cc][Ss][_-][Ff][Vv]3[-_]([0-9]+)$"}, {"CSFV3<cubedsphere>"} ) {}
-
-  void print( std::ostream& os ) const override {
-    os << std::left << std::setw( 20 ) << "CS-FV3-<FaceNx>" << "Cubed sphere, equidistant FV3";
-  }
-
-  const atlas::Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const override {
-    int id;
-    std::vector<std::string> matches;
-    if ( match( name, matches, id ) ) {
-      util::Config gridconf( config );
-      int CubeNx = to_int( matches[0] );
-      gridconf.set( "type", type() );
-      gridconf.set( "CubeNx", CubeNx );
-      return create( gridconf );
-    }
-    return nullptr;
-  }
-
-  const atlas::Grid::Implementation* create( const Grid::Config& config ) const override {
-    int CubeNx = 0;
-    config.get( "CubeNx", CubeNx );
-    util::Config projconf;
-    projconf.set("type", "cubedsphere_equidistant_fv3");
-    projconf.set("CubeNx", CubeNx);
-
-    // Shift projection by a longitude
-    if (config.has("ShiftLon")) {
-      double shiftLon = 0.0;
-      config.get("ShiftLon", shiftLon);
-      projconf.set("ShiftLon", shiftLon);
-    }
-
-    // Apply a Schmidt transform
-    if (config.has("DoSchmidt")) {
-      bool doSchmidt = false;
-      config.get("DoSchmidt", doSchmidt);
-      if (doSchmidt) {
-        double stretchFac;
-        double targetLon;
-        double targetLat;
-        config.get("StretchFac", stretchFac);
-        config.get("TargetLon", targetLon);
-        config.get("TargetLat", targetLat);
-        projconf.set("DoSchmidt", doSchmidt);
-        projconf.set("StretchFac", stretchFac);
-        projconf.set("TargetLon", targetLon);
-        projconf.set("TargetLat", targetLat);
-      }
-    }
-
-    return new CubedSphereGrid::grid_t( "CS-FV3-" + std::to_string( CubeNx ), CubeNx, Projection( projconf ) );
-  }
-
-  void force_link() {}
-
-} cubedsphere_equidistant_fv3_;
-
-// -------------------------------------------------------------------------------------------------
-
 void force_link_CubedSphere() {
     cubedsphere_equiangular_.force_link();
     cubedsphere_equidistant_.force_link();
-    cubedsphere_equidistant_fv3_.force_link();
   }
 
 // -------------------------------------------------------------------------------------------------

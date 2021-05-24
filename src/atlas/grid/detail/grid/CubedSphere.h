@@ -19,6 +19,7 @@
 #include "atlas/grid/detail/grid/Grid.h"
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Object.h"
 #include "atlas/util/ObjectHandle.h"
@@ -208,6 +209,10 @@ public:
   // Return number of tiles
   inline idx_t GetNTiles() const { return nTiles_; }
 
+  void xy2xyt(const double xy[], double xyt[]) const;
+
+  void xyt2xy(const double xyt[], double xy[]) const;
+
   // Tile specific access to x and y locations
   // -----------------------------------------
 
@@ -243,48 +248,44 @@ public:
   // Functions for returning xy
   // --------------------------
 
-  inline void xy( idx_t i, idx_t j, idx_t t, double xyt[] ) const {
+  inline void xyt( idx_t i, idx_t j, idx_t t, double crd[] ) const {
     std::size_t tIndex = static_cast<std::size_t>(tileCases_ * t / nTiles_);
-    xyt[0] = xtile.at(tIndex)(i, j, t);
-    xyt[1] = ytile.at(tIndex)(i, j, t);
-    xyt[2] = static_cast<double>(t);
+    crd[0] = xtile.at(tIndex)(i, j, t);
+    crd[1] = ytile.at(tIndex)(i, j, t);
+    crd[2] = static_cast<double>(t);
+  }
+
+  PointXY xyt( idx_t i, idx_t j, idx_t t ) const {
+    std::size_t tIndex = static_cast<std::size_t>(tileCases_ * t / nTiles_);
+    return PointXY( xtile.at(tIndex)(i, j, t), ytile.at(tIndex)(i, j, t) );
+  }
+
+  inline void xy( idx_t i, idx_t j, idx_t t, double xy[] ) const {
+    double crd[3];
+    this->xyt(i,j,t,crd);
+    std::cout << "   " << std::endl;
+    std::cout <<"crd " << crd[0] << " " << crd[1]  << " " << crd[2] << std::endl;
+    this->xyt2xy(crd, xy);
   }
 
   PointXY xy( idx_t i, idx_t j, idx_t t ) const {
-    std::size_t tIndex = static_cast<std::size_t>(tileCases_ * t / nTiles_);
-    return PointXY( xtile.at(tIndex)(i, j, t), ytile.at(tIndex)(i, j, t) );
+    double crd[2];
+    this->xy(i,j,t,crd);
+    return PointXY(crd[0], crd[1]);
   }
 
   // Functions for returning lonlat, either as array or PointLonLat
   // --------------------------------------------------------------
 
   void lonlat( idx_t i, idx_t j, idx_t t, double lonlat[] ) const {
-    double xytll[5];
-    xytll[0] = i;
-    xytll[1] = j;
-    xytll[2] = t;
-    projection_.xy2lonlat( xytll );
-    lonlat[LON] = xytll[3+LON];
-    lonlat[LAT] = xytll[3+LAT];
+    this->xy(i, j, t, lonlat);  // outputing xy in lonlat
+    projection_.xy2lonlat( lonlat ); // converting xy to lonlat
   }
 
   PointLonLat lonlat( idx_t i, idx_t j, idx_t t ) const {
     double lonlat[2];
     this->lonlat(i, j, t, lonlat);
     return PointLonLat( lonlat[LON], lonlat[LAT] );
-  }
-
-  // Function for finding indices (xy) from lonlat (testing only)
-  // ------------------------------------------------------------
-
-  void lonlat2xy( double lonlat[], idx_t ijt[] ) const {
-    double llxyt[5];
-    llxyt[0] = lonlat[0];
-    llxyt[1] = lonlat[1];
-    projection_.lonlat2xy( llxyt );
-    ijt[0] = static_cast<int>( llxyt[2] );
-    ijt[1] = static_cast<int>( llxyt[3] );
-    ijt[2] = static_cast<int>( llxyt[4] );
   }
 
   // Check on whether i, j, t values are for extra point on tile 1

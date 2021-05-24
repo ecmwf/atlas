@@ -14,14 +14,16 @@
 #include "eckit/utils/Hash.h"
 
 #include "atlas/array.h"
+#include "atlas/projection/detail/ProjectionImpl.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
+#include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {
 namespace projection {
 namespace detail {
 
-class CubedSphereProjectionBase {
+class CubedSphereProjectionBase : public ProjectionImpl {
   typedef array::ArrayT<double> ArrayLatLon_;
   typedef array::ArrayView<double, 2> ArrayViewLatLon_;
   public:
@@ -31,8 +33,8 @@ class CubedSphereProjectionBase {
     void hash( eckit::Hash& ) const;
 
     // projection and inverse projection
-    void xy2lonlat( double crd[] ) const;
-    void lonlat2xy( double crd[] ) const;
+    void xy2lonlatpost( double xyz[], const idx_t & t, double crd[] ) const;
+    void lonlat2xypre( double crd[], idx_t & t, double xyz[] ) const;
 
     // Functions for xy to latlon on each tile
     void tile1Rotate( double[] ) const;
@@ -84,56 +86,36 @@ class CubedSphereProjectionBase {
 
     void schmidtTransform(double, double, double, double[]) const;
 
-  protected:
-    idx_t tile( const double xy[] ) const {
-      // Assume one face-edge is of length 90 degrees.
-      //
-      //   y ^
-      //     |
-      //    135           -------
-      //     |           |       |
-      //     |           |   2   |
-      //     |           |       |
-      //     45   ------- ------- ------- -------
-      //     |   |       |       |       |       |
-      //     |   |   0   |   1   |   3   |   4   |
-      //     |   |       |       |       |       |
-      //    -45   -------  ------ ------- -------
-      //     |                           |       |
-      //     |                           |   5   |
-      //     |                           |       |
-      //   -135                           -------
-      //     ----0-------90------180-----270----360--->  x
-      const double x = xy[0]/90.;
-      const double& y = xy[1];
-      if( x < 2. ) {
-        return  y > 45. ? 2 : std::floor(x);
-      }
-      else {
-        return y < -45. ? 5 : std::floor(x+1.);
-      }
-  }
+    void xy2alphabetat(const double xy[], idx_t & t, double ab[]) const {
+        // xy is in degrees while ab is in radians
+        // ab are the  (alpha, beta) coordinates and t is the tile index.
+        t = tileFromXY(xy);
+        std::vector<double> xOffset{0., 1., 1., 2., 3., 3.};
+        std::vector<double> yOffset{1., 1., 2., 1., 1., 0.};
 
-    void xy2xyt(const double xy[], double xyt[]) const {
-        // xy is in degrees while xyt is in radians
-        // (alpha, beta) and tiles.
-        double normalisedX = xy[0]/90.;
-        double normalisedY = (xy[1] + 135.)/90.;
-        xyt[0] = (normalisedX - std::floor(normalisedX))* M_PI_2 - M_PI_4;
-        xyt[1] = (normalisedY - std::floor(normalisedY))* M_PI_2 - M_PI_4;
-        xyt[2] = tile(xy);
+        double normalisedX = xy[XX]/90.;
+        double normalisedY = (xy[YY] + 135.)/90.;
+        ab[LON] = (normalisedX - xOffset[t])* M_PI_2 - M_PI_4;
+        ab[LAT] = (normalisedY - yOffset[t])* M_PI_2 - M_PI_4;
+
     }
 
-    void xyt2xy(const double xyt[], double xy[]) const {
-        // xy is in degrees while xyt is in radians
+    void alphabetatt2xy(const idx_t & t, const double ab[],  double xy[]) const {
+        // xy is in degrees while ab is in radians
         // (alpha, beta) and tiles.
         std::vector<double> xOffset{0., 90., 90., 180, 270, 270};
         std::vector<double> yOffset{-45., -45, 45, -45, -45, -135};
-        double normalisedX = (xyt[0] + M_PI_4)/M_PI_2;
-        double normalisedY = (xyt[1] + M_PI_4)/M_PI_2;
-        xy[0] = normalisedX * 90. + xOffset[xyt[2]];
-        xy[1] = normalisedY * 90. + yOffset[xyt[2]];
-  }
+        double normalisedX = (ab[LON] + M_PI_4)/M_PI_2;
+        double normalisedY = (ab[LAT] + M_PI_4)/M_PI_2;
+        xy[XX] = normalisedX * 90. + xOffset[t];
+        xy[YY] = normalisedY * 90. + yOffset[t];
+    }
+
+    idx_t tileFromXY(const double xy[]) const;
+
+  protected:  
+
+    idx_t tileFromLonLat(const double crd[]) const;
 
   private:
     int cubeNx_;
@@ -146,6 +128,7 @@ class CubedSphereProjectionBase {
     double stretchFac_;
     double targetLon_;
     double targetLat_;
+    const double epsilon_;
 };
 
 }  // namespace detail
