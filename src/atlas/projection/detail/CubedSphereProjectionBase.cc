@@ -75,7 +75,7 @@ void CubedSphereProjectionBase::xy2lonlatpost( double xyz[], const idx_t & t, do
 
     ProjectionUtilities::cartesianToSpherical(xyz, crd, false);
 
-    if (crd[LON] < 0.0) crd[LON] += 2.0*M_PI;
+    if (crd[LON] < 0.0) { crd[LON] += 2.0*M_PI; }
     crd[LON] = crd[LON] - M_PI;
 
     Log::debug() << "xy2lonlat:: lonlat before rotation : "  << crd[LON] << " " << crd[LAT]  << std::endl;
@@ -108,7 +108,7 @@ void CubedSphereProjectionBase::xy2lonlatpost( double xyz[], const idx_t & t, do
     }
 
     // longitude does not make sense at the poles - set to 0.
-    if (std::abs(std::abs(crd[LAT]) - M_PI_2) < 1e-15) crd[LON] = 0.;
+    if (std::abs(std::abs(crd[LAT]) - M_PI_2) < 1e-15) { crd[LON] = 0.; }
 
     crd[LON] *= Constants::radiansToDegrees();
     crd[LAT] *= Constants::radiansToDegrees();
@@ -120,8 +120,8 @@ void CubedSphereProjectionBase::lonlat2xypre( double crd[], idx_t & t, double xy
 
     using util::Constants;
 
-    if (std::abs(crd[LON]) < 1e-15) crd[LON] = 0.;
-    if (std::abs(crd[LAT]) < 1e-15) crd[LAT] = 0.;
+    if (std::abs(crd[LON]) < 1e-15) { crd[LON] = 0.; }
+    if (std::abs(crd[LAT]) < 1e-15) { crd[LAT] = 0.; }
 
     // convert degrees to radians
     crd[LON] *= Constants::degreesToRadians();
@@ -364,19 +364,19 @@ idx_t CubedSphereProjectionBase::tileFromLonLat(const double crd[]) const {
     const double & lon = crd[LON];
     const double & lat = crd[LAT];
 
-    double zPlusAbsX = xyz[ZZ] + abs(xyz[XX]);
-    double zPlusAbsY = xyz[ZZ] + abs(xyz[YY]);
-    double zMinusAbsX = xyz[ZZ] - abs(xyz[XX]);
-    double zMinusAbsY = xyz[ZZ] - abs(xyz[YY]);
+    double zPlusAbsX = xyz[ZZ] + std::abs(xyz[XX]);
+    double zPlusAbsY = xyz[ZZ] + std::abs(xyz[YY]);
+    double zMinusAbsX = xyz[ZZ] - std::abs(xyz[XX]);
+    double zMinusAbsY = xyz[ZZ] - std::abs(xyz[YY]);
 
     // Note that this method can lead to roundoff errors that can
     // cause the tile selection to fail.
     // To this end we enforce that tiny values close (in roundoff terms)
     // to a boundary should end up exactly on the boundary.
-    if (abs(zPlusAbsX) < epsilon_) zPlusAbsX = 0.;
-    if (abs(zPlusAbsY) < epsilon_) zPlusAbsY = 0.;
-    if (abs(zMinusAbsX) < epsilon_) zMinusAbsX = 0.;
-    if (abs(zMinusAbsY) < epsilon_) zMinusAbsY = 0.;
+    if (std::abs(zPlusAbsX) < epsilon_) { zPlusAbsX = 0.; }
+    if (std::abs(zPlusAbsY) < epsilon_) { zPlusAbsY = 0.; }
+    if (std::abs(zMinusAbsX) < epsilon_) { zMinusAbsX = 0.; }
+    if (std::abs(zMinusAbsY) < epsilon_) { zMinusAbsY = 0.; }
 
     if (lon >= 1.75 * M_PI  || lon < 0.25 * M_PI) {
         if  ( (zPlusAbsX <= 0.) && (zPlusAbsY <= 0.) ) {
@@ -387,8 +387,8 @@ idx_t CubedSphereProjectionBase::tileFromLonLat(const double crd[]) const {
            t = 0;
         }
         // extra point corner point
-        if ( (abs(lon + 0.25 * M_PI) < epsilon_) &&
-             (abs(lat - cornerLat) < epsilon_) ) t = 0;
+        if ( (std::abs(lon + 0.25 * M_PI) < epsilon_) &&
+             (std::abs(lat - cornerLat) < epsilon_) ) t = 0;
     }
 
     if (lon >= 0.25 * M_PI  && lon < 0.75 * M_PI) {
@@ -412,8 +412,8 @@ idx_t CubedSphereProjectionBase::tileFromLonLat(const double crd[]) const {
             t = 3;
         }
         // extra point corner point
-        if ( (abs(lon - 0.75 * M_PI) < epsilon_) &&
-             (abs(lat + cornerLat) < epsilon_) ) t = 1;
+        if ( (std::abs(lon - 0.75 * M_PI) < epsilon_) &&
+             (std::abs(lat + cornerLat) < epsilon_) ) t = 1;
     }
 
     if (lon >= 1.25 * M_PI  && lon < 1.75 * M_PI) {
