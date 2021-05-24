@@ -428,7 +428,7 @@ CASE( "test_structured_from_config" ) {
 }
 
 CASE( "test_equiangular_cubedsphere" ) {
-    int resolution(512);
+    int resolution(32);
     Grid g{"CS-EA-" + std::to_string(resolution) };
     Log::info() << " grid created - grid spec = " <<  g.spec() << std::endl;
     std::vector<atlas::PointLonLat> pointsLonLat;
