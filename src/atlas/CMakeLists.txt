@@ -74,8 +74,6 @@ projection/Projection.cc
 projection/Projection.h
 projection/detail/CubedSphereEquiAnglProjection.cc
 projection/detail/CubedSphereEquiAnglProjection.h
-projection/detail/CubedSphereEquiDistFV3Projection.cc
-projection/detail/CubedSphereEquiDistFV3Projection.h
 projection/detail/CubedSphereEquiDistProjection.cc
 projection/detail/CubedSphereEquiDistProjection.h
 projection/detail/CubedSphereProjectionBase.cc
