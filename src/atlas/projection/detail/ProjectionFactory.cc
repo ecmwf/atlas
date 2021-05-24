@@ -15,7 +15,6 @@
 #include "atlas/util/Config.h"
 
 #include "atlas/projection/detail/CubedSphereEquiAnglProjection.h"
-#include "atlas/projection/detail/CubedSphereEquiDistFV3Projection.h"
 #include "atlas/projection/detail/CubedSphereEquiDistProjection.h"
 #include "atlas/projection/detail/LambertAzimuthalEqualAreaProjection.h"
 #include "atlas/projection/detail/LambertConformalConicProjection.h"
@@ -32,7 +31,6 @@ void force_link() {
     static struct Link {
         Link() {
             ProjectionBuilder<detail::CubedSphereEquiAnglProjection>();
-            ProjectionBuilder<detail::CubedSphereEquiDistFV3Projection>();
             ProjectionBuilder<detail::CubedSphereEquiDistProjection>();
             ProjectionBuilder<detail::LonLatProjection>();
             ProjectionBuilder<detail::RotatedLonLatProjection>();
