@@ -26,9 +26,9 @@ class EquiAnglCubedSphereGrid;
                                     |                     |                               |
                              StructuredGrid        UnstructuredGrid                  CubedSphere
                                     |                                                     |
-               +--------------------+-----------------------+               +------+------+------+------+
-               |                    |                       |               |             |             |
-          ReducedGrid          GaussianGrid            RegularGrid       EquiDist      EquiAngl     EquiDistFV3
+               +--------------------+-----------------------+               +------+------+
+               |                    |                       |               |             |
+          ReducedGrid          GaussianGrid            RegularGrid       EquiDist      EquiAngl
                |                 |     |                 |     |
                +--------+--------+     +--------+--------+     +-----+
                         |                       |                    |
