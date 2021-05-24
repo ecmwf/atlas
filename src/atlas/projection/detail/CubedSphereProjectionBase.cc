@@ -128,7 +128,7 @@ void CubedSphereProjectionBase::lonlat2xypre( double crd[], idx_t & t, double xy
     crd[LAT] *= Constants::degreesToRadians();
 
     // To [-pi/4, 7/4 * pi)
-    if (crd[LON] >= 1.75 * M_PI) crd[LON] += -2.*M_PI;
+    if (crd[LON] >= 1.75 * M_PI) { crd[LON] += -2.*M_PI; }
 
     // find tile which this lonlat is linked to
     // works [-pi/4, 7/4 * pi)
@@ -340,11 +340,11 @@ idx_t CubedSphereProjectionBase::tileFromXY( const double xy[] ) const {
   }
 
   // extra points
-  if ((std::abs(xy[XX]) < epsilon_) && (std::abs(xy[YY] - 45.) < epsilon_)) t = 0;
-  if ((std::abs(xy[XX] - 180.) < epsilon_) && (std::abs(xy[YY] + 45.) < epsilon_)) t = 1;
+  if ((std::abs(xy[XX]) < epsilon_) && (std::abs(xy[YY] - 45.) < epsilon_)) { t = 0; }
+  if ((std::abs(xy[XX] - 180.) < epsilon_) && (std::abs(xy[YY] + 45.) < epsilon_)) { t = 1; }
 
   // for end iterator !!!!
-  if ((std::abs(xy[XX] - 360.) < epsilon_) && (std::abs(xy[YY] + 135.) < epsilon_)) t = 5;
+  if ((std::abs(xy[XX] - 360.) < epsilon_) && (std::abs(xy[YY] + 135.) < epsilon_)) { t = 5; }
 
   return t;
 }
