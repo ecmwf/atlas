@@ -26,6 +26,8 @@ namespace atlas {
 namespace projection {
 namespace detail {
 
+static constexpr bool debug = false;
+
 // -------------------------------------------------------------------------------------------------
 
 CubedSphereEquiDistProjection::CubedSphereEquiDistProjection( const eckit::Parametrisation& params )
@@ -49,13 +51,17 @@ void CubedSphereEquiDistProjection::lonlat2xy( double crd[] ) const {
     ab[0] =   M_PI_4 * xyz[YY] / xyz[XX] ;
     ab[1] = - M_PI_4 * xyz[ZZ] / xyz[XX];
 
-    Log::debug() << "lonlat2xy xyz ab : "
-       << xyz[0] << " " << xyz[1]  << " " << xyz[2] << " "
-       << ab[0] << " " << ab[1] << std::endl;
+    if( debug ) {
+        Log::debug() << "lonlat2xy xyz ab : "
+                     << xyz[0] << " " << xyz[1]  << " " << xyz[2] << " "
+                     << ab[0] << " " << ab[1] << std::endl;
+    }
 
     CubedSphereProjectionBase::alphabetatt2xy(t, ab, crd);
 
-    Log::info() << "lonlat2xy end : xy = " << crd[LON] << " " << crd[LAT] << std::endl;
+    if( debug ) {
+        Log::info() << "lonlat2xy end : xy = " << crd[LON] << " " << crd[LAT] << std::endl;
+    }
 
 }
 
@@ -72,7 +78,9 @@ void CubedSphereEquiDistProjection::xy2lonlat( double crd[] ) const {
     // calculate xy (in degrees) to alpha beta (in radians) and t - tile index.
     CubedSphereProjectionBase::xy2alphabetat(crd, t, ab);
 
-    Log::info() << "xy2lonlat:: crd t ab  : "  << crd[LON] << " " << crd[1] << " " << t << " " << ab[0] << " " << ab[1] << std::endl;
+    if( debug ) {
+        Log::info() << "xy2lonlat:: crd t ab  : "  << crd[LON] << " " << crd[1] << " " << t << " " << ab[0] << " " << ab[1] << std::endl;
+    }
 
     xyz[0] = -rsq3;
     xyz[1] = -rsq3 * ab[0] / M_PI_4;
@@ -80,7 +88,9 @@ void CubedSphereEquiDistProjection::xy2lonlat( double crd[] ) const {
 
     CubedSphereProjectionBase::xy2lonlatpost(xyz, t, crd);
 
-    Log::info() << "end of equidistant xy2lonlat lonlat = " << crd[LON] << " " << crd[LAT] << std::endl;
+    if( debug ) {
+        Log::info() << "end of equidistant xy2lonlat lonlat = " << crd[LON] << " " << crd[LAT] << std::endl;
+    }
 }
 
 

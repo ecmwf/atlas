@@ -263,8 +263,6 @@ public:
   inline void xy( idx_t i, idx_t j, idx_t t, double xy[] ) const {
     double crd[3];
     this->xyt(i,j,t,crd);
-    std::cout << "   " << std::endl;
-    std::cout <<"crd " << crd[0] << " " << crd[1]  << " " << crd[2] << std::endl;
     this->xyt2xy(crd, xy);
   }
 
