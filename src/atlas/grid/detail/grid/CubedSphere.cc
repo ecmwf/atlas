@@ -179,8 +179,8 @@ void CubedSphere::xyt2xy(const double xyt[], double xy[]) const {
     // xy is in degrees
     // while xyt is in number of grid points
     // (alpha, beta) and tiles.
-    std::vector<double> xOffsetDeg{0., 90., 90., 180, 270, 270};
-    std::vector<double> yOffsetDeg{-45., -45, 45, -45, -45, -135};
+    std::vector<double> xOffsetDeg{0., 90., 90., 180., 270., 270.};
+    std::vector<double> yOffsetDeg{-45., -45., 45., -45., -45., -135.};
 
     double N = static_cast<double>(CubeNx_);
     std::vector<double> xOffsetIndex{0, N, N, 2*N, 3*N,  3*N};
@@ -207,10 +207,10 @@ namespace {
 
 static class cubedsphere_equiangular : public GridBuilder {
 public:
-  cubedsphere_equiangular() : GridBuilder( "cubedsphere_equiangular", {"^[Cc][Ss][_-][Ee][Aa][-_]([0-9]+)$"}, {"CSEA<cubedsphere>"} ) {}
+  cubedsphere_equiangular() : GridBuilder( "cubedsphere_equiangular", {"^[Cc][Ss][_-][Ee][Aa][-_]([0-9]+)$"}, {"CS-EA-<N>"} ) {}
 
   void print( std::ostream& os ) const override {
-    os << std::left << std::setw( 20 ) << "CS-EA-<FaceNx>" << "Cubed sphere, equiangular";
+    os << std::left << std::setw( 20 ) << "CS-EA-<N>" << "Cubed sphere, equiangular";
   }
 
   // Factory constructor
@@ -230,7 +230,9 @@ public:
   // Factory constructor
   const atlas::Grid::Implementation* create( const Grid::Config& config ) const override {
     int CubeNx = 0;
-    config.get( "CubeNx", CubeNx );
+    if( not config.get( "CubeNx", CubeNx ) ) {
+        throw_AssertionFailed("Could not find \"CubeNx\" in configuration of cubed sphere grid",Here());
+    }
     util::Config projconf;
     projconf.set("type", "cubedsphere_equiangular");
     projconf.set("CubeNx", CubeNx);
@@ -259,7 +261,6 @@ public:
         projconf.set("TargetLat", targetLat);
       }
     }
-
     return new CubedSphereGrid::grid_t( "CS-EA-" + std::to_string( CubeNx ), CubeNx, Projection( projconf ) );
   }
 
@@ -271,10 +272,10 @@ public:
 
 static class cubedsphere_equidistant : public GridBuilder {
 public:
-  cubedsphere_equidistant() : GridBuilder( "cubedsphere_equidistant", {"^[Cc][Ss][_-][Ee][Dd][-_]([0-9]+)$"}, {"CSED<cubedsphere>"} ) {}
+  cubedsphere_equidistant() : GridBuilder( "cubedsphere_equidistant", {"^[Cc][Ss][_-][Ee][Dd][-_]([0-9]+)$"}, {"CS-ED-<N>"} ) {}
 
   void print( std::ostream& os ) const override {
-    os << std::left << std::setw( 20 ) << "CS-ED-<FaceNx>" << "Cubed sphere, equidistant";
+    os << std::left << std::setw( 20 ) << "CS-ED-<N>" << "Cubed sphere, equidistant";
   }
 
   const atlas::Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const override {
@@ -292,7 +293,9 @@ public:
 
   const atlas::Grid::Implementation* create( const Grid::Config& config ) const override {
     int CubeNx = 0;
-    config.get( "CubeNx", CubeNx );
+    if( not config.get( "CubeNx", CubeNx ) ) {
+        throw_AssertionFailed("Could not find \"CubeNx\" in configuration of cubed sphere grid",Here());
+    }
     util::Config projconf;
     projconf.set("type", "cubedsphere_equidistant");
     projconf.set("CubeNx", CubeNx);
