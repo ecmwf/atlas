@@ -10,12 +10,13 @@
 #include <cmath>
 #include <functional>
 
+#include "eckit/geometry/Sphere.h"
+
 #include "atlas/domain.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
 #include "atlas/util/Point.h"
-#include "eckit/geometry/Sphere.h"
 
 namespace atlas {
 namespace projection {
@@ -27,60 +28,65 @@ struct ProjectionUtilities {
 
   // -----------------------------------------------------------------------------------------------
 
-  static constexpr double epsilon() { return 1.0e-10; }
+  enum class CoordinateSystem {
+      RIGHT_HAND,
+      LEFT_HAND,
+  };
 
   // -----------------------------------------------------------------------------------------------
 
   static void cartesianToSpherical(const double xyz[], double lonlat[],
-                                   const bool right_hand = false) {
+                                   const CoordinateSystem coordinate_system, const double& radius = 0 ) {
 
     using eckit::geometry::Sphere;
     using util::Constants;
 
     // Make point objects.
-    const auto pointXyz = PointXYZ(xyz);
+    const auto pointXYZ = PointXYZ(xyz);
     auto pointLonLat = PointLonLat();
 
     // Transform coordinates.
-    Sphere::convertCartesianToSpherical(
-      PointXYZ::norm(pointXyz), pointXyz, pointLonLat);
+    auto r = radius != 0. ? radius : PointXYZ::norm(pointXYZ);
+    Sphere::convertCartesianToSpherical(r, pointXYZ, pointLonLat);
 
     // Copy to array.
     lonlat[LON] = pointLonLat.lon() * Constants::degreesToRadians();
     lonlat[LAT] = -pointLonLat.lat() * Constants::degreesToRadians();
 
     // Left or right hand system.
-    if (right_hand) lonlat[LAT] += 0.5 * M_PI;
+    if (coordinate_system == CoordinateSystem::RIGHT_HAND) {
+        lonlat[LAT] += 0.5 * M_PI;
+    }
 
   }
 
   //------------------------------------------------------------------------------------------------
 
   static void sphericalToCartesian(const double lonlat[], double xyz[],
-                                   const bool right_hand = false, const bool unit = false) {
+                                   const CoordinateSystem coordinate_system, const double& radius = 0) {
 
     using eckit::geometry::Sphere;
     using util::Constants;
 
     // Make point objects.
     const auto pointLonLat = PointLonLat(lonlat) * Constants::radiansToDegrees();
-    auto pointXyz = PointXYZ();
+    auto pointXYZ = PointXYZ();
 
     // Set Radius
-    auto r = util::Earth::radius();
-    if (unit) {r = 1.0;}
+    auto r = radius != 0 ? radius :  util::Earth::radius();
 
     // Transform coordinates.
-    Sphere::convertSphericalToCartesian(r, pointLonLat, pointXyz, 0.0);
+    Sphere::convertSphericalToCartesian(r, pointLonLat, pointXYZ, 0.0);
 
     // Copy to array.
-    xyz[XX] = pointXyz.x();
-    xyz[YY] = pointXyz.y();
-    xyz[ZZ] = pointXyz.z();
+    xyz[XX] = pointXYZ.x();
+    xyz[YY] = pointXYZ.y();
+    xyz[ZZ] = pointXYZ.z();
 
     // Left or right hand system
-    if (!right_hand) xyz[ZZ] *= -1;
-
+    if (coordinate_system != CoordinateSystem::RIGHT_HAND) {
+        xyz[ZZ] *= -1;
+    }
   }
 
   //------------------------------------------------------------------------------------------------

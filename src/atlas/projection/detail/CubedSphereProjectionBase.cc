@@ -5,14 +5,20 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
+#include "CubedSphereProjectionBase.h"
+
 #include <cmath>
+#include <functional>
+#include <array>
 #include <limits>
 #include <iostream>
 #include <iomanip>
-#include "CubedSphereProjectionBase.h"
 
 #include "atlas/projection/detail/ProjectionUtilities.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/runtime/Trace.h"
+#include "atlas/runtime/Exception.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
 
@@ -23,7 +29,11 @@ namespace detail {
 // -------------------------------------------------------------------------------------------------
 // Helper functions and variables local to this translation unit
 namespace {
+
 static constexpr bool debug = false; // constexpr so compiler can optimize `if ( debug ) { ... }` out
+
+static constexpr double deg2rad = util::Constants::degreesToRadians();
+static constexpr double rad2deg = util::Constants::radiansToDegrees();
 
 static bool is_tiny( const double& x ) {
     constexpr double epsilon = 1.e-15;
@@ -141,7 +151,7 @@ static void schmidtTransform( double stretchFac, double targetLon,
     double lat_t;
 
     if ( std::abs(c2m1) > 1.0e-7 ) {
-        sin_lat = sin(lonlat[LAT]);
+        sin_lat = std::sin(lonlat[LAT]);
         lat_t = std::asin( (c2m1+c2p1*sin_lat)/(c2p1+c2m1*sin_lat) );
     } else {         // no stretching
         lat_t = lonlat[LAT];
@@ -153,10 +163,10 @@ static void schmidtTransform( double stretchFac, double targetLon,
 
     if ( (1.-std::abs(sin_o)) < 1.0e-7 ) {    // poles
         lonlat[LON] = 0.0;
-        lonlat[LAT] = copysign( 0.5*M_PI, sin_o );
+        lonlat[LAT] = std::copysign( 0.5*M_PI, sin_o );
     } else {
-        lonlat[LAT] = asin( sin_o );
-        lonlat[LON] = targetLon + atan2( -cos_lat*sin(lonlat[LON]), -sin_lat*cos_p+cos_lat*sin_p*cos(lonlat[LON]));
+        lonlat[LAT] = std::asin( sin_o );
+        lonlat[LON] = targetLon + atan2( -cos_lat*std::sin(lonlat[LON]), -sin_lat*cos_p+cos_lat*sin_p*std::cos(lonlat[LON]));
         if ( lonlat[LON] < 0.0 ) {
             lonlat[LON] = lonlat[LON] + 2.0*M_PI;
         } else if ( lonlat[LON] >= 2.0*M_PI ) {
@@ -166,6 +176,17 @@ static void schmidtTransform( double stretchFac, double targetLon,
 
 }
 
+void sphericalToCartesian(const double lonlat[], double xyz[] ) {
+    auto crd_sys = ProjectionUtilities::CoordinateSystem::LEFT_HAND;
+    constexpr double radius = 1.;
+    ProjectionUtilities::sphericalToCartesian(lonlat, xyz, crd_sys, radius);
+}
+
+void cartesianToSpherical(const double xyz[], double lonlat[] ) {
+    auto crd_sys = ProjectionUtilities::CoordinateSystem::LEFT_HAND;
+    constexpr double radius = 0.; // --> equivalent to radius = norm(xyz)
+    ProjectionUtilities::cartesianToSpherical(xyz, lonlat, crd_sys, radius);
+}
 
 } // namespace
 
@@ -211,11 +232,9 @@ void CubedSphereProjectionBase::hash( eckit::Hash& h ) const {
 
 // -------------------------------------------------------------------------------------------------
 
-void CubedSphereProjectionBase::xy2lonlatpost( double xyz[], const idx_t & t, double crd[] ) const {
+void CubedSphereProjectionBase::xy2lonlat_post( double xyz[], const idx_t & t, double crd[] ) const {
 
-    using util::Constants;
-
-    ProjectionUtilities::cartesianToSpherical(xyz, crd, false);
+    cartesianToSpherical(xyz, crd);
 
     if (crd[LON] < 0.0) { crd[LON] += 2.0*M_PI; }
     crd[LON] = crd[LON] - M_PI;
@@ -225,17 +244,17 @@ void CubedSphereProjectionBase::xy2lonlatpost( double xyz[], const idx_t & t, do
     }
 
     // Convert to cartesian
-    ProjectionUtilities::sphericalToCartesian(crd, xyz, false, true);
+    sphericalToCartesian(crd, xyz);
 
     // Perform tile specific rotation
     tileRotate[t](xyz);
 
-    // Back to latlon
-    ProjectionUtilities::cartesianToSpherical(xyz, crd, false);
+    // Back to lonlat
+    cartesianToSpherical(xyz, crd);
 
     // Shift longitude
     if (shiftLon_ != 0.0) {
-      crd[LON] = crd[LON] + shiftLon_*atlas::util::Constants::degreesToRadians();
+      crd[LON] = crd[LON] + shiftLon_*deg2rad;
       if (crd[LON] < -M_PI) {crd[LON] =  2*M_PI + crd[LON];}
       if (crd[LON] >  M_PI) {crd[LON] = -2*M_PI + crd[LON];}
     }
@@ -246,41 +265,68 @@ void CubedSphereProjectionBase::xy2lonlatpost( double xyz[], const idx_t & t, do
     // Schmidt transform
     if (doSchmidt_) {
        schmidtTransform(stretchFac_,
-                        targetLon_*atlas::util::Constants::degreesToRadians(),
-                        targetLat_*atlas::util::Constants::degreesToRadians(),
+                        targetLon_*deg2rad,
+                        targetLat_*deg2rad,
                         crd);
     }
 
     // longitude does not make sense at the poles - set to 0.
     if (std::abs(std::abs(crd[LAT]) - M_PI_2) < 1e-15) { crd[LON] = 0.; }
 
-    crd[LON] *= Constants::radiansToDegrees();
-    crd[LAT] *= Constants::radiansToDegrees();
+    crd[LON] *= rad2deg;
+    crd[LAT] *= rad2deg;
 }
 
 // -------------------------------------------------------------------------------------------------
 
-void CubedSphereProjectionBase::lonlat2xypre( double crd[], idx_t & t, double xyz[] ) const {
-
-    using util::Constants;
+void CubedSphereProjectionBase::lonlat2xy_pre( double crd[], idx_t & t, double xyz[] ) const {
 
     if (std::abs(crd[LON]) < 1e-15) { crd[LON] = 0.; }
     if (std::abs(crd[LAT]) < 1e-15) { crd[LAT] = 0.; }
 
     // convert degrees to radians
-    crd[LON] *= Constants::degreesToRadians();
-    crd[LAT] *= Constants::degreesToRadians();
+    crd[LON] *= deg2rad;
+    crd[LAT] *= deg2rad;
 
     // To [-pi/4, 7/4 * pi)
     if (crd[LON] >= 1.75 * M_PI) { crd[LON] += -2.*M_PI; }
 
     // find tile which this lonlat is linked to
     // works [-pi/4, 7/4 * pi)
-    t = CubedSphereProjectionBase::tileFromLonLat(crd);
+    t = tileFromLonLat(crd);
 
-    ProjectionUtilities::sphericalToCartesian(crd, xyz, false, true);
+    sphericalToCartesian(crd, xyz);
     tileRotateInverse[t](xyz);
 
+}
+
+// -------------------------------------------------------------------------------------------------
+
+
+void CubedSphereProjectionBase::xy2alphabetat(const double xy[], idx_t& t, double ab[]) const {
+    // xy is in degrees while ab is in radians
+    // ab are the  (alpha, beta) coordinates and t is the tile index.
+    static std::array<double,6> xOffset{0., 1., 1., 2., 3., 3.}; // could become constexpr with C++17
+    static std::array<double,6> yOffset{1., 1., 2., 1., 1., 0.};
+
+    t = tileFromXY(xy);
+    double normalisedX = xy[XX]/90.;
+    double normalisedY = (xy[YY] + 135.)/90.;
+    ab[LON] = (normalisedX - xOffset[t])* M_PI_2 - M_PI_4;
+    ab[LAT] = (normalisedY - yOffset[t])* M_PI_2 - M_PI_4;
+}
+
+// -------------------------------------------------------------------------------------------------
+
+void CubedSphereProjectionBase::alphabetat2xy(const idx_t& t, const double ab[], double xy[]) const {
+    // xy is in degrees while ab is in radians
+    // (alpha, beta) and tiles.
+    static std::array<double,6> xOffset{0., 90., 90., 180., 270., 270.}; // could become constexpr with C++17
+    static std::array<double,6> yOffset{-45., -45., 45., -45., -45., -135.};
+    double normalisedX = (ab[LON] + M_PI_4)/M_PI_2;
+    double normalisedY = (ab[LAT] + M_PI_4)/M_PI_2;
+    xy[XX] = normalisedX * 90. + xOffset[t];
+    xy[YY] = normalisedY * 90. + yOffset[t];
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -335,6 +381,8 @@ idx_t CubedSphereProjectionBase::tileFromXY( const double xy[] ) const {
   // for end iterator !!!!
   if ( is_same( xy[XX], 360. ) && is_same( xy[YY], -135.) ) { t = 5; }
 
+  ATLAS_ASSERT( t >= 0 );
+
   return t;
 }
 
@@ -344,9 +392,9 @@ idx_t CubedSphereProjectionBase::tileFromLonLat(const double crd[]) const {
     idx_t t(-1);
     double xyz[3];
 
-    ProjectionUtilities::sphericalToCartesian(crd, xyz, false, true);
+    sphericalToCartesian(crd, xyz);
 
-    const double cornerLat= std::asin(1./std::sqrt(3.0));
+    static const double cornerLat= std::asin(1./std::sqrt(3.0));
       // the magnitude of the latitude at the corners of the cube (not including the sign)
       // in radians.
 

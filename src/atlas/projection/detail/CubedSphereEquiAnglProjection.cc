@@ -47,7 +47,7 @@ void CubedSphereEquiAnglProjection::lonlat2xy( double crd[] ) const {
     double ab[2]; // alpha-beta coordinate
     double xyz[3]; // on Cartesian grid
 
-    CubedSphereProjectionBase::lonlat2xypre(crd, t, xyz);
+    CubedSphereProjectionBase::lonlat2xy_pre(crd, t, xyz);
 
     // should be between - pi/4 and pi/4
     // now calculate (alpha, beta) in radians.
@@ -61,7 +61,7 @@ void CubedSphereEquiAnglProjection::lonlat2xy( double crd[] ) const {
                      << ab[LON] << " " << ab[LAT] << std::endl;
     }
 
-    CubedSphereProjectionBase::alphabetatt2xy(t, ab, crd);
+    CubedSphereProjectionBase::alphabetat2xy(t, ab, crd);
 
     if( debug ) {
         Log::debug() << "lonlat2xy end : xy = " << crd[LON] << " " << crd[LAT] << std::endl;
@@ -78,7 +78,7 @@ void CubedSphereEquiAnglProjection::xy2lonlat( double crd[] ) const {
         Log::info() << "xy2lonlat start xy = " << crd[LON] << " " << crd[LAT] <<std::endl;
     }
 
-    const double rsq3 = 1.0/std::sqrt(3.0);
+    static const double rsq3 = 1.0/std::sqrt(3.0);
     double xyz[3];
     double ab[2]; // alpha-beta coordinate
     idx_t t;  // tile index
@@ -91,10 +91,10 @@ void CubedSphereEquiAnglProjection::xy2lonlat( double crd[] ) const {
     }
 
     xyz[0] = -rsq3;
-    xyz[1] = -rsq3*tan(ab[0]);
-    xyz[2] = -rsq3*tan(ab[1]);
+    xyz[1] = -rsq3*std::tan(ab[0]);
+    xyz[2] = -rsq3*std::tan(ab[1]);
 
-    CubedSphereProjectionBase::xy2lonlatpost(xyz, t, crd);
+    CubedSphereProjectionBase::xy2lonlat_post(xyz, t, crd);
 
     if( debug ) {
         Log::info() << "end of equiangular xy2lonlat lonlat = " <<  crd[LON] << " " << crd[LAT] << std::endl;
