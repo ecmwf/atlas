@@ -24,12 +24,9 @@ static constexpr bool debug = false; // constexpr so compiler can optimize `if (
 
 // -------------------------------------------------------------------------------------------------
 
-CubedSphereProjectionBase::CubedSphereProjectionBase( const eckit::Parametrisation& params )
-                                                            : tile1LonsArray_(), tile1LatsArray_(),
+CubedSphereProjectionBase::CubedSphereProjectionBase( const eckit::Parametrisation& params ) :
                                                              epsilon_{1e-15} {
   ATLAS_TRACE( "CubedSphereProjectionBase::CubedSphereProjectionBase" );
-  // Get cube sphere face dimension
-  params.get("CubeNx", cubeNx_);
 
   // Shift projection by a longitude
   shiftLon_ = 0.0;
@@ -52,10 +49,6 @@ CubedSphereProjectionBase::CubedSphereProjectionBase( const eckit::Parametrisati
       params.get("TargetLat", targetLat_);
     }
   }
-
-  // Arrays to hold projection for (0,0) centered tile
-  tile1LonsArray_.reset(new ArrayLatLon_(cubeNx_+1, cubeNx_+1));
-  tile1LatsArray_.reset(new ArrayLatLon_(cubeNx_+1, cubeNx_+1));
 }
 
 // -------------------------------------------------------------------------------------------------

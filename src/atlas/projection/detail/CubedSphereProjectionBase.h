@@ -70,20 +70,6 @@ class CubedSphereProjectionBase : public ProjectionImpl {
        [this](double xyz[]){this->tile6RotateInverse(xyz);}
       };
 
-    // Array views for accessing data of tile 0 projection
-    ArrayViewLatLon_ getLatArray() const {
-      ATLAS_TRACE( "CubedSphereProjectionBase::getLatArray" );
-      array::ArrayView<double, 2> tile1Lats = array::make_view<double, 2>( *tile1LatsArray_ );
-      return tile1Lats;
-    }
-    ArrayViewLatLon_ getLonArray() const {
-      ATLAS_TRACE( "CubedSphereProjectionBase::getLonArray" );
-      array::ArrayView<double, 2> tile1Lons = array::make_view<double, 2>( *tile1LonsArray_ );
-      return tile1Lons;
-    }
-
-    int getCubeNx() const { return cubeNx_; }
-
     void schmidtTransform(double, double, double, double[]) const;
 
     void xy2alphabetat(const double xy[], idx_t & t, double ab[]) const {
@@ -118,9 +104,6 @@ class CubedSphereProjectionBase : public ProjectionImpl {
     idx_t tileFromLonLat(const double crd[]) const;
 
   private:
-    int cubeNx_;
-    std::unique_ptr<ArrayLatLon_> tile1LonsArray_;
-    std::unique_ptr<ArrayLatLon_> tile1LatsArray_;
     // Shift entire grid
     double shiftLon_;
     // Schmidt transform
