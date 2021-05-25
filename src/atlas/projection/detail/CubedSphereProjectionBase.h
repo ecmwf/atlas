@@ -36,8 +36,6 @@ class CubedSphereProjectionBase : public ProjectionImpl {
     void xy2lonlatpost( double xyz[], const idx_t & t, double crd[] ) const;
     void lonlat2xypre( double crd[], idx_t & t, double xyz[] ) const;
 
-    void schmidtTransform(double, double, double, double[]) const;
-
     void xy2alphabetat(const double xy[], idx_t & t, double ab[]) const {
         // xy is in degrees while ab is in radians
         // ab are the  (alpha, beta) coordinates and t is the tile index.

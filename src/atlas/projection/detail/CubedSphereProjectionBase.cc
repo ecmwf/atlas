@@ -126,6 +126,47 @@ static const std::vector<std::function<void(double[])>> tileRotateInverse = {
     [](double xyz[]){tile6RotateInverse(xyz);},
 };
 
+static void schmidtTransform( double stretchFac, double targetLon,
+                              double targetLat, double lonlat[]) {
+
+
+    double c2p1 = 1.0 + stretchFac*stretchFac;
+    double c2m1 = 1.0 - stretchFac*stretchFac;
+
+    double sin_p = std::sin(targetLat);
+    double cos_p = std::cos(targetLat);
+
+    double sin_lat;
+    double cos_lat;
+    double lat_t;
+
+    if ( std::abs(c2m1) > 1.0e-7 ) {
+        sin_lat = sin(lonlat[LAT]);
+        lat_t = std::asin( (c2m1+c2p1*sin_lat)/(c2p1+c2m1*sin_lat) );
+    } else {         // no stretching
+        lat_t = lonlat[LAT];
+    }
+
+    sin_lat = std::sin(lat_t);
+    cos_lat = std::cos(lat_t);
+    double sin_o = -(sin_p*sin_lat + cos_p*cos_lat*cos(lonlat[LON]));
+
+    if ( (1.-std::abs(sin_o)) < 1.0e-7 ) {    // poles
+        lonlat[LON] = 0.0;
+        lonlat[LAT] = copysign( 0.5*M_PI, sin_o );
+    } else {
+        lonlat[LAT] = asin( sin_o );
+        lonlat[LON] = targetLon + atan2( -cos_lat*sin(lonlat[LON]), -sin_lat*cos_p+cos_lat*sin_p*cos(lonlat[LON]));
+        if ( lonlat[LON] < 0.0 ) {
+            lonlat[LON] = lonlat[LON] + 2.0*M_PI;
+        } else if ( lonlat[LON] >= 2.0*M_PI ) {
+            lonlat[LON] = lonlat[LON] - 2.0*M_PI;
+        }
+    }
+
+}
+
+
 } // namespace
 
 
@@ -204,10 +245,10 @@ void CubedSphereProjectionBase::xy2lonlatpost( double xyz[], const idx_t & t, do
 
     // Schmidt transform
     if (doSchmidt_) {
-       this->schmidtTransform(stretchFac_,
-                              targetLon_*atlas::util::Constants::degreesToRadians(),
-                              targetLat_*atlas::util::Constants::degreesToRadians(),
-                              crd);
+       schmidtTransform(stretchFac_,
+                        targetLon_*atlas::util::Constants::degreesToRadians(),
+                        targetLat_*atlas::util::Constants::degreesToRadians(),
+                        crd);
     }
 
     // longitude does not make sense at the poles - set to 0.
@@ -243,46 +284,6 @@ void CubedSphereProjectionBase::lonlat2xypre( double crd[], idx_t & t, double xy
 }
 
 // -------------------------------------------------------------------------------------------------
-
-void CubedSphereProjectionBase::schmidtTransform( double stretchFac, double targetLon,
-                                                  double targetLat, double lonlat[]) const {
-
-
-  double c2p1 = 1.0 + stretchFac*stretchFac;
-  double c2m1 = 1.0 - stretchFac*stretchFac;
-
-  double sin_p = std::sin(targetLat);
-  double cos_p = std::cos(targetLat);
-
-  double sin_lat;
-  double cos_lat;
-  double lat_t;
-
-  if ( std::abs(c2m1) > 1.0e-7 ) {
-    sin_lat = sin(lonlat[LAT]);
-    lat_t = std::asin( (c2m1+c2p1*sin_lat)/(c2p1+c2m1*sin_lat) );
-  } else {         // no stretching
-    lat_t = lonlat[LAT];
-  }
-
-  sin_lat = std::sin(lat_t);
-  cos_lat = std::cos(lat_t);
-  double sin_o = -(sin_p*sin_lat + cos_p*cos_lat*cos(lonlat[LON]));
-
-  if ( (1.-std::abs(sin_o)) < 1.0e-7 ) {    // poles
-    lonlat[LON] = 0.0;
-    lonlat[LAT] = copysign( 0.5*M_PI, sin_o );
-  } else {
-    lonlat[LAT] = asin( sin_o );
-    lonlat[LON] = targetLon + atan2( -cos_lat*sin(lonlat[LON]), -sin_lat*cos_p+cos_lat*sin_p*cos(lonlat[LON]));
-    if ( lonlat[LON] < 0.0 ) {
-      lonlat[LON] = lonlat[LON] + 2.0*M_PI;
-    } else if ( lonlat[LON] >= 2.0*M_PI ) {
-      lonlat[LON] = lonlat[LON] - 2.0*M_PI;
-    }
-  }
-
-}
 
 idx_t CubedSphereProjectionBase::tileFromXY( const double xy[] ) const {
   // Assume one face-edge is of length 90 degrees.
