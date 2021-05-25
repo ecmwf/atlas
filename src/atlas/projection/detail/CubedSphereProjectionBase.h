@@ -36,40 +36,6 @@ class CubedSphereProjectionBase : public ProjectionImpl {
     void xy2lonlatpost( double xyz[], const idx_t & t, double crd[] ) const;
     void lonlat2xypre( double crd[], idx_t & t, double xyz[] ) const;
 
-    // Functions for xy to latlon on each tile
-    void tile1Rotate( double[] ) const;
-    void tile2Rotate( double[] ) const;
-    void tile3Rotate( double[] ) const;
-    void tile4Rotate( double[] ) const;
-    void tile5Rotate( double[] ) const;
-    void tile6Rotate( double[] ) const;
-
-    std::vector<std::function<void(double[])>> tileRotate =
-      {[this](double xyz[]){this->tile1Rotate(xyz);},
-       [this](double xyz[]){this->tile2Rotate(xyz);},
-       [this](double xyz[]){this->tile3Rotate(xyz);},
-       [this](double xyz[]){this->tile4Rotate(xyz);},
-       [this](double xyz[]){this->tile5Rotate(xyz);},
-       [this](double xyz[]){this->tile6Rotate(xyz);}
-      };
-
-    // Functions for latlon to xy on each tile
-    void tile1RotateInverse( double[] ) const;
-    void tile2RotateInverse( double[] ) const;
-    void tile3RotateInverse( double[] ) const;
-    void tile4RotateInverse( double[] ) const;
-    void tile5RotateInverse( double[] ) const;
-    void tile6RotateInverse( double[] ) const;
-
-    std::vector<std::function<void(double[])>> tileRotateInverse =
-      {[this](double xyz[]){this->tile1RotateInverse(xyz);},
-       [this](double xyz[]){this->tile2RotateInverse(xyz);},
-       [this](double xyz[]){this->tile3RotateInverse(xyz);},
-       [this](double xyz[]){this->tile4RotateInverse(xyz);},
-       [this](double xyz[]){this->tile5RotateInverse(xyz);},
-       [this](double xyz[]){this->tile6RotateInverse(xyz);}
-      };
-
     void schmidtTransform(double, double, double, double[]) const;
 
     void xy2alphabetat(const double xy[], idx_t & t, double ab[]) const {

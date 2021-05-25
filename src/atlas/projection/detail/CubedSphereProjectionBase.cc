@@ -22,7 +22,7 @@ namespace detail {
 
 // -------------------------------------------------------------------------------------------------
 // Helper functions and variables local to this translation unit
-
+namespace {
 static constexpr bool debug = false; // constexpr so compiler can optimize `if ( debug ) { ... }` out
 
 static bool is_tiny( const double& x ) {
@@ -34,6 +34,100 @@ static bool is_same( const double& x, const double& y ) {
     constexpr double epsilon = 1.e-15;
     return (std::abs(x-y) < epsilon );
 }
+
+// --- Functions for xy to latlon on each tile
+
+static void tile1Rotate( double xyz[] ) {
+    //  Face 1, no rotation.
+}
+static void tile2Rotate( double xyz[] ) {
+    //  Face 2: rotate -90.0 degrees about z axis
+    constexpr double angle = -M_PI / 2.0;
+    ProjectionUtilities::rotate3dZ(angle, xyz);
+}
+static void tile3Rotate( double xyz[] ) {
+    //  Face 3: rotate -90.0 degrees about z axis
+    //          rotate  90.0 degrees about x axis
+    constexpr double angle_z = -M_PI / 2.0;
+    ProjectionUtilities::rotate3dZ(angle_z, xyz);
+    constexpr double angle_x = M_PI / 2.0;
+    ProjectionUtilities::rotate3dX(angle_x, xyz);
+}
+static void tile4Rotate( double xyz[] ) {
+    //  Face 4: rotate -180.0 degrees about z axis
+    constexpr double angle = -M_PI;
+    ProjectionUtilities::rotate3dZ(angle, xyz);
+}
+static void tile5Rotate( double xyz[] ) {
+    //  Face 5: rotate 90.0 degrees about z axis
+    constexpr double angle = M_PI / 2.0;
+    ProjectionUtilities::rotate3dZ(angle, xyz);
+}
+static void tile6Rotate( double xyz[] ) {
+    // Face 6: rotate 90.0 degrees about y axis
+    //         rotate 90.0 degrees about z axis
+    constexpr double angle_y = M_PI / 2.0;
+    ProjectionUtilities::rotate3dY(angle_y, xyz);
+    constexpr double angle_z = M_PI / 2.0;
+    ProjectionUtilities::rotate3dZ(angle_z, xyz);
+}
+
+static const std::vector<std::function<void(double[])>> tileRotate = {
+    [](double xyz[]){tile1Rotate(xyz);},
+    [](double xyz[]){tile2Rotate(xyz);},
+    [](double xyz[]){tile3Rotate(xyz);},
+    [](double xyz[]){tile4Rotate(xyz);},
+    [](double xyz[]){tile5Rotate(xyz);},
+    [](double xyz[]){tile6Rotate(xyz);}
+};
+
+// Functions for latlon to xy on each tile
+static void tile1RotateInverse( double xyz[] ) {
+    //  Face 1, no rotation.
+}
+static void tile2RotateInverse( double xyz[] ) {
+    //  Face 2: rotate 90.0 degrees about z axis
+    constexpr double angle = M_PI / 2.0;
+    ProjectionUtilities::rotate3dZ(angle, xyz);
+}
+static void tile3RotateInverse( double xyz[] ) {
+    //  Face 3: rotate  90.0 degrees about x axis
+    //          rotate -90.0 degrees about z axis
+    constexpr double angle_x = -M_PI / 2.0;
+    ProjectionUtilities::rotate3dX(angle_x, xyz);
+    constexpr double angle_z = M_PI / 2.0;
+    ProjectionUtilities::rotate3dZ(angle_z, xyz);
+}
+static void tile4RotateInverse( double xyz[] ) {
+    //  Face 4: rotate  180.0 degrees about z axis
+    constexpr double angle = M_PI;
+    ProjectionUtilities::rotate3dZ(angle, xyz);
+}
+static void tile5RotateInverse( double xyz[] ) {
+    //  Face 5: rotate -90.0 degrees about y axis
+    constexpr double angle = - M_PI / 2.0;
+    ProjectionUtilities::rotate3dZ(angle, xyz);
+}
+static void tile6RotateInverse( double xyz[] ) {
+    //  Face 6: rotate -90.0 degrees about y axis
+    //          rotate -90.0 degrees about z axis
+    constexpr double angle_z = -M_PI / 2.;
+    ProjectionUtilities::rotate3dZ(angle_z, xyz);
+    constexpr double angle_y = -M_PI / 2.;
+    ProjectionUtilities::rotate3dY(angle_y, xyz);
+}
+
+static const std::vector<std::function<void(double[])>> tileRotateInverse = {
+    [](double xyz[]){tile1RotateInverse(xyz);},
+    [](double xyz[]){tile2RotateInverse(xyz);},
+    [](double xyz[]){tile3RotateInverse(xyz);},
+    [](double xyz[]){tile4RotateInverse(xyz);},
+    [](double xyz[]){tile5RotateInverse(xyz);},
+    [](double xyz[]){tile6RotateInverse(xyz);},
+};
+
+} // namespace
+
 
 // -------------------------------------------------------------------------------------------------
 
@@ -93,7 +187,7 @@ void CubedSphereProjectionBase::xy2lonlatpost( double xyz[], const idx_t & t, do
     ProjectionUtilities::sphericalToCartesian(crd, xyz, false, true);
 
     // Perform tile specific rotation
-    tileRotate.at(t)(xyz);
+    tileRotate[t](xyz);
 
     // Back to latlon
     ProjectionUtilities::cartesianToSpherical(xyz, crd, false);
@@ -144,122 +238,7 @@ void CubedSphereProjectionBase::lonlat2xypre( double crd[], idx_t & t, double xy
     t = CubedSphereProjectionBase::tileFromLonLat(crd);
 
     ProjectionUtilities::sphericalToCartesian(crd, xyz, false, true);
-    tileRotateInverse.at(t)(xyz);
-
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void CubedSphereProjectionBase::tile1Rotate( double xyz[] ) const {
-  //  Face 1, no rotation.
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void CubedSphereProjectionBase::tile2Rotate( double xyz[] ) const {
-  //  Face 2: rotate -90.0 degrees about z axis
-  double angle;
-  angle = -M_PI / 2.0;
-  ProjectionUtilities::rotate3dZ(angle, xyz);
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void CubedSphereProjectionBase::tile3Rotate( double xyz[] ) const {
-  //  Face 3: rotate -90.0 degrees about z axis
-  //          rotate  90.0 degrees about x axis
-  double angle;
-  angle = -M_PI / 2.0;
-  ProjectionUtilities::rotate3dZ(angle, xyz);
-  angle = M_PI / 2.0;
-  ProjectionUtilities::rotate3dX(angle, xyz);
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void CubedSphereProjectionBase::tile4Rotate( double xyz[] ) const {
-  //  Face 4: rotate -180.0 degrees about z axis
-  double angle;
-  angle = -M_PI;
-  ProjectionUtilities::rotate3dZ(angle, xyz);
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void CubedSphereProjectionBase::tile5Rotate( double xyz[] ) const {
-  //  Face 5: rotate 90.0 degrees about z axis
-  double angle;
-  angle = M_PI / 2.0;
-  ProjectionUtilities::rotate3dZ(angle, xyz);
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void CubedSphereProjectionBase::tile6Rotate( double xyz[] ) const {
-  // Face 6: rotate 90.0 degrees about y axis
-  //         rotate 90.0 degrees about z axis
-  double angle;
-  angle = M_PI / 2.0;
-  ProjectionUtilities::rotate3dY(angle, xyz);
-  angle = M_PI / 2.0;
-  ProjectionUtilities::rotate3dZ(angle, xyz);
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void CubedSphereProjectionBase::tile1RotateInverse( double xyt[] ) const {
-  //  Face 1, no rotation.
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void CubedSphereProjectionBase::tile2RotateInverse( double xyz[] ) const {
-  //  Face 2: rotate 90.0 degrees about z axis
-  double angle;
-  angle = M_PI / 2.0;
-  ProjectionUtilities::rotate3dZ(angle, xyz);
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void CubedSphereProjectionBase::tile3RotateInverse( double xyz[] ) const {
-  //  Face 3: rotate  90.0 degrees about x axis
-  //          rotate -90.0 degrees about z axis
-  double angle;
-  angle = -M_PI / 2.0;
-  ProjectionUtilities::rotate3dX(angle, xyz);
-  angle = M_PI / 2.0;
-  ProjectionUtilities::rotate3dZ(angle, xyz);
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void CubedSphereProjectionBase::tile4RotateInverse( double xyz[] ) const {
-  //  Face 4: rotate  180.0 degrees about z axis
-  double angle;
-  angle = M_PI;
-  ProjectionUtilities::rotate3dZ(angle, xyz);
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void CubedSphereProjectionBase::tile5RotateInverse( double xyz[] ) const {
-  //  Face 5: rotate -90.0 degrees about y axis
-  double angle;
-  angle = - M_PI / 2.0;
-  ProjectionUtilities::rotate3dZ(angle, xyz);
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void CubedSphereProjectionBase::tile6RotateInverse( double xyz[] ) const {
-  //  Face 6: rotate -90.0 degrees about y axis
-  //          rotate -90.0 degrees about z axis
-  double angle;
-  angle = -M_PI / 2.;
-  ProjectionUtilities::rotate3dZ(angle, xyz);
-  angle = -M_PI / 2.;
-  ProjectionUtilities::rotate3dY(angle, xyz);
+    tileRotateInverse[t](xyz);
 
 }
 
