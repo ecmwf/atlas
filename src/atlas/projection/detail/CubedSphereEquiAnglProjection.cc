@@ -26,6 +26,8 @@ namespace atlas {
 namespace projection {
 namespace detail {
 
+static constexpr bool debug = false; // constexpr so compiler can optimize `if ( debug ) { ... }` out
+
 // -------------------------------------------------------------------------------------------------
 
 CubedSphereEquiAnglProjection::CubedSphereEquiAnglProjection( const eckit::Parametrisation& params )
@@ -37,7 +39,9 @@ CubedSphereEquiAnglProjection::CubedSphereEquiAnglProjection( const eckit::Param
 
 void CubedSphereEquiAnglProjection::lonlat2xy( double crd[] ) const {
 
-    Log::info() << "lonlat2xy start : lonlat = " << crd[LON] << " " << crd[LAT] << std::endl;
+    if( debug ) {
+        Log::info() << "lonlat2xy start : lonlat = " << crd[LON] << " " << crd[LAT] << std::endl;
+    }
 
     idx_t t;
     double ab[2]; // alpha-beta coordinate
@@ -51,13 +55,17 @@ void CubedSphereEquiAnglProjection::lonlat2xy( double crd[] ) const {
     ab[1] = std::atan(-xyz[ZZ]/xyz[XX]);  // I think the minus is here due to the
     // left coordinate system
 
-    Log::debug() << "lonlat2xy xyz ab : "
-      << xyz[XX] << " " << xyz[YY] << " " << xyz[ZZ] << " "
-      << ab[LON] << " " << ab[LAT] << std::endl;
+    if( debug ) {
+        Log::debug() << "lonlat2xy xyz ab : "
+                     << xyz[XX] << " " << xyz[YY] << " " << xyz[ZZ] << " "
+                     << ab[LON] << " " << ab[LAT] << std::endl;
+    }
 
     CubedSphereProjectionBase::alphabetatt2xy(t, ab, crd);
 
-    Log::debug() << "lonlat2xy end : xy = " << crd[LON] << " " << crd[LAT] << std::endl;
+    if( debug ) {
+        Log::debug() << "lonlat2xy end : xy = " << crd[LON] << " " << crd[LAT] << std::endl;
+    }
 
 }
 
@@ -66,7 +74,9 @@ void CubedSphereEquiAnglProjection::lonlat2xy( double crd[] ) const {
 //
 void CubedSphereEquiAnglProjection::xy2lonlat( double crd[] ) const {
 
-    Log::info() << "xy2lonlat start xy = " << crd[LON] << " " << crd[LAT] <<std::endl;
+    if( debug ) {
+        Log::info() << "xy2lonlat start xy = " << crd[LON] << " " << crd[LAT] <<std::endl;
+    }
 
     const double rsq3 = 1.0/std::sqrt(3.0);
     double xyz[3];
@@ -76,7 +86,9 @@ void CubedSphereEquiAnglProjection::xy2lonlat( double crd[] ) const {
     // calculate xy (in degrees) to alpha beta (in radians) and t - tile index.
     CubedSphereProjectionBase::xy2alphabetat(crd, t, ab);
 
-    Log::debug() << "xy2lonlat:: crd t ab  : "  << crd[0] << " " << crd[1] << " " << t << " " << ab[0] << " " << ab[1] << std::endl;
+    if( debug ) {
+        Log::debug() << "xy2lonlat:: crd t ab  : "  << crd[0] << " " << crd[1] << " " << t << " " << ab[0] << " " << ab[1] << std::endl;
+    }
 
     xyz[0] = -rsq3;
     xyz[1] = -rsq3*tan(ab[0]);
@@ -84,7 +96,9 @@ void CubedSphereEquiAnglProjection::xy2lonlat( double crd[] ) const {
 
     CubedSphereProjectionBase::xy2lonlatpost(xyz, t, crd);
 
-    Log::info() << "end of equiangular xy2lonlat lonlat = " <<  crd[LON] << " " << crd[LAT] << std::endl;
+    if( debug ) {
+        Log::info() << "end of equiangular xy2lonlat lonlat = " <<  crd[LON] << " " << crd[LAT] << std::endl;
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

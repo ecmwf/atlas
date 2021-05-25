@@ -20,6 +20,8 @@ namespace atlas {
 namespace projection {
 namespace detail {
 
+static constexpr bool debug = false; // constexpr so compiler can optimize `if ( debug ) { ... }` out
+
 // -------------------------------------------------------------------------------------------------
 
 CubedSphereProjectionBase::CubedSphereProjectionBase( const eckit::Parametrisation& params )
@@ -78,7 +80,9 @@ void CubedSphereProjectionBase::xy2lonlatpost( double xyz[], const idx_t & t, do
     if (crd[LON] < 0.0) { crd[LON] += 2.0*M_PI; }
     crd[LON] = crd[LON] - M_PI;
 
-    Log::debug() << "xy2lonlat:: lonlat before rotation : "  << crd[LON] << " " << crd[LAT]  << std::endl;
+    if ( debug ) {
+        Log::debug() << "xy2lonlat:: lonlat before rotation : "  << crd[LON] << " " << crd[LAT]  << std::endl;
+    }
 
     // Convert to cartesian
     ProjectionUtilities::sphericalToCartesian(crd, xyz, false, true);
