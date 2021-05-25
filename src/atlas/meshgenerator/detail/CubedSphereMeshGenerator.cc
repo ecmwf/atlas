@@ -329,9 +329,9 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
       for ( int iy = 0; iy < cubeNx; iy++ ) {
 
         quad_nodes[0] = NodeArray(it, ix  , iy  );
-        quad_nodes[1] = NodeArray(it, ix  , iy+1);
+        quad_nodes[1] = NodeArray(it, ix+1, iy  );
         quad_nodes[2] = NodeArray(it, ix+1, iy+1);
-        quad_nodes[3] = NodeArray(it, ix+1, iy  );
+        quad_nodes[3] = NodeArray(it, ix  , iy+1);
 
         node_connectivity.set( icell, quad_nodes );
         cells_part( icell ) = 0;
