@@ -334,7 +334,15 @@ public:
 void force_link_CubedSphere() {
     cubedsphere_equiangular_.force_link();
     cubedsphere_equidistant_.force_link();
-  }
+}
+
+Grid::Config CubedSphere::meshgenerator() const {
+    return Config( "type", "cubedsphere" );
+}
+
+Grid::Config CubedSphere::partitioner() const {
+    return Config( "type", "equal_regions" ); // TODO: implement better one specific for cubed sphere
+}
 
 // -------------------------------------------------------------------------------------------------
 

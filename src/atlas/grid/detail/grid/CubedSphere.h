@@ -410,6 +410,12 @@ public:
     return std::unique_ptr<Grid::IteratorLonLat>( new IteratorLonLat( *this, false ) );
   }
 
+  // Default configurations
+
+  Config meshgenerator() const override;
+
+  Config partitioner() const override;
+
 protected:
   virtual void print( std::ostream& ) const override;
 
@@ -437,7 +443,6 @@ protected:
 
 private:
   std::string name_ = {"cubedsphere"};
-  mutable std::string type_;
 };
 
 }  // namespace grid

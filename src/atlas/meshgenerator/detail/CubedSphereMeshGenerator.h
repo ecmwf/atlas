@@ -45,7 +45,8 @@ public:
 
     using MeshGenerator::Implementation::generate;
 
-    std::string type() const override { return "cubed sphere"; }
+    static std::string static_type() { return "cubedsphere"; }
+    std::string type() const override { return static_type(); }
 
 private:
     virtual void hash( eckit::Hash& ) const override;

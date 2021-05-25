@@ -360,7 +360,7 @@ void CubedSphereMeshGenerator::hash( eckit::Hash& h ) const {
 // -------------------------------------------------------------------------------------------------
 
 namespace {
-  static MeshGeneratorBuilder<CubedSphereMeshGenerator> CubedSphereMeshGenerator( "cubedsphere" );
+  static MeshGeneratorBuilder<CubedSphereMeshGenerator> CubedSphereMeshGenerator( CubedSphereMeshGenerator::static_type() );
 }
 
 // -------------------------------------------------------------------------------------------------
