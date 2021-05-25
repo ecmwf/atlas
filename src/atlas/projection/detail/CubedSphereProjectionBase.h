@@ -111,7 +111,6 @@ class CubedSphereProjectionBase : public ProjectionImpl {
     double stretchFac_;
     double targetLon_;
     double targetLat_;
-    const double epsilon_;
 };
 
 }  // namespace detail

@@ -20,12 +20,24 @@ namespace atlas {
 namespace projection {
 namespace detail {
 
+// -------------------------------------------------------------------------------------------------
+// Helper functions and variables local to this translation unit
+
 static constexpr bool debug = false; // constexpr so compiler can optimize `if ( debug ) { ... }` out
+
+static bool is_tiny( const double& x ) {
+    constexpr double epsilon = 1.e-15;
+    return (std::abs(x) < epsilon );
+}
+
+static bool is_same( const double& x, const double& y ) {
+    constexpr double epsilon = 1.e-15;
+    return (std::abs(x-y) < epsilon );
+}
 
 // -------------------------------------------------------------------------------------------------
 
-CubedSphereProjectionBase::CubedSphereProjectionBase( const eckit::Parametrisation& params ) :
-                                                             epsilon_{1e-15} {
+CubedSphereProjectionBase::CubedSphereProjectionBase( const eckit::Parametrisation& params ) {
   ATLAS_TRACE( "CubedSphereProjectionBase::CubedSphereProjectionBase" );
 
   // Shift projection by a longitude
@@ -337,11 +349,11 @@ idx_t CubedSphereProjectionBase::tileFromXY( const double xy[] ) const {
   }
 
   // extra points
-  if ((std::abs(xy[XX]) < epsilon_) && (std::abs(xy[YY] - 45.) < epsilon_)) { t = 0; }
-  if ((std::abs(xy[XX] - 180.) < epsilon_) && (std::abs(xy[YY] + 45.) < epsilon_)) { t = 1; }
+  if ( is_same( xy[XX], 0.   ) && is_same( xy[YY],  45. ) ) { t = 0; }
+  if ( is_same( xy[XX], 180. ) && is_same( xy[YY], -45. ) ) { t = 1; }
 
   // for end iterator !!!!
-  if ((std::abs(xy[XX] - 360.) < epsilon_) && (std::abs(xy[YY] + 135.) < epsilon_)) { t = 5; }
+  if ( is_same( xy[XX], 360. ) && is_same( xy[YY], -135.) ) { t = 5; }
 
   return t;
 }
@@ -370,10 +382,10 @@ idx_t CubedSphereProjectionBase::tileFromLonLat(const double crd[]) const {
     // cause the tile selection to fail.
     // To this end we enforce that tiny values close (in roundoff terms)
     // to a boundary should end up exactly on the boundary.
-    if (std::abs(zPlusAbsX) < epsilon_) { zPlusAbsX = 0.; }
-    if (std::abs(zPlusAbsY) < epsilon_) { zPlusAbsY = 0.; }
-    if (std::abs(zMinusAbsX) < epsilon_) { zMinusAbsX = 0.; }
-    if (std::abs(zMinusAbsY) < epsilon_) { zMinusAbsY = 0.; }
+    if ( is_tiny(zPlusAbsX) ) { zPlusAbsX = 0.; }
+    if ( is_tiny(zPlusAbsY) ) { zPlusAbsY = 0.; }
+    if ( is_tiny(zMinusAbsX) ) { zMinusAbsX = 0.; }
+    if ( is_tiny(zMinusAbsY) ) { zMinusAbsY = 0.; }
 
     if (lon >= 1.75 * M_PI  || lon < 0.25 * M_PI) {
         if  ( (zPlusAbsX <= 0.) && (zPlusAbsY <= 0.) ) {
@@ -384,8 +396,7 @@ idx_t CubedSphereProjectionBase::tileFromLonLat(const double crd[]) const {
            t = 0;
         }
         // extra point corner point
-        if ( (std::abs(lon + 0.25 * M_PI) < epsilon_) &&
-             (std::abs(lat - cornerLat) < epsilon_) ) t = 0;
+        if ( is_same( lon, -0.25 * M_PI ) && is_same( lat, cornerLat ) ) { t = 0; }
     }
 
     if (lon >= 0.25 * M_PI  && lon < 0.75 * M_PI) {
@@ -409,8 +420,7 @@ idx_t CubedSphereProjectionBase::tileFromLonLat(const double crd[]) const {
             t = 3;
         }
         // extra point corner point
-        if ( (std::abs(lon - 0.75 * M_PI) < epsilon_) &&
-             (std::abs(lat + cornerLat) < epsilon_) ) t = 1;
+        if ( is_same(lon, 0.75 * M_PI) && is_same( lat, -cornerLat ) ) { t = 1; }
     }
 
     if (lon >= 1.25 * M_PI  && lon < 1.75 * M_PI) {
@@ -424,11 +434,14 @@ idx_t CubedSphereProjectionBase::tileFromLonLat(const double crd[]) const {
         }
     }
 
-    Log::debug() << "tileFromLonLat:: lonlat abs xyz t = " <<
-                 std::setprecision(std::numeric_limits<double>::digits10 + 1) <<
-        zPlusAbsX  << " " << zPlusAbsY << " " << zMinusAbsX << " " << zMinusAbsY << " " <<
-        crd[LON] << " " << crd[LAT]  << " "  <<
-        xyz[XX] << " " << xyz[YY]  << " " << xyz[ZZ] << " " << t << std::endl;
+    if( debug ) {
+        Log::debug() << "tileFromLonLat:: lonlat abs xyz t = "
+                     << std::setprecision(std::numeric_limits<double>::digits10 + 1)
+                     << zPlusAbsX << " " << zPlusAbsY << " " << zMinusAbsX << " " << zMinusAbsY << " "
+                     << crd[LON] << " " << crd[LAT] << " "
+                     << xyz[XX] << " " << xyz[YY] << " " << xyz[ZZ] << " " << t
+                     << std::endl;
+    }
 
     return t;
 }
