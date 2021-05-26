@@ -194,7 +194,7 @@ int AtlasGrids::execute( const Args& args ) {
                 Log::info() << "   Gaussian N number:                  " << gaussian.N() << std::endl;
             }
             if ( auto cubedsphere = CubedSphereGrid( grid ) ) {
-                Log::info() << "   Cubedsphere faces:                   " << cubedsphere.GetCubeNx() << "x" << cubedsphere.GetCubeNx() << "x6" << std::endl;
+                Log::info() << "   Cubedsphere faces:                   " << cubedsphere.N() << "x" << cubedsphere.N() << "x6" << std::endl;
             }
             Log::info() << "   number of points:                   " << grid.size() << std::endl;
 

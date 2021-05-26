@@ -82,15 +82,15 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
 
   const auto csgrid = CubedSphereGrid( grid );
 
-  const int cubeNx = csgrid.GetCubeNx();
+  const int N = csgrid.N();
   const int nTiles = csgrid.GetNTiles();
 
-  ATLAS_TRACE( "Number of faces per tile edge = " + std::to_string(cubeNx) );
+  ATLAS_TRACE( "Number of faces per tile edge = " + std::to_string(N) );
 
   // Number of nodes
-  int nnodes = nTiles*cubeNx*cubeNx+2;             // Number of unique grid nodes
-  int nnodes_all = nTiles*(cubeNx+1)*(cubeNx+1);   // Number of grid nodes including edge and corner duplicates
-  int ncells = nTiles*cubeNx*cubeNx;               // Number of unique grid cells
+  int nnodes = nTiles*N*N+2;             // Number of unique grid nodes
+  int nnodes_all = nTiles*(N+1)*(N+1);   // Number of grid nodes including edge and corner duplicates
+  int ncells = nTiles*N*N;               // Number of unique grid cells
 
   // Construct mesh nodes
   // --------------------
@@ -120,20 +120,20 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
   // We could include the duplicate points in the array if we make them Ghost nodes but it is not
   // clear if this provides any benefit.
 
-  array::ArrayT<int> NodeArrayT( nTiles, cubeNx+1, cubeNx+1 ); // All grid points including duplicates
+  array::ArrayT<int> NodeArrayT( nTiles, N+1, N+1 ); // All grid points including duplicates
   array::ArrayView<int, 3> NodeArray = array::make_view<int, 3>( NodeArrayT );
 
   for ( it = 0; it < nTiles; it++ ) {
-    for ( ix = 0; ix < cubeNx+1; ix++ ) {
-      for ( iy = 0; iy < cubeNx+1; iy++ ) {
+    for ( ix = 0; ix < N+1; ix++ ) {
+      for ( iy = 0; iy < N+1; iy++ ) {
         NodeArray(it, ix, iy) = -9999;
       }
     }
   }
 
   for ( it = 0; it < nTiles; it++ ) {               // 0, 1, 2, 3, 4, 5
-    for ( ix = 0; ix < cubeNx; ix++ ) {        // 0, 1, ..., cubeNx-1
-      for ( iy = 0; iy < cubeNx; iy++ ) {      // 0, 1, ..., cubeNx-1
+    for ( ix = 0; ix < N; ix++ ) {        // 0, 1, ..., N-1
+      for ( iy = 0; iy < N; iy++ ) {      // 0, 1, ..., N-1
 
         // Get xy from global xy grid array
         csgrid.xy( ix, iy, it, xy_ );
@@ -165,7 +165,7 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
   // -------------
   it = 0;
   ix = 0;
-  iy = cubeNx;
+  iy = N;
 
   csgrid.xy( ix, iy, it, xy_ );
   xy( inode, XX ) = xy_[XX];
@@ -184,7 +184,7 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
   // Extra point 2
   // -------------
   it = 1;
-  ix = cubeNx;
+  ix = N;
   iy = 0;
 
   csgrid.xy( ix, iy, it, xy_ );
@@ -219,8 +219,8 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     lonlattest[LAT] = lonlat( n, LAT );
     // Search the array for this node
     for ( it = 0; it < nTiles; it++ ) {
-      for ( ix = 0; ix < cubeNx; ix++ ) {
-        for ( iy = 0; iy < cubeNx; iy++ ) {
+      for ( ix = 0; ix < N; ix++ ) {
+        for ( iy = 0; iy < N; iy++ ) {
           if (NodeArray(it, ix, iy) == n) {
             ijtnode[0] = ix;
             ijtnode[1] = iy;
@@ -240,83 +240,83 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
 
   // Fill duplicate points in the corners
   // ------------------------------------
-  NodeArray(0, cubeNx, cubeNx) = NodeArray(2, 0, 0); ++inode;
-  NodeArray(1, cubeNx, cubeNx) = NodeArray(3, 0, 0); ++inode;
-  NodeArray(2, cubeNx, cubeNx) = NodeArray(4, 0, 0); ++inode;
-  NodeArray(3, cubeNx, cubeNx) = NodeArray(5, 0, 0); ++inode;
-  NodeArray(4, cubeNx, cubeNx) = NodeArray(0, 0, 0); ++inode;
-  NodeArray(5, cubeNx, cubeNx) = NodeArray(1, 0, 0); ++inode;
+  NodeArray(0, N, N) = NodeArray(2, 0, 0); ++inode;
+  NodeArray(1, N, N) = NodeArray(3, 0, 0); ++inode;
+  NodeArray(2, N, N) = NodeArray(4, 0, 0); ++inode;
+  NodeArray(3, N, N) = NodeArray(5, 0, 0); ++inode;
+  NodeArray(4, N, N) = NodeArray(0, 0, 0); ++inode;
+  NodeArray(5, N, N) = NodeArray(1, 0, 0); ++inode;
 
   // Special points have two duplicates each
-  NodeArray(2, 0, cubeNx) = NodeArray(0, 0, cubeNx); ++inode;
-  NodeArray(4, 0, cubeNx) = NodeArray(0, 0, cubeNx); ++inode;
-  NodeArray(3, cubeNx, 0) = NodeArray(1, cubeNx, 0); ++inode;
-  NodeArray(5, cubeNx, 0) = NodeArray(1, cubeNx, 0); ++inode;
+  NodeArray(2, 0, N) = NodeArray(0, 0, N); ++inode;
+  NodeArray(4, 0, N) = NodeArray(0, 0, N); ++inode;
+  NodeArray(3, N, 0) = NodeArray(1, N, 0); ++inode;
+  NodeArray(5, N, 0) = NodeArray(1, N, 0); ++inode;
 
   // Top & right duplicates
   // ----------------------
 
   // Tile 1
-  for ( ix = 1; ix < cubeNx; ix++ ) {
-    NodeArray(0, ix, cubeNx) = NodeArray(2, 0, cubeNx-ix); ++inode;
+  for ( ix = 1; ix < N; ix++ ) {
+    NodeArray(0, ix, N) = NodeArray(2, 0, N-ix); ++inode;
   }
-  for ( iy = 0; iy < cubeNx; iy++ ) {
-    NodeArray(0, cubeNx, iy) = NodeArray(1, 0, iy); ++inode;
+  for ( iy = 0; iy < N; iy++ ) {
+    NodeArray(0, N, iy) = NodeArray(1, 0, iy); ++inode;
   }
 
   // Tile 2
-  for ( ix = 0; ix < cubeNx; ix++ ) {
-    NodeArray(1, ix, cubeNx) = NodeArray(2, ix, 0); ++inode;
+  for ( ix = 0; ix < N; ix++ ) {
+    NodeArray(1, ix, N) = NodeArray(2, ix, 0); ++inode;
   }
-  for ( iy = 1; iy < cubeNx; iy++ ) {
-    NodeArray(1, cubeNx, iy) = NodeArray(3, cubeNx-iy, 0); ++inode;
+  for ( iy = 1; iy < N; iy++ ) {
+    NodeArray(1, N, iy) = NodeArray(3, N-iy, 0); ++inode;
   }
 
   // Tile 3
-  for ( ix = 1; ix < cubeNx; ix++ ) {
-    NodeArray(2, ix, cubeNx) = NodeArray(4, 0, cubeNx-ix); ++inode;
+  for ( ix = 1; ix < N; ix++ ) {
+    NodeArray(2, ix, N) = NodeArray(4, 0, N-ix); ++inode;
   }
-  for ( iy = 0; iy < cubeNx; iy++ ) {
-    NodeArray(2, cubeNx, iy) = NodeArray(3, 0, iy); ++inode;
+  for ( iy = 0; iy < N; iy++ ) {
+    NodeArray(2, N, iy) = NodeArray(3, 0, iy); ++inode;
   }
 
   // Tile 4
-  for ( ix = 0; ix < cubeNx; ix++ ) {
-    NodeArray(3, ix, cubeNx) = NodeArray(4, ix, 0); ++inode;
+  for ( ix = 0; ix < N; ix++ ) {
+    NodeArray(3, ix, N) = NodeArray(4, ix, 0); ++inode;
   }
-  for ( iy = 1; iy < cubeNx; iy++ ) {
-    NodeArray(3, cubeNx, iy) = NodeArray(5, cubeNx-iy, 0); ++inode;
+  for ( iy = 1; iy < N; iy++ ) {
+    NodeArray(3, N, iy) = NodeArray(5, N-iy, 0); ++inode;
   }
 
   // Tile 5
-  for ( ix = 1; ix < cubeNx; ix++ ) {
-    NodeArray(4, ix, cubeNx) = NodeArray(0, 0, cubeNx-ix); ++inode;
+  for ( ix = 1; ix < N; ix++ ) {
+    NodeArray(4, ix, N) = NodeArray(0, 0, N-ix); ++inode;
   }
-  for ( iy = 0; iy < cubeNx; iy++ ) {
-    NodeArray(4, cubeNx, iy) = NodeArray(5, 0, iy); ++inode;
+  for ( iy = 0; iy < N; iy++ ) {
+    NodeArray(4, N, iy) = NodeArray(5, 0, iy); ++inode;
   }
 
   // Tile 6
-  for ( ix = 0; ix < cubeNx; ix++ ) {
-    NodeArray(5, ix, cubeNx) = NodeArray(0, ix, 0); ++inode;
+  for ( ix = 0; ix < N; ix++ ) {
+    NodeArray(5, ix, N) = NodeArray(0, ix, 0); ++inode;
   }
-  for ( iy = 1; iy < cubeNx; iy++ ) {
-    NodeArray(5, cubeNx, iy) = NodeArray(1, cubeNx-iy, 0); ++inode;
+  for ( iy = 1; iy < N; iy++ ) {
+    NodeArray(5, N, iy) = NodeArray(1, N-iy, 0); ++inode;
   }
 
   // Assert that the correct number of nodes have been set when duplicates are added
   ATLAS_ASSERT( nnodes_all == inode, "Insufficient nodes" );
 
   for ( it = 0; it < nTiles; it++ ) {
-    for ( ix = 0; ix < cubeNx+1; ix++ ) {
-      for ( iy = 0; iy < cubeNx+1; iy++ ) {
+    for ( ix = 0; ix < N+1; ix++ ) {
+      for ( iy = 0; iy < N+1; iy++ ) {
         ATLAS_ASSERT( NodeArray(it, ix, iy) != -9999, "Node Array Not Set Properly" );
       }
     }
   }
 
   // Cells in mesh
-  mesh.cells().add( new mesh::temporary::Quadrilateral(), nTiles*cubeNx*cubeNx );
+  mesh.cells().add( new mesh::temporary::Quadrilateral(), nTiles*N*N );
   //int quad_begin  = mesh.cells().elements( 0 ).begin();
   array::ArrayView<int, 1> cells_part = array::make_view<int, 1>( mesh.cells().partition() );
   atlas::mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
@@ -325,8 +325,8 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
   idx_t quad_nodes[4];
 
   for ( int it = 0; it < nTiles; it++ ) {
-    for ( int ix = 0; ix < cubeNx; ix++ ) {
-      for ( int iy = 0; iy < cubeNx; iy++ ) {
+    for ( int ix = 0; ix < N; ix++ ) {
+      for ( int iy = 0; iy < N; iy++ ) {
 
         quad_nodes[0] = NodeArray(it, ix  , iy  );
         quad_nodes[1] = NodeArray(it, ix+1, iy  );

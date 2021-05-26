@@ -55,8 +55,8 @@ std::string CubedSphere::name() const {
 
 CubedSphere::CubedSphere( int N, Projection p ) : CubedSphere( CubedSphere::static_type(), N, p ) {}
 
-CubedSphere::CubedSphere( const std::string& name, int CubeNx, Projection projection ) :
-                           Grid(), CubeNx_(CubeNx), name_( name )  { // Number of tiles hardwired to 6 at the moment. Regional may need 1
+CubedSphere::CubedSphere( const std::string& name, int N, Projection projection ) :
+                           Grid(), N_(N), name_( name )  { // Number of tiles hardwired to 6 at the moment. Regional may need 1
   // Copy members
   projection_ = projection ? projection : Projection();
 
@@ -69,34 +69,34 @@ CubedSphere::CubedSphere( const std::string& name, int CubeNx, Projection projec
   // the y start position. Tile 3, 4 and 5 are rotated and ysr provides the start point for y after
   // these rotations.
 
-  xs_[0] = 0*CubeNx;
-  xs_[1] = 1*CubeNx;
-  xs_[2] = 1*CubeNx;
-  xs_[3] = 2*CubeNx;
-  xs_[4] = 3*CubeNx;
-  xs_[5] = 3*CubeNx;
+  xs_[0] = 0*N;
+  xs_[1] = 1*N;
+  xs_[2] = 1*N;
+  xs_[3] = 2*N;
+  xs_[4] = 3*N;
+  xs_[5] = 3*N;
 
-  ys_[0] = 1*CubeNx;
-  ys_[1] = 1*CubeNx;
-  ys_[2] = 2*CubeNx;
-  ys_[3] = 1*CubeNx+1;
-  ys_[4] = 1*CubeNx+1;
-  ys_[5] = 0*CubeNx+1;
+  ys_[0] = 1*N;
+  ys_[1] = 1*N;
+  ys_[2] = 2*N;
+  ys_[3] = 1*N+1;
+  ys_[4] = 1*N+1;
+  ys_[5] = 0*N+1;
 
   ysr_[0] = ys_[0];
   ysr_[1] = ys_[1];
   ysr_[2] = ys_[2];
-  ysr_[3] = 2*CubeNx;
-  ysr_[4] = 2*CubeNx;
-  ysr_[5] = 1*CubeNx;
+  ysr_[3] = 2*N;
+  ysr_[4] = 2*N;
+  ysr_[5] = 1*N;
 
   // Number of grid points on each face of the tile.
-  npts_.push_back(CubeNx*CubeNx+1); // An extra point lies on tile 1
-  npts_.push_back(CubeNx*CubeNx+1); // An extra point lies on tile 2
-  npts_.push_back(CubeNx*CubeNx);
-  npts_.push_back(CubeNx*CubeNx);
-  npts_.push_back(CubeNx*CubeNx);
-  npts_.push_back(CubeNx*CubeNx);
+  npts_.push_back(N*N+1); // An extra point lies on tile 1
+  npts_.push_back(N*N+1); // An extra point lies on tile 2
+  npts_.push_back(N*N);
+  npts_.push_back(N*N);
+  npts_.push_back(N*N);
+  npts_.push_back(N*N);
 }
 
 // Provide the domain for the cubed-sphere grid, which is global.
@@ -118,7 +118,7 @@ std::string CubedSphere::type() const {
 // Provide a unique identification hash for the grid and the projection.
 void CubedSphere::hash( eckit::Hash& h ) const {
   h.add("CubedSphere");
-  h.add(CubeNx_);
+  h.add(N_);
 
   // also add projection information
   projection().hash( h );
@@ -154,19 +154,19 @@ void CubedSphere::xy2xyt(const double xy[], double xyt[]) const {
     double normalisedX = xy[XX]/90.;
     double normalisedY = (xy[YY] + 135.)/90.;
 
-    double CubeNxDouble = static_cast<double>(CubeNx_);
+    double NDouble = static_cast<double>(N_);
 
-    std::vector<double> yOffset{CubeNxDouble,
-                                CubeNxDouble,
-                                2. *  CubeNxDouble,
-                                CubeNxDouble,
-                                CubeNxDouble,
+    std::vector<double> yOffset{NDouble,
+                                NDouble,
+                                2. *  NDouble,
+                                NDouble,
+                                NDouble,
                                 0};
 
-    xyt[0] = (normalisedX - std::floor(normalisedX)) * static_cast<double>(CubeNx_)
+    xyt[0] = (normalisedX - std::floor(normalisedX)) * static_cast<double>(N_)
           + xs_[static_cast<size_t>(xyt[2])];
 
-    xyt[1] = (normalisedY - std::floor(normalisedY)) * static_cast<double>(CubeNx_)
+    xyt[1] = (normalisedY - std::floor(normalisedY)) * static_cast<double>(N_)
           + yOffset[static_cast<size_t>(xyt[2])];
 
     using atlas::projection::detail::CubedSphereProjectionBase;
@@ -182,7 +182,7 @@ void CubedSphere::xyt2xy(const double xyt[], double xy[]) const {
     std::vector<double> xOffsetDeg{0., 90., 90., 180., 270., 270.};
     std::vector<double> yOffsetDeg{-45., -45., 45., -45., -45., -135.};
 
-    double N = static_cast<double>(CubeNx_);
+    double N = static_cast<double>(N_);
     std::vector<double> xOffsetIndex{0, N, N, 2*N, 3*N,  3*N};
     std::vector<double> yOffsetIndex{N, N, 2*N, N,  N, 0};
 
@@ -219,9 +219,9 @@ public:
     std::vector<std::string> matches;
     if ( match( name, matches, id ) ) {
       util::Config gridconf( config );
-      int CubeNx = to_int( matches[0] );
+      int N = to_int( matches[0] );
       gridconf.set( "type", type() );
-      gridconf.set( "CubeNx", CubeNx );
+      gridconf.set( "N", N );
       return create( gridconf );
     }
     return nullptr;
@@ -229,13 +229,13 @@ public:
 
   // Factory constructor
   const atlas::Grid::Implementation* create( const Grid::Config& config ) const override {
-    int CubeNx = 0;
-    if( not config.get( "CubeNx", CubeNx ) ) {
-        throw_AssertionFailed("Could not find \"CubeNx\" in configuration of cubed sphere grid",Here());
+    int N = 0;
+    if( not config.get( "N", N ) ) {
+        throw_AssertionFailed("Could not find \"N\" in configuration of cubed sphere grid",Here());
     }
     util::Config projconf;
     projconf.set("type", "cubedsphere_equiangular");
-    projconf.set("CubeNx", CubeNx);
+    projconf.set("N", N);
 
     // Shift projection by a longitude
     if (config.has("ShiftLon")) {
@@ -261,7 +261,7 @@ public:
         projconf.set("TargetLat", targetLat);
       }
     }
-    return new CubedSphereGrid::grid_t( "CS-EA-" + std::to_string( CubeNx ), CubeNx, Projection( projconf ) );
+    return new CubedSphereGrid::grid_t( "CS-EA-" + std::to_string( N ), N, Projection( projconf ) );
   }
 
   void force_link() {}
@@ -283,22 +283,22 @@ public:
     std::vector<std::string> matches;
     if ( match( name, matches, id ) ) {
       util::Config gridconf( config );
-      int CubeNx = to_int( matches[0] );
+      int N = to_int( matches[0] );
       gridconf.set( "type", type() );
-      gridconf.set( "CubeNx", CubeNx );
+      gridconf.set( "N", N );
       return create( gridconf );
     }
     return nullptr;
   }
 
   const atlas::Grid::Implementation* create( const Grid::Config& config ) const override {
-    int CubeNx = 0;
-    if( not config.get( "CubeNx", CubeNx ) ) {
-        throw_AssertionFailed("Could not find \"CubeNx\" in configuration of cubed sphere grid",Here());
+    int N = 0;
+    if( not config.get( "N", N ) ) {
+        throw_AssertionFailed("Could not find \"N\" in configuration of cubed sphere grid",Here());
     }
     util::Config projconf;
     projconf.set("type", "cubedsphere_equidistant");
-    projconf.set("CubeNx", CubeNx);
+    projconf.set("N", N);
 
     // Shift projection by a longitude
     if (config.has("ShiftLon")) {
@@ -325,7 +325,7 @@ public:
       }
     }
 
-    return new CubedSphereGrid::grid_t( "CS-ED-" + std::to_string( CubeNx ), CubeNx, Projection( projconf ) );
+    return new CubedSphereGrid::grid_t( "CS-ED-" + std::to_string( N ), N, Projection( projconf ) );
   }
 
   void force_link() {}

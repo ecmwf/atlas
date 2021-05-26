@@ -230,8 +230,8 @@ public:
   // Given indexes in the array (i, j, t) return lat/lon as a PointLonLat object
   PointLonLat lonlat( idx_t i, idx_t j, idx_t t ) const { return grid_->lonlat( i, j, t ); }
 
-  // Return the size of the cubed sphere grid, where CubeNX is the number of grid boxes along the edge of a tile
-  inline int GetCubeNx() const { return grid_->GetCubeNx(); }
+  // Return the size of the cubed sphere grid, where N is the number of grid boxes along the edge of a tile
+  inline int N() const { return grid_->N(); }
 
   // Return the number of tiles
   inline int GetNTiles() const { return grid_->GetNTiles(); }

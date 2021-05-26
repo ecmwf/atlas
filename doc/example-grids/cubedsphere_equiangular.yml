@@ -4,7 +4,7 @@
 # J. Comput. Phys., 227, 55–78
 
 type   : "cubedsphere_equiangular"
-CubeNx : 12
+N : 12
 
 check :
   size : 866

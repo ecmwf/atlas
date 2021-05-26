@@ -70,8 +70,8 @@ private:
     // beginning of the iterator, otherwise at the end. Class is templated and point can be xy or
     // lonlat.
     CubedSphereIterator( const CubedSphere& grid, bool begin = true ) :
-                          grid_( grid ), i_( begin ? 0 : grid_.CubeNx() ),
-                          j_( begin ? 0 : grid_.CubeNx() ), t_( begin ? 0 : 5 ),
+                          grid_( grid ), i_( begin ? 0 : grid_.N() ),
+                          j_( begin ? 0 : grid_.N() ), t_( begin ? 0 : 5 ),
                           compute_point{grid_} {
       // Check that point lies in grid and if so return the xy/lonlat
       if ( grid_.inGrid(i_, j_, t_) ) {
@@ -203,8 +203,8 @@ public:
   virtual std::string type() const override;
 
   // Return number of faces on cube
-  inline idx_t GetCubeNx() const { return CubeNx_; }
-  inline idx_t CubeNx() const { return CubeNx_; }
+  inline idx_t GetN() const { return N_; }
+  inline idx_t N() const { return N_; }
 
   // Return number of tiles
   inline idx_t GetNTiles() const { return nTiles_; }
@@ -290,7 +290,7 @@ public:
   // -------------------------------------------------------------
 
   inline bool extraPoint1(idx_t i, idx_t j, idx_t t) const {
-    if (i == 0 && j == CubeNx_ && t == 0) {
+    if (i == 0 && j == N_ && t == 0) {
       return true;
     } else {
       return false;
@@ -301,7 +301,7 @@ public:
   // -------------------------------------------------------------
 
   inline bool extraPoint2(idx_t i, idx_t j, idx_t t) const {
-    if (i == CubeNx_ && j == 0 && t == 1) {
+    if (i == N_ && j == 0 && t == 1) {
       return true;
     } else {
       return false;
@@ -313,8 +313,8 @@ public:
 
   inline bool inGrid(idx_t i, idx_t j, idx_t t) const {
     if (t >= 0 && t <= 5) {
-      if (i >= 0 && i <= CubeNx_-1) {
-        if (i >= 0 && i <= CubeNx_-1) {
+      if (i >= 0 && i <= N_-1) {
+        if (i >= 0 && i <= N_-1) {
           return true;
         }
       }
@@ -328,7 +328,7 @@ public:
   // ----------------------------------
 
   bool finalElement(idx_t i, idx_t j, idx_t t) const {
-    if (i == CubeNx_-1 && j == CubeNx_-1 && t == 5) {
+    if (i == N_-1 && j == N_-1 && t == 5) {
       return true;
     }
     return false;
@@ -354,9 +354,9 @@ public:
     }
 
     // Moving to extra point 1
-    if (ijt[2] == 0 && ijt[0] == CubeNx_-1 && ijt[1] == CubeNx_-1) {
+    if (ijt[2] == 0 && ijt[0] == N_-1 && ijt[1] == N_-1) {
       ijt[0] = 0;
-      ijt[1] = CubeNx_;
+      ijt[1] = N_;
       return ijt;
     }
 
@@ -368,21 +368,21 @@ public:
     }
 
     // Moving to extra point 2
-    if (ijt[0] == CubeNx_-1 && ijt[1] == 0 && ijt[2] == 1) {
-      ijt[0] = CubeNx_;
+    if (ijt[0] == N_-1 && ijt[1] == 0 && ijt[2] == 1) {
+      ijt[0] = N_;
       return ijt;
     }
 
 
-    if (ijt[0] == CubeNx_-1 && ijt[1] == CubeNx_-1 && ijt[2] == nTiles_-1) {  // Final point
-      ijt[0] = CubeNx_;
-      ijt[1] = CubeNx_;
+    if (ijt[0] == N_-1 && ijt[1] == N_-1 && ijt[2] == nTiles_-1) {  // Final point
+      ijt[0] = N_;
+      ijt[1] = N_;
       ijt[2] = nTiles_-1;
-    } else if (ijt[0] == CubeNx_-1 && ijt[1] == CubeNx_-1) {  // Corner
+    } else if (ijt[0] == N_-1 && ijt[1] == N_-1) {  // Corner
       ijt[0] = 0;
       ijt[1] = 0;
       ijt[2] = ijt[2] + 1;
-    } else if (ijt[0] == CubeNx_-1) {  // Edge
+    } else if (ijt[0] == N_-1) {  // Edge
       ijt[0] = 0;
       ijt[1] = ijt[1] + 1;
     } else { // Internal points
@@ -424,7 +424,7 @@ protected:
   Domain computeDomain() const;
 
   // Number of faces on tile
-  idx_t CubeNx_;
+  idx_t N_;
 
   // Number of tiles
   static const idx_t nTiles_ = 6;

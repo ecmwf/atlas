@@ -27,7 +27,7 @@ CubedSphereGrid::CubedSphereGrid( const Grid::Implementation* grid ) : Grid( gri
 
 CubedSphereGrid::CubedSphereGrid( const std::string& grid ) : Grid( grid ), grid_( cubedsphere_grid( get() ) ) {}
 
-CubedSphereGrid::CubedSphereGrid( const int& CubeNx, const Projection& projection ) :
-    Grid( new CubedSphereGrid::grid_t( CubeNx, projection ) ), grid_( cubedsphere_grid( get() ) ) {}
+CubedSphereGrid::CubedSphereGrid( const int& N, const Projection& projection ) :
+    Grid( new CubedSphereGrid::grid_t( N, projection ) ), grid_( cubedsphere_grid( get() ) ) {}
 
 }  // namespace atlas

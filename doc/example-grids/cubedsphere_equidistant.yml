@@ -6,7 +6,7 @@
 # Mon. Wea. Rev., 124, 2046–2070.
 
 type   : "cubedsphere_equidistant"
-CubeNx : 12
+N : 12
 
 check :
   size : 866
