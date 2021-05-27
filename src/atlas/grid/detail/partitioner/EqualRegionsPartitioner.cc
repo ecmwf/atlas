@@ -60,7 +60,9 @@ range_t<Iterator, Sentinel> range( Iterator b, Sentinel e ) {
 template <typename Container, typename Int>
 range_t<typename Container::const_iterator, typename Container::const_iterator> subrange(
     const Container& c, std::initializer_list<Int>&& _range ) {
-    return range( c.begin() + _range.begin()[1], c.begin() + _range.begin()[2] );
+    const Int rbegin = _range.begin()[0];
+    const Int rend   = _range.begin()[1];
+    return range( c.begin() + rbegin, c.begin() + rend );
 }
 
 }  // namespace
@@ -447,13 +449,19 @@ EqualRegionsPartitioner::EqualRegionsPartitioner() : Partitioner(), N_( nb_parti
     init();
 }
 
-EqualRegionsPartitioner::EqualRegionsPartitioner( int N ) : Partitioner( N ), N_( N ) {
+EqualRegionsPartitioner::EqualRegionsPartitioner( int N ) :
+    Partitioner( N ), N_( N ) {
     init();
 }
 
 EqualRegionsPartitioner::EqualRegionsPartitioner( int N, const eckit::Parametrisation& config ) :
-    Partitioner( N ), N_( N ) {
-    init();
+    EqualRegionsPartitioner( N ) {
+    std::string crds;
+    if( config.get("coordinates",crds) ) {
+        if( crds == "lonlat" ) {
+            coordinates_ = Coordinates::LONLAT;
+        }
+    }
 }
 
 int EqualRegionsPartitioner::partition( const double& x, const double& y ) const {
@@ -601,6 +609,8 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
         atlas::vector<NodeInt> nodes( grid.size() );
         int* nodes_buffer = reinterpret_cast<int*>( nodes.data() );
         long nb_workers   = comm.size();
+        ATLAS_DEBUG_VAR( grid.size() );
+        ATLAS_DEBUG_VAR( nb_workers );
 
         /*
     Sort nodes from north to south, and west to east. Now we can easily split
@@ -609,7 +619,7 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
     already by construction in this order, but then sorting is really fast
     */
 
-        if ( StructuredGrid( grid ) ) {
+        if ( StructuredGrid( grid ) && ( coordinates_ == Coordinates::XY ) ) {
             // The grid comes sorted from north to south and west to east by
             // construction
             // ATLAS_ASSERT to make sure.
@@ -682,6 +692,7 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
         }
         else {
             ATLAS_TRACE( "sort all" );
+
             std::vector<eckit::mpi::Request> requests;
 
             for ( int w = 0; w < nb_workers; ++w ) {
@@ -704,32 +715,66 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                     atlas::vector<NodeInt> w_nodes( w_size );
                     int* w_nodes_buffer = reinterpret_cast<int*>( w_nodes.data() );
 
-                    ATLAS_TRACE_SCOPE( "create one bit" ) {
-                        if ( true )  // optimized experimental when true (still need to
-                                     // benchmark)
-                        {
-                            int i = w_begin;
-                            int j( 0 );
-                            for ( const PointXY& point : subrange( grid.xy(), {w_begin, w_end} ) ) {
-                                w_nodes[j].x = microdeg( point.x() );
-                                w_nodes[j].y = microdeg( point.y() );
-                                w_nodes[j].n = i++;
-                                ++j;
-                            }
-                        }
-                        else {
-                            idx_t i( 0 );
-                            idx_t j( 0 );
-                            for ( const PointXY& point : grid.xy() ) {
-                                if ( i >= w_begin && i < w_end ) {
-                                    w_nodes[j].x = microdeg( point.x() );
-                                    w_nodes[j].y = microdeg( point.y() );
-                                    w_nodes[j].n = i;
+                    if( coordinates_ == Coordinates::XY ) {
+                        ATLAS_TRACE_SCOPE( "create one bit - Coordinates::XY" ) {
+                            if ( true )  // optimized experimental when true (still need to
+                            // benchmark)
+                            {
+                                int i = w_begin;
+                                int j( 0 );
+                                for ( const auto& point : subrange( grid.xy(), {w_begin, w_end} ) ) {
+                                    w_nodes[j].x = microdeg( point[0] );
+                                    w_nodes[j].y = microdeg( point[1] );
+                                    w_nodes[j].n = i++;
                                     ++j;
                                 }
-                                ++i;
+                            }
+                            else {
+                                idx_t i( 0 );
+                                idx_t j( 0 );
+                                for ( const auto& point : grid.xy() ) {
+                                    if ( i >= w_begin && i < w_end ) {
+                                        w_nodes[j].x = microdeg( point[0] );
+                                        w_nodes[j].y = microdeg( point[1] );
+                                        w_nodes[j].n = i;
+                                        ++j;
+                                    }
+                                    ++i;
+                                }
                             }
                         }
+                    }
+                    else if( coordinates_ == Coordinates::LONLAT ) {
+                        ATLAS_TRACE_SCOPE( "create one bit - Coordinates::LONLAT" ) {
+                            if ( true )  // optimized experimental when true (still need to
+                            // benchmark)
+                            {
+                                int i = w_begin;
+                                int j( 0 );
+                                for ( const auto& point : subrange( grid.lonlat(), {w_begin, w_end} ) ) {
+                                    w_nodes[j].x = microdeg( point[0] );
+                                    w_nodes[j].y = microdeg( point[1] );
+                                    w_nodes[j].n = i++;
+                                    ++j;
+                                }
+                            }
+                            else {
+                                idx_t i( 0 );
+                                idx_t j( 0 );
+                                for ( const auto& point : grid.xy() ) {
+                                    if ( i >= w_begin && i < w_end ) {
+                                        w_nodes[j].x = microdeg( point[0] );
+                                        w_nodes[j].y = microdeg( point[1] );
+                                        w_nodes[j].n = i;
+                                        ++j;
+                                    }
+                                    ++i;
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        ATLAS_THROW_EXCEPTION("Should not be here");
                     }
                     ATLAS_TRACE_SCOPE( "sort one bit" ) { omp::sort( w_nodes.begin(), w_nodes.end(), compare_NS_WE ); }
                     ATLAS_TRACE_SCOPE( "send to rank0" ) {

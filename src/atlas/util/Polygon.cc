@@ -45,6 +45,10 @@ Polygon::Polygon( const Polygon::edge_set_t& edges ) {
 }
 
 void Polygon::setup( const Polygon::edge_set_t& edges ) {
+    if( edges.empty() ) {
+        return;
+    }
+
     // get external edges by attempting to remove reversed edges, if any
     edge_set_t extEdges;
     for ( const edge_t& e : edges ) {

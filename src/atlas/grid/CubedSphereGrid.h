@@ -199,6 +199,72 @@ Position in the grid iterator/mesh:
 
 */
 
+
+namespace temporary {
+
+class IteratorTIJ {
+    using implementation_t = grid::detail::grid::CubedSphere::IteratorTIJ;
+
+public:
+    using difference_type   = implementation_t::difference_type;
+    using iterator_category = implementation_t::iterator_category;
+    using value_type        = implementation_t::value_type;
+    using pointer           = implementation_t::pointer;
+    using reference         = implementation_t::reference;
+
+public:
+    IteratorTIJ( std::unique_ptr<implementation_t> iterator ) : iterator_( std::move( iterator ) ) {}
+
+    bool next( value_type& xy ) { return iterator_->next( xy ); }
+
+    reference operator*() const { return iterator_->operator*(); }
+
+    const IteratorTIJ& operator++() {
+        iterator_->operator++();
+        return *this;
+    }
+
+    const IteratorTIJ& operator+=( difference_type distance ) {
+        iterator_->operator+=( distance );
+        return *this;
+    }
+
+    friend difference_type operator-( const IteratorTIJ& last, const IteratorTIJ& first ) {
+        return first.iterator_->distance( *last.iterator_ );
+    }
+
+    bool operator==( const IteratorTIJ& other ) const { return iterator_->operator==( *other.iterator_ ); }
+    bool operator!=( const IteratorTIJ& other ) const { return iterator_->operator!=( *other.iterator_ ); }
+
+private:
+    difference_type distance( const IteratorTIJ& other ) const { return iterator_->distance( *other.iterator_ ); }
+
+private:
+    std::unique_ptr<implementation_t> iterator_;
+};
+
+class IterateTIJ {
+public:
+    using iterator       = IteratorTIJ;
+    using const_iterator = iterator;
+    using Grid           = grid::detail::grid::CubedSphere;
+
+public:
+    IterateTIJ( const Grid& grid ) : grid_( grid ) {}
+    iterator begin() const { return grid_.tij_begin(); }
+    iterator end() const { return grid_.tij_end(); }
+
+private:
+    const Grid& grid_;
+};
+
+
+} // namespace temporary
+
+
+
+
+
 class CubedSphereGrid : public Grid {
 public:
     using grid_t = grid::detail::grid::CubedSphere;
@@ -241,6 +307,8 @@ public:
 
   // Transform from xyt space to xy space
   void xyt2xy(const double xyt[], double xy[]) const {return grid_->xyt2xy(xyt, xy); }
+
+  temporary::IterateTIJ tij() const { return temporary::IterateTIJ(*grid_); }
 
 private:
   const grid_t* grid_;
