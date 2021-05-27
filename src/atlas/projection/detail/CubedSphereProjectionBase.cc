@@ -337,16 +337,22 @@ void CubedSphereProjectionBase::enforceXYdomain(double xy[] ) const {
     // can affect whether xy that is created within a valid space
     // This has been tested with N = 512 with equiangular and equidistant projections.
     const double tol{70.0};
-    if (is_same(xy[XX], 0.0, tol)) { xy[XX] = 0.0; }
+    constexpr double epsilon = std::numeric_limits<double>::epsilon();
+
+    xy[XX] = std::max(xy[XX], 0.0);
+    xy[XX] = std::min(xy[XX], 360.0 - epsilon);
+    xy[YY] = std::max(xy[YY], -135.0 + epsilon);
+    xy[YY] = std::min(xy[YY], 135.0 - epsilon);
     if (is_same(xy[XX], 90.0, tol)) { xy[XX] = 90.0; }
     if (is_same(xy[XX], 180.0, tol)) { xy[XX] = 180.0; }
     if (is_same(xy[XX], 270.0, tol)) { xy[XX] = 270.0; }
     if (is_same(xy[YY], -45.0, tol) && (xy[XX] <= 180.0)) { xy[YY] = -45.0; }
     if (is_same(xy[YY], 45.0, tol) && (xy[XX] > 180.0)) { xy[YY] = 45.0; }
-    if (is_same(xy[YY], 45.0, tol) && is_same(xy[XX], 0.0)) { xy[YY] = 45.0; }
-    if (xy[YY] >= 135.0) { xy[YY] = 135.0 - __DBL_EPSILON__ ; }
-    if (xy[YY] <= -135.0) { xy[YY] = -135.0 + __DBL_EPSILON__ ; }
-    if (xy[XX] >= 360.0) { xy[XX] = 360.0 + __DBL_EPSILON__ ; }
+    if (is_same(xy[YY], 45.0, tol) && is_same(xy[XX], 0.0, tol)) {
+        xy[XX] = 0.0;
+        xy[YY] = 45.0;
+    }
+
 }
 
 idx_t CubedSphereProjectionBase::tileFromXY( const double xy[] ) const {

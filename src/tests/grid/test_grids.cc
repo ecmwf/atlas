@@ -9,6 +9,7 @@
  */
 
 #include <algorithm>
+#include <cmath>
 #include <iomanip>
 #include <sstream>
 
@@ -455,10 +456,11 @@ CASE( "test_cubedsphere" ) {
         EXPECT(grid.size() == 6* resolution * resolution +2);
 
         // Note that with nodal points on the cubed-sphere
+        // for a equiangular and equidistant projections and a resolution of 2 are the same.
         if (resolution == 2) {
-            const double rpi     = 2.0 * asin( 1.0 );
-            const double rad2deg = 180.0 / rpi;
-            double cornerLat = rad2deg * atan(sin(rpi/4.0));
+            constexpr double rpi = M_PI;
+            constexpr double rad2deg = 180. / rpi;
+            double cornerLat = rad2deg * std::atan(std::sin(rpi/4.0));
             double tolerance = 1e-13;
             // Expected latitudes/longitude per tile
             std::vector<std::pair<double, double>> expectedLatLon{
