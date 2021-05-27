@@ -56,7 +56,7 @@ void CubedSphereEquiAnglProjection::lonlat2xy( double crd[] ) const {
     // left coordinate system
 
     if( debug ) {
-        Log::debug() << "lonlat2xy xyz ab : "
+        Log::info() << "lonlat2xy xyz ab : "
                      << xyz[XX] << " " << xyz[YY] << " " << xyz[ZZ] << " "
                      << ab[LON] << " " << ab[LAT] << std::endl;
     }
@@ -64,7 +64,7 @@ void CubedSphereEquiAnglProjection::lonlat2xy( double crd[] ) const {
     CubedSphereProjectionBase::alphabetat2xy(t, ab, crd);
 
     if( debug ) {
-        Log::debug() << "lonlat2xy end : xy = " << crd[LON] << " " << crd[LAT] << std::endl;
+        Log::info() << "lonlat2xy end : xy = " << crd[LON] << " " << crd[LAT] << std::endl;
     }
 
 }

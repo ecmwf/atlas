@@ -40,9 +40,9 @@ static bool is_tiny( const double& x ) {
     return (std::abs(x) < epsilon );
 }
 
-static bool is_same( const double& x, const double& y ) {
+static bool is_same( const double& x, const double& y, const double& tol = 1.0 ) {
     constexpr double epsilon = 1.e-15;
-    return (std::abs(x-y) < epsilon );
+    return (std::abs(x-y) < epsilon * tol);
 }
 
 // --- Functions for xy to latlon on each tile
@@ -327,9 +327,27 @@ void CubedSphereProjectionBase::alphabetat2xy(const idx_t& t, const double ab[],
     double normalisedY = (ab[LAT] + M_PI_4)/M_PI_2;
     xy[XX] = normalisedX * 90. + xOffset[t];
     xy[YY] = normalisedY * 90. + yOffset[t];
+
+    enforceXYdomain(xy);
 }
 
 // -------------------------------------------------------------------------------------------------
+void CubedSphereProjectionBase::enforceXYdomain(double xy[] ) const {
+    // the conversion from lonlat to xy can involve some small errors and small errors
+    // can affect whether xy that is created within a valid space
+    // This has been tested with N = 512 with equiangular and equidistant projections.
+    const double tol{70.0};
+    if (is_same(xy[XX], 0.0, tol)) { xy[XX] = 0.0; }
+    if (is_same(xy[XX], 90.0, tol)) { xy[XX] = 90.0; }
+    if (is_same(xy[XX], 180.0, tol)) { xy[XX] = 180.0; }
+    if (is_same(xy[XX], 270.0, tol)) { xy[XX] = 270.0; }
+    if (is_same(xy[YY], -45.0, tol) && (xy[XX] <= 180.0)) { xy[YY] = -45.0; }
+    if (is_same(xy[YY], 45.0, tol) && (xy[XX] > 180.0)) { xy[YY] = 45.0; }
+    if (is_same(xy[YY], 45.0, tol) && is_same(xy[XX], 0.0)) { xy[YY] = 45.0; }
+    if (xy[YY] >= 135.0) { xy[YY] = 135.0 - __DBL_EPSILON__ ; }
+    if (xy[YY] <= -135.0) { xy[YY] = -135.0 + __DBL_EPSILON__ ; }
+    if (xy[XX] >= 360.0) { xy[XX] = 360.0 + __DBL_EPSILON__ ; }
+}
 
 idx_t CubedSphereProjectionBase::tileFromXY( const double xy[] ) const {
   // Assume one face-edge is of length 90 degrees.
@@ -357,8 +375,9 @@ idx_t CubedSphereProjectionBase::tileFromXY( const double xy[] ) const {
   //   -135                                    ----------(5 for end iterator)
   //     ----0---------90--------180--------270--------360--->  x
 
-  idx_t t{-1};
 
+
+  idx_t t{-1};
 
   if ((xy[XX] >= 0.) && ( xy[YY] >= -45.) && (xy[XX] < 90.) && (xy[YY] < 45.)) {
      t = 0;
@@ -463,7 +482,7 @@ idx_t CubedSphereProjectionBase::tileFromLonLat(const double crd[]) const {
     }
 
     if( debug ) {
-        Log::debug() << "tileFromLonLat:: lonlat abs xyz t = "
+        Log::info() << "tileFromLonLat:: lonlat abs xyz t = "
                      << std::setprecision(std::numeric_limits<double>::digits10 + 1)
                      << zPlusAbsX << " " << zPlusAbsY << " " << zMinusAbsX << " " << zMinusAbsY << " "
                      << crd[LON] << " " << crd[LAT] << " "

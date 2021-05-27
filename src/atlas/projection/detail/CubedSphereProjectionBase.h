@@ -27,6 +27,9 @@ class CubedSphereProjectionBase : public ProjectionImpl {
     idx_t tileFromXY(const double xy[]) const;
 
   protected:
+
+    void enforceXYdomain( double xy[] ) const;
+
     // projection and inverse projection
     void xy2lonlat_post( double xyz[], const idx_t& t, double crd[] ) const;
     void lonlat2xy_pre( double crd[], idx_t& t, double xyz[] ) const;
