@@ -344,7 +344,11 @@ Grid::Config CubedSphere::meshgenerator() const {
 }
 
 Grid::Config CubedSphere::partitioner() const {
-    return Config( "type", "equal_regions" ); // TODO: implement better one specific for cubed sphere
+    // TODO: implement better one specific for cubed sphere
+    Grid::Config config;
+    config.set("type","equal_regions");
+    config.set("coordinates","lonlat"); // do not use the grid.xy() coordinates for partitioning
+    return config;
 }
 
 // -------------------------------------------------------------------------------------------------

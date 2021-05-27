@@ -30,6 +30,7 @@ namespace grid {
 namespace detail {
 namespace grid {
 
+
 /**
  * @brief CubedSphere Grid
  *
@@ -58,6 +59,27 @@ private:
       grid_.lonlat( i, j, t, point.data() );
     }
     const CubedSphere& grid_;
+  };
+
+  class PointTIJ : public std::array<idx_t,3> {
+  public:
+      using std::array<idx_t,3>::array;
+      idx_t t() const { return data()[0]; }
+      idx_t i() const { return data()[1]; }
+      idx_t j() const { return data()[2]; }
+      idx_t& t() { return data()[0]; }
+      idx_t& i() { return data()[1]; }
+      idx_t& j() { return data()[2]; }
+  };
+
+  struct ComputePointTIJ {
+      ComputePointTIJ( const CubedSphere& grid ) : grid_( grid ) {}
+      void operator()( idx_t i, idx_t j, idx_t t, PointTIJ& point ) {
+          point.t() = t;
+          point.i() = i;
+          point.j() = j;
+      }
+      const CubedSphere& grid_;
   };
 
   // -----------------------------------------------------------------------------------------------
@@ -181,6 +203,9 @@ public:
   // Iterators for returning xy or lonlat
   using IteratorXY     = CubedSphereIterator<Grid::IteratorXY, ComputePointXY>;
   using IteratorLonLat = CubedSphereIterator<Grid::IteratorLonLat, ComputePointLonLat>;
+
+  class IteratorTIJ_Base : public IteratorT<IteratorTIJ_Base, PointTIJ> {};
+  using IteratorTIJ = CubedSphereIterator<IteratorTIJ_Base, ComputePointTIJ>;
 
   static std::string static_type();
 
@@ -407,6 +432,12 @@ public:
   virtual std::unique_ptr<Grid::IteratorLonLat> lonlat_end() const override {
     return std::unique_ptr<Grid::IteratorLonLat>( new IteratorLonLat( *this, false ) );
   }
+  virtual std::unique_ptr<IteratorTIJ> tij_begin() const {
+      return std::unique_ptr<IteratorTIJ>( new IteratorTIJ( *this ) );
+  }
+  virtual std::unique_ptr<IteratorTIJ> tij_end() const {
+      return std::unique_ptr<IteratorTIJ>( new IteratorTIJ( *this, false ) );
+  }
 
   // Default configurations
 
@@ -442,6 +473,7 @@ protected:
 private:
   std::string name_ = {"cubedsphere"};
 };
+
 
 }  // namespace grid
 }  // namespace detail

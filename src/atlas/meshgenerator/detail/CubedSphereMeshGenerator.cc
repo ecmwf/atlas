@@ -85,7 +85,8 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
   const int N = csgrid.N();
   const int nTiles = csgrid.GetNTiles();
 
-  ATLAS_TRACE( "Number of faces per tile edge = " + std::to_string(N) );
+  ATLAS_TRACE("CubedSphereMeshGenerator::generate");
+  Log::debug() << "Number of faces per tile edge = " << std::to_string(N) << std::endl;
 
   // Number of nodes
   int nnodes = nTiles*N*N+2;             // Number of unique grid nodes
@@ -121,15 +122,17 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
   // clear if this provides any benefit.
 
   array::ArrayT<int> NodeArrayT( nTiles, N+1, N+1 ); // All grid points including duplicates
-  array::ArrayView<int, 3> NodeArray = array::make_view<int, 3>( NodeArrayT );
+  auto NodeArray = array::make_view<int, 3>( NodeArrayT );
 
-  for ( it = 0; it < nTiles; it++ ) {
-    for ( ix = 0; ix < N+1; ix++ ) {
-      for ( iy = 0; iy < N+1; iy++ ) {
-        NodeArray(it, ix, iy) = -9999;
+
+  {
+      ATLAS_TRACE("iterate entire grid");
+      idx_t n{0};
+      for( auto& p : csgrid.tij() ) {
+          NodeArray(p.t(), p.i(), p.j()) = n++;
       }
-    }
   }
+
 
   for ( it = 0; it < nTiles; it++ ) {               // 0, 1, 2, 3, 4, 5
     for ( ix = 0; ix < N; ix++ ) {        // 0, 1, ..., N-1
@@ -138,68 +141,68 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
         // Get xy from global xy grid array
         csgrid.xy( ix, iy, it, xy_ );
 
-        xy( inode, XX ) = xy_[XX];
-        xy( inode, YY ) = xy_[YY];
+        idx_t n = NodeArray(it, ix, iy);
+
+        xy( n, XX ) = xy_[XX];
+        xy( n, YY ) = xy_[YY];
 
         csgrid.lonlat( ix, iy, it, lonlat_ );
 
-        lonlat( inode, LON ) = lonlat_[LON];
-        lonlat( inode, LAT ) = lonlat_[LAT];
+        lonlat( n, LON ) = lonlat_[LON];
+        lonlat( n, LAT ) = lonlat_[LAT];
 
         // Ghost nodes
-        ghost(inode) = 0; // No ghost nodes
+        ghost(n) = 0; // No ghost nodes
 
-        glb_idx(inode) = inode;
-        remote_idx(inode) = inode;
-        part(inode) = 0;
-
-        NodeArray(it, ix, iy) = inode;
-
-        ++inode;
-
+        glb_idx(n) = n+1;
+        remote_idx(n) = n;
+        part(n) = distribution.partition(n);
+        inode++;
       }
     }
   }
 
   // Extra point 1
   // -------------
-  it = 0;
-  ix = 0;
-  iy = N;
+  {
+      it = 0;
+      ix = 0;
+      iy = N;
 
-  csgrid.xy( ix, iy, it, xy_ );
-  xy( inode, XX ) = xy_[XX];
-  xy( inode, YY ) = xy_[YY];
-  csgrid.lonlat( ix, iy, it, lonlat_ );
-  lonlat( inode, LON ) = lonlat_[LON];
-  lonlat( inode, LAT ) = lonlat_[LAT];
-  ghost(inode) = 0;
-  glb_idx(inode) = inode;
-  remote_idx(inode) = inode;
-  part(inode) = 0;
-  NodeArray(it, ix, iy) = inode;
-
-  ++inode;
+      idx_t n = NodeArray(it, ix, iy);
+      csgrid.xy( ix, iy, it, xy_ );
+      xy( n, XX ) = xy_[XX];
+      xy( n, YY ) = xy_[YY];
+      csgrid.lonlat( ix, iy, it, lonlat_ );
+      lonlat( n, LON ) = lonlat_[LON];
+      lonlat( n, LAT ) = lonlat_[LAT];
+      ghost(n) = 0;
+      glb_idx(n) = n+1;
+      remote_idx(n) = n;
+      part(n) = distribution.partition(n);
+      inode++;
+  }
 
   // Extra point 2
   // -------------
-  it = 1;
-  ix = N;
-  iy = 0;
+  {
+      it = 1;
+      ix = N;
+      iy = 0;
+      idx_t n = NodeArray(it, ix, iy);
 
-  csgrid.xy( ix, iy, it, xy_ );
-  xy( inode, XX ) = xy_[XX];
-  xy( inode, YY ) = xy_[YY];
-  csgrid.lonlat( ix, iy, it, lonlat_ );
-  lonlat( inode, LON ) = lonlat_[LON];
-  lonlat( inode, LAT ) = lonlat_[LAT];
-  ghost(inode) = 0;
-  glb_idx(inode) = inode;
-  remote_idx(inode) = inode;
-  part(inode) = 0;
-  NodeArray(it, ix, iy) = inode;
-
-  ++inode;
+      csgrid.xy( ix, iy, it, xy_ );
+      xy( n, XX ) = xy_[XX];
+      xy( n, YY ) = xy_[YY];
+      csgrid.lonlat( ix, iy, it, lonlat_ );
+      lonlat( n, LON ) = lonlat_[LON];
+      lonlat( n, LAT ) = lonlat_[LAT];
+      ghost(n) = 0;
+      glb_idx(n) = n+1;
+      remote_idx(n) = n;
+      part(n) = distribution.partition(n);
+      inode++;
+  }
 
 #if 0
   // TESTING: Check that inverse projection returns the correct xyt
@@ -318,7 +321,9 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
   // Cells in mesh
   mesh.cells().add( new mesh::temporary::Quadrilateral(), nTiles*N*N );
   //int quad_begin  = mesh.cells().elements( 0 ).begin();
-  array::ArrayView<int, 1> cells_part = array::make_view<int, 1>( mesh.cells().partition() );
+  auto cells_part    = array::make_view<int, 1>( mesh.cells().partition() );
+  auto cells_gidx = array::make_view<gidx_t, 1>( mesh.cells().global_index() );
+  auto cells_ridx = array::make_indexview<idx_t, 1>( mesh.cells().remote_index() );
   atlas::mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
 
   int icell = 0;
@@ -334,7 +339,9 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
         quad_nodes[3] = NodeArray(it, ix  , iy+1);
 
         node_connectivity.set( icell, quad_nodes );
-        cells_part( icell ) = 0;
+        cells_part( icell ) = part( quad_nodes[0] );
+        cells_gidx( icell ) = icell + 1 ;
+        cells_ridx( icell ) = icell;
 
         ++icell;
 
