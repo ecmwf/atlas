@@ -52,8 +52,8 @@ void CubedSphereEquiAnglProjection::lonlat2xy( double crd[] ) const {
 
     // should be between - pi/4 and pi/4
     // now calculate (alpha, beta) in radians.
-    ab[0] = std::atan(xyz[YY]/xyz[XX]);
-    ab[1] = std::atan(-xyz[ZZ]/xyz[XX]);  // I think the minus is here due to the
+    ab[0] = std::atan2(xyz[YY],xyz[XX]);
+    ab[1] = std::atan2(-xyz[ZZ],xyz[XX]);  // I think the minus is here due to the
     // left coordinate system
 
     if( debug ) {
