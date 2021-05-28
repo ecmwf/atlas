@@ -26,7 +26,7 @@ namespace atlas {
 namespace projection {
 namespace detail {
 
-static constexpr bool debug = false; // constexpr so compiler can optimize `if ( debug ) { ... }` out
+static constexpr bool debug = true; // constexpr so compiler can optimize `if ( debug ) { ... }` out
 
 // -------------------------------------------------------------------------------------------------
 
@@ -40,7 +40,8 @@ CubedSphereEquiAnglProjection::CubedSphereEquiAnglProjection( const eckit::Param
 void CubedSphereEquiAnglProjection::lonlat2xy( double crd[] ) const {
 
     if( debug ) {
-        Log::info() << "lonlat2xy start : lonlat = " << crd[LON] << " " << crd[LAT] << std::endl;
+        Log::info() << "equiangular lonlat2xy start : lonlat = "
+                    << crd[LON] << " " << crd[LAT] << std::endl;
     }
 
     idx_t t;
@@ -56,7 +57,7 @@ void CubedSphereEquiAnglProjection::lonlat2xy( double crd[] ) const {
     // left coordinate system
 
     if( debug ) {
-        Log::info() << "lonlat2xy xyz ab : "
+        Log::info() << "equiangular lonlat2xy xyz ab : "
                      << xyz[XX] << " " << xyz[YY] << " " << xyz[ZZ] << " "
                      << ab[LON] << " " << ab[LAT] << std::endl;
     }
@@ -64,7 +65,8 @@ void CubedSphereEquiAnglProjection::lonlat2xy( double crd[] ) const {
     CubedSphereProjectionBase::alphabetat2xy(t, ab, crd);
 
     if( debug ) {
-        Log::info() << "lonlat2xy end : xy = " << crd[LON] << " " << crd[LAT] << std::endl;
+        Log::info() << "equiangular lonlat2xy end : xy = "
+                    << crd[LON] << " " << crd[LAT] << std::endl;
     }
 
 }
@@ -87,7 +89,8 @@ void CubedSphereEquiAnglProjection::xy2lonlat( double crd[] ) const {
     CubedSphereProjectionBase::xy2alphabetat(crd, t, ab);
 
     if( debug ) {
-        Log::debug() << "xy2lonlat:: crd t ab  : "  << crd[0] << " " << crd[1] << " " << t << " " << ab[0] << " " << ab[1] << std::endl;
+        Log::debug() << "equiangular xy2lonlat:: crd t ab  : "
+                     << crd[0] << " " << crd[1] << " " << t << " " << ab[0] << " " << ab[1] << std::endl;
     }
 
     xyz[0] = -rsq3;

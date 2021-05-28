@@ -30,7 +30,7 @@ namespace detail {
 // Helper functions and variables local to this translation unit
 namespace {
 
-static constexpr bool debug = false; // constexpr so compiler can optimize `if ( debug ) { ... }` out
+static constexpr bool debug = true; // constexpr so compiler can optimize `if ( debug ) { ... }` out
 
 static constexpr double deg2rad = util::Constants::degreesToRadians();
 static constexpr double rad2deg = util::Constants::radiansToDegrees();
@@ -339,6 +339,11 @@ void CubedSphereProjectionBase::enforceXYdomain(double xy[] ) const {
     const double tol{70.0};
     constexpr double epsilon = std::numeric_limits<double>::epsilon();
 
+
+    if ( debug ) {
+        Log::info() << "enforcXYDomain before " << xy[XX] << " " << xy[YY] << std::endl;
+    }
+
     xy[XX] = std::max(xy[XX], 0.0);
     xy[XX] = std::min(xy[XX], 360.0 - epsilon);
     xy[YY] = std::max(xy[YY], -135.0 + epsilon);
@@ -351,6 +356,10 @@ void CubedSphereProjectionBase::enforceXYdomain(double xy[] ) const {
     if (is_same(xy[YY], 45.0, tol) && is_same(xy[XX], 0.0, tol)) {
         xy[XX] = 0.0;
         xy[YY] = 45.0;
+    }
+
+    if ( debug ) {
+        Log::info() << "enforcXYDomain after " << xy[XX] << " " << xy[YY] << std::endl;
     }
 
 }

@@ -26,7 +26,7 @@ namespace atlas {
 namespace projection {
 namespace detail {
 
-static constexpr bool debug = false; // constexpr so compiler can optimize `if ( debug ) { ... }` out
+static constexpr bool debug = true; // constexpr so compiler can optimize `if ( debug ) { ... }` out
 
 // -------------------------------------------------------------------------------------------------
 
@@ -39,7 +39,7 @@ CubedSphereEquiDistProjection::CubedSphereEquiDistProjection( const eckit::Param
 void CubedSphereEquiDistProjection::lonlat2xy( double crd[] ) const {
 
     if( debug ) {
-        Log::info() << "lonlat2xy start : lonlat = " << crd[LON] << " " << crd[LAT] << std::endl;
+        Log::info() << "equidist lonlat2xy start : lonlat = " << crd[LON] << " " << crd[LAT] << std::endl;
     }
     idx_t t;
     double ab[2]; // alpha-beta coordinate
@@ -53,7 +53,7 @@ void CubedSphereEquiDistProjection::lonlat2xy( double crd[] ) const {
     ab[1] = - M_PI_4 * xyz[ZZ] / xyz[XX];
 
     if( debug ) {
-        Log::info() << "lonlat2xy xyz ab : "
+        Log::info() << "equidist lonlat2xy xyz ab : "
                      << xyz[0] << " " << xyz[1]  << " " << xyz[2] << " "
                      << ab[0] << " " << ab[1] << std::endl;
     }
@@ -61,7 +61,7 @@ void CubedSphereEquiDistProjection::lonlat2xy( double crd[] ) const {
     CubedSphereProjectionBase::alphabetat2xy(t, ab, crd);
 
     if( debug ) {
-        Log::info() << "lonlat2xy end : xy = " << crd[LON] << " " << crd[LAT] << std::endl;
+        Log::info() << "equidist lonlat2xy end : xy = " << crd[LON] << " " << crd[LAT] << std::endl;
     }
 
 }
@@ -80,7 +80,7 @@ void CubedSphereEquiDistProjection::xy2lonlat( double crd[] ) const {
     CubedSphereProjectionBase::xy2alphabetat(crd, t, ab);
 
     if( debug ) {
-        Log::info() << "xy2lonlat:: crd t ab  : "  << crd[LON] << " " << crd[1]
+        Log::info() << "equidist xy2lonlat:: crd t ab  : "  << crd[LON] << " " << crd[1]
                     << " " << t << " " << ab[0] << " " << ab[1] << std::endl;
     }
 
