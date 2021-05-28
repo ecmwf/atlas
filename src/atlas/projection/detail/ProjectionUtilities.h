@@ -13,6 +13,7 @@
 #include "eckit/geometry/Sphere.h"
 
 #include "atlas/domain.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
@@ -32,6 +33,8 @@ struct ProjectionUtilities {
       RIGHT_HAND,
       LEFT_HAND,
   };
+
+  static constexpr bool debug = true; // constexpr so compiler can optimize `if ( debug ) { ... }` out
 
   // -----------------------------------------------------------------------------------------------
 
@@ -73,10 +76,16 @@ struct ProjectionUtilities {
     auto pointXYZ = PointXYZ();
 
     // Set Radius
-    auto r = radius != 0 ? radius :  util::Earth::radius();
+    auto r = radius != 0 ? radius : util::Earth::radius();
 
     // Transform coordinates.
     Sphere::convertSphericalToCartesian(r, pointLonLat, pointXYZ, 0.0);
+
+    if( debug ) {
+        Log::info() << "sphericalToCartesian:: pointLonLat pointXYZ = "
+                    << pointLonLat  << " " << pointXYZ
+                    << std::endl;
+    }
 
     // Copy to array.
     xyz[XX] = pointXYZ.x();
