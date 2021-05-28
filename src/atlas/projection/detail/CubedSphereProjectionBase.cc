@@ -30,7 +30,7 @@ namespace detail {
 // Helper functions and variables local to this translation unit
 namespace {
 
-static constexpr bool debug = true; // constexpr so compiler can optimize `if ( debug ) { ... }` out
+static constexpr bool debug = false; // constexpr so compiler can optimize `if ( debug ) { ... }` out
 
 static constexpr double deg2rad = util::Constants::degreesToRadians();
 static constexpr double rad2deg = util::Constants::radiansToDegrees();

@@ -16,8 +16,6 @@ namespace atlas {
 
 //---------------------------------------------------------------------------------------------------------------------
 class CubedSphereGrid;
-class EquiDistCubedSphereGrid;
-class EquiAnglCubedSphereGrid;
 
 /*
                                              Grid
@@ -25,10 +23,10 @@ class EquiAnglCubedSphereGrid;
                                     +----------+----------+-------------------------------+
                                     |                     |                               |
                              StructuredGrid        UnstructuredGrid                  CubedSphere
-                                    |                                                     |
-               +--------------------+-----------------------+               +------+------+
-               |                    |                       |               |             |
-          ReducedGrid          GaussianGrid            RegularGrid       EquiDist      EquiAngl
+                                    |
+               +--------------------+-----------------------+
+               |                    |                       |
+          ReducedGrid          GaussianGrid            RegularGrid
                |                 |     |                 |     |
                +--------+--------+     +--------+--------+     +-----+
                         |                       |                    |

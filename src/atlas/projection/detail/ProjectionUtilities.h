@@ -34,7 +34,7 @@ struct ProjectionUtilities {
       LEFT_HAND,
   };
 
-  static constexpr bool debug = true; // constexpr so compiler can optimize `if ( debug ) { ... }` out
+  static constexpr bool debug = false; // constexpr so compiler can optimize `if ( debug ) { ... }` out
 
   // -----------------------------------------------------------------------------------------------
 
