@@ -156,12 +156,9 @@ void CubedSphere::xy2xyt(const double xy[], double xyt[]) const {
 
     double NDouble = static_cast<double>(N_);
 
-    std::vector<double> yOffset{NDouble,
-                                NDouble,
-                                2. *  NDouble,
-                                NDouble,
-                                NDouble,
-                                0};
+    std::array<double,6> yOffset{
+        NDouble, NDouble, 2. * NDouble,
+        NDouble, NDouble, 0};
 
     xyt[0] = (normalisedX - std::floor(normalisedX)) * static_cast<double>(N_)
           + xs_[static_cast<size_t>(xyt[2])];
@@ -179,12 +176,14 @@ void CubedSphere::xyt2xy(const double xyt[], double xy[]) const {
     // xy is in degrees
     // while xyt is in number of grid points
     // (alpha, beta) and tiles.
-    std::vector<double> xOffsetDeg{0., 90., 90., 180., 270., 270.};
-    std::vector<double> yOffsetDeg{-45., -45., 45., -45., -45., -135.};
+    static std::array<double, 6> xOffsetDeg{0., 90., 90., 180., 270., 270.};
+    static std::array<double, 6> yOffsetDeg{-45., -45., 45., -45., -45., -135.};
 
     double N = static_cast<double>(N_);
-    std::vector<double> xOffsetIndex{0, N, N, 2*N, 3*N,  3*N};
-    std::vector<double> yOffsetIndex{N, N, 2*N, N,  N, 0};
+    double N_2 = static_cast<double>(2 * N_);
+    double N_3 = static_cast<double>(3 * N_);
+    std::array<double, 6> xOffsetIndex{0, N, N, N_2, N_3, N_3};
+    std::array<double, 6> yOffsetIndex{N, N, N_2, N,  N, 0};
 
     double normalisedX =
      (xyt[0] - xOffsetIndex[static_cast<size_t>(xyt[2])])/N;
