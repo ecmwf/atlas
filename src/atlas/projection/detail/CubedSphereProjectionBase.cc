@@ -352,7 +352,7 @@ void CubedSphereProjectionBase::enforceXYdomain(double xy[] ) const {
     if (is_same(xy[XX], 180.0, tol)) { xy[XX] = 180.0; }
     if (is_same(xy[XX], 270.0, tol)) { xy[XX] = 270.0; }
     if (is_same(xy[YY], -45.0, tol) && (xy[XX] <= 180.0)) { xy[YY] = -45.0; }
-    if (is_same(xy[YY], 45.0, tol) && (xy[XX] > 180.0)) { xy[YY] = 45.0; }
+    if (is_same(xy[YY], 45.0, tol) && (xy[XX] >= 180.0)) { xy[YY] = 45.0; }
     if (is_same(xy[YY], 45.0, tol) && is_same(xy[XX], 0.0, tol)) {
         xy[XX] = 0.0;
         xy[YY] = 45.0;
