@@ -88,7 +88,7 @@ struct AtlasGrids : public atlas::AtlasTool {
                "       Browse catalogue of grids\n"
                "\n"
                "       GRID: unique identifier for grid \n"
-               "           Example values: N80, F40, O24, L32\n";
+               "           Example values: N80, F40, O24, L32, CS-ED-12\n";
     }
 
     AtlasGrids( int argc, char** argv ) : AtlasTool( argc, argv ) {
@@ -192,6 +192,9 @@ int AtlasGrids::execute( const Args& args ) {
             Log::info() << "   uid:                                " << grid.uid() << std::endl;
             if ( auto gaussian = GaussianGrid( grid ) ) {
                 Log::info() << "   Gaussian N number:                  " << gaussian.N() << std::endl;
+            }
+            if ( auto cubedsphere = CubedSphereGrid( grid ) ) {
+                Log::info() << "   Cubedsphere faces:                   " << cubedsphere.N() << "x" << cubedsphere.N() << "x6" << std::endl;
             }
             Log::info() << "   number of points:                   " << grid.size() << std::endl;
 

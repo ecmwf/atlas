@@ -107,7 +107,7 @@ class Meshgen2Gmsh : public AtlasTool {
     std::string longDescription() override {
         return "    The 'GRID' argument can be either the name of a named grid, orthe path to a"
                " YAML configuration file that describes the grid.\n"
-               "Example values for grid names are: N80, F40, O24, L64x33. See the program "
+               "Example values for grid names are: N80, F40, O24, L64x33, CS-ED-12. See the program "
                "'atlas-grids' for a list of named grids.\n"
                "\n"
                "    The optional 'OUTPUT' argument contains the path to the output file. "
@@ -141,7 +141,7 @@ Meshgen2Gmsh::Meshgen2Gmsh( int argc, char** argv ) : AtlasTool( argc, argv ) {
                                         "case serial" ) );
     add_option( new SimpleOption<bool>( "ghost", "Output ghost elements" ) );
     add_option( new SimpleOption<std::string>(
-        "generator", "Mesh generator [structured,regular,delaunay] (default = structured)" ) );
+        "generator", "Mesh generator [structured,regular,delaunay,cubedsphere] (default = structured)" ) );
     add_option( new SimpleOption<std::string>(
         "partitioner", "Mesh partitioner [equal_regions,checkerboard,equal_bands,regular_bands" ) );
 

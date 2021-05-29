@@ -43,7 +43,6 @@ PartitionGraph* build_partition_graph( const MeshImpl& mesh ) {
         polygon.push_back( xy( node, XX ) );
         polygon.push_back( xy( node, YY ) );
     }
-    ATLAS_ASSERT( polygon.size() >= 4 );
 
     eckit::mpi::Buffer<double> recv_polygons( mpi_size );
     comm.allGatherv( polygon.begin(), polygon.end(), recv_polygons );

@@ -41,7 +41,6 @@ void atlas::Projection::xy2lonlat( Point2& point ) const {
     get()->xy2lonlat( point );
 }
 
-
 void atlas::Projection::lonlat2xy( double crd[] ) const {
     get()->lonlat2xy( crd );
 }

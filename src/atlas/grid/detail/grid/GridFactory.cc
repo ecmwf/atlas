@@ -10,6 +10,7 @@
 
 #include <string>
 
+#include "atlas/grid/detail/grid/CubedSphere.h"
 #include "atlas/grid/detail/grid/GridFactory.h"
 #include "atlas/grid/detail/grid/Structured.h"
 #include "atlas/grid/detail/grid/Unstructured.h"
@@ -23,6 +24,7 @@ namespace {
 void force_link() {
     static struct Link {
         Link() {
+            GridFactoryBuilder<detail::grid::CubedSphere>();
             GridFactoryBuilder<detail::grid::Structured>();
             GridFactoryBuilder<detail::grid::Unstructured>();
         }

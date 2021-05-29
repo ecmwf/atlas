@@ -72,6 +72,12 @@ option/TransOptions.cc
 projection.h
 projection/Projection.cc
 projection/Projection.h
+projection/detail/CubedSphereEquiAnglProjection.cc
+projection/detail/CubedSphereEquiAnglProjection.h
+projection/detail/CubedSphereEquiDistProjection.cc
+projection/detail/CubedSphereEquiDistProjection.h
+projection/detail/CubedSphereProjectionBase.cc
+projection/detail/CubedSphereProjectionBase.h
 projection/detail/LambertAzimuthalEqualAreaProjection.cc
 projection/detail/LambertAzimuthalEqualAreaProjection.h
 projection/detail/LambertConformalConicProjection.cc
@@ -84,6 +90,7 @@ projection/detail/ProjectionFactory.cc
 projection/detail/ProjectionFactory.h
 projection/detail/ProjectionImpl.cc
 projection/detail/ProjectionImpl.h
+projection/detail/ProjectionUtilities.h
 projection/detail/SchmidtProjection.cc
 projection/detail/SchmidtProjection.h
 
@@ -104,6 +111,8 @@ domain/detail/DomainFactory.h
 domain/detail/DomainFactory.cc
 
 grid.h
+grid/CubedSphereGrid.cc
+grid/CubedSphereGrid.h
 grid/Grid.cc
 grid/Grid.h
 grid/SpecRegistry.cc
@@ -129,6 +138,8 @@ grid/StencilComputer.cc
 grid/StructuredPartitionPolygon.h
 grid/StructuredPartitionPolygon.cc
 
+grid/detail/grid/CubedSphere.cc
+grid/detail/grid/CubedSphere.h
 grid/detail/grid/GridBuilder.h
 grid/detail/grid/GridBuilder.cc
 grid/detail/grid/GridFactory.h
@@ -343,6 +354,8 @@ mesh/actions/ReorderReverseCuthillMckee.cc
 meshgenerator.h
 meshgenerator/MeshGenerator.cc
 meshgenerator/MeshGenerator.h
+meshgenerator/detail/CubedSphereMeshGenerator.h
+meshgenerator/detail/CubedSphereMeshGenerator.cc
 meshgenerator/detail/DelaunayMeshGenerator.h
 meshgenerator/detail/DelaunayMeshGenerator.cc
 meshgenerator/detail/StructuredMeshGenerator.h
