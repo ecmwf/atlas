@@ -147,7 +147,7 @@ Partitioner* PartitionerFactory::build( const std::string& name ) {
 
     std::map<std::string, PartitionerFactory*>::const_iterator j = m->find( name );
 
-    Log::debug() << "Looking for PartitionerFactory [" << name << "]" << '\n';
+    Log::debug() << "Looking for PartitionerFactory [" << name << "]" << std::endl;
 
     if ( j == m->end() ) {
         Log::error() << "No PartitionerFactory for [" << name << "]" << '\n';
@@ -155,6 +155,7 @@ Partitioner* PartitionerFactory::build( const std::string& name ) {
         for ( j = m->begin(); j != m->end(); ++j ) {
             Log::error() << "   " << ( *j ).first << '\n';
         }
+        Log::error() << std::flush;
         throw_Exception( std::string( "No PartitionerFactory called " ) + name );
     }
 

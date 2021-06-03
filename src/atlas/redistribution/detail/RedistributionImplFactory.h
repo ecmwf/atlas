@@ -9,29 +9,26 @@
 
 namespace atlas {
 
-  class FunctionSpace;
+class FunctionSpace;
 
-  namespace redistribution {
-    namespace detail {
-      class RedistributionImpl;
-    }
-  }
+namespace redistribution {
+namespace detail {
+class RedistributionImpl;
 }
+}  // namespace redistribution
+}  // namespace atlas
 
 namespace atlas {
-  namespace redistribution{
-    namespace detail {
+namespace redistribution {
+namespace detail {
 
-      /// \brief  Factory class to select correct concrete redistributor.
-      class RedistributionImplFactory {
-
-      public:
-
-        /// \brief  Selection based on source and target function spaces.
-        static RedistributionImpl* build(
-          const FunctionSpace& sourceFunctionSpace,
-          const FunctionSpace& targetFunctionSpace);
-      };
-    }
-  }
-}
+/// \brief  Factory class to select correct concrete redistributor.
+class RedistributionImplFactory {
+public:
+    /// \brief  Selection based on source and target function spaces.
+    static RedistributionImpl* build( const FunctionSpace& sourceFunctionSpace,
+                                      const FunctionSpace& targetFunctionSpace );
+};
+}  // namespace detail
+}  // namespace redistribution
+}  // namespace atlas

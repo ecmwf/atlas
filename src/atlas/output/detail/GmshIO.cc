@@ -1136,9 +1136,20 @@ void GmshIO::write( const Mesh& mesh, const PathName& file_path ) const {
         //[next]  make NodesFunctionSpace accept const mesh
         functionspace::NodeColumns function_space( const_cast<Mesh&>( mesh ) );
 
-        write( nodes.partition(), function_space, mesh_info, std::ios_base::out );
+        FieldSet fieldset;
+        auto lat = array::make_view<double, 1>(
+            fieldset.add( Field( "lat", array::make_datatype<double>(), {nodes.size()} ) ) );
+        auto lon = array::make_view<double, 1>(
+            fieldset.add( Field( "lon", array::make_datatype<double>(), {nodes.size()} ) ) );
 
-        std::vector<std::string> extra_fields = {"dual_volumes", "dual_delta_sph", "lsm", "core", "ghost", "halo"};
+        auto lonlat = array::make_view<double, 2>( nodes.lonlat() );
+        for ( idx_t n = 0; n < nodes.size(); ++n ) {
+            lon( n ) = lonlat( n, 0 );
+            lat( n ) = lonlat( n, 1 );
+        }
+        write( fieldset, function_space, mesh_info, std::ios_base::out );
+        std::vector<std::string> extra_fields = {"partition",      "water", "dual_volumes",
+                                                 "dual_delta_sph", "ghost", "halo"};
         for ( auto& f : extra_fields ) {
             if ( nodes.has_field( f ) ) {
                 write( nodes.field( f ), function_space, mesh_info, std::ios_base::app );

@@ -72,6 +72,15 @@ MeshGenerator make_meshgenerator( const Grid& grid, const AtlasTool::Args& args 
         config.set( "fixup", args.getBool( "fixup" ) );
     }
 
+    if ( args.has( "partition" ) ) {
+        config.set( "partition", args.getInt( "partition" ) );
+        config.set( "part", args.getInt( "partition" ) );
+    }
+    if ( args.has( "partitions" ) ) {
+        config.set( "partitions", args.getInt( "partitions" ) );
+        config.set( "nb_parts", args.getInt( "partitions" ) );
+    }
+
     return MeshGenerator{config};
 }
 
@@ -83,7 +92,9 @@ Partitioner make_partitioner( const Grid& grid, const AtlasTool::Args& args ) {
     if ( args.has( "regular" ) ) {
         config.set( "regular", args.getBool( "regular" ) );
     }
-
+    if ( args.has( "partitions" ) ) {
+        config.set( "partitions", args.getInt( "partitions" ) );
+    }
     return Partitioner{config};
 }
 
@@ -96,7 +107,7 @@ class Meshgen2Gmsh : public AtlasTool {
     std::string longDescription() override {
         return "    The 'GRID' argument can be either the name of a named grid, orthe path to a"
                " YAML configuration file that describes the grid.\n"
-               "Example values for grid names are: N80, F40, O24, L64x33. See the program "
+               "Example values for grid names are: N80, F40, O24, L64x33, CS-ED-12. See the program "
                "'atlas-grids' for a list of named grids.\n"
                "\n"
                "    The optional 'OUTPUT' argument contains the path to the output file. "
@@ -130,7 +141,7 @@ Meshgen2Gmsh::Meshgen2Gmsh( int argc, char** argv ) : AtlasTool( argc, argv ) {
                                         "case serial" ) );
     add_option( new SimpleOption<bool>( "ghost", "Output ghost elements" ) );
     add_option( new SimpleOption<std::string>(
-        "generator", "Mesh generator [structured,regular,delaunay] (default = structured)" ) );
+        "generator", "Mesh generator [structured,regular,delaunay,cubedsphere] (default = structured)" ) );
     add_option( new SimpleOption<std::string>(
         "partitioner", "Mesh partitioner [equal_regions,checkerboard,equal_bands,regular_bands" ) );
 
@@ -161,6 +172,9 @@ Meshgen2Gmsh::Meshgen2Gmsh( int argc, char** argv ) : AtlasTool( argc, argv ) {
     add_option( new SimpleOption<bool>(
         "land", "Output elements containing land points (not specifying --water or --land enables both)" ) );
     add_option( new SimpleOption<bool>( "fixup", "Apply custom fixes to the mesh where it applies" ) );
+    add_option( new SimpleOption<bool>( "gmsh", "Output gmsh (default=true)" ) );
+    add_option( new SimpleOption<long>( "partition", "partition [0:partitions]" ) );
+    add_option( new SimpleOption<long>( "partitions", "Number of partitions" ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -300,37 +314,38 @@ int Meshgen2Gmsh::execute( const Args& args ) {
         build_statistics( mesh );
     }
 
-    bool torus = false;
-    args.get( "torus", torus );
-    if ( torus ) {
-        if ( auto g = StructuredGrid( grid ) ) {
-            dim_3d = true;
-            Log::debug() << "Building xyz representation for nodes on torus" << std::endl;
-            mesh::actions::BuildTorusXYZField( "xyz" )( mesh, g.domain(), 5., 2., g.nxmax(), g.ny() );
-        }
-        else {
-            Log::error() << "Cannot output non StructuredGrid grids as torus at the moment" << std::endl;
-        }
-    }
-
-
     bool lonlat             = args.getBool( "lonlat", false );
     bool ij                 = args.getBool( "ij", false );
     std::string coordinates = dim_3d ? "xyz" : lonlat ? "lonlat" : ij ? "ij" : "xy";
 
-    Config gmsh_config;
-    gmsh_config.set( "coordinates", coordinates );
-    gmsh_config.set( "edges", edges );
-    gmsh_config.set( "ghost", ghost );
-    gmsh_config.set( "info", info );
-    if ( args.has( "land" ) || args.has( "water" ) ) {
-        gmsh_config.set( "land", args.getBool( "land", false ) );
-        gmsh_config.set( "water", args.getBool( "water", false ) );
+    if ( args.getBool( "gmsh", true ) ) {
+        bool torus = false;
+        args.get( "torus", torus );
+        if ( torus ) {
+            if ( auto g = StructuredGrid( grid ) ) {
+                dim_3d = true;
+                Log::debug() << "Building xyz representation for nodes on torus" << std::endl;
+                mesh::actions::BuildTorusXYZField( "xyz" )( mesh, g.domain(), 5., 2., g.nxmax(), g.ny() );
+            }
+            else {
+                Log::error() << "Cannot output non StructuredGrid grids as torus at the moment" << std::endl;
+            }
+        }
+
+        Config gmsh_config;
+        gmsh_config.set( "coordinates", coordinates );
+        gmsh_config.set( "edges", edges );
+        gmsh_config.set( "ghost", ghost );
+        gmsh_config.set( "info", info );
+        if ( args.has( "land" ) || args.has( "water" ) ) {
+            gmsh_config.set( "land", args.getBool( "land", false ) );
+            gmsh_config.set( "water", args.getBool( "water", false ) );
+        }
+        atlas::output::Gmsh gmsh( path_out, gmsh_config );
+        Log::info() << "Writing mesh to gmsh file \"" << path_out << "\" generated from grid \"" << grid.name() << "\""
+                    << std::endl;
+        gmsh.write( mesh );
     }
-    atlas::output::Gmsh gmsh( path_out, gmsh_config );
-    Log::info() << "Writing mesh to gmsh file \"" << path_out << "\" generated from grid \"" << grid.name() << "\""
-                << std::endl;
-    gmsh.write( mesh );
 
     if ( info ) {
         Log::info() << "Partitioning graph: \n" << mesh.partitionGraph() << std::endl;

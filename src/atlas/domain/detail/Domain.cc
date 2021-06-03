@@ -56,7 +56,7 @@ void atlas__Domain__hash( const Domain* This, char*& hash, int& size ) {
     This->hash( md5 );
     std::string s = md5.digest();
     size          = static_cast<int>( s.size() );
-    hash          = new char[size + 1 ];
+    hash          = new char[size + 1];
     std::strncpy( hash, s.c_str(), size + 1 );
 }
 Domain::Spec* atlas__Domain__spec( const Domain* This ) {

@@ -12,5 +12,6 @@
 
 #include "atlas/io/types/array/ArrayReference.h"
 #include "atlas/io/types/array/adaptors/ArrayAdaptor.h"
+#include "atlas/io/types/array/adaptors/StdArrayAdaptor.h"
 #include "atlas/io/types/array/adaptors/StdVectorAdaptor.h"
 #include "atlas/io/types/array/adaptors/VectorAdaptor.h"

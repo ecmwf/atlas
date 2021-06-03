@@ -19,8 +19,8 @@
 #include <set>
 #include <stdexcept>
 
-#include "eckit/filesystem/PathName.h"
 #include "eckit/exception/Exceptions.h"
+#include "eckit/filesystem/PathName.h"
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
@@ -142,8 +142,8 @@ void build_statistics( Mesh& mesh ) {
     int idt = 10;
     if ( mpi::size() == 1 ) {
         ofs.open( stats_path.localPath(), std::ofstream::out );
-        if( !ofs.is_open() ) {
-            throw eckit::CantOpenFile(stats_path);
+        if ( !ofs.is_open() ) {
+            throw eckit::CantOpenFile( stats_path );
         }
         ofs << "# STATISTICS rho (min_length/max_length), eta (quality) \n";
         ofs << std::setw( idt ) << "# rho";

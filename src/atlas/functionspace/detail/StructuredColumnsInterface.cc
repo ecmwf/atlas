@@ -120,7 +120,7 @@ void atlas__fs__StructuredColumns__checksum_fieldset( const detail::StructuredCo
     size      = static_cast<idx_t>( checksum_str.size() );
     checksum  = new char[size + 1];
     allocated = true;
-    std::strncpy( checksum, checksum_str.c_str(), size + 1);
+    std::strncpy( checksum, checksum_str.c_str(), size + 1 );
 }
 
 void atlas__fs__StructuredColumns__checksum_field( const detail::StructuredColumns* This, const field::FieldImpl* field,

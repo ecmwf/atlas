@@ -204,12 +204,12 @@ void TransIFS::invtrans( const FieldSet& spfields, FieldSet& gpfields, const eck
 void TransIFS::invtrans_adj( const Field& gpfield, Field& spfield, const eckit::Configuration& config ) const {
     ATLAS_ASSERT( Spectral( spfield.functionspace() ) );
     if ( StructuredColumns( gpfield.functionspace() ) ) {
-        __invtrans_adj( Spectral( spfield.functionspace() ), spfield, StructuredColumns( gpfield.functionspace() ), gpfield,
-                    config );
+        __invtrans_adj( Spectral( spfield.functionspace() ), spfield, StructuredColumns( gpfield.functionspace() ),
+                        gpfield, config );
     }
     else if ( NodeColumns( gpfield.functionspace() ) ) {
         __invtrans_adj( Spectral( spfield.functionspace() ), spfield, NodeColumns( gpfield.functionspace() ), gpfield,
-                    config );
+                        config );
     }
     else {
         ATLAS_NOTIMPLEMENTED;
@@ -221,12 +221,12 @@ void TransIFS::invtrans_adj( const FieldSet& gpfields, FieldSet& spfields, const
     std::string functionspace( fieldset_functionspace( gpfields ) );
 
     if ( functionspace == StructuredColumns::type() ) {
-        __invtrans_adj( Spectral( spfields[0].functionspace() ), spfields, StructuredColumns( gpfields[0].functionspace() ),
-                    gpfields, config );
+        __invtrans_adj( Spectral( spfields[0].functionspace() ), spfields,
+                        StructuredColumns( gpfields[0].functionspace() ), gpfields, config );
     }
     else if ( functionspace == NodeColumns::type() ) {
         __invtrans_adj( Spectral( spfields[0].functionspace() ), spfields, NodeColumns( gpfields[0].functionspace() ),
-                    gpfields, config );
+                        gpfields, config );
     }
     else {
         ATLAS_NOTIMPLEMENTED;
@@ -258,24 +258,21 @@ void TransIFS::invtrans_grad( const FieldSet& spfields, FieldSet& gradfields,
 
 // --------------------------------------------------------------------------------------------
 
-void TransIFS::invtrans_grad_adj( const Field& gradfield, Field& spfield,
-                                 const eckit::Configuration& config ) const {
+void TransIFS::invtrans_grad_adj( const Field& gradfield, Field& spfield, const eckit::Configuration& config ) const {
     ATLAS_ASSERT( Spectral( spfield.functionspace() ) );
     ATLAS_ASSERT( NodeColumns( gradfield.functionspace() ) );
-    __invtrans_grad_adj( Spectral( spfield.functionspace() ), spfield,
-                        NodeColumns( gradfield.functionspace() ), gradfield,
-                        config );
+    __invtrans_grad_adj( Spectral( spfield.functionspace() ), spfield, NodeColumns( gradfield.functionspace() ),
+                         gradfield, config );
 }
 
 void TransIFS::invtrans_grad_adj( const FieldSet& gradfields, FieldSet& spfields,
-                                 const eckit::Configuration& config ) const {
+                                  const eckit::Configuration& config ) const {
     assert_spectral_functionspace( spfields );
     std::string functionspace( fieldset_functionspace( gradfields ) );
 
     if ( functionspace == NodeColumns::type() ) {
         __invtrans_grad_adj( Spectral( spfields[0].functionspace() ), spfields,
-                            NodeColumns( gradfields[0].functionspace() ), gradfields,
-                            config );
+                             NodeColumns( gradfields[0].functionspace() ), gradfields, config );
     }
     else {
         ATLAS_NOTIMPLEMENTED;
@@ -304,12 +301,12 @@ void TransIFS::invtrans_vordiv2wind( const Field& spvor, const Field& spdiv, Fie
 
 
 void TransIFS::invtrans_vordiv2wind_adj( const Field& gpwind, Field& spvor, Field& spdiv,
-                                        const eckit::Configuration& config ) const {
+                                         const eckit::Configuration& config ) const {
     ATLAS_ASSERT( Spectral( spvor.functionspace() ) );
     ATLAS_ASSERT( Spectral( spdiv.functionspace() ) );
     ATLAS_ASSERT( NodeColumns( gpwind.functionspace() ) );
     __invtrans_vordiv2wind_adj( Spectral( spvor.functionspace() ), spvor, spdiv, NodeColumns( gpwind.functionspace() ),
-                               gpwind, config );
+                                gpwind, config );
 }
 
 // --------------------------------------------------------------------------------------------
@@ -336,24 +333,24 @@ void TransIFS::invtrans( const int nb_scalar_fields, const double scalar_spectra
 }
 
 void TransIFS::invtrans_adj( const int nb_scalar_fields, const double gp_fields[], const int nb_vordiv_fields,
-                            double vorticity_spectra[], double divergence_spectra[], double scalar_spectra[] ,
-                            const eckit::Configuration& config ) const {
+                             double vorticity_spectra[], double divergence_spectra[], double scalar_spectra[],
+                             const eckit::Configuration& config ) const {
 #ifdef TRANS_HAVE_INVTRANS_ADJ
     ATLAS_TRACE( "TransIFS::invtrans_adj" );
     TransParameters params( *this, config );
     struct ::InvTransAdj_t args = new_invtrans_adj( trans_.get() );
-    args.nscalar             = nb_scalar_fields;
-    args.rspscalar           = scalar_spectra;
-    args.nvordiv             = nb_vordiv_fields;
-    args.rspvor              = vorticity_spectra;
-    args.rspdiv              = divergence_spectra;
-    args.rgp                 = gp_fields;
-    args.lglobal             = params.global();
-    args.lscalarders         = params.scalar_derivatives();
-    args.luvder_EW           = params.wind_EW_derivatives();
-    args.lvordivgp           = params.vorticity_divergence_fields();
-    args.nproma              = params.nproma();
-    args.ngpblks             = params.ngpblks();
+    args.nscalar                = nb_scalar_fields;
+    args.rspscalar              = scalar_spectra;
+    args.nvordiv                = nb_vordiv_fields;
+    args.rspvor                 = vorticity_spectra;
+    args.rspdiv                 = divergence_spectra;
+    args.rgp                    = gp_fields;
+    args.lglobal                = params.global();
+    args.lscalarders            = params.scalar_derivatives();
+    args.luvder_EW              = params.wind_EW_derivatives();
+    args.lvordivgp              = params.vorticity_divergence_fields();
+    args.nproma                 = params.nproma();
+    args.ngpblks                = params.ngpblks();
     TRANS_CHECK( ::trans_invtrans_adj( &args ) );
 #else
     ATLAS_NOTIMPLEMENTED;
@@ -380,19 +377,17 @@ void TransIFS::invtrans( const int nb_vordiv_fields, const double vorticity_spec
 
 
 void TransIFS::invtrans_adj( const int nb_scalar_fields, const double gp_fields[], double scalar_spectra[],
-                            const eckit::Configuration& config ) const {
+                             const eckit::Configuration& config ) const {
     return invtrans_adj( nb_scalar_fields, gp_fields, 0, nullptr, nullptr, scalar_spectra, config );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
 
-void TransIFS::invtrans_adj( const int nb_vordiv_fields, const double gp_fields[],
-                            double divergence_spectra[], double vorticity_spectra[],
-                            const eckit::Configuration& config ) const {
+void TransIFS::invtrans_adj( const int nb_vordiv_fields, const double gp_fields[], double divergence_spectra[],
+                             double vorticity_spectra[], const eckit::Configuration& config ) const {
     return invtrans_adj( 0, gp_fields, nb_vordiv_fields, vorticity_spectra, divergence_spectra, nullptr, config );
 }
-
 
 
 void TransIFS::dirtrans( const int nb_fields, const double scalar_fields[], double scalar_spectra[],
@@ -1266,7 +1261,6 @@ void TransIFS::__invtrans_grad( const Spectral& sp, const Field& spfield, const 
 
 void TransIFS::__invtrans_grad( const Spectral& sp, const FieldSet& spfields, const functionspace::NodeColumns& gp,
                                 FieldSet& gradfields, const eckit::Configuration& config ) const {
-
     assertCompatibleDistributions( gp, sp );
 
     // Count total number of fields and do sanity checks
@@ -1347,9 +1341,8 @@ void TransIFS::__invtrans_grad( const Spectral& sp, const FieldSet& spfields, co
 
 //---------------------------------------------------------------------------------------------
 
-void TransIFS::__invtrans_grad_adj( const Spectral& sp, Field& spfield,
-                                   const functionspace::NodeColumns& gp,
-                                   const Field& gradfield, const eckit::Configuration& config ) const {
+void TransIFS::__invtrans_grad_adj( const Spectral& sp, Field& spfield, const functionspace::NodeColumns& gp,
+                                    const Field& gradfield, const eckit::Configuration& config ) const {
     FieldSet spfields;
     spfields.add( spfield );
     FieldSet gradfields;
@@ -1357,9 +1350,8 @@ void TransIFS::__invtrans_grad_adj( const Spectral& sp, Field& spfield,
     __invtrans_grad_adj( sp, spfields, gp, gradfields, config );
 }
 
-void TransIFS::__invtrans_grad_adj( const Spectral& sp, FieldSet& spfields,
-                                   const functionspace::NodeColumns& gp, const FieldSet& gradfields,
-                                   const eckit::Configuration& config ) const {
+void TransIFS::__invtrans_grad_adj( const Spectral& sp, FieldSet& spfields, const functionspace::NodeColumns& gp,
+                                    const FieldSet& gradfields, const eckit::Configuration& config ) const {
 #ifdef TRANS_HAVE_INVTRANS_ADJ
     assertCompatibleDistributions( gp, sp );
 
@@ -1392,10 +1384,10 @@ void TransIFS::__invtrans_grad_adj( const Spectral& sp, FieldSet& spfields,
     // Do transform
     {
         struct ::InvTransAdj_t transform = ::new_invtrans_adj( trans_.get() );
-        transform.nscalar             = nfld;
-        transform.rgp                 = rgp.data();
-        transform.rspscalar           = rsp.data();
-        transform.lscalarders         = true;
+        transform.nscalar                = nfld;
+        transform.rgp                    = rgp.data();
+        transform.rspscalar              = rsp.data();
+        transform.lscalarders            = true;
 
         TRANS_CHECK( ::trans_invtrans_adj( &transform ) );
     }
@@ -1426,7 +1418,7 @@ void TransIFS::__invtrans( const Spectral& sp, const Field& spfield, const funct
 // --------------------------------------------------------------------------------------------
 
 void TransIFS::__invtrans_adj( const Spectral& sp, Field& spfield, const functionspace::NodeColumns& gp,
-                              const Field& gpfield, const eckit::Configuration& config ) const {
+                               const Field& gpfield, const eckit::Configuration& config ) const {
     FieldSet spfields;
     spfields.add( spfield );
     FieldSet gpfields;
@@ -1483,9 +1475,8 @@ void TransIFS::__invtrans( const Spectral& sp, const FieldSet& spfields, const f
 
 // --------------------------------------------------------------------------------------------
 
-void TransIFS::__invtrans_adj( const Spectral& sp, FieldSet& spfields,
-                              const functionspace::NodeColumns& gp, const FieldSet& gpfields,
-                              const eckit::Configuration& config ) const {
+void TransIFS::__invtrans_adj( const Spectral& sp, FieldSet& spfields, const functionspace::NodeColumns& gp,
+                               const FieldSet& gpfields, const eckit::Configuration& config ) const {
 #ifdef TRANS_HAVE_INVTRANS_ADJ
 
     assertCompatibleDistributions( gp, sp );
@@ -1519,9 +1510,9 @@ void TransIFS::__invtrans_adj( const Spectral& sp, FieldSet& spfields,
     // Do transform
     {
         struct ::InvTransAdj_t transform = ::new_invtrans_adj( trans_.get() );
-        transform.nscalar             = int( nfld );
-        transform.rgp                 = rgp.data();
-        transform.rspscalar           = rsp.data();
+        transform.nscalar                = int( nfld );
+        transform.rgp                    = rgp.data();
+        transform.rspscalar              = rsp.data();
 
         TRANS_CHECK( ::trans_invtrans_adj( &transform ) );
     }
@@ -1537,7 +1528,6 @@ void TransIFS::__invtrans_adj( const Spectral& sp, FieldSet& spfields,
     ATLAS_NOTIMPLEMENTED;
 #endif
 }
-
 
 
 // --------------------------------------------------------------------------------------------
@@ -1586,12 +1576,11 @@ void TransIFS::__invtrans( const functionspace::Spectral& sp, const Field& spfie
 }
 
 
-
 // --------------------------------------------------------------------------------------------
 
 void TransIFS::__invtrans_adj( const functionspace::Spectral& sp, Field& spfield,
-                              const functionspace::StructuredColumns& gp, const Field& gpfield,
-                              const eckit::Configuration& config ) const {
+                               const functionspace::StructuredColumns& gp, const Field& gpfield,
+                               const eckit::Configuration& config ) const {
 #ifdef TRANS_HAVE_INVTRANS_ADJ
 
     ATLAS_ASSERT( gpfield.functionspace() == 0 || functionspace::StructuredColumns( gpfield.functionspace() ) );
@@ -1622,9 +1611,9 @@ void TransIFS::__invtrans_adj( const functionspace::Spectral& sp, Field& spfield
     // Do transform
     {
         struct ::InvTransAdj_t transform = ::new_invtrans_adj( trans_.get() );
-        transform.nscalar             = nfld;
-        transform.rgp                 = rgp.data();
-        transform.rspscalar           = rsp.data();
+        transform.nscalar                = nfld;
+        transform.rgp                    = rgp.data();
+        transform.rspscalar              = rsp.data();
         TRANS_CHECK( ::trans_invtrans_adj( &transform ) );
     }
 
@@ -1637,7 +1626,6 @@ void TransIFS::__invtrans_adj( const functionspace::Spectral& sp, Field& spfield
 #else
     ATLAS_NOTIMPLEMENTED;
 #endif
-
 }
 
 // --------------------------------------------------------------------------------------------
@@ -1697,10 +1685,9 @@ void TransIFS::__invtrans( const functionspace::Spectral& sp, const FieldSet& sp
 }
 
 
-
 void TransIFS::__invtrans_adj( const functionspace::Spectral& sp, FieldSet& spfields,
-                              const functionspace::StructuredColumns& gp, const FieldSet& gpfields,
-                              const eckit::Configuration& config ) const {
+                               const functionspace::StructuredColumns& gp, const FieldSet& gpfields,
+                               const eckit::Configuration& config ) const {
 #ifdef TRANS_HAVE_INVTRANS_ADJ
 
     assertCompatibleDistributions( gp, sp );
@@ -1735,9 +1722,9 @@ void TransIFS::__invtrans_adj( const functionspace::Spectral& sp, FieldSet& spfi
     // Do transform
     {
         struct ::InvTransAdj_t transform = ::new_invtrans_adj( trans_.get() );
-        transform.nscalar             = int( nfld );
-        transform.rgp                 = rgp.data();
-        transform.rspscalar           = rsp.data();
+        transform.nscalar                = int( nfld );
+        transform.rgp                    = rgp.data();
+        transform.rspscalar              = rsp.data();
 
         TRANS_CHECK( ::trans_invtrans_adj( &transform ) );
     }
@@ -1896,8 +1883,8 @@ void TransIFS::__invtrans_vordiv2wind( const Spectral& sp, const Field& spvor, c
 }
 
 void TransIFS::__invtrans_vordiv2wind_adj( const Spectral& sp, Field& spvor, Field& spdiv,
-                                          const functionspace::NodeColumns& gp, const Field& gpwind,
-                                          const eckit::Configuration& ) const {
+                                           const functionspace::NodeColumns& gp, const Field& gpwind,
+                                           const eckit::Configuration& ) const {
 #ifdef TRANS_HAVE_INVTRANS_ADJ
 
     assertCompatibleDistributions( gp, sp );
@@ -1948,10 +1935,10 @@ void TransIFS::__invtrans_vordiv2wind_adj( const Spectral& sp, Field& spvor, Fie
     // Do transform
     {
         struct ::InvTransAdj_t transform = ::new_invtrans_adj( trans_.get() );
-        transform.nvordiv             = int( nfld );
-        transform.rgp                 = rgp.data();
-        transform.rspvor              = rspvor.data();
-        transform.rspdiv              = rspdiv.data();
+        transform.nvordiv                = int( nfld );
+        transform.rgp                    = rgp.data();
+        transform.rspvor                 = rspvor.data();
+        transform.rspdiv                 = rspdiv.data();
 
         ATLAS_ASSERT( transform.rspvor );
         ATLAS_ASSERT( transform.rspdiv );

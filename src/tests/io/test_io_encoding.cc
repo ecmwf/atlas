@@ -270,6 +270,72 @@ CASE( "encoding std::vector" ) {
 
 // -------------------------------------------------------------------------------------------------------
 
+
+template <typename T>
+void assert_StdArray() {
+    static_assert( io::is_interpretable<std::array<T, 5>, ArrayReference>(), "" );
+    static_assert( not io::can_encode_data<std::array<T, 5>>(), "" );
+    static_assert( not io::can_encode_metadata<std::array<T, 5>>(), "" );
+    static_assert( not io::is_encodable<std::array<T, 5>>(), "" );
+}
+
+template <typename T>
+void encode_StdArray() {
+    std::array<T, 5> in{1, 2, 3, 4, 5};
+
+    ArrayReference interpreted;
+    interprete( in, interpreted );
+
+    atlas::io::Data data;
+    atlas::io::Metadata metadata;
+
+    encode( interpreted, metadata, data );
+
+    EXPECT( data.size() == in.size() * sizeof( T ) );
+    EXPECT( ::memcmp( in.data(), data.data(), data.size() ) == 0 );
+    EXPECT( metadata.type() == "array" );
+    EXPECT( metadata.getString( "datatype" ) == atlas::array::DataType::str<T>() );
+}
+
+CASE( "encoding std::array" ) {
+    assert_StdArray<int>();
+    assert_StdArray<float>();
+    assert_StdArray<double>();
+    assert_StdArray<long>();
+    assert_StdArray<std::byte>();
+
+    encode_StdVector<int>();
+    encode_StdVector<float>();
+    encode_StdVector<double>();
+    encode_StdVector<long>();
+
+    {
+        using T = std::byte;
+        std::bitset<8> bits;
+        std::vector<T> in;
+        in.resize( 5 );
+        size_t n{0};
+        for ( auto& byte : in ) {
+            bits.set( n++, true );
+            byte = *reinterpret_cast<std::byte*>( &bits );
+        }
+        ArrayReference interpreted;
+        interprete( in, interpreted );
+
+        atlas::io::Data data;
+        atlas::io::Metadata metadata;
+
+        encode( interpreted, metadata, data );
+
+        EXPECT( data.size() == in.size() * sizeof( T ) );
+        EXPECT( ::memcmp( in.data(), data.data(), data.size() ) == 0 );
+        EXPECT( metadata.type() == "array" );
+        EXPECT( metadata.getString( "datatype" ) == atlas::array::DataType::str<T>() );
+    }
+}
+
+// -------------------------------------------------------------------------------------------------------
+
 CASE( "encoding atlas::array::Array" ) {
     static_assert( io::is_interpretable<atlas::array::Array, ArrayReference>(), "" );
     static_assert( not io::can_encode_data<atlas::array::Array>(), "" );
@@ -422,6 +488,43 @@ CASE( "Encoder for std::vector" ) {
 
 // -------------------------------------------------------------------------------------------------------
 
+CASE( "Encoder for std::array" ) {
+    SECTION( "ref" ) {
+        using T = double;
+        std::array<T, 8> v{1, 2, 3, 4, 5, 6, 7, 8};
+
+        io::Encoder encoder( io::ref( v ) );
+
+        // We can only encode with reference to original vector (no copies were made)
+        io::Metadata metadata;
+        io::Data data;
+        encode( encoder, metadata, data );
+        EXPECT( data.size() == v.size() * sizeof( T ) );
+        EXPECT( ::memcmp( data, v.data(), data.size() ) == 0 );
+    }
+
+    SECTION( "copy" ) {
+        using T = double;
+        std::array<T, 8> v{1, 2, 3, 4, 5, 6, 7, 8};
+
+        io::Encoder encoder;
+        {
+            std::array<T, 8> scoped = v;
+            encoder                 = io::Encoder( io::copy( scoped ) );
+            std::fill( std::begin( scoped ), std::end( scoped ), 0 );  // zero out before destruction
+        }
+
+        // We can now encode with scoped vector destroyed
+        io::Metadata metadata;
+        io::Data data;
+        encode( encoder, metadata, data );
+        EXPECT_EQ( data.size(), v.size() * sizeof( T ) );
+        EXPECT( ::memcmp( data, v.data(), data.size() ) == 0 );
+    }
+}
+
+// -------------------------------------------------------------------------------------------------------
+
 CASE( "Encoder for atlas::vector" ) {
     SECTION( "ref" ) {
         using T = double;
@@ -537,6 +640,12 @@ struct EncodedArray {
         }
         return ::memcmp( lhs.data(), rhs.in.data(), rhs.in.size() * rhs.in.datatype().size() ) == 0;
     }
+    friend bool operator==( const std::array<T, 8>& lhs, const EncodedArray<T>& rhs ) {
+        if ( lhs.size() != rhs.in.size() ) {
+            return false;
+        }
+        return ::memcmp( lhs.data(), rhs.in.data(), rhs.in.size() * rhs.in.datatype().size() ) == 0;
+    }
     friend bool operator==( const atlas::array::Array& lhs, const EncodedArray<T>& rhs ) {
         if ( lhs.datatype() != rhs.in.datatype() ) {
             return false;
@@ -592,6 +701,36 @@ CASE( "Decoding to std::vector" ) {
     using T = double;
     EncodedArray<T> encoded;
     std::vector<T> out;
+
+    SECTION( "decode std::vector directly" ) {
+        EXPECT_NO_THROW( decode( encoded.metadata, encoded.data, out ) );
+        EXPECT( out == encoded );
+    }
+
+    SECTION( "decode using rvalue io::Decoder (type erasure)" ) {
+        EXPECT_NO_THROW( decode( encoded.metadata, encoded.data, io::Decoder( out ) ) );
+        EXPECT( out == encoded );
+    }
+
+    SECTION( "decode using lvalue io::Decoder (type erasure)" ) {
+        io::Decoder decoder( out );
+        EXPECT_NO_THROW( decode( encoded.metadata, encoded.data, io::Decoder( out ) ) );
+        EXPECT( out == encoded );
+    }
+
+    SECTION( "decode using decoder of decoder" ) {
+        io::Decoder decoder( out );
+        EXPECT_NO_THROW( decode( encoded.metadata, encoded.data, io::Decoder( decoder ) ) );
+        EXPECT( out == encoded );
+    }
+}
+
+// -------------------------------------------------------------------------------------------------------
+
+CASE( "Decoding to std::array" ) {
+    using T = double;
+    EncodedArray<T> encoded;
+    std::array<T, 8> out;
 
     SECTION( "decode std::vector directly" ) {
         EXPECT_NO_THROW( decode( encoded.metadata, encoded.data, out ) );

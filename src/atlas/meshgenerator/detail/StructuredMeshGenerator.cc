@@ -146,9 +146,10 @@ StructuredMeshGenerator::StructuredMeshGenerator( const eckit::Parametrisation& 
         }
         options.set( "partitioner", partitioner );
     }
-     else if ( grid::Partitioner::exists( "trans" ) ) {
+    else if ( grid::Partitioner::exists( "trans" ) ) {
         partitioner = "trans";
-    } else {
+    }
+    else {
         partitioner = "equal_regions";
     }
     std::cout << "StructuredMeshGenerator::partitioner = " << partitioner << std::endl;
