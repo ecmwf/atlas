@@ -82,7 +82,7 @@ static void tile6Rotate( double xyz[] ) {
     ProjectionUtilities::rotate3dZ(angle_z, xyz);
 }
 
-static const std::vector<std::function<void(double[])>> tileRotate = {
+static const std::array<std::function<void(double[])>, 6> tileRotate = {
     [](double xyz[]){tile1Rotate(xyz);},
     [](double xyz[]){tile2Rotate(xyz);},
     [](double xyz[]){tile3Rotate(xyz);},
@@ -127,7 +127,7 @@ static void tile6RotateInverse( double xyz[] ) {
     ProjectionUtilities::rotate3dY(angle_y, xyz);
 }
 
-static const std::vector<std::function<void(double[])>> tileRotateInverse = {
+static const std::array<std::function<void(double[])>,6> tileRotateInverse = {
     [](double xyz[]){tile1RotateInverse(xyz);},
     [](double xyz[]){tile2RotateInverse(xyz);},
     [](double xyz[]){tile3RotateInverse(xyz);},
