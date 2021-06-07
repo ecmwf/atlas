@@ -18,7 +18,6 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/runtime/Exception.h"
-#include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
 
