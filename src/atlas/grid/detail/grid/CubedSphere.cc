@@ -97,6 +97,16 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
   npts_.push_back(N*N);
   npts_.push_back(N*N);
   npts_.push_back(N*N);
+
+  xtile = {
+    [this](int i, int j, int t) {return this->x123(i, t);},
+    [this](int i, int j, int t) {return this->x456(j, t);}
+  };
+
+  ytile = {
+    [this](int i, int j, int t) {return this->y123(j, t);},
+    [this](int i, int j, int t) {return this->y456(i, t);}
+  };
 }
 
 // Provide the domain for the cubed-sphere grid, which is global.

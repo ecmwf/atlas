@@ -260,15 +260,8 @@ public:
   // Lambdas for access to appropriate functions for tile
   // ----------------------------------------------------
 
-  std::vector<std::function<double(int, int, int)>> xtile =
-    {[this](int i, int j, int t) {return this->x123(i, t);},
-     [this](int i, int j, int t) {return this->x456(j, t);}
-    };
-
-  std::vector<std::function<double(int, int, int)>> ytile =
-    {[this](int i, int j, int t) {return this->y123(j, t);},
-     [this](int i, int j, int t) {return this->y456(i, t);}
-    };
+  std::vector<std::function<double(int, int, int)>> xtile;
+  std::vector<std::function<double(int, int, int)>> ytile;
 
   // Functions for returning xy
   // --------------------------
