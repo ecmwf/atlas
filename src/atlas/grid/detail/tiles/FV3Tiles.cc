@@ -34,6 +34,8 @@ static constexpr bool debug = false; // constexpr so compiler can optimize `if (
 static constexpr double deg2rad = ::atlas::util::Constants::degreesToRadians();
 static constexpr double rad2deg = ::atlas::util::Constants::radiansToDegrees();
 
+using atlas::projection::detail::ProjectionUtilities;
+
 static bool is_tiny( const double& x ) {
     constexpr double epsilon = 1.e-15;
     return (std::abs(x) < epsilon );
@@ -45,7 +47,7 @@ static bool is_same( const double& x, const double& y, const double& tol = 1.0 )
 }
 
 void sphericalToCartesian(const double lonlat[], double xyz[] ) {
-    auto crd_sys = ::atlas::util::ProjectionUtilities::CoordinateSystem::LEFT_HAND;
+    auto crd_sys = ProjectionUtilities::CoordinateSystem::LEFT_HAND;
     constexpr double radius = 1.;
     ProjectionUtilities::sphericalToCartesian(lonlat, xyz, crd_sys, radius);
 }

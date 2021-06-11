@@ -21,6 +21,32 @@ LFRicCubedSphereTiles::LFRicCubedSphereTiles( const eckit::Parametrisation& ) {
 }
 
 idx_t LFRicCubedSphereTiles::tileFromXY( const double xy[] ) const  {
+
+    // Assume one face-edge is of length 90 degrees.
+    //
+    //   y ^
+    //     |
+    //    135              ----------
+    //     |              |     ^    |
+    //     |              |          |
+    //     |              |=<   2   <|
+    //     |              |     v    |
+    //     |              |     =    |
+    //     45  0----------2----------3----------4----------
+    //     |   |    ^     |     ^    |    =     |     =    |
+    //     |   |          |          |    ^     |     ^    |
+    //     |   |=<  0    <|=<   1   <|=<  3    <|=<   4   <|
+    //     |   |    v     |     v    |          |          |
+    //     |   |    =     |     =    |    v     |     v    |
+    //    -45  0 ---------1----------1----------5----------
+    //     |                                    |     =    |
+    //     |                                    |     ^    |
+    //     |                                    |=<   5   <|
+    //     |                                    |          |
+    //     |                                    |     v    |
+    //   -135                                    ----------(5 for end iterator)
+    //     ----0---------90--------180--------270--------360--->  x
+
     idx_t t{-1}; // tile index
 
     return t;
