@@ -52,11 +52,7 @@ void sphericalToCartesian(const double lonlat[], double xyz[] ) {
     ProjectionUtilities::sphericalToCartesian(lonlat, xyz, crd_sys, radius);
 }
 
-void cartesianToSpherical(const double xyz[], double lonlat[] ) {
-    auto crd_sys = ProjectionUtilities::CoordinateSystem::LEFT_HAND;
-    constexpr double radius = 0.; // --> equivalent to radius = norm(xyz)
-    ProjectionUtilities::cartesianToSpherical(xyz, lonlat, crd_sys, radius);
-}
+
 
 }
 
