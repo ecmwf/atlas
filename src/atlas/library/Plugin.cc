@@ -20,6 +20,10 @@ Plugin::Plugin( const std::string& name, const std::string& libname ) : eckit::s
     atlas::Library::instance().registerPlugin( *this );
 }
 
+Plugin::~Plugin() {
+    atlas::Library::instance().deregisterPlugin( *this );
+}
+
 //----------------------------------------------------------------------------------------------------------------------
 
 }  // namespace atlas
