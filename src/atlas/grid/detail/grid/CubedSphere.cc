@@ -167,8 +167,9 @@ void CubedSphere::xy2xyt(const double xy[], double xyt[]) const {
           + yOffset[static_cast<size_t>(xyt[2])];
 
     using atlas::projection::detail::CubedSphereProjectionBase;
+    atlas::CubedSphereTiles tiles = dynamic_cast<const CubedSphereProjectionBase &>(projection_).getCubedSphereTiles();
     xyt[2] =
-        dynamic_cast<const CubedSphereProjectionBase &>(projection_).tileFromXY(xy);
+        dynamic_cast<const CubedSphereProjectionBase &>(projection_).getCubedSphereTiles().tileFromXY(xy);
 }
 
 // Convert from xyt space into continuous xy space.

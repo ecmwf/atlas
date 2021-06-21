@@ -22,7 +22,7 @@
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
 
-#include "atlas/grid/Tiles.h"
+//#include "atlas/grid/Tiles.h"
 
 namespace atlas {
 namespace projection {
@@ -50,7 +50,6 @@ static bool is_same( const double& x, const double& y, const double& tol = 1.0 )
 static double abs_diff( const double& x, const double& y ) {
     return (std::abs(x-y));
 }
-
 
 // --- Functions for xy to latlon on each tile
 
@@ -180,7 +179,6 @@ static void schmidtTransform( double stretchFac, double targetLon,
             lonlat[LON] = lonlat[LON] - 2.0*M_PI;
         }
     }
-
 }
 
 void sphericalToCartesian(const double lonlat[], double xyz[] ) {
@@ -200,13 +198,10 @@ void cartesianToSpherical(const double xyz[], double lonlat[] ) {
 
 // -------------------------------------------------------------------------------------------------
 
-CubedSphereProjectionBase::CubedSphereProjectionBase( const eckit::Parametrisation& params )
+CubedSphereProjectionBase::CubedSphereProjectionBase( const eckit::Parametrisation& params ) :
+    CubedSphereTiles_(params)
 {
   ATLAS_TRACE( "CubedSphereProjectionBase::CubedSphereProjectionBase" );
-
-
-//  std::shared_ptr<atlas::CubedSphereTiles> CubedSphereTiles_ =
-//          std::make_shared<atlas::CubedSphereTiles> ();
 
   // Shift projection by a longitude
   shiftLon_ = 0.0;
@@ -305,9 +300,7 @@ void CubedSphereProjectionBase::lonlat2xy_pre( double crd[], idx_t & t, double x
 
     // find tile which this lonlat is linked to
     // works [-pi/4, 7/4 * pi)
-     t = tileFromLonLat(crd);
-
-   // t = CubedSphereTiles_->tileFromLonLat(crd);
+    t = CubedSphereTiles_.tileFromLonLat(crd);
 
     sphericalToCartesian(crd, xyz);
     tileRotateInverse[t](xyz);
@@ -323,8 +316,7 @@ void CubedSphereProjectionBase::xy2alphabetat(const double xy[], idx_t& t, doubl
     static std::array<double,6> xOffset{0., 1., 1., 2., 3., 3.}; // could become constexpr with C++17
     static std::array<double,6> yOffset{1., 1., 2., 1., 1., 0.};
 
-    t = tileFromXY(xy);
-   // t = CubedSphereTiles_->tileFromXY(xy);
+    t = CubedSphereTiles_.tileFromXY(xy);
     double normalisedX = xy[XX]/90.;
     double normalisedY = (xy[YY] + 135.)/90.;
     ab[LON] = (normalisedX - xOffset[t])* M_PI_2 - M_PI_4;
@@ -343,187 +335,10 @@ void CubedSphereProjectionBase::alphabetat2xy(const idx_t& t, const double ab[],
     xy[XX] = normalisedX * 90. + xOffset[t];
     xy[YY] = normalisedY * 90. + yOffset[t];
 
-    enforceXYdomain(xy);
-    //CubedSphereTiles_->enforceXYdomain(xy);
+    CubedSphereTiles_.enforceXYdomain(xy);
 }
 
-// -------------------------------------------------------------------------------------------------
-void CubedSphereProjectionBase::enforceXYdomain(double xy[] ) const {
-    // the conversion from lonlat to xy can involve some small errors and small errors
-    // can affect whether xy that is created within a valid space
-    // This has been tested with N = 512 with equiangular and equidistant projections.
-    const double tol{70.0};
-    constexpr double epsilon = std::numeric_limits<double>::epsilon();
 
-
-    if ( debug ) {
-        Log::info() << "enforcXYDomain before " << xy[XX] << " " << xy[YY] << std::endl;
-    }
-
-    xy[XX] = std::max(xy[XX], 0.0);
-    xy[XX] = std::min(xy[XX], 360.0 - epsilon);
-    xy[YY] = std::max(xy[YY], -135.0 + epsilon);
-    xy[YY] = std::min(xy[YY], 135.0 - epsilon);
-    if (is_same(xy[XX], 90.0, tol)) { xy[XX] = 90.0; }
-    if (is_same(xy[XX], 180.0, tol)) { xy[XX] = 180.0; }
-    if (is_same(xy[XX], 270.0, tol)) { xy[XX] = 270.0; }
-    if (is_same(xy[YY], -45.0, tol) && (xy[XX] <= 180.0)) { xy[YY] = -45.0; }
-    if (is_same(xy[YY], 45.0, tol) && (xy[XX] >= 180.0)) { xy[YY] = 45.0; }
-    if (is_same(xy[YY], 45.0, tol) && is_same(xy[XX], 0.0, tol)) {
-        xy[XX] = 0.0;
-        xy[YY] = 45.0;
-    }
-
-    if ( debug ) {
-        Log::info() << "enforcXYDomain after " << xy[XX] << " " << xy[YY] << std::endl;
-    }
-
-}
-
-idx_t CubedSphereProjectionBase::tileFromXY( const double xy[] ) const {
-  // Assume one face-edge is of length 90 degrees.
-  //
-  //   y ^
-  //     |
-  //    135              ----------
-  //     |              |     ^    |
-  //     |              |          |
-  //     |              |=<   2   <|
-  //     |              |     v    |
-  //     |              |     =    |
-  //     45  0----------2----------3----------4----------
-  //     |   |    ^     |     ^    |    =     |     =    |
-  //     |   |          |          |    ^     |     ^    |
-  //     |   |=<  0    <|=<   1   <|=<  3    <|=<   4   <|
-  //     |   |    v     |     v    |          |          |
-  //     |   |    =     |     =    |    v     |     v    |
-  //    -45  0 ---------1----------1----------5----------
-  //     |                                    |     =    |
-  //     |                                    |     ^    |
-  //     |                                    |=<   5   <|
-  //     |                                    |          |
-  //     |                                    |     v    |
-  //   -135                                    ----------(5 for end iterator)
-  //     ----0---------90--------180--------270--------360--->  x
-
-
-
-  idx_t t{-1};
-
-  if ((xy[XX] >= 0.) && ( xy[YY] >= -45.) && (xy[XX] < 90.) && (xy[YY] < 45.)) {
-     t = 0;
-  } else if ((xy[XX] >= 90.) && ( xy[YY] >= -45.) && (xy[XX] < 180.) && (xy[YY] < 45.)) {
-     t = 1;
-  } else if ((xy[XX] >= 90.) && ( xy[YY] >= 45.) && (xy[XX] < 180.) && (xy[YY] < 135.)) {
-     t = 2;
-  } else if ((xy[XX] >= 180.) && ( xy[YY] > -45.) && (xy[XX] < 270.) && (xy[YY] <= 45.)) {
-     t = 3;
-  } else if ((xy[XX] >= 270.) && ( xy[YY] > -45.) && (xy[XX] < 360.) && (xy[YY] <= 45.)) {
-     t = 4;
-  } else if ((xy[XX] >= 270.) && ( xy[YY] > -135.) && (xy[XX] < 360.) && (xy[YY] <= -45.)) {
-     t = 5;
-  }
-
-  // extra points
-  if ( is_same( xy[XX], 0.   ) && is_same( xy[YY],  45. ) ) { t = 0; }
-  if ( is_same( xy[XX], 180. ) && is_same( xy[YY], -45. ) ) { t = 1; }
-
-  // for end iterator !!!!
-  if ( is_same( xy[XX], 360. ) && is_same( xy[YY], -135.) ) { t = 5; }
-
-  ATLAS_ASSERT( t >= 0 );
-
-  return t;
-}
-
-// assuming that crd[] here holds the latitude/longitude in RADIANS.
-// expecting longitude range between 0 and 2* PI
-idx_t CubedSphereProjectionBase::tileFromLonLat(const double crd[]) const {
-    idx_t t(-1);
-    double xyz[3];
-
-    sphericalToCartesian(crd, xyz);
-
-    static const double cornerLat= std::asin(1./std::sqrt(3.0));
-      // the magnitude of the latitude at the corners of the cube (not including the sign)
-      // in radians.
-
-    const double & lon = crd[LON];
-    const double & lat = crd[LAT];
-
-    double zPlusAbsX = xyz[ZZ] + std::abs(xyz[XX]);
-    double zPlusAbsY = xyz[ZZ] + std::abs(xyz[YY]);
-    double zMinusAbsX = xyz[ZZ] - std::abs(xyz[XX]);
-    double zMinusAbsY = xyz[ZZ] - std::abs(xyz[YY]);
-
-    // Note that this method can lead to roundoff errors that can
-    // cause the tile selection to fail.
-    // To this end we enforce that tiny values close (in roundoff terms)
-    // to a boundary should end up exactly on the boundary.
-    if ( is_tiny(zPlusAbsX) ) { zPlusAbsX = 0.; }
-    if ( is_tiny(zPlusAbsY) ) { zPlusAbsY = 0.; }
-    if ( is_tiny(zMinusAbsX) ) { zMinusAbsX = 0.; }
-    if ( is_tiny(zMinusAbsY) ) { zMinusAbsY = 0.; }
-
-    if (lon >= 1.75 * M_PI  || lon < 0.25 * M_PI) {
-        if  ( (zPlusAbsX <= 0.) && (zPlusAbsY <= 0.) ) {
-           t = 2;
-        } else if ( (zMinusAbsX > 0.) && (zMinusAbsY > 0.) ) {
-           t = 5;
-        } else {
-           t = 0;
-        }
-        // extra point corner point
-        if ( is_same( lon, -0.25 * M_PI ) && is_same( lat, cornerLat ) ) { t = 0; }
-        if ( is_same( lon,  1.75 * M_PI ) && is_same( lat, cornerLat ) ) { t = 0; }
-    }
-
-    if (lon >= 0.25 * M_PI  && lon < 0.75 * M_PI) {
-        // interior
-        if  ( (zPlusAbsX <= 0.) && (zPlusAbsY <= 0.) ) {
-            t = 2;
-        } else if  ( (zMinusAbsX > 0.) && (zMinusAbsY > 0.) ) {
-            t = 5;
-        } else {
-            t = 1;
-        }
-    }
-
-    if (lon >= 0.75 * M_PI  && lon < 1.25 * M_PI) {
-        // interior
-        if  ( (zPlusAbsX < 0.) && (zPlusAbsY < 0.) ) {
-            t = 2;
-        } else if  ( (zMinusAbsX >= 0.) && (zMinusAbsY >= 0.) ) {
-            t = 5;
-        } else {
-            t = 3;
-        }
-        // extra point corner point
-        if ( is_same(lon, 0.75 * M_PI) && is_same( lat, -cornerLat ) ) { t = 1; }
-    }
-
-    if (lon >= 1.25 * M_PI  && lon < 1.75 * M_PI) {
-        // interior
-        if  ( (zPlusAbsX < 0.) && (zPlusAbsY < 0.) ) {
-            t = 2;
-        } else if  ( (zMinusAbsX >= 0.) && (zMinusAbsY >= 0.) ) {
-            t = 5;
-        } else {
-            t = 4;
-        }
-    }
-
-    if( debug ) {
-        Log::info() << "tileFromLonLat:: lonlat abs xyz t = "
-                     << std::setprecision(std::numeric_limits<double>::digits10 + 1)
-                     << zPlusAbsX << " " << zPlusAbsY << " " << zMinusAbsX << " " << zMinusAbsY << " "
-                     << crd[LON] << " " << crd[LAT] << " "
-                     << xyz[XX] << " " << xyz[YY] << " " << xyz[ZZ] << " " << t
-                     << std::endl;
-    }
-
-    return t;
-}
 
 // -------------------------------------------------------------------------------------------------
 
