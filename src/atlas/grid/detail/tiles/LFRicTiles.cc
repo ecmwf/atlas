@@ -9,7 +9,9 @@
  */
 
 #include <ostream>
+#include <iostream>
 #include "atlas/grid/detail/tiles/Tiles.h"
+#include "atlas/grid/detail/tiles/TilesFactory.h"
 #include "atlas/grid/detail/tiles/LFRicTiles.h"
 #include "atlas/projection/detail/ProjectionUtilities.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -43,7 +45,7 @@ void sphericalToCartesian(const double lonlat[], double xyz[] ) {
 
 // constructor
 LFRicCubedSphereTiles::LFRicCubedSphereTiles( const eckit::Parametrisation& ) {
-
+   std::cout << "LFRicCubedSphereTiles constructor" << std::endl;
 }
 
 idx_t LFRicCubedSphereTiles::tileFromXY( const double xy[] ) const  {
@@ -162,18 +164,14 @@ void LFRicCubedSphereTiles::enforceXYdomain( double xy[] ) const {
     }
 }
 
-LFRicCubedSphereTiles::Spec LFRicCubedSphereTiles::spec() const {
-    Spec tile_spec;
-    return tile_spec;
-}
 
 void LFRicCubedSphereTiles::print( std::ostream& os) const {
     os << "CubedSphereTiles["
        << "]";
 }
 
-void LFRicCubedSphereTiles::hash( eckit::Hash& ) const {
-
+namespace {
+static  CubedSphereTilesBuilder<LFRicCubedSphereTiles> register_builder( LFRicCubedSphereTiles::static_type() );
 }
 
 

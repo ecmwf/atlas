@@ -11,11 +11,14 @@
 #include <array>
 #include <limits>
 #include <ostream>
+#include <iostream>
 #include <string>
 #include <utility>
 #include <iomanip>
 
 #include "eckit/utils/Hash.h"
+
+#include "atlas/grid/detail/tiles/TilesFactory.h"
 
 #include "atlas/grid/detail/tiles/Tiles.h"
 #include "atlas/grid/detail/tiles/FV3Tiles.h"
@@ -29,7 +32,7 @@
 
 namespace {
 
-static constexpr bool debug = false; // constexpr so compiler can optimize `if ( debug ) { ... }` out
+static constexpr bool debug = true; // constexpr so compiler can optimize `if ( debug ) { ... }` out
 
 static constexpr double deg2rad = ::atlas::util::Constants::degreesToRadians();
 static constexpr double rad2deg = ::atlas::util::Constants::radiansToDegrees();
@@ -61,8 +64,9 @@ namespace cubedspheretiles {
 
 // constructor
 FV3CubedSphereTiles::FV3CubedSphereTiles( const eckit::Parametrisation& ) {
-
+  std::cout << "FV3CubedSphereTiles constructor" << std::endl;
 }
+
 
 idx_t FV3CubedSphereTiles::tileFromXY( const double xy[] ) const  {
 
@@ -121,10 +125,15 @@ idx_t FV3CubedSphereTiles::tileFromXY( const double xy[] ) const  {
     return t;
 }
 
+// Calculates the FV3 panel
+// Input (crd) is Longitude and Latitude in Radians
+// Output is tile number
 idx_t FV3CubedSphereTiles::tileFromLonLat( const double crd[] ) const {
 
     idx_t t(-1); // tile index
     double xyz[3];
+
+    std::cout << " tileFromLonLat = " <<  crd[LON] << " " << crd[LAT] << std::endl;
 
     sphericalToCartesian(crd, xyz);
 
@@ -157,8 +166,10 @@ idx_t FV3CubedSphereTiles::tileFromLonLat( const double crd[] ) const {
         } else {
            t = 0;
         }
-        // extra point corner point
+        // extra point corner point (considering two different longitudes depending on
+        // whether we are on longitude points [0,2*pi] or [-pi/4,pi/4]
         if ( is_same( lon, -0.25 * M_PI ) && is_same( lat, cornerLat ) ) { t = 0; }
+        if ( is_same( lon,  1.75 * M_PI ) && is_same( lat, cornerLat ) ) { t = 0; }
     }
 
     if (lon >= 0.25 * M_PI  && lon < 0.75 * M_PI) {
@@ -217,7 +228,7 @@ void FV3CubedSphereTiles::enforceXYdomain( double xy[] ) const {
 
 
     if ( debug ) {
-        Log::info() << "enforcXYDomain before " << xy[XX] << " " << xy[YY] << std::endl;
+        Log::info() << "enforceXYDomain before " << xy[XX] << " " << xy[YY] << std::endl;
     }
 
     xy[XX] = std::max(xy[XX], 0.0);
@@ -239,19 +250,19 @@ void FV3CubedSphereTiles::enforceXYdomain( double xy[] ) const {
     }
 }
 
-FV3CubedSphereTiles::Spec FV3CubedSphereTiles::spec() const {
-    Spec tile_spec;
-    return tile_spec;
-}
 
 void FV3CubedSphereTiles::print( std::ostream& os) const {
     os << "CubedSphereTiles["
        << "]";
 }
 
-void FV3CubedSphereTiles::hash( eckit::Hash& ) const {
 
+namespace {
+static  CubedSphereTilesBuilder<FV3CubedSphereTiles> register_builder( FV3CubedSphereTiles::static_type() );
 }
+
 
 }  // namespace cubedspheretiles
 }  // namespace atlas
+
+

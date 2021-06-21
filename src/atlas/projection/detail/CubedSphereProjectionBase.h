@@ -6,12 +6,18 @@
  */
 
 #pragma once
+#include <memory>
 
 #include "eckit/config/Parametrisation.h"
 #include "eckit/utils/Hash.h"
 
+//#include "atlas/grid/Tiles.h"
 #include "atlas/projection/detail/ProjectionImpl.h"
 #include "atlas/library/config.h"
+
+namespace atlas {
+class CubedSphereTiles;
+}
 
 namespace atlas {
 namespace projection {
@@ -47,6 +53,8 @@ class CubedSphereProjectionBase : public ProjectionImpl {
     double stretchFac_;
     double targetLon_;
     double targetLat_;
+  //  std::shared_ptr<atlas::CubedSphereTiles> CubedSphereTiles_;
+
 };
 
 }  // namespace detail

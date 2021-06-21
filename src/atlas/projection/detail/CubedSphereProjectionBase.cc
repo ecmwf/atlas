@@ -13,6 +13,7 @@
 #include <limits>
 #include <iostream>
 #include <iomanip>
+#include <memory>
 
 #include "atlas/projection/detail/ProjectionUtilities.h"
 #include "atlas/runtime/Log.h"
@@ -20,6 +21,8 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
+
+#include "atlas/grid/Tiles.h"
 
 namespace atlas {
 namespace projection {
@@ -29,7 +32,7 @@ namespace detail {
 // Helper functions and variables local to this translation unit
 namespace {
 
-static constexpr bool debug = false; // constexpr so compiler can optimize `if ( debug ) { ... }` out
+static constexpr bool debug = true; // constexpr so compiler can optimize `if ( debug ) { ... }` out
 
 static constexpr double deg2rad = util::Constants::degreesToRadians();
 static constexpr double rad2deg = util::Constants::radiansToDegrees();
@@ -43,6 +46,11 @@ static bool is_same( const double& x, const double& y, const double& tol = 1.0 )
     constexpr double epsilon = 1.e-15;
     return (std::abs(x-y) < epsilon * tol);
 }
+
+static double abs_diff( const double& x, const double& y ) {
+    return (std::abs(x-y));
+}
+
 
 // --- Functions for xy to latlon on each tile
 
@@ -192,8 +200,13 @@ void cartesianToSpherical(const double xyz[], double lonlat[] ) {
 
 // -------------------------------------------------------------------------------------------------
 
-CubedSphereProjectionBase::CubedSphereProjectionBase( const eckit::Parametrisation& params ) {
+CubedSphereProjectionBase::CubedSphereProjectionBase( const eckit::Parametrisation& params )
+{
   ATLAS_TRACE( "CubedSphereProjectionBase::CubedSphereProjectionBase" );
+
+
+//  std::shared_ptr<atlas::CubedSphereTiles> CubedSphereTiles_ =
+//          std::make_shared<atlas::CubedSphereTiles> ();
 
   // Shift projection by a longitude
   shiftLon_ = 0.0;
@@ -292,7 +305,9 @@ void CubedSphereProjectionBase::lonlat2xy_pre( double crd[], idx_t & t, double x
 
     // find tile which this lonlat is linked to
     // works [-pi/4, 7/4 * pi)
-    t = tileFromLonLat(crd);
+     t = tileFromLonLat(crd);
+
+   // t = CubedSphereTiles_->tileFromLonLat(crd);
 
     sphericalToCartesian(crd, xyz);
     tileRotateInverse[t](xyz);
@@ -309,6 +324,7 @@ void CubedSphereProjectionBase::xy2alphabetat(const double xy[], idx_t& t, doubl
     static std::array<double,6> yOffset{1., 1., 2., 1., 1., 0.};
 
     t = tileFromXY(xy);
+   // t = CubedSphereTiles_->tileFromXY(xy);
     double normalisedX = xy[XX]/90.;
     double normalisedY = (xy[YY] + 135.)/90.;
     ab[LON] = (normalisedX - xOffset[t])* M_PI_2 - M_PI_4;
@@ -328,6 +344,7 @@ void CubedSphereProjectionBase::alphabetat2xy(const idx_t& t, const double ab[],
     xy[YY] = normalisedY * 90. + yOffset[t];
 
     enforceXYdomain(xy);
+    //CubedSphereTiles_->enforceXYdomain(xy);
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -458,6 +475,7 @@ idx_t CubedSphereProjectionBase::tileFromLonLat(const double crd[]) const {
         }
         // extra point corner point
         if ( is_same( lon, -0.25 * M_PI ) && is_same( lat, cornerLat ) ) { t = 0; }
+        if ( is_same( lon,  1.75 * M_PI ) && is_same( lat, cornerLat ) ) { t = 0; }
     }
 
     if (lon >= 0.25 * M_PI  && lon < 0.75 * M_PI) {

@@ -9,25 +9,40 @@
  */
 
 #include <string>
+#include <iostream>
 
 #include "eckit/utils/MD5.h"
 
 #include "atlas/grid/detail/tiles/Tiles.h"
 #include "atlas/grid/detail/tiles/TilesFactory.h"
 #include "atlas/runtime/Exception.h"
+#include "atlas/util/Config.h"
 
 namespace atlas {
 namespace cubedspheretiles {
 
+const CubedSphereTiles* CubedSphereTiles::create() {
+    // default: FV3 version (for now)
+    util::Config params;
+    params.set( "tile type", "FV3CubedSphereTiles" );
+    return CubedSphereTiles::create( params );
+}
+
 const CubedSphereTiles* CubedSphereTiles::create( const eckit::Parametrisation& p ) {
     std::string CubedSphereTiles_type;
-    if ( p.get( "type", CubedSphereTiles_type ) ) {
+
+    std::cout << "tiles/Tiles.cc within create " << std::endl;
+    if ( p.get( "tile type", CubedSphereTiles_type ) ) {
+        std::cout << "tiles/Tiles.cc tile type = "  << CubedSphereTiles_type << std::endl;
         return CubedSphereTilesFactory::build( CubedSphereTiles_type, p );
+    } else {
+        return create();
     }
 
-    // should return error here
-    throw_Exception( "type missing in Params", Here() );
 }
+
+
+
 
 }  // namespace cubedspheretiles
 }  // namespace atlas

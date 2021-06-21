@@ -8,42 +8,57 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <iostream>
+
 #include "atlas/grid/Tiles.h"
 #include "atlas/grid/detail/tiles/Tiles.h"
 #include "atlas/grid/detail/tiles/FV3Tiles.h"
 #include "atlas/grid/detail/tiles/LFRicTiles.h"
 
 
-using FV3 = atlas::cubedspheretiles::FV3CubedSphereTiles;
-using LFRic = atlas::cubedspheretiles::LFRicCubedSphereTiles;
+using FV3CubedSphereTiles = atlas::cubedspheretiles::FV3CubedSphereTiles;
+using LFRicCubedSphereTiles = atlas::cubedspheretiles::LFRicCubedSphereTiles;
 
 namespace atlas {
 
 CubedSphereTiles::CubedSphereTiles( const eckit::Parametrisation& p ) : Handle(
-                atlas::cubedspheretiles::CubedSphereTiles::create( p ) ) {}
+                atlas::cubedspheretiles::CubedSphereTiles::create( p ) ) {
+
+   std::cout << "grid/Tiles.h CubedSphereTiles constr"  << std::endl;
+}
+
+FV3CubedSphereTiles::FV3CubedSphereTiles( const CubedSphereTiles& cubedspheretiles ) :
+    CubedSphereTiles ( cubedspheretiles ),
+    cubedspheretiles_( dynamic_cast<const atlas::cubedspheretiles::FV3CubedSphereTiles*>( get() ) ) {}
+
+
+LFRicCubedSphereTiles::LFRicCubedSphereTiles( const CubedSphereTiles& cubedspheretiles ) :
+    CubedSphereTiles ( cubedspheretiles ),
+    cubedspheretiles_( dynamic_cast<const atlas::cubedspheretiles::LFRicCubedSphereTiles*>( get() ) ) {}
+
 
 std::string atlas::CubedSphereTiles::type() const {
     return get()->type();
 }
 
 idx_t CubedSphereTiles::tileFromXY( const double xy[] ) const {
-    return get()->tileFromXY(xy);
+     return get()->tileFromXY(xy);
 }
 
-idx_t CubedSphereTiles::tileFromLonLat( const double lonlat[] ) const {
-    return get()->tileFromLonLat(lonlat);
+idx_t CubedSphereTiles::tileFromLonLat(const double lonlat[]) const {
+     return get()->tileFromLonLat(lonlat);
 }
 
-void  CubedSphereTiles::enforceXYdomain( double xy[] ) const {
-    return get()->enforceXYdomain(xy);
+void CubedSphereTiles::enforceXYdomain(double xy[]) const {
+     return get()->enforceXYdomain(xy);
 }
 
 void CubedSphereTiles::print( std::ostream& os ) const {
     get()->print( os );
 }
 
-std::ostream& operator<<( std::ostream& os, const CubedSphereTiles& d ) {
-    d.print( os );
+std::ostream& operator<<( std::ostream& os, const CubedSphereTiles& t ) {
+    t.print( os );
     return os;
 }
 

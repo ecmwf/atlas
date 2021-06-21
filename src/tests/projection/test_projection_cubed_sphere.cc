@@ -14,7 +14,14 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/projection/Projection.h"
 #include "atlas/util/Point.h"
+#include "atlas/util/Constants.h"
 
+
+#include "atlas/grid/Tiles.h"
+#include "atlas/grid/detail/tiles/Tiles.h"
+
+#include "atlas/grid/detail/tiles/FV3Tiles.h"
+#include "atlas/grid/detail/tiles/LFRicTiles.h"
 #include "tests/AtlasTestEnvironment.h"
 
 namespace atlas {
@@ -22,6 +29,57 @@ namespace test {
 
 
 //-----------------------------------------------------------------------------
+
+CASE ("test_tiles") {
+   int resolution(2);
+    Grid g{ "CS-EA-" + std::to_string(resolution)};
+
+    using atlas::cubedspheretiles::FV3CubedSphereTiles;
+    using atlas::cubedspheretiles::LFRicCubedSphereTiles;
+    using util::Constants;
+
+    util::Config params;
+    FV3CubedSphereTiles f(params);
+    LFRicCubedSphereTiles l(params);
+
+    double cd[2];
+    for ( auto crd : g.lonlat() ) {
+       std::cout << "fv3 crd "  << crd[LON] << " " << crd[LAT]  <<  std::endl;
+       atlas::PointLonLat pointLonLat = crd * Constants::degreesToRadians();
+       cd[LON] = pointLonLat.lon();
+       cd[LAT] = pointLonLat.lat();
+       std::cout << "fv3 cd(lon , lat) = "
+                 << cd[LON] << " " << cd[LAT]  << std::endl;
+
+       int t = f.tileFromLonLat(cd);
+       int t2 = l.tileFromLonLat(cd);
+       std::cout << "fv3 lfric tilesfromlonlat = " << t << " " << t2 << std::endl;
+
+       g.projection().lonlat2xy(crd);
+       cd[LON] = crd.lon();
+       cd[LAT] = crd.lat();
+
+       t = f.tileFromXY(cd);
+       t2 = l.tileFromXY(cd);
+       std::cout << "fv3 lfric tilesfromxy = " << t << " " << t2 << std::endl;
+    }
+
+    params.set("tile type", "LFRicCubedSphereTiles");
+    atlas::CubedSphereTiles tiles(params);
+    for ( auto crd : g.lonlat() ) {
+        atlas::PointLonLat pointLonLat = crd * Constants::degreesToRadians();
+        cd[LON] = pointLonLat.lon();
+        cd[LAT] = pointLonLat.lat();
+        std::cout << "generic cd(lon , lat) = "
+                  << cd[LON] << " " << cd[LAT]  << std::endl;
+        std::cout <<  f.tileFromLonLat(cd)   << std::endl;
+        std::cout <<  tiles.tileFromLonLat(cd)   << std::endl;
+
+    }
+
+
+
+}
 
 CASE( "test_projection_cubedsphere_xy_latlon" ) {
 

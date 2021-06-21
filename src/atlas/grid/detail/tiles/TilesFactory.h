@@ -11,6 +11,7 @@
 #pragma once
 
 #include <string>
+#include <iostream>
 
 #include "atlas/util/Config.h"
 #include "atlas/util/Factory.h"
@@ -38,7 +39,10 @@ private:
 template <class T>
 class CubedSphereTilesBuilder : public CubedSphereTilesFactory {
 private:
-    virtual const CubedSphereTiles* make( const eckit::Parametrisation& param ) { return new T( param ); }
+    virtual const CubedSphereTiles* make( const eckit::Parametrisation& param ) {
+        std::cout << "TilesFactory::CubedSphereTilesBuilder::make "  <<
+                     __PRETTY_FUNCTION__    <<   std::endl;
+        return new T( param ); }
 
 public:
     using CubedSphereTilesFactory::CubedSphereTilesFactory;

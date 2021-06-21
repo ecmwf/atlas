@@ -32,19 +32,11 @@ public:
 
     virtual void enforceXYdomain( double xy[] ) const override;
 
-    virtual Spec spec() const override;
-
     virtual void print( std::ostream& ) const override;
 
-    virtual void hash( eckit::Hash& ) const override;
-
-    virtual std::string units() const override { return units_; }
 
 private:
 
-
-    std::string units_;
-    bool unit_degrees_;
 
 };
 

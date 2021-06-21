@@ -30,6 +30,8 @@ public:
 
 public:
 
+    static const CubedSphereTiles* create( );
+
     static const CubedSphereTiles* create( const eckit::Parametrisation& );
 
     virtual std::string type() const = 0;
@@ -40,8 +42,6 @@ public:
 
     virtual void enforceXYdomain( double xy[] ) const = 0;
 
-    virtual Spec spec() const = 0;
-
     /// Output to stream
     virtual void print( std::ostream& ) const = 0;
 
@@ -49,10 +49,6 @@ public:
         cst.print( s );
         return s;
     }
-
-    virtual std::string units() const = 0;
-
-    virtual void hash( eckit::Hash& ) const = 0;
 
 };
 

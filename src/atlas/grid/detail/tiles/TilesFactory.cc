@@ -9,7 +9,9 @@
  */
 
 #include <string>
+#include <iostream>
 
+#include "atlas/util/Factory.h"
 #include "atlas/grid/detail/tiles/Tiles.h"
 #include "atlas/grid/detail/tiles/TilesFactory.h"
 #include "atlas/grid/detail/tiles/FV3Tiles.h"
@@ -39,6 +41,7 @@ const CubedSphereTiles* CubedSphereTilesFactory::build( const std::string& build
 
 const CubedSphereTiles* CubedSphereTilesFactory::build( const std::string& builder, const eckit::Parametrisation& param ) {
     force_link();
+    std::cout << "CubedSphereTilesFactory::build builder params" << builder << " " << std::endl;
     auto factory = get( builder );
     return factory->make( param );
 }

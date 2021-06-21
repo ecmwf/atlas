@@ -10,6 +10,7 @@
 
 #include <array>
 #include <string>
+#include <iostream>
 
 #include "atlas/library/config.h"
 #include "atlas/util/ObjectHandle.h"
@@ -61,8 +62,6 @@ public:
 
     void enforceXYdomain( double xy[] ) const;
 
-    std::string units() const;
-
 private:
     /// Output to stream
     void print( std::ostream& ) const;
@@ -71,12 +70,15 @@ private:
 
 };
 
+
 class FV3CubedSphereTiles : public CubedSphereTiles {
 public:
     using CubedSphereTiles::CubedSphereTiles;
-    FV3CubedSphereTiles() : CubedSphereTiles() {}
+    FV3CubedSphereTiles() : CubedSphereTiles() {
+      std::cout << "grid/Tiles.h FV3CubedSphereTiles"  << std::endl;
+    }
 
-    FV3CubedSphereTiles( const FV3CubedSphereTiles& );
+    FV3CubedSphereTiles( const CubedSphereTiles& );
 
 private:
     const ::atlas::cubedspheretiles::FV3CubedSphereTiles* cubedspheretiles_;
@@ -85,9 +87,11 @@ private:
 class LFRicCubedSphereTiles : public CubedSphereTiles {
 public:
     using CubedSphereTiles::CubedSphereTiles;
-    LFRicCubedSphereTiles() : CubedSphereTiles() {}
+    LFRicCubedSphereTiles() : CubedSphereTiles() {
+      std::cout << "grid/Tiles.h LFRicCubedSphereTiles"  << std::endl;
+    }
 
-    LFRicCubedSphereTiles( const LFRicCubedSphereTiles& );
+    LFRicCubedSphereTiles( const CubedSphereTiles& );
 
 private:
     const ::atlas::cubedspheretiles::LFRicCubedSphereTiles* cubedspheretiles_;
