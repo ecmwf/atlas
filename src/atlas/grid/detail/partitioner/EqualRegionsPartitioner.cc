@@ -449,16 +449,15 @@ EqualRegionsPartitioner::EqualRegionsPartitioner() : Partitioner(), N_( nb_parti
     init();
 }
 
-EqualRegionsPartitioner::EqualRegionsPartitioner( int N ) :
-    Partitioner( N ), N_( N ) {
+EqualRegionsPartitioner::EqualRegionsPartitioner( int N ) : Partitioner( N ), N_( N ) {
     init();
 }
 
 EqualRegionsPartitioner::EqualRegionsPartitioner( int N, const eckit::Parametrisation& config ) :
     EqualRegionsPartitioner( N ) {
     std::string crds;
-    if( config.get("coordinates",crds) ) {
-        if( crds == "lonlat" ) {
+    if ( config.get( "coordinates", crds ) ) {
+        if ( crds == "lonlat" ) {
             coordinates_ = Coordinates::LONLAT;
         }
     }
@@ -715,7 +714,7 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                     atlas::vector<NodeInt> w_nodes( w_size );
                     int* w_nodes_buffer = reinterpret_cast<int*>( w_nodes.data() );
 
-                    if( coordinates_ == Coordinates::XY ) {
+                    if ( coordinates_ == Coordinates::XY ) {
                         ATLAS_TRACE_SCOPE( "create one bit - Coordinates::XY" ) {
                             if ( true )  // optimized experimental when true (still need to
                             // benchmark)
@@ -744,7 +743,7 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                             }
                         }
                     }
-                    else if( coordinates_ == Coordinates::LONLAT ) {
+                    else if ( coordinates_ == Coordinates::LONLAT ) {
                         ATLAS_TRACE_SCOPE( "create one bit - Coordinates::LONLAT" ) {
                             if ( true )  // optimized experimental when true (still need to
                             // benchmark)
@@ -774,7 +773,7 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
                         }
                     }
                     else {
-                        ATLAS_THROW_EXCEPTION("Should not be here");
+                        ATLAS_THROW_EXCEPTION( "Should not be here" );
                     }
                     ATLAS_TRACE_SCOPE( "sort one bit" ) { omp::sort( w_nodes.begin(), w_nodes.end(), compare_NS_WE ); }
                     ATLAS_TRACE_SCOPE( "send to rank0" ) {

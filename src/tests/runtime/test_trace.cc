@@ -20,7 +20,7 @@ namespace atlas {
 namespace test {
 
 static void work() {
-    std::this_thread::sleep_for( std::chrono::milliseconds(10) );
+    std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) );
 }
 
 

@@ -15,7 +15,7 @@
 
 // GNU C++ compiler (version 11) should not try to optimize this code
 #ifdef __GNUC__
-#pragma GCC optimize ("O0")
+#pragma GCC optimize( "O0" )
 #endif
 
 #include "scalar.h"
