@@ -24,7 +24,32 @@ public:
     LFRicCubedSphereTiles( const eckit::Parametrisation& );
 
     static std::string static_type() { return "LFRicCubedSphereTiles"; }
+
     virtual std::string type() const override { return static_type(); }
+
+    virtual void tile0Rotate( double xyz[] ) const override;
+
+    virtual void tile1Rotate( double xyz[] ) const override;
+
+    virtual void tile2Rotate( double xyz[] ) const override;
+
+    virtual void tile3Rotate( double xyz[] ) const override;
+
+    virtual void tile4Rotate( double xyz[] ) const override;
+
+    virtual void tile5Rotate( double xyz[] ) const override;
+
+    virtual void tile0RotateInverse( double xyz[] ) const override;
+
+    virtual void tile1RotateInverse( double xyz[] ) const override;
+
+    virtual void tile2RotateInverse( double xyz[] ) const override;
+
+    virtual void tile3RotateInverse( double xyz[] ) const override;
+
+    virtual void tile4RotateInverse( double xyz[] ) const override;
+
+    virtual void tile5RotateInverse( double xyz[] ) const override;
 
     virtual idx_t tileFromXY( const double xy[] ) const override;
 

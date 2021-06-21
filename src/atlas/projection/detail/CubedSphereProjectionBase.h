@@ -6,11 +6,11 @@
  */
 
 #pragma once
+#include <functional>
 #include <memory>
 
 #include "eckit/config/Parametrisation.h"
 #include "eckit/utils/Hash.h"
-
 #include "atlas/grid/Tiles.h"
 #include "atlas/projection/detail/ProjectionImpl.h"
 #include "atlas/library/config.h"
@@ -50,7 +50,12 @@ class CubedSphereProjectionBase : public ProjectionImpl {
     double stretchFac_;
     double targetLon_;
     double targetLat_;
+
+    void tileRotate(const idx_t& t, double xyz[]) const;
+    void tileRotateInverse(const idx_t& t, double xyz[]) const;
+
 };
+
 
 }  // namespace detail
 }  // namespace projection

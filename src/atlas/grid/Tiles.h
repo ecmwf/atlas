@@ -56,6 +56,30 @@ public:
     /// Type of the cubed-sphere tiles:
     std::string type() const;
 
+    void tile0Rotate( double xyz[] ) const;
+
+    void tile1Rotate( double xyz[] ) const;
+
+    void tile2Rotate( double xyz[] ) const;
+
+    void tile3Rotate( double xyz[] ) const;
+
+    void tile4Rotate( double xyz[] ) const;
+
+    void tile5Rotate( double xyz[] ) const;
+
+    void tile0RotateInverse( double xyz[] ) const;
+
+    void tile1RotateInverse( double xyz[] ) const;
+
+    void tile2RotateInverse( double xyz[] ) const;
+
+    void tile3RotateInverse( double xyz[] ) const;
+
+    void tile4RotateInverse( double xyz[] ) const;
+
+    void tile5RotateInverse( double xyz[] ) const;
+
     idx_t tileFromXY( const double xy[] ) const;
 
     idx_t tileFromLonLat( const double lonlat[] ) const;

@@ -36,6 +36,30 @@ public:
 
     virtual std::string type() const = 0;
 
+    virtual void tile0Rotate( double xyz[] ) const = 0;
+
+    virtual void tile1Rotate( double xyz[] ) const = 0;
+
+    virtual void tile2Rotate( double xyz[] ) const = 0;
+
+    virtual void tile3Rotate( double xyz[] ) const = 0;
+
+    virtual void tile4Rotate( double xyz[] ) const = 0;
+
+    virtual void tile5Rotate( double xyz[] ) const = 0;
+
+    virtual void tile0RotateInverse( double xyz[] ) const = 0;
+
+    virtual void tile1RotateInverse( double xyz[] ) const = 0;
+
+    virtual void tile2RotateInverse( double xyz[] ) const = 0;
+
+    virtual void tile3RotateInverse( double xyz[] ) const = 0;
+
+    virtual void tile4RotateInverse( double xyz[] ) const = 0;
+
+    virtual void tile5RotateInverse( double xyz[] ) const = 0;
+
     virtual idx_t tileFromXY( const double xy[] ) const = 0;
 
     virtual idx_t tileFromLonLat( const double lonlat[] ) const = 0;

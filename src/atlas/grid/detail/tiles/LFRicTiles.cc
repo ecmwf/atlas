@@ -45,7 +45,82 @@ void sphericalToCartesian(const double lonlat[], double xyz[] ) {
 
 // constructor
 LFRicCubedSphereTiles::LFRicCubedSphereTiles( const eckit::Parametrisation& ) {
-   std::cout << "LFRicCubedSphereTiles constructor" << std::endl;
+    std::cout << "LFRicCubedSphereTiles constructor" << std::endl;
+}
+
+void LFRicCubedSphereTiles::tile0Rotate( double xyz[] ) const {
+    // Face 0, no rotation.
+}
+
+void LFRicCubedSphereTiles::tile1Rotate( double xyz[] ) const {
+    static std::array<double,3> xyzTemp{xyz[0], xyz[1], xyz[2]};
+    xyz[0] = -xyzTemp[1];
+    xyz[1] =  xyzTemp[0];
+    xyz[2] =  xyzTemp[2];
+}
+
+void LFRicCubedSphereTiles::tile2Rotate( double xyz[] ) const {
+    static std::array<double,3> xyzTemp{xyz[0], xyz[1], xyz[2]};
+    xyz[0] = -xyzTemp[0];
+    xyz[1] =  xyzTemp[2];
+    xyz[2] =  xyzTemp[1];
+}
+void LFRicCubedSphereTiles::tile3Rotate( double xyz[] ) const {
+    static std::array<double,3> xyzTemp{xyz[0], xyz[1], xyz[2]};
+    xyz[0] = -xyzTemp[2];
+    xyz[1] = -xyzTemp[0];
+    xyz[2] =  xyzTemp[1];
+}
+void LFRicCubedSphereTiles::tile4Rotate( double xyz[] ) const {
+    static std::array<double,3> xyzTemp{xyz[0], xyz[1], xyz[2]};
+    xyz[0] = -xyzTemp[2];
+    xyz[1] =  xyzTemp[1];
+    xyz[2] =  xyzTemp[0];
+}
+void LFRicCubedSphereTiles::tile5Rotate( double xyz[] ) const {
+    static std::array<double,3> xyzTemp{xyz[0], xyz[1], xyz[2]};
+    xyz[0] = -xyzTemp[1];
+    xyz[1] =  xyzTemp[2];
+    xyz[2] = -xyzTemp[0];
+}
+
+void LFRicCubedSphereTiles::tile0RotateInverse( double xyz[] ) const {
+    // Face 0, no rotation.
+}
+
+void LFRicCubedSphereTiles::tile1RotateInverse( double xyz[] ) const {
+    static std::array<double,3> xyzTemp{xyz[0], xyz[1], xyz[2]};
+    xyz[0] =  xyzTemp[1];
+    xyz[1] = -xyzTemp[0];
+    xyz[2] =  xyzTemp[2];
+}
+
+void LFRicCubedSphereTiles::tile2RotateInverse( double xyz[] ) const {
+    static std::array<double,3> xyzTemp{xyz[0], xyz[1], xyz[2]};
+    xyz[0] = -xyzTemp[0];
+    xyz[1] =  xyzTemp[2];
+    xyz[2] =  xyzTemp[1];
+}
+
+void LFRicCubedSphereTiles::tile3RotateInverse( double xyz[] ) const {
+    static std::array<double,3> xyzTemp{xyz[0], xyz[1], xyz[2]};
+    xyz[0] = -xyzTemp[1];
+    xyz[1] =  xyzTemp[2];
+    xyz[2] = -xyzTemp[0];
+}
+
+void LFRicCubedSphereTiles::tile4RotateInverse( double xyz[] ) const {
+    static std::array<double,3> xyzTemp{xyz[0], xyz[1], xyz[2]};
+    xyz[0] =  xyzTemp[2];
+    xyz[1] =  xyzTemp[1];
+    xyz[2] = -xyzTemp[0];
+}
+
+void LFRicCubedSphereTiles::tile5RotateInverse( double xyz[] ) const {
+    static std::array<double,3> xyzTemp{xyz[0], xyz[1], xyz[2]};
+    xyz[0] = -xyzTemp[2];
+    xyz[1] = -xyzTemp[0];
+    xyz[2] =  xyzTemp[1];
 }
 
 idx_t LFRicCubedSphereTiles::tileFromXY( const double xy[] ) const  {

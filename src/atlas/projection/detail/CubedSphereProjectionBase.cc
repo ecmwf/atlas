@@ -37,111 +37,6 @@ static constexpr bool debug = true; // constexpr so compiler can optimize `if ( 
 static constexpr double deg2rad = util::Constants::degreesToRadians();
 static constexpr double rad2deg = util::Constants::radiansToDegrees();
 
-static bool is_tiny( const double& x ) {
-    constexpr double epsilon = 1.e-15;
-    return (std::abs(x) < epsilon );
-}
-
-static bool is_same( const double& x, const double& y, const double& tol = 1.0 ) {
-    constexpr double epsilon = 1.e-15;
-    return (std::abs(x-y) < epsilon * tol);
-}
-
-static double abs_diff( const double& x, const double& y ) {
-    return (std::abs(x-y));
-}
-
-// --- Functions for xy to latlon on each tile
-
-static void tile1Rotate( double xyz[] ) {
-    //  Face 1, no rotation.
-}
-static void tile2Rotate( double xyz[] ) {
-    //  Face 2: rotate -90.0 degrees about z axis
-    constexpr double angle = -M_PI / 2.0;
-    ProjectionUtilities::rotate3dZ(angle, xyz);
-}
-static void tile3Rotate( double xyz[] ) {
-    //  Face 3: rotate -90.0 degrees about z axis
-    //          rotate  90.0 degrees about x axis
-    constexpr double angle_z = -M_PI / 2.0;
-    ProjectionUtilities::rotate3dZ(angle_z, xyz);
-    constexpr double angle_x = M_PI / 2.0;
-    ProjectionUtilities::rotate3dX(angle_x, xyz);
-}
-static void tile4Rotate( double xyz[] ) {
-    //  Face 4: rotate -180.0 degrees about z axis
-    constexpr double angle = -M_PI;
-    ProjectionUtilities::rotate3dZ(angle, xyz);
-}
-static void tile5Rotate( double xyz[] ) {
-    //  Face 5: rotate 90.0 degrees about z axis
-    constexpr double angle = M_PI / 2.0;
-    ProjectionUtilities::rotate3dZ(angle, xyz);
-}
-static void tile6Rotate( double xyz[] ) {
-    // Face 6: rotate 90.0 degrees about y axis
-    //         rotate 90.0 degrees about z axis
-    constexpr double angle_y = M_PI / 2.0;
-    ProjectionUtilities::rotate3dY(angle_y, xyz);
-    constexpr double angle_z = M_PI / 2.0;
-    ProjectionUtilities::rotate3dZ(angle_z, xyz);
-}
-
-static const std::array<std::function<void(double[])>, 6> tileRotate = {
-    [](double xyz[]){tile1Rotate(xyz);},
-    [](double xyz[]){tile2Rotate(xyz);},
-    [](double xyz[]){tile3Rotate(xyz);},
-    [](double xyz[]){tile4Rotate(xyz);},
-    [](double xyz[]){tile5Rotate(xyz);},
-    [](double xyz[]){tile6Rotate(xyz);}
-};
-
-// Functions for latlon to xy on each tile
-static void tile1RotateInverse( double xyz[] ) {
-    //  Face 1, no rotation.
-}
-static void tile2RotateInverse( double xyz[] ) {
-    //  Face 2: rotate 90.0 degrees about z axis
-    constexpr double angle = M_PI / 2.0;
-    ProjectionUtilities::rotate3dZ(angle, xyz);
-}
-static void tile3RotateInverse( double xyz[] ) {
-    //  Face 3: rotate  90.0 degrees about x axis
-    //          rotate -90.0 degrees about z axis
-    constexpr double angle_x = -M_PI / 2.0;
-    ProjectionUtilities::rotate3dX(angle_x, xyz);
-    constexpr double angle_z = M_PI / 2.0;
-    ProjectionUtilities::rotate3dZ(angle_z, xyz);
-}
-static void tile4RotateInverse( double xyz[] ) {
-    //  Face 4: rotate  180.0 degrees about z axis
-    constexpr double angle = M_PI;
-    ProjectionUtilities::rotate3dZ(angle, xyz);
-}
-static void tile5RotateInverse( double xyz[] ) {
-    //  Face 5: rotate -90.0 degrees about y axis
-    constexpr double angle = - M_PI / 2.0;
-    ProjectionUtilities::rotate3dZ(angle, xyz);
-}
-static void tile6RotateInverse( double xyz[] ) {
-    //  Face 6: rotate -90.0 degrees about y axis
-    //          rotate -90.0 degrees about z axis
-    constexpr double angle_z = -M_PI / 2.;
-    ProjectionUtilities::rotate3dZ(angle_z, xyz);
-    constexpr double angle_y = -M_PI / 2.;
-    ProjectionUtilities::rotate3dY(angle_y, xyz);
-}
-
-static const std::array<std::function<void(double[])>,6> tileRotateInverse = {
-    [](double xyz[]){tile1RotateInverse(xyz);},
-    [](double xyz[]){tile2RotateInverse(xyz);},
-    [](double xyz[]){tile3RotateInverse(xyz);},
-    [](double xyz[]){tile4RotateInverse(xyz);},
-    [](double xyz[]){tile5RotateInverse(xyz);},
-    [](double xyz[]){tile6RotateInverse(xyz);},
-};
-
 static void schmidtTransform( double stretchFac, double targetLon,
                               double targetLat, double lonlat[]) {
 
@@ -226,6 +121,8 @@ CubedSphereProjectionBase::CubedSphereProjectionBase( const eckit::Parametrisati
   }
 }
 
+
+
 // -------------------------------------------------------------------------------------------------
 
 void CubedSphereProjectionBase::hash( eckit::Hash& h ) const {
@@ -254,7 +151,7 @@ void CubedSphereProjectionBase::xy2lonlat_post( double xyz[], const idx_t & t, d
     sphericalToCartesian(crd, xyz);
 
     // Perform tile specific rotation
-    tileRotate[t](xyz);
+    tileRotate(t, xyz);
 
     // Back to lonlat
     cartesianToSpherical(xyz, crd);
@@ -303,14 +200,14 @@ void CubedSphereProjectionBase::lonlat2xy_pre( double crd[], idx_t & t, double x
     t = CubedSphereTiles_.tileFromLonLat(crd);
 
     sphericalToCartesian(crd, xyz);
-    tileRotateInverse[t](xyz);
+    tileRotateInverse(t, xyz);
 
 }
 
 // -------------------------------------------------------------------------------------------------
 
-
 void CubedSphereProjectionBase::xy2alphabetat(const double xy[], idx_t& t, double ab[]) const {
+
     // xy is in degrees while ab is in radians
     // ab are the  (alpha, beta) coordinates and t is the tile index.
     static std::array<double,6> xOffset{0., 1., 1., 2., 3., 3.}; // could become constexpr with C++17
@@ -338,7 +235,29 @@ void CubedSphereProjectionBase::alphabetat2xy(const idx_t& t, const double ab[],
     CubedSphereTiles_.enforceXYdomain(xy);
 }
 
+void CubedSphereProjectionBase::tileRotate(const idx_t& t, double xyz[]) const  {
 
+    switch (t) {
+    case 0: CubedSphereTiles_.tile0Rotate(xyz); break;
+    case 1: CubedSphereTiles_.tile1Rotate(xyz); break;
+    case 2: CubedSphereTiles_.tile2Rotate(xyz); break;
+    case 3: CubedSphereTiles_.tile3Rotate(xyz); break;
+    case 4: CubedSphereTiles_.tile4Rotate(xyz); break;
+    case 5: CubedSphereTiles_.tile5Rotate(xyz); break;
+    }
+};
+
+void CubedSphereProjectionBase::tileRotateInverse(const idx_t& t, double xyz[]) const  {
+
+    switch (t) {
+    case 0: CubedSphereTiles_.tile0RotateInverse(xyz); break;
+    case 1: CubedSphereTiles_.tile1RotateInverse(xyz); break;
+    case 2: CubedSphereTiles_.tile2RotateInverse(xyz); break;
+    case 3: CubedSphereTiles_.tile3RotateInverse(xyz); break;
+    case 4: CubedSphereTiles_.tile4RotateInverse(xyz); break;
+    case 5: CubedSphereTiles_.tile5RotateInverse(xyz); break;
+    }
+};
 
 // -------------------------------------------------------------------------------------------------
 

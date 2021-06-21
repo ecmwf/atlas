@@ -67,6 +67,82 @@ FV3CubedSphereTiles::FV3CubedSphereTiles( const eckit::Parametrisation& ) {
   std::cout << "FV3CubedSphereTiles constructor" << std::endl;
 }
 
+void FV3CubedSphereTiles::tile0Rotate( double xyz[] ) const {
+    //  Face 0, no rotation.
+}
+
+void FV3CubedSphereTiles::tile1Rotate( double xyz[] ) const {
+    //  Face 1: rotate -90.0 degrees about z axis
+    constexpr double angle = -M_PI / 2.0;
+    ProjectionUtilities::rotate3dZ(angle, xyz);
+}
+
+void FV3CubedSphereTiles::tile2Rotate( double xyz[] ) const {
+    //  Face 2: rotate -90.0 degrees about z axis
+    //          rotate  90.0 degrees about x axis
+    constexpr double angle_z = -M_PI / 2.0;
+    ProjectionUtilities::rotate3dZ(angle_z, xyz);
+    constexpr double angle_x = M_PI / 2.0;
+    ProjectionUtilities::rotate3dX(angle_x, xyz);
+}
+void FV3CubedSphereTiles::tile3Rotate( double xyz[] ) const {
+    //  Face 3: rotate -180.0 degrees about z axis
+    constexpr double angle = -M_PI;
+    ProjectionUtilities::rotate3dZ(angle, xyz);
+}
+void FV3CubedSphereTiles::tile4Rotate( double xyz[] ) const {
+    //  Face 4: rotate 90.0 degrees about z axis
+    constexpr double angle = M_PI / 2.0;
+    ProjectionUtilities::rotate3dZ(angle, xyz);
+}
+void FV3CubedSphereTiles::tile5Rotate( double xyz[] ) const {
+    // Face 5: rotate 90.0 degrees about y axis
+    //         rotate 90.0 degrees about z axis
+    constexpr double angle_y = M_PI / 2.0;
+    ProjectionUtilities::rotate3dY(angle_y, xyz);
+    constexpr double angle_z = M_PI / 2.0;
+    ProjectionUtilities::rotate3dZ(angle_z, xyz);
+}
+
+void FV3CubedSphereTiles::tile0RotateInverse( double xyz[] ) const {
+    //  Face 0, no rotation.
+}
+
+void FV3CubedSphereTiles::tile1RotateInverse( double xyz[] ) const {
+    //  Face 1: rotate 90.0 degrees about z axis
+    constexpr double angle = M_PI / 2.0;
+    ProjectionUtilities::rotate3dZ(angle, xyz);
+}
+
+void FV3CubedSphereTiles::tile2RotateInverse( double xyz[] ) const {
+    //  Face 2: rotate  90.0 degrees about x axis
+    //          rotate -90.0 degrees about z axis
+    constexpr double angle_x = -M_PI / 2.0;
+    ProjectionUtilities::rotate3dX(angle_x, xyz);
+    constexpr double angle_z = M_PI / 2.0;
+    ProjectionUtilities::rotate3dZ(angle_z, xyz);
+}
+
+void FV3CubedSphereTiles::tile3RotateInverse( double xyz[] ) const {
+    //  Face 3: rotate  180.0 degrees about z axis
+    constexpr double angle = M_PI;
+    ProjectionUtilities::rotate3dZ(angle, xyz);
+}
+
+void FV3CubedSphereTiles::tile4RotateInverse( double xyz[] ) const {
+    //  Face 4: rotate -90.0 degrees about y axis
+    constexpr double angle = - M_PI / 2.0;
+    ProjectionUtilities::rotate3dZ(angle, xyz);
+}
+
+void FV3CubedSphereTiles::tile5RotateInverse( double xyz[] ) const {
+    //  Face 5: rotate -90.0 degrees about y axis
+    //          rotate -90.0 degrees about z axis
+    constexpr double angle_z = -M_PI / 2.;
+    ProjectionUtilities::rotate3dZ(angle_z, xyz);
+    constexpr double angle_y = -M_PI / 2.;
+    ProjectionUtilities::rotate3dY(angle_y, xyz);
+}
 
 idx_t FV3CubedSphereTiles::tileFromXY( const double xy[] ) const  {
 
