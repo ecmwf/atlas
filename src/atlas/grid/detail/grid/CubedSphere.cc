@@ -60,6 +60,12 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
   // Copy members
   projection_ = projection ? projection : Projection();
 
+
+  //using atlas::projection::detail::CubedSphereProjectionBase;
+  //ab2xyOffsets_ =
+  //    dynamic_cast<const CubedSphereProjectionBase &>(projection_).getCubedSphereTiles().ab2xyOffsets();
+
+
   // Domain
   domain_ = computeDomain();
 
@@ -167,7 +173,6 @@ void CubedSphere::xy2xyt(const double xy[], double xyt[]) const {
           + yOffset[static_cast<size_t>(xyt[2])];
 
     using atlas::projection::detail::CubedSphereProjectionBase;
-    atlas::CubedSphereTiles tiles = dynamic_cast<const CubedSphereProjectionBase &>(projection_).getCubedSphereTiles();
     xyt[2] =
         dynamic_cast<const CubedSphereProjectionBase &>(projection_).getCubedSphereTiles().tileFromXY(xy);
 }
@@ -177,12 +182,26 @@ void CubedSphere::xyt2xy(const double xyt[], double xy[]) const {
     // xy is in degrees
     // while xyt is in number of grid points
     // (alpha, beta) and tiles.
-    static std::array<double, 6> xOffsetDeg{0., 90., 90., 180., 270., 270.};
-    static std::array<double, 6> yOffsetDeg{-45., -45., 45., -45., -45., -135.};
+
+    // Willem - ideally I would like to be able to get ab2xyOffsetsfrom the tile class that is imbedded into
+    // CubedSphereProjection base.  However I get a bad cast when I try
+    //   using atlas::projection::detail::CubedSphereProjectionBase;
+    //   std::array<std::array<double, 6>,2> ab2xyOffsets =
+    //    dynamic_cast<const CubedSphereProjectionBase &>(projection_).getCubedSphereTiles().ab2xyOffsets();
+    //
+    // Note that when I change the grid iterator in this class to be more flexible, I intend to
+    //    replace xOffsetIndex ,yOffsetIndex.
+    std::array<std::array<double, 6>,2> ab2xyOffsets =
+        { {  {0., 90., 90., 180., 270.,  270.},
+             {-45., -45., 45., -45., -45., -135.} } };
 
     double N = static_cast<double>(N_);
     double N_2 = static_cast<double>(2 * N_);
     double N_3 = static_cast<double>(3 * N_);
+
+    // Note that the below offsets will be replaced by xy2abOffsets
+    // when the iterator has been made more flexible to take account of
+    // panelling
     std::array<double, 6> xOffsetIndex{0, N, N, N_2, N_3, N_3};
     std::array<double, 6> yOffsetIndex{N, N, N_2, N,  N, 0};
 
@@ -190,8 +209,8 @@ void CubedSphere::xyt2xy(const double xyt[], double xy[]) const {
      (xyt[0] - xOffsetIndex[static_cast<size_t>(xyt[2])])/N;
     double normalisedY =
      (xyt[1] - yOffsetIndex[static_cast<size_t>(xyt[2])])/N;
-    xy[XX] = normalisedX * 90. + xOffsetDeg[xyt[2]];
-    xy[YY] = normalisedY * 90. + yOffsetDeg[xyt[2]];
+    xy[XX] = normalisedX * 90. + ab2xyOffsets[LON][xyt[2]];
+    xy[YY] = normalisedY * 90. + ab2xyOffsets[LAT][xyt[2]];
 }
 
 // ------------------------------------------

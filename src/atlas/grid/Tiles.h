@@ -56,6 +56,10 @@ public:
     /// Type of the cubed-sphere tiles:
     std::string type() const;
 
+    std::array<std::array<double,6>,2> xy2abOffsets() const;
+
+    std::array<std::array<double,6>,2> ab2xyOffsets() const;
+
     void tile0Rotate( double xyz[] ) const;
 
     void tile1Rotate( double xyz[] ) const;

@@ -48,6 +48,16 @@ LFRicCubedSphereTiles::LFRicCubedSphereTiles( const eckit::Parametrisation& ) {
     std::cout << "LFRicCubedSphereTiles constructor" << std::endl;
 }
 
+std::array<std::array<double,6>,2> LFRicCubedSphereTiles::xy2abOffsets() const {
+    return { {  {0., 1., 2., 3., 0., 0.},
+                {1., 1., 1., 1., 2., 0.} } };
+}
+
+std::array<std::array<double,6>,2> LFRicCubedSphereTiles::ab2xyOffsets() const {
+    return { { {0.,  90., 180., 270.,  0.,    0.},
+             {-45., -45., -45., -45., 45., -135.} } };
+}
+
 void LFRicCubedSphereTiles::tile0Rotate( double xyz[] ) const {
     // Face 0, no rotation.
 }

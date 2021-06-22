@@ -210,14 +210,15 @@ void CubedSphereProjectionBase::xy2alphabetat(const double xy[], idx_t& t, doubl
 
     // xy is in degrees while ab is in radians
     // ab are the  (alpha, beta) coordinates and t is the tile index.
-    static std::array<double,6> xOffset{0., 1., 1., 2., 3., 3.}; // could become constexpr with C++17
-    static std::array<double,6> yOffset{1., 1., 2., 1., 1., 0.};
+
+   // static std::array<double,6> xOffset{0., 1., 1., 2., 3., 3.}; // could become constexpr with C++17
+   // static std::array<double,6> yOffset{1., 1., 2., 1., 1., 0.};
 
     t = CubedSphereTiles_.tileFromXY(xy);
     double normalisedX = xy[XX]/90.;
     double normalisedY = (xy[YY] + 135.)/90.;
-    ab[LON] = (normalisedX - xOffset[t])* M_PI_2 - M_PI_4;
-    ab[LAT] = (normalisedY - yOffset[t])* M_PI_2 - M_PI_4;
+    ab[LON] = (normalisedX - CubedSphereTiles_.xy2abOffsets()[XX][t])* M_PI_2 - M_PI_4;
+    ab[LAT] = (normalisedY - CubedSphereTiles_.xy2abOffsets()[YY][t])* M_PI_2 - M_PI_4;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -225,12 +226,10 @@ void CubedSphereProjectionBase::xy2alphabetat(const double xy[], idx_t& t, doubl
 void CubedSphereProjectionBase::alphabetat2xy(const idx_t& t, const double ab[], double xy[]) const {
     // xy is in degrees while ab is in radians
     // (alpha, beta) and tiles.
-    static std::array<double,6> xOffset{0., 90., 90., 180., 270., 270.}; // could become constexpr with C++17
-    static std::array<double,6> yOffset{-45., -45., 45., -45., -45., -135.};
     double normalisedX = (ab[LON] + M_PI_4)/M_PI_2;
     double normalisedY = (ab[LAT] + M_PI_4)/M_PI_2;
-    xy[XX] = normalisedX * 90. + xOffset[t];
-    xy[YY] = normalisedY * 90. + yOffset[t];
+    xy[XX] = normalisedX * 90. + CubedSphereTiles_.ab2xyOffsets()[LON][t];
+    xy[YY] = normalisedY * 90. + CubedSphereTiles_.ab2xyOffsets()[LAT][t];
 
     CubedSphereTiles_.enforceXYdomain(xy);
 }

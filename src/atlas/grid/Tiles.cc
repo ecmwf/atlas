@@ -41,6 +41,14 @@ std::string atlas::CubedSphereTiles::type() const {
     return get()->type();
 }
 
+std::array<std::array<double,6>,2> CubedSphereTiles::xy2abOffsets() const {
+    return get()->xy2abOffsets();
+}
+
+std::array<std::array<double,6>,2> CubedSphereTiles::ab2xyOffsets() const {
+    return get()->ab2xyOffsets();
+}
+
 void CubedSphereTiles::tile0Rotate( double xyz[] ) const {
     return get()->tile0Rotate(xyz);
 }

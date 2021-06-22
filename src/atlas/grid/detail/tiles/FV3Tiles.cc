@@ -67,6 +67,16 @@ FV3CubedSphereTiles::FV3CubedSphereTiles( const eckit::Parametrisation& ) {
   std::cout << "FV3CubedSphereTiles constructor" << std::endl;
 }
 
+std::array<std::array<double,6>,2> FV3CubedSphereTiles::xy2abOffsets() const {
+    return { {  {0., 1., 1., 2., 3., 3.},
+                {1., 1., 2., 1., 1., 0.} } };
+}
+
+std::array<std::array<double,6>,2> FV3CubedSphereTiles::ab2xyOffsets() const {
+    return { {  {0., 90., 90., 180., 270.,  270.},
+             {-45., -45., 45., -45., -45., -135.} } };
+}
+
 void FV3CubedSphereTiles::tile0Rotate( double xyz[] ) const {
     //  Face 0, no rotation.
 }

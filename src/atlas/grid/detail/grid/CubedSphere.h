@@ -398,7 +398,6 @@ public:
       return ijt;
     }
 
-
     if (ijt[0] == N_-1 && ijt[1] == N_-1 && ijt[2] == nTiles_-1) {  // Final point
       ijt[0] = N_;
       ijt[1] = N_;
@@ -472,6 +471,7 @@ protected:
 
 private:
   std::string name_ = {"cubedsphere"};
+//  std::array<std::array<double,6>,2> ab2xyOffsets_;
 };
 
 

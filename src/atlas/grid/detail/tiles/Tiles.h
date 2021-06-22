@@ -36,6 +36,10 @@ public:
 
     virtual std::string type() const = 0;
 
+    virtual std::array<std::array<double,6>,2> xy2abOffsets() const = 0;
+
+    virtual std::array<std::array<double,6>,2> ab2xyOffsets() const = 0;
+
     virtual void tile0Rotate( double xyz[] ) const = 0;
 
     virtual void tile1Rotate( double xyz[] ) const = 0;
