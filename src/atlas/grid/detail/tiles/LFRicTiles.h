@@ -27,6 +27,10 @@ public:
 
     virtual std::string type() const override { return static_type(); }
 
+    virtual std::array<std::array<double,6>,2> xy2abOffsets() const override;
+
+    virtual std::array<std::array<double,6>,2> ab2xyOffsets() const override;
+
     virtual void tile0Rotate( double xyz[] ) const override;
 
     virtual void tile1Rotate( double xyz[] ) const override;
