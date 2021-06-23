@@ -34,9 +34,6 @@ namespace {
 
 static constexpr bool debug = true; // constexpr so compiler can optimize `if ( debug ) { ... }` out
 
-static constexpr double deg2rad = ::atlas::util::Constants::degreesToRadians();
-static constexpr double rad2deg = ::atlas::util::Constants::radiansToDegrees();
-
 using atlas::projection::detail::ProjectionUtilities;
 
 static bool is_tiny( const double& x ) {
@@ -54,8 +51,6 @@ void sphericalToCartesian(const double lonlat[], double xyz[] ) {
     constexpr double radius = 1.;
     ProjectionUtilities::sphericalToCartesian(lonlat, xyz, crd_sys, radius);
 }
-
-
 
 }
 

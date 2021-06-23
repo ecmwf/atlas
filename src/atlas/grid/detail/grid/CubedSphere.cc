@@ -50,7 +50,7 @@ std::string CubedSphere::static_type() {
 }
 
 std::string CubedSphere::name() const {
-  return name_;
+    return name_;
 }
 
 CubedSphere::CubedSphere( int N, Projection p ) : CubedSphere( CubedSphere::static_type(), N, p ) {}
@@ -174,7 +174,7 @@ void CubedSphere::xy2xyt( const double xy[], double xyt[] ) const {
 
     using atlas::projection::detail::CubedSphereProjectionBase;
     xyt[2] =
-        dynamic_cast<const CubedSphereProjectionBase &>(projection_).getCubedSphereTiles().tileFromXY(xy);
+        dynamic_cast<const CubedSphereProjectionBase &>( projection_ ).getCubedSphereTiles().tileFromXY(xy);
 }
 
 // Convert from xyt space into continuous xy space.
@@ -191,13 +191,13 @@ void CubedSphere::xyt2xy( const double xyt[], double xy[] ) const {
     //
     // Note that when I change the grid iterator in this class to be more flexible, I intend to
     //    replace xOffsetIndex ,yOffsetIndex.
-    std::array<std::array<double, 6>,2> ab2xyOffsets =
+    static std::array<std::array<double, 6>,2> ab2xyOffsets =
         { {  {0., 90., 90., 180., 270.,  270.},
              {-45., -45., 45., -45., -45., -135.} } };
 
-    double N = static_cast<double>(N_);
-    double N_2 = static_cast<double>(2 * N_);
-    double N_3 = static_cast<double>(3 * N_);
+    double N = static_cast<double>( N_ );
+    double N_2 = static_cast<double>( 2 * N_ );
+    double N_3 = static_cast<double>( 3 * N_ );
 
     // Note that the below offsets will be replaced by xy2abOffsets
     // when the iterator has been made more flexible to take account of

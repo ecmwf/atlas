@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <array>
 #include <string>
 
 #include "atlas/grid/detail/tiles/Tiles.h"
@@ -63,9 +64,7 @@ public:
 
     virtual void print( std::ostream& ) const override;
 
-
 private:
-
 
 };
 

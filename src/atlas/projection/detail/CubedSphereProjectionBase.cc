@@ -221,9 +221,6 @@ void CubedSphereProjectionBase::xy2alphabetat( const double xy[], idx_t& t, doub
     // xy is in degrees while ab is in radians
     // ab are the  (alpha, beta) coordinates and t is the tile index.
 
-   // static std::array<double,6> xOffset{0., 1., 1., 2., 3., 3.}; // could become constexpr with C++17
-   // static std::array<double,6> yOffset{1., 1., 2., 1., 1., 0.};
-
     t = CubedSphereTiles_.tileFromXY(xy);
     double normalisedX = xy[XX]/90.;
     double normalisedY = (xy[YY] + 135.)/90.;
@@ -254,7 +251,7 @@ void CubedSphereProjectionBase::tileRotate(const idx_t& t, double xyz[]) const  
     case 4: CubedSphereTiles_.tile4Rotate(xyz); break;
     case 5: CubedSphereTiles_.tile5Rotate(xyz); break;
     }
-};
+}
 
 void CubedSphereProjectionBase::tileRotateInverse(const idx_t& t, double xyz[]) const  {
 
@@ -266,7 +263,7 @@ void CubedSphereProjectionBase::tileRotateInverse(const idx_t& t, double xyz[]) 
     case 4: CubedSphereTiles_.tile4RotateInverse(xyz); break;
     case 5: CubedSphereTiles_.tile5RotateInverse(xyz); break;
     }
-};
+}
 
 // -------------------------------------------------------------------------------------------------
 

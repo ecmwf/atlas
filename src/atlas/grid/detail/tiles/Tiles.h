@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include <array>
 #include <string>
-#include <vector>
 
 #include "atlas/library/config.h"
 #include "atlas/util/Config.h"

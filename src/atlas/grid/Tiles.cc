@@ -8,8 +8,6 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include <iostream>
-
 #include "atlas/grid/Tiles.h"
 #include "atlas/grid/detail/tiles/Tiles.h"
 #include "atlas/grid/detail/tiles/FV3Tiles.h"
@@ -23,8 +21,6 @@ namespace atlas {
 
 CubedSphereTiles::CubedSphereTiles( const eckit::Parametrisation& p ) : Handle(
                 atlas::cubedspheretiles::CubedSphereTiles::create( p ) ) {
-
-   std::cout << "grid/Tiles.h CubedSphereTiles constr"  << std::endl;
 }
 
 FV3CubedSphereTiles::FV3CubedSphereTiles( const CubedSphereTiles& cubedspheretiles ) :

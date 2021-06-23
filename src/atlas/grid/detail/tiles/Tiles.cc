@@ -9,7 +9,6 @@
  */
 
 #include <string>
-#include <iostream>
 
 #include "eckit/utils/MD5.h"
 
@@ -31,17 +30,13 @@ const CubedSphereTiles* CubedSphereTiles::create() {
 const CubedSphereTiles* CubedSphereTiles::create( const eckit::Parametrisation& p ) {
     std::string CubedSphereTiles_type;
 
-    std::cout << "tiles/Tiles.cc within create " << std::endl;
     if ( p.get( "tile type", CubedSphereTiles_type ) ) {
-        std::cout << "tiles/Tiles.cc tile type = "  << CubedSphereTiles_type << std::endl;
         return CubedSphereTilesFactory::build( CubedSphereTiles_type, p );
     } else {
         return create();
     }
 
 }
-
-
 
 
 }  // namespace cubedspheretiles

@@ -140,8 +140,6 @@ grid/StructuredPartitionPolygon.cc
 grid/Tiles.h
 grid/Tiles.cc
 
-
-
 grid/detail/grid/CubedSphere.cc
 grid/detail/grid/CubedSphere.h
 grid/detail/grid/GridBuilder.h
@@ -213,8 +211,6 @@ grid/detail/partitioner/RegularBandsPartitioner.cc
 grid/detail/partitioner/RegularBandsPartitioner.h
 grid/detail/partitioner/SerialPartitioner.cc
 grid/detail/partitioner/SerialPartitioner.h
-
-
 
 grid/detail/spacing/Spacing.cc
 grid/detail/spacing/Spacing.h
