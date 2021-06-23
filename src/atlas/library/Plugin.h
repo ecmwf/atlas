@@ -21,6 +21,8 @@ public:
     /// @param [in] name    Plugin name
     /// @param [in] libname Library name as will be used in file system
     explicit Plugin( const std::string& name, const std::string& libname = "" );
+
+    virtual ~Plugin();
 };
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -133,7 +133,8 @@ private:
     int N_;
     std::vector<double> bands_;
     std::vector<int> sectors_;
-    enum class Coordinates {
+    enum class Coordinates
+    {
         XY,
         LONLAT,
     };

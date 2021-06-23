@@ -17,11 +17,11 @@ namespace projection {
 namespace detail {
 
 class CubedSphereEquiAnglProjection final : public CubedSphereProjectionBase {
-  public:
+public:
     // constructor
     CubedSphereEquiAnglProjection( const eckit::Parametrisation& );
 
-    virtual ~CubedSphereEquiAnglProjection(){}
+    virtual ~CubedSphereEquiAnglProjection() {}
 
     // projection name
     static std::string static_type() { return "cubedsphere_equiangular"; }

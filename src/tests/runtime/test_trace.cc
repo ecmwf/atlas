@@ -8,6 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <chrono>
+#include <thread>
+
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/Trace.h"
 #include "tests/AtlasTestEnvironment.h"
@@ -16,12 +19,19 @@
 namespace atlas {
 namespace test {
 
+static void work() {
+    std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) );
+}
+
+
 CASE( "test elapsed" ) {
     auto trace = Trace( Here() );
 
     EXPECT( trace.running() );
 
     EXPECT( trace.elapsed() == 0. );
+
+    work();
 
     trace.pause();
 
@@ -32,6 +42,8 @@ CASE( "test elapsed" ) {
     EXPECT( trace.elapsed() == elapsed );
 
     trace.resume();
+
+    work();
 
     EXPECT( trace.running() );
 
@@ -44,6 +56,8 @@ CASE( "test trace OpenMP" ) {
     atlas_omp_parallel_for( int i = 0; i < 10; ++i ) {
         auto trace = Trace( Here(), "loop" );
         if ( ATLAS_HAVE_OMP ) {
+            work();
+
             trace.stop();
             if ( atlas_omp_get_thread_num() > 0 ) {
                 EXPECT( trace.elapsed() == 0. );

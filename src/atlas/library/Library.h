@@ -75,9 +75,13 @@ public:
     Library();
 
     void registerPlugin( eckit::system::Plugin& );
+    void deregisterPlugin( eckit::system::Plugin& );
     const std::vector<eckit::system::Plugin*>& plugins() { return plugins_; }
 
     std::string cachePath() const;
+    std::string dataPath() const;
+
+    void registerDataPath( const std::string& );
 
 protected:
     virtual const void* addr() const override;
@@ -96,6 +100,7 @@ protected:
 
 private:
     std::vector<eckit::system::Plugin*> plugins_;
+    std::vector<std::string> data_paths_;
 };
 
 using Atlas = Library;

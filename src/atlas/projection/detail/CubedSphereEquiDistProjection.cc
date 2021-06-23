@@ -26,80 +26,74 @@ namespace atlas {
 namespace projection {
 namespace detail {
 
-static constexpr bool debug = false; // constexpr so compiler can optimize `if ( debug ) { ... }` out
+static constexpr bool debug = false;  // constexpr so compiler can optimize `if ( debug ) { ... }` out
 
 // -------------------------------------------------------------------------------------------------
 
-CubedSphereEquiDistProjection::CubedSphereEquiDistProjection( const eckit::Parametrisation& params )
-    : CubedSphereProjectionBase(params) {
-}
+CubedSphereEquiDistProjection::CubedSphereEquiDistProjection( const eckit::Parametrisation& params ) :
+    CubedSphereProjectionBase( params ) {}
 
 // -------------------------------------------------------------------------------------------------
 
 void CubedSphereEquiDistProjection::lonlat2xy( double crd[] ) const {
-
-    if( debug ) {
+    if ( debug ) {
         Log::info() << "equidist lonlat2xy start : lonlat = " << crd[LON] << " " << crd[LAT] << std::endl;
     }
     idx_t t;
-    double ab[2]; // alpha-beta coordinate
-    double xyz[3]; // on Cartesian grid
+    double ab[2];   // alpha-beta coordinate
+    double xyz[3];  // on Cartesian grid
 
-    CubedSphereProjectionBase::lonlat2xy_pre(crd, t, xyz);
+    CubedSphereProjectionBase::lonlat2xy_pre( crd, t, xyz );
 
     //now should be tile 0 - now calculate (alpha, beta) in radians.
     // should be between - pi/4 and pi/4
-    ab[0] =   M_PI_4 * xyz[YY] / xyz[XX] ;
-    ab[1] = - M_PI_4 * xyz[ZZ] / xyz[XX];
+    ab[0] = M_PI_4 * xyz[YY] / xyz[XX];
+    ab[1] = -M_PI_4 * xyz[ZZ] / xyz[XX];
 
-    if( debug ) {
-        Log::info() << "equidist lonlat2xy xyz ab : "
-                     << xyz[0] << " " << xyz[1]  << " " << xyz[2] << " "
-                     << ab[0] << " " << ab[1] << std::endl;
+    if ( debug ) {
+        Log::info() << "equidist lonlat2xy xyz ab : " << xyz[0] << " " << xyz[1] << " " << xyz[2] << " " << ab[0] << " "
+                    << ab[1] << std::endl;
     }
 
-    CubedSphereProjectionBase::alphabetat2xy(t, ab, crd);
+    CubedSphereProjectionBase::alphabetat2xy( t, ab, crd );
 
-    if( debug ) {
+    if ( debug ) {
         Log::info() << "equidist lonlat2xy end : xy = " << crd[LON] << " " << crd[LAT] << std::endl;
     }
-
 }
 
 
 // -------------------------------------------------------------------------------------------------
 
 void CubedSphereEquiDistProjection::xy2lonlat( double crd[] ) const {
-
-    static const double rsq3 = 1.0/sqrt(3.0);
+    static const double rsq3 = 1.0 / sqrt( 3.0 );
     double xyz[3];
-    double ab[2]; // alpha-beta coordinate
-    idx_t t;  // tile index
+    double ab[2];  // alpha-beta coordinate
+    idx_t t;       // tile index
 
     // calculate xy (in degrees) to alpha beta (in radians) and t - tile index.
-    CubedSphereProjectionBase::xy2alphabetat(crd, t, ab);
+    CubedSphereProjectionBase::xy2alphabetat( crd, t, ab );
 
-    if( debug ) {
-        Log::info() << "equidist xy2lonlat:: crd t ab  : "  << crd[LON] << " " << crd[1]
-                    << " " << t << " " << ab[0] << " " << ab[1] << std::endl;
+    if ( debug ) {
+        Log::info() << "equidist xy2lonlat:: crd t ab  : " << crd[LON] << " " << crd[1] << " " << t << " " << ab[0]
+                    << " " << ab[1] << std::endl;
     }
 
     xyz[0] = -rsq3;
     xyz[1] = -rsq3 * ab[0] / M_PI_4;
     xyz[2] = -rsq3 * ab[1] / M_PI_4;
 
-    CubedSphereProjectionBase::xy2lonlat_post(xyz, t, crd);
+    CubedSphereProjectionBase::xy2lonlat_post( xyz, t, crd );
 
-    if( debug ) {
-        Log::info() << "end of equidistant xy2lonlat lonlat = "
-                    << crd[LON] << " " << crd[LAT] << std::endl;
+    if ( debug ) {
+        Log::info() << "end of equidistant xy2lonlat lonlat = " << crd[LON] << " " << crd[LAT] << std::endl;
     }
 }
 
 
 // -------------------------------------------------------------------------------------------------
 
-ProjectionImpl::Jacobian CubedSphereEquiDistProjection::jacobian(const PointLonLat& ) const {
+ProjectionImpl::Jacobian CubedSphereEquiDistProjection::jacobian( const PointLonLat& ) const {
     ATLAS_NOTIMPLEMENTED;
 }
 
@@ -119,14 +113,13 @@ CubedSphereEquiDistProjection::Spec CubedSphereEquiDistProjection::spec() const 
 void CubedSphereEquiDistProjection::hash( eckit::Hash& h ) const {
     // Add to hash
     h.add( static_type() );
-    CubedSphereProjectionBase::hash(h);
+    CubedSphereProjectionBase::hash( h );
 }
 
 // -------------------------------------------------------------------------------------------------
 
 namespace {
-static ProjectionBuilder<CubedSphereEquiDistProjection>
-register_1( CubedSphereEquiDistProjection::static_type() );
+static ProjectionBuilder<CubedSphereEquiDistProjection> register_1( CubedSphereEquiDistProjection::static_type() );
 }
 
 }  // namespace detail

@@ -82,26 +82,25 @@ CASE ("test_tiles") {
 }
 
 CASE( "test_projection_cubedsphere_xy_latlon" ) {
+    int resolution( 12 );
+    std::vector<std::string> grid_names{"CS-EA-" + std::to_string( resolution ),
+                                        "CS-ED-" + std::to_string( resolution )};
 
-    int resolution(12);
-    std::vector<std::string> grid_names{"CS-EA-" + std::to_string(resolution),
-                                        "CS-ED-" + std::to_string(resolution)};
-
-    for (std::string & s : grid_names) {
-        Grid g{ s };
+    for ( std::string& s : grid_names ) {
+        Grid g{s};
         for ( auto crd : g.lonlat() ) {
-            Point2 lonlat { crd };
+            Point2 lonlat{crd};
             g->projection().lonlat2xy( crd );
             g->projection().xy2lonlat( crd );
             // except for point lonlat (90,82.5) on compiler pgc++
             // we have a maximum error tolerance of 1e-11
-            EXPECT_APPROX_EQ(lonlat, crd, 1e-6);
+            EXPECT_APPROX_EQ( lonlat, crd, 1e-6 );
         }
         for ( auto crd : g.xy() ) {
-            Point2 xy { crd };
+            Point2 xy{crd};
             g->projection().xy2lonlat( crd );
             g->projection().lonlat2xy( crd );
-            EXPECT_APPROX_EQ(xy, crd, 1e-6);
+            EXPECT_APPROX_EQ( xy, crd, 1e-6 );
         }
     }
 }
