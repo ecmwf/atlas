@@ -24,7 +24,7 @@ namespace atlas {
       // I expect this will be replaced by some more aggressive tests.
 
       // Set grid.
-      const auto grid = atlas::Grid("CS-EA-24");
+      const auto grid = atlas::Grid("CS-EA-6");
 
       atlas::Log::info() << grid->type() << std::endl;
       atlas::Log::info() << grid.size() << std::endl;
@@ -36,20 +36,36 @@ namespace atlas {
 
       // Set functionspace
       auto functionSpace = atlas::functionspace::NodeColumns(mesh,
-        atlas::util::Config("levels", 1) | atlas::util::Config("periodic_points", true));
+        atlas::util::Config("levels", 2));
 
       // Set field
-      auto field = functionSpace.createField<idx_t>(atlas::option::name("indices"));
-      auto fieldView = atlas::array::make_view<idx_t, 2>( field );
+      auto field = functionSpace.createField<double>(atlas::option::name("test"));
+      auto fieldView = atlas::array::make_view<double, 2>( field );
+
+
+      auto xyIt = grid.xy().begin();
 
       for (idx_t i = 0; i < fieldView.shape()[0]; ++i) {
-        fieldView(i, 0) = i;
+
+        auto xy = *xyIt;
+
+        if (xyIt != grid.xy().end()) {
+          fieldView(i, 0) = xy.x();
+          fieldView(i, 1) = xy.y();
+
+          ++xyIt;
+          }
+        else {
+          fieldView(i, 0) = 0.;
+          fieldView(i, 1) = 0.;
+          }
+
       }
 
       // Set gmsh config.
-      auto gmshConfigXy = atlas::util::Config("coordinates", "xy");
-      auto gmshConfigXyz = atlas::util::Config("coordinates", "xyz");
-      auto gmshConfigLonLat = atlas::util::Config("coordinates", "lonlat");
+      auto gmshConfigXy = atlas::util::Config("coordinates", "xy") | atlas::util::Config("ghost", false);
+      auto gmshConfigXyz = atlas::util::Config("coordinates", "xyz") | atlas::util::Config("ghost", false);
+      auto gmshConfigLonLat = atlas::util::Config("coordinates", "lonlat") | atlas::util::Config("ghost", false);
 
       // Set source gmsh object.
       const auto gmshXy =

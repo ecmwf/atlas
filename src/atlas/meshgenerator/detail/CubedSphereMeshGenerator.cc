@@ -95,7 +95,7 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
 
   // Construct mesh nodes
   // --------------------
-  mesh.nodes().resize( nnodes );
+  mesh.nodes().resize( nnodes_all );
   mesh::Nodes& nodes = mesh.nodes();
   auto xy         = array::make_view<double, 2>( nodes.xy() );
   auto lonlat     = array::make_view<double, 2>( nodes.lonlat() );
@@ -103,12 +103,11 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
   auto remote_idx = array::make_indexview<idx_t, 1>( nodes.remote_index() );
   auto part       = array::make_view<int, 1>( nodes.partition() );
   auto ghost      = array::make_view<int, 1>( nodes.ghost() );
-  //auto flags      = array::make_view<int, 1>( nodes.flags() );
+  auto flags      = array::make_view<int, 1>( nodes.flags() );
+
+  std::vector<idx_t> local_idx(static_cast<size_t>(nnodes_all));
 
   int inode = 0;
-  double xy_[3];
-  double lonlat_[2];
-
   int it;
   int ix;
   int iy;
@@ -133,76 +132,57 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
       }
   }
 
+  auto addConcreteNode = [&](idx_t it, idx_t ix, idx_t iy) {
+
+    // Get xy from global xy grid array
+
+    double xy_[3];
+    csgrid.xy( ix, iy, it, xy_ );
+
+    idx_t n = NodeArray(it, ix, iy);
+
+    xy( n, XX ) = xy_[XX];
+    xy( n, YY ) = xy_[YY];
+
+    // Get lonlat from global lonlat array
+    double lonlat_[2];
+    csgrid.lonlat( ix, iy, it, lonlat_ );
+
+    lonlat( n, LON ) = lonlat_[LON];
+    lonlat( n, LAT ) = lonlat_[LAT];
+
+    // Is not ghost node
+    mesh::Nodes::Topology::reset(flags(n));
+    ghost(n) = 0;
+
+    glb_idx(n) = n+1;
+    remote_idx(n) = n;
+    part(n) = distribution.partition(n);
+    inode++;
+
+    return;
+
+    };
 
   for ( it = 0; it < nTiles; it++ ) {               // 0, 1, 2, 3, 4, 5
     for ( ix = 0; ix < N; ix++ ) {        // 0, 1, ..., N-1
       for ( iy = 0; iy < N; iy++ ) {      // 0, 1, ..., N-1
 
-        // Get xy from global xy grid array
-        csgrid.xy( ix, iy, it, xy_ );
+        addConcreteNode(it, ix, iy);
 
-        idx_t n = NodeArray(it, ix, iy);
-
-        xy( n, XX ) = xy_[XX];
-        xy( n, YY ) = xy_[YY];
-
-        csgrid.lonlat( ix, iy, it, lonlat_ );
-
-        lonlat( n, LON ) = lonlat_[LON];
-        lonlat( n, LAT ) = lonlat_[LAT];
-
-        // Ghost nodes
-        ghost(n) = 0; // No ghost nodes
-
-        glb_idx(n) = n+1;
-        remote_idx(n) = n;
-        part(n) = distribution.partition(n);
-        inode++;
       }
+
     }
+
   }
 
   // Extra point 1
   // -------------
-  {
-      it = 0;
-      ix = 0;
-      iy = N;
-
-      idx_t n = NodeArray(it, ix, iy);
-      csgrid.xy( ix, iy, it, xy_ );
-      xy( n, XX ) = xy_[XX];
-      xy( n, YY ) = xy_[YY];
-      csgrid.lonlat( ix, iy, it, lonlat_ );
-      lonlat( n, LON ) = lonlat_[LON];
-      lonlat( n, LAT ) = lonlat_[LAT];
-      ghost(n) = 0;
-      glb_idx(n) = n+1;
-      remote_idx(n) = n;
-      part(n) = distribution.partition(n);
-      inode++;
-  }
+  addConcreteNode(0, 0, N);
 
   // Extra point 2
   // -------------
-  {
-      it = 1;
-      ix = N;
-      iy = 0;
-      idx_t n = NodeArray(it, ix, iy);
-
-      csgrid.xy( ix, iy, it, xy_ );
-      xy( n, XX ) = xy_[XX];
-      xy( n, YY ) = xy_[YY];
-      csgrid.lonlat( ix, iy, it, lonlat_ );
-      lonlat( n, LON ) = lonlat_[LON];
-      lonlat( n, LAT ) = lonlat_[LAT];
-      ghost(n) = 0;
-      glb_idx(n) = n+1;
-      remote_idx(n) = n;
-      part(n) = distribution.partition(n);
-      inode++;
-  }
+  addConcreteNode(1, N, 0);
 
 #if 0
   // TESTING: Check that inverse projection returns the correct xyt
@@ -241,71 +221,116 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
   // Assert that the correct number of nodes have been set
   ATLAS_ASSERT( nnodes == inode, "Insufficient nodes" );
 
+  // Start adding Ghost nodes.
+
+  auto addGhostNode = [&](idx_t itGhost, idx_t ixGhost, idx_t iyGhost,
+    idx_t itConcrete, idx_t ixConcrete, idx_t iyConcrete) {
+
+    // Get concrete node id
+    auto nConcrete = NodeArray(itConcrete, ixConcrete, iyConcrete);
+
+    // Add ghost node to NodeArray
+    NodeArray(itGhost, ixGhost, iyGhost) = inode;
+
+    // "Create" ghost xy coordinate.
+
+    // Get Jacobian of coords rtw indices
+    auto x0 = xy(NodeArray(itGhost, 0, 0), XX);
+    auto y0 = xy(NodeArray(itGhost, 0, 0), YY);
+
+    auto dx_di = xy(NodeArray(itGhost, 1, 0), XX) - x0;
+    auto dx_dj = xy(NodeArray(itGhost, 0, 1), XX) - x0;
+    auto dy_di = xy(NodeArray(itGhost, 1, 0), YY) - y0;
+    auto dy_dj = xy(NodeArray(itGhost, 0, 1), YY) - y0;
+
+    // Set xy coordinates
+    xy(inode, XX) = x0 + ixGhost * dx_di + iyGhost * dx_dj;
+    xy(inode, YY) = y0 + ixGhost * dy_di + iyGhost * dy_dj;
+
+    // Same lonlat as concrete points
+    lonlat(inode, LON) = lonlat( nConcrete, LON);
+    lonlat(inode, LAT) = lonlat( nConcrete, LAT);
+
+    // Is ghost node
+    mesh::Nodes::Topology::set(flags(inode), mesh::Nodes::Topology::GHOST);
+    ghost(inode) = 1;
+
+    // Partitioning logic to be added in future PR
+    glb_idx(inode) = inode + 1;
+    remote_idx(inode) = inode;
+    part(inode) = distribution.partition(inode);
+
+    inode++;
+
+  };
+
   // Fill duplicate points in the corners
   // ------------------------------------
-  NodeArray(0, N, N) = NodeArray(2, 0, 0); ++inode;
-  NodeArray(1, N, N) = NodeArray(3, 0, 0); ++inode;
-  NodeArray(2, N, N) = NodeArray(4, 0, 0); ++inode;
-  NodeArray(3, N, N) = NodeArray(5, 0, 0); ++inode;
-  NodeArray(4, N, N) = NodeArray(0, 0, 0); ++inode;
-  NodeArray(5, N, N) = NodeArray(1, 0, 0); ++inode;
+  addGhostNode(0, N, N, 2, 0, 0);
+  addGhostNode(1, N, N, 3, 0, 0);
+  addGhostNode(2, N, N, 4, 0, 0);
+  addGhostNode(3, N, N, 5, 0, 0);
+  addGhostNode(4, N, N, 0, 0, 0);
+  addGhostNode(5, N, N, 1, 0, 0);
 
   // Special points have two duplicates each
-  NodeArray(2, 0, N) = NodeArray(0, 0, N); ++inode;
-  NodeArray(4, 0, N) = NodeArray(0, 0, N); ++inode;
-  NodeArray(3, N, 0) = NodeArray(1, N, 0); ++inode;
-  NodeArray(5, N, 0) = NodeArray(1, N, 0); ++inode;
+  addGhostNode(2, 0, N, 0, 0, N);
+  addGhostNode(4, 0, N, 0, 0, N);
+  addGhostNode(3, N, 0, 1, N, 0);
+  addGhostNode(5, N, 0, 1, N, 0);
 
   // Top & right duplicates
   // ----------------------
 
   // Tile 1
   for ( ix = 1; ix < N; ix++ ) {
-    NodeArray(0, ix, N) = NodeArray(2, 0, N-ix); ++inode;
+    addGhostNode(0, ix, N, 2, 0, N - ix);
   }
   for ( iy = 0; iy < N; iy++ ) {
-    NodeArray(0, N, iy) = NodeArray(1, 0, iy); ++inode;
+    addGhostNode(0, N, iy, 1, 0, iy);
   }
 
   // Tile 2
   for ( ix = 0; ix < N; ix++ ) {
-    NodeArray(1, ix, N) = NodeArray(2, ix, 0); ++inode;
+    addGhostNode(1, ix, N, 2, ix, 0);
   }
   for ( iy = 1; iy < N; iy++ ) {
-    NodeArray(1, N, iy) = NodeArray(3, N-iy, 0); ++inode;
+    addGhostNode(1, N, iy, 3, N - iy, 0);
   }
 
   // Tile 3
   for ( ix = 1; ix < N; ix++ ) {
-    NodeArray(2, ix, N) = NodeArray(4, 0, N-ix); ++inode;
+    addGhostNode(2, ix, N, 4, 0, N - ix);
   }
   for ( iy = 0; iy < N; iy++ ) {
-    NodeArray(2, N, iy) = NodeArray(3, 0, iy); ++inode;
+    addGhostNode(2, N, iy, 3, 0, iy);
   }
 
   // Tile 4
   for ( ix = 0; ix < N; ix++ ) {
-    NodeArray(3, ix, N) = NodeArray(4, ix, 0); ++inode;
+    addGhostNode(3, ix, N, 4, ix, 0);
   }
   for ( iy = 1; iy < N; iy++ ) {
-    NodeArray(3, N, iy) = NodeArray(5, N-iy, 0); ++inode;
+    addGhostNode(3, N, iy, 5, N - iy, 0);
   }
 
   // Tile 5
   for ( ix = 1; ix < N; ix++ ) {
-    NodeArray(4, ix, N) = NodeArray(0, 0, N-ix); ++inode;
+    addGhostNode(4, ix, N, 0, 0, N - ix);
   }
   for ( iy = 0; iy < N; iy++ ) {
-    NodeArray(4, N, iy) = NodeArray(5, 0, iy); ++inode;
+    addGhostNode(4, N, iy, 5, 0, iy);
   }
 
   // Tile 6
   for ( ix = 0; ix < N; ix++ ) {
-    NodeArray(5, ix, N) = NodeArray(0, ix, 0); ++inode;
+    addGhostNode(5, ix, N, 0, ix, 0);
   }
   for ( iy = 1; iy < N; iy++ ) {
-    NodeArray(5, N, iy) = NodeArray(1, N-iy, 0); ++inode;
+    addGhostNode(5, N, iy, 1, N - iy, 0);
   }
+
+
 
   // Assert that the correct number of nodes have been set when duplicates are added
   ATLAS_ASSERT( nnodes_all == inode, "Insufficient nodes" );
@@ -313,6 +338,7 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
   for ( it = 0; it < nTiles; it++ ) {
     for ( ix = 0; ix < N+1; ix++ ) {
       for ( iy = 0; iy < N+1; iy++ ) {
+
         ATLAS_ASSERT( NodeArray(it, ix, iy) != -9999, "Node Array Not Set Properly" );
       }
     }
