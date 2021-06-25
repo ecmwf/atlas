@@ -157,7 +157,7 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
         inode++;
 
         return;
-    }
+    };
 
 
     for ( it = 0; it < nTiles; it++ ) {     // 0, 1, 2, 3, 4, 5
