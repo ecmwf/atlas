@@ -122,9 +122,9 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
 
     {
         ATLAS_TRACE( "iterate entire grid" );
-        idx_t n{0};
+        idx_t nOwned{0};
         for ( auto& p : csgrid.tij() ) {
-            NodeArray( p.t(), p.i(), p.j() ) = n++;
+            NodeArray( p.t(), p.i(), p.j() ) = nOwned++;
         }
     }
 
@@ -135,25 +135,25 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
         double xy_[3];
         csgrid.xy( ix, iy, it, xy_ );
 
-        idx_t iGridIt = NodeArray(it, ix, iy);
+        idx_t nOwned = NodeArray(it, ix, iy);
 
-        xy( iGridIt, XX ) = xy_[XX];
-        xy( iGridIt, YY ) = xy_[YY];
+        xy( nOwned, XX ) = xy_[XX];
+        xy( nOwned, YY ) = xy_[YY];
 
         // Get lonlat from global lonlat array
         double lonlat_[2];
         csgrid.lonlat( ix, iy, it, lonlat_ );
 
-        lonlat( iGridIt, LON ) = lonlat_[LON];
-        lonlat( iGridIt, LAT ) = lonlat_[LAT];
+        lonlat( nOwned, LON ) = lonlat_[LON];
+        lonlat( nOwned, LAT ) = lonlat_[LAT];
 
         // Is not ghost node
-        mesh::Nodes::Topology::reset(flags(iGridIt));
-        ghost(iGridIt) = 0;
+        mesh::Nodes::Topology::reset(flags(nOwned));
+        ghost(nOwned) = 0;
 
-        glb_idx(iGridIt) = iGridIt + 1;
-        remote_idx(iGridIt) = iGridIt;
-        part(iGridIt) = distribution.partition(iGridIt);
+        glb_idx(nOwned) = nOwned + 1;
+        remote_idx(nOwned) = nOwned;
+        part(nOwned) = distribution.partition(nOwned);
         inode++;
 
         return;
@@ -215,7 +215,13 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     // Assert that the correct number of nodes have been set
     ATLAS_ASSERT( nnodes == inode, "Insufficient nodes" );
 
+    // Vector of ghost global index of each ghost point
+    auto ghostGblIdx = std::vector<idx_t>();
+    auto ownedGblIdx = std::vector<idx_t>();
+
+
     // Start adding Ghost nodes.
+
 
     auto addGhostNode = [&](idx_t itGhost, idx_t ixGhost, idx_t iyGhost,
       idx_t itOwned, idx_t ixOwned, idx_t iyOwned) {
@@ -253,6 +259,10 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
       glb_idx(inode) = inode + 1;
       remote_idx(inode) = inode;
       part(inode) = distribution.partition(inode);
+
+      // Append metadata
+      ghostGblIdx.push_back(inode);
+      ownedGblIdx.push_back(nOwned);
 
       inode++;
 
@@ -370,6 +380,12 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     // Parallel
     generateGlobalElementNumbering( mesh );
     nodes.metadata().set( "parallel", true );
+
+    // Global indices of ghost nodes.
+    nodes.metadata().set( "ghost-global-idx", ghostGblIdx);
+
+    // Global indices of owned nodes for each ghost node (same order as above)
+    nodes.metadata().set( "owned-global-idx", ownedGblIdx);
 }
 
 // -------------------------------------------------------------------------------------------------

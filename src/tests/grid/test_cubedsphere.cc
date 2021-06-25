@@ -37,6 +37,14 @@ namespace atlas {
       // Set functionspace
       auto functionSpace = atlas::functionspace::NodeColumns(mesh);
 
+      auto ghostIdx = mesh.nodes().metadata().get<std::vector<idx_t>>("ghost-global-idx");
+      auto ownedIdx = mesh.nodes().metadata().get<std::vector<idx_t>>("owned-global-idx");
+
+      // Print out ghost global indices with corresponding owned global indices
+      auto ownedIdxIt = ownedIdx.begin();
+      for (auto iGhost : ghostIdx) std::cout << iGhost << " " << *ownedIdxIt++ << std::endl;
+
+
       // Set field
       auto field = functionSpace.ghost();
 
