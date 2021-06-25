@@ -224,7 +224,7 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
 
       // "Create" ghost xy coordinate.
 
-      // Get Jacobian of coords rtw indicesd
+      // Get Jacobian of coords rtw indices
       auto x0 = xy(NodeArray(tijGhost[0], 0, 0), XX);
       auto y0 = xy(NodeArray(tijGhost[0], 0, 0), YY);
 
