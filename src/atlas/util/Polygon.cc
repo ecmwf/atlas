@@ -45,7 +45,7 @@ Polygon::Polygon( const Polygon::edge_set_t& edges ) {
 }
 
 void Polygon::setup( const Polygon::edge_set_t& edges ) {
-    if( edges.empty() ) {
+    if ( edges.empty() ) {
         return;
     }
 

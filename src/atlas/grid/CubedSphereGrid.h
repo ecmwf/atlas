@@ -257,10 +257,7 @@ private:
 };
 
 
-} // namespace temporary
-
-
-
+}  // namespace temporary
 
 
 class CubedSphereGrid : public Grid {
@@ -268,48 +265,48 @@ public:
     using grid_t = grid::detail::grid::CubedSphere;
 
 public:
-  CubedSphereGrid();
-  CubedSphereGrid( const Grid& );
-  CubedSphereGrid( const Grid::Implementation* );
-  CubedSphereGrid( const std::string& name );
-  CubedSphereGrid( const Config& );
-  CubedSphereGrid( const int&, const Projection& = Projection() );
+    CubedSphereGrid();
+    CubedSphereGrid( const Grid& );
+    CubedSphereGrid( const Grid::Implementation* );
+    CubedSphereGrid( const std::string& name );
+    CubedSphereGrid( const Config& );
+    CubedSphereGrid( const int&, const Projection& = Projection() );
 
-  operator bool() const { return valid(); }
+    operator bool() const { return valid(); }
 
-  bool valid() const { return grid_; }
+    bool valid() const { return grid_; }
 
-  using Grid::xy;
-  void xyt( idx_t i, idx_t j, idx_t t, double xyt[] ) const { grid_->xyt( i, j, t, xyt ); }
-  PointXY xyt( idx_t i, idx_t j, idx_t t) const { return grid_->xyt( i, j, t ); }
-  // Given indexes in the array (i, j, t) return position array xyt
+    using Grid::xy;
+    void xyt( idx_t i, idx_t j, idx_t t, double xyt[] ) const { grid_->xyt( i, j, t, xyt ); }
+    PointXY xyt( idx_t i, idx_t j, idx_t t ) const { return grid_->xyt( i, j, t ); }
+    // Given indexes in the array (i, j, t) return position array xyt
 
-  void xy( idx_t i, idx_t j, idx_t t, double xy[] ) const { grid_->xy( i, j, t, xy ); }
-  PointXY xy( idx_t i, idx_t j, idx_t t) const { return grid_->xy( i, j, t); }
+    void xy( idx_t i, idx_t j, idx_t t, double xy[] ) const { grid_->xy( i, j, t, xy ); }
+    PointXY xy( idx_t i, idx_t j, idx_t t ) const { return grid_->xy( i, j, t ); }
 
-  using Grid::lonlat;
-  // Given indexes in the array (i, j) return lat/lon array (via the projection)
-  void lonlat( idx_t i, idx_t j, idx_t t, double lonlat[] ) const { grid_->lonlat( i, j, t, lonlat ); }
+    using Grid::lonlat;
+    // Given indexes in the array (i, j) return lat/lon array (via the projection)
+    void lonlat( idx_t i, idx_t j, idx_t t, double lonlat[] ) const { grid_->lonlat( i, j, t, lonlat ); }
 
-  // Given indexes in the array (i, j, t) return lat/lon as a PointLonLat object
-  PointLonLat lonlat( idx_t i, idx_t j, idx_t t ) const { return grid_->lonlat( i, j, t ); }
+    // Given indexes in the array (i, j, t) return lat/lon as a PointLonLat object
+    PointLonLat lonlat( idx_t i, idx_t j, idx_t t ) const { return grid_->lonlat( i, j, t ); }
 
-  // Return the size of the cubed sphere grid, where N is the number of grid boxes along the edge of a tile
-  inline int N() const { return grid_->N(); }
+    // Return the size of the cubed sphere grid, where N is the number of grid boxes along the edge of a tile
+    inline int N() const { return grid_->N(); }
 
-  // Return the number of tiles
-  inline int GetNTiles() const { return grid_->GetNTiles(); }
+    // Return the number of tiles
+    inline int GetNTiles() const { return grid_->GetNTiles(); }
 
-  // Transform from xy space to xyt space that is a function of resolution.
-  void xy2xyt(const double xy[], double xyt[]) const {return grid_->xy2xyt(xy, xyt); }
+    // Transform from xy space to xyt space that is a function of resolution.
+    void xy2xyt( const double xy[], double xyt[] ) const { return grid_->xy2xyt( xy, xyt ); }
 
-  // Transform from xyt space to xy space
-  void xyt2xy(const double xyt[], double xy[]) const {return grid_->xyt2xy(xyt, xy); }
+    // Transform from xyt space to xy space
+    void xyt2xy( const double xyt[], double xy[] ) const { return grid_->xyt2xy( xyt, xy ); }
 
-  temporary::IterateTIJ tij() const { return temporary::IterateTIJ(*grid_); }
+    temporary::IterateTIJ tij() const { return temporary::IterateTIJ( *grid_ ); }
 
 private:
-  const grid_t* grid_;
+    const grid_t* grid_;
 };
 
 //---------------------------------------------------------------------------------------------------------------------
