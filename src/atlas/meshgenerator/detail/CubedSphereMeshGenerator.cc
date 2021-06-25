@@ -126,38 +126,38 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
 
   {
       ATLAS_TRACE("iterate entire grid");
-      idx_t n{0};
+      idx_t iGridIt{0};
       for( auto& p : csgrid.tij() ) {
-          NodeArray(p.t(), p.i(), p.j()) = n++;
+          NodeArray(p.t(), p.i(), p.j()) = iGridIt++;
       }
   }
 
-  auto addConcreteNode = [&](idx_t it, idx_t ix, idx_t iy) {
+  auto addOwnedNode = [&](idx_t it, idx_t ix, idx_t iy) {
 
     // Get xy from global xy grid array
 
     double xy_[3];
     csgrid.xy( ix, iy, it, xy_ );
 
-    idx_t n = NodeArray(it, ix, iy);
+    idx_t iGridIt = NodeArray(it, ix, iy);
 
-    xy( n, XX ) = xy_[XX];
-    xy( n, YY ) = xy_[YY];
+    xy( iGridIt, XX ) = xy_[XX];
+    xy( iGridIt, YY ) = xy_[YY];
 
     // Get lonlat from global lonlat array
     double lonlat_[2];
     csgrid.lonlat( ix, iy, it, lonlat_ );
 
-    lonlat( n, LON ) = lonlat_[LON];
-    lonlat( n, LAT ) = lonlat_[LAT];
+    lonlat( iGridIt, LON ) = lonlat_[LON];
+    lonlat( iGridIt, LAT ) = lonlat_[LAT];
 
     // Is not ghost node
-    mesh::Nodes::Topology::reset(flags(n));
-    ghost(n) = 0;
+    mesh::Nodes::Topology::reset(flags(iGridIt));
+    ghost(iGridIt) = 0;
 
-    glb_idx(n) = n+1;
-    remote_idx(n) = n;
-    part(n) = distribution.partition(n);
+    glb_idx(iGridIt) = iGridIt + 1;
+    remote_idx(iGridIt) = iGridIt;
+    part(iGridIt) = distribution.partition(iGridIt);
     inode++;
 
     return;
@@ -168,7 +168,7 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     for ( ix = 0; ix < N; ix++ ) {        // 0, 1, ..., N-1
       for ( iy = 0; iy < N; iy++ ) {      // 0, 1, ..., N-1
 
-        addConcreteNode(it, ix, iy);
+        addOwnedNode(it, ix, iy);
 
       }
 
@@ -178,11 +178,11 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
 
   // Extra point 1
   // -------------
-  addConcreteNode(0, 0, N);
+  addOwnedNode(0, 0, N);
 
   // Extra point 2
   // -------------
-  addConcreteNode(1, N, 0);
+  addOwnedNode(1, N, 0);
 
 #if 0
   // TESTING: Check that inverse projection returns the correct xyt
@@ -224,17 +224,17 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
   // Start adding Ghost nodes.
 
   auto addGhostNode = [&](idx_t itGhost, idx_t ixGhost, idx_t iyGhost,
-    idx_t itConcrete, idx_t ixConcrete, idx_t iyConcrete) {
+    idx_t itOwned, idx_t ixOwned, idx_t iyOwned) {
 
     // Get concrete node id
-    auto nConcrete = NodeArray(itConcrete, ixConcrete, iyConcrete);
+    auto nOwned = NodeArray(itOwned, ixOwned, iyOwned);
 
     // Add ghost node to NodeArray
     NodeArray(itGhost, ixGhost, iyGhost) = inode;
 
     // "Create" ghost xy coordinate.
 
-    // Get Jacobian of coords rtw indices
+    // Get Jacobian of coords rtw indicesd
     auto x0 = xy(NodeArray(itGhost, 0, 0), XX);
     auto y0 = xy(NodeArray(itGhost, 0, 0), YY);
 
@@ -248,8 +248,8 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     xy(inode, YY) = y0 + ixGhost * dy_di + iyGhost * dy_dj;
 
     // Same lonlat as concrete points
-    lonlat(inode, LON) = lonlat( nConcrete, LON);
-    lonlat(inode, LAT) = lonlat( nConcrete, LAT);
+    lonlat(inode, LON) = lonlat( nOwned, LON);
+    lonlat(inode, LAT) = lonlat( nOwned, LAT);
 
     // Is ghost node
     mesh::Nodes::Topology::set(flags(inode), mesh::Nodes::Topology::GHOST);

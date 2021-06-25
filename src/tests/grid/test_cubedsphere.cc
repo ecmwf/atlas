@@ -35,32 +35,11 @@ namespace atlas {
       auto mesh = meshGen.generate(grid);
 
       // Set functionspace
-      auto functionSpace = atlas::functionspace::NodeColumns(mesh,
-        atlas::util::Config("levels", 2));
+      auto functionSpace = atlas::functionspace::NodeColumns(mesh);
 
       // Set field
-      auto field = functionSpace.createField<double>(atlas::option::name("test"));
-      auto fieldView = atlas::array::make_view<double, 2>( field );
+      auto field = functionSpace.ghost();
 
-
-      auto xyIt = grid.xy().begin();
-
-      for (idx_t i = 0; i < fieldView.shape()[0]; ++i) {
-
-        auto xy = *xyIt;
-
-        if (xyIt != grid.xy().end()) {
-          fieldView(i, 0) = xy.x();
-          fieldView(i, 1) = xy.y();
-
-          ++xyIt;
-          }
-        else {
-          fieldView(i, 0) = 0.;
-          fieldView(i, 1) = 0.;
-          }
-
-      }
 
       // Set gmsh config.
       auto gmshConfigXy = atlas::util::Config("coordinates", "xy") | atlas::util::Config("ghost", false);
