@@ -167,8 +167,6 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     array::ArrayT<int> NodeArrayT( nTiles, N + 1, N + 1 );  // All grid points including duplicates
     auto NodeArray = array::make_view<int, 3>( NodeArrayT );
 
-
-    std::cout << "adding owned nodes" << std::endl;
     // Add owned nodes to node array
     idx_t nOwned = 0;
     auto addOwnedNode = [&](Tij tijOwned) {
@@ -206,16 +204,12 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     // Loop over owned (t, i, j)
     for (auto& p : csgrid.tij()) addOwnedNode(Tij{p.t(), p.i(), p.j()});
 
-    std::cout << "finished adding owned nodes" << std::endl;
-
     // Assert that the correct number of nodes have been set
     ATLAS_ASSERT( nnodes == nOwned, "Insufficient nodes" );
 
     // Vector of ghost global index of each ghost point
     auto ghostGblIdx = std::vector<idx_t>();
     auto ownedGblIdx = std::vector<idx_t>();
-
-    std::cout << "adding ghost nodes" << std::endl;
 
     // Add ghost nodes to node array
     // (nGhost started after nOwned)
@@ -280,8 +274,6 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
         }
     }
 
-
-    std::cout << "generating cells" << std::endl;
     // Cells in mesh
     mesh.cells().add( new mesh::temporary::Quadrilateral(), nTiles * N * N );
     //int quad_begin  = mesh.cells().elements( 0 ).begin();
