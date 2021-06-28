@@ -69,6 +69,14 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
     // the y start position. Tile 3, 4 and 5 are rotated and ysr provides the start point for y after
     // these rotations.
 
+    std::cout << "CubedSphere name " << name_ << std::endl;
+    std::cout << "CubedSphere projection_->type()" << projection_->type() << std::endl;
+
+    using atlas::projection::detail::CubedSphereProjectionBase;
+    std::string tile_type = dynamic_cast<const CubedSphereProjectionBase &>( *projection_).getCubedSphereTiles().type();
+
+    std::cout << "CubedSphere tiles type " << tile_type << std::endl;
+
     xs_[0] = 0 * N;
     xs_[1] = 1 * N;
     xs_[2] = 1 * N;
@@ -174,7 +182,9 @@ void CubedSphere::xy2xyt( const double xy[], double xyt[] ) const {
 
     using atlas::projection::detail::CubedSphereProjectionBase;
     xyt[2] =
-        dynamic_cast<const CubedSphereProjectionBase &>( projection_ ).getCubedSphereTiles().tileFromXY(xy);
+        dynamic_cast<const CubedSphereProjectionBase &>( * projection_ ).getCubedSphereTiles().tileFromXY(xy);
+
+    throw std::runtime_error("error  xy2xyt");
 }
 
 // Convert from xyt space into continuous xy space.
@@ -183,17 +193,16 @@ void CubedSphere::xyt2xy( const double xyt[], double xy[] ) const {
     // while xyt is in number of grid points
     // (alpha, beta) and tiles.
 
-    // Willem - ideally I would like to be able to get ab2xyOffsetsfrom the tile class that is imbedded into
-    // CubedSphereProjection base.  However I get a bad cast when I try
-    //   using atlas::projection::detail::CubedSphereProjectionBase;
-    //   std::array<std::array<double, 6>,2> ab2xyOffsets =
-    //    dynamic_cast<const CubedSphereProjectionBase &>(projection_).getCubedSphereTiles().ab2xyOffsets();
+
+    using atlas::projection::detail::CubedSphereProjectionBase;
+    std::array<std::array<double, 6>,2> ab2xyOffsets =
+      dynamic_cast<const CubedSphereProjectionBase &>( *projection_).getCubedSphereTiles().ab2xyOffsets();
     //
     // Note that when I change the grid iterator in this class to be more flexible, I intend to
     //    replace xOffsetIndex ,yOffsetIndex.
-    static std::array<std::array<double, 6>,2> ab2xyOffsets =
-        { {  {0., 90., 90., 180., 270.,  270.},
-             {-45., -45., 45., -45., -45., -135.} } };
+    //static std::array<std::array<double, 6>,2> ab2xyOffsets =
+    //    { {  {0., 90., 90., 180., 270.,  270.},
+    //         {-45., -45., 45., -45., -45., -135.} } };
 
     double N = static_cast<double>( N_ );
     double N_2 = static_cast<double>( 2 * N_ );
@@ -231,7 +240,7 @@ public:
 
     void print( std::ostream& os ) const override {
         os << std::left << std::setw( 20 ) << "CS-EA-<N>"
-           << "Cubed sphere, equiangular";
+           << "Cubed sphere for equiangular";
     }
 
     // Factory constructor
@@ -257,6 +266,9 @@ public:
         util::Config projconf;
         projconf.set( "type", "cubedsphere_equiangular" );
         projconf.set( "N", N );
+
+
+        //projconf.set( "tile type", "LFRicCubedSphereTiles");
 
         // Shift projection by a longitude
         if ( config.has( "ShiftLon" ) ) {
