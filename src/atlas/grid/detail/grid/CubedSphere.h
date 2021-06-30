@@ -45,14 +45,19 @@ private:
     // Get the position in the xy plane and return as PointXY object
     struct ComputePointXY {
         ComputePointXY( const CubedSphere& grid ) : grid_( grid ) {}
-        void operator()( idx_t i, idx_t j, idx_t t, PointXY& point ) { grid_.xy( i, j, t, point.data() ); }
+        void operator()( idx_t i, idx_t j, idx_t t, PointXY& point ) {
+          std::cout << "Compute XY" << i << j << t << std::endl;
+
+          grid_.xy( i, j, t, point.data() ); }
         const CubedSphere& grid_;
     };
 
     // Get the lonlat and return as PointLonLat object
     struct ComputePointLonLat {
         ComputePointLonLat( const CubedSphere& grid ) : grid_( grid ) {}
-        void operator()( idx_t i, idx_t j, idx_t t, PointLonLat& point ) { grid_.lonlat( i, j, t, point.data() ); }
+        void operator()( idx_t i, idx_t j, idx_t t, PointLonLat& point ) {
+         std::cout << "Compute PointLonLat" << i << j << t << std::endl;
+          grid_.lonlat( i, j, t, point.data() ); }
         const CubedSphere& grid_;
     };
 
@@ -234,16 +239,18 @@ public:
     // Tile specific access to x and y locations
     // -----------------------------------------
 
-    inline double x123( idx_t i, idx_t t ) const { return static_cast<double>( xs_[t] ) + static_cast<double>( i ); }
-
-    inline double x456( idx_t j, idx_t t ) const {
-        return static_cast<double>( xs_[t] ) + ( y123( j, t ) - static_cast<double>( ys_[t] ) );
+    inline double xsPlusIndex(idx_t idx, idx_t t ) const {
+        return static_cast<double>( xs_[t] ) + static_cast<double>( idx );
+    }
+    inline double xsrMinusIndex(idx_t idx, idx_t t ) const {
+        return static_cast<double>( xsr_[t] ) - static_cast<double>( idx );
     }
 
-    inline double y123( idx_t j, idx_t t ) const { return static_cast<double>( ys_[t] ) + static_cast<double>( j ); }
-
-    inline double y456( idx_t i, idx_t t ) const {
-        return static_cast<double>( ysr_[t] ) - x123( i, t ) + static_cast<double>( xs_[t] );
+    inline double ysPlusIndex(idx_t idx, idx_t t ) const {
+        return static_cast<double>( ys_[t] ) + static_cast<double>( idx );
+    }
+    inline double ysrMinusIndex(idx_t idx, idx_t t ) const {
+        return static_cast<double>( ysr_[t] ) - static_cast<double>( idx );
     }
 
     // Lambdas for access to appropriate functions for tile
@@ -256,15 +263,13 @@ public:
     // --------------------------
 
     inline void xyt( idx_t i, idx_t j, idx_t t, double crd[] ) const {
-        std::size_t tIndex = static_cast<std::size_t>( tileCases_ * t / nTiles_ );
-        crd[0]             = xtile.at( tIndex )( i, j, t );
-        crd[1]             = ytile.at( tIndex )( i, j, t );
+        crd[0]             = xtile.at( t )( i, j, t );
+        crd[1]             = ytile.at( t )( i, j, t );
         crd[2]             = static_cast<double>( t );
     }
 
     PointXY xyt( idx_t i, idx_t j, idx_t t ) const {
-        std::size_t tIndex = static_cast<std::size_t>( tileCases_ * t / nTiles_ );
-        return PointXY( xtile.at( tIndex )( i, j, t ), ytile.at( tIndex )( i, j, t ) );
+        return PointXY( xtile.at( t )( i, j, t ), ytile.at( t )( i, j, t ) );
     }
 
     inline void xy( idx_t i, idx_t j, idx_t t, double xy[] ) const {
@@ -296,6 +301,7 @@ public:
     // Check on whether i, j, t values are for extra point on tile 1
     // -------------------------------------------------------------
 
+    /*
     inline bool extraPoint1( idx_t i, idx_t j, idx_t t ) const {
         if ( i == 0 && j == N_ && t == 0 ) {
             return true;
@@ -316,13 +322,38 @@ public:
             return false;
         }
     }
+    */
 
     // Check whether i, j, t is in grid
     // --------------------------------
+    inline  bool inGrid ( idx_t i, idx_t j, idx_t t    ) const  {
+      if ( t >= 0 && t <= 5 ) {
+        if ( j >= jmin_[t] && j <= jmax_[t] ) {
+          if ( i >= imin_[t][j] && i <= imax_[t][j] ) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
 
-    inline bool inGrid( idx_t i, idx_t j, idx_t t ) const {
+
+    /*
+    inline bool inGridLFRic( idx_t i, idx_t j, idx_t t ) const {
+        std::array<idx_t, 6> dim{N_-1, N_-1, N_-1, N_-1, N_, N_-2};
         if ( t >= 0 && t <= 5 ) {
-            if ( i >= 0 && i <= N_ - 1 ) {
+            if ( j >= 0 && j <= dim[t] ) {
+                if ( i >= 0 && i <= dim[t] ) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    inline bool inGridFV3( idx_t i, idx_t j, idx_t t ) const {
+        if ( t >= 0 && t <= 5 ) {
+            if ( j >= 0 && j <= N_ - 1 ) {
                 if ( i >= 0 && i <= N_ - 1 ) {
                     return true;
                 }
@@ -336,6 +367,9 @@ public:
         }
         return false;
     }
+    */
+
+
 
     // Check on whether the final element
     // ----------------------------------
@@ -350,28 +384,59 @@ public:
     // Move to next grid element in an iterator
     // ----------------------------------------
 
+    // Note that i is the fastest index, followed by j, followed by t
     std::unique_ptr<int[]> nextElement( const idx_t i, const idx_t j, const idx_t t ) const {
-        std::unique_ptr<int[]> ijt( new int[3] );
+      std::unique_ptr<int[]> ijt( new int[3] );
 
-        ijt[0] = i;
+      std::cout << " next element i, j t " << i << " " << j << " " << t << std::endl;
+
+      ijt[0] = i;
+      ijt[1] = j;
+      ijt[2] = t;
+
+      if (i < imax_[t][j]) {
+        ijt[0] = i + 1;
         ijt[1] = j;
         ijt[2] = t;
+        return ijt;
+      }
 
-        // Moving from extra point 1
-        if ( extraPoint1( ijt[0], ijt[1], ijt[2] ) ) {
+      if (i == imax_[t][j] ) {
+        if (j < jmax_[t]) {
+          // move to next column
+          ijt[0] = 0;
+          ijt[1] = j+1;
+          ijt[2] = t;
+          return ijt;
+        }
+
+        if (j == jmax_[t]) {
+          if (t < nTiles_-1) {
+
+            // move to next tile
             ijt[0] = 0;
             ijt[1] = 0;
-            ijt[2] = 1;
+            ijt[2] = t+1;
             return ijt;
-        }
+          }
 
-        // Moving to extra point 1
-        if ( ijt[2] == 0 && ijt[0] == N_ - 1 && ijt[1] == N_ - 1 ) {
-            ijt[0] = 0;
+          if (t == nTiles_ -1) {
+            // We are at the final point so we go to
+            // to a point that defines the "end()" of the
+            // iterator i.e. it is not a point on the grid
+            // For now it is set at (N_, N_, nTiles -1)
+            ijt[0] = N_;
             ijt[1] = N_;
+            ijt[2] = nTiles_ - 1;
             return ijt;
+          }
         }
+      }
 
+      return ijt;
+
+    }
+/*
         // Moving from extra point 2
         if ( extraPoint2( ijt[0], ijt[1], ijt[2] ) ) {
             ijt[0] = 0;
@@ -384,7 +449,6 @@ public:
             ijt[0] = N_;
             return ijt;
         }
-
 
         if ( ijt[0] == N_ - 1 && ijt[1] == N_ - 1 && ijt[2] == nTiles_ - 1 ) {  // Final point
             ijt[0] = N_;
@@ -404,8 +468,11 @@ public:
             ijt[0] = ijt[0] + 1;
         }
 
+
         return ijt;
     }
+
+*/
 
     // Iterator start/end positions
     // ----------------------------
@@ -455,10 +522,20 @@ protected:
     // Start points in x,y direction
     int xs_[nTiles_];
     int ys_[nTiles_];
-    int ysr_[nTiles_];  // (for panels 4, 5, 6)
+    int xsr_[nTiles_];  // x order reversed
+    int ysr_[nTiles_];  // y order reversed (for FV3 panels 4, 5, 6)
 
     // Number of unique points on each tile
     std::vector<int> npts_;
+
+    std::string tileType_;
+
+    std::array<idx_t,6>  jmin_{0,0,0,0,0,0};
+    std::array<idx_t,6>  jmax_;
+    std::vector<std::vector<idx_t>> imin_;
+    std::vector<std::vector<idx_t>> imax_;
+
+
 
 private:
     std::string name_ = {"cubedsphere"};
