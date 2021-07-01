@@ -47,8 +47,7 @@ private:
         ComputePointXY( const CubedSphere& grid ) : grid_( grid ) {}
         void operator()( idx_t i, idx_t j, idx_t t, PointXY& point ) {
           std::cout << "Compute XY" << i << j << t << std::endl;
-
-          grid_.xy( i, j, t, point.data() ); }
+          grid_.xy( i, j, t, point.data()); }
         const CubedSphere& grid_;
     };
 
@@ -243,6 +242,7 @@ public:
         return static_cast<double>( xs_[t] ) + static_cast<double>( idx );
     }
     inline double xsrMinusIndex(idx_t idx, idx_t t ) const {
+        std::cout << "xsrMinusIndex idx t res " << idx << " " << t << " " << xsr_[t]  << " " << static_cast<double>( xsr_[t] ) - static_cast<double>( idx ) << std::endl;
         return static_cast<double>( xsr_[t] ) - static_cast<double>( idx );
     }
 
@@ -275,7 +275,9 @@ public:
     inline void xy( idx_t i, idx_t j, idx_t t, double xy[] ) const {
         double crd[3];
         this->xyt( i, j, t, crd );
+       // std::cout << "Compute XYT" << crd[0]<< crd[1] <<crd[2]<< std::endl;
         this->xyt2xy( crd, xy );
+       // std::cout << "XY" << xy[0]<< xy[1]<< std::endl;
     }
 
     PointXY xy( idx_t i, idx_t j, idx_t t ) const {
@@ -288,8 +290,11 @@ public:
     // --------------------------------------------------------------
 
     void lonlat( idx_t i, idx_t j, idx_t t, double lonlat[] ) const {
+        std::cout << "Compute LONLAT_INPUT" << i << j << t << std::endl;
         this->xy( i, j, t, lonlat );      // outputing xy in lonlat
+        std::cout << "Compute LONLAT_XY" << lonlat[0]<< lonlat[1] <<t<< std::endl;
         projection_.xy2lonlat( lonlat );  // converting xy to lonlat
+        std::cout << "Compute LONLAT_LONLAT" << lonlat[0]<< lonlat[1] <<t<< std::endl;
     }
 
     PointLonLat lonlat( idx_t i, idx_t j, idx_t t ) const {

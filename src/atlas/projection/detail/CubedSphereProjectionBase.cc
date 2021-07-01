@@ -29,7 +29,7 @@ namespace detail {
 // Helper functions and variables local to this translation unit
 namespace {
 
-static constexpr bool debug = false;  // constexpr so compiler can optimize `if ( debug ) { ... }` out
+static constexpr bool debug = true;  // constexpr so compiler can optimize `if ( debug ) { ... }` out
 
 static constexpr double deg2rad = util::Constants::degreesToRadians();
 static constexpr double rad2deg = util::Constants::radiansToDegrees();
@@ -144,7 +144,7 @@ void CubedSphereProjectionBase::xy2lonlat_post( double xyz[], const idx_t& t, do
     crd[LON] = crd[LON] - M_PI;
 
     if ( debug ) {
-        Log::debug() << "xy2lonlat:: lonlat before rotation : " << crd[LON] << " " << crd[LAT] << std::endl;
+        Log::info() << "xy2lonlat:: lonlat before rotation : " << crd[LON] << " " << crd[LAT] << std::endl;
     }
 
     // Convert to cartesian
@@ -152,6 +152,10 @@ void CubedSphereProjectionBase::xy2lonlat_post( double xyz[], const idx_t& t, do
 
     // Perform tile specific rotation
     tileRotate(t, xyz);
+
+    if ( debug ) {
+        Log::info() << "xy2lonlat:: lonlat after rotation : " << crd[LON] << " " << crd[LAT] << std::endl;
+    }
 
     // Back to lonlat
     cartesianToSpherical( xyz, crd );

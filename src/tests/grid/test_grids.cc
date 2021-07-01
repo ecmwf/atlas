@@ -499,7 +499,7 @@ CASE( "test_cubedsphere" ) {
 
             if ( s == "CS-LFR-" + std::to_string( resolution ) ) {
 
-                /*
+               /*
                 std::vector<std::pair<double, double>> expectedLatLon{
                     {-cornerLat, 315.0}, {-45.0, 0.0},  {0.0, 315.0},        {0.0, 0.0},   // tile 0
                     {-cornerLat, 45.0},  {-45.0, 90.0}, {-cornerLat, 135.0}, {0.0, 45.0},  // tile 1
@@ -532,9 +532,14 @@ CASE( "test_cubedsphere" ) {
                     {315.0, -45.0}, {315.0, -90.0}};
                  */
                 for ( std::size_t jn = 0; jn < grid.size(); ++jn ) {
-                    std::cout << "jn lat lon" << jn << " " << pointLonLats[jn].lat() << " " << pointLonLats[jn].lon() << std::endl;
                     std::cout << "jn x  y" << jn << " " << pointXYs[jn].x() << " " << pointXYs[jn].y() << std::endl;
                 }
+
+                for ( std::size_t jn = 0; jn < grid.size(); ++jn ) {
+                    std::cout << "jn lat lon" << jn << " " << pointLonLats[jn].lat() << " " << pointLonLats[jn].lon() << std::endl;
+                }
+
+
 
             }
 

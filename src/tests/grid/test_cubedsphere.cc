@@ -23,7 +23,7 @@ CASE( "cubedsphere_grid_mesh_field_test" ) {
     // I expect this will be replaced by some more aggressive tests.
 
     // Set grid.
-    const auto grid = atlas::Grid( "CS-LFR-24" );
+    const auto grid = atlas::Grid( "CS-EA-24" );
 
     atlas::Log::info() << grid->type() << std::endl;
     atlas::Log::info() << grid.size() << std::endl;
