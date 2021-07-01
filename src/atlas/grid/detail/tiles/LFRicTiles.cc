@@ -72,13 +72,6 @@ void LFRicCubedSphereTiles::tile1Rotate( double xyz[] ) const {
 void LFRicCubedSphereTiles::tile2Rotate( double xyz[] ) const {
     double xyz_in[3];
     std::copy( xyz, xyz + 3, xyz_in );
-   // xyz[XX] = -xyz_in[XX];
-  //  xyz[YY] =  xyz_in[ZZ];
-  //  xyz[ZZ] =  xyz_in[YY];
-
-  //   xyz[XX] =  xyz_in[XX];
- //    xyz[YY] = -xyz_in[ZZ];
-  //   xyz[ZZ] = -xyz_in[YY];
     xyz[XX] = -xyz_in[XX];
     xyz[YY] = -xyz_in[YY];
 
@@ -88,21 +81,15 @@ void LFRicCubedSphereTiles::tile3Rotate( double xyz[] ) const {
     std::copy( xyz, xyz + 3, xyz_in );
     xyz[XX] =  xyz_in[YY];
     xyz[YY] = -xyz_in[XX];
-
-    //xyz[XX] = -xyz_in[ZZ];
-    //xyz[YY] = -xyz_in[XX];
-   // xyz[ZZ] =  xyz_in[YY];
 }
 void LFRicCubedSphereTiles::tile4Rotate( double xyz[] ) const {
     double xyz_in[3];
     std::copy( xyz, xyz + 3, xyz_in );
-   // xyz[XX] = -xyz_in[ZZ];
     xyz[XX] =  xyz_in[ZZ];
-   // xyz[ZZ] = xyz_in[XX];
     xyz[ZZ] = -xyz_in[XX];
 }
 void LFRicCubedSphereTiles::tile5Rotate( double xyz[] ) const {
-    // unsure about tile 5
+    // unsure about tile 5 need to test with N>2
     double xyz_in[3];
     std::copy( xyz, xyz + 3, xyz_in );
     xyz[XX] = -xyz_in[YY];
@@ -117,38 +104,40 @@ void LFRicCubedSphereTiles::tile0RotateInverse( double xyz[] ) const {
 }
 
 void LFRicCubedSphereTiles::tile1RotateInverse( double xyz[] ) const {
-    static std::array<double,3> xyzTemp{xyz[0], xyz[1], xyz[2]};
-    xyz[0] =  xyzTemp[1];
-    xyz[1] = -xyzTemp[0];
-    xyz[2] =  xyzTemp[2];
+    double xyz_in[3];
+    std::copy( xyz, xyz + 3, xyz_in );
+    xyz[XX] =  xyz_in[YY];
+    xyz[YY] = -xyz_in[XX];
 }
 
 void LFRicCubedSphereTiles::tile2RotateInverse( double xyz[] ) const {
-    static std::array<double,3> xyzTemp{xyz[0], xyz[1], xyz[2]};
-    xyz[0] = -xyzTemp[0];
-    xyz[1] =  xyzTemp[2];
-    xyz[2] =  xyzTemp[1];
+    double xyz_in[3];
+    std::copy( xyz, xyz + 3, xyz_in );
+    xyz[XX] = -xyz_in[XX];
+    xyz[YY] = -xyz_in[YY];
 }
 
 void LFRicCubedSphereTiles::tile3RotateInverse( double xyz[] ) const {
-    static std::array<double,3> xyzTemp{xyz[0], xyz[1], xyz[2]};
-    xyz[0] = -xyzTemp[1];
-    xyz[1] =  xyzTemp[2];
-    xyz[2] = -xyzTemp[0];
+    double xyz_in[3];
+    std::copy( xyz, xyz + 3, xyz_in );
+    xyz[XX] = -xyz_in[YY];
+    xyz[YY] =  xyz_in[XX];
 }
 
 void LFRicCubedSphereTiles::tile4RotateInverse( double xyz[] ) const {
-    static std::array<double,3> xyzTemp{xyz[0], xyz[1], xyz[2]};
-    xyz[0] =  xyzTemp[2];
-    xyz[1] =  xyzTemp[1];
-    xyz[2] = -xyzTemp[0];
+    double xyz_in[3];
+    std::copy( xyz, xyz + 3, xyz_in );
+    xyz[XX] = -xyz_in[ZZ];
+    xyz[ZZ] =  xyz_in[XX];
 }
 
 void LFRicCubedSphereTiles::tile5RotateInverse( double xyz[] ) const {
-    static std::array<double,3> xyzTemp{xyz[0], xyz[1], xyz[2]};
-    xyz[0] = -xyzTemp[2];
-    xyz[1] = -xyzTemp[0];
-    xyz[2] =  xyzTemp[1];
+    double xyz_in[3];
+    std::copy( xyz, xyz + 3, xyz_in );
+    xyz[XX] =  xyz_in[ZZ];
+    xyz[YY] = -xyz_in[XX];
+  //  xyz[ZZ] = -xyz_in[XX];
+    xyz[ZZ] = xyz_in[YY];
 }
 
 idx_t LFRicCubedSphereTiles::tileFromXY( const double xy[] ) const  {
