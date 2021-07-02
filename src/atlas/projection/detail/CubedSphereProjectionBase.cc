@@ -29,10 +29,7 @@ namespace detail {
 // Helper functions and variables local to this translation unit
 namespace {
 
-static constexpr bool debug = false;  // constexpr so compiler can optimize `if ( debug ) { ... }` out
-
 static constexpr double deg2rad = util::Constants::degreesToRadians();
-static constexpr double rad2deg = util::Constants::radiansToDegrees();
 
 static void schmidtTransform( double stretchFac, double targetLon,
                               double targetLat, double lonlat[]) {
@@ -41,38 +38,38 @@ static void schmidtTransform( double stretchFac, double targetLon,
     double c2p1 = 1.0 + stretchFac*stretchFac;
     double c2m1 = 1.0 - stretchFac*stretchFac;
 
-    double sin_p = std::sin(targetLat);
-    double cos_p = std::cos(targetLat);
+    double sin_p = std::sin(targetLat * deg2rad);
+    double cos_p = std::cos(targetLat * deg2rad);
 
     double sin_lat;
     double cos_lat;
     double lat_t;
 
     if ( std::abs( c2m1 ) > 1.0e-7 ) {
-        sin_lat = std::sin( lonlat[LAT] );
+        sin_lat = std::sin( lonlat[LAT] * deg2rad);
         lat_t   = std::asin( ( c2m1 + c2p1 * sin_lat ) / ( c2p1 + c2m1 * sin_lat ) );
     }
     else {  // no stretching
         lat_t = lonlat[LAT];
     }
 
-    sin_lat      = std::sin( lat_t );
-    cos_lat      = std::cos( lat_t );
-    double sin_o = -( sin_p * sin_lat + cos_p * cos_lat * cos( lonlat[LON] ) );
+    sin_lat      = std::sin( lat_t);
+    cos_lat      = std::cos( lat_t);
+    double sin_o = -( sin_p * sin_lat + cos_p * cos_lat * cos( lonlat[LON] *deg2rad ) );
 
     if ( ( 1. - std::abs( sin_o ) ) < 1.0e-7 ) {  // poles
         lonlat[LON] = 0.0;
-        lonlat[LAT] = std::copysign( 0.5 * M_PI, sin_o );
+        lonlat[LAT] = std::copysign( 90.0, sin_o );
     }
     else {
         lonlat[LAT] = std::asin( sin_o );
-        lonlat[LON] = targetLon + atan2( -cos_lat * std::sin( lonlat[LON] ),
-                                         -sin_lat * cos_p + cos_lat * sin_p * std::cos( lonlat[LON] ) );
+        lonlat[LON] = targetLon + atan2( -cos_lat * std::sin( lonlat[LON] * deg2rad ),
+                                         -sin_lat * cos_p + cos_lat * sin_p * std::cos( lonlat[LON] * deg2rad ) );
         if ( lonlat[LON] < 0.0 ) {
-            lonlat[LON] = lonlat[LON] + 2.0 * M_PI;
+            lonlat[LON] += 360.;
         }
-        else if ( lonlat[LON] >= 2.0 * M_PI ) {
-            lonlat[LON] = lonlat[LON] - 2.0 * M_PI;
+        else if ( lonlat[LON] >= 360. ) {
+            lonlat[LON] -= 360.;
         }
     }
 }
@@ -138,10 +135,10 @@ void CubedSphereProjectionBase::hash( eckit::Hash& h ) const {
 void CubedSphereProjectionBase::xy2lonlat_post( double xyz[], const idx_t& t, double crd[] ) const {
     cartesianToSpherical( xyz, crd );
 
-    if ( crd[LON] < 0.0 ) {
-        crd[LON] += 2.0 * M_PI;
+    if ( crd[LON] < 0. ) {
+      crd[LON] += 360.;
     }
-    crd[LON] = crd[LON] - M_PI;
+    crd[LON] -= 180.;
 
     // Convert to cartesian
     sphericalToCartesian( crd, xyz );
@@ -149,38 +146,35 @@ void CubedSphereProjectionBase::xy2lonlat_post( double xyz[], const idx_t& t, do
     // Perform tile specific rotation
     tileRotate(t, xyz);
 
-
     // Back to lonlat
     cartesianToSpherical( xyz, crd );
 
     // Shift longitude
     if ( shiftLon_ != 0.0 ) {
-        crd[LON] = crd[LON] + shiftLon_ * deg2rad;
-        if ( crd[LON] < -M_PI ) {
-            crd[LON] = 2 * M_PI + crd[LON];
+        crd[LON] = crd[LON] + shiftLon_;
+        if ( crd[LON] < -180.) {
+            crd[LON] = 360. + crd[LON];
         }
-        if ( crd[LON] > M_PI ) {
-            crd[LON] = -2 * M_PI + crd[LON];
+        if ( crd[LON] > 180. ) {
+            crd[LON] = - 360. + crd[LON];
         }
     }
 
     // To 0, 360
     if ( crd[LON] < 0.0 ) {
-        crd[LON] = 2. * M_PI + crd[LON];
+        crd[LON] += 360.;
     }
 
     // Schmidt transform
     if ( doSchmidt_ ) {
-        schmidtTransform( stretchFac_, targetLon_ * deg2rad, targetLat_ * deg2rad, crd );
+        schmidtTransform( stretchFac_, targetLon_, targetLat_, crd );
     }
 
     // longitude does not make sense at the poles - set to 0.
-    if ( std::abs( std::abs( crd[LAT] ) - M_PI_2 ) < 1e-15 ) {
+    if ( std::abs( std::abs( crd[LAT] ) - 90. ) < 1e-15 ) {
         crd[LON] = 0.;
     }
 
-    crd[LON] *= rad2deg;
-    crd[LAT] *= rad2deg;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -193,17 +187,13 @@ void CubedSphereProjectionBase::lonlat2xy_pre( double crd[], idx_t& t, double xy
         crd[LAT] = 0.;
     }
 
-    // convert degrees to radians
-    crd[LON] *= deg2rad;
-    crd[LAT] *= deg2rad;
-
-    // To [-pi/4, 7/4 * pi)
-    if ( crd[LON] >= 1.75 * M_PI ) {
-        crd[LON] += -2. * M_PI;
+    // To [-45.0, 315)
+    if ( crd[LON] >= 315.0 ) {
+        crd[LON] -= 360.;
     }
 
     // find tile which this lonlat is linked to
-    // works [-pi/4, 7/4 * pi)
+    // works [-45, 315.0)
     t = CubedSphereTiles_.tileFromLonLat(crd);
 
     sphericalToCartesian(crd, xyz);
@@ -215,25 +205,24 @@ void CubedSphereProjectionBase::lonlat2xy_pre( double crd[], idx_t& t, double xy
 
 
 void CubedSphereProjectionBase::xy2alphabetat( const double xy[], idx_t& t, double ab[] ) const {
-    // xy is in degrees while ab is in radians
+    // xy is in degrees while ab is in degree
     // ab are the  (alpha, beta) coordinates and t is the tile index.
 
     t = CubedSphereTiles_.tileFromXY(xy);
     double normalisedX = xy[XX]/90.;
     double normalisedY = (xy[YY] + 135.)/90.;
-    ab[LON] = (normalisedX - CubedSphereTiles_.xy2abOffsets()[XX][t])* M_PI_2 - M_PI_4;
-    ab[LAT] = (normalisedY - CubedSphereTiles_.xy2abOffsets()[YY][t])* M_PI_2 - M_PI_4;
+    ab[LON] = (normalisedX - CubedSphereTiles_.xy2abOffsets()[XX][t])* 90.0 - 45.0;
+    ab[LAT] = (normalisedY - CubedSphereTiles_.xy2abOffsets()[YY][t])* 90.0 - 45.0;
 }
 
 // -------------------------------------------------------------------------------------------------
 
 void CubedSphereProjectionBase::alphabetat2xy( const idx_t& t, const double ab[], double xy[] ) const {
-    // xy is in degrees while ab is in radians
+    // xy and ab are in degrees
     // (alpha, beta) and tiles.
-    double normalisedX = (ab[LON] + M_PI_4)/M_PI_2;
-    double normalisedY = (ab[LAT] + M_PI_4)/M_PI_2;
-    xy[XX] = normalisedX * 90. + CubedSphereTiles_.ab2xyOffsets()[LON][t];
-    xy[YY] = normalisedY * 90. + CubedSphereTiles_.ab2xyOffsets()[LAT][t];
+
+    xy[XX] = ab[LON] + 45.0 + CubedSphereTiles_.ab2xyOffsets()[LON][t];
+    xy[YY] = ab[LAT] + 45.0 + CubedSphereTiles_.ab2xyOffsets()[LAT][t];
 
     CubedSphereTiles_.enforceXYdomain(xy);
 }

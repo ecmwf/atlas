@@ -467,7 +467,7 @@ CASE( "test_cubedsphere" ) {
             // Expected latitudes/longitude per tile
 
             if ( ( s == "CS-EA-" + std::to_string( resolution ) )  ||
-                 ( s == "CS-ES-" + std::to_string( resolution ) ) ) {
+                 ( s == "CS-ED-" + std::to_string( resolution ) ) ) {
                 std::vector<std::pair<double, double>> expectedLatLon{
                     {-cornerLat, 315.0}, {-45.0, 0.0},  {0.0, 315.0},        {0.0, 0.0},         {cornerLat, 315.0},
                     {-cornerLat, 45.0},  {-45.0, 90.0}, {-cornerLat, 135.0}, {0.0, 45.0},        {0.0, 90.0},
@@ -483,6 +483,10 @@ CASE( "test_cubedsphere" ) {
                     {315.0, -45.0}, {315.0, -90.0}};
 
                 for ( std::size_t jn = 0; jn < grid.size(); ++jn ) {
+                    Log::info() << s << " " << jn << " lon2x " << pointXYs_from_LonLat[jn].x() << " "
+                                <<  expectedXY[jn].first  <<std::endl;
+                    Log::info() << s << " " << jn << " lat2y " << pointXYs_from_LonLat[jn].y() << " "
+                                <<  expectedXY[jn].second  <<std::endl;
                     EXPECT( std::abs( pointLonLats[jn].lat() - expectedLatLon[jn].first ) < tolerance );
                     EXPECT( std::abs( pointLonLats[jn].lon() - expectedLatLon[jn].second ) < tolerance );
                     EXPECT( std::abs( pointLonLats_from_XY[jn].lat() - expectedLatLon[jn].first ) < tolerance );
@@ -515,6 +519,10 @@ CASE( "test_cubedsphere" ) {
                     {45.0, -90.0} };
 
                 for ( std::size_t jn = 0; jn < grid.size(); ++jn ) {
+                    Log::info() << s << " " << jn << " lon2x " << pointXYs_from_LonLat[jn].x() << " "
+                                <<  expectedXY[jn].first  <<std::endl;
+                    Log::info() << s << " " << jn << " lat2y " << pointXYs_from_LonLat[jn].y() << " "
+                                <<  expectedXY[jn].second  <<std::endl;
                     EXPECT( std::abs( pointLonLats[jn].lat() - expectedLatLon[jn].first ) < tolerance );
                     EXPECT( std::abs( pointLonLats[jn].lon() - expectedLatLon[jn].second ) < tolerance );
                     EXPECT( std::abs( pointLonLats_from_XY[jn].lat() - expectedLatLon[jn].first ) < tolerance );

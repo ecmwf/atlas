@@ -206,13 +206,13 @@ idx_t LFRicCubedSphereTiles::tileFromLonLat( const double crd[] ) const {
          t = 4;
     } else if ( (zMinusAbsX > 0.) && (zMinusAbsY > 0.) ) {
          t = 5;
-    } else if (lon >= 1.75 * M_PI  || lon < 0.25 * M_PI) {
+    } else if (lon >= 315.  || lon < 45.) {
          t = 0;
-    } else if (lon >= 0.25 * M_PI  && lon < 0.75 * M_PI) {
+    } else if (lon >= 45. && lon < 135.) {
          t = 1;
-    } else if (lon >= 0.75 * M_PI  && lon < 1.25 * M_PI) {
+    } else if (lon >= 135.  && lon < 225.) {
          t = 2;
-    } else if (lon >= 1.25 * M_PI  && lon < 1.75 * M_PI) {
+    } else if (lon >= 225.  && lon < 315.) {
          t = 3;
     }
 
@@ -249,7 +249,7 @@ void LFRicCubedSphereTiles::enforceXYdomain( double xy[] ) const {
 
 
     if ( debug ) {
-        Log::info() << "enforcXYDomain after " << xy[XX] << " " << xy[YY] << std::endl;
+        Log::info() << "enforceXYDomain after " << xy[XX] << " " << xy[YY] << std::endl;
     }
 }
 

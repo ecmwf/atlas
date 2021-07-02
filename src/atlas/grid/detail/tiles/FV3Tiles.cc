@@ -31,7 +31,8 @@
 
 namespace {
 
-static constexpr bool debug = true; // constexpr so compiler can optimize `if ( debug ) { ... }` out
+static constexpr bool debug = false; // constexpr so compiler can optimize `if ( debug ) { ... }` out
+static constexpr double rad2deg = atlas::util::Constants::radiansToDegrees();
 
 using atlas::projection::detail::ProjectionUtilities;
 
@@ -214,7 +215,7 @@ idx_t FV3CubedSphereTiles::tileFromLonLat( const double crd[] ) const {
 
     sphericalToCartesian(crd, xyz);
 
-    static const double cornerLat= std::asin(1./std::sqrt(3.0));
+    static const double cornerLat= std::asin(1./std::sqrt(3.0)) * rad2deg;
       // the magnitude of the latitude at the corners of the cube (not including the sign)
       // in radians.
 
@@ -235,7 +236,7 @@ idx_t FV3CubedSphereTiles::tileFromLonLat( const double crd[] ) const {
     if ( is_tiny(zMinusAbsX) ) { zMinusAbsX = 0.; }
     if ( is_tiny(zMinusAbsY) ) { zMinusAbsY = 0.; }
 
-    if (lon >= 1.75 * M_PI  || lon < 0.25 * M_PI) {
+    if (lon >= 315.  || lon < 45.) {
         if  ( (zPlusAbsX <= 0.) && (zPlusAbsY <= 0.) ) {
            t = 2;
         } else if ( (zMinusAbsX > 0.) && (zMinusAbsY > 0.) ) {
@@ -244,12 +245,12 @@ idx_t FV3CubedSphereTiles::tileFromLonLat( const double crd[] ) const {
            t = 0;
         }
         // extra point corner point (considering two different longitudes depending on
-        // whether we are on longitude points [0,2*pi] or [-pi/4,pi/4]
-        if ( is_same( lon, -0.25 * M_PI ) && is_same( lat, cornerLat ) ) { t = 0; }
-        if ( is_same( lon,  1.75 * M_PI ) && is_same( lat, cornerLat ) ) { t = 0; }
+        // whether we are on longitude points [0,360] or [-45.,45.]
+        if ( is_same( lon, -45. ) && is_same( lat, cornerLat ) ) { t = 0; }
+        if ( is_same( lon,  315. ) && is_same( lat, cornerLat ) ) { t = 0; }
     }
 
-    if (lon >= 0.25 * M_PI  && lon < 0.75 * M_PI) {
+    if (lon >= 45.  && lon < 135.) {
         // interior
         if  ( (zPlusAbsX <= 0.) && (zPlusAbsY <= 0.) ) {
             t = 2;
@@ -260,7 +261,7 @@ idx_t FV3CubedSphereTiles::tileFromLonLat( const double crd[] ) const {
         }
     }
 
-    if (lon >= 0.75 * M_PI  && lon < 1.25 * M_PI) {
+    if (lon >= 135.  && lon < 225.) {
         // interior
         if  ( (zPlusAbsX < 0.) && (zPlusAbsY < 0.) ) {
             t = 2;
@@ -270,10 +271,10 @@ idx_t FV3CubedSphereTiles::tileFromLonLat( const double crd[] ) const {
             t = 3;
         }
         // extra point corner point
-        if ( is_same(lon, 0.75 * M_PI) && is_same( lat, -cornerLat ) ) { t = 1; }
+        if ( is_same(lon, 135.) && is_same( lat, -cornerLat ) ) { t = 1; }
     }
 
-    if (lon >= 1.25 * M_PI  && lon < 1.75 * M_PI) {
+    if (lon >= 225.  && lon < 315.) {
         // interior
         if  ( (zPlusAbsX < 0.) && (zPlusAbsY < 0.) ) {
             t = 2;
