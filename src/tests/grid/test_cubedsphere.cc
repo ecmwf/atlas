@@ -24,7 +24,7 @@ namespace atlas {
       // I expect this will be replaced by some more aggressive tests.
 
       // Set grid.
-      const auto grid = atlas::Grid("CS-EA-6");
+      const auto grid = atlas::Grid("CS-EA-2");
 
       atlas::Log::info() << grid->type() << std::endl;
       atlas::Log::info() << grid.size() << std::endl;
@@ -43,7 +43,6 @@ namespace atlas {
       // Print out ghost global indices with corresponding owned global indices
       auto ownedIdxIt = ownedIdx.begin();
       for (auto iGhost : ghostIdx) std::cout << iGhost << " " << *ownedIdxIt++ << std::endl;
-
 
       // Set field
       auto field = functionSpace.ghost();

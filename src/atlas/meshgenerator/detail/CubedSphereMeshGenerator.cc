@@ -91,6 +91,7 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
 
     auto ghostToOwnedTij = std::vector<TijPair>{};
 
+
     // -------------------------------------------------------------------------
     // BEGIN FV3 SPECIFIC MAP
     // -------------------------------------------------------------------------
@@ -131,10 +132,12 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     for ( idx_t ix = 0; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{5, ix, N}, {0, ix, 0}});
     for ( idx_t iy = 1; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{5, N, iy}, {1, N - iy, 0}});
 
+
+
     // -------------------------------------------------------------------------
     // END FV3 SPECIFIC MAP
     // -------------------------------------------------------------------------
-
+    std::cout << " after fv3"  << std::endl;
 
     ATLAS_TRACE( "CubedSphereMeshGenerator::generate" );
     Log::debug() << "Number of faces per tile edge = " << std::to_string( N ) << std::endl;
@@ -163,6 +166,8 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     // neighbours. However the mesh will not contain these points so no Ghost nodes are required.
     // We could include the duplicate points in the array if we make them Ghost nodes but it is not
     // clear if this provides any benefit.
+
+
 
     array::ArrayT<int> NodeArrayT( nTiles, N + 1, N + 1 );  // All grid points including duplicates
     auto NodeArray = array::make_view<int, 3>( NodeArrayT );
@@ -201,8 +206,21 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
         return;
     };
 
+
+
+    auto p  = csgrid.tij().begin();
+    auto e = csgrid.tij().end();
+    std::cout << "begin  = " << (*p).t()  << " " << (*p).i() << " " << (*p).j() << std::endl;
+    std::cout << "end  = " << (*e).t()  << " " << (*e).i() << " " << (*e).j() << std::endl;
+
     // Loop over owned (t, i, j)
-    for (auto& p : csgrid.tij()) addOwnedNode(Tij{p.t(), p.i(), p.j()});
+   // for (auto& p : csgrid.tij()) {
+    for ( std::size_t jn = 0; jn < csgrid.size(); ++jn ) {
+        std::cout << "add Owned Node = " << jn << " " << (*p).t()  << " " << (*p).i() << " " << (*p).j() << std::endl;
+        addOwnedNode(Tij{(*p).t(), (*p).i(), (*p).j()});
+        if (jn != static_cast<std::size_t>(csgrid.size() - 1)) {++p;}
+
+   }
 
     // Assert that the correct number of nodes have been set
     ATLAS_ASSERT( nnodes == nOwned, "Insufficient nodes" );
@@ -211,51 +229,83 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     auto ghostGblIdx = std::vector<idx_t>();
     auto ownedGblIdx = std::vector<idx_t>();
 
+    std::cout << "ghostToOwnedTij.size() " << ghostToOwnedTij.size() << std::endl;
+
+
     // Add ghost nodes to node array
     // (nGhost started after nOwned)
     auto nGhost = nOwned;
     auto addGhostNode = [&](Tij tijGhost, Tij tijOwned) {
 
+      std::cout << "addGhostNode" << std::endl;
+
       // Get concrete node id
       auto nOwned = NodeArray(tijOwned[0], tijOwned[1], tijOwned[2]);
 
+      std::cout << "addGhostNode nOwned id" << nOwned << std::endl;
+
       // Add ghost node to NodeArray
       NodeArray(tijGhost[0], tijGhost[1], tijGhost[2]) = nGhost;
+
+     std::cout << "addGhostNode to NodeArray" << nOwned << std::endl;
 
       // "Create" ghost xy coordinate.
 
       // Get Jacobian of coords rtw indices
       auto x0 = xy(NodeArray(tijGhost[0], 0, 0), XX);
+
+      std::cout << "addGhostNode x0" << x0 << std::endl;
+
       auto y0 = xy(NodeArray(tijGhost[0], 0, 0), YY);
+
+      std::cout << "addGhostNode y0" << y0 << std::endl;
 
       auto dx_di = xy(NodeArray(tijGhost[0], 1, 0), XX) - x0;
       auto dx_dj = xy(NodeArray(tijGhost[0], 0, 1), XX) - x0;
       auto dy_di = xy(NodeArray(tijGhost[0], 1, 0), YY) - y0;
       auto dy_dj = xy(NodeArray(tijGhost[0], 0, 1), YY) - y0;
 
+      std::cout << "addGhostNode dx_ " << dx_di << " " <<dx_dj << std::endl;
+
       // Set xy coordinates
       xy(nGhost, XX) = x0 + tijGhost[1] * dx_di + tijGhost[2] * dx_dj;
       xy(nGhost, YY) = y0 + tijGhost[1] * dy_di + tijGhost[2] * dy_dj;
+
+      std::cout << "xy " <<  xy(nGhost, XX)  << " "  << xy(nGhost, YY) << std::endl;
 
       // Same lonlat as concrete points
       lonlat(nGhost, LON) = lonlat( nOwned, LON);
       lonlat(nGhost, LAT) = lonlat( nOwned, LAT);
 
+      std::cout << "lonlat " <<  lonlat(nGhost, LON)  << " "  <<    lonlat(nGhost, LAT) << std::endl;
+
       // Is ghost node
       mesh::Nodes::Topology::set(flags(nGhost), mesh::Nodes::Topology::GHOST);
       ghost(nGhost) = 1;
 
+      std::cout << "is ghost node" << std::endl;
+
       // Partitioning logic to be added in future PR
       glb_idx(nGhost) = nGhost + 1;
       remote_idx(nGhost) = nGhost;
-      part(nGhost) = distribution.partition(nGhost);
+
+      std::cout << "global remote idx " << std::endl;
+
+      // not sure (below - for multiple PEs)
+      part(nGhost) = distribution.partition(nOwned);
+
+      std::cout << "partitioning logic" << std::endl;
 
       // Append metadata
       // Global indicies of ghost node and owned node
       ghostGblIdx.push_back(nGhost + 1);
       ownedGblIdx.push_back(nOwned + 1);
 
+      std::cout << "append metadata" << std::endl;
+
       ++nGhost;
+
+      std::cout << "end of loop" << std::endl;
 
     };
 
