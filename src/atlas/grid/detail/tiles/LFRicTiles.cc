@@ -14,6 +14,7 @@
 #include "atlas/grid/detail/tiles/TilesFactory.h"
 #include "atlas/grid/detail/tiles/LFRicTiles.h"
 #include "atlas/projection/detail/ProjectionUtilities.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {
@@ -45,7 +46,6 @@ void sphericalToCartesian(const double lonlat[], double xyz[] ) {
 
 // constructor
 LFRicCubedSphereTiles::LFRicCubedSphereTiles( const eckit::Parametrisation& ) {
-    std::cout << "LFRicCubedSphereTiles constructor" << std::endl;
 }
 
 std::array<std::array<double,6>,2> LFRicCubedSphereTiles::xy2abOffsets() const {
@@ -89,13 +89,11 @@ void LFRicCubedSphereTiles::tile4Rotate( double xyz[] ) const {
     xyz[ZZ] = -xyz_in[XX];
 }
 void LFRicCubedSphereTiles::tile5Rotate( double xyz[] ) const {
-    // unsure about tile 5 need to test with N>2
     double xyz_in[3];
     std::copy( xyz, xyz + 3, xyz_in );
     xyz[XX] = -xyz_in[YY];
     xyz[YY] =  xyz_in[ZZ];
-  //  xyz[ZZ] = -xyz_in[XX];
-    xyz[ZZ] = xyz_in[XX];
+    xyz[ZZ] =  xyz_in[XX];
 
 }
 
@@ -136,8 +134,7 @@ void LFRicCubedSphereTiles::tile5RotateInverse( double xyz[] ) const {
     std::copy( xyz, xyz + 3, xyz_in );
     xyz[XX] =  xyz_in[ZZ];
     xyz[YY] = -xyz_in[XX];
-  //  xyz[ZZ] = -xyz_in[XX];
-    xyz[ZZ] = xyz_in[YY];
+    xyz[ZZ] =  xyz_in[YY];
 }
 
 idx_t LFRicCubedSphereTiles::tileFromXY( const double xy[] ) const  {

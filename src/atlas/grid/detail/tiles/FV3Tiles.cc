@@ -11,7 +11,6 @@
 #include <array>
 #include <limits>
 #include <ostream>
-#include <iostream>
 #include <string>
 #include <utility>
 #include <iomanip>
@@ -59,7 +58,6 @@ namespace cubedspheretiles {
 
 // constructor
 FV3CubedSphereTiles::FV3CubedSphereTiles( const eckit::Parametrisation& ) {
-  std::cout << "FV3CubedSphereTiles constructor" << std::endl;
 }
 
 std::array<std::array<double,6>,2> FV3CubedSphereTiles::xy2abOffsets() const {
@@ -213,8 +211,6 @@ idx_t FV3CubedSphereTiles::tileFromLonLat( const double crd[] ) const {
 
     idx_t t(-1); // tile index
     double xyz[3];
-
-    std::cout << " tileFromLonLat = " <<  crd[LON] << " " << crd[LAT] << std::endl;
 
     sphericalToCartesian(crd, xyz);
 

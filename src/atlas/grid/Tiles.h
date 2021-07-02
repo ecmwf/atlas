@@ -103,7 +103,6 @@ class FV3CubedSphereTiles : public CubedSphereTiles {
 public:
     using CubedSphereTiles::CubedSphereTiles;
     FV3CubedSphereTiles() : CubedSphereTiles() {
-      std::cout << "grid/Tiles.h FV3CubedSphereTiles"  << std::endl;
     }
 
     FV3CubedSphereTiles( const CubedSphereTiles& );
@@ -116,7 +115,6 @@ class LFRicCubedSphereTiles : public CubedSphereTiles {
 public:
     using CubedSphereTiles::CubedSphereTiles;
     LFRicCubedSphereTiles() : CubedSphereTiles() {
-      std::cout << "grid/Tiles.h LFRicCubedSphereTiles"  << std::endl;
     }
 
     LFRicCubedSphereTiles( const CubedSphereTiles& );

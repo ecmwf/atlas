@@ -69,17 +69,12 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
     // the y start position. Tile 3, 4 and 5 are rotated and ysr provides the start point for y after
     // these rotations.
 
-    std::cout << "CubedSphere name " << name_ << std::endl;
-    std::cout << "CubedSphere projection_->type()" << projection_->type() << std::endl;
-
     using atlas::projection::detail::CubedSphereProjectionBase;
     std::string tileType_ = dynamic_cast<const CubedSphereProjectionBase &>(*projection_).getCubedSphereTiles().type();
 
     using atlas::projection::detail::CubedSphereProjectionBase;
     std::array<std::array<double, 6>,2> xy2abOffsets =
       dynamic_cast<const CubedSphereProjectionBase &>( *projection_).getCubedSphereTiles().xy2abOffsets();
-
-    std::cout << "CubedSphere tiles type " << tileType_ << std::endl;
 
     // default assumes all panels start in bottom left corner
     for (std::size_t i = 0; i < nTiles_; ++i) {
@@ -130,14 +125,6 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
         imax_.push_back(imaxTile);
         imin_.push_back(iminTile);
       }
-
-      std::cout  << "jmax_" << jmax_[0] << jmax_[1] << jmax_[2] << jmax_[3] << jmax_[4] << jmax_[5] << std::endl;
-      std::cout  << "jmin_" << jmin_[0] << jmin_[1] << jmin_[2] << jmin_[3] << jmin_[4] << jmin_[5] << std::endl;
-
-      std::cout  << "imax_" << imax_[0][0] << " " <<  imax_[1][0] << imax_[0][1] << std::endl;
-
-
-
 
 
     } else if (tileType_ == "LFRicCubedSphereTiles") {

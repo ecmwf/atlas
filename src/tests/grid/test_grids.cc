@@ -466,8 +466,6 @@ CASE( "test_cubedsphere" ) {
             double tolerance         = 1e-13;
             // Expected latitudes/longitude per tile
 
-            std::cout << s << std::endl;
-
             if ( ( s == "CS-EA-" + std::to_string( resolution ) )  ||
                  ( s == "CS-ES-" + std::to_string( resolution ) ) ) {
                 std::vector<std::pair<double, double>> expectedLatLon{
@@ -530,13 +528,9 @@ CASE( "test_cubedsphere" ) {
 
         }
         for ( std::size_t jn = 0; jn < grid.size(); ++jn ) {
-            std::cout << "jn x  y" << jn << " " << pointXYs[jn].x() << " " << pointXYs[jn].y() << std::endl;
+            Log::info() << s <<  " jn = " << jn << " x = " << pointXYs[jn].x() << " y = " << pointXYs[jn].y() <<
+               " lat = "  << pointLonLats[jn].lat() << " lon = " <<  pointLonLats[jn].lon() << std::endl;
         }
-
-        for ( std::size_t jn = 0; jn < grid.size(); ++jn ) {
-            std::cout << "jn lat lon" << jn << " " << pointLonLats[jn].lat() << " " << pointLonLats[jn].lon() << std::endl;
-        }
-
     }
 }
 
