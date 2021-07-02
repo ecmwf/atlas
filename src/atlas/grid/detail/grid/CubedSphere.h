@@ -431,6 +431,8 @@ protected:
     std::vector<std::vector<idx_t>> imin_;
     std::vector<std::vector<idx_t>> imax_;
 
+    std::string stagger_;
+
 private:
     std::string name_ = {"cubedsphere"};
 };

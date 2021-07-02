@@ -76,24 +76,34 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
     std::array<std::array<double, 6>,2> xy2abOffsets =
       dynamic_cast<const CubedSphereProjectionBase &>( *projection_).getCubedSphereTiles().xy2abOffsets();
 
-    // default assumes all panels start in bottom left corner
+    // default assumes all panels start in bottom left corner or center
+    double staggerSize = (stagger_ == "C") ? 0.5 : 0.0;
     for (std::size_t i = 0; i < nTiles_; ++i) {
-      xs_[i] = xy2abOffsets[LON][i] * N;
-      xsr_[i] = xy2abOffsets[LON][i] * N;
-      ys_[i] = xy2abOffsets[LAT][i] * N;
-      ysr_[i] = xy2abOffsets[LAT][i] * N;
+      xs_[i] = xy2abOffsets[LON][i] * N + staggerSize;
+      xsr_[i] = xy2abOffsets[LON][i] * N + staggerSize;
+      ys_[i] = xy2abOffsets[LAT][i] * N + staggerSize;
+      ysr_[i] = xy2abOffsets[LAT][i] * N + staggerSize;
     }
 
     if (tileType_ == "FV3CubedSphereTiles") {
       // panel 3,4,5 are reversed in that they start in top left corner
       for (std::size_t i = 3; i < nTiles_; ++i) {
-          ys_[i] += 1;
-          ysr_[i] += N;
+          if (stagger_ == "C") {
+            ysr_[i] += N - 1;
+          } else {
+            ys_[i] += 1;
+            ysr_[i] += N;
+          }
       }
 
       // Number of grid points on each face of the tile.
-      npts_.push_back( N * N + 1 );  // An extra point lies on tile 1
-      npts_.push_back( N * N + 1 );  // An extra point lies on tile 2
+      if (stagger_ == "C") {
+        npts_.push_back( N * N );
+        npts_.push_back( N * N );
+      } else {
+        npts_.push_back( N * N + 1 );  // An extra point lies on tile 1
+        npts_.push_back( N * N + 1 );  // An extra point lies on tile 2
+      }
       npts_.push_back( N * N );
       npts_.push_back( N * N );
       npts_.push_back( N * N );
@@ -114,14 +124,18 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
                [this]( int i, int j, int t ) { return this->ysrMinusIndex( i, t ); }};
 
       jmax_ = std::array<idx_t,6>{N,N-1,N-1,N-1,N-1,N-1};
-
+      if (stagger_ == "C") {
+          jmax_[0] = N-1;
+      }
       for ( idx_t t = 0; t < nTiles_; ++t) {
         std::size_t rowlength =  1 + jmax_[t] - jmin_[t];
         std::vector<idx_t> imaxTile(rowlength, N-1);
         std::vector<idx_t> iminTile(rowlength, 0);
-        // extra points
-        if (t == 0) imaxTile[N] = 0;
-        if (t == 1) imaxTile[0] = N;
+        if (stagger_ != "C") {
+            // extra points
+            if (t == 0) imaxTile[N] = 0;
+            if (t == 1) imaxTile[0] = N;
+        }
         imax_.push_back(imaxTile);
         imin_.push_back(iminTile);
       }
@@ -145,9 +159,13 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
       npts_.push_back( N * N );
       npts_.push_back( N * N );
       npts_.push_back( N * N );
-      npts_.push_back( (N + 1) * (N + 1) ); // top panel includes all edges
-      npts_.push_back( (N - 1) * (N - 1) ); // bottom panel excludes all edges
-
+      if (stagger_ == "C") {
+        npts_.push_back( N * N );
+        npts_.push_back( N * N );
+      } else {
+        npts_.push_back( (N + 1) * (N + 1) ); // top panel includes all edges
+        npts_.push_back( (N - 1) * (N - 1) ); // bottom panel excludes all edges
+      }
       xtile = {[this]( int i, int j, int t ) { return this->xsPlusIndex( i, t ); },
                [this]( int i, int j, int t ) { return this->xsPlusIndex( i, t ); },
                [this]( int i, int j, int t ) { return this->xsrMinusIndex( j, t ); },
@@ -164,18 +182,23 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
 
 
       jmax_ = std::array<idx_t,6>{N-1,N-1,N-1,N-1,N,N-2};
+      if (stagger_ == "C") {
+          jmax_[4] = N-1;
+          jmax_[5] = N-1;
+      }
 
       for ( std::size_t t = 0; t < nTiles_; ++t) {
         std::size_t rowlength =  1 + jmax_[t] - jmin_[t];
         std::vector<idx_t> imaxTile(rowlength, N-1);
         std::vector<idx_t> iminTile(rowlength, 0);
-        if (t == 4) { std::fill_n(imaxTile.begin(),rowlength, N); }
-        if (t == 5) { std::fill_n(imaxTile.begin(),rowlength, N-2); }
+        if (stagger_ != "C") {
+            if (t == 4) { std::fill_n(imaxTile.begin(),rowlength, N); }
+            if (t == 5) { std::fill_n(imaxTile.begin(),rowlength, N-2); }
+        }
         imax_.push_back(imaxTile);
         imin_.push_back(iminTile);
       }
     }
-
 }
 
 // Provide the domain for the cubed-sphere grid, which is global.
