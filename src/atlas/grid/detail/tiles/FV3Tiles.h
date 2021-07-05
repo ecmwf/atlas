@@ -23,7 +23,7 @@ public:
     // constructor
     FV3CubedSphereTiles( const eckit::Parametrisation& );
 
-    static std::string static_type() { return "FV3CubedSphereTiles"; }
+    static std::string static_type() { return "cubedsphere_fv3"; }
 
     virtual std::string type() const override { return static_type(); }
 

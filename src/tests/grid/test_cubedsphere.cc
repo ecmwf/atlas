@@ -21,19 +21,19 @@ namespace atlas {
 
     CASE("cubedsphere_tile_test") {
 
-      auto tileConfig1 = atlas::util::Config("tile type", "LFRicCubedSphereTiles");
+      auto tileConfig1 = atlas::util::Config("tile type", "cubedsphere_lfric");
       auto lfricTiles = atlas::CubedSphereTiles(tileConfig1);
-      EXPECT(lfricTiles.type() == "LFRicCubedSphereTiles");
+      EXPECT(lfricTiles.type() == "cubedsphere_lfric");
 
-      auto tileConfig2 = atlas::util::Config("tile type", "FV3CubedSphereTiles");
+      auto tileConfig2 = atlas::util::Config("tile type", "cubedsphere_fv3");
       auto fv3Tiles = atlas::CubedSphereTiles(tileConfig2);
-      EXPECT(fv3Tiles.type() == "FV3CubedSphereTiles");
+      EXPECT(fv3Tiles.type() == "cubedsphere_fv3");
 
-      auto lfricTiles2 = atlas::CubedSphereTiles("LFRicCubedSphereTiles");
-      EXPECT(lfricTiles2.type() == "LFRicCubedSphereTiles");
+      auto lfricTiles2 = atlas::CubedSphereTiles("cubedsphere_lfric");
+      EXPECT(lfricTiles2.type() == "cubedsphere_lfric");
 
-      auto fv3Tiles2 = atlas::CubedSphereTiles("FV3CubedSphereTiles");
-      EXPECT(fv3Tiles.type() == "FV3CubedSphereTiles");
+      auto fv3Tiles2 = atlas::CubedSphereTiles("cubedsphere_fv3");
+      EXPECT(fv3Tiles.type() == "cubedsphere_fv3");
 
     }
 

@@ -19,7 +19,6 @@
 
 #include "atlas/grid/Tiles.h"
 #include "atlas/grid/detail/tiles/Tiles.h"
-
 #include "atlas/grid/detail/tiles/FV3Tiles.h"
 #include "atlas/grid/detail/tiles/LFRicTiles.h"
 #include "tests/AtlasTestEnvironment.h"
@@ -32,52 +31,80 @@ namespace test {
 
 CASE ("test_tiles") {
    int resolution(2);
-    Grid g{ "CS-EA-" + std::to_string(resolution)};
+    Grid gEA{ "CS-EA-" + std::to_string(resolution)};
+    Grid gLFR{ "CS-LFR-" + std::to_string(resolution)};
 
-    using atlas::cubedspheretiles::FV3CubedSphereTiles;
-    using atlas::cubedspheretiles::LFRicCubedSphereTiles;
     using util::Constants;
 
     util::Config params;
-    FV3CubedSphereTiles f(params);
-    LFRicCubedSphereTiles l(params);
+    CubedSphereTiles f("cubedsphere_fv3");
+    CubedSphereTiles l("cubedsphere_lfric");
 
     double cd[2];
-    for ( auto crd : g.lonlat() ) {
-       std::cout << "fv3 crd "  << crd[LON] << " " << crd[LAT]  <<  std::endl;
-       atlas::PointLonLat pointLonLat = crd * Constants::degreesToRadians();
+
+    idx_t jn(0);
+
+    std::array<idx_t, 7> EAOffset{0,
+                                  resolution * resolution + 1,
+                                  2 * resolution * resolution + 2,
+                                  3 * resolution * resolution + 2,
+                                  4 * resolution * resolution + 2,
+                                  5 * resolution * resolution + 2,
+                                  6 * resolution * resolution + 2};
+
+    for ( auto crd : gEA.lonlat() ) {
+       atlas::PointLonLat pointLonLat = crd;
        cd[LON] = pointLonLat.lon();
        cd[LAT] = pointLonLat.lat();
-       std::cout << "fv3 cd(lon , lat) = "
-                 << cd[LON] << " " << cd[LAT]  << std::endl;
 
-       int t = f.tileFromLonLat(cd);
-       int t2 = l.tileFromLonLat(cd);
-       std::cout << "fv3 lfric tilesfromlonlat = " << t << " " << t2 << std::endl;
+       int t = f.tileFromLonLat(cd);  
 
-       g.projection().lonlat2xy(crd);
+       gEA.projection().lonlat2xy(crd);
        cd[LON] = crd.lon();
        cd[LAT] = crd.lat();
 
-       t = f.tileFromXY(cd);
-       t2 = l.tileFromXY(cd);
-       std::cout << "fv3 lfric tilesfromxy = " << t << " " << t2 << std::endl;
-    }
+       int t2 = f.tileFromXY(cd);
 
-    params.set("tile type", "LFRicCubedSphereTiles");
-    atlas::CubedSphereTiles tiles(params);
-    for ( auto crd : g.lonlat() ) {
-        atlas::PointLonLat pointLonLat = crd * Constants::degreesToRadians();
-        cd[LON] = pointLonLat.lon();
-        cd[LAT] = pointLonLat.lat();
-        std::cout << "generic cd(lon , lat) = "
-                  << cd[LON] << " " << cd[LAT]  << std::endl;
-        std::cout <<  f.tileFromLonLat(cd)   << std::endl;
-        std::cout <<  tiles.tileFromLonLat(cd)   << std::endl;
-
+       for (std::size_t i = 0; i < 6; ++i) {
+           if (jn >= EAOffset[i] && jn < EAOffset[i+1]) {
+               EXPECT(t == static_cast<idx_t>(i));
+               EXPECT(t2 == static_cast<idx_t>(i));
+           }
+       }
+       ++jn;
     }
 
 
+    std::array<idx_t, 7> LFRicOffset{0,
+                                  resolution * resolution,
+                                  2 * resolution * resolution,
+                                  3 * resolution * resolution,
+                                  4 * resolution * resolution,
+                                  4 * resolution * resolution + (resolution + 1) * (resolution + 1),
+                                  6 * resolution * resolution + 2};
+
+    jn = 0;
+    for ( auto crd : gLFR.lonlat() ) {
+       atlas::PointLonLat pointLonLat = crd;
+       cd[LON] = pointLonLat.lon();
+       cd[LAT] = pointLonLat.lat();
+
+       int t3 = l.tileFromLonLat(cd);
+
+       gLFR.projection().lonlat2xy(crd);
+       cd[LON] = crd.lon();
+       cd[LAT] = crd.lat();
+
+       int t4 = l.tileFromXY(cd);
+
+       for (std::size_t i = 0; i < 6; ++i) {
+           if (jn >= LFRicOffset[i] && jn < LFRicOffset[i+1]) {
+               EXPECT(t3 == static_cast<idx_t>(i));
+               EXPECT(t4 == static_cast<idx_t>(i));
+           }
+       }
+       ++jn;
+    }
 
 }
 

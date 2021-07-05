@@ -23,7 +23,7 @@ namespace cubedspheretiles {
 const CubedSphereTiles* CubedSphereTiles::create() {
     // default: FV3 version (for now)
     util::Config params;
-    params.set( "tile type", "FV3CubedSphereTiles" );
+    params.set( "tile type", "cubedsphere_fv3" );
     return CubedSphereTiles::create( params );
 }
 
@@ -36,8 +36,9 @@ const CubedSphereTiles* CubedSphereTiles::create( const std::string & s)  {
 const CubedSphereTiles* CubedSphereTiles::create( const eckit::Parametrisation& p ) {
     std::string CubedSphereTiles_type;
 
-    if ( p.get( "tile type", CubedSphereTiles_type ) ) {
-        return CubedSphereTilesFactory::build( CubedSphereTiles_type, p );
+    if (p.has( "tile type" ) ) {
+       p.get( "tile type", CubedSphereTiles_type );
+       return CubedSphereTilesFactory::build( CubedSphereTiles_type, p );
     } else {
         return create();
     }

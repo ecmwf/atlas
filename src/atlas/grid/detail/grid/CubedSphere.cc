@@ -84,7 +84,7 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
       ysr_[i] = xy2abOffsets[LAT][i] * N;
     }
 
-    if (tileType_ == "FV3CubedSphereTiles") {
+    if (tileType_ == "cubedsphere_fv3") {
       // panel 3,4,5 are reversed in that they start in top left corner
       for (std::size_t i = 3; i < nTiles_; ++i) {
           ys_[i] += 1;
@@ -127,7 +127,7 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
       }
 
 
-    } else if (tileType_ == "LFRicCubedSphereTiles") {
+    } else if (tileType_ == "cubedsphere_lfric") {
 
       // panel 2, 3 starts in lower right corner initially going upwards
       xs_[2] += 1;
@@ -318,7 +318,7 @@ public:
         }
         util::Config projconf;
         projconf.set( "type", "cubedsphere_equiangular" );
-        projconf.set( "tile type", "LFRicCubedSphereTiles");
+        projconf.set( "tile type", "cubedsphere_lfric");
 
         // Shift projection by a longitude
         if ( config.has( "ShiftLon" ) ) {
