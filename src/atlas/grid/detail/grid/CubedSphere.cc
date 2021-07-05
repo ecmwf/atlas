@@ -263,10 +263,8 @@ void CubedSphere::xyt2xy( const double xyt[], double xy[] ) const {
     std::array<std::array<double, 6>,2> ab2xyOffsets =
       dynamic_cast<const CubedSphereProjectionBase &>( *projection_).getCubedSphereTiles().ab2xyOffsets();
 
-
     std::array<std::array<double, 6>,2> xy2abOffsets =
       dynamic_cast<const CubedSphereProjectionBase &>( *projection_).getCubedSphereTiles().xy2abOffsets();
-
 
     double N = static_cast<double>( N_ );
     std::size_t t = static_cast<std::size_t>(xyt[2]);
@@ -291,10 +289,10 @@ GridFactoryBuilder<CubedSphere> __register_CubedSphere( CubedSphere::static_type
 static class cubedsphere_lfric : public GridBuilder {
 public:
     cubedsphere_lfric() :
-        GridBuilder( "cubedsphere_lfric", {"^[Cc][Ss][_-][Ll][Ff][Rr][-_]([0-9]+)$"}, {"CS-EA-<N>"} ) {}
+        GridBuilder( "cubedsphere_lfric", {"^[Cc][Ss][_-][Ll][Ff][Rr][-_]([0-9]+)$"}, {"CS-LFR-<N>"} ) {}
 
     void print( std::ostream& os ) const override {
-        os << std::left << std::setw( 20 ) << "CS-LFR-<F>-<N>"
+        os << std::left << std::setw( 20 ) << "CS-LFR-<N>"
            << "Cubed sphere for equiangular";
     }
 
@@ -307,7 +305,6 @@ public:
             int N = to_int( matches[0] );
             gridconf.set( "type", type() );
             gridconf.set( "N", N );
-            gridconf.set( "stagger", "F");
             return create( gridconf );
         }
         return nullptr;
@@ -321,9 +318,6 @@ public:
         }
         util::Config projconf;
         projconf.set( "type", "cubedsphere_equiangular" );
-        projconf.set( "N", N );
-
-
         projconf.set( "tile type", "LFRicCubedSphereTiles");
 
         // Shift projection by a longitude
@@ -395,10 +389,6 @@ public:
         }
         util::Config projconf;
         projconf.set( "type", "cubedsphere_equiangular" );
-        projconf.set( "N", N );
-
-
-        //projconf.set( "tile type", "LFRicCubedSphereTiles");
 
         // Shift projection by a longitude
         if ( config.has( "ShiftLon" ) ) {
@@ -463,7 +453,6 @@ public:
         }
         util::Config projconf;
         projconf.set( "type", "cubedsphere_equidistant" );
-        projconf.set( "N", N );
 
         // Shift projection by a longitude
         if ( config.has( "ShiftLon" ) ) {
