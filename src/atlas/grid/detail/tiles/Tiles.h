@@ -34,6 +34,8 @@ public:
 
     static const CubedSphereTiles* create( const eckit::Parametrisation& );
 
+    static const CubedSphereTiles* create( const std::string& );
+
     virtual std::string type() const = 0;
 
     virtual std::array<std::array<double,6>,2> xy2abOffsets() const = 0;

@@ -52,6 +52,7 @@ public:
     using Handle::Handle;
     CubedSphereTiles() = default;
     CubedSphereTiles( const eckit::Parametrisation& );
+    CubedSphereTiles( const std::string& );
 
     /// Type of the cubed-sphere tiles:
     std::string type() const;

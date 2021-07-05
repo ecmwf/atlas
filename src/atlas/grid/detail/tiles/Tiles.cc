@@ -27,6 +27,12 @@ const CubedSphereTiles* CubedSphereTiles::create() {
     return CubedSphereTiles::create( params );
 }
 
+const CubedSphereTiles* CubedSphereTiles::create( const std::string & s)  {
+    util::Config params;
+    params.set( "tile type", s );
+    return CubedSphereTiles::create( params );
+}
+
 const CubedSphereTiles* CubedSphereTiles::create( const eckit::Parametrisation& p ) {
     std::string CubedSphereTiles_type;
 

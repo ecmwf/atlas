@@ -23,6 +23,11 @@ CubedSphereTiles::CubedSphereTiles( const eckit::Parametrisation& p ) : Handle(
                 atlas::cubedspheretiles::CubedSphereTiles::create( p ) ) {
 }
 
+CubedSphereTiles::CubedSphereTiles( const std::string& s ) : Handle(
+                atlas::cubedspheretiles::CubedSphereTiles::create( s ) ) {
+}
+
+
 std::string atlas::CubedSphereTiles::type() const {
     return get()->type();
 }

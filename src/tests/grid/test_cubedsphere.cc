@@ -23,13 +23,16 @@ namespace atlas {
 
       auto tileConfig1 = atlas::util::Config("tile type", "LFRicCubedSphereTiles");
       auto lfricTiles = atlas::CubedSphereTiles(tileConfig1);
-
       EXPECT(lfricTiles.type() == "LFRicCubedSphereTiles");
-
 
       auto tileConfig2 = atlas::util::Config("tile type", "FV3CubedSphereTiles");
       auto fv3Tiles = atlas::CubedSphereTiles(tileConfig2);
+      EXPECT(fv3Tiles.type() == "FV3CubedSphereTiles");
 
+      auto lfricTiles2 = atlas::CubedSphereTiles("LFRicCubedSphereTiles");
+      EXPECT(lfricTiles2.type() == "LFRicCubedSphereTiles");
+
+      auto fv3Tiles2 = atlas::CubedSphereTiles("FV3CubedSphereTiles");
       EXPECT(fv3Tiles.type() == "FV3CubedSphereTiles");
 
     }
