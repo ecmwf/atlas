@@ -98,30 +98,4 @@ private:
 
 };
 
-
-class FV3CubedSphereTiles : public CubedSphereTiles {
-public:
-    using CubedSphereTiles::CubedSphereTiles;
-    FV3CubedSphereTiles() : CubedSphereTiles() {
-    }
-
-    FV3CubedSphereTiles( const CubedSphereTiles& );
-
-private:
-    const ::atlas::cubedspheretiles::FV3CubedSphereTiles* cubedspheretiles_;
-};
-
-class LFRicCubedSphereTiles : public CubedSphereTiles {
-public:
-    using CubedSphereTiles::CubedSphereTiles;
-    LFRicCubedSphereTiles() : CubedSphereTiles() {
-    }
-
-    LFRicCubedSphereTiles( const CubedSphereTiles& );
-
-private:
-    const ::atlas::cubedspheretiles::LFRicCubedSphereTiles* cubedspheretiles_;
-};
-
-
 }  // namespace atlas

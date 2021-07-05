@@ -23,16 +23,6 @@ CubedSphereTiles::CubedSphereTiles( const eckit::Parametrisation& p ) : Handle(
                 atlas::cubedspheretiles::CubedSphereTiles::create( p ) ) {
 }
 
-FV3CubedSphereTiles::FV3CubedSphereTiles( const CubedSphereTiles& cubedspheretiles ) :
-    CubedSphereTiles ( cubedspheretiles ),
-    cubedspheretiles_( dynamic_cast<const atlas::cubedspheretiles::FV3CubedSphereTiles*>( get() ) ) {}
-
-
-LFRicCubedSphereTiles::LFRicCubedSphereTiles( const CubedSphereTiles& cubedspheretiles ) :
-    CubedSphereTiles ( cubedspheretiles ),
-    cubedspheretiles_( dynamic_cast<const atlas::cubedspheretiles::LFRicCubedSphereTiles*>( get() ) ) {}
-
-
 std::string atlas::CubedSphereTiles::type() const {
     return get()->type();
 }
