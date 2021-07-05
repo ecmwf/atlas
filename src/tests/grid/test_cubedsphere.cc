@@ -11,12 +11,28 @@
 #include "atlas/mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
+#include "atlas/grid/Tiles.h"
+#include "atlas/option.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
 namespace atlas {
   namespace test {
 
+    CASE("cubedsphere_tile_test") {
+
+      auto tileConfig1 = atlas::util::Config("tile type", "LFRicCubedSphereTiles");
+      auto lfricTiles = atlas::CubedSphereTiles(tileConfig1);
+
+      EXPECT(lfricTiles.type() == "LFRicCubedSphereTiles");
+
+
+      auto tileConfig2 = atlas::util::Config("tile type", "FV3CubedSphereTiles");
+      auto fv3Tiles = atlas::CubedSphereTiles(tileConfig2);
+
+      EXPECT(fv3Tiles.type() == "FV3CubedSphereTiles");
+
+    }
 
     CASE("cubedsphere_grid_mesh_field_test") {
 
