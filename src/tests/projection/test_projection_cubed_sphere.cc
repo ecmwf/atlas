@@ -74,7 +74,6 @@ CASE ("test_tiles") {
        ++jn;
     }
 
-
     std::array<idx_t, 7> LFRicOffset{0,
                                   resolution * resolution,
                                   2 * resolution * resolution,

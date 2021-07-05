@@ -413,8 +413,6 @@ protected:
     // Number of tiles
     static const idx_t nTiles_ = 6;
 
-    const idx_t tileCases_ = 2;
-
     // Start points in x,y direction
     int xs_[nTiles_];
     int ys_[nTiles_];

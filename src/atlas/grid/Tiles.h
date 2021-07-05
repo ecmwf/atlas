@@ -36,8 +36,6 @@ class Config;
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 namespace cubedspheretiles {
 class CubedSphereTiles;
-//class FV3CubedSphereTiles;
-//class LFRicCubedSphereTiles;
 }  // namespace cubespheretiles
 #endif
 

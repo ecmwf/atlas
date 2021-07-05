@@ -318,7 +318,7 @@ public:
         }
         util::Config projconf;
         projconf.set( "type", "cubedsphere_equiangular" );
-        projconf.set( "tile type", "cubedsphere_lfric");
+        projconf.set( "tile type", "cubedsphere_lfric" );
 
         // Shift projection by a longitude
         if ( config.has( "ShiftLon" ) ) {
@@ -344,6 +344,7 @@ public:
                 projconf.set( "TargetLat", targetLat );
             }
         }
+
         return new CubedSphereGrid::grid_t( "CS-LFR-" + std::to_string( N ), N, Projection( projconf ) );
     }
 

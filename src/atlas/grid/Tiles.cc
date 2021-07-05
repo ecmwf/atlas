@@ -14,9 +14,6 @@
 #include "atlas/grid/detail/tiles/LFRicTiles.h"
 
 
-//using FV3CubedSphereTiles = atlas::cubedspheretiles::FV3CubedSphereTiles;
-//using LFRicCubedSphereTiles = atlas::cubedspheretiles::LFRicCubedSphereTiles;
-
 namespace atlas {
 
 CubedSphereTiles::CubedSphereTiles( const eckit::Parametrisation& p ) : Handle(
