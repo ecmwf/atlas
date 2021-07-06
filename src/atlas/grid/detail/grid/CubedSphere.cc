@@ -113,6 +113,8 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
                [this]( int i, int j, int t ) { return this->ysrMinusIndex( i, t ); },
                [this]( int i, int j, int t ) { return this->ysrMinusIndex( i, t ); }};
 
+
+      jmin_ = std::array<idx_t,6>{0,0,0,0,0,0};
       jmax_ = std::array<idx_t,6>{N,N-1,N-1,N-1,N-1,N-1};
 
       for ( idx_t t = 0; t < nTiles_; ++t) {
@@ -162,15 +164,15 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
                [this]( int i, int j, int t ) { return this->ysPlusIndex( j, t ); },
                [this]( int i, int j, int t ) { return this->ysrMinusIndex( i, t ); }};
 
-
-      jmax_ = std::array<idx_t,6>{N-1,N-1,N-1,N-1,N,N-2};
+      // we only start from 0 if that happens to be an edge.
+      // note that tiles 3,4,5 start from 1 as they don't start on the edge of the cube.
+      jmin_ = std::array<idx_t,6>{0,0,0,1,1,1};
+      jmax_ = std::array<idx_t,6>{N-1,N-1,N-1,N,N+1,N-1};
 
       for ( std::size_t t = 0; t < nTiles_; ++t) {
         std::size_t rowlength =  1 + jmax_[t] - jmin_[t];
-        std::vector<idx_t> imaxTile(rowlength, N-1);
-        std::vector<idx_t> iminTile(rowlength, 0);
-        if (t == 4) { std::fill_n(imaxTile.begin(),rowlength, N); }
-        if (t == 5) { std::fill_n(imaxTile.begin(),rowlength, N-2); }
+        std::vector<idx_t> iminTile(rowlength, jmin_[t]);
+        std::vector<idx_t> imaxTile(rowlength, jmax_[t]);
         imax_.push_back(imaxTile);
         imin_.push_back(iminTile);
       }
