@@ -62,7 +62,9 @@ CubedSphere::CubedSphere( int N, Projection p ) : CubedSphere( CubedSphere::stat
 CubedSphere::CubedSphere( const std::string& name, int N, Projection projection ) :
     Grid(), N_( N ), name_( name ) {  // Number of tiles hardwired to 6 at the moment. Regional may need 1
     // Copy members
-    projection_ = projection ? projection : Projection();
+    util::Config defaultProjConfig;
+    defaultProjConfig.set("type", "cubedsphere_equiangular");
+    projection_ = projection ? projection : Projection(defaultProjConfig);
 
     // Domain
     domain_ = computeDomain();
@@ -75,6 +77,11 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
 
     using atlas::projection::detail::CubedSphereProjectionBase;
     cs_projection_ = dynamic_cast<CubedSphereProjectionBase*>( projection_.get() );
+    if( not cs_projection_ ) {
+      ATLAS_THROW_EXCEPTION( "Provided projection " << projection_.type() <<
+                              " is incompatible with the CubedSphere grid type" );
+    }
+
     tiles_ = cs_projection_->getCubedSphereTiles();
 
     // default assumes all panels start in bottom left corner
@@ -381,6 +388,7 @@ public:
         }
         util::Config projconf;
         projconf.set( "type", "cubedsphere_equiangular" );
+        projconf.set( "tile.type", "cubedsphere_fv3" );
 
         // Shift projection by a longitude
         if ( config.has( "ShiftLon" ) ) {
@@ -445,6 +453,7 @@ public:
         }
         util::Config projconf;
         projconf.set( "type", "cubedsphere_equidistant" );
+        projconf.set( "tile.type", "cubedsphere_fv3" );
 
         // Shift projection by a longitude
         if ( config.has( "ShiftLon" ) ) {

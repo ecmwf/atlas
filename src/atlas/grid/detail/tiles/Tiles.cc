@@ -23,7 +23,7 @@ namespace cubedspheretiles {
 const CubedSphereTiles* CubedSphereTiles::create() {
     // default: FV3 version (for now)
     util::Config params;
-    params.set( "type", "cubedsphere_fv3" );
+    params.set( "type", "cubedsphere_lfric" );
     return CubedSphereTiles::create( params );
 }
 
