@@ -18,6 +18,7 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
+#include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
 
@@ -86,13 +87,19 @@ void cartesianToSpherical( const double xyz[], double lonlat[] ) {
     ProjectionUtilities::cartesianToSpherical( xyz, lonlat, crd_sys, radius );
 }
 
+std::string getTileType(const eckit::Parametrisation & params) {
+    std::string tileStr;
+    params.get("tile.type", tileStr);
+    return tileStr;
+}
+
 }  // namespace
 
 
 // -------------------------------------------------------------------------------------------------
 
 CubedSphereProjectionBase::CubedSphereProjectionBase( const eckit::Parametrisation& params ) :
-    CubedSphereTiles_(params)
+    CubedSphereTiles_(getTileType(params))
 {
   ATLAS_TRACE( "CubedSphereProjectionBase::CubedSphereProjectionBase" );
 

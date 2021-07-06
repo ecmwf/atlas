@@ -15,6 +15,9 @@
 #include "atlas/library/config.h"
 #include "atlas/util/ObjectHandle.h"
 
+
+#pragma once
+
 //---------------------------------------------------------------------------------------------------------------------
 
 // Forward declarations
