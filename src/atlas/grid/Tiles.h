@@ -8,15 +8,14 @@
  * nor does it submit to any jurisdiction.
  */
 
+#pragma once
+
 #include <array>
 #include <string>
 #include <iostream>
 
 #include "atlas/library/config.h"
 #include "atlas/util/ObjectHandle.h"
-
-
-#pragma once
 
 //---------------------------------------------------------------------------------------------------------------------
 
