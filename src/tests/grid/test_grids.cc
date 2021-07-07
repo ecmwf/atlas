@@ -430,9 +430,9 @@ CASE( "test_structured_from_config" ) {
 
 CASE( "test_cubedsphere" ) {
     int resolution( 2 );
-    std::vector<std::string> grid_names{"CS-EA-" + std::to_string( resolution ),
-                                        "CS-ED-" + std::to_string( resolution ),
-                                        "CS-LFR-" + std::to_string( resolution ),
+    std::vector<std::string> grid_names{"CS-EA-L-" + std::to_string( resolution ),
+                                        "CS-ED-L-" + std::to_string( resolution ),
+                                        "CS-LFR-L-" + std::to_string( resolution ),
                                        };
 
     for ( std::string& s : grid_names ) {
@@ -466,8 +466,8 @@ CASE( "test_cubedsphere" ) {
             double tolerance         = 1e-13;
             // Expected latitudes/longitude per tile
 
-            if ( ( s == "CS-EA-" + std::to_string( resolution ) )  ||
-                 ( s == "CS-ED-" + std::to_string( resolution ) ) ) {
+            if ( ( s == "CS-EA-L-" + std::to_string( resolution ) )  ||
+                 ( s == "CS-ED-L-" + std::to_string( resolution ) ) ) {
                 std::vector<std::pair<double, double>> expectedLatLon{
                     {-cornerLat, 315.0}, {-45.0, 0.0},  {0.0, 315.0},        {0.0, 0.0},         {cornerLat, 315.0},
                     {-cornerLat, 45.0},  {-45.0, 90.0}, {-cornerLat, 135.0}, {0.0, 45.0},        {0.0, 90.0},
@@ -498,7 +498,7 @@ CASE( "test_cubedsphere" ) {
                 }
 
 
-            } else if ( s == "CS-LFR-" + std::to_string( resolution ) ) {
+            } else if ( s == "CS-LFR-L-" + std::to_string( resolution ) ) {
                 std::vector<std::pair<double, double>> expectedLatLon{
                     {-cornerLat, 315.0},  {-45.0, 0.0}, {0.0, 315.0},        {0.0, 0.0},   // tile 0
                     {-cornerLat, 45.0},  {-45.0, 90.0}, {0.0, 45.0},         {0.0, 90.0},  // tile 1
