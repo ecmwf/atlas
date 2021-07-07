@@ -8,6 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
+#pragma once
+
 #include <array>
 #include <string>
 #include <iostream>
@@ -36,8 +38,6 @@ class Config;
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 namespace cubedspheretiles {
 class CubedSphereTiles;
-class FV3CubedSphereTiles;
-class LFRicCubedSphereTiles;
 }  // namespace cubespheretiles
 #endif
 
@@ -52,6 +52,7 @@ public:
     using Handle::Handle;
     CubedSphereTiles() = default;
     CubedSphereTiles( const eckit::Parametrisation& );
+    CubedSphereTiles( const std::string& );
 
     /// Type of the cubed-sphere tiles:
     std::string type() const;
@@ -97,31 +98,5 @@ private:
     friend std::ostream& operator<<( std::ostream& s, const CubedSphereTiles& cst );
 
 };
-
-
-class FV3CubedSphereTiles : public CubedSphereTiles {
-public:
-    using CubedSphereTiles::CubedSphereTiles;
-    FV3CubedSphereTiles() : CubedSphereTiles() {
-    }
-
-    FV3CubedSphereTiles( const CubedSphereTiles& );
-
-private:
-    const ::atlas::cubedspheretiles::FV3CubedSphereTiles* cubedspheretiles_;
-};
-
-class LFRicCubedSphereTiles : public CubedSphereTiles {
-public:
-    using CubedSphereTiles::CubedSphereTiles;
-    LFRicCubedSphereTiles() : CubedSphereTiles() {
-    }
-
-    LFRicCubedSphereTiles( const CubedSphereTiles& );
-
-private:
-    const ::atlas::cubedspheretiles::LFRicCubedSphereTiles* cubedspheretiles_;
-};
-
 
 }  // namespace atlas

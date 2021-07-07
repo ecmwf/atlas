@@ -14,23 +14,15 @@
 #include "atlas/grid/detail/tiles/LFRicTiles.h"
 
 
-using FV3CubedSphereTiles = atlas::cubedspheretiles::FV3CubedSphereTiles;
-using LFRicCubedSphereTiles = atlas::cubedspheretiles::LFRicCubedSphereTiles;
-
 namespace atlas {
 
 CubedSphereTiles::CubedSphereTiles( const eckit::Parametrisation& p ) : Handle(
                 atlas::cubedspheretiles::CubedSphereTiles::create( p ) ) {
 }
 
-FV3CubedSphereTiles::FV3CubedSphereTiles( const CubedSphereTiles& cubedspheretiles ) :
-    CubedSphereTiles ( cubedspheretiles ),
-    cubedspheretiles_( dynamic_cast<const atlas::cubedspheretiles::FV3CubedSphereTiles*>( get() ) ) {}
-
-
-LFRicCubedSphereTiles::LFRicCubedSphereTiles( const CubedSphereTiles& cubedspheretiles ) :
-    CubedSphereTiles ( cubedspheretiles ),
-    cubedspheretiles_( dynamic_cast<const atlas::cubedspheretiles::LFRicCubedSphereTiles*>( get() ) ) {}
+CubedSphereTiles::CubedSphereTiles( const std::string& s ) : Handle(
+                atlas::cubedspheretiles::CubedSphereTiles::create( s ) ) {
+}
 
 
 std::string atlas::CubedSphereTiles::type() const {

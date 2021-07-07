@@ -519,10 +519,6 @@ CASE( "test_cubedsphere" ) {
                     {45.0, -90.0} };
 
                 for ( std::size_t jn = 0; jn < grid.size(); ++jn ) {
-                    Log::info() << s << " " << jn << " lon2x " << pointXYs_from_LonLat[jn].x() << " "
-                                <<  expectedXY[jn].first  <<std::endl;
-                    Log::info() << s << " " << jn << " lat2y " << pointXYs_from_LonLat[jn].y() << " "
-                                <<  expectedXY[jn].second  <<std::endl;
                     EXPECT( std::abs( pointLonLats[jn].lat() - expectedLatLon[jn].first ) < tolerance );
                     EXPECT( std::abs( pointLonLats[jn].lon() - expectedLatLon[jn].second ) < tolerance );
                     EXPECT( std::abs( pointLonLats_from_XY[jn].lat() - expectedLatLon[jn].first ) < tolerance );

@@ -22,6 +22,7 @@
 #include "atlas/grid/detail/grid/GridFactory.h"
 #include "atlas/grid/detail/spacing/CustomSpacing.h"
 #include "atlas/grid/detail/spacing/LinearSpacing.h"
+#include "atlas/grid/Tiles.h"
 #include "atlas/projection/detail/CubedSphereProjectionBase.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
@@ -53,12 +54,17 @@ std::string CubedSphere::name() const {
     return name_;
 }
 
+using atlas::projection::detail::CubedSphereProjectionBase;
+
+
 CubedSphere::CubedSphere( int N, Projection p ) : CubedSphere( CubedSphere::static_type(), N, p ) {}
 
 CubedSphere::CubedSphere( const std::string& name, int N, Projection projection ) :
     Grid(), N_( N ), name_( name ) {  // Number of tiles hardwired to 6 at the moment. Regional may need 1
     // Copy members
-    projection_ = projection ? projection : Projection();
+    util::Config defaultProjConfig;
+    defaultProjConfig.set("type", "cubedsphere_equiangular");
+    projection_ = projection ? projection : Projection(defaultProjConfig);
 
     // Domain
     domain_ = computeDomain();
@@ -70,22 +76,24 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
     // these rotations.
 
     using atlas::projection::detail::CubedSphereProjectionBase;
-    std::string tileType_ = dynamic_cast<const CubedSphereProjectionBase &>(*projection_).getCubedSphereTiles().type();
+    cs_projection_ = dynamic_cast<CubedSphereProjectionBase*>( projection_.get() );
+    if( not cs_projection_ ) {
+      ATLAS_THROW_EXCEPTION( "Provided projection " << projection_.type() <<
+                              " is incompatible with the CubedSphere grid type" );
+    }
 
-    using atlas::projection::detail::CubedSphereProjectionBase;
-    std::array<std::array<double, 6>,2> xy2abOffsets =
-      dynamic_cast<const CubedSphereProjectionBase &>( *projection_).getCubedSphereTiles().xy2abOffsets();
+    tiles_ = cs_projection_->getCubedSphereTiles();
 
     // default assumes all panels start in bottom left corner or center
     double staggerSize = (stagger_ == "C") ? 0.5 : 0.0;
     for (std::size_t i = 0; i < nTiles_; ++i) {
-      xs_[i] = xy2abOffsets[LON][i] * N + staggerSize;
-      xsr_[i] = xy2abOffsets[LON][i] * N + staggerSize;
-      ys_[i] = xy2abOffsets[LAT][i] * N + staggerSize;
-      ysr_[i] = xy2abOffsets[LAT][i] * N + staggerSize;
+      xs_[i] = tiles_.xy2abOffsets[LON][i] * N + staggerSize;
+      xsr_[i] = tiles_.xy2abOffsets[LON][i] * N + staggerSize;
+      ys_[i] = tiles_.xy2abOffsets[LAT][i] * N + staggerSize;
+      ysr_[i] = tiles_.xy2abOffsets[LAT][i] * N + staggerSize;
     }
 
-    if (tileType_ == "FV3CubedSphereTiles") {
+    if (tiles_.type() == "cubedsphere_fv3") {
       // panel 3,4,5 are reversed in that they start in top left corner
       for (std::size_t i = 3; i < nTiles_; ++i) {
           if (stagger_ == "C") {
@@ -141,7 +149,7 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
       }
 
 
-    } else if (tileType_ == "LFRicCubedSphereTiles") {
+    } else if (tiles_.type() == "cubedsphere_lfric") {
 
       // panel 2, 3 starts in lower right corner initially going upwards
       xs_[2] += 1;
@@ -267,10 +275,7 @@ void CubedSphere::xy2xyt( const double xy[], double xyt[] ) const {
 
     xyt[1] = ( normalisedY - std::floor( normalisedY ) ) * static_cast<double>( N_ ) +
              yOffset[static_cast<size_t>( xyt[2] )];
-
-    using atlas::projection::detail::CubedSphereProjectionBase;
-    xyt[2] =
-        dynamic_cast<const CubedSphereProjectionBase &>( * projection_ ).getCubedSphereTiles().tileFromXY(xy);
+    xyt[2] = tiles_.tileFromXY(xy);
 
     throw std::runtime_error("error  xy2xyt");
 }
@@ -281,25 +286,15 @@ void CubedSphere::xyt2xy( const double xyt[], double xy[] ) const {
     // while xyt is in number of grid points
     // (alpha, beta) and tiles.
 
-
-    using atlas::projection::detail::CubedSphereProjectionBase;
-    std::array<std::array<double, 6>,2> ab2xyOffsets =
-      dynamic_cast<const CubedSphereProjectionBase &>( *projection_).getCubedSphereTiles().ab2xyOffsets();
-
-
-    std::array<std::array<double, 6>,2> xy2abOffsets =
-      dynamic_cast<const CubedSphereProjectionBase &>( *projection_).getCubedSphereTiles().xy2abOffsets();
-
-
     double N = static_cast<double>( N_ );
     std::size_t t = static_cast<std::size_t>(xyt[2]);
 
     double normalisedX =
-     (xyt[0] - xy2abOffsets[XX][t] * N)/N;
+     (xyt[0] - tiles_.xy2abOffsets()[XX][t] * N)/N;
     double normalisedY =
-     (xyt[1] - xy2abOffsets[YY][t] * N)/N;
-    xy[XX] = normalisedX * 90. + ab2xyOffsets[LON][t];
-    xy[YY] = normalisedY * 90. + ab2xyOffsets[LAT][t];
+     (xyt[1] - tiles_.xy2abOffsets()[YY][t] * N)/N;
+    xy[XX] = normalisedX * 90. + tiles_.ab2xyOffsets()[LON][t];
+    xy[YY] = normalisedY * 90. + tiles_.ab2xyOffsets()[LAT][t];
 }
 
 // ------------------------------------------
@@ -314,10 +309,10 @@ GridFactoryBuilder<CubedSphere> __register_CubedSphere( CubedSphere::static_type
 static class cubedsphere_lfric : public GridBuilder {
 public:
     cubedsphere_lfric() :
-        GridBuilder( "cubedsphere_lfric", {"^[Cc][Ss][_-][Ll][Ff][Rr][-_]([0-9]+)$"}, {"CS-EA-<N>"} ) {}
+        GridBuilder( "cubedsphere_lfric", {"^[Cc][Ss][_-][Ll][Ff][Rr][-_]([0-9]+)$"}, {"CS-LFR-<N>"} ) {}
 
     void print( std::ostream& os ) const override {
-        os << std::left << std::setw( 20 ) << "CS-LFR-<F>-<N>"
+        os << std::left << std::setw( 20 ) << "CS-LFR-<N>"
            << "Cubed sphere for equiangular";
     }
 
@@ -330,7 +325,6 @@ public:
             int N = to_int( matches[0] );
             gridconf.set( "type", type() );
             gridconf.set( "N", N );
-            gridconf.set( "stagger", "F");
             return create( gridconf );
         }
         return nullptr;
@@ -342,12 +336,10 @@ public:
         if ( not config.get( "N", N ) ) {
             throw_AssertionFailed( "Could not find \"N\" in configuration of cubed sphere grid", Here() );
         }
+
         util::Config projconf;
         projconf.set( "type", "cubedsphere_equiangular" );
-        projconf.set( "N", N );
-
-
-        projconf.set( "tile type", "LFRicCubedSphereTiles");
+        projconf.set( "tile.type", "cubedsphere_lfric" );
 
         // Shift projection by a longitude
         if ( config.has( "ShiftLon" ) ) {
@@ -373,6 +365,7 @@ public:
                 projconf.set( "TargetLat", targetLat );
             }
         }
+
         return new CubedSphereGrid::grid_t( "CS-LFR-" + std::to_string( N ), N, Projection( projconf ) );
     }
 
@@ -418,10 +411,7 @@ public:
         }
         util::Config projconf;
         projconf.set( "type", "cubedsphere_equiangular" );
-        projconf.set( "N", N );
-
-
-        //projconf.set( "tile type", "LFRicCubedSphereTiles");
+        projconf.set( "tile.type", "cubedsphere_fv3" );
 
         // Shift projection by a longitude
         if ( config.has( "ShiftLon" ) ) {
@@ -486,7 +476,7 @@ public:
         }
         util::Config projconf;
         projconf.set( "type", "cubedsphere_equidistant" );
-        projconf.set( "N", N );
+        projconf.set( "tile.type", "cubedsphere_fv3" );
 
         // Shift projection by a longitude
         if ( config.has( "ShiftLon" ) ) {

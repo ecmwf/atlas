@@ -24,7 +24,7 @@ public:
     // constructor
     LFRicCubedSphereTiles( const eckit::Parametrisation& );
 
-    static std::string static_type() { return "LFRicCubedSphereTiles"; }
+    static std::string static_type() { return "cubedsphere_lfric"; }
 
     virtual std::string type() const override { return static_type(); }
 
