@@ -17,7 +17,9 @@
 #include "atlas/array.h"
 #include "atlas/grid/Spacing.h"
 #include "atlas/grid/detail/grid/Grid.h"
+#include "atlas/grid/Tiles.h"
 #include "atlas/library/config.h"
+#include "atlas/projection/detail/CubedSphereProjectionBase.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -39,6 +41,8 @@ namespace grid {
  *
  * For more detail on this implementation see atlas/grid/CubedSphereGrid.h
  */
+
+using atlas::projection::detail::CubedSphereProjectionBase;
 
 class CubedSphere : public Grid {
 private:
@@ -430,8 +434,11 @@ protected:
     std::vector<std::vector<idx_t>> imin_;
     std::vector<std::vector<idx_t>> imax_;
 
+
 private:
     std::string name_ = {"cubedsphere"};
+    CubedSphereProjectionBase * cs_projection_;  // store pointer to dynamic_cast for convenience
+    CubedSphereTiles tiles_;
 };
 
 

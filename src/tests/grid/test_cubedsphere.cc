@@ -21,11 +21,11 @@ namespace atlas {
 
     CASE("cubedsphere_tile_test") {
 
-      auto tileConfig1 = atlas::util::Config("tile type", "cubedsphere_lfric");
+      auto tileConfig1 = atlas::util::Config("type", "cubedsphere_lfric");
       auto lfricTiles = atlas::CubedSphereTiles(tileConfig1);
       EXPECT(lfricTiles.type() == "cubedsphere_lfric");
 
-      auto tileConfig2 = atlas::util::Config("tile type", "cubedsphere_fv3");
+      auto tileConfig2 = atlas::util::Config("type", "cubedsphere_fv3");
       auto fv3Tiles = atlas::CubedSphereTiles(tileConfig2);
       EXPECT(fv3Tiles.type() == "cubedsphere_fv3");
 
