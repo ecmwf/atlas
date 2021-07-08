@@ -68,7 +68,6 @@ CubedSphere::CubedSphere( int N, Projection p ) : CubedSphere( CubedSphere::stat
 CubedSphere::CubedSphere( const std::string& name, int N, Projection projection ) :
     Grid(), N_( N ), name_( name ), stagger_( extractStagger(name) ) {
     // Number of tiles hardwired to 6 at the moment. Regional may need 1
-    std::cout << "Inside constructor. Name: " << name_ << " stagger_: " << stagger_ << std::endl;
     // Copy members
     util::Config defaultProjConfig;
     defaultProjConfig.set("type", "cubedsphere_equiangular");
@@ -405,11 +404,9 @@ public:
 
     // Factory constructor
     const atlas::Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const override {
-        std::cout << "Inside first EA create. " << std::endl;
         int id;
         std::vector<std::string> matches;
         if ( match( name, matches, id ) ) {
-            std::cout << "N: " << matches[0] << std::endl;
             util::Config gridconf( config );
             int N = to_int( matches[0] );
             gridconf.set( "type", type() );
@@ -422,7 +419,6 @@ public:
 
     // Factory constructor
     const atlas::Grid::Implementation* create( const Grid::Config& config ) const override {
-        std::cout << "Inside second EA create. " << std::endl;
         int N = 0;
         if ( not config.get( "N", N ) ) {
             throw_AssertionFailed( "Could not find \"N\" in configuration of cubed sphere grid", Here() );
@@ -481,7 +477,6 @@ public:
 
     const atlas::Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const override {
         int id;
-        std::cout << "Inside first ED create. " << std::endl;
         std::vector<std::string> matches;
         if ( match( name, matches, id ) ) {
             util::Config gridconf( config );
@@ -496,7 +491,6 @@ public:
 
     const atlas::Grid::Implementation* create( const Grid::Config& config ) const override {
         int N = 0;
-        std::cout << "Inside second ED create. " << std::endl;
         if ( not config.get( "N", N ) ) {
             throw_AssertionFailed( "Could not find \"N\" in configuration of cubed sphere grid", Here() );
         }
