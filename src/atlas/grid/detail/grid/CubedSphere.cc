@@ -31,8 +31,9 @@
 #include "atlas/util/UnitSphere.h"
 
 static std::string extractStagger(std::string fullString) {
-    int pos = fullString.rfind("-");
-    return fullString.substr(pos-1, 1);
+    // return a substring of length 1, starting one position to the left of
+    // the last "-"
+    return fullString.substr(fullString.rfind("-")-1, 1);
 }
 
 namespace atlas {
