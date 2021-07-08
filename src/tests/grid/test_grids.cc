@@ -433,6 +433,8 @@ CASE( "test_cubedsphere" ) {
     std::vector<std::string> grid_names{"CS-EA-L-" + std::to_string( resolution ),
                                         "CS-ED-L-" + std::to_string( resolution ),
                                         "CS-LFR-L-" + std::to_string( resolution ),
+                                        "CS-EA-C-" + std::to_string( resolution ),
+                                        "CS-ED-C-" + std::to_string( resolution ),
                                        };
 
     for ( std::string& s : grid_names ) {
@@ -453,9 +455,13 @@ CASE( "test_cubedsphere" ) {
             grid->projection().lonlat2xy( crd );
             pointXYs_from_LonLat.push_back( crd );
         }
-        EXPECT( pointLonLats.size() == 6 * resolution * resolution + 2 );
-        EXPECT( pointXYs.size() == 6 * resolution * resolution + 2 );
-        EXPECT( grid.size() == 6 * resolution * resolution + 2 );
+        int numAdditionalPoints = 0;
+        if (s.substr(s.rfind("-")-1, 1) == "L") {
+            numAdditionalPoints = 2;
+        }
+        EXPECT( pointLonLats.size() == 6 * resolution * resolution + numAdditionalPoints );
+        EXPECT( pointXYs.size() == 6 * resolution * resolution + numAdditionalPoints );
+        EXPECT( grid.size() == 6 * resolution * resolution + numAdditionalPoints );
 
         // Note that with nodal points on the cubed-sphere
         // for a equiangular and equidistant projections and a resolution of 2 are the same.
