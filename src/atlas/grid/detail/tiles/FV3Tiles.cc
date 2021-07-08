@@ -185,18 +185,17 @@ idx_t FV3CubedSphereTiles::tileFromXY( const double xy[] ) const  {
        t = 1;
     } else if ((xy[XX] >= 90.) && ( xy[YY] >= 45.) && (xy[XX] < 180.) && (xy[YY] < 135.)) {
        t = 2;
-    } else if ((xy[XX] >= 180.) && ( xy[YY] >= -45.) && (xy[XX] < 270.) && (xy[YY] <= 45.)) {
+    } else if ((xy[XX] >= 180.) && ( xy[YY] > -45.) && (xy[XX] < 270.) && (xy[YY] <= 45.)) {
        t = 3;
     } else if ((xy[XX] >= 270.) && ( xy[YY] > -45.) && (xy[XX] < 360.) && (xy[YY] <= 45.)) {
        t = 4;
-    } else if ((xy[XX] >= 270.) && ( xy[YY] >= -135.) && (xy[XX] < 360.) && (xy[YY] <= -45.)) {
+    } else if ((xy[XX] >= 270.) && ( xy[YY] > -135.) && (xy[XX] < 360.) && (xy[YY] <= -45.)) {
        t = 5;
     }
 
     // extra points
     if ( is_same( xy[XX], 0.   ) && is_same( xy[YY],  45. ) ) { t = 0; }
     if ( is_same( xy[XX], 180. ) && is_same( xy[YY], -45. ) ) { t = 1; }
-    if ( is_same( xy[XX], 360. ) && is_same( xy[YY], -180. ) ) { t = 0; }
 
     // for end iterator !!!!
     if ( is_same( xy[XX], 360. ) && is_same( xy[YY], -135.) ) { t = 5; }
