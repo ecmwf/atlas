@@ -99,16 +99,17 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
       ys_[i] = tiles_.xy2abOffsets()[LAT][i] * N + staggerSize;
       ysr_[i] = tiles_.xy2abOffsets()[LAT][i] * N + staggerSize;
     }
+    std::cout << "xs_[5]: " << xs_[5] << std::endl;
 
     if (tiles_.type() == "cubedsphere_fv3") {
       // panel 3,4,5 are reversed in that they start in top left corner
       for (std::size_t i = 3; i < nTiles_; ++i) {
-          if (stagger_ == "C") {
+        if (stagger_ == "C") {
             ysr_[i] += N - 1;
-          } else {
+        } else {
             ys_[i] += 1;
             ysr_[i] += N;
-          }
+        }
       }
 
       // Number of grid points on each face of the tile.
@@ -160,13 +161,15 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
 
       // panel 2, 3 starts in lower right corner initially going upwards
       xs_[2] += 1;
-      xsr_[2] += N-1;
       xs_[3] += 1;
+      xsr_[2] += N-1;
       xsr_[3] += N-1;
 
       // panel 5 starts in upper left corner going downwards
-      xs_[5] += 1;
-      ys_[5] += 1;
+      if (stagger_ == "L") {
+        xs_[5] += 1;
+        ys_[5] += 1;
+      }
       ysr_[5] += N-1;
 
       // Number of grid points on each face of the tile.
@@ -300,6 +303,7 @@ void CubedSphere::xyt2xy( const double xyt[], double xy[] ) const {
      (xyt[0] - tiles_.xy2abOffsets()[XX][t] * N)/N;
     double normalisedY =
      (xyt[1] - tiles_.xy2abOffsets()[YY][t] * N)/N;
+    std::cout << "normalizedXY: " << normalisedX << " " << normalisedY << std::endl;
     xy[XX] = normalisedX * 90. + tiles_.ab2xyOffsets()[LON][t];
     xy[YY] = normalisedY * 90. + tiles_.ab2xyOffsets()[LAT][t];
 }

@@ -241,6 +241,7 @@ public:
     // -----------------------------------------
 
     inline double xsPlusIndex(idx_t idx, idx_t t ) const {
+        std::cout << "idx: " << idx << " return value: " << static_cast<double>( xs_[t] ) + static_cast<double>( idx ) << " tile: " << t << std::endl;
         return static_cast<double>( xs_[t] ) + static_cast<double>( idx ); }
 
     inline double xsrMinusIndex(idx_t idx, idx_t t ) const {
@@ -265,6 +266,7 @@ public:
         crd[0]             = xtile.at( t )( i, j, t );
         crd[1]             = ytile.at( t )( i, j, t );
         crd[2]             = static_cast<double>( t );
+        std::cout << "xyt: " << crd[0] << " " << crd[1] << " " << crd[2] << " " << std::endl;
     }
 
     PointXY xyt( idx_t i, idx_t j, idx_t t ) const {
@@ -418,10 +420,10 @@ protected:
     static const idx_t nTiles_ = 6;
 
     // Start points in x,y direction
-    int xs_[nTiles_];
-    int ys_[nTiles_];
-    int xsr_[nTiles_];  // x order reversed
-    int ysr_[nTiles_];  // y order reversed (for FV3 panels 4, 5, 6)
+    double xs_[nTiles_];
+    double ys_[nTiles_];
+    double xsr_[nTiles_];  // x order reversed
+    double ysr_[nTiles_];  // y order reversed (for FV3 panels 4, 5, 6)
 
     // Number of unique points on each tile
     std::vector<int> npts_;
