@@ -125,7 +125,9 @@ private:
             i_                         = ijt[0];
             j_                         = ijt[1];
             t_                         = ijt[2];
-            compute_point( i_, j_, t_, point_ );
+            if ( grid_.inGrid( i_, j_, t_ ) ) {
+                compute_point( i_, j_, t_, point_ );
+            }
             return *this;
         }
 
@@ -138,7 +140,9 @@ private:
                 j_                         = ijt[1];
                 t_                         = ijt[2];
             }
-            compute_point( i_, j_, t_, point_ );
+            if ( grid_.inGrid( i_, j_, t_ ) ) {
+                compute_point( i_, j_, t_, point_ );
+            }
             return *this;
         }
 
@@ -241,7 +245,6 @@ public:
     // -----------------------------------------
 
     inline double xsPlusIndex(idx_t idx, idx_t t ) const {
-        std::cout << "idx: " << idx << " return value: " << static_cast<double>( xs_[t] ) + static_cast<double>( idx ) << " tile: " << t << std::endl;
         return static_cast<double>( xs_[t] ) + static_cast<double>( idx ); }
 
     inline double xsrMinusIndex(idx_t idx, idx_t t ) const {
@@ -266,7 +269,6 @@ public:
         crd[0]             = xtile.at( t )( i, j, t );
         crd[1]             = ytile.at( t )( i, j, t );
         crd[2]             = static_cast<double>( t );
-        std::cout << "xyt: " << crd[0] << " " << crd[1] << " " << crd[2] << " " << std::endl;
     }
 
     PointXY xyt( idx_t i, idx_t j, idx_t t ) const {

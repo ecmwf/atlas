@@ -433,8 +433,8 @@ CASE( "test_cubedsphere" ) {
     std::vector<std::string> grid_names{"CS-EA-L-" + std::to_string( resolution ),
                                         "CS-ED-L-" + std::to_string( resolution ),
                                         "CS-LFR-L-" + std::to_string( resolution ),
-                                        /*"CS-EA-C-" + std::to_string( resolution ),
-                                        "CS-ED-C-" + std::to_string( resolution )*/
+                                        "CS-EA-C-" + std::to_string( resolution ),
+                                        "CS-ED-C-" + std::to_string( resolution ),
                                         "CS-LFR-C-" + std::to_string( resolution )
                                        };
 
