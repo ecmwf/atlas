@@ -99,6 +99,7 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
       ys_[i] = tiles_.xy2abOffsets()[LAT][i] * N + staggerSize;
       ysr_[i] = tiles_.xy2abOffsets()[LAT][i] * N + staggerSize;
     }
+    std::cout << "xs_[5]: " << xs_[5] << std::endl;
 
     if (tiles_.type() == "cubedsphere_fv3") {
       // panel 3,4,5 are reversed in that they start in top left corner
@@ -302,6 +303,7 @@ void CubedSphere::xyt2xy( const double xyt[], double xy[] ) const {
      (xyt[0] - tiles_.xy2abOffsets()[XX][t] * N)/N;
     double normalisedY =
      (xyt[1] - tiles_.xy2abOffsets()[YY][t] * N)/N;
+    std::cout << "normalizedXY: " << normalisedX << " " << normalisedY << std::endl;
     xy[XX] = normalisedX * 90. + tiles_.ab2xyOffsets()[LON][t];
     xy[YY] = normalisedY * 90. + tiles_.ab2xyOffsets()[LAT][t];
 }
