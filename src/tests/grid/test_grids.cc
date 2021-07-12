@@ -560,15 +560,14 @@ CASE( "test_cubedsphere" ) {
                     EXPECT( std::abs( pointXYs_from_LonLat[jn].x() - expectedXY[jn].first ) < tolerance );
                     EXPECT( std::abs( pointXYs_from_LonLat[jn].y() - expectedXY[jn].second ) < tolerance );
                 }
-            } else if ( ( s == "CS-EA-C-" + std::to_string( resolution ) )  ||
-                    ( s == "CS-ED-C-" + std::to_string( resolution ) ) ) {
-                // std::vector<std::pair<double, double>> expectedLatLon{
-                //     {-cornerLat, 315.0}, {-45.0, 0.0},  {0.0, 315.0},        {0.0, 0.0},         {cornerLat, 315.0},
-                //     {-cornerLat, 45.0},  {-45.0, 90.0}, {-cornerLat, 135.0}, {0.0, 45.0},        {0.0, 90.0},
-                //     {cornerLat, 45.0},   {45.0, 90.0},  {45.0, 0.0},         {90, 0.0},          {cornerLat, 135.0},
-                //     {0.0, 135.0},        {45.0, 180.0}, {0.0, 180.0},        {cornerLat, 225.0}, {0.0, 225.0},
-                //     {45.0, 270.0},       {0.0, 270.0},  {-cornerLat, 225.0}, {-45.0, 180.0},     {-45.0, 270.0},
-                //     {-90.0, 0.0}};
+            } else if ( s == "CS-ED-C-" + std::to_string( resolution ) ) {
+                std::vector<std::pair<double, double>> expectedLatLon{
+                    {-24.0948, 333.435}, {-24.0948, 26.5651}, {24.0948, 333.435}, {24.0948, 26.5651},
+                    {-24.0948, 63.4349}, {-24.0948, 116.565}, {24.0948, 63.4349}, {24.0948, 116.565},
+                    {54.7356, 45.},      {54.7356, 135.},     {54.7356, 315.},    {54.7356, 225.},
+                    {24.0948, 153.435},  {-24.0948, 153.435}, {24.0948, 206.565}, {-24.0948, 206.565},
+                    {24.0948, 243.435},  {-24.0948, 243.435}, {24.0948, 296.565}, {-24.0948, 296.565},
+                    {-54.7356, 225.},    {-54.7356, 135.},    {-54.7356, 315.},   {-54.7356, 45.} };
                 std::vector<std::pair<double, double>> expectedXY{
                     {22.5 , -22.5}, {67.5,  -22.5},  {22.5,   22.5},  {67.5,   22.5},
                     {112.5, -22.5}, {157.5, -22.5},  {112.5,  22.5},  {157.5,  22.5},
@@ -582,10 +581,40 @@ CASE( "test_cubedsphere" ) {
                                 <<  expectedXY[jn].first  <<std::endl;
                     Log::info() << s << " " << jn << " lat2y " << pointXYs_from_LonLat[jn].y() << " "
                                 <<  expectedXY[jn].second  <<std::endl;
-                    // EXPECT( std::abs( pointLonLats[jn].lat() - expectedLatLon[jn].first ) < tolerance );
-                    // EXPECT( std::abs( pointLonLats[jn].lon() - expectedLatLon[jn].second ) < tolerance );
-                    // EXPECT( std::abs( pointLonLats_from_XY[jn].lat() - expectedLatLon[jn].first ) < tolerance );
-                    // EXPECT( std::abs( pointLonLats_from_XY[jn].lon() - expectedLatLon[jn].second ) < tolerance );
+                    EXPECT( std::abs( pointLonLats[jn].lat() - expectedLatLon[jn].first ) < tolerance );
+                    EXPECT( std::abs( pointLonLats[jn].lon() - expectedLatLon[jn].second ) < tolerance );
+                    EXPECT( std::abs( pointLonLats_from_XY[jn].lat() - expectedLatLon[jn].first ) < tolerance );
+                    EXPECT( std::abs( pointLonLats_from_XY[jn].lon() - expectedLatLon[jn].second ) < tolerance );
+                    EXPECT( std::abs( pointXYs[jn].x() - expectedXY[jn].first ) < tolerance );
+                    EXPECT( std::abs( pointXYs[jn].y() - expectedXY[jn].second ) < tolerance );
+                    EXPECT( std::abs( pointXYs_from_LonLat[jn].x() - expectedXY[jn].first ) < tolerance );
+                    EXPECT( std::abs( pointXYs_from_LonLat[jn].y() - expectedXY[jn].second ) < tolerance );
+                }
+            } else if ( s == "CS-EA-C-" + std::to_string( resolution ) ) {
+                std::vector<std::pair<double, double>> expectedLatLon{
+                    {-20.941, 337.5}, {-20.941, 22.5},  {20.941, 337.5},  {20.941, 22.5},
+                    {-20.941, 67.5},  {-20.941, 112.5}, {20.941, 67.5},   {20.941, 112.5},
+                    {59.6388, 45.},   {59.6388, 135.},  {59.6388, 315.},  {59.6388, 225.},
+                    {20.941, 157.5},  {-20.941, 157.5}, {20.941, 202.5},  {-20.941, 202.5},
+                    {20.941, 247.5},  {-20.941, 247.5}, {20.941, 292.5},  {-20.941, 292.5},
+                    {-59.6388, 225.}, {-59.6388, 135.}, {-59.6388, 315.}, {-59.6388, 45.} };
+                std::vector<std::pair<double, double>> expectedXY{
+                    {22.5 , -22.5}, {67.5,  -22.5},  {22.5,   22.5},  {67.5,   22.5},
+                    {112.5, -22.5}, {157.5, -22.5},  {112.5,  22.5},  {157.5,  22.5},
+                    {112.5,  67.5}, {157.5,  67.5},  {112.5,  112.5}, {157.5,  112.5},
+                    {202.5,  22.5}, {202.5, -22.5},  {247.5,  22.5},  {247.5, -22.5},
+                    {292.5,  22.5}, {292.5, -22.5},  {337.5,  22.5},  {337.5, -22.5},
+                    {292.5, -67.5}, {292.5, -112.5}, {337.5, -67.5},  {337.5, -112.5} };
+
+                for ( std::size_t jn = 0; jn < grid.size(); ++jn ) {
+                    Log::info() << s << " " << jn << " lon2x " << pointXYs_from_LonLat[jn].x() << " "
+                                <<  expectedXY[jn].first  <<std::endl;
+                    Log::info() << s << " " << jn << " lat2y " << pointXYs_from_LonLat[jn].y() << " "
+                                <<  expectedXY[jn].second  <<std::endl;
+                    EXPECT( std::abs( pointLonLats[jn].lat() - expectedLatLon[jn].first ) < tolerance );
+                    EXPECT( std::abs( pointLonLats[jn].lon() - expectedLatLon[jn].second ) < tolerance );
+                    EXPECT( std::abs( pointLonLats_from_XY[jn].lat() - expectedLatLon[jn].first ) < tolerance );
+                    EXPECT( std::abs( pointLonLats_from_XY[jn].lon() - expectedLatLon[jn].second ) < tolerance );
                     EXPECT( std::abs( pointXYs[jn].x() - expectedXY[jn].first ) < tolerance );
                     EXPECT( std::abs( pointXYs[jn].y() - expectedXY[jn].second ) < tolerance );
                     EXPECT( std::abs( pointXYs_from_LonLat[jn].x() - expectedXY[jn].first ) < tolerance );
@@ -599,7 +628,6 @@ CASE( "test_cubedsphere" ) {
         }
     }
 }
-
 
 //-----------------------------------------------------------------------------
 
