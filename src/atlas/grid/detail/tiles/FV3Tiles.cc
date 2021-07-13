@@ -328,6 +328,11 @@ void FV3CubedSphereTiles::enforceXYdomain( double xy[] ) const {
     }
 }
 
+atlas::PointXY FV3CubedSphereTiles::anyXYToFundamentalXY (const atlas::PointXY & xyGhost) const {
+    atlas::PointXY xyOwned;
+
+    return xyOwned;
+}
 
 void FV3CubedSphereTiles::print( std::ostream& os) const {
     os << "CubedSphereTiles["

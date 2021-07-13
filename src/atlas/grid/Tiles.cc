@@ -97,6 +97,10 @@ void CubedSphereTiles::enforceXYdomain(double xy[]) const {
      return get()->enforceXYdomain(xy);
 }
 
+atlas::PointXY CubedSphereTiles::anyXYToFundamentalXY (const atlas::PointXY & xyGhost) const {
+    return get()->anyXYToFundamentalXY(xyGhost);
+}
+
 void CubedSphereTiles::print( std::ostream& os ) const {
     get()->print( os );
 }

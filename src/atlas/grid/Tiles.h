@@ -91,6 +91,8 @@ public:
 
     void enforceXYdomain( double xy[] ) const;
 
+    atlas::PointXY anyXYToFundamentalXY (const atlas::PointXY & anyXY) const;
+
 private:
     /// Output to stream
     void print( std::ostream& ) const;

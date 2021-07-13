@@ -8,14 +8,18 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <algorithm>
 #include <ostream>
 #include <iostream>
+
 #include "atlas/grid/detail/tiles/Tiles.h"
 #include "atlas/grid/detail/tiles/TilesFactory.h"
 #include "atlas/grid/detail/tiles/LFRicTiles.h"
 #include "atlas/projection/detail/ProjectionUtilities.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
+
+
 
 namespace atlas {
 namespace cubedspheretiles {
@@ -42,11 +46,36 @@ void sphericalToCartesian(const double lonlat[], double xyz[] ) {
     ProjectionUtilities::sphericalToCartesian(lonlat, xyz, crd_sys, radius);
 }
 
+enum dirn {
+    E,
+    S,
+    W,
+    N
+};
+
 }
 
 // constructor
 LFRicCubedSphereTiles::LFRicCubedSphereTiles( const eckit::Parametrisation& ) {
 }
+
+
+// enum E S W N
+/*
+define node
+
+static std::array<std::array<std::pair<int, int>, 4>, 6> tileEdgeMapping() {
+    return {
+        { { (3, )   }
+
+
+        }
+    };
+}
+[t][e]pair(t2, e)
+
+[t][c]  -> t c  t c
+*/
 
 std::array<std::array<double,6>,2> LFRicCubedSphereTiles::xy2abOffsets() const {
     return { {  {0., 1., 2., 3., 0., 0.},
@@ -136,6 +165,11 @@ void LFRicCubedSphereTiles::tile5RotateInverse( double xyz[] ) const {
     xyz[YY] = -xyz_in[XX];
     xyz[ZZ] =  xyz_in[YY];
 }
+
+
+
+
+
 
 idx_t LFRicCubedSphereTiles::tileFromXY( const double xy[] ) const  {
 
@@ -253,6 +287,137 @@ void LFRicCubedSphereTiles::enforceXYdomain( double xy[] ) const {
     }
 }
 
+// input is the xy value as PointXY that is not quite on the right part of the XY space
+// i.e. a ghost point X
+atlas::PointXY LFRicCubedSphereTiles::anyXYToFundamentalXY (const atlas::PointXY & anyXY ) const {
+
+
+    // I think that mathematically the best option is to consider
+    // this as a rotation of a tile and a translation
+
+
+    // tile values are periodicity to them
+    //  x = [0, 360)   y = (-135, 225]
+    //  with the exception that all edges below  y=-45 get mapped onto y=-45.
+
+
+    // Assume one face-edge is of length 90 degrees.
+    //
+    //   y ^
+    //     |
+    //    225  4----------4----------4----------4----------
+    //     |   |    ^    *|     ^   *|    ^    *|     ^   *|
+    //     |   |    =     |     =    |          |          |
+    //     |   |<   2   =<|<   3   =<|<  0    =<|=<   1   <|
+    //     |   |          |     v    |    v     |     v    |
+    //     |   |    <     |          |     =    |     =    |
+    //    135   ---------- ---------- ---------- ----------
+    //     |   |    <=    |    <=    |    <=   *|*   <=    |
+    //     |   |          |          |          |          |
+    //     |   |=<   4  <=|=<   4  <=|=<   4  <=|=<   4  <=|
+    //     |   |     v    |     v    |     v    |     v    |
+    //     |   |*   <=    |    <=   *|    <=    |    <=    |
+    //     45  4----------4----------4----------4----------
+    //     |   |    ^     |     ^    |    ^     |     ^    |
+    //     |   |          |          |          |          |
+    //     |   |=<  0    <|=<   1   <|=<  2    <|=<   3   <|
+    //     |   |    v     |     v    |    v     |     v    |
+    //     |   |*   =     |*    =    |*    =    | *   =    |
+    //    -45  0 ---------1----------2----------3----------
+    //     |   |    ^     |*    ^    |     ^   *|    ^     |
+    //     |   |          |          |          |          |
+    //     |   |<   5    <|<   5    <|<   5    <|<   5    <|
+    //     |   |          |          |          |          |
+    //     |   |*    v    |     v    |     v    |     v   *|
+    //   -135   ---------- ---------- ---------- ----------
+    //     ----0---------90--------180--------270--------360--->  x
+
+
+    // first find the bottom left hand corner of xyGhost tile
+    // (except for tile 5) this point will exist in the tile.
+    atlas::PointXY withinRange = anyXY;
+
+    while (withinRange.x() < 0.0) { withinRange.x() += 360.0; }
+    while (withinRange.x() >= 360.0) { withinRange.x() -= 360.0; }
+    while (withinRange.y() <= -135.0) { withinRange.y() += 360.0; }
+    while (withinRange.y() > 225.0) { withinRange.y() -= 360.0; }
+
+    // Note that the tile index here is that for the inner part of the tile
+    // It won't be always consistent with the official tile indexing
+    // However, it does not need to, here.
+    std::size_t tileValue[4][4] = { {2, 3, 0, 1},
+                                    {4, 4, 4, 4},
+                                    {0, 1, 2, 3},
+                                    {5, 5, 5, 5} };
+
+    // originCorner shows the origin for the xy displacement
+    // 0 = bottom left
+    // 1 = bottom right
+    // 2 = top right
+    // 3 = top left.
+    std::size_t originCorner[4][4] = { {2, 2, 2, 2 },
+                                       {0, 1, 2, 3 },
+                                       {0, 0, 0, 0 },
+                                       {0, 3, 2, 1 } };
+
+
+    std::array<atlas::PointXY, 6> botLeftTile{atlas::PointXY{0., -45.},   atlas::PointXY{90, -45},
+                                              atlas::PointXY{180., -45.}, atlas::PointXY{270, -45},
+                                              atlas::PointXY{0., 45.},    atlas::PointXY{0, -135.} };
+
+    // Step 0: Find appropriate panel
+
+    auto xIndex = static_cast<size_t>(withinRange.x()/90.0);
+    auto yIndex = static_cast<size_t>((withinRange.y()+135.0)/90.0);
+
+    atlas::PointXY BotLeft{ xIndex * 90.0, yIndex * 90.0 - 135.0};
+    atlas::PointXY remBotLeft = withinRange - BotLeft;
+    atlas::PointXY rottransPt;
+
+    if (yIndex != 4) {
+
+        std::size_t tile = tileValue[xIndex][yIndex];
+
+        // Step 2: Apply appropriate rotation:
+        atlas::PointXY remBotRight = atlas::PointXY{ 90.0 - remBotLeft.y(), remBotLeft.x()};
+        atlas::PointXY remTopRight = atlas::PointXY{ 90.0 - remBotLeft.x(), 90.0 - remBotLeft.y()};
+        atlas::PointXY remTopLeft = atlas::PointXY{ remBotLeft.y(), 90 - remBotLeft.x()};
+        std::array<atlas::PointXY, 4> orientatedDisp{remBotLeft, remBotRight, remTopRight, remTopLeft};
+
+        atlas::PointXY rem = orientatedDisp[ originCorner[xIndex][yIndex] ];
+
+        rottransPt = rem + botLeftTile[tile];
+
+
+    } else  {
+        // yIndex equal to 4 means that you are on the top most horizontal line.
+        rottransPt.x() = (withinRange.x() < 180 ?   withinRange.x() + 180.:  withinRange.x() - 180.);
+        rottransPt.y() = - 45.0;
+
+    }
+
+    // so far we have dealt not explicitly dealt with edges
+    // the only edges that need considering are those that concern the bottom tile
+    // The rest, I think are either dealt with by the operation to wrap (xy) within the x = [0,360)
+    // y = [-135, 215] ranges.
+
+    if ((withinRange.x() == 0.0) && (withinRange.y() < -45.0)) {
+       // x = [270,360)
+       rottransPt.x() = 360.0 + (45.0 + withinRange.y());
+       rottransPt.y() = -45.0;
+    }
+    if ((withinRange.x() == 90.0) && (withinRange.y() < -45.0)) {
+       // x = (90,180]
+       rottransPt.x() = 90.0 - (45.0 + withinRange.y());
+       rottransPt.y() = -45.0;
+    }
+    if ((withinRange.x() >= 0.0) && (withinRange.x() <= 90.0) && (withinRange.y() == -135.0)) {
+       rottransPt.x() = 90.0 - withinRange.x();
+       rottransPt.y() = -45.0;
+    }
+    return rottransPt;
+}
+
 
 void LFRicCubedSphereTiles::print( std::ostream& os) const {
     os << "CubedSphereTiles["
@@ -264,5 +429,46 @@ static  CubedSphereTilesBuilder<LFRicCubedSphereTiles> register_builder( LFRicCu
 }
 
 
+/*
+
+// I am first going to stipulate that this will work for (x = [-90, 450), y= (-225,225])
+atlas::PointXY origin({0., 0.});
+
+atlas::PointXY botLeft({ static_cast<int>(xyGhost.x()/90.0) * 90.0,
+                         static_cast<int>((xyGhost.y()+135.0)/90.0) * 90.0 - 135.0
+                       });
+atlas::PointXY remBotLeft = xyGhost - botLeft;
+
+
+
+// Deal with data on tiles 0-4 where botLeft is part of the tile. (L shaped edges.)
+std::vector<atlas::PointXY> ownedBotLeft{ {0., -45.}, {90., -45.}, {180., -45.}, {270.0, -45.0}, {0, 45.} };
+for (std::size_t i = 0; i < ownedBotLeft.size(); ++i) {
+    if ((botLeft == ownedBotLeft[i]) && (remBotLeft.x() >= 0.) && (remBotLeft.y() >= 0.)) {
+        return xyGhost;
+    }
+}
+
+// Deal with __
+//            |  shaped edges
+atlas::PointXY topRight = botLeft + atlas::PointXY{90.0, 90.0};
+atlas::PointXY remTopRight = topRight - xyGhost;
+std::vector<atlas::PointXY> ownedTopRight{ {90., 135.}};
+for (std::size_t i = 0; i < ownedTopRight.size(); ++i) {
+    if ((botLeft == ownedTopRight[i]) && (remTopRight.x() >= 0.) && (remTopRight.y() >= 0.)) {
+        return xyGhost;
+    }
+}
+
+// Deal tiles that have no owned edges.
+std::vector<atlas::PointXY> notOwnedBotLeft{ {0., -135.}};
+for (std::size_t i = 0; i < notOwnedBotLeft.size(); ++i) {
+    if ((botLeft == notOwnedBotLeft[i]) && (remBotLeft.x() >= 0.) && (remBotLeft.y() >= 0.) &&
+        (remTopRight.x() >= 0.) && (remTopRight.y() >= 0.)) {
+        return xyGhost;
+    }
+}
+
+*/
 }  // namespace cubespheretiles
 }  // namespace atlas

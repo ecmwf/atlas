@@ -19,7 +19,8 @@
 namespace atlas {
   namespace test {
 
-    CASE("cubedsphere_tile_test") {
+
+    CASE("cubedsphere_tile_constructor_test") {
 
       auto tileConfig1 = atlas::util::Config("type", "cubedsphere_lfric");
       auto lfricTiles = atlas::CubedSphereTiles(tileConfig1);
@@ -87,6 +88,23 @@ namespace atlas {
       gmshXyz.write(field);
       gmshLonLat.write(mesh);
       gmshLonLat.write(field);
+
+
+    }
+
+
+    CASE("cubedsphere_tile_anyXYToFundamentalXY_test") {
+
+      auto tileConfig1 = atlas::util::Config("type", "cubedsphere_lfric");
+      auto lfricTiles = atlas::CubedSphereTiles(tileConfig1);
+
+      // create a nodal cubed-sphere grid and check that no point are changed by
+      // iterating through points.
+
+      // iterate through 9 points in x from [0,360]
+      // iterate through 9 points in y from [-135, 225]
+      // and check with expected output. 81 checks!
+
 
 
     }
