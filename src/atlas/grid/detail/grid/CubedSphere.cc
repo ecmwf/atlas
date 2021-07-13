@@ -91,13 +91,16 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
 
     tiles_ = cs_projection_->getCubedSphereTiles();
 
-    // default assumes all panels start in bottom left corner or center
     double staggerSize = (stagger_ == "C") ? 0.5 : 0.0;
     for (std::size_t i = 0; i < nTiles_; ++i) {
+      // default assumes all panels start in bottom left corner or center
       xs_[i] = tiles_.xy2abOffsets()[LON][i] * N + staggerSize;
       xsr_[i] = tiles_.xy2abOffsets()[LON][i] * N + staggerSize;
       ys_[i] = tiles_.xy2abOffsets()[LAT][i] * N + staggerSize;
       ysr_[i] = tiles_.xy2abOffsets()[LAT][i] * N + staggerSize;
+
+      // default assumes number of points on a panel is N * N
+      npts_.push_back( N * N );
     }
 
     if (tiles_.type() == "cubedsphere_fv3") {
@@ -111,18 +114,11 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
         }
       }
 
-      // Number of grid points on each face of the tile.
-      if (stagger_ == "C") {
-        npts_.push_back( N * N );
-        npts_.push_back( N * N );
-      } else {
-        npts_.push_back( N * N + 1 );  // An extra point lies on tile 1
-        npts_.push_back( N * N + 1 );  // An extra point lies on tile 2
+      // Exceptions to N * N grid points on certain tiles
+      if (stagger_ == "L") {
+        npts_[0] += 1;  // An extra nodal point lies on tile 1
+        npts_[1] += 1;  // An extra nodal point lies on tile 2
       }
-      npts_.push_back( N * N );
-      npts_.push_back( N * N );
-      npts_.push_back( N * N );
-      npts_.push_back( N * N );
 
       xtile = {[this]( int i, int j, int t ) { return this->xsPlusIndex( i, t ); },
                [this]( int i, int j, int t ) { return this->xsPlusIndex( i, t ); },
@@ -171,18 +167,12 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
       }
       ysr_[5] += N-1;
 
-      // Number of grid points on each face of the tile.
-      npts_.push_back( N * N );
-      npts_.push_back( N * N );
-      npts_.push_back( N * N );
-      npts_.push_back( N * N );
-      if (stagger_ == "C") {
-        npts_.push_back( N * N );
-        npts_.push_back( N * N );
-      } else {
-        npts_.push_back( (N + 1) * (N + 1) ); // top panel includes all edges
-        npts_.push_back( (N - 1) * (N - 1) ); // bottom panel excludes all edges
+      // Exceptions to N * N grid points on certain tiles
+      if (stagger_ == "L") {
+        npts_[4] = (N + 1) * (N + 1); // nodal top panel includes all edges
+        npts_[5] = (N - 1) * (N - 1); // nodal bottom panel excludes all edges
       }
+
       xtile = {[this]( int i, int j, int t ) { return this->xsPlusIndex( i, t ); },
                [this]( int i, int j, int t ) { return this->xsPlusIndex( i, t ); },
                [this]( int i, int j, int t ) { return this->xsrMinusIndex( j, t ); },
