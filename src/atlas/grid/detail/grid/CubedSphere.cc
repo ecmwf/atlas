@@ -103,6 +103,9 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
       npts_.push_back( N * N );
     }
 
+    // default assumes jmax_ value of N-1 on all tiles
+    jmax_ = std::array<idx_t,6>  {N-1,N-1,N-1,N-1,N-1,N-1};
+
     if (tiles_.type() == "cubedsphere_fv3") {
       // panel 3,4,5 are reversed in that they start in top left corner
       for (std::size_t i = 3; i < nTiles_; ++i) {
@@ -134,15 +137,15 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
                [this]( int i, int j, int t ) { return this->ysrMinusIndex( i, t ); },
                [this]( int i, int j, int t ) { return this->ysrMinusIndex( i, t ); }};
 
-      jmax_ = std::array<idx_t,6>{N,N-1,N-1,N-1,N-1,N-1};
-      if (stagger_ == "C") {
-          jmax_[0] = N-1;
+      // Exceptions to jmax_ value of N-1 on certain tiles
+      if (stagger_ == "L") {
+          jmax_[0] = N; // Due to extra nodal point on panel 1
       }
       for ( idx_t t = 0; t < nTiles_; ++t) {
         std::size_t rowlength =  1 + jmax_[t] - jmin_[t];
         std::vector<idx_t> imaxTile(rowlength, N-1);
         std::vector<idx_t> iminTile(rowlength, 0);
-        if (stagger_ != "C") {
+        if (stagger_ == "L") {
             // extra points
             if (t == 0) imaxTile[N] = 0;
             if (t == 1) imaxTile[0] = N;
@@ -187,18 +190,17 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
                [this]( int i, int j, int t ) { return this->ysPlusIndex( j, t ); },
                [this]( int i, int j, int t ) { return this->ysrMinusIndex( i, t ); }};
 
-
-      jmax_ = std::array<idx_t,6>{N-1,N-1,N-1,N-1,N,N-2};
-      if (stagger_ == "C") {
-          jmax_[4] = N-1;
-          jmax_[5] = N-1;
+      // Exceptions to jmax_ value of N-1 on certain tiles
+      if (stagger_ == "L") {
+          jmax_[4] = N;
+          jmax_[5] = N-2;
       }
 
       for ( std::size_t t = 0; t < nTiles_; ++t) {
         std::size_t rowlength =  1 + jmax_[t] - jmin_[t];
         std::vector<idx_t> imaxTile(rowlength, N-1);
         std::vector<idx_t> iminTile(rowlength, 0);
-        if (stagger_ != "C") {
+        if (stagger_ == "L") {
             if (t == 4) { std::fill_n(imaxTile.begin(),rowlength, N); }
             if (t == 5) { std::fill_n(imaxTile.begin(),rowlength, N-2); }
         }
