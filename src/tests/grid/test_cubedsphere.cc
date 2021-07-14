@@ -101,9 +101,36 @@ namespace atlas {
       // create a nodal cubed-sphere grid and check that no point are changed by
       // iterating through points.
 
+      int resolution( 2 );
+      std::vector<std::string> grid_names{"CS-LFR-" + std::to_string( resolution ),
+                                         };
+      Grid grid{grid_names[0]};
+
+      int jn{0};
+      for ( auto crd : grid.xy() ) {
+          atlas::PointXY initialXY{crd[XX], crd[YY]};
+          atlas::PointXY finalXY = lfricTiles.anyXYToFundamentalXY(initialXY);
+          EXPECT_APPROX_EQ(initialXY, finalXY);
+          ++jn;
+      }
+
       // iterate through 9 points in x from [0,360]
       // iterate through 9 points in y from [-135, 225]
       // and check with expected output. 81 checks!
+      for (idx_t yIndx = 0 ; yIndx < 9 ; ++yIndx) {
+          for (idx_t xIndx = 0 ; xIndx < 9 ; ++xIndx) {
+              atlas::PointXY initialXY{xIndx*45.0, yIndx*45.0 - 135.0};
+              atlas::PointXY middleXY = lfricTiles.anyXYToFundamentalXY(initialXY);
+              atlas::PointXY finalXY = lfricTiles.anyXYToFundamentalXY(middleXY);
+
+              std::cout << "xIndx yIndx InitialXY MiddleXY FinalXY " << xIndx  << " " << yIndx << " " << initialXY.x() << " " << initialXY.y()
+                              << " " << middleXY.x() << " " << middleXY.y()
+                              << " " << finalXY.x() << " " << finalXY.y() << std::endl;
+
+              EXPECT_APPROX_EQ(middleXY, finalXY);
+
+          }
+      }
 
 
 

@@ -312,11 +312,11 @@ atlas::PointXY LFRicCubedSphereTiles::anyXYToFundamentalXY (const atlas::PointXY
     //     |   |          |     v    |    v     |     v    |
     //     |   |    <     |          |     =    |     =    |
     //    135   ---------- ---------- ---------- ----------
-    //     |   |    <=    |    <=    |    <=   *|*   <=    |
+    //     |   |    <=    |          |         *|*         |
     //     |   |          |          |          |          |
-    //     |   |=<   4  <=|=<   4  <=|=<   4  <=|=<   4  <=|
-    //     |   |     v    |     v    |     v    |     v    |
-    //     |   |*   <=    |    <=   *|    <=    |    <=    |
+    //     |   |=<   4  <=|     4    |     4    |     4    |
+    //     |   |     v    |     ^    |     ^    |     ^    |
+    //     |   |*   <=    |     |   *|     |    |     |    |
     //     45  4----------4----------4----------4----------
     //     |   |    ^     |     ^    |    ^     |     ^    |
     //     |   |          |          |          |          |
@@ -342,24 +342,25 @@ atlas::PointXY LFRicCubedSphereTiles::anyXYToFundamentalXY (const atlas::PointXY
     while (withinRange.y() <= -135.0) { withinRange.y() += 360.0; }
     while (withinRange.y() > 225.0) { withinRange.y() -= 360.0; }
 
+    std::cout << "withinRange " << withinRange.x() << " " << withinRange.y() << std::endl;
+
     // Note that the tile index here is that for the inner part of the tile
     // It won't be always consistent with the official tile indexing
     // However, it does not need to, here.
-    std::size_t tileValue[4][4] = { {2, 3, 0, 1},
-                                    {4, 4, 4, 4},
+    std::size_t tileValue[4][4] = { {5, 5, 5, 5},
                                     {0, 1, 2, 3},
-                                    {5, 5, 5, 5} };
+                                    {4, 4, 4, 4},
+                                    {2, 3, 0, 1} };
 
     // originCorner shows the origin for the xy displacement
     // 0 = bottom left
     // 1 = bottom right
     // 2 = top right
     // 3 = top left.
-    std::size_t originCorner[4][4] = { {2, 2, 2, 2 },
-                                       {0, 1, 2, 3 },
+    std::size_t originCorner[4][4] = { {0, 3, 2, 1 },
                                        {0, 0, 0, 0 },
-                                       {0, 3, 2, 1 } };
-
+                                       {0, 1, 2, 3 },
+                                       {2, 2, 2, 2 } };
 
     std::array<atlas::PointXY, 6> botLeftTile{atlas::PointXY{0., -45.},   atlas::PointXY{90, -45},
                                               atlas::PointXY{180., -45.}, atlas::PointXY{270, -45},
@@ -370,13 +371,22 @@ atlas::PointXY LFRicCubedSphereTiles::anyXYToFundamentalXY (const atlas::PointXY
     auto xIndex = static_cast<size_t>(withinRange.x()/90.0);
     auto yIndex = static_cast<size_t>((withinRange.y()+135.0)/90.0);
 
+    // The inverted L edge of tile 4 needs including in tile 4
+    if (((withinRange.x() == 90.0) || withinRange.x() == 180.0 ||  withinRange.x() == 270.0)
+         && (withinRange.y() > 45.0)) xIndex -= 1;
+    if (withinRange.y() == 135.0) yIndex -= 1;
+
+    std::cout << "X Y index = " << xIndex << " " << yIndex << std::endl;
+
     atlas::PointXY BotLeft{ xIndex * 90.0, yIndex * 90.0 - 135.0};
     atlas::PointXY remBotLeft = withinRange - BotLeft;
     atlas::PointXY rottransPt;
 
     if (yIndex != 4) {
 
-        std::size_t tile = tileValue[xIndex][yIndex];
+        std::size_t tile = tileValue[yIndex][xIndex];
+
+        std::cout << "tile " << tile << std::endl;
 
         // Step 2: Apply appropriate rotation:
         atlas::PointXY remBotRight = atlas::PointXY{ 90.0 - remBotLeft.y(), remBotLeft.x()};
@@ -384,7 +394,9 @@ atlas::PointXY LFRicCubedSphereTiles::anyXYToFundamentalXY (const atlas::PointXY
         atlas::PointXY remTopLeft = atlas::PointXY{ remBotLeft.y(), 90 - remBotLeft.x()};
         std::array<atlas::PointXY, 4> orientatedDisp{remBotLeft, remBotRight, remTopRight, remTopLeft};
 
-        atlas::PointXY rem = orientatedDisp[ originCorner[xIndex][yIndex] ];
+        atlas::PointXY rem = orientatedDisp[ originCorner[yIndex][xIndex] ];
+
+        std::cout << "rem botLeftTile " << rem << " "  << botLeftTile[tile]  << std::endl;
 
         rottransPt = rem + botLeftTile[tile];
 
@@ -401,18 +413,18 @@ atlas::PointXY LFRicCubedSphereTiles::anyXYToFundamentalXY (const atlas::PointXY
     // The rest, I think are either dealt with by the operation to wrap (xy) within the x = [0,360)
     // y = [-135, 215] ranges.
 
-    if ((withinRange.x() == 0.0) && (withinRange.y() < -45.0)) {
+    if ((rottransPt.x() == 0.0) && (rottransPt.y() < -45.0)) {
        // x = [270,360)
-       rottransPt.x() = 360.0 + (45.0 + withinRange.y());
+       rottransPt.x() = 360.0 + (45.0 + rottransPt.y());
        rottransPt.y() = -45.0;
     }
-    if ((withinRange.x() == 90.0) && (withinRange.y() < -45.0)) {
+    if ((rottransPt.x() == 90.0) && (rottransPt.y() < -45.0)) {
        // x = (90,180]
-       rottransPt.x() = 90.0 - (45.0 + withinRange.y());
+       rottransPt.x() = 90.0 - (45.0 + rottransPt.y());
        rottransPt.y() = -45.0;
     }
-    if ((withinRange.x() >= 0.0) && (withinRange.x() <= 90.0) && (withinRange.y() == -135.0)) {
-       rottransPt.x() = 90.0 - withinRange.x();
+    if ((rottransPt.x() >= 0.0) && (rottransPt.x() <= 90.0) && (rottransPt.y() == -135.0)) {
+       rottransPt.x() = 90.0 - rottransPt.x();
        rottransPt.y() = -45.0;
     }
     return rottransPt;
