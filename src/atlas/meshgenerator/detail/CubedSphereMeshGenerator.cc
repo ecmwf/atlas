@@ -80,6 +80,64 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     const int N      = csgrid.N();
     const int nTiles = csgrid.GetNTiles();
 
+
+    // Make a list linking ghost (t, i, j) values to known (t, i, j)
+    // This will be different for each cube-sphere once MeshGenerator is generalised.
+
+    using Tij = typename std::array<idx_t, 3>;
+
+    // first: ghost (t, i, j); second owned (t, i, j).
+    using TijPair = typename std::pair<Tij, Tij>;
+
+    auto ghostToOwnedTij = std::vector<TijPair>{};
+
+
+    // -------------------------------------------------------------------------
+    // BEGIN FV3 SPECIFIC MAP
+    // -------------------------------------------------------------------------
+
+    // Special points.
+    ghostToOwnedTij.push_back(TijPair{{0, N, N}, {2, 0, 0}});
+    ghostToOwnedTij.push_back(TijPair{{1, N, N}, {3, 0, 0}});
+    ghostToOwnedTij.push_back(TijPair{{2, N, N}, {4, 0, 0}});
+    ghostToOwnedTij.push_back(TijPair{{3, N, N}, {5, 0, 0}});
+    ghostToOwnedTij.push_back(TijPair{{4, N, N}, {0, 0, 0}});
+    ghostToOwnedTij.push_back(TijPair{{5, N, N}, {1, 0, 0}});
+    ghostToOwnedTij.push_back(TijPair{{2, 0, N}, {0, 0, N}});
+    ghostToOwnedTij.push_back(TijPair{{4, 0, N}, {0, 0, N}});
+    ghostToOwnedTij.push_back(TijPair{{3, N, 0}, {1, N, 0}});
+    ghostToOwnedTij.push_back(TijPair{{5, N, 0}, {1, N, 0}});
+
+    // Tile 1
+    for ( idx_t ix = 1; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{0, ix, N}, {2, 0, N - ix}});
+    for ( idx_t iy = 0; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{0, N, iy}, {1, 0, iy}});
+
+    // Tile 2
+    for ( idx_t ix = 0; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{1, ix, N}, {2, ix, 0}});
+    for ( idx_t iy = 1; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{1, N, iy}, {3, N - iy, 0}});
+
+    // Tile 3
+    for ( idx_t ix = 1; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{2, ix, N}, {4, 0, N - ix}});
+    for ( idx_t iy = 0; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{2, N, iy}, {3, 0, iy}});
+
+    // Tile 4
+    for ( idx_t ix = 0; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{3, ix, N}, {4, ix, 0}});
+    for ( idx_t iy = 1; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{3, N, iy}, {5, N - iy, 0}});
+
+    // Tile 5
+    for ( idx_t ix = 1; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{4, ix, N}, {0, 0, N - ix}});
+    for ( idx_t iy = 0; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{4, N, iy}, {5, 0, iy}});
+
+    // Tile 6
+    for ( idx_t ix = 0; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{5, ix, N}, {0, ix, 0}});
+    for ( idx_t iy = 1; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{5, N, iy}, {1, N - iy, 0}});
+
+
+
+    // -------------------------------------------------------------------------
+    // END FV3 SPECIFIC MAP
+    // -------------------------------------------------------------------------
+
     ATLAS_TRACE( "CubedSphereMeshGenerator::generate" );
     Log::debug() << "Number of faces per tile edge = " << std::to_string( N ) << std::endl;
 
@@ -90,7 +148,7 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
 
     // Construct mesh nodes
     // --------------------
-    mesh.nodes().resize( nnodes );
+    mesh.nodes().resize( nnodes_all );
     mesh::Nodes& nodes = mesh.nodes();
     auto xy            = array::make_view<double, 2>( nodes.xy() );
     auto lonlat        = array::make_view<double, 2>( nodes.lonlat() );
@@ -98,15 +156,7 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     auto remote_idx    = array::make_indexview<idx_t, 1>( nodes.remote_index() );
     auto part          = array::make_view<int, 1>( nodes.partition() );
     auto ghost         = array::make_view<int, 1>( nodes.ghost() );
-    //auto flags      = array::make_view<int, 1>( nodes.flags() );
-
-    int inode = 0;
-    double xy_[3];
-    double lonlat_[2];
-
-    int it;
-    int ix;
-    int iy;
+    auto flags         = array::make_view<int, 1>( nodes.flags() );
 
     // Loop over entire grid
     // ---------------------
@@ -119,217 +169,111 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     array::ArrayT<int> NodeArrayT( nTiles, N + 1, N + 1 );  // All grid points including duplicates
     auto NodeArray = array::make_view<int, 3>( NodeArrayT );
 
+    // Add owned nodes to node array
+    idx_t nOwned = 0;
+    auto addOwnedNode = [&](Tij tijOwned) {
 
-    {
-        ATLAS_TRACE( "iterate entire grid" );
-        idx_t n{0};
-        for ( auto& p : csgrid.tij() ) {
-            NodeArray( p.t(), p.i(), p.j() ) = n++;
-        }
-    }
+        // Set node array
+        NodeArray(tijOwned[0], tijOwned[1], tijOwned[2]) = nOwned;
 
+        // Get xy from global xy grid array
+        double xy_[3];
+        csgrid.xy( tijOwned[1], tijOwned[2], tijOwned[0], xy_ );
 
-    for ( it = 0; it < nTiles; it++ ) {     // 0, 1, 2, 3, 4, 5
-        for ( ix = 0; ix < N; ix++ ) {      // 0, 1, ..., N-1
-            for ( iy = 0; iy < N; iy++ ) {  // 0, 1, ..., N-1
+        xy( nOwned, XX ) = xy_[XX];
+        xy( nOwned, YY ) = xy_[YY];
 
-                // Get xy from global xy grid array
-                csgrid.xy( ix, iy, it, xy_ );
+        // Get lonlat from global lonlat array
+        double lonlat_[2];
+        csgrid.lonlat( tijOwned[1], tijOwned[2], tijOwned[0], lonlat_ );
 
-                idx_t n = NodeArray( it, ix, iy );
+        lonlat( nOwned, LON ) = lonlat_[LON];
+        lonlat( nOwned, LAT ) = lonlat_[LAT];
 
-                xy( n, XX ) = xy_[XX];
-                xy( n, YY ) = xy_[YY];
+        // Is not ghost node
+        mesh::Nodes::Topology::reset(flags(nOwned));
+        ghost(nOwned) = 0;
 
-                csgrid.lonlat( ix, iy, it, lonlat_ );
+        glb_idx(nOwned) = nOwned + 1;
+        remote_idx(nOwned) = nOwned;
+        part(nOwned) = distribution.partition(nOwned);
 
-                lonlat( n, LON ) = lonlat_[LON];
-                lonlat( n, LAT ) = lonlat_[LAT];
+        ++nOwned;
 
-                // Ghost nodes
-                ghost( n ) = 0;  // No ghost nodes
+        return;
+    };
 
-                glb_idx( n )    = n + 1;
-                remote_idx( n ) = n;
-                part( n )       = distribution.partition( n );
-                inode++;
-            }
-        }
-    }
+    // Loop over owned (t, i, j)
 
-    // Extra point 1
-    // -------------
-    {
-        it = 0;
-        ix = 0;
-        iy = N;
-
-        idx_t n = NodeArray( it, ix, iy );
-        csgrid.xy( ix, iy, it, xy_ );
-        xy( n, XX ) = xy_[XX];
-        xy( n, YY ) = xy_[YY];
-        csgrid.lonlat( ix, iy, it, lonlat_ );
-        lonlat( n, LON ) = lonlat_[LON];
-        lonlat( n, LAT ) = lonlat_[LAT];
-        ghost( n )       = 0;
-        glb_idx( n )     = n + 1;
-        remote_idx( n )  = n;
-        part( n )        = distribution.partition( n );
-        inode++;
-    }
-
-    // Extra point 2
-    // -------------
-    {
-        it      = 1;
-        ix      = N;
-        iy      = 0;
-        idx_t n = NodeArray( it, ix, iy );
-
-        csgrid.xy( ix, iy, it, xy_ );
-        xy( n, XX ) = xy_[XX];
-        xy( n, YY ) = xy_[YY];
-        csgrid.lonlat( ix, iy, it, lonlat_ );
-        lonlat( n, LON ) = lonlat_[LON];
-        lonlat( n, LAT ) = lonlat_[LAT];
-        ghost( n )       = 0;
-        glb_idx( n )     = n + 1;
-        remote_idx( n )  = n;
-        part( n )        = distribution.partition( n );
-        inode++;
-    }
-
-#if 0
-  // TESTING: Check that inverse projection returns the correct xyt
-  // --------------------------------------------------------------
-  idx_t ijtnode[3];
-  idx_t ijtproj[3];
-  double lonlattest[2];
-
-  for (int n = 0; n < inode-2; n++) {
-    ijtnode[0] = -1;
-    ijtnode[1] = -1;
-    ijtnode[2] = -1;
-    ijtproj[0] = -2;
-    ijtproj[1] = -2;
-    ijtproj[2] = -2;
-    lonlattest[LON] = lonlat( n, LON );
-    lonlattest[LAT] = lonlat( n, LAT );
-    // Search the array for this node
-    for ( it = 0; it < nTiles; it++ ) {
-      for ( ix = 0; ix < N; ix++ ) {
-        for ( iy = 0; iy < N; iy++ ) {
-          if (NodeArray(it, ix, iy) == n) {
-            ijtnode[0] = ix;
-            ijtnode[1] = iy;
-            ijtnode[2] = it;
-            csgrid.lonlat2xy( lonlattest, ijtproj);
-          }
-        }
-      }
-    }
-    bool samePoint = ijtproj[0] == ijtnode[0] && ijtproj[1] == ijtnode[1] && ijtproj[2] == ijtnode[2];
-    ATLAS_ASSERT(samePoint, "NOT THE SAME POINT");
-  }
-#endif
+    for (auto& p : csgrid.tij()) addOwnedNode(Tij{p.t(), p.i(), p.j()});
 
     // Assert that the correct number of nodes have been set
-    ATLAS_ASSERT( nnodes == inode, "Insufficient nodes" );
+    ATLAS_ASSERT( nnodes == nOwned, "Insufficient nodes" );
 
-    // Fill duplicate points in the corners
-    // ------------------------------------
-    NodeArray( 0, N, N ) = NodeArray( 2, 0, 0 );
-    ++inode;
-    NodeArray( 1, N, N ) = NodeArray( 3, 0, 0 );
-    ++inode;
-    NodeArray( 2, N, N ) = NodeArray( 4, 0, 0 );
-    ++inode;
-    NodeArray( 3, N, N ) = NodeArray( 5, 0, 0 );
-    ++inode;
-    NodeArray( 4, N, N ) = NodeArray( 0, 0, 0 );
-    ++inode;
-    NodeArray( 5, N, N ) = NodeArray( 1, 0, 0 );
-    ++inode;
+    // Vector of ghost global index of each ghost point
+    auto ghostGblIdx = std::vector<idx_t>();
+    auto ownedGblIdx = std::vector<idx_t>();
 
-    // Special points have two duplicates each
-    NodeArray( 2, 0, N ) = NodeArray( 0, 0, N );
-    ++inode;
-    NodeArray( 4, 0, N ) = NodeArray( 0, 0, N );
-    ++inode;
-    NodeArray( 3, N, 0 ) = NodeArray( 1, N, 0 );
-    ++inode;
-    NodeArray( 5, N, 0 ) = NodeArray( 1, N, 0 );
-    ++inode;
+    // Add ghost nodes to node array
+    // (nGhost started after nOwned)
+    auto nGhost = nOwned;
+    auto addGhostNode = [&](Tij tijGhost, Tij tijOwned) {
 
-    // Top & right duplicates
-    // ----------------------
+        // Get concrete node id
+        auto nOwned = NodeArray(tijOwned[0], tijOwned[1], tijOwned[2]);
 
-    // Tile 1
-    for ( ix = 1; ix < N; ix++ ) {
-        NodeArray( 0, ix, N ) = NodeArray( 2, 0, N - ix );
-        ++inode;
-    }
-    for ( iy = 0; iy < N; iy++ ) {
-        NodeArray( 0, N, iy ) = NodeArray( 1, 0, iy );
-        ++inode;
-    }
+        // Add ghost node to NodeArray
+        NodeArray(tijGhost[0], tijGhost[1], tijGhost[2]) = nGhost;
 
-    // Tile 2
-    for ( ix = 0; ix < N; ix++ ) {
-        NodeArray( 1, ix, N ) = NodeArray( 2, ix, 0 );
-        ++inode;
-    }
-    for ( iy = 1; iy < N; iy++ ) {
-        NodeArray( 1, N, iy ) = NodeArray( 3, N - iy, 0 );
-        ++inode;
-    }
+        // "Create" ghost xy coordinate.
 
-    // Tile 3
-    for ( ix = 1; ix < N; ix++ ) {
-        NodeArray( 2, ix, N ) = NodeArray( 4, 0, N - ix );
-        ++inode;
-    }
-    for ( iy = 0; iy < N; iy++ ) {
-        NodeArray( 2, N, iy ) = NodeArray( 3, 0, iy );
-        ++inode;
-    }
+        // Get Jacobian of coords rtw indices
+        auto x0 = xy(NodeArray(tijGhost[0], 0, 0), XX);
+        auto y0 = xy(NodeArray(tijGhost[0], 0, 0), YY);
 
-    // Tile 4
-    for ( ix = 0; ix < N; ix++ ) {
-        NodeArray( 3, ix, N ) = NodeArray( 4, ix, 0 );
-        ++inode;
-    }
-    for ( iy = 1; iy < N; iy++ ) {
-        NodeArray( 3, N, iy ) = NodeArray( 5, N - iy, 0 );
-        ++inode;
-    }
+        auto dx_di = xy(NodeArray(tijGhost[0], 1, 0), XX) - x0;
+        auto dx_dj = xy(NodeArray(tijGhost[0], 0, 1), XX) - x0;
+        auto dy_di = xy(NodeArray(tijGhost[0], 1, 0), YY) - y0;
+        auto dy_dj = xy(NodeArray(tijGhost[0], 0, 1), YY) - y0;
 
-    // Tile 5
-    for ( ix = 1; ix < N; ix++ ) {
-        NodeArray( 4, ix, N ) = NodeArray( 0, 0, N - ix );
-        ++inode;
-    }
-    for ( iy = 0; iy < N; iy++ ) {
-        NodeArray( 4, N, iy ) = NodeArray( 5, 0, iy );
-        ++inode;
-    }
+        // Set xy coordinates
+        xy(nGhost, XX) = x0 + tijGhost[1] * dx_di + tijGhost[2] * dx_dj;
+        xy(nGhost, YY) = y0 + tijGhost[1] * dy_di + tijGhost[2] * dy_dj;
 
-    // Tile 6
-    for ( ix = 0; ix < N; ix++ ) {
-        NodeArray( 5, ix, N ) = NodeArray( 0, ix, 0 );
-        ++inode;
-    }
-    for ( iy = 1; iy < N; iy++ ) {
-        NodeArray( 5, N, iy ) = NodeArray( 1, N - iy, 0 );
-        ++inode;
-    }
+        // Same lonlat as concrete points
+        lonlat(nGhost, LON) = lonlat( nOwned, LON);
+        lonlat(nGhost, LAT) = lonlat( nOwned, LAT);
+
+        // Is ghost node
+        mesh::Nodes::Topology::set(flags(nGhost), mesh::Nodes::Topology::GHOST);
+        ghost(nGhost) = 1;
+
+        // Partitioning logic to be added in future PR
+        glb_idx(nGhost) = nGhost + 1;
+        remote_idx(nGhost) = nGhost;
+
+        // not sure (below - for multiple PEs)
+        part(nGhost) = distribution.partition(nOwned);
+
+        // Append metadata
+        // Global indicies of ghost node and owned node
+        ghostGblIdx.push_back(nGhost + 1);
+        ownedGblIdx.push_back(nOwned + 1);
+
+        ++nGhost;
+
+    };
+
+    // Loop over ghost (t, i, j)
+    for (auto& pPair : ghostToOwnedTij) addGhostNode(pPair.first, pPair.second);
+
 
     // Assert that the correct number of nodes have been set when duplicates are added
-    ATLAS_ASSERT( nnodes_all == inode, "Insufficient nodes" );
+    ATLAS_ASSERT( nnodes_all == nGhost, "Insufficient nodes" );
 
-    for ( it = 0; it < nTiles; it++ ) {
-        for ( ix = 0; ix < N + 1; ix++ ) {
-            for ( iy = 0; iy < N + 1; iy++ ) {
+    for ( idx_t it = 0; it < nTiles; it++ ) {
+        for ( idx_t ix = 0; ix < N + 1; ix++ ) {
+            for ( idx_t iy = 0; iy < N + 1; iy++ ) {
                 ATLAS_ASSERT( NodeArray( it, ix, iy ) != -9999, "Node Array Not Set Properly" );
             }
         }
@@ -370,6 +314,12 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     // Parallel
     generateGlobalElementNumbering( mesh );
     nodes.metadata().set( "parallel", true );
+
+    // Global indices of ghost nodes.
+    nodes.metadata().set( "ghost-global-idx", ghostGblIdx);
+
+    // Global indices of owned nodes for each ghost node (same order as above)
+    nodes.metadata().set( "owned-global-idx", ownedGblIdx);
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -383,7 +333,7 @@ void CubedSphereMeshGenerator::hash( eckit::Hash& h ) const {
 
 namespace {
 static MeshGeneratorBuilder<CubedSphereMeshGenerator> CubedSphereMeshGenerator(
-    CubedSphereMeshGenerator::static_type() );
+        CubedSphereMeshGenerator::static_type() );
 }
 
 // -------------------------------------------------------------------------------------------------
