@@ -16,6 +16,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/grid/CubedSphereGrid.h"
 #include "atlas/grid/Distribution.h"
+#include "atlas/grid/Iterator.h"
 #include "atlas/grid/Partitioner.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/Connectivity.h"
@@ -42,7 +43,7 @@ namespace meshgenerator {
 
 // -------------------------------------------------------------------------------------------------
 
-CubedSphereMeshGenerator::CubedSphereMeshGenerator( const eckit::Parametrisation& p ) {}
+CubedSphereMeshGenerator::CubedSphereMeshGenerator(const eckit::Parametrisation& p) {}
 
 // -------------------------------------------------------------------------------------------------
 
@@ -50,113 +51,147 @@ void CubedSphereMeshGenerator::configure_defaults() {}
 
 // -------------------------------------------------------------------------------------------------
 
-void CubedSphereMeshGenerator::generate( const Grid& grid, Mesh& mesh ) const {
-    // Check for proper grid and need for mesh
-    ATLAS_ASSERT( !mesh.generated() );
-    const CubedSphereGrid csg = CubedSphereGrid( grid );
-    if ( !csg ) {
-        throw_Exception( "CubedSphereMeshGenerator can only work with a cubedsphere grid", Here() );
-    }
+void CubedSphereMeshGenerator::generate(const Grid& grid, Mesh& mesh) const {
 
-    // Number of processors
-    //size_t nb_parts = options.get<size_t>( "nb_parts" );
+  // Check for proper grid and need for mesh
+  ATLAS_ASSERT(!mesh.generated());
+  if (!CubedSphereGrid(grid)) {
+    throw_Exception("CubedSphereMeshGenerator can only work "
+      "with a cubedsphere grid", Here());
+  }
 
-    // Decomposition type
-    std::string partitioner_type = "checkerboard";
-    options.get( "checkerboard", partitioner_type );
+  // Check for proper stagger
+  const auto gridType = grid->type();
+  const auto gridStagger = gridType.substr(gridType.rfind("-") - 1, 1);
 
-    // Partitioner
-    grid::Partitioner partitioner( partitioner_type, 1 );
-    grid::Distribution distribution( partitioner.partition( grid ) );
+  if (gridStagger != "C") {
+    throw_Exception("CubedSphereMeshGenerator can only work with a"
+      "cell-centroid grid. Try FV3CubedSphereMeshGenerator instead.");
+  }
 
-    generate( grid, distribution, mesh );
+  // Partitioner
+  const auto partitioner = grid::Partitioner("checkerboard", 1);
+  const auto distribution =
+    grid::Distribution(partitioner.partition(grid));
+
+  generate(grid, distribution, mesh);
 }
 
 // -------------------------------------------------------------------------------------------------
 
-void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribution& distribution, Mesh& mesh ) const {
-    const auto csgrid = CubedSphereGrid( grid );
+void CubedSphereMeshGenerator::generate(const Grid& grid, const grid::Distribution& distribution, Mesh& mesh) const {
+    const auto csgrid = CubedSphereGrid(grid);
 
+    // Get dimensions of grid
     const int N      = csgrid.N();
     const int nTiles = csgrid.GetNTiles();
 
+    ATLAS_TRACE("CubedSphereMeshGenerator::generate");
+    Log::debug() << "Number of faces per tile edge = " << std::to_string(N) << std::endl;
 
-    // Make a list linking ghost (t, i, j) values to known (t, i, j)
-    // This will be different for each cube-sphere once MeshGenerator is generalised.
+    // Number of nodes and cells.
+    const int nNodesUnique  = nTiles * N * N + 2;
+    const int nNodesAll     = nTiles * (N + 1) * (N + 1);
+    const int nCells        = nTiles * N * N;
 
-    using Tij = typename std::array<idx_t, 3>;
+    // Construct mesh cells.
+    auto& cells = mesh.cells();
+    cells.add(new mesh::temporary::Quadrilateral(), nCells);
 
-    // first: ghost (t, i, j); second owned (t, i, j).
-    using TijPair = typename std::pair<Tij, Tij>;
+    auto cellGlobalIdx = array::make_indexview<idx_t, 1>(cells.global_index());
+    auto cellRemoteIdx = array::make_indexview<idx_t, 1>(cells.remote_index());
+    auto cellPart      = array::make_view<int, 1>(cells.partition());
+    auto cellXY        = std::vector<PointXY>(static_cast<size_t>(nCells));
 
-    auto ghostToOwnedTij = std::vector<TijPair>{};
+    // Construct mesh nodes.
+    auto& nodes = mesh.nodes();
+    nodes.resize(nNodesAll);
 
+    auto nodeGlobalIdx = array::make_indexview<idx_t, 1>(nodes.global_index());
+    auto nodeRemoteIdx = array::make_indexview<idx_t, 1>(nodes.remote_index());
+    auto nodePart      = array::make_view<int, 1>(nodes.partition());
+    auto nodeXY        = array::make_view<double, 2>(nodes.xy());
+    auto nodeLonLat    = array::make_view<double, 2>(nodes.lonlat());
+    auto nodeGhost     = array::make_view<int, 1>(nodes.ghost());
+    auto nodeFlags     = array::make_view<int, 1>(nodes.flags());
 
-    // -------------------------------------------------------------------------
-    // BEGIN FV3 SPECIFIC MAP
-    // -------------------------------------------------------------------------
-
-    // Special points.
-    ghostToOwnedTij.push_back(TijPair{{0, N, N}, {2, 0, 0}});
-    ghostToOwnedTij.push_back(TijPair{{1, N, N}, {3, 0, 0}});
-    ghostToOwnedTij.push_back(TijPair{{2, N, N}, {4, 0, 0}});
-    ghostToOwnedTij.push_back(TijPair{{3, N, N}, {5, 0, 0}});
-    ghostToOwnedTij.push_back(TijPair{{4, N, N}, {0, 0, 0}});
-    ghostToOwnedTij.push_back(TijPair{{5, N, N}, {1, 0, 0}});
-    ghostToOwnedTij.push_back(TijPair{{2, 0, N}, {0, 0, N}});
-    ghostToOwnedTij.push_back(TijPair{{4, 0, N}, {0, 0, N}});
-    ghostToOwnedTij.push_back(TijPair{{3, N, 0}, {1, N, 0}});
-    ghostToOwnedTij.push_back(TijPair{{5, N, 0}, {1, N, 0}});
-
-    // Tile 1
-    for ( idx_t ix = 1; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{0, ix, N}, {2, 0, N - ix}});
-    for ( idx_t iy = 0; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{0, N, iy}, {1, 0, iy}});
-
-    // Tile 2
-    for ( idx_t ix = 0; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{1, ix, N}, {2, ix, 0}});
-    for ( idx_t iy = 1; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{1, N, iy}, {3, N - iy, 0}});
-
-    // Tile 3
-    for ( idx_t ix = 1; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{2, ix, N}, {4, 0, N - ix}});
-    for ( idx_t iy = 0; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{2, N, iy}, {3, 0, iy}});
-
-    // Tile 4
-    for ( idx_t ix = 0; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{3, ix, N}, {4, ix, 0}});
-    for ( idx_t iy = 1; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{3, N, iy}, {5, N - iy, 0}});
-
-    // Tile 5
-    for ( idx_t ix = 1; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{4, ix, N}, {0, 0, N - ix}});
-    for ( idx_t iy = 0; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{4, N, iy}, {5, 0, iy}});
-
-    // Tile 6
-    for ( idx_t ix = 0; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{5, ix, N}, {0, ix, 0}});
-    for ( idx_t iy = 1; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{5, N, iy}, {1, N - iy, 0}});
+    // Set grid shaped arrays of cell and node local index
+    array::ArrayT<int> cellLocalIdxData(nTiles, N, N);
+    array::ArrayT<int> nodeLocalIdxData(nTiles, N + 1, N + 1);
+    auto cellLocalIdx = array::make_view<int, 3>(cellLocalIdxData);
+    auto nodeLocalIdx = array::make_view<int, 3>(nodeLocalIdxData);
 
 
 
-    // -------------------------------------------------------------------------
-    // END FV3 SPECIFIC MAP
-    // -------------------------------------------------------------------------
+    // Loop over all cells and set local index
+    int iCell = 0;
+    for (idx_t t = 0; t < nTiles; ++t) {
+      for (idx_t j = 0; j < N; ++j) {
+        for (idx_t i = 0; i < N; ++i) {
+          cellLocalIdx(t, j, i) = iCell++;
+        }
+      }
+    }
 
-    ATLAS_TRACE( "CubedSphereMeshGenerator::generate" );
-    Log::debug() << "Number of faces per tile edge = " << std::to_string( N ) << std::endl;
+    // Loop over all nodes and set local index
+    int iNode = 0;
+    for (idx_t t = 0; t < nTiles; ++t) {
+      for (idx_t j = 0; j < N + 1; ++j) {
+        for (idx_t i = 0; i < N + 1; ++i) {
+          nodeLocalIdx(t, j, i) = iNode++;
+        }
+      }
+    }
 
-    // Number of nodes
-    int nnodes     = nTiles * N * N + 2;              // Number of unique grid nodes
-    int nnodes_all = nTiles * ( N + 1 ) * ( N + 1 );  // Number of grid nodes including edge and corner duplicates
-    int ncells     = nTiles * N * N;                  // Number of unique grid cells
+    // Loop over grid points and set cell global index and xy
+    idx_t iGrid = 0;
+    auto tji = csgrid.tij().begin();
+    for (auto& xy : csgrid.xy()) {
 
-    // Construct mesh nodes
-    // --------------------
-    mesh.nodes().resize( nnodes_all );
-    mesh::Nodes& nodes = mesh.nodes();
-    auto xy            = array::make_view<double, 2>( nodes.xy() );
-    auto lonlat        = array::make_view<double, 2>( nodes.lonlat() );
-    auto glb_idx       = array::make_view<gidx_t, 1>( nodes.global_index() );
-    auto remote_idx    = array::make_indexview<idx_t, 1>( nodes.remote_index() );
-    auto part          = array::make_view<int, 1>( nodes.partition() );
-    auto ghost         = array::make_view<int, 1>( nodes.ghost() );
-    auto flags         = array::make_view<int, 1>( nodes.flags() );
+      const int iLocalIdx = cellLocalIdx(*(tji).t(), tij.j(), tij.i());
+
+    }
+
+
+
+
+
+    for (auto& tij : csgrid.tij()) {
+
+      const int iLocalIdx = cellLocalIdx(tij.t(), tij.j(), tij.i());
+
+      cellGlobalIdx(iLocalIdx) = iGrid++;
+      cellXY[static_cast<size_t>(iLocalIdx)] =
+        csgrid.xy(tij.i(), tij.j(), tij.t());
+
+    }
+
+    // Loop over cells and add nodes.
+    for (idx_t t = 0; t < nTiles; ++t) {
+
+      for (idx_t j = 0; j < N; ++j) {
+        for (idx_t i = 0; i < N; ++i) {
+
+
+
+
+        }
+      }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     // Loop over entire grid
     // ---------------------
@@ -166,8 +201,8 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     // We could include the duplicate points in the array if we make them Ghost nodes but it is not
     // clear if this provides any benefit.
 
-    array::ArrayT<int> NodeArrayT( nTiles, N + 1, N + 1 );  // All grid points including duplicates
-    auto NodeArray = array::make_view<int, 3>( NodeArrayT );
+    array::ArrayT<int> NodeArrayT(nTiles, N + 1, N + 1);  // All grid points including duplicates
+    auto NodeArray = array::make_view<int, 3>(NodeArrayT);
 
     // Add owned nodes to node array
     idx_t nOwned = 0;
@@ -178,17 +213,17 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
 
         // Get xy from global xy grid array
         double xy_[3];
-        csgrid.xy( tijOwned[1], tijOwned[2], tijOwned[0], xy_ );
+        csgrid.xy(tijOwned[1], tijOwned[2], tijOwned[0], xy_);
 
-        xy( nOwned, XX ) = xy_[XX];
-        xy( nOwned, YY ) = xy_[YY];
+        xy(nOwned, XX) = xy_[XX];
+        xy(nOwned, YY) = xy_[YY];
 
         // Get lonlat from global lonlat array
         double lonlat_[2];
-        csgrid.lonlat( tijOwned[1], tijOwned[2], tijOwned[0], lonlat_ );
+        csgrid.lonlat(tijOwned[1], tijOwned[2], tijOwned[0], lonlat_);
 
-        lonlat( nOwned, LON ) = lonlat_[LON];
-        lonlat( nOwned, LAT ) = lonlat_[LAT];
+        lonlat(nOwned, LON) = lonlat_[LON];
+        lonlat(nOwned, LAT) = lonlat_[LAT];
 
         // Is not ghost node
         mesh::Nodes::Topology::reset(flags(nOwned));
@@ -208,7 +243,7 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     for (auto& p : csgrid.tij()) addOwnedNode(Tij{p.t(), p.i(), p.j()});
 
     // Assert that the correct number of nodes have been set
-    ATLAS_ASSERT( nnodes == nOwned, "Insufficient nodes" );
+    ATLAS_ASSERT(nnodes == nOwned, "Insufficient nodes");
 
     // Vector of ghost global index of each ghost point
     auto ghostGblIdx = std::vector<idx_t>();
@@ -241,8 +276,8 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
         xy(nGhost, YY) = y0 + tijGhost[1] * dy_di + tijGhost[2] * dy_dj;
 
         // Same lonlat as concrete points
-        lonlat(nGhost, LON) = lonlat( nOwned, LON);
-        lonlat(nGhost, LAT) = lonlat( nOwned, LAT);
+        lonlat(nGhost, LON) = lonlat(nOwned, LON);
+        lonlat(nGhost, LAT) = lonlat(nOwned, LAT);
 
         // Is ghost node
         mesh::Nodes::Topology::set(flags(nGhost), mesh::Nodes::Topology::GHOST);
@@ -269,39 +304,39 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
 
 
     // Assert that the correct number of nodes have been set when duplicates are added
-    ATLAS_ASSERT( nnodes_all == nGhost, "Insufficient nodes" );
+    ATLAS_ASSERT(nnodes_all == nGhost, "Insufficient nodes");
 
-    for ( idx_t it = 0; it < nTiles; it++ ) {
-        for ( idx_t ix = 0; ix < N + 1; ix++ ) {
-            for ( idx_t iy = 0; iy < N + 1; iy++ ) {
-                ATLAS_ASSERT( NodeArray( it, ix, iy ) != -9999, "Node Array Not Set Properly" );
+    for (idx_t it = 0; it < nTiles; it++) {
+        for (idx_t ix = 0; ix < N + 1; ix++) {
+            for (idx_t iy = 0; iy < N + 1; iy++) {
+                ATLAS_ASSERT(NodeArray(it, ix, iy) != -9999, "Node Array Not Set Properly");
             }
         }
     }
 
     // Cells in mesh
-    mesh.cells().add( new mesh::temporary::Quadrilateral(), nTiles * N * N );
-    //int quad_begin  = mesh.cells().elements( 0 ).begin();
-    auto cells_part = array::make_view<int, 1>( mesh.cells().partition() );
-    auto cells_gidx = array::make_view<gidx_t, 1>( mesh.cells().global_index() );
-    auto cells_ridx = array::make_indexview<idx_t, 1>( mesh.cells().remote_index() );
+    mesh.cells().add(new mesh::temporary::Quadrilateral(), nTiles * N * N);
+    //int quad_begin  = mesh.cells().elements(0).begin();
+    auto cells_part = array::make_view<int, 1>(mesh.cells().partition());
+    auto cells_gidx = array::make_view<gidx_t, 1>(mesh.cells().global_index());
+    auto cells_ridx = array::make_indexview<idx_t, 1>(mesh.cells().remote_index());
     atlas::mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
 
     int icell = 0;
     idx_t quad_nodes[4];
 
-    for ( int it = 0; it < nTiles; it++ ) {
-        for ( int ix = 0; ix < N; ix++ ) {
-            for ( int iy = 0; iy < N; iy++ ) {
-                quad_nodes[0] = NodeArray( it, ix, iy );
-                quad_nodes[1] = NodeArray( it, ix + 1, iy );
-                quad_nodes[2] = NodeArray( it, ix + 1, iy + 1 );
-                quad_nodes[3] = NodeArray( it, ix, iy + 1 );
+    for (int it = 0; it < nTiles; it++) {
+        for (int ix = 0; ix < N; ix++) {
+            for (int iy = 0; iy < N; iy++) {
+                quad_nodes[0] = NodeArray(it, ix, iy);
+                quad_nodes[1] = NodeArray(it, ix + 1, iy);
+                quad_nodes[2] = NodeArray(it, ix + 1, iy + 1);
+                quad_nodes[3] = NodeArray(it, ix, iy + 1);
 
-                node_connectivity.set( icell, quad_nodes );
-                cells_part( icell ) = part( quad_nodes[0] );
-                cells_gidx( icell ) = icell + 1;
-                cells_ridx( icell ) = icell;
+                node_connectivity.set(icell, quad_nodes);
+                cells_part(icell) = part(quad_nodes[0]);
+                cells_gidx(icell) = icell + 1;
+                cells_ridx(icell) = icell;
 
                 ++icell;
             }
@@ -309,31 +344,31 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     }
 
     // Assertion that correct number of cells are set
-    ATLAS_ASSERT( ncells == icell, "Insufficient cells have been set" );
+    ATLAS_ASSERT(ncells == icell, "Insufficient cells have been set");
 
     // Parallel
-    generateGlobalElementNumbering( mesh );
-    nodes.metadata().set( "parallel", true );
+    generateGlobalElementNumbering(mesh);
+    nodes.metadata().set("parallel", true);
 
     // Global indices of ghost nodes.
-    nodes.metadata().set( "ghost-global-idx", ghostGblIdx);
+    nodes.metadata().set("ghost-global-idx", ghostGblIdx);
 
     // Global indices of owned nodes for each ghost node (same order as above)
-    nodes.metadata().set( "owned-global-idx", ownedGblIdx);
+    nodes.metadata().set("owned-global-idx", ownedGblIdx);
 }
 
 // -------------------------------------------------------------------------------------------------
 
-void CubedSphereMeshGenerator::hash( eckit::Hash& h ) const {
-    h.add( "CubedSphereMeshGenerator" );
-    options.hash( h );
+void CubedSphereMeshGenerator::hash(eckit::Hash& h) const {
+    h.add("CubedSphereMeshGenerator");
+    options.hash(h);
 }
 
 // -------------------------------------------------------------------------------------------------
 
 namespace {
 static MeshGeneratorBuilder<CubedSphereMeshGenerator> CubedSphereMeshGenerator(
-        CubedSphereMeshGenerator::static_type() );
+        CubedSphereMeshGenerator::static_type());
 }
 
 // -------------------------------------------------------------------------------------------------
