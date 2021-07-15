@@ -430,9 +430,12 @@ CASE( "test_structured_from_config" ) {
 
 CASE( "test_cubedsphere" ) {
     int resolution( 2 );
-    std::vector<std::string> grid_names{"CS-EA-" + std::to_string( resolution ),
-                                        "CS-ED-" + std::to_string( resolution ),
-                                        "CS-LFR-" + std::to_string( resolution ),
+    std::vector<std::string> grid_names{"CS-EA-L-" + std::to_string( resolution ),
+                                        "CS-ED-L-" + std::to_string( resolution ),
+                                        "CS-LFR-L-" + std::to_string( resolution ),
+                                        "CS-EA-C-" + std::to_string( resolution ),
+                                        "CS-ED-C-" + std::to_string( resolution ),
+                                        "CS-LFR-C-" + std::to_string( resolution )
                                        };
 
     for ( std::string& s : grid_names ) {
@@ -442,6 +445,9 @@ CASE( "test_cubedsphere" ) {
         std::vector<PointXY> pointXYs;
         std::vector<PointLonLat> pointLonLats;
         std::vector<PointLonLat> pointXYs_from_LonLat;
+        std::vector<std::pair<double, double>> expectedLatLon;
+        std::vector<std::pair<double, double>> expectedXY;
+        const double tolerance = 1e-4;
 
         for ( auto crd : grid.xy() ) {
             pointXYs.push_back( crd );
@@ -453,9 +459,13 @@ CASE( "test_cubedsphere" ) {
             grid->projection().lonlat2xy( crd );
             pointXYs_from_LonLat.push_back( crd );
         }
-        EXPECT( pointLonLats.size() == 6 * resolution * resolution + 2 );
-        EXPECT( pointXYs.size() == 6 * resolution * resolution + 2 );
-        EXPECT( grid.size() == 6 * resolution * resolution + 2 );
+        int numAdditionalPoints = 0;
+        if (s.substr(s.rfind("-")-1, 1) == "L") {
+            numAdditionalPoints = 2;
+        }
+        EXPECT( pointLonLats.size() == 6 * resolution * resolution + numAdditionalPoints );
+        EXPECT( pointXYs.size() == 6 * resolution * resolution + numAdditionalPoints );
+        EXPECT( grid.size() == 6 * resolution * resolution + numAdditionalPoints );
 
         // Note that with nodal points on the cubed-sphere
         // for a equiangular and equidistant projections and a resolution of 2 are the same.
@@ -463,43 +473,25 @@ CASE( "test_cubedsphere" ) {
             constexpr double rpi     = M_PI;
             constexpr double rad2deg = 180. / rpi;
             double cornerLat         = rad2deg * std::atan( std::sin( rpi / 4.0 ) );
-            double tolerance         = 1e-13;
-            // Expected latitudes/longitude per tile
 
-            if ( ( s == "CS-EA-" + std::to_string( resolution ) )  ||
-                 ( s == "CS-ED-" + std::to_string( resolution ) ) ) {
-                std::vector<std::pair<double, double>> expectedLatLon{
+            // Expected latitudes/longitude per tile
+            if ( ( s == "CS-EA-L-" + std::to_string( resolution ) )  ||
+                 ( s == "CS-ED-L-" + std::to_string( resolution ) ) ) {
+                expectedLatLon = std::vector<std::pair<double, double>> {
                     {-cornerLat, 315.0}, {-45.0, 0.0},  {0.0, 315.0},        {0.0, 0.0},         {cornerLat, 315.0},
                     {-cornerLat, 45.0},  {-45.0, 90.0}, {-cornerLat, 135.0}, {0.0, 45.0},        {0.0, 90.0},
                     {cornerLat, 45.0},   {45.0, 90.0},  {45.0, 0.0},         {90, 0.0},          {cornerLat, 135.0},
                     {0.0, 135.0},        {45.0, 180.0}, {0.0, 180.0},        {cornerLat, 225.0}, {0.0, 225.0},
                     {45.0, 270.0},       {0.0, 270.0},  {-cornerLat, 225.0}, {-45.0, 180.0},     {-45.0, 270.0},
                     {-90.0, 0.0}};
-                std::vector<std::pair<double, double>> expectedXY{
+                expectedXY = std::vector<std::pair<double, double>> {
                     {0.0, -45.0},   {45.0, -45.0},  {0.0, 0.0},    {45.0, 0.0},  {0.0, 45.0},    {90.0, -45.0},
                     {135.0, -45.0}, {180.0, -45.0}, {90.0, 0.0},   {135.0, 0.0}, {90.0, 45.0},   {135.0, 45.0},
                     {90.0, 90.0},   {135.0, 90.0},  {180.0, 45.0}, {180.0, 0.0}, {225.0, 45.0},  {225.0, 0.0},
                     {270.0, 45.0},  {270.0, 0.0},   {315.0, 45.0}, {315.0, 0.0}, {270.0, -45.0}, {270.0, -90.0},
                     {315.0, -45.0}, {315.0, -90.0}};
-
-                for ( std::size_t jn = 0; jn < grid.size(); ++jn ) {
-                    Log::info() << s << " " << jn << " lon2x " << pointXYs_from_LonLat[jn].x() << " "
-                                <<  expectedXY[jn].first  <<std::endl;
-                    Log::info() << s << " " << jn << " lat2y " << pointXYs_from_LonLat[jn].y() << " "
-                                <<  expectedXY[jn].second  <<std::endl;
-                    EXPECT( std::abs( pointLonLats[jn].lat() - expectedLatLon[jn].first ) < tolerance );
-                    EXPECT( std::abs( pointLonLats[jn].lon() - expectedLatLon[jn].second ) < tolerance );
-                    EXPECT( std::abs( pointLonLats_from_XY[jn].lat() - expectedLatLon[jn].first ) < tolerance );
-                    EXPECT( std::abs( pointLonLats_from_XY[jn].lon() - expectedLatLon[jn].second ) < tolerance );
-                    EXPECT( std::abs( pointXYs[jn].x() - expectedXY[jn].first ) < tolerance );
-                    EXPECT( std::abs( pointXYs[jn].y() - expectedXY[jn].second ) < tolerance );
-                    EXPECT( std::abs( pointXYs_from_LonLat[jn].x() - expectedXY[jn].first ) < tolerance );
-                    EXPECT( std::abs( pointXYs_from_LonLat[jn].y() - expectedXY[jn].second ) < tolerance );
-                }
-
-
-            } else if ( s == "CS-LFR-" + std::to_string( resolution ) ) {
-                std::vector<std::pair<double, double>> expectedLatLon{
+            } else if ( s == "CS-LFR-L-" + std::to_string( resolution ) ) {
+                expectedLatLon = std::vector<std::pair<double, double>> {
                     {-cornerLat, 315.0},  {-45.0, 0.0}, {0.0, 315.0},        {0.0, 0.0},   // tile 0
                     {-cornerLat, 45.0},  {-45.0, 90.0}, {0.0, 45.0},         {0.0, 90.0},  // tile 1
                     {-45.0, 180.0},       {0.0, 180.0}, {-cornerLat, 135.0}, {0.0, 135.0}, // tile 2
@@ -508,7 +500,7 @@ CASE( "test_cubedsphere" ) {
                     {45.0,  270.0},       {90.0,  0.0}, {45.0,  90.0},
                     {cornerLat, 225.0},  {45.0, 180.0}, {cornerLat, 135.0},
                     {-90, 0.0} };                                                          // tile 5
-                std::vector<std::pair<double, double>> expectedXY{
+                expectedXY = std::vector<std::pair<double, double>> {
                     {0.0,  -45.0},   {45.0, -45.0},    {0.0,   0.0},  {45.0, 0.0},
                     {90.0, -45.0},  {135.0, -45.0},   {90.0,   0.0}, {135.0, 0.0},
                     {225.0,-45.0},  {225.0,   0.0},  {180.0, -45.0}, {180.0, 0.0},
@@ -517,19 +509,67 @@ CASE( "test_cubedsphere" ) {
                     {0.0,   90.0},   {45.0,  90.0},   {90.0,  90.0},
                     {0.0,  135.0},   {45.0, 135.0},   {90.0, 135.0},
                     {45.0, -90.0} };
-
-                for ( std::size_t jn = 0; jn < grid.size(); ++jn ) {
-                    EXPECT( std::abs( pointLonLats[jn].lat() - expectedLatLon[jn].first ) < tolerance );
-                    EXPECT( std::abs( pointLonLats[jn].lon() - expectedLatLon[jn].second ) < tolerance );
-                    EXPECT( std::abs( pointLonLats_from_XY[jn].lat() - expectedLatLon[jn].first ) < tolerance );
-                    EXPECT( std::abs( pointLonLats_from_XY[jn].lon() - expectedLatLon[jn].second ) < tolerance );
-                    EXPECT( std::abs( pointXYs[jn].x() - expectedXY[jn].first ) < tolerance );
-                    EXPECT( std::abs( pointXYs[jn].y() - expectedXY[jn].second ) < tolerance );
-                    EXPECT( std::abs( pointXYs_from_LonLat[jn].x() - expectedXY[jn].first ) < tolerance );
-                    EXPECT( std::abs( pointXYs_from_LonLat[jn].y() - expectedXY[jn].second ) < tolerance );
-                }
+            } else if ( s == "CS-LFR-C-" + std::to_string( resolution ) ) {
+                expectedLatLon = std::vector<std::pair<double, double>> {
+                    {-20.941, 337.5}, {-20.941, 22.5},  {20.941, 337.5},  {20.941,   22.5},
+                    {-20.941, 67.5},  {-20.941, 112.5}, {20.941, 67.5},   {20.941,  112.5},
+                    {-20.941, 202.5}, {20.941, 202.5},  {-20.941, 157.5}, {20.941,  157.5},
+                    {-20.941, 292.5}, {20.941, 292.5},  {-20.941, 247.5}, {20.941,  247.5},
+                    {59.6388, 315.},  {59.6388, 45.},   {59.6388, 225.},  {59.6388,  135.},
+                    {-59.6388, 315.}, {-59.6388, 45.},  {-59.6388, 225.}, {-59.6388,  135.} };
+                expectedXY = std::vector<std::pair<double, double>> {
+                    {22.5 , -22.5}, {67.5,  -22.5},  {22.5,   22.5},  {67.5,   22.5},
+                    {112.5, -22.5}, {157.5, -22.5},  {112.5,  22.5},  {157.5,  22.5},
+                    {247.5, -22.5}, {247.5,  22.5},  {202.5, -22.5},  {202.5,  22.5},
+                    {337.5, -22.5}, {337.5,  22.5},  {292.5, -22.5},  {292.5,  22.5},
+                    {22.5,  67.5},  {67.5,  67.5},   {22.5,  112.5},  {67.5,  112.5},
+                    {22.5, -67.5},  {22.5, -112.5},  {67.5, -67.5},   {67.5, -112.5} };
+            } else if ( s == "CS-ED-C-" + std::to_string( resolution ) ) {
+                expectedLatLon = std::vector<std::pair<double, double>> {
+                    {-24.0948, 333.435}, {-24.0948, 26.5651}, {24.0948, 333.435}, {24.0948, 26.5651},
+                    {-24.0948, 63.4349}, {-24.0948, 116.565}, {24.0948, 63.4349}, {24.0948, 116.565},
+                    {54.7356, 45.},      {54.7356, 135.},     {54.7356, 315.},    {54.7356, 225.},
+                    {24.0948, 153.435},  {-24.0948, 153.435}, {24.0948, 206.565}, {-24.0948, 206.565},
+                    {24.0948, 243.435},  {-24.0948, 243.435}, {24.0948, 296.565}, {-24.0948, 296.565},
+                    {-54.7356, 225.},    {-54.7356, 135.},    {-54.7356, 315.},   {-54.7356, 45.} };
+                expectedXY = std::vector<std::pair<double, double>> {
+                    {22.5 , -22.5}, {67.5,  -22.5},  {22.5,   22.5},  {67.5,   22.5},
+                    {112.5, -22.5}, {157.5, -22.5},  {112.5,  22.5},  {157.5,  22.5},
+                    {112.5,  67.5}, {157.5,  67.5},  {112.5,  112.5}, {157.5,  112.5},
+                    {202.5,  22.5}, {202.5, -22.5},  {247.5,  22.5},  {247.5, -22.5},
+                    {292.5,  22.5}, {292.5, -22.5},  {337.5,  22.5},  {337.5, -22.5},
+                    {292.5, -67.5}, {292.5, -112.5}, {337.5, -67.5},  {337.5, -112.5} };
+            } else if ( s == "CS-EA-C-" + std::to_string( resolution ) ) {
+                expectedLatLon = std::vector<std::pair<double, double>> {
+                    {-20.941, 337.5}, {-20.941, 22.5},  {20.941, 337.5},  {20.941, 22.5},
+                    {-20.941, 67.5},  {-20.941, 112.5}, {20.941, 67.5},   {20.941, 112.5},
+                    {59.6388, 45.},   {59.6388, 135.},  {59.6388, 315.},  {59.6388, 225.},
+                    {20.941, 157.5},  {-20.941, 157.5}, {20.941, 202.5},  {-20.941, 202.5},
+                    {20.941, 247.5},  {-20.941, 247.5}, {20.941, 292.5},  {-20.941, 292.5},
+                    {-59.6388, 225.}, {-59.6388, 135.}, {-59.6388, 315.}, {-59.6388, 45.} };
+                expectedXY = std::vector<std::pair<double, double>> {
+                    {22.5 , -22.5}, {67.5,  -22.5},  {22.5,   22.5},  {67.5,   22.5},
+                    {112.5, -22.5}, {157.5, -22.5},  {112.5,  22.5},  {157.5,  22.5},
+                    {112.5,  67.5}, {157.5,  67.5},  {112.5,  112.5}, {157.5,  112.5},
+                    {202.5,  22.5}, {202.5, -22.5},  {247.5,  22.5},  {247.5, -22.5},
+                    {292.5,  22.5}, {292.5, -22.5},  {337.5,  22.5},  {337.5, -22.5},
+                    {292.5, -67.5}, {292.5, -112.5}, {337.5, -67.5},  {337.5, -112.5} };
             }
-
+        }
+        // Perform the test comparison now that expected values are set
+        for ( std::size_t jn = 0; jn < grid.size(); ++jn ) {
+            Log::info() << s << " " << jn << " lon2x " << pointXYs_from_LonLat[jn].x() << " "
+                        <<  expectedXY[jn].first  <<std::endl;
+            Log::info() << s << " " << jn << " lat2y " << pointXYs_from_LonLat[jn].y() << " "
+                        <<  expectedXY[jn].second  <<std::endl;
+            EXPECT( std::abs( pointLonLats[jn].lat() - expectedLatLon[jn].first ) < tolerance );
+            EXPECT( std::abs( pointLonLats[jn].lon() - expectedLatLon[jn].second ) < tolerance );
+            EXPECT( std::abs( pointLonLats_from_XY[jn].lat() - expectedLatLon[jn].first ) < tolerance );
+            EXPECT( std::abs( pointLonLats_from_XY[jn].lon() - expectedLatLon[jn].second ) < tolerance );
+            EXPECT( std::abs( pointXYs[jn].x() - expectedXY[jn].first ) < tolerance );
+            EXPECT( std::abs( pointXYs[jn].y() - expectedXY[jn].second ) < tolerance );
+            EXPECT( std::abs( pointXYs_from_LonLat[jn].x() - expectedXY[jn].first ) < tolerance );
+            EXPECT( std::abs( pointXYs_from_LonLat[jn].y() - expectedXY[jn].second ) < tolerance );
         }
         for ( std::size_t jn = 0; jn < grid.size(); ++jn ) {
             Log::info() << s <<  " jn = " << jn << " x = " << pointXYs[jn].x() << " y = " << pointXYs[jn].y() <<

@@ -31,8 +31,8 @@ namespace test {
 
 CASE ("test_tiles") {
    int resolution(2);
-    Grid gEA{ "CS-EA-" + std::to_string(resolution)};
-    Grid gLFR{ "CS-LFR-" + std::to_string(resolution)};
+    Grid gEA{ "CS-EA-L-" + std::to_string(resolution)};
+    Grid gLFR{ "CS-LFR-L-" + std::to_string(resolution)};
 
     using util::Constants;
 
@@ -109,8 +109,8 @@ CASE ("test_tiles") {
 
 CASE( "test_projection_cubedsphere_xy_latlon" ) {
     int resolution( 12 );
-    std::vector<std::string> grid_names{"CS-EA-" + std::to_string( resolution ),
-                                        "CS-ED-" + std::to_string( resolution )};
+    std::vector<std::string> grid_names{"CS-EA-L-" + std::to_string( resolution ),
+                                        "CS-ED-L-" + std::to_string( resolution )};
 
     for ( std::string& s : grid_names ) {
         Grid g{s};

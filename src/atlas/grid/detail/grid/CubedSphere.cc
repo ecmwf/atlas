@@ -30,6 +30,12 @@
 #include "atlas/util/Point.h"
 #include "atlas/util/UnitSphere.h"
 
+static std::string extractStagger(std::string fullString) {
+    // return a substring of length 1, starting one position to the left of
+    // the last "-"
+    return fullString.substr(fullString.rfind("-")-1, 1);
+}
+
 namespace atlas {
 namespace grid {
 namespace detail {
@@ -60,7 +66,8 @@ using atlas::projection::detail::CubedSphereProjectionBase;
 CubedSphere::CubedSphere( int N, Projection p ) : CubedSphere( CubedSphere::static_type(), N, p ) {}
 
 CubedSphere::CubedSphere( const std::string& name, int N, Projection projection ) :
-    Grid(), N_( N ), name_( name ) {  // Number of tiles hardwired to 6 at the moment. Regional may need 1
+    Grid(), N_( N ), name_( name ), stagger_( extractStagger(name) ) {
+    // Number of tiles hardwired to 6 at the moment. Regional may need 1
     // Copy members
     util::Config defaultProjConfig;
     defaultProjConfig.set("type", "cubedsphere_equiangular");
@@ -84,28 +91,37 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
 
     tiles_ = cs_projection_->getCubedSphereTiles();
 
-    // default assumes all panels start in bottom left corner
+    double staggerSize = (stagger_ == "C") ? 0.5 : 0.0;
     for (std::size_t i = 0; i < nTiles_; ++i) {
-      xs_[i] = tiles_.xy2abOffsets()[LON][i] * N;
-      xsr_[i] = tiles_.xy2abOffsets()[LON][i] * N;
-      ys_[i] = tiles_.xy2abOffsets()[LAT][i] * N;
-      ysr_[i] = tiles_.xy2abOffsets()[LAT][i] * N;
+      // default assumes all panels start in bottom left corner or center
+      xs_[i] = tiles_.xy2abOffsets()[LON][i] * N + staggerSize;
+      xsr_[i] = tiles_.xy2abOffsets()[LON][i] * N + staggerSize;
+      ys_[i] = tiles_.xy2abOffsets()[LAT][i] * N + staggerSize;
+      ysr_[i] = tiles_.xy2abOffsets()[LAT][i] * N + staggerSize;
+
+      // default assumes number of points on a panel is N * N
+      npts_.push_back( N * N );
     }
+
+    // default assumes jmax_ value of N-1 on all tiles
+    jmax_ = std::array<idx_t,6>  {N-1,N-1,N-1,N-1,N-1,N-1};
 
     if (tiles_.type() == "cubedsphere_fv3") {
       // panel 3,4,5 are reversed in that they start in top left corner
       for (std::size_t i = 3; i < nTiles_; ++i) {
-          ys_[i] += 1;
-          ysr_[i] += N;
+        if (stagger_ == "C") {
+            ysr_[i] += N - 1;
+        } else {
+            ys_[i] += 1;
+            ysr_[i] += N;
+        }
       }
 
-      // Number of grid points on each face of the tile.
-      npts_.push_back( N * N + 1 );  // An extra point lies on tile 1
-      npts_.push_back( N * N + 1 );  // An extra point lies on tile 2
-      npts_.push_back( N * N );
-      npts_.push_back( N * N );
-      npts_.push_back( N * N );
-      npts_.push_back( N * N );
+      // Exceptions to N * N grid points on certain tiles
+      if (stagger_ == "L") {
+        npts_[0] += 1;  // An extra nodal point lies on tile 1
+        npts_[1] += 1;  // An extra nodal point lies on tile 2
+      }
 
       xtile = {[this]( int i, int j, int t ) { return this->xsPlusIndex( i, t ); },
                [this]( int i, int j, int t ) { return this->xsPlusIndex( i, t ); },
@@ -121,15 +137,19 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
                [this]( int i, int j, int t ) { return this->ysrMinusIndex( i, t ); },
                [this]( int i, int j, int t ) { return this->ysrMinusIndex( i, t ); }};
 
-      jmax_ = std::array<idx_t,6>{N,N-1,N-1,N-1,N-1,N-1};
-
+      // Exceptions to jmax_ value of N-1 on certain tiles
+      if (stagger_ == "L") {
+          jmax_[0] = N; // Due to extra nodal point on panel 1
+      }
       for ( idx_t t = 0; t < nTiles_; ++t) {
         std::size_t rowlength =  1 + jmax_[t] - jmin_[t];
         std::vector<idx_t> imaxTile(rowlength, N-1);
         std::vector<idx_t> iminTile(rowlength, 0);
-        // extra points
-        if (t == 0) imaxTile[N] = 0;
-        if (t == 1) imaxTile[0] = N;
+        if (stagger_ == "L") {
+            // extra points
+            if (t == 0) imaxTile[N] = 0;
+            if (t == 1) imaxTile[0] = N;
+        }
         imax_.push_back(imaxTile);
         imin_.push_back(iminTile);
       }
@@ -139,22 +159,22 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
 
       // panel 2, 3 starts in lower right corner initially going upwards
       xs_[2] += 1;
-      xsr_[2] += N-1;
       xs_[3] += 1;
+      xsr_[2] += N-1;
       xsr_[3] += N-1;
 
       // panel 5 starts in upper left corner going downwards
-      xs_[5] += 1;
-      ys_[5] += 1;
+      if (stagger_ == "L") {
+        xs_[5] += 1;
+        ys_[5] += 1;
+      }
       ysr_[5] += N-1;
 
-      // Number of grid points on each face of the tile.
-      npts_.push_back( N * N );
-      npts_.push_back( N * N );
-      npts_.push_back( N * N );
-      npts_.push_back( N * N );
-      npts_.push_back( (N + 1) * (N + 1) ); // top panel includes all edges
-      npts_.push_back( (N - 1) * (N - 1) ); // bottom panel excludes all edges
+      // Exceptions to N * N grid points on certain tiles
+      if (stagger_ == "L") {
+        npts_[4] = (N + 1) * (N + 1); // nodal top panel includes all edges
+        npts_[5] = (N - 1) * (N - 1); // nodal bottom panel excludes all edges
+      }
 
       xtile = {[this]( int i, int j, int t ) { return this->xsPlusIndex( i, t ); },
                [this]( int i, int j, int t ) { return this->xsPlusIndex( i, t ); },
@@ -170,20 +190,24 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
                [this]( int i, int j, int t ) { return this->ysPlusIndex( j, t ); },
                [this]( int i, int j, int t ) { return this->ysrMinusIndex( i, t ); }};
 
-
-      jmax_ = std::array<idx_t,6>{N-1,N-1,N-1,N-1,N,N-2};
+      // Exceptions to jmax_ value of N-1 on certain tiles
+      if (stagger_ == "L") {
+          jmax_[4] = N;
+          jmax_[5] = N-2;
+      }
 
       for ( std::size_t t = 0; t < nTiles_; ++t) {
         std::size_t rowlength =  1 + jmax_[t] - jmin_[t];
         std::vector<idx_t> imaxTile(rowlength, N-1);
         std::vector<idx_t> iminTile(rowlength, 0);
-        if (t == 4) { std::fill_n(imaxTile.begin(),rowlength, N); }
-        if (t == 5) { std::fill_n(imaxTile.begin(),rowlength, N-2); }
+        if (stagger_ == "L") {
+            if (t == 4) { std::fill_n(imaxTile.begin(),rowlength, N); }
+            if (t == 5) { std::fill_n(imaxTile.begin(),rowlength, N-2); }
+        }
         imax_.push_back(imaxTile);
         imin_.push_back(iminTile);
       }
     }
-
 }
 
 // Provide the domain for the cubed-sphere grid, which is global.
@@ -286,10 +310,10 @@ GridFactoryBuilder<CubedSphere> __register_CubedSphere( CubedSphere::static_type
 static class cubedsphere_lfric : public GridBuilder {
 public:
     cubedsphere_lfric() :
-        GridBuilder( "cubedsphere_lfric", {"^[Cc][Ss][_-][Ll][Ff][Rr][-_]([0-9]+)$"}, {"CS-LFR-<N>"} ) {}
+        GridBuilder( "cubedsphere_lfric", {"^[Cc][Ss][_-][Ll][Ff][Rr][-_][CL][-_]([0-9]+)$"}, {"CS-LFR-<S>-<N>"} ) {}
 
     void print( std::ostream& os ) const override {
-        os << std::left << std::setw( 20 ) << "CS-LFR-<N>"
+        os << std::left << std::setw( 20 ) << "CS-LFR-<S>-<N>"
            << "Cubed sphere for equiangular";
     }
 
@@ -302,6 +326,7 @@ public:
             int N = to_int( matches[0] );
             gridconf.set( "type", type() );
             gridconf.set( "N", N );
+            gridconf.set( "stagger", extractStagger(name));
             return create( gridconf );
         }
         return nullptr;
@@ -312,6 +337,10 @@ public:
         int N = 0;
         if ( not config.get( "N", N ) ) {
             throw_AssertionFailed( "Could not find \"N\" in configuration of cubed sphere grid", Here() );
+        }
+        std::string stagger;
+        if ( not config.get( "stagger", stagger ) ) {
+            stagger = "L"; // Default to nodal
         }
 
         util::Config projconf;
@@ -343,7 +372,8 @@ public:
             }
         }
 
-        return new CubedSphereGrid::grid_t( "CS-LFR-" + std::to_string( N ), N, Projection( projconf ) );
+        return new CubedSphereGrid::grid_t( "CS-LFR-" + stagger + "-" + std::to_string( N ),
+            N, Projection( projconf ) );
     }
 
     void force_link() {}
@@ -359,10 +389,10 @@ public:
 static class cubedsphere_equiangular : public GridBuilder {
 public:
     cubedsphere_equiangular() :
-        GridBuilder( "cubedsphere_equiangular", {"^[Cc][Ss][_-][Ee][Aa][-_]([0-9]+)$"}, {"CS-EA-<N>"} ) {}
+        GridBuilder( "cubedsphere_equiangular", {"^[Cc][Ss][_-][Ee][Aa][-_][CL][-_]([0-9]+)$"}, {"CS-EA-<S>-<N>"} ) {}
 
     void print( std::ostream& os ) const override {
-        os << std::left << std::setw( 20 ) << "CS-EA-<N>"
+        os << std::left << std::setw( 20 ) << "CS-EA-<S>-<N>"
            << "Cubed sphere for equiangular";
     }
 
@@ -375,6 +405,7 @@ public:
             int N = to_int( matches[0] );
             gridconf.set( "type", type() );
             gridconf.set( "N", N );
+            gridconf.set( "stagger", extractStagger(name));
             return create( gridconf );
         }
         return nullptr;
@@ -385,6 +416,10 @@ public:
         int N = 0;
         if ( not config.get( "N", N ) ) {
             throw_AssertionFailed( "Could not find \"N\" in configuration of cubed sphere grid", Here() );
+        }
+        std::string stagger;
+        if ( not config.get( "stagger", stagger ) ) {
+            stagger = "L"; // Default to nodal
         }
         util::Config projconf;
         projconf.set( "type", "cubedsphere_equiangular" );
@@ -414,7 +449,8 @@ public:
                 projconf.set( "TargetLat", targetLat );
             }
         }
-        return new CubedSphereGrid::grid_t( "CS-EA-" + std::to_string( N ), N, Projection( projconf ) );
+        return new CubedSphereGrid::grid_t( "CS-EA-" + stagger + "-" + std::to_string( N ),
+            N, Projection( projconf ) );
     }
 
     void force_link() {}
@@ -426,10 +462,10 @@ public:
 static class cubedsphere_equidistant : public GridBuilder {
 public:
     cubedsphere_equidistant() :
-        GridBuilder( "cubedsphere_equidistant", {"^[Cc][Ss][_-][Ee][Dd][-_]([0-9]+)$"}, {"CS-ED-<N>"} ) {}
+        GridBuilder( "cubedsphere_equidistant", {"^[Cc][Ss][_-][Ee][Dd][-_][CL][-_]([0-9]+)$"}, {"CS-ED-<S>-<N>"} ) {}
 
     void print( std::ostream& os ) const override {
-        os << std::left << std::setw( 20 ) << "CS-ED-<N>"
+        os << std::left << std::setw( 20 ) << "CS-ED-<S>-<N>"
            << "Cubed sphere, equidistant";
     }
 
@@ -441,6 +477,7 @@ public:
             int N = to_int( matches[0] );
             gridconf.set( "type", type() );
             gridconf.set( "N", N );
+            gridconf.set( "stagger", extractStagger(name));
             return create( gridconf );
         }
         return nullptr;
@@ -450,6 +487,10 @@ public:
         int N = 0;
         if ( not config.get( "N", N ) ) {
             throw_AssertionFailed( "Could not find \"N\" in configuration of cubed sphere grid", Here() );
+        }
+        std::string stagger;
+        if ( not config.get( "stagger", stagger ) ) {
+            stagger = "L"; // Default to nodal
         }
         util::Config projconf;
         projconf.set( "type", "cubedsphere_equidistant" );
@@ -480,7 +521,8 @@ public:
             }
         }
 
-        return new CubedSphereGrid::grid_t( "CS-ED-" + std::to_string( N ), N, Projection( projconf ) );
+        return new CubedSphereGrid::grid_t( "CS-ED-" + stagger + "-" + std::to_string( N ),
+            N, Projection( projconf ) );
     }
 
     void force_link() {}
