@@ -328,7 +328,7 @@ void FV3CubedSphereTiles::enforceXYdomain( double xy[] ) const {
     }
 }
 
-atlas::PointXY FV3CubedSphereTiles::anyXYToFundamentalXY (const atlas::PointXY & xyGhost) const {
+atlas::PointXY FV3CubedSphereTiles::tileCubePeriodicity (const atlas::PointXY & xyExtended, const atlas::idx_t tile) const {
     atlas::PointXY xyOwned;
 
     return xyOwned;

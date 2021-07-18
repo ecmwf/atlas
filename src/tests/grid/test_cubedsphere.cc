@@ -93,7 +93,7 @@ namespace atlas {
     }
 
 
-    CASE("cubedsphere_tile_anyXYToFundamentalXY_test") {
+    CASE("cubedsphere_tileCubePeriodicity_test") {
 
       auto tileConfig1 = atlas::util::Config("type", "cubedsphere_lfric");
       auto lfricTiles = atlas::CubedSphereTiles(tileConfig1);
@@ -109,14 +109,81 @@ namespace atlas {
       int jn{0};
       for ( auto crd : grid.xy() ) {
           atlas::PointXY initialXY{crd[XX], crd[YY]};
-          atlas::PointXY finalXY = lfricTiles.anyXYToFundamentalXY(initialXY);
+          double xy[2] = {initialXY.x(), initialXY.y()};
+          atlas::idx_t t = lfricTiles.tileFromXY(xy);
+          atlas::PointXY finalXY = lfricTiles.tileCubePeriodicity(initialXY, t);
           EXPECT_APPROX_EQ(initialXY, finalXY);
           ++jn;
       }
 
-      std::vector<std::pair<double, double>> gettingXY{
-          {180, -45}, {225.0,-45.0}
-      };
+      std::vector<atlas::PointXY>
+              startingXYTile0 { {0., 315.}, {90., 315.}, {0., 225.}, {90., 225.},
+                           {0., 135.}, {90., 135.}, {45., 0.}, {45., 90.},
+                           {0., -45.}, {90., -45.}, {0, -135.}, {90,-135.},
+                           {-90., 45.}, {180., 45.}, {270., 45.}, {360., 45.},
+                           {-90.,-45.}, {180.,-45.}, {270.,-45.}, {360.,-45.}
+                         };
+
+      std::vector<atlas::PointXY>
+              expectedXYTile0 { {0., -45.}, {90., -45.}, {270., -45.}, {180., -45.},
+                           {0., 135.}, {90., 135.}, {45., 0.}, {45., 90.},
+                           {0., -45.}, {90., -45.}, {270., -45.}, {180., -45.},
+                           {0., 135.}, {90., 135.}, {0., 135.}, {0., 45.},
+                           {270., -45.}, {180.,-45.}, {270.,-45.}, {0.,-45.}
+                         };
+
+      std::vector<atlas::PointXY>
+              startingXYTile1 { {90., 315.}, {180., 315.}, {90., 225.}, {180., 225.},
+                           {90., 135.}, {180., 135.}, {135., 0.}, {135., 90.},
+                           {90., -45.}, {180., -45.}, {90., -135.}, {180,-135.},
+                           {0., 45.}, {270., 45.}, {360., 45.}, {450., 45.},
+                           {0.,-45.}, {270.,-45.}, {360.,-45.}, {450.,-45.}
+                         };
+
+      std::vector<atlas::PointXY>
+              expectedXYTile1 { {90., -45.}, {180., -45.}, {0., -45.}, {270., -45.},
+                           {0., 45.}, {0., 135.}, {135., 0.}, {45., 90.},
+                           {90., -45.}, {180., -45.}, {0., -45.}, {270., -45.},
+                           {0.,  45.}, {0., 135.}, {0., 45.}, {90., 45.},
+                           {0., -45.}, {270.,-45.}, {0.,-45.}, {90.,-45.}
+                         };
+
+
+
+      // testing tile 0
+      for (atlas::idx_t t = 0; t < 2; t++) {
+          std::vector<atlas::PointXY> startingXY;
+          std::vector<atlas::PointXY> expectedXY;
+
+          if (t == 0) {
+              startingXY = startingXYTile0;
+              expectedXY = expectedXYTile0;
+          }
+          if (t == 1) {
+              startingXY = startingXYTile1;
+              expectedXY = expectedXYTile1;
+          }
+
+
+          std::size_t jn{0};
+          for (atlas::PointXY p : startingXY) {
+              std::cout << std::endl << "t jn p = " << t << " " << jn << " " << p.x() << " " << p.y() << std::endl;
+              atlas::PointXY middleXY = lfricTiles.tileCubePeriodicity(p, t);
+              atlas::PointXY finalXY = lfricTiles.tileCubePeriodicity(middleXY, 0);
+              EXPECT_APPROX_EQ(middleXY, finalXY);
+              EXPECT_APPROX_EQ(middleXY, expectedXY[jn]);
+              ++jn;
+
+          }
+
+      }
+
+
+
+
+
+
+      /*
 
       std::vector<std::pair<double, double>> expectedXY{
           {270.,-45.0}, {225.0, -45.0},  {180,-45.0},  {135.0,-45.0}, {90.0,-45.0},   {45.0, -45.0},   {270.0,-45.0}, {315.0,-45.0}, {270.0,-45.0},
@@ -159,8 +226,8 @@ namespace atlas {
                   for (idx_t xIndx = 0 ; xIndx < 3 ; ++xIndx) {
                       atlas::PointXY offsetXY{xIndx*45.0, yIndx*45.0};
                       atlas::PointXY initialXY = startingXY[t] + offsetXY;
-                      atlas::PointXY middleXY = lfricTiles.anyXYToFundamentalXY(initialXY);
-                      atlas::PointXY finalXY = lfricTiles.anyXYToFundamentalXY(middleXY);
+                      atlas::PointXY middleXY = lfricTiles.tileCubePeriodicity(initialXY, t);
+                      atlas::PointXY finalXY = lfricTiles.tileCubePeriodicity(middleXY, t);
 
                       std::cout << "xIndx yIndx InitialXY MiddleXY FinalXY " << xIndx  << " " << yIndx << "   " << initialXY.x() << " " << initialXY.y()
                                 << "   " << middleXY.x() << " " << middleXY.y()
@@ -175,7 +242,7 @@ namespace atlas {
 
           }
       }
-
+      */
 
 
     }

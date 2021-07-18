@@ -91,7 +91,7 @@ public:
 
     void enforceXYdomain( double xy[] ) const;
 
-    atlas::PointXY anyXYToFundamentalXY (const atlas::PointXY & anyXY) const;
+    atlas::PointXY tileCubePeriodicity (const atlas::PointXY & xyExtended, const atlas::idx_t tile) const;
 
 private:
     /// Output to stream

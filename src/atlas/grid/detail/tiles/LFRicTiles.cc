@@ -38,6 +38,16 @@ atlas::PointXY rotatePlus180AboutPt(const atlas::PointXY & xy, const atlas::Poin
                            2.0 * origin.y() - xy.y() };
 }
 
+void enforceWrapAround(atlas::PointXY & withinRange) {
+
+    while (withinRange.x() < 0.0) { withinRange.x() += 360.0; }
+    while (withinRange.x() >= 360.0) { withinRange.x() -= 360.0; }
+    while (withinRange.y() <= -135.0) { withinRange.y() += 360.0; }
+    while (withinRange.y() > 225.0) { withinRange.y() -= 360.0; }
+
+    return;
+}
+
 
 
 }
@@ -66,13 +76,6 @@ void sphericalToCartesian(const double lonlat[], double xyz[] ) {
     constexpr double radius = 1.;
     ProjectionUtilities::sphericalToCartesian(lonlat, xyz, crd_sys, radius);
 }
-
-enum dirn {
-    E,
-    S,
-    W,
-    N
-};
 
 }
 
@@ -308,9 +311,9 @@ void LFRicCubedSphereTiles::enforceXYdomain( double xy[] ) const {
     }
 }
 
-// input is the xy value as PointXY that is not quite on the right part of the XY space
-// i.e. a ghost point X
-atlas::PointXY LFRicCubedSphereTiles::anyXYToFundamentalXY (const atlas::PointXY & anyXY ) const {
+// input is the xy value as PointXY that is a continous extension in terms of xy space from the tile in question
+// the output is an xy value that lives on the standard "|---" shape
+atlas::PointXY LFRicCubedSphereTiles::tileCubePeriodicity (const atlas::PointXY & xyExtended, const atlas::idx_t t) const {
 
 
     // I think that mathematically the best option is to consider
@@ -527,86 +530,87 @@ atlas::PointXY LFRicCubedSphereTiles::anyXYToFundamentalXY (const atlas::PointXY
                                                 atlas::PointXY{90., 135.},    atlas::PointXY{90., -45.} };
 
      // Step 1: wrap into range  x = [ 0, 360],  y = [135, 225]
-     atlas::PointXY withinRange = anyXY;
+     atlas::PointXY withinRange = xyExtended;
 
-     while (withinRange.x() < 0.0) { withinRange.x() += 360.0; }
-     while (withinRange.x() >= 360.0) { withinRange.x() -= 360.0; }
-     while (withinRange.y() < -135.0) { withinRange.y() += 360.0; }
-     while (withinRange.y() > 225.0) { withinRange.y() -= 360.0; }
+     enforceWrapAround(withinRange);
 
-     size_t t{0};
      if ( (withinRange.x() < botLeftTile[t].x() && withinRange.y() < botLeftTile[t].y() ) ||
           (withinRange.x() > botRightTile[t].x() && withinRange.y() < botRightTile[t].y() )||
           (withinRange.x() > topRightTile[t].x() && withinRange.y() > topRightTile[t].y() )||
           (withinRange.x() < topLeftTile[t].x() && withinRange.y() > topLeftTile[t].y() )  )
           {
-        std::cout << "xy  (" << withinRange.x() << ", "   << withinRange.y()  <<  ") not meaningful for tile " <<  t << std::endl;
+        std::cout << "xy  (" << withinRange.x() << ", "   << withinRange.y()  <<  ") not meaningful for tile " << t << std::endl;
         return atlas::PointXY{-360.0, -360.0};
      }
 
      // find appropriate tile.
      // This tile selection assumes incorrectly that
      // the edge to the bottom (in yIndex) or the edge to the left (in xIndex is part of the tile)
-     auto xIndex = static_cast<size_t>(withinRange.x()/90.0);
-     auto yIndex = static_cast<size_t>((withinRange.y()+135.0)/90.0);
-
 
      atlas::PointXY finalXY = withinRange;
      atlas::PointXY tempXY = withinRange;
      atlas::PointXY temp2XY = withinRange;
 
+     std::cout << "withinRange " << withinRange.x() << " " << withinRange.y() << std::endl;
+
      switch(t) {
        case 0:
          finalXY = (withinRange.y() > 135.0) ?
-              rotatePlus180AboutPt(withinRange, atlas::PointXY{90.0, 90.0}) :
+              rotatePlus180AboutPt(withinRange, atlas::PointXY{135.0, 90.0}) :
               withinRange;
          break;
        case 1:
-         if (withinRange.y() >= 45.0)  {
-            tempXY = rotatePlus90AboutPt(withinRange, atlas::PointXY{90.0, 45.0});
+         if ((withinRange.x() >= 90.0) && (withinRange.x() <= 180.0)) {
+             if (withinRange.y() >= 45.0)  {
+                 tempXY = rotatePlus90AboutPt(withinRange, atlas::PointXY{90.0, 45.0});
 
-            if (withinRange.y() > 135.0) {
-              finalXY = rotatePlus90AboutPt(tempXY, atlas::PointXY{0.0, 45.0});
-              finalXY.x() += 360.0;
-            } else {
-              finalXY = tempXY;
-            }
-
-         } else if (withinRange.y() < 45.0) {
-            finalXY = rotateMinus90AboutPt(withinRange, atlas::PointXY{90.0, -45.0});
+                 if (withinRange.y() > 135.0) {
+                     finalXY = rotatePlus90AboutPt(tempXY, atlas::PointXY{0.0, 45.0});
+                     finalXY.x() += 360.0;
+                 } else {
+                     finalXY = tempXY;
+                 }
+             } else if (withinRange.y() < -45.0) {
+                 finalXY = rotateMinus90AboutPt(withinRange, atlas::PointXY{90.0, -45.0});
+             }
          }
          break;
        case 2:
-         if (withinRange.y() > 135.0) {
-             finalXY = rotatePlus180AboutPt(tempXY, atlas::PointXY{90.0, 90.0});
-         } else if (withinRange.y() >= 45.0)  {
-             tempXY = rotatePlus90AboutPt(withinRange, atlas::PointXY{180.0, 45.0});
-             finalXY = rotatePlus90AboutPt(tempXY, atlas::PointXY{90.0, 45.0});
-         } else if (withinRange.y() < -45.0) {
-             tempXY = rotateMinus90AboutPt(withinRange, atlas::PointXY{180.0, -45.0});
-             finalXY = rotateMinus90AboutPt(tempXY, atlas::PointXY{90.0, -45.0});
+         if ((withinRange.x() >= 180.0) && (withinRange.x() <= 270.0)) {
+             if (withinRange.y() > 135.0) {
+                 finalXY = rotatePlus180AboutPt(tempXY, atlas::PointXY{90.0, 90.0});
+             } else if (withinRange.y() >= 45.0)  {
+                 tempXY = rotatePlus90AboutPt(withinRange, atlas::PointXY{180.0, 45.0});
+                 finalXY = rotatePlus90AboutPt(tempXY, atlas::PointXY{90.0, 45.0});
+             } else if (withinRange.y() < -45.0) {
+                 tempXY = rotateMinus90AboutPt(withinRange, atlas::PointXY{180.0, -45.0});
+                 finalXY = rotateMinus90AboutPt(tempXY, atlas::PointXY{90.0, -45.0});
+             }
          }
          break;
+
        case 3:
-         if (withinRange.y() > 135.0) {
-             finalXY = rotatePlus180AboutPt(tempXY, atlas::PointXY{180.0, 90.0});
-         } else if (withinRange.y() >= 45.0)  {
-             finalXY = rotateMinus90AboutPt(tempXY, atlas::PointXY{360.0, 45.0});
-             finalXY.x() -= 360.0;
-         } else if (withinRange.y() < -45.0) {
-             finalXY = rotatePlus90AboutPt(tempXY, atlas::PointXY{360.0,-45.0});
-             finalXY.x() -= 360.0;
+         if ((withinRange.x() >= 270.0) && (withinRange.x() <= 360.0)) {
+             if (withinRange.y() > 135.0) {
+                 finalXY = rotatePlus180AboutPt(tempXY, atlas::PointXY{180.0, 90.0});
+             } else if (withinRange.y() >= 45.0)  {
+                 finalXY = rotateMinus90AboutPt(tempXY, atlas::PointXY{360.0, 45.0});
+                 finalXY.x() -= 360.0;
+             } else if (withinRange.y() < -45.0) {
+                 finalXY = rotatePlus90AboutPt(tempXY, atlas::PointXY{360.0,-45.0});
+                 finalXY.x() -= 360.0;
+             }
          }
          break;
        case 4:
          if (withinRange.y() > 135.0) {
              finalXY = rotatePlus180AboutPt(tempXY, atlas::PointXY{90.0, 90.0});
          }
-         if (withinRange.x() >= 90.0) {
+         if (withinRange.x() > 90.0) {
              tempXY = rotateMinus90AboutPt(withinRange, atlas::PointXY{90.0, 45.0});
-             if (withinRange.x() >= 180) {
+             if (withinRange.x() > 180.0) {
                  temp2XY = rotateMinus90AboutPt(tempXY, atlas::PointXY{90.0, -45.0});
-                 if (withinRange.x() >= 270) {
+                 if (withinRange.x() > 270.0) {
                      finalXY = rotateMinus90AboutPt(temp2XY, atlas::PointXY{0.0, -45.0});
                      finalXY.x() += 360.0;
                  } else {
@@ -638,6 +642,39 @@ atlas::PointXY LFRicCubedSphereTiles::anyXYToFundamentalXY (const atlas::PointXY
          // code block
          break;
      }
+
+     // now we need to correct for the edges and corners.
+     if (finalXY.x() > 90. && finalXY.x() < 180. && finalXY.y() == 45.0) {
+         finalXY.y() = 45.0 + (finalXY.x() - 90.0);
+         finalXY.x() = 90.0;
+     }
+     if (finalXY.x() == 180. && finalXY.y() == 45.0) {
+         finalXY.x() = 90.;
+         finalXY.y() = 135.0;
+     }
+     if (finalXY.x() > 180. && finalXY.x() < 270. && finalXY.y() == 45.0) {
+         finalXY.x() = 90.0 - (finalXY.x() - 90.0);
+         finalXY.y() = 135.0;
+     }
+     if (finalXY.x() == 270. && finalXY.y() == 45.0) {
+         finalXY.x() = 0.;
+         finalXY.y() = 135.0;
+     }
+     if (finalXY.x() > 270. && finalXY.x() <= 360. && finalXY.y() == 45.0) {
+         finalXY.y() = 135.0 - (finalXY.x() - 270.0);
+         finalXY.x() = 0.0;
+     }
+     if (finalXY.x() == 0. && finalXY.y() < -45. && finalXY.y() > -135.0) {
+         finalXY.x() = 360.0 + (finalXY.y() + 45.0);
+         finalXY.y() = -45.;
+     }
+     if (finalXY.x() == 90. && finalXY.y() < -45. && finalXY.y() > -135.0) {
+         finalXY.x() = 90.0 - (finalXY.y() + 45.0);
+         finalXY.y() = -45.;
+     }
+
+     enforceWrapAround(finalXY);
+
      return finalXY;
 }
 
