@@ -245,10 +245,8 @@ namespace atlas {
               expectedXY = expectedXYTile5;
           }
 
-
           std::size_t jn{0};
           for (atlas::PointXY p : startingXY) {
-              std::cout << std::endl << "t jn p = " << t << " " << jn << " " << p.x() << " " << p.y() << std::endl;
               atlas::PointXY middleXY = lfricTiles.tileCubePeriodicity(p, t);
               atlas::PointXY finalXY = lfricTiles.tileCubePeriodicity(middleXY, 0);
               EXPECT_APPROX_EQ(middleXY, finalXY);
@@ -258,74 +256,6 @@ namespace atlas {
           }
 
       }
-
-
-
-
-
-
-      /*
-
-      std::vector<std::pair<double, double>> expectedXY{
-          {270.,-45.0}, {225.0, -45.0},  {180,-45.0},  {135.0,-45.0}, {90.0,-45.0},   {45.0, -45.0},   {270.0,-45.0}, {315.0,-45.0}, {270.0,-45.0},
-          {315.,-45.0},  {45.0, -90.0},  {135,-45.0},  {45.0, -90.0}, {135.0, -45.0}, {45.0, -90.0}, {315.0,-45.0}, {45.0, -90.0}, {315.,-45.0},
-          {0.0, -45.0},  {45.0, -45.0}, {90.0,-45.0},  {135.0,-45.0}, {180.0, -45.0}, {225.0,-45.0}, {270.0,-45.0}, {315.0,-45.0}, {0.0,-45.0},
-          {0.0,   0.0},  {45.0,  0.0},  {90.0,   0.0}, {135.0,  0.0},   {180.0, 0.0},  {225.0, 0.0},  {270.0, 0.0}, {315.0,  0.0}, {0.0, 0.0},
-          {0.0,   45.0}, {45.0,  45.0}, {90.0,  45.0},                                                                             {0.0, 45.0},
-          {0.0,   90.0}, {45.0,  90.0}, {90.0,  90.0},                                                                             {0.0, 90.0},
-          {0.0,  135.0}, {45.0, 135.0}, {90.0, 135.0},                                                                             {0.0,  135.0},
-          {180.0,  0.0}, {225.0,  0.0}, {270.0,  0.0}, {315.0,  0.0}, {0.0,   0.0}, {45.0,  0.0},  {90.0,   0.0},  {135.0, 0.0},  {180.0, 0.0},
-          {180.0, -45.0},{225.0,-45.0}, {270.0,-45.0}, {315.0,-45.0}, {0.0, -45.0}, {45.0, -45.0}, {90.0, -45.0},  {135.0, -45.0},{180.0, -45.0} };
-
-      // iterate through 9 points in x from [0,360]
-      // iterate through 9 points in y from [-135, 225]
-      // and check with expected output. 81 checks!
-
-
-      std::vector<atlas::PointXY> startingXY{
-          {0.0, 45.0}, {-45.0, 90}, {0.0, -45.0}, {0.0, -45.0} };
-
-      size_t indx{0};
-
-      for (idx_t t = 0; t < 1; ++t) {
-          // for each tile we check whether the xy points are consistent Up, Right, Down, Left
-          // of the tile.
-
-          if (t == 0) {
-              std::vector<atlas::PointXY> expectedXYUP{
-                  {0.0, 45.0}, {45.0, 45.0},  {90.0, 45.0},
-                  {0.0, 90.0}, {45.0, 90.0},  {90.0, 90.0},
-                  {0.0,135.0}, {45.0,135.0},  {90.0,135.0},
-                  {270.0,-45.0},{225.0,-45.0}, {180.0,-45.0},
-                  {315.0,-45.0},{45.0, -90.0}, {135.0,-45.0},
-                  {0.0,-45.0},{45.0, -45.0},  {90.0,-45.0}
-              };
-
-
-              // Up
-              for (idx_t yIndx = 0 ; yIndx < 7 ; ++yIndx) {
-                  for (idx_t xIndx = 0 ; xIndx < 3 ; ++xIndx) {
-                      atlas::PointXY offsetXY{xIndx*45.0, yIndx*45.0};
-                      atlas::PointXY initialXY = startingXY[t] + offsetXY;
-                      atlas::PointXY middleXY = lfricTiles.tileCubePeriodicity(initialXY, t);
-                      atlas::PointXY finalXY = lfricTiles.tileCubePeriodicity(middleXY, t);
-
-                      std::cout << "xIndx yIndx InitialXY MiddleXY FinalXY " << xIndx  << " " << yIndx << "   " << initialXY.x() << " " << initialXY.y()
-                                << "   " << middleXY.x() << " " << middleXY.y()
-                                << "   " << finalXY.x() << " " << finalXY.y() << std::endl;
-
-                      EXPECT_APPROX_EQ(middleXY, finalXY);
-                      EXPECT_APPROX_EQ(middleXY, expectedXYUP[indx]);
-                      indx += 1;
-
-                  }
-              }
-
-          }
-      }
-      */
-
-
     }
 
  
