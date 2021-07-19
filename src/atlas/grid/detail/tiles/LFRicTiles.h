@@ -14,6 +14,7 @@
 #include <string>
 
 #include "atlas/grid/detail/tiles/Tiles.h"
+#include "atlas/util/Point.h"
 
 namespace atlas {
 namespace cubedspheretiles {
@@ -61,6 +62,8 @@ public:
     virtual idx_t tileFromLonLat( const double lonlat[] ) const override;
 
     virtual void enforceXYdomain( double xy[] ) const override;
+
+    virtual atlas::PointXY tileCubePeriodicity (const atlas::PointXY & xyExtended, const atlas::idx_t tile) const override;
 
     virtual void print( std::ostream& ) const override;
 
