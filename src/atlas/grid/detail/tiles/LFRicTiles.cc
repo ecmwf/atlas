@@ -395,7 +395,7 @@ atlas::PointXY LFRicCubedSphereTiles::tileCubePeriodicity (const atlas::PointXY 
     //     |                         |To 0      |
     //     |                         |rotate-180|
     //     |                         |about     |
-    //     |                         |(90,90)   |
+    //     |                         |(135.,90)   |
     //     |                         |          |
     //    135                        4----------4
     //     |                         |To 4 dble |
@@ -427,7 +427,7 @@ atlas::PointXY LFRicCubedSphereTiles::tileCubePeriodicity (const atlas::PointXY 
     //     |                                    |To 1      |
     //     |                                    |rotate-180|
     //     |                                    |about     |
-    //     |                                    |(180,90)   |
+    //     |                                    |(225,90)   |
     //     |                                    |          |
     //    135                                   4----------4
     //     |                                    |To 4      |
@@ -518,7 +518,7 @@ atlas::PointXY LFRicCubedSphereTiles::tileCubePeriodicity (const atlas::PointXY 
                                                atlas::PointXY{0., 45.},    atlas::PointXY{0, -135.} };
 
      std::array<atlas::PointXY, 6> botRightTile{atlas::PointXY{90., -45.},   atlas::PointXY{180., -45},
-                                                atlas::PointXY{270., -45.}, atlas::PointXY{0., -45},
+                                                atlas::PointXY{270., -45.}, atlas::PointXY{360., -45},
                                                 atlas::PointXY{90., 45.},    atlas::PointXY{90., -135.} };
 
      std::array<atlas::PointXY, 6> topLeftTile{atlas::PointXY{0., 45.},   atlas::PointXY{90, 45},
@@ -526,13 +526,11 @@ atlas::PointXY LFRicCubedSphereTiles::tileCubePeriodicity (const atlas::PointXY 
                                                atlas::PointXY{0., 135.},    atlas::PointXY{0, -45.} };
 
      std::array<atlas::PointXY, 6> topRightTile{atlas::PointXY{90., 45.},   atlas::PointXY{180., 45},
-                                                atlas::PointXY{270., 45.}, atlas::PointXY{0., 45},
+                                                atlas::PointXY{270., 45.}, atlas::PointXY{360., 45},
                                                 atlas::PointXY{90., 135.},    atlas::PointXY{90., -45.} };
 
      // Step 1: wrap into range  x = [ 0, 360],  y = [135, 225]
      atlas::PointXY withinRange = xyExtended;
-
-     enforceWrapAround(withinRange);
 
      if ( (withinRange.x() < botLeftTile[t].x() && withinRange.y() < botLeftTile[t].y() ) ||
           (withinRange.x() > botRightTile[t].x() && withinRange.y() < botRightTile[t].y() )||
@@ -542,6 +540,9 @@ atlas::PointXY LFRicCubedSphereTiles::tileCubePeriodicity (const atlas::PointXY 
         std::cout << "xy  (" << withinRange.x() << ", "   << withinRange.y()  <<  ") not meaningful for tile " << t << std::endl;
         return atlas::PointXY{-360.0, -360.0};
      }
+
+     enforceWrapAround(withinRange);
+
 
      // find appropriate tile.
      // This tile selection assumes incorrectly that
@@ -578,7 +579,7 @@ atlas::PointXY LFRicCubedSphereTiles::tileCubePeriodicity (const atlas::PointXY 
        case 2:
          if ((withinRange.x() >= 180.0) && (withinRange.x() <= 270.0)) {
              if (withinRange.y() > 135.0) {
-                 finalXY = rotatePlus180AboutPt(tempXY, atlas::PointXY{90.0, 90.0});
+                 finalXY = rotatePlus180AboutPt(tempXY, atlas::PointXY{135.0, 90.0});
              } else if (withinRange.y() >= 45.0)  {
                  tempXY = rotatePlus90AboutPt(withinRange, atlas::PointXY{180.0, 45.0});
                  finalXY = rotatePlus90AboutPt(tempXY, atlas::PointXY{90.0, 45.0});
@@ -590,9 +591,9 @@ atlas::PointXY LFRicCubedSphereTiles::tileCubePeriodicity (const atlas::PointXY 
          break;
 
        case 3:
-         if ((withinRange.x() >= 270.0) && (withinRange.x() <= 360.0)) {
+         if (((withinRange.x() >= 270.0) && (withinRange.x() <= 360.0) ) || withinRange.x() == 0.0) {
              if (withinRange.y() > 135.0) {
-                 finalXY = rotatePlus180AboutPt(tempXY, atlas::PointXY{180.0, 90.0});
+                 finalXY = rotatePlus180AboutPt(tempXY, atlas::PointXY{225.0, 90.0});
              } else if (withinRange.y() >= 45.0)  {
                  finalXY = rotateMinus90AboutPt(tempXY, atlas::PointXY{360.0, 45.0});
                  finalXY.x() -= 360.0;
@@ -604,7 +605,7 @@ atlas::PointXY LFRicCubedSphereTiles::tileCubePeriodicity (const atlas::PointXY 
          break;
        case 4:
          if (withinRange.y() > 135.0) {
-             finalXY = rotatePlus180AboutPt(tempXY, atlas::PointXY{90.0, 90.0});
+             finalXY = rotatePlus180AboutPt(tempXY, atlas::PointXY{135.0, 90.0});
          }
          if (withinRange.x() > 90.0) {
              tempXY = rotateMinus90AboutPt(withinRange, atlas::PointXY{90.0, 45.0});
@@ -623,7 +624,7 @@ atlas::PointXY LFRicCubedSphereTiles::tileCubePeriodicity (const atlas::PointXY 
          break;
        case 5:
          if (withinRange.y() > 135.0) {
-             finalXY = rotatePlus180AboutPt(tempXY, atlas::PointXY{90.0, 90.0});
+             finalXY = rotatePlus180AboutPt(tempXY, atlas::PointXY{135.0, 90.0});
          }
          if (withinRange.x() >= 90.0) {
              tempXY = rotatePlus90AboutPt(withinRange, atlas::PointXY{90.0, -45.0});
