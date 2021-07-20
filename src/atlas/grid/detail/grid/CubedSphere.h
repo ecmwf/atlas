@@ -125,7 +125,9 @@ private:
             i_                         = ijt[0];
             j_                         = ijt[1];
             t_                         = ijt[2];
-            compute_point( i_, j_, t_, point_ );
+            if ( grid_.inGrid( i_, j_, t_ ) ) {
+                compute_point( i_, j_, t_, point_ );
+            }
             return *this;
         }
 
@@ -138,7 +140,9 @@ private:
                 j_                         = ijt[1];
                 t_                         = ijt[2];
             }
-            compute_point( i_, j_, t_, point_ );
+            if ( grid_.inGrid( i_, j_, t_ ) ) {
+                compute_point( i_, j_, t_, point_ );
+            }
             return *this;
         }
 
@@ -418,10 +422,10 @@ protected:
     static const idx_t nTiles_ = 6;
 
     // Start points in x,y direction
-    int xs_[nTiles_];
-    int ys_[nTiles_];
-    int xsr_[nTiles_];  // x order reversed
-    int ysr_[nTiles_];  // y order reversed (for FV3 panels 4, 5, 6)
+    double xs_[nTiles_];
+    double ys_[nTiles_];
+    double xsr_[nTiles_];  // x order reversed
+    double ysr_[nTiles_];  // y order reversed (for FV3 panels 4, 5, 6)
 
     // Number of unique points on each tile
     std::vector<int> npts_;
@@ -433,6 +437,7 @@ protected:
     std::vector<std::vector<idx_t>> imin_;
     std::vector<std::vector<idx_t>> imax_;
 
+    std::string stagger_;
 
 private:
     std::string name_ = {"cubedsphere"};
