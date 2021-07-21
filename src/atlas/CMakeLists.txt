@@ -189,6 +189,8 @@ grid/detail/partitioner/BandsPartitioner.cc
 grid/detail/partitioner/BandsPartitioner.h
 grid/detail/partitioner/CheckerboardPartitioner.cc
 grid/detail/partitioner/CheckerboardPartitioner.h
+grid/detail/partitioner/CubedSpherePartitioner.cc
+grid/detail/partitioner/CubedSpherePartitioner.h
 grid/detail/partitioner/EqualBandsPartitioner.cc
 grid/detail/partitioner/EqualBandsPartitioner.h
 grid/detail/partitioner/EqualRegionsPartitioner.cc
