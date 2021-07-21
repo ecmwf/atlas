@@ -44,7 +44,7 @@ namespace atlas {
       // I expect this will be replaced by some more aggressive tests.
 
       // Set grid.
-      const auto grid = atlas::Grid("CS-EA-2");
+      const auto grid = atlas::Grid("CS-EA-L-2");
 
       atlas::Log::info() << grid->type() << std::endl;
       atlas::Log::info() << grid.size() << std::endl;
@@ -102,7 +102,7 @@ namespace atlas {
       // iterating through points.
 
       int resolution( 2 );
-      std::vector<std::string> grid_names{"CS-LFR-" + std::to_string( resolution ),
+      std::vector<std::string> grid_names{"CS-LFR-L-" + std::to_string( resolution ),
                                          };
       Grid grid{grid_names[0]};
 
