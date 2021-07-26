@@ -31,58 +31,88 @@ namespace grid {
 namespace detail {
 namespace partitioner {
 
+namespace  {
+
+bool isNearInt( double value )
+{
+    const double epsilon = 1e-12;
+    const double diff = value - floor( value );
+    return ( diff <= epsilon || diff >= (1.0 - epsilon) );
+}
+
+}
+
 CubedSpherePartitioner::CubedSpherePartitioner() : Partitioner() {}
 
 CubedSpherePartitioner::CubedSpherePartitioner( int N ) : Partitioner( N ) {}
 
 CubedSpherePartitioner::CubedSpherePartitioner( int N, const eckit::Parametrisation& config ) : Partitioner( N ) {
-    config.get( "bands", nbands_ );
-    config.get( "regular", regular_ );
+    config.get( "starting rank on tile", globalProcStartPE_);
+    config.get( "final rank on tile", globalProcEndPE_);
+    config.get( "nprocy", nprocy_);
+    config.get( "nprocx", nprocx_);
+    config.get( "nprocy", nprocy_);
 }
 
-CubedSpherePartitioner::CubedSpherePartitioner( int N, int nbands ) : Partitioner( N ), nbands_{nbands} {}
+CubedSpherePartitioner::CubedSpherePartitioner( const int N, const std::vector<int> & globalProcStartPE,
+                                                const std::vector<int> & globalProcEndPE,
+                                                const std::vector<int> & nprocx,
+                                                const std::vector<int> & nprocy )
+    : Partitioner( N ), globalProcStartPE_{globalProcStartPE},  globalProcEndPE_{globalProcEndPE},
+      nprocx_{nprocx},  nprocy_{nprocy} {}
 
-CubedSpherePartitioner::CubedSpherePartitioner( int N, int nbands, bool cubedsphere ) :
-    Partitioner( N ), nbands_{nbands} {}
+
 
 CubedSpherePartitioner::CubedSphere CubedSpherePartitioner::cubedsphere( const Grid& grid ) const {
     // grid dimensions
     const CubedSphereGrid cg( grid );
-    if ( !rg ) {
+    if ( !cg ) {
         throw_Exception( "CubedSphere Partitioner only works for Regular grids.", Here() );
     }
 
     CubedSphere cb;
 
-    cb.nx        = rg.nx();
-    cb.ny        = rg.ny();
-    idx_t nparts = nb_partitions();
-
-    if ( nbands_ > 0 ) {
-        cb.nbands = nbands_;
-    }
-    else {
-        // default number of bands
-        double zz = std::sqrt( (double)( nparts * cb.ny ) / cb.nx );  // aim at +/-square regions
-        cb.nbands = (idx_t)zz + 0.5;
-        if ( cb.nbands < 1 ) {
-            cb.nbands = 1;  // at least one band
-        }
-        if ( cb.nbands > nparts ) {
-            cb.nbands = nparts;  // not more bands than procs
-        }
-
-        // true CubedSphere means nbands must divide nparts
-        if ( CubedSphere_ ) {
-            while ( nparts % cb.nbands != 0 ) {
-                cb.nbands--;
-            }
-        }
-    }
-    if ( CubedSphere_ && nparts % cb.nbands != 0 ) {
-        throw_Exception( "number of bands doesn't divide number of partitions", Here() );
+    for (idx_t t = 0; t < 6; ++t) {
+        cb.nx[t] = cg.N();
+        cb.ny[t] = cg.N();
     }
 
+    atlas::idx_t nparts = nb_partitions();
+
+    if (regular_) {
+      // share PEs around tiles
+      // minRanksPerTile
+
+      idx_t ranksPerTile = nparts/6;
+
+      idx_t reminder = nparts - 6 * ranksPerTile;
+
+      for (idx_t t = 0; t < 6; ++t) {
+         cb.nproc[t] = ranksPerTile;
+      }
+
+      // round-robin;
+      idx_t t{0};
+      while (reminder > 0) {
+         if (t == 6) t=0;
+         cb.nproc[t] += 1;
+         t += 1;
+         reminder -= 1;
+      }
+
+      // now need to specify nprocx and nprocy.
+      // nproc is 0 for the tile we use default nprocx and nprocy = 1
+
+      // if we can square-root nproc and get an integer
+      // we use that for nprocx and nprocy
+      // otherwise we split just in nprocx and keep nprocy =1;
+
+       for (idx_t t = 0; t < 6; ++t) {
+           if (cb.nproc[t] > 0) {
+              double sq = std::sqrt(static_cast<double>(cb.nproc[t]));
+           }
+       }
+    }
     return cb;
 }
 
@@ -110,12 +140,16 @@ bool compare_X_Y( const CubedSpherePartitioner::NodeInt& node1, const CubedSpher
     return false;
 }
 
-void CubedSpherePartitioner::partition( const CubedSphere& cb, int nb_nodes, NodeInt nodes[], int part[] ) const {
+void CubedSpherePartitioner::partition( const CubedSphere& cb, const int nb_nodes, NodeInt nodes[], int part[] ) const {
     size_t nparts = nb_partitions();
-    size_t nbands = cb.nbands;
-    size_t nx     = cb.nx;
-    size_t ny     = cb.ny;
     long remainder;
+
+    /* Sort cell centers (increasing tiles), south to north (increasing y) and west to east (increasing x)
+
+    /* No of procs per tile
+
+    /*
+
 
     /*
 Sort nodes from south to north (increasing y), and west to east (increasing x).
@@ -126,7 +160,7 @@ already by construction in this order, but then sorting is really fast
 
     /*
 Number of procs per band
-*/
+
     std::vector<size_t> npartsb( nbands, 0 );  // number of procs per band
     remainder = nparts;
     for ( size_t iband = 0; iband < nbands; iband++ ) {
@@ -140,6 +174,9 @@ Number of procs per band
 
     bool split_lons = not regular_;
     bool split_lats = not regular_;
+
+*/
+
     /*
 Number of gridpoints per band
 */
@@ -229,20 +266,22 @@ void CubedSpherePartitioner::partition( const Grid& grid, int part[] ) const {
         }
     }
     else {
-        auto cb = CubedSphere( grid );
+        auto cb = cubedsphere( grid );
 
         std::vector<NodeInt> nodes( grid.size() );
         int n( 0 );
 
-        for ( idx_t iy = 0; iy < cb.ny; ++iy ) {
-            for ( idx_t ix = 0; ix < cb.nx; ++ix ) {
-                nodes[n].x = static_cast<int>( ix );
-                nodes[n].y = static_cast<int>( iy );
-                nodes[n].n = static_cast<int>( n );
-                ++n;
+        for (idx_t it = 0; it < 6; ++it) {
+            for ( idx_t iy = 0; iy < cb.ny[it]; ++iy ) {
+                for ( idx_t ix = 0; ix < cb.nx[it]; ++ix ) {
+                    nodes[n].t = static_cast<int>( it );
+                    nodes[n].x = static_cast<int>( ix );
+                    nodes[n].y = static_cast<int>( iy );
+                    nodes[n].n = static_cast<int>( n );
+                    ++n;
+                }
             }
         }
-
         partition( cb, grid.size(), nodes.data(), part );
     }
 }

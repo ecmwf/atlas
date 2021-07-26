@@ -26,15 +26,18 @@ public:
     CubedSpherePartitioner( int N );  // N is the number of parts (aka MPI tasks)
     CubedSpherePartitioner( int N, const eckit::Parametrisation& );
 
-    CubedSpherePartitioner( int N, int nbands );
-    CubedSpherePartitioner( int N, int nbands, bool cubedsphere );
+    CubedSpherePartitioner( const int N, const std::vector<int> & globalProcStartPE,
+                                         const std::vector<int> & globalProcEndPE,
+                                         const std::vector<int> & nprocx,
+                                         const std::vector<int> & nprocy );
+
 
     // Node struct that holds the x and y indices (for global, it's longitude and
     // latitude in millidegrees (integers))
     // This structure is used in sorting algorithms, and uses less memory than
     // if x and y were in double precision.
     struct NodeInt {
-        int x, y;
+        int x, y, t;
         int n;
     };
 
@@ -42,8 +45,21 @@ public:
 
 private:
     struct CubedSphere {
-        idx_t nbands[6];  // number of bands
-        idx_t nx[6], ny[6];  // grid dimensions
+        idx_t nproc[6];
+        idx_t nprocx[6];  // number of PEs in the x direction of xy space on each tile.
+        idx_t nprocy[6];  // number of PEs in the y direction of xy space on each tile.
+        idx_t globalProcStartPE[6]; // lowest global mpi rank on each tile;
+        idx_t globalProcEndPE[6]; // final global mpi rank on each tile;
+                   // note that mpi ranks on each tile are vary contiguously from globalProcStartPE to
+                   // globalProcEndPE.
+
+        idx_t nx[6], ny[6];  // grid dimensions on each tile - for all cell-centered grids they will be same.
+
+        // the two variables below are for now the main options
+        // in the future this will be extended
+        idx_t startingCornerOnTile[6] = {0,0,0,0,0,0}  ; // for now bottom left corner (0) default. Could be configurable to
+                                       // top left (1), top right(2) bottom right(3)
+        idx_t xFirst[6] = {1,1,1,1,1,1}; // if 1 then x is leading index - if 0 y is leading index;
     };
 
     CubedSphere cubedsphere( const Grid& ) const;
@@ -58,8 +74,11 @@ private:
     void check() const;
 
 private:
-    idx_t nbands_      = 0;  // number of bands from configuration
-    bool regular_      = false;
+    std::vector<atlas::idx_t> globalProcStartPE_;
+    std::vector<atlas::idx_t> globalProcEndPE_;
+    std::vector<atlas::idx_t> nprocx_{1,1,1,1,1,1};  // number of ranks in x direction on each tile
+    std::vector<atlas::idx_t> nprocy_{1,1,1,1,1,1};  // number of ranks in x direction on each tile
+    bool regular_      = true;
     bool cubedsphere_ = true;  // exact (true) or approximate (false) cubedsphere
 };
 
