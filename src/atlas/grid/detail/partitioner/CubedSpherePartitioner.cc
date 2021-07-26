@@ -180,6 +180,9 @@ Number of procs per band
     /*
 Number of gridpoints per band
 */
+
+
+    /*
     std::vector<size_t> ngpb( nbands, 0 );
     // split latitudes?
     if ( split_lats ) {
@@ -256,6 +259,7 @@ Number of gridpoints per band
             ++jpart;
         }
     }
+    */
 }
 
 void CubedSpherePartitioner::partition( const Grid& grid, int part[] ) const {

@@ -258,7 +258,56 @@ namespace atlas {
       }
     }
 
- 
+    CASE("cubedsphere_tileCubePeriodicity_3_test") {
+        auto tileConfig1 = atlas::util::Config("type", "cubedsphere_lfric");
+        auto lfricTiles = atlas::CubedSphereTiles(tileConfig1);
+
+        // create a nodal cubed-sphere grid and check that no point are changed by
+        // iterating through points.
+
+        int resolution( 3 );
+        std::vector<std::string> grid_names{"CS-LFR-C-" + std::to_string( resolution ),
+                                           };
+        Grid grid{grid_names[0]};
+
+        std::vector<atlas::PointXY>
+                startingXY { {45.,-45.}, {45., -60.}, {45., -75.}, {45., -90.},
+                           };
+
+
+        int jn{0};
+        for ( auto crd : grid.xy() ) {
+            atlas::PointXY initialXY{crd[XX], crd[YY]};
+            double xy[2] = {initialXY.x(), initialXY.y()};
+            atlas::idx_t t = lfricTiles.tileFromXY(xy);
+            atlas::PointXY finalXY = lfricTiles.tileCubePeriodicity(initialXY, t);
+            atlas::PointLonLat lonlatPt = crd;
+            grid.projection().xy2lonlat(lonlatPt);
+            std::cout << " start end  = " << crd.x() << " " << crd.y()
+                      << " " << finalXY.x() << " " <<  finalXY.y()
+                      << " " << lonlatPt.lon() << " " <<  lonlatPt.lat()
+                      << std::endl;
+             EXPECT_APPROX_EQ(initialXY, finalXY);
+            ++jn;
+        }
+
+        for (atlas::PointXY p : startingXY) {
+           atlas::PointXY pointFrom0 = lfricTiles.tileCubePeriodicity(p, 0);
+           atlas::PointXY pointFrom5 = lfricTiles.tileCubePeriodicity(p, 5);
+           std::cout << " start = " << p.x() << " " << p.y()
+                     << " from0 = " << pointFrom0.x() << " " << pointFrom0.y()
+                     << " from1 = " << pointFrom5.x() << " " << pointFrom5.y()
+                     << std::endl;
+
+
+        }
+
+
+
+
+
+
+    }
   }  // namespace test
 }  // namespace atlas
 
