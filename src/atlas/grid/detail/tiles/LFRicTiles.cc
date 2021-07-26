@@ -114,10 +114,8 @@ void LFRicCubedSphereTiles::tile4Rotate( double xyz[] ) const {
 void LFRicCubedSphereTiles::tile5Rotate( double xyz[] ) const {
     double xyz_in[3];
     std::copy( xyz, xyz + 3, xyz_in );
-    xyz[XX] = -xyz_in[YY];
-    xyz[YY] =  xyz_in[ZZ];
+    xyz[XX] = -xyz_in[ZZ];
     xyz[ZZ] =  xyz_in[XX];
-
 }
 
 void LFRicCubedSphereTiles::tile0RotateInverse( double xyz[] ) const {
@@ -156,8 +154,7 @@ void LFRicCubedSphereTiles::tile5RotateInverse( double xyz[] ) const {
     double xyz_in[3];
     std::copy( xyz, xyz + 3, xyz_in );
     xyz[XX] =  xyz_in[ZZ];
-    xyz[YY] = -xyz_in[XX];
-    xyz[ZZ] =  xyz_in[YY];
+    xyz[ZZ] = -xyz_in[XX];
 }
 
 idx_t LFRicCubedSphereTiles::tileFromXY( const double xy[] ) const  {
