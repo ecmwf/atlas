@@ -99,6 +99,8 @@ public:
         add_option( new SimpleOption<bool>( "backward-interpolator-output",
                                             "Output backward interpolator's points and weights" ) );
         add_option( new SimpleOption<bool>( "skip-halo-exchange", "Skip halo exchange" ) );
+        add_option( new SimpleOption<double>( "missing-value", "Missing value to be inserted when projection fails" ) );
+
     }
 };
 
@@ -250,7 +252,11 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
 
     FieldSet tgt_fields;
     for ( idx_t i = 0; i < src_fields.size(); ++i ) {
-        tgt_fields.add( tgt_functionspace.createField<double>( option::name( src_fields[i].name() ) ) );
+        auto tgt_field = tgt_fields.add( tgt_functionspace.createField<double>( option::name( src_fields[i].name() ) ) );
+        double missing_value;
+        if( args.get("missing-value",missing_value) ) {
+            tgt_field.metadata().set("missing_value",missing_value);
+        }
     }
 
     if ( args.getBool( "skip-halo-exchange", false ) ) {

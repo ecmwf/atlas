@@ -86,6 +86,7 @@ protected:
     NonLinear nonLinear_;
     bool use_eckit_linalg_spmv_;
     bool allow_halo_exchange_{true};
+    std::vector<idx_t> missing_;
 
 protected:
     virtual void do_setup( const FunctionSpace& source, const FunctionSpace& target ) = 0;
