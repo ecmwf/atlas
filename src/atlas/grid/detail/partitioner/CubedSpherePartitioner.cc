@@ -40,16 +40,47 @@ bool isNearInt( double value )
     return ( diff <= epsilon || diff >= (1.0 - epsilon) );
 }
 
+std::vector<std::vector<atlas::idx_t>> createOffset(const std::array<std::size_t,6> & ngpt, const std::array<idx_t,6> nproc1D,
+                                                    const std::array<idx_t,6> maxDim1D, const std::array<idx_t,6> maxDim2D) {
+
+    std::vector<std::vector<atlas::idx_t>> offset;
+
+    idx_t totalNproc1D = std::accumulate(std::begin(nproc1D), std::end(nproc1D), 0);
+
+    // ngpbt - number of grid points per band and tile.
+    std::vector<std::size_t> ngpbt(static_cast<std::size_t>(totalNproc1D), 0);
+
+    idx_t j(0);
+    for (std::size_t t = 0; t < 6; ++t) {
+        idx_t jt = static_cast<idx_t>(j);
+        std::size_t nproc = static_cast<std::size_t>(nproc1D[t]);
+        std::vector<idx_t> offsetPerTile(nproc + 1, 0);
+
+        for (std::size_t proc1D = 0; proc1D <  nproc; ++proc1D, ++j) {
+            ngpbt[static_cast<size_t>(j)] = proc1D <  nproc - 1 ? ngpt[t]/ nproc :
+                                            ngpt[t] - static_cast<std::size_t>(std::accumulate(ngpbt.begin() + jt, ngpbt.begin() + j, 0));
+
+            offsetPerTile[proc1D] = proc1D == 0 ? 0 :
+                                   std::accumulate(ngpbt.begin() + jt, ngpbt.begin() + j, 0) / maxDim2D[t];
+
+        }
+        offsetPerTile[nproc] = maxDim1D[t];
+        offset.push_back(offsetPerTile);
+    }
+
+    return offset;
+}
+
+
 }
 
 CubedSpherePartitioner::CubedSpherePartitioner() : Partitioner() {}
 
-CubedSpherePartitioner::CubedSpherePartitioner( int N ) : Partitioner( N ) {}
+CubedSpherePartitioner::CubedSpherePartitioner( int N ) : Partitioner( N ), regular_{true} {}
 
-CubedSpherePartitioner::CubedSpherePartitioner( int N, const eckit::Parametrisation& config ) : Partitioner( N ) {
+CubedSpherePartitioner::CubedSpherePartitioner( int N, const eckit::Parametrisation& config ) : Partitioner( N ), regular_{false} {
     config.get( "starting rank on tile", globalProcStartPE_);
     config.get( "final rank on tile", globalProcEndPE_);
-    config.get( "nprocy", nprocy_);
     config.get( "nprocx", nprocx_);
     config.get( "nprocy", nprocy_);
 }
@@ -57,22 +88,21 @@ CubedSpherePartitioner::CubedSpherePartitioner( int N, const eckit::Parametrisat
 CubedSpherePartitioner::CubedSpherePartitioner( const int N, const std::vector<int> & globalProcStartPE,
                                                 const std::vector<int> & globalProcEndPE,
                                                 const std::vector<int> & nprocx,
-                                                const std::vector<int> & nprocy )
+                                                const std::vector<int> & nprocy)
     : Partitioner( N ), globalProcStartPE_{globalProcStartPE},  globalProcEndPE_{globalProcEndPE},
-      nprocx_{nprocx},  nprocy_{nprocy} {}
-
+      nprocx_{nprocx},  nprocy_{nprocy}, regular_{false}   {}
 
 
 CubedSpherePartitioner::CubedSphere CubedSpherePartitioner::cubedsphere( const Grid& grid ) const {
     // grid dimensions
     const CubedSphereGrid cg( grid );
     if ( !cg ) {
-        throw_Exception( "CubedSphere Partitioner only works for Regular grids.", Here() );
+        throw_Exception( "CubedSphere Partitioner only works for cubed sphere grids.", Here() );
     }
 
     CubedSphere cb;
 
-    for (idx_t t = 0; t < 6; ++t) {
+    for (std::size_t t = 0; t < 6; ++t) {
         cb.nx[t] = cg.N();
         cb.ny[t] = cg.N();
     }
@@ -87,12 +117,12 @@ CubedSpherePartitioner::CubedSphere CubedSpherePartitioner::cubedsphere( const G
 
       idx_t reminder = nparts - 6 * ranksPerTile;
 
-      for (idx_t t = 0; t < 6; ++t) {
+      for (std::size_t t = 0; t < 6; ++t) {
          cb.nproc[t] = ranksPerTile;
       }
 
       // round-robin;
-      idx_t t{0};
+      std::size_t t{0};
       while (reminder > 0) {
          if (t == 6) t=0;
          cb.nproc[t] += 1;
@@ -107,159 +137,82 @@ CubedSpherePartitioner::CubedSphere CubedSpherePartitioner::cubedsphere( const G
       // we use that for nprocx and nprocy
       // otherwise we split just in nprocx and keep nprocy =1;
 
-       for (idx_t t = 0; t < 6; ++t) {
+       for (size_t t = 0; t < 6; ++t) {
            if (cb.nproc[t] > 0) {
               double sq = std::sqrt(static_cast<double>(cb.nproc[t]));
+              if (isNearInt(sq)) {
+                  cb.nprocx[t] = static_cast<idx_t>(floor(sq+0.5));
+                  cb.nprocy[t] = static_cast<idx_t>(floor(sq+0.5));
+              } else {
+                  cb.nprocx[t] = 1;
+                  cb.nprocy[t] = cb.nproc[t];
+              }
            }
        }
+       cb.globalProcStartPE[0] = 0;
+       cb.globalProcEndPE[0] = cb.nproc[0] -1;
+
+         for (size_t t = 1; t < 6; ++t) {
+             if (cb.nproc[t] == 0) {
+                cb.globalProcStartPE[t] = cb.globalProcEndPE[t-1];
+                cb.globalProcEndPE[t] =  cb.globalProcEndPE[t-1];
+             } else {
+               cb.globalProcStartPE[t] = cb.globalProcEndPE[t-1] + 1;
+               cb.globalProcEndPE[t] =   cb.globalProcStartPE[t] + cb.nproc[t] - 1;
+             }
+         }
+
+
+    }  else {
+       for (size_t t = 0; t < 6; ++t) {
+         cb.globalProcStartPE[t] = globalProcStartPE_[t];
+         cb.globalProcEndPE[t] = globalProcEndPE_[t];
+         cb.nprocx[t] = nprocx_[t];
+         cb.nprocy[t] = nprocy_[t];
+       }
+       cb.nproc[0] = globalProcEndPE_[0] + 1;
+       for (size_t t = 1; t < 6; ++t) {
+         cb.nproc[t] = cb.globalProcStartPE[t] == cb.globalProcEndPE[t-1] ? cb.nproc[t] = 0 :
+                       cb.globalProcEndPE[t] - cb.globalProcStartPE[t] + 1;
+       }
+
     }
     return cb;
 }
 
-bool compare_Y_X( const CubedSpherePartitioner::NodeInt& node1, const CubedSpherePartitioner::NodeInt& node2 ) {
-    // comparison of two locations; X1 < X2 if it's to the south, then to the
-    // east.
-    if ( node1.y < node2.y ) {
-        return true;
-    }
-    if ( node1.y == node2.y ) {
-        return ( node1.x < node2.x );
-    }
-    return false;
-}
 
-bool compare_X_Y( const CubedSpherePartitioner::NodeInt& node1, const CubedSpherePartitioner::NodeInt& node2 ) {
-    // comparison of two locations; X1 < X2 if it's to the east, then to the
-    // south.
-    if ( node1.x < node2.x ) {
-        return true;
-    }
-    if ( node1.x == node2.x ) {
-        return ( node1.y < node2.y );
-    }
-    return false;
-}
+
+
 
 void CubedSpherePartitioner::partition( const CubedSphere& cb, const int nb_nodes, NodeInt nodes[], int part[] ) const {
-    size_t nparts = nb_partitions();
-    long remainder;
 
-    /* Sort cell centers (increasing tiles), south to north (increasing y) and west to east (increasing x)
+    // ngpt number of grid points per tile (this is for cell centers where the number of cells are the same
+    std::size_t tileCells = static_cast<std::size_t>(nb_nodes/6);
+    std::array<std::size_t, 6> ngpt{tileCells, tileCells, tileCells, tileCells, tileCells, tileCells};
 
-    /* No of procs per tile
+    // xoffset - the xoffset per band per tile (including cb.nx[t])
+    std::vector<std::vector<atlas::idx_t>> xoffset = createOffset(ngpt, cb.nprocx, cb.nx, cb.ny);
 
-    /*
+    // yoffset - the yoffset per band per tile (including cb.ny[t])
+    std::vector<std::vector<atlas::idx_t>> yoffset = createOffset(ngpt, cb.nprocy, cb.ny, cb.nx);
 
-
-    /*
-Sort nodes from south to north (increasing y), and west to east (increasing x).
-Now we can easily split
-the points in bands. Note this may not be necessary, as it could be
-already by construction in this order, but then sorting is really fast
-*/
-
-    /*
-Number of procs per band
-
-    std::vector<size_t> npartsb( nbands, 0 );  // number of procs per band
-    remainder = nparts;
-    for ( size_t iband = 0; iband < nbands; iband++ ) {
-        npartsb[iband] = nparts / nbands;
-        remainder -= npartsb[iband];
-    }
-    // distribute remaining procs over first bands
-    for ( size_t iband = 0; iband < remainder; iband++ ) {
-        ++npartsb[iband];
-    }
-
-    bool split_lons = not regular_;
-    bool split_lats = not regular_;
-
-*/
-
-    /*
-Number of gridpoints per band
-*/
-
-
-    /*
-    std::vector<size_t> ngpb( nbands, 0 );
-    // split latitudes?
-    if ( split_lats ) {
-        remainder = nb_nodes;
-        for ( size_t iband = 0; iband < nbands; iband++ ) {
-            ngpb[iband] = ( nb_nodes * npartsb[iband] ) / nparts;
-            remainder -= ngpb[iband];
+    int p;  // partition index
+    // loop over all data tile by tile
+    for (int n = 0; n < nb_nodes; ++n) {
+        std::size_t t = static_cast<std::size_t>(nodes[n].t);
+        p = cb.globalProcStartPE[t];
+        for (std::size_t yproc = 0; yproc < static_cast<std::size_t>(cb.nprocy[t]); ++yproc) {
+           for (std::size_t xproc = 0; xproc < static_cast<std::size_t>(cb.nprocx[t]); ++xproc) {
+               if ( (nodes[n].y >= yoffset[t][yproc]) && (nodes[n].y < yoffset[t][yproc+1]) &&
+                    (nodes[n].x >= xoffset[t][xproc]) && (nodes[n].x < xoffset[t][xproc+1]) )
+               {
+                  part[n] = p;
+               }
+               ++p;
+           }
         }
-        // distribute remaining gridpoints over first bands
-        for ( size_t iband = 0; iband < remainder; iband++ ) {
-            ++ngpb[iband];
-        }
-    }
-    else {
-        remainder = ny;
-        for ( size_t iband = 0; iband < nbands; iband++ ) {
-            ngpb[iband] = nx * ( ( ny * npartsb[iband] ) / nparts );
-            remainder -= ngpb[iband] / nx;
-        }
-        // distribute remaining rows over first bands
-        for ( size_t iband = 0; iband < remainder; iband++ ) {
-            ngpb[iband] += nx;
-        }
-    }
-
-    // sort nodes according to Y first, to determine bands
-    std::sort( nodes, nodes + nb_nodes, compare_Y_X );
-
-    // for each band, select gridpoints belonging to that band, and sort them
-    // according to X first
-    size_t offset = 0;
-    int jpart     = 0;
-    for ( size_t iband = 0; iband < nbands; iband++ ) {
-        // sort according to X first
-        std::sort( nodes + offset, nodes + offset + ngpb[iband], compare_X_Y );
-
-        // number of gridpoints per task
-        std::vector<int> ngpp( npartsb[iband], 0 );
-        remainder = ngpb[iband];
-
-        int part_ny = ngpb[iband] / cb.nx;
-        int part_nx = ngpb[iband] / npartsb[iband] / part_ny;
-
-        for ( size_t ipart = 0; ipart < npartsb[iband]; ipart++ ) {
-            if ( split_lons ) {
-                ngpp[ipart] = ngpb[iband] / npartsb[iband];
-            }
-            else {
-                ngpp[ipart] = part_nx * part_ny;
-            }
-            remainder -= ngpp[ipart];
-        }
-        if ( split_lons ) {
-            // distribute remaining gridpoints over first parts
-            for ( size_t ipart = 0; ipart < remainder; ipart++ ) {
-                ++ngpp[ipart];
-            }
-        }
-        else {
-            size_t ipart = 0;
-            while ( remainder > part_ny ) {
-                ngpp[ipart++] += part_ny;
-                remainder -= part_ny;
-            }
-            ngpp[npartsb[iband] - 1] += remainder;
-        }
-
-        // set partition number for each part
-        for ( size_t ipart = 0; ipart < npartsb[iband]; ipart++ ) {
-            for ( size_t jj = offset; jj < offset + ngpp[ipart]; jj++ ) {
-                part[nodes[jj].n] = jpart;
-            }
-            offset += ngpp[ipart];
-            ++jpart;
-        }
-    }
-    */
+     }
+    ATLAS_ASSERT( part[nb_nodes-1] == nb_partitions(), "number of partitions created not what is expected");
 }
 
 void CubedSpherePartitioner::partition( const Grid& grid, int part[] ) const {
@@ -272,10 +225,10 @@ void CubedSpherePartitioner::partition( const Grid& grid, int part[] ) const {
     else {
         auto cb = cubedsphere( grid );
 
-        std::vector<NodeInt> nodes( grid.size() );
-        int n( 0 );
+        std::vector<NodeInt> nodes( static_cast<std::size_t>(grid.size()) );
+        std::size_t n( 0 );
 
-        for (idx_t it = 0; it < 6; ++it) {
+        for (std::size_t it = 0; it < 6; ++it) {
             for ( idx_t iy = 0; iy < cb.ny[it]; ++iy ) {
                 for ( idx_t ix = 0; ix < cb.nx[it]; ++ix ) {
                     nodes[n].t = static_cast<int>( it );
