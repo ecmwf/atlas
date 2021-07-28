@@ -68,10 +68,6 @@ CASE( "Interpolation with MissingValue" ) {
 
     // Set output field (2 points)
     functionspace::PointCloud fsB( {PointLonLat{0.1, 0.1}, PointLonLat{0.9, 0.9}} );
-    Field fieldB( "B", array::make_datatype<double>(), array::make_shape( fsB.size() ) );
-
-    auto viewB = array::make_view<double, 1>( fieldB );
-    ATLAS_ASSERT( viewB.size() == 2 );
 
 
     SECTION( "missing-if-all-missing" ) {
@@ -79,6 +75,9 @@ CASE( "Interpolation with MissingValue" ) {
                                      fsA, fsB );
 
         for ( std::string type : {"equals", "approximately-equals", "nan"} ) {
+            Field fieldB( "B", array::make_datatype<double>(), array::make_shape( fsB.size() ) );
+            auto viewB = array::make_view<double, 1>( fieldB );
+
             fieldA.metadata().set( "missing_value_type", type );
             viewA( 4 ) = type == "nan" ? nan : missingValue;
 
@@ -98,6 +97,9 @@ CASE( "Interpolation with MissingValue" ) {
                                      fsA, fsB );
 
         for ( std::string type : {"equals", "approximately-equals", "nan"} ) {
+            Field fieldB( "B", array::make_datatype<double>(), array::make_shape( fsB.size() ) );
+            auto viewB = array::make_view<double, 1>( fieldB );
+
             fieldA.metadata().set( "missing_value_type", type );
             viewA( 4 ) = type == "nan" ? nan : missingValue;
 
@@ -117,6 +119,9 @@ CASE( "Interpolation with MissingValue" ) {
             Config( "type", "finite-element" ).set( "non_linear", "missing-if-heaviest-missing" ), fsA, fsB );
 
         for ( std::string type : {"equals", "approximately-equals", "nan"} ) {
+            Field fieldB( "B", array::make_datatype<double>(), array::make_shape( fsB.size() ) );
+            auto viewB = array::make_view<double, 1>( fieldB );
+
             fieldA.metadata().set( "missing_value_type", type );
             viewA( 4 ) = type == "nan" ? nan : missingValue;
 
