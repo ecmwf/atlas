@@ -28,7 +28,7 @@ namespace atlas {
        void partition(const CubedSpherePartitioner & partitioner, const Grid & grid,
                       CubedSpherePartitioner::CubedSphere & cb,  std::vector<idx_t> & part)  {
 
-           std::vector<CubedSpherePartitioner::NodeInt> nodes( static_cast<std::size_t>(grid.size()) );
+           std::vector<CubedSpherePartitioner::CellInt> nodes( static_cast<std::size_t>(grid.size()) );
            std::size_t n( 0 );
 
 

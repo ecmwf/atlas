@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2013 ECMWF.
+ * (C) Crown Copyright Met Office 2021
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -38,7 +38,7 @@ public:
     // latitude in millidegrees (integers))
     // This structure is used in sorting algorithms, and uses less memory than
     // if x and y were in double precision.
-    struct NodeInt {
+    struct CellInt {
         int x, y, t;
         int n;
     };
@@ -56,7 +56,7 @@ public:
         std::array<atlas::idx_t, 6> ny; // grid dimensions on each tile - for all cell-centered grids they will be same.
 
         // these are the offsets in the x and y directions
-        // they are allocated in "void partition(CubedSphere& cb, int nb_nodes, NodeInt nodes[], int part[] );"
+        // they are allocated in "void partition(CubedSphere& cb, int nb_nodes, CellInt nodes[], int part[] );"
         std::vector<std::vector<atlas::idx_t>> xoffset;
         std::vector<std::vector<atlas::idx_t>> yoffset;
 
@@ -69,13 +69,11 @@ public:
 
     CubedSphere cubedsphere( const Grid& ) const;
 
-    void partition(CubedSphere& cb, const int nb_nodes, const NodeInt nodes[], int part[] ) const;
+    void partition(CubedSphere& cb, const int nb_nodes, const CellInt nodes[], int part[] ) const;
 
     virtual std::string type() const { return "cubedsphere"; }
 
 private:
-
-   // void partition(CubedSphere& cb, int nb_nodes, NodeInt nodes[], int part[] ) const;
 
     using Partitioner::partition;
     virtual void partition( const Grid&, int part[] ) const;
@@ -88,7 +86,6 @@ private:
     std::vector<atlas::idx_t> nprocx_{1,1,1,1,1,1};  // number of ranks in x direction on each tile
     std::vector<atlas::idx_t> nprocy_{1,1,1,1,1,1};  // number of ranks in x direction on each tile
     bool regular_      = true;  // regular algorithm for partitioning.
-    bool cubedsphere_ = true;  // exact (true) or approximate (false) cubedsphere
 };
 
 }  // namespace partitioner

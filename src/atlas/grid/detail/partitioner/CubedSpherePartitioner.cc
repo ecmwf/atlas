@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2013 ECMWF.
+ * (C) Crown Copyright 2021 Met Office
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -18,13 +18,9 @@
 #include <iostream>
 #include <vector>
 
-
 #include "atlas/grid/CubedSphereGrid.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/util/MicroDeg.h"
-
-using atlas::util::microdeg;
 
 namespace atlas {
 namespace grid {
@@ -58,10 +54,10 @@ std::vector<std::vector<atlas::idx_t>> createOffset(const std::array<std::size_t
 
         for (std::size_t proc1D = 0; proc1D <  nproc; ++proc1D, ++j) {
             ngpbt[static_cast<size_t>(j)] = proc1D <  nproc - 1 ? ngpt[t]/ nproc :
-                                            ngpt[t] - static_cast<std::size_t>(std::accumulate(ngpbt.begin() + jt, ngpbt.begin() + j, 0));
+                                                                  ngpt[t] - static_cast<std::size_t>(std::accumulate(ngpbt.begin() + jt, ngpbt.begin() + j, 0));
 
             offsetPerTile[proc1D] = proc1D == 0 ? 0 :
-                                    std::accumulate(ngpbt.begin() + jt, ngpbt.begin() + j, 0) / maxDim2D[t];
+                                                  std::accumulate(ngpbt.begin() + jt, ngpbt.begin() + j, 0) / maxDim2D[t];
 
         }
         offsetPerTile[nproc] = maxDim1D[t];
@@ -110,77 +106,77 @@ CubedSpherePartitioner::CubedSphere CubedSpherePartitioner::cubedsphere( const G
     atlas::idx_t nparts = nb_partitions();
 
     if (regular_) {
-      // share PEs around tiles
-      // minRanksPerTile
+        // share PEs around tiles
+        // minRanksPerTile
 
-      idx_t ranksPerTile = nparts/6;
+        idx_t ranksPerTile = nparts/6;
 
-      idx_t reminder = nparts - 6 * ranksPerTile;
+        idx_t reminder = nparts - 6 * ranksPerTile;
 
-      for (std::size_t t = 0; t < 6; ++t) {
-         cb.nproc[t] = ranksPerTile;
-      }
+        for (std::size_t t = 0; t < 6; ++t) {
+            cb.nproc[t] = ranksPerTile;
+        }
 
-      // round-robin;
-      std::size_t t{0};
-      while (reminder > 0) {
-         if (t == 6) t=0;
-         cb.nproc[t] += 1;
-         t += 1;
-         reminder -= 1;
-      }
+        // round-robin;
+        std::size_t t{0};
+        while (reminder > 0) {
+            if (t == 6) t=0;
+            cb.nproc[t] += 1;
+            t += 1;
+            reminder -= 1;
+        }
 
-      // now need to specify nprocx and nprocy.
-      // nproc is 0 for the tile we use default nprocx and nprocy = 1
+        // now need to specify nprocx and nprocy.
+        // nproc is 0 for the tile we use default nprocx and nprocy = 1
 
-      // if we can square-root nproc and get an integer
-      // we use that for nprocx and nprocy
-      // otherwise we split just in nprocx and keep nprocy =1;
+        // if we can square-root nproc and get an integer
+        // we use that for nprocx and nprocy
+        // otherwise we split just in nprocx and keep nprocy =1;
 
-       for (size_t t = 0; t < 6; ++t) {
-           if (cb.nproc[t] > 0) {
-              double sq = std::sqrt(static_cast<double>(cb.nproc[t]));
-              if (isNearInt(sq)) {
-                  cb.nprocx[t] = static_cast<idx_t>(floor(sq+0.5));
-                  cb.nprocy[t] = static_cast<idx_t>(floor(sq+0.5));
-              } else {
-                  cb.nprocx[t] = 1;
-                  cb.nprocy[t] = cb.nproc[t];
-              }
-           }
-       }
-       cb.globalProcStartPE[0] = 0;
-       cb.globalProcEndPE[0] = cb.nproc[0] -1;
+        for (size_t t = 0; t < 6; ++t) {
+            if (cb.nproc[t] > 0) {
+                double sq = std::sqrt(static_cast<double>(cb.nproc[t]));
+                if (isNearInt(sq)) {
+                    cb.nprocx[t] = static_cast<idx_t>(floor(sq+0.5));
+                    cb.nprocy[t] = static_cast<idx_t>(floor(sq+0.5));
+                } else {
+                    cb.nprocx[t] = 1;
+                    cb.nprocy[t] = cb.nproc[t];
+                }
+            }
+        }
+        cb.globalProcStartPE[0] = 0;
+        cb.globalProcEndPE[0] = cb.nproc[0] -1;
 
-         for (size_t t = 1; t < 6; ++t) {
-             if (cb.nproc[t] == 0) {
+        for (size_t t = 1; t < 6; ++t) {
+            if (cb.nproc[t] == 0) {
                 cb.globalProcStartPE[t] = cb.globalProcEndPE[t-1];
                 cb.globalProcEndPE[t] =  cb.globalProcEndPE[t-1];
-             } else {
-               cb.globalProcStartPE[t] = cb.globalProcEndPE[t-1] + 1;
-               cb.globalProcEndPE[t] =   cb.globalProcStartPE[t] + cb.nproc[t] - 1;
-             }
-         }
+            } else {
+                cb.globalProcStartPE[t] = cb.globalProcEndPE[t-1] + 1;
+                cb.globalProcEndPE[t] =   cb.globalProcStartPE[t] + cb.nproc[t] - 1;
+            }
+        }
 
 
     }  else {
-       for (size_t t = 0; t < 6; ++t) {
-         cb.globalProcStartPE[t] = globalProcStartPE_[t];
-         cb.globalProcEndPE[t] = globalProcEndPE_[t];
-         cb.nprocx[t] = nprocx_[t];
-         cb.nprocy[t] = nprocy_[t];
-       }
-       cb.nproc[0] = globalProcEndPE_[0] + 1;
-       for (size_t t = 1; t < 6; ++t) {
-         cb.nproc[t] = cb.globalProcStartPE[t] == cb.globalProcEndPE[t-1] ? cb.nproc[t] = 0 :
-                       cb.globalProcEndPE[t] - cb.globalProcStartPE[t] + 1;
-       }
+        for (size_t t = 0; t < 6; ++t) {
+            cb.globalProcStartPE[t] = globalProcStartPE_[t];
+            cb.globalProcEndPE[t] = globalProcEndPE_[t];
+            cb.nprocx[t] = nprocx_[t];
+            cb.nprocy[t] = nprocy_[t];
+        }
+        cb.nproc[0] = globalProcEndPE_[0] + 1;
+        for (size_t t = 1; t < 6; ++t) {
+            cb.nproc[t] = cb.globalProcStartPE[t] == cb.globalProcEndPE[t-1] ? cb.nproc[t] = 0 :
+                    cb.globalProcEndPE[t] - cb.globalProcStartPE[t] + 1;
+        }
 
     }
     return cb;
 }
 
-void CubedSpherePartitioner::partition( CubedSphere& cb, const int nb_nodes, const NodeInt nodes[], int part[] ) const {
+void CubedSpherePartitioner::partition( CubedSphere& cb, const int nb_nodes, const CellInt nodes[], int part[] ) const {
 
     // ngpt number of grid points per tile (this is for cell centers where the number of cells are the same
     std::size_t tileCells = static_cast<std::size_t>(nb_nodes/6);
@@ -200,16 +196,16 @@ void CubedSpherePartitioner::partition( CubedSphere& cb, const int nb_nodes, con
         std::size_t t = static_cast<std::size_t>(nodes[n].t);
         p = cb.globalProcStartPE[t];
         for (std::size_t yproc = 0; yproc < static_cast<std::size_t>(cb.nprocy[t]); ++yproc) {
-           for (std::size_t xproc = 0; xproc < static_cast<std::size_t>(cb.nprocx[t]); ++xproc) {
-               if ( (nodes[n].y >= cb.yoffset[t][yproc]) && (nodes[n].y < cb.yoffset[t][yproc+1]) &&
-                    (nodes[n].x >= cb.xoffset[t][xproc]) && (nodes[n].x < cb.xoffset[t][xproc+1]) )
-               {
-                  part[n] = p;
-               }
-               ++p;
-           }
+            for (std::size_t xproc = 0; xproc < static_cast<std::size_t>(cb.nprocx[t]); ++xproc) {
+                if ( (nodes[n].y >= cb.yoffset[t][yproc]) && (nodes[n].y < cb.yoffset[t][yproc+1]) &&
+                     (nodes[n].x >= cb.xoffset[t][xproc]) && (nodes[n].x < cb.xoffset[t][xproc+1]) )
+                {
+                    part[n] = p;
+                }
+                ++p;
+            }
         }
-     }
+    }
     ATLAS_ASSERT( part[nb_nodes-1] == nb_partitions() - 1, "number of partitions created not what is expected");
 }
 
@@ -223,7 +219,7 @@ void CubedSpherePartitioner::partition( const Grid& grid, int part[] ) const {
     else {
         auto cb = cubedsphere( grid );
 
-        std::vector<NodeInt> nodes( static_cast<std::size_t>(grid.size()) );
+        std::vector<CellInt> nodes( static_cast<std::size_t>(grid.size()) );
         std::size_t n( 0 );
 
         for ( std::size_t it = 0; it < 6; ++it ) {
@@ -248,5 +244,5 @@ void CubedSpherePartitioner::partition( const Grid& grid, int part[] ) const {
 
 namespace {
 atlas::grid::detail::partitioner::PartitionerBuilder<atlas::grid::detail::partitioner::CubedSpherePartitioner>
-    __CubedSphere( "CubedSphere" );
+__CubedSphere( "CubedSphere" );
 }
