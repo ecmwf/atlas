@@ -7,12 +7,14 @@
 
 #include "atlas/array/MakeView.h"
 #include "atlas/functionspace/NodeColumns.h"
+#include "atlas/field/FieldSet.h"
 #include "atlas/grid.h"
+#include "atlas/grid/Tiles.h"
 #include "atlas/mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
-#include "atlas/grid/Tiles.h"
 #include "atlas/option.h"
+#include "atlas/util/CoordinateEnums.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -38,7 +40,8 @@ namespace atlas {
 
     }
 
-    CASE("cubedsphere_grid_mesh_field_test") {
+
+    CASE("cubedsphere_FV3_mesh_test") {
 
       // THIS IS TEMPORARY!
       // I expect this will be replaced by some more aggressive tests.
@@ -46,12 +49,12 @@ namespace atlas {
       // Set grid.
       const auto grid = atlas::Grid("CS-EA-L-2");
 
-      atlas::Log::info() << grid->type() << std::endl;
+      atlas::Log::info() << grid.name() << std::endl;
       atlas::Log::info() << grid.size() << std::endl;
 
 
       // Set mesh.
-      auto meshGen = atlas::MeshGenerator("cubedsphere");
+      auto meshGen = atlas::MeshGenerator("FV3-cubedsphere");
       auto mesh = meshGen.generate(grid);
 
       // Set functionspace
@@ -75,11 +78,11 @@ namespace atlas {
 
       // Set source gmsh object.
       const auto gmshXy =
-        atlas::output::Gmsh("cs_xy_mesh.msh", gmshConfigXy);
+        atlas::output::Gmsh("FV3_xy_mesh.msh", gmshConfigXy);
       const auto gmshXyz =
-        atlas::output::Gmsh("cs_xyz_mesh.msh", gmshConfigXyz);
+        atlas::output::Gmsh("FV3_xyz_mesh.msh", gmshConfigXyz);
       const auto gmshLonLat =
-        atlas::output::Gmsh("cs_lonlat_mesh.msh", gmshConfigLonLat);
+        atlas::output::Gmsh("FV3_lonlat_mesh.msh", gmshConfigLonLat);
 
       // Write gmsh.
       gmshXy.write(mesh);
@@ -91,6 +94,77 @@ namespace atlas {
 
 
     }
+
+    CASE("cubedsphere_generic_mesh_test") {
+
+      // THIS IS TEMPORARY!
+      // I expect this will be replaced by some more aggressive tests.
+
+      // Set grid.
+      const auto grid = atlas::Grid("CS-LFR-C-6");
+
+      atlas::Log::info() << grid.name() << std::endl;
+      atlas::Log::info() << grid.size() << std::endl;
+
+
+      // Set mesh.
+      auto meshGen = atlas::MeshGenerator("cubedsphere");
+      const auto mesh = meshGen.generate(grid);
+
+      // Set functionspace
+      auto functionSpace = atlas::functionspace::NodeColumns(mesh);
+
+      // Set fields
+
+      auto fieldSet = FieldSet{};
+      fieldSet.add(mesh.nodes().global_index());
+      fieldSet.add(mesh.nodes().remote_index());
+      fieldSet.add(mesh.nodes().xy());
+      fieldSet.add(mesh.nodes().lonlat());
+      fieldSet.add(mesh.nodes().ghost());
+      fieldSet.add(mesh.nodes().partition());
+
+      // Visually inspect the fields.
+      // remote indices should be equal at tile boundaries.
+
+
+      // Set gmsh config.
+      auto gmshConfigXy = atlas::util::Config("coordinates", "xy");
+      auto gmshConfigXyz = atlas::util::Config("coordinates", "xyz");
+      auto gmshConfigLonLat = atlas::util::Config("coordinates", "lonlat");
+
+      // Set source gmsh object.
+      const auto gmshXy =
+        atlas::output::Gmsh("cs_xy_mesh.msh", gmshConfigXy);
+      const auto gmshXyz =
+        atlas::output::Gmsh("cs_xyz_mesh.msh", gmshConfigXyz);
+      const auto gmshLonLat =
+        atlas::output::Gmsh("cs_lonlat_mesh.msh", gmshConfigLonLat);
+
+      // Write gmsh.
+      gmshXy.write(mesh);
+      gmshXy.write(fieldSet);
+      gmshXyz.write(mesh);
+      gmshXyz.write(fieldSet);
+      gmshLonLat.write(mesh);
+      gmshLonLat.write(fieldSet);
+
+
+      // Check that node positions match those of equivalent nodal grid.
+      const auto nodeGrid = atlas::Grid("CS-LFR-L-6");
+      const auto viewNodesXy = array::make_view<double, 2>(mesh.nodes().xy());
+
+      idx_t iNode = 0;
+      for (auto& xy : nodeGrid.xy()) {
+
+          is_approximately_equal(xy.x(), viewNodesXy(iNode, XX), 1e-12);
+          is_approximately_equal(xy.y(), viewNodesXy(iNode, YY), 1e-12);
+          ++iNode;
+        }
+
+
+    }
+
 
 
     CASE("cubedsphere_tileCubePeriodicity_test") {
@@ -258,7 +332,7 @@ namespace atlas {
       }
     }
 
- 
+
   }  // namespace test
 }  // namespace atlas
 

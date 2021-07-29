@@ -16,7 +16,9 @@
 #include "atlas/field/Field.h"
 #include "atlas/grid/CubedSphereGrid.h"
 #include "atlas/grid/Distribution.h"
+#include "atlas/grid/Iterator.h"
 #include "atlas/grid/Partitioner.h"
+#include "atlas/grid/Tiles.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/mesh/ElementType.h"
@@ -27,6 +29,7 @@
 #include "atlas/meshgenerator/detail/CubedSphereMeshGenerator.h"
 #include "atlas/meshgenerator/detail/MeshGeneratorFactory.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/projection/detail/CubedSphereProjectionBase.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Constants.h"
@@ -42,7 +45,7 @@ namespace meshgenerator {
 
 // -------------------------------------------------------------------------------------------------
 
-CubedSphereMeshGenerator::CubedSphereMeshGenerator( const eckit::Parametrisation& p ) {}
+CubedSphereMeshGenerator::CubedSphereMeshGenerator(const eckit::Parametrisation& p) {}
 
 // -------------------------------------------------------------------------------------------------
 
@@ -50,290 +53,340 @@ void CubedSphereMeshGenerator::configure_defaults() {}
 
 // -------------------------------------------------------------------------------------------------
 
-void CubedSphereMeshGenerator::generate( const Grid& grid, Mesh& mesh ) const {
-    // Check for proper grid and need for mesh
-    ATLAS_ASSERT( !mesh.generated() );
-    const CubedSphereGrid csg = CubedSphereGrid( grid );
-    if ( !csg ) {
-        throw_Exception( "CubedSphereMeshGenerator can only work with a cubedsphere grid", Here() );
-    }
+void CubedSphereMeshGenerator::generate(const Grid& grid, Mesh& mesh) const {
 
-    // Number of processors
-    //size_t nb_parts = options.get<size_t>( "nb_parts" );
+  // Check for proper grid and need for mesh
+  ATLAS_ASSERT(!mesh.generated());
+  if (!CubedSphereGrid(grid)) {
+    throw_Exception("CubedSphereMeshGenerator can only work "
+      "with a cubedsphere grid.", Here());
+  }
 
-    // Decomposition type
-    std::string partitioner_type = "checkerboard";
-    options.get( "checkerboard", partitioner_type );
+  // Check for proper stagger
+  const auto gridName = grid.name();
+  const auto gridStagger = gridName.substr(gridName.rfind("-") - 1, 1);
 
-    // Partitioner
-    grid::Partitioner partitioner( partitioner_type, 1 );
-    grid::Distribution distribution( partitioner.partition( grid ) );
 
-    generate( grid, distribution, mesh );
+  if (gridStagger != "C") {
+    throw_Exception("CubedSphereMeshGenerator can only work with a"
+      "cell-centroid grid. Try FV3CubedSphereMeshGenerator instead.");
+  }
+
+  // Partitioner
+  const auto partitioner = grid::Partitioner("checkerboard", 1);
+  const auto distribution =
+    grid::Distribution(partitioner.partition(grid));
+
+  generate(grid, distribution, mesh);
 }
 
 // -------------------------------------------------------------------------------------------------
 
-void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribution& distribution, Mesh& mesh ) const {
-    const auto csgrid = CubedSphereGrid( grid );
+void CubedSphereMeshGenerator::generate(const Grid& grid, const grid::Distribution& distribution, Mesh& mesh) const {
+  const auto csGrid = CubedSphereGrid(grid);
 
-    const int N      = csgrid.N();
-    const int nTiles = csgrid.GetNTiles();
+  // Get dimensions of grid
+  const auto N      = csGrid.N();
+  const auto nTiles = csGrid.GetNTiles();
 
+  ATLAS_TRACE("CubedSphereMeshGenerator::generate");
+  Log::debug() << "Number of cells per tile edge = " << std::to_string(N) << std::endl;
 
-    // Make a list linking ghost (t, i, j) values to known (t, i, j)
-    // This will be different for each cube-sphere once MeshGenerator is generalised.
+  // Set tiles.
+  // TODO: this needs to be replaced with regular expression matching.
+  auto gridTiles = CubedSphereTiles(util::Config("type", "cubedsphere_lfric"));
 
-    using Tij = typename std::array<idx_t, 3>;
-
-    // first: ghost (t, i, j); second owned (t, i, j).
-    using TijPair = typename std::pair<Tij, Tij>;
-
-    auto ghostToOwnedTij = std::vector<TijPair>{};
-
-
-    // -------------------------------------------------------------------------
-    // BEGIN FV3 SPECIFIC MAP
-    // -------------------------------------------------------------------------
-
-    // Special points.
-    ghostToOwnedTij.push_back(TijPair{{0, N, N}, {2, 0, 0}});
-    ghostToOwnedTij.push_back(TijPair{{1, N, N}, {3, 0, 0}});
-    ghostToOwnedTij.push_back(TijPair{{2, N, N}, {4, 0, 0}});
-    ghostToOwnedTij.push_back(TijPair{{3, N, N}, {5, 0, 0}});
-    ghostToOwnedTij.push_back(TijPair{{4, N, N}, {0, 0, 0}});
-    ghostToOwnedTij.push_back(TijPair{{5, N, N}, {1, 0, 0}});
-    ghostToOwnedTij.push_back(TijPair{{2, 0, N}, {0, 0, N}});
-    ghostToOwnedTij.push_back(TijPair{{4, 0, N}, {0, 0, N}});
-    ghostToOwnedTij.push_back(TijPair{{3, N, 0}, {1, N, 0}});
-    ghostToOwnedTij.push_back(TijPair{{5, N, 0}, {1, N, 0}});
-
-    // Tile 1
-    for ( idx_t ix = 1; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{0, ix, N}, {2, 0, N - ix}});
-    for ( idx_t iy = 0; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{0, N, iy}, {1, 0, iy}});
-
-    // Tile 2
-    for ( idx_t ix = 0; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{1, ix, N}, {2, ix, 0}});
-    for ( idx_t iy = 1; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{1, N, iy}, {3, N - iy, 0}});
-
-    // Tile 3
-    for ( idx_t ix = 1; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{2, ix, N}, {4, 0, N - ix}});
-    for ( idx_t iy = 0; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{2, N, iy}, {3, 0, iy}});
-
-    // Tile 4
-    for ( idx_t ix = 0; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{3, ix, N}, {4, ix, 0}});
-    for ( idx_t iy = 1; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{3, N, iy}, {5, N - iy, 0}});
-
-    // Tile 5
-    for ( idx_t ix = 1; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{4, ix, N}, {0, 0, N - ix}});
-    for ( idx_t iy = 0; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{4, N, iy}, {5, 0, iy}});
-
-    // Tile 6
-    for ( idx_t ix = 0; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{5, ix, N}, {0, ix, 0}});
-    for ( idx_t iy = 1; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{5, N, iy}, {1, N - iy, 0}});
+  // Number of nodes and cells.
+  const auto nNodesUnique  = nTiles * N * N + 2;
+  const auto nNodesAll     = nTiles * (N + 1) * (N + 1);
+  const auto nCells        = nTiles * N * N;
 
 
+  // Construct mesh cells.
+  auto& cells = mesh.cells();
+  cells.add(new mesh::temporary::Quadrilateral(), nCells);
+  auto cellRemoteIdxArr = array::make_indexview<idx_t, 1>(cells.remote_index());
+  auto cellGlobalIdxArr = array::make_view<gidx_t, 1>(cells.global_index());
+  auto cellPartArr      = array::make_view<int, 1>(cells.partition());
+  auto cellXyArr        = std::vector<PointXY>(static_cast<size_t>(nCells));
 
-    // -------------------------------------------------------------------------
-    // END FV3 SPECIFIC MAP
-    // -------------------------------------------------------------------------
+  // Set grid shaped arrays of cell local indices.
+  array::ArrayT<int> cellLocalIdxData(nTiles, N, N);
+  auto cellLocalIdxGrid = array::make_view<idx_t, 3>(cellLocalIdxData);
 
-    ATLAS_TRACE( "CubedSphereMeshGenerator::generate" );
-    Log::debug() << "Number of faces per tile edge = " << std::to_string( N ) << std::endl;
-
-    // Number of nodes
-    int nnodes     = nTiles * N * N + 2;              // Number of unique grid nodes
-    int nnodes_all = nTiles * ( N + 1 ) * ( N + 1 );  // Number of grid nodes including edge and corner duplicates
-    int ncells     = nTiles * N * N;                  // Number of unique grid cells
-
-    // Construct mesh nodes
-    // --------------------
-    mesh.nodes().resize( nnodes_all );
-    mesh::Nodes& nodes = mesh.nodes();
-    auto xy            = array::make_view<double, 2>( nodes.xy() );
-    auto lonlat        = array::make_view<double, 2>( nodes.lonlat() );
-    auto glb_idx       = array::make_view<gidx_t, 1>( nodes.global_index() );
-    auto remote_idx    = array::make_indexview<idx_t, 1>( nodes.remote_index() );
-    auto part          = array::make_view<int, 1>( nodes.partition() );
-    auto ghost         = array::make_view<int, 1>( nodes.ghost() );
-    auto flags         = array::make_view<int, 1>( nodes.flags() );
-
-    // Loop over entire grid
-    // ---------------------
-
-    // Node array will include duplicates of the grid points to make it easier to fill up the
-    // neighbours. However the mesh will not contain these points so no Ghost nodes are required.
-    // We could include the duplicate points in the array if we make them Ghost nodes but it is not
-    // clear if this provides any benefit.
-
-    array::ArrayT<int> NodeArrayT( nTiles, N + 1, N + 1 );  // All grid points including duplicates
-    auto NodeArray = array::make_view<int, 3>( NodeArrayT );
-
-    // Add owned nodes to node array
-    idx_t nOwned = 0;
-    auto addOwnedNode = [&](Tij tijOwned) {
-
-        // Set node array
-        NodeArray(tijOwned[0], tijOwned[1], tijOwned[2]) = nOwned;
-
-        // Get xy from global xy grid array
-        double xy_[3];
-        csgrid.xy( tijOwned[1], tijOwned[2], tijOwned[0], xy_ );
-
-        xy( nOwned, XX ) = xy_[XX];
-        xy( nOwned, YY ) = xy_[YY];
-
-        // Get lonlat from global lonlat array
-        double lonlat_[2];
-        csgrid.lonlat( tijOwned[1], tijOwned[2], tijOwned[0], lonlat_ );
-
-        lonlat( nOwned, LON ) = lonlat_[LON];
-        lonlat( nOwned, LAT ) = lonlat_[LAT];
-
-        // Is not ghost node
-        mesh::Nodes::Topology::reset(flags(nOwned));
-        ghost(nOwned) = 0;
-
-        glb_idx(nOwned) = nOwned + 1;
-        remote_idx(nOwned) = nOwned;
-        part(nOwned) = distribution.partition(nOwned);
-
-        ++nOwned;
-
-        return;
-    };
-
-    // Loop over owned (t, i, j)
-
-    for (auto& p : csgrid.tij()) addOwnedNode(Tij{p.t(), p.i(), p.j()});
-
-    // Assert that the correct number of nodes have been set
-    ATLAS_ASSERT( nnodes == nOwned, "Insufficient nodes" );
-
-    // Vector of ghost global index of each ghost point
-    auto ghostGblIdx = std::vector<idx_t>();
-    auto ownedGblIdx = std::vector<idx_t>();
-
-    // Add ghost nodes to node array
-    // (nGhost started after nOwned)
-    auto nGhost = nOwned;
-    auto addGhostNode = [&](Tij tijGhost, Tij tijOwned) {
-
-        // Get concrete node id
-        auto nOwned = NodeArray(tijOwned[0], tijOwned[1], tijOwned[2]);
-
-        // Add ghost node to NodeArray
-        NodeArray(tijGhost[0], tijGhost[1], tijGhost[2]) = nGhost;
-
-        // "Create" ghost xy coordinate.
-
-        // Get Jacobian of coords rtw indices
-        auto x0 = xy(NodeArray(tijGhost[0], 0, 0), XX);
-        auto y0 = xy(NodeArray(tijGhost[0], 0, 0), YY);
-
-        auto dx_di = xy(NodeArray(tijGhost[0], 1, 0), XX) - x0;
-        auto dx_dj = xy(NodeArray(tijGhost[0], 0, 1), XX) - x0;
-        auto dy_di = xy(NodeArray(tijGhost[0], 1, 0), YY) - y0;
-        auto dy_dj = xy(NodeArray(tijGhost[0], 0, 1), YY) - y0;
-
-        // Set xy coordinates
-        xy(nGhost, XX) = x0 + tijGhost[1] * dx_di + tijGhost[2] * dx_dj;
-        xy(nGhost, YY) = y0 + tijGhost[1] * dy_di + tijGhost[2] * dy_dj;
-
-        // Same lonlat as concrete points
-        lonlat(nGhost, LON) = lonlat( nOwned, LON);
-        lonlat(nGhost, LAT) = lonlat( nOwned, LAT);
-
-        // Is ghost node
-        mesh::Nodes::Topology::set(flags(nGhost), mesh::Nodes::Topology::GHOST);
-        ghost(nGhost) = 1;
-
-        // Partitioning logic to be added in future PR
-        glb_idx(nGhost) = nGhost + 1;
-        remote_idx(nGhost) = nGhost;
-
-        // not sure (below - for multiple PEs)
-        part(nGhost) = distribution.partition(nOwned);
-
-        // Append metadata
-        // Global indicies of ghost node and owned node
-        ghostGblIdx.push_back(nGhost + 1);
-        ownedGblIdx.push_back(nOwned + 1);
-
-        ++nGhost;
-
-    };
-
-    // Loop over ghost (t, i, j)
-    for (auto& pPair : ghostToOwnedTij) addGhostNode(pPair.first, pPair.second);
-
-
-    // Assert that the correct number of nodes have been set when duplicates are added
-    ATLAS_ASSERT( nnodes_all == nGhost, "Insufficient nodes" );
-
-    for ( idx_t it = 0; it < nTiles; it++ ) {
-        for ( idx_t ix = 0; ix < N + 1; ix++ ) {
-            for ( idx_t iy = 0; iy < N + 1; iy++ ) {
-                ATLAS_ASSERT( NodeArray( it, ix, iy ) != -9999, "Node Array Not Set Properly" );
-            }
-        }
+  // Loop over all cells and set local index
+  idx_t cellIdx = 0;
+  for (idx_t t = 0; t < nTiles; ++t) {
+    for (idx_t j = 0; j < N; ++j) {
+      for (idx_t i = 0; i < N; ++i) {
+        cellLocalIdxGrid(t, j, i) = cellIdx++;
+      }
     }
+  }
 
-    // Cells in mesh
-    mesh.cells().add( new mesh::temporary::Quadrilateral(), nTiles * N * N );
-    //int quad_begin  = mesh.cells().elements( 0 ).begin();
-    auto cells_part = array::make_view<int, 1>( mesh.cells().partition() );
-    auto cells_gidx = array::make_view<gidx_t, 1>( mesh.cells().global_index() );
-    auto cells_ridx = array::make_indexview<idx_t, 1>( mesh.cells().remote_index() );
-    atlas::mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
+  // Loop over grid points and set cell global index and xy
+  gidx_t gridIdx = 1;
+  auto tji = csGrid.tij().begin();
+  for (const auto& xy : csGrid.xy()) {
 
-    int icell = 0;
-    idx_t quad_nodes[4];
+      // Get local index.
+      const auto cellLocalIdx =
+        cellLocalIdxGrid((*tji).t(), (*tji).j(), (*tji).i());
+      ++tji;
 
-    for ( int it = 0; it < nTiles; it++ ) {
-        for ( int ix = 0; ix < N; ix++ ) {
-            for ( int iy = 0; iy < N; iy++ ) {
-                quad_nodes[0] = NodeArray( it, ix, iy );
-                quad_nodes[1] = NodeArray( it, ix + 1, iy );
-                quad_nodes[2] = NodeArray( it, ix + 1, iy + 1 );
-                quad_nodes[3] = NodeArray( it, ix, iy + 1 );
+      // Set cell-centroid xy.
+      cellXyArr[static_cast<size_t>(cellLocalIdx)] = xy;
 
-                node_connectivity.set( icell, quad_nodes );
-                cells_part( icell ) = part( quad_nodes[0] );
-                cells_gidx( icell ) = icell + 1;
-                cells_ridx( icell ) = icell;
+      // Set remote id to iLocal (all cells owned for now)
+      cellRemoteIdxArr(cellLocalIdx) = cellLocalIdx;
 
-                ++icell;
-            }
+      // Set partition using grid global index.
+      cellPartArr(cellLocalIdx) = 0 ;
+
+      // Set cell global index to grid global index.
+      cellGlobalIdxArr(cellLocalIdx) = gridIdx++;
+
+  }
+
+  // Construct mesh nodes.
+  auto& nodes = mesh.nodes();
+  nodes.resize(nNodesAll);
+  auto nodeRemoteIdxArr = array::make_view<idx_t, 1>(nodes.remote_index());
+  auto nodeGlobalIdxArr = array::make_view<gidx_t, 1>(nodes.global_index());
+  auto nodePartArr      = array::make_view<int, 1>(nodes.partition());
+  auto nodeLocalXyArr   = array::make_view<double, 2>(nodes.xy());
+  auto nodeLonLatArr    = array::make_view<double, 2>(nodes.lonlat());
+  auto nodeGhostArr     = array::make_view<int, 1>(nodes.ghost());
+  auto nodeFlagsArr     = array::make_view<int, 1>(nodes.flags());
+  auto nodeRemoteXyArr  = std::vector<PointXY>{};
+
+  // Set grid shaped array of node local indices.
+  array::ArrayT<int> nodeLocalIdxData(nTiles, N + 1, N + 1);
+  auto nodeLocalIdxGrid = array::make_view<idx_t, 3>(nodeLocalIdxData);
+
+  // Calculate Jacobian of xy wrt ij for each tile so that we can easily
+  // switch between the two.
+  struct Jacobian {
+    double dxByDi{};
+    double dxByDj{};
+    double dyByDi{};
+    double dyByDj{};
+    double diByDx{};
+    double diByDy{};
+    double djByDx{};
+    double djByDy{};
+    PointXY xy0{};
+  };
+
+  idx_t t = 0;
+  auto xyJacobians = std::vector<Jacobian>{};
+  std::generate_n(std::back_inserter(xyJacobians), nTiles, [&](){
+
+      // Initialise element.
+      auto jacElem = Jacobian{};
+
+      // Get cell indices.
+      const auto ij00 = static_cast<size_t>(cellLocalIdxGrid(t, 0, 0));
+      const auto ij10 = static_cast<size_t>(cellLocalIdxGrid(t, 0, 1));
+      const auto ij01 = static_cast<size_t>(cellLocalIdxGrid(t, 1, 0));
+
+      // Calculate Jacobian.
+      jacElem.dxByDi = cellXyArr[ij10].x() - cellXyArr[ij00].x();
+      jacElem.dxByDj = cellXyArr[ij01].x() - cellXyArr[ij00].x();
+      jacElem.dyByDi = cellXyArr[ij10].y() - cellXyArr[ij00].y();
+      jacElem.dyByDj = cellXyArr[ij01].y() - cellXyArr[ij00].y();
+
+      // Calculate inverse Jacobian.
+      const auto invDet =
+        1./(jacElem.dxByDi * jacElem.dyByDj - jacElem.dxByDj * jacElem.dyByDi);
+      jacElem.diByDx =  jacElem.dyByDj * invDet;
+      jacElem.diByDy = -jacElem.dxByDj * invDet;
+      jacElem.djByDx = -jacElem.dyByDi * invDet;
+      jacElem.djByDy =  jacElem.dxByDi * invDet;
+
+      // Extrapolate to get xy of node(t, 0, 0)
+      jacElem.xy0 = PointXY{
+        cellXyArr[ij00].x() - 0.5 * jacElem.dxByDi - 0.5 * jacElem.dxByDj,
+        cellXyArr[ij00].y() - 0.5 * jacElem.dyByDi - 0.5 * jacElem.dyByDj
+      };
+
+      ++t;
+      return jacElem;
+
+    });
+
+  // Initialise node connectivity.
+  auto& nodeConnectivity = mesh.cells().node_connectivity();
+
+  // Loop over cells and add nodes.
+  idx_t nodeLocalOwnedIdx = 0;
+  idx_t nodeLocalGhostIdx = nNodesUnique;
+  gidx_t nodeGlobalOwnedIdx = 1;
+  gidx_t nodeGlobalGhostIdx = nNodesUnique + 1;
+
+  for (idx_t t = 0; t < nTiles; ++t) {
+    for (idx_t jNode = 0; jNode < N + 1; ++jNode) {
+      for (idx_t iNode = 0; iNode < N + 1 ; ++iNode) {
+
+        // Get cell indices.
+        const auto iCell = std::max(0, iNode - 1);
+        const auto jCell = std::max(0, jNode - 1);
+        const auto cellLocalIdx = cellLocalIdxGrid(t, jCell, iCell);
+
+        // Get cell centre.
+        const auto x0 = cellXyArr[static_cast<size_t>(cellLocalIdx)].x();
+        const auto y0 = cellXyArr[static_cast<size_t>(cellLocalIdx)].y();
+
+        // Extrapolate node xy from cell centre.
+        const auto di = iNode - iCell - 0.5;
+        const auto dj = jNode - jCell - 0.5;
+        const auto nodeLocalXy = PointXY{
+          x0 + di * xyJacobians[static_cast<size_t>(t)].dxByDi
+             + dj * xyJacobians[static_cast<size_t>(t)].dxByDj,
+          y0 + di * xyJacobians[static_cast<size_t>(t)].dyByDi
+             + dj * xyJacobians[static_cast<size_t>(t)].dyByDj
+        };
+
+        // Use tile class to convert extrapolated xy to true xy.
+        const auto nodeRemoteXy = gridTiles.tileCubePeriodicity(nodeLocalXy, t);
+
+        // Node is owned if nodeRemoteXy and nodeLocalXy are on same tile.
+        idx_t nodeLocalIdx{};
+        if (gridTiles.tileFromXY(nodeRemoteXy.data()) == t) {
+
+          // Owned node.
+
+          // Get local node index.
+          nodeLocalIdx = nodeLocalOwnedIdx++;
+
+          // Set flags
+          mesh::Nodes::Topology::reset(nodeFlagsArr(nodeLocalIdx));
+          nodeGhostArr(nodeLocalIdx) = 0;
+
+          // Set global index
+          nodeGlobalIdxArr(nodeLocalIdx) = nodeGlobalOwnedIdx++;
+
+          // Set remote id to local index (all node owned for now).
+          nodeRemoteIdxArr(nodeLocalIdx) = nodeLocalIdx;
+
+          // Set partition to cell part
+          nodePartArr(nodeLocalIdx) = cellPartArr(cellLocalIdx);
+
+        } else {
+
+          // Ghost node.
+
+          // Get local node index.
+          nodeLocalIdx = nodeLocalGhostIdx++;
+
+          // Set flags.
+          mesh::Nodes::Topology::set(nodeFlagsArr(nodeLocalIdx),
+            mesh::Nodes::Topology::GHOST);
+          nodeGhostArr(nodeLocalIdx) = 1;
+
+          // Set global index (ghost points have unique global index).
+          nodeGlobalIdxArr(nodeLocalIdx) = nodeGlobalGhostIdx++;
+
+          // Need to work this out once we've populated rest of mesh.
+          nodeRemoteIdxArr(nodeLocalIdx) = -1;
+
+          // Need to work this out once we've populated rest of mesh.
+          nodePartArr(nodeLocalIdx) = -1;
+
+          // Keep track of remote xy.
+          nodeRemoteXyArr.push_back(nodeRemoteXy);
+
         }
+
+        // Set xy
+        nodeLocalXyArr(nodeLocalIdx, XX) = nodeLocalXy.x();
+        nodeLocalXyArr(nodeLocalIdx, YY) = nodeLocalXy.y();
+
+        // Set node lon and lat.
+        const PointLonLat lonLat = csGrid.projection().lonlat(nodeRemoteXy);
+        nodeLonLatArr(nodeLocalIdx, LON) = lonLat.lon();
+        nodeLonLatArr(nodeLocalIdx, LAT) = lonLat.lat();
+
+        // Update local node grid.
+        nodeLocalIdxGrid(t, jNode, iNode) = nodeLocalIdx;
+
+        // Node layout relative to cell.
+        //
+        //  ^  N3 - N2
+        //  ^  |  C  |
+        //  j  N0 - N1
+        //      i > >
+        //
+        // C: Cell
+        // N0, N1, N2, N3: Nodes
+        if (iNode > 0 && jNode > 0) {
+
+          // Get nodes of quadrilateral cell.
+          const auto quadNodes = std::array<idx_t, 4> {
+            nodeLocalIdxGrid(t, jNode - 1, iNode - 1),
+            nodeLocalIdxGrid(t, jNode - 1, iNode    ),
+            nodeLocalIdxGrid(t, jNode    , iNode    ),
+            nodeLocalIdxGrid(t, jNode    , iNode - 1)
+          };
+
+          // Set node connectivity.
+          nodeConnectivity.set(cellLocalIdx, quadNodes.data());
+        }
+
+      }
     }
+  }
 
-    // Assertion that correct number of cells are set
-    ATLAS_ASSERT( ncells == icell, "Insufficient cells have been set" );
+  // Set remote indices of ghost points.
+  auto nodeRemoteXyIt = nodeRemoteXyArr.begin();
+  for (idx_t nodeLocalIdx = nNodesUnique;
+    nodeLocalIdx < nNodesAll; ++nodeLocalIdx) {
 
-    // Parallel
-    generateGlobalElementNumbering( mesh );
-    nodes.metadata().set( "parallel", true );
+    // Get remote xy
+    const auto nodeRemoteXy = *nodeRemoteXyIt++;
 
-    // Global indices of ghost nodes.
-    nodes.metadata().set( "ghost-global-idx", ghostGblIdx);
+    // Get remote t
+    const auto t = static_cast<size_t>(
+      gridTiles.tileFromXY(nodeRemoteXy.data()));
 
-    // Global indices of owned nodes for each ghost node (same order as above)
-    nodes.metadata().set( "owned-global-idx", ownedGblIdx);
+    // Get remote i and j
+    const auto dx = nodeRemoteXy.x() - xyJacobians[t].xy0.x();
+    const auto dy = nodeRemoteXy.y() - xyJacobians[t].xy0.y();
+
+    // Round to deal with potential floating point error.
+    const auto i = static_cast<idx_t>(
+      std::round(dx * xyJacobians[t].diByDx + dy * xyJacobians[t].diByDy));
+    const auto j = static_cast<idx_t>(
+      std::round(dx * xyJacobians[t].djByDx + dy * xyJacobians[t].djByDy));
+
+    // Set remote index and partition.
+    const auto nodeRemoteIdx = nodeLocalIdxGrid(t, j, i);
+    nodeRemoteIdxArr(nodeLocalIdx) = nodeRemoteIdx;
+    nodePartArr(nodeLocalIdx) = nodePartArr(nodeRemoteIdx);
+
+  }
+
+  nodes.metadata().set( "parallel", true );
+
+  // check that node counts are correct
+  ATLAS_ASSERT(nodeLocalOwnedIdx = nNodesUnique);
+  ATLAS_ASSERT(nodeLocalGhostIdx = nNodesAll);
+
+  return;
 }
 
 // -------------------------------------------------------------------------------------------------
 
-void CubedSphereMeshGenerator::hash( eckit::Hash& h ) const {
-    h.add( "CubedSphereMeshGenerator" );
-    options.hash( h );
+void CubedSphereMeshGenerator::hash(eckit::Hash& h) const {
+    h.add("CubedSphereMeshGenerator");
+    options.hash(h);
 }
 
 // -------------------------------------------------------------------------------------------------
 
 namespace {
 static MeshGeneratorBuilder<CubedSphereMeshGenerator> CubedSphereMeshGenerator(
-        CubedSphereMeshGenerator::static_type() );
+        CubedSphereMeshGenerator::static_type());
 }
 
 // -------------------------------------------------------------------------------------------------

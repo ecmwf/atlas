@@ -77,6 +77,8 @@ protected:
 
     FunctionSpace source_;
     FunctionSpace target_;
+
+    bool treat_failure_as_missing_value_{true};
 };
 
 }  // namespace method
