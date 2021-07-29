@@ -7,12 +7,14 @@
 
 #include "atlas/array/MakeView.h"
 #include "atlas/functionspace/NodeColumns.h"
+#include "atlas/field/FieldSet.h"
 #include "atlas/grid.h"
+#include "atlas/grid/Tiles.h"
 #include "atlas/mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
-#include "atlas/grid/Tiles.h"
 #include "atlas/option.h"
+#include "atlas/util/CoordinateEnums.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -47,7 +49,7 @@ namespace atlas {
       // Set grid.
       const auto grid = atlas::Grid("CS-EA-L-2");
 
-      atlas::Log::info() << grid->type() << std::endl;
+      atlas::Log::info() << grid.name() << std::endl;
       atlas::Log::info() << grid.size() << std::endl;
 
 
@@ -101,25 +103,35 @@ namespace atlas {
       // Set grid.
       const auto grid = atlas::Grid("CS-LFR-C-6");
 
-      atlas::Log::info() << grid->type() << std::endl;
+      atlas::Log::info() << grid.name() << std::endl;
       atlas::Log::info() << grid.size() << std::endl;
 
 
       // Set mesh.
       auto meshGen = atlas::MeshGenerator("cubedsphere");
-      auto mesh = meshGen.generate(grid);
+      const auto mesh = meshGen.generate(grid);
 
       // Set functionspace
       auto functionSpace = atlas::functionspace::NodeColumns(mesh);
 
-      // Set field
-      auto field = functionSpace.ghost();
+      // Set fields
+
+      auto fieldSet = FieldSet{};
+      fieldSet.add(mesh.nodes().global_index());
+      fieldSet.add(mesh.nodes().remote_index());
+      fieldSet.add(mesh.nodes().xy());
+      fieldSet.add(mesh.nodes().lonlat());
+      fieldSet.add(mesh.nodes().ghost());
+      fieldSet.add(mesh.nodes().partition());
+
+      // Visually inspect the fields.
+      // remote indices should be equal at tile boundaries.
 
 
       // Set gmsh config.
-      auto gmshConfigXy = atlas::util::Config("coordinates", "xy") | atlas::util::Config("ghost", false);
-      auto gmshConfigXyz = atlas::util::Config("coordinates", "xyz") | atlas::util::Config("ghost", false);
-      auto gmshConfigLonLat = atlas::util::Config("coordinates", "lonlat") | atlas::util::Config("ghost", false);
+      auto gmshConfigXy = atlas::util::Config("coordinates", "xy");
+      auto gmshConfigXyz = atlas::util::Config("coordinates", "xyz");
+      auto gmshConfigLonLat = atlas::util::Config("coordinates", "lonlat");
 
       // Set source gmsh object.
       const auto gmshXy =
@@ -131,11 +143,24 @@ namespace atlas {
 
       // Write gmsh.
       gmshXy.write(mesh);
-      gmshXy.write(field);
+      gmshXy.write(fieldSet);
       gmshXyz.write(mesh);
-      gmshXyz.write(field);
+      gmshXyz.write(fieldSet);
       gmshLonLat.write(mesh);
-      gmshLonLat.write(field);
+      gmshLonLat.write(fieldSet);
+
+
+      // Check that node positions match those of equivalent nodal grid.
+      const auto nodeGrid = atlas::Grid("CS-LFR-L-6");
+      const auto viewNodesXy = array::make_view<double, 2>(mesh.nodes().xy());
+
+      idx_t iNode = 0;
+      for (auto& xy : nodeGrid.xy()) {
+
+          is_approximately_equal(xy.x(), viewNodesXy(iNode, XX), 1e-12);
+          is_approximately_equal(xy.y(), viewNodesXy(iNode, YY), 1e-12);
+          ++iNode;
+        }
 
 
     }

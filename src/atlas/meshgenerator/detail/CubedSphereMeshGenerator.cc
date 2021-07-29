@@ -59,14 +59,12 @@ void CubedSphereMeshGenerator::generate(const Grid& grid, Mesh& mesh) const {
   ATLAS_ASSERT(!mesh.generated());
   if (!CubedSphereGrid(grid)) {
     throw_Exception("CubedSphereMeshGenerator can only work "
-      "with a cubedsphere grid", Here());
+      "with a cubedsphere grid.", Here());
   }
 
   // Check for proper stagger
-  const auto gridType = grid.name();
-
-  std::cout << gridType << std::endl;
-  const auto gridStagger = gridType.substr(gridType.rfind("-") - 1, 1);
+  const auto gridName = grid.name();
+  const auto gridStagger = gridName.substr(gridName.rfind("-") - 1, 1);
 
 
   if (gridStagger != "C") {
@@ -87,207 +85,230 @@ void CubedSphereMeshGenerator::generate(const Grid& grid, Mesh& mesh) const {
 void CubedSphereMeshGenerator::generate(const Grid& grid, const grid::Distribution& distribution, Mesh& mesh) const {
   const auto csGrid = CubedSphereGrid(grid);
 
-  std::cout << "set dimensions" << std::endl;
-
   // Get dimensions of grid
-  const int N      = csGrid.N();
-  const int nTiles = csGrid.GetNTiles();
-
-  // Set projection and tiles.
-
-  std::cout << "get tiles" << std::endl;
-  auto gridTiles = CubedSphereTiles(util::Config("type", "cubedsphere_lfric"));
+  const auto N      = csGrid.N();
+  const auto nTiles = csGrid.GetNTiles();
 
   ATLAS_TRACE("CubedSphereMeshGenerator::generate");
-  Log::debug() << "Number of faces per tile edge = " << std::to_string(N) << std::endl;
+  Log::debug() << "Number of cells per tile edge = " << std::to_string(N) << std::endl;
+
+  // Set tiles.
+  // TODO: this needs to be replaced with regular expression matching.
+  auto gridTiles = CubedSphereTiles(util::Config("type", "cubedsphere_lfric"));
 
   // Number of nodes and cells.
-  const int nNodesUnique  = nTiles * N * N + 2;
-  const int nNodesAll     = nTiles * (N + 1) * (N + 1);
-  const int nCells        = nTiles * N * N;
+  const auto nNodesUnique  = nTiles * N * N + 2;
+  const auto nNodesAll     = nTiles * (N + 1) * (N + 1);
+  const auto nCells        = nTiles * N * N;
 
-  std::cout << "construct cells" << std::endl;
 
   // Construct mesh cells.
   auto& cells = mesh.cells();
   cells.add(new mesh::temporary::Quadrilateral(), nCells);
-
-  std::cout << "added quads" << std::endl;
-
-  auto cellRemoteIdx = array::make_indexview<idx_t, 1>(cells.remote_index());
-  auto cellGlobalIdx = array::make_view<gidx_t, 1>(cells.global_index());
-  auto cellPart      = array::make_view<int, 1>(cells.partition());
-
-  std::cout << "pointed views" << std::endl;
-
-  auto cellXY        = std::vector<PointXY>(static_cast<size_t>(nCells));
-
-   std::cout << "made vectors" << std::endl;
+  auto cellRemoteIdxArr = array::make_indexview<idx_t, 1>(cells.remote_index());
+  auto cellGlobalIdxArr = array::make_view<gidx_t, 1>(cells.global_index());
+  auto cellPartArr      = array::make_view<int, 1>(cells.partition());
+  auto cellXyArr        = std::vector<PointXY>(static_cast<size_t>(nCells));
 
   // Set grid shaped arrays of cell local indices.
   array::ArrayT<int> cellLocalIdxData(nTiles, N, N);
-  auto cellLocalIdx = array::make_view<int, 3>(cellLocalIdxData);
-
-
-  std::cout << "populate cells" << std::endl;
+  auto cellLocalIdxGrid = array::make_view<idx_t, 3>(cellLocalIdxData);
 
   // Loop over all cells and set local index
-  int iCell = 0;
+  idx_t cellIdx = 0;
   for (idx_t t = 0; t < nTiles; ++t) {
     for (idx_t j = 0; j < N; ++j) {
       for (idx_t i = 0; i < N; ++i) {
-        cellLocalIdx(t, j, i) = iCell++;
+        cellLocalIdxGrid(t, j, i) = cellIdx++;
       }
     }
   }
 
   // Loop over grid points and set cell global index and xy
-  gidx_t iGrid = 1;
+  gidx_t gridIdx = 1;
   auto tji = csGrid.tij().begin();
   for (const auto& xy : csGrid.xy()) {
 
-      // Get t, j, i.
-      const auto t = (*tji).t(), j = (*tji).j(), i = (*tji).i();
+      // Get local index.
+      const auto cellLocalIdx =
+        cellLocalIdxGrid((*tji).t(), (*tji).j(), (*tji).i());
       ++tji;
 
-      // Get local index.
-      const auto iCellLocal = cellLocalIdx(t, j, i);
-
       // Set cell-centroid xy.
-      cellXY[static_cast<size_t>(iCellLocal)] = xy;
+      cellXyArr[static_cast<size_t>(cellLocalIdx)] = xy;
 
       // Set remote id to iLocal (all cells owned for now)
-      cellRemoteIdx(iCellLocal) = iCellLocal;
+      cellRemoteIdxArr(cellLocalIdx) = cellLocalIdx;
 
       // Set partition using grid global index.
-      cellPart(iCellLocal) = 0 ;
+      cellPartArr(cellLocalIdx) = 0 ;
 
       // Set cell global index to grid global index.
-      cellGlobalIdx(iCellLocal) = iGrid++;
+      cellGlobalIdxArr(cellLocalIdx) = gridIdx++;
 
   }
 
-  std::cout << "construct nodes" << std::endl;
   // Construct mesh nodes.
   auto& nodes = mesh.nodes();
   nodes.resize(nNodesAll);
-
-  auto nodeRemoteIdx = array::make_indexview<idx_t, 1>(nodes.remote_index());
-  auto nodeGlobalIdx = array::make_view<gidx_t, 1>(nodes.global_index());
-  auto nodePart      = array::make_view<int, 1>(nodes.partition());
-  auto nodeXY        = array::make_view<double, 2>(nodes.xy());
-  auto nodeLonLat    = array::make_view<double, 2>(nodes.lonlat());
-  auto nodeGhost     = array::make_view<int, 1>(nodes.ghost());
-  auto nodeFlags     = array::make_view<int, 1>(nodes.flags());
+  auto nodeRemoteIdxArr = array::make_view<idx_t, 1>(nodes.remote_index());
+  auto nodeGlobalIdxArr = array::make_view<gidx_t, 1>(nodes.global_index());
+  auto nodePartArr      = array::make_view<int, 1>(nodes.partition());
+  auto nodeLocalXyArr   = array::make_view<double, 2>(nodes.xy());
+  auto nodeLonLatArr    = array::make_view<double, 2>(nodes.lonlat());
+  auto nodeGhostArr     = array::make_view<int, 1>(nodes.ghost());
+  auto nodeFlagsArr     = array::make_view<int, 1>(nodes.flags());
+  auto nodeRemoteXyArr  = std::vector<PointXY>{};
 
   // Set grid shaped array of node local indices.
   array::ArrayT<int> nodeLocalIdxData(nTiles, N + 1, N + 1);
-  auto nodeLocalIdx = array::make_view<int, 3>(nodeLocalIdxData);
+  auto nodeLocalIdxGrid = array::make_view<idx_t, 3>(nodeLocalIdxData);
 
+  // Calculate Jacobian of xy wrt ij for each tile so that we can easily
+  // switch between the two.
+  struct Jacobian {
+    double dxByDi{};
+    double dxByDj{};
+    double dyByDi{};
+    double dyByDj{};
+    double diByDx{};
+    double diByDy{};
+    double djByDx{};
+    double djByDy{};
+    PointXY xy0{};
+  };
+
+  idx_t t = 0;
+  auto xyJacobians = std::vector<Jacobian>{};
+  std::generate_n(std::back_inserter(xyJacobians), nTiles, [&](){
+
+      // Initialise element.
+      auto jacElem = Jacobian{};
+
+      // Get cell indices.
+      const auto ij00 = static_cast<size_t>(cellLocalIdxGrid(t, 0, 0));
+      const auto ij10 = static_cast<size_t>(cellLocalIdxGrid(t, 0, 1));
+      const auto ij01 = static_cast<size_t>(cellLocalIdxGrid(t, 1, 0));
+
+      // Calculate Jacobian.
+      jacElem.dxByDi = cellXyArr[ij10].x() - cellXyArr[ij00].x();
+      jacElem.dxByDj = cellXyArr[ij01].x() - cellXyArr[ij00].x();
+      jacElem.dyByDi = cellXyArr[ij10].y() - cellXyArr[ij00].y();
+      jacElem.dyByDj = cellXyArr[ij01].y() - cellXyArr[ij00].y();
+
+      // Calculate inverse Jacobian.
+      const auto invDet =
+        1./(jacElem.dxByDi * jacElem.dyByDj - jacElem.dxByDj * jacElem.dyByDi);
+      jacElem.diByDx =  jacElem.dyByDj * invDet;
+      jacElem.diByDy = -jacElem.dxByDj * invDet;
+      jacElem.djByDx = -jacElem.dyByDi * invDet;
+      jacElem.djByDy =  jacElem.dxByDi * invDet;
+
+      // Extrapolate to get xy of node(t, 0, 0)
+      jacElem.xy0 = PointXY{
+        cellXyArr[ij00].x() - 0.5 * jacElem.dxByDi - 0.5 * jacElem.dxByDj,
+        cellXyArr[ij00].y() - 0.5 * jacElem.dyByDi - 0.5 * jacElem.dyByDj
+      };
+
+      ++t;
+      return jacElem;
+
+    });
 
   // Initialise node connectivity.
   auto& nodeConnectivity = mesh.cells().node_connectivity();
 
-  std::cout << "populate nodes" << std::endl;
-
   // Loop over cells and add nodes.
-  idx_t iNodeLocalOwned = 0;
-  idx_t iNodeLocalGhost = nNodesUnique;
-  gidx_t iNodeGlobalOwned = 1;
-  gidx_t iNodeGlobalGhost = nNodesUnique + 1;
-
+  idx_t nodeLocalOwnedIdx = 0;
+  idx_t nodeLocalGhostIdx = nNodesUnique;
+  gidx_t nodeGlobalOwnedIdx = 1;
+  gidx_t nodeGlobalGhostIdx = nNodesUnique + 1;
 
   for (idx_t t = 0; t < nTiles; ++t) {
+    for (idx_t jNode = 0; jNode < N + 1; ++jNode) {
+      for (idx_t iNode = 0; iNode < N + 1 ; ++iNode) {
 
-    // Calc coordinate xy Jacobian wrt ij (this belongs in tile/grid class).
-    const auto i0_j0 = static_cast<size_t>(cellLocalIdx(t, 0, 0));
-    const auto i1_j0 = static_cast<size_t>(cellLocalIdx(t, 0, 1));
-    const auto i0_j1 = static_cast<size_t>(cellLocalIdx(t, 1, 0));
+        // Get cell indices.
+        const auto iCell = std::max(0, iNode - 1);
+        const auto jCell = std::max(0, jNode - 1);
+        const auto cellLocalIdx = cellLocalIdxGrid(t, jCell, iCell);
 
-    const auto dx_di = cellXY[i1_j0].x() - cellXY[i0_j0].x();
-    const auto dx_dj = cellXY[i0_j1].x() - cellXY[i0_j0].x();
-    const auto dy_di = cellXY[i1_j0].y() - cellXY[i0_j0].y();
-    const auto dy_dj = cellXY[i0_j1].y() - cellXY[i0_j0].y();
+        // Get cell centre.
+        const auto x0 = cellXyArr[static_cast<size_t>(cellLocalIdx)].x();
+        const auto y0 = cellXyArr[static_cast<size_t>(cellLocalIdx)].y();
 
-    std:: cout << t << " dx_di " << dx_di << std::endl;
-    std:: cout << t << " dx_dj " << dx_dj << std::endl;
-    std:: cout << t << " dy_di " << dy_di << std::endl;
-    std:: cout << t << " dy_dj " << dy_dj << std::endl << std::endl;
-
-    for (idx_t j = 0; j < N; ++j) {
-      for (idx_t i = 0; i < N; ++i) {
-
-        auto addNode = [&](const idx_t iCellLocal,
-          const double di, const double dj) {
-
-          // Get cell centre.
-          const auto x0 = cellXY[static_cast<size_t>(iCellLocal)].x();
-          const auto y0 = cellXY[static_cast<size_t>(iCellLocal)].y();
-
-          // Set node position.
-          const auto apparentXY = PointXY{
-            x0 + di * dx_di + dj * dx_dj,
-            y0 + di * dy_di + dj * dy_dj
-          };
-
-          // Use tile class to convert apparent XY to true XY.
-          const auto trueXY = gridTiles.tileCubePeriodicity(apparentXY, t);
-
-          //std::cout << apparentXY << std::endl;
-          //std::cout << trueXY << std::endl;
-
-          // Node is owned if trueXY = apparentXY. Otherwise, ghost.
-          idx_t iNodeLocal = -1;
-
-          if (gridTiles.tileFromXY(trueXY.data()) == t) {
-
-            iNodeLocal = iNodeLocalOwned++;
-
-            mesh::Nodes::Topology::reset(nodeFlags(iNodeLocal));
-            nodeGhost(iNodeLocal) = 0;
-            nodeGlobalIdx(iNodeLocal) = iNodeGlobalOwned++;
-
-          } else {
-
-            iNodeLocal = iNodeLocalGhost++;
-
-            mesh::Nodes::Topology::set(nodeFlags(iNodeLocal),
-              mesh::Nodes::Topology::GHOST);
-            nodeGhost(iNodeLocal) = 1;
-            nodeGlobalIdx(iNodeLocal) = iNodeGlobalGhost++;
-          }
-
-          // Set xy
-          nodeXY(iNodeLocal, XX) = apparentXY.x();
-          nodeXY(iNodeLocal, YY) = apparentXY.y();
-
-
-          // Set node lon and lat.
-          const PointLonLat lonLat = csGrid.projection().lonlat(trueXY);
-          nodeLonLat(iNodeLocal, LON) = lonLat.lon();
-          nodeLonLat(iNodeLocal, LAT) = lonLat.lat();
-
-
-          const auto checkXY = csGrid.projection().xy(lonLat);
-
-          ATLAS_ASSERT(checkXY == trueXY, "lonlat and xy do not match" );
-
-          // Set remote id to local index (all node owned for now).
-          nodeRemoteIdx(iNodeLocal) = iNodeLocal;
-
-          // Set partition to zero (for now).
-          nodePart(iNodeLocal) = 0;
-
-          // Update local node grid.
-          nodeLocalIdx(t, j + static_cast<idx_t>(dj + 0.5),
-            i + static_cast<idx_t>(di + 0.5)) = iNodeLocal;
-          //std::cout << t << " " << j + static_cast<idx_t>(dj + 0.5) << " " << i + static_cast<idx_t>(di + 0.5) << std::endl;
-          //std::cout << std::endl;
-
-
-          return;
+        // Extrapolate node xy from cell centre.
+        const auto di = iNode - iCell - 0.5;
+        const auto dj = jNode - jCell - 0.5;
+        const auto nodeLocalXy = PointXY{
+          x0 + di * xyJacobians[static_cast<size_t>(t)].dxByDi
+             + dj * xyJacobians[static_cast<size_t>(t)].dxByDj,
+          y0 + di * xyJacobians[static_cast<size_t>(t)].dyByDi
+             + dj * xyJacobians[static_cast<size_t>(t)].dyByDj
         };
 
+        // Use tile class to convert extrapolated xy to true xy.
+        const auto nodeRemoteXy = gridTiles.tileCubePeriodicity(nodeLocalXy, t);
+
+        // Node is owned if nodeRemoteXy and nodeLocalXy are on same tile.
+        idx_t nodeLocalIdx{};
+        if (gridTiles.tileFromXY(nodeRemoteXy.data()) == t) {
+
+          // Owned node.
+
+          // Get local node index.
+          nodeLocalIdx = nodeLocalOwnedIdx++;
+
+          // Set flags
+          mesh::Nodes::Topology::reset(nodeFlagsArr(nodeLocalIdx));
+          nodeGhostArr(nodeLocalIdx) = 0;
+
+          // Set global index
+          nodeGlobalIdxArr(nodeLocalIdx) = nodeGlobalOwnedIdx++;
+
+          // Set remote id to local index (all node owned for now).
+          nodeRemoteIdxArr(nodeLocalIdx) = nodeLocalIdx;
+
+          // Set partition to cell part
+          nodePartArr(nodeLocalIdx) = cellPartArr(cellLocalIdx);
+
+        } else {
+
+          // Ghost node.
+
+          // Get local node index.
+          nodeLocalIdx = nodeLocalGhostIdx++;
+
+          // Set flags.
+          mesh::Nodes::Topology::set(nodeFlagsArr(nodeLocalIdx),
+            mesh::Nodes::Topology::GHOST);
+          nodeGhostArr(nodeLocalIdx) = 1;
+
+          // Set global index (ghost points have unique global index).
+          nodeGlobalIdxArr(nodeLocalIdx) = nodeGlobalGhostIdx++;
+
+          // Need to work this out once we've populated rest of mesh.
+          nodeRemoteIdxArr(nodeLocalIdx) = -1;
+
+          // Need to work this out once we've populated rest of mesh.
+          nodePartArr(nodeLocalIdx) = -1;
+
+          // Keep track of remote xy.
+          nodeRemoteXyArr.push_back(nodeRemoteXy);
+
+        }
+
+        // Set xy
+        nodeLocalXyArr(nodeLocalIdx, XX) = nodeLocalXy.x();
+        nodeLocalXyArr(nodeLocalIdx, YY) = nodeLocalXy.y();
+
+        // Set node lon and lat.
+        const PointLonLat lonLat = csGrid.projection().lonlat(nodeRemoteXy);
+        nodeLonLatArr(nodeLocalIdx, LON) = lonLat.lon();
+        nodeLonLatArr(nodeLocalIdx, LAT) = lonLat.lat();
+
+        // Update local node grid.
+        nodeLocalIdxGrid(t, jNode, iNode) = nodeLocalIdx;
 
         // Node layout relative to cell.
         //
@@ -298,42 +319,58 @@ void CubedSphereMeshGenerator::generate(const Grid& grid, const grid::Distributi
         //
         // C: Cell
         // N0, N1, N2, N3: Nodes
+        if (iNode > 0 && jNode > 0) {
 
-        // Get cell.
-        const auto iCellLocal = cellLocalIdx(t, j, i);
+          // Get nodes of quadrilateral cell.
+          const auto quadNodes = std::array<idx_t, 4> {
+            nodeLocalIdxGrid(t, jNode - 1, iNode - 1),
+            nodeLocalIdxGrid(t, jNode - 1, iNode    ),
+            nodeLocalIdxGrid(t, jNode    , iNode    ),
+            nodeLocalIdxGrid(t, jNode    , iNode - 1)
+          };
 
-        // Every cell sets top right node.
-        addNode(iCellLocal, 0.5, 0.5);
-
-        // i == 0 cells set top left node.
-        if (i == 0) addNode(iCellLocal, -0.5, 0.5);
-
-        // j == 0 cells set bottom right node.
-        if (j == 0) addNode(iCellLocal, 0.5, -0.5);
-
-        // i == 0 and j == 0 cell sets bottom left node.
-        if (i == 0 && j == 0) addNode(iCellLocal, -0.5, -0.5);
-
-
-        // Get list of nodes for cell
-        const auto iNodes = std::array<idx_t, 4> {
-          nodeLocalIdx(t, j, i),
-          nodeLocalIdx(t, j, i + 1),
-          nodeLocalIdx(t, j + 1, i + 1),
-          nodeLocalIdx(t, j + 1, i)
-        };
-
-        // Set node connectivity.
-        nodeConnectivity.set(iCellLocal, iNodes.data());
+          // Set node connectivity.
+          nodeConnectivity.set(cellLocalIdx, quadNodes.data());
+        }
 
       }
     }
   }
 
-  std::cout << "meshgen done" << std::endl;
-  std::cout << iNodeLocalOwned << " " << iNodeLocalGhost << std::endl;
-  std::cout << nNodesUnique << " " << nNodesAll << std::endl;
+  // Set remote indices of ghost points.
+  auto nodeRemoteXyIt = nodeRemoteXyArr.begin();
+  for (idx_t nodeLocalIdx = nNodesUnique;
+    nodeLocalIdx < nNodesAll; ++nodeLocalIdx) {
 
+    // Get remote xy
+    const auto nodeRemoteXy = *nodeRemoteXyIt++;
+
+    // Get remote t
+    const auto t = static_cast<size_t>(
+      gridTiles.tileFromXY(nodeRemoteXy.data()));
+
+    // Get remote i and j
+    const auto dx = nodeRemoteXy.x() - xyJacobians[t].xy0.x();
+    const auto dy = nodeRemoteXy.y() - xyJacobians[t].xy0.y();
+
+    // Round to deal with potential floating point error.
+    const auto i = static_cast<idx_t>(
+      std::round(dx * xyJacobians[t].diByDx + dy * xyJacobians[t].diByDy));
+    const auto j = static_cast<idx_t>(
+      std::round(dx * xyJacobians[t].djByDx + dy * xyJacobians[t].djByDy));
+
+    // Set remote index and partition.
+    const auto nodeRemoteIdx = nodeLocalIdxGrid(t, j, i);
+    nodeRemoteIdxArr(nodeLocalIdx) = nodeRemoteIdx;
+    nodePartArr(nodeLocalIdx) = nodePartArr(nodeRemoteIdx);
+
+  }
+
+  nodes.metadata().set( "parallel", true );
+
+  // check that node counts are correct
+  ATLAS_ASSERT(nodeLocalOwnedIdx = nNodesUnique);
+  ATLAS_ASSERT(nodeLocalGhostIdx = nNodesAll);
 
   return;
 }
