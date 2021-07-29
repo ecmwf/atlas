@@ -247,7 +247,7 @@ void CubedSphereMeshGenerator::generate(const Grid& grid, const grid::Distributi
              + dj * xyJacobians[static_cast<size_t>(t)].dyByDj
         };
 
-        // Use tile class to convert extrapolated xy to true xy.
+        // Use tile class to convert local xy to remote xy.
         const auto nodeRemoteXy = gridTiles.tileCubePeriodicity(nodeLocalXy, t);
 
         // Node is owned if nodeRemoteXy and nodeLocalXy are on same tile.
