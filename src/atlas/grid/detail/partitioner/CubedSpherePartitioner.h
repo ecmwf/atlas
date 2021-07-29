@@ -43,13 +43,10 @@ public:
         int n;
     };
 
-    virtual std::string type() const { return "cubedsphere"; }
-
-private:
     struct CubedSphere {
         std::array<atlas::idx_t, 6> nproc;
-        std::array<atlas::idx_t, 6> nprocx;  // number of PEs in the x direction of xy space on each tile.
-        std::array<atlas::idx_t, 6> nprocy;  // number of PEs in the y direction of xy space on each tile.
+        std::array<atlas::idx_t, 6> nprocx{1,1,1,1,1,1};  // number of PEs in the x direction of xy space on each tile.
+        std::array<atlas::idx_t, 6> nprocy{1,1,1,1,1,1};  // number of PEs in the y direction of xy space on each tile.
         std::array<atlas::idx_t, 6> globalProcStartPE; // lowest global mpi rank on each tile;
         std::array<atlas::idx_t, 6> globalProcEndPE; // final global mpi rank on each tile;
                    // note that mpi ranks on each tile are vary contiguously from globalProcStartPE to
@@ -57,6 +54,11 @@ private:
 
         std::array<atlas::idx_t, 6> nx;
         std::array<atlas::idx_t, 6> ny; // grid dimensions on each tile - for all cell-centered grids they will be same.
+
+        // these are the offsets in the x and y directions
+        // they are allocated in "void partition(CubedSphere& cb, int nb_nodes, NodeInt nodes[], int part[] );"
+        std::vector<std::vector<atlas::idx_t>> xoffset;
+        std::vector<std::vector<atlas::idx_t>> yoffset;
 
         // the two variables below are for now the main options
         // in the future this will be extended
@@ -67,9 +69,13 @@ private:
 
     CubedSphere cubedsphere( const Grid& ) const;
 
-    // Doesn't matter if nodes[] is in degrees or radians, as a sorting
-    // algorithm is used internally
-    void partition( const CubedSphere& cb, int nb_nodes, NodeInt nodes[], int part[] ) const;
+    void partition(CubedSphere& cb, const int nb_nodes, const NodeInt nodes[], int part[] ) const;
+
+    virtual std::string type() const { return "cubedsphere"; }
+
+private:
+
+   // void partition(CubedSphere& cb, int nb_nodes, NodeInt nodes[], int part[] ) const;
 
     using Partitioner::partition;
     virtual void partition( const Grid&, int part[] ) const;

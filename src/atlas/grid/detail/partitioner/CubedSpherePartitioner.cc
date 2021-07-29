@@ -61,7 +61,7 @@ std::vector<std::vector<atlas::idx_t>> createOffset(const std::array<std::size_t
                                             ngpt[t] - static_cast<std::size_t>(std::accumulate(ngpbt.begin() + jt, ngpbt.begin() + j, 0));
 
             offsetPerTile[proc1D] = proc1D == 0 ? 0 :
-                                   std::accumulate(ngpbt.begin() + jt, ngpbt.begin() + j, 0) / maxDim2D[t];
+                                    std::accumulate(ngpbt.begin() + jt, ngpbt.begin() + j, 0) / maxDim2D[t];
 
         }
         offsetPerTile[nproc] = maxDim1D[t];
@@ -180,21 +180,19 @@ CubedSpherePartitioner::CubedSphere CubedSpherePartitioner::cubedsphere( const G
     return cb;
 }
 
-
-
-
-
-void CubedSpherePartitioner::partition( const CubedSphere& cb, const int nb_nodes, NodeInt nodes[], int part[] ) const {
+void CubedSpherePartitioner::partition( CubedSphere& cb, const int nb_nodes, const NodeInt nodes[], int part[] ) const {
 
     // ngpt number of grid points per tile (this is for cell centers where the number of cells are the same
     std::size_t tileCells = static_cast<std::size_t>(nb_nodes/6);
     std::array<std::size_t, 6> ngpt{tileCells, tileCells, tileCells, tileCells, tileCells, tileCells};
 
     // xoffset - the xoffset per band per tile (including cb.nx[t])
-    std::vector<std::vector<atlas::idx_t>> xoffset = createOffset(ngpt, cb.nprocx, cb.nx, cb.ny);
+    //std::vector<std::vector<atlas::idx_t>> xoffset(createOffset(ngpt, cb.nprocx, cb.nx, cb.ny));
+
+    cb.xoffset = createOffset(ngpt, cb.nprocx, cb.nx, cb.ny);
 
     // yoffset - the yoffset per band per tile (including cb.ny[t])
-    std::vector<std::vector<atlas::idx_t>> yoffset = createOffset(ngpt, cb.nprocy, cb.ny, cb.nx);
+    cb.yoffset = createOffset(ngpt, cb.nprocy, cb.ny, cb.nx);
 
     int p;  // partition index
     // loop over all data tile by tile
@@ -203,8 +201,8 @@ void CubedSpherePartitioner::partition( const CubedSphere& cb, const int nb_node
         p = cb.globalProcStartPE[t];
         for (std::size_t yproc = 0; yproc < static_cast<std::size_t>(cb.nprocy[t]); ++yproc) {
            for (std::size_t xproc = 0; xproc < static_cast<std::size_t>(cb.nprocx[t]); ++xproc) {
-               if ( (nodes[n].y >= yoffset[t][yproc]) && (nodes[n].y < yoffset[t][yproc+1]) &&
-                    (nodes[n].x >= xoffset[t][xproc]) && (nodes[n].x < xoffset[t][xproc+1]) )
+               if ( (nodes[n].y >= cb.yoffset[t][yproc]) && (nodes[n].y < cb.yoffset[t][yproc+1]) &&
+                    (nodes[n].x >= cb.xoffset[t][xproc]) && (nodes[n].x < cb.xoffset[t][xproc+1]) )
                {
                   part[n] = p;
                }
@@ -212,7 +210,7 @@ void CubedSpherePartitioner::partition( const CubedSphere& cb, const int nb_node
            }
         }
      }
-    ATLAS_ASSERT( part[nb_nodes-1] == nb_partitions(), "number of partitions created not what is expected");
+    ATLAS_ASSERT( part[nb_nodes-1] == nb_partitions() - 1, "number of partitions created not what is expected");
 }
 
 void CubedSpherePartitioner::partition( const Grid& grid, int part[] ) const {
@@ -228,7 +226,7 @@ void CubedSpherePartitioner::partition( const Grid& grid, int part[] ) const {
         std::vector<NodeInt> nodes( static_cast<std::size_t>(grid.size()) );
         std::size_t n( 0 );
 
-        for (std::size_t it = 0; it < 6; ++it) {
+        for ( std::size_t it = 0; it < 6; ++it ) {
             for ( idx_t iy = 0; iy < cb.ny[it]; ++iy ) {
                 for ( idx_t ix = 0; ix < cb.nx[it]; ++ix ) {
                     nodes[n].t = static_cast<int>( it );

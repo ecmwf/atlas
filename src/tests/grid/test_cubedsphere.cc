@@ -11,13 +11,43 @@
 #include "atlas/mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
+#include "atlas/grid/detail/partitioner/CubedSpherePartitioner.h"
 #include "atlas/grid/Tiles.h"
 #include "atlas/option.h"
+
 
 #include "tests/AtlasTestEnvironment.h"
 
 namespace atlas {
   namespace test {
+
+    namespace {
+
+       using grid::detail::partitioner::CubedSpherePartitioner;
+
+       void partition(const CubedSpherePartitioner & partitioner, const Grid & grid,
+                      CubedSpherePartitioner::CubedSphere & cb,  std::vector<idx_t> & part)  {
+
+           std::vector<CubedSpherePartitioner::NodeInt> nodes( static_cast<std::size_t>(grid.size()) );
+           std::size_t n( 0 );
+
+
+
+           for (std::size_t it = 0; it < 6; ++it) {
+               for ( idx_t iy = 0; iy < cb.ny[it]; ++iy ) {
+                   for ( idx_t ix = 0; ix < cb.nx[it]; ++ix ) {
+                       nodes[n].t = static_cast<int>( it );
+                       nodes[n].x = static_cast<int>( ix );
+                       nodes[n].y = static_cast<int>( iy );
+                       nodes[n].n = static_cast<int>( n );
+                       ++n;
+                   }
+               }
+           }
+           partitioner.partition( cb, grid.size(), nodes.data(), part.data() );
+
+       }
+    }
 
 
     CASE("cubedsphere_tile_constructor_test") {
@@ -252,61 +282,163 @@ namespace atlas {
               EXPECT_APPROX_EQ(middleXY, finalXY);
               EXPECT_APPROX_EQ(middleXY, expectedXY[jn]);
               ++jn;
-
           }
 
       }
     }
 
-    CASE("cubedsphere_tileCubePeriodicity_3_test") {
-        auto tileConfig1 = atlas::util::Config("type", "cubedsphere_lfric");
-        auto lfricTiles = atlas::CubedSphereTiles(tileConfig1);
-
-        // create a nodal cubed-sphere grid and check that no point are changed by
-        // iterating through points.
-
-        int resolution( 3 );
+    CASE("cubedsphere_partitioner_test") {
+        int resolution( 4 );
         std::vector<std::string> grid_names{"CS-LFR-C-" + std::to_string( resolution ),
                                            };
         Grid grid{grid_names[0]};
 
-        std::vector<atlas::PointXY>
-                startingXY { {45.,-45.}, {45., -60.}, {45., -75.}, {45., -90.},
-                           };
+        using grid::detail::partitioner::CubedSpherePartitioner;
 
 
-        int jn{0};
-        for ( auto crd : grid.xy() ) {
-            atlas::PointXY initialXY{crd[XX], crd[YY]};
-            double xy[2] = {initialXY.x(), initialXY.y()};
-            atlas::idx_t t = lfricTiles.tileFromXY(xy);
-            atlas::PointXY finalXY = lfricTiles.tileCubePeriodicity(initialXY, t);
-            atlas::PointLonLat lonlatPt = crd;
-            grid.projection().xy2lonlat(lonlatPt);
-            std::cout << " start end  = " << crd.x() << " " << crd.y()
-                      << " " << finalXY.x() << " " <<  finalXY.y()
-                      << " " << lonlatPt.lon() << " " <<  lonlatPt.lat()
-                      << std::endl;
-             EXPECT_APPROX_EQ(initialXY, finalXY);
-            ++jn;
-        }
+        // 2 partitions via configuration and distribution object
+        {
+            std::vector<int> globalProcStartPE{0,0,0,1,1,1};
+            std::vector<int> globalProcEndPE{0,0,0,1,1,1};
+            std::vector<int> nprocx{1,1,1,1,1,1};
+            std::vector<int> nprocy{1,1,1,1,1,1};
 
-        for (atlas::PointXY p : startingXY) {
-           atlas::PointXY pointFrom0 = lfricTiles.tileCubePeriodicity(p, 0);
-           atlas::PointXY pointFrom5 = lfricTiles.tileCubePeriodicity(p, 5);
-           std::cout << " start = " << p.x() << " " << p.y()
-                     << " from0 = " << pointFrom0.x() << " " << pointFrom0.y()
-                     << " from1 = " << pointFrom5.x() << " " << pointFrom5.y()
-                     << std::endl;
+            atlas::util::Config conf;
+            conf.set("starting rank on tile", globalProcStartPE);
+            conf.set("final rank on tile", globalProcEndPE);
+            conf.set("nprocx", nprocx);
+            conf.set("nprocy", nprocy);
 
+            grid::Distribution d_cs =
+                    grid::Partitioner( new CubedSpherePartitioner(2, conf) ).partition( grid );
+
+            for ( idx_t t = 0; t < 96; ++t ) {
+                 EXPECT( d_cs.partition(t) == t/48);
+            }
 
         }
 
+        // 3 partitions  via vector constructor and distribution object
+        {
+            std::vector<int> globalProcStartPE{0,0,1,1,2,2};
+            std::vector<int> globalProcEndPE{0,0,1,1,2,2};
+            std::vector<int> nprocx{1,1,1,1,1,1};
+            std::vector<int> nprocy{1,1,1,1,1,1};
 
+            grid::Distribution d_cs =
+                    grid::Partitioner( new CubedSpherePartitioner(3, globalProcStartPE,
+                                                                  globalProcEndPE, nprocx, nprocy) ).partition( grid );
 
+            for ( idx_t t = 0; t < 96; ++t ) {
+                 EXPECT( d_cs.partition(t) == t/32);
+            }
+        }
 
+        // 4 partitions
+        {
+            CubedSpherePartitioner partitioner( 4 );
+            CubedSpherePartitioner::CubedSphere cb = partitioner.cubedsphere(grid);
+            std::vector<idx_t> part(static_cast<size_t>(grid.size()), 0);
+            partition(partitioner,grid, cb, part);
 
+            for (std::size_t t = 0 ; t < 4; ++t) {
+                EXPECT( cb.nproc[t] == 1 );
+                EXPECT( cb.nprocx[t] == 1 );
+                EXPECT( cb.nprocy[t] == 1 );
+                EXPECT( cb.nx[t] == 4 );
+                EXPECT( cb.ny[t] == 4 );
+                EXPECT( cb.globalProcStartPE[t] == static_cast<atlas::idx_t>(t) );
+                EXPECT( cb.globalProcEndPE[t] == static_cast<atlas::idx_t>(t) );
+            }
 
+            for (std::size_t t = 4 ; t < 6; ++t) {
+                EXPECT( cb.nproc[t] == 0 );
+                EXPECT( cb.nprocx[t] == 1 );
+                EXPECT( cb.nprocy[t] == 1 );
+                EXPECT( cb.nx[t] == 4 );
+                EXPECT( cb.ny[t] == 4 );
+                EXPECT( cb.globalProcStartPE[t] == static_cast<atlas::idx_t>(3) );
+                EXPECT( cb.globalProcEndPE[t] == static_cast<atlas::idx_t>(3) );
+            }
+
+            for (size_t i = 0; i < static_cast<size_t>(grid.size()); ++i) {
+                if (i < 64) {
+                    EXPECT(part[i] == static_cast<idx_t>(i/16));
+                } else {
+                    EXPECT(part[i] == 3);
+                }
+            }
+        }
+
+        // 12 partitions
+        {
+            CubedSpherePartitioner partitioner( 12 );
+            CubedSpherePartitioner::CubedSphere cb = partitioner.cubedsphere(grid);
+            std::vector<idx_t> part(static_cast<size_t>(grid.size()), 0);
+            partition(partitioner,grid, cb, part);
+
+            for (std::size_t t = 0 ; t < 6; ++t) {
+                EXPECT( cb.nproc[t] == 2 );
+                EXPECT( cb.nprocx[t] == 1 );
+                EXPECT( cb.nprocy[t] == 2 );
+                EXPECT( cb.nx[t] == 4 );
+                EXPECT( cb.ny[t] == 4 );
+                EXPECT( cb.globalProcStartPE[t] == static_cast<atlas::idx_t>(2 * t) );
+                EXPECT( cb.globalProcEndPE[t] == static_cast<atlas::idx_t>(2 * t + 1) );
+
+                for ( size_t i = 0; i < static_cast<size_t>(grid.size()); ++i ) {
+                    EXPECT(part[i] == static_cast<idx_t>(i/8));
+                }
+            }
+
+        }
+
+        // 24 partitions
+        {
+            CubedSpherePartitioner partitioner( 24 );
+            CubedSpherePartitioner::CubedSphere cb = partitioner.cubedsphere(grid);
+            std::vector<idx_t> part(static_cast<size_t>(grid.size()), 0);
+            partition(partitioner,grid, cb, part);
+
+            for (std::size_t t = 0 ; t < 6; ++t) {
+                EXPECT( cb.nproc[t] == 4 );
+                EXPECT( cb.nprocx[t] == 2 );
+                EXPECT( cb.nprocy[t] == 2 );
+                EXPECT( cb.nx[t] == 4 );
+                EXPECT( cb.ny[t] == 4 );
+                EXPECT( cb.globalProcStartPE[t] == static_cast<atlas::idx_t>( 4 * t ) );
+                EXPECT( cb.globalProcEndPE[t] == static_cast<atlas::idx_t>( 4 * t + 3 ) );
+
+                std::size_t l( 0 );
+                for ( idx_t t = 0; t < 6; ++t ) {
+                    for ( idx_t j = 0; j < 4; ++j ) {
+                        for ( idx_t i = 0; i < 4; ++i,++l ) {
+                            gidx_t temp = l/2;
+                            gidx_t temp2 = temp % 2;
+                            gidx_t temp8 = l/8;
+                            EXPECT(part[l] == temp2 + 2 * temp8  );
+                        }
+                    }
+                }
+            }
+
+        }
+
+        // 24 partitions, creating distribution object
+        {
+           grid::Distribution d_cs = grid::Partitioner( new CubedSpherePartitioner(24) ).partition( grid );
+           gidx_t l( 0 );
+           for ( idx_t t = 0; t < 6; ++t ) {
+               for ( idx_t j = 0; j < 4; ++j ) {
+                   for ( idx_t i = 0; i < 4; ++i,++l ) {
+                       gidx_t temp = l/2;
+                       gidx_t temp2 = temp % 2;
+                       gidx_t temp8 = l/8;
+                       EXPECT(d_cs.partition(l) == temp2 + 2 * temp8  );
+                   }
+               }
+           }
+        }
     }
   }  // namespace test
 }  // namespace atlas
