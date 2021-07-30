@@ -55,27 +55,27 @@ void CubedSphereMeshGenerator::configure_defaults() {}
 
 void CubedSphereMeshGenerator::generate(const Grid& grid, Mesh& mesh) const {
 
-  // Check for proper grid and need for mesh
+  // Check for correct grid and need for mesh
   ATLAS_ASSERT(!mesh.generated());
   if (!CubedSphereGrid(grid)) {
     throw_Exception("CubedSphereMeshGenerator can only work "
-      "with a cubedsphere grid.", Here());
+    "with a cubedsphere grid.", Here());
   }
 
-  // Check for proper stagger
+  // Check for correct stagger
   const auto gridName = grid.name();
   const auto gridStagger = gridName.substr(gridName.rfind("-") - 1, 1);
 
 
   if (gridStagger != "C") {
     throw_Exception("CubedSphereMeshGenerator can only work with a"
-      "cell-centroid grid. Try FV3CubedSphereMeshGenerator instead.");
+    "cell-centroid grid. Try FV3CubedSphereMeshGenerator instead.");
   }
 
   // Partitioner
   const auto partitioner = grid::Partitioner("checkerboard", 1);
   const auto distribution =
-    grid::Distribution(partitioner.partition(grid));
+  grid::Distribution(partitioner.partition(grid));
 
   generate(grid, distribution, mesh);
 }
@@ -90,7 +90,8 @@ void CubedSphereMeshGenerator::generate(const Grid& grid, const grid::Distributi
   const auto nTiles = csGrid.GetNTiles();
 
   ATLAS_TRACE("CubedSphereMeshGenerator::generate");
-  Log::debug() << "Number of cells per tile edge = " << std::to_string(N) << std::endl;
+  Log::debug() << "Number of cells per tile edge = "
+    << std::to_string(N) << std::endl;
 
   // Set tiles.
   // TODO: this needs to be replaced with regular expression matching.
@@ -129,22 +130,22 @@ void CubedSphereMeshGenerator::generate(const Grid& grid, const grid::Distributi
   auto tji = csGrid.tij().begin();
   for (const auto& xy : csGrid.xy()) {
 
-      // Get local index.
-      const auto cellLocalIdx =
-        cellLocalIdxGrid((*tji).t(), (*tji).j(), (*tji).i());
-      ++tji;
+    // Get local index.
+    const auto cellLocalIdx =
+    cellLocalIdxGrid((*tji).t(), (*tji).j(), (*tji).i());
+    ++tji;
 
-      // Set cell-centroid xy.
-      cellXyArr[static_cast<size_t>(cellLocalIdx)] = xy;
+    // Set cell-centroid xy.
+    cellXyArr[static_cast<size_t>(cellLocalIdx)] = xy;
 
-      // Set remote id to iLocal (all cells owned for now)
-      cellRemoteIdxArr(cellLocalIdx) = cellLocalIdx;
+    // Set remote id to iLocal (all cells owned for now)
+    cellRemoteIdxArr(cellLocalIdx) = cellLocalIdx;
 
-      // Set partition using grid global index.
-      cellPartArr(cellLocalIdx) = 0 ;
+    // Set partition using grid global index.
+    cellPartArr(cellLocalIdx) = 0 ;
 
-      // Set cell global index to grid global index.
-      cellGlobalIdxArr(cellLocalIdx) = gridIdx++;
+    // Set cell global index to grid global index.
+    cellGlobalIdxArr(cellLocalIdx) = gridIdx++;
 
   }
 
@@ -198,7 +199,7 @@ void CubedSphereMeshGenerator::generate(const Grid& grid, const grid::Distributi
 
       // Calculate inverse Jacobian.
       const auto invDet =
-        1./(jacElem.dxByDi * jacElem.dyByDj - jacElem.dxByDj * jacElem.dyByDi);
+      1./(jacElem.dxByDi * jacElem.dyByDj - jacElem.dxByDj * jacElem.dyByDi);
       jacElem.diByDx =  jacElem.dyByDj * invDet;
       jacElem.diByDy = -jacElem.dxByDj * invDet;
       jacElem.djByDx = -jacElem.dyByDi * invDet;
@@ -241,11 +242,11 @@ void CubedSphereMeshGenerator::generate(const Grid& grid, const grid::Distributi
         const auto di = iNode - iCell - 0.5;
         const auto dj = jNode - jCell - 0.5;
         const auto nodeLocalXy = PointXY{
-          x0 + di * xyJacobians[static_cast<size_t>(t)].dxByDi
-             + dj * xyJacobians[static_cast<size_t>(t)].dxByDj,
-          y0 + di * xyJacobians[static_cast<size_t>(t)].dyByDi
-             + dj * xyJacobians[static_cast<size_t>(t)].dyByDj
-        };
+            x0 + di * xyJacobians[static_cast<size_t>(t)].dxByDi
+               + dj * xyJacobians[static_cast<size_t>(t)].dxByDj,
+            y0 + di * xyJacobians[static_cast<size_t>(t)].dyByDi
+               + dj * xyJacobians[static_cast<size_t>(t)].dyByDj
+          };
 
         // Use tile class to convert local xy to remote xy.
         const auto nodeRemoteXy = gridTiles.tileCubePeriodicity(nodeLocalXy, t);
@@ -281,7 +282,7 @@ void CubedSphereMeshGenerator::generate(const Grid& grid, const grid::Distributi
 
           // Set flags.
           mesh::Nodes::Topology::set(nodeFlagsArr(nodeLocalIdx),
-            mesh::Nodes::Topology::GHOST);
+          mesh::Nodes::Topology::GHOST);
           nodeGhostArr(nodeLocalIdx) = 1;
 
           // Set global index (ghost points have unique global index).
@@ -323,10 +324,10 @@ void CubedSphereMeshGenerator::generate(const Grid& grid, const grid::Distributi
 
           // Get nodes of quadrilateral cell.
           const auto quadNodes = std::array<idx_t, 4> {
-            nodeLocalIdxGrid(t, jNode - 1, iNode - 1),
-            nodeLocalIdxGrid(t, jNode - 1, iNode    ),
-            nodeLocalIdxGrid(t, jNode    , iNode    ),
-            nodeLocalIdxGrid(t, jNode    , iNode - 1)
+          nodeLocalIdxGrid(t, jNode - 1, iNode - 1),
+          nodeLocalIdxGrid(t, jNode - 1, iNode    ),
+          nodeLocalIdxGrid(t, jNode    , iNode    ),
+          nodeLocalIdxGrid(t, jNode    , iNode - 1)
           };
 
           // Set node connectivity.
@@ -340,29 +341,29 @@ void CubedSphereMeshGenerator::generate(const Grid& grid, const grid::Distributi
   // Set remote indices of ghost points.
   auto nodeRemoteXyIt = nodeRemoteXyArr.begin();
   for (idx_t nodeLocalIdx = nNodesUnique;
-    nodeLocalIdx < nNodesAll; ++nodeLocalIdx) {
+  nodeLocalIdx < nNodesAll; ++nodeLocalIdx) {
 
-    // Get remote xy
-    const auto nodeRemoteXy = *nodeRemoteXyIt++;
+  // Get remote xy
+  const auto nodeRemoteXy = *nodeRemoteXyIt++;
 
-    // Get remote t
-    const auto t = static_cast<size_t>(
-      gridTiles.tileFromXY(nodeRemoteXy.data()));
+  // Get remote t
+  const auto t = static_cast<size_t>(
+  gridTiles.tileFromXY(nodeRemoteXy.data()));
 
-    // Get remote i and j
-    const auto dx = nodeRemoteXy.x() - xyJacobians[t].xy0.x();
-    const auto dy = nodeRemoteXy.y() - xyJacobians[t].xy0.y();
+  // Get remote i and j
+  const auto dx = nodeRemoteXy.x() - xyJacobians[t].xy0.x();
+  const auto dy = nodeRemoteXy.y() - xyJacobians[t].xy0.y();
 
-    // Round to deal with potential floating point error.
-    const auto i = static_cast<idx_t>(
-      std::round(dx * xyJacobians[t].diByDx + dy * xyJacobians[t].diByDy));
-    const auto j = static_cast<idx_t>(
-      std::round(dx * xyJacobians[t].djByDx + dy * xyJacobians[t].djByDy));
+  // Round to deal with potential floating point error.
+  const auto i = static_cast<idx_t>(
+  std::round(dx * xyJacobians[t].diByDx + dy * xyJacobians[t].diByDy));
+  const auto j = static_cast<idx_t>(
+  std::round(dx * xyJacobians[t].djByDx + dy * xyJacobians[t].djByDy));
 
-    // Set remote index and partition.
-    const auto nodeRemoteIdx = nodeLocalIdxGrid(t, j, i);
-    nodeRemoteIdxArr(nodeLocalIdx) = nodeRemoteIdx;
-    nodePartArr(nodeLocalIdx) = nodePartArr(nodeRemoteIdx);
+  // Set remote index and partition.
+  const auto nodeRemoteIdx = nodeLocalIdxGrid(t, j, i);
+  nodeRemoteIdxArr(nodeLocalIdx) = nodeRemoteIdx;
+  nodePartArr(nodeLocalIdx) = nodePartArr(nodeRemoteIdx);
 
   }
 
@@ -378,15 +379,15 @@ void CubedSphereMeshGenerator::generate(const Grid& grid, const grid::Distributi
 // -------------------------------------------------------------------------------------------------
 
 void CubedSphereMeshGenerator::hash(eckit::Hash& h) const {
-    h.add("CubedSphereMeshGenerator");
-    options.hash(h);
+h.add("CubedSphereMeshGenerator");
+options.hash(h);
 }
 
 // -------------------------------------------------------------------------------------------------
 
 namespace {
 static MeshGeneratorBuilder<CubedSphereMeshGenerator> CubedSphereMeshGenerator(
-        CubedSphereMeshGenerator::static_type());
+CubedSphereMeshGenerator::static_type());
 }
 
 // -------------------------------------------------------------------------------------------------
