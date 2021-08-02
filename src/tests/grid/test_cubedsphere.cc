@@ -109,7 +109,7 @@ namespace atlas {
 
       // Set mesh.
       auto meshGen = atlas::MeshGenerator("cubedsphere");
-      const auto mesh = meshGen.generate(grid);
+      auto mesh = meshGen.generate(grid);
 
       // Set functionspace
       auto functionSpace = atlas::functionspace::NodeColumns(mesh);
