@@ -79,18 +79,18 @@ namespace atlas {
       // Set source gmsh object.
       const auto gmshXy =
         atlas::output::Gmsh("FV3_xy_mesh.msh", gmshConfigXy);
-      const auto gmshXyz =
-        atlas::output::Gmsh("FV3_xyz_mesh.msh", gmshConfigXyz);
-      const auto gmshLonLat =
-        atlas::output::Gmsh("FV3_lonlat_mesh.msh", gmshConfigLonLat);
+      //const auto gmshXyz =
+        //atlas::output::Gmsh("FV3_xyz_mesh.msh", gmshConfigXyz);
+      //const auto gmshLonLat =
+        //atlas::output::Gmsh("FV3_lonlat_mesh.msh", gmshConfigLonLat);
 
       // Write gmsh.
-      gmshXy.write(mesh);
-      gmshXy.write(field);
-      gmshXyz.write(mesh);
-      gmshXyz.write(field);
-      gmshLonLat.write(mesh);
-      gmshLonLat.write(field);
+      //gmshXy.write(mesh);
+      //gmshXy.write(field);
+      //gmshXyz.write(mesh);
+      //gmshXyz.write(field);
+      //gmshLonLat.write(mesh);
+      //gmshLonLat.write(field);
 
 
     }
@@ -101,7 +101,7 @@ namespace atlas {
       // I expect this will be replaced by some more aggressive tests.
 
       // Set grid.
-      const auto grid = atlas::Grid("CS-LFR-C-6");
+      const auto grid = atlas::Grid("CS-LFR-C-24");
 
       atlas::Log::info() << grid.name() << std::endl;
       atlas::Log::info() << grid.size() << std::endl;
@@ -123,6 +123,9 @@ namespace atlas {
       fieldSet.add(mesh.nodes().lonlat());
       fieldSet.add(mesh.nodes().ghost());
       fieldSet.add(mesh.nodes().partition());
+      //fieldSet.add(functionSpace.ghost());
+      //fieldSet.add(functionSpace->lonlat());
+
 
       // Visually inspect the fields.
       // remote indices should be equal at tile boundaries.
@@ -150,9 +153,11 @@ namespace atlas {
       gmshLonLat.write(fieldSet);
 
 
+      /*
       // Check that node positions match those of equivalent nodal grid.
       const auto nodeGrid = atlas::Grid("CS-LFR-L-6");
       const auto viewNodesXy = array::make_view<double, 2>(mesh.nodes().xy());
+
 
       idx_t iNode = 0;
       for (auto& xy : nodeGrid.xy()) {
@@ -161,7 +166,7 @@ namespace atlas {
           is_approximately_equal(xy.y(), viewNodesXy(iNode, YY), 1e-12);
           ++iNode;
         }
-
+    */
 
     }
 
