@@ -23,6 +23,7 @@
 #include "atlas/grid/detail/distribution/DistributionArray.h"
 #include "atlas/grid/detail/partitioner/BandsPartitioner.h"
 #include "atlas/grid/detail/partitioner/CheckerboardPartitioner.h"
+#include "atlas/grid/detail/partitioner/CubedSpherePartitioner.h"
 #include "atlas/grid/detail/partitioner/EqualBandsPartitioner.h"
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
 #include "atlas/grid/detail/partitioner/MatchingFunctionSpacePartitionerLonLatPolygon.h"
@@ -84,6 +85,7 @@ struct force_link {
     force_link() {
         load_builder<EqualRegionsPartitioner>();
         load_builder<CheckerboardPartitioner>();
+        load_builder<CubedSpherePartitioner>();
         load_builder<BandsPartitioner>();
         load_builder<EqualBandsPartitioner>();
         load_builder<RegularBandsPartitioner>();
