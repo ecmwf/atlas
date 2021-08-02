@@ -31,13 +31,12 @@ namespace  {
 
 bool isNearInt( double value )
 {
-    const double epsilon = 1e-12;
     const double diff = value - floor( value );
-    return ( diff <= epsilon || diff >= (1.0 - epsilon) );
+    return ( diff <= std::numeric_limits<double>::epsilon() || diff >= (1.0 - std::numeric_limits<double>::epsilon() ) );
 }
 
-std::vector<std::vector<atlas::idx_t>> createOffset(const std::array<std::size_t,6> & ngpt, const std::array<idx_t,6> nproc1D,
-                                                    const std::array<idx_t,6> maxDim1D, const std::array<idx_t,6> maxDim2D) {
+std::vector<std::vector<atlas::idx_t>> createOffset( const std::array<std::size_t,6> & ngpt, const std::array<idx_t,6> nproc1D,
+                                                     const std::array<idx_t,6> maxDim1D, const std::array<idx_t,6> maxDim2D ) {
 
     std::vector<std::vector<atlas::idx_t>> offset;
 
@@ -47,17 +46,17 @@ std::vector<std::vector<atlas::idx_t>> createOffset(const std::array<std::size_t
     std::vector<std::size_t> ngpbt(static_cast<std::size_t>(totalNproc1D), 0);
 
     idx_t j(0);
-    for (std::size_t t = 0; t < 6; ++t) {
+    for ( std::size_t t = 0; t < 6; ++t ) {
         idx_t jt = static_cast<idx_t>(j);
         std::size_t nproc = static_cast<std::size_t>(nproc1D[t]);
         std::vector<idx_t> offsetPerTile(nproc + 1, 0);
 
         for (std::size_t proc1D = 0; proc1D <  nproc; ++proc1D, ++j) {
             ngpbt[static_cast<size_t>(j)] = proc1D <  nproc - 1 ? ngpt[t]/ nproc :
-                                                                  ngpt[t] - static_cast<std::size_t>(std::accumulate(ngpbt.begin() + jt, ngpbt.begin() + j, 0));
+                                            ngpt[t] - static_cast<std::size_t>(std::accumulate(ngpbt.begin() + jt, ngpbt.begin() + j, 0));
 
             offsetPerTile[proc1D] = proc1D == 0 ? 0 :
-                                                  std::accumulate(ngpbt.begin() + jt, ngpbt.begin() + j, 0) / maxDim2D[t];
+                                    std::accumulate(ngpbt.begin() + jt, ngpbt.begin() + j, 0) / maxDim2D[t];
 
         }
         offsetPerTile[nproc] = maxDim1D[t];
@@ -66,7 +65,6 @@ std::vector<std::vector<atlas::idx_t>> createOffset(const std::array<std::size_t
 
     return offset;
 }
-
 
 }
 
@@ -84,7 +82,7 @@ CubedSpherePartitioner::CubedSpherePartitioner( int N, const eckit::Parametrisat
 CubedSpherePartitioner::CubedSpherePartitioner( const int N, const std::vector<int> & globalProcStartPE,
                                                 const std::vector<int> & globalProcEndPE,
                                                 const std::vector<int> & nprocx,
-                                                const std::vector<int> & nprocy)
+                                                const std::vector<int> & nprocy )
     : Partitioner( N ), globalProcStartPE_{globalProcStartPE},  globalProcEndPE_{globalProcEndPE},
       nprocx_{nprocx},  nprocy_{nprocy}, regular_{false}   {}
 
@@ -98,14 +96,14 @@ CubedSpherePartitioner::CubedSphere CubedSpherePartitioner::cubedsphere( const G
 
     CubedSphere cb;
 
-    for (std::size_t t = 0; t < 6; ++t) {
+    for ( std::size_t t = 0; t < 6; ++t ) {
         cb.nx[t] = cg.N();
         cb.ny[t] = cg.N();
     }
 
     atlas::idx_t nparts = nb_partitions();
 
-    if (regular_) {
+    if ( regular_ ) {
         // share PEs around tiles
         // minRanksPerTile
 
@@ -113,13 +111,13 @@ CubedSpherePartitioner::CubedSphere CubedSpherePartitioner::cubedsphere( const G
 
         idx_t reminder = nparts - 6 * ranksPerTile;
 
-        for (std::size_t t = 0; t < 6; ++t) {
+        for ( std::size_t t = 0; t < 6; ++t ) {
             cb.nproc[t] = ranksPerTile;
         }
 
         // round-robin;
         std::size_t t{0};
-        while (reminder > 0) {
+        while ( reminder > 0 ) {
             if (t == 6) t=0;
             cb.nproc[t] += 1;
             t += 1;
@@ -133,12 +131,12 @@ CubedSpherePartitioner::CubedSphere CubedSpherePartitioner::cubedsphere( const G
         // we use that for nprocx and nprocy
         // otherwise we split just in nprocx and keep nprocy =1;
 
-        for (size_t t = 0; t < 6; ++t) {
-            if (cb.nproc[t] > 0) {
-                double sq = std::sqrt(static_cast<double>(cb.nproc[t]));
-                if (isNearInt(sq)) {
-                    cb.nprocx[t] = static_cast<idx_t>(floor(sq+0.5));
-                    cb.nprocy[t] = static_cast<idx_t>(floor(sq+0.5));
+        for ( std::size_t t = 0; t < 6; ++t ) {
+            if ( cb.nproc[t] > 0 ) {
+                double sq = std::sqrt(static_cast<double>( cb.nproc[t] ) );
+                if ( isNearInt(sq) ) {
+                    cb.nprocx[t] = static_cast<idx_t>( std::round( sq ) );
+                    cb.nprocy[t] = static_cast<idx_t>( std::round( sq ) );
                 } else {
                     cb.nprocx[t] = 1;
                     cb.nprocy[t] = cb.nproc[t];
@@ -148,8 +146,8 @@ CubedSpherePartitioner::CubedSphere CubedSpherePartitioner::cubedsphere( const G
         cb.globalProcStartPE[0] = 0;
         cb.globalProcEndPE[0] = cb.nproc[0] -1;
 
-        for (size_t t = 1; t < 6; ++t) {
-            if (cb.nproc[t] == 0) {
+        for ( size_t t = 1; t < 6; ++t ) {
+            if ( cb.nproc[t] == 0 ) {
                 cb.globalProcStartPE[t] = cb.globalProcEndPE[t-1];
                 cb.globalProcEndPE[t] =  cb.globalProcEndPE[t-1];
             } else {
@@ -158,18 +156,17 @@ CubedSpherePartitioner::CubedSphere CubedSpherePartitioner::cubedsphere( const G
             }
         }
 
-
     }  else {
-        for (size_t t = 0; t < 6; ++t) {
+        for ( size_t t = 0; t < 6; ++t ) {
             cb.globalProcStartPE[t] = globalProcStartPE_[t];
             cb.globalProcEndPE[t] = globalProcEndPE_[t];
             cb.nprocx[t] = nprocx_[t];
             cb.nprocy[t] = nprocy_[t];
         }
         cb.nproc[0] = globalProcEndPE_[0] + 1;
-        for (size_t t = 1; t < 6; ++t) {
+        for ( std::size_t t = 1; t < 6; ++t ) {
             cb.nproc[t] = cb.globalProcStartPE[t] == cb.globalProcEndPE[t-1] ? cb.nproc[t] = 0 :
-                    cb.globalProcEndPE[t] - cb.globalProcStartPE[t] + 1;
+                          cb.globalProcEndPE[t] - cb.globalProcStartPE[t] + 1;
         }
 
     }
@@ -192,13 +189,13 @@ void CubedSpherePartitioner::partition( CubedSphere& cb, const int nb_nodes, con
 
     int p;  // partition index
     // loop over all data tile by tile
-    for (int n = 0; n < nb_nodes; ++n) {
-        std::size_t t = static_cast<std::size_t>(nodes[n].t);
+    for ( int n = 0; n < nb_nodes; ++n ) {
+        std::size_t t = static_cast<std::size_t>( nodes[n].t );
         p = cb.globalProcStartPE[t];
-        for (std::size_t yproc = 0; yproc < static_cast<std::size_t>(cb.nprocy[t]); ++yproc) {
-            for (std::size_t xproc = 0; xproc < static_cast<std::size_t>(cb.nprocx[t]); ++xproc) {
-                if ( (nodes[n].y >= cb.yoffset[t][yproc]) && (nodes[n].y < cb.yoffset[t][yproc+1]) &&
-                     (nodes[n].x >= cb.xoffset[t][xproc]) && (nodes[n].x < cb.xoffset[t][xproc+1]) )
+        for ( std::size_t yproc = 0; yproc < static_cast<std::size_t>(cb.nprocy[t]); ++yproc ) {
+            for ( std::size_t xproc = 0; xproc < static_cast<std::size_t>(cb.nprocx[t]); ++xproc ) {
+                if ( ( nodes[n].y >= cb.yoffset[t][yproc]) && (nodes[n].y < cb.yoffset[t][yproc+1] ) &&
+                     ( nodes[n].x >= cb.xoffset[t][xproc]) && (nodes[n].x < cb.xoffset[t][xproc+1] ) )
                 {
                     part[n] = p;
                 }
@@ -206,7 +203,7 @@ void CubedSpherePartitioner::partition( CubedSphere& cb, const int nb_nodes, con
             }
         }
     }
-    ATLAS_ASSERT( part[nb_nodes-1] == nb_partitions() - 1, "number of partitions created not what is expected");
+    ATLAS_ASSERT( part[nb_nodes-1] == nb_partitions() - 1, "number of partitions created not what is expected" );
 }
 
 void CubedSpherePartitioner::partition( const Grid& grid, int part[] ) const {
@@ -219,7 +216,7 @@ void CubedSpherePartitioner::partition( const Grid& grid, int part[] ) const {
     else {
         auto cb = cubedsphere( grid );
 
-        std::vector<CellInt> nodes( static_cast<std::size_t>(grid.size()) );
+        std::vector<CellInt> nodes( static_cast<std::size_t>( grid.size() ) );
         std::size_t n( 0 );
 
         for ( std::size_t it = 0; it < 6; ++it ) {

@@ -29,15 +29,13 @@ public:
     CubedSpherePartitioner( const int N, const std::vector<int> & globalProcStartPE,
                                          const std::vector<int> & globalProcEndPE,
                                          const std::vector<int> & nprocx,
-                                         const std::vector<int> & nprocy);
+                                         const std::vector<int> & nprocy );
 
     CubedSpherePartitioner( const int N, const bool regularGrid );
 
 
-    // Node struct that holds the x and y indices (for global, it's longitude and
-    // latitude in millidegrees (integers))
-    // This structure is used in sorting algorithms, and uses less memory than
-    // if x and y were in double precision.
+    // Cell struct that holds the x and y and t indices
+    // This could be replaced using the tij iterator that is part of the grid class
     struct CellInt {
         int x, y, t;
         int n;
@@ -69,7 +67,7 @@ public:
 
     CubedSphere cubedsphere( const Grid& ) const;
 
-    void partition(CubedSphere& cb, const int nb_nodes, const CellInt nodes[], int part[] ) const;
+    void partition( CubedSphere& cb, const int nb_nodes, const CellInt nodes[], int part[] ) const;
 
     virtual std::string type() const { return "cubedsphere"; }
 
@@ -85,7 +83,7 @@ private:
     std::vector<atlas::idx_t> globalProcEndPE_{0,0,0,0,0,0};
     std::vector<atlas::idx_t> nprocx_{1,1,1,1,1,1};  // number of ranks in x direction on each tile
     std::vector<atlas::idx_t> nprocy_{1,1,1,1,1,1};  // number of ranks in x direction on each tile
-    bool regular_      = true;  // regular algorithm for partitioning.
+    bool regular_ = true;  // regular algorithm for partitioning.
 };
 
 }  // namespace partitioner
