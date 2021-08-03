@@ -350,7 +350,7 @@ subroutine IndexKDTree__closestPointsWithinRadius_separate_coords(this, plon, pl
   type(c_ptr) :: distances_cptr
   real(c_double), pointer :: lons_fptr(:)
   real(c_double), pointer :: lats_fptr(:)
-  integer(c_int), pointer :: indices_fptr(:)
+  integer(ATLAS_KIND_IDX), pointer :: indices_fptr(:)
   real(c_double), pointer :: distances_fptr(:)
   call atlas__IndexKDTree__closestPointsWithinRadius(this%CPTR_PGIBUG_A, plon, plat, radius, &
                                                    & k_tmp, lons_cptr, lats_cptr, indices_cptr, distances_cptr)

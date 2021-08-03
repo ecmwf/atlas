@@ -370,12 +370,7 @@ CASE( "encoding atlas::array::Array" ) {
     EXPECT( ::memcmp( in.data(), data, data.size() ) == 0 );
     EXPECT( metadata.type() == "array" );
     EXPECT( metadata.getString( "datatype" ) == in.datatype().str() );
-
-#if ( ATLAS_BITS_LOCAL == 32 )
-    EXPECT( metadata.getIntVector( "shape" ) == in.shape() );
-#else
-    EXPECT( metadata.getLongVector( "shape" ) == in.shape() );
-#endif
+    EXPECT( array::ArrayShape{metadata.getIntVector( "shape" )} == in.shape() );
 }
 
 // -------------------------------------------------------------------------------------------------------

@@ -167,7 +167,7 @@ int AtlasParallelInterpolation::execute( const AtlasTool::Args& args ) {
     }
     if ( structured ) {
         src_functionspace =
-            functionspace::StructuredColumns{src.mesh().grid(), option::halo( std::max( 2, source_mesh_halo ) ) |
+            functionspace::StructuredColumns{src.mesh().grid(), option::halo( std::max<idx_t>( 2, source_mesh_halo ) ) |
                                                                     util::Config( "periodic_points", true )};
     }
     else {
