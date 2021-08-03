@@ -101,7 +101,7 @@ namespace atlas {
       // I expect this will be replaced by some more aggressive tests.
 
       // Set grid.
-      const auto grid = atlas::Grid("CS-LFR-C-24");
+      const auto grid = atlas::Grid("CS-LFR-C-12");
 
       atlas::Log::info() << grid.name() << std::endl;
       atlas::Log::info() << grid.size() << std::endl;
@@ -123,8 +123,6 @@ namespace atlas {
       fieldSet.add(mesh.nodes().lonlat());
       fieldSet.add(mesh.nodes().ghost());
       fieldSet.add(mesh.nodes().partition());
-      //fieldSet.add(functionSpace.ghost());
-      //fieldSet.add(functionSpace->lonlat());
 
 
       // Visually inspect the fields.
@@ -146,11 +144,11 @@ namespace atlas {
 
       // Write gmsh.
       gmshXy.write(mesh);
-      gmshXy.write(fieldSet);
+      gmshXy.write(fieldSet, functionSpace);
       gmshXyz.write(mesh);
-      gmshXyz.write(fieldSet);
+      gmshXyz.write(fieldSet, functionSpace);
       gmshLonLat.write(mesh);
-      gmshLonLat.write(fieldSet);
+      gmshLonLat.write(fieldSet, functionSpace);
 
 
       /*
