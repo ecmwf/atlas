@@ -45,7 +45,16 @@ namespace meshgenerator {
 
 // -----------------------------------------------------------------------------
 
-CubedSphereMeshGenerator::CubedSphereMeshGenerator(const eckit::Parametrisation& p) {}
+CubedSphereMeshGenerator::CubedSphereMeshGenerator(const eckit::Parametrisation& p) {
+
+  options.set( "nb_parts", mpi::size() );
+
+  // This option sets the part that will be generated
+  options.set( "part", mpi::rank() );
+
+  options.set( "partitioner", "equal_regions");
+
+}
 
 // -----------------------------------------------------------------------------
 
@@ -137,6 +146,9 @@ void CubedSphereMeshGenerator::generate(const Grid& grid,
   // Cast grid to cubed sphere grid.
   const auto csGrid = CubedSphereGrid(grid);
 
+  // Clone some grid properties.
+  setGrid(mesh, csGrid, distribution);
+
   // Get dimensions of grid
   const auto N      = csGrid.N();
   const auto nTiles = csGrid.GetNTiles();
@@ -149,8 +161,8 @@ void CubedSphereMeshGenerator::generate(const Grid& grid,
     << std::to_string(N) << std::endl;
 
   // Define bad index values.
-  constexpr auto badIdx = std::numeric_limits<idx_t>::min();
-  constexpr auto badGlobalIdx = std::numeric_limits<gidx_t>::min();
+  constexpr auto undefinedIdx = -1;
+  constexpr auto undefinedGlobalIdx = -1;
 
   // Set tiles.
   // TODO: this needs to be replaced with regular expression matching.
@@ -192,9 +204,9 @@ void CubedSphereMeshGenerator::generate(const Grid& grid,
 
   // Define cell record.
   struct CellRecord {
-    gidx_t   globalIdx{badGlobalIdx}; // Global ID.
-    idx_t   localIdx{badIdx};         // Local ID.
-    idx_t   part{badIdx};             // Partition.
+    gidx_t   globalIdx{undefinedGlobalIdx}; // Global ID.
+    idx_t   localIdx{undefinedIdx};         // Local ID.
+    idx_t   part{undefinedIdx};             // Partition.
     PointXY xy{};                     // Position.
   };
 
@@ -319,12 +331,12 @@ void CubedSphereMeshGenerator::generate(const Grid& grid,
 
   // Define node record.
   struct NodeRecord {
-    gidx_t  globalIdx{badGlobalIdx};  // Global ID,
-    idx_t   localIdx{badIdx};         // Local ID.
-    idx_t   localPart{badIdx};        // Partition node is on.
-    idx_t   remoteIdx{badIdx};        // Local ID of owned node.
-    idx_t   remotePart{badIdx};       // Partion that owned node is on.
-    idx_t   t{badIdx};                // Tile that owned node is on.
+    gidx_t  globalIdx{undefinedGlobalIdx};  // Global ID,
+    idx_t   localIdx{undefinedIdx};         // Local ID.
+    idx_t   localPart{undefinedIdx};        // Partition node is on.
+    idx_t   remoteIdx{undefinedIdx};        // Local ID of owned node.
+    idx_t   remotePart{undefinedIdx};       // Partion that owned node is on.
+    idx_t   t{undefinedIdx};                // Tile that owned node is on.
     int    ghost{0};                  // True if node is a ghost.
     PointXY localXy{};                // Position of this node.
     PointXY remoteXy{};               // Position of owned node.
@@ -383,9 +395,10 @@ void CubedSphereMeshGenerator::generate(const Grid& grid,
           // Set local index.
           node.localIdx = nodeLocalIdxCount[idx2st(node.localPart)]++;
 
-          // Remote partition and remote index are identical to local.
+          // Remote partition local.
           node.remotePart = node.localPart;
-          node.remoteIdx = -1;
+
+          // Remote index left undefined.
 
         } else {
 
@@ -590,10 +603,15 @@ void CubedSphereMeshGenerator::generate(const Grid& grid,
   // 7. FINALISE
   // ---------------------------------------------------------------------------
 
+  mesh.nodes().global_index().metadata().set("human_readable", true);
+  mesh.nodes().global_index().metadata().set("min", 1);
+  mesh.nodes().global_index().metadata().set("max", nNodesAll);
+  mesh.nodes().metadata().set("parallel", true);
+
   mesh.cells().global_index().metadata().set("human_readable", true);
   mesh.cells().global_index().metadata().set("min", 1);
   mesh.cells().global_index().metadata().set("max", nCells);
-  mesh.nodes().metadata().set("parallel", true);
+  mesh.cells().metadata().set("parallel", true);
 
   return;
 }
