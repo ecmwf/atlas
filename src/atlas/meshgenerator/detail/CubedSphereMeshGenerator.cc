@@ -164,10 +164,12 @@ void CubedSphereMeshGenerator::generate(const Grid& grid,
   constexpr auto undefinedIdx = -1;
   constexpr auto undefinedGlobalIdx = -1;
 
-  // Set tiles.
-  // TODO: this needs to be replaced with regular expression matching.
-  const auto gridTiles =
-    CubedSphereTiles(util::Config("type", "cubedsphere_lfric"));
+  // Projection and tiles
+  const auto* const csProjection =
+    dynamic_cast<const projection::detail::CubedSphereProjectionBase*>(
+    csGrid.projection().get());
+  ATLAS_ASSERT(csProjection);
+  const auto csTiles = csProjection->getCubedSphereTiles();
 
   // Get partition information.
   const auto nParts =   mpi::comm().size();
@@ -337,9 +339,9 @@ void CubedSphereMeshGenerator::generate(const Grid& grid,
     idx_t   remoteIdx{undefinedIdx};        // Local ID of owned node.
     idx_t   remotePart{undefinedIdx};       // Partion that owned node is on.
     idx_t   t{undefinedIdx};                // Tile that owned node is on.
-    int    ghost{0};                  // True if node is a ghost.
-    PointXY localXy{};                // Position of this node.
-    PointXY remoteXy{};               // Position of owned node.
+    bool    ghost{false};                   // True if node is a ghost.
+    PointXY localXy{};                      // Position of this node.
+    PointXY remoteXy{};                     // Position of owned node.
   };
 
   // Make list of all nodes.
@@ -375,13 +377,13 @@ void CubedSphereMeshGenerator::generate(const Grid& grid,
           };
 
         // Get remote xy from tile class and local t.
-        node.remoteXy = gridTiles.tileCubePeriodicity(node.localXy, t);
+        node.remoteXy = csTiles.tileCubePeriodicity(node.localXy, t);
 
         // Local taken from owning cell.
         node.localPart = cell.part;
 
         // Get remote t from tile class.
-        node.t = gridTiles.tileFromXY(node.remoteXy.data());
+        node.t = csTiles.tileFromXY(node.remoteXy.data());
 
         // Node is a type-A ghost if local t and remote t differ.
         // Otherwise node is owned.
@@ -395,10 +397,11 @@ void CubedSphereMeshGenerator::generate(const Grid& grid,
           // Set local index.
           node.localIdx = nodeLocalIdxCount[idx2st(node.localPart)]++;
 
-          // Remote partition local.
+          // Remote partition same as local.
           node.remotePart = node.localPart;
 
-          // Remote index left undefined.
+          // Remote index same as local.
+          node.remoteIdx = node.localIdx;
 
         } else {
 
@@ -441,7 +444,10 @@ void CubedSphereMeshGenerator::generate(const Grid& grid,
     nodePtr->remoteIdx = remoteNode.localIdx;
 
     // Node is a ghost.
-    nodePtr->ghost = 1;
+    nodePtr->ghost = true;
+
+    // Check that remote index is now defined.
+    ATLAS_ASSERT(nodePtr->remoteIdx != undefinedIdx);
 
   }
 
@@ -475,6 +481,9 @@ void CubedSphereMeshGenerator::generate(const Grid& grid,
 
         if (cell0.part == st2idx(thisPart)) {
 
+          // Check that node-cell partitions match.
+          ATLAS_ASSERT(node.localPart == cell0.part);
+
           // Node is either owned or Type-A ghost.
           localNodes.push_back(&node);
 
@@ -485,10 +494,12 @@ void CubedSphereMeshGenerator::generate(const Grid& grid,
           // Node has a non-owning neighbouring cell and is a type-B ghost.
 
           // Change local index to match this partition.
+          node.localPart = st2idx(thisPart);
           node.localIdx = nodeLocalIdxCount[thisPart]++;
-          node.ghost = 1;
+          node.ghost = true;
 
-          // Does this need a unique global index?
+          // Check remote index is defined.
+          ATLAS_ASSERT(node.remoteIdx != undefinedIdx);
 
           localNodes.push_back(&node);
 
@@ -533,7 +544,7 @@ void CubedSphereMeshGenerator::generate(const Grid& grid,
     nodesXy(localIdx, YY) = nodePtr->localXy.y();
 
     // Set lon-lat.
-    const auto lonLat = csGrid.projection().lonlat(nodePtr->remoteXy);
+    const auto lonLat = csProjection->lonlat(nodePtr->remoteXy);
     nodesLonLat(localIdx, LON) = lonLat.lon();
     nodesLonLat(localIdx, LAT) = lonLat.lat();
 
@@ -579,11 +590,19 @@ void CubedSphereMeshGenerator::generate(const Grid& grid,
           const auto localIdx = cell.localIdx + idx0;
 
           // Set quadrilateral.
-          const auto i0 = globalNodes[getNodeIdx(t, j    , i    )].localIdx;
-          const auto i1 = globalNodes[getNodeIdx(t, j    , i + 1)].localIdx;
-          const auto i2 = globalNodes[getNodeIdx(t, j + 1, i + 1)].localIdx;
-          const auto i3 = globalNodes[getNodeIdx(t, j + 1, i    )].localIdx;
-          const auto quadNodeIdx = std::array<idx_t, 4> {i0, i1, i2, i3};
+          const auto& node0 = globalNodes[getNodeIdx(t, j    , i    )];
+          const auto& node1 = globalNodes[getNodeIdx(t, j    , i + 1)];
+          const auto& node2 = globalNodes[getNodeIdx(t, j + 1, i + 1)];
+          const auto& node3 = globalNodes[getNodeIdx(t, j + 1, i    )];
+
+          // Check nodes partitions match.
+          ATLAS_ASSERT(node0.localPart == cell.part);
+          ATLAS_ASSERT(node1.localPart == cell.part);
+          ATLAS_ASSERT(node2.localPart == cell.part);
+          ATLAS_ASSERT(node3.localPart == cell.part);
+
+          const auto quadNodeIdx = std::array<idx_t, 4> {
+            node0.localIdx, node1.localIdx, node2.localIdx, node3.localIdx};
 
           // Set connectivity.
           nodeConnectivity.set(localIdx, quadNodeIdx.data());

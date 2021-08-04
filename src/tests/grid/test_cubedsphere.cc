@@ -101,7 +101,7 @@ namespace atlas {
       // I expect this will be replaced by some more aggressive tests.
 
       // Set grid.
-      const auto grid = atlas::Grid("CS-LFR-C-12");
+      const auto grid = atlas::Grid("CS-LFR-C-32");
 
       atlas::Log::info() << grid.name() << std::endl;
       atlas::Log::info() << grid.size() << std::endl;
@@ -133,6 +133,10 @@ namespace atlas {
       auto gmshConfigXy = atlas::util::Config("coordinates", "xy");
       auto gmshConfigXyz = atlas::util::Config("coordinates", "xyz");
       auto gmshConfigLonLat = atlas::util::Config("coordinates", "lonlat");
+
+      gmshConfigXy.set("ghost", "true");
+      gmshConfigXyz.set("ghost", "true");
+      gmshConfigLonLat.set("ghost", "true");
 
       // Set source gmsh object.
       const auto gmshXy =
