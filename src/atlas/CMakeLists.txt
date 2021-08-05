@@ -365,10 +365,10 @@ meshgenerator/MeshGenerator.cc
 meshgenerator/MeshGenerator.h
 meshgenerator/detail/CubedSphereMeshGenerator.h
 meshgenerator/detail/CubedSphereMeshGenerator.cc
+meshgenerator/detail/NodalCubedSphereMeshGenerator.h
+meshgenerator/detail/NodalCubedSphereMeshGenerator.cc
 meshgenerator/detail/DelaunayMeshGenerator.h
 meshgenerator/detail/DelaunayMeshGenerator.cc
-meshgenerator/detail/FV3CubedSphereMeshGenerator.h
-meshgenerator/detail/FV3CubedSphereMeshGenerator.cc
 meshgenerator/detail/StructuredMeshGenerator.h
 meshgenerator/detail/StructuredMeshGenerator.cc
 meshgenerator/detail/RegularMeshGenerator.cc

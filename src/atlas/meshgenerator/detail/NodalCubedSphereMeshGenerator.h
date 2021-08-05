@@ -36,16 +36,16 @@ namespace meshgenerator {
 
 //--------------------------------------------------------------------------------------------------
 
-class FV3CubedSphereMeshGenerator : public MeshGenerator::Implementation {
+class NodalCubedSphereMeshGenerator : public MeshGenerator::Implementation {
 public:
-    FV3CubedSphereMeshGenerator( const eckit::Parametrisation& = util::NoConfig() );
+    NodalCubedSphereMeshGenerator( const eckit::Parametrisation& = util::NoConfig() );
 
     virtual void generate( const Grid&, const grid::Distribution&, Mesh& ) const override;
     virtual void generate( const Grid&, Mesh& ) const override;
 
     using MeshGenerator::Implementation::generate;
 
-    static std::string static_type() { return "FV3-cubedsphere"; }
+    static std::string static_type() { return "nodal-cubedsphere"; }
     std::string type() const override { return static_type(); }
 
 private:

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2020 UCAR
+ * (C) Crown Copyright 2021 Met Office
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -47,18 +47,35 @@ namespace meshgenerator {
 
 CubedSphereMeshGenerator::CubedSphereMeshGenerator(const eckit::Parametrisation& p) {
 
-  options.set( "nb_parts", mpi::size() );
+  configure_defaults();
 
-  // This option sets the part that will be generated
-  options.set( "part", mpi::rank() );
+  // Get number of partitions.
+  size_t nb_parts;
+  if (p.get("nb_parts", nb_parts)) options.set("nb_parts", nb_parts);
 
-  options.set( "partitioner", "equal_regions");
+  // Get this partition.
+  size_t part;
+  if (p.get("part", part)) options.set("part", part);
+
+  // Get partitioner.
+  std::string partitioner;
+  if (p.get("partitioner", partitioner)) options.set("partitioner", partitioner);
 
 }
 
 // -----------------------------------------------------------------------------
 
-void CubedSphereMeshGenerator::configure_defaults() {}
+
+void CubedSphereMeshGenerator::configure_defaults() {
+  // This option sets number of parts the mesh will be split in.
+  options.set( "nb_parts", mpi::size() );
+
+  // This option sets the part that will be generated.
+  options.set("part", mpi::rank());
+
+  // This options sets the default partitioner.
+  options.set<std::string>("partitioner", "equal_regions");
+}
 
 // -----------------------------------------------------------------------------
 
@@ -75,16 +92,26 @@ void CubedSphereMeshGenerator::generate(const Grid& grid, Mesh& mesh) const {
   const auto gridName = grid.name();
   const auto gridStagger = gridName.substr(gridName.rfind("-") - 1, 1);
 
-
   if (gridStagger != "C") {
     throw_Exception("CubedSphereMeshGenerator can only work with a"
-    "cell-centroid grid. Try FV3CubedSphereMeshGenerator instead.");
+    "cell-centroid grid. Try NodalCubedSphereMeshGenerator instead.");
   }
 
+  // Get partitioner type and number of partitions from config.
+  const auto nParts = static_cast<idx_t>(options.get<size_t>("nb_parts"));
+  const auto partType = options.get<std::string>("partitioner");
+
+  // Set partition config.
+  auto partConfig = util::Config{};
+  partConfig.set("type", partType);
+  partConfig.set("partitions", nParts);
+
+  // Use lonlat instead of xy for equal_regions partitioner.
+  if (partType == "equal_regions") partConfig.set("coordinates", "lonlat");
+
   // Partitioner (using equal regions for now. Will change in final PR)
-  const auto partitioner = grid::Partitioner("equal_regions", util::Config("coordinates", "lonlat"));
-  const auto distribution =
-  grid::Distribution(partitioner.partition(grid));
+  const auto partitioner = grid::Partitioner(partConfig);
+  const auto distribution = grid::Distribution(grid, partitioner);
 
   generate(grid, distribution, mesh);
 }
@@ -205,11 +232,13 @@ void CubedSphereMeshGenerator::generate(const Grid& grid,
   // ---------------------------------------------------------------------------
 
   // Define cell record.
+  // This currently keeps track of more information than we probably need.
+  // This may be reduced once we've implemented halos.
   struct CellRecord {
     gidx_t   globalIdx{undefinedGlobalIdx}; // Global ID.
     idx_t   localIdx{undefinedIdx};         // Local ID.
     idx_t   part{undefinedIdx};             // Partition.
-    PointXY xy{};                     // Position.
+    PointXY xy{};                           // Position.
   };
 
   // Define ij bounding box for each face (this partition only).
@@ -332,6 +361,8 @@ void CubedSphereMeshGenerator::generate(const Grid& grid,
     });
 
   // Define node record.
+  // This currently keeps track of more information than we probably need.
+  // This may be reduced once we've implemented halos.
   struct NodeRecord {
     gidx_t  globalIdx{undefinedGlobalIdx};  // Global ID,
     idx_t   localIdx{undefinedIdx};         // Local ID.
@@ -552,9 +583,8 @@ void CubedSphereMeshGenerator::generate(const Grid& grid,
     nodesGhost(localIdx) = nodePtr->ghost;
 
     // Set general flags.
-    mesh::Nodes::Topology::reset(nodesFlags(localIdx));
-    if (nodePtr->ghost) mesh::Nodes::Topology::set(
-      nodesFlags(localIdx), mesh::Nodes::Topology::GHOST);
+    Topology::reset(nodesFlags(localIdx));
+    if (nodePtr->ghost) Topology::set(nodesFlags(localIdx), Topology::GHOST);
   }
 
   // ---------------------------------------------------------------------------

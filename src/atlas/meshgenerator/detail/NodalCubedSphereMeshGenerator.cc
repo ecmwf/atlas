@@ -24,8 +24,8 @@
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/meshgenerator/detail/FV3CubedSphereMeshGenerator.h"
 #include "atlas/meshgenerator/detail/MeshGeneratorFactory.h"
+#include "atlas/meshgenerator/detail/NodalCubedSphereMeshGenerator.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
@@ -42,20 +42,20 @@ namespace meshgenerator {
 
 // -------------------------------------------------------------------------------------------------
 
-FV3CubedSphereMeshGenerator::FV3CubedSphereMeshGenerator( const eckit::Parametrisation& p ) {}
+NodalCubedSphereMeshGenerator::NodalCubedSphereMeshGenerator( const eckit::Parametrisation& p ) {}
 
 // -------------------------------------------------------------------------------------------------
 
-void FV3CubedSphereMeshGenerator::configure_defaults() {}
+void NodalCubedSphereMeshGenerator::configure_defaults() {}
 
 // -------------------------------------------------------------------------------------------------
 
-void FV3CubedSphereMeshGenerator::generate( const Grid& grid, Mesh& mesh ) const {
+void NodalCubedSphereMeshGenerator::generate( const Grid& grid, Mesh& mesh ) const {
     // Check for proper grid and need for mesh
     ATLAS_ASSERT( !mesh.generated() );
     const CubedSphereGrid csg = CubedSphereGrid( grid );
     if ( !csg ) {
-        throw_Exception( "FV3CubedSphereMeshGenerator can only work with a cubedsphere grid", Here() );
+        throw_Exception( "NodalCubedSphereMeshGenerator can only work with a cubedsphere grid", Here() );
     }
 
     // Number of processors
@@ -74,7 +74,7 @@ void FV3CubedSphereMeshGenerator::generate( const Grid& grid, Mesh& mesh ) const
 
 // -------------------------------------------------------------------------------------------------
 
-void FV3CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribution& distribution, Mesh& mesh ) const {
+void NodalCubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribution& distribution, Mesh& mesh ) const {
     const auto csgrid = CubedSphereGrid( grid );
 
     const int N      = csgrid.N();
@@ -138,7 +138,7 @@ void FV3CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distri
     // END FV3 SPECIFIC MAP
     // -------------------------------------------------------------------------
 
-    ATLAS_TRACE( "FV3CubedSphereMeshGenerator::generate" );
+    ATLAS_TRACE( "NodalCubedSphereMeshGenerator::generate" );
     Log::debug() << "Number of faces per tile edge = " << std::to_string( N ) << std::endl;
 
     // Number of nodes
@@ -324,16 +324,16 @@ void FV3CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distri
 
 // -------------------------------------------------------------------------------------------------
 
-void FV3CubedSphereMeshGenerator::hash( eckit::Hash& h ) const {
-    h.add( "FV3CubedSphereMeshGenerator" );
+void NodalCubedSphereMeshGenerator::hash( eckit::Hash& h ) const {
+    h.add( "NodalCubedSphereMeshGenerator" );
     options.hash( h );
 }
 
 // -------------------------------------------------------------------------------------------------
 
 namespace {
-static MeshGeneratorBuilder<FV3CubedSphereMeshGenerator> FV3CubedSphereMeshGenerator(
-        FV3CubedSphereMeshGenerator::static_type() );
+static MeshGeneratorBuilder<NodalCubedSphereMeshGenerator> NodalCubedSphereMeshGenerator(
+        NodalCubedSphereMeshGenerator::static_type() );
 }
 
 // -------------------------------------------------------------------------------------------------
