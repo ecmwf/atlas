@@ -84,9 +84,9 @@ int getEnv( const std::string& env, int default_value ) {
 static void add_tokens( std::vector<std::string>& tokens, const std::string& str, const std::string& sep ) {
     eckit::Tokenizer tokenize{sep};
     std::vector<std::string> tokenized;
-    tokenize(str, tokenized);
-    for( auto& t : tokenized ) {
-        if( not t.empty() ) {
+    tokenize( str, tokenized );
+    for ( auto& t : tokenized ) {
+        if ( not t.empty() ) {
             tokens.push_back( eckit::PathExpander::expand( t ) );
         }
     }
@@ -140,7 +140,7 @@ void Library::registerPlugin( eckit::system::Plugin& plugin ) {
 void Library::deregisterPlugin( eckit::system::Plugin& plugin ) {
     auto it = std::find( plugins_.begin(), plugins_.end(), &plugin );
     ATLAS_ASSERT( it != plugins_.end() );
-    plugins_.erase(it);
+    plugins_.erase( it );
 }
 
 std::string Library::cachePath() const {
@@ -152,8 +152,8 @@ std::string Library::cachePath() const {
 }
 
 void Library::registerDataPath( const std::string& path ) {
-    ATLAS_DEBUG_VAR(path);
-    if( data_paths_.empty() ) {
+    ATLAS_DEBUG_VAR( path );
+    if ( data_paths_.empty() ) {
         init_data_paths( data_paths_ );
     }
     add_tokens( data_paths_, path, ":" );
@@ -161,21 +161,21 @@ void Library::registerDataPath( const std::string& path ) {
 
 
 std::string Library::dataPath() const {
-    if( data_paths_.empty() ) {
-        ATLAS_THROW_EXCEPTION("Attempted to access atlas::Library function before atlas was initialized");
+    if ( data_paths_.empty() ) {
+        ATLAS_THROW_EXCEPTION( "Attempted to access atlas::Library function before atlas was initialized" );
     }
     std::vector<std::string> paths = data_paths_;
-    auto join = [](const std::vector<std::string>& v, const std::string& sep) -> std::string {
+    auto join                      = []( const std::vector<std::string>& v, const std::string& sep ) -> std::string {
         std::stringstream joined;
-        for( size_t i=0; i<v.size(); ++i ) {
-            if( i>0 ) {
+        for ( size_t i = 0; i < v.size(); ++i ) {
+            if ( i > 0 ) {
                 joined << sep;
             }
             joined << v[i];
         }
         return joined.str();
     };
-    return join(paths,":");
+    return join( paths, ":" );
 }
 
 Library& Library::instance() {
@@ -252,7 +252,7 @@ void Library::initialise( const eckit::Parametrisation& config ) {
     library::enable_floating_point_exceptions();
     library::enable_atlas_signal_handler();
 
-    if( data_paths_.empty() ) {
+    if ( data_paths_.empty() ) {
         init_data_paths( data_paths_ );
     }
 

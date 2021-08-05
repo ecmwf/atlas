@@ -19,8 +19,8 @@
 #include <iterator>
 #include <map>
 #include <string>
-#include <vector>
 #include <type_traits>
+#include <vector>
 
 #include "atlas/field/Field.h"
 #include "atlas/library/config.h"
@@ -45,7 +45,7 @@ public:  // types
     using const_iterator = std::vector<Field>::const_iterator;
 
     template <typename T>
-        static constexpr bool is_index() {
+    static constexpr bool is_index() {
         return std::is_integral<T>::value or std::is_enum<T>::value;
     }
 
@@ -68,23 +68,27 @@ public:  // methods
     const std::string& name() const { return name_; }
     std::string& name() { return name_; }
 
-    template< typename Index, enable_if_index_t<Index> = 0 >
-    const Field& operator[]( Index i ) const { return field( i ); }
+    template <typename Index, enable_if_index_t<Index> = 0>
+    const Field& operator[]( Index i ) const {
+        return field( i );
+    }
 
-    template< typename Index, enable_if_index_t<Index> = 0 >
-    Field& operator[]( Index i ) { return field( i ); }
+    template <typename Index, enable_if_index_t<Index> = 0>
+    Field& operator[]( Index i ) {
+        return field( i );
+    }
 
     const Field& operator[]( const std::string& name ) const { return field( name ); }
     Field& operator[]( const std::string& name ) { return field( name ); }
 
-    template< typename Index, enable_if_index_t<Index> = 0 >
+    template <typename Index, enable_if_index_t<Index> = 0>
     const Field& field( Index i ) const {
         if ( i >= size() )
             throw_OutOfRange( "fieldset", i, size(), Here() );
         return fields_[i];
     }
 
-    template< typename Index, enable_if_index_t<Index> = 0 >
+    template <typename Index, enable_if_index_t<Index> = 0>
     Field& field( Index i ) {
         if ( i >= size() )
             throw_OutOfRange( "fieldset", i, size(), Here() );
@@ -161,11 +165,15 @@ public:  // methods
     const std::string& name() const { return get()->name(); }
     std::string& name() { return get()->name(); }
 
-    template< typename Index, enable_if_index_t<Index> = 0 >
-    const Field& operator[]( Index i ) const { return get()->operator[]( i ); }
+    template <typename Index, enable_if_index_t<Index> = 0>
+    const Field& operator[]( Index i ) const {
+        return get()->operator[]( i );
+    }
 
-    template< typename Index, enable_if_index_t<Index> = 0 >
-    Field& operator[]( Index i ) { return get()->operator[]( i ); }
+    template <typename Index, enable_if_index_t<Index> = 0>
+    Field& operator[]( Index i ) {
+        return get()->operator[]( i );
+    }
 
     const Field& operator[]( const std::string& name ) const { return get()->operator[]( name ); }
     Field& operator[]( const std::string& name ) { return get()->operator[]( name ); }
@@ -173,11 +181,15 @@ public:  // methods
     const Field& operator[]( const char* name ) const { return get()->operator[]( name ); }
     Field& operator[]( const char* name ) { return get()->operator[]( name ); }
 
-    template< typename Index, enable_if_index_t<Index> = 0 >
-    const Field& field( Index i ) const { return get()->field( i ); }
+    template <typename Index, enable_if_index_t<Index> = 0>
+    const Field& field( Index i ) const {
+        return get()->field( i );
+    }
 
-    template< typename Index, enable_if_index_t<Index> = 0 >
-    Field& field( Index i ) { return get()->field( i ); }
+    template <typename Index, enable_if_index_t<Index> = 0>
+    Field& field( Index i ) {
+        return get()->field( i );
+    }
 
     std::vector<std::string> field_names() const { return get()->field_names(); }
 

@@ -126,7 +126,7 @@ std::string CubedSphere::type() const {
 // Provide a unique identification hash for the grid and the projection.
 void CubedSphere::hash( eckit::Hash& h ) const {
     h.add( "CubedSphere" );
-    h.add( int(N_) );
+    h.add( int( N_ ) );
 
     // also add projection information
     projection().hash( h );

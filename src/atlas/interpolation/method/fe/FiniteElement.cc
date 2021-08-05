@@ -275,7 +275,7 @@ void FiniteElement::setup( const FunctionSpace& source ) {
 
             if ( !success ) {
                 failures.push_back( ip );
-                if( not treat_failure_as_missing_value_) {
+                if ( not treat_failure_as_missing_value_ ) {
                     Log::debug() << "------------------------------------------------------"
                                     "---------------------\n";
                     const PointLonLat pll{out_lonlat( ip, 0 ), out_lonlat( ip, 1 )};

@@ -302,7 +302,7 @@ idx_t StructuredIndexRange::getElemCount() const {
     const auto count =
         std::accumulate( iBeginEnd_.cbegin(), iBeginEnd_.cend(), 0, []( const idx_t cumulant, const idxPair iElem ) {
             // Only count positive differences.
-            return cumulant + static_cast<idx_t>( std::max( iElem.second - iElem.first, idx_t(0) ) );
+            return cumulant + static_cast<idx_t>( std::max( iElem.second - iElem.first, idx_t( 0 ) ) );
         } );
 
     return count;
