@@ -39,8 +39,7 @@ private:
 template <class T>
 class CubedSphereTilesBuilder : public CubedSphereTilesFactory {
 private:
-    virtual const CubedSphereTiles* make( const eckit::Parametrisation& param ) {
-        return new T( param ); }
+    virtual const CubedSphereTiles* make( const eckit::Parametrisation& param ) { return new T( param ); }
 
 public:
     using CubedSphereTilesFactory::CubedSphereTilesFactory;
@@ -51,4 +50,3 @@ public:
 }  // namespace detail
 }  // namespace grid
 }  // namespace atlas
-

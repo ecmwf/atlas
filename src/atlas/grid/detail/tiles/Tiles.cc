@@ -28,9 +28,11 @@ const CubedSphereTiles* CubedSphereTiles::create() {
     return CubedSphereTiles::create( params );
 }
 
-const CubedSphereTiles* CubedSphereTiles::create( const std::string & s)  {
+const CubedSphereTiles* CubedSphereTiles::create( const std::string& s ) {
     util::Config params;
-    if (s == "") return CubedSphereTiles::create();
+    if ( s == "" ) {
+        return CubedSphereTiles::create();
+    }
     params.set( "type", s );
     return CubedSphereTiles::create( params );
 }
@@ -38,13 +40,13 @@ const CubedSphereTiles* CubedSphereTiles::create( const std::string & s)  {
 const CubedSphereTiles* CubedSphereTiles::create( const eckit::Parametrisation& p ) {
     std::string CubedSphereTiles_type;
 
-    if (p.has( "type" ) ) {
-       p.get( "type", CubedSphereTiles_type );
-       return CubedSphereTilesFactory::build( CubedSphereTiles_type, p );
-    } else {
+    if ( p.has( "type" ) ) {
+        p.get( "type", CubedSphereTiles_type );
+        return CubedSphereTilesFactory::build( CubedSphereTiles_type, p );
+    }
+    else {
         return create();
     }
-
 }
 
 }  // namespace detail

@@ -10,11 +10,11 @@
 
 #include <string>
 
-#include "atlas/util/Factory.h"
-#include "atlas/grid/detail/tiles/Tiles.h"
-#include "atlas/grid/detail/tiles/TilesFactory.h"
 #include "atlas/grid/detail/tiles/FV3Tiles.h"
 #include "atlas/grid/detail/tiles/LFRicTiles.h"
+#include "atlas/grid/detail/tiles/Tiles.h"
+#include "atlas/grid/detail/tiles/TilesFactory.h"
+#include "atlas/util/Factory.h"
 
 namespace atlas {
 namespace grid {
@@ -39,7 +39,8 @@ const CubedSphereTiles* CubedSphereTilesFactory::build( const std::string& build
     return build( builder, util::NoConfig() );
 }
 
-const CubedSphereTiles* CubedSphereTilesFactory::build( const std::string& builder, const eckit::Parametrisation& param ) {
+const CubedSphereTiles* CubedSphereTilesFactory::build( const std::string& builder,
+                                                        const eckit::Parametrisation& param ) {
     force_link();
     auto factory = get( builder );
     return factory->make( param );

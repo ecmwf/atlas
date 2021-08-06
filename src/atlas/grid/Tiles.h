@@ -11,8 +11,8 @@
 #pragma once
 
 #include <array>
-#include <string>
 #include <iostream>
+#include <string>
 
 #include "atlas/library/config.h"
 #include "atlas/util/ObjectHandle.h"
@@ -45,8 +45,7 @@ class CubedSphereTiles;
 
 //---------------------------------------------------------------------------------------------------------------------
 
-class CubedSphereTiles : DOXYGEN_HIDE(
-    public util::ObjectHandle<atlas::grid::detail::CubedSphereTiles> ) {
+class CubedSphereTiles : DOXYGEN_HIDE( public util::ObjectHandle<atlas::grid::detail::CubedSphereTiles> ) {
 public:
     using Spec = util::Config;
 
@@ -59,9 +58,9 @@ public:
     /// Type of the cubed-sphere tiles:
     std::string type() const;
 
-    std::array<std::array<double,6>,2> xy2abOffsets() const;
+    std::array<std::array<double, 6>, 2> xy2abOffsets() const;
 
-    std::array<std::array<double,6>,2> ab2xyOffsets() const;
+    std::array<std::array<double, 6>, 2> ab2xyOffsets() const;
 
     void rotate( idx_t t, double xyz[] ) const;
 
@@ -80,7 +79,6 @@ private:
     void print( std::ostream& ) const;
 
     friend std::ostream& operator<<( std::ostream& s, const CubedSphereTiles& cst );
-
 };
 
 }  // namespace grid

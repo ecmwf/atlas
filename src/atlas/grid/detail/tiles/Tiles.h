@@ -30,8 +30,7 @@ public:
     using Spec = util::Config;
 
 public:
-
-    static const CubedSphereTiles* create( );
+    static const CubedSphereTiles* create();
 
     static const CubedSphereTiles* create( const eckit::Parametrisation& );
 
@@ -39,13 +38,13 @@ public:
 
     virtual std::string type() const = 0;
 
-    virtual std::array<std::array<double,6>,2> xy2abOffsets() const = 0;
+    virtual std::array<std::array<double, 6>, 2> xy2abOffsets() const = 0;
 
-    virtual std::array<std::array<double,6>,2> ab2xyOffsets() const = 0;
+    virtual std::array<std::array<double, 6>, 2> ab2xyOffsets() const = 0;
 
-    virtual void rotate(idx_t t, double xyz[] ) const = 0;
+    virtual void rotate( idx_t t, double xyz[] ) const = 0;
 
-    virtual void unrotate(idx_t t, double xyz[] ) const = 0;
+    virtual void unrotate( idx_t t, double xyz[] ) const = 0;
 
     virtual idx_t indexFromXY( const double xy[] ) const = 0;
 
@@ -62,10 +61,8 @@ public:
         cst.print( s );
         return s;
     }
-
 };
 
-} // namespace detail
-} // namespace grid
-} // namespace atlas
-
+}  // namespace detail
+}  // namespace grid
+}  // namespace atlas

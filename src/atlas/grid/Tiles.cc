@@ -9,58 +9,56 @@
  */
 
 #include "atlas/grid/Tiles.h"
-#include "atlas/grid/detail/tiles/Tiles.h"
 #include "atlas/grid/detail/tiles/FV3Tiles.h"
 #include "atlas/grid/detail/tiles/LFRicTiles.h"
+#include "atlas/grid/detail/tiles/Tiles.h"
 
 
 namespace atlas {
 namespace grid {
 
-CubedSphereTiles::CubedSphereTiles( const eckit::Parametrisation& p ) : Handle(
-                atlas::grid::detail::CubedSphereTiles::create( p ) ) {
-}
+CubedSphereTiles::CubedSphereTiles( const eckit::Parametrisation& p ) :
+    Handle( atlas::grid::detail::CubedSphereTiles::create( p ) ) {}
 
-CubedSphereTiles::CubedSphereTiles( const std::string& s ) : Handle(
-                atlas::grid::detail::CubedSphereTiles::create( s ) ) {
-}
+CubedSphereTiles::CubedSphereTiles( const std::string& s ) :
+    Handle( atlas::grid::detail::CubedSphereTiles::create( s ) ) {}
 
 
 std::string CubedSphereTiles::type() const {
     return get()->type();
 }
 
-std::array<std::array<double,6>,2> CubedSphereTiles::xy2abOffsets() const {
+std::array<std::array<double, 6>, 2> CubedSphereTiles::xy2abOffsets() const {
     return get()->xy2abOffsets();
 }
 
-std::array<std::array<double,6>,2> CubedSphereTiles::ab2xyOffsets() const {
+std::array<std::array<double, 6>, 2> CubedSphereTiles::ab2xyOffsets() const {
     return get()->ab2xyOffsets();
 }
 
 void CubedSphereTiles::rotate( idx_t t, double xyz[] ) const {
-    return get()->rotate(t, xyz);
+    return get()->rotate( t, xyz );
 }
 
 void CubedSphereTiles::unrotate( idx_t t, double xyz[] ) const {
-    return get()->unrotate(t,xyz);
+    return get()->unrotate( t, xyz );
 }
 
 
 idx_t CubedSphereTiles::indexFromXY( const double xy[] ) const {
-     return get()->indexFromXY(xy);
+    return get()->indexFromXY( xy );
 }
 
-idx_t CubedSphereTiles::indexFromLonLat(const double lonlat[]) const {
-     return get()->indexFromLonLat(lonlat);
+idx_t CubedSphereTiles::indexFromLonLat( const double lonlat[] ) const {
+    return get()->indexFromLonLat( lonlat );
 }
 
 idx_t CubedSphereTiles::size() const {
-     return get()->size();
+    return get()->size();
 }
 
-void CubedSphereTiles::enforceXYdomain(double xy[]) const {
-     return get()->enforceXYdomain(xy);
+void CubedSphereTiles::enforceXYdomain( double xy[] ) const {
+    return get()->enforceXYdomain( xy );
 }
 
 void CubedSphereTiles::print( std::ostream& os ) const {

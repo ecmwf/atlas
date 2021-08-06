@@ -97,41 +97,63 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     // -------------------------------------------------------------------------
 
     // Special points.
-    ghostToOwnedTij.push_back(TijPair{{0, N, N}, {2, 0, 0}});
-    ghostToOwnedTij.push_back(TijPair{{1, N, N}, {3, 0, 0}});
-    ghostToOwnedTij.push_back(TijPair{{2, N, N}, {4, 0, 0}});
-    ghostToOwnedTij.push_back(TijPair{{3, N, N}, {5, 0, 0}});
-    ghostToOwnedTij.push_back(TijPair{{4, N, N}, {0, 0, 0}});
-    ghostToOwnedTij.push_back(TijPair{{5, N, N}, {1, 0, 0}});
-    ghostToOwnedTij.push_back(TijPair{{2, 0, N}, {0, 0, N}});
-    ghostToOwnedTij.push_back(TijPair{{4, 0, N}, {0, 0, N}});
-    ghostToOwnedTij.push_back(TijPair{{3, N, 0}, {1, N, 0}});
-    ghostToOwnedTij.push_back(TijPair{{5, N, 0}, {1, N, 0}});
+    ghostToOwnedTij.push_back( TijPair{{0, N, N}, {2, 0, 0}} );
+    ghostToOwnedTij.push_back( TijPair{{1, N, N}, {3, 0, 0}} );
+    ghostToOwnedTij.push_back( TijPair{{2, N, N}, {4, 0, 0}} );
+    ghostToOwnedTij.push_back( TijPair{{3, N, N}, {5, 0, 0}} );
+    ghostToOwnedTij.push_back( TijPair{{4, N, N}, {0, 0, 0}} );
+    ghostToOwnedTij.push_back( TijPair{{5, N, N}, {1, 0, 0}} );
+    ghostToOwnedTij.push_back( TijPair{{2, 0, N}, {0, 0, N}} );
+    ghostToOwnedTij.push_back( TijPair{{4, 0, N}, {0, 0, N}} );
+    ghostToOwnedTij.push_back( TijPair{{3, N, 0}, {1, N, 0}} );
+    ghostToOwnedTij.push_back( TijPair{{5, N, 0}, {1, N, 0}} );
 
     // Tile 1
-    for ( idx_t ix = 1; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{0, ix, N}, {2, 0, N - ix}});
-    for ( idx_t iy = 0; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{0, N, iy}, {1, 0, iy}});
+    for ( idx_t ix = 1; ix < N; ix++ ) {
+        ghostToOwnedTij.push_back( TijPair{{0, ix, N}, {2, 0, N - ix}} );
+    }
+    for ( idx_t iy = 0; iy < N; iy++ ) {
+        ghostToOwnedTij.push_back( TijPair{{0, N, iy}, {1, 0, iy}} );
+    }
 
     // Tile 2
-    for ( idx_t ix = 0; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{1, ix, N}, {2, ix, 0}});
-    for ( idx_t iy = 1; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{1, N, iy}, {3, N - iy, 0}});
+    for ( idx_t ix = 0; ix < N; ix++ ) {
+        ghostToOwnedTij.push_back( TijPair{{1, ix, N}, {2, ix, 0}} );
+    }
+    for ( idx_t iy = 1; iy < N; iy++ ) {
+        ghostToOwnedTij.push_back( TijPair{{1, N, iy}, {3, N - iy, 0}} );
+    }
 
     // Tile 3
-    for ( idx_t ix = 1; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{2, ix, N}, {4, 0, N - ix}});
-    for ( idx_t iy = 0; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{2, N, iy}, {3, 0, iy}});
+    for ( idx_t ix = 1; ix < N; ix++ ) {
+        ghostToOwnedTij.push_back( TijPair{{2, ix, N}, {4, 0, N - ix}} );
+    }
+    for ( idx_t iy = 0; iy < N; iy++ )
+        ghostToOwnedTij.push_back( TijPair{{2, N, iy}, {3, 0, iy}} );
 
     // Tile 4
-    for ( idx_t ix = 0; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{3, ix, N}, {4, ix, 0}});
-    for ( idx_t iy = 1; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{3, N, iy}, {5, N - iy, 0}});
+    for ( idx_t ix = 0; ix < N; ix++ ) {
+        ghostToOwnedTij.push_back( TijPair{{3, ix, N}, {4, ix, 0}} );
+    }
+    for ( idx_t iy = 1; iy < N; iy++ ) {
+        ghostToOwnedTij.push_back( TijPair{{3, N, iy}, {5, N - iy, 0}} );
+    }
 
     // Tile 5
-    for ( idx_t ix = 1; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{4, ix, N}, {0, 0, N - ix}});
-    for ( idx_t iy = 0; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{4, N, iy}, {5, 0, iy}});
+    for ( idx_t ix = 1; ix < N; ix++ ) {
+        ghostToOwnedTij.push_back( TijPair{{4, ix, N}, {0, 0, N - ix}} );
+    }
+    for ( idx_t iy = 0; iy < N; iy++ ) {
+        ghostToOwnedTij.push_back( TijPair{{4, N, iy}, {5, 0, iy}} );
+    }
 
     // Tile 6
-    for ( idx_t ix = 0; ix < N; ix++ ) ghostToOwnedTij.push_back(TijPair{{5, ix, N}, {0, ix, 0}});
-    for ( idx_t iy = 1; iy < N; iy++ ) ghostToOwnedTij.push_back(TijPair{{5, N, iy}, {1, N - iy, 0}});
-
+    for ( idx_t ix = 0; ix < N; ix++ ) {
+        ghostToOwnedTij.push_back( TijPair{{5, ix, N}, {0, ix, 0}} );
+    }
+    for ( idx_t iy = 1; iy < N; iy++ ) {
+        ghostToOwnedTij.push_back( TijPair{{5, N, iy}, {1, N - iy, 0}} );
+    }
 
 
     // -------------------------------------------------------------------------
@@ -170,11 +192,10 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     auto NodeArray = array::make_view<int, 3>( NodeArrayT );
 
     // Add owned nodes to node array
-    idx_t nOwned = 0;
-    auto addOwnedNode = [&](Tij tijOwned) {
-
+    idx_t nOwned      = 0;
+    auto addOwnedNode = [&]( Tij tijOwned ) {
         // Set node array
-        NodeArray(tijOwned[0], tijOwned[1], tijOwned[2]) = nOwned;
+        NodeArray( tijOwned[0], tijOwned[1], tijOwned[2] ) = nOwned;
 
         // Get xy from global xy grid array
         double xy_[3];
@@ -191,12 +212,12 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
         lonlat( nOwned, LAT ) = lonlat_[LAT];
 
         // Is not ghost node
-        mesh::Nodes::Topology::reset(flags(nOwned));
-        ghost(nOwned) = 0;
+        mesh::Nodes::Topology::reset( flags( nOwned ) );
+        ghost( nOwned ) = 0;
 
-        glb_idx(nOwned) = nOwned + 1;
-        remote_idx(nOwned) = nOwned;
-        part(nOwned) = distribution.partition(nOwned);
+        glb_idx( nOwned )    = nOwned + 1;
+        remote_idx( nOwned ) = nOwned;
+        part( nOwned )       = distribution.partition( nOwned );
 
         ++nOwned;
 
@@ -205,7 +226,8 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
 
     // Loop over owned (t, i, j)
 
-    for (auto& p : csgrid.tij()) addOwnedNode(Tij{p.t(), p.i(), p.j()});
+    for ( auto& p : csgrid.tij() )
+        addOwnedNode( Tij{p.t(), p.i(), p.j()} );
 
     // Assert that the correct number of nodes have been set
     ATLAS_ASSERT( nnodes == nOwned, "Insufficient nodes" );
@@ -216,56 +238,55 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
 
     // Add ghost nodes to node array
     // (nGhost started after nOwned)
-    auto nGhost = nOwned;
-    auto addGhostNode = [&](Tij tijGhost, Tij tijOwned) {
-
+    auto nGhost       = nOwned;
+    auto addGhostNode = [&]( Tij tijGhost, Tij tijOwned ) {
         // Get concrete node id
-        auto nOwned = NodeArray(tijOwned[0], tijOwned[1], tijOwned[2]);
+        auto nOwned = NodeArray( tijOwned[0], tijOwned[1], tijOwned[2] );
 
         // Add ghost node to NodeArray
-        NodeArray(tijGhost[0], tijGhost[1], tijGhost[2]) = nGhost;
+        NodeArray( tijGhost[0], tijGhost[1], tijGhost[2] ) = nGhost;
 
         // "Create" ghost xy coordinate.
 
         // Get Jacobian of coords rtw indices
-        auto x0 = xy(NodeArray(tijGhost[0], 0, 0), XX);
-        auto y0 = xy(NodeArray(tijGhost[0], 0, 0), YY);
+        auto x0 = xy( NodeArray( tijGhost[0], 0, 0 ), XX );
+        auto y0 = xy( NodeArray( tijGhost[0], 0, 0 ), YY );
 
-        auto dx_di = xy(NodeArray(tijGhost[0], 1, 0), XX) - x0;
-        auto dx_dj = xy(NodeArray(tijGhost[0], 0, 1), XX) - x0;
-        auto dy_di = xy(NodeArray(tijGhost[0], 1, 0), YY) - y0;
-        auto dy_dj = xy(NodeArray(tijGhost[0], 0, 1), YY) - y0;
+        auto dx_di = xy( NodeArray( tijGhost[0], 1, 0 ), XX ) - x0;
+        auto dx_dj = xy( NodeArray( tijGhost[0], 0, 1 ), XX ) - x0;
+        auto dy_di = xy( NodeArray( tijGhost[0], 1, 0 ), YY ) - y0;
+        auto dy_dj = xy( NodeArray( tijGhost[0], 0, 1 ), YY ) - y0;
 
         // Set xy coordinates
-        xy(nGhost, XX) = x0 + tijGhost[1] * dx_di + tijGhost[2] * dx_dj;
-        xy(nGhost, YY) = y0 + tijGhost[1] * dy_di + tijGhost[2] * dy_dj;
+        xy( nGhost, XX ) = x0 + tijGhost[1] * dx_di + tijGhost[2] * dx_dj;
+        xy( nGhost, YY ) = y0 + tijGhost[1] * dy_di + tijGhost[2] * dy_dj;
 
         // Same lonlat as concrete points
-        lonlat(nGhost, LON) = lonlat( nOwned, LON);
-        lonlat(nGhost, LAT) = lonlat( nOwned, LAT);
+        lonlat( nGhost, LON ) = lonlat( nOwned, LON );
+        lonlat( nGhost, LAT ) = lonlat( nOwned, LAT );
 
         // Is ghost node
-        mesh::Nodes::Topology::set(flags(nGhost), mesh::Nodes::Topology::GHOST);
-        ghost(nGhost) = 1;
+        mesh::Nodes::Topology::set( flags( nGhost ), mesh::Nodes::Topology::GHOST );
+        ghost( nGhost ) = 1;
 
         // Partitioning logic to be added in future PR
-        glb_idx(nGhost) = nGhost + 1;
-        remote_idx(nGhost) = nGhost;
+        glb_idx( nGhost )    = nGhost + 1;
+        remote_idx( nGhost ) = nGhost;
 
         // not sure (below - for multiple PEs)
-        part(nGhost) = distribution.partition(nOwned);
+        part( nGhost ) = distribution.partition( nOwned );
 
         // Append metadata
         // Global indicies of ghost node and owned node
-        ghostGblIdx.push_back(nGhost + 1);
-        ownedGblIdx.push_back(nOwned + 1);
+        ghostGblIdx.push_back( nGhost + 1 );
+        ownedGblIdx.push_back( nOwned + 1 );
 
         ++nGhost;
-
     };
 
     // Loop over ghost (t, i, j)
-    for (auto& pPair : ghostToOwnedTij) addGhostNode(pPair.first, pPair.second);
+    for ( auto& pPair : ghostToOwnedTij )
+        addGhostNode( pPair.first, pPair.second );
 
 
     // Assert that the correct number of nodes have been set when duplicates are added
@@ -316,10 +337,10 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     nodes.metadata().set( "parallel", true );
 
     // Global indices of ghost nodes.
-    nodes.metadata().set( "ghost-global-idx", ghostGblIdx);
+    nodes.metadata().set( "ghost-global-idx", ghostGblIdx );
 
     // Global indices of owned nodes for each ghost node (same order as above)
-    nodes.metadata().set( "owned-global-idx", ownedGblIdx);
+    nodes.metadata().set( "owned-global-idx", ownedGblIdx );
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -333,7 +354,7 @@ void CubedSphereMeshGenerator::hash( eckit::Hash& h ) const {
 
 namespace {
 static MeshGeneratorBuilder<CubedSphereMeshGenerator> CubedSphereMeshGenerator(
-        CubedSphereMeshGenerator::static_type() );
+    CubedSphereMeshGenerator::static_type() );
 }
 
 // -------------------------------------------------------------------------------------------------

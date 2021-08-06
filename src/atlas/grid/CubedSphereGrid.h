@@ -10,8 +10,8 @@
 #include <string>
 
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/detail/grid/CubedSphere.h"
 #include "atlas/grid/Tiles.h"
+#include "atlas/grid/detail/grid/CubedSphere.h"
 
 namespace atlas {
 
