@@ -13,6 +13,7 @@
 #include "atlas/mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
+#include "atlas/grid/Partitioner.h"
 #include "atlas/grid/detail/partitioner/CubedSpherePartitioner.h"
 #include "atlas/option.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -368,6 +369,27 @@ namespace atlas {
 
         using grid::detail::partitioner::CubedSpherePartitioner;
 
+
+        // factory based constructor
+        {
+            std::vector<int> globalProcStartPE{0,0,0,1,1,1};
+            std::vector<int> globalProcEndPE{0,0,0,1,1,1};
+            std::vector<int> nprocx{1,1,1,1,1,1};
+            std::vector<int> nprocy{1,1,1,1,1,1};
+
+            atlas::util::Config conf;
+            conf.set("starting rank on tile", globalProcStartPE);
+            conf.set("final rank on tile", globalProcEndPE);
+            conf.set("nprocx", nprocx);
+            conf.set("nprocy", nprocy);
+
+            grid::Partitioner partitioner( "cubed_sphere", conf);
+            grid::Distribution d_cs = partitioner.partition( grid );
+
+            grid::Partitioner partitioner2( "cubed_sphere", 2);
+            grid::Distribution d_cs2 = partitioner2.partition( grid );
+
+        }
 
         // 2 partitions via configuration and distribution object
         {

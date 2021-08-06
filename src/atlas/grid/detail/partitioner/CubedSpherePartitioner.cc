@@ -35,6 +35,12 @@ bool isNearInt( double value )
     return ( diff <= std::numeric_limits<double>::epsilon() || diff >= (1.0 - std::numeric_limits<double>::epsilon() ) );
 }
 
+bool isConfigSufficient( const eckit::Parametrisation& config )
+{
+  return !( config.has("starting rank on tile") ) || !( config.has("final rank on tile") ) ||
+         !( config.has("nprocx") ) || !( config.has("nprocy") );
+}
+
 std::vector<std::vector<atlas::idx_t>> createOffset( const std::array<std::size_t,6> & ngpt, const std::array<idx_t,6> nproc1D,
                                                      const std::array<idx_t,6> maxDim1D, const std::array<idx_t,6> maxDim2D ) {
 
@@ -72,11 +78,14 @@ CubedSpherePartitioner::CubedSpherePartitioner() : Partitioner() {}
 
 CubedSpherePartitioner::CubedSpherePartitioner( int N ) : Partitioner( N ), regular_{true} {}
 
-CubedSpherePartitioner::CubedSpherePartitioner( int N, const eckit::Parametrisation& config ) : Partitioner( N ), regular_{false} {
-    config.get( "starting rank on tile", globalProcStartPE_);
-    config.get( "final rank on tile", globalProcEndPE_);
-    config.get( "nprocx", nprocx_);
-    config.get( "nprocy", nprocy_);
+CubedSpherePartitioner::CubedSpherePartitioner( int N, const eckit::Parametrisation& config ) : Partitioner( N ), regular_{isConfigSufficient(config)} {
+    if ( config.has("starting rank on tile") && config.has("final rank on tile") &&
+         config.has("nprocx") && config.has("nprocy") ) {
+        config.get( "starting rank on tile", globalProcStartPE_);
+        config.get( "final rank on tile", globalProcEndPE_);
+        config.get( "nprocx", nprocx_);
+        config.get( "nprocy", nprocy_);
+    }
 }
 
 CubedSpherePartitioner::CubedSpherePartitioner( const int N, const std::vector<int> & globalProcStartPE,
@@ -241,5 +250,5 @@ void CubedSpherePartitioner::partition( const Grid& grid, int part[] ) const {
 
 namespace {
 atlas::grid::detail::partitioner::PartitionerBuilder<atlas::grid::detail::partitioner::CubedSpherePartitioner>
-__CubedSphere( "CubedSphere" );
+__CubedSphere( "cubed_sphere" );
 }
