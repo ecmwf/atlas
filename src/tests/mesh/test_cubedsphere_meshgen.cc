@@ -28,18 +28,15 @@ namespace atlas {
       // Set grid.
       const auto grid = atlas::Grid("CS-LFR-C-16");
 
-      // Set partitioners.
-      const auto csPart = grid::Partitioner("cubed_sphere", mpi::size());
-      const auto erPart = grid::Partitioner("equal_regions", mpi::size());
+      // Set mesh config.
+      auto meshConfig = util::Config("partitioner", "equal_regions");
 
-      // Set distributions
-      const auto csDist = grid::Distribution(grid, csPart);
-      const auto erDist = grid::Distribution(grid, erPart);
+      // Set mesh generators.
+      const auto csMeshgen = atlas::MeshGenerator("cubedsphere"); // defaults to cubed sphere partitioner.
+      const auto erMeshgen = atlas::MeshGenerator("cubedsphere", meshConfig); // Equal regions partitioner.
 
-
-      // Set meshes.
-      const auto csMesh = atlas::MeshGenerator("cubedsphere").generate(grid);
-      const auto erMesh = atlas::MeshGenerator("cubedsphere").generate(grid, erDist);
+      const auto csMesh = csMeshgen.generate(grid);
+      const auto erMesh = erMeshgen.generate(grid);
 
 
       // Set gmsh config.

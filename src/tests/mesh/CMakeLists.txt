@@ -103,7 +103,7 @@ ecbuild_add_test( TARGET atlas_test_healpixmeshgen
 )
 
 ecbuild_add_test( TARGET atlas_test_cubedsphere_meshgen
-  MPI        4
+  MPI        8
   CONDITION  eckit_HAVE_MPI
   SOURCES test_cubedsphere_meshgen.cc
   LIBS atlas

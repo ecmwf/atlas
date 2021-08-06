@@ -19,6 +19,7 @@ class Parametrisation;
 }
 
 namespace atlas {
+class CubedSphereGrid;
 class Mesh;
 template <typename T>
 class vector;
@@ -53,6 +54,8 @@ private:
   virtual void hash( eckit::Hash& ) const override;
 
   void configure_defaults();
+
+  void generate_mesh( const CubedSphereGrid&, const grid::Distribution&, Mesh& ) const;
 
 private:
   util::Metadata options;

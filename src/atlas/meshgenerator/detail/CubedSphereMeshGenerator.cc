@@ -81,6 +81,29 @@ void CubedSphereMeshGenerator::configure_defaults() {
 
 void CubedSphereMeshGenerator::generate(const Grid& grid, Mesh& mesh) const {
 
+  // Get partitioner type and number of partitions from config.
+  const auto nParts = static_cast<idx_t>(options.get<size_t>("nb_parts"));
+  const auto partType = options.get<std::string>("partitioner");
+
+  auto partConfig = util::Config{};
+  partConfig.set("type", partType);
+  partConfig.set("partitions", nParts);
+
+  // Use lonlat instead of xy for equal_regions partitioner.
+  if (partType == "equal_regions") partConfig.set("coordinates", "lonlat");
+
+  // Set distribution.
+  const auto partitioner = grid::Partitioner(partConfig);
+  const auto distribution = grid::Distribution(grid, partitioner);
+
+  generate(grid, distribution, mesh);
+
+}
+
+// -----------------------------------------------------------------------------
+
+void CubedSphereMeshGenerator::generate(const Grid& grid, const grid::Distribution& distribution, Mesh& mesh) const {
+
   // Check for correct grid and need for mesh
   ATLAS_ASSERT(!mesh.generated());
   if (!CubedSphereGrid(grid)) {
@@ -97,28 +120,18 @@ void CubedSphereMeshGenerator::generate(const Grid& grid, Mesh& mesh) const {
     "cell-centroid grid. Try NodalCubedSphereMeshGenerator instead.");
   }
 
-  // Get partitioner type and number of partitions from config.
-  const auto nParts = static_cast<idx_t>(options.get<size_t>("nb_parts"));
-  const auto partType = options.get<std::string>("partitioner");
+  // Cast grid to cubed sphere grid.
+  const auto csGrid = CubedSphereGrid(grid);
 
-  // Set partition config.
-  auto partConfig = util::Config{};
-  partConfig.set("type", partType);
-  partConfig.set("partitions", nParts);
+  // Clone some grid properties.
+  setGrid(mesh, csGrid, distribution);
 
-  // Use lonlat instead of xy for equal_regions partitioner.
-  if (partType == "equal_regions") partConfig.set("coordinates", "lonlat");
-
-  // Partitioner (using equal regions for now. Will change in final PR)
-  const auto partitioner = grid::Partitioner(partConfig);
-  const auto distribution = grid::Distribution(grid, partitioner);
-
-  generate(grid, distribution, mesh);
+  generate_mesh(csGrid, distribution, mesh);
 }
 
 // -----------------------------------------------------------------------------
 
-void CubedSphereMeshGenerator::generate(const Grid& grid,
+void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
   const grid::Distribution& distribution, Mesh& mesh) const {
 
   ATLAS_TRACE("CubedSphereMeshGenerator::generate");
@@ -169,12 +182,6 @@ void CubedSphereMeshGenerator::generate(const Grid& grid,
   // ---------------------------------------------------------------------------
   // 1. PREAMBLE
   // ---------------------------------------------------------------------------
-
-  // Cast grid to cubed sphere grid.
-  const auto csGrid = CubedSphereGrid(grid);
-
-  // Clone some grid properties.
-  setGrid(mesh, csGrid, distribution);
 
   // Get dimensions of grid
   const auto N      = csGrid.N();
