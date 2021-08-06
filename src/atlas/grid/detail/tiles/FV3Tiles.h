@@ -15,7 +15,8 @@
 #include "atlas/grid/detail/tiles/Tiles.h"
 
 namespace atlas {
-namespace cubedspheretiles {
+namespace grid {
+namespace detail {
 
 class FV3CubedSphereTiles : public CubedSphereTiles {
 public:
@@ -31,33 +32,13 @@ public:
 
     virtual std::array<std::array<double,6>,2> ab2xyOffsets() const override;
 
-    virtual void tile0Rotate( double xyz[] ) const override;
+    virtual void rotate( idx_t t, double xyz[] ) const override;
 
-    virtual void tile1Rotate( double xyz[] ) const override;
+    virtual void unrotate( idx_t, double xyz[] ) const override;
 
-    virtual void tile2Rotate( double xyz[] ) const override;
+    virtual idx_t indexFromXY( const double xy[] ) const override;
 
-    virtual void tile3Rotate( double xyz[] ) const override;
-
-    virtual void tile4Rotate( double xyz[] ) const override;
-
-    virtual void tile5Rotate( double xyz[] ) const override;
-
-    virtual void tile0RotateInverse( double xyz[] ) const override;
-
-    virtual void tile1RotateInverse( double xyz[] ) const override;
-
-    virtual void tile2RotateInverse( double xyz[] ) const override;
-
-    virtual void tile3RotateInverse( double xyz[] ) const override;
-
-    virtual void tile4RotateInverse( double xyz[] ) const override;
-
-    virtual void tile5RotateInverse( double xyz[] ) const override;
-
-    virtual idx_t tileFromXY( const double xy[] ) const override;
-
-    virtual idx_t tileFromLonLat( const double lonlat[] ) const override;
+    virtual idx_t indexFromLonLat( const double lonlat[] ) const override;
 
     virtual void enforceXYdomain( double xy[] ) const override;
 
@@ -67,6 +48,6 @@ private:
 
 };
 
-
-}  // namespace cubedspheretiles
+}  // namespace detail
+}  // namespace grid
 }  // namespace atlas

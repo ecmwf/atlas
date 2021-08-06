@@ -10,15 +10,18 @@
 
 #include <ostream>
 #include <iostream>
+
 #include "atlas/grid/detail/tiles/Tiles.h"
 #include "atlas/grid/detail/tiles/TilesFactory.h"
 #include "atlas/grid/detail/tiles/LFRicTiles.h"
 #include "atlas/projection/detail/ProjectionUtilities.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {
-namespace cubedspheretiles {
+namespace grid {
+namespace detail {
 
 namespace {
 
@@ -58,37 +61,40 @@ std::array<std::array<double,6>,2> LFRicCubedSphereTiles::ab2xyOffsets() const {
              {-45., -45., -45., -45., 45., -135.} } };
 }
 
-void LFRicCubedSphereTiles::tile0Rotate( double xyz[] ) const {
+static void tile0Rotate( double xyz[] ) {
     // Face 0, no rotation.
 }
 
-void LFRicCubedSphereTiles::tile1Rotate( double xyz[] ) const {
+static void tile1Rotate( double xyz[] ) {
     double xyz_in[3];
     std::copy( xyz, xyz + 3, xyz_in );
     xyz[XX] = -xyz_in[YY];
     xyz[YY] =  xyz_in[XX];
 }
 
-void LFRicCubedSphereTiles::tile2Rotate( double xyz[] ) const {
+static void tile2Rotate( double xyz[] ) {
     double xyz_in[3];
     std::copy( xyz, xyz + 3, xyz_in );
     xyz[XX] = -xyz_in[XX];
     xyz[YY] = -xyz_in[YY];
 
 }
-void LFRicCubedSphereTiles::tile3Rotate( double xyz[] ) const {
+
+static void tile3Rotate( double xyz[] ) {
     double xyz_in[3];
     std::copy( xyz, xyz + 3, xyz_in );
     xyz[XX] =  xyz_in[YY];
     xyz[YY] = -xyz_in[XX];
 }
-void LFRicCubedSphereTiles::tile4Rotate( double xyz[] ) const {
+
+static void tile4Rotate( double xyz[] ) {
     double xyz_in[3];
     std::copy( xyz, xyz + 3, xyz_in );
     xyz[XX] =  xyz_in[ZZ];
     xyz[ZZ] = -xyz_in[XX];
 }
-void LFRicCubedSphereTiles::tile5Rotate( double xyz[] ) const {
+
+static void tile5Rotate( double xyz[] ) {
     double xyz_in[3];
     std::copy( xyz, xyz + 3, xyz_in );
     xyz[XX] = -xyz_in[YY];
@@ -97,39 +103,39 @@ void LFRicCubedSphereTiles::tile5Rotate( double xyz[] ) const {
 
 }
 
-void LFRicCubedSphereTiles::tile0RotateInverse( double xyz[] ) const {
+static void tile0RotateInverse( double xyz[] ) {
     // Face 0, no rotation.
 }
 
-void LFRicCubedSphereTiles::tile1RotateInverse( double xyz[] ) const {
+static void tile1RotateInverse( double xyz[] ) {
     double xyz_in[3];
     std::copy( xyz, xyz + 3, xyz_in );
     xyz[XX] =  xyz_in[YY];
     xyz[YY] = -xyz_in[XX];
 }
 
-void LFRicCubedSphereTiles::tile2RotateInverse( double xyz[] ) const {
+static void tile2RotateInverse( double xyz[] ) {
     double xyz_in[3];
     std::copy( xyz, xyz + 3, xyz_in );
     xyz[XX] = -xyz_in[XX];
     xyz[YY] = -xyz_in[YY];
 }
 
-void LFRicCubedSphereTiles::tile3RotateInverse( double xyz[] ) const {
+static void tile3RotateInverse( double xyz[] ) {
     double xyz_in[3];
     std::copy( xyz, xyz + 3, xyz_in );
     xyz[XX] = -xyz_in[YY];
     xyz[YY] =  xyz_in[XX];
 }
 
-void LFRicCubedSphereTiles::tile4RotateInverse( double xyz[] ) const {
+static void tile4RotateInverse( double xyz[] ) {
     double xyz_in[3];
     std::copy( xyz, xyz + 3, xyz_in );
     xyz[XX] = -xyz_in[ZZ];
     xyz[ZZ] =  xyz_in[XX];
 }
 
-void LFRicCubedSphereTiles::tile5RotateInverse( double xyz[] ) const {
+static void tile5RotateInverse( double xyz[] ) {
     double xyz_in[3];
     std::copy( xyz, xyz + 3, xyz_in );
     xyz[XX] =  xyz_in[ZZ];
@@ -137,7 +143,38 @@ void LFRicCubedSphereTiles::tile5RotateInverse( double xyz[] ) const {
     xyz[ZZ] =  xyz_in[YY];
 }
 
-idx_t LFRicCubedSphereTiles::tileFromXY( const double xy[] ) const  {
+void LFRicCubedSphereTiles::rotate( idx_t t, double xyz[] ) const {
+    switch(t) {
+    case 0: { tile0Rotate(xyz); break; }
+    case 1: { tile1Rotate(xyz); break; }
+    case 2: { tile2Rotate(xyz); break; }
+    case 3: { tile3Rotate(xyz); break; }
+    case 4: { tile4Rotate(xyz); break; }
+    case 5: { tile5Rotate(xyz); break; }
+    default:{
+        Log::info() << "ERROR: t out of range" << std::endl;
+        throw_OutOfRange("t",t,6);
+    }
+    }
+}
+
+void LFRicCubedSphereTiles::unrotate( idx_t t, double xyz[] ) const {
+    switch(t) {
+    case 0: { tile0RotateInverse(xyz); break; }
+    case 1: { tile1RotateInverse(xyz); break; }
+    case 2: { tile2RotateInverse(xyz); break; }
+    case 3: { tile3RotateInverse(xyz); break; }
+    case 4: { tile4RotateInverse(xyz); break; }
+    case 5: { tile5RotateInverse(xyz); break; }
+    default:{
+        Log::info() << "ERROR: t out of range" << std::endl;
+        throw_OutOfRange("t",t,6);
+    }
+    }
+}
+
+
+idx_t LFRicCubedSphereTiles::indexFromXY( const double xy[] ) const  {
 
     // Assume one face-edge is of length 90 degrees.
     //
@@ -183,7 +220,7 @@ idx_t LFRicCubedSphereTiles::tileFromXY( const double xy[] ) const  {
     return t;
 }
 
-idx_t LFRicCubedSphereTiles::tileFromLonLat( const double crd[] ) const {
+idx_t LFRicCubedSphereTiles::indexFromLonLat( const double crd[] ) const {
     idx_t t{-1}; // tile index
 
     double xyz[3];
@@ -227,7 +264,7 @@ void LFRicCubedSphereTiles::enforceXYdomain( double xy[] ) const {
     constexpr double epsilon = std::numeric_limits<double>::epsilon();
 
     if ( debug ) {
-        Log::info() << "enforcXYDomain before " << xy[XX] << " " << xy[YY] << std::endl;
+        Log::info() << "enforceXYDomain before " << xy[XX] << " " << xy[YY] << std::endl;
     }
 
     if (is_same(xy[YY], 45.0, tol)) { xy[YY] = 45.0;}
@@ -255,8 +292,7 @@ void LFRicCubedSphereTiles::enforceXYdomain( double xy[] ) const {
 
 
 void LFRicCubedSphereTiles::print( std::ostream& os) const {
-    os << "CubedSphereTiles["
-       << "]";
+    os << "LFRicCubedSphereTiles";
 }
 
 namespace {
@@ -264,5 +300,6 @@ static  CubedSphereTilesBuilder<LFRicCubedSphereTiles> register_builder( LFRicCu
 }
 
 
-}  // namespace cubespheretiles
+}  // namespace detail
+}  // namespace grid
 }  // namespace atlas

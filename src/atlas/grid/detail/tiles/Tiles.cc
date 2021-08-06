@@ -18,7 +18,8 @@
 #include "atlas/util/Config.h"
 
 namespace atlas {
-namespace cubedspheretiles {
+namespace grid {
+namespace detail {
 
 const CubedSphereTiles* CubedSphereTiles::create() {
     // default: FV3 version (for now)
@@ -46,6 +47,6 @@ const CubedSphereTiles* CubedSphereTiles::create( const eckit::Parametrisation& 
 
 }
 
-
-}  // namespace cubedspheretiles
+}  // namespace detail
+}  // namespace grid
 }  // namespace atlas

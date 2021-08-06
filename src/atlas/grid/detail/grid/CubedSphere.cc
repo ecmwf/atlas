@@ -83,13 +83,15 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
     }
 
     tiles_ = cs_projection_->getCubedSphereTiles();
+    tiles_offsets_xy2ab_ = tiles_.xy2abOffsets();
+    tiles_offsets_ab2xy_ = tiles_.ab2xyOffsets();
 
     // default assumes all panels start in bottom left corner
     for (std::size_t i = 0; i < nTiles_; ++i) {
-      xs_[i] = tiles_.xy2abOffsets()[LON][i] * N;
-      xsr_[i] = tiles_.xy2abOffsets()[LON][i] * N;
-      ys_[i] = tiles_.xy2abOffsets()[LAT][i] * N;
-      ysr_[i] = tiles_.xy2abOffsets()[LAT][i] * N;
+      xs_[i]  = tiles_offsets_xy2ab_[LON][i] * N;
+      xsr_[i] = tiles_offsets_xy2ab_[LON][i] * N;
+      ys_[i]  = tiles_offsets_xy2ab_[LAT][i] * N;
+      ysr_[i] = tiles_offsets_xy2ab_[LAT][i] * N;
     }
 
     if (tiles_.type() == "cubedsphere_fv3") {
@@ -133,9 +135,8 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
         imax_.push_back(imaxTile);
         imin_.push_back(iminTile);
       }
-
-
-    } else if (tiles_.type() == "cubedsphere_lfric") {
+    }
+    else if (tiles_.type() == "cubedsphere_lfric") {
 
       // panel 2, 3 starts in lower right corner initially going upwards
       xs_[2] += 1;
@@ -236,6 +237,7 @@ Grid::Spec CubedSphere::spec() const {
 }
 
 // Convert from xy space into resolution dependent xyt space.
+// Note: unused
 void CubedSphere::xy2xyt( const double xy[], double xyt[] ) const {
     // xy is in degrees while xyt is in radians
     // (alpha, beta) and tiles.
@@ -247,12 +249,9 @@ void CubedSphere::xy2xyt( const double xy[], double xyt[] ) const {
 
     std::array<double, 6> yOffset{NDouble, NDouble, 2. * NDouble, NDouble, NDouble, 0};
 
-    xyt[0] =
-        ( normalisedX - std::floor( normalisedX ) ) * static_cast<double>( N_ ) + xs_[static_cast<size_t>( xyt[2] )];
-
-    xyt[1] = ( normalisedY - std::floor( normalisedY ) ) * static_cast<double>( N_ ) +
-             yOffset[static_cast<size_t>( xyt[2] )];
-    xyt[2] = tiles_.tileFromXY(xy);
+    xyt[0] = ( normalisedX - std::floor( normalisedX ) ) * static_cast<double>( N_ ) + xs_[static_cast<size_t>( xyt[2] )];
+    xyt[1] = ( normalisedY - std::floor( normalisedY ) ) * static_cast<double>( N_ ) + yOffset[static_cast<size_t>( xyt[2] )];
+    xyt[2] = tiles_.indexFromXY(xy);
 
     throw std::runtime_error("error  xy2xyt");
 }
@@ -266,12 +265,10 @@ void CubedSphere::xyt2xy( const double xyt[], double xy[] ) const {
     double N = static_cast<double>( N_ );
     std::size_t t = static_cast<std::size_t>(xyt[2]);
 
-    double normalisedX =
-     (xyt[0] - tiles_.xy2abOffsets()[XX][t] * N)/N;
-    double normalisedY =
-     (xyt[1] - tiles_.xy2abOffsets()[YY][t] * N)/N;
-    xy[XX] = normalisedX * 90. + tiles_.ab2xyOffsets()[LON][t];
-    xy[YY] = normalisedY * 90. + tiles_.ab2xyOffsets()[LAT][t];
+    double normalisedX = (xyt[0] - tiles_offsets_xy2ab_[XX][t] * N)/N;
+    double normalisedY = (xyt[1] - tiles_offsets_xy2ab_[YY][t] * N)/N;
+    xy[XX] = normalisedX * 90. + tiles_offsets_ab2xy_[LON][t];
+    xy[YY] = normalisedY * 90. + tiles_offsets_ab2xy_[LAT][t];
 }
 
 // ------------------------------------------

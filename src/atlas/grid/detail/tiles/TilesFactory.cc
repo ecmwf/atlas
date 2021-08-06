@@ -17,7 +17,8 @@
 #include "atlas/grid/detail/tiles/LFRicTiles.h"
 
 namespace atlas {
-namespace cubedspheretiles {
+namespace grid {
+namespace detail {
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -46,5 +47,6 @@ const CubedSphereTiles* CubedSphereTilesFactory::build( const std::string& build
 
 //----------------------------------------------------------------------------------------------------------------------
 
-}  // namespace cubedspheretiles
+}  // namespace detail
+}  // namespace grid
 }  // namespace atlas

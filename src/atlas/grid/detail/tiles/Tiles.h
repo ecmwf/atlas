@@ -22,7 +22,8 @@ class Parametrisation;
 }
 
 namespace atlas {
-namespace cubedspheretiles {
+namespace grid {
+namespace detail {
 
 class CubedSphereTiles : public util::Object {
 public:
@@ -42,35 +43,17 @@ public:
 
     virtual std::array<std::array<double,6>,2> ab2xyOffsets() const = 0;
 
-    virtual void tile0Rotate( double xyz[] ) const = 0;
+    virtual void rotate(idx_t t, double xyz[] ) const = 0;
 
-    virtual void tile1Rotate( double xyz[] ) const = 0;
+    virtual void unrotate(idx_t t, double xyz[] ) const = 0;
 
-    virtual void tile2Rotate( double xyz[] ) const = 0;
+    virtual idx_t indexFromXY( const double xy[] ) const = 0;
 
-    virtual void tile3Rotate( double xyz[] ) const = 0;
-
-    virtual void tile4Rotate( double xyz[] ) const = 0;
-
-    virtual void tile5Rotate( double xyz[] ) const = 0;
-
-    virtual void tile0RotateInverse( double xyz[] ) const = 0;
-
-    virtual void tile1RotateInverse( double xyz[] ) const = 0;
-
-    virtual void tile2RotateInverse( double xyz[] ) const = 0;
-
-    virtual void tile3RotateInverse( double xyz[] ) const = 0;
-
-    virtual void tile4RotateInverse( double xyz[] ) const = 0;
-
-    virtual void tile5RotateInverse( double xyz[] ) const = 0;
-
-    virtual idx_t tileFromXY( const double xy[] ) const = 0;
-
-    virtual idx_t tileFromLonLat( const double lonlat[] ) const = 0;
+    virtual idx_t indexFromLonLat( const double lonlat[] ) const = 0;
 
     virtual void enforceXYdomain( double xy[] ) const = 0;
+
+    idx_t size() const { return 6; }
 
     /// Output to stream
     virtual void print( std::ostream& ) const = 0;
@@ -82,11 +65,7 @@ public:
 
 };
 
-class FV3CubedSphereTiles;
-
-class LFRicCubedSphereTiles;
-
-} // namespace cubedspheretiles
-
+} // namespace detail
+} // namespace grid
 } // namespace atlas
 

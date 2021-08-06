@@ -37,8 +37,8 @@ CASE ("test_tiles") {
     using util::Constants;
 
     util::Config params;
-    CubedSphereTiles f("cubedsphere_fv3");
-    CubedSphereTiles l("cubedsphere_lfric");
+    grid::CubedSphereTiles f("cubedsphere_fv3");
+    grid::CubedSphereTiles l("cubedsphere_lfric");
 
     double cd[2];
 
@@ -57,13 +57,13 @@ CASE ("test_tiles") {
        cd[LON] = pointLonLat.lon();
        cd[LAT] = pointLonLat.lat();
 
-       int t = f.tileFromLonLat(cd);  
+       int t = f.indexFromLonLat(cd);
 
        gEA.projection().lonlat2xy(crd);
        cd[LON] = crd.lon();
        cd[LAT] = crd.lat();
 
-       int t2 = f.tileFromXY(cd);
+       int t2 = f.indexFromXY(cd);
 
        for (std::size_t i = 0; i < 6; ++i) {
            if (jn >= EAOffset[i] && jn < EAOffset[i+1]) {
@@ -85,16 +85,17 @@ CASE ("test_tiles") {
     jn = 0;
     for ( auto crd : gLFR.lonlat() ) {
        atlas::PointLonLat pointLonLat = crd;
+
        cd[LON] = pointLonLat.lon();
        cd[LAT] = pointLonLat.lat();
 
-       int t3 = l.tileFromLonLat(cd);
+       int t3 = l.indexFromLonLat(cd);
 
        gLFR.projection().lonlat2xy(crd);
        cd[LON] = crd.lon();
        cd[LAT] = crd.lat();
 
-       int t4 = l.tileFromXY(cd);
+       int t4 = l.indexFromXY(cd);
 
        for (std::size_t i = 0; i < 6; ++i) {
            if (jn >= LFRicOffset[i] && jn < LFRicOffset[i+1]) {
@@ -104,7 +105,6 @@ CASE ("test_tiles") {
        }
        ++jn;
     }
-
 }
 
 CASE( "test_projection_cubedsphere_xy_latlon" ) {

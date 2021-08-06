@@ -16,7 +16,8 @@
 #include "atlas/util/Factory.h"
 
 namespace atlas {
-namespace cubedspheretiles {
+namespace grid {
+namespace detail {
 
 class CubedSphereTiles;
 
@@ -47,6 +48,7 @@ public:
 
 //----------------------------------------------------------------------------------------------------------------------
 
-}  // namespace cubedspheretiles
+}  // namespace detail
+}  // namespace grid
 }  // namespace atlas
 

@@ -99,9 +99,10 @@ std::string getTileType(const eckit::Parametrisation & params) {
 // -------------------------------------------------------------------------------------------------
 
 CubedSphereProjectionBase::CubedSphereProjectionBase( const eckit::Parametrisation& params ) :
-    CubedSphereTiles_(getTileType(params))
-{
-  ATLAS_TRACE( "CubedSphereProjectionBase::CubedSphereProjectionBase" );
+    tiles_( getTileType( params ) ),
+    tiles_offsets_ab2xy_(tiles_.ab2xyOffsets()),
+    tiles_offsets_xy2ab_(tiles_.xy2abOffsets()) {
+    ATLAS_TRACE( "CubedSphereProjectionBase::CubedSphereProjectionBase" );
 
     // Shift projection by a longitude
     shiftLon_ = 0.0;
@@ -139,7 +140,7 @@ void CubedSphereProjectionBase::hash( eckit::Hash& h ) const {
 
 // -------------------------------------------------------------------------------------------------
 
-void CubedSphereProjectionBase::xy2lonlat_post( double xyz[], const idx_t& t, double crd[] ) const {
+void CubedSphereProjectionBase::xy2lonlat_post( double xyz[], const idx_t t, double crd[] ) const {
     cartesianToSpherical( xyz, crd );
 
     if ( crd[LON] < 0. ) {
@@ -151,7 +152,7 @@ void CubedSphereProjectionBase::xy2lonlat_post( double xyz[], const idx_t& t, do
     sphericalToCartesian( crd, xyz );
 
     // Perform tile specific rotation
-    tileRotate(t, xyz);
+    tiles_.rotate(t,xyz);
 
     // Back to lonlat
     cartesianToSpherical( xyz, crd );
@@ -201,10 +202,10 @@ void CubedSphereProjectionBase::lonlat2xy_pre( double crd[], idx_t& t, double xy
 
     // find tile which this lonlat is linked to
     // works [-45, 315.0)
-    t = CubedSphereTiles_.tileFromLonLat(crd);
+    t = tiles_.indexFromLonLat(crd);
 
     sphericalToCartesian(crd, xyz);
-    tileRotateInverse(t, xyz);
+    tiles_.unrotate(t,xyz);
 
 }
 
@@ -215,47 +216,23 @@ void CubedSphereProjectionBase::xy2alphabetat( const double xy[], idx_t& t, doub
     // xy is in degrees while ab is in degree
     // ab are the  (alpha, beta) coordinates and t is the tile index.
 
-    t = CubedSphereTiles_.tileFromXY(xy);
+    t = tiles_.indexFromXY(xy);
     double normalisedX = xy[XX]/90.;
     double normalisedY = (xy[YY] + 135.)/90.;
-    ab[LON] = (normalisedX - CubedSphereTiles_.xy2abOffsets()[XX][t])* 90.0 - 45.0;
-    ab[LAT] = (normalisedY - CubedSphereTiles_.xy2abOffsets()[YY][t])* 90.0 - 45.0;
+    ab[LON] = (normalisedX - tiles_offsets_xy2ab_[XX][size_t(t)])* 90.0 - 45.0;
+    ab[LAT] = (normalisedY - tiles_offsets_xy2ab_[YY][size_t(t)])* 90.0 - 45.0;
 }
 
 // -------------------------------------------------------------------------------------------------
 
-void CubedSphereProjectionBase::alphabetat2xy( const idx_t& t, const double ab[], double xy[] ) const {
+void CubedSphereProjectionBase::alphabetat2xy( const idx_t t, const double ab[], double xy[] ) const {
     // xy and ab are in degrees
     // (alpha, beta) and tiles.
 
-    xy[XX] = ab[LON] + 45.0 + CubedSphereTiles_.ab2xyOffsets()[LON][t];
-    xy[YY] = ab[LAT] + 45.0 + CubedSphereTiles_.ab2xyOffsets()[LAT][t];
+    xy[XX] = ab[LON] + 45.0 + tiles_offsets_ab2xy_[LON][size_t(t)];
+    xy[YY] = ab[LAT] + 45.0 + tiles_offsets_ab2xy_[LAT][size_t(t)];
 
-    CubedSphereTiles_.enforceXYdomain(xy);
-}
-
-void CubedSphereProjectionBase::tileRotate(const idx_t& t, double xyz[]) const  {
-
-    switch (t) {
-    case 0: CubedSphereTiles_.tile0Rotate(xyz); break;
-    case 1: CubedSphereTiles_.tile1Rotate(xyz); break;
-    case 2: CubedSphereTiles_.tile2Rotate(xyz); break;
-    case 3: CubedSphereTiles_.tile3Rotate(xyz); break;
-    case 4: CubedSphereTiles_.tile4Rotate(xyz); break;
-    case 5: CubedSphereTiles_.tile5Rotate(xyz); break;
-    }
-}
-
-void CubedSphereProjectionBase::tileRotateInverse(const idx_t& t, double xyz[]) const  {
-
-    switch (t) {
-    case 0: CubedSphereTiles_.tile0RotateInverse(xyz); break;
-    case 1: CubedSphereTiles_.tile1RotateInverse(xyz); break;
-    case 2: CubedSphereTiles_.tile2RotateInverse(xyz); break;
-    case 3: CubedSphereTiles_.tile3RotateInverse(xyz); break;
-    case 4: CubedSphereTiles_.tile4RotateInverse(xyz); break;
-    case 5: CubedSphereTiles_.tile5RotateInverse(xyz); break;
-    }
+    tiles_.enforceXYdomain(xy);
 }
 
 // -------------------------------------------------------------------------------------------------

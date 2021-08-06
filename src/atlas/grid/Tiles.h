@@ -35,16 +35,18 @@ namespace util {
 class Config;
 }  // namespace util
 
+namespace grid {
+
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-namespace cubedspheretiles {
+namespace detail {
 class CubedSphereTiles;
-}  // namespace cubespheretiles
+}  // namespace detail
 #endif
 
 //---------------------------------------------------------------------------------------------------------------------
 
 class CubedSphereTiles : DOXYGEN_HIDE(
-    public util::ObjectHandle<atlas::cubedspheretiles::CubedSphereTiles> ) {
+    public util::ObjectHandle<atlas::grid::detail::CubedSphereTiles> ) {
 public:
     using Spec = util::Config;
 
@@ -61,35 +63,17 @@ public:
 
     std::array<std::array<double,6>,2> ab2xyOffsets() const;
 
-    void tile0Rotate( double xyz[] ) const;
+    void rotate( idx_t t, double xyz[] ) const;
 
-    void tile1Rotate( double xyz[] ) const;
+    void unrotate( idx_t t, double xyz[] ) const;
 
-    void tile2Rotate( double xyz[] ) const;
+    idx_t indexFromXY( const double xy[] ) const;
 
-    void tile3Rotate( double xyz[] ) const;
-
-    void tile4Rotate( double xyz[] ) const;
-
-    void tile5Rotate( double xyz[] ) const;
-
-    void tile0RotateInverse( double xyz[] ) const;
-
-    void tile1RotateInverse( double xyz[] ) const;
-
-    void tile2RotateInverse( double xyz[] ) const;
-
-    void tile3RotateInverse( double xyz[] ) const;
-
-    void tile4RotateInverse( double xyz[] ) const;
-
-    void tile5RotateInverse( double xyz[] ) const;
-
-    idx_t tileFromXY( const double xy[] ) const;
-
-    idx_t tileFromLonLat( const double lonlat[] ) const;
+    idx_t indexFromLonLat( const double lonlat[] ) const;
 
     void enforceXYdomain( double xy[] ) const;
+
+    idx_t size() const;
 
 private:
     /// Output to stream
@@ -99,4 +83,5 @@ private:
 
 };
 
+}  // namespace grid
 }  // namespace atlas

@@ -55,7 +55,8 @@ void sphericalToCartesian(const double lonlat[], double xyz[] ) {
 }
 
 namespace atlas {
-namespace cubedspheretiles {
+namespace grid {
+namespace detail {
 
 // constructor
 FV3CubedSphereTiles::FV3CubedSphereTiles( const eckit::Parametrisation& ) {
@@ -71,17 +72,17 @@ std::array<std::array<double,6>,2> FV3CubedSphereTiles::ab2xyOffsets() const {
              {-45., -45., 45., -45., -45., -135.} } };
 }
 
-void FV3CubedSphereTiles::tile0Rotate( double xyz[] ) const {
+static void tile0Rotate( double xyz[] ) {
     //  Face 0, no rotation.
 }
 
-void FV3CubedSphereTiles::tile1Rotate( double xyz[] ) const {
+static void tile1Rotate( double xyz[] ) {
     //  Face 1: rotate -90.0 degrees about z axis
     constexpr double angle = -M_PI / 2.0;
     ProjectionUtilities::rotate3dZ(angle, xyz);
 }
 
-void FV3CubedSphereTiles::tile2Rotate( double xyz[] ) const {
+static void tile2Rotate( double xyz[] ) {
     //  Face 2: rotate -90.0 degrees about z axis
     //          rotate  90.0 degrees about x axis
     constexpr double angle_z = -M_PI / 2.0;
@@ -89,17 +90,20 @@ void FV3CubedSphereTiles::tile2Rotate( double xyz[] ) const {
     constexpr double angle_x = M_PI / 2.0;
     ProjectionUtilities::rotate3dX(angle_x, xyz);
 }
-void FV3CubedSphereTiles::tile3Rotate( double xyz[] ) const {
+
+static void tile3Rotate( double xyz[] ) {
     //  Face 3: rotate -180.0 degrees about z axis
     constexpr double angle = -M_PI;
     ProjectionUtilities::rotate3dZ(angle, xyz);
 }
-void FV3CubedSphereTiles::tile4Rotate( double xyz[] ) const {
+
+static void tile4Rotate( double xyz[] ) {
     //  Face 4: rotate 90.0 degrees about z axis
     constexpr double angle = M_PI / 2.0;
     ProjectionUtilities::rotate3dZ(angle, xyz);
 }
-void FV3CubedSphereTiles::tile5Rotate( double xyz[] ) const {
+
+static void tile5Rotate( double xyz[] ) {
     // Face 5: rotate 90.0 degrees about y axis
     //         rotate 90.0 degrees about z axis
     constexpr double angle_y = M_PI / 2.0;
@@ -108,17 +112,29 @@ void FV3CubedSphereTiles::tile5Rotate( double xyz[] ) const {
     ProjectionUtilities::rotate3dZ(angle_z, xyz);
 }
 
-void FV3CubedSphereTiles::tile0RotateInverse( double xyz[] ) const {
+void FV3CubedSphereTiles::rotate( idx_t t, double xyz[] ) const {
+    switch(t) {
+    case 0: { tile0Rotate(xyz); break; }
+    case 1: { tile1Rotate(xyz); break; }
+    case 2: { tile2Rotate(xyz); break; }
+    case 3: { tile3Rotate(xyz); break; }
+    case 4: { tile4Rotate(xyz); break; }
+    case 5: { tile5Rotate(xyz); break; }
+    default:{ throw_OutOfRange("t",t,6); }
+    }
+}
+
+static void tile0RotateInverse( double xyz[] ) {
     //  Face 0, no rotation.
 }
 
-void FV3CubedSphereTiles::tile1RotateInverse( double xyz[] ) const {
+static void tile1RotateInverse( double xyz[] ) {
     //  Face 1: rotate 90.0 degrees about z axis
     constexpr double angle = M_PI / 2.0;
     ProjectionUtilities::rotate3dZ(angle, xyz);
 }
 
-void FV3CubedSphereTiles::tile2RotateInverse( double xyz[] ) const {
+static void tile2RotateInverse( double xyz[] ) {
     //  Face 2: rotate  90.0 degrees about x axis
     //          rotate -90.0 degrees about z axis
     constexpr double angle_x = -M_PI / 2.0;
@@ -127,19 +143,19 @@ void FV3CubedSphereTiles::tile2RotateInverse( double xyz[] ) const {
     ProjectionUtilities::rotate3dZ(angle_z, xyz);
 }
 
-void FV3CubedSphereTiles::tile3RotateInverse( double xyz[] ) const {
+static void tile3RotateInverse( double xyz[] ) {
     //  Face 3: rotate  180.0 degrees about z axis
     constexpr double angle = M_PI;
     ProjectionUtilities::rotate3dZ(angle, xyz);
 }
 
-void FV3CubedSphereTiles::tile4RotateInverse( double xyz[] ) const {
+static void tile4RotateInverse( double xyz[] ) {
     //  Face 4: rotate -90.0 degrees about y axis
     constexpr double angle = - M_PI / 2.0;
     ProjectionUtilities::rotate3dZ(angle, xyz);
 }
 
-void FV3CubedSphereTiles::tile5RotateInverse( double xyz[] ) const {
+static void tile5RotateInverse( double xyz[] ) {
     //  Face 5: rotate -90.0 degrees about y axis
     //          rotate -90.0 degrees about z axis
     constexpr double angle_z = -M_PI / 2.;
@@ -148,7 +164,19 @@ void FV3CubedSphereTiles::tile5RotateInverse( double xyz[] ) const {
     ProjectionUtilities::rotate3dY(angle_y, xyz);
 }
 
-idx_t FV3CubedSphereTiles::tileFromXY( const double xy[] ) const  {
+void FV3CubedSphereTiles::unrotate( idx_t t, double xyz[] ) const {
+    switch(t) {
+    case 0: { tile0RotateInverse(xyz); break; }
+    case 1: { tile1RotateInverse(xyz); break; }
+    case 2: { tile2RotateInverse(xyz); break; }
+    case 3: { tile3RotateInverse(xyz); break; }
+    case 4: { tile4RotateInverse(xyz); break; }
+    case 5: { tile5RotateInverse(xyz); break; }
+    default:{ throw_OutOfRange("t",t,6); }
+    }
+}
+
+idx_t FV3CubedSphereTiles::indexFromXY( const double xy[] ) const  {
 
     // Assume one face-edge is of length 90 degrees.
     //
@@ -208,7 +236,7 @@ idx_t FV3CubedSphereTiles::tileFromXY( const double xy[] ) const  {
 // Calculates the FV3 panel
 // Input (crd) is Longitude and Latitude in Radians
 // Output is tile number
-idx_t FV3CubedSphereTiles::tileFromLonLat( const double crd[] ) const {
+idx_t FV3CubedSphereTiles::indexFromLonLat( const double crd[] ) const {
 
     idx_t t(-1); // tile index
     double xyz[3];
@@ -324,14 +352,13 @@ void FV3CubedSphereTiles::enforceXYdomain( double xy[] ) const {
     }
 
     if ( debug ) {
-        Log::info() << "enforcXYDomain after " << xy[XX] << " " << xy[YY] << std::endl;
+        Log::info() << "enforceXYDomain after " << xy[XX] << " " << xy[YY] << std::endl;
     }
 }
 
 
 void FV3CubedSphereTiles::print( std::ostream& os) const {
-    os << "CubedSphereTiles["
-       << "]";
+    os << "FV3CubedSphereTiles";
 }
 
 
@@ -340,7 +367,8 @@ static  CubedSphereTilesBuilder<FV3CubedSphereTiles> register_builder( FV3CubedS
 }
 
 
-}  // namespace cubedspheretiles
+}  // namespace detail
+}  // namespace grid
 }  // namespace atlas
 
 
