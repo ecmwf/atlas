@@ -123,6 +123,7 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
                  [this]( int i, int j, int t ) { return this->ysrMinusIndex( i, t ); },
                  [this]( int i, int j, int t ) { return this->ysrMinusIndex( i, t ); }};
 
+        jmin_ = std::array<idx_t, 6>{0, 0, 0, 0, 0, 0};
         jmax_ = std::array<idx_t, 6>{N, N - 1, N - 1, N - 1, N - 1, N - 1};
 
         for ( idx_t t = 0; t < nTiles_; ++t ) {
@@ -174,7 +175,7 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
                  [this]( int i, int j, int t ) { return this->ysPlusIndex( j, t ); },
                  [this]( int i, int j, int t ) { return this->ysrMinusIndex( i, t ); }};
 
-
+        jmin_ = std::array<idx_t, 6>{0, 0, 0, 0, 0, 0};
         jmax_ = std::array<idx_t, 6>{N - 1, N - 1, N - 1, N - 1, N, N - 2};
 
         for ( std::size_t t = 0; t < nTiles_; ++t ) {
