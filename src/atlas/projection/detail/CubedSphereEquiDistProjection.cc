@@ -46,12 +46,13 @@ void CubedSphereEquiDistProjection::lonlat2xy( double crd[] ) const {
     CubedSphereProjectionBase::lonlat2xy_pre( crd, t, xyz );
 
     //now should be tile 0 - now calculate (alpha, beta) in radians.
-    // should be between - pi/4 and pi/4
-    ab[0] = M_PI_4 * xyz[YY] / xyz[XX];
-    ab[1] = -M_PI_4 * xyz[ZZ] / xyz[XX];
+    // should be between - 45.0 and 45.0
+    ab[0] = 45.0 * xyz[YY] / xyz[XX];
+    ab[1] = - 45.0 * xyz[ZZ] / xyz[XX];
 
     if ( debug ) {
-        Log::info() << "equidist lonlat2xy xyz ab : " << xyz[0] << " " << xyz[1] << " " << xyz[2] << " " << ab[0] << " "
+        Log::info() << "equidist lonlat2xy xyz ab : " << xyz[0]
+                    << " " << xyz[1] << " " << xyz[2] << " " << ab[0] << " "
                     << ab[1] << std::endl;
     }
 
@@ -75,18 +76,20 @@ void CubedSphereEquiDistProjection::xy2lonlat( double crd[] ) const {
     CubedSphereProjectionBase::xy2alphabetat( crd, t, ab );
 
     if ( debug ) {
-        Log::info() << "equidist xy2lonlat:: crd t ab  : " << crd[LON] << " " << crd[1] << " " << t << " " << ab[0]
+        Log::info() << "equidist xy2lonlat:: crd t ab  : "
+                    << crd[LON] << " " << crd[1] << " " << t << " " << ab[0]
                     << " " << ab[1] << std::endl;
     }
 
     xyz[0] = -rsq3;
-    xyz[1] = -rsq3 * ab[0] / M_PI_4;
-    xyz[2] = -rsq3 * ab[1] / M_PI_4;
+    xyz[1] = -rsq3 * ab[0] / 45.;
+    xyz[2] = -rsq3 * ab[1] / 45.;
 
     CubedSphereProjectionBase::xy2lonlat_post( xyz, t, crd );
 
     if ( debug ) {
-        Log::info() << "end of equidistant xy2lonlat lonlat = " << crd[LON] << " " << crd[LAT] << std::endl;
+        Log::info() << "end of equidistant xy2lonlat lonlat = "
+                    << crd[LON] << " " << crd[LAT] << std::endl;
     }
 }
 
