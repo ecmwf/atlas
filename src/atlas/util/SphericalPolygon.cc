@@ -52,14 +52,10 @@ bool SphericalPolygon::contains( const Point2& P ) const {
         const bool BPA = ( B[LON] <= P[LON] && P[LON] < A[LON] );
 
         if ( APB != BPA ) {
-            const double lat = [&] {
-                if ( is_approximately_equal( A[LAT], B[LAT] ) && is_approximately_equal( std::abs( A[LAT] ), 90. ) ) {
-                    return A[LAT];
-                }
-                else {
-                    return util::Earth::greatCircleLatitudeGivenLongitude( A, B, P[LON] );
-                }
-            }();
+            const double lat =
+                is_approximately_equal( A[LAT], B[LAT] ) && is_approximately_equal( std::abs( A[LAT] ), 90. )
+                    ? A[LAT]
+                    : util::Earth::greatCircleLatitudeGivenLongitude( A, B, P[LON] );
 
             ATLAS_ASSERT( !std::isnan( lat ) );
             if ( is_approximately_equal( P[LAT], lat ) ) {

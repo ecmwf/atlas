@@ -36,7 +36,7 @@ template <typename PointContainer>
 PointLonLat compute_centroid( const PointContainer& points ) {
     ATLAS_ASSERT( eckit::geometry::points_equal( points.front(), points.back() ) );
 
-    PointLonLat centroid = {0, 0};
+    PointLonLat centroid = { 0, 0 };
     double signed_area   = 0.;
     double a             = 0.;  // Partial signed area
 
@@ -83,8 +83,8 @@ double compute_inner_radius_squared( const PointContainer& points, const PointLo
 PolygonXY::PolygonXY( const PartitionPolygon& partition_polygon ) : PolygonCoordinates( partition_polygon.xy(), true ) {
     RectangularLonLatDomain inscribed = partition_polygon.inscribedDomain();
     if ( inscribed ) {
-        inner_coordinatesMin_ = {inscribed.xmin(), inscribed.ymin()};
-        inner_coordinatesMax_ = {inscribed.xmax(), inscribed.ymax()};
+        inner_coordinatesMin_ = { inscribed.xmin(), inscribed.ymin() };
+        inner_coordinatesMax_ = { inscribed.xmax(), inscribed.ymax() };
     }
     else {
         centroid_             = compute_centroid( coordinates_ );
@@ -108,8 +108,8 @@ bool PolygonXY::contains( const Point2& P ) const {
     }
 
     if ( inner_radius_squared_ == 0 ) {  // check inner bounding box
-        if ( inner_coordinatesMin_[LON] <= P[LON] && inner_coordinatesMax_[LON] >= P[LON] &&
-             inner_coordinatesMin_[LAT] <= P[LAT] && inner_coordinatesMax_[LAT] >= P[LAT] ) {
+        if ( inner_coordinatesMin_[LON] <= P[LON] && P[LON] <= inner_coordinatesMax_[LON] &&
+             inner_coordinatesMin_[LAT] <= P[LAT] && P[LAT] <= inner_coordinatesMax_[LAT] ) {
             return true;
         }
     }
