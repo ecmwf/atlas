@@ -74,7 +74,7 @@ void CubedSphereMeshGenerator::configure_defaults() {
   options.set("part", mpi::rank());
 
   // This options sets the default partitioner.
-  options.set<std::string>("partitioner", "equal_regions");
+  options.set<std::string>("partitioner", "cubed_sphere");
 }
 
 // -----------------------------------------------------------------------------
