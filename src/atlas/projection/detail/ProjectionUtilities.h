@@ -52,12 +52,12 @@ struct ProjectionUtilities {
         Sphere::convertCartesianToSpherical( r, pointXYZ, pointLonLat );
 
         // Copy to array.
-        lonlat[LON] = pointLonLat.lon() * Constants::degreesToRadians();
-        lonlat[LAT] = -pointLonLat.lat() * Constants::degreesToRadians();
+        lonlat[LON] = pointLonLat.lon();
+        lonlat[LAT] = -pointLonLat.lat();
 
         // Left or right hand system.
         if ( coordinate_system == CoordinateSystem::RIGHT_HAND ) {
-            lonlat[LAT] += 0.5 * M_PI;
+            lonlat[LAT] += 90.;
         }
     }
 
@@ -69,8 +69,10 @@ struct ProjectionUtilities {
         using util::Constants;
 
         // Make point objects.
-        const auto pointLonLat = PointLonLat( lonlat ) * Constants::radiansToDegrees();
-        auto pointXYZ          = PointXYZ();
+
+        const auto pointLonLat = PointLonLat( lonlat );
+
+        auto pointXYZ = PointXYZ();
 
         // Set Radius
         auto r = radius != 0 ? radius : util::Earth::radius();

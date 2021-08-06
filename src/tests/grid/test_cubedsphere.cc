@@ -8,8 +8,10 @@
 #include "atlas/array/MakeView.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid.h"
+#include "atlas/grid/Tiles.h"
 #include "atlas/mesh.h"
 #include "atlas/meshgenerator.h"
+#include "atlas/option.h"
 #include "atlas/output/Gmsh.h"
 
 #include "tests/AtlasTestEnvironment.h"
@@ -17,13 +19,103 @@
 namespace atlas {
 namespace test {
 
+CASE( "cubedsphere_tile_test" ) {
+    auto tileConfig1 = atlas::util::Config( "type", "cubedsphere_lfric" );
+    auto lfricTiles  = atlas::grid::CubedSphereTiles( tileConfig1 );
+    EXPECT( lfricTiles.type() == "cubedsphere_lfric" );
+
+    auto tileConfig2 = atlas::util::Config( "type", "cubedsphere_fv3" );
+    auto fv3Tiles    = atlas::grid::CubedSphereTiles( tileConfig2 );
+    EXPECT( fv3Tiles.type() == "cubedsphere_fv3" );
+
+    auto lfricTiles2 = atlas::grid::CubedSphereTiles( "cubedsphere_lfric" );
+    EXPECT( lfricTiles2.type() == "cubedsphere_lfric" );
+
+    auto fv3Tiles2 = atlas::grid::CubedSphereTiles( "cubedsphere_fv3" );
+    EXPECT( fv3Tiles.type() == "cubedsphere_fv3" );
+}
+
+
+//-----------------------------------------------------------------------------
+
+CASE( "test_iterator" ) {
+    std::vector<int> resolutions{1, 2, 4, 8};
+    std::vector<std::string> grid_prefixes{"CS-EA-", "CS-ED-"};
+
+
+    for ( auto resolution : resolutions ) {
+        for ( auto grid_prefix : grid_prefixes ) {
+            std::string grid_name = grid_prefix + std::to_string( resolution );
+            Grid g( grid_name );
+            SECTION( grid_name + " xy" ) {
+                std::vector<PointXY> coordinates_1;
+                std::vector<PointXY> coordinates_2;
+                std::vector<PointXY> coordinates_3;
+                {
+                    for ( auto crd : g.xy() ) {
+                        coordinates_1.push_back( crd );
+                    }
+                }
+                {
+                    auto iterator = g.xy().begin();
+                    for ( int n = 0; n < g.size(); ++n ) {
+                        coordinates_2.push_back( *iterator );
+                        iterator += 1;
+                    }
+                }
+                {
+                    auto iterator = g.xy().begin();
+                    PointXY crd;
+                    while ( iterator.next( crd ) ) {
+                        coordinates_3.push_back( crd );
+                    }
+                }
+                EXPECT_EQ( coordinates_1.size(), g.size() );
+                EXPECT_EQ( coordinates_2.size(), g.size() );
+                EXPECT_EQ( coordinates_3.size(), g.size() );
+                EXPECT_EQ( coordinates_2, coordinates_1 );
+                EXPECT_EQ( coordinates_3, coordinates_1 );
+            }
+            SECTION( grid_name + " lonlat" ) {
+                std::vector<PointLonLat> coordinates_1;
+                std::vector<PointLonLat> coordinates_2;
+                std::vector<PointLonLat> coordinates_3;
+                {
+                    for ( auto crd : g.lonlat() ) {
+                        coordinates_1.push_back( crd );
+                    }
+                }
+                {
+                    auto iterator = g.lonlat().begin();
+                    for ( int n = 0; n < g.size(); ++n ) {
+                        coordinates_2.push_back( *iterator );
+                        iterator += 1;
+                    }
+                }
+                {
+                    auto iterator = g.lonlat().begin();
+                    PointLonLat crd;
+                    while ( iterator.next( crd ) ) {
+                        coordinates_3.push_back( crd );
+                    }
+                }
+                EXPECT_EQ( coordinates_1.size(), g.size() );
+                EXPECT_EQ( coordinates_2.size(), g.size() );
+                EXPECT_EQ( coordinates_3.size(), g.size() );
+                EXPECT_EQ( coordinates_2, coordinates_1 );
+                EXPECT_EQ( coordinates_3, coordinates_1 );
+            }
+        }
+    }
+}
+
 
 CASE( "cubedsphere_grid_mesh_field_test" ) {
     // THIS IS TEMPORARY!
     // I expect this will be replaced by some more aggressive tests.
 
     // Set grid.
-    const auto grid = atlas::Grid( "CS-EA-24" );
+    const auto grid = atlas::Grid( "CS-EA-2" );
 
     atlas::Log::info() << grid->type() << std::endl;
     atlas::Log::info() << grid.size() << std::endl;
@@ -34,21 +126,24 @@ CASE( "cubedsphere_grid_mesh_field_test" ) {
     auto mesh    = meshGen.generate( grid );
 
     // Set functionspace
-    auto functionSpace = atlas::functionspace::NodeColumns(
-        mesh, atlas::util::Config( "levels", 1 ) | atlas::util::Config( "periodic_points", true ) );
+    auto functionSpace = atlas::functionspace::NodeColumns( mesh );
 
-    // Set field
-    auto field     = functionSpace.createField<idx_t>( atlas::option::name( "indices" ) );
-    auto fieldView = atlas::array::make_view<idx_t, 2>( field );
+    auto ghostIdx = mesh.nodes().metadata().get<std::vector<idx_t>>( "ghost-global-idx" );
+    auto ownedIdx = mesh.nodes().metadata().get<std::vector<idx_t>>( "owned-global-idx" );
 
-    for ( idx_t i = 0; i < fieldView.shape()[0]; ++i ) {
-        fieldView( i, 0 ) = i;
+    // Print out ghost global indices with corresponding owned global indices
+    auto ownedIdxIt = ownedIdx.begin();
+    for ( auto iGhost : ghostIdx ) {
+        std::cout << iGhost << " " << *ownedIdxIt++ << std::endl;
     }
 
+    // Set field
+    auto field = functionSpace.ghost();
+
     // Set gmsh config.
-    auto gmshConfigXy     = atlas::util::Config( "coordinates", "xy" );
-    auto gmshConfigXyz    = atlas::util::Config( "coordinates", "xyz" );
-    auto gmshConfigLonLat = atlas::util::Config( "coordinates", "lonlat" );
+    auto gmshConfigXy     = atlas::util::Config( "coordinates", "xy" ) | atlas::util::Config( "ghost", false );
+    auto gmshConfigXyz    = atlas::util::Config( "coordinates", "xyz" ) | atlas::util::Config( "ghost", false );
+    auto gmshConfigLonLat = atlas::util::Config( "coordinates", "lonlat" ) | atlas::util::Config( "ghost", false );
 
     // Set source gmsh object.
     const auto gmshXy     = atlas::output::Gmsh( "cs_xy_mesh.msh", gmshConfigXy );
@@ -63,6 +158,7 @@ CASE( "cubedsphere_grid_mesh_field_test" ) {
     gmshLonLat.write( mesh );
     gmshLonLat.write( field );
 }
+
 
 }  // namespace test
 }  // namespace atlas

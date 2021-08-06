@@ -18,6 +18,7 @@
 
 #include "atlas/domain/Domain.h"
 #include "atlas/grid/CubedSphereGrid.h"
+#include "atlas/grid/Tiles.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
 #include "atlas/grid/detail/grid/GridFactory.h"
 #include "atlas/grid/detail/spacing/CustomSpacing.h"
@@ -53,12 +54,17 @@ std::string CubedSphere::name() const {
     return name_;
 }
 
+using atlas::projection::detail::CubedSphereProjectionBase;
+
+
 CubedSphere::CubedSphere( int N, Projection p ) : CubedSphere( CubedSphere::static_type(), N, p ) {}
 
 CubedSphere::CubedSphere( const std::string& name, int N, Projection projection ) :
     Grid(), N_( N ), name_( name ) {  // Number of tiles hardwired to 6 at the moment. Regional may need 1
     // Copy members
-    projection_ = projection ? projection : Projection();
+    util::Config defaultProjConfig;
+    defaultProjConfig.set( "type", "cubedsphere_equiangular" );
+    projection_ = projection ? projection : Projection( defaultProjConfig );
 
     // Domain
     domain_ = computeDomain();
@@ -69,40 +75,122 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
     // the y start position. Tile 3, 4 and 5 are rotated and ysr provides the start point for y after
     // these rotations.
 
-    xs_[0] = 0 * N;
-    xs_[1] = 1 * N;
-    xs_[2] = 1 * N;
-    xs_[3] = 2 * N;
-    xs_[4] = 3 * N;
-    xs_[5] = 3 * N;
+    using atlas::projection::detail::CubedSphereProjectionBase;
+    cs_projection_ = dynamic_cast<CubedSphereProjectionBase*>( projection_.get() );
+    if ( not cs_projection_ ) {
+        ATLAS_THROW_EXCEPTION( "Provided projection " << projection_.type()
+                                                      << " is incompatible with the CubedSphere grid type" );
+    }
 
-    ys_[0] = 1 * N;
-    ys_[1] = 1 * N;
-    ys_[2] = 2 * N;
-    ys_[3] = 1 * N + 1;
-    ys_[4] = 1 * N + 1;
-    ys_[5] = 0 * N + 1;
+    tiles_               = cs_projection_->getCubedSphereTiles();
+    tiles_offsets_xy2ab_ = tiles_.xy2abOffsets();
+    tiles_offsets_ab2xy_ = tiles_.ab2xyOffsets();
 
-    ysr_[0] = ys_[0];
-    ysr_[1] = ys_[1];
-    ysr_[2] = ys_[2];
-    ysr_[3] = 2 * N;
-    ysr_[4] = 2 * N;
-    ysr_[5] = 1 * N;
+    // default assumes all panels start in bottom left corner
+    for ( std::size_t i = 0; i < nTiles_; ++i ) {
+        xs_[i]  = tiles_offsets_xy2ab_[LON][i] * N;
+        xsr_[i] = tiles_offsets_xy2ab_[LON][i] * N;
+        ys_[i]  = tiles_offsets_xy2ab_[LAT][i] * N;
+        ysr_[i] = tiles_offsets_xy2ab_[LAT][i] * N;
+    }
 
-    // Number of grid points on each face of the tile.
-    npts_.push_back( N * N + 1 );  // An extra point lies on tile 1
-    npts_.push_back( N * N + 1 );  // An extra point lies on tile 2
-    npts_.push_back( N * N );
-    npts_.push_back( N * N );
-    npts_.push_back( N * N );
-    npts_.push_back( N * N );
+    if ( tiles_.type() == "cubedsphere_fv3" ) {
+        // panel 3,4,5 are reversed in that they start in top left corner
+        for ( std::size_t i = 3; i < nTiles_; ++i ) {
+            ys_[i] += 1;
+            ysr_[i] += N;
+        }
 
-    xtile = {[this]( int i, int j, int t ) { return this->x123( i, t ); },
-             [this]( int i, int j, int t ) { return this->x456( j, t ); }};
+        // Number of grid points on each face of the tile.
+        npts_.push_back( N * N + 1 );  // An extra point lies on tile 1
+        npts_.push_back( N * N + 1 );  // An extra point lies on tile 2
+        npts_.push_back( N * N );
+        npts_.push_back( N * N );
+        npts_.push_back( N * N );
+        npts_.push_back( N * N );
 
-    ytile = {[this]( int i, int j, int t ) { return this->y123( j, t ); },
-             [this]( int i, int j, int t ) { return this->y456( i, t ); }};
+        xtile = {[this]( int i, int j, int t ) { return this->xsPlusIndex( i, t ); },
+                 [this]( int i, int j, int t ) { return this->xsPlusIndex( i, t ); },
+                 [this]( int i, int j, int t ) { return this->xsPlusIndex( i, t ); },
+                 [this]( int i, int j, int t ) { return this->xsPlusIndex( j, t ); },
+                 [this]( int i, int j, int t ) { return this->xsPlusIndex( j, t ); },
+                 [this]( int i, int j, int t ) { return this->xsPlusIndex( j, t ); }};
+
+        ytile = {[this]( int i, int j, int t ) { return this->ysPlusIndex( j, t ); },
+                 [this]( int i, int j, int t ) { return this->ysPlusIndex( j, t ); },
+                 [this]( int i, int j, int t ) { return this->ysPlusIndex( j, t ); },
+                 [this]( int i, int j, int t ) { return this->ysrMinusIndex( i, t ); },
+                 [this]( int i, int j, int t ) { return this->ysrMinusIndex( i, t ); },
+                 [this]( int i, int j, int t ) { return this->ysrMinusIndex( i, t ); }};
+
+        jmax_ = std::array<idx_t, 6>{N, N - 1, N - 1, N - 1, N - 1, N - 1};
+
+        for ( idx_t t = 0; t < nTiles_; ++t ) {
+            std::size_t rowlength = 1 + jmax_[t] - jmin_[t];
+            std::vector<idx_t> imaxTile( rowlength, N - 1 );
+            std::vector<idx_t> iminTile( rowlength, 0 );
+            // extra points
+            if ( t == 0 ) {
+                imaxTile[N] = 0;
+            }
+            if ( t == 1 ) {
+                imaxTile[0] = N;
+            }
+            imax_.push_back( imaxTile );
+            imin_.push_back( iminTile );
+        }
+    }
+    else if ( tiles_.type() == "cubedsphere_lfric" ) {
+        // panel 2, 3 starts in lower right corner initially going upwards
+        xs_[2] += 1;
+        xsr_[2] += N - 1;
+        xs_[3] += 1;
+        xsr_[3] += N - 1;
+
+        // panel 5 starts in upper left corner going downwards
+        xs_[5] += 1;
+        ys_[5] += 1;
+        ysr_[5] += N - 1;
+
+        // Number of grid points on each face of the tile.
+        npts_.push_back( N * N );
+        npts_.push_back( N * N );
+        npts_.push_back( N * N );
+        npts_.push_back( N * N );
+        npts_.push_back( ( N + 1 ) * ( N + 1 ) );  // top panel includes all edges
+        npts_.push_back( ( N - 1 ) * ( N - 1 ) );  // bottom panel excludes all edges
+
+        xtile = {[this]( int i, int j, int t ) { return this->xsPlusIndex( i, t ); },
+                 [this]( int i, int j, int t ) { return this->xsPlusIndex( i, t ); },
+                 [this]( int i, int j, int t ) { return this->xsrMinusIndex( j, t ); },
+                 [this]( int i, int j, int t ) { return this->xsrMinusIndex( j, t ); },
+                 [this]( int i, int j, int t ) { return this->xsPlusIndex( i, t ); },
+                 [this]( int i, int j, int t ) { return this->xsPlusIndex( j, t ); }};
+
+        ytile = {[this]( int i, int j, int t ) { return this->ysPlusIndex( j, t ); },
+                 [this]( int i, int j, int t ) { return this->ysPlusIndex( j, t ); },
+                 [this]( int i, int j, int t ) { return this->ysPlusIndex( i, t ); },
+                 [this]( int i, int j, int t ) { return this->ysPlusIndex( i, t ); },
+                 [this]( int i, int j, int t ) { return this->ysPlusIndex( j, t ); },
+                 [this]( int i, int j, int t ) { return this->ysrMinusIndex( i, t ); }};
+
+
+        jmax_ = std::array<idx_t, 6>{N - 1, N - 1, N - 1, N - 1, N, N - 2};
+
+        for ( std::size_t t = 0; t < nTiles_; ++t ) {
+            std::size_t rowlength = 1 + jmax_[t] - jmin_[t];
+            std::vector<idx_t> imaxTile( rowlength, N - 1 );
+            std::vector<idx_t> iminTile( rowlength, 0 );
+            if ( t == 4 ) {
+                std::fill_n( imaxTile.begin(), rowlength, N );
+            }
+            if ( t == 5 ) {
+                std::fill_n( imaxTile.begin(), rowlength, N - 2 );
+            }
+            imax_.push_back( imaxTile );
+            imin_.push_back( iminTile );
+        }
+    }
 }
 
 // Provide the domain for the cubed-sphere grid, which is global.
@@ -155,6 +243,7 @@ Grid::Spec CubedSphere::spec() const {
 }
 
 // Convert from xy space into resolution dependent xyt space.
+// Note: unused
 void CubedSphere::xy2xyt( const double xy[], double xyt[] ) const {
     // xy is in degrees while xyt is in radians
     // (alpha, beta) and tiles.
@@ -168,12 +257,11 @@ void CubedSphere::xy2xyt( const double xy[], double xyt[] ) const {
 
     xyt[0] =
         ( normalisedX - std::floor( normalisedX ) ) * static_cast<double>( N_ ) + xs_[static_cast<size_t>( xyt[2] )];
-
     xyt[1] = ( normalisedY - std::floor( normalisedY ) ) * static_cast<double>( N_ ) +
              yOffset[static_cast<size_t>( xyt[2] )];
+    xyt[2] = tiles_.indexFromXY( xy );
 
-    using atlas::projection::detail::CubedSphereProjectionBase;
-    xyt[2] = dynamic_cast<const CubedSphereProjectionBase&>( projection_ ).tileFromXY( xy );
+    throw std::runtime_error( "error  xy2xyt" );
 }
 
 // Convert from xyt space into continuous xy space.
@@ -181,19 +269,14 @@ void CubedSphere::xyt2xy( const double xyt[], double xy[] ) const {
     // xy is in degrees
     // while xyt is in number of grid points
     // (alpha, beta) and tiles.
-    static std::array<double, 6> xOffsetDeg{0., 90., 90., 180., 270., 270.};
-    static std::array<double, 6> yOffsetDeg{-45., -45., 45., -45., -45., -135.};
 
-    double N   = static_cast<double>( N_ );
-    double N_2 = static_cast<double>( 2 * N_ );
-    double N_3 = static_cast<double>( 3 * N_ );
-    std::array<double, 6> xOffsetIndex{0, N, N, N_2, N_3, N_3};
-    std::array<double, 6> yOffsetIndex{N, N, N_2, N, N, 0};
+    double N      = static_cast<double>( N_ );
+    std::size_t t = static_cast<std::size_t>( xyt[2] );
 
-    double normalisedX = ( xyt[0] - xOffsetIndex[static_cast<size_t>( xyt[2] )] ) / N;
-    double normalisedY = ( xyt[1] - yOffsetIndex[static_cast<size_t>( xyt[2] )] ) / N;
-    xy[XX]             = normalisedX * 90. + xOffsetDeg[xyt[2]];
-    xy[YY]             = normalisedY * 90. + yOffsetDeg[xyt[2]];
+    double normalisedX = ( xyt[0] - tiles_offsets_xy2ab_[XX][t] * N ) / N;
+    double normalisedY = ( xyt[1] - tiles_offsets_xy2ab_[YY][t] * N ) / N;
+    xy[XX]             = normalisedX * 90. + tiles_offsets_ab2xy_[LON][t];
+    xy[YY]             = normalisedY * 90. + tiles_offsets_ab2xy_[LAT][t];
 }
 
 // ------------------------------------------
@@ -204,9 +287,77 @@ GridFactoryBuilder<CubedSphere> __register_CubedSphere( CubedSphere::static_type
 
 // -------------------------------------------------------------------------------------------------
 
+
+static class cubedsphere_lfric : public GridBuilder {
+public:
+    cubedsphere_lfric() :
+        GridBuilder( "cubedsphere_lfric", {"^[Cc][Ss][_-][Ll][Ff][Rr][-_]([0-9]+)$"}, {"CS-LFR-<N>"} ) {}
+
+    void print( std::ostream& os ) const override {
+        os << std::left << std::setw( 20 ) << "CS-LFR-<N>"
+           << "Cubed sphere for equiangular";
+    }
+
+    // Factory constructor
+    const atlas::Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const override {
+        int id;
+        std::vector<std::string> matches;
+        if ( match( name, matches, id ) ) {
+            util::Config gridconf( config );
+            int N = to_int( matches[0] );
+            gridconf.set( "type", type() );
+            gridconf.set( "N", N );
+            return create( gridconf );
+        }
+        return nullptr;
+    }
+
+    // Factory constructor
+    const atlas::Grid::Implementation* create( const Grid::Config& config ) const override {
+        int N = 0;
+        if ( not config.get( "N", N ) ) {
+            throw_AssertionFailed( "Could not find \"N\" in configuration of cubed sphere grid", Here() );
+        }
+
+        util::Config projconf;
+        projconf.set( "type", "cubedsphere_equiangular" );
+        projconf.set( "tile.type", "cubedsphere_lfric" );
+
+        // Shift projection by a longitude
+        if ( config.has( "ShiftLon" ) ) {
+            double shiftLon = 0.0;
+            config.get( "ShiftLon", shiftLon );
+            projconf.set( "ShiftLon", shiftLon );
+        }
+
+        // Apply a Schmidt transform
+        if ( config.has( "DoSchmidt" ) ) {
+            bool doSchmidt = false;
+            config.get( "DoSchmidt", doSchmidt );
+            if ( doSchmidt ) {
+                double stretchFac;
+                double targetLon;
+                double targetLat;
+                config.get( "StretchFac", stretchFac );
+                config.get( "TargetLon", targetLon );
+                config.get( "TargetLat", targetLat );
+                projconf.set( "DoSchmidt", doSchmidt );
+                projconf.set( "StretchFac", stretchFac );
+                projconf.set( "TargetLon", targetLon );
+                projconf.set( "TargetLat", targetLat );
+            }
+        }
+
+        return new CubedSphereGrid::grid_t( "CS-LFR-" + std::to_string( N ), N, Projection( projconf ) );
+    }
+
+    void force_link() {}
+
+} cubedsphere_lfric_;
+
+
 // Specialization based on type of projection
 // ------------------------------------------
-
 static class cubedsphere_equiangular : public GridBuilder {
 public:
     cubedsphere_equiangular() :
@@ -214,7 +365,7 @@ public:
 
     void print( std::ostream& os ) const override {
         os << std::left << std::setw( 20 ) << "CS-EA-<N>"
-           << "Cubed sphere, equiangular";
+           << "Cubed sphere for equiangular";
     }
 
     // Factory constructor
@@ -239,7 +390,7 @@ public:
         }
         util::Config projconf;
         projconf.set( "type", "cubedsphere_equiangular" );
-        projconf.set( "N", N );
+        projconf.set( "tile.type", "cubedsphere_fv3" );
 
         // Shift projection by a longitude
         if ( config.has( "ShiftLon" ) ) {
@@ -304,7 +455,7 @@ public:
         }
         util::Config projconf;
         projconf.set( "type", "cubedsphere_equidistant" );
-        projconf.set( "N", N );
+        projconf.set( "tile.type", "cubedsphere_fv3" );
 
         // Shift projection by a longitude
         if ( config.has( "ShiftLon" ) ) {
@@ -341,6 +492,7 @@ public:
 // -------------------------------------------------------------------------------------------------
 
 void force_link_CubedSphere() {
+    cubedsphere_lfric_.force_link();
     cubedsphere_equiangular_.force_link();
     cubedsphere_equidistant_.force_link();
 }
