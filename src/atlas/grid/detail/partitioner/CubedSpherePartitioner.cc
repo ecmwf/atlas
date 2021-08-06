@@ -21,6 +21,7 @@
 #include "atlas/grid/CubedSphereGrid.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 namespace atlas {
 namespace grid {
@@ -182,10 +183,10 @@ CubedSpherePartitioner::CubedSphere CubedSpherePartitioner::cubedsphere( const G
     return cb;
 }
 
-void CubedSpherePartitioner::partition( CubedSphere& cb, const int nb_nodes, const CellInt nodes[], int part[] ) const {
+void CubedSpherePartitioner::partition( CubedSphere& cb, const int nb_cells, const CellInt cells[], int part[] ) const {
 
     // ngpt number of grid points per tile (this is for cell centers where the number of cells are the same
-    std::size_t tileCells = static_cast<std::size_t>(nb_nodes/6);
+    std::size_t tileCells = static_cast<std::size_t>(nb_cells/6);
     std::array<std::size_t, 6> ngpt{tileCells, tileCells, tileCells, tileCells, tileCells, tileCells};
 
     // xoffset - the xoffset per band per tile (including cb.nx[t])
@@ -198,13 +199,13 @@ void CubedSpherePartitioner::partition( CubedSphere& cb, const int nb_nodes, con
 
     int p;  // partition index
     // loop over all data tile by tile
-    for ( int n = 0; n < nb_nodes; ++n ) {
-        std::size_t t = static_cast<std::size_t>( nodes[n].t );
+    for ( int n = 0; n < nb_cells; ++n ) {
+        std::size_t t = static_cast<std::size_t>( cells[n].t );
         p = cb.globalProcStartPE[t];
         for ( std::size_t yproc = 0; yproc < static_cast<std::size_t>(cb.nprocy[t]); ++yproc ) {
             for ( std::size_t xproc = 0; xproc < static_cast<std::size_t>(cb.nprocx[t]); ++xproc ) {
-                if ( ( nodes[n].y >= cb.yoffset[t][yproc]) && (nodes[n].y < cb.yoffset[t][yproc+1] ) &&
-                     ( nodes[n].x >= cb.xoffset[t][xproc]) && (nodes[n].x < cb.xoffset[t][xproc+1] ) )
+                if ( ( cells[n].y >= cb.yoffset[t][yproc]) && (cells[n].y < cb.yoffset[t][yproc+1] ) &&
+                     ( cells[n].x >= cb.xoffset[t][xproc]) && (cells[n].x < cb.xoffset[t][xproc+1] ) )
                 {
                     part[n] = p;
                 }
@@ -212,7 +213,8 @@ void CubedSpherePartitioner::partition( CubedSphere& cb, const int nb_nodes, con
             }
         }
     }
-    ATLAS_ASSERT( part[nb_nodes-1] == nb_partitions() - 1, "number of partitions created not what is expected" );
+    std::cout << "mpi rank final part nb_partitions " << atlas::mpi::rank() << " " << part[nb_cells-1] << " " << nb_partitions() << std::endl;
+    ATLAS_ASSERT( part[nb_cells-1] == nb_partitions() - 1, "number of partitions created not what is expected" );
 }
 
 void CubedSpherePartitioner::partition( const Grid& grid, int part[] ) const {
@@ -225,21 +227,21 @@ void CubedSpherePartitioner::partition( const Grid& grid, int part[] ) const {
     else {
         auto cb = cubedsphere( grid );
 
-        std::vector<CellInt> nodes( static_cast<std::size_t>( grid.size() ) );
+        std::vector<CellInt> cells( static_cast<std::size_t>( grid.size() ) );
         std::size_t n( 0 );
 
         for ( std::size_t it = 0; it < 6; ++it ) {
             for ( idx_t iy = 0; iy < cb.ny[it]; ++iy ) {
                 for ( idx_t ix = 0; ix < cb.nx[it]; ++ix ) {
-                    nodes[n].t = static_cast<int>( it );
-                    nodes[n].x = static_cast<int>( ix );
-                    nodes[n].y = static_cast<int>( iy );
-                    nodes[n].n = static_cast<int>( n );
+                    cells[n].t = static_cast<int>( it );
+                    cells[n].x = static_cast<int>( ix );
+                    cells[n].y = static_cast<int>( iy );
+                    cells[n].n = static_cast<int>( n );
                     ++n;
                 }
             }
         }
-        partition( cb, grid.size(), nodes.data(), part );
+        partition( cb, grid.size(), cells.data(), part );
     }
 }
 
