@@ -30,13 +30,23 @@ static constexpr bool debug = false;  // constexpr so compiler can optimize `if 
 using atlas::projection::detail::ProjectionUtilities;
 
 static bool is_tiny( const double& x ) {
-    constexpr double epsilon = 1.e-15;
+    constexpr double epsilon = 1.e-12;
     return ( std::abs( x ) < epsilon );
 }
 
 static bool is_same( const double& x, const double& y, const double& tol = 1.0 ) {
-    constexpr double epsilon = 1.e-15;
+    constexpr double epsilon = 1.e-12;
     return ( std::abs( x - y ) < epsilon * tol );
+}
+
+static bool is_less( const double& lhs, const double& rhs ) {
+    constexpr double epsilon = 1.e-12;
+    return lhs < rhs - epsilon;
+}
+
+static bool is_geq( const double& lhs, const double& rhs ) {
+    constexpr double epsilon = 1.e-12;
+    return lhs >= rhs - epsilon;
 }
 
 void sphericalToCartesian( const double lonlat[], double xyz[] ) {
@@ -198,7 +208,6 @@ void LFRicCubedSphereTiles::unrotate( idx_t t, double xyz[] ) const {
             break;
         }
         default: {
-            Log::info() << "ERROR: t out of range" << std::endl;
             throw_OutOfRange( "t", t, 6 );
         }
     }
@@ -288,16 +297,16 @@ idx_t LFRicCubedSphereTiles::indexFromLonLat( const double crd[] ) const {
     else if ( ( zMinusAbsX > 0. ) && ( zMinusAbsY > 0. ) ) {
         t = 5;
     }
-    else if ( lon >= 315. || lon < 45. ) {
+    else if ( is_geq( lon, 315. ) || is_less( lon, 45. ) ) {
         t = 0;
     }
-    else if ( lon >= 45. && lon < 135. ) {
+    else if ( is_geq( lon, 45. ) && is_less( lon, 135. ) ) {
         t = 1;
     }
-    else if ( lon >= 135. && lon < 225. ) {
+    else if ( is_geq( lon, 135. ) && is_less( lon, 225. ) ) {
         t = 2;
     }
-    else if ( lon >= 225. && lon < 315. ) {
+    else if ( is_geq( lon, 225. ) && is_less( lon, 315. ) ) {
         t = 3;
     }
 

@@ -37,13 +37,23 @@ static constexpr double rad2deg = atlas::util::Constants::radiansToDegrees();
 using atlas::projection::detail::ProjectionUtilities;
 
 static bool is_tiny( const double& x ) {
-    constexpr double epsilon = 1.e-15;
+    constexpr double epsilon = 1.e-12;
     return ( std::abs( x ) < epsilon );
 }
 
 static bool is_same( const double& x, const double& y, const double& tol = 1.0 ) {
-    constexpr double epsilon = 1.e-15;
+    constexpr double epsilon = 1.e-12;
     return ( std::abs( x - y ) < epsilon * tol );
+}
+
+static bool is_less( const double& lhs, const double& rhs ) {
+    constexpr double epsilon = 1.e-12;
+    return lhs < rhs - epsilon;
+}
+
+static bool is_geq( const double& lhs, const double& rhs ) {
+    constexpr double epsilon = 1.e-12;
+    return lhs >= rhs - epsilon;
 }
 
 void sphericalToCartesian( const double lonlat[], double xyz[] ) {
@@ -317,7 +327,7 @@ idx_t FV3CubedSphereTiles::indexFromLonLat( const double crd[] ) const {
         zMinusAbsY = 0.;
     }
 
-    if ( lon >= 315. || lon < 45. ) {
+    if ( is_geq( lon, 315. ) || is_less( lon, 45. ) ) {
         if ( ( zPlusAbsX <= 0. ) && ( zPlusAbsY <= 0. ) ) {
             t = 2;
         }
@@ -337,7 +347,7 @@ idx_t FV3CubedSphereTiles::indexFromLonLat( const double crd[] ) const {
         }
     }
 
-    if ( lon >= 45. && lon < 135. ) {
+    if ( is_geq( lon, 45. ) && is_less( lon, 135. ) ) {
         // interior
         if ( ( zPlusAbsX <= 0. ) && ( zPlusAbsY <= 0. ) ) {
             t = 2;
@@ -350,7 +360,7 @@ idx_t FV3CubedSphereTiles::indexFromLonLat( const double crd[] ) const {
         }
     }
 
-    if ( lon >= 135. && lon < 225. ) {
+    if ( is_geq( lon, 135. ) && is_less( lon, 225. ) ) {
         // interior
         if ( ( zPlusAbsX < 0. ) && ( zPlusAbsY < 0. ) ) {
             t = 2;
@@ -367,7 +377,7 @@ idx_t FV3CubedSphereTiles::indexFromLonLat( const double crd[] ) const {
         }
     }
 
-    if ( lon >= 225. && lon < 315. ) {
+    if ( is_geq( lon, 225. ) && is_less( lon, 315. ) ) {
         // interior
         if ( ( zPlusAbsX < 0. ) && ( zPlusAbsY < 0. ) ) {
             t = 2;
