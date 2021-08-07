@@ -16,12 +16,13 @@
 
 #include <algorithm>
 #include <vector>
+
 #include <omp.h>
 
 template <typename RandomAccessIterator>
 void merge_sort_recursive( const RandomAccessIterator& iterator, size_t begin, size_t end ) {
     auto size = end - begin;
-    if ( size >= 2 ) { // should be much larger in real case (e.g. 256)
+    if ( size >= 2 ) {  // should be much larger in real case (e.g. 256)
         auto mid = begin + size / 2;
         {
 #pragma omp task shared( iterator ) untied if ( size >= ( 1 << 15 ) )
@@ -41,11 +42,11 @@ template <typename RandomAccessIterator>
 void omp_sort( RandomAccessIterator first, RandomAccessIterator last ) {
 #pragma omp parallel
 #pragma omp single
-        merge_sort_recursive( first, 0, std::distance( first, last ) );
+    merge_sort_recursive( first, 0, std::distance( first, last ) );
 }
 
 int main() {
-    auto integers = std::vector<int>(8);
+    auto integers = std::vector<int>( 8 );
     omp_sort( integers.begin(), integers.end() );
     return 0;
 }

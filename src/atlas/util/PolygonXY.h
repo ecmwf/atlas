@@ -38,7 +38,7 @@ public:
 
 private:
     PointLonLat centroid_;
-    double inner_radius_squared_{ 0 };
+    double inner_radius_squared_{0};
     PointLonLat inner_coordinatesMin_;
     PointLonLat inner_coordinatesMax_;
 };
