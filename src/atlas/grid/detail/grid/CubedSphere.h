@@ -129,7 +129,7 @@ private:
             j_                         = ijt[1];
             t_                         = ijt[2];
             ++n_;
-            if ( n_ != size_ ) {
+            if ( ( n_ != size_ ) && ( grid_.inGrid( i_, j_, t_ ) ) ) {
                 compute_point( i_, j_, t_, point_ );
             }
             return *this;
@@ -148,7 +148,7 @@ private:
                 t_                         = ijt[2];
             }
             n_ += d;
-            if ( n_ != size_ ) {
+            if ( ( n_ != size_ ) && ( grid_.inGrid( i_, j_, t_ ) ) ) {
                 compute_point( i_, j_, t_, point_ );
             }
             return *this;
