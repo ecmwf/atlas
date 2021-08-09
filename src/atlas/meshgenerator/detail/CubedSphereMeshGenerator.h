@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2020 UCAR
+ * (C) Crown Copyright 2021 Met Office
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -19,6 +19,7 @@ class Parametrisation;
 }
 
 namespace atlas {
+class CubedSphereGrid;
 class Mesh;
 template <typename T>
 class vector;
@@ -53,6 +54,8 @@ private:
   virtual void hash( eckit::Hash& ) const override;
 
   void configure_defaults();
+
+  void generate_mesh( const CubedSphereGrid&, const grid::Distribution&, Mesh& ) const;
 
 private:
   util::Metadata options;
