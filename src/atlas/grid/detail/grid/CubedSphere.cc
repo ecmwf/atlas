@@ -33,7 +33,7 @@
 static std::string extractStagger( std::string fullString ) {
     // return a substring of length 1, starting one position to the left of
     // the last "-"
-    return fullString.substr( fullString.rfind( "-" )-1, 1 );
+    return fullString.substr( fullString.rfind( "-" ) - 1, 1 );
 }
 
 namespace atlas {
@@ -94,20 +94,20 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
     tiles_offsets_ab2xy_ = tiles_.ab2xyOffsets();
 
     double staggerSize = ( stagger_ == "C" ) ? 0.5 : 0.0;
-    for (std::size_t i = 0; i < nTiles_; ++i) {
+    for ( std::size_t i = 0; i < nTiles_; ++i ) {
       // default assumes all panels start in bottom left corner or center
-      xs_[i] = tiles_.xy2abOffsets()[LON][i] * N + staggerSize;
-      xsr_[i] = tiles_.xy2abOffsets()[LON][i] * N + staggerSize;
-      ys_[i] = tiles_.xy2abOffsets()[LAT][i] * N + staggerSize;
-      ysr_[i] = tiles_.xy2abOffsets()[LAT][i] * N + staggerSize;
+      xs_[i]  = tiles_offsets_xy2ab_[LON][i] * N + staggerSize;
+      xsr_[i] = tiles_offsets_xy2ab_[LON][i] * N + staggerSize;
+      ys_[i]  = tiles_offsets_xy2ab_[LAT][i] * N + staggerSize;
+      ysr_[i] = tiles_offsets_xy2ab_[LAT][i] * N + staggerSize;
 
       // default assumes number of points on a panel is N * N
       npts_.push_back( N * N );
     }
 
     jmin_ = std::array<idx_t, 6>{0, 0, 0, 0, 0, 0};
-    // default assumes jmax_ value of N-1 on all tiles
-    jmax_ = std::array<idx_t,6>  {N-1,N-1,N-1,N-1,N-1,N-1};
+    // default assumes jmax_ value of N - 1 on all tiles
+    jmax_ = std::array<idx_t, 6>{N - 1, N - 1, N - 1, N - 1, N - 1, N - 1};
 
     if ( tiles_.type() == "cubedsphere_fv3" ) {
       // panel 3,4,5 are reversed in that they start in top left corner
@@ -140,18 +140,23 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
                  [this]( int i, int j, int t ) { return this->ysrMinusIndex( i, t ); },
                  [this]( int i, int j, int t ) { return this->ysrMinusIndex( i, t ); }};
 
+
       // Exceptions to jmax_ value of N-1 on certain tiles
-      if (stagger_ == "L") {
+      if ( stagger_ == "L" ) {
           jmax_[0] = N; // Due to extra nodal point on panel 1
       }
-      for ( idx_t t = 0; t < nTiles_; ++t) {
+      for ( idx_t t = 0; t < nTiles_; ++t ) {
         std::size_t rowlength =  1 + jmax_[t] - jmin_[t];
-        std::vector<idx_t> imaxTile(rowlength, N-1);
-        std::vector<idx_t> iminTile(rowlength, 0);
-        if (stagger_ == "L") {
+        std::vector<idx_t> imaxTile( rowlength, N - 1 );
+        std::vector<idx_t> iminTile( rowlength, 0 );
+        if ( stagger_ == "L" ) {
             // extra points
-            if (t == 0) imaxTile[N] = 0;
-            if (t == 1) imaxTile[0] = N;
+            if ( t == 0 ) {
+                imaxTile[N] = 0;
+            }
+            if ( t == 1 ) {
+                imaxTile[0] = N;
+            }
         }
         imax_.push_back( imaxTile );
         imin_.push_back( iminTile );
@@ -160,21 +165,21 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
     else if ( tiles_.type() == "cubedsphere_lfric" ) {
         // panel 2, 3 starts in lower right corner initially going upwards
         xs_[2] += 1;
-        xs_[3] += 1;
         xsr_[2] += N - 1;
+        xs_[3] += 1;
         xsr_[3] += N - 1;
 
         // panel 5 starts in upper left corner going downwards
-        if (stagger_ == "L") {
+        if ( stagger_ == "L" ) {
           xs_[5] += 1;
           ys_[5] += 1;
         }
-        ysr_[5] += N-1;
+        ysr_[5] += N - 1;
 
         // Exceptions to N * N grid points on certain tiles
         if ( stagger_ == "L" ) {
-          npts_[4] = ( N + 1 ) * ( N + 1 ); // nodal top panel includes all edges
-          npts_[5] = ( N - 1 ) * ( N - 1 ); // nodal bottom panel excludes all edges
+          npts_[4] = ( N + 1 ) * ( N + 1 );  // nodal top panel includes all edges
+          npts_[5] = ( N - 1 ) * ( N - 1 );  // nodal bottom panel excludes all edges
         }
 
         xtile = {[this]( int i, int j, int t ) { return this->xsPlusIndex( i, t ); },

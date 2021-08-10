@@ -461,7 +461,7 @@ CASE( "test_cubedsphere" ) {
             pointXYs_from_LonLat.emplace_back( crd );
         }
         int numAdditionalPoints = 0;
-        if ( s.substr(s.rfind( "-" )-1, 1 ) == "L" ) {
+        if ( s.substr( s.rfind( "-" ) - 1, 1 ) == "L" ) {
             numAdditionalPoints = 2;
         }
         EXPECT( pointLonLats.size() == 6 * resolution * resolution + numAdditionalPoints );
@@ -578,9 +578,9 @@ CASE( "test_cubedsphere" ) {
         // Perform the test comparison now that expected values are set
         for ( std::size_t jn = 0; jn < grid.size(); ++jn ) {
             Log::info() << s << " " << jn << " lon2x " << pointXYs_from_LonLat[jn].x() << " "
-                        <<  expectedXY[jn].first  <<std::endl;
+                        << expectedXY[jn].first << std::endl;
             Log::info() << s << " " << jn << " lat2y " << pointXYs_from_LonLat[jn].y() << " "
-                        <<  expectedXY[jn].second  <<std::endl;
+                        << expectedXY[jn].second << std::endl;
             EXPECT( std::abs( pointLonLats[jn].lat() - expectedLatLon[jn].first ) < tolerance );
             EXPECT( std::abs( pointLonLats[jn].lon() - expectedLatLon[jn].second ) < tolerance );
             EXPECT( std::abs( pointLonLats_from_XY[jn].lat() - expectedLatLon[jn].first ) < tolerance );
@@ -591,8 +591,8 @@ CASE( "test_cubedsphere" ) {
             EXPECT( std::abs( pointXYs_from_LonLat[jn].y() - expectedXY[jn].second ) < tolerance );
         }
         for ( std::size_t jn = 0; jn < grid.size(); ++jn ) {
-            Log::info() << s <<  " jn = " << jn << " x = " << pointXYs[jn].x() << " y = " << pointXYs[jn].y() <<
-               " lat = "  << pointLonLats[jn].lat() << " lon = " <<  pointLonLats[jn].lon() << std::endl;
+            Log::info() << s << " jn = " << jn << " x = " << pointXYs[jn].x() << " y = " << pointXYs[jn].y()
+                        << " lat = " << pointLonLats[jn].lat() << " lon = " << pointLonLats[jn].lon() << std::endl;
         }
     }
 }
