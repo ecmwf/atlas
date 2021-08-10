@@ -36,7 +36,6 @@ static std::string extractStagger( std::string fullString ) {
     return fullString.substr( fullString.rfind( "-" )-1, 1 );
 }
 
-
 namespace atlas {
 namespace grid {
 namespace detail {
@@ -106,6 +105,7 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
       npts_.push_back( N * N );
     }
 
+    jmin_ = std::array<idx_t, 6>{0, 0, 0, 0, 0, 0};
     // default assumes jmax_ value of N-1 on all tiles
     jmax_ = std::array<idx_t,6>  {N-1,N-1,N-1,N-1,N-1,N-1};
 
@@ -153,16 +153,16 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
             if (t == 0) imaxTile[N] = 0;
             if (t == 1) imaxTile[0] = N;
         }
-        imax_.push_back(imaxTile);
-        imin_.push_back(iminTile);
+        imax_.push_back( imaxTile );
+        imin_.push_back( iminTile );
       }
     }
     else if ( tiles_.type() == "cubedsphere_lfric" ) {
         // panel 2, 3 starts in lower right corner initially going upwards
         xs_[2] += 1;
         xs_[3] += 1;
-        xsr_[2] += N-1;
-        xsr_[3] += N-1;
+        xsr_[2] += N - 1;
+        xsr_[3] += N - 1;
 
         // panel 5 starts in upper left corner going downwards
         if (stagger_ == "L") {
@@ -173,8 +173,8 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
 
         // Exceptions to N * N grid points on certain tiles
         if ( stagger_ == "L" ) {
-          npts_[4] = (N + 1) * (N + 1); // nodal top panel includes all edges
-          npts_[5] = (N - 1) * (N - 1); // nodal bottom panel excludes all edges
+          npts_[4] = ( N + 1 ) * ( N + 1 ); // nodal top panel includes all edges
+          npts_[5] = ( N - 1 ) * ( N - 1 ); // nodal bottom panel excludes all edges
         }
 
         xtile = {[this]( int i, int j, int t ) { return this->xsPlusIndex( i, t ); },
@@ -194,7 +194,7 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
         // Exceptions to jmax_ value of N-1 on certain tiles
         if ( stagger_ == "L" ) {
             jmax_[4] = N;
-            jmax_[5] = N-2;
+            jmax_[5] = N - 2;
         }
 
         for ( std::size_t t = 0; t < nTiles_; ++t ) {
@@ -202,8 +202,12 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
             std::vector<idx_t> imaxTile( rowlength, N - 1 );
             std::vector<idx_t> iminTile( rowlength, 0 );
             if ( stagger_ == "L" ) {
-                if ( t == 4 ) { std::fill_n( imaxTile.begin(),rowlength, N ); }
-                if ( t == 5 ) { std::fill_n( imaxTile.begin(),rowlength, N - 2 ); }
+                if ( t == 4 ) {
+                    std::fill_n( imaxTile.begin(), rowlength, N );
+                }
+                if ( t == 5 ) {
+                    std::fill_n( imaxTile.begin(), rowlength, N - 2 );
+                }
             }
             imax_.push_back( imaxTile );
             imin_.push_back( iminTile );
