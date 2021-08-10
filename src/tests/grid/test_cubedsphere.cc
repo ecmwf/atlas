@@ -40,7 +40,7 @@ CASE( "cubedsphere_tile_test" ) {
 
 CASE( "test_iterator" ) {
     std::vector<int> resolutions{1, 2, 4, 8};
-    std::vector<std::string> grid_prefixes{"CS-EA-", "CS-ED-"};
+    std::vector<std::string> grid_prefixes{"CS-EA-L-", "CS-ED-L-"};
 
 
     for ( auto resolution : resolutions ) {
