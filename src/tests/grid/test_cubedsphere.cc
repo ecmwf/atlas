@@ -47,8 +47,9 @@ CASE( "test_iterator" ) {
         for ( auto& grid_prefix : grid_prefixes ) {
             std::string grid_name = grid_prefix + std::to_string( resolution );
             SECTION( grid_name ) {
-                if( grid_name == "CS-LFR-L-1" ) {
-                    Log::error() << eckit::Colour::red << "TODO: Fix me!!!. Skipping..." << eckit::Colour::reset << std::endl;
+                if ( grid_name == "CS-LFR-L-1" ) {
+                    Log::error() << eckit::Colour::red << "TODO: Fix me!!!. Skipping..." << eckit::Colour::reset
+                                 << std::endl;
                     continue;
                 }
                 Grid g( grid_name );
