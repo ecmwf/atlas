@@ -44,7 +44,7 @@ CASE( "test_iterator" ) {
 
 
     for ( auto resolution : resolutions ) {
-        for ( auto grid_prefix : grid_prefixes ) {
+        for ( auto& grid_prefix : grid_prefixes ) {
             std::string grid_name = grid_prefix + std::to_string( resolution );
             Grid g( grid_name );
             SECTION( grid_name + " xy" ) {
