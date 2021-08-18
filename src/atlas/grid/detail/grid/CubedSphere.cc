@@ -30,10 +30,10 @@
 #include "atlas/util/Point.h"
 #include "atlas/util/UnitSphere.h"
 
-static std::string extractStagger( std::string fullString ) {
+static std::string extractStagger( const std::string& name ) {
     // return a substring of length 1, starting one position to the left of
     // the last "-"
-    return fullString.substr( fullString.rfind( "-" ) - 1, 1 );
+    return name.substr( name.rfind( "-" ) - 1, 1 );
 }
 
 namespace atlas {
