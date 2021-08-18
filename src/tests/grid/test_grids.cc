@@ -443,7 +443,7 @@ CASE( "test_cubedsphere" ) {
     constexpr double rad2deg = 180. / M_PI;
     const double cornerLat = rad2deg * std::atan( std::sin( M_PI / 4.0 ) );
 
-    const std::vector<int> resolutions{ 2, 4, 8 };
+    const std::vector<int> resolutions{1, 2, 4, 8};
     for( auto resolution : resolutions ) {
         const std::vector<std::string> grid_names{
             "CS-EA-L-" + std::to_string( resolution ),
@@ -456,6 +456,10 @@ CASE( "test_cubedsphere" ) {
 
         for ( const std::string& grid_name : grid_names ) {
             Log::info() << "Testing " << grid_name << std::endl;
+            if( grid_name == "CS-LFR-L-1" ) {
+                Log::error() << eckit::Colour::red << "TODO: Fix me!!!. Skipping..." << eckit::Colour::reset << std::endl;
+                continue;
+            }
             Grid grid{grid_name};
             EXPECT( grid );
             std::vector<PointLonLat> pointLonLats_from_XY;
@@ -486,7 +490,7 @@ CASE( "test_cubedsphere" ) {
 
             // Note that with nodal points on the cubed-sphere
             // for a equiangular and equidistant projections and a resolution of 2 are the same.
-                // Expected latitudes/longitude per tile
+            // Expected latitudes/longitude per tile
             if ( ( grid_name == "CS-EA-L-2" )  ||
                  ( grid_name == "CS-ED-L-2" ) ) {
                 expectedLatLon = std::vector<PointLatLon> {
