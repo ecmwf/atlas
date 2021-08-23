@@ -7,6 +7,16 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.26.0] - 2021-08-23
+### Added
+- Support for Cubed sphere grids and preliminary support for cubes sphere mesh generation.
+
+### Fixed
+- Compilation with ALTAS_BITS_LOCAL=64
+- Too aggressive optimisation with GNU 11
+- Compatibility with CMake 3.20 and NVHPC compilers
+
+
 ## [0.25.0] - 2021-05-18
 ### Added
 - New concept Redistribution to redistribute field on same grid but with different partitioner
@@ -295,6 +305,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.26.0]: https://github.com/ecmwf/atlas/compare/0.26.0...0.25.0
 [0.25.0]: https://github.com/ecmwf/atlas/compare/0.24.1...0.25.0
 [0.24.1]: https://github.com/ecmwf/atlas/compare/0.24.0...0.24.1
 [0.24.0]: https://github.com/ecmwf/atlas/compare/0.23.0...0.24.0
