@@ -14,9 +14,13 @@ authors = [
 def real_name(name):
     # Because some contributors use different names or aliases
     alias = {
-        "cosunae"      : "Carlos Osuna",
-        "carlos osuna" : "Carlos Osuna",
-        "mengaldo"     : "Gianmarco Mengaldo"
+        "cosunae"               : "Carlos Osuna",
+        "carlos osuna"          : "Carlos Osuna",
+        "mengaldo"              : "Gianmarco Mengaldo",
+        "svahl991"              : "Steven Vahl",
+        "benjaminmenetrier"     : "Benjamin Menetrier",
+        "danholdaway"           : "Daniel Holdaway",
+        "MarekWlasak"           : "Marek Wlasak",
     }
     if name in alias:
         return alias[name]
