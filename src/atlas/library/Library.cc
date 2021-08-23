@@ -81,6 +81,23 @@ int getEnv( const std::string& env, int default_value ) {
     return default_value;
 }
 
+static void add_tokens( std::vector<std::string>& tokens, const std::string& str, const std::string& sep ) {
+    eckit::Tokenizer tokenize{sep};
+    std::vector<std::string> tokenized;
+    tokenize( str, tokenized );
+    for ( auto& t : tokenized ) {
+        if ( not t.empty() ) {
+            tokens.push_back( eckit::PathExpander::expand( t ) );
+        }
+    }
+};
+
+static void init_data_paths( std::vector<std::string>& data_paths ) {
+    ATLAS_ASSERT( eckit::Main::instance().ready() );
+    add_tokens( data_paths, eckit::LibResource<std::string, Library>( "atlas-data-path;$ATLAS_DATA_PATH", "" ), ":" );
+    add_tokens( data_paths, "~atlas/share", ":" );
+}
+
 }  // namespace
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -120,13 +137,45 @@ void Library::registerPlugin( eckit::system::Plugin& plugin ) {
     plugins_.push_back( &plugin );
 }
 
+void Library::deregisterPlugin( eckit::system::Plugin& plugin ) {
+    auto it = std::find( plugins_.begin(), plugins_.end(), &plugin );
+    ATLAS_ASSERT( it != plugins_.end() );
+    plugins_.erase( it );
+}
+
 std::string Library::cachePath() const {
     auto resource = []() -> std::string {
-        return eckit::LibResource<std::string, Library>( "atlas-cache-path;$ATLAS_CACHE_PATH",
-                                                         "/tmp/cache" );
+        return eckit::LibResource<std::string, Library>( "atlas-cache-path;$ATLAS_CACHE_PATH", "/tmp/cache" );
     };
     static std::string ATLAS_CACHE_PATH = eckit::PathExpander::expand( resource() );
     return ATLAS_CACHE_PATH;
+}
+
+void Library::registerDataPath( const std::string& path ) {
+    ATLAS_DEBUG_VAR( path );
+    if ( data_paths_.empty() ) {
+        init_data_paths( data_paths_ );
+    }
+    add_tokens( data_paths_, path, ":" );
+}
+
+
+std::string Library::dataPath() const {
+    if ( data_paths_.empty() ) {
+        ATLAS_THROW_EXCEPTION( "Attempted to access atlas::Library function before atlas was initialized" );
+    }
+    std::vector<std::string> paths = data_paths_;
+    auto join                      = []( const std::vector<std::string>& v, const std::string& sep ) -> std::string {
+        std::stringstream joined;
+        for ( size_t i = 0; i < v.size(); ++i ) {
+            if ( i > 0 ) {
+                joined << sep;
+            }
+            joined << v[i];
+        }
+        return joined.str();
+    };
+    return join( paths, ":" );
 }
 
 Library& Library::instance() {
@@ -202,6 +251,10 @@ void Library::initialise( const eckit::Parametrisation& config ) {
 
     library::enable_floating_point_exceptions();
     library::enable_atlas_signal_handler();
+
+    if ( data_paths_.empty() ) {
+        init_data_paths( data_paths_ );
+    }
 
     // Summary
     if ( getEnv( "ATLAS_LOG_RANK", 0 ) == int( mpi::rank() ) ) {

@@ -34,8 +34,7 @@ namespace test {
 
 CASE( "test_interpolation_finite_element" ) {
     Grid grid( "O64" );
-    MeshGenerator meshgen( "structured" );
-    Mesh mesh = meshgen.generate( grid );
+    Mesh mesh( grid );
     NodeColumns fs( mesh );
 
     // Some points at the equator

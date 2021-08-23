@@ -26,6 +26,9 @@ class Redistribution : public util::ObjectHandle<redistribution::detail::Redistr
 public:
     using Handle::Handle;
 
+    /// \brief    Empty default constructor.
+    Redistribution();
+
     /// \brief    Constructs and initialises the redistributor.
     ///
     /// \details  Initialises class to copy fields from a source function space

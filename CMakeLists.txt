@@ -24,7 +24,12 @@ set( ATLAS_BITS_LOCAL  32 CACHE STRING "bits used to define a local index (atlas
 ################################################################################
 # Required packages
 
-ecbuild_find_package( NAME eckit VERSION 1.16 REQUIRED )
+if( ATLAS_BITS_LOCAL MATCHES 64 )
+  ecbuild_find_package( NAME eckit VERSION 1.17.1 REQUIRED )
+else()
+  ecbuild_find_package( NAME eckit VERSION 1.16 REQUIRED )
+endif()
+
 ecbuild_debug( "   eckit_FEATURES : [${eckit_FEATURES}]" )
 
 ################################################################################

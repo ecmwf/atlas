@@ -120,6 +120,7 @@ static void init() {
 
 namespace detail {
 namespace grid {
+void force_link_CubedSphere();
 void force_link_Gaussian();
 void force_link_LonLat();
 void force_link_Regional();
@@ -127,6 +128,7 @@ void force_link_Regional();
 }  // namespace detail
 
 const GridBuilder::Registry& GridBuilder::nameRegistry() {
+    detail::grid::force_link_CubedSphere();
     detail::grid::force_link_Gaussian();
     detail::grid::force_link_LonLat();
     detail::grid::force_link_Regional();

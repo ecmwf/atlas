@@ -241,7 +241,7 @@ void FiniteElement::setup( const FunctionSpace& source ) {
 
     // search nearest k cell centres
 
-    const idx_t maxNbElemsToTry = std::max<idx_t>( 64, idx_t( Nelements * maxFractionElemsToTry ) );
+    const idx_t maxNbElemsToTry = std::max<idx_t>( 8, idx_t( Nelements * maxFractionElemsToTry ) );
     idx_t max_neighbours        = 0;
 
     std::vector<size_t> failures;
@@ -275,28 +275,35 @@ void FiniteElement::setup( const FunctionSpace& source ) {
 
             if ( !success ) {
                 failures.push_back( ip );
-                Log::debug() << "------------------------------------------------------"
-                                "---------------------\n";
-                const PointLonLat pll{out_lonlat( ip, 0 ), out_lonlat( ip, 1 )};
-                Log::debug() << "Failed to project point (lon,lat)=" << pll << '\n';
-                Log::debug() << failures_log.str();
+                if ( not treat_failure_as_missing_value_ ) {
+                    Log::debug() << "------------------------------------------------------"
+                                    "---------------------\n";
+                    const PointLonLat pll{out_lonlat( ip, 0 ), out_lonlat( ip, 1 )};
+                    Log::debug() << "Failed to project point (lon,lat)=" << pll << '\n';
+                    Log::debug() << failures_log.str();
+                }
             }
         }
     }
     Log::debug() << "Maximum neighbours searched was " << eckit::Plural( max_neighbours, "element" ) << std::endl;
 
-    eckit::mpi::comm().barrier();
     if ( failures.size() ) {
-        // If this fails, consider lowering atlas::grid::parametricEpsilon
-        std::ostringstream msg;
-        msg << "Rank " << mpi::rank() << " failed to project points:\n";
-        for ( std::vector<size_t>::const_iterator i = failures.begin(); i != failures.end(); ++i ) {
-            const PointLonLat pll{out_lonlat( *i, (size_t)0 ), out_lonlat( *i, (size_t)1 )};  // lookup point
-            msg << "\t(lon,lat) = " << pll << "\n";
+        if ( treat_failure_as_missing_value_ ) {
+            missing_.resize( failures.size() );
+            std::copy( std::begin( failures ), std::end( failures ), missing_.begin() );
         }
+        else {
+            // If this fails, consider lowering atlas::grid::parametricEpsilon
+            std::ostringstream msg;
+            msg << "Rank " << mpi::rank() << " failed to project points:\n";
+            for ( std::vector<size_t>::const_iterator i = failures.begin(); i != failures.end(); ++i ) {
+                const PointLonLat pll{out_lonlat( *i, (size_t)0 ), out_lonlat( *i, (size_t)1 )};  // lookup point
+                msg << "\t(lon,lat) = " << pll << "\n";
+            }
 
-        Log::error() << msg.str() << std::endl;
-        throw_Exception( msg.str() );
+            Log::error() << msg.str() << std::endl;
+            throw_Exception( msg.str() );
+        }
     }
 
     // fill sparse matrix and return

@@ -10,11 +10,6 @@
 
 #include "atlas/interpolation/method/Method.h"
 
-#include "eckit/log/Timer.h"
-#include "eckit/thread/AutoLock.h"
-#include "eckit/thread/Mutex.h"
-#include "eckit/thread/Once.h"
-
 #include "atlas/array.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
@@ -29,6 +24,75 @@
 using namespace atlas::linalg;
 namespace atlas {
 namespace interpolation {
+
+namespace {
+
+template <typename Value>
+void set_missing_values_rank1( Field& tgt, const std::vector<idx_t>& missing, const Value& missing_value ) {
+    auto tgt_v = array::make_view<Value, 1>( tgt );
+    for ( auto i : missing ) {
+        tgt_v( i ) = missing_value;
+    }
+}
+
+template <typename Value>
+void set_missing_values_rank2( Field& tgt, const std::vector<idx_t>& missing, const Value& missing_value ) {
+    auto tgt_v     = array::make_view<Value, 2>( tgt );
+    const idx_t Nj = tgt_v.shape( 1 );
+    for ( auto i : missing ) {
+        for ( idx_t j = 0; j < Nj; ++j ) {
+            tgt_v( i, j ) = missing_value;
+        }
+    }
+}
+
+template <typename Value>
+void set_missing_values_rank3( Field& tgt, const std::vector<idx_t>& missing, const Value& missing_value ) {
+    auto tgt_v     = array::make_view<Value, 3>( tgt );
+    const idx_t Nj = tgt_v.shape( 1 );
+    const idx_t Nk = tgt_v.shape( 2 );
+    for ( auto i : missing ) {
+        for ( idx_t j = 0; j < Nj; ++j ) {
+            for ( idx_t k = 0; k < Nk; ++k ) {
+                tgt_v( i, j, k ) = missing_value;
+            }
+        }
+    }
+}
+
+template <typename Value>
+void set_missing_values_T( Field& tgt, const std::vector<idx_t>& missing ) {
+    Value missing_value = tgt.metadata().get<Value>( "missing_value" );
+    if ( tgt.rank() == 1 ) {
+        set_missing_values_rank1( tgt, missing, missing_value );
+    }
+    else if ( tgt.rank() == 2 ) {
+        set_missing_values_rank2( tgt, missing, missing_value );
+    }
+    else if ( tgt.rank() == 3 ) {
+        set_missing_values_rank3( tgt, missing, missing_value );
+    }
+    else {
+        ATLAS_NOTIMPLEMENTED;
+    }
+}
+
+void set_missing_values( Field& tgt, const std::vector<idx_t>& missing ) {
+    if ( missing.empty() ) {
+        return;
+    }
+    if ( tgt.datatype().kind() == array::DataType::KIND_REAL64 ) {
+        set_missing_values_T<double>( tgt, missing );
+    }
+    else if ( tgt.datatype().kind() == array::DataType::KIND_REAL32 ) {
+        set_missing_values_T<float>( tgt, missing );
+    }
+    else {
+        ATLAS_NOTIMPLEMENTED;
+    }
+}
+
+}  // anonymous namespace
 
 template <typename Value>
 void Method::interpolate_field_rank1( const Field& src, Field& tgt, const Matrix& W ) const {
@@ -187,11 +251,22 @@ void Method::do_execute( const Field& src, Field& tgt ) const {
     }
 
     // carry over missing value metadata
-    field::MissingValue mv( src );
-    if ( mv ) {
-        mv.metadata( tgt );
-        ATLAS_ASSERT( field::MissingValue( tgt ) );
+    if ( not tgt.metadata().has( "missing_value" ) ) {
+        field::MissingValue mv_src( src );
+        if ( mv_src ) {
+            mv_src.metadata( tgt );
+            ATLAS_ASSERT( field::MissingValue( tgt ) );
+        }
+        else if ( not missing_.empty() ) {
+            if ( not tgt.metadata().has( "missing_value" ) ) {
+                tgt.metadata().set( "missing_value", 9999. );
+            }
+            tgt.metadata().set( "missing_value_type", "equals" );
+        }
     }
+
+    // set missing values
+    set_missing_values( tgt, missing_ );
 
     tgt.set_dirty();
 }
