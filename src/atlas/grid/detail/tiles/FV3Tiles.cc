@@ -38,12 +38,12 @@ static constexpr double rad2deg = atlas::util::Constants::radiansToDegrees();
 using atlas::projection::detail::ProjectionUtilities;
 
 static bool is_tiny( const double& x ) {
-    constexpr double epsilon = 1.e-15;
+    constexpr double epsilon = 1.e-12;
     return ( std::abs( x ) < epsilon );
 }
 
 static bool is_same( const double& x, const double& y, const double& tol = 1.0 ) {
-    constexpr double epsilon = 1.e-15;
+    constexpr double epsilon = 1.e-12;
     return ( std::abs( x - y ) < epsilon * tol );
 }
 

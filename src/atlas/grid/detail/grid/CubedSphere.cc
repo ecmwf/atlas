@@ -66,7 +66,7 @@ using atlas::projection::detail::CubedSphereProjectionBase;
 CubedSphere::CubedSphere( int N, Projection p ) : CubedSphere( CubedSphere::static_type(), N, p ) {}
 
 CubedSphere::CubedSphere( const std::string& name, int N, Projection projection ) :
-    Grid(), N_( N ), name_( name ), stagger_( extractStagger( name ) ) {
+    Grid(), N_( N ), stagger_( extractStagger( name ) ), name_( name ) {
     // Number of tiles hardwired to 6 at the moment. Regional may need 1
     // Copy members
     util::Config defaultProjConfig;
@@ -105,7 +105,6 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
         npts_.push_back( N * N );
     }
 
-    jmin_ = std::array<idx_t, 6>{0, 0, 0, 0, 0, 0};
     // default assumes jmax_ value of N - 1 on all tiles
     jmax_ = std::array<idx_t, 6>{N - 1, N - 1, N - 1, N - 1, N - 1, N - 1};
 
