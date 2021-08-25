@@ -10,6 +10,7 @@
 #include "atlas/field/FieldSet.h"
 #include "atlas/grid.h"
 #include "atlas/grid/Tiles.h"
+#include "atlas/grid/detail/tiles/Tiles.h"
 #include "atlas/mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/option.h"
@@ -34,24 +35,21 @@ void partition(const CubedSpherePartitioner & partitioner, const Grid & grid,
     std::vector<CubedSpherePartitioner::CellInt> nodes( static_cast<std::size_t>(grid.size()) );
     std::size_t n( 0 );
 
-
-
-           for (std::size_t it = 0; it < 6; ++it) {
-               for ( idx_t iy = 0; iy < cb.ny[it]; ++iy ) {
-                   for ( idx_t ix = 0; ix < cb.nx[it]; ++ix ) {
-                       nodes[n].t = static_cast<int>( it );
-                       nodes[n].x = static_cast<int>( ix );
-                       nodes[n].y = static_cast<int>( iy );
-                       nodes[n].n = static_cast<int>( n );
-                       ++n;
-                   }
-               }
-           }
-           partitioner.partition( cb, grid.size(), nodes.data(), part.data() );
-
-       }
+    for (std::size_t it = 0; it < 6; ++it) {
+        for ( idx_t iy = 0; iy < cb.ny[it]; ++iy ) {
+            for ( idx_t ix = 0; ix < cb.nx[it]; ++ix ) {
+                nodes[n].t = static_cast<int>( it );
+                nodes[n].x = static_cast<int>( ix );
+                nodes[n].y = static_cast<int>( iy );
+                nodes[n].n = static_cast<int>( n );
+                ++n;
+            }
+        }
     }
+    partitioner.partition( cb, grid.size(), nodes.data(), part.data() );
 
+}
+}
 
     CASE("cubedsphere_tile_constructor_test") {
 

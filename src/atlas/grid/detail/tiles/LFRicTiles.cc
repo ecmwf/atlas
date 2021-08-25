@@ -50,6 +50,12 @@ static bool is_geq( const double& lhs, const double& rhs ) {
     return lhs >= rhs - epsilon;
 }
 
+void sphericalToCartesian( const double lonlat[], double xyz[] ) {
+    auto crd_sys            = ProjectionUtilities::CoordinateSystem::LEFT_HAND;
+    constexpr double radius = 1.;
+    ProjectionUtilities::sphericalToCartesian( lonlat, xyz, crd_sys, radius );
+}
+
 atlas::PointXY rotatePlus90AboutPt(const atlas::PointXY & xy, const atlas::PointXY & origin) {
     return atlas::PointXY{ -xy.y() + origin.x() + origin.y(),
                             xy.x() - origin.x() + origin.y()};
@@ -642,10 +648,6 @@ void LFRicCubedSphereTiles::enforceWrapAround(const atlas::idx_t t, atlas::Point
     }
 
     return;
-}
-
-void LFRicCubedSphereTiles::print( std::ostream& os ) const {
-    os << "LFRicCubedSphereTiles";
 }
 
 namespace {

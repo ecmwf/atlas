@@ -78,7 +78,7 @@ void NodalCubedSphereMeshGenerator::generate( const Grid& grid, const grid::Dist
     const auto csgrid = CubedSphereGrid( grid );
 
     const int N      = csgrid.N();
-    const int nTiles = csgrid.GetNTiles();
+    const int nTiles = csgrid.tiles().size();
 
 
     // Make a list linking ghost (t, i, j) values to known (t, i, j)

@@ -14,6 +14,8 @@
 #include <string>
 
 #include "atlas/grid/detail/tiles/Tiles.h"
+#include "atlas/util/Point.h"
+
 
 namespace atlas {
 namespace grid {
@@ -48,7 +50,7 @@ public:
 
 private:
     std::array<atlas::PointXY, 6> botLeftTile_{atlas::PointXY{0., -45.},   atlas::PointXY{90, -45},
-                                              atlas::PointXY{180., -45.}, atlas::PointXY{270, -45},
+                                               atlas::PointXY{180., -45.}, atlas::PointXY{270, -45},
                                               atlas::PointXY{0., 45.},    atlas::PointXY{0, -135.} };
 
     std::array<atlas::PointXY, 6> botRightTile_{atlas::PointXY{90., -45.},   atlas::PointXY{180., -45},

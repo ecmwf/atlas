@@ -27,6 +27,7 @@
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/Point.h"
 
 
 namespace {
@@ -443,9 +444,12 @@ void FV3CubedSphereTiles::enforceXYdomain( double xy[] ) const {
 
 atlas::PointXY FV3CubedSphereTiles::tileCubePeriodicity (const atlas::PointXY & xyExtended, const atlas::idx_t tile) const {
     atlas::PointXY xyOwned;
+    return xyOwned;
+}
 
 void FV3CubedSphereTiles::print( std::ostream& os ) const {
-    os << "FV3CubedSphereTiles";
+    os << "FV3CubedSphereTiles"
+       << "]";
 }
 
 
