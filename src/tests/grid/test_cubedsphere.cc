@@ -54,17 +54,17 @@ void partition(const CubedSpherePartitioner & partitioner, const Grid & grid,
     CASE("cubedsphere_tile_constructor_test") {
 
       auto tileConfig1 = atlas::util::Config("type", "cubedsphere_lfric");
-      auto lfricTiles = atlas::CubedSphereTiles(tileConfig1);
+      auto lfricTiles = atlas::grid::CubedSphereTiles(tileConfig1);
       EXPECT(lfricTiles.type() == "cubedsphere_lfric");
 
       auto tileConfig2 = atlas::util::Config("type", "cubedsphere_fv3");
-      auto fv3Tiles = atlas::CubedSphereTiles(tileConfig2);
+      auto fv3Tiles = atlas::grid::CubedSphereTiles(tileConfig2);
       EXPECT(fv3Tiles.type() == "cubedsphere_fv3");
 
-      auto lfricTiles2 = atlas::CubedSphereTiles("cubedsphere_lfric");
+      auto lfricTiles2 = atlas::grid::CubedSphereTiles("cubedsphere_lfric");
       EXPECT(lfricTiles2.type() == "cubedsphere_lfric");
 
-      auto fv3Tiles2 = atlas::CubedSphereTiles("cubedsphere_fv3");
+      auto fv3Tiles2 = atlas::grid::CubedSphereTiles("cubedsphere_fv3");
       EXPECT(fv3Tiles.type() == "cubedsphere_fv3");
 
     }
@@ -172,7 +172,7 @@ void partition(const CubedSpherePartitioner & partitioner, const Grid & grid,
     CASE("cubedsphere_tileCubePeriodicity_test") {
 
       auto tileConfig1 = atlas::util::Config("type", "cubedsphere_lfric");
-      auto lfricTiles = atlas::CubedSphereTiles(tileConfig1);
+      auto lfricTiles = atlas::grid::CubedSphereTiles(tileConfig1);
 
       // create a nodal cubed-sphere grid and check that no point are changed by
       // iterating through points.
@@ -186,7 +186,7 @@ void partition(const CubedSpherePartitioner & partitioner, const Grid & grid,
       for ( auto crd : grid.xy() ) {
           atlas::PointXY initialXY{crd[XX], crd[YY]};
           double xy[2] = {initialXY.x(), initialXY.y()};
-          atlas::idx_t t = lfricTiles.tileFromXY(xy);
+          atlas::idx_t t = lfricTiles.indexFromXY(xy);
           atlas::PointXY finalXY = lfricTiles.tileCubePeriodicity(initialXY, t);
           EXPECT_APPROX_EQ(initialXY, finalXY);
           ++jn;
