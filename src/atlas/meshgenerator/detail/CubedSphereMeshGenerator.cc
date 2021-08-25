@@ -185,7 +185,7 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
 
   // Get dimensions of grid
   const auto N      = csGrid.N();
-  const auto nTiles = csGrid.GetNTiles();
+  const auto nTiles = csGrid.tiles().size();
 
   const auto nNodesUnique = nTiles * N * N + 2;
   const auto nNodesAll    = nTiles * (N + 1) * (N + 1);
@@ -421,7 +421,7 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
         node.localPart = cell.part;
 
         // Get remote t from tile class.
-        node.t = csTiles.tileFromXY(node.remoteXy.data());
+        node.t = csTiles.indexFromXY(node.remoteXy.data());
 
         // Node is a type-A ghost if local t and remote t differ.
         // Otherwise node is owned.
