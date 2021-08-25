@@ -57,7 +57,7 @@ public:
 
     /// Type of the cubed-sphere tiles:
     std::string type() const;
-
+  
     // These are offsets needed for transforming
     // from xy space to the "archetypal base" tile.
     std::array<std::array<double, 6>, 2> xy2abOffsets() const;

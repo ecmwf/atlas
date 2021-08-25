@@ -16,7 +16,6 @@
 #include "atlas/grid/detail/tiles/Tiles.h"
 #include "atlas/util/Point.h"
 
-
 namespace atlas {
 namespace grid {
 namespace detail {
@@ -66,10 +65,10 @@ private:
                                                atlas::PointXY{90., 135.},    atlas::PointXY{90., -45.} };
 
     bool withinCross(const atlas::idx_t t, const atlas::PointXY & withinRange) const;
+  
     void enforceWrapAround(const atlas::idx_t t, atlas::PointXY & withinRange) const;
 
 };
-
 
 }  // namespace detail
 }  // namespace grid

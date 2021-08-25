@@ -18,7 +18,6 @@
 #include "atlas/util/Object.h"
 #include "atlas/util/Point.h"
 
-
 namespace eckit {
 class Parametrisation;
 }

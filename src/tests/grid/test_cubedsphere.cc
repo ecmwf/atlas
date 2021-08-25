@@ -28,10 +28,10 @@ namespace test {
 namespace {
 
 using grid::detail::partitioner::CubedSpherePartitioner;
-
+  
 void partition(const CubedSpherePartitioner & partitioner, const Grid & grid,
                CubedSpherePartitioner::CubedSphere & cb,  std::vector<idx_t> & part)  {
-
+  
     std::vector<CubedSpherePartitioner::CellInt> nodes( static_cast<std::size_t>(grid.size()) );
     std::size_t n( 0 );
 
@@ -51,24 +51,106 @@ void partition(const CubedSpherePartitioner & partitioner, const Grid & grid,
 }
 }
 
-    CASE("cubedsphere_tile_constructor_test") {
+CASE( "cubedsphere_tile_test" ) {
+    auto tileConfig1 = atlas::util::Config( "type", "cubedsphere_lfric" );
+    auto lfricTiles  = atlas::grid::CubedSphereTiles( tileConfig1 );
+    EXPECT( lfricTiles.type() == "cubedsphere_lfric" );
 
-      auto tileConfig1 = atlas::util::Config("type", "cubedsphere_lfric");
-      auto lfricTiles = atlas::grid::CubedSphereTiles(tileConfig1);
-      EXPECT(lfricTiles.type() == "cubedsphere_lfric");
+    auto tileConfig2 = atlas::util::Config( "type", "cubedsphere_fv3" );
+    auto fv3Tiles    = atlas::grid::CubedSphereTiles( tileConfig2 );
+    EXPECT( fv3Tiles.type() == "cubedsphere_fv3" );
 
-      auto tileConfig2 = atlas::util::Config("type", "cubedsphere_fv3");
-      auto fv3Tiles = atlas::grid::CubedSphereTiles(tileConfig2);
-      EXPECT(fv3Tiles.type() == "cubedsphere_fv3");
+    auto lfricTiles2 = atlas::grid::CubedSphereTiles( "cubedsphere_lfric" );
+    EXPECT( lfricTiles2.type() == "cubedsphere_lfric" );
 
-      auto lfricTiles2 = atlas::grid::CubedSphereTiles("cubedsphere_lfric");
-      EXPECT(lfricTiles2.type() == "cubedsphere_lfric");
+    auto fv3Tiles2 = atlas::grid::CubedSphereTiles( "cubedsphere_fv3" );
+    EXPECT( fv3Tiles.type() == "cubedsphere_fv3" );
+}
 
-      auto fv3Tiles2 = atlas::grid::CubedSphereTiles("cubedsphere_fv3");
-      EXPECT(fv3Tiles.type() == "cubedsphere_fv3");
 
+//-----------------------------------------------------------------------------
+
+CASE( "test_iterator" ) {
+    std::vector<int> resolutions{1, 2, 4, 8};
+    std::vector<std::string> grid_prefixes{"CS-EA-L-", "CS-ED-L-", "CS-EA-C-", "CS-ED-C-", "CS-LFR-L-", "CS-LFR-C-"};
+
+
+    for ( auto resolution : resolutions ) {
+        for ( auto& grid_prefix : grid_prefixes ) {
+            std::string grid_name = grid_prefix + std::to_string( resolution );
+            SECTION( grid_name ) {
+                if ( grid_name == "CS-LFR-L-1" ) {
+                    Log::error() << eckit::Colour::red << "TODO: Fix me!!!. Skipping..." << eckit::Colour::reset
+                                 << std::endl;
+                    continue;
+                }
+                Grid g( grid_name );
+
+                // Test xy
+                {
+                    std::vector<PointXY> coordinates_1;
+                    std::vector<PointXY> coordinates_2;
+                    std::vector<PointXY> coordinates_3;
+                    {
+                        for ( auto crd : g.xy() ) {
+                            coordinates_1.push_back( crd );
+                        }
+                    }
+                    {
+                        auto iterator = g.xy().begin();
+                        for ( int n = 0; n < g.size(); ++n ) {
+                            coordinates_2.push_back( *iterator );
+                            iterator += 1;
+                        }
+                    }
+                    {
+                        auto iterator = g.xy().begin();
+                        PointXY crd;
+                        while ( iterator.next( crd ) ) {
+                            coordinates_3.push_back( crd );
+                        }
+                    }
+                    EXPECT_EQ( coordinates_1.size(), g.size() );
+                    EXPECT_EQ( coordinates_2.size(), g.size() );
+                    EXPECT_EQ( coordinates_3.size(), g.size() );
+                    EXPECT_EQ( coordinates_2, coordinates_1 );
+                    EXPECT_EQ( coordinates_3, coordinates_1 );
+                }
+
+                // Test lonlat
+                {
+                    std::vector<PointLonLat> coordinates_1;
+                    std::vector<PointLonLat> coordinates_2;
+                    std::vector<PointLonLat> coordinates_3;
+                    {
+                        for ( auto crd : g.lonlat() ) {
+                            coordinates_1.push_back( crd );
+                        }
+                    }
+                    {
+                        auto iterator = g.lonlat().begin();
+                        for ( int n = 0; n < g.size(); ++n ) {
+                            coordinates_2.push_back( *iterator );
+                            iterator += 1;
+                        }
+                    }
+                    {
+                        auto iterator = g.lonlat().begin();
+                        PointLonLat crd;
+                        while ( iterator.next( crd ) ) {
+                            coordinates_3.push_back( crd );
+                        }
+                    }
+                    EXPECT_EQ( coordinates_1.size(), g.size() );
+                    EXPECT_EQ( coordinates_2.size(), g.size() );
+                    EXPECT_EQ( coordinates_3.size(), g.size() );
+                    EXPECT_EQ( coordinates_2, coordinates_1 );
+                    EXPECT_EQ( coordinates_3, coordinates_1 );
+                }
+            }
+        }
     }
-
+}
 
     CASE("cubedsphere_FV3_mesh_test") {
 
@@ -166,8 +248,6 @@ void partition(const CubedSpherePartitioner & partitioner, const Grid & grid,
       gmshLonLat.write(mesh);
 
     }
-
-
 
     CASE("cubedsphere_tileCubePeriodicity_test") {
 

@@ -227,7 +227,6 @@ void LFRicCubedSphereTiles::unrotate( idx_t t, double xyz[] ) const {
     }
 }
 
-
 idx_t LFRicCubedSphereTiles::indexFromXY( const double xy[] ) const {
     // Assume one face-edge is of length 90 degrees.
     //
@@ -465,8 +464,8 @@ atlas::PointXY LFRicCubedSphereTiles::tileCubePeriodicity (const atlas::PointXY 
     //     ----0---------90--------180--------270--------360--->  x//     ----0---------90--------180--------270--------360--->  x
 
 
-     // Step 1: wrap into range  x = [ 0, 360],  y = [135, 225] ensuring that we stay
-     //         on the cross associated with tile index.
+    // Step 1: wrap into range  x = [ 0, 360],  y = [135, 225] ensuring that we stay
+    //         on the cross associated with tile index.
     if( !withinCross(t, xyExtended) ) {
       ATLAS_THROW_EXCEPTION( "Point (" << xyExtended.x() << "," << xyExtended.y() << ")" <<
                               " is not in the cross extension of tile " << t );
@@ -648,6 +647,9 @@ void LFRicCubedSphereTiles::enforceWrapAround(const atlas::idx_t t, atlas::Point
     }
 
     return;
+
+void LFRicCubedSphereTiles::print( std::ostream& os ) const {
+    os << "LFRicCubedSphereTiles";
 }
 
 namespace {

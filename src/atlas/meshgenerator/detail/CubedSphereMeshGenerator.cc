@@ -80,11 +80,10 @@ void CubedSphereMeshGenerator::configure_defaults() {
 // -----------------------------------------------------------------------------
 
 void CubedSphereMeshGenerator::generate(const Grid& grid, Mesh& mesh) const {
-
+  
   // Get partitioner type and number of partitions from config.
   const auto nParts = static_cast<idx_t>(options.get<size_t>("nb_parts"));
   const auto partType = options.get<std::string>("partitioner");
-
   auto partConfig = util::Config{};
   partConfig.set("type", partType);
   partConfig.set("partitions", nParts);

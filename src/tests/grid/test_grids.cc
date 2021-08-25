@@ -439,7 +439,6 @@ struct PointLatLon : public Point2 {
     double lat() const { return x_[0]; }
 };
 
-
 CASE( "test_cubedsphere" ) {
     constexpr double rad2deg = 180. / M_PI;
     const double cornerLat   = rad2deg * std::atan( std::sin( M_PI / 4.0 ) );
@@ -568,6 +567,7 @@ CASE( "test_cubedsphere" ) {
                                                           {-54.735610317245339, 135.},
                                                           {-54.735610317245339, 315.},
                                                           {-54.735610317245339, 45.}};
+
                 expectedXY = std::vector<PointXY>{
                     {22.5, -22.5}, {67.5, -22.5},  {22.5, 22.5},   {67.5, 22.5},    {112.5, -22.5}, {157.5, -22.5},
                     {112.5, 22.5}, {157.5, 22.5},  {112.5, 67.5},  {157.5, 67.5},   {112.5, 112.5}, {157.5, 112.5},
