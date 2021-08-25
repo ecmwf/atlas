@@ -9,92 +9,55 @@
  */
 
 #include "atlas/grid/Tiles.h"
-#include "atlas/grid/detail/tiles/Tiles.h"
 #include "atlas/grid/detail/tiles/FV3Tiles.h"
 #include "atlas/grid/detail/tiles/LFRicTiles.h"
+#include "atlas/grid/detail/tiles/Tiles.h"
 
 
 namespace atlas {
+namespace grid {
 
-CubedSphereTiles::CubedSphereTiles( const eckit::Parametrisation& p ) : Handle(
-                atlas::cubedspheretiles::CubedSphereTiles::create( p ) ) {
-}
+CubedSphereTiles::CubedSphereTiles( const eckit::Parametrisation& p ) :
+    Handle( atlas::grid::detail::CubedSphereTiles::create( p ) ) {}
 
-CubedSphereTiles::CubedSphereTiles( const std::string& s ) : Handle(
-                atlas::cubedspheretiles::CubedSphereTiles::create( s ) ) {
-}
+CubedSphereTiles::CubedSphereTiles( const std::string& s ) :
+    Handle( atlas::grid::detail::CubedSphereTiles::create( s ) ) {}
 
 
-std::string atlas::CubedSphereTiles::type() const {
+std::string CubedSphereTiles::type() const {
     return get()->type();
 }
 
-std::array<std::array<double,6>,2> CubedSphereTiles::xy2abOffsets() const {
+std::array<std::array<double, 6>, 2> CubedSphereTiles::xy2abOffsets() const {
     return get()->xy2abOffsets();
 }
 
-std::array<std::array<double,6>,2> CubedSphereTiles::ab2xyOffsets() const {
+std::array<std::array<double, 6>, 2> CubedSphereTiles::ab2xyOffsets() const {
     return get()->ab2xyOffsets();
 }
 
-void CubedSphereTiles::tile0Rotate( double xyz[] ) const {
-    return get()->tile0Rotate(xyz);
+void CubedSphereTiles::rotate( idx_t t, double xyz[] ) const {
+    return get()->rotate( t, xyz );
 }
 
-void CubedSphereTiles::tile1Rotate( double xyz[] ) const{
-    return get()->tile1Rotate(xyz);
-};
-
-void CubedSphereTiles::tile2Rotate( double xyz[] ) const{
-    return get()->tile2Rotate(xyz);
-};
-
-void CubedSphereTiles::tile3Rotate( double xyz[] ) const {
-    return get()->tile3Rotate(xyz);
+void CubedSphereTiles::unrotate( idx_t t, double xyz[] ) const {
+    return get()->unrotate( t, xyz );
 }
 
-void CubedSphereTiles::tile4Rotate( double xyz[] ) const {
-    return get()->tile4Rotate(xyz);
+idx_t CubedSphereTiles::indexFromXY( const double xy[] ) const {
+    return get()->indexFromXY( xy );
 }
 
-void CubedSphereTiles::tile5Rotate( double xyz[] ) const{
-    return get()->tile5Rotate(xyz);
+idx_t CubedSphereTiles::indexFromLonLat( const double lonlat[] ) const {
+    return get()->indexFromLonLat( lonlat );
 }
 
-void CubedSphereTiles::tile0RotateInverse( double xyz[] ) const {
-    return get()->tile0RotateInverse(xyz);
+idx_t CubedSphereTiles::size() const {
+    return get()->size();
 }
 
-void CubedSphereTiles::tile1RotateInverse( double xyz[] ) const {
-    return get()->tile1RotateInverse(xyz);
-}
-
-void CubedSphereTiles::tile2RotateInverse( double xyz[] ) const {
-    return get()->tile2RotateInverse(xyz);
-}
-
-void CubedSphereTiles::tile3RotateInverse( double xyz[] ) const {
-    return get()->tile3RotateInverse(xyz);
-}
-
-void CubedSphereTiles::tile4RotateInverse( double xyz[] ) const {
-    return get()->tile4RotateInverse(xyz);
-}
-
-void CubedSphereTiles::tile5RotateInverse( double xyz[] ) const {
-    return get()->tile5RotateInverse(xyz);
-}
-
-idx_t CubedSphereTiles::tileFromXY( const double xy[] ) const {
-     return get()->tileFromXY(xy);
-}
-
-idx_t CubedSphereTiles::tileFromLonLat(const double lonlat[]) const {
-     return get()->tileFromLonLat(lonlat);
-}
-
-void CubedSphereTiles::enforceXYdomain(double xy[]) const {
-     return get()->enforceXYdomain(xy);
+void CubedSphereTiles::enforceXYdomain( double xy[] ) const {
+    return get()->enforceXYdomain( xy );
 }
 
 atlas::PointXY CubedSphereTiles::tileCubePeriodicity (const atlas::PointXY & xyExtended, const atlas::idx_t tile) const {
@@ -110,4 +73,5 @@ std::ostream& operator<<( std::ostream& os, const CubedSphereTiles& t ) {
     return os;
 }
 
+}  // namespace grid
 }  // namespace atlas

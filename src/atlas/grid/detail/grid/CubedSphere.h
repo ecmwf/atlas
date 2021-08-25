@@ -14,10 +14,12 @@
 #include <numeric>
 #include <vector>
 
+#include "eckit/types/Types.h"
+
 #include "atlas/array.h"
 #include "atlas/grid/Spacing.h"
-#include "atlas/grid/detail/grid/Grid.h"
 #include "atlas/grid/Tiles.h"
+#include "atlas/grid/detail/grid/Grid.h"
 #include "atlas/library/config.h"
 #include "atlas/projection/detail/CubedSphereProjectionBase.h"
 #include "atlas/runtime/Exception.h"
@@ -49,16 +51,14 @@ private:
     // Get the position in the xy plane and return as PointXY object
     struct ComputePointXY {
         ComputePointXY( const CubedSphere& grid ) : grid_( grid ) {}
-        void operator()( idx_t i, idx_t j, idx_t t, PointXY& point ) {
-          grid_.xy( i, j, t, point.data()); }
+        void operator()( idx_t i, idx_t j, idx_t t, PointXY& point ) { grid_.xy( i, j, t, point.data() ); }
         const CubedSphere& grid_;
     };
 
     // Get the lonlat and return as PointLonLat object
     struct ComputePointLonLat {
         ComputePointLonLat( const CubedSphere& grid ) : grid_( grid ) {}
-        void operator()( idx_t i, idx_t j, idx_t t, PointLonLat& point ) {
-          grid_.lonlat( i, j, t, point.data() ); }
+        void operator()( idx_t i, idx_t j, idx_t t, PointLonLat& point ) { grid_.lonlat( i, j, t, point.data() ); }
         const CubedSphere& grid_;
     };
 
@@ -96,6 +96,8 @@ private:
             i_( begin ? 0 : grid_.N() ),
             j_( begin ? 0 : grid_.N() ),
             t_( begin ? 0 : 5 ),
+            size_( grid_.size() ),
+            n_( begin ? 0 : size_ ),
             compute_point{grid_} {
             // Check that point lies in grid and if so return the xy/lonlat
             if ( grid_.inGrid( i_, j_, t_ ) ) {
@@ -105,12 +107,13 @@ private:
 
         // Return the point and move iterator to the next location
         virtual bool next( typename Base::value_type& point ) {
-            if ( grid_.inGrid( i_, j_, t_ ) && !grid_.finalElement( i_, j_, t_ ) ) {
+            if ( n_ != size_ ) {
                 compute_point( i_, j_, t_, point );
                 std::unique_ptr<int[]> ijt = grid_.nextElement( i_, j_, t_ );
                 i_                         = ijt[0];
                 j_                         = ijt[1];
                 t_                         = ijt[2];
+                ++n_;
                 return true;
             }
             return false;
@@ -125,7 +128,8 @@ private:
             i_                         = ijt[0];
             j_                         = ijt[1];
             t_                         = ijt[2];
-            if ( grid_.inGrid( i_, j_, t_ ) ) {
+            ++n_;
+            if ( n_ != size_ ) {
                 compute_point( i_, j_, t_, point_ );
             }
             return *this;
@@ -134,13 +138,17 @@ private:
         // += operator, move some distance d through the iterator and return point
         virtual const Base& operator+=( typename Base::difference_type distance ) {
             idx_t d = distance;
+            // Following loop could be optimised to not iterate through every point,
+            // but rather jump through a tile at a time if possible.
+            // Then OpenMP algorithms can be made much quicker.
             for ( int n = 0; n < d; n++ ) {
                 std::unique_ptr<int[]> ijt = grid_.nextElement( i_, j_, t_ );
                 i_                         = ijt[0];
                 j_                         = ijt[1];
                 t_                         = ijt[2];
             }
-            if ( grid_.inGrid( i_, j_, t_ ) ) {
+            n_ += d;
+            if ( n_ != size_ ) {
                 compute_point( i_, j_, t_, point_ );
             }
             return *this;
@@ -191,6 +199,8 @@ private:
             result->j_     = j_;
             result->t_     = t_;
             result->point_ = point_;
+            result->size_  = size_;
+            result->n_     = n_;
             return std::unique_ptr<Base>( result );
         }
 
@@ -198,6 +208,8 @@ private:
         idx_t i_;
         idx_t j_;
         idx_t t_;
+        idx_t size_;
+        idx_t n_;
         typename Base::value_type point_;
         ComputePoint compute_point;
     };
@@ -231,30 +243,29 @@ public:
     virtual std::string type() const override;
 
     // Return number of faces on cube
-    inline idx_t GetN() const { return N_; }
     inline idx_t N() const { return N_; }
 
-    // Return number of tiles
-    inline idx_t GetNTiles() const { return nTiles_; }
-
-    void xy2xyt( const double xy[], double xyt[] ) const;
-
-    void xyt2xy( const double xyt[], double xy[] ) const;
+    // Access to the tile class
+    inline atlas::grid::CubedSphereTiles tiles() const { return tiles_; }
 
     // Tile specific access to x and y locations
     // -----------------------------------------
 
-    inline double xsPlusIndex(idx_t idx, idx_t t ) const {
-        return static_cast<double>( xs_[t] ) + static_cast<double>( idx ); }
+    inline double xsPlusIndex( idx_t idx, idx_t t ) const {
+        return static_cast<double>( xs_[t] ) + static_cast<double>( idx );
+    }
 
-    inline double xsrMinusIndex(idx_t idx, idx_t t ) const {
-        return static_cast<double>( xsr_[t] ) - static_cast<double>( idx ); }
+    inline double xsrMinusIndex( idx_t idx, idx_t t ) const {
+        return static_cast<double>( xsr_[t] ) - static_cast<double>( idx );
+    }
 
-    inline double ysPlusIndex(idx_t idx, idx_t t ) const {
-        return static_cast<double>( ys_[t] ) + static_cast<double>( idx ); }
+    inline double ysPlusIndex( idx_t idx, idx_t t ) const {
+        return static_cast<double>( ys_[t] ) + static_cast<double>( idx );
+    }
 
-    inline double ysrMinusIndex(idx_t idx, idx_t t ) const {
-        return static_cast<double>( ysr_[t] ) - static_cast<double>( idx ); }
+    inline double ysrMinusIndex( idx_t idx, idx_t t ) const {
+        return static_cast<double>( ysr_[t] ) - static_cast<double>( idx );
+    }
 
     // Lambdas for access to appropriate functions for tile
     // ----------------------------------------------------
@@ -266,9 +277,9 @@ public:
     // --------------------------
 
     inline void xyt( idx_t i, idx_t j, idx_t t, double crd[] ) const {
-        crd[0]             = xtile.at( t )( i, j, t );
-        crd[1]             = ytile.at( t )( i, j, t );
-        crd[2]             = static_cast<double>( t );
+        crd[0] = xtile.at( t )( i, j, t );
+        crd[1] = ytile.at( t )( i, j, t );
+        crd[2] = static_cast<double>( t );
     }
 
     PointXY xyt( idx_t i, idx_t j, idx_t t ) const {
@@ -303,23 +314,30 @@ public:
 
     // Check whether i, j, t is in grid
     // --------------------------------
-    inline  bool inGrid ( idx_t i, idx_t j, idx_t t    ) const  {
-      if ( t >= 0 && t <= 5 ) {
-        if ( j >= jmin_[t] && j <= jmax_[t] ) {
-          if ( i >= imin_[t][j] && i <= imax_[t][j] ) {
-            return true;
-          }
+    inline bool inGrid( idx_t i, idx_t j, idx_t t ) const {
+        constexpr idx_t tmax = 5;
+        if ( t >= 0 && t <= tmax ) {
+            if ( j >= jmin_[t] && j <= jmax_[t] ) {
+                if ( i >= imin_[t][j] && i <= imax_[t][j] ) {
+                    return true;
+                }
+            }
         }
-      }
-      return false;
+        return false;
     }
 
     // Check on whether the final element
     // ----------------------------------
 
     bool finalElement( idx_t i, idx_t j, idx_t t ) const {
-        if ( i == imax_[5][jmax_[5]]  && j ==jmax_[5] && t == 5 ) {
-            return true;
+        constexpr idx_t tmax = 5;
+        if ( t == tmax ) {
+            idx_t jmax = jmax_[tmax];
+            if ( j == jmax ) {
+                if ( i == imax_[tmax][jmax] ) {
+                    return true;
+                }
+            }
         }
         return false;
     }
@@ -329,53 +347,51 @@ public:
 
     // Note that i is the fastest index, followed by j, followed by t
     std::unique_ptr<int[]> nextElement( const idx_t i, const idx_t j, const idx_t t ) const {
-      std::unique_ptr<int[]> ijt( new int[3] );
+        std::unique_ptr<int[]> ijt( new int[3] );
 
-      ijt[0] = i;
-      ijt[1] = j;
-      ijt[2] = t;
-
-      if (i < imax_[t][j]) {
-        ijt[0] = i + 1;
+        ijt[0] = i;
         ijt[1] = j;
         ijt[2] = t;
+
+        if ( i < imax_[t][j] ) {
+            ijt[0] = i + 1;
+            ijt[1] = j;
+            ijt[2] = t;
+            return ijt;
+        }
+
+        if ( i == imax_[t][j] ) {
+            if ( j < jmax_[t] ) {
+                // move to next column
+                ijt[0] = 0;
+                ijt[1] = j + 1;
+                ijt[2] = t;
+                return ijt;
+            }
+
+            if ( j == jmax_[t] ) {
+                if ( t < nTiles_ - 1 ) {
+                    // move to next tile
+                    ijt[0] = 0;
+                    ijt[1] = 0;
+                    ijt[2] = t + 1;
+                    return ijt;
+                }
+
+                if ( t == nTiles_ - 1 ) {
+                    // We are at the final point so we go to
+                    // to a point that defines the "end()" of the
+                    // iterator i.e. it is not a point on the grid
+                    // For now it is set at (N_, N_, nTiles -1)
+                    ijt[0] = N_;
+                    ijt[1] = N_;
+                    ijt[2] = nTiles_ - 1;
+                    return ijt;
+                }
+            }
+        }
+
         return ijt;
-      }
-
-      if (i == imax_[t][j] ) {
-        if (j < jmax_[t]) {
-          // move to next column
-          ijt[0] = 0;
-          ijt[1] = j+1;
-          ijt[2] = t;
-          return ijt;
-        }
-
-        if (j == jmax_[t]) {
-          if (t < nTiles_-1) {
-
-            // move to next tile
-            ijt[0] = 0;
-            ijt[1] = 0;
-            ijt[2] = t+1;
-            return ijt;
-          }
-
-          if (t == nTiles_ -1) {
-            // We are at the final point so we go to
-            // to a point that defines the "end()" of the
-            // iterator i.e. it is not a point on the grid
-            // For now it is set at (N_, N_, nTiles -1)
-            ijt[0] = N_;
-            ijt[1] = N_;
-            ijt[2] = nTiles_ - 1;
-            return ijt;
-          }
-        }
-      }
-
-      return ijt;
-
     }
 
     // Iterator start/end positions
@@ -415,6 +431,12 @@ protected:
 
     Domain computeDomain() const;
 
+private:
+    void xy2xyt( const double xy[], double xyt[] ) const;  // note: unused!
+
+    void xyt2xy( const double xyt[], double xy[] ) const;
+
+protected:
     // Number of faces on tile
     idx_t N_;
 
@@ -432,8 +454,8 @@ protected:
 
     std::string tileType_;
 
-    std::array<idx_t,6>  jmin_{0,0,0,0,0,0};
-    std::array<idx_t,6>  jmax_;
+    std::array<idx_t, 6> jmin_{0,0,0,0,0,0};
+    std::array<idx_t, 6> jmax_;
     std::vector<std::vector<idx_t>> imin_;
     std::vector<std::vector<idx_t>> imax_;
 
@@ -441,8 +463,10 @@ protected:
 
 private:
     std::string name_ = {"cubedsphere"};
-    CubedSphereProjectionBase * cs_projection_;  // store pointer to dynamic_cast for convenience
-    CubedSphereTiles tiles_;
+    CubedSphereProjectionBase* cs_projection_;  // store pointer to dynamic_cast for convenience
+    atlas::grid::CubedSphereTiles tiles_;
+    std::array<std::array<double, 6>, 2> tiles_offsets_xy2ab_;
+    std::array<std::array<double, 6>, 2> tiles_offsets_ab2xy_;
 };
 
 

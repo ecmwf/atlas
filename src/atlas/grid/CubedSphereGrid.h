@@ -10,6 +10,7 @@
 #include <string>
 
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/Tiles.h"
 #include "atlas/grid/detail/grid/CubedSphere.h"
 
 namespace atlas {
@@ -295,13 +296,7 @@ public:
     inline int N() const { return grid_->N(); }
 
     // Return the number of tiles
-    inline int GetNTiles() const { return grid_->GetNTiles(); }
-
-    // Transform from xy space to xyt space that is a function of resolution.
-    void xy2xyt( const double xy[], double xyt[] ) const { return grid_->xy2xyt( xy, xyt ); }
-
-    // Transform from xyt space to xy space
-    void xyt2xy( const double xyt[], double xy[] ) const { return grid_->xyt2xy( xyt, xy ); }
+    inline atlas::grid::CubedSphereTiles tiles() const { return grid_->tiles(); }
 
     temporary::IterateTIJ tij() const { return temporary::IterateTIJ( *grid_ ); }
 

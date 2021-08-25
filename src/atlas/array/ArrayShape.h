@@ -42,6 +42,8 @@ public:
     ArrayShape( idx_t data[], size_t size ) : Base( data, data + size ) {}
     template <typename idx_t, std::size_t N>
     ArrayShape( const std::array<idx_t, N>& list ) : Base( list.begin(), list.end() ) {}
+    template <typename idx_t>
+    ArrayShape( const std::vector<idx_t>& list ) : Base( list.begin(), list.end() ) {}
 };
 
 namespace detail {

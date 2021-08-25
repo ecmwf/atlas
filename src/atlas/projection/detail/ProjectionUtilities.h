@@ -57,7 +57,7 @@ struct ProjectionUtilities {
 
         // Left or right hand system.
         if ( coordinate_system == CoordinateSystem::RIGHT_HAND ) {
-           lonlat[LAT] += 90.;
+            lonlat[LAT] += 90.;
         }
     }
 
@@ -72,7 +72,7 @@ struct ProjectionUtilities {
 
         const auto pointLonLat = PointLonLat( lonlat );
 
-        auto pointXYZ          = PointXYZ();
+        auto pointXYZ = PointXYZ();
 
         // Set Radius
         auto r = radius != 0 ? radius : util::Earth::radius();

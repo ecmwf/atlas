@@ -428,6 +428,17 @@ CASE( "test_structured_from_config" ) {
     EXPECT( not g.domain().global() );
 }
 
+struct PointLatLon : public Point2 {
+    using Point2::Point2;
+    PointLatLon() : Point2() {}
+
+    // Allow initialization through PointXY lonlat = {0,0};
+    PointLatLon( std::initializer_list<double> list ) : PointLatLon( list.begin() ) {}
+
+    double lon() const { return x_[1]; }
+    double lat() const { return x_[0]; }
+};
+
 CASE( "test_cubedsphere" ) {
     int resolution( 2 );
     std::vector<std::string> grid_names{"CS-EA-L-" + std::to_string( resolution ),
@@ -474,10 +485,11 @@ CASE( "test_cubedsphere" ) {
             constexpr double rad2deg = 180. / rpi;
             double cornerLat         = rad2deg * std::atan( std::sin( rpi / 4.0 ) );
 
+            // Note that with nodal points on the cubed-sphere
+            // for a equiangular and equidistant projections and a resolution of 2 are the same.
             // Expected latitudes/longitude per tile
-            if ( ( s == "CS-EA-L-" + std::to_string( resolution ) )  ||
-                 ( s == "CS-ED-L-" + std::to_string( resolution ) ) ) {
-                expectedLatLon = std::vector<std::pair<double, double>> {
+            if ( ( grid_name == "CS-EA-L-2" ) || ( grid_name == "CS-ED-L-2" ) ) {
+                expectedLatLon = std::vector<std::pair<double, double>>{
                     {-cornerLat, 315.0}, {-45.0, 0.0},  {0.0, 315.0},        {0.0, 0.0},         {cornerLat, 315.0},
                     {-cornerLat, 45.0},  {-45.0, 90.0}, {-cornerLat, 135.0}, {0.0, 45.0},        {0.0, 90.0},
                     {cornerLat, 45.0},   {45.0, 90.0},  {45.0, 0.0},         {90, 0.0},          {cornerLat, 135.0},

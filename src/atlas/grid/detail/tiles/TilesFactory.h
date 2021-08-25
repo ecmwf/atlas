@@ -16,7 +16,8 @@
 #include "atlas/util/Factory.h"
 
 namespace atlas {
-namespace cubedspheretiles {
+namespace grid {
+namespace detail {
 
 class CubedSphereTiles;
 
@@ -38,8 +39,7 @@ private:
 template <class T>
 class CubedSphereTilesBuilder : public CubedSphereTilesFactory {
 private:
-    virtual const CubedSphereTiles* make( const eckit::Parametrisation& param ) {
-        return new T( param ); }
+    virtual const CubedSphereTiles* make( const eckit::Parametrisation& param ) { return new T( param ); }
 
 public:
     using CubedSphereTilesFactory::CubedSphereTilesFactory;
@@ -47,6 +47,6 @@ public:
 
 //----------------------------------------------------------------------------------------------------------------------
 
-}  // namespace cubedspheretiles
+}  // namespace detail
+}  // namespace grid
 }  // namespace atlas
-

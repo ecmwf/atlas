@@ -19,6 +19,7 @@
 #include <iterator>
 #include <map>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include "atlas/field/Field.h"
@@ -43,6 +44,18 @@ public:  // types
     using iterator       = std::vector<Field>::iterator;
     using const_iterator = std::vector<Field>::const_iterator;
 
+    template <typename T>
+    static constexpr bool is_index() {
+        return std::is_integral<T>::value or std::is_enum<T>::value;
+    }
+
+    template <bool pred>
+    using enable_if_t = typename std::enable_if<pred, int>::type;
+
+    template <typename T>
+    using enable_if_index_t = enable_if_t<is_index<T>()>;
+
+
 public:  // methods
     /// Constructs an empty FieldSet
     FieldSetImpl( const std::string& name = "untitled" );
@@ -55,21 +68,28 @@ public:  // methods
     const std::string& name() const { return name_; }
     std::string& name() { return name_; }
 
-    const Field& operator[]( const std::int32_t& i ) const { return field( i ); }
-    Field& operator[]( const std::int32_t& i ) { return field( i ); }
+    template <typename Index, enable_if_index_t<Index> = 0>
+    const Field& operator[]( Index i ) const {
+        return field( i );
+    }
 
-    const Field& operator[]( const std::int64_t& i ) const { return field( i ); }
-    Field& operator[]( const std::int64_t& i ) { return field( i ); }
+    template <typename Index, enable_if_index_t<Index> = 0>
+    Field& operator[]( Index i ) {
+        return field( i );
+    }
 
     const Field& operator[]( const std::string& name ) const { return field( name ); }
     Field& operator[]( const std::string& name ) { return field( name ); }
 
-    const Field& field( const idx_t& i ) const {
+    template <typename Index, enable_if_index_t<Index> = 0>
+    const Field& field( Index i ) const {
         if ( i >= size() )
             throw_OutOfRange( "fieldset", i, size(), Here() );
         return fields_[i];
     }
-    Field& field( const idx_t& i ) {
+
+    template <typename Index, enable_if_index_t<Index> = 0>
+    Field& field( Index i ) {
         if ( i >= size() )
             throw_OutOfRange( "fieldset", i, size(), Here() );
         return fields_[i];
@@ -128,6 +148,9 @@ public:  // types
     using iterator       = Implementation::iterator;
     using const_iterator = Implementation::const_iterator;
 
+    template <typename T>
+    using enable_if_index_t = Implementation::enable_if_index_t<T>;
+
 public:  // methods
     using Handle::Handle;
     FieldSet();
@@ -142,11 +165,15 @@ public:  // methods
     const std::string& name() const { return get()->name(); }
     std::string& name() { return get()->name(); }
 
-    const Field& operator[]( const std::int32_t& i ) const { return get()->operator[]( i ); }
-    Field& operator[]( const std::int32_t& i ) { return get()->operator[]( i ); }
+    template <typename Index, enable_if_index_t<Index> = 0>
+    const Field& operator[]( Index i ) const {
+        return get()->operator[]( i );
+    }
 
-    const Field& operator[]( const std::int64_t& i ) const { return get()->operator[]( i ); }
-    Field& operator[]( const std::int64_t& i ) { return get()->operator[]( i ); }
+    template <typename Index, enable_if_index_t<Index> = 0>
+    Field& operator[]( Index i ) {
+        return get()->operator[]( i );
+    }
 
     const Field& operator[]( const std::string& name ) const { return get()->operator[]( name ); }
     Field& operator[]( const std::string& name ) { return get()->operator[]( name ); }
@@ -154,8 +181,15 @@ public:  // methods
     const Field& operator[]( const char* name ) const { return get()->operator[]( name ); }
     Field& operator[]( const char* name ) { return get()->operator[]( name ); }
 
-    const Field& field( const idx_t& i ) const { return get()->field( i ); }
-    Field& field( const idx_t& i ) { return get()->field( i ); }
+    template <typename Index, enable_if_index_t<Index> = 0>
+    const Field& field( Index i ) const {
+        return get()->field( i );
+    }
+
+    template <typename Index, enable_if_index_t<Index> = 0>
+    Field& field( Index i ) {
+        return get()->field( i );
+    }
 
     std::vector<std::string> field_names() const { return get()->field_names(); }
 

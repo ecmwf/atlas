@@ -13,14 +13,14 @@
 #include "atlas/grid.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/projection/Projection.h"
-#include "atlas/util/Point.h"
 #include "atlas/util/Constants.h"
+#include "atlas/util/Point.h"
 
 
 #include "atlas/grid/Tiles.h"
-#include "atlas/grid/detail/tiles/Tiles.h"
 #include "atlas/grid/detail/tiles/FV3Tiles.h"
 #include "atlas/grid/detail/tiles/LFRicTiles.h"
+#include "atlas/grid/detail/tiles/Tiles.h"
 #include "tests/AtlasTestEnvironment.h"
 
 namespace atlas {
@@ -29,20 +29,20 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-CASE ("test_tiles") {
-   int resolution(2);
-    Grid gEA{ "CS-EA-L-" + std::to_string(resolution)};
-    Grid gLFR{ "CS-LFR-L-" + std::to_string(resolution)};
+CASE( "test_tiles" ) {
+    int resolution( 2 );
+    Grid gEA{"CS-EA-L-" + std::to_string( resolution )};
+    Grid gLFR{"CS-LFR-L-" + std::to_string( resolution )};
 
     using util::Constants;
 
     util::Config params;
-    CubedSphereTiles f("cubedsphere_fv3");
-    CubedSphereTiles l("cubedsphere_lfric");
+    grid::CubedSphereTiles f( "cubedsphere_fv3" );
+    grid::CubedSphereTiles l( "cubedsphere_lfric" );
 
     double cd[2];
 
-    idx_t jn(0);
+    idx_t jn( 0 );
 
     std::array<idx_t, 7> EAOffset{0,
                                   resolution * resolution + 1,
@@ -53,58 +53,58 @@ CASE ("test_tiles") {
                                   6 * resolution * resolution + 2};
 
     for ( auto crd : gEA.lonlat() ) {
-       atlas::PointLonLat pointLonLat = crd;
-       cd[LON] = pointLonLat.lon();
-       cd[LAT] = pointLonLat.lat();
+        atlas::PointLonLat pointLonLat = crd;
+        cd[LON]                        = pointLonLat.lon();
+        cd[LAT]                        = pointLonLat.lat();
 
-       int t = f.tileFromLonLat(cd);  
+        int t = f.indexFromLonLat( cd );
 
-       gEA.projection().lonlat2xy(crd);
-       cd[LON] = crd.lon();
-       cd[LAT] = crd.lat();
+        gEA.projection().lonlat2xy( crd );
+        cd[LON] = crd.lon();
+        cd[LAT] = crd.lat();
 
-       int t2 = f.tileFromXY(cd);
+        int t2 = f.indexFromXY( cd );
 
-       for (std::size_t i = 0; i < 6; ++i) {
-           if (jn >= EAOffset[i] && jn < EAOffset[i+1]) {
-               EXPECT(t == static_cast<idx_t>(i));
-               EXPECT(t2 == static_cast<idx_t>(i));
-           }
-       }
-       ++jn;
+        for ( std::size_t i = 0; i < 6; ++i ) {
+            if ( jn >= EAOffset[i] && jn < EAOffset[i + 1] ) {
+                EXPECT( t == static_cast<idx_t>( i ) );
+                EXPECT( t2 == static_cast<idx_t>( i ) );
+            }
+        }
+        ++jn;
     }
 
     std::array<idx_t, 7> LFRicOffset{0,
-                                  resolution * resolution,
-                                  2 * resolution * resolution,
-                                  3 * resolution * resolution,
-                                  4 * resolution * resolution,
-                                  4 * resolution * resolution + (resolution + 1) * (resolution + 1),
-                                  6 * resolution * resolution + 2};
+                                     resolution * resolution,
+                                     2 * resolution * resolution,
+                                     3 * resolution * resolution,
+                                     4 * resolution * resolution,
+                                     4 * resolution * resolution + ( resolution + 1 ) * ( resolution + 1 ),
+                                     6 * resolution * resolution + 2};
 
     jn = 0;
     for ( auto crd : gLFR.lonlat() ) {
-       atlas::PointLonLat pointLonLat = crd;
-       cd[LON] = pointLonLat.lon();
-       cd[LAT] = pointLonLat.lat();
+        atlas::PointLonLat pointLonLat = crd;
 
-       int t3 = l.tileFromLonLat(cd);
+        cd[LON] = pointLonLat.lon();
+        cd[LAT] = pointLonLat.lat();
 
-       gLFR.projection().lonlat2xy(crd);
-       cd[LON] = crd.lon();
-       cd[LAT] = crd.lat();
+        int t3 = l.indexFromLonLat( cd );
 
-       int t4 = l.tileFromXY(cd);
+        gLFR.projection().lonlat2xy( crd );
+        cd[LON] = crd.lon();
+        cd[LAT] = crd.lat();
 
-       for (std::size_t i = 0; i < 6; ++i) {
-           if (jn >= LFRicOffset[i] && jn < LFRicOffset[i+1]) {
-               EXPECT(t3 == static_cast<idx_t>(i));
-               EXPECT(t4 == static_cast<idx_t>(i));
-           }
-       }
-       ++jn;
+        int t4 = l.indexFromXY( cd );
+
+        for ( std::size_t i = 0; i < 6; ++i ) {
+            if ( jn >= LFRicOffset[i] && jn < LFRicOffset[i + 1] ) {
+                EXPECT( t3 == static_cast<idx_t>( i ) );
+                EXPECT( t4 == static_cast<idx_t>( i ) );
+            }
+        }
+        ++jn;
     }
-
 }
 
 CASE( "test_projection_cubedsphere_xy_latlon" ) {

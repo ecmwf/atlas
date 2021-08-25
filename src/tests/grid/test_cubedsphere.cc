@@ -12,6 +12,7 @@
 #include "atlas/grid/Tiles.h"
 #include "atlas/mesh.h"
 #include "atlas/meshgenerator.h"
+#include "atlas/option.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/grid/Partitioner.h"
 #include "atlas/grid/detail/partitioner/CubedSpherePartitioner.h"
@@ -22,17 +23,16 @@
 #include "tests/AtlasTestEnvironment.h"
 
 namespace atlas {
-  namespace test {
+namespace test {
+namespace {
 
-    namespace {
+using grid::detail::partitioner::CubedSpherePartitioner;
 
-       using grid::detail::partitioner::CubedSpherePartitioner;
+void partition(const CubedSpherePartitioner & partitioner, const Grid & grid,
+               CubedSpherePartitioner::CubedSphere & cb,  std::vector<idx_t> & part)  {
 
-       void partition(const CubedSpherePartitioner & partitioner, const Grid & grid,
-                      CubedSpherePartitioner::CubedSphere & cb,  std::vector<idx_t> & part)  {
-
-           std::vector<CubedSpherePartitioner::CellInt> nodes( static_cast<std::size_t>(grid.size()) );
-           std::size_t n( 0 );
+    std::vector<CubedSpherePartitioner::CellInt> nodes( static_cast<std::size_t>(grid.size()) );
+    std::size_t n( 0 );
 
 
 

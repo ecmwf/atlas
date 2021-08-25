@@ -108,8 +108,8 @@ bool PolygonXY::contains( const Point2& P ) const {
     }
 
     if ( inner_radius_squared_ == 0 ) {  // check inner bounding box
-        if ( inner_coordinatesMin_[LON] <= P[LON] && inner_coordinatesMax_[LON] >= P[LON] &&
-             inner_coordinatesMin_[LAT] <= P[LAT] && inner_coordinatesMax_[LAT] >= P[LAT] ) {
+        if ( inner_coordinatesMin_[LON] <= P[LON] && P[LON] <= inner_coordinatesMax_[LON] &&
+             inner_coordinatesMin_[LAT] <= P[LAT] && P[LAT] <= inner_coordinatesMax_[LAT] ) {
             return true;
         }
     }

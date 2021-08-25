@@ -34,7 +34,7 @@ namespace test {
 
 CASE( "test_interpolation_finite_element" ) {
     Grid grid( "O64" );
-    Mesh mesh ( grid );
+    Mesh mesh( grid );
     NodeColumns fs( mesh );
 
     // Some points at the equator

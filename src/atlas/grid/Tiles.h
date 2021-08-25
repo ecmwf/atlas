@@ -11,8 +11,8 @@
 #pragma once
 
 #include <array>
-#include <string>
 #include <iostream>
+#include <string>
 
 #include "atlas/library/config.h"
 #include "atlas/util/ObjectHandle.h"
@@ -35,16 +35,17 @@ namespace util {
 class Config;
 }  // namespace util
 
+namespace grid {
+
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-namespace cubedspheretiles {
+namespace detail {
 class CubedSphereTiles;
-}  // namespace cubespheretiles
+}  // namespace detail
 #endif
 
 //---------------------------------------------------------------------------------------------------------------------
 
-class CubedSphereTiles : DOXYGEN_HIDE(
-    public util::ObjectHandle<atlas::cubedspheretiles::CubedSphereTiles> ) {
+class CubedSphereTiles : DOXYGEN_HIDE( public util::ObjectHandle<atlas::grid::detail::CubedSphereTiles> ) {
 public:
     using Spec = util::Config;
 
@@ -59,44 +60,25 @@ public:
 
     // These are offsets needed for transforming
     // from xy space to the "archetypal base" tile.
-    std::array<std::array<double,6>,2> xy2abOffsets() const;
+    std::array<std::array<double, 6>, 2> xy2abOffsets() const;
 
-    std::array<std::array<double,6>,2> ab2xyOffsets() const;
+    std::array<std::array<double, 6>, 2> ab2xyOffsets() const;
 
-    // 3D Cartesian rotations from tile 0 to tileX
-    void tile0Rotate( double xyz[] ) const;
+    void rotate( idx_t t, double xyz[] ) const;
 
-    void tile1Rotate( double xyz[] ) const;
-
-    void tile2Rotate( double xyz[] ) const;
-
-    void tile3Rotate( double xyz[] ) const;
-
-    void tile4Rotate( double xyz[] ) const;
-
-    void tile5Rotate( double xyz[] ) const;
-
-    void tile0RotateInverse( double xyz[] ) const;
-
-    void tile1RotateInverse( double xyz[] ) const;
-
-    void tile2RotateInverse( double xyz[] ) const;
-
-    void tile3RotateInverse( double xyz[] ) const;
-
-    void tile4RotateInverse( double xyz[] ) const;
-
-    void tile5RotateInverse( double xyz[] ) const;
+    void unrotate( idx_t t, double xyz[] ) const;
 
     // tile index from xy space
-    idx_t tileFromXY( const double xy[] ) const;
+    idx_t indexFromXY( const double xy[] ) const;
 
     // tile index from longitude and latitude space
-    idx_t tileFromLonLat( const double lonlat[] ) const;
+    idx_t indexFromLonLat( const double lonlat[] ) const;
 
     // enforceXYdomain reinforces the tile shape in xy space;
     // if values move a miniscule amount outside the domain, it will be brought back in.
     void enforceXYdomain( double xy[] ) const;
+
+    idx_t size() const;
 
     // this provides periodicity to each of the tiles by extending each tile over edges
     // in a cross-like fashion. Periodicity of this form does not allow
@@ -108,7 +90,7 @@ private:
     void print( std::ostream& ) const;
 
     friend std::ostream& operator<<( std::ostream& s, const CubedSphereTiles& cst );
-
 };
 
+}  // namespace grid
 }  // namespace atlas

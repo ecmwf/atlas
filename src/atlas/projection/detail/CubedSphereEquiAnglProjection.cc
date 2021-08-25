@@ -22,12 +22,12 @@
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
 
-namespace  {
+namespace {
 
-   static constexpr bool debug = false;  // constexpr so compiler can optimize `if ( debug ) { ... }` out
-   static constexpr double deg2rad = atlas::util::Constants::degreesToRadians();
-   static constexpr double rad2deg = atlas::util::Constants::radiansToDegrees();
-}
+static constexpr bool debug     = false;  // constexpr so compiler can optimize `if ( debug ) { ... }` out
+static constexpr double deg2rad = atlas::util::Constants::degreesToRadians();
+static constexpr double rad2deg = atlas::util::Constants::radiansToDegrees();
+}  // namespace
 
 namespace atlas {
 namespace projection {
@@ -92,8 +92,8 @@ void CubedSphereEquiAnglProjection::xy2lonlat( double crd[] ) const {
     }
 
     xyz[0] = -rsq3;
-    xyz[1] = -rsq3 * std::tan( ab[0] * deg2rad);
-    xyz[2] = -rsq3 * std::tan( ab[1] * deg2rad);
+    xyz[1] = -rsq3 * std::tan( ab[0] * deg2rad );
+    xyz[2] = -rsq3 * std::tan( ab[1] * deg2rad );
 
     CubedSphereProjectionBase::xy2lonlat_post( xyz, t, crd );
 
