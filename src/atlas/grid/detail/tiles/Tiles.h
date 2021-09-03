@@ -55,7 +55,7 @@ public:
 
     idx_t size() const { return 6; }
 
-    virtual atlas::PointXY tileCubePeriodicity ( const atlas::PointXY & xyExtended, const atlas::idx_t tile ) const = 0;
+    virtual atlas::PointXY tileCubePeriodicity( const atlas::PointXY& xyExtended, const atlas::idx_t tile ) const = 0;
 
     /// Output to stream
     virtual void print( std::ostream& ) const = 0;

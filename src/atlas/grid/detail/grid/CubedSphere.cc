@@ -67,7 +67,6 @@ CubedSphere::CubedSphere( int N, Projection p ) : CubedSphere( CubedSphere::stat
 
 CubedSphere::CubedSphere( const std::string& name, int N, Projection projection ) :
     Grid(), N_( N ), stagger_( extractStagger( name ) ), name_( name ) {
-
     // Number of tiles hardwired to 6 at the moment. Regional may need 1
     // Copy members
     util::Config defaultProjConfig;

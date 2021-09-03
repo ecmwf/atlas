@@ -41,7 +41,8 @@ public:
 
     virtual void enforceXYdomain( double xy[] ) const override;
 
-    virtual atlas::PointXY tileCubePeriodicity (const atlas::PointXY & xyExtended, const atlas::idx_t tile) const override;
+    virtual atlas::PointXY tileCubePeriodicity( const atlas::PointXY& xyExtended,
+                                                const atlas::idx_t tile ) const override;
 
     virtual void print( std::ostream& ) const override;
 

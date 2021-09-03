@@ -57,7 +57,7 @@ public:
 
     /// Type of the cubed-sphere tiles:
     std::string type() const;
-  
+
     // These are offsets needed for transforming
     // from xy space to the "archetypal base" tile.
     std::array<std::array<double, 6>, 2> xy2abOffsets() const;
@@ -83,7 +83,7 @@ public:
     // this provides periodicity to each of the tiles by extending each tile over edges
     // in a cross-like fashion. Periodicity of this form does not allow
     // a "diagonal" extension over corners of the cube.
-    atlas::PointXY tileCubePeriodicity (const atlas::PointXY & xyExtended, const atlas::idx_t tile) const;
+    atlas::PointXY tileCubePeriodicity( const atlas::PointXY& xyExtended, const atlas::idx_t tile ) const;
 
 private:
     /// Output to stream

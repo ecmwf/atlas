@@ -60,8 +60,9 @@ void CubedSphereTiles::enforceXYdomain( double xy[] ) const {
     return get()->enforceXYdomain( xy );
 }
 
-atlas::PointXY CubedSphereTiles::tileCubePeriodicity (const atlas::PointXY & xyExtended, const atlas::idx_t tile) const {
-    return get()->tileCubePeriodicity(xyExtended, tile);
+atlas::PointXY CubedSphereTiles::tileCubePeriodicity( const atlas::PointXY& xyExtended,
+                                                      const atlas::idx_t tile ) const {
+    return get()->tileCubePeriodicity( xyExtended, tile );
 }
 
 void CubedSphereTiles::print( std::ostream& os ) const {
