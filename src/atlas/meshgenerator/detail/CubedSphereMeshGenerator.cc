@@ -183,8 +183,8 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
   // ---------------------------------------------------------------------------
 
   // Get dimensions of grid
-  const auto N      = csGrid.N();
-  const auto nTiles = csGrid.tiles().size();
+  const idx_t N      = csGrid.N();
+  const idx_t nTiles = csGrid.tiles().size();
 
   const auto nNodesUnique = nTiles * N * N + 2;
   const auto nNodesAll    = nTiles * (N + 1) * (N + 1);
@@ -219,17 +219,19 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
   // Helper functions to get node and cell idx from (t, j, i).
   const auto getNodeIdx = [&](idx_t t, idx_t j, idx_t i){
     // Adjust bounds.
-    t = std::max(std::min(t, nTiles - 1), 0);
-    j = std::max(std::min(j, N), 0);
-    i = std::max(std::min(i, N), 0);
+    constexpr idx_t zero = 0;
+    t = std::max(std::min<idx_t>(t, nTiles - 1), zero);
+    j = std::max(std::min(j, N), zero);
+    i = std::max(std::min(i, N), zero);
     return idx2st(t * (N + 1) * (N + 1) + j * (N + 1) + i);
   };
 
   const auto getCellIdx = [&](idx_t t, idx_t j, idx_t i){
     // Adjust bounds.
-    t = std::max(std::min(t, nTiles - 1), 0);
-    j = std::max(std::min(j, N - 1), 0);
-    i = std::max(std::min(i, N - 1), 0);
+    constexpr idx_t zero = 0;
+    t = std::max(std::min(t, nTiles - 1), zero);
+    j = std::max(std::min(j, N - 1), zero);
+    i = std::max(std::min(i, N - 1), zero);
     return idx2st(t * N * N + j * N + i);
   };
 

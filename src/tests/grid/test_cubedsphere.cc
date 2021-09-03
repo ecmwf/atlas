@@ -30,7 +30,7 @@ namespace {
 using grid::detail::partitioner::CubedSpherePartitioner;
   
 void partition(const CubedSpherePartitioner & partitioner, const Grid & grid,
-               CubedSpherePartitioner::CubedSphere & cb,  std::vector<idx_t> & part)  {
+               CubedSpherePartitioner::CubedSphere & cb,  std::vector<int> & part)  {
   
     std::vector<CubedSpherePartitioner::CellInt> nodes( static_cast<std::size_t>(grid.size()) );
     std::size_t n( 0 );
@@ -266,7 +266,7 @@ CASE( "test_iterator" ) {
       for ( auto crd : grid.xy() ) {
           atlas::PointXY initialXY{crd[XX], crd[YY]};
           double xy[2] = {initialXY.x(), initialXY.y()};
-          atlas::idx_t t = lfricTiles.indexFromXY(xy);
+          idx_t t = lfricTiles.indexFromXY(xy);
           atlas::PointXY finalXY = lfricTiles.tileCubePeriodicity(initialXY, t);
           EXPECT_APPROX_EQ(initialXY, finalXY);
           ++jn;
@@ -486,7 +486,7 @@ CASE( "test_iterator" ) {
             {
                 CubedSpherePartitioner partitioner( 4 );
                 CubedSpherePartitioner::CubedSphere cb = partitioner.cubedsphere(grid);
-                std::vector<idx_t> part(static_cast<size_t>(grid.size()), 0);
+                std::vector<int> part(static_cast<size_t>(grid.size()), 0);
                 partition(partitioner,grid, cb, part);
 
                 for (std::size_t t = 0 ; t < 4; ++t) {
@@ -522,7 +522,7 @@ CASE( "test_iterator" ) {
             {
                 CubedSpherePartitioner partitioner( 12 );
                 CubedSpherePartitioner::CubedSphere cb = partitioner.cubedsphere(grid);
-                std::vector<idx_t> part(static_cast<size_t>(grid.size()), 0);
+                std::vector<int> part(static_cast<size_t>(grid.size()), 0);
                 partition(partitioner,grid, cb, part);
 
                 for (std::size_t t = 0 ; t < 6; ++t) {
@@ -531,11 +531,11 @@ CASE( "test_iterator" ) {
                     EXPECT( cb.nprocy[t] == 2 );
                     EXPECT( cb.nx[t] == 4 );
                     EXPECT( cb.ny[t] == 4 );
-                    EXPECT( cb.globalProcStartPE[t] == static_cast<atlas::idx_t>(2 * t) );
-                    EXPECT( cb.globalProcEndPE[t] == static_cast<atlas::idx_t>(2 * t + 1) );
+                    EXPECT( cb.globalProcStartPE[t] == static_cast<int>(2 * t) );
+                    EXPECT( cb.globalProcEndPE[t] == static_cast<int>(2 * t + 1) );
 
                     for ( size_t i = 0; i < static_cast<size_t>(grid.size()); ++i ) {
-                        EXPECT(part[i] == static_cast<idx_t>(i/8));
+                        EXPECT(part[i] == static_cast<int>(i/8));
                     }
                 }
 
@@ -545,7 +545,7 @@ CASE( "test_iterator" ) {
             {
                 CubedSpherePartitioner partitioner( 24 );
                 CubedSpherePartitioner::CubedSphere cb = partitioner.cubedsphere(grid);
-                std::vector<idx_t> part(static_cast<size_t>(grid.size()), 0);
+                std::vector<int> part(static_cast<size_t>(grid.size()), 0);
                 partition(partitioner,grid, cb, part);
 
                 for (std::size_t t = 0 ; t < 6; ++t) {
@@ -554,8 +554,8 @@ CASE( "test_iterator" ) {
                     EXPECT( cb.nprocy[t] == 2 );
                     EXPECT( cb.nx[t] == 4 );
                     EXPECT( cb.ny[t] == 4 );
-                    EXPECT( cb.globalProcStartPE[t] == static_cast<atlas::idx_t>( 4 * t ) );
-                    EXPECT( cb.globalProcEndPE[t] == static_cast<atlas::idx_t>( 4 * t + 3 ) );
+                    EXPECT( cb.globalProcStartPE[t] == static_cast<int>( 4 * t ) );
+                    EXPECT( cb.globalProcEndPE[t] == static_cast<int>( 4 * t + 3 ) );
 
                     std::size_t l( 0 );
                     for ( idx_t t = 0; t < 6; ++t ) {

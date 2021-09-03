@@ -93,8 +93,9 @@ CubedSpherePartitioner::CubedSpherePartitioner( const int N, const std::vector<i
                                                 const std::vector<int> & globalProcEndPE,
                                                 const std::vector<int> & nprocx,
                                                 const std::vector<int> & nprocy )
-    : Partitioner( N ), globalProcStartPE_{globalProcStartPE},  globalProcEndPE_{globalProcEndPE},
-      nprocx_{nprocx},  nprocy_{nprocy}, regular_{false}   {}
+    : Partitioner( N ), globalProcStartPE_(globalProcStartPE.begin(),globalProcStartPE.end()),
+      globalProcEndPE_(globalProcEndPE.begin(),globalProcEndPE.end()),
+      nprocx_{nprocx.begin(),nprocx.end()},  nprocy_{nprocy.begin(),nprocy.end()}, regular_{false}   {}
 
 
 CubedSpherePartitioner::CubedSphere CubedSpherePartitioner::cubedsphere( const Grid& grid ) const {
