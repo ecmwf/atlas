@@ -647,9 +647,6 @@ void LFRicCubedSphereTiles::enforceWrapAround(const atlas::idx_t t, atlas::Point
     }
 
     return;
-
-void LFRicCubedSphereTiles::print( std::ostream& os ) const {
-    os << "LFRicCubedSphereTiles";
 }
 
 namespace {
