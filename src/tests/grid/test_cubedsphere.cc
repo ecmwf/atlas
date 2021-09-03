@@ -385,10 +385,10 @@ CASE( "cubedsphere_partitioner_test" ) {
             conf.set( "nprocx", nprocx );
             conf.set( "nprocy", nprocy );
 
-            grid::Partitioner partitioner( "cubed_sphere", conf );
+            grid::Partitioner partitioner( "cubedsphere", conf );
             grid::Distribution d_cs = partitioner.partition( grid );
 
-            grid::Partitioner partitioner2( "cubed_sphere", 2 );
+            grid::Partitioner partitioner2( "cubedsphere", 2 );
             grid::Distribution d_cs2 = partitioner2.partition( grid );
         }
 
@@ -535,7 +535,7 @@ CASE( "cubedsphere_partitioner_test" ) {
     }
     else {
         // Factory test using mpi to determine number of partitions
-        grid::Partitioner partitioner2( "cubed_sphere", atlas::mpi::size() );
+        grid::Partitioner partitioner2( "cubedsphere", atlas::mpi::size() );
         grid::Distribution d_cs2 = partitioner2.partition( grid );
     }
 }

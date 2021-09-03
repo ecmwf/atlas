@@ -75,7 +75,7 @@ void CubedSphereMeshGenerator::configure_defaults() {
     options.set( "part", mpi::rank() );
 
     // This options sets the default partitioner.
-    options.set<std::string>( "partitioner", "cubed_sphere" );
+    options.set<std::string>( "partitioner", "cubedsphere" );
 }
 
 // -----------------------------------------------------------------------------
@@ -117,7 +117,7 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
 
     if ( gridStagger != "C" ) {
         throw_Exception(
-            "CubedSphereMeshGenerator can only work with a"
+            "CubedSphereMeshGenerator can only work with a "
             "cell-centroid grid. Try NodalCubedSphereMeshGenerator instead." );
     }
 

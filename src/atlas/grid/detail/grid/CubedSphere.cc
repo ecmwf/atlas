@@ -541,15 +541,22 @@ void force_link_CubedSphere() {
 }
 
 Grid::Config CubedSphere::meshgenerator() const {
+    if ( stagger_ == "L" ) {
+        return Config( "type", "nodal-cubedsphere" );
+    }
     return Config( "type", "cubedsphere" );
 }
 
 Grid::Config CubedSphere::partitioner() const {
-    // TODO: implement better one specific for cubed sphere
-    Grid::Config config;
-    config.set( "type", "equal_regions" );
-    config.set( "coordinates", "lonlat" );  // do not use the grid.xy() coordinates for partitioning
-    return config;
+    if ( stagger_ == "L" ) {
+        // TODO: implement better one specific for cubed sphere that
+        //       works for nodal grid ?
+        Grid::Config config;
+        config.set( "type", "equal_regions" );
+        config.set( "coordinates", "lonlat" );  // do not use the grid.xy() coordinates for partitioning
+        return config;
+    }
+    return Config( "type", "cubedsphere" );
 }
 
 // -------------------------------------------------------------------------------------------------

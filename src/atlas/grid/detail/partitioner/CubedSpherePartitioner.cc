@@ -259,5 +259,5 @@ void CubedSpherePartitioner::partition( const Grid& grid, int part[] ) const {
 
 namespace {
 atlas::grid::detail::partitioner::PartitionerBuilder<atlas::grid::detail::partitioner::CubedSpherePartitioner>
-    __CubedSphere( "cubed_sphere" );
+    __CubedSphere( "cubedsphere" );
 }
