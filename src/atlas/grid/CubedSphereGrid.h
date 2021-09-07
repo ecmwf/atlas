@@ -300,6 +300,8 @@ public:
 
     temporary::IterateTIJ tij() const { return temporary::IterateTIJ( *grid_ ); }
 
+    const std::string& stagger() const { return grid_->stagger(); }
+
 private:
     const grid_t* grid_;
 };

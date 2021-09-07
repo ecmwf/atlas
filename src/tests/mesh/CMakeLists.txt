@@ -102,6 +102,14 @@ ecbuild_add_test( TARGET atlas_test_healpixmeshgen
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_cubedsphere_meshgen
+  MPI        8
+  CONDITION  eckit_HAVE_MPI
+  SOURCES test_cubedsphere_meshgen.cc
+  LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 
 ecbuild_add_executable( TARGET atlas_test_mesh_reorder
   SOURCES  test_mesh_reorder.cc

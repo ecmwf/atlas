@@ -227,8 +227,8 @@ public:
     static std::string static_type();
 
     // Constructors
-    CubedSphere( const std::string&, int, Projection );
-    CubedSphere( int, Projection );
+    CubedSphere( const std::string&, int, Projection, const std::string& stagger );
+    CubedSphere( int, Projection, const std::string& stagger );
     CubedSphere( const CubedSphere& );
 
     // Destructor
@@ -245,7 +245,7 @@ public:
     // Return number of faces on cube
     inline idx_t N() const { return N_; }
 
-    // Return number of tiles
+    // Access to the tile class
     inline atlas::grid::CubedSphereTiles tiles() const { return tiles_; }
 
     // Tile specific access to x and y locations
@@ -422,6 +422,8 @@ public:
 
     Config partitioner() const override;
 
+    const std::string& stagger() const { return stagger_; }
+
 protected:
     virtual void print( std::ostream& ) const override;
 
@@ -454,7 +456,7 @@ protected:
 
     std::string tileType_;
 
-    std::array<idx_t, 6> jmin_;
+    std::array<idx_t, 6> jmin_{0, 0, 0, 0, 0, 0};
     std::array<idx_t, 6> jmax_;
     std::vector<std::vector<idx_t>> imin_;
     std::vector<std::vector<idx_t>> imax_;

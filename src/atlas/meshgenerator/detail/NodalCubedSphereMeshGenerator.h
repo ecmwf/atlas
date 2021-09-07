@@ -1,5 +1,5 @@
 /*
- * (C) Crown Copyright 2021 Met Office
+ * (C) Copyright 2020 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -19,7 +19,6 @@ class Parametrisation;
 }
 
 namespace atlas {
-class CubedSphereGrid;
 class Mesh;
 template <typename T>
 class vector;
@@ -37,24 +36,22 @@ namespace meshgenerator {
 
 //--------------------------------------------------------------------------------------------------
 
-class CubedSphereMeshGenerator : public MeshGenerator::Implementation {
+class NodalCubedSphereMeshGenerator : public MeshGenerator::Implementation {
 public:
-    CubedSphereMeshGenerator( const eckit::Parametrisation& = util::NoConfig() );
+    NodalCubedSphereMeshGenerator( const eckit::Parametrisation& = util::NoConfig() );
 
     virtual void generate( const Grid&, const grid::Distribution&, Mesh& ) const override;
     virtual void generate( const Grid&, Mesh& ) const override;
 
     using MeshGenerator::Implementation::generate;
 
-    static std::string static_type() { return "cubedsphere"; }
+    static std::string static_type() { return "nodal-cubedsphere"; }
     std::string type() const override { return static_type(); }
 
 private:
     virtual void hash( eckit::Hash& ) const override;
 
     void configure_defaults();
-
-    void generate_mesh( const CubedSphereGrid&, const grid::Distribution&, Mesh& ) const;
 
 private:
     util::Metadata options;

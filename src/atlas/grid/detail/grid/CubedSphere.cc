@@ -30,12 +30,6 @@
 #include "atlas/util/Point.h"
 #include "atlas/util/UnitSphere.h"
 
-static std::string extractStagger( const std::string& name ) {
-    // return a substring of length 1, starting one position to the left of
-    // the last "-"
-    return name.substr( name.rfind( "-" ) - 1, 1 );
-}
-
 namespace atlas {
 namespace grid {
 namespace detail {
@@ -63,10 +57,15 @@ std::string CubedSphere::name() const {
 using atlas::projection::detail::CubedSphereProjectionBase;
 
 
-CubedSphere::CubedSphere( int N, Projection p ) : CubedSphere( CubedSphere::static_type(), N, p ) {}
+CubedSphere::CubedSphere( int N, Projection p, const std::string& s ) :
+    CubedSphere( CubedSphere::static_type(), N, p, s ) {}
 
-CubedSphere::CubedSphere( const std::string& name, int N, Projection projection ) :
-    Grid(), N_( N ), name_( name ), stagger_( extractStagger( name ) ) {
+CubedSphere::CubedSphere( const std::string& name, int N, Projection projection, const std::string& stagger ) :
+    Grid(), N_( N ), stagger_( stagger ), name_( name ) {
+    if ( stagger_ != "C" && stagger_ != "L" ) {
+        ATLAS_THROW_EXCEPTION( "Unrecognized stagger \"" << stagger_ << "\" for grid " << name );
+    }
+
     // Number of tiles hardwired to 6 at the moment. Regional may need 1
     // Copy members
     util::Config defaultProjConfig;
@@ -105,7 +104,6 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection 
         npts_.push_back( N * N );
     }
 
-    jmin_ = std::array<idx_t, 6>{0, 0, 0, 0, 0, 0};
     // default assumes jmax_ value of N - 1 on all tiles
     jmax_ = std::array<idx_t, 6>{N - 1, N - 1, N - 1, N - 1, N - 1, N - 1};
 
@@ -319,11 +317,12 @@ GridFactoryBuilder<CubedSphere> __register_CubedSphere( CubedSphere::static_type
 static class cubedsphere_lfric : public GridBuilder {
 public:
     cubedsphere_lfric() :
-        GridBuilder( "cubedsphere_lfric", {"^[Cc][Ss][_-][Ll][Ff][Rr][-_][CL][-_]([0-9]+)$"}, {"CS-LFR-<S>-<N>"} ) {}
+        GridBuilder( "cubedsphere_lfric", {"^[Cc][Ss][_-][Ll][Ff][Rr][-_](([CL])[-_])?([0-9]+)$"},
+                     {"CS-LFR-<N>", "CS-LFR-{C,L}-<N>"} ) {}
 
     void print( std::ostream& os ) const override {
-        os << std::left << std::setw( 20 ) << "CS-LFR-<S>-<N>"
-           << "Cubed sphere for equiangular";
+        os << std::left << std::setw( 20 ) << "CS-LFR-<n>"
+           << "Cubed sphere for LFRic";
     }
 
     // Factory constructor
@@ -332,10 +331,11 @@ public:
         std::vector<std::string> matches;
         if ( match( name, matches, id ) ) {
             util::Config gridconf( config );
-            int N = to_int( matches[0] );
+            int N               = to_int( matches[2] );
+            std::string stagger = matches[1].empty() ? "C" : matches[1];
             gridconf.set( "type", type() );
             gridconf.set( "N", N );
-            gridconf.set( "stagger", extractStagger( name ) );
+            gridconf.set( "stagger", stagger );
             return create( gridconf );
         }
         return nullptr;
@@ -347,9 +347,16 @@ public:
         if ( not config.get( "N", N ) ) {
             throw_AssertionFailed( "Could not find \"N\" in configuration of cubed sphere grid", Here() );
         }
+        std::string name;
         std::string stagger;
         if ( not config.get( "stagger", stagger ) ) {
-            stagger = "L";  // Default to nodal
+            stagger = "C";  // Default to centred
+        }
+        if ( stagger == "C" ) {
+            name = "CS-LFR-" + std::to_string( N );
+        }
+        else {
+            name = "CS-LFR-" + stagger + "-" + std::to_string( N );
         }
 
         util::Config projconf;
@@ -381,8 +388,7 @@ public:
             }
         }
 
-        return new CubedSphereGrid::grid_t( "CS-LFR-" + stagger + "-" + std::to_string( N ), N,
-                                            Projection( projconf ) );
+        return new CubedSphereGrid::grid_t( name, N, Projection( projconf ), stagger );
     }
 
     void force_link() {}
@@ -395,7 +401,8 @@ public:
 static class cubedsphere_equiangular : public GridBuilder {
 public:
     cubedsphere_equiangular() :
-        GridBuilder( "cubedsphere_equiangular", {"^[Cc][Ss][_-][Ee][Aa][-_][CL][-_]([0-9]+)$"}, {"CS-EA-<S>-<N>"} ) {}
+        GridBuilder( "cubedsphere_equiangular", {"^[Cc][Ss][_-][Ee][Aa][-_](([CL])[-_])?([0-9]+)$"},
+                     {"CS-EA-<N>", "CS-EA-{C,L}-<N>"} ) {}
 
     void print( std::ostream& os ) const override {
         os << std::left << std::setw( 20 ) << "CS-EA-<S>-<N>"
@@ -408,10 +415,11 @@ public:
         std::vector<std::string> matches;
         if ( match( name, matches, id ) ) {
             util::Config gridconf( config );
-            int N = to_int( matches[0] );
+            int N               = to_int( matches[2] );
+            std::string stagger = matches[1].empty() ? "C" : matches[1];
             gridconf.set( "type", type() );
             gridconf.set( "N", N );
-            gridconf.set( "stagger", extractStagger( name ) );
+            gridconf.set( "stagger", stagger );
             return create( gridconf );
         }
         return nullptr;
@@ -425,8 +433,16 @@ public:
         }
         std::string stagger;
         if ( not config.get( "stagger", stagger ) ) {
-            stagger = "L";  // Default to nodal
+            stagger = "C";  // Default to centred
         }
+        std::string name;
+        if ( stagger == "C" ) {
+            name = "CS-LFR-" + std::to_string( N );
+        }
+        else {
+            name = "CS-LFR-" + stagger + "-" + std::to_string( N );
+        }
+
         util::Config projconf;
         projconf.set( "type", "cubedsphere_equiangular" );
         projconf.set( "tile.type", "cubedsphere_fv3" );
@@ -455,7 +471,7 @@ public:
                 projconf.set( "TargetLat", targetLat );
             }
         }
-        return new CubedSphereGrid::grid_t( "CS-EA-" + stagger + "-" + std::to_string( N ), N, Projection( projconf ) );
+        return new CubedSphereGrid::grid_t( name, N, Projection( projconf ), stagger );
     }
 
     void force_link() {}
@@ -467,10 +483,11 @@ public:
 static class cubedsphere_equidistant : public GridBuilder {
 public:
     cubedsphere_equidistant() :
-        GridBuilder( "cubedsphere_equidistant", {"^[Cc][Ss][_-][Ee][Dd][-_][CL][-_]([0-9]+)$"}, {"CS-ED-<S>-<N>"} ) {}
+        GridBuilder( "cubedsphere_equidistant", {"^[Cc][Ss][_-][Ee][Dd][-_](([CL])[-_])?([0-9]+)$"},
+                     {"CS-ED-<N>", "CS-ED-{C,L}-<N>"} ) {}
 
     void print( std::ostream& os ) const override {
-        os << std::left << std::setw( 20 ) << "CS-ED-<S>-<N>"
+        os << std::left << std::setw( 20 ) << "CS-ED-<N>"
            << "Cubed sphere, equidistant";
     }
 
@@ -479,10 +496,11 @@ public:
         std::vector<std::string> matches;
         if ( match( name, matches, id ) ) {
             util::Config gridconf( config );
-            int N = to_int( matches[0] );
+            int N               = to_int( matches[2] );
+            std::string stagger = matches[1].empty() ? "C" : matches[1];
             gridconf.set( "type", type() );
             gridconf.set( "N", N );
-            gridconf.set( "stagger", extractStagger( name ) );
+            gridconf.set( "stagger", stagger );
             return create( gridconf );
         }
         return nullptr;
@@ -495,8 +513,16 @@ public:
         }
         std::string stagger;
         if ( not config.get( "stagger", stagger ) ) {
-            stagger = "L";  // Default to nodal
+            stagger = "C";  // Default to centred
         }
+        std::string name;
+        if ( stagger == "C" ) {
+            name = "CS-ED-" + std::to_string( N );
+        }
+        else {
+            name = "CS-ED-" + stagger + "-" + std::to_string( N );
+        }
+
         util::Config projconf;
         projconf.set( "type", "cubedsphere_equidistant" );
         projconf.set( "tile.type", "cubedsphere_fv3" );
@@ -526,7 +552,7 @@ public:
             }
         }
 
-        return new CubedSphereGrid::grid_t( "CS-ED-" + stagger + "-" + std::to_string( N ), N, Projection( projconf ) );
+        return new CubedSphereGrid::grid_t( name, N, Projection( projconf ), stagger );
     }
 
     void force_link() {}
@@ -542,15 +568,22 @@ void force_link_CubedSphere() {
 }
 
 Grid::Config CubedSphere::meshgenerator() const {
+    if ( stagger_ == "L" ) {
+        return Config( "type", "nodal-cubedsphere" );
+    }
     return Config( "type", "cubedsphere" );
 }
 
 Grid::Config CubedSphere::partitioner() const {
-    // TODO: implement better one specific for cubed sphere
-    Grid::Config config;
-    config.set( "type", "equal_regions" );
-    config.set( "coordinates", "lonlat" );  // do not use the grid.xy() coordinates for partitioning
-    return config;
+    if ( stagger_ == "L" ) {
+        // TODO: implement better one specific for cubed sphere that
+        //       works for nodal grid
+        Grid::Config config;
+        config.set( "type", "equal_regions" );
+        config.set( "coordinates", "lonlat" );  // do not use the grid.xy() coordinates for partitioning
+        return config;
+    }
+    return Config( "type", "cubedsphere" );
 }
 
 // -------------------------------------------------------------------------------------------------

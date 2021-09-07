@@ -58,6 +58,8 @@ public:
     /// Type of the cubed-sphere tiles:
     std::string type() const;
 
+    // These are offsets needed for transforming
+    // from xy space to the "archetypal base" tile.
     std::array<std::array<double, 6>, 2> xy2abOffsets() const;
 
     std::array<std::array<double, 6>, 2> ab2xyOffsets() const;
@@ -66,13 +68,22 @@ public:
 
     void unrotate( idx_t t, double xyz[] ) const;
 
+    // tile index from xy space
     idx_t indexFromXY( const double xy[] ) const;
 
+    // tile index from longitude and latitude space
     idx_t indexFromLonLat( const double lonlat[] ) const;
 
+    // enforceXYdomain reinforces the tile shape in xy space;
+    // if values move a miniscule amount outside the domain, it will be brought back in.
     void enforceXYdomain( double xy[] ) const;
 
     idx_t size() const;
+
+    // this provides periodicity to each of the tiles by extending each tile over edges
+    // in a cross-like fashion. Periodicity of this form does not allow
+    // a "diagonal" extension over corners of the cube.
+    atlas::PointXY tileCubePeriodicity( const atlas::PointXY& xyExtended, const atlas::idx_t tile ) const;
 
 private:
     /// Output to stream

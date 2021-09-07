@@ -8,6 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <algorithm>
 #include <iostream>
 #include <ostream>
 
@@ -55,7 +56,19 @@ void sphericalToCartesian( const double lonlat[], double xyz[] ) {
     ProjectionUtilities::sphericalToCartesian( lonlat, xyz, crd_sys, radius );
 }
 
-}  // namespace
+atlas::PointXY rotatePlus90AboutPt( const atlas::PointXY& xy, const atlas::PointXY& origin ) {
+    return atlas::PointXY{-xy.y() + origin.x() + origin.y(), xy.x() - origin.x() + origin.y()};
+}
+
+atlas::PointXY rotateMinus90AboutPt( const atlas::PointXY& xy, const atlas::PointXY& origin ) {
+    return atlas::PointXY{xy.y() + origin.x() - origin.y(), -xy.x() + origin.x() + origin.y()};
+}
+
+atlas::PointXY rotatePlus180AboutPt( const atlas::PointXY& xy, const atlas::PointXY& origin ) {
+    return atlas::PointXY{2.0 * origin.x() - xy.x(), 2.0 * origin.y() - xy.y()};
+}
+
+}  // anonymous namespace
 
 // constructor
 LFRicCubedSphereTiles::LFRicCubedSphereTiles( const eckit::Parametrisation& ) {}
@@ -103,8 +116,7 @@ static void tile4Rotate( double xyz[] ) {
 static void tile5Rotate( double xyz[] ) {
     double xyz_in[3];
     std::copy( xyz, xyz + 3, xyz_in );
-    xyz[XX] = -xyz_in[YY];
-    xyz[YY] = xyz_in[ZZ];
+    xyz[XX] = -xyz_in[ZZ];
     xyz[ZZ] = xyz_in[XX];
 }
 
@@ -144,8 +156,7 @@ static void tile5RotateInverse( double xyz[] ) {
     double xyz_in[3];
     std::copy( xyz, xyz + 3, xyz_in );
     xyz[XX] = xyz_in[ZZ];
-    xyz[YY] = -xyz_in[XX];
-    xyz[ZZ] = xyz_in[YY];
+    xyz[ZZ] = -xyz_in[XX];
 }
 
 void LFRicCubedSphereTiles::rotate( idx_t t, double xyz[] ) const {
@@ -212,7 +223,6 @@ void LFRicCubedSphereTiles::unrotate( idx_t t, double xyz[] ) const {
         }
     }
 }
-
 
 idx_t LFRicCubedSphereTiles::indexFromXY( const double xy[] ) const {
     // Assume one face-edge is of length 90 degrees.
@@ -352,9 +362,295 @@ void LFRicCubedSphereTiles::enforceXYdomain( double xy[] ) const {
     }
 }
 
+// input is the xy value as PointXY that is a continous "cross " extension in terms of xy space from the tile in question
+// the output is an xy value that lives on the standard "|---" shape
+atlas::PointXY LFRicCubedSphereTiles::tileCubePeriodicity( const atlas::PointXY& xyExtended,
+                                                           const atlas::idx_t t ) const {
+    // xy space is a function of tiles--Tile 0)                    // xy space for Tile 1
+    //                                                             //
+    //   y ^                                                       //   y ^
+    //                                                             //     |
+    //     |
+    //    225   ----------                                         //    225              ----------
+    //     |   |To 2      |                                        //     |              |To 3 as   |
+    //     |   |rotate    |                                        //     |              |below inst|
+    //     |   |-180      |                                        //     |              |and rotate|
+    //     |   |about     |                                        //     |              |+90 about |
+    //     |   |(90,90)   |                                        //     |              |(0,45) +  |replace in [0,360) x range
+    //    135  4----------4                                        //    135             4----------4
+    //     |   |    <=    |                                        //     |              |To 4      |
+    //     |   |          |                                        //     |              |rotate    |
+    //     |   |=<   4  <=|                                        //     |              |+90 about |
+    //     |   |     v    |                                        //     |              |(90,45)   |
+    //     |   |*   <=    |                                        //     |              |          |
+    //     45  4----------4----------4----------4----------        //     45  4----------4----------4----------4----------
+    //     |   |    ^     |     ^    |    ^     |     ^    |       //     |   |    ^     |     ^    |    ^     |     ^    |
+    //     |   |          |          |          |          |       //     |   |          |          |          |          |
+    //     |   |=<  0    <|=<   1   <|=<  2    <|=<   3   <|       //     |   |=<  0    <|=<   1   <|=<  2    <|=<   3   <|
+    //     |   |    v     |     v    |    v     |     v    |       //     |   |    v     |     v    |    v     |     v    |
+    //     |   |*   =     |*    =    |*    =    | *   =    |       //     |   |*   =     |*    =    |*    =    | *   =    |
+    //    -45  0 ---------1----------2----------3----------        //    -45  0 ---------1----------2----------3----------
+    //     |   |    ^     |                                        //     |              |To 5      |
+    //     |   |          |                                        //     |              |rotate    |
+    //     |   |<   5    <|                                        //     |              |-90 about |
+    //     |   |          |                                        //     |              |(90,-45)  |
+    //     |   |*    v    |                                        //     |              |          |
+    //   -135   ---------- ---------- ---------- ----------        //   -135   ---------- ---------- ---------- ----------
+    //     ----0---------90--------180--------270--------360--->  x   ----0---------90--------180--------270--------360--->  x
+
+    // xy space for Tile 2                                         // xy space for Tile 3
+    //                                                             //
+    //   y ^                                                       //   y ^
+    //     |                                                       //     |
+    //    225                         ----------                   //    225                                    ----------
+    //     |                         |To 0      |                  //     |                                    |To 1      |
+    //     |                         |rotate-180|                  //     |                                    |rotate-180|
+    //     |                         |about     |                  //     |                                    |about     |
+    //     |                         |(135.,90) |                  //     |                                    |(225,90)  |
+    //     |                         |          |                  //     |                                    |          |
+    //    135                        4----------4                  //    135                                   4----------4
+    //     |                         |To 4 dble |                  //     |                                    |To 4      |
+    //     |                         |+90       |                  //     |                                    |-90       |
+    //     |                         |rotations |                  //     |                                    |rotation  |
+    //     |                         |about(180,45)                //     |                                    |about(360,45)
+    //     |                         |(90,45)   |                  //     |                                    |and       | replace in x range
+    //     45  4----------4----------4----------4----------        //     45  4----------4----------4----------4----------
+    //     |   |    ^     |     ^    |    ^     |     ^    |       //     |   |    ^     |     ^    |    ^     |     ^    |
+    //     |   |          |          |          |          |       //     |   |          |          |          |          |
+    //     |   |=<  0    <|=<   1   <|=<  2    <|=<   3   <|       //     |   |=<  0    <|=<   1   <|=<  2    <|=<   3   <|
+    //     |   |    v     |     v    |    v     |     v    |       //     |   |    v     |     v    |    v     |     v    |
+    //     |   |*   =     |*    =    |*    =    | *   =    |       //     |   |*   =     |*    =    |*    =    | *   =    |
+    //    -45  0 ---------1----------2----------3----------        //    -45  0 ---------1----------2----------3----------
+    //     |                         |To 5 dble |                  //     |                                    |To 5      |
+    //     |                         |-90       |                  //     |                                    |90        |
+    //     |                         |rotations |                  //     |                                    |rotation  |
+    //     |                         |about (180,-45)|             //     |                                    |about (360,-45)|
+    //     |                         |(90,-45)  |                  //     |                                    |and       |replace in x range
+    //   -135   ---------- ---------- ---------- ----------        //   -135   ---------- ---------- ---------- ----------
+    //     ----0---------90--------180--------270--------360--->  x//     ----0---------90--------180--------270--------360--->  x
+
+    // xy space for Tile 4's                                       // xy space Tile 5's
+    //                                                             //
+    //   y ^                                                       //   y ^
+    //     |                                                       //     |
+    //    225   ----------                                         //    225   ----------
+    //     |   |To 2      |                                        //     |   |To 2      |
+    //     |   |rotate    |                                        //     |   |rotate    |
+    //     |   |-180      |                                        //     |   |-180      |
+    //     |   |about     |                                        //     |   |about     |
+    //     |   |(135.,90) |                                        //     |   |(135.,90) |
+    //    135  4----------4----------4----------4----------|       //    135  4----------4
+    //     |   |    <=    |To 1      |To 5      |To 3      |       //     |   |    <=    |
+    //     |   |          |rotate    |rotate 180|rotate+90 |       //     |   |          |
+    //     |   |=<   4  <=|-90 about |about     |about     |       //     |   |=<   4  <=|
+    //     |   |     v    |(90,45)   |          |          |       //     |   |     v    |
+    //     |   |*   <=    |          |(135, 0)  |(360, 45) |       //     |   |*   <=    |
+    //     45  4----------4----------4----------4----------        //     45  4----------4
+    //     |   |    ^     |                                        //     |   |    ^     |
+    //     |   |          |                                        //     |   |          |
+    //     |   |=<  0    <|                                        //     |   |=   0    >|
+    //     |   |    v     |                                        //     |   |          |
+    //     |   |*   =     |                                        //     |   |*   =     |
+    //    -45  0 ---------1                                        //    -45  0 ---------1----------2----------3----------|
+    //     |   |    ^     |                                        //     |   |    ^     |To 1      |To 4      |To 3 as   |
+    //     |   |          |                                        //     |   |          |rotate    |rotate    |left instr|
+    //     |   |<   5    <|                                        //     |   |<   5    <|+90 about |+180      |+ rotate  |
+    //     |   |          |                                        //     |   |          |(90,-45)  |(135,0)   |+90 about |
+    //     |   |*    v    |                                        //     |   |*    v    |          |          |(0, 45)   |+ replace in [0,360 range)
+    //   -135   ---------- ---------- ---------- ----------        //   -135   ---------- ---------- ---------- ----------
+    //     ----0---------90--------180--------270--------360--->  x//     ----0---------90--------180--------270--------360--->  x
+
+
+    // Step 1: wrap into range  x = [ 0, 360],  y = [135, 225] ensuring that we stay
+    //         on the cross associated with tile index.
+    if ( !withinCross( t, xyExtended ) ) {
+        ATLAS_THROW_EXCEPTION( "Point (" << xyExtended.x() << "," << xyExtended.y() << ")"
+                                         << " is not in the cross extension of tile " << t );
+    }
+
+    atlas::PointXY withinRange = xyExtended;
+    enforceWrapAround( t, withinRange );
+
+    atlas::PointXY finalXY = withinRange;
+    atlas::PointXY tempXY  = withinRange;
+
+    switch ( t ) {
+        case 0:
+            finalXY = ( withinRange.y() > 135.0 ) ? rotatePlus180AboutPt( withinRange, atlas::PointXY{135.0, 90.0} )
+                                                  : withinRange;
+            break;
+        case 1:
+            if ( ( withinRange.x() >= 90.0 ) && ( withinRange.x() <= 180.0 ) ) {
+                if ( withinRange.y() >= 45.0 ) {
+                    tempXY = rotatePlus90AboutPt( withinRange, atlas::PointXY{90.0, 45.0} );
+
+                    if ( withinRange.y() > 135.0 ) {
+                        finalXY = rotatePlus90AboutPt( tempXY, atlas::PointXY{0.0, 45.0} );
+                        finalXY.x() += 360.0;
+                    }
+                    else {
+                        finalXY = tempXY;
+                    }
+                }
+                else if ( withinRange.y() < -45.0 ) {
+                    finalXY = rotateMinus90AboutPt( withinRange, atlas::PointXY{90.0, -45.0} );
+                }
+            }
+            break;
+        case 2:
+            if ( ( withinRange.x() >= 180.0 ) && ( withinRange.x() <= 270.0 ) ) {
+                if ( withinRange.y() > 135.0 ) {
+                    finalXY = rotatePlus180AboutPt( tempXY, atlas::PointXY{135.0, 90.0} );
+                }
+                else if ( withinRange.y() >= 45.0 ) {
+                    tempXY  = rotatePlus90AboutPt( withinRange, atlas::PointXY{180.0, 45.0} );
+                    finalXY = rotatePlus90AboutPt( tempXY, atlas::PointXY{90.0, 45.0} );
+                }
+                else if ( withinRange.y() < -45.0 ) {
+                    tempXY  = rotateMinus90AboutPt( withinRange, atlas::PointXY{180.0, -45.0} );
+                    finalXY = rotateMinus90AboutPt( tempXY, atlas::PointXY{90.0, -45.0} );
+                }
+            }
+            break;
+
+        case 3:
+            if ( ( ( withinRange.x() >= 270.0 ) && ( withinRange.x() <= 360.0 ) ) || withinRange.x() == 0.0 ) {
+                if ( withinRange.y() > 135.0 ) {
+                    finalXY = rotatePlus180AboutPt( tempXY, atlas::PointXY{225.0, 90.0} );
+                }
+                else if ( withinRange.y() >= 45.0 ) {
+                    finalXY = rotateMinus90AboutPt( tempXY, atlas::PointXY{360.0, 45.0} );
+                    finalXY.x() -= 360.0;
+                }
+                else if ( withinRange.y() < -45.0 ) {
+                    finalXY = rotatePlus90AboutPt( tempXY, atlas::PointXY{360.0, -45.0} );
+                    finalXY.x() -= 360.0;
+                }
+            }
+            break;
+        case 4:
+            if ( withinRange.y() > 135.0 ) {
+                finalXY = rotatePlus180AboutPt( tempXY, atlas::PointXY{135.0, 90.0} );
+            }
+            else if ( ( withinRange.y() >= 45.0 ) && ( withinRange.y() <= 135.0 ) ) {
+                if ( ( withinRange.x() > 90.0 ) && ( withinRange.x() <= 180.0 ) ) {
+                    finalXY = rotateMinus90AboutPt( withinRange, atlas::PointXY{90.0, 45.0} );
+                }
+                if ( ( withinRange.x() > 180.0 ) && ( withinRange.x() <= 270.0 ) ) {
+                    finalXY = rotatePlus180AboutPt( withinRange, atlas::PointXY{135.0, 0.0} );
+                }
+                if ( ( withinRange.x() > 270.0 ) && ( withinRange.x() <= 360.0 ) ) {
+                    finalXY = rotatePlus90AboutPt( withinRange, atlas::PointXY{360.0, 45.0} );
+                }
+            }
+            break;
+        case 5:
+            if ( withinRange.y() > 135.0 ) {
+                finalXY = rotatePlus180AboutPt( tempXY, atlas::PointXY{135.0, 90.0} );
+            }
+            else if ( ( withinRange.y() <= -45.0 ) && ( withinRange.y() >= -135.0 ) ) {
+                if ( ( withinRange.x() > 90.0 ) && ( withinRange.x() <= 180.0 ) ) {
+                    finalXY = rotatePlus90AboutPt( withinRange, atlas::PointXY{90.0, -45.0} );
+                }
+                if ( ( withinRange.x() > 180.0 ) && ( withinRange.x() <= 270.0 ) ) {
+                    finalXY = rotatePlus180AboutPt( withinRange, atlas::PointXY{135.0, 0.0} );
+                }
+                if ( ( withinRange.x() > 270.0 ) && ( withinRange.x() <= 360.0 ) ) {
+                    finalXY = rotateMinus90AboutPt( withinRange, atlas::PointXY{360.0, -45.0} );
+                }
+            }
+            break;
+    }
+
+    // Now we are on the standard tiles with their default rotate orientation.
+    // The next step is to wrap the edges and corners to the correct tiles.
+    if ( finalXY.x() > 90. && finalXY.x() < 180. && finalXY.y() == 45.0 ) {
+        finalXY.y() = 45.0 + ( finalXY.x() - 90.0 );
+        finalXY.x() = 90.0;
+    }
+    if ( finalXY.x() == 180. && finalXY.y() == 45.0 ) {
+        finalXY.x() = 90.;
+        finalXY.y() = 135.0;
+    }
+    if ( finalXY.x() > 180. && finalXY.x() < 270. && finalXY.y() == 45.0 ) {
+        finalXY.x() = 90.0 - ( finalXY.x() - 90.0 );
+        finalXY.y() = 135.0;
+    }
+    if ( finalXY.x() == 270. && finalXY.y() == 45.0 ) {
+        finalXY.x() = 0.;
+        finalXY.y() = 135.0;
+    }
+    if ( finalXY.x() > 270. && finalXY.x() <= 360. && finalXY.y() == 45.0 ) {
+        finalXY.y() = 135.0 - ( finalXY.x() - 270.0 );
+        finalXY.x() = 0.0;
+    }
+
+    if ( finalXY.x() >= 360. )
+        finalXY.x() -= 360.;
+
+    if ( finalXY.x() == 0. && finalXY.y() < -45. && finalXY.y() > -135.0 ) {
+        finalXY.x() = 360.0 + ( finalXY.y() + 45.0 );
+        finalXY.y() = -45.;
+    }
+    if ( finalXY.x() == 90. && finalXY.y() < -45. && finalXY.y() > -135.0 ) {
+        finalXY.x() = 90.0 - ( finalXY.y() + 45.0 );
+        finalXY.y() = -45.;
+    }
+    if ( finalXY.y() <= -135. && finalXY.x() >= 0. && finalXY.x() <= 90.0 ) {
+        finalXY.x() = 270.0 - finalXY.x();
+        finalXY.y() = -45.;
+    }
+
+    return finalXY;
+}
+
 
 void LFRicCubedSphereTiles::print( std::ostream& os ) const {
-    os << "LFRicCubedSphereTiles";
+    os << "CubedSphereTiles["
+       << "]";
+}
+
+
+bool LFRicCubedSphereTiles::withinCross( const atlas::idx_t tiles, const atlas::PointXY& withinRange ) const {
+    std::size_t t = static_cast<std::size_t>( tiles );
+    return !( ( withinRange.x() < botLeftTile_[t].x() && withinRange.y() < botLeftTile_[t].y() ) ||
+              ( withinRange.x() > botRightTile_[t].x() && withinRange.y() < botRightTile_[t].y() ) ||
+              ( withinRange.x() > topRightTile_[t].x() && withinRange.y() > topRightTile_[t].y() ) ||
+              ( withinRange.x() < topLeftTile_[t].x() && withinRange.y() > topLeftTile_[t].y() ) );
+}
+
+
+void LFRicCubedSphereTiles::enforceWrapAround( const atlas::idx_t t, atlas::PointXY& withinRange ) const {
+    if ( withinRange.x() < 0.0 ) {
+        atlas::PointXY temp = withinRange;
+        temp.x() += 360;
+        if ( withinCross( t, temp ) ) {
+            withinRange = temp;
+        }
+    }
+    if ( withinRange.x() > 360.0 ) {
+        atlas::PointXY temp = withinRange;
+        temp.x() -= 360;
+        if ( withinCross( t, temp ) ) {
+            withinRange = temp;
+        }
+    }
+    if ( withinRange.y() <= -135.0 ) {
+        atlas::PointXY temp = withinRange;
+        temp.y() += 360;
+        if ( withinCross( t, temp ) ) {
+            withinRange = temp;
+        }
+    }
+    if ( withinRange.y() > 225.0 ) {
+        atlas::PointXY temp = withinRange;
+        temp.y() -= 360;
+        if ( withinCross( t, temp ) ) {
+            withinRange = temp;
+        }
+    }
+
+    return;
 }
 
 namespace {

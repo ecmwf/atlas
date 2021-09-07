@@ -44,7 +44,6 @@ void CubedSphereTiles::unrotate( idx_t t, double xyz[] ) const {
     return get()->unrotate( t, xyz );
 }
 
-
 idx_t CubedSphereTiles::indexFromXY( const double xy[] ) const {
     return get()->indexFromXY( xy );
 }
@@ -59,6 +58,11 @@ idx_t CubedSphereTiles::size() const {
 
 void CubedSphereTiles::enforceXYdomain( double xy[] ) const {
     return get()->enforceXYdomain( xy );
+}
+
+atlas::PointXY CubedSphereTiles::tileCubePeriodicity( const atlas::PointXY& xyExtended,
+                                                      const atlas::idx_t tile ) const {
+    return get()->tileCubePeriodicity( xyExtended, tile );
 }
 
 void CubedSphereTiles::print( std::ostream& os ) const {
