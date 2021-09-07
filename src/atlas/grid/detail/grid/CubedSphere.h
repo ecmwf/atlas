@@ -227,8 +227,8 @@ public:
     static std::string static_type();
 
     // Constructors
-    CubedSphere( const std::string&, int, Projection );
-    CubedSphere( int, Projection );
+    CubedSphere( const std::string&, int, Projection, const std::string& stagger );
+    CubedSphere( int, Projection, const std::string& stagger );
     CubedSphere( const CubedSphere& );
 
     // Destructor
@@ -421,6 +421,8 @@ public:
     Config meshgenerator() const override;
 
     Config partitioner() const override;
+
+    const std::string& stagger() const { return stagger_; }
 
 protected:
     virtual void print( std::ostream& ) const override;

@@ -5,6 +5,7 @@
 
 type   : "cubedsphere_equiangular"
 N : 12
+stagger : "L"
 
 check :
   size : 866

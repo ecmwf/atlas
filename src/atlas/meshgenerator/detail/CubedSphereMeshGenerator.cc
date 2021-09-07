@@ -111,18 +111,18 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
             Here() );
     }
 
-    // Check for correct stagger
-    const auto gridName    = grid.name();
-    const auto gridStagger = gridName.substr( gridName.rfind( "-" ) - 1, 1 );
+    // Cast grid to cubed sphere grid.
+    const auto csGrid = CubedSphereGrid( grid );
 
-    if ( gridStagger != "C" ) {
+    // Check for correct stagger
+    const auto gridName = grid.name();
+
+    if ( csGrid.stagger() != "C" ) {
         throw_Exception(
             "CubedSphereMeshGenerator can only work with a "
             "cell-centroid grid. Try NodalCubedSphereMeshGenerator instead." );
     }
 
-    // Cast grid to cubed sphere grid.
-    const auto csGrid = CubedSphereGrid( grid );
 
     // Clone some grid properties.
     setGrid( mesh, csGrid, distribution );
