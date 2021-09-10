@@ -10,6 +10,7 @@
 
 #include "atlas/interpolation/method/Method.h"
 
+
 #include "atlas/array.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
@@ -289,86 +290,87 @@ void Method::do_execute_adjoint( FieldSet& fieldsSource, FieldSet& fieldsTarget 
 
     for ( idx_t i = 0; i < fieldsSource.size(); ++i ) {
         Log::debug() << "Method::do_execute() on field " << ( i + 1 ) << '/' << N << "..." << std::endl;
-        Method::do_execute( fieldsSource[i], fieldsTarget[i] );
+        Method::do_execute_adjoint( fieldsSource[i], fieldsTarget[i] );
     }
 }
 
 void Method::do_execute_adjoint(Field& src, Field& tgt ) const {
     ATLAS_TRACE( "atlas::interpolation::method::Method::do_execute_adjoint()" );
 
-
     // There is no adjoint of nonlinear part
     // Step 1 will include the transpose copy here: will move later to setup
-
-
-    adjointHaloExchange( src );
+    // Assuming that there is no missing data
 
     Matrix tmp(*matrix_);
     Matrix transpose = tmp.transpose();
+    std::cout << src.shape(0) << " " << src.shape(1) << " " << src.levels() << std::endl;
+    Field temp_field(src.name(), src.datatype().kind(), src.shape());
+    std::cout << temp_field.shape(0) << " " << temp_field.shape(1) << " " << temp_field.levels() << std::endl;
+
+    temp_field.set_levels(src.levels());
 
     if ( src.datatype().kind() == array::DataType::KIND_REAL64 ) {
-        interpolate_field<double>( src, tgt, transpose);
-    }
-    else if ( src.datatype().kind() == array::DataType::KIND_REAL32 ) {
-        interpolate_field<float>( src, tgt, transpose);
-    }
-    else {
-        ATLAS_NOTIMPLEMENTED;
-    }
+        auto temp_view = array::make_view<double, 2>( temp_field );
+        auto src_view = array::make_view<double, 2>( src );
+        auto tgt_view = array::make_view<double, 2>( tgt );
 
-
-
-    /*
-    1)
-
-
-
-
-    2)
-    */
-
-
-    haloExchange( src );
-
-    // non-linearities: a non-empty M matrix contains the corrections applied to matrix_
-    Matrix M;
-    if ( !matrix_->empty() && nonLinear_( src ) ) {
-        Matrix W( *matrix_ );  // copy (a big penalty -- copy-on-write would definitely be better)
-        if ( nonLinear_->execute( W, src ) ) {
-            M.swap( W );
-        }
-    }
-
-    if ( src.datatype().kind() == array::DataType::KIND_REAL64 ) {
-        interpolate_field<double>( src, tgt, M.empty() ? *matrix_ : M );
-    }
-    else if ( src.datatype().kind() == array::DataType::KIND_REAL32 ) {
-        interpolate_field<float>( src, tgt, M.empty() ? *matrix_ : M );
-    }
-    else {
-        ATLAS_NOTIMPLEMENTED;
-    }
-
-    // carry over missing value metadata
-    if ( not tgt.metadata().has( "missing_value" ) ) {
-        field::MissingValue mv_src( src );
-        if ( mv_src ) {
-            mv_src.metadata( tgt );
-            ATLAS_ASSERT( field::MissingValue( tgt ) );
-        }
-        else if ( not missing_.empty() ) {
-            if ( not tgt.metadata().has( "missing_value" ) ) {
-                tgt.metadata().set( "missing_value", 9999. );
+        for (idx_t t = 0; t < temp_field.shape(0); ++t) {
+            for (idx_t k = 0; k < temp_field.shape(1); ++k) {
+                temp_view(t, k) = 0.;
             }
-            tgt.metadata().set( "missing_value_type", "equals" );
         }
+        interpolate_field<double>( tgt, temp_field, transpose);
+
+        for (idx_t t = 0; t < temp_field.shape(0); ++t) {
+            for (idx_t k = 0; k < temp_field.shape(1); ++k) {
+                src_view(t, k) += temp_view(t, k);
+            }
+        }
+
+        for (idx_t t = 0; t < tgt.shape(0); ++t) {
+            for (idx_t k = 0; k < tgt.shape(1); ++k) {
+                tgt_view(t, k) = 0.0;
+            }
+        }
+
+    }
+    else if ( src.datatype().kind() == array::DataType::KIND_REAL32 ) {
+        auto temp_view = array::make_view<float, 2>( temp_field );
+        auto src_view = array::make_view<float, 2>( src );
+        auto tgt_view = array::make_view<float, 2>( tgt );
+
+        for (idx_t t = 0; t < temp_field.shape(0); ++t) {
+            for (idx_t k = 0; k < temp_field.shape(1); ++k) {
+                temp_view(t, k) = 0.0;
+            }
+        }
+
+        std::cout << "tgt temp levels = " << tgt.levels() << " " << temp_field.levels() << std::endl;
+
+        interpolate_field<float>( tgt, temp_field, transpose);
+
+
+        for (idx_t t = 0; t < temp_field.shape(0); ++t) {
+            for (idx_t  k = 0; k < temp_field.shape(1); ++k) {
+                src_view(t, k) += temp_view(t, k);
+            }
+        }
+
+        for (idx_t t = 0; t < tgt.shape(0); ++t) {
+            for (idx_t k = 0; k < tgt.shape(1); ++k) {
+                tgt_view(t, k) = 0.0;
+            }
+        }
+
+
+    }
+    else {
+        ATLAS_NOTIMPLEMENTED;
     }
 
-    // set missing values
-    set_missing_values( tgt, missing_ );
 
-    tgt.set_dirty();
 
+    adjointHaloExchange( src );
 
 }
 
