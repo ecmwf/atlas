@@ -206,6 +206,16 @@ void Method::execute( const Field& source, Field& target ) const {
     this->do_execute( source, target );
 }
 
+void Method::execute_adjoint( FieldSet& source, FieldSet& target ) const {
+    ATLAS_TRACE( "atlas::interpolation::method::Method::execute(FieldSet, FieldSet)" );
+    this->do_execute_adjoint( source, target );
+}
+
+void Method::execute_adjoint( Field& source, Field& target ) const {
+    ATLAS_TRACE( "atlas::interpolation::method::Method::execute(Field, Field)" );
+    this->do_execute_adjoint( source, target );
+}
+
 void Method::do_setup( const FunctionSpace& /*source*/, const Field& /*target*/ ) {
     ATLAS_NOTIMPLEMENTED;
 }
@@ -271,6 +281,99 @@ void Method::do_execute( const Field& src, Field& tgt ) const {
     tgt.set_dirty();
 }
 
+void Method::do_execute_adjoint( FieldSet& fieldsSource, FieldSet& fieldsTarget ) const {
+    ATLAS_TRACE( "atlas::interpolation::method::Method::do_execute_adjoint()" );
+
+    const idx_t N = fieldsSource.size();
+    ATLAS_ASSERT( N == fieldsTarget.size() );
+
+    for ( idx_t i = 0; i < fieldsSource.size(); ++i ) {
+        Log::debug() << "Method::do_execute() on field " << ( i + 1 ) << '/' << N << "..." << std::endl;
+        Method::do_execute( fieldsSource[i], fieldsTarget[i] );
+    }
+}
+
+void Method::do_execute_adjoint(Field& src, Field& tgt ) const {
+    ATLAS_TRACE( "atlas::interpolation::method::Method::do_execute_adjoint()" );
+
+
+    // There is no adjoint of nonlinear part
+    // Step 1 will include the transpose copy here: will move later to setup
+
+
+    adjointHaloExchange( src );
+
+    Matrix tmp(*matrix_);
+    Matrix transpose = tmp.transpose();
+
+    if ( src.datatype().kind() == array::DataType::KIND_REAL64 ) {
+        interpolate_field<double>( src, tgt, transpose);
+    }
+    else if ( src.datatype().kind() == array::DataType::KIND_REAL32 ) {
+        interpolate_field<float>( src, tgt, transpose);
+    }
+    else {
+        ATLAS_NOTIMPLEMENTED;
+    }
+
+
+
+    /*
+    1)
+
+
+
+
+    2)
+    */
+
+
+    haloExchange( src );
+
+    // non-linearities: a non-empty M matrix contains the corrections applied to matrix_
+    Matrix M;
+    if ( !matrix_->empty() && nonLinear_( src ) ) {
+        Matrix W( *matrix_ );  // copy (a big penalty -- copy-on-write would definitely be better)
+        if ( nonLinear_->execute( W, src ) ) {
+            M.swap( W );
+        }
+    }
+
+    if ( src.datatype().kind() == array::DataType::KIND_REAL64 ) {
+        interpolate_field<double>( src, tgt, M.empty() ? *matrix_ : M );
+    }
+    else if ( src.datatype().kind() == array::DataType::KIND_REAL32 ) {
+        interpolate_field<float>( src, tgt, M.empty() ? *matrix_ : M );
+    }
+    else {
+        ATLAS_NOTIMPLEMENTED;
+    }
+
+    // carry over missing value metadata
+    if ( not tgt.metadata().has( "missing_value" ) ) {
+        field::MissingValue mv_src( src );
+        if ( mv_src ) {
+            mv_src.metadata( tgt );
+            ATLAS_ASSERT( field::MissingValue( tgt ) );
+        }
+        else if ( not missing_.empty() ) {
+            if ( not tgt.metadata().has( "missing_value" ) ) {
+                tgt.metadata().set( "missing_value", 9999. );
+            }
+            tgt.metadata().set( "missing_value_type", "equals" );
+        }
+    }
+
+    // set missing values
+    set_missing_values( tgt, missing_ );
+
+    tgt.set_dirty();
+
+
+}
+
+
+
 void Method::normalise( Triplets& triplets ) {
     // sum all calculated weights for normalisation
     double sum = 0.0;
@@ -294,6 +397,18 @@ void Method::haloExchange( const FieldSet& fields ) const {
 void Method::haloExchange( const Field& field ) const {
     if ( field.dirty() && allow_halo_exchange_ ) {
         source().haloExchange( field );
+    }
+}
+
+void Method::adjointHaloExchange( const FieldSet& fields ) const {
+    for ( auto& field : fields ) {
+        adjointHaloExchange( field );
+    }
+}
+void Method::adjointHaloExchange( const Field& field ) const {
+    std::cout << "adjointHaloExchange  field.dirty allowHaloExchange " << field.dirty() << " " << allow_halo_exchange_ << std::endl;
+    if ( field.dirty() && allow_halo_exchange_ ) {
+        source().adjointHaloExchange( field );
     }
 }
 

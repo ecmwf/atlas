@@ -294,8 +294,8 @@ CASE( "test_interpolation_structured using fs API for fieldset" ) {
     FieldSet fields_target;
     using Value = float;
     for ( idx_t f = 0; f < 3; ++f ) {
-        auto field_source = fields_source.add( input_fs.createField<Value>() );
-        fields_target.add( output_fs.createField<Value>() );
+        auto field_source = fields_source.add( input_fs.createField<Value>(option::name( "field " + std::to_string(f))) );
+        fields_target.add( output_fs.createField<Value>(option::name( "field " + std::to_string(f) )) );
 
         auto source = array::make_view<Value, 2>( field_source );
         for ( idx_t n = 0; n < input_fs.size(); ++n ) {
@@ -319,6 +319,65 @@ CASE( "test_interpolation_structured using fs API for fieldset" ) {
         }
     }
 
+    SECTION( "with matrix adjoint" ) {
+        Interpolation interpolation( scheme(), input_fs, output_fs );
+
+        std::vector<float> AxAx(fields_source.field_names().size(), 0.);
+        std::vector<float> xAtAx(fields_source.field_names().size(), 0.);
+
+        FieldSet fields_source_reference;
+
+        std::cout << "fields source field names" << fields_source.field_names() << std::endl;
+        for (const std::string & s : fields_source.field_names()) {
+            fields_source_reference.add(fields_source[s]);
+        }
+
+        interpolation.execute( fields_source, fields_target );
+
+        std::cout << "after interpolation exe" << std::endl;
+
+        std::size_t fIndx(0);
+        auto source_names = fields_source.field_names();
+        for (const std::string & s : fields_target.field_names()) {
+           auto target = array::make_view<double, 1>( fields_target[s] );
+           auto source = array::make_view<double, 1>( fields_source[source_names[fIndx]] );
+
+           for ( idx_t n = 0; n < output_fs.size(); ++n ) {
+               AxAx[fIndx] += target[n] * target[n];
+           }
+           for ( idx_t n = 0; n < input_fs.size(); ++n ) {
+               AxAx[fIndx] += source[n] * source[n];
+           }
+           fIndx += 1;
+        }
+
+        std::cout << "after interpolation exe sum" << std::endl;
+
+        interpolation.execute_adjoint( fields_source, fields_target );
+
+        std::cout << "after interpolation exe adj" << std::endl;
+
+        fIndx = 0;
+        for (const std::string & s : fields_source.field_names()) {
+           auto source_reference = array::make_view<double, 1>( fields_source_reference[s] );
+           auto source = array::make_view<double, 1>( fields_source[s] );
+
+           for ( idx_t n = 0; n < input_fs.size(); ++n ) {
+               xAtAx[fIndx] += source[n] * source_reference[n];
+           }
+           fIndx += 1;
+        }
+
+        for (std::size_t t = 0; t < AxAx.size(); ++t) {
+            std::cout << "Adjoint test t  = " << t
+                      << " (Ax).(Ax) = " << AxAx[t]
+                      << " x.(AtAx) = " << xAtAx[t]
+                      << std::endl;
+        }
+
+
+
+    }
 
     SECTION( "matrix free" ) {
         Interpolation interpolation( scheme() | Config( "matrix_free", true ), input_fs, output_fs );
@@ -333,6 +392,7 @@ CASE( "test_interpolation_structured using fs API for fieldset" ) {
         }
     }
 }
+
 
 
 /// @brief Compute magnitude of flow with rotation-angle beta
