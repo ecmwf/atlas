@@ -333,6 +333,11 @@ void Method::do_execute_adjoint(Field& src, Field& tgt ) const {
             }
         }
 
+        src.set_dirty();
+
+        adjointHaloExchange(src);
+
+
     }
     else if ( src.datatype().kind() == array::DataType::KIND_REAL32 ) {
         auto temp_view = array::make_view<float, 2>( temp_field );
@@ -361,6 +366,8 @@ void Method::do_execute_adjoint(Field& src, Field& tgt ) const {
                 tgt_view(t, k) = 0.0;
             }
         }
+
+        adjointHaloExchange(src);
 
 
     }
@@ -397,6 +404,7 @@ void Method::haloExchange( const FieldSet& fields ) const {
     }
 }
 void Method::haloExchange( const Field& field ) const {
+    std::cout << "haloExchange  field.dirty allowHaloExchange " << field.dirty() << " " << allow_halo_exchange_ << std::endl;
     if ( field.dirty() && allow_halo_exchange_ ) {
         source().haloExchange( field );
     }
