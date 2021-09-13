@@ -116,6 +116,18 @@ private:
     template <typename Value>
     void interpolate_field_rank3( const Field& src, Field& tgt, const Matrix& ) const;
 
+    template <typename Value>
+    void adjoint_interpolate_field( Field& src, Field& tgt, const Matrix& ) const;
+
+    template <typename Value>
+    void adjoint_interpolate_field_rank1( Field& src, Field& tgt, const Matrix& ) const;
+
+    template <typename Value>
+    void adjoint_interpolate_field_rank2( Field& src, Field& tgt, const Matrix& ) const;
+
+    template <typename Value>
+    void adjoint_interpolate_field_rank3( Field& src, Field& tgt, const Matrix& ) const;
+
     void check_compatibility( const Field& src, const Field& tgt, const Matrix& W ) const;
 };
 

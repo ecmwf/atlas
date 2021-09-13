@@ -128,6 +128,91 @@ void Method::interpolate_field_rank3( const Field& src, Field& tgt, const Matrix
     sparse_matrix_multiply( W, src_v, tgt_v, sparse::backend::omp() );
 }
 
+template <typename Value>
+void Method::adjoint_interpolate_field_rank1( Field& src, Field& tgt, const Matrix& W ) const {
+
+    Field tmp( src.name(), src.datatype().kind(), src.shape() );
+    tmp.set_levels( src.levels() );
+
+    auto tmp_v = array::make_view<double, 1>( tmp );
+    auto src_v = array::make_view<double, 1>( src );
+    auto tgt_v = array::make_view<double, 1>( tgt );
+
+    for ( idx_t t = 0; t < tmp.shape(0); ++t ) {
+        tmp_v(t) = 0.;
+    }
+
+    if ( use_eckit_linalg_spmv_ ) {
+        if ( src.datatype() != array::make_datatype<double>() ) {
+            throw_NotImplemented( "Only double precision interpolation is currently implemented with eckit backend",
+                                  Here() );
+        }
+        sparse_matrix_multiply( W, tgt_v, tmp_v, sparse::backend::eckit_linalg() );
+    }
+    else {
+        sparse_matrix_multiply( W, tgt_v, tmp_v, sparse::backend::omp() );
+    }
+
+    for ( idx_t t = 0; t < tmp.shape(0); ++t ) {
+        src_v(t) += tmp_v(t);
+        tgt_v(t) = 0.;
+    }
+}
+
+template <typename Value>
+void Method::adjoint_interpolate_field_rank2( Field& src, Field& tgt, const Matrix& W ) const {
+    Field tmp( src.name(), src.datatype().kind(), src.shape() );
+    tmp.set_levels( src.levels() );
+
+    auto tmp_v = array::make_view<Value, 2>( tmp );
+    auto src_v = array::make_view<Value, 2>( src );
+    auto tgt_v = array::make_view<Value, 2>( tgt );
+
+    for ( idx_t t = 0; t < tmp.shape(0); ++t ) {
+        for ( idx_t k = 0; k < tmp.shape(1); ++k ) {
+            tmp_v(t, k) = 0.;
+        }
+    }
+
+    sparse_matrix_multiply( W, tgt_v, tmp_v, sparse::backend::omp() );
+
+    for ( idx_t t = 0; t < tmp.shape(0); ++t ) {
+        for ( idx_t k = 0; k < tmp.shape(1); ++k ) {
+            src_v(t, k) += tmp_v(t, k);
+            tgt_v(t, k) = 0.;
+        }
+    }
+}
+
+template <typename Value>
+void Method::adjoint_interpolate_field_rank3( Field& src, Field& tgt, const Matrix& W ) const {
+
+    Field tmp( src.name(), src.datatype().kind(), src.shape() );
+    tmp.set_levels( src.levels() );
+
+    auto tmp_v = array::make_view<Value, 3>( tmp );
+    auto src_v = array::make_view<Value, 3>( src );
+    auto tgt_v = array::make_view<Value, 3>( tgt );
+
+    for ( idx_t t = 0; t < tmp.shape(0); ++t ) {
+        for ( idx_t j = 0; j < tmp.shape(1); ++j ) {
+            for ( idx_t k = 0; k < tmp.shape(2); ++k ) {
+                tmp_v(t, j, k) = 0.;
+            }
+        }
+    }
+
+    sparse_matrix_multiply( W, tgt_v, tmp_v, sparse::backend::omp() );
+
+    for ( idx_t t = 0; t < tmp.shape(0); ++t ) {
+        for ( idx_t j = 0; j < tmp.shape(1); ++j ) {
+            for ( idx_t k = 0; k < tmp.shape(2); ++k ) {
+                src_v(t, j, k) += tmp_v(t, j, k);
+                tgt_v(t, j, k) = 0.;
+            }
+        }
+    }
+}
 
 void Method::check_compatibility( const Field& src, const Field& tgt, const Matrix& W ) const {
     ATLAS_ASSERT( src.datatype() == tgt.datatype() );
@@ -152,6 +237,24 @@ void Method::interpolate_field( const Field& src, Field& tgt, const Matrix& W ) 
     }
     else if ( src.rank() == 3 ) {
         interpolate_field_rank3<Value>( src, tgt, W );
+    }
+    else {
+        ATLAS_NOTIMPLEMENTED;
+    }
+}
+
+template <typename Value>
+void Method::adjoint_interpolate_field( Field& src, Field& tgt, const Matrix& W ) const {
+    check_compatibility( tgt, src, W );
+
+    if ( src.rank() == 1 ) {
+        adjoint_interpolate_field_rank1<Value>( src, tgt, W );
+    }
+    else if ( src.rank() == 2 ) {
+        adjoint_interpolate_field_rank2<Value>( src, tgt, W );
+    }
+    else if ( src.rank() == 3 ) {
+        adjoint_interpolate_field_rank3<Value>( src, tgt, W );
     }
     else {
         ATLAS_NOTIMPLEMENTED;
@@ -232,7 +335,6 @@ void Method::do_execute( const FieldSet& fieldsSource, FieldSet& fieldsTarget ) 
     ATLAS_ASSERT( N == fieldsTarget.size() );
 
     for ( idx_t i = 0; i < fieldsSource.size(); ++i ) {
-        Log::debug() << "Method::do_execute() on field " << ( i + 1 ) << '/' << N << "..." << std::endl;
         Method::do_execute( fieldsSource[i], fieldsTarget[i] );
     }
 }
@@ -297,85 +399,37 @@ void Method::do_execute_adjoint( FieldSet& fieldsSource, FieldSet& fieldsTarget 
 void Method::do_execute_adjoint(Field& src, Field& tgt ) const {
     ATLAS_TRACE( "atlas::interpolation::method::Method::do_execute_adjoint()" );
 
+    if ( nonLinear_( src ) ) {
+       throw_NotImplemented( "Adjoint interpolation only works for interpolation schemes that are linear",
+                              Here() );
+    }
+
+    if ( not missing_.empty() ) {
+        throw_NotImplemented( "Adjoint Interpolation does not work for fields that have missing data. ",
+                              Here() );
+    }
+
+
     // There is no adjoint of nonlinear part
     // Step 1 will include the transpose copy here: will move later to setup
     // Assuming that there is no missing data
 
     Matrix tmp(*matrix_);
     Matrix transpose = tmp.transpose();
-    std::cout << src.shape(0) << " " << src.shape(1) << " " << src.levels() << std::endl;
-    Field temp_field(src.name(), src.datatype().kind(), src.shape());
-    std::cout << temp_field.shape(0) << " " << temp_field.shape(1) << " " << temp_field.levels() << std::endl;
-
-    temp_field.set_levels(src.levels());
 
     if ( src.datatype().kind() == array::DataType::KIND_REAL64 ) {
-        auto temp_view = array::make_view<double, 2>( temp_field );
-        auto src_view = array::make_view<double, 2>( src );
-        auto tgt_view = array::make_view<double, 2>( tgt );
 
-        for (idx_t t = 0; t < temp_field.shape(0); ++t) {
-            for (idx_t k = 0; k < temp_field.shape(1); ++k) {
-                temp_view(t, k) = 0.;
-            }
-        }
-        interpolate_field<double>( tgt, temp_field, transpose);
-
-        for (idx_t t = 0; t < temp_field.shape(0); ++t) {
-            for (idx_t k = 0; k < temp_field.shape(1); ++k) {
-                src_view(t, k) += temp_view(t, k);
-            }
-        }
-
-        for (idx_t t = 0; t < tgt.shape(0); ++t) {
-            for (idx_t k = 0; k < tgt.shape(1); ++k) {
-                tgt_view(t, k) = 0.0;
-            }
-        }
-
-        src.set_dirty();
-
-        adjointHaloExchange(src);
-
-
+        adjoint_interpolate_field<double>( src, tgt, transpose );
     }
     else if ( src.datatype().kind() == array::DataType::KIND_REAL32 ) {
-        auto temp_view = array::make_view<float, 2>( temp_field );
-        auto src_view = array::make_view<float, 2>( src );
-        auto tgt_view = array::make_view<float, 2>( tgt );
 
-        for (idx_t t = 0; t < temp_field.shape(0); ++t) {
-            for (idx_t k = 0; k < temp_field.shape(1); ++k) {
-                temp_view(t, k) = 0.0;
-            }
-        }
-
-        std::cout << "tgt temp levels = " << tgt.levels() << " " << temp_field.levels() << std::endl;
-
-        interpolate_field<float>( tgt, temp_field, transpose);
-
-
-        for (idx_t t = 0; t < temp_field.shape(0); ++t) {
-            for (idx_t  k = 0; k < temp_field.shape(1); ++k) {
-                src_view(t, k) += temp_view(t, k);
-            }
-        }
-
-        for (idx_t t = 0; t < tgt.shape(0); ++t) {
-            for (idx_t k = 0; k < tgt.shape(1); ++k) {
-                tgt_view(t, k) = 0.0;
-            }
-        }
-
-        adjointHaloExchange(src);
-
-
+        adjoint_interpolate_field<float>( src, tgt, transpose );
     }
     else {
         ATLAS_NOTIMPLEMENTED;
     }
 
-
+    src.set_dirty();
 
     adjointHaloExchange( src );
 
