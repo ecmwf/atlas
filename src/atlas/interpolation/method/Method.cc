@@ -276,11 +276,23 @@ Method::Method( const Method::Config& config ) {
     matrix_cache_  = interpolation::MatrixCache( matrix_shared_ );
     matrix_        = matrix_shared_.get();
 
+    config.get("adjoint coefficients", create_adjoint_coeffs_);
+    std::cout << "create_adjoint_coeffs " << create_adjoint_coeffs_ << std::endl;
+
 }
 
 void Method::setup( const FunctionSpace& source, const FunctionSpace& target ) {
     ATLAS_TRACE( "atlas::interpolation::method::Method::setup(FunctionSpace, FunctionSpace)" );
     this->do_setup( source, target );
+
+    if (create_adjoint_coeffs_) {
+        Matrix tmp(*matrix_);
+
+        // if interpolation is matrix free then matrix->nonZeros() will be zero.
+        if (tmp.nonZeros() > 0) {
+            matrix_transpose_ = tmp.transpose();
+        }
+    }
 }
 
 void Method::setup( const Grid& source, const Grid& target ) {
@@ -411,9 +423,6 @@ void Method::do_execute_adjoint(Field& src, Field& tgt ) const {
                               Here() );
     }
 
-    Matrix tmp(*matrix_);
-    Matrix matrix_transpose_ = tmp.transpose();
-
     if ( src.datatype().kind() == array::DataType::KIND_REAL64 ) {
 
         adjoint_interpolate_field<double>( src, tgt, matrix_transpose_ );
@@ -455,7 +464,6 @@ void Method::haloExchange( const FieldSet& fields ) const {
     }
 }
 void Method::haloExchange( const Field& field ) const {
-    std::cout << "haloExchange  field.dirty allowHaloExchange " << field.dirty() << " " << allow_halo_exchange_ << std::endl;
     if ( field.dirty() && allow_halo_exchange_ ) {
         source().haloExchange( field );
     }
@@ -467,7 +475,6 @@ void Method::adjointHaloExchange( const FieldSet& fields ) const {
     }
 }
 void Method::adjointHaloExchange( const Field& field ) const {
-    std::cout << "adjointHaloExchange  field.dirty allowHaloExchange " << field.dirty() << " " << allow_halo_exchange_ << std::endl;
     if ( field.dirty() && allow_halo_exchange_ ) {
         source().adjointHaloExchange( field );
     }

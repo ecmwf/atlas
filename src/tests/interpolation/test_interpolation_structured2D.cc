@@ -320,7 +320,7 @@ CASE( "test_interpolation_structured using fs API for fieldset" ) {
     }
 
     SECTION( "with matrix adjoint" ) {
-        Interpolation interpolation( scheme(), input_fs, output_fs );
+        Interpolation interpolation( scheme() | Config( "adjoint coefficients", true ), input_fs, output_fs );
 
         std::vector<Value> AxAx(fields_source.field_names().size(), 0.);
         std::vector<Value> xAtAx(fields_source.field_names().size(), 0.);
