@@ -145,7 +145,6 @@ CASE( "which scheme?" ) {
     Log::info() << scheme().getString( "type" ) << std::endl;
 }
 
-/*
 CASE( "test_interpolation_structured using functionspace API" ) {
     Grid grid( input_gridname( "O32" ) );
 
@@ -277,11 +276,10 @@ CASE( "test_interpolation_structured using fs API multiple levels" ) {
         gmsh.write( field_target );
     }
 }
-*/
 
 CASE( "test_interpolation_structured using fs API for fieldset" ) {
-    Grid input_grid( input_gridname( "O2" ) );
-    Grid output_grid( output_gridname( "O4" ) );
+    Grid input_grid( input_gridname( "O32" ) );
+    Grid output_grid( output_gridname( "O64" ) );
 
     // Cubic interpolation requires a StructuredColumns functionspace with 2 halos
     StructuredColumns input_fs( input_grid, scheme() | option::levels( 3 ) );
@@ -386,7 +384,7 @@ CASE( "test_interpolation_structured using fs API for fieldset" ) {
                       << " x.(AtAx) = " << xAtAx[t]
                       << std::endl;
 
-            EXPECT_APPROX_EQ( AxAx[t], xAtAx[t] );
+            EXPECT_APPROX_EQ( AxAx[t], xAtAx[t], 1.0e-9 );
         }
 
     }
@@ -433,7 +431,7 @@ Field rotated_flow( const StructuredColumns& fs, const double& beta ) {
     return field;
 }
 
-/*
+
 CASE( "test_interpolation_structured for vectors" ) {
     Grid input_grid( input_gridname( "O32" ) );
     Grid output_grid( output_gridname( "O64" ) );
@@ -480,7 +478,7 @@ CASE( "ATLAS-315: Target grid with domain West of 0 degrees Lon" ) {
 
     interpolation.execute( field_src, field_tgt );
 }
-*/
+
 }  // namespace test
 }  // namespace atlas
 
