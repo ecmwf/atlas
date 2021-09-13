@@ -8,6 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <memory>
+
 #include "atlas/interpolation/method/Method.h"
 
 
@@ -273,6 +275,7 @@ Method::Method( const Method::Config& config ) {
     matrix_shared_ = std::make_shared<Matrix>();
     matrix_cache_  = interpolation::MatrixCache( matrix_shared_ );
     matrix_        = matrix_shared_.get();
+
 }
 
 void Method::setup( const FunctionSpace& source, const FunctionSpace& target ) {
@@ -346,7 +349,7 @@ void Method::do_execute( const Field& src, Field& tgt ) const {
 
     // non-linearities: a non-empty M matrix contains the corrections applied to matrix_
     Matrix M;
-    if ( !matrix_->empty() && nonLinear_( src ) ) {
+    if ( not matrix_->empty() && nonLinear_( src ) ) {
         Matrix W( *matrix_ );  // copy (a big penalty -- copy-on-write would definitely be better)
         if ( nonLinear_->execute( W, src ) ) {
             M.swap( W );
@@ -391,7 +394,6 @@ void Method::do_execute_adjoint( FieldSet& fieldsSource, FieldSet& fieldsTarget 
     ATLAS_ASSERT( N == fieldsTarget.size() );
 
     for ( idx_t i = 0; i < fieldsSource.size(); ++i ) {
-        Log::debug() << "Method::do_execute() on field " << ( i + 1 ) << '/' << N << "..." << std::endl;
         Method::do_execute_adjoint( fieldsSource[i], fieldsTarget[i] );
     }
 }
@@ -400,7 +402,7 @@ void Method::do_execute_adjoint(Field& src, Field& tgt ) const {
     ATLAS_TRACE( "atlas::interpolation::method::Method::do_execute_adjoint()" );
 
     if ( nonLinear_( src ) ) {
-       throw_NotImplemented( "Adjoint interpolation only works for interpolation schemes that are linear",
+        throw_NotImplemented( "Adjoint interpolation only works for interpolation schemes that are linear",
                               Here() );
     }
 
@@ -409,21 +411,16 @@ void Method::do_execute_adjoint(Field& src, Field& tgt ) const {
                               Here() );
     }
 
-
-    // There is no adjoint of nonlinear part
-    // Step 1 will include the transpose copy here: will move later to setup
-    // Assuming that there is no missing data
-
     Matrix tmp(*matrix_);
-    Matrix transpose = tmp.transpose();
+    Matrix matrix_transpose_ = tmp.transpose();
 
     if ( src.datatype().kind() == array::DataType::KIND_REAL64 ) {
 
-        adjoint_interpolate_field<double>( src, tgt, transpose );
+        adjoint_interpolate_field<double>( src, tgt, matrix_transpose_ );
     }
     else if ( src.datatype().kind() == array::DataType::KIND_REAL32 ) {
 
-        adjoint_interpolate_field<float>( src, tgt, transpose );
+        adjoint_interpolate_field<float>( src, tgt, matrix_transpose_ );
     }
     else {
         ATLAS_NOTIMPLEMENTED;

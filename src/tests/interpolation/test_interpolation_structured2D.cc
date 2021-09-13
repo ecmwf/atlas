@@ -304,7 +304,7 @@ CASE( "test_interpolation_structured using fs API for fieldset" ) {
             for ( idx_t k = 0; k < 3; ++k ) {
                 source( n, k ) = vortex_rollup( lonlat( n, LON ), lonlat( n, LAT ), 0.5 + double( k ) / 2 );
             }
-        };
+        }
     }
 
     SECTION( "with matrix" ) {
@@ -326,13 +326,8 @@ CASE( "test_interpolation_structured using fs API for fieldset" ) {
 
         std::vector<Value> AxAx(fields_source.field_names().size(), 0.);
         std::vector<Value> xAtAx(fields_source.field_names().size(), 0.);
-        std::vector<Value> temp1(fields_source.field_names().size(), 0.);
-        std::vector<Value> temp2(fields_source.field_names().size(), 0.);
 
         FieldSet fields_source_reference;
-        std::cout << "fields source field names" << fields_source.field_names() << std::endl;
-
-
         for (atlas::Field & field : fields_source) {
             Field temp_field(field.name(), field.datatype().kind(), field.shape());
             temp_field.set_levels(field.levels());
@@ -350,8 +345,6 @@ CASE( "test_interpolation_structured using fs API for fieldset" ) {
 
         interpolation.execute( fields_source, fields_target );
 
-        std::cout << "after interpolation exe" << std::endl;
-
         std::size_t fIndx(0);
         auto source_names = fields_source.field_names();
         for (const std::string & s : fields_target.field_names()) {
@@ -363,49 +356,38 @@ CASE( "test_interpolation_structured using fs API for fieldset" ) {
                    AxAx[fIndx] += source( n, k) * source( n, k );
                }
            }
-            std::cout << "AXAX f size source " << input_fs.size() << " "<< fields_source[source_names[fIndx]].shape(0) << " "
-                      << fIndx << " " << AxAx[fIndx] << std::endl;
 
            for ( idx_t n = 0; n < output_fs.size(); ++n ) {
                for ( idx_t k = 0; k < 3; ++k ) {
                    AxAx[fIndx] += target( n, k ) * target( n, k );
                }
            }
-           std::cout << "AXAX f target + source " << fIndx << " " << AxAx[fIndx] << std::endl;
            fIndx += 1;
         }
 
-        std::cout << "after interpolation exe sum" << std::endl;
-
         interpolation.execute_adjoint( fields_source, fields_target );
 
-        std::cout << "after interpolation exe adj" << std::endl;
-
         fIndx = 0;
-        for (const std::string & s : fields_source.field_names()) {
+        for ( const std::string & s : fields_source.field_names() ) {
            auto source_reference = array::make_view<Value, 2>( fields_source_reference[s] );
            auto source = array::make_view<Value, 2>( fields_source[s] );
 
            for ( idx_t n = 0; n < input_fs.size(); ++n ) {
                for ( idx_t k = 0; k < 3; ++k ) {
                    xAtAx[fIndx] += source( n, k ) * source_reference( n, k );
-                   temp1[fIndx] += source( n, k) * source ( n, k);
-                   temp2[fIndx] += source_reference(n, k) * source_reference(n,k);
                }
            }
            fIndx += 1;
         }
 
-        for (std::size_t t = 0; t < AxAx.size(); ++t) {
-            std::cout << "Adjoint test t  = " << t
+        for ( std::size_t t = 0; t < AxAx.size(); ++t ) {
+            std::cout << " Adjoint test t  = " << t
                       << " (Ax).(Ax) = " << AxAx[t]
                       << " x.(AtAx) = " << xAtAx[t]
-                      << " temp 1 = " << temp1[t]
-                      << " temp 2 = " << temp2[t]
                       << std::endl;
+
+            EXPECT_APPROX_EQ( AxAx[t], xAtAx[t] );
         }
-
-
 
     }
 
