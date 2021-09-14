@@ -234,7 +234,6 @@ CASE( "test_interpolation_structured using grid API" ) {
         EXPECT_NO_THROW( test( rotated( output_gridname( "O64" ) ) ) );
     }
     SECTION( "Interpolate from " + input_grid.name() + " to lambert" ) {
-        ;
         EXPECT_NO_THROW( test( lambert() ) );
     }
     SECTION( "Interpolate from " + input_grid.name() + " to rotaded_mercator" ) {
@@ -264,7 +263,7 @@ CASE( "test_interpolation_structured using fs API multiple levels" ) {
         for ( idx_t k = 0; k < 3; ++k ) {
             source( n, k ) = vortex_rollup( lonlat( n, LON ), lonlat( n, LAT ), 0.5 + double( k ) / 2 );
         }
-    };
+    }
     interpolation.execute( field_source, field_target );
 
     ATLAS_TRACE_SCOPE( "output" ) {
@@ -474,7 +473,7 @@ CASE( "ATLAS-315: Target grid with domain West of 0 degrees Lon" ) {
     constexpr double k = 1;
     for ( idx_t n = 0; n < source.size(); ++n ) {
         source( n ) = vortex_rollup( lonlat( n, LON ), lonlat( n, LAT ), 0.5 + double( k ) / 2 );
-    };
+    }
 
     interpolation.execute( field_src, field_tgt );
 }
