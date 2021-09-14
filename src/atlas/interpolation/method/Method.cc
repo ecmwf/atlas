@@ -423,6 +423,10 @@ void Method::do_execute_adjoint(Field& src, Field& tgt ) const {
                               Here() );
     }
 
+    if ( matrix_transpose_.empty() ) {
+        throw_AssertionFailed("Need to set 'adjoint coefficients' to true in config for adjoint interpolation to work");
+    }
+
     if ( src.datatype().kind() == array::DataType::KIND_REAL64 ) {
 
         adjoint_interpolate_field<double>( src, tgt, matrix_transpose_ );
