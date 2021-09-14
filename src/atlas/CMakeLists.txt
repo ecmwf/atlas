@@ -381,6 +381,8 @@ meshgenerator/detail/MeshGeneratorInterface.cc
 meshgenerator/detail/MeshGeneratorInterface.h
 meshgenerator/detail/HealpixMeshGenerator.h
 meshgenerator/detail/HealpixMeshGenerator.cc
+meshgenerator/detail/cubedsphere/CubedSphereUtility.h
+meshgenerator/detail/cubedsphere/CubedSphereUtility.cc
 )
 
 list( APPEND atlas_output_srcs

@@ -26,6 +26,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/meshgenerator/detail/MeshGeneratorFactory.h"
 #include "atlas/meshgenerator/detail/NodalCubedSphereMeshGenerator.h"
+#include "atlas/meshgenerator/detail/cubedsphere/CubedSphereUtility.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
@@ -78,9 +79,26 @@ void NodalCubedSphereMeshGenerator::generate( const Grid& grid, const grid::Dist
                                               Mesh& mesh ) const {
     const auto csgrid = CubedSphereGrid( grid );
 
+    using namespace detail::cubedsphere;
+
     const int N      = csgrid.N();
     const int nTiles = csgrid.tiles().size();
 
+    // N must be greater than 1.
+    if (N < 2) throw_Exception("N must be greater than 1 for NodalCubedSphereMeshGenerator", Here());
+
+    // grid must have node staggering.
+    if (csgrid.stagger() != "L") {
+      throw_Exception("NodalCubedSphereMeshGenerator will only work with a"
+      "nodal grid. Try CubedSphereMeshGenerator instead.", Here());
+    }
+
+    // Get tiles
+    auto csprojection = castProjection(csgrid.projection().get());
+    // grid must use FV3Tiles class.
+    if (csprojection->getCubedSphereTiles().type() != "cubedsphere_fv3") {
+      throw_Exception("NodalCubedSphereMeshGenerator only works with FV3 tiles", Here());
+    }
 
     // Make a list linking ghost (t, i, j) values to known (t, i, j)
     // This will be different for each cube-sphere once MeshGenerator is generalised.
