@@ -276,7 +276,7 @@ Method::Method( const Method::Config& config ) {
     matrix_cache_  = interpolation::MatrixCache( matrix_shared_ );
     matrix_        = matrix_shared_.get();
 
-    config.get("adjoint coefficients", create_adjoint_coeffs_);
+    config.get("adjoint", create_adjoint_coeffs_);
 }
 
 void Method::setup( const FunctionSpace& source, const FunctionSpace& target ) {

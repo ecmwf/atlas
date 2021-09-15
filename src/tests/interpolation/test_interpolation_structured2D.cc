@@ -241,6 +241,7 @@ CASE( "test_interpolation_structured using grid API" ) {
     }
 }
 
+
 CASE( "test_interpolation_structured using fs API multiple levels" ) {
     Grid input_grid( input_gridname( "O32" ) );
     Grid output_grid( output_gridname( "O64" ) );
@@ -276,7 +277,15 @@ CASE( "test_interpolation_structured using fs API multiple levels" ) {
     }
 }
 
-CASE( "test_interpolation_structured using fs API for fieldset" ) {
+template< typename Value > struct AdjointTolerance {
+    static const Value value;
+};
+template<> const double AdjointTolerance<double>::value = 1.e-8;
+template<> const float AdjointTolerance<float>::value = 3.e-1;
+
+
+template<typename Value>
+void test_interpolation_structured_using_fs_API_for_fieldset() {
     Grid input_grid( input_gridname( "O32" ) );
     Grid output_grid( output_gridname( "O64" ) );
 
@@ -291,7 +300,6 @@ CASE( "test_interpolation_structured using fs API for fieldset" ) {
 
     FieldSet fields_source;
     FieldSet fields_target;
-    using Value = double;
     for ( idx_t f = 0; f < 3; ++f ) {
         auto field_source = fields_source.add( input_fs.createField<Value>(option::name( "field " + std::to_string(f))) );
         fields_target.add( output_fs.createField<Value>(option::name( "field " + std::to_string(f) )) );
@@ -304,13 +312,12 @@ CASE( "test_interpolation_structured using fs API for fieldset" ) {
         }
     }
 
-    SECTION( "with matrix" ) {
+    ATLAS_TRACE_SCOPE( "with matrix" ) {
         Interpolation interpolation( scheme(), input_fs, output_fs );
         interpolation.execute( fields_source, fields_target );
 
         ATLAS_TRACE_SCOPE( "output" ) {
-            output::Gmsh gmsh( scheme().getString( "name" ) + "-multilevel-fieldset-output-section" +
-                                   std::to_string( _subsection ) + ".msh",
+            output::Gmsh gmsh( scheme().getString( "name" ) + "-multilevel-fieldset-output-with-matrix-" + array::make_datatype<Value>().str() + ".msh",
                                Config( "coordinates", "xy" ) );
             gmsh.write( output_mesh );
             output_fs.haloExchange( fields_target );
@@ -318,8 +325,8 @@ CASE( "test_interpolation_structured using fs API for fieldset" ) {
         }
     }
 
-    SECTION( "with matrix adjoint" ) {
-        Interpolation interpolation( scheme() | Config( "adjoint coefficients", true ), input_fs, output_fs );
+    ATLAS_TRACE_SCOPE( "with matrix adjoint" ) {
+        Interpolation interpolation( scheme() | Config( "adjoint", true ), input_fs, output_fs );
 
         std::vector<Value> AxAx(fields_source.field_names().size(), 0.);
         std::vector<Value> xAtAx(fields_source.field_names().size(), 0.);
@@ -378,28 +385,36 @@ CASE( "test_interpolation_structured using fs API for fieldset" ) {
         }
 
         for ( std::size_t t = 0; t < AxAx.size(); ++t ) {
-            std::cout << " Adjoint test t  = " << t
-                      << " (Ax).(Ax) = " << AxAx[t]
-                      << " x.(AtAx) = " << xAtAx[t]
-                      << std::endl;
+            Log::debug() << " Adjoint test t  = " << t
+                         << " (Ax).(Ax) = " << AxAx[t]
+                         << " x.(AtAx) = " << xAtAx[t]
+                         << std::endl;
 
-            EXPECT_APPROX_EQ( AxAx[t], xAtAx[t], 1.0e-9 );
+            EXPECT_APPROX_EQ( AxAx[t], xAtAx[t], AdjointTolerance<Value>::value );
         }
 
     }
 
-    SECTION( "matrix free" ) {
+    ATLAS_TRACE_SCOPE( "matrix free" ) {
         Interpolation interpolation( scheme() | Config( "matrix_free", true ), input_fs, output_fs );
         interpolation.execute( fields_source, fields_target );
         ATLAS_TRACE_SCOPE( "output" ) {
-            output::Gmsh gmsh( scheme().getString( "name" ) + "-multilevel-fieldset-output-section" +
-                                   std::to_string( _subsection ) + ".msh",
+            output::Gmsh gmsh( scheme().getString( "name" ) + "-multilevel-fieldset-output-section-matrix-free-" +
+                                   array::make_datatype<Value>().str() + ".msh",
                                Config( "coordinates", "xy" ) );
             gmsh.write( output_mesh );
             output_fs.haloExchange( fields_target );
             gmsh.write( fields_target );
         }
     }
+}
+
+CASE( "test_interpolation_structured using fs API for fieldset (Value=double)" ) {
+    test_interpolation_structured_using_fs_API_for_fieldset<double>();
+}
+
+CASE( "test_interpolation_structured using fs API for fieldset (Value=float)" ) {
+    test_interpolation_structured_using_fs_API_for_fieldset<float>();
 }
 
 
