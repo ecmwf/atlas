@@ -277,8 +277,6 @@ Method::Method( const Method::Config& config ) {
     matrix_        = matrix_shared_.get();
 
     config.get("adjoint coefficients", create_adjoint_coeffs_);
-    std::cout << "create_adjoint_coeffs " << create_adjoint_coeffs_ << std::endl;
-
 }
 
 void Method::setup( const FunctionSpace& source, const FunctionSpace& target ) {
