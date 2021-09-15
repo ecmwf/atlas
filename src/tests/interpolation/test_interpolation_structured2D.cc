@@ -233,14 +233,12 @@ CASE( "test_interpolation_structured using grid API" ) {
     SECTION( "Interpolate from " + input_grid.name() + " to rotated " + output_gridname( "O64" ) ) {
         EXPECT_NO_THROW( test( rotated( output_gridname( "O64" ) ) ) );
     }
-    SECTION( "Interpolate from " + input_grid.name() + " to lambert" ) {
-        ;
-        EXPECT_NO_THROW( test( lambert() ) );
-    }
+    SECTION( "Interpolate from " + input_grid.name() + " to lambert" ) { EXPECT_NO_THROW( test( lambert() ) ); }
     SECTION( "Interpolate from " + input_grid.name() + " to rotaded_mercator" ) {
         EXPECT_NO_THROW( test( rotated_mercator() ) );
     }
 }
+
 
 CASE( "test_interpolation_structured using fs API multiple levels" ) {
     Grid input_grid( input_gridname( "O32" ) );
@@ -264,7 +262,7 @@ CASE( "test_interpolation_structured using fs API multiple levels" ) {
         for ( idx_t k = 0; k < 3; ++k ) {
             source( n, k ) = vortex_rollup( lonlat( n, LON ), lonlat( n, LAT ), 0.5 + double( k ) / 2 );
         }
-    };
+    }
     interpolation.execute( field_source, field_target );
 
     ATLAS_TRACE_SCOPE( "output" ) {
@@ -277,7 +275,18 @@ CASE( "test_interpolation_structured using fs API multiple levels" ) {
     }
 }
 
-CASE( "test_interpolation_structured using fs API for fieldset" ) {
+template <typename Value>
+struct AdjointTolerance {
+    static const Value value;
+};
+template <>
+const double AdjointTolerance<double>::value = 1.e-8;
+template <>
+const float AdjointTolerance<float>::value = 3.e-1;
+
+
+template <typename Value>
+void test_interpolation_structured_using_fs_API_for_fieldset() {
     Grid input_grid( input_gridname( "O32" ) );
     Grid output_grid( output_gridname( "O64" ) );
 
@@ -292,26 +301,26 @@ CASE( "test_interpolation_structured using fs API for fieldset" ) {
 
     FieldSet fields_source;
     FieldSet fields_target;
-    using Value = float;
     for ( idx_t f = 0; f < 3; ++f ) {
-        auto field_source = fields_source.add( input_fs.createField<Value>() );
-        fields_target.add( output_fs.createField<Value>() );
+        auto field_source =
+            fields_source.add( input_fs.createField<Value>( option::name( "field " + std::to_string( f ) ) ) );
+        fields_target.add( output_fs.createField<Value>( option::name( "field " + std::to_string( f ) ) ) );
 
         auto source = array::make_view<Value, 2>( field_source );
         for ( idx_t n = 0; n < input_fs.size(); ++n ) {
             for ( idx_t k = 0; k < 3; ++k ) {
                 source( n, k ) = vortex_rollup( lonlat( n, LON ), lonlat( n, LAT ), 0.5 + double( k ) / 2 );
             }
-        };
+        }
     }
 
-    SECTION( "with matrix" ) {
+    ATLAS_TRACE_SCOPE( "with matrix" ) {
         Interpolation interpolation( scheme(), input_fs, output_fs );
         interpolation.execute( fields_source, fields_target );
 
         ATLAS_TRACE_SCOPE( "output" ) {
-            output::Gmsh gmsh( scheme().getString( "name" ) + "-multilevel-fieldset-output-section" +
-                                   std::to_string( _subsection ) + ".msh",
+            output::Gmsh gmsh( scheme().getString( "name" ) + "-multilevel-fieldset-output-with-matrix-" +
+                                   array::make_datatype<Value>().str() + ".msh",
                                Config( "coordinates", "xy" ) );
             gmsh.write( output_mesh );
             output_fs.haloExchange( fields_target );
@@ -319,19 +328,93 @@ CASE( "test_interpolation_structured using fs API for fieldset" ) {
         }
     }
 
+    ATLAS_TRACE_SCOPE( "with matrix adjoint" ) {
+        Interpolation interpolation( scheme() | Config( "adjoint", true ), input_fs, output_fs );
 
-    SECTION( "matrix free" ) {
+        std::vector<Value> AxAx( fields_source.field_names().size(), 0. );
+        std::vector<Value> xAtAx( fields_source.field_names().size(), 0. );
+
+        FieldSet fields_source_reference;
+        for ( atlas::Field& field : fields_source ) {
+            Field temp_field( field.name(), field.datatype().kind(), field.shape() );
+            temp_field.set_levels( field.levels() );
+
+            auto fieldInView  = array::make_view<Value, 2>( field );
+            auto fieldOutView = array::make_view<Value, 2>( temp_field );
+
+            for ( atlas::idx_t jn = 0; jn < temp_field.shape( 0 ); ++jn ) {
+                for ( atlas::idx_t jl = 0; jl < temp_field.levels(); ++jl ) {
+                    fieldOutView( jn, jl ) = fieldInView( jn, jl );
+                }
+            }
+            fields_source_reference.add( temp_field );
+        }
+
+        interpolation.execute( fields_source, fields_target );
+
+        std::size_t fIndx( 0 );
+        auto source_names = fields_source.field_names();
+        for ( const std::string& s : fields_target.field_names() ) {
+            auto target = array::make_view<Value, 2>( fields_target[s] );
+            auto source = array::make_view<Value, 2>( fields_source[source_names[fIndx]] );
+
+            for ( idx_t n = 0; n < input_fs.size(); ++n ) {
+                for ( idx_t k = 0; k < 3; ++k ) {
+                    AxAx[fIndx] += source( n, k ) * source( n, k );
+                }
+            }
+
+            for ( idx_t n = 0; n < output_fs.size(); ++n ) {
+                for ( idx_t k = 0; k < 3; ++k ) {
+                    AxAx[fIndx] += target( n, k ) * target( n, k );
+                }
+            }
+            fIndx += 1;
+        }
+
+        interpolation.execute_adjoint( fields_source, fields_target );
+
+        fIndx = 0;
+        for ( const std::string& s : fields_source.field_names() ) {
+            auto source_reference = array::make_view<Value, 2>( fields_source_reference[s] );
+            auto source           = array::make_view<Value, 2>( fields_source[s] );
+
+            for ( idx_t n = 0; n < input_fs.size(); ++n ) {
+                for ( idx_t k = 0; k < 3; ++k ) {
+                    xAtAx[fIndx] += source( n, k ) * source_reference( n, k );
+                }
+            }
+            fIndx += 1;
+        }
+
+        for ( std::size_t t = 0; t < AxAx.size(); ++t ) {
+            Log::debug() << " Adjoint test t  = " << t << " (Ax).(Ax) = " << AxAx[t] << " x.(AtAx) = " << xAtAx[t]
+                         << std::endl;
+
+            EXPECT_APPROX_EQ( AxAx[t], xAtAx[t], AdjointTolerance<Value>::value );
+        }
+    }
+
+    ATLAS_TRACE_SCOPE( "matrix free" ) {
         Interpolation interpolation( scheme() | Config( "matrix_free", true ), input_fs, output_fs );
         interpolation.execute( fields_source, fields_target );
         ATLAS_TRACE_SCOPE( "output" ) {
-            output::Gmsh gmsh( scheme().getString( "name" ) + "-multilevel-fieldset-output-section" +
-                                   std::to_string( _subsection ) + ".msh",
+            output::Gmsh gmsh( scheme().getString( "name" ) + "-multilevel-fieldset-output-section-matrix-free-" +
+                                   array::make_datatype<Value>().str() + ".msh",
                                Config( "coordinates", "xy" ) );
             gmsh.write( output_mesh );
             output_fs.haloExchange( fields_target );
             gmsh.write( fields_target );
         }
     }
+}
+
+CASE( "test_interpolation_structured using fs API for fieldset (Value=double)" ) {
+    test_interpolation_structured_using_fs_API_for_fieldset<double>();
+}
+
+CASE( "test_interpolation_structured using fs API for fieldset (Value=float)" ) {
+    test_interpolation_structured_using_fs_API_for_fieldset<float>();
 }
 
 
@@ -360,6 +443,7 @@ Field rotated_flow( const StructuredColumns& fs, const double& beta ) {
     }
     return field;
 }
+
 
 CASE( "test_interpolation_structured for vectors" ) {
     Grid input_grid( input_gridname( "O32" ) );
@@ -403,7 +487,7 @@ CASE( "ATLAS-315: Target grid with domain West of 0 degrees Lon" ) {
     constexpr double k = 1;
     for ( idx_t n = 0; n < source.size(); ++n ) {
         source( n ) = vortex_rollup( lonlat( n, LON ), lonlat( n, LAT ), 0.5 + double( k ) / 2 );
-    };
+    }
 
     interpolation.execute( field_src, field_tgt );
 }
