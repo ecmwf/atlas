@@ -85,19 +85,22 @@ void NodalCubedSphereMeshGenerator::generate( const Grid& grid, const grid::Dist
     const int nTiles = csgrid.tiles().size();
 
     // N must be greater than 1.
-    if (N < 2) throw_Exception("N must be greater than 1 for NodalCubedSphereMeshGenerator", Here());
+    if ( N < 2 )
+        throw_Exception( "N must be greater than 1 for NodalCubedSphereMeshGenerator", Here() );
 
     // grid must have node staggering.
-    if (csgrid.stagger() != "L") {
-      throw_Exception("NodalCubedSphereMeshGenerator will only work with a"
-      "nodal grid. Try CubedSphereMeshGenerator instead.", Here());
+    if ( csgrid.stagger() != "L" ) {
+        throw_Exception(
+            "NodalCubedSphereMeshGenerator will only work with a"
+            "nodal grid. Try CubedSphereMeshGenerator instead.",
+            Here() );
     }
 
     // Get tiles
-    auto csprojection = castProjection(csgrid.projection().get());
+    auto csprojection = castProjection( csgrid.projection().get() );
     // grid must use FV3Tiles class.
-    if (csprojection->getCubedSphereTiles().type() != "cubedsphere_fv3") {
-      throw_Exception("NodalCubedSphereMeshGenerator only works with FV3 tiles", Here());
+    if ( csprojection->getCubedSphereTiles().type() != "cubedsphere_fv3" ) {
+        throw_Exception( "NodalCubedSphereMeshGenerator only works with FV3 tiles", Here() );
     }
 
     // Make a list linking ghost (t, i, j) values to known (t, i, j)
