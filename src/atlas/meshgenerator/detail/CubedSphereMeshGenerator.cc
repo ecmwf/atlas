@@ -189,7 +189,8 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
   struct LocalElem;
 
   // Define bad index values.
-  constexpr idx_t undefinedIdx = -1;
+  constexpr idx_t undefinedIdx       = -1;
+  constexpr idx_t undefinedGlobalIdx = -1;
 
   // Define cell/node type.
   enum class ElemType {
@@ -203,7 +204,7 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
   // stored in (t, j, i) row-major order.
   struct GlobalElem {
     LocalElem* localPtr{};                    // Pointer to local element.
-    idx_t      globalIdx{undefinedIdx};       // Global index.
+    gidx_t     globalIdx{undefinedGlobalIdx}; // Global index.
     idx_t      remoteIdx{undefinedIdx};       // Remote index.
     idx_t      part{undefinedIdx};            // Partition.
   };
@@ -353,10 +354,10 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
   // Initialise bounding box.
   auto cellBounds = std::vector<BoundingBox>(static_cast<size_t>(6));
 
-  // Set xy and tji grid iterators.
+  // Set tji grid iterator.
   auto ijtIt = csGrid.tij().begin();
 
-  for (idx_t gridIdx = 0; gridIdx < csGrid.size(); ++gridIdx) {
+  for (gidx_t gridIdx = 0; gridIdx < csGrid.size(); ++gridIdx) {
 
     // It's more than likely that the grid order follows the same (t, j, i) row-
     // major order of the mesh. However, we shouldn't assume this is true.
@@ -473,10 +474,12 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
 
           // We're not sure (i.e., node is on a tile edge).
 
-          // check that xy is on this tile.
+          // Check that xy is on this tile.
           PointXY xy = jacobian.xy(PointIJ(i, j) ,t);
           xy = jacobian.snapToEdge(xy, t);
 
+          // This will only determine if tGlobal does not match t.
+          // This is cheaper than determining the correct tGlobal.
           idx_t tGlobal =
             csProjection->getCubedSphereTiles().indexFromXY(xy.data());
 
