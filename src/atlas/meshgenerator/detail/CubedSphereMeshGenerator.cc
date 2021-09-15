@@ -394,7 +394,7 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
   auto cellLocalIdxCount = std::vector<idx_t>(nParts, 0);
 
   // Give possible edge-halo cells a unique global ID.
-  idx_t cellGlobalIdxCount = nCellsUnique + 1;
+  gidx_t cellGlobalIdxCount = nCellsUnique + 1;
 
   for (idx_t t = 0; t < 6; ++t) {
     for (idx_t j = -nHalo; j < N + nHalo; ++j) {
@@ -439,7 +439,7 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
   auto nodeLocalIdxCount = std::vector<idx_t>(nParts, 0);
 
   // Set counter for global indices.
-  idx_t nodeGlobalOwnedIdxCount = 1;
+  gidx_t nodeGlobalOwnedIdxCount = 1;
   idx_t nodeGlobalGhostIdxCount = nNodesUnique + 1;
 
   for (idx_t t = 0; t < 6; ++t) {
