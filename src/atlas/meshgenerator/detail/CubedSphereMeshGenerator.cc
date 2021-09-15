@@ -253,8 +253,9 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
   const idx_t nNodesTotal  = nNodesArray - 6 * 4 * nHalo * nHalo;
   const idx_t nCellsTotal  = nCellsArray - 6 * 4 * nHalo * nHalo;
 
-  // Projection and tiles
+  // Projection and jacobian.
   const auto* const csProjection = castProjection(csGrid.projection().get());
+  const auto jacobian = NeighbourJacobian(csGrid);
 
   // Get partition information.
   const auto nParts = options.get<size_t>("nb_parts");
@@ -367,15 +368,15 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
     const idx_t j = (*ijtIt).j();
     const idx_t t = (*ijtIt).t();
     const size_t cellIdx = getCellIdx(i, j, t);
-    GlobalElem& cell = globalCells[cellIdx];
+    GlobalElem& globalCell = globalCells[cellIdx];
 
     // Set global index.
-    cell.globalIdx = gridIdx + 1;
+    globalCell.globalIdx = gridIdx + 1;
 
     // Set partition.
-    cell.part = distribution.partition(gridIdx);
+    globalCell.part = distribution.partition(gridIdx);
 
-    if (cell.part == static_cast<idx_t>(thisPart)) {
+    if (globalCell.part == static_cast<idx_t>(thisPart)) {
 
       // Keep track of local (t, j, i) bounds.
       BoundingBox& bounds = cellBounds[static_cast<size_t>(t)];
@@ -393,8 +394,6 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
   auto cellLocalIdxCount = std::vector<idx_t>(nParts, 0);
 
   // Give possible edge-halo cells a unique global ID.
-  const auto jacobian = NeighbourJacobian(csGrid);
-
   idx_t cellGlobalIdxCount = nCellsUnique + 1;
 
   for (idx_t t = 0; t < 6; ++t) {
@@ -405,18 +404,19 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
         if (invalidCell(i, j)) continue;
 
         // Get cell.
-        GlobalElem& cell = globalCells[getCellIdx(i, j, t)];
+        GlobalElem& globalCell = globalCells[getCellIdx(i, j, t)];
 
         // Set cell remote index if interior cell.
         if (interiorCell(i, j)) {
 
           // Set remote index.
-          cell.remoteIdx = cellLocalIdxCount[static_cast<size_t>(cell.part)]++;
+          globalCell.remoteIdx =
+            cellLocalIdxCount[static_cast<size_t>(globalCell.part)]++;
 
         } else {
 
           // Set global index.
-          cell.globalIdx = cellGlobalIdxCount++;
+          globalCell.globalIdx = cellGlobalIdxCount++;
           // Leave remote index and part undefined.
         }
       }
@@ -450,24 +450,25 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
         if (invalidNode(i, j)) continue;
 
         // Get this node.
-        GlobalElem& node = globalNodes[getNodeIdx(i, j, t)];
+        GlobalElem& globalNode = globalNodes[getNodeIdx(i, j, t)];
 
         // Get owner cell.
         idx_t iCell, jCell;
         std::tie(iCell, jCell) = nodeOwnerCell(i, j);
-        const GlobalElem& cell = globalCells[getCellIdx(iCell, jCell, t)];
+        const GlobalElem& ownerCell = globalCells[getCellIdx(iCell, jCell, t)];
 
         if (interiorNode(i, j)) {
 
           // Node is definitely an owner.
-          node.globalIdx = nodeGlobalOwnedIdxCount++;
-          node.part = cell.part;
-          node.remoteIdx = nodeLocalIdxCount[static_cast<size_t>(node.part)]++;
+          globalNode.globalIdx = nodeGlobalOwnedIdxCount++;
+          globalNode.part = ownerCell.part;
+          globalNode.remoteIdx =
+            nodeLocalIdxCount[static_cast<size_t>(globalNode.part)]++;
 
         } else if (exteriorNode(i, j)) {
 
           // Node is definitely a ghost.
-          node.globalIdx = nodeGlobalGhostIdxCount++;
+          globalNode.globalIdx = nodeGlobalGhostIdxCount++;
           // Leave remote index and partition undefined.
 
         } else {
@@ -486,14 +487,15 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
           if (tGlobal == t) {
 
             // Node is an owner.
-            node.globalIdx = nodeGlobalOwnedIdxCount++;
-            node.part = cell.part;
-            node.remoteIdx = nodeLocalIdxCount[static_cast<size_t>(node.part)]++;
+            globalNode.globalIdx = nodeGlobalOwnedIdxCount++;
+            globalNode.part = ownerCell.part;
+            globalNode.remoteIdx =
+              nodeLocalIdxCount[static_cast<size_t>(globalNode.part)]++;
 
           } else {
 
             // Node is a ghost.
-            node.globalIdx = nodeGlobalGhostIdxCount++;
+            globalNode.globalIdx = nodeGlobalGhostIdxCount++;
 
           }
         } // Finished with this node.
@@ -556,7 +558,8 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
                  (iHalo == i && jHalo == j)) continue;
 
               // Is there a nearby owner cell?
-              const GlobalElem& ownerCell = globalCells[getCellIdx(iHalo, jHalo, t)];
+              const GlobalElem& ownerCell =
+                globalCells[getCellIdx(iHalo, jHalo, t)];
 
               const bool isHalo =
                 ownerCell.part == static_cast<idx_t>(thisPart);
@@ -596,7 +599,9 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
   // Partition by cell type.
   auto haloBeginIt =
     std::stable_partition(localCells.begin(), localCells.end(),
-    [](const LocalElem& cell) -> bool {return cell.type == ElemType::OWNER;});
+    [](const LocalElem& localCell) -> bool {
+      return localCell.type == ElemType::OWNER;
+    });
 
   // Sort by halo.
   std::stable_sort(haloBeginIt, localCells.end(),
@@ -605,14 +610,15 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
 
   // Point global cell to local cell. This is needed to determine node halos.
   // Need to determine remote index and partition if we haven't done so already.
-  for (LocalElem& cell : localCells) {
+  for (LocalElem& localCell : localCells) {
 
-    cell.globalPtr->localPtr = &cell;
+    localCell.globalPtr->localPtr = &localCell;
 
-    if (cell.globalPtr->remoteIdx == undefinedIdx) {
+    if (localCell.globalPtr->remoteIdx == undefinedIdx) {
 
       const auto ijtGlobal =
-        jacobian.ijLocalToGlobal(PointIJ(cell.i + 0.5, cell.j + 0.5), cell.t);
+        jacobian.ijLocalToGlobal(
+          PointIJ(localCell.i + 0.5, localCell.j + 0.5), localCell.t);
 
       const idx_t i = ijtGlobal.first.iCell();
       const idx_t j = ijtGlobal.first.jCell();
@@ -622,8 +628,8 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
 
       const GlobalElem& ownerCell = globalCells[getCellIdx(i, j, t)];
 
-      cell.globalPtr->remoteIdx = ownerCell.remoteIdx;
-      cell.globalPtr->part = ownerCell.part;
+      localCell.globalPtr->remoteIdx = ownerCell.remoteIdx;
+      localCell.globalPtr->part = ownerCell.part;
     }
   }
 
@@ -678,14 +684,15 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
 
               if (invalidCell(iCell, jCell)) continue;
 
-              const GlobalElem& cell = globalCells[getCellIdx(iCell, jCell, t)];
+              const GlobalElem& globalCell =
+                globalCells[getCellIdx(iCell, jCell, t)];
 
               // Get halo information from cell.
               // By this point, any global cell on this PE will have a
               // non-null local cell pointer.
-              if (cell.localPtr) {
+              if (globalCell.localPtr) {
                 isGhost = true;
-                halo = std::min(halo, cell.localPtr->halo);
+                halo = std::min(halo, globalCell.localPtr->halo);
               }
             }
           }
@@ -713,7 +720,9 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
   // Partition by node type.
   auto ghostBeginIt =
     std::stable_partition(localNodes.begin(), localNodes.end(),
-    [](const LocalElem& node) -> bool {return node.type == ElemType::OWNER;});
+    [](const LocalElem& localNode) -> bool {
+      return localNode.type == ElemType::OWNER;
+    });
 
   // Sort by halo.
   std::stable_sort(ghostBeginIt, localNodes.end(),
@@ -723,14 +732,14 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
   // Associate global nodes with local nodes. Allows us to determine node
   // local indices around a cell.
   // Determine partition and remote index if we haven't done so already.
-  for (LocalElem& node : localNodes) {
+  for (LocalElem& localNode : localNodes) {
 
-    node.globalPtr->localPtr = &node;
+    localNode.globalPtr->localPtr = &localNode;
 
-    if (node.globalPtr->remoteIdx == undefinedIdx) {
+    if (localNode.globalPtr->remoteIdx == undefinedIdx) {
 
       const auto ijtGlobal =
-        jacobian.ijLocalToGlobal(PointIJ(node.i, node.j), node.t);
+        jacobian.ijLocalToGlobal(PointIJ(localNode.i, localNode.j), localNode.t);
 
       const idx_t i = ijtGlobal.first.iNode();
       const idx_t j = ijtGlobal.first.jNode();
@@ -741,8 +750,8 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
       const GlobalElem& ownerNode =
         globalNodes[getNodeIdx(i, j, t)];
 
-      node.globalPtr->remoteIdx = ownerNode.remoteIdx;
-      node.globalPtr->part = ownerNode.part;
+      localNode.globalPtr->remoteIdx = ownerNode.remoteIdx;
+      localNode.globalPtr->part = ownerNode.part;
     }
   }
 
@@ -773,21 +782,22 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
 
   // Set fields.
   idx_t nodeLocalIdx = 0;
-  for (const LocalElem& node : localNodes) {
+  for (const LocalElem& localNode : localNodes) {
 
     // Set global index.
-    nodesGlobalIdx(nodeLocalIdx) = node.globalPtr->globalIdx;
+    nodesGlobalIdx(nodeLocalIdx) = localNode.globalPtr->globalIdx;
 
     // Set node remote index.
-    nodesRemoteIdx(nodeLocalIdx) = node.globalPtr->remoteIdx;
+    nodesRemoteIdx(nodeLocalIdx) = localNode.globalPtr->remoteIdx;
 
     // Set node partition.
-    nodesPart(nodeLocalIdx) = node.globalPtr->part;
+    nodesPart(nodeLocalIdx) = localNode.globalPtr->part;
 
     // Set xy.
-    const PointXY xyLocal = jacobian.xy(PointIJ(node.i, node.j), node.t);
-    const PointXY xyGlobal = interiorNode(node.i, node.j) ?
-      xyLocal : jacobian.xyLocalToGlobal(xyLocal, node.t).first;
+    const PointXY xyLocal =
+      jacobian.xy(PointIJ(localNode.i, localNode.j), localNode.t);
+    const PointXY xyGlobal = interiorNode(localNode.i, localNode.j) ?
+      xyLocal : jacobian.xyLocalToGlobal(xyLocal, localNode.t).first;
 
     nodesXy(nodeLocalIdx, XX) = xyLocal.x();
     nodesXy(nodeLocalIdx, YY) = xyLocal.y();
@@ -798,17 +808,17 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
     nodesLonLat(nodeLocalIdx, LAT) = lonLat.lat();
 
     // Set tij.
-    nodesIjt(nodeLocalIdx, Coordinates::I) = node.i;
-    nodesIjt(nodeLocalIdx, Coordinates::J) = node.j;
-    nodesIjt(nodeLocalIdx, Coordinates::T) = node.t;
+    nodesIjt(nodeLocalIdx, Coordinates::I) = localNode.i;
+    nodesIjt(nodeLocalIdx, Coordinates::J) = localNode.j;
+    nodesIjt(nodeLocalIdx, Coordinates::T) = localNode.t;
 
     // Set halo.
-    nodesHalo(nodeLocalIdx) = node.halo;
-    ATLAS_ASSERT(node.halo != undefinedIdx);
+    nodesHalo(nodeLocalIdx) = localNode.halo;
+    ATLAS_ASSERT(localNode.halo != undefinedIdx);
 
     // Set flags.
     Topology::reset(nodesFlags(nodeLocalIdx));
-    switch(node.type) {
+    switch(localNode.type) {
 
       case ElemType::UNDEFINED : {
         ATLAS_ASSERT(0);
@@ -817,7 +827,7 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
       case ElemType::OWNER : {
         nodesGhost(nodeLocalIdx) = 0;
         // Vitally important that these two match!
-        ATLAS_ASSERT(nodeLocalIdx == node.globalPtr->remoteIdx);
+        ATLAS_ASSERT(nodeLocalIdx == localNode.globalPtr->remoteIdx);
         break;
       }
       case ElemType::HALO : {
@@ -839,7 +849,8 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
   auto& cells = mesh.cells();
 
   // Resize cells.
-  cells.add(new mesh::temporary::Quadrilateral(), static_cast<idx_t>(localCells.size()));
+  cells.add(new mesh::temporary::Quadrilateral(),
+            static_cast<idx_t>(localCells.size()));
 
   // Add extra fields.
   ijtField = cells.add(
@@ -871,38 +882,39 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
   // Set method to get node local index.
   const auto getNodeLocalIdx = [&](idx_t i, idx_t j, idx_t t) -> idx_t {
 
-    const GlobalElem& node = globalNodes[getNodeIdx(i, j, t)];
+    const GlobalElem& globalNode = globalNodes[getNodeIdx(i, j, t)];
 
     // Do some pointer arithmetic to get local index.
-    return static_cast<idx_t>(node.localPtr - localNodes.data());
+    return static_cast<idx_t>(globalNode.localPtr - localNodes.data());
   };
 
   idx_t cellLocalIdx = 0;
-  for (const LocalElem& cell : localCells) {
+  for (const LocalElem& localCell : localCells) {
 
     // Get local indices four surroundings nodes.
     const auto quadNodeIdx = std::array<idx_t, 4> {
-      getNodeLocalIdx(cell.i    , cell.j    , cell.t),
-      getNodeLocalIdx(cell.i + 1, cell.j    , cell.t),
-      getNodeLocalIdx(cell.i + 1, cell.j + 1, cell.t),
-      getNodeLocalIdx(cell.i    , cell.j + 1, cell.t)};
+      getNodeLocalIdx(localCell.i    , localCell.j    , localCell.t),
+      getNodeLocalIdx(localCell.i + 1, localCell.j    , localCell.t),
+      getNodeLocalIdx(localCell.i + 1, localCell.j + 1, localCell.t),
+      getNodeLocalIdx(localCell.i    , localCell.j + 1, localCell.t)};
 
     // Set connectivity.
     nodeConnectivity.set(cellLocalIdx + cellElemIdx0, quadNodeIdx.data());
 
     // Set global index.
-    cellsGlobalIdx(cellLocalIdx) = cell.globalPtr->globalIdx;
+    cellsGlobalIdx(cellLocalIdx) = localCell.globalPtr->globalIdx;
 
     // Set cell remote index.
-    cellsRemoteIdx(cellLocalIdx) = cell.globalPtr->remoteIdx;
+    cellsRemoteIdx(cellLocalIdx) = localCell.globalPtr->remoteIdx;
 
     // Set partition.
-    cellsPart(cellLocalIdx) = cell.globalPtr->part;
+    cellsPart(cellLocalIdx) = localCell.globalPtr->part;
 
     // Set xy.
-    const PointXY xyLocal = jacobian.xy(PointIJ(cell.i + 0.5, cell.j + 0.5), cell.t);
-    const PointXY xyGlobal = interiorCell(cell.i, cell.j) ?
-      xyLocal : jacobian.xyLocalToGlobal(xyLocal, cell.t).first;
+    const PointXY xyLocal =
+      jacobian.xy(PointIJ(localCell.i + 0.5, localCell.j + 0.5), localCell.t);
+    const PointXY xyGlobal = interiorCell(localCell.i, localCell.j) ?
+      xyLocal : jacobian.xyLocalToGlobal(xyLocal, localCell.t).first;
 
     cellsXy(cellLocalIdx, XX) = xyLocal.x();
     cellsXy(cellLocalIdx, YY) = xyLocal.y();
@@ -913,18 +925,18 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
     cellsLonLat(cellLocalIdx, LAT) = lonLat.lat();
 
     // Set ijt.
-    cellsIjt(cellLocalIdx, Coordinates::I) = cell.i;
-    cellsIjt(cellLocalIdx, Coordinates::J) = cell.j;
-    cellsIjt(cellLocalIdx, Coordinates::T) = cell.t;
+    cellsIjt(cellLocalIdx, Coordinates::I) = localCell.i;
+    cellsIjt(cellLocalIdx, Coordinates::J) = localCell.j;
+    cellsIjt(cellLocalIdx, Coordinates::T) = localCell.t;
 
     // Set halo.
-    cellsHalo(cellLocalIdx) = cell.halo;
+    cellsHalo(cellLocalIdx) = localCell.halo;
 
-    ATLAS_ASSERT(cell.halo != undefinedIdx);
+    ATLAS_ASSERT(localCell.halo != undefinedIdx);
 
     // Set flags.
     Topology::reset(cellsFlags(cellLocalIdx));
-    switch(cell.type) {
+    switch(localCell.type) {
 
       case ElemType::UNDEFINED : {
         ATLAS_ASSERT(0);
@@ -932,7 +944,7 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid,
       }
       case ElemType::OWNER : {
         // Vitally important that these two match!
-        ATLAS_ASSERT(cellLocalIdx == cell.globalPtr->remoteIdx);
+        ATLAS_ASSERT(cellLocalIdx == localCell.globalPtr->remoteIdx);
         break;
       }
       case ElemType::HALO : {
