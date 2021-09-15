@@ -132,7 +132,6 @@ void Method::interpolate_field_rank3( const Field& src, Field& tgt, const Matrix
 
 template <typename Value>
 void Method::adjoint_interpolate_field_rank1( Field& src, Field& tgt, const Matrix& W ) const {
-
     Field tmp( src.name(), src.datatype().kind(), src.shape() );
     tmp.set_levels( src.levels() );
 
@@ -140,8 +139,8 @@ void Method::adjoint_interpolate_field_rank1( Field& src, Field& tgt, const Matr
     auto src_v = array::make_view<double, 1>( src );
     auto tgt_v = array::make_view<double, 1>( tgt );
 
-    for ( idx_t t = 0; t < tmp.shape(0); ++t ) {
-        tmp_v(t) = 0.;
+    for ( idx_t t = 0; t < tmp.shape( 0 ); ++t ) {
+        tmp_v( t ) = 0.;
     }
 
     if ( use_eckit_linalg_spmv_ ) {
@@ -155,9 +154,9 @@ void Method::adjoint_interpolate_field_rank1( Field& src, Field& tgt, const Matr
         sparse_matrix_multiply( W, tgt_v, tmp_v, sparse::backend::omp() );
     }
 
-    for ( idx_t t = 0; t < tmp.shape(0); ++t ) {
-        src_v(t) += tmp_v(t);
-        tgt_v(t) = 0.;
+    for ( idx_t t = 0; t < tmp.shape( 0 ); ++t ) {
+        src_v( t ) += tmp_v( t );
+        tgt_v( t ) = 0.;
     }
 }
 
@@ -170,25 +169,24 @@ void Method::adjoint_interpolate_field_rank2( Field& src, Field& tgt, const Matr
     auto src_v = array::make_view<Value, 2>( src );
     auto tgt_v = array::make_view<Value, 2>( tgt );
 
-    for ( idx_t t = 0; t < tmp.shape(0); ++t ) {
-        for ( idx_t k = 0; k < tmp.shape(1); ++k ) {
-            tmp_v(t, k) = 0.;
+    for ( idx_t t = 0; t < tmp.shape( 0 ); ++t ) {
+        for ( idx_t k = 0; k < tmp.shape( 1 ); ++k ) {
+            tmp_v( t, k ) = 0.;
         }
     }
 
     sparse_matrix_multiply( W, tgt_v, tmp_v, sparse::backend::omp() );
 
-    for ( idx_t t = 0; t < tmp.shape(0); ++t ) {
-        for ( idx_t k = 0; k < tmp.shape(1); ++k ) {
-            src_v(t, k) += tmp_v(t, k);
-            tgt_v(t, k) = 0.;
+    for ( idx_t t = 0; t < tmp.shape( 0 ); ++t ) {
+        for ( idx_t k = 0; k < tmp.shape( 1 ); ++k ) {
+            src_v( t, k ) += tmp_v( t, k );
+            tgt_v( t, k ) = 0.;
         }
     }
 }
 
 template <typename Value>
 void Method::adjoint_interpolate_field_rank3( Field& src, Field& tgt, const Matrix& W ) const {
-
     Field tmp( src.name(), src.datatype().kind(), src.shape() );
     tmp.set_levels( src.levels() );
 
@@ -196,21 +194,21 @@ void Method::adjoint_interpolate_field_rank3( Field& src, Field& tgt, const Matr
     auto src_v = array::make_view<Value, 3>( src );
     auto tgt_v = array::make_view<Value, 3>( tgt );
 
-    for ( idx_t t = 0; t < tmp.shape(0); ++t ) {
-        for ( idx_t j = 0; j < tmp.shape(1); ++j ) {
-            for ( idx_t k = 0; k < tmp.shape(2); ++k ) {
-                tmp_v(t, j, k) = 0.;
+    for ( idx_t t = 0; t < tmp.shape( 0 ); ++t ) {
+        for ( idx_t j = 0; j < tmp.shape( 1 ); ++j ) {
+            for ( idx_t k = 0; k < tmp.shape( 2 ); ++k ) {
+                tmp_v( t, j, k ) = 0.;
             }
         }
     }
 
     sparse_matrix_multiply( W, tgt_v, tmp_v, sparse::backend::omp() );
 
-    for ( idx_t t = 0; t < tmp.shape(0); ++t ) {
-        for ( idx_t j = 0; j < tmp.shape(1); ++j ) {
-            for ( idx_t k = 0; k < tmp.shape(2); ++k ) {
-                src_v(t, j, k) += tmp_v(t, j, k);
-                tgt_v(t, j, k) = 0.;
+    for ( idx_t t = 0; t < tmp.shape( 0 ); ++t ) {
+        for ( idx_t j = 0; j < tmp.shape( 1 ); ++j ) {
+            for ( idx_t k = 0; k < tmp.shape( 2 ); ++k ) {
+                src_v( t, j, k ) += tmp_v( t, j, k );
+                tgt_v( t, j, k ) = 0.;
             }
         }
     }
@@ -276,18 +274,18 @@ Method::Method( const Method::Config& config ) {
     matrix_cache_  = interpolation::MatrixCache( matrix_shared_ );
     matrix_        = matrix_shared_.get();
 
-    config.get("adjoint", create_adjoint_coeffs_);
+    config.get( "adjoint", adjoint_ );
 }
 
 void Method::setup( const FunctionSpace& source, const FunctionSpace& target ) {
     ATLAS_TRACE( "atlas::interpolation::method::Method::setup(FunctionSpace, FunctionSpace)" );
     this->do_setup( source, target );
 
-    if (create_adjoint_coeffs_) {
-        Matrix tmp(*matrix_);
+    if ( adjoint_ ) {
+        Matrix tmp( *matrix_ );
 
         // if interpolation is matrix free then matrix->nonZeros() will be zero.
-        if (tmp.nonZeros() > 0) {
+        if ( tmp.nonZeros() > 0 ) {
             matrix_transpose_ = tmp.transpose();
         }
     }
@@ -408,29 +406,26 @@ void Method::do_execute_adjoint( FieldSet& fieldsSource, FieldSet& fieldsTarget 
     }
 }
 
-void Method::do_execute_adjoint(Field& src, Field& tgt ) const {
+void Method::do_execute_adjoint( Field& src, Field& tgt ) const {
     ATLAS_TRACE( "atlas::interpolation::method::Method::do_execute_adjoint()" );
 
     if ( nonLinear_( src ) ) {
-        throw_NotImplemented( "Adjoint interpolation only works for interpolation schemes that are linear",
-                              Here() );
+        throw_NotImplemented( "Adjoint interpolation only works for interpolation schemes that are linear", Here() );
     }
 
     if ( not missing_.empty() ) {
-        throw_NotImplemented( "Adjoint Interpolation does not work for fields that have missing data. ",
-                              Here() );
+        throw_NotImplemented( "Adjoint Interpolation does not work for fields that have missing data. ", Here() );
     }
 
     if ( matrix_transpose_.empty() ) {
-        throw_AssertionFailed("Need to set 'adjoint coefficients' to true in config for adjoint interpolation to work");
+        throw_AssertionFailed(
+            "Need to set 'adjoint coefficients' to true in config for adjoint interpolation to work" );
     }
 
     if ( src.datatype().kind() == array::DataType::KIND_REAL64 ) {
-
         adjoint_interpolate_field<double>( src, tgt, matrix_transpose_ );
     }
     else if ( src.datatype().kind() == array::DataType::KIND_REAL32 ) {
-
         adjoint_interpolate_field<float>( src, tgt, matrix_transpose_ );
     }
     else {
@@ -440,9 +435,7 @@ void Method::do_execute_adjoint(Field& src, Field& tgt ) const {
     src.set_dirty();
 
     adjointHaloExchange( src );
-
 }
-
 
 
 void Method::normalise( Triplets& triplets ) {
