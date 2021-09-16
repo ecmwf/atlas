@@ -11,8 +11,6 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Point.h"
 
-#include "eckit/maths/Eigen.h"
-
 namespace atlas {
 class CubedSphereGrid;
 }
@@ -128,6 +126,9 @@ public:
     /// Discrete point contructor (implicit dx).
     Jacobian2( const Point2& f00, const Point2& f10, const Point2& f01 );
 
+    /// Determinant of Jacobian.
+    double det() const;
+
     /// Jacobian-scalar multiplication.
     Jacobian2 operator*( double a ) const;
 
@@ -144,11 +145,13 @@ public:
     Jacobian2 sign() const;
 
 private:
-    // Data constructor.
-    inline Jacobian2( const Eigen::Matrix2d& data );
 
     // Data storage.
-    Eigen::Matrix2d data_{};
+    double df0_by_dx0_;
+    double df0_by_dx1_;
+    double df1_by_dx0_;
+    double df1_by_dx1_;
+
 };
 
 /// \brief   Class to convert between ij and xy on a tile and its four
