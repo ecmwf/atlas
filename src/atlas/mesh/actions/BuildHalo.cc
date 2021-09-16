@@ -1303,6 +1303,21 @@ void BuildHalo::operator()( int nb_elems ) {
     int halo = 0;
     mesh_.metadata().get( "halo", halo );
 
+    // Locked halos must be set at mesh generation.
+    bool haloLocked = false;
+    if ( mesh_.metadata().get( "halo_locked", haloLocked ) ) {
+        if ( haloLocked && halo < nb_elems ) {
+            const auto errMsg =
+                "Error: Halo size locked. Please set MeshGenerator "
+                "parameter \"halo\" to at least " +
+                std::to_string( nb_elems ) +
+                ".\n"
+                "Current halo size is " +
+                std::to_string( halo ) + ".\n";
+            throw_Exception( errMsg, Here() );
+        }
+    }
+
     if ( halo == nb_elems ) {
         return;
     }
