@@ -524,7 +524,7 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
                 else {
                     // Cell is halo if there are nearby owners.
                     bool ownerFound = false;
-                    idx_t halo     = nHalo;
+                    idx_t halo      = nHalo;
                     for ( idx_t jHalo = j - nHalo; jHalo < j + nHalo + 1; ++jHalo ) {
                         for ( idx_t iHalo = i - nHalo; iHalo < i + nHalo + 1; ++iHalo ) {
                             if ( invalidCell( iHalo, jHalo ) || ( iHalo == i && jHalo == j ) )

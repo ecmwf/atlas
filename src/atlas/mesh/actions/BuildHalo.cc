@@ -1309,8 +1309,11 @@ void BuildHalo::operator()( int nb_elems ) {
         if ( haloLocked && halo < nb_elems ) {
             const auto errMsg =
                 "Error: Halo size locked. Please set MeshGenerator "
-                "parameter \"halo\" to at least " + std::to_string( nb_elems ) + ".\n"
-                "Current halo size is " + std::to_string( halo ) + ".\n";
+                "parameter \"halo\" to at least " +
+                std::to_string( nb_elems ) +
+                ".\n"
+                "Current halo size is " +
+                std::to_string( halo ) + ".\n";
             throw_Exception( errMsg, Here() );
         }
     }
