@@ -326,7 +326,7 @@ PointIJT NeighbourJacobian::ijLocalToGlobal( const PointIJT& ijtLocal ) const {
 }
 
 bool NeighbourJacobian::ijInterior( const PointIJ& ij ) const {
-    return ij.iNode() >= 0 && ij.iNode() <= N_ and ij.jNode() >= 0 && ij.jNode() <= N_;
+    return ij.iNode() >= 0 && ij.iNode() <= N_ && ij.jNode() >= 0 && ij.jNode() <= N_;
 }
 
 bool NeighbourJacobian::ijEdge( const PointIJ& ij ) const {

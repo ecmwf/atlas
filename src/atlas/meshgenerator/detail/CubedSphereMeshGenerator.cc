@@ -522,8 +522,8 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
                     localCell.globalPtr = &globalCell;
                 }
                 else {
-                    // Check if cell is halo.
-                    bool haloFound = false;
+                    // Cell is halo if there are nearby owners.
+                    bool ownerFound = false;
                     idx_t halo     = nHalo;
                     for ( idx_t jHalo = j - nHalo; jHalo < j + nHalo + 1; ++jHalo ) {
                         for ( idx_t iHalo = i - nHalo; iHalo < i + nHalo + 1; ++iHalo ) {
@@ -533,11 +533,11 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
                             // Is there a nearby owner cell?
                             const GlobalElem& ownerCell = globalCells[getCellIdx( iHalo, jHalo, t )];
 
-                            const bool isHalo = ownerCell.part == static_cast<idx_t>( thisPart );
+                            const bool isOwner = ownerCell.part == static_cast<idx_t>( thisPart );
 
-                            haloFound = haloFound || isHalo;
+                            ownerFound = ownerFound || isOwner;
 
-                            if ( isHalo ) {
+                            if ( isOwner ) {
                                 // Determine halo level from cell distance (l-infinity norm).
                                 const idx_t dist = std::max( std::abs( iHalo - i ), std::abs( jHalo - j ) );
 
@@ -546,7 +546,7 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
                         }
                     }
 
-                    if ( haloFound ) {
+                    if ( ownerFound ) {
                         // Cell is a halo.
                         localCells.emplace_back();
                         LocalElem& localCell = localCells.back();
