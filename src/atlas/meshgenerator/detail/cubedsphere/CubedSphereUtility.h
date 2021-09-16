@@ -62,6 +62,7 @@ const CubedSphereProjectionBase* castProjection( const ProjectionImpl* projectio
 class PointIJ : public Point2 {
 public:
     using Point2::Point2;
+    PointIJ() : Point2() {}
 
     /// Index constructor.
     inline PointIJ( idx_t i, idx_t j ) : Point2( static_cast<double>( i ), static_cast<double>( j ) ) {}
