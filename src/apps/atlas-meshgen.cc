@@ -80,6 +80,10 @@ MeshGenerator make_meshgenerator( const Grid& grid, const AtlasTool::Args& args 
         config.set( "partitions", args.getInt( "partitions" ) );
         config.set( "nb_parts", args.getInt( "partitions" ) );
     }
+    if ( args.has( "halo" ) ) {
+        config.set( "halo", args.getInt( "halo" ) );
+    }
+
 
     return MeshGenerator{config};
 }
@@ -175,6 +179,9 @@ Meshgen2Gmsh::Meshgen2Gmsh( int argc, char** argv ) : AtlasTool( argc, argv ) {
     add_option( new SimpleOption<bool>( "gmsh", "Output gmsh (default=true)" ) );
     add_option( new SimpleOption<long>( "partition", "partition [0:partitions]" ) );
     add_option( new SimpleOption<long>( "partitions", "Number of partitions" ) );
+    add_option( new SimpleOption<bool>( "partition-graph", "Output partition graph" ) );
+    add_option(
+        new SimpleOption<bool>( "partition-polygons", "Output partition polygons python visualization scripts" ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -348,13 +355,20 @@ int Meshgen2Gmsh::execute( const Args& args ) {
     }
 
     if ( info ) {
-        Log::info() << "Partitioning graph: \n" << mesh.partitionGraph() << std::endl;
         Log::info() << "Mesh partition footprint: " << eckit::Bytes( mesh.footprint() ) << std::endl;
+    }
+
+    if ( args.getBool( "partition-graph", false ) ) {
+        Log::info() << "Partitioning graph: \n" << mesh.partitionGraph() << std::endl;
+    }
+
+    if ( args.getBool( "partition-polygons", false ) ) {
         for ( idx_t jhalo = 0; jhalo <= halo; ++jhalo ) {
             mesh.polygon( jhalo ).outputPythonScript( "polygon_halo" + std::to_string( jhalo ) + ".py",
                                                       Config( "nodes", false )( "coordinates", coordinates ) );
         }
     }
+
     return success();
 }
 

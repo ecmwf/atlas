@@ -57,6 +57,9 @@ public:
     void execute( const FieldSet& source, FieldSet& target ) const;
     void execute( const Field& source, Field& target ) const;
 
+    void execute_adjoint( FieldSet& source, FieldSet& target ) const;
+    void execute_adjoint( Field& source, Field& target ) const;
+
     virtual void print( std::ostream& ) const = 0;
 
     virtual const FunctionSpace& source() const = 0;
@@ -68,6 +71,9 @@ protected:
     virtual void do_execute( const FieldSet& source, FieldSet& target ) const;
     virtual void do_execute( const Field& source, Field& target ) const;
 
+    virtual void do_execute_adjoint( FieldSet& source, FieldSet& target ) const;
+    virtual void do_execute_adjoint( Field& source, Field& target ) const;
+
     using Triplet  = eckit::linalg::Triplet;
     using Triplets = std::vector<Triplet>;
     using Matrix   = eckit::linalg::SparseMatrix;
@@ -76,6 +82,9 @@ protected:
 
     void haloExchange( const FieldSet& ) const;
     void haloExchange( const Field& ) const;
+
+    void adjointHaloExchange( const FieldSet& ) const;
+    void adjointHaloExchange( const Field& ) const;
 
     // NOTE : Matrix-free or non-linear interpolation operators do not have matrices, so do not expose here
     friend class atlas::test::Access;
@@ -87,6 +96,9 @@ protected:
     bool use_eckit_linalg_spmv_;
     bool allow_halo_exchange_{true};
     std::vector<idx_t> missing_;
+    bool adjoint_{false};
+    Matrix matrix_transpose_;
+
 
 protected:
     virtual void do_setup( const FunctionSpace& source, const FunctionSpace& target ) = 0;
@@ -106,6 +118,18 @@ private:
 
     template <typename Value>
     void interpolate_field_rank3( const Field& src, Field& tgt, const Matrix& ) const;
+
+    template <typename Value>
+    void adjoint_interpolate_field( Field& src, Field& tgt, const Matrix& ) const;
+
+    template <typename Value>
+    void adjoint_interpolate_field_rank1( Field& src, Field& tgt, const Matrix& ) const;
+
+    template <typename Value>
+    void adjoint_interpolate_field_rank2( Field& src, Field& tgt, const Matrix& ) const;
+
+    template <typename Value>
+    void adjoint_interpolate_field_rank3( Field& src, Field& tgt, const Matrix& ) const;
 
     void check_compatibility( const Field& src, const Field& tgt, const Matrix& W ) const;
 };

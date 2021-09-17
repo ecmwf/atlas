@@ -146,13 +146,11 @@ public:
     Jacobian2 sign() const;
 
 private:
-
     // Data storage.
     double df0_by_dx0_;
     double df0_by_dx1_;
     double df1_by_dx0_;
     double df1_by_dx1_;
-
 };
 
 /// \brief   Class to convert between ij and xy on a tile and its four

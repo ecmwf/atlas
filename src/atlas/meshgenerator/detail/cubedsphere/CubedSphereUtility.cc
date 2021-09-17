@@ -34,48 +34,44 @@ const CubedSphereProjectionBase* castProjection( const ProjectionImpl* projectio
 // -----------------------------------------------------------------------------
 
 Jacobian2::Jacobian2( double df0_by_dx0, double df0_by_dx1, double df1_by_dx0, double df1_by_dx1 ) :
-    df0_by_dx0_( df0_by_dx0 ),  df0_by_dx1_( df0_by_dx1 ),
-    df1_by_dx0_( df1_by_dx0 ),  df1_by_dx1_( df1_by_dx1 ) {
-}
+    df0_by_dx0_( df0_by_dx0 ), df0_by_dx1_( df0_by_dx1 ), df1_by_dx0_( df1_by_dx0 ), df1_by_dx1_( df1_by_dx1 ) {}
 
 Jacobian2::Jacobian2( const Point2& f00, const Point2& f10, const Point2& f01, double dx0, double dx1 ) :
-    Jacobian2( ( f10[0] - f00[0] ) / dx0, ( f01[0] - f00[0] ) / dx1,
-               ( f10[1] - f00[1] ) / dx0, ( f01[1] - f00[1] ) / dx1 ) {}
+    Jacobian2( ( f10[0] - f00[0] ) / dx0, ( f01[0] - f00[0] ) / dx1, ( f10[1] - f00[1] ) / dx0,
+               ( f01[1] - f00[1] ) / dx1 ) {}
 
 Jacobian2::Jacobian2( const Point2& f00, const Point2& f10, const Point2& f01 ) : Jacobian2( f00, f10, f01, 1., 1. ) {}
 
 double Jacobian2::det() const {
-  return df0_by_dx0_ * df1_by_dx1_ - df0_by_dx1_ * df1_by_dx0_;
+    return df0_by_dx0_ * df1_by_dx1_ - df0_by_dx1_ * df1_by_dx0_;
 }
 
 Jacobian2 Jacobian2::operator*( double a ) const {
-    return Jacobian2( df0_by_dx0_ * a, df0_by_dx1_ * a,
-                      df1_by_dx0_ * a, df1_by_dx1_ * a );
+    return Jacobian2( df0_by_dx0_ * a, df0_by_dx1_ * a, df1_by_dx0_ * a, df1_by_dx1_ * a );
 }
 
 Point2 Jacobian2::operator*( const Point2& dx ) const {
-    return Point2(dx[0] * df0_by_dx0_ + df0_by_dx1_ * dx[1],
-                  dx[0] * df1_by_dx0_ + df1_by_dx1_ * dx[1]);
+    return Point2( dx[0] * df0_by_dx0_ + df0_by_dx1_ * dx[1], dx[0] * df1_by_dx0_ + df1_by_dx1_ * dx[1] );
 }
 
 Jacobian2 Jacobian2::operator*( const Jacobian2& Jb ) const {
-    return Jacobian2(df0_by_dx0_ * Jb.df0_by_dx0_ + df0_by_dx1_ * Jb.df1_by_dx0_,
-                     df0_by_dx0_ * Jb.df0_by_dx1_ + df0_by_dx1_ * Jb.df1_by_dx1_,
-                     df1_by_dx0_ * Jb.df0_by_dx0_ + df1_by_dx1_ * Jb.df1_by_dx0_,
-                     df1_by_dx0_ * Jb.df0_by_dx1_ + df1_by_dx1_ * Jb.df1_by_dx1_);
+    return Jacobian2( df0_by_dx0_ * Jb.df0_by_dx0_ + df0_by_dx1_ * Jb.df1_by_dx0_,
+                      df0_by_dx0_ * Jb.df0_by_dx1_ + df0_by_dx1_ * Jb.df1_by_dx1_,
+                      df1_by_dx0_ * Jb.df0_by_dx0_ + df1_by_dx1_ * Jb.df1_by_dx0_,
+                      df1_by_dx0_ * Jb.df0_by_dx1_ + df1_by_dx1_ * Jb.df1_by_dx1_ );
 }
 
 Jacobian2 Jacobian2::inverse() const {
-    return Jacobian2( df1_by_dx1_, -df0_by_dx1_, -df1_by_dx0_, df0_by_dx0_ ) * ( 1. /  det() );
+    return Jacobian2( df1_by_dx1_, -df0_by_dx1_, -df1_by_dx0_, df0_by_dx0_ ) * ( 1. / det() );
 }
 
 Jacobian2 Jacobian2::sign() const {
     const auto smallNumber = det() * std::numeric_limits<double>::epsilon();
-    const auto signValue = [&](double number) -> double {
-        return std::abs(number) < smallNumber ? 0. : number < 0. ? -1. : 1.;
+    const auto signValue   = [&]( double number ) -> double {
+        return std::abs( number ) < smallNumber ? 0. : number < 0. ? -1. : 1.;
     };
-    return Jacobian2( signValue( df0_by_dx0_ ), signValue( df0_by_dx1_ ),
-                      signValue( df1_by_dx0_ ), signValue( df1_by_dx1_ ));
+    return Jacobian2( signValue( df0_by_dx0_ ), signValue( df0_by_dx1_ ), signValue( df1_by_dx0_ ),
+                      signValue( df1_by_dx1_ ) );
 }
 
 

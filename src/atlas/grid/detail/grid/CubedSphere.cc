@@ -575,15 +575,17 @@ Grid::Config CubedSphere::meshgenerator() const {
 }
 
 Grid::Config CubedSphere::partitioner() const {
+    Grid::Config config;
     if ( stagger_ == "L" ) {
         // TODO: implement better one specific for cubed sphere that
         //       works for nodal grid
-        Grid::Config config;
         config.set( "type", "equal_regions" );
         config.set( "coordinates", "lonlat" );  // do not use the grid.xy() coordinates for partitioning
         return config;
     }
-    return Config( "type", "cubedsphere" );
+    config.set( "coordinates", "lonlat" );
+    config.set( "type", "cubedsphere" );
+    return config;
 }
 
 // -------------------------------------------------------------------------------------------------

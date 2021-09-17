@@ -54,7 +54,6 @@ void FunctionSpace::adjointHaloExchange( const Field& field, bool on_device ) co
     get()->adjointHaloExchange( field, on_device );
 }
 
-
 idx_t FunctionSpace::size() const {
     return get()->size();
 }
