@@ -280,9 +280,9 @@ struct AdjointTolerance {
     static const Value value;
 };
 template <>
-const double AdjointTolerance<double>::value = 1.e-8;
+const double AdjointTolerance<double>::value = 2.e-14;
 template <>
-const float AdjointTolerance<float>::value = 3.e-1;
+const float AdjointTolerance<float>::value = 4.e-6;
 
 
 template <typename Value>
@@ -389,9 +389,11 @@ void test_interpolation_structured_using_fs_API_for_fieldset() {
 
         for ( std::size_t t = 0; t < AxAx.size(); ++t ) {
             Log::debug() << " Adjoint test t  = " << t << " (Ax).(Ax) = " << AxAx[t] << " x.(AtAx) = " << xAtAx[t]
-                         << std::endl;
+                      << " std::abs( 1.0 - xAtAx[t]/AxAx[t] ) " << std::abs( 1.0 - xAtAx[t]/AxAx[t] )
+                      << " AdjointTolerance<Value>::value " << AdjointTolerance<Value>::value
+                      << std::endl;
 
-            EXPECT_APPROX_EQ( AxAx[t], xAtAx[t], AdjointTolerance<Value>::value );
+            EXPECT( std::abs( 1.0 - xAtAx[t]/AxAx[t] ) < AdjointTolerance<Value>::value );
         }
     }
 

@@ -57,8 +57,17 @@ public:
     void execute( const FieldSet& source, FieldSet& target ) const;
     void execute( const Field& source, Field& target ) const;
 
-    void execute_adjoint( FieldSet& source, FieldSet& target ) const;
-    void execute_adjoint( Field& source, Field& target ) const;
+    /**
+     * @brief execute_adjoint
+     * @param source - it is either a FieldSet or a Field
+     * @param target - it is either a FieldSet or a Field
+     *                 Note that formally in an adjoint operation of this
+     *                 type we should be setting the values in the target
+     *                 to zero. This is not done for efficiency reasons and
+     *                 because in most cases it is not necessary.
+     */
+    void execute_adjoint( FieldSet& source, const FieldSet& target ) const;
+    void execute_adjoint( Field& source, const Field& target ) const;
 
     virtual void print( std::ostream& ) const = 0;
 
@@ -71,8 +80,8 @@ protected:
     virtual void do_execute( const FieldSet& source, FieldSet& target ) const;
     virtual void do_execute( const Field& source, Field& target ) const;
 
-    virtual void do_execute_adjoint( FieldSet& source, FieldSet& target ) const;
-    virtual void do_execute_adjoint( Field& source, Field& target ) const;
+    virtual void do_execute_adjoint( FieldSet& source, const FieldSet& target ) const;
+    virtual void do_execute_adjoint( Field& source, const Field& target ) const;
 
     using Triplet  = eckit::linalg::Triplet;
     using Triplets = std::vector<Triplet>;
@@ -120,16 +129,16 @@ private:
     void interpolate_field_rank3( const Field& src, Field& tgt, const Matrix& ) const;
 
     template <typename Value>
-    void adjoint_interpolate_field( Field& src, Field& tgt, const Matrix& ) const;
+    void adjoint_interpolate_field( Field& src, const Field& tgt, const Matrix& ) const;
 
     template <typename Value>
-    void adjoint_interpolate_field_rank1( Field& src, Field& tgt, const Matrix& ) const;
+    void adjoint_interpolate_field_rank1( Field& src, const Field& tgt, const Matrix& ) const;
 
     template <typename Value>
-    void adjoint_interpolate_field_rank2( Field& src, Field& tgt, const Matrix& ) const;
+    void adjoint_interpolate_field_rank2( Field& src, const Field& tgt, const Matrix& ) const;
 
     template <typename Value>
-    void adjoint_interpolate_field_rank3( Field& src, Field& tgt, const Matrix& ) const;
+    void adjoint_interpolate_field_rank3( Field& src, const Field& tgt, const Matrix& ) const;
 
     void check_compatibility( const Field& src, const Field& tgt, const Matrix& W ) const;
 };
