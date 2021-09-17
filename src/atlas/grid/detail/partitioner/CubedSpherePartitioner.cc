@@ -219,8 +219,6 @@ void CubedSpherePartitioner::partition( CubedSphere& cb, const int nb_cells, con
             }
         }
     }
-    std::cout << "mpi rank final part nb_partitions " << atlas::mpi::rank() << " " << part[nb_cells - 1] << " "
-              << nb_partitions() << std::endl;
     ATLAS_ASSERT( part[nb_cells - 1] == nb_partitions() - 1, "number of partitions created not what is expected" );
 }
 
