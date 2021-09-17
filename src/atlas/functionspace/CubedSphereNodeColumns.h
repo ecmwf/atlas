@@ -24,18 +24,18 @@ public:
 
   inline CubedSphereNodeColumns(const FunctionSpace& functionSpace) :
     NodeColumns(functionSpace), CubedSphereUtility(
-      this->mesh().nodes().field("ijt"),
+      this->mesh().nodes().field("tij"),
       this->mesh().nodes().ghost()) {}
 
   inline CubedSphereNodeColumns(const Mesh& mesh,
     const eckit::Configuration& configuration) :
     NodeColumns(mesh, configuration), CubedSphereUtility(
-      this->mesh().nodes().field("ijt"),
+      this->mesh().nodes().field("tij"),
       this->mesh().nodes().ghost()) {}
 
   inline CubedSphereNodeColumns(const Mesh& mesh) :
     NodeColumns(mesh), CubedSphereUtility(
-      this->mesh().nodes().field("ijt"),
+      this->mesh().nodes().field("tij"),
       this->mesh().nodes().ghost()) {}
 
 };

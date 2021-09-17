@@ -13,18 +13,18 @@ namespace detail {
 
 CubedSphereUtility::~CubedSphereUtility() {};
 
-CubedSphereUtility::CubedSphereUtility(const Field& ijt, const Field& ghost) :
-  ijt_(ijt), ghost_(ghost)
+CubedSphereUtility::CubedSphereUtility(const Field& tij, const Field& ghost) :
+  tij_(tij), ghost_(ghost)
 {
 
   // Make array view.
-  const auto ijtView_ = array::make_view<idx_t, 2>(ijt);
+  const auto tijView_ = array::make_view<idx_t, 2>(tij);
 
-  // loop over ijt_ and find min and max ij bounds.
-  for (idx_t index = 0; index < ijtView_.shape(0); ++index) {
-    const auto i = ijtView_(index, Coordinates::I);
-    const auto j = ijtView_(index, Coordinates::J);
-    const auto t = static_cast<size_t>(ijtView_(index, Coordinates::T));
+  // loop over tij and find min and max ij bounds.
+  for (idx_t index = 0; index < tijView_.shape(0); ++index) {
+    const auto t = static_cast<size_t>(tijView_(index, Coordinates::T));
+    const idx_t i = tijView_(index, Coordinates::I);
+    const idx_t j = tijView_(index, Coordinates::J);
 
     ijBounds_[t].iBegin = std::min(i    , ijBounds_[t].iBegin);
     ijBounds_[t].jBegin = std::min(j    , ijBounds_[t].jBegin);
@@ -33,23 +33,23 @@ CubedSphereUtility::CubedSphereUtility(const Field& ijt, const Field& ghost) :
 
   }
 
-  // Set ijtToIdx vectors
+  // Set tijToIdx vectors
   for (idx_t t = 0; t < 6; ++t) {
 
     // Set data array.
-    const auto vecSize = (j_end(t) - j_begin(t))
-                       * (i_end(t) - i_begin(t));
-    ijtToIdx_.push_back(std::vector<idx_t>(static_cast<size_t>(vecSize), invalid_index()));
+    const auto vecSize = static_cast<size_t>((j_end(t) - j_begin(t))
+                                           * (i_end(t) - i_begin(t)));
+    tijToIdx_.push_back(std::vector<idx_t>(vecSize, invalid_index()));
 
   }
 
   // loop over ijt_ and set ijtToIdx
-  for (idx_t index = 0; index < ijtView_.shape(0); ++index) {
-    const auto i = ijtView_(index, Coordinates::I);
-    const auto j = ijtView_(index, Coordinates::J);
-    const auto t = ijtView_(index, Coordinates::T);
+  for (idx_t index = 0; index < tijView_.shape(0); ++index) {
+    const idx_t t = tijView_(index, Coordinates::T);
+    const idx_t i = tijView_(index, Coordinates::I);
+    const idx_t j = tijView_(index, Coordinates::J);
 
-   ijtToIdx_[static_cast<size_t>(t)][vecIndex(i, j, t)] = index;
+   tijToIdx_[static_cast<size_t>(t)][vecIndex(t, i, j)] = index;
   }
 }
 
@@ -73,38 +73,37 @@ idx_t CubedSphereUtility::j_end(idx_t t) const {
   return ijBounds_[static_cast<size_t>(t)].jEnd;
 }
 
-idx_t CubedSphereUtility::index(idx_t i, idx_t j, idx_t t) const {
+idx_t CubedSphereUtility::index(idx_t t, idx_t i, idx_t j) const {
 
   // Check bounds.
   iBoundsCheck(i, t);
   jBoundsCheck(j, t);
 
-  return ijtToIdx_[static_cast<size_t>(t)][vecIndex(i, j, t)];
+  return tijToIdx_[static_cast<size_t>(t)][vecIndex(t, i, j)];
 }
 
-Field CubedSphereUtility::ijt() const {
-  return ijt_;
+Field CubedSphereUtility::tij() const {
+  return tij_;
 }
 
 void CubedSphereUtility::tBoundsCheck(idx_t t) const {
-  if (t < 0 or t > 5) throw_OutOfRange("t", t, 6);
+  if (t < 0 || t > 5) throw_OutOfRange("t", t, 6);
 }
 
 void CubedSphereUtility::jBoundsCheck(idx_t j, idx_t t) const {
-  const auto jSize = j_end(t) - j_begin(t);
+  const idx_t jSize = j_end(t) - j_begin(t);
   j -= j_begin(t);
-  if (j < 0 or j >= jSize) throw_OutOfRange("j - jMin", j, jSize);
+  if (j < 0 || j >= jSize) throw_OutOfRange("j - jMin", j, jSize);
 }
 
 void CubedSphereUtility::iBoundsCheck(idx_t i, idx_t t) const {
-  const auto iSize = i_end(t) - i_begin(t);
+  const idx_t iSize = i_end(t) - i_begin(t);
   i -= i_begin(t);
-  if (i < 0 or i >= iSize) throw_OutOfRange("i - iMin", i, iSize);
+  if (i < 0 || i >= iSize) throw_OutOfRange("i - iMin", i, iSize);
 }
 
-size_t CubedSphereUtility::vecIndex(idx_t i, idx_t j, idx_t t) const {
-  return static_cast<size_t>((j - j_begin(t)) * (i_end(t) - i_begin(t))
-               + i - i_begin(t));
+size_t CubedSphereUtility::vecIndex(idx_t t, idx_t i, idx_t j) const {
+  return static_cast<size_t>((j - j_begin(t)) * (i_end(t) - i_begin(t)) + i - i_begin(t));
 }
 
 

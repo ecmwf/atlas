@@ -242,7 +242,7 @@ void testHaloExchange( const std::string& gridStr, const std::string& partitione
         nodeFields.add( mesh.nodes().remote_index() );
         nodeFields.add( mesh.nodes().partition() );
         nodeFields.add( mesh.nodes().global_index() );
-        nodeFields.add( mesh.nodes().field( "ijt" ) );
+        nodeFields.add( mesh.nodes().field( "tij" ) );
         nodeFields.add( testField1 );
 
         auto cellFields = FieldSet{};
@@ -250,6 +250,9 @@ void testHaloExchange( const std::string& gridStr, const std::string& partitione
         cellFields.add( mesh.cells().remote_index() );
         cellFields.add( mesh.cells().partition() );
         cellFields.add( mesh.cells().global_index() );
+        cellFields.add( mesh.cells().field( "tij" ) );
+        cellFields.add( mesh.cells().field( "xy" ) );
+        cellFields.add( mesh.cells().field( "lonlat" ) );
         cellFields.add( testField2 );
 
         // Set gmsh config.
@@ -287,22 +290,17 @@ CASE( "cubedsphere_mesh_test" ) {
         testHaloExchange( "CS-LFR-C-12", "equal_regions", 0 );
         testHaloExchange( "CS-LFR-C-12", "cubedsphere", 0 );
     }
-
     SECTION( "N12, halo = 1" ) {
         testHaloExchange( "CS-LFR-C-12", "equal_regions", 1 );
         testHaloExchange( "CS-LFR-C-12", "cubedsphere", 1 );
     }
-    SECTION( "N12, halo = 2" ) {
-        testHaloExchange( "CS-LFR-C-12", "equal_regions", 2 );
-        testHaloExchange( "CS-LFR-C-12", "cubedsphere", 2 );
-    }
     SECTION( "N12, halo = 3" ) {
         testHaloExchange( "CS-LFR-C-12", "equal_regions", 3 );
-        testHaloExchange( "CS-LFR-C-12", "cubedsphere", 3 );
+        testHaloExchange( "CS-LFR-C-12", "regular_bands", 3 );
     }
-    SECTION( "Prime number mesh (N211)" ) {
-        testHaloExchange( "CS-LFR-C-211", "equal_regions", 1, false );
-        testHaloExchange( "CS-LFR-C-211", "cubedsphere", 1, false );
+    SECTION( "Prime number mesh (N17)" ) {
+        testHaloExchange( "CS-LFR-C-17", "equal_regions", 1 );
+        testHaloExchange( "CS-LFR-C-17", "cubedsphere", 1 );
     }
 }
 

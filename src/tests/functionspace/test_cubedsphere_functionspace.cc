@@ -46,20 +46,20 @@ namespace test {
     // Loop over all non halo elements of test field.
     idx_t testFuncCallCount = 0;
     functionspace.for_each(
-      [&](idx_t index, idx_t i, idx_t j, idx_t t) {
+      [&](idx_t index, idx_t t, idx_t i, idx_t j) {
 
         // Make sure index matches ijt.
-        ATLAS_ASSERT(index == functionspace.index(i, j, t));
+        EXPECT(index == functionspace.index(t, i, j));
 
         // Check that indices of "+" stencil are valid.
         const auto badIdx = functionspace.invalid_index();
-        ATLAS_ASSERT(functionspace.index(i - 1, j    , t) != badIdx);
-        ATLAS_ASSERT(functionspace.index(i + 1, j    , t) != badIdx);
-        ATLAS_ASSERT(functionspace.index(i    , j - 1, t) != badIdx);
-        ATLAS_ASSERT(functionspace.index(i    , j + 1, t) != badIdx);
+        EXPECT(functionspace.index(t, i - 1, j    ) != badIdx);
+        EXPECT(functionspace.index(t, i + 1, j    ) != badIdx);
+        EXPECT(functionspace.index(t, i    , j - 1) != badIdx);
+        EXPECT(functionspace.index(t, i    , j + 1) != badIdx);
 
         // Make sure we're avoiding halos.
-        ATLAS_ASSERT(!ghostView(index));
+        EXPECT(!ghostView(index));
 
         // Set field values.
         fieldView(index) = testFunction(lonLatView(index, LON), lonLatView(index, LAT));
@@ -68,7 +68,7 @@ namespace test {
     });
 
     // Make sure call count is less than functionspace.size() as we skipped halos.
-    ATLAS_ASSERT(testFuncCallCount < functionspace.size());
+    EXPECT(testFuncCallCount < functionspace.size());
 
     // Perform halo exchange.
     functionspace.haloExchange(field);
@@ -76,20 +76,20 @@ namespace test {
     // Loop over elements including halo
     testFuncCallCount = 0;
     functionspace.for_each(
-      [&](idx_t index, idx_t i, idx_t j, idx_t t) {
+      [&](idx_t index, idx_t t, idx_t i, idx_t j) {
 
         // Make sure index matches ijt.
-        ATLAS_ASSERT(index == functionspace.index(i, j, t));
+        EXPECT(index == functionspace.index(t, i, j));
 
         // Set field values.
-        ATLAS_ASSERT(is_approximately_equal(
+        EXPECT(is_approximately_equal(
           fieldView(index), testFunction(lonLatView(index, LON), lonLatView(index, LAT))));
         ++testFuncCallCount;
 
     }, true);
 
     // Make sure call count is equal to functionspace.size().
-    ATLAS_ASSERT(testFuncCallCount == functionspace.size());
+    EXPECT(testFuncCallCount == functionspace.size());
 
 
   }

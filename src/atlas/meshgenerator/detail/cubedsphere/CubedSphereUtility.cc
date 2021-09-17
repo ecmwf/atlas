@@ -109,11 +109,11 @@ NeighbourJacobian::NeighbourJacobian( const CubedSphereGrid& csGrid ) {
     std::array<PointXY, 6> xy01;
 
     // Loop over grid points.
-    auto ijtIt = csGrid.tij().begin();
+    auto tijIt = csGrid.tij().begin();
     for ( const PointXY& xy : csGrid.xy() ) {
-        const idx_t i = ( *ijtIt ).i();
-        const idx_t j = ( *ijtIt ).j();
-        const auto t  = static_cast<size_t>( ( *ijtIt ).t() );
+        const auto t  = static_cast<size_t>( ( *tijIt ).t() );
+        const idx_t i = ( *tijIt ).i();
+        const idx_t j = ( *tijIt ).j();
 
         if ( i == 0 && j == 0 )
             xy00[t] = xy;
@@ -122,7 +122,7 @@ NeighbourJacobian::NeighbourJacobian( const CubedSphereGrid& csGrid ) {
         else if ( i == 0 && j == 1 )
             xy01[t] = xy;
 
-        ++ijtIt;
+        ++tijIt;
     }
 
     for ( size_t t = 0; t < 6; ++t ) {
@@ -176,7 +176,6 @@ NeighbourJacobian::NeighbourJacobian( const CubedSphereGrid& csGrid ) {
                 }
                 case TileEdge::UNDEFINED: {
                     throw_Exception( "Undefined tile edge.", Here() );
-                    break;
                 }
             }
 
@@ -229,8 +228,8 @@ PointXY NeighbourJacobian::xy( const PointIJ& ij, idx_t t ) const {
     return xy00 + jac * ij;
 }
 
-PointXY NeighbourJacobian::xy( const PointIJT& ijt ) const {
-    return xy( ijt.first, ijt.second );
+PointXY NeighbourJacobian::xy( const PointTIJ& tij) const {
+    return xy( tij.ij(), tij.t() );
 }
 
 PointIJ NeighbourJacobian::ij( const PointXY& xy, idx_t t ) const {
@@ -242,11 +241,11 @@ PointIJ NeighbourJacobian::ij( const PointXY& xy, idx_t t ) const {
     return jac * ( xy - xy00 );
 }
 
-PointIJ NeighbourJacobian::ij( const PointXYT& xyt ) const {
+PointIJ NeighbourJacobian::ij( const PointTXY& xyt ) const {
     return ij( xyt.first, xyt.second );
 }
 
-PointXYT NeighbourJacobian::xyLocalToGlobal( const PointXY& xyLocal, idx_t tLocal ) const {
+PointTXY NeighbourJacobian::xyLocalToGlobal( const PointXY& xyLocal, idx_t tLocal ) const {
     // The tileCubePeriodicity method fails when extrapolating along an unowned
     // tile edge. This method explicitly places an xy point on to a neighbouring
     // tile to avoid this. Once the correct xy position has been found,
@@ -268,7 +267,7 @@ PointXYT NeighbourJacobian::xyLocalToGlobal( const PointXY& xyLocal, idx_t tLoca
 
         // Return local values if not on edge.
         if ( !ijEdge( ijLocal ) )
-            return std::make_pair( xyLocal, tLocal );
+            return PointTXY( xyLocal, tLocal );
 
         // We're on an edge. Will need to check with Tiles class.
         xyGlobal = xyLocal;
@@ -286,6 +285,7 @@ PointXYT NeighbourJacobian::xyLocalToGlobal( const PointXY& xyLocal, idx_t tLoca
             k = TileEdge::RIGHT;
         else if ( ijLocal.jNode() > N_ )
             k = TileEdge::TOP;
+        else throw_Exception( "Cannot determine neighbour tile.", Here() );
 
         // Get reference points and jacobian.
         const PointXY& xy00Local_  = neighbours_[static_cast<size_t>( tLocal )].xy00Local_[k];
@@ -307,25 +307,25 @@ PointXYT NeighbourJacobian::xyLocalToGlobal( const PointXY& xyLocal, idx_t tLoca
     xyGlobal = csTiles.tileCubePeriodicity( xyGlobal, tGlobal );
     tGlobal  = csTiles.indexFromXY( xyGlobal.data() );
 
-    return std::make_pair( xyGlobal, tGlobal );
+    return PointTXY( xyGlobal, tGlobal );
 }
 
-PointXYT NeighbourJacobian::xyLocalToGlobal( const PointXYT& xytLocal ) const {
-    return xyLocalToGlobal( xytLocal.first, xytLocal.second );
+PointTXY NeighbourJacobian::xyLocalToGlobal( const PointTXY& txyLocal ) const {
+    return xyLocalToGlobal( txyLocal.xy(), txyLocal.t() );
 }
 
-PointIJT NeighbourJacobian::ijLocalToGlobal( const PointIJ& ijLocal, idx_t tLocal ) const {
+PointTIJ NeighbourJacobian::ijLocalToGlobal( const PointIJ& ijLocal, idx_t tLocal ) const {
     // Use xyLocalToGlobal method to take care of this.
 
     // Get global xyt.
-    PointXYT xytGlobal = xyLocalToGlobal( xy( ijLocal, tLocal ), tLocal );
+    PointTXY txyGlobal = xyLocalToGlobal( xy( ijLocal, tLocal ), tLocal );
 
     // convert to ijt
-    return std::make_pair( ij( xytGlobal ), xytGlobal.second );
+    return PointTIJ( ij( txyGlobal ), txyGlobal.second );
 }
 
-PointIJT NeighbourJacobian::ijLocalToGlobal( const PointIJT& ijtLocal ) const {
-    return ijLocalToGlobal( ijtLocal.first, ijtLocal.second );
+PointTIJ NeighbourJacobian::ijLocalToGlobal( const PointTIJ& tijLocal ) const {
+    return ijLocalToGlobal( tijLocal.ij(), tijLocal.t() );
 }
 
 bool NeighbourJacobian::ijInterior( const PointIJ& ij ) const {
