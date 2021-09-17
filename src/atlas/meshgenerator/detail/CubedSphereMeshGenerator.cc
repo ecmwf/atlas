@@ -30,6 +30,7 @@
 #include "atlas/meshgenerator/detail/MeshGeneratorFactory.h"
 #include "atlas/meshgenerator/detail/cubedsphere/CubedSphereUtility.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/omp/omp.h"
 #include "atlas/projection/detail/CubedSphereProjectionBase.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"

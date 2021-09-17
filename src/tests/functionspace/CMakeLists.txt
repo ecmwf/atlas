@@ -35,6 +35,14 @@ ecbuild_add_test( TARGET atlas_test_cellcolumns
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_cubedsphere_functionspace
+  MPI        8
+  CONDITION  eckit_HAVE_MPI
+  SOURCES test_cubedsphere_functionspace.cc
+  LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET test_structuredcolumns_biperiodic
   SOURCES  test_structuredcolumns_biperiodic.cc
   LIBS     atlas
