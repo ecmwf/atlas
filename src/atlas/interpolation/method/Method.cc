@@ -132,9 +132,6 @@ void Method::interpolate_field_rank3( const Field& src, Field& tgt, const Matrix
 
 template <typename Value>
 void Method::adjoint_interpolate_field_rank1( Field& src, const Field& tgt, const Matrix& W ) const {
-   // Field tmp( src.name(), src.datatype().kind(), src.shape() );
-   // tmp.set_levels( src.levels() );
-
     array::ArrayT<Value> tmp( src.shape() );
 
     auto tmp_v = array::make_view<double, 1>( tmp );
@@ -161,9 +158,6 @@ void Method::adjoint_interpolate_field_rank1( Field& src, const Field& tgt, cons
 
 template <typename Value>
 void Method::adjoint_interpolate_field_rank2( Field& src, const Field& tgt, const Matrix& W ) const {
-   // Field tmp( src.name(), src.datatype().kind(), src.shape() );
-   // tmp.set_levels( src.levels() );
-
     array::ArrayT<Value> tmp( src.shape() );
 
     auto tmp_v = array::make_view<Value, 2>( tmp );
@@ -183,9 +177,6 @@ void Method::adjoint_interpolate_field_rank2( Field& src, const Field& tgt, cons
 
 template <typename Value>
 void Method::adjoint_interpolate_field_rank3( Field& src, const Field& tgt, const Matrix& W ) const {
-   // Field tmp( src.name(), src.datatype().kind(), src.shape() );
-   // tmp.set_levels( src.levels() );
-
     array::ArrayT<Value> tmp( src.shape() );
 
     auto tmp_v = array::make_view<Value, 3>( tmp );
