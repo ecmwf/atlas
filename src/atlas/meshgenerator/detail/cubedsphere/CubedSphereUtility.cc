@@ -115,12 +115,15 @@ NeighbourJacobian::NeighbourJacobian( const CubedSphereGrid& csGrid ) {
         const idx_t j = ( *ijtIt ).j();
         const auto t  = static_cast<size_t>( ( *ijtIt ).t() );
 
-        if ( i == 0 && j == 0 )
+        if ( i == 0 && j == 0 ) {
             xy00[t] = xy;
-        else if ( i == 1 && j == 0 )
+        }
+        else if ( i == 1 && j == 0 ) {
             xy10[t] = xy;
-        else if ( i == 0 && j == 1 )
+        }
+        else if ( i == 0 && j == 1 ) {
             xy01[t] = xy;
+        }
 
         ++ijtIt;
     }
@@ -267,8 +270,9 @@ PointXYT NeighbourJacobian::xyLocalToGlobal( const PointXY& xyLocal, idx_t tLoca
         // We're within the tile boundary (possibly on an edge).
 
         // Return local values if not on edge.
-        if ( !ijEdge( ijLocal ) )
+        if ( !ijEdge( ijLocal ) ) {
             return std::make_pair( xyLocal, tLocal );
+        }
 
         // We're on an edge. Will need to check with Tiles class.
         xyGlobal = xyLocal;
@@ -278,14 +282,18 @@ PointXYT NeighbourJacobian::xyLocalToGlobal( const PointXY& xyLocal, idx_t tLoca
         // We're outside the tile boundary.
         // Figure out which tile xy is on.
         TileEdge::k k;
-        if ( ijLocal.iNode() < 0 )
+        if ( ijLocal.iNode() < 0 ) {
             k = TileEdge::LEFT;
-        else if ( ijLocal.jNode() < 0 )
+        }
+        else if ( ijLocal.jNode() < 0 ) {
             k = TileEdge::BOTTOM;
-        else if ( ijLocal.iNode() > N_ )
+        }
+        else if ( ijLocal.iNode() > N_ ) {
             k = TileEdge::RIGHT;
-        else if ( ijLocal.jNode() > N_ )
+        }
+        else if ( ijLocal.jNode() > N_ ) {
             k = TileEdge::TOP;
+        }
 
         // Get reference points and jacobian.
         const PointXY& xy00Local_  = neighbours_[static_cast<size_t>( tLocal )].xy00Local_[k];

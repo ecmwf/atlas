@@ -117,7 +117,7 @@ public:
     const Signal& signal( int signum ) const;
 
 private:
-    typedef std::map<int, Signal> registered_signals_t;
+    using registered_signals_t = std::map<int, Signal>;
     registered_signals_t registered_signals_;
     eckit::Channel& out_;
 };

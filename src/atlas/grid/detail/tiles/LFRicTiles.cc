@@ -585,8 +585,9 @@ atlas::PointXY LFRicCubedSphereTiles::tileCubePeriodicity( const atlas::PointXY&
         finalXY.x() = 0.0;
     }
 
-    if ( finalXY.x() >= 360. )
+    if ( finalXY.x() >= 360. ) {
         finalXY.x() -= 360.;
+    }
 
     if ( finalXY.x() == 0. && finalXY.y() < -45. && finalXY.y() > -135.0 ) {
         finalXY.x() = 360.0 + ( finalXY.y() + 45.0 );

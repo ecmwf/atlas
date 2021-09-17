@@ -84,10 +84,12 @@ CASE( "cubedsphere_mesh_jacobian_test" ) {
                 const auto ij = PointIJ( i, j );
 
                 // Only look at halo values.
-                if ( !jacobian.ijCross( ij ) )
+                if ( !jacobian.ijCross( ij ) ) {
                     continue;
-                if ( jacobian.ijInterior( ij ) )
+                }
+                if ( jacobian.ijInterior( ij ) ) {
                     continue;
+                }
 
                 // Get known good outputs.
                 const auto xyLocalKgo  = *xyLocalKgoIt++;
@@ -158,8 +160,9 @@ void testHaloExchange( const std::string& gridStr, const std::string& partitione
     idx_t testFuncCallCount = 0;
     for ( idx_t i = 0; i < nodeColumns.size(); ++i ) {
         // Stop once we've reached ghost points.
-        if ( ghostView( i ) )
+        if ( ghostView( i ) ) {
             break;
+        }
 
         testView1( i ) = testFunction( lonLatView( i, LON ), lonLatView( i, LAT ) );
         ++testFuncCallCount;
@@ -202,8 +205,9 @@ void testHaloExchange( const std::string& gridStr, const std::string& partitione
     // Set non-halo values.
     testFuncCallCount = 0;
     for ( idx_t i = 0; i < cellColumns.size(); ++i ) {
-        if ( haloView( i ) )
+        if ( haloView( i ) ) {
             break;
+        }
 
         testView2( i ) = testFunction( lonLatView( i, LON ), lonLatView( i, LAT ) );
         ++testFuncCallCount;

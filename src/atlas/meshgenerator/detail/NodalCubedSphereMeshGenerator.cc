@@ -85,8 +85,9 @@ void NodalCubedSphereMeshGenerator::generate( const Grid& grid, const grid::Dist
     const int nTiles = csgrid.tiles().size();
 
     // N must be greater than 1.
-    if ( N < 2 )
+    if ( N < 2 ) {
         throw_Exception( "N must be greater than 1 for NodalCubedSphereMeshGenerator", Here() );
+    }
 
     // grid must have node staggering.
     if ( csgrid.stagger() != "L" ) {
@@ -131,40 +132,52 @@ void NodalCubedSphereMeshGenerator::generate( const Grid& grid, const grid::Dist
     ghostToOwnedTij.push_back( TijPair{{5, N, 0}, {1, N, 0}} );
 
     // Tile 1
-    for ( idx_t ix = 1; ix < N; ix++ )
+    for ( idx_t ix = 1; ix < N; ix++ ) {
         ghostToOwnedTij.push_back( TijPair{{0, ix, N}, {2, 0, N - ix}} );
-    for ( idx_t iy = 0; iy < N; iy++ )
+    }
+    for ( idx_t iy = 0; iy < N; iy++ ) {
         ghostToOwnedTij.push_back( TijPair{{0, N, iy}, {1, 0, iy}} );
+    }
 
     // Tile 2
-    for ( idx_t ix = 0; ix < N; ix++ )
+    for ( idx_t ix = 0; ix < N; ix++ ) {
         ghostToOwnedTij.push_back( TijPair{{1, ix, N}, {2, ix, 0}} );
-    for ( idx_t iy = 1; iy < N; iy++ )
+    }
+    for ( idx_t iy = 1; iy < N; iy++ ) {
         ghostToOwnedTij.push_back( TijPair{{1, N, iy}, {3, N - iy, 0}} );
+    }
 
     // Tile 3
-    for ( idx_t ix = 1; ix < N; ix++ )
+    for ( idx_t ix = 1; ix < N; ix++ ) {
         ghostToOwnedTij.push_back( TijPair{{2, ix, N}, {4, 0, N - ix}} );
-    for ( idx_t iy = 0; iy < N; iy++ )
+    }
+    for ( idx_t iy = 0; iy < N; iy++ ) {
         ghostToOwnedTij.push_back( TijPair{{2, N, iy}, {3, 0, iy}} );
+    }
 
     // Tile 4
-    for ( idx_t ix = 0; ix < N; ix++ )
+    for ( idx_t ix = 0; ix < N; ix++ ) {
         ghostToOwnedTij.push_back( TijPair{{3, ix, N}, {4, ix, 0}} );
-    for ( idx_t iy = 1; iy < N; iy++ )
+    }
+    for ( idx_t iy = 1; iy < N; iy++ ) {
         ghostToOwnedTij.push_back( TijPair{{3, N, iy}, {5, N - iy, 0}} );
+    }
 
     // Tile 5
-    for ( idx_t ix = 1; ix < N; ix++ )
+    for ( idx_t ix = 1; ix < N; ix++ ) {
         ghostToOwnedTij.push_back( TijPair{{4, ix, N}, {0, 0, N - ix}} );
-    for ( idx_t iy = 0; iy < N; iy++ )
+    }
+    for ( idx_t iy = 0; iy < N; iy++ ) {
         ghostToOwnedTij.push_back( TijPair{{4, N, iy}, {5, 0, iy}} );
+    }
 
     // Tile 6
-    for ( idx_t ix = 0; ix < N; ix++ )
+    for ( idx_t ix = 0; ix < N; ix++ ) {
         ghostToOwnedTij.push_back( TijPair{{5, ix, N}, {0, ix, 0}} );
-    for ( idx_t iy = 1; iy < N; iy++ )
+    }
+    for ( idx_t iy = 1; iy < N; iy++ ) {
         ghostToOwnedTij.push_back( TijPair{{5, N, iy}, {1, N - iy, 0}} );
+    }
 
 
     // -------------------------------------------------------------------------
@@ -237,8 +250,9 @@ void NodalCubedSphereMeshGenerator::generate( const Grid& grid, const grid::Dist
 
     // Loop over owned (t, i, j)
 
-    for ( auto& p : csgrid.tij() )
+    for ( auto& p : csgrid.tij() ) {
         addOwnedNode( Tij{p.t(), p.i(), p.j()} );
+    }
 
     // Assert that the correct number of nodes have been set
     ATLAS_ASSERT( nnodes == nOwned, "Insufficient nodes" );
@@ -296,8 +310,9 @@ void NodalCubedSphereMeshGenerator::generate( const Grid& grid, const grid::Dist
     };
 
     // Loop over ghost (t, i, j)
-    for ( auto& pPair : ghostToOwnedTij )
+    for ( auto& pPair : ghostToOwnedTij ) {
         addGhostNode( pPair.first, pPair.second );
+    }
 
 
     // Assert that the correct number of nodes have been set when duplicates are added
