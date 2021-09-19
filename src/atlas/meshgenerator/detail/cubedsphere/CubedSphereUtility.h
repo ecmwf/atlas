@@ -92,24 +92,24 @@ public:
     /// @}
 };
 
-/// (PointXY, t) tuple.
-class PointTXY : public std::pair<PointXY, idx_t> {
-      using std::pair<PointXY, idx_t>::pair;
+/// (t, PointXY) tuple.
+class PointTXY : public std::pair<idx_t, PointXY> {
+      using std::pair<idx_t, PointXY>::pair;
 public:
-      PointXY& xy() {return first;}
-      idx_t& t() {return second;}
-      const PointXY& xy() const {return first;}
-      const idx_t& t() const {return second;}
+      idx_t& t() { return first; }
+      PointXY& xy() { return second; }
+      const idx_t& t() const { return first; }
+      const PointXY& xy() const { return second; }
 };
 
-/// (PointIJ, t) tuple.
-class PointTIJ : public std::pair<PointIJ, idx_t> {
-    using std::pair<PointIJ, idx_t>::pair;
+/// (t, PointIJ) tuple.
+class PointTIJ : public std::pair<idx_t, PointIJ> {
+    using std::pair<idx_t, PointIJ>::pair;
 public:
-    PointIJ& ij() {return first;}
-    idx_t& t() {return second;}
-    const PointIJ& ij() const {return first;}
-    const idx_t& t() const {return second;}
+    idx_t& t() { return first; }
+    PointIJ& ij() { return second; }
+    const idx_t& t() const { return first; }
+    const PointIJ& ij() const { return second; }
 };
 
 /// \brief   Jacobian class for 2 dimensional vector fields.

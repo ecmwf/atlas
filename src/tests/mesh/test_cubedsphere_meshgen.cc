@@ -101,17 +101,17 @@ CASE( "cubedsphere_mesh_jacobian_test" ) {
                 const auto ijtGlobal = jacobian.ijLocalToGlobal( ij, t );
 
                 EXPECT( xyLocal == xyLocalKgo );
-                EXPECT( xytGlobal.first == xyGlobalKgo );
-                EXPECT( xytGlobal.second == tKgo );
-                EXPECT( ijtGlobal.first == ijGlobalKgo );
-                EXPECT( ijtGlobal.second == tKgo );
+                EXPECT( xytGlobal.xy() == xyGlobalKgo );
+                EXPECT( xytGlobal.t() == tKgo );
+                EXPECT( ijtGlobal.ij() == ijGlobalKgo );
+                EXPECT( ijtGlobal.t() == tKgo );
 
                 // Check xy and ij transforms are consistent.
                 EXPECT( jacobian.ij( ( jacobian.xyLocalToGlobal( xyLocal, t ) ) ) ==
-                        jacobian.ijLocalToGlobal( ij, t ).first );
+                        jacobian.ijLocalToGlobal( ij, t ).ij() );
 
                 EXPECT( jacobian.xy( ( jacobian.ijLocalToGlobal( ij, t ) ) ) ==
-                        jacobian.xyLocalToGlobal( xyLocal, t ).first );
+                        jacobian.xyLocalToGlobal( xyLocal, t ).xy() );
             }
         }
     }

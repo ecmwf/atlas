@@ -115,6 +115,7 @@ NeighbourJacobian::NeighbourJacobian( const CubedSphereGrid& csGrid ) {
         const idx_t i = ( *tijIt ).i();
         const idx_t j = ( *tijIt ).j();
 
+
         if ( i == 0 && j == 0 )
             xy00[t] = xy;
         else if ( i == 1 && j == 0 )
@@ -242,7 +243,7 @@ PointIJ NeighbourJacobian::ij( const PointXY& xy, idx_t t ) const {
 }
 
 PointIJ NeighbourJacobian::ij( const PointTXY& xyt ) const {
-    return ij( xyt.first, xyt.second );
+    return ij( xyt.xy(), xyt.t() );
 }
 
 PointTXY NeighbourJacobian::xyLocalToGlobal( const PointXY& xyLocal, idx_t tLocal ) const {
@@ -267,7 +268,7 @@ PointTXY NeighbourJacobian::xyLocalToGlobal( const PointXY& xyLocal, idx_t tLoca
 
         // Return local values if not on edge.
         if ( !ijEdge( ijLocal ) )
-            return PointTXY( xyLocal, tLocal );
+            return PointTXY( tLocal, xyLocal );
 
         // We're on an edge. Will need to check with Tiles class.
         xyGlobal = xyLocal;
@@ -307,7 +308,7 @@ PointTXY NeighbourJacobian::xyLocalToGlobal( const PointXY& xyLocal, idx_t tLoca
     xyGlobal = csTiles.tileCubePeriodicity( xyGlobal, tGlobal );
     tGlobal  = csTiles.indexFromXY( xyGlobal.data() );
 
-    return PointTXY( xyGlobal, tGlobal );
+    return PointTXY( tGlobal, xyGlobal );
 }
 
 PointTXY NeighbourJacobian::xyLocalToGlobal( const PointTXY& txyLocal ) const {
@@ -321,7 +322,7 @@ PointTIJ NeighbourJacobian::ijLocalToGlobal( const PointIJ& ijLocal, idx_t tLoca
     PointTXY txyGlobal = xyLocalToGlobal( xy( ijLocal, tLocal ), tLocal );
 
     // convert to ijt
-    return PointTIJ( ij( txyGlobal ), txyGlobal.second );
+    return PointTIJ( txyGlobal.t(), ij( txyGlobal ) );
 }
 
 PointTIJ NeighbourJacobian::ijLocalToGlobal( const PointTIJ& tijLocal ) const {
