@@ -25,14 +25,14 @@ namespace detail {
 
 using namespace meshgenerator::detail::cubedsphere;
 
-class CubedSphereUtility
+class StructuredCubedSphere
 {
 
 public:
 
-  CubedSphereUtility() = default;
-  CubedSphereUtility(const Field& tij, const Field& ghost);
-  virtual ~CubedSphereUtility() = 0;
+  StructuredCubedSphere() = default;
+  StructuredCubedSphere(const Field& tij, const Field& ghost);
+  virtual ~StructuredCubedSphere() = 0;
 
   /// Invalid index.
   static constexpr idx_t invalid_index() {return -1;}

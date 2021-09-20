@@ -5,17 +5,29 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "CubedSphereUtility.h"
+#include "atlas/functionspace/detail/StructuredCubedSphere.h"
+#include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace functionspace {
 namespace detail {
 
-CubedSphereUtility::~CubedSphereUtility() {};
+namespace  {
+#if ATLAS_BUILD_TYPE_DEBUG
+  constexpr bool checkBounds = true;
+#else
+  constexpr bool checkBounds = false;
+#endif
+}
 
-CubedSphereUtility::CubedSphereUtility(const Field& tij, const Field& ghost) :
+StructuredCubedSphere::~StructuredCubedSphere() {};
+
+StructuredCubedSphere::StructuredCubedSphere(const Field& tij, const Field& ghost) :
   tij_(tij), ghost_(ghost)
 {
+
+  Log::debug() << "StructuredCubedSphere bounds checking is set to "
+                  + std::to_string(checkBounds) << std::endl;
 
   // Make array view.
   const auto tijView_ = array::make_view<idx_t, 2>(tij);
@@ -53,56 +65,55 @@ CubedSphereUtility::CubedSphereUtility(const Field& tij, const Field& ghost) :
   }
 }
 
-idx_t CubedSphereUtility::i_begin(idx_t t) const {
-  tBoundsCheck(t);
+idx_t StructuredCubedSphere::i_begin(idx_t t) const {
+  if (checkBounds) tBoundsCheck(t);
   return ijBounds_[static_cast<size_t>(t)].iBegin;
 }
 
-idx_t CubedSphereUtility::i_end(idx_t t) const {
-  tBoundsCheck(t);
+idx_t StructuredCubedSphere::i_end(idx_t t) const {
+  if (checkBounds) tBoundsCheck(t);
   return ijBounds_[static_cast<size_t>(t)].iEnd;
 }
 
-idx_t CubedSphereUtility::j_begin(idx_t t) const {
-  tBoundsCheck(t);
+idx_t StructuredCubedSphere::j_begin(idx_t t) const {
+  if (checkBounds) tBoundsCheck(t);
   return ijBounds_[static_cast<size_t>(t)].jBegin;
 }
 
-idx_t CubedSphereUtility::j_end(idx_t t) const {
-  tBoundsCheck(t);
+idx_t StructuredCubedSphere::j_end(idx_t t) const {
+  if (checkBounds) tBoundsCheck(t);
   return ijBounds_[static_cast<size_t>(t)].jEnd;
 }
 
-idx_t CubedSphereUtility::index(idx_t t, idx_t i, idx_t j) const {
+idx_t StructuredCubedSphere::index(idx_t t, idx_t i, idx_t j) const {
 
-  // Check bounds.
-  iBoundsCheck(i, t);
-  jBoundsCheck(j, t);
+  if (checkBounds) iBoundsCheck(i, t);
+  if (checkBounds) jBoundsCheck(j, t);
 
   return tijToIdx_[static_cast<size_t>(t)][vecIndex(t, i, j)];
 }
 
-Field CubedSphereUtility::tij() const {
+Field StructuredCubedSphere::tij() const {
   return tij_;
 }
 
-void CubedSphereUtility::tBoundsCheck(idx_t t) const {
+void StructuredCubedSphere::tBoundsCheck(idx_t t) const {
   if (t < 0 || t > 5) throw_OutOfRange("t", t, 6);
 }
 
-void CubedSphereUtility::jBoundsCheck(idx_t j, idx_t t) const {
+void StructuredCubedSphere::jBoundsCheck(idx_t j, idx_t t) const {
   const idx_t jSize = j_end(t) - j_begin(t);
   j -= j_begin(t);
   if (j < 0 || j >= jSize) throw_OutOfRange("j - jMin", j, jSize);
 }
 
-void CubedSphereUtility::iBoundsCheck(idx_t i, idx_t t) const {
+void StructuredCubedSphere::iBoundsCheck(idx_t i, idx_t t) const {
   const idx_t iSize = i_end(t) - i_begin(t);
   i -= i_begin(t);
   if (i < 0 || i >= iSize) throw_OutOfRange("i - iMin", i, iSize);
 }
 
-size_t CubedSphereUtility::vecIndex(idx_t t, idx_t i, idx_t j) const {
+size_t StructuredCubedSphere::vecIndex(idx_t t, idx_t i, idx_t j) const {
   return static_cast<size_t>((j - j_begin(t)) * (i_end(t) - i_begin(t)) + i - i_begin(t));
 }
 

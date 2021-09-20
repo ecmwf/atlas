@@ -8,7 +8,7 @@
 #pragma once
 
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/functionspace/detail/CubedSphereUtility.h"
+#include "atlas/functionspace/detail/StructuredCubedSphere.h"
 #include "atlas/mesh.h"
 #include "atlas/mesh/Nodes.h"
 
@@ -16,25 +16,25 @@ namespace atlas {
 namespace functionspace {
 
 class CubedSphereNodeColumns : public functionspace::NodeColumns,
-  public detail::CubedSphereUtility {
+  public detail::StructuredCubedSphere {
 
 public:
 
-  inline CubedSphereNodeColumns() : NodeColumns(), CubedSphereUtility() {}
+  inline CubedSphereNodeColumns() : NodeColumns(), StructuredCubedSphere() {}
 
   inline CubedSphereNodeColumns(const FunctionSpace& functionSpace) :
-    NodeColumns(functionSpace), CubedSphereUtility(
+    NodeColumns(functionSpace), StructuredCubedSphere(
       this->mesh().nodes().field("tij"),
       this->mesh().nodes().ghost()) {}
 
   inline CubedSphereNodeColumns(const Mesh& mesh,
     const eckit::Configuration& configuration) :
-    NodeColumns(mesh, configuration), CubedSphereUtility(
+    NodeColumns(mesh, configuration), StructuredCubedSphere(
       this->mesh().nodes().field("tij"),
       this->mesh().nodes().ghost()) {}
 
   inline CubedSphereNodeColumns(const Mesh& mesh) :
-    NodeColumns(mesh), CubedSphereUtility(
+    NodeColumns(mesh), StructuredCubedSphere(
       this->mesh().nodes().field("tij"),
       this->mesh().nodes().ghost()) {}
 
