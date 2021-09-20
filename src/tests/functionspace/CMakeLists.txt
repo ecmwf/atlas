@@ -40,7 +40,7 @@ ecbuild_add_test( TARGET test_structuredcolumns_biperiodic
   LIBS     atlas
   MPI 5
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
-  CONDITION eckit_HAVE_MPI
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 5
 )
 
 ecbuild_add_test( TARGET atlas_test_structuredcolumns
@@ -48,7 +48,7 @@ ecbuild_add_test( TARGET atlas_test_structuredcolumns
   LIBS     atlas
   MPI 5
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
-  CONDITION eckit_HAVE_MPI
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 5
 )
 
 ecbuild_add_test( TARGET atlas_test_pointcloud
