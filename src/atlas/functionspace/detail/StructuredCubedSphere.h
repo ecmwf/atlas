@@ -47,7 +47,7 @@ public:
   /// j lower bound for tile t (including halo)
   idx_t j_end(idx_t t) const;
 
-  /// Return array_view index for (i, j, t).
+  /// Return array_view index for (t, i, j).
   idx_t index(idx_t t, idx_t i, idx_t j) const;
 
   /// Return ijt field.
