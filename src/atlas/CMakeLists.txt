@@ -460,8 +460,8 @@ functionspace/detail/StructuredColumns_setup.cc
 functionspace/detail/StructuredColumns_create_remote_index.cc
 functionspace/detail/PointCloudInterface.h
 functionspace/detail/PointCloudInterface.cc
-functionspace/detail/CubedSphereUtility.h
-functionspace/detail/CubedSphereUtility.cc
+functionspace/detail/StructuredCubedSphere.h
+functionspace/detail/StructuredCubedSphere.cc
 
 )
 

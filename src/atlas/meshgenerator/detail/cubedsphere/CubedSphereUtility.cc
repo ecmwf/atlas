@@ -66,7 +66,7 @@ Jacobian2 Jacobian2::inverse() const {
 }
 
 Jacobian2 Jacobian2::sign() const {
-    const auto smallNumber = det() * std::numeric_limits<double>::epsilon();
+    const double smallNumber = det() * std::numeric_limits<double>::epsilon();
     const auto signValue   = [&]( double number ) -> double {
         return std::abs( number ) < smallNumber ? 0. : number < 0. ? -1. : 1.;
     };
@@ -229,10 +229,6 @@ PointXY NeighbourJacobian::xy( const PointIJ& ij, idx_t t ) const {
     return xy00 + jac * ij;
 }
 
-PointXY NeighbourJacobian::xy( const PointTIJ& tij) const {
-    return xy( tij.ij(), tij.t() );
-}
-
 PointIJ NeighbourJacobian::ij( const PointXY& xy, idx_t t ) const {
     // Get jacobian.
     const Jacobian2& jac = dij_by_dxy_[static_cast<size_t>( t )];
@@ -240,10 +236,6 @@ PointIJ NeighbourJacobian::ij( const PointXY& xy, idx_t t ) const {
 
     // Return ij
     return jac * ( xy - xy00 );
-}
-
-PointIJ NeighbourJacobian::ij( const PointTXY& xyt ) const {
-    return ij( xyt.xy(), xyt.t() );
 }
 
 PointTXY NeighbourJacobian::xyLocalToGlobal( const PointXY& xyLocal, idx_t tLocal ) const {
@@ -311,10 +303,6 @@ PointTXY NeighbourJacobian::xyLocalToGlobal( const PointXY& xyLocal, idx_t tLoca
     return PointTXY( tGlobal, xyGlobal );
 }
 
-PointTXY NeighbourJacobian::xyLocalToGlobal( const PointTXY& txyLocal ) const {
-    return xyLocalToGlobal( txyLocal.xy(), txyLocal.t() );
-}
-
 PointTIJ NeighbourJacobian::ijLocalToGlobal( const PointIJ& ijLocal, idx_t tLocal ) const {
     // Use xyLocalToGlobal method to take care of this.
 
@@ -322,12 +310,9 @@ PointTIJ NeighbourJacobian::ijLocalToGlobal( const PointIJ& ijLocal, idx_t tLoca
     PointTXY txyGlobal = xyLocalToGlobal( xy( ijLocal, tLocal ), tLocal );
 
     // convert to ijt
-    return PointTIJ( txyGlobal.t(), ij( txyGlobal ) );
+    return PointTIJ( txyGlobal.t(), ij( txyGlobal.xy(), txyGlobal.t() ) );
 }
 
-PointTIJ NeighbourJacobian::ijLocalToGlobal( const PointTIJ& tijLocal ) const {
-    return ijLocalToGlobal( tijLocal.ij(), tijLocal.t() );
-}
 
 bool NeighbourJacobian::ijInterior( const PointIJ& ij ) const {
     return ij.iNode() >= 0 && ij.iNode() <= N_ && ij.jNode() >= 0 && ij.jNode() <= N_;

@@ -182,29 +182,17 @@ public:
     /// Grid-data constructor.
     NeighbourJacobian( const CubedSphereGrid& csGrid );
 
-    /// @{
     /// Convert ij on local tile t to xy.
     PointXY xy( const PointIJ& ij, idx_t t ) const;
-    PointXY xy( const PointTIJ& tij ) const;
-    /// @}
 
-    /// @{
     /// Convert xy on local tile t to ij.
     PointIJ ij( const PointXY& xy, idx_t t ) const;
-    PointIJ ij( const PointTXY& txy ) const;
-    /// @}
 
-    /// @{
     /// Convert extrapolated xy on tile t to global xy and t (needed for halos).
     PointTXY xyLocalToGlobal( const PointXY& xyLocal, idx_t tLocal ) const;
-    PointTXY xyLocalToGlobal( const PointTXY& txyLocal ) const;
-    /// @}
 
-    /// @{
     /// Convert extrapolated ij on tile t to global ij and t (needed for halos).
     PointTIJ ijLocalToGlobal( const PointIJ& ijLocal, idx_t tLocal ) const;
-    PointTIJ ijLocalToGlobal( const PointTIJ& ijtLocal ) const;
-    /// @}
 
     /// Return true if ij is interior or on the edge of a tile.
     bool ijInterior( const PointIJ& ij ) const;

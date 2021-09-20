@@ -89,8 +89,8 @@ void CubedSphereMeshGenerator::configure_defaults() {
 
 void CubedSphereMeshGenerator::generate( const Grid& grid, Mesh& mesh ) const {
     // Get partitioner type and number of partitions from config.
-    const auto nParts   = static_cast<idx_t>( options.get<size_t>( "nb_parts" ) );
-    const auto partType = options.get<std::string>( "partitioner" );
+    const idx_t nParts   = static_cast<idx_t>( options.get<size_t>( "nb_parts" ) );
+    const std::string partType = options.get<std::string>( "partitioner" );
 
     auto partConfig = util::Config{};
     partConfig.set( "type", partType );
@@ -233,7 +233,7 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
         GlobalElem* globalPtr{};             // Pointer to global element.
         ElemType type{ElemType::UNDEFINED};  // Cell/node Type.
         idx_t halo{undefinedIdx};            // Halo level.
-        idx_t t{};                           // t, j, and i.
+        idx_t t{};                           // t, i and j.
         idx_t i{};
         idx_t j{};
     };
@@ -270,8 +270,8 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
     const auto jacobian            = NeighbourJacobian( csGrid );
 
     // Get partition information.
-    const auto nParts   = options.get<size_t>( "nb_parts" );
-    const auto thisPart = options.get<size_t>( "part" );
+    const size_t nParts   = options.get<size_t>( "nb_parts" );
+    const size_t thisPart = options.get<size_t>( "part" );
 
     // Define an index counter.
     const auto idxSum = []( const std::vector<idx_t>& idxCounts ) -> idx_t {
@@ -469,7 +469,7 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
 
                     // Check that xy is on this tile.
                     PointXY xy = jacobian.xy( PointIJ( i, j ), t );
-                    xy         = jacobian.snapToEdge( xy, t );
+                    xy = jacobian.snapToEdge( xy, t );
 
                     // This will only determine if tGlobal does not match t.
                     // This is cheaper than determining the correct tGlobal.
@@ -590,12 +590,12 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
         localCell.globalPtr->localPtr = &localCell;
 
         if ( localCell.globalPtr->remoteIdx == undefinedIdx ) {
-            const PointTIJ ijtGlobal =
+            const PointTIJ tijGlobal =
                 jacobian.ijLocalToGlobal( PointIJ( localCell.i + 0.5, localCell.j + 0.5 ), localCell.t );
 
-            const idx_t& t = ijtGlobal.t();
-            const idx_t& i = ijtGlobal.ij().iCell();
-            const idx_t& j = ijtGlobal.ij().jCell();
+            const idx_t& t = tijGlobal.t();
+            const idx_t& i = tijGlobal.ij().iCell();
+            const idx_t& j = tijGlobal.ij().jCell();
 
             const GlobalElem& ownerCell = globalCells[getCellIdx( i, j, t )];
 
@@ -699,11 +699,11 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
         localNode.globalPtr->localPtr = &localNode;
 
         if ( localNode.globalPtr->remoteIdx == undefinedIdx ) {
-            const PointTIJ ijtGlobal = jacobian.ijLocalToGlobal( PointIJ( localNode.i, localNode.j ), localNode.t );
+            const PointTIJ tijGlobal = jacobian.ijLocalToGlobal( PointIJ( localNode.i, localNode.j ), localNode.t );
 
-            const idx_t& t = ijtGlobal.t();
-            const idx_t& i = ijtGlobal.ij().iNode();
-            const idx_t& j = ijtGlobal.ij().jNode();
+            const idx_t& t = tijGlobal.t();
+            const idx_t& i = tijGlobal.ij().iNode();
+            const idx_t& j = tijGlobal.ij().jNode();
 
             const GlobalElem& ownerNode = globalNodes[getNodeIdx( i, j, t )];
 
