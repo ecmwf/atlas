@@ -296,7 +296,7 @@ CASE( "cubedsphere_mesh_test" ) {
     }
     SECTION( "N12, halo = 3" ) {
         testHaloExchange( "CS-LFR-C-12", "equal_regions", 3 );
-        testHaloExchange( "CS-LFR-C-12", "regular_bands", 3 );
+        testHaloExchange( "CS-LFR-C-12", "cubedsphere", 3 );
     }
     SECTION( "Prime number mesh (N17)" ) {
         testHaloExchange( "CS-LFR-C-17", "equal_regions", 1 );
