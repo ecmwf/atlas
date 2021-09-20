@@ -86,10 +86,23 @@ idx_t StructuredCubedSphere::j_end(idx_t t) const {
 
 idx_t StructuredCubedSphere::index(idx_t t, idx_t i, idx_t j) const {
 
-  if (checkBounds) iBoundsCheck(i, t);
-  if (checkBounds) jBoundsCheck(j, t);
+  if (checkBounds) {
+    iBoundsCheck(i, t);
+    jBoundsCheck(j, t);
+  }
 
-  return tijToIdx_[static_cast<size_t>(t)][vecIndex(t, i, j)];
+  const idx_t idx = tijToIdx_[static_cast<size_t>(t)][vecIndex(t, i, j)];
+
+  if (checkBounds) {
+    if (idx == invalid_index()) {
+    const std::string errMsg =
+      "(" + std::to_string(t) + ", " + std::to_string(i) + ", " + std::to_string(j) + ") "
+      "is not a valid (t, i, j) combination.";
+    throw_Exception(errMsg, Here());
+    }
+  }
+
+  return idx;
 }
 
 Field StructuredCubedSphere::tij() const {
