@@ -52,7 +52,6 @@ StructuredCubedSphere::StructuredCubedSphere(const Field& tij, const Field& ghos
     const size_t vecSize = static_cast<size_t>((j_end(t) - j_begin(t))
                                            * (i_end(t) - i_begin(t)));
     tijToIdx_.push_back(std::vector<idx_t>(vecSize, invalid_index()));
-
   }
 
   // loop over ijt_ and set ijtToIdx
