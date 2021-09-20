@@ -608,8 +608,6 @@ void EqualRegionsPartitioner::partition( const Grid& grid, int part[] ) const {
         atlas::vector<NodeInt> nodes( grid.size() );
         int* nodes_buffer = reinterpret_cast<int*>( nodes.data() );
         long nb_workers   = comm.size();
-        ATLAS_DEBUG_VAR( grid.size() );
-        ATLAS_DEBUG_VAR( nb_workers );
 
         /*
     Sort nodes from north to south, and west to east. Now we can easily split

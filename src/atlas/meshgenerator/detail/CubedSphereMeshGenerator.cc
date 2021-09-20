@@ -9,6 +9,7 @@
 #include <cmath>
 #include <limits>
 #include <numeric>
+#include <string>
 #include <vector>
 
 #include "eckit/utils/Hash.h"
@@ -49,23 +50,27 @@ CubedSphereMeshGenerator::CubedSphereMeshGenerator( const eckit::Parametrisation
 
     // Get number of partitions.
     size_t nb_parts;
-    if ( p.get( "nb_parts", nb_parts ) )
+    if ( p.get( "nb_parts", nb_parts ) ) {
         options.set( "nb_parts", nb_parts );
+    }
 
     // Get this partition.
     size_t part;
-    if ( p.get( "part", part ) )
+    if ( p.get( "part", part ) ) {
         options.set( "part", part );
+    }
 
     // Get halo size.
     idx_t halo;
-    if ( p.get( "halo", halo ) )
+    if ( p.get( "halo", halo ) ) {
         options.set( "halo", halo );
+    }
 
     // Get partitioner.
     std::string partitioner;
-    if ( p.get( "partitioner", partitioner ) )
+    if ( p.get( "partitioner", partitioner ) ) {
         options.set( "partitioner", partitioner );
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -110,13 +115,14 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, Mesh& mesh ) const {
 // -----------------------------------------------------------------------------
 
 void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribution& distribution, Mesh& mesh ) const {
+    // Check for correct grid and need for mesh
     ATLAS_ASSERT( !mesh.generated() );
 
     // Cast grid to cubed sphere grid.
     const auto csGrid = CubedSphereGrid( grid );
 
     // Check for successful cast.
-    if ( !CubedSphereGrid( grid ) ) {
+    if ( !csGrid ) {
         throw_Exception(
             "CubedSphereMeshGenerator can only work "
             "with a cubedsphere grid.",

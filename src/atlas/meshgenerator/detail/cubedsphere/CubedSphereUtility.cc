@@ -313,7 +313,6 @@ PointTIJ NeighbourJacobian::ijLocalToGlobal( const PointIJ& ijLocal, idx_t tLoca
     return PointTIJ( txyGlobal.t(), ij( txyGlobal.xy(), txyGlobal.t() ) );
 }
 
-
 bool NeighbourJacobian::ijInterior( const PointIJ& ij ) const {
     return ij.iNode() >= 0 && ij.iNode() <= N_ && ij.jNode() >= 0 && ij.jNode() <= N_;
 }

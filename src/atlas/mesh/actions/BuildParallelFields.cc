@@ -1074,8 +1074,9 @@ Field& build_cells_remote_idx( mesh::Cells& cells, const mesh::Nodes& nodes ) {
 void build_cells_parallel_fields( Mesh& mesh ) {
     bool parallel = false;
     mesh.cells().metadata().get( "parallel", parallel );
-    if ( !parallel )
+    if ( !parallel ) {
         build_cells_remote_idx( mesh.cells(), mesh.nodes() );
+    }
 
     mesh.cells().metadata().set( "parallel", true );
 }
