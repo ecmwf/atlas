@@ -40,6 +40,7 @@ Field getGhost<NodeColumns>( const Mesh& mesh ) {
 
 template<>
 Field getGhost<CellColumns>( const Mesh& mesh ) {
+  // No ghost field for CellColumns. Halo field is next best thing.
   return mesh.cells().halo();
 }
 }
@@ -48,7 +49,7 @@ Field getGhost<CellColumns>( const Mesh& mesh ) {
 // CubedSphereColumnsImpl.
 template<typename BaseFunctionSpace>
 CubedSphereColumns<BaseFunctionSpace>::CubedSphereColumns() :
-  BaseFunctionSpace (),
+  BaseFunctionSpace(),
   cubedSphereColumnsHandle_( new detail::CubedSphereColumnsImpl() ) {}
 
 template<typename BaseFunctionSpace>
@@ -74,6 +75,21 @@ CubedSphereColumns<BaseFunctionSpace>::CubedSphereColumns(
   cubedSphereColumnsHandle_( new detail::CubedSphereColumnsImpl(
     getTij<BaseFunctionSpace>( this->mesh() ),
     getGhost<BaseFunctionSpace>( this->mesh() ) ) ) {}
+
+template<typename BaseFunctionSpace>
+idx_t CubedSphereColumns<BaseFunctionSpace>::invalid_index() const {
+  return cubedSphereColumnsHandle_.get()->invalid_index();
+}
+
+template<typename BaseFunctionSpace>
+idx_t CubedSphereColumns<BaseFunctionSpace>::nb_elems() const {
+  return cubedSphereColumnsHandle_.get()->nb_elems();
+}
+
+template<typename BaseFunctionSpace>
+idx_t CubedSphereColumns<BaseFunctionSpace>::nb_owned_elems() const {
+  return cubedSphereColumnsHandle_.get()->nb_owned_elems();
+}
 
 template<typename BaseFunctionSpace>
 idx_t CubedSphereColumns<BaseFunctionSpace>::i_begin(idx_t t) const {
@@ -103,6 +119,11 @@ idx_t CubedSphereColumns<BaseFunctionSpace>::index(idx_t t, idx_t i, idx_t j) co
 template<typename BaseFunctionSpace>
 Field CubedSphereColumns<BaseFunctionSpace>::tij() const {
   return cubedSphereColumnsHandle_.get()->tij();
+}
+
+template<typename BaseFunctionSpace>
+Field CubedSphereColumns<BaseFunctionSpace>::ghost() const {
+  return cubedSphereColumnsHandle_.get()->ghost();
 }
 
 // Explicit instantiation of template classes.

@@ -7,6 +7,9 @@
 
 #pragma once
 
+#include <functional>
+#include <type_traits>
+
 #include "atlas/array/ArrayView.h"
 #include "atlas/functionspace/CellColumns.h"
 #include "atlas/functionspace/NodeColumns.h"
@@ -17,8 +20,6 @@
 
 namespace atlas {
 class Mesh;
-class CellColumns;
-class NodeColumns;
 }
 
 namespace atlas {
@@ -37,7 +38,13 @@ public:
   CubedSphereColumns(const Mesh& mesh);
 
   /// Invalid index.
-  static constexpr idx_t invalid_index() {return -1;}
+  idx_t invalid_index() const;
+
+  /// Get totla number of element.
+  idx_t nb_elems() const;
+
+  /// Get number of owned elements.
+  idx_t nb_owned_elems() const;
 
   /// i lower bound for tile t (including halo)
   idx_t i_begin(idx_t t) const;
@@ -55,31 +62,113 @@ public:
   /// Return tij field.
   Field tij() const;
 
-  /// Apply functor f(index, t, i, j) to all valid (t, i, j) triplets.
-  /// (use "#pragma omp atomic" to update array elements other than [index].)
-  template<typename functor>
-  void for_each(const functor& f, bool include_halo = false)  const {
+  /// Return ghost field.
+  Field ghost() const;
 
-    using namespace meshgenerator::detail::cubedsphere;
+private:
+  class For {
+  public:
+    For( const CubedSphereColumns<BaseFunctionSpace>& functionSpace,
+      const util::Config& config = util::NoConfig() ) :
+      functionSpace_{functionSpace},
+      indexMax_{config.getBool("include_halo", false) ?
+        functionSpace.nb_elems() : functionSpace.nb_owned_elems() } ,
+      levels_{config.getInt("levels", functionSpace_.levels())},
+      tijView_(array::make_view<idx_t, 2>( functionSpace_.tij() ) ) {}
 
-    // make array views.
-    const auto tijView_ =
-      array::make_view<idx_t, 2>( cubedSphereColumnsHandle_.get()->tij() );
-    const auto ghostView_ =
-      array::make_view<idx_t, 1>( cubedSphereColumnsHandle_.get()->ghost() );
+      // Define SFINAE Macro. This should be able to evaluate FunctorArgs() to
+      // type void* if the Functor is convertible to a function pointer.
+      #define FunctorArgs( ... ) \
+        std::enable_if< \
+          std::is_convertible<Functor, std::function< \
+            void( __VA_ARGS__ )>>::value, Functor>::type*
 
-    // Loop over elements.
-    for (idx_t index = 0; index < tijView_.shape(0); ++index) {
+      // Functor: void f( index, t, i, j, k)
+      template<typename Functor, typename FunctorArgs( idx_t, idx_t, idx_t, idx_t, idx_t ) = nullptr>
+      void operator()( const Functor& f) const {
 
-      if (!include_halo and ghostView_(index)) continue;
+        using namespace meshgenerator::detail::cubedsphere;
 
-      const idx_t t = tijView_(index, Coordinates::T);
-      const idx_t i = tijView_(index, Coordinates::I);
-      const idx_t j = tijView_(index, Coordinates::J);
+        // Loop over elements.
+        atlas_omp_parallel_for ( idx_t index = 0; index < indexMax_; ++index ) {
 
-      f(index, t, i, j);
+          const idx_t t = tijView_(index, Coordinates::T);
+          const idx_t i = tijView_(index, Coordinates::I);
+          const idx_t j = tijView_(index, Coordinates::J);
+          for ( idx_t k = 0; k < levels_; ++k ) {
+            f( index, t, i, j, k );
+          }
+        }
+      }
 
-    }
+      // Functor: void f( index, t, i, j)
+      template<typename Functor, typename FunctorArgs( idx_t, idx_t, idx_t, idx_t ) = nullptr>
+      void operator()( const Functor& f) const {
+
+        using namespace meshgenerator::detail::cubedsphere;
+
+        // Loop over elements.
+        atlas_omp_parallel_for ( idx_t index = 0; index < indexMax_; ++index ) {
+
+          const idx_t t = tijView_(index, Coordinates::T);
+          const idx_t i = tijView_(index, Coordinates::I);
+          const idx_t j = tijView_(index, Coordinates::J);
+          f( index, t, i, j );
+        }
+      }
+
+      // Functor: void f( index, k)
+      template<typename Functor, typename FunctorArgs( idx_t, idx_t ) = nullptr>
+      void operator()( const Functor& f) const {
+
+        using namespace meshgenerator::detail::cubedsphere;
+
+        // Loop over elements.
+        atlas_omp_parallel_for ( idx_t index = 0; index < indexMax_; ++index ) {
+
+          for ( idx_t k = 0; k < levels_; ++k ) {
+            f( index, k );
+          }
+        }
+      }
+
+      // Functor: void f( index )
+      template<typename Functor, typename FunctorArgs( idx_t ) = nullptr>
+      void operator()( const Functor& f) const {
+
+        using namespace meshgenerator::detail::cubedsphere;
+
+        // Loop over elements.
+        atlas_omp_parallel_for ( idx_t index = 0; index < indexMax_; ++index ) {
+
+          f( index );
+        }
+      }
+
+      #undef FunctorArgs
+
+  private:
+    const CubedSphereColumns<BaseFunctionSpace>& functionSpace_;
+    idx_t indexMax_;
+    idx_t levels_;
+    array::ArrayView<idx_t, 2> tijView_;
+  };
+
+public:
+
+/// Visit each element index and apply functor with signature:
+///   f(index, t, i, j, k), f(index t, i, j), f(index, k) or f(index).
+  template <typename Functor>
+  void parallel_for( const Functor& f ) const {
+    For( *this, util::NoConfig() )( f );
+  }
+
+  /// Visit each element index and apply functor with signature:
+  ///   f(index, t, i, j, k), f(index t, i, j), f(index, k) or f(index).
+  /// Can also specify "idx_t levels" and "bool include_halo".
+  template <typename Functor>
+  void parallel_for( const util::Config& config, const Functor& f ) const {
+    For( *this, config )( f );
   }
 
 private:

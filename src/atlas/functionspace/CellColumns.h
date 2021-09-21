@@ -51,6 +51,7 @@ public:
 
     idx_t nb_cells() const;
     idx_t nb_cells_global() const;  // Only on MPI rank 0, will this be different from 0
+    idx_t levels() const;
     std::vector<idx_t> nb_cells_global_foreach_rank() const;
 
     const Mesh& mesh() const { return mesh_; }
@@ -161,6 +162,7 @@ public:
 
     idx_t nb_cells() const;
     idx_t nb_cells_global() const;  // Only on MPI rank 0, will this be different from 0
+    idx_t levels() const;
 
     const Mesh& mesh() const;
 

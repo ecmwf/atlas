@@ -46,7 +46,7 @@ namespace test {
 
     // Loop over all non halo elements of test field.
     idx_t testFuncCallCount = 0;
-    functionspace.for_each(
+    functionspace.parallel_for(
       [&](idx_t index, idx_t t, idx_t i, idx_t j) {
 
         // Make sure index matches ijt.
@@ -76,7 +76,7 @@ namespace test {
 
     // Loop over elements including halo
     testFuncCallCount = 0;
-    functionspace.for_each(
+    functionspace.parallel_for(util::Config("include_halo", true),
       [&](idx_t index, idx_t t, idx_t i, idx_t j) {
 
         // Make sure index matches ijt.
@@ -87,12 +87,43 @@ namespace test {
           fieldView(index), testFunction(lonLatView(index, LON), lonLatView(index, LAT))));
         ++testFuncCallCount;
 
-    }, true);
+    });
 
     // Make sure call count is equal to functionspace.size().
     EXPECT(testFuncCallCount == functionspace.size());
 
 
+    // Test SFINAE for parallel_for.
+    // Suggestions for more inventive tests are welcome.
+
+    idx_t nLevels = 10;
+    auto field3 = functionspace.template createField<double>(
+          util::Config("name", "test field") | util::Config("levels", nLevels));
+    auto fieldView2 = array::make_view<double, 2>(field3);
+
+    functionspace.parallel_for(util::Config("levels", nLevels),
+      [&](idx_t index, idx_t t, idx_t i, idx_t j, idx_t k) {
+        fieldView2(index, k) = t * i * j * k;
+      });
+
+    functionspace.parallel_for(
+      [&](idx_t index, idx_t t, idx_t i, idx_t j) {
+        for (idx_t k = 0; k < nLevels; ++k) {
+          EXPECT(static_cast<idx_t>(fieldView2(index, k)) == t * i * j * k);
+        }
+      });
+
+    functionspace.parallel_for(util::Config("levels", nLevels),
+      [&](idx_t index, idx_t k) {
+        fieldView2(index, k) = k;
+      });
+
+    functionspace.parallel_for(
+      [&](idx_t index) {
+        for (idx_t k = 0; k < nLevels; ++k) {
+          EXPECT(static_cast<idx_t>(fieldView2(index, k)) == k);
+        }
+      });
   }
 
 CASE("cubedsphere_mesh_functionspace") {

@@ -27,11 +27,14 @@ CubedSphereColumnsImpl::CubedSphereColumnsImpl(const Field& tij, const Field& gh
   Log::debug() << "CubedSphereColumnsImpl bounds checking is set to "
                   + std::to_string(checkBounds) << std::endl;
 
-  // Make array view.
-  const auto tijView_ = array::make_view<idx_t, 2>(tij);
+  // Make array views.
+  const auto tijView_ = array::make_view<idx_t, 2>(tij_);
+  const auto ghostView_ = array::make_view<idx_t, 1>(ghost_);
+
+  nElems_ = tijView_.shape(0);
 
   // loop over tij and find min and max ij bounds.
-  for (idx_t index = 0; index < tijView_.shape(0); ++index) {
+  for (idx_t index = 0; index < nElems_; ++index) {
     const size_t t = static_cast<size_t>(tijView_(index, Coordinates::T));
     const idx_t i = tijView_(index, Coordinates::I);
     const idx_t j = tijView_(index, Coordinates::J);
@@ -41,6 +44,8 @@ CubedSphereColumnsImpl::CubedSphereColumnsImpl(const Field& tij, const Field& gh
     ijBounds_[t].iEnd   = std::max(i + 1, ijBounds_[t].iEnd  );
     ijBounds_[t].jEnd   = std::max(j + 1, ijBounds_[t].jEnd  );
 
+    // Keep track of highest non-ghost index.
+    if (!ghostView_(index)) nOwnedElems_ = index + 1;
   }
 
   // Set tijToIdx vectors
@@ -53,13 +58,21 @@ CubedSphereColumnsImpl::CubedSphereColumnsImpl(const Field& tij, const Field& gh
   }
 
   // loop over ijt_ and set ijtToIdx
-  for (idx_t index = 0; index < tijView_.shape(0); ++index) {
+  for (idx_t index = 0; index < nElems_; ++index) {
     const idx_t t = tijView_(index, Coordinates::T);
     const idx_t i = tijView_(index, Coordinates::I);
     const idx_t j = tijView_(index, Coordinates::J);
 
    tijToIdx_[static_cast<size_t>(t)][vecIndex(t, i, j)] = index;
   }
+}
+
+idx_t CubedSphereColumnsImpl::nb_elems() const {
+  return nElems_;
+}
+
+idx_t CubedSphereColumnsImpl::nb_owned_elems() const {
+  return nOwnedElems_;
 }
 
 idx_t CubedSphereColumnsImpl::i_begin(idx_t t) const {

@@ -37,13 +37,21 @@ public:
   /// Invalid index.
   static constexpr idx_t invalid_index() {return -1;}
 
+  /// Number of elements.
+  idx_t nb_elems() const;
+
+  /// Number of owned elements.
+  idx_t nb_owned_elems() const;
+
   /// i lower bound for tile t (including halo)
   idx_t i_begin(idx_t) const;
+
   /// i lower bound for tile t (including halo)
   idx_t i_end(idx_t t) const;
 
   /// j lower bound for tile t (including halo)
   idx_t j_begin(idx_t t) const;
+
   /// j lower bound for tile t (including halo)
   idx_t j_end(idx_t t) const;
 
@@ -85,6 +93,12 @@ private:
 
   // ghost field.
   Field ghost_;
+
+  // Number  cells/nodes.
+  idx_t nElems_{};
+
+  // Number of owned cells/nodes.
+  idx_t nOwnedElems_{};
 
 };
 
