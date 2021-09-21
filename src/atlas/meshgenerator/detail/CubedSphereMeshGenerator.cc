@@ -102,8 +102,9 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, Mesh& mesh ) const {
     partConfig.set( "partitions", nParts );
 
     // Use lonlat instead of xy for non cubedsphere partitioner.
-    if ( partType != "cubedsphere" )
+    if ( partType != "cubedsphere" ) {
         partConfig.set( "coordinates", "lonlat" );
+    }
 
     // Set distribution.
     const auto partitioner  = grid::Partitioner( partConfig );
@@ -316,13 +317,15 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
                               ( i > N && j > N ) ||  // Top-right corner.
                               ( i < 0 && j > N );    // Top-left corner.
 
-        if ( inCorner )
+        if ( inCorner ) {
             return true;
+        }
 
         const bool outOfBounds = i < -nHalo || i > N + nHalo || j < -nHalo || j > N + nHalo;
 
-        if ( outOfBounds )
+        if ( outOfBounds ) {
             return true;
+        }
 
         return false;
     };
@@ -334,13 +337,15 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
                               ( i > N - 1 && j > N - 1 ) ||  // Top-right corner.
                               ( i < 0 && j > N - 1 );        // Top-left corner.
 
-        if ( inCorner )
+        if ( inCorner ) {
             return true;
+        }
 
         const bool outOfBounds = i < -nHalo || i > N + nHalo - 1 || j < -nHalo || j > N + nHalo - 1;
 
-        if ( outOfBounds )
+        if ( outOfBounds ) {
             return true;
+        }
 
         return false;
     };
@@ -405,8 +410,9 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
         for ( idx_t j = -nHalo; j < N + nHalo; ++j ) {
             for ( idx_t i = -nHalo; i < N + nHalo; ++i ) {
                 // Skip invalid cell.
-                if ( invalidCell( i, j ) )
+                if ( invalidCell( i, j ) ) {
                     continue;
+                }
 
                 // Get cell.
                 GlobalElem& globalCell = globalCells[getCellIdx( i, j, t )];
@@ -448,8 +454,9 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
         for ( idx_t j = -nHalo; j < N + nHalo + 1; ++j ) {
             for ( idx_t i = -nHalo; i < N + nHalo + 1; ++i ) {
                 // Skip if not a valid node.
-                if ( invalidNode( i, j ) )
+                if ( invalidNode( i, j ) ) {
                     continue;
+                }
 
                 // Get this node.
                 GlobalElem& globalNode = globalNodes[getNodeIdx( i, j, t )];
@@ -518,8 +525,9 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
 
         for ( idx_t j = bounds.jBegin; j < bounds.jEnd; ++j ) {
             for ( idx_t i = bounds.iBegin; i < bounds.iEnd; ++i ) {
-                if ( invalidCell( i, j ) )
+                if ( invalidCell( i, j ) ) {
                     continue;
+                }
 
                 // Get cell
                 GlobalElem& globalCell = globalCells[getCellIdx( i, j, t )];
@@ -543,8 +551,9 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
                     idx_t halo      = nHalo;
                     for ( idx_t jHalo = j - nHalo; jHalo < j + nHalo + 1; ++jHalo ) {
                         for ( idx_t iHalo = i - nHalo; iHalo < i + nHalo + 1; ++iHalo ) {
-                            if ( invalidCell( iHalo, jHalo ) || ( iHalo == i && jHalo == j ) )
+                            if ( invalidCell( iHalo, jHalo ) || ( iHalo == i && jHalo == j ) ) {
                                 continue;
+                            }
 
                             // Is there a nearby owner cell?
                             const GlobalElem& ownerCell = globalCells[getCellIdx( iHalo, jHalo, t )];
@@ -626,8 +635,9 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
 
         for ( idx_t j = bounds.jBegin; j < bounds.jEnd + 1; ++j ) {
             for ( idx_t i = bounds.iBegin; i < bounds.iEnd + 1; ++i ) {
-                if ( invalidNode( i, j ) )
+                if ( invalidNode( i, j ) ) {
                     continue;
+                }
 
                 // Get node.
                 GlobalElem& globalNode = globalNodes[getNodeIdx( i, j, t )];

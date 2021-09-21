@@ -11,6 +11,7 @@
 #include "atlas/field.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/meshgenerator/detail/cubedsphere/CubedSphereUtility.h"
+#include "atlas/util/Object.h"
 
 /// Extra cubed sphere functionality for NodeColumns and CellColumns function
 /// spaces.
@@ -25,14 +26,13 @@ namespace detail {
 
 using namespace meshgenerator::detail::cubedsphere;
 
-class StructuredCubedSphere
+class CubedSphereColumnsImpl : public util::Object
 {
 
 public:
 
-  StructuredCubedSphere() = default;
-  StructuredCubedSphere(const Field& tij, const Field& ghost);
-  virtual ~StructuredCubedSphere() = 0;
+  CubedSphereColumnsImpl() = default;
+  CubedSphereColumnsImpl(const Field& tij, const Field& ghost);
 
   /// Invalid index.
   static constexpr idx_t invalid_index() {return -1;}
@@ -53,28 +53,8 @@ public:
   /// Return ijt field.
   Field tij() const;
 
-  /// Apply functor f(index, t, i, j) to all valid (t, i, j) triplets.
-  /// (use "#pragma omp atomic" to update array elements other than [index].)
-  template<typename functor>
-  void for_each(const functor& f, bool include_halo = false)  const {
-
-    // make array views.
-    const auto ijtView_   = array::make_view<idx_t, 2>(tij_);
-    const auto ghostView_ = array::make_view<idx_t, 1>(ghost_);
-
-    // Loop over elements.
-    atlas_omp_parallel_for (idx_t index = 0; index < ijtView_.shape(0); ++index) {
-
-      if (!include_halo and ghostView_(index)) continue;
-
-      const idx_t t = ijtView_(index, Coordinates::T);
-      const idx_t i = ijtView_(index, Coordinates::I);
-      const idx_t j = ijtView_(index, Coordinates::J);
-
-      f(index, t, i, j);
-
-    }
-  }
+  /// Return ghost/halo field.
+  Field ghost() const;
 
 private:
 

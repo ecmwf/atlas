@@ -5,7 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "atlas/functionspace/detail/StructuredCubedSphere.h"
+#include "atlas/functionspace/detail/CubedSphereColumnsImpl.h"
 #include "atlas/runtime/Log.h"
 
 namespace atlas {
@@ -20,13 +20,11 @@ namespace  {
 #endif
 }
 
-StructuredCubedSphere::~StructuredCubedSphere() {};
-
-StructuredCubedSphere::StructuredCubedSphere(const Field& tij, const Field& ghost) :
+CubedSphereColumnsImpl::CubedSphereColumnsImpl(const Field& tij, const Field& ghost) :
   tij_(tij), ghost_(ghost)
 {
 
-  Log::debug() << "StructuredCubedSphere bounds checking is set to "
+  Log::debug() << "CubedSphereColumnsImpl bounds checking is set to "
                   + std::to_string(checkBounds) << std::endl;
 
   // Make array view.
@@ -64,27 +62,27 @@ StructuredCubedSphere::StructuredCubedSphere(const Field& tij, const Field& ghos
   }
 }
 
-idx_t StructuredCubedSphere::i_begin(idx_t t) const {
+idx_t CubedSphereColumnsImpl::i_begin(idx_t t) const {
   if (checkBounds) tBoundsCheck(t);
   return ijBounds_[static_cast<size_t>(t)].iBegin;
 }
 
-idx_t StructuredCubedSphere::i_end(idx_t t) const {
+idx_t CubedSphereColumnsImpl::i_end(idx_t t) const {
   if (checkBounds) tBoundsCheck(t);
   return ijBounds_[static_cast<size_t>(t)].iEnd;
 }
 
-idx_t StructuredCubedSphere::j_begin(idx_t t) const {
+idx_t CubedSphereColumnsImpl::j_begin(idx_t t) const {
   if (checkBounds) tBoundsCheck(t);
   return ijBounds_[static_cast<size_t>(t)].jBegin;
 }
 
-idx_t StructuredCubedSphere::j_end(idx_t t) const {
+idx_t CubedSphereColumnsImpl::j_end(idx_t t) const {
   if (checkBounds) tBoundsCheck(t);
   return ijBounds_[static_cast<size_t>(t)].jEnd;
 }
 
-idx_t StructuredCubedSphere::index(idx_t t, idx_t i, idx_t j) const {
+idx_t CubedSphereColumnsImpl::index(idx_t t, idx_t i, idx_t j) const {
 
   if (checkBounds) {
     iBoundsCheck(i, t);
@@ -94,27 +92,31 @@ idx_t StructuredCubedSphere::index(idx_t t, idx_t i, idx_t j) const {
   return tijToIdx_[static_cast<size_t>(t)][vecIndex(t, i, j)];
 }
 
-Field StructuredCubedSphere::tij() const {
+Field CubedSphereColumnsImpl::tij() const {
   return tij_;
 }
 
-void StructuredCubedSphere::tBoundsCheck(idx_t t) const {
+Field CubedSphereColumnsImpl::ghost() const {
+  return ghost_;
+}
+
+void CubedSphereColumnsImpl::tBoundsCheck(idx_t t) const {
   if (t < 0 || t > 5) throw_OutOfRange("t", t, 6);
 }
 
-void StructuredCubedSphere::jBoundsCheck(idx_t j, idx_t t) const {
+void CubedSphereColumnsImpl::jBoundsCheck(idx_t j, idx_t t) const {
   const idx_t jSize = j_end(t) - j_begin(t);
   j -= j_begin(t);
   if (j < 0 || j >= jSize) throw_OutOfRange("j - jMin", j, jSize);
 }
 
-void StructuredCubedSphere::iBoundsCheck(idx_t i, idx_t t) const {
+void CubedSphereColumnsImpl::iBoundsCheck(idx_t i, idx_t t) const {
   const idx_t iSize = i_end(t) - i_begin(t);
   i -= i_begin(t);
   if (i < 0 || i >= iSize) throw_OutOfRange("i - iMin", i, iSize);
 }
 
-size_t StructuredCubedSphere::vecIndex(idx_t t, idx_t i, idx_t j) const {
+size_t CubedSphereColumnsImpl::vecIndex(idx_t t, idx_t i, idx_t j) const {
   return static_cast<size_t>((j - j_begin(t)) * (i_end(t) - i_begin(t)) + i - i_begin(t));
 }
 

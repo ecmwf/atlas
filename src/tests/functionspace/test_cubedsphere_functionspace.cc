@@ -8,8 +8,7 @@
 #include "atlas/array.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/CellColumns.h"
-#include "atlas/functionspace/CubedSphereCellColumns.h"
-#include "atlas/functionspace/CubedSphereNodeColumns.h"
+#include "atlas/functionspace/CubedSphereColumns.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/grid.h"
 #include "atlas/grid/CubedSphereGrid.h"
@@ -29,8 +28,8 @@ namespace test {
     return std::sin(3 * lon * M_PI / 180) * std::sin(2 * lat * M_PI / 180);
   }
 
-  template<typename FSpace>
-  void testFunctionSpace(const FSpace& functionspace) {
+  template<typename BaseFunctionSpace>
+  void testFunctionSpace(const functionspace::CubedSphereColumns<BaseFunctionSpace>& functionspace) {
 
     // Make field.
     auto field = functionspace.template createField<double>(
@@ -40,8 +39,10 @@ namespace test {
     // Get view of lonlat.
     const auto lonLatView = array::make_view<double, 2>(functionspace.lonlat());
 
-    // Get view of halo/ghosts.
-    const auto ghostView = array::make_view<idx_t, 1>(functionspace.ghost());
+    // Get view of ghost field if NodeColumns, halo field if CellColumns.
+    const auto ghostView = functionspace.type() == "NodeColumns" ?
+        array::make_view<idx_t, 1>( functionspace.mesh().nodes().ghost() ) :
+        array::make_view<idx_t, 1>( functionspace.mesh().nodes().halo() );
 
     // Loop over all non halo elements of test field.
     idx_t testFuncCallCount = 0;
