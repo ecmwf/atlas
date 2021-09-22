@@ -97,9 +97,9 @@ namespace test {
     // Suggestions for more inventive tests are welcome.
 
     idx_t nLevels = 10;
-    auto field3 = functionspace.template createField<double>(
+    auto field2 = functionspace.template createField<double>(
           util::Config("name", "test field") | util::Config("levels", nLevels));
-    auto fieldView2 = array::make_view<double, 2>(field3);
+    auto fieldView2 = array::make_view<double, 2>(field2);
 
     functionspace.parallel_for(util::Config("levels", nLevels),
       [&](idx_t index, idx_t t, idx_t i, idx_t j, idx_t k) {

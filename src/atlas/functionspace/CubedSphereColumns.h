@@ -77,7 +77,7 @@ private:
       tijView_(array::make_view<idx_t, 2>( functionSpace_.tij() ) ) {}
 
       // Define SFINAE Macro. This should be able to evaluate FunctorArgs() to
-      // type void* if the Functor is convertible to a function pointer.
+      // pointer type if the Functor is convertible to a std::function.
       #define FunctorArgs( ... ) \
         std::enable_if< \
           std::is_convertible<Functor, std::function< \
