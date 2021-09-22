@@ -76,15 +76,19 @@ private:
       levels_{config.getInt("levels", functionSpace_.levels())},
       tijView_(array::make_view<idx_t, 2>( functionSpace_.tij() ) ) {}
 
-      // Define SFINAE Macro. This should be able to evaluate FunctorArgs() to
-      // pointer type if the Functor is convertible to a std::function.
-      #define FunctorArgs( ... ) \
-        std::enable_if< \
-          std::is_convertible<Functor, std::function< \
-            void( __VA_ARGS__ )>>::value, Functor>::type*
+      // Define SFINAE template metaprogramming. Enable if functor can be
+      // converted to std::function object.
+      template<typename FuncType, typename... ArgTypes>
+      struct ValidFunctor {
+        static constexpr bool value =
+         std::is_convertible<FuncType, std::function<void( ArgTypes... )>>::value;
+      };
+      template<typename FuncType, typename... ArgTypes>
+      using EnableFunctor = typename
+        std::enable_if<ValidFunctor<FuncType, ArgTypes...>::value>::type*;
 
       // Functor: void f( index, t, i, j, k)
-      template<typename Functor, typename FunctorArgs( idx_t, idx_t, idx_t, idx_t, idx_t ) = nullptr>
+      template<typename Functor, EnableFunctor<Functor, idx_t, idx_t, idx_t, idx_t, idx_t> = nullptr>
       void operator()( const Functor& f) const {
 
         using namespace meshgenerator::detail::cubedsphere;
@@ -102,7 +106,7 @@ private:
       }
 
       // Functor: void f( index, t, i, j)
-      template<typename Functor, typename FunctorArgs( idx_t, idx_t, idx_t, idx_t ) = nullptr>
+      template<typename Functor, EnableFunctor<Functor, idx_t, idx_t, idx_t, idx_t> = nullptr>
       void operator()( const Functor& f) const {
 
         using namespace meshgenerator::detail::cubedsphere;
@@ -118,7 +122,7 @@ private:
       }
 
       // Functor: void f( index, k)
-      template<typename Functor, typename FunctorArgs( idx_t, idx_t ) = nullptr>
+      template<typename Functor, EnableFunctor<Functor, idx_t, idx_t> = nullptr>
       void operator()( const Functor& f) const {
 
         using namespace meshgenerator::detail::cubedsphere;
@@ -133,7 +137,7 @@ private:
       }
 
       // Functor: void f( index )
-      template<typename Functor, typename FunctorArgs( idx_t ) = nullptr>
+      template<typename Functor, EnableFunctor<Functor, idx_t> = nullptr>
       void operator()( const Functor& f) const {
 
         using namespace meshgenerator::detail::cubedsphere;
@@ -144,8 +148,6 @@ private:
           f( index );
         }
       }
-
-      #undef FunctorArgs
 
   private:
     const CubedSphereColumns<BaseFunctionSpace>& functionSpace_;
