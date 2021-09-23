@@ -29,7 +29,7 @@ CubedSphereColumnsImpl::CubedSphereColumnsImpl(const Field& tij, const Field& gh
 
   // Make array views.
   const auto tijView_ = array::make_view<idx_t, 2>(tij_);
-  const auto ghostView_ = array::make_view<idx_t, 1>(ghost_);
+  const auto ghostView_ = array::make_view<int, 1>(ghost_);
 
   nElems_ = tijView_.shape(0);
 

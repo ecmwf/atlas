@@ -65,7 +65,8 @@ public:
     PointIJ() : Point2() {}
 
     /// Index constructor.
-    inline PointIJ( idx_t i, idx_t j ) : Point2( static_cast<double>( i ), static_cast<double>( j ) ) {}
+    template <typename IndexI, typename IndexJ>
+    inline PointIJ( IndexI i, IndexJ j ) : Point2( static_cast<double>( i ), static_cast<double>( j ) ) {}
 
     /// @{
     ///  Return i or j by value.

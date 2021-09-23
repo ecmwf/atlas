@@ -41,8 +41,8 @@ namespace test {
 
     // Get view of ghost field if NodeColumns, halo field if CellColumns.
     const auto ghostView = functionspace.type() == "NodeColumns" ?
-        array::make_view<idx_t, 1>( functionspace.mesh().nodes().ghost() ) :
-        array::make_view<idx_t, 1>( functionspace.mesh().nodes().halo() );
+        array::make_view<int, 1>( functionspace.mesh().nodes().ghost() ) :
+        array::make_view<int, 1>( functionspace.mesh().nodes().halo() );
 
     // Loop over all non halo elements of test field.
     idx_t testFuncCallCount = 0;
