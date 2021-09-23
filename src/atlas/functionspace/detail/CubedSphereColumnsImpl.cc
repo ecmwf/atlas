@@ -7,6 +7,7 @@
 
 #include "atlas/functionspace/detail/CubedSphereColumnsImpl.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/runtime/Trace.h"
 
 namespace atlas {
 namespace functionspace {
@@ -23,7 +24,7 @@ namespace  {
 CubedSphereColumnsImpl::CubedSphereColumnsImpl(const Field& tij, const Field& ghost) :
   tij_(tij), ghost_(ghost)
 {
-
+  ATLAS_TRACE();
   Log::debug() << "CubedSphereColumnsImpl bounds checking is set to "
                   + std::to_string(checkBounds) << std::endl;
 

@@ -174,6 +174,47 @@ CASE("cubedsphere_mesh_functionspace") {
 
 }
 
+CASE("test copies and up/down casting") {
+  // IMPORTANT: The internal structure should be cached and not be recomputed at all costs
+  // This can be verified with ATLAS_DEBUG=1 and ATLAS_TRACE_REPORT=1
+
+  // Set grid.
+  const auto grid = Grid("CS-LFR-12");
+  const auto mesh = MeshGenerator( grid.meshgenerator() | option::halo(1) ).generate(grid);
+
+  functionspace::CubedSphereCellColumns cs_cellcolumns;
+  functionspace::CubedSphereNodeColumns cs_nodecolumns;
+
+  ATLAS_TRACE_SCOPE("create functionspaces with cs structure") {
+      cs_cellcolumns = functionspace::CubedSphereCellColumns(mesh);
+      cs_nodecolumns = functionspace::CubedSphereNodeColumns(mesh);
+  }
+
+  ATLAS_TRACE_SCOPE("casting cellcolumns up/down") {
+      const auto columns = functionspace::CellColumns( cs_cellcolumns );
+      const auto functionspace = FunctionSpace( columns );
+      const functionspace::CubedSphereCellColumns back = functionspace;
+  }
+
+  ATLAS_TRACE_SCOPE("casting cellcolumns up/down from mesh") {
+      const auto columns = functionspace::CellColumns( mesh );
+      const auto functionspace = FunctionSpace( columns );
+      const functionspace::CubedSphereCellColumns back = functionspace;
+  }
+
+  ATLAS_TRACE_SCOPE("casting nodecolumns up/down") {
+      const auto columns = functionspace::NodeColumns( cs_nodecolumns );
+      const auto functionspace = FunctionSpace( columns );
+      const functionspace::CubedSphereNodeColumns back = functionspace;
+  }
+
+  ATLAS_TRACE_SCOPE("casting nodecolumns up/down from mesh") {
+      const auto columns = functionspace::NodeColumns( mesh );
+      const auto functionspace = FunctionSpace( columns );
+      const functionspace::CubedSphereNodeColumns back = functionspace;
+  }
+
+}
 
 
 }  // namespace test

@@ -10,9 +10,11 @@
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/util/detail/Cache.h"
 
 namespace atlas {
 namespace functionspace {
+
 
 // Helper functions to get fields.
 namespace
@@ -45,6 +47,50 @@ Field getGhost<CellColumns>( const Mesh& mesh ) {
 }
 }
 
+namespace {
+template<typename BaseFunctionSpace>
+class CubedSphereStructureCache : public util::Cache<std::string, detail::CubedSphereColumnsImpl>,
+                                  public mesh::detail::MeshObserver {
+private:
+    using Base = util::Cache<std::string, detail::CubedSphereColumnsImpl>;
+    CubedSphereStructureCache() : Base( "CubedSphereStructureCache<"+BaseFunctionSpace::type()+">" ) {}
+
+public:
+    static CubedSphereStructureCache& instance() {
+        static CubedSphereStructureCache inst;
+        return inst;
+    }
+    util::ObjectHandle<value_type> get_or_create( const BaseFunctionSpace* functionspace ) {
+        ATLAS_ASSERT( functionspace );
+        auto& mesh = functionspace->mesh();
+        ATLAS_ASSERT( mesh );
+        auto& mesh_impl = *mesh.get();
+        registerMesh( mesh_impl );
+        creator_type creator = std::bind( &CubedSphereStructureCache::create, mesh );
+        util::ObjectHandle<value_type> value = Base::get_or_create( key( mesh_impl ), creator );
+        return value;
+    }
+    void onMeshDestruction( mesh::detail::MeshImpl& mesh ) override {
+        remove( key( mesh ) );
+    }
+
+private:
+    static Base::key_type key( const mesh::detail::MeshImpl& mesh ) {
+        std::ostringstream key;
+        key << "mesh[address=" << &mesh << "]";
+        return key.str();
+    }
+
+    static value_type* create( const Mesh& mesh ) {
+        value_type* value = new value_type(getTij<BaseFunctionSpace>(mesh),
+                                           getGhost<BaseFunctionSpace>(mesh)) ;
+        return value;
+    }
+};
+
+
+}
+
 // All constructors pass arguments through to BaseFunctionSpace, then construct
 // CubedSphereColumnsImpl.
 template<typename BaseFunctionSpace>
@@ -55,26 +101,28 @@ CubedSphereColumns<BaseFunctionSpace>::CubedSphereColumns() :
 template<typename BaseFunctionSpace>
 CubedSphereColumns<BaseFunctionSpace>::CubedSphereColumns(
   const FunctionSpace& functionspace) :
-  BaseFunctionSpace( functionspace ),
-  cubedSphereColumnsHandle_( new detail::CubedSphereColumnsImpl(
-    getTij<BaseFunctionSpace>( this->mesh() ),
-    getGhost<BaseFunctionSpace>( this->mesh() ) ) ) {}
+  BaseFunctionSpace( [&]() {
+    bool compatible = dynamic_cast<const typename BaseFunctionSpace::Implementation*>(functionspace.get());
+    if( not compatible ) {
+        ATLAS_THROW_EXCEPTION("FunctionSpace " << functionspace.type() << " can not be interpreted as a "
+                              << BaseFunctionSpace::type() );
+    }
+    return functionspace; }()),
+  cubedSphereColumnsHandle_(
+      CubedSphereStructureCache<BaseFunctionSpace>::instance().get_or_create(this) )
+ {}
 
 template<typename BaseFunctionSpace>
 CubedSphereColumns<BaseFunctionSpace>::CubedSphereColumns(
   const Mesh& mesh, const eckit::Configuration& configuration) :
   BaseFunctionSpace( mesh, configuration ),
-  cubedSphereColumnsHandle_( new detail::CubedSphereColumnsImpl(
-    getTij<BaseFunctionSpace>( this->mesh() ),
-    getGhost<BaseFunctionSpace>( this->mesh() ) ) ) {}
+  cubedSphereColumnsHandle_( CubedSphereStructureCache<BaseFunctionSpace>::instance().get_or_create(this)) {}
 
 template<typename BaseFunctionSpace>
 CubedSphereColumns<BaseFunctionSpace>::CubedSphereColumns(
   const Mesh& mesh) :
   BaseFunctionSpace( mesh ),
-  cubedSphereColumnsHandle_( new detail::CubedSphereColumnsImpl(
-    getTij<BaseFunctionSpace>( this->mesh() ),
-    getGhost<BaseFunctionSpace>( this->mesh() ) ) ) {}
+  cubedSphereColumnsHandle_( CubedSphereStructureCache<BaseFunctionSpace>::instance().get_or_create(this) ) {}
 
 template<typename BaseFunctionSpace>
 idx_t CubedSphereColumns<BaseFunctionSpace>::invalid_index() const {

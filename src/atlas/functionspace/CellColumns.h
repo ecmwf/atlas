@@ -45,7 +45,8 @@ public:
 
     virtual ~CellColumns() override;
 
-    virtual std::string type() const override { return "Cells"; }
+    static std::string static_type() { return "CellColumns"; }
+    virtual std::string type() const override { return static_type(); }
 
     virtual std::string distribution() const override;
 
@@ -152,10 +153,15 @@ const parallel::Checksum* atlas__fs__CellColumns__get_checksum( const CellColumn
 
 class CellColumns : public FunctionSpace {
 public:
+    using Implementation = detail::CellColumns;
+
+public:
     CellColumns();
     CellColumns( const FunctionSpace& );
     CellColumns( const Mesh&, const eckit::Configuration& );
     CellColumns( const Mesh& mesh );
+
+    static std::string type() { return detail::CellColumns::static_type(); }
 
     operator bool() const { return valid(); }
     bool valid() const { return functionspace_; }
