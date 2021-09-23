@@ -40,7 +40,7 @@ public:
   /// Invalid index.
   idx_t invalid_index() const;
 
-  /// Get totla number of element.
+  /// Get total number of elements.
   idx_t nb_elems() const;
 
   /// Get number of owned elements.
@@ -70,19 +70,20 @@ private:
   public:
     For( const CubedSphereColumns<BaseFunctionSpace>& functionSpace,
       const util::Config& config = util::NoConfig() ) :
-      functionSpace_{functionSpace},
-      indexMax_{config.getBool("include_halo", false) ?
+      functionSpace_{ functionSpace },
+      indexMax_{ config.getBool( "include_halo", false ) ?
         functionSpace.nb_elems() : functionSpace.nb_owned_elems() } ,
-      levels_{config.getInt("levels", functionSpace_.levels())},
-      tijView_(array::make_view<idx_t, 2>( functionSpace_.tij() ) ) {}
+      levels_{ config.getInt( "levels", functionSpace_.levels() ) },
+      tijView_( array::make_view<idx_t, 2>( functionSpace_.tij() ) ) {}
 
       // Define template to disable invalid functors.
       template<typename FuncType, typename ...ArgTypes>
-      using EnableFunctor = typename
-        std::enable_if<std::is_convertible<FuncType, std::function<void( ArgTypes... )>>::value>::type*;
+      using EnableFunctor = typename std::enable_if<std::is_convertible<
+        FuncType, std::function<void( ArgTypes... )>>::value>::type*;
 
       // Functor: void f( index, t, i, j, k)
-      template<typename Functor, EnableFunctor<Functor, idx_t, idx_t, idx_t, idx_t, idx_t> = nullptr>
+      template<typename Functor,
+        EnableFunctor<Functor, idx_t, idx_t, idx_t, idx_t, idx_t> = nullptr>
       void operator()( const Functor& f ) const {
 
         using namespace meshgenerator::detail::cubedsphere;
@@ -90,9 +91,9 @@ private:
         // Loop over elements.
         atlas_omp_parallel_for ( idx_t index = 0; index < indexMax_; ++index ) {
 
-          const idx_t t = tijView_(index, Coordinates::T);
-          const idx_t i = tijView_(index, Coordinates::I);
-          const idx_t j = tijView_(index, Coordinates::J);
+          const idx_t t = tijView_( index, Coordinates::T );
+          const idx_t i = tijView_( index, Coordinates::I );
+          const idx_t j = tijView_( index, Coordinates::J );
           for ( idx_t k = 0; k < levels_; ++k ) {
             f( index, t, i, j, k );
           }
@@ -100,7 +101,8 @@ private:
       }
 
       // Functor: void f( index, t, i, j)
-      template<typename Functor, EnableFunctor<Functor, idx_t, idx_t, idx_t, idx_t> = nullptr>
+      template<typename Functor,
+        EnableFunctor<Functor, idx_t, idx_t, idx_t, idx_t> = nullptr>
       void operator()( const Functor& f ) const {
 
         using namespace meshgenerator::detail::cubedsphere;
@@ -108,9 +110,9 @@ private:
         // Loop over elements.
         atlas_omp_parallel_for ( idx_t index = 0; index < indexMax_; ++index ) {
 
-          const idx_t t = tijView_(index, Coordinates::T);
-          const idx_t i = tijView_(index, Coordinates::I);
-          const idx_t j = tijView_(index, Coordinates::J);
+          const idx_t t = tijView_( index, Coordinates::T );
+          const idx_t i = tijView_( index, Coordinates::I );
+          const idx_t j = tijView_( index, Coordinates::J );
           f( index, t, i, j );
         }
       }
