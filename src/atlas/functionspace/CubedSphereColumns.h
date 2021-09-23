@@ -76,9 +76,8 @@ private:
       levels_{config.getInt("levels", functionSpace_.levels())},
       tijView_(array::make_view<idx_t, 2>( functionSpace_.tij() ) ) {}
 
-      // Define SFINAE template metaprogramming. Enable if functor can be
-      // converted to std::function object.
-      template<typename FuncType, typename... ArgTypes>
+      // Define template to disable invalid functors.
+      template<typename FuncType, typename ...ArgTypes>
       using EnableFunctor = typename
         std::enable_if<std::is_convertible<FuncType, std::function<void( ArgTypes... )>>::value>::type*;
 
