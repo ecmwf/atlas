@@ -521,7 +521,11 @@ struct PackStructuredColumns {
     void pack_1( const Field& field ) {
         auto gpfield = make_view<double, 1>( field );
         idx_t n      = 0;
-        for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
+
+        std::cout << "pack1 " << std::endl;
+
+        for ( idx_t jnode = 0; jnode < StructuredColumns(field.functionspace()).sizeOwned();
+              ++jnode ) {
             rgpview_( f, n ) = gpfield( jnode );
             ++n;
         }
@@ -532,7 +536,8 @@ struct PackStructuredColumns {
         const idx_t nvars = gpfield.shape( 1 );
         for ( idx_t jvar = 0; jvar < nvars; ++jvar ) {
             idx_t n = 0;
-            for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
+            for ( idx_t jnode = 0; jnode < StructuredColumns(field.functionspace()).sizeOwned();
+                  ++jnode ) {
                 rgpview_( f, n ) = gpfield( jnode, jvar );
                 ++n;
             }
@@ -612,7 +617,8 @@ struct UnpackNodeColumns {
     void unpack_1( Field& field, idx_t ) {
         auto gpfield = make_view<double, 1>( field );
         idx_t n( 0 );
-        for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
+        for ( idx_t jnode = 0; jnode <
+              gpfield.shape( 0 ); ++jnode ) {
             if ( !is_ghost( jnode ) ) {
                 gpfield( jnode ) = rgpview_( f, n );
                 ++n;
@@ -678,7 +684,8 @@ struct UnpackStructuredColumns {
     void unpack_1( Field& field ) {
         auto gpfield = make_view<double, 1>( field );
         idx_t n      = 0;
-        for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
+        for ( idx_t jnode = 0; jnode < StructuredColumns(field.functionspace()).sizeOwned();
+              ++jnode ) {
             gpfield( jnode ) = rgpview_( f, n );
             ++n;
         }
@@ -689,7 +696,8 @@ struct UnpackStructuredColumns {
         const idx_t nvars = gpfield.shape( 1 );
         for ( idx_t jvar = 0; jvar < nvars; ++jvar ) {
             idx_t n = 0;
-            for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
+            for ( idx_t jnode = 0; jnode < StructuredColumns(field.functionspace()).sizeOwned();
+                  ++jnode ) {
                 gpfield( jnode, jvar ) = rgpview_( f, n );
                 ++n;
             }
