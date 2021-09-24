@@ -56,9 +56,9 @@ public:
 
     void execute( const Field& source, Field& target ) const;
 
-    void execute_adjoint( FieldSet& source, FieldSet& target ) const;
+    void execute_adjoint( FieldSet& source, const FieldSet& target ) const;
 
-    void execute_adjoint( Field& source, Field& target ) const;
+    void execute_adjoint( Field& source, const Field& target ) const;
 
     void print( std::ostream& out ) const;
 
