@@ -154,7 +154,7 @@ void testHaloExchange( const std::string& gridStr, const std::string& partitione
     // Make some field views.
     auto testView1  = array::make_view<double, 1>( testField1 );
     auto lonLatView = array::make_view<double, 2>( nodeColumns.lonlat() );
-    auto ghostView  = array::make_view<idx_t, 1>( nodeColumns.ghost() );
+    auto ghostView  = array::make_view<int, 1>( nodeColumns.ghost() );
 
     // Set non-ghost values.
     idx_t testFuncCallCount = 0;
@@ -199,7 +199,7 @@ void testHaloExchange( const std::string& gridStr, const std::string& partitione
 
     // Make some field views.
     auto testView2 = array::make_view<double, 1>( testField2 );
-    auto haloView  = array::make_view<idx_t, 1>( cellColumns.mesh().cells().halo() );
+    auto haloView  = array::make_view<int, 1>( cellColumns.mesh().cells().halo() );
     lonLatView     = array::make_view<double, 2>( cellColumns.mesh().cells().field( "lonlat" ) );
 
     // Set non-halo values.
