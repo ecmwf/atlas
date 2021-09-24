@@ -522,8 +522,6 @@ struct PackStructuredColumns {
         auto gpfield = make_view<double, 1>( field );
         idx_t n      = 0;
 
-        std::cout << "pack1 " << std::endl;
-
         for ( idx_t jnode = 0; jnode < StructuredColumns(field.functionspace()).sizeOwned();
               ++jnode ) {
             rgpview_( f, n ) = gpfield( jnode );
@@ -617,8 +615,7 @@ struct UnpackNodeColumns {
     void unpack_1( Field& field, idx_t ) {
         auto gpfield = make_view<double, 1>( field );
         idx_t n( 0 );
-        for ( idx_t jnode = 0; jnode <
-              gpfield.shape( 0 ); ++jnode ) {
+        for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
             if ( !is_ghost( jnode ) ) {
                 gpfield( jnode ) = rgpview_( f, n );
                 ++n;
