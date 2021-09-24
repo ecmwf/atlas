@@ -13,7 +13,7 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/functionspace/CellColumns.h"
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/functionspace/detail/CubedSphereColumnsImpl.h"
+#include "atlas/functionspace/detail/CubedSphereStructure.h"
 #include "atlas/meshgenerator/detail/cubedsphere/CubedSphereUtility.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/util/ObjectHandle.h"
@@ -171,8 +171,8 @@ public:
 
 private:
 
-  // Object hanldle for CubedSphereColumnsImpl
-  util::ObjectHandle<detail::CubedSphereColumnsImpl> cubedSphereColumnsHandle_;
+  // Object hanldle for CubedSphereStructure
+  util::ObjectHandle<detail::CubedSphereStructure> cubedSphereColumnsHandle_;
 
 };
 

@@ -49,10 +49,10 @@ Field getGhost<CellColumns>( const Mesh& mesh ) {
 
 namespace {
 template<typename BaseFunctionSpace>
-class CubedSphereStructureCache : public util::Cache<std::string, detail::CubedSphereColumnsImpl>,
+class CubedSphereStructureCache : public util::Cache<std::string, detail::CubedSphereStructure>,
                                   public mesh::detail::MeshObserver {
 private:
-    using Base = util::Cache<std::string, detail::CubedSphereColumnsImpl>;
+    using Base = util::Cache<std::string, detail::CubedSphereStructure>;
     CubedSphereStructureCache() : Base( "CubedSphereStructureCache<"+BaseFunctionSpace::type()+">" ) {}
 
 public:
@@ -92,11 +92,11 @@ private:
 }
 
 // All constructors pass arguments through to BaseFunctionSpace, then construct
-// CubedSphereColumnsImpl.
+// CubedSphereStructure.
 template<typename BaseFunctionSpace>
 CubedSphereColumns<BaseFunctionSpace>::CubedSphereColumns() :
   BaseFunctionSpace(),
-  cubedSphereColumnsHandle_( new detail::CubedSphereColumnsImpl() ) {}
+  cubedSphereColumnsHandle_( new detail::CubedSphereStructure() ) {}
 
 template<typename BaseFunctionSpace>
 CubedSphereColumns<BaseFunctionSpace>::CubedSphereColumns(
