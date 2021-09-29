@@ -459,6 +459,9 @@ inline void NodeColumns::meanAndStandardDeviationPerLevel( const Field& field, F
 
 class NodeColumns : public FunctionSpace {
 public:
+    using Implementation = detail::NodeColumns;
+
+public:
     NodeColumns();
     NodeColumns( const FunctionSpace& );
 

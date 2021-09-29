@@ -99,21 +99,19 @@ CASE( "cubedsphere_mesh_jacobian_test" ) {
 
                 // Test known good output.
                 const auto xyLocal   = jacobian.xy( ij, t );
-                const auto xytGlobal = jacobian.xyLocalToGlobal( xyLocal, t );
-                const auto ijtGlobal = jacobian.ijLocalToGlobal( ij, t );
+                const auto txyGlobal = jacobian.xyLocalToGlobal( xyLocal, t );
+                const auto tijGlobal = jacobian.ijLocalToGlobal( ij, t );
 
                 EXPECT( xyLocal == xyLocalKgo );
-                EXPECT( xytGlobal.first == xyGlobalKgo );
-                EXPECT( xytGlobal.second == tKgo );
-                EXPECT( ijtGlobal.first == ijGlobalKgo );
-                EXPECT( ijtGlobal.second == tKgo );
+                EXPECT( txyGlobal.xy() == xyGlobalKgo );
+                EXPECT( txyGlobal.t() == tKgo );
+                EXPECT( tijGlobal.ij() == ijGlobalKgo );
+                EXPECT( tijGlobal.t() == tKgo );
 
                 // Check xy and ij transforms are consistent.
-                EXPECT( jacobian.ij( ( jacobian.xyLocalToGlobal( xyLocal, t ) ) ) ==
-                        jacobian.ijLocalToGlobal( ij, t ).first );
+                EXPECT( jacobian.ij( txyGlobal.xy(), txyGlobal.t() ) == jacobian.ijLocalToGlobal( ij, t ).ij() );
 
-                EXPECT( jacobian.xy( ( jacobian.ijLocalToGlobal( ij, t ) ) ) ==
-                        jacobian.xyLocalToGlobal( xyLocal, t ).first );
+                EXPECT( jacobian.xy( tijGlobal.ij(), tijGlobal.t() ) == jacobian.xyLocalToGlobal( xyLocal, t ).xy() );
             }
         }
     }
@@ -154,7 +152,7 @@ void testHaloExchange( const std::string& gridStr, const std::string& partitione
     // Make some field views.
     auto testView1  = array::make_view<double, 1>( testField1 );
     auto lonLatView = array::make_view<double, 2>( nodeColumns.lonlat() );
-    auto ghostView  = array::make_view<idx_t, 1>( nodeColumns.ghost() );
+    auto ghostView  = array::make_view<int, 1>( nodeColumns.ghost() );
 
     // Set non-ghost values.
     idx_t testFuncCallCount = 0;
@@ -199,7 +197,7 @@ void testHaloExchange( const std::string& gridStr, const std::string& partitione
 
     // Make some field views.
     auto testView2 = array::make_view<double, 1>( testField2 );
-    auto haloView  = array::make_view<idx_t, 1>( cellColumns.mesh().cells().halo() );
+    auto haloView  = array::make_view<int, 1>( cellColumns.mesh().cells().halo() );
     lonLatView     = array::make_view<double, 2>( cellColumns.mesh().cells().field( "lonlat" ) );
 
     // Set non-halo values.
@@ -246,7 +244,7 @@ void testHaloExchange( const std::string& gridStr, const std::string& partitione
         nodeFields.add( mesh.nodes().remote_index() );
         nodeFields.add( mesh.nodes().partition() );
         nodeFields.add( mesh.nodes().global_index() );
-        nodeFields.add( mesh.nodes().field( "ijt" ) );
+        nodeFields.add( mesh.nodes().field( "tij" ) );
         nodeFields.add( testField1 );
 
         auto cellFields = FieldSet{};
@@ -254,6 +252,9 @@ void testHaloExchange( const std::string& gridStr, const std::string& partitione
         cellFields.add( mesh.cells().remote_index() );
         cellFields.add( mesh.cells().partition() );
         cellFields.add( mesh.cells().global_index() );
+        cellFields.add( mesh.cells().field( "tij" ) );
+        cellFields.add( mesh.cells().field( "xy" ) );
+        cellFields.add( mesh.cells().field( "lonlat" ) );
         cellFields.add( testField2 );
 
         // Set gmsh config.
@@ -291,22 +292,17 @@ CASE( "cubedsphere_mesh_test" ) {
         testHaloExchange( "CS-LFR-C-12", "equal_regions", 0 );
         testHaloExchange( "CS-LFR-C-12", "cubedsphere", 0 );
     }
-
     SECTION( "N12, halo = 1" ) {
         testHaloExchange( "CS-LFR-C-12", "equal_regions", 1 );
         testHaloExchange( "CS-LFR-C-12", "cubedsphere", 1 );
-    }
-    SECTION( "N12, halo = 2" ) {
-        testHaloExchange( "CS-LFR-C-12", "equal_regions", 2 );
-        testHaloExchange( "CS-LFR-C-12", "cubedsphere", 2 );
     }
     SECTION( "N12, halo = 3" ) {
         testHaloExchange( "CS-LFR-C-12", "equal_regions", 3 );
         testHaloExchange( "CS-LFR-C-12", "cubedsphere", 3 );
     }
-    SECTION( "Prime number mesh (N211)" ) {
-        testHaloExchange( "CS-LFR-C-211", "equal_regions", 1, false );
-        testHaloExchange( "CS-LFR-C-211", "cubedsphere", 1, false );
+    SECTION( "Prime number mesh (N17)" ) {
+        testHaloExchange( "CS-LFR-C-17", "equal_regions", 1 );
+        testHaloExchange( "CS-LFR-C-17", "cubedsphere", 1 );
     }
 }
 

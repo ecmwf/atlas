@@ -503,7 +503,7 @@ struct PackStructuredColumns {
 
     PackStructuredColumns( LocalView<double, 2>& rgpview ) : rgpview_( rgpview ), f( 0 ) {}
 
-    void operator()( const StructuredColumns & sc, const Field& field ) {
+    void operator()( const StructuredColumns& sc, const Field& field ) {
         switch ( field.rank() ) {
             case 1:
                 pack_1( sc, field );
@@ -518,7 +518,7 @@ struct PackStructuredColumns {
         }
     }
 
-    void pack_1( const StructuredColumns & sc, const Field& field ) {
+    void pack_1( const StructuredColumns& sc, const Field& field ) {
         auto gpfield = make_view<double, 1>( field );
 
         for ( idx_t jnode = 0; jnode < sc.sizeOwned(); ++jnode ) {
@@ -526,7 +526,7 @@ struct PackStructuredColumns {
         }
         ++f;
     }
-    void pack_2( const StructuredColumns & sc, const Field& field ) {
+    void pack_2( const StructuredColumns& sc, const Field& field ) {
         auto gpfield      = make_view<double, 2>( field );
         const idx_t nvars = gpfield.shape( 1 );
         for ( idx_t jvar = 0; jvar < nvars; ++jvar ) {
@@ -1368,7 +1368,7 @@ void TransIFS::__invtrans_grad_adj( const Spectral& sp, FieldSet& spfields, cons
 
     // Pack gridpoints
     {
-        PackNodeColumns pack( rgpview, gp);
+        PackNodeColumns pack( rgpview, gp );
         for ( idx_t jfld = 0; jfld < gradfields.size(); ++jfld ) {
             pack( gradfields[jfld] );
         }
@@ -1494,7 +1494,7 @@ void TransIFS::__invtrans_adj( const Spectral& sp, FieldSet& spfields, const fun
 
     // Pack gridpoints
     {
-        PackNodeColumns pack( rgpview, gp);
+        PackNodeColumns pack( rgpview, gp );
         for ( idx_t jfld = 0; jfld < gpfields.size(); ++jfld ) {
             pack( gpfields[jfld] );
         }

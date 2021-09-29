@@ -306,6 +306,10 @@ idx_t CellColumns::nb_cells_global() const {
     return nb_cells_global_;
 }
 
+idx_t CellColumns::levels() const {
+    return nb_levels_;
+}
+
 Field CellColumns::createField( const eckit::Configuration& options ) const {
     Field field( config_name( options ), config_datatype( options ), config_shape( options ) );
     set_field_metadata( options, field );
@@ -786,6 +790,10 @@ idx_t CellColumns::nb_cells() const {
 
 idx_t CellColumns::nb_cells_global() const {  // Only on MPI rank 0, will this be different from 0
     return functionspace_->nb_cells_global();
+}
+
+idx_t CellColumns::levels() const {
+    return functionspace_->levels();
 }
 
 const Mesh& CellColumns::mesh() const {
