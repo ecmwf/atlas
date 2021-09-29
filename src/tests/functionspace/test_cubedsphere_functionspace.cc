@@ -24,6 +24,10 @@
 namespace atlas {
 namespace test {
 
+  // Allow small differences in the last few bits of a double aprroximately equal to 1
+  constexpr double epsilon = std::numeric_limits<double>::epsilon() * 8;
+
+
   double testFunction(double lon, double lat) {
     return std::sin(3 * lon * M_PI / 180) * std::sin(2 * lat * M_PI / 180);
   }
@@ -84,7 +88,7 @@ namespace test {
 
         // Set field values.
         EXPECT(is_approximately_equal(
-          fieldView(index), testFunction(lonLatView(index, LON), lonLatView(index, LAT))));
+          fieldView(index), testFunction(lonLatView(index, LON), lonLatView(index, LAT)), epsilon));
         ++testFuncCallCount;
 
     });
