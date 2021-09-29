@@ -177,7 +177,7 @@ jobs:
       with:
         self_coverage: true
         force_build: true
-        cache_suffix: "${{ matrix.build_type }}-v1"
+        cache_suffix: "${{ matrix.build_type }}-v2"
         recreate_cache: ${{ matrix.caching == false }}
         dependencies: |
           ecmwf/ecbuild
