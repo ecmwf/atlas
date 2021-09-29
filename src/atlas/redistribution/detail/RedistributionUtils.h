@@ -24,14 +24,17 @@ using functionspace::FunctionSpaceImpl;
 
 /// \brief  Check function space can be cast to FunctionSpaceType.
 template <typename FunctionSpaceType>
-void tryCast( const FunctionSpaceImpl* const functionSpacePtr, const std::string& varName,
+const FunctionSpaceType* tryCast( const FunctionSpaceImpl* const functionSpacePtr, const std::string& varName,
               eckit::CodeLocation location ) {
+
+    const FunctionSpaceType* functionSpaceConcretePtr =
+      functionSpacePtr->cast<FunctionSpaceType>();
     // Check if cast failed.
-    if ( !( functionSpacePtr->cast<FunctionSpaceType>() ) ) {
+    if ( !functionSpaceConcretePtr ) {
         throw eckit::BadCast( "Cannot cast " + varName + " to " + typeid( FunctionSpaceType ).name(), location );
     }
 
-    return;
+    return functionSpaceConcretePtr;
 }
 
 /// \brief  Check grids associated with two function spaces match.

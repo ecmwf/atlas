@@ -11,11 +11,6 @@ namespace atlas {
 namespace redistribution {
 namespace detail {
 
-// Constructors/destructors.
-
-RedistributionImpl::RedistributionImpl( const FunctionSpace& source, const FunctionSpace& target ) :
-    sourceFunctionSpace_( source ), targetFunctionSpace_( target ) {}
-
 // Getters.
 
 FunctionSpace& RedistributionImpl::source() {

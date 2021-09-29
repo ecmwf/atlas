@@ -59,14 +59,17 @@ void forEachIndex( const StructuredIndexRangeVector& ranges, const functorType& 
 //========================================================================
 
 // Constructor.
-StructuredColumnsToStructuredColumns::StructuredColumnsToStructuredColumns( const FunctionSpace& sourceFunctionSpace,
-                                                                            const FunctionSpace& targetFunctionSpace ) :
-    RedistributionImpl( sourceFunctionSpace, targetFunctionSpace ),
-    sourceStructuredColumnsPtr_( source()->cast<StructuredColumns>() ),
-    targetStructuredColumnsPtr_( target()->cast<StructuredColumns>() ) {
-    // Check casts.
-    TRY_CAST( StructuredColumns, sourceStructuredColumnsPtr_ );
-    TRY_CAST( StructuredColumns, targetStructuredColumnsPtr_ );
+void StructuredColumnsToStructuredColumns::setup(
+  const FunctionSpace& sourceFunctionSpace, const FunctionSpace& targetFunctionSpace ) {
+
+    source() = sourceFunctionSpace;
+    target() = targetFunctionSpace;
+
+    // Cast to StructuredColumns.
+    sourceStructuredColumnsPtr_ =
+      TRY_CAST( StructuredColumns, source()->cast<StructuredColumns>() );
+    targetStructuredColumnsPtr_ =
+      TRY_CAST( StructuredColumns, target()->cast<StructuredColumns>() );
 
     // Check that grids match.
     CHECK_GRIDS( StructuredColumns, sourceStructuredColumnsPtr_, targetStructuredColumnsPtr_ );
@@ -352,6 +355,11 @@ void StructuredIndexRange::forEach( const functorType& functor ) const {
     }
 
     return;
+}
+
+namespace {
+static RedistributionImplBuilder<StructuredColumnsToStructuredColumns>
+  register_builder( StructuredColumnsToStructuredColumns::static_type() );
 }
 
 }  // namespace detail

@@ -23,8 +23,14 @@ namespace detail {
 /// \brief  Abstract base class for redistributor implementation.
 class RedistributionImpl : public util::Object {
 public:
-    /// \brief  Virtual destructor.
-    virtual ~RedistributionImpl() = default;
+
+    RedistributionImpl() = default;
+
+    /// \Setup class.
+    virtual void setup( const FunctionSpace& source, const FunctionSpace& target ) = 0;
+
+    /// \brief Concrete type.
+    virtual std::string type() const = 0;
 
     /// \brief  Maps source field to target field.
     virtual void execute( const Field& sourceField, Field& targetField ) const = 0;
@@ -43,9 +49,6 @@ public:
 
     /// \brief  Get const reference to target function space.
     const FunctionSpace& target() const;
-
-protected:
-    RedistributionImpl( const FunctionSpace& source, const FunctionSpace& target );
 
 private:
     FunctionSpace sourceFunctionSpace_;

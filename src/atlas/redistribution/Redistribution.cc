@@ -16,7 +16,13 @@ namespace atlas {
 // Use redistribution implementation factory to make object.
 Redistribution::Redistribution() : Handle(){};
 Redistribution::Redistribution( const FunctionSpace& sourceFunctionSpace, const FunctionSpace& targetFunctionSpace ) :
-    Handle( redistribution::detail::RedistributionImplFactory::build( sourceFunctionSpace, targetFunctionSpace ) ) {}
+    Handle( [&]() -> redistribution::detail::RedistributionImpl* {
+
+      ATLAS_ASSERT( sourceFunctionSpace.type() == sourceFunctionSpace.type() );
+      auto impl = redistribution::detail::RedistributionImplFactory::build( sourceFunctionSpace.type() );
+      impl->setup(sourceFunctionSpace, targetFunctionSpace);
+      return impl;
+      }() ) {}
 
 void Redistribution::execute( const Field& sourceField, Field& targetField ) const {
     get()->execute( sourceField, targetField );

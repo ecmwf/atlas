@@ -9,8 +9,10 @@
 
 #include <vector>
 
+#include "atlas/functionspace/detail/StructuredColumns.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/redistribution/detail/RedistributionImpl.h"
+#include "atlas/redistribution/detail/RedistributionImplFactory.h"
 
 
 namespace atlas {
@@ -49,7 +51,9 @@ using functionspace::detail::StructuredColumns;
 ///           different partitioners.
 class StructuredColumnsToStructuredColumns : public RedistributionImpl {
 public:
-    /// \brief    Constructs and initialises the redistributor.
+    StructuredColumnsToStructuredColumns() = default;
+
+    /// \brief    Initialises the redistributor.
     ///
     /// \details  Performs MPI_Allgatherv to determine the (i, j, k) ranges
     ///           of each source and target function space on each PE.
@@ -57,8 +61,14 @@ public:
     ///
     /// \param[in]  sourceFunctionSpace  Function space of source fields.
     /// \param[in]  targetFunctionSpace  Function space of target fields.
-    StructuredColumnsToStructuredColumns( const FunctionSpace& sourceFunctionSpace,
-                                          const FunctionSpace& targetFunctionSpace );
+    void setup( const FunctionSpace& sourceFunctionSpace,
+                const FunctionSpace& targetFunctionSpace );
+
+    static std::string static_type() {
+      return functionspace::detail::StructuredColumns::static_type();
+    }
+
+    virtual std::string type() const override { return static_type(); }
 
     /// \brief    Redistributes source field to target field.
     ///
@@ -129,6 +139,7 @@ private:
     // Begin and end of i range for each j.
     idxPairVector iBeginEnd_{};
 };
+
 }  // namespace detail
 }  // namespace redistribution
 }  // namespace atlas
