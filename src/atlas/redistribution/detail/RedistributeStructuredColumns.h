@@ -9,8 +9,6 @@
 
 #include <vector>
 
-#include "atlas/functionspace/detail/StructuredColumns.h"
-#include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/redistribution/detail/RedistributionImpl.h"
 #include "atlas/redistribution/detail/RedistributionImplFactory.h"
 
@@ -33,7 +31,7 @@ namespace redistribution {
 namespace detail {
 
 // Forward declarations.
-class StructuredColumnsToStructuredColumns;
+class RedistributeStructuredColumns;
 class StructuredIndexRange;
 
 // Type aliases.
@@ -49,9 +47,9 @@ using functionspace::detail::StructuredColumns;
 ///
 /// \details  Class to map two function spaces with the same grid but
 ///           different partitioners.
-class StructuredColumnsToStructuredColumns : public RedistributionImpl {
+class RedistributeStructuredColumns : public RedistributionImpl {
 public:
-    StructuredColumnsToStructuredColumns() = default;
+    RedistributeStructuredColumns() = default;
 
     /// \brief    Initialises the redistributor.
     ///
@@ -62,13 +60,11 @@ public:
     /// \param[in]  sourceFunctionSpace  Function space of source fields.
     /// \param[in]  targetFunctionSpace  Function space of target fields.
     void setup( const FunctionSpace& sourceFunctionSpace,
-                const FunctionSpace& targetFunctionSpace );
+                const FunctionSpace& targetFunctionSpace ) override;
 
-    static std::string static_type() {
-      return functionspace::detail::StructuredColumns::static_type();
-    }
+    static std::string static_type() {return "RedistributeStructuredColumns"; }
 
-    virtual std::string type() const override { return static_type(); }
+    std::string type() const override { return static_type(); }
 
     /// \brief    Redistributes source field to target field.
     ///

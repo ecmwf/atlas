@@ -10,17 +10,25 @@
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/redistribution/detail/RedistributionImplFactory.h"
+#include "atlas/redistribution/detail/RedistributeGeneric.h"
+
 
 namespace atlas {
 
 // Use redistribution implementation factory to make object.
 Redistribution::Redistribution() : Handle(){};
-Redistribution::Redistribution( const FunctionSpace& sourceFunctionSpace, const FunctionSpace& targetFunctionSpace ) :
+Redistribution::Redistribution( const FunctionSpace& sourceFunctionSpace,
+                                const FunctionSpace& targetFunctionSpace,
+                                const util::Config& config) :
     Handle( [&]() -> redistribution::detail::RedistributionImpl* {
 
-      ATLAS_ASSERT( sourceFunctionSpace.type() == sourceFunctionSpace.type() );
-      auto impl = redistribution::detail::RedistributionImplFactory::build( sourceFunctionSpace.type() );
-      impl->setup(sourceFunctionSpace, targetFunctionSpace);
+      ATLAS_ASSERT( sourceFunctionSpace.type() == targetFunctionSpace.type() );
+
+      std::string type = redistribution::detail::RedistributeGeneric::static_type();
+      config.get( "type", type );
+
+      auto impl = redistribution::detail::RedistributionImplFactory::build( type );
+      impl->setup( sourceFunctionSpace, targetFunctionSpace );
       return impl;
       }() ) {}
 

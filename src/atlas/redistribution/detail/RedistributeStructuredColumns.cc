@@ -11,15 +11,10 @@
 #include "atlas/array/MakeView.h"
 #include "atlas/field.h"
 #include "atlas/field/FieldSet.h"
+#include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/redistribution/detail/RedistributionUtils.h"
-#include "atlas/redistribution/detail/StructuredColumnsToStructuredColumns.h"
-
-// Exception handling macros.
-#define TRY_CAST( a, b ) tryCast<a>( b, #b, Here() )
-#define CHECK_GRIDS( a, b, c ) checkGrids<a>( b, c, #b, #c, Here() )
-#define CHECK_FIELD_DATA_TYPE( a, b ) checkFieldDataType( a, b, #a, #b, Here() )
-#define CHECK_FIELD_SET_SIZE( a, b ) checkFieldSetSize( a, b, #a, #b, Here() )
+#include "atlas/redistribution/detail/RedistributeStructuredColumns.h"
 
 namespace atlas {
 namespace redistribution {
@@ -59,7 +54,7 @@ void forEachIndex( const StructuredIndexRangeVector& ranges, const functorType& 
 //========================================================================
 
 // Constructor.
-void StructuredColumnsToStructuredColumns::setup(
+void RedistributeStructuredColumns::setup(
   const FunctionSpace& sourceFunctionSpace, const FunctionSpace& targetFunctionSpace ) {
 
     source() = sourceFunctionSpace;
@@ -67,12 +62,12 @@ void StructuredColumnsToStructuredColumns::setup(
 
     // Cast to StructuredColumns.
     sourceStructuredColumnsPtr_ =
-      TRY_CAST( StructuredColumns, source()->cast<StructuredColumns>() );
+      _ATLAS_REDIST_TRY_CAST( StructuredColumns, source().get() );
     targetStructuredColumnsPtr_ =
-      TRY_CAST( StructuredColumns, target()->cast<StructuredColumns>() );
+      _ATLAS_REDIST_TRY_CAST( StructuredColumns, target().get() );
 
     // Check that grids match.
-    CHECK_GRIDS( StructuredColumns, sourceStructuredColumnsPtr_, targetStructuredColumnsPtr_ );
+    _ATLAS_REDIST_CHECK_GRIDS( StructuredColumns, sourceStructuredColumnsPtr_, targetStructuredColumnsPtr_ );
 
 
     // Get source and target range of this function space.
@@ -131,19 +126,19 @@ void StructuredColumnsToStructuredColumns::setup(
     return;
 }
 
-void StructuredColumnsToStructuredColumns::execute( const Field& sourceField, Field& targetField ) const {
+void RedistributeStructuredColumns::execute( const Field& sourceField, Field& targetField ) const {
     // Check functionspace casts.
-    TRY_CAST( StructuredColumns, sourceField.functionspace().get() );
-    TRY_CAST( StructuredColumns, targetField.functionspace().get() );
+    _ATLAS_REDIST_TRY_CAST( StructuredColumns, sourceField.functionspace().get() );
+    _ATLAS_REDIST_TRY_CAST( StructuredColumns, targetField.functionspace().get() );
 
     // Check source grids match.
-    CHECK_GRIDS( StructuredColumns, sourceField.functionspace().get(), sourceStructuredColumnsPtr_ );
+    _ATLAS_REDIST_CHECK_GRIDS( StructuredColumns, sourceField.functionspace().get(), sourceStructuredColumnsPtr_ );
 
     // Check target grids match.
-    CHECK_GRIDS( StructuredColumns, targetField.functionspace().get(), targetStructuredColumnsPtr_ );
+    _ATLAS_REDIST_CHECK_GRIDS( StructuredColumns, targetField.functionspace().get(), targetStructuredColumnsPtr_ );
 
     // Check data types match.
-    CHECK_FIELD_DATA_TYPE( sourceField, targetField );
+    _ATLAS_REDIST_CHECK_FIELD_DATA_TYPE( sourceField, targetField );
 
     // Determine data type of field and execute.
     switch ( sourceField.datatype().kind() ) {
@@ -170,9 +165,9 @@ void StructuredColumnsToStructuredColumns::execute( const Field& sourceField, Fi
     return;
 }
 
-void StructuredColumnsToStructuredColumns::execute( const FieldSet& sourceFieldSet, FieldSet& targetFieldSet ) const {
+void RedistributeStructuredColumns::execute( const FieldSet& sourceFieldSet, FieldSet& targetFieldSet ) const {
     // Check that both FieldSets are the same size.
-    CHECK_FIELD_SET_SIZE( sourceFieldSet, targetFieldSet );
+    _ATLAS_REDIST_CHECK_FIELD_SET_SIZE( sourceFieldSet, targetFieldSet );
 
     auto targetFieldSetIt = targetFieldSet.begin();
     std::for_each( sourceFieldSet.cbegin(), sourceFieldSet.cend(), [&]( const Field& sourceField ) {
@@ -188,7 +183,7 @@ void StructuredColumnsToStructuredColumns::execute( const FieldSet& sourceFieldS
 //========================================================================
 
 template <typename fieldType>
-void StructuredColumnsToStructuredColumns::doExecute( const Field& sourceField, Field& targetField ) const {
+void RedistributeStructuredColumns::doExecute( const Field& sourceField, Field& targetField ) const {
     // Make Atlas view objects.
     const auto sourceView = array::make_view<fieldType, 2>( sourceField );
     auto targetView       = array::make_view<fieldType, 2>( targetField );
@@ -358,8 +353,8 @@ void StructuredIndexRange::forEach( const functorType& functor ) const {
 }
 
 namespace {
-static RedistributionImplBuilder<StructuredColumnsToStructuredColumns>
-  register_builder( StructuredColumnsToStructuredColumns::static_type() );
+static RedistributionImplBuilder<RedistributeStructuredColumns>
+  register_builder( RedistributeStructuredColumns::static_type() );
 }
 
 }  // namespace detail

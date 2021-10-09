@@ -37,7 +37,10 @@ public:
     ///
     /// \param[in]  sourceFunctionSpace  Function space of source fields.
     /// \param[in]  targetFunctionSpace  Function space of target fields.
-    Redistribution( const FunctionSpace& sourceFunctionSpace, const FunctionSpace& targetFunctionSpace );
+    /// \param[in]  config               Config to specify "type" of redistribution.
+    Redistribution( const FunctionSpace& sourceFunctionSpace,
+                    const FunctionSpace& targetFunctionSpace,
+                    const util::Config& config = util::Config());
 
     /// \brief    Maps source field to target field.
     ///

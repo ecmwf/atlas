@@ -16,6 +16,12 @@
 
 #include "eckit/exception/Exceptions.h"
 
+// Exception handling macros.
+#define _ATLAS_REDIST_TRY_CAST( a, b ) tryCast<a>( b, #b, Here() )
+#define _ATLAS_REDIST_CHECK_GRIDS( a, b, c ) checkGrids<a>( b, c, #b, #c, Here() )
+#define _ATLAS_REDIST_CHECK_FIELD_DATA_TYPE( a, b ) checkFieldDataType( a, b, #a, #b, Here() )
+#define _ATLAS_REDIST_CHECK_FIELD_SET_SIZE( a, b ) checkFieldSetSize( a, b, #a, #b, Here() )
+
 namespace atlas {
 namespace redistribution {
 namespace detail {
@@ -34,7 +40,7 @@ const FunctionSpaceType* tryCast( const FunctionSpaceImpl* const functionSpacePt
         throw eckit::BadCast( "Cannot cast " + varName + " to " + typeid( FunctionSpaceType ).name(), location );
     }
 
-    return functionSpaceConcretePtr;
+    return functionSpaceConcretePtr ;
 }
 
 /// \brief  Check grids associated with two function spaces match.

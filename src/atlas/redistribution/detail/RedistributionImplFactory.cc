@@ -9,7 +9,8 @@
 
 #include "atlas/redistribution/detail/RedistributionImplFactory.h"
 #include "atlas/redistribution/detail/RedistributionImpl.h"
-#include "atlas/redistribution/detail/StructuredColumnsToStructuredColumns.h"
+#include "atlas/redistribution/detail/RedistributeGeneric.h"
+#include "atlas/redistribution/detail/RedistributeStructuredColumns.h"
 
 namespace atlas {
 namespace redistribution {
@@ -20,7 +21,8 @@ namespace detail {
 void force_link() {
     static struct Link {
         Link() {
-            RedistributionImplBuilder<redistribution::detail::StructuredColumnsToStructuredColumns>();
+            RedistributionImplBuilder<redistribution::detail::RedistributeGeneric>();
+            RedistributionImplBuilder<redistribution::detail::RedistributeStructuredColumns>();
         }
     } link;
 }
