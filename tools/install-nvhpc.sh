@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Install PGI Community Edition on Travis
+# Install NVHPC
 # https://github.com/nemequ/pgi-travis
 #
 # Originally written for Squash <https://github.com/quixdb/squash> by
@@ -12,10 +12,10 @@
 # See <https://creativecommons.org/publicdomain/zero/1.0/> for
 # details.
 
-version=20.9
+version=21.9
 
 TEMPORARY_FILES="${TMPDIR:-/tmp}"
-export NVHPC_INSTALL_DIR=$(pwd)/pgi-install
+export NVHPC_INSTALL_DIR=$(pwd)/nvhpc-install
 export NVHPC_SILENT=true
 while [ $# != 0 ]; do
     case "$1" in
@@ -48,33 +48,28 @@ case "$(uname -m)" in
 		;;
 esac
 
-# Example download URL for version 20.9
-#    https://developer.download.nvidia.com/hpc-sdk/20.9/nvhpc_2020_209_Linux_x86_64_cuda_11.0.tar.gz
+if [ -d "${NVHPC_INSTALL_DIR}" ]; then
+    if [[ $(find "${NVHPC_INSTALL_DIR}" -name "nvc" | wc -l) == 1 ]]; then
+      echo "NVHPC already installed at ${NVHPC_INSTALL_DIR}"
+      exit
+    fi
+fi
+
+# Example download URL for version 21.9
+#    https://developer.download.nvidia.com/hpc-sdk/21.9/nvhpc_2020_219_Linux_x86_64_cuda_11.0.tar.gz
 
 ver="$(echo $version | tr -d . )"
 URL=$(curl -s "https://developer.nvidia.com/nvidia-hpc-sdk-$ver-downloads" | grep -oP "https://developer.download.nvidia.com/hpc-sdk/([0-9]{2}\.[0-9]+)/nvhpc_([0-9]{4})_([0-9]+)_Linux_$(uname -m)_cuda_([0-9\.]+).tar.gz" | sort | tail -1)
 FOLDER="$(basename "$(echo "${URL}" | grep -oP '[^/]+$')" .tar.gz)"
 
-if [ ! -z "${TRAVIS_REPO_SLUG}" ]; then
-	curl --location \
-    	--user-agent "pgi-travis (https://github.com/nemequ/pgi-travis; ${TRAVIS_REPO_SLUG})" \
-    	--referer "http://www.pgroup.com/products/community.htm" \
-    	--header "X-Travis-Build-Number: ${TRAVIS_BUILD_NUMBER}" \
-    	--header "X-Travis-Event-Type: ${TRAVIS_EVENT_TYPE}" \
-    	--header "X-Travis-Job-Number: ${TRAVIS_JOB_NUMBER}" \
-    	"${URL}" | tar zx -C "${TEMPORARY_FILES}"
+if [ ! -d "${TEMPORARY_FILES}/${FOLDER}" ]; then
+  echo "Downloading ${TEMPORARY_FILES}/${FOLDER} from URL [${URL}]"
+  mkdir -p ${TEMPORARY_FILES}
+  curl --location \
+       --user-agent "pgi-travis (https://github.com/nemequ/pgi-travis)" \
+       "${URL}" | tar zx -C "${TEMPORARY_FILES}"
 else
-
-  if [ ! -d "${TEMPORARY_FILES}/${FOLDER}" ]; then
-    echo "Downloading ${TEMPORARY_FILES}/${FOLDER} from URL [${URL}]"
-    mkdir -p ${TEMPORARY_FILES}
-    curl --location \
-         --user-agent "pgi-travis (https://github.com/nemequ/pgi-travis)" \
-         "${URL}" | tar zx -C "${TEMPORARY_FILES}"
-  else
-     echo "Download already present in ${TEMPORARY_FILES}/${FOLDER}"
-  fi
-
+   echo "Download already present in ${TEMPORARY_FILES}/${FOLDER}"
 fi
 
 echo "+ ${TEMPORARY_FILES}/${FOLDER}/install"
@@ -83,30 +78,30 @@ echo "+ ${TEMPORARY_FILES}/${FOLDER}/install"
 #comment out to cleanup
 #rm -rf "${TEMPORARY_FILES}/${FOLDER}"
 
-PGI_VERSION=$(basename "${NVHPC_INSTALL_DIR}"/Linux_$(uname -m)/*.*/)
+NVHPC_VERSION=$(basename "${NVHPC_INSTALL_DIR}"/Linux_$(uname -m)/*.*/)
 
 # Use gcc which is available in PATH
-${NVHPC_INSTALL_DIR}/Linux_$(uname -m)/${PGI_VERSION}/compilers/bin/makelocalrc \
-  -x ${NVHPC_INSTALL_DIR}/Linux_$(uname -m)/${PGI_VERSION}/compilers/bin \
+${NVHPC_INSTALL_DIR}/Linux_$(uname -m)/${NVHPC_VERSION}/compilers/bin/makelocalrc \
+  -x ${NVHPC_INSTALL_DIR}/Linux_$(uname -m)/${NVHPC_VERSION}/compilers/bin \
   -gcc $(which gcc) \
   -gpp $(which g++) \
   -g77 $(which gfortran)
 
 cat > ${NVHPC_INSTALL_DIR}/env.sh << EOF
 ### Variables
-PGI_INSTALL_DIR=${NVHPC_INSTALL_DIR}
-PGI_VERSION=${PGI_VERSION}
+export NVHPC_INSTALL_DIR=${NVHPC_INSTALL_DIR}
+export NVHPC_VERSION=${NVHPC_VERSION}
+export NVHPC_DIR=\${NVHPC_INSTALL_DIR}/Linux_$(uname -m)/\${NVHPC_VERSION}
 
 ### Compilers
-PGI_DIR=\${PGI_INSTALL_DIR}/Linux_$(uname -m)/\${PGI_VERSION}
-export PATH=\${PGI_DIR}/compilers/bin:\${PATH}
-EOF
-
-cat >> ${NVHPC_INSTALL_DIR}/env.sh << EOF
+export PATH=\${NVHPC_DIR}/compilers/bin:\${PATH}
+export NVHPC_LIBRARY_PATH=\${NVHPC_DIR}/compilers/lib
+export LD_LIBRARY_PATH=\${NVHPC_LIBRARY_PATH}
 
 ### MPI
-export MPI_HOME=\${PGI_DIR}/comm_libs/mpi
+export MPI_HOME=\${NVHPC_DIR}/comm_libs/mpi
 export PATH=\${MPI_HOME}/bin:\${PATH}
-export LD_LIBRARY_PATH=\${PGI_DIR}/compilers/lib:\${LD_LIBRARY_PATH}
 EOF
+
+cat ${NVHPC_INSTALL_DIR}/env.sh
 

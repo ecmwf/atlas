@@ -441,6 +441,8 @@ functionspace/Spectral.h
 functionspace/Spectral.cc
 functionspace/PointCloud.h
 functionspace/PointCloud.cc
+functionspace/CubedSphereColumns.h
+functionspace/CubedSphereColumns.cc
 functionspace/detail/FunctionSpaceImpl.h
 functionspace/detail/FunctionSpaceImpl.cc
 functionspace/detail/FunctionSpaceInterface.h
@@ -458,6 +460,9 @@ functionspace/detail/StructuredColumns_setup.cc
 functionspace/detail/StructuredColumns_create_remote_index.cc
 functionspace/detail/PointCloudInterface.h
 functionspace/detail/PointCloudInterface.cc
+functionspace/detail/CubedSphereStructure.h
+functionspace/detail/CubedSphereStructure.cc
+
 )
 
 list( APPEND atlas_numerics_srcs

@@ -35,12 +35,20 @@ ecbuild_add_test( TARGET atlas_test_cellcolumns
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_cubedsphere_functionspace
+  MPI        8
+  CONDITION  eckit_HAVE_MPI
+  SOURCES test_cubedsphere_functionspace.cc
+  LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET test_structuredcolumns_biperiodic
   SOURCES  test_structuredcolumns_biperiodic.cc
   LIBS     atlas
   MPI 5
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
-  CONDITION eckit_HAVE_MPI
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 5
 )
 
 ecbuild_add_test( TARGET atlas_test_structuredcolumns
@@ -48,7 +56,7 @@ ecbuild_add_test( TARGET atlas_test_structuredcolumns
   LIBS     atlas
   MPI 5
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
-  CONDITION eckit_HAVE_MPI
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 5
 )
 
 ecbuild_add_test( TARGET atlas_test_pointcloud
