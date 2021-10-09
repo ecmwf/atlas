@@ -94,15 +94,15 @@ void CubedSphereMeshGenerator::configure_defaults() {
 
 void CubedSphereMeshGenerator::generate( const Grid& grid, Mesh& mesh ) const {
     // Get partitioner type and number of partitions from config.
-    const auto nParts   = static_cast<idx_t>( options.get<size_t>( "nb_parts" ) );
-    const auto partType = options.get<std::string>( "partitioner" );
+    const idx_t nParts   = static_cast<idx_t>( options.get<size_t>( "nb_parts" ) );
+    const std::string partType = options.get<std::string>( "partitioner" );
 
     auto partConfig = util::Config{};
     partConfig.set( "type", partType );
     partConfig.set( "partitions", nParts );
 
-    // Use lonlat instead of xy for equal_regions partitioner.
-    if ( partType == "equal_regions" ) {
+    // Use lonlat instead of xy for non cubedsphere partitioner.
+    if ( partType != "cubedsphere" ) {
         partConfig.set( "coordinates", "lonlat" );
     }
 
@@ -118,15 +118,33 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, Mesh& mesh ) const {
 void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribution& distribution, Mesh& mesh ) const {
     // Check for correct grid and need for mesh
     ATLAS_ASSERT( !mesh.generated() );
-    if ( !CubedSphereGrid( grid ) ) {
+
+    // Cast grid to cubed sphere grid.
+    const auto csGrid = CubedSphereGrid( grid );
+
+    // Check for successful cast.
+    if ( !csGrid ) {
         throw_Exception(
             "CubedSphereMeshGenerator can only work "
             "with a cubedsphere grid.",
             Here() );
     }
 
-    // Cast grid to cubed sphere grid.
-    const auto csGrid = CubedSphereGrid( grid );
+    // Check for correct grid stagger.
+    if ( csGrid.stagger() != "C" ) {
+        throw_Exception(
+            "CubedSphereMeshGenerator will only work with a "
+            "cell-centroid grid.",
+            Here() );
+    }
+
+    // Check for sensible halo size.
+    if ( options.get<idx_t>("halo") > csGrid.N() ) {
+        throw_Exception(
+            "Halo size " + std::to_string(options.get<idx_t>("halo")) + " "
+            "is larger than grid size " + std::to_string(csGrid.N()) + ".",
+            Here() );
+    }
 
     // Clone some grid properties.
     setGrid( mesh, csGrid, distribution );
@@ -222,7 +240,9 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
         GlobalElem* globalPtr{};             // Pointer to global element.
         ElemType type{ElemType::UNDEFINED};  // Cell/node Type.
         idx_t halo{undefinedIdx};            // Halo level.
-        idx_t i{}, j{}, t{};                 // i, j and t.
+        idx_t t{};                           // t, i and j.
+        idx_t i{};
+        idx_t j{};
     };
 
     // Define ij bounding box for each face (this partition only).
@@ -232,15 +252,6 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
         idx_t jBegin{std::numeric_limits<idx_t>::max()};
         idx_t jEnd{std::numeric_limits<idx_t>::min()};
     };
-
-
-    // Check for correct grid stagger.
-    if ( csGrid.stagger() != "C" ) {
-        throw_Exception(
-            "CubedSphereMeshGenerator will only work with a"
-            "cell-centroid grid. Try NodalCubedSphereMeshGenerator instead.",
-            Here() );
-    }
 
     // Get dimensions of grid
     const idx_t N = csGrid.N();
@@ -266,8 +277,8 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
     const auto jacobian            = NeighbourJacobian( csGrid );
 
     // Get partition information.
-    const auto nParts   = options.get<size_t>( "nb_parts" );
-    const auto thisPart = options.get<size_t>( "part" );
+    const size_t nParts   = options.get<size_t>( "nb_parts" );
+    const size_t thisPart = options.get<size_t>( "part" );
 
     // Define an index counter.
     const auto idxSum = []( const std::vector<idx_t>& idxCounts ) -> idx_t {
@@ -357,17 +368,17 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
     // Initialise bounding box.
     auto cellBounds = std::vector<BoundingBox>( static_cast<size_t>( 6 ) );
 
-    // Set tji grid iterator.
-    auto ijtIt = csGrid.tij().begin();
+    // Set tij grid iterator.
+    auto tijIt = csGrid.tij().begin();
 
     for ( gidx_t gridIdx = 0; gridIdx < csGrid.size(); ++gridIdx ) {
         // It's more than likely that the grid order follows the same (t, j, i) row-
         // major order of the mesh. However, we shouldn't assume this is true.
 
         // Get cell index.
-        const idx_t i          = ( *ijtIt ).i();
-        const idx_t j          = ( *ijtIt ).j();
-        const idx_t t          = ( *ijtIt ).t();
+        const idx_t t          = ( *tijIt ).t();
+        const idx_t i          = ( *tijIt ).i();
+        const idx_t j          = ( *tijIt ).j();
         const size_t cellIdx   = getCellIdx( i, j, t );
         GlobalElem& globalCell = globalCells[cellIdx];
 
@@ -385,8 +396,8 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
             bounds.jBegin       = std::min( bounds.jBegin, j - nHalo );
             bounds.jEnd         = std::max( bounds.jEnd, j + nHalo + 1 );
         }
-        // Increment iterators.
-        ++ijtIt;
+        // Increment tij.
+        ++tijIt;
     }
 
     // Set counters for cell local indices.
@@ -471,7 +482,7 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
 
                     // Check that xy is on this tile.
                     PointXY xy = jacobian.xy( PointIJ( i, j ), t );
-                    xy         = jacobian.snapToEdge( xy, t );
+                    xy = jacobian.snapToEdge( xy, t );
 
                     // This will only determine if tGlobal does not match t.
                     // This is cheaper than determining the correct tGlobal.
@@ -529,9 +540,9 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
 
                     localCell.type      = ElemType::OWNER;
                     localCell.halo      = 0;
+                    localCell.t         = t;
                     localCell.i         = i;
                     localCell.j         = j;
-                    localCell.t         = t;
                     localCell.globalPtr = &globalCell;
                 }
                 else {
@@ -567,9 +578,9 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
 
                         localCell.type      = ElemType::HALO;
                         localCell.halo      = halo;
+                        localCell.t         = t;
                         localCell.i         = i;
                         localCell.j         = j;
-                        localCell.t         = t;
                         localCell.globalPtr = &globalCell;
 
                     }  // Finished with halo search.
@@ -594,14 +605,12 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
         localCell.globalPtr->localPtr = &localCell;
 
         if ( localCell.globalPtr->remoteIdx == undefinedIdx ) {
-            const auto ijtGlobal =
+            const PointTIJ tijGlobal =
                 jacobian.ijLocalToGlobal( PointIJ( localCell.i + 0.5, localCell.j + 0.5 ), localCell.t );
 
-            const idx_t i = ijtGlobal.first.iCell();
-            const idx_t j = ijtGlobal.first.jCell();
-            const idx_t t = ijtGlobal.second;
-
-            ATLAS_ASSERT( interiorCell( i, j ) );
+            const idx_t& t = tijGlobal.t();
+            const idx_t& i = tijGlobal.ij().iCell();
+            const idx_t& j = tijGlobal.ij().jCell();
 
             const GlobalElem& ownerCell = globalCells[getCellIdx( i, j, t )];
 
@@ -656,9 +665,8 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
                     // A double-loop with no more than four iterations!
                     for ( idx_t iCell = i - 1; iCell < i + 1; ++iCell ) {
                         for ( idx_t jCell = j - 1; jCell < j + 1; ++jCell ) {
-                            if ( invalidCell( iCell, jCell ) ) {
+                            if ( invalidCell( iCell, jCell ) )
                                 continue;
-                            }
 
                             const GlobalElem& globalCell = globalCells[getCellIdx( iCell, jCell, t )];
 
@@ -679,9 +687,9 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
 
                         localNode.type      = ElemType::HALO;
                         localNode.halo      = halo;
+                        localNode.t         = t;
                         localNode.i         = i;
                         localNode.j         = j;
-                        localNode.t         = t;
                         localNode.globalPtr = &globalNode;
                     }
 
@@ -707,13 +715,11 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
         localNode.globalPtr->localPtr = &localNode;
 
         if ( localNode.globalPtr->remoteIdx == undefinedIdx ) {
-            const auto ijtGlobal = jacobian.ijLocalToGlobal( PointIJ( localNode.i, localNode.j ), localNode.t );
+            const PointTIJ tijGlobal = jacobian.ijLocalToGlobal( PointIJ( localNode.i, localNode.j ), localNode.t );
 
-            const idx_t i = ijtGlobal.first.iNode();
-            const idx_t j = ijtGlobal.first.jNode();
-            const idx_t t = ijtGlobal.second;
-
-            ATLAS_ASSERT( !exteriorNode( i, j ) );
+            const idx_t& t = tijGlobal.t();
+            const idx_t& i = tijGlobal.ij().iNode();
+            const idx_t& j = tijGlobal.ij().jNode();
 
             const GlobalElem& ownerNode = globalNodes[getNodeIdx( i, j, t )];
 
@@ -724,7 +730,7 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
 
     // ---------------------------------------------------------------------------
     // 6. ASSIGN NODES TO MESH
-    //    In addition to the usual fields, we will add i, j and t to mesh.nodes().
+    //    In addition to the usual fields, we will add t, i and j to mesh.nodes().
     // ---------------------------------------------------------------------------
 
     // Resize nodes.
@@ -732,8 +738,8 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
     nodes.resize( static_cast<idx_t>( localNodes.size() ) );
 
     // Add extra field.
-    Field ijtField = nodes.add( Field( "ijt", make_datatype<idx_t>(), make_shape( nodes.size(), 3 ) ) );
-    ijtField.set_variables( 3 );
+    Field tijField = nodes.add( Field( "tij", make_datatype<idx_t>(), make_shape( nodes.size(), 3 ) ) );
+    tijField.set_variables( 3 );
 
     // Get field views
     auto nodesGlobalIdx = array::make_view<gidx_t, 1>( nodes.global_index() );
@@ -744,7 +750,7 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
     auto nodesGhost     = array::make_view<int, 1>( nodes.ghost() );
     auto nodesHalo      = array::make_view<int, 1>( nodes.halo() );
     auto nodesFlags     = array::make_view<int, 1>( nodes.flags() );
-    auto nodesIjt       = array::make_view<idx_t, 2>( ijtField );
+    auto nodesTij       = array::make_view<idx_t, 2>( tijField );
 
     // Set fields.
     idx_t nodeLocalIdx = 0;
@@ -761,7 +767,7 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
         // Set xy.
         const PointXY xyLocal = jacobian.xy( PointIJ( localNode.i, localNode.j ), localNode.t );
         const PointXY xyGlobal =
-            interiorNode( localNode.i, localNode.j ) ? xyLocal : jacobian.xyLocalToGlobal( xyLocal, localNode.t ).first;
+            interiorNode( localNode.i, localNode.j ) ? xyLocal : jacobian.xyLocalToGlobal( xyLocal, localNode.t ).xy();
 
         nodesXy( nodeLocalIdx, XX ) = xyLocal.x();
         nodesXy( nodeLocalIdx, YY ) = xyLocal.y();
@@ -772,25 +778,25 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
         nodesLonLat( nodeLocalIdx, LAT ) = lonLat.lat();
 
         // Set tij.
-        nodesIjt( nodeLocalIdx, Coordinates::I ) = localNode.i;
-        nodesIjt( nodeLocalIdx, Coordinates::J ) = localNode.j;
-        nodesIjt( nodeLocalIdx, Coordinates::T ) = localNode.t;
+        nodesTij( nodeLocalIdx, Coordinates::T ) = localNode.t;
+        nodesTij( nodeLocalIdx, Coordinates::I ) = localNode.i;
+        nodesTij( nodeLocalIdx, Coordinates::J ) = localNode.j;
 
         // Set halo.
         nodesHalo( nodeLocalIdx ) = localNode.halo;
-        ATLAS_ASSERT( localNode.halo != undefinedIdx );
 
         // Set flags.
         Topology::reset( nodesFlags( nodeLocalIdx ) );
         switch ( localNode.type ) {
             case ElemType::UNDEFINED: {
-                ATLAS_ASSERT( 0 );
+                ATLAS_ASSERT( 0, "Trying to add undefined node to mesh." );
                 break;
             }
             case ElemType::OWNER: {
                 nodesGhost( nodeLocalIdx ) = 0;
                 // Vitally important that these two match!
-                ATLAS_ASSERT( nodeLocalIdx == localNode.globalPtr->remoteIdx );
+                ATLAS_ASSERT( nodeLocalIdx == localNode.globalPtr->remoteIdx,
+                              "Owner local index and remote index do not match.");
                 break;
             }
             case ElemType::HALO: {
@@ -805,7 +811,7 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
 
     // ---------------------------------------------------------------------------
     // 7. ASSIGN CELLS TO MESH
-    //    Again, we'll add i, j and t to mesh.cells(). We'll also add the xy and
+    //    Again, we'll add t, i and j to mesh.cells(). We'll also add the xy and
     //    lonlat coordinates of the cell centres.
     // ---------------------------------------------------------------------------
 
@@ -815,8 +821,8 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
     cells.add( new mesh::temporary::Quadrilateral(), static_cast<idx_t>( localCells.size() ) );
 
     // Add extra fields.
-    ijtField = cells.add( Field( "ijt", make_datatype<idx_t>(), make_shape( cells.size(), 3 ) ) );
-    ijtField.set_variables( 3 );
+    tijField = cells.add( Field( "tij", make_datatype<idx_t>(), make_shape( cells.size(), 3 ) ) );
+    tijField.set_variables( 3 );
 
     Field xyField = cells.add( Field( "xy", make_datatype<double>(), make_shape( cells.size(), 2 ) ) );
     xyField.set_variables( 2 );
@@ -830,7 +836,7 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
     auto cellsPart      = array::make_view<int, 1>( cells.partition() );
     auto cellsHalo      = array::make_view<int, 1>( cells.halo() );
     auto cellsFlags     = array::make_view<int, 1>( cells.flags() );
-    auto cellsIjt       = array::make_view<idx_t, 2>( ijtField );
+    auto cellsTij       = array::make_view<idx_t, 2>( tijField );
     auto cellsXy        = array::make_view<double, 2>( xyField );
     auto cellsLonLat    = array::make_view<double, 2>( lonLatField );
 
@@ -869,7 +875,7 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
         // Set xy.
         const PointXY xyLocal = jacobian.xy( PointIJ( localCell.i + 0.5, localCell.j + 0.5 ), localCell.t );
         const PointXY xyGlobal =
-            interiorCell( localCell.i, localCell.j ) ? xyLocal : jacobian.xyLocalToGlobal( xyLocal, localCell.t ).first;
+            interiorCell( localCell.i, localCell.j ) ? xyLocal : jacobian.xyLocalToGlobal( xyLocal, localCell.t ).xy();
 
         cellsXy( cellLocalIdx, XX ) = xyLocal.x();
         cellsXy( cellLocalIdx, YY ) = xyLocal.y();
@@ -879,26 +885,26 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
         cellsLonLat( cellLocalIdx, LON ) = lonLat.lon();
         cellsLonLat( cellLocalIdx, LAT ) = lonLat.lat();
 
-        // Set ijt.
-        cellsIjt( cellLocalIdx, Coordinates::I ) = localCell.i;
-        cellsIjt( cellLocalIdx, Coordinates::J ) = localCell.j;
-        cellsIjt( cellLocalIdx, Coordinates::T ) = localCell.t;
+        // Set tij.
+        cellsTij( cellLocalIdx, Coordinates::T ) = localCell.t;
+        cellsTij( cellLocalIdx, Coordinates::I ) = localCell.i;
+        cellsTij( cellLocalIdx, Coordinates::J ) = localCell.j;
+
 
         // Set halo.
         cellsHalo( cellLocalIdx ) = localCell.halo;
-
-        ATLAS_ASSERT( localCell.halo != undefinedIdx );
 
         // Set flags.
         Topology::reset( cellsFlags( cellLocalIdx ) );
         switch ( localCell.type ) {
             case ElemType::UNDEFINED: {
-                ATLAS_ASSERT( 0 );
+                ATLAS_ASSERT( 0, "Trying to add undefined cell to mesh." );
                 break;
             }
             case ElemType::OWNER: {
                 // Vitally important that these two match!
-                ATLAS_ASSERT( cellLocalIdx == localCell.globalPtr->remoteIdx );
+                ATLAS_ASSERT( cellLocalIdx == localCell.globalPtr->remoteIdx,
+                              "Owner local index and remote index do not match.");
                 break;
             }
             case ElemType::HALO: {

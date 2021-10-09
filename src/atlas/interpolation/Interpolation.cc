@@ -88,11 +88,11 @@ void Interpolation::execute( const Field& source, Field& target ) const {
     get()->execute( source, target );
 }
 
-void Interpolation::execute_adjoint( FieldSet& source, FieldSet& target ) const {
+void Interpolation::execute_adjoint( FieldSet& source, const FieldSet& target ) const {
     get()->execute_adjoint( source, target );
 }
 
-void Interpolation::execute_adjoint( Field& source, Field& target ) const {
+void Interpolation::execute_adjoint( Field& source, const Field& target ) const {
     get()->execute_adjoint( source, target );
 }
 

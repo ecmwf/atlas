@@ -37,9 +37,9 @@ using namespace projection::detail;
 struct Coordinates {
     enum k : idx_t
     {
+        T,
         I,
-        J,
-        T
+        J
     };
 };
 
@@ -65,7 +65,8 @@ public:
     PointIJ() : Point2() {}
 
     /// Index constructor.
-    inline PointIJ( idx_t i, idx_t j ) : Point2( static_cast<double>( i ), static_cast<double>( j ) ) {}
+    template <typename IndexI, typename IndexJ>
+    inline PointIJ( IndexI i, IndexJ j ) : Point2( static_cast<double>( i ), static_cast<double>( j ) ) {}
 
     /// @{
     ///  Return i or j by value.
@@ -92,11 +93,25 @@ public:
     /// @}
 };
 
-/// (PointXY, t) tuple def.
-using PointXYT = std::pair<PointXY, idx_t>;
+/// (t, PointXY) tuple.
+class PointTXY : public std::pair<idx_t, PointXY> {
+      using std::pair<idx_t, PointXY>::pair;
+public:
+      idx_t& t() { return first; }
+      PointXY& xy() { return second; }
+      const idx_t& t() const { return first; }
+      const PointXY& xy() const { return second; }
+};
 
-/// (PointIJ, t) tuple def.
-using PointIJT = std::pair<PointIJ, idx_t>;
+/// (t, PointIJ) tuple.
+class PointTIJ : public std::pair<idx_t, PointIJ> {
+    using std::pair<idx_t, PointIJ>::pair;
+public:
+    idx_t& t() { return first; }
+    PointIJ& ij() { return second; }
+    const idx_t& t() const { return first; }
+    const PointIJ& ij() const { return second; }
+};
 
 /// \brief   Jacobian class for 2 dimensional vector fields.
 ///
@@ -168,29 +183,17 @@ public:
     /// Grid-data constructor.
     NeighbourJacobian( const CubedSphereGrid& csGrid );
 
-    /// @{
     /// Convert ij on local tile t to xy.
     PointXY xy( const PointIJ& ij, idx_t t ) const;
-    PointXY xy( const std::pair<PointIJ, idx_t>& ijt ) const;
-    /// @}
 
-    /// @{
     /// Convert xy on local tile t to ij.
     PointIJ ij( const PointXY& xy, idx_t t ) const;
-    PointIJ ij( const std::pair<PointXY, idx_t>& xyt ) const;
-    /// @}
 
-    /// @{
     /// Convert extrapolated xy on tile t to global xy and t (needed for halos).
-    std::pair<PointXY, idx_t> xyLocalToGlobal( const PointXY& xyLocal, idx_t tLocal ) const;
-    std::pair<PointXY, idx_t> xyLocalToGlobal( const std::pair<PointXY, idx_t>& xytLocal ) const;
-    /// @}
+    PointTXY xyLocalToGlobal( const PointXY& xyLocal, idx_t tLocal ) const;
 
-    /// @{
     /// Convert extrapolated ij on tile t to global ij and t (needed for halos).
-    std::pair<PointIJ, idx_t> ijLocalToGlobal( const PointIJ& ijLocal, idx_t tLocal ) const;
-    std::pair<PointIJ, idx_t> ijLocalToGlobal( const std::pair<PointIJ, idx_t>& ijtLocal ) const;
-    /// @}
+    PointTIJ ijLocalToGlobal( const PointIJ& ijLocal, idx_t tLocal ) const;
 
     /// Return true if ij is interior or on the edge of a tile.
     bool ijInterior( const PointIJ& ij ) const;

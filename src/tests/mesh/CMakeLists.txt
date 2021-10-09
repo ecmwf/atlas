@@ -50,7 +50,7 @@ ecbuild_add_test( TARGET atlas_test_parfields
 
 ecbuild_add_test( TARGET atlas_test_halo
   MPI        5
-  CONDITION  eckit_HAVE_MPI
+  CONDITION  eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 5
   SOURCES    test_halo.cc ../TestMeshes.h
   LIBS       atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
@@ -58,7 +58,7 @@ ecbuild_add_test( TARGET atlas_test_halo
 
 ecbuild_add_test( TARGET atlas_test_distmesh
   MPI        5
-  CONDITION  eckit_HAVE_MPI
+  CONDITION  eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 5
   SOURCES    test_distmesh.cc ../TestMeshes.h
   LIBS       atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
@@ -104,7 +104,7 @@ ecbuild_add_test( TARGET atlas_test_healpixmeshgen
 
 ecbuild_add_test( TARGET atlas_test_cubedsphere_meshgen
   MPI        8
-  CONDITION  eckit_HAVE_MPI
+  CONDITION  eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 8
   SOURCES test_cubedsphere_meshgen.cc
   LIBS atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}

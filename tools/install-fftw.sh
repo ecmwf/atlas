@@ -16,8 +16,9 @@ export PATH=$SCRIPTDIR:$PATH
 
 # Some defaults for the arguments
 PREFIX=$(pwd)/install
-fftw_version=3.3.8
-fftw_configure="--enable-shared --enable-single"
+fftw_version=3.3.10
+fftw_configure="--enable-shared"
+fftw_with_single=false
 
 while [ $# != 0 ]; do
     case "$1" in
@@ -26,6 +27,9 @@ while [ $# != 0 ]; do
         ;;
     "--version")
         fftw_version="$2"; shift
+        ;;
+    "--with-single")
+        fftw_with_single=true;
         ;;
     *)
         echo "Unrecognized argument '$1'"
@@ -42,6 +46,17 @@ if [[ -f "${fftw_installed}" ]]; then
   echo "FFTW ${fftw_version} is already installed at ${PREFIX}"
   exit
 fi
+
+os=$(uname)
+case "$os" in
+    Darwin)
+      brew ls --versions fftw || brew install fftw
+      exit
+    ;;
+    *)
+    ;;
+esac
+
 
 if [ -z "${TMPDIR+x}" ]; then
   TMPDIR=${HOME}/tmp
@@ -65,8 +80,20 @@ make -j8
 echo "+ make install"
 make install
 
+if $fftw_with_single; then
+  # Now again in single precision
+  make clean
+  echo "+ ./configure --prefix=${PREFIX} ${fftw_configure} --enable-float"
+  ./configure --prefix=${PREFIX} ${fftw_configure} --enable-float
+  echo "+ make -j8"
+  make -j8
+  echo "+ make install"
+  make install
+fi
+
+
 echo "+ rm -rf \${fftw_tarball} \${fftw_dir}"
-#rm -rf ${fftw_tarball} ${fftw_dir}
+rm -rf ${fftw_tarball} ${fftw_dir}
 
 echo "+ touch ${fftw_installed}"
 touch ${fftw_installed}
