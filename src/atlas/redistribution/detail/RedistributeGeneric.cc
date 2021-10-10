@@ -31,48 +31,27 @@ using functionspace::detail::PointCloud;
 using functionspace::detail::StructuredColumns;
 
 using mesh::HybridElements;
+using mesh::Nodes;
 
 // Helper type definitions and functions for redistribution.
 namespace  {
+
+// Helper types to distinguish mesh-based and meshless functionspaces.
+template <typename FunctionSpaceType>
+using MeshBased = typename std::enable_if<
+    std::is_same<FunctionSpaceType, CellColumns>::value ||
+    std::is_same<FunctionSpaceType, EdgeColumns>::value ||
+    std::is_same<FunctionSpaceType, NodeColumns>::value>::type*;
+
+template <typename FunctionSpaceType>
+using Meshless = typename std::enable_if<
+    std::is_same<FunctionSpaceType, StructuredColumns>::value ||
+    std::is_same<FunctionSpaceType, PointCloud>::value>::type*;
 
 // Define index-UID struct. (Needed to overload "<").
 struct IdxUid : public std::pair<idx_t, uidx_t> {
     using std::pair<idx_t, uidx_t>::pair;
 };
-
-// Need to overload "<" operator as C++11 std::set_intersection does not support
-// comparison lambda.
-bool operator<( const IdxUid& lhs, const uidx_t& rhs ) {
-    return lhs.second < rhs;
-}
-bool operator<( const uidx_t& lhs, const IdxUid& rhs ) {
-    return lhs < rhs.second;
-}
-
-// Get UIDs for NodeColumns, PointCloud or StructuredColumns.
-template <typename FunctionSpaceType>
-std::vector<IdxUid> getPointUidVec(const FunctionSpaceType* functionSpaceImpl) {
-
-    const auto lonLat = array::make_view<double, 2>( functionSpaceImpl->lonlat() );
-    const auto ghost = array::make_view<int, 1>( functionSpaceImpl->ghost() );
-
-    auto uidVec = std::vector<IdxUid>{};
-
-    // Get UIDs for non ghost elems.
-    for ( idx_t i = 0; i < functionSpaceImpl->size(); ++i ) {
-        if ( ghost( i ) ) {
-            continue;
-        }
-        const auto uid =
-            util::unique_lonlat( lonLat( i, LON ), lonLat( i, LAT ) );
-       uidVec.push_back( IdxUid( i, uid ) );
-    }
-
-    // Sort by key.
-    std::sort( uidVec.begin(), uidVec.end() );
-
-    return uidVec;
-}
 
 // Get elements from mesh.
 const HybridElements& getElems( const CellColumns* functionSpaceImpl ) {
@@ -81,38 +60,95 @@ const HybridElements& getElems( const CellColumns* functionSpaceImpl ) {
 const HybridElements& getElems( const EdgeColumns* functionSpaceImpl ) {
     return functionSpaceImpl->edges();
 }
+const Nodes& getElems( const NodeColumns* functionSpaceImpl ) {
+    return functionSpaceImpl->nodes();
+}
 
-// Get UIDs for CellColumns or EdgeColumns.
-template <typename FunctionSpaceType>
-std::vector<IdxUid> getElemUidVec(const FunctionSpaceType* functionSpaceImpl) {
+// Create ghost field for mesh based functionspace.
+template <typename FunctionSpaceType, MeshBased<FunctionSpaceType> = nullptr>
+Field getGhostField( const FunctionSpaceType* functionSpaceImpl ) {
 
-    // Get elems.
+    // Get mesh elements.
     const auto& elems = getElems( functionSpaceImpl );
 
-    // Get partition field.
-    const auto part = array::make_view<int, 1>( elems.partition() );
+    // Make ghost field.
+    auto ghost = Field( "ghost" , array::make_datatype<int>(),
+                        array::make_shape( functionSpaceImpl->size() ) );
 
-    // Get remote index field.
-    const auto ridx = array::make_indexview<int, 1> ( elems.remote_index() );
+    // Make views.
+    auto ghostView = array::make_view<int, 1>( ghost );
+    auto remoteIndexView = array::make_indexview<idx_t, 1>( elems.remote_index() );
+    auto partitionView = array::make_view<int, 1>( elems.partition() );
 
-    // Get node-elem connectivity table.
-    const auto& connectivity = elems.node_connectivity();
+    // Set ghost field.
+    const auto thisPart = static_cast<int>( mpi::comm().rank() );
+    for ( idx_t i = 0; i < ghost.shape( 0 ); ++i ) {
+        ghostView( i ) = partitionView( i ) != thisPart ||
+                         remoteIndexView ( i ) != i;
+    }
+    return ghost;
+}
 
-    // UID generation is a bit more involved for non-point elements.
-    const auto uidGenerator = util::UniqueLonLat( functionSpaceImpl->mesh() );
-    const auto thisPart = static_cast<idx_t>( mpi::comm().rank() );
+// Get ghost field from meshless functionspace.
+template <typename FunctionSpaceType, Meshless<FunctionSpaceType> = nullptr>
+Field getGhostField( const FunctionSpaceType* functionSpaceImpl ) {
+    return functionSpaceImpl->ghost();
+}
+
+// Get UID field from mesh based functionspace.
+template <typename FunctionSpaceType, MeshBased<FunctionSpaceType> = nullptr>
+Field getUidField( const FunctionSpaceType* functionSpaceImpl ) {
+    return getElems( functionSpaceImpl ).global_index();
+}
+
+// Get UID field from StructuredColumns.
+template <Meshless<StructuredColumns> = nullptr>
+Field getUidField( const StructuredColumns* functionSpaceImpl ) {
+    return functionSpaceImpl->global_index();
+}
+
+// Create UIDs from lonlat for PointCloud.
+template <Meshless<PointCloud> = nullptr>
+Field getUidField( const PointCloud* functionSpaceImpl ) {
+
+    // Make UID field.
+    Field uid = Field( " Uniquie ID ", array::make_datatype<uidx_t>(),
+                       array::make_shape( functionSpaceImpl->size() ) );
+
+    // Make views.
+    auto uidView = array::make_view<uidx_t, 1>( uid );
+    const auto lonLatView = array::make_view<double, 2>( functionSpaceImpl->lonlat() );
+
+    // Set UIDs
+    for ( idx_t i = 0; i < uid.shape(0); ++i ) {
+        uidView( i ) = util::unique_lonlat( lonLatView (i, LON), lonLatView(i, LAT ) );
+    }
+    return uid;
+}
+
+// Get vector of (local index, UID) pairs.
+template <typename FunctionSpaceType>
+std::vector<IdxUid> getUidVec(const FunctionSpaceType* functionSpaceImpl) {
+
+    // Get ghost and unique ID fields from functionspace.
+    const auto ghost = getGhostField( functionSpaceImpl );
+    const auto uid = getUidField( functionSpaceImpl );
+
+    // Make views to fields.
+    const auto ghostView = array::make_view<int, 1>( ghost );
+    const auto uidView = array::make_view<uidx_t, 1>( uid );
+
     auto uidVec = std::vector<IdxUid>{};
 
-    // Get non-halo UIDs for elems on this partition.
+    // Get UIDs for non ghost elems.
     for ( idx_t i = 0; i < functionSpaceImpl->size(); ++i ) {
-        if ( part( i ) != thisPart || ridx( i ) != i ) {
+        if ( ghostView( i ) ) {
             continue;
         }
-        const auto uid = uidGenerator( connectivity.row( i ) );
-        uidVec.push_back( IdxUid( i, uid ) );
+       uidVec.push_back( IdxUid( i, uidView( i ) ) );
     }
 
-    // Sort by key.
+    // Sort by UID value.
     std::sort( uidVec.begin(), uidVec.end(),
         []( const IdxUid& a, const IdxUid& b ){ return a.second < b.second; } );
 
@@ -126,19 +162,19 @@ std::vector<IdxUid> getUidVec(const FunctionSpace& functionSpace) {
     const auto* functionSpaceImpl = functionSpace.get();
 
     if ( functionSpaceImpl->cast<CellColumns>() ) {
-        return getElemUidVec( functionSpaceImpl->cast<CellColumns>() );
+        return getUidVec( functionSpaceImpl->cast<CellColumns>() );
     }
     if ( functionSpaceImpl->cast<EdgeColumns>() ) {
-        return getElemUidVec( functionSpaceImpl->cast<EdgeColumns>() );
+        return getUidVec( functionSpaceImpl->cast<EdgeColumns>() );
     }
     if ( functionSpaceImpl->cast<NodeColumns>() ) {
-        return getPointUidVec( functionSpaceImpl->cast<NodeColumns>() );
+        return getUidVec( functionSpaceImpl->cast<NodeColumns>() );
     }
     if ( functionSpaceImpl->cast<PointCloud>() ) {
-        return getPointUidVec( functionSpaceImpl->cast<PointCloud>() );
+        return getUidVec( functionSpaceImpl->cast<PointCloud>() );
     }
     if ( functionSpaceImpl->cast<StructuredColumns>() ) {
-        return getPointUidVec( functionSpaceImpl->cast<StructuredColumns>() );
+        return getUidVec( functionSpaceImpl->cast<StructuredColumns>() );
     }
 
     const auto errorMessage =
@@ -183,6 +219,15 @@ std::pair<std::vector<uidx_t>, std::vector<int>>
     return std::make_pair( recvBuffer, disps );
 }
 
+// Need to overload "<" operator as C++11 std::set_intersection does not support
+// comparison lambda.
+bool operator<( const IdxUid& lhs, const uidx_t& rhs ) {
+    return lhs.second < rhs;
+}
+bool operator<( const uidx_t& lhs, const IdxUid& rhs ) {
+    return lhs < rhs.second;
+}
+
 // Find the intersection between local and global UIDs, then return local
 // indices of incections and PE dispacements in vector.
 std::pair<std::vector<idx_t>, std::vector<int>>
@@ -206,19 +251,15 @@ std::pair<std::vector<idx_t>, std::vector<int>>
         // Set intersection displacement.
         disps.push_back( static_cast<int>( uidIntersection.size() ) );
 
-        // Sort by local index to improve locality of reference in execute method.
-        std::sort( uidIntersection.begin() + disps[i], uidIntersection.begin() + disps[i + 1],
-            []( const IdxUid& a, const IdxUid& b ){ return a.first < b.first; } );
-
     }
 
     // Check that the set of all intersections matches UIDs on local PE.
     if ( ATLAS_BUILD_TYPE_DEBUG ) {
         auto tempUids = uidIntersection;
-        std::sort( tempUids.begin(), tempUids.end() );
-        const std::string errorMessage =
-            "Set of all UID intersections does not match local UIDs.";
-        ATLAS_ASSERT( tempUids == localUids, errorMessage );
+        std::sort( tempUids.begin(), tempUids.end(),
+            []( const IdxUid& a, const IdxUid& b ){ return a.second < b.second; } );
+        ATLAS_ASSERT( tempUids == localUids,
+        "Set of all UID intersections does not match local UIDs." );
     }
 
     // Return local indices of intersection and displacements.
