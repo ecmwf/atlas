@@ -152,6 +152,14 @@ std::vector<IdxUid> getUidVec(const FunctionSpaceType* functionSpaceImpl) {
     std::sort( uidVec.begin(), uidVec.end(),
         []( const IdxUid& a, const IdxUid& b ){ return a.second < b.second; } );
 
+    // Check UIDs are unique.
+    if ( ATLAS_BUILD_TYPE_DEBUG ) {
+        const size_t vecSize = uidVec.size();
+        std::unique( uidVec.begin(), uidVec.end(),
+            []( const IdxUid& a, const IdxUid& b ){ return a.second == b.second; });
+        ATLAS_ASSERT( uidVec.size() == vecSize, "Unique ID set has duplicate members" );
+    }
+
     return uidVec;
 }
 
@@ -246,7 +254,7 @@ std::pair<std::vector<idx_t>, std::vector<int>>
 
         // Get intersection.
         std::set_intersection( localUids.begin(), localUids.end(),
-            globalUidsBegin, globalUidsEnd, std::back_inserter(uidIntersection) );
+            globalUidsBegin, globalUidsEnd, std::back_inserter( uidIntersection) );
 
         // Set intersection displacement.
         disps.push_back( static_cast<int>( uidIntersection.size() ) );
