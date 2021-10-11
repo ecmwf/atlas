@@ -26,6 +26,7 @@
 namespace atlas {
 namespace test {
 
+
 // Set floating point tolerance.
 template<typename Value>
 Value tolerance() { return  std::numeric_limits<Value>::epsilon() * 64; }
@@ -54,12 +55,49 @@ util::Config fieldConfig<3>() {
     return config;
 }
 
-// Define test pattern for grid.
+// Helper types to distinguish floating point and integral types.
+template <typename Value>
+using IsIntegral = typename std::enable_if<std::is_integral<Value>::value>::type*;
+
+template <typename Value>
+using IsFloatingPoint = typename std::enable_if<std::is_floating_point<Value>::value>::type*;
+
+// Aplitude for test function/
+constexpr double testAmplitude = 5.;
+
+// Convert value to integral.
+template <typename Value, IsIntegral<Value> = nullptr>
+Value castValue( const double& inVal ) {
+    return static_cast<Value>( std::round( inVal ) );
+}
+
+// Cast value to different float.
+template <typename Value, IsFloatingPoint<Value> = nullptr>
+Value castValue( const double& inVal ) {
+    return static_cast<Value>( inVal );
+}
+
+// Check integral types are equal.
+template <typename Value, IsIntegral<Value> = nullptr>
+bool checkValue( const Value& valA, const Value& valB ) {
+    return valA == valB;
+}
+
+// Check floating point types are almost equal.
+template <typename Value, IsFloatingPoint<Value> = nullptr>
+bool checkValue( const Value& valA, const Value& valB ) {
+    const auto tol = testAmplitude * tolerance<Value>();
+    return std::abs( valA - valB ) <= tol;
+}
+
+// Define test pattern for nodes.
 template <typename Value>
 Value testPattern( double lambda, double phi, idx_t level ) {
-    return static_cast<Value>( std::cos( lambda * ( 1 + level ) * M_PI / 180. ) *
-                           std::cos( phi * ( 1 + level ) * M_PI / 180. ) );
+    return castValue<Value>(
+        testAmplitude * std::cos( lambda * ( 1 + level ) * M_PI / 180. ) *
+                        std::cos( phi * ( 1 + level ) * M_PI / 180. ) );
 }
+// Define test pattern for HybridElements.
 template <typename Value>
 Value testPattern( const mesh::Connectivity::Row& elem, const array::ArrayView<double, 2>& lonLatView ){
 
@@ -175,7 +213,7 @@ protected:
 
 };
 
-// Test rank 1 fields with lonlat method.
+// Test rank 1 fields.
 template <typename Value>
 struct TestRedistributionPoints1 : public TestRedistribution<Value, 1> {
     using TestRedistribution<Value, 1>::TestRedistribution;
@@ -200,9 +238,9 @@ struct TestRedistributionPoints1 : public TestRedistribution<Value, 1> {
         // Check target field.
         int nCheck{};
         for ( idx_t i = 0; i < this->targetView_.shape( 0 ); ++i ) {
-            EXPECT_APPROX_EQ( this->targetView_( i ),
-                testPattern<Value>( targetLonlatView( i, 0 ),
-                                    targetLonlatView( i, 1 ), 0 ), tolerance<Value>() );
+            EXPECT( checkValue( this->targetView_( i ),
+                    testPattern<Value>( targetLonlatView( i, LON ),
+                                        targetLonlatView( i, LAT ), 0 ) ) );
             ++nCheck;
         }
         mpi::comm().allReduceInPlace( nCheck, eckit::mpi::Operation::SUM );
@@ -211,7 +249,7 @@ struct TestRedistributionPoints1 : public TestRedistribution<Value, 1> {
     }
 };
 
-// Test rank 2 fields with lonlat method.
+// Test rank 2 fields.
 template <typename Value>
 struct TestRedistributionPoints2 : public TestRedistribution<Value, 2> {
     using TestRedistribution<Value, 2>::TestRedistribution;
@@ -224,8 +262,8 @@ struct TestRedistributionPoints2 : public TestRedistribution<Value, 2> {
         for ( idx_t i = 0; i < this->sourceView_.shape( 0 ); ++i ) {
             for ( idx_t j = 0; j < this->sourceView_.shape( 1 ); ++j ) {
                 this->sourceView_( i, j ) =
-                    testPattern<Value>( sourceLonlatView( i, 0 ),
-                                        sourceLonlatView( i, 1 ), j );
+                    testPattern<Value>( sourceLonlatView( i, LON ),
+                                        sourceLonlatView( i, LAT ), j );
             }
         }
 
@@ -239,9 +277,9 @@ struct TestRedistributionPoints2 : public TestRedistribution<Value, 2> {
         int nCheck{};
         for ( idx_t i = 0; i < this->targetView_.shape( 0 ); ++i ) {
             for ( idx_t j = 0; j < this->targetView_.shape( 1 ); ++j ) {
-                EXPECT_APPROX_EQ( this->targetView_( i, j ),
-                    testPattern<Value>( targetLonlatView( i, 0 ),
-                                        targetLonlatView( i, 1 ), j ), tolerance<Value>() );
+                EXPECT( checkValue( this->targetView_( i, j ),
+                        testPattern<Value>( targetLonlatView( i, LON ),
+                                            targetLonlatView( i, LAT ), j ) ) );
                 ++nCheck;
             }
         }
@@ -251,7 +289,7 @@ struct TestRedistributionPoints2 : public TestRedistribution<Value, 2> {
     }
 };
 
-// Test rank 3 fields with lonlat method.
+// Test rank 3 fields .
 template <typename Value>
 struct TestRedistributionPoints3 : public TestRedistribution<Value, 3> {
     using TestRedistribution<Value, 3>::TestRedistribution;
@@ -264,11 +302,11 @@ struct TestRedistributionPoints3 : public TestRedistribution<Value, 3> {
         for ( idx_t i = 0; i < this->sourceView_.shape( 0 ); ++i ) {
             for ( idx_t j = 0; j < this->sourceView_.shape( 1 ); ++j ) {
                 this->sourceView_( i, j, 0 ) =
-                    testPattern<Value>( sourceLonlatView( i, 0 ),
-                                        sourceLonlatView( i, 1 ), j );
+                    testPattern<Value>( sourceLonlatView( i, LON ),
+                                        sourceLonlatView( i, LAT ), j );
                 this->sourceView_( i, j, 1 ) =
-                    -testPattern<Value>( sourceLonlatView( i, 0 ),
-                                         sourceLonlatView( i, 1 ), j );
+                    -testPattern<Value>( sourceLonlatView( i, LON ),
+                                         sourceLonlatView( i, LAT ), j );
             }
         }
 
@@ -283,13 +321,13 @@ struct TestRedistributionPoints3 : public TestRedistribution<Value, 3> {
         int nCheck{};
         for ( idx_t i = 0; i < this->targetView_.shape( 0 ); ++i ) {
             for ( idx_t j = 0; j < this->targetView_.shape( 1 ); ++j ) {
-                EXPECT_APPROX_EQ( this->targetView_( i, j, 0 ),
-                    testPattern<Value>( targetLonlatView( i, 0 ),
-                                        targetLonlatView( i, 1 ), j ), tolerance<Value>() );
+                EXPECT( checkValue (this->targetView_( i, j, 0 ),
+                        testPattern<Value>( targetLonlatView( i, LON ),
+                                            targetLonlatView( i, LAT ), j ) ) );
                 ++nCheck;
-                EXPECT_APPROX_EQ( this->targetView_( i, j, 1 ),
-                    -testPattern<Value>( targetLonlatView( i, 0 ),
-                                         targetLonlatView( i, 1 ), j ), tolerance<Value>() );
+                EXPECT( checkValue (this->targetView_( i, j, 1 ),
+                        -testPattern<Value>( targetLonlatView( i, LON ),
+                                             targetLonlatView( i, LAT ), j ) ) );
                 ++nCheck;
             }
         }
@@ -305,19 +343,15 @@ struct TestRedistributionElems : public TestRedistribution<Value, 1> {
     using TestRedistribution<Value, 1>::TestRedistribution;
     void execute() {
 
-        // Non lonlat method defined. Test redistrubtion global index instead.
-
         // Get source node connectivity and lonlat view.
         const auto* sourceConnectivity = getConnectivity( this->sourceFunctionSpace_ );
         const auto sourceLonLatView = array::make_view<double, 2>(
             getMesh( this->sourceFunctionSpace_).nodes().lonlat() );
 
-        // Get source node connectivity and lonlat view.
+        // Get target node connectivity and lonlat view.
         const auto* targetConnectivity = getConnectivity( this->targetFunctionSpace_ );
         const auto targetLonLatView = array::make_view<double, 2>(
             getMesh( this->targetFunctionSpace_).nodes().lonlat() );
-
-
 
         // Set source field.
         for ( idx_t i = 0; i < this->sourceView_.shape( 0 ); ++i ) {
@@ -333,7 +367,7 @@ struct TestRedistributionElems : public TestRedistribution<Value, 1> {
         // Check target field.
         int nCheck{};
         for ( idx_t i = 0; i < this->targetView_.shape( 0 ); ++i ) {
-            EXPECT_APPROX_EQ( this->targetView_( i ), testPattern<Value>( targetConnectivity->row( i ) , targetLonLatView ), tolerance<Value>() );
+            EXPECT( checkValue( this->targetView_( i ), testPattern<Value>( targetConnectivity->row( i ) , targetLonLatView ) ) );
             ++nCheck;
         }
         mpi::comm().allReduceInPlace( nCheck, eckit::mpi::Operation::SUM );
@@ -366,10 +400,18 @@ CASE( "Structured grid" ) {
         // Test float.
         auto test4 = TestRedistributionPoints1<float>( sourceFunctionSpace, targetFunctionSpace );
 
+        // Test int.
+        auto test5 = TestRedistributionPoints1<int>( sourceFunctionSpace, targetFunctionSpace );
+
+        // Test long.
+        auto test6 = TestRedistributionPoints1<long>( sourceFunctionSpace, targetFunctionSpace );
+
         test1.execute();
         test2.execute();
         test3.execute();
         test4.execute();
+        test5.execute();
+        test6.execute();
 
         test2.outputFields( "StructuredGrid_NodeColumns");
 
