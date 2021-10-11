@@ -94,7 +94,7 @@ void CubedSphereMeshGenerator::configure_defaults() {
 
 void CubedSphereMeshGenerator::generate( const Grid& grid, Mesh& mesh ) const {
     // Get partitioner type and number of partitions from config.
-    const idx_t nParts   = static_cast<idx_t>( options.get<size_t>( "nb_parts" ) );
+    const idx_t nParts         = static_cast<idx_t>( options.get<size_t>( "nb_parts" ) );
     const std::string partType = options.get<std::string>( "partitioner" );
 
     auto partConfig = util::Config{};
@@ -139,11 +139,12 @@ void CubedSphereMeshGenerator::generate( const Grid& grid, const grid::Distribut
     }
 
     // Check for sensible halo size.
-    if ( options.get<idx_t>("halo") > csGrid.N() ) {
-        throw_Exception(
-            "Halo size " + std::to_string(options.get<idx_t>("halo")) + " "
-            "is larger than grid size " + std::to_string(csGrid.N()) + ".",
-            Here() );
+    if ( options.get<idx_t>( "halo" ) > csGrid.N() ) {
+        throw_Exception( "Halo size " + std::to_string( options.get<idx_t>( "halo" ) ) +
+                             " "
+                             "is larger than grid size " +
+                             std::to_string( csGrid.N() ) + ".",
+                         Here() );
     }
 
     // Clone some grid properties.
@@ -482,7 +483,7 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
 
                     // Check that xy is on this tile.
                     PointXY xy = jacobian.xy( PointIJ( i, j ), t );
-                    xy = jacobian.snapToEdge( xy, t );
+                    xy         = jacobian.snapToEdge( xy, t );
 
                     // This will only determine if tGlobal does not match t.
                     // This is cheaper than determining the correct tGlobal.
@@ -796,7 +797,7 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
                 nodesGhost( nodeLocalIdx ) = 0;
                 // Vitally important that these two match!
                 ATLAS_ASSERT( nodeLocalIdx == localNode.globalPtr->remoteIdx,
-                              "Owner local index and remote index do not match.");
+                              "Owner local index and remote index do not match." );
                 break;
             }
             case ElemType::HALO: {
@@ -904,7 +905,7 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
             case ElemType::OWNER: {
                 // Vitally important that these two match!
                 ATLAS_ASSERT( cellLocalIdx == localCell.globalPtr->remoteIdx,
-                              "Owner local index and remote index do not match.");
+                              "Owner local index and remote index do not match." );
                 break;
             }
             case ElemType::HALO: {

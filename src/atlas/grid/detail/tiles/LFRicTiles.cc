@@ -71,7 +71,23 @@ atlas::PointXY rotatePlus180AboutPt( const atlas::PointXY& xy, const atlas::Poin
 }  // anonymous namespace
 
 // constructor
-LFRicCubedSphereTiles::LFRicCubedSphereTiles( const eckit::Parametrisation& ) {}
+LFRicCubedSphereTiles::LFRicCubedSphereTiles( const eckit::Parametrisation& ) {
+    botLeftTile_ =
+        std::array<atlas::PointXY, 6>{atlas::PointXY{0., -45.}, atlas::PointXY{90, -45}, atlas::PointXY{180., -45.},
+                                      atlas::PointXY{270, -45}, atlas::PointXY{0., 45.}, atlas::PointXY{0, -135.}};
+
+    botRightTile_ =
+        std::array<atlas::PointXY, 6>{atlas::PointXY{90., -45.}, atlas::PointXY{180., -45}, atlas::PointXY{270., -45.},
+                                      atlas::PointXY{360., -45}, atlas::PointXY{90., 45.},  atlas::PointXY{90., -135.}};
+
+    topLeftTile_ =
+        std::array<atlas::PointXY, 6>{atlas::PointXY{0., 45.}, atlas::PointXY{90, 45},   atlas::PointXY{180., 45.},
+                                      atlas::PointXY{270, 45}, atlas::PointXY{0., 135.}, atlas::PointXY{0, -45.}};
+
+    topRightTile_ =
+        std::array<atlas::PointXY, 6>{atlas::PointXY{90., 45.}, atlas::PointXY{180., 45},  atlas::PointXY{270., 45.},
+                                      atlas::PointXY{360., 45}, atlas::PointXY{90., 135.}, atlas::PointXY{90., -45.}};
+}
 
 std::array<std::array<double, 6>, 2> LFRicCubedSphereTiles::xy2abOffsets() const {
     return {{{0., 1., 2., 3., 0., 0.}, {1., 1., 1., 1., 2., 0.}}};

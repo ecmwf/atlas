@@ -503,13 +503,13 @@ struct PackStructuredColumns {
 
     PackStructuredColumns( LocalView<double, 2>& rgpview ) : rgpview_( rgpview ), f( 0 ) {}
 
-    void operator()( const Field& field ) {
+    void operator()( const StructuredColumns& sc, const Field& field ) {
         switch ( field.rank() ) {
             case 1:
-                pack_1( field );
+                pack_1( sc, field );
                 break;
             case 2:
-                pack_2( field );
+                pack_2( sc, field );
                 break;
             default:
                 ATLAS_DEBUG_VAR( field.rank() );
@@ -518,23 +518,20 @@ struct PackStructuredColumns {
         }
     }
 
-    void pack_1( const Field& field ) {
+    void pack_1( const StructuredColumns& sc, const Field& field ) {
         auto gpfield = make_view<double, 1>( field );
-        idx_t n      = 0;
-        for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
-            rgpview_( f, n ) = gpfield( jnode );
-            ++n;
+
+        for ( idx_t jnode = 0; jnode < sc.sizeOwned(); ++jnode ) {
+            rgpview_( f, jnode ) = gpfield( jnode );
         }
         ++f;
     }
-    void pack_2( const Field& field ) {
+    void pack_2( const StructuredColumns& sc, const Field& field ) {
         auto gpfield      = make_view<double, 2>( field );
         const idx_t nvars = gpfield.shape( 1 );
         for ( idx_t jvar = 0; jvar < nvars; ++jvar ) {
-            idx_t n = 0;
-            for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
-                rgpview_( f, n ) = gpfield( jnode, jvar );
-                ++n;
+            for ( idx_t jnode = 0; jnode < sc.sizeOwned(); ++jnode ) {
+                rgpview_( f, jnode ) = gpfield( jnode, jvar );
             }
             ++f;
         }
@@ -660,13 +657,13 @@ struct UnpackStructuredColumns {
 
     UnpackStructuredColumns( const LocalView<double, 2>& rgpview ) : rgpview_( rgpview ), f( 0 ) {}
 
-    void operator()( Field& field ) {
+    void operator()( const StructuredColumns& sc, Field& field ) {
         switch ( field.rank() ) {
             case 1:
-                unpack_1( field );
+                unpack_1( sc, field );
                 break;
             case 2:
-                unpack_2( field );
+                unpack_2( sc, field );
                 break;
             default:
                 ATLAS_DEBUG_VAR( field.rank() );
@@ -675,23 +672,19 @@ struct UnpackStructuredColumns {
         }
     }
 
-    void unpack_1( Field& field ) {
+    void unpack_1( const StructuredColumns& sc, Field& field ) {
         auto gpfield = make_view<double, 1>( field );
-        idx_t n      = 0;
-        for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
-            gpfield( jnode ) = rgpview_( f, n );
-            ++n;
+        for ( idx_t jnode = 0; jnode < sc.sizeOwned(); ++jnode ) {
+            gpfield( jnode ) = rgpview_( f, jnode );
         }
         ++f;
     }
-    void unpack_2( Field& field ) {
+    void unpack_2( const StructuredColumns& sc, Field& field ) {
         auto gpfield      = make_view<double, 2>( field );
         const idx_t nvars = gpfield.shape( 1 );
         for ( idx_t jvar = 0; jvar < nvars; ++jvar ) {
-            idx_t n = 0;
-            for ( idx_t jnode = 0; jnode < gpfield.shape( 0 ); ++jnode ) {
-                gpfield( jnode, jvar ) = rgpview_( f, n );
-                ++n;
+            for ( idx_t jnode = 0; jnode < sc.sizeOwned(); ++jnode ) {
+                gpfield( jnode, jvar ) = rgpview_( f, jnode );
             }
             ++f;
         }
@@ -1180,7 +1173,7 @@ void TransIFS::__dirtrans( const StructuredColumns& gp, const Field& gpfield, co
     // Pack gridpoints
     {
         PackStructuredColumns pack( rgpview );
-        pack( gpfield );
+        pack( gp, gpfield );
     }
 
     // Do transform
@@ -1225,7 +1218,7 @@ void TransIFS::__dirtrans( const StructuredColumns& gp, const FieldSet& gpfields
     {
         PackStructuredColumns pack( rgpview );
         for ( idx_t jfld = 0; jfld < gpfields.size(); ++jfld ) {
-            pack( gpfields[jfld] );
+            pack( gp, gpfields[jfld] );
         }
     }
 
@@ -1375,7 +1368,7 @@ void TransIFS::__invtrans_grad_adj( const Spectral& sp, FieldSet& spfields, cons
 
     // Pack gridpoints
     {
-        PackStructuredColumns pack( rgpview );
+        PackNodeColumns pack( rgpview, gp );
         for ( idx_t jfld = 0; jfld < gradfields.size(); ++jfld ) {
             pack( gradfields[jfld] );
         }
@@ -1501,7 +1494,7 @@ void TransIFS::__invtrans_adj( const Spectral& sp, FieldSet& spfields, const fun
 
     // Pack gridpoints
     {
-        PackStructuredColumns pack( rgpview );
+        PackNodeColumns pack( rgpview, gp );
         for ( idx_t jfld = 0; jfld < gpfields.size(); ++jfld ) {
             pack( gpfields[jfld] );
         }
@@ -1571,7 +1564,7 @@ void TransIFS::__invtrans( const functionspace::Spectral& sp, const Field& spfie
     // Unpack gridpoint fields
     {
         UnpackStructuredColumns unpack( rgpview );
-        unpack( gpfield );
+        unpack( gp, gpfield );
     }
 }
 
@@ -1605,7 +1598,7 @@ void TransIFS::__invtrans_adj( const functionspace::Spectral& sp, Field& spfield
     // Pack gridpoints
     {
         PackStructuredColumns pack( rgpview );
-        pack( gpfield );
+        pack( gp, gpfield );
     }
 
     // Do transform
@@ -1679,7 +1672,7 @@ void TransIFS::__invtrans( const functionspace::Spectral& sp, const FieldSet& sp
     {
         UnpackStructuredColumns unpack( rgpview );
         for ( idx_t jfld = 0; jfld < gpfields.size(); ++jfld ) {
-            unpack( gpfields[jfld] );
+            unpack( gp, gpfields[jfld] );
         }
     }
 }
@@ -1715,7 +1708,7 @@ void TransIFS::__invtrans_adj( const functionspace::Spectral& sp, FieldSet& spfi
     {
         PackStructuredColumns pack( rgpview );
         for ( idx_t jfld = 0; jfld < gpfields.size(); ++jfld ) {
-            pack( gpfields[jfld] );
+            pack( gp, gpfields[jfld] );
         }
     }
 

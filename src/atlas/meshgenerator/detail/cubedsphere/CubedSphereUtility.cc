@@ -67,7 +67,7 @@ Jacobian2 Jacobian2::inverse() const {
 
 Jacobian2 Jacobian2::sign() const {
     const double smallNumber = det() * std::numeric_limits<double>::epsilon();
-    const auto signValue   = [&]( double number ) -> double {
+    const auto signValue     = [&]( double number ) -> double {
         return std::abs( number ) < smallNumber ? 0. : number < 0. ? -1. : 1.;
     };
     return Jacobian2( signValue( df0_by_dx0_ ), signValue( df0_by_dx1_ ), signValue( df1_by_dx0_ ),
@@ -118,10 +118,12 @@ NeighbourJacobian::NeighbourJacobian( const CubedSphereGrid& csGrid ) {
 
         if ( i == 0 && j == 0 ) {
             xy00[t] = xy;
-        } else if ( i == 1 && j == 0 ) {
-          xy10[t] = xy;
-        } else if ( i == 0 && j == 1 ) {
-          xy01[t] = xy;
+        }
+        else if ( i == 1 && j == 0 ) {
+            xy10[t] = xy;
+        }
+        else if ( i == 0 && j == 1 ) {
+            xy01[t] = xy;
         }
         ++tijIt;
     }
@@ -272,14 +274,18 @@ PointTXY NeighbourJacobian::xyLocalToGlobal( const PointXY& xyLocal, idx_t tLoca
         TileEdge::k k;
         if ( ijLocal.iNode() < 0 ) {
             k = TileEdge::LEFT;
-        } else if ( ijLocal.jNode() < 0 ) {
+        }
+        else if ( ijLocal.jNode() < 0 ) {
             k = TileEdge::BOTTOM;
-        } else if ( ijLocal.iNode() > N_ ) {
+        }
+        else if ( ijLocal.iNode() > N_ ) {
             k = TileEdge::RIGHT;
-        } else if ( ijLocal.jNode() > N_ ) {
+        }
+        else if ( ijLocal.jNode() > N_ ) {
             k = TileEdge::TOP;
-        } else {
-          throw_Exception( "Cannot determine neighbour tile.", Here() );
+        }
+        else {
+            throw_Exception( "Cannot determine neighbour tile.", Here() );
         }
 
         // Get reference points and jacobian.

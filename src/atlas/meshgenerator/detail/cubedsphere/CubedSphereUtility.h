@@ -95,17 +95,19 @@ public:
 
 /// (t, PointXY) tuple.
 class PointTXY : public std::pair<idx_t, PointXY> {
-      using std::pair<idx_t, PointXY>::pair;
+    using std::pair<idx_t, PointXY>::pair;
+
 public:
-      idx_t& t() { return first; }
-      PointXY& xy() { return second; }
-      const idx_t& t() const { return first; }
-      const PointXY& xy() const { return second; }
+    idx_t& t() { return first; }
+    PointXY& xy() { return second; }
+    const idx_t& t() const { return first; }
+    const PointXY& xy() const { return second; }
 };
 
 /// (t, PointIJ) tuple.
 class PointTIJ : public std::pair<idx_t, PointIJ> {
     using std::pair<idx_t, PointIJ>::pair;
+
 public:
     idx_t& t() { return first; }
     PointIJ& ij() { return second; }
