@@ -213,7 +213,7 @@ protected:
 
 };
 
-// Test rank 1 fields.
+// Test rank 1 fields with lonlat method.
 template <typename Value>
 struct TestRedistributionPoints1 : public TestRedistribution<Value, 1> {
     using TestRedistribution<Value, 1>::TestRedistribution;
