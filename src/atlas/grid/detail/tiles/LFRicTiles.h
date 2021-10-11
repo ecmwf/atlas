@@ -49,21 +49,10 @@ public:
     virtual void print( std::ostream& ) const override;
 
 private:
-    std::array<atlas::PointXY, 6> botLeftTile_{atlas::PointXY{0., -45.},   atlas::PointXY{90, -45},
-                                               atlas::PointXY{180., -45.}, atlas::PointXY{270, -45},
-                                               atlas::PointXY{0., 45.},    atlas::PointXY{0, -135.}};
-
-    std::array<atlas::PointXY, 6> botRightTile_{atlas::PointXY{90., -45.},  atlas::PointXY{180., -45},
-                                                atlas::PointXY{270., -45.}, atlas::PointXY{360., -45},
-                                                atlas::PointXY{90., 45.},   atlas::PointXY{90., -135.}};
-
-    std::array<atlas::PointXY, 6> topLeftTile_{atlas::PointXY{0., 45.},   atlas::PointXY{90, 45},
-                                               atlas::PointXY{180., 45.}, atlas::PointXY{270, 45},
-                                               atlas::PointXY{0., 135.},  atlas::PointXY{0, -45.}};
-
-    std::array<atlas::PointXY, 6> topRightTile_{atlas::PointXY{90., 45.},  atlas::PointXY{180., 45},
-                                                atlas::PointXY{270., 45.}, atlas::PointXY{360., 45},
-                                                atlas::PointXY{90., 135.}, atlas::PointXY{90., -45.}};
+    std::array<atlas::PointXY, 6> botLeftTile_;
+    std::array<atlas::PointXY, 6> botRightTile_;
+    std::array<atlas::PointXY, 6> topLeftTile_;
+    std::array<atlas::PointXY, 6> topRightTile_;
 
     bool withinCross( const atlas::idx_t t, const atlas::PointXY& withinRange ) const;
 

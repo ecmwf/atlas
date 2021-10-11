@@ -456,7 +456,7 @@ protected:
 
     std::string tileType_;
 
-    std::array<idx_t, 6> jmin_{0, 0, 0, 0, 0, 0};
+    std::array<idx_t, 6> jmin_;
     std::array<idx_t, 6> jmax_;
     std::vector<std::vector<idx_t>> imin_;
     std::vector<std::vector<idx_t>> imax_;

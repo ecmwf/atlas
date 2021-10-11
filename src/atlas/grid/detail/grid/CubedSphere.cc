@@ -105,6 +105,7 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection,
     }
 
     // default assumes jmax_ value of N - 1 on all tiles
+    jmin_ = std::array<idx_t, 6>{0, 0, 0, 0, 0, 0};
     jmax_ = std::array<idx_t, 6>{N - 1, N - 1, N - 1, N - 1, N - 1, N - 1};
 
     if ( tiles_.type() == "cubedsphere_fv3" ) {

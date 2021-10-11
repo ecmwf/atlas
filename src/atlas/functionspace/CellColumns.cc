@@ -307,7 +307,7 @@ idx_t CellColumns::nb_cells_global() const {
 }
 
 idx_t CellColumns::levels() const {
-  return nb_levels_;
+    return nb_levels_;
 }
 
 Field CellColumns::createField( const eckit::Configuration& options ) const {

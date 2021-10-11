@@ -19,6 +19,7 @@ on:
 env:
   ATLAS_TOOLS: ${{ github.workspace }}/tools
   CTEST_PARALLEL_LEVEL: 1
+  CACHE_SUFFIX: v1
 
 jobs:
   ci:
@@ -136,6 +137,7 @@ jobs:
         ${ATLAS_TOOLS}/install-intel-oneapi.sh
         source /opt/intel/oneapi/setvars.sh
         printenv >> $GITHUB_ENV
+        echo "CACHE_SUFFIX=$(icc -dumpversion)" >> $GITHUB_ENV
 
     - name: Install MPI
       shell: bash -eux {0}
@@ -177,7 +179,7 @@ jobs:
       with:
         self_coverage: true
         force_build: true
-        cache_suffix: "${{ matrix.build_type }}-v2"
+        cache_suffix: "${{ matrix.build_type }}-${{ env.CACHE_SUFFIX }}"
         recreate_cache: ${{ matrix.caching == false }}
         dependencies: |
           ecmwf/ecbuild
