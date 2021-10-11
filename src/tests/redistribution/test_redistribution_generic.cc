@@ -103,7 +103,7 @@ Value testPattern( const mesh::Connectivity::Row& elem, const array::ArrayView<d
 
     Value f{};
     for ( idx_t i = 0; i < elem.size(); ++i ){
-        f += testPattern<Value>(lonLatView( elem( i ), LON ), lonLatView( elem( i ), LAT ), 1 );
+        f += testPattern<Value>(lonLatView( elem( i ), LON ), lonLatView( elem( i ), LAT ), 2 );
     }
     return  f / elem.size();
 }
@@ -537,7 +537,7 @@ CASE( "Cubed sphere grid" ) {
         const auto sourceFunctionSpace = functionspace::CubedSphereCellColumns( sourceMesh );
         const auto targetFunctionSpace = functionspace::CubedSphereCellColumns( targetMesh );
 
-        auto test = TestRedistributionPoints2<double>( sourceFunctionSpace, targetFunctionSpace );
+        auto test = TestRedistributionElems<double>( sourceFunctionSpace, targetFunctionSpace );
 
         test.execute();
 
