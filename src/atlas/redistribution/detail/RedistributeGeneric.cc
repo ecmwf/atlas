@@ -36,17 +36,29 @@ using mesh::Nodes;
 // Helper type definitions and functions for redistribution.
 namespace  {
 
-// Helper types to distinguish mesh-based and meshless functionspaces.
+// Does functionspace have ghost field?
 template <typename FunctionSpaceType>
-using MeshBased = typename std::enable_if<
-    std::is_same<FunctionSpaceType, CellColumns>::value ||
-    std::is_same<FunctionSpaceType, EdgeColumns>::value ||
-    std::is_same<FunctionSpaceType, NodeColumns>::value>::type*;
+using HasGhost = typename std::enable_if<
+std::is_same<FunctionSpaceType, NodeColumns>::value ||
+std::is_same<FunctionSpaceType, StructuredColumns>::value ||
+std::is_same<FunctionSpaceType, PointCloud>::value>::type*;
 
 template <typename FunctionSpaceType>
-using Meshless = typename std::enable_if<
-    std::is_same<FunctionSpaceType, StructuredColumns>::value ||
-    std::is_same<FunctionSpaceType, PointCloud>::value>::type*;
+using NoGhost =  typename std::enable_if<
+std::is_same<FunctionSpaceType, CellColumns>::value ||
+std::is_same<FunctionSpaceType, EdgeColumns>::value>::type*;
+
+// Does function space have global index field?
+template <typename FunctionSpaceType>
+using HasGidx = typename std::enable_if<
+std::is_same<FunctionSpaceType, NodeColumns>::value ||
+std::is_same<FunctionSpaceType, EdgeColumns>::value ||
+std::is_same<FunctionSpaceType, CellColumns>::value ||
+std::is_same<FunctionSpaceType, StructuredColumns>::value>::type*;
+
+template <typename FunctionSpaceType>
+using NoGidx = typename std::enable_if<
+std::is_same<FunctionSpaceType, PointCloud>::value>::type*;
 
 // Define index-UID struct. (Needed to overload "<").
 struct IdxUid : public std::pair<idx_t, uidx_t> {
@@ -63,9 +75,18 @@ const HybridElements& getElems( const EdgeColumns* functionSpaceImpl ) {
 const Nodes& getElems( const NodeColumns* functionSpaceImpl ) {
     return functionSpaceImpl->nodes();
 }
+const StructuredColumns& getElems( const StructuredColumns* functionSpaceImpl ) {
+    return *functionSpaceImpl;
+}
 
-// Create ghost field for mesh based functionspace.
-template <typename FunctionSpaceType, MeshBased<FunctionSpaceType> = nullptr>
+// Get ghost field from functionspace.
+template <typename FunctionSpaceType, HasGhost<FunctionSpaceType> = nullptr>
+Field getGhostField( const FunctionSpaceType* functionSpaceImpl ) {
+    return functionSpaceImpl->ghost();
+}
+
+// Create ghost field.
+template <typename FunctionSpaceType, NoGhost<FunctionSpaceType> = nullptr>
 Field getGhostField( const FunctionSpaceType* functionSpaceImpl ) {
 
     // Get mesh elements.
@@ -89,27 +110,15 @@ Field getGhostField( const FunctionSpaceType* functionSpaceImpl ) {
     return ghost;
 }
 
-// Get ghost field from meshless functionspace.
-template <typename FunctionSpaceType, Meshless<FunctionSpaceType> = nullptr>
-Field getGhostField( const FunctionSpaceType* functionSpaceImpl ) {
-    return functionSpaceImpl->ghost();
-}
-
-// Get UID field from mesh based functionspace.
-template <typename FunctionSpaceType, MeshBased<FunctionSpaceType> = nullptr>
+// Get UID field from functionspace global indices.
+template <typename FunctionSpaceType, HasGidx<FunctionSpaceType> = nullptr>
 Field getUidField( const FunctionSpaceType* functionSpaceImpl ) {
     return getElems( functionSpaceImpl ).global_index();
 }
 
-// Get UID field from StructuredColumns.
-template <Meshless<StructuredColumns> = nullptr>
-Field getUidField( const StructuredColumns* functionSpaceImpl ) {
-    return functionSpaceImpl->global_index();
-}
-
-// Create UIDs from lonlat for PointCloud.
-template <Meshless<PointCloud> = nullptr>
-Field getUidField( const PointCloud* functionSpaceImpl ) {
+// Create UID field.
+template <typename FunctionSpaceType, NoGidx<FunctionSpaceType> = nullptr>
+Field getUidField( const FunctionSpaceType* functionSpaceImpl ) {
 
     // Make UID field.
     Field uid = Field( " Uniquie ID ", array::make_datatype<uidx_t>(),
