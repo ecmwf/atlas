@@ -236,8 +236,8 @@ std::pair<std::vector<uidx_t>, std::vector<int>>
     return std::make_pair( recvBuffer, disps );
 }
 
-// Need to overload "<" operator as C++11 std::set_intersection does not support
-// comparison lambda.
+// Need to overload "<" operator for comparison of asymmetric types in
+// std::set_intersection.
 bool operator<( const IdxUid& lhs, const uidx_t& rhs ) {
     return lhs.second < rhs;
 }
