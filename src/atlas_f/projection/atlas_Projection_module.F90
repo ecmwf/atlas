@@ -45,6 +45,8 @@ contains
   procedure, public :: type => atlas_Projection__type
   procedure, public :: hash
   procedure, public :: spec
+  procedure, public :: xy2lonlat
+  procedure, public :: lonlat2xy
 
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_Projection__final_auto
@@ -124,6 +126,27 @@ function spec(this)
   call spec%return()
 end function
 
+subroutine xy2lonlat(this, x, y, lon, lat)
+  use atlas_projection_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double
+  class(atlas_Projection), intent(in) :: this
+  real(c_double), intent(in) :: x
+  real(c_double), intent(in) :: y
+  real(c_double), intent(out) :: lon
+  real(c_double), intent(out) :: lat
+  call atlas__Projection__xy2lonlat(this%CPTR_PGIBUG_A, x, y, lon, lat )
+end subroutine
+
+subroutine lonlat2xy(this, lon, lat, x, y)
+  use atlas_projection_c_binding
+  use, intrinsic :: iso_c_binding, only : c_double
+  class(atlas_Projection), intent(in) :: this
+  real(c_double), intent(in) :: lon
+  real(c_double), intent(in) :: lat
+  real(c_double), intent(out) :: x
+  real(c_double), intent(out) :: y
+  call atlas__Projection__lonlat2xy(this%CPTR_PGIBUG_A, lon, lat, x, y )
+end subroutine
 
 !------------------------------------------------------------------------------
 
