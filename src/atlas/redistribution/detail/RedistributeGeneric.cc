@@ -446,8 +446,8 @@ void RedistributeGeneric::doExecute( const Field& sourceField, Field& targetFiel
 
     // Get number of elems per column.
     int elemsPerCol = 1;
-    for ( size_t i = 1; i < Rank; ++i ) {
-        elemsPerCol *= sourceView.shape()[i];
+    for ( int i = 1; i < Rank; ++i ) {
+        elemsPerCol *= sourceView.shape( i );
     }
 
     // Set send displacement and counts vectors.
