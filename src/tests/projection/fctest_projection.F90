@@ -46,8 +46,8 @@ projection = atlas_Projection(config)
 x = 5000.0e3_dp
 y = 5000.0e3_dp
 call projection%xy2lonlat(x, y, lon, lat)
-FCTEST_CHECK_EQUAL( lon, 63.589354937751843_dp )
-FCTEST_CHECK_EQUAL( lat, 53.514474547667490_dp )
+FCTEST_CHECK_CLOSE( lon, 63.589_dp, 1.0e-3_dp )
+FCTEST_CHECK_CLOSE( lat, 53.514_dp, 1.0e-3_dp )
 call config%final()
 call projection%final()
 END_TEST
@@ -63,8 +63,8 @@ projection = atlas_Projection(config)
 lon = 12.0_dp
 lat = 38.0_dp
 call projection%lonlat2xy(lon, lat, x, y)
-FCTEST_CHECK_EQUAL( x, 943554.15397332644_dp )
-FCTEST_CHECK_EQUAL( y, 3234635.8948126417_dp )
+FCTEST_CHECK_CLOSE( x, 943554.154_dp, 1.0e-3_dp )
+FCTEST_CHECK_CLOSE( y, 3234635.895_dp, 1.0e-3_dp )
 call config%final()
 call projection%final()
 END_TEST
