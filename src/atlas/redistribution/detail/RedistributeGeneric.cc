@@ -375,7 +375,7 @@ void RedistributeGeneric::execute( const Field &sourceField, Field &targetField 
 
     // Check number of levels and variables match.
     for ( idx_t i = 1; i < sourceField.rank(); ++i ) {
-        ATLAS_ASSERT( sourceField.shape( i ) == targetField.shape()[i] );
+        ATLAS_ASSERT( sourceField.shape( i ) == targetField.shape( i ) );
     }
 
     // Perform redistribution.
