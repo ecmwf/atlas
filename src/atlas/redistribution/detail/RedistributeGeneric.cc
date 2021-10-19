@@ -121,7 +121,7 @@ template <typename FunctionSpaceType, NoGidx<FunctionSpaceType> = nullptr>
 Field getUidField( const FunctionSpaceType* functionSpaceImpl ) {
 
     // Make UID field.
-    Field uid = Field( " Uniquie ID ", array::make_datatype<uidx_t>(),
+    Field uid = Field( " Unique ID ", array::make_datatype<uidx_t>(),
                        array::make_shape( functionSpaceImpl->size() ) );
 
     // Make views.
@@ -148,13 +148,13 @@ std::vector<IdxUid> getUidVec(const FunctionSpaceType* functionSpaceImpl) {
     const auto uidView = array::make_view<uidx_t, 1>( uid );
 
     auto uidVec = std::vector<IdxUid>{};
+    uidVec.reserve( functionSpaceImpl->size() );
 
     // Get UIDs for non ghost elems.
     for ( idx_t i = 0; i < functionSpaceImpl->size(); ++i ) {
-        if ( ghostView( i ) ) {
-            continue;
+        if ( !ghostView( i ) ) {
+            uidVec.emplace_back( i, uidView( i ) );
         }
-       uidVec.push_back( IdxUid( i, uidView( i ) ) );
     }
 
     // Sort by UID value.
@@ -181,28 +181,29 @@ std::vector<IdxUid> getUidVec(const FunctionSpace& functionSpace) {
     if ( functionSpaceImpl->cast<CellColumns>() ) {
         return getUidVec( functionSpaceImpl->cast<CellColumns>() );
     }
-    if ( functionSpaceImpl->cast<EdgeColumns>() ) {
+    else if ( functionSpaceImpl->cast<EdgeColumns>() ) {
         return getUidVec( functionSpaceImpl->cast<EdgeColumns>() );
     }
-    if ( functionSpaceImpl->cast<NodeColumns>() ) {
+    else if ( functionSpaceImpl->cast<NodeColumns>() ) {
         return getUidVec( functionSpaceImpl->cast<NodeColumns>() );
     }
-    if ( functionSpaceImpl->cast<PointCloud>() ) {
+    else if ( functionSpaceImpl->cast<PointCloud>() ) {
         return getUidVec( functionSpaceImpl->cast<PointCloud>() );
     }
-    if ( functionSpaceImpl->cast<StructuredColumns>() ) {
+    else if ( functionSpaceImpl->cast<StructuredColumns>() ) {
         return getUidVec( functionSpaceImpl->cast<StructuredColumns>() );
     }
-
-    const auto errorMessage =
-        "Cannot redistribute functionspace type " + functionSpaceImpl->type();
-    throw_NotImplemented( errorMessage, Here() );
-
+    else {
+        const auto errorMessage =
+            "Cannot redistribute functionspace type " + functionSpaceImpl->type();
+        throw_NotImplemented( errorMessage, Here() );
+    }
 }
 
 // Copy UID index
 std::vector<idx_t> getUidIdx( const std::vector<IdxUid>& uidVec ) {
     auto idxVec = std::vector<idx_t>{};
+    idxVec.reserve( uidVec.size() );
     std::transform( uidVec.begin(), uidVec.end(), std::back_inserter( idxVec ),
                    []( const IdxUid& uid ){ return uid.first; } );
     return idxVec;
@@ -211,6 +212,7 @@ std::vector<idx_t> getUidIdx( const std::vector<IdxUid>& uidVec ) {
 // Copy UID value
 std::vector<uidx_t> getUidVal( const std::vector<IdxUid>& uidVec ) {
     auto valVec = std::vector<uidx_t>{};
+    valVec.reserve( uidVec.size() );
     std::transform( uidVec.begin(), uidVec.end(), std::back_inserter( valVec ),
                    []( const IdxUid& uid ){ return uid.second; } );
     return valVec;
@@ -224,7 +226,9 @@ std::pair<std::vector<uidx_t>, std::vector<int>>
     mpi::comm().allGather( static_cast<int>( sendBuffer.size() ),
                            counts.begin(), counts.end() );
 
-    auto disps = std::vector<int>{ 0 };
+    auto disps = std::vector<int>{};
+    disps.reserve( mpi::comm().size() + 1 );
+    disps.push_back( 0 );
     std::partial_sum( counts.begin(), counts.end(), std::back_inserter( disps ) );
 
 
@@ -252,7 +256,11 @@ std::pair<std::vector<idx_t>, std::vector<int>>
     const std::vector<uidx_t>& globalUids, const std::vector<int>& globalDisps ) {
 
     auto uidIntersection = std::vector<IdxUid>{};
-    auto disps = std::vector<int>{ 0 };
+    uidIntersection.reserve( localUids.size() );
+
+    auto disps = std::vector<int>{};
+    disps.reserve( mpi::comm().size() + 1 );
+    disps.push_back( 0 );
 
     // Loop over all PE and find UID intersection.
     for ( size_t i = 0; i < mpi::comm().size(); ++i ) {
@@ -303,7 +311,7 @@ void iterateField( const std::vector<idx_t>& idxList,
                    array::ArrayView<Value, 2>& fieldView, const Functor f ) {
 
     for ( const idx_t i : idxList ) {
-        for ( idx_t j = 0; j < fieldView.shape(1); ++j ) {
+        for ( idx_t j = 0; j < fieldView.shape( 1 ); ++j ) {
             f( fieldView( i, j ) );
         }
     }
@@ -315,8 +323,8 @@ void iterateField( const std::vector<idx_t>& idxList,
                    array::ArrayView<Value, 3>& fieldView, const Functor f ) {
 
     for ( const idx_t i : idxList ) {
-        for ( idx_t j = 0; j < fieldView.shape(1); ++j ) {
-            for ( idx_t k = 0; k < fieldView.shape(2); ++k )
+        for ( idx_t j = 0; j < fieldView.shape( 1 ); ++j ) {
+            for ( idx_t k = 0; k < fieldView.shape( 2 ); ++k )
                 f( fieldView( i, j, k ) );
         }
     }
@@ -367,7 +375,7 @@ void RedistributeGeneric::execute( const Field &sourceField, Field &targetField 
 
     // Check number of levels and variables match.
     for ( idx_t i = 1; i < sourceField.rank(); ++i ) {
-        ATLAS_ASSERT( sourceField.shape(i) == targetField.shape()[i] );
+        ATLAS_ASSERT( sourceField.shape( i ) == targetField.shape()[i] );
     }
 
     // Perform redistribution.
@@ -452,7 +460,9 @@ void RedistributeGeneric::doExecute( const Field& sourceField, Field& targetFiel
 
     // Set send displacement and counts vectors.
     auto sendDisps = std::vector<int>{};
+    sendDisps.reserve( mpi::comm().size() + 1 );
     auto sendCounts = std::vector<int>{};
+    sendCounts.reserve( mpi::comm().size() );
     std::transform( sourceDisps_.begin(), sourceDisps_.end(),
                     std::back_inserter( sendDisps ),
                     [&]( const int& disp ){ return disp * elemsPerCol; } );
@@ -461,7 +471,9 @@ void RedistributeGeneric::doExecute( const Field& sourceField, Field& targetFiel
 
     // Set recv displacement and counts vectors.
     auto recvDisps = std::vector<int>{};
+    recvDisps.reserve( mpi::comm().size() + 1 );
     auto recvCounts = std::vector<int>{};
+    recvCounts.reserve( mpi::comm().size() );
     std::transform( targetDisps_.begin(), targetDisps_.end(),
                     std::back_inserter( recvDisps ),
                     [&]( const int& disp ){ return disp * elemsPerCol; } );
