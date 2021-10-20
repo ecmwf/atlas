@@ -88,6 +88,10 @@ public:
 
     virtual atlas::Field ghost() const;
 
+    virtual atlas::Field remote_index() const;
+
+    virtual atlas::Field global_index() const;
+
     virtual const util::PartitionPolygons& polygons() const;
 
     virtual const Projection& projection() const;

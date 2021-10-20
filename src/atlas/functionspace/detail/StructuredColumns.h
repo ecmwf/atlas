@@ -143,8 +143,8 @@ public:
     Field xy() const { return field_xy_; }
     Field z() const { return vertical().z(); }
     Field partition() const { return field_partition_; }
-    Field global_index() const { return field_global_index_; }
-    Field remote_index() const {
+    Field global_index() const override { return field_global_index_; }
+    Field remote_index() const override {
         if ( not field_remote_index_ ) {
             create_remote_index();
         }

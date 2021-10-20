@@ -76,6 +76,11 @@ public:
     Field lonlat() const;
 
     Field ghost() const;
+
+    Field global_index() const;
+
+    Field remote_index() const;
+
 };
 
 //------------------------------------------------------------------------------------------------------
