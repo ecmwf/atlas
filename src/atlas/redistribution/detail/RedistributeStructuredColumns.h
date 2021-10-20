@@ -20,9 +20,7 @@ class FieldSet;
 class FunctionSpace;
 
 namespace functionspace {
-namespace detail {
 class StructuredColumns;
-}
 }  // namespace functionspace
 }  // namespace atlas
 
@@ -40,8 +38,6 @@ using idxPair                    = std::pair<idx_t, idx_t>;
 using idxPairVector              = std::vector<idxPair>;
 using StructuredIndexRangeVector = std::vector<StructuredIndexRange>;
 
-using functionspace::detail::StructuredColumns;
-
 /// \brief    Concrete redistributor class for StructuredColumns to
 ///           StructuredColumns.
 ///
@@ -57,10 +53,10 @@ public:
     ///           of each source and target function space on each PE.
     ///           The grids of source and target function space must match.
     ///
-    /// \param[in]  sourceFunctionSpace  Function space of source fields.
-    /// \param[in]  targetFunctionSpace  Function space of target fields.
-    void setup( const FunctionSpace& sourceFunctionSpace,
-                const FunctionSpace& targetFunctionSpace ) override;
+    /// \param[in]  source  Function space of source fields.
+    /// \param[in]  target  Function space of target fields.
+    void setup( const FunctionSpace& source,
+                const FunctionSpace& target ) override;
 
     static std::string static_type() {return "RedistributeStructuredColumns"; }
 
@@ -73,27 +69,27 @@ public:
     ///           sourceFunctionSpace supplied to the constructor. Same
     ///           applies to target field.
     ///
-    /// \param[in]  sourceField  input field matching sourceFunctionSpace.
-    /// \param[out] targetField  output field matching targetFunctionSpace.
-    void execute( const Field& sourceField, Field& targetField ) const override;
+    /// \param[in]  source  input field matching sourceFunctionSpace.
+    /// \param[out] target  output field matching targetFunctionSpace.
+    void execute( const Field& source, Field& target) const override;
 
     /// \brief    Redistributes source field set to target fields set.
     ///
     /// \details  Transfers source field set to target field set via
     ///           multiple invocations of execute(sourceField, targetField).
     ///
-    /// \param[in]  sourceFieldSet  input field set.
-    /// \param[out] targetFieldSet  output field set.
-    void execute( const FieldSet& sourceFieldSet, FieldSet& targetFieldSet ) const override;
+    /// \param[in]  source  input field set.
+    /// \param[out] target  output field set.
+    void execute( const FieldSet& source, FieldSet& target ) const override;
 
 private:
     // Generic execute call to handle different field types.
     template <typename fieldType>
-    void doExecute( const Field& sourceField, Field& targetField ) const;
+    void doExecute( const Field& source, Field& target ) const;
 
     // FunctionSpaces recast to StructuredColumns.
-    const StructuredColumns* sourceStructuredColumnsPtr_{};
-    const StructuredColumns* targetStructuredColumnsPtr_{};
+    functionspace::StructuredColumns source_;
+    functionspace::StructuredColumns target_;
 
     // Vectors of index range intersection objects.
     StructuredIndexRangeVector sendIntersections_{};
@@ -113,7 +109,7 @@ public:
     StructuredIndexRange() = default;
 
     /// \brief    Constructor.
-    StructuredIndexRange( const StructuredColumns* const structuredColumnsPtr );
+    StructuredIndexRange( const functionspace::StructuredColumns& );
 
     /// \brief    Get index ranges from all PEs.
     StructuredIndexRangeVector getStructuredIndexRanges() const;
@@ -122,11 +118,11 @@ public:
     idx_t getElemCount() const;
 
     /// \brief    Intersection operator.
-    StructuredIndexRange operator&( const StructuredIndexRange& indexRange ) const;
+    StructuredIndexRange operator&( const StructuredIndexRange& ) const;
 
     /// \brief    Iterate over all indices and do something with functor.
     template <typename functorType>
-    void forEach( const functorType& functor ) const;
+    void forEach( const functorType& ) const;
 
 private:
     // Begin and end of j range.

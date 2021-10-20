@@ -483,14 +483,16 @@ CASE( "Structured grid" ) {
         const auto targetLonLatView = array::make_view<double, 2>( targetFunctionSpace.lonlat() );
 
         // Add non-ghost lonlats to vector.
-        for ( idx_t i = 0; i < sourceFunctionSpace->size(); ++i ) {
+        sourceLonLat.reserve( sourceFunctionSpace.size() );
+        for ( idx_t i = 0; i < sourceFunctionSpace.size(); ++i ) {
             if ( !sourceGhostView( i ) ) {
-                sourceLonLat.push_back( PointXY( sourceLonLatView( i, LON ), sourceLonLatView( i, LAT ) ) );
+                sourceLonLat.emplace_back( sourceLonLatView( i, LON ), sourceLonLatView( i, LAT ) );
             }
         }
-        for ( idx_t i = 0; i < targetFunctionSpace->size(); ++i ) {
+        targetLonLat.reserve( targetFunctionSpace.size() );
+        for ( idx_t i = 0; i < targetFunctionSpace.size(); ++i ) {
             if ( !targetGhostView( i ) ) {
-                targetLonLat.push_back( PointXY( targetLonLatView( i, LON ), targetLonLatView( i, LAT ) ) );
+                targetLonLat.emplace_back( targetLonLatView( i, LON ), targetLonLatView( i, LAT ) );
             }
         }
 
