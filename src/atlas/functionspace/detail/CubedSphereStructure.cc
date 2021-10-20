@@ -54,15 +54,16 @@ CubedSphereStructure::CubedSphereStructure( const Field& tij, const Field& ghost
         ijBounds_[t].jEnd   = std::max( j + 1, ijBounds_[t].jEnd );
 
         // Keep track of highest non-ghost index.
-        if ( !ghostView_( index ) )
+        if ( !ghostView_( index ) ) {
             nOwnedElems_ = index + 1;
+        }
     }
 
     // Set tijToIdx vectors
     for ( idx_t t = 0; t < 6; ++t ) {
         // Set data array.
         const size_t vecSize = static_cast<size_t>( ( j_end( t ) - j_begin( t ) ) * ( i_end( t ) - i_begin( t ) ) );
-        tijToIdx_.push_back( std::vector<idx_t>( vecSize, invalid_index() ) );
+        tijToIdx_.emplace_back( vecSize, invalid_index() );
     }
 
     // loop over ijt_ and set ijtToIdx
@@ -84,26 +85,30 @@ idx_t CubedSphereStructure::nb_owned_elems() const {
 }
 
 idx_t CubedSphereStructure::i_begin( idx_t t ) const {
-    if ( checkBounds )
+    if ( checkBounds ) {
         tBoundsCheck( t );
+    }
     return ijBounds_[static_cast<size_t>( t )].iBegin;
 }
 
 idx_t CubedSphereStructure::i_end( idx_t t ) const {
-    if ( checkBounds )
+    if ( checkBounds ) {
         tBoundsCheck( t );
+    }
     return ijBounds_[static_cast<size_t>( t )].iEnd;
 }
 
 idx_t CubedSphereStructure::j_begin( idx_t t ) const {
-    if ( checkBounds )
+    if ( checkBounds ) {
         tBoundsCheck( t );
+    }
     return ijBounds_[static_cast<size_t>( t )].jBegin;
 }
 
 idx_t CubedSphereStructure::j_end( idx_t t ) const {
-    if ( checkBounds )
+    if ( checkBounds ) {
         tBoundsCheck( t );
+    }
     return ijBounds_[static_cast<size_t>( t )].jEnd;
 }
 
@@ -125,22 +130,25 @@ Field CubedSphereStructure::ghost() const {
 }
 
 void CubedSphereStructure::tBoundsCheck( idx_t t ) const {
-    if ( t < 0 || t > 5 )
+    if ( t < 0 || t > 5 ) {
         throw_OutOfRange( "t", t, 6 );
+    }
 }
 
 void CubedSphereStructure::jBoundsCheck( idx_t j, idx_t t ) const {
     const idx_t jSize = j_end( t ) - j_begin( t );
     j -= j_begin( t );
-    if ( j < 0 || j >= jSize )
+    if ( j < 0 || j >= jSize ) {
         throw_OutOfRange( "j - jMin", j, jSize );
+    }
 }
 
 void CubedSphereStructure::iBoundsCheck( idx_t i, idx_t t ) const {
     const idx_t iSize = i_end( t ) - i_begin( t );
     i -= i_begin( t );
-    if ( i < 0 || i >= iSize )
+    if ( i < 0 || i >= iSize ) {
         throw_OutOfRange( "i - iMin", i, iSize );
+    }
 }
 
 size_t CubedSphereStructure::vecIndex( idx_t t, idx_t i, idx_t j ) const {
