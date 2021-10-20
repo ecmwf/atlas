@@ -32,26 +32,18 @@ Redistribution::Redistribution( const FunctionSpace& sourceFunctionSpace,
       return impl;
       }() ) {}
 
-void Redistribution::execute( const Field& sourceField, Field& targetField ) const {
-    get()->execute( sourceField, targetField );
+void Redistribution::execute( const Field& source, Field& target ) const {
+    get()->execute( source, target );
     return;
 }
 
-void Redistribution::execute( const FieldSet& sourceFieldSet, FieldSet& targetFieldSet ) const {
-    get()->execute( sourceFieldSet, targetFieldSet );
+void Redistribution::execute( const FieldSet& source, FieldSet& target ) const {
+    get()->execute( source, target );
     return;
-}
-
-FunctionSpace& Redistribution::source() {
-    return get()->source();
 }
 
 const FunctionSpace& Redistribution::source() const {
     return get()->source();
-}
-
-FunctionSpace& Redistribution::target() {
-    return get()->target();
 }
 
 const FunctionSpace& Redistribution::target() const {

@@ -48,15 +48,7 @@ public:
     RedistributeStructuredColumns() = default;
 
     /// \brief    Initialises the redistributor.
-    ///
-    /// \details  Performs MPI_Allgatherv to determine the (i, j, k) ranges
-    ///           of each source and target function space on each PE.
-    ///           The grids of source and target function space must match.
-    ///
-    /// \param[in]  source  Function space of source fields.
-    /// \param[in]  target  Function space of target fields.
-    void setup( const FunctionSpace& source,
-                const FunctionSpace& target ) override;
+    void do_setup() override;
 
     static std::string static_type() {return "RedistributeStructuredColumns"; }
 
@@ -85,7 +77,7 @@ public:
 private:
     // Generic execute call to handle different field types.
     template <typename fieldType>
-    void doExecute( const Field& source, Field& target ) const;
+    void do_execute( const Field& source, Field& target ) const;
 
     // FunctionSpaces recast to StructuredColumns.
     functionspace::StructuredColumns source_;

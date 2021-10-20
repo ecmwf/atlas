@@ -24,180 +24,121 @@ namespace atlas {
 namespace redistribution {
 namespace detail {
 
-using functionspace::detail::CellColumns;
-using functionspace::detail::EdgeColumns;
-using functionspace::detail::NodeColumns;
-using functionspace::detail::PointCloud;
-using functionspace::detail::StructuredColumns;
-
 using mesh::HybridElements;
 using mesh::Nodes;
 
 // Helper type definitions and functions for redistribution.
 namespace  {
 
-// Does functionspace have ghost field?
-template <typename FunctionSpaceType>
-using HasGhost = typename std::enable_if<
-std::is_same<FunctionSpaceType, NodeColumns>::value ||
-std::is_same<FunctionSpaceType, StructuredColumns>::value ||
-std::is_same<FunctionSpaceType, PointCloud>::value>::type*;
-
-template <typename FunctionSpaceType>
-using NoGhost =  typename std::enable_if<
-std::is_same<FunctionSpaceType, CellColumns>::value ||
-std::is_same<FunctionSpaceType, EdgeColumns>::value>::type*;
-
-// Does function space have global index field?
-template <typename FunctionSpaceType>
-using HasGidx = typename std::enable_if<
-std::is_same<FunctionSpaceType, NodeColumns>::value ||
-std::is_same<FunctionSpaceType, EdgeColumns>::value ||
-std::is_same<FunctionSpaceType, CellColumns>::value ||
-std::is_same<FunctionSpaceType, StructuredColumns>::value>::type*;
-
-template <typename FunctionSpaceType>
-using NoGidx = typename std::enable_if<
-std::is_same<FunctionSpaceType, PointCloud>::value>::type*;
-
 // Define index-UID struct. (Needed to overload "<").
 struct IdxUid : public std::pair<idx_t, uidx_t> {
     using std::pair<idx_t, uidx_t>::pair;
 };
 
-// Get elements from mesh.
-const HybridElements& getElems( const CellColumns* functionSpaceImpl ) {
-    return functionSpaceImpl->cells();
-}
-const HybridElements& getElems( const EdgeColumns* functionSpaceImpl ) {
-    return functionSpaceImpl->edges();
-}
-const Nodes& getElems( const NodeColumns* functionSpaceImpl ) {
-    return functionSpaceImpl->nodes();
-}
-const StructuredColumns& getElems( const StructuredColumns* functionSpaceImpl ) {
-    return *functionSpaceImpl;
-}
-
-// Get ghost field from functionspace.
-template <typename FunctionSpaceType, HasGhost<FunctionSpaceType> = nullptr>
-Field getGhostField( const FunctionSpaceType* functionSpaceImpl ) {
-    return functionSpaceImpl->ghost();
-}
-
-// Create ghost field.
-template <typename FunctionSpaceType, NoGhost<FunctionSpaceType> = nullptr>
-Field getGhostField( const FunctionSpaceType* functionSpaceImpl ) {
-
-    // Get mesh elements.
-    const auto& elems = getElems( functionSpaceImpl );
-
-    // Make ghost field.
-    auto ghost = Field( "ghost" , array::make_datatype<int>(),
-                        array::make_shape( functionSpaceImpl->size() ) );
-
-    // Make views.
-    auto ghostView = array::make_view<int, 1>( ghost );
-    auto remoteIndexView = array::make_indexview<idx_t, 1>( elems.remote_index() );
-    auto partitionView = array::make_view<int, 1>( elems.partition() );
-
-    // Set ghost field.
-    const auto thisPart = static_cast<int>( mpi::comm().rank() );
-    for ( idx_t i = 0; i < ghost.shape( 0 ); ++i ) {
-        ghostView( i ) = partitionView( i ) != thisPart ||
-                         remoteIndexView ( i ) != i;
+Field getGhostField( const FunctionSpace& functionspace ) {
+    if( functionspace::NodeColumns( functionspace ) ||
+        functionspace::StructuredColumns( functionspace ) ||
+        functionspace::PointCloud( functionspace ) ) {
+        return functionspace.ghost();
     }
-    return ghost;
+    if( functionspace::EdgeColumns( functionspace ) ||
+        functionspace::CellColumns( functionspace ) ) {
+
+        // TODO: Move something like this into the functionspace::EdgeColumns and functionspace::CellColumns
+
+        // Get mesh elements.
+        const auto& elems = functionspace::EdgeColumns( functionspace )
+                          ? functionspace::EdgeColumns( functionspace ).edges()
+                          : functionspace::CellColumns( functionspace ).cells();
+
+
+        // Make ghost field.
+        auto ghost_field = Field( "ghost" , array::make_datatype<int>(),
+                            array::make_shape( functionspace.size() ) );
+
+        // Make views.
+        auto ghost = array::make_view<int, 1>( ghost_field );
+        auto remote_index = array::make_indexview<idx_t, 1>( elems.remote_index() );
+        auto partition = array::make_view<int, 1>( elems.partition() );
+
+        // Set ghost field.
+        const auto thisPart = static_cast<int>( mpi::comm().rank() );
+        for ( idx_t i = 0; i < ghost.shape( 0 ); ++i ) {
+            ghost( i ) = partition( i ) != thisPart ||
+                             remote_index ( i ) != i;
+        }
+        return ghost_field;
+    }
+    return functionspace.ghost();
 }
 
-// Get UID field from functionspace global indices.
-template <typename FunctionSpaceType, HasGidx<FunctionSpaceType> = nullptr>
-Field getUidField( const FunctionSpaceType* functionSpaceImpl ) {
-    return getElems( functionSpaceImpl ).global_index();
-}
 
 // Create UID field.
-template <typename FunctionSpaceType, NoGidx<FunctionSpaceType> = nullptr>
-Field getUidField( const FunctionSpaceType* functionSpaceImpl ) {
+Field getUidField( const FunctionSpace& functionspace ) {
 
-    // Make UID field.
-    Field uid = Field( " Unique ID ", array::make_datatype<uidx_t>(),
-                       array::make_shape( functionSpaceImpl->size() ) );
+    // Note there is a difference between uid_field and global_index in the type: uidx_t vs gidx_t
+    // Currently this aliases the same type though...
 
-    // Make views.
-    auto uidView = array::make_view<uidx_t, 1>( uid );
-    const auto lonLatView = array::make_view<double, 2>( functionSpaceImpl->lonlat() );
-
-    // Set UIDs
-    for ( idx_t i = 0; i < uid.shape(0); ++i ) {
-        uidView( i ) = util::unique_lonlat( lonLatView (i, LON), lonLatView(i, LAT ) );
+    if( not functionspace::PointCloud( functionspace ) ) {
+        return functionspace.global_index();
     }
-    return uid;
+    else {
+        // PointCloud has no global_index()... TODO, put something in place there.
+
+        // Make UID field.
+        Field uid_field = Field( "Unique ID", array::make_datatype<uidx_t>(),
+                           array::make_shape( functionspace.size() ) );
+
+        // Make views.
+        auto uid = array::make_view<uidx_t, 1>( uid_field );
+        const auto lonlat = array::make_view<double, 2>( functionspace.lonlat() );
+
+        // Set UIDs
+        for ( idx_t i = 0; i < uid_field.shape(0); ++i ) {
+            uid( i ) = util::unique_lonlat( lonlat (i, LON), lonlat(i, LAT ) );
+        }
+        return uid_field;
+    }
+
+
 }
 
-// Get vector of (local index, UID) pairs.
-template <typename FunctionSpaceType>
-std::vector<IdxUid> getUidVec(const FunctionSpaceType* functionSpaceImpl) {
+// Resolve functionspace implementation type and get unique ID vector.
+std::vector<IdxUid> getUidVec(const FunctionSpace& functionspace) {
+
 
     // Get ghost and unique ID fields from functionspace.
-    const auto ghost = getGhostField( functionSpaceImpl );
-    const auto uid = getUidField( functionSpaceImpl );
+    const auto ghost_field = getGhostField( functionspace );
+    const auto uid = getUidField( functionspace );
 
     // Make views to fields.
-    const auto ghostView = array::make_view<int, 1>( ghost );
+    const auto ghost = array::make_view<int, 1>( ghost_field );
     const auto uidView = array::make_view<uidx_t, 1>( uid );
 
     auto uidVec = std::vector<IdxUid>{};
-    uidVec.reserve( functionSpaceImpl->size() );
+    uidVec.reserve( functionspace.size() );
 
     // Get UIDs for non ghost elems.
-    for ( idx_t i = 0; i < functionSpaceImpl->size(); ++i ) {
-        if ( !ghostView( i ) ) {
+    for ( idx_t i = 0; i < functionspace.size(); ++i ) {
+        if ( not ghost( i ) ) {
             uidVec.emplace_back( i, uidView( i ) );
         }
     }
 
     // Sort by UID value.
     std::sort( uidVec.begin(), uidVec.end(),
-        []( const IdxUid& a, const IdxUid& b ){ return a.second < b.second; } );
+               []( const IdxUid& a, const IdxUid& b ){ return a.second < b.second; } );
 
     // Check UIDs are unique.
     if ( ATLAS_BUILD_TYPE_DEBUG ) {
         const size_t vecSize = uidVec.size();
         std::unique( uidVec.begin(), uidVec.end(),
-            []( const IdxUid& a, const IdxUid& b ){ return a.second == b.second; });
+                     []( const IdxUid& a, const IdxUid& b ){ return a.second == b.second; });
         ATLAS_ASSERT( uidVec.size() == vecSize, "Unique ID set has duplicate members" );
     }
 
     return uidVec;
-}
 
-// Resolve functionspace implementation type and get unique ID vector.
-std::vector<IdxUid> getUidVec(const FunctionSpace& functionSpace) {
-
-    // Get implementation pointer.
-    const auto* functionSpaceImpl = functionSpace.get();
-
-    if ( functionSpaceImpl->cast<CellColumns>() ) {
-        return getUidVec( functionSpaceImpl->cast<CellColumns>() );
-    }
-    else if ( functionSpaceImpl->cast<EdgeColumns>() ) {
-        return getUidVec( functionSpaceImpl->cast<EdgeColumns>() );
-    }
-    else if ( functionSpaceImpl->cast<NodeColumns>() ) {
-        return getUidVec( functionSpaceImpl->cast<NodeColumns>() );
-    }
-    else if ( functionSpaceImpl->cast<PointCloud>() ) {
-        return getUidVec( functionSpaceImpl->cast<PointCloud>() );
-    }
-    else if ( functionSpaceImpl->cast<StructuredColumns>() ) {
-        return getUidVec( functionSpaceImpl->cast<StructuredColumns>() );
-    }
-    else {
-        const auto errorMessage =
-            "Cannot redistribute functionspace type " + functionSpaceImpl->type();
-        throw_NotImplemented( errorMessage, Here() );
-    }
 }
 
 // Copy UID index
@@ -324,20 +265,16 @@ void iterateField( const std::vector<idx_t>& idxList,
 
     for ( const idx_t i : idxList ) {
         for ( idx_t j = 0; j < fieldView.shape( 1 ); ++j ) {
-            for ( idx_t k = 0; k < fieldView.shape( 2 ); ++k )
+            for ( idx_t k = 0; k < fieldView.shape( 2 ); ++k ) {
                 f( fieldView( i, j, k ) );
+            }
         }
     }
 }
 
 }
 
-void RedistributeGeneric::setup(const FunctionSpace &sourceFunctionSpace,
-                                const FunctionSpace &targetFunctionSpace) {
-
-    // Assign function spaces.
-    source() = sourceFunctionSpace;
-    target() = targetFunctionSpace;
+void RedistributeGeneric::do_setup() {
 
     // get a unique ID (UID) for each owned member of functionspace.
     const auto sourceUidVec = getUidVec( source() );
@@ -379,7 +316,7 @@ void RedistributeGeneric::execute( const Field &sourceField, Field &targetField 
     }
 
     // Perform redistribution.
-    doExecute( sourceField, targetField );
+    do_execute( sourceField, targetField );
 }
 
 void RedistributeGeneric::execute( const FieldSet &sourceFieldSet, FieldSet &targetFieldSet ) const {
@@ -394,23 +331,23 @@ void RedistributeGeneric::execute( const FieldSet &sourceFieldSet, FieldSet &tar
 }
 
 // Determine datatype.
-void RedistributeGeneric::doExecute( const Field& sourceField, Field& targetField ) const {
+void RedistributeGeneric::do_execute( const Field& sourceField, Field& targetField ) const {
 
     switch ( sourceField.datatype().kind() ) {
         case array::DataType::KIND_REAL64 : {
-            doExecute<double>( sourceField, targetField );
+            do_execute<double>( sourceField, targetField );
             break;
         }
         case array::DataType::KIND_REAL32 : {
-            doExecute<float>( sourceField, targetField );
+            do_execute<float>( sourceField, targetField );
             break;
         }
         case array::DataType::KIND_INT64 : {
-            doExecute<long>( sourceField, targetField );
+            do_execute<long>( sourceField, targetField );
             break;
         }
         case array::DataType::KIND_INT32 : {
-            doExecute<int>( sourceField, targetField );
+            do_execute<int>( sourceField, targetField );
             break;
         }
         default : {
@@ -422,19 +359,19 @@ void RedistributeGeneric::doExecute( const Field& sourceField, Field& targetFiel
 
 // Determine rank.
 template <typename Value>
-void RedistributeGeneric::doExecute( const Field& sourceField, Field& targetField ) const {
+void RedistributeGeneric::do_execute( const Field& sourceField, Field& targetField ) const {
 
     switch ( sourceField.rank() ) {
         case 1 : {
-            doExecute<Value, 1>( sourceField, targetField );
+            do_execute<Value, 1>( sourceField, targetField );
             break;
         }
         case 2 : {
-            doExecute<Value, 2>( sourceField, targetField );
+            do_execute<Value, 2>( sourceField, targetField );
             break;
         }
         case 3 : {
-            doExecute<Value, 3>( sourceField, targetField );
+            do_execute<Value, 3>( sourceField, targetField );
             break;
         }
         default : {
@@ -446,7 +383,7 @@ void RedistributeGeneric::doExecute( const Field& sourceField, Field& targetFiel
 
 // Perform redistribution.
 template <typename Value, int Rank>
-void RedistributeGeneric::doExecute( const Field& sourceField, Field& targetField ) const {
+void RedistributeGeneric::do_execute( const Field& sourceField, Field& targetField ) const {
 
     // Get array views.
     auto sourceView = array::make_view<Value, Rank>( sourceField );

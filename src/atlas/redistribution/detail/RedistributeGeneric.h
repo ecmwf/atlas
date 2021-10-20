@@ -20,23 +20,22 @@ public:
 
   std::string type() const override { return static_type(); }
 
-  void setup( const FunctionSpace& sourceFunctionSpace,
-              const FunctionSpace& targetFunctionSpace) override;
+  void do_setup() override;
 
-  void execute( const Field& sourceField, Field& targetField ) const override;
+  void execute( const Field& source, Field& target) const override;
 
-  void execute( const FieldSet& sourceFieldSet, FieldSet& targetFieldSet ) const override;
+  void execute( const FieldSet& source, FieldSet& target ) const override;
 
 private:
 
   // Determine datatype.
-  void doExecute( const Field& sourceField, Field& targetField ) const;
+  void do_execute( const Field& source, Field& target ) const;
   // Determine rank.
   template <typename Value>
-  void doExecute( const Field& sourceField, Field& targetField ) const;
+  void do_execute( const Field& source, Field& target ) const;
   // Perform redistribution.
   template <typename Value, int Rank>
-  void doExecute( const Field& sourceField, Field& targetField ) const;
+  void do_execute( const Field& source, Field& target ) const;
 
   // Local indices to send to each PE
   std::vector<idx_t> sourceLocalIdx_{};

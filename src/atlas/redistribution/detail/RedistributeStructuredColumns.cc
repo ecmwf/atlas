@@ -55,11 +55,7 @@ void forEachIndex( const StructuredIndexRangeVector& ranges, const functorType& 
 //========================================================================
 
 // Constructor.
-void RedistributeStructuredColumns::setup(
-  const FunctionSpace& sourceFunctionSpace, const FunctionSpace& targetFunctionSpace ) {
-
-    source() = sourceFunctionSpace;
-    target() = targetFunctionSpace;
+void RedistributeStructuredColumns::do_setup() {
 
     source_ = source();
     target_ = target();
@@ -148,19 +144,19 @@ void RedistributeStructuredColumns::execute( const Field& sourceField, Field& ta
     // Determine data type of field and execute.
     switch ( sourceField.datatype().kind() ) {
         case array::DataType::KIND_REAL64:
-            doExecute<double>( sourceField, targetField );
+            do_execute<double>( sourceField, targetField );
             break;
 
         case array::DataType::KIND_REAL32:
-            doExecute<float>( sourceField, targetField );
+            do_execute<float>( sourceField, targetField );
             break;
 
         case array::DataType::KIND_INT32:
-            doExecute<int>( sourceField, targetField );
+            do_execute<int>( sourceField, targetField );
             break;
 
         case array::DataType::KIND_INT64:
-            doExecute<long>( sourceField, targetField );
+            do_execute<long>( sourceField, targetField );
             break;
 
         default:
@@ -188,7 +184,7 @@ void RedistributeStructuredColumns::execute( const FieldSet& sourceFieldSet, Fie
 //========================================================================
 
 template <typename fieldType>
-void RedistributeStructuredColumns::doExecute( const Field& sourceField, Field& targetField ) const {
+void RedistributeStructuredColumns::do_execute( const Field& sourceField, Field& targetField ) const {
     // Make Atlas view objects.
     const auto sourceView = array::make_view<fieldType, 2>( sourceField );
     auto targetView       = array::make_view<fieldType, 2>( targetField );

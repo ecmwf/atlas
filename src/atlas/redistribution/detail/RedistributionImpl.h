@@ -26,33 +26,37 @@ public:
 
     RedistributionImpl() = default;
 
+    /// \brief    Initialises the redistributor.
+    ///
+    /// \details  Performs MPI_Allgatherv to determine the (i, j, k) ranges
+    ///           of each source and target function space on each PE.
+    ///           The grids of source and target function space must match.
+    ///
+    /// \param[in]  source  Function space of source fields.
+    /// \param[in]  target  Function space of target fields.
+    void setup( const FunctionSpace& source, const FunctionSpace& target );
+
     /// \Setup class.
-    virtual void setup( const FunctionSpace& source, const FunctionSpace& target ) = 0;
+    virtual void do_setup() = 0;
 
     /// \brief Concrete type.
     virtual std::string type() const = 0;
 
     /// \brief  Maps source field to target field.
-    virtual void execute( const Field& sourceField, Field& targetField ) const = 0;
+    virtual void execute( const Field& source, Field& target ) const = 0;
 
     /// \brief  Maps source field set to target field set.
-    virtual void execute( const FieldSet& sourceFieldSet, FieldSet& targetFieldSet ) const = 0;
-
-    /// \brief  Get reference to source function space.
-    FunctionSpace& source();
+    virtual void execute( const FieldSet& source, FieldSet& target ) const = 0;
 
     /// \brief  Get const reference to source function space.
     const FunctionSpace& source() const;
-
-    /// \brief  Get reference to target function space.
-    FunctionSpace& target();
 
     /// \brief  Get const reference to target function space.
     const FunctionSpace& target() const;
 
 private:
-    FunctionSpace sourceFunctionSpace_;
-    FunctionSpace targetFunctionSpace_;
+    FunctionSpace source_;
+    FunctionSpace target_;
 };
 
 }  // namespace detail
