@@ -666,8 +666,9 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
                     // A double-loop with no more than four iterations!
                     for ( idx_t iCell = i - 1; iCell < i + 1; ++iCell ) {
                         for ( idx_t jCell = j - 1; jCell < j + 1; ++jCell ) {
-                            if ( invalidCell( iCell, jCell ) )
+                            if ( invalidCell( iCell, jCell ) ) {
                                 continue;
+                            }
 
                             const GlobalElem& globalCell = globalCells[getCellIdx( iCell, jCell, t )];
 

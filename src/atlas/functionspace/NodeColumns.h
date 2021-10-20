@@ -261,6 +261,10 @@ public:
 
     Field ghost() const override { return nodes_.ghost(); }
 
+    Field global_index() const override { return nodes_.global_index(); }
+
+    Field remote_index() const override { return nodes_.remote_index(); }
+
     const util::PartitionPolygon& polygon( idx_t halo = 0 ) const override { return mesh_.polygon( halo ); }
 
     const util::PartitionPolygons& polygons() const override { return mesh_.polygons(); }

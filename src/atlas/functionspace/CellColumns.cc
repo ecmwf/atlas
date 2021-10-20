@@ -567,6 +567,14 @@ Field CellColumns::lonlat() const {
     return mesh_.cells().field( "lonlat" );
 }
 
+Field CellColumns::remote_index() const {
+    return mesh_.cells().remote_index();
+}
+
+Field CellColumns::global_index() const {
+    return mesh_.cells().global_index();
+}
+
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------

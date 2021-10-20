@@ -70,6 +70,14 @@ Field FunctionSpace::ghost() const {
     return get()->ghost();
 }
 
+Field FunctionSpace::global_index() const {
+    return get()->global_index();
+}
+
+Field FunctionSpace::remote_index() const {
+    return get()->remote_index();
+}
+
 void FunctionSpace::haloExchange( const FieldSet& fields, bool on_device ) const {
     get()->haloExchange( fields, on_device );
 }
