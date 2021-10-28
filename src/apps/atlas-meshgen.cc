@@ -198,23 +198,6 @@ std::string get_arg( const AtlasTool::Args& args, const std::string& flag, const
     throw_Exception( "Could not find argument for flag " + flag );
 }
 
-std::string get_positional_arg( const AtlasTool::Args& args, idx_t p ) {
-    // skip flags arguments ( "-o mesh.msh" does not count as a whole )
-    int c = 0;
-    for ( int i = 0; i < args.count(); ++i ) {
-        if ( args( i )[0] == '-' ) {
-            i++;
-        }
-        else {
-            if ( c == p ) {
-                return args( i );
-            }
-            c++;
-        }
-    }
-    return std::string{};
-}
-
 int Meshgen2Gmsh::execute( const Args& args ) {
     key = "";
     args.get( "grid.name", key );
