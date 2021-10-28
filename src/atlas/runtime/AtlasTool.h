@@ -56,6 +56,8 @@ protected:
 
     bool handle_help();
 
+    std::string get_positional_arg( const Args&, size_t pos ) const;
+
 public:
     AtlasTool( int argc, char** argv );
 

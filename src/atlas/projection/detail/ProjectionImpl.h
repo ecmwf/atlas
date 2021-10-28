@@ -310,6 +310,10 @@ const ProjectionImpl* atlas__Projection__ctor_config( const eckit::Parametrisati
 void atlas__Projection__type( const ProjectionImpl* This, char*& type, int& size );
 void atlas__Projection__hash( const ProjectionImpl* This, char*& hash, int& size );
 ProjectionImpl::Spec* atlas__Projection__spec( const ProjectionImpl* This );
+void atlas__Projection__xy2lonlat( const ProjectionImpl* This, const double x, const double y, double& lon,
+                                   double& lat );
+void atlas__Projection__lonlat2xy( const ProjectionImpl* This, const double lon, const double lat, double& x,
+                                   double& y );
 }
 
 }  // namespace detail

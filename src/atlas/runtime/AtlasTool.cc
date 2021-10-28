@@ -206,7 +206,18 @@ void atlas::AtlasTool::add_option( eckit::option::Option* option ) {
 }
 
 void atlas::AtlasTool::help( std::ostream& out ) {
-    out << "NAME\n" << indent() << name();
+    auto indented = [&]( const std::string& s ) -> std::string {
+        std::string str = indent() + s;
+        size_t pos      = 0;
+        while ( ( pos = str.find( '\n', pos ) ) != std::string::npos ) {
+            str.replace( pos, 1, '\n' + indent() );
+            ++pos;
+        }
+        return str;
+    };
+
+
+    out << "NAME\n" << indented( name() );
     std::string brief = briefDescription();
     if ( brief.size() ) {
         out << " - " << brief << '\n';
@@ -215,17 +226,19 @@ void atlas::AtlasTool::help( std::ostream& out ) {
     std::string usg = usage();
     if ( usg.size() ) {
         out << '\n';
-        out << "SYNOPSIS\n" << indent() << usg << '\n';
+        out << "SYNOPSIS\n" << indented( usg ) << '\n';
     }
     std::string desc = longDescription();
     if ( desc.size() ) {
         out << '\n';
-        out << "DESCRIPTION\n" << indent() << desc << '\n';
+        out << "DESCRIPTION\n" << indented( desc ) << '\n';
     }
     out << '\n';
     out << "OPTIONS\n";
     for ( Options::const_iterator it = options_.begin(); it != options_.end(); ++it ) {
-        out << indent() << ( **it ) << "\n\n";
+        std::stringstream s;
+        s << **it;
+        out << indented( s.str() ) << "\n\n";
     }
     out << std::flush;
 }
@@ -240,6 +253,22 @@ bool atlas::AtlasTool::handle_help() {
         }
     }
     return false;
+}
+
+std::string atlas::AtlasTool::get_positional_arg( const Args& args, size_t p ) const {
+    int c = 0;
+    for ( int i = 0; i < args.count(); ++i ) {
+        if ( args( i )[0] == '-' ) {
+            i++;
+        }
+        else {
+            if ( c == p ) {
+                return args( i );
+            }
+            c++;
+        }
+    }
+    return std::string{};
 }
 
 atlas::AtlasTool::AtlasTool( int argc, char** argv ) : eckit::Tool( argc, argv ) {

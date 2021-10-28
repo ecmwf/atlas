@@ -392,6 +392,22 @@ ProjectionImpl::Spec* atlas__Projection__spec( const ProjectionImpl* This ) {
     ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Projection" );
     return new ProjectionImpl::Spec( This->spec() );
 }
+void atlas__Projection__xy2lonlat( const ProjectionImpl* This, const double x, const double y, double& lon,
+                                   double& lat ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Projection" );
+    Point2 p( x, y );
+    This->xy2lonlat( p );
+    lon = p.x();
+    lat = p.y();
+}
+void atlas__Projection__lonlat2xy( const ProjectionImpl* This, const double lon, const double lat, double& x,
+                                   double& y ) {
+    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Projection" );
+    Point2 p( lon, lat );
+    This->lonlat2xy( p );
+    x = p.x();
+    y = p.y();
+}
 
 }  // extern "C"
 

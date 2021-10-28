@@ -52,8 +52,8 @@ void GridBoxMaximum::do_execute( const Field& source, Field& target ) const {
 
     auto xarray = atlas::array::make_view<double, 1>( source );
     auto yarray = atlas::array::make_view<double, 1>( target );
-    ATLAS_ASSERT( xarray.size() == idx_t( sourceBoxes_.size() ) );
-    ATLAS_ASSERT( yarray.size() == idx_t( targetBoxes_.size() ) );
+    ATLAS_ASSERT( xarray.size() == sourceBoxes_.size() );
+    ATLAS_ASSERT( yarray.size() == targetBoxes_.size() );
 
     yarray.assign( 0. );
     failures_.clear();
