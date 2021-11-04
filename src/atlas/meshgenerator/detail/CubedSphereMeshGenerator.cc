@@ -49,19 +49,19 @@ CubedSphereMeshGenerator::CubedSphereMeshGenerator( const eckit::Parametrisation
     configure_defaults();
 
     // Get number of partitions.
-    size_t nb_parts;
+    int nb_parts;
     if ( p.get( "nb_parts", nb_parts ) ) {
         options.set( "nb_parts", nb_parts );
     }
 
     // Get this partition.
-    size_t part;
+    int part;
     if ( p.get( "part", part ) ) {
         options.set( "part", part );
     }
 
     // Get halo size.
-    idx_t halo;
+    int halo;
     if ( p.get( "halo", halo ) ) {
         options.set( "halo", halo );
     }
@@ -84,7 +84,7 @@ void CubedSphereMeshGenerator::configure_defaults() {
     options.set( "part", mpi::rank() );
 
     // This options sets the number of halo elements around each partition.
-    options.set( "halo", idx_t{1} );
+    options.set( "halo", 1 );
 
     // This options sets the default partitioner.
     options.set<std::string>( "partitioner", "cubedsphere" );
@@ -231,7 +231,7 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
         LocalElem* localPtr{};                 // Pointer to local element.
         gidx_t globalIdx{undefinedGlobalIdx};  // Global index.
         idx_t remoteIdx{undefinedIdx};         // Remote index.
-        idx_t part{undefinedIdx};              // Partition.
+        int part{undefinedIdx};                // Partition.
     };
 
     // Struct to store additional information of local cells/nodes.
@@ -240,7 +240,7 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
     struct LocalElem {
         GlobalElem* globalPtr{};             // Pointer to global element.
         ElemType type{ElemType::UNDEFINED};  // Cell/node Type.
-        idx_t halo{undefinedIdx};            // Halo level.
+        int halo{undefinedIdx};              // Halo level.
         idx_t t{};                           // t, i and j.
         idx_t i{};
         idx_t j{};
@@ -258,7 +258,7 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
     const idx_t N = csGrid.N();
 
     // Get size of halo.
-    idx_t nHalo = 0;
+    int nHalo = 0;
     options.get( "halo", nHalo );
 
     // Unique non-halo nodes and cells.
@@ -278,8 +278,8 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
     const auto jacobian            = NeighbourJacobian( csGrid );
 
     // Get partition information.
-    const size_t nParts   = options.get<size_t>( "nb_parts" );
-    const size_t thisPart = options.get<size_t>( "part" );
+    const int nParts   = options.get<int>( "nb_parts" );
+    const int thisPart = options.get<int>( "part" );
 
     // Define an index counter.
     const auto idxSum = []( const std::vector<idx_t>& idxCounts ) -> idx_t {
@@ -367,7 +367,7 @@ void CubedSphereMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid, con
     auto globalCells = std::vector<GlobalElem>( static_cast<size_t>( nCellsArray ) );
 
     // Initialise bounding box.
-    auto cellBounds = std::vector<BoundingBox>( static_cast<size_t>( 6 ) );
+    auto cellBounds = std::vector<BoundingBox>(  6 );
 
     // Set tij grid iterator.
     auto tijIt = csGrid.tij().begin();

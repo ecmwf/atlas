@@ -9,11 +9,13 @@
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/CellColumns.h"
 #include "atlas/functionspace/NodeColumns.h"
+#include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/grid.h"
 #include "atlas/grid/CubedSphereGrid.h"
 #include "atlas/grid/Partitioner.h"
 #include "atlas/grid/Tiles.h"
 #include "atlas/grid/detail/partitioner/CubedSpherePartitioner.h"
+#include "atlas/interpolation.h"
 #include "atlas/mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/meshgenerator/detail/cubedsphere/CubedSphereUtility.h"
@@ -118,9 +120,30 @@ CASE( "cubedsphere_mesh_jacobian_test" ) {
 }
 
 
-double testFunction( double lon, double lat ) {
-    return std::sin( 3 * lon * M_PI / 180 ) * std::sin( 2 * lat * M_PI / 180 );
-}
+double testFunction( double lon, double lat, double t = 1. ) {
+    // lon and lat in degrees!
+
+    // Formula found in "A Lagrangian Particle Method with Remeshing for Tracer Transport on the Sphere"
+    // by Peter Bosler, James Kent, Robert Krasny, CHristiane Jablonowski, JCP 2015
+
+    lon *= M_PI / 180.;
+    lat *= M_PI / 180.;
+
+    auto sqr           = []( const double x ) { return x * x; };
+    auto sech          = []( const double x ) { return 1. / std::cosh( x ); };
+    const double T     = 1.;
+    const double Omega = 2. * M_PI / T;
+    t *= T;
+    const double lambda_prime = std::atan2( -std::cos( lon - Omega * t ), std::tan( lat ) );
+    const double rho          = 3. * std::sqrt( 1. - sqr( std::cos( lat ) ) * sqr( std::sin( lon - Omega * t ) ) );
+    double omega              = 0.;
+    double a                  = util::Earth::radius();
+    if ( rho != 0. ) {
+        omega = 0.5 * 3 * std::sqrt( 3 ) * a * Omega * sqr( sech( rho ) ) * std::tanh( rho ) / rho;
+    }
+    double q = 1. - std::tanh( 0.2 * rho * std::sin( lambda_prime - omega / a * t ) );
+    return q;
+};
 
 
 void testHaloExchange( const std::string& gridStr, const std::string& partitionerStr, idx_t halo, bool output = true ) {
@@ -304,6 +327,92 @@ CASE( "cubedsphere_mesh_test" ) {
         testHaloExchange( "CS-LFR-C-17", "equal_regions", 1 );
         testHaloExchange( "CS-LFR-C-17", "cubedsphere", 1 );
     }
+}
+
+CASE( "cubedsphere_dual_mesh_test") {
+
+    // This test generates a test field on a structured gird, then interpolates
+    // it to a cubed-sphere dual mesh field.
+    // The following functionality is tested:
+    //   * Generation of a cubed-sphere dual mesh.
+    //   * Partitioning of cubed-sphere dual mesh with a matching mesh partitioner.
+    //   * Interpolation from a StructuredColumns source to a cubed sphere dual mesh (NodeColumns) target.
+
+    // Set number of levels for test field.
+    const idx_t nLevels = 5;
+
+    // Make a grid, mesh and functionspace for structured source grid.
+
+    const auto sourceGrid = Grid( "O96" );
+    const auto sourceDistribution = grid::Distribution( sourceGrid, grid::Partitioner( "equal_bands") );
+    const auto sourceMesh = MeshGenerator( "structured" ).generate( sourceGrid, sourceDistribution );
+    const auto sourceFunctionSpace = functionspace::StructuredColumns( sourceGrid, sourceDistribution,
+                                     util::Config( "halo", 1 ) | util::Config( "periodic_points", true ) );
+
+    // Make and set a source field.
+    auto sourceField = sourceFunctionSpace.createField<double>(
+                       util::Config( "name", "source field" ) | util::Config( "levels", 5 ) );
+    auto sourceView = array::make_view<double, 2>( sourceField );
+    const auto sourceLonLatView = array::make_view<double, 2>( sourceFunctionSpace.lonlat() );
+
+    for ( idx_t i = 0; i < sourceView.shape( 0 ); ++i ) {
+        for ( idx_t j = 0; j < sourceView.shape( 1 ); ++j ) {
+            sourceView( i, j ) = testFunction(
+                sourceLonLatView( i, LON ), sourceLonLatView( i, LAT ),
+                static_cast<double>( j ) / ( nLevels - 1 ) );
+        }
+    }
+
+    // Set matching mesh partitioner.
+    const auto targetPartitioner = grid::MatchingPartitioner(sourceMesh);
+
+    // Set target grid, mesh and functionspace.
+    const auto targetGrid = Grid( "CS-LFR-C-48" );
+    const auto targetMesh = MeshGenerator( "cubedsphere_dual" ).generate( targetGrid, targetPartitioner );
+    const auto targetFunctionSpace = functionspace::NodeColumns( targetMesh );
+    auto targetField = targetFunctionSpace.createField<double>(
+                       util::Config( "name", "targetField" )  | util::Config( "levels", 5 ) );
+
+    // Perform interpolation.
+    auto scheme = util::Config( "type", "structured-linear2D" ) | util::Config( "halo", 1 );
+    auto interp = Interpolation(scheme, sourceFunctionSpace, targetFunctionSpace);
+    interp.execute(sourceField, targetField);
+    targetField.haloExchange();
+
+    // Test accuracy of interpolation.
+    auto targetView = array::make_view<double, 2>( targetField );
+    const auto targetLonLatView = array::make_view<double, 2>( targetFunctionSpace.lonlat() );
+    double maxError = 0.;
+    for ( idx_t i = 0; i < targetView.shape( 0 ); ++i ) {
+        for ( idx_t j = 0; j < targetView.shape( 1 ); ++j ) {
+            double referenceVal = testFunction(
+                targetLonLatView( i, LON ), targetLonLatView( i, LAT ),
+                static_cast<double>( j ) / ( nLevels - 1 ) );
+
+            double relativeError = std::abs( (targetView( i, j ) - referenceVal ) / referenceVal );
+            maxError = std::max ( maxError, relativeError );
+        }
+    }
+    mpi::comm().allReduceInPlace( maxError, eckit::mpi::Operation::Code::MAX );
+    Log::info() << "Max interpolation error = " + std::to_string( maxError ) << std::endl;
+
+    // Maximum interpolation error should be less than 1%.
+    EXPECT( maxError < 0.01 );
+
+    // Set gmsh output.
+    const auto gmshConfigXy = util::Config( "coordinates", "xy" ) |
+                              util::Config( "ghost", true ) |
+                              util::Config( "info", true );
+    const auto gmshConfigXyz = util::Config( "coordinates", "xyz" ) |
+                               util::Config( "ghost", true ) |
+                               util::Config( "info", true );
+    auto gmshXy  = output::Gmsh( "dual_xy.msh", gmshConfigXy );
+    auto gmshXyz = output::Gmsh( "dual_xyz.msh", gmshConfigXyz );
+    gmshXy.write( targetMesh );
+    gmshXyz.write( targetMesh );
+    gmshXy.write( targetField, targetFunctionSpace );
+    gmshXyz.write( targetField, targetFunctionSpace );
+
 }
 
 
