@@ -7,28 +7,44 @@
 
 #pragma once
 
+#pragma once
+
+#include <string>
+
+#include "atlas/util/Config.h"
+#include "atlas/util/Factory.h"
+
 namespace atlas {
-
-class FunctionSpace;
-
 namespace redistribution {
 namespace detail {
+
 class RedistributionImpl;
-}
-}  // namespace redistribution
-}  // namespace atlas
 
-namespace atlas {
-namespace redistribution {
-namespace detail {
+//----------------------------------------------------------------------------------------------------------------------
 
-/// \brief  Factory class to select correct concrete redistributor.
-class RedistributionImplFactory {
+class RedistributionImplFactory : public util::Factory<RedistributionImplFactory> {
 public:
-    /// \brief  Selection based on source and target function spaces.
-    static RedistributionImpl* build( const FunctionSpace& sourceFunctionSpace,
-                                      const FunctionSpace& targetFunctionSpace );
+    static std::string className() { return "RedistributionFactory"; }
+    static RedistributionImpl* build( const std::string& );
+    using Factory::Factory;
+
+private:
+    virtual RedistributionImpl* make() = 0;
 };
+
+//----------------------------------------------------------------------------------------------------------------------
+
+template <class T>
+class RedistributionImplBuilder : public RedistributionImplFactory {
+private:
+    virtual RedistributionImpl* make() { return new T(); }
+
+public:
+    using RedistributionImplFactory::RedistributionImplFactory;
+};
+
+//----------------------------------------------------------------------------------------------------------------------
+
 }  // namespace detail
 }  // namespace redistribution
 }  // namespace atlas
