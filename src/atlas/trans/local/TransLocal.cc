@@ -14,11 +14,10 @@
 #include <cstdlib>
 #include <fstream>
 
+#include "atlas/linalg/dense.h"
 #include "eckit/config/YAMLConfiguration.h"
 #include "eckit/eckit.h"
 #include "eckit/io/DataHandle.h"
-#include "eckit/linalg/LinearAlgebra.h"
-#include "eckit/linalg/Matrix.h"
 #include "eckit/log/Bytes.h"
 #include "eckit/log/JSON.h"
 #include "eckit/types/FloatCompare.h"
@@ -95,6 +94,9 @@ public:
 #endif
         return string_to_FFT.at( config_.getString( "fft", fft_default ) );
     }
+
+    std::string matrix_multiply() const { return config_.getString( "matrix_multiply", "" ); }
+
 
 private:
     const eckit::Configuration& config_;
@@ -261,14 +263,6 @@ struct FFTW_Data {
 // Class TransLocal
 // --------------------------------------------------------------------------------------------------------------------
 
-const eckit::linalg::LinearAlgebra& linear_algebra_backend() {
-    if ( eckit::linalg::LinearAlgebra::hasBackend( "mkl" ) ) {
-        return eckit::linalg::LinearAlgebra::getBackend( "mkl" );
-    }
-    // Default backend
-    return eckit::linalg::LinearAlgebra::backend();
-}
-
 bool TransLocal::warning( const eckit::Configuration& config ) const {
     int warning = warning_;
     config.get( "warning", warning );
@@ -286,8 +280,8 @@ TransLocal::TransLocal( const Cache& cache, const Grid& grid, const Domain& doma
     fft_cache_( cache.fft().data() ),
     fft_cachesize_( cache.fft().size() ),
     fftw_( new detail::FFTW_Data ),
-    linalg_( linear_algebra_backend() ),
-    warning_( TransParameters( config ).warning() ) {
+    linalg_backend_( TransParameters{config}.matrix_multiply() ),
+    warning_( TransParameters{config}.warning() ) {
     ATLAS_TRACE( "TransLocal constructor" );
     double fft_threshold = 0.0;  // fraction of latitudes of the full grid down to which FFT is used.
     // This threshold needs to be adjusted depending on the dgemm and FFT performance of the machine
@@ -876,6 +870,7 @@ void TransLocal::invtrans_legendre( const int truncation, const int nlats, const
                                     const eckit::Configuration& ) const {
     // Legendre transform:
     {
+        linalg::dense::Backend linalg_backend{linalg_backend_};
         Log::debug() << "Legendre dgemm: using " << nlatsLegReduced_ - nlat0_[0] << " latitudes out of "
                      << nlatsGlobal_ / 2 << std::endl;
         ATLAS_TRACE( "Inverse Legendre Transform (GEMM)" );
@@ -888,6 +883,8 @@ void TransLocal::invtrans_legendre( const int truncation, const int nlats, const
                 auto posFourier = [&]( int jfld, int imag, int jlat, int jm, int nlatsH ) {
                     return jfld + nb_fields * ( imag + n_imag * ( nlatsLegReduced_ - nlat0_[jm] - nlatsH + jlat ) );
                 };
+                // THESE ARE REALLOCATED FOR EACH jm ???
+                // THEY COULD ALLOCATED ONCE BEFORE jm LOOP WITH A MAXIMUM SIZE?
                 double* scalar_sym;
                 double* scalar_asym;
                 double* scl_fourier_sym;
@@ -933,12 +930,13 @@ void TransLocal::invtrans_legendre( const int truncation, const int nlats, const
                                   size_t( is ) == n_imag * nb_fields * size_sym );
                 }
                 if ( nlatsLegReduced_ - nlat0_[jm] > 0 ) {
+                    ATLAS_TRACE( "matrix_multiply (" + std::string( linalg_backend ) + ")" );
                     {
-                        eckit::linalg::Matrix A( scalar_sym, nb_fields * n_imag, size_sym );
-                        eckit::linalg::Matrix B( legendre_sym_ + legendre_sym_begin_[jm] + nlat0_[jm] * size_sym,
-                                                 size_sym, nlatsLegReduced_ - nlat0_[jm] );
-                        eckit::linalg::Matrix C( scl_fourier_sym, nb_fields * n_imag, nlatsLegReduced_ - nlat0_[jm] );
-                        linalg_.gemm( A, B, C );
+                        linalg::Matrix A( scalar_sym, nb_fields * n_imag, size_sym );
+                        linalg::Matrix B( legendre_sym_ + legendre_sym_begin_[jm] + nlat0_[jm] * size_sym, size_sym,
+                                          nlatsLegReduced_ - nlat0_[jm] );
+                        linalg::Matrix C( scl_fourier_sym, nb_fields * n_imag, nlatsLegReduced_ - nlat0_[jm] );
+                        linalg::matrix_multiply( A, B, C, linalg_backend );
                         /*Log::info() << "sym: ";
                         for ( int j = 0; j < size_sym * ( nlatsLegReduced_ - nlat0_[jm] ); j++ ) {
                             Log::info() << legendre_sym_[j + legendre_sym_begin_[jm] + nlat0_[jm] * size_sym] << " ";
@@ -946,11 +944,11 @@ void TransLocal::invtrans_legendre( const int truncation, const int nlats, const
                         Log::info() << std::endl;*/
                     }
                     if ( size_asym > 0 ) {
-                        eckit::linalg::Matrix A( scalar_asym, nb_fields * n_imag, size_asym );
-                        eckit::linalg::Matrix B( legendre_asym_ + legendre_asym_begin_[jm] + nlat0_[jm] * size_asym,
-                                                 size_asym, nlatsLegReduced_ - nlat0_[jm] );
-                        eckit::linalg::Matrix C( scl_fourier_asym, nb_fields * n_imag, nlatsLegReduced_ - nlat0_[jm] );
-                        linalg_.gemm( A, B, C );
+                        linalg::Matrix A( scalar_asym, nb_fields * n_imag, size_asym );
+                        linalg::Matrix B( legendre_asym_ + legendre_asym_begin_[jm] + nlat0_[jm] * size_asym, size_asym,
+                                          nlatsLegReduced_ - nlat0_[jm] );
+                        linalg::Matrix C( scl_fourier_asym, nb_fields * n_imag, nlatsLegReduced_ - nlat0_[jm] );
+                        linalg::matrix_multiply( A, B, C, linalg_backend );
                         /*Log::info() << "asym: ";
                         for ( int j = 0; j < size_asym * ( nlatsLegReduced_ - nlat0_[jm] ); j++ ) {
                             Log::info() << legendre_asym_[j + legendre_asym_begin_[jm] + nlat0_[jm] * size_asym] << " ";
@@ -1069,15 +1067,16 @@ void TransLocal::invtrans_fourier_regular( const int nlats, const int nlons, con
 #endif
     }
     else {
+        linalg::dense::Backend linalg_backend{linalg_backend_};
 #if !TRANSLOCAL_DGEMM2
         // dgemm-method 1
         {
-            ATLAS_TRACE( "Inverse Fourier Transform (NoFFT)" );
-            eckit::linalg::Matrix A( fourier_, nlons, ( truncation_ + 1 ) * 2 );
-            eckit::linalg::Matrix B( scl_fourier, ( truncation_ + 1 ) * 2, nb_fields * nlats );
-            eckit::linalg::Matrix C( gp_fields, nlons, nb_fields * nlats );
+            ATLAS_TRACE( "Inverse Fourier Transform (NoFFT,matrix_multiply=" + std::string( linalg_backend ) + ")" );
+            linalg::Matrix A( fourier_, nlons, ( truncation_ + 1 ) * 2 );
+            linalg::Matrix B( scl_fourier, ( truncation_ + 1 ) * 2, nb_fields * nlats );
+            linalg::Matrix C( gp_fields, nlons, nb_fields * nlats );
 
-            linalg_.gemm( A, B, C );
+            linalg::matrix_multiply( A, B, C, linalg_backend );
         }
 #else
         // dgemm-method 2
@@ -1087,10 +1086,10 @@ void TransLocal::invtrans_fourier_regular( const int nlats, const int nlons, con
         alloc_aligned( gp, nb_fields * grid_.size() );
         {
             ATLAS_TRACE( "Fourier dgemm method 2" );
-            eckit::linalg::Matrix A( scl_fourier, nb_fields * nlats, ( truncation_ + 1 ) * 2 );
-            eckit::linalg::Matrix B( fourier_, ( truncation_ + 1 ) * 2, nlons );
-            eckit::linalg::Matrix C( gp, nb_fields * nlats, nlons );
-            linalg_.gemm( A, B, C );
+            linalg::Matrix A( scl_fourier, nb_fields * nlats, ( truncation_ + 1 ) * 2 );
+            linalg::Matrix B( fourier_, ( truncation_ + 1 ) * 2, nlons );
+            linalg::Matrix C( gp, nb_fields * nlats, nlons );
+            linalg::matrix_multiply( A, B, C, linalg_backend );
         }
 
         // Transposition in grid point space:
@@ -1192,21 +1191,23 @@ void TransLocal::invtrans_unstructured_precomp( const int truncation, const int 
     alloc_aligned( fouriertp, 2 * ( truncation ) );
     alloc_aligned( gp_opt, nb_fields );
 
+    linalg::dense::Backend linalg_backend{linalg_backend_};
+
     {
-        ATLAS_TRACE( "Inverse Legendre Transform (GEMM)" );
+        ATLAS_TRACE( "Inverse Legendre Transform (GEMM," + std::string( linalg_backend ) + ")" );
         for ( int jm = 0; jm < truncation; jm++ ) {
             const int noff = ( 2 * truncation + 3 - jm ) * jm / 2, ns = truncation - jm + 1;
-            eckit::linalg::Matrix A( eckit::linalg::Matrix(
-                const_cast<double*>( scalar_spectra ) + nb_fields * 2 * noff, nb_fields * 2, ns ) );
-            eckit::linalg::Matrix B( legendre_ + noff * nlats, ns, nlats );
-            eckit::linalg::Matrix C( scl_fourier + jm * size_fourier * nlats, nb_fields * 2, nlats );
-            linalg_.gemm( A, B, C );
+            linalg::Matrix A( eckit::linalg::Matrix( const_cast<double*>( scalar_spectra ) + nb_fields * 2 * noff,
+                                                     nb_fields * 2, ns ) );
+            linalg::Matrix B( legendre_ + noff * nlats, ns, nlats );
+            linalg::Matrix C( scl_fourier + jm * size_fourier * nlats, nb_fields * 2, nlats );
+            linalg::matrix_multiply( A, B, C, linalg_backend );
         }
     }
 
     // loop over all points:
     {
-        ATLAS_TRACE( "Inverse Fourier Transform (NoFFT)" );
+        ATLAS_TRACE( "Inverse Fourier Transform (NoFFT," + std::string( linalg_backend ) + ")" );
         int ip = 0;
         for ( const PointLonLat p : grid_.lonlat() ) {
             const double lon = p.lon() * util::Constants::degreesToRadians();
@@ -1238,10 +1239,10 @@ void TransLocal::invtrans_unstructured_precomp( const int truncation, const int 
             }
             {
                 //ATLAS_TRACE( "opt Fourier dgemm" );
-                eckit::linalg::Matrix A( fouriertp, 1, (truncation)*2 );
-                eckit::linalg::Matrix B( scl_fourier_tp, (truncation)*2, nb_fields );
-                eckit::linalg::Matrix C( gp_opt, 1, nb_fields );
-                linalg_.gemm( A, B, C );
+                linalg::Matrix A( fouriertp, 1, (truncation)*2 );
+                linalg::Matrix B( scl_fourier_tp, (truncation)*2, nb_fields );
+                linalg::Matrix C( gp_opt, 1, nb_fields );
+                linalg::matrix_multiply( A, B, C, linalg_backend );
                 for ( int j = 0; j < nb_fields; j++ ) {
                     gp_fields[ip + j * grid_.size()] = gp_opt[j];
                 }
@@ -1278,6 +1279,8 @@ void TransLocal::invtrans_unstructured( const int truncation, const int nb_field
                        << std::endl;
     }
 
+    linalg::dense::Backend linalg_backend{linalg_backend_};
+
     double* zfn;
     alloc_aligned( zfn, ( truncation + 1 ) * ( truncation + 1 ) );
     compute_zfn( truncation, zfn );
@@ -1303,13 +1306,14 @@ void TransLocal::invtrans_unstructured( const int truncation, const int nb_field
         // Legendre transform:
         {
             //ATLAS_TRACE( "opt Legendre dgemm" );
+            ATLAS_TRACE( "Legendre matrix_multiply (" + std::string( linalg_backend ) + ")" );
             for ( int jm = 0; jm <= truncation; jm++ ) {
                 const int noff = ( 2 * truncation + 3 - jm ) * jm / 2, ns = truncation - jm + 1;
-                eckit::linalg::Matrix A( eckit::linalg::Matrix(
-                    const_cast<double*>( scalar_spectra ) + nb_fields * 2 * noff, nb_fields * 2, ns ) );
-                eckit::linalg::Matrix B( legendre + noff, ns, 1 );
-                eckit::linalg::Matrix C( scl_fourier + jm * size_fourier, nb_fields * 2, 1 );
-                linalg_.gemm( A, B, C );
+                linalg::Matrix A( eckit::linalg::Matrix( const_cast<double*>( scalar_spectra ) + nb_fields * 2 * noff,
+                                                         nb_fields * 2, ns ) );
+                linalg::Matrix B( legendre + noff, ns, 1 );
+                linalg::Matrix C( scl_fourier + jm * size_fourier, nb_fields * 2, 1 );
+                linalg::matrix_multiply( A, B, C, linalg_backend );
             }
         }
         {
@@ -1335,11 +1339,11 @@ void TransLocal::invtrans_unstructured( const int truncation, const int nb_field
             fouriertp[idx++] = -2. * std::sin( jm * lon );  // imaginary part
         }
         {
-            //ATLAS_TRACE( "opt Fourier dgemm" );
-            eckit::linalg::Matrix A( fouriertp, 1, ( truncation + 1 ) * 2 );
-            eckit::linalg::Matrix B( scl_fourier_tp, ( truncation + 1 ) * 2, nb_fields );
-            eckit::linalg::Matrix C( gp_opt, 1, nb_fields );
-            linalg_.gemm( A, B, C );
+            ATLAS_TRACE( "Fourier matrix_multiply (" + std::string( linalg_backend ) + ")" );
+            linalg::Matrix A( fouriertp, 1, ( truncation + 1 ) * 2 );
+            linalg::Matrix B( scl_fourier_tp, ( truncation + 1 ) * 2, nb_fields );
+            linalg::Matrix C( gp_opt, 1, nb_fields );
+            linalg::matrix_multiply( A, B, C, linalg_backend );
             for ( int j = 0; j < nb_fields; j++ ) {
                 gp_fields[ip + j * grid_.size()] = gp_opt[j];
             }
