@@ -14,8 +14,6 @@
 
 #include "eckit/utils/Hash.h"
 
-
-#include "atlas/array/helpers/ArrayCopier.h"
 #include "atlas/functionspace/CubedSphereColumns.h"
 #include "atlas/grid/CubedSphereGrid.h"
 #include "atlas/grid/Distribution.h"
@@ -146,12 +144,9 @@ namespace  {
 template<typename Value, int Rank>
 void copyField(const Field& sourceField, Field& targetField) {
 
-    // Make views to field.
-    const auto sourceView = array::make_view<Value, Rank>( sourceField );
-    auto targetView = array::make_view<Value, Rank>( targetField );
-
     // Assign source field values to target field.
-    array::helpers::array_copier<Value, Rank>::apply( sourceView, targetView );
+    array::make_view<Value, Rank>( targetField ).assign(
+                                array::make_view<Value, Rank>( sourceField ) );
 }
 
 }
