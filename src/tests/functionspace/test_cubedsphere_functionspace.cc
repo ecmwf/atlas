@@ -130,21 +130,34 @@ CASE( "cubedsphere_mesh_functionspace" ) {
     const auto meshGenEqualRegions = MeshGenerator( "cubedsphere", meshConfigEqualRegions );
     const auto meshGenCubedSphere  = MeshGenerator( "cubedsphere", meshConfigCubedSphere );
 
+    // Set dual mesh generator.
+    const auto dualMeshGenEqualRegions = MeshGenerator( "cubedsphere_dual", meshConfigEqualRegions );
+    const auto dualMeshGenCubedSphere  = MeshGenerator( "cubedsphere_dual", meshConfigCubedSphere );
+
     // Set mesh
     const auto meshEqualRegions = meshGenEqualRegions.generate( grid );
     const auto meshCubedSphere  = meshGenCubedSphere.generate( grid );
+
+    // Set dual mesh
+    const auto dualMeshEqualRegions = dualMeshGenEqualRegions.generate( grid );
+    const auto dualMeshCubedSphere  = dualMeshGenCubedSphere.generate( grid );
 
     // Set functionspace.
     const auto equalRegionsCellColumns = functionspace::CubedSphereCellColumns( meshEqualRegions );
     const auto cubedSphereCellColumns  = functionspace::CubedSphereCellColumns( meshCubedSphere );
     const auto equalRegionsNodeColumns = functionspace::CubedSphereNodeColumns( meshEqualRegions );
     const auto cubedSphereNodeColumns  = functionspace::CubedSphereNodeColumns( meshCubedSphere );
+    const auto equalRegionsDualNodeColumns = functionspace::CubedSphereNodeColumns( dualMeshEqualRegions );
+    const auto cubedSphereDualNodeColumns  = functionspace::CubedSphereNodeColumns( dualMeshCubedSphere );
+
 
     // test functionspaces.
     SECTION( "CellColumns: equal_regions" ) { testFunctionSpace( equalRegionsCellColumns ); }
     SECTION( "CellColumns: cubedsphere" ) { testFunctionSpace( cubedSphereCellColumns ); }
     SECTION( "NodeColumns: equal_regions" ) { testFunctionSpace( equalRegionsNodeColumns ); }
     SECTION( "NodeColumns: cubedsphere" ) { testFunctionSpace( cubedSphereNodeColumns ); }
+    SECTION( "NodeColumns: dual mesh, equal_regions" ) { testFunctionSpace( equalRegionsDualNodeColumns ); }
+    SECTION( "NodeColumns: dual mesh, cubedsphere" ) { testFunctionSpace( cubedSphereDualNodeColumns ); }
 }
 
 CASE( "test copies and up/down casting" ) {
