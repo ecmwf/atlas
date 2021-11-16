@@ -59,7 +59,6 @@ include( features/ATLAS_RUN )
 include( atlas_compile_flags )
 
 add_subdirectory( src )
-add_subdirectory( etc )
 add_subdirectory( doc )
 
 ################################################################################
