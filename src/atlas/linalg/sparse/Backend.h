@@ -26,16 +26,17 @@ sparse::Backend& default_backend( const std::string& backend );
 
 struct Backend : util::Config {
     Backend() : util::Config() { set( current_backend() ); }
-    Backend( const std::string type ) : util::Config() { set( default_backend( ( type ) ) ); }
+    Backend( const std::string& type );
     Backend( const eckit::Configuration& other );
     std::string type() const { return getString( "type" ); }
     operator std::string() const { return type(); }
+    bool available() const;
 };
 
 namespace backend {
-struct omp : Backend {
-    static std::string type() { return "omp"; }
-    omp() : Backend( type() ) {}
+struct openmp : Backend {
+    static std::string type() { return "openmp"; }
+    openmp() : Backend( type() ) {}
 };
 
 struct eckit_linalg : Backend {
