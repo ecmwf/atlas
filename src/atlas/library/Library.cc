@@ -178,6 +178,24 @@ std::string Library::dataPath() const {
     return join( paths, ":" );
 }
 
+std::string atlas::Library::linalgSparseBackend() const {
+    auto resource = []() -> std::string {
+        return eckit::LibResource<std::string, Library>( "atlas-linalg-sparse-backend;$ATLAS_LINALG_SPARSE_BACKEND",
+                                                         "" );
+    };
+    static std::string ATLAS_LINALG_SPARSE_BACKEND = resource();
+    return ATLAS_LINALG_SPARSE_BACKEND;
+}
+
+std::string atlas::Library::linalgDenseBackend() const {
+    auto resource = []() -> std::string {
+        return eckit::LibResource<std::string, Library>( "atlas-linalg-dense-backend;$ATLAS_LINALG_DENSE_BACKEND", "" );
+    };
+    static std::string ATLAS_LINALG_DENSE_BACKEND = resource();
+    return ATLAS_LINALG_DENSE_BACKEND;
+}
+
+
 Library& Library::instance() {
     return libatlas;
 }
