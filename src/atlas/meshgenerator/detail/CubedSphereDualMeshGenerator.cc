@@ -192,7 +192,7 @@ void CubedSphereDualMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid,
     copyField<int, 1>( csCells.flags(), nodes.flags() );
     copyField<double, 2>( csCells.field( "xy" ), nodes.xy() );
     copyField<double, 2>( csCells.field( "lonlat" ), nodes.lonlat() );
-    copyField<idx_t, 2>( csCells.field( "tij"), nodes.field("tij") );
+    copyField<idx_t, 2>( csCells.field( "tij"), nodes.field( "tij" ) );
 
     // Need to set a ghost field and decrement halo by one.
     auto nodesGhost = array::make_view<int, 1>( nodes.ghost() );
@@ -207,159 +207,155 @@ void CubedSphereDualMeshGenerator::generate_mesh( const CubedSphereGrid& csGrid,
     //--------------------------------------------------------------------------
 
     // Make views to cubed sphere nodes.
-    const auto csNodesGlobalIdx = array::make_view<gidx_t, 1>( csNodes.global_index() );
-    const auto csNodesRemoteIdx = array::make_indexview<idx_t, 1>( csNodes.remote_index() );
-    const auto csNodesXy        = array::make_view<double, 2>( csNodes.xy() );
-    const auto csNodesLonLat    = array::make_view<double, 2>( csNodes.lonlat() );
-    const auto csNodesPart      = array::make_view<int, 1>( csNodes.partition() );
     const auto csNodesHalo      = array::make_view<int, 1>( csNodes.halo() );
-    const auto csNodesFlags     = array::make_view<int, 1>( csNodes.flags() );
     const auto csNodesTij       = array::make_view<idx_t, 2>( csNodes.field( "tij" ) );
 
-    // Check if cell is in tile corner.
-    const auto cornerCell = [&]( idx_t idxCell ) -> bool {
+    // Figure out element types.
+    enum struct ElemType { tri, quad };
+    const auto getType = [&]( idx_t idx ) -> ElemType {
 
         // Nodes of csMesh are cells of dual mesh.
-
-        const idx_t i = csNodesTij( idxCell, Coordinates::I );
-        const idx_t j = csNodesTij( idxCell, Coordinates::J );
-        return ( i == 0 && j == 0 ) || ( i == N && j == 0 ) ||
-               ( i == N && j == N ) || ( i == 0 && j == N );
+        const idx_t i = csNodesTij( idx, Coordinates::I );
+        const idx_t j = csNodesTij( idx, Coordinates::J );
+        auto cornerCell = ( i == 0 && j == 0 ) || ( i == N && j == 0 ) ||
+                          ( i == N && j == N ) || ( i == 0 && j == N );
+        return cornerCell ? ElemType::tri : ElemType::quad;
     };
 
-    // Check if cell is out of bounds
+    // Set first element type. ( first = type, second = count )
+    auto typeCounts = std::vector< std::pair<ElemType, idx_t> > { std::make_pair( getType( 0 ), 1 ) };
 
-    // Figure out the number of quads and triangles we need to add.
-    idx_t nQuadCell = 0;
-    idx_t nTriCell = 0;
-    for ( idx_t idxCsNode = 0; idxCsNode < csNodes.size(); ++idxCsNode ) {
+    // Count the number of consecutive triangles and quadtrilaterals in dual mesh.
+    // This is an attempt to keep dual mesh cells in the same order as mesh nodes.
+    // Otherwise, the halo exchange bookkeeping is invalidated.
+    for ( idx_t idx = 1; idx < csNodes.size(); ++idx ) {
 
-        // Exclude outer halo ring of cubed sphere mesh nodes.
-        if ( csNodesHalo( idxCsNode ) < nHalo ) {
-
-            // Tile corner elements are triangles. Rest are quads.
-            if ( cornerCell( idxCsNode ) ) {
-                ++nTriCell;
-            }
-            else {
-                ++nQuadCell;
-            }
+        // Exclude outer ring of cubed sphere mesh halo.
+        if ( csNodesHalo ( idx ) == nHalo ) {
+            break;
         }
+
+        // Get the element type.
+        const auto elemType = getType( idx );
+
+        // Increment counter if this elemType is the same as last one
+        if ( elemType == typeCounts.back().first ) {
+            ++typeCounts.back().second;
+        }
+        // Otherwise add a new counter.
+        else {
+            typeCounts.emplace_back( elemType, 1 );
+        }
+
     }
 
     // Add cells to mesh.
     auto& cells = mesh.cells();
-    cells.add( new mesh::temporary::Quadrilateral(), nQuadCell );
-    cells.add( new mesh::temporary::Triangle(), nTriCell );
+    idx_t nCells{};
+    // Loop through type counters.
+    for ( const auto& typeCount : typeCounts ) {
+
+        // Select element type.
+        switch ( typeCount.first ) {
+            // Add a batch of triangles.
+            case ElemType::tri : {
+                cells.add( new mesh::temporary::Triangle(), typeCount.second );
+                break;
+            }
+            // Add a batch quadrilaterals.
+            case ElemType::quad : {
+                cells.add( new mesh::temporary::Quadrilateral(), typeCount.second );
+                break;
+            }
+        }
+        // Increment the total number of cells.
+        nCells += typeCount.second;
+    }
+
+    // Add extra fields to cells.
+    cells.add( Field( "tij", array::make_datatype<idx_t>(),
+                             array::make_shape( cells.size(), 3 ) ) );
+
+    cells.add( Field( "xy", array::make_datatype<double>(),
+                      array::make_shape( cells.size(), 2 ) ) );
+
+    cells.add( Field( "lonlat", array::make_datatype<double>(),
+                      array::make_shape( cells.size(), 2 ) ) );
+
+    // Copy dual cells fields from nodes.
+    copyField<gidx_t, 1>( csNodes.global_index(), cells.global_index() );
+    copyField<idx_t, 1>( csNodes.remote_index(), cells.remote_index() );
+    copyField<int, 1>( csNodes.partition(), cells.partition() );
+    copyField<int, 1>( csNodes.halo(), cells.halo() );
+    copyField<int, 1>( csNodes.flags(), cells.flags() );
+    copyField<idx_t, 2>( csNodes.field( "tij" ), cells.field( "tij" ) );
+    copyField<double, 2>( csNodes.xy(), cells.field( "xy" ) );
+    copyField<double, 2>( csNodes.lonlat(), cells.field( "lonlat" ) );
+
+    // Get node connectivity.
     auto& nodeConnectivity = cells.node_connectivity();
 
-    // Add extra fields.
-    auto tijField = cells.add( Field( "tij", array::make_datatype<idx_t>(),
-                                      array::make_shape( cells.size(), 3 ) ) );
-    tijField.set_variables( 3 );
+    // Loop over dual mesh cells and set connectivity.
+    for ( idx_t idx = 0; idx < nCells; ++idx ) {
 
-    Field xyField = cells.add( Field( "xy", array::make_datatype<double>(),
-                                      array::make_shape( cells.size(), 2 ) ) );
-    xyField.set_variables( 2 );
+        const idx_t t = csNodesTij( idx, Coordinates::T );
+        const idx_t i = csNodesTij( idx, Coordinates::I );
+        const idx_t j = csNodesTij( idx, Coordinates::J );
 
-    Field lonLatField = cells.add( Field( "lonlat", array::make_datatype<double>(),
-                                          array::make_shape( cells.size(), 2 ) ) );
-    lonLatField.set_variables( 2 );
 
-    // Make views to dual mesh fields.
-    auto cellsGlobalIdx = array::make_view<gidx_t, 1>( cells.global_index() );
-    auto cellsRemoteIdx = array::make_indexview<idx_t, 1>( cells.remote_index() );
-    auto cellsPart      = array::make_view<int, 1>( cells.partition() );
-    auto cellsHalo      = array::make_view<int, 1>( cells.halo() );
-    auto cellsFlags     = array::make_view<int, 1>( cells.flags() );
-    auto cellsTij       = array::make_view<idx_t, 2>( tijField );
-    auto cellsXy        = array::make_view<double, 2>( xyField );
-    auto cellsLonLat    = array::make_view<double, 2>( lonLatField );
+        // Declare vector of surrounding nodes.
+        auto cellNodes = std::vector<idx_t>{};
 
-    // Set separate counters for quads and triangles.
-    idx_t idxQuadCell = cells.elements( 0 ).begin();
-    idx_t idxTriCell = cells.elements( 1 ).begin();
-
-    // Loop over mesh nodes and set dual mesh cells.
-    for ( idx_t idxCsNode = 0; idxCsNode < nQuadCell + nTriCell; ++idxCsNode ) {
-
-        const idx_t tCell = csNodesTij( idxCsNode, Coordinates::T );
-        const idx_t iCell = csNodesTij( idxCsNode, Coordinates::I );
-        const idx_t jCell = csNodesTij( idxCsNode, Coordinates::J );
-
-        idx_t idxCell;
-
-        // Set corner triangle.
-        if ( cornerCell( idxCsNode ) ) {
-            idxCell = idxTriCell++;
-
-            auto triCellNodes = std::array<idx_t, 3>{};
+        // Get number of nodes per element.
+        const auto nNodes = cells.node_connectivity().row( idx ).size();
+        // Element is a triangle.
+        if ( nNodes == 3 ) {
 
             // Bottom-left corner.
-            if ( iCell == 0 && jCell == 0 ) {
-                triCellNodes = {
-                    csCellsFunctionSpace.index( tCell,  0, -1 ),
-                    csCellsFunctionSpace.index( tCell,  0,  0 ),
-                    csCellsFunctionSpace.index( tCell, -1,  0 )};
+            if ( i == 0 && j == 0 ) {
+                cellNodes = {
+                    csCellsFunctionSpace.index( t,  0, -1 ),
+                    csCellsFunctionSpace.index( t,  0,  0 ),
+                    csCellsFunctionSpace.index( t, -1,  0 )};
             }
-
             // Bottom-right corner.
-            else if ( iCell == N && jCell == 0 ) {
-                triCellNodes = {
-                    csCellsFunctionSpace.index( tCell, N - 1, -1 ),
-                    csCellsFunctionSpace.index( tCell, N    ,  0 ),
-                    csCellsFunctionSpace.index( tCell, N - 1,  0 )};
+            else if ( i == N && j == 0 ) {
+                cellNodes = {
+                    csCellsFunctionSpace.index( t, N - 1, -1 ),
+                    csCellsFunctionSpace.index( t, N    ,  0 ),
+                    csCellsFunctionSpace.index( t, N - 1,  0 )};
             }
-
             // Top-right corner.
-            else if ( iCell == N && jCell == N ) {
-                triCellNodes = {
-                    csCellsFunctionSpace.index( tCell, N - 1, N - 1 ),
-                    csCellsFunctionSpace.index( tCell, N    , N - 1 ),
-                    csCellsFunctionSpace.index( tCell, N - 1, N     )};
+            else if ( i == N && j == N ) {
+                cellNodes = {
+                    csCellsFunctionSpace.index( t, N - 1, N - 1 ),
+                    csCellsFunctionSpace.index( t, N    , N - 1 ),
+                    csCellsFunctionSpace.index( t, N - 1, N     )};
             }
-
             // Top-left corner.
             else {
-                triCellNodes = {
-                    csCellsFunctionSpace.index( tCell, -1, N - 1 ),
-                    csCellsFunctionSpace.index( tCell,  0, N - 1 ),
-                    csCellsFunctionSpace.index( tCell,  0, N     )};
+                cellNodes = {
+                    csCellsFunctionSpace.index( t, -1, N - 1 ),
+                    csCellsFunctionSpace.index( t,  0, N - 1 ),
+                    csCellsFunctionSpace.index( t,  0, N     )};
             }
 
-            nodeConnectivity.set( idxCell, triCellNodes.data());
-
         }
+        // Element is a quadtrilateral.
+        else if ( nNodes == 4 ) {
 
-        // Set quad.
+            cellNodes = {
+                csCellsFunctionSpace.index( t, i - 1, j - 1 ),
+                csCellsFunctionSpace.index( t, i    , j - 1 ),
+                csCellsFunctionSpace.index( t, i    , j     ),
+                csCellsFunctionSpace.index( t, i - 1, j     )};
+        }
+        // Couldn't determine element type.
         else {
-            idxCell = idxQuadCell++;
-
-            auto quadCellNodes = std::array<idx_t, 4>{
-                csCellsFunctionSpace.index( tCell, iCell - 1, jCell - 1 ),
-                csCellsFunctionSpace.index( tCell, iCell    , jCell - 1 ),
-                csCellsFunctionSpace.index( tCell, iCell    , jCell     ),
-                csCellsFunctionSpace.index( tCell, iCell - 1, jCell     ),
-            };
-
-            nodeConnectivity.set( idxCell, quadCellNodes.data() );
-
+            ATLAS_THROW_EXCEPTION( "Could not determine element type for cell " + std::to_string( idx ) + "."; );
         }
 
-        // Copy field data.
-        cellsGlobalIdx(idxCell) = csNodesGlobalIdx(idxCsNode);
-        cellsRemoteIdx(idxCell) = csNodesRemoteIdx(idxCsNode);
-        cellsPart(idxCell) = csNodesPart(idxCsNode);
-        cellsHalo(idxCell) = csNodesHalo(idxCsNode);
-        cellsFlags(idxCell) = csNodesFlags(idxCsNode);
-        cellsTij(idxCell, Coordinates::T) = csNodesTij(idxCsNode, Coordinates::T);
-        cellsTij(idxCell, Coordinates::I) = csNodesTij(idxCsNode, Coordinates::I);
-        cellsTij(idxCell, Coordinates::J) = csNodesTij(idxCsNode, Coordinates::J);
-        cellsXy(idxCell, XX) = csNodesXy(idxCsNode, XX);
-        cellsXy(idxCell, YY) = csNodesXy(idxCsNode, YY);
-        cellsLonLat(idxCell, LON) = csNodesLonLat(idxCsNode, LON);
-        cellsLonLat(idxCell, LAT) = csNodesLonLat(idxCsNode, LAT);
-
+        nodeConnectivity.set( idx, cellNodes.data() );
     }
 
     // Set metadata.

@@ -331,87 +331,156 @@ CASE( "cubedsphere_mesh_test" ) {
 
 CASE( "cubedsphere_dual_mesh_test") {
 
-    // This test generates a test field on a structured gird, then interpolates
-    // it to a cubed-sphere dual mesh field.
-    // The following functionality is tested:
-    //   * Generation of a cubed-sphere dual mesh.
-    //   * Partitioning of cubed-sphere dual mesh with a matching mesh partitioner.
-    //   * Interpolation from a StructuredColumns source to a cubed sphere dual mesh (NodeColumns) target.
+    SECTION( "NodeColumns") {
 
-    // Set number of levels for test field.
-    const idx_t nLevels = 5;
+        // This test generates a test field on a structured gird, then interpolates
+        // it to a cubed-sphere dual mesh field.
+        // The following functionality is tested:
+        //   * Generation of a cubed-sphere dual mesh.
+        //   * Partitioning of cubed-sphere dual mesh with a matching mesh partitioner.
+        //   * Interpolation from a StructuredColumns source to a cubed sphere dual mesh (NodeColumns) target.
 
-    // Make a grid, mesh and functionspace for structured source grid.
+        // Set number of levels for test field.
+        const idx_t nLevels = 5;
 
-    const auto sourceGrid = Grid( "O96" );
-    const auto sourceDistribution = grid::Distribution( sourceGrid, grid::Partitioner( "equal_bands") );
-    const auto sourceMesh = MeshGenerator( "structured" ).generate( sourceGrid, sourceDistribution );
-    const auto sourceFunctionSpace = functionspace::StructuredColumns( sourceGrid, sourceDistribution,
-                                     util::Config( "halo", 1 ) | util::Config( "periodic_points", true ) );
+        // Make a grid, mesh and functionspace for structured source grid.
 
-    // Make and set a source field.
-    auto sourceField = sourceFunctionSpace.createField<double>(
-                       util::Config( "name", "source field" ) | util::Config( "levels", 5 ) );
-    auto sourceView = array::make_view<double, 2>( sourceField );
-    const auto sourceLonLatView = array::make_view<double, 2>( sourceFunctionSpace.lonlat() );
+        const auto sourceGrid = Grid( "O96" );
+        const auto sourceDistribution = grid::Distribution( sourceGrid, grid::Partitioner( "equal_bands") );
+        const auto sourceMesh = MeshGenerator( "structured" ).generate( sourceGrid, sourceDistribution );
+        const auto sourceFunctionSpace = functionspace::StructuredColumns( sourceGrid, sourceDistribution,
+                                         util::Config( "halo", 1 ) | util::Config( "periodic_points", true ) );
 
-    for ( idx_t i = 0; i < sourceView.shape( 0 ); ++i ) {
-        for ( idx_t j = 0; j < sourceView.shape( 1 ); ++j ) {
-            sourceView( i, j ) = testFunction(
-                sourceLonLatView( i, LON ), sourceLonLatView( i, LAT ),
-                static_cast<double>( j ) / ( nLevels - 1 ) );
+        // Make and set a source field.
+        auto sourceField = sourceFunctionSpace.createField<double>(
+                           util::Config( "name", "source field" ) | util::Config( "levels", nLevels ) );
+        auto sourceView = array::make_view<double, 2>( sourceField );
+        const auto sourceLonLatView = array::make_view<double, 2>( sourceFunctionSpace.lonlat() );
+
+        for ( idx_t i = 0; i < sourceView.shape( 0 ); ++i ) {
+            for ( idx_t j = 0; j < sourceView.shape( 1 ); ++j ) {
+                sourceView( i, j ) = testFunction(
+                    sourceLonLatView( i, LON ), sourceLonLatView( i, LAT ),
+                    static_cast<double>( j ) / ( nLevels - 1 ) );
+            }
         }
+
+        // Set matching mesh partitioner.
+        const auto targetPartitioner = grid::MatchingPartitioner(sourceMesh);
+
+        // Set target grid, mesh and functionspace.
+        const auto targetGrid = Grid( "CS-LFR-C-48" );
+        const auto targetMesh = MeshGenerator( "cubedsphere_dual" ).generate( targetGrid, targetPartitioner );
+        const auto targetFunctionSpace = functionspace::NodeColumns( targetMesh );
+        auto targetField = targetFunctionSpace.createField<double>(
+                           util::Config( "name", "targetField" )  | util::Config( "levels", 5 ) );
+
+        // Perform interpolation.
+        auto scheme = util::Config( "type", "structured-linear2D" ) | util::Config( "halo", 1 );
+        auto interp = Interpolation(scheme, sourceFunctionSpace, targetFunctionSpace);
+        interp.execute(sourceField, targetField);
+        targetField.haloExchange();
+
+        // Test accuracy of interpolation.
+        auto targetView = array::make_view<double, 2>( targetField );
+        const auto targetLonLatView = array::make_view<double, 2>( targetFunctionSpace.lonlat() );
+        double maxError = 0.;
+        for ( idx_t i = 0; i < targetView.shape( 0 ); ++i ) {
+            for ( idx_t j = 0; j < targetView.shape( 1 ); ++j ) {
+                double referenceVal = testFunction(
+                    targetLonLatView( i, LON ), targetLonLatView( i, LAT ),
+                    static_cast<double>( j ) / ( nLevels - 1 ) );
+
+                double relativeError = std::abs( (targetView( i, j ) - referenceVal ) / referenceVal );
+                maxError = std::max ( maxError, relativeError );
+            }
+        }
+        mpi::comm().allReduceInPlace( maxError, eckit::mpi::Operation::Code::MAX );
+        Log::info() << "Max interpolation error = " + std::to_string( maxError ) << std::endl;
+
+        // Maximum interpolation error should be less than 1%.
+        EXPECT( maxError < 0.01 );
+
+        // gmsh output.
+        const auto gmshConfigXy = util::Config( "coordinates", "xy" ) |
+                                  util::Config( "ghost", true ) |
+                                  util::Config( "info", true );
+        const auto gmshConfigXyz = util::Config( "coordinates", "xyz" ) |
+                                   util::Config( "ghost", true ) |
+                                   util::Config( "info", true );
+        auto gmshXy  = output::Gmsh( "dual_nodes_xy.msh", gmshConfigXy );
+        auto gmshXyz = output::Gmsh( "dual_nodes_xyz.msh", gmshConfigXyz );
+        gmshXy.write( targetMesh );
+        gmshXyz.write( targetMesh );
+        gmshXy.write( targetField, targetFunctionSpace );
+        gmshXyz.write( targetField, targetFunctionSpace );
+
     }
 
-    // Set matching mesh partitioner.
-    const auto targetPartitioner = grid::MatchingPartitioner(sourceMesh);
+    SECTION( "CellColumns" ) {
 
-    // Set target grid, mesh and functionspace.
-    const auto targetGrid = Grid( "CS-LFR-C-48" );
-    const auto targetMesh = MeshGenerator( "cubedsphere_dual" ).generate( targetGrid, targetPartitioner );
-    const auto targetFunctionSpace = functionspace::NodeColumns( targetMesh );
-    auto targetField = targetFunctionSpace.createField<double>(
-                       util::Config( "name", "targetField" )  | util::Config( "levels", 5 ) );
+        // Simple test to check halo exchange and output mesh.
 
-    // Perform interpolation.
-    auto scheme = util::Config( "type", "structured-linear2D" ) | util::Config( "halo", 1 );
-    auto interp = Interpolation(scheme, sourceFunctionSpace, targetFunctionSpace);
-    interp.execute(sourceField, targetField);
-    targetField.haloExchange();
+        // Set number of levels for test field.
+        const idx_t nLevels = 5;
 
-    // Test accuracy of interpolation.
-    auto targetView = array::make_view<double, 2>( targetField );
-    const auto targetLonLatView = array::make_view<double, 2>( targetFunctionSpace.lonlat() );
-    double maxError = 0.;
-    for ( idx_t i = 0; i < targetView.shape( 0 ); ++i ) {
-        for ( idx_t j = 0; j < targetView.shape( 1 ); ++j ) {
-            double referenceVal = testFunction(
-                targetLonLatView( i, LON ), targetLonLatView( i, LAT ),
-                static_cast<double>( j ) / ( nLevels - 1 ) );
+        // Set grid, mesh and functionspace.
+        const auto grid = Grid( "CS-LFR-C-48" );
+        const auto mesh = MeshGenerator( "cubedsphere_dual",
+            util::Config( "partitioner", "equal_regions" ) ).generate( grid );
+        const auto functionSpace = functionspace::CellColumns( mesh );
+        auto field = functionSpace.createField<double>(
+                     util::Config( "name", "targetField" )  | util::Config( "levels", nLevels ) );
 
-            double relativeError = std::abs( (targetView( i, j ) - referenceVal ) / referenceVal );
-            maxError = std::max ( maxError, relativeError );
+        // Make views.
+        auto fieldView = array::make_view<double, 2>( field );
+        const auto lonLatView = array::make_view<double, 2>( functionSpace.lonlat() );
+        const auto remoteIdxView = array::make_indexview<idx_t, 1>( functionSpace.cells().remote_index() );
+        const auto partView = array::make_view<int, 1>( functionSpace.cells().partition() );
+
+        // Set test field on owned cells.
+        for ( idx_t i = 0; i < fieldView.shape( 0 ); ++i ) {
+
+            // Break once we've got to ghost cells (cells mirrored from ghost nodes).
+            if ( partView( i ) != mpi::rank() || remoteIdxView( i ) != i  ) {
+                break;
+            }
+
+            for ( idx_t j = 0; j < fieldView.shape( 1 ); ++j ) {
+                fieldView( i, j ) = testFunction(
+                    lonLatView( i, LON ), lonLatView( i, LAT ),
+                    static_cast<double>( j ) / ( nLevels - 1 ) );
+            }
         }
+
+        // Perform halo exchange.
+        field.haloExchange();
+
+        // Check test field on *all* cells.
+        for ( idx_t i = 0; i < fieldView.shape( 0 ); ++i ) {
+
+            for ( idx_t j = 0; j < fieldView.shape( 1 ); ++j ) {
+                EXPECT_APPROX_EQ( fieldView( i, j ),  testFunction(
+                                  lonLatView( i, LON ), lonLatView( i, LAT ),
+                                  static_cast<double>( j ) / ( nLevels - 1 ) ) ) ;
+            }
+        }
+
+        // gmsh output.
+        const auto gmshConfigXy = util::Config( "coordinates", "xy" ) |
+                                  util::Config( "ghost", true ) |
+                                  util::Config( "info", true );
+        const auto gmshConfigXyz = util::Config( "coordinates", "xyz" ) |
+                                   util::Config( "ghost", true ) |
+                                   util::Config( "info", true );
+        auto gmshXy  = output::Gmsh( "dual_cells_xy.msh", gmshConfigXy );
+        auto gmshXyz = output::Gmsh( "dual_cells_xyz.msh", gmshConfigXyz );
+        gmshXy.write( mesh );
+        gmshXyz.write( mesh );
+        gmshXy.write( FieldSet{ field }, functionSpace );
+        gmshXyz.write( FieldSet{ field }, functionSpace );
+
     }
-    mpi::comm().allReduceInPlace( maxError, eckit::mpi::Operation::Code::MAX );
-    Log::info() << "Max interpolation error = " + std::to_string( maxError ) << std::endl;
-
-    // Maximum interpolation error should be less than 1%.
-    EXPECT( maxError < 0.01 );
-
-    // Set gmsh output.
-    const auto gmshConfigXy = util::Config( "coordinates", "xy" ) |
-                              util::Config( "ghost", true ) |
-                              util::Config( "info", true );
-    const auto gmshConfigXyz = util::Config( "coordinates", "xyz" ) |
-                               util::Config( "ghost", true ) |
-                               util::Config( "info", true );
-    auto gmshXy  = output::Gmsh( "dual_xy.msh", gmshConfigXy );
-    auto gmshXyz = output::Gmsh( "dual_xyz.msh", gmshConfigXyz );
-    gmshXy.write( targetMesh );
-    gmshXyz.write( targetMesh );
-    gmshXy.write( targetField, targetFunctionSpace );
-    gmshXyz.write( targetField, targetFunctionSpace );
 
 }
 
