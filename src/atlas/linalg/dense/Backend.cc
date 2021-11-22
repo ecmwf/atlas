@@ -60,7 +60,16 @@ struct backends {
 private:
     backends() {
         auto configured  = atlas::Library::instance().linalgDenseBackend();
-        current_backend_ = configured.empty() ? backend::eckit_linalg::type() : configured;
+        if( configured.empty() ) {
+            // Proposal for default backend would be "eckit_linalg":
+            //     current_backend_ = configured.empty() ? backend::eckit_linalg::type() : configured;
+            //
+            // However to be identical in behaviour for TransLocal with atlas 0.26.0 and earlier before
+            // any other codes can be adapted in short notice:
+            if( eckit::linalg::LinearAlgebra::hasBackend("mkl") ) {
+                current_backend_ = "mkl";
+            }
+        }
         map_.emplace( "default", util::Config( "type", current_backend_ ) );
     }
 };
