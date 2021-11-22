@@ -25,7 +25,12 @@
 
 #if ATLAS_HAVE_TRANS
 #include "atlas/trans/ifs/TransIFS.h"
+#if ATLAS_HAVE_ECTRANS
+#include "ectrans/transi.h"
+#else
 #include "transi/trans.h"
+#endif
+
 namespace {
 void trans_check( const int code, const char* msg, const eckit::CodeLocation& location ) {
     if ( code != TRANS_SUCCESS ) {
