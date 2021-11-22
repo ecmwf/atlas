@@ -69,6 +69,9 @@ private:
             if( eckit::linalg::LinearAlgebra::hasBackend("mkl") ) {
                 current_backend_ = "mkl";
             }
+            else {
+                current_backend_ = backend::eckit_linalg::type();
+            }
         }
         map_.emplace( "default", util::Config( "type", current_backend_ ) );
     }

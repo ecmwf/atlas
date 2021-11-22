@@ -68,7 +68,12 @@ void expect_equal( const T1& v, const T2& r ) {
 
 CASE( "test configuration via resource" ) {
     if ( atlas::Library::instance().linalgDenseBackend().empty() ) {
-        EXPECT_EQ( dense::current_backend().type(), eckit_linalg );
+        if ( eckit::linalg::LinearAlgebra::hasBackend( "mkl" ) ) {
+            EXPECT_EQ( dense::current_backend().type(), "mkl" );
+        }
+        else {
+            EXPECT_EQ( dense::current_backend().type(), eckit_linalg );
+        }
     }
     else {
         EXPECT_EQ( dense::current_backend().type(), atlas::Library::instance().linalgDenseBackend() );
