@@ -9,35 +9,39 @@
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
+#include "atlas/redistribution/detail/RedistributeGeneric.h"
 #include "atlas/redistribution/detail/RedistributionImplFactory.h"
+
 
 namespace atlas {
 
 // Use redistribution implementation factory to make object.
 Redistribution::Redistribution() : Handle(){};
-Redistribution::Redistribution( const FunctionSpace& sourceFunctionSpace, const FunctionSpace& targetFunctionSpace ) :
-    Handle( redistribution::detail::RedistributionImplFactory::build( sourceFunctionSpace, targetFunctionSpace ) ) {}
+Redistribution::Redistribution( const FunctionSpace& sourceFunctionSpace, const FunctionSpace& targetFunctionSpace,
+                                const util::Config& config ) :
+    Handle( [&]() -> redistribution::detail::RedistributionImpl* {
+        ATLAS_ASSERT( sourceFunctionSpace.type() == targetFunctionSpace.type() );
 
-void Redistribution::execute( const Field& sourceField, Field& targetField ) const {
-    get()->execute( sourceField, targetField );
+        std::string type = redistribution::detail::RedistributeGeneric::static_type();
+        config.get( "type", type );
+
+        auto impl = redistribution::detail::RedistributionImplFactory::build( type );
+        impl->setup( sourceFunctionSpace, targetFunctionSpace );
+        return impl;
+    }() ) {}
+
+void Redistribution::execute( const Field& source, Field& target ) const {
+    get()->execute( source, target );
     return;
 }
 
-void Redistribution::execute( const FieldSet& sourceFieldSet, FieldSet& targetFieldSet ) const {
-    get()->execute( sourceFieldSet, targetFieldSet );
+void Redistribution::execute( const FieldSet& source, FieldSet& target ) const {
+    get()->execute( source, target );
     return;
-}
-
-FunctionSpace& Redistribution::source() {
-    return get()->source();
 }
 
 const FunctionSpace& Redistribution::source() const {
     return get()->source();
-}
-
-FunctionSpace& Redistribution::target() {
-    return get()->target();
 }
 
 const FunctionSpace& Redistribution::target() const {

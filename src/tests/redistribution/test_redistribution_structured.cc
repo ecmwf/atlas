@@ -24,7 +24,7 @@ namespace test {
 
 // Define test pattern for grid.
 template <typename T>
-T testPattern( const T lambda, const T phi, const idx_t field, const idx_t level ) {
+T testPattern( const double lambda, const double phi, const idx_t field, const idx_t level ) {
     return static_cast<T>( 100. * ( 1 + field ) * std::cos( lambda * ( 1 + level ) * M_PI / 180. ) *
                            std::cos( phi * ( 1 + level ) * M_PI / 180. ) );
 }
@@ -92,10 +92,11 @@ bool testStructColsToStructCols( const atlas::Grid& grid, const idx_t nFields,
     }
 
     // Set up redistributer.
-    auto repart = atlas::Redistribution( sourceFunctionSpace, targetFunctionSpace );
+    auto redist = atlas::Redistribution( sourceFunctionSpace, targetFunctionSpace,
+                                         util::Config( "type", "RedistributeStructuredColumns" ) );
 
     // Execute redistributer.
-    repart.execute( sourceFieldSet, targetFieldSet );
+    redist.execute( sourceFieldSet, targetFieldSet );
 
     // Read and data from target fields.
     bool testPassed = true;
@@ -152,7 +153,7 @@ bool testStructColsToStructCols( const atlas::Grid& grid, const idx_t nFields,
     return testPassed;
 }
 
-CASE( "StructuredColumns to StructuredColumns" ) {
+CASE( "Redistribute Structured Columns" ) {
     SECTION( "lonlat: checkerboard to equal_regions" ) {
         // Set grid.
         idx_t nFields = 5;

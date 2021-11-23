@@ -5,21 +5,17 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
+#include "RedistributeStructuredColumns.h"
+
 #include <algorithm>
 #include <numeric>
 
 #include "atlas/array/MakeView.h"
 #include "atlas/field.h"
 #include "atlas/field/FieldSet.h"
+#include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/redistribution/detail/RedistributionUtils.h"
-#include "atlas/redistribution/detail/StructuredColumnsToStructuredColumns.h"
-
-// Exception handling macros.
-#define TRY_CAST( a, b ) tryCast<a>( b, #b, Here() )
-#define CHECK_GRIDS( a, b, c ) checkGrids<a>( b, c, #b, #c, Here() )
-#define CHECK_FIELD_DATA_TYPE( a, b ) checkFieldDataType( a, b, #a, #b, Here() )
-#define CHECK_FIELD_SET_SIZE( a, b ) checkFieldSetSize( a, b, #a, #b, Here() )
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace redistribution {
@@ -59,22 +55,24 @@ void forEachIndex( const StructuredIndexRangeVector& ranges, const functorType& 
 //========================================================================
 
 // Constructor.
-StructuredColumnsToStructuredColumns::StructuredColumnsToStructuredColumns( const FunctionSpace& sourceFunctionSpace,
-                                                                            const FunctionSpace& targetFunctionSpace ) :
-    RedistributionImpl( sourceFunctionSpace, targetFunctionSpace ),
-    sourceStructuredColumnsPtr_( source()->cast<StructuredColumns>() ),
-    targetStructuredColumnsPtr_( target()->cast<StructuredColumns>() ) {
-    // Check casts.
-    TRY_CAST( StructuredColumns, sourceStructuredColumnsPtr_ );
-    TRY_CAST( StructuredColumns, targetStructuredColumnsPtr_ );
+void RedistributeStructuredColumns::do_setup() {
+    source_ = source();
+    target_ = target();
+
+    // Assert that functionspaces are StructuredColumns.
+    ATLAS_ASSERT( source_, source().type() + " must be StructuredColumns" );
+    ATLAS_ASSERT( target_, target().type() + " must be StructuredColumns" );
 
     // Check that grids match.
-    CHECK_GRIDS( StructuredColumns, sourceStructuredColumnsPtr_, targetStructuredColumnsPtr_ );
+    ATLAS_ASSERT( source_.grid().name() == target_.grid().name() );
+
+    // Check levels match.
+    ATLAS_ASSERT( source_.levels() == target_.levels() );
 
 
     // Get source and target range of this function space.
-    const auto sourceRange = StructuredIndexRange( sourceStructuredColumnsPtr_ );
-    const auto targetRange = StructuredIndexRange( targetStructuredColumnsPtr_ );
+    const auto sourceRange = StructuredIndexRange( source_ );
+    const auto targetRange = StructuredIndexRange( target_ );
 
 
     // Get source and target ranges over all PEs.
@@ -104,11 +102,9 @@ StructuredColumnsToStructuredColumns::StructuredColumnsToStructuredColumns( cons
         return std::make_pair( counts, displacements );
     };
 
-    std::tie( sendCounts_, sendDisplacements_ ) =
-        getCountsDisplacements( sendIntersections_, sourceStructuredColumnsPtr_->levels() );
+    std::tie( sendCounts_, sendDisplacements_ ) = getCountsDisplacements( sendIntersections_, source_.levels() );
 
-    std::tie( recvCounts_, recvDisplacements_ ) =
-        getCountsDisplacements( recvIntersections_, targetStructuredColumnsPtr_->levels() );
+    std::tie( recvCounts_, recvDisplacements_ ) = getCountsDisplacements( recvIntersections_, target_.levels() );
 
 
     // Trim off invalid intersections.
@@ -128,48 +124,49 @@ StructuredColumnsToStructuredColumns::StructuredColumnsToStructuredColumns( cons
     return;
 }
 
-void StructuredColumnsToStructuredColumns::execute( const Field& sourceField, Field& targetField ) const {
-    // Check functionspace casts.
-    TRY_CAST( StructuredColumns, sourceField.functionspace().get() );
-    TRY_CAST( StructuredColumns, targetField.functionspace().get() );
+void RedistributeStructuredColumns::execute( const Field& sourceField, Field& targetField ) const {
+    // Assert that fields are defined on StructuredColumns.
+    ATLAS_ASSERT( functionspace::StructuredColumns( sourceField.functionspace() ) );
+    ATLAS_ASSERT( functionspace::StructuredColumns( targetField.functionspace() ) );
 
-    // Check source grids match.
-    CHECK_GRIDS( StructuredColumns, sourceField.functionspace().get(), sourceStructuredColumnsPtr_ );
+    // Check that grids match.
+    ATLAS_ASSERT( functionspace::StructuredColumns( sourceField.functionspace() ).grid().name() ==
+                  source_.grid().name() );
+    ATLAS_ASSERT( functionspace::StructuredColumns( targetField.functionspace() ).grid().name() ==
+                  target_.grid().name() );
 
-    // Check target grids match.
-    CHECK_GRIDS( StructuredColumns, targetField.functionspace().get(), targetStructuredColumnsPtr_ );
-
-    // Check data types match.
-    CHECK_FIELD_DATA_TYPE( sourceField, targetField );
+    // Check levels match.
+    ATLAS_ASSERT( sourceField.levels() == source_.levels() );
+    ATLAS_ASSERT( targetField.levels() == target_.levels() );
 
     // Determine data type of field and execute.
     switch ( sourceField.datatype().kind() ) {
         case array::DataType::KIND_REAL64:
-            doExecute<double>( sourceField, targetField );
+            do_execute<double>( sourceField, targetField );
             break;
 
         case array::DataType::KIND_REAL32:
-            doExecute<float>( sourceField, targetField );
+            do_execute<float>( sourceField, targetField );
             break;
 
         case array::DataType::KIND_INT32:
-            doExecute<int>( sourceField, targetField );
+            do_execute<int>( sourceField, targetField );
             break;
 
         case array::DataType::KIND_INT64:
-            doExecute<long>( sourceField, targetField );
+            do_execute<long>( sourceField, targetField );
             break;
 
         default:
-            throw eckit::NotImplemented( "No implementation for data type " + sourceField.datatype().str(), Here() );
+            throw_NotImplemented( "No implementation for data type " + sourceField.datatype().str(), Here() );
     }
 
     return;
 }
 
-void StructuredColumnsToStructuredColumns::execute( const FieldSet& sourceFieldSet, FieldSet& targetFieldSet ) const {
+void RedistributeStructuredColumns::execute( const FieldSet& sourceFieldSet, FieldSet& targetFieldSet ) const {
     // Check that both FieldSets are the same size.
-    CHECK_FIELD_SET_SIZE( sourceFieldSet, targetFieldSet );
+    ATLAS_ASSERT( sourceFieldSet.size() == targetFieldSet.size() );
 
     auto targetFieldSetIt = targetFieldSet.begin();
     std::for_each( sourceFieldSet.cbegin(), sourceFieldSet.cend(), [&]( const Field& sourceField ) {
@@ -185,7 +182,7 @@ void StructuredColumnsToStructuredColumns::execute( const FieldSet& sourceFieldS
 //========================================================================
 
 template <typename fieldType>
-void StructuredColumnsToStructuredColumns::doExecute( const Field& sourceField, Field& targetField ) const {
+void RedistributeStructuredColumns::do_execute( const Field& sourceField, Field& targetField ) const {
     // Make Atlas view objects.
     const auto sourceView = array::make_view<fieldType, 2>( sourceField );
     auto targetView       = array::make_view<fieldType, 2>( targetField );
@@ -205,8 +202,8 @@ void StructuredColumnsToStructuredColumns::doExecute( const Field& sourceField, 
     auto sendBufferIt = sendBuffer.begin();
     auto sendFunctor  = [&]( const idx_t i, const idx_t j ) {
         // Loop over levels
-        const auto iNode = sourceStructuredColumnsPtr_->index( i, j );
-        const auto kEnd  = sourceStructuredColumnsPtr_->levels();
+        const auto iNode = source_.index( i, j );
+        const auto kEnd  = source_.levels();
         for ( idx_t k = 0; k < kEnd; ++k ) {
             *sendBufferIt++ = sourceView( iNode, k );
         }
@@ -218,8 +215,8 @@ void StructuredColumnsToStructuredColumns::doExecute( const Field& sourceField, 
     auto recvBufferIt = recvBuffer.cbegin();
     auto recvFunctor  = [&]( const idx_t i, const idx_t j ) {
         // Loop over levels
-        const auto iNode = targetStructuredColumnsPtr_->index( i, j );
-        const auto kEnd  = targetStructuredColumnsPtr_->levels();
+        const auto iNode = target_.index( i, j );
+        const auto kEnd  = target_.levels();
         for ( idx_t k = 0; k < kEnd; ++k ) {
             targetView( iNode, k ) = *recvBufferIt++;
         }
@@ -245,11 +242,11 @@ void StructuredColumnsToStructuredColumns::doExecute( const Field& sourceField, 
 //========================================================================
 
 // Constructor.
-StructuredIndexRange::StructuredIndexRange( const StructuredColumns* const structuredColumnsPtr ) {
-    jBeginEnd_ = std::make_pair( structuredColumnsPtr->j_begin(), structuredColumnsPtr->j_end() );
+StructuredIndexRange::StructuredIndexRange( const functionspace::StructuredColumns& structuredColumns ) {
+    jBeginEnd_ = std::make_pair( structuredColumns.j_begin(), structuredColumns.j_end() );
 
     for ( auto j = jBeginEnd_.first; j < jBeginEnd_.second; ++j ) {
-        iBeginEnd_.push_back( std::make_pair( structuredColumnsPtr->i_begin( j ), structuredColumnsPtr->i_end( j ) ) );
+        iBeginEnd_.push_back( std::make_pair( structuredColumns.i_begin( j ), structuredColumns.i_end( j ) ) );
     }
 
     return;
@@ -352,6 +349,11 @@ void StructuredIndexRange::forEach( const functorType& functor ) const {
     }
 
     return;
+}
+
+namespace {
+static RedistributionImplBuilder<RedistributeStructuredColumns> register_builder(
+    RedistributeStructuredColumns::static_type() );
 }
 
 }  // namespace detail
