@@ -261,8 +261,9 @@ PointTXY NeighbourJacobian::xyLocalToGlobal( const PointXY& xyLocal, idx_t tLoca
         // We're within the tile boundary (possibly on an edge).
 
         // Return local values if not on edge.
-        if ( !ijEdge( ijLocal ) )
+        if ( !ijEdge( ijLocal ) ) {
             return PointTXY( tLocal, xyLocal );
+        }
 
         // We're on an edge. Will need to check with Tiles class.
         xyGlobal = xyLocal;
