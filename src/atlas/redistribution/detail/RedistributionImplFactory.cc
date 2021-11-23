@@ -5,29 +5,38 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "atlas/redistribution/detail/RedistributionImplFactory.h"
-#include "atlas/functionspace/StructuredColumns.h"
-#include "atlas/redistribution/detail/StructuredColumnsToStructuredColumns.h"
+#include <string>
 
-#include "eckit/exception/Exceptions.h"
+#include "atlas/redistribution/detail/RedistributeGeneric.h"
+#include "atlas/redistribution/detail/RedistributeStructuredColumns.h"
+#include "atlas/redistribution/detail/RedistributionImpl.h"
+#include "atlas/redistribution/detail/RedistributionImplFactory.h"
 
 namespace atlas {
 namespace redistribution {
 namespace detail {
 
-RedistributionImpl* RedistributionImplFactory::build( const FunctionSpace& sourceFunctionSpace,
-                                                      const FunctionSpace& targetFunctionSpace ) {
-    if ( sourceFunctionSpace->type() == functionspace::StructuredColumns::type() &&
-         targetFunctionSpace->type() == functionspace::StructuredColumns::type() ) {
-        return new StructuredColumnsToStructuredColumns( sourceFunctionSpace, targetFunctionSpace );
-    }
-    else {
-        throw eckit::NotImplemented( "No implementation for source function space " + sourceFunctionSpace->type() +
-                                         " and target functionspace " + targetFunctionSpace->type(),
-                                     Here() );
-        return nullptr;
-    }
+//----------------------------------------------------------------------------------------------------------------------
+
+void force_link() {
+    static struct Link {
+        Link() {
+            RedistributionImplBuilder<redistribution::detail::RedistributeGeneric>();
+            RedistributionImplBuilder<redistribution::detail::RedistributeStructuredColumns>();
+        }
+    } link;
 }
+
+//----------------------------------------------------------------------------------------------------------------------
+
+redistribution::detail::RedistributionImpl* RedistributionImplFactory::build( const std::string& builder ) {
+    force_link();
+    auto factory = get( builder );
+    return factory->make();
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 }  // namespace detail
 }  // namespace redistribution
 }  // namespace atlas

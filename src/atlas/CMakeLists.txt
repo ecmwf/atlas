@@ -610,9 +610,10 @@ redistribution/detail/RedistributionImpl.h
 redistribution/detail/RedistributionImpl.cc
 redistribution/detail/RedistributionImplFactory.h
 redistribution/detail/RedistributionImplFactory.cc
-redistribution/detail/RedistributionUtils.h
-redistribution/detail/StructuredColumnsToStructuredColumns.h
-redistribution/detail/StructuredColumnsToStructuredColumns.cc
+redistribution/detail/RedistributeGeneric.h
+redistribution/detail/RedistributeGeneric.cc
+redistribution/detail/RedistributeStructuredColumns.h
+redistribution/detail/RedistributeStructuredColumns.cc
 )
 
 list( APPEND atlas_array_srcs

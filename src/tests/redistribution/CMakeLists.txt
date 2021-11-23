@@ -5,10 +5,19 @@
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 #
 
-ecbuild_add_test( TARGET atlas_test_redistribution
-  SOURCES   test_redistribution.cc
+ecbuild_add_test( TARGET atlas_test_redistribution_structured
+  SOURCES   test_redistribution_structured.cc
   MPI       8
   LIBS      atlas
   CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 8
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
+
+ecbuild_add_test( TARGET atlas_test_redistribution_generic
+  SOURCES   test_redistribution_generic.cc
+  MPI       8
+  LIBS      atlas
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 8
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
