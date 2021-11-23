@@ -354,7 +354,7 @@ struct TestRedistributionElems : public TestRedistribution<Value, 1> {
 
 
 CASE( "Structured grid" ) {
-    auto grid = atlas::Grid( "L48x37" );
+    auto grid = atlas::Grid( "L24x19" );
 
     // Set mesh config.
     const auto sourceMeshConfig = util::Config( "partitioner", "equal_regions" );
@@ -474,7 +474,7 @@ CASE( "Structured grid" ) {
 }
 
 CASE( "Cubed sphere grid" ) {
-    auto grid = atlas::Grid( "CS-LFR-C-16" );
+    auto grid = atlas::Grid( "CS-LFR-C-8" );
 
     // Set mesh config.
     const auto sourceMeshConfig = util::Config( "partitioner", "equal_regions" ) | util::Config( "halo", "2" );
@@ -503,6 +503,39 @@ CASE( "Cubed sphere grid" ) {
         test.execute();
 
         test.outputFields( "CubedSphere_CellColumns" );
+    }
+}
+
+CASE( "Cubed sphere dual grid" ) {
+    auto grid = atlas::Grid( "CS-LFR-C-8" );
+
+    // Set mesh config.
+    const auto sourceMeshConfig = util::Config( "partitioner", "equal_regions" ) | util::Config( "halo", "1" );
+    const auto targetMeshConfig = util::Config( "partitioner", "cubedsphere" ) | util::Config( "halo", "1" );
+
+    auto sourceMesh = MeshGenerator( "cubedsphere_dual", sourceMeshConfig ).generate( grid );
+    auto targetMesh = MeshGenerator( "cubedsphere_dual", targetMeshConfig ).generate( grid );
+
+    SECTION( "CubedSphereDualNodeColumns" ) {
+        const auto sourceFunctionSpace = functionspace::CubedSphereNodeColumns( sourceMesh );
+        const auto targetFunctionSpace = functionspace::CubedSphereNodeColumns( targetMesh );
+
+        auto test = TestRedistributionPoints2<double>( sourceFunctionSpace, targetFunctionSpace );
+
+        test.execute();
+
+        test.outputFields( "CubedSphereDual_NodeColumns" );
+    }
+
+    SECTION( "CubedSphereDualCellColumns" ) {
+        const auto sourceFunctionSpace = functionspace::CubedSphereCellColumns( sourceMesh );
+        const auto targetFunctionSpace = functionspace::CubedSphereCellColumns( targetMesh );
+
+        auto test = TestRedistributionElems<double>( sourceFunctionSpace, targetFunctionSpace );
+
+        test.execute();
+
+        test.outputFields( "CubedSphereDual_CellColumns" );
     }
 }
 
