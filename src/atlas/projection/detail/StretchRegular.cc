@@ -113,7 +113,9 @@ double StretchLAM<Rotation>::general_stretch(double& lamphi, const bool& L_long,
        double lamphi_start; ///< start of the regular grid
        double lamphi_end; ///< end of the regular grid
        double point = lamphi; ///< starting point
-       double epstest = 0.00000000001; ///< correction used to change from double to integer
+       constexpr float epstest = std::numeric_limits<float>::epsilon(); ///< correction used to change from double to integer
+       constexpr double epsrem = 0.1 * std::numeric_limits<double>::epsilon()/std::numeric_limits<float>::epsilon(); ///< correction used to part the find a part of an integer
+
 
        if ((n_int > 0 ) && (var_ratio_ > 1)){
 
@@ -180,12 +182,12 @@ double StretchLAM<Rotation>::general_stretch(double& lamphi, const bool& L_long,
                  n_high_st = (n_stretched_/2.);
                  n_high_rim = n_high - n_high_st;
                  p_rem = 0;
-                 p_rem_low = std:: fmod((delta_dist + epstest) , delta_high_);
+                 p_rem_low = std:: fmod((delta_dist + epsrem) , delta_high_);
              } else {
                  n_high_st = n_high;
                  n_high_rim = 0;
-                 // part remaining, use modulo
-                 p_rem = std:: fmod((delta_dist + epstest ) , delta_high_);
+                 ///< part remaining, use modulo
+                 p_rem = std:: fmod((delta_dist + epsrem ) , delta_high_);
                  p_rem_low = 0.;
              }
 
@@ -274,10 +276,10 @@ double StretchLAM<Rotation>::general_stretch(double& lamphi, const bool& L_long,
 template <typename Rotation>
 void StretchLAM<Rotation>::lonlat2xy( double crd[] ) const {
 
-    //unrotate
+    ///<unrotate
     rotation_.rotate( crd );
 
-    // PUT the unstretch, I don't have it nows
+    ///< PUT the unstretch, I don't have it nows
 
 }
 
@@ -299,9 +301,10 @@ void StretchLAM<Rotation>::xy2lonlat( double crd[] ) const {
     double add_xf_; ///< distance end of the grid and internal regular grid
     double add_yf_; ///< distance end of the grid and internal regular grid
     double check_x; ///< check middle of the previous regular grid
-    double check_y; ///< check middle of the previous regular grid
-    double epsilon = 0.01; ///< use in check if the same value
-    double epstest = 0.00000000001; ///< correction used to change from double to integer
+    double check_y; ///< check middle of the previous regular gridr
+    constexpr float epsilon = std::numeric_limits<float>::epsilon(); ///< value used to check if the values are equal
+    constexpr float epstest = std::numeric_limits<float>::epsilon(); ///< correction used to change from double to integer
+
     int nx_, ny_;
     int n_stretchedx_, n_stretchedy_, n_x_rim_, n_y_rim_;
 
@@ -377,7 +380,7 @@ template class StretchLAM<Rotated>;
 namespace {
 static ProjectionBuilder<StretchRegular> register_1( StretchRegular::static_type() );
 static ProjectionBuilder<RotatedStretchRegular> register_2( RotatedStretchRegular::static_type() );
-}  // namespace
+}  ///< namespace
 
 }  // namespace detail
 }  // namespace projection

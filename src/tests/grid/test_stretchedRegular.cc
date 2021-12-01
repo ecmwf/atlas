@@ -254,7 +254,6 @@ CASE( "Regularstretch" ) {
     ///< define mesh to write in file
     auto meshGen_st = atlas::MeshGenerator( "structured" );
     Mesh mesh_st = StructuredMeshGenerator().generate( grid_st );
-    //auto mesh_st    = meshGen_st.generate( grid_st );
     auto meshGen_reg = atlas::MeshGenerator( "regular" );
     auto mesh_reg    = meshGen_reg.generate( reg_grid );
 
@@ -263,13 +262,11 @@ CASE( "Regularstretch" ) {
     auto gmshConfig_reg = atlas::util::Config( "coordinates", "xy" ) | atlas::util::Config( "ghost", false );
     gmshConfig_reg.set( "info", true );
 
-    //auto gmshConfig_stretch = atlas::util::Config( "coordinates", "xy" ) | atlas::util::Config( "ghost", false );
     auto gmshConfig_stretch = atlas::util::Config( "coordinates", "lonlat" ) | atlas::util::Config( "ghost", false );
     gmshConfig_stretch.set( "info", true );
 
     ///< Set source gmsh object.
     const auto gmsh_reg     = atlas::output::Gmsh( "xy_mesh.msh", gmshConfig_reg );
-    //const auto gmsh_stretch = atlas::output::Gmsh( "stretch_mesh.msh", gmshConfig_stretch );
     output::Gmsh gmsh_stretch( "stretch_mesh.msh" , gmshConfig_stretch );
 
     /**
@@ -302,11 +299,6 @@ CASE( "Regularstretch" ) {
     starty_n = starty - alpha;
     endy_n = endy + alpha;
 
-    std::cout<<"dim h_res: "<< h_res * nx_new  <<std::endl;
-    std::cout<<"dim bounds: "<< endx - endy  <<std::endl;
-    std::cout<<"alpha: "<< alpha <<std::endl;
-    std::cout<<"newstartx: "<< startx_n <<std::endl;
-    std::cout<<"newstarty: "<< starty_n <<std::endl;
 
     ///< create regular grid
     atlas::util::Config reg_grid_config_ex;
