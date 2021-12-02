@@ -298,15 +298,10 @@ void StretchLAM<Rotation>::xy2lonlat( double crd[] ) const {
     double phi_hires_size; ///< size regular grid y
     double lambda_start; ///< start grid x
     double phi_start; ///< start grid y
-    double add_xf_; ///< distance end of the grid and internal regular grid
-    double add_yf_; ///< distance end of the grid and internal regular grid
-    double check_x; ///< check middle of the previous regular grid
-    double check_y; ///< check middle of the previous regular gridr
     constexpr float epsilon = std::numeric_limits<float>::epsilon(); ///< value used to check if the values are equal
     constexpr float epstest = std::numeric_limits<float>::epsilon(); ///< correction used to change from double to integer
 
-    int nx_, ny_;
-    int n_stretchedx_, n_stretchedy_, n_x_rim_, n_y_rim_;
+    int n_stretchedx_ = 0, n_stretchedy_ = 0, n_x_rim_ = 0, n_y_rim_ = 0;
 
     ///< original domain size includes the points for the rim
     double deltax_all = (endx_ - startx_);
@@ -326,8 +321,9 @@ void StretchLAM<Rotation>::xy2lonlat( double crd[] ) const {
               * in the middle of the previous regular grid
               */
 
-              add_xf_ = (deltax_all + epstest - lam_hires_size) / 2.;
-              add_yf_ = (deltay_all + epstest - phi_hires_size) / 2.;
+              ///< distance end of the grid and internal regular grid
+              double add_xf_ = (deltax_all + epstest - lam_hires_size) / 2.;
+              double add_yf_ = (deltay_all + epstest - phi_hires_size) / 2.;
               /**
                *  Compute the number of points for different part of the grid
                *  internal regular grid high resolution
@@ -341,19 +337,21 @@ void StretchLAM<Rotation>::xy2lonlat( double crd[] ) const {
               n_stretchedy_ = ((deltay_all + epstest - phi_hires_size) / delta_high_) - n_y_rim_ ;
               lambda_start = x_reg_start_;
               phi_start = y_reg_start_;
-              check_x = startx_ + add_xf_ - lambda_start;
-              check_y = starty_ + add_yf_ - phi_start;
-              double check_st;
-
-              check_st = n_stretchedx_ - n_stretchedy_;
+              /**
+               *  check if stretched grid is in the middle
+               *  of the previous regular grid
+              */
+              double check_x = startx_ + add_xf_ - lambda_start;
+              double check_y = starty_ + add_yf_ - phi_start;
+              double check_st = n_stretchedx_ - n_stretchedy_;
               checkvalue(epsilon, check_x);
               checkvalue(epsilon, check_y);
               checkvalue(epsilon, check_st);
 
-              nx_ = ((deltax_all + epstest) / delta_high_) + 1;
-              ny_ = ((deltay_all + epstest) / delta_high_ ) + 1;
-
          }
+
+    int nx_ = ((deltax_all + epstest) / delta_high_) + 1;
+    int ny_ = ((deltay_all + epstest) / delta_high_ ) + 1;
 
     crd[0] = general_stretch(crd[0], true, nx_, n_stretchedx_, n_x_rim_);
     crd[1] = general_stretch(crd[1], false, ny_, n_stretchedy_, n_y_rim_);
