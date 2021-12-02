@@ -28,7 +28,9 @@ namespace method {
 
 class FiniteElement : public Method {
 public:
-    FiniteElement(const Config& config): Method(config) {}
+    FiniteElement(const Config& config): Method(config) {
+        if (config.has("maxFractionElemsToTry") ) { config.get("maxFractionElemsToTry", maxFractionElemsToTry_); }
+    }
 
     virtual ~FiniteElement() override {}
 
@@ -79,6 +81,7 @@ protected:
     FunctionSpace target_;
 
     bool treat_failure_as_missing_value_{true};
+    double maxFractionElemsToTry_{0.2};
 };
 
 }  // namespace method

@@ -132,20 +132,26 @@ struct Stencil {
 void FiniteElement::print(std::ostream& out) const {
     functionspace::NodeColumns src(source_);
     functionspace::NodeColumns tgt(target_);
-    if (not tgt) {
-        ATLAS_NOTIMPLEMENTED;
+    if ( mpi::rank() == 0 ) {
+        out << "atlas::interpolation::method::FiniteElement" << std::endl;
+        out << "maxFractionElemsToTry_: " << maxFractionElemsToTry_;
+        out << " treat_failure_as_missing_value_: " << treat_failure_as_missing_value_ << std::endl;
     }
+    if ( not tgt ) {
+        return;
+    }
+    out << "NodeColumns to NodeColumns stencil weights: " << std::endl;
     auto gidx_src = array::make_view<gidx_t, 1>(src.nodes().global_index());
 
     ATLAS_ASSERT(tgt.nodes().size() == idx_t(matrix_->rows()));
 
 
     auto field_stencil_points_loc  = tgt.createField<gidx_t>(option::variables(Stencil::max_stencil_size));
-    auto field_stencil_weigths_loc = tgt.createField<double>(option::variables(Stencil::max_stencil_size));
+    auto field_stencil_weights_loc = tgt.createField<double>(option::variables(Stencil::max_stencil_size));
     auto field_stencil_size_loc    = tgt.createField<int>();
 
     auto stencil_points_loc  = array::make_view<gidx_t, 2>(field_stencil_points_loc);
-    auto stencil_weights_loc = array::make_view<double, 2>(field_stencil_weigths_loc);
+    auto stencil_weights_loc = array::make_view<double, 2>(field_stencil_weights_loc);
     auto stencil_size_loc    = array::make_view<idx_t, 1>(field_stencil_size_loc);
     stencil_size_loc.assign(0);
 
@@ -232,7 +238,6 @@ void FiniteElement::setup(const FunctionSpace& source) {
     array::ArrayView<double, 2> out_lonlat = array::make_view<double, 2>(target_lonlat_);
 
     idx_t Nelements                    = meshSource.cells().size();
-    const double maxFractionElemsToTry = 0.2;
 
     // weights -- one per vertex of element, triangles (3) or quads (4)
 
@@ -241,7 +246,7 @@ void FiniteElement::setup(const FunctionSpace& source) {
 
     // search nearest k cell centres
 
-    const idx_t maxNbElemsToTry = std::max<idx_t>(8, idx_t(Nelements * maxFractionElemsToTry));
+    const idx_t maxNbElemsToTry = std::max<idx_t>(8, idx_t(Nelements * maxFractionElemsToTry_));
     idx_t max_neighbours        = 0;
 
     std::vector<size_t> failures;
