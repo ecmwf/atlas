@@ -22,9 +22,9 @@ namespace detail {
 namespace distribution {
 
 template <typename Int>
-BandsDistribution<Int>::BandsDistribution( const atlas::Grid& grid, atlas::idx_t nb_partitions, const std::string& type,
-                                           size_t blocksize ) :
-    DistributionFunctionT<BandsDistribution<Int>>( grid ) {
+BandsDistribution<Int>::BandsDistribution(const atlas::Grid& grid, atlas::idx_t nb_partitions, const std::string& type,
+                                          size_t blocksize):
+    DistributionFunctionT<BandsDistribution<Int>>(grid) {
     this->type_          = type;
     size_t gridsize      = grid.size();
     this->size_          = gridsize;
@@ -34,19 +34,19 @@ BandsDistribution<Int>::BandsDistribution( const atlas::Grid& grid, atlas::idx_t
 
     nb_blocks_ = gridsize / blocksize_;
 
-    if ( gridsize % blocksize_ ) {
+    if (gridsize % blocksize_) {
         nb_blocks_++;
     }
 
-    this->nb_pts_.reserve( nb_partitions_Int_ );
+    this->nb_pts_.reserve(nb_partitions_Int_);
 
-    for ( idx_t iproc = 0; iproc < nb_partitions; iproc++ ) {
+    for (idx_t iproc = 0; iproc < nb_partitions; iproc++) {
         // Approximate values
-        gidx_t imin = blocksize_ * ( ( ( iproc + 0 ) * nb_blocks_ ) / nb_partitions_Int_ );
-        gidx_t imax = blocksize_ * ( ( ( iproc + 1 ) * nb_blocks_ ) / nb_partitions_Int_ );
+        gidx_t imin = blocksize_ * (((iproc + 0) * nb_blocks_) / nb_partitions_Int_);
+        gidx_t imax = blocksize_ * (((iproc + 1) * nb_blocks_) / nb_partitions_Int_);
 
-        while ( imin > 0 ) {
-            if ( function( imin - blocksize_ ) == iproc ) {
+        while (imin > 0) {
+            if (function(imin - blocksize_) == iproc) {
                 imin -= blocksize_;
             }
             else {
@@ -54,16 +54,16 @@ BandsDistribution<Int>::BandsDistribution( const atlas::Grid& grid, atlas::idx_t
             }
         }
 
-        while ( function( imin ) < iproc ) {
+        while (function(imin) < iproc) {
             imin += blocksize_;
         }
 
-        while ( function( imax - 1 ) == iproc + 1 ) {
+        while (function(imax - 1) == iproc + 1) {
             imax -= blocksize_;
         }
 
-        while ( imax + blocksize_ <= gridsize ) {
-            if ( function( imax ) == iproc ) {
+        while (imax + blocksize_ <= gridsize) {
+            if (function(imax) == iproc) {
                 imax += blocksize_;
             }
             else {
@@ -71,23 +71,23 @@ BandsDistribution<Int>::BandsDistribution( const atlas::Grid& grid, atlas::idx_t
             }
         }
 
-        imax = std::min( imax, (gidx_t)gridsize );
-        this->nb_pts_.push_back( imax - imin );
+        imax = std::min(imax, (gidx_t)gridsize);
+        this->nb_pts_.push_back(imax - imin);
     }
 
-    this->max_pts_ = *std::max_element( this->nb_pts_.begin(), this->nb_pts_.end() );
-    this->min_pts_ = *std::min_element( this->nb_pts_.begin(), this->nb_pts_.end() );
+    this->max_pts_ = *std::max_element(this->nb_pts_.begin(), this->nb_pts_.end());
+    this->min_pts_ = *std::min_element(this->nb_pts_.begin(), this->nb_pts_.end());
 
-    ATLAS_ASSERT( detectOverflow( gridsize, nb_partitions_Int_, blocksize_ ) == false );
+    ATLAS_ASSERT(detectOverflow(gridsize, nb_partitions_Int_, blocksize_) == false);
 }
 
 template <typename Int>
-bool BandsDistribution<Int>::detectOverflow( size_t gridsize, size_t nb_partitions, size_t blocksize ) {
+bool BandsDistribution<Int>::detectOverflow(size_t gridsize, size_t nb_partitions, size_t blocksize) {
     int64_t size                 = gridsize;
-    int64_t iblock               = ( size - 1 ) / int64_t( blocksize );
-    int64_t intermediate_product = iblock * int64_t( nb_partitions );
-    ATLAS_ASSERT( intermediate_product > 0, "Even 64 bits is insufficient to prevent overflow." );
-    if ( intermediate_product > std::numeric_limits<Int>::max() ) {
+    int64_t iblock               = (size - 1) / int64_t(blocksize);
+    int64_t intermediate_product = iblock * int64_t(nb_partitions);
+    ATLAS_ASSERT(intermediate_product > 0, "Even 64 bits is insufficient to prevent overflow.");
+    if (intermediate_product > std::numeric_limits<Int>::max()) {
         return true;
     }
     return false;

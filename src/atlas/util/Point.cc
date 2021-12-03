@@ -15,17 +15,17 @@ namespace atlas {
 
 void PointLonLat::normalise() {
     constexpr util::NormaliseLongitude normalize_from_zero;
-    lon() = normalize_from_zero( lon() );
+    lon() = normalize_from_zero(lon());
 }
 
-void PointLonLat::normalise( double west ) {
-    util::NormaliseLongitude normalize_from_west( west );
-    lon() = normalize_from_west( lon() );
+void PointLonLat::normalise(double west) {
+    util::NormaliseLongitude normalize_from_west(west);
+    lon() = normalize_from_west(lon());
 }
 
-void PointLonLat::normalise( double west, double east ) {
-    util::NormaliseLongitude normalize_between_west_and_east( west, east );
-    lon() = normalize_between_west_and_east( lon() );
+void PointLonLat::normalise(double west, double east) {
+    util::NormaliseLongitude normalize_between_west_and_east(west, east);
+    lon() = normalize_between_west_and_east(lon());
 }
 
 }  // namespace atlas

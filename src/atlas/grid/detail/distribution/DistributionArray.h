@@ -31,17 +31,17 @@ public:
 
     DistributionArray() = default;
 
-    DistributionArray( const Grid&, const eckit::Parametrisation& );
+    DistributionArray(const Grid&, const eckit::Parametrisation&);
 
-    DistributionArray( const Grid&, const Partitioner& );
+    DistributionArray(const Grid&, const Partitioner&);
 
-    DistributionArray( int nb_partitions, idx_t npts, int partition[], int part0 = 0 );
+    DistributionArray(int nb_partitions, idx_t npts, int partition[], int part0 = 0);
 
-    DistributionArray( int nb_partitions, partition_t&& partition );
+    DistributionArray(int nb_partitions, partition_t&& partition);
 
     virtual ~DistributionArray();
 
-    int partition( const gidx_t gidx ) const override { return part_[gidx]; }
+    int partition(const gidx_t gidx) const override { return part_[gidx]; }
 
     const partition_t& partition() const { return part_; }
 
@@ -58,21 +58,19 @@ public:
 
     const std::string& type() const override { return type_; }
 
-    void print( std::ostream& ) const override;
+    void print(std::ostream&) const override;
 
-    size_t footprint() const override {
-        return nb_pts_.size() * sizeof( nb_pts_[0] ) + part_.size() * sizeof( part_[0] );
-    }
+    size_t footprint() const override { return nb_pts_.size() * sizeof(nb_pts_[0]) + part_.size() * sizeof(part_[0]); }
 
     bool functional() const override { return false; }
 
     gidx_t size() const override { return part_.size(); }
 
-    void hash( eckit::Hash& ) const override;
+    void hash(eckit::Hash&) const override;
 
-    void partition( gidx_t begin, gidx_t end, int partitions[] ) const override {
+    void partition(gidx_t begin, gidx_t end, int partitions[]) const override {
         size_t i = 0;
-        for ( gidx_t n = begin; n < end; ++n, ++i ) {
+        for (gidx_t n = begin; n < end; ++n, ++i) {
             partitions[i] = part_[n];
         }
     }

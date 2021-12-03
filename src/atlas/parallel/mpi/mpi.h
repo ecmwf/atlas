@@ -24,11 +24,11 @@ inline const Comm& comm() {
 }
 
 inline idx_t rank() {
-    return static_cast<idx_t>( comm().rank() );
+    return static_cast<idx_t>(comm().rank());
 }
 
 inline int size() {
-    return static_cast<idx_t>( comm().size() );
+    return static_cast<idx_t>(comm().size());
 }
 
 void finalize();

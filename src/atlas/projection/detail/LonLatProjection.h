@@ -28,7 +28,7 @@ private:
 
 public:
     // constructor
-    LonLatProjectionT( const eckit::Parametrisation& );
+    LonLatProjectionT(const eckit::Parametrisation&);
 
     // destructor
     ~LonLatProjectionT() = default;
@@ -38,13 +38,13 @@ public:
     std::string type() const override { return static_type(); }
 
     // projection and inverse projection
-    void xy2lonlat( double crd[] ) const override { rotation_.rotate( crd ); }
-    void lonlat2xy( double crd[] ) const override { rotation_.unrotate( crd ); }
+    void xy2lonlat(double crd[]) const override { rotation_.rotate(crd); }
+    void lonlat2xy(double crd[]) const override { rotation_.unrotate(crd); }
 
-    Jacobian jacobian( const PointLonLat& ) const override;
+    Jacobian jacobian(const PointLonLat&) const override;
 
     bool strictlyRegional() const override { return false; }
-    RectangularLonLatDomain lonlatBoundingBox( const Domain& ) const override;
+    RectangularLonLatDomain lonlatBoundingBox(const Domain&) const override;
 
     // specification
     Spec spec() const override;
@@ -53,7 +53,7 @@ public:
 
     operator bool() const override { return rotation_.rotated(); }
 
-    void hash( eckit::Hash& ) const override;
+    void hash(eckit::Hash&) const override;
 
 private:
     Rotation rotation_;

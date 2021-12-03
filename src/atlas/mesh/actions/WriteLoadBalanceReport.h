@@ -15,14 +15,14 @@ class Mesh;
 namespace mesh {
 namespace actions {
 
-void write_load_balance_report( const Mesh& mesh, std::ostream& ofs );
-void write_load_balance_report( const Mesh& mesh, const std::string& filename );
+void write_load_balance_report(const Mesh& mesh, std::ostream& ofs);
+void write_load_balance_report(const Mesh& mesh, const std::string& filename);
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
 extern "C" {
-void atlas__write_load_balance_report( Mesh::Implementation* mesh, char* filename );
+void atlas__write_load_balance_report(Mesh::Implementation* mesh, char* filename);
 }
 
 // ------------------------------------------------------------------

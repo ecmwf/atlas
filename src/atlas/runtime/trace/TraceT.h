@@ -45,12 +45,12 @@ public:
 
 public:  // static methods
     static std::string report();
-    static std::string report( const eckit::Configuration& config );
+    static std::string report(const eckit::Configuration& config);
 
 public:
-    TraceT( const CodeLocation& );
-    TraceT( const CodeLocation&, const std::string& title );
-    TraceT( const CodeLocation&, const std::string& title, const Labels& );
+    TraceT(const CodeLocation&);
+    TraceT(const CodeLocation&, const std::string& title);
+    TraceT(const CodeLocation&, const std::string& title, const Labels&);
 
     ~TraceT();
 
@@ -76,7 +76,7 @@ private:  // member functions
 
     void registerTimer();
 
-    static std::string formatTitle( const std::string& );
+    static std::string formatTitle(const std::string&);
 
 private:  // member data
     bool running_{false};
@@ -92,27 +92,27 @@ private:  // member data
 // Definitions
 
 template <typename TraceTraits>
-inline std::string TraceT<TraceTraits>::formatTitle( const std::string& _title ) {
+inline std::string TraceT<TraceTraits>::formatTitle(const std::string& _title) {
     std::string title = _title;
-    +( Barriers::state() ? " [b]" : "" ) +
-        ( atlas_omp_get_num_threads() > 1 ? " @thread[" + std::to_string( atlas_omp_get_thread_num() ) + "]" : "" );
+    +(Barriers::state() ? " [b]" : "") +
+        (atlas_omp_get_num_threads() > 1 ? " @thread[" + std::to_string(atlas_omp_get_thread_num()) + "]" : "");
     return title;
 }
 
 template <typename TraceTraits>
-inline TraceT<TraceTraits>::TraceT( const CodeLocation& loc, const std::string& title ) :
-    loc_( loc ), title_( formatTitle( title ) ) {
+inline TraceT<TraceTraits>::TraceT(const CodeLocation& loc, const std::string& title):
+    loc_(loc), title_(formatTitle(title)) {
     start();
 }
 
 template <typename TraceTraits>
-inline TraceT<TraceTraits>::TraceT( const CodeLocation& loc ) : loc_( loc ), title_( loc_ ? loc_.func() : "" ) {
+inline TraceT<TraceTraits>::TraceT(const CodeLocation& loc): loc_(loc), title_(loc_ ? loc_.func() : "") {
     start();
 }
 
 template <typename TraceTraits>
-inline TraceT<TraceTraits>::TraceT( const CodeLocation& loc, const std::string& title, const Labels& labels ) :
-    loc_( loc ), title_( title ), labels_( labels ) {
+inline TraceT<TraceTraits>::TraceT(const CodeLocation& loc, const std::string& title, const Labels& labels):
+    loc_(loc), title_(title), labels_(labels) {
     start();
 }
 
@@ -129,14 +129,14 @@ inline void TraceT<TraceTraits>::barrier() const {
 template <typename TraceTraits>
 inline void TraceT<TraceTraits>::registerTimer() {
     std::string title =
-        title_ + ( Barriers::state() ? " [b]" : "" ) +
-        ( atlas_omp_get_num_threads() > 1 ? " @thread[" + std::to_string( atlas_omp_get_thread_num() ) + "]" : "" );
-    id_ = Timings::add( loc_, callstack_, title, labels_ );
+        title_ + (Barriers::state() ? " [b]" : "") +
+        (atlas_omp_get_num_threads() > 1 ? " @thread[" + std::to_string(atlas_omp_get_thread_num()) + "]" : "");
+    id_ = Timings::add(loc_, callstack_, title, labels_);
 }
 
 template <typename TraceTraits>
 inline void TraceT<TraceTraits>::updateTimings() const {
-    Timings::update( id_, stopwatch_.elapsed() );
+    Timings::update(id_, stopwatch_.elapsed());
 }
 
 template <typename TraceTraits>
@@ -146,13 +146,13 @@ inline bool TraceT<TraceTraits>::running() const {
 
 template <typename TraceTraits>
 inline void TraceT<TraceTraits>::start() {
-    if ( Control::enabled() ) {
+    if (Control::enabled()) {
         running_ = true;
-        if ( not callstack_ ) {
-            callstack_ = CurrentCallStack::instance().push( loc_, title_ );
+        if (not callstack_) {
+            callstack_ = CurrentCallStack::instance().push(loc_, title_);
         }
         registerTimer();
-        Tracing::start( title_ );
+        Tracing::start(title_);
         barrier();
         stopwatch_.start();
     }
@@ -160,19 +160,19 @@ inline void TraceT<TraceTraits>::start() {
 
 template <typename TraceTraits>
 inline void TraceT<TraceTraits>::stop() {
-    if ( running_ ) {
+    if (running_) {
         barrier();
         stopwatch_.stop();
         CurrentCallStack::instance().pop();
         updateTimings();
-        Tracing::stop( title_, stopwatch_.elapsed() );
+        Tracing::stop(title_, stopwatch_.elapsed());
         running_ = false;
     }
 }
 
 template <typename TraceTraits>
 inline void TraceT<TraceTraits>::pause() {
-    if ( running_ ) {
+    if (running_) {
         barrier();
         stopwatch_.stop();
         CurrentCallStack::instance().pop();
@@ -181,9 +181,9 @@ inline void TraceT<TraceTraits>::pause() {
 
 template <typename TraceTraits>
 inline void TraceT<TraceTraits>::resume() {
-    if ( running_ ) {
+    if (running_) {
         barrier();
-        CurrentCallStack::instance().push( loc_, title_ );
+        CurrentCallStack::instance().push(loc_, title_);
         stopwatch_.start();
     }
 }
@@ -199,8 +199,8 @@ inline std::string TraceT<TraceTraits>::report() {
 }
 
 template <typename TraceTraits>
-inline std::string TraceT<TraceTraits>::report( const eckit::Configuration& config ) {
-    return Timings::report( config ) + Barriers::report();
+inline std::string TraceT<TraceTraits>::report(const eckit::Configuration& config) {
+    return Timings::report(config) + Barriers::report();
 }
 
 //-----------------------------------------------------------------------------------------------------------

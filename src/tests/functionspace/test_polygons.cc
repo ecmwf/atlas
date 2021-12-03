@@ -30,12 +30,12 @@ namespace test {
 
 namespace {
 std::string grid_name() {
-    static std::string _gridname = eckit::Resource<std::string>( "--grid", "O32" );
+    static std::string _gridname = eckit::Resource<std::string>("--grid", "O32");
     return _gridname;
 }
 
 std::string functionspace_name() {
-    static std::string _name = eckit::Resource<std::string>( "--functionspace", "StructuredColumns" );
+    static std::string _name = eckit::Resource<std::string>("--functionspace", "StructuredColumns");
     return _name;
 }
 
@@ -49,7 +49,7 @@ std::string configuration() {
 
 FunctionSpace structured_columns() {
     static functionspace::StructuredColumns _fs = []() {
-        Grid grid( grid_name() );
+        Grid grid(grid_name());
         return functionspace::StructuredColumns{grid};
     }();
     return _fs;
@@ -57,8 +57,8 @@ FunctionSpace structured_columns() {
 
 FunctionSpace node_columns() {
     static functionspace::NodeColumns _fs = []() {
-        Grid grid( grid_name() );
-        Mesh mesh = StructuredMeshGenerator().generate( grid );
+        Grid grid(grid_name());
+        Mesh mesh = StructuredMeshGenerator().generate(grid);
         return functionspace::NodeColumns{mesh};
     }();
     return _fs;
@@ -80,66 +80,66 @@ std::vector<PointLonLat>& points() {
     return _points;
 }
 
-void check_part( const std::vector<int>& vec ) {
+void check_part(const std::vector<int>& vec) {
     Log::debug() << "part = " << vec << std::endl;
     std::vector<int> expected;
-    if ( mpi::size() == 1 && grid_name() == "O32" ) {
+    if (mpi::size() == 1 && grid_name() == "O32") {
         expected = std::vector<int>{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     }
-    if ( mpi::size() == 4 && grid_name() == "O32" && functionspace_name() == "StructuredColumns" ) {
+    if (mpi::size() == 4 && grid_name() == "O32" && functionspace_name() == "StructuredColumns") {
         expected = std::vector<int>{0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3};
     }
-    if ( mpi::size() == 4 && grid_name() == "O32" && functionspace_name() == "NodeColumns" ) {
+    if (mpi::size() == 4 && grid_name() == "O32" && functionspace_name() == "NodeColumns") {
         expected = std::vector<int>{0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3};
     }
-    if ( expected.size() ) {
-        EXPECT( vec == expected );
+    if (expected.size()) {
+        EXPECT(vec == expected);
     }
     else {
         Log::warning() << "Check for part not implemented for configuration " << configuration() << std::endl;
     }
 }
 
-void check_sizes( const std::vector<int>& vec ) {
+void check_sizes(const std::vector<int>& vec) {
     Log::debug() << "sizes = " << vec << std::endl;
     std::vector<int> expected;
-    if ( mpi::size() == 1 && grid_name() == "O32" && functionspace_name() == "StructuredColumns" ) {
+    if (mpi::size() == 1 && grid_name() == "O32" && functionspace_name() == "StructuredColumns") {
         expected = std::vector<int>{5};
     }
-    if ( mpi::size() == 4 && grid_name() == "O32" && functionspace_name() == "StructuredColumns" ) {
+    if (mpi::size() == 4 && grid_name() == "O32" && functionspace_name() == "StructuredColumns") {
         expected = std::vector<int>{7, 43, 43, 7};
     }
-    if ( mpi::size() == 1 && grid_name() == "O32" && functionspace_name() == "NodeColumns" ) {
+    if (mpi::size() == 1 && grid_name() == "O32" && functionspace_name() == "NodeColumns") {
         expected = std::vector<int>{167};
     }
-    if ( mpi::size() == 4 && grid_name() == "O32" && functionspace_name() == "NodeColumns" ) {
+    if (mpi::size() == 4 && grid_name() == "O32" && functionspace_name() == "NodeColumns") {
         expected = std::vector<int>{169, 147, 149, 165};
     }
-    if ( expected.size() ) {
-        EXPECT( vec == expected );
+    if (expected.size()) {
+        EXPECT(vec == expected);
     }
     else {
         Log::warning() << "Check for sizes not implemented for configuration " << configuration() << std::endl;
     }
 }
 
-void check_simplified_sizes( const std::vector<int>& vec ) {
+void check_simplified_sizes(const std::vector<int>& vec) {
     Log::debug() << "simplified_sizes = " << vec << std::endl;
     std::vector<int> expected;
-    if ( mpi::size() == 1 && grid_name() == "O32" && functionspace_name() == "StructuredColumns" ) {
+    if (mpi::size() == 1 && grid_name() == "O32" && functionspace_name() == "StructuredColumns") {
         expected = std::vector<int>{5};
     }
-    if ( mpi::size() == 4 && grid_name() == "O32" && functionspace_name() == "StructuredColumns" ) {
+    if (mpi::size() == 4 && grid_name() == "O32" && functionspace_name() == "StructuredColumns") {
         expected = std::vector<int>{7, 43, 43, 7};
     }
-    if ( mpi::size() == 1 && grid_name() == "O32" && functionspace_name() == "NodeColumns" ) {
+    if (mpi::size() == 1 && grid_name() == "O32" && functionspace_name() == "NodeColumns") {
         expected = std::vector<int>{5};
     }
-    if ( mpi::size() == 4 && grid_name() == "O32" && functionspace_name() == "NodeColumns" ) {
+    if (mpi::size() == 4 && grid_name() == "O32" && functionspace_name() == "NodeColumns") {
         expected = std::vector<int>{8, 5, 8, 7};
     }
-    if ( expected.size() ) {
-        EXPECT( vec == expected );
+    if (expected.size()) {
+        EXPECT(vec == expected);
     }
     else {
         Log::warning() << "Check for simplified_sizes not implemented for configuration " << configuration()
@@ -152,40 +152,40 @@ void check_simplified_sizes( const std::vector<int>& vec ) {
 
 //-----------------------------------------------------------------------------
 
-CASE( "info" ) {
-    functionspace().polygon().outputPythonScript( "polygon.py" );
+CASE("info") {
+    functionspace().polygon().outputPythonScript("polygon.py");
 }
 
-CASE( "test_polygons" ) {
+CASE("test_polygons") {
     auto fs = functionspace();
 
-    ATLAS_TRACE( "computations after setup" );
-    auto polygons = ListPolygonXY( fs.polygons() );
+    ATLAS_TRACE("computations after setup");
+    auto polygons = ListPolygonXY(fs.polygons());
 
-    std::vector<int> sizes( mpi::size() );
-    std::vector<int> simplified_sizes( mpi::size() );
-    for ( idx_t i = 0; i < mpi::size(); ++i ) {
+    std::vector<int> sizes(mpi::size());
+    std::vector<int> simplified_sizes(mpi::size());
+    for (idx_t i = 0; i < mpi::size(); ++i) {
         sizes[i]            = fs.polygons()[i].size();
         simplified_sizes[i] = polygons[i].size();
     }
 
     // Test iterator:
-    for ( auto& polygon : fs.polygons() ) {
+    for (auto& polygon : fs.polygons()) {
         Log::info() << "size of polygon = " << polygon.size() << std::endl;
     }
 
-    for ( auto& polygon : polygons ) {
+    for (auto& polygon : polygons) {
         Log::info() << "size of PolygonXY = " << polygon.size() << std::endl;
     }
 
-    std::vector<int> part( points().size() );
-    for ( size_t n = 0; n < points().size(); ++n ) {
+    std::vector<int> part(points().size());
+    for (size_t n = 0; n < points().size(); ++n) {
         Log::debug() << n << "  " << points()[n];
 
         // A brute force approach.
         // Use PolygonLocator class for optimized result
-        for ( idx_t p = 0; p < polygons.size(); ++p ) {
-            if ( polygons[p].contains( points()[n] ) ) {
+        for (idx_t p = 0; p < polygons.size(); ++p) {
+            if (polygons[p].contains(points()[n])) {
                 Log::debug() << " : " << p;
                 part[n] = p;
             }
@@ -193,35 +193,35 @@ CASE( "test_polygons" ) {
         Log::debug() << std::endl;
     }
 
-    check_part( part );
-    check_sizes( sizes );
-    check_simplified_sizes( simplified_sizes );
+    check_part(part);
+    check_sizes(sizes);
+    check_simplified_sizes(simplified_sizes);
 
-    PolygonLocator find_partition( polygons );
-    for ( size_t n = 0; n < points().size(); ++n ) {
-        EXPECT_EQ( find_partition( points()[n] ), part[n] );
+    PolygonLocator find_partition(polygons);
+    for (size_t n = 0; n < points().size(); ++n) {
+        EXPECT_EQ(find_partition(points()[n]), part[n]);
     }
     Log::info() << std::endl;
 }
 
-CASE( "test_polygon_locator_from_const_ref_polygons" ) {
+CASE("test_polygon_locator_from_const_ref_polygons") {
     auto polygons = ListPolygonXY{functionspace().polygons()};
-    PolygonLocator find_partition( polygons );
-    EXPECT_EQ( find_partition( PointLonLat{0., 90.} ), 0 );
-    EXPECT_EQ( find_partition( PointLonLat{0., -90.} ), mpi::size() - 1 );
+    PolygonLocator find_partition(polygons);
+    EXPECT_EQ(find_partition(PointLonLat{0., 90.}), 0);
+    EXPECT_EQ(find_partition(PointLonLat{0., -90.}), mpi::size() - 1);
 }
 
-CASE( "test_polygon_locator_from_move" ) {
-    PolygonLocator find_partition( ListPolygonXY{functionspace().polygons()} );
-    EXPECT_EQ( find_partition( PointLonLat{0., 90.} ), 0 );
-    EXPECT_EQ( find_partition( PointLonLat{0., -90.} ), mpi::size() - 1 );
+CASE("test_polygon_locator_from_move") {
+    PolygonLocator find_partition(ListPolygonXY{functionspace().polygons()});
+    EXPECT_EQ(find_partition(PointLonLat{0., 90.}), 0);
+    EXPECT_EQ(find_partition(PointLonLat{0., -90.}), mpi::size() - 1);
 }
 
-CASE( "test_polygon_locator_from_shared" ) {
-    auto polygons = std::make_shared<ListPolygonXY>( functionspace().polygons() );
-    PolygonLocator find_partition( polygons );
-    EXPECT_EQ( find_partition( PointLonLat{0., 90.} ), 0 );
-    EXPECT_EQ( find_partition( PointLonLat{0., -90.} ), mpi::size() - 1 );
+CASE("test_polygon_locator_from_shared") {
+    auto polygons = std::make_shared<ListPolygonXY>(functionspace().polygons());
+    PolygonLocator find_partition(polygons);
+    EXPECT_EQ(find_partition(PointLonLat{0., 90.}), 0);
+    EXPECT_EQ(find_partition(PointLonLat{0., -90.}), mpi::size() - 1);
 }
 
 //-----------------------------------------------------------------------------
@@ -229,6 +229,6 @@ CASE( "test_polygon_locator_from_shared" ) {
 }  // namespace test
 }  // namespace atlas
 
-int main( int argc, char** argv ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
 }

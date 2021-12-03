@@ -20,24 +20,24 @@ namespace array {
 //------------------------------------------------------------------------------------------------------
 
 template <typename Value, int Rank>
-IndexView<Value, Rank>::IndexView( Value* data, const idx_t shape[1] ) : data_( data ) {
+IndexView<Value, Rank>::IndexView(Value* data, const idx_t shape[1]): data_(data) {
     strides_[0] = 1;
     shape_[0]   = shape[0];
 }
 
 template <typename Value, int Rank>
-IndexView<Value, Rank>::IndexView( Value* data, const idx_t shape[1], const idx_t strides[1] ) :
-    data_( const_cast<Value*>( data ) ) {
+IndexView<Value, Rank>::IndexView(Value* data, const idx_t shape[1], const idx_t strides[1]):
+    data_(const_cast<Value*>(data)) {
     strides_[0] = strides[0];
     shape_[0]   = shape[0];
 }
 
 template <typename Value, int Rank>
-void IndexView<Value, Rank>::dump( std::ostream& os ) const {
+void IndexView<Value, Rank>::dump(std::ostream& os) const {
     os << "size: " << size() << " , values: ";
     os << "[ ";
-    for ( idx_t j = 0; j < size(); ++j ) {
-        os << ( *this )( j ) << " ";
+    for (idx_t j = 0; j < size(); ++j) {
+        os << (*this)(j) << " ";
     }
     os << "]" << std::endl;
 }
@@ -45,16 +45,16 @@ void IndexView<Value, Rank>::dump( std::ostream& os ) const {
 //------------------------------------------------------------------------------------------------------
 // Explicit template instatiation
 
-#define EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK( TYPE, RANK ) \
-    template class IndexView<TYPE, RANK>;                       \
+#define EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(TYPE, RANK) \
+    template class IndexView<TYPE, RANK>;                     \
     template class IndexView<const TYPE, RANK>;
 
-#define EXPLICIT_TEMPLATE_INSTANTIATION( RANK )            \
-    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK( int, RANK ) \
-    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK( long, RANK )
+#define EXPLICIT_TEMPLATE_INSTANTIATION(RANK)            \
+    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(int, RANK) \
+    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(long, RANK)
 
-EXPLICIT_TEMPLATE_INSTANTIATION( 1 )
-EXPLICIT_TEMPLATE_INSTANTIATION( 2 )
+EXPLICIT_TEMPLATE_INSTANTIATION(1)
+EXPLICIT_TEMPLATE_INSTANTIATION(2)
 
 #undef EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK
 #undef EXPLICIT_TEMPLATE_INSTANTIATION

@@ -32,7 +32,7 @@ public:  // methods
     //-- Constructors
 
     /// @brief Construct "size" polygon
-    StructuredPartitionPolygon( const functionspace::FunctionSpaceImpl& fs, idx_t halo );
+    StructuredPartitionPolygon(const functionspace::FunctionSpaceImpl& fs, idx_t halo);
 
     //-- Accessors
 
@@ -41,14 +41,14 @@ public:  // methods
     /// @brief Return the memory footprint of the Polygon
     size_t footprint() const override;
 
-    void outputPythonScript( const eckit::PathName&, const eckit::Configuration& = util::NoConfig() ) const override;
+    void outputPythonScript(const eckit::PathName&, const eckit::Configuration& = util::NoConfig()) const override;
 
     PointsXY xy() const override;
     PointsLonLat lonlat() const override;
 
     const RectangularDomain& inscribedDomain() const override { return inscribed_domain_; }
 
-    void allGather( util::PartitionPolygons& ) const override;
+    void allGather(util::PartitionPolygons&) const override;
 
 private:
     // void print( std::ostream& ) const;

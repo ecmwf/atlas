@@ -25,7 +25,7 @@ namespace actions {
  * - dual_volumes field
  * - dual_normals field
  */
-void build_median_dual_mesh( Mesh& mesh );
+void build_median_dual_mesh(Mesh& mesh);
 
 /*
  * Build centroid-dual mesh by connecting cell centres with cell centres
@@ -34,7 +34,7 @@ void build_median_dual_mesh( Mesh& mesh );
  * - skewness field value 1 at ip1, value -1 at ip2
  * - alpha field  value 1 at ip1, value 0 at ip2
  */
-void build_centroid_dual_mesh( Mesh& mesh );
+void build_centroid_dual_mesh(Mesh& mesh);
 
 /*
  * Build brick-dual mesh
@@ -52,13 +52,13 @@ void build_centroid_dual_mesh( Mesh& mesh );
  *   |       |       |       |
  *   |   #   |   #   |   #   |   #
  */
-void build_brick_dual_mesh( const Grid& grid, Mesh& mesh );
+void build_brick_dual_mesh(const Grid& grid, Mesh& mesh);
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 extern "C" {
-void atlas__build_median_dual_mesh( Mesh::Implementation* mesh );
-void atlas__build_centroid_dual_mesh( Mesh::Implementation* mesh );
+void atlas__build_median_dual_mesh(Mesh::Implementation* mesh);
+void atlas__build_centroid_dual_mesh(Mesh::Implementation* mesh);
 }
 // ------------------------------------------------------------------
 

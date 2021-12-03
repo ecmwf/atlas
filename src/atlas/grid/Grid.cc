@@ -25,41 +25,41 @@
 namespace atlas {
 
 Grid::IterateXY Grid::xy() const {
-    return Grid::IterateXY( *get() );
+    return Grid::IterateXY(*get());
 }
 
 Grid::IterateLonLat Grid::lonlat() const {
-    return Grid::IterateLonLat( *get() );
+    return Grid::IterateLonLat(*get());
 }
 
-Grid::Grid( const std::string& shortname, const Domain& domain ) :
-    Handle( [&] {
+Grid::Grid(const std::string& shortname, const Domain& domain):
+    Handle([&] {
         Config config;
-        if ( domain ) {
-            config.set( "domain", domain.spec() );
+        if (domain) {
+            config.set("domain", domain.spec());
         }
-        return Grid::Implementation::create( shortname, config );
-    }() ) {}
+        return Grid::Implementation::create(shortname, config);
+    }()) {}
 
-Grid::Grid( const std::string& shortname, const Projection& projection, const Domain& domain ) :
-    Handle( [&] {
+Grid::Grid(const std::string& shortname, const Projection& projection, const Domain& domain):
+    Handle([&] {
         Config config;
-        if ( projection ) {
-            config.set( "projection", projection.spec() );
+        if (projection) {
+            config.set("projection", projection.spec());
         }
-        if ( domain ) {
-            config.set( "domain", domain.spec() );
+        if (domain) {
+            config.set("domain", domain.spec());
         }
-        return Grid::Implementation::create( shortname, config );
-    }() ) {}
+        return Grid::Implementation::create(shortname, config);
+    }()) {}
 
-Grid::Grid( const Grid& grid, const Grid::Domain& domain ) :
-    Handle( [&] {
-        ATLAS_ASSERT( grid );
-        return Grid::Implementation::create( *grid.get(), domain );
-    }() ) {}
+Grid::Grid(const Grid& grid, const Grid::Domain& domain):
+    Handle([&] {
+        ATLAS_ASSERT(grid);
+        return Grid::Implementation::create(*grid.get(), domain);
+    }()) {}
 
-Grid::Grid( const Config& p ) : Handle( Grid::Implementation::create( p ) ) {}
+Grid::Grid(const Config& p): Handle(Grid::Implementation::create(p)) {}
 
 idx_t Grid::size() const {
     return get()->size();
@@ -89,8 +89,8 @@ std::string Grid::uid() const {
     return get()->uid();
 }
 
-void Grid::hash( eckit::Hash& h ) const {
-    get()->hash( h );
+void Grid::hash(eckit::Hash& h) const {
+    get()->hash(h);
 }
 
 Grid::Spec Grid::spec() const {

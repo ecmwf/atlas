@@ -33,10 +33,10 @@ namespace {
 struct Increments {
     double dx;
     double dy;
-    Increments( double _dx, double _dy ) : dx( _dx ), dy( _dy ) {}
+    Increments(double _dx, double _dy): dx(_dx), dy(_dy) {}
 };
 
-static Grid RegularLL( const Increments& increments, const Domain& _domain ) {
+static Grid RegularLL(const Increments& increments, const Domain& _domain) {
     // As MIR defines a "RegularLL" grid:
     //   - If the domain is global or zonal band, the grid is periodic, with the domain's West defining the West boundary
     //     and the East-most point is at (East-dx) where (East = West+360)
@@ -49,45 +49,45 @@ static Grid RegularLL( const Increments& increments, const Domain& _domain ) {
     double s = domain.ymin();
     double w = domain.xmin();
     double e = domain.xmax();
-    long nj  = long( ( n - s ) / dy ) + 1;
-    long ni  = long( ( e - w ) / dx ) + long( domain.zonal_band() ? 0 : 1 );
+    long nj  = long((n - s) / dy) + 1;
+    long ni  = long((e - w) / dx) + long(domain.zonal_band() ? 0 : 1);
 
     using atlas::grid::LinearSpacing;
-    StructuredGrid::XSpace xspace( LinearSpacing( w, e, ni, not domain.zonal_band() ) );
-    StructuredGrid::YSpace yspace( LinearSpacing( n, s, nj ) );
+    StructuredGrid::XSpace xspace(LinearSpacing(w, e, ni, not domain.zonal_band()));
+    StructuredGrid::YSpace yspace(LinearSpacing(n, s, nj));
 
-    return StructuredGrid( xspace, yspace, StructuredGrid::Projection(), domain );
+    return StructuredGrid(xspace, yspace, StructuredGrid::Projection(), domain);
 }
 
-static Grid RegularLL( const Increments& increments ) {
-    return RegularLL( increments, RectangularDomain{{0., 360.}, {-90., 90.}} );
+static Grid RegularLL(const Increments& increments) {
+    return RegularLL(increments, RectangularDomain{{0., 360.}, {-90., 90.}});
 }
 
-static Grid RegularLL11( const Domain& domain ) {
-    return RegularLL( Increments{1., 1.}, domain );
+static Grid RegularLL11(const Domain& domain) {
+    return RegularLL(Increments{1., 1.}, domain);
 }
 
 static Grid RegularLL11() {
-    return RegularLL( Increments{1., 1.}, RectangularDomain{{0., 360.}, {-90., 90.}} );
+    return RegularLL(Increments{1., 1.}, RectangularDomain{{0., 360.}, {-90., 90.}});
 }
 
 }  // namespace
 
-CASE( "Test number of points for global grids" ) {
+CASE("Test number of points for global grids") {
     // --- Global grids --- //
-    EXPECT( Grid( "O16" ).size() == 1600 );
+    EXPECT(Grid("O16").size() == 1600);
 
-    EXPECT( Grid( "O1280" ).size() == 6599680 );
+    EXPECT(Grid("O1280").size() == 6599680);
 
-    EXPECT( RegularLL( Increments{1., 1.} ).size() == 65160 );
+    EXPECT(RegularLL(Increments{1., 1.}).size() == 65160);
 }
 
-CASE( "Test number of points for non-global grids" ) {
+CASE("Test number of points for non-global grids") {
     Grid global = RegularLL11();
 
-    auto test_regional_size = [&]( const Domain& domain, idx_t size ) -> bool {
-        if ( RegularLL11( domain ).size() != size ) {
-            Log::error() << "RegularLL11( domain ).size() != size ---> [ " << RegularLL11( domain ).size()
+    auto test_regional_size = [&](const Domain& domain, idx_t size) -> bool {
+        if (RegularLL11(domain).size() != size) {
+            Log::error() << "RegularLL11( domain ).size() != size ---> [ " << RegularLL11(domain).size()
                          << " != " << size << " ]" << std::endl;
             Log::error() << "    with Domain = " << domain << std::endl;
             return false;
@@ -95,9 +95,9 @@ CASE( "Test number of points for non-global grids" ) {
         return true;
     };
 
-    auto test_cropping_size = [&]( const Domain& domain, idx_t size ) -> bool {
-        if ( Grid( global, domain ).size() != size ) {
-            Log::error() << "Grid( global, domain ).size() != size ---> [ " << Grid( global, domain ).size()
+    auto test_cropping_size = [&](const Domain& domain, idx_t size) -> bool {
+        if (Grid(global, domain).size() != size) {
+            Log::error() << "Grid( global, domain ).size() != size ---> [ " << Grid(global, domain).size()
                          << " != " << size << " ]" << std::endl;
             Log::error() << "    with Domain = " << domain << std::endl;
             return false;
@@ -108,76 +108,76 @@ CASE( "Test number of points for non-global grids" ) {
     // -- Parallels
     {
         // North Pole latitude
-        EXPECT( test_regional_size( RectangularDomain{{0., 360.}, {90., 90.}}, 360 ) );
-        EXPECT( test_cropping_size( RectangularDomain{{0., 360.}, {90., 90.}}, 360 ) );
+        EXPECT(test_regional_size(RectangularDomain{{0., 360.}, {90., 90.}}, 360));
+        EXPECT(test_cropping_size(RectangularDomain{{0., 360.}, {90., 90.}}, 360));
 
         // North Pole latitude plus one extra
-        EXPECT( test_regional_size( RectangularDomain{{0., 360.}, {89., 90.}}, 720 ) );
-        EXPECT( test_cropping_size( RectangularDomain{{0., 360.}, {89., 90.}}, 720 ) );
+        EXPECT(test_regional_size(RectangularDomain{{0., 360.}, {89., 90.}}, 720));
+        EXPECT(test_cropping_size(RectangularDomain{{0., 360.}, {89., 90.}}, 720));
 
         // Equator latitude
-        EXPECT( test_regional_size( RectangularDomain{{0., 360.}, {0., 0.}}, 360 ) );
-        EXPECT( test_cropping_size( RectangularDomain{{0., 360.}, {0., 0.}}, 360 ) );
+        EXPECT(test_regional_size(RectangularDomain{{0., 360.}, {0., 0.}}, 360));
+        EXPECT(test_cropping_size(RectangularDomain{{0., 360.}, {0., 0.}}, 360));
 
         // South Pole latitude
-        EXPECT( test_regional_size( RectangularDomain{{0., 360.}, {-90., -90.}}, 360 ) );
-        EXPECT( test_cropping_size( RectangularDomain{{0., 360.}, {-90., -90.}}, 360 ) );
+        EXPECT(test_regional_size(RectangularDomain{{0., 360.}, {-90., -90.}}, 360));
+        EXPECT(test_cropping_size(RectangularDomain{{0., 360.}, {-90., -90.}}, 360));
 
         // South Pole latitude plus one extra
-        EXPECT( test_regional_size( RectangularDomain{{0., 360.}, {-90., -89.}}, 720 ) );
-        EXPECT( test_cropping_size( RectangularDomain{{0., 360.}, {-90., -89.}}, 720 ) );
+        EXPECT(test_regional_size(RectangularDomain{{0., 360.}, {-90., -89.}}, 720));
+        EXPECT(test_cropping_size(RectangularDomain{{0., 360.}, {-90., -89.}}, 720));
     }
 
     // -- Meridians
     {
         // Greenwich Meridian
-        EXPECT( test_regional_size( RectangularDomain{{0., 0.}, {-90., 90.}}, 181 ) );
-        EXPECT( test_cropping_size( RectangularDomain{{0., 0.}, {-90., 90.}}, 181 ) );
+        EXPECT(test_regional_size(RectangularDomain{{0., 0.}, {-90., 90.}}, 181));
+        EXPECT(test_cropping_size(RectangularDomain{{0., 0.}, {-90., 90.}}, 181));
 
         // Greenwich Meridian + one to East
-        EXPECT( test_regional_size( RectangularDomain{{0., 1.}, {-90., 90.}}, 2 * 181 ) );
-        EXPECT( test_cropping_size( RectangularDomain{{0., 1.}, {-90., 90.}}, 2 * 181 ) );
+        EXPECT(test_regional_size(RectangularDomain{{0., 1.}, {-90., 90.}}, 2 * 181));
+        EXPECT(test_cropping_size(RectangularDomain{{0., 1.}, {-90., 90.}}, 2 * 181));
 
         // Greenwich Meridian + one to West
-        EXPECT( test_regional_size( RectangularDomain{{-1., 0.}, {-90., 90.}}, 2 * 181 ) );
-        EXPECT( test_cropping_size( RectangularDomain{{-1., 0.}, {-90., 90.}}, 2 * 181 ) );
+        EXPECT(test_regional_size(RectangularDomain{{-1., 0.}, {-90., 90.}}, 2 * 181));
+        EXPECT(test_cropping_size(RectangularDomain{{-1., 0.}, {-90., 90.}}, 2 * 181));
 
         // Meridian, one degree to the East of Greenwich
-        EXPECT( test_regional_size( RectangularDomain{{-1., -1.}, {-90., 90.}}, 181 ) );
-        EXPECT( test_cropping_size( RectangularDomain{{-1., -1.}, {-90., 90.}}, 181 ) );
+        EXPECT(test_regional_size(RectangularDomain{{-1., -1.}, {-90., 90.}}, 181));
+        EXPECT(test_cropping_size(RectangularDomain{{-1., -1.}, {-90., 90.}}, 181));
 
         // Date line at 180 degrees East
-        EXPECT( test_regional_size( RectangularDomain{{180., 180.}, {-90., 90.}}, 181 ) );
-        EXPECT( test_cropping_size( RectangularDomain{{180., 180.}, {-90., 90.}}, 181 ) );
+        EXPECT(test_regional_size(RectangularDomain{{180., 180.}, {-90., 90.}}, 181));
+        EXPECT(test_cropping_size(RectangularDomain{{180., 180.}, {-90., 90.}}, 181));
 
         // Date line at 180 degrees West
-        EXPECT( test_regional_size( RectangularDomain{{-180., -180.}, {-90., 90.}}, 181 ) );
-        EXPECT( test_cropping_size( RectangularDomain{{-180., -180.}, {-90., 90.}}, 181 ) );
+        EXPECT(test_regional_size(RectangularDomain{{-180., -180.}, {-90., 90.}}, 181));
+        EXPECT(test_cropping_size(RectangularDomain{{-180., -180.}, {-90., 90.}}, 181));
     }
 
     // Crop to single point {0.,0.}
-    EXPECT( test_cropping_size( RectangularDomain{{-0.5, 0.5}, {-0.5, 0.5}}, 1 ) );
-    EXPECT( test_cropping_size( RectangularDomain{{0., 0.}, {0., 0.}}, 1 ) );
+    EXPECT(test_cropping_size(RectangularDomain{{-0.5, 0.5}, {-0.5, 0.5}}, 1));
+    EXPECT(test_cropping_size(RectangularDomain{{0., 0.}, {0., 0.}}, 1));
 
     // Regional grid with same domain leads to bounds given by domain --> 4 points
-    EXPECT( test_regional_size( RectangularDomain{{-0.5, 0.5}, {-0.5, 0.5}}, 4 ) );
-    EXPECT( test_regional_size( RectangularDomain{{0., 0.}, {0., 0.}}, 1 ) );
+    EXPECT(test_regional_size(RectangularDomain{{-0.5, 0.5}, {-0.5, 0.5}}, 4));
+    EXPECT(test_regional_size(RectangularDomain{{0., 0.}, {0., 0.}}, 1));
 }
 
-CASE( "Test first point of cropped global grids (MIR-374)" ) {
-    auto test_first_point = []( const std::string& name, const Domain& domain, const PointLonLat& p ) -> bool {
+CASE("Test first point of cropped global grids (MIR-374)") {
+    auto test_first_point = [](const std::string& name, const Domain& domain, const PointLonLat& p) -> bool {
         double eps = 1.e-6;
         Grid global_grid{name};
         Grid cropped_grid{global_grid, domain};
 
         PointLonLat first_point = *cropped_grid.lonlat().begin();
-        if ( not is_approximately_equal( first_point.lon(), p.lon(), eps ) ||
-             not is_approximately_equal( first_point.lat(), p.lat(), eps ) ) {
-            auto old_precision = Log::error().precision( 16 );
+        if (not is_approximately_equal(first_point.lon(), p.lon(), eps) ||
+            not is_approximately_equal(first_point.lat(), p.lat(), eps)) {
+            auto old_precision = Log::error().precision(16);
             Log::error() << "First point doesn't match for Grid " << name << " with domain " << domain << std::endl;
             Log::error() << "    first_point = " << first_point << std::endl;
             Log::error() << "    expected    = " << p << std::endl;
-            Log::error().precision( old_precision );
+            Log::error().precision(old_precision);
             return false;
         }
         return true;
@@ -200,6 +200,6 @@ CASE( "Test first point of cropped global grids (MIR-374)" ) {
 }  // namespace test
 }  // namespace atlas
 
-int main( int argc, char** argv ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
 }

@@ -33,9 +33,9 @@ namespace actions {
 
 class ReorderReverseCuthillMckee : public ReorderImpl {
 public:
-    ReorderReverseCuthillMckee( const eckit::Parametrisation& = util::NoConfig() );
+    ReorderReverseCuthillMckee(const eckit::Parametrisation& = util::NoConfig());
 
-    std::vector<idx_t> computeNodesOrder( Mesh& ) override;
+    std::vector<idx_t> computeNodesOrder(Mesh&) override;
 
 private:
     bool ghost_at_end_{true};

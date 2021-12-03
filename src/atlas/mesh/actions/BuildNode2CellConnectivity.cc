@@ -53,13 +53,13 @@ namespace actions {
 namespace {  // anonymous
 struct Sort {
     Sort() = default;
-    Sort( gidx_t gid, idx_t idx ) {
+    Sort(gidx_t gid, idx_t idx) {
         g = gid;
         i = idx;
     }
     gidx_t g;
     idx_t i;
-    bool operator<( const Sort& other ) const { return ( g < other.g ); }
+    bool operator<(const Sort& other) const { return (g < other.g); }
 };
 }  // anonymous namespace
 
@@ -72,49 +72,49 @@ void BuildNode2CellConnectivity::operator()() {
 
     const mesh::HybridElements::Connectivity& cell_node_connectivity = mesh_.cells().node_connectivity();
 
-    std::vector<idx_t> to_cell_size( nodes.size(), 0 );
-    for ( idx_t jcell = 0; jcell < nb_cells; ++jcell ) {
-        for ( idx_t j = 0; j < cell_node_connectivity.cols( jcell ); ++j ) {
-            ++to_cell_size[cell_node_connectivity( jcell, j )];
+    std::vector<idx_t> to_cell_size(nodes.size(), 0);
+    for (idx_t jcell = 0; jcell < nb_cells; ++jcell) {
+        for (idx_t j = 0; j < cell_node_connectivity.cols(jcell); ++j) {
+            ++to_cell_size[cell_node_connectivity(jcell, j)];
         }
     }
 
-    node_to_cell.add( nodes.size(), to_cell_size.data() );
+    node_to_cell.add(nodes.size(), to_cell_size.data());
 
-    for ( idx_t jnode = 0; jnode < nodes.size(); ++jnode ) {
+    for (idx_t jnode = 0; jnode < nodes.size(); ++jnode) {
         to_cell_size[jnode] = 0;
     }
 
-    UniqueLonLat compute_uid( mesh_ );
-    std::vector<Sort> cell_sort( nb_cells );
-    for ( idx_t jcell = 0; jcell < nb_cells; ++jcell ) {
-        cell_sort[jcell] = Sort( compute_uid( cell_node_connectivity.row( jcell ) ), jcell );
+    UniqueLonLat compute_uid(mesh_);
+    std::vector<Sort> cell_sort(nb_cells);
+    for (idx_t jcell = 0; jcell < nb_cells; ++jcell) {
+        cell_sort[jcell] = Sort(compute_uid(cell_node_connectivity.row(jcell)), jcell);
     }
 
 
-    std::stable_sort( cell_sort.data(), cell_sort.data() + nb_cells );
+    std::stable_sort(cell_sort.data(), cell_sort.data() + nb_cells);
 
-    for ( idx_t jcell = 0; jcell < nb_cells; ++jcell ) {
+    for (idx_t jcell = 0; jcell < nb_cells; ++jcell) {
         idx_t icell = cell_sort[jcell].i;
-        ATLAS_ASSERT( icell < nb_cells );
-        for ( idx_t j = 0; j < cell_node_connectivity.cols( icell ); ++j ) {
-            idx_t node = cell_node_connectivity( icell, j );
-            node_to_cell.set( node, to_cell_size[node]++, icell );
+        ATLAS_ASSERT(icell < nb_cells);
+        for (idx_t j = 0; j < cell_node_connectivity.cols(icell); ++j) {
+            idx_t node = cell_node_connectivity(icell, j);
+            node_to_cell.set(node, to_cell_size[node]++, icell);
         }
     }
 }
 
-BuildNode2CellConnectivity::BuildNode2CellConnectivity( Mesh& mesh ) : mesh_( mesh ) {}
+BuildNode2CellConnectivity::BuildNode2CellConnectivity(Mesh& mesh): mesh_(mesh) {}
 
 
 //----------------------------------------------------------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
 extern "C" {
-void atlas__build_node_to_cell_connectivity( Mesh::Implementation* mesh ) {
-    ATLAS_ASSERT( mesh != nullptr, "Cannot access uninitialised atlas_Mesh" );
-    auto m                               = Mesh( mesh );
-    auto build_node_to_cell_connectivity = BuildNode2CellConnectivity( m );
+void atlas__build_node_to_cell_connectivity(Mesh::Implementation* mesh) {
+    ATLAS_ASSERT(mesh != nullptr, "Cannot access uninitialised atlas_Mesh");
+    auto m                               = Mesh(mesh);
+    auto build_node_to_cell_connectivity = BuildNode2CellConnectivity(m);
     build_node_to_cell_connectivity();
 }
 }

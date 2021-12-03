@@ -23,20 +23,20 @@ namespace partitioner {
 class SerialPartitioner : public Partitioner {
 public:
     SerialPartitioner();
-    SerialPartitioner( int N, const eckit::Parametrisation& config ) : Partitioner( 1 ) {}
+    SerialPartitioner(int N, const eckit::Parametrisation& config): Partitioner(1) {}
 
-    SerialPartitioner( int N ) : Partitioner( N ) {}
+    SerialPartitioner(int N): Partitioner(N) {}
 
     std::string type() const override { return static_type(); }
     static std::string static_type() { return "serial"; }
 
-    Distribution partition( const Grid& grid ) const override {
+    Distribution partition(const Grid& grid) const override {
         return Distribution{new distribution::SerialDistribution{grid}};
     }
 
-    void partition( const Grid& grid, int part[] ) const override {
+    void partition(const Grid& grid, int part[]) const override {
         gidx_t gridsize = grid.size();
-        for ( gidx_t n = 0; n < gridsize; ++n ) {
+        for (gidx_t n = 0; n < gridsize; ++n) {
             part[n] = 0.;
         }
     }

@@ -26,11 +26,11 @@ namespace method {
 
 class GridBoxMethod : public KNearestNeighboursBase {
 public:
-    GridBoxMethod( const Config& );
+    GridBoxMethod(const Config&);
     virtual ~GridBoxMethod() override;
 
 protected:
-    virtual void print( std::ostream& ) const override;
+    virtual void print(std::ostream&) const override;
 
     using KNearestNeighboursBase::do_setup;
     /**
@@ -38,21 +38,21 @@ protected:
      * @param source functionspace containing source points
      * @param target functionspace containing target points
      */
-    virtual void do_setup( const FunctionSpace& source, const FunctionSpace& target ) override;
-    virtual void do_setup( const Grid& source, const Grid& target, const Cache& ) override;
+    virtual void do_setup(const FunctionSpace& source, const FunctionSpace& target) override;
+    virtual void do_setup(const Grid& source, const Grid& target, const Cache&) override;
 
     virtual const FunctionSpace& source() const override { return source_; }
     virtual const FunctionSpace& target() const override { return target_; }
 
-    bool intersect( size_t i, const GridBox& iBox, const util::IndexKDTree::ValueList&, std::vector<Triplet>& ) const;
+    bool intersect(size_t i, const GridBox& iBox, const util::IndexKDTree::ValueList&, std::vector<Triplet>&) const;
 
-    virtual void do_execute( const FieldSet& source, FieldSet& target ) const override = 0;
-    virtual void do_execute( const Field& source, Field& target ) const override       = 0;
+    virtual void do_execute(const FieldSet& source, FieldSet& target) const override = 0;
+    virtual void do_execute(const Field& source, Field& target) const override       = 0;
 
     virtual Cache createCache() const override;
 
 protected:
-    static void giveUp( const std::forward_list<size_t>& );
+    static void giveUp(const std::forward_list<size_t>&);
 
     FunctionSpace source_;
     FunctionSpace target_;

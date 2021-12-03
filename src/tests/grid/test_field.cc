@@ -35,113 +35,112 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-void take_array( const array::Array& arr ) {
-    EXPECT( arr.size() == 20 );
+void take_array(const array::Array& arr) {
+    EXPECT(arr.size() == 20);
 }
 
 class TakeArray {
 public:
-    TakeArray( const array::Array& arr ) { EXPECT( arr.size() == 20 ); }
+    TakeArray(const array::Array& arr) { EXPECT(arr.size() == 20); }
 };
 
 //-----------------------------------------------------------------------------
 
-CASE( "test_fieldcreator" ) {
-    Field field( util::Config( "creator", "ArraySpec" )( "shape", array::make_shape( 10, 2 ) )(
-        "datatype", array::DataType::real32().str() )( "name", "myfield" ) );
+CASE("test_fieldcreator") {
+    Field field(util::Config("creator", "ArraySpec")("shape", array::make_shape(10, 2))(
+        "datatype", array::DataType::real32().str())("name", "myfield"));
 
-    EXPECT( field.datatype() == array::DataType::real32() );
-    EXPECT( field.name() == "myfield" );
+    EXPECT(field.datatype() == array::DataType::real32());
+    EXPECT(field.name() == "myfield");
 
-    Grid g( "O6" );
+    Grid g("O6");
 
-    Field arr( util::Config( "creator", "ArraySpec" )( "shape", array::make_shape( 10, 2 ) ) );
-    EXPECT( arr.shape( 0 ) == 10 );
-    EXPECT( arr.shape( 1 ) == 2 );
-    EXPECT( arr.datatype() == array::DataType::real64() );
+    Field arr(util::Config("creator", "ArraySpec")("shape", array::make_shape(10, 2)));
+    EXPECT(arr.shape(0) == 10);
+    EXPECT(arr.shape(1) == 2);
+    EXPECT(arr.datatype() == array::DataType::real64());
 
-    util::Config ifs_parameters = util::Config( "creator", "IFS" )( "nlev", 137 )( "nproma", 10 )( "ngptot", g.size() );
+    util::Config ifs_parameters = util::Config("creator", "IFS")("nlev", 137)("nproma", 10)("ngptot", g.size());
 
     Log::info() << "Creating IFS field " << std::endl;
-    Field ifs( util::Config( ifs_parameters )( "name", "myfield" )( "datatype", array::DataType::int32().str() )(
-        "nvar", 8 ) );
+    Field ifs(util::Config(ifs_parameters)("name", "myfield")("datatype", array::DataType::int32().str())("nvar", 8));
 
-    ATLAS_DEBUG_VAR( ifs );
-    EXPECT( ifs.shape( 0 ) == 36 );
-    EXPECT( ifs.shape( 1 ) == 8 );
-    EXPECT( ifs.shape( 2 ) == 137 );
-    EXPECT( ifs.shape( 3 ) == 10 );
+    ATLAS_DEBUG_VAR(ifs);
+    EXPECT(ifs.shape(0) == 36);
+    EXPECT(ifs.shape(1) == 8);
+    EXPECT(ifs.shape(2) == 137);
+    EXPECT(ifs.shape(3) == 10);
 
     Log::flush();
 }
 
-CASE( "test_implicit_conversion" ) {
-    Field field( "tmp", array::make_datatype<double>(), array::make_shape( 10, 2 ) );
+CASE("test_implicit_conversion") {
+    Field field("tmp", array::make_datatype<double>(), array::make_shape(10, 2));
     const array::Array& const_array = field;
     array::Array& array             = field;
 
-    array::ArrayView<double, 2> arrv = array::make_view<double, 2>( array );
-    arrv( 0, 0 )                     = 8.;
+    array::ArrayView<double, 2> arrv = array::make_view<double, 2>(array);
+    arrv(0, 0)                       = 8.;
 
-    array::ArrayView<const double, 2> carrv = array::make_view<double, 2>( const_array );
-    EXPECT( carrv( 0, 0 ) == 8. );
+    array::ArrayView<const double, 2> carrv = array::make_view<double, 2>(const_array);
+    EXPECT(carrv(0, 0) == 8.);
 
-    array::ArrayView<const double, 2> cfieldv = array::make_view<const double, 2>( field );
-    EXPECT( cfieldv( 0, 0 ) == 8. );
+    array::ArrayView<const double, 2> cfieldv = array::make_view<const double, 2>(field);
+    EXPECT(cfieldv(0, 0) == 8.);
 
-    take_array( field );
-    TakeArray ta( field );
+    take_array(field);
+    TakeArray ta(field);
 
     const Field& f = field;
-    TakeArray cta( f );
+    TakeArray cta(f);
 }
 
-CASE( "test_wrap_rawdata_through_array" ) {
-    std::vector<double> rawdata( 20, 8. );
-    util::ObjectHandle<array::Array> array( array::Array::wrap( rawdata.data(), array::make_shape( 10, 2 ) ) );
-    Field field( "wrapped", array.get() );
+CASE("test_wrap_rawdata_through_array") {
+    std::vector<double> rawdata(20, 8.);
+    util::ObjectHandle<array::Array> array(array::Array::wrap(rawdata.data(), array::make_shape(10, 2)));
+    Field field("wrapped", array.get());
 
-    EXPECT( array->owners() == 2 );
-    const array::ArrayView<double, 2> cfieldv = array::make_view<double, 2>( field );
-    EXPECT( cfieldv( 9, 1 ) == 8. );
+    EXPECT(array->owners() == 2);
+    const array::ArrayView<double, 2> cfieldv = array::make_view<double, 2>(field);
+    EXPECT(cfieldv(9, 1) == 8.);
 }
 
-CASE( "test_wrap_rawdata_direct" ) {
-    std::vector<double> rawdata( 10 * 2, 8. );
-    Field field( "wrapped", rawdata.data(), array::make_shape( 10, 2 ) );
+CASE("test_wrap_rawdata_direct") {
+    std::vector<double> rawdata(10 * 2, 8.);
+    Field field("wrapped", rawdata.data(), array::make_shape(10, 2));
 
-    EXPECT( field.array().owners() == 1 );
-    const array::ArrayView<double, 2> cfieldv = array::make_view<double, 2>( field );
-    EXPECT( cfieldv( 9, 1 ) == 8. );
+    EXPECT(field.array().owners() == 1);
+    const array::ArrayView<double, 2> cfieldv = array::make_view<double, 2>(field);
+    EXPECT(cfieldv(9, 1) == 8.);
 }
 
-CASE( "test_wrap_rawdata_through_field" ) {
-    std::vector<double> rawdata( 10 * 2, 8. );
-    Field field( "name", rawdata.data(), array::make_shape( 10, 2 ) );
+CASE("test_wrap_rawdata_through_field") {
+    std::vector<double> rawdata(10 * 2, 8.);
+    Field field("name", rawdata.data(), array::make_shape(10, 2));
 }
 
-CASE( "test_field_aligned" ) {
+CASE("test_field_aligned") {
     using namespace array;
-    auto check_field = []( const Field& field ) {
-        EXPECT_EQ( field.shape()[0], 10 );
-        EXPECT_EQ( field.shape()[1], 5 );
-        EXPECT_EQ( field.shape()[2], 3 );
-        EXPECT_EQ( field.size(), 10 * 5 * 3 );
-        EXPECT_EQ( field.contiguous(), false );
-        EXPECT_EQ( field.strides()[0], 5 * 4 );
-        EXPECT_EQ( field.strides()[1], 4 );
-        EXPECT_EQ( field.strides()[2], 1 );
+    auto check_field = [](const Field& field) {
+        EXPECT_EQ(field.shape()[0], 10);
+        EXPECT_EQ(field.shape()[1], 5);
+        EXPECT_EQ(field.shape()[2], 3);
+        EXPECT_EQ(field.size(), 10 * 5 * 3);
+        EXPECT_EQ(field.contiguous(), false);
+        EXPECT_EQ(field.strides()[0], 5 * 4);
+        EXPECT_EQ(field.strides()[1], 4);
+        EXPECT_EQ(field.strides()[2], 1);
     };
-    SECTION( "field(name,datatype,spec)" ) {
-        Field field( "name", make_datatype<double>(), ArraySpec{make_shape( 10, 5, 3 ), ArrayAlignment( 4 )} );
-        check_field( field );
+    SECTION("field(name,datatype,spec)") {
+        Field field("name", make_datatype<double>(), ArraySpec{make_shape(10, 5, 3), ArrayAlignment(4)});
+        check_field(field);
     }
-    SECTION( "field(config)" ) {
-        Field field( util::Config( "creator", "ArraySpec" ) |                     //
-                     util::Config( "datatype", make_datatype<double>().str() ) |  //
-                     option::shape( {10, 5, 3} ) |                                //
-                     option::alignment( 4 ) );
-        check_field( field );
+    SECTION("field(config)") {
+        Field field(util::Config("creator", "ArraySpec") |                     //
+                    util::Config("datatype", make_datatype<double>().str()) |  //
+                    option::shape({10, 5, 3}) |                                //
+                    option::alignment(4));
+        check_field(field);
     }
 }
 
@@ -150,6 +149,6 @@ CASE( "test_field_aligned" ) {
 }  // namespace test
 }  // namespace atlas
 
-int main( int argc, char** argv ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
 }

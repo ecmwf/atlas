@@ -43,7 +43,7 @@ static void init() {
 
 template <typename T>
 void load_builder() {
-    LegendreCacheCreatorBuilder<T>( "tmp" );
+    LegendreCacheCreatorBuilder<T>("tmp");
 }
 
 struct force_link {
@@ -55,85 +55,85 @@ struct force_link {
     }
 };
 
-static LegendreCacheCreatorFactory& factory( const std::string& name ) {
-    ATLAS_ASSERT( m );
-    std::map<std::string, LegendreCacheCreatorFactory*>::const_iterator j = m->find( name );
-    if ( j == m->end() ) {
+static LegendreCacheCreatorFactory& factory(const std::string& name) {
+    ATLAS_ASSERT(m);
+    std::map<std::string, LegendreCacheCreatorFactory*>::const_iterator j = m->find(name);
+    if (j == m->end()) {
         Log::error() << "No LegendreCacheCreatorFactory for [" << name << "]" << std::endl;
         Log::error() << "TransFactories are:" << std::endl;
-        for ( j = m->begin(); j != m->end(); ++j ) {
-            Log::error() << "   " << ( *j ).first << std::endl;
+        for (j = m->begin(); j != m->end(); ++j) {
+            Log::error() << "   " << (*j).first << std::endl;
         }
-        throw_Exception( std::string( "No LegendreCacheCreatorFactory called " ) + name );
+        throw_Exception(std::string("No LegendreCacheCreatorFactory called ") + name);
     }
     return *j->second;
 }
 
 }  // namespace
 
-LegendreCacheCreatorFactory::LegendreCacheCreatorFactory( const std::string& name ) : name_( name ) {
-    pthread_once( &once, init );
+LegendreCacheCreatorFactory::LegendreCacheCreatorFactory(const std::string& name): name_(name) {
+    pthread_once(&once, init);
 
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
-    ATLAS_ASSERT( m );
-    ATLAS_ASSERT( m->find( name ) == m->end() );
-    ( *m )[name] = this;
+    ATLAS_ASSERT(m);
+    ATLAS_ASSERT(m->find(name) == m->end());
+    (*m)[name] = this;
 }
 
 LegendreCacheCreatorFactory::~LegendreCacheCreatorFactory() {
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
-    ATLAS_ASSERT( m );
-    m->erase( name_ );
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
+    ATLAS_ASSERT(m);
+    m->erase(name_);
 }
 
-bool LegendreCacheCreatorFactory::has( const std::string& name ) {
-    pthread_once( &once, init );
+bool LegendreCacheCreatorFactory::has(const std::string& name) {
+    pthread_once(&once, init);
 
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
     static force_link static_linking;
 
-    ATLAS_ASSERT( m );
-    return ( m->find( name ) != m->end() );
+    ATLAS_ASSERT(m);
+    return (m->find(name) != m->end());
 }
 
-void LegendreCacheCreatorFactory::list( std::ostream& out ) {
-    pthread_once( &once, init );
+void LegendreCacheCreatorFactory::list(std::ostream& out) {
+    pthread_once(&once, init);
 
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
     static force_link static_linking;
 
-    ATLAS_ASSERT( m );
+    ATLAS_ASSERT(m);
     const char* sep = "";
-    for ( std::map<std::string, LegendreCacheCreatorFactory*>::const_iterator j = m->begin(); j != m->end(); ++j ) {
-        out << sep << ( *j ).first;
+    for (std::map<std::string, LegendreCacheCreatorFactory*>::const_iterator j = m->begin(); j != m->end(); ++j) {
+        out << sep << (*j).first;
         sep = ", ";
     }
 }
 
-LegendreCacheCreator::Implementation* LegendreCacheCreatorFactory::build( const Grid& grid, int truncation,
-                                                                          const eckit::Configuration& config ) {
-    pthread_once( &once, init );
+LegendreCacheCreator::Implementation* LegendreCacheCreatorFactory::build(const Grid& grid, int truncation,
+                                                                         const eckit::Configuration& config) {
+    pthread_once(&once, init);
 
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
     static force_link static_linking;
 
     util::Config options = Trans::config();
-    options.set( eckit::LocalConfiguration( config ) );
+    options.set(eckit::LocalConfiguration(config));
 
-    std::string name = options.getString( "type" );
+    std::string name = options.getString("type");
 
     Log::debug() << "Looking for LegendreCacheCreatorFactory [" << name << "]" << std::endl;
 
-    return factory( name ).make( grid, truncation, options );
+    return factory(name).make(grid, truncation, options);
 }
 
 
-LegendreCacheCreator::LegendreCacheCreator( const Grid& grid, int truncation, const eckit::Configuration& config ) :
-    Handle( LegendreCacheCreatorFactory::build( grid, truncation, config ) ) {}
+LegendreCacheCreator::LegendreCacheCreator(const Grid& grid, int truncation, const eckit::Configuration& config):
+    Handle(LegendreCacheCreatorFactory::build(grid, truncation, config)) {}
 
 
 bool LegendreCacheCreator::supported() const {
@@ -144,8 +144,8 @@ std::string LegendreCacheCreator::uid() const {
     return get()->uid();
 }
 
-void LegendreCacheCreator::create( const std::string& path ) const {
-    get()->create( path );
+void LegendreCacheCreator::create(const std::string& path) const {
+    get()->create(path);
 }
 
 Cache LegendreCacheCreator::create() const {

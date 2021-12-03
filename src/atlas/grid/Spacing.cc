@@ -17,14 +17,14 @@
 namespace atlas {
 namespace grid {
 
-Spacing::Spacing( const eckit::Parametrisation& p ) : Handle( atlas::grid::spacing::Spacing::create( p ) ) {}
+Spacing::Spacing(const eckit::Parametrisation& p): Handle(atlas::grid::spacing::Spacing::create(p)) {}
 
 size_t Spacing::size() const {
     return get()->size();
 }
 
-double Spacing::operator[]( size_t i ) const {
-    return get()->operator[]( i );
+double Spacing::operator[](size_t i) const {
+    return get()->operator[](i);
 }
 
 Spacing::const_iterator Spacing::begin() const {
@@ -63,17 +63,17 @@ Spacing::Spec Spacing::spec() const {
     return get()->spec();
 }
 
-LinearSpacing::LinearSpacing( double start, double stop, long N, bool endpoint ) :
-    Spacing( new atlas::grid::spacing::LinearSpacing( start, stop, N, endpoint ) ) {}
+LinearSpacing::LinearSpacing(double start, double stop, long N, bool endpoint):
+    Spacing(new atlas::grid::spacing::LinearSpacing(start, stop, N, endpoint)) {}
 
-LinearSpacing::LinearSpacing( const Interval& interval, long N, bool endpoint ) :
-    Spacing( new atlas::grid::spacing::LinearSpacing( interval, N, endpoint ) ) {}
+LinearSpacing::LinearSpacing(const Interval& interval, long N, bool endpoint):
+    Spacing(new atlas::grid::spacing::LinearSpacing(interval, N, endpoint)) {}
 
 double LinearSpacing::step() const {
-    return dynamic_cast<const spacing::LinearSpacing*>( get() )->step();
+    return dynamic_cast<const spacing::LinearSpacing*>(get())->step();
 }
 
-GaussianSpacing::GaussianSpacing( long N ) : Spacing( new atlas::grid::spacing::GaussianSpacing( N ) ) {}
+GaussianSpacing::GaussianSpacing(long N): Spacing(new atlas::grid::spacing::GaussianSpacing(N)) {}
 
 }  // namespace grid
 }  // namespace atlas

@@ -58,14 +58,14 @@ class Hilbert {
 public:
     /// Constructor
     /// Initializes the hilbert space filling curve with a given "space" and "levels"
-    Hilbert( const Domain& domain, idx_t levels );
+    Hilbert(const Domain& domain, idx_t levels);
 
     /// Compute the hilbert code for a given point in 2D
-    gidx_t operator()( const PointXY& point );
+    gidx_t operator()(const PointXY& point);
 
     /// Compute the hilbert code for a given point in 2D
     /// @param [out] relative_tolerance  cell-size of smallest level divided by bounding-box size
-    gidx_t operator()( const PointXY& point, double& relative_tolerance );
+    gidx_t operator()(const PointXY& point, double& relative_tolerance);
 
     /// Return the maximum hilbert code possible with the initialized levels
     ///
@@ -77,7 +77,7 @@ private:  // functions
     using box_t = std::array<PointXY, 4>;
 
     /// @brief Recursive algorithm
-    gidx_t recursive_algorithm( const PointXY& p, const box_t& box, idx_t level );
+    gidx_t recursive_algorithm(const PointXY& p, const box_t& box, idx_t level);
 
 private:  // data
     /// Vertex label type (4 vertices in 2D)
@@ -102,49 +102,49 @@ private:  // data
 
 // -------------------------------------------------------------------------------------
 
-Hilbert::Hilbert( const Domain& domain, idx_t levels ) : domain_{domain}, max_level_( levels ) {
-    nb_keys_2_ = gidx_t( std::pow( gidx_t( 4 ), gidx_t( max_level_ ) ) );
+Hilbert::Hilbert(const Domain& domain, idx_t levels): domain_{domain}, max_level_(levels) {
+    nb_keys_2_ = gidx_t(std::pow(gidx_t(4), gidx_t(max_level_)));
     nb_keys_   = nb_keys_2_ * 2;
 }
 
 
-gidx_t Hilbert::operator()( const PointXY& point ) {
+gidx_t Hilbert::operator()(const PointXY& point) {
     box_t box;
     box[A]            = {domain_.xmin(), domain_.ymax()};
     box[B]            = {domain_.xmin(), domain_.ymin()};
     box[C]            = {domain_.xmax(), domain_.ymin()};
     box[D]            = {domain_.xmax(), domain_.ymax()};
-    const double xmid = ( domain_.xmin() + domain_.xmax() ) * 0.5;
-    if ( point.x() < xmid ) {
+    const double xmid = (domain_.xmin() + domain_.xmax()) * 0.5;
+    if (point.x() < xmid) {
         box[C].x() = xmid;
         box[D].x() = xmid;
-        return recursive_algorithm( point, box, 0 );
+        return recursive_algorithm(point, box, 0);
     }
     else {
         box[A].x() = xmid;
         box[B].x() = xmid;
-        return recursive_algorithm( point, box, 0 ) + nb_keys_2_;
+        return recursive_algorithm(point, box, 0) + nb_keys_2_;
     }
 }
 
-gidx_t Hilbert::recursive_algorithm( const PointXY& p, const box_t& box, idx_t level ) {
-    if ( level == max_level_ ) {
+gidx_t Hilbert::recursive_algorithm(const PointXY& p, const box_t& box, idx_t level) {
+    if (level == max_level_) {
         return 0;
     }
 
     double min_distance = std::numeric_limits<double>::max();
 
-    auto compute_distance2 = []( const PointXY& p1, const PointXY& p2 ) {
+    auto compute_distance2 = [](const PointXY& p1, const PointXY& p2) {
         // workaround because of eckit 1.3.2 issue with constness in KPoint
         double d = 0;
-        for ( size_t i = 0; i < 2; i++ ) {
+        for (size_t i = 0; i < 2; i++) {
             double dx = p1[i] - p2[i];
             d += dx * dx;
         }
         return d;
     };
 
-    auto compute_average = []( const PointXY& p1, const PointXY& p2 ) {
+    auto compute_average = [](const PointXY& p1, const PointXY& p2) {
         // workaround because of eckit 1.3.2 issue with constness in KPoint
         PointXY avg;
         avg.x() = p1.x() + p2.x();
@@ -155,43 +155,43 @@ gidx_t Hilbert::recursive_algorithm( const PointXY& p, const box_t& box, idx_t l
     };
 
     idx_t quadrant{0};
-    for ( idx_t idx = 0; idx < 4; ++idx ) {
+    for (idx_t idx = 0; idx < 4; ++idx) {
         // double distance = box[idx].distance2( p );  // does not compile with eckit 1.3.2
-        double distance = compute_distance2( p, box[idx] );  // workaround
-        if ( distance < min_distance ) {
+        double distance = compute_distance2(p, box[idx]);  // workaround
+        if (distance < min_distance) {
             quadrant     = idx;
             min_distance = distance;
         }
     }
 
     box_t box_quadrant;
-    switch ( quadrant ) {
+    switch (quadrant) {
         case A:
             box_quadrant[A] = box[A];
             // box_quadrant[B] = ( box[A] + box[D] ) * 0.5;  // does not compile with eckit 1.3.2
             // box_quadrant[C] = ( box[A] + box[C] ) * 0.5;  // does not compile with eckit 1.3.2
             // box_quadrant[D] = ( box[A] + box[B] ) * 0.5;  // does not compile with eckit 1.3.2
-            box_quadrant[B] = compute_average( box[A], box[D] );  // workaround
-            box_quadrant[C] = compute_average( box[A], box[C] );  // workaround
-            box_quadrant[D] = compute_average( box[A], box[B] );  // workaround
+            box_quadrant[B] = compute_average(box[A], box[D]);  // workaround
+            box_quadrant[C] = compute_average(box[A], box[C]);  // workaround
+            box_quadrant[D] = compute_average(box[A], box[B]);  // workaround
             break;
         case B:
             // box_quadrant[A] = ( box[B] + box[A] ) * 0.5;  // does not compile with eckit 1.3.2
             box_quadrant[B] = box[B];
             // box_quadrant[C] = ( box[B] + box[C] ) * 0.5;  // does not compile with eckit 1.3.2
             // box_quadrant[D] = ( box[B] + box[D] ) * 0.5;  // does not compile with eckit 1.3.2
-            box_quadrant[A] = compute_average( box[B], box[A] );  // workaround
-            box_quadrant[C] = compute_average( box[B], box[C] );  // workaround
-            box_quadrant[D] = compute_average( box[B], box[D] );  // workaround
+            box_quadrant[A] = compute_average(box[B], box[A]);  // workaround
+            box_quadrant[C] = compute_average(box[B], box[C]);  // workaround
+            box_quadrant[D] = compute_average(box[B], box[D]);  // workaround
             break;
         case C:
             // box_quadrant[A] = ( box[C] + box[A] ) * 0.5;  // does not compile with eckit 1.3.2
             // box_quadrant[B] = ( box[C] + box[B] ) * 0.5;  // does not compile with eckit 1.3.2
             box_quadrant[C] = box[C];
             // box_quadrant[D] = ( box[C] + box[D] ) * 0.5;  // does not compile with eckit 1.3.2
-            box_quadrant[A] = compute_average( box[C], box[A] );  // workaround
-            box_quadrant[B] = compute_average( box[C], box[B] );  // workaround
-            box_quadrant[D] = compute_average( box[C], box[D] );  // workaround
+            box_quadrant[A] = compute_average(box[C], box[A]);  // workaround
+            box_quadrant[B] = compute_average(box[C], box[B]);  // workaround
+            box_quadrant[D] = compute_average(box[C], box[D]);  // workaround
 
             break;
         case D:
@@ -199,9 +199,9 @@ gidx_t Hilbert::recursive_algorithm( const PointXY& p, const box_t& box, idx_t l
             // box_quadrant[B] = ( box[D] + box[B] ) * 0.5;  // does not compile with eckit 1.3.2
             // box_quadrant[C] = ( box[D] + box[A] ) * 0.5;  // does not compile with eckit 1.3.2
             box_quadrant[D] = box[D];
-            box_quadrant[A] = compute_average( box[D], box[C] );  // workaround
-            box_quadrant[B] = compute_average( box[D], box[B] );  // workaround
-            box_quadrant[C] = compute_average( box[D], box[A] );  // workaround
+            box_quadrant[A] = compute_average(box[D], box[C]);  // workaround
+            box_quadrant[B] = compute_average(box[D], box[B]);  // workaround
+            box_quadrant[C] = compute_average(box[D], box[A]);  // workaround
 
             break;
     }
@@ -218,92 +218,92 @@ gidx_t Hilbert::recursive_algorithm( const PointXY& p, const box_t& box, idx_t l
     //   level max_level_-2 --> 0000
     //   level max_level_-3 --> 000000
     gidx_t key = 0;
-    auto index = ( max_level_ - level ) * 2 - 1;
+    auto index = (max_level_ - level) * 2 - 1;
     gidx_t mask;
 
     // Create a mask value with all trailing bits for leftmost bit (of 2)
-    mask = gidx_t( 1 ) << index;
+    mask = gidx_t(1) << index;
 
     // Add mask to key
-    if ( quadrant == C || quadrant == D ) {
+    if (quadrant == C || quadrant == D) {
         key |= mask;
     }
 
     // Create a mask value with all trailing bits for rightmost bit (of 2)
-    mask = gidx_t( 1 ) << ( index - 1 );
+    mask = gidx_t(1) << (index - 1);
 
     // Add mask to key
-    if ( quadrant == B || quadrant == D ) {
+    if (quadrant == B || quadrant == D) {
         key |= mask;
     }
 
-    return recursive_algorithm( p, box_quadrant, level + 1 ) + key;
+    return recursive_algorithm(p, box_quadrant, level + 1) + key;
 }
 
 // ------------------------------------------------------------------
 
-ReorderHilbert::ReorderHilbert( const eckit::Parametrisation& config ) {
-    config.get( "recursion", recursion_ );
-    config.get( "ghost_at_end", ghost_at_end_ );
+ReorderHilbert::ReorderHilbert(const eckit::Parametrisation& config) {
+    config.get("recursion", recursion_);
+    config.get("ghost_at_end", ghost_at_end_);
 }
 
 
-Domain global_bounding_box( const Mesh& mesh ) {
-    auto xy = array::make_view<double, 2>( mesh.nodes().xy() );
+Domain global_bounding_box(const Mesh& mesh) {
+    auto xy = array::make_view<double, 2>(mesh.nodes().xy());
 
     double xmin = std::numeric_limits<double>::max();
     double xmax = -std::numeric_limits<double>::max();
     double ymin = std::numeric_limits<double>::max();
     double ymax = -std::numeric_limits<double>::max();
-    for ( idx_t i = 0; i < xy.shape( 0 ); ++i ) {
-        xmin = std::min( xmin, xy( i, XX ) );
-        xmax = std::max( xmax, xy( i, XX ) );
-        ymin = std::min( ymin, xy( i, YY ) );
-        ymax = std::max( ymax, xy( i, YY ) );
+    for (idx_t i = 0; i < xy.shape(0); ++i) {
+        xmin = std::min(xmin, xy(i, XX));
+        xmax = std::max(xmax, xy(i, XX));
+        ymin = std::min(ymin, xy(i, YY));
+        ymax = std::max(ymax, xy(i, YY));
     }
     const auto& comm = atlas::mpi::comm();
 
-    comm.allReduceInPlace( xmin, eckit::mpi::min() );
-    comm.allReduceInPlace( xmax, eckit::mpi::max() );
-    comm.allReduceInPlace( ymin, eckit::mpi::min() );
-    comm.allReduceInPlace( ymax, eckit::mpi::max() );
-    return RectangularDomain( {xmin, xmax}, {ymin, ymax} );
+    comm.allReduceInPlace(xmin, eckit::mpi::min());
+    comm.allReduceInPlace(xmax, eckit::mpi::max());
+    comm.allReduceInPlace(ymin, eckit::mpi::min());
+    comm.allReduceInPlace(ymax, eckit::mpi::max());
+    return RectangularDomain({xmin, xmax}, {ymin, ymax});
 }
 
-std::vector<idx_t> ReorderHilbert::computeNodesOrder( Mesh& mesh ) {
+std::vector<idx_t> ReorderHilbert::computeNodesOrder(Mesh& mesh) {
     using hilbert_reordering_t = std::vector<std::pair<gidx_t, idx_t>>;
 
-    Hilbert hilbert{global_bounding_box( mesh ), recursion_};
+    Hilbert hilbert{global_bounding_box(mesh), recursion_};
 
-    auto xy    = array::make_view<double, 2>( mesh.nodes().xy() );
-    auto ghost = array::make_view<int, 1>( mesh.nodes().ghost() );
+    auto xy    = array::make_view<double, 2>(mesh.nodes().xy());
+    auto ghost = array::make_view<int, 1>(mesh.nodes().ghost());
 
-    idx_t size = xy.shape( 0 );
+    idx_t size = xy.shape(0);
     hilbert_reordering_t hilbert_reordering;
-    hilbert_reordering.reserve( size );
-    ATLAS_TRACE_SCOPE( "hilbert nodes" ) {
-        for ( idx_t n = 0; n < size; ++n ) {
-            PointXY p{xy( n, XX ), xy( n, YY )};
-            if ( not ghost( n ) ) {
-                hilbert_reordering.emplace_back( hilbert( p ), n );
+    hilbert_reordering.reserve(size);
+    ATLAS_TRACE_SCOPE("hilbert nodes") {
+        for (idx_t n = 0; n < size; ++n) {
+            PointXY p{xy(n, XX), xy(n, YY)};
+            if (not ghost(n)) {
+                hilbert_reordering.emplace_back(hilbert(p), n);
             }
             else {
-                if ( ghost_at_end_ ) {
+                if (ghost_at_end_) {
                     // ghost nodes get a fake "hilbert_idx" at the end
-                    hilbert_reordering.emplace_back( hilbert.nb_keys() + n, n );
+                    hilbert_reordering.emplace_back(hilbert.nb_keys() + n, n);
                 }
                 else {
-                    hilbert_reordering.emplace_back( hilbert( p ), n );
+                    hilbert_reordering.emplace_back(hilbert(p), n);
                 }
             }
         }
     }
 
-    std::sort( hilbert_reordering.begin(), hilbert_reordering.end() );
+    std::sort(hilbert_reordering.begin(), hilbert_reordering.end());
     std::vector<idx_t> order;
-    order.reserve( size );
-    for ( const auto& pair : hilbert_reordering ) {
-        order.emplace_back( pair.second );
+    order.reserve(size);
+    for (const auto& pair : hilbert_reordering) {
+        order.emplace_back(pair.second);
     }
     return order;
 }
@@ -386,7 +386,7 @@ if ( 0 ) {
 #endif
 
 namespace {
-static ReorderBuilder<ReorderHilbert> __ReorderHilbert( "hilbert" );
+static ReorderBuilder<ReorderHilbert> __ReorderHilbert("hilbert");
 }  // namespace
 
 

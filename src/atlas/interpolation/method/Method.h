@@ -40,7 +40,7 @@ class Method : public util::Object {
 public:
     typedef eckit::Parametrisation Config;
 
-    Method( const Config& );
+    Method(const Config&);
     virtual ~Method() {}
 
     /**
@@ -48,16 +48,28 @@ public:
      * @param source functionspace containing source elements
      * @param target functionspace containing target points
      */
-    void setup( const FunctionSpace& source, const FunctionSpace& target );
-    void setup( const Grid& source, const Grid& target );
-    void setup( const FunctionSpace& source, const Field& target );
-    void setup( const FunctionSpace& source, const FieldSet& target );
-    void setup( const Grid& source, const Grid& target, const Cache& );
+    void setup(const FunctionSpace& source, const FunctionSpace& target);
+    void setup(const Grid& source, const Grid& target);
+    void setup(const FunctionSpace& source, const Field& target);
+    void setup(const FunctionSpace& source, const FieldSet& target);
+    void setup(const Grid& source, const Grid& target, const Cache&);
 
-    void execute( const FieldSet& source, FieldSet& target ) const;
-    void execute( const Field& source, Field& target ) const;
+    void execute(const FieldSet& source, FieldSet& target) const;
+    void execute(const Field& source, Field& target) const;
 
-    virtual void print( std::ostream& ) const = 0;
+    /**
+     * @brief execute_adjoint
+     * @param source - it is either a FieldSet or a Field
+     * @param target - it is either a FieldSet or a Field
+     *                 Note that formally in an adjoint operation of this
+     *                 type we should be setting the values in the target
+     *                 to zero. This is not done for efficiency reasons and
+     *                 because in most cases it is not necessary.
+     */
+    void execute_adjoint(FieldSet& source, const FieldSet& target) const;
+    void execute_adjoint(Field& source, const Field& target) const;
+
+    virtual void print(std::ostream&) const = 0;
 
     virtual const FunctionSpace& source() const = 0;
     virtual const FunctionSpace& target() const = 0;
@@ -65,17 +77,23 @@ public:
     virtual interpolation::Cache createCache() const;
 
 protected:
-    virtual void do_execute( const FieldSet& source, FieldSet& target ) const;
-    virtual void do_execute( const Field& source, Field& target ) const;
+    virtual void do_execute(const FieldSet& source, FieldSet& target) const;
+    virtual void do_execute(const Field& source, Field& target) const;
+
+    virtual void do_execute_adjoint(FieldSet& source, const FieldSet& target) const;
+    virtual void do_execute_adjoint(Field& source, const Field& target) const;
 
     using Triplet  = eckit::linalg::Triplet;
     using Triplets = std::vector<Triplet>;
     using Matrix   = eckit::linalg::SparseMatrix;
 
-    static void normalise( Triplets& triplets );
+    static void normalise(Triplets& triplets);
 
-    void haloExchange( const FieldSet& ) const;
-    void haloExchange( const Field& ) const;
+    void haloExchange(const FieldSet&) const;
+    void haloExchange(const Field&) const;
+
+    void adjointHaloExchange(const FieldSet&) const;
+    void adjointHaloExchange(const Field&) const;
 
     // NOTE : Matrix-free or non-linear interpolation operators do not have matrices, so do not expose here
     friend class atlas::test::Access;
@@ -84,30 +102,45 @@ protected:
     std::shared_ptr<Matrix> matrix_shared_;
     interpolation::MatrixCache matrix_cache_;
     NonLinear nonLinear_;
-    bool use_eckit_linalg_spmv_;
+    std::string linalg_backend_;
     bool allow_halo_exchange_{true};
     std::vector<idx_t> missing_;
+    bool adjoint_{false};
+    Matrix matrix_transpose_;
+
 
 protected:
-    virtual void do_setup( const FunctionSpace& source, const FunctionSpace& target ) = 0;
-    virtual void do_setup( const Grid& source, const Grid& target, const Cache& )     = 0;
-    virtual void do_setup( const FunctionSpace& source, const Field& target );
-    virtual void do_setup( const FunctionSpace& source, const FieldSet& target );
+    virtual void do_setup(const FunctionSpace& source, const FunctionSpace& target) = 0;
+    virtual void do_setup(const Grid& source, const Grid& target, const Cache&)     = 0;
+    virtual void do_setup(const FunctionSpace& source, const Field& target);
+    virtual void do_setup(const FunctionSpace& source, const FieldSet& target);
 
 private:
     template <typename Value>
-    void interpolate_field( const Field& src, Field& tgt, const Matrix& ) const;
+    void interpolate_field(const Field& src, Field& tgt, const Matrix&) const;
 
     template <typename Value>
-    void interpolate_field_rank1( const Field& src, Field& tgt, const Matrix& ) const;
+    void interpolate_field_rank1(const Field& src, Field& tgt, const Matrix&) const;
 
     template <typename Value>
-    void interpolate_field_rank2( const Field& src, Field& tgt, const Matrix& ) const;
+    void interpolate_field_rank2(const Field& src, Field& tgt, const Matrix&) const;
 
     template <typename Value>
-    void interpolate_field_rank3( const Field& src, Field& tgt, const Matrix& ) const;
+    void interpolate_field_rank3(const Field& src, Field& tgt, const Matrix&) const;
 
-    void check_compatibility( const Field& src, const Field& tgt, const Matrix& W ) const;
+    template <typename Value>
+    void adjoint_interpolate_field(Field& src, const Field& tgt, const Matrix&) const;
+
+    template <typename Value>
+    void adjoint_interpolate_field_rank1(Field& src, const Field& tgt, const Matrix&) const;
+
+    template <typename Value>
+    void adjoint_interpolate_field_rank2(Field& src, const Field& tgt, const Matrix&) const;
+
+    template <typename Value>
+    void adjoint_interpolate_field_rank3(Field& src, const Field& tgt, const Matrix&) const;
+
+    void check_compatibility(const Field& src, const Field& tgt, const Matrix& W) const;
 };
 
 }  // namespace interpolation

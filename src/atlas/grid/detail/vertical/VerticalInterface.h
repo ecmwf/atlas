@@ -26,11 +26,11 @@ class FieldImpl;
 namespace atlas {
 
 extern "C" {
-Vertical* atlas__Vertical__new( idx_t levels, const double z[] );
-Vertical* atlas__Vertical__new_interval( idx_t levels, const double z[], const double interval[] );
-void atlas__Vertical__delete( Vertical* This );
-field::FieldImpl* atlas__Vertical__z( const Vertical* This );
-int atlas__Vertical__size( const Vertical* This );
+Vertical* atlas__Vertical__new(idx_t levels, const double z[]);
+Vertical* atlas__Vertical__new_interval(idx_t levels, const double z[], const double interval[]);
+void atlas__Vertical__delete(Vertical* This);
+field::FieldImpl* atlas__Vertical__z(const Vertical* This);
+int atlas__Vertical__size(const Vertical* This);
 }
 
 }  // namespace atlas

@@ -22,11 +22,11 @@ public:
     static std::string static_type() { return "spherical-polygon"; }
 
 public:
-    MatchingMeshPartitionerSphericalPolygon() : MatchingMeshPartitioner() {}
-    MatchingMeshPartitionerSphericalPolygon( const idx_t nb_partitions ) : MatchingMeshPartitioner( nb_partitions ) {}
-    MatchingMeshPartitionerSphericalPolygon( const idx_t nb_partitions, const eckit::Parametrisation& config ) :
-        MatchingMeshPartitioner( nb_partitions ) {}
-    MatchingMeshPartitionerSphericalPolygon( const Mesh& mesh ) : MatchingMeshPartitioner( mesh ) {}
+    MatchingMeshPartitionerSphericalPolygon(): MatchingMeshPartitioner() {}
+    MatchingMeshPartitionerSphericalPolygon(const idx_t nb_partitions): MatchingMeshPartitioner(nb_partitions) {}
+    MatchingMeshPartitionerSphericalPolygon(const idx_t nb_partitions, const eckit::Parametrisation& config):
+        MatchingMeshPartitioner(nb_partitions) {}
+    MatchingMeshPartitionerSphericalPolygon(const Mesh& mesh): MatchingMeshPartitioner(mesh) {}
 
     using MatchingMeshPartitioner::partition;
     /**
@@ -37,7 +37,7 @@ public:
    * @param[in] grid grid to be partitioned
    * @param[out] partitioning partitioning result
    */
-    void partition( const Grid& grid, int partitioning[] ) const;
+    void partition(const Grid& grid, int partitioning[]) const;
 
     virtual std::string type() const { return static_type(); }
 };

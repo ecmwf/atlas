@@ -35,15 +35,15 @@ void force_link() {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-const CubedSphereTiles* CubedSphereTilesFactory::build( const std::string& builder ) {
-    return build( builder, util::NoConfig() );
+const CubedSphereTiles* CubedSphereTilesFactory::build(const std::string& builder) {
+    return build(builder, util::NoConfig());
 }
 
-const CubedSphereTiles* CubedSphereTilesFactory::build( const std::string& builder,
-                                                        const eckit::Parametrisation& param ) {
+const CubedSphereTiles* CubedSphereTilesFactory::build(const std::string& builder,
+                                                       const eckit::Parametrisation& param) {
     force_link();
-    auto factory = get( builder );
-    return factory->make( param );
+    auto factory = get(builder);
+    return factory->make(param);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

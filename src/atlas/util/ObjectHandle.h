@@ -20,26 +20,26 @@ class Object;
 class ObjectHandleBase {
 public:
     ObjectHandleBase() = default;
-    ObjectHandleBase( const Object* object ) : object_( const_cast<Object*>( object ) ) { attach(); }
+    ObjectHandleBase(const Object* object): object_(const_cast<Object*>(object)) { attach(); }
 
     virtual ~ObjectHandleBase() {
-        if ( object_ ) {
+        if (object_) {
             release();
         }
     }
 
-    const ObjectHandleBase& operator=( const ObjectHandleBase& other ) {
-        if ( object_ != other.object_ ) {
-            assign( other );
+    const ObjectHandleBase& operator=(const ObjectHandleBase& other) {
+        if (object_ != other.object_) {
+            assign(other);
         }
         return *this;
     }
 
     operator bool() const { return object_ != nullptr; }
 
-    void reset( const Object* other ) {
-        if ( object_ != other ) {
-            assign( other );
+    void reset(const Object* other) {
+        if (object_ != other) {
+            assign(other);
         }
     }
 
@@ -48,13 +48,13 @@ public:
 private:
     void release();
 
-    void assign( const ObjectHandleBase& other );
+    void assign(const ObjectHandleBase& other);
 
-    void assign( const Object* other );
+    void assign(const Object* other);
 
     void attach();
 
-    bool null() const { return ( object_ == nullptr ); }
+    bool null() const { return (object_ == nullptr); }
 
 protected:
     Object* object_{nullptr};
@@ -68,20 +68,20 @@ public:
 
 public:
     ObjectHandle() = default;
-    ObjectHandle( const T* object ) : ObjectHandleBase( reinterpret_cast<const Object*>( object ) ) {}
-    ObjectHandle( const ObjectHandle& handle ) : ObjectHandleBase( reinterpret_cast<const Object*>( handle.get() ) ) {}
-    ObjectHandle& operator=( const ObjectHandle& handle ) {
-        reset( handle.get() );
+    ObjectHandle(const T* object): ObjectHandleBase(reinterpret_cast<const Object*>(object)) {}
+    ObjectHandle(const ObjectHandle& handle): ObjectHandleBase(reinterpret_cast<const Object*>(handle.get())) {}
+    ObjectHandle& operator=(const ObjectHandle& handle) {
+        reset(handle.get());
         return *this;
     }
-    ATLAS_ALWAYS_INLINE T* get() { return reinterpret_cast<T*>( object_ ); }
-    ATLAS_ALWAYS_INLINE const T* get() const { return reinterpret_cast<const T*>( object_ ); }
+    ATLAS_ALWAYS_INLINE T* get() { return reinterpret_cast<T*>(object_); }
+    ATLAS_ALWAYS_INLINE const T* get() const { return reinterpret_cast<const T*>(object_); }
     ATLAS_ALWAYS_INLINE const T* operator->() const { return get(); }
     ATLAS_ALWAYS_INLINE T* operator->() { return get(); }
     ATLAS_ALWAYS_INLINE const T& operator*() const { return *get(); }
     ATLAS_ALWAYS_INLINE T& operator*() { return *get(); }
-    ATLAS_ALWAYS_INLINE void reset( const T* object ) {
-        ObjectHandleBase::reset( reinterpret_cast<const Object*>( object ) );
+    ATLAS_ALWAYS_INLINE void reset(const T* object) {
+        ObjectHandleBase::reset(reinterpret_cast<const Object*>(object));
     }
 };
 

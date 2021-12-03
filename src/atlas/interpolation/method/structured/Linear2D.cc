@@ -18,14 +18,14 @@ namespace method {
 
 namespace {
 
-MethodBuilder<Linear2D> __builder1( "structured-linear2D" );
-MethodBuilder<Linear2D> __builder2( "linear2D" );
-MethodBuilder<Linear2D> __builder3( "structured-bilinear" );
-MethodBuilder<Linear2D> __builder4( "bilinear" );
+MethodBuilder<Linear2D> __builder1("structured-linear2D");
+MethodBuilder<Linear2D> __builder2("linear2D");
+MethodBuilder<Linear2D> __builder3("structured-bilinear");
+MethodBuilder<Linear2D> __builder4("bilinear");
 
 }  // namespace
 
-Linear2D::Linear2D( const Config& config ) : StructuredInterpolation2D<LinearHorizontalKernel>( config ) {}
+Linear2D::Linear2D(const Config& config): StructuredInterpolation2D<LinearHorizontalKernel>(config) {}
 
 }  // namespace method
 }  // namespace interpolation

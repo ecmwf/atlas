@@ -32,14 +32,14 @@ public:
 public:
     static const Domain* create();  // Create a global domain
 
-    static const Domain* create( const eckit::Parametrisation& );
+    static const Domain* create(const eckit::Parametrisation&);
 
     virtual std::string type() const = 0;
 
     /// Checks if the point is contained in the domain
-    virtual bool contains( double x, double y ) const = 0;
+    virtual bool contains(double x, double y) const = 0;
 
-    bool contains( const PointXY& p ) const { return contains( p.x(), p.y() ); }
+    bool contains(const PointXY& p) const { return contains(p.x(), p.y()); }
 
     // Specification of grid
     virtual Spec spec() const = 0;
@@ -60,29 +60,29 @@ public:
     virtual bool containsSouthPole() const = 0;
 
     /// Output to stream
-    virtual void print( std::ostream& ) const = 0;
+    virtual void print(std::ostream&) const = 0;
 
-    friend std::ostream& operator<<( std::ostream& s, const Domain& d ) {
-        d.print( s );
+    friend std::ostream& operator<<(std::ostream& s, const Domain& d) {
+        d.print(s);
         return s;
     }
 
     virtual std::string units() const = 0;
 
-    virtual void hash( eckit::Hash& ) const = 0;
+    virtual void hash(eckit::Hash&) const = 0;
 };
 
 class RectangularDomain;
 
 extern "C" {
-const Domain* atlas__Domain__ctor_config( const eckit::Parametrisation* config );
-void atlas__Domain__type( const Domain* This, char*& type, int& size );
-void atlas__Domain__hash( const Domain* This, char*& hash, int& size );
-Domain::Spec* atlas__Domain__spec( const Domain* This );
-double atlas__LonLatRectangularDomain__north( const RectangularDomain* This );
-double atlas__LonLatRectangularDomain__west( const RectangularDomain* This );
-double atlas__LonLatRectangularDomain__south( const RectangularDomain* This );
-double atlas__LonLatRectangularDomain__east( const RectangularDomain* This );
+const Domain* atlas__Domain__ctor_config(const eckit::Parametrisation* config);
+void atlas__Domain__type(const Domain* This, char*& type, int& size);
+void atlas__Domain__hash(const Domain* This, char*& hash, int& size);
+Domain::Spec* atlas__Domain__spec(const Domain* This);
+double atlas__LonLatRectangularDomain__north(const RectangularDomain* This);
+double atlas__LonLatRectangularDomain__west(const RectangularDomain* This);
+double atlas__LonLatRectangularDomain__south(const RectangularDomain* This);
+double atlas__LonLatRectangularDomain__east(const RectangularDomain* This);
 }
 
 }  // namespace domain

@@ -63,40 +63,39 @@ public:
     //--------------------------------------------------------------------------------------
     // Constructors
 
-    KDTree( const KDTree& handle ) : Handle( handle ) {}
+    KDTree(const KDTree& handle): Handle(handle) {}
 
     /// @brief Construct an empty kd-tree with default geometry (Earth)
-    KDTree() : Handle( new detail::KDTreeMemory<Payload, Point>() ) {}
+    KDTree(): Handle(new detail::KDTreeMemory<Payload, Point>()) {}
 
     /// @brief Construct an empty kd-tree with custom geometry
-    KDTree( const Geometry& geometry ) : Handle( new detail::KDTreeMemory<Payload, Point>( geometry ) ) {}
+    KDTree(const Geometry& geometry): Handle(new detail::KDTreeMemory<Payload, Point>(geometry)) {}
 
     /// @brief Construct a shared kd-tree with default geometry (Earth)
     template <typename Tree>
-    KDTree( const std::shared_ptr<Tree>& kdtree ) :
-        Handle( new detail::KDTree_eckit<Tree, Payload, Point>( kdtree ) ) {}
+    KDTree(const std::shared_ptr<Tree>& kdtree): Handle(new detail::KDTree_eckit<Tree, Payload, Point>(kdtree)) {}
 
     /// @brief Construct a shared kd-tree with custom geometry
     template <typename Tree>
-    KDTree( const std::shared_ptr<Tree>& kdtree, const Geometry& geometry ) :
-        Handle( new detail::KDTree_eckit<Tree, Payload, Point>( kdtree, geometry ) ) {}
+    KDTree(const std::shared_ptr<Tree>& kdtree, const Geometry& geometry):
+        Handle(new detail::KDTree_eckit<Tree, Payload, Point>(kdtree, geometry)) {}
 
     //--------------------------------------------------------------------------------------
     // Methods to build the KDTree
 
     /// @brief Reserve memory for building the kd-tree in one shot (optional, at cost of extra memory)
-    void reserve( idx_t size ) { get()->reserve( size ); }
+    void reserve(idx_t size) { get()->reserve(size); }
 
     /// @brief Insert spherical point (lon,lat) or 3D cartesian point (x,y,z)
     /// @warning If memory has been reserved with reserve(), insertion will be delayed until build() is called.
     template <typename Point>
-    void insert( const Point& p, const Payload& payload ) {
-        get()->insert( p, payload );
+    void insert(const Point& p, const Payload& payload) {
+        get()->insert(p, payload);
     }
 
     /// @brief Insert kd-tree value in tree
     /// @warning If memory has been reserved with reserve(), insertion will be delayed until build() is called.
-    void insert( const Value& value ) { get()->insert( value ); }
+    void insert(const Value& value) { get()->insert(value); }
 
     /// @brief Build the kd-tree in one shot, if memory has been reserved.
     /// This will need to be called before all search functions like closestPoints().
@@ -107,40 +106,40 @@ public:
     /// Memory will be reserved with reserve() to match the size
     /// @post The KDTree is ready to be used
     template <typename Longitudes, typename Latitudes, typename Payloads>
-    void build( const Longitudes& longitudes, const Latitudes& latitudes, const Payloads& payloads ) {
-        get()->build( longitudes, latitudes, payloads );
+    void build(const Longitudes& longitudes, const Latitudes& latitudes, const Payloads& payloads) {
+        get()->build(longitudes, latitudes, payloads);
     }
 
     /// @brief Build with spherical points (lon,lat) given separate iterator ranges for longitudes, latitudes, and payloads.
     /// Memory will be reserved with reserve() to match the size
     /// @post The KDTree is ready to be used
     template <typename LongitudesIterator, typename LatitudesIterator, typename PayloadsIterator>
-    void build( const LongitudesIterator& longitudes_begin, const LongitudesIterator& longitudes_end,
-                const LatitudesIterator& latitudes_begin, const LatitudesIterator& latitudes_end,
-                const PayloadsIterator& payloads_begin, const PayloadsIterator& payloads_end ) {
-        get()->build( longitudes_begin, longitudes_end, latitudes_begin, latitudes_end, payloads_begin, payloads_end );
+    void build(const LongitudesIterator& longitudes_begin, const LongitudesIterator& longitudes_end,
+               const LatitudesIterator& latitudes_begin, const LatitudesIterator& latitudes_end,
+               const PayloadsIterator& payloads_begin, const PayloadsIterator& payloads_end) {
+        get()->build(longitudes_begin, longitudes_end, latitudes_begin, latitudes_end, payloads_begin, payloads_end);
     }
 
     /// @brief Build with templated points. Points can be either 2D (lon,lat) or 3D (x,y,z)
     /// Memory will be reserved with reserve() to match the size
     /// @post The KDTree is ready to be used
     template <typename Points, typename Payloads>
-    void build( const Points& points, const Payloads& payloads ) {
-        get()->build( points, payloads );
+    void build(const Points& points, const Payloads& payloads) {
+        get()->build(points, payloads);
     }
 
     /// @brief Build with spherical points (lon,lat) given separate iterator ranges for longitudes, latitudes, and payloads.
     /// Memory will be reserved with reserve() to match the size
     /// @post The KDTree is ready to be used
     template <typename PointIterator, typename PayloadsIterator>
-    void build( const PointIterator& points_begin, const PointIterator& points_end,
-                const PayloadsIterator& payloads_begin, const PayloadsIterator& payloads_end ) {
-        get()->build( points_begin, points_end, payloads_begin, payloads_end );
+    void build(const PointIterator& points_begin, const PointIterator& points_end,
+               const PayloadsIterator& payloads_begin, const PayloadsIterator& payloads_end) {
+        get()->build(points_begin, points_end, payloads_begin, payloads_end);
     }
 
     /// @brief Build with vector of Value
     /// @post The KDTree is ready to be used
-    void build( const std::vector<Value>& values ) { get()->build( values ); }
+    void build(const std::vector<Value>& values) { get()->build(values); }
 
     //--------------------------------------------------------------------------------------
     // Methods to access the KDTree
@@ -153,21 +152,21 @@ public:
 
     /// @brief Find k closest points given a 3D cartesian point (x,y,z) or 2D lonlat point(lon,lat)
     template <typename Point>
-    ValueList closestPoints( const Point& p, size_t k ) const {
-        return get()->closestPoints( p, k );
+    ValueList closestPoints(const Point& p, size_t k) const {
+        return get()->closestPoints(p, k);
     }
 
     /// @brief Find closest point given a 3D cartesian point (x,y,z) or 2D lonlat point(lon,lat)
     template <typename Point>
-    Value closestPoint( const Point& p ) const {
-        return get()->closestPoint( p );
+    Value closestPoint(const Point& p) const {
+        return get()->closestPoint(p);
     }
 
     /// @brief Find all points within a distance of given radius from a given point 3D cartesian point (x,y,z)
     /// or a 2D (lon,lat) point
     template <typename Point>
-    ValueList closestPointsWithinRadius( const Point& p, double radius ) const {
-        return get()->closestPointsWithinRadius( p, radius );
+    ValueList closestPointsWithinRadius(const Point& p, double radius) const {
+        return get()->closestPointsWithinRadius(p, radius);
     }
 
     /// @brief Return geometry used to convert (lon,lat) to (x,y,z) coordinates
@@ -185,23 +184,22 @@ using IndexKDTree   = IndexKDTree3D;
 
 extern "C" {
 IndexKDTree::Implementation* atlas__IndexKDTree__new();
-IndexKDTree::Implementation* atlas__IndexKDTree__new_geometry( const Geometry::Implementation* geometry );
-void atlas__IndexKDTree__delete( IndexKDTree::Implementation* This );
-void atlas__IndexKDTree__reserve( IndexKDTree::Implementation* This, const idx_t size );
-void atlas__IndexKDTree__insert( IndexKDTree::Implementation* This, const double lon, const double lat,
-                                 const idx_t index );
-void atlas__IndexKDTree__build( IndexKDTree::Implementation* This );
-void atlas__IndexKDTree__closestPoints( const IndexKDTree::Implementation* This, const double plon, const double plat,
-                                        const size_t k, double*& lon, double*& lat, idx_t*& indices,
-                                        double*& distances );
-void atlas__IndexKDTree__closestPoint( const IndexKDTree::Implementation* This, const double plon, const double plat,
-                                       double& lon, double& lat, idx_t& index, double& distance );
-void atlas__IndexKDTree__closestPointsWithinRadius( const IndexKDTree::Implementation* This, const double plon,
-                                                    const double plat, const double radius, size_t& k, double*& lon,
-                                                    double*& lat, idx_t*& indices, double*& distances );
-const Geometry::Implementation* atlas__IndexKDTree__geometry( const IndexKDTree::Implementation* This );
-int atlas__IndexKDTree__empty( const IndexKDTree::Implementation* This );
-idx_t atlas__IndexKDTree__size( const IndexKDTree::Implementation* This );
+IndexKDTree::Implementation* atlas__IndexKDTree__new_geometry(const Geometry::Implementation* geometry);
+void atlas__IndexKDTree__delete(IndexKDTree::Implementation* This);
+void atlas__IndexKDTree__reserve(IndexKDTree::Implementation* This, const idx_t size);
+void atlas__IndexKDTree__insert(IndexKDTree::Implementation* This, const double lon, const double lat,
+                                const idx_t index);
+void atlas__IndexKDTree__build(IndexKDTree::Implementation* This);
+void atlas__IndexKDTree__closestPoints(const IndexKDTree::Implementation* This, const double plon, const double plat,
+                                       const size_t k, double*& lon, double*& lat, idx_t*& indices, double*& distances);
+void atlas__IndexKDTree__closestPoint(const IndexKDTree::Implementation* This, const double plon, const double plat,
+                                      double& lon, double& lat, idx_t& index, double& distance);
+void atlas__IndexKDTree__closestPointsWithinRadius(const IndexKDTree::Implementation* This, const double plon,
+                                                   const double plat, const double radius, size_t& k, double*& lon,
+                                                   double*& lat, idx_t*& indices, double*& distances);
+const Geometry::Implementation* atlas__IndexKDTree__geometry(const IndexKDTree::Implementation* This);
+int atlas__IndexKDTree__empty(const IndexKDTree::Implementation* This);
+idx_t atlas__IndexKDTree__size(const IndexKDTree::Implementation* This);
 }
 
 //------------------------------------------------------------------------------------------------------

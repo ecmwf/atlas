@@ -22,43 +22,43 @@ Mesh::Implementation* atlas__Mesh__new() {
     return new Mesh::Implementation();
 }
 
-void atlas__Mesh__delete( Mesh::Implementation* This ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Mesh" );
+void atlas__Mesh__delete(Mesh::Implementation* This) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialisd atlas_Mesh");
     delete This;
 }
 
-Nodes* atlas__Mesh__nodes( Mesh::Implementation* This ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Mesh" );
+Nodes* atlas__Mesh__nodes(Mesh::Implementation* This) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialisd atlas_Mesh");
     return &This->nodes();
 }
 
-Edges* atlas__Mesh__edges( Mesh::Implementation* This ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Mesh" );
+Edges* atlas__Mesh__edges(Mesh::Implementation* This) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialisd atlas_Mesh");
     return &This->edges();
 }
 
-Cells* atlas__Mesh__cells( Mesh::Implementation* This ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Mesh" );
+Cells* atlas__Mesh__cells(Mesh::Implementation* This) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialisd atlas_Mesh");
     return &This->cells();
 }
 
-size_t atlas__Mesh__footprint( Mesh::Implementation* This ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Mesh" );
+size_t atlas__Mesh__footprint(Mesh::Implementation* This) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialisd atlas_Mesh");
     return This->footprint();
 }
 
-void atlas__Mesh__update_device( Mesh::Implementation* This ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Mesh" );
+void atlas__Mesh__update_device(Mesh::Implementation* This) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialisd atlas_Mesh");
     This->updateDevice();
 }
 
-void atlas__Mesh__update_host( Mesh::Implementation* This ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Mesh" );
+void atlas__Mesh__update_host(Mesh::Implementation* This) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialisd atlas_Mesh");
     This->updateHost();
 }
 
-void atlas__Mesh__sync_host_device( Mesh::Implementation* This ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Mesh" );
+void atlas__Mesh__sync_host_device(Mesh::Implementation* This) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialisd atlas_Mesh");
     This->syncHostDevice();
 }
 

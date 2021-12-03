@@ -34,7 +34,7 @@ namespace interpolation {
 /**
  * @brief NonLinear class applies non-linear corrections to an interpolation matrix
  */
-struct NonLinear : DOXYGEN_HIDE( public util::ObjectHandle<nonlinear::NonLinear> ) {
+struct NonLinear : DOXYGEN_HIDE(public util::ObjectHandle<nonlinear::NonLinear>) {
     using Spec   = util::Config;
     using Config = nonlinear::NonLinear::Config;
     using Matrix = nonlinear::NonLinear::Matrix;
@@ -44,8 +44,8 @@ struct NonLinear : DOXYGEN_HIDE( public util::ObjectHandle<nonlinear::NonLinear>
      */
     using Handle::Handle;
     NonLinear();
-    NonLinear( const Config& );
-    NonLinear( const std::string& type, const Config& );
+    NonLinear(const Config&);
+    NonLinear(const std::string& type, const Config&);
 
     /**
      * @brief bool operator
@@ -58,7 +58,7 @@ struct NonLinear : DOXYGEN_HIDE( public util::ObjectHandle<nonlinear::NonLinear>
      * @param [in] f field
      * @return if NonLinear applies to field
      */
-    bool operator()( const Field& f ) const;
+    bool operator()(const Field& f) const;
 
     /**
      * @brief Apply non-linear corrections to interpolation matrix
@@ -66,7 +66,7 @@ struct NonLinear : DOXYGEN_HIDE( public util::ObjectHandle<nonlinear::NonLinear>
      * @param [in] f field
      * @return if W was modified
      */
-    bool execute( Matrix& W, const Field& f ) const;
+    bool execute(Matrix& W, const Field& f) const;
 };
 
 

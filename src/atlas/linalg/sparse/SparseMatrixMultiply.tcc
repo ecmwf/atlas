@@ -69,11 +69,14 @@ template <typename Matrix, typename SourceView, typename TargetView>
 void sparse_matrix_multiply( const Matrix& matrix, const SourceView& src, TargetView& tgt, Indexing indexing,
                              const eckit::Configuration& config ) {
     std::string type = config.getString( "type", sparse::current_backend() );
-    if ( type == sparse::backend::omp::type() ) {
-        sparse::dispatch_sparse_matrix_multiply<sparse::backend::omp>( matrix, src, tgt, indexing, config );
+    if ( type == sparse::backend::openmp::type() ) {
+        sparse::dispatch_sparse_matrix_multiply<sparse::backend::openmp>( matrix, src, tgt, indexing, config );
     }
     else if ( type == sparse::backend::eckit_linalg::type() ) {
         sparse::dispatch_sparse_matrix_multiply<sparse::backend::eckit_linalg>( matrix, src, tgt, indexing, config );
+    }
+    else if( eckit::linalg::LinearAlgebra::hasBackend(type) ) {
+        sparse::dispatch_sparse_matrix_multiply<sparse::backend::eckit_linalg>( matrix, src, tgt, indexing, util::Config("backend",type)  );
     }
     else {
         throw_NotImplemented( "sparse_matrix_multiply cannot be performed with unsupported backend [" + type + "]",

@@ -25,12 +25,12 @@ class Spacing;
 class SpacingFactory : public util::Factory<SpacingFactory> {
 public:
     static std::string className() { return "SpacingFactory"; }
-    static const Spacing* build( const std::string& );
-    static const Spacing* build( const std::string&, const eckit::Parametrisation& );
+    static const Spacing* build(const std::string&);
+    static const Spacing* build(const std::string&, const eckit::Parametrisation&);
     using Factory::Factory;
 
 private:
-    virtual const Spacing* make( const eckit::Parametrisation& ) = 0;
+    virtual const Spacing* make(const eckit::Parametrisation&) = 0;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -38,7 +38,7 @@ private:
 template <class T>
 class SpacingBuilder : public SpacingFactory {
 private:
-    virtual const Spacing* make( const eckit::Parametrisation& param ) { return new T( param ); }
+    virtual const Spacing* make(const eckit::Parametrisation& param) { return new T(param); }
 
 public:
     using SpacingFactory::SpacingFactory;

@@ -45,23 +45,23 @@ class RectangularLonLatDomain;
 
 //---------------------------------------------------------------------------------------------------------------------
 
-class Domain : DOXYGEN_HIDE( public util::ObjectHandle<atlas::domain::Domain> ) {
+class Domain : DOXYGEN_HIDE(public util::ObjectHandle<atlas::domain::Domain>) {
 public:
     using Spec = util::Config;
 
 public:
     using Handle::Handle;
     Domain() = default;
-    Domain( const eckit::Parametrisation& );
+    Domain(const eckit::Parametrisation&);
 
     /// Type of the domain
     std::string type() const;
 
     /// Checks if the point is contained in the domain
-    bool contains( double x, double y ) const;
+    bool contains(double x, double y) const;
 
     /// Checks if the point is contained in the domain
-    bool contains( const PointXY& p ) const;
+    bool contains(const PointXY& p) const;
 
     // Specification of Domain
     Spec spec() const;
@@ -73,7 +73,7 @@ public:
     bool empty() const;
 
     /// Add domain to the given hash
-    void hash( eckit::Hash& ) const;
+    void hash(eckit::Hash&) const;
 
     /// Check if grid includes the North pole (can only be true when units are in
     /// degrees)
@@ -88,9 +88,9 @@ public:
 
 private:
     /// Output to stream
-    void print( std::ostream& ) const;
+    void print(std::ostream&) const;
 
-    friend std::ostream& operator<<( std::ostream& s, const Domain& d );
+    friend std::ostream& operator<<(std::ostream& s, const Domain& d);
 };
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -101,18 +101,18 @@ public:
 
 public:
     using Domain::Domain;
-    RectangularDomain() : Domain() {}
-    RectangularDomain( const Interval& x, const Interval& y, const std::string& units = "degrees" );
+    RectangularDomain(): Domain() {}
+    RectangularDomain(const Interval& x, const Interval& y, const std::string& units = "degrees");
 
-    RectangularDomain( const Domain& );
+    RectangularDomain(const Domain&);
 
     operator bool() const { return domain_; }
 
     /// Checks if the x-value is contained in the domain
-    bool contains_x( double x ) const;
+    bool contains_x(double x) const;
 
     /// Checks if the y-value is contained in the domain
-    bool contains_y( double y ) const;
+    bool contains_y(double y) const;
 
     bool zonal_band() const;
 
@@ -130,9 +130,9 @@ private:
 class RectangularLonLatDomain : public RectangularDomain {
 public:
     using RectangularDomain::RectangularDomain;
-    RectangularLonLatDomain( const Interval& x, const Interval& y ) : RectangularDomain( x, y, "degrees" ) {}
-    RectangularLonLatDomain( const double& north, const double& west, const double& south, const double& east ) :
-        RectangularLonLatDomain( {west, east}, {south, north} ) {}
+    RectangularLonLatDomain(const Interval& x, const Interval& y): RectangularDomain(x, y, "degrees") {}
+    RectangularLonLatDomain(const double& north, const double& west, const double& south, const double& east):
+        RectangularLonLatDomain({west, east}, {south, north}) {}
 
     operator bool() const { return RectangularDomain::operator bool() && units() == "degrees"; }
 
@@ -150,9 +150,9 @@ public:
 
 public:
     using RectangularLonLatDomain::RectangularLonLatDomain;
-    ZonalBandDomain( const Interval& y, const double& west );
-    ZonalBandDomain( const Interval& y );
-    ZonalBandDomain( const Domain& );
+    ZonalBandDomain(const Interval& y, const double& west);
+    ZonalBandDomain(const Interval& y);
+    ZonalBandDomain(const Domain&);
 
     operator bool() const { return domain_; }
 
@@ -164,9 +164,9 @@ private:
 
 class GlobalDomain : public ZonalBandDomain {
 public:
-    GlobalDomain( const double& west );
+    GlobalDomain(const double& west);
     GlobalDomain();
-    GlobalDomain( const Domain& );
+    GlobalDomain(const Domain&);
 
     operator bool() const { return domain_; }
 

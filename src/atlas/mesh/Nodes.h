@@ -54,13 +54,13 @@ public:  // methods
 
     //-- Accessors
 
-    const Field& field( const std::string& name ) const;
-    Field& field( const std::string& name );
-    bool has_field( const std::string& name ) const { return ( fields_.find( name ) != fields_.end() ); }
+    const Field& field(const std::string& name) const;
+    Field& field(const std::string& name);
+    bool has_field(const std::string& name) const { return (fields_.find(name) != fields_.end()); }
 
-    const Field& field( idx_t ) const;
-    Field& field( idx_t );
-    idx_t nb_fields() const { return static_cast<idx_t>( fields_.size() ); }
+    const Field& field(idx_t) const;
+    Field& field(idx_t);
+    idx_t nb_fields() const { return static_cast<idx_t>(fields_.size()); }
 
     const util::Metadata& metadata() const { return metadata_; }
     util::Metadata& metadata() { return metadata_; }
@@ -97,22 +97,22 @@ public:  // methods
     const Connectivity& cell_connectivity() const;
     Connectivity& cell_connectivity();
 
-    const Connectivity& connectivity( const std::string& name ) const;
-    Connectivity& connectivity( const std::string& name );
+    const Connectivity& connectivity(const std::string& name) const;
+    Connectivity& connectivity(const std::string& name);
 
-    bool has_connectivity( std::string name ) const { return connectivities_.count( name ); }
+    bool has_connectivity(std::string name) const { return connectivities_.count(name); }
 
     idx_t size() const { return size_; }
 
     // -- Modifiers
 
-    Field add( const Field& );
+    Field add(const Field&);
 
-    void resize( idx_t );
+    void resize(idx_t);
 
-    void remove_field( const std::string& name );
+    void remove_field(const std::string& name);
 
-    Connectivity& add( Connectivity* );
+    Connectivity& add(Connectivity*);
 
     /// @brief Return the memory footprint of the Nodes
     size_t footprint() const;
@@ -124,10 +124,10 @@ public:  // methods
     void syncHostDevice() const;
 
 private:
-    void print( std::ostream& ) const;
+    void print(std::ostream&) const;
 
-    friend std::ostream& operator<<( std::ostream& s, const Nodes& p ) {
-        p.print( s );
+    friend std::ostream& operator<<(std::ostream& s, const Nodes& p) {
+        p.print(s);
         return s;
     }
 
@@ -175,27 +175,27 @@ inline Nodes::Connectivity& Nodes::cell_connectivity() {
 
 extern "C" {
 Nodes* atlas__mesh__Nodes__create();
-void atlas__mesh__Nodes__delete( Nodes* This );
-idx_t atlas__mesh__Nodes__size( Nodes* This );
-void atlas__mesh__Nodes__resize( Nodes* This, idx_t size );
-idx_t atlas__mesh__Nodes__nb_fields( Nodes* This );
-void atlas__mesh__Nodes__add_field( Nodes* This, field::FieldImpl* field );
-void atlas__mesh__Nodes__remove_field( Nodes* This, char* name );
-int atlas__mesh__Nodes__has_field( Nodes* This, char* name );
-field::FieldImpl* atlas__mesh__Nodes__field_by_name( Nodes* This, char* name );
-field::FieldImpl* atlas__mesh__Nodes__field_by_idx( Nodes* This, idx_t idx );
-util::Metadata* atlas__mesh__Nodes__metadata( Nodes* This );
-void atlas__mesh__Nodes__str( Nodes* This, char*& str, int& size );
-IrregularConnectivity* atlas__mesh__Nodes__edge_connectivity( Nodes* This );
-IrregularConnectivity* atlas__mesh__Nodes__cell_connectivity( Nodes* This );
-IrregularConnectivity* atlas__mesh__Nodes__connectivity( Nodes* This, char* name );
-void atlas__mesh__Nodes__add_connectivity( Nodes* This, IrregularConnectivity* connectivity );
-field::FieldImpl* atlas__mesh__Nodes__xy( Nodes* This );
-field::FieldImpl* atlas__mesh__Nodes__lonlat( Nodes* This );
-field::FieldImpl* atlas__mesh__Nodes__global_index( Nodes* This );
-field::FieldImpl* atlas__mesh__Nodes__remote_index( Nodes* This );
-field::FieldImpl* atlas__mesh__Nodes__partition( Nodes* This );
-field::FieldImpl* atlas__mesh__Nodes__ghost( Nodes* This );
+void atlas__mesh__Nodes__delete(Nodes* This);
+idx_t atlas__mesh__Nodes__size(Nodes* This);
+void atlas__mesh__Nodes__resize(Nodes* This, idx_t size);
+idx_t atlas__mesh__Nodes__nb_fields(Nodes* This);
+void atlas__mesh__Nodes__add_field(Nodes* This, field::FieldImpl* field);
+void atlas__mesh__Nodes__remove_field(Nodes* This, char* name);
+int atlas__mesh__Nodes__has_field(Nodes* This, char* name);
+field::FieldImpl* atlas__mesh__Nodes__field_by_name(Nodes* This, char* name);
+field::FieldImpl* atlas__mesh__Nodes__field_by_idx(Nodes* This, idx_t idx);
+util::Metadata* atlas__mesh__Nodes__metadata(Nodes* This);
+void atlas__mesh__Nodes__str(Nodes* This, char*& str, int& size);
+IrregularConnectivity* atlas__mesh__Nodes__edge_connectivity(Nodes* This);
+IrregularConnectivity* atlas__mesh__Nodes__cell_connectivity(Nodes* This);
+IrregularConnectivity* atlas__mesh__Nodes__connectivity(Nodes* This, char* name);
+void atlas__mesh__Nodes__add_connectivity(Nodes* This, IrregularConnectivity* connectivity);
+field::FieldImpl* atlas__mesh__Nodes__xy(Nodes* This);
+field::FieldImpl* atlas__mesh__Nodes__lonlat(Nodes* This);
+field::FieldImpl* atlas__mesh__Nodes__global_index(Nodes* This);
+field::FieldImpl* atlas__mesh__Nodes__remote_index(Nodes* This);
+field::FieldImpl* atlas__mesh__Nodes__partition(Nodes* This);
+field::FieldImpl* atlas__mesh__Nodes__ghost(Nodes* This);
 }
 
 //------------------------------------------------------------------------------------------------------

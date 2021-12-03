@@ -862,21 +862,21 @@ const double lonlat_arp_t32c24[] = {
 
 namespace atlas {
 namespace test {
-CASE( "t31c2.4" ) {
+CASE("t31c2.4") {
     auto nx = std::vector<int>{20, 27, 32, 40, 45, 48, 60, 60, 64, 64, 64, 64, 64, 64, 64, 64,
                                64, 64, 64, 64, 64, 64, 64, 64, 60, 60, 48, 45, 40, 32, 27, 20};
 
-    auto proj = Projection( "rotated_schmidt", Config( "stretching_factor", 2.4 ) | Config( "rotation_angle", 180.0 ) |
-                                                   Config( "north_pole", {2.0, 46.7} ) );
+    auto proj = Projection("rotated_schmidt", Config("stretching_factor", 2.4) | Config("rotation_angle", 180.0) |
+                                                  Config("north_pole", {2.0, 46.7}));
 
-    auto grid = ReducedGaussianGrid( nx, proj );
+    auto grid = ReducedGaussianGrid(nx, proj);
 
-    for ( int j = 0, jglo = 0; j < grid.ny(); j++ ) {
-        for ( int i = 0; i < grid.nx( j ); i++, jglo++ ) {
-            auto ll1 = PointLonLat( lonlat_arp_t32c24[2 * jglo + 0], lonlat_arp_t32c24[2 * jglo + 1] );
-            auto ll2 = grid.lonlat( i, j );
-            EXPECT_APPROX_EQ( ll1.lon(), ll2.lon(), 1.e-10 );
-            EXPECT_APPROX_EQ( ll1.lat(), ll2.lat(), 1.e-10 );
+    for (int j = 0, jglo = 0; j < grid.ny(); j++) {
+        for (int i = 0; i < grid.nx(j); i++, jglo++) {
+            auto ll1 = PointLonLat(lonlat_arp_t32c24[2 * jglo + 0], lonlat_arp_t32c24[2 * jglo + 1]);
+            auto ll2 = grid.lonlat(i, j);
+            EXPECT_APPROX_EQ(ll1.lon(), ll2.lon(), 1.e-10);
+            EXPECT_APPROX_EQ(ll1.lat(), ll2.lat(), 1.e-10);
         }
     }
 }
@@ -886,6 +886,6 @@ CASE( "t31c2.4" ) {
 }  // namespace atlas
 
 
-int main( int argc, char* argv[] ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char* argv[]) {
+    return atlas::test::run(argc, argv);
 }

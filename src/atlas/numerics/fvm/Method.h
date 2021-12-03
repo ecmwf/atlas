@@ -39,9 +39,9 @@ namespace fvm {
 
 class Method : public numerics::Method {
 public:
-    Method( Mesh&, const eckit::Configuration& );
-    Method( Mesh&, const mesh::Halo& );
-    Method( Mesh& );
+    Method(Mesh&, const eckit::Configuration&);
+    Method(Mesh&, const mesh::Halo&);
+    Method(Mesh&);
 
     virtual std::string& name() const override {
         static std::string _name{"fvm"};
@@ -80,9 +80,9 @@ private:         // data
 // C wrapper interfaces to C++ routines
 
 extern "C" {
-Method* atlas__numerics__fvm__Method__new( Mesh::Implementation* mesh, const eckit::Configuration* params );
-const functionspace::detail::NodeColumns* atlas__numerics__fvm__Method__functionspace_nodes( Method* This );
-const functionspace::detail::EdgeColumns* atlas__numerics__fvm__Method__functionspace_edges( Method* This );
+Method* atlas__numerics__fvm__Method__new(Mesh::Implementation* mesh, const eckit::Configuration* params);
+const functionspace::detail::NodeColumns* atlas__numerics__fvm__Method__functionspace_nodes(Method* This);
+const functionspace::detail::EdgeColumns* atlas__numerics__fvm__Method__functionspace_edges(Method* This);
 }
 
 }  // namespace fvm

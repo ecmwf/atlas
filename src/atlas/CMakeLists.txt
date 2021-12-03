@@ -189,6 +189,8 @@ grid/detail/partitioner/BandsPartitioner.cc
 grid/detail/partitioner/BandsPartitioner.h
 grid/detail/partitioner/CheckerboardPartitioner.cc
 grid/detail/partitioner/CheckerboardPartitioner.h
+grid/detail/partitioner/CubedSpherePartitioner.cc
+grid/detail/partitioner/CubedSpherePartitioner.h
 grid/detail/partitioner/EqualBandsPartitioner.cc
 grid/detail/partitioner/EqualBandsPartitioner.h
 grid/detail/partitioner/EqualRegionsPartitioner.cc
@@ -363,6 +365,8 @@ meshgenerator/MeshGenerator.cc
 meshgenerator/MeshGenerator.h
 meshgenerator/detail/CubedSphereMeshGenerator.h
 meshgenerator/detail/CubedSphereMeshGenerator.cc
+meshgenerator/detail/NodalCubedSphereMeshGenerator.h
+meshgenerator/detail/NodalCubedSphereMeshGenerator.cc
 meshgenerator/detail/DelaunayMeshGenerator.h
 meshgenerator/detail/DelaunayMeshGenerator.cc
 meshgenerator/detail/StructuredMeshGenerator.h
@@ -377,6 +381,8 @@ meshgenerator/detail/MeshGeneratorInterface.cc
 meshgenerator/detail/MeshGeneratorInterface.h
 meshgenerator/detail/HealpixMeshGenerator.h
 meshgenerator/detail/HealpixMeshGenerator.cc
+meshgenerator/detail/cubedsphere/CubedSphereUtility.h
+meshgenerator/detail/cubedsphere/CubedSphereUtility.cc
 )
 
 list( APPEND atlas_output_srcs
@@ -435,6 +441,8 @@ functionspace/Spectral.h
 functionspace/Spectral.cc
 functionspace/PointCloud.h
 functionspace/PointCloud.cc
+functionspace/CubedSphereColumns.h
+functionspace/CubedSphereColumns.cc
 functionspace/detail/FunctionSpaceImpl.h
 functionspace/detail/FunctionSpaceImpl.cc
 functionspace/detail/FunctionSpaceInterface.h
@@ -452,6 +460,9 @@ functionspace/detail/StructuredColumns_setup.cc
 functionspace/detail/StructuredColumns_create_remote_index.cc
 functionspace/detail/PointCloudInterface.h
 functionspace/detail/PointCloudInterface.cc
+functionspace/detail/CubedSphereStructure.h
+functionspace/detail/CubedSphereStructure.cc
+
 )
 
 list( APPEND atlas_numerics_srcs
@@ -583,10 +594,18 @@ linalg/sparse.h
 linalg/sparse/Backend.h
 linalg/sparse/Backend.cc
 linalg/sparse/SparseMatrixMultiply.h
+linalg/sparse/SparseMatrixMultiply.tcc
 linalg/sparse/SparseMatrixMultiply_EckitLinalg.h
 linalg/sparse/SparseMatrixMultiply_EckitLinalg.cc
 linalg/sparse/SparseMatrixMultiply_OpenMP.h
 linalg/sparse/SparseMatrixMultiply_OpenMP.cc
+linalg/dense.h
+linalg/dense/Backend.h
+linalg/dense/Backend.cc
+linalg/dense/MatrixMultiply.h
+linalg/dense/MatrixMultiply.tcc
+linalg/dense/MatrixMultiply_EckitLinalg.h
+linalg/dense/MatrixMultiply_EckitLinalg.cc
 )
 
 
@@ -597,9 +616,10 @@ redistribution/detail/RedistributionImpl.h
 redistribution/detail/RedistributionImpl.cc
 redistribution/detail/RedistributionImplFactory.h
 redistribution/detail/RedistributionImplFactory.cc
-redistribution/detail/RedistributionUtils.h
-redistribution/detail/StructuredColumnsToStructuredColumns.h
-redistribution/detail/StructuredColumnsToStructuredColumns.cc
+redistribution/detail/RedistributeGeneric.h
+redistribution/detail/RedistributeGeneric.cc
+redistribution/detail/RedistributeStructuredColumns.h
+redistribution/detail/RedistributeStructuredColumns.cc
 )
 
 list( APPEND atlas_array_srcs

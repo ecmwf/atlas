@@ -27,11 +27,11 @@ namespace io {
 
 class RecordPrinter {
 public:
-    RecordPrinter( const Record::URI&, const util::Config& = util::NoConfig() );
+    RecordPrinter(const Record::URI&, const util::Config& = util::NoConfig());
 
-    RecordPrinter( const eckit::PathName&, const util::Config& = util::NoConfig() );
+    RecordPrinter(const eckit::PathName&, const util::Config& = util::NoConfig());
 
-    RecordPrinter( const eckit::PathName&, std::uint64_t offset, const util::Config& = util::NoConfig() );
+    RecordPrinter(const eckit::PathName&, std::uint64_t offset, const util::Config& = util::NoConfig());
 
     Record record() const { return record_; }
 
@@ -41,9 +41,9 @@ public:
 
     Time time() const { return record_.time(); }
 
-    void print( std::ostream& out ) const;
+    void print(std::ostream& out) const;
 
-    friend std::ostream& operator<<( std::ostream&, const RecordPrinter& );
+    friend std::ostream& operator<<(std::ostream&, const RecordPrinter&);
 
 private:
     Session session_;

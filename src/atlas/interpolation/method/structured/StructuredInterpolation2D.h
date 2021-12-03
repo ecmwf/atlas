@@ -33,37 +33,37 @@ namespace method {
 template <typename Kernel>
 class StructuredInterpolation2D : public Method {
 public:
-    StructuredInterpolation2D( const Config& config );
+    StructuredInterpolation2D(const Config& config);
 
     virtual ~StructuredInterpolation2D() override {}
 
-    virtual void print( std::ostream& ) const override;
+    virtual void print(std::ostream&) const override;
 
 
 protected:
-    void setup( const FunctionSpace& source );
+    void setup(const FunctionSpace& source);
 
     virtual const FunctionSpace& source() const override { return source_; }
 
     virtual const FunctionSpace& target() const override { return target_; }
 
 private:
-    virtual void do_setup( const Grid& source, const Grid& target, const Cache& ) override;
+    virtual void do_setup(const Grid& source, const Grid& target, const Cache&) override;
 
-    virtual void do_setup( const FunctionSpace& source, const FunctionSpace& target ) override;
+    virtual void do_setup(const FunctionSpace& source, const FunctionSpace& target) override;
 
-    virtual void do_setup( const FunctionSpace& source, const Field& target ) override;
+    virtual void do_setup(const FunctionSpace& source, const Field& target) override;
 
-    virtual void do_setup( const FunctionSpace& source, const FieldSet& target ) override;
+    virtual void do_setup(const FunctionSpace& source, const FieldSet& target) override;
 
-    virtual void do_execute( const Field& src, Field& tgt ) const override;
+    virtual void do_execute(const Field& src, Field& tgt) const override;
 
-    virtual void do_execute( const FieldSet& src, FieldSet& tgt ) const override;
+    virtual void do_execute(const FieldSet& src, FieldSet& tgt) const override;
 
     template <typename Value, int Rank>
-    void execute_impl( const Kernel& kernel, const FieldSet& src, FieldSet& tgt ) const;
+    void execute_impl(const Kernel& kernel, const FieldSet& src, FieldSet& tgt) const;
 
-    static double convert_units_multiplier( const Field& field );
+    static double convert_units_multiplier(const Field& field);
 
 protected:
     Field target_lonlat_;

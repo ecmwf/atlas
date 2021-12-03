@@ -1,0 +1,210 @@
+name: build
+
+# Controls when the action will run
+on:
+
+  # Trigger the workflow on all pushes, except on tag creation
+  push:
+    branches:
+    - '**'
+    tags-ignore:
+    - '**'
+
+  # Trigger the workflow on all pull requests
+  pull_request: ~
+
+  # Allow workflow to be dispatched on demand
+  workflow_dispatch: ~
+
+env:
+  ATLAS_TOOLS: ${{ github.workspace }}/tools
+  CTEST_PARALLEL_LEVEL: 1
+  CACHE_SUFFIX: v1
+
+jobs:
+  ci:
+    name: ci
+
+    strategy:
+      fail-fast: false  # false: try to complete all jobs
+
+      matrix:
+        build_type: [Release,Debug]
+        name:
+          - linux gnu-10
+          - linux clang-12
+          - linux nvhpc-21.9
+          - linux intel
+          - macos
+
+        include:
+
+          - name: linux gnu-10
+            os: ubuntu-20.04
+            compiler: gnu-10
+            compiler_cc: gcc-10
+            compiler_cxx: g++-10
+            compiler_fc: gfortran-10
+            caching: true
+
+          - name: linux clang-12
+            os: ubuntu-20.04
+            compiler: clang-12
+            compiler_cc: clang-12
+            compiler_cxx: clang++-12
+            compiler_fc: gfortran-10
+            caching: true
+
+          - name: linux clang-12
+            build_type: Release
+            os: ubuntu-20.04
+            compiler: clang-12
+            compiler_cc: clang-12
+            compiler_cxx: clang++-12
+            compiler_fc: gfortran-10
+            ctest_options: "-LE mpi" # For now until Checkerboard fixed
+            caching: true
+
+          - name: linux nvhpc-21.9
+            os: ubuntu-20.04
+            compiler: nvhpc-21.9
+            compiler_cc: nvc
+            compiler_cxx: nvc++
+            compiler_fc: nvfortran
+            cmake_options: -DCMAKE_CXX_FLAGS=--diag_suppress177
+            ctest_options: "-LE mpi" # For now until Checkerboard fixed
+            caching: false
+
+          - name : linux intel
+            os: ubuntu-20.04
+            compiler: intel-oneapi
+            compiler_cc: icc
+            compiler_cxx: icpc
+            compiler_fc: ifort
+            caching: true
+
+          - name: macos
+            # Xcode compiler requires empty environment variables, so we pass null (~) here
+            os: macos-11
+            compiler: clang-12
+            compiler_cc: ~
+            compiler_cxx: ~
+            compiler_fc: gfortran-11
+            caching: true
+
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Environment
+      run:  |
+        echo "DEPS_DIR=${{ runner.temp }}/deps" >> $GITHUB_ENV
+        echo "CC=${{ matrix.compiler_cc }}"     >> $GITHUB_ENV
+        echo "CXX=${{ matrix.compiler_cxx }}"   >> $GITHUB_ENV
+        echo "FC=${{ matrix.compiler_fc }}"     >> $GITHUB_ENV
+
+        if [[ "${{ matrix.os }}" =~ macos ]]; then
+          brew install ninja
+        else
+          sudo apt-get update
+          sudo apt-get install ninja-build
+        fi
+
+        printenv
+
+    - name: Cache Dependencies
+      # There seems to be a problem with cached NVHPC dependencies, leading to SIGILL perhaps due to slightly different architectures
+      if: matrix.caching
+      id: deps-cache
+      uses: pat-s/always-upload-cache@v2.1.5
+      with:
+        path: ${{ env.DEPS_DIR }}
+        key: deps-${{ matrix.os }}-${{ matrix.compiler }}-v1
+
+    - name: Install NVHPC compiler
+      if: contains( matrix.compiler, 'nvhpc' )
+      shell: bash -eux {0}
+      run: |
+        ${ATLAS_TOOLS}/install-nvhpc.sh --prefix ${DEPS_DIR}/nvhpc
+        source ${DEPS_DIR}/nvhpc/env.sh
+        echo "${NVHPC_DIR}/compilers/bin"                   >> $GITHUB_PATH
+        [ -z ${MPI_HOME+x} ] || echo "MPI_HOME=${MPI_HOME}" >> $GITHUB_ENV
+
+    - name: Install Intel oneAPI compiler
+      if: contains( matrix.compiler, 'intel' )
+      run: |
+        ${ATLAS_TOOLS}/install-intel-oneapi.sh
+        source /opt/intel/oneapi/setvars.sh
+        printenv >> $GITHUB_ENV
+        echo "CACHE_SUFFIX=$(icc -dumpversion)" >> $GITHUB_ENV
+
+    - name: Install MPI
+      shell: bash -eux {0}
+      run: |
+        FCFLAGS=-fPIC CFLAGS=-fPIC FFLAGS=-fPIC ${ATLAS_TOOLS}/install-mpi.sh --mpi openmpi --prefix  ${DEPS_DIR}/openmpi
+        [ -f ${DEPS_DIR}/openmpi/env.sh ] && source ${DEPS_DIR}/openmpi/env.sh
+        [ -z ${MPI_HOME+x} ] || echo "MPI_HOME=${MPI_HOME}" >> $GITHUB_ENV
+
+    - name: Install FFTW
+      shell: bash -eux {0}
+      run: |
+        ${ATLAS_TOOLS}/install-fftw.sh --version 3.3.10 --prefix ${DEPS_DIR}/fftw
+        echo "FFTW_ROOT=${DEPS_DIR}/fftw" >> $GITHUB_ENV
+
+    - name: Install LZ4
+      if: "!contains( matrix.compiler, 'nvhpc' )"
+      run: |
+        brew install lz4
+        echo "LZ4_ROOT=$(brew --prefix lz4)" >> $GITHUB_ENV
+
+    - name: Install Eigen
+      if: "!contains( matrix.compiler, 'nvhpc' )"
+      run: |
+        brew install eigen
+
+    - name: Set Build & Test Environment
+      run: |
+
+        # Only add --oversubscribe arg for openmpi
+        [ -z ${I_MPI_ROOT+x} ] && echo "ATLAS_RUN_MPI_ARGS=--oversubscribe" >> $GITHUB_ENV
+
+        # Add mpirun to path for testing
+        [ -z ${MPI_HOME+x} ] || echo "${MPI_HOME}/bin" >> $GITHUB_PATH
+
+
+    - name: Build & Test
+      id: build-test
+      uses: ecmwf-actions/build-package@v2
+      with:
+        self_coverage: true
+        force_build: true
+        cache_suffix: "${{ matrix.build_type }}-${{ env.CACHE_SUFFIX }}"
+        recreate_cache: ${{ matrix.caching == false }}
+        dependencies: |
+          ecmwf/ecbuild
+          ecmwf/eckit
+          ecmwf/fckit
+        dependency_branch: develop
+        dependency_cmake_options: |
+          ecmwf/eckit: "-G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DENABLE_TESTS=OFF -DENABLE_ECKIT_CMD=OFF -DENABLE_ECKIT_SQL=OFF"
+          ecmwf/fckit: "-G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DENABLE_TESTS=OFF"
+        cmake_options: "-G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DATLAS_BITS_LOCAL=32 ${{ matrix.cmake_options }}"
+        ctest_options: "${{ matrix.ctest_options }}"
+
+    - name: Verify tools
+      run: |
+        export PATH=${{ steps.build-test.outputs.bin_path }}:$PATH
+
+        echo "+ atlas --info"
+        atlas --info
+
+        echo "+ atlas-grids --list"
+        atlas-grids --list
+
+
+    - name: Codecov Upload
+      if: steps.build-test.outputs.coverage_file
+      uses: codecov/codecov-action@v2
+      with:
+        files: ${{ steps.build-test.outputs.coverage_file }}

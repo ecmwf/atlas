@@ -57,8 +57,8 @@ public:
    * @param U [out] Spectral wind U = u*cos(lat)
    * @param V [out] Spectral wind V = v*cos(lat)
    */
-    virtual void execute( const int nb_coeff, const int nb_fields, const double vorticity[], const double divergence[],
-                          double U[], double V[], const eckit::Configuration& = util::NoConfig() ) const = 0;
+    virtual void execute(const int nb_coeff, const int nb_fields, const double vorticity[], const double divergence[],
+                         double U[], double V[], const eckit::Configuration& = util::NoConfig()) const = 0;
 };
 
 // ------------------------------------------------------------------
@@ -69,23 +69,23 @@ public:
    * \brief build VorDivToUV
    * \return VorDivToUVImpl
    */
-    static VorDivToUVImpl* build( const FunctionSpace& sp, const eckit::Configuration& = util::NoConfig() );
-    static VorDivToUVImpl* build( int truncation, const eckit::Configuration& = util::NoConfig() );
+    static VorDivToUVImpl* build(const FunctionSpace& sp, const eckit::Configuration& = util::NoConfig());
+    static VorDivToUVImpl* build(int truncation, const eckit::Configuration& = util::NoConfig());
 
     /*!
    * \brief list all registered trans implementations
    */
-    static void list( std::ostream& );
+    static void list(std::ostream&);
 
-    static bool has( const std::string& name );
+    static bool has(const std::string& name);
 
 private:
     std::string name_;
-    virtual VorDivToUVImpl* make( const FunctionSpace& sp, const eckit::Configuration& ) = 0;
-    virtual VorDivToUVImpl* make( int truncation, const eckit::Configuration& )          = 0;
+    virtual VorDivToUVImpl* make(const FunctionSpace& sp, const eckit::Configuration&) = 0;
+    virtual VorDivToUVImpl* make(int truncation, const eckit::Configuration&)          = 0;
 
 protected:
-    VorDivToUVFactory( const std::string& );
+    VorDivToUVFactory(const std::string&);
     virtual ~VorDivToUVFactory();
 };
 
@@ -93,28 +93,28 @@ protected:
 
 template <class T>
 class VorDivToUVBuilder : public VorDivToUVFactory {
-    virtual VorDivToUVImpl* make( const FunctionSpace& sp, const eckit::Configuration& config ) {
-        return new T( sp, config );
+    virtual VorDivToUVImpl* make(const FunctionSpace& sp, const eckit::Configuration& config) {
+        return new T(sp, config);
     }
-    virtual VorDivToUVImpl* make( int truncation, const eckit::Configuration& config ) {
-        return new T( truncation, config );
+    virtual VorDivToUVImpl* make(int truncation, const eckit::Configuration& config) {
+        return new T(truncation, config);
     }
 
 public:
-    VorDivToUVBuilder( const std::string& name ) : VorDivToUVFactory( name ) {}
+    VorDivToUVBuilder(const std::string& name): VorDivToUVFactory(name) {}
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class VorDivToUV : DOXYGEN_HIDE( public util::ObjectHandle<VorDivToUVImpl> ) {
+class VorDivToUV : DOXYGEN_HIDE(public util::ObjectHandle<VorDivToUVImpl>) {
 public:
     using Handle::Handle;
     VorDivToUV() = default;
 
-    VorDivToUV( const FunctionSpace& sp, const eckit::Configuration& = util::NoConfig() );
-    VorDivToUV( int truncation, const eckit::Configuration& = util::NoConfig() );
+    VorDivToUV(const FunctionSpace& sp, const eckit::Configuration& = util::NoConfig());
+    VorDivToUV(int truncation, const eckit::Configuration& = util::NoConfig());
 
-    void hash( eckit::Hash& ) const;
+    void hash(eckit::Hash&) const;
 
     int truncation() const;
 
@@ -123,8 +123,8 @@ public:
     // you're doing.
     // See IFS trans library.
 
-    virtual void execute( const int nb_coeff, const int nb_fields, const double vorticity[], const double divergence[],
-                          double U[], double V[], const eckit::Configuration& = util::NoConfig() ) const;
+    virtual void execute(const int nb_coeff, const int nb_fields, const double vorticity[], const double divergence[],
+                         double U[], double V[], const eckit::Configuration& = util::NoConfig()) const;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

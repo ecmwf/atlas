@@ -51,7 +51,6 @@ ecbuild_add_test( TARGET  atlas_test_distribution_regular_bands
 )
 
 
-
 file( GLOB grids ${PROJECT_SOURCE_DIR}/doc/example-grids/*.yml )
 if( NOT HAVE_PROJ )
     ecbuild_list_exclude_pattern(

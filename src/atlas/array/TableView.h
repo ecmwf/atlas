@@ -54,36 +54,36 @@ public:
     };
 
 public:
-    TableIndex( idx_t* idx ) : idx_( idx ) {}
-    void set( const idx_t& value ) { *( idx_ ) = value + BASE; }
+    TableIndex(idx_t* idx): idx_(idx) {}
+    void set(const idx_t& value) { *(idx_) = value + BASE; }
     idx_t get() const { return *(idx_)-BASE; }
-    void operator       =( const idx_t& value ) { set( value ); }
-    TableIndex& operator=( const TableIndex& other ) {
-        set( other.get() );
+    void operator       =(const idx_t& value) { set(value); }
+    TableIndex& operator=(const TableIndex& other) {
+        set(other.get());
         return *this;
     }
-    TableIndex& operator+( const idx_t& value ) {
-        *( idx_ ) += value;
+    TableIndex& operator+(const idx_t& value) {
+        *(idx_) += value;
         return *this;
     }
-    TableIndex& operator-( const idx_t& value ) {
-        *( idx_ ) -= value;
+    TableIndex& operator-(const idx_t& value) {
+        *(idx_) -= value;
         return *this;
     }
     TableIndex& operator--() {
-        --( *( idx_ ) );
+        --(*(idx_));
         return *this;
     }
     TableIndex& operator++() {
-        ++( *( idx_ ) );
+        ++(*(idx_));
         return *this;
     }
-    TableIndex& operator+=( const idx_t& value ) {
-        *( idx_ ) += value;
+    TableIndex& operator+=(const idx_t& value) {
+        *(idx_) += value;
         return *this;
     }
-    TableIndex& operator-=( const idx_t& value ) {
-        *( idx_ ) -= value;
+    TableIndex& operator-=(const idx_t& value) {
+        *(idx_) -= value;
         return *this;
     }
 
@@ -110,22 +110,22 @@ class TableRow {
 
 public:
     ATLAS_HOST_DEVICE
-    TableRow( const idx_t* data, size_t size ) : data_( const_cast<idx_t*>( data ) ), size_( size ) {}
+    TableRow(const idx_t* data, size_t size): data_(const_cast<idx_t*>(data)), size_(size) {}
 
     ATLAS_HOST_DEVICE
-    idx_t operator()( size_t i ) const { return data_[i] FROM_FORTRAN; }
+    idx_t operator()(size_t i) const { return data_[i] FROM_FORTRAN; }
 
     ATLAS_HOST_DEVICE
-    ReturnType operator()( size_t i ) { return INDEX_REF( data_ + i ); }
+    ReturnType operator()(size_t i) { return INDEX_REF(data_ + i); }
 
     ATLAS_HOST_DEVICE
     size_t size() const { return size_; }
 
     // TODO: Following function should only be allowed to compile if
     // ReadOnly=false (SFINAE?)
-    TableRow& operator=( const idx_t column_values[] ) {
-        assert( not ReadOnly );
-        for ( size_t n = 0; n < size_; ++n ) {
+    TableRow& operator=(const idx_t column_values[]) {
+        assert(not ReadOnly);
+        for (size_t n = 0; n < size_; ++n) {
             data_[n] = column_values[n] TO_FORTRAN;
         }
         return *this;
@@ -163,16 +163,16 @@ public:
 
     template <typename ReturnType>
     struct Access_t<ReturnType, true> {
-        Access_t( const TableView<ReadOnly>* tv ) : tv_( const_cast<TableView<ReadOnly>*>( tv ) ) {}
+        Access_t(const TableView<ReadOnly>* tv): tv_(const_cast<TableView<ReadOnly>*>(tv)) {}
         TableView<ReadOnly>* tv_;
-        idx_t apply( size_t row, size_t col ) const { return tv_->values_( tv_->displs_( row ) + col ) FROM_FORTRAN; }
+        idx_t apply(size_t row, size_t col) const { return tv_->values_(tv_->displs_(row) + col) FROM_FORTRAN; }
     };
 
     template <typename ReturnType>
     struct Access_t<ReturnType, false> {
-        Access_t( const TableView<ReadOnly>* tv ) : tv_( const_cast<TableView<ReadOnly>*>( tv ) ) {}
+        Access_t(const TableView<ReadOnly>* tv): tv_(const_cast<TableView<ReadOnly>*>(tv)) {}
         TableView<ReadOnly>* tv_;
-        Index apply( size_t row, size_t col ) const { return Index( &tv_->values_( tv_->displs_( row ) + col ) ); }
+        Index apply(size_t row, size_t col) const { return Index(&tv_->values_(tv_->displs_(row) + col)); }
     };
 
     using Access      = Access_t<Index, ReadOnly>;
@@ -180,11 +180,11 @@ public:
 
     //-- Constructors
 
-    TableView( const Table& table, bool host = true );
+    TableView(const Table& table, bool host = true);
 
-    TableView( const TableView& other );
+    TableView(const TableView& other);
 
-    TableView operator=( const TableView& other );
+    TableView operator=(const TableView& other);
 
     ~TableView() {}
 
@@ -196,7 +196,7 @@ public:
 
     /// @brief Number of columns for specified row in the connectivity table
     ATLAS_HOST_DEVICE
-    size_t cols( size_t row_idx ) const { return counts_( row_idx ); }
+    size_t cols(size_t row_idx) const { return counts_(row_idx); }
 
     /// @brief Maximum value for number of columns over all rows
     ATLAS_HOST_DEVICE
@@ -209,17 +209,17 @@ public:
     /// @brief Access to connectivity table elements for given row and column
     /// The returned index has base 0 regardless if ATLAS_HAVE_FORTRAN is defined.
     ATLAS_HOST_DEVICE
-    idx_t operator()( size_t row_idx, size_t col_idx ) const {
-        assert( counts_( row_idx ) > col_idx );
-        return const_access_.apply( row_idx, col_idx );
+    idx_t operator()(size_t row_idx, size_t col_idx) const {
+        assert(counts_(row_idx) > col_idx);
+        return const_access_.apply(row_idx, col_idx);
     }
 
     /// @brief Access to connectivity table elements for given row and column
     /// The returned index has base 0 regardless if ATLAS_HAVE_FORTRAN is defined.
     ATLAS_HOST_DEVICE
-    Index operator()( size_t row_idx, size_t col_idx ) {
-        assert( counts_( row_idx ) > col_idx );
-        return access_.apply( row_idx, col_idx );
+    Index operator()(size_t row_idx, size_t col_idx) {
+        assert(counts_(row_idx) > col_idx);
+        return access_.apply(row_idx, col_idx);
     }
 
     /// @brief Access to raw data.
@@ -235,15 +235,15 @@ public:
     idx_t missing_value() const { return missing_value_; }
 
     ATLAS_HOST_DEVICE
-    ConstRow row( size_t row_idx ) const { return ConstRow( values_.data() + displs_( row_idx ), counts_( row_idx ) ); }
+    ConstRow row(size_t row_idx) const { return ConstRow(values_.data() + displs_(row_idx), counts_(row_idx)); }
 
     ATLAS_HOST_DEVICE
-    Row row( size_t row_idx ) { return Row( values_.data() + displs_( row_idx ), counts_( row_idx ) ); }
+    Row row(size_t row_idx) { return Row(values_.data() + displs_(row_idx), counts_(row_idx)); }
 
     ///-- Modifiers
 
     ATLAS_HOST_DEVICE
-    size_t displs( const size_t row ) const { return displs_( row ); }
+    size_t displs(const size_t row) const { return displs_(row); }
 
 private:
     const size_t* displs() const { return displs_.data(); }

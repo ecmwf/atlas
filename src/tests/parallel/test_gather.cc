@@ -31,47 +31,47 @@ namespace test {
 //-----------------------------------------------------------------------------
 
 template <typename T, size_t N>
-std::vector<T> vec( const T ( &list )[N] ) {
-    return std::vector<T>( list, list + N );
+std::vector<T> vec(const T (&list)[N]) {
+    return std::vector<T>(list, list + N);
 }
 
 struct Fixture {
     Fixture() {
-        rank           = static_cast<int>( mpi::comm().rank() );
-        comm_size      = static_cast<int>( mpi::comm().size() );
+        rank           = static_cast<int>(mpi::comm().rank());
+        comm_size      = static_cast<int>(mpi::comm().size());
         int nnodes_c[] = {6, 6, 7};
-        nb_nodes       = vec( nnodes_c );
+        nb_nodes       = vec(nnodes_c);
         Nl             = nb_nodes[rank];
-        switch ( mpi::comm().rank() ) {
+        switch (mpi::comm().rank()) {
             case 0: {  //./----> extra ghost point with nonstandard gidx
                 int part_c[]    = {2, 0, 0, 0, 1, 2};
-                part            = vec( part_c );
+                part            = vec(part_c);
                 idx_t ridx_c[]  = {4, 1, 2, 3, 1, 3};
-                ridx            = vec( ridx_c );
+                ridx            = vec(ridx_c);
                 gidx_t gidx_c[] = {9, 1, 2, 3, 4, 20};
-                gidx            = vec( gidx_c );
+                gidx            = vec(gidx_c);
                 break;
             }
             case 1: {
                 int part_c[]    = {0, 1, 1, 1, 2, 2};
-                part            = vec( part_c );
+                part            = vec(part_c);
                 idx_t ridx_c[]  = {3, 1, 2, 3, 2, 3};
-                ridx            = vec( ridx_c );
+                ridx            = vec(ridx_c);
                 gidx_t gidx_c[] = {3, 4, 5, 6, 7, 8};
-                gidx            = vec( gidx_c );
+                gidx            = vec(gidx_c);
                 break;
             }
             case 2: {
                 int part_c[]    = {1, 1, 2, 2, 2, 0, 0};
-                part            = vec( part_c );
+                part            = vec(part_c);
                 idx_t ridx_c[]  = {2, 3, 2, 3, 4, 1, 2};
-                ridx            = vec( ridx_c );
+                ridx            = vec(ridx_c);
                 gidx_t gidx_c[] = {5, 6, 7, 8, 9, 1, 2};
-                gidx            = vec( gidx_c );
+                gidx            = vec(gidx_c);
                 break;
             }
         }
-        gather_scatter.setup( part.data(), ridx.data(), 0, gidx.data(), Nl );
+        gather_scatter.setup(part.data(), ridx.data(), 0, gidx.data(), Nl);
     }
     parallel::GatherScatter gather_scatter;
     std::vector<int> nb_nodes;
@@ -89,100 +89,100 @@ struct Fixture {
 
 //-----------------------------------------------------------------------------
 
-CASE( "test_gather" ) {
+CASE("test_gather") {
     Fixture f;
 
-    SECTION( "test_gather_rank0" ) {
-        for ( f.root = 0; f.root < f.comm_size; ++f.root ) {
-            std::vector<POD> loc( f.Nl );
-            std::vector<POD> glb( f.Ng() );
+    SECTION("test_gather_rank0") {
+        for (f.root = 0; f.root < f.comm_size; ++f.root) {
+            std::vector<POD> loc(f.Nl);
+            std::vector<POD> glb(f.Ng());
 
-            for ( int j = 0; j < f.Nl; ++j ) {
-                loc[j] = ( idx_t( f.part[j] ) != f.rank ? 0 : f.gidx[j] * 10 );
+            for (int j = 0; j < f.Nl; ++j) {
+                loc[j] = (idx_t(f.part[j]) != f.rank ? 0 : f.gidx[j] * 10);
             }
 
             idx_t strides[] = {1};
             idx_t extents[] = {1};
-            f.gather_scatter.gather( loc.data(), strides, extents, 1, glb.data(), strides, extents, 1, f.root );
+            f.gather_scatter.gather(loc.data(), strides, extents, 1, glb.data(), strides, extents, 1, f.root);
 
-            if ( f.rank == f.root ) {
+            if (f.rank == f.root) {
                 POD glb_c[] = {10, 20, 30, 40, 50, 60, 70, 80, 90};
-                EXPECT( glb == eckit::testing::make_view( glb_c, glb_c + f.Ng() ) );
+                EXPECT(glb == eckit::testing::make_view(glb_c, glb_c + f.Ng()));
             }
         }
     }
 
 #if 1
-    SECTION( "test_gather_rank1_deprecated" ) {
-        for ( f.root = 0; f.root < f.comm_size; ++f.root ) {
-            array::ArrayT<POD> loc( f.Nl, 2 );
-            array::ArrayT<POD> glb( f.Ng(), 2 );
-            array::ArrayT<POD> glb1( f.Ng(), 1 );
-            array::ArrayT<POD> glb2( f.Ng(), 1 );
-            array::ArrayView<POD, 2> locv = array::make_view<POD, 2>( loc );
-            for ( int j = 0; j < f.Nl; ++j ) {
-                locv( j, 0 ) = ( size_t( f.part[j] ) != mpi::comm().rank() ? 0 : f.gidx[j] * 10 );
-                locv( j, 1 ) = ( size_t( f.part[j] ) != mpi::comm().rank() ? 0 : f.gidx[j] * 100 );
+    SECTION("test_gather_rank1_deprecated") {
+        for (f.root = 0; f.root < f.comm_size; ++f.root) {
+            array::ArrayT<POD> loc(f.Nl, 2);
+            array::ArrayT<POD> glb(f.Ng(), 2);
+            array::ArrayT<POD> glb1(f.Ng(), 1);
+            array::ArrayT<POD> glb2(f.Ng(), 1);
+            array::ArrayView<POD, 2> locv = array::make_view<POD, 2>(loc);
+            for (int j = 0; j < f.Nl; ++j) {
+                locv(j, 0) = (size_t(f.part[j]) != mpi::comm().rank() ? 0 : f.gidx[j] * 10);
+                locv(j, 1) = (size_t(f.part[j]) != mpi::comm().rank() ? 0 : f.gidx[j] * 100);
             }
 
             // Gather complete field
             {
-                idx_t loc_strides[] = {loc.stride( 0 ), loc.stride( 1 )};
-                idx_t loc_extents[] = {1, loc.shape( 1 )};
-                idx_t glb_strides[] = {glb.stride( 0 ), glb.stride( 1 )};
-                idx_t glb_extents[] = {1, glb.shape( 1 )};
+                idx_t loc_strides[] = {loc.stride(0), loc.stride(1)};
+                idx_t loc_extents[] = {1, loc.shape(1)};
+                idx_t glb_strides[] = {glb.stride(0), glb.stride(1)};
+                idx_t glb_extents[] = {1, glb.shape(1)};
 
-                f.gather_scatter.gather( loc.data<POD>(), loc_strides, loc_extents, 2, glb.data<POD>(), glb_strides,
-                                         glb_extents, 2, f.root );
+                f.gather_scatter.gather(loc.data<POD>(), loc_strides, loc_extents, 2, glb.data<POD>(), glb_strides,
+                                        glb_extents, 2, f.root);
             }
-            if ( f.rank == f.root ) {
-                auto glbv   = array::make_view<POD, 2>( glb );
+            if (f.rank == f.root) {
+                auto glbv   = array::make_view<POD, 2>(glb);
                 POD glb_c[] = {10, 100, 20, 200, 30, 300, 40, 400, 50, 500, 60, 600, 70, 700, 80, 800, 90, 900};
-                idx_t c( 0 );
-                for ( idx_t i = 0; i < glb.shape( 0 ); ++i ) {
-                    for ( idx_t j = 0; j < glb.shape( 1 ); ++j ) {
-                        EXPECT( glbv( i, j ) == glb_c[c++] );
+                idx_t c(0);
+                for (idx_t i = 0; i < glb.shape(0); ++i) {
+                    for (idx_t j = 0; j < glb.shape(1); ++j) {
+                        EXPECT(glbv(i, j) == glb_c[c++]);
                     }
                 }
             }
 
             // Gather only first component
             {
-                idx_t loc_strides[] = {loc.stride( 0 ), 2};
+                idx_t loc_strides[] = {loc.stride(0), 2};
                 idx_t loc_extents[] = {1, 1};
-                idx_t glb_strides[] = {glb1.stride( 0 ), glb1.stride( 1 )};
-                idx_t glb_extents[] = {1, glb1.shape( 1 )};
+                idx_t glb_strides[] = {glb1.stride(0), glb1.stride(1)};
+                idx_t glb_extents[] = {1, glb1.shape(1)};
 
-                f.gather_scatter.gather( loc.data<POD>(), loc_strides, loc_extents, 2, glb1.data<POD>(), glb_strides,
-                                         glb_extents, 2, f.root );
+                f.gather_scatter.gather(loc.data<POD>(), loc_strides, loc_extents, 2, glb1.data<POD>(), glb_strides,
+                                        glb_extents, 2, f.root);
             }
-            if ( f.rank == f.root ) {
-                auto glbv    = array::make_view<POD, 2>( glb1 );
+            if (f.rank == f.root) {
+                auto glbv    = array::make_view<POD, 2>(glb1);
                 POD glb1_c[] = {10, 20, 30, 40, 50, 60, 70, 80, 90};
-                idx_t c( 0 );
-                for ( idx_t i = 0; i < glb1.shape( 0 ); ++i ) {
-                    for ( idx_t j = 0; j < glb1.shape( 1 ); ++j ) {
-                        EXPECT( glbv( i, j ) == glb1_c[c++] );
+                idx_t c(0);
+                for (idx_t i = 0; i < glb1.shape(0); ++i) {
+                    for (idx_t j = 0; j < glb1.shape(1); ++j) {
+                        EXPECT(glbv(i, j) == glb1_c[c++]);
                     }
                 }
             }
 
             // Gather only second component
             {
-                idx_t loc_strides[] = {loc.stride( 0 ), 2};
+                idx_t loc_strides[] = {loc.stride(0), 2};
                 idx_t loc_extents[] = {1, 1};
-                idx_t glb_strides[] = {glb2.stride( 0 ), glb2.stride( 1 )};
-                idx_t glb_extents[] = {1, glb2.shape( 1 )};
-                f.gather_scatter.gather( loc.data<POD>() + 1, loc_strides, loc_extents, 1, glb2.data<POD>(),
-                                         glb_strides, glb_extents, 1, f.root );
+                idx_t glb_strides[] = {glb2.stride(0), glb2.stride(1)};
+                idx_t glb_extents[] = {1, glb2.shape(1)};
+                f.gather_scatter.gather(loc.data<POD>() + 1, loc_strides, loc_extents, 1, glb2.data<POD>(), glb_strides,
+                                        glb_extents, 1, f.root);
             }
-            if ( f.rank == f.root ) {
-                auto glbv    = array::make_view<POD, 2>( glb2 );
+            if (f.rank == f.root) {
+                auto glbv    = array::make_view<POD, 2>(glb2);
                 POD glb2_c[] = {100, 200, 300, 400, 500, 600, 700, 800, 900};
-                idx_t c( 0 );
-                for ( idx_t i = 0; i < glb2.shape( 0 ); ++i ) {
-                    for ( idx_t j = 0; j < glb2.shape( 1 ); ++j ) {
-                        EXPECT( glbv( i, j ) == glb2_c[c++] );
+                idx_t c(0);
+                for (idx_t i = 0; i < glb2.shape(0); ++i) {
+                    for (idx_t j = 0; j < glb2.shape(1); ++j) {
+                        EXPECT(glbv(i, j) == glb2_c[c++]);
                     }
                 }
             }
@@ -190,16 +190,16 @@ CASE( "test_gather" ) {
     }
 #endif
 
-    SECTION( "test_gather_rank1" ) {
-        for ( f.root = 0; f.root < f.comm_size; ++f.root ) {
-            array::ArrayT<POD> loc( f.Nl, 2 );
-            array::ArrayT<POD> glb( f.Ng(), 2 );
-            array::ArrayT<POD> glb1( f.Ng(), 1 );
-            array::ArrayT<POD> glb2( f.Ng(), 1 );
-            array::ArrayView<POD, 2> locv = array::make_view<POD, 2>( loc );
-            for ( int j = 0; j < f.Nl; ++j ) {
-                locv( j, 0 ) = ( idx_t( f.part[j] ) != f.rank ? 0 : f.gidx[j] * 10 );
-                locv( j, 1 ) = ( idx_t( f.part[j] ) != f.rank ? 0 : f.gidx[j] * 100 );
+    SECTION("test_gather_rank1") {
+        for (f.root = 0; f.root < f.comm_size; ++f.root) {
+            array::ArrayT<POD> loc(f.Nl, 2);
+            array::ArrayT<POD> glb(f.Ng(), 2);
+            array::ArrayT<POD> glb1(f.Ng(), 1);
+            array::ArrayT<POD> glb2(f.Ng(), 1);
+            array::ArrayView<POD, 2> locv = array::make_view<POD, 2>(loc);
+            for (int j = 0; j < f.Nl; ++j) {
+                locv(j, 0) = (idx_t(f.part[j]) != f.rank ? 0 : f.gidx[j] * 10);
+                locv(j, 1) = (idx_t(f.part[j]) != f.rank ? 0 : f.gidx[j] * 100);
             }
 
 // Gather complete field
@@ -310,22 +310,21 @@ CASE( "test_gather" ) {
         }
     }
 
-    SECTION( "test_gather_rank2" ) {
-        for ( f.root = 0; f.root < f.comm_size; ++f.root ) {
-            array::ArrayT<POD> loc( f.Nl, 3, 2 );
-            array::ArrayT<POD> glb( f.Ng(), 3, 2 );
-            array::ArrayT<POD> glbx1( f.Ng(), 3 );
-            array::ArrayT<POD> glbx2( f.Ng(), 3 );
-            array::ArrayT<POD> glb1x( f.Ng(), 2 );
-            array::ArrayT<POD> glb2x( f.Ng(), 2 );
-            array::ArrayT<POD> glb32( f.Ng() );
+    SECTION("test_gather_rank2") {
+        for (f.root = 0; f.root < f.comm_size; ++f.root) {
+            array::ArrayT<POD> loc(f.Nl, 3, 2);
+            array::ArrayT<POD> glb(f.Ng(), 3, 2);
+            array::ArrayT<POD> glbx1(f.Ng(), 3);
+            array::ArrayT<POD> glbx2(f.Ng(), 3);
+            array::ArrayT<POD> glb1x(f.Ng(), 2);
+            array::ArrayT<POD> glb2x(f.Ng(), 2);
+            array::ArrayT<POD> glb32(f.Ng());
 
-            array::ArrayView<POD, 3> locv = array::make_view<POD, 3>( loc );
-            for ( int p = 0; p < f.Nl; ++p ) {
-                for ( int i = 0; i < 3; ++i ) {
-                    locv( p, i, 0 ) =
-                        ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : -f.gidx[p] * std::pow( 10, i ) );
-                    locv( p, i, 1 ) = ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : f.gidx[p] * std::pow( 10, i ) );
+            array::ArrayView<POD, 3> locv = array::make_view<POD, 3>(loc);
+            for (int p = 0; p < f.Nl; ++p) {
+                for (int i = 0; i < 3; ++i) {
+                    locv(p, i, 0) = (size_t(f.part[p]) != mpi::comm().rank() ? 0 : -f.gidx[p] * std::pow(10, i));
+                    locv(p, i, 1) = (size_t(f.part[p]) != mpi::comm().rank() ? 0 : f.gidx[p] * std::pow(10, i));
                 }
             }
 
@@ -525,82 +524,81 @@ CASE( "test_gather" ) {
         }
     }
 
-    SECTION( "test_gather_rank0_ArrayView" ) {
-        for ( f.root = 0; f.root < f.comm_size; ++f.root ) {
-            array::ArrayT<POD> loc( f.Nl );
-            array::ArrayT<POD> glb( f.Ng() );
+    SECTION("test_gather_rank0_ArrayView") {
+        for (f.root = 0; f.root < f.comm_size; ++f.root) {
+            array::ArrayT<POD> loc(f.Nl);
+            array::ArrayT<POD> glb(f.Ng());
 
-            array::ArrayView<POD, 1> locv = array::make_view<POD, 1>( loc );
-            array::ArrayView<POD, 1> glbv = array::make_view<POD, 1>( glb );
-            for ( int p = 0; p < f.Nl; ++p ) {
-                locv( p ) = ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : f.gidx[p] * 10 );
+            array::ArrayView<POD, 1> locv = array::make_view<POD, 1>(loc);
+            array::ArrayView<POD, 1> glbv = array::make_view<POD, 1>(glb);
+            for (int p = 0; p < f.Nl; ++p) {
+                locv(p) = (size_t(f.part[p]) != mpi::comm().rank() ? 0 : f.gidx[p] * 10);
             }
 
             // Gather complete field
-            { f.gather_scatter.gather( locv, glbv, f.root ); }
-            if ( f.rank == f.root ) {
+            { f.gather_scatter.gather(locv, glbv, f.root); }
+            if (f.rank == f.root) {
                 POD glb_c[] = {10, 20, 30, 40, 50, 60, 70, 80, 90};
-                for ( idx_t n = 0; n < glb.shape( 0 ); ++n ) {
-                    EXPECT( glbv( n ) == glb_c[n] );
+                for (idx_t n = 0; n < glb.shape(0); ++n) {
+                    EXPECT(glbv(n) == glb_c[n]);
                 }
             }
         }
     }
 
-    SECTION( "test_gather_rank1_ArrayView" ) {
-        for ( f.root = 0; f.root < f.comm_size; ++f.root ) {
-            array::ArrayT<POD> loc( f.Nl, 2 );
-            array::ArrayT<POD> glb( f.Ng(), 2 );
+    SECTION("test_gather_rank1_ArrayView") {
+        for (f.root = 0; f.root < f.comm_size; ++f.root) {
+            array::ArrayT<POD> loc(f.Nl, 2);
+            array::ArrayT<POD> glb(f.Ng(), 2);
 
-            array::ArrayView<POD, 2> locv = array::make_view<POD, 2>( loc );
-            array::ArrayView<POD, 2> glbv = array::make_view<POD, 2>( glb );
-            for ( int p = 0; p < f.Nl; ++p ) {
-                locv( p, 0 ) = ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : -f.gidx[p] * 10 );
-                locv( p, 1 ) = ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : f.gidx[p] * 10 );
+            array::ArrayView<POD, 2> locv = array::make_view<POD, 2>(loc);
+            array::ArrayView<POD, 2> glbv = array::make_view<POD, 2>(glb);
+            for (int p = 0; p < f.Nl; ++p) {
+                locv(p, 0) = (size_t(f.part[p]) != mpi::comm().rank() ? 0 : -f.gidx[p] * 10);
+                locv(p, 1) = (size_t(f.part[p]) != mpi::comm().rank() ? 0 : f.gidx[p] * 10);
             }
 
             // Gather complete field
-            { f.gather_scatter.gather( locv, glbv, f.root ); }
-            if ( f.rank == f.root ) {
+            { f.gather_scatter.gather(locv, glbv, f.root); }
+            if (f.rank == f.root) {
                 POD glb_c[] = {-10, 10, -20, 20, -30, 30, -40, 40, -50, 50, -60, 60, -70, 70, -80, 80, -90, 90};
 
-                auto glbv = array::make_view<POD, 2>( glb );
-                idx_t c( 0 );
-                for ( idx_t i = 0; i < glb.shape( 0 ); ++i ) {
-                    for ( idx_t j = 0; j < glb.shape( 1 ); ++j ) {
-                        EXPECT( glbv( i, j ) == glb_c[c++] );
+                auto glbv = array::make_view<POD, 2>(glb);
+                idx_t c(0);
+                for (idx_t i = 0; i < glb.shape(0); ++i) {
+                    for (idx_t j = 0; j < glb.shape(1); ++j) {
+                        EXPECT(glbv(i, j) == glb_c[c++]);
                     }
                 }
             }
         }
     }
 
-    SECTION( "test_gather_rank2_ArrayView" ) {
-        for ( f.root = 0; f.root < f.comm_size; ++f.root ) {
-            array::ArrayT<POD> loc( f.Nl, 3, 2 );
-            array::ArrayT<POD> glb( f.Ng(), 3, 2 );
+    SECTION("test_gather_rank2_ArrayView") {
+        for (f.root = 0; f.root < f.comm_size; ++f.root) {
+            array::ArrayT<POD> loc(f.Nl, 3, 2);
+            array::ArrayT<POD> glb(f.Ng(), 3, 2);
 
-            array::ArrayView<POD, 3> locv = array::make_view<POD, 3>( loc );
-            array::ArrayView<POD, 3> glbv = array::make_view<POD, 3>( glb );
-            for ( int p = 0; p < f.Nl; ++p ) {
-                for ( int i = 0; i < 3; ++i ) {
-                    locv( p, i, 0 ) =
-                        ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : -f.gidx[p] * std::pow( 10, i ) );
-                    locv( p, i, 1 ) = ( size_t( f.part[p] ) != mpi::comm().rank() ? 0 : f.gidx[p] * std::pow( 10, i ) );
+            array::ArrayView<POD, 3> locv = array::make_view<POD, 3>(loc);
+            array::ArrayView<POD, 3> glbv = array::make_view<POD, 3>(glb);
+            for (int p = 0; p < f.Nl; ++p) {
+                for (int i = 0; i < 3; ++i) {
+                    locv(p, i, 0) = (size_t(f.part[p]) != mpi::comm().rank() ? 0 : -f.gidx[p] * std::pow(10, i));
+                    locv(p, i, 1) = (size_t(f.part[p]) != mpi::comm().rank() ? 0 : f.gidx[p] * std::pow(10, i));
                 }
             }
 
             // Gather complete field
-            { f.gather_scatter.gather( locv, glbv, f.root ); }
-            if ( f.rank == f.root ) {
+            { f.gather_scatter.gather(locv, glbv, f.root); }
+            if (f.rank == f.root) {
                 POD glb_c[] = {-1, 1, -10, 10, -100, 100, -2, 2, -20, 20, -200, 200, -3, 3, -30, 30, -300, 300,
                                -4, 4, -40, 40, -400, 400, -5, 5, -50, 50, -500, 500, -6, 6, -60, 60, -600, 600,
                                -7, 7, -70, 70, -700, 700, -8, 8, -80, 80, -800, 800, -9, 9, -90, 90, -900, 900};
-                idx_t c( 0 );
-                for ( idx_t i = 0; i < glb.shape( 0 ); ++i ) {
-                    for ( idx_t j = 0; j < glb.shape( 1 ); ++j ) {
-                        for ( idx_t k = 0; k < glb.shape( 2 ); ++k ) {
-                            EXPECT( glbv( i, j, k ) == glb_c[c++] );
+                idx_t c(0);
+                for (idx_t i = 0; i < glb.shape(0); ++i) {
+                    for (idx_t j = 0; j < glb.shape(1); ++j) {
+                        for (idx_t k = 0; k < glb.shape(2); ++k) {
+                            EXPECT(glbv(i, j, k) == glb_c[c++]);
                         }
                     }
                 }
@@ -609,43 +607,43 @@ CASE( "test_gather" ) {
         f.root = 0;
     }
 
-    SECTION( "test_scatter_rank2_ArrayView" ) {
-        for ( f.root = 0; f.root < f.comm_size; ++f.root ) {
-            array::ArrayT<POD> loc( f.Nl, 3, 2 );
-            array::ArrayT<POD> glb( f.Ng(), 3, 2 );
+    SECTION("test_scatter_rank2_ArrayView") {
+        for (f.root = 0; f.root < f.comm_size; ++f.root) {
+            array::ArrayT<POD> loc(f.Nl, 3, 2);
+            array::ArrayT<POD> glb(f.Ng(), 3, 2);
 
-            array::ArrayView<POD, 3> locv = array::make_view<POD, 3>( loc );
-            array::ArrayView<POD, 3> glbv = array::make_view<POD, 3>( glb );
-            if ( f.rank == f.root ) {
+            array::ArrayView<POD, 3> locv = array::make_view<POD, 3>(loc);
+            array::ArrayView<POD, 3> glbv = array::make_view<POD, 3>(glb);
+            if (f.rank == f.root) {
                 POD glb_c[] = {-1, 1, -10, 10, -100, 100, -2, 2, -20, 20, -200, 200, -3, 3, -30, 30, -300, 300,
                                -4, 4, -40, 40, -400, 400, -5, 5, -50, 50, -500, 500, -6, 6, -60, 60, -600, 600,
                                -7, 7, -70, 70, -700, 700, -8, 8, -80, 80, -800, 800, -9, 9, -90, 90, -900, 900};
-                idx_t c( 0 );
-                for ( int i = 0; i < glb.shape( 0 ); ++i ) {
-                    for ( int j = 0; j < glb.shape( 1 ); ++j ) {
-                        for ( int k = 0; k < glb.shape( 2 ); ++k ) {
-                            glbv( i, j, k ) = glb_c[c++];
+                idx_t c(0);
+                for (int i = 0; i < glb.shape(0); ++i) {
+                    for (int j = 0; j < glb.shape(1); ++j) {
+                        for (int k = 0; k < glb.shape(2); ++k) {
+                            glbv(i, j, k) = glb_c[c++];
                         }
                     }
                 }
             }
 
             POD nan = -1000.;
-            locv.assign( nan );
+            locv.assign(nan);
 
-            f.gather_scatter.scatter( glbv, locv, f.root );
+            f.gather_scatter.scatter(glbv, locv, f.root);
 
-            switch ( mpi::comm().rank() ) {
+            switch (mpi::comm().rank()) {
                 case 0: {
                     POD loc_c[] = {nan, nan, nan, nan, nan,  nan, -1,  1,   -10, 10,  -100, 100,
                                    -2,  2,   -20, 20,  -200, 200, -3,  3,   -30, 30,  -300, 300,
                                    nan, nan, nan, nan, nan,  nan, nan, nan, nan, nan, nan,  nan};
 
-                    idx_t c( 0 );
-                    for ( idx_t i = 0; i < loc.shape( 0 ); ++i ) {
-                        for ( idx_t j = 0; j < loc.shape( 1 ); ++j ) {
-                            for ( idx_t k = 0; k < loc.shape( 2 ); ++k ) {
-                                EXPECT( is_approximately_equal( locv( i, j, k ), loc_c[c++] ) );
+                    idx_t c(0);
+                    for (idx_t i = 0; i < loc.shape(0); ++i) {
+                        for (idx_t j = 0; j < loc.shape(1); ++j) {
+                            for (idx_t k = 0; k < loc.shape(2); ++k) {
+                                EXPECT(is_approximately_equal(locv(i, j, k), loc_c[c++]));
                             }
                         }
                     }
@@ -655,11 +653,11 @@ CASE( "test_gather" ) {
                     POD loc_c[] = {nan, nan, nan, nan, nan,  nan, -4,  4,   -40, 40,  -400, 400,
                                    -5,  5,   -50, 50,  -500, 500, -6,  6,   -60, 60,  -600, 600,
                                    nan, nan, nan, nan, nan,  nan, nan, nan, nan, nan, nan,  nan};
-                    idx_t c( 0 );
-                    for ( idx_t i = 0; i < loc.shape( 0 ); ++i ) {
-                        for ( idx_t j = 0; j < loc.shape( 1 ); ++j ) {
-                            for ( idx_t k = 0; k < loc.shape( 2 ); ++k ) {
-                                EXPECT( is_approximately_equal( locv( i, j, k ), loc_c[c++] ) );
+                    idx_t c(0);
+                    for (idx_t i = 0; i < loc.shape(0); ++i) {
+                        for (idx_t j = 0; j < loc.shape(1); ++j) {
+                            for (idx_t k = 0; k < loc.shape(2); ++k) {
+                                EXPECT(is_approximately_equal(locv(i, j, k), loc_c[c++]));
                             }
                         }
                     }
@@ -669,11 +667,11 @@ CASE( "test_gather" ) {
                     POD loc_c[] = {nan,  nan, nan,  nan, nan, nan, nan, nan, nan,  nan, nan, nan, -7,  7,
                                    -70,  70,  -700, 700, -8,  8,   -80, 80,  -800, 800, -9,  9,   -90, 90,
                                    -900, 900, nan,  nan, nan, nan, nan, nan, nan,  nan, nan, nan, nan, nan};
-                    idx_t c( 0 );
-                    for ( idx_t i = 0; i < loc.shape( 0 ); ++i ) {
-                        for ( idx_t j = 0; j < loc.shape( 1 ); ++j ) {
-                            for ( idx_t k = 0; k < loc.shape( 2 ); ++k ) {
-                                EXPECT( is_approximately_equal( locv( i, j, k ), loc_c[c++] ) );
+                    idx_t c(0);
+                    for (idx_t i = 0; i < loc.shape(0); ++i) {
+                        for (idx_t j = 0; j < loc.shape(1); ++j) {
+                            for (idx_t k = 0; k < loc.shape(2); ++k) {
+                                EXPECT(is_approximately_equal(locv(i, j, k), loc_c[c++]));
                             }
                         }
                     }
@@ -689,6 +687,6 @@ CASE( "test_gather" ) {
 }  // namespace test
 }  // namespace atlas
 
-int main( int argc, char** argv ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
 }

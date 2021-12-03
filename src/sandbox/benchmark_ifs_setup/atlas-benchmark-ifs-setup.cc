@@ -44,7 +44,7 @@ using eckit::PathName;
 //------------------------------------------------------------------------------
 
 class Tool : public AtlasTool {
-    int execute( const Args& args ) override;
+    int execute(const Args& args) override;
     std::string briefDescription() override {
         return "Tool to generate a python script that plots the grid-distribution "
                "of a given grid";
@@ -52,7 +52,7 @@ class Tool : public AtlasTool {
     std::string usage() override { return name() + " --grid=name [OPTION]... OUTPUT [--help]"; }
 
 public:
-    Tool( int argc, char** argv );
+    Tool(int argc, char** argv);
 
 private:
     std::string key;
@@ -66,31 +66,30 @@ static int halo_default() {
     return 2;
 }
 
-Tool::Tool( int argc, char** argv ) : AtlasTool( argc, argv ) {
-    add_option( new SimpleOption<std::string>(
-        "grid", "Grid unique identifier\n" + indent() + "     Example values: N80, F40, O24, L32" ) );
-    add_option(
-        new SimpleOption<long>( "halo", "Number of halos (default=" + std::to_string( halo_default() ) + ")" ) );
+Tool::Tool(int argc, char** argv): AtlasTool(argc, argv) {
+    add_option(new SimpleOption<std::string>(
+        "grid", "Grid unique identifier\n" + indent() + "     Example values: N80, F40, O24, L32"));
+    add_option(new SimpleOption<long>("halo", "Number of halos (default=" + std::to_string(halo_default()) + ")"));
 }
 
 //-----------------------------------------------------------------------------
 
-int Tool::execute( const Args& args ) {
-    Trace timer( Here(), displayName() );
+int Tool::execute(const Args& args) {
+    Trace timer(Here(), displayName());
     key = "";
-    args.get( "grid", key );
+    args.get("grid", key);
 
     std::string path_in_str = "";
-    if ( args.get( "grid", path_in_str ) ) {
+    if (args.get("grid", path_in_str)) {
         path_in = path_in_str;
     }
 
     StructuredGrid grid;
-    if ( key.size() ) {
+    if (key.size()) {
         try {
-            grid = Grid( key );
+            grid = Grid(key);
         }
-        catch ( eckit::Exception& ) {
+        catch (eckit::Exception&) {
             return failed();
         }
     }
@@ -98,11 +97,11 @@ int Tool::execute( const Args& args ) {
         Log::error() << "No grid specified." << std::endl;
     }
 
-    if ( !grid ) {
+    if (!grid) {
         return failed();
     }
 
-    size_t halo = args.getLong( "halo", halo_default() );
+    size_t halo = args.getLong("halo", halo_default());
 
     Log::info() << "Configuration" << std::endl;
     Log::info() << "~~~~~~~~~~~~~" << std::endl;
@@ -111,13 +110,13 @@ int Tool::execute( const Args& args ) {
     Log::info() << "  MPI    : " << mpi::comm().size() << std::endl;
     Log::info() << "  OpenMP : " << atlas_omp_get_max_threads() << std::endl;
 
-    MeshGenerator meshgenerator( "structured", util::Config( "partitioner", "equal_regions" ) );
+    MeshGenerator meshgenerator("structured", util::Config("partitioner", "equal_regions"));
 
     size_t iterations = 1;
-    for ( size_t i = 0; i < iterations; ++i ) {
-        ATLAS_TRACE( "iteration" );
-        Mesh mesh = meshgenerator.generate( grid );
-        numerics::fvm::Method fvm( mesh, mesh::Halo( halo ) );
+    for (size_t i = 0; i < iterations; ++i) {
+        ATLAS_TRACE("iteration");
+        Mesh mesh = meshgenerator.generate(grid);
+        numerics::fvm::Method fvm(mesh, mesh::Halo(halo));
         // mesh::actions::build_halo( mesh, halo );
         mpi::comm().barrier();
     }
@@ -128,7 +127,7 @@ int Tool::execute( const Args& args ) {
 
 //------------------------------------------------------------------------------
 
-int main( int argc, char** argv ) {
-    Tool tool( argc, argv );
+int main(int argc, char** argv) {
+    Tool tool(argc, argv);
     return tool.start();
 }

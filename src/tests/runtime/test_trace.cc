@@ -20,67 +20,67 @@ namespace atlas {
 namespace test {
 
 static void work() {
-    std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) );
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
 
-CASE( "test elapsed" ) {
-    auto trace = Trace( Here() );
+CASE("test elapsed") {
+    auto trace = Trace(Here());
 
-    EXPECT( trace.running() );
+    EXPECT(trace.running());
 
-    EXPECT( trace.elapsed() == 0. );
+    EXPECT(trace.elapsed() == 0.);
 
     work();
 
     trace.pause();
 
-    EXPECT( trace.running() );
+    EXPECT(trace.running());
 
     double elapsed = trace.elapsed();
-    EXPECT( elapsed != 0. );
-    EXPECT( trace.elapsed() == elapsed );
+    EXPECT(elapsed != 0.);
+    EXPECT(trace.elapsed() == elapsed);
 
     trace.resume();
 
     work();
 
-    EXPECT( trace.running() );
+    EXPECT(trace.running());
 
     trace.stop();
 
-    EXPECT( trace.elapsed() != elapsed );
+    EXPECT(trace.elapsed() != elapsed);
 }
 
-CASE( "test trace OpenMP" ) {
-    atlas_omp_parallel_for( int i = 0; i < 10; ++i ) {
-        auto trace = Trace( Here(), "loop" );
-        if ( ATLAS_HAVE_OMP ) {
+CASE("test trace OpenMP") {
+    atlas_omp_parallel_for(int i = 0; i < 10; ++i) {
+        auto trace = Trace(Here(), "loop");
+        if (ATLAS_HAVE_OMP) {
             work();
 
             trace.stop();
-            if ( atlas_omp_get_thread_num() > 0 ) {
-                EXPECT( trace.elapsed() == 0. );
+            if (atlas_omp_get_thread_num() > 0) {
+                EXPECT(trace.elapsed() == 0.);
             }
             else {
-                EXPECT( trace.elapsed() != 0. );
+                EXPECT(trace.elapsed() != 0.);
             }
         }
     }
 }
 
-CASE( "test barrier" ) {
-    EXPECT( runtime::trace::Barriers::state() == Library::instance().traceBarriers() );
+CASE("test barrier") {
+    EXPECT(runtime::trace::Barriers::state() == Library::instance().traceBarriers());
     {
-        runtime::trace::Barriers set_barriers( true );
-        EXPECT( runtime::trace::Barriers::state() == true );
+        runtime::trace::Barriers set_barriers(true);
+        EXPECT(runtime::trace::Barriers::state() == true);
         {
-            runtime::trace::Barriers set_barriers( false );
-            EXPECT( runtime::trace::Barriers::state() == false );
+            runtime::trace::Barriers set_barriers(false);
+            EXPECT(runtime::trace::Barriers::state() == false);
         }
-        EXPECT( runtime::trace::Barriers::state() == true );
+        EXPECT(runtime::trace::Barriers::state() == true);
     }
-    EXPECT( runtime::trace::Barriers::state() == Library::instance().traceBarriers() );
+    EXPECT(runtime::trace::Barriers::state() == Library::instance().traceBarriers());
 }
 
 // --------------------------------------------------------------------------
@@ -99,7 +99,7 @@ void wind_next() {
 static int count = 0;
 void dp_meth() {
     ATLAS_TRACE();
-    if ( count == 0 ) {
+    if (count == 0) {
         wind_const();
     }
     else {
@@ -117,15 +117,15 @@ void execute_sladv() {
     tracer_interpolation();
 }
 
-CASE( "test report" ) {
-    SECTION( "1" ) {
-        for ( int i = 0; i < 3; ++i ) {
+CASE("test report") {
+    SECTION("1") {
+        for (int i = 0; i < 3; ++i) {
             execute_sladv();
         }
     }
-    SECTION( "2" ) {
+    SECTION("2") {
         count = 0;
-        for ( int i = 0; i < 3; ++i ) {
+        for (int i = 0; i < 3; ++i) {
             execute_sladv();
         }
     }
@@ -138,6 +138,6 @@ CASE( "test report" ) {
 }  // namespace test
 }  // namespace atlas
 
-int main( int argc, char** argv ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
 }

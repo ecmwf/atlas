@@ -68,7 +68,7 @@ if( atlas_HAVE_TRANS AND atlas_REQUIRES_PRIVATE_DEPENDENCIES )
     if( transi_DIR )
         find_dependency( transi HINTS ${CMAKE_CURRENT_LIST_DIR}/../transi @transi_DIR@ )
     else()
-        find_dependency( trans COMPONENTS transi double HINTS ${CMAKE_CURRENT_LIST_DIR}/../trans @trans_DIR@ )
+        find_dependency( ectrans COMPONENTS transi double HINTS ${CMAKE_CURRENT_LIST_DIR}/../ectrans @ectrans_DIR@ )
     endif()
 endif()
 

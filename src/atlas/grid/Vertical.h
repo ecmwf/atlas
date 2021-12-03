@@ -25,13 +25,12 @@ class Field;
 class Vertical {
 public:
     template <typename vector_t>  // expect "vector_t::size()" and "vector_t::operator[]"
-    Vertical( idx_t levels, const vector_t& z, const util::Config& config = util::NoConfig() );
+    Vertical(idx_t levels, const vector_t& z, const util::Config& config = util::NoConfig());
 
     template <typename vector_t, typename Interval>  // expect "vector_t::size()" and "vector_t::operator[]"
-    Vertical( idx_t levels, const vector_t& z, const Interval& interval,
-              const util::Config& config = util::NoConfig() );
+    Vertical(idx_t levels, const vector_t& z, const Interval& interval, const util::Config& config = util::NoConfig());
 
-    Vertical( const util::Config& config = util::NoConfig() );
+    Vertical(const util::Config& config = util::NoConfig());
 
     Field z() const;
 
@@ -41,12 +40,12 @@ public:
     idx_t size() const { return size_; }
 
     template <typename Int>
-    double operator()( const Int k ) const {
+    double operator()(const Int k) const {
         return z_[k];
     }
 
     template <typename Int>
-    double operator[]( const Int k ) const {
+    double operator[](const Int k) const {
         return z_[k];
     }
 
@@ -57,7 +56,7 @@ public:
     double back() const { return z_.back(); }
 
     /// @brief Output information of field
-    friend std::ostream& operator<<( std::ostream& os, const Vertical& v );
+    friend std::ostream& operator<<(std::ostream& os, const Vertical& v);
 
 private:
     idx_t size_;
@@ -71,8 +70,8 @@ private:
 //---------------------------------------------------------------------------------------------------------------------
 
 template <typename vector_t, typename Interval>
-Vertical::Vertical( idx_t levels, const vector_t& z, const Interval& interval, const util::Config& config ) :
-    Vertical( levels, z, config ) {
+Vertical::Vertical(idx_t levels, const vector_t& z, const Interval& interval, const util::Config& config):
+    Vertical(levels, z, config) {
     min_ = interval[0];
     max_ = interval[1];
 }
@@ -80,14 +79,14 @@ Vertical::Vertical( idx_t levels, const vector_t& z, const Interval& interval, c
 //---------------------------------------------------------------------------------------------------------------------
 
 template <typename vector_t>
-Vertical::Vertical( idx_t levels, const vector_t& z, const util::Config& ) : size_{levels}, k_begin_{0}, k_end_{size_} {
-    assert( size_ == static_cast<idx_t>( z.size() ) );
-    z_.resize( size_ );
-    for ( idx_t k = 0; k < size_; ++k ) {
+Vertical::Vertical(idx_t levels, const vector_t& z, const util::Config&): size_{levels}, k_begin_{0}, k_end_{size_} {
+    assert(size_ == static_cast<idx_t>(z.size()));
+    z_.resize(size_);
+    for (idx_t k = 0; k < size_; ++k) {
         z_[k] = z[k];
     }
-    min_ = ( size_ ? z[0] : 0. );
-    max_ = ( size_ ? z[size_ - 1] : 1. );
+    min_ = (size_ ? z[0] : 0.);
+    max_ = (size_ ? z[size_ - 1] : 1.);
 }
 
 //---------------------------------------------------------------------------------------------------------------------

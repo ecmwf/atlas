@@ -26,21 +26,21 @@ public:
     using value_type   = Value;
     using creator_type = std::function<value_type*()>;
 
-    Cache( const std::string& name ) : name_( name ) {}
+    Cache(const std::string& name): name_(name) {}
 
     virtual ~Cache() {}
 
-    ObjectHandle<value_type> get_or_create( const key_type& key, const creator_type& creator ) {
-        return get_or_create( key, key, creator );
+    ObjectHandle<value_type> get_or_create(const key_type& key, const creator_type& creator) {
+        return get_or_create(key, key, creator);
     }
 
-    ObjectHandle<value_type> get_or_create( const key_type& key, const key_type& remove_key,
-                                            const creator_type& creator ) {
-        std::lock_guard<std::mutex> guard( lock_ );
-        auto it = map_.find( key );
-        if ( it != map_.end() ) {
+    ObjectHandle<value_type> get_or_create(const key_type& key, const key_type& remove_key,
+                                           const creator_type& creator) {
+        std::lock_guard<std::mutex> guard(lock_);
+        auto it = map_.find(key);
+        if (it != map_.end()) {
             ObjectHandle<value_type> value = it->second;
-            if ( value ) {
+            if (value) {
                 Log::debug() << "Key \"" << key << "\" was found in cache \"" << name_ << "\"" << std::endl;
                 return value;
             }
@@ -51,19 +51,19 @@ public:
         }
         Log::debug() << "Key \"" << key << "\" not found in cache \"" << name_
                      << "\" , creating new, removable with key \"" << remove_key << "\"" << std::endl;
-        ObjectHandle<value_type> value( creator() );
+        ObjectHandle<value_type> value(creator());
         map_[key] = value;
-        remove_[remove_key].emplace_back( key );
+        remove_[remove_key].emplace_back(key);
         return value;
     }
 
-    void remove( const key_type& remove_key ) {
-        std::lock_guard<std::mutex> guard( lock_ );
-        if ( remove_.find( remove_key ) != remove_.end() ) {
-            for ( auto& key : remove_[remove_key] ) {
-                bool erased = map_.erase( key );
-                if ( erased ) {
-                    if ( remove_key == key ) {
+    void remove(const key_type& remove_key) {
+        std::lock_guard<std::mutex> guard(lock_);
+        if (remove_.find(remove_key) != remove_.end()) {
+            for (auto& key : remove_[remove_key]) {
+                bool erased = map_.erase(key);
+                if (erased) {
+                    if (remove_key == key) {
                         Log::debug() << "Erased key \"" << key << "\" from cache \"" << name_ << "\"." << std::endl;
                     }
                     else {

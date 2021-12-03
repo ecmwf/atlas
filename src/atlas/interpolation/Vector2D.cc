@@ -17,7 +17,7 @@
 namespace atlas {
 namespace interpolation {
 
-void Vector2D::print( std::ostream& s ) const {
+void Vector2D::print(std::ostream& s) const {
     s << "[" << x() << "," << y() << "]";
 }
 

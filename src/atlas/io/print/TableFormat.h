@@ -26,16 +26,16 @@ namespace io {
 
 class MetadataPrettyPrintBase {
 public:
-    virtual ~MetadataPrettyPrintBase()        = default;
-    virtual void print( std::ostream& ) const = 0;
-    friend std::ostream& operator<<( std::ostream&, const MetadataPrettyPrintBase& );
+    virtual ~MetadataPrettyPrintBase()      = default;
+    virtual void print(std::ostream&) const = 0;
+    friend std::ostream& operator<<(std::ostream&, const MetadataPrettyPrintBase&);
     std::string str() const;
 };
 
 class MetadataPrettyPrint {
 public:
-    MetadataPrettyPrint( const atlas::io::Metadata& );
-    friend std::ostream& operator<<( std::ostream& out, const MetadataPrettyPrint& p );
+    MetadataPrettyPrint(const atlas::io::Metadata&);
+    friend std::ostream& operator<<(std::ostream& out, const MetadataPrettyPrint& p);
     std::string str() const;
 
 private:
@@ -44,9 +44,9 @@ private:
 
 class TableFormat {
 public:
-    TableFormat( const Record::URI& record, const util::Config& config );
+    TableFormat(const Record::URI& record, const util::Config& config);
 
-    void print( std::ostream& ) const;
+    void print(std::ostream&) const;
 
 private:
     const Record record_;

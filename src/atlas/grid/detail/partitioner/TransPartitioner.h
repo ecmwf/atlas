@@ -30,7 +30,7 @@ public:
     /// @brief Constructor
     TransPartitioner();
 
-    TransPartitioner( const idx_t nb_partitions, const eckit::Parametrisation& = util::NoConfig() );
+    TransPartitioner(const idx_t nb_partitions, const eckit::Parametrisation& = util::NoConfig());
 
     virtual ~TransPartitioner();
 
@@ -38,11 +38,11 @@ public:
     /// Warning: this function temporariliy allocates a new Trans, but without the
     /// computations
     /// of the spectral coefficients (LDGRIDONLY=TRUE)
-    virtual void partition( const Grid&, int part[] ) const;
+    virtual void partition(const Grid&, int part[]) const;
 
     int nb_bands() const;
 
-    int nb_regions( int b ) const;
+    int nb_regions(int b) const;
 
     virtual std::string type() const { return "trans"; }
 

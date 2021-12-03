@@ -24,19 +24,19 @@ namespace detail {
 class CubedSphereProjectionBase : public ProjectionImpl {
 public:
     // constructor
-    CubedSphereProjectionBase( const eckit::Parametrisation& );
+    CubedSphereProjectionBase(const eckit::Parametrisation&);
 
-    void hash( eckit::Hash& ) const;
+    void hash(eckit::Hash&) const;
 
     atlas::grid::CubedSphereTiles getCubedSphereTiles() const { return tiles_; };
 
 protected:
     // projection and inverse projection
-    void xy2lonlat_post( double xyz[], const idx_t t, double crd[] ) const;
-    void lonlat2xy_pre( double crd[], idx_t& t, double xyz[] ) const;
+    void xy2lonlat_post(double xyz[], const idx_t t, double crd[]) const;
+    void lonlat2xy_pre(double crd[], idx_t& t, double xyz[]) const;
 
-    void xy2alphabetat( const double xy[], idx_t& t, double ab[] ) const;
-    void alphabetat2xy( const idx_t t, const double ab[], double xy[] ) const;
+    void xy2alphabetat(const double xy[], idx_t& t, double ab[]) const;
+    void alphabetat2xy(const idx_t t, const double ab[], double xy[]) const;
 
 private:
     atlas::grid::CubedSphereTiles tiles_;

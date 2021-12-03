@@ -19,9 +19,9 @@ struct Type {
     const std::string name_;
     operator const std::string&() { return name_; }
     operator bool() const { return name_.size(); }
-    Type( const char* name ) : name_( name ) {}
-    Type( const std::string& name ) : name_( name ) {}
-    bool operator==( const Type& other ) const { return name_ == other.name_; }
+    Type(const char* name): name_(name) {}
+    Type(const std::string& name): name_(name) {}
+    bool operator==(const Type& other) const { return name_ == other.name_; }
 };
 
 

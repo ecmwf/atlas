@@ -21,23 +21,23 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-CASE( "test_Flags" ) {
-    int b1 = ( 1 << 0 );
-    int b2 = ( 1 << 1 );
-    int b3 = ( 1 << 2 );
-    int b4 = ( 1 << 3 );
+CASE("test_Flags") {
+    int b1 = (1 << 0);
+    int b2 = (1 << 1);
+    int b3 = (1 << 2);
+    int b4 = (1 << 3);
 
     int bits = b1 | b2;
-    std::cout << Bitflags::bitstr( bits ) << std::endl;
-    EXPECT( bits == 3 );
+    std::cout << Bitflags::bitstr(bits) << std::endl;
+    EXPECT(bits == 3);
 
-    EXPECT( Bitflags::check( bits, b1 ) );
-    EXPECT( Bitflags::check( bits, b2 ) );
-    EXPECT( !Bitflags::check( bits, b3 ) );
-    EXPECT( Bitflags::check_all( bits, b1 | b2 ) );
-    EXPECT( !Bitflags::check_all( bits, b1 | b3 ) );
-    EXPECT( Bitflags::check_any( bits, b1 | b3 ) );
-    EXPECT( !Bitflags::check_any( bits, b3 | b4 ) );
+    EXPECT(Bitflags::check(bits, b1));
+    EXPECT(Bitflags::check(bits, b2));
+    EXPECT(!Bitflags::check(bits, b3));
+    EXPECT(Bitflags::check_all(bits, b1 | b2));
+    EXPECT(!Bitflags::check_all(bits, b1 | b3));
+    EXPECT(Bitflags::check_any(bits, b1 | b3));
+    EXPECT(!Bitflags::check_any(bits, b3 | b4));
 }
 
 //-----------------------------------------------------------------------------
@@ -45,6 +45,6 @@ CASE( "test_Flags" ) {
 }  // namespace test
 }  // namespace atlas
 
-int main( int argc, char** argv ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
 }

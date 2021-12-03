@@ -14,6 +14,7 @@
 #include "atlas/meshgenerator/detail/DelaunayMeshGenerator.h"
 #include "atlas/meshgenerator/detail/HealpixMeshGenerator.h"
 #include "atlas/meshgenerator/detail/MeshGeneratorFactory.h"
+#include "atlas/meshgenerator/detail/NodalCubedSphereMeshGenerator.h"
 #include "atlas/meshgenerator/detail/StructuredMeshGenerator.h"
 
 using atlas::Mesh;
@@ -30,21 +31,22 @@ void force_link() {
             MeshGeneratorBuilder<meshgenerator::StructuredMeshGenerator>();
             MeshGeneratorBuilder<meshgenerator::DelaunayMeshGenerator>();
             MeshGeneratorBuilder<meshgenerator::HealpixMeshGenerator>();
+            MeshGeneratorBuilder<meshgenerator::NodalCubedSphereMeshGenerator>();
         }
     } link;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-const MeshGenerator::Implementation* MeshGeneratorFactory::build( const std::string& builder ) {
-    return build( builder, util::NoConfig() );
+const MeshGenerator::Implementation* MeshGeneratorFactory::build(const std::string& builder) {
+    return build(builder, util::NoConfig());
 }
 
-const MeshGenerator::Implementation* MeshGeneratorFactory::build( const std::string& builder,
-                                                                  const eckit::Parametrisation& param ) {
+const MeshGenerator::Implementation* MeshGeneratorFactory::build(const std::string& builder,
+                                                                 const eckit::Parametrisation& param) {
     force_link();
-    auto factory = get( builder );
-    return factory->make( param );
+    auto factory = get(builder);
+    return factory->make(param);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

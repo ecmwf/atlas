@@ -25,33 +25,33 @@ namespace array {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void interprete( const atlas::array::Array& a, atlas::io::ArrayReference& out ) {
-    out = io::ArrayReference( a.data(), a.datatype(), a.shape() );
+void interprete(const atlas::array::Array& a, atlas::io::ArrayReference& out) {
+    out = io::ArrayReference(a.data(), a.datatype(), a.shape());
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void decode( const atlas::io::Metadata& metadata, const atlas::io::Data& data, atlas::array::Array& out ) {
-    atlas::io::ArrayMetadata array( metadata );
+void decode(const atlas::io::Metadata& metadata, const atlas::io::Data& data, atlas::array::Array& out) {
+    atlas::io::ArrayMetadata array(metadata);
 
-    if ( array.datatype() != out.datatype() ) {
+    if (array.datatype() != out.datatype()) {
         std::stringstream err;
         err << "Could not decode " << metadata.json() << " into Array with datatype " << out.datatype().str() << "."
             << "Incompatible datatype!";
-        throw atlas::io::Exception( err.str(), Here() );
+        throw atlas::io::Exception(err.str(), Here());
     }
-    if ( array.rank() != out.rank() ) {
+    if (array.rank() != out.rank()) {
         std::stringstream err;
         err << "Could not decode " << metadata.json() << " into Array with rank " << out.rank() << "."
             << "Incompatible rank!";
-        throw atlas::io::Exception( err.str(), Here() );
+        throw atlas::io::Exception(err.str(), Here());
     }
 
-    out.resize( array.shape() );
+    out.resize(array.shape());
 
-    ATLAS_ASSERT( out.contiguous() );
+    ATLAS_ASSERT(out.contiguous());
 
-    ::memcpy( out.data(), data, data.size() );
+    ::memcpy(out.data(), data, data.size());
 }
 
 //---------------------------------------------------------------------------------------------------------------------

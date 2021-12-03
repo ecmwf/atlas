@@ -41,7 +41,12 @@
 #include "atlas/util/Config.h"
 
 #if ATLAS_HAVE_TRANS
-#include "transi/version.h"
+#include "atlas/library/config.h"
+#if ATLAS_HAVE_ECTRANS
+#include "ectrans/transi.h"
+#else
+#include "transi/trans.h"
+#endif
 #endif
 
 using eckit::LocalPathName;
@@ -53,60 +58,60 @@ namespace atlas {
 //----------------------------------------------------------------------------------------------------------------------
 
 namespace {
-std::string str( bool v ) {
+std::string str(bool v) {
     return v ? "ON" : "OFF";
 }
 
-std::string str( const eckit::system::Library& lib ) {
+std::string str(const eckit::system::Library& lib) {
     std::string gitsha1 = lib.gitsha1();
     std::stringstream ss;
     ss << lib.name() << " version (" << lib.version() << "),";
-    if ( lib.gitsha1() != "not available" ) {
-        ss << "  git-sha1 " << lib.gitsha1( 7 );
+    if (lib.gitsha1() != "not available") {
+        ss << "  git-sha1 " << lib.gitsha1(7);
     }
     return ss.str();
 }
 
-bool getEnv( const std::string& env, bool default_value ) {
-    if ( ::getenv( env.c_str() ) ) {
-        return eckit::Translator<std::string, bool>()( ::getenv( env.c_str() ) );
+bool getEnv(const std::string& env, bool default_value) {
+    if (::getenv(env.c_str())) {
+        return eckit::Translator<std::string, bool>()(::getenv(env.c_str()));
     }
     return default_value;
 }
 
-int getEnv( const std::string& env, int default_value ) {
-    if ( ::getenv( env.c_str() ) ) {
-        return eckit::Translator<std::string, int>()( ::getenv( env.c_str() ) );
+int getEnv(const std::string& env, int default_value) {
+    if (::getenv(env.c_str())) {
+        return eckit::Translator<std::string, int>()(::getenv(env.c_str()));
     }
     return default_value;
 }
 
-static void add_tokens( std::vector<std::string>& tokens, const std::string& str, const std::string& sep ) {
+static void add_tokens(std::vector<std::string>& tokens, const std::string& str, const std::string& sep) {
     eckit::Tokenizer tokenize{sep};
     std::vector<std::string> tokenized;
-    tokenize( str, tokenized );
-    for ( auto& t : tokenized ) {
-        if ( not t.empty() ) {
-            tokens.push_back( eckit::PathExpander::expand( t ) );
+    tokenize(str, tokenized);
+    for (auto& t : tokenized) {
+        if (not t.empty()) {
+            tokens.push_back(eckit::PathExpander::expand(t));
         }
     }
 };
 
-static void init_data_paths( std::vector<std::string>& data_paths ) {
-    ATLAS_ASSERT( eckit::Main::instance().ready() );
-    add_tokens( data_paths, eckit::LibResource<std::string, Library>( "atlas-data-path;$ATLAS_DATA_PATH", "" ), ":" );
-    add_tokens( data_paths, "~atlas/share", ":" );
+static void init_data_paths(std::vector<std::string>& data_paths) {
+    ATLAS_ASSERT(eckit::Main::instance().ready());
+    add_tokens(data_paths, eckit::LibResource<std::string, Library>("atlas-data-path;$ATLAS_DATA_PATH", ""), ":");
+    add_tokens(data_paths, "~atlas/share", ":");
 }
 
 }  // namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void initialise( int argc, char** argv ) {
-    Library::instance().initialise( argc, argv );
+void initialise(int argc, char** argv) {
+    Library::instance().initialise(argc, argv);
 }
-void initialize( int argc, char** argv ) {
-    Library::instance().initialise( argc, argv );
+void initialize(int argc, char** argv) {
+    Library::instance().initialise(argc, argv);
 }
 void initialise() {
     Library::instance().initialise();
@@ -123,60 +128,77 @@ void finalize() {
 
 static Library libatlas;
 
-Library::Library() :
-    eckit::system::Library( std::string( "atlas" ) ),
-    debug_( eckit::system::Library::debug() ),
-    info_( getEnv( "ATLAS_INFO", true ) ),
-    warning_( getEnv( "ATLAS_WARNING", true ) ),
-    trace_( getEnv( "ATLAS_TRACE", false ) ),
-    trace_memory_( getEnv( "ATLAS_TRACE_MEMORY", false ) ),
-    trace_barriers_( getEnv( "ATLAS_TRACE_BARRIERS", false ) ),
-    trace_report_( getEnv( "ATLAS_TRACE_REPORT", false ) ) {}
+Library::Library():
+    eckit::system::Library(std::string("atlas")),
+    debug_(eckit::system::Library::debug()),
+    info_(getEnv("ATLAS_INFO", true)),
+    warning_(getEnv("ATLAS_WARNING", true)),
+    trace_(getEnv("ATLAS_TRACE", false)),
+    trace_memory_(getEnv("ATLAS_TRACE_MEMORY", false)),
+    trace_barriers_(getEnv("ATLAS_TRACE_BARRIERS", false)),
+    trace_report_(getEnv("ATLAS_TRACE_REPORT", false)) {}
 
-void Library::registerPlugin( eckit::system::Plugin& plugin ) {
-    plugins_.push_back( &plugin );
+void Library::registerPlugin(eckit::system::Plugin& plugin) {
+    plugins_.push_back(&plugin);
 }
 
-void Library::deregisterPlugin( eckit::system::Plugin& plugin ) {
-    auto it = std::find( plugins_.begin(), plugins_.end(), &plugin );
-    ATLAS_ASSERT( it != plugins_.end() );
-    plugins_.erase( it );
+void Library::deregisterPlugin(eckit::system::Plugin& plugin) {
+    auto it = std::find(plugins_.begin(), plugins_.end(), &plugin);
+    ATLAS_ASSERT(it != plugins_.end());
+    plugins_.erase(it);
 }
 
 std::string Library::cachePath() const {
     auto resource = []() -> std::string {
-        return eckit::LibResource<std::string, Library>( "atlas-cache-path;$ATLAS_CACHE_PATH", "/tmp/cache" );
+        return eckit::LibResource<std::string, Library>("atlas-cache-path;$ATLAS_CACHE_PATH", "/tmp/cache");
     };
-    static std::string ATLAS_CACHE_PATH = eckit::PathExpander::expand( resource() );
+    static std::string ATLAS_CACHE_PATH = eckit::PathExpander::expand(resource());
     return ATLAS_CACHE_PATH;
 }
 
-void Library::registerDataPath( const std::string& path ) {
-    ATLAS_DEBUG_VAR( path );
-    if ( data_paths_.empty() ) {
-        init_data_paths( data_paths_ );
+void Library::registerDataPath(const std::string& path) {
+    ATLAS_DEBUG_VAR(path);
+    if (data_paths_.empty()) {
+        init_data_paths(data_paths_);
     }
-    add_tokens( data_paths_, path, ":" );
+    add_tokens(data_paths_, path, ":");
 }
 
 
 std::string Library::dataPath() const {
-    if ( data_paths_.empty() ) {
-        ATLAS_THROW_EXCEPTION( "Attempted to access atlas::Library function before atlas was initialized" );
+    if (data_paths_.empty()) {
+        ATLAS_THROW_EXCEPTION("Attempted to access atlas::Library function before atlas was initialized");
     }
     std::vector<std::string> paths = data_paths_;
-    auto join                      = []( const std::vector<std::string>& v, const std::string& sep ) -> std::string {
+    auto join                      = [](const std::vector<std::string>& v, const std::string& sep) -> std::string {
         std::stringstream joined;
-        for ( size_t i = 0; i < v.size(); ++i ) {
-            if ( i > 0 ) {
+        for (size_t i = 0; i < v.size(); ++i) {
+            if (i > 0) {
                 joined << sep;
             }
             joined << v[i];
         }
         return joined.str();
     };
-    return join( paths, ":" );
+    return join(paths, ":");
 }
+
+std::string atlas::Library::linalgSparseBackend() const {
+    auto resource = []() -> std::string {
+        return eckit::LibResource<std::string, Library>("atlas-linalg-sparse-backend;$ATLAS_LINALG_SPARSE_BACKEND", "");
+    };
+    static std::string ATLAS_LINALG_SPARSE_BACKEND = resource();
+    return ATLAS_LINALG_SPARSE_BACKEND;
+}
+
+std::string atlas::Library::linalgDenseBackend() const {
+    auto resource = []() -> std::string {
+        return eckit::LibResource<std::string, Library>("atlas-linalg-dense-backend;$ATLAS_LINALG_DENSE_BACKEND", "");
+    };
+    static std::string ATLAS_LINALG_DENSE_BACKEND = resource();
+    return ATLAS_LINALG_DENSE_BACKEND;
+}
+
 
 Library& Library::instance() {
     return libatlas;
@@ -191,22 +213,22 @@ std::string Library::version() const {
     return atlas::library::version();
 }
 
-std::string Library::gitsha1( unsigned int count ) const {
-    return atlas::library::git_sha1( count );
+std::string Library::gitsha1(unsigned int count) const {
+    return atlas::library::git_sha1(count);
 }
 
-void Library::initialise( int argc, char** argv ) {
-    if ( not Main::ready() ) {
-        Main::initialise( argc, argv );
-        Main::instance().taskID( eckit::mpi::comm( "world" ).rank() );
-        if ( Main::instance().taskID() != 0 ) {
+void Library::initialise(int argc, char** argv) {
+    if (not Main::ready()) {
+        Main::initialise(argc, argv);
+        Main::instance().taskID(eckit::mpi::comm("world").rank());
+        if (Main::instance().taskID() != 0) {
             eckit::Log::warning().reset();
             eckit::Log::info().reset();
             eckit::Log::debug().reset();
             atlas::Log::debug().reset();
         }
         Log::debug() << "Atlas initialised eckit::Main.\n";
-        if ( eckit::mpi::comm( "world" ).size() > 1 ) {
+        if (eckit::mpi::comm("world").size() > 1) {
             Log::debug() << "--> Only MPI rank 0 is logging. Please initialise eckit::Main \n"
                             "    before to avoid this behaviour.\n";
         }
@@ -215,34 +237,34 @@ void Library::initialise( int argc, char** argv ) {
 }
 
 
-void Library::initialise( const eckit::Parametrisation& config ) {
-    if ( config.has( "log" ) ) {
-        config.get( "log.info", info_ );
-        config.get( "log.trace", trace_ );
-        config.get( "log.warning", warning_ );
-        config.get( "log.debug", debug_ );
+void Library::initialise(const eckit::Parametrisation& config) {
+    if (config.has("log")) {
+        config.get("log.info", info_);
+        config.get("log.trace", trace_);
+        config.get("log.warning", warning_);
+        config.get("log.debug", debug_);
     }
-    if ( config.has( "trace" ) ) {
-        config.get( "trace.barriers", trace_barriers_ );
-        config.get( "trace.report", trace_report_ );
-        config.get( "trace.memory", trace_memory_ );
+    if (config.has("trace")) {
+        config.get("trace.barriers", trace_barriers_);
+        config.get("trace.report", trace_report_);
+        config.get("trace.memory", trace_memory_);
     }
 
-    if ( not debug_ ) {
+    if (not debug_) {
         debug_channel_.reset();
     }
-    if ( not trace_ ) {
+    if (not trace_) {
         trace_channel_.reset();
     }
-    if ( not info_ ) {
+    if (not info_) {
         info_channel_.reset();
     }
-    if ( not warning_ ) {
+    if (not warning_) {
         warning_channel_.reset();
     }
 
     auto& out = [&]() -> eckit::Channel& {
-        if ( getEnv( "ATLAS_LOG_RANK", 0 ) == int( mpi::rank() ) ) {
+        if (getEnv("ATLAS_LOG_RANK", 0) == int(mpi::rank())) {
             return Log::debug();
         }
         static eckit::Channel sink;
@@ -252,27 +274,27 @@ void Library::initialise( const eckit::Parametrisation& config ) {
     library::enable_floating_point_exceptions();
     library::enable_atlas_signal_handler();
 
-    if ( data_paths_.empty() ) {
-        init_data_paths( data_paths_ );
+    if (data_paths_.empty()) {
+        init_data_paths(data_paths_);
     }
 
     // Summary
-    if ( getEnv( "ATLAS_LOG_RANK", 0 ) == int( mpi::rank() ) ) {
+    if (getEnv("ATLAS_LOG_RANK", 0) == int(mpi::rank())) {
         out << "Executable        [" << Main::instance().name() << "]\n";
         out << " \n";
-        out << "  current dir     [" << PathName( LocalPathName::cwd() ).fullName() << "]\n";
+        out << "  current dir     [" << PathName(LocalPathName::cwd()).fullName() << "]\n";
         out << " \n";
         out << "  MPI\n";
         out << "    communicator  [" << mpi::comm() << "] \n";
         out << "    size          [" << mpi::size() << "] \n";
         out << "    rank          [" << mpi::rank() << "] \n";
         out << " \n";
-        out << "  log.info        [" << str( info_ ) << "] \n";
-        out << "  log.trace       [" << str( trace() ) << "] \n";
-        out << "  log.debug       [" << str( debug() ) << "] \n";
-        out << "  trace.barriers  [" << str( traceBarriers() ) << "] \n";
-        out << "  trace.report    [" << str( trace_report_ ) << "] \n";
-        out << "  trace.memory    [" << str( trace_memory_ ) << "] \n";
+        out << "  log.info        [" << str(info_) << "] \n";
+        out << "  log.trace       [" << str(trace()) << "] \n";
+        out << "  log.debug       [" << str(debug()) << "] \n";
+        out << "  trace.barriers  [" << str(traceBarriers()) << "] \n";
+        out << "  trace.report    [" << str(trace_report_) << "] \n";
+        out << "  trace.memory    [" << str(trace_memory_) << "] \n";
         out << " \n";
         out << atlas::Library::instance().information();
         out << std::flush;
@@ -281,15 +303,15 @@ void Library::initialise( const eckit::Parametrisation& config ) {
 
 
 void Library::initialise() {
-    initialise( util::NoConfig() );
+    initialise(util::NoConfig());
 }
 
 void Library::finalise() {
-    if ( ATLAS_HAVE_TRACE && trace_report_ ) {
+    if (ATLAS_HAVE_TRACE && trace_report_) {
         Log::info() << atlas::Trace::report() << std::endl;
     }
 
-    if ( getEnv( "ATLAS_FINALISES_MPI", false ) ) {
+    if (getEnv("ATLAS_FINALISES_MPI", false)) {
         Log::debug() << "ATLAS_FINALISES_MPI is set: calling atlas::mpi::finalize()" << std::endl;
         mpi::finalise();
     }
@@ -297,79 +319,79 @@ void Library::finalise() {
     // Make sure that these specialised channels that wrap Log::info() are
     // destroyed before eckit::Log::info gets destroyed.
     // Just in case someone still tries to log, we reset to empty channels.
-    trace_channel_.reset( new eckit::Channel() );
+    trace_channel_.reset(new eckit::Channel());
 
     Log::debug() << "Atlas finalised" << std::endl;
 
     Log::flush();
 
-    if ( debugChannel() ) {
-        debug_channel_.reset( new eckit::Channel( new eckit::PrefixTarget( "ATLAS_DEBUG" ) ) );
+    if (debugChannel()) {
+        debug_channel_.reset(new eckit::Channel(new eckit::PrefixTarget("ATLAS_DEBUG")));
     }
-    if ( infoChannel() ) {
+    if (infoChannel()) {
         info_ = false;
-        info_channel_.reset( new eckit::Channel( new eckit::PrefixTarget( "ATLAS_INFO" ) ) );
+        info_channel_.reset(new eckit::Channel(new eckit::PrefixTarget("ATLAS_INFO")));
     }
-    if ( warningChannel() ) {
+    if (warningChannel()) {
         warning_ = false;
-        warning_channel_.reset( new eckit::Channel( new eckit::PrefixTarget( "ATLAS_WARNING" ) ) );
+        warning_channel_.reset(new eckit::Channel(new eckit::PrefixTarget("ATLAS_WARNING")));
     }
 }
 
 eckit::Channel& Library::infoChannel() const {
-    if ( info_ ) {
+    if (info_) {
         return eckit::Log::info();
     }
-    else if ( !info_channel_ ) {
-        info_channel_.reset( new eckit::Channel() );
+    else if (!info_channel_) {
+        info_channel_.reset(new eckit::Channel());
     }
     return *info_channel_;
 }
 
 
 eckit::Channel& Library::warningChannel() const {
-    if ( warning_ ) {
+    if (warning_) {
         return eckit::Log::warning();
     }
-    else if ( !warning_channel_ ) {
-        warning_channel_.reset( new eckit::Channel() );
+    else if (!warning_channel_) {
+        warning_channel_.reset(new eckit::Channel());
     }
     return *warning_channel_;
 }
 
 
 eckit::Channel& Library::traceChannel() const {
-    if ( trace_channel_ ) {
+    if (trace_channel_) {
         return *trace_channel_;
     }
-    if ( trace_ ) {
-        trace_channel_.reset( new eckit::Channel(
-            new eckit::PrefixTarget( "ATLAS_TRACE", new eckit::OStreamTarget( eckit::Log::info() ) ) ) );
+    if (trace_) {
+        trace_channel_.reset(
+            new eckit::Channel(new eckit::PrefixTarget("ATLAS_TRACE", new eckit::OStreamTarget(eckit::Log::info()))));
     }
     else {
-        trace_channel_.reset( new eckit::Channel() );
+        trace_channel_.reset(new eckit::Channel());
     }
     return *trace_channel_;
 }
 
 eckit::Channel& Library::debugChannel() const {
-    if ( debug_channel_ ) {
+    if (debug_channel_) {
         return *debug_channel_;
     }
-    if ( debug_ ) {
-        debug_channel_.reset( new eckit::Channel( new eckit::PrefixTarget( "ATLAS_DEBUG" ) ) );
+    if (debug_) {
+        debug_channel_.reset(new eckit::Channel(new eckit::PrefixTarget("ATLAS_DEBUG")));
     }
     else {
-        debug_channel_.reset( new eckit::Channel() );
+        debug_channel_.reset(new eckit::Channel());
     }
     return *debug_channel_;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void Library::Information::print( std::ostream& out ) const {
+void Library::Information::print(std::ostream& out) const {
     out << "atlas version (" << atlas::Library::instance().version() << "), "
-        << "git-sha1 " << atlas::Library::instance().gitsha1( 7 ) << '\n';
+        << "git-sha1 " << atlas::Library::instance().gitsha1(7) << '\n';
     out << " \n";
     out << "  Build:" << std::endl;
     out << "    build type      : " << ATLAS_BUILD_TYPE << '\n'
@@ -390,19 +412,19 @@ void Library::Information::print( std::ostream& out ) const {
 #endif
         << " \n";
 
-    bool feature_fortran( ATLAS_HAVE_FORTRAN );
-    bool feature_OpenMP( ATLAS_HAVE_OMP );
-    bool feature_Trans( ATLAS_HAVE_TRANS );
-    bool feature_FFTW( ATLAS_HAVE_FFTW );
-    bool feature_Eigen( ATLAS_HAVE_EIGEN );
-    bool feature_Tesselation( ATLAS_HAVE_TESSELATION );
-    bool feature_BoundsChecking( ATLAS_ARRAYVIEW_BOUNDS_CHECKING );
-    bool feature_Init_sNaN( ATLAS_INIT_SNAN );
-    bool feature_MPI( false );
+    bool feature_fortran(ATLAS_HAVE_FORTRAN);
+    bool feature_OpenMP(ATLAS_HAVE_OMP);
+    bool feature_Trans(ATLAS_HAVE_TRANS);
+    bool feature_FFTW(ATLAS_HAVE_FFTW);
+    bool feature_Eigen(ATLAS_HAVE_EIGEN);
+    bool feature_Tesselation(ATLAS_HAVE_TESSELATION);
+    bool feature_BoundsChecking(ATLAS_ARRAYVIEW_BOUNDS_CHECKING);
+    bool feature_Init_sNaN(ATLAS_INIT_SNAN);
+    bool feature_MPI(false);
 #if ECKIT_HAVE_MPI
     feature_MPI = true;
 #endif
-    bool feature_MKL( false );
+    bool feature_MKL(false);
 #if ECKIT_HAVE_MKL
     feature_MKL = true;
 #endif
@@ -414,48 +436,48 @@ void Library::Information::print( std::ostream& out ) const {
 #endif
 #endif
     out << "  Features:" << '\n'
-        << "    Fortran        : " << str( feature_fortran ) << '\n'
-        << "    MPI            : " << str( feature_MPI ) << '\n'
-        << "    OpenMP         : " << str( feature_OpenMP ) << '\n'
-        << "    BoundsChecking : " << str( feature_BoundsChecking ) << '\n'
-        << "    Init_sNaN      : " << str( feature_Init_sNaN ) << '\n'
-        << "    Trans          : " << str( feature_Trans ) << '\n'
-        << "    FFTW           : " << str( feature_FFTW ) << '\n'
-        << "    Eigen          : " << str( feature_Eigen ) << '\n'
-        << "    MKL            : " << str( feature_MKL ) << '\n'
-        << "    Tesselation    : " << str( feature_Tesselation ) << '\n'
+        << "    Fortran        : " << str(feature_fortran) << '\n'
+        << "    MPI            : " << str(feature_MPI) << '\n'
+        << "    OpenMP         : " << str(feature_OpenMP) << '\n'
+        << "    BoundsChecking : " << str(feature_BoundsChecking) << '\n'
+        << "    Init_sNaN      : " << str(feature_Init_sNaN) << '\n'
+        << "    Trans          : " << str(feature_Trans) << '\n'
+        << "    FFTW           : " << str(feature_FFTW) << '\n'
+        << "    Eigen          : " << str(feature_Eigen) << '\n'
+        << "    MKL            : " << str(feature_MKL) << '\n'
+        << "    Tesselation    : " << str(feature_Tesselation) << '\n'
         << "    ArrayDataStore : " << array_data_store << '\n'
         << "    idx_t          : " << ATLAS_BITS_LOCAL << " bit integer" << '\n'
         << "    gidx_t         : " << ATLAS_BITS_GLOBAL << " bit integer" << '\n';
 
     auto& plugins = Library::instance().plugins();
-    if ( !plugins.empty() ) {
+    if (!plugins.empty()) {
         out << "    \n  Plugins: \n";
-        for ( auto& plugin : plugins ) {
-            out << "    " << str( *plugin ) << '\n';
+        for (auto& plugin : plugins) {
+            out << "    " << str(*plugin) << '\n';
         }
     }
 
     out << "    \n  Dependencies: \n";
     out << "    ecbuild version (" << ECBUILD_VERSION << ")" << '\n';
-    if ( Library::exists( "eckit" ) ) {
-        out << "    " << str( Library::lookup( "eckit" ) ) << '\n';
+    if (Library::exists("eckit")) {
+        out << "    " << str(Library::lookup("eckit")) << '\n';
     }
-    if ( Library::exists( "fckit" ) ) {
-        out << "    " << str( Library::lookup( "fckit" ) ) << '\n';
+    if (Library::exists("fckit")) {
+        out << "    " << str(Library::lookup("fckit")) << '\n';
     }
 
 #if ATLAS_HAVE_TRANS
-#ifdef TRANS_HAVE_FAUX
-    out << "    trans version (" << trans_version_str() << "), "
-        << "git-sha1 " << trans_git_sha1_abbrev( 7 ) << '\n';
-    out << "    faux version (" << trans_faux_version_str() << "), "
-        << "git-sha1 " << trans_faux_git_sha1_abbrev( 7 ) << '\n';
+#if ATLAS_HAVE_ECTRANS
+    out << "    ectrans version (" << ectrans_version() << "), "
+        << "git-sha1 " << ectrans_git_sha1_abbrev(7) << '\n';
+    out << "    fiat version (" << ectrans_fiat_version() << "), "
+        << "git-sha1 " << ectrans_fiat_git_sha1_abbrev(7) << '\n';
 #else
     out << "    transi version (" << transi_version() << "), "
-        << "git-sha1 " << transi_git_sha1_abbrev( 7 ) << '\n';
+        << "git-sha1 " << transi_git_sha1_abbrev(7) << '\n';
     out << "    trans version (" << trans_version() << "), "
-        << "git-sha1 " << trans_git_sha1_abbrev( 7 ) << '\n';
+        << "git-sha1 " << trans_git_sha1_abbrev(7) << '\n';
 #endif
 #endif
 }

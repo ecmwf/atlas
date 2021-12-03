@@ -46,15 +46,15 @@ void force_link() {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-const Projection::Implementation* ProjectionFactory::build( const std::string& builder ) {
-    return build( builder, util::NoConfig() );
+const Projection::Implementation* ProjectionFactory::build(const std::string& builder) {
+    return build(builder, util::NoConfig());
 }
 
-const Projection::Implementation* ProjectionFactory::build( const std::string& builder,
-                                                            const eckit::Parametrisation& param ) {
+const Projection::Implementation* ProjectionFactory::build(const std::string& builder,
+                                                           const eckit::Parametrisation& param) {
     force_link();
-    auto factory = get( builder );
-    return factory->make( param );
+    auto factory = get(builder);
+    return factory->make(param);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

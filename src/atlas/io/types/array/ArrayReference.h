@@ -23,19 +23,19 @@ class ArrayReference : public ArrayMetadata {
 public:
     ArrayReference() = default;
 
-    ArrayReference( const void* data, DataType, const ArrayShape& );
+    ArrayReference(const void* data, DataType, const ArrayShape&);
 
     template <typename T>
-    ArrayReference( const T* data, const ArrayShape& shape ) :
-        ArrayMetadata( DataType::create<T>(), shape ), data_( const_cast<T*>( data ) ) {}
+    ArrayReference(const T* data, const ArrayShape& shape):
+        ArrayMetadata(DataType::create<T>(), shape), data_(const_cast<T*>(data)) {}
 
-    ArrayReference( ArrayReference&& );
+    ArrayReference(ArrayReference&&);
 
-    ArrayReference& operator=( ArrayReference&& );
+    ArrayReference& operator=(ArrayReference&&);
 
     void* data() const { return data_; }
 
-    friend void decode( const atlas::io::Metadata&, const atlas::io::Data&, ArrayReference& );
+    friend void decode(const atlas::io::Metadata&, const atlas::io::Data&, ArrayReference&);
 
 private:
     void* data_{nullptr};
@@ -43,9 +43,9 @@ private:
 
 //---------------------------------------------------------------------------------------------------------------------
 
-size_t encode_metadata( const ArrayReference& value, atlas::io::Metadata& out );
+size_t encode_metadata(const ArrayReference& value, atlas::io::Metadata& out);
 
-void encode_data( const ArrayReference& value, atlas::io::Data& out );
+void encode_data(const ArrayReference& value, atlas::io::Data& out);
 
 //---------------------------------------------------------------------------------------------------------------------
 

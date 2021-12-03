@@ -34,7 +34,7 @@ namespace field {
 /**
  * @brief Missing values indicator
  */
-struct MissingValue : DOXYGEN_HIDE( public util::ObjectHandle<detail::MissingValue> ) {
+struct MissingValue : DOXYGEN_HIDE(public util::ObjectHandle<detail::MissingValue>) {
     using Spec   = util::Config;
     using Config = detail::MissingValue::Config;
 
@@ -43,10 +43,10 @@ struct MissingValue : DOXYGEN_HIDE( public util::ObjectHandle<detail::MissingVal
      */
     using Handle::Handle;
     MissingValue();
-    MissingValue( const Config& );
-    MissingValue( const std::string& type, const Config& );
-    MissingValue( const Field& );
-    MissingValue( const std::string& type, const Field& );
+    MissingValue(const Config&);
+    MissingValue(const std::string& type, const Config&);
+    MissingValue(const Field&);
+    MissingValue(const std::string& type, const Field&);
 
     /**
      * @brief bool operator
@@ -59,35 +59,35 @@ struct MissingValue : DOXYGEN_HIDE( public util::ObjectHandle<detail::MissingVal
      * @param [in] value user-defined value
      * @return if user-defined value indicates a missing value
      */
-    bool operator()( const double& value ) const;
+    bool operator()(const double& value) const;
 
     /**
      * @brief operator() on user-defined values
      * @param [in] value user-defined value
      * @return if user-defined value indicates a missing value
      */
-    bool operator()( const float& value ) const;
+    bool operator()(const float& value) const;
 
     /**
      * @brief operator() on user-defined values
      * @param [in] value user-defined value
      * @return if user-defined value indicates a missing value
      */
-    bool operator()( const int& value ) const;
+    bool operator()(const int& value) const;
 
     /**
      * @brief operator() on user-defined values
      * @param [in] value user-defined value
      * @return if user-defined value indicates a missing value
      */
-    bool operator()( const long& value ) const;
+    bool operator()(const long& value) const;
 
     /**
      * @brief operator() on user-defined values
      * @param [in] value user-defined value
      * @return if user-defined value indicates a missing value
      */
-    bool operator()( const unsigned long& value ) const;
+    bool operator()(const unsigned long& value) const;
 
     /**
      * @brief if missing value is represented by not-a-number
@@ -105,7 +105,7 @@ struct MissingValue : DOXYGEN_HIDE( public util::ObjectHandle<detail::MissingVal
      * @brief fill missing value metadata on Field
      * @param [in] field field to set
      */
-    void metadata( Field& field ) const;
+    void metadata(Field& field) const;
 };
 
 

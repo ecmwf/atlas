@@ -28,28 +28,28 @@ protected:
     static constexpr char units_[] = "degrees";
 
 public:
-    static bool is_global( const Interval& y );
+    static bool is_global(const Interval& y);
 
 public:
     // constructor
-    ZonalBandDomain( const eckit::Parametrisation& );
-    ZonalBandDomain( const Interval& );
-    ZonalBandDomain( const Interval&, const double west );
+    ZonalBandDomain(const eckit::Parametrisation&);
+    ZonalBandDomain(const Interval&);
+    ZonalBandDomain(const Interval&, const double west);
 
     static std::string static_type() { return "zonal_band"; }
     virtual std::string type() const override { return static_type(); }
 
     /// Checks if the point is contained in the domain
-    virtual bool contains( double x, double y ) const override;
+    virtual bool contains(double x, double y) const override;
 
     virtual bool global() const override { return global_; }
-    virtual bool empty() const override { return ( ymin() == ymax() ); }
+    virtual bool empty() const override { return (ymin() == ymax()); }
 
     virtual Spec spec() const override;
 
-    virtual void print( std::ostream& ) const override;
+    virtual void print(std::ostream&) const override;
 
-    virtual void hash( eckit::Hash& ) const override;
+    virtual void hash(eckit::Hash&) const override;
 
     virtual std::string units() const override { return units_; }
 

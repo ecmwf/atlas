@@ -28,8 +28,8 @@ namespace trans {
 
 class VorDivToUVIFS : public trans::VorDivToUVImpl {
 public:
-    VorDivToUVIFS( const FunctionSpace&, const eckit::Configuration& = util::NoConfig() );
-    VorDivToUVIFS( int truncation, const eckit::Configuration& = util::NoConfig() );
+    VorDivToUVIFS(const FunctionSpace&, const eckit::Configuration& = util::NoConfig());
+    VorDivToUVIFS(int truncation, const eckit::Configuration& = util::NoConfig());
 
     virtual ~VorDivToUVIFS();
 
@@ -54,8 +54,8 @@ public:
  * @param U [out] Spectral wind U = u*cos(lat)
  * @param V [out] Spectral wind V = v*cos(lat)
  */
-    virtual void execute( const int nb_coeff, const int nb_fields, const double vorticity[], const double divergence[],
-                          double U[], double V[], const eckit::Configuration& = util::NoConfig() ) const override;
+    virtual void execute(const int nb_coeff, const int nb_fields, const double vorticity[], const double divergence[],
+                         double U[], double V[], const eckit::Configuration& = util::NoConfig()) const override;
 
 private:
     int truncation_;

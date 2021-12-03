@@ -26,44 +26,44 @@ private:
 
 public:
     ArrayStrides() {}
-    ArrayStrides( std::initializer_list<idx_t> list ) : Base( list ) {}
-    ArrayStrides( Base&& base ) : Base( std::forward<Base>( base ) ) {}
+    ArrayStrides(std::initializer_list<idx_t> list): Base(list) {}
+    ArrayStrides(Base&& base): Base(std::forward<Base>(base)) {}
 };
 
 namespace detail {
 
 template <typename Int>
-inline ArrayStrides make_strides( Int size1 ) {
-    return ArrayStrides{static_cast<idx_t>( size1 )};
+inline ArrayStrides make_strides(Int size1) {
+    return ArrayStrides{static_cast<idx_t>(size1)};
 }
 template <typename Int1, typename Int2>
-inline ArrayStrides make_strides( Int1 size1, Int2 size2 ) {
-    return ArrayStrides{static_cast<idx_t>( size1 ), static_cast<idx_t>( size2 )};
+inline ArrayStrides make_strides(Int1 size1, Int2 size2) {
+    return ArrayStrides{static_cast<idx_t>(size1), static_cast<idx_t>(size2)};
 }
 template <typename Int1, typename Int2, typename Int3>
-inline ArrayStrides make_strides( Int1 size1, Int2 size2, Int3 size3 ) {
-    return ArrayStrides{static_cast<idx_t>( size1 ), static_cast<idx_t>( size2 ), static_cast<idx_t>( size3 )};
+inline ArrayStrides make_strides(Int1 size1, Int2 size2, Int3 size3) {
+    return ArrayStrides{static_cast<idx_t>(size1), static_cast<idx_t>(size2), static_cast<idx_t>(size3)};
 }
 template <typename Int1, typename Int2, typename Int3, typename Int4>
-inline ArrayStrides make_strides( Int1 size1, Int2 size2, Int3 size3, Int4 size4 ) {
-    return ArrayStrides{static_cast<idx_t>( size1 ), static_cast<idx_t>( size2 ), static_cast<idx_t>( size3 ),
-                        static_cast<idx_t>( size4 )};
+inline ArrayStrides make_strides(Int1 size1, Int2 size2, Int3 size3, Int4 size4) {
+    return ArrayStrides{static_cast<idx_t>(size1), static_cast<idx_t>(size2), static_cast<idx_t>(size3),
+                        static_cast<idx_t>(size4)};
 }
 template <typename Int1, typename Int2, typename Int3, typename Int4, typename Int5>
-inline ArrayStrides make_strides( Int1 size1, Int2 size2, Int3 size3, Int4 size4, Int5 size5 ) {
-    return ArrayStrides{static_cast<idx_t>( size1 ), static_cast<idx_t>( size2 ), static_cast<idx_t>( size3 ),
-                        static_cast<idx_t>( size4 ), static_cast<idx_t>( size5 )};
+inline ArrayStrides make_strides(Int1 size1, Int2 size2, Int3 size3, Int4 size4, Int5 size5) {
+    return ArrayStrides{static_cast<idx_t>(size1), static_cast<idx_t>(size2), static_cast<idx_t>(size3),
+                        static_cast<idx_t>(size4), static_cast<idx_t>(size5)};
 }
 
 }  // namespace detail
 
-inline ArrayStrides make_strides( std::initializer_list<idx_t> sizes ) {
-    return ArrayStrides( sizes );
+inline ArrayStrides make_strides(std::initializer_list<idx_t> sizes) {
+    return ArrayStrides(sizes);
 }
 
 template <typename... idx_t>
-ArrayStrides make_strides( idx_t... indices ) {
-    return detail::make_strides( std::forward<idx_t>( indices )... );
+ArrayStrides make_strides(idx_t... indices) {
+    return detail::make_strides(std::forward<idx_t>(indices)...);
 }
 
 

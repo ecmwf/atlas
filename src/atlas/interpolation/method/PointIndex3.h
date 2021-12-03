@@ -37,8 +37,8 @@ public:
     typedef typename Tree::Point Point;
     typedef typename Tree::Value Value;
 
-    PointKdTree() : eckit::KDTreeMemory<Traits>() {}
-    PointKdTree( Alloc& alloc ) : Tree( alloc ) {}
+    PointKdTree(): eckit::KDTreeMemory<Traits>() {}
+    PointKdTree(Alloc& alloc): Tree(alloc) {}
 
     using Tree::findInSphere;
     using Tree::kNearestNeighbours;
@@ -67,11 +67,11 @@ struct ElemIndex3TreeTrait {
 
 typedef PointKdTree<ElemIndex3TreeTrait> ElemIndex3;
 
-ElemIndex3* create_element_kdtree( const Mesh& mesh, const Field& field_centres );
+ElemIndex3* create_element_kdtree(const Mesh& mesh, const Field& field_centres);
 
 // TODO: remove this function, and use "create_element_kdtree(const Field&)"
 // instead.
-ElemIndex3* create_element_centre_index( const Mesh& mesh );
+ElemIndex3* create_element_centre_index(const Mesh& mesh);
 
 //----------------------------------------------------------------------------------------------------------------------
 

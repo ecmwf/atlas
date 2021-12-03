@@ -18,13 +18,13 @@ namespace io {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-RecordReader::RecordReader( const Record::URI& ref ) : RecordReader( ref.path, ref.offset ) {}
+RecordReader::RecordReader(const Record::URI& ref): RecordReader(ref.path, ref.offset) {}
 
 //---------------------------------------------------------------------------------------------------------------------
 
-RecordReader::RecordReader( const std::string& path, uint64_t offset ) : session_{}, path_{path}, offset_{offset} {}
+RecordReader::RecordReader(const std::string& path, uint64_t offset): session_{}, path_{path}, offset_{offset} {}
 
-RecordReader::RecordReader( Stream stream, uint64_t offset ) : session_{}, stream_{stream}, path_{}, offset_{offset} {}
+RecordReader::RecordReader(Stream stream, uint64_t offset): session_{}, stream_{stream}, path_{}, offset_{offset} {}
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -37,21 +37,21 @@ Record::URI RecordReader::uri() const {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-RecordItem::URI RecordReader::uri( const std::string& key ) const {
-    return RecordItem::URI( path_, offset_, key );
+RecordItem::URI RecordReader::uri(const std::string& key) const {
+    return RecordItem::URI(path_, offset_, key);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void RecordReader::wait( const std::string& key ) {
-    request( key ).wait();
+void RecordReader::wait(const std::string& key) {
+    request(key).wait();
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
 void RecordReader::wait() {
     // This can be optimized perhaps to overlap IO with decoding in multithreaded environment
-    for ( auto& pair : requests_ ) {
+    for (auto& pair : requests_) {
         auto& request = pair.second;
         request.wait();
     }
@@ -59,19 +59,19 @@ void RecordReader::wait() {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-ReadRequest& RecordReader::request( const std::string& key ) {
-    return requests_.at( key );
+ReadRequest& RecordReader::request(const std::string& key) {
+    return requests_.at(key);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
-Metadata RecordReader::metadata( const std::string& key ) {
+Metadata RecordReader::metadata(const std::string& key) {
     Metadata metadata;
-    RecordItemReader{uri( key )}.read( metadata );
+    RecordItemReader{uri(key)}.read(metadata);
     return metadata;
 }
 
-void RecordReader::checksum( bool b ) {
+void RecordReader::checksum(bool b) {
     do_checksum_ = b;
 }
 

@@ -37,7 +37,7 @@ const double nan             = std::numeric_limits<double>::quiet_NaN();
 using field::MissingValue;
 using util::Config;
 
-CASE( "Interpolation with MissingValue" ) {
+CASE("Interpolation with MissingValue") {
     /*
        Set input field full of 1's, with 9 nodes
          1 ... 1 ... 1
@@ -46,92 +46,92 @@ CASE( "Interpolation with MissingValue" ) {
          |i   i|     :  i: interpolation on two points, this quadrilateral only
          1-----1 ... 1
      */
-    RectangularDomain domain( {0, 2}, {0, 2}, "degrees" );
-    Grid gridA( "L90", domain );
+    RectangularDomain domain({0, 2}, {0, 2}, "degrees");
+    Grid gridA("L90", domain);
 
     const idx_t nbNodes = 9;
-    ATLAS_ASSERT( gridA.size() == nbNodes );
+    ATLAS_ASSERT(gridA.size() == nbNodes);
 
-    Mesh meshA = MeshGenerator( "structured" ).generate( gridA );
+    Mesh meshA = MeshGenerator("structured").generate(gridA);
 
-    functionspace::NodeColumns fsA( meshA );
-    Field fieldA = fsA.createField<double>( option::name( "A" ) );
+    functionspace::NodeColumns fsA(meshA);
+    Field fieldA = fsA.createField<double>(option::name("A"));
 
-    fieldA.metadata().set( "missing_value", missingValue );
-    fieldA.metadata().set( "missing_value_epsilon", missingValueEps );
+    fieldA.metadata().set("missing_value", missingValue);
+    fieldA.metadata().set("missing_value_epsilon", missingValueEps);
 
-    auto viewA = array::make_view<double, 1>( fieldA );
-    for ( idx_t j = 0; j < fsA.nodes().size(); ++j ) {
-        viewA( j ) = 1;
+    auto viewA = array::make_view<double, 1>(fieldA);
+    for (idx_t j = 0; j < fsA.nodes().size(); ++j) {
+        viewA(j) = 1;
     }
 
 
     // Set output field (2 points)
-    functionspace::PointCloud fsB( {PointLonLat{0.1, 0.1}, PointLonLat{0.9, 0.9}} );
+    functionspace::PointCloud fsB({PointLonLat{0.1, 0.1}, PointLonLat{0.9, 0.9}});
 
 
-    SECTION( "missing-if-all-missing" ) {
-        Interpolation interpolation( Config( "type", "finite-element" ).set( "non_linear", "missing-if-all-missing" ),
-                                     fsA, fsB );
+    SECTION("missing-if-all-missing") {
+        Interpolation interpolation(Config("type", "finite-element").set("non_linear", "missing-if-all-missing"), fsA,
+                                    fsB);
 
-        for ( std::string type : {"equals", "approximately-equals", "nan"} ) {
-            Field fieldB( "B", array::make_datatype<double>(), array::make_shape( fsB.size() ) );
-            auto viewB = array::make_view<double, 1>( fieldB );
+        for (std::string type : {"equals", "approximately-equals", "nan"}) {
+            Field fieldB("B", array::make_datatype<double>(), array::make_shape(fsB.size()));
+            auto viewB = array::make_view<double, 1>(fieldB);
 
-            fieldA.metadata().set( "missing_value_type", type );
-            viewA( 4 ) = type == "nan" ? nan : missingValue;
+            fieldA.metadata().set("missing_value_type", type);
+            viewA(4) = type == "nan" ? nan : missingValue;
 
-            EXPECT( MissingValue( fieldA ) );
-            interpolation.execute( fieldA, fieldB );
+            EXPECT(MissingValue(fieldA));
+            interpolation.execute(fieldA, fieldB);
 
-            MissingValue mv( fieldB );
-            EXPECT( mv );
-            EXPECT( mv( viewB( 0 ) ) == false );
-            EXPECT( mv( viewB( 1 ) ) == false );
+            MissingValue mv(fieldB);
+            EXPECT(mv);
+            EXPECT(mv(viewB(0)) == false);
+            EXPECT(mv(viewB(1)) == false);
         }
     }
 
 
-    SECTION( "missing-if-any-missing" ) {
-        Interpolation interpolation( Config( "type", "finite-element" ).set( "non_linear", "missing-if-any-missing" ),
-                                     fsA, fsB );
+    SECTION("missing-if-any-missing") {
+        Interpolation interpolation(Config("type", "finite-element").set("non_linear", "missing-if-any-missing"), fsA,
+                                    fsB);
 
-        for ( std::string type : {"equals", "approximately-equals", "nan"} ) {
-            Field fieldB( "B", array::make_datatype<double>(), array::make_shape( fsB.size() ) );
-            auto viewB = array::make_view<double, 1>( fieldB );
+        for (std::string type : {"equals", "approximately-equals", "nan"}) {
+            Field fieldB("B", array::make_datatype<double>(), array::make_shape(fsB.size()));
+            auto viewB = array::make_view<double, 1>(fieldB);
 
-            fieldA.metadata().set( "missing_value_type", type );
-            viewA( 4 ) = type == "nan" ? nan : missingValue;
+            fieldA.metadata().set("missing_value_type", type);
+            viewA(4) = type == "nan" ? nan : missingValue;
 
-            EXPECT( MissingValue( fieldA ) );
-            interpolation.execute( fieldA, fieldB );
+            EXPECT(MissingValue(fieldA));
+            interpolation.execute(fieldA, fieldB);
 
-            MissingValue mv( fieldB );
-            EXPECT( mv );
-            EXPECT( mv( viewB( 0 ) ) );
-            EXPECT( mv( viewB( 1 ) ) );
+            MissingValue mv(fieldB);
+            EXPECT(mv);
+            EXPECT(mv(viewB(0)));
+            EXPECT(mv(viewB(1)));
         }
     }
 
 
-    SECTION( "missing-if-heaviest-missing" ) {
-        Interpolation interpolation(
-            Config( "type", "finite-element" ).set( "non_linear", "missing-if-heaviest-missing" ), fsA, fsB );
+    SECTION("missing-if-heaviest-missing") {
+        Interpolation interpolation(Config("type", "finite-element").set("non_linear", "missing-if-heaviest-missing"),
+                                    fsA, fsB);
 
-        for ( std::string type : {"equals", "approximately-equals", "nan"} ) {
-            Field fieldB( "B", array::make_datatype<double>(), array::make_shape( fsB.size() ) );
-            auto viewB = array::make_view<double, 1>( fieldB );
+        for (std::string type : {"equals", "approximately-equals", "nan"}) {
+            Field fieldB("B", array::make_datatype<double>(), array::make_shape(fsB.size()));
+            auto viewB = array::make_view<double, 1>(fieldB);
 
-            fieldA.metadata().set( "missing_value_type", type );
-            viewA( 4 ) = type == "nan" ? nan : missingValue;
+            fieldA.metadata().set("missing_value_type", type);
+            viewA(4) = type == "nan" ? nan : missingValue;
 
-            EXPECT( MissingValue( fieldA ) );
-            interpolation.execute( fieldA, fieldB );
+            EXPECT(MissingValue(fieldA));
+            interpolation.execute(fieldA, fieldB);
 
-            MissingValue mv( fieldB );
-            EXPECT( mv );
-            EXPECT( mv( viewB( 0 ) ) == false );
-            EXPECT( mv( viewB( 1 ) ) );
+            MissingValue mv(fieldB);
+            EXPECT(mv);
+            EXPECT(mv(viewB(0)) == false);
+            EXPECT(mv(viewB(1)));
         }
     }
 }
@@ -141,6 +141,6 @@ CASE( "Interpolation with MissingValue" ) {
 }  // namespace atlas
 
 
-int main( int argc, char** argv ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
 }

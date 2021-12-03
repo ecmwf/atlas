@@ -32,47 +32,39 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-CASE( "test_interpolation_finite_element" ) {
-    Grid grid( "O64" );
-    Mesh mesh( grid );
-    NodeColumns fs( mesh );
+CASE("test_interpolation_finite_element") {
+    Grid grid("O64");
+    Mesh mesh(grid);
+    NodeColumns fs(mesh);
 
     // Some points at the equator
-    PointCloud pointcloud( {{00., 0.},
-                            {10., 0.},
-                            {20., 0.},
-                            {30., 0.},
-                            {40., 0.},
-                            {50., 0.},
-                            {60., 0.},
-                            {70., 0.},
-                            {80., 0.},
-                            {90., 0.}} );
+    PointCloud pointcloud(
+        {{00., 0.}, {10., 0.}, {20., 0.}, {30., 0.}, {40., 0.}, {50., 0.}, {60., 0.}, {70., 0.}, {80., 0.}, {90., 0.}});
 
-    auto func = []( double x ) -> double { return std::sin( x * M_PI / 180. ); };
+    auto func = [](double x) -> double { return std::sin(x * M_PI / 180.); };
 
-    Interpolation interpolation( option::type( "finite-element" ), fs, pointcloud );
+    Interpolation interpolation(option::type("finite-element"), fs, pointcloud);
 
-    Field field_source = fs.createField<double>( option::name( "source" ) );
-    Field field_target( "target", array::make_datatype<double>(), array::make_shape( pointcloud.size() ) );
+    Field field_source = fs.createField<double>(option::name("source"));
+    Field field_target("target", array::make_datatype<double>(), array::make_shape(pointcloud.size()));
 
-    auto lonlat = array::make_view<double, 2>( fs.nodes().lonlat() );
-    auto source = array::make_view<double, 1>( field_source );
-    for ( idx_t j = 0; j < fs.nodes().size(); ++j ) {
-        source( j ) = func( lonlat( j, LON ) );
+    auto lonlat = array::make_view<double, 2>(fs.nodes().lonlat());
+    auto source = array::make_view<double, 1>(field_source);
+    for (idx_t j = 0; j < fs.nodes().size(); ++j) {
+        source(j) = func(lonlat(j, LON));
     }
 
-    interpolation.execute( field_source, field_target );
+    interpolation.execute(field_source, field_target);
 
-    auto target = array::make_view<double, 1>( field_target );
+    auto target = array::make_view<double, 1>(field_target);
 
-    auto check = std::vector<double>{func( 00. ), func( 10. ), func( 20. ), func( 30. ), func( 40. ),
-                                     func( 50. ), func( 60. ), func( 70. ), func( 80. ), func( 90. )};
+    auto check = std::vector<double>{func(00.), func(10.), func(20.), func(30.), func(40.),
+                                     func(50.), func(60.), func(70.), func(80.), func(90.)};
 
-    for ( idx_t j = 0; j < pointcloud.size(); ++j ) {
+    for (idx_t j = 0; j < pointcloud.size(); ++j) {
         static double interpolation_tolerance = 1.e-4;
-        Log::info() << target( j ) << "  " << check[j] << std::endl;
-        EXPECT( eckit::types::is_approximately_equal( target( j ), check[j], interpolation_tolerance ) );
+        Log::info() << target(j) << "  " << check[j] << std::endl;
+        EXPECT(eckit::types::is_approximately_equal(target(j), check[j], interpolation_tolerance));
     }
 }
 
@@ -81,6 +73,6 @@ CASE( "test_interpolation_finite_element" ) {
 }  // namespace test
 }  // namespace atlas
 
-int main( int argc, char** argv ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
 }

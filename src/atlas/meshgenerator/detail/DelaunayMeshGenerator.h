@@ -26,20 +26,20 @@ namespace meshgenerator {
 class DelaunayMeshGenerator : public MeshGenerator::Implementation {
 public:
     DelaunayMeshGenerator();
-    DelaunayMeshGenerator( const eckit::Parametrisation& p );
+    DelaunayMeshGenerator(const eckit::Parametrisation& p);
 
     virtual ~DelaunayMeshGenerator() override;
 
     std::string type() const override { return "delaunay"; }
 
 private:  // methods
-    virtual void hash( eckit::Hash& ) const override;
+    virtual void hash(eckit::Hash&) const override;
 
     using MeshGenerator::Implementation::generate;
-    virtual void generate( const Grid&, const grid::Distribution&, Mesh& ) const override;
-    virtual void generate( const Grid&, Mesh& ) const override;
+    virtual void generate(const Grid&, const grid::Distribution&, Mesh&) const override;
+    virtual void generate(const Grid&, Mesh&) const override;
 
-    void createNodes( const Grid&, Mesh& ) const;
+    void createNodes(const Grid&, Mesh&) const;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -35,16 +35,16 @@ namespace detail {
  * @brief Missing values indicator base class
  */
 struct MissingValue : util::Object {
-    using Config                          = eckit::Parametrisation;
-    virtual ~MissingValue()               = default;
-    virtual bool isnan() const            = 0;
-    virtual void metadata( Field& ) const = 0;
+    using Config                        = eckit::Parametrisation;
+    virtual ~MissingValue()             = default;
+    virtual bool isnan() const          = 0;
+    virtual void metadata(Field&) const = 0;
 
-    virtual bool operator()( const double& ) const { ATLAS_NOTIMPLEMENTED; }
-    virtual bool operator()( const float& ) const { ATLAS_NOTIMPLEMENTED; }
-    virtual bool operator()( const int& ) const { ATLAS_NOTIMPLEMENTED; }
-    virtual bool operator()( const long& ) const { ATLAS_NOTIMPLEMENTED; }
-    virtual bool operator()( const unsigned long& ) const { ATLAS_NOTIMPLEMENTED; }
+    virtual bool operator()(const double&) const { ATLAS_NOTIMPLEMENTED; }
+    virtual bool operator()(const float&) const { ATLAS_NOTIMPLEMENTED; }
+    virtual bool operator()(const int&) const { ATLAS_NOTIMPLEMENTED; }
+    virtual bool operator()(const long&) const { ATLAS_NOTIMPLEMENTED; }
+    virtual bool operator()(const unsigned long&) const { ATLAS_NOTIMPLEMENTED; }
 };
 
 
@@ -55,10 +55,10 @@ struct MissingValueFactory : util::Factory<MissingValueFactory> {
     using Config = MissingValue::Config;
     using Factory::Factory;
     static std::string className() { return "MissingValueFactory"; }
-    static const MissingValue* build( const std::string&, const Config& );
+    static const MissingValue* build(const std::string&, const Config&);
 
 private:
-    virtual const MissingValue* make( const Config& ) = 0;
+    virtual const MissingValue* make(const Config&) = 0;
 };
 
 
@@ -68,7 +68,7 @@ private:
 template <class T>
 class MissingValueFactoryBuilder : public MissingValueFactory {
 private:
-    virtual const MissingValue* make( const Config& config ) override { return new T( config ); }
+    virtual const MissingValue* make(const Config& config) override { return new T(config); }
 
 public:
     using MissingValueFactory::MissingValueFactory;

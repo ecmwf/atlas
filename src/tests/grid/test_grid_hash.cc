@@ -27,25 +27,25 @@ namespace test {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-CASE( "test_global" ) {
+CASE("test_global") {
     auto grids = {
-        std::make_tuple( Grid( "O32" ), "e8d76a652ea937615276383aba43c912" ),
-        std::make_tuple( Grid( "O32", Domain() ), "e8d76a652ea937615276383aba43c912" ),
-        std::make_tuple( Grid( "O32", RectangularDomain( {0, 360}, {90, -90} ) ), "e8d76a652ea937615276383aba43c912" ),
-        std::make_tuple( Grid( "O32", ZonalBandDomain( {90, -90} ) ), "e8d76a652ea937615276383aba43c912" ),
+        std::make_tuple(Grid("O32"), "e8d76a652ea937615276383aba43c912"),
+        std::make_tuple(Grid("O32", Domain()), "e8d76a652ea937615276383aba43c912"),
+        std::make_tuple(Grid("O32", RectangularDomain({0, 360}, {90, -90})), "e8d76a652ea937615276383aba43c912"),
+        std::make_tuple(Grid("O32", ZonalBandDomain({90, -90})), "e8d76a652ea937615276383aba43c912"),
     };
 
     int c{0};
-    for ( auto entry : grids ) {
-        Grid grid        = std::get<0>( entry );
-        std::string hash = std::get<1>( entry );
-        SECTION( "grid: " + std::to_string( c ) ) {
+    for (auto entry : grids) {
+        Grid grid        = std::get<0>(entry);
+        std::string hash = std::get<1>(entry);
+        SECTION("grid: " + std::to_string(c)) {
             Hash h;
-            grid.hash( h );
-            if ( hash.empty() ) {
-                Log::info() << "grid " << c << "   hash = " << std::string( h ) << std::endl;
+            grid.hash(h);
+            if (hash.empty()) {
+                Log::info() << "grid " << c << "   hash = " << std::string(h) << std::endl;
             }
-            EXPECT( std::string( h ) == hash );
+            EXPECT(std::string(h) == hash);
         }
         c++;
     }
@@ -56,6 +56,6 @@ CASE( "test_global" ) {
 }  // namespace test
 }  // namespace atlas
 
-int main( int argc, char** argv ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
 }

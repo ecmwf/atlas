@@ -30,28 +30,28 @@ private:
     StopWatch stopwatch_;
 
 public:
-    BarriersState( BarriersState const& ) = delete;
-    void operator=( BarriersState const& ) = delete;
+    BarriersState(BarriersState const&) = delete;
+    void operator=(BarriersState const&) = delete;
     static BarriersState& instance() {
         static BarriersState state;
         return state;
     }
     operator bool() const { return barriers_; }
-    void set( bool state ) { barriers_ = state; }
+    void set(bool state) { barriers_ = state; }
     StopWatch& stopwatch() { return stopwatch_; }
 
     std::string report() const {
         std::stringstream out;
         double time = stopwatch_.elapsed();
-        if ( time ) {
+        if (time) {
             out << "Total time spent in mpi barriers due to load imbalance : " << time << "s" << std::endl;
         }
         return out.str();
     }
 };
 
-Barriers::Barriers( bool state ) : previous_state_( BarriersState::instance() ) {
-    BarriersState::instance().set( state );
+Barriers::Barriers(bool state): previous_state_(BarriersState::instance()) {
+    BarriersState::instance().set(state);
 }
 
 Barriers::~Barriers() {
@@ -59,15 +59,15 @@ Barriers::~Barriers() {
 }
 
 void Barriers::restore() {
-    BarriersState::instance().set( previous_state_ );
+    BarriersState::instance().set(previous_state_);
 }
 
 bool Barriers::state() {
-    return BarriersState::instance() && ( atlas_omp_get_num_threads() <= 1 );
+    return BarriersState::instance() && (atlas_omp_get_num_threads() <= 1);
 }
 
 void Barriers::execute() {
-    if ( state() ) {
+    if (state()) {
         BarriersState::instance().stopwatch().start();
         mpi::comm().barrier();
         BarriersState::instance().stopwatch().stop();

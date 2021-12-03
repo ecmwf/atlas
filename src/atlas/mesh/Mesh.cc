@@ -17,19 +17,19 @@ namespace atlas {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Mesh::Mesh() : Handle( new Implementation() ) {}
+Mesh::Mesh(): Handle(new Implementation()) {}
 
-Mesh::Mesh( const Grid& grid ) :
-    Handle( [&]() {
+Mesh::Mesh(const Grid& grid):
+    Handle([&]() {
         auto meshgenerator = MeshGenerator{grid.meshgenerator()};
-        auto mesh          = meshgenerator.generate( grid, grid::Partitioner( grid.partitioner() ) );
+        auto mesh          = meshgenerator.generate(grid, grid::Partitioner(grid.partitioner()));
         mesh.get()->attach();
         return mesh.get();
-    }() ) {
+    }()) {
     get()->detach();
 }
 
-Mesh::Mesh( eckit::Stream& stream ) : Handle( new Implementation( stream ) ) {}
+Mesh::Mesh(eckit::Stream& stream): Handle(new Implementation(stream)) {}
 
 //----------------------------------------------------------------------------------------------------------------------
 

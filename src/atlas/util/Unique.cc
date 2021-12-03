@@ -14,26 +14,26 @@
 namespace atlas {
 namespace util {
 
-uidx_t unique_lonlat( const double& lon, const double& lat, const PeriodicTransform& transform ) {
+uidx_t unique_lonlat(const double& lon, const double& lat, const PeriodicTransform& transform) {
     std::array<double, 2> lonlat{lon, lat};
-    transform( lonlat );
-    return unique_lonlat( lonlat );
+    transform(lonlat);
+    return unique_lonlat(lonlat);
 }
 
 
-uidx_t UniqueLonLat::operator()( const mesh::Connectivity::Row& elem_nodes, const PeriodicTransform& transform ) const {
+uidx_t UniqueLonLat::operator()(const mesh::Connectivity::Row& elem_nodes, const PeriodicTransform& transform) const {
     std::array<double, 2> centroid;
     centroid[LON] = 0.;
     centroid[LAT] = 0.;
     size_t npts   = elem_nodes.size();
-    for ( size_t jnode = 0; jnode < npts; ++jnode ) {
-        centroid[LON] += lonlat( elem_nodes( jnode ), LON );
-        centroid[LAT] += lonlat( elem_nodes( jnode ), LAT );
+    for (size_t jnode = 0; jnode < npts; ++jnode) {
+        centroid[LON] += lonlat(elem_nodes(jnode), LON);
+        centroid[LAT] += lonlat(elem_nodes(jnode), LAT);
     }
-    centroid[LON] /= static_cast<double>( npts );
-    centroid[LAT] /= static_cast<double>( npts );
-    transform( centroid );
-    return unique_lonlat( centroid );
+    centroid[LON] /= static_cast<double>(npts);
+    centroid[LAT] /= static_cast<double>(npts);
+    transform(centroid);
+    return unique_lonlat(centroid);
 }
 
 

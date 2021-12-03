@@ -36,11 +36,11 @@ public:
     using Spec           = atlas::util::Config;
 
 public:
-    static const Spacing* create( const eckit::Parametrisation& params );
+    static const Spacing* create(const eckit::Parametrisation& params);
 
     virtual std::string type() const = 0;
 
-    double operator[]( size_t i ) const { return x_[i]; }
+    double operator[](size_t i) const { return x_[i]; }
 
     size_t size() const { return x_.size(); }
 

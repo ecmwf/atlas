@@ -45,36 +45,36 @@ public:
    * \brief build Trans
    * \return TransImpl
    */
-    static const TransImpl* build( const FunctionSpace& gp, const FunctionSpace& sp,
-                                   const eckit::Configuration& = util::Config() );
-    static const TransImpl* build( const Grid&, int truncation, const eckit::Configuration& = util::Config() );
+    static const TransImpl* build(const FunctionSpace& gp, const FunctionSpace& sp,
+                                  const eckit::Configuration& = util::Config());
+    static const TransImpl* build(const Grid&, int truncation, const eckit::Configuration& = util::Config());
 
-    static const TransImpl* build( const Grid&, const Domain&, int truncation,
-                                   const eckit::Configuration& = util::Config() );
+    static const TransImpl* build(const Grid&, const Domain&, int truncation,
+                                  const eckit::Configuration& = util::Config());
 
-    static const TransImpl* build( const Cache&, const FunctionSpace& gp, const FunctionSpace& sp,
-                                   const eckit::Configuration& = util::Config() );
+    static const TransImpl* build(const Cache&, const FunctionSpace& gp, const FunctionSpace& sp,
+                                  const eckit::Configuration& = util::Config());
 
-    static const TransImpl* build( const Cache&, const Grid&, int truncation,
-                                   const eckit::Configuration& = util::Config() );
+    static const TransImpl* build(const Cache&, const Grid&, int truncation,
+                                  const eckit::Configuration& = util::Config());
 
-    static const TransImpl* build( const Cache&, const Grid&, const Domain&, int truncation,
-                                   const eckit::Configuration& = util::Config() );
+    static const TransImpl* build(const Cache&, const Grid&, const Domain&, int truncation,
+                                  const eckit::Configuration& = util::Config());
 
-    static void list( std::ostream& out );
+    static void list(std::ostream& out);
 
-    static bool has( const std::string& backend );
+    static bool has(const std::string& backend);
 
-    static void backend( const std::string& );
+    static void backend(const std::string&);
 
     static std::string backend();
 
     static const eckit::Configuration& config();
 
-    static void config( const eckit::Configuration& );
+    static void config(const eckit::Configuration&);
 
 public:
-    TransFactory( const std::string& name, const std::string& backend );
+    TransFactory(const std::string& name, const std::string& backend);
     virtual ~TransFactory();
 
     TransFactory() {}
@@ -83,12 +83,12 @@ private:
     std::string name_;
     std::string backend_;
 
-    virtual const TransImpl* make( const Cache&, const FunctionSpace& /*gp*/, const FunctionSpace& /*sp*/,
-                                   const eckit::Configuration& ) {
+    virtual const TransImpl* make(const Cache&, const FunctionSpace& /*gp*/, const FunctionSpace& /*sp*/,
+                                  const eckit::Configuration&) {
         return nullptr;
     }
-    virtual const TransImpl* make( const Cache&, const Grid& /*gp*/, const Domain&, int /*truncation*/,
-                                   const eckit::Configuration& ) {
+    virtual const TransImpl* make(const Cache&, const Grid& /*gp*/, const Domain&, int /*truncation*/,
+                                  const eckit::Configuration&) {
         return nullptr;
     }
 };
@@ -97,34 +97,33 @@ private:
 
 template <class T>
 class TransBuilderFunctionSpace : public TransFactory {
-    virtual const TransImpl* make( const Cache& cache, const FunctionSpace& gp, const FunctionSpace& sp,
-                                   const eckit::Configuration& config ) override {
-        return new T( cache, gp, sp, config );
+    virtual const TransImpl* make(const Cache& cache, const FunctionSpace& gp, const FunctionSpace& sp,
+                                  const eckit::Configuration& config) override {
+        return new T(cache, gp, sp, config);
     }
-    virtual const TransImpl* make( const Cache&, const Grid&, const Domain&, int,
-                                   const eckit::Configuration& ) override {
-        throw_Exception( "This function should not be called", Here() );
+    virtual const TransImpl* make(const Cache&, const Grid&, const Domain&, int, const eckit::Configuration&) override {
+        throw_Exception("This function should not be called", Here());
     }
 
 public:
-    TransBuilderFunctionSpace( const std::string& name, const std::string& backend ) : TransFactory( name, backend ) {}
+    TransBuilderFunctionSpace(const std::string& name, const std::string& backend): TransFactory(name, backend) {}
 
     TransBuilderFunctionSpace() {}
 };
 
 template <class T>
 class TransBuilderGrid : public TransFactory {
-    virtual const TransImpl* make( const Cache& cache, const Grid& grid, const Domain& domain, int truncation,
-                                   const eckit::Configuration& config ) override {
-        return new T( cache, grid, domain, truncation, config );
+    virtual const TransImpl* make(const Cache& cache, const Grid& grid, const Domain& domain, int truncation,
+                                  const eckit::Configuration& config) override {
+        return new T(cache, grid, domain, truncation, config);
     }
-    virtual const TransImpl* make( const Cache&, const FunctionSpace&, const FunctionSpace&,
-                                   const eckit::Configuration& ) override {
-        throw_Exception( "This function should not be called", Here() );
+    virtual const TransImpl* make(const Cache&, const FunctionSpace&, const FunctionSpace&,
+                                  const eckit::Configuration&) override {
+        throw_Exception("This function should not be called", Here());
     }
 
 public:
-    TransBuilderGrid( const std::string& name, const std::string& backend ) : TransFactory( name, backend ) {}
+    TransBuilderGrid(const std::string& name, const std::string& backend): TransFactory(name, backend) {}
 
     TransBuilderGrid() {}
 };

@@ -34,33 +34,34 @@ namespace {
 ///   - ATLAS_TRACE recording
 class FileHandle : public eckit::FileHandle {
 public:
-    FileHandle( const eckit::PathName& path, char openmode ) :
-        eckit::FileHandle( path, openmode == 'a' /*overwrite*/ ) {
-        ATLAS_TRACE( "FileHandle::open(" + eckit::FileHandle::path() + "," + openmode + ")" );
-        if ( openmode == 'r' ) {
+    FileHandle(const eckit::PathName& path, char openmode): eckit::FileHandle(path, openmode == 'a' /*overwrite*/) {
+        ATLAS_TRACE("FileHandle::open(" + eckit::FileHandle::path() + "," + openmode + ")");
+        if (openmode == 'r') {
             openForRead();
         }
-        else if ( openmode == 'w' || ( openmode == 'a' && not path.exists() ) ) {
-            openForWrite( 0 );
+        else if (openmode == 'w' || (openmode == 'a' && not path.exists())) {
+            openForWrite(0);
         }
-        else if ( openmode == 'a' ) {
-            openForWrite( path.size() );
-            seek( eckit::Offset( path.size() ) );
+        else if (openmode == 'a') {
+            openForWrite(path.size());
+            seek(eckit::Offset(path.size()));
         }
     }
 
     void close() override {
-        if ( not closed_ ) {
-            ATLAS_TRACE( "FileHandle::close(" + path() + ")" );
+        if (not closed_) {
+            ATLAS_TRACE("FileHandle::close(" + path() + ")");
             eckit::FileHandle::close();
             closed_ = true;
         }
     }
 
-    FileHandle( const eckit::PathName& path, Mode openmode ) :
-        FileHandle( path, openmode == Mode::read ? 'r' : openmode == Mode::write ? 'w' : 'a' ) {}
+    FileHandle(const eckit::PathName& path, Mode openmode):
+        FileHandle(path, openmode == Mode::read    ? 'r'
+                         : openmode == Mode::write ? 'w'
+                                                   : 'a') {}
 
-    FileHandle( const eckit::PathName& path, const std::string& openmode ) : FileHandle( path, openmode[0] ) {}
+    FileHandle(const eckit::PathName& path, const std::string& openmode): FileHandle(path, openmode[0]) {}
 
     ~FileHandle() override { close(); }
 
@@ -81,12 +82,12 @@ private:
 ///   - ATLAS_TRACE recording
 class PooledHandle : public eckit::PooledHandle {
 public:
-    PooledHandle( const eckit::PathName& path ) : eckit::PooledHandle( path ), path_( path ) {
-        ATLAS_TRACE( "PooledHandle::open(" + path_.baseName() + ")" );
+    PooledHandle(const eckit::PathName& path): eckit::PooledHandle(path), path_(path) {
+        ATLAS_TRACE("PooledHandle::open(" + path_.baseName() + ")");
         openForRead();
     }
     ~PooledHandle() override {
-        ATLAS_TRACE( "PooledHandle::close(" + path_.baseName() + ")" );
+        ATLAS_TRACE("PooledHandle::close(" + path_.baseName() + ")");
         close();
     }
     eckit::PathName path_;
@@ -96,40 +97,42 @@ public:
 
 //---------------------------------------------------------------------------------------------------------------------
 
-FileStream::FileStream( const eckit::PathName& path, char openmode ) :
-    Stream( [&path, &openmode]() -> eckit::DataHandle* {
+FileStream::FileStream(const eckit::PathName& path, char openmode):
+    Stream([&path, &openmode]() -> eckit::DataHandle* {
         eckit::DataHandle* datahandle;
-        if ( openmode == 'r' ) {
-            datahandle = new PooledHandle( path );
+        if (openmode == 'r') {
+            datahandle = new PooledHandle(path);
         }
         else {
-            datahandle = new FileHandle( path, openmode );
+            datahandle = new FileHandle(path, openmode);
         }
         return datahandle;
-    }() ) {
-    if ( openmode == 'r' ) {
+    }()) {
+    if (openmode == 'r') {
         // Keep the PooledHandle alive until the end of active session
-        Session::store( *this );
+        Session::store(*this);
     }
 }
 
-FileStream::FileStream( const eckit::PathName& path, Mode openmode ) :
-    FileStream( path, openmode == Mode::read ? 'r' : openmode == Mode::write ? 'w' : 'a' ) {}
+FileStream::FileStream(const eckit::PathName& path, Mode openmode):
+    FileStream(path, openmode == Mode::read    ? 'r'
+                     : openmode == Mode::write ? 'w'
+                                               : 'a') {}
 
-FileStream::FileStream( const eckit::PathName& path, const std::string& openmode ) : FileStream( path, openmode[0] ) {}
-
-//---------------------------------------------------------------------------------------------------------------------
-
-InputFileStream::InputFileStream( const eckit::PathName& path ) : FileStream( path, Mode::read ) {}
+FileStream::FileStream(const eckit::PathName& path, const std::string& openmode): FileStream(path, openmode[0]) {}
 
 //---------------------------------------------------------------------------------------------------------------------
 
-OutputFileStream::OutputFileStream( const eckit::PathName& path, Mode openmode ) : FileStream( path, openmode ) {}
+InputFileStream::InputFileStream(const eckit::PathName& path): FileStream(path, Mode::read) {}
 
-OutputFileStream::OutputFileStream( const eckit::PathName& path, const std::string& openmode ) :
-    FileStream( path, openmode ) {}
+//---------------------------------------------------------------------------------------------------------------------
 
-OutputFileStream::OutputFileStream( const eckit::PathName& path, char openmode ) : FileStream( path, openmode ) {}
+OutputFileStream::OutputFileStream(const eckit::PathName& path, Mode openmode): FileStream(path, openmode) {}
+
+OutputFileStream::OutputFileStream(const eckit::PathName& path, const std::string& openmode):
+    FileStream(path, openmode) {}
+
+OutputFileStream::OutputFileStream(const eckit::PathName& path, char openmode): FileStream(path, openmode) {}
 
 void OutputFileStream::close() {
     datahandle().close();

@@ -30,8 +30,8 @@ void finalise();
 void finalize();
 }  // namespace mpi
 
-void initialise( int argc, char** argv );
-void initialize( int argc, char** argv );
+void initialise(int argc, char** argv);
+void initialize(int argc, char** argv);
 void initialise();
 void initialize();
 void finalise();
@@ -45,20 +45,20 @@ public:
 
     virtual std::string version() const override;
 
-    virtual std::string gitsha1( unsigned int count ) const override;
-    std::string gitsha1() const { return gitsha1( 7 ); }
+    virtual std::string gitsha1(unsigned int count) const override;
+    std::string gitsha1() const { return gitsha1(7); }
 
-    void initialise( int argc, char** argv );
-    void initialise( const eckit::Parametrisation& );
+    void initialise(int argc, char** argv);
+    void initialise(const eckit::Parametrisation&);
     void initialise();
     void finalise();
 
     struct Information {
-        friend std::ostream& operator<<( std::ostream& s, const Information& i ) {
-            i.print( s );
+        friend std::ostream& operator<<(std::ostream& s, const Information& i) {
+            i.print(s);
             return s;
         }
-        void print( std::ostream& ) const;
+        void print(std::ostream&) const;
     };
     Information information() const { return Information(); }
 
@@ -74,14 +74,17 @@ public:
 
     Library();
 
-    void registerPlugin( eckit::system::Plugin& );
-    void deregisterPlugin( eckit::system::Plugin& );
+    void registerPlugin(eckit::system::Plugin&);
+    void deregisterPlugin(eckit::system::Plugin&);
     const std::vector<eckit::system::Plugin*>& plugins() { return plugins_; }
 
     std::string cachePath() const;
     std::string dataPath() const;
 
-    void registerDataPath( const std::string& );
+    std::string linalgDenseBackend() const;
+    std::string linalgSparseBackend() const;
+
+    void registerDataPath(const std::string&);
 
 protected:
     virtual const void* addr() const override;

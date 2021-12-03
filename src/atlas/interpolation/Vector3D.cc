@@ -17,7 +17,7 @@
 namespace atlas {
 namespace interpolation {
 
-void Vector3D::print( std::ostream& s ) const {
+void Vector3D::print(std::ostream& s) const {
     s << "[" << x() << "," << y() << "," << z() << "]";
 }
 

@@ -19,43 +19,41 @@ namespace io {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-RecordItem::URI::URI( const std::string& _uri ) {
+RecordItem::URI::URI(const std::string& _uri) {
     eckit::URI uri{_uri};
 
-    ATLAS_ASSERT( uri.scheme() == "file" );
-    ATLAS_ASSERT( not uri.query( "key" ).empty() );
+    ATLAS_ASSERT(uri.scheme() == "file");
+    ATLAS_ASSERT(not uri.query("key").empty());
 
     path   = uri.path();
     offset = 0;
-    if ( not uri.query( "offset" ).empty() ) {
-        offset = std::stoul( uri.query( "offset" ) );
+    if (not uri.query("offset").empty()) {
+        offset = std::stoul(uri.query("offset"));
     }
-    key = uri.query( "key" );
+    key = uri.query("key");
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
-RecordItem::URI::URI( const std::string& _path, uint64_t _offset, const std::string& _key ) :
-    path( _path ), offset( _offset ), key( _key ) {}
+RecordItem::URI::URI(const std::string& _path, uint64_t _offset, const std::string& _key):
+    path(_path), offset(_offset), key(_key) {}
 
 //---------------------------------------------------------------------------------------------------------------------
 
 std::string RecordItem::URI::str() const {
-    eckit::URI uri( "file", eckit::PathName( path ) );
-    uri.query( "offset", std::to_string( offset ) );
-    uri.query( "key", key );
+    eckit::URI uri("file", eckit::PathName(path));
+    uri.query("offset", std::to_string(offset));
+    uri.query("key", key);
     return uri.asRawString();
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
-RecordItem::RecordItem( RecordItem&& other ) :
-    metadata_( std::move( other.metadata_ ) ), data_( std::move( other.data_ ) ) {}
+RecordItem::RecordItem(RecordItem&& other): metadata_(std::move(other.metadata_)), data_(std::move(other.data_)) {}
 
 //---------------------------------------------------------------------------------------------------------------------
 
-RecordItem::RecordItem( Metadata&& metadata, Data&& data ) :
-    metadata_( new Metadata( metadata ) ), data_( std::move( data ) ) {}
+RecordItem::RecordItem(Metadata&& metadata, Data&& data): metadata_(new Metadata(metadata)), data_(std::move(data)) {}
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -71,14 +69,14 @@ const Metadata& RecordItem::metadata() const {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void RecordItem::metadata( const Metadata& m ) {
+void RecordItem::metadata(const Metadata& m) {
     *metadata_ = m;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void RecordItem::data( Data&& d ) {
-    data_ = std::move( d );
+void RecordItem::data(Data&& d) {
+    data_ = std::move(d);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -91,40 +89,40 @@ bool RecordItem::empty() const {
 
 void RecordItem::clear() {
     data_.clear();
-    metadata_.reset( new atlas::io::Metadata() );
+    metadata_.reset(new atlas::io::Metadata());
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
 void RecordItem::decompress() {
-    ATLAS_ASSERT( not empty() );
-    if ( metadata().data.compressed() ) {
-        data_.decompress( metadata().data.compression(), metadata().data.size() );
+    ATLAS_ASSERT(not empty());
+    if (metadata().data.compressed()) {
+        data_.decompress(metadata().data.compression(), metadata().data.size());
     }
-    metadata_->data.compressed( false );
+    metadata_->data.compressed(false);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
 void RecordItem::compress() {
-    ATLAS_ASSERT( not empty() );
-    if ( not metadata().data.compressed() && metadata().data.compression() != "none" ) {
-        data_.compress( metadata().data.compression() );
-        metadata_->data.compressed( true );
+    ATLAS_ASSERT(not empty());
+    if (not metadata().data.compressed() && metadata().data.compression() != "none") {
+        data_.compress(metadata().data.compression());
+        metadata_->data.compressed(true);
     }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
-size_t encode_metadata( const RecordItem& in, Metadata& metadata ) {
-    metadata.set( in.metadata() );
+size_t encode_metadata(const RecordItem& in, Metadata& metadata) {
+    metadata.set(in.metadata());
     return in.data().size();
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void encode_data( const RecordItem& in, Data& out ) {
-    out.assign( in.data() );
+void encode_data(const RecordItem& in, Data& out) {
+    out.assign(in.data());
 }
 
 //---------------------------------------------------------------------------------------------------------------------

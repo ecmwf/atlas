@@ -20,13 +20,13 @@ using Spec = util::Config;
 
 class SpecRegistry {
 public:
-    static void add( const std::string& id, Spec&& spec ) { registry().add( id, std::move( spec ) ); }
+    static void add(const std::string& id, Spec&& spec) { registry().add(id, std::move(spec)); }
 
-    static bool has( const std::string& id ) { return registry().has( id ); }
+    static bool has(const std::string& id) { return registry().has(id); }
 
-    static Spec get( const std::string& id ) { return registry().get( id ); }
+    static Spec get(const std::string& id) { return registry().get(id); }
 
-    static void list( std::ostream& out ) { return registry().list( out ); }
+    static void list(std::ostream& out) { return registry().list(out); }
 
     static std::vector<std::string> keys() { return registry().keys(); }
 

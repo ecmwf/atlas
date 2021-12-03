@@ -21,12 +21,12 @@ namespace detail {
 
 extern "C" {
 
-GmshImpl* atlas__output__Gmsh__create_pathname_mode( const char* pathname, const char* mode ) {
-    return new GmshImpl( std::string( pathname ), std::string( mode ) );
+GmshImpl* atlas__output__Gmsh__create_pathname_mode(const char* pathname, const char* mode) {
+    return new GmshImpl(std::string(pathname), std::string(mode));
 }
-GmshImpl* atlas__output__Gmsh__create_pathname_mode_config( const char* pathname, const char* mode,
-                                                            const eckit::Parametrisation* config ) {
-    return new GmshImpl( std::string( pathname ), std::string( mode ), *config );
+GmshImpl* atlas__output__Gmsh__create_pathname_mode_config(const char* pathname, const char* mode,
+                                                           const eckit::Parametrisation* config) {
+    return new GmshImpl(std::string(pathname), std::string(mode), *config);
 }
 
 }  // extern C

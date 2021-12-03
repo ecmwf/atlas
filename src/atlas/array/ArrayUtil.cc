@@ -16,10 +16,10 @@
 namespace atlas {
 namespace array {
 
-void throw_OutOfRange( const std::string& class_name, char idx_str, int idx, int max ) {
+void throw_OutOfRange(const std::string& class_name, char idx_str, int idx, int max) {
     std::ostringstream msg;
     msg << class_name << " index " << idx << " out of bounds: " << idx << " >= " << max;
-    throw_Exception( msg.str(), Here() );
+    throw_Exception(msg.str(), Here());
 }
 
 }  // namespace array

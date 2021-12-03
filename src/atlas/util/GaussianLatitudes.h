@@ -25,7 +25,7 @@ namespace util {
  * N number)
  * @param latitudes [out] latitudes in degrees
  */
-void gaussian_latitudes_npole_equator( const size_t N, double latitudes[] );
+void gaussian_latitudes_npole_equator(const size_t N, double latitudes[]);
 
 /**
  * @brief Compute gaussian latitudes and quadrature weights between North pole
@@ -35,7 +35,7 @@ void gaussian_latitudes_npole_equator( const size_t N, double latitudes[] );
  * @param latitudes [out] latitudes in degrees
  * @param weights   [out] quadrature weights
  */
-void gaussian_quadrature_npole_equator( const size_t N, double latitudes[], double weights[] );
+void gaussian_quadrature_npole_equator(const size_t N, double latitudes[], double weights[]);
 
 /**
  * @brief Compute gaussian latitudes between North pole and South pole
@@ -43,7 +43,7 @@ void gaussian_quadrature_npole_equator( const size_t N, double latitudes[], doub
  * N number)
  * @param latitudes [out] latitudes in degrees  (size 2*N)
  */
-void gaussian_latitudes_npole_spole( const size_t N, double latitudes[] );
+void gaussian_latitudes_npole_spole(const size_t N, double latitudes[]);
 
 /**
  * @brief Compute gaussian latitudes and quadrature weights between North pole
@@ -53,7 +53,7 @@ void gaussian_latitudes_npole_spole( const size_t N, double latitudes[] );
  * @param latitudes [out] latitudes in degrees (size 2*N)
  * @param weights   [out] quadrature weights   (size 2*N)
  */
-void gaussian_quadrature_npole_spole( const size_t N, double latitudes[], double weights[] );
+void gaussian_quadrature_npole_spole(const size_t N, double latitudes[], double weights[]);
 
 }  // namespace util
 }  // namespace atlas

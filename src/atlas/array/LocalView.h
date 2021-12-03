@@ -67,14 +67,13 @@ class LocalView {
     template <typename T>
     using is_non_const_value_type = typename std::is_same<T, typename std::remove_const<Value>::type>;
 
-#define ENABLE_IF_NON_CONST                                                                               \
-    template <bool EnableBool                                                                     = true, \
-              typename std::enable_if<( !std::is_const<Value>::value && EnableBool ), int>::type* = nullptr>
+#define ENABLE_IF_NON_CONST                                                                             \
+    template <bool EnableBool                                                                   = true, \
+              typename std::enable_if<(!std::is_const<Value>::value && EnableBool), int>::type* = nullptr>
 
-#define ENABLE_IF_CONST_WITH_NON_CONST( T )                                                                 \
-    template <typename T,                                                                                   \
-              typename std::enable_if<( std::is_const<Value>::value && is_non_const_value_type<T>::value ), \
-                                      int>::type* = nullptr>
+#define ENABLE_IF_CONST_WITH_NON_CONST(T)                                                                             \
+    template <typename T, typename std::enable_if<(std::is_const<Value>::value && is_non_const_value_type<T>::value), \
+                                                  int>::type* = nullptr>
 
 
 public:
@@ -101,19 +100,19 @@ private:
 public:
     // -- Constructors
 
-    ENABLE_IF_CONST_WITH_NON_CONST( value_type )
-    LocalView( value_type* data, const idx_t shape[], const idx_t strides[] ) : data_( data ) {
+    ENABLE_IF_CONST_WITH_NON_CONST(value_type)
+    LocalView(value_type* data, const idx_t shape[], const idx_t strides[]): data_(data) {
         size_ = 1;
-        for ( idx_t j = 0; j < Rank; ++j ) {
+        for (idx_t j = 0; j < Rank; ++j) {
             shape_[j]   = shape[j];
             strides_[j] = strides[j];
             size_ *= shape_[j];
         }
     }
 
-    LocalView( value_type* data, const idx_t shape[], const idx_t strides[] ) : data_( data ) {
+    LocalView(value_type* data, const idx_t shape[], const idx_t strides[]): data_(data) {
         size_ = 1;
-        for ( idx_t j = 0; j < Rank; ++j ) {
+        for (idx_t j = 0; j < Rank; ++j) {
             shape_[j]   = shape[j];
             strides_[j] = strides[j];
             size_ *= shape_[j];
@@ -121,19 +120,19 @@ public:
     }
 
 
-    ENABLE_IF_CONST_WITH_NON_CONST( value_type )
-    LocalView( value_type* data, const idx_t shape[] ) : data_( data ) {
+    ENABLE_IF_CONST_WITH_NON_CONST(value_type)
+    LocalView(value_type* data, const idx_t shape[]): data_(data) {
         size_ = 1;
-        for ( int j = Rank - 1; j >= 0; --j ) {
+        for (int j = Rank - 1; j >= 0; --j) {
             shape_[j]   = shape[j];
             strides_[j] = size_;
             size_ *= shape_[j];
         }
     }
 
-    LocalView( value_type* data, const idx_t shape[] ) : data_( data ) {
+    LocalView(value_type* data, const idx_t shape[]): data_(data) {
         size_ = 1;
-        for ( int j = Rank - 1; j >= 0; --j ) {
+        for (int j = Rank - 1; j >= 0; --j) {
             shape_[j]   = shape[j];
             strides_[j] = size_;
             size_ *= shape_[j];
@@ -143,66 +142,66 @@ public:
 
     template <typename value_type, typename = typename std::enable_if<std::is_const<Value>::value &&
                                                                       !std::is_const<value_type>::value>::type>
-    LocalView( value_type* data, const ArrayShape& shape ) : data_( data ) {
+    LocalView(value_type* data, const ArrayShape& shape): data_(data) {
         size_ = 1;
-        for ( int j = Rank - 1; j >= 0; --j ) {
+        for (int j = Rank - 1; j >= 0; --j) {
             shape_[j]   = shape[j];
             strides_[j] = size_;
             size_ *= shape_[j];
         }
     }
 
-    LocalView( value_type* data, const ArrayShape& shape ) : data_( data ) {
+    LocalView(value_type* data, const ArrayShape& shape): data_(data) {
         size_ = 1;
-        for ( int j = Rank - 1; j >= 0; --j ) {
+        for (int j = Rank - 1; j >= 0; --j) {
             shape_[j]   = shape[j];
             strides_[j] = size_;
             size_ *= shape_[j];
         }
     }
 
-    ENABLE_IF_CONST_WITH_NON_CONST( value_type )
+    ENABLE_IF_CONST_WITH_NON_CONST(value_type)
     operator const LocalView<value_type, Rank>&() const {
-        static_assert( std::is_const<Value>::value, "must be const" );
-        static_assert( !std::is_const<value_type>::value, "must be non-const" );
-        return (const LocalView<value_type, Rank>&)( *this );
+        static_assert(std::is_const<Value>::value, "must be const");
+        static_assert(!std::is_const<value_type>::value, "must be non-const");
+        return (const LocalView<value_type, Rank>&)(*this);
     }
 
     // -- Access methods
 
     template <typename... Ints>
-    value_type& operator()( Ints... idx ) {
-        check_bounds( idx... );
-        return data_[index( idx... )];
+    value_type& operator()(Ints... idx) {
+        check_bounds(idx...);
+        return data_[index(idx...)];
     }
 
     template <typename... Ints>
-    const value_type& operator()( Ints... idx ) const {
-        check_bounds( idx... );
-        return data_[index( idx... )];
+    const value_type& operator()(Ints... idx) const {
+        check_bounds(idx...);
+        return data_[index(idx...)];
     }
 
     template <typename Int, bool EnableBool = true>
-    typename std::enable_if<( Rank == 1 && EnableBool ), const value_type&>::type operator[]( Int idx ) const {
-        check_bounds( idx );
+    typename std::enable_if<(Rank == 1 && EnableBool), const value_type&>::type operator[](Int idx) const {
+        check_bounds(idx);
         return data_[idx];
     }
 
     template <typename Int, bool EnableBool = true>
-    typename std::enable_if<( Rank == 1 && EnableBool ), value_type&>::type operator[]( Int idx ) {
-        check_bounds( idx );
+    typename std::enable_if<(Rank == 1 && EnableBool), value_type&>::type operator[](Int idx) {
+        check_bounds(idx);
         return data_[idx];
     }
 
     idx_t size() const { return size_; }
 
     template <typename Int>
-    idx_t shape( Int idx ) const {
+    idx_t shape(Int idx) const {
         return shape_[idx];
     }
 
     template <typename Int>
-    idx_t stride( Int idx ) const {
+    idx_t stride(Int idx) const {
         return strides_[idx];
     }
 
@@ -214,27 +213,27 @@ public:
 
     value_type* data() { return data_; }
 
-    bool contiguous() const { return ( size_ == shape_[0] * strides_[0] ? true : false ); }
+    bool contiguous() const { return (size_ == shape_[0] * strides_[0] ? true : false); }
 
     ENABLE_IF_NON_CONST
-    void assign( const value_type& value );
+    void assign(const value_type& value);
 
-    void dump( std::ostream& os ) const;
+    void dump(std::ostream& os) const;
 
     static constexpr idx_t rank() { return Rank; }
 
     template <typename... Args>
-    typename slice_t<Args...>::type slice( Args... args ) {
-        return slicer_t( *this ).apply( args... );
+    typename slice_t<Args...>::type slice(Args... args) {
+        return slicer_t(*this).apply(args...);
     }
 
     template <typename... Args>
-    typename const_slice_t<Args...>::type slice( Args... args ) const {
-        return const_slicer_t( *this ).apply( args... );
+    typename const_slice_t<Args...>::type slice(Args... args) const {
+        return const_slicer_t(*this).apply(args...);
     }
 
-    friend std::ostream& operator<<( std::ostream& out, const LocalView& x ) {
-        x.dump( out );
+    friend std::ostream& operator<<(std::ostream& out, const LocalView& x) {
+        x.dump(out);
         return out;
     }
 
@@ -242,49 +241,49 @@ private:
     // -- Private methods
 
     template <int Dim, typename Int, typename... Ints>
-    constexpr idx_t index_part( Int idx, Ints... next_idx ) const {
-        return idx * strides_[Dim] + index_part<Dim + 1>( next_idx... );
+    constexpr idx_t index_part(Int idx, Ints... next_idx) const {
+        return idx * strides_[Dim] + index_part<Dim + 1>(next_idx...);
     }
 
     template <int Dim, typename Int>
-    constexpr idx_t index_part( Int last_idx ) const {
+    constexpr idx_t index_part(Int last_idx) const {
         return last_idx * strides_[Dim];
     }
 
     template <typename... Ints>
-    constexpr idx_t index( Ints... idx ) const {
-        return index_part<0>( idx... );
+    constexpr idx_t index(Ints... idx) const {
+        return index_part<0>(idx...);
     }
 
 #if ATLAS_ARRAYVIEW_BOUNDS_CHECKING
     template <typename... Ints>
-    void check_bounds( Ints... idx ) const {
-        static_assert( sizeof...( idx ) == Rank, "Expected number of indices is different from rank of array" );
-        return check_bounds_part<0>( idx... );
+    void check_bounds(Ints... idx) const {
+        static_assert(sizeof...(idx) == Rank, "Expected number of indices is different from rank of array");
+        return check_bounds_part<0>(idx...);
     }
 #else
     template <typename... Ints>
-    void check_bounds( Ints... ) const {}
+    void check_bounds(Ints...) const {}
 #endif
 
     template <typename... Ints>
-    void check_bounds_force( Ints... idx ) const {
-        static_assert( sizeof...( idx ) == Rank, "Expected number of indices is different from rank of array" );
-        return check_bounds_part<0>( idx... );
+    void check_bounds_force(Ints... idx) const {
+        static_assert(sizeof...(idx) == Rank, "Expected number of indices is different from rank of array");
+        return check_bounds_part<0>(idx...);
     }
 
     template <int Dim, typename Int, typename... Ints>
-    void check_bounds_part( Int idx, Ints... next_idx ) const {
-        if ( idx_t( idx ) >= shape_[Dim] ) {
-            throw_OutOfRange( "LocalView", array_dim<Dim>(), idx, shape_[Dim] );
+    void check_bounds_part(Int idx, Ints... next_idx) const {
+        if (idx_t(idx) >= shape_[Dim]) {
+            throw_OutOfRange("LocalView", array_dim<Dim>(), idx, shape_[Dim]);
         }
-        check_bounds_part<Dim + 1>( next_idx... );
+        check_bounds_part<Dim + 1>(next_idx...);
     }
 
     template <int Dim, typename Int>
-    void check_bounds_part( Int last_idx ) const {
-        if ( idx_t( last_idx ) >= shape_[Dim] ) {
-            throw_OutOfRange( "LocalView", array_dim<Dim>(), last_idx, shape_[Dim] );
+    void check_bounds_part(Int last_idx) const {
+        if (idx_t(last_idx) >= shape_[Dim]) {
+            throw_OutOfRange("LocalView", array_dim<Dim>(), last_idx, shape_[Dim]);
         }
     }
 

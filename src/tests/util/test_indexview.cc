@@ -31,9 +31,9 @@ namespace test {
 //-----------------------------------------------------------------------------
 
 template <typename Iterator>
-std::string pos( Iterator& it ) {
+std::string pos(Iterator& it) {
     std::stringstream ss;
-    for ( size_t i = 0; i < it.pos().size(); ++i ) {
+    for (size_t i = 0; i < it.pos().size(); ++i) {
         ss << it.pos()[i] << " ";
     }
     return ss.str();
@@ -102,14 +102,14 @@ std::endl;
 */
 
 #if ATLAS_HAVE_GRIDTOOLS_STORAGE
-CASE( "test_indexview_1d" ) {
+CASE("test_indexview_1d") {
     // array::ArrayT<int> array( 10 );
 
-    Array* array                      = Array::create<double>( 10 );
-    array::ArrayView<double, 1> aview = make_host_view<double, 1>( *array );
+    Array* array                      = Array::create<double>(10);
+    array::ArrayView<double, 1> aview = make_host_view<double, 1>(*array);
 
-    aview( 0 ) = 1 IN_FORTRAN;
-    EXPECT( aview( 0 ) == 1 IN_FORTRAN );
+    aview(0) = 1 IN_FORTRAN;
+    EXPECT(aview(0) == 1 IN_FORTRAN);
 
     /*
 array::ArrayView<int,1>       aview(array);
@@ -151,44 +151,44 @@ EXPECT( val == 5 );
     delete array;
 }
 #else
-CASE( "test_indexview_1d" ) {
-    Array* array = Array::create<int>( 10 );
+CASE("test_indexview_1d") {
+    Array* array = Array::create<int>(10);
 
-    array::ArrayView<int, 1> aview      = array::make_view<int, 1>( *array );
-    IndexView<int, 1> iview             = make_indexview<int, 1>( *array );
-    const IndexView<int, 1> const_iview = make_indexview<int, 1>( *array );
+    array::ArrayView<int, 1> aview      = array::make_view<int, 1>(*array);
+    IndexView<int, 1> iview             = make_indexview<int, 1>(*array);
+    const IndexView<int, 1> const_iview = make_indexview<int, 1>(*array);
 
-    aview( 0 ) = 1 IN_FORTRAN;
-    EXPECT( aview( 0 ) == 1 IN_FORTRAN );
-    EXPECT( const_iview( 0 ) == 0 );
-    EXPECT( int( iview( 0 ) ) == 0 );
+    aview(0) = 1 IN_FORTRAN;
+    EXPECT(aview(0) == 1 IN_FORTRAN);
+    EXPECT(const_iview(0) == 0);
+    EXPECT(int(iview(0)) == 0);
 
-    iview( 2 ) = 2;
-    EXPECT( aview( 2 ) == 3 IN_FORTRAN );
-    EXPECT( const_iview( 2 ) == 2 );
-    EXPECT( int( iview( 2 ) ) == 2 );
+    iview(2) = 2;
+    EXPECT(aview(2) == 3 IN_FORTRAN);
+    EXPECT(const_iview(2) == 2);
+    EXPECT(int(iview(2)) == 2);
 
-    iview( 3 ) = iview( 2 );
-    EXPECT( aview( 3 ) == 3 IN_FORTRAN );
-    EXPECT( const_iview( 3 ) == 2 );
-    EXPECT( int( iview( 3 ) ) == 2 );
+    iview(3) = iview(2);
+    EXPECT(aview(3) == 3 IN_FORTRAN);
+    EXPECT(const_iview(3) == 2);
+    EXPECT(int(iview(3)) == 2);
 
-    iview( 3 ) = iview( 2 ) + 1;
-    EXPECT( aview( 3 ) == 4 IN_FORTRAN );
-    EXPECT( const_iview( 3 ) == 3 );
-    EXPECT( int( iview( 3 ) ) == 3 );
+    iview(3) = iview(2) + 1;
+    EXPECT(aview(3) == 4 IN_FORTRAN);
+    EXPECT(const_iview(3) == 3);
+    EXPECT(int(iview(3)) == 3);
 
-    iview( 4 ) = iview( 3 );
-    ++iview( 4 );
-    EXPECT( aview( 4 ) == 5 IN_FORTRAN );
-    EXPECT( const_iview( 4 ) == 4 );
-    EXPECT( int( iview( 4 ) ) == 4 );
+    iview(4) = iview(3);
+    ++iview(4);
+    EXPECT(aview(4) == 5 IN_FORTRAN);
+    EXPECT(const_iview(4) == 4);
+    EXPECT(int(iview(4)) == 4);
 
-    int val = iview( 4 );
-    EXPECT( val == 4 );
+    int val = iview(4);
+    EXPECT(val == 4);
 
-    val = iview( 4 ) + 1;
-    EXPECT( val == 5 );
+    val = iview(4) + 1;
+    EXPECT(val == 5);
     delete array;
 }
 #endif
@@ -287,6 +287,6 @@ CASE( "test_indexview_3d" )
 }  // namespace test
 }  // namespace atlas
 
-int main( int argc, char** argv ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
 }

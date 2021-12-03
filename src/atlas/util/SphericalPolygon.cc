@@ -24,18 +24,18 @@ namespace util {
 
 //------------------------------------------------------------------------------------------------------
 
-SphericalPolygon::SphericalPolygon( const PartitionPolygon& partition_polygon ) :
-    PolygonCoordinates( partition_polygon.xy(), false ) {}
+SphericalPolygon::SphericalPolygon(const PartitionPolygon& partition_polygon):
+    PolygonCoordinates(partition_polygon.xy(), false) {}
 
-SphericalPolygon::SphericalPolygon( const std::vector<PointLonLat>& points ) : PolygonCoordinates( points ) {}
+SphericalPolygon::SphericalPolygon(const std::vector<PointLonLat>& points): PolygonCoordinates(points) {}
 
-bool SphericalPolygon::contains( const Point2& P ) const {
+bool SphericalPolygon::contains(const Point2& P) const {
     using eckit::types::is_approximately_equal;
 
-    ATLAS_ASSERT( coordinates_.size() >= 2 );
+    ATLAS_ASSERT(coordinates_.size() >= 2);
 
     // check first bounding box
-    if ( coordinatesMax_[LON] <= P[LON] || P[LON] < coordinatesMin_[LON] ) {
+    if (coordinatesMax_[LON] <= P[LON] || P[LON] < coordinatesMin_[LON]) {
         return false;
     }
 
@@ -43,26 +43,25 @@ bool SphericalPolygon::contains( const Point2& P ) const {
     int wn = 0;
 
     // loop on polygon edges
-    for ( size_t i = 1; i < coordinates_.size(); ++i ) {
+    for (size_t i = 1; i < coordinates_.size(); ++i) {
         const Point2& A = coordinates_[i - 1];
         const Point2& B = coordinates_[i];
 
         // test if P is on/above/below of a great circle containing A,B
-        const bool APB = ( A[LON] <= P[LON] && P[LON] < B[LON] );
-        const bool BPA = ( B[LON] <= P[LON] && P[LON] < A[LON] );
+        const bool APB = (A[LON] <= P[LON] && P[LON] < B[LON]);
+        const bool BPA = (B[LON] <= P[LON] && P[LON] < A[LON]);
 
-        if ( APB != BPA ) {
-            const double lat =
-                is_approximately_equal( A[LAT], B[LAT] ) && is_approximately_equal( std::abs( A[LAT] ), 90. )
-                    ? A[LAT]
-                    : util::Earth::greatCircleLatitudeGivenLongitude( A, B, P[LON] );
+        if (APB != BPA) {
+            const double lat = is_approximately_equal(A[LAT], B[LAT]) && is_approximately_equal(std::abs(A[LAT]), 90.)
+                                   ? A[LAT]
+                                   : util::Earth::greatCircleLatitudeGivenLongitude(A, B, P[LON]);
 
-            ATLAS_ASSERT( !std::isnan( lat ) );
-            if ( is_approximately_equal( P[LAT], lat ) ) {
+            ATLAS_ASSERT(!std::isnan(lat));
+            if (is_approximately_equal(P[LAT], lat)) {
                 return true;
             }
 
-            wn += ( P[LAT] > lat ? -1 : 1 ) * ( APB ? -1 : 1 );
+            wn += (P[LAT] > lat ? -1 : 1) * (APB ? -1 : 1);
         }
     }
 

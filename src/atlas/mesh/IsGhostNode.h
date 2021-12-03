@@ -21,10 +21,10 @@ namespace mesh {
 
 class IsGhostNode {
 public:
-    IsGhostNode( const mesh::Nodes& nodes ) :
-        flags_( array::make_view<int, 1>( nodes.flags() ) ), ghost_( array::make_view<int, 1>( nodes.ghost() ) ) {}
+    IsGhostNode(const mesh::Nodes& nodes):
+        flags_(array::make_view<int, 1>(nodes.flags())), ghost_(array::make_view<int, 1>(nodes.ghost())) {}
 
-    bool operator()( idx_t idx ) const { return Nodes::Topology::check( flags_( idx ), Nodes::Topology::GHOST ); }
+    bool operator()(idx_t idx) const { return Nodes::Topology::check(flags_(idx), Nodes::Topology::GHOST); }
 
 private:
     array::ArrayView<const int, 1> flags_;
