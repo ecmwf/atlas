@@ -39,85 +39,85 @@ namespace io {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-inline Link link( const std::string& uri ) {
+inline Link link(const std::string& uri) {
     return Link{uri};
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
 template <typename T, disable_if_interpretable_t<T, ArrayReference> = 0>
-Reference<T> ref( const T& x, tag::enable_static_assert = tag::enable_static_assert() ) {
-    static_assert( is_encodable<T>(),
-                   "in atlas::io::ref(const Value&)"
-                   "\n"
-                   "\n     Static assertion failed"
-                   "\n     -----------------------"
-                   "\n"
-                   "\n     Cannot encode values of referenced type."
-                   "\n"
-                   "\n     Implement the functions"
-                   "\n"
-                   "\n         void encode_data(const Value& in, atlas::io::Data& out);"
-                   "\n         size_t encode_metadata(const Value& value, atlas::io::Metadata& metadata);"
-                   "\n"
-                   "\n     or alternatively a conversion function to atlas::io::types::ArrayView"
-                   "\n"
-                   "\n         void interprete(const Value& in, atlas::io::types::ArrayView& out)"
-                   "\n"
-                   "\n     Rules of argument-dependent-lookup apply."
-                   "\n     --> Functions need to be declared in namespace of any of the arguments."
-                   "\n"
-                   "\n     Note, turn this into a runtime exception by calling this function instead:"
-                   "\n"
-                   "\n        atlas::io::ref(const T&, atlas::io::no_static_assert() )"
-                   "\n" );
-    return Reference<T>( x );
+Reference<T> ref(const T& x, tag::enable_static_assert = tag::enable_static_assert()) {
+    static_assert(is_encodable<T>(),
+                  "in atlas::io::ref(const Value&)"
+                  "\n"
+                  "\n     Static assertion failed"
+                  "\n     -----------------------"
+                  "\n"
+                  "\n     Cannot encode values of referenced type."
+                  "\n"
+                  "\n     Implement the functions"
+                  "\n"
+                  "\n         void encode_data(const Value& in, atlas::io::Data& out);"
+                  "\n         size_t encode_metadata(const Value& value, atlas::io::Metadata& metadata);"
+                  "\n"
+                  "\n     or alternatively a conversion function to atlas::io::types::ArrayView"
+                  "\n"
+                  "\n         void interprete(const Value& in, atlas::io::types::ArrayView& out)"
+                  "\n"
+                  "\n     Rules of argument-dependent-lookup apply."
+                  "\n     --> Functions need to be declared in namespace of any of the arguments."
+                  "\n"
+                  "\n     Note, turn this into a runtime exception by calling this function instead:"
+                  "\n"
+                  "\n        atlas::io::ref(const T&, atlas::io::no_static_assert() )"
+                  "\n");
+    return Reference<T>(x);
 }
 
 
 template <typename T, disable_if_interpretable_t<T, ArrayReference> = 0>
-Reference<T> ref( const T& x, tag::disable_static_assert ) {
-    if ( not is_encodable<T>() ) {
-        throw NotEncodable( x );
+Reference<T> ref(const T& x, tag::disable_static_assert) {
+    if (not is_encodable<T>()) {
+        throw NotEncodable(x);
     }
-    return Reference<T>( x );
+    return Reference<T>(x);
 }
 
 
 template <typename T, enable_if_interpretable_t<T, ArrayReference> = 0>
-ArrayReference ref( const T& x, tag::enable_static_assert = tag::enable_static_assert() ) {
+ArrayReference ref(const T& x, tag::enable_static_assert = tag::enable_static_assert()) {
     ArrayReference w;
-    interprete( x, w );
+    interprete(x, w);
     return w;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
 template <typename T>
-RecordItem copy( T&& value, tag::disable_static_assert ) {
-    return RecordItem( std::forward<T>( value ), tag::disable_static_assert() );
+RecordItem copy(T&& value, tag::disable_static_assert) {
+    return RecordItem(std::forward<T>(value), tag::disable_static_assert());
 }
 
 template <typename T>
-RecordItem copy( T&& value ) {
-    return RecordItem( std::forward<T>( value ) );
+RecordItem copy(T&& value) {
+    return RecordItem(std::forward<T>(value));
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
 template <typename T>
-void encode( const T& in, atlas::io::Metadata& metadata, atlas::io::Data& data,
-             tag::enable_static_assert = tag::enable_static_assert() ) {
-    auto referenced = ref( in, tag::enable_static_assert() );
-    sfinae::encode_metadata( referenced, metadata );
-    sfinae::encode_data( referenced, data );
+void encode(const T& in, atlas::io::Metadata& metadata, atlas::io::Data& data,
+            tag::enable_static_assert = tag::enable_static_assert()) {
+    auto referenced = ref(in, tag::enable_static_assert());
+    sfinae::encode_metadata(referenced, metadata);
+    sfinae::encode_data(referenced, data);
 }
 
 template <typename T>
-void encode( const T& in, atlas::io::Metadata& metadata, atlas::io::Data& data, tag::disable_static_assert ) {
-    auto referenced = ref( in, tag::disable_static_assert() );
-    sfinae::encode_metadata( referenced, metadata );
-    sfinae::encode_data( referenced, data );
+void encode(const T& in, atlas::io::Metadata& metadata, atlas::io::Data& data, tag::disable_static_assert) {
+    auto referenced = ref(in, tag::disable_static_assert());
+    sfinae::encode_metadata(referenced, metadata);
+    sfinae::encode_data(referenced, data);
 }
 
 //---------------------------------------------------------------------------------------------------------------------

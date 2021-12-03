@@ -38,8 +38,8 @@ public:
     /// \param[in]  source  Function space of source fields.
     /// \param[in]  target  Function space of target fields.
     /// \param[in]  config  Config to specify "type" of redistribution.
-    Redistribution( const FunctionSpace& source, const FunctionSpace& target,
-                    const util::Config& config = util::Config() );
+    Redistribution(const FunctionSpace& source, const FunctionSpace& target,
+                   const util::Config& config = util::Config());
 
     /// \brief    Maps source field to target field.
     ///
@@ -49,7 +49,7 @@ public:
     ///
     /// \param[in]  source  input field matching sourceFunctionSpace.
     /// \param[out] target  output field matching targetFunctionSpace.
-    void execute( const Field& source, Field& target ) const;
+    void execute(const Field& source, Field& target) const;
 
     /// \brief    Redistributes source field set to target fields set.
     ///
@@ -58,7 +58,7 @@ public:
     ///
     /// \param[in]  source  input field set.
     /// \param[out] target  output field set.
-    void execute( const FieldSet& sourceFieldSet, FieldSet& targetFieldSet ) const;
+    void execute(const FieldSet& sourceFieldSet, FieldSet& targetFieldSet) const;
 
     /// \brief  Get const reference to source function space.
     const FunctionSpace& source() const;

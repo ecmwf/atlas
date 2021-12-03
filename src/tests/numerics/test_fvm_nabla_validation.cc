@@ -86,109 +86,108 @@ class SolidBodyRotation {
     double cos_beta;
 
 public:
-    SolidBodyRotation( const double _radius, const double _beta ) : radius{_radius}, beta{_beta} {
-        sin_beta = std::sin( beta );
-        cos_beta = std::cos( beta );
+    SolidBodyRotation(const double _radius, const double _beta): radius{_radius}, beta{_beta} {
+        sin_beta = std::sin(beta);
+        cos_beta = std::cos(beta);
     }
-    void wind( const double x, const double y, double& u, double& v ) {
-        double cos_x = std::cos( x );
-        double cos_y = std::cos( y );
-        double sin_x = std::sin( x );
-        double sin_y = std::sin( y );
+    void wind(const double x, const double y, double& u, double& v) {
+        double cos_x = std::cos(x);
+        double cos_y = std::cos(y);
+        double sin_x = std::sin(x);
+        double sin_y = std::sin(y);
         u            = cos_y * cos_beta + cos_x * sin_y * sin_beta;
         v            = -sin_x * sin_beta;
     }
 
-    void vordiv( const double x, const double y, double& vor, double& div ) {
-        double cos_x = std::cos( x );
-        double cos_y = std::cos( y );
-        double sin_x = std::sin( x );
-        double sin_y = std::sin( y );
+    void vordiv(const double x, const double y, double& vor, double& div) {
+        double cos_x = std::cos(x);
+        double cos_y = std::cos(y);
+        double sin_x = std::sin(x);
+        double sin_y = std::sin(y);
 
         // Divergence = 1./(R*cos(y)) * ( d/dx( u ) + d/dy( v * cos(y) ) )
         // Vorticity  = 1./(R*cos(y)) * ( d/dx( v ) - d/dy( u * cos(y) ) )
         double ddx_u      = -sin_x * sin_y * sin_beta;
-        double ddy_cosy_v = ( -sin_x * sin_beta ) * ( -sin_y );
+        double ddy_cosy_v = (-sin_x * sin_beta) * (-sin_y);
         double ddx_v      = -cos_x * sin_beta;
-        double ddy_cosy_u = 2 * cos_y * ( -sin_y ) * cos_beta + ( -sin_y ) * cos_x * sin_y * sin_beta +
-                            cos_y * cos_x * cos_y * sin_beta;
+        double ddy_cosy_u =
+            2 * cos_y * (-sin_y) * cos_beta + (-sin_y) * cos_x * sin_y * sin_beta + cos_y * cos_x * cos_y * sin_beta;
 
-        double metric = 1. / ( radius * cos_y );
+        double metric = 1. / (radius * cos_y);
 
-        div = metric * ( ddx_u + ddy_cosy_v );
-        vor = metric * ( ddx_v - ddy_cosy_u );
+        div = metric * (ddx_u + ddy_cosy_v);
+        vor = metric * (ddx_v - ddy_cosy_u);
     }
 
-    void wind_magnitude_squared( const double x, const double y, double& f ) {
+    void wind_magnitude_squared(const double x, const double y, double& f) {
         double u, v;
-        wind( x, y, u, v );
+        wind(x, y, u, v);
         f = u * u + v * v;
     }
 
-    void wind_magnitude_squared_gradient( const double x, const double y, double& dfdx, double& dfdy ) {
-        double cos_x = std::cos( x );
-        double cos_y = std::cos( y );
-        double sin_x = std::sin( x );
-        double sin_y = std::sin( y );
+    void wind_magnitude_squared_gradient(const double x, const double y, double& dfdx, double& dfdy) {
+        double cos_x = std::cos(x);
+        double cos_y = std::cos(y);
+        double sin_x = std::sin(x);
+        double sin_y = std::sin(y);
 
         double metric_y = 1. / radius;
         double metric_x = metric_y / cos_y;
 
         double u    = cos_y * cos_beta + cos_x * sin_y * sin_beta;
         double v    = -sin_x * sin_beta;
-        double dudx = metric_x * ( -sin_x * sin_y * sin_beta );
-        double dudy = metric_y * ( -sin_y * cos_beta + cos_x * cos_y * sin_beta );
-        double dvdx = metric_x * ( -cos_x * sin_beta );
-        double dvdy = metric_y * ( 0. );
+        double dudx = metric_x * (-sin_x * sin_y * sin_beta);
+        double dudy = metric_y * (-sin_y * cos_beta + cos_x * cos_y * sin_beta);
+        double dvdx = metric_x * (-cos_x * sin_beta);
+        double dvdy = metric_y * (0.);
         dfdx        = 2 * u * dudx + 2 * v * dvdx;
         dfdy        = 2 * u * dudy + 2 * v * dvdy;
     }
 };
 
-FieldSet analytical_fields( const fvm::Method& fvm ) {
+FieldSet analytical_fields(const fvm::Method& fvm) {
     constexpr double deg2rad = M_PI / 180.;
     const double radius      = fvm.radius();
 
-    auto lonlat_deg = array::make_view<double, 2>( fvm.mesh().nodes().lonlat() );
+    auto lonlat_deg = array::make_view<double, 2>(fvm.mesh().nodes().lonlat());
 
     FieldSet fields;
-    auto add_scalar_field = [&]( const std::string& name ) {
-        return array::make_view<double, 1>(
-            fields.add( fvm.node_columns().createField<double>( option::name( name ) ) ) );
+    auto add_scalar_field = [&](const std::string& name) {
+        return array::make_view<double, 1>(fields.add(fvm.node_columns().createField<double>(option::name(name))));
     };
-    auto add_vector_field = [&]( const std::string& name ) {
-        return array::make_view<double, 2>( fields.add( fvm.node_columns().createField<double>(
-            option::name( name ) | option::type( "vector" ) | option::variables( 2 ) ) ) );
+    auto add_vector_field = [&](const std::string& name) {
+        return array::make_view<double, 2>(fields.add(fvm.node_columns().createField<double>(
+            option::name(name) | option::type("vector") | option::variables(2))));
     };
-    auto f      = add_scalar_field( "f" );
-    auto uv     = add_vector_field( "uv" );
-    auto u      = add_scalar_field( "u" );
-    auto v      = add_scalar_field( "v" );
-    auto grad_f = add_vector_field( "ref_grad_f" );
-    auto dfdx   = add_scalar_field( "ref_dfdx" );
-    auto dfdy   = add_scalar_field( "ref_dfdy" );
-    auto div    = add_scalar_field( "ref_div" );
-    auto vor    = add_scalar_field( "ref_vor" );
+    auto f      = add_scalar_field("f");
+    auto uv     = add_vector_field("uv");
+    auto u      = add_scalar_field("u");
+    auto v      = add_scalar_field("v");
+    auto grad_f = add_vector_field("ref_grad_f");
+    auto dfdx   = add_scalar_field("ref_dfdx");
+    auto dfdy   = add_scalar_field("ref_dfdy");
+    auto div    = add_scalar_field("ref_div");
+    auto vor    = add_scalar_field("ref_vor");
 
     auto flow          = SolidBodyRotation{radius, beta_in_degrees() * deg2rad};
-    auto is_ghost      = array::make_view<int, 1>( fvm.mesh().nodes().ghost() );
+    auto is_ghost      = array::make_view<int, 1>(fvm.mesh().nodes().ghost());
     const idx_t nnodes = fvm.mesh().nodes().size();
-    for ( idx_t jnode = 0; jnode < nnodes; ++jnode ) {
-        if ( is_ghost( jnode ) ) {
+    for (idx_t jnode = 0; jnode < nnodes; ++jnode) {
+        if (is_ghost(jnode)) {
             continue;
         }
-        double x = lonlat_deg( jnode, LON ) * deg2rad;
-        double y = lonlat_deg( jnode, LAT ) * deg2rad;
+        double x = lonlat_deg(jnode, LON) * deg2rad;
+        double y = lonlat_deg(jnode, LAT) * deg2rad;
 
-        flow.wind( x, y, u( jnode ), v( jnode ) );
-        flow.vordiv( x, y, vor( jnode ), div( jnode ) );
-        flow.wind_magnitude_squared( x, y, f( jnode ) );
-        flow.wind_magnitude_squared_gradient( x, y, dfdx( jnode ), dfdy( jnode ) );
+        flow.wind(x, y, u(jnode), v(jnode));
+        flow.vordiv(x, y, vor(jnode), div(jnode));
+        flow.wind_magnitude_squared(x, y, f(jnode));
+        flow.wind_magnitude_squared_gradient(x, y, dfdx(jnode), dfdy(jnode));
 
-        uv( jnode, XX )     = u( jnode );
-        uv( jnode, YY )     = v( jnode );
-        grad_f( jnode, XX ) = dfdx( jnode );
-        grad_f( jnode, YY ) = dfdy( jnode );
+        uv(jnode, XX)     = u(jnode);
+        uv(jnode, YY)     = v(jnode);
+        grad_f(jnode, XX) = dfdx(jnode);
+        grad_f(jnode, YY) = dfdy(jnode);
     }
     fields.set_dirty();
     fields.haloExchange();
@@ -198,77 +197,76 @@ FieldSet analytical_fields( const fvm::Method& fvm ) {
 
 //-----------------------------------------------------------------------------
 
-CASE( "test_analytical" ) {
-    Grid grid( griduid(), GlobalDomain( -180. ) );
+CASE("test_analytical") {
+    Grid grid(griduid(), GlobalDomain(-180.));
 
-    Mesh mesh = MeshGenerator{"structured"}.generate( grid );
-    fvm::Method fvm( mesh, option::radius( radius() ) );
-    Nabla nabla( fvm, util::Config( "metric_approach", metric_approach() ) );
-    FieldSet fields = analytical_fields( fvm );
+    Mesh mesh = MeshGenerator{"structured"}.generate(grid);
+    fvm::Method fvm(mesh, option::radius(radius()));
+    Nabla nabla(fvm, util::Config("metric_approach", metric_approach()));
+    FieldSet fields = analytical_fields(fvm);
 
-    Field div = fields.add( fvm.node_columns().createField<double>( option::name( "div" ) ) );
-    Field vor = fields.add( fvm.node_columns().createField<double>( option::name( "vor" ) ) );
-    Field grad_f =
-        fields.add( fvm.node_columns().createField<double>( option::name( "grad_f" ) | option::variables( 2 ) ) );
-    Field dfdx = fields.add( fvm.node_columns().createField<double>( option::name( "dfdx" ) ) );
-    Field dfdy = fields.add( fvm.node_columns().createField<double>( option::name( "dfdy" ) ) );
+    Field div    = fields.add(fvm.node_columns().createField<double>(option::name("div")));
+    Field vor    = fields.add(fvm.node_columns().createField<double>(option::name("vor")));
+    Field grad_f = fields.add(fvm.node_columns().createField<double>(option::name("grad_f") | option::variables(2)));
+    Field dfdx   = fields.add(fvm.node_columns().createField<double>(option::name("dfdx")));
+    Field dfdy   = fields.add(fvm.node_columns().createField<double>(option::name("dfdy")));
 
-    auto split = []( const Field& vector, Field& component_x, Field& component_y ) {
-        auto v = array::make_view<double, 2>( vector );
-        auto x = array::make_view<double, 1>( component_x );
-        auto y = array::make_view<double, 1>( component_y );
-        for ( idx_t j = 0; j < v.shape( 0 ); ++j ) {
-            x( j ) = v( j, XX );
-            y( j ) = v( j, YY );
+    auto split = [](const Field& vector, Field& component_x, Field& component_y) {
+        auto v = array::make_view<double, 2>(vector);
+        auto x = array::make_view<double, 1>(component_x);
+        auto y = array::make_view<double, 1>(component_y);
+        for (idx_t j = 0; j < v.shape(0); ++j) {
+            x(j) = v(j, XX);
+            y(j) = v(j, YY);
         }
     };
 
 
-    ATLAS_TRACE_SCOPE( "gradient" ) nabla.gradient( fields["f"], grad_f );
-    split( grad_f, dfdx, dfdy );
-    ATLAS_TRACE_SCOPE( "divergence" ) nabla.divergence( fields["uv"], div );
-    ATLAS_TRACE_SCOPE( "vorticity" ) nabla.curl( fields["uv"], vor );
+    ATLAS_TRACE_SCOPE("gradient") nabla.gradient(fields["f"], grad_f);
+    split(grad_f, dfdx, dfdy);
+    ATLAS_TRACE_SCOPE("divergence") nabla.divergence(fields["uv"], div);
+    ATLAS_TRACE_SCOPE("vorticity") nabla.curl(fields["uv"], vor);
 
-    auto do_mask_polar_values = [&]( Field& field, double mask ) {
+    auto do_mask_polar_values = [&](Field& field, double mask) {
         using Topology  = atlas::mesh::Nodes::Topology;
         using Range     = atlas::array::Range;
-        auto node_flags = array::make_view<int, 1>( fvm.node_columns().nodes().flags() );
-        auto is_polar   = [&]( idx_t j ) {
-            return Topology::check( node_flags( j ), Topology::BC | Topology::NORTH ) ||
-                   Topology::check( node_flags( j ), Topology::BC | Topology::SOUTH );
+        auto node_flags = array::make_view<int, 1>(fvm.node_columns().nodes().flags());
+        auto is_polar   = [&](idx_t j) {
+            return Topology::check(node_flags(j), Topology::BC | Topology::NORTH) ||
+                   Topology::check(node_flags(j), Topology::BC | Topology::SOUTH);
         };
-        auto apply = [&]( array::LocalView<double, 2>&& view ) {
-            for ( idx_t j = 0; j < view.shape( 0 ); ++j ) {
-                if ( is_polar( j ) ) {
-                    for ( idx_t v = 0; v < view.shape( 1 ); ++v ) {
-                        view( j, v ) = mask;
+        auto apply = [&](array::LocalView<double, 2>&& view) {
+            for (idx_t j = 0; j < view.shape(0); ++j) {
+                if (is_polar(j)) {
+                    for (idx_t v = 0; v < view.shape(1); ++v) {
+                        view(j, v) = mask;
                     }
                 }
             }
         };
-        if ( field.rank() == 1 ) {
-            apply( array::make_view<double, 1>( field ).slice( Range::all(), Range::dummy() ) );
+        if (field.rank() == 1) {
+            apply(array::make_view<double, 1>(field).slice(Range::all(), Range::dummy()));
         }
-        else if ( field.rank() == 2 ) {
-            apply( array::make_view<double, 2>( field ).slice( Range::all(), Range::all() ) );
+        else if (field.rank() == 2) {
+            apply(array::make_view<double, 2>(field).slice(Range::all(), Range::all()));
         }
     };
 
-    for ( auto fieldname : std::vector<std::string>{"dfdx", "dfdy", "div", "vor"} ) {
-        auto err_field  = fields.add( fvm.node_columns().createField<double>( option::name( "err_" + fieldname ) ) );
-        auto err2_field = fields.add( fvm.node_columns().createField<double>( option::name( "err2_" + fieldname ) ) );
-        auto fld        = array::make_view<double, 1>( fields[fieldname] );
-        auto ref        = array::make_view<double, 1>( fields["ref_" + fieldname] );
-        auto err        = array::make_view<double, 1>( fields["err_" + fieldname] );
-        auto err2       = array::make_view<double, 1>( fields["err2_" + fieldname] );
-        for ( idx_t j = 0; j < fld.shape( 0 ); ++j ) {
-            err( j )  = fld( j ) - ref( j );
-            err2( j ) = err( j ) * err( j );
+    for (auto fieldname : std::vector<std::string>{"dfdx", "dfdy", "div", "vor"}) {
+        auto err_field  = fields.add(fvm.node_columns().createField<double>(option::name("err_" + fieldname)));
+        auto err2_field = fields.add(fvm.node_columns().createField<double>(option::name("err2_" + fieldname)));
+        auto fld        = array::make_view<double, 1>(fields[fieldname]);
+        auto ref        = array::make_view<double, 1>(fields["ref_" + fieldname]);
+        auto err        = array::make_view<double, 1>(fields["err_" + fieldname]);
+        auto err2       = array::make_view<double, 1>(fields["err2_" + fieldname]);
+        for (idx_t j = 0; j < fld.shape(0); ++j) {
+            err(j)  = fld(j) - ref(j);
+            err2(j) = err(j) * err(j);
         }
 
-        if ( mask_polar_values() ) {
-            do_mask_polar_values( fields["err_" + fieldname], 0. );
-            do_mask_polar_values( fields["err2_" + fieldname], 0. );
+        if (mask_polar_values()) {
+            do_mask_polar_values(fields["err_" + fieldname], 0.);
+            do_mask_polar_values(fields["err2_" + fieldname], 0.);
         }
     }
 
@@ -276,53 +274,53 @@ CASE( "test_analytical" ) {
 
 
     // output to gmsh
-    if ( output_gmsh() ) {
-        output::Gmsh{"mesh_2d.msh", util::Config( "coordinates", "lonlat" )}.write( mesh );
-        output::Gmsh{"mesh_3d.msh", util::Config( "coordinates", "xyz" )}.write( mesh );
-        output::Gmsh{"fields.msh"}.write( fields );
+    if (output_gmsh()) {
+        output::Gmsh{"mesh_2d.msh", util::Config("coordinates", "lonlat")}.write(mesh);
+        output::Gmsh{"mesh_3d.msh", util::Config("coordinates", "xyz")}.write(mesh);
+        output::Gmsh{"fields.msh"}.write(fields);
     }
 
-    auto minmax_within_error = [&]( const std::string& name, double error ) {
+    auto minmax_within_error = [&](const std::string& name, double error) {
         Field field = fields["err_" + name];
-        error       = std::abs( error );
+        error       = std::abs(error);
         double min, max;
-        fvm.node_columns().minimum( field, min );
-        fvm.node_columns().maximum( field, max );
+        fvm.node_columns().minimum(field, min);
+        fvm.node_columns().maximum(field, max);
         bool success = true;
-        if ( min < -error ) {
+        if (min < -error) {
             Log::warning() << "minumum " << min << " smaller than error " << -error << std::endl;
             success = false;
         }
-        if ( max > error ) {
+        if (max > error) {
             Log::warning() << "maximum " << max << " greater than error " << error << std::endl;
             success = false;
         }
         Log::info() << name << "\t: minmax error between { " << min << " , " << max << " }" << std::endl;
         return success;
     };
-    EXPECT( minmax_within_error( "dfdx", 1.e-11 ) );
-    EXPECT( minmax_within_error( "dfdy", 1.e-11 ) );
-    EXPECT( minmax_within_error( "div", 1.e-16 ) );
-    EXPECT( minmax_within_error( "vor", 1.5e-9 ) );
+    EXPECT(minmax_within_error("dfdx", 1.e-11));
+    EXPECT(minmax_within_error("dfdy", 1.e-11));
+    EXPECT(minmax_within_error("div", 1.e-16));
+    EXPECT(minmax_within_error("vor", 1.5e-9));
 
-    auto rms_within_error = [&]( const std::string& name, double error ) {
+    auto rms_within_error = [&](const std::string& name, double error) {
         Field field = fields["err2_" + name];
         double mean;
         idx_t N;
-        fvm.node_columns().mean( field, mean, N );
-        double rms   = std::sqrt( mean / double( N ) );
+        fvm.node_columns().mean(field, mean, N);
+        double rms   = std::sqrt(mean / double(N));
         bool success = true;
-        if ( rms > error ) {
+        if (rms > error) {
             Log::warning() << "rms " << rms << " greater than error " << error << std::endl;
             success = false;
         }
         Log::info() << name << "\t: rms error = " << rms << std::endl;
         return success;
     };
-    EXPECT( rms_within_error( "dfdx", 1.e-14 ) );
-    EXPECT( rms_within_error( "dfdy", 1.e-14 ) );
-    EXPECT( rms_within_error( "div", 5.e-20 ) );
-    EXPECT( rms_within_error( "vor", 5.e-13 ) );
+    EXPECT(rms_within_error("dfdx", 1.e-14));
+    EXPECT(rms_within_error("dfdy", 1.e-14));
+    EXPECT(rms_within_error("div", 5.e-20));
+    EXPECT(rms_within_error("vor", 5.e-13));
 
     // error for vorticity seems too high ?
 }
@@ -332,6 +330,6 @@ CASE( "test_analytical" ) {
 }  // namespace test
 }  // namespace atlas
 
-int main( int argc, char** argv ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
 }

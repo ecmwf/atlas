@@ -37,14 +37,14 @@ void force_link() {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-const Domain* DomainFactory::build( const std::string& builder ) {
-    return build( builder, util::NoConfig() );
+const Domain* DomainFactory::build(const std::string& builder) {
+    return build(builder, util::NoConfig());
 }
 
-const Domain* DomainFactory::build( const std::string& builder, const eckit::Parametrisation& param ) {
+const Domain* DomainFactory::build(const std::string& builder, const eckit::Parametrisation& param) {
     force_link();
-    auto factory = get( builder );
-    return factory->make( param );
+    auto factory = get(builder);
+    return factory->make(param);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

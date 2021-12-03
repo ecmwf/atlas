@@ -20,18 +20,18 @@ public:
     enum
     {
         NONE     = 0,
-        GHOST    = ( 1 << 1 ),
-        PERIODIC = ( 1 << 2 ),
-        BC       = ( 1 << 3 ),
-        WEST     = ( 1 << 4 ),
-        EAST     = ( 1 << 5 ),
-        NORTH    = ( 1 << 6 ),
-        SOUTH    = ( 1 << 7 ),
-        PATCH    = ( 1 << 8 ),
-        POLE     = ( 1 << 9 ),
-        LAND     = ( 1 << 10 ),
-        WATER    = ( 1 << 11 ),
-        INVALID  = ( 1 << 12 ),
+        GHOST    = (1 << 1),
+        PERIODIC = (1 << 2),
+        BC       = (1 << 3),
+        WEST     = (1 << 4),
+        EAST     = (1 << 5),
+        NORTH    = (1 << 6),
+        SOUTH    = (1 << 7),
+        PATCH    = (1 << 8),
+        POLE     = (1 << 9),
+        LAND     = (1 << 10),
+        WATER    = (1 << 11),
+        INVALID  = (1 << 12),
     };
 };
 

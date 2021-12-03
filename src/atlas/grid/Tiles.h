@@ -45,15 +45,15 @@ class CubedSphereTiles;
 
 //---------------------------------------------------------------------------------------------------------------------
 
-class CubedSphereTiles : DOXYGEN_HIDE( public util::ObjectHandle<atlas::grid::detail::CubedSphereTiles> ) {
+class CubedSphereTiles : DOXYGEN_HIDE(public util::ObjectHandle<atlas::grid::detail::CubedSphereTiles>) {
 public:
     using Spec = util::Config;
 
 public:
     using Handle::Handle;
     CubedSphereTiles() = default;
-    CubedSphereTiles( const eckit::Parametrisation& );
-    CubedSphereTiles( const std::string& );
+    CubedSphereTiles(const eckit::Parametrisation&);
+    CubedSphereTiles(const std::string&);
 
     /// Type of the cubed-sphere tiles:
     std::string type() const;
@@ -64,32 +64,32 @@ public:
 
     std::array<std::array<double, 6>, 2> ab2xyOffsets() const;
 
-    void rotate( idx_t t, double xyz[] ) const;
+    void rotate(idx_t t, double xyz[]) const;
 
-    void unrotate( idx_t t, double xyz[] ) const;
+    void unrotate(idx_t t, double xyz[]) const;
 
     // tile index from xy space
-    idx_t indexFromXY( const double xy[] ) const;
+    idx_t indexFromXY(const double xy[]) const;
 
     // tile index from longitude and latitude space
-    idx_t indexFromLonLat( const double lonlat[] ) const;
+    idx_t indexFromLonLat(const double lonlat[]) const;
 
     // enforceXYdomain reinforces the tile shape in xy space;
     // if values move a miniscule amount outside the domain, it will be brought back in.
-    void enforceXYdomain( double xy[] ) const;
+    void enforceXYdomain(double xy[]) const;
 
     idx_t size() const;
 
     // this provides periodicity to each of the tiles by extending each tile over edges
     // in a cross-like fashion. Periodicity of this form does not allow
     // a "diagonal" extension over corners of the cube.
-    atlas::PointXY tileCubePeriodicity( const atlas::PointXY& xyExtended, const atlas::idx_t tile ) const;
+    atlas::PointXY tileCubePeriodicity(const atlas::PointXY& xyExtended, const atlas::idx_t tile) const;
 
 private:
     /// Output to stream
-    void print( std::ostream& ) const;
+    void print(std::ostream&) const;
 
-    friend std::ostream& operator<<( std::ostream& s, const CubedSphereTiles& cst );
+    friend std::ostream& operator<<(std::ostream& s, const CubedSphereTiles& cst);
 };
 
 }  // namespace grid

@@ -38,15 +38,15 @@ void force_link() {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-const MeshGenerator::Implementation* MeshGeneratorFactory::build( const std::string& builder ) {
-    return build( builder, util::NoConfig() );
+const MeshGenerator::Implementation* MeshGeneratorFactory::build(const std::string& builder) {
+    return build(builder, util::NoConfig());
 }
 
-const MeshGenerator::Implementation* MeshGeneratorFactory::build( const std::string& builder,
-                                                                  const eckit::Parametrisation& param ) {
+const MeshGenerator::Implementation* MeshGeneratorFactory::build(const std::string& builder,
+                                                                 const eckit::Parametrisation& param) {
     force_link();
-    auto factory = get( builder );
-    return factory->make( param );
+    auto factory = get(builder);
+    return factory->make(param);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

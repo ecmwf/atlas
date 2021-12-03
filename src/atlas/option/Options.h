@@ -22,42 +22,42 @@ namespace option {
 
 class type : public util::Config {
 public:
-    type( const std::string& );
+    type(const std::string&);
 };
 
 // ----------------------------------------------------------------------------
 
 class global : public util::Config {
 public:
-    global( size_t owner = 0 );
+    global(size_t owner = 0);
 };
 
 // ----------------------------------------------------------------------------
 
 class levels : public util::Config {
 public:
-    levels( size_t );
+    levels(size_t);
 };
 
 // ----------------------------------------------------------------------------
 
 class variables : public util::Config {
 public:
-    variables( size_t );
+    variables(size_t);
 };
 
 // ----------------------------------------------------------------------------
 
 class vector : public util::Config {
 public:
-    vector( size_t = 2 );
+    vector(size_t = 2);
 };
 
 // ----------------------------------------------------------------------------
 
 class name : public util::Config {
 public:
-    name( const std::string& );
+    name(const std::string&);
 };
 
 // ----------------------------------------------------------------------------
@@ -72,9 +72,9 @@ public:
 
 class datatype : public util::Config {
 public:
-    datatype( array::DataType::kind_t );
-    datatype( const std::string& );
-    datatype( array::DataType );
+    datatype(array::DataType::kind_t);
+    datatype(const std::string&);
+    datatype(array::DataType);
 };
 
 // ----------------------------------------------------------------------------
@@ -82,36 +82,36 @@ public:
 class shape : public util::Config {
 public:
     template <typename T>
-    shape( const std::initializer_list<T>& list ) {
-        set( "shape", list );
+    shape(const std::initializer_list<T>& list) {
+        set("shape", list);
     }
 };
 
 class alignment : public util::Config {
 public:
-    alignment( int );
+    alignment(int);
 };
 
 // ----------------------------------------------------------------------------
 
 class halo : public util::Config {
 public:
-    halo( size_t size );
+    halo(size_t size);
 };
 
 // ----------------------------------------------------------------------------
 
 class radius : public util::Config {
 public:
-    radius( double );
-    radius( const std::string& = "Earth" );
+    radius(double);
+    radius(const std::string& = "Earth");
 };
 
 // ---------------------------------
 
 class pole_edges : public util::Config {
 public:
-    pole_edges( bool = true );
+    pole_edges(bool = true);
 };
 
 // ----------------------------------------------------------------------------
@@ -120,7 +120,7 @@ public:
 
 template <typename T>
 datatypeT<T>::datatypeT() {
-    set( "datatype", array::DataType::kind<T>() );
+    set("datatype", array::DataType::kind<T>());
 }
 
 }  // namespace option

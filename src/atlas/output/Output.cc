@@ -51,123 +51,123 @@ OutputImpl::~OutputImpl() = default;
 
 }  // namespace detail
 
-Output::Output( const std::string& key, std::ostream& stream, const eckit::Parametrisation& params ) :
-    Handle( detail::OutputFactory::build( key, stream, params ) ) {}
+Output::Output(const std::string& key, std::ostream& stream, const eckit::Parametrisation& params):
+    Handle(detail::OutputFactory::build(key, stream, params)) {}
 
 /// Write mesh file
-void Output::write( const Mesh& m, const eckit::Parametrisation& c ) const {
-    get()->write( m, c );
+void Output::write(const Mesh& m, const eckit::Parametrisation& c) const {
+    get()->write(m, c);
 }
 
 /// Write field to file
-void Output::write( const Field& f, const eckit::Parametrisation& c ) const {
-    get()->write( f, c );
+void Output::write(const Field& f, const eckit::Parametrisation& c) const {
+    get()->write(f, c);
 }
 
 /// Write fieldset to file using FunctionSpace
-void Output::write( const FieldSet& f, const eckit::Parametrisation& c ) const {
-    get()->write( f, c );
+void Output::write(const FieldSet& f, const eckit::Parametrisation& c) const {
+    get()->write(f, c);
 }
 
 /// Write field to file using Functionspace
-void Output::write( const Field& f, const FunctionSpace& fs, const eckit::Parametrisation& c ) const {
-    get()->write( f, fs, c );
+void Output::write(const Field& f, const FunctionSpace& fs, const eckit::Parametrisation& c) const {
+    get()->write(f, fs, c);
 }
 
 /// Write fieldset to file using FunctionSpace
-void Output::write( const FieldSet& f, const FunctionSpace& fs, const eckit::Parametrisation& c ) const {
-    get()->write( f, fs, c );
+void Output::write(const FieldSet& f, const FunctionSpace& fs, const eckit::Parametrisation& c) const {
+    get()->write(f, fs, c);
 }
 
 namespace detail {
 
-OutputFactory::OutputFactory( const std::string& name ) : name_( name ) {
-    pthread_once( &once, init );
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+OutputFactory::OutputFactory(const std::string& name): name_(name) {
+    pthread_once(&once, init);
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
-    ATLAS_ASSERT( m );
-    if ( m->find( name ) != m->end() ) {
-        throw_Exception( "Duplicate OutputFactory entry " + name );
+    ATLAS_ASSERT(m);
+    if (m->find(name) != m->end()) {
+        throw_Exception("Duplicate OutputFactory entry " + name);
     }
 
-    ( *m )[name] = this;
+    (*m)[name] = this;
 }
 
 OutputFactory::~OutputFactory() {
-    pthread_once( &once, init );
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
-    ATLAS_ASSERT( m );
-    m->erase( name_ );
+    pthread_once(&once, init);
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
+    ATLAS_ASSERT(m);
+    m->erase(name_);
 }
 
-void OutputFactory::list( std::ostream& out ) {
-    pthread_once( &once, init );
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+void OutputFactory::list(std::ostream& out) {
+    pthread_once(&once, init);
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
-    ATLAS_ASSERT( m );
+    ATLAS_ASSERT(m);
     const char* sep = "";
-    for ( std::map<std::string, OutputFactory*>::const_iterator j = m->begin(); j != m->end(); ++j ) {
-        out << sep << ( *j ).first;
+    for (std::map<std::string, OutputFactory*>::const_iterator j = m->begin(); j != m->end(); ++j) {
+        out << sep << (*j).first;
         sep = ", ";
     }
 }
 
-const OutputImpl* OutputFactory::build( const std::string& name, std::ostream& stream ) {
-    pthread_once( &once, init );
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+const OutputImpl* OutputFactory::build(const std::string& name, std::ostream& stream) {
+    pthread_once(&once, init);
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
-    ATLAS_ASSERT( m );
-    std::map<std::string, OutputFactory*>::const_iterator j = m->find( name );
+    ATLAS_ASSERT(m);
+    std::map<std::string, OutputFactory*>::const_iterator j = m->find(name);
 
     Log::debug() << "Looking for OutputFactory [" << name << "]" << std::endl;
 
-    if ( j == m->end() ) {
+    if (j == m->end()) {
         Log::error() << "No OutputFactory for [" << name << "]" << std::endl;
         Log::error() << "OutputFactories are:" << std::endl;
-        for ( j = m->begin(); j != m->end(); ++j ) {
-            Log::error() << "   " << ( *j ).first << std::endl;
+        for (j = m->begin(); j != m->end(); ++j) {
+            Log::error() << "   " << (*j).first << std::endl;
         }
-        throw_Exception( std::string( "No OutputFactory called " ) + name );
+        throw_Exception(std::string("No OutputFactory called ") + name);
     }
 
-    return ( *j ).second->make( stream );
+    return (*j).second->make(stream);
 }
 
-const OutputImpl* OutputFactory::build( const std::string& name, std::ostream& stream,
-                                        const eckit::Parametrisation& param ) {
-    pthread_once( &once, init );
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+const OutputImpl* OutputFactory::build(const std::string& name, std::ostream& stream,
+                                       const eckit::Parametrisation& param) {
+    pthread_once(&once, init);
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
-    ATLAS_ASSERT( m );
-    std::map<std::string, OutputFactory*>::const_iterator j = m->find( name );
+    ATLAS_ASSERT(m);
+    std::map<std::string, OutputFactory*>::const_iterator j = m->find(name);
 
     Log::debug() << "Looking for OutputFactory [" << name << "]" << std::endl;
 
-    if ( j == m->end() ) {
+    if (j == m->end()) {
         Log::error() << "No OutputFactory for [" << name << "]" << std::endl;
         Log::error() << "OutputFactories are:" << std::endl;
-        for ( j = m->begin(); j != m->end(); ++j ) {
-            Log::error() << "   " << ( *j ).first << std::endl;
+        for (j = m->begin(); j != m->end(); ++j) {
+            Log::error() << "   " << (*j).first << std::endl;
         }
-        throw_Exception( std::string( "No OutputFactory called " ) + name );
+        throw_Exception(std::string("No OutputFactory called ") + name);
     }
 
-    return ( *j ).second->make( stream, param );
+    return (*j).second->make(stream, param);
 }
 
 extern "C" {
 
-void atlas__Output__delete( OutputImpl* This ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Output" );
+void atlas__Output__delete(OutputImpl* This) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialisd atlas_Output");
     delete This;
 }
 
-const OutputImpl* atlas__Output__create( const char* factory_key, std::ostream* stream,
-                                         const eckit::Parametrisation* config ) {
-    ATLAS_ASSERT( config != nullptr, "Cannot access uninitialisd atlas_Config" );
-    const OutputImpl* output( nullptr );
+const OutputImpl* atlas__Output__create(const char* factory_key, std::ostream* stream,
+                                        const eckit::Parametrisation* config) {
+    ATLAS_ASSERT(config != nullptr, "Cannot access uninitialisd atlas_Config");
+    const OutputImpl* output(nullptr);
     {
-        Output o( std::string{factory_key}, *stream, *config );
+        Output o(std::string{factory_key}, *stream, *config);
         output = o.get();
         output->attach();
     }
@@ -175,42 +175,41 @@ const OutputImpl* atlas__Output__create( const char* factory_key, std::ostream* 
     return output;
 }
 
-void atlas__Output__write_mesh( const OutputImpl* This, Mesh::Implementation* mesh,
-                                const eckit::Parametrisation* params ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Output" );
-    Mesh m( mesh );
-    This->write( m, *params );
+void atlas__Output__write_mesh(const OutputImpl* This, Mesh::Implementation* mesh,
+                               const eckit::Parametrisation* params) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialisd atlas_Output");
+    Mesh m(mesh);
+    This->write(m, *params);
 }
-void atlas__Output__write_fieldset( const OutputImpl* This, const FieldSetImpl* fieldset,
-                                    const eckit::Parametrisation* config ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Output" );
-    ATLAS_ASSERT( fieldset != nullptr, "Cannot access uninitialisd atlas_FieldSet" );
-    This->write( fieldset, *config );
+void atlas__Output__write_fieldset(const OutputImpl* This, const FieldSetImpl* fieldset,
+                                   const eckit::Parametrisation* config) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialisd atlas_Output");
+    ATLAS_ASSERT(fieldset != nullptr, "Cannot access uninitialisd atlas_FieldSet");
+    This->write(fieldset, *config);
 }
-void atlas__Output__write_field( const OutputImpl* This, const FieldImpl* field,
-                                 const eckit::Parametrisation* config ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Output" );
-    ATLAS_ASSERT( field != nullptr, "Cannot access uninitialisd atlas_Field" );
-    ATLAS_ASSERT( config != nullptr, "Cannot access uninitialisd atlas_Config" );
-    This->write( field, *config );
+void atlas__Output__write_field(const OutputImpl* This, const FieldImpl* field, const eckit::Parametrisation* config) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialisd atlas_Output");
+    ATLAS_ASSERT(field != nullptr, "Cannot access uninitialisd atlas_Field");
+    ATLAS_ASSERT(config != nullptr, "Cannot access uninitialisd atlas_Config");
+    This->write(field, *config);
 }
-void atlas__Output__write_fieldset_fs( const OutputImpl* This, const FieldSetImpl* fieldset,
-                                       const functionspace::FunctionSpaceImpl* functionspace,
-                                       const eckit::Parametrisation* params ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Output" );
-    ATLAS_ASSERT( fieldset != nullptr, "Cannot access uninitialisd atlas_FieldSet" );
-    ATLAS_ASSERT( functionspace != nullptr, "Cannot access uninitialisd atlas_FunctionSpace" );
+void atlas__Output__write_fieldset_fs(const OutputImpl* This, const FieldSetImpl* fieldset,
+                                      const functionspace::FunctionSpaceImpl* functionspace,
+                                      const eckit::Parametrisation* params) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialisd atlas_Output");
+    ATLAS_ASSERT(fieldset != nullptr, "Cannot access uninitialisd atlas_FieldSet");
+    ATLAS_ASSERT(functionspace != nullptr, "Cannot access uninitialisd atlas_FunctionSpace");
 
-    This->write( fieldset, functionspace, *params );
+    This->write(fieldset, functionspace, *params);
 }
-void atlas__Output__write_field_fs( const OutputImpl* This, const FieldImpl* field,
-                                    const functionspace::FunctionSpaceImpl* functionspace,
-                                    const eckit::Parametrisation* config ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_Output" );
-    ATLAS_ASSERT( field != nullptr, "Cannot access uninitialisd atlas_Field" );
-    ATLAS_ASSERT( functionspace != nullptr, "Cannot access uninitialisd atlas_FunctionSpace" );
-    ATLAS_ASSERT( config != nullptr, "Cannot access uninitialisd atlas_Config" );
-    This->write( field, functionspace, *config );
+void atlas__Output__write_field_fs(const OutputImpl* This, const FieldImpl* field,
+                                   const functionspace::FunctionSpaceImpl* functionspace,
+                                   const eckit::Parametrisation* config) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialisd atlas_Output");
+    ATLAS_ASSERT(field != nullptr, "Cannot access uninitialisd atlas_Field");
+    ATLAS_ASSERT(functionspace != nullptr, "Cannot access uninitialisd atlas_FunctionSpace");
+    ATLAS_ASSERT(config != nullptr, "Cannot access uninitialisd atlas_Config");
+    This->write(field, functionspace, *config);
 }
 }
 

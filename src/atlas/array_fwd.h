@@ -50,63 +50,63 @@ template <typename Value, int Rank>
 class IndexView;
 
 template <typename Value, int Rank>
-ArrayView<Value, Rank> make_view( Array& array );
+ArrayView<Value, Rank> make_view(Array& array);
 
 template <typename Value, int Rank>
-ArrayView<const Value, Rank> make_view( const Array& array );
+ArrayView<const Value, Rank> make_view(const Array& array);
 
 
 template <class Value, int Rank, ENABLE_IF_NOT_CONST>
-LocalView<Value, Rank> make_view( Value data[], const ArrayShape& shape );
+LocalView<Value, Rank> make_view(Value data[], const ArrayShape& shape);
 
 template <class Value, int Rank, ENABLE_IF_NOT_CONST>
-LocalView<const Value, Rank> make_view( const Value data[], const ArrayShape& shape );
+LocalView<const Value, Rank> make_view(const Value data[], const ArrayShape& shape);
 
 template <class Value, int Rank, ENABLE_IF_CONST>
-LocalView<Value, Rank> make_view( Value data[], const ArrayShape& shape );
+LocalView<Value, Rank> make_view(Value data[], const ArrayShape& shape);
 
 template <class Value, int Rank, ENABLE_IF_CONST>
-LocalView<Value, Rank> make_view( typename std::remove_const<Value>::type data[], const ArrayShape& shape );
+LocalView<Value, Rank> make_view(typename std::remove_const<Value>::type data[], const ArrayShape& shape);
 
 //------------------------------------------------------------------------------------------------------
 
 template <typename Value, unsigned int Rank, ENABLE_IF_NOT_CONST>
-LocalView<Value, Rank> make_view( Value data[], size_t size );
+LocalView<Value, Rank> make_view(Value data[], size_t size);
 
 template <typename Value, unsigned int Rank, ENABLE_IF_NOT_CONST>
-LocalView<const Value, Rank> make_view( const Value data[], size_t size );
+LocalView<const Value, Rank> make_view(const Value data[], size_t size);
 
 template <typename Value, unsigned int Rank, ENABLE_IF_CONST>
-LocalView<Value, Rank> make_view( Value data[], size_t size );
+LocalView<Value, Rank> make_view(Value data[], size_t size);
 
 template <typename Value, unsigned int Rank, ENABLE_IF_CONST>
-LocalView<Value, Rank> make_view( typename std::remove_const<Value>::type data[], size_t size );
+LocalView<Value, Rank> make_view(typename std::remove_const<Value>::type data[], size_t size);
 
 template <typename Value, int Rank>
-ArrayView<Value, Rank> make_host_view( Array& array );
+ArrayView<Value, Rank> make_host_view(Array& array);
 
 template <typename Value, int Rank>
-ArrayView<const Value, Rank> make_host_view( const Array& array );
+ArrayView<const Value, Rank> make_host_view(const Array& array);
 
 template <typename Value, int Rank>
-ArrayView<Value, Rank> make_device_view( Array& array );
+ArrayView<Value, Rank> make_device_view(Array& array);
 
 template <typename Value, int Rank>
-ArrayView<const Value, Rank> make_device_view( const Array& array );
-
-
-template <typename Value, int Rank>
-IndexView<Value, Rank> make_indexview( Array& array );
-
-template <typename Value, int Rank>
-IndexView<const Value, Rank> make_indexview( const Array& array );
+ArrayView<const Value, Rank> make_device_view(const Array& array);
 
 
 template <typename Value, int Rank>
-IndexView<Value, Rank> make_host_indexview( Array& array );
+IndexView<Value, Rank> make_indexview(Array& array);
 
 template <typename Value, int Rank>
-IndexView<const Value, Rank> make_host_indexview( const Array& array );
+IndexView<const Value, Rank> make_indexview(const Array& array);
+
+
+template <typename Value, int Rank>
+IndexView<Value, Rank> make_host_indexview(Array& array);
+
+template <typename Value, int Rank>
+IndexView<const Value, Rank> make_host_indexview(const Array& array);
 
 // class Table;
 

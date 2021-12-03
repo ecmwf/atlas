@@ -34,11 +34,11 @@ public:
     using reference         = implementation_t::reference;
 
 public:
-    IteratorXY( std::unique_ptr<implementation_t> iterator ) : iterator_( std::move( iterator ) ) {}
+    IteratorXY(std::unique_ptr<implementation_t> iterator): iterator_(std::move(iterator)) {}
 
-    IteratorXY( const IteratorXY& iterator ) : iterator_( iterator.iterator_->clone() ) {}
+    IteratorXY(const IteratorXY& iterator): iterator_(iterator.iterator_->clone()) {}
 
-    bool next( value_type& xy ) { return iterator_->next( xy ); }
+    bool next(value_type& xy) { return iterator_->next(xy); }
 
     reference operator*() const { return iterator_->operator*(); }
 
@@ -47,27 +47,27 @@ public:
         return *this;
     }
 
-    const IteratorXY& operator+=( difference_type distance ) {
-        iterator_->operator+=( distance );
+    const IteratorXY& operator+=(difference_type distance) {
+        iterator_->operator+=(distance);
         return *this;
     }
 
-    friend IteratorXY operator+( const IteratorXY& a, difference_type distance ) {
-        IteratorXY result( a );
+    friend IteratorXY operator+(const IteratorXY& a, difference_type distance) {
+        IteratorXY result(a);
         result += distance;
         return result;
     }
 
-    friend difference_type operator-( const IteratorXY& last, const IteratorXY& first ) {
-        return first.iterator_->distance( *last.iterator_ );
+    friend difference_type operator-(const IteratorXY& last, const IteratorXY& first) {
+        return first.iterator_->distance(*last.iterator_);
     }
 
-    bool operator==( const IteratorXY& other ) const { return iterator_->operator==( *other.iterator_ ); }
-    bool operator!=( const IteratorXY& other ) const { return iterator_->operator!=( *other.iterator_ ); }
+    bool operator==(const IteratorXY& other) const { return iterator_->operator==(*other.iterator_); }
+    bool operator!=(const IteratorXY& other) const { return iterator_->operator!=(*other.iterator_); }
 
 private:
-    IteratorXY::difference_type distance( const IteratorXY& other ) const {
-        return iterator_->distance( *other.iterator_ );
+    IteratorXY::difference_type distance(const IteratorXY& other) const {
+        return iterator_->distance(*other.iterator_);
     }
 
 private:
@@ -88,11 +88,11 @@ public:
     using reference         = implementation_t::reference;
 
 public:
-    IteratorLonLat( std::unique_ptr<implementation_t> iterator ) : iterator_( std::move( iterator ) ) {}
+    IteratorLonLat(std::unique_ptr<implementation_t> iterator): iterator_(std::move(iterator)) {}
 
-    IteratorLonLat( const IteratorLonLat& iterator ) : iterator_( iterator.iterator_->clone() ) {}
+    IteratorLonLat(const IteratorLonLat& iterator): iterator_(iterator.iterator_->clone()) {}
 
-    bool next( value_type& xy ) { return iterator_->next( xy ); }
+    bool next(value_type& xy) { return iterator_->next(xy); }
 
     reference operator*() const { return iterator_->operator*(); }
 
@@ -101,26 +101,26 @@ public:
         return *this;
     }
 
-    const IteratorLonLat& operator+=( difference_type distance ) {
-        iterator_->operator+=( distance );
+    const IteratorLonLat& operator+=(difference_type distance) {
+        iterator_->operator+=(distance);
         return *this;
     }
 
-    friend IteratorLonLat operator+( const IteratorLonLat& a, difference_type distance ) {
-        IteratorLonLat result( a );
+    friend IteratorLonLat operator+(const IteratorLonLat& a, difference_type distance) {
+        IteratorLonLat result(a);
         result += distance;
         return result;
     }
 
-    friend difference_type operator-( const IteratorLonLat& last, const IteratorLonLat& first ) {
-        return first.iterator_->distance( *last.iterator_ );
+    friend difference_type operator-(const IteratorLonLat& last, const IteratorLonLat& first) {
+        return first.iterator_->distance(*last.iterator_);
     }
 
-    bool operator==( const IteratorLonLat& other ) const { return iterator_->operator==( *other.iterator_ ); }
-    bool operator!=( const IteratorLonLat& other ) const { return iterator_->operator!=( *other.iterator_ ); }
+    bool operator==(const IteratorLonLat& other) const { return iterator_->operator==(*other.iterator_); }
+    bool operator!=(const IteratorLonLat& other) const { return iterator_->operator!=(*other.iterator_); }
 
 private:
-    difference_type distance( const IteratorLonLat& other ) const { return iterator_->distance( *other.iterator_ ); }
+    difference_type distance(const IteratorLonLat& other) const { return iterator_->distance(*other.iterator_); }
 
 private:
     std::unique_ptr<implementation_t> iterator_;
@@ -135,12 +135,12 @@ public:
     using Grid           = detail::grid::Grid;
 
 public:
-    IterateXY( const Grid& grid ) : grid_( grid ) {}
+    IterateXY(const Grid& grid): grid_(grid) {}
     iterator begin() const;
     iterator end() const;
-    void access( size_t i, PointXY& );
+    void access(size_t i, PointXY&);
     PointXY front() { return *begin(); }
-    PointXY back() { return *( begin() + ( grid_.size() - 1 ) ); }
+    PointXY back() { return *(begin() + (grid_.size() - 1)); }
 
 private:
     const Grid& grid_;
@@ -153,11 +153,11 @@ public:
     using Grid           = detail::grid::Grid;
 
 public:
-    IterateLonLat( const Grid& grid ) : grid_( grid ) {}
+    IterateLonLat(const Grid& grid): grid_(grid) {}
     iterator begin() const;
     iterator end() const;
     PointLonLat front() { return *begin(); }
-    PointLonLat back() { return *( begin() + ( grid_.size() - 1 ) ); }
+    PointLonLat back() { return *(begin() + (grid_.size() - 1)); }
 
 private:
     const Grid& grid_;
@@ -169,12 +169,12 @@ private:
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 namespace std {
 
-inline atlas::grid::IteratorXY::difference_type distance( const atlas::grid::IteratorXY& first,
-                                                          const atlas::grid::IteratorXY& last ) {
+inline atlas::grid::IteratorXY::difference_type distance(const atlas::grid::IteratorXY& first,
+                                                         const atlas::grid::IteratorXY& last) {
     return last - first;
 }
-inline atlas::grid::IteratorLonLat::difference_type distance( const atlas::grid::IteratorLonLat& first,
-                                                              const atlas::grid::IteratorLonLat& last ) {
+inline atlas::grid::IteratorLonLat::difference_type distance(const atlas::grid::IteratorLonLat& first,
+                                                             const atlas::grid::IteratorLonLat& last) {
     return last - first;
 }
 

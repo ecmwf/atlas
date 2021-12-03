@@ -25,10 +25,10 @@ struct gt_view {
 };
 
 template <typename Value, unsigned int Rank>
-typename gt_view<Value, Rank>::type make_gt_host_view( const Array& array );
+typename gt_view<Value, Rank>::type make_gt_host_view(const Array& array);
 
 template <typename Value, unsigned int Rank>
-typename gt_view<Value, Rank>::type make_gt_device_view( const Array& array );
+typename gt_view<Value, Rank>::type make_gt_device_view(const Array& array);
 
 }  // namespace gridtools
 }  // namespace array

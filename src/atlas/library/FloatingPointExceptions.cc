@@ -26,26 +26,26 @@
 #include "atlas/runtime/Trace.h"
 
 namespace {
-int getEnv( const std::string& env, int default_value ) {
-    if ( ::getenv( env.c_str() ) ) {
-        return eckit::Translator<std::string, int>()( ::getenv( env.c_str() ) );
+int getEnv(const std::string& env, int default_value) {
+    if (::getenv(env.c_str())) {
+        return eckit::Translator<std::string, int>()(::getenv(env.c_str()));
     }
     return default_value;
 }
 }  // namespace
 
-static int atlas_feenableexcept( int excepts ) {
+static int atlas_feenableexcept(int excepts) {
 #if ATLAS_HAVE_FEENABLEEXCEPT
-    return ::feenableexcept( excepts );
+    return ::feenableexcept(excepts);
 #else
     return 0;
 #endif
 }
 
 #ifdef UNUSED
-static int atlas_fedisableexcept( int excepts ) {
+static int atlas_fedisableexcept(int excepts) {
 #if ATLAS_HAVE_FEDISABLEEXCEPT
-    return ::fedisableexcept( excepts );
+    return ::fedisableexcept(excepts);
 #else
     return 0;
 #endif
@@ -77,11 +77,11 @@ class Signal {
 public:
     Signal();
 
-    Signal( int signum );
+    Signal(int signum);
 
-    Signal( int signum, signal_action_t );
+    Signal(int signum, signal_action_t);
 
-    Signal( int signum, signal_handler_t signal_handler );
+    Signal(int signum, signal_handler_t signal_handler);
 
     operator int() const { return signum_; }
     int signum() const { return signum_; }
@@ -93,7 +93,7 @@ public:
     const struct sigaction* action() const { return &signal_action_; }
 
 private:
-    friend std::ostream& operator<<( std::ostream&, const Signal& );
+    friend std::ostream& operator<<(std::ostream&, const Signal&);
 
     int signum_;
     std::string str_;
@@ -111,10 +111,10 @@ private:
 public:
     static Signals& instance();
     void setSignalHandlers();
-    void setSignalHandler( const Signal& );
-    void restoreSignalHandler( int signum );
+    void setSignalHandler(const Signal&);
+    void restoreSignalHandler(int signum);
     void restoreAllSignalHandlers();
-    const Signal& signal( int signum ) const;
+    const Signal& signal(int signum) const;
 
 private:
     using registered_signals_t = std::map<int, Signal>;
@@ -127,12 +127,12 @@ private:
 
 // ------------------------------------------------------------------------------------
 
-[[noreturn]] void atlas_signal_handler( int signum, siginfo_t* si, void* /*unused*/ ) {
-    Signal signal = Signals::instance().signal( signum );
+[[noreturn]] void atlas_signal_handler(int signum, siginfo_t* si, void* /*unused*/) {
+    Signal signal = Signals::instance().signal(signum);
 
     std::string signal_code;
-    if ( signum == SIGFPE ) {
-        switch ( si->si_code ) {
+    if (signum == SIGFPE) {
+        switch (si->si_code) {
             case FPE_FLTDIV:
                 signal_code = " [FE_DIVBYZERO]";
                 break;
@@ -162,95 +162,94 @@ private:
         << "=========================================\n"
         << std::endl;
 
-    Signals::instance().restoreSignalHandler( signum );
+    Signals::instance().restoreSignalHandler(signum);
     eckit::LibEcKit::instance().abort();
 
     // Just in case we end up here, which normally we shouldn't.
-    std::_Exit( EXIT_FAILURE );
+    std::_Exit(EXIT_FAILURE);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
 
-Signals::Signals() :
-    out_( [&]() -> eckit::Channel& {
-        if ( getEnv( "ATLAS_LOG_RANK", 0 ) == int( mpi::rank() ) ) {
+Signals::Signals():
+    out_([&]() -> eckit::Channel& {
+        if (getEnv("ATLAS_LOG_RANK", 0) == int(mpi::rank())) {
             return Log::debug();
         }
         static eckit::Channel sink;
         return sink;
-    }() ) {}
+    }()) {}
 
 Signals& Signals::instance() {
     static Signals signals;
     return signals;
 }
 
-void Signals::restoreSignalHandler( int signum ) {
-    if ( registered_signals_.find( signum ) != registered_signals_.end() ) {
+void Signals::restoreSignalHandler(int signum) {
+    if (registered_signals_.find(signum) != registered_signals_.end()) {
         out_ << "\n";
-        std::signal( signum, SIG_DFL );
-        out_ << "Atlas restored default signal handler for signal " << std::setw( 7 ) << std::left
+        std::signal(signum, SIG_DFL);
+        out_ << "Atlas restored default signal handler for signal " << std::setw(7) << std::left
              << registered_signals_[signum].code() << " [" << registered_signals_[signum] << "]\n";
         out_ << std::endl;
-        registered_signals_.erase( signum );
+        registered_signals_.erase(signum);
     }
 }
 
 void Signals::restoreAllSignalHandlers() {
     out_ << "\n";
-    for ( registered_signals_t::const_iterator it = registered_signals_.begin(); it != registered_signals_.end();
-          ++it ) {
-        std::signal( it->first, SIG_DFL );
-        out_ << "Atlas restored default signal handler for signal " << std::setw( 7 ) << std::left << it->second.code()
+    for (registered_signals_t::const_iterator it = registered_signals_.begin(); it != registered_signals_.end(); ++it) {
+        std::signal(it->first, SIG_DFL);
+        out_ << "Atlas restored default signal handler for signal " << std::setw(7) << std::left << it->second.code()
              << " [" << it->second.str() << "]\n";
     }
     out_ << std::endl;
     registered_signals_.clear();
 }
 
-const Signal& Signals::signal( int signum ) const {
-    return registered_signals_.at( signum );
+const Signal& Signals::signal(int signum) const {
+    return registered_signals_.at(signum);
 }
 
-std::ostream& operator<<( std::ostream& out, const Signal& signal ) {
+std::ostream& operator<<(std::ostream& out, const Signal& signal) {
     out << signal.str();
     return out;
 }
 
 void Signals::setSignalHandlers() {
-    setSignalHandler( SIGINT );
-    setSignalHandler( SIGILL );
-    setSignalHandler( SIGABRT );
-    setSignalHandler( SIGFPE );
-    setSignalHandler( SIGSEGV );
-    setSignalHandler( SIGTERM );
+    setSignalHandler(SIGINT);
+    setSignalHandler(SIGILL);
+    setSignalHandler(SIGABRT);
+    setSignalHandler(SIGFPE);
+    setSignalHandler(SIGSEGV);
+    setSignalHandler(SIGTERM);
 }
 
-void Signals::setSignalHandler( const Signal& signal ) {
+void Signals::setSignalHandler(const Signal& signal) {
     registered_signals_[signal] = signal;
-    sigaction( signal, signal.action(), nullptr );
-    out_ << "Atlas registered signal handler for signal " << std::setw( 7 ) << std::left << signal.code() << " ["
+    sigaction(signal, signal.action(), nullptr);
+    out_ << "Atlas registered signal handler for signal " << std::setw(7) << std::left << signal.code() << " ["
          << signal << "]" << std::endl;
 }
 
 
-Signal::Signal() : signum_( 0 ), str_() {
+Signal::Signal(): signum_(0), str_() {
     signal_action_.sa_handler = SIG_DFL;
 }
 
-Signal::Signal( int signum ) : Signal( signum, atlas_signal_handler ) {}
+Signal::Signal(int signum): Signal(signum, atlas_signal_handler) {}
 
-Signal::Signal( int signum, signal_handler_t signal_handler ) : signum_( signum ), str_( strsignal( signum ) ) {
-    memset( &signal_action_, 0, sizeof( signal_action_ ) );
-    sigemptyset( &signal_action_.sa_mask );
+Signal::Signal(int signum, signal_handler_t signal_handler): signum_(signum), str_(strsignal(signum)) {
+    memset(&signal_action_, 0, sizeof(signal_action_));
+    sigemptyset(&signal_action_.sa_mask);
     signal_action_.sa_handler = signal_handler;
     signal_action_.sa_flags   = 0;
 }
 
-Signal::Signal( int signum, signal_action_t signal_action ) : signum_( signum ), str_( strsignal( signum ) ) {
-    memset( &signal_action_, 0, sizeof( signal_action_ ) );
-    sigemptyset( &signal_action_.sa_mask );
+Signal::Signal(int signum, signal_action_t signal_action): signum_(signum), str_(strsignal(signum)) {
+    memset(&signal_action_, 0, sizeof(signal_action_));
+    sigemptyset(&signal_action_.sa_mask);
     signal_action_.sa_sigaction = signal_action;
     signal_action_.sa_flags     = SA_SIGINFO;
 }
@@ -258,7 +257,7 @@ Signal::Signal( int signum, signal_action_t signal_action ) : signum_( signum ),
 
 void enable_floating_point_exceptions() {
     auto& out = [&]() -> eckit::Channel& {
-        if ( getEnv( "ATLAS_LOG_RANK", 0 ) == int( mpi::rank() ) ) {
+        if (getEnv("ATLAS_LOG_RANK", 0) == int(mpi::rank())) {
             return Log::debug();
         }
         static eckit::Channel sink;
@@ -269,56 +268,56 @@ void enable_floating_point_exceptions() {
     //   std::vector<std::string> floating_point_exceptions = eckit::Resource<std::vector<std::string>>( "atlasFPE;$ATLAS_FPE", {"false"} );
     // Instead, manually access environment
     std::vector<std::string> floating_point_exceptions{"false"};
-    if ( ::getenv( "ATLAS_FPE" ) ) {
-        std::string env( ::getenv( "ATLAS_FPE" ) );
-        std::vector<std::string> tmp = eckit::Translator<std::string, std::vector<std::string>>()( env );
+    if (::getenv("ATLAS_FPE")) {
+        std::string env(::getenv("ATLAS_FPE"));
+        std::vector<std::string> tmp = eckit::Translator<std::string, std::vector<std::string>>()(env);
         floating_point_exceptions    = tmp;
         // Above trick with "tmp" is what avoids the Cray 8.6 compiler bug
     }
     else {
-        floating_point_exceptions = eckit::Resource<std::vector<std::string>>( "atlasFPE", {"false"} );
+        floating_point_exceptions = eckit::Resource<std::vector<std::string>>("atlasFPE", {"false"});
     }
     {
         bool _enable = false;
         int _excepts = 0;
-        auto enable  = [&]( int except ) {
+        auto enable  = [&](int except) {
             _excepts |= except;
             _enable = true;
             out << "Atlas enabled floating point exception " << except_to_str[except] << std::endl;
         };
         bool skip_map = false;
-        if ( floating_point_exceptions.size() == 1 ) {
-            std::string s = eckit::StringTools::lower( floating_point_exceptions[0] );
-            if ( s == "no" || s == "off" || s == "false" || s == "0" ) {
+        if (floating_point_exceptions.size() == 1) {
+            std::string s = eckit::StringTools::lower(floating_point_exceptions[0]);
+            if (s == "no" || s == "off" || s == "false" || s == "0") {
                 _enable  = false;
                 skip_map = true;
             }
-            else if ( s == "yes" || s == "on" || s == "true" || s == "1" ) {
-                enable( FE_INVALID );
-                enable( FE_DIVBYZERO );
-                enable( FE_OVERFLOW );
+            else if (s == "yes" || s == "on" || s == "true" || s == "1") {
+                enable(FE_INVALID);
+                enable(FE_DIVBYZERO);
+                enable(FE_OVERFLOW);
                 skip_map = true;
             }
         }
-        if ( not skip_map ) {
-            for ( auto& s : floating_point_exceptions ) {
-                if ( str_to_except.find( s ) == str_to_except.end() ) {
+        if (not skip_map) {
+            for (auto& s : floating_point_exceptions) {
+                if (str_to_except.find(s) == str_to_except.end()) {
                     throw eckit::UserError(
                         s + " is not a valid floating point exception code. "
                             "Valid codes: [FE_INVALID,FE_INEXACT,FE_DIVBYZERO,FE_OVERFLOW,FE_ALL_EXCEPT]",
-                        Here() );
+                        Here());
                 }
-                enable( str_to_except[s] );
+                enable(str_to_except[s]);
             }
         }
-        if ( _enable ) {
-            atlas_feenableexcept( _excepts );
+        if (_enable) {
+            atlas_feenableexcept(_excepts);
         }
     }
 }
 
 void enable_atlas_signal_handler() {
-    if ( eckit::Resource<bool>( "atlasSignalHandler;$ATLAS_SIGNAL_HANDLER", false ) ) {
+    if (eckit::Resource<bool>("atlasSignalHandler;$ATLAS_SIGNAL_HANDLER", false)) {
         Signals::instance().setSignalHandlers();
     }
 }

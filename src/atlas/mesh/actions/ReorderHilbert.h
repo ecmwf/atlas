@@ -34,9 +34,9 @@ namespace actions {
 ///                                             // internal nodes or added/remain at the end
 class ReorderHilbert : public ReorderImpl {
 public:
-    ReorderHilbert( const eckit::Parametrisation& config = util::NoConfig() );
+    ReorderHilbert(const eckit::Parametrisation& config = util::NoConfig());
 
-    std::vector<idx_t> computeNodesOrder( Mesh& ) override;
+    std::vector<idx_t> computeNodesOrder(Mesh&) override;
 
 private:
     idx_t recursion_{30};

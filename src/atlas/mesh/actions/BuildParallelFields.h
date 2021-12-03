@@ -31,7 +31,7 @@ namespace actions {
  * Build all parallel fields in the mesh
  *  - calls build_nodes_parallel_fields()
  */
-void build_parallel_fields( Mesh& mesh );
+void build_parallel_fields(Mesh& mesh);
 
 /*
  * Build parallel fields for the "nodes" function space if they don't exist.
@@ -39,7 +39,7 @@ void build_parallel_fields( Mesh& mesh );
  * - partition:  set to mpi::rank() for negative values
  * - remote_idx: rebuild from scratch
  */
-void build_nodes_parallel_fields( mesh::Nodes& nodes );
+void build_nodes_parallel_fields(mesh::Nodes& nodes);
 
 /*
  * Build parallel fields for the "edges" function space if they don't exist.
@@ -53,20 +53,20 @@ void build_nodes_parallel_fields( mesh::Nodes& nodes );
  *        Because of this problem, the size of the halo should be set to 2
  * instead of 1!!!
  */
-void build_edges_parallel_fields( Mesh& mesh );
+void build_edges_parallel_fields(Mesh& mesh);
 
-void build_cells_parallel_fields( Mesh& mesh );
+void build_cells_parallel_fields(Mesh& mesh);
 
-void renumber_nodes_glb_idx( mesh::Nodes& nodes );
+void renumber_nodes_glb_idx(mesh::Nodes& nodes);
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
 extern "C" {
-void atlas__build_parallel_fields( Mesh::Implementation* mesh );
-void atlas__build_nodes_parallel_fields( mesh::Nodes* nodes );
-void atlas__build_edges_parallel_fields( Mesh::Implementation* mesh );
-void atlas__renumber_nodes_glb_idx( mesh::Nodes* nodes );
+void atlas__build_parallel_fields(Mesh::Implementation* mesh);
+void atlas__build_nodes_parallel_fields(mesh::Nodes* nodes);
+void atlas__build_edges_parallel_fields(Mesh::Implementation* mesh);
+void atlas__renumber_nodes_glb_idx(mesh::Nodes* nodes);
 }
 
 // ------------------------------------------------------------------

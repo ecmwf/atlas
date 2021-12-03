@@ -21,7 +21,7 @@ namespace spacing {
 class FocusSpacing : public Spacing {
 public:
     // constructor
-    FocusSpacing( const eckit::Parametrisation& p );
+    FocusSpacing(const eckit::Parametrisation& p);
 
     // class name
     static std::string static_type() { return "focus"; }

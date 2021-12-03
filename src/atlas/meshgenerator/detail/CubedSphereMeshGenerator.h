@@ -39,10 +39,10 @@ namespace meshgenerator {
 
 class CubedSphereMeshGenerator : public MeshGenerator::Implementation {
 public:
-    CubedSphereMeshGenerator( const eckit::Parametrisation& = util::NoConfig() );
+    CubedSphereMeshGenerator(const eckit::Parametrisation& = util::NoConfig());
 
-    virtual void generate( const Grid&, const grid::Distribution&, Mesh& ) const override;
-    virtual void generate( const Grid&, Mesh& ) const override;
+    virtual void generate(const Grid&, const grid::Distribution&, Mesh&) const override;
+    virtual void generate(const Grid&, Mesh&) const override;
 
     using MeshGenerator::Implementation::generate;
 
@@ -50,11 +50,11 @@ public:
     std::string type() const override { return static_type(); }
 
 private:
-    virtual void hash( eckit::Hash& ) const override;
+    virtual void hash(eckit::Hash&) const override;
 
     void configure_defaults();
 
-    void generate_mesh( const CubedSphereGrid&, const grid::Distribution&, Mesh& ) const;
+    void generate_mesh(const CubedSphereGrid&, const grid::Distribution&, Mesh&) const;
 
 private:
     util::Metadata options;

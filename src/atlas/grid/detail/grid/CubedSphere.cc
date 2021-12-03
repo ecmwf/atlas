@@ -38,10 +38,10 @@ namespace grid {
 
 static eckit::Translator<std::string, int> to_int;
 
-static Domain domain( const Grid::Config& grid ) {
+static Domain domain(const Grid::Config& grid) {
     Grid::Config config;
-    if ( grid.get( "domain", config ) ) {
-        return Domain( config );
+    if (grid.get("domain", config)) {
+        return Domain(config);
     }
     return Domain();
 }
@@ -57,20 +57,19 @@ std::string CubedSphere::name() const {
 using atlas::projection::detail::CubedSphereProjectionBase;
 
 
-CubedSphere::CubedSphere( int N, Projection p, const std::string& s ) :
-    CubedSphere( CubedSphere::static_type(), N, p, s ) {}
+CubedSphere::CubedSphere(int N, Projection p, const std::string& s): CubedSphere(CubedSphere::static_type(), N, p, s) {}
 
-CubedSphere::CubedSphere( const std::string& name, int N, Projection projection, const std::string& stagger ) :
-    Grid(), N_( N ), stagger_( stagger ), name_( name ) {
-    if ( stagger_ != "C" && stagger_ != "L" ) {
-        ATLAS_THROW_EXCEPTION( "Unrecognized stagger \"" << stagger_ << "\" for grid " << name );
+CubedSphere::CubedSphere(const std::string& name, int N, Projection projection, const std::string& stagger):
+    Grid(), N_(N), stagger_(stagger), name_(name) {
+    if (stagger_ != "C" && stagger_ != "L") {
+        ATLAS_THROW_EXCEPTION("Unrecognized stagger \"" << stagger_ << "\" for grid " << name);
     }
 
     // Number of tiles hardwired to 6 at the moment. Regional may need 1
     // Copy members
     util::Config defaultProjConfig;
-    defaultProjConfig.set( "type", "cubedsphere_equiangular" );
-    projection_ = projection ? projection : Projection( defaultProjConfig );
+    defaultProjConfig.set("type", "cubedsphere_equiangular");
+    projection_ = projection ? projection : Projection(defaultProjConfig);
 
     // Domain
     domain_ = computeDomain();
@@ -82,18 +81,18 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection,
     // these rotations.
 
     using atlas::projection::detail::CubedSphereProjectionBase;
-    cs_projection_ = dynamic_cast<CubedSphereProjectionBase*>( projection_.get() );
-    if ( not cs_projection_ ) {
-        ATLAS_THROW_EXCEPTION( "Provided projection " << projection_.type()
-                                                      << " is incompatible with the CubedSphere grid type" );
+    cs_projection_ = dynamic_cast<CubedSphereProjectionBase*>(projection_.get());
+    if (not cs_projection_) {
+        ATLAS_THROW_EXCEPTION("Provided projection " << projection_.type()
+                                                     << " is incompatible with the CubedSphere grid type");
     }
 
     tiles_               = cs_projection_->getCubedSphereTiles();
     tiles_offsets_xy2ab_ = tiles_.xy2abOffsets();
     tiles_offsets_ab2xy_ = tiles_.ab2xyOffsets();
 
-    double staggerSize = ( stagger_ == "C" ) ? 0.5 : 0.0;
-    for ( std::size_t i = 0; i < nTiles_; ++i ) {
+    double staggerSize = (stagger_ == "C") ? 0.5 : 0.0;
+    for (std::size_t i = 0; i < nTiles_; ++i) {
         // default assumes all panels start in bottom left corner or center
         xs_[i]  = tiles_offsets_xy2ab_[LON][i] * N + staggerSize;
         xsr_[i] = tiles_offsets_xy2ab_[LON][i] * N + staggerSize;
@@ -101,17 +100,17 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection,
         ysr_[i] = tiles_offsets_xy2ab_[LAT][i] * N + staggerSize;
 
         // default assumes number of points on a panel is N * N
-        npts_.push_back( N * N );
+        npts_.push_back(N * N);
     }
 
     // default assumes jmax_ value of N - 1 on all tiles
     jmin_ = std::array<idx_t, 6>{0, 0, 0, 0, 0, 0};
     jmax_ = std::array<idx_t, 6>{N - 1, N - 1, N - 1, N - 1, N - 1, N - 1};
 
-    if ( tiles_.type() == "cubedsphere_fv3" ) {
+    if (tiles_.type() == "cubedsphere_fv3") {
         // panel 3,4,5 are reversed in that they start in top left corner
-        for ( std::size_t i = 3; i < nTiles_; ++i ) {
-            if ( stagger_ == "C" ) {
+        for (std::size_t i = 3; i < nTiles_; ++i) {
+            if (stagger_ == "C") {
                 ysr_[i] += N - 1;
             }
             else {
@@ -121,48 +120,48 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection,
         }
 
         // Exceptions to N * N grid points on certain tiles
-        if ( stagger_ == "L" ) {
+        if (stagger_ == "L") {
             npts_[0] += 1;  // An extra nodal point lies on tile 1
             npts_[1] += 1;  // An extra nodal point lies on tile 2
         }
 
-        xtile = {[this]( int i, int j, int t ) { return this->xsPlusIndex( i, t ); },
-                 [this]( int i, int j, int t ) { return this->xsPlusIndex( i, t ); },
-                 [this]( int i, int j, int t ) { return this->xsPlusIndex( i, t ); },
-                 [this]( int i, int j, int t ) { return this->xsPlusIndex( j, t ); },
-                 [this]( int i, int j, int t ) { return this->xsPlusIndex( j, t ); },
-                 [this]( int i, int j, int t ) { return this->xsPlusIndex( j, t ); }};
+        xtile = {[this](int i, int j, int t) { return this->xsPlusIndex(i, t); },
+                 [this](int i, int j, int t) { return this->xsPlusIndex(i, t); },
+                 [this](int i, int j, int t) { return this->xsPlusIndex(i, t); },
+                 [this](int i, int j, int t) { return this->xsPlusIndex(j, t); },
+                 [this](int i, int j, int t) { return this->xsPlusIndex(j, t); },
+                 [this](int i, int j, int t) { return this->xsPlusIndex(j, t); }};
 
-        ytile = {[this]( int i, int j, int t ) { return this->ysPlusIndex( j, t ); },
-                 [this]( int i, int j, int t ) { return this->ysPlusIndex( j, t ); },
-                 [this]( int i, int j, int t ) { return this->ysPlusIndex( j, t ); },
-                 [this]( int i, int j, int t ) { return this->ysrMinusIndex( i, t ); },
-                 [this]( int i, int j, int t ) { return this->ysrMinusIndex( i, t ); },
-                 [this]( int i, int j, int t ) { return this->ysrMinusIndex( i, t ); }};
+        ytile = {[this](int i, int j, int t) { return this->ysPlusIndex(j, t); },
+                 [this](int i, int j, int t) { return this->ysPlusIndex(j, t); },
+                 [this](int i, int j, int t) { return this->ysPlusIndex(j, t); },
+                 [this](int i, int j, int t) { return this->ysrMinusIndex(i, t); },
+                 [this](int i, int j, int t) { return this->ysrMinusIndex(i, t); },
+                 [this](int i, int j, int t) { return this->ysrMinusIndex(i, t); }};
 
 
         // Exceptions to jmax_ value of N-1 on certain tiles
-        if ( stagger_ == "L" ) {
+        if (stagger_ == "L") {
             jmax_[0] = N;  // Due to extra nodal point on panel 1
         }
-        for ( idx_t t = 0; t < nTiles_; ++t ) {
+        for (idx_t t = 0; t < nTiles_; ++t) {
             std::size_t rowlength = 1 + jmax_[t] - jmin_[t];
-            std::vector<idx_t> imaxTile( rowlength, N - 1 );
-            std::vector<idx_t> iminTile( rowlength, 0 );
-            if ( stagger_ == "L" ) {
+            std::vector<idx_t> imaxTile(rowlength, N - 1);
+            std::vector<idx_t> iminTile(rowlength, 0);
+            if (stagger_ == "L") {
                 // extra points
-                if ( t == 0 ) {
+                if (t == 0) {
                     imaxTile[N] = 0;
                 }
-                if ( t == 1 ) {
+                if (t == 1) {
                     imaxTile[0] = N;
                 }
             }
-            imax_.push_back( imaxTile );
-            imin_.push_back( iminTile );
+            imax_.push_back(imaxTile);
+            imin_.push_back(iminTile);
         }
     }
-    else if ( tiles_.type() == "cubedsphere_lfric" ) {
+    else if (tiles_.type() == "cubedsphere_lfric") {
         // panel 2, 3 starts in lower right corner initially going upwards
         xs_[2] += 1;
         xsr_[2] += N - 1;
@@ -170,52 +169,52 @@ CubedSphere::CubedSphere( const std::string& name, int N, Projection projection,
         xsr_[3] += N - 1;
 
         // panel 5 starts in upper left corner going downwards
-        if ( stagger_ == "L" ) {
+        if (stagger_ == "L") {
             xs_[5] += 1;
             ys_[5] += 1;
         }
         ysr_[5] += N - 1;
 
         // Exceptions to N * N grid points on certain tiles
-        if ( stagger_ == "L" ) {
-            npts_[4] = ( N + 1 ) * ( N + 1 );  // nodal top panel includes all edges
-            npts_[5] = ( N - 1 ) * ( N - 1 );  // nodal bottom panel excludes all edges
+        if (stagger_ == "L") {
+            npts_[4] = (N + 1) * (N + 1);  // nodal top panel includes all edges
+            npts_[5] = (N - 1) * (N - 1);  // nodal bottom panel excludes all edges
         }
 
-        xtile = {[this]( int i, int j, int t ) { return this->xsPlusIndex( i, t ); },
-                 [this]( int i, int j, int t ) { return this->xsPlusIndex( i, t ); },
-                 [this]( int i, int j, int t ) { return this->xsrMinusIndex( j, t ); },
-                 [this]( int i, int j, int t ) { return this->xsrMinusIndex( j, t ); },
-                 [this]( int i, int j, int t ) { return this->xsPlusIndex( i, t ); },
-                 [this]( int i, int j, int t ) { return this->xsPlusIndex( j, t ); }};
+        xtile = {[this](int i, int j, int t) { return this->xsPlusIndex(i, t); },
+                 [this](int i, int j, int t) { return this->xsPlusIndex(i, t); },
+                 [this](int i, int j, int t) { return this->xsrMinusIndex(j, t); },
+                 [this](int i, int j, int t) { return this->xsrMinusIndex(j, t); },
+                 [this](int i, int j, int t) { return this->xsPlusIndex(i, t); },
+                 [this](int i, int j, int t) { return this->xsPlusIndex(j, t); }};
 
-        ytile = {[this]( int i, int j, int t ) { return this->ysPlusIndex( j, t ); },
-                 [this]( int i, int j, int t ) { return this->ysPlusIndex( j, t ); },
-                 [this]( int i, int j, int t ) { return this->ysPlusIndex( i, t ); },
-                 [this]( int i, int j, int t ) { return this->ysPlusIndex( i, t ); },
-                 [this]( int i, int j, int t ) { return this->ysPlusIndex( j, t ); },
-                 [this]( int i, int j, int t ) { return this->ysrMinusIndex( i, t ); }};
+        ytile = {[this](int i, int j, int t) { return this->ysPlusIndex(j, t); },
+                 [this](int i, int j, int t) { return this->ysPlusIndex(j, t); },
+                 [this](int i, int j, int t) { return this->ysPlusIndex(i, t); },
+                 [this](int i, int j, int t) { return this->ysPlusIndex(i, t); },
+                 [this](int i, int j, int t) { return this->ysPlusIndex(j, t); },
+                 [this](int i, int j, int t) { return this->ysrMinusIndex(i, t); }};
 
         // Exceptions to jmax_ value of N-1 on certain tiles
-        if ( stagger_ == "L" ) {
+        if (stagger_ == "L") {
             jmax_[4] = N;
             jmax_[5] = N - 2;
         }
 
-        for ( std::size_t t = 0; t < nTiles_; ++t ) {
+        for (std::size_t t = 0; t < nTiles_; ++t) {
             std::size_t rowlength = 1 + jmax_[t] - jmin_[t];
-            std::vector<idx_t> imaxTile( rowlength, N - 1 );
-            std::vector<idx_t> iminTile( rowlength, 0 );
-            if ( stagger_ == "L" ) {
-                if ( t == 4 ) {
-                    std::fill_n( imaxTile.begin(), rowlength, N );
+            std::vector<idx_t> imaxTile(rowlength, N - 1);
+            std::vector<idx_t> iminTile(rowlength, 0);
+            if (stagger_ == "L") {
+                if (t == 4) {
+                    std::fill_n(imaxTile.begin(), rowlength, N);
                 }
-                if ( t == 5 ) {
-                    std::fill_n( imaxTile.begin(), rowlength, N - 2 );
+                if (t == 5) {
+                    std::fill_n(imaxTile.begin(), rowlength, N - 2);
                 }
             }
-            imax_.push_back( imaxTile );
-            imin_.push_back( iminTile );
+            imax_.push_back(imaxTile);
+            imin_.push_back(iminTile);
         }
     }
 }
@@ -229,7 +228,7 @@ Domain CubedSphere::computeDomain() const {
 CubedSphere::~CubedSphere() = default;
 
 // Print the name of the Grid
-void CubedSphere::print( std::ostream& os ) const {
+void CubedSphere::print(std::ostream& os) const {
     os << "CubedSphere(Name:" << name() << ")";
 }
 
@@ -239,69 +238,67 @@ std::string CubedSphere::type() const {
 }
 
 // Provide a unique identification hash for the grid and the projection.
-void CubedSphere::hash( eckit::Hash& h ) const {
-    h.add( "CubedSphere" );
-    h.add( int( N_ ) );
+void CubedSphere::hash(eckit::Hash& h) const {
+    h.add("CubedSphere");
+    h.add(int(N_));
 
     // also add projection information
-    projection().hash( h );
+    projection().hash(h);
 
     // also add domain information, even though already encoded in grid.
-    domain().hash( h );
+    domain().hash(h);
 }
 
 // Return the bounding box for the grid, global
 RectangularLonLatDomain CubedSphere::lonlatBoundingBox() const {
-    return projection_ ? projection_.lonlatBoundingBox( computeDomain() ) : domain();
+    return projection_ ? projection_.lonlatBoundingBox(computeDomain()) : domain();
 }
 
 // Return the specification for the grid.
 Grid::Spec CubedSphere::spec() const {
     Grid::Spec grid_spec;
 
-    if ( name() == "cubedsphere" ) {
-        grid_spec.set( "type", type() );
+    if (name() == "cubedsphere") {
+        grid_spec.set("type", type());
     }
     else {
-        grid_spec.set( "name", name() );
+        grid_spec.set("name", name());
     }
-    grid_spec.set( "projection", projection().spec() );
+    grid_spec.set("projection", projection().spec());
     return grid_spec;
 }
 
 // Convert from xy space into resolution dependent xyt space.
 // Note: unused
-void CubedSphere::xy2xyt( const double xy[], double xyt[] ) const {
+void CubedSphere::xy2xyt(const double xy[], double xyt[]) const {
     // xy is in degrees while xyt is in radians
     // (alpha, beta) and tiles.
 
     double normalisedX = xy[XX] / 90.;
-    double normalisedY = ( xy[YY] + 135. ) / 90.;
+    double normalisedY = (xy[YY] + 135.) / 90.;
 
-    double NDouble = static_cast<double>( N_ );
+    double NDouble = static_cast<double>(N_);
 
     std::array<double, 6> yOffset{NDouble, NDouble, 2. * NDouble, NDouble, NDouble, 0};
 
-    xyt[0] =
-        ( normalisedX - std::floor( normalisedX ) ) * static_cast<double>( N_ ) + xs_[static_cast<size_t>( xyt[2] )];
-    xyt[1] = ( normalisedY - std::floor( normalisedY ) ) * static_cast<double>( N_ ) +
-             yOffset[static_cast<size_t>( xyt[2] )];
-    xyt[2] = tiles_.indexFromXY( xy );
+    xyt[0] = (normalisedX - std::floor(normalisedX)) * static_cast<double>(N_) + xs_[static_cast<size_t>(xyt[2])];
+    xyt[1] = (normalisedY - std::floor(normalisedY)) * static_cast<double>(N_) + yOffset[static_cast<size_t>(xyt[2])];
+    xyt[2] = tiles_.indexFromXY(xy);
 
-    throw std::runtime_error( "error  xy2xyt" );
+    throw std::runtime_error("error  xy2xyt");
 }
 
 // Convert from xyt space into continuous xy space.
-void CubedSphere::xyt2xy( const double xyt[], double xy[] ) const {
+void CubedSphere::xyt2xy(const double xyt[], double xy[]) const {
     // xy is in degrees
     // while xyt is in number of grid points
     // (alpha, beta) and tiles.
 
-    double N      = static_cast<double>( N_ );
-    std::size_t t = static_cast<std::size_t>( xyt[2] );
+    double N      = static_cast<double>(N_);
+    std::size_t t = static_cast<std::size_t>(xyt[2]);
 
-    double normalisedX = ( xyt[0] - tiles_offsets_xy2ab_[XX][t] * N ) / N;
-    double normalisedY = ( xyt[1] - tiles_offsets_xy2ab_[YY][t] * N ) / N;
+    double normalisedX = (xyt[0] - tiles_offsets_xy2ab_[XX][t] * N) / N;
+    double normalisedY = (xyt[1] - tiles_offsets_xy2ab_[YY][t] * N) / N;
     xy[XX]             = normalisedX * 90. + tiles_offsets_ab2xy_[LON][t];
     xy[YY]             = normalisedY * 90. + tiles_offsets_ab2xy_[LAT][t];
 }
@@ -309,7 +306,7 @@ void CubedSphere::xyt2xy( const double xyt[], double xy[] ) const {
 // ------------------------------------------
 
 namespace {
-GridFactoryBuilder<CubedSphere> __register_CubedSphere( CubedSphere::static_type() );
+GridFactoryBuilder<CubedSphere> __register_CubedSphere(CubedSphere::static_type());
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -317,79 +314,79 @@ GridFactoryBuilder<CubedSphere> __register_CubedSphere( CubedSphere::static_type
 
 static class cubedsphere_lfric : public GridBuilder {
 public:
-    cubedsphere_lfric() :
-        GridBuilder( "cubedsphere_lfric", {"^[Cc][Ss][_-][Ll][Ff][Rr][-_](([CL])[-_])?([0-9]+)$"},
-                     {"CS-LFR-<N>", "CS-LFR-{C,L}-<N>"} ) {}
+    cubedsphere_lfric():
+        GridBuilder("cubedsphere_lfric", {"^[Cc][Ss][_-][Ll][Ff][Rr][-_](([CL])[-_])?([0-9]+)$"},
+                    {"CS-LFR-<N>", "CS-LFR-{C,L}-<N>"}) {}
 
-    void print( std::ostream& os ) const override {
-        os << std::left << std::setw( 20 ) << "CS-LFR-<n>"
+    void print(std::ostream& os) const override {
+        os << std::left << std::setw(20) << "CS-LFR-<n>"
            << "Cubed sphere for LFRic";
     }
 
     // Factory constructor
-    const atlas::Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const override {
+    const atlas::Grid::Implementation* create(const std::string& name, const Grid::Config& config) const override {
         int id;
         std::vector<std::string> matches;
-        if ( match( name, matches, id ) ) {
-            util::Config gridconf( config );
-            int N               = to_int( matches[2] );
+        if (match(name, matches, id)) {
+            util::Config gridconf(config);
+            int N               = to_int(matches[2]);
             std::string stagger = matches[1].empty() ? "C" : matches[1];
-            gridconf.set( "type", type() );
-            gridconf.set( "N", N );
-            gridconf.set( "stagger", stagger );
-            return create( gridconf );
+            gridconf.set("type", type());
+            gridconf.set("N", N);
+            gridconf.set("stagger", stagger);
+            return create(gridconf);
         }
         return nullptr;
     }
 
     // Factory constructor
-    const atlas::Grid::Implementation* create( const Grid::Config& config ) const override {
+    const atlas::Grid::Implementation* create(const Grid::Config& config) const override {
         int N = 0;
-        if ( not config.get( "N", N ) ) {
-            throw_AssertionFailed( "Could not find \"N\" in configuration of cubed sphere grid", Here() );
+        if (not config.get("N", N)) {
+            throw_AssertionFailed("Could not find \"N\" in configuration of cubed sphere grid", Here());
         }
         std::string name;
         std::string stagger;
-        if ( not config.get( "stagger", stagger ) ) {
+        if (not config.get("stagger", stagger)) {
             stagger = "C";  // Default to centred
         }
-        if ( stagger == "C" ) {
-            name = "CS-LFR-" + std::to_string( N );
+        if (stagger == "C") {
+            name = "CS-LFR-" + std::to_string(N);
         }
         else {
-            name = "CS-LFR-" + stagger + "-" + std::to_string( N );
+            name = "CS-LFR-" + stagger + "-" + std::to_string(N);
         }
 
         util::Config projconf;
-        projconf.set( "type", "cubedsphere_equiangular" );
-        projconf.set( "tile.type", "cubedsphere_lfric" );
+        projconf.set("type", "cubedsphere_equiangular");
+        projconf.set("tile.type", "cubedsphere_lfric");
 
         // Shift projection by a longitude
-        if ( config.has( "ShiftLon" ) ) {
+        if (config.has("ShiftLon")) {
             double shiftLon = 0.0;
-            config.get( "ShiftLon", shiftLon );
-            projconf.set( "ShiftLon", shiftLon );
+            config.get("ShiftLon", shiftLon);
+            projconf.set("ShiftLon", shiftLon);
         }
 
         // Apply a Schmidt transform
-        if ( config.has( "DoSchmidt" ) ) {
+        if (config.has("DoSchmidt")) {
             bool doSchmidt = false;
-            config.get( "DoSchmidt", doSchmidt );
-            if ( doSchmidt ) {
+            config.get("DoSchmidt", doSchmidt);
+            if (doSchmidt) {
                 double stretchFac;
                 double targetLon;
                 double targetLat;
-                config.get( "StretchFac", stretchFac );
-                config.get( "TargetLon", targetLon );
-                config.get( "TargetLat", targetLat );
-                projconf.set( "DoSchmidt", doSchmidt );
-                projconf.set( "StretchFac", stretchFac );
-                projconf.set( "TargetLon", targetLon );
-                projconf.set( "TargetLat", targetLat );
+                config.get("StretchFac", stretchFac);
+                config.get("TargetLon", targetLon);
+                config.get("TargetLat", targetLat);
+                projconf.set("DoSchmidt", doSchmidt);
+                projconf.set("StretchFac", stretchFac);
+                projconf.set("TargetLon", targetLon);
+                projconf.set("TargetLat", targetLat);
             }
         }
 
-        return new CubedSphereGrid::grid_t( name, N, Projection( projconf ), stagger );
+        return new CubedSphereGrid::grid_t(name, N, Projection(projconf), stagger);
     }
 
     void force_link() {}
@@ -401,78 +398,78 @@ public:
 // ------------------------------------------
 static class cubedsphere_equiangular : public GridBuilder {
 public:
-    cubedsphere_equiangular() :
-        GridBuilder( "cubedsphere_equiangular", {"^[Cc][Ss][_-][Ee][Aa][-_](([CL])[-_])?([0-9]+)$"},
-                     {"CS-EA-<N>", "CS-EA-{C,L}-<N>"} ) {}
+    cubedsphere_equiangular():
+        GridBuilder("cubedsphere_equiangular", {"^[Cc][Ss][_-][Ee][Aa][-_](([CL])[-_])?([0-9]+)$"},
+                    {"CS-EA-<N>", "CS-EA-{C,L}-<N>"}) {}
 
-    void print( std::ostream& os ) const override {
-        os << std::left << std::setw( 20 ) << "CS-EA-<S>-<N>"
+    void print(std::ostream& os) const override {
+        os << std::left << std::setw(20) << "CS-EA-<S>-<N>"
            << "Cubed sphere for equiangular";
     }
 
     // Factory constructor
-    const atlas::Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const override {
+    const atlas::Grid::Implementation* create(const std::string& name, const Grid::Config& config) const override {
         int id;
         std::vector<std::string> matches;
-        if ( match( name, matches, id ) ) {
-            util::Config gridconf( config );
-            int N               = to_int( matches[2] );
+        if (match(name, matches, id)) {
+            util::Config gridconf(config);
+            int N               = to_int(matches[2]);
             std::string stagger = matches[1].empty() ? "C" : matches[1];
-            gridconf.set( "type", type() );
-            gridconf.set( "N", N );
-            gridconf.set( "stagger", stagger );
-            return create( gridconf );
+            gridconf.set("type", type());
+            gridconf.set("N", N);
+            gridconf.set("stagger", stagger);
+            return create(gridconf);
         }
         return nullptr;
     }
 
     // Factory constructor
-    const atlas::Grid::Implementation* create( const Grid::Config& config ) const override {
+    const atlas::Grid::Implementation* create(const Grid::Config& config) const override {
         int N = 0;
-        if ( not config.get( "N", N ) ) {
-            throw_AssertionFailed( "Could not find \"N\" in configuration of cubed sphere grid", Here() );
+        if (not config.get("N", N)) {
+            throw_AssertionFailed("Could not find \"N\" in configuration of cubed sphere grid", Here());
         }
         std::string stagger;
-        if ( not config.get( "stagger", stagger ) ) {
+        if (not config.get("stagger", stagger)) {
             stagger = "C";  // Default to centred
         }
         std::string name;
-        if ( stagger == "C" ) {
-            name = "CS-LFR-" + std::to_string( N );
+        if (stagger == "C") {
+            name = "CS-LFR-" + std::to_string(N);
         }
         else {
-            name = "CS-LFR-" + stagger + "-" + std::to_string( N );
+            name = "CS-LFR-" + stagger + "-" + std::to_string(N);
         }
 
         util::Config projconf;
-        projconf.set( "type", "cubedsphere_equiangular" );
-        projconf.set( "tile.type", "cubedsphere_fv3" );
+        projconf.set("type", "cubedsphere_equiangular");
+        projconf.set("tile.type", "cubedsphere_fv3");
 
         // Shift projection by a longitude
-        if ( config.has( "ShiftLon" ) ) {
+        if (config.has("ShiftLon")) {
             double shiftLon = 0.0;
-            config.get( "ShiftLon", shiftLon );
-            projconf.set( "ShiftLon", shiftLon );
+            config.get("ShiftLon", shiftLon);
+            projconf.set("ShiftLon", shiftLon);
         }
 
         // Apply a Schmidt transform
-        if ( config.has( "DoSchmidt" ) ) {
+        if (config.has("DoSchmidt")) {
             bool doSchmidt = false;
-            config.get( "DoSchmidt", doSchmidt );
-            if ( doSchmidt ) {
+            config.get("DoSchmidt", doSchmidt);
+            if (doSchmidt) {
                 double stretchFac;
                 double targetLon;
                 double targetLat;
-                config.get( "StretchFac", stretchFac );
-                config.get( "TargetLon", targetLon );
-                config.get( "TargetLat", targetLat );
-                projconf.set( "DoSchmidt", doSchmidt );
-                projconf.set( "StretchFac", stretchFac );
-                projconf.set( "TargetLon", targetLon );
-                projconf.set( "TargetLat", targetLat );
+                config.get("StretchFac", stretchFac);
+                config.get("TargetLon", targetLon);
+                config.get("TargetLat", targetLat);
+                projconf.set("DoSchmidt", doSchmidt);
+                projconf.set("StretchFac", stretchFac);
+                projconf.set("TargetLon", targetLon);
+                projconf.set("TargetLat", targetLat);
             }
         }
-        return new CubedSphereGrid::grid_t( name, N, Projection( projconf ), stagger );
+        return new CubedSphereGrid::grid_t(name, N, Projection(projconf), stagger);
     }
 
     void force_link() {}
@@ -483,77 +480,77 @@ public:
 
 static class cubedsphere_equidistant : public GridBuilder {
 public:
-    cubedsphere_equidistant() :
-        GridBuilder( "cubedsphere_equidistant", {"^[Cc][Ss][_-][Ee][Dd][-_](([CL])[-_])?([0-9]+)$"},
-                     {"CS-ED-<N>", "CS-ED-{C,L}-<N>"} ) {}
+    cubedsphere_equidistant():
+        GridBuilder("cubedsphere_equidistant", {"^[Cc][Ss][_-][Ee][Dd][-_](([CL])[-_])?([0-9]+)$"},
+                    {"CS-ED-<N>", "CS-ED-{C,L}-<N>"}) {}
 
-    void print( std::ostream& os ) const override {
-        os << std::left << std::setw( 20 ) << "CS-ED-<N>"
+    void print(std::ostream& os) const override {
+        os << std::left << std::setw(20) << "CS-ED-<N>"
            << "Cubed sphere, equidistant";
     }
 
-    const atlas::Grid::Implementation* create( const std::string& name, const Grid::Config& config ) const override {
+    const atlas::Grid::Implementation* create(const std::string& name, const Grid::Config& config) const override {
         int id;
         std::vector<std::string> matches;
-        if ( match( name, matches, id ) ) {
-            util::Config gridconf( config );
-            int N               = to_int( matches[2] );
+        if (match(name, matches, id)) {
+            util::Config gridconf(config);
+            int N               = to_int(matches[2]);
             std::string stagger = matches[1].empty() ? "C" : matches[1];
-            gridconf.set( "type", type() );
-            gridconf.set( "N", N );
-            gridconf.set( "stagger", stagger );
-            return create( gridconf );
+            gridconf.set("type", type());
+            gridconf.set("N", N);
+            gridconf.set("stagger", stagger);
+            return create(gridconf);
         }
         return nullptr;
     }
 
-    const atlas::Grid::Implementation* create( const Grid::Config& config ) const override {
+    const atlas::Grid::Implementation* create(const Grid::Config& config) const override {
         int N = 0;
-        if ( not config.get( "N", N ) ) {
-            throw_AssertionFailed( "Could not find \"N\" in configuration of cubed sphere grid", Here() );
+        if (not config.get("N", N)) {
+            throw_AssertionFailed("Could not find \"N\" in configuration of cubed sphere grid", Here());
         }
         std::string stagger;
-        if ( not config.get( "stagger", stagger ) ) {
+        if (not config.get("stagger", stagger)) {
             stagger = "C";  // Default to centred
         }
         std::string name;
-        if ( stagger == "C" ) {
-            name = "CS-ED-" + std::to_string( N );
+        if (stagger == "C") {
+            name = "CS-ED-" + std::to_string(N);
         }
         else {
-            name = "CS-ED-" + stagger + "-" + std::to_string( N );
+            name = "CS-ED-" + stagger + "-" + std::to_string(N);
         }
 
         util::Config projconf;
-        projconf.set( "type", "cubedsphere_equidistant" );
-        projconf.set( "tile.type", "cubedsphere_fv3" );
+        projconf.set("type", "cubedsphere_equidistant");
+        projconf.set("tile.type", "cubedsphere_fv3");
 
         // Shift projection by a longitude
-        if ( config.has( "ShiftLon" ) ) {
+        if (config.has("ShiftLon")) {
             double shiftLon = 0.0;
-            config.get( "ShiftLon", shiftLon );
-            projconf.set( "ShiftLon", shiftLon );
+            config.get("ShiftLon", shiftLon);
+            projconf.set("ShiftLon", shiftLon);
         }
 
         // Apply a Schmidt transform
-        if ( config.has( "DoSchmidt" ) ) {
+        if (config.has("DoSchmidt")) {
             bool doSchmidt = false;
-            config.get( "DoSchmidt", doSchmidt );
-            if ( doSchmidt ) {
+            config.get("DoSchmidt", doSchmidt);
+            if (doSchmidt) {
                 double stretchFac;
                 double targetLon;
                 double targetLat;
-                config.get( "StretchFac", stretchFac );
-                config.get( "TargetLon", targetLon );
-                config.get( "TargetLat", targetLat );
-                projconf.set( "DoSchmidt", doSchmidt );
-                projconf.set( "StretchFac", stretchFac );
-                projconf.set( "TargetLon", targetLon );
-                projconf.set( "TargetLat", targetLat );
+                config.get("StretchFac", stretchFac);
+                config.get("TargetLon", targetLon);
+                config.get("TargetLat", targetLat);
+                projconf.set("DoSchmidt", doSchmidt);
+                projconf.set("StretchFac", stretchFac);
+                projconf.set("TargetLon", targetLon);
+                projconf.set("TargetLat", targetLat);
             }
         }
 
-        return new CubedSphereGrid::grid_t( name, N, Projection( projconf ), stagger );
+        return new CubedSphereGrid::grid_t(name, N, Projection(projconf), stagger);
     }
 
     void force_link() {}
@@ -569,23 +566,23 @@ void force_link_CubedSphere() {
 }
 
 Grid::Config CubedSphere::meshgenerator() const {
-    if ( stagger_ == "L" ) {
-        return Config( "type", "nodal-cubedsphere" );
+    if (stagger_ == "L") {
+        return Config("type", "nodal-cubedsphere");
     }
-    return Config( "type", "cubedsphere" );
+    return Config("type", "cubedsphere");
 }
 
 Grid::Config CubedSphere::partitioner() const {
     Grid::Config config;
-    if ( stagger_ == "L" ) {
+    if (stagger_ == "L") {
         // TODO: implement better one specific for cubed sphere that
         //       works for nodal grid
-        config.set( "type", "equal_regions" );
-        config.set( "coordinates", "lonlat" );  // do not use the grid.xy() coordinates for partitioning
+        config.set("type", "equal_regions");
+        config.set("coordinates", "lonlat");  // do not use the grid.xy() coordinates for partitioning
         return config;
     }
-    config.set( "coordinates", "lonlat" );
-    config.set( "type", "cubedsphere" );
+    config.set("coordinates", "lonlat");
+    config.set("type", "cubedsphere");
     return config;
 }
 

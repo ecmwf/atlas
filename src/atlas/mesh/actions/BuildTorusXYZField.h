@@ -36,10 +36,10 @@ namespace actions {
 /// Creates a XYZ field from the (lon,lat) field
 class BuildTorusXYZField {
 public:
-    explicit BuildTorusXYZField( const std::string& name = "xyz" );
+    explicit BuildTorusXYZField(const std::string& name = "xyz");
 
-    Field& operator()( Mesh&, const atlas::Domain&, double r0, double r1, idx_t nx, idx_t ny ) const;
-    Field& operator()( mesh::Nodes&, const atlas::Domain&, double r0, double r1, idx_t nx, idx_t ny ) const;
+    Field& operator()(Mesh&, const atlas::Domain&, double r0, double r1, idx_t nx, idx_t ny) const;
+    Field& operator()(mesh::Nodes&, const atlas::Domain&, double r0, double r1, idx_t nx, idx_t ny) const;
 
 private:
     std::string name_;

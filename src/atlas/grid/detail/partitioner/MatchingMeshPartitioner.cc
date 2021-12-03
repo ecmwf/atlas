@@ -16,16 +16,16 @@ namespace grid {
 namespace detail {
 namespace partitioner {
 
-MatchingMeshPartitioner::MatchingMeshPartitioner() : Partitioner() {
+MatchingMeshPartitioner::MatchingMeshPartitioner(): Partitioner() {
     ATLAS_NOTIMPLEMENTED;
 }
 
-MatchingMeshPartitioner::MatchingMeshPartitioner( const idx_t nb_partitions ) : Partitioner( nb_partitions ) {
+MatchingMeshPartitioner::MatchingMeshPartitioner(const idx_t nb_partitions): Partitioner(nb_partitions) {
     ATLAS_NOTIMPLEMENTED;
 }
 
-MatchingMeshPartitioner::MatchingMeshPartitioner( const Mesh& mesh ) :
-    Partitioner( mesh.nb_partitions() ), prePartitionedMesh_( mesh ) {}
+MatchingMeshPartitioner::MatchingMeshPartitioner(const Mesh& mesh):
+    Partitioner(mesh.nb_partitions()), prePartitionedMesh_(mesh) {}
 
 }  // namespace partitioner
 }  // namespace detail

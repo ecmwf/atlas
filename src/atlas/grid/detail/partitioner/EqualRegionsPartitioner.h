@@ -72,22 +72,22 @@ namespace grid {
 namespace detail {
 namespace partitioner {
 
-void eq_caps( int N, std::vector<int>& n_regions, std::vector<double>& s_cap );
-void eq_regions( int N, double xmin[], double xmax[], double ymin[], double ymax[] );
+void eq_caps(int N, std::vector<int>& n_regions, std::vector<double>& s_cap);
+void eq_regions(int N, double xmin[], double xmax[], double ymin[], double ymax[]);
 
 class EqualRegionsPartitioner : public Partitioner {
 public:
     EqualRegionsPartitioner();
 
-    EqualRegionsPartitioner( int N );
-    EqualRegionsPartitioner( int N, const eckit::Parametrisation& config );
+    EqualRegionsPartitioner(int N);
+    EqualRegionsPartitioner(int N, const eckit::Parametrisation& config);
 
-    void where( int partition, int& band, int& sector ) const;
+    void where(int partition, int& band, int& sector) const;
     int nb_bands() const { return bands_.size(); }
-    int nb_regions( int band ) const { return sectors_[band]; }
+    int nb_regions(int band) const { return sectors_[band]; }
 
     using Partitioner::partition;
-    virtual void partition( const Grid&, int part[] ) const;
+    virtual void partition(const Grid&, int part[]) const;
 
     virtual std::string type() const { return "equal_regions"; }
 
@@ -99,35 +99,35 @@ public:
     struct NodeInt {
         int x, y;
         int n;
-        bool operator!=( const NodeInt& other ) const { return n != other.n; }
-        bool operator==( const NodeInt& other ) const { return n == other.n; }
-        void swap( NodeInt& other ) {
-            auto _swap = []( int& a, int& b ) {
+        bool operator!=(const NodeInt& other) const { return n != other.n; }
+        bool operator==(const NodeInt& other) const { return n == other.n; }
+        void swap(NodeInt& other) {
+            auto _swap = [](int& a, int& b) {
                 int tmp = a;
                 a       = b;
                 b       = tmp;
             };
-            _swap( x, other.x );
-            _swap( y, other.y );
-            _swap( n, other.n );
+            _swap(x, other.x);
+            _swap(y, other.y);
+            _swap(n, other.n);
         }
-        friend void swap( NodeInt& a, NodeInt& b ) { a.swap( b ); }
+        friend void swap(NodeInt& a, NodeInt& b) { a.swap(b); }
     };
 
 private:
     void init();
     // Doesn't matter if nodes[] is in degrees or radians, as a sorting
     // algorithm is used internally
-    void partition( int nb_nodes, NodeInt nodes[], int part[] ) const;
+    void partition(int nb_nodes, NodeInt nodes[], int part[]) const;
 
     // x and y in radians
-    int partition( const double& x, const double& y ) const;
+    int partition(const double& x, const double& y) const;
 
     // y in radians
-    int band( const double& y ) const;
+    int band(const double& y) const;
 
     // x in radians
-    int sector( int band, const double& x ) const;
+    int sector(int band, const double& x) const;
 
 private:
     int N_;

@@ -19,37 +19,37 @@ namespace functionspace {
 
 // ------------------------------------------------------------------
 
-FunctionSpaceImpl::FunctionSpaceImpl() : metadata_( new util::Metadata() ) {}
+FunctionSpaceImpl::FunctionSpaceImpl(): metadata_(new util::Metadata()) {}
 
 FunctionSpaceImpl::~FunctionSpaceImpl() {
     delete metadata_;
 }
 
-atlas::Field FunctionSpaceImpl::createField( const atlas::Field& field ) const {
-    return createField( field, util::NoConfig() );
+atlas::Field FunctionSpaceImpl::createField(const atlas::Field& field) const {
+    return createField(field, util::NoConfig());
 }
 
-void FunctionSpaceImpl::haloExchange( const FieldSet&, bool ) const {
+void FunctionSpaceImpl::haloExchange(const FieldSet&, bool) const {
     ATLAS_NOTIMPLEMENTED;
 }
 
-void FunctionSpaceImpl::haloExchange( const Field&, bool ) const {
+void FunctionSpaceImpl::haloExchange(const Field&, bool) const {
     ATLAS_NOTIMPLEMENTED;
 }
 
-void FunctionSpaceImpl::adjointHaloExchange( const FieldSet&, bool ) const {
+void FunctionSpaceImpl::adjointHaloExchange(const FieldSet&, bool) const {
     ATLAS_NOTIMPLEMENTED;
 }
 
-void FunctionSpaceImpl::adjointHaloExchange( const Field&, bool ) const {
+void FunctionSpaceImpl::adjointHaloExchange(const Field&, bool) const {
     ATLAS_NOTIMPLEMENTED;
 }
 
-Field NoFunctionSpace::createField( const eckit::Configuration& ) const {
+Field NoFunctionSpace::createField(const eckit::Configuration&) const {
     ATLAS_NOTIMPLEMENTED;
 }
 
-Field NoFunctionSpace::createField( const Field&, const eckit::Configuration& ) const {
+Field NoFunctionSpace::createField(const Field&, const eckit::Configuration&) const {
     ATLAS_NOTIMPLEMENTED;
 }
 
@@ -69,26 +69,26 @@ Field FunctionSpaceImpl::global_index() const {
     ATLAS_NOTIMPLEMENTED;
 }
 
-const util::PartitionPolygon& FunctionSpaceImpl::polygon( idx_t /*halo */ ) const {
-    throw_Exception( "polygon() not implemented in derived class", Here() );
+const util::PartitionPolygon& FunctionSpaceImpl::polygon(idx_t /*halo */) const {
+    throw_Exception("polygon() not implemented in derived class", Here());
 }
 
 const util::PartitionPolygons& FunctionSpaceImpl::polygons() const {
-    throw_Exception( "polygons() not implemented in derived class", Here() );
+    throw_Exception("polygons() not implemented in derived class", Here());
 }
 
 const Projection& FunctionSpaceImpl::projection() const {
-    throw_Exception( "projection() not implemented in derived class", Here() );
+    throw_Exception("projection() not implemented in derived class", Here());
 }
 
 template <typename DATATYPE>
-Field FunctionSpaceImpl::createField( const eckit::Configuration& options ) const {
-    return createField( option::datatypeT<DATATYPE>() | options );
+Field FunctionSpaceImpl::createField(const eckit::Configuration& options) const {
+    return createField(option::datatypeT<DATATYPE>() | options);
 }
 
 template <typename DATATYPE>
 Field FunctionSpaceImpl::createField() const {
-    return createField( option::datatypeT<DATATYPE>() );
+    return createField(option::datatypeT<DATATYPE>());
 }
 
 idx_t FunctionSpaceImpl::nb_partitions() const {
@@ -102,10 +102,10 @@ template Field FunctionSpaceImpl::createField<int>() const;
 template Field FunctionSpaceImpl::createField<long>() const;
 
 
-template Field FunctionSpaceImpl::createField<double>( const eckit::Configuration& ) const;
-template Field FunctionSpaceImpl::createField<float>( const eckit::Configuration& ) const;
-template Field FunctionSpaceImpl::createField<int>( const eckit::Configuration& ) const;
-template Field FunctionSpaceImpl::createField<long>( const eckit::Configuration& ) const;
+template Field FunctionSpaceImpl::createField<double>(const eckit::Configuration&) const;
+template Field FunctionSpaceImpl::createField<float>(const eckit::Configuration&) const;
+template Field FunctionSpaceImpl::createField<int>(const eckit::Configuration&) const;
+template Field FunctionSpaceImpl::createField<long>(const eckit::Configuration&) const;
 
 
 // ------------------------------------------------------------------

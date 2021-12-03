@@ -22,21 +22,21 @@ template <typename Rotation>
 class MercatorProjectionT final : public ProjectionImpl {
 public:
     // constructor
-    MercatorProjectionT( const eckit::Parametrisation& );
+    MercatorProjectionT(const eckit::Parametrisation&);
 
     // projection name
     static std::string static_type() { return Rotation::typePrefix() + "mercator"; }
     std::string type() const override { return static_type(); }
 
     // projection and inverse projection
-    void xy2lonlat( double crd[] ) const override;
-    void lonlat2xy( double crd[] ) const override;
+    void xy2lonlat(double crd[]) const override;
+    void lonlat2xy(double crd[]) const override;
 
-    Jacobian jacobian( const PointLonLat& ) const override;
+    Jacobian jacobian(const PointLonLat&) const override;
 
     bool strictlyRegional() const override { return true; }  // Mercator projection cannot be used for global grids
-    RectangularLonLatDomain lonlatBoundingBox( const Domain& domain ) const override {
-        return ProjectionImpl::lonlatBoundingBox( domain );
+    RectangularLonLatDomain lonlatBoundingBox(const Domain& domain) const override {
+        return ProjectionImpl::lonlatBoundingBox(domain);
     }
 
     // specification
@@ -44,7 +44,7 @@ public:
 
     std::string units() const override { return "meters"; }
 
-    void hash( eckit::Hash& ) const override;
+    void hash(eckit::Hash&) const override;
 
 protected:
     Normalise normalise_;
@@ -63,7 +63,7 @@ protected:
     double false_northing_;
 
 
-    void setup( const eckit::Parametrisation& p );
+    void setup(const eckit::Parametrisation& p);
 
 private:
     Rotation rotation_;

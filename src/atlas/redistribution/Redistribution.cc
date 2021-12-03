@@ -16,27 +16,27 @@
 namespace atlas {
 
 // Use redistribution implementation factory to make object.
-Redistribution::Redistribution() : Handle(){};
-Redistribution::Redistribution( const FunctionSpace& sourceFunctionSpace, const FunctionSpace& targetFunctionSpace,
-                                const util::Config& config ) :
-    Handle( [&]() -> redistribution::detail::RedistributionImpl* {
-        ATLAS_ASSERT( sourceFunctionSpace.type() == targetFunctionSpace.type() );
+Redistribution::Redistribution(): Handle(){};
+Redistribution::Redistribution(const FunctionSpace& sourceFunctionSpace, const FunctionSpace& targetFunctionSpace,
+                               const util::Config& config):
+    Handle([&]() -> redistribution::detail::RedistributionImpl* {
+        ATLAS_ASSERT(sourceFunctionSpace.type() == targetFunctionSpace.type());
 
         std::string type = redistribution::detail::RedistributeGeneric::static_type();
-        config.get( "type", type );
+        config.get("type", type);
 
-        auto impl = redistribution::detail::RedistributionImplFactory::build( type );
-        impl->setup( sourceFunctionSpace, targetFunctionSpace );
+        auto impl = redistribution::detail::RedistributionImplFactory::build(type);
+        impl->setup(sourceFunctionSpace, targetFunctionSpace);
         return impl;
-    }() ) {}
+    }()) {}
 
-void Redistribution::execute( const Field& source, Field& target ) const {
-    get()->execute( source, target );
+void Redistribution::execute(const Field& source, Field& target) const {
+    get()->execute(source, target);
     return;
 }
 
-void Redistribution::execute( const FieldSet& source, FieldSet& target ) const {
-    get()->execute( source, target );
+void Redistribution::execute(const FieldSet& source, FieldSet& target) const {
+    get()->execute(source, target);
     return;
 }
 

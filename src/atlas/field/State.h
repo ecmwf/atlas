@@ -35,35 +35,35 @@ public:  // methods
          //-- Constructors
     State();
 
-    State( const std::string& generator, const eckit::Parametrisation& = util::Config() );
+    State(const std::string& generator, const eckit::Parametrisation& = util::Config());
 
     //-- Accessors
 
-    const Field& field( const std::string& name ) const;
-    Field& field( const std::string& name );
-    bool has( const std::string& name ) const { return ( fields_.find( name ) != fields_.end() ); }
+    const Field& field(const std::string& name) const;
+    Field& field(const std::string& name);
+    bool has(const std::string& name) const { return (fields_.find(name) != fields_.end()); }
     std::vector<std::string> field_names() const;
 
-    const Field& field( const idx_t idx ) const;
-    Field& field( const idx_t idx );
-    idx_t size() const { return static_cast<idx_t>( fields_.size() ); }
+    const Field& field(const idx_t idx) const;
+    Field& field(const idx_t idx);
+    idx_t size() const { return static_cast<idx_t>(fields_.size()); }
 
-    const Field& operator[]( const idx_t idx ) const { return field( idx ); }
-    Field& operator[]( const idx_t idx ) { return field( idx ); }
+    const Field& operator[](const idx_t idx) const { return field(idx); }
+    Field& operator[](const idx_t idx) { return field(idx); }
 
-    const Field& operator[]( const std::string& name ) const { return field( name ); }
-    Field& operator[]( const std::string& name ) { return field( name ); }
+    const Field& operator[](const std::string& name) const { return field(name); }
+    Field& operator[](const std::string& name) { return field(name); }
 
     const util::Metadata& metadata() const;
     util::Metadata& metadata();
 
     // -- Modifiers
 
-    void initialize( const std::string& generator, const eckit::Parametrisation& = util::Config() );
+    void initialize(const std::string& generator, const eckit::Parametrisation& = util::Config());
 
-    Field add( Field );
+    Field add(Field);
 
-    void remove( const std::string& name );
+    void remove(const std::string& name);
 
 private:
     typedef std::map<std::string, Field> FieldMap;
@@ -77,11 +77,11 @@ private:
 
 class StateGenerator : public util::Object {
 public:
-    StateGenerator( const eckit::Parametrisation& = util::Config() );
+    StateGenerator(const eckit::Parametrisation& = util::Config());
 
     virtual ~StateGenerator();
 
-    virtual void generate( State&, const eckit::Parametrisation& = util::Config() ) const = 0;
+    virtual void generate(State&, const eckit::Parametrisation& = util::Config()) const = 0;
 };
 
 //------------------------------------------------------------------------------------------------------
@@ -92,30 +92,30 @@ public:
    * \brief build StateCreator with options specified in parametrisation
    * \return mesh generator
    */
-    static StateGenerator* build( const std::string& state_generator, const eckit::Parametrisation& = util::Config() );
+    static StateGenerator* build(const std::string& state_generator, const eckit::Parametrisation& = util::Config());
 
     /*!
    * \brief list all registered field creators
    */
-    static void list( std::ostream& );
-    static bool has( const std::string& name );
+    static void list(std::ostream&);
+    static bool has(const std::string& name);
 
 private:
-    virtual StateGenerator* make( const eckit::Parametrisation& = util::Config() ) = 0;
+    virtual StateGenerator* make(const eckit::Parametrisation& = util::Config()) = 0;
 
     std::string name_;
 
 protected:
-    StateGeneratorFactory( const std::string& );
+    StateGeneratorFactory(const std::string&);
     virtual ~StateGeneratorFactory();
 };
 
 template <class T>
 class StateGeneratorBuilder : public StateGeneratorFactory {
-    virtual StateGenerator* make( const eckit::Parametrisation& param = util::Config() ) { return new T( param ); }
+    virtual StateGenerator* make(const eckit::Parametrisation& param = util::Config()) { return new T(param); }
 
 public:
-    StateGeneratorBuilder( const std::string& name ) : StateGeneratorFactory( name ) {}
+    StateGeneratorBuilder(const std::string& name): StateGeneratorFactory(name) {}
 };
 
 // ------------------------------------------------------------------------------------
@@ -123,15 +123,15 @@ public:
 // C wrapper interfaces to C++ routines
 extern "C" {
 State* atlas__State__new();
-void atlas__State__initialize( State* This, const char* generator, const eckit::Parametrisation* params );
-void atlas__State__delete( State* This );
-void atlas__State__add( State* This, FieldImpl* field );
-void atlas__State__remove( State* This, const char* name );
-int atlas__State__has( State* This, const char* name );
-FieldImpl* atlas__State__field_by_name( State* This, const char* name );
-FieldImpl* atlas__State__field_by_index( State* This, idx_t index );
-idx_t atlas__State__size( const State* This );
-util::Metadata* atlas__State__metadata( State* This );
+void atlas__State__initialize(State* This, const char* generator, const eckit::Parametrisation* params);
+void atlas__State__delete(State* This);
+void atlas__State__add(State* This, FieldImpl* field);
+void atlas__State__remove(State* This, const char* name);
+int atlas__State__has(State* This, const char* name);
+FieldImpl* atlas__State__field_by_name(State* This, const char* name);
+FieldImpl* atlas__State__field_by_index(State* This, idx_t index);
+idx_t atlas__State__size(const State* This);
+util::Metadata* atlas__State__metadata(State* This);
 }
 
 }  // namespace field

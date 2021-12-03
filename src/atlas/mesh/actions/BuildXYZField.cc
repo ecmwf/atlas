@@ -24,34 +24,34 @@ namespace actions {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-BuildXYZField::BuildXYZField( const std::string& name, bool force_recompute ) :
-    name_( name ), force_recompute_( force_recompute ) {}
+BuildXYZField::BuildXYZField(const std::string& name, bool force_recompute):
+    name_(name), force_recompute_(force_recompute) {}
 
-Field& BuildXYZField::operator()( Mesh& mesh ) const {
-    return operator()( mesh.nodes() );
+Field& BuildXYZField::operator()(Mesh& mesh) const {
+    return operator()(mesh.nodes());
 }
 
-Field& BuildXYZField::operator()( mesh::Nodes& nodes ) const {
+Field& BuildXYZField::operator()(mesh::Nodes& nodes) const {
     bool recompute = force_recompute_;
-    if ( !nodes.has_field( name_ ) ) {
-        nodes.add( Field( name_, array::make_datatype<double>(), array::make_shape( nodes.size(), 3 ) ) );
+    if (!nodes.has_field(name_)) {
+        nodes.add(Field(name_, array::make_datatype<double>(), array::make_shape(nodes.size(), 3)));
         recompute = true;
     }
-    if ( recompute ) {
-        ATLAS_TRACE( "BuildXYZField" );
-        array::ArrayView<double, 2> lonlat = array::make_view<double, 2>( nodes.lonlat() );
-        array::ArrayView<double, 2> xyz    = array::make_view<double, 2>( nodes.field( name_ ) );
+    if (recompute) {
+        ATLAS_TRACE("BuildXYZField");
+        array::ArrayView<double, 2> lonlat = array::make_view<double, 2>(nodes.lonlat());
+        array::ArrayView<double, 2> xyz    = array::make_view<double, 2>(nodes.field(name_));
 
         PointXYZ p2;
-        for ( idx_t n = 0; n < nodes.size(); ++n ) {
-            const PointLonLat p1( lonlat( n, 0 ), lonlat( n, 1 ) );
-            util::Earth::convertSphericalToCartesian( p1, p2 );
-            xyz( n, 0 ) = p2.x();
-            xyz( n, 1 ) = p2.y();
-            xyz( n, 2 ) = p2.z();
+        for (idx_t n = 0; n < nodes.size(); ++n) {
+            const PointLonLat p1(lonlat(n, 0), lonlat(n, 1));
+            util::Earth::convertSphericalToCartesian(p1, p2);
+            xyz(n, 0) = p2.x();
+            xyz(n, 1) = p2.y();
+            xyz(n, 2) = p2.z();
         }
     }
-    return nodes.field( name_ );
+    return nodes.field(name_);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

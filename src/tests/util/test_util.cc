@@ -19,19 +19,19 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-CASE( "convert to microdegrees" ) {
-    EXPECT_EQ( microdeg( -179.999999999999 ), -180000000 );
-    EXPECT_EQ( microdeg( +179.999999999999 ), +180000000 );
-    EXPECT_EQ( microdeg( -180.000000000001 ), -180000000 );
-    EXPECT_EQ( microdeg( +180.000000000001 ), +180000000 );
-    EXPECT_EQ( microdeg( -0.000000000001 ), 0 );
-    EXPECT_EQ( microdeg( +0.000000000001 ), 0 );
-    EXPECT_EQ( microdeg( -0.000001 ), -1 );
-    EXPECT_EQ( microdeg( +0.000001 ), +1 );
-    EXPECT_EQ( microdeg( -0.000001499999 ), -1 );
-    EXPECT_EQ( microdeg( +0.000001499999 ), +1 );
-    EXPECT_EQ( microdeg( -0.000001500001 ), -2 );
-    EXPECT_EQ( microdeg( +0.000001500001 ), +2 );
+CASE("convert to microdegrees") {
+    EXPECT_EQ(microdeg(-179.999999999999), -180000000);
+    EXPECT_EQ(microdeg(+179.999999999999), +180000000);
+    EXPECT_EQ(microdeg(-180.000000000001), -180000000);
+    EXPECT_EQ(microdeg(+180.000000000001), +180000000);
+    EXPECT_EQ(microdeg(-0.000000000001), 0);
+    EXPECT_EQ(microdeg(+0.000000000001), 0);
+    EXPECT_EQ(microdeg(-0.000001), -1);
+    EXPECT_EQ(microdeg(+0.000001), +1);
+    EXPECT_EQ(microdeg(-0.000001499999), -1);
+    EXPECT_EQ(microdeg(+0.000001499999), +1);
+    EXPECT_EQ(microdeg(-0.000001500001), -2);
+    EXPECT_EQ(microdeg(+0.000001500001), +2);
 }
 
 //-----------------------------------------------------------------------------
@@ -39,6 +39,6 @@ CASE( "convert to microdegrees" ) {
 }  // namespace test
 }  // namespace atlas
 
-int main( int argc, char** argv ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
 }

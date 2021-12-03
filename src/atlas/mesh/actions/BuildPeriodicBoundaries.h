@@ -23,12 +23,12 @@ namespace actions {
  *   are set to the master nodes at WEST-BC, whereas the
  *   global index remains unchanged
  */
-void build_periodic_boundaries( Mesh& mesh );
+void build_periodic_boundaries(Mesh& mesh);
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 extern "C" {
-void atlas__build_periodic_boundaries( Mesh::Implementation* mesh );
+void atlas__build_periodic_boundaries(Mesh::Implementation* mesh);
 }
 // ------------------------------------------------------------------
 

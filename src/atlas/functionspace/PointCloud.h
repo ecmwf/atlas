@@ -30,26 +30,26 @@ namespace detail {
 class PointCloud : public functionspace::FunctionSpaceImpl {
 public:
     template <typename Point>
-    PointCloud( const std::vector<Point>& );
-    PointCloud( const Field& lonlat );
-    PointCloud( const Field& lonlat, const Field& ghost );
-    PointCloud( const Grid& );
+    PointCloud(const std::vector<Point>&);
+    PointCloud(const Field& lonlat);
+    PointCloud(const Field& lonlat, const Field& ghost);
+    PointCloud(const Grid&);
     virtual ~PointCloud() override {}
     virtual std::string type() const override { return "PointCloud"; }
     virtual operator bool() const override { return true; }
-    virtual size_t footprint() const override { return sizeof( *this ); }
+    virtual size_t footprint() const override { return sizeof(*this); }
     virtual std::string distribution() const override;
     Field lonlat() const override { return lonlat_; }
     const Field& vertical() const { return vertical_; }
     Field ghost() const override;
-    virtual idx_t size() const override { return lonlat_.shape( 0 ); }
+    virtual idx_t size() const override { return lonlat_.shape(0); }
 
     using FunctionSpaceImpl::createField;
-    virtual Field createField( const eckit::Configuration& ) const override;
-    virtual Field createField( const Field&, const eckit::Configuration& ) const override;
+    virtual Field createField(const eckit::Configuration&) const override;
+    virtual Field createField(const Field&, const eckit::Configuration&) const override;
 
-    void haloExchange( const FieldSet&, bool /*on_device*/ = false ) const override {}
-    void haloExchange( const Field&, bool /*on_device*/ = false ) const override {}
+    void haloExchange(const FieldSet&, bool /*on_device*/ = false) const override {}
+    void haloExchange(const Field&, bool /*on_device*/ = false) const override {}
 
     template <typename Point>
     class IteratorT {
@@ -60,9 +60,9 @@ public:
         using reference         = Point&;
         using iterator_category = std::output_iterator_tag;
 
-        IteratorT( const PointCloud& fs, bool begin = true );
+        IteratorT(const PointCloud& fs, bool begin = true);
 
-        bool next( Point& );
+        bool next(Point&);
 
         const Point operator*() const;
 
@@ -71,8 +71,8 @@ public:
             return *this;
         }
 
-        bool operator==( const IteratorT& other ) const { return n_ == other.n_; }
-        bool operator!=( const IteratorT& other ) const { return n_ != other.n_; }
+        bool operator==(const IteratorT& other) const { return n_ == other.n_; }
+        bool operator!=(const IteratorT& other) const { return n_ != other.n_; }
 
     private:
         const PointCloud& fs_;
@@ -90,9 +90,9 @@ public:
         using const_iterator = iterator;
 
     public:
-        IterateT( const PointCloud& fs ) : fs_( fs ) {}
-        iterator begin() const { return IteratorT<Point>( fs_ ); }
-        iterator end() const { return IteratorT<Point>( fs_, false ); }
+        IterateT(const PointCloud& fs): fs_(fs) {}
+        iterator begin() const { return IteratorT<Point>(fs_); }
+        iterator end() const { return IteratorT<Point>(fs_, false); }
         idx_t size() const { return fs_.size(); }
 
     private:
@@ -102,9 +102,9 @@ public:
 
     class Iterate {
     public:
-        Iterate( const PointCloud& fs ) : fs_( fs ) {}
+        Iterate(const PointCloud& fs): fs_(fs) {}
         IterateT<PointXYZ> xyz() const {
-            ATLAS_ASSERT( fs_.vertical() );
+            ATLAS_ASSERT(fs_.vertical());
             return IterateT<PointXYZ>{fs_};
         }
         IterateT<PointXY> xy() const { return IterateT<PointXY>{fs_}; }
@@ -114,7 +114,7 @@ public:
         const PointCloud& fs_;
     };
 
-    Iterate iterate() const { return Iterate( *this ); }
+    Iterate iterate() const { return Iterate(*this); }
 
 private:
     Field lonlat_;
@@ -131,12 +131,12 @@ private:
 
 class PointCloud : public FunctionSpace {
 public:
-    PointCloud( const FunctionSpace& );
-    PointCloud( const Field& points );
-    PointCloud( const std::vector<PointXY>& );
-    PointCloud( const std::vector<PointXYZ>& );
-    PointCloud( const std::initializer_list<std::initializer_list<double>>& );
-    PointCloud( const Grid& grid );
+    PointCloud(const FunctionSpace&);
+    PointCloud(const Field& points);
+    PointCloud(const std::vector<PointXY>&);
+    PointCloud(const std::vector<PointXYZ>&);
+    PointCloud(const std::initializer_list<std::initializer_list<double>>&);
+    PointCloud(const Grid& grid);
 
     operator bool() const { return valid(); }
     bool valid() const { return functionspace_; }

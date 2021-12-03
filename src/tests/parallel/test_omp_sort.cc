@@ -22,69 +22,67 @@ namespace atlas {
 namespace test {
 
 
-atlas::vector<int> create_random_data( int n ) {
+atlas::vector<int> create_random_data(int n) {
     std::random_device r;
     std::seed_seq seed{r(), r(), r(), r(), r(), r(), r(), r()};
-    std::mt19937 eng( seed );  // a source of random data
+    std::mt19937 eng(seed);  // a source of random data
 
     std::uniform_int_distribution<int> dist;
-    atlas::vector<int> v( n );
+    atlas::vector<int> v(n);
 
-    std::generate( v.begin(), v.end(), std::bind( dist, eng ) );
+    std::generate(v.begin(), v.end(), std::bind(dist, eng));
     return v;
 }
 
 //-----------------------------------------------------------------------------
 
-CASE( "test_sort_little" ) {
+CASE("test_sort_little") {
     // Because there is little work to be done, the underlying algorithm will not use OpenMP here.
-    auto integers = create_random_data( 20 );
+    auto integers = create_random_data(20);
 
-    SECTION( "default order" ) {
-        omp::sort( integers.begin(), integers.end() );
-        EXPECT( std::is_sorted( integers.begin(), integers.end() ) );
+    SECTION("default order") {
+        omp::sort(integers.begin(), integers.end());
+        EXPECT(std::is_sorted(integers.begin(), integers.end()));
     }
 
-    SECTION( "reverse order" ) {
-        omp::sort( integers.begin(), integers.end(), []( const int& a, const int& b ) { return b > a; } );
-        EXPECT(
-            std::is_sorted( integers.begin(), integers.end(), []( const int& a, const int& b ) { return b > a; } ) );
+    SECTION("reverse order") {
+        omp::sort(integers.begin(), integers.end(), [](const int& a, const int& b) { return b > a; });
+        EXPECT(std::is_sorted(integers.begin(), integers.end(), [](const int& a, const int& b) { return b > a; }));
     }
 }
 
-CASE( "test_sort_large" ) {
+CASE("test_sort_large") {
     // There is enough work to use OpenMP underneith, if ATLAS_HAVE_OMP && OMP_NUM_THREADS > 1
-    auto integers = create_random_data( 1000000 );
+    auto integers = create_random_data(1000000);
 
-    SECTION( "default order" ) {
-        omp::sort( integers.begin(), integers.end() );
-        EXPECT( std::is_sorted( integers.begin(), integers.end() ) );
+    SECTION("default order") {
+        omp::sort(integers.begin(), integers.end());
+        EXPECT(std::is_sorted(integers.begin(), integers.end()));
     }
 
-    SECTION( "reverse order" ) {
-        omp::sort( integers.begin(), integers.end(), []( const int& a, const int& b ) { return b > a; } );
-        EXPECT(
-            std::is_sorted( integers.begin(), integers.end(), []( const int& a, const int& b ) { return b > a; } ) );
+    SECTION("reverse order") {
+        omp::sort(integers.begin(), integers.end(), [](const int& a, const int& b) { return b > a; });
+        EXPECT(std::is_sorted(integers.begin(), integers.end(), [](const int& a, const int& b) { return b > a; }));
     }
 }
 
-CASE( "test_merge_blocks" ) {
+CASE("test_merge_blocks") {
     // There is enough work to use OpenMP underneith, if ATLAS_HAVE_OMP && OMP_NUM_THREADS > 1
 
     auto nb_blocks  = 16;
     auto block_size = 100000;
-    auto integers   = create_random_data( nb_blocks * block_size );
-    std::vector<int> blocks_size( nb_blocks, block_size );
+    auto integers   = create_random_data(nb_blocks * block_size);
+    std::vector<int> blocks_size(nb_blocks, block_size);
 
     auto end = integers.begin();
-    for ( int b = 0; b < nb_blocks; ++b ) {
+    for (int b = 0; b < nb_blocks; ++b) {
         auto begin = end;
         end        = begin + blocks_size[b];
-        omp::sort( begin, end );
+        omp::sort(begin, end);
     }
 
-    omp::merge_blocks( integers.begin(), integers.end(), blocks_size.begin(), blocks_size.end() );
-    EXPECT( std::is_sorted( integers.begin(), integers.end() ) );
+    omp::merge_blocks(integers.begin(), integers.end(), blocks_size.begin(), blocks_size.end());
+    EXPECT(std::is_sorted(integers.begin(), integers.end()));
 }
 
 //-----------------------------------------------------------------------------
@@ -92,6 +90,6 @@ CASE( "test_merge_blocks" ) {
 }  // namespace test
 }  // namespace atlas
 
-int main( int argc, char** argv ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
 }

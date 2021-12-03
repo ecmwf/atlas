@@ -21,16 +21,16 @@ namespace array {
 
 namespace {
 template <typename Value, int Rank>
-inline static void check_metadata( const Array& array ) {
-    if ( array.rank() != Rank ) {
+inline static void check_metadata(const Array& array) {
+    if (array.rank() != Rank) {
         std::stringstream err;
         err << "Number of dimensions do not match: template argument " << Rank << " expected to be " << array.rank();
-        throw_Exception( err.str(), Here() );
+        throw_Exception(err.str(), Here());
     }
-    if ( array.datatype() != array::DataType::create<Value>() ) {
+    if (array.datatype() != array::DataType::create<Value>()) {
         std::stringstream err;
         err << "Data Type does not match: template argument expected to be " << array.datatype().str();
-        throw_Exception( err.str(), Here() );
+        throw_Exception(err.str(), Here());
     }
 }
 }  // namespace
@@ -38,57 +38,57 @@ inline static void check_metadata( const Array& array ) {
 //------------------------------------------------------------------------------
 
 template <typename Value, int Rank>
-ArrayView<Value, Rank> make_host_view( Array& array ) {
-    return ArrayView<Value, Rank>( (Value*)( array.storage() ), array.shape(), array.strides() );
+ArrayView<Value, Rank> make_host_view(Array& array) {
+    return ArrayView<Value, Rank>((Value*)(array.storage()), array.shape(), array.strides());
 }
 
 template <typename Value, int Rank>
-ArrayView<const Value, Rank> make_host_view( const Array& array ) {
-    return ArrayView<const Value, Rank>( (const Value*)( array.storage() ), array.shape(), array.strides() );
+ArrayView<const Value, Rank> make_host_view(const Array& array) {
+    return ArrayView<const Value, Rank>((const Value*)(array.storage()), array.shape(), array.strides());
 }
 
 template <typename Value, int Rank>
-ArrayView<Value, Rank> make_device_view( Array& array ) {
-    return make_host_view<Value, Rank>( array );
+ArrayView<Value, Rank> make_device_view(Array& array) {
+    return make_host_view<Value, Rank>(array);
 }
 
 template <typename Value, int Rank>
-ArrayView<const Value, Rank> make_device_view( const Array& array ) {
-    return make_host_view<Value, Rank>( array );
+ArrayView<const Value, Rank> make_device_view(const Array& array) {
+    return make_host_view<Value, Rank>(array);
 }
 
 template <typename Value, int Rank>
-IndexView<Value, Rank> make_host_indexview( Array& array ) {
-    return IndexView<Value, Rank>( (Value*)( array.storage() ), array.shape().data() );
+IndexView<Value, Rank> make_host_indexview(Array& array) {
+    return IndexView<Value, Rank>((Value*)(array.storage()), array.shape().data());
 }
 
 template <typename Value, int Rank>
-IndexView<const Value, Rank> make_host_indexview( const Array& array ) {
-    return IndexView<const Value, Rank>( (const Value*)( array.storage() ), array.shape().data() );
+IndexView<const Value, Rank> make_host_indexview(const Array& array) {
+    return IndexView<const Value, Rank>((const Value*)(array.storage()), array.shape().data());
 }
 
 template <typename Value, int Rank>
-IndexView<Value, Rank> make_indexview( Array& array ) {
-    check_metadata<Value, Rank>( array );
-    return make_host_indexview<Value, Rank>( array );
+IndexView<Value, Rank> make_indexview(Array& array) {
+    check_metadata<Value, Rank>(array);
+    return make_host_indexview<Value, Rank>(array);
 }
 
 template <typename Value, int Rank>
-IndexView<const Value, Rank> make_indexview( const Array& array ) {
-    check_metadata<Value, Rank>( array );
-    return make_host_indexview<Value, Rank>( array );
+IndexView<const Value, Rank> make_indexview(const Array& array) {
+    check_metadata<Value, Rank>(array);
+    return make_host_indexview<Value, Rank>(array);
 }
 
 template <typename Value, int Rank>
-ArrayView<Value, Rank> make_view( Array& array ) {
-    check_metadata<Value, Rank>( array );
-    return make_host_view<Value, Rank>( array );
+ArrayView<Value, Rank> make_view(Array& array) {
+    check_metadata<Value, Rank>(array);
+    return make_host_view<Value, Rank>(array);
 }
 
 template <typename Value, int Rank>
-ArrayView<const Value, Rank> make_view( const Array& array ) {
-    check_metadata<Value, Rank>( array );
-    return make_host_view<Value, Rank>( array );
+ArrayView<const Value, Rank> make_view(const Array& array) {
+    check_metadata<Value, Rank>(array);
+    return make_host_view<Value, Rank>(array);
 }
 
 // --------------------------------------------------------------------------------------------
@@ -101,55 +101,55 @@ ArrayView<const Value, Rank> make_view( const Array& array ) {
 namespace atlas {
 namespace array {
 
-#define EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK( TYPE, RANK )                            \
-    template ArrayView<TYPE, RANK> make_view<TYPE, RANK>( Array& );                        \
-    template ArrayView<const TYPE, RANK> make_view<const TYPE, RANK>( Array& );            \
-    template ArrayView<const TYPE, RANK> make_view<TYPE, RANK>( const Array& );            \
-    template ArrayView<const TYPE, RANK> make_view<const TYPE, RANK>( const Array& );      \
-                                                                                           \
-    template ArrayView<TYPE, RANK> make_host_view<TYPE, RANK>( Array& );                   \
-    template ArrayView<const TYPE, RANK> make_host_view<const TYPE, RANK>( Array& );       \
-    template ArrayView<const TYPE, RANK> make_host_view<TYPE, RANK>( const Array& );       \
-    template ArrayView<const TYPE, RANK> make_host_view<const TYPE, RANK>( const Array& ); \
-                                                                                           \
-    template ArrayView<TYPE, RANK> make_device_view<TYPE, RANK>( Array& );                 \
-    template ArrayView<const TYPE, RANK> make_device_view<const TYPE, RANK>( Array& );     \
-    template ArrayView<const TYPE, RANK> make_device_view<TYPE, RANK>( const Array& );     \
-    template ArrayView<const TYPE, RANK> make_device_view<const TYPE, RANK>( const Array& );
+#define EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(TYPE, RANK)                            \
+    template ArrayView<TYPE, RANK> make_view<TYPE, RANK>(Array&);                        \
+    template ArrayView<const TYPE, RANK> make_view<const TYPE, RANK>(Array&);            \
+    template ArrayView<const TYPE, RANK> make_view<TYPE, RANK>(const Array&);            \
+    template ArrayView<const TYPE, RANK> make_view<const TYPE, RANK>(const Array&);      \
+                                                                                         \
+    template ArrayView<TYPE, RANK> make_host_view<TYPE, RANK>(Array&);                   \
+    template ArrayView<const TYPE, RANK> make_host_view<const TYPE, RANK>(Array&);       \
+    template ArrayView<const TYPE, RANK> make_host_view<TYPE, RANK>(const Array&);       \
+    template ArrayView<const TYPE, RANK> make_host_view<const TYPE, RANK>(const Array&); \
+                                                                                         \
+    template ArrayView<TYPE, RANK> make_device_view<TYPE, RANK>(Array&);                 \
+    template ArrayView<const TYPE, RANK> make_device_view<const TYPE, RANK>(Array&);     \
+    template ArrayView<const TYPE, RANK> make_device_view<TYPE, RANK>(const Array&);     \
+    template ArrayView<const TYPE, RANK> make_device_view<const TYPE, RANK>(const Array&);
 
-#define EXPLICIT_TEMPLATE_INSTATIATION( RANK )                \
-    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK( int, RANK )    \
-    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK( long, RANK )   \
-    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK( float, RANK )  \
-    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK( double, RANK ) \
-    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK( unsigned long, RANK )
+#define EXPLICIT_TEMPLATE_INSTATIATION(RANK)                \
+    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(int, RANK)    \
+    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(long, RANK)   \
+    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(float, RANK)  \
+    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(double, RANK) \
+    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(unsigned long, RANK)
 
 
-EXPLICIT_TEMPLATE_INSTATIATION( 1 )
-EXPLICIT_TEMPLATE_INSTATIATION( 2 )
-EXPLICIT_TEMPLATE_INSTATIATION( 3 )
-EXPLICIT_TEMPLATE_INSTATIATION( 4 )
-EXPLICIT_TEMPLATE_INSTATIATION( 5 )
-EXPLICIT_TEMPLATE_INSTATIATION( 6 )
-EXPLICIT_TEMPLATE_INSTATIATION( 7 )
-EXPLICIT_TEMPLATE_INSTATIATION( 8 )
-EXPLICIT_TEMPLATE_INSTATIATION( 9 )
+EXPLICIT_TEMPLATE_INSTATIATION(1)
+EXPLICIT_TEMPLATE_INSTATIATION(2)
+EXPLICIT_TEMPLATE_INSTATIATION(3)
+EXPLICIT_TEMPLATE_INSTATIATION(4)
+EXPLICIT_TEMPLATE_INSTATIATION(5)
+EXPLICIT_TEMPLATE_INSTATIATION(6)
+EXPLICIT_TEMPLATE_INSTATIATION(7)
+EXPLICIT_TEMPLATE_INSTATIATION(8)
+EXPLICIT_TEMPLATE_INSTATIATION(9)
 
 #undef EXPLICIT_TEMPLATE_INSTATIATION_TYPE_RANK
 #undef EXPLICIT_TEMPLATE_INSTATIATION
 
-#define EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW_TYPE_RANK( TYPE, RANK )            \
-    template IndexView<TYPE, RANK> make_indexview<TYPE, RANK>( Array& );             \
-    template IndexView<const TYPE, RANK> make_indexview<const TYPE, RANK>( Array& ); \
-    template IndexView<const TYPE, RANK> make_indexview<TYPE, RANK>( const Array& ); \
-    template IndexView<const TYPE, RANK> make_indexview<const TYPE, RANK>( const Array& );
+#define EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW_TYPE_RANK(TYPE, RANK)            \
+    template IndexView<TYPE, RANK> make_indexview<TYPE, RANK>(Array&);             \
+    template IndexView<const TYPE, RANK> make_indexview<const TYPE, RANK>(Array&); \
+    template IndexView<const TYPE, RANK> make_indexview<TYPE, RANK>(const Array&); \
+    template IndexView<const TYPE, RANK> make_indexview<const TYPE, RANK>(const Array&);
 
-#define EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW( RANK )            \
-    EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW_TYPE_RANK( int, RANK ) \
-    EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW_TYPE_RANK( long, RANK )
+#define EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW(RANK)            \
+    EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW_TYPE_RANK(int, RANK) \
+    EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW_TYPE_RANK(long, RANK)
 
-EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW( 1 )
-EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW( 2 )
+EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW(1)
+EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW(2)
 
 #undef EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW
 #undef EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW

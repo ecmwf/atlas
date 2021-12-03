@@ -57,10 +57,10 @@ public:  // methods
     explicit MeshImpl();
 
     /// @brief Construct a mesh from a Stream (serialization)
-    explicit MeshImpl( eckit::Stream& );
+    explicit MeshImpl(eckit::Stream&);
 
     /// @brief Serialization to Stream
-    void encode( eckit::Stream& s ) const;
+    void encode(eckit::Stream& s) const;
 
     /// Destructor
     /// @note No need to be virtual since this is not a base class.
@@ -69,7 +69,7 @@ public:  // methods
     util::Metadata& metadata() { return metadata_; }
     const util::Metadata& metadata() const { return metadata_; }
 
-    void print( std::ostream& ) const;
+    void print(std::ostream&) const;
 
     const Nodes& nodes() const { return *nodes_; }
     Nodes& nodes() { return *nodes_; }
@@ -109,26 +109,26 @@ public:  // methods
 
     PartitionGraph::Neighbours nearestNeighbourPartitions() const;
 
-    const PartitionPolygon& polygon( idx_t halo = 0 ) const;
+    const PartitionPolygon& polygon(idx_t halo = 0) const;
     const util::PartitionPolygons& polygons() const;
 
     const Grid grid() const { return grid_; }
 
-    void attachObserver( MeshObserver& ) const;
-    void detachObserver( MeshObserver& ) const;
+    void attachObserver(MeshObserver&) const;
+    void detachObserver(MeshObserver&) const;
 
 private:  // methods
     friend class ::atlas::Mesh;
 
-    friend std::ostream& operator<<( std::ostream& s, const MeshImpl& p ) {
-        p.print( s );
+    friend std::ostream& operator<<(std::ostream& s, const MeshImpl& p) {
+        p.print(s);
         return s;
     }
 
     void createElements();
 
-    void setProjection( const Projection& );
-    void setGrid( const Grid& );
+    void setProjection(const Projection&);
+    void setGrid(const Grid&);
 
 private:  // members
     util::Metadata metadata_;
@@ -165,26 +165,26 @@ private:
     std::vector<const MeshImpl*> registered_meshes_;
 
 public:
-    void registerMesh( const MeshImpl& mesh ) {
-        if ( std::find( registered_meshes_.begin(), registered_meshes_.end(), &mesh ) == registered_meshes_.end() ) {
-            registered_meshes_.push_back( &mesh );
-            mesh.attachObserver( *this );
+    void registerMesh(const MeshImpl& mesh) {
+        if (std::find(registered_meshes_.begin(), registered_meshes_.end(), &mesh) == registered_meshes_.end()) {
+            registered_meshes_.push_back(&mesh);
+            mesh.attachObserver(*this);
         }
     }
-    void unregisterMesh( const MeshImpl& mesh ) {
-        auto found = std::find( registered_meshes_.begin(), registered_meshes_.end(), &mesh );
-        if ( found != registered_meshes_.end() ) {
-            registered_meshes_.erase( found );
-            mesh.detachObserver( *this );
+    void unregisterMesh(const MeshImpl& mesh) {
+        auto found = std::find(registered_meshes_.begin(), registered_meshes_.end(), &mesh);
+        if (found != registered_meshes_.end()) {
+            registered_meshes_.erase(found);
+            mesh.detachObserver(*this);
         }
     }
     virtual ~MeshObserver() {
-        for ( auto mesh : registered_meshes_ ) {
-            mesh->detachObserver( *this );
+        for (auto mesh : registered_meshes_) {
+            mesh->detachObserver(*this);
         }
     }
 
-    virtual void onMeshDestruction( MeshImpl& ) = 0;
+    virtual void onMeshDestruction(MeshImpl&) = 0;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

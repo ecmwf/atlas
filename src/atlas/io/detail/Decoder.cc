@@ -15,14 +15,14 @@
 namespace atlas {
 namespace io {
 
-void decode( const atlas::io::Metadata& metadata, const atlas::io::Data& data, Decoder& decoder ) {
-    ATLAS_TRACE( "decode" );
-    decoder.self_->decode_( metadata, data );
+void decode(const atlas::io::Metadata& metadata, const atlas::io::Data& data, Decoder& decoder) {
+    ATLAS_TRACE("decode");
+    decoder.self_->decode_(metadata, data);
 }
 
-void decode( const atlas::io::Metadata& metadata, const atlas::io::Data& data, Decoder&& decoder ) {
-    ATLAS_TRACE_SCOPE( "decode" );
-    decoder.self_->decode_( metadata, data );
+void decode(const atlas::io::Metadata& metadata, const atlas::io::Data& data, Decoder&& decoder) {
+    ATLAS_TRACE_SCOPE("decode");
+    decoder.self_->decode_(metadata, data);
 }
 
 

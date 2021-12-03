@@ -25,7 +25,7 @@
 #endif
 
 // Bug in Cray 8.5 or below results in segmentation fault in atlas_test_omp_sort
-#if ATLAS_HAVE_OMP_SORTING && defined( _CRAYC )
+#if ATLAS_HAVE_OMP_SORTING && defined(_CRAYC)
 #if _RELEASE <= 8 && _RELEASE_MINOR < 6
 #undef ATLAS_HAVE_OMP_SORTING
 #define ATLAS_HAVE_OMP_SORTING 0
@@ -95,136 +95,136 @@ namespace detail {
 
 #if ATLAS_HAVE_OMP_SORTING
 template <typename RandomAccessIterator, typename Compare>
-void merge_sort_recursive( const RandomAccessIterator& iterator, size_t begin, size_t end, Compare compare ) {
+void merge_sort_recursive(const RandomAccessIterator& iterator, size_t begin, size_t end, Compare compare) {
     auto size = end - begin;
-    if ( size >= 256 ) {
+    if (size >= 256) {
         auto mid = begin + size / 2;
         //#pragma omp taskgroup
         //   --> it would be preferred to use taskgroup and taskyield instead of taskwait,
         //       but this leads to segfaults on Cray (cce/8.5.8)
         {
 #if ATLAS_OMP_TASK_UNTIED_SUPPORTED
-#pragma omp task shared( iterator ) untied if ( size >= ( 1 << 15 ) )
+#pragma omp task shared(iterator) untied if (size >= (1 << 15))
 #else
-#pragma omp task shared( iterator )
+#pragma omp task shared(iterator)
 #endif
-            merge_sort_recursive( iterator, begin, mid, compare );
+            merge_sort_recursive(iterator, begin, mid, compare);
 #if ATLAS_OMP_TASK_UNTIED_SUPPORTED
-#pragma omp task shared( iterator ) untied if ( size >= ( 1 << 15 ) )
+#pragma omp task shared(iterator) untied if (size >= (1 << 15))
 #else
-#pragma omp task shared( iterator )
+#pragma omp task shared(iterator)
 #endif
-            merge_sort_recursive( iterator, mid, end, compare );
+            merge_sort_recursive(iterator, mid, end, compare);
 //#pragma omp taskyield
 #pragma omp taskwait
         }
-        std::inplace_merge( iterator + begin, iterator + mid, iterator + end, compare );
+        std::inplace_merge(iterator + begin, iterator + mid, iterator + end, compare);
     }
     else {
-        std::sort( iterator + begin, iterator + end, compare );
+        std::sort(iterator + begin, iterator + end, compare);
     }
 }
 #endif
 
 #if ATLAS_HAVE_OMP_SORTING
 template <typename RandomAccessIterator, typename Indexable, typename Compare>
-void merge_blocks_recursive( const RandomAccessIterator& iterator, const Indexable& blocks, size_t blocks_begin,
-                             size_t blocks_end, Compare compare ) {
-    if ( blocks_end <= blocks_begin + 1 ) {
+void merge_blocks_recursive(const RandomAccessIterator& iterator, const Indexable& blocks, size_t blocks_begin,
+                            size_t blocks_end, Compare compare) {
+    if (blocks_end <= blocks_begin + 1) {
         // recursion done, go back out
         return;
     }
-    size_t blocks_mid = ( blocks_begin + blocks_end ) / 2;
+    size_t blocks_mid = (blocks_begin + blocks_end) / 2;
     //#pragma omp taskgroup
     //   --> it would be preferred to use taskgroup and taskyield instead of taskwait,
     //       but this leads to segfaults on Cray (cce/8.5.8)
     {
-#pragma omp task shared( iterator, blocks )
-        merge_blocks_recursive( iterator, blocks, blocks_begin, blocks_mid, compare );
-#pragma omp task shared( iterator, blocks )
-        merge_blocks_recursive( iterator, blocks, blocks_mid, blocks_end, compare );
+#pragma omp task shared(iterator, blocks)
+        merge_blocks_recursive(iterator, blocks, blocks_begin, blocks_mid, compare);
+#pragma omp task shared(iterator, blocks)
+        merge_blocks_recursive(iterator, blocks, blocks_mid, blocks_end, compare);
 //#pragma omp taskyield
 #pragma omp taskwait
     }
     auto begin = iterator + blocks[blocks_begin];
     auto mid   = iterator + blocks[blocks_mid];
     auto end   = iterator + blocks[blocks_end];
-    std::inplace_merge( begin, mid, end, compare );
+    std::inplace_merge(begin, mid, end, compare);
 }
 #endif
 
 template <typename RandomAccessIterator, typename Indexable, typename Compare>
-void merge_blocks_recursive_seq( RandomAccessIterator& iterator, const Indexable& blocks, size_t blocks_begin,
-                                 size_t blocks_end, Compare compare ) {
-    if ( blocks_end <= blocks_begin + 1 ) {
+void merge_blocks_recursive_seq(RandomAccessIterator& iterator, const Indexable& blocks, size_t blocks_begin,
+                                size_t blocks_end, Compare compare) {
+    if (blocks_end <= blocks_begin + 1) {
         // recursion done, go back out
         return;
     }
-    size_t blocks_mid = ( blocks_begin + blocks_end ) / 2;
+    size_t blocks_mid = (blocks_begin + blocks_end) / 2;
     {
-        merge_blocks_recursive_seq( iterator, blocks, blocks_begin, blocks_mid, compare );
-        merge_blocks_recursive_seq( iterator, blocks, blocks_mid, blocks_end, compare );
+        merge_blocks_recursive_seq(iterator, blocks, blocks_begin, blocks_mid, compare);
+        merge_blocks_recursive_seq(iterator, blocks, blocks_mid, blocks_end, compare);
     }
     auto begin = iterator + blocks[blocks_begin];
     auto mid   = iterator + blocks[blocks_mid];
     auto end   = iterator + blocks[blocks_end];
 
-    std::inplace_merge( begin, mid, end, compare );
+    std::inplace_merge(begin, mid, end, compare);
 }
 
 }  // namespace detail
 
 template <typename RandomAccessIterator, typename Compare>
-void sort( RandomAccessIterator first, RandomAccessIterator last, Compare compare ) {
+void sort(RandomAccessIterator first, RandomAccessIterator last, Compare compare) {
 #if ATLAS_HAVE_OMP_SORTING
-    if ( atlas_omp_get_max_threads() > 1 ) {
+    if (atlas_omp_get_max_threads() > 1) {
 #pragma omp parallel
 #pragma omp single
-        detail::merge_sort_recursive( first, 0, std::distance( first, last ), compare );
+        detail::merge_sort_recursive(first, 0, std::distance(first, last), compare);
     }
     else {
-        std::sort( first, last, compare );
+        std::sort(first, last, compare);
     }
 #else
-    std::sort( first, last, compare );
+    std::sort(first, last, compare);
 #endif
 }
 
 template <typename RandomAccessIterator>
-void sort( RandomAccessIterator first, RandomAccessIterator last ) {
+void sort(RandomAccessIterator first, RandomAccessIterator last) {
     using value_type = typename std::iterator_traits<RandomAccessIterator>::value_type;
-    ::atlas::omp::sort( first, last, std::less<value_type>() );
+    ::atlas::omp::sort(first, last, std::less<value_type>());
 }
 
 template <typename RandomAccessIterator, typename RandomAccessIterator2, typename Compare>
-void merge_blocks( RandomAccessIterator first, RandomAccessIterator last, RandomAccessIterator2 blocks_size_first,
-                   RandomAccessIterator2 blocks_size_last, Compare compare ) {
+void merge_blocks(RandomAccessIterator first, RandomAccessIterator last, RandomAccessIterator2 blocks_size_first,
+                  RandomAccessIterator2 blocks_size_last, Compare compare) {
     using size_type     = typename std::iterator_traits<RandomAccessIterator2>::value_type;
-    size_type nb_blocks = std::distance( blocks_size_first, blocks_size_last );
-    std::vector<size_type> blocks_displs( nb_blocks + 1 );
+    size_type nb_blocks = std::distance(blocks_size_first, blocks_size_last);
+    std::vector<size_type> blocks_displs(nb_blocks + 1);
     blocks_displs[0] = 0;
-    for ( size_t i = 1; i < blocks_displs.size(); ++i ) {
+    for (size_t i = 1; i < blocks_displs.size(); ++i) {
         blocks_displs[i] = blocks_displs[i - 1] + blocks_size_first[i - 1];
     }
 #if ATLAS_HAVE_OMP_SORTING
-    if ( atlas_omp_get_max_threads() > 1 ) {
+    if (atlas_omp_get_max_threads() > 1) {
 #pragma omp parallel
 #pragma omp single
-        detail::merge_blocks_recursive( first, blocks_displs, 0, nb_blocks, compare );
+        detail::merge_blocks_recursive(first, blocks_displs, 0, nb_blocks, compare);
     }
     else {
-        detail::merge_blocks_recursive_seq( first, blocks_displs, 0, nb_blocks, compare );
+        detail::merge_blocks_recursive_seq(first, blocks_displs, 0, nb_blocks, compare);
     }
 #else
-    detail::merge_blocks_recursive_seq( first, blocks_displs, 0, nb_blocks, compare );
+    detail::merge_blocks_recursive_seq(first, blocks_displs, 0, nb_blocks, compare);
 #endif
 }
 
 template <typename RandomAccessIterator, typename RandomAccessIterator2>
-void merge_blocks( RandomAccessIterator first, RandomAccessIterator last, RandomAccessIterator2 blocks_size_first,
-                   RandomAccessIterator2 blocks_size_last ) {
+void merge_blocks(RandomAccessIterator first, RandomAccessIterator last, RandomAccessIterator2 blocks_size_first,
+                  RandomAccessIterator2 blocks_size_last) {
     using value_type = typename std::iterator_traits<RandomAccessIterator>::value_type;
-    ::atlas::omp::merge_blocks( first, last, blocks_size_first, blocks_size_last, std::less<value_type>() );
+    ::atlas::omp::merge_blocks(first, last, blocks_size_first, blocks_size_last, std::less<value_type>());
 }
 
 }  // namespace omp

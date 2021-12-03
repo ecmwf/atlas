@@ -15,31 +15,31 @@
 namespace atlas {
 namespace parallel {
 
-Checksum::Checksum() : name_() {
+Checksum::Checksum(): name_() {
     is_setup_ = false;
 }
 
-Checksum::Checksum( const std::string& name ) : name_( name ) {
+Checksum::Checksum(const std::string& name): name_(name) {
     is_setup_ = false;
 }
 
-void Checksum::setup( const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
-                      const int parsize ) {
+void Checksum::setup(const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
+                     const int parsize) {
     parsize_ = parsize;
-    gather_  = util::ObjectHandle<GatherScatter>( new GatherScatter() );
-    gather_->setup( part, remote_idx, base, glb_idx, parsize );
+    gather_  = util::ObjectHandle<GatherScatter>(new GatherScatter());
+    gather_->setup(part, remote_idx, base, glb_idx, parsize);
     is_setup_ = true;
 }
 
-void Checksum::setup( const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
-                      const int mask[], const int parsize ) {
+void Checksum::setup(const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
+                     const int mask[], const int parsize) {
     parsize_ = parsize;
-    gather_  = util::ObjectHandle<GatherScatter>( new GatherScatter() );
-    gather_->setup( part, remote_idx, base, glb_idx, mask, parsize );
+    gather_  = util::ObjectHandle<GatherScatter>(new GatherScatter());
+    gather_->setup(part, remote_idx, base, glb_idx, mask, parsize);
     is_setup_ = true;
 }
 
-void Checksum::setup( const util::ObjectHandle<GatherScatter>& gather ) {
+void Checksum::setup(const util::ObjectHandle<GatherScatter>& gather) {
     gather_   = gather;
     parsize_  = gather->parsize_;
     is_setup_ = true;
@@ -51,52 +51,52 @@ Checksum* atlas__Checksum__new() {
     return new Checksum();
 }
 
-void atlas__Checksum__delete( Checksum* This ) {
+void atlas__Checksum__delete(Checksum* This) {
     delete This;
 }
 
-void atlas__Checksum__setup32( Checksum* This, int part[], idx_t remote_idx[], int base, int glb_idx[], int parsize ) {
+void atlas__Checksum__setup32(Checksum* This, int part[], idx_t remote_idx[], int base, int glb_idx[], int parsize) {
 #if ATLAS_BITS_GLOBAL == 32
-    This->setup( part, remote_idx, base, glb_idx, parsize );
+    This->setup(part, remote_idx, base, glb_idx, parsize);
 #else
-    std::vector<gidx_t> glb_idx_convert( parsize );
-    for ( int j = 0; j < parsize; ++j ) {
+    std::vector<gidx_t> glb_idx_convert(parsize);
+    for (int j = 0; j < parsize; ++j) {
         glb_idx_convert[j] = glb_idx[j];
     }
-    This->setup( part, remote_idx, base, glb_idx_convert.data(), parsize );
+    This->setup(part, remote_idx, base, glb_idx_convert.data(), parsize);
 #endif
 }
 
-void atlas__Checksum__setup64( Checksum* This, int part[], idx_t remote_idx[], int base, long glb_idx[], int parsize ) {
+void atlas__Checksum__setup64(Checksum* This, int part[], idx_t remote_idx[], int base, long glb_idx[], int parsize) {
 #if ATLAS_BITS_GLOBAL == 64
-    This->setup( part, remote_idx, base, glb_idx, parsize );
+    This->setup(part, remote_idx, base, glb_idx, parsize);
 #else
-    std::vector<gidx_t> glb_idx_convert( parsize );
-    for ( int j = 0; j < parsize; ++j ) {
+    std::vector<gidx_t> glb_idx_convert(parsize);
+    for (int j = 0; j < parsize; ++j) {
         glb_idx_convert[j] = glb_idx[j];
     }
-    This->setup( part, remote_idx, base, glb_idx_convert.data(), parsize );
+    This->setup(part, remote_idx, base, glb_idx_convert.data(), parsize);
 #endif
 }
 
-void atlas__Checksum__execute_strided_int( Checksum* This, int lfield[], int lvar_strides[], int lvar_extents[],
-                                           int lvar_rank, char* checksum ) {
-    std::strcpy( checksum, This->execute( lfield, lvar_strides, lvar_extents, lvar_rank ).c_str() );
+void atlas__Checksum__execute_strided_int(Checksum* This, int lfield[], int lvar_strides[], int lvar_extents[],
+                                          int lvar_rank, char* checksum) {
+    std::strcpy(checksum, This->execute(lfield, lvar_strides, lvar_extents, lvar_rank).c_str());
 }
 
-void atlas__Checksum__execute_strided_float( Checksum* This, float lfield[], int lvar_strides[], int lvar_extents[],
-                                             int lvar_rank, char* checksum ) {
-    std::strcpy( checksum, This->execute( lfield, lvar_strides, lvar_extents, lvar_rank ).c_str() );
+void atlas__Checksum__execute_strided_float(Checksum* This, float lfield[], int lvar_strides[], int lvar_extents[],
+                                            int lvar_rank, char* checksum) {
+    std::strcpy(checksum, This->execute(lfield, lvar_strides, lvar_extents, lvar_rank).c_str());
 }
 
-void atlas__Checksum__execute_strided_double( Checksum* This, double lfield[], int lvar_strides[], int lvar_extents[],
-                                              int lvar_rank, char* checksum ) {
-    std::strcpy( checksum, This->execute( lfield, lvar_strides, lvar_extents, lvar_rank ).c_str() );
+void atlas__Checksum__execute_strided_double(Checksum* This, double lfield[], int lvar_strides[], int lvar_extents[],
+                                             int lvar_rank, char* checksum) {
+    std::strcpy(checksum, This->execute(lfield, lvar_strides, lvar_extents, lvar_rank).c_str());
 }
 
-void atlas__Checksum__execute_strided_long( Checksum* This, long lfield[], int lvar_strides[], int lvar_extents[],
-                                            int lvar_rank, char* checksum ) {
-    std::strcpy( checksum, This->execute( lfield, lvar_strides, lvar_extents, lvar_rank ).c_str() );
+void atlas__Checksum__execute_strided_long(Checksum* This, long lfield[], int lvar_strides[], int lvar_extents[],
+                                           int lvar_rank, char* checksum) {
+    std::strcpy(checksum, This->execute(lfield, lvar_strides, lvar_extents, lvar_rank).c_str());
 }
 
 // const char* atlas__Checksum__execute_strided_double (Checksum* This,

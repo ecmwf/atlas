@@ -27,7 +27,7 @@ namespace classic_gaussian {
  * number)
  * @param nlon [out] points per latitude
  */
-void points_per_latitude_npole_equator( const size_t N, long nlon[] );
+void points_per_latitude_npole_equator(const size_t N, long nlon[]);
 
 /**
  * @brief Compute points per latitude between North pole and equator
@@ -35,7 +35,7 @@ void points_per_latitude_npole_equator( const size_t N, long nlon[] );
  * number)
  * @param nlon [out] points per latitude
  */
-void points_per_latitude_npole_equator( const size_t N, int nlon[] );
+void points_per_latitude_npole_equator(const size_t N, int nlon[]);
 
 /**
  * @brief Compute points per latitude between North pole and South pole
@@ -43,7 +43,7 @@ void points_per_latitude_npole_equator( const size_t N, int nlon[] );
  * number)
  * @param nlon [out] points per latitude  (size 2*N)
  */
-void points_per_latitude_npole_spole( const size_t N, long nlon[] );
+void points_per_latitude_npole_spole(const size_t N, long nlon[]);
 
 /**
  * @brief Compute points per latitude between North pole and South pole
@@ -51,7 +51,7 @@ void points_per_latitude_npole_spole( const size_t N, long nlon[] );
  * number)
  * @param nlon [out] points per latitude  (size 2*N)
  */
-void points_per_latitude_npole_spole( const size_t N, int nlon[] );
+void points_per_latitude_npole_spole(const size_t N, int nlon[]);
 
 }  // namespace classic_gaussian
 }  // namespace pl

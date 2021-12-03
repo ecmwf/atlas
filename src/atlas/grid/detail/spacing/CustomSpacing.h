@@ -51,9 +51,9 @@ private:
 
 public:
     // constructor
-    CustomSpacing( const eckit::Parametrisation& p );
+    CustomSpacing(const eckit::Parametrisation& p);
 
-    CustomSpacing( long N, const double x[], const Interval& = {North(), South()} );
+    CustomSpacing(long N, const double x[], const Interval& = {North(), South()});
 
     // class name
     static std::string static_type() { return "custom"; }

@@ -17,11 +17,10 @@
 namespace atlas {
 namespace grid {
 
-CubedSphereTiles::CubedSphereTiles( const eckit::Parametrisation& p ) :
-    Handle( atlas::grid::detail::CubedSphereTiles::create( p ) ) {}
+CubedSphereTiles::CubedSphereTiles(const eckit::Parametrisation& p):
+    Handle(atlas::grid::detail::CubedSphereTiles::create(p)) {}
 
-CubedSphereTiles::CubedSphereTiles( const std::string& s ) :
-    Handle( atlas::grid::detail::CubedSphereTiles::create( s ) ) {}
+CubedSphereTiles::CubedSphereTiles(const std::string& s): Handle(atlas::grid::detail::CubedSphereTiles::create(s)) {}
 
 
 std::string CubedSphereTiles::type() const {
@@ -36,41 +35,40 @@ std::array<std::array<double, 6>, 2> CubedSphereTiles::ab2xyOffsets() const {
     return get()->ab2xyOffsets();
 }
 
-void CubedSphereTiles::rotate( idx_t t, double xyz[] ) const {
-    return get()->rotate( t, xyz );
+void CubedSphereTiles::rotate(idx_t t, double xyz[]) const {
+    return get()->rotate(t, xyz);
 }
 
-void CubedSphereTiles::unrotate( idx_t t, double xyz[] ) const {
-    return get()->unrotate( t, xyz );
+void CubedSphereTiles::unrotate(idx_t t, double xyz[]) const {
+    return get()->unrotate(t, xyz);
 }
 
-idx_t CubedSphereTiles::indexFromXY( const double xy[] ) const {
-    return get()->indexFromXY( xy );
+idx_t CubedSphereTiles::indexFromXY(const double xy[]) const {
+    return get()->indexFromXY(xy);
 }
 
-idx_t CubedSphereTiles::indexFromLonLat( const double lonlat[] ) const {
-    return get()->indexFromLonLat( lonlat );
+idx_t CubedSphereTiles::indexFromLonLat(const double lonlat[]) const {
+    return get()->indexFromLonLat(lonlat);
 }
 
 idx_t CubedSphereTiles::size() const {
     return get()->size();
 }
 
-void CubedSphereTiles::enforceXYdomain( double xy[] ) const {
-    return get()->enforceXYdomain( xy );
+void CubedSphereTiles::enforceXYdomain(double xy[]) const {
+    return get()->enforceXYdomain(xy);
 }
 
-atlas::PointXY CubedSphereTiles::tileCubePeriodicity( const atlas::PointXY& xyExtended,
-                                                      const atlas::idx_t tile ) const {
-    return get()->tileCubePeriodicity( xyExtended, tile );
+atlas::PointXY CubedSphereTiles::tileCubePeriodicity(const atlas::PointXY& xyExtended, const atlas::idx_t tile) const {
+    return get()->tileCubePeriodicity(xyExtended, tile);
 }
 
-void CubedSphereTiles::print( std::ostream& os ) const {
-    get()->print( os );
+void CubedSphereTiles::print(std::ostream& os) const {
+    get()->print(os);
 }
 
-std::ostream& operator<<( std::ostream& os, const CubedSphereTiles& t ) {
-    t.print( os );
+std::ostream& operator<<(std::ostream& os, const CubedSphereTiles& t) {
+    t.print(os);
     return os;
 }
 

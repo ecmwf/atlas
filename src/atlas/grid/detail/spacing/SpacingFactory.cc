@@ -21,19 +21,19 @@ namespace spacing {
 
 void force_link() {
     static struct Link { Link() = default; } link;
-    []( const Link& ) {}( link );  // disable unused warnings
+    [](const Link&) {}(link);  // disable unused warnings
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-const Spacing* SpacingFactory::build( const std::string& builder ) {
-    return build( builder, util::NoConfig() );
+const Spacing* SpacingFactory::build(const std::string& builder) {
+    return build(builder, util::NoConfig());
 }
 
-const Spacing* SpacingFactory::build( const std::string& builder, const eckit::Parametrisation& param ) {
+const Spacing* SpacingFactory::build(const std::string& builder, const eckit::Parametrisation& param) {
     force_link();
-    auto factory = get( builder );
-    return factory->make( param );
+    auto factory = get(builder);
+    return factory->make(param);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

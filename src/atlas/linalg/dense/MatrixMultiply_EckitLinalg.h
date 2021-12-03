@@ -28,7 +28,7 @@ namespace dense {
 
 template <>
 struct MatrixMultiply<backend::eckit_linalg> {
-    static void apply( const Matrix& A, const Matrix& B, Matrix& C, const Configuration& );
+    static void apply(const Matrix& A, const Matrix& B, Matrix& C, const Configuration&);
 };
 
 }  // namespace dense

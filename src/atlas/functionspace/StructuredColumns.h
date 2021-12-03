@@ -23,15 +23,15 @@ namespace functionspace {
 class StructuredColumns : public FunctionSpace {
 public:
     StructuredColumns();
-    StructuredColumns( const FunctionSpace& );
-    StructuredColumns( const Grid&, const eckit::Configuration& = util::NoConfig() );
-    StructuredColumns( const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig() );
-    StructuredColumns( const Grid&, const grid::Distribution&, const eckit::Configuration& = util::NoConfig() );
-    StructuredColumns( const Grid&, const Vertical&, const eckit::Configuration& = util::NoConfig() );
-    StructuredColumns( const Grid&, const Vertical&, const grid::Partitioner&,
-                       const eckit::Configuration& = util::NoConfig() );
-    StructuredColumns( const Grid&, const grid::Distribution&, const Vertical&,
-                       const eckit::Configuration& = util::NoConfig() );
+    StructuredColumns(const FunctionSpace&);
+    StructuredColumns(const Grid&, const eckit::Configuration& = util::NoConfig());
+    StructuredColumns(const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig());
+    StructuredColumns(const Grid&, const grid::Distribution&, const eckit::Configuration& = util::NoConfig());
+    StructuredColumns(const Grid&, const Vertical&, const eckit::Configuration& = util::NoConfig());
+    StructuredColumns(const Grid&, const Vertical&, const grid::Partitioner&,
+                      const eckit::Configuration& = util::NoConfig());
+    StructuredColumns(const Grid&, const grid::Distribution&, const Vertical&,
+                      const eckit::Configuration& = util::NoConfig());
 
     static std::string type() { return detail::StructuredColumns::static_type(); }
 
@@ -50,22 +50,22 @@ public:
 
     const StructuredGrid& grid() const { return functionspace_->grid(); }
 
-    void gather( const FieldSet&, FieldSet& ) const;
-    void gather( const Field&, Field& ) const;
+    void gather(const FieldSet&, FieldSet&) const;
+    void gather(const Field&, Field&) const;
 
-    void scatter( const FieldSet&, FieldSet& ) const;
-    void scatter( const Field&, Field& ) const;
+    void scatter(const FieldSet&, FieldSet&) const;
+    void scatter(const Field&, Field&) const;
 
-    std::string checksum( const FieldSet& ) const;
-    std::string checksum( const Field& ) const;
+    std::string checksum(const FieldSet&) const;
+    std::string checksum(const Field&) const;
 
-    idx_t index( idx_t i, idx_t j ) const { return functionspace_->index( i, j ); }
+    idx_t index(idx_t i, idx_t j) const { return functionspace_->index(i, j); }
 
-    idx_t i_begin( idx_t j ) const { return functionspace_->i_begin( j ); }
-    idx_t i_end( idx_t j ) const { return functionspace_->i_end( j ); }
+    idx_t i_begin(idx_t j) const { return functionspace_->i_begin(j); }
+    idx_t i_end(idx_t j) const { return functionspace_->i_end(j); }
 
-    idx_t i_begin_halo( idx_t j ) const { return functionspace_->i_begin_halo( j ); }
-    idx_t i_end_halo( idx_t j ) const { return functionspace_->i_end_halo( j ); }
+    idx_t i_begin_halo(idx_t j) const { return functionspace_->i_begin_halo(j); }
+    idx_t i_end_halo(idx_t j) const { return functionspace_->i_end_halo(j); }
 
     idx_t j_begin() const { return functionspace_->j_begin(); }
     idx_t j_end() const { return functionspace_->j_end(); }
@@ -84,20 +84,20 @@ public:
     Field index_j() const { return functionspace_->index_j(); }
     Field ghost() const { return functionspace_->ghost(); }
 
-    void compute_xy( idx_t i, idx_t j, PointXY& xy ) const { return functionspace_->compute_xy( i, j, xy ); }
-    PointXY compute_xy( idx_t i, idx_t j ) const { return functionspace_->compute_xy( i, j ); }
+    void compute_xy(idx_t i, idx_t j, PointXY& xy) const { return functionspace_->compute_xy(i, j, xy); }
+    PointXY compute_xy(idx_t i, idx_t j) const { return functionspace_->compute_xy(i, j); }
 
     size_t footprint() const { return functionspace_->footprint(); }
 
-    const util::PartitionPolygon& polygon( idx_t halo = 0 ) const { return functionspace_->polygon( halo ); }
+    const util::PartitionPolygon& polygon(idx_t halo = 0) const { return functionspace_->polygon(halo); }
 
     class For {
     public:
-        For( const StructuredColumns& fs, const util::Config& config = util::NoConfig() ) :
+        For(const StructuredColumns& fs, const util::Config& config = util::NoConfig()):
             fs_{fs},
-            global{config.getBool( "global", false )},
-            owner{config.getInt( "owner", 0 )},
-            levels{config.getInt( "levels", fs_.levels() )} {}
+            global{config.getBool("global", false)},
+            owner{config.getInt("owner", 0)},
+            levels{config.getInt("levels", fs_.levels())} {}
 
     protected:
         const StructuredColumns& fs_;
@@ -106,38 +106,38 @@ public:
         idx_t levels;
 
     public:
-#define FunctorArgs( ... )                                                                                             \
-    typename std::enable_if<std::is_convertible<Functor, std::function<void( __VA_ARGS__ )>>::value, Functor>::type* = \
+#define FunctorArgs(...)                                                                                             \
+    typename std::enable_if<std::is_convertible<Functor, std::function<void(__VA_ARGS__)>>::value, Functor>::type* = \
         nullptr
 
 
         // Functor: void f(index,i,j,k)
-        template <typename Functor, FunctorArgs( idx_t, idx_t, idx_t, idx_t )>
-        void operator()( const Functor& f ) const {
-            ATLAS_ASSERT( levels );
-            if ( global ) {
-                if ( owner == mpi::rank() ) {
+        template <typename Functor, FunctorArgs(idx_t, idx_t, idx_t, idx_t)>
+        void operator()(const Functor& f) const {
+            ATLAS_ASSERT(levels);
+            if (global) {
+                if (owner == mpi::rank()) {
                     const idx_t ny = fs_.grid().ny();
-                    std::vector<idx_t> offset( ny );
+                    std::vector<idx_t> offset(ny);
                     offset[0] = 0;
-                    for ( idx_t j = 1; j < ny; ++j ) {
-                        offset[j] = offset[j - 1] + fs_.grid().nx( j - 1 );
+                    for (idx_t j = 1; j < ny; ++j) {
+                        offset[j] = offset[j - 1] + fs_.grid().nx(j - 1);
                     }
-                    atlas_omp_parallel_for( idx_t j = 0; j < ny; ++j ) {
+                    atlas_omp_parallel_for(idx_t j = 0; j < ny; ++j) {
                         idx_t index = offset[j];
-                        for ( auto i = 0; i < fs_.grid().nx( j ); ++i, ++index ) {
-                            for ( auto k = 0; k < levels; ++k ) {
-                                f( index, i, j, k );
+                        for (auto i = 0; i < fs_.grid().nx(j); ++i, ++index) {
+                            for (auto k = 0; k < levels; ++k) {
+                                f(index, i, j, k);
                             }
                         }
                     }
                 }
             }
             else {
-                for ( auto j = fs_.j_begin(); j < fs_.j_end(); ++j ) {
-                    for ( auto i = fs_.i_begin( j ); i < fs_.i_end( j ); ++i ) {
-                        for ( auto k = 0; k < levels; ++k ) {
-                            f( fs_.index( i, j ), i, j, k );
+                for (auto j = fs_.j_begin(); j < fs_.j_end(); ++j) {
+                    for (auto i = fs_.i_begin(j); i < fs_.i_end(j); ++i) {
+                        for (auto k = 0; k < levels; ++k) {
+                            f(fs_.index(i, j), i, j, k);
                         }
                     }
                 }
@@ -145,53 +145,53 @@ public:
         }
 
         // Functor: void f(index,i,j)
-        template <typename Functor, FunctorArgs( idx_t, idx_t, idx_t )>
-        void operator()( const Functor& f ) const {
-            ATLAS_ASSERT( levels == 0 );
-            if ( global ) {
-                if ( owner == mpi::rank() ) {
+        template <typename Functor, FunctorArgs(idx_t, idx_t, idx_t)>
+        void operator()(const Functor& f) const {
+            ATLAS_ASSERT(levels == 0);
+            if (global) {
+                if (owner == mpi::rank()) {
                     const idx_t ny = fs_.grid().ny();
-                    std::vector<idx_t> offset( ny );
+                    std::vector<idx_t> offset(ny);
                     offset[0] = 0;
-                    for ( idx_t j = 1; j < ny; ++j ) {
-                        offset[j] = offset[j - 1] + fs_.grid().nx( j - 1 );
+                    for (idx_t j = 1; j < ny; ++j) {
+                        offset[j] = offset[j - 1] + fs_.grid().nx(j - 1);
                     }
-                    atlas_omp_parallel_for( idx_t j = 0; j < ny; ++j ) {
+                    atlas_omp_parallel_for(idx_t j = 0; j < ny; ++j) {
                         idx_t index = offset[j];
-                        for ( idx_t i = 0; i < fs_.grid().nx( j ); ++i, ++index ) {
-                            f( index, i, j );
+                        for (idx_t i = 0; i < fs_.grid().nx(j); ++i, ++index) {
+                            f(index, i, j);
                         }
                     }
                 }
             }
             else {
-                for ( auto j = fs_.j_begin(); j < fs_.j_end(); ++j ) {
-                    for ( auto i = fs_.i_begin( j ); i < fs_.i_end( j ); ++i ) {
-                        f( fs_.index( i, j ), i, j );
+                for (auto j = fs_.j_begin(); j < fs_.j_end(); ++j) {
+                    for (auto i = fs_.i_begin(j); i < fs_.i_end(j); ++i) {
+                        f(fs_.index(i, j), i, j);
                     }
                 }
             }
         }
 
         // Functor: void f(index,k)
-        template <typename Functor, FunctorArgs( idx_t, idx_t )>
-        void operator()( const Functor& f ) const {
-            ATLAS_ASSERT( levels );
-            if ( global ) {
-                if ( owner == mpi::rank() ) {
+        template <typename Functor, FunctorArgs(idx_t, idx_t)>
+        void operator()(const Functor& f) const {
+            ATLAS_ASSERT(levels);
+            if (global) {
+                if (owner == mpi::rank()) {
                     const idx_t size = fs_.grid().size();
-                    atlas_omp_parallel_for( idx_t n = 0; n < size; ++n ) {
-                        for ( idx_t k = 0; k < levels; ++k ) {
-                            f( n, k );
+                    atlas_omp_parallel_for(idx_t n = 0; n < size; ++n) {
+                        for (idx_t k = 0; k < levels; ++k) {
+                            f(n, k);
                         }
                     }
                 }
             }
             else {
                 const idx_t size = fs_.sizeOwned();
-                atlas_omp_parallel_for( idx_t n = 0; n < size; ++n ) {
-                    for ( idx_t k = 0; k < levels; ++k ) {
-                        f( n, k );
+                atlas_omp_parallel_for(idx_t n = 0; n < size; ++n) {
+                    for (idx_t k = 0; k < levels; ++k) {
+                        f(n, k);
                     }
                 }
             }
@@ -199,18 +199,18 @@ public:
 
 
         // Functor: void f(index)
-        template <typename Functor, FunctorArgs( idx_t )>
-        void operator()( const Functor& f ) const {
-            ATLAS_ASSERT( levels == 0 );
-            if ( global ) {
-                if ( owner == mpi::rank() ) {
+        template <typename Functor, FunctorArgs(idx_t)>
+        void operator()(const Functor& f) const {
+            ATLAS_ASSERT(levels == 0);
+            if (global) {
+                if (owner == mpi::rank()) {
                     const idx_t size = fs_.grid().size();
-                    atlas_omp_parallel_for( idx_t n = 0; n < size; ++n ) { f( n ); }
+                    atlas_omp_parallel_for(idx_t n = 0; n < size; ++n) { f(n); }
                 }
             }
             else {
                 const idx_t size = fs_.sizeOwned();
-                atlas_omp_parallel_for( idx_t n = 0; n < size; ++n ) { f( n ); }
+                atlas_omp_parallel_for(idx_t n = 0; n < size; ++n) { f(n); }
             }
         }
 
@@ -218,18 +218,18 @@ public:
     };
 
     template <typename Functor>
-    void parallel_for( const Functor& f ) const {
-        For( *this, util::NoConfig() )( f );
+    void parallel_for(const Functor& f) const {
+        For(*this, util::NoConfig())(f);
     }
     template <typename Functor>
-    void parallel_for( const util::Config& config, const Functor& f ) const {
-        For( *this, config )( f );
+    void parallel_for(const util::Config& config, const Functor& f) const {
+        For(*this, config)(f);
     }
 
 private:
     const detail::StructuredColumns* functionspace_;
-    void setup( const Grid& grid, const Vertical& vertical, const grid::Distribution& distribution,
-                const eckit::Configuration& config );
+    void setup(const Grid& grid, const Vertical& vertical, const grid::Distribution& distribution,
+               const eckit::Configuration& config);
 };
 
 // -------------------------------------------------------------------

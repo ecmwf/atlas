@@ -13,16 +13,16 @@
 #ifdef _OPENMP
 #include <omp.h>
 #else
-extern "C" void omp_set_num_threads( int num_threads );
-extern "C" int omp_get_num_threads( void );
-extern "C" int omp_get_max_threads( void );
-extern "C" int omp_get_thread_num( void );
-extern "C" int omp_get_num_procs( void );
-extern "C" int omp_in_parallel( void );
-extern "C" int omp_set_dynamic( int dynamic_threads );
-extern "C" int omp_get_dynamic( void );
-extern "C" void omp_set_nested( int nested );
-extern "C" int omp_get_nested( void );
+extern "C" void omp_set_num_threads(int num_threads);
+extern "C" int omp_get_num_threads(void);
+extern "C" int omp_get_max_threads(void);
+extern "C" int omp_get_thread_num(void);
+extern "C" int omp_get_num_procs(void);
+extern "C" int omp_in_parallel(void);
+extern "C" int omp_set_dynamic(int dynamic_threads);
+extern "C" int omp_get_dynamic(void);
+extern "C" void omp_set_nested(int nested);
+extern "C" int omp_get_nested(void);
 #endif
 
 #if ATLAS_HAVE_OMP
@@ -40,17 +40,17 @@ extern "C" {
 }
 #endif
 
-void atlas_omp_set_num_threads( int num_threads ) {
+void atlas_omp_set_num_threads(int num_threads) {
 #if ATLAS_HAVE_OMP
-    if ( omp_set_num_threads ) {
-        omp_set_num_threads( num_threads );
+    if (omp_set_num_threads) {
+        omp_set_num_threads(num_threads);
     }
 #endif
 }
 
-int atlas_omp_get_num_threads( void ) {
+int atlas_omp_get_num_threads(void) {
 #if ATLAS_HAVE_OMP
-    if ( omp_get_num_threads ) {
+    if (omp_get_num_threads) {
         return omp_get_num_threads();
     }
     else {
@@ -61,9 +61,9 @@ int atlas_omp_get_num_threads( void ) {
 #endif
 }
 
-int atlas_omp_get_max_threads( void ) {
+int atlas_omp_get_max_threads(void) {
 #if ATLAS_HAVE_OMP
-    if ( omp_get_max_threads ) {
+    if (omp_get_max_threads) {
         return omp_get_max_threads();
     }
     else {
@@ -74,9 +74,9 @@ int atlas_omp_get_max_threads( void ) {
 #endif
 }
 
-int atlas_omp_get_thread_num( void ) {
+int atlas_omp_get_thread_num(void) {
 #if ATLAS_HAVE_OMP
-    if ( omp_get_thread_num ) {
+    if (omp_get_thread_num) {
         return omp_get_thread_num();
     }
     else {
@@ -87,9 +87,9 @@ int atlas_omp_get_thread_num( void ) {
 #endif
 }
 
-int atlas_omp_get_num_procs( void ) {
+int atlas_omp_get_num_procs(void) {
 #if ATLAS_HAVE_OMP
-    if ( omp_get_num_procs ) {
+    if (omp_get_num_procs) {
         return omp_get_num_procs();
     }
     else {
@@ -100,9 +100,9 @@ int atlas_omp_get_num_procs( void ) {
 #endif
 }
 
-int atlas_omp_in_parallel( void ) {
+int atlas_omp_in_parallel(void) {
 #if ATLAS_HAVE_OMP
-    if ( omp_in_parallel ) {
+    if (omp_in_parallel) {
         return omp_in_parallel();
     }
     else {
@@ -113,17 +113,17 @@ int atlas_omp_in_parallel( void ) {
 #endif
 }
 
-void atlas_omp_set_dynamic( int dynamic_threads ) {
+void atlas_omp_set_dynamic(int dynamic_threads) {
 #if ATLAS_HAVE_OMP
-    if ( omp_set_dynamic ) {
-        omp_set_dynamic( dynamic_threads );
+    if (omp_set_dynamic) {
+        omp_set_dynamic(dynamic_threads);
     }
 #endif
 }
 
-int atlas_omp_get_dynamic( void ) {
+int atlas_omp_get_dynamic(void) {
 #if ATLAS_HAVE_OMP
-    if ( omp_get_dynamic ) {
+    if (omp_get_dynamic) {
         return omp_get_dynamic();
     }
     else {
@@ -134,17 +134,17 @@ int atlas_omp_get_dynamic( void ) {
 #endif
 }
 
-void atlas_omp_set_nested( int nested ) {
+void atlas_omp_set_nested(int nested) {
 #if ATLAS_HAVE_OMP
-    if ( omp_set_nested ) {
-        omp_set_nested( nested );
+    if (omp_set_nested) {
+        omp_set_nested(nested);
     }
 #endif
 }
 
-int atlas_omp_get_nested( void ) {
+int atlas_omp_get_nested(void) {
 #if ATLAS_HAVE_OMP
-    if ( omp_get_nested ) {
+    if (omp_get_nested) {
         return omp_get_nested();
     }
     else {

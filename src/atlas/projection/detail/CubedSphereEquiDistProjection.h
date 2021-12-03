@@ -19,7 +19,7 @@ namespace detail {
 class CubedSphereEquiDistProjection final : public CubedSphereProjectionBase {
 public:
     // constructor
-    CubedSphereEquiDistProjection( const eckit::Parametrisation& );
+    CubedSphereEquiDistProjection(const eckit::Parametrisation&);
 
     virtual ~CubedSphereEquiDistProjection() {}
 
@@ -28,14 +28,14 @@ public:
     std::string type() const override { return static_type(); }
 
     // projection and inverse projection
-    void xy2lonlat( double crd[] ) const override;
-    void lonlat2xy( double crd[] ) const override;
+    void xy2lonlat(double crd[]) const override;
+    void lonlat2xy(double crd[]) const override;
 
-    Jacobian jacobian( const PointLonLat& ) const override;
+    Jacobian jacobian(const PointLonLat&) const override;
 
     bool strictlyRegional() const override { return false; }
-    RectangularLonLatDomain lonlatBoundingBox( const Domain& domain ) const override {
-        return ProjectionImpl::lonlatBoundingBox( domain );
+    RectangularLonLatDomain lonlatBoundingBox(const Domain& domain) const override {
+        return ProjectionImpl::lonlatBoundingBox(domain);
     }
 
     // specification
@@ -43,7 +43,7 @@ public:
 
     std::string units() const override { return "degrees"; }
 
-    void hash( eckit::Hash& ) const override;
+    void hash(eckit::Hash&) const override;
 };
 
 }  // namespace detail

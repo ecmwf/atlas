@@ -27,69 +27,69 @@ namespace method {
 
 
 namespace {
-MethodBuilder<GridBoxAverage> __builder( "grid-box-average" );
+MethodBuilder<GridBoxAverage> __builder("grid-box-average");
 }
 
 
-void GridBoxAverage::do_execute( const FieldSet& source, FieldSet& target ) const {
-    ATLAS_ASSERT( source.size() == target.size() );
+void GridBoxAverage::do_execute(const FieldSet& source, FieldSet& target) const {
+    ATLAS_ASSERT(source.size() == target.size());
 
     // Matrix-based interpolation is handled by base (Method) class
     // TODO: exploit sparse/dense matrix multiplication
-    for ( idx_t i = 0; i < source.size(); ++i ) {
-        if ( matrixFree_ ) {
-            GridBoxAverage::do_execute( source[i], target[i] );
+    for (idx_t i = 0; i < source.size(); ++i) {
+        if (matrixFree_) {
+            GridBoxAverage::do_execute(source[i], target[i]);
         }
         else {
-            Method::do_execute( source[i], target[i] );
+            Method::do_execute(source[i], target[i]);
         }
     }
 }
 
 
-void GridBoxAverage::do_execute( const Field& source, Field& target ) const {
-    ATLAS_TRACE( "atlas::interpolation::method::GridBoxAverage::do_execute()" );
+void GridBoxAverage::do_execute(const Field& source, Field& target) const {
+    ATLAS_TRACE("atlas::interpolation::method::GridBoxAverage::do_execute()");
 
     // Matrix-based interpolation is handled by base (Method) class
-    if ( !matrixFree_ ) {
-        Method::do_execute( source, target );
+    if (!matrixFree_) {
+        Method::do_execute(source, target);
         return;
     }
 
 
     // ensure GridBoxMethod::setup()
     functionspace::PointCloud tgt = target_;
-    ATLAS_ASSERT( tgt );
+    ATLAS_ASSERT(tgt);
 
-    ATLAS_ASSERT( searchRadius_ > 0. );
-    ATLAS_ASSERT( !sourceBoxes_.empty() );
-    ATLAS_ASSERT( !targetBoxes_.empty() );
+    ATLAS_ASSERT(searchRadius_ > 0.);
+    ATLAS_ASSERT(!sourceBoxes_.empty());
+    ATLAS_ASSERT(!targetBoxes_.empty());
 
 
     // set arrays
-    ATLAS_ASSERT( source.rank() == 1 );
-    ATLAS_ASSERT( target.rank() == 1 );
+    ATLAS_ASSERT(source.rank() == 1);
+    ATLAS_ASSERT(target.rank() == 1);
 
-    auto xarray = atlas::array::make_view<double, 1>( source );
-    auto yarray = atlas::array::make_view<double, 1>( target );
-    ATLAS_ASSERT( xarray.size() == sourceBoxes_.size() );
-    ATLAS_ASSERT( yarray.size() == targetBoxes_.size() );
+    auto xarray = atlas::array::make_view<double, 1>(source);
+    auto yarray = atlas::array::make_view<double, 1>(target);
+    ATLAS_ASSERT(xarray.size() == sourceBoxes_.size());
+    ATLAS_ASSERT(yarray.size() == targetBoxes_.size());
 
-    yarray.assign( 0. );
+    yarray.assign(0.);
     failures_.clear();
 
 
     // interpolate
-    eckit::ProgressTimer progress( "Intersecting", targetBoxes_.size(), "grid box", double( 5. ) );
+    eckit::ProgressTimer progress("Intersecting", targetBoxes_.size(), "grid box", double(5.));
 
     std::vector<Triplet> triplets;
     size_t i = 0;
-    for ( auto p : tgt.iterate().lonlat() ) {
+    for (auto p : tgt.iterate().lonlat()) {
         ++progress;
 
-        if ( intersect( i, targetBoxes_.at( i ), pTree_.closestPointsWithinRadius( p, searchRadius_ ), triplets ) ) {
+        if (intersect(i, targetBoxes_.at(i), pTree_.closestPointsWithinRadius(p, searchRadius_), triplets)) {
             auto& y = yarray[i];
-            for ( auto& t : triplets ) {
+            for (auto& t : triplets) {
                 y += xarray[t.col()] * t.value();
             }
         }
@@ -97,8 +97,8 @@ void GridBoxAverage::do_execute( const Field& source, Field& target ) const {
         ++i;
     }
 
-    if ( !failures_.empty() ) {
-        giveUp( failures_ );
+    if (!failures_.empty()) {
+        giveUp(failures_);
     }
 }
 

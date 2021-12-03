@@ -18,33 +18,33 @@ namespace io {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-size_t encode_metadata( const int&, atlas::io::Metadata& );
-size_t encode_metadata( const long&, atlas::io::Metadata& );
-size_t encode_metadata( const long long&, atlas::io::Metadata& );
-size_t encode_metadata( const unsigned long&, atlas::io::Metadata& );
-size_t encode_metadata( const unsigned long long&, atlas::io::Metadata& );
-size_t encode_metadata( const float&, atlas::io::Metadata& );
-size_t encode_metadata( const double&, atlas::io::Metadata& );
+size_t encode_metadata(const int&, atlas::io::Metadata&);
+size_t encode_metadata(const long&, atlas::io::Metadata&);
+size_t encode_metadata(const long long&, atlas::io::Metadata&);
+size_t encode_metadata(const unsigned long&, atlas::io::Metadata&);
+size_t encode_metadata(const unsigned long long&, atlas::io::Metadata&);
+size_t encode_metadata(const float&, atlas::io::Metadata&);
+size_t encode_metadata(const double&, atlas::io::Metadata&);
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void encode_data( const int&, atlas::io::Data& );
-void encode_data( const long&, atlas::io::Data& );
-void encode_data( const long long&, atlas::io::Data& );
-void encode_data( const unsigned long&, atlas::io::Data& );
-void encode_data( const unsigned long long&, atlas::io::Data& );
-void encode_data( const float&, atlas::io::Data& );
-void encode_data( const double&, atlas::io::Data& );
+void encode_data(const int&, atlas::io::Data&);
+void encode_data(const long&, atlas::io::Data&);
+void encode_data(const long long&, atlas::io::Data&);
+void encode_data(const unsigned long&, atlas::io::Data&);
+void encode_data(const unsigned long long&, atlas::io::Data&);
+void encode_data(const float&, atlas::io::Data&);
+void encode_data(const double&, atlas::io::Data&);
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void decode( const atlas::io::Metadata&, const atlas::io::Data&, int& );
-void decode( const atlas::io::Metadata&, const atlas::io::Data&, long& );
-void decode( const atlas::io::Metadata&, const atlas::io::Data&, long long& );
-void decode( const atlas::io::Metadata&, const atlas::io::Data&, unsigned long& );
-void decode( const atlas::io::Metadata&, const atlas::io::Data&, unsigned long long& );
-void decode( const atlas::io::Metadata&, const atlas::io::Data&, float& );
-void decode( const atlas::io::Metadata&, const atlas::io::Data&, double& );
+void decode(const atlas::io::Metadata&, const atlas::io::Data&, int&);
+void decode(const atlas::io::Metadata&, const atlas::io::Data&, long&);
+void decode(const atlas::io::Metadata&, const atlas::io::Data&, long long&);
+void decode(const atlas::io::Metadata&, const atlas::io::Data&, unsigned long&);
+void decode(const atlas::io::Metadata&, const atlas::io::Data&, unsigned long long&);
+void decode(const atlas::io::Metadata&, const atlas::io::Data&, float&);
+void decode(const atlas::io::Metadata&, const atlas::io::Data&, double&);
 
 //---------------------------------------------------------------------------------------------------------------------
 

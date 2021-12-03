@@ -33,16 +33,16 @@ struct array_assigner;
 template <typename Value, unsigned int Rank, unsigned int Dim>
 struct array_assigner_impl {
     template <typename View, typename... DimIndex>
-    static void apply( View& arr, Value value, DimIndex... idxs ) {
-        for ( idx_t i = 0; i < arr.shape( Dim ); ++i ) {
-            array_assigner_impl<Value, Rank, Dim + 1>::apply( arr, value, idxs..., i );
+    static void apply(View& arr, Value value, DimIndex... idxs) {
+        for (idx_t i = 0; i < arr.shape(Dim); ++i) {
+            array_assigner_impl<Value, Rank, Dim + 1>::apply(arr, value, idxs..., i);
         }
     }
 
     template <typename View, typename Iterator, typename... DimIndex>
-    static void apply( View& arr, Iterator& it, DimIndex... idxs ) {
-        for ( idx_t i = 0; i < arr.shape( Dim ); ++i ) {
-            array_assigner_impl<Value, Rank, Dim + 1>::apply( arr, it, idxs..., i );
+    static void apply(View& arr, Iterator& it, DimIndex... idxs) {
+        for (idx_t i = 0; i < arr.shape(Dim); ++i) {
+            array_assigner_impl<Value, Rank, Dim + 1>::apply(arr, it, idxs..., i);
         }
     }
 };
@@ -51,13 +51,13 @@ struct array_assigner_impl {
 template <typename Value, unsigned int Rank>
 struct array_assigner_impl<Value, Rank, Rank> {
     template <typename View, typename... DimIndex>
-    static void apply( View& arr, Value value, DimIndex... idxs ) {
-        arr( idxs... ) = value;
+    static void apply(View& arr, Value value, DimIndex... idxs) {
+        arr(idxs...) = value;
     }
 
     template <typename View, typename Iterator, typename... DimIndex>
-    static void apply( View& arr, Iterator& it, DimIndex... idxs ) {
-        arr( idxs... ) = *it;
+    static void apply(View& arr, Iterator& it, DimIndex... idxs) {
+        arr(idxs...) = *it;
         ++it;
     }
 };
@@ -67,24 +67,24 @@ struct array_assigner_impl<Value, Rank, Rank> {
 template <typename Value, unsigned int Rank>
 struct array_assigner {
     template <typename T>
-    static void apply( Array& arr, Value value ) {
-        return apply( make_host_view<T, Rank>( arr ), value );
+    static void apply(Array& arr, Value value) {
+        return apply(make_host_view<T, Rank>(arr), value);
     }
 
-    static void apply( ArrayView<Value, Rank>& arr, Value value ) {
-        array_assigner_impl<Value, Rank, 0u>::apply( arr, value );
+    static void apply(ArrayView<Value, Rank>& arr, Value value) {
+        array_assigner_impl<Value, Rank, 0u>::apply(arr, value);
         // Note: no need to apply variadic pack (idxs...)
     }
 
     template <typename Iterable>
-    static void apply( ArrayView<Value, Rank>& arr, const Iterable& iterable ) {
+    static void apply(ArrayView<Value, Rank>& arr, const Iterable& iterable) {
         typename Iterable::const_iterator it = iterable.begin();
-        array_assigner_impl<Value, Rank, 0u>::apply( arr, it );
-        ATLAS_ASSERT( it = iterable.end() );
+        array_assigner_impl<Value, Rank, 0u>::apply(arr, it);
+        ATLAS_ASSERT(it = iterable.end());
     }
 
-    static void apply( LocalView<Value, Rank>& arr, Value value ) {
-        array_assigner_impl<Value, Rank, 0u>::apply( arr, value );
+    static void apply(LocalView<Value, Rank>& arr, Value value) {
+        array_assigner_impl<Value, Rank, 0u>::apply(arr, value);
         // Note: no need to apply variadic pack (idxs...)
     }
 };

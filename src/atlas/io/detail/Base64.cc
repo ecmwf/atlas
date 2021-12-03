@@ -40,42 +40,42 @@ static std::array<unsigned char, 256> b64_encode_table{
 
 //---------------------------------------------------------------------------------------------------------------------
 
-std::string Base64::encode( const void* data, size_t len ) {
+std::string Base64::encode(const void* data, size_t len) {
     const auto& table        = b64_encode_table;
-    const unsigned char* src = reinterpret_cast<const unsigned char*>( data );
+    const unsigned char* src = reinterpret_cast<const unsigned char*>(data);
     unsigned char *out, *pos;
     const unsigned char *end, *in;
 
-    size_t out_len = 4 * ( ( len + 2 ) / 3 ); /* 3-byte blocks to 4-byte */
+    size_t out_len = 4 * ((len + 2) / 3); /* 3-byte blocks to 4-byte */
 
-    if ( out_len < len ) {
+    if (out_len < len) {
         return std::string(); /* integer overflow */
     }
 
     std::string str;
-    str.resize( out_len );
-    out = reinterpret_cast<unsigned char*>( const_cast<char*>( str.data() ) );
+    str.resize(out_len);
+    out = reinterpret_cast<unsigned char*>(const_cast<char*>(str.data()));
 
     end = src + len;
     in  = src;
     pos = out;
-    while ( end - in >= 3 ) {
+    while (end - in >= 3) {
         *pos++ = table[in[0] >> 2];
-        *pos++ = table[( ( in[0] & 0x03 ) << 4 ) | ( in[1] >> 4 )];
-        *pos++ = table[( ( in[1] & 0x0f ) << 2 ) | ( in[2] >> 6 )];
+        *pos++ = table[((in[0] & 0x03) << 4) | (in[1] >> 4)];
+        *pos++ = table[((in[1] & 0x0f) << 2) | (in[2] >> 6)];
         *pos++ = table[in[2] & 0x3f];
         in += 3;
     }
 
-    if ( end - in ) {
+    if (end - in) {
         *pos++ = table[in[0] >> 2];
-        if ( end - in == 1 ) {
-            *pos++ = table[( in[0] & 0x03 ) << 4];
+        if (end - in == 1) {
+            *pos++ = table[(in[0] & 0x03) << 4];
             *pos++ = '=';
         }
         else {
-            *pos++ = table[( ( in[0] & 0x03 ) << 4 ) | ( in[1] >> 4 )];
-            *pos++ = table[( in[1] & 0x0f ) << 2];
+            *pos++ = table[((in[0] & 0x03) << 4) | (in[1] >> 4)];
+            *pos++ = table[(in[1] & 0x0f) << 2];
         }
         *pos++ = '=';
     }
@@ -84,28 +84,28 @@ std::string Base64::encode( const void* data, size_t len ) {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-std::string Base64::decode( const void* data, size_t len ) {
+std::string Base64::decode(const void* data, size_t len) {
     const auto& table = b64_decode_table;
 
-    const unsigned char* p = reinterpret_cast<const unsigned char*>( data );
-    int pad                = len > 0 && ( len % 4 || p[len - 1] == '=' );
-    const size_t L         = ( ( len + 3 ) / 4 - pad ) * 4;
-    std::string str( L / 4 * 3 + pad, '\0' );
+    const unsigned char* p = reinterpret_cast<const unsigned char*>(data);
+    int pad                = len > 0 && (len % 4 || p[len - 1] == '=');
+    const size_t L         = ((len + 3) / 4 - pad) * 4;
+    std::string str(L / 4 * 3 + pad, '\0');
 
-    for ( size_t i = 0, j = 0; i < L; i += 4 ) {
+    for (size_t i = 0, j = 0; i < L; i += 4) {
         int n    = table[p[i]] << 18 | table[p[i + 1]] << 12 | table[p[i + 2]] << 6 | table[p[i + 3]];
         str[j++] = n >> 16;
         str[j++] = n >> 8 & 0xFF;
         str[j++] = n & 0xFF;
     }
 
-    if ( pad ) {
+    if (pad) {
         int n               = table[p[L]] << 18 | table[p[L + 1]] << 12;
         str[str.size() - 1] = n >> 16;
 
-        if ( len > L + 2 && p[L + 2] != '=' ) {
+        if (len > L + 2 && p[L + 2] != '=') {
             n |= table[p[L + 2]] << 6;
-            str.push_back( n >> 8 & 0xFF );
+            str.push_back(n >> 8 & 0xFF);
         }
     }
     return str;

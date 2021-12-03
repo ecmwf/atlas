@@ -30,54 +30,54 @@ namespace method {
 
 
 namespace {
-MethodBuilder<GridBoxMaximum> __builder( "grid-box-maximum" );
+MethodBuilder<GridBoxMaximum> __builder("grid-box-maximum");
 }
 
 
-void GridBoxMaximum::do_execute( const FieldSet& source, FieldSet& target ) const {
-    ATLAS_ASSERT( source.size() == target.size() );
+void GridBoxMaximum::do_execute(const FieldSet& source, FieldSet& target) const {
+    ATLAS_ASSERT(source.size() == target.size());
 
-    for ( idx_t i = 0; i < source.size(); ++i ) {
-        do_execute( source[i], target[i] );
+    for (idx_t i = 0; i < source.size(); ++i) {
+        do_execute(source[i], target[i]);
     }
 }
 
 
-void GridBoxMaximum::do_execute( const Field& source, Field& target ) const {
-    ATLAS_TRACE( "atlas::interpolation::method::GridBoxMaximum::do_execute()" );
+void GridBoxMaximum::do_execute(const Field& source, Field& target) const {
+    ATLAS_TRACE("atlas::interpolation::method::GridBoxMaximum::do_execute()");
 
     // set arrays
-    ATLAS_ASSERT( source.rank() == 1 );
-    ATLAS_ASSERT( target.rank() == 1 );
+    ATLAS_ASSERT(source.rank() == 1);
+    ATLAS_ASSERT(target.rank() == 1);
 
-    auto xarray = atlas::array::make_view<double, 1>( source );
-    auto yarray = atlas::array::make_view<double, 1>( target );
-    ATLAS_ASSERT( xarray.size() == sourceBoxes_.size() );
-    ATLAS_ASSERT( yarray.size() == targetBoxes_.size() );
+    auto xarray = atlas::array::make_view<double, 1>(source);
+    auto yarray = atlas::array::make_view<double, 1>(target);
+    ATLAS_ASSERT(xarray.size() == sourceBoxes_.size());
+    ATLAS_ASSERT(yarray.size() == targetBoxes_.size());
 
-    yarray.assign( 0. );
+    yarray.assign(0.);
     failures_.clear();
 
 
-    if ( !matrixFree_ ) {
+    if (!matrixFree_) {
         const Matrix& m = *matrix_;
-        Matrix::const_iterator k( m );
+        Matrix::const_iterator k(m);
 
-        for ( decltype( m.rows() ) i = 0, j = 0; i < m.rows(); ++i ) {
+        for (decltype(m.rows()) i = 0, j = 0; i < m.rows(); ++i) {
             double max = std::numeric_limits<double>::lowest();
             bool found = false;
 
-            for ( ; k != m.end( i ); ++k ) {
-                ATLAS_ASSERT( k.col() < size_t( xarray.shape( 0 ) ) );
+            for (; k != m.end(i); ++k) {
+                ATLAS_ASSERT(k.col() < size_t(xarray.shape(0)));
                 auto value = xarray[k.col()];
-                if ( max < value ) {
+                if (max < value) {
                     max = value;
                     j   = k.col();
                 }
                 found = true;
             }
 
-            ATLAS_ASSERT( found );
+            ATLAS_ASSERT(found);
             yarray[i] = xarray[j];
         }
         return;
@@ -86,26 +86,25 @@ void GridBoxMaximum::do_execute( const Field& source, Field& target ) const {
 
     // ensure GridBoxMethod::setup()
     functionspace::PointCloud tgt = target_;
-    ATLAS_ASSERT( tgt );
+    ATLAS_ASSERT(tgt);
 
-    ATLAS_ASSERT( searchRadius_ > 0. );
-    ATLAS_ASSERT( !sourceBoxes_.empty() );
-    ATLAS_ASSERT( !targetBoxes_.empty() );
+    ATLAS_ASSERT(searchRadius_ > 0.);
+    ATLAS_ASSERT(!sourceBoxes_.empty());
+    ATLAS_ASSERT(!targetBoxes_.empty());
 
 
     // interpolate
-    eckit::ProgressTimer progress( "Intersecting", targetBoxes_.size(), "grid box", double( 5. ) );
+    eckit::ProgressTimer progress("Intersecting", targetBoxes_.size(), "grid box", double(5.));
 
     std::vector<Triplet> triplets;
     size_t i = 0;
-    for ( auto p : tgt.iterate().lonlat() ) {
+    for (auto p : tgt.iterate().lonlat()) {
         ++progress;
 
-        if ( intersect( i, targetBoxes_.at( i ), pTree_.closestPointsWithinRadius( p, searchRadius_ ), triplets ) ) {
-            auto triplet =
-                std::max_element( triplets.begin(), triplets.end(), []( const Triplet& a, const Triplet& b ) {
-                    return !eckit::types::is_approximately_greater_or_equal( a.value(), b.value() );
-                } );
+        if (intersect(i, targetBoxes_.at(i), pTree_.closestPointsWithinRadius(p, searchRadius_), triplets)) {
+            auto triplet = std::max_element(triplets.begin(), triplets.end(), [](const Triplet& a, const Triplet& b) {
+                return !eckit::types::is_approximately_greater_or_equal(a.value(), b.value());
+            });
 
             yarray[i] = xarray[triplet->col()];
         }
@@ -113,8 +112,8 @@ void GridBoxMaximum::do_execute( const Field& source, Field& target ) const {
         ++i;
     }
 
-    if ( !failures_.empty() ) {
-        giveUp( failures_ );
+    if (!failures_.empty()) {
+        giveUp(failures_);
     }
 }
 

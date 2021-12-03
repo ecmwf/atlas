@@ -25,11 +25,11 @@ class Array;
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void interprete( const Array&, atlas::io::ArrayReference& );
+void interprete(const Array&, atlas::io::ArrayReference&);
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void decode( const atlas::io::Metadata&, const atlas::io::Data&, Array& );
+void decode(const atlas::io::Metadata&, const atlas::io::Data&, Array&);
 
 //---------------------------------------------------------------------------------------------------------------------
 }  // namespace array

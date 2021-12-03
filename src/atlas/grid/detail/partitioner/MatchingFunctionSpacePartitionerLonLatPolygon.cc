@@ -36,13 +36,13 @@ namespace {
 // PartitionerBuilder<MatchingFunctionSpacePartitionerLonLatPolygon> __builder( "lonlat-polygon" );
 }
 
-void MatchingFunctionSpacePartitionerLonLatPolygon::partition( const Grid& grid, int part[] ) const {
-    ATLAS_TRACE( "MatchingFunctionSpacePartitionerLonLatPolygon" );
+void MatchingFunctionSpacePartitionerLonLatPolygon::partition(const Grid& grid, int part[]) const {
+    ATLAS_TRACE("MatchingFunctionSpacePartitionerLonLatPolygon");
     //atlas::vector<int> part( grid.size() );
 
-    if ( mpi::size() == 1 ) {
+    if (mpi::size() == 1) {
         // shortcut
-        omp::fill( part, part + grid.size(), 0 );
+        omp::fill(part, part + grid.size(), 0);
     }
     else {
         const auto& p = partitioned_.polygon();
@@ -50,17 +50,17 @@ void MatchingFunctionSpacePartitionerLonLatPolygon::partition( const Grid& grid,
         int rank = mpi::rank();
         util::PolygonXY poly{p};
         {
-            ATLAS_TRACE( "point-in-polygon check for entire grid (" + std::to_string( grid.size() ) + " points)" );
+            ATLAS_TRACE("point-in-polygon check for entire grid (" + std::to_string(grid.size()) + " points)");
             size_t num_threads = atlas_omp_get_max_threads();
-            size_t chunk_size  = grid.size() / ( 1000 * num_threads );
-            size_t chunks      = num_threads == 1 ? 1 : std::max( size_t( 1 ), size_t( grid.size() ) / chunk_size );
+            size_t chunk_size  = grid.size() / (1000 * num_threads);
+            size_t chunks      = num_threads == 1 ? 1 : std::max(size_t(1), size_t(grid.size()) / chunk_size);
             atlas_omp_pragma(omp parallel for schedule(dynamic,1))
             for( size_t chunk=0; chunk < chunks; ++chunk) {
-                const size_t begin = chunk * size_t( grid.size() ) / chunks;
-                const size_t end   = ( chunk + 1 ) * size_t( grid.size() ) / chunks;
+                const size_t begin = chunk * size_t(grid.size()) / chunks;
+                const size_t end   = (chunk + 1) * size_t(grid.size()) / chunks;
                 auto it            = grid.xy().begin() + chunk * grid.size() / chunks;
-                for ( size_t n = begin; n < end; ++n ) {
-                    if ( poly.contains( *it ) ) {
+                for (size_t n = begin; n < end; ++n) {
+                    if (poly.contains(*it)) {
                         part[n] = rank;
                     }
                     else {
@@ -70,7 +70,7 @@ void MatchingFunctionSpacePartitionerLonLatPolygon::partition( const Grid& grid,
                 }
             }
         }
-        ATLAS_TRACE_MPI( ALLREDUCE ) { mpi::comm().allReduceInPlace( part, grid.size(), eckit::mpi::max() ); }
+        ATLAS_TRACE_MPI(ALLREDUCE) { mpi::comm().allReduceInPlace(part, grid.size(), eckit::mpi::max()); }
     }
 }
 

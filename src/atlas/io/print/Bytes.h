@@ -19,15 +19,15 @@ namespace io {
 
 struct Bytes {
 public:
-    Bytes( size_t bytes ) : bytes_( bytes ) {}
+    Bytes(size_t bytes): bytes_(bytes) {}
 
     operator size_t() const { return bytes_; }
 
-    std::string str( int decimals = 2, int width = 7 ) const;
+    std::string str(int decimals = 2, int width = 7) const;
 
-    void print( std::ostream& out, int decimals = 2, int width = 7 ) const;
+    void print(std::ostream& out, int decimals = 2, int width = 7) const;
 
-    friend std::ostream& operator<<( std::ostream&, const Bytes& );
+    friend std::ostream& operator<<(std::ostream&, const Bytes&);
 
 private:
     size_t bytes_;

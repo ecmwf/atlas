@@ -23,21 +23,21 @@ namespace grid {
 namespace detail {
 namespace distribution {
 
-void DistributionFunction::print( std::ostream& s ) const {
-    auto print_partition = [&]( std::ostream& s ) {
-        eckit::output_list<int> list_printer( s );
-        for ( gidx_t i = 0; i < size_; i++ ) {
-            list_printer.push_back( partition( i ) );
+void DistributionFunction::print(std::ostream& s) const {
+    auto print_partition = [&](std::ostream& s) {
+        eckit::output_list<int> list_printer(s);
+        for (gidx_t i = 0; i < size_; i++) {
+            list_printer.push_back(partition(i));
         }
     };
     s << "Distribution( "
       << "type: " << type_ << ", nb_points: " << size_ << ", nb_partitions: " << nb_pts_.size() << ", parts : ";
-    print_partition( s );
+    print_partition(s);
 }
 
-void DistributionFunction::hash( eckit::Hash& hash ) const {
-    for ( gidx_t i = 0; i < size_; i++ ) {
-        hash.add( partition( i ) );
+void DistributionFunction::hash(eckit::Hash& hash) const {
+    for (gidx_t i = 0; i < size_; i++) {
+        hash.add(partition(i));
     }
 }
 

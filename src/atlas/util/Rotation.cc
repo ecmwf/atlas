@@ -25,16 +25,16 @@ namespace util {
 
 namespace {
 
-PointLonLat wrap_latitude( const PointLonLat& p ) {
+PointLonLat wrap_latitude(const PointLonLat& p) {
     double lon = p.lon();
     double lat = p.lat();
 
-    while ( lat > 90. ) {
+    while (lat > 90.) {
         lon += 180.;
         lat = 180. - lat;
     }
 
-    while ( lat < -90. ) {
+    while (lat < -90.) {
         lon -= 180.;
         lat = -180. - lat;
     }
@@ -42,7 +42,7 @@ PointLonLat wrap_latitude( const PointLonLat& p ) {
     return {lon, lat};
 }
 
-double wrap_angle( double a ) {
+double wrap_angle(double a) {
     PointLonLat angle{a, 0};
     angle.normalise();
     return angle.lon();
@@ -50,41 +50,41 @@ double wrap_angle( double a ) {
 
 }  // namespace
 
-void Rotation::print( std::ostream& out ) const {
+void Rotation::print(std::ostream& out) const {
     out << "north_pole:" << npole_ << ", south_pole:" << spole_ << ", rotation_angle:" << angle_;
 }
-std::ostream& operator<<( std::ostream& out, const Rotation& r ) {
-    r.print( out );
+std::ostream& operator<<(std::ostream& out, const Rotation& r) {
+    r.print(out);
     return out;
 }
 
-PointLonLat Rotation::rotate( const PointLonLat& p ) const {
-    PointLonLat rotated( p );
-    rotate( rotated.data() );
+PointLonLat Rotation::rotate(const PointLonLat& p) const {
+    PointLonLat rotated(p);
+    rotate(rotated.data());
     return rotated;
 }
 
-PointLonLat Rotation::unrotate( const PointLonLat& p ) const {
-    PointLonLat unrotated( p );
-    unrotate( unrotated.data() );
+PointLonLat Rotation::unrotate(const PointLonLat& p) const {
+    PointLonLat unrotated(p);
+    unrotate(unrotated.data());
     return unrotated;
 }
 
 void Rotation::precompute() {
-    const double theta = -( 90. + spole_.lat() ) * Constants::degreesToRadians();
+    const double theta = -(90. + spole_.lat()) * Constants::degreesToRadians();
     const double phi   = -spole_.lon() * Constants::degreesToRadians();
 
-    const double sin_theta = std::sin( theta );
-    const double cos_theta = std::cos( theta );
-    const double sin_phi   = std::sin( phi );
-    const double cos_phi   = std::cos( phi );
+    const double sin_theta = std::sin(theta);
+    const double cos_theta = std::cos(theta);
+    const double sin_phi   = std::sin(phi);
+    const double cos_phi   = std::cos(phi);
 
-    auto eq = []( double a, double b ) { return eckit::types::is_approximately_equal( a, b, 1.e-12 ); };
+    auto eq = [](double a, double b) { return eckit::types::is_approximately_equal(a, b, 1.e-12); };
 
-    rotated_ = !eq( angle_, 0 ) || !eq( sin_theta, 0 ) || !eq( cos_theta, 1 ) || !eq( sin_phi, 0 ) || !eq( cos_phi, 1 );
-    rotation_angle_only_ = eq( sin_theta, 0 ) && eq( cos_theta, 1 ) && rotated_;
+    rotated_ = !eq(angle_, 0) || !eq(sin_theta, 0) || !eq(cos_theta, 1) || !eq(sin_phi, 0) || !eq(cos_phi, 1);
+    rotation_angle_only_ = eq(sin_theta, 0) && eq(cos_theta, 1) && rotated_;
 
-    if ( !rotated_ ) {
+    if (!rotated_) {
         rotate_ = unrotate_ = RotationMatrix{{{1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}}};
         return;
     }
@@ -124,35 +124,35 @@ void Rotation::precompute() {
                                 {sin_theta * cos_phi, -sin_theta * sin_phi, cos_theta}}};
 }
 
-Rotation::Rotation( const PointLonLat& south_pole, double rotation_angle ) {
+Rotation::Rotation(const PointLonLat& south_pole, double rotation_angle) {
     spole_ = south_pole;
-    npole_ = PointLonLat( spole_.lon() - 180., spole_.lat() + 180. );
-    if ( npole_.lat() > 90 ) {
+    npole_ = PointLonLat(spole_.lon() - 180., spole_.lat() + 180.);
+    if (npole_.lat() > 90) {
         npole_.lon() += 180.;
     }
-    angle_ = wrap_angle( rotation_angle );
+    angle_ = wrap_angle(rotation_angle);
 
     precompute();
 }
 
-Rotation::Rotation( const eckit::Parametrisation& p ) {
+Rotation::Rotation(const eckit::Parametrisation& p) {
     // get rotation angle
-    p.get( "rotation_angle", angle_ );
-    angle_ = wrap_angle( angle_ );
+    p.get("rotation_angle", angle_);
+    angle_ = wrap_angle(angle_);
 
     // get pole
-    std::vector<double> pole( 2 );
-    if ( p.get( "north_pole", pole ) ) {
-        npole_ = PointLonLat( pole.data() );
-        spole_ = PointLonLat( npole_.lon() + 180., npole_.lat() - 180. );
-        if ( spole_.lat() < -90 ) {
+    std::vector<double> pole(2);
+    if (p.get("north_pole", pole)) {
+        npole_ = PointLonLat(pole.data());
+        spole_ = PointLonLat(npole_.lon() + 180., npole_.lat() - 180.);
+        if (spole_.lat() < -90) {
             spole_.lon() -= 180.;
         }
     }
-    else if ( p.get( "south_pole", pole ) ) {
-        spole_ = PointLonLat( pole.data() );
-        npole_ = PointLonLat( spole_.lon() - 180., spole_.lat() + 180. );
-        if ( npole_.lat() > 90 ) {
+    else if (p.get("south_pole", pole)) {
+        spole_ = PointLonLat(pole.data());
+        npole_ = PointLonLat(spole_.lon() - 180., spole_.lat() + 180.);
+        if (npole_.lat() > 90) {
             npole_.lon() += 180.;
         }
     }
@@ -162,46 +162,46 @@ Rotation::Rotation( const eckit::Parametrisation& p ) {
 
 using RotationMatrix = std::array<std::array<double, 3>, 3>;
 
-inline PointXYZ rotate_geocentric( const PointXYZ& p, const RotationMatrix& R ) {
-    return PointXYZ( R[XX][XX] * p.x() + R[XX][YY] * p.y() + R[XX][ZZ] * p.z(),
-                     R[YY][XX] * p.x() + R[YY][YY] * p.y() + R[YY][ZZ] * p.z(),
-                     R[ZZ][XX] * p.x() + R[ZZ][YY] * p.y() + R[ZZ][ZZ] * p.z() );
+inline PointXYZ rotate_geocentric(const PointXYZ& p, const RotationMatrix& R) {
+    return PointXYZ(R[XX][XX] * p.x() + R[XX][YY] * p.y() + R[XX][ZZ] * p.z(),
+                    R[YY][XX] * p.x() + R[YY][YY] * p.y() + R[YY][ZZ] * p.z(),
+                    R[ZZ][XX] * p.x() + R[ZZ][YY] * p.y() + R[ZZ][ZZ] * p.z());
 }
 
-void Rotation::rotate( double crd[] ) const {
-    if ( !rotated_ ) {
+void Rotation::rotate(double crd[]) const {
+    if (!rotated_) {
         return;
     }
 
     crd[LON] -= angle_;
 
-    if ( !rotation_angle_only_ ) {
-        const PointLonLat L( wrap_latitude( {crd[LON], crd[LAT]} ) );
+    if (!rotation_angle_only_) {
+        const PointLonLat L(wrap_latitude({crd[LON], crd[LAT]}));
         PointXYZ P;
-        UnitSphere::convertSphericalToCartesian( L, P );
+        UnitSphere::convertSphericalToCartesian(L, P);
 
-        const PointXYZ Pt = rotate_geocentric( P, rotate_ );
+        const PointXYZ Pt = rotate_geocentric(P, rotate_);
         PointLonLat Lt;
-        UnitSphere::convertCartesianToSpherical( Pt, Lt );
+        UnitSphere::convertCartesianToSpherical(Pt, Lt);
 
         crd[LON] = Lt.lon();
         crd[LAT] = Lt.lat();
     }
 }
 
-void Rotation::unrotate( double crd[] ) const {
-    if ( !rotated_ ) {
+void Rotation::unrotate(double crd[]) const {
+    if (!rotated_) {
         return;
     }
 
-    if ( !rotation_angle_only_ ) {
-        const PointLonLat Lt( crd );
+    if (!rotation_angle_only_) {
+        const PointLonLat Lt(crd);
         PointXYZ Pt;
-        UnitSphere::convertSphericalToCartesian( Lt, Pt );
+        UnitSphere::convertSphericalToCartesian(Lt, Pt);
 
-        const PointXYZ P = rotate_geocentric( Pt, unrotate_ );
+        const PointXYZ P = rotate_geocentric(Pt, unrotate_);
         PointLonLat L;
-        UnitSphere::convertCartesianToSpherical( P, L );
+        UnitSphere::convertCartesianToSpherical(P, L);
 
         crd[LON] = L.lon();
         crd[LAT] = L.lat();

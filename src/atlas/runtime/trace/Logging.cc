@@ -49,9 +49,9 @@ public:
     operator std::ostream&() { return *channel_; }
     operator std::ostream*() { return channel_; }
 
-    void set( std::ostream& channel ) { channel_ = &channel; }
-    void set( bool state ) {
-        if ( state == false ) {
+    void set(std::ostream& channel) { channel_ = &channel; }
+    void set(bool state) {
+        if (state == false) {
             channel_ = &empty_channel();
         }
     }
@@ -59,16 +59,16 @@ public:
 
 //-----------------------------------------------------------------------------------------------------------
 
-Logging::Logging( bool state ) : previous_state_( LoggingState::instance() ) {
-    LoggingState::instance().set( state );
+Logging::Logging(bool state): previous_state_(LoggingState::instance()) {
+    LoggingState::instance().set(state);
 }
 
-Logging::Logging( std::ostream& channel ) : previous_state_( LoggingState::instance() ) {
-    LoggingState::instance().set( channel );
+Logging::Logging(std::ostream& channel): previous_state_(LoggingState::instance()) {
+    LoggingState::instance().set(channel);
 }
 
 Logging::~Logging() {
-    LoggingState::instance().set( *previous_state_ );
+    LoggingState::instance().set(*previous_state_);
 }
 
 std::ostream& Logging::channel() {
@@ -79,14 +79,14 @@ bool Logging::enabled() {
     return LoggingState::instance();
 }
 
-void Logging::start( const std::string& title ) {
-    if ( enabled() ) {
+void Logging::start(const std::string& title) {
+    if (enabled()) {
         channel() << title << " ..." << std::endl;
     }
 }
 
-void Logging::stop( const std::string& title, double seconds ) {
-    if ( enabled() ) {
+void Logging::stop(const std::string& title, double seconds) {
+    if (enabled()) {
         channel() << title << " ... done : " << seconds << "s" << std::endl;
     }
 }
@@ -98,8 +98,8 @@ std::ostream& NoLogging::channel() {
 
 //-----------------------------------------------------------------------------------------------------------
 
-void LoggingResult::stop( const std::string& title, double seconds ) {
-    if ( enabled() ) {
+void LoggingResult::stop(const std::string& title, double seconds) {
+    if (enabled()) {
         channel() << title << " : " << seconds << "s" << std::endl;
     }
 }

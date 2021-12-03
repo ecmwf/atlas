@@ -24,24 +24,24 @@ namespace std {
 //---------------------------------------------------------------------------------------------------------------------
 
 template <typename T>
-void interprete( const std::vector<T>& vector, atlas::io::ArrayReference& out ) {
+void interprete(const std::vector<T>& vector, atlas::io::ArrayReference& out) {
     using atlas::io::ArrayReference;
-    out = ArrayReference{vector.data(), {int( vector.size() )}};
+    out = ArrayReference{vector.data(), {int(vector.size())}};
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
 template <typename T>
-void decode( const atlas::io::Metadata& m, const atlas::io::Data& encoded, std::vector<T>& out ) {
-    atlas::io::ArrayMetadata array( m );
-    if ( array.datatype().kind() != atlas::io::ArrayMetadata::DataType::kind<T>() ) {
+void decode(const atlas::io::Metadata& m, const atlas::io::Data& encoded, std::vector<T>& out) {
+    atlas::io::ArrayMetadata array(m);
+    if (array.datatype().kind() != atlas::io::ArrayMetadata::DataType::kind<T>()) {
         std::stringstream err;
         err << "Could not decode " << m.json() << " into std::vector<" << atlas::io::demangle<T>() << ">. "
             << "Incompatible datatype!";
-        throw atlas::io::Exception( err.str(), Here() );
+        throw atlas::io::Exception(err.str(), Here());
     }
-    const T* data = static_cast<const T*>( encoded.data() );
-    out.assign( data, data + array.size() );
+    const T* data = static_cast<const T*>(encoded.data());
+    out.assign(data, data + array.size());
 }
 
 //---------------------------------------------------------------------------------------------------------------------

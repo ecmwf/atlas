@@ -26,12 +26,12 @@ class CubedSphereTiles;
 class CubedSphereTilesFactory : public util::Factory<CubedSphereTilesFactory> {
 public:
     static std::string className() { return "CubedSphereTilesFactory"; }
-    static const CubedSphereTiles* build( const std::string& );
-    static const CubedSphereTiles* build( const std::string&, const eckit::Parametrisation& );
+    static const CubedSphereTiles* build(const std::string&);
+    static const CubedSphereTiles* build(const std::string&, const eckit::Parametrisation&);
     using Factory::Factory;
 
 private:
-    virtual const CubedSphereTiles* make( const eckit::Parametrisation& ) = 0;
+    virtual const CubedSphereTiles* make(const eckit::Parametrisation&) = 0;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -39,7 +39,7 @@ private:
 template <class T>
 class CubedSphereTilesBuilder : public CubedSphereTilesFactory {
 private:
-    virtual const CubedSphereTiles* make( const eckit::Parametrisation& param ) { return new T( param ); }
+    virtual const CubedSphereTiles* make(const eckit::Parametrisation& param) { return new T(param); }
 
 public:
     using CubedSphereTilesFactory::CubedSphereTilesFactory;

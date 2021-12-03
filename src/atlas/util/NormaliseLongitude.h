@@ -18,21 +18,21 @@ namespace util {
 class NormaliseLongitude {
 public:
     // Normalise longitude between (west - eps, east - eps ) with west = 0., east = 360.
-    constexpr NormaliseLongitude() : west_( -eps_ ), east_( 360. - eps_ ) {}
+    constexpr NormaliseLongitude(): west_(-eps_), east_(360. - eps_) {}
 
     // Normalise longitude between ( west-eps, east-eps )  with east = west + 360
-    constexpr NormaliseLongitude( double west ) : west_( west - eps_ ), east_( west + 360. - eps_ ) {}
+    constexpr NormaliseLongitude(double west): west_(west - eps_), east_(west + 360. - eps_) {}
 
     // Normalise longitude between ( west-eps, east+eps )
-    constexpr NormaliseLongitude( double west, double east ) : west_( west - eps_ ), east_( east + eps_ ) {}
+    constexpr NormaliseLongitude(double west, double east): west_(west - eps_), east_(east + eps_) {}
 
-    constexpr NormaliseLongitude( const NormaliseLongitude& other ) : west_( other.west_ ), east_( other.east_ ) {}
+    constexpr NormaliseLongitude(const NormaliseLongitude& other): west_(other.west_), east_(other.east_) {}
 
-    double operator()( double lon ) const {
-        while ( lon < west_ ) {
+    double operator()(double lon) const {
+        while (lon < west_) {
             lon += 360.;
         }
-        while ( lon > east_ ) {
+        while (lon > east_) {
             lon -= 360.;
         }
         return lon;

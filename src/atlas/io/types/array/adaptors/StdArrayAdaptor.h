@@ -24,7 +24,7 @@ namespace std {
 //---------------------------------------------------------------------------------------------------------------------
 
 template <typename T, size_t N>
-void interprete( const std::array<T, N>& vector, atlas::io::ArrayReference& out ) {
+void interprete(const std::array<T, N>& vector, atlas::io::ArrayReference& out) {
     using atlas::io::ArrayReference;
     out = ArrayReference{vector.data(), {N}};
 }
@@ -32,22 +32,22 @@ void interprete( const std::array<T, N>& vector, atlas::io::ArrayReference& out 
 //---------------------------------------------------------------------------------------------------------------------
 
 template <typename T, size_t N>
-void decode( const atlas::io::Metadata& m, const atlas::io::Data& encoded, std::array<T, N>& out ) {
-    atlas::io::ArrayMetadata array( m );
-    if ( array.datatype().kind() != atlas::io::ArrayMetadata::DataType::kind<T>() ) {
+void decode(const atlas::io::Metadata& m, const atlas::io::Data& encoded, std::array<T, N>& out) {
+    atlas::io::ArrayMetadata array(m);
+    if (array.datatype().kind() != atlas::io::ArrayMetadata::DataType::kind<T>()) {
         std::stringstream err;
         err << "Could not decode " << m.json() << " into std::vector<" << atlas::io::demangle<T>() << ">. "
             << "Incompatible datatype!";
-        throw atlas::io::Exception( err.str(), Here() );
+        throw atlas::io::Exception(err.str(), Here());
     }
-    if ( array.size() != N ) {
+    if (array.size() != N) {
         std::stringstream err;
         err << "Could not decode " << m.json() << " into std::array<" << atlas::io::demangle<T>() << "," << N << ">. "
             << "Incompatible size!";
-        throw atlas::io::Exception( err.str(), Here() );
+        throw atlas::io::Exception(err.str(), Here());
     }
-    const T* data = static_cast<const T*>( encoded.data() );
-    std::copy( data, data + N, out.begin() );
+    const T* data = static_cast<const T*>(encoded.data());
+    std::copy(data, data + N, out.begin());
 }
 
 //---------------------------------------------------------------------------------------------------------------------

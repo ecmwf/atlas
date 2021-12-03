@@ -58,27 +58,27 @@ public:  // types
         using reference         = const Point&;
 
     public:
-        virtual bool next( value_type& )                         = 0;
-        virtual reference operator*() const                      = 0;
-        virtual const Derived& operator++()                      = 0;
-        virtual const Derived& operator+=( difference_type )     = 0;
-        virtual bool operator==( const Derived& ) const          = 0;
-        virtual bool operator!=( const Derived& ) const          = 0;
-        virtual difference_type distance( const Derived& ) const = 0;
-        virtual std::unique_ptr<Derived> clone() const           = 0;
+        virtual bool next(value_type&)                         = 0;
+        virtual reference operator*() const                    = 0;
+        virtual const Derived& operator++()                    = 0;
+        virtual const Derived& operator+=(difference_type)     = 0;
+        virtual bool operator==(const Derived&) const          = 0;
+        virtual bool operator!=(const Derived&) const          = 0;
+        virtual difference_type distance(const Derived&) const = 0;
+        virtual std::unique_ptr<Derived> clone() const         = 0;
         virtual ~IteratorT() {}
     };
     class IteratorXY : public IteratorT<IteratorXY, PointXY> {};
     class IteratorLonLat : public IteratorT<IteratorLonLat, PointLonLat> {};
 
 public:  // methods
-    static const Grid* create( const Config& );
+    static const Grid* create(const Config&);
 
-    static const Grid* create( const std::string& name );
+    static const Grid* create(const std::string& name);
 
-    static const Grid* create( const std::string& name, const Config& );
+    static const Grid* create(const std::string& name, const Config&);
 
-    static const Grid* create( const Grid&, const Domain& );
+    static const Grid* create(const Grid&, const Domain&);
 
     /// ctor (default)
     Grid();
@@ -95,7 +95,7 @@ public:  // methods
     virtual uid_t uid() const;
 
     /// Adds to the hash the information that makes this Grid unique
-    virtual void hash( eckit::Hash& ) const = 0;
+    virtual void hash(eckit::Hash&) const = 0;
 
     /// @returns the hash of the information that makes this Grid unique
     std::string hash() const;
@@ -124,19 +124,19 @@ public:  // methods
     virtual std::unique_ptr<IteratorLonLat> lonlat_begin() const = 0;
     virtual std::unique_ptr<IteratorLonLat> lonlat_end() const   = 0;
 
-    void attachObserver( GridObserver& ) const;
-    void detachObserver( GridObserver& ) const;
+    void attachObserver(GridObserver&) const;
+    void detachObserver(GridObserver&) const;
 
     virtual Config meshgenerator() const;
     virtual Config partitioner() const;
 
 protected:  // methods
     /// Fill provided me
-    virtual void print( std::ostream& ) const = 0;
+    virtual void print(std::ostream&) const = 0;
 
 private:  // methods
-    friend std::ostream& operator<<( std::ostream& s, const Grid& p ) {
-        p.print( s );
+    friend std::ostream& operator<<(std::ostream& s, const Grid& p) {
+        p.print(s);
         return s;
     }
 
@@ -159,34 +159,34 @@ private:
     std::vector<const Grid*> registered_grids_;
 
 public:
-    void registerGrid( const Grid& grid ) {
-        if ( std::find( registered_grids_.begin(), registered_grids_.end(), &grid ) == registered_grids_.end() ) {
-            registered_grids_.push_back( &grid );
-            grid.attachObserver( *this );
+    void registerGrid(const Grid& grid) {
+        if (std::find(registered_grids_.begin(), registered_grids_.end(), &grid) == registered_grids_.end()) {
+            registered_grids_.push_back(&grid);
+            grid.attachObserver(*this);
         }
     }
-    void unregisterGrid( const Grid& grid ) {
-        auto found = std::find( registered_grids_.begin(), registered_grids_.end(), &grid );
-        if ( found != registered_grids_.end() ) {
-            registered_grids_.erase( found );
-            grid.detachObserver( *this );
+    void unregisterGrid(const Grid& grid) {
+        auto found = std::find(registered_grids_.begin(), registered_grids_.end(), &grid);
+        if (found != registered_grids_.end()) {
+            registered_grids_.erase(found);
+            grid.detachObserver(*this);
         }
     }
     virtual ~GridObserver() {
-        for ( auto grid : registered_grids_ ) {
-            grid->detachObserver( *this );
+        for (auto grid : registered_grids_) {
+            grid->detachObserver(*this);
         }
     }
-    virtual void onGridDestruction( Grid& ) = 0;
+    virtual void onGridDestruction(Grid&) = 0;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
 extern "C" {
-idx_t atlas__grid__Grid__size( Grid* This );
-Grid::Spec* atlas__grid__Grid__spec( Grid* This );
-void atlas__grid__Grid__uid( const Grid* This, char*& uid, int& size );
-Grid::Domain::Implementation* atlas__grid__Grid__lonlat_bounding_box( const Grid* This );
+idx_t atlas__grid__Grid__size(Grid* This);
+Grid::Spec* atlas__grid__Grid__spec(Grid* This);
+void atlas__grid__Grid__uid(const Grid* This, char*& uid, int& size);
+Grid::Domain::Implementation* atlas__grid__Grid__lonlat_bounding_box(const Grid* This);
 }
 
 }  // namespace grid

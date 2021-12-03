@@ -48,7 +48,7 @@ static void init() {
 
 template <typename T>
 void load_builder() {
-    VorDivToUVBuilder<T>( "tmp" );
+    VorDivToUVBuilder<T>("tmp");
 }
 
 struct force_link {
@@ -60,103 +60,103 @@ struct force_link {
     }
 };
 
-VorDivToUVFactory& factory( const std::string& name ) {
-    std::map<std::string, VorDivToUVFactory*>::const_iterator j = m->find( name );
-    if ( j == m->end() ) {
+VorDivToUVFactory& factory(const std::string& name) {
+    std::map<std::string, VorDivToUVFactory*>::const_iterator j = m->find(name);
+    if (j == m->end()) {
         Log::error() << "No VorDivToUVFactory for [" << name << "]" << std::endl;
         Log::error() << "VorDivToUVFactory are:" << std::endl;
-        for ( j = m->begin(); j != m->end(); ++j ) {
-            Log::error() << "   " << ( *j ).first << std::endl;
+        for (j = m->begin(); j != m->end(); ++j) {
+            Log::error() << "   " << (*j).first << std::endl;
         }
-        throw_Exception( std::string( "No VorDivToUVFactory called " ) + name );
+        throw_Exception(std::string("No VorDivToUVFactory called ") + name);
     }
     return *j->second;
 }
 
 }  // namespace
 
-VorDivToUVFactory::VorDivToUVFactory( const std::string& name ) : name_( name ) {
-    pthread_once( &once, init );
+VorDivToUVFactory::VorDivToUVFactory(const std::string& name): name_(name) {
+    pthread_once(&once, init);
 
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
-    ATLAS_ASSERT( m->find( name ) == m->end() );
-    ( *m )[name] = this;
+    ATLAS_ASSERT(m->find(name) == m->end());
+    (*m)[name] = this;
 }
 
 VorDivToUVFactory::~VorDivToUVFactory() {
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
-    m->erase( name_ );
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
+    m->erase(name_);
 }
 
-bool VorDivToUVFactory::has( const std::string& name ) {
-    pthread_once( &once, init );
+bool VorDivToUVFactory::has(const std::string& name) {
+    pthread_once(&once, init);
 
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
     static force_link static_linking;
 
-    return ( m->find( name ) != m->end() );
+    return (m->find(name) != m->end());
 }
 
-void VorDivToUVFactory::list( std::ostream& out ) {
-    pthread_once( &once, init );
+void VorDivToUVFactory::list(std::ostream& out) {
+    pthread_once(&once, init);
 
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
     static force_link static_linking;
 
     const char* sep = "";
-    for ( std::map<std::string, VorDivToUVFactory*>::const_iterator j = m->begin(); j != m->end(); ++j ) {
-        out << sep << ( *j ).first;
+    for (std::map<std::string, VorDivToUVFactory*>::const_iterator j = m->begin(); j != m->end(); ++j) {
+        out << sep << (*j).first;
         sep = ", ";
     }
 }
 
-VorDivToUV::Implementation* VorDivToUVFactory::build( const FunctionSpace& sp, const eckit::Configuration& config ) {
-    pthread_once( &once, init );
+VorDivToUV::Implementation* VorDivToUVFactory::build(const FunctionSpace& sp, const eckit::Configuration& config) {
+    pthread_once(&once, init);
 
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
     static force_link static_linking;
 
-    std::string suffix( "(" + sp.type() + ")" );
-    std::string name = config.getString( "type", TRANS_DEFAULT ) + suffix;
+    std::string suffix("(" + sp.type() + ")");
+    std::string name = config.getString("type", TRANS_DEFAULT) + suffix;
 
     Log::debug() << "Looking for TransFactory [" << name << "]" << std::endl;
 
-    if ( not config.has( "type" ) and not has( name ) ) {
-        name = std::string( "local" ) + suffix;
+    if (not config.has("type") and not has(name)) {
+        name = std::string("local") + suffix;
         Log::debug() << "Looking for TransFactory [" << name << "]" << std::endl;
     }
 
-    return factory( name ).make( sp, config );
+    return factory(name).make(sp, config);
 }
 
-VorDivToUV::Implementation* VorDivToUVFactory::build( int truncation, const eckit::Configuration& config ) {
-    pthread_once( &once, init );
+VorDivToUV::Implementation* VorDivToUVFactory::build(int truncation, const eckit::Configuration& config) {
+    pthread_once(&once, init);
 
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
     static force_link static_linking;
 
-    std::string name = config.getString( "type", TRANS_DEFAULT );
+    std::string name = config.getString("type", TRANS_DEFAULT);
 
     Log::debug() << "Looking for VorDivToUVFactory [" << name << "]" << std::endl;
 
-    if ( not config.has( "type" ) and not has( name ) ) {
-        name = std::string( "local" );
+    if (not config.has("type") and not has(name)) {
+        name = std::string("local");
         Log::debug() << "Looking for VorDivToUVFactory [" << name << "]" << std::endl;
     }
 
-    return factory( name ).make( truncation, config );
+    return factory(name).make(truncation, config);
 }
 
-VorDivToUV::VorDivToUV( const FunctionSpace& sp, const eckit::Configuration& config ) :
-    Handle( VorDivToUVFactory::build( sp, config ) ) {}
+VorDivToUV::VorDivToUV(const FunctionSpace& sp, const eckit::Configuration& config):
+    Handle(VorDivToUVFactory::build(sp, config)) {}
 
-VorDivToUV::VorDivToUV( int truncation, const eckit::Configuration& config ) :
-    Handle( VorDivToUVFactory::build( truncation, config ) ) {}
+VorDivToUV::VorDivToUV(int truncation, const eckit::Configuration& config):
+    Handle(VorDivToUVFactory::build(truncation, config)) {}
 
 int VorDivToUV::truncation() const {
     return get()->truncation();
@@ -167,9 +167,9 @@ int VorDivToUV::truncation() const {
 // you're doing.
 // See IFS trans library.
 
-void VorDivToUV::execute( const int nb_coeff, const int nb_fields, const double vorticity[], const double divergence[],
-                          double U[], double V[], const eckit::Configuration& config ) const {
-    get()->execute( nb_coeff, nb_fields, vorticity, divergence, U, V, config );
+void VorDivToUV::execute(const int nb_coeff, const int nb_fields, const double vorticity[], const double divergence[],
+                         double U[], double V[], const eckit::Configuration& config) const {
+    get()->execute(nb_coeff, nb_fields, vorticity, divergence, U, V, config);
 }
 
 }  // namespace trans

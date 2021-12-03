@@ -18,7 +18,7 @@ namespace grid {
 namespace detail {
 namespace partitioner {
 
-EqualBandsPartitioner::EqualBandsPartitioner() : EqualBandsPartitioner( mpi::size() ) {}
+EqualBandsPartitioner::EqualBandsPartitioner(): EqualBandsPartitioner(mpi::size()) {}
 
 }  // namespace partitioner
 }  // namespace detail
@@ -27,5 +27,5 @@ EqualBandsPartitioner::EqualBandsPartitioner() : EqualBandsPartitioner( mpi::siz
 
 namespace {
 atlas::grid::detail::partitioner::PartitionerBuilder<atlas::grid::detail::partitioner::EqualBandsPartitioner>
-    __EqualBands( atlas::grid::detail::partitioner::EqualBandsPartitioner::static_type() );
+    __EqualBands(atlas::grid::detail::partitioner::EqualBandsPartitioner::static_type());
 }

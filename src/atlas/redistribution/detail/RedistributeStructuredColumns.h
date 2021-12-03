@@ -63,7 +63,7 @@ public:
     ///
     /// \param[in]  source  input field matching sourceFunctionSpace.
     /// \param[out] target  output field matching targetFunctionSpace.
-    void execute( const Field& source, Field& target ) const override;
+    void execute(const Field& source, Field& target) const override;
 
     /// \brief    Redistributes source field set to target fields set.
     ///
@@ -72,12 +72,12 @@ public:
     ///
     /// \param[in]  source  input field set.
     /// \param[out] target  output field set.
-    void execute( const FieldSet& source, FieldSet& target ) const override;
+    void execute(const FieldSet& source, FieldSet& target) const override;
 
 private:
     // Generic execute call to handle different field types.
     template <typename fieldType>
-    void do_execute( const Field& source, Field& target ) const;
+    void do_execute(const Field& source, Field& target) const;
 
     // FunctionSpaces recast to StructuredColumns.
     functionspace::StructuredColumns source_;
@@ -101,7 +101,7 @@ public:
     StructuredIndexRange() = default;
 
     /// \brief    Constructor.
-    StructuredIndexRange( const functionspace::StructuredColumns& );
+    StructuredIndexRange(const functionspace::StructuredColumns&);
 
     /// \brief    Get index ranges from all PEs.
     StructuredIndexRangeVector getStructuredIndexRanges() const;
@@ -110,11 +110,11 @@ public:
     idx_t getElemCount() const;
 
     /// \brief    Intersection operator.
-    StructuredIndexRange operator&(const StructuredIndexRange&)const;
+    StructuredIndexRange operator&(const StructuredIndexRange&) const;
 
     /// \brief    Iterate over all indices and do something with functor.
     template <typename functorType>
-    void forEach( const functorType& ) const;
+    void forEach(const functorType&) const;
 
 private:
     // Begin and end of j range.

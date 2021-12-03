@@ -18,55 +18,55 @@
 
 namespace atlas {
 
-Projection::Projection() : Handle( new projection::detail::LonLatProjection() ) {}
+Projection::Projection(): Handle(new projection::detail::LonLatProjection()) {}
 
-Projection::Projection( const eckit::Parametrisation& p ) : Handle( Implementation::create( p ) ) {}
+Projection::Projection(const eckit::Parametrisation& p): Handle(Implementation::create(p)) {}
 
-Projection::Projection( const std::string& type, const eckit::Parametrisation& p ) :
-    Handle( Implementation::create( type, p ) ) {}
+Projection::Projection(const std::string& type, const eckit::Parametrisation& p):
+    Handle(Implementation::create(type, p)) {}
 
 atlas::Projection::operator bool() const {
     return get()->operator bool();
 }
 
-void Projection::hash( eckit::Hash& h ) const {
-    get()->hash( h );
+void Projection::hash(eckit::Hash& h) const {
+    get()->hash(h);
 }
 
-void atlas::Projection::xy2lonlat( double crd[] ) const {
-    get()->xy2lonlat( crd );
+void atlas::Projection::xy2lonlat(double crd[]) const {
+    get()->xy2lonlat(crd);
 }
 
-void atlas::Projection::xy2lonlat( Point2& point ) const {
-    get()->xy2lonlat( point );
+void atlas::Projection::xy2lonlat(Point2& point) const {
+    get()->xy2lonlat(point);
 }
 
-void atlas::Projection::lonlat2xy( double crd[] ) const {
-    get()->lonlat2xy( crd );
+void atlas::Projection::lonlat2xy(double crd[]) const {
+    get()->lonlat2xy(crd);
 }
 
-void atlas::Projection::lonlat2xy( Point2& point ) const {
-    get()->lonlat2xy( point );
+void atlas::Projection::lonlat2xy(Point2& point) const {
+    get()->lonlat2xy(point);
 }
 
-atlas::Projection::Jacobian atlas::Projection::jacobian( const PointLonLat& p ) const {
-    return get()->jacobian( p );
+atlas::Projection::Jacobian atlas::Projection::jacobian(const PointLonLat& p) const {
+    return get()->jacobian(p);
 }
 
-PointLonLat atlas::Projection::lonlat( const PointXY& xy ) const {
-    return get()->lonlat( xy );
+PointLonLat atlas::Projection::lonlat(const PointXY& xy) const {
+    return get()->lonlat(xy);
 }
 
-PointXY atlas::Projection::xy( const PointLonLat& lonlat ) const {
-    return get()->xy( lonlat );
+PointXY atlas::Projection::xy(const PointLonLat& lonlat) const {
+    return get()->xy(lonlat);
 }
 
 bool atlas::Projection::strictlyRegional() const {
     return get()->strictlyRegional();
 }
 
-RectangularLonLatDomain Projection::lonlatBoundingBox( const Domain& domain ) const {
-    return get()->lonlatBoundingBox( domain );
+RectangularLonLatDomain Projection::lonlatBoundingBox(const Domain& domain) const {
+    return get()->lonlatBoundingBox(domain);
 }
 
 Projection::Spec atlas::Projection::spec() const {

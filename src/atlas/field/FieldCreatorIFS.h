@@ -50,8 +50,8 @@ namespace field {
 class FieldCreatorIFS : public FieldCreator {
 public:
     FieldCreatorIFS() {}
-    FieldCreatorIFS( const eckit::Parametrisation& ) {}
-    virtual FieldImpl* createField( const eckit::Parametrisation& ) const;
+    FieldCreatorIFS(const eckit::Parametrisation&) {}
+    virtual FieldImpl* createField(const eckit::Parametrisation&) const;
 };
 
 // ------------------------------------------------------------------

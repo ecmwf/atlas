@@ -19,16 +19,16 @@ namespace sparse {
 
 class Backend;
 
-void current_backend( const std::string& backend );
+void current_backend(const std::string& backend);
 sparse::Backend& current_backend();
-sparse::Backend& default_backend( const std::string& backend );
+sparse::Backend& default_backend(const std::string& backend);
 
 
 struct Backend : util::Config {
-    Backend() : util::Config() { set( current_backend() ); }
-    Backend( const std::string& type );
-    Backend( const eckit::Configuration& other );
-    std::string type() const { return getString( "type" ); }
+    Backend(): util::Config() { set(current_backend()); }
+    Backend(const std::string& type);
+    Backend(const eckit::Configuration& other);
+    std::string type() const { return getString("type"); }
     operator std::string() const { return type(); }
     bool available() const;
 };
@@ -36,12 +36,12 @@ struct Backend : util::Config {
 namespace backend {
 struct openmp : Backend {
     static std::string type() { return "openmp"; }
-    openmp() : Backend( type() ) {}
+    openmp(): Backend(type()) {}
 };
 
 struct eckit_linalg : Backend {
     static std::string type() { return "eckit_linalg"; }
-    eckit_linalg() : Backend( type() ) {}
+    eckit_linalg(): Backend(type()) {}
 };
 }  // namespace backend
 

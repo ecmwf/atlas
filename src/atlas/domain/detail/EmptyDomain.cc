@@ -21,20 +21,20 @@ namespace domain {
 
 EmptyDomain::EmptyDomain() = default;
 
-EmptyDomain::EmptyDomain( const eckit::Parametrisation& p ) {}
+EmptyDomain::EmptyDomain(const eckit::Parametrisation& p) {}
 
 EmptyDomain::Spec EmptyDomain::spec() const {
     Spec domain_spec;
-    domain_spec.set( "type", type() );
+    domain_spec.set("type", type());
     return domain_spec;
 }
 
-void EmptyDomain::print( std::ostream& os ) const {
+void EmptyDomain::print(std::ostream& os) const {
     os << "EmptyDomain";
 }
 
-void EmptyDomain::hash( eckit::Hash& h ) const {
-    h.add( type() );
+void EmptyDomain::hash(eckit::Hash& h) const {
+    h.add(type());
 }
 
 std::string EmptyDomain::units() const {
@@ -42,7 +42,7 @@ std::string EmptyDomain::units() const {
 }
 
 namespace {
-static DomainBuilder<EmptyDomain> register_builder( EmptyDomain::static_type() );
+static DomainBuilder<EmptyDomain> register_builder(EmptyDomain::static_type());
 }
 
 }  // namespace domain

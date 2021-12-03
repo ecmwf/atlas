@@ -35,24 +35,24 @@ public:
     Stream() = default;
 
     /// Constructor taking ownership of datahandle
-    Stream( eckit::DataHandle* );
+    Stream(eckit::DataHandle*);
 
     /// Constructor to share datahandle with a shared_ptr
-    Stream( std::shared_ptr<eckit::DataHandle> );
+    Stream(std::shared_ptr<eckit::DataHandle>);
 
     /// Constructor referencing datahandle, no ownership is taken
     /// @note The usability depends on the usable lifetime of
     ///       the referenced datahandle
-    Stream( eckit::DataHandle& );
+    Stream(eckit::DataHandle&);
 
     /// Assignment constructor sharing datahandle with other Stream
-    Stream( const Stream& );
+    Stream(const Stream&);
 
     /// Access internal eckit::DataHandle
     eckit::DataHandle& datahandle();
 
     /// Move position to given offset
-    std::uint64_t seek( std::uint64_t offset );
+    std::uint64_t seek(std::uint64_t offset);
 
     /// Return offset of current position
     std::uint64_t position();
@@ -60,12 +60,12 @@ public:
     /// Write data of given length (bytes)
     /// @return number of bytes written
     /// @post The position is increased with number of bytes written
-    std::uint64_t write( const void* data, size_t length );
+    std::uint64_t write(const void* data, size_t length);
 
     /// Read data of given length (bytes)
     /// @return number of bytes read
     /// @post The position is increased with number of bytes read
-    std::uint64_t read( void* data, size_t length );
+    std::uint64_t read(void* data, size_t length);
 
     /// Return true if pointer is valid;
     operator bool() const { return ptr_; }

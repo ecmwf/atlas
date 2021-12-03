@@ -16,18 +16,18 @@
 namespace atlas {
 namespace mesh {
 
-Halo::Halo( const Mesh& mesh ) {
+Halo::Halo(const Mesh& mesh) {
     size_ = 0;
-    mesh.metadata().get( "halo", size_ );
+    mesh.metadata().get("halo", size_);
 }
 
-Halo::Halo( const detail::MeshImpl& mesh ) {
+Halo::Halo(const detail::MeshImpl& mesh) {
     size_ = 0;
-    mesh.metadata().get( "halo", size_ );
+    mesh.metadata().get("halo", size_);
 }
 
 int Halo::size() const {
-    ATLAS_ASSERT( size_ >= 0 );
+    ATLAS_ASSERT(size_ >= 0);
     return size_;
 }
 

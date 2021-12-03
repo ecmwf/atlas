@@ -21,7 +21,7 @@ namespace detail {
 class FV3CubedSphereTiles : public CubedSphereTiles {
 public:
     // constructor
-    FV3CubedSphereTiles( const eckit::Parametrisation& );
+    FV3CubedSphereTiles(const eckit::Parametrisation&);
 
     static std::string static_type() { return "cubedsphere_fv3"; }
 
@@ -31,20 +31,20 @@ public:
 
     virtual std::array<std::array<double, 6>, 2> ab2xyOffsets() const override;
 
-    virtual void rotate( idx_t t, double xyz[] ) const override;
+    virtual void rotate(idx_t t, double xyz[]) const override;
 
-    virtual void unrotate( idx_t, double xyz[] ) const override;
+    virtual void unrotate(idx_t, double xyz[]) const override;
 
-    virtual idx_t indexFromXY( const double xy[] ) const override;
+    virtual idx_t indexFromXY(const double xy[]) const override;
 
-    virtual idx_t indexFromLonLat( const double lonlat[] ) const override;
+    virtual idx_t indexFromLonLat(const double lonlat[]) const override;
 
-    virtual void enforceXYdomain( double xy[] ) const override;
+    virtual void enforceXYdomain(double xy[]) const override;
 
-    virtual atlas::PointXY tileCubePeriodicity( const atlas::PointXY& xyExtended,
-                                                const atlas::idx_t tile ) const override;
+    virtual atlas::PointXY tileCubePeriodicity(const atlas::PointXY& xyExtended,
+                                               const atlas::idx_t tile) const override;
 
-    virtual void print( std::ostream& ) const override;
+    virtual void print(std::ostream&) const override;
 
 private:
 };

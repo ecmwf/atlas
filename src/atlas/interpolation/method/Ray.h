@@ -28,19 +28,19 @@ struct Ray {
     Vector3D dir;
 
     /// initializes ray with origin in point and direction to (0,0,0)
-    explicit Ray( const double* p );
+    explicit Ray(const double* p);
 
-    Ray( const double* o, const double* d );
+    Ray(const double* o, const double* d);
 
-    explicit Ray( const PointXYZ& );
+    explicit Ray(const PointXYZ&);
 
-    Ray( const PointXYZ&, const Vector3D& );
+    Ray(const PointXYZ&, const Vector3D&);
 
-    Vector3D operator()( double t ) const { return orig + t * dir; }
+    Vector3D operator()(double t) const { return orig + t * dir; }
 
-    void print( std::ostream& s ) const;
+    void print(std::ostream& s) const;
 
-    friend std::ostream& operator<<( std::ostream& s, const Ray& p );
+    friend std::ostream& operator<<(std::ostream& s, const Ray& p);
 };
 
 //----------------------------------------------------------------------------------------------------------------------

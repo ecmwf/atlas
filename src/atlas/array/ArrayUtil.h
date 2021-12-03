@@ -59,21 +59,21 @@ public:
     virtual void* voidDeviceData()                  = 0;
     template <typename Value>
     Value* hostData() {
-        return static_cast<Value*>( voidHostData() );
+        return static_cast<Value*>(voidHostData());
     }
     template <typename Value>
     Value* deviceData() {
-        return static_cast<Value*>( voidDeviceData() );
+        return static_cast<Value*>(voidDeviceData());
     }
 };
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 template <int Dim>
 static constexpr char array_dim() {
-    return Dim == 0 ? 'i' : ( Dim == 1 ? 'j' : ( Dim == 2 ? 'k' : ( Dim == 3 ? 'l' : ( Dim == 4 ? 'm' : ( '*' ) ) ) ) );
+    return Dim == 0 ? 'i' : (Dim == 1 ? 'j' : (Dim == 2 ? 'k' : (Dim == 3 ? 'l' : (Dim == 4 ? 'm' : ('*')))));
 }
 
-void throw_OutOfRange( const std::string& class_name, char idx_str, int idx, int max );
+void throw_OutOfRange(const std::string& class_name, char idx_str, int idx, int max);
 #endif
 
 //------------------------------------------------------------------------------------------------------

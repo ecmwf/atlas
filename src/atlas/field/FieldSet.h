@@ -58,9 +58,9 @@ public:  // types
 
 public:  // methods
     /// Constructs an empty FieldSet
-    FieldSetImpl( const std::string& name = "untitled" );
+    FieldSetImpl(const std::string& name = "untitled");
 
-    idx_t size() const { return static_cast<idx_t>( fields_.size() ); }
+    idx_t size() const { return static_cast<idx_t>(fields_.size()); }
     bool empty() const { return !fields_.size(); }
 
     void clear();
@@ -69,39 +69,39 @@ public:  // methods
     std::string& name() { return name_; }
 
     template <typename Index, enable_if_index_t<Index> = 0>
-    const Field& operator[]( Index i ) const {
-        return field( i );
+    const Field& operator[](Index i) const {
+        return field(i);
     }
 
     template <typename Index, enable_if_index_t<Index> = 0>
-    Field& operator[]( Index i ) {
-        return field( i );
+    Field& operator[](Index i) {
+        return field(i);
     }
 
-    const Field& operator[]( const std::string& name ) const { return field( name ); }
-    Field& operator[]( const std::string& name ) { return field( name ); }
+    const Field& operator[](const std::string& name) const { return field(name); }
+    Field& operator[](const std::string& name) { return field(name); }
 
     template <typename Index, enable_if_index_t<Index> = 0>
-    const Field& field( Index i ) const {
-        if ( i >= size() )
-            throw_OutOfRange( "fieldset", i, size(), Here() );
+    const Field& field(Index i) const {
+        if (i >= size())
+            throw_OutOfRange("fieldset", i, size(), Here());
         return fields_[i];
     }
 
     template <typename Index, enable_if_index_t<Index> = 0>
-    Field& field( Index i ) {
-        if ( i >= size() )
-            throw_OutOfRange( "fieldset", i, size(), Here() );
+    Field& field(Index i) {
+        if (i >= size())
+            throw_OutOfRange("fieldset", i, size(), Here());
         return fields_[i];
     }
 
     std::vector<std::string> field_names() const;
 
-    Field add( const Field& );
+    Field add(const Field&);
 
-    bool has_field( const std::string& name ) const;
+    bool has_field(const std::string& name) const;
 
-    Field& field( const std::string& name ) const;
+    Field& field(const std::string& name) const;
 
     iterator begin() { return fields_.begin(); }
     iterator end() { return fields_.end(); }
@@ -110,9 +110,9 @@ public:  // methods
     const_iterator cbegin() const { return fields_.begin(); }
     const_iterator cend() const { return fields_.end(); }
 
-    void haloExchange( bool on_device = false ) const;
-    void adjointHaloExchange( bool on_device = false ) const;
-    void set_dirty( bool = true ) const;
+    void haloExchange(bool on_device = false) const;
+    void adjointHaloExchange(bool on_device = false) const;
+    void set_dirty(bool = true) const;
 
 protected:                                // data
     std::vector<Field> fields_;           ///< field storage
@@ -124,15 +124,15 @@ class FieldImpl;
 
 // C wrapper interfaces to C++ routines
 extern "C" {
-FieldSetImpl* atlas__FieldSet__new( char* name );
-void atlas__FieldSet__delete( FieldSetImpl* This );
-void atlas__FieldSet__add_field( FieldSetImpl* This, FieldImpl* field );
-int atlas__FieldSet__has_field( const FieldSetImpl* This, char* name );
-idx_t atlas__FieldSet__size( const FieldSetImpl* This );
-FieldImpl* atlas__FieldSet__field_by_name( FieldSetImpl* This, char* name );
-FieldImpl* atlas__FieldSet__field_by_idx( FieldSetImpl* This, idx_t idx );
-void atlas__FieldSet__set_dirty( FieldSetImpl* This, int value );
-void atlas__FieldSet__halo_exchange( FieldSetImpl* This, int on_device );
+FieldSetImpl* atlas__FieldSet__new(char* name);
+void atlas__FieldSet__delete(FieldSetImpl* This);
+void atlas__FieldSet__add_field(FieldSetImpl* This, FieldImpl* field);
+int atlas__FieldSet__has_field(const FieldSetImpl* This, char* name);
+idx_t atlas__FieldSet__size(const FieldSetImpl* This);
+FieldImpl* atlas__FieldSet__field_by_name(FieldSetImpl* This, char* name);
+FieldImpl* atlas__FieldSet__field_by_idx(FieldSetImpl* This, idx_t idx);
+void atlas__FieldSet__set_dirty(FieldSetImpl* This, int value);
+void atlas__FieldSet__halo_exchange(FieldSetImpl* This, int on_device);
 }
 
 }  // namespace field
@@ -143,7 +143,7 @@ void atlas__FieldSet__halo_exchange( FieldSetImpl* This, int on_device );
 /**
  * @brief Represents a set of fields, where order is preserved
  */
-class FieldSet : DOXYGEN_HIDE( public util::ObjectHandle<field::FieldSetImpl> ) {
+class FieldSet : DOXYGEN_HIDE(public util::ObjectHandle<field::FieldSetImpl>) {
 public:  // types
     using iterator       = Implementation::iterator;
     using const_iterator = Implementation::const_iterator;
@@ -154,8 +154,8 @@ public:  // types
 public:  // methods
     using Handle::Handle;
     FieldSet();
-    FieldSet( const std::string& name );
-    FieldSet( const Field& );
+    FieldSet(const std::string& name);
+    FieldSet(const Field&);
 
     idx_t size() const { return get()->size(); }
     bool empty() const { return get()->empty(); }
@@ -166,38 +166,38 @@ public:  // methods
     std::string& name() { return get()->name(); }
 
     template <typename Index, enable_if_index_t<Index> = 0>
-    const Field& operator[]( Index i ) const {
-        return get()->operator[]( i );
+    const Field& operator[](Index i) const {
+        return get()->operator[](i);
     }
 
     template <typename Index, enable_if_index_t<Index> = 0>
-    Field& operator[]( Index i ) {
-        return get()->operator[]( i );
+    Field& operator[](Index i) {
+        return get()->operator[](i);
     }
 
-    const Field& operator[]( const std::string& name ) const { return get()->operator[]( name ); }
-    Field& operator[]( const std::string& name ) { return get()->operator[]( name ); }
+    const Field& operator[](const std::string& name) const { return get()->operator[](name); }
+    Field& operator[](const std::string& name) { return get()->operator[](name); }
 
-    const Field& operator[]( const char* name ) const { return get()->operator[]( name ); }
-    Field& operator[]( const char* name ) { return get()->operator[]( name ); }
+    const Field& operator[](const char* name) const { return get()->operator[](name); }
+    Field& operator[](const char* name) { return get()->operator[](name); }
 
     template <typename Index, enable_if_index_t<Index> = 0>
-    const Field& field( Index i ) const {
-        return get()->field( i );
+    const Field& field(Index i) const {
+        return get()->field(i);
     }
 
     template <typename Index, enable_if_index_t<Index> = 0>
-    Field& field( Index i ) {
-        return get()->field( i );
+    Field& field(Index i) {
+        return get()->field(i);
     }
 
     std::vector<std::string> field_names() const { return get()->field_names(); }
 
-    Field add( const Field& field ) { return get()->add( field ); }
+    Field add(const Field& field) { return get()->add(field); }
 
-    bool has_field( const std::string& name ) const { return get()->has_field( name ); }
+    bool has_field(const std::string& name) const { return get()->has_field(name); }
 
-    Field& field( const std::string& name ) const { return get()->field( name ); }
+    Field& field(const std::string& name) const { return get()->field(name); }
 
     iterator begin() { return get()->begin(); }
     iterator end() { return get()->end(); }
@@ -206,8 +206,8 @@ public:  // methods
     const_iterator cbegin() const { return get()->begin(); }
     const_iterator cend() const { return get()->end(); }
 
-    void haloExchange( bool on_device = false ) const { get()->haloExchange( on_device ); }
-    void set_dirty( bool = true ) const;
+    void haloExchange(bool on_device = false) const { get()->haloExchange(on_device); }
+    void set_dirty(bool = true) const;
 };
 
 }  // namespace atlas

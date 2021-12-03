@@ -21,26 +21,26 @@ namespace atlas {
 //---------------------------------------------------------------------------------------------------------------------
 
 template <typename T>
-void encode_data( const atlas::vector<T>& v, atlas::io::Data& out ) {
-    out.assign( v.data(), v.size() * sizeof( T ) );
+void encode_data(const atlas::vector<T>& v, atlas::io::Data& out) {
+    out.assign(v.data(), v.size() * sizeof(T));
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
 template <typename T>
-size_t encode_metadata( const atlas::vector<T>& v, atlas::io::Metadata& metadata ) {
+size_t encode_metadata(const atlas::vector<T>& v, atlas::io::Metadata& metadata) {
     using atlas::io::ArrayMetadata;
     using DataType = ArrayMetadata::DataType;
-    return encode_metadata( ArrayMetadata{DataType::create<T>(), {v.size()}}, metadata );
+    return encode_metadata(ArrayMetadata{DataType::create<T>(), {v.size()}}, metadata);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
 template <typename T>
-void decode( const atlas::io::Metadata& m, const atlas::io::Data& encoded, atlas::vector<T>& out ) {
-    atlas::io::ArrayMetadata array( m );
-    const T* data = static_cast<const T*>( encoded.data() );
-    out.assign( data, data + array.size() );
+void decode(const atlas::io::Metadata& m, const atlas::io::Data& encoded, atlas::vector<T>& out) {
+    atlas::io::ArrayMetadata array(m);
+    const T* data = static_cast<const T*>(encoded.data());
+    out.assign(data, data + array.size());
 }
 
 //---------------------------------------------------------------------------------------------------------------------

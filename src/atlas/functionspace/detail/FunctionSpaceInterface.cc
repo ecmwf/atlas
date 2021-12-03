@@ -27,27 +27,27 @@ namespace functionspace {
 
 // C wrapper interfaces to C++ routines
 extern "C" {
-void atlas__FunctionSpace__delete( FunctionSpaceImpl* This ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_FunctionSpace" );
+void atlas__FunctionSpace__delete(FunctionSpaceImpl* This) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_FunctionSpace");
     delete This;
     This = nullptr;
 }
 
-void atlas__FunctionSpace__name( const FunctionSpaceImpl* This, char*& name, int& size ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_FunctionSpace" );
+void atlas__FunctionSpace__name(const FunctionSpaceImpl* This, char*& name, int& size) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_FunctionSpace");
     std::string s = This->type();
-    size          = static_cast<int>( s.size() );
+    size          = static_cast<int>(s.size());
     name          = new char[size + 1];
-    std::strncpy( name, s.c_str(), size + 1 );
+    std::strncpy(name, s.c_str(), size + 1);
 }
 
-field::FieldImpl* atlas__FunctionSpace__create_field( const FunctionSpaceImpl* This,
-                                                      const eckit::Configuration* options ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_FunctionSpace" );
-    ATLAS_ASSERT( options != nullptr );
+field::FieldImpl* atlas__FunctionSpace__create_field(const FunctionSpaceImpl* This,
+                                                     const eckit::Configuration* options) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_FunctionSpace");
+    ATLAS_ASSERT(options != nullptr);
     field::FieldImpl* field;
     {
-        Field f = This->createField( *options );
+        Field f = This->createField(*options);
         field   = f.get();
         field->attach();
     }
@@ -57,15 +57,15 @@ field::FieldImpl* atlas__FunctionSpace__create_field( const FunctionSpaceImpl* T
 
 //------------------------------------------------------------------------------
 
-field::FieldImpl* atlas__FunctionSpace__create_field_template( const FunctionSpaceImpl* This,
-                                                               const field::FieldImpl* field_template,
-                                                               const eckit::Configuration* options ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_FunctionSpace" );
-    ATLAS_ASSERT( field_template != nullptr, "Cannot access uninitialised atlas_Field" );
-    ATLAS_ASSERT( options != nullptr );
+field::FieldImpl* atlas__FunctionSpace__create_field_template(const FunctionSpaceImpl* This,
+                                                              const field::FieldImpl* field_template,
+                                                              const eckit::Configuration* options) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_FunctionSpace");
+    ATLAS_ASSERT(field_template != nullptr, "Cannot access uninitialised atlas_Field");
+    ATLAS_ASSERT(options != nullptr);
     field::FieldImpl* field;
     {
-        Field f = This->createField( Field( field_template ), *options );
+        Field f = This->createField(Field(field_template), *options);
         field   = f.get();
         field->attach();
     }
@@ -75,39 +75,39 @@ field::FieldImpl* atlas__FunctionSpace__create_field_template( const FunctionSpa
 
 //------------------------------------------------------------------------------
 
-void atlas__FunctionSpace__halo_exchange_field( const FunctionSpaceImpl* This, field::FieldImpl* field ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_FunctionSpace" );
-    ATLAS_ASSERT( field != nullptr, "Cannot access uninitialised atlas_Field" );
-    Field f( field );
-    This->haloExchange( f );
+void atlas__FunctionSpace__halo_exchange_field(const FunctionSpaceImpl* This, field::FieldImpl* field) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_FunctionSpace");
+    ATLAS_ASSERT(field != nullptr, "Cannot access uninitialised atlas_Field");
+    Field f(field);
+    This->haloExchange(f);
 }
 
 //------------------------------------------------------------------------------
 
-void atlas__FunctionSpace__halo_exchange_fieldset( const FunctionSpaceImpl* This, field::FieldSetImpl* fieldset ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_FunctionSpace" );
-    ATLAS_ASSERT( fieldset != nullptr, "Cannot access uninitialised atlas_FieldSet" );
-    FieldSet f( fieldset );
-    This->haloExchange( f );
+void atlas__FunctionSpace__halo_exchange_fieldset(const FunctionSpaceImpl* This, field::FieldSetImpl* fieldset) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_FunctionSpace");
+    ATLAS_ASSERT(fieldset != nullptr, "Cannot access uninitialised atlas_FieldSet");
+    FieldSet f(fieldset);
+    This->haloExchange(f);
 }
 
 //------------------------------------------------------------------------------
 
-void atlas__FunctionSpace_adjoint_halo_exchange_field( const FunctionSpaceImpl* This, field::FieldImpl* field ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_FunctionSpace" );
-    ATLAS_ASSERT( field != nullptr, "Cannot access uninitialised atlas_Field" );
-    Field f( field );
-    This->adjointHaloExchange( f );
+void atlas__FunctionSpace_adjoint_halo_exchange_field(const FunctionSpaceImpl* This, field::FieldImpl* field) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_FunctionSpace");
+    ATLAS_ASSERT(field != nullptr, "Cannot access uninitialised atlas_Field");
+    Field f(field);
+    This->adjointHaloExchange(f);
 }
 
 //------------------------------------------------------------------------------
 
-void atlas__FunctionSpace__adjoint_halo_exchange_fieldset( const FunctionSpaceImpl* This,
-                                                           field::FieldSetImpl* fieldset ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_FunctionSpace" );
-    ATLAS_ASSERT( fieldset != nullptr, "Cannot access uninitialised atlas_FieldSet" );
-    FieldSet f( fieldset );
-    This->adjointHaloExchange( f );
+void atlas__FunctionSpace__adjoint_halo_exchange_fieldset(const FunctionSpaceImpl* This,
+                                                          field::FieldSetImpl* fieldset) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_FunctionSpace");
+    ATLAS_ASSERT(fieldset != nullptr, "Cannot access uninitialised atlas_FieldSet");
+    FieldSet f(fieldset);
+    This->adjointHaloExchange(f);
 }
 }
 

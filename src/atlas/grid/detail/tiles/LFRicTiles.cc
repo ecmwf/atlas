@@ -30,48 +30,48 @@ static constexpr bool debug = false;  // constexpr so compiler can optimize `if 
 
 using atlas::projection::detail::ProjectionUtilities;
 
-static bool is_tiny( const double& x ) {
+static bool is_tiny(const double& x) {
     constexpr double epsilon = 1.e-12;
-    return ( std::abs( x ) < epsilon );
+    return (std::abs(x) < epsilon);
 }
 
-static bool is_same( const double& x, const double& y, const double& tol = 1.0 ) {
+static bool is_same(const double& x, const double& y, const double& tol = 1.0) {
     constexpr double epsilon = 1.e-12;
-    return ( std::abs( x - y ) < epsilon * tol );
+    return (std::abs(x - y) < epsilon * tol);
 }
 
-static bool is_less( const double& lhs, const double& rhs ) {
+static bool is_less(const double& lhs, const double& rhs) {
     constexpr double epsilon = 1.e-12;
     return lhs < rhs - epsilon;
 }
 
-static bool is_geq( const double& lhs, const double& rhs ) {
+static bool is_geq(const double& lhs, const double& rhs) {
     constexpr double epsilon = 1.e-12;
     return lhs >= rhs - epsilon;
 }
 
-void sphericalToCartesian( const double lonlat[], double xyz[] ) {
+void sphericalToCartesian(const double lonlat[], double xyz[]) {
     auto crd_sys            = ProjectionUtilities::CoordinateSystem::LEFT_HAND;
     constexpr double radius = 1.;
-    ProjectionUtilities::sphericalToCartesian( lonlat, xyz, crd_sys, radius );
+    ProjectionUtilities::sphericalToCartesian(lonlat, xyz, crd_sys, radius);
 }
 
-atlas::PointXY rotatePlus90AboutPt( const atlas::PointXY& xy, const atlas::PointXY& origin ) {
+atlas::PointXY rotatePlus90AboutPt(const atlas::PointXY& xy, const atlas::PointXY& origin) {
     return atlas::PointXY{-xy.y() + origin.x() + origin.y(), xy.x() - origin.x() + origin.y()};
 }
 
-atlas::PointXY rotateMinus90AboutPt( const atlas::PointXY& xy, const atlas::PointXY& origin ) {
+atlas::PointXY rotateMinus90AboutPt(const atlas::PointXY& xy, const atlas::PointXY& origin) {
     return atlas::PointXY{xy.y() + origin.x() - origin.y(), -xy.x() + origin.x() + origin.y()};
 }
 
-atlas::PointXY rotatePlus180AboutPt( const atlas::PointXY& xy, const atlas::PointXY& origin ) {
+atlas::PointXY rotatePlus180AboutPt(const atlas::PointXY& xy, const atlas::PointXY& origin) {
     return atlas::PointXY{2.0 * origin.x() - xy.x(), 2.0 * origin.y() - xy.y()};
 }
 
 }  // anonymous namespace
 
 // constructor
-LFRicCubedSphereTiles::LFRicCubedSphereTiles( const eckit::Parametrisation& ) {
+LFRicCubedSphereTiles::LFRicCubedSphereTiles(const eckit::Parametrisation&) {
     botLeftTile_ =
         std::array<atlas::PointXY, 6>{atlas::PointXY{0., -45.}, atlas::PointXY{90, -45}, atlas::PointXY{180., -45.},
                                       atlas::PointXY{270, -45}, atlas::PointXY{0., 45.}, atlas::PointXY{0, -135.}};
@@ -97,150 +97,150 @@ std::array<std::array<double, 6>, 2> LFRicCubedSphereTiles::ab2xyOffsets() const
     return {{{0., 90., 180., 270., 0., 0.}, {-45., -45., -45., -45., 45., -135.}}};
 }
 
-static void tile0Rotate( double xyz[] ) {
+static void tile0Rotate(double xyz[]) {
     // Face 0, no rotation.
 }
 
-static void tile1Rotate( double xyz[] ) {
+static void tile1Rotate(double xyz[]) {
     double xyz_in[3];
-    std::copy( xyz, xyz + 3, xyz_in );
+    std::copy(xyz, xyz + 3, xyz_in);
     xyz[XX] = -xyz_in[YY];
     xyz[YY] = xyz_in[XX];
 }
 
-static void tile2Rotate( double xyz[] ) {
+static void tile2Rotate(double xyz[]) {
     double xyz_in[3];
-    std::copy( xyz, xyz + 3, xyz_in );
+    std::copy(xyz, xyz + 3, xyz_in);
     xyz[XX] = -xyz_in[XX];
     xyz[YY] = -xyz_in[YY];
 }
 
-static void tile3Rotate( double xyz[] ) {
+static void tile3Rotate(double xyz[]) {
     double xyz_in[3];
-    std::copy( xyz, xyz + 3, xyz_in );
+    std::copy(xyz, xyz + 3, xyz_in);
     xyz[XX] = xyz_in[YY];
     xyz[YY] = -xyz_in[XX];
 }
 
-static void tile4Rotate( double xyz[] ) {
+static void tile4Rotate(double xyz[]) {
     double xyz_in[3];
-    std::copy( xyz, xyz + 3, xyz_in );
+    std::copy(xyz, xyz + 3, xyz_in);
     xyz[XX] = xyz_in[ZZ];
     xyz[ZZ] = -xyz_in[XX];
 }
 
-static void tile5Rotate( double xyz[] ) {
+static void tile5Rotate(double xyz[]) {
     double xyz_in[3];
-    std::copy( xyz, xyz + 3, xyz_in );
+    std::copy(xyz, xyz + 3, xyz_in);
     xyz[XX] = -xyz_in[ZZ];
     xyz[ZZ] = xyz_in[XX];
 }
 
-static void tile0RotateInverse( double xyz[] ) {
+static void tile0RotateInverse(double xyz[]) {
     // Face 0, no rotation.
 }
 
-static void tile1RotateInverse( double xyz[] ) {
+static void tile1RotateInverse(double xyz[]) {
     double xyz_in[3];
-    std::copy( xyz, xyz + 3, xyz_in );
+    std::copy(xyz, xyz + 3, xyz_in);
     xyz[XX] = xyz_in[YY];
     xyz[YY] = -xyz_in[XX];
 }
 
-static void tile2RotateInverse( double xyz[] ) {
+static void tile2RotateInverse(double xyz[]) {
     double xyz_in[3];
-    std::copy( xyz, xyz + 3, xyz_in );
+    std::copy(xyz, xyz + 3, xyz_in);
     xyz[XX] = -xyz_in[XX];
     xyz[YY] = -xyz_in[YY];
 }
 
-static void tile3RotateInverse( double xyz[] ) {
+static void tile3RotateInverse(double xyz[]) {
     double xyz_in[3];
-    std::copy( xyz, xyz + 3, xyz_in );
+    std::copy(xyz, xyz + 3, xyz_in);
     xyz[XX] = -xyz_in[YY];
     xyz[YY] = xyz_in[XX];
 }
 
-static void tile4RotateInverse( double xyz[] ) {
+static void tile4RotateInverse(double xyz[]) {
     double xyz_in[3];
-    std::copy( xyz, xyz + 3, xyz_in );
+    std::copy(xyz, xyz + 3, xyz_in);
     xyz[XX] = -xyz_in[ZZ];
     xyz[ZZ] = xyz_in[XX];
 }
 
-static void tile5RotateInverse( double xyz[] ) {
+static void tile5RotateInverse(double xyz[]) {
     double xyz_in[3];
-    std::copy( xyz, xyz + 3, xyz_in );
+    std::copy(xyz, xyz + 3, xyz_in);
     xyz[XX] = xyz_in[ZZ];
     xyz[ZZ] = -xyz_in[XX];
 }
 
-void LFRicCubedSphereTiles::rotate( idx_t t, double xyz[] ) const {
-    switch ( t ) {
+void LFRicCubedSphereTiles::rotate(idx_t t, double xyz[]) const {
+    switch (t) {
         case 0: {
-            tile0Rotate( xyz );
+            tile0Rotate(xyz);
             break;
         }
         case 1: {
-            tile1Rotate( xyz );
+            tile1Rotate(xyz);
             break;
         }
         case 2: {
-            tile2Rotate( xyz );
+            tile2Rotate(xyz);
             break;
         }
         case 3: {
-            tile3Rotate( xyz );
+            tile3Rotate(xyz);
             break;
         }
         case 4: {
-            tile4Rotate( xyz );
+            tile4Rotate(xyz);
             break;
         }
         case 5: {
-            tile5Rotate( xyz );
+            tile5Rotate(xyz);
             break;
         }
         default: {
             Log::info() << "ERROR: t out of range" << std::endl;
-            throw_OutOfRange( "t", t, 6 );
+            throw_OutOfRange("t", t, 6);
         }
     }
 }
 
-void LFRicCubedSphereTiles::unrotate( idx_t t, double xyz[] ) const {
-    switch ( t ) {
+void LFRicCubedSphereTiles::unrotate(idx_t t, double xyz[]) const {
+    switch (t) {
         case 0: {
-            tile0RotateInverse( xyz );
+            tile0RotateInverse(xyz);
             break;
         }
         case 1: {
-            tile1RotateInverse( xyz );
+            tile1RotateInverse(xyz);
             break;
         }
         case 2: {
-            tile2RotateInverse( xyz );
+            tile2RotateInverse(xyz);
             break;
         }
         case 3: {
-            tile3RotateInverse( xyz );
+            tile3RotateInverse(xyz);
             break;
         }
         case 4: {
-            tile4RotateInverse( xyz );
+            tile4RotateInverse(xyz);
             break;
         }
         case 5: {
-            tile5RotateInverse( xyz );
+            tile5RotateInverse(xyz);
             break;
         }
         default: {
-            throw_OutOfRange( "t", t, 6 );
+            throw_OutOfRange("t", t, 6);
         }
     }
 }
 
-idx_t LFRicCubedSphereTiles::indexFromXY( const double xy[] ) const {
+idx_t LFRicCubedSphereTiles::indexFromXY(const double xy[]) const {
     // Assume one face-edge is of length 90 degrees.
     //
     //   y ^
@@ -268,120 +268,120 @@ idx_t LFRicCubedSphereTiles::indexFromXY( const double xy[] ) const {
 
     idx_t t{-1};  // tile index
 
-    if ( ( xy[XX] >= 0. ) && ( xy[YY] >= -45. ) && ( xy[XX] < 90. ) && ( xy[YY] < 45. ) ) {
+    if ((xy[XX] >= 0.) && (xy[YY] >= -45.) && (xy[XX] < 90.) && (xy[YY] < 45.)) {
         t = 0;
     }
-    else if ( ( xy[XX] >= 90. ) && ( xy[YY] >= -45. ) && ( xy[XX] < 180. ) && ( xy[YY] < 45. ) ) {
+    else if ((xy[XX] >= 90.) && (xy[YY] >= -45.) && (xy[XX] < 180.) && (xy[YY] < 45.)) {
         t = 1;
     }
-    else if ( ( xy[XX] >= 180. ) && ( xy[YY] >= -45. ) && ( xy[XX] < 270. ) && ( xy[YY] < 45. ) ) {
+    else if ((xy[XX] >= 180.) && (xy[YY] >= -45.) && (xy[XX] < 270.) && (xy[YY] < 45.)) {
         t = 2;
     }
-    else if ( ( xy[XX] >= 270. ) && ( xy[YY] >= -45. ) && ( xy[XX] < 360. ) && ( xy[YY] < 45. ) ) {
+    else if ((xy[XX] >= 270.) && (xy[YY] >= -45.) && (xy[XX] < 360.) && (xy[YY] < 45.)) {
         t = 3;
     }
-    else if ( ( xy[XX] >= 0. ) && ( xy[YY] >= 45. ) && ( xy[XX] <= 90. ) && ( xy[YY] <= 135. ) ) {
+    else if ((xy[XX] >= 0.) && (xy[YY] >= 45.) && (xy[XX] <= 90.) && (xy[YY] <= 135.)) {
         t = 4;
     }
-    else if ( ( xy[XX] > 0. ) && ( xy[YY] > -135. ) && ( xy[XX] < 90. ) && ( xy[YY] < -45. ) ) {
+    else if ((xy[XX] > 0.) && (xy[YY] > -135.) && (xy[XX] < 90.) && (xy[YY] < -45.)) {
         t = 5;
     }
 
     return t;
 }
 
-idx_t LFRicCubedSphereTiles::indexFromLonLat( const double crd[] ) const {
+idx_t LFRicCubedSphereTiles::indexFromLonLat(const double crd[]) const {
     idx_t t{-1};  // tile index
 
     double xyz[3];
 
-    sphericalToCartesian( crd, xyz );
+    sphericalToCartesian(crd, xyz);
 
     const double& lon = crd[LON];
 
-    double zPlusAbsX  = xyz[ZZ] + std::abs( xyz[XX] );
-    double zPlusAbsY  = xyz[ZZ] + std::abs( xyz[YY] );
-    double zMinusAbsX = xyz[ZZ] - std::abs( xyz[XX] );
-    double zMinusAbsY = xyz[ZZ] - std::abs( xyz[YY] );
+    double zPlusAbsX  = xyz[ZZ] + std::abs(xyz[XX]);
+    double zPlusAbsY  = xyz[ZZ] + std::abs(xyz[YY]);
+    double zMinusAbsX = xyz[ZZ] - std::abs(xyz[XX]);
+    double zMinusAbsY = xyz[ZZ] - std::abs(xyz[YY]);
 
-    if ( is_tiny( zPlusAbsX ) ) {
+    if (is_tiny(zPlusAbsX)) {
         zPlusAbsX = 0.;
     }
-    if ( is_tiny( zPlusAbsY ) ) {
+    if (is_tiny(zPlusAbsY)) {
         zPlusAbsY = 0.;
     }
-    if ( is_tiny( zMinusAbsX ) ) {
+    if (is_tiny(zMinusAbsX)) {
         zMinusAbsX = 0.;
     }
-    if ( is_tiny( zMinusAbsY ) ) {
+    if (is_tiny(zMinusAbsY)) {
         zMinusAbsY = 0.;
     }
 
-    if ( ( zPlusAbsX <= 0. ) && ( zPlusAbsY <= 0. ) ) {
+    if ((zPlusAbsX <= 0.) && (zPlusAbsY <= 0.)) {
         t = 4;
     }
-    else if ( ( zMinusAbsX > 0. ) && ( zMinusAbsY > 0. ) ) {
+    else if ((zMinusAbsX > 0.) && (zMinusAbsY > 0.)) {
         t = 5;
     }
-    else if ( is_geq( lon, 315. ) || is_less( lon, 45. ) ) {
+    else if (is_geq(lon, 315.) || is_less(lon, 45.)) {
         t = 0;
     }
-    else if ( is_geq( lon, 45. ) && is_less( lon, 135. ) ) {
+    else if (is_geq(lon, 45.) && is_less(lon, 135.)) {
         t = 1;
     }
-    else if ( is_geq( lon, 135. ) && is_less( lon, 225. ) ) {
+    else if (is_geq(lon, 135.) && is_less(lon, 225.)) {
         t = 2;
     }
-    else if ( is_geq( lon, 225. ) && is_less( lon, 315. ) ) {
+    else if (is_geq(lon, 225.) && is_less(lon, 315.)) {
         t = 3;
     }
 
     return t;
 }
 
-void LFRicCubedSphereTiles::enforceXYdomain( double xy[] ) const {
+void LFRicCubedSphereTiles::enforceXYdomain(double xy[]) const {
     // the conversion from lonlat to xy can involve some small errors and small errors
     // can affect whether xy that is created within a valid space
     // This has been tested with N = 512 with equiangular and equidistant projections.
     const double tol{70.0};
     constexpr double epsilon = std::numeric_limits<double>::epsilon();
 
-    if ( debug ) {
+    if (debug) {
         Log::info() << "enforceXYDomain before " << xy[XX] << " " << xy[YY] << std::endl;
     }
 
-    if ( is_same( xy[YY], 45.0, tol ) ) {
+    if (is_same(xy[YY], 45.0, tol)) {
         xy[YY] = 45.0;
     }
-    if ( is_same( xy[YY], -45.0, tol ) ) {
+    if (is_same(xy[YY], -45.0, tol)) {
         xy[YY] = -45.0;
     }
-    if ( xy[YY] < -45.0 ) {
-        xy[XX] = std::min( xy[XX], 90.0 - epsilon );
-        xy[XX] = std::max( xy[XX], 0.0 + epsilon );
+    if (xy[YY] < -45.0) {
+        xy[XX] = std::min(xy[XX], 90.0 - epsilon);
+        xy[XX] = std::max(xy[XX], 0.0 + epsilon);
     }
-    else if ( xy[YY] >= -45.0 ) {
-        xy[XX] = std::max( xy[XX], 0.0 );
+    else if (xy[YY] >= -45.0) {
+        xy[XX] = std::max(xy[XX], 0.0);
     }
-    if ( xy[YY] >= 45.0 ) {
-        xy[XX] = std::min( xy[XX], 90.0 );
+    if (xy[YY] >= 45.0) {
+        xy[XX] = std::min(xy[XX], 90.0);
     }
 
-    xy[XX] = std::max( xy[XX], 0.0 );
-    xy[XX] = std::min( xy[XX], 360.0 - epsilon );
-    xy[YY] = std::max( xy[YY], -135.0 + epsilon );
-    xy[YY] = std::min( xy[YY], 135.0 );
+    xy[XX] = std::max(xy[XX], 0.0);
+    xy[XX] = std::min(xy[XX], 360.0 - epsilon);
+    xy[YY] = std::max(xy[YY], -135.0 + epsilon);
+    xy[YY] = std::min(xy[YY], 135.0);
 
 
-    if ( debug ) {
+    if (debug) {
         Log::info() << "enforceXYDomain after " << xy[XX] << " " << xy[YY] << std::endl;
     }
 }
 
 // input is the xy value as PointXY that is a continous "cross " extension in terms of xy space from the tile in question
 // the output is an xy value that lives on the standard "|---" shape
-atlas::PointXY LFRicCubedSphereTiles::tileCubePeriodicity( const atlas::PointXY& xyExtended,
-                                                           const atlas::idx_t t ) const {
+atlas::PointXY LFRicCubedSphereTiles::tileCubePeriodicity(const atlas::PointXY& xyExtended,
+                                                          const atlas::idx_t t) const {
     // xy space is a function of tiles--Tile 0)                    // xy space for Tile 1
     //                                                             //
     //   y ^                                                       //   y ^
@@ -479,100 +479,100 @@ atlas::PointXY LFRicCubedSphereTiles::tileCubePeriodicity( const atlas::PointXY&
 
     // Step 1: wrap into range  x = [ 0, 360],  y = [135, 225] ensuring that we stay
     //         on the cross associated with tile index.
-    if ( !withinCross( t, xyExtended ) ) {
-        ATLAS_THROW_EXCEPTION( "Point (" << xyExtended.x() << "," << xyExtended.y() << ")"
-                                         << " is not in the cross extension of tile " << t );
+    if (!withinCross(t, xyExtended)) {
+        ATLAS_THROW_EXCEPTION("Point (" << xyExtended.x() << "," << xyExtended.y() << ")"
+                                        << " is not in the cross extension of tile " << t);
     }
 
     atlas::PointXY withinRange = xyExtended;
-    enforceWrapAround( t, withinRange );
+    enforceWrapAround(t, withinRange);
 
     atlas::PointXY finalXY = withinRange;
     atlas::PointXY tempXY  = withinRange;
 
-    switch ( t ) {
+    switch (t) {
         case 0:
-            finalXY = ( withinRange.y() > 135.0 ) ? rotatePlus180AboutPt( withinRange, atlas::PointXY{135.0, 90.0} )
-                                                  : withinRange;
+            finalXY = (withinRange.y() > 135.0) ? rotatePlus180AboutPt(withinRange, atlas::PointXY{135.0, 90.0})
+                                                : withinRange;
             break;
         case 1:
-            if ( ( withinRange.x() >= 90.0 ) && ( withinRange.x() <= 180.0 ) ) {
-                if ( withinRange.y() >= 45.0 ) {
-                    tempXY = rotatePlus90AboutPt( withinRange, atlas::PointXY{90.0, 45.0} );
+            if ((withinRange.x() >= 90.0) && (withinRange.x() <= 180.0)) {
+                if (withinRange.y() >= 45.0) {
+                    tempXY = rotatePlus90AboutPt(withinRange, atlas::PointXY{90.0, 45.0});
 
-                    if ( withinRange.y() > 135.0 ) {
-                        finalXY = rotatePlus90AboutPt( tempXY, atlas::PointXY{0.0, 45.0} );
+                    if (withinRange.y() > 135.0) {
+                        finalXY = rotatePlus90AboutPt(tempXY, atlas::PointXY{0.0, 45.0});
                         finalXY.x() += 360.0;
                     }
                     else {
                         finalXY = tempXY;
                     }
                 }
-                else if ( withinRange.y() < -45.0 ) {
-                    finalXY = rotateMinus90AboutPt( withinRange, atlas::PointXY{90.0, -45.0} );
+                else if (withinRange.y() < -45.0) {
+                    finalXY = rotateMinus90AboutPt(withinRange, atlas::PointXY{90.0, -45.0});
                 }
             }
             break;
         case 2:
-            if ( ( withinRange.x() >= 180.0 ) && ( withinRange.x() <= 270.0 ) ) {
-                if ( withinRange.y() > 135.0 ) {
-                    finalXY = rotatePlus180AboutPt( tempXY, atlas::PointXY{135.0, 90.0} );
+            if ((withinRange.x() >= 180.0) && (withinRange.x() <= 270.0)) {
+                if (withinRange.y() > 135.0) {
+                    finalXY = rotatePlus180AboutPt(tempXY, atlas::PointXY{135.0, 90.0});
                 }
-                else if ( withinRange.y() >= 45.0 ) {
-                    tempXY  = rotatePlus90AboutPt( withinRange, atlas::PointXY{180.0, 45.0} );
-                    finalXY = rotatePlus90AboutPt( tempXY, atlas::PointXY{90.0, 45.0} );
+                else if (withinRange.y() >= 45.0) {
+                    tempXY  = rotatePlus90AboutPt(withinRange, atlas::PointXY{180.0, 45.0});
+                    finalXY = rotatePlus90AboutPt(tempXY, atlas::PointXY{90.0, 45.0});
                 }
-                else if ( withinRange.y() < -45.0 ) {
-                    tempXY  = rotateMinus90AboutPt( withinRange, atlas::PointXY{180.0, -45.0} );
-                    finalXY = rotateMinus90AboutPt( tempXY, atlas::PointXY{90.0, -45.0} );
+                else if (withinRange.y() < -45.0) {
+                    tempXY  = rotateMinus90AboutPt(withinRange, atlas::PointXY{180.0, -45.0});
+                    finalXY = rotateMinus90AboutPt(tempXY, atlas::PointXY{90.0, -45.0});
                 }
             }
             break;
 
         case 3:
-            if ( ( ( withinRange.x() >= 270.0 ) && ( withinRange.x() <= 360.0 ) ) || withinRange.x() == 0.0 ) {
-                if ( withinRange.y() > 135.0 ) {
-                    finalXY = rotatePlus180AboutPt( tempXY, atlas::PointXY{225.0, 90.0} );
+            if (((withinRange.x() >= 270.0) && (withinRange.x() <= 360.0)) || withinRange.x() == 0.0) {
+                if (withinRange.y() > 135.0) {
+                    finalXY = rotatePlus180AboutPt(tempXY, atlas::PointXY{225.0, 90.0});
                 }
-                else if ( withinRange.y() >= 45.0 ) {
-                    finalXY = rotateMinus90AboutPt( tempXY, atlas::PointXY{360.0, 45.0} );
+                else if (withinRange.y() >= 45.0) {
+                    finalXY = rotateMinus90AboutPt(tempXY, atlas::PointXY{360.0, 45.0});
                     finalXY.x() -= 360.0;
                 }
-                else if ( withinRange.y() < -45.0 ) {
-                    finalXY = rotatePlus90AboutPt( tempXY, atlas::PointXY{360.0, -45.0} );
+                else if (withinRange.y() < -45.0) {
+                    finalXY = rotatePlus90AboutPt(tempXY, atlas::PointXY{360.0, -45.0});
                     finalXY.x() -= 360.0;
                 }
             }
             break;
         case 4:
-            if ( withinRange.y() > 135.0 ) {
-                finalXY = rotatePlus180AboutPt( tempXY, atlas::PointXY{135.0, 90.0} );
+            if (withinRange.y() > 135.0) {
+                finalXY = rotatePlus180AboutPt(tempXY, atlas::PointXY{135.0, 90.0});
             }
-            else if ( ( withinRange.y() >= 45.0 ) && ( withinRange.y() <= 135.0 ) ) {
-                if ( ( withinRange.x() > 90.0 ) && ( withinRange.x() <= 180.0 ) ) {
-                    finalXY = rotateMinus90AboutPt( withinRange, atlas::PointXY{90.0, 45.0} );
+            else if ((withinRange.y() >= 45.0) && (withinRange.y() <= 135.0)) {
+                if ((withinRange.x() > 90.0) && (withinRange.x() <= 180.0)) {
+                    finalXY = rotateMinus90AboutPt(withinRange, atlas::PointXY{90.0, 45.0});
                 }
-                if ( ( withinRange.x() > 180.0 ) && ( withinRange.x() <= 270.0 ) ) {
-                    finalXY = rotatePlus180AboutPt( withinRange, atlas::PointXY{135.0, 0.0} );
+                if ((withinRange.x() > 180.0) && (withinRange.x() <= 270.0)) {
+                    finalXY = rotatePlus180AboutPt(withinRange, atlas::PointXY{135.0, 0.0});
                 }
-                if ( ( withinRange.x() > 270.0 ) && ( withinRange.x() <= 360.0 ) ) {
-                    finalXY = rotatePlus90AboutPt( withinRange, atlas::PointXY{360.0, 45.0} );
+                if ((withinRange.x() > 270.0) && (withinRange.x() <= 360.0)) {
+                    finalXY = rotatePlus90AboutPt(withinRange, atlas::PointXY{360.0, 45.0});
                 }
             }
             break;
         case 5:
-            if ( withinRange.y() > 135.0 ) {
-                finalXY = rotatePlus180AboutPt( tempXY, atlas::PointXY{135.0, 90.0} );
+            if (withinRange.y() > 135.0) {
+                finalXY = rotatePlus180AboutPt(tempXY, atlas::PointXY{135.0, 90.0});
             }
-            else if ( ( withinRange.y() <= -45.0 ) && ( withinRange.y() >= -135.0 ) ) {
-                if ( ( withinRange.x() > 90.0 ) && ( withinRange.x() <= 180.0 ) ) {
-                    finalXY = rotatePlus90AboutPt( withinRange, atlas::PointXY{90.0, -45.0} );
+            else if ((withinRange.y() <= -45.0) && (withinRange.y() >= -135.0)) {
+                if ((withinRange.x() > 90.0) && (withinRange.x() <= 180.0)) {
+                    finalXY = rotatePlus90AboutPt(withinRange, atlas::PointXY{90.0, -45.0});
                 }
-                if ( ( withinRange.x() > 180.0 ) && ( withinRange.x() <= 270.0 ) ) {
-                    finalXY = rotatePlus180AboutPt( withinRange, atlas::PointXY{135.0, 0.0} );
+                if ((withinRange.x() > 180.0) && (withinRange.x() <= 270.0)) {
+                    finalXY = rotatePlus180AboutPt(withinRange, atlas::PointXY{135.0, 0.0});
                 }
-                if ( ( withinRange.x() > 270.0 ) && ( withinRange.x() <= 360.0 ) ) {
-                    finalXY = rotateMinus90AboutPt( withinRange, atlas::PointXY{360.0, -45.0} );
+                if ((withinRange.x() > 270.0) && (withinRange.x() <= 360.0)) {
+                    finalXY = rotateMinus90AboutPt(withinRange, atlas::PointXY{360.0, -45.0});
                 }
             }
             break;
@@ -580,40 +580,40 @@ atlas::PointXY LFRicCubedSphereTiles::tileCubePeriodicity( const atlas::PointXY&
 
     // Now we are on the standard tiles with their default rotate orientation.
     // The next step is to wrap the edges and corners to the correct tiles.
-    if ( finalXY.x() > 90. && finalXY.x() < 180. && finalXY.y() == 45.0 ) {
-        finalXY.y() = 45.0 + ( finalXY.x() - 90.0 );
+    if (finalXY.x() > 90. && finalXY.x() < 180. && finalXY.y() == 45.0) {
+        finalXY.y() = 45.0 + (finalXY.x() - 90.0);
         finalXY.x() = 90.0;
     }
-    if ( finalXY.x() == 180. && finalXY.y() == 45.0 ) {
+    if (finalXY.x() == 180. && finalXY.y() == 45.0) {
         finalXY.x() = 90.;
         finalXY.y() = 135.0;
     }
-    if ( finalXY.x() > 180. && finalXY.x() < 270. && finalXY.y() == 45.0 ) {
-        finalXY.x() = 90.0 - ( finalXY.x() - 90.0 );
+    if (finalXY.x() > 180. && finalXY.x() < 270. && finalXY.y() == 45.0) {
+        finalXY.x() = 90.0 - (finalXY.x() - 90.0);
         finalXY.y() = 135.0;
     }
-    if ( finalXY.x() == 270. && finalXY.y() == 45.0 ) {
+    if (finalXY.x() == 270. && finalXY.y() == 45.0) {
         finalXY.x() = 0.;
         finalXY.y() = 135.0;
     }
-    if ( finalXY.x() > 270. && finalXY.x() <= 360. && finalXY.y() == 45.0 ) {
-        finalXY.y() = 135.0 - ( finalXY.x() - 270.0 );
+    if (finalXY.x() > 270. && finalXY.x() <= 360. && finalXY.y() == 45.0) {
+        finalXY.y() = 135.0 - (finalXY.x() - 270.0);
         finalXY.x() = 0.0;
     }
 
-    if ( finalXY.x() >= 360. ) {
+    if (finalXY.x() >= 360.) {
         finalXY.x() -= 360.;
     }
 
-    if ( finalXY.x() == 0. && finalXY.y() < -45. && finalXY.y() > -135.0 ) {
-        finalXY.x() = 360.0 + ( finalXY.y() + 45.0 );
+    if (finalXY.x() == 0. && finalXY.y() < -45. && finalXY.y() > -135.0) {
+        finalXY.x() = 360.0 + (finalXY.y() + 45.0);
         finalXY.y() = -45.;
     }
-    if ( finalXY.x() == 90. && finalXY.y() < -45. && finalXY.y() > -135.0 ) {
-        finalXY.x() = 90.0 - ( finalXY.y() + 45.0 );
+    if (finalXY.x() == 90. && finalXY.y() < -45. && finalXY.y() > -135.0) {
+        finalXY.x() = 90.0 - (finalXY.y() + 45.0);
         finalXY.y() = -45.;
     }
-    if ( finalXY.y() <= -135. && finalXY.x() >= 0. && finalXY.x() <= 90.0 ) {
+    if (finalXY.y() <= -135. && finalXY.x() >= 0. && finalXY.x() <= 90.0) {
         finalXY.x() = 270.0 - finalXY.x();
         finalXY.y() = -45.;
     }
@@ -622,47 +622,47 @@ atlas::PointXY LFRicCubedSphereTiles::tileCubePeriodicity( const atlas::PointXY&
 }
 
 
-void LFRicCubedSphereTiles::print( std::ostream& os ) const {
+void LFRicCubedSphereTiles::print(std::ostream& os) const {
     os << "CubedSphereTiles["
        << "]";
 }
 
 
-bool LFRicCubedSphereTiles::withinCross( const atlas::idx_t tiles, const atlas::PointXY& withinRange ) const {
-    std::size_t t = static_cast<std::size_t>( tiles );
-    return !( ( withinRange.x() < botLeftTile_[t].x() && withinRange.y() < botLeftTile_[t].y() ) ||
-              ( withinRange.x() > botRightTile_[t].x() && withinRange.y() < botRightTile_[t].y() ) ||
-              ( withinRange.x() > topRightTile_[t].x() && withinRange.y() > topRightTile_[t].y() ) ||
-              ( withinRange.x() < topLeftTile_[t].x() && withinRange.y() > topLeftTile_[t].y() ) );
+bool LFRicCubedSphereTiles::withinCross(const atlas::idx_t tiles, const atlas::PointXY& withinRange) const {
+    std::size_t t = static_cast<std::size_t>(tiles);
+    return !((withinRange.x() < botLeftTile_[t].x() && withinRange.y() < botLeftTile_[t].y()) ||
+             (withinRange.x() > botRightTile_[t].x() && withinRange.y() < botRightTile_[t].y()) ||
+             (withinRange.x() > topRightTile_[t].x() && withinRange.y() > topRightTile_[t].y()) ||
+             (withinRange.x() < topLeftTile_[t].x() && withinRange.y() > topLeftTile_[t].y()));
 }
 
 
-void LFRicCubedSphereTiles::enforceWrapAround( const atlas::idx_t t, atlas::PointXY& withinRange ) const {
-    if ( withinRange.x() < 0.0 ) {
+void LFRicCubedSphereTiles::enforceWrapAround(const atlas::idx_t t, atlas::PointXY& withinRange) const {
+    if (withinRange.x() < 0.0) {
         atlas::PointXY temp = withinRange;
         temp.x() += 360;
-        if ( withinCross( t, temp ) ) {
+        if (withinCross(t, temp)) {
             withinRange = temp;
         }
     }
-    if ( withinRange.x() > 360.0 ) {
+    if (withinRange.x() > 360.0) {
         atlas::PointXY temp = withinRange;
         temp.x() -= 360;
-        if ( withinCross( t, temp ) ) {
+        if (withinCross(t, temp)) {
             withinRange = temp;
         }
     }
-    if ( withinRange.y() <= -135.0 ) {
+    if (withinRange.y() <= -135.0) {
         atlas::PointXY temp = withinRange;
         temp.y() += 360;
-        if ( withinCross( t, temp ) ) {
+        if (withinCross(t, temp)) {
             withinRange = temp;
         }
     }
-    if ( withinRange.y() > 225.0 ) {
+    if (withinRange.y() > 225.0) {
         atlas::PointXY temp = withinRange;
         temp.y() -= 360;
-        if ( withinCross( t, temp ) ) {
+        if (withinCross(t, temp)) {
             withinRange = temp;
         }
     }
@@ -671,7 +671,7 @@ void LFRicCubedSphereTiles::enforceWrapAround( const atlas::idx_t t, atlas::Poin
 }
 
 namespace {
-static CubedSphereTilesBuilder<LFRicCubedSphereTiles> register_builder( LFRicCubedSphereTiles::static_type() );
+static CubedSphereTilesBuilder<LFRicCubedSphereTiles> register_builder(LFRicCubedSphereTiles::static_type());
 }
 
 

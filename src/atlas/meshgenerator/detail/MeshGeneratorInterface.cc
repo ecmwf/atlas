@@ -25,15 +25,15 @@ namespace meshgenerator {
 
 extern "C" {
 
-void atlas__MeshGenerator__delete( MeshGenerator::Implementation* This ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_MeshGenerator" );
+void atlas__MeshGenerator__delete(MeshGenerator::Implementation* This) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialisd atlas_MeshGenerator");
     delete This;
 }
 
-const MeshGenerator::Implementation* atlas__MeshGenerator__create_noconfig( const char* name ) {
-    const MeshGenerator::Implementation* meshgenerator( nullptr );
+const MeshGenerator::Implementation* atlas__MeshGenerator__create_noconfig(const char* name) {
+    const MeshGenerator::Implementation* meshgenerator(nullptr);
     {
-        MeshGenerator m( std::string{name} );
+        MeshGenerator m(std::string{name});
         meshgenerator = m.get();
         meshgenerator->attach();
     }
@@ -41,12 +41,12 @@ const MeshGenerator::Implementation* atlas__MeshGenerator__create_noconfig( cons
     return meshgenerator;
 }
 
-const MeshGenerator::Implementation* atlas__MeshGenerator__create( const char* name,
-                                                                   const eckit::Parametrisation* config ) {
-    const MeshGenerator::Implementation* meshgenerator( nullptr );
-    ATLAS_ASSERT( config );
+const MeshGenerator::Implementation* atlas__MeshGenerator__create(const char* name,
+                                                                  const eckit::Parametrisation* config) {
+    const MeshGenerator::Implementation* meshgenerator(nullptr);
+    ATLAS_ASSERT(config);
     {
-        MeshGenerator m( std::string( name ), *config );
+        MeshGenerator m(std::string(name), *config);
         meshgenerator = m.get();
         meshgenerator->attach();
     }
@@ -56,14 +56,14 @@ const MeshGenerator::Implementation* atlas__MeshGenerator__create( const char* n
 
 Mesh::Implementation* atlas__MeshGenerator__generate__grid_griddist(
     const MeshGenerator::Implementation* This, const Grid::Implementation* grid,
-    const grid::Distribution::Implementation* distribution ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_MeshGenerator" );
-    ATLAS_ASSERT( grid != nullptr, "Cannot access uninitialisd atlas_Grid" );
-    ATLAS_ASSERT( distribution != nullptr, "Cannot access uninitialisd atlas_GridDistribution" );
+    const grid::Distribution::Implementation* distribution) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialisd atlas_MeshGenerator");
+    ATLAS_ASSERT(grid != nullptr, "Cannot access uninitialisd atlas_Grid");
+    ATLAS_ASSERT(distribution != nullptr, "Cannot access uninitialisd atlas_GridDistribution");
 
     Mesh::Implementation* m;
     {
-        Mesh mesh = This->generate( Grid( grid ), grid::Distribution( distribution ) );
+        Mesh mesh = This->generate(Grid(grid), grid::Distribution(distribution));
         mesh.get()->attach();
         m = mesh.get();
     }
@@ -71,13 +71,13 @@ Mesh::Implementation* atlas__MeshGenerator__generate__grid_griddist(
     return m;
 }
 
-Mesh::Implementation* atlas__MeshGenerator__generate__grid( const MeshGenerator::Implementation* This,
-                                                            const Grid::Implementation* grid ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialisd atlas_MeshGenerator" );
-    ATLAS_ASSERT( grid != nullptr, "Cannot access uninitialisd atlas_Grid" );
+Mesh::Implementation* atlas__MeshGenerator__generate__grid(const MeshGenerator::Implementation* This,
+                                                           const Grid::Implementation* grid) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialisd atlas_MeshGenerator");
+    ATLAS_ASSERT(grid != nullptr, "Cannot access uninitialisd atlas_Grid");
     Mesh::Implementation* m;
     {
-        Mesh mesh = This->generate( Grid( grid ) );
+        Mesh mesh = This->generate(Grid(grid));
         ;
         mesh.get()->attach();
         m = mesh.get();

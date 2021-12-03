@@ -31,7 +31,7 @@ struct Convert {
     using value_type = typename std::conditional<std::is_const<View>::value, const introspection::value_type<View>,
                                                  introspection::value_type<View>>::type;
     using type       = array::LocalView<value_type, introspection::rank<View>()>;
-    static type apply( View& view ) { return type( view.data(), view.shape() ); }
+    static type apply(View& view) { return type(view.data(), view.shape()); }
 };
 
 template <typename View>
@@ -39,7 +39,7 @@ struct Convert<View, eckit::linalg::Vector> {
     using value_type =
         typename std::conditional<std::is_const<View>::value, const eckit::linalg::Scalar, eckit::linalg::Scalar>::type;
     using type = array::LocalView<value_type, 1>;
-    static type apply( View& v ) { return type( v.data(), array::make_shape( v.size() ) ); }
+    static type apply(View& v) { return type(v.data(), array::make_shape(v.size())); }
 };
 
 template <typename View>
@@ -47,13 +47,13 @@ struct Convert<View, eckit::linalg::Matrix> {
     using value_type =
         typename std::conditional<std::is_const<View>::value, const eckit::linalg::Scalar, eckit::linalg::Scalar>::type;
     using type = array::LocalView<value_type, 2>;
-    static type apply( View& m ) { return type( m.data(), array::make_shape( m.cols(), m.rows() ) ); }
+    static type apply(View& m) { return type(m.data(), array::make_shape(m.cols(), m.rows())); }
 };
 
 template <typename View>
 struct ConvertView {
     using type = typename Convert<View, introspection::base_type<View>>::type;
-    static type apply( View& v ) { return Convert<View, introspection::base_type<View>>::apply( v ); }
+    static type apply(View& v) { return Convert<View, introspection::base_type<View>>::apply(v); }
 };
 
 }  // namespace view
@@ -62,8 +62,8 @@ template <typename View>
 using view_type = typename view::ConvertView<View>::type;
 
 template <typename T>
-view_type<T> make_view( T& view ) {
-    return view::ConvertView<T>::apply( view );
+view_type<T> make_view(T& view) {
+    return view::ConvertView<T>::apply(view);
 }
 
 }  // namespace linalg

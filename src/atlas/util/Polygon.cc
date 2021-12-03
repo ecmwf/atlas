@@ -30,8 +30,8 @@ namespace {
 
 //------------------------------------------------------------------------------------------------------
 
-double cross_product_analog( const Point2& A, const Point2& B, const Point2& C ) {
-    return ( A[XX] - C[XX] ) * ( B[YY] - C[YY] ) - ( A[YY] - C[YY] ) * ( B[XX] - C[XX] );
+double cross_product_analog(const Point2& A, const Point2& B, const Point2& C) {
+    return (A[XX] - C[XX]) * (B[YY] - C[YY]) - (A[YY] - C[YY]) * (B[XX] - C[XX]);
 }
 
 }  // namespace
@@ -40,40 +40,40 @@ double cross_product_analog( const Point2& A, const Point2& B, const Point2& C )
 
 Polygon::Polygon() = default;
 
-Polygon::Polygon( const Polygon::edge_set_t& edges ) {
-    setup( edges );
+Polygon::Polygon(const Polygon::edge_set_t& edges) {
+    setup(edges);
 }
 
-void Polygon::setup( const Polygon::edge_set_t& edges ) {
-    if ( edges.empty() ) {
+void Polygon::setup(const Polygon::edge_set_t& edges) {
+    if (edges.empty()) {
         return;
     }
 
     // get external edges by attempting to remove reversed edges, if any
     edge_set_t extEdges;
-    for ( const edge_t& e : edges ) {
-        if ( !extEdges.erase( e.reverse() ) ) {
-            extEdges.insert( e );
+    for (const edge_t& e : edges) {
+        if (!extEdges.erase(e.reverse())) {
+            extEdges.insert(e);
         }
     }
-    ATLAS_ASSERT( extEdges.size() >= 2 );
+    ATLAS_ASSERT(extEdges.size() >= 2);
 
     // set one polygon cycle, by picking next edge with first node same as second
     // node of last edge
     clear();
-    reserve( extEdges.size() + 1 );
+    reserve(extEdges.size() + 1);
 
-    emplace_back( extEdges.begin()->first );
-    for ( edge_set_t::iterator e = extEdges.begin(); e != extEdges.end() && e->first == back();
-          e                      = extEdges.lower_bound( edge_t( back(), std::numeric_limits<idx_t>::min() ) ) ) {
-        emplace_back( e->second );
-        extEdges.erase( *e );
+    emplace_back(extEdges.begin()->first);
+    for (edge_set_t::iterator e = extEdges.begin(); e != extEdges.end() && e->first == back();
+         e                      = extEdges.lower_bound(edge_t(back(), std::numeric_limits<idx_t>::min()))) {
+        emplace_back(e->second);
+        extEdges.erase(*e);
     }
-    ATLAS_ASSERT( front() == back() );
+    ATLAS_ASSERT(front() == back());
 
     // exhaust remaining edges, should represent additional cycles, if any
-    while ( !extEdges.empty() ) {
-        operator+=( Polygon( extEdges ) );
+    while (!extEdges.empty()) {
+        operator+=(Polygon(extEdges));
     }
 }
 
@@ -81,35 +81,35 @@ Polygon::operator bool() const {
     return !Polygon::empty();
 }
 
-Polygon& Polygon::operator+=( const Polygon& other ) {
-    if ( empty() ) {
-        return operator=( other );
+Polygon& Polygon::operator+=(const Polygon& other) {
+    if (empty()) {
+        return operator=(other);
     }
 
     // polygon can have multiple cycles, but must be connected graphs
     // Note: a 'cycle' is handled by repeating the indices, excluding (repeated)
     // last index
-    ATLAS_ASSERT( other.front() == other.back() );
-    const difference_type N = difference_type( other.size() ) - 1;
+    ATLAS_ASSERT(other.front() == other.back());
+    const difference_type N = difference_type(other.size()) - 1;
 
-    container_t cycle( 2 * size_t( N ) );
-    std::copy( other.begin(), other.begin() + N, cycle.begin() );
-    std::copy( other.begin(), other.begin() + N, cycle.begin() + N );
+    container_t cycle(2 * size_t(N));
+    std::copy(other.begin(), other.begin() + N, cycle.begin());
+    std::copy(other.begin(), other.begin() + N, cycle.begin() + N);
 
-    for ( const_iterator c = cycle.begin(); c != cycle.begin() + N; ++c ) {
-        iterator here = std::find( begin(), end(), *c );
-        if ( here != end() ) {
-            insert( here, c, c + N );
+    for (const_iterator c = cycle.begin(); c != cycle.begin() + N; ++c) {
+        iterator here = std::find(begin(), end(), *c);
+        if (here != end()) {
+            insert(here, c, c + N);
             return *this;
         }
     }
 
-    throw_AssertionFailed( "Polygon: could not merge polygons, they are not connected", Here() );
+    throw_AssertionFailed("Polygon: could not merge polygons, they are not connected", Here());
 }
 
-void Polygon::print( std::ostream& s ) const {
+void Polygon::print(std::ostream& s) const {
     char z = '{';
-    for ( auto n : static_cast<const container_t&>( *this ) ) {
+    for (auto n : static_cast<const container_t&>(*this)) {
         s << z << n;
         z = ',';
     }
@@ -124,61 +124,60 @@ const RectangularDomain& PartitionPolygon::inscribedDomain() const {
 //------------------------------------------------------------------------------------------------------
 
 
-PolygonCoordinates::PolygonCoordinates( const Polygon& poly, const atlas::Field& coordinates,
-                                        bool removeAlignedPoints ) {
-    ATLAS_ASSERT( poly.size() > 2 );
-    ATLAS_ASSERT( poly.front() == poly.back() );
+PolygonCoordinates::PolygonCoordinates(const Polygon& poly, const atlas::Field& coordinates, bool removeAlignedPoints) {
+    ATLAS_ASSERT(poly.size() > 2);
+    ATLAS_ASSERT(poly.front() == poly.back());
 
     // Point coordinates
     // - use a bounding box to quickly discard points,
     // - except when that is above/below bounding box but poles should be included
 
     coordinates_.clear();
-    coordinates_.reserve( poly.size() );
+    coordinates_.reserve(poly.size());
 
-    auto coord      = array::make_view<double, 2>( coordinates );
-    coordinatesMin_ = Point2( coord( poly[0], XX ), coord( poly[0], YY ) );
+    auto coord      = array::make_view<double, 2>(coordinates);
+    coordinatesMin_ = Point2(coord(poly[0], XX), coord(poly[0], YY));
     coordinatesMax_ = coordinatesMin_;
 
     size_t nb_removed_points_due_to_alignment = 0;
 
 
-    for ( size_t i = 0; i < poly.size(); ++i ) {
-        Point2 A( coord( poly[i], XX ), coord( poly[i], YY ) );
-        coordinatesMin_ = Point2::componentsMin( coordinatesMin_, A );
-        coordinatesMax_ = Point2::componentsMax( coordinatesMax_, A );
+    for (size_t i = 0; i < poly.size(); ++i) {
+        Point2 A(coord(poly[i], XX), coord(poly[i], YY));
+        coordinatesMin_ = Point2::componentsMin(coordinatesMin_, A);
+        coordinatesMax_ = Point2::componentsMax(coordinatesMax_, A);
 
         // if new point is aligned with existing edge (cross product ~= 0) make the
         // edge longer
-        if ( ( coordinates_.size() >= 2 ) && removeAlignedPoints ) {
+        if ((coordinates_.size() >= 2) && removeAlignedPoints) {
             const Point2& B = coordinates_.back();
             const Point2& C = coordinates_[coordinates_.size() - 2];
-            if ( eckit::types::is_approximately_equal( 0., cross_product_analog( A, B, C ) ) ) {
+            if (eckit::types::is_approximately_equal(0., cross_product_analog(A, B, C))) {
                 coordinates_.back() = A;
                 ++nb_removed_points_due_to_alignment;
                 continue;
             }
         }
 
-        coordinates_.emplace_back( A );
+        coordinates_.emplace_back(A);
     }
 
-    ATLAS_ASSERT( coordinates_.size() == poly.size() - nb_removed_points_due_to_alignment );
+    ATLAS_ASSERT(coordinates_.size() == poly.size() - nb_removed_points_due_to_alignment);
 }
 
 
 template <typename PointContainer>
-PolygonCoordinates::PolygonCoordinates( const PointContainer& points ) {
-    coordinates_.assign( points.begin(), points.end() );
-    ATLAS_ASSERT( coordinates_.size() > 2 );
-    ATLAS_ASSERT( eckit::geometry::points_equal( coordinates_.front(), coordinates_.back() ) );
+PolygonCoordinates::PolygonCoordinates(const PointContainer& points) {
+    coordinates_.assign(points.begin(), points.end());
+    ATLAS_ASSERT(coordinates_.size() > 2);
+    ATLAS_ASSERT(eckit::geometry::points_equal(coordinates_.front(), coordinates_.back()));
 
     coordinatesMin_ = coordinates_.front();
     coordinatesMax_ = coordinatesMin_;
     centroid_       = Point2{0., 0.};
-    for ( const Point2& P : coordinates_ ) {
-        coordinatesMin_ = Point2::componentsMin( coordinatesMin_, P );
-        coordinatesMax_ = Point2::componentsMax( coordinatesMax_, P );
+    for (const Point2& P : coordinates_) {
+        coordinatesMin_ = Point2::componentsMin(coordinatesMin_, P);
+        coordinatesMax_ = Point2::componentsMax(coordinatesMax_, P);
         centroid_[XX] += P[XX];
         centroid_[YY] += P[YY];
     }
@@ -187,9 +186,9 @@ PolygonCoordinates::PolygonCoordinates( const PointContainer& points ) {
 }
 
 template <typename PointContainer>
-PolygonCoordinates::PolygonCoordinates( const PointContainer& points, bool removeAlignedPoints ) {
+PolygonCoordinates::PolygonCoordinates(const PointContainer& points, bool removeAlignedPoints) {
     coordinates_.clear();
-    coordinates_.reserve( points.size() );
+    coordinates_.reserve(points.size());
 
     coordinatesMin_ = Point2{std::numeric_limits<double>::max(), std::numeric_limits<double>::max()};
     coordinatesMax_ = Point2{std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest()};
@@ -197,40 +196,40 @@ PolygonCoordinates::PolygonCoordinates( const PointContainer& points, bool remov
 
     size_t nb_removed_points_due_to_alignment = 0;
 
-    for ( size_t i = 0; i < points.size(); ++i ) {
+    for (size_t i = 0; i < points.size(); ++i) {
         const Point2& A = points[i];
-        coordinatesMin_ = Point2::componentsMin( coordinatesMin_, A );
-        coordinatesMax_ = Point2::componentsMax( coordinatesMax_, A );
+        coordinatesMin_ = Point2::componentsMin(coordinatesMin_, A);
+        coordinatesMax_ = Point2::componentsMax(coordinatesMax_, A);
         centroid_[XX] += A[XX];
         centroid_[YY] += A[YY];
 
         // if new point is aligned with existing edge (cross product ~= 0) make the
         // edge longer
-        if ( ( coordinates_.size() >= 2 ) && removeAlignedPoints ) {
+        if ((coordinates_.size() >= 2) && removeAlignedPoints) {
             const Point2& B = coordinates_.back();
             const Point2& C = coordinates_[coordinates_.size() - 2];
-            if ( eckit::types::is_approximately_equal( 0., cross_product_analog( A, B, C ) ) ) {
+            if (eckit::types::is_approximately_equal(0., cross_product_analog(A, B, C))) {
                 coordinates_.back() = A;
                 ++nb_removed_points_due_to_alignment;
                 continue;
             }
         }
-        coordinates_.emplace_back( A );
+        coordinates_.emplace_back(A);
     }
     centroid_[XX] /= points.size();
     centroid_[YY] /= points.size();
 
-    ATLAS_ASSERT( coordinates_.size() > 2 );
-    ATLAS_ASSERT( eckit::geometry::points_equal( coordinates_.front(), coordinates_.back() ) );
+    ATLAS_ASSERT(coordinates_.size() > 2);
+    ATLAS_ASSERT(eckit::geometry::points_equal(coordinates_.front(), coordinates_.back()));
 }
 
-template PolygonCoordinates::PolygonCoordinates( const std::vector<Point2>& );
-template PolygonCoordinates::PolygonCoordinates( const std::vector<PointXY>& );
-template PolygonCoordinates::PolygonCoordinates( const std::vector<PointLonLat>& );
+template PolygonCoordinates::PolygonCoordinates(const std::vector<Point2>&);
+template PolygonCoordinates::PolygonCoordinates(const std::vector<PointXY>&);
+template PolygonCoordinates::PolygonCoordinates(const std::vector<PointLonLat>&);
 
-template PolygonCoordinates::PolygonCoordinates( const std::vector<Point2>&, bool );
-template PolygonCoordinates::PolygonCoordinates( const std::vector<PointXY>&, bool );
-template PolygonCoordinates::PolygonCoordinates( const std::vector<PointLonLat>&, bool );
+template PolygonCoordinates::PolygonCoordinates(const std::vector<Point2>&, bool);
+template PolygonCoordinates::PolygonCoordinates(const std::vector<PointXY>&, bool);
+template PolygonCoordinates::PolygonCoordinates(const std::vector<PointLonLat>&, bool);
 
 
 PolygonCoordinates::~PolygonCoordinates() = default;
@@ -247,10 +246,10 @@ const Point2& PolygonCoordinates::centroid() const {
     return centroid_;
 }
 
-void PolygonCoordinates::print( std::ostream& out ) const {
+void PolygonCoordinates::print(std::ostream& out) const {
     out << "[";
-    for ( size_t i = 0; i < coordinates_.size(); ++i ) {
-        if ( i > 0 ) {
+    for (size_t i = 0; i < coordinates_.size(); ++i) {
+        if (i > 0) {
             out << " ";
         }
         out << coordinates_[i];
@@ -258,21 +257,21 @@ void PolygonCoordinates::print( std::ostream& out ) const {
     out << "]";
 }
 
-Polygon::edge_set_t ExplicitPartitionPolygon::compute_edges( idx_t points_size ) {
+Polygon::edge_set_t ExplicitPartitionPolygon::compute_edges(idx_t points_size) {
     util::Polygon::edge_set_t edges;
-    auto add_edge = [&]( idx_t p1, idx_t p2 ) {
+    auto add_edge = [&](idx_t p1, idx_t p2) {
         util::Polygon::edge_t edge = {p1, p2};
-        edges.insert( edge );
+        edges.insert(edge);
         // Log::info() << edge.first << "  " << edge.second << std::endl;
     };
-    for ( idx_t p = 0; p < points_size - 2; ++p ) {
-        add_edge( p, p + 1 );
+    for (idx_t p = 0; p < points_size - 2; ++p) {
+        add_edge(p, p + 1);
     }
-    add_edge( points_size - 2, 0 );
+    add_edge(points_size - 2, 0);
     return edges;
 }
 
-void ExplicitPartitionPolygon::allGather( PartitionPolygons& ) const {
+void ExplicitPartitionPolygon::allGather(PartitionPolygons&) const {
     ATLAS_NOTIMPLEMENTED;
 }
 

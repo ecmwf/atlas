@@ -22,9 +22,9 @@ class PartitionPolygon;
 
 class SphericalPolygon : public PolygonCoordinates {
 public:
-    SphericalPolygon( const PartitionPolygon& );
+    SphericalPolygon(const PartitionPolygon&);
 
-    SphericalPolygon( const std::vector<PointLonLat>& points );
+    SphericalPolygon(const std::vector<PointLonLat>& points);
 
     /*
    * Point-in-polygon test based on winding number
@@ -34,7 +34,7 @@ public:
    * @param[in] P given point in (lon,lat) coordinates
    * @return if point is in polygon
    */
-    bool contains( const Point2& lonlat ) const override;
+    bool contains(const Point2& lonlat) const override;
 };
 
 //------------------------------------------------------------------------------------------------------

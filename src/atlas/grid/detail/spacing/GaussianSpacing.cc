@@ -19,61 +19,61 @@ namespace atlas {
 namespace grid {
 namespace spacing {
 
-GaussianSpacing::GaussianSpacing( long N ) {
+GaussianSpacing::GaussianSpacing(long N) {
     // perform checks
-    ATLAS_ASSERT( N % 2 == 0 );
+    ATLAS_ASSERT(N % 2 == 0);
 
     // initialize latitudes during setup, to avoid repeating it.
-    x_.resize( N );
-    gaussian::gaussian_latitudes_npole_spole( N / 2, x_.data() );
+    x_.resize(N);
+    gaussian::gaussian_latitudes_npole_spole(N / 2, x_.data());
 
     min_ = -90.;
     max_ = 90.;
 }
 
-GaussianSpacing::GaussianSpacing( const eckit::Parametrisation& params ) {
+GaussianSpacing::GaussianSpacing(const eckit::Parametrisation& params) {
     // retrieve N from params
     long N;
-    if ( !params.get( "N", N ) ) {
-        throw_Exception( "N missing in Params", Here() );
+    if (!params.get("N", N)) {
+        throw_Exception("N missing in Params", Here());
     }
 
     // perform checks
-    ATLAS_ASSERT( N % 2 == 0 );
+    ATLAS_ASSERT(N % 2 == 0);
 
     // initialize latitudes during setup, to avoid repeating it.
-    x_.resize( N );
-    gaussian::gaussian_latitudes_npole_spole( N / 2, x_.data() );
+    x_.resize(N);
+    gaussian::gaussian_latitudes_npole_spole(N / 2, x_.data());
 
     // Not yet implemented: specify different bounds or direction (e.g from south
     // to north pole)
     double start = 90.;
     double end   = -90.;
-    params.get( "start", start );
-    params.get( "end", end );
+    params.get("start", start);
+    params.get("end", end);
 
     std::vector<double> interval;
-    if ( params.get( "interval", interval ) ) {
+    if (params.get("interval", interval)) {
         start = interval[0];
         end   = interval[1];
     }
-    if ( start != 90. && end != -90. ) {
+    if (start != 90. && end != -90.) {
         ATLAS_NOTIMPLEMENTED;
     }
 
-    min_ = std::min( start, end );
-    max_ = std::max( start, end );
+    min_ = std::min(start, end);
+    max_ = std::max(start, end);
 }
 
 GaussianSpacing::Spec GaussianSpacing::spec() const {
     Spec spacing_specs;
-    spacing_specs.set( "type", static_type() );
-    spacing_specs.set( "N", size() );
+    spacing_specs.set("type", static_type());
+    spacing_specs.set("N", size());
     return spacing_specs;
 }
 
 namespace {
-static SpacingBuilder<GaussianSpacing> __builder( GaussianSpacing::static_type() );
+static SpacingBuilder<GaussianSpacing> __builder(GaussianSpacing::static_type());
 }
 
 }  // namespace spacing

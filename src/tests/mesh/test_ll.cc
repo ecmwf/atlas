@@ -21,10 +21,10 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-CASE( "test_ll_meshgen_one_part" ) {
-    Grid g( "L5" );
-    Mesh m = StructuredMeshGenerator().generate( g );
-    output::Gmsh( "L5.msh" ).write( m );
+CASE("test_ll_meshgen_one_part") {
+    Grid g("L5");
+    Mesh m = StructuredMeshGenerator().generate(g);
+    output::Gmsh("L5.msh").write(m);
 }
 
 //-----------------------------------------------------------------------------
@@ -32,6 +32,6 @@ CASE( "test_ll_meshgen_one_part" ) {
 }  // namespace test
 }  // namespace atlas
 
-int main( int argc, char** argv ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
 }

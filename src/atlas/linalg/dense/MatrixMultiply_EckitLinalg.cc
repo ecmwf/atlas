@@ -31,21 +31,21 @@ namespace linalg {
 namespace dense {
 
 namespace {
-const eckit::linalg::LinearAlgebra& eckit_linalg_backend( const Configuration& config ) {
+const eckit::linalg::LinearAlgebra& eckit_linalg_backend(const Configuration& config) {
     std::string backend = "default";
-    config.get( "backend", backend );
-    if ( backend == "default" ) {
+    config.get("backend", backend);
+    if (backend == "default") {
         return eckit::linalg::LinearAlgebra::backend();
     }
-    ATLAS_ASSERT( eckit::linalg::LinearAlgebra::hasBackend( backend ) );
-    return eckit::linalg::LinearAlgebra::getBackend( backend );
+    ATLAS_ASSERT(eckit::linalg::LinearAlgebra::hasBackend(backend));
+    return eckit::linalg::LinearAlgebra::getBackend(backend);
 }
 
 }  // namespace
 
-void MatrixMultiply<backend::eckit_linalg>::apply( const Matrix& A, const Matrix& B, Matrix& C,
-                                                   const Configuration& config ) {
-    eckit_linalg_backend( config ).gemm( A, B, C );
+void MatrixMultiply<backend::eckit_linalg>::apply(const Matrix& A, const Matrix& B, Matrix& C,
+                                                  const Configuration& config) {
+    eckit_linalg_backend(config).gemm(A, B, C);
 }
 
 

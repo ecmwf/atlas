@@ -59,7 +59,7 @@ public:
   * @param Grid data structure pointer to use
   * @return Grid data structure pointer
   */
-    static Mesh read( const eckit::PathName& path );
+    static Mesh read(const eckit::PathName& path);
 
     /**
   * @brief Read PointCloudIO file into a Mesh
@@ -67,14 +67,14 @@ public:
   * @param vfnames names of fields to read
   * @return Mesh pointer
   */
-    static Mesh read( const eckit::PathName& path, std::vector<std::string>& vfnames );
+    static Mesh read(const eckit::PathName& path, std::vector<std::string>& vfnames);
 
     /**
  * @brief Write Grid to PointCloudIO file (overwrites possibly existing file)
  * @param path output file path
  * @param grid Grid data structure
  */
-    static void write( const eckit::PathName& path, const Mesh& mesh );
+    static void write(const eckit::PathName& path, const Mesh& mesh);
 
     /**
  * @brief Write FieldSet to PointCloudIO file (overwrites possibly existing
@@ -82,8 +82,8 @@ public:
  * @param path output file path
  * @param fieldset FieldSet data structure
  */
-    static void write( const eckit::PathName& path, const FieldSet& fieldset,
-                       const functionspace::NodeColumns& function_space );
+    static void write(const eckit::PathName& path, const FieldSet& fieldset,
+                      const functionspace::NodeColumns& function_space);
 
     /**
  * @brief Write lan/lon to PointCloudIO file (overwrites possibly existing file)
@@ -92,7 +92,7 @@ public:
  * @param lon vector containing longitude values
  * @param lat vector containing latitude values
  */
-    static void write( const eckit::PathName& path, const std::vector<PointLonLat>& pts );
+    static void write(const eckit::PathName& path, const std::vector<PointLonLat>& pts);
 
     /**
  * @brief Write lan/lon and fields to PointCloudIO file (overwrites possibly
@@ -106,8 +106,8 @@ public:
  * containing field values
  * @param afnames array (of length nb_fld) of field names
  */
-    static void write( const eckit::PathName& path, const int& nb_pts, const double* lon, const double* lat,
-                       const int& nb_fld = 0, const double** afvalues = NULL, const char** afnames = NULL );
+    static void write(const eckit::PathName& path, const int& nb_pts, const double* lon, const double* lat,
+                      const int& nb_fld = 0, const double** afvalues = NULL, const char** afnames = NULL);
 
     /**
  * @brief Write lan/lon and fields to PointCloudIO file (overwrites possibly
@@ -122,9 +122,9 @@ public:
  * vectors
  * @param vfnames vector of field names
  */
-    static void write( const eckit::PathName& path, const std::vector<double>& lon, const std::vector<double>& lat,
-                       const std::vector<std::vector<double>*>& vfvalues = std::vector<std::vector<double>*>(),
-                       const std::vector<std::string>& vfnames           = std::vector<std::string>() );
+    static void write(const eckit::PathName& path, const std::vector<double>& lon, const std::vector<double>& lat,
+                      const std::vector<std::vector<double>*>& vfvalues = std::vector<std::vector<double>*>(),
+                      const std::vector<std::string>& vfnames           = std::vector<std::string>());
 };
 
 // C wrapper interfaces to C++ routines

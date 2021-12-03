@@ -50,7 +50,7 @@ public:
 
     virtual ~FieldCreator();
 
-    virtual FieldImpl* createField( const eckit::Parametrisation& ) const = 0;
+    virtual FieldImpl* createField(const eckit::Parametrisation&) const = 0;
 };
 
 //------------------------------------------------------------------------------------------------------
@@ -61,36 +61,36 @@ public:
    * \brief build FieldCreator with factory key, and default options
    * \return FieldCreator
    */
-    static FieldCreator* build( const std::string& );
+    static FieldCreator* build(const std::string&);
 
     /*!
    * \brief build FieldCreator with options specified in parametrisation
    * \return mesh generator
    */
-    static FieldCreator* build( const std::string&, const eckit::Parametrisation& );
+    static FieldCreator* build(const std::string&, const eckit::Parametrisation&);
 
     /*!
    * \brief list all registered field creators
    */
-    static void list( std::ostream& );
+    static void list(std::ostream&);
 
 private:
     std::string name_;
-    virtual FieldCreator* make()                                = 0;
-    virtual FieldCreator* make( const eckit::Parametrisation& ) = 0;
+    virtual FieldCreator* make()                              = 0;
+    virtual FieldCreator* make(const eckit::Parametrisation&) = 0;
 
 protected:
-    FieldCreatorFactory( const std::string& );
+    FieldCreatorFactory(const std::string&);
     virtual ~FieldCreatorFactory();
 };
 
 template <class T>
 class FieldCreatorBuilder : public FieldCreatorFactory {
     virtual FieldCreator* make() { return new T(); }
-    virtual FieldCreator* make( const eckit::Parametrisation& param ) { return new T( param ); }
+    virtual FieldCreator* make(const eckit::Parametrisation& param) { return new T(param); }
 
 public:
-    FieldCreatorBuilder( const std::string& name ) : FieldCreatorFactory( name ) {}
+    FieldCreatorBuilder(const std::string& name): FieldCreatorFactory(name) {}
 };
 
 //------------------------------------------------------------------------------------------------------

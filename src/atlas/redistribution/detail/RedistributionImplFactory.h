@@ -25,7 +25,7 @@ class RedistributionImpl;
 class RedistributionImplFactory : public util::Factory<RedistributionImplFactory> {
 public:
     static std::string className() { return "RedistributionFactory"; }
-    static RedistributionImpl* build( const std::string& );
+    static RedistributionImpl* build(const std::string&);
     using Factory::Factory;
 
 private:

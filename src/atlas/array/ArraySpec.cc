@@ -18,40 +18,40 @@ namespace atlas {
 namespace array {
 
 namespace {
-size_t compute_aligned_size( size_t size, size_t alignment ) {
+size_t compute_aligned_size(size_t size, size_t alignment) {
     size_t div           = size / alignment;
     size_t mod           = size % alignment;
     size_t _aligned_size = div * alignment;
-    if ( mod > 0 ) {
+    if (mod > 0) {
         _aligned_size += alignment;
     }
     return _aligned_size;
 }
 }  // namespace
 
-ArraySpec::ArraySpec() : size_(), rank_(), allocated_size_(), contiguous_( true ), default_layout_( true ) {}
+ArraySpec::ArraySpec(): size_(), rank_(), allocated_size_(), contiguous_(true), default_layout_(true) {}
 
-ArraySpec::ArraySpec( const ArrayShape& shape ) : ArraySpec( shape, ArrayAlignment() ) {}
+ArraySpec::ArraySpec(const ArrayShape& shape): ArraySpec(shape, ArrayAlignment()) {}
 
-ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayAlignment& alignment ) {
+ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayAlignment& alignment) {
     ArrayShape aligned_shape = shape;
-    aligned_shape.back()     = compute_aligned_size( aligned_shape.back(), alignment );
+    aligned_shape.back()     = compute_aligned_size(aligned_shape.back(), alignment);
 
-    rank_           = static_cast<int>( shape.size() );
+    rank_           = static_cast<int>(shape.size());
     size_           = 1;
     allocated_size_ = 1;
-    shape_.resize( rank_ );
-    strides_.resize( rank_ );
-    layout_.resize( rank_ );
-    for ( int j = rank_ - 1; j >= 0; --j ) {
+    shape_.resize(rank_);
+    strides_.resize(rank_);
+    layout_.resize(rank_);
+    for (int j = rank_ - 1; j >= 0; --j) {
         shape_[j]   = shape[j];
         strides_[j] = allocated_size_;
         layout_[j]  = j;
-        size_ *= size_t( shape_[j] );
-        allocated_size_ *= size_t( aligned_shape[j] );
+        size_ *= size_t(shape_[j]);
+        allocated_size_ *= size_t(aligned_shape[j]);
     }
-    ATLAS_ASSERT( allocated_size_ == compute_aligned_size( size_t( shape_[0] ) * size_t( strides_[0] ), alignment ) );
-    contiguous_     = ( size_ == allocated_size_ );
+    ATLAS_ASSERT(allocated_size_ == compute_aligned_size(size_t(shape_[0]) * size_t(strides_[0]), alignment));
+    contiguous_     = (size_ == allocated_size_);
     default_layout_ = true;
     alignment_      = alignment;
 
@@ -60,25 +60,25 @@ ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayAlignment& alignment )
 #endif
 };
 
-ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides ) :
-    ArraySpec( shape, strides, ArrayAlignment() ) {}
+ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayStrides& strides):
+    ArraySpec(shape, strides, ArrayAlignment()) {}
 
-ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides, const ArrayAlignment& alignment ) {
-    ATLAS_ASSERT( shape.size() == strides.size(), "dimensions of shape and stride don't match" );
+ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayStrides& strides, const ArrayAlignment& alignment) {
+    ATLAS_ASSERT(shape.size() == strides.size(), "dimensions of shape and stride don't match");
 
-    rank_ = static_cast<int>( shape.size() );
+    rank_ = static_cast<int>(shape.size());
     size_ = 1;
-    shape_.resize( rank_ );
-    strides_.resize( rank_ );
-    layout_.resize( rank_ );
-    for ( int j = rank_ - 1; j >= 0; --j ) {
+    shape_.resize(rank_);
+    strides_.resize(rank_);
+    layout_.resize(rank_);
+    for (int j = rank_ - 1; j >= 0; --j) {
         shape_[j]   = shape[j];
         strides_[j] = strides[j];
         layout_[j]  = j;
         size_ *= shape_[j];
     }
-    allocated_size_ = compute_aligned_size( shape_[0] * strides_[0], alignment );
-    contiguous_     = ( size_ == allocated_size_ );
+    allocated_size_ = compute_aligned_size(shape_[0] * strides_[0], alignment);
+    contiguous_     = (size_ == allocated_size_);
     default_layout_ = true;
 
 #ifdef ATLAS_HAVE_FORTRAN
@@ -86,30 +86,30 @@ ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides, cons
 #endif
 }
 
-ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides, const ArrayLayout& layout ) :
-    ArraySpec( shape, strides, layout, ArrayAlignment() ) {}
+ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayStrides& strides, const ArrayLayout& layout):
+    ArraySpec(shape, strides, layout, ArrayAlignment()) {}
 
-ArraySpec::ArraySpec( const ArrayShape& shape, const ArrayStrides& strides, const ArrayLayout& layout,
-                      const ArrayAlignment& alignment ) {
-    ATLAS_ASSERT( shape.size() == strides.size(), "dimensions of shape and stride don't match" );
+ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayStrides& strides, const ArrayLayout& layout,
+                     const ArrayAlignment& alignment) {
+    ATLAS_ASSERT(shape.size() == strides.size(), "dimensions of shape and stride don't match");
 
-    rank_ = static_cast<int>( shape.size() );
+    rank_ = static_cast<int>(shape.size());
     size_ = 1;
-    shape_.resize( rank_ );
-    strides_.resize( rank_ );
-    layout_.resize( rank_ );
+    shape_.resize(rank_);
+    strides_.resize(rank_);
+    layout_.resize(rank_);
     default_layout_ = true;
-    for ( int j = rank_ - 1; j >= 0; --j ) {
+    for (int j = rank_ - 1; j >= 0; --j) {
         shape_[j]   = shape[j];
         strides_[j] = strides[j];
         layout_[j]  = layout[j];
         size_ *= shape_[j];
-        if ( layout_[j] != idx_t( j ) ) {
+        if (layout_[j] != idx_t(j)) {
             default_layout_ = false;
         }
     }
-    allocated_size_ = compute_aligned_size( shape_[layout_[0]] * strides_[layout_[0]], alignment );
-    contiguous_     = ( size_ == allocated_size_ );
+    allocated_size_ = compute_aligned_size(shape_[layout_[0]] * strides_[layout_[0]], alignment);
+    contiguous_     = (size_ == allocated_size_);
 
 #ifdef ATLAS_HAVE_FORTRAN
     allocate_fortran_specs();
@@ -125,12 +125,12 @@ const std::vector<int>& ArraySpec::stridesf() const {
 }
 
 void ArraySpec::allocate_fortran_specs() {
-    shapef_.resize( rank_ );
-    for ( idx_t j = 0; j < rank_; ++j ) {
+    shapef_.resize(rank_);
+    for (idx_t j = 0; j < rank_; ++j) {
         shapef_[j] = shape_[rank_ - 1 - layout_[j]];
     }
-    stridesf_.resize( strides_.size() );
-    std::reverse_copy( strides_.begin(), strides_.end(), stridesf_.begin() );
+    stridesf_.resize(strides_.size());
+    std::reverse_copy(strides_.begin(), strides_.end(), stridesf_.begin());
 }
 
 }  // namespace array

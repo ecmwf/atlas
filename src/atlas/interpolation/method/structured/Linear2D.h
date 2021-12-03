@@ -19,7 +19,7 @@ namespace method {
 
 class Linear2D : public StructuredInterpolation2D<LinearHorizontalKernel> {
 public:
-    Linear2D( const Config& );
+    Linear2D(const Config&);
 };
 
 }  // namespace method

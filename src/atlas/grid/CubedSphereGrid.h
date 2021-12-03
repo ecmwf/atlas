@@ -212,9 +212,9 @@ public:
     using reference         = implementation_t::reference;
 
 public:
-    IteratorTIJ( std::unique_ptr<implementation_t> iterator ) : iterator_( std::move( iterator ) ) {}
+    IteratorTIJ(std::unique_ptr<implementation_t> iterator): iterator_(std::move(iterator)) {}
 
-    bool next( value_type& xy ) { return iterator_->next( xy ); }
+    bool next(value_type& xy) { return iterator_->next(xy); }
 
     reference operator*() const { return iterator_->operator*(); }
 
@@ -223,20 +223,20 @@ public:
         return *this;
     }
 
-    const IteratorTIJ& operator+=( difference_type distance ) {
-        iterator_->operator+=( distance );
+    const IteratorTIJ& operator+=(difference_type distance) {
+        iterator_->operator+=(distance);
         return *this;
     }
 
-    friend difference_type operator-( const IteratorTIJ& last, const IteratorTIJ& first ) {
-        return first.iterator_->distance( *last.iterator_ );
+    friend difference_type operator-(const IteratorTIJ& last, const IteratorTIJ& first) {
+        return first.iterator_->distance(*last.iterator_);
     }
 
-    bool operator==( const IteratorTIJ& other ) const { return iterator_->operator==( *other.iterator_ ); }
-    bool operator!=( const IteratorTIJ& other ) const { return iterator_->operator!=( *other.iterator_ ); }
+    bool operator==(const IteratorTIJ& other) const { return iterator_->operator==(*other.iterator_); }
+    bool operator!=(const IteratorTIJ& other) const { return iterator_->operator!=(*other.iterator_); }
 
 private:
-    difference_type distance( const IteratorTIJ& other ) const { return iterator_->distance( *other.iterator_ ); }
+    difference_type distance(const IteratorTIJ& other) const { return iterator_->distance(*other.iterator_); }
 
 private:
     std::unique_ptr<implementation_t> iterator_;
@@ -249,7 +249,7 @@ public:
     using Grid           = grid::detail::grid::CubedSphere;
 
 public:
-    IterateTIJ( const Grid& grid ) : grid_( grid ) {}
+    IterateTIJ(const Grid& grid): grid_(grid) {}
     iterator begin() const { return grid_.tij_begin(); }
     iterator end() const { return grid_.tij_end(); }
 
@@ -267,30 +267,30 @@ public:
 
 public:
     CubedSphereGrid();
-    CubedSphereGrid( const Grid& );
-    CubedSphereGrid( const Grid::Implementation* );
-    CubedSphereGrid( const std::string& name );
-    CubedSphereGrid( const Config& );
-    CubedSphereGrid( const int&, const Projection& = Projection() );
+    CubedSphereGrid(const Grid&);
+    CubedSphereGrid(const Grid::Implementation*);
+    CubedSphereGrid(const std::string& name);
+    CubedSphereGrid(const Config&);
+    CubedSphereGrid(const int&, const Projection& = Projection());
 
     operator bool() const { return valid(); }
 
     bool valid() const { return grid_; }
 
     using Grid::xy;
-    void xyt( idx_t i, idx_t j, idx_t t, double xyt[] ) const { grid_->xyt( i, j, t, xyt ); }
-    PointXY xyt( idx_t i, idx_t j, idx_t t ) const { return grid_->xyt( i, j, t ); }
+    void xyt(idx_t i, idx_t j, idx_t t, double xyt[]) const { grid_->xyt(i, j, t, xyt); }
+    PointXY xyt(idx_t i, idx_t j, idx_t t) const { return grid_->xyt(i, j, t); }
     // Given indexes in the array (i, j, t) return position array xyt
 
-    void xy( idx_t i, idx_t j, idx_t t, double xy[] ) const { grid_->xy( i, j, t, xy ); }
-    PointXY xy( idx_t i, idx_t j, idx_t t ) const { return grid_->xy( i, j, t ); }
+    void xy(idx_t i, idx_t j, idx_t t, double xy[]) const { grid_->xy(i, j, t, xy); }
+    PointXY xy(idx_t i, idx_t j, idx_t t) const { return grid_->xy(i, j, t); }
 
     using Grid::lonlat;
     // Given indexes in the array (i, j) return lat/lon array (via the projection)
-    void lonlat( idx_t i, idx_t j, idx_t t, double lonlat[] ) const { grid_->lonlat( i, j, t, lonlat ); }
+    void lonlat(idx_t i, idx_t j, idx_t t, double lonlat[]) const { grid_->lonlat(i, j, t, lonlat); }
 
     // Given indexes in the array (i, j, t) return lat/lon as a PointLonLat object
-    PointLonLat lonlat( idx_t i, idx_t j, idx_t t ) const { return grid_->lonlat( i, j, t ); }
+    PointLonLat lonlat(idx_t i, idx_t j, idx_t t) const { return grid_->lonlat(i, j, t); }
 
     // Return the size of the cubed sphere grid, where N is the number of grid boxes along the edge of a tile
     inline int N() const { return grid_->N(); }
@@ -298,7 +298,7 @@ public:
     // Return the number of tiles
     inline atlas::grid::CubedSphereTiles tiles() const { return grid_->tiles(); }
 
-    temporary::IterateTIJ tij() const { return temporary::IterateTIJ( *grid_ ); }
+    temporary::IterateTIJ tij() const { return temporary::IterateTIJ(*grid_); }
 
     const std::string& stagger() const { return grid_->stagger(); }
 

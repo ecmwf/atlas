@@ -34,90 +34,90 @@ enum class FFT
 
 class scalar_derivatives : public util::Config {
 public:
-    scalar_derivatives( bool );
+    scalar_derivatives(bool);
 };
 
 // ----------------------------------------------------------------------------
 
 class wind_EW_derivatives : public util::Config {
 public:
-    wind_EW_derivatives( bool );
+    wind_EW_derivatives(bool);
 };
 
 // ----------------------------------------------------------------------------
 
 class vorticity_divergence_fields : public util::Config {
 public:
-    vorticity_divergence_fields( bool );
+    vorticity_divergence_fields(bool);
 };
 
 // ----------------------------------------------------------------------------
 
 class flt : public util::Config {
 public:
-    flt( bool );
+    flt(bool);
 };
 
 // ----------------------------------------------------------------------------
 
 class fft : public util::Config {
 public:
-    fft( FFT );
-    fft( const std::string& );
+    fft(FFT);
+    fft(const std::string&);
 };
 
 class no_fft : public fft {
 public:
-    no_fft() : fft( FFT::OFF ) {}
+    no_fft(): fft(FFT::OFF) {}
 };
 
 // ----------------------------------------------------------------------------
 
 class split_latitudes : public util::Config {
 public:
-    split_latitudes( bool );
+    split_latitudes(bool);
 };
 
 // ----------------------------------------------------------------------------
 
 class write_legendre : public util::Config {
 public:
-    write_legendre( const eckit::PathName& );
+    write_legendre(const eckit::PathName&);
 };
 
 // ----------------------------------------------------------------------------
 
 class read_legendre : public util::Config {
 public:
-    read_legendre( const eckit::PathName& );
+    read_legendre(const eckit::PathName&);
 };
 
 // ----------------------------------------------------------------------------
 
 class write_fft : public util::Config {
 public:
-    write_fft( const eckit::PathName& );
+    write_fft(const eckit::PathName&);
 };
 
 // ----------------------------------------------------------------------------
 
 class read_fft : public util::Config {
 public:
-    read_fft( const eckit::PathName& );
+    read_fft(const eckit::PathName&);
 };
 
 // ----------------------------------------------------------------------------
 
 class nproma : public util::Config {
 public:
-    nproma( int );
+    nproma(int);
 };
 
 // ----------------------------------------------------------------------------
 
 class warning : public util::Config {
 public:
-    warning( int = 1 );
+    warning(int = 1);
 };
 
 // ----------------------------------------------------------------------------

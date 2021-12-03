@@ -47,25 +47,25 @@ protected:
     virtual std::string longDescription() { return ""; }
     virtual std::string usage() { return name() + " [OPTION]... [--help,-h] [--debug]"; }
 
-    void add_option( eckit::option::Option* option );
+    void add_option(eckit::option::Option* option);
 
-    virtual void help( std::ostream& out = Log::info() );
+    virtual void help(std::ostream& out = Log::info());
 
     virtual int numberOfPositionalArguments() { return -1; }
     virtual int minimumPositionalArguments() { return 0; }
 
     bool handle_help();
 
-    std::string get_positional_arg( const Args&, size_t pos ) const;
+    std::string get_positional_arg(const Args&, size_t pos) const;
 
 public:
-    AtlasTool( int argc, char** argv );
+    AtlasTool(int argc, char** argv);
 
     int start();
 
     virtual void run();  // unused
 
-    virtual int execute( const Args& ) = 0;
+    virtual int execute(const Args&) = 0;
 
     static constexpr int success() { return 0; }
     static constexpr int failed() { return 1; }

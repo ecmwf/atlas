@@ -32,260 +32,260 @@ namespace test {
 //-----------------------------------------------------------------------------
 
 
-CASE( "test_ij2gidx" ) {
-    StructuredGrid n16 = Grid( "N16" );
+CASE("test_ij2gidx") {
+    StructuredGrid n16 = Grid("N16");
 
-    for ( int j = 0, jglo = 0; j < n16.ny(); j++ ) {
-        for ( int i = 0; i < n16.nx( j ); i++, jglo++ ) {
+    for (int j = 0, jglo = 0; j < n16.ny(); j++) {
+        for (int i = 0; i < n16.nx(j); i++, jglo++) {
             idx_t i1, j1;
-            n16.index2ij( jglo, i1, j1 );
-            EXPECT( n16.index( i, j ) == jglo );
-            EXPECT( i1 == i );
-            EXPECT( j1 == j );
+            n16.index2ij(jglo, i1, j1);
+            EXPECT(n16.index(i, j) == jglo);
+            EXPECT(i1 == i);
+            EXPECT(j1 == j);
         }
     }
 }
 
-CASE( "test_factory" ) {
-    StructuredGrid structured = Grid( "N80" );
+CASE("test_factory") {
+    StructuredGrid structured = Grid("N80");
 
-    Grid grid = Grid( "N24" );
+    Grid grid = Grid("N24");
 
     std::cout << "structured.ny() = " << structured.ny() << std::endl;
     std::cout << "grid.npts() = " << grid.size() << std::endl;
 }
 
-CASE( "test_regular_gg" ) {
-    RegularGrid grid( "F32" );
+CASE("test_regular_gg") {
+    RegularGrid grid("F32");
 
-    EXPECT( grid.ny() == 64 );
-    EXPECT( grid.size() == 8192 );
+    EXPECT(grid.ny() == 64);
+    EXPECT(grid.size() == 8192);
     // EXPECT(grid.type() == "regular_gaussian");
 
     // Full Gaussian Grid
 
     Grid::Config config;
-    config.set( "type", "regular_gaussian" );
-    config.set( "N", 32 );
-    grid = Grid( config );
-    EXPECT( grid.size() == 8192 );
+    config.set("type", "regular_gaussian");
+    config.set("N", 32);
+    grid = Grid(config);
+    EXPECT(grid.size() == 8192);
     // EXPECT(grid.type() == "regular_gaussian");
 }
 
-CASE( "test_reduced_gg" ) {
+CASE("test_reduced_gg") {
     StructuredGrid grid;
 
-    grid = Grid( "N32" );
-    EXPECT( grid.ny() == 64 );
-    EXPECT( grid.size() == 6114 );
+    grid = Grid("N32");
+    EXPECT(grid.ny() == 64);
+    EXPECT(grid.size() == 6114);
 
-    grid = ReducedGaussianGrid( {4, 6, 8, 8, 6, 4} );
+    grid = ReducedGaussianGrid({4, 6, 8, 8, 6, 4});
 
-    EXPECT( grid.ny() == 6 );
-    EXPECT( grid.size() == 8 + 12 + 16 );
+    EXPECT(grid.ny() == 6);
+    EXPECT(grid.size() == 8 + 12 + 16);
 }
 
-CASE( "test_reduced_gg_ifs" ) {
-    StructuredGrid grid( "N32" );
+CASE("test_reduced_gg_ifs") {
+    StructuredGrid grid("N32");
 
     // EXPECT(grid.N() ==    32);
-    EXPECT( grid.ny() == 64 );
-    EXPECT( grid.size() == 6114 );
+    EXPECT(grid.ny() == 64);
+    EXPECT(grid.size() == 6114);
     // EXPECT(grid.type() == "classic_gaussian");
 }
 
-CASE( "test_regular_ll" ) {
+CASE("test_regular_ll") {
     // Constructor for N=8
     idx_t nlon = 32;
     idx_t nlat = 16;
     std::stringstream name;
     name << "Slat" << nlon << "x" << nlat;
-    RegularGrid grid( name.str() );
+    RegularGrid grid(name.str());
 
-    EXPECT( grid.nx() == nlon );
-    EXPECT( grid.ny() == nlat );
-    EXPECT( grid.size() == 512 );
+    EXPECT(grid.nx() == nlon);
+    EXPECT(grid.ny() == nlat);
+    EXPECT(grid.size() == 512);
     // EXPECT(grid.type() == "shifted_lat");
-    EXPECT( is_approximately_equal( grid.y( 0 ), 90. - 0.5 * ( 180. / 16. ) ) );
-    EXPECT( is_approximately_equal( grid.y( grid.ny() - 1 ), -90. + 0.5 * ( 180. / 16. ) ) );
-    EXPECT( is_approximately_equal( grid.x( 0 ), 0. ) );
-    EXPECT( is_approximately_equal( grid.x( grid.nx() - 1 ), 360. - 360. / 32. ) );
+    EXPECT(is_approximately_equal(grid.y(0), 90. - 0.5 * (180. / 16.)));
+    EXPECT(is_approximately_equal(grid.y(grid.ny() - 1), -90. + 0.5 * (180. / 16.)));
+    EXPECT(is_approximately_equal(grid.x(0), 0.));
+    EXPECT(is_approximately_equal(grid.x(grid.nx() - 1), 360. - 360. / 32.));
 
     // Construct using builders/factories
 
     // Global Grid
     Grid::Config config1;
-    config1.set( "type", "shifted_lat" );
-    config1.set( "nx", 32 );
-    config1.set( "ny", 16 );
-    grid = Grid( config1 );
-    EXPECT( grid.size() == 512 );
+    config1.set("type", "shifted_lat");
+    config1.set("nx", 32);
+    config1.set("ny", 16);
+    grid = Grid(config1);
+    EXPECT(grid.size() == 512);
     // EXPECT(gridptr->type() == "shifted_lat");
 
     Grid::Config config2;
-    config2.set( "type", "shifted_lat" );
-    config2.set( "N", 8 );
-    grid = Grid( config2 );
-    EXPECT( grid.size() == 512 );
+    config2.set("type", "shifted_lat");
+    config2.set("N", 8);
+    grid = Grid(config2);
+    EXPECT(grid.size() == 512);
     // EXPECT(gridptr->type() == "shifted_lat");
 
-    RegularGrid ll_poles( "L4x3" );
-    EXPECT( ll_poles.nx() == 4 );
-    EXPECT( ll_poles.ny() == 3 );
+    RegularGrid ll_poles("L4x3");
+    EXPECT(ll_poles.nx() == 4);
+    EXPECT(ll_poles.ny() == 3);
 
-    RegularGrid ll_nopoles( "Slat4x2" );
-    EXPECT( ll_nopoles.nx() == 4 );
-    EXPECT( ll_nopoles.ny() == 2 );
-    EXPECT( is_approximately_equal( ll_nopoles.y( 0 ), 45. ) );   // tolerance was previously 1.e-5
-    EXPECT( is_approximately_equal( ll_nopoles.y( 1 ), -45. ) );  // tolerance was previously 1.e-5
-    EXPECT( is_approximately_equal( ll_nopoles.x( 0 ), 0. ) );    // tolerance was previously 1.e-5
-    EXPECT( is_approximately_equal( ll_nopoles.x( 1 ), 90. ) );   // tolerance was previously 1.e-5
+    RegularGrid ll_nopoles("Slat4x2");
+    EXPECT(ll_nopoles.nx() == 4);
+    EXPECT(ll_nopoles.ny() == 2);
+    EXPECT(is_approximately_equal(ll_nopoles.y(0), 45.));   // tolerance was previously 1.e-5
+    EXPECT(is_approximately_equal(ll_nopoles.y(1), -45.));  // tolerance was previously 1.e-5
+    EXPECT(is_approximately_equal(ll_nopoles.x(0), 0.));    // tolerance was previously 1.e-5
+    EXPECT(is_approximately_equal(ll_nopoles.x(1), 90.));   // tolerance was previously 1.e-5
 }
 
-CASE( "test_reducedgaussian" ) {
-    StructuredGrid N640( "N640" );
-    EXPECT( N640.size() == 2140702 );
-    ReducedGaussianGrid custom( N640.nx() );
-    EXPECT( N640.size() == custom.size() );
+CASE("test_reducedgaussian") {
+    StructuredGrid N640("N640");
+    EXPECT(N640.size() == 2140702);
+    ReducedGaussianGrid custom(N640.nx());
+    EXPECT(N640.size() == custom.size());
 }
 
-CASE( "test_cropping previous case" ) {
-    StructuredGrid grid( "N32" );
-    EXPECT( grid.ny() == 64 );
-    EXPECT( grid.size() == 6114 );
+CASE("test_cropping previous case") {
+    StructuredGrid grid("N32");
+    EXPECT(grid.ny() == 64);
+    EXPECT(grid.size() == 6114);
 
-    StructuredGrid cropped( grid, RectangularDomain( {-27, 45}, {33, 73} ) );
-    EXPECT( cropped.ny() == 14 );
-    EXPECT( cropped.size() == 267 );
+    StructuredGrid cropped(grid, RectangularDomain({-27, 45}, {33, 73}));
+    EXPECT(cropped.ny() == 14);
+    EXPECT(cropped.size() == 267);
 }
 
-CASE( "cropping with line at north pole" ) {
-    StructuredGrid grid( "L16", RectangularDomain( {0, 360}, {90, 90} ) );
-    EXPECT( grid.ny() == 1 );
-    EXPECT( grid.nx( 0 ) == 64 );
-    EXPECT( grid.size() == 64 );
+CASE("cropping with line at north pole") {
+    StructuredGrid grid("L16", RectangularDomain({0, 360}, {90, 90}));
+    EXPECT(grid.ny() == 1);
+    EXPECT(grid.nx(0) == 64);
+    EXPECT(grid.size() == 64);
 }
 
-CASE( "cropping with line at south pole" ) {
-    StructuredGrid grid( "L16", RectangularDomain( {0, 360}, {-90, -90} ) );
-    EXPECT( grid.ny() == 1 );
-    EXPECT( grid.nx( 0 ) == 64 );
-    EXPECT( grid.size() == 64 );
+CASE("cropping with line at south pole") {
+    StructuredGrid grid("L16", RectangularDomain({0, 360}, {-90, -90}));
+    EXPECT(grid.ny() == 1);
+    EXPECT(grid.nx(0) == 64);
+    EXPECT(grid.size() == 64);
 }
 
-CASE( "cropping with line at equator" ) {
-    StructuredGrid grid( "L16", RectangularDomain( {0, 360}, {0, 0} ) );
-    EXPECT( grid.ny() == 1 );
-    EXPECT( grid.nx( 0 ) == 64 );
-    EXPECT( grid.size() == 64 );
+CASE("cropping with line at equator") {
+    StructuredGrid grid("L16", RectangularDomain({0, 360}, {0, 0}));
+    EXPECT(grid.ny() == 1);
+    EXPECT(grid.nx(0) == 64);
+    EXPECT(grid.size() == 64);
 }
 
-CASE( "cropping single point at equator" ) {
-    StructuredGrid grid( "L16", RectangularDomain( {0, 0}, {0, 0} ) );
-    EXPECT( grid.ny() == 1 );
-    EXPECT( grid.nx( 0 ) == 1 );
-    EXPECT( grid.size() == 1 );
+CASE("cropping single point at equator") {
+    StructuredGrid grid("L16", RectangularDomain({0, 0}, {0, 0}));
+    EXPECT(grid.ny() == 1);
+    EXPECT(grid.nx(0) == 1);
+    EXPECT(grid.size() == 1);
 }
 
-CASE( "Create cropped unstructured grid using rectangular domain" ) {
-    StructuredGrid agrid( "L8" );
-    auto domain = RectangularDomain( {-27, 45}, {33, 73} );
-    StructuredGrid sgrid( agrid, domain );
-    UnstructuredGrid ugrid( agrid, domain );
-    EXPECT( ugrid.size() == sgrid.size() );
+CASE("Create cropped unstructured grid using rectangular domain") {
+    StructuredGrid agrid("L8");
+    auto domain = RectangularDomain({-27, 45}, {33, 73});
+    StructuredGrid sgrid(agrid, domain);
+    UnstructuredGrid ugrid(agrid, domain);
+    EXPECT(ugrid.size() == sgrid.size());
 }
 
-CASE( "Create cropped unstructured grid using zonal domain" ) {
-    StructuredGrid agrid( "L8" );
-    auto domain = ZonalBandDomain( {33, 73} );
-    StructuredGrid sgrid( agrid, domain );
-    UnstructuredGrid ugrid( agrid, domain );
-    EXPECT( ugrid.size() == sgrid.size() );
+CASE("Create cropped unstructured grid using zonal domain") {
+    StructuredGrid agrid("L8");
+    auto domain = ZonalBandDomain({33, 73});
+    StructuredGrid sgrid(agrid, domain);
+    UnstructuredGrid ugrid(agrid, domain);
+    EXPECT(ugrid.size() == sgrid.size());
 }
 
-CASE( "Create unstructured from unstructured" ) {
-    StructuredGrid agrid( "L8" );
-    UnstructuredGrid global_unstructured( agrid, Domain() );
-    EXPECT( UnstructuredGrid( global_unstructured ) );
-    EXPECT( global_unstructured.size() == agrid.size() );
-    auto domain = ZonalBandDomain( {33, 73} );
-    UnstructuredGrid ugrid( global_unstructured, domain );
-    EXPECT( ugrid.size() == StructuredGrid( agrid, domain ).size() );
+CASE("Create unstructured from unstructured") {
+    StructuredGrid agrid("L8");
+    UnstructuredGrid global_unstructured(agrid, Domain());
+    EXPECT(UnstructuredGrid(global_unstructured));
+    EXPECT(global_unstructured.size() == agrid.size());
+    auto domain = ZonalBandDomain({33, 73});
+    UnstructuredGrid ugrid(global_unstructured, domain);
+    EXPECT(ugrid.size() == StructuredGrid(agrid, domain).size());
 }
 
-CASE( "ATLAS-255: regular Gaussian grid with global domain" ) {
+CASE("ATLAS-255: regular Gaussian grid with global domain") {
     GlobalDomain globe;
-    Grid grid( "F80", globe );
-    EXPECT( GaussianGrid( grid ) );
+    Grid grid("F80", globe);
+    EXPECT(GaussianGrid(grid));
 }
 
-CASE( "ATLAS-255: reduced Gaussian grid with global domain" ) {
+CASE("ATLAS-255: reduced Gaussian grid with global domain") {
     GlobalDomain globe;
-    Grid grid( "O80", globe );
-    EXPECT( GaussianGrid( grid ) );
+    Grid grid("O80", globe);
+    EXPECT(GaussianGrid(grid));
 }
 
-CASE( "test_from_string_L32" ) {
+CASE("test_from_string_L32") {
     Grid grid;
-    EXPECT( not grid );
+    EXPECT(not grid);
 
-    grid = Grid( "L32" );
-    EXPECT( grid );
-    EXPECT( StructuredGrid( grid ) == true );
-    EXPECT( RegularGrid( grid ) == true );
+    grid = Grid("L32");
+    EXPECT(grid);
+    EXPECT(StructuredGrid(grid) == true);
+    EXPECT(RegularGrid(grid) == true);
 
-    auto structured = StructuredGrid( grid );
-    EXPECT( structured.ny() == 65 );
-    EXPECT( structured.periodic() == true );
-    EXPECT( structured.nx( 0 ) == 128 );
-    EXPECT( structured.y().front() == 90. );
-    EXPECT( structured.y().back() == -90. );
+    auto structured = StructuredGrid(grid);
+    EXPECT(structured.ny() == 65);
+    EXPECT(structured.periodic() == true);
+    EXPECT(structured.nx(0) == 128);
+    EXPECT(structured.y().front() == 90.);
+    EXPECT(structured.y().back() == -90.);
 
-    auto regular = RegularGrid( grid );
-    EXPECT( regular.ny() == 65 );
-    EXPECT( regular.periodic() == true );
-    EXPECT( regular.nx() == 128 );
-    EXPECT( regular.y().front() == 90. );
-    EXPECT( regular.y().back() == -90. );
+    auto regular = RegularGrid(grid);
+    EXPECT(regular.ny() == 65);
+    EXPECT(regular.periodic() == true);
+    EXPECT(regular.nx() == 128);
+    EXPECT(regular.y().front() == 90.);
+    EXPECT(regular.y().back() == -90.);
 }
 
-CASE( "test_from_string_O32" ) {
+CASE("test_from_string_O32") {
     Grid grid;
-    EXPECT( not grid );
+    EXPECT(not grid);
 
-    grid = Grid( "O32" );
-    EXPECT( grid );
+    grid = Grid("O32");
+    EXPECT(grid);
 
-    EXPECT( StructuredGrid( grid ) );
-    EXPECT( !RegularGrid( grid ) );
+    EXPECT(StructuredGrid(grid));
+    EXPECT(!RegularGrid(grid));
 
-    auto structured = StructuredGrid( grid );
-    EXPECT( structured.ny() == 64 );
-    EXPECT( structured.periodic() == true );
-    EXPECT( structured.nx().front() == 20 );
+    auto structured = StructuredGrid(grid);
+    EXPECT(structured.ny() == 64);
+    EXPECT(structured.periodic() == true);
+    EXPECT(structured.nx().front() == 20);
 }
 
-CASE( "test_from_string_O32_with_domain" ) {
+CASE("test_from_string_O32_with_domain") {
     Grid grid;
-    EXPECT( not grid );
+    EXPECT(not grid);
 
-    grid = Grid( "O32", RectangularDomain( {0, 90}, {0, 90} ) );
-    EXPECT( grid );
+    grid = Grid("O32", RectangularDomain({0, 90}, {0, 90}));
+    EXPECT(grid);
 
-    EXPECT( StructuredGrid( grid ) );
-    EXPECT( !RegularGrid( grid ) );
+    EXPECT(StructuredGrid(grid));
+    EXPECT(!RegularGrid(grid));
 
-    auto structured = StructuredGrid( grid );
-    EXPECT( structured.ny() == 32 );
-    EXPECT( structured.periodic() == false );
-    EXPECT( structured.nx().front() == 6 );
+    auto structured = StructuredGrid(grid);
+    EXPECT(structured.ny() == 32);
+    EXPECT(structured.periodic() == false);
+    EXPECT(structured.nx().front() == 6);
 
-    output::Gmsh gmsh( "test_grid_ptr_O32_subdomain.msh" );
-    Mesh mesh = StructuredMeshGenerator().generate( grid );
-    gmsh.write( mesh );
+    output::Gmsh gmsh("test_grid_ptr_O32_subdomain.msh");
+    Mesh mesh = StructuredMeshGenerator().generate(grid);
+    gmsh.write(mesh);
 }
 
-CASE( "test_structured_1" ) {
+CASE("test_structured_1") {
     std::stringstream json;
     json << "{"
             "\"type\" : \"structured\","
@@ -294,77 +294,77 @@ CASE( "test_structured_1" ) {
             "\"xspace\" : { \"type\":\"linear\", \"N\":16, \"start\":0,  "
             "\"end\":360, \"endpoint\":false }"
             "}";
-    json.seekp( 0 );
+    json.seekp(0);
 
     Grid grid;
-    EXPECT( not grid );
+    EXPECT(not grid);
 
-    Config json_config( json );
+    Config json_config(json);
 
-    grid = StructuredGrid( json_config );
-    EXPECT( grid );
-    EXPECT( StructuredGrid( grid ) );
-    EXPECT( RegularGrid( grid ) );
+    grid = StructuredGrid(json_config);
+    EXPECT(grid);
+    EXPECT(StructuredGrid(grid));
+    EXPECT(RegularGrid(grid));
 
-    auto structured = StructuredGrid( grid );
-    EXPECT( structured.ny() == 9 );
-    EXPECT( structured.periodic() == true );
-    EXPECT( structured.nx( 0 ) == 16 );
-    EXPECT( structured.y().front() == 90. );
-    EXPECT( structured.y().back() == -90. );
+    auto structured = StructuredGrid(grid);
+    EXPECT(structured.ny() == 9);
+    EXPECT(structured.periodic() == true);
+    EXPECT(structured.nx(0) == 16);
+    EXPECT(structured.y().front() == 90.);
+    EXPECT(structured.y().back() == -90.);
 
-    auto regular = RegularGrid( grid );
-    EXPECT( regular.ny() == 9 );
-    EXPECT( regular.periodic() == true );
-    EXPECT( regular.nx() == 16 );
-    EXPECT( regular.y().front() == 90. );
-    EXPECT( regular.y().back() == -90. );
+    auto regular = RegularGrid(grid);
+    EXPECT(regular.ny() == 9);
+    EXPECT(regular.periodic() == true);
+    EXPECT(regular.nx() == 16);
+    EXPECT(regular.y().front() == 90.);
+    EXPECT(regular.y().back() == -90.);
 
-    output::Gmsh gmsh( "test_grid_ptr.msh" );
-    Mesh mesh = StructuredMeshGenerator().generate( grid );
-    gmsh.write( mesh );
+    output::Gmsh gmsh("test_grid_ptr.msh");
+    Mesh mesh = StructuredMeshGenerator().generate(grid);
+    gmsh.write(mesh);
 }
 
-CASE( "test_structured_2" ) {
+CASE("test_structured_2") {
     using XSpace     = StructuredGrid::XSpace;
     using YSpace     = StructuredGrid::YSpace;
     using Domain     = StructuredGrid::Domain;
     using Projection = StructuredGrid::Projection;
-    StructuredGrid grid( XSpace( {0., 360.}, {2, 4, 6, 6, 4, 2}, false ),
-                         YSpace( grid::LinearSpacing( {90., -90.}, 6 ) ), Projection(), Domain() );
-    EXPECT( grid );
+    StructuredGrid grid(XSpace({0., 360.}, {2, 4, 6, 6, 4, 2}, false), YSpace(grid::LinearSpacing({90., -90.}, 6)),
+                        Projection(), Domain());
+    EXPECT(grid);
 
-    output::Gmsh gmsh( "test_grid_ptr_structured_2.msh" );
-    Mesh mesh = StructuredMeshGenerator().generate( grid );
-    gmsh.write( mesh );
+    output::Gmsh gmsh("test_grid_ptr_structured_2.msh");
+    Mesh mesh = StructuredMeshGenerator().generate(grid);
+    gmsh.write(mesh);
 
     Log::info() << grid.spec() << std::endl;
 
-    Grid newgrid( grid.spec() );
+    Grid newgrid(grid.spec());
     Log::info() << newgrid.spec() << std::endl;
 
     Log::info() << "original: " << grid.uid() << std::endl;
     Log::info() << "fromspec: " << newgrid.uid() << std::endl;
-    EXPECT( grid == newgrid );
+    EXPECT(grid == newgrid);
 }
 
-CASE( "test_structured_3" ) {
-    StructuredGrid grid( "O32" );
-    EXPECT( grid );
+CASE("test_structured_3") {
+    StructuredGrid grid("O32");
+    EXPECT(grid);
 
     Log::info() << grid.spec() << std::endl;
 
-    Grid newgrid( grid.spec() );
+    Grid newgrid(grid.spec());
     Log::info() << newgrid.spec() << std::endl;
 
     Log::info() << "original: " << grid.uid() << std::endl;
     Log::info() << "fromspec: " << newgrid.uid() << std::endl;
-    EXPECT( grid == newgrid );
-    EXPECT( grid.name() == "O32" );
-    EXPECT( newgrid.name() == "O32" );
+    EXPECT(grid == newgrid);
+    EXPECT(grid.name() == "O32");
+    EXPECT(newgrid.name() == "O32");
 }
 
-CASE( "test_structured_triangulated" ) {
+CASE("test_structured_triangulated") {
     Grid grid;
 
     // Create grid
@@ -372,93 +372,93 @@ CASE( "test_structured_triangulated" ) {
         using XSpace = StructuredGrid::XSpace;
         using YSpace = StructuredGrid::YSpace;
         auto xspace  = util::Config{};
-        xspace.set( "type", "linear" );
-        xspace.set( "N", 16 );
-        xspace.set( "length", 360 );
-        xspace.set( "endpoint", false );
-        xspace.set( "start[]", []() {
-            auto startpts = std::vector<double>( 8 );
-            for ( int i = 0; i < 8; ++i ) {
+        xspace.set("type", "linear");
+        xspace.set("N", 16);
+        xspace.set("length", 360);
+        xspace.set("endpoint", false);
+        xspace.set("start[]", []() {
+            auto startpts = std::vector<double>(8);
+            for (int i = 0; i < 8; ++i) {
                 startpts[i] = i * 12.;
             }
             return startpts;
-        }() );
+        }());
         grid = StructuredGrid{XSpace{xspace}, YSpace{grid::LinearSpacing{{90., -90.}, 8}}};
     }
 
-    EXPECT( grid );
+    EXPECT(grid);
     Log::info() << grid.spec() << std::endl;
 
     // Create and output mesh
     {
-        auto meshgen = StructuredMeshGenerator{util::Config( "angle", -1. )};
-        auto mesh    = meshgen.generate( grid );
+        auto meshgen = StructuredMeshGenerator{util::Config("angle", -1.)};
+        auto mesh    = meshgen.generate(grid);
         auto gmsh    = output::Gmsh{"structured_triangulated.msh"};
-        gmsh.write( mesh );
+        gmsh.write(mesh);
     }
 }
 
-CASE( "test_structured_from_config" ) {
+CASE("test_structured_from_config") {
     Config config;
-    config.set( "type", "structured" );
-    config.set( "xspace", []() {
+    config.set("type", "structured");
+    config.set("xspace", []() {
         Config config;
-        config.set( "type", "linear" );
-        config.set( "N", 40 );
-        config.set( "start", 5 );
-        config.set( "end", 365 );
-        config.set( "endpoint", false );
+        config.set("type", "linear");
+        config.set("N", 40);
+        config.set("start", 5);
+        config.set("end", 365);
+        config.set("endpoint", false);
         return config;
-    }() );
-    config.set( "yspace", []() {
+    }());
+    config.set("yspace", []() {
         Config config;
-        config.set( "type", "custom" );
-        config.set( "N", 9 );
-        config.set( "values", std::vector<double>{5., 15., 25., 35., 45., 55., 65., 75., 85.} );
+        config.set("type", "custom");
+        config.set("N", 9);
+        config.set("values", std::vector<double>{5., 15., 25., 35., 45., 55., 65., 75., 85.});
         return config;
-    }() );
+    }());
     StructuredGrid g{config};
-    for ( idx_t j = 0; j < g.ny(); ++j ) {
-        EXPECT_EQ( g.nx( j ), 40 );
-        EXPECT_EQ( g.x( 0, j ), 5. );
-        EXPECT_EQ( g.x( g.nx( j ), j ), 365. );
-        EXPECT_EQ( g.dx( j ), 9. );
-        EXPECT_EQ( g.xmin( j ), 5. );
+    for (idx_t j = 0; j < g.ny(); ++j) {
+        EXPECT_EQ(g.nx(j), 40);
+        EXPECT_EQ(g.x(0, j), 5.);
+        EXPECT_EQ(g.x(g.nx(j), j), 365.);
+        EXPECT_EQ(g.dx(j), 9.);
+        EXPECT_EQ(g.xmin(j), 5.);
     }
-    EXPECT( not g.domain().global() );
+    EXPECT(not g.domain().global());
 }
 
 struct PointLatLon : public Point2 {
     using Point2::Point2;
-    PointLatLon() : Point2() {}
+    PointLatLon(): Point2() {}
 
     // Allow initialization through PointXY lonlat = {0,0};
-    PointLatLon( std::initializer_list<double> list ) : PointLatLon( list.begin() ) {}
+    PointLatLon(std::initializer_list<double> list): PointLatLon(list.begin()) {}
 
     double lon() const { return x_[1]; }
     double lat() const { return x_[0]; }
 };
 
-CASE( "test_cubedsphere" ) {
+CASE("test_cubedsphere") {
     constexpr double rad2deg = 180. / M_PI;
-    const double cornerLat   = rad2deg * std::atan( std::sin( M_PI / 4.0 ) );
+    const double cornerLat   = rad2deg * std::atan(std::sin(M_PI / 4.0));
 
     const std::vector<int> resolutions{1, 2, 4, 8};
-    for ( auto resolution : resolutions ) {
+    for (auto resolution : resolutions) {
         const std::vector<std::string> grid_names{
-            "CS-EA-L-" + std::to_string( resolution ),  "CS-ED-L-" + std::to_string( resolution ),
-            "CS-LFR-L-" + std::to_string( resolution ), "CS-EA-C-" + std::to_string( resolution ),
-            "CS-ED-C-" + std::to_string( resolution ),  "CS-LFR-C-" + std::to_string( resolution )};
+            "CS-EA-L-" + std::to_string(resolution),  "CS-ED-L-" + std::to_string(resolution),
+            "CS-LFR-L-" + std::to_string(resolution), "CS-EA-C-" + std::to_string(resolution),
+            "CS-ED-C-" + std::to_string(resolution),  "CS-LFR-C-" + std::to_string(resolution)};
 
-        for ( const std::string& grid_name : grid_names ) {
+        for (const std::string& grid_name : grid_names) {
             Log::info() << "Testing " << grid_name << std::endl;
-            if ( grid_name == "CS-LFR-L-1" ) {
+            if (grid_name == "CS-LFR-L-1") {
                 Log::error() << eckit::Colour::red << "TODO: Fix me!!!. Skipping..." << eckit::Colour::reset
                              << std::endl;
                 continue;
             }
             Grid grid{grid_name};
-            EXPECT( grid );
+            EXPECT(grid);
             std::vector<PointLonLat> pointLonLats_from_XY;
             std::vector<PointXY> pointXYs;
             std::vector<PointLonLat> pointLonLats;
@@ -467,28 +467,28 @@ CASE( "test_cubedsphere" ) {
             std::vector<PointXY> expectedXY;
             const double tolerance = 1e-13;
 
-            for ( auto crd : grid.xy() ) {
-                pointXYs.push_back( crd );
-                grid->projection().xy2lonlat( crd );
-                pointLonLats_from_XY.emplace_back( crd );
+            for (auto crd : grid.xy()) {
+                pointXYs.push_back(crd);
+                grid->projection().xy2lonlat(crd);
+                pointLonLats_from_XY.emplace_back(crd);
             }
-            for ( auto crd : grid.lonlat() ) {
-                pointLonLats.emplace_back( crd );
-                grid->projection().lonlat2xy( crd );
-                pointXYs_from_LonLat.emplace_back( crd );
+            for (auto crd : grid.lonlat()) {
+                pointLonLats.emplace_back(crd);
+                grid->projection().lonlat2xy(crd);
+                pointXYs_from_LonLat.emplace_back(crd);
             }
             int numAdditionalPoints = 0;
-            if ( grid_name.substr( grid_name.rfind( "-" ) - 1, 1 ) == "L" ) {
+            if (grid_name.substr(grid_name.rfind("-") - 1, 1) == "L") {
                 numAdditionalPoints = 2;
             }
-            EXPECT( pointLonLats.size() == 6 * resolution * resolution + numAdditionalPoints );
-            EXPECT( pointXYs.size() == 6 * resolution * resolution + numAdditionalPoints );
-            EXPECT( grid.size() == 6 * resolution * resolution + numAdditionalPoints );
+            EXPECT(pointLonLats.size() == 6 * resolution * resolution + numAdditionalPoints);
+            EXPECT(pointXYs.size() == 6 * resolution * resolution + numAdditionalPoints);
+            EXPECT(grid.size() == 6 * resolution * resolution + numAdditionalPoints);
 
             // Note that with nodal points on the cubed-sphere
             // for a equiangular and equidistant projections and a resolution of 2 are the same.
             // Expected latitudes/longitude per tile
-            if ( ( grid_name == "CS-EA-L-2" ) || ( grid_name == "CS-ED-L-2" ) ) {
+            if ((grid_name == "CS-EA-L-2") || (grid_name == "CS-ED-L-2")) {
                 expectedLatLon = std::vector<PointLatLon>{
                     {-cornerLat, 315.0}, {-45.0, 0.0},  {0.0, 315.0},        {0.0, 0.0},         {cornerLat, 315.0},
                     {-cornerLat, 45.0},  {-45.0, 90.0}, {-cornerLat, 135.0}, {0.0, 45.0},        {0.0, 90.0},
@@ -503,7 +503,7 @@ CASE( "test_cubedsphere" ) {
                     {270.0, 45.0},  {270.0, 0.0},   {315.0, 45.0}, {315.0, 0.0}, {270.0, -45.0}, {270.0, -90.0},
                     {315.0, -45.0}, {315.0, -90.0}};
             }
-            else if ( grid_name == "CS-LFR-L-2" ) {
+            else if (grid_name == "CS-LFR-L-2") {
                 expectedLatLon = std::vector<PointLatLon>{
                     {-cornerLat, 315.0}, {-45.0, 0.0},       {0.0, 315.0},        {0.0, 0.0},    // tile 0
                     {-cornerLat, 45.0},  {-45.0, 90.0},      {0.0, 45.0},         {0.0, 90.0},   // tile 1
@@ -519,7 +519,7 @@ CASE( "test_cubedsphere" ) {
                     {90.0, 45.0},   {0.0, 90.0},   {45.0, 90.0},   {90.0, 90.0}, {0.0, 135.0},   {45.0, 135.0},
                     {90.0, 135.0},  {45.0, -90.0}};
             }
-            else if ( grid_name == "CS-LFR-C-2" ) {
+            else if (grid_name == "CS-LFR-C-2") {
                 expectedLatLon = std::vector<PointLatLon>{
                     {-20.941020472243846, 337.5}, {-20.941020472243846, 22.5},  {20.941020472243846, 337.5},
                     {20.941020472243846, 22.5},   {-20.941020472243846, 67.5},  {-20.941020472243846, 112.5},
@@ -535,7 +535,7 @@ CASE( "test_cubedsphere" ) {
                     {337.5, -22.5}, {337.5, 22.5}, {292.5, -22.5}, {292.5, 22.5},  {22.5, 67.5},   {67.5, 67.5},
                     {22.5, 112.5},  {67.5, 112.5}, {22.5, -67.5},  {22.5, -112.5}, {67.5, -67.5},  {67.5, -112.5}};
             }
-            else if ( grid_name == "CS-ED-C-2" ) {
+            else if (grid_name == "CS-ED-C-2") {
                 expectedLatLon = std::vector<PointLatLon>{{-24.094842552110702, 333.43494882292202},
                                                           {-24.094842552110702, 26.565051177078004},
                                                           {24.094842552110702, 333.43494882292202},
@@ -567,7 +567,7 @@ CASE( "test_cubedsphere" ) {
                     {202.5, 22.5}, {202.5, -22.5}, {247.5, 22.5},  {247.5, -22.5},  {292.5, 22.5},  {292.5, -22.5},
                     {337.5, 22.5}, {337.5, -22.5}, {292.5, -67.5}, {292.5, -112.5}, {337.5, -67.5}, {337.5, -112.5}};
             }
-            else if ( grid_name == "CS-EA-C-2" ) {
+            else if (grid_name == "CS-EA-C-2") {
                 expectedLatLon = std::vector<PointLatLon>{
                     {-20.941020472243846, 337.5}, {-20.941020472243846, 22.5},  {20.941020472243846, 337.5},
                     {20.941020472243846, 22.5},   {-20.941020472243846, 67.5},  {-20.941020472243846, 112.5},
@@ -585,26 +585,26 @@ CASE( "test_cubedsphere" ) {
             }
 
             // Perform the test comparison now that expected values are set
-            if ( expectedXY.size() && expectedLatLon.size() ) {
-                for ( std::size_t jn = 0; jn < grid.size(); ++jn ) {
+            if (expectedXY.size() && expectedLatLon.size()) {
+                for (std::size_t jn = 0; jn < grid.size(); ++jn) {
                     Log::debug() << grid_name << " " << jn << " lon2x " << pointXYs_from_LonLat[jn].x() << " "
                                  << expectedXY[jn].x() << std::endl;
                     Log::debug() << grid_name << " " << jn << " lat2y " << pointXYs_from_LonLat[jn].y() << " "
                                  << expectedXY[jn].y() << std::endl;
-                    EXPECT( std::abs( pointLonLats[jn].lat() - expectedLatLon[jn].lat() ) < tolerance );
-                    EXPECT( std::abs( pointLonLats[jn].lon() - expectedLatLon[jn].lon() ) < tolerance );
-                    EXPECT( std::abs( pointLonLats_from_XY[jn].lat() - expectedLatLon[jn].lat() ) < tolerance );
-                    EXPECT( std::abs( pointLonLats_from_XY[jn].lon() - expectedLatLon[jn].lon() ) < tolerance );
-                    EXPECT( std::abs( pointXYs[jn].x() - expectedXY[jn].x() ) < tolerance );
-                    EXPECT( std::abs( pointXYs[jn].y() - expectedXY[jn].y() ) < tolerance );
-                    EXPECT( std::abs( pointXYs_from_LonLat[jn].x() - expectedXY[jn].x() ) < tolerance );
-                    EXPECT( std::abs( pointXYs_from_LonLat[jn].y() - expectedXY[jn].y() ) < tolerance );
+                    EXPECT(std::abs(pointLonLats[jn].lat() - expectedLatLon[jn].lat()) < tolerance);
+                    EXPECT(std::abs(pointLonLats[jn].lon() - expectedLatLon[jn].lon()) < tolerance);
+                    EXPECT(std::abs(pointLonLats_from_XY[jn].lat() - expectedLatLon[jn].lat()) < tolerance);
+                    EXPECT(std::abs(pointLonLats_from_XY[jn].lon() - expectedLatLon[jn].lon()) < tolerance);
+                    EXPECT(std::abs(pointXYs[jn].x() - expectedXY[jn].x()) < tolerance);
+                    EXPECT(std::abs(pointXYs[jn].y() - expectedXY[jn].y()) < tolerance);
+                    EXPECT(std::abs(pointXYs_from_LonLat[jn].x() - expectedXY[jn].x()) < tolerance);
+                    EXPECT(std::abs(pointXYs_from_LonLat[jn].y() - expectedXY[jn].y()) < tolerance);
                 }
             }
             else {
                 Log::warning() << "  No tests implemented for grid " << grid_name << std::endl;
             }
-            for ( std::size_t jn = 0; jn < grid.size(); ++jn ) {
+            for (std::size_t jn = 0; jn < grid.size(); ++jn) {
                 Log::debug() << grid_name << " jn = " << jn << " x = " << pointXYs[jn].x()
                              << " y = " << pointXYs[jn].y() << " lat = " << pointLonLats[jn].lat()
                              << " lon = " << pointLonLats[jn].lon() << std::endl;
@@ -618,6 +618,6 @@ CASE( "test_cubedsphere" ) {
 }  // namespace test
 }  // namespace atlas
 
-int main( int argc, char** argv ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
 }

@@ -37,20 +37,20 @@ public:  // -- static functions --
     /// - All fields in mesh.nodes() are reordered.
     /// - mesh.cells().node_connectivity() gets updated
     /// - mesh.edges().node_connectivity() gets updated
-    static void reorderNodes( Mesh& mesh, const std::vector<idx_t>& order );
+    static void reorderNodes(Mesh& mesh, const std::vector<idx_t>& order);
 
     /// Reorder the cells by lowest node local index within each cell
-    static void reorderCellsUsingNodes( Mesh& mesh );
+    static void reorderCellsUsingNodes(Mesh& mesh);
 
     /// Reorder the edges by lowest node local index within each edge
-    static void reorderEdgesUsingNodes( Mesh& mesh );
+    static void reorderEdgesUsingNodes(Mesh& mesh);
 
 public:  // -- member functions --
     /// Reorder the nodes in the given mesh using the order computed with the computeNodesOrder function
     /// Then apply reorderCellsUsingNodes and reorderEdgesUsingNodes
-    virtual void operator()( Mesh& );
+    virtual void operator()(Mesh&);
 
-    virtual std::vector<idx_t> computeNodesOrder( Mesh& ) = 0;
+    virtual std::vector<idx_t> computeNodesOrder(Mesh&) = 0;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -58,11 +58,11 @@ public:  // -- member functions --
 class ReorderFactory : public util::Factory<ReorderFactory> {
 public:
     static std::string className() { return "ReorderFactory"; }
-    static const ReorderImpl* build( const eckit::Parametrisation& );
+    static const ReorderImpl* build(const eckit::Parametrisation&);
     using Factory::Factory;
 
 private:
-    virtual const ReorderImpl* make( const eckit::Parametrisation& ) = 0;
+    virtual const ReorderImpl* make(const eckit::Parametrisation&) = 0;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -70,7 +70,7 @@ private:
 template <class T>
 class ReorderBuilder : public ReorderFactory {
 private:
-    virtual const ReorderImpl* make( const eckit::Parametrisation& param ) { return new T( param ); }
+    virtual const ReorderImpl* make(const eckit::Parametrisation& param) { return new T(param); }
 
 public:
     using ReorderFactory::ReorderFactory;
@@ -78,17 +78,17 @@ public:
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class Reorder : DOXYGEN_HIDE( public util::ObjectHandle<ReorderImpl> ) {
+class Reorder : DOXYGEN_HIDE(public util::ObjectHandle<ReorderImpl>) {
 public:
     using Parameters = atlas::util::Config;
 
 public:
     using Handle::Handle;
-    Reorder( const eckit::Parametrisation& config ) : Handle( ReorderFactory::build( config ) ) {}
+    Reorder(const eckit::Parametrisation& config): Handle(ReorderFactory::build(config)) {}
 
     /// Reorder the nodes in the given mesh using the order computed with the ReorderImpl::computeNodesOrder function
     /// Then apply ReorderImpl::reorderCellsUsingNodes and ReorderImpl::reorderEdgesUsingNodes
-    void operator()( Mesh& mesh ) { get()->operator()( mesh ); }
+    void operator()(Mesh& mesh) { get()->operator()(mesh); }
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -96,9 +96,9 @@ public:
 /// Dummy implemenation of ReorderImpl which does nothing
 class NoReorder : public ReorderImpl {
 public:
-    NoReorder( const eckit::Parametrisation& ) {}
-    void operator()( Mesh& ) override {}
-    std::vector<idx_t> computeNodesOrder( Mesh& ) override { return {}; }
+    NoReorder(const eckit::Parametrisation&) {}
+    void operator()(Mesh&) override {}
+    std::vector<idx_t> computeNodesOrder(Mesh&) override { return {}; }
 };
 
 //----------------------------------------------------------------------------------------------------------------------

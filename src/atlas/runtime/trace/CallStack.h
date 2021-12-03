@@ -30,7 +30,7 @@ public:
     using const_reverse_iterator = std::list<size_t>::const_reverse_iterator;
 
 public:
-    void push_front( const CodeLocation&, const std::string& id = "" );
+    void push_front(const CodeLocation&, const std::string& id = "");
     void pop_front();
 
     const_iterator begin() const { return stack_.begin(); }
@@ -46,8 +46,8 @@ public:
 
 public:
     CallStack() = default;
-    CallStack( const CallStack& other ) : stack_( other.stack_ ) {}
-    CallStack& operator=( const CallStack& other ) {
+    CallStack(const CallStack& other): stack_(other.stack_) {}
+    CallStack& operator=(const CallStack& other) {
         stack_ = other.stack_;
         hash_  = 0;
         return *this;

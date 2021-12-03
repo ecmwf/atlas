@@ -42,21 +42,21 @@ namespace meshgenerator {
 
 class RegularMeshGenerator : public MeshGenerator::Implementation {
 public:
-    RegularMeshGenerator( const eckit::Parametrisation& = util::NoConfig() );
+    RegularMeshGenerator(const eckit::Parametrisation& = util::NoConfig());
 
-    virtual void generate( const Grid&, const grid::Distribution&, Mesh& ) const override;
-    virtual void generate( const Grid&, Mesh& ) const override;
+    virtual void generate(const Grid&, const grid::Distribution&, Mesh&) const override;
+    virtual void generate(const Grid&, Mesh&) const override;
 
     using MeshGenerator::Implementation::generate;
 
     std::string type() const override { return "regular"; }
 
 private:
-    virtual void hash( eckit::Hash& ) const override;
+    virtual void hash(eckit::Hash&) const override;
 
     void configure_defaults();
 
-    void generate_mesh( const RegularGrid&, const grid::Distribution& distribution, Mesh& m ) const;
+    void generate_mesh(const RegularGrid&, const grid::Distribution& distribution, Mesh& m) const;
 
 private:
     util::Metadata options;

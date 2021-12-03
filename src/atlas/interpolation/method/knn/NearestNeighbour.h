@@ -19,10 +19,10 @@ namespace method {
 
 class NearestNeighbour : public KNearestNeighboursBase {
 public:
-    NearestNeighbour( const Config& config ) : KNearestNeighboursBase( config ) {}
+    NearestNeighbour(const Config& config): KNearestNeighboursBase(config) {}
     virtual ~NearestNeighbour() override {}
 
-    virtual void print( std::ostream& ) const override {}
+    virtual void print(std::ostream&) const override {}
 
 protected:
     virtual const FunctionSpace& source() const override { return source_; }
@@ -38,9 +38,9 @@ private:
    * @param source functionspace containing source elements
    * @param target functionspace containing target points
    */
-    virtual void do_setup( const FunctionSpace& source, const FunctionSpace& target ) override;
+    virtual void do_setup(const FunctionSpace& source, const FunctionSpace& target) override;
 
-    virtual void do_setup( const Grid& source, const Grid& target, const Cache& ) override;
+    virtual void do_setup(const Grid& source, const Grid& target, const Cache&) override;
 
     FunctionSpace source_;
     FunctionSpace target_;

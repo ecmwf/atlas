@@ -41,7 +41,7 @@ namespace detail {
 
 class EdgeColumns : public functionspace::FunctionSpaceImpl {
 public:
-    EdgeColumns( const Mesh&, const eckit::Configuration& = util::NoConfig() );
+    EdgeColumns(const Mesh&, const eckit::Configuration& = util::NoConfig());
 
     virtual ~EdgeColumns() override;
 
@@ -61,26 +61,26 @@ public:
 
     // -- Field creation methods
 
-    virtual Field createField( const eckit::Configuration& ) const override;
+    virtual Field createField(const eckit::Configuration&) const override;
 
-    virtual Field createField( const Field&, const eckit::Configuration& ) const override;
+    virtual Field createField(const Field&, const eckit::Configuration&) const override;
 
     // -- Parallelisation aware methods
 
-    virtual void haloExchange( const FieldSet&, bool on_device = false ) const override;
-    virtual void haloExchange( const Field&, bool on_device = false ) const override;
+    virtual void haloExchange(const FieldSet&, bool on_device = false) const override;
+    virtual void haloExchange(const Field&, bool on_device = false) const override;
     const parallel::HaloExchange& halo_exchange() const;
 
-    void gather( const FieldSet&, FieldSet& ) const;
-    void gather( const Field&, Field& ) const;
+    void gather(const FieldSet&, FieldSet&) const;
+    void gather(const Field&, Field&) const;
     const parallel::GatherScatter& gather() const;
 
-    void scatter( const FieldSet&, FieldSet& ) const;
-    void scatter( const Field&, Field& ) const;
+    void scatter(const FieldSet&, FieldSet&) const;
+    void scatter(const Field&, Field&) const;
     const parallel::GatherScatter& scatter() const;
 
-    std::string checksum( const FieldSet& ) const;
-    std::string checksum( const Field& ) const;
+    std::string checksum(const FieldSet&) const;
+    std::string checksum(const Field&) const;
     const parallel::Checksum& checksum() const;
 
     virtual idx_t size() const override { return nb_edges_; }
@@ -92,12 +92,12 @@ public:
     Field remote_index() const override;
 
 private:  // methods
-    idx_t config_size( const eckit::Configuration& config ) const;
-    array::DataType config_datatype( const eckit::Configuration& ) const;
-    std::string config_name( const eckit::Configuration& ) const;
-    idx_t config_levels( const eckit::Configuration& ) const;
-    array::ArrayShape config_shape( const eckit::Configuration& ) const;
-    void set_field_metadata( const eckit::Configuration&, Field& ) const;
+    idx_t config_size(const eckit::Configuration& config) const;
+    array::DataType config_datatype(const eckit::Configuration&) const;
+    std::string config_name(const eckit::Configuration&) const;
+    idx_t config_levels(const eckit::Configuration&) const;
+    array::ArrayShape config_shape(const eckit::Configuration&) const;
+    void set_field_metadata(const eckit::Configuration&, Field&) const;
     virtual size_t footprint() const override;
 
 private:                           // data
@@ -116,37 +116,37 @@ private:                           // data
 
 extern "C" {
 
-EdgeColumns* atlas__fs__EdgeColumns__new( Mesh::Implementation* mesh, const eckit::Configuration* config );
-void atlas__fs__EdgeColumns__delete( EdgeColumns* This );
-int atlas__fs__EdgeColumns__nb_edges( const EdgeColumns* This );
-Mesh::Implementation* atlas__fs__EdgeColumns__mesh( EdgeColumns* This );
-mesh::Edges* atlas__fs__EdgeColumns__edges( EdgeColumns* This );
-field::FieldImpl* atlas__fs__EdgeColumns__create_field( const EdgeColumns* This, const eckit::Configuration* options );
-field::FieldImpl* atlas__fs__EdgeColumns__create_field_template( const EdgeColumns* This,
-                                                                 const field::FieldImpl* field_template,
-                                                                 const eckit::Configuration* options );
+EdgeColumns* atlas__fs__EdgeColumns__new(Mesh::Implementation* mesh, const eckit::Configuration* config);
+void atlas__fs__EdgeColumns__delete(EdgeColumns* This);
+int atlas__fs__EdgeColumns__nb_edges(const EdgeColumns* This);
+Mesh::Implementation* atlas__fs__EdgeColumns__mesh(EdgeColumns* This);
+mesh::Edges* atlas__fs__EdgeColumns__edges(EdgeColumns* This);
+field::FieldImpl* atlas__fs__EdgeColumns__create_field(const EdgeColumns* This, const eckit::Configuration* options);
+field::FieldImpl* atlas__fs__EdgeColumns__create_field_template(const EdgeColumns* This,
+                                                                const field::FieldImpl* field_template,
+                                                                const eckit::Configuration* options);
 
-void atlas__fs__EdgeColumns__halo_exchange_fieldset( const EdgeColumns* This, field::FieldSetImpl* fieldset );
-void atlas__fs__EdgeColumns__halo_exchange_field( const EdgeColumns* This, field::FieldImpl* field );
-const parallel::HaloExchange* atlas__fs__EdgeColumns__get_halo_exchange( const EdgeColumns* This );
+void atlas__fs__EdgeColumns__halo_exchange_fieldset(const EdgeColumns* This, field::FieldSetImpl* fieldset);
+void atlas__fs__EdgeColumns__halo_exchange_field(const EdgeColumns* This, field::FieldImpl* field);
+const parallel::HaloExchange* atlas__fs__EdgeColumns__get_halo_exchange(const EdgeColumns* This);
 
-void atlas__fs__EdgeColumns__gather_fieldset( const EdgeColumns* This, const field::FieldSetImpl* local,
-                                              field::FieldSetImpl* global );
-void atlas__fs__EdgeColumns__gather_field( const EdgeColumns* This, const field::FieldImpl* local,
-                                           field::FieldImpl* global );
-const parallel::GatherScatter* atlas__fs__EdgeColumns__get_gather( const EdgeColumns* This );
+void atlas__fs__EdgeColumns__gather_fieldset(const EdgeColumns* This, const field::FieldSetImpl* local,
+                                             field::FieldSetImpl* global);
+void atlas__fs__EdgeColumns__gather_field(const EdgeColumns* This, const field::FieldImpl* local,
+                                          field::FieldImpl* global);
+const parallel::GatherScatter* atlas__fs__EdgeColumns__get_gather(const EdgeColumns* This);
 
-void atlas__fs__EdgeColumns__scatter_fieldset( const EdgeColumns* This, const field::FieldSetImpl* global,
-                                               field::FieldSetImpl* local );
-void atlas__fs__EdgeColumns__scatter_field( const EdgeColumns* This, const field::FieldImpl* global,
-                                            field::FieldImpl* local );
-const parallel::GatherScatter* atlas__fs__EdgeColumns__get_scatter( const EdgeColumns* This );
+void atlas__fs__EdgeColumns__scatter_fieldset(const EdgeColumns* This, const field::FieldSetImpl* global,
+                                              field::FieldSetImpl* local);
+void atlas__fs__EdgeColumns__scatter_field(const EdgeColumns* This, const field::FieldImpl* global,
+                                           field::FieldImpl* local);
+const parallel::GatherScatter* atlas__fs__EdgeColumns__get_scatter(const EdgeColumns* This);
 
-void atlas__fs__EdgeColumns__checksum_fieldset( const EdgeColumns* This, const field::FieldSetImpl* fieldset,
-                                                char*& checksum, int& size, int& allocated );
-void atlas__fs__EdgeColumns__checksum_field( const EdgeColumns* This, const field::FieldImpl* field, char*& checksum,
-                                             int& size, int& allocated );
-const parallel::Checksum* atlas__fs__EdgeColumns__get_checksum( const EdgeColumns* This );
+void atlas__fs__EdgeColumns__checksum_fieldset(const EdgeColumns* This, const field::FieldSetImpl* fieldset,
+                                               char*& checksum, int& size, int& allocated);
+void atlas__fs__EdgeColumns__checksum_field(const EdgeColumns* This, const field::FieldImpl* field, char*& checksum,
+                                            int& size, int& allocated);
+const parallel::Checksum* atlas__fs__EdgeColumns__get_checksum(const EdgeColumns* This);
 }
 
 }  // namespace detail
@@ -156,9 +156,9 @@ const parallel::Checksum* atlas__fs__EdgeColumns__get_checksum( const EdgeColumn
 class EdgeColumns : public FunctionSpace {
 public:
     EdgeColumns();
-    EdgeColumns( const FunctionSpace& );
-    EdgeColumns( const Mesh&, const eckit::Configuration& );
-    EdgeColumns( const Mesh& mesh );
+    EdgeColumns(const FunctionSpace&);
+    EdgeColumns(const Mesh&, const eckit::Configuration&);
+    EdgeColumns(const Mesh& mesh);
 
     operator bool() const { return valid(); }
     bool valid() const { return functionspace_; }
@@ -173,16 +173,16 @@ public:
     // -- Parallelisation aware methods
     const parallel::HaloExchange& halo_exchange() const;
 
-    void gather( const FieldSet&, FieldSet& ) const;
-    void gather( const Field&, Field& ) const;
+    void gather(const FieldSet&, FieldSet&) const;
+    void gather(const Field&, Field&) const;
     const parallel::GatherScatter& gather() const;
 
-    void scatter( const FieldSet&, FieldSet& ) const;
-    void scatter( const Field&, Field& ) const;
+    void scatter(const FieldSet&, FieldSet&) const;
+    void scatter(const Field&, Field&) const;
     const parallel::GatherScatter& scatter() const;
 
-    std::string checksum( const FieldSet& ) const;
-    std::string checksum( const Field& ) const;
+    std::string checksum(const FieldSet&) const;
+    std::string checksum(const Field&) const;
     const parallel::Checksum& checksum() const;
 
 private:

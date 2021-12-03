@@ -48,26 +48,26 @@ public:
 class Cache {
 public:
     Cache() = default;
-    Cache( const Cache& other );
-    Cache( const Interpolation& );
+    Cache(const Cache& other);
+    Cache(const Interpolation&);
     operator bool() const { return not cache_.empty(); }
     virtual ~Cache();
     size_t footprint() const {
         size_t footprint{0};
-        for ( auto& entry : cache_ ) {
+        for (auto& entry : cache_) {
             footprint += entry.second->footprint();
         }
         return footprint;
     }
-    void add( const Cache& );
+    void add(const Cache&);
 
 protected:
-    Cache( std::shared_ptr<InterpolationCacheEntry> cache );
+    Cache(std::shared_ptr<InterpolationCacheEntry> cache);
 
 public:
-    const InterpolationCacheEntry* get( const std::string& type ) const {
-        auto it = cache_.find( type );
-        if ( it != cache_.end() ) {
+    const InterpolationCacheEntry* get(const std::string& type) const {
+        auto it = cache_.find(type);
+        if (it != cache_.end()) {
             return it->second.get();
         }
         return nullptr;
@@ -83,7 +83,7 @@ class MatrixCacheEntry : public InterpolationCacheEntry {
 public:
     using Matrix = eckit::linalg::SparseMatrix;
     ~MatrixCacheEntry() override;
-    MatrixCacheEntry( const Matrix* matrix ) : matrix_{matrix} { ATLAS_ASSERT( matrix_ != nullptr ); }
+    MatrixCacheEntry(const Matrix* matrix): matrix_{matrix} { ATLAS_ASSERT(matrix_ != nullptr); }
     const Matrix& matrix() const { return *matrix_; }
     size_t footprint() const override { return matrix_->footprint(); }
     operator bool() const { return not matrix_->empty(); }
@@ -102,17 +102,17 @@ public:
 
 public:
     MatrixCache() = default;
-    MatrixCache( const Cache& c );
-    MatrixCache( Matrix&& m );
-    MatrixCache( std::shared_ptr<const Matrix> m );
-    MatrixCache( const Matrix* m );
-    MatrixCache( const Interpolation& );
+    MatrixCache(const Cache& c);
+    MatrixCache(Matrix&& m);
+    MatrixCache(std::shared_ptr<const Matrix> m);
+    MatrixCache(const Matrix* m);
+    MatrixCache(const Interpolation&);
     operator bool() const;
     const Matrix& matrix() const;
     size_t footprint() const;
 
 private:
-    MatrixCache( std::shared_ptr<InterpolationCacheEntry> entry );
+    MatrixCache(std::shared_ptr<InterpolationCacheEntry> entry);
     const MatrixCacheEntry* matrix_{nullptr};
 };
 
@@ -121,11 +121,11 @@ private:
 class IndexKDTreeCacheEntry : public InterpolationCacheEntry {
 public:
     using IndexKDTree = util::IndexKDTree;
-    IndexKDTreeCacheEntry( const IndexKDTree& tree ) : tree_{tree} { ATLAS_ASSERT( tree_ ); }
+    IndexKDTreeCacheEntry(const IndexKDTree& tree): tree_{tree} { ATLAS_ASSERT(tree_); }
     virtual ~IndexKDTreeCacheEntry() override;
     const IndexKDTree& tree() const;
     size_t footprint() const override { return tree().footprint(); }
-    operator bool() const { return bool( tree_ ); }
+    operator bool() const { return bool(tree_); }
     static std::string static_type() { return "IndexKDTree"; }
     std::string type() const override { return static_type(); }
 
@@ -139,9 +139,9 @@ public:
 
 public:
     IndexKDTreeCache() = default;
-    IndexKDTreeCache( const Cache& c );
-    IndexKDTreeCache( const IndexKDTree& );
-    IndexKDTreeCache( const Interpolation& );
+    IndexKDTreeCache(const Cache& c);
+    IndexKDTreeCache(const IndexKDTree&);
+    IndexKDTreeCache(const Interpolation&);
     operator bool() const;
     const IndexKDTree& tree() const;
     size_t footprint() const;

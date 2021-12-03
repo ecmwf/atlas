@@ -18,17 +18,17 @@ namespace grid {
 namespace detail {
 namespace partitioner {
 
-MatchingFunctionSpacePartitioner::MatchingFunctionSpacePartitioner() : Partitioner() {
+MatchingFunctionSpacePartitioner::MatchingFunctionSpacePartitioner(): Partitioner() {
     ATLAS_NOTIMPLEMENTED;
 }
 
-MatchingFunctionSpacePartitioner::MatchingFunctionSpacePartitioner( const idx_t nb_partitions ) :
-    Partitioner( nb_partitions ) {
+MatchingFunctionSpacePartitioner::MatchingFunctionSpacePartitioner(const idx_t nb_partitions):
+    Partitioner(nb_partitions) {
     ATLAS_NOTIMPLEMENTED;
 }
 
-MatchingFunctionSpacePartitioner::MatchingFunctionSpacePartitioner( const FunctionSpace& functionspace ) :
-    Partitioner( functionspace.nb_partitions() ), partitioned_( functionspace ) {}
+MatchingFunctionSpacePartitioner::MatchingFunctionSpacePartitioner(const FunctionSpace& functionspace):
+    Partitioner(functionspace.nb_partitions()), partitioned_(functionspace) {}
 
 }  // namespace partitioner
 }  // namespace detail

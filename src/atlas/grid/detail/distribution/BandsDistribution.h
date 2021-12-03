@@ -27,14 +27,14 @@ private:
     Int nb_partitions_Int_;
 
 public:
-    BandsDistribution( const Grid& grid, idx_t nb_partitions, const std::string& type, size_t blocksize = 1 );
+    BandsDistribution(const Grid& grid, idx_t nb_partitions, const std::string& type, size_t blocksize = 1);
 
-    ATLAS_ALWAYS_INLINE int function( gidx_t index ) const {
-        Int iblock = static_cast<Int>( index / blocksize_ );
-        return ( iblock * nb_partitions_Int_ ) / nb_blocks_;
+    ATLAS_ALWAYS_INLINE int function(gidx_t index) const {
+        Int iblock = static_cast<Int>(index / blocksize_);
+        return (iblock * nb_partitions_Int_) / nb_blocks_;
     }
 
-    static bool detectOverflow( size_t gridsize, size_t nb_partitions, size_t blocksize );
+    static bool detectOverflow(size_t gridsize, size_t nb_partitions, size_t blocksize);
 };
 
 

@@ -19,16 +19,16 @@ namespace dense {
 
 class Backend;
 
-void current_backend( const std::string& backend );
+void current_backend(const std::string& backend);
 dense::Backend& current_backend();
-dense::Backend& default_backend( const std::string& backend );
+dense::Backend& default_backend(const std::string& backend);
 
 
 struct Backend : util::Config {
-    Backend() : util::Config() { set( current_backend() ); }
-    Backend( const std::string type );
-    Backend( const eckit::Configuration& other );
-    std::string type() const { return getString( "type" ); }
+    Backend(): util::Config() { set(current_backend()); }
+    Backend(const std::string type);
+    Backend(const eckit::Configuration& other);
+    std::string type() const { return getString("type"); }
     operator std::string() const;
     bool available() const;
 };
@@ -36,7 +36,7 @@ struct Backend : util::Config {
 namespace backend {
 struct eckit_linalg : Backend {
     static std::string type() { return "eckit_linalg"; }
-    eckit_linalg() : Backend( type() ) {}
+    eckit_linalg(): Backend(type()) {}
 };
 }  // namespace backend
 
