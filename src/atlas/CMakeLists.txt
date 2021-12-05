@@ -365,6 +365,8 @@ meshgenerator/MeshGenerator.cc
 meshgenerator/MeshGenerator.h
 meshgenerator/detail/CubedSphereMeshGenerator.h
 meshgenerator/detail/CubedSphereMeshGenerator.cc
+meshgenerator/detail/CubedSphereDualMeshGenerator.h
+meshgenerator/detail/CubedSphereDualMeshGenerator.cc
 meshgenerator/detail/NodalCubedSphereMeshGenerator.h
 meshgenerator/detail/NodalCubedSphereMeshGenerator.cc
 meshgenerator/detail/DelaunayMeshGenerator.h
