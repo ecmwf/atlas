@@ -146,8 +146,8 @@ CASE("extract cache, copy it, and pass non-owning pointer") {
     }
     check_field(field_target, grid_target, func, 1.e-4);
     set_field(field_target, 0.);
-    ATLAS_TRACE_SCOPE("Interpolate with [omp] sparse_matrix_multiply of eckit::linalg::Vector") {
-        atlas::linalg::sparse::current_backend("omp");
+    ATLAS_TRACE_SCOPE("Interpolate with [openmp] sparse_matrix_multiply of eckit::linalg::Vector") {
+        atlas::linalg::sparse::current_backend("openmp");
         eckit::linalg::Vector src{array::make_view<double, 1>(field_source).data(), field_source.size()};
         eckit::linalg::Vector tgt{array::make_view<double, 1>(field_target).data(), field_target.size()};
         atlas::linalg::sparse_matrix_multiply(matrix, src, tgt);

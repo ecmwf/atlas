@@ -6,15 +6,10 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-ecbuild_add_test( TARGET atlas_test_linalg_sparse
-    SOURCES test_linalg_sparse.cc
+ecbuild_add_executable(
+    TARGET  atlas-benchmark-trans
+    SOURCES atlas-benchmark-trans.cc
     LIBS    atlas
-    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
-  )
-
-ecbuild_add_test( TARGET atlas_test_linalg_dense
-    SOURCES test_linalg_dense.cc
-    LIBS    atlas
-    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
-  )
+#    NOINSTALL
+)
 

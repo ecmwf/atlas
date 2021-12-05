@@ -596,10 +596,18 @@ linalg/sparse.h
 linalg/sparse/Backend.h
 linalg/sparse/Backend.cc
 linalg/sparse/SparseMatrixMultiply.h
+linalg/sparse/SparseMatrixMultiply.tcc
 linalg/sparse/SparseMatrixMultiply_EckitLinalg.h
 linalg/sparse/SparseMatrixMultiply_EckitLinalg.cc
 linalg/sparse/SparseMatrixMultiply_OpenMP.h
 linalg/sparse/SparseMatrixMultiply_OpenMP.cc
+linalg/dense.h
+linalg/dense/Backend.h
+linalg/dense/Backend.cc
+linalg/dense/MatrixMultiply.h
+linalg/dense/MatrixMultiply.tcc
+linalg/dense/MatrixMultiply_EckitLinalg.h
+linalg/dense/MatrixMultiply_EckitLinalg.cc
 )
 
 

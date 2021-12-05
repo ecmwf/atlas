@@ -15,30 +15,25 @@
 
 namespace atlas {
 namespace linalg {
-namespace sparse {
+namespace dense {
 
 class Backend;
 
 void current_backend(const std::string& backend);
-sparse::Backend& current_backend();
-sparse::Backend& default_backend(const std::string& backend);
+dense::Backend& current_backend();
+dense::Backend& default_backend(const std::string& backend);
 
 
 struct Backend : util::Config {
     Backend(): util::Config() { set(current_backend()); }
-    Backend(const std::string& type);
+    Backend(const std::string type);
     Backend(const eckit::Configuration& other);
     std::string type() const { return getString("type"); }
-    operator std::string() const { return type(); }
+    operator std::string() const;
     bool available() const;
 };
 
 namespace backend {
-struct openmp : Backend {
-    static std::string type() { return "openmp"; }
-    openmp(): Backend(type()) {}
-};
-
 struct eckit_linalg : Backend {
     static std::string type() { return "eckit_linalg"; }
     eckit_linalg(): Backend(type()) {}
@@ -46,6 +41,6 @@ struct eckit_linalg : Backend {
 }  // namespace backend
 
 
-}  // namespace sparse
+}  // namespace dense
 }  // namespace linalg
 }  // namespace atlas

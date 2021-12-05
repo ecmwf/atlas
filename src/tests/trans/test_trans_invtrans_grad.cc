@@ -31,8 +31,13 @@
 #include "tests/AtlasTestEnvironment.h"
 
 #if ATLAS_HAVE_TRANS
+#include "atlas/library/config.h"
 #include "atlas/trans/ifs/TransIFS.h"
+#if ATLAS_HAVE_ECTRANS
+#include "ectrans/transi.h"
+#else
 #include "transi/trans.h"
+#endif
 #endif
 
 namespace atlas {

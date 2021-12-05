@@ -16,18 +16,13 @@
 #include "atlas/array.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/linalg/dense/Backend.h"
 #include "atlas/trans/detail/TransImpl.h"
 
 #define TRANSLOCAL_DGEMM2 0
 
 //-----------------------------------------------------------------------------
 // Forward declarations
-
-namespace eckit {
-namespace linalg {
-class LinearAlgebra;
-}  // namespace linalg
-}  // namespace eckit
 
 namespace atlas {
 class Field;
@@ -66,6 +61,18 @@ int fourier_truncation(const int truncation,  // truncation
 ///
 /// @note: Direct transforms are not implemented and cannot be unless
 ///        the grid is global. There are no plans to support this at the moment.
+///
+/// @note: The matrix_multiply (GEMM) implementation can be configured within the Configuration argument in the constructor
+///        using "matrix_multiply" key or if not given, it will use the atlas::linalg::dense::current_backend(),
+///        evaluated at invocation time. To reset the current_backend at any time:
+///             atlas::linalg::dense::current_backend( type );
+///        Possible values for type or "matrix_multiply" are e.g.
+///        - "eckit_linalg" which uses the configured default backend of eckit::linalg::LinearAlgebra
+///        - "generic" : "generic" backend for eckit::linalg::LinearAlgebra
+///        - "lapack"  : "lapack"  backend for eckit::linalg::LinearAlgebra
+///        - "openmp"  : "openmp"  backend for eckit::linalg::LinearAlgebra, or "generic" if "openmp" is not available.
+///        - "eigen"   : "eigen"   backend for eckit::linalg::LinearAlgebra
+
 class TransLocal : public trans::TransImpl {
 public:
     TransLocal(const Grid&, const long truncation, const eckit::Configuration& = util::NoConfig());
@@ -231,7 +238,7 @@ private:
 
     std::unique_ptr<detail::FFTW_Data> fftw_;
 
-    const eckit::linalg::LinearAlgebra& linalg_;
+    std::string linalg_backend_;
     int warning_ = 0;
 };
 

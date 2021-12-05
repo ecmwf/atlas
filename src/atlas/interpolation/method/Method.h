@@ -102,7 +102,7 @@ protected:
     std::shared_ptr<Matrix> matrix_shared_;
     interpolation::MatrixCache matrix_cache_;
     NonLinear nonLinear_;
-    bool use_eckit_linalg_spmv_;
+    std::string linalg_backend_;
     bool allow_halo_exchange_{true};
     std::vector<idx_t> missing_;
     bool adjoint_{false};

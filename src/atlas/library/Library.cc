@@ -41,7 +41,12 @@
 #include "atlas/util/Config.h"
 
 #if ATLAS_HAVE_TRANS
-#include "transi/version.h"
+#include "atlas/library/config.h"
+#if ATLAS_HAVE_ECTRANS
+#include "ectrans/transi.h"
+#else
+#include "transi/trans.h"
+#endif
 #endif
 
 using eckit::LocalPathName;
@@ -177,6 +182,23 @@ std::string Library::dataPath() const {
     };
     return join(paths, ":");
 }
+
+std::string atlas::Library::linalgSparseBackend() const {
+    auto resource = []() -> std::string {
+        return eckit::LibResource<std::string, Library>("atlas-linalg-sparse-backend;$ATLAS_LINALG_SPARSE_BACKEND", "");
+    };
+    static std::string ATLAS_LINALG_SPARSE_BACKEND = resource();
+    return ATLAS_LINALG_SPARSE_BACKEND;
+}
+
+std::string atlas::Library::linalgDenseBackend() const {
+    auto resource = []() -> std::string {
+        return eckit::LibResource<std::string, Library>("atlas-linalg-dense-backend;$ATLAS_LINALG_DENSE_BACKEND", "");
+    };
+    static std::string ATLAS_LINALG_DENSE_BACKEND = resource();
+    return ATLAS_LINALG_DENSE_BACKEND;
+}
+
 
 Library& Library::instance() {
     return libatlas;
@@ -446,11 +468,11 @@ void Library::Information::print(std::ostream& out) const {
     }
 
 #if ATLAS_HAVE_TRANS
-#ifdef TRANS_HAVE_FAUX
-    out << "    trans version (" << trans_version_str() << "), "
-        << "git-sha1 " << trans_git_sha1_abbrev(7) << '\n';
-    out << "    faux version (" << trans_faux_version_str() << "), "
-        << "git-sha1 " << trans_faux_git_sha1_abbrev(7) << '\n';
+#if ATLAS_HAVE_ECTRANS
+    out << "    ectrans version (" << ectrans_version() << "), "
+        << "git-sha1 " << ectrans_git_sha1_abbrev(7) << '\n';
+    out << "    fiat version (" << ectrans_fiat_version() << "), "
+        << "git-sha1 " << ectrans_fiat_git_sha1_abbrev(7) << '\n';
 #else
     out << "    transi version (" << transi_version() << "), "
         << "git-sha1 " << transi_git_sha1_abbrev(7) << '\n';

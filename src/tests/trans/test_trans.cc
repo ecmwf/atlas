@@ -37,10 +37,15 @@
 #include "tests/AtlasTestEnvironment.h"
 
 #if ATLAS_HAVE_TRANS
+#include "atlas/library/config.h"
 #include "atlas/trans/ifs/TransIFS.h"
 #include "atlas/trans/ifs/TransIFSNodeColumns.h"
 #include "atlas/trans/ifs/TransIFSStructuredColumns.h"
+#if ATLAS_HAVE_ECTRANS
+#include "ectrans/transi.h"
+#else
 #include "transi/trans.h"
+#endif
 #endif
 
 using namespace eckit;

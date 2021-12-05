@@ -81,6 +81,9 @@ public:
     std::string cachePath() const;
     std::string dataPath() const;
 
+    std::string linalgDenseBackend() const;
+    std::string linalgSparseBackend() const;
+
     void registerDataPath(const std::string&);
 
 protected:

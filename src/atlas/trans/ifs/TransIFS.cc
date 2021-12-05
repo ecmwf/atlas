@@ -10,14 +10,18 @@
 
 #include "eckit/log/JSON.h"
 
+#include "atlas/library/config.h"
+#if ATLAS_HAVE_ECTRANS
+#include "ectrans/transi.h"
+#else
 #include "transi/trans.h"
+#endif
 
 #include "atlas/array.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/StructuredColumns.h"
-#include "atlas/library/config.h"
 #include "atlas/mesh/IsGhostNode.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/parallel/mpi/mpi.h"

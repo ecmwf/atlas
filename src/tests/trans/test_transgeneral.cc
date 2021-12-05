@@ -38,7 +38,12 @@
 #include "tests/AtlasTestEnvironment.h"
 
 #if ATLAS_HAVE_TRANS
+#include "atlas/library/config.h"
+#if ATLAS_HAVE_ECTRANS
+#include "ectrans/transi.h"
+#else
 #include "transi/trans.h"
+#endif
 #endif
 
 using namespace eckit;
@@ -638,8 +643,8 @@ CASE("test_trans_vordiv_with_translib") {
 }
 #endif
 //-----------------------------------------------------------------------------
-#if 0
-CASE( "test_trans_hires" ) {
+#if 1
+CASE("test_trans_hires") {
     Log::info() << "test_trans_hires" << std::endl;
     // test transgeneral by comparing its result with the trans library
     // this test is based on the test_nomesh case in test_trans.cc
@@ -647,68 +652,90 @@ CASE( "test_trans_hires" ) {
     std::ostream& out = Log::info();
     double tolerance  = 1.e-13;
 
-#if ATLAS_HAVE_TRANS
-    //std::string transTypes[4] = {"localopt", "localopt2", "Local", "ifs"};
-    //std::string transTypes[2] = {"localopt2", "Local"};
-    std::string transTypes[3] = {"Local", "localopt2", "localopt"};
-    //std::string transTypes[1] = {"Local"};
-#else
-    std::string transTypes[1] = {"localopt2"};
-#endif
+    //#if ATLAS_HAVE_TRANS
+    //    //std::string transTypes[4] = {"localopt", "localopt2", "Local", "ifs"};
+    //    //std::string transTypes[2] = {"localopt2", "Local"};
+    //    //std::string transTypes[3] = {"Local", "localopt2", "localopt"};
+    //    //std::string transTypes[1] = {"Local"};
+    //#else
+    //    //std::string transTypes[1] = {"localopt2"};
+    //#endif
+    std::vector<util::Config> trans_configs;
+    std::vector<std::string> transTypes = {"local"};
+    if (trans::Trans::hasBackend("ifs")) {
+        transTypes.emplace_back("ifs");
+    }
+    std::map<std::string, std::vector<std::string>> backends{{"ifs", {"lapack"}},
+                                                             {"local", {"generic", "openmp", "eigen"}}};
 
-    //Domain testdomain = ZonalBandDomain( {-90., 90.} );
+    //Domain testdomain =F ZonalBandDomain( {-90., 90.} );
     //Domain testdomain = ZonalBandDomain( {-.5, .5} );
     //Domain testdomain = RectangularDomain( {0., 30.}, {-.05, .05} );
     //Domain testdomain = ZonalBandDomain( {-85., -86.} );
-    ///Domain testdomain = RectangularDomain( {-.01, .01}, {-.01, .01} );
-    Domain testdomain = RectangularDomain( {-1, 1}, {-1, 1} );
+    //Domain testdomain = RectangularDomain( {-.01, .01}, {-.01, .01} );
+    //Domain testdomain = RectangularDomain( {-1, 1}, {-1, 1} );
+    Domain testdomain = GlobalDomain();
     // Grid: (Adjust the following line if the test takes too long!)
-    Grid g( "F22000", testdomain );
-    Grid g_global( g.name() );
+    Grid g("O160", testdomain);
+    Grid g_global(g.name());
 
-    grid::StructuredGrid gs( g );
-    grid::StructuredGrid gs_global( g_global );
+    StructuredGrid gs(g);
+    StructuredGrid gs_global(g_global);
     Log::info() << "nlats: " << gs.ny() << " nlons:" << gs.nxmax() << std::endl;
     int ndgl = gs_global.ny();
     //int trc  = ndgl - 1;  // linear
     int trc = ndgl / 2. - 1;  // cubic
+    Log::info() << "truncation: " << trc << std::endl;
 
     int nb_scalar = 1, nb_vordiv = 0;
 
-    for ( auto transType : transTypes ) {
-        int N = ( trc + 2 ) * ( trc + 1 ) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
+    for (auto& trans_type : transTypes) {
+        ATLAS_TRACE(trans_type);
+        int N = (trc + 2) * (trc + 1) / 2, nb_all = nb_scalar + 2 * nb_vordiv;
         int icase = 0;
-        trans::Trans trans( g, trc, util::Config( "type", transType ) );
-        for ( int ivar_in = 2; ivar_in < 3; ivar_in++ ) {         // vorticity, divergence, scalar
-            for ( int ivar_out = 2; ivar_out < 3; ivar_out++ ) {  // u, v, scalar
+        trans::Trans trans(g, trc, option::type(trans_type));
+        for (int ivar_in = 2; ivar_in < 3; ivar_in++) {         // vorticity, divergence, scalar
+            for (int ivar_out = 2; ivar_out < 3; ivar_out++) {  // u, v, scalar
                 int nb_fld = 1;
-                if ( ivar_out == 2 ) { nb_fld = nb_scalar; }
+                if (ivar_out == 2) {
+                    nb_fld = nb_scalar;
+                }
                 else {
                     nb_fld = nb_vordiv;
                 }
-                for ( int jfld = 0; jfld < 1; jfld++ ) {  // multiple fields
+                for (int jfld = 0; jfld < 1; jfld++) {  // multiple fields
                     int k = 0;
-                    for ( int m = 0; m <= trc; m++ ) {                 // zonal wavenumber
-                        for ( int n = m; n <= trc; n++ ) {             // total wavenumber
-                            for ( int imag = 0; imag <= 1; imag++ ) {  // real and imaginary part
+                    for (int m = 0; m <= trc; m++) {                 // zonal wavenumber
+                        for (int n = m; n <= trc; n++) {             // total wavenumber
+                            for (int imag = 0; imag <= 1; imag++) {  // real and imaginary part
 
-                                if ( sphericalharmonics_analytic_point( n, m, true, 0., 0., ivar_in, ivar_in ) == 0. &&
-                                     icase < 1 ) {
-                                    auto start = std::chrono::system_clock::now();
-                                    std::vector<double> sp( 2 * N * nb_scalar );
-                                    std::vector<double> gp( nb_all * g.size() );
-                                    if ( ivar_in == 2 ) sp[k * nb_scalar + jfld] = 1.;
-                                    EXPECT_NO_THROW( trans.invtrans( nb_scalar, sp.data(), nb_vordiv, nullptr, nullptr,
-                                                                     gp.data() ) );
+                                if (sphericalharmonics_analytic_point(n, m, true, 0., 0., ivar_in, ivar_in) == 0. &&
+                                    icase < 1) {
+                                    std::vector<double> sp(2 * N * nb_scalar);
+                                    std::vector<double> gp(nb_all * g.size());
+                                    if (ivar_in == 2) {
+                                        sp[k * nb_scalar + jfld] = 1.;
+                                    }
+                                    auto original_backend = linalg::dense::current_backend();
+                                    for (auto& backend : backends[trans_type]) {
+                                        if (linalg::dense::Backend(backend).available()) {
+                                            linalg::dense::current_backend(backend);
+                                            ATLAS_TRACE("invtrans [backend=" + backend + "]");
+                                            auto start = std::chrono::system_clock::now();
+                                            EXPECT_NO_THROW(trans.invtrans(nb_scalar, sp.data(), nb_vordiv, nullptr,
+                                                                           nullptr, gp.data()));
+                                            auto end = std::chrono::system_clock::now();  //
+                                            std::chrono::duration<double> elapsed_seconds = end - start;
+                                            std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+                                            std::string time_str = std::ctime(&end_time);
+                                            Log::info()
+                                                << trans_type << "[backend=" << backend << "] : case " << icase
+                                                << ", elapsed time: " << elapsed_seconds.count()
+                                                << "s. Now: " << time_str.substr(0, time_str.length() - 1) << std::endl;
+                                        }
+                                    }
+                                    linalg::dense::current_backend(original_backend);
                                     icase++;
-                                    auto end = std::chrono::system_clock::now();  //
-                                    std::chrono::duration<double> elapsed_seconds = end - start;
-                                    std::time_t end_time = std::chrono::system_clock::to_time_t( end );
-                                    std::string time_str = std::ctime( &end_time );
-                                    Log::info()
-                                        << transType << ": case " << icase
-                                        << ", elapsed time: " << elapsed_seconds.count()
-                                        << "s. Now: " << time_str.substr( 0, time_str.length() - 1 ) << std::endl;
                                 }
                                 k++;
                             }
@@ -717,8 +744,8 @@ CASE( "test_trans_hires" ) {
                 }
             }
         }
-        Log::info() << "Vordiv+scalar comparison with trans::" << transType << ": all " << icase
-                    << " cases successfully passed!" << std::endl;
+        //.Log::info() << "Vordiv+scalar comparison with trans::" << description << ": all " << icase
+        //            << " cases successfully passed!" << std::endl;
     }
 }
 #endif

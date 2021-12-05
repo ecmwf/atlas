@@ -25,7 +25,6 @@ with_cgal=false
 with_deps=false
 WORK_DIR=$(pwd)
 BUILD_TYPE=RelWithDebInfo
-ifs_projects_GIT="git@git.ecmwf.int:~nawd/ifs-projects"
 
 function print_help {
     echo "Quick installer for Atlas and its dependencies"
@@ -40,7 +39,7 @@ function print_help {
     echo ""
     echo "Options:"
     echo ""
-    echo "  --with-deps                  Install dependencies together with Atlas: fftw, cgal, ecbuild, eckit, fckit, trans"
+    echo "  --with-deps                  Install dependencies together with Atlas: fftw, cgal, ecbuild, eckit, fckit, fiat, ectrans"
     echo "  --prefix <prefix>            Install prefix for atlas (and its dependencies if requested with '--with-deps')"
     echo "  --build-type <build-type>    Build type for atlas (and its dependencies if requested with '--with-deps')"
     echo "                               Possible values are ( Release | RelWithDebInfo | Debug )"
@@ -145,7 +144,7 @@ if ${with_deps}; then
   echo "Installing ecbuild"
   [[ -d ${SOURCES_DIR}/ecbuild ]] || git clone -b master https://github.com/ecmwf/ecbuild ${SOURCES_DIR}/ecbuild
   mkdir -p ${BUILDS_DIR}/ecbuild && cd ${BUILDS_DIR}/ecbuild
-  cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} -- -DENABLE_TESTS=OFF ${SOURCES_DIR}/ecbuild
+  cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} -DENABLE_TESTS=OFF ${SOURCES_DIR}/ecbuild
   make -j8 install
 
   ### Install eckit
@@ -183,25 +182,26 @@ if ${with_deps}; then
         ${SOURCES_DIR}/fckit
   make -j8 install
 
-  ### Install faux + trans (optional, off by default)
+  ### Install fiat + ectrans (optional, off by default)
   if ${with_trans}; then
-    echo "Installing faux"
-    [[ -d ${SOURCES_DIR}/ifs-projects ]] || git clone -b develop ${ifs_projects_GIT} ${SOURCES_DIR}/ifs-projects
-    mkdir -p ${BUILDS_DIR}/faux && cd ${BUILDS_DIR}/faux
+    echo "Installing fiat"
+    [[ -d ${SOURCES_DIR}/fiat ]] || git clone -b master https://github.com/ecmwf-ifs/fiat ${SOURCES_DIR}/fiat
+    mkdir -p ${BUILDS_DIR}/fiat && cd ${BUILDS_DIR}/fiat
     cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
           -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
           -DENABLE_TESTS=OFF \
           ${CMAKE_OPTIONS} \
-          ${SOURCES_DIR}/ifs-projects/faux
+          ${SOURCES_DIR}/fiat
     make -j8 install
 
-    echo "Installing trans"
-    mkdir -p ${BUILDS_DIR}/trans && cd ${BUILDS_DIR}/trans
+    echo "Installing ectrans"
+    [[ -d ${SOURCES_DIR}/ectrans ]] || git clone -b master https://github.com/ecmwf-ifs/ectrans ${SOURCES_DIR}/ectrans
+    mkdir -p ${BUILDS_DIR}/ectrans && cd ${BUILDS_DIR}/ectrans
     cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
           -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
           -DENABLE_TESTS=OFF \
           ${CMAKE_OPTIONS} \
-          ${SOURCES_DIR}/ifs-projects/trans
+          ${SOURCES_DIR}/ectrans
     make -j8 install
   fi
 

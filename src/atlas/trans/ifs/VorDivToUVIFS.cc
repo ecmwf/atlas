@@ -8,7 +8,12 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "atlas/library/config.h"
+#if ATLAS_HAVE_ECTRANS
+#include "ectrans/transi.h"
+#else
 #include "transi/trans.h"
+#endif
 
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/parallel/mpi/mpi.h"
