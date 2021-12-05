@@ -500,8 +500,8 @@ CASE("Cubed sphere dual grid") {
     auto grid = atlas::Grid("CS-LFR-C-8");
 
     // Set mesh config.
-    const auto sourceMeshConfig = util::Config("partitioner", "equal_regions") | util::Config("halo", "1");
-    const auto targetMeshConfig = util::Config("partitioner", "cubedsphere") | util::Config("halo", "1");
+    const auto sourceMeshConfig = util::Config("partitioner", "equal_regions") | util::Config("halo", "0");
+    const auto targetMeshConfig = util::Config("partitioner", "cubedsphere") | util::Config("halo", "0");
 
     auto sourceMesh = MeshGenerator("cubedsphere_dual", sourceMeshConfig).generate(grid);
     auto targetMesh = MeshGenerator("cubedsphere_dual", targetMeshConfig).generate(grid);

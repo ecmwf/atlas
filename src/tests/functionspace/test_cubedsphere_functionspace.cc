@@ -133,8 +133,8 @@ CASE("cubedsphere_mesh_functionspace") {
     const auto meshGenCubedSphere  = MeshGenerator("cubedsphere", meshConfigCubedSphere);
 
     // Set dual mesh generator.
-    const auto dualMeshGenEqualRegions = MeshGenerator("cubedsphere_dual", meshConfigEqualRegions);
-    const auto dualMeshGenCubedSphere  = MeshGenerator("cubedsphere_dual", meshConfigCubedSphere);
+    const auto dualMeshGenEqualRegions = MeshGenerator("cubedsphere_dual", meshConfigEqualRegions | util::Config("halo", 0));
+    const auto dualMeshGenCubedSphere  = MeshGenerator("cubedsphere_dual", meshConfigCubedSphere | util::Config("halo", 0));
 
     // Set mesh
     const auto meshEqualRegions = meshGenEqualRegions.generate(grid);
