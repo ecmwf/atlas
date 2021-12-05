@@ -74,7 +74,7 @@ void CubedSphereDualMeshGenerator::configure_defaults() {
     options.set("part", mpi::rank());
 
     // This options sets the number of halo elements around each partition.
-    options.set("halo", 1);
+    options.set("halo", 0);
 
     // This options sets the default partitioner.
     options.set<std::string>("partitioner", "cubedsphere");
@@ -124,10 +124,10 @@ void CubedSphereDualMeshGenerator::generate(const Grid& grid, const grid::Distri
     }
 
     // Enforce compatible halo size.
-    if (options.get<idx_t>("halo") != 1) {
+    if (options.get<idx_t>("halo") != 0) {
         throw_Exception(
             "Halo size CubedSphereDualMeshGenerator is currently "
-            "limited to 1.",
+            "limited to 0.",
             Here());
     }
 
@@ -164,7 +164,9 @@ void CubedSphereDualMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, 
     //--------------------------------------------------------------------------
 
     // Generate cubed sphere mesh.
-    const auto csMesh = MeshGenerator("cubedsphere", options).generate(csGrid, distribution);
+    auto csOptions = options;
+    csOptions.set("halo", nHalo + 1);
+    const auto csMesh = MeshGenerator("cubedsphere", csOptions).generate(csGrid, distribution);
 
     // Generate fucntionspaces cubed sphere mesh.
     const auto csCellsFunctionSpace = functionspace::CubedSphereCellColumns(csMesh);
@@ -197,6 +199,7 @@ void CubedSphereDualMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, 
 
     for (idx_t idx = 0; idx < nodes.size(); ++idx) {
         nodesGhost(idx) = nodesHalo(idx) > 0;
+        nodesHalo(idx)  = std::max(0, nodesHalo(idx) - 1);
     }
 
     //--------------------------------------------------------------------------
@@ -229,7 +232,7 @@ void CubedSphereDualMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, 
     // Otherwise, the halo exchange bookkeeping is invalidated.
     for (idx_t idx = 1; idx < csNodes.size(); ++idx) {
         // Exclude outer ring of cubed sphere mesh halo.
-        if (csNodesHalo(idx) == nHalo) {
+        if (csNodesHalo(idx) == nHalo + 1) {
             break;
         }
 
