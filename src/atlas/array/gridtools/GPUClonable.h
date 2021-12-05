@@ -18,29 +18,29 @@ namespace gridtools {
 
 template <typename Base>
 struct GPUClonable {
-    GPUClonable( Base* base_ptr ) : base_ptr_( base_ptr ), gpu_object_ptr_( nullptr ) {
+    GPUClonable(Base* base_ptr): base_ptr_(base_ptr), gpu_object_ptr_(nullptr) {
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-        cudaMalloc( &gpu_object_ptr_, sizeof( Base ) );
+        cudaMalloc(&gpu_object_ptr_, sizeof(Base));
 #endif
     }
 
     ~GPUClonable() {
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-        assert( gpu_object_ptr_ );
-        cudaFree( gpu_object_ptr_ );
+        assert(gpu_object_ptr_);
+        cudaFree(gpu_object_ptr_);
 #endif
     }
 
-    Base* gpu_object_ptr() { return static_cast<Base*>( gpu_object_ptr_ ); }
+    Base* gpu_object_ptr() { return static_cast<Base*>(gpu_object_ptr_); }
 
     void updateDevice() {
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-        cudaMemcpy( gpu_object_ptr_, base_ptr_, sizeof( Base ), cudaMemcpyHostToDevice );
+        cudaMemcpy(gpu_object_ptr_, base_ptr_, sizeof(Base), cudaMemcpyHostToDevice);
 #endif
     }
     void updateHost() {
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-        cudaMemcpy( base_ptr_, gpu_object_ptr_, sizeof( Base ), cudaMemcpyDeviceToHost );
+        cudaMemcpy(base_ptr_, gpu_object_ptr_, sizeof(Base), cudaMemcpyDeviceToHost);
 #endif
     }
 

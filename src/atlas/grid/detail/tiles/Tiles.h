@@ -33,9 +33,9 @@ public:
 public:
     static const CubedSphereTiles* create();
 
-    static const CubedSphereTiles* create( const eckit::Parametrisation& );
+    static const CubedSphereTiles* create(const eckit::Parametrisation&);
 
-    static const CubedSphereTiles* create( const std::string& );
+    static const CubedSphereTiles* create(const std::string&);
 
     virtual std::string type() const = 0;
 
@@ -43,25 +43,25 @@ public:
 
     virtual std::array<std::array<double, 6>, 2> ab2xyOffsets() const = 0;
 
-    virtual void rotate( idx_t t, double xyz[] ) const = 0;
+    virtual void rotate(idx_t t, double xyz[]) const = 0;
 
-    virtual void unrotate( idx_t t, double xyz[] ) const = 0;
+    virtual void unrotate(idx_t t, double xyz[]) const = 0;
 
-    virtual idx_t indexFromXY( const double xy[] ) const = 0;
+    virtual idx_t indexFromXY(const double xy[]) const = 0;
 
-    virtual idx_t indexFromLonLat( const double lonlat[] ) const = 0;
+    virtual idx_t indexFromLonLat(const double lonlat[]) const = 0;
 
-    virtual void enforceXYdomain( double xy[] ) const = 0;
+    virtual void enforceXYdomain(double xy[]) const = 0;
 
     idx_t size() const { return 6; }
 
-    virtual atlas::PointXY tileCubePeriodicity( const atlas::PointXY& xyExtended, const atlas::idx_t tile ) const = 0;
+    virtual atlas::PointXY tileCubePeriodicity(const atlas::PointXY& xyExtended, const atlas::idx_t tile) const = 0;
 
     /// Output to stream
-    virtual void print( std::ostream& ) const = 0;
+    virtual void print(std::ostream&) const = 0;
 
-    friend std::ostream& operator<<( std::ostream& s, const CubedSphereTiles& cst ) {
-        cst.print( s );
+    friend std::ostream& operator<<(std::ostream& s, const CubedSphereTiles& cst) {
+        cst.print(s);
         return s;
     }
 };

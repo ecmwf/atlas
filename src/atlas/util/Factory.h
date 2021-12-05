@@ -27,7 +27,7 @@ class FactoryBase;
 
 class FactoryRegistry {
 protected:
-    FactoryRegistry( const std::string& factory );
+    FactoryRegistry(const std::string& factory);
     virtual ~FactoryRegistry();
 
 private:
@@ -38,24 +38,24 @@ private:
 public:
     const std::string& factory() const { return factory_; }
     std::vector<std::string> keys() const;
-    void list( std::ostream& ) const;
-    bool has( const std::string& builder ) const;
-    void add( const std::string& builder, FactoryBase* );
-    void remove( const std::string& builder );
-    FactoryBase* get( const std::string& builder ) const;
+    void list(std::ostream&) const;
+    bool has(const std::string& builder) const;
+    void add(const std::string& builder, FactoryBase*);
+    void remove(const std::string& builder);
+    FactoryBase* get(const std::string& builder) const;
 };
 
 template <typename T>
 struct FactoryRegistryT : public FactoryRegistry {
 public:
     static std::shared_ptr<FactoryRegistryT<T>> instance() {
-        static std::shared_ptr<FactoryRegistryT<T>> env( new FactoryRegistryT<T>( T::className() ) );
+        static std::shared_ptr<FactoryRegistryT<T>> env(new FactoryRegistryT<T>(T::className()));
         return env;
     }
     virtual ~FactoryRegistryT() {}
 
 protected:
-    FactoryRegistryT( const std::string& factory ) : FactoryRegistry( factory ) {}
+    FactoryRegistryT(const std::string& factory): FactoryRegistry(factory) {}
 };
 
 class FactoryBase {
@@ -65,9 +65,9 @@ private:
     std::shared_ptr<FactoryRegistry> attached_registry_;
 
 protected:
-    FactoryBase( FactoryRegistry&, const std::string& builder );
+    FactoryBase(FactoryRegistry&, const std::string& builder);
     virtual ~FactoryBase();
-    void attach_registry( const std::shared_ptr<FactoryRegistry>& registry ) { attached_registry_ = registry; }
+    void attach_registry(const std::shared_ptr<FactoryRegistry>& registry) { attached_registry_ = registry; }
     friend class FactoryRegistry;
 
 public:
@@ -79,13 +79,13 @@ template <typename T>
 class Factory : public FactoryBase {
 public:
     static std::vector<std::string> keys() { return registry().keys(); }
-    static void list( std::ostream& out ) { return registry().list( out ); }
-    static bool has( const std::string& builder ) { return registry().has( builder ); }
-    static T* get( const std::string& builder ) { return dynamic_cast<T*>( registry().get( builder ) ); }
+    static void list(std::ostream& out) { return registry().list(out); }
+    static bool has(const std::string& builder) { return registry().has(builder); }
+    static T* get(const std::string& builder) { return dynamic_cast<T*>(registry().get(builder)); }
 
-    Factory( const std::string& builder = "" ) : FactoryBase( registry(), builder ) {
-        if ( not builder.empty() ) {
-            attach_registry( FactoryRegistryT<T>::instance() );
+    Factory(const std::string& builder = ""): FactoryBase(registry(), builder) {
+        if (not builder.empty()) {
+            attach_registry(FactoryRegistryT<T>::instance());
         }
     }
 

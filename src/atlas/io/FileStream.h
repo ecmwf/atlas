@@ -36,25 +36,25 @@ enum class Mode
 
 class FileStream : public Stream {
 public:
-    FileStream( const eckit::PathName& path, Mode openmode );
-    FileStream( const eckit::PathName& path, char openmode );
-    FileStream( const eckit::PathName& path, const std::string& openmode );
+    FileStream(const eckit::PathName& path, Mode openmode);
+    FileStream(const eckit::PathName& path, char openmode);
+    FileStream(const eckit::PathName& path, const std::string& openmode);
 };
 
 //---------------------------------------------------------------------------------------------------------------------
 
 class InputFileStream : public FileStream {
 public:
-    InputFileStream( const eckit::PathName& path );
+    InputFileStream(const eckit::PathName& path);
 };
 
 //---------------------------------------------------------------------------------------------------------------------
 
 class OutputFileStream : public FileStream {
 public:
-    OutputFileStream( const eckit::PathName& path, Mode openmode = Mode::write );
-    OutputFileStream( const eckit::PathName& path, const std::string& openmode );
-    OutputFileStream( const eckit::PathName& path, char openmode );
+    OutputFileStream(const eckit::PathName& path, Mode openmode = Mode::write);
+    OutputFileStream(const eckit::PathName& path, const std::string& openmode);
+    OutputFileStream(const eckit::PathName& path, char openmode);
     void close();
 };
 

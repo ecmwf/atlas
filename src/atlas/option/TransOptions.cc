@@ -19,58 +19,58 @@
 namespace atlas {
 namespace option {
 
-vorticity_divergence_fields::vorticity_divergence_fields( bool v ) {
-    set( "vorticity_divergence_fields", v );
+vorticity_divergence_fields::vorticity_divergence_fields(bool v) {
+    set("vorticity_divergence_fields", v);
 }
 
-wind_EW_derivatives::wind_EW_derivatives( bool v ) {
-    set( "wind_EW_derivatives", v );
+wind_EW_derivatives::wind_EW_derivatives(bool v) {
+    set("wind_EW_derivatives", v);
 }
 
-scalar_derivatives::scalar_derivatives( bool v ) {
-    set( "scalar_derivatives", v );
+scalar_derivatives::scalar_derivatives(bool v) {
+    set("scalar_derivatives", v);
 }
 
-flt::flt( bool flt ) {
-    set( "flt", flt );
+flt::flt(bool flt) {
+    set("flt", flt);
 }
 
-fft::fft( FFT fft ) {
+fft::fft(FFT fft) {
     static const std::map<FFT, std::string> FFT_to_string = {
         {FFT::OFF, "OFF"}, {FFT::FFT992, "FFT992"}, {FFT::FFTW, "FFTW"}};
-    set( "fft", FFT_to_string.at( fft ) );
+    set("fft", FFT_to_string.at(fft));
 }
 
-fft::fft( const std::string& fft ) {
-    set( "fft", fft );
+fft::fft(const std::string& fft) {
+    set("fft", fft);
 }
 
-split_latitudes::split_latitudes( bool split_latitudes ) {
-    set( "split_latitudes", split_latitudes );
+split_latitudes::split_latitudes(bool split_latitudes) {
+    set("split_latitudes", split_latitudes);
 }
 
-write_legendre::write_legendre( const eckit::PathName& filepath ) {
-    set( "write_legendre", filepath );
+write_legendre::write_legendre(const eckit::PathName& filepath) {
+    set("write_legendre", filepath);
 }
 
-read_legendre::read_legendre( const eckit::PathName& filepath ) {
-    set( "read_legendre", filepath );
+read_legendre::read_legendre(const eckit::PathName& filepath) {
+    set("read_legendre", filepath);
 }
 
-write_fft::write_fft( const eckit::PathName& filepath ) {
-    set( "write_fft", filepath );
+write_fft::write_fft(const eckit::PathName& filepath) {
+    set("write_fft", filepath);
 }
 
-read_fft::read_fft( const eckit::PathName& filepath ) {
-    set( "read_fft", filepath );
+read_fft::read_fft(const eckit::PathName& filepath) {
+    set("read_fft", filepath);
 }
 
-nproma::nproma( int nproma ) {
-    set( "nproma", nproma );
+nproma::nproma(int nproma) {
+    set("nproma", nproma);
 }
 
-warning::warning( int warning ) {
-    set( "warning", warning );
+warning::warning(int warning) {
+    set("warning", warning);
 }
 
 // ----------------------------------------------------------------------------

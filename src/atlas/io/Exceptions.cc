@@ -23,13 +23,13 @@ namespace io {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-std::string demangle( const char* name ) {
+std::string demangle(const char* name) {
 #ifdef eckit_HAVE_CXXABI_H
     int status = -4;
 
-    std::unique_ptr<char, void ( * )( void* )> res{abi::__cxa_demangle( name, nullptr, nullptr, &status ), std::free};
+    std::unique_ptr<char, void (*)(void*)> res{abi::__cxa_demangle(name, nullptr, nullptr, &status), std::free};
 
-    return ( status == 0 ) ? res.get() : name;
+    return (status == 0) ? res.get() : name;
 #else
     return name;
 #endif
@@ -37,7 +37,7 @@ std::string demangle( const char* name ) {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-NotEncodable::NotEncodable( const std::string& type_name ) :
+NotEncodable::NotEncodable(const std::string& type_name):
     Exception{[&type_name] {
         std::stringstream message;
         message << "atlas::io::NotEncodable: Cannot encode values of type " << type_name << ".";
@@ -63,7 +63,7 @@ NotEncodable::NotEncodable( const std::string& type_name ) :
 
 //---------------------------------------------------------------------------------------------------------------------
 
-NotDecodable::NotDecodable( const std::string& type_name ) :
+NotDecodable::NotDecodable(const std::string& type_name):
     Exception{[&type_name] {
         std::stringstream message;
         message << "atlas::io::NotDecodable: Cannot decode values of type " << type_name << ".";

@@ -23,14 +23,14 @@ namespace method {
 
 class KNearestNeighboursBase : public Method {
 public:
-    KNearestNeighboursBase( const Config& config ) : Method( config ) {}
+    KNearestNeighboursBase(const Config& config): Method(config) {}
     virtual ~KNearestNeighboursBase() override {}
 
 protected:
-    void buildPointSearchTree( Mesh& meshSource ) { buildPointSearchTree( meshSource, mesh::Halo( meshSource ) ); }
-    void buildPointSearchTree( Mesh& meshSource, const mesh::Halo& );
-    void buildPointSearchTree( const FunctionSpace& );
-    bool extractTreeFromCache( const Cache& );
+    void buildPointSearchTree(Mesh& meshSource) { buildPointSearchTree(meshSource, mesh::Halo(meshSource)); }
+    void buildPointSearchTree(Mesh& meshSource, const mesh::Halo&);
+    void buildPointSearchTree(const FunctionSpace&);
+    bool extractTreeFromCache(const Cache&);
 
     util::IndexKDTree pTree_;
 };

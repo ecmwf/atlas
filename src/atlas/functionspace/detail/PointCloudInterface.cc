@@ -26,19 +26,19 @@ namespace functionspace {
 
 extern "C" {
 
-const detail::PointCloud* atlas__functionspace__PointCloud__new__lonlat( const Field::Implementation* lonlat ) {
-    return new detail::PointCloud( Field( lonlat ) );
+const detail::PointCloud* atlas__functionspace__PointCloud__new__lonlat(const Field::Implementation* lonlat) {
+    return new detail::PointCloud(Field(lonlat));
 }
 
-const detail::PointCloud* atlas__functionspace__PointCloud__new__grid( const Grid::Implementation* grid ) {
-    return new detail::PointCloud( Grid( grid ) );
+const detail::PointCloud* atlas__functionspace__PointCloud__new__grid(const Grid::Implementation* grid) {
+    return new detail::PointCloud(Grid(grid));
 }
 
-const field::FieldImpl* atlas__fs__PointCloud__lonlat( const detail::PointCloud* This ) {
+const field::FieldImpl* atlas__fs__PointCloud__lonlat(const detail::PointCloud* This) {
     return This->lonlat().get();
 }
 
-idx_t atlas__fs__PointCloud__size( const detail::PointCloud* This ) {
+idx_t atlas__fs__PointCloud__size(const detail::PointCloud* This) {
     return This->size();
 }
 }

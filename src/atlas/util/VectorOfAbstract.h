@@ -26,24 +26,24 @@ namespace util {
 //------------------------------------------------------------------------------------------------------
 
 template <typename BaseIterator>
-class DereferenceIterator : DOXYGEN_HIDE( public BaseIterator ) {
+class DereferenceIterator : DOXYGEN_HIDE(public BaseIterator) {
 public:
     using value_type = typename BaseIterator::value_type::element_type;
     using pointer    = value_type*;
     using reference  = value_type&;
 
-    DereferenceIterator( const BaseIterator& other ) : BaseIterator( other ) {}
+    DereferenceIterator(const BaseIterator& other): BaseIterator(other) {}
 
-    reference operator*() const { return *( this->BaseIterator::operator*() ); }
+    reference operator*() const { return *(this->BaseIterator::operator*()); }
     pointer operator->() const { return this->BaseIterator::operator*().get(); }
-    reference operator[]( size_t n ) const { return *( this->BaseIterator::operator[]( n ) ); }
+    reference operator[](size_t n) const { return *(this->BaseIterator::operator[](n)); }
 };
 
 //------------------------------------------------------------------------------------------------------
 
 template <typename Iterator>
-DereferenceIterator<Iterator> make_dereference_iterator( Iterator t ) {
-    return DereferenceIterator<Iterator>( t );
+DereferenceIterator<Iterator> make_dereference_iterator(Iterator t) {
+    return DereferenceIterator<Iterator>(t);
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -59,17 +59,17 @@ public:
 
 public:
     VectorOfAbstract() = default;
-    VectorOfAbstract( VectorOfAbstract&& other ) : container_( std::move( other.container_ ) ) {}
+    VectorOfAbstract(VectorOfAbstract&& other): container_(std::move(other.container_)) {}
 
-    const_iterator begin() const { return make_dereference_iterator( container_.begin() ); }
-    const_iterator end() const { return make_dereference_iterator( container_.end() ); }
-    const_reference operator[]( idx_t i ) const { return *container_[i]; }
-    const_reference at( idx_t i ) const { return *container_[i]; }
+    const_iterator begin() const { return make_dereference_iterator(container_.begin()); }
+    const_iterator end() const { return make_dereference_iterator(container_.end()); }
+    const_reference operator[](idx_t i) const { return *container_[i]; }
+    const_reference at(idx_t i) const { return *container_[i]; }
     idx_t size() const { return container_.size(); }
-    void reserve( size_t size ) { container_.reserve( size ); }
+    void reserve(size_t size) { container_.reserve(size); }
     template <typename... Args>
-    void emplace_back( Args&&... args ) {
-        container_.emplace_back( std::forward<Args>( args )... );
+    void emplace_back(Args&&... args) {
+        container_.emplace_back(std::forward<Args>(args)...);
     }
     container_type& get() { return container_; }
     void clear() { return container_.clear(); }

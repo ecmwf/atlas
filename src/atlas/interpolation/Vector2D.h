@@ -41,12 +41,12 @@ typedef Eigen::Vector2d Vector2D;
 
 class Vector2D {
 private:
-    Vector2D( const double* d ) {
+    Vector2D(const double* d) {
         xy_[0] = d[0];
         xy_[1] = d[1];
     }
 
-    Vector2D( double x, double y ) {
+    Vector2D(double x, double y) {
         xy_[0] = x;
         xy_[1] = y;
     }
@@ -56,31 +56,31 @@ public:
         // Warning, data_ is uninitialised
     }
 
-    static Vector2D Map( const double* data ) { return Vector2D( data ); }
+    static Vector2D Map(const double* data) { return Vector2D(data); }
 
     // Operators
 
-    double operator[]( size_t i ) const { return xy_[i]; }
+    double operator[](size_t i) const { return xy_[i]; }
 
     // Vector2D operator*(const Vector2D &) const;
-    Vector2D operator-( const Vector2D& other ) const { return Vector2D( x() - other.x(), y() - other.y() ); }
+    Vector2D operator-(const Vector2D& other) const { return Vector2D(x() - other.x(), y() - other.y()); }
 
-    Vector2D operator+( const Vector2D& other ) const { return Vector2D( x() + other.x(), y() + other.y() ); }
+    Vector2D operator+(const Vector2D& other) const { return Vector2D(x() + other.x(), y() + other.y()); }
 
-    Vector2D operator-() const { return Vector2D( -x(), -y() ); }
+    Vector2D operator-() const { return Vector2D(-x(), -y()); }
 
-    double norm() const { return sqrt( squaredNorm() ); }
+    double norm() const { return sqrt(squaredNorm()); }
 
     double squaredNorm() const { return x() * x() + y() * y(); }
 
-    double dot( const Vector2D& other ) const { return x() * other.x() + y() * other.y(); }
+    double dot(const Vector2D& other) const { return x() * other.x() + y() * other.y(); }
 
-    double cross( const Vector2D& other ) const { return x() * other.y() - y() * other.x(); }
+    double cross(const Vector2D& other) const { return x() * other.y() - y() * other.x(); }
 
-    void print( std::ostream& s ) const;
+    void print(std::ostream& s) const;
 
-    friend std::ostream& operator<<( std::ostream& s, const Vector2D& p ) {
-        p.print( s );
+    friend std::ostream& operator<<(std::ostream& s, const Vector2D& p) {
+        p.print(s);
         return s;
     }
 
@@ -90,7 +90,7 @@ private:
     double xy_[2];
 };
 
-Vector2D operator*( double, const Vector2D& );
+Vector2D operator*(double, const Vector2D&);
 
 #endif
 

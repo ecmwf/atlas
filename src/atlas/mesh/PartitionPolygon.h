@@ -43,7 +43,7 @@ public:  // methods
     //-- Constructors
 
     /// @brief Construct "size" polygon
-    PartitionPolygon( const detail::MeshImpl& mesh, idx_t halo );
+    PartitionPolygon(const detail::MeshImpl& mesh, idx_t halo);
 
     //-- Accessors
 
@@ -52,18 +52,18 @@ public:  // methods
     /// @brief Return the memory footprint of the Polygon
     size_t footprint() const override;
 
-    void outputPythonScript( const eckit::PathName&, const eckit::Configuration& = util::NoConfig() ) const override;
+    void outputPythonScript(const eckit::PathName&, const eckit::Configuration& = util::NoConfig()) const override;
 
     PointsXY xy() const override;
     PointsXY lonlat() const override;
 
-    void allGather( util::PartitionPolygons& ) const override;
+    void allGather(util::PartitionPolygons&) const override;
 
 private:
-    void print( std::ostream& ) const;
+    void print(std::ostream&) const;
 
-    friend std::ostream& operator<<( std::ostream& s, const PartitionPolygon& p ) {
-        p.print( s );
+    friend std::ostream& operator<<(std::ostream& s, const PartitionPolygon& p) {
+        p.print(s);
         return s;
     }
 

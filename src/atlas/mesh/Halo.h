@@ -29,9 +29,9 @@ namespace mesh {
 class Halo {
 public:
     Halo() {}
-    Halo( const Mesh& mesh );
-    Halo( const detail::MeshImpl& mesh );
-    Halo( const int size ) : size_( size ) {}
+    Halo(const Mesh& mesh);
+    Halo(const detail::MeshImpl& mesh);
+    Halo(const int size): size_(size) {}
     int size() const;
 
 private:

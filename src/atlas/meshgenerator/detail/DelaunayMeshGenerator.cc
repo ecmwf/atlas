@@ -37,18 +37,18 @@ namespace meshgenerator {
 
 DelaunayMeshGenerator::DelaunayMeshGenerator() = default;
 
-DelaunayMeshGenerator::DelaunayMeshGenerator( const eckit::Parametrisation& ) {}
+DelaunayMeshGenerator::DelaunayMeshGenerator(const eckit::Parametrisation&) {}
 
 DelaunayMeshGenerator::~DelaunayMeshGenerator() = default;
 
-void DelaunayMeshGenerator::hash( eckit::Hash& h ) const {
-    h.add( "Delaunay" );
+void DelaunayMeshGenerator::hash(eckit::Hash& h) const {
+    h.add("Delaunay");
 
     // no other settings
 }
 
-void DelaunayMeshGenerator::generate( const Grid& grid, const grid::Distribution& dist, Mesh& mesh ) const {
-    if ( dist.nb_partitions() > 1 ) {
+void DelaunayMeshGenerator::generate(const Grid& grid, const grid::Distribution& dist, Mesh& mesh) const {
+    if (dist.nb_partitions() > 1) {
         Log::warning() << "Delaunay triangulation does not support a GridDistribution"
                           "with more than 1 partition"
                        << std::endl;
@@ -58,51 +58,51 @@ void DelaunayMeshGenerator::generate( const Grid& grid, const grid::Distribution
         /// HINT: use atlas/actions/DistributeMesh
     }
     else {
-        generate( grid, mesh );
+        generate(grid, mesh);
     }
 }
 
-void DelaunayMeshGenerator::generate( const Grid& g, Mesh& mesh ) const {
-    createNodes( g, mesh );
+void DelaunayMeshGenerator::generate(const Grid& g, Mesh& mesh) const {
+    createNodes(g, mesh);
 
-    mesh::actions::BuildXYZField()( mesh );
-    mesh::actions::ExtendNodesGlobal()( g,
-                                        mesh );  ///< does nothing if global domain
-    mesh::actions::BuildConvexHull3D()( mesh );
+    mesh::actions::BuildXYZField()(mesh);
+    mesh::actions::ExtendNodesGlobal()(g,
+                                       mesh);  ///< does nothing if global domain
+    mesh::actions::BuildConvexHull3D()(mesh);
 
-    setGrid( mesh, g, "serial" );
+    setGrid(mesh, g, "serial");
 }
 
-void DelaunayMeshGenerator::createNodes( const Grid& grid, Mesh& mesh ) const {
+void DelaunayMeshGenerator::createNodes(const Grid& grid, Mesh& mesh) const {
     idx_t nb_nodes = grid.size();
-    mesh.nodes().resize( nb_nodes );
+    mesh.nodes().resize(nb_nodes);
 
-    auto xy     = array::make_view<double, 2>( mesh.nodes().xy() );
-    auto lonlat = array::make_view<double, 2>( mesh.nodes().lonlat() );
-    auto ghost  = array::make_view<int, 1>( mesh.nodes().ghost() );
-    auto gidx   = array::make_view<gidx_t, 1>( mesh.nodes().global_index() );
+    auto xy     = array::make_view<double, 2>(mesh.nodes().xy());
+    auto lonlat = array::make_view<double, 2>(mesh.nodes().lonlat());
+    auto ghost  = array::make_view<int, 1>(mesh.nodes().ghost());
+    auto gidx   = array::make_view<gidx_t, 1>(mesh.nodes().global_index());
 
     size_t jnode{0};
     Projection projection = grid.projection();
     PointLonLat Pll;
-    for ( PointXY Pxy : grid.xy() ) {
-        xy( jnode, size_t( XX ) ) = Pxy.x();
-        xy( jnode, size_t( YY ) ) = Pxy.y();
+    for (PointXY Pxy : grid.xy()) {
+        xy(jnode, size_t(XX)) = Pxy.x();
+        xy(jnode, size_t(YY)) = Pxy.y();
 
-        Pll                            = projection.lonlat( Pxy );
-        lonlat( jnode, size_t( LON ) ) = Pll.lon();
-        lonlat( jnode, size_t( LAT ) ) = Pll.lat();
+        Pll                        = projection.lonlat(Pxy);
+        lonlat(jnode, size_t(LON)) = Pll.lon();
+        lonlat(jnode, size_t(LAT)) = Pll.lat();
 
-        ghost( jnode ) = false;
+        ghost(jnode) = false;
 
-        gidx( jnode ) = jnode + 1;
+        gidx(jnode) = jnode + 1;
 
         ++jnode;
     }
 }
 
 namespace {
-static MeshGeneratorBuilder<DelaunayMeshGenerator> __delaunay( "delaunay" );
+static MeshGeneratorBuilder<DelaunayMeshGenerator> __delaunay("delaunay");
 }
 
 //----------------------------------------------------------------------------------------------------------------------

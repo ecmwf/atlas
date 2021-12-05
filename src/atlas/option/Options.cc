@@ -18,67 +18,67 @@
 namespace atlas {
 namespace option {
 
-type::type( const std::string& _type ) {
-    set( "type", _type );
+type::type(const std::string& _type) {
+    set("type", _type);
 }
 
-halo::halo( size_t size ) {
-    set( "halo", size );
+halo::halo(size_t size) {
+    set("halo", size);
 }
 
-datatype::datatype( array::DataType::kind_t kind ) {
-    set( "datatype", kind );
+datatype::datatype(array::DataType::kind_t kind) {
+    set("datatype", kind);
 }
 
-datatype::datatype( const std::string& str ) {
-    set( "datatype", array::DataType::str_to_kind( str ) );
+datatype::datatype(const std::string& str) {
+    set("datatype", array::DataType::str_to_kind(str));
 }
 
-datatype::datatype( array::DataType dtype ) {
-    set( "datatype", dtype.kind() );
+datatype::datatype(array::DataType dtype) {
+    set("datatype", dtype.kind());
 }
 
-name::name( const std::string& _name ) {
-    set( "name", _name );
+name::name(const std::string& _name) {
+    set("name", _name);
 }
 
-global::global( size_t _owner ) {
-    set( "global", true );
-    set( "owner", _owner );
+global::global(size_t _owner) {
+    set("global", true);
+    set("owner", _owner);
 }
 
-levels::levels( size_t _levels ) {
-    set( "levels", _levels );
+levels::levels(size_t _levels) {
+    set("levels", _levels);
 }
 
-variables::variables( size_t _variables ) {
-    set( "variables", _variables );
+variables::variables(size_t _variables) {
+    set("variables", _variables);
 }
 
-vector::vector( size_t _components ) {
-    set( "variables", _components );
-    set( "type", "vector" );
+vector::vector(size_t _components) {
+    set("variables", _components);
+    set("type", "vector");
 }
 
-radius::radius( double _radius ) {
-    set( "radius", _radius );
+radius::radius(double _radius) {
+    set("radius", _radius);
 }
 
-radius::radius( const std::string& key ) {
-    if ( key == "Earth" ) {
-        set( "radius", util::Earth::radius() );
+radius::radius(const std::string& key) {
+    if (key == "Earth") {
+        set("radius", util::Earth::radius());
     }
     else {
         ATLAS_NOTIMPLEMENTED;
     }
 }
 
-pole_edges::pole_edges( bool _pole_edges ) {
-    set( "pole_edges", _pole_edges );
+pole_edges::pole_edges(bool _pole_edges) {
+    set("pole_edges", _pole_edges);
 }
 
-alignment::alignment( int value ) {
-    set( "alignment", value );
+alignment::alignment(int value) {
+    set("alignment", value);
 }
 
 // ----------------------------------------------------------------------------

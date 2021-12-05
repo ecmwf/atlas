@@ -28,37 +28,37 @@ class BitflagsView {};
 /// @brief Convenience class to modify and interpret bitflags
 class Bitflags {
 public:
-    static void reset( int& flags, int bit = 0 ) { flags = bit; }
+    static void reset(int& flags, int bit = 0) { flags = bit; }
 
-    static void set( int& flags, int bit ) { flags |= bit; }
+    static void set(int& flags, int bit) { flags |= bit; }
 
-    static void unset( int& flags, int bit ) { flags &= ( ~bit ); }
+    static void unset(int& flags, int bit) { flags &= (~bit); }
 
-    static void toggle( int& flags, int bit ) { flags ^= bit; }
+    static void toggle(int& flags, int bit) { flags ^= bit; }
 
-    static bool check( int flags, int bits ) { return ( flags & bits ) == bits; }
+    static bool check(int flags, int bits) { return (flags & bits) == bits; }
 
-    static bool check_all( int flags, int bits ) { return ( flags & bits ) == bits; }
+    static bool check_all(int flags, int bits) { return (flags & bits) == bits; }
 
-    static bool check_any( int flags, int bits ) { return flags & bits; }
+    static bool check_any(int flags, int bits) { return flags & bits; }
 
-    static std::string bitstr( int flags ) {
+    static std::string bitstr(int flags) {
         char str[9] = {0};
         int i;
-        for ( i = 7; i >= 0; i-- ) {
-            str[i] = ( flags & 1 ) ? '1' : '0';
+        for (i = 7; i >= 0; i--) {
+            str[i] = (flags & 1) ? '1' : '0';
             flags >>= 1;
         }
-        return std::string( str, 9 );
+        return std::string(str, 9);
     }
 
     /// @brief Create convenience accessor to modify flags
     /// @note Use `auto` for return type! (will be more clear with C++14)
-    static detail::BitflagsView<int> view( int& flags );
+    static detail::BitflagsView<int> view(int& flags);
 
     /// @brief Create convenience accessor to modify flags
     /// @note Use `auto` for return type! (will be more clear with C++14)
-    static detail::BitflagsView<const int> view( const int& flags );
+    static detail::BitflagsView<const int> view(const int& flags);
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -73,10 +73,10 @@ class BitflagsView<const int> {
     const int flags_;
 
 public:
-    BitflagsView( const int flags ) : flags_( flags ) {}
-    bool check( int bit ) const { return Bitflags::check( flags_, bit ); }
-    bool check_all( int bit ) const { return Bitflags::check_all( flags_, bit ); }
-    bool check_any( int bit ) const { return Bitflags::check_any( flags_, bit ); }
+    BitflagsView(const int flags): flags_(flags) {}
+    bool check(int bit) const { return Bitflags::check(flags_, bit); }
+    bool check_all(int bit) const { return Bitflags::check_all(flags_, bit); }
+    bool check_any(int bit) const { return Bitflags::check_any(flags_, bit); }
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -87,14 +87,14 @@ class BitflagsView<int> {
     int& flags_;
 
 public:
-    BitflagsView( int& flags ) : flags_( flags ) {}
-    void reset( int bit = 0 ) { Bitflags::reset( flags_, bit ); }
-    void set( int bit ) { Bitflags::set( flags_, bit ); }
-    void unset( int bit ) { Bitflags::unset( flags_, bit ); }
-    void toggle( int bit ) { Bitflags::toggle( flags_, bit ); }
-    bool check( int bit ) const { return Bitflags::check( flags_, bit ); }
-    bool check_all( int bit ) const { return Bitflags::check_all( flags_, bit ); }
-    bool check_any( int bit ) const { return Bitflags::check_any( flags_, bit ); }
+    BitflagsView(int& flags): flags_(flags) {}
+    void reset(int bit = 0) { Bitflags::reset(flags_, bit); }
+    void set(int bit) { Bitflags::set(flags_, bit); }
+    void unset(int bit) { Bitflags::unset(flags_, bit); }
+    void toggle(int bit) { Bitflags::toggle(flags_, bit); }
+    bool check(int bit) const { return Bitflags::check(flags_, bit); }
+    bool check_all(int bit) const { return Bitflags::check_all(flags_, bit); }
+    bool check_any(int bit) const { return Bitflags::check_any(flags_, bit); }
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -103,11 +103,11 @@ public:
 
 //----------------------------------------------------------------------------------------------------------------------
 
-inline detail::BitflagsView<const int> Bitflags::view( const int& flags ) {
-    return detail::BitflagsView<const int>( flags );
+inline detail::BitflagsView<const int> Bitflags::view(const int& flags) {
+    return detail::BitflagsView<const int>(flags);
 }
-inline detail::BitflagsView<int> Bitflags::view( int& flags ) {
-    return detail::BitflagsView<int>( flags );
+inline detail::BitflagsView<int> Bitflags::view(int& flags) {
+    return detail::BitflagsView<int>(flags);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

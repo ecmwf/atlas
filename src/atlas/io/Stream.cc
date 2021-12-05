@@ -19,37 +19,37 @@ namespace io {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-Stream::Stream( eckit::DataHandle& datahandle ) : ptr_( &datahandle ) {}
+Stream::Stream(eckit::DataHandle& datahandle): ptr_(&datahandle) {}
 
-Stream::Stream( eckit::DataHandle* datahandle ) : shared_( datahandle ), ptr_( shared_.get() ) {}
+Stream::Stream(eckit::DataHandle* datahandle): shared_(datahandle), ptr_(shared_.get()) {}
 
-Stream::Stream( std::shared_ptr<eckit::DataHandle> datahandle ) : shared_( datahandle ), ptr_( shared_.get() ) {}
+Stream::Stream(std::shared_ptr<eckit::DataHandle> datahandle): shared_(datahandle), ptr_(shared_.get()) {}
 
-Stream::Stream( const Stream& other ) = default;
+Stream::Stream(const Stream& other) = default;
 
 eckit::DataHandle& Stream::datahandle() {
-    ATLAS_ASSERT( ptr_ != nullptr );
+    ATLAS_ASSERT(ptr_ != nullptr);
     return *ptr_;
 }
 
-uint64_t Stream::seek( uint64_t offset ) {
-    ATLAS_ASSERT( ptr_ != nullptr );
-    return std::uint64_t( ptr_->seek( static_cast<long long>( offset ) ) );
+uint64_t Stream::seek(uint64_t offset) {
+    ATLAS_ASSERT(ptr_ != nullptr);
+    return std::uint64_t(ptr_->seek(static_cast<long long>(offset)));
 }
 
 uint64_t Stream::position() {
-    ATLAS_ASSERT( ptr_ != nullptr );
-    return std::uint64_t( ptr_->position() );
+    ATLAS_ASSERT(ptr_ != nullptr);
+    return std::uint64_t(ptr_->position());
 }
 
-uint64_t Stream::write( const void* data, size_t length ) {
-    ATLAS_ASSERT( ptr_ != nullptr );
-    return std::uint64_t( ptr_->write( data, static_cast<long>( length ) ) );
+uint64_t Stream::write(const void* data, size_t length) {
+    ATLAS_ASSERT(ptr_ != nullptr);
+    return std::uint64_t(ptr_->write(data, static_cast<long>(length)));
 }
 
-uint64_t Stream::read( void* data, size_t length ) {
-    ATLAS_ASSERT( ptr_ != nullptr );
-    return std::uint64_t( ptr_->read( data, static_cast<long>( length ) ) );
+uint64_t Stream::read(void* data, size_t length) {
+    ATLAS_ASSERT(ptr_ != nullptr);
+    return std::uint64_t(ptr_->read(data, static_cast<long>(length)));
 }
 
 //---------------------------------------------------------------------------------------------------------------------

@@ -38,10 +38,10 @@ struct Intersect {
         return *this;
     }
 
-    void print( std::ostream& s ) const;
+    void print(std::ostream& s) const;
 
-    friend std::ostream& operator<<( std::ostream& s, const Intersect& p ) {
-        p.print( s );
+    friend std::ostream& operator<<(std::ostream& s, const Intersect& p) {
+        p.print(s);
         return s;
     }
 

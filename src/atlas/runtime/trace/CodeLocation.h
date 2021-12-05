@@ -18,22 +18,22 @@ namespace atlas {
 
 class CodeLocation {
 public:
-    CodeLocation( const CodeLocation& loc ) : CodeLocation( loc.file(), loc.line(), loc.func(), loc.stored_ ) {}
-    CodeLocation( const eckit::CodeLocation& loc ) : loc_( loc ), stored_( false ) {}
-    CodeLocation( const char* file, int line, const char* function, bool store = false ) : stored_( store ) {
-        if ( stored_ ) {
-            if ( file ) {
-                file_str_ = std::string( file );
+    CodeLocation(const CodeLocation& loc): CodeLocation(loc.file(), loc.line(), loc.func(), loc.stored_) {}
+    CodeLocation(const eckit::CodeLocation& loc): loc_(loc), stored_(false) {}
+    CodeLocation(const char* file, int line, const char* function, bool store = false): stored_(store) {
+        if (stored_) {
+            if (file) {
+                file_str_ = std::string(file);
                 file_     = file_str_.c_str();
             }
-            if ( function ) {
-                function_str_ = std::string( function );
+            if (function) {
+                function_str_ = std::string(function);
                 function_     = function_str_.c_str();
             }
-            loc_ = eckit::CodeLocation( file_, line, function_ );
+            loc_ = eckit::CodeLocation(file_, line, function_);
         }
         else {
-            loc_ = eckit::CodeLocation( file, line, function );
+            loc_ = eckit::CodeLocation(file, line, function);
         }
     }
     operator const eckit::CodeLocation&() const { return loc_; }
@@ -48,7 +48,7 @@ public:
     const char* file() const { return loc_.file(); }
     /// accessor to function
     const char* func() const { return loc_.func(); }
-    friend std::ostream& operator<<( std::ostream& s, const CodeLocation& loc );
+    friend std::ostream& operator<<(std::ostream& s, const CodeLocation& loc);
 
 private:
     eckit::CodeLocation loc_;

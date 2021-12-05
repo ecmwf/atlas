@@ -16,9 +16,9 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
-Intersect::Intersect() : u( 0. ), v( 0. ), t( 0. ), success_( false ) {}
+Intersect::Intersect(): u(0.), v(0.), t(0.), success_(false) {}
 
-void Intersect::print( std::ostream& s ) const {
+void Intersect::print(std::ostream& s) const {
     s << "Intersect[u=" << u << ",v=" << v << ",t=" << t << ",success=" << success_ << "]";
 }
 

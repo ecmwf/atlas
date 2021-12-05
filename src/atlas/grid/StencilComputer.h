@@ -34,15 +34,15 @@ class ComputeLower {
 public:
     ComputeLower() = default;
 
-    ComputeLower( const Vertical& z );
+    ComputeLower(const Vertical& z);
 
-    idx_t operator()( double z ) const {
-        idx_t idx = static_cast<idx_t>( std::floor( z * rlevaux_ ) );
+    idx_t operator()(double z) const {
+        idx_t idx = static_cast<idx_t>(std::floor(z * rlevaux_));
 #ifndef NDEBUG
-        ATLAS_ASSERT( idx < static_cast<idx_t>( nvaux_.size() ) && idx >= 0 );
+        ATLAS_ASSERT(idx < static_cast<idx_t>(nvaux_.size()) && idx >= 0);
 #endif
         idx = nvaux_[idx];
-        if ( idx < nlev_ - 1 && z > z_[idx + 1] ) {
+        if (idx < nlev_ - 1 && z > z_[idx + 1]) {
             ++idx;
         }
         return idx;
@@ -61,17 +61,17 @@ class ComputeNorth {
 public:
     ComputeNorth() = default;
 
-    ComputeNorth( const StructuredGrid& grid, idx_t halo );
+    ComputeNorth(const StructuredGrid& grid, idx_t halo);
 
-    idx_t operator()( double y ) const {
-        idx_t j = static_cast<idx_t>( std::floor( ( y_[halo_ + 0] - y ) / dy_ ) );
-        j       = std::max<idx_t>( halo_, std::min<idx_t>( j, halo_ + ny_ - 1 ) );
-        while ( y_[halo_ + j] > y ) {
+    idx_t operator()(double y) const {
+        idx_t j = static_cast<idx_t>(std::floor((y_[halo_ + 0] - y) / dy_));
+        j       = std::max<idx_t>(halo_, std::min<idx_t>(j, halo_ + ny_ - 1));
+        while (y_[halo_ + j] > y) {
             ++j;
         }
         do {
             --j;
-        } while ( y_[halo_ + j] < y );
+        } while (y_[halo_ + j] < y);
 
         return j;
     }
@@ -89,11 +89,11 @@ class ComputeWest {
 public:
     ComputeWest() = default;
 
-    ComputeWest( const StructuredGrid& grid, idx_t halo = 0 );
+    ComputeWest(const StructuredGrid& grid, idx_t halo = 0);
 
-    idx_t operator()( const double& x, idx_t j ) const {
+    idx_t operator()(const double& x, idx_t j) const {
         idx_t jj = halo_ + j;
-        idx_t i  = static_cast<idx_t>( std::floor( ( x - xref[jj] ) / dx[jj] ) );
+        idx_t i  = static_cast<idx_t>(std::floor((x - xref[jj]) / dx[jj]));
         return i;
     }
 };
@@ -136,13 +136,13 @@ class ComputeHorizontalStencil {
 public:
     ComputeHorizontalStencil() = default;
 
-    ComputeHorizontalStencil( const StructuredGrid& grid, idx_t stencil_width );
+    ComputeHorizontalStencil(const StructuredGrid& grid, idx_t stencil_width);
 
     template <typename stencil_t>
-    void operator()( const double& x, const double& y, stencil_t& stencil ) const {
-        stencil.j_begin_ = compute_north_( y ) - stencil_begin_;
-        for ( idx_t jj = 0; jj < stencil_width_; ++jj ) {
-            stencil.i_begin_[jj] = compute_west_( x, stencil.j_begin_ + jj ) - stencil_begin_;
+    void operator()(const double& x, const double& y, stencil_t& stencil) const {
+        stencil.j_begin_ = compute_north_(y) - stencil_begin_;
+        for (idx_t jj = 0; jj < stencil_width_; ++jj) {
+            stencil.i_begin_[jj] = compute_west_(x, stencil.j_begin_ + jj) - stencil_begin_;
         }
     }
 };
@@ -185,22 +185,22 @@ class ComputeVerticalStencil {
 public:
     ComputeVerticalStencil() = default;
 
-    ComputeVerticalStencil( const Vertical& vertical, idx_t stencil_width );
+    ComputeVerticalStencil(const Vertical& vertical, idx_t stencil_width);
 
     template <typename stencil_t>
-    void operator()( const double& z, stencil_t& stencil ) const {
-        idx_t k_begin = compute_lower_( z ) - stencil_begin_;
+    void operator()(const double& z, stencil_t& stencil) const {
+        idx_t k_begin = compute_lower_(z) - stencil_begin_;
         idx_t k_end   = k_begin + stencil_width_;
         idx_t move    = 0;
 
-        if ( k_begin < clip_begin_ ) {
+        if (k_begin < clip_begin_) {
             move = k_begin - clip_begin_;
-            if ( z < vertical_min_ ) {
+            if (z < vertical_min_) {
                 --k_begin;
                 --move;
             }
         }
-        else if ( k_end > clip_end_ ) {
+        else if (k_end > clip_end_) {
             move = k_end - clip_end_;
         }
         stencil.k_begin_    = k_begin - move;

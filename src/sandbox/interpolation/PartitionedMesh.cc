@@ -18,62 +18,62 @@
 namespace atlas {
 namespace interpolation {
 
-PartitionedMesh::PartitionedMesh( const std::string& partitioner, const std::string& generator,
-                                  bool generatorTriangulate, double generatorAngle ) :
-    optionPartitioner_( partitioner ), optionGenerator_( generator ) {
-    generatorParams_.set( "three_dimensional", false );
-    generatorParams_.set( "patch_pole", true );
-    generatorParams_.set( "include_pole", false );
-    generatorParams_.set( "triangulate", generatorTriangulate );
-    generatorParams_.set( "angle", generatorAngle );
-    generatorParams_.set( "fixup", true );
+PartitionedMesh::PartitionedMesh(const std::string& partitioner, const std::string& generator,
+                                 bool generatorTriangulate, double generatorAngle):
+    optionPartitioner_(partitioner), optionGenerator_(generator) {
+    generatorParams_.set("three_dimensional", false);
+    generatorParams_.set("patch_pole", true);
+    generatorParams_.set("include_pole", false);
+    generatorParams_.set("triangulate", generatorTriangulate);
+    generatorParams_.set("angle", generatorAngle);
+    generatorParams_.set("fixup", true);
 }
 
-void PartitionedMesh::writeGmsh( const std::string& fileName, const FieldSet& fields ) {
+void PartitionedMesh::writeGmsh(const std::string& fileName, const FieldSet& fields) {
     util::Config output_config;
     //output_config.set( "coordinates", std::string( "xyz" ) );
-    output_config.set( "ghost", true );
+    output_config.set("ghost", true);
 
-    output::Gmsh out( fileName, output_config );
-    out.write( mesh_ );
+    output::Gmsh out(fileName, output_config);
+    out.write(mesh_);
 
-    if ( not fields.empty() ) {
-        out.write( fields );
+    if (not fields.empty()) {
+        out.write(fields);
     }
 }
 
-void PartitionedMesh::partition( const Grid& grid ) {
-    ATLAS_TRACE( "PartitionedMesh::partition()" );
+void PartitionedMesh::partition(const Grid& grid) {
+    ATLAS_TRACE("PartitionedMesh::partition()");
 
     auto meshgen_config = grid.meshgenerator();
-    meshgen_config.set( generatorParams_ );
-    if ( optionGenerator_ != "default" ) {
-        meshgen_config.set( "type", optionGenerator_ );
+    meshgen_config.set(generatorParams_);
+    if (optionGenerator_ != "default") {
+        meshgen_config.set("type", optionGenerator_);
     }
-    MeshGenerator meshgen( meshgen_config );
+    MeshGenerator meshgen(meshgen_config);
 
     auto partitioner_config = grid.partitioner();
-    if ( optionPartitioner_ != "default" ) {
-        partitioner_config.set( "type", optionPartitioner_ );
+    if (optionPartitioner_ != "default") {
+        partitioner_config.set("type", optionPartitioner_);
     }
-    partitioner_ = Partitioner( partitioner_config );
+    partitioner_ = Partitioner(partitioner_config);
 
-    mesh_ = meshgen.generate( grid, partitioner_.partition( grid ) );
+    mesh_ = meshgen.generate(grid, partitioner_.partition(grid));
 }
 
-void PartitionedMesh::partition( const Grid& grid, const PartitionedMesh& other ) {
-    ATLAS_TRACE( "PartitionedMesh::partition(other)" );
+void PartitionedMesh::partition(const Grid& grid, const PartitionedMesh& other) {
+    ATLAS_TRACE("PartitionedMesh::partition(other)");
 
-    partitioner_ = grid::MatchingMeshPartitioner( other.mesh_, util::Config( "type", optionPartitioner_ ) );
+    partitioner_ = grid::MatchingMeshPartitioner(other.mesh_, util::Config("type", optionPartitioner_));
 
     auto meshgen_config = grid.meshgenerator();
-    meshgen_config.set( generatorParams_ );
-    if ( optionGenerator_ != "default" ) {
-        meshgen_config.set( "type", optionGenerator_ );
+    meshgen_config.set(generatorParams_);
+    if (optionGenerator_ != "default") {
+        meshgen_config.set("type", optionGenerator_);
     }
-    MeshGenerator meshgen( meshgen_config );
+    MeshGenerator meshgen(meshgen_config);
 
-    mesh_ = meshgen.generate( grid, partitioner_.partition( grid ) );
+    mesh_ = meshgen.generate(grid, partitioner_.partition(grid));
 }
 
 }  // namespace interpolation

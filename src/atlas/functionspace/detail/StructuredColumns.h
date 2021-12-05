@@ -64,19 +64,19 @@ class StructuredColumnsChecksumCache;
 
 class StructuredColumns : public FunctionSpaceImpl {
 public:
-    StructuredColumns( const Grid&, const eckit::Configuration& = util::NoConfig() );
+    StructuredColumns(const Grid&, const eckit::Configuration& = util::NoConfig());
 
-    StructuredColumns( const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig() );
+    StructuredColumns(const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig());
 
-    StructuredColumns( const Grid&, const grid::Distribution&, const eckit::Configuration& = util::NoConfig() );
+    StructuredColumns(const Grid&, const grid::Distribution&, const eckit::Configuration& = util::NoConfig());
 
-    StructuredColumns( const Grid&, const grid::Distribution&, const Vertical&,
-                       const eckit::Configuration& = util::NoConfig() );
+    StructuredColumns(const Grid&, const grid::Distribution&, const Vertical&,
+                      const eckit::Configuration& = util::NoConfig());
 
-    StructuredColumns( const Grid&, const Vertical&, const eckit::Configuration& = util::NoConfig() );
+    StructuredColumns(const Grid&, const Vertical&, const eckit::Configuration& = util::NoConfig());
 
-    StructuredColumns( const Grid&, const Vertical&, const grid::Partitioner&,
-                       const eckit::Configuration& = util::NoConfig() );
+    StructuredColumns(const Grid&, const Vertical&, const grid::Partitioner&,
+                      const eckit::Configuration& = util::NoConfig());
 
     virtual ~StructuredColumns() override;
 
@@ -85,21 +85,21 @@ public:
     virtual std::string distribution() const override;
 
     /// @brief Create a Structured field
-    virtual Field createField( const eckit::Configuration& ) const override;
+    virtual Field createField(const eckit::Configuration&) const override;
 
-    virtual Field createField( const Field&, const eckit::Configuration& ) const override;
+    virtual Field createField(const Field&, const eckit::Configuration&) const override;
 
-    void gather( const FieldSet&, FieldSet& ) const;
-    void gather( const Field&, Field& ) const;
+    void gather(const FieldSet&, FieldSet&) const;
+    void gather(const Field&, Field&) const;
 
-    void scatter( const FieldSet&, FieldSet& ) const;
-    void scatter( const Field&, Field& ) const;
+    void scatter(const FieldSet&, FieldSet&) const;
+    void scatter(const Field&, Field&) const;
 
-    virtual void haloExchange( const FieldSet&, bool on_device = false ) const override;
-    virtual void haloExchange( const Field&, bool on_device = false ) const override;
+    virtual void haloExchange(const FieldSet&, bool on_device = false) const override;
+    virtual void haloExchange(const Field&, bool on_device = false) const override;
 
-    virtual void adjointHaloExchange( const FieldSet&, bool on_device = false ) const override;
-    virtual void adjointHaloExchange( const Field&, bool on_device = false ) const override;
+    virtual void adjointHaloExchange(const FieldSet&, bool on_device = false) const override;
+    virtual void adjointHaloExchange(const Field&, bool on_device = false) const override;
 
     idx_t sizeOwned() const { return size_owned_; }
     idx_t sizeHalo() const { return size_halo_; }
@@ -109,8 +109,8 @@ public:
 
     idx_t halo() const { return halo_; }
 
-    std::string checksum( const FieldSet& ) const;
-    std::string checksum( const Field& ) const;
+    std::string checksum(const FieldSet&) const;
+    std::string checksum(const Field&) const;
 
 
     const Vertical& vertical() const { return vertical_; }
@@ -119,11 +119,11 @@ public:
 
     const Projection& projection() const override { return grid().projection(); }
 
-    idx_t i_begin( idx_t j ) const { return i_begin_[j]; }
-    idx_t i_end( idx_t j ) const { return i_end_[j]; }
+    idx_t i_begin(idx_t j) const { return i_begin_[j]; }
+    idx_t i_end(idx_t j) const { return i_end_[j]; }
 
-    idx_t i_begin_halo( idx_t j ) const { return i_begin_halo_[j]; }
-    idx_t i_end_halo( idx_t j ) const { return i_end_halo_[j]; }
+    idx_t i_begin_halo(idx_t j) const { return i_begin_halo_[j]; }
+    idx_t i_end_halo(idx_t j) const { return i_end_halo_[j]; }
 
     idx_t j_begin() const { return j_begin_; }
     idx_t j_end() const { return j_end_; }
@@ -134,9 +134,9 @@ public:
     idx_t k_begin() const { return vertical_.k_begin(); }
     idx_t k_end() const { return vertical_.k_end(); }
 
-    idx_t index( idx_t i, idx_t j ) const {
-        check_bounds( i, j );
-        return ij2gp_( i, j );
+    idx_t index(idx_t i, idx_t j) const {
+        check_bounds(i, j);
+        return ij2gp_(i, j);
     }
 
     Field lonlat() const override { return field_xy_; }
@@ -145,7 +145,7 @@ public:
     Field partition() const { return field_partition_; }
     Field global_index() const override { return field_global_index_; }
     Field remote_index() const override {
-        if ( not field_remote_index_ ) {
+        if (not field_remote_index_) {
             create_remote_index();
         }
         return field_remote_index_;
@@ -154,16 +154,16 @@ public:
     Field index_j() const { return field_index_j_; }
     Field ghost() const override { return field_ghost_; }
 
-    void compute_xy( idx_t i, idx_t j, PointXY& xy ) const;
-    PointXY compute_xy( idx_t i, idx_t j ) const {
+    void compute_xy(idx_t i, idx_t j, PointXY& xy) const;
+    PointXY compute_xy(idx_t i, idx_t j) const {
         PointXY xy;
-        compute_xy( i, j, xy );
+        compute_xy(i, j, xy);
         return xy;
     }
 
     virtual size_t footprint() const override;
 
-    const util::PartitionPolygon& polygon( idx_t halo = 0 ) const override;
+    const util::PartitionPolygon& polygon(idx_t halo = 0) const override;
 
     const util::PartitionPolygons& polygons() const override;
 
@@ -171,26 +171,26 @@ public:
 
 
 private:  // methods
-    idx_t config_size( const eckit::Configuration& config ) const;
-    array::DataType config_datatype( const eckit::Configuration& ) const;
-    std::string config_name( const eckit::Configuration& ) const;
-    idx_t config_levels( const eckit::Configuration& ) const;
-    array::ArrayShape config_shape( const eckit::Configuration& ) const;
-    array::ArrayAlignment config_alignment( const eckit::Configuration& ) const;
-    array::ArraySpec config_spec( const eckit::Configuration& ) const;
-    void set_field_metadata( const eckit::Configuration&, Field& ) const;
+    idx_t config_size(const eckit::Configuration& config) const;
+    array::DataType config_datatype(const eckit::Configuration&) const;
+    std::string config_name(const eckit::Configuration&) const;
+    idx_t config_levels(const eckit::Configuration&) const;
+    array::ArrayShape config_shape(const eckit::Configuration&) const;
+    array::ArrayAlignment config_alignment(const eckit::Configuration&) const;
+    array::ArraySpec config_spec(const eckit::Configuration&) const;
+    void set_field_metadata(const eckit::Configuration&, Field&) const;
 
-    void check_bounds( idx_t i, idx_t j ) const {
+    void check_bounds(idx_t i, idx_t j) const {
 #if ATLAS_ARRAYVIEW_BOUNDS_CHECKING
-        if ( j < j_begin_halo() || j >= j_end_halo() ) {
-            throw_outofbounds( i, j );
+        if (j < j_begin_halo() || j >= j_end_halo()) {
+            throw_outofbounds(i, j);
         }
-        if ( i < i_begin_halo( j ) || i >= i_end_halo( j ) ) {
-            throw_outofbounds( i, j );
+        if (i < i_begin_halo(j) || i >= i_end_halo(j)) {
+            throw_outofbounds(i, j);
         }
 #endif
     }
-    [[noreturn]] void throw_outofbounds( idx_t i, idx_t j ) const;
+    [[noreturn]] void throw_outofbounds(idx_t i, idx_t j) const;
 
     const parallel::GatherScatter& gather() const;
     const parallel::GatherScatter& scatter() const;
@@ -231,11 +231,11 @@ private:  // data
 
     class Map2to1 {
     public:
-        Map2to1() { resize( {1, 0}, {1, 0} ); }
+        Map2to1() { resize({1, 0}, {1, 0}); }
 
-        Map2to1( std::array<idx_t, 2> i_range, std::array<idx_t, 2> j_range ) { resize( i_range, j_range ); }
+        Map2to1(std::array<idx_t, 2> i_range, std::array<idx_t, 2> j_range) { resize(i_range, j_range); }
 
-        void resize( std::array<idx_t, 2> i_range, std::array<idx_t, 2> j_range );
+        void resize(std::array<idx_t, 2> i_range, std::array<idx_t, 2> j_range);
 
         atlas::vector<idx_t> data_;
         idx_t i_min_;
@@ -244,56 +244,56 @@ private:  // data
         idx_t j_max_;
         idx_t j_stride_;
 
-        idx_t operator()( idx_t i, idx_t j ) const { return data_[( i - i_min_ ) + ( j - j_min_ ) * j_stride_] - 1; }
+        idx_t operator()(idx_t i, idx_t j) const { return data_[(i - i_min_) + (j - j_min_) * j_stride_] - 1; }
 
-        void set( idx_t i, idx_t j, idx_t n ) { data_[( i - i_min_ ) + ( j - j_min_ ) * j_stride_] = n + 1; }
+        void set(idx_t i, idx_t j, idx_t n) { data_[(i - i_min_) + (j - j_min_) * j_stride_] = n + 1; }
 
         static idx_t missing() { return std::numeric_limits<idx_t>::max() - 1; }
 
         size_t footprint() const;
 
     private:
-        void print( std::ostream& ) const;
+        void print(std::ostream&) const;
 
-        friend std::ostream& operator<<( std::ostream& s, const Map2to1& p ) {
-            p.print( s );
+        friend std::ostream& operator<<(std::ostream& s, const Map2to1& p) {
+            p.print(s);
             return s;
         }
     };
 
     class IndexRange {
     public:
-        IndexRange() { resize( 1, 0 ); }
+        IndexRange() { resize(1, 0); }
 
-        IndexRange( idx_t min, idx_t max ) { resize( min, max ); }
+        IndexRange(idx_t min, idx_t max) { resize(min, max); }
 
         std::vector<idx_t> data_;
         idx_t min_;
         idx_t max_;
 
-        idx_t operator()( idx_t i ) const { return data_[i - min_]; }
+        idx_t operator()(idx_t i) const { return data_[i - min_]; }
 
-        idx_t& operator()( idx_t i ) { return data_[i - min_]; }
+        idx_t& operator()(idx_t i) { return data_[i - min_]; }
 
-        idx_t operator[]( idx_t i ) const { return data_[i - min_]; }
+        idx_t operator[](idx_t i) const { return data_[i - min_]; }
 
-        idx_t& operator[]( idx_t i ) { return data_[i - min_]; }
+        idx_t& operator[](idx_t i) { return data_[i - min_]; }
 
         idx_t missing() const { return std::numeric_limits<idx_t>::max() - 1; }
 
-        idx_t size() const { return idx_t( data_.size() ); }
+        idx_t size() const { return idx_t(data_.size()); }
 
-        void resize( idx_t min, idx_t max ) {
+        void resize(idx_t min, idx_t max) {
             min_ = min;
             max_ = max;
-            data_.resize( max_ - min_ + 1, missing() + 1 );
+            data_.resize(max_ - min_ + 1, missing() + 1);
         }
 
     private:
-        void print( std::ostream& ) const;
+        void print(std::ostream&) const;
 
-        friend std::ostream& operator<<( std::ostream& s, const IndexRange& p ) {
-            p.print( s );
+        friend std::ostream& operator<<(std::ostream& s, const IndexRange& p) {
+            p.print(s);
             return s;
         }
     };
@@ -316,7 +316,7 @@ private:  // data
     friend struct StructuredColumnsFortranAccess;
     Map2to1 ij2gp_;
 
-    void setup( const grid::Distribution& distribution, const eckit::Configuration& config );
+    void setup(const grid::Distribution& distribution, const eckit::Configuration& config);
 };
 
 // -------------------------------------------------------------------

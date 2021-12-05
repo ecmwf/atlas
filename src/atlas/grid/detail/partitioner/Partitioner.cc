@@ -60,9 +60,9 @@ namespace grid {
 namespace detail {
 namespace partitioner {
 
-Partitioner::Partitioner() : nb_partitions_( mpi::size() ) {}
+Partitioner::Partitioner(): nb_partitions_(mpi::size()) {}
 
-Partitioner::Partitioner( const idx_t nb_partitions ) : nb_partitions_( nb_partitions ) {}
+Partitioner::Partitioner(const idx_t nb_partitions): nb_partitions_(nb_partitions) {}
 
 Partitioner::~Partitioner() = default;
 
@@ -70,15 +70,15 @@ idx_t Partitioner::nb_partitions() const {
     return nb_partitions_;
 }
 
-Distribution Partitioner::partition( const Grid& grid ) const {
-    return new distribution::DistributionArray{grid, atlas::grid::Partitioner( this )};
+Distribution Partitioner::partition(const Grid& grid) const {
+    return new distribution::DistributionArray{grid, atlas::grid::Partitioner(this)};
 }
 
 namespace {
 
 template <typename T>
 void load_builder() {
-    PartitionerBuilder<T>( "tmp" );
+    PartitionerBuilder<T>("tmp");
 }
 
 struct force_link {
@@ -98,118 +98,118 @@ struct force_link {
 
 }  // namespace
 
-PartitionerFactory::PartitionerFactory( const std::string& name ) : name_( name ) {
-    pthread_once( &once, init );
+PartitionerFactory::PartitionerFactory(const std::string& name): name_(name) {
+    pthread_once(&once, init);
 
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
-    if ( m->find( name ) != m->end() ) {
-        throw_Exception( "Partitioner with name [" + name + "] is already registered.", Here() );
+    if (m->find(name) != m->end()) {
+        throw_Exception("Partitioner with name [" + name + "] is already registered.", Here());
     }
-    ( *m )[name] = this;
+    (*m)[name] = this;
 }
 
 PartitionerFactory::~PartitionerFactory() {
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
-    m->erase( name_ );
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
+    m->erase(name_);
 }
 
-void PartitionerFactory::list( std::ostream& out ) {
-    pthread_once( &once, init );
+void PartitionerFactory::list(std::ostream& out) {
+    pthread_once(&once, init);
 
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
     static force_link static_linking;
 
     const char* sep = "";
-    for ( std::map<std::string, PartitionerFactory*>::const_iterator j = m->begin(); j != m->end(); ++j ) {
-        out << sep << ( *j ).first;
+    for (std::map<std::string, PartitionerFactory*>::const_iterator j = m->begin(); j != m->end(); ++j) {
+        out << sep << (*j).first;
         sep = ", ";
     }
 }
 
-bool PartitionerFactory::has( const std::string& name ) {
-    pthread_once( &once, init );
+bool PartitionerFactory::has(const std::string& name) {
+    pthread_once(&once, init);
 
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
     static force_link static_linking;
 
-    return ( m->find( name ) != m->end() );
+    return (m->find(name) != m->end());
 }
 
-Partitioner* PartitionerFactory::build( const std::string& name ) {
-    pthread_once( &once, init );
+Partitioner* PartitionerFactory::build(const std::string& name) {
+    pthread_once(&once, init);
 
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
     static force_link static_linking;
 
-    std::map<std::string, PartitionerFactory*>::const_iterator j = m->find( name );
+    std::map<std::string, PartitionerFactory*>::const_iterator j = m->find(name);
 
     Log::debug() << "Looking for PartitionerFactory [" << name << "]" << std::endl;
 
-    if ( j == m->end() ) {
+    if (j == m->end()) {
         Log::error() << "No PartitionerFactory for [" << name << "]" << '\n';
         Log::error() << "PartitionerFactories are:" << '\n';
-        for ( j = m->begin(); j != m->end(); ++j ) {
-            Log::error() << "   " << ( *j ).first << '\n';
+        for (j = m->begin(); j != m->end(); ++j) {
+            Log::error() << "   " << (*j).first << '\n';
         }
         Log::error() << std::flush;
-        throw_Exception( std::string( "No PartitionerFactory called " ) + name );
+        throw_Exception(std::string("No PartitionerFactory called ") + name);
     }
 
-    return ( *j ).second->make();
+    return (*j).second->make();
 }
 
-Partitioner* PartitionerFactory::build( const std::string& name, const idx_t nb_partitions ) {
+Partitioner* PartitionerFactory::build(const std::string& name, const idx_t nb_partitions) {
     atlas::util::Config config;
-    return build( name, nb_partitions, config );
+    return build(name, nb_partitions, config);
 }
 
-Partitioner* PartitionerFactory::build( const std::string& name, const idx_t nb_partitions,
-                                        const eckit::Parametrisation& config ) {
-    pthread_once( &once, init );
+Partitioner* PartitionerFactory::build(const std::string& name, const idx_t nb_partitions,
+                                       const eckit::Parametrisation& config) {
+    pthread_once(&once, init);
 
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
     static force_link static_linking;
 
-    std::map<std::string, PartitionerFactory*>::const_iterator j = m->find( name );
+    std::map<std::string, PartitionerFactory*>::const_iterator j = m->find(name);
 
     Log::debug() << "Looking for PartitionerFactory [" << name << "]" << '\n';
 
-    if ( j == m->end() ) {
+    if (j == m->end()) {
         Log::error() << "No PartitionerFactory for [" << name << "]" << '\n';
         Log::error() << "PartitionerFactories are:" << '\n';
-        for ( j = m->begin(); j != m->end(); ++j ) {
-            Log::error() << "   " << ( *j ).first << '\n';
+        for (j = m->begin(); j != m->end(); ++j) {
+            Log::error() << "   " << (*j).first << '\n';
         }
-        throw_Exception( std::string( "No PartitionerFactory called " ) + name );
+        throw_Exception(std::string("No PartitionerFactory called ") + name);
     }
 
-    return ( *j ).second->make( nb_partitions, config );
+    return (*j).second->make(nb_partitions, config);
 }
 
 
-Partitioner* MatchingPartitionerFactory::build( const std::string& type, const Mesh& partitioned ) {
-    if ( type == MatchingMeshPartitionerSphericalPolygon::static_type() ) {
-        return new MatchingMeshPartitionerSphericalPolygon( partitioned );
+Partitioner* MatchingPartitionerFactory::build(const std::string& type, const Mesh& partitioned) {
+    if (type == MatchingMeshPartitionerSphericalPolygon::static_type()) {
+        return new MatchingMeshPartitionerSphericalPolygon(partitioned);
     }
-    else if ( type == MatchingMeshPartitionerLonLatPolygon::static_type() ) {
-        return new MatchingMeshPartitionerLonLatPolygon( partitioned );
+    else if (type == MatchingMeshPartitionerLonLatPolygon::static_type()) {
+        return new MatchingMeshPartitionerLonLatPolygon(partitioned);
     }
-    else if ( type == MatchingMeshPartitionerBruteForce::static_type() ) {
-        return new MatchingMeshPartitionerBruteForce( partitioned );
+    else if (type == MatchingMeshPartitionerBruteForce::static_type()) {
+        return new MatchingMeshPartitionerBruteForce(partitioned);
     }
     else {
         ATLAS_NOTIMPLEMENTED;
     }
 }
 
-Partitioner* MatchingPartitionerFactory::build( const std::string& type, const FunctionSpace& partitioned ) {
-    if ( type == MatchingFunctionSpacePartitionerLonLatPolygon::static_type() ) {
-        return new MatchingFunctionSpacePartitionerLonLatPolygon( partitioned );
+Partitioner* MatchingPartitionerFactory::build(const std::string& type, const FunctionSpace& partitioned) {
+    if (type == MatchingFunctionSpacePartitionerLonLatPolygon::static_type()) {
+        return new MatchingFunctionSpacePartitionerLonLatPolygon(partitioned);
     }
     else {
         ATLAS_NOTIMPLEMENTED;

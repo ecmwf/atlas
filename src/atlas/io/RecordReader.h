@@ -25,43 +25,43 @@ namespace io {
 
 class RecordReader {
 public:
-    RecordReader( const Record::URI& ref );
+    RecordReader(const Record::URI& ref);
 
-    RecordReader( const std::string& path, std::uint64_t offset = 0 );
+    RecordReader(const std::string& path, std::uint64_t offset = 0);
 
-    RecordReader( Stream stream, std::uint64_t offset = 0 );
+    RecordReader(Stream stream, std::uint64_t offset = 0);
 
     template <typename T>
-    ReadRequest& read( const std::string& key, T& value ) {
-        ATLAS_TRACE( "read(" + key + ")" );
+    ReadRequest& read(const std::string& key, T& value) {
+        ATLAS_TRACE("read(" + key + ")");
 
-        if ( stream_ ) {
-            ATLAS_TRACE( "stream" );
-            requests_.emplace( key, ReadRequest{stream_, offset_, key, value} );
+        if (stream_) {
+            ATLAS_TRACE("stream");
+            requests_.emplace(key, ReadRequest{stream_, offset_, key, value});
         }
         else {
-            requests_.emplace( key, ReadRequest{uri( key ), value} );
+            requests_.emplace(key, ReadRequest{uri(key), value});
         }
-        if ( do_checksum_ >= 0 ) {
-            requests_.at( key ).checksum( do_checksum_ );
+        if (do_checksum_ >= 0) {
+            requests_.at(key).checksum(do_checksum_);
         }
-        return requests_.at( key );
+        return requests_.at(key);
     }
 
-    void wait( const std::string& key );
+    void wait(const std::string& key);
 
     void wait();
 
-    ReadRequest& request( const std::string& key );
+    ReadRequest& request(const std::string& key);
 
-    Metadata metadata( const std::string& key );
+    Metadata metadata(const std::string& key);
 
-    void checksum( bool );
+    void checksum(bool);
 
 private:
     Record::URI uri() const;
 
-    RecordItem::URI uri( const std::string& key ) const;
+    RecordItem::URI uri(const std::string& key) const;
 
 private:
     Session session_;

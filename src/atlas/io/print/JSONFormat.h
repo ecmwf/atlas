@@ -24,9 +24,9 @@ namespace io {
 
 class JSONFormat {
 public:
-    JSONFormat( const Record::URI& record, const util::Config& config );
+    JSONFormat(const Record::URI& record, const util::Config& config);
 
-    void print( std::ostream& ) const;
+    void print(std::ostream&) const;
 
 private:
     const Record record_;

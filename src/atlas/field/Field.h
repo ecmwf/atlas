@@ -56,32 +56,32 @@ namespace atlas {
 ///    Field field = functionspace.createField<double>( ... );
 ///    auto view = array::make_view<double,2>( field );
 /// @endcode
-class Field : DOXYGEN_HIDE( public util::ObjectHandle<field::FieldImpl> ) {
+class Field : DOXYGEN_HIDE(public util::ObjectHandle<field::FieldImpl>) {
 public:
     using Handle::Handle;
     Field() = default;
 
     /// @brief Create field from parametrisation
-    Field( const eckit::Parametrisation& );
+    Field(const eckit::Parametrisation&);
 
     /// @brief Create field with given name, Datatype and ArrayShape
-    Field( const std::string& name, array::DataType, const array::ArrayShape& = array::ArrayShape() );
+    Field(const std::string& name, array::DataType, const array::ArrayShape& = array::ArrayShape());
 
     /// @brief Create field with given name, Datatype and ArraySpec
-    Field( const std::string& name, array::DataType, array::ArraySpec&& );
+    Field(const std::string& name, array::DataType, array::ArraySpec&&);
 
     /// @brief Create field with given name, and take ownership of given Array
-    Field( const std::string& name, array::Array* );
+    Field(const std::string& name, array::Array*);
 
     /// @brief Create field by wrapping existing data, Datatype of template and
     /// ArraySpec
     template <typename DATATYPE>
-    Field( const std::string& name, DATATYPE* data, const array::ArraySpec& );
+    Field(const std::string& name, DATATYPE* data, const array::ArraySpec&);
 
     /// @brief Create field by wrapping existing data, Datatype of template and
     /// ArrayShape
     template <typename DATATYPE>
-    Field( const std::string& name, DATATYPE* data, const array::ArrayShape& );
+    Field(const std::string& name, DATATYPE* data, const array::ArrayShape&);
 
     // -- Conversion
 
@@ -107,16 +107,16 @@ public:
     const std::string& name() const;
 
     /// @brief Rename this field
-    void rename( const std::string& name );
+    void rename(const std::string& name);
 
     /// @brief Access to metadata associated to this field
     const util::Metadata& metadata() const;
     util::Metadata& metadata();
 
     /// @brief Resize field to given shape
-    void resize( const array::ArrayShape& shape );
+    void resize(const array::ArrayShape& shape);
 
-    void insert( idx_t idx1, idx_t size1 );
+    void insert(idx_t idx1, idx_t size1);
 
     /// @brief Shape of this field in Fortran style (reverse order of C style)
     const std::vector<int>& shapef() const;
@@ -131,10 +131,10 @@ public:
     const array::ArrayStrides& strides() const;
 
     /// @brief Shape of this field associated to index 'i'
-    idx_t shape( idx_t i ) const;
+    idx_t shape(idx_t i) const;
 
     /// @brief Stride of this field associated to index 'i'
-    idx_t stride( idx_t i ) const;
+    idx_t stride(idx_t i) const;
 
     /// @brief Number of values stored in this field
     size_t size() const;
@@ -148,20 +148,20 @@ public:
     bool contiguous() const;
 
     /// @brief Output information of field
-    friend std::ostream& operator<<( std::ostream& os, const Field& v );
+    friend std::ostream& operator<<(std::ostream& os, const Field& v);
 
     /// @brief Output information of field plus raw data
-    void dump( std::ostream& os ) const;
+    void dump(std::ostream& os) const;
 
     /// Metadata that is more intrinsic to the Field, and queried often
-    void set_levels( idx_t n );
+    void set_levels(idx_t n);
     idx_t levels() const;
 
     /// Metadata that is more intrinsic to the Field, and queried often
-    void set_variables( idx_t n );
+    void set_variables(idx_t n);
     idx_t variables() const;
 
-    void set_functionspace( const FunctionSpace& functionspace );
+    void set_functionspace(const FunctionSpace& functionspace);
     const FunctionSpace& functionspace() const;
 
     /// @brief Return the memory footprint of the Field
@@ -169,10 +169,10 @@ public:
 
     bool dirty() const;
 
-    void set_dirty( bool = true ) const;
+    void set_dirty(bool = true) const;
 
-    void haloExchange( bool on_device = false ) const;
-    void adjointHaloExchange( bool on_device = false ) const;
+    void haloExchange(bool on_device = false) const;
+    void adjointHaloExchange(bool on_device = false) const;
 
     // -- Methods related to host-device synchronisation
     void updateHost() const;
@@ -184,14 +184,14 @@ public:
     void reactivateHostWriteViews() const;
 };
 
-extern template Field::Field( const std::string&, float*, const array::ArraySpec& );
-extern template Field::Field( const std::string&, float*, const array::ArrayShape& );
-extern template Field::Field( const std::string&, double*, const array::ArraySpec& );
-extern template Field::Field( const std::string&, double*, const array::ArrayShape& );
-extern template Field::Field( const std::string&, long*, const array::ArraySpec& );
-extern template Field::Field( const std::string&, long*, const array::ArrayShape& );
-extern template Field::Field( const std::string&, int*, const array::ArraySpec& );
-extern template Field::Field( const std::string&, int*, const array::ArrayShape& );
+extern template Field::Field(const std::string&, float*, const array::ArraySpec&);
+extern template Field::Field(const std::string&, float*, const array::ArrayShape&);
+extern template Field::Field(const std::string&, double*, const array::ArraySpec&);
+extern template Field::Field(const std::string&, double*, const array::ArrayShape&);
+extern template Field::Field(const std::string&, long*, const array::ArraySpec&);
+extern template Field::Field(const std::string&, long*, const array::ArrayShape&);
+extern template Field::Field(const std::string&, int*, const array::ArraySpec&);
+extern template Field::Field(const std::string&, int*, const array::ArrayShape&);
 
 //------------------------------------------------------------------------------------------------------
 

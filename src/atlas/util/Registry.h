@@ -27,25 +27,25 @@ class Registry {
 public:
     Registry() = default;
 
-    void add( const std::string& key, T&& value ) {
-        ATLAS_ASSERT_MSG( m_.emplace( key, std::move( value ) ).second, "ObjectRegistry: duplicate '" + key + "'" );
+    void add(const std::string& key, T&& value) {
+        ATLAS_ASSERT_MSG(m_.emplace(key, std::move(value)).second, "ObjectRegistry: duplicate '" + key + "'");
     }
 
-    bool has( const std::string& key ) { return m_.find( key ) != m_.end(); }
+    bool has(const std::string& key) { return m_.find(key) != m_.end(); }
 
-    T get( const std::string& key ) {
-        auto j = m_.find( key );
-        if ( j != m_.end() ) {
+    T get(const std::string& key) {
+        auto j = m_.find(key);
+        if (j != m_.end()) {
             return j->second;
         }
 
-        list( Log::error() << "Registry: unknown '" << key << "', choices are: " );
-        throw_Exception( "Registry: unknown '" + key + "'" );
+        list(Log::error() << "Registry: unknown '" << key << "', choices are: ");
+        throw_Exception("Registry: unknown '" + key + "'");
     }
 
-    void list( std::ostream& out ) {
+    void list(std::ostream& out) {
         const char* sep = "";
-        for ( const auto& j : m_ ) {
+        for (const auto& j : m_) {
             out << sep << j.first;
             sep = ", ";
         }
@@ -53,8 +53,8 @@ public:
 
     std::vector<std::string> keys() {
         std::vector<std::string> keys;
-        for ( const auto& j : m_ ) {
-            keys.push_back( j.first );
+        for (const auto& j : m_) {
+            keys.push_back(j.first);
         }
         return keys;
     }

@@ -22,8 +22,7 @@ namespace partitioner {
 class EqualBandsPartitioner : public BandsPartitioner {
 public:
     EqualBandsPartitioner();
-    EqualBandsPartitioner( int N, const eckit::Parametrisation& config = util::NoConfig() ) :
-        BandsPartitioner( N, 1 ) {}
+    EqualBandsPartitioner(int N, const eckit::Parametrisation& config = util::NoConfig()): BandsPartitioner(N, 1) {}
     std::string type() const override { return static_type(); }
     static std::string static_type() { return "equal_bands"; }
 };

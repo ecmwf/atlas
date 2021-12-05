@@ -28,14 +28,14 @@ public:
 // Class used to avoid any printing before and after a timer
 class NoLogging {
 public:
-    NoLogging( bool state );
-    NoLogging( std::ostream& channel );
+    NoLogging(bool state);
+    NoLogging(std::ostream& channel);
 
 public:  // static methods
     static std::ostream& channel();
     static bool enabled();
-    static void start( const std::string& ) {}
-    static void stop( const std::string&, double ) {}
+    static void start(const std::string&) {}
+    static void stop(const std::string&, double) {}
 };
 
 //-----------------------------------------------------------------------------------------------------------
@@ -46,15 +46,15 @@ public:  // static methods
 //     timer-name ... done : 5s
 class Logging {
 public:
-    Logging( bool state );
-    Logging( std::ostream& channel );
+    Logging(bool state);
+    Logging(std::ostream& channel);
     virtual ~Logging();
 
 public:  // static methods
     static std::ostream& channel();
     static bool enabled();
-    static void start( const std::string& title );
-    static void stop( const std::string& title, double seconds );
+    static void start(const std::string& title);
+    static void stop(const std::string& title, double seconds);
 
 private:
     std::ostream* previous_state_;
@@ -70,8 +70,8 @@ public:
     using Logging::Logging;
 
 public:  // static methods
-    static void start( const std::string& ) {}
-    static void stop( const std::string& title, double seconds );
+    static void start(const std::string&) {}
+    static void stop(const std::string& title, double seconds);
 };
 
 //-----------------------------------------------------------------------------------------------------------

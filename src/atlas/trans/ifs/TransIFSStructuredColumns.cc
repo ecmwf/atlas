@@ -16,23 +16,23 @@
 namespace atlas {
 namespace trans {
 
-TransIFSStructuredColumns::TransIFSStructuredColumns( const functionspace::StructuredColumns& gp,
-                                                      const functionspace::Spectral& sp,
-                                                      const eckit::Configuration& config ) :
-    TransIFSStructuredColumns( Cache(), gp, sp, config ) {}
+TransIFSStructuredColumns::TransIFSStructuredColumns(const functionspace::StructuredColumns& gp,
+                                                     const functionspace::Spectral& sp,
+                                                     const eckit::Configuration& config):
+    TransIFSStructuredColumns(Cache(), gp, sp, config) {}
 
-TransIFSStructuredColumns::TransIFSStructuredColumns( const Cache& cache, const functionspace::StructuredColumns& gp,
-                                                      const functionspace::Spectral& sp,
-                                                      const eckit::Configuration& config ) :
-    TransIFS( cache, gp.grid(), sp.truncation(), config ) {
-    assertCompatibleDistributions( gp, sp );
+TransIFSStructuredColumns::TransIFSStructuredColumns(const Cache& cache, const functionspace::StructuredColumns& gp,
+                                                     const functionspace::Spectral& sp,
+                                                     const eckit::Configuration& config):
+    TransIFS(cache, gp.grid(), sp.truncation(), config) {
+    assertCompatibleDistributions(gp, sp);
     spectral_ = sp;
 }
 
 TransIFSStructuredColumns::~TransIFSStructuredColumns() = default;
 
 namespace {
-static TransBuilderFunctionSpace<TransIFSStructuredColumns> builder( "ifs(StructuredColumns,Spectral)", "ifs" );
+static TransBuilderFunctionSpace<TransIFSStructuredColumns> builder("ifs(StructuredColumns,Spectral)", "ifs");
 }
 
 }  // namespace trans

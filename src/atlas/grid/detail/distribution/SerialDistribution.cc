@@ -20,13 +20,13 @@ namespace grid {
 namespace detail {
 namespace distribution {
 
-SerialDistribution::SerialDistribution( const Grid& grid ) : DistributionFunctionT<SerialDistribution>( grid ) {
+SerialDistribution::SerialDistribution(const Grid& grid): DistributionFunctionT<SerialDistribution>(grid) {
     type_          = "serial";
     nb_partitions_ = 1;
     size_          = grid.size();
-    nb_pts_.resize( nb_partitions_, grid.size() );
-    max_pts_ = *std::max_element( nb_pts_.begin(), nb_pts_.end() );
-    min_pts_ = *std::min_element( nb_pts_.begin(), nb_pts_.end() );
+    nb_pts_.resize(nb_partitions_, grid.size());
+    max_pts_ = *std::max_element(nb_pts_.begin(), nb_pts_.end());
+    min_pts_ = *std::min_element(nb_pts_.begin(), nb_pts_.end());
 }
 
 }  // namespace distribution

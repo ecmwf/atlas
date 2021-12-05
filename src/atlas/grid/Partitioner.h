@@ -65,25 +65,25 @@ namespace grid {
 
 // ------------------------------------------------------------------
 
-class Partitioner : DOXYGEN_HIDE( public util::ObjectHandle<detail::partitioner::Partitioner> ) {
+class Partitioner : DOXYGEN_HIDE(public util::ObjectHandle<detail::partitioner::Partitioner>) {
 public:
     using Config         = eckit::Parametrisation;
     using Implementation = detail::partitioner::Partitioner;
 
 public:
-    static bool exists( const std::string& type );
+    static bool exists(const std::string& type);
 
 public:
     using Handle::Handle;
     Partitioner() = default;
-    Partitioner( const std::string& type );
-    Partitioner( const std::string& type, const idx_t nb_partitions );
-    Partitioner( const Config& );
-    Partitioner( const std::string& type, const Config& );
+    Partitioner(const std::string& type);
+    Partitioner(const std::string& type, const idx_t nb_partitions);
+    Partitioner(const Config&);
+    Partitioner(const std::string& type, const Config&);
 
-    void partition( const Grid& grid, int part[] ) const;
+    void partition(const Grid& grid, int part[]) const;
 
-    Distribution partition( const Grid& grid ) const;
+    Distribution partition(const Grid& grid) const;
 
     idx_t nb_partitions() const;
 
@@ -97,14 +97,14 @@ public:
     using Config = eckit::Parametrisation;
 
 public:
-    static bool exists( const std::string& type );
+    static bool exists(const std::string& type);
 
 public:
     MatchingPartitioner();
-    MatchingPartitioner( const Mesh& );
-    MatchingPartitioner( const Mesh&, const Config& );
-    MatchingPartitioner( const FunctionSpace& );
-    MatchingPartitioner( const FunctionSpace&, const Config& );
+    MatchingPartitioner(const Mesh&);
+    MatchingPartitioner(const Mesh&, const Config&);
+    MatchingPartitioner(const FunctionSpace&);
+    MatchingPartitioner(const FunctionSpace&, const Config&);
 };
 
 // ------------------------------------------------------------------
@@ -120,16 +120,16 @@ public:
 using GridImpl = detail::grid::Grid;
 
 extern "C" {
-Partitioner::Implementation* atlas__grid__Partitioner__new( const Partitioner::Config* config );
+Partitioner::Implementation* atlas__grid__Partitioner__new(const Partitioner::Config* config);
 
-Partitioner::Implementation* atlas__grid__Partitioner__new_type( const char* type );
+Partitioner::Implementation* atlas__grid__Partitioner__new_type(const char* type);
 
-Partitioner::Implementation* atlas__grid__MatchingMeshPartitioner__new( const mesh::detail::MeshImpl* mesh,
-                                                                        const Partitioner::Config* config );
+Partitioner::Implementation* atlas__grid__MatchingMeshPartitioner__new(const mesh::detail::MeshImpl* mesh,
+                                                                       const Partitioner::Config* config);
 Partitioner::Implementation* atlas__grid__MatchingFunctionSpacePartitioner__new(
-    const functionspace::FunctionSpaceImpl* functionspace, const Partitioner::Config* config );
-void atlas__grid__Partitioner__delete( Partitioner::Implementation* This );
-DistributionImpl* atlas__grid__Partitioner__partition( const Partitioner::Implementation* This, const GridImpl* grid );
+    const functionspace::FunctionSpaceImpl* functionspace, const Partitioner::Config* config);
+void atlas__grid__Partitioner__delete(Partitioner::Implementation* This);
+DistributionImpl* atlas__grid__Partitioner__partition(const Partitioner::Implementation* This, const GridImpl* grid);
 }
 #endif
 

@@ -20,7 +20,7 @@ namespace atlas {
 
 class Version : public Tool {
 public:
-    Version( int argc, char** argv ) : Tool( argc, argv ) {}
+    Version(int argc, char** argv): Tool(argc, argv) {}
 
     ~Version() override = default;
 
@@ -28,19 +28,19 @@ public:
 };
 
 void Version::run() {
-    if ( Resource<bool>( "--version", false ) ) {
+    if (Resource<bool>("--version", false)) {
         Log::info() << atlas::Library::instance().version() << std::endl;
         return;
     }
-    else if ( Resource<bool>( "--git", false ) ) {
-        Log::info() << atlas::Library::instance().gitsha1( 12 ) << std::endl;
+    else if (Resource<bool>("--git", false)) {
+        Log::info() << atlas::Library::instance().gitsha1(12) << std::endl;
         return;
     }
-    else if ( Resource<bool>( "--info", false ) ) {
+    else if (Resource<bool>("--info", false)) {
         Log::info() << atlas::Library::instance().information() << std::endl;
         return;
     }
-    else if ( Resource<bool>( "--help", false ) ) {
+    else if (Resource<bool>("--help", false)) {
         Log::info() << "NAME\n"
                        "       atlas - Framework for parallel flexible data structures on "
                        "the sphere\n"
@@ -80,7 +80,7 @@ void Version::run() {
 
 using namespace atlas;
 
-int main( int argc, char** argv ) {
-    Version tool( argc, argv );
+int main(int argc, char** argv) {
+    Version tool(argc, argv);
     return tool.start();
 }

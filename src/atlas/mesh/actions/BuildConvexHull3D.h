@@ -20,7 +20,7 @@ namespace actions {
 /// Creates a 3D convex-hull on the mesh points
 class BuildConvexHull3D {
 public:
-    void operator()( Mesh& ) const;
+    void operator()(Mesh&) const;
 };
 
 }  // namespace actions

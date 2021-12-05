@@ -19,28 +19,28 @@ namespace functionspace {
 // Helper functions to get fields.
 namespace {
 template <typename BaseFunctionSpace>
-Field getTij( const Mesh& mesh );
+Field getTij(const Mesh& mesh);
 
 template <typename BaseFunctionSpace>
-Field getGhost( const Mesh& mesh );
+Field getGhost(const Mesh& mesh);
 
 template <>
-Field getTij<NodeColumns>( const Mesh& mesh ) {
-    return mesh.nodes().field( "tij" );
+Field getTij<NodeColumns>(const Mesh& mesh) {
+    return mesh.nodes().field("tij");
 }
 
 template <>
-Field getTij<CellColumns>( const Mesh& mesh ) {
-    return mesh.cells().field( "tij" );
+Field getTij<CellColumns>(const Mesh& mesh) {
+    return mesh.cells().field("tij");
 }
 
 template <>
-Field getGhost<NodeColumns>( const Mesh& mesh ) {
+Field getGhost<NodeColumns>(const Mesh& mesh) {
     return mesh.nodes().ghost();
 }
 
 template <>
-Field getGhost<CellColumns>( const Mesh& mesh ) {
+Field getGhost<CellColumns>(const Mesh& mesh) {
     // No ghost field for CellColumns. Halo field is next best thing.
     return mesh.cells().halo();
 }
@@ -52,34 +52,34 @@ class CubedSphereStructureCache : public util::Cache<std::string, detail::CubedS
                                   public mesh::detail::MeshObserver {
 private:
     using Base = util::Cache<std::string, detail::CubedSphereStructure>;
-    CubedSphereStructureCache() : Base( "CubedSphereStructureCache<" + BaseFunctionSpace::type() + ">" ) {}
+    CubedSphereStructureCache(): Base("CubedSphereStructureCache<" + BaseFunctionSpace::type() + ">") {}
 
 public:
     static CubedSphereStructureCache& instance() {
         static CubedSphereStructureCache inst;
         return inst;
     }
-    util::ObjectHandle<value_type> get_or_create( const BaseFunctionSpace* functionspace ) {
-        ATLAS_ASSERT( functionspace );
+    util::ObjectHandle<value_type> get_or_create(const BaseFunctionSpace* functionspace) {
+        ATLAS_ASSERT(functionspace);
         auto& mesh = functionspace->mesh();
-        ATLAS_ASSERT( mesh );
+        ATLAS_ASSERT(mesh);
         auto& mesh_impl = *mesh.get();
-        registerMesh( mesh_impl );
-        creator_type creator                 = std::bind( &CubedSphereStructureCache::create, mesh );
-        util::ObjectHandle<value_type> value = Base::get_or_create( key( mesh_impl ), creator );
+        registerMesh(mesh_impl);
+        creator_type creator                 = std::bind(&CubedSphereStructureCache::create, mesh);
+        util::ObjectHandle<value_type> value = Base::get_or_create(key(mesh_impl), creator);
         return value;
     }
-    void onMeshDestruction( mesh::detail::MeshImpl& mesh ) override { remove( key( mesh ) ); }
+    void onMeshDestruction(mesh::detail::MeshImpl& mesh) override { remove(key(mesh)); }
 
 private:
-    static Base::key_type key( const mesh::detail::MeshImpl& mesh ) {
+    static Base::key_type key(const mesh::detail::MeshImpl& mesh) {
         std::ostringstream key;
         key << "mesh[address=" << &mesh << "]";
         return key.str();
     }
 
-    static value_type* create( const Mesh& mesh ) {
-        value_type* value = new value_type( getTij<BaseFunctionSpace>( mesh ), getGhost<BaseFunctionSpace>( mesh ) );
+    static value_type* create(const Mesh& mesh) {
+        value_type* value = new value_type(getTij<BaseFunctionSpace>(mesh), getGhost<BaseFunctionSpace>(mesh));
         return value;
     }
 };
@@ -90,31 +90,30 @@ private:
 // All constructors pass arguments through to BaseFunctionSpace, then construct
 // CubedSphereStructure.
 template <typename BaseFunctionSpace>
-CubedSphereColumns<BaseFunctionSpace>::CubedSphereColumns() :
-    BaseFunctionSpace(), cubedSphereColumnsHandle_( new detail::CubedSphereStructure() ) {}
+CubedSphereColumns<BaseFunctionSpace>::CubedSphereColumns():
+    BaseFunctionSpace(), cubedSphereColumnsHandle_(new detail::CubedSphereStructure()) {}
 
 template <typename BaseFunctionSpace>
-CubedSphereColumns<BaseFunctionSpace>::CubedSphereColumns( const FunctionSpace& functionspace ) :
-    BaseFunctionSpace( [&]() {
-        bool compatible = dynamic_cast<const typename BaseFunctionSpace::Implementation*>( functionspace.get() );
-        if ( not compatible ) {
-            ATLAS_THROW_EXCEPTION( "FunctionSpace " << functionspace.type() << " can not be interpreted as a "
-                                                    << BaseFunctionSpace::type() );
+CubedSphereColumns<BaseFunctionSpace>::CubedSphereColumns(const FunctionSpace& functionspace):
+    BaseFunctionSpace([&]() {
+        bool compatible = dynamic_cast<const typename BaseFunctionSpace::Implementation*>(functionspace.get());
+        if (not compatible) {
+            ATLAS_THROW_EXCEPTION("FunctionSpace " << functionspace.type() << " can not be interpreted as a "
+                                                   << BaseFunctionSpace::type());
         }
         return functionspace;
-    }() ),
-    cubedSphereColumnsHandle_( CubedSphereStructureCache<BaseFunctionSpace>::instance().get_or_create( this ) ) {}
+    }()),
+    cubedSphereColumnsHandle_(CubedSphereStructureCache<BaseFunctionSpace>::instance().get_or_create(this)) {}
 
 template <typename BaseFunctionSpace>
-CubedSphereColumns<BaseFunctionSpace>::CubedSphereColumns( const Mesh& mesh,
-                                                           const eckit::Configuration& configuration ) :
-    BaseFunctionSpace( mesh, configuration ),
-    cubedSphereColumnsHandle_( CubedSphereStructureCache<BaseFunctionSpace>::instance().get_or_create( this ) ) {}
+CubedSphereColumns<BaseFunctionSpace>::CubedSphereColumns(const Mesh& mesh, const eckit::Configuration& configuration):
+    BaseFunctionSpace(mesh, configuration),
+    cubedSphereColumnsHandle_(CubedSphereStructureCache<BaseFunctionSpace>::instance().get_or_create(this)) {}
 
 template <typename BaseFunctionSpace>
-CubedSphereColumns<BaseFunctionSpace>::CubedSphereColumns( const Mesh& mesh ) :
-    BaseFunctionSpace( mesh ),
-    cubedSphereColumnsHandle_( CubedSphereStructureCache<BaseFunctionSpace>::instance().get_or_create( this ) ) {}
+CubedSphereColumns<BaseFunctionSpace>::CubedSphereColumns(const Mesh& mesh):
+    BaseFunctionSpace(mesh),
+    cubedSphereColumnsHandle_(CubedSphereStructureCache<BaseFunctionSpace>::instance().get_or_create(this)) {}
 
 template <typename BaseFunctionSpace>
 idx_t CubedSphereColumns<BaseFunctionSpace>::invalid_index() const {
@@ -132,28 +131,28 @@ idx_t CubedSphereColumns<BaseFunctionSpace>::nb_owned_elems() const {
 }
 
 template <typename BaseFunctionSpace>
-idx_t CubedSphereColumns<BaseFunctionSpace>::i_begin( idx_t t ) const {
-    return cubedSphereColumnsHandle_.get()->i_begin( t );
+idx_t CubedSphereColumns<BaseFunctionSpace>::i_begin(idx_t t) const {
+    return cubedSphereColumnsHandle_.get()->i_begin(t);
 }
 
 template <typename BaseFunctionSpace>
-idx_t CubedSphereColumns<BaseFunctionSpace>::i_end( idx_t t ) const {
-    return cubedSphereColumnsHandle_.get()->i_end( t );
+idx_t CubedSphereColumns<BaseFunctionSpace>::i_end(idx_t t) const {
+    return cubedSphereColumnsHandle_.get()->i_end(t);
 }
 
 template <typename BaseFunctionSpace>
-idx_t CubedSphereColumns<BaseFunctionSpace>::j_begin( idx_t t ) const {
-    return cubedSphereColumnsHandle_.get()->j_begin( t );
+idx_t CubedSphereColumns<BaseFunctionSpace>::j_begin(idx_t t) const {
+    return cubedSphereColumnsHandle_.get()->j_begin(t);
 }
 
 template <typename BaseFunctionSpace>
-idx_t CubedSphereColumns<BaseFunctionSpace>::j_end( idx_t t ) const {
-    return cubedSphereColumnsHandle_.get()->j_end( t );
+idx_t CubedSphereColumns<BaseFunctionSpace>::j_end(idx_t t) const {
+    return cubedSphereColumnsHandle_.get()->j_end(t);
 }
 
 template <typename BaseFunctionSpace>
-idx_t CubedSphereColumns<BaseFunctionSpace>::index( idx_t t, idx_t i, idx_t j ) const {
-    return cubedSphereColumnsHandle_.get()->index( t, i, j );
+idx_t CubedSphereColumns<BaseFunctionSpace>::index(idx_t t, idx_t i, idx_t j) const {
+    return cubedSphereColumnsHandle_.get()->index(t, i, j);
 }
 
 template <typename BaseFunctionSpace>

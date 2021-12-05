@@ -59,11 +59,11 @@ class Spectral : public functionspace::FunctionSpaceImpl {
 */
 
 public:
-    Spectral( const eckit::Configuration& );
+    Spectral(const eckit::Configuration&);
 
-    Spectral( const int truncation, const eckit::Configuration& = util::NoConfig() );
+    Spectral(const int truncation, const eckit::Configuration& = util::NoConfig());
 
-    Spectral( const trans::Trans&, const eckit::Configuration& = util::NoConfig() );
+    Spectral(const trans::Trans&, const eckit::Configuration& = util::NoConfig());
 
     virtual ~Spectral() override;
 
@@ -72,21 +72,21 @@ public:
     virtual std::string distribution() const override;
 
     using FunctionSpaceImpl::createField;
-    virtual Field createField( const eckit::Configuration& ) const override;
-    virtual Field createField( const Field&, const eckit::Configuration& ) const override;
+    virtual Field createField(const eckit::Configuration&) const override;
+    virtual Field createField(const Field&, const eckit::Configuration&) const override;
 
-    void gather( const FieldSet&, FieldSet& ) const;
-    void gather( const Field&, Field& ) const;
+    void gather(const FieldSet&, FieldSet&) const;
+    void gather(const Field&, Field&) const;
 
-    void scatter( const FieldSet&, FieldSet& ) const;
-    void scatter( const Field&, Field& ) const;
+    void scatter(const FieldSet&, FieldSet&) const;
+    void scatter(const Field&, Field&) const;
 
-    std::string checksum( const FieldSet& ) const;
-    std::string checksum( const Field& ) const;
+    std::string checksum(const FieldSet&) const;
+    std::string checksum(const Field&) const;
 
-    void norm( const Field&, double& norm, int rank = 0 ) const;
-    void norm( const Field&, double norm_per_level[], int rank = 0 ) const;
-    void norm( const Field&, std::vector<double>& norm_per_level, int rank = 0 ) const;
+    void norm(const Field&, double& norm, int rank = 0) const;
+    void norm(const Field&, double norm_per_level[], int rank = 0) const;
+    void norm(const Field&, std::vector<double>& norm_per_level, int rank = 0) const;
 
     array::LocalView<const int, 1> zonal_wavenumbers() const;  // zero-based, OK
 
@@ -94,11 +94,11 @@ public:
 
     class For {
     public:
-        For( const Spectral& fs, const util::Config& config = util::NoConfig() ) :
+        For(const Spectral& fs, const util::Config& config = util::NoConfig()):
             truncation{fs.truncation()},
             zonal_wavenumbers{fs.zonal_wavenumbers()},
-            global{config.getBool( "global", false )},
-            owner{config.getInt( "owner", 0 )} {}
+            global{config.getBool("global", false)},
+            owner{config.getInt("owner", 0)} {}
 
     protected:
         using View = const array::LocalView<const int, 1>;
@@ -108,30 +108,30 @@ public:
         idx_t owner;
 
     public:
-#define FunctorArgs( ... )                                                                                             \
-    typename std::enable_if<std::is_convertible<Functor, std::function<void( __VA_ARGS__ )>>::value, Functor>::type* = \
+#define FunctorArgs(...)                                                                                             \
+    typename std::enable_if<std::is_convertible<Functor, std::function<void(__VA_ARGS__)>>::value, Functor>::type* = \
         nullptr
 
         // Functor: void f(real,imag,n,m)
-        template <typename Functor, FunctorArgs( idx_t, idx_t, int, int )>
-        void operator()( const Functor& f ) const {
+        template <typename Functor, FunctorArgs(idx_t, idx_t, int, int)>
+        void operator()(const Functor& f) const {
             idx_t index = 0;
-            if ( global ) {
-                if ( owner == mpi::rank() ) {
-                    atlas_omp_parallel_for( int m = 0; m <= truncation; ++m ) {
-                        for ( int n = m; n <= truncation; ++n ) {
-                            f( index, index + 1, n, m );
+            if (global) {
+                if (owner == mpi::rank()) {
+                    atlas_omp_parallel_for(int m = 0; m <= truncation; ++m) {
+                        for (int n = m; n <= truncation; ++n) {
+                            f(index, index + 1, n, m);
                             index += 2;
                         }
                     }
                 }
             }
             else {
-                const int nb_zonal_wavenumbers{static_cast<int>( zonal_wavenumbers.size() )};
-                atlas_omp_parallel_for( int jm = 0; jm < nb_zonal_wavenumbers; ++jm ) {
-                    const int m = zonal_wavenumbers( jm );
-                    for ( int n = m; n <= truncation; ++n ) {
-                        f( index, index + 1, n, m );
+                const int nb_zonal_wavenumbers{static_cast<int>(zonal_wavenumbers.size())};
+                atlas_omp_parallel_for(int jm = 0; jm < nb_zonal_wavenumbers; ++jm) {
+                    const int m = zonal_wavenumbers(jm);
+                    for (int n = m; n <= truncation; ++n) {
+                        f(index, index + 1, n, m);
                         index += 2;
                     }
                 }
@@ -139,25 +139,25 @@ public:
         }
 
         // Functor: void f(real,imag,n)
-        template <typename Functor, FunctorArgs( idx_t, idx_t, int )>
-        void operator()( const Functor& f ) const {
+        template <typename Functor, FunctorArgs(idx_t, idx_t, int)>
+        void operator()(const Functor& f) const {
             idx_t index = 0;
-            if ( global ) {
-                if ( owner == mpi::rank() ) {
-                    atlas_omp_parallel_for( int m = 0; m <= truncation; ++m ) {
-                        for ( int n = m; n <= truncation; ++n ) {
-                            f( index, index + 1, n );
+            if (global) {
+                if (owner == mpi::rank()) {
+                    atlas_omp_parallel_for(int m = 0; m <= truncation; ++m) {
+                        for (int n = m; n <= truncation; ++n) {
+                            f(index, index + 1, n);
                             index += 2;
                         }
                     }
                 }
             }
             else {
-                const int nb_zonal_wavenumbers{static_cast<int>( zonal_wavenumbers.size() )};
-                atlas_omp_parallel_for( int jm = 0; jm < nb_zonal_wavenumbers; ++jm ) {
-                    const int m = zonal_wavenumbers( jm );
-                    for ( int n = m; n <= truncation; ++n ) {
-                        f( index, index + 1, n );
+                const int nb_zonal_wavenumbers{static_cast<int>(zonal_wavenumbers.size())};
+                atlas_omp_parallel_for(int jm = 0; jm < nb_zonal_wavenumbers; ++jm) {
+                    const int m = zonal_wavenumbers(jm);
+                    for (int n = m; n <= truncation; ++n) {
+                        f(index, index + 1, n);
                         index += 2;
                     }
                 }
@@ -166,13 +166,13 @@ public:
 #undef FunctorArgs
     };
     template <typename Functor>
-    void parallel_for( const Functor& f ) const {
-        For( *this, util::NoConfig() )( f );
+    void parallel_for(const Functor& f) const {
+        For(*this, util::NoConfig())(f);
     }
 
     template <typename Functor>
-    void parallel_for( const util::Config& config, const Functor& f ) const {
-        For( *this, config )( f );
+    void parallel_for(const util::Config& config, const Functor& f) const {
+        For(*this, config)(f);
     }
 
 public:  // methods
@@ -183,11 +183,11 @@ public:  // methods
     virtual idx_t size() const override { return nb_spectral_coefficients(); }
 
 private:  // methods
-    array::DataType config_datatype( const eckit::Configuration& ) const;
-    std::string config_name( const eckit::Configuration& ) const;
-    idx_t config_size( const eckit::Configuration& ) const;
-    idx_t config_levels( const eckit::Configuration& ) const;
-    void set_field_metadata( const eckit::Configuration&, Field& ) const;
+    array::DataType config_datatype(const eckit::Configuration&) const;
+    std::string config_name(const eckit::Configuration&) const;
+    idx_t config_size(const eckit::Configuration&) const;
+    idx_t config_levels(const eckit::Configuration&) const;
+    void set_field_metadata(const eckit::Configuration&, Field&) const;
     size_t footprint() const override;
 
 
@@ -213,26 +213,26 @@ private:  // data
 class Spectral : public FunctionSpace {
 public:
     Spectral();
-    Spectral( const FunctionSpace& );
-    Spectral( const eckit::Configuration& );
-    Spectral( const int truncation, const eckit::Configuration& = util::NoConfig() );
-    Spectral( const trans::Trans&, const eckit::Configuration& = util::NoConfig() );
+    Spectral(const FunctionSpace&);
+    Spectral(const eckit::Configuration&);
+    Spectral(const int truncation, const eckit::Configuration& = util::NoConfig());
+    Spectral(const trans::Trans&, const eckit::Configuration& = util::NoConfig());
 
     operator bool() const { return valid(); }
     bool valid() const { return functionspace_; }
 
-    void gather( const FieldSet&, FieldSet& ) const;
-    void gather( const Field&, Field& ) const;
+    void gather(const FieldSet&, FieldSet&) const;
+    void gather(const Field&, Field&) const;
 
-    void scatter( const FieldSet&, FieldSet& ) const;
-    void scatter( const Field&, Field& ) const;
+    void scatter(const FieldSet&, FieldSet&) const;
+    void scatter(const Field&, Field&) const;
 
-    std::string checksum( const FieldSet& ) const;
-    std::string checksum( const Field& ) const;
+    std::string checksum(const FieldSet&) const;
+    std::string checksum(const Field&) const;
 
-    void norm( const Field&, double& norm, int rank = 0 ) const;
-    void norm( const Field&, double norm_per_level[], int rank = 0 ) const;
-    void norm( const Field&, std::vector<double>& norm_per_level, int rank = 0 ) const;
+    void norm(const Field&, double& norm, int rank = 0) const;
+    void norm(const Field&, double norm_per_level[], int rank = 0) const;
+    void norm(const Field&, std::vector<double>& norm_per_level, int rank = 0) const;
 
     array::LocalView<const int, 1> zonal_wavenumbers() const;  // zero-based, OK
 
@@ -242,12 +242,12 @@ public:
     idx_t levels() const { return functionspace_->levels(); }
 
     template <typename Functor>
-    void parallel_for( const Functor& f ) const {
-        functionspace_->parallel_for( f );
+    void parallel_for(const Functor& f) const {
+        functionspace_->parallel_for(f);
     }
     template <typename Functor>
-    void parallel_for( const util::Config& config, const Functor& f ) const {
-        functionspace_->parallel_for( config, f );
+    void parallel_for(const util::Config& config, const Functor& f) const {
+        functionspace_->parallel_for(config, f);
     }
 
 private:

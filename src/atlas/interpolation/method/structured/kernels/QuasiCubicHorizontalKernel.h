@@ -38,13 +38,13 @@ class QuasiCubicHorizontalKernel {
 public:
     QuasiCubicHorizontalKernel() = default;
 
-    QuasiCubicHorizontalKernel( const functionspace::StructuredColumns& fs,
-                                const util::Config& config = util::NoConfig() ) {
+    QuasiCubicHorizontalKernel(const functionspace::StructuredColumns& fs,
+                               const util::Config& config = util::NoConfig()) {
         src_ = fs;
-        ATLAS_ASSERT( src_ );
-        ATLAS_ASSERT( src_.halo() >= 2 );
-        compute_horizontal_stencil_ = grid::ComputeHorizontalStencil( src_.grid(), stencil_width() );
-        limiter_                    = config.getBool( "limiter", false );
+        ATLAS_ASSERT(src_);
+        ATLAS_ASSERT(src_.halo() >= 2);
+        compute_horizontal_stencil_ = grid::ComputeHorizontalStencil(src_.grid(), stencil_width());
+        limiter_                    = config.getBool("limiter", false);
     }
 
 protected:
@@ -57,7 +57,7 @@ public:
     static constexpr idx_t stencil_width() { return 4; }
     static constexpr idx_t stencil_size() { return 12; }
     static constexpr idx_t stencil_halo() {
-        return static_cast<idx_t>( static_cast<double>( stencil_width() ) / 2. + 0.5 );
+        return static_cast<idx_t>(static_cast<double>(stencil_width()) / 2. + 0.5);
     }
 
 public:
@@ -74,44 +74,44 @@ public:
     };
 
     template <typename stencil_t>
-    void compute_stencil( const double x, const double y, stencil_t& stencil ) const {
-        compute_horizontal_stencil_( x, y, stencil );
+    void compute_stencil(const double x, const double y, stencil_t& stencil) const {
+        compute_horizontal_stencil_(x, y, stencil);
     }
 
     template <typename weights_t>
-    void compute_weights( const double x, const double y, weights_t& weights ) const {
+    void compute_weights(const double x, const double y, weights_t& weights) const {
         Stencil stencil;
-        compute_stencil( x, y, stencil );
-        compute_weights( x, y, stencil, weights );
+        compute_stencil(x, y, stencil);
+        compute_weights(x, y, stencil, weights);
     }
 
     template <typename stencil_t, typename weights_t>
-    void compute_weights( const double x, const double y, const stencil_t& stencil, weights_t& weights ) const {
+    void compute_weights(const double x, const double y, const stencil_t& stencil, weights_t& weights) const {
         PointXY P1, P2;
         std::array<double, 4> yvec;
 
         // Compute x-direction weights LINEAR for outer rows  ( j = {0,3} )
-        for ( idx_t j = 0; j < 4; j += 3 ) {
+        for (idx_t j = 0; j < 4; j += 3) {
             auto& weights_i = weights.weights_i[j];
-            src_.compute_xy( stencil.i( 1, j ), stencil.j( j ), P1 );
-            src_.compute_xy( stencil.i( 2, j ), stencil.j( j ), P2 );
-            const double alpha = ( P2.x() - x ) / ( P2.x() - P1.x() );
+            src_.compute_xy(stencil.i(1, j), stencil.j(j), P1);
+            src_.compute_xy(stencil.i(2, j), stencil.j(j), P2);
+            const double alpha = (P2.x() - x) / (P2.x() - P1.x());
             weights_i[1]       = alpha;
             weights_i[2]       = 1. - alpha;
             yvec[j]            = P1.y();
         }
 
         // Compute x-direction weights CUBIC for inner rows ( j = {1,2} )
-        for ( idx_t j = 1; j < 3; ++j ) {
+        for (idx_t j = 1; j < 3; ++j) {
             auto& weights_i = weights.weights_i[j];
-            src_.compute_xy( stencil.i( 1, j ), stencil.j( j ), P1 );
-            src_.compute_xy( stencil.i( 2, j ), stencil.j( j ), P2 );
-            const double alpha               = ( P2.x() - x ) / ( P2.x() - P1.x() );
+            src_.compute_xy(stencil.i(1, j), stencil.j(j), P1);
+            src_.compute_xy(stencil.i(2, j), stencil.j(j), P2);
+            const double alpha               = (P2.x() - x) / (P2.x() - P1.x());
             const double alpha_sqr           = alpha * alpha;
             const double two_minus_alpha     = 2. - alpha;
             const double one_minus_alpha_sqr = 1. - alpha_sqr;
             weights_i[0]                     = -alpha * one_minus_alpha_sqr / 6.;
-            weights_i[1]                     = 0.5 * alpha * ( 1. + alpha ) * two_minus_alpha;
+            weights_i[1]                     = 0.5 * alpha * (1. + alpha) * two_minus_alpha;
             weights_i[2]                     = 0.5 * one_minus_alpha_sqr * two_minus_alpha;
             weights_i[3]                     = 1. - weights_i[0] - weights_i[1] - weights_i[2];
             yvec[j]                          = P1.y();
@@ -134,188 +134,186 @@ public:
         const double dl4 = y - yvec[3];
 
         auto& weights_j = weights.weights_j;
-        weights_j[0]    = ( dl2 * dl3 * dl4 ) / dcl1;
-#if defined( _CRAYC ) && ATLAS_BUILD_TYPE_RELEASE
+        weights_j[0]    = (dl2 * dl3 * dl4) / dcl1;
+#if defined(_CRAYC) && ATLAS_BUILD_TYPE_RELEASE
         // prevents FE_INVALID somehow (tested with Cray 8.7)
-        ATLAS_ASSERT( !std::isnan( weights_j[0] ) );
+        ATLAS_ASSERT(!std::isnan(weights_j[0]));
 #endif
-        weights_j[1] = ( dl1 * dl3 * dl4 ) / dcl2;
-        weights_j[2] = ( dl1 * dl2 * dl4 ) / dcl3;
+        weights_j[1] = (dl1 * dl3 * dl4) / dcl2;
+        weights_j[2] = (dl1 * dl2 * dl4) / dcl3;
         weights_j[3] = 1. - weights_j[0] - weights_j[1] - weights_j[2];
     }
 
     template <typename stencil_t, typename weights_t, typename array_t>
-    typename array_t::value_type interpolate( const stencil_t& stencil, const weights_t& weights,
-                                              const array_t& input ) const {
+    typename array_t::value_type interpolate(const stencil_t& stencil, const weights_t& weights,
+                                             const array_t& input) const {
         using Value = typename array_t::value_type;
 
         std::array<std::array<idx_t, stencil_width()>, stencil_width()> index;
         const auto& weights_j = weights.weights_j;
         Value output          = 0.;
         // LINEAR for outer rows  ( j = {0,3} )
-        for ( idx_t j = 0; j < 4; j += 3 ) {
+        for (idx_t j = 0; j < 4; j += 3) {
             const auto& weights_i = weights.weights_i[j];
-            for ( idx_t i : {1, 2} ) {
-                idx_t n = src_.index( stencil.i( i, j ), stencil.j( j ) );
+            for (idx_t i : {1, 2}) {
+                idx_t n = src_.index(stencil.i(i, j), stencil.j(j));
                 Value w = weights_i[i] * weights_j[j];
                 output += w * input[n];
                 index[j][i] = n;
             }
         }
         // CUBIC for inner rows ( j = {1,2} )
-        for ( idx_t j = 1; j < 3; ++j ) {
+        for (idx_t j = 1; j < 3; ++j) {
             const auto& weights_i = weights.weights_i[j];
-            for ( idx_t i = 0; i < stencil_width(); ++i ) {
-                idx_t n = src_.index( stencil.i( i, j ), stencil.j( j ) );
+            for (idx_t i = 0; i < stencil_width(); ++i) {
+                idx_t n = src_.index(stencil.i(i, j), stencil.j(j));
                 Value w = weights_i[i] * weights_j[j];
                 output += w * input[n];
                 index[j][i] = n;
             }
         }
 
-        if ( limiter_ ) {
-            Limiter::limit( output, index, input );
+        if (limiter_) {
+            Limiter::limit(output, index, input);
         }
         return output;
     }
 
     template <typename stencil_t, typename weights_t, typename Value, int Rank>
-    typename std::enable_if<( Rank == 1 ), void>::type interpolate( const stencil_t& stencil, const weights_t& weights,
-                                                                    const array::ArrayView<const Value, Rank>& input,
-                                                                    array::ArrayView<Value, Rank>& output,
-                                                                    idx_t r ) const {
+    typename std::enable_if<(Rank == 1), void>::type interpolate(const stencil_t& stencil, const weights_t& weights,
+                                                                 const array::ArrayView<const Value, Rank>& input,
+                                                                 array::ArrayView<Value, Rank>& output, idx_t r) const {
         std::array<std::array<idx_t, stencil_width()>, stencil_width()> index;
         const auto& weights_j = weights.weights_j;
-        output( r )           = 0.;
+        output(r)             = 0.;
 
         // LINEAR for outer rows  ( j = {0,3} )
-        for ( idx_t j = 0; j < 4; j += 3 ) {
+        for (idx_t j = 0; j < 4; j += 3) {
             const auto& weights_i = weights.weights_i[j];
-            for ( idx_t i = 1; i < 3; ++i ) {  // i = {1,2}
-                idx_t n = src_.index( stencil.i( i, j ), stencil.j( j ) );
+            for (idx_t i = 1; i < 3; ++i) {  // i = {1,2}
+                idx_t n = src_.index(stencil.i(i, j), stencil.j(j));
                 Value w = weights_i[i] * weights_j[j];
-                output( r ) += w * input[n];
+                output(r) += w * input[n];
                 index[j][i] = n;
             }
         }
         // CUBIC for inner rows ( j = {1,2} )
-        for ( idx_t j = 1; j < 3; ++j ) {
+        for (idx_t j = 1; j < 3; ++j) {
             const auto& weights_i = weights.weights_i[j];
-            for ( idx_t i = 0; i < stencil_width(); ++i ) {
-                idx_t n = src_.index( stencil.i( i, j ), stencil.j( j ) );
+            for (idx_t i = 0; i < stencil_width(); ++i) {
+                idx_t n = src_.index(stencil.i(i, j), stencil.j(j));
                 Value w = weights_i[i] * weights_j[j];
-                output( r ) += w * input[n];
+                output(r) += w * input[n];
                 index[j][i] = n;
             }
         }
 
-        if ( limiter_ ) {
-            Limiter::limit( index, input, output, r );
+        if (limiter_) {
+            Limiter::limit(index, input, output, r);
         }
     }
 
     template <typename stencil_t, typename weights_t, typename Value, int Rank>
-    typename std::enable_if<( Rank == 2 ), void>::type interpolate( const stencil_t& stencil, const weights_t& weights,
-                                                                    const array::ArrayView<const Value, Rank>& input,
-                                                                    array::ArrayView<Value, Rank>& output,
-                                                                    idx_t r ) const {
+    typename std::enable_if<(Rank == 2), void>::type interpolate(const stencil_t& stencil, const weights_t& weights,
+                                                                 const array::ArrayView<const Value, Rank>& input,
+                                                                 array::ArrayView<Value, Rank>& output, idx_t r) const {
         std::array<std::array<idx_t, stencil_width()>, stencil_width()> index;
         const auto& weights_j = weights.weights_j;
-        const idx_t Nk        = output.shape( 1 );
-        for ( idx_t k = 0; k < Nk; ++k ) {
-            output( r, k ) = 0.;
+        const idx_t Nk        = output.shape(1);
+        for (idx_t k = 0; k < Nk; ++k) {
+            output(r, k) = 0.;
         }
 
         // LINEAR for outer rows  ( j = {0,3} )
-        for ( idx_t j = 0; j < 4; j += 3 ) {
+        for (idx_t j = 0; j < 4; j += 3) {
             const auto& weights_i = weights.weights_i[j];
-            for ( idx_t i = 1; i < 3; ++i ) {  // i = {1,2}
-                idx_t n = src_.index( stencil.i( i, j ), stencil.j( j ) );
+            for (idx_t i = 1; i < 3; ++i) {  // i = {1,2}
+                idx_t n = src_.index(stencil.i(i, j), stencil.j(j));
                 Value w = weights_i[i] * weights_j[j];
-                for ( idx_t k = 0; k < Nk; ++k ) {
-                    output( r, k ) += w * input( n, k );
+                for (idx_t k = 0; k < Nk; ++k) {
+                    output(r, k) += w * input(n, k);
                 }
                 index[j][i] = n;
             }
         }
         // CUBIC for inner rows ( j = {1,2} )
-        for ( idx_t j = 1; j < 3; ++j ) {
+        for (idx_t j = 1; j < 3; ++j) {
             const auto& weights_i = weights.weights_i[j];
-            for ( idx_t i = 0; i < stencil_width(); ++i ) {
-                idx_t n = src_.index( stencil.i( i, j ), stencil.j( j ) );
+            for (idx_t i = 0; i < stencil_width(); ++i) {
+                idx_t n = src_.index(stencil.i(i, j), stencil.j(j));
                 Value w = weights_i[i] * weights_j[j];
-                for ( idx_t k = 0; k < Nk; ++k ) {
-                    output( r, k ) += w * input( n, k );
+                for (idx_t k = 0; k < Nk; ++k) {
+                    output(r, k) += w * input(n, k);
                 }
                 index[j][i] = n;
             }
         }
 
-        if ( limiter_ ) {
-            Limiter::limit( index, input, output, r );
+        if (limiter_) {
+            Limiter::limit(index, input, output, r);
         }
     }
 
     template <typename array_t>
-    typename array_t::value_type operator()( const double x, const double y, const array_t& input ) const {
+    typename array_t::value_type operator()(const double x, const double y, const array_t& input) const {
         Stencil stencil;
-        compute_stencil( x, y, stencil );
+        compute_stencil(x, y, stencil);
         Weights weights;
-        compute_weights( x, y, stencil, weights );
-        return interpolate( stencil, weights, input );
+        compute_weights(x, y, stencil, weights);
+        return interpolate(stencil, weights, input);
     }
 
     template <typename array_t>
-    typename array_t::value_type interpolate( const PointLonLat& p, const array_t& input, WorkSpace& ws ) const {
-        compute_stencil( p.lon(), p.lat(), ws.stencil );
-        compute_weights( p.lon(), p.lat(), ws.stencil, ws.weights );
-        return interpolate( ws.stencil, ws.weights, input );
+    typename array_t::value_type interpolate(const PointLonLat& p, const array_t& input, WorkSpace& ws) const {
+        compute_stencil(p.lon(), p.lat(), ws.stencil);
+        compute_weights(p.lon(), p.lat(), ws.stencil, ws.weights);
+        return interpolate(ws.stencil, ws.weights, input);
     }
 
     // Thread private workspace
-    Triplets compute_triplets( const idx_t row, const double x, const double y, WorkSpace& ws ) const {
+    Triplets compute_triplets(const idx_t row, const double x, const double y, WorkSpace& ws) const {
         Triplets triplets;
-        triplets.reserve( stencil_size() );
-        insert_triplets( row, x, y, triplets, ws );
+        triplets.reserve(stencil_size());
+        insert_triplets(row, x, y, triplets, ws);
         return triplets;
     }
 
-    Triplets reserve_triplets( size_t N ) {
+    Triplets reserve_triplets(size_t N) {
         Triplets triplets;
-        triplets.reserve( N * stencil_size() );
+        triplets.reserve(N * stencil_size());
         return triplets;
     }
 
-    Triplets allocate_triplets( size_t N ) { return Triplets( N * stencil_size() ); }
+    Triplets allocate_triplets(size_t N) { return Triplets(N * stencil_size()); }
 
-    void insert_triplets( const idx_t row, const PointXY& p, Triplets& triplets, WorkSpace& ws ) const {
-        insert_triplets( row, p.x(), p.y(), triplets, ws );
+    void insert_triplets(const idx_t row, const PointXY& p, Triplets& triplets, WorkSpace& ws) const {
+        insert_triplets(row, p.x(), p.y(), triplets, ws);
     }
 
-    void insert_triplets( const idx_t row, const double x, const double y, Triplets& triplets, WorkSpace& ws ) const {
-        compute_horizontal_stencil_( x, y, ws.stencil );
-        compute_weights( x, y, ws.stencil, ws.weights );
+    void insert_triplets(const idx_t row, const double x, const double y, Triplets& triplets, WorkSpace& ws) const {
+        compute_horizontal_stencil_(x, y, ws.stencil);
+        compute_weights(x, y, ws.stencil, ws.weights);
         const auto& wj = ws.weights.weights_j;
 
         idx_t pos = row * stencil_size();
 
         // LINEAR for outer rows  ( j = {0,3} )
-        for ( idx_t j = 0; j < 4; j += 3 ) {
+        for (idx_t j = 0; j < 4; j += 3) {
             const auto& wi = ws.weights.weights_i[j];
-            for ( idx_t i = 1; i < 3; ++i ) {  // i = {1,2}
-                idx_t col       = src_.index( ws.stencil.i( i, j ), ws.stencil.j( j ) );
+            for (idx_t i = 1; i < 3; ++i) {  // i = {1,2}
+                idx_t col       = src_.index(ws.stencil.i(i, j), ws.stencil.j(j));
                 double w        = wi[i] * wj[j];
-                triplets[pos++] = Triplet( row, col, w );
+                triplets[pos++] = Triplet(row, col, w);
             }
         }
 
         // CUBIC for inner rows ( j = {1,2} )
-        for ( idx_t j = 1; j < 3; ++j ) {
+        for (idx_t j = 1; j < 3; ++j) {
             const auto& wi = ws.weights.weights_i[j];
-            for ( idx_t i = 0; i < stencil_width(); ++i ) {
-                idx_t col       = src_.index( ws.stencil.i( i, j ), ws.stencil.j( j ) );
+            for (idx_t i = 0; i < stencil_width(); ++i) {
+                idx_t col       = src_.index(ws.stencil.i(i, j), ws.stencil.j(j));
                 double w        = wi[i] * wj[j];
-                triplets[pos++] = Triplet( row, col, w );
+                triplets[pos++] = Triplet(row, col, w);
             }
         }
     }

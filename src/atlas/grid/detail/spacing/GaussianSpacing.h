@@ -42,9 +42,9 @@ namespace spacing {
 class GaussianSpacing : public Spacing {
 public:
     // constructor
-    GaussianSpacing( const eckit::Parametrisation& p );
+    GaussianSpacing(const eckit::Parametrisation& p);
 
-    GaussianSpacing( long N );
+    GaussianSpacing(long N);
 
     // class name
     static std::string static_type() { return "gaussian"; }

@@ -34,21 +34,21 @@ namespace fvm {
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 class Nabla : public atlas::numerics::NablaImpl {
 public:
-    Nabla( const atlas::numerics::Method&, const eckit::Parametrisation& );
+    Nabla(const atlas::numerics::Method&, const eckit::Parametrisation&);
     virtual ~Nabla() override;
 
-    virtual void gradient( const Field& scalar, Field& grad ) const override;
-    virtual void divergence( const Field& vector, Field& div ) const override;
-    virtual void curl( const Field& vector, Field& curl ) const override;
-    virtual void laplacian( const Field& scalar, Field& laplacian ) const override;
+    virtual void gradient(const Field& scalar, Field& grad) const override;
+    virtual void divergence(const Field& vector, Field& div) const override;
+    virtual void curl(const Field& vector, Field& curl) const override;
+    virtual void laplacian(const Field& scalar, Field& laplacian) const override;
 
     virtual const FunctionSpace& functionspace() const override;
 
 private:
     void setup();
 
-    void gradient_of_scalar( const Field& scalar, Field& grad ) const;
-    void gradient_of_vector( const Field& vector, Field& grad ) const;
+    void gradient_of_scalar(const Field& scalar, Field& grad) const;
+    void gradient_of_vector(const Field& vector, Field& grad) const;
 
 private:
     fvm::Method const* fvm_;

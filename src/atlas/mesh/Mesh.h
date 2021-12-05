@@ -52,7 +52,7 @@ namespace atlas {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class Mesh : DOXYGEN_HIDE( public util::ObjectHandle<mesh::detail::MeshImpl> ) {
+class Mesh : DOXYGEN_HIDE(public util::ObjectHandle<mesh::detail::MeshImpl>) {
 public:
     using Nodes          = mesh::Nodes;
     using Cells          = mesh::Cells;
@@ -67,13 +67,13 @@ public:
     Mesh();
 
     /// @brief Generate a mesh from a Grid with recommended mesh generator and partitioner strategy
-    Mesh( const Grid& );
+    Mesh(const Grid&);
 
     /// @brief Construct a mesh from a Stream (serialization)
-    explicit Mesh( eckit::Stream& );
+    explicit Mesh(eckit::Stream&);
 
     /// @brief Serialization to Stream
-    void encode( eckit::Stream& s ) const { return get()->encode( s ); }
+    void encode(eckit::Stream& s) const { return get()->encode(s); }
 
     const util::Metadata& metadata() const { return get()->metadata(); }
     util::Metadata& metadata() { return get()->metadata(); }
@@ -117,22 +117,22 @@ public:
 
     PartitionGraph::Neighbours nearestNeighbourPartitions() const { return get()->nearestNeighbourPartitions(); }
 
-    const Polygon& polygon( idx_t halo = 0 ) const { return get()->polygon( halo ); }
+    const Polygon& polygon(idx_t halo = 0) const { return get()->polygon(halo); }
     const Polygons& polygons() const { return get()->polygons(); }
 
     const Grid grid() const { return get()->grid(); }
 
 private:  // methods
-    void print( std::ostream& out ) const { get()->print( out ); }
+    void print(std::ostream& out) const { get()->print(out); }
 
-    friend std::ostream& operator<<( std::ostream& s, const Mesh& p ) {
-        p.print( s );
+    friend std::ostream& operator<<(std::ostream& s, const Mesh& p) {
+        p.print(s);
         return s;
     }
 
     friend class meshgenerator::MeshGeneratorImpl;
-    void setProjection( const Projection& p ) { get()->setProjection( p ); }
-    void setGrid( const Grid& p ) { get()->setGrid( p ); }
+    void setProjection(const Projection& p) { get()->setProjection(p); }
+    void setGrid(const Grid& p) { get()->setGrid(p); }
 };
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -25,43 +25,43 @@ namespace actions {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-BuildTorusXYZField::BuildTorusXYZField( const std::string& name ) : name_( name ) {}
+BuildTorusXYZField::BuildTorusXYZField(const std::string& name): name_(name) {}
 
-Field& BuildTorusXYZField::operator()( Mesh& mesh, const Domain& dom, double r0, double r1, idx_t nx, idx_t ny ) const {
-    return operator()( mesh.nodes(), dom, r0, r1, nx, ny );
+Field& BuildTorusXYZField::operator()(Mesh& mesh, const Domain& dom, double r0, double r1, idx_t nx, idx_t ny) const {
+    return operator()(mesh.nodes(), dom, r0, r1, nx, ny);
 }
 
-Field& BuildTorusXYZField::operator()( mesh::Nodes& nodes, const Domain& dom, double r0, double r1, idx_t nx,
-                                       idx_t ny ) const {
+Field& BuildTorusXYZField::operator()(mesh::Nodes& nodes, const Domain& dom, double r0, double r1, idx_t nx,
+                                      idx_t ny) const {
     // fill xyz with torus coordinates. r0 and r1 are large and small radii,
     // respectively.
 
-    auto domain = RectangularDomain( dom );
-    ATLAS_ASSERT( domain );
+    auto domain = RectangularDomain(dom);
+    ATLAS_ASSERT(domain);
     const double xmin = domain.xmin();
     const double xmax = domain.xmax();
     const double ymin = domain.ymin();
     const double ymax = domain.ymax();
 
-    if ( !nodes.has_field( name_ ) ) {
+    if (!nodes.has_field(name_)) {
         const idx_t npts                         = nodes.size();
-        const array::ArrayView<double, 2> lonlat = array::make_view<double, 2>( nodes.xy() );
+        const array::ArrayView<double, 2> lonlat = array::make_view<double, 2>(nodes.xy());
         array::ArrayView<double, 2> xyz          = array::make_view<double, 2>(
-            nodes.add( Field( name_, array::make_datatype<double>(), array::make_shape( npts, 3 ) ) ) );
+            nodes.add(Field(name_, array::make_datatype<double>(), array::make_shape(npts, 3))));
 
         const double pi = M_PI;
-        const double c1 = 2. * pi / double( nx ) * ( nx - 1 ) / ( xmax - xmin );
-        const double c2 = 2. * pi / double( ny ) * ( ny - 1 ) / ( ymax - ymin );
-        for ( idx_t n = 0; n < npts; ++n ) {
-            double lon = -pi + c1 * ( lonlat( n, 0 ) - xmin );
-            double lat = -pi + c2 * ( lonlat( n, 1 ) - ymin );
+        const double c1 = 2. * pi / double(nx) * (nx - 1) / (xmax - xmin);
+        const double c2 = 2. * pi / double(ny) * (ny - 1) / (ymax - ymin);
+        for (idx_t n = 0; n < npts; ++n) {
+            double lon = -pi + c1 * (lonlat(n, 0) - xmin);
+            double lat = -pi + c2 * (lonlat(n, 1) - ymin);
 
-            xyz( n, 0 ) = std::cos( lon ) * ( r0 + r1 * std::cos( lat ) );
-            xyz( n, 1 ) = std::sin( lon ) * ( r0 + r1 * std::cos( lat ) );
-            xyz( n, 2 ) = r1 * std::sin( lat );
+            xyz(n, 0) = std::cos(lon) * (r0 + r1 * std::cos(lat));
+            xyz(n, 1) = std::sin(lon) * (r0 + r1 * std::cos(lat));
+            xyz(n, 2) = r1 * std::sin(lat);
         }
     }
-    return nodes.field( name_ );
+    return nodes.field(name_);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

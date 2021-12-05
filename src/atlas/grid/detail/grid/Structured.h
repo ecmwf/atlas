@@ -39,20 +39,20 @@ namespace grid {
 class Structured : public Grid {
 private:
     struct ComputePointXY {
-        ComputePointXY( const Structured& grid ) : grid_( grid ), ny_( grid_.ny() ) {}
-        void operator()( idx_t i, idx_t j, PointXY& point ) {
-            if ( j < ny_ ) {  // likely
-                grid_.xy( i, j, point.data() );
+        ComputePointXY(const Structured& grid): grid_(grid), ny_(grid_.ny()) {}
+        void operator()(idx_t i, idx_t j, PointXY& point) {
+            if (j < ny_) {  // likely
+                grid_.xy(i, j, point.data());
             }
         }
         const Structured& grid_;
         idx_t ny_;
     };
     struct ComputePointLonLat {
-        ComputePointLonLat( const Structured& grid ) : grid_( grid ), ny_( grid_.ny() ) {}
-        void operator()( idx_t i, idx_t j, PointLonLat& point ) {
-            if ( j < ny_ ) {  // likely
-                grid_.lonlat( i, j, point.data() );
+        ComputePointLonLat(const Structured& grid): grid_(grid), ny_(grid_.ny()) {}
+        void operator()(idx_t i, idx_t j, PointLonLat& point) {
+            if (j < ny_) {  // likely
+                grid_.lonlat(i, j, point.data());
             }
         }
         const Structured& grid_;
@@ -62,17 +62,17 @@ private:
     template <typename Base, typename ComputePoint>
     class StructuredIterator : public Base {
     public:
-        StructuredIterator( const Structured& grid, bool begin = true ) :
-            grid_( grid ), ny_( grid_.ny() ), i_( 0 ), j_( begin ? 0 : grid_.ny() ), compute_point{grid_} {
-            if ( j_ != ny_ && grid_.size() ) {
-                compute_point( i_, j_, point_ );
+        StructuredIterator(const Structured& grid, bool begin = true):
+            grid_(grid), ny_(grid_.ny()), i_(0), j_(begin ? 0 : grid_.ny()), compute_point{grid_} {
+            if (j_ != ny_ && grid_.size()) {
+                compute_point(i_, j_, point_);
             }
         }
-        virtual bool next( typename Base::value_type& point ) {
-            if ( j_ < ny_ && i_ < grid_.nx( j_ ) ) {
-                compute_point( i_++, j_, point );
+        virtual bool next(typename Base::value_type& point) {
+            if (j_ < ny_ && i_ < grid_.nx(j_)) {
+                compute_point(i_++, j_, point);
 
-                if ( i_ == grid_.nx( j_ ) ) {
+                if (i_ == grid_.nx(j_)) {
                     j_++;
                     i_ = 0;
                 }
@@ -85,33 +85,33 @@ private:
 
         virtual const Base& operator++() {
             ++i_;
-            if ( i_ == grid_.nx( j_ ) ) {
+            if (i_ == grid_.nx(j_)) {
                 ++j_;
                 i_ = 0;
             }
-            compute_point( i_, j_, point_ );
+            compute_point(i_, j_, point_);
             return *this;
         }
 
-        virtual const Base& operator+=( typename Base::difference_type distance ) {
+        virtual const Base& operator+=(typename Base::difference_type distance) {
             idx_t d = distance;
-            while ( j_ != ny_ && d >= ( grid_.nx( j_ ) - i_ ) ) {
-                d -= ( grid_.nx( j_ ) - i_ );
+            while (j_ != ny_ && d >= (grid_.nx(j_) - i_)) {
+                d -= (grid_.nx(j_) - i_);
                 ++j_;
                 i_ = 0;
             }
             i_ += d;
-            compute_point( i_, j_, point_ );
+            compute_point(i_, j_, point_);
             return *this;
         }
 
-        virtual typename Base::difference_type distance( const Base& other ) const {
-            const auto& _other               = static_cast<const StructuredIterator&>( other );
+        virtual typename Base::difference_type distance(const Base& other) const {
+            const auto& _other               = static_cast<const StructuredIterator&>(other);
             typename Base::difference_type d = 0;
             idx_t j                          = j_;
             idx_t i                          = i_;
-            while ( j < _other.j_ ) {
-                d += grid_.nx( j ) - i;
+            while (j < _other.j_) {
+                d += grid_.nx(j) - i;
                 ++j;
                 i = 0;
             }
@@ -119,22 +119,22 @@ private:
             return d;
         }
 
-        virtual bool operator==( const Base& other ) const {
-            return j_ == static_cast<const StructuredIterator&>( other ).j_ &&
-                   i_ == static_cast<const StructuredIterator&>( other ).i_;
+        virtual bool operator==(const Base& other) const {
+            return j_ == static_cast<const StructuredIterator&>(other).j_ &&
+                   i_ == static_cast<const StructuredIterator&>(other).i_;
         }
 
-        virtual bool operator!=( const Base& other ) const {
-            return i_ != static_cast<const StructuredIterator&>( other ).i_ ||
-                   j_ != static_cast<const StructuredIterator&>( other ).j_;
+        virtual bool operator!=(const Base& other) const {
+            return i_ != static_cast<const StructuredIterator&>(other).i_ ||
+                   j_ != static_cast<const StructuredIterator&>(other).j_;
         }
 
         virtual std::unique_ptr<Base> clone() const {
-            auto result    = new StructuredIterator( grid_, false );
+            auto result    = new StructuredIterator(grid_, false);
             result->i_     = i_;
             result->j_     = j_;
             result->point_ = point_;
-            return std::unique_ptr<Base>( result );
+            return std::unique_ptr<Base>(result);
         }
 
     public:
@@ -156,20 +156,19 @@ public:
         public:
             // Constructor NVector can be either std::vector<int> or std::vector<long>
             template <typename NVector>
-            Implementation( const std::array<double, 2>& interval, const NVector& N, bool endpoint = true );
+            Implementation(const std::array<double, 2>& interval, const NVector& N, bool endpoint = true);
 
-            Implementation( const std::array<double, 2>& interval, std::initializer_list<int>&& N,
-                            bool endpoint = true );
+            Implementation(const std::array<double, 2>& interval, std::initializer_list<int>&& N, bool endpoint = true);
 
-            Implementation( const Spacing&, idx_t ny = 1 );
+            Implementation(const Spacing&, idx_t ny = 1);
 
-            Implementation( const std::vector<Spacing>& );
+            Implementation(const std::vector<Spacing>&);
 
-            Implementation( const Config& );
+            Implementation(const Config&);
 
-            Implementation( const std::vector<Config>& );
+            Implementation(const std::vector<Config>&);
 
-            Implementation( const std::vector<spacing::LinearSpacing::Params>& );
+            Implementation(const std::vector<spacing::LinearSpacing::Params>&);
 
             idx_t ny() const { return ny_; }
 
@@ -202,7 +201,7 @@ public:
             std::string type() const;
 
         private:
-            void reserve( idx_t ny );
+            void reserve(idx_t ny);
 
         private:
             idx_t ny_;
@@ -219,23 +218,23 @@ public:
     public:
         XSpace();
 
-        XSpace( const XSpace& );
+        XSpace(const XSpace&);
 
-        XSpace( const Spacing&, idx_t ny = 1 );
+        XSpace(const Spacing&, idx_t ny = 1);
 
-        XSpace( const std::vector<Spacing>& );
+        XSpace(const std::vector<Spacing>&);
 
-        XSpace( const std::vector<spacing::LinearSpacing::Params>& );
+        XSpace(const std::vector<spacing::LinearSpacing::Params>&);
 
         // Constructor NVector can be either std::vector<int> or std::vector<long> or initializer list
         template <typename NVector>
-        XSpace( const std::array<double, 2>& interval, const NVector& N, bool endpoint = true );
+        XSpace(const std::array<double, 2>& interval, const NVector& N, bool endpoint = true);
 
-        XSpace( const std::array<double, 2>& interval, std::initializer_list<int>&& N, bool endpoint = true );
+        XSpace(const std::array<double, 2>& interval, std::initializer_list<int>&& N, bool endpoint = true);
 
-        XSpace( const Config& );
+        XSpace(const Config&);
 
-        XSpace( const std::vector<Config>& );
+        XSpace(const std::vector<Config>&);
 
         idx_t ny() const { return impl_->ny(); }
 
@@ -277,9 +276,9 @@ public:
     static std::string static_type();
 
 public:
-    Structured( const std::string&, XSpace, YSpace, Projection, Domain );
-    Structured( XSpace, YSpace, Projection, Domain );
-    Structured( const Structured&, Domain );
+    Structured(const std::string&, XSpace, YSpace, Projection, Domain);
+    Structured(XSpace, YSpace, Projection, Domain);
+    Structured(const Structured&, Domain);
 
     virtual ~Structured() override;
 
@@ -296,9 +295,9 @@ public:
 
     virtual std::string type() const override;
 
-    inline idx_t ny() const { return static_cast<idx_t>( y_.size() ); }
+    inline idx_t ny() const { return static_cast<idx_t>(y_.size()); }
 
-    inline idx_t nx( idx_t j ) const { return static_cast<idx_t>( nx_[j] ); }
+    inline idx_t nx(idx_t j) const { return static_cast<idx_t>(nx_[j]); }
 
     inline idx_t nxmax() const { return nxmax_; }
 
@@ -308,26 +307,26 @@ public:
 
     inline const std::vector<double>& y() const { return y_; }
 
-    inline double dx( idx_t j ) const { return dx_[j]; }
+    inline double dx(idx_t j) const { return dx_[j]; }
 
-    inline double xmin( idx_t j ) const { return xmin_[j]; }
+    inline double xmin(idx_t j) const { return xmin_[j]; }
 
-    inline double x( idx_t i, idx_t j ) const { return xmin_[j] + static_cast<double>( i ) * dx_[j]; }
+    inline double x(idx_t i, idx_t j) const { return xmin_[j] + static_cast<double>(i) * dx_[j]; }
 
-    inline double y( idx_t j ) const { return y_[j]; }
+    inline double y(idx_t j) const { return y_[j]; }
 
-    inline void xy( idx_t i, idx_t j, double crd[] ) const {
-        crd[0] = x( i, j );
-        crd[1] = y( j );
+    inline void xy(idx_t i, idx_t j, double crd[]) const {
+        crd[0] = x(i, j);
+        crd[1] = y(j);
     }
 
-    PointXY xy( idx_t i, idx_t j ) const { return PointXY( x( i, j ), y( j ) ); }
+    PointXY xy(idx_t i, idx_t j) const { return PointXY(x(i, j), y(j)); }
 
-    PointLonLat lonlat( idx_t i, idx_t j ) const { return projection_.lonlat( xy( i, j ) ); }
+    PointLonLat lonlat(idx_t i, idx_t j) const { return projection_.lonlat(xy(i, j)); }
 
-    void lonlat( idx_t i, idx_t j, double crd[] ) const {
-        xy( i, j, crd );
-        projection_.xy2lonlat( crd );
+    void lonlat(idx_t i, idx_t j, double crd[]) const {
+        xy(i, j, crd);
+        projection_.xy2lonlat(crd);
     }
 
     inline bool reduced() const { return nxmax() != nxmin(); }
@@ -338,28 +337,28 @@ public:
     const YSpace& yspace() const { return yspace_; }
 
     virtual std::unique_ptr<Grid::IteratorXY> xy_begin() const override {
-        return std::unique_ptr<Grid::IteratorXY>( new IteratorXY( *this ) );
+        return std::unique_ptr<Grid::IteratorXY>(new IteratorXY(*this));
     }
     virtual std::unique_ptr<Grid::IteratorXY> xy_end() const override {
-        return std::unique_ptr<Grid::IteratorXY>( new IteratorXY( *this, false ) );
+        return std::unique_ptr<Grid::IteratorXY>(new IteratorXY(*this, false));
     }
     virtual std::unique_ptr<Grid::IteratorLonLat> lonlat_begin() const override {
-        return std::unique_ptr<Grid::IteratorLonLat>( new IteratorLonLat( *this ) );
+        return std::unique_ptr<Grid::IteratorLonLat>(new IteratorLonLat(*this));
     }
     virtual std::unique_ptr<Grid::IteratorLonLat> lonlat_end() const override {
-        return std::unique_ptr<Grid::IteratorLonLat>( new IteratorLonLat( *this, false ) );
+        return std::unique_ptr<Grid::IteratorLonLat>(new IteratorLonLat(*this, false));
     }
 
-    gidx_t index( idx_t i, idx_t j ) const { return jglooff_[j] + i; }
+    gidx_t index(idx_t i, idx_t j) const { return jglooff_[j] + i; }
 
-    void index2ij( gidx_t gidx, idx_t& i, idx_t& j ) const {
-        if ( ( gidx < 0 ) || ( gidx >= jglooff_.back() ) ) {
-            throw_Exception( "Structured::index2ij: gidx out of bounds", Here() );
+    void index2ij(gidx_t gidx, idx_t& i, idx_t& j) const {
+        if ((gidx < 0) || (gidx >= jglooff_.back())) {
+            throw_Exception("Structured::index2ij: gidx out of bounds", Here());
         }
         idx_t ja = 0, jb = jglooff_.size();
-        while ( jb - ja > 1 ) {
-            idx_t jm = ( ja + jb ) / 2;
-            if ( gidx < jglooff_[jm] ) {
+        while (jb - ja > 1) {
+            idx_t jm = (ja + jb) / 2;
+            if (gidx < jglooff_[jm]) {
                 jb = jm;
             }
             else {
@@ -375,9 +374,9 @@ public:
 
 
 protected:  // methods
-    virtual void print( std::ostream& ) const override;
+    virtual void print(std::ostream&) const override;
 
-    virtual void hash( eckit::Hash& ) const override;
+    virtual void hash(eckit::Hash&) const override;
 
     virtual RectangularLonLatDomain lonlatBoundingBox() const override;
 
@@ -385,7 +384,7 @@ protected:  // methods
 
     Domain computeDomain() const;
 
-    void crop( const Domain& );
+    void crop(const Domain&);
 
 protected:
     // Minimum number of points across parallels (constant y)
@@ -426,36 +425,36 @@ private:
 };
 
 extern "C" {
-void atlas__grid__Structured__delete( Structured* This );
-const Structured* atlas__grid__Structured( char* identifier );
-const Structured* atlas__grid__Structured__config( util::Config* conf );
-Structured* atlas__grid__regular__RegularGaussian( long N );
-Structured* atlas__grid__reduced__ReducedGaussian_int( int nx[], long ny );
-Structured* atlas__grid__reduced__ReducedGaussian_long( long nx[], long ny );
-Structured* atlas__grid__reduced__ReducedGaussian_int_projection( int nx[], long ny,
-                                                                  const Projection::Implementation* projection );
-Structured* atlas__grid__reduced__ReducedGaussian_long_projection( long nx[], long ny,
-                                                                   const Projection::Implementation* projection );
-Structured* atlas__grid__regular__RegularLonLat( long nx, long ny );
-Structured* atlas__grid__regular__ShiftedLonLat( long nx, long ny );
-Structured* atlas__grid__regular__ShiftedLon( long nx, long ny );
-Structured* atlas__grid__regular__ShiftedLat( long nx, long ny );
+void atlas__grid__Structured__delete(Structured* This);
+const Structured* atlas__grid__Structured(char* identifier);
+const Structured* atlas__grid__Structured__config(util::Config* conf);
+Structured* atlas__grid__regular__RegularGaussian(long N);
+Structured* atlas__grid__reduced__ReducedGaussian_int(int nx[], long ny);
+Structured* atlas__grid__reduced__ReducedGaussian_long(long nx[], long ny);
+Structured* atlas__grid__reduced__ReducedGaussian_int_projection(int nx[], long ny,
+                                                                 const Projection::Implementation* projection);
+Structured* atlas__grid__reduced__ReducedGaussian_long_projection(long nx[], long ny,
+                                                                  const Projection::Implementation* projection);
+Structured* atlas__grid__regular__RegularLonLat(long nx, long ny);
+Structured* atlas__grid__regular__ShiftedLonLat(long nx, long ny);
+Structured* atlas__grid__regular__ShiftedLon(long nx, long ny);
+Structured* atlas__grid__regular__ShiftedLat(long nx, long ny);
 
-void atlas__grid__Structured__nx_array( Structured* This, const idx_t*& nx, idx_t& size );
-idx_t atlas__grid__Structured__nx( Structured* This, idx_t j );
-idx_t atlas__grid__Structured__ny( Structured* This );
-gidx_t atlas__grid__Structured__index( Structured* This, idx_t i, idx_t j );
-void atlas__grid__Structured__index2ij( Structured* This, gidx_t gidx, idx_t& i, idx_t& j );
-idx_t atlas__grid__Structured__nxmin( Structured* This );
-idx_t atlas__grid__Structured__nxmax( Structured* This );
-double atlas__grid__Structured__y( Structured* This, idx_t j );
-double atlas__grid__Structured__x( Structured* This, idx_t i, idx_t j );
-void atlas__grid__Structured__xy( Structured* This, idx_t i, idx_t j, double crd[] );
-void atlas__grid__Structured__lonlat( Structured* This, idx_t i, idx_t j, double crd[] );
-void atlas__grid__Structured__y_array( Structured* This, const double*& lats, idx_t& size );
-int atlas__grid__Structured__reduced( Structured* This );
+void atlas__grid__Structured__nx_array(Structured* This, const idx_t*& nx, idx_t& size);
+idx_t atlas__grid__Structured__nx(Structured* This, idx_t j);
+idx_t atlas__grid__Structured__ny(Structured* This);
+gidx_t atlas__grid__Structured__index(Structured* This, idx_t i, idx_t j);
+void atlas__grid__Structured__index2ij(Structured* This, gidx_t gidx, idx_t& i, idx_t& j);
+idx_t atlas__grid__Structured__nxmin(Structured* This);
+idx_t atlas__grid__Structured__nxmax(Structured* This);
+double atlas__grid__Structured__y(Structured* This, idx_t j);
+double atlas__grid__Structured__x(Structured* This, idx_t i, idx_t j);
+void atlas__grid__Structured__xy(Structured* This, idx_t i, idx_t j, double crd[]);
+void atlas__grid__Structured__lonlat(Structured* This, idx_t i, idx_t j, double crd[]);
+void atlas__grid__Structured__y_array(Structured* This, const double*& lats, idx_t& size);
+int atlas__grid__Structured__reduced(Structured* This);
 
-idx_t atlas__grid__Gaussian__N( Structured* This );
+idx_t atlas__grid__Gaussian__N(Structured* This);
 }
 
 }  // namespace grid

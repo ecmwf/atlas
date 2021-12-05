@@ -29,7 +29,7 @@ class Stream;
 
 //---------------------------------------------------------------------------------------------------------------------
 
-size_t uncompressed_size( const atlas::io::Metadata& m );
+size_t uncompressed_size(const atlas::io::Metadata& m);
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -37,11 +37,11 @@ class Metadata : public util::Config {
 public:
     using util::Config::Config;
 
-    Link link() const { return Link{getString( "link", "" )}; }
+    Link link() const { return Link{getString("link", "")}; }
 
-    Type type() const { return Type{getString( "type", "" )}; }
+    Type type() const { return Type{getString("type", "")}; }
 
-    void link( atlas::io::Metadata&& );
+    void link(atlas::io::Metadata&&);
 
     std::string json() const;
 
@@ -51,9 +51,9 @@ public:
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void write( const atlas::io::Metadata&, std::ostream& out );
+void write(const atlas::io::Metadata&, std::ostream& out);
 
-void write( const atlas::io::Metadata&, atlas::io::Stream& out );
+void write(const atlas::io::Metadata&, atlas::io::Stream& out);
 
 //---------------------------------------------------------------------------------------------------------------------
 

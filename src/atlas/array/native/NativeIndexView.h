@@ -62,20 +62,20 @@ public:
     };
 
 public:
-    FortranIndex( Value* idx ) : idx_( idx ) {}
-    void set( const Value& value ) { *( idx_ ) = value + BASE; }
+    FortranIndex(Value* idx): idx_(idx) {}
+    void set(const Value& value) { *(idx_) = value + BASE; }
     Value get() const { return *(idx_)-BASE; }
-    void operator                =( const Value& value ) { set( value ); }
-    FortranIndex<Value>& operator=( const FortranIndex<Value>& other ) {
-        set( other.get() );
+    void operator                =(const Value& value) { set(value); }
+    FortranIndex<Value>& operator=(const FortranIndex<Value>& other) {
+        set(other.get());
         return *this;
     }
     FortranIndex<Value>& operator--() {
-        --( *( idx_ ) );
+        --(*(idx_));
         return *this;
     }
     FortranIndex<Value>& operator++() {
-        ++( *( idx_ ) );
+        ++(*(idx_));
         return *this;
     }
 
@@ -123,78 +123,78 @@ public:
 
 public:
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-    IndexView( Value* data, const idx_t shape[Rank] );
+    IndexView(Value* data, const idx_t shape[Rank]);
 
-    IndexView( Value* data, const idx_t shape[Rank], const idx_t strides[Rank] );
+    IndexView(Value* data, const idx_t shape[Rank], const idx_t strides[Rank]);
 #endif
     // -- Access methods
 
     /// @brief Multidimensional index operator: view(i,j,k,...)
     template <typename... Idx>
-    Index operator()( Idx... idx ) {
-        check_bounds( idx... );
-        return INDEX_REF( &data_[index( idx... )] );
+    Index operator()(Idx... idx) {
+        check_bounds(idx...);
+        return INDEX_REF(&data_[index(idx...)]);
     }
 
     /// @brief Multidimensional index operator: view(i,j,k,...)
     template <typename... Ints>
-    const value_type operator()( Ints... idx ) const {
-        return data_[index( idx... )] FROM_FORTRAN;
+    const value_type operator()(Ints... idx) const {
+        return data_[index(idx...)] FROM_FORTRAN;
     }
 
 private:
     // -- Private methods
 
     template <int Dim, typename Int, typename... Ints>
-    constexpr idx_t index_part( Int idx, Ints... next_idx ) const {
-        return idx * strides_[Dim] + index_part<Dim + 1>( next_idx... );
+    constexpr idx_t index_part(Int idx, Ints... next_idx) const {
+        return idx * strides_[Dim] + index_part<Dim + 1>(next_idx...);
     }
 
     template <int Dim, typename Int>
-    constexpr idx_t index_part( Int last_idx ) const {
+    constexpr idx_t index_part(Int last_idx) const {
         return last_idx * strides_[Dim];
     }
 
     template <typename... Ints>
-    constexpr idx_t index( Ints... idx ) const {
-        return index_part<0>( idx... );
+    constexpr idx_t index(Ints... idx) const {
+        return index_part<0>(idx...);
     }
 
 #if ATLAS_INDEXVIEW_BOUNDS_CHECKING
     template <typename... Ints>
-    void check_bounds( Ints... idx ) const {
-        static_assert( sizeof...( idx ) == Rank, "Expected number of indices is different from rank of array" );
-        return check_bounds_part<0>( idx... );
+    void check_bounds(Ints... idx) const {
+        static_assert(sizeof...(idx) == Rank, "Expected number of indices is different from rank of array");
+        return check_bounds_part<0>(idx...);
     }
 #else
     template <typename... Ints>
-    void check_bounds( Ints... ) const {}
+    void check_bounds(Ints...) const {}
 #endif
 
     template <typename... Ints>
-    void check_bounds_force( Ints... idx ) const {
-        static_assert( sizeof...( idx ) == Rank, "Expected number of indices is different from rank of array" );
-        return check_bounds_part<0>( idx... );
+    void check_bounds_force(Ints... idx) const {
+        static_assert(sizeof...(idx) == Rank, "Expected number of indices is different from rank of array");
+        return check_bounds_part<0>(idx...);
     }
 
     template <int Dim, typename Int, typename... Ints>
-    void check_bounds_part( Int idx, Ints... next_idx ) const {
-        if ( idx_t( idx ) >= shape_[Dim] ) {
-            throw_OutOfRange( "IndexView", array_dim<Dim>(), idx, shape_[Dim] );
+    void check_bounds_part(Int idx, Ints... next_idx) const {
+        if (idx_t(idx) >= shape_[Dim]) {
+            throw_OutOfRange("IndexView", array_dim<Dim>(), idx, shape_[Dim]);
         }
-        check_bounds_part<Dim + 1>( next_idx... );
+        check_bounds_part<Dim + 1>(next_idx...);
     }
 
     template <int Dim, typename Int>
-    void check_bounds_part( Int last_idx ) const {
-        if ( idx_t( last_idx ) >= shape_[Dim] ) {
-            throw_OutOfRange( "IndexView", array_dim<Dim>(), last_idx, shape_[Dim] );
+    void check_bounds_part(Int last_idx) const {
+        if (idx_t(last_idx) >= shape_[Dim]) {
+            throw_OutOfRange("IndexView", array_dim<Dim>(), last_idx, shape_[Dim]);
         }
     }
 
     idx_t size() const { return shape_[0]; }
 
-    void dump( std::ostream& os ) const;
+    void dump(std::ostream& os) const;
 
 private:
     Value* data_;

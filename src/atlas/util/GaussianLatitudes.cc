@@ -18,20 +18,20 @@
 namespace atlas {
 namespace util {
 
-void gaussian_latitudes_npole_equator( const size_t N, double latitudes[] ) {
-    grid::spacing::gaussian::gaussian_latitudes_npole_equator( N, latitudes );
+void gaussian_latitudes_npole_equator(const size_t N, double latitudes[]) {
+    grid::spacing::gaussian::gaussian_latitudes_npole_equator(N, latitudes);
 }
 
-void gaussian_quadrature_npole_equator( const size_t N, double latitudes[], double weights[] ) {
-    grid::spacing::gaussian::gaussian_quadrature_npole_equator( N, latitudes, weights );
+void gaussian_quadrature_npole_equator(const size_t N, double latitudes[], double weights[]) {
+    grid::spacing::gaussian::gaussian_quadrature_npole_equator(N, latitudes, weights);
 }
 
-void gaussian_latitudes_npole_spole( const size_t N, double latitudes[] ) {
-    grid::spacing::gaussian::gaussian_latitudes_npole_spole( N, latitudes );
+void gaussian_latitudes_npole_spole(const size_t N, double latitudes[]) {
+    grid::spacing::gaussian::gaussian_latitudes_npole_spole(N, latitudes);
 }
 
-void gaussian_quadrature_npole_spole( const size_t N, double latitudes[], double weights[] ) {
-    grid::spacing::gaussian::gaussian_quadrature_npole_spole( N, latitudes, weights );
+void gaussian_quadrature_npole_spole(const size_t N, double latitudes[], double weights[]) {
+    grid::spacing::gaussian::gaussian_quadrature_npole_spole(N, latitudes, weights);
 }
 
 }  // namespace util

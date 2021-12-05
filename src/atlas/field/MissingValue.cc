@@ -27,16 +27,16 @@ namespace field {
 
 
 namespace {
-std::string config_type( const MissingValue::Config& c ) {
+std::string config_type(const MissingValue::Config& c) {
     std::string value;
-    c.get( "type", value );
+    c.get("type", value);
     return value;
 }
 
 
-std::string field_type( const Field& f ) {
+std::string field_type(const Field& f) {
     std::string value;
-    if ( f.metadata().get( "missing_value_type", value ) ) {
+    if (f.metadata().get("missing_value_type", value)) {
         value += "-" + f.datatype().str();
     }
     return value;
@@ -44,70 +44,70 @@ std::string field_type( const Field& f ) {
 }  // namespace
 
 
-MissingValue::MissingValue() : Handle( nullptr ) {}
+MissingValue::MissingValue(): Handle(nullptr) {}
 
 
-MissingValue::MissingValue( const MissingValue::Config& config ) :
-    Handle( detail::MissingValueFactory::build( config_type( config ), config ) ) {}
+MissingValue::MissingValue(const MissingValue::Config& config):
+    Handle(detail::MissingValueFactory::build(config_type(config), config)) {}
 
 
-MissingValue::MissingValue( const std::string& type, const MissingValue::Config& config ) :
-    Handle( detail::MissingValueFactory::build( type, config ) ) {}
+MissingValue::MissingValue(const std::string& type, const MissingValue::Config& config):
+    Handle(detail::MissingValueFactory::build(type, config)) {}
 
 
-MissingValue::MissingValue( const Field& field ) :
-    Handle( detail::MissingValueFactory::build( field_type( field ), field.metadata() ) ) {}
+MissingValue::MissingValue(const Field& field):
+    Handle(detail::MissingValueFactory::build(field_type(field), field.metadata())) {}
 
 
-MissingValue::MissingValue( const std::string& type, const Field& field ) :
-    Handle( detail::MissingValueFactory::build( type, field.metadata() ) ) {}
+MissingValue::MissingValue(const std::string& type, const Field& field):
+    Handle(detail::MissingValueFactory::build(type, field.metadata())) {}
 
 
-bool MissingValue::operator()( const double& value ) const {
-    ATLAS_ASSERT_MSG( operator bool(), "MissingValue::operator()( const double& ) ObjectHandle not setup" );
-    return get()->operator()( value );
+bool MissingValue::operator()(const double& value) const {
+    ATLAS_ASSERT_MSG(operator bool(), "MissingValue::operator()( const double& ) ObjectHandle not setup");
+    return get()->operator()(value);
 }
 
 
-bool MissingValue::operator()( const float& value ) const {
-    ATLAS_ASSERT_MSG( operator bool(), "MissingValue::operator()( const float& ): ObjectHandle not setup" );
-    return get()->operator()( value );
+bool MissingValue::operator()(const float& value) const {
+    ATLAS_ASSERT_MSG(operator bool(), "MissingValue::operator()( const float& ): ObjectHandle not setup");
+    return get()->operator()(value);
 }
 
 
-bool MissingValue::operator()( const int& value ) const {
-    ATLAS_ASSERT_MSG( operator bool(), "MissingValue::operator()( const int& ): ObjectHandle not setup" );
-    return get()->operator()( value );
+bool MissingValue::operator()(const int& value) const {
+    ATLAS_ASSERT_MSG(operator bool(), "MissingValue::operator()( const int& ): ObjectHandle not setup");
+    return get()->operator()(value);
 }
 
 
-bool MissingValue::operator()( const long& value ) const {
-    ATLAS_ASSERT_MSG( operator bool(), "MissingValue::operator()( const long& ): ObjectHandle not setup" );
-    return get()->operator()( value );
+bool MissingValue::operator()(const long& value) const {
+    ATLAS_ASSERT_MSG(operator bool(), "MissingValue::operator()( const long& ): ObjectHandle not setup");
+    return get()->operator()(value);
 }
 
 
-bool MissingValue::operator()( const unsigned long& value ) const {
-    ATLAS_ASSERT_MSG( operator bool(), "MissingValue::operator()( const unsigned long& ): ObjectHandle not setup" );
-    return get()->operator()( value );
+bool MissingValue::operator()(const unsigned long& value) const {
+    ATLAS_ASSERT_MSG(operator bool(), "MissingValue::operator()( const unsigned long& ): ObjectHandle not setup");
+    return get()->operator()(value);
 }
 
 
 bool MissingValue::isnan() const {
-    ATLAS_ASSERT_MSG( operator bool(), "MissingValue: ObjectHandle not setup" );
+    ATLAS_ASSERT_MSG(operator bool(), "MissingValue: ObjectHandle not setup");
     return get()->isnan();
 }
 
 
 const detail::MissingValue& MissingValue::ref() const {
-    ATLAS_ASSERT_MSG( operator bool(), "MissingValue: ObjectHandle not setup" );
+    ATLAS_ASSERT_MSG(operator bool(), "MissingValue: ObjectHandle not setup");
     return *get();  // (one dereferencing level less)
 }
 
 
-void MissingValue::metadata( Field& field ) const {
-    ATLAS_ASSERT_MSG( operator bool(), "MissingValue: ObjectHandle not setup" );
-    get()->metadata( field );
+void MissingValue::metadata(Field& field) const {
+    ATLAS_ASSERT_MSG(operator bool(), "MissingValue: ObjectHandle not setup");
+    get()->metadata(field);
 }
 
 

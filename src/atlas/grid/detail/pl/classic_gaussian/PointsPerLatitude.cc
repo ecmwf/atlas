@@ -29,46 +29,46 @@ namespace classic_gaussian {
 //-----------------------------------------------------------------------------
 
 template <typename Int>
-void points_per_latitude_npole_equator_impl( const size_t N, Int nlon[] ) {
+void points_per_latitude_npole_equator_impl(const size_t N, Int nlon[]) {
     std::stringstream Nstream;
     Nstream << N;
     std::string Nstr = Nstream.str();
-    if ( PointsPerLatitudeFactory::has( Nstr ) ) {
-        std::unique_ptr<const PointsPerLatitude> pl( PointsPerLatitudeFactory::build( Nstr ) );
-        pl->assign( nlon, N );
+    if (PointsPerLatitudeFactory::has(Nstr)) {
+        std::unique_ptr<const PointsPerLatitude> pl(PointsPerLatitudeFactory::build(Nstr));
+        pl->assign(nlon, N);
     }
     else {
-        throw_Exception( "gaussian::classic::PointsPerLatitude not available for N" + Nstr, Here() );
+        throw_Exception("gaussian::classic::PointsPerLatitude not available for N" + Nstr, Here());
     }
 }
 
 //-----------------------------------------------------------------------------
 
 template <typename Int>
-void points_per_latitude_npole_spole_impl( const size_t N, Int nlon[] ) {
-    points_per_latitude_npole_equator( N, nlon );
+void points_per_latitude_npole_spole_impl(const size_t N, Int nlon[]) {
+    points_per_latitude_npole_equator(N, nlon);
     size_t end = 2 * N - 1;
-    for ( size_t jlat = 0; jlat < N; ++jlat ) {
+    for (size_t jlat = 0; jlat < N; ++jlat) {
         nlon[end--] = nlon[jlat];
     }
 }
 
 //-----------------------------------------------------------------------------
 
-void points_per_latitude_npole_equator( const size_t N, long nlon[] ) {
-    points_per_latitude_npole_equator_impl( N, nlon );
+void points_per_latitude_npole_equator(const size_t N, long nlon[]) {
+    points_per_latitude_npole_equator_impl(N, nlon);
 }
-void points_per_latitude_npole_equator( const size_t N, int nlon[] ) {
-    points_per_latitude_npole_equator_impl( N, nlon );
+void points_per_latitude_npole_equator(const size_t N, int nlon[]) {
+    points_per_latitude_npole_equator_impl(N, nlon);
 }
 
 //-----------------------------------------------------------------------------
 
-void points_per_latitude_npole_spole( const size_t N, long nlon[] ) {
-    points_per_latitude_npole_spole_impl( N, nlon );
+void points_per_latitude_npole_spole(const size_t N, long nlon[]) {
+    points_per_latitude_npole_spole_impl(N, nlon);
 }
-void points_per_latitude_npole_spole( const size_t N, int nlon[] ) {
-    points_per_latitude_npole_spole_impl( N, nlon );
+void points_per_latitude_npole_spole(const size_t N, int nlon[]) {
+    points_per_latitude_npole_spole_impl(N, nlon);
 }
 
 //-----------------------------------------------------------------------------

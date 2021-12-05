@@ -31,42 +31,42 @@ namespace linalg {
 namespace sparse {
 
 namespace {
-const eckit::linalg::LinearAlgebra& eckit_linalg_backend( const Configuration& config ) {
+const eckit::linalg::LinearAlgebra& eckit_linalg_backend(const Configuration& config) {
     std::string backend = "default";
-    config.get( "backend", backend );
-    if ( backend == "default" ) {
+    config.get("backend", backend);
+    if (backend == "default") {
         return eckit::linalg::LinearAlgebra::backend();
     }
-    ATLAS_ASSERT( eckit::linalg::LinearAlgebra::hasBackend( backend ) );
-    return eckit::linalg::LinearAlgebra::getBackend( backend );
+    ATLAS_ASSERT(eckit::linalg::LinearAlgebra::hasBackend(backend));
+    return eckit::linalg::LinearAlgebra::getBackend(backend);
 }
 
 }  // namespace
 
 void SparseMatrixMultiply<backend::eckit_linalg, Indexing::layout_right, 1, const double, double>::apply(
-    const SparseMatrix& W, const View<const double, 1>& src, View<double, 1>& tgt, const Configuration& config ) {
-    ATLAS_ASSERT( src.contiguous() );
-    ATLAS_ASSERT( tgt.contiguous() );
-    eckit::linalg::Vector v_src( src.data(), src.size() );
-    eckit::linalg::Vector v_tgt( tgt.data(), tgt.size() );
-    eckit_linalg_backend( config ).spmv( W, v_src, v_tgt );
+    const SparseMatrix& W, const View<const double, 1>& src, View<double, 1>& tgt, const Configuration& config) {
+    ATLAS_ASSERT(src.contiguous());
+    ATLAS_ASSERT(tgt.contiguous());
+    eckit::linalg::Vector v_src(src.data(), src.size());
+    eckit::linalg::Vector v_tgt(tgt.data(), tgt.size());
+    eckit_linalg_backend(config).spmv(W, v_src, v_tgt);
 }
 
 void SparseMatrixMultiply<backend::eckit_linalg, Indexing::layout_right, 2, const double, double>::apply(
-    const SparseMatrix& W, const View<const double, 2>& src, View<double, 2>& tgt, const Configuration& config ) {
-    ATLAS_ASSERT( src.contiguous() );
-    ATLAS_ASSERT( tgt.contiguous() );
-    ATLAS_ASSERT( src.shape( 1 ) >= W.cols() );
-    ATLAS_ASSERT( tgt.shape( 1 ) >= W.rows() );
-    eckit::linalg::Matrix m_src( src.data(), src.shape( 1 ), src.shape( 0 ) );
-    eckit::linalg::Matrix m_tgt( tgt.data(), tgt.shape( 1 ), tgt.shape( 0 ) );
-    eckit_linalg_backend( config ).spmm( W, m_src, m_tgt );
+    const SparseMatrix& W, const View<const double, 2>& src, View<double, 2>& tgt, const Configuration& config) {
+    ATLAS_ASSERT(src.contiguous());
+    ATLAS_ASSERT(tgt.contiguous());
+    ATLAS_ASSERT(src.shape(1) >= W.cols());
+    ATLAS_ASSERT(tgt.shape(1) >= W.rows());
+    eckit::linalg::Matrix m_src(src.data(), src.shape(1), src.shape(0));
+    eckit::linalg::Matrix m_tgt(tgt.data(), tgt.shape(1), tgt.shape(0));
+    eckit_linalg_backend(config).spmm(W, m_src, m_tgt);
 }
 
 void SparseMatrixMultiply<backend::eckit_linalg, Indexing::layout_left, 1, const double, double>::apply(
-    const SparseMatrix& W, const View<const double, 1>& src, View<double, 1>& tgt, const Configuration& config ) {
-    SparseMatrixMultiply<backend::eckit_linalg, Indexing::layout_right, 1, const double, double>::apply( W, src, tgt,
-                                                                                                         config );
+    const SparseMatrix& W, const View<const double, 1>& src, View<double, 1>& tgt, const Configuration& config) {
+    SparseMatrixMultiply<backend::eckit_linalg, Indexing::layout_right, 1, const double, double>::apply(W, src, tgt,
+                                                                                                        config);
 }
 
 }  // namespace sparse

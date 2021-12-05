@@ -25,8 +25,8 @@ namespace util {
 // Compute coordinates of a point on a rotated sphere with specified pole
 class Rotation {
 public:
-    Rotation( const PointLonLat& south_pole, double rotation_angle = 0. );
-    Rotation( const eckit::Parametrisation& );
+    Rotation(const PointLonLat& south_pole, double rotation_angle = 0.);
+    Rotation(const eckit::Parametrisation&);
 
     bool rotated() const { return rotated_; }
 
@@ -34,17 +34,17 @@ public:
     PointLonLat northPole() const { return npole_; }
     double rotationAngle() const { return angle_; }
 
-    PointLonLat rotate( const PointLonLat& ) const;
-    PointLonLat unrotate( const PointLonLat& ) const;
+    PointLonLat rotate(const PointLonLat&) const;
+    PointLonLat unrotate(const PointLonLat&) const;
 
-    void rotate( double crd[] ) const;
-    void unrotate( double crd[] ) const;
+    void rotate(double crd[]) const;
+    void unrotate(double crd[]) const;
 
 private:
     void precompute();
 
-    void print( std::ostream& ) const;
-    friend std::ostream& operator<<( std::ostream&, const Rotation& );
+    void print(std::ostream&) const;
+    friend std::ostream& operator<<(std::ostream&, const Rotation&);
 
 private:
     PointLonLat npole_ = {-180., 90.};  // North Pole

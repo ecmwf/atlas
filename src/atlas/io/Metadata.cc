@@ -25,54 +25,54 @@ namespace io {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-size_t uncompressed_size( const atlas::io::Metadata& m ) {
-    if ( m.has( "data.size" ) ) {
-        return m.getUnsigned( "data.size" );
+size_t uncompressed_size(const atlas::io::Metadata& m) {
+    if (m.has("data.size")) {
+        return m.getUnsigned("data.size");
     }
-    else if ( m.has( "type" ) ) {
-        if ( m.getString( "type" ) == "array" ) {
-            atlas::io::ArrayMetadata array( m );
+    else if (m.has("type")) {
+        if (m.getString("type") == "array") {
+            atlas::io::ArrayMetadata array(m);
             return array.bytes();
         }
     }
     std::stringstream err;
     err << "Could not compute uncompressed data size from metadata \n";
-    write( m, err );
-    throw Exception( err.str() );
+    write(m, err);
+    throw Exception(err.str());
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void write( const atlas::io::Metadata& metadata, std::ostream& out ) {
-    eckit::JSON js( out, eckit::JSON::Formatting::indent( 4 ) );
+void write(const atlas::io::Metadata& metadata, std::ostream& out) {
+    eckit::JSON js(out, eckit::JSON::Formatting::indent(4));
     js << metadata;
 }
 
-void write( const atlas::io::Metadata& metadata, atlas::io::Stream& out ) {
+void write(const atlas::io::Metadata& metadata, atlas::io::Stream& out) {
     std::stringstream ss;
-    write( metadata, ss );
+    write(metadata, ss);
     std::string s = ss.str();
-    out.write( s.data(), s.size() );
+    out.write(s.data(), s.size());
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void Metadata::link( Metadata&& linked ) {
+void Metadata::link(Metadata&& linked) {
     std::string initial_link = link();
-    ATLAS_ASSERT( initial_link.size() );
+    ATLAS_ASSERT(initial_link.size());
 
-    data   = std::move( linked.data );
-    record = std::move( linked.record );
+    data   = std::move(linked.data);
+    record = std::move(linked.record);
 
-    set( linked );
+    set(linked);
 
     // Set link to initial_link, in case the link is itself another link
-    set( "link", initial_link );
+    set("link", initial_link);
 }
 
 std::string Metadata::json() const {
     std::stringstream s;
-    eckit::JSON js( s, eckit::JSON::Formatting::compact() );
+    eckit::JSON js(s, eckit::JSON::Formatting::compact());
     js << *this;
     return s.str();
 }

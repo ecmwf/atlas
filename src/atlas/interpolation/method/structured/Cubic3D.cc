@@ -18,14 +18,14 @@ namespace method {
 
 namespace {
 
-MethodBuilder<Cubic3D> __builder1( "structured-cubic3D" );
-MethodBuilder<Cubic3D> __builder2( "cubic3D" );
-MethodBuilder<Cubic3D> __builder3( "structured-tricubic" );
-MethodBuilder<Cubic3D> __builder4( "tricubic" );
+MethodBuilder<Cubic3D> __builder1("structured-cubic3D");
+MethodBuilder<Cubic3D> __builder2("cubic3D");
+MethodBuilder<Cubic3D> __builder3("structured-tricubic");
+MethodBuilder<Cubic3D> __builder4("tricubic");
 
 }  // namespace
 
-Cubic3D::Cubic3D( const Config& config ) : StructuredInterpolation3D<Cubic3DKernel>( config ) {}
+Cubic3D::Cubic3D(const Config& config): StructuredInterpolation3D<Cubic3DKernel>(config) {}
 
 }  // namespace method
 }  // namespace interpolation

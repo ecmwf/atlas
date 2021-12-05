@@ -25,8 +25,8 @@ class HorizontalStencil {
     idx_t j_begin_;
 
 public:
-    idx_t i( idx_t offset_i, idx_t offset_j ) const { return i_begin_[offset_j] + offset_i; }
-    idx_t j( idx_t offset ) const { return j_begin_ + offset; }
+    idx_t i(idx_t offset_i, idx_t offset_j) const { return i_begin_[offset_j] + offset_i; }
+    idx_t j(idx_t offset) const { return j_begin_ + offset; }
     constexpr idx_t width() const { return StencilWidth; }
 };
 
@@ -45,7 +45,7 @@ class VerticalStencil {
     //    |-----|-----|--+--|      --> k_interval_ = 2
     //    |-----|-----|-----|  +   --> k_interval_ = 3
 public:
-    idx_t k( idx_t offset ) const { return k_begin_ + offset; }
+    idx_t k(idx_t offset) const { return k_begin_ + offset; }
     constexpr idx_t width() const { return StencilWidth; }
     idx_t k_interval() const { return k_interval_; }
 };
@@ -62,9 +62,9 @@ class Stencil3D {
     idx_t k_interval_;
 
 public:
-    idx_t i( idx_t offset_i, idx_t offset_j ) const { return i_begin_[offset_j] + offset_i; }
-    idx_t j( idx_t offset ) const { return j_begin_ + offset; }
-    idx_t k( idx_t offset ) const { return k_begin_ + offset; }
+    idx_t i(idx_t offset_i, idx_t offset_j) const { return i_begin_[offset_j] + offset_i; }
+    idx_t j(idx_t offset) const { return j_begin_ + offset; }
+    idx_t k(idx_t offset) const { return k_begin_ + offset; }
     constexpr idx_t width() const { return StencilWidth; }
     idx_t k_interval() const { return k_interval_; }
 };

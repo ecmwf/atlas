@@ -34,10 +34,10 @@ void force_link() {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-const GridImpl* GridFactory::build( const std::string& builder, const util::Config& config ) {
+const GridImpl* GridFactory::build(const std::string& builder, const util::Config& config) {
     force_link();
-    auto factory = get( builder );
-    return factory->make( config );
+    auto factory = get(builder);
+    return factory->make(config);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

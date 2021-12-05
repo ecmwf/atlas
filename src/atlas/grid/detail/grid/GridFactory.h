@@ -30,11 +30,11 @@ using GridImpl = detail::grid::Grid;
 class GridFactory : public util::Factory<GridFactory> {
 public:
     static std::string className() { return "GridFactory"; }
-    static const GridImpl* build( const std::string&, const util::Config& );
+    static const GridImpl* build(const std::string&, const util::Config&);
     using Factory::Factory;
 
 private:
-    virtual const GridImpl* make( const util::Config& ) = 0;
+    virtual const GridImpl* make(const util::Config&) = 0;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -42,7 +42,7 @@ private:
 template <class T>
 class GridFactoryBuilder : public GridFactory {
 private:
-    virtual const GridImpl* make( const util::Config& config ) override { return T::create( config ); }
+    virtual const GridImpl* make(const util::Config& config) override { return T::create(config); }
 
 public:
     using GridFactory::GridFactory;

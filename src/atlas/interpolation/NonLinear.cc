@@ -22,33 +22,33 @@ namespace interpolation {
 
 
 namespace {
-std::string config_type( const eckit::Parametrisation& config ) {
+std::string config_type(const eckit::Parametrisation& config) {
     std::string value;
-    ATLAS_ASSERT_MSG( config.get( "type", value ), "" );
+    ATLAS_ASSERT_MSG(config.get("type", value), "");
     return value;
 }
 }  // namespace
 
 
-NonLinear::NonLinear() : Handle( nullptr ) {}
+NonLinear::NonLinear(): Handle(nullptr) {}
 
 
-NonLinear::NonLinear( const NonLinear::Config& config ) :
-    Handle( nonlinear::NonLinearFactory::build( config_type( config ), config ) ) {}
+NonLinear::NonLinear(const NonLinear::Config& config):
+    Handle(nonlinear::NonLinearFactory::build(config_type(config), config)) {}
 
 
-NonLinear::NonLinear( const std::string& type, const NonLinear::Config& config ) :
-    Handle( nonlinear::NonLinearFactory::build( type, config ) ) {}
+NonLinear::NonLinear(const std::string& type, const NonLinear::Config& config):
+    Handle(nonlinear::NonLinearFactory::build(type, config)) {}
 
 
-bool NonLinear::operator()( const Field& f ) const {
-    return operator bool() && get()->applicable( f );
+bool NonLinear::operator()(const Field& f) const {
+    return operator bool() && get()->applicable(f);
 }
 
 
-bool NonLinear::execute( NonLinear::Matrix& W, const Field& f ) const {
-    ATLAS_ASSERT_MSG( operator bool(), "NonLinear: ObjectHandle not setup" );
-    return get()->execute( W, f );
+bool NonLinear::execute(NonLinear::Matrix& W, const Field& f) const {
+    ATLAS_ASSERT_MSG(operator bool(), "NonLinear: ObjectHandle not setup");
+    return get()->execute(W, f);
 }
 
 

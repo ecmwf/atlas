@@ -35,8 +35,8 @@ public:
         std::string path;
         std::uint64_t offset;
         URI() = default;
-        URI( const std::string& _path, std::uint64_t _offset = 0 ) : path( _path ), offset( _offset ) {}
-        URI( const URI& other ) : path( other.path ), offset( other.offset ) {}
+        URI(const std::string& _path, std::uint64_t _offset = 0): path(_path), offset(_offset) {}
+        URI(const URI& other): path(other.path), offset(other.offset) {}
     };
 
 private:
@@ -45,13 +45,13 @@ private:
 public:
     Record();
 
-    Record( const Record& );
+    Record(const Record&);
 
     bool empty() const;
 
-    Record& read( Stream& in, bool verify_end = false );
+    Record& read(Stream& in, bool verify_end = false);
 
-    const Metadata& metadata( const std::string& key ) const;
+    const Metadata& metadata(const std::string& key) const;
 
     Endian endian() const;
 
@@ -63,7 +63,7 @@ public:
 
     const std::vector<std::string>& keys() const;
 
-    bool has( const std::string& key );
+    bool has(const std::string& key);
 
     operator const ParsedRecord&() const;
 };

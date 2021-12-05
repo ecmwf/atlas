@@ -26,8 +26,8 @@ namespace io {
 struct RecordItem {
 public:
     struct URI {
-        URI( const std::string& uri );
-        URI( const std::string& _path, std::uint64_t _offset, const std::string& _key );
+        URI(const std::string& uri);
+        URI(const std::string& _path, std::uint64_t _offset, const std::string& _key);
         std::string str() const;
         operator std::string() { return str(); }
         std::string path;
@@ -39,22 +39,22 @@ public:
     RecordItem() = default;
 
     template <typename T>
-    explicit RecordItem( T&& x, tag::enable_static_assert = tag::enable_static_assert() );
+    explicit RecordItem(T&& x, tag::enable_static_assert = tag::enable_static_assert());
 
     template <typename T>
-    explicit RecordItem( T&& x, tag::disable_static_assert );
+    explicit RecordItem(T&& x, tag::disable_static_assert);
 
-    RecordItem( Metadata&&, Data&& );
+    RecordItem(Metadata&&, Data&&);
 
-    RecordItem( RecordItem&& other );
+    RecordItem(RecordItem&& other);
 
     const Data& data() const;
 
     const Metadata& metadata() const;
 
-    void metadata( const Metadata& m );
+    void metadata(const Metadata& m);
 
-    void data( atlas::io::Data&& d );
+    void data(atlas::io::Data&& d);
 
     bool empty() const;
 
@@ -73,24 +73,24 @@ private:
 //---------------------------------------------------------------------------------------------------------------------
 
 template <typename T>
-RecordItem::RecordItem( T&& x, tag::enable_static_assert ) {
-    encode( x, *metadata_, data_ );
+RecordItem::RecordItem(T&& x, tag::enable_static_assert) {
+    encode(x, *metadata_, data_);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
 template <typename T>
-RecordItem::RecordItem( T&& x, tag::disable_static_assert ) {
-    encode( x, *metadata_, data_, tag::disable_static_assert() );
+RecordItem::RecordItem(T&& x, tag::disable_static_assert) {
+    encode(x, *metadata_, data_, tag::disable_static_assert());
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
-size_t encode_metadata( const RecordItem& in, atlas::io::Metadata& metadata );
+size_t encode_metadata(const RecordItem& in, atlas::io::Metadata& metadata);
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void encode_data( const RecordItem& in, atlas::io::Data& out );
+void encode_data(const RecordItem& in, atlas::io::Data& out);
 
 //---------------------------------------------------------------------------------------------------------------------
 

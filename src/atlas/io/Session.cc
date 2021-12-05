@@ -29,8 +29,8 @@ using lock_guard = std::lock_guard<std::recursive_mutex>;
 
 class SessionImpl {
 public:
-    void store( Stream stream );
-    Record record( const std::string& path, size_t offset );
+    void store(Stream stream);
+    Record record(const std::string& path, size_t offset);
 
 private:
     std::recursive_mutex mutex_;
@@ -48,9 +48,9 @@ public:
     void push();
     void pop();
 
-    Record record( const std::string& path, size_t offset );
+    Record record(const std::string& path, size_t offset);
 
-    void store( Stream stream );
+    void store(Stream stream);
 
 private:
     friend class Session;
@@ -69,9 +69,9 @@ ActiveSession& ActiveSession::instance() {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-Record ActiveSession::record( const std::string& path, size_t offset ) {
-    if ( count_ ) {
-        return current().record( path, offset );
+Record ActiveSession::record(const std::string& path, size_t offset) {
+    if (count_) {
+        return current().record(path, offset);
     }
     else {
         return Record();
@@ -80,18 +80,18 @@ Record ActiveSession::record( const std::string& path, size_t offset ) {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void ActiveSession::store( Stream stream ) {
-    if ( count_ ) {
-        return current().store( stream );
+void ActiveSession::store(Stream stream) {
+    if (count_) {
+        return current().store(stream);
     }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
 SessionImpl& ActiveSession::current() {
-    lock_guard lock( mutex_ );
-    if ( count_ == 0 ) {
-        ATLAS_THROW_EXCEPTION( "No atlas::io session is currently active" );
+    lock_guard lock(mutex_);
+    if (count_ == 0) {
+        ATLAS_THROW_EXCEPTION("No atlas::io session is currently active");
     }
     return *session_;
 }
@@ -99,10 +99,10 @@ SessionImpl& ActiveSession::current() {
 //---------------------------------------------------------------------------------------------------------------------
 
 void ActiveSession::push() {
-    lock_guard lock( mutex_ );
-    if ( count_ == 0 ) {
-        ATLAS_ASSERT( session_ == nullptr );
-        session_.reset( new SessionImpl() );
+    lock_guard lock(mutex_);
+    if (count_ == 0) {
+        ATLAS_ASSERT(session_ == nullptr);
+        session_.reset(new SessionImpl());
     }
     ++count_;
 }
@@ -110,32 +110,32 @@ void ActiveSession::push() {
 //---------------------------------------------------------------------------------------------------------------------
 
 void ActiveSession::pop() {
-    lock_guard lock( mutex_ );
-    if ( count_ == 0 ) {
-        ATLAS_THROW_EXCEPTION( "No atlas::io session is currently active" );
+    lock_guard lock(mutex_);
+    if (count_ == 0) {
+        ATLAS_THROW_EXCEPTION("No atlas::io session is currently active");
     }
     --count_;
-    if ( count_ == 0 ) {
+    if (count_ == 0) {
         session_.reset();
     }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void SessionImpl::store( Stream stream ) {
-    lock_guard lock( mutex_ );
-    handles_.emplace_back( stream );
+void SessionImpl::store(Stream stream) {
+    lock_guard lock(mutex_);
+    handles_.emplace_back(stream);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
-Record SessionImpl::record( const std::string& path, size_t offset ) {
-    lock_guard lock( mutex_ );
-    auto key = Record::URI{eckit::PathName( path ).fullName(), offset}.str();
-    if ( records_.find( key ) == records_.end() ) {
-        records_.emplace( key, Record{} );
+Record SessionImpl::record(const std::string& path, size_t offset) {
+    lock_guard lock(mutex_);
+    auto key = Record::URI{eckit::PathName(path).fullName(), offset}.str();
+    if (records_.find(key) == records_.end()) {
+        records_.emplace(key, Record{});
     }
-    return records_.at( key );
+    return records_.at(key);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -158,22 +158,22 @@ bool Session::active() {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-Record Session::record( const std::string& path, size_t offset ) {
-    return ActiveSession::instance().record( path, offset );
+Record Session::record(const std::string& path, size_t offset) {
+    return ActiveSession::instance().record(path, offset);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
-Record Session::record( Stream stream, size_t offset ) {
+Record Session::record(Stream stream, size_t offset) {
     std::stringstream id;
     id << &stream.datahandle();
-    return ActiveSession::instance().record( id.str(), offset );
+    return ActiveSession::instance().record(id.str(), offset);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void Session::store( Stream stream ) {
-    ActiveSession::instance().store( stream );
+void Session::store(Stream stream) {
+    ActiveSession::instance().store(stream);
 }
 
 //---------------------------------------------------------------------------------------------------------------------

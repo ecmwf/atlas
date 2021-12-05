@@ -31,16 +31,16 @@ using namespace atlas::output;
 #define NLATS 64
 #define NLONG 128
 
-int main( int argc, char** argv ) {
-    atlas::initialize( argc, argv );
-    Grid grid( "L33x11" );
+int main(int argc, char** argv) {
+    atlas::initialize(argc, argv);
+    Grid grid("L33x11");
 
     // Build a mesh from grid
-    MeshGenerator generate( "delaunay" );
-    Mesh mesh = generate( grid );
+    MeshGenerator generate("delaunay");
+    Mesh mesh = generate(grid);
 
-    Gmsh gmsh( "earth.msh", util::Config( "coordinates", "xyz" ) );
-    gmsh.write( mesh );
+    Gmsh gmsh("earth.msh", util::Config("coordinates", "xyz"));
+    gmsh.write(mesh);
 
     atlas::finalize();
     atlas::mpi::finalize();

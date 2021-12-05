@@ -18,22 +18,22 @@
 
 namespace atlas {
 
-Vertical* atlas__Vertical__new( idx_t levels, const double z[] ) {
-    std::vector<double> zvec( z, z + levels );
-    return new Vertical( levels, zvec );
+Vertical* atlas__Vertical__new(idx_t levels, const double z[]) {
+    std::vector<double> zvec(z, z + levels);
+    return new Vertical(levels, zvec);
 }
 
-Vertical* atlas__Vertical__new_interval( idx_t levels, const double z[], const double interval[] ) {
-    std::vector<double> zvec( z, z + levels );
-    return new Vertical( levels, zvec, interval );
+Vertical* atlas__Vertical__new_interval(idx_t levels, const double z[], const double interval[]) {
+    std::vector<double> zvec(z, z + levels);
+    return new Vertical(levels, zvec, interval);
 }
 
-void atlas__Vertical__delete( Vertical* This ) {
+void atlas__Vertical__delete(Vertical* This) {
     delete This;
 }
 
-field::FieldImpl* atlas__Vertical__z( const Vertical* This ) {
-    ATLAS_ASSERT( This != nullptr );
+field::FieldImpl* atlas__Vertical__z(const Vertical* This) {
+    ATLAS_ASSERT(This != nullptr);
     field::FieldImpl* field;
     {
         Field f = This->z();
@@ -44,7 +44,7 @@ field::FieldImpl* atlas__Vertical__z( const Vertical* This ) {
     return field;
 }
 
-int atlas__Vertical__size( const Vertical* This ) {
+int atlas__Vertical__size(const Vertical* This) {
     return This->size();
 }
 

@@ -33,251 +33,251 @@ using field::MissingValue;
 using util::Config;
 
 
-CASE( "MissingValue (basic)" ) {
-    SECTION( "not defined" ) {
+CASE("MissingValue (basic)") {
+    SECTION("not defined") {
         auto mv = MissingValue();
-        EXPECT( !bool( mv ) );
+        EXPECT(!bool(mv));
 
-        mv = MissingValue( "not defined", Config() );
-        EXPECT( !bool( mv ) );
+        mv = MissingValue("not defined", Config());
+        EXPECT(!bool(mv));
     }
 
 
-    SECTION( "nan" ) {
+    SECTION("nan") {
         Config config;
 
-        auto mv = MissingValue( "nan", config );
-        EXPECT( bool( mv ) );
+        auto mv = MissingValue("nan", config);
+        EXPECT(bool(mv));
 
-        EXPECT( mv( nan ) );
-        EXPECT( mv( missingValue ) == false );
+        EXPECT(mv(nan));
+        EXPECT(mv(missingValue) == false);
 
-        config.set( "type", "nan" );
-        mv = MissingValue( config );
-        EXPECT( bool( mv ) );
+        config.set("type", "nan");
+        mv = MissingValue(config);
+        EXPECT(bool(mv));
 
-        EXPECT( mv( nan ) );
-        EXPECT( mv( missingValue ) == false );
+        EXPECT(mv(nan));
+        EXPECT(mv(missingValue) == false);
     }
 
 
-    SECTION( "equals" ) {
+    SECTION("equals") {
         Config config;
-        config.set( "missing_value", missingValue );
+        config.set("missing_value", missingValue);
 
-        auto mv = MissingValue( "equals", config );
-        EXPECT( bool( mv ) );
+        auto mv = MissingValue("equals", config);
+        EXPECT(bool(mv));
 
-        EXPECT( mv( missingValue - 1 ) == false );
-        EXPECT( mv( missingValue - missingValueEps / 2 ) == false );
-        EXPECT( mv( missingValue ) );
-        EXPECT( mv( missingValue + missingValueEps / 2 ) == false );
-        EXPECT( mv( missingValue + 1 ) == false );
+        EXPECT(mv(missingValue - 1) == false);
+        EXPECT(mv(missingValue - missingValueEps / 2) == false);
+        EXPECT(mv(missingValue));
+        EXPECT(mv(missingValue + missingValueEps / 2) == false);
+        EXPECT(mv(missingValue + 1) == false);
 
-        config.set( "type", "equals" );
-        mv = MissingValue( config );
-        EXPECT( bool( mv ) );
+        config.set("type", "equals");
+        mv = MissingValue(config);
+        EXPECT(bool(mv));
 
-        EXPECT( mv( missingValue - 1 ) == false );
-        EXPECT( mv( missingValue - missingValueEps / 2 ) == false );
-        EXPECT( mv( missingValue ) );
-        EXPECT( mv( missingValue + missingValueEps / 2 ) == false );
-        EXPECT( mv( missingValue + 1 ) == false );
+        EXPECT(mv(missingValue - 1) == false);
+        EXPECT(mv(missingValue - missingValueEps / 2) == false);
+        EXPECT(mv(missingValue));
+        EXPECT(mv(missingValue + missingValueEps / 2) == false);
+        EXPECT(mv(missingValue + 1) == false);
     }
 
 
-    SECTION( "approximately-equals" ) {
+    SECTION("approximately-equals") {
         Config config;
-        config.set( "missing_value", missingValue );
-        config.set( "missing_value_epsilon", missingValueEps );
+        config.set("missing_value", missingValue);
+        config.set("missing_value_epsilon", missingValueEps);
 
-        auto mv = MissingValue( "approximately-equals", config );
-        EXPECT( bool( mv ) );
+        auto mv = MissingValue("approximately-equals", config);
+        EXPECT(bool(mv));
 
-        EXPECT( mv( missingValue - missingValueEps * 2 ) == false );
-        EXPECT( mv( missingValue - missingValueEps / 2 ) );
-        EXPECT( mv( missingValue ) );
-        EXPECT( mv( missingValue + missingValueEps / 2 ) );
-        EXPECT( mv( missingValue + missingValueEps * 2 ) == false );
+        EXPECT(mv(missingValue - missingValueEps * 2) == false);
+        EXPECT(mv(missingValue - missingValueEps / 2));
+        EXPECT(mv(missingValue));
+        EXPECT(mv(missingValue + missingValueEps / 2));
+        EXPECT(mv(missingValue + missingValueEps * 2) == false);
 
-        config.set( "type", "approximately-equals" );
-        mv = MissingValue( config );
-        EXPECT( bool( mv ) );
+        config.set("type", "approximately-equals");
+        mv = MissingValue(config);
+        EXPECT(bool(mv));
 
-        EXPECT( mv( missingValue - missingValueEps * 2 ) == false );
-        EXPECT( mv( missingValue - missingValueEps / 2 ) );
-        EXPECT( mv( missingValue ) );
-        EXPECT( mv( missingValue + missingValueEps / 2 ) );
-        EXPECT( mv( missingValue + missingValueEps * 2 ) == false );
+        EXPECT(mv(missingValue - missingValueEps * 2) == false);
+        EXPECT(mv(missingValue - missingValueEps / 2));
+        EXPECT(mv(missingValue));
+        EXPECT(mv(missingValue + missingValueEps / 2));
+        EXPECT(mv(missingValue + missingValueEps * 2) == false);
     }
 }
 
 
-CASE( "MissingValue (DataType specialisations)" ) {
-    SECTION( "real64" ) {
-        auto n   = static_cast<double>( missingValue );
-        auto eps = static_cast<double>( missingValueEps );
+CASE("MissingValue (DataType specialisations)") {
+    SECTION("real64") {
+        auto n   = static_cast<double>(missingValue);
+        auto eps = static_cast<double>(missingValueEps);
         auto nan = std::numeric_limits<double>::quiet_NaN();
 
         Config config;
-        config.set( "missing_value", n );
-        config.set( "missing_value_epsilon", eps );
+        config.set("missing_value", n);
+        config.set("missing_value_epsilon", eps);
 
-        for ( std::string type : {"nan", "equals", "approximately-equals"} ) {
-            auto mv = MissingValue( type + "-real64", config );
-            EXPECT( bool( mv ) );
-            EXPECT( mv( type == "nan" ? nan : n ) );
-            EXPECT( mv( n ) != mv( nan ) );
-            EXPECT( mv( n + 1 ) == false );
+        for (std::string type : {"nan", "equals", "approximately-equals"}) {
+            auto mv = MissingValue(type + "-real64", config);
+            EXPECT(bool(mv));
+            EXPECT(mv(type == "nan" ? nan : n));
+            EXPECT(mv(n) != mv(nan));
+            EXPECT(mv(n + 1) == false);
         }
     }
 
 
-    SECTION( "real32" ) {
-        auto n   = static_cast<float>( missingValue );
-        auto eps = static_cast<float>( missingValueEps );
+    SECTION("real32") {
+        auto n   = static_cast<float>(missingValue);
+        auto eps = static_cast<float>(missingValueEps);
         auto nan = std::numeric_limits<float>::quiet_NaN();
 
         Config config;
-        config.set( "missing_value", n );
-        config.set( "missing_value_epsilon", eps );
+        config.set("missing_value", n);
+        config.set("missing_value_epsilon", eps);
 
-        for ( std::string type : {"nan", "equals", "approximately-equals"} ) {
-            auto mv = MissingValue( type + "-real32", config );
-            EXPECT( bool( mv ) );
-            EXPECT( mv( type == "nan" ? nan : n ) );
-            EXPECT( mv( n ) != mv( nan ) );
-            EXPECT( mv( n + 1 ) == false );
+        for (std::string type : {"nan", "equals", "approximately-equals"}) {
+            auto mv = MissingValue(type + "-real32", config);
+            EXPECT(bool(mv));
+            EXPECT(mv(type == "nan" ? nan : n));
+            EXPECT(mv(n) != mv(nan));
+            EXPECT(mv(n + 1) == false);
         }
     }
 
 
-    SECTION( "int32" ) {
-        auto n  = static_cast<int>( missingValue );
-        auto mv = MissingValue( "equals-int32", Config( "missing_value", n ) );
-        EXPECT( bool( mv ) );
-        EXPECT( mv( n ) );
-        EXPECT( mv( n + 1 ) == false );
+    SECTION("int32") {
+        auto n  = static_cast<int>(missingValue);
+        auto mv = MissingValue("equals-int32", Config("missing_value", n));
+        EXPECT(bool(mv));
+        EXPECT(mv(n));
+        EXPECT(mv(n + 1) == false);
     }
 
 
-    SECTION( "int64" ) {
-        auto n  = static_cast<long>( missingValue );
-        auto mv = MissingValue( "equals-int64", Config( "missing_value", n ) );
-        EXPECT( bool( mv ) );
-        EXPECT( mv( n ) );
-        EXPECT( mv( n + 1 ) == false );
+    SECTION("int64") {
+        auto n  = static_cast<long>(missingValue);
+        auto mv = MissingValue("equals-int64", Config("missing_value", n));
+        EXPECT(bool(mv));
+        EXPECT(mv(n));
+        EXPECT(mv(n + 1) == false);
     }
 
 
-    SECTION( "uint64" ) {
-        auto n  = static_cast<unsigned long>( missingValue );
-        auto mv = MissingValue( "equals-uint64", Config( "missing_value", n ) );
-        EXPECT( bool( mv ) );
-        EXPECT( mv( n ) );
-        EXPECT( mv( n + 1 ) == false );
+    SECTION("uint64") {
+        auto n  = static_cast<unsigned long>(missingValue);
+        auto mv = MissingValue("equals-uint64", Config("missing_value", n));
+        EXPECT(bool(mv));
+        EXPECT(mv(n));
+        EXPECT(mv(n + 1) == false);
     }
 }
 
 
-CASE( "MissingValue from Field (basic)" ) {
+CASE("MissingValue from Field (basic)") {
     std::vector<double> values{1., nan, missingValue, missingValue, missingValue + missingValueEps / 2., 6., 7.};
-    Field field( "field", values.data(), array::make_shape( values.size(), 1 ) );
+    Field field("field", values.data(), array::make_shape(values.size(), 1));
 
-    field.metadata().set( "missing_value_type", "not defined" );
-    field.metadata().set( "missing_value", missingValue );
-    field.metadata().set( "missing_value_epsilon", missingValueEps );
+    field.metadata().set("missing_value_type", "not defined");
+    field.metadata().set("missing_value", missingValue);
+    field.metadata().set("missing_value_epsilon", missingValueEps);
 
-    EXPECT( !bool( MissingValue( field ) ) );
+    EXPECT(!bool(MissingValue(field)));
 
 
-    SECTION( "nan" ) {
+    SECTION("nan") {
         // missing value type from user
-        EXPECT( std::count_if( values.begin(), values.end(), MissingValue( "nan", field ) ) == 1 );
+        EXPECT(std::count_if(values.begin(), values.end(), MissingValue("nan", field)) == 1);
 
         // missing value type from field
-        field.metadata().set( "missing_value_type", "nan" );
-        EXPECT( std::count_if( values.begin(), values.end(), MissingValue( field ) ) == 1 );
+        field.metadata().set("missing_value_type", "nan");
+        EXPECT(std::count_if(values.begin(), values.end(), MissingValue(field)) == 1);
     }
 
 
-    SECTION( "equals" ) {
+    SECTION("equals") {
         // missing value type from user (value set from field)
-        EXPECT( std::count_if( values.begin(), values.end(), MissingValue( "equals", field ) ) == 2 );
+        EXPECT(std::count_if(values.begin(), values.end(), MissingValue("equals", field)) == 2);
 
         // missing value type from field
-        field.metadata().set( "missing_value_type", "equals" );
-        EXPECT( std::count_if( values.begin(), values.end(), MissingValue( field ) ) == 2 );
+        field.metadata().set("missing_value_type", "equals");
+        EXPECT(std::count_if(values.begin(), values.end(), MissingValue(field)) == 2);
     }
 
 
-    SECTION( "approximately-equals" ) {
+    SECTION("approximately-equals") {
         // missing value type from user (value set from field)
-        EXPECT( std::count_if( values.begin(), values.end(), MissingValue( "approximately-equals", field ) ) == 3 );
+        EXPECT(std::count_if(values.begin(), values.end(), MissingValue("approximately-equals", field)) == 3);
 
         // missing value type from field
-        field.metadata().set( "missing_value_type", "approximately-equals" );
-        EXPECT( std::count_if( values.begin(), values.end(), MissingValue( field ) ) == 3 );
+        field.metadata().set("missing_value_type", "approximately-equals");
+        EXPECT(std::count_if(values.begin(), values.end(), MissingValue(field)) == 3);
     }
 }
 
 
-CASE( "MissingValue from Field (DataType specialisations)" ) {
-    SECTION( "real64" ) {
-        std::vector<double> values( 3, 1. );
-        Field field( "field", array::make_datatype<double>(), array::make_shape( values.size(), 1 ) );
-        EXPECT( field.datatype().str() == array::DataType::real64().str() );
-        EXPECT( !MissingValue( field ) );
+CASE("MissingValue from Field (DataType specialisations)") {
+    SECTION("real64") {
+        std::vector<double> values(3, 1.);
+        Field field("field", array::make_datatype<double>(), array::make_shape(values.size(), 1));
+        EXPECT(field.datatype().str() == array::DataType::real64().str());
+        EXPECT(!MissingValue(field));
 
-        field.metadata().set( "missing_value_type", "nan" );
-        EXPECT( MissingValue( field ) );
+        field.metadata().set("missing_value_type", "nan");
+        EXPECT(MissingValue(field));
     }
 
 
-    SECTION( "real32" ) {
-        std::vector<float> values( 3, 1. );
-        Field field( "field", array::make_datatype<float>(), array::make_shape( values.size(), 1 ) );
-        EXPECT( field.datatype().str() == array::DataType::real32().str() );
-        EXPECT( !MissingValue( field ) );
+    SECTION("real32") {
+        std::vector<float> values(3, 1.);
+        Field field("field", array::make_datatype<float>(), array::make_shape(values.size(), 1));
+        EXPECT(field.datatype().str() == array::DataType::real32().str());
+        EXPECT(!MissingValue(field));
 
-        field.metadata().set( "missing_value_type", "nan" );
-        EXPECT( MissingValue( field ) );
+        field.metadata().set("missing_value_type", "nan");
+        EXPECT(MissingValue(field));
     }
 
 
-    SECTION( "int32" ) {
-        std::vector<int> values( 3, 1 );
-        Field field( "field", array::make_datatype<int>(), array::make_shape( values.size(), 1 ) );
-        EXPECT( field.datatype().str() == array::DataType::int32().str() );
-        EXPECT( !MissingValue( field ) );
+    SECTION("int32") {
+        std::vector<int> values(3, 1);
+        Field field("field", array::make_datatype<int>(), array::make_shape(values.size(), 1));
+        EXPECT(field.datatype().str() == array::DataType::int32().str());
+        EXPECT(!MissingValue(field));
 
-        field.metadata().set( "missing_value_type", "equals" );
-        field.metadata().set( "missing_value", static_cast<int>( missingValue ) );
-        EXPECT( MissingValue( field ) );
+        field.metadata().set("missing_value_type", "equals");
+        field.metadata().set("missing_value", static_cast<int>(missingValue));
+        EXPECT(MissingValue(field));
     }
 
 
-    SECTION( "int64" ) {
-        std::vector<long> values( 3, 1 );
-        Field field( "field", array::make_datatype<long>(), array::make_shape( values.size(), 1 ) );
-        EXPECT( field.datatype().str() == array::DataType::int64().str() );
-        EXPECT( !MissingValue( field ) );
+    SECTION("int64") {
+        std::vector<long> values(3, 1);
+        Field field("field", array::make_datatype<long>(), array::make_shape(values.size(), 1));
+        EXPECT(field.datatype().str() == array::DataType::int64().str());
+        EXPECT(!MissingValue(field));
 
-        field.metadata().set( "missing_value_type", "equals" );
-        field.metadata().set( "missing_value", static_cast<long>( missingValue ) );
-        EXPECT( MissingValue( field ) );
+        field.metadata().set("missing_value_type", "equals");
+        field.metadata().set("missing_value", static_cast<long>(missingValue));
+        EXPECT(MissingValue(field));
     }
 
 
-    SECTION( "uint64" ) {
-        std::vector<unsigned long> values( 3, 1 );
-        Field field( "field", array::make_datatype<unsigned long>(), array::make_shape( values.size(), 1 ) );
-        EXPECT( field.datatype().str() == array::DataType::uint64().str() );
-        EXPECT( !MissingValue( field ) );
+    SECTION("uint64") {
+        std::vector<unsigned long> values(3, 1);
+        Field field("field", array::make_datatype<unsigned long>(), array::make_shape(values.size(), 1));
+        EXPECT(field.datatype().str() == array::DataType::uint64().str());
+        EXPECT(!MissingValue(field));
 
-        field.metadata().set( "missing_value_type", "equals" );
-        field.metadata().set( "missing_value", static_cast<unsigned long>( missingValue ) );
-        EXPECT( MissingValue( field ) );
+        field.metadata().set("missing_value_type", "equals");
+        field.metadata().set("missing_value", static_cast<unsigned long>(missingValue));
+        EXPECT(MissingValue(field));
     }
 }
 
@@ -285,6 +285,6 @@ CASE( "MissingValue from Field (DataType specialisations)" ) {
 }  // namespace atlas
 
 
-int main( int argc, char** argv ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
 }

@@ -50,14 +50,14 @@ public:
     // -- Types
 
     struct edge_t : std::pair<idx_t, idx_t> {
-        edge_t( idx_t A, idx_t B ) : std::pair<idx_t, idx_t>( A, B ) {}
+        edge_t(idx_t A, idx_t B): std::pair<idx_t, idx_t>(A, B) {}
 
-        edge_t reverse() const { return edge_t( std::pair<idx_t, idx_t>::second, std::pair<idx_t, idx_t>::first ); }
+        edge_t reverse() const { return edge_t(std::pair<idx_t, idx_t>::second, std::pair<idx_t, idx_t>::first); }
 
         struct LessThan {
-            bool operator()( const edge_t& e1, const edge_t& e2 ) const {
+            bool operator()(const edge_t& e1, const edge_t& e2) const {
                 // order ascending by 'first'
-                return ( e1.first < e2.first ? true : e1.first > e2.first ? false : e1.second < e2.second );
+                return (e1.first < e2.first ? true : e1.first > e2.first ? false : e1.second < e2.second);
             }
         };
     };
@@ -68,27 +68,27 @@ public:
     // -- Constructors
 
     Polygon();
-    Polygon( const edge_set_t& );
+    Polygon(const edge_set_t&);
 
     // -- Operators
 
     operator bool() const;
 
-    Polygon& operator+=( const Polygon& );
+    Polygon& operator+=(const Polygon&);
 
     // -- Methods
 
-    void print( std::ostream& ) const;
+    void print(std::ostream&) const;
 
     // -- Friends
 
-    friend std::ostream& operator<<( std::ostream& s, const Polygon& p ) {
-        p.print( s );
+    friend std::ostream& operator<<(std::ostream& s, const Polygon& p) {
+        p.print(s);
         return s;
     }
 
 protected:
-    void setup( const edge_set_t& );
+    void setup(const edge_set_t&);
 };
 
 //------------------------------------------------------------------------------------------------------
@@ -111,7 +111,7 @@ public:
     virtual size_t footprint() const { return 0; }
 
     /// @brief Output a python script that plots the partition
-    virtual void outputPythonScript( const eckit::PathName&, const eckit::Configuration& = util::NoConfig() ) const {}
+    virtual void outputPythonScript(const eckit::PathName&, const eckit::Configuration& = util::NoConfig()) const {}
 
     /// @brief All (x,y) coordinates defining a polygon. Last point should match first.
     virtual PointsXY xy() const = 0;
@@ -119,30 +119,30 @@ public:
     /// @brief All (lon,lat) coordinates defining a polygon. Last point should match first.
     virtual PointsLonLat lonlat() const = 0;
 
-    virtual void allGather( PartitionPolygons& ) const = 0;
+    virtual void allGather(PartitionPolygons&) const = 0;
 };
 
 //------------------------------------------------------------------------------------------------------
 
 class ExplicitPartitionPolygon : public util::PartitionPolygon {
 public:
-    explicit ExplicitPartitionPolygon( PointsXY&& points ) :
-        ExplicitPartitionPolygon( std::move( points ), RectangularDomain() ) {}
+    explicit ExplicitPartitionPolygon(PointsXY&& points):
+        ExplicitPartitionPolygon(std::move(points), RectangularDomain()) {}
 
-    explicit ExplicitPartitionPolygon( PointsXY&& points, const RectangularDomain& inscribed ) :
-        points_( std::move( points ) ), inscribed_( inscribed ) {
-        setup( compute_edges( points_.size() ) );
+    explicit ExplicitPartitionPolygon(PointsXY&& points, const RectangularDomain& inscribed):
+        points_(std::move(points)), inscribed_(inscribed) {
+        setup(compute_edges(points_.size()));
     }
 
     PointsXY xy() const override { return points_; }
     PointsLonLat lonlat() const override { return points_; }
 
-    void allGather( util::PartitionPolygons& ) const override;
+    void allGather(util::PartitionPolygons&) const override;
 
     const RectangularDomain& inscribedDomain() const override { return inscribed_; }
 
 private:
-    static util::Polygon::edge_set_t compute_edges( idx_t points_size );
+    static util::Polygon::edge_set_t compute_edges(idx_t points_size);
 
 
 private:
@@ -161,13 +161,13 @@ public:
     using Vector = VectorOfAbstract<PolygonCoordinates>;
     // -- Constructors
 
-    PolygonCoordinates( const Polygon&, const atlas::Field& coordinates, bool removeAlignedPoints );
+    PolygonCoordinates(const Polygon&, const atlas::Field& coordinates, bool removeAlignedPoints);
 
     template <typename PointContainer>
-    PolygonCoordinates( const PointContainer& points );
+    PolygonCoordinates(const PointContainer& points);
 
     template <typename PointContainer>
-    PolygonCoordinates( const PointContainer& points, bool removeAlignedPoints );
+    PolygonCoordinates(const PointContainer& points, bool removeAlignedPoints);
 
     // -- Destructor
 
@@ -178,7 +178,7 @@ public:
     /// @brief Point-in-partition test
     /// @param[in] P given point
     /// @return if point is in polygon
-    virtual bool contains( const Point2& P ) const = 0;
+    virtual bool contains(const Point2& P) const = 0;
 
     const Point2& coordinatesMax() const;
     const Point2& coordinatesMin() const;
@@ -186,7 +186,7 @@ public:
 
     idx_t size() const { return coordinates_.size(); }
 
-    void print( std::ostream& ) const;
+    void print(std::ostream&) const;
 
 protected:
     // -- Members

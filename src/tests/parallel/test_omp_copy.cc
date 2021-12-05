@@ -25,20 +25,20 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-CASE( "test omp::copy" ) {
-    Grid grid( "O400" );
-    atlas::vector<PointXY> points( grid.size() );
-    omp::copy( grid.xy().begin(), grid.xy().end(), points.begin() );
+CASE("test omp::copy") {
+    Grid grid("O400");
+    atlas::vector<PointXY> points(grid.size());
+    omp::copy(grid.xy().begin(), grid.xy().end(), points.begin());
 }
 
 
-CASE( "test atlas::vector assign" ) {
+CASE("test atlas::vector assign") {
     // atlas::vector assign uses omp::copy
     // It should reproduce exactly the same points as previous test case
-    Grid grid( "O400" );
+    Grid grid("O400");
     atlas::vector<PointXY> points;
-    points.assign( grid.xy().begin(), grid.xy().end() );
-    EXPECT( points.size() == grid.size() );
+    points.assign(grid.xy().begin(), grid.xy().end());
+    EXPECT(points.size() == grid.size());
 }
 
 //-----------------------------------------------------------------------------
@@ -46,6 +46,6 @@ CASE( "test atlas::vector assign" ) {
 }  // namespace test
 }  // namespace atlas
 
-int main( int argc, char** argv ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
 }

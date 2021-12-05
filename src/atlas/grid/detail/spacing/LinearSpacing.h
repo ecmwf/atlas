@@ -48,9 +48,9 @@ public:
 
 public:
     /// constructor
-    LinearSpacing( const eckit::Parametrisation& p );
-    LinearSpacing( double start, double end, long N, bool endpoint = true );
-    LinearSpacing( const Interval&, long N, bool endpoint = true );
+    LinearSpacing(const eckit::Parametrisation& p);
+    LinearSpacing(double start, double end, long N, bool endpoint = true);
+    LinearSpacing(const Interval&, long N, bool endpoint = true);
 
     // LinearSpacing( double centre, double step, long N, bool endpoint=true );
 
@@ -73,14 +73,14 @@ public:
         bool endpoint;
         double step;
         Params() = default;
-        Params( const eckit::Parametrisation& p );
-        Params( double start, double end, long N, bool endpoint );
+        Params(const eckit::Parametrisation& p);
+        Params(double start, double end, long N, bool endpoint);
     };
 
 protected:
     // points are equally spaced between xmin and xmax
     // Depending on value of endpoint, the spacing will be different
-    void setup( double start, double end, long N, bool endpoint );
+    void setup(double start, double end, long N, bool endpoint);
 
     double start_;
     double end_;

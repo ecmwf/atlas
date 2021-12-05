@@ -22,11 +22,11 @@ public:
     static std::string static_type() { return "lonlat-polygon"; }
 
 public:
-    MatchingMeshPartitionerLonLatPolygon() : MatchingMeshPartitioner() {}
-    MatchingMeshPartitionerLonLatPolygon( const size_t nb_partitions ) : MatchingMeshPartitioner( nb_partitions ) {}
-    MatchingMeshPartitionerLonLatPolygon( const size_t nb_partitions, const eckit::Parametrisation& config ) :
-        MatchingMeshPartitioner( nb_partitions ) {}
-    MatchingMeshPartitionerLonLatPolygon( const Mesh& mesh ) : MatchingMeshPartitioner( mesh ) {}
+    MatchingMeshPartitionerLonLatPolygon(): MatchingMeshPartitioner() {}
+    MatchingMeshPartitionerLonLatPolygon(const size_t nb_partitions): MatchingMeshPartitioner(nb_partitions) {}
+    MatchingMeshPartitionerLonLatPolygon(const size_t nb_partitions, const eckit::Parametrisation& config):
+        MatchingMeshPartitioner(nb_partitions) {}
+    MatchingMeshPartitionerLonLatPolygon(const Mesh& mesh): MatchingMeshPartitioner(mesh) {}
 
     using Partitioner::partition;
 
@@ -38,7 +38,7 @@ public:
    * @param[in] grid grid to be partitioned
    * @param[out] partitioning partitioning result
    */
-    void partition( const Grid& grid, int partitioning[] ) const;
+    void partition(const Grid& grid, int partitioning[]) const;
 
     virtual std::string type() const { return static_type(); }
 };

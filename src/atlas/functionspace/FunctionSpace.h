@@ -36,7 +36,7 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
-class FunctionSpace : DOXYGEN_HIDE( public util::ObjectHandle<functionspace::FunctionSpaceImpl> ) {
+class FunctionSpace : DOXYGEN_HIDE(public util::ObjectHandle<functionspace::FunctionSpaceImpl>) {
 public:
     using Handle::Handle;
     FunctionSpace();
@@ -46,24 +46,24 @@ public:
     size_t footprint() const;
     std::string distribution() const;
 
-    Field createField( const eckit::Configuration& ) const;
+    Field createField(const eckit::Configuration&) const;
 
-    Field createField( const Field& ) const;
-    Field createField( const Field&, const eckit::Configuration& ) const;
+    Field createField(const Field&) const;
+    Field createField(const Field&, const eckit::Configuration&) const;
 
     template <typename DATATYPE>
-    Field createField( const eckit::Configuration& ) const;
+    Field createField(const eckit::Configuration&) const;
 
     template <typename DATATYPE>
     Field createField() const;
 
-    void haloExchange( const FieldSet&, bool on_device = false ) const;
-    void haloExchange( const Field&, bool on_device = false ) const;
+    void haloExchange(const FieldSet&, bool on_device = false) const;
+    void haloExchange(const Field&, bool on_device = false) const;
 
-    void adjointHaloExchange( const FieldSet&, bool on_device = false ) const;
-    void adjointHaloExchange( const Field&, bool on_device = false ) const;
+    void adjointHaloExchange(const FieldSet&, bool on_device = false) const;
+    void adjointHaloExchange(const Field&, bool on_device = false) const;
 
-    const util::PartitionPolygon& polygon( idx_t halo = 0 ) const;
+    const util::PartitionPolygon& polygon(idx_t halo = 0) const;
 
     const util::PartitionPolygons& polygons() const;
 
@@ -88,10 +88,10 @@ extern template Field FunctionSpace::createField<float>() const;
 extern template Field FunctionSpace::createField<double>() const;
 extern template Field FunctionSpace::createField<int>() const;
 extern template Field FunctionSpace::createField<long>() const;
-extern template Field FunctionSpace::createField<float>( const eckit::Configuration& ) const;
-extern template Field FunctionSpace::createField<double>( const eckit::Configuration& ) const;
-extern template Field FunctionSpace::createField<int>( const eckit::Configuration& ) const;
-extern template Field FunctionSpace::createField<long>( const eckit::Configuration& ) const;
+extern template Field FunctionSpace::createField<float>(const eckit::Configuration&) const;
+extern template Field FunctionSpace::createField<double>(const eckit::Configuration&) const;
+extern template Field FunctionSpace::createField<int>(const eckit::Configuration&) const;
+extern template Field FunctionSpace::createField<long>(const eckit::Configuration&) const;
 
 //------------------------------------------------------------------------------------------------------
 

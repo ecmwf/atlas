@@ -20,14 +20,14 @@ namespace actions {
 
 class BuildNode2CellConnectivity {
 public:
-    BuildNode2CellConnectivity( Mesh& mesh );
+    BuildNode2CellConnectivity(Mesh& mesh);
     void operator()();
 
 private:
     Mesh& mesh_;
 };
 
-inline void build_node_to_cell_connectivity( Mesh& mesh ) {
+inline void build_node_to_cell_connectivity(Mesh& mesh) {
     BuildNode2CellConnectivity{mesh}();
 }
 
@@ -47,7 +47,7 @@ class MeshImpl;
 
 // C wrapper interfaces to C++ routines
 extern "C" {
-void atlas__build_node_to_cell_connectivity( atlas::mesh::detail::MeshImpl* mesh );
+void atlas__build_node_to_cell_connectivity(atlas::mesh::detail::MeshImpl* mesh);
 }
 
 // ------------------------------------------------------------------

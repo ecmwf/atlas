@@ -20,32 +20,32 @@ namespace atlas {
 
 namespace {
 
-std::vector<double> linspace( double start, double end, idx_t N, bool endpoint ) {
+std::vector<double> linspace(double start, double end, idx_t N, bool endpoint) {
     std::vector<double> x_;
-    if ( N > 0 ) {
+    if (N > 0) {
         volatile double _N = N;  // volatile keyword prevents agressive optimization by Cray compiler
-        x_.resize( N );
+        x_.resize(N);
 
         double step;
-        if ( endpoint && N > 1 ) {
-            step = ( end - start ) / ( _N - 1 );
+        if (endpoint && N > 1) {
+            step = (end - start) / (_N - 1);
         }
-        else if ( N > 0 ) {
-            step = ( end - start ) / _N;
+        else if (N > 0) {
+            step = (end - start) / _N;
         }
         else {
             step = 0.;
         }
 
-        for ( idx_t i = 0; i < N; ++i ) {
+        for (idx_t i = 0; i < N; ++i) {
             x_[i] = start + i * step;
         }
     }
     return x_;
 }
 
-idx_t get_levels( const util::Config& config ) {
-    return config.getInt( "levels", 0 );
+idx_t get_levels(const util::Config& config) {
+    return config.getInt("levels", 0);
 }
 
 
@@ -53,20 +53,20 @@ idx_t get_levels( const util::Config& config ) {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-Vertical::Vertical( const util::Config& config ) :
-    Vertical( get_levels( config ), linspace( 0., 1., get_levels( config ), true ), config ) {}
+Vertical::Vertical(const util::Config& config):
+    Vertical(get_levels(config), linspace(0., 1., get_levels(config), true), config) {}
 
 Field Vertical::z() const {
-    auto zfield = Field( "z", array::make_datatype<double>(), array::make_shape( size() ) );
-    auto zview  = array::make_view<double, 1>( zfield );
-    for ( idx_t k = 0; k < size(); ++k ) {
-        zview( k ) = z_[k];
+    auto zfield = Field("z", array::make_datatype<double>(), array::make_shape(size()));
+    auto zview  = array::make_view<double, 1>(zfield);
+    for (idx_t k = 0; k < size(); ++k) {
+        zview(k) = z_[k];
     }
     return zfield;
 }
 
 
-std::ostream& operator<<( std::ostream& os, const Vertical& v ) {
+std::ostream& operator<<(std::ostream& os, const Vertical& v) {
     os << v.z_;
     return os;
 }

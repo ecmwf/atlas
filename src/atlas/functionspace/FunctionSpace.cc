@@ -15,7 +15,7 @@
 
 namespace atlas {
 
-FunctionSpace::FunctionSpace() : Handle( new functionspace::NoFunctionSpace() ) {}
+FunctionSpace::FunctionSpace(): Handle(new functionspace::NoFunctionSpace()) {}
 
 
 std::string FunctionSpace::type() const {
@@ -30,28 +30,28 @@ size_t FunctionSpace::footprint() const {
     return get()->footprint();
 }
 
-Field FunctionSpace::createField( const eckit::Configuration& config ) const {
-    return get()->createField( config );
+Field FunctionSpace::createField(const eckit::Configuration& config) const {
+    return get()->createField(config);
 }
 
-Field FunctionSpace::createField( const Field& other ) const {
-    return get()->createField( other );
+Field FunctionSpace::createField(const Field& other) const {
+    return get()->createField(other);
 }
 
-Field FunctionSpace::createField( const Field& other, const eckit::Configuration& config ) const {
-    return get()->createField( other, config );
+Field FunctionSpace::createField(const Field& other, const eckit::Configuration& config) const {
+    return get()->createField(other, config);
 }
 
 std::string FunctionSpace::distribution() const {
     return get()->distribution();
 }
 
-void FunctionSpace::haloExchange( const Field& field, bool on_device ) const {
-    get()->haloExchange( field, on_device );
+void FunctionSpace::haloExchange(const Field& field, bool on_device) const {
+    get()->haloExchange(field, on_device);
 }
 
-void FunctionSpace::adjointHaloExchange( const Field& field, bool on_device ) const {
-    get()->adjointHaloExchange( field, on_device );
+void FunctionSpace::adjointHaloExchange(const Field& field, bool on_device) const {
+    get()->adjointHaloExchange(field, on_device);
 }
 
 idx_t FunctionSpace::size() const {
@@ -78,16 +78,16 @@ Field FunctionSpace::remote_index() const {
     return get()->remote_index();
 }
 
-void FunctionSpace::haloExchange( const FieldSet& fields, bool on_device ) const {
-    get()->haloExchange( fields, on_device );
+void FunctionSpace::haloExchange(const FieldSet& fields, bool on_device) const {
+    get()->haloExchange(fields, on_device);
 }
 
-void FunctionSpace::adjointHaloExchange( const FieldSet& fields, bool on_device ) const {
-    get()->adjointHaloExchange( fields, on_device );
+void FunctionSpace::adjointHaloExchange(const FieldSet& fields, bool on_device) const {
+    get()->adjointHaloExchange(fields, on_device);
 }
 
-const util::PartitionPolygon& FunctionSpace::polygon( idx_t halo ) const {
-    return get()->polygon( halo );
+const util::PartitionPolygon& FunctionSpace::polygon(idx_t halo) const {
+    return get()->polygon(halo);
 }
 
 const util::PartitionPolygons& FunctionSpace::polygons() const {
@@ -104,8 +104,8 @@ Field FunctionSpace::createField() const {
 }
 
 template <typename DATATYPE>
-Field FunctionSpace::createField( const eckit::Configuration& options ) const {
-    return get()->createField<DATATYPE>( options );
+Field FunctionSpace::createField(const eckit::Configuration& options) const {
+    return get()->createField<DATATYPE>(options);
 }
 
 template Field FunctionSpace::createField<double>() const;
@@ -113,10 +113,10 @@ template Field FunctionSpace::createField<float>() const;
 template Field FunctionSpace::createField<int>() const;
 template Field FunctionSpace::createField<long>() const;
 
-template Field FunctionSpace::createField<double>( const eckit::Configuration& ) const;
-template Field FunctionSpace::createField<float>( const eckit::Configuration& ) const;
-template Field FunctionSpace::createField<int>( const eckit::Configuration& ) const;
-template Field FunctionSpace::createField<long>( const eckit::Configuration& ) const;
+template Field FunctionSpace::createField<double>(const eckit::Configuration&) const;
+template Field FunctionSpace::createField<float>(const eckit::Configuration&) const;
+template Field FunctionSpace::createField<int>(const eckit::Configuration&) const;
+template Field FunctionSpace::createField<long>(const eckit::Configuration&) const;
 
 
 // ------------------------------------------------------------------

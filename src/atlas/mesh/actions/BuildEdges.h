@@ -21,11 +21,11 @@ namespace atlas {
 namespace mesh {
 namespace actions {
 
-void build_edges( Mesh& mesh );
-void build_edges( Mesh& mesh, const eckit::Configuration& );
-void build_pole_edges( Mesh& mesh );
-void build_element_to_edge_connectivity( Mesh& mesh );
-void build_node_to_edge_connectivity( Mesh& mesh );
+void build_edges(Mesh& mesh);
+void build_edges(Mesh& mesh, const eckit::Configuration&);
+void build_pole_edges(Mesh& mesh);
+void build_element_to_edge_connectivity(Mesh& mesh);
+void build_node_to_edge_connectivity(Mesh& mesh);
 
 // ------------------------------------------------------------------
 
@@ -46,9 +46,9 @@ class MeshImpl;
 
 // C wrapper interfaces to C++ routines
 extern "C" {
-void atlas__build_edges( atlas::mesh::detail::MeshImpl* mesh );
-void atlas__build_pole_edges( atlas::mesh::detail::MeshImpl* mesh );
-void atlas__build_node_to_edge_connectivity( atlas::mesh::detail::MeshImpl* mesh );
+void atlas__build_edges(atlas::mesh::detail::MeshImpl* mesh);
+void atlas__build_pole_edges(atlas::mesh::detail::MeshImpl* mesh);
+void atlas__build_node_to_edge_connectivity(atlas::mesh::detail::MeshImpl* mesh);
 }
 
 // ------------------------------------------------------------------

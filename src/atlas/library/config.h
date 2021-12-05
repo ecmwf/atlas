@@ -18,7 +18,7 @@
 #include "atlas/library/defines.h"
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-#define DOXYGEN_HIDE( X ) X
+#define DOXYGEN_HIDE(X) X
 #endif
 
 #define ATLAS_HAVE_TRACE 1
@@ -36,7 +36,7 @@ using gidx_t = long;
 
 /// @typedef idx_t
 /// Integer type for indices in connectivity tables
-#if ( ATLAS_BITS_LOCAL == 32 )
+#if (ATLAS_BITS_LOCAL == 32)
 using idx_t = int;
 #else
 using idx_t  = long;

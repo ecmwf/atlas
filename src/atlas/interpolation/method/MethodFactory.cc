@@ -48,10 +48,10 @@ void force_link() {
 
 }  // namespace
 
-Method* MethodFactory::build( const std::string& name, const Method::Config& config ) {
+Method* MethodFactory::build(const std::string& name, const Method::Config& config) {
     force_link();
-    auto factory = get( name );
-    return factory->make( config );
+    auto factory = get(name);
+    return factory->make(config);
 }
 
 }  // namespace interpolation

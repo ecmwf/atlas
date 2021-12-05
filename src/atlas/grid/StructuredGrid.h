@@ -63,13 +63,13 @@ public:
 
 public:
     StructuredGrid();
-    StructuredGrid( const Grid& );
-    StructuredGrid( const Grid::Implementation* );
-    StructuredGrid( const std::string& name, const Domain& = Domain() );
-    StructuredGrid( const std::string& name, const Projection&, const Domain& = Domain() );
-    StructuredGrid( const Config& );
-    StructuredGrid( const XSpace&, const YSpace&, const Projection& = Projection(), const Domain& = Domain() );
-    StructuredGrid( const Grid&, const Domain& );
+    StructuredGrid(const Grid&);
+    StructuredGrid(const Grid::Implementation*);
+    StructuredGrid(const std::string& name, const Domain& = Domain());
+    StructuredGrid(const std::string& name, const Projection&, const Domain& = Domain());
+    StructuredGrid(const Config&);
+    StructuredGrid(const XSpace&, const YSpace&, const Projection& = Projection(), const Domain& = Domain());
+    StructuredGrid(const Grid&, const Domain&);
 
     operator bool() const { return valid(); }
 
@@ -77,7 +77,7 @@ public:
 
     inline idx_t ny() const { return grid_->ny(); }
 
-    inline idx_t nx( idx_t j ) const { return grid_->nx( j ); }
+    inline idx_t nx(idx_t j) const { return grid_->nx(j); }
 
     inline const std::vector<idx_t>& nx() const { return grid_->nx(); }
 
@@ -86,27 +86,27 @@ public:
     inline const std::vector<double>& y() const { return grid_->y(); }
 
     /// x coordinate for given grid point {i,j}
-    inline double x( idx_t i, idx_t j ) const { return grid_->x( i, j ); }
+    inline double x(idx_t i, idx_t j) const { return grid_->x(i, j); }
 
     /// y coordinate for given grid row {j}
-    inline double y( idx_t j ) const { return grid_->y( j ); }
+    inline double y(idx_t j) const { return grid_->y(j); }
 
     /// increment in x for a given grid row {j}
-    inline double dx( idx_t j ) const { return grid_->dx( j ); }
+    inline double dx(idx_t j) const { return grid_->dx(j); }
 
     /// x coordinate of beginning of a given grid row {j}
-    inline double xmin( idx_t j ) const { return grid_->xmin( j ); }
+    inline double xmin(idx_t j) const { return grid_->xmin(j); }
 
 
     using Grid::xy;
-    void xy( idx_t i, idx_t j, double xy[] ) const { grid_->xy( i, j, xy ); }
+    void xy(idx_t i, idx_t j, double xy[]) const { grid_->xy(i, j, xy); }
 
     using Grid::lonlat;
-    void lonlat( idx_t i, idx_t j, double lonlat[] ) const { grid_->lonlat( i, j, lonlat ); }
+    void lonlat(idx_t i, idx_t j, double lonlat[]) const { grid_->lonlat(i, j, lonlat); }
 
-    PointXY xy( idx_t i, idx_t j ) const { return PointXY( x( i, j ), y( j ) ); }
+    PointXY xy(idx_t i, idx_t j) const { return PointXY(x(i, j), y(j)); }
 
-    PointLonLat lonlat( idx_t i, idx_t j ) const { return grid_->lonlat( i, j ); }
+    PointLonLat lonlat(idx_t i, idx_t j) const { return grid_->lonlat(i, j); }
 
     inline bool reduced() const { return grid_->reduced(); }
 
@@ -118,9 +118,9 @@ public:
 
     const YSpace& yspace() const { return grid_->yspace(); }
 
-    gidx_t index( idx_t i, idx_t j ) const { return grid_->index( i, j ); }
+    gidx_t index(idx_t i, idx_t j) const { return grid_->index(i, j); }
 
-    void index2ij( gidx_t gidx, idx_t& i, idx_t& j ) const { grid_->index2ij( gidx, i, j ); }
+    void index2ij(gidx_t gidx, idx_t& i, idx_t& j) const { grid_->index2ij(gidx, i, j); }
 
 private:
     const grid_t* grid_;
@@ -155,9 +155,9 @@ public:
 
     idx_t nx() const { return nxmax(); }
 
-    inline double x( idx_t i ) const { return x( i, 0 ); }
+    inline double x(idx_t i) const { return x(i, 0); }
 
-    PointXY xy( idx_t i, idx_t j ) const { return PointXY( x( i ), y( j ) ); }
+    PointXY xy(idx_t i, idx_t j) const { return PointXY(x(i), y(j)); }
 };
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -197,11 +197,11 @@ class ReducedGaussianGrid : public Gaussian<ReducedGrid> {
 
 public:
     using grid_t::grid_t;
-    ReducedGaussianGrid( const std::initializer_list<idx_t>& pl );
-    ReducedGaussianGrid( const std::vector<long>& pl, const Domain& = Domain() );
-    ReducedGaussianGrid( const std::vector<int>& pl, const Domain& = Domain() );
-    ReducedGaussianGrid( const std::vector<long>& pl, const Projection& );
-    ReducedGaussianGrid( const std::vector<int>& pl, const Projection& );
+    ReducedGaussianGrid(const std::initializer_list<idx_t>& pl);
+    ReducedGaussianGrid(const std::vector<long>& pl, const Domain& = Domain());
+    ReducedGaussianGrid(const std::vector<int>& pl, const Domain& = Domain());
+    ReducedGaussianGrid(const std::vector<long>& pl, const Projection&);
+    ReducedGaussianGrid(const std::vector<int>& pl, const Projection&);
 
     operator bool() const { return valid(); }
 
@@ -217,7 +217,7 @@ class RegularGaussianGrid : public Gaussian<RegularGrid> {
 
 public:
     using grid_t::grid_t;
-    RegularGaussianGrid( int N, const Domain& = Domain() );
+    RegularGaussianGrid(int N, const Domain& = Domain());
 
     operator bool() const { return valid(); }
 
@@ -237,11 +237,11 @@ public:
 
     bool valid() const { return RegularGrid::valid() && global_lonlat(); }
 
-    inline double lon( idx_t i ) const { return x( i ); }
+    inline double lon(idx_t i) const { return x(i); }
 
-    inline double lat( idx_t j ) const { return y( j ); }
+    inline double lat(idx_t j) const { return y(j); }
 
-    PointLonLat lonlat( idx_t i, idx_t j ) const { return xy( i, j ); }
+    PointLonLat lonlat(idx_t i, idx_t j) const { return xy(i, j); }
 
     bool standard() const { return standard_lon() && standard_lat(); }
     bool shifted() const { return shifted_lon() && shifted_lat(); }
@@ -251,13 +251,13 @@ public:
 protected:
     bool global_lonlat() const { return domain().global() && not projection() && yspace().type() == "linear"; }
 
-    bool standard_lon() const { return x( 0 ) == 0.; }
+    bool standard_lon() const { return x(0) == 0.; }
 
-    bool standard_lat() const { return y( 0 ) == 90. && ny() % 2 == 1; }
+    bool standard_lat() const { return y(0) == 90. && ny() % 2 == 1; }
 
-    bool shifted_lon() const { return x( 0 ) == 0.5 * 360. / nx(); }
+    bool shifted_lon() const { return x(0) == 0.5 * 360. / nx(); }
 
-    bool shifted_lat() const { return y( 0 ) == 90. - 0.5 * 180. / ny() && ny() % 2 == 0; }
+    bool shifted_lat() const { return y(0) == 90. - 0.5 * 180. / ny() && ny() % 2 == 0; }
 };
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -269,8 +269,8 @@ public:
     using grid_t = grid::detail::grid::Healpix;
 
 public:
-    HealpixGrid( const Grid& );
-    HealpixGrid( int N );
+    HealpixGrid(const Grid&);
+    HealpixGrid(int N);
 
     bool valid() { return grid_; }
 

@@ -61,7 +61,7 @@ namespace atlas {
 ///               |                       |                    |
 ///      ReducedGaussianGrid     RegularGaussianGrid    RegularLonLatGrid
 /// @endcode
-class Grid : DOXYGEN_HIDE( public util::ObjectHandle<grid::detail::grid::Grid> ) {
+class Grid : DOXYGEN_HIDE(public util::ObjectHandle<grid::detail::grid::Grid>) {
 public:
     using Config        = util::Config;
     using Spec          = util::Config;
@@ -78,13 +78,13 @@ public:
 
     using Handle::Handle;
     Grid() = default;
-    Grid( const std::string& name, const Domain& = Domain() );
-    Grid( const std::string& name, const Projection&, const Domain& = Domain() );
-    Grid( const Grid&, const Domain& );
-    Grid( const Config& );
+    Grid(const std::string& name, const Domain& = Domain());
+    Grid(const std::string& name, const Projection&, const Domain& = Domain());
+    Grid(const Grid&, const Domain&);
+    Grid(const Config&);
 
-    bool operator==( const Grid& other ) const { return uid() == other.uid(); }
-    bool operator!=( const Grid& other ) const { return uid() != other.uid(); }
+    bool operator==(const Grid& other) const { return uid() == other.uid(); }
+    bool operator!=(const Grid& other) const { return uid() != other.uid(); }
 
     idx_t size() const;
 
@@ -95,7 +95,7 @@ public:
     std::string uid() const;
 
     /// Adds to the hash the information that makes this Grid unique
-    void hash( eckit::Hash& h ) const;
+    void hash(eckit::Hash& h) const;
 
     size_t footprint() const;
 

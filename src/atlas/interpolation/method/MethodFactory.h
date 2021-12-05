@@ -33,10 +33,10 @@ namespace interpolation {
 struct MethodFactory : public util::Factory<MethodFactory> {
 public:
     static std::string className() { return "MethodFactory"; }
-    static Method* build( const std::string& name, const Method::Config& );
+    static Method* build(const std::string& name, const Method::Config&);
 
 protected:
-    virtual Method* make( const Method::Config& ) = 0;
+    virtual Method* make(const Method::Config&) = 0;
     using Factory::Factory;
 };
 
@@ -45,7 +45,7 @@ struct MethodBuilder : public MethodFactory {
     using MethodFactory::MethodFactory;
 
 private:
-    virtual Method* make( const Method::Config& config ) { return new T( config ); }
+    virtual Method* make(const Method::Config& config) { return new T(config); }
 };
 
 }  // namespace interpolation

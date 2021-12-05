@@ -31,11 +31,11 @@ namespace trans {
 
 class TransIFSStructuredColumns : public trans::TransIFS {
 public:
-    TransIFSStructuredColumns( const functionspace::StructuredColumns&, const functionspace::Spectral&,
-                               const eckit::Configuration& = util::Config() );
+    TransIFSStructuredColumns(const functionspace::StructuredColumns&, const functionspace::Spectral&,
+                              const eckit::Configuration& = util::Config());
 
-    TransIFSStructuredColumns( const Cache&, const functionspace::StructuredColumns&, const functionspace::Spectral&,
-                               const eckit::Configuration& = util::Config() );
+    TransIFSStructuredColumns(const Cache&, const functionspace::StructuredColumns&, const functionspace::Spectral&,
+                              const eckit::Configuration& = util::Config());
 
     virtual ~TransIFSStructuredColumns();
 };

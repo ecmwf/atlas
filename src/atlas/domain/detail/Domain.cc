@@ -23,45 +23,45 @@ namespace domain {
 const Domain* Domain::create() {
     // default: global domain
     util::Config projParams;
-    projParams.set( "type", "global" );
-    return Domain::create( projParams );
+    projParams.set("type", "global");
+    return Domain::create(projParams);
 }
 
-const Domain* Domain::create( const eckit::Parametrisation& p ) {
+const Domain* Domain::create(const eckit::Parametrisation& p) {
     std::string domain_type;
-    if ( p.get( "type", domain_type ) ) {
-        return DomainFactory::build( domain_type, p );
+    if (p.get("type", domain_type)) {
+        return DomainFactory::build(domain_type, p);
     }
 
     // should return error here
-    throw_Exception( "type missing in Params", Here() );
+    throw_Exception("type missing in Params", Here());
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
 extern "C" {
-const Domain* atlas__Domain__ctor_config( const eckit::Parametrisation* config ) {
-    return Domain::create( *config );
+const Domain* atlas__Domain__ctor_config(const eckit::Parametrisation* config) {
+    return Domain::create(*config);
 }
-void atlas__Domain__type( const Domain* This, char*& type, int& size ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Domain" );
+void atlas__Domain__type(const Domain* This, char*& type, int& size) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_Domain");
     std::string s = This->type();
-    size          = static_cast<int>( s.size() );
+    size          = static_cast<int>(s.size());
     type          = new char[size + 1];
-    std::strncpy( type, s.c_str(), size + 1 );
+    std::strncpy(type, s.c_str(), size + 1);
 }
-void atlas__Domain__hash( const Domain* This, char*& hash, int& size ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Domain" );
+void atlas__Domain__hash(const Domain* This, char*& hash, int& size) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_Domain");
     eckit::MD5 md5;
-    This->hash( md5 );
+    This->hash(md5);
     std::string s = md5.digest();
-    size          = static_cast<int>( s.size() );
+    size          = static_cast<int>(s.size());
     hash          = new char[size + 1];
-    std::strncpy( hash, s.c_str(), size + 1 );
+    std::strncpy(hash, s.c_str(), size + 1);
 }
-Domain::Spec* atlas__Domain__spec( const Domain* This ) {
-    ATLAS_ASSERT( This != nullptr, "Cannot access uninitialised atlas_Domain" );
-    return new Domain::Spec( This->spec() );
+Domain::Spec* atlas__Domain__spec(const Domain* This) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_Domain");
+    return new Domain::Spec(This->spec());
 }
 
 }  // extern "C"

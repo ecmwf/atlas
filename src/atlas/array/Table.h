@@ -63,14 +63,14 @@ public:
 
     /// @brief Construct connectivity table that needs resizing a-posteriori
     /// Data is owned
-    Table( const std::string& name = "" );
+    Table(const std::string& name = "");
 
     ~Table();
 
 private:
     /// @brief Construct connectivity table wrapping existing raw data.
     /// No resizing can be performed as data is not owned.
-    Table( idx_t values[], size_t rows, size_t displs[], size_t counts[] );
+    Table(idx_t values[], size_t rows, size_t displs[], size_t counts[]);
 
 public:
     //-- Accessors
@@ -79,13 +79,13 @@ public:
     const std::string& name() const { return name_; }
 
     /// @brief Rename this Connectivity
-    void rename( const std::string& name ) { name_ = name; }
+    void rename(const std::string& name) { name_ = name; }
 
     /// @brief Number of rows in the connectivity table
     size_t rows() const { return rows_; }
 
     /// @brief Number of columns for specified row in the connectivity table
-    size_t cols( size_t row_idx ) const { return counts_( row_idx ); }
+    size_t cols(size_t row_idx) const { return counts_(row_idx); }
 
     /// @brief Maximum value for number of columns over all rows
     size_t maxcols() const { return maxcols_; }
@@ -121,7 +121,7 @@ public:
     virtual bool deviceNeedsUpdate() const;
 
     /// @brief Print all values unformatted to output stream
-    void dump( std::ostream& ) const;
+    void dump(std::ostream&) const;
 
     /// @brief Check if data is owned or wrapped
     bool owns() { return owns_; }
@@ -130,27 +130,27 @@ public:
 
     /// @brief Resize connectivity, and add given rows
     /// @note Can only be used when data is owned.
-    virtual void add( size_t rows, size_t cols, const idx_t values[], bool fortran_array = false );
+    virtual void add(size_t rows, size_t cols, const idx_t values[], bool fortran_array = false);
 
     /// @brief Resize connectivity, and add given rows with missing values
     /// @note Can only be used when data is owned.
-    virtual void add( size_t rows, size_t cols );
+    virtual void add(size_t rows, size_t cols);
 
     /// @brief Resize connectivity, and add given rows with missing values
     /// @note Can only be used when data is owned.
-    virtual void add( size_t rows, const size_t cols[] );
+    virtual void add(size_t rows, const size_t cols[]);
 
     /// @brief Resize connectivity, and insert given rows
     /// @note Can only be used when data is owned.
-    virtual void insert( size_t position, size_t rows, size_t cols, const idx_t values[], bool fortran_array = false );
+    virtual void insert(size_t position, size_t rows, size_t cols, const idx_t values[], bool fortran_array = false);
 
     /// @brief Resize connectivity, and insert given rows with missing values
     /// @note Can only be used when data is owned.
-    virtual void insert( size_t position, size_t rows, size_t cols );
+    virtual void insert(size_t position, size_t rows, size_t cols);
 
     /// @brief Resize connectivity, and insert given rows with missing values
     /// @note Can only be used when data is owned.
-    virtual void insert( size_t position, size_t rows, const size_t cols[] );
+    virtual void insert(size_t position, size_t rows, const size_t cols[]);
 
     /// @brief Resize connectivity, and insert given rows with missing values
     /// @note Invalidates non-owned Table
@@ -159,15 +159,15 @@ public:
 private:
     ///-- Internal helper functions
 
-    void resize_values( size_t old_size, size_t size, bool initialize, const idx_t values[], bool fortran_array );
+    void resize_values(size_t old_size, size_t size, bool initialize, const idx_t values[], bool fortran_array);
 
-    void resize_counts_and_displs( size_t size );
+    void resize_counts_and_displs(size_t size);
 
-    void insert_counts_and_displs( size_t position, size_t rows );
+    void insert_counts_and_displs(size_t position, size_t rows);
 
-    void resize_values( size_t size );
+    void resize_values(size_t size);
 
-    void insert_values( size_t position, size_t size );
+    void insert_values(size_t position, size_t size);
 
 private:
     template <bool ReadOnly>

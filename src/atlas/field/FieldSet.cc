@@ -20,15 +20,15 @@ namespace field {
 
 //------------------------------------------------------------------------------------------------------
 
-FieldSetImpl::FieldSetImpl( const std::string& /*name*/ ) : name_() {}
+FieldSetImpl::FieldSetImpl(const std::string& /*name*/): name_() {}
 
 void FieldSetImpl::clear() {
     index_.clear();
     fields_.clear();
 }
 
-Field FieldSetImpl::add( const Field& field ) {
-    if ( field.name().size() ) {
+Field FieldSetImpl::add(const Field& field) {
+    if (field.name().size()) {
         index_[field.name()] = size();
     }
     else {
@@ -36,46 +36,46 @@ Field FieldSetImpl::add( const Field& field ) {
         name << name_ << "[" << size() << "]";
         index_[name.str()] = size();
     }
-    fields_.push_back( field );
+    fields_.push_back(field);
     return field;
 }
 
-bool FieldSetImpl::has_field( const std::string& name ) const {
-    return index_.count( name );
+bool FieldSetImpl::has_field(const std::string& name) const {
+    return index_.count(name);
 }
 
-Field& FieldSetImpl::field( const std::string& name ) const {
-    if ( !has_field( name ) ) {
-        const std::string msg( "FieldSet" + ( name_.length() ? " \"" + name_ + "\"" : "" ) + ": cannot find field \"" +
-                               name + "\"" );
-        throw_Exception( msg, Here() );
+Field& FieldSetImpl::field(const std::string& name) const {
+    if (!has_field(name)) {
+        const std::string msg("FieldSet" + (name_.length() ? " \"" + name_ + "\"" : "") + ": cannot find field \"" +
+                              name + "\"");
+        throw_Exception(msg, Here());
     }
-    return const_cast<Field&>( fields_[index_.at( name )] );
+    return const_cast<Field&>(fields_[index_.at(name)]);
 }
 
-void FieldSetImpl::haloExchange( bool on_device ) const {
-    for ( idx_t i = 0; i < size(); ++i ) {
-        field( i ).haloExchange( on_device );
-    }
-}
-
-void FieldSetImpl::adjointHaloExchange( bool on_device ) const {
-    for ( idx_t i = 0; i < size(); ++i ) {
-        field( i ).adjointHaloExchange( on_device );
+void FieldSetImpl::haloExchange(bool on_device) const {
+    for (idx_t i = 0; i < size(); ++i) {
+        field(i).haloExchange(on_device);
     }
 }
 
-void FieldSetImpl::set_dirty( bool value ) const {
-    for ( idx_t i = 0; i < size(); ++i ) {
-        field( i ).set_dirty( value );
+void FieldSetImpl::adjointHaloExchange(bool on_device) const {
+    for (idx_t i = 0; i < size(); ++i) {
+        field(i).adjointHaloExchange(on_device);
+    }
+}
+
+void FieldSetImpl::set_dirty(bool value) const {
+    for (idx_t i = 0; i < size(); ++i) {
+        field(i).set_dirty(value);
     }
 }
 
 std::vector<std::string> FieldSetImpl::field_names() const {
     std::vector<std::string> ret;
 
-    for ( const_iterator field = cbegin(); field != cend(); ++field ) {
-        ret.push_back( field->name() );
+    for (const_iterator field = cbegin(); field != cend(); ++field) {
+        ret.push_back(field->name());
     }
 
     return ret;
@@ -85,51 +85,51 @@ std::vector<std::string> FieldSetImpl::field_names() const {
 // C wrapper interfaces to C++ routines
 extern "C" {
 
-FieldSetImpl* atlas__FieldSet__new( char* name ) {
-    FieldSetImpl* fset = new FieldSetImpl( std::string( name ) );
+FieldSetImpl* atlas__FieldSet__new(char* name) {
+    FieldSetImpl* fset = new FieldSetImpl(std::string(name));
     fset->name()       = name;
     return fset;
 }
 
-void atlas__FieldSet__delete( FieldSetImpl* This ) {
-    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_FieldSet" );
+void atlas__FieldSet__delete(FieldSetImpl* This) {
+    ATLAS_ASSERT(This != nullptr, "Reason: Use of uninitialised atlas_FieldSet");
     delete This;
 }
 
-void atlas__FieldSet__add_field( FieldSetImpl* This, FieldImpl* field ) {
-    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_FieldSet" );
-    ATLAS_ASSERT( field != nullptr, "Reason: Use of uninitialised atlas_Field" );
-    This->add( field );
+void atlas__FieldSet__add_field(FieldSetImpl* This, FieldImpl* field) {
+    ATLAS_ASSERT(This != nullptr, "Reason: Use of uninitialised atlas_FieldSet");
+    ATLAS_ASSERT(field != nullptr, "Reason: Use of uninitialised atlas_Field");
+    This->add(field);
 }
 
-int atlas__FieldSet__has_field( const FieldSetImpl* This, char* name ) {
-    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_FieldSet" );
-    return This->has_field( std::string( name ) );
+int atlas__FieldSet__has_field(const FieldSetImpl* This, char* name) {
+    ATLAS_ASSERT(This != nullptr, "Reason: Use of uninitialised atlas_FieldSet");
+    return This->has_field(std::string(name));
 }
 
-idx_t atlas__FieldSet__size( const FieldSetImpl* This ) {
-    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_FieldSet" );
+idx_t atlas__FieldSet__size(const FieldSetImpl* This) {
+    ATLAS_ASSERT(This != nullptr, "Reason: Use of uninitialised atlas_FieldSet");
     return This->size();
 }
 
-FieldImpl* atlas__FieldSet__field_by_name( FieldSetImpl* This, char* name ) {
-    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_FieldSet" );
-    return This->field( std::string( name ) ).get();
+FieldImpl* atlas__FieldSet__field_by_name(FieldSetImpl* This, char* name) {
+    ATLAS_ASSERT(This != nullptr, "Reason: Use of uninitialised atlas_FieldSet");
+    return This->field(std::string(name)).get();
 }
 
-FieldImpl* atlas__FieldSet__field_by_idx( FieldSetImpl* This, idx_t idx ) {
-    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_FieldSet" );
-    return This->operator[]( idx ).get();
+FieldImpl* atlas__FieldSet__field_by_idx(FieldSetImpl* This, idx_t idx) {
+    ATLAS_ASSERT(This != nullptr, "Reason: Use of uninitialised atlas_FieldSet");
+    return This->operator[](idx).get();
 }
 
-void atlas__FieldSet__set_dirty( FieldSetImpl* This, int value ) {
-    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_FieldSet" );
-    This->set_dirty( value );
+void atlas__FieldSet__set_dirty(FieldSetImpl* This, int value) {
+    ATLAS_ASSERT(This != nullptr, "Reason: Use of uninitialised atlas_FieldSet");
+    This->set_dirty(value);
 }
 
-void atlas__FieldSet__halo_exchange( FieldSetImpl* This, int on_device ) {
-    ATLAS_ASSERT( This != nullptr, "Reason: Use of uninitialised atlas_FieldSet" );
-    This->haloExchange( on_device );
+void atlas__FieldSet__halo_exchange(FieldSetImpl* This, int on_device) {
+    ATLAS_ASSERT(This != nullptr, "Reason: Use of uninitialised atlas_FieldSet");
+    This->haloExchange(on_device);
 }
 }
 //-----------------------------------------------------------------------------
@@ -138,16 +138,16 @@ void atlas__FieldSet__halo_exchange( FieldSetImpl* This, int on_device ) {
 
 //------------------------------------------------------------------------------------------------------
 
-FieldSet::FieldSet() : Handle( new Implementation() ) {}
+FieldSet::FieldSet(): Handle(new Implementation()) {}
 
-FieldSet::FieldSet( const std::string& name ) : Handle( new Implementation( name ) ) {}
+FieldSet::FieldSet(const std::string& name): Handle(new Implementation(name)) {}
 
-FieldSet::FieldSet( const Field& field ) : Handle( new Implementation() ) {
-    get()->add( field );
+FieldSet::FieldSet(const Field& field): Handle(new Implementation()) {
+    get()->add(field);
 }
 
-void FieldSet::set_dirty( bool value ) const {
-    get()->set_dirty( value );
+void FieldSet::set_dirty(bool value) const {
+    get()->set_dirty(value);
 }
 
 //------------------------------------------------------------------------------------------------------

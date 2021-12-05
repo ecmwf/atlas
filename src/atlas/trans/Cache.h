@@ -61,7 +61,7 @@ private:
     eckit::Buffer buffer_;
 
 public:
-    TransCacheFileEntry( const eckit::PathName& path );
+    TransCacheFileEntry(const eckit::PathName& path);
     virtual size_t size() const override { return buffer_.size(); }
     virtual const void* data() const override { return buffer_.data(); }
 };
@@ -70,7 +70,7 @@ public:
 
 class TransCacheMemoryEntry final : public TransCacheEntry {
 public:
-    TransCacheMemoryEntry( const void* data, size_t size );
+    TransCacheMemoryEntry(const void* data, size_t size);
     virtual const void* data() const override { return data_; }
     virtual size_t size() const override { return size_; }
 
@@ -83,7 +83,7 @@ private:
 
 class TransCacheOwnedMemoryEntry final : public TransCacheEntry {
 public:
-    TransCacheOwnedMemoryEntry( size_t size );
+    TransCacheOwnedMemoryEntry(size_t size);
     virtual ~TransCacheOwnedMemoryEntry() override;
     virtual const void* data() const override { return data_; }
     virtual size_t size() const override { return size_; }
@@ -98,7 +98,7 @@ private:
 class Cache {
 public:
     Cache();
-    Cache( const Cache& other ) = default;
+    Cache(const Cache& other) = default;
     operator bool() const;
     const TransImpl* trans() const { return trans_.get(); }
     const TransCacheEntry& legendre() const { return *legendre_; }
@@ -106,9 +106,9 @@ public:
     virtual ~Cache();
 
 protected:
-    Cache( const std::shared_ptr<TransCacheEntry>& legendre );
-    Cache( const std::shared_ptr<TransCacheEntry>& legendre, const std::shared_ptr<TransCacheEntry>& fft );
-    Cache( const TransImpl* );
+    Cache(const std::shared_ptr<TransCacheEntry>& legendre);
+    Cache(const std::shared_ptr<TransCacheEntry>& legendre, const std::shared_ptr<TransCacheEntry>& fft);
+    Cache(const TransImpl*);
 
 private:
     util::ObjectHandle<const TransImpl> trans_;
@@ -118,21 +118,21 @@ private:
 
 class TransCache : public Cache {
 public:
-    TransCache( const Trans& );
+    TransCache(const Trans&);
 };
 
 
 class LegendreCache : public Cache {
 public:
-    LegendreCache( size_t size );
-    LegendreCache( const void* address, size_t size );
-    LegendreCache( const eckit::PathName& path );
+    LegendreCache(size_t size);
+    LegendreCache(const void* address, size_t size);
+    LegendreCache(const eckit::PathName& path);
 };
 
 class LegendreFFTCache : public Cache {
 public:
-    LegendreFFTCache( const void* legendre_address, size_t legendre_size, const void* fft_address, size_t fft_size );
-    LegendreFFTCache( const eckit::PathName& legendre_path, const eckit::PathName& fft_path );
+    LegendreFFTCache(const void* legendre_address, size_t legendre_size, const void* fft_address, size_t fft_size);
+    LegendreFFTCache(const eckit::PathName& legendre_path, const eckit::PathName& fft_path);
 };
 
 //----------------------------------------------------------------------------------------------------------------------

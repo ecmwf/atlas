@@ -23,25 +23,25 @@ public:
     using Interval = std::array<double, 2>;
 
 public:
-    static bool is_global( const Interval& x, const Interval& y, const std::string& units = "degrees" );
-    static bool is_zonal_band( const Interval& x, const std::string& units = "degrees" );
+    static bool is_global(const Interval& x, const Interval& y, const std::string& units = "degrees");
+    static bool is_zonal_band(const Interval& x, const std::string& units = "degrees");
 
 public:
     // constructor
-    RectangularDomain( const eckit::Parametrisation& );
-    RectangularDomain( const Interval& x, const Interval& y, const std::string& units );
+    RectangularDomain(const eckit::Parametrisation&);
+    RectangularDomain(const Interval& x, const Interval& y, const std::string& units);
 
     static std::string static_type() { return "rectangular"; }
     virtual std::string type() const override { return static_type(); }
 
     /// Checks if the point is contained in the domain
-    virtual bool contains( double x, double y ) const override;
+    virtual bool contains(double x, double y) const override;
 
     /// Checks if the x-value is contained in the domain
-    bool contains_x( double x ) const { return ( xmin_tol_ <= x && x <= xmax_tol_ ); }
+    bool contains_x(double x) const { return (xmin_tol_ <= x && x <= xmax_tol_); }
 
     /// Checks if the y-value is contained in the domain
-    bool contains_y( double y ) const { return ( ymin_tol_ <= y && y <= ymax_tol_ ); }
+    bool contains_y(double y) const { return (ymin_tol_ <= y && y <= ymax_tol_); }
 
     /// Check if grid includes the North pole
     virtual bool containsNorthPole() const override;
@@ -50,18 +50,18 @@ public:
     virtual bool containsSouthPole() const override;
 
     virtual bool global() const override { return global_; }
-    bool zonal_band() const { return is_zonal_band( {xmin_, xmax_}, units_ ); }
+    bool zonal_band() const { return is_zonal_band({xmin_, xmax_}, units_); }
 
     virtual bool empty() const override {
         //  deepcode ignore FloatingPointEquals: We want exact comparison
-        return ( xmin_ == xmax_ ) or ( ymin_ == ymax_ );
+        return (xmin_ == xmax_) or (ymin_ == ymax_);
     }
 
     virtual Spec spec() const override;
 
-    virtual void print( std::ostream& ) const override;
+    virtual void print(std::ostream&) const override;
 
-    virtual void hash( eckit::Hash& ) const override;
+    virtual void hash(eckit::Hash&) const override;
 
     virtual std::string units() const override { return units_; }
 
@@ -80,8 +80,8 @@ private:
 
 class RectangularLonLatDomain : public RectangularDomain {
 public:
-    RectangularLonLatDomain( const eckit::Parametrisation& config ) : RectangularDomain( config ) {}
-    RectangularLonLatDomain( const Interval& x, const Interval& y ) : RectangularDomain( x, y, "degrees" ) {}
+    RectangularLonLatDomain(const eckit::Parametrisation& config): RectangularDomain(config) {}
+    RectangularLonLatDomain(const Interval& x, const Interval& y): RectangularDomain(x, y, "degrees") {}
     double north() const { return ymax(); }
     double south() const { return ymin(); }
     double west() const { return xmin(); }

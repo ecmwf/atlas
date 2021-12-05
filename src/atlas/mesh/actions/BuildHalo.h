@@ -23,8 +23,8 @@ namespace actions {
 
 class BuildHalo {
 public:
-    BuildHalo( Mesh& mesh );
-    void operator()( int nb_elems );
+    BuildHalo(Mesh& mesh);
+    void operator()(int nb_elems);
 
 private:
     Mesh& mesh_;
@@ -39,15 +39,15 @@ public:
 /// @param [in]    nb_elems  Size of the halo
 /// @author Willem Deconinck
 /// @date June 2014
-inline void build_halo( Mesh& mesh, int nb_elems ) {
-    BuildHalo f( mesh );
-    f( nb_elems );
+inline void build_halo(Mesh& mesh, int nb_elems) {
+    BuildHalo f(mesh);
+    f(nb_elems);
 }
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 extern "C" {
-void atlas__build_halo( Mesh::Implementation* mesh, int nb_elems );
+void atlas__build_halo(Mesh::Implementation* mesh, int nb_elems);
 }
 // ------------------------------------------------------------------
 

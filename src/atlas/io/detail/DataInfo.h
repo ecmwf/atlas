@@ -26,16 +26,16 @@ public:
     const std::string& compression() const { return compression_; }
     Endian endian() const { return endian_; }
 
-    void endian( Endian e ) { endian_ = e; }
+    void endian(Endian e) { endian_ = e; }
 
-    void compression( const std::string& c ) { compression_ = c; }
-    void size( size_t s ) { uncompressed_size_ = s; }
+    void compression(const std::string& c) { compression_ = c; }
+    void size(size_t s) { uncompressed_size_ = s; }
     size_t size() const { return uncompressed_size_; }
-    void compressed_size( size_t s ) { compressed_size_ = s; }
+    void compressed_size(size_t s) { compressed_size_ = s; }
     size_t compressed_size() const { return compressed_size_; }
-    void compressed( bool f ) {
-        if ( f == false ) {
-            compression( "none" );
+    void compressed(bool f) {
+        if (f == false) {
+            compression("none");
         }
     }
 
@@ -44,9 +44,9 @@ public:
     operator bool() const { return section_ > 0; }
 
     const Checksum& checksum() const { return checksum_; }
-    void checksum( const std::string& c ) { checksum_ = Checksum( c ); }
+    void checksum(const std::string& c) { checksum_ = Checksum(c); }
 
-    void section( int s ) { section_ = s; }
+    void section(int s) { section_ = s; }
 
 private:
     int section_{0};

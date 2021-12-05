@@ -28,7 +28,7 @@ namespace mesh {
  */
 class ElementType : public util::Object {
 public:  // methods
-    static ElementType* create( const std::string& );
+    static ElementType* create(const std::string&);
 
     //-- Constructors
 
@@ -139,7 +139,7 @@ public:
     virtual idx_t nb_facets() const { return FACETS; }
     virtual idx_t nb_ridges() const { return RIDGES; }
     virtual const std::string& name() const {
-        static std::string s( "Quadrilateral" );
+        static std::string s("Quadrilateral");
         return s;
     }
 };
@@ -170,7 +170,7 @@ public:
     virtual idx_t nb_facets() const { return FACETS; }
     virtual idx_t nb_ridges() const { return RIDGES; }
     virtual const std::string& name() const {
-        static std::string s( "Triangle" );
+        static std::string s("Triangle");
         return s;
     }
 };
@@ -196,7 +196,7 @@ public:
     virtual idx_t nb_nodes() const { return VERTICES; }
     virtual idx_t nb_facets() const { return FACETS; }
     virtual const std::string& name() const {
-        static std::string s( "Line" );
+        static std::string s("Line");
         return s;
     }
 };
@@ -207,11 +207,11 @@ ElementType* atlas__mesh__Triangle__create();
 ElementType* atlas__mesh__Quadrilateral__create();
 ElementType* atlas__mesh__Line__create();
 
-void atlas__mesh__ElementType__delete( ElementType* This );
-idx_t atlas__mesh__ElementType__nb_nodes( const ElementType* This );
-idx_t atlas__mesh__ElementType__nb_edges( const ElementType* This );
-int atlas__mesh__ElementType__parametric( const ElementType* This );
-const char* atlas__mesh__ElementType__name( const ElementType* This );
+void atlas__mesh__ElementType__delete(ElementType* This);
+idx_t atlas__mesh__ElementType__nb_nodes(const ElementType* This);
+idx_t atlas__mesh__ElementType__nb_edges(const ElementType* This);
+int atlas__mesh__ElementType__parametric(const ElementType* This);
+const char* atlas__mesh__ElementType__name(const ElementType* This);
 }
 
 //------------------------------------------------------------------------------------------------------

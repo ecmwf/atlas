@@ -21,7 +21,7 @@ namespace trace {
 class StopWatch {
 public:
     StopWatch();
-    StopWatch( double elapsed );
+    StopWatch(double elapsed);
     void start();
     void stop();
     void reset();
@@ -35,9 +35,9 @@ private:
 
 //-----------------------------------------------------------------------------------------------------------
 
-inline StopWatch::StopWatch() : elapsed_( 0 ) {}
+inline StopWatch::StopWatch(): elapsed_(0) {}
 
-inline StopWatch::StopWatch( double elapsed ) : elapsed_( elapsed ) {}
+inline StopWatch::StopWatch(double elapsed): elapsed_(elapsed) {}
 
 inline void StopWatch::start() {
     start_   = std::chrono::steady_clock::now();
@@ -45,8 +45,8 @@ inline void StopWatch::start() {
 }
 
 inline void StopWatch::stop() {
-    if ( running_ ) {
-        elapsed_ += ( std::chrono::steady_clock::now() - start_ );
+    if (running_) {
+        elapsed_ += (std::chrono::steady_clock::now() - start_);
         running_ = false;
     }
 }

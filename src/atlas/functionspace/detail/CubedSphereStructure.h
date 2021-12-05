@@ -27,7 +27,7 @@ namespace detail {
 class CubedSphereStructure : public util::Object {
 public:
     CubedSphereStructure() = default;
-    CubedSphereStructure( const Field& tij, const Field& ghost );
+    CubedSphereStructure(const Field& tij, const Field& ghost);
 
     /// Invalid index.
     static constexpr idx_t invalid_index() { return -1; }
@@ -39,19 +39,19 @@ public:
     idx_t nb_owned_elems() const;
 
     /// i lower bound for tile t (including halo)
-    idx_t i_begin( idx_t ) const;
+    idx_t i_begin(idx_t) const;
 
     /// i lower bound for tile t (including halo)
-    idx_t i_end( idx_t t ) const;
+    idx_t i_end(idx_t t) const;
 
     /// j lower bound for tile t (including halo)
-    idx_t j_begin( idx_t t ) const;
+    idx_t j_begin(idx_t t) const;
 
     /// j lower bound for tile t (including halo)
-    idx_t j_end( idx_t t ) const;
+    idx_t j_end(idx_t t) const;
 
     /// Return array_view index for (t, i, j).
-    idx_t index( idx_t t, idx_t i, idx_t j ) const;
+    idx_t index(idx_t t, idx_t i, idx_t j) const;
 
     /// Return ijt field.
     Field tij() const;
@@ -70,12 +70,12 @@ private:
     };
 
     // Bounds checking.
-    void tBoundsCheck( idx_t t ) const;
-    void iBoundsCheck( idx_t i, idx_t t ) const;
-    void jBoundsCheck( idx_t j, idx_t t ) const;
+    void tBoundsCheck(idx_t t) const;
+    void iBoundsCheck(idx_t i, idx_t t) const;
+    void jBoundsCheck(idx_t j, idx_t t) const;
 
     // Row-major index of ijtToidx vectors.
-    size_t vecIndex( idx_t i, idx_t j, idx_t t ) const;
+    size_t vecIndex(idx_t i, idx_t j, idx_t t) const;
 
     // Index storage vectors.
     std::vector<std::vector<idx_t>> tijToIdx_;

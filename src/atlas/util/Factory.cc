@@ -21,74 +21,74 @@ using lock_guard = std::lock_guard<std::mutex>;
 namespace atlas {
 namespace util {
 
-bool FactoryRegistry::has( const std::string& builder ) const {
-    lock_guard lock( mutex_ );
-    return ( factories_.find( builder ) != factories_.end() );
+bool FactoryRegistry::has(const std::string& builder) const {
+    lock_guard lock(mutex_);
+    return (factories_.find(builder) != factories_.end());
 }
 
-FactoryBase* FactoryRegistry::get( const std::string& builder ) const {
-    lock_guard lock( mutex_ );
-    auto iterator = factories_.find( builder );
+FactoryBase* FactoryRegistry::get(const std::string& builder) const {
+    lock_guard lock(mutex_);
+    auto iterator = factories_.find(builder);
 
-    if ( iterator == factories_.end() ) {
+    if (iterator == factories_.end()) {
         Log::error() << "No " << factory_ << " for [" << builder << "]" << std::endl;
         Log::error() << "Factories are:" << std::endl;
-        for ( const auto& map_pair : factories_ ) {
+        for (const auto& map_pair : factories_) {
             Log::error() << "   " << map_pair.first << std::endl;
         }
-        throw_Exception( std::string( "No " ) + factory_ + std::string( " called " ) + builder );
+        throw_Exception(std::string("No ") + factory_ + std::string(" called ") + builder);
     }
     else {
         return iterator->second;
     }
 }
 
-void FactoryRegistry::add( const std::string& builder, FactoryBase* factory ) {
-    lock_guard lock( mutex_ );
-    ATLAS_ASSERT( factories_.find( builder ) == factories_.end(), "Cannot find builder in factory" );
+void FactoryRegistry::add(const std::string& builder, FactoryBase* factory) {
+    lock_guard lock(mutex_);
+    ATLAS_ASSERT(factories_.find(builder) == factories_.end(), "Cannot find builder in factory");
     factories_[builder] = factory;
 #ifdef DEBUG_FACTORY_REGISTRATION
     std::cout << "Registered " << builder << " (" << factory << ") in " << factory_ << std::endl << std::flush;
 #endif
 }
 
-void FactoryRegistry::remove( const std::string& builder ) {
-    lock_guard lock( mutex_ );
-    ATLAS_ASSERT( factories_.find( builder ) != factories_.end() );
+void FactoryRegistry::remove(const std::string& builder) {
+    lock_guard lock(mutex_);
+    ATLAS_ASSERT(factories_.find(builder) != factories_.end());
 #ifdef DEBUG_FACTORY_REGISTRATION
     FactoryBase* factory = factories_[builder];
     std::cout << "Unregistered " << builder << " (" << factory << ") from " << factory_ << std::endl << std::flush;
 #endif
-    factories_.erase( builder );
+    factories_.erase(builder);
 }
 
-FactoryRegistry::FactoryRegistry( const std::string& factory ) : factory_( factory ) {
+FactoryRegistry::FactoryRegistry(const std::string& factory): factory_(factory) {
 #ifdef DEBUG_FACTORY_REGISTRATION
     std::cout << "Created " << factory << std::endl;
 #endif
 }
 
 FactoryRegistry::~FactoryRegistry() {
-    ATLAS_ASSERT( factories_.empty(), "Registry should only be destroyed once all builders have been unregistrered" );
+    ATLAS_ASSERT(factories_.empty(), "Registry should only be destroyed once all builders have been unregistrered");
 #ifdef DEBUG_FACTORY_REGISTRATION
     std::cout << "Destroyed " << factory_ << std::endl << std::flush;
 #endif
 }
 
 std::vector<std::string> FactoryRegistry::keys() const {
-    lock_guard lock( mutex_ );
+    lock_guard lock(mutex_);
     std::vector<std::string> _keys;
-    _keys.reserve( factories_.size() );
-    for ( const auto& key_value : factories_ ) {
-        _keys.emplace_back( key_value.first );
+    _keys.reserve(factories_.size());
+    for (const auto& key_value : factories_) {
+        _keys.emplace_back(key_value.first);
     }
     return _keys;
 }
 
-void FactoryRegistry::list( std::ostream& out ) const {
-    lock_guard lock( mutex_ );
+void FactoryRegistry::list(std::ostream& out) const {
+    lock_guard lock(mutex_);
     const char* sep = "";
-    for ( const auto& map_pair : factories_ ) {
+    for (const auto& map_pair : factories_) {
         out << sep << map_pair.first;
         sep = ", ";
     }
@@ -97,16 +97,16 @@ void FactoryRegistry::list( std::ostream& out ) const {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-FactoryBase::FactoryBase( FactoryRegistry& registry, const std::string& builder ) :
-    registry_( registry ), builder_( builder ) {
-    if ( not builder_.empty() ) {
-        registry_.add( builder, this );
+FactoryBase::FactoryBase(FactoryRegistry& registry, const std::string& builder):
+    registry_(registry), builder_(builder) {
+    if (not builder_.empty()) {
+        registry_.add(builder, this);
     }
 }
 
 FactoryBase::~FactoryBase() {
-    if ( not builder_.empty() ) {
-        registry_.remove( builder_ );
+    if (not builder_.empty()) {
+        registry_.remove(builder_);
     }
 }
 

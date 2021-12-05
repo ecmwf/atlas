@@ -22,19 +22,19 @@ namespace io {
 template <typename T>
 struct Reference {
     const T* ref;
-    Reference( const T& r ) : ref( &r ) {}
+    Reference(const T& r): ref(&r) {}
 
-    friend size_t encode_metadata( const Reference<T>& in, atlas::io::Metadata& metadata ) {
+    friend size_t encode_metadata(const Reference<T>& in, atlas::io::Metadata& metadata) {
         size_t size{0};
-        if ( not sfinae::encode_metadata( *in.ref, metadata, size ) ) {
-            throw NotEncodable( *in.ref );
+        if (not sfinae::encode_metadata(*in.ref, metadata, size)) {
+            throw NotEncodable(*in.ref);
         }
         return size;
     }
 
-    friend void encode_data( const Reference<T>& in, atlas::io::Data& out ) {
-        if ( not sfinae::encode_data( *in.ref, out ) ) {
-            throw NotEncodable( *in.ref );
+    friend void encode_data(const Reference<T>& in, atlas::io::Data& out) {
+        if (not sfinae::encode_data(*in.ref, out)) {
+            throw NotEncodable(*in.ref);
         }
     }
 };

@@ -32,19 +32,19 @@ public:
 public:
     ArrayMetadata();
 
-    explicit ArrayMetadata( const Metadata& );
+    explicit ArrayMetadata(const Metadata&);
 
-    explicit ArrayMetadata( const DataType&, const ArrayShape& );
+    explicit ArrayMetadata(const DataType&, const ArrayShape&);
 
-    explicit ArrayMetadata( const ArrayMetadata& );
+    explicit ArrayMetadata(const ArrayMetadata&);
 
-    ArrayMetadata( ArrayMetadata&& );
+    ArrayMetadata(ArrayMetadata&&);
 
-    ArrayMetadata& operator=( ArrayMetadata&& );
+    ArrayMetadata& operator=(ArrayMetadata&&);
 
-    int rank() const { return int( shape_.size() ); }
+    int rank() const { return int(shape_.size()); }
 
-    int shape( int i ) const;
+    int shape(int i) const;
 
     const ArrayShape& shape() const { return shape_; }
 
@@ -54,7 +54,7 @@ public:
 
     size_t bytes() const { return size() * datatype_.size(); }
 
-    friend size_t encode_metadata( const ArrayMetadata& value, atlas::io::Metadata& out );
+    friend size_t encode_metadata(const ArrayMetadata& value, atlas::io::Metadata& out);
 
 private:
     ArrayShape shape_;
@@ -63,7 +63,7 @@ private:
 
 //---------------------------------------------------------------------------------------------------------------------
 
-size_t encode_metadata( const ArrayMetadata& value, atlas::io::Metadata& out );
+size_t encode_metadata(const ArrayMetadata& value, atlas::io::Metadata& out);
 
 //---------------------------------------------------------------------------------------------------------------------
 

@@ -15,10 +15,10 @@
 namespace atlas {
 namespace util {
 
-inline int microdeg( const double& deg ) {
-    assert( deg < 2145. );   // Since INT_MAX ==  2147483647
-    assert( deg > -2145. );  // Since INT_MIN == –2147483648
-    return static_cast<int>( deg < 0 ? deg * 1.e6 - 0.5 : deg * 1.e6 + 0.5 );
+inline int microdeg(const double& deg) {
+    assert(deg < 2145.);   // Since INT_MAX ==  2147483647
+    assert(deg > -2145.);  // Since INT_MIN == –2147483648
+    return static_cast<int>(deg < 0 ? deg * 1.e6 - 0.5 : deg * 1.e6 + 0.5);
 }
 
 }  // namespace util

@@ -19,28 +19,28 @@ namespace atlas {
 
 // ------------------------------------------------------------------
 
-std::ostream& operator<<( std::ostream& os, const Field& f ) {
-    os << ( *f.get() );
+std::ostream& operator<<(std::ostream& os, const Field& f) {
+    os << (*f.get());
     return os;
 }
 
-Field::Field( const eckit::Parametrisation& config ) : Handle( Implementation::create( config ) ) {}
+Field::Field(const eckit::Parametrisation& config): Handle(Implementation::create(config)) {}
 
-Field::Field( const std::string& name, array::DataType datatype, const array::ArrayShape& shape ) :
-    Handle( Implementation::create( name, datatype, shape ) ) {}
+Field::Field(const std::string& name, array::DataType datatype, const array::ArrayShape& shape):
+    Handle(Implementation::create(name, datatype, shape)) {}
 
-Field::Field( const std::string& name, array::DataType datatype, array::ArraySpec&& spec ) :
-    Handle( Implementation::create( name, datatype, std::move( spec ) ) ) {}
+Field::Field(const std::string& name, array::DataType datatype, array::ArraySpec&& spec):
+    Handle(Implementation::create(name, datatype, std::move(spec))) {}
 
-Field::Field( const std::string& name, array::Array* array ) : Handle( Implementation::create( name, array ) ) {}
-
-template <typename DATATYPE>
-Field::Field( const std::string& name, DATATYPE* data, const array::ArraySpec& spec ) :
-    Handle( Implementation::wrap( name, data, spec ) ) {}
+Field::Field(const std::string& name, array::Array* array): Handle(Implementation::create(name, array)) {}
 
 template <typename DATATYPE>
-Field::Field( const std::string& name, DATATYPE* data, const array::ArrayShape& shape ) :
-    Handle( Implementation::wrap( name, data, shape ) ) {}
+Field::Field(const std::string& name, DATATYPE* data, const array::ArraySpec& spec):
+    Handle(Implementation::wrap(name, data, spec)) {}
+
+template <typename DATATYPE>
+Field::Field(const std::string& name, DATATYPE* data, const array::ArrayShape& shape):
+    Handle(Implementation::wrap(name, data, shape)) {}
 
 /// @brief Implicit conversion to Array
 Field::operator const array::Array&() const {
@@ -75,8 +75,8 @@ const std::string& Field::name() const {
 }
 
 /// @brief Rename this field
-void Field::rename( const std::string& name ) {
-    get()->rename( name );
+void Field::rename(const std::string& name) {
+    get()->rename(name);
 }
 
 /// @brief Access to metadata associated to this field
@@ -88,12 +88,12 @@ util::Metadata& Field::metadata() {
 }
 
 /// @brief Resize field to given shape
-void Field::resize( const array::ArrayShape& shape ) {
-    get()->resize( shape );
+void Field::resize(const array::ArrayShape& shape) {
+    get()->resize(shape);
 }
 
-void Field::insert( idx_t idx1, idx_t size1 ) {
-    get()->insert( idx1, size1 );
+void Field::insert(idx_t idx1, idx_t size1) {
+    get()->insert(idx1, size1);
 }
 
 /// @brief Shape of this field in Fortran style (reverse order of C style)
@@ -117,13 +117,13 @@ const array::ArrayStrides& Field::strides() const {
 }
 
 /// @brief Shape of this field associated to index 'i'
-idx_t Field::shape( idx_t i ) const {
-    return get()->shape( i );
+idx_t Field::shape(idx_t i) const {
+    return get()->shape(i);
 }
 
 /// @brief Stride of this field associated to index 'i'
-idx_t Field::stride( idx_t i ) const {
-    return get()->stride( i );
+idx_t Field::stride(idx_t i) const {
+    return get()->stride(i);
 }
 
 /// @brief Number of values stored in this field
@@ -146,28 +146,28 @@ bool Field::contiguous() const {
 }
 
 /// @brief Output information of field plus raw data
-void Field::dump( std::ostream& os ) const {
-    get()->dump( os );
+void Field::dump(std::ostream& os) const {
+    get()->dump(os);
 }
 
 /// Metadata that is more intrinsic to the Field, and queried often
-void Field::set_levels( idx_t n ) {
-    get()->set_levels( n );
+void Field::set_levels(idx_t n) {
+    get()->set_levels(n);
 }
 idx_t Field::levels() const {
     return get()->levels();
 }
 
 /// Metadata that is more intrinsic to the Field, and queried often
-void Field::set_variables( idx_t n ) {
-    get()->set_variables( n );
+void Field::set_variables(idx_t n) {
+    get()->set_variables(n);
 }
 idx_t Field::variables() const {
     return get()->variables();
 }
 
-void Field::set_functionspace( const FunctionSpace& functionspace ) {
-    get()->set_functionspace( functionspace );
+void Field::set_functionspace(const FunctionSpace& functionspace) {
+    get()->set_functionspace(functionspace);
 }
 const FunctionSpace& Field::functionspace() const {
     return get()->functionspace();
@@ -182,16 +182,16 @@ bool Field::dirty() const {
     return get()->dirty();
 }
 
-void Field::set_dirty( bool value ) const {
-    get()->set_dirty( value );
+void Field::set_dirty(bool value) const {
+    get()->set_dirty(value);
 }
 
-void Field::haloExchange( bool on_device ) const {
-    get()->haloExchange( on_device );
+void Field::haloExchange(bool on_device) const {
+    get()->haloExchange(on_device);
 }
 
-void Field::adjointHaloExchange( bool on_device ) const {
-    get()->adjointHaloExchange( on_device );
+void Field::adjointHaloExchange(bool on_device) const {
+    get()->adjointHaloExchange(on_device);
 }
 
 // -- Methods related to host-device synchronisation, requires gridtools_storage
@@ -220,14 +220,14 @@ void Field::reactivateHostWriteViews() const {
 
 // ------------------------------------------------------------------
 
-template Field::Field( const std::string&, float*, const array::ArraySpec& );
-template Field::Field( const std::string&, float*, const array::ArrayShape& );
-template Field::Field( const std::string&, double*, const array::ArraySpec& );
-template Field::Field( const std::string&, double*, const array::ArrayShape& );
-template Field::Field( const std::string&, long*, const array::ArraySpec& );
-template Field::Field( const std::string&, long*, const array::ArrayShape& );
-template Field::Field( const std::string&, int*, const array::ArraySpec& );
-template Field::Field( const std::string&, int*, const array::ArrayShape& );
+template Field::Field(const std::string&, float*, const array::ArraySpec&);
+template Field::Field(const std::string&, float*, const array::ArrayShape&);
+template Field::Field(const std::string&, double*, const array::ArraySpec&);
+template Field::Field(const std::string&, double*, const array::ArrayShape&);
+template Field::Field(const std::string&, long*, const array::ArraySpec&);
+template Field::Field(const std::string&, long*, const array::ArrayShape&);
+template Field::Field(const std::string&, int*, const array::ArraySpec&);
+template Field::Field(const std::string&, int*, const array::ArrayShape&);
 
 // ------------------------------------------------------------------
 

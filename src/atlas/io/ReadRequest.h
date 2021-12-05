@@ -24,17 +24,17 @@ namespace io {
 
 class ReadRequest {
 public:
-    ReadRequest( ReadRequest&& other );
+    ReadRequest(ReadRequest&& other);
 
     template <typename T>
-    ReadRequest( Stream stream, size_t offset, const std::string& key, T& value ) :
-        ReadRequest{stream, offset, key, new Decoder( value )} {}
+    ReadRequest(Stream stream, size_t offset, const std::string& key, T& value):
+        ReadRequest{stream, offset, key, new Decoder(value)} {}
 
     template <typename T>
-    ReadRequest( const std::string& URI, T& value ) : ReadRequest{URI, new Decoder( value )} {}
+    ReadRequest(const std::string& URI, T& value): ReadRequest{URI, new Decoder(value)} {}
 
     template <typename T>
-    ReadRequest( const RecordItem::URI& URI, T& value ) : ReadRequest{URI.str(), value} {}
+    ReadRequest(const RecordItem::URI& URI, T& value): ReadRequest{URI.str(), value} {}
 
     ~ReadRequest();
 
@@ -48,14 +48,14 @@ public:
 
     void wait();
 
-    void checksum( bool );
+    void checksum(bool);
 
 private:
-    ReadRequest( const std::string& URI, Decoder* decoder );
-    ReadRequest( Stream, size_t offset, const std::string& key, Decoder* );
+    ReadRequest(const std::string& URI, Decoder* decoder);
+    ReadRequest(Stream, size_t offset, const std::string& key, Decoder*);
 
-    ReadRequest()                     = delete;
-    ReadRequest( const ReadRequest& ) = delete;
+    ReadRequest()                   = delete;
+    ReadRequest(const ReadRequest&) = delete;
 
     Stream stream_;
     size_t offset_;

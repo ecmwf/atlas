@@ -12,7 +12,7 @@
 
 namespace atlas {
 
-std::ostream& operator<<( std::ostream& s, const CodeLocation& loc ) {
+std::ostream& operator<<(std::ostream& s, const CodeLocation& loc) {
     s << loc.loc_;
     return s;
 }

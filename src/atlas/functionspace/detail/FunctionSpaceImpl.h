@@ -49,14 +49,14 @@ public:
     virtual operator bool() const { return true; }
     virtual size_t footprint() const = 0;
 
-    virtual atlas::Field createField( const eckit::Configuration& ) const = 0;
+    virtual atlas::Field createField(const eckit::Configuration&) const = 0;
 
-    virtual atlas::Field createField( const atlas::Field&, const eckit::Configuration& ) const = 0;
+    virtual atlas::Field createField(const atlas::Field&, const eckit::Configuration&) const = 0;
 
-    atlas::Field createField( const atlas::Field& ) const;
+    atlas::Field createField(const atlas::Field&) const;
 
     template <typename DATATYPE>
-    atlas::Field createField( const eckit::Configuration& ) const;
+    atlas::Field createField(const eckit::Configuration&) const;
 
     template <typename DATATYPE>
     atlas::Field createField() const;
@@ -72,17 +72,17 @@ public:
 
     virtual std::string distribution() const = 0;
 
-    virtual void haloExchange( const FieldSet&, bool /*on_device*/ = false ) const;
-    virtual void haloExchange( const Field&, bool /* on_device*/ = false ) const;
+    virtual void haloExchange(const FieldSet&, bool /*on_device*/ = false) const;
+    virtual void haloExchange(const Field&, bool /* on_device*/ = false) const;
 
-    virtual void adjointHaloExchange( const FieldSet&, bool /*on_device*/ = false ) const;
-    virtual void adjointHaloExchange( const Field&, bool /* on_device*/ = false ) const;
+    virtual void adjointHaloExchange(const FieldSet&, bool /*on_device*/ = false) const;
+    virtual void adjointHaloExchange(const Field&, bool /* on_device*/ = false) const;
 
     virtual idx_t size() const = 0;
 
     virtual idx_t nb_partitions() const;
 
-    virtual const util::PartitionPolygon& polygon( idx_t halo = 0 ) const;
+    virtual const util::PartitionPolygon& polygon(idx_t halo = 0) const;
 
     virtual atlas::Field lonlat() const;
 
@@ -102,12 +102,12 @@ private:
 
 template <typename FunctionSpaceT>
 inline FunctionspaceT_nonconst* FunctionSpaceImpl::cast() {
-    return dynamic_cast<FunctionspaceT_nonconst*>( this );
+    return dynamic_cast<FunctionspaceT_nonconst*>(this);
 }
 
 template <typename FunctionSpaceT>
 inline FunctionspaceT_const* FunctionSpaceImpl::cast() const {
-    return dynamic_cast<FunctionspaceT_const*>( this );
+    return dynamic_cast<FunctionspaceT_const*>(this);
 }
 
 #undef FunctionspaceT_const
@@ -118,15 +118,15 @@ inline FunctionspaceT_const* FunctionSpaceImpl::cast() const {
 /// @brief Dummy Functionspace class that evaluates to false
 class NoFunctionSpace : public FunctionSpaceImpl {
 public:
-    NoFunctionSpace() : FunctionSpaceImpl() {}
+    NoFunctionSpace(): FunctionSpaceImpl() {}
     virtual ~NoFunctionSpace() {}
     virtual std::string type() const { return "NoFunctionSpace"; }
     virtual operator bool() const { return false; }
-    virtual size_t footprint() const { return sizeof( *this ); }
+    virtual size_t footprint() const { return sizeof(*this); }
     virtual std::string distribution() const { return std::string(); }
 
-    virtual Field createField( const eckit::Configuration& ) const;
-    virtual Field createField( const Field&, const eckit::Configuration& ) const;
+    virtual Field createField(const eckit::Configuration&) const;
+    virtual Field createField(const Field&, const eckit::Configuration&) const;
     virtual idx_t size() const { return 0; }
 };
 

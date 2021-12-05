@@ -22,8 +22,8 @@ public:
         PREFIX    = 1,
         TIMESTAMP = 2
     };
-    static void addFortranUnit( int unit, Style = PREFIX, const char* prefix = "" );
-    static void setFortranUnit( int unit, Style = PREFIX, const char* prefix = "" );
+    static void addFortranUnit(int unit, Style = PREFIX, const char* prefix = "");
+    static void setFortranUnit(int unit, Style = PREFIX, const char* prefix = "");
 
     // Fortran unit numbers
     static int output_unit() { return 6; }
@@ -40,46 +40,46 @@ std::string backtrace();
 
 namespace atlas {
 namespace detail {
-void debug_parallel_here( const eckit::CodeLocation& );
-void debug_parallel_what( const eckit::CodeLocation&, const std::string& );
+void debug_parallel_here(const eckit::CodeLocation&);
+void debug_parallel_what(const eckit::CodeLocation&, const std::string&);
 }  // namespace detail
 }  // namespace atlas
 
 #define ATLAS_DEBUG_HERE()                                           \
     do {                                                             \
         ::atlas::Log::info() << "DEBUG() @ " << Here() << std::endl; \
-    } while ( 0 )
-#define ATLAS_DEBUG_WHAT( WHAT )                                                   \
+    } while (0)
+#define ATLAS_DEBUG_WHAT(WHAT)                                                     \
     do {                                                                           \
         ::atlas::Log::info() << "DEBUG(" << WHAT << ") @ " << Here() << std::endl; \
-    } while ( 0 )
-#define ATLAS_DEBUG_VAR( VAR )                                                                       \
+    } while (0)
+#define ATLAS_DEBUG_VAR(VAR)                                                                         \
     do {                                                                                             \
         ::atlas::Log::info() << "DEBUG( " << #VAR << " : " << VAR << " ) @ " << Here() << std::endl; \
-    } while ( 0 )
+    } while (0)
 
-#define ATLAS_DEBUG( ... ) __ATLAS_SPLICE( __ATLAS_DEBUG_, __ATLAS_NARG( __VA_ARGS__ ) )( __VA_ARGS__ )
+#define ATLAS_DEBUG(...) __ATLAS_SPLICE(__ATLAS_DEBUG_, __ATLAS_NARG(__VA_ARGS__))(__VA_ARGS__)
 #define __ATLAS_DEBUG_0 ATLAS_DEBUG_HERE
 #define __ATLAS_DEBUG_1 ATLAS_DEBUG_WHAT
 
 #define ATLAS_DEBUG_BACKTRACE()                                                                                \
     do {                                                                                                       \
         ::atlas::Log::info() << "DEBUG() @ " << Here() << "Backtrace:\n" << ::atlas::backtrace() << std::endl; \
-    } while ( 0 )
+    } while (0)
 
-#define ATLAS_DEBUG_PARALLEL_HERE()                     \
-    do {                                                \
-        ::atlas::detail::debug_parallel_here( Here() ); \
-    } while ( 0 )
-#define ATLAS_DEBUG_PARALLEL_WHAT( WHAT )                        \
-    do {                                                         \
-        std::stringstream w;                                     \
-        w << WHAT;                                               \
-        ::atlas::detail::debug_parallel_what( Here(), w.str() ); \
-    } while ( 0 )
+#define ATLAS_DEBUG_PARALLEL_HERE()                   \
+    do {                                              \
+        ::atlas::detail::debug_parallel_here(Here()); \
+    } while (0)
+#define ATLAS_DEBUG_PARALLEL_WHAT(WHAT)                        \
+    do {                                                       \
+        std::stringstream w;                                   \
+        w << WHAT;                                             \
+        ::atlas::detail::debug_parallel_what(Here(), w.str()); \
+    } while (0)
 
-#define ATLAS_DEBUG_PARALLEL( ... )                                        \
-    __ATLAS_SPLICE( __ATLAS_DEBUG_PARALLEL_, __ATLAS_NARG( __VA_ARGS__ ) ) \
-    ( __VA_ARGS__ )
+#define ATLAS_DEBUG_PARALLEL(...)                                      \
+    __ATLAS_SPLICE(__ATLAS_DEBUG_PARALLEL_, __ATLAS_NARG(__VA_ARGS__)) \
+    (__VA_ARGS__)
 #define __ATLAS_DEBUG_PARALLEL_0 ATLAS_DEBUG_PARALLEL_HERE
 #define __ATLAS_DEBUG_PARALLEL_1 ATLAS_DEBUG_PARALLEL_WHAT

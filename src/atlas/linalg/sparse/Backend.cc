@@ -29,35 +29,35 @@ struct backends {
         return x;
     }
 
-    void set( const std::string& current_backend ) { current_backend_ = current_backend; }
+    void set(const std::string& current_backend) { current_backend_ = current_backend; }
 
-    sparse::Backend& get( const std::string& type ) {
-        if ( map_.find( type ) == map_.end() ) {
-            map_.emplace( type, util::Config( "type", type ) );
+    sparse::Backend& get(const std::string& type) {
+        if (map_.find(type) == map_.end()) {
+            map_.emplace(type, util::Config("type", type));
         }
         return map_[type];
     }
 
-    sparse::Backend& get() { return get( current_backend_ ); }
+    sparse::Backend& get() { return get(current_backend_); }
 
 private:
     backends() = default;
 };
 }  // namespace
 
-void current_backend( const std::string& backend ) {
-    backends::instance().set( backend );
+void current_backend(const std::string& backend) {
+    backends::instance().set(backend);
 }
 sparse::Backend& current_backend() {
     return backends::instance().get();
 }
 
-sparse::Backend& default_backend( const std::string& backend ) {
-    return backends::instance().get( backend );
+sparse::Backend& default_backend(const std::string& backend) {
+    return backends::instance().get(backend);
 }
 
-Backend::Backend( const eckit::Configuration& other ) : util::Config( other ) {
-    ATLAS_ASSERT( has( "type" ) );
+Backend::Backend(const eckit::Configuration& other): util::Config(other) {
+    ATLAS_ASSERT(has("type"));
 }
 
 }  // namespace sparse

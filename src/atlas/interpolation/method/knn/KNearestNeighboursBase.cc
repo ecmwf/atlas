@@ -24,55 +24,55 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
-void KNearestNeighboursBase::buildPointSearchTree( Mesh& meshSource, const mesh::Halo& _halo ) {
+void KNearestNeighboursBase::buildPointSearchTree(Mesh& meshSource, const mesh::Halo& _halo) {
     ATLAS_TRACE();
-    eckit::TraceTimer<Atlas> tim( "KNearestNeighboursBase::buildPointSearchTree()" );
+    eckit::TraceTimer<Atlas> tim("KNearestNeighboursBase::buildPointSearchTree()");
 
 
-    auto lonlat = array::make_view<double, 2>( meshSource.nodes().lonlat() );
-    auto halo   = array::make_view<int, 1>( meshSource.nodes().halo() );
+    auto lonlat = array::make_view<double, 2>(meshSource.nodes().lonlat());
+    auto halo   = array::make_view<int, 1>(meshSource.nodes().halo());
     int h       = _halo.size();
 
-    static bool fastBuildKDTrees = eckit::Resource<bool>( "$ATLAS_FAST_BUILD_KDTREES", true );
+    static bool fastBuildKDTrees = eckit::Resource<bool>("$ATLAS_FAST_BUILD_KDTREES", true);
 
-    if ( fastBuildKDTrees ) {
-        pTree_.reserve( lonlat.shape( 0 ) );
+    if (fastBuildKDTrees) {
+        pTree_.reserve(lonlat.shape(0));
     }
-    for ( idx_t ip = 0; ip < lonlat.shape( 0 ); ++ip ) {
-        if ( halo( ip ) <= h ) {
-            pTree_.insert( PointLonLat( lonlat( ip, LON ), lonlat( ip, LAT ) ), ip );
+    for (idx_t ip = 0; ip < lonlat.shape(0); ++ip) {
+        if (halo(ip) <= h) {
+            pTree_.insert(PointLonLat(lonlat(ip, LON), lonlat(ip, LAT)), ip);
         }
     }
     pTree_.build();
 
 
     // generate 3D point coordinates
-    mesh::actions::BuildXYZField( "xyz" )( meshSource );
+    mesh::actions::BuildXYZField("xyz")(meshSource);
 }
 
 namespace {
 
 template <typename FunctionSpace_type>
-void insert_tree( util::IndexKDTree& tree, const FunctionSpace_type& functionspace ) {
+void insert_tree(util::IndexKDTree& tree, const FunctionSpace_type& functionspace) {
     size_t ip{0};
-    for ( auto p : functionspace.iterate().lonlat() ) {
-        tree.insert( p, ip++ );
+    for (auto p : functionspace.iterate().lonlat()) {
+        tree.insert(p, ip++);
     }
 }
 
 }  // namespace
 
-void KNearestNeighboursBase::buildPointSearchTree( const FunctionSpace& functionspace ) {
+void KNearestNeighboursBase::buildPointSearchTree(const FunctionSpace& functionspace) {
     ATLAS_TRACE();
-    eckit::TraceTimer<Atlas> tim( "KNearestNeighboursBase::buildPointSearchTree()" );
+    eckit::TraceTimer<Atlas> tim("KNearestNeighboursBase::buildPointSearchTree()");
 
-    static bool fastBuildKDTrees = eckit::Resource<bool>( "$ATLAS_FAST_BUILD_KDTREES", true );
+    static bool fastBuildKDTrees = eckit::Resource<bool>("$ATLAS_FAST_BUILD_KDTREES", true);
 
-    if ( fastBuildKDTrees ) {
-        pTree_.reserve( functionspace.size() );
+    if (fastBuildKDTrees) {
+        pTree_.reserve(functionspace.size());
     }
-    if ( functionspace::PointCloud fs = functionspace ) {
-        insert_tree( pTree_, fs );
+    if (functionspace::PointCloud fs = functionspace) {
+        insert_tree(pTree_, fs);
     }
     else {
         ATLAS_NOTIMPLEMENTED;
@@ -80,9 +80,9 @@ void KNearestNeighboursBase::buildPointSearchTree( const FunctionSpace& function
     pTree_.build();
 }
 
-bool KNearestNeighboursBase::extractTreeFromCache( const Cache& c ) {
-    IndexKDTreeCache cache( c );
-    if ( cache ) {
+bool KNearestNeighboursBase::extractTreeFromCache(const Cache& c) {
+    IndexKDTreeCache cache(c);
+    if (cache) {
         pTree_ = cache.tree();
         return true;
     }

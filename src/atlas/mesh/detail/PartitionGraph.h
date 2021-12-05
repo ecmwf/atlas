@@ -32,16 +32,16 @@ public:
 
 public:
     PartitionGraph();
-    PartitionGraph( idx_t values[], idx_t rows, idx_t displs[], idx_t counts[] );
+    PartitionGraph(idx_t values[], idx_t rows, idx_t displs[], idx_t counts[]);
     size_t footprint() const;
     idx_t size() const;
-    Neighbours nearestNeighbours( const idx_t partition ) const;
+    Neighbours nearestNeighbours(const idx_t partition) const;
     idx_t maximumNearestNeighbours() const;
     operator bool() const;
 
 private:
-    void print( std::ostream& ) const;
-    friend std::ostream& operator<<( std::ostream& s, const PartitionGraph& p );
+    void print(std::ostream&) const;
+    friend std::ostream& operator<<(std::ostream& s, const PartitionGraph& p);
 
 private:
     std::vector<idx_t> counts_;
@@ -50,7 +50,7 @@ private:
     idx_t maximum_nearest_neighbours_;
 };
 
-PartitionGraph* build_partition_graph( const MeshImpl& mesh );
+PartitionGraph* build_partition_graph(const MeshImpl& mesh);
 
 //----------------------------------------------------------------------------------------------------------------------
 

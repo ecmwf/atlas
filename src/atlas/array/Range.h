@@ -28,18 +28,18 @@ class RangeBase {};
 
 class RangeFrom : public RangeBase {
 public:
-    RangeFrom( int start ) : start_( start ) {}
+    RangeFrom(int start): start_(start) {}
 
     int start() const { return start_; }
 
     template <int Dim, typename View>
-    int end( const View& view ) const {
-        return view.shape( Dim );
+    int end(const View& view) const {
+        return view.shape(Dim);
     }
 
     template <typename View>
-    int end( const View& view, int i ) const {
-        return view.shape( i );
+    int end(const View& view, int i) const {
+        return view.shape(i);
     }
 
 private:
@@ -50,7 +50,7 @@ private:
 
 class RangeTo : public RangeBase {
 public:
-    RangeTo( int end ) : end_( end ) {}
+    RangeTo(int end): end_(end) {}
 
     int start() const { return 0; }
 
@@ -67,13 +67,13 @@ public:
     int start() const { return 0; }
 
     template <int Dim, typename View>
-    int end( const View& view ) const {
-        return view.shape( Dim );
+    int end(const View& view) const {
+        return view.shape(Dim);
     }
 
     template <typename View>
-    int end( const View& view, int i ) const {
-        return view.shape( i );
+    int end(const View& view, int i) const {
+        return view.shape(i);
     }
 };
 
@@ -94,18 +94,18 @@ private:
     using Dummy = helpers::RangeDummy;
 
 public:
-    static From from( int start ) { return From( start ); }
-    static To to( int end ) { return To( end ); }
+    static From from(int start) { return From(start); }
+    static To to(int end) { return To(end); }
     static All all() { return All(); }
     static Dummy dummy() { return Dummy(); }
 
 public:
     template <typename Start, typename End>
-    Range( Start start, End end ) : start_( static_cast<int>( start ) ), end_( static_cast<int>( end ) ) {}
+    Range(Start start, End end): start_(static_cast<int>(start)), end_(static_cast<int>(end)) {}
     int start() const { return start_; }
     int end() const { return end_; }
 
-    Range() : Range( 0, 0 ) {}
+    Range(): Range(0, 0) {}
 
 private:
     int start_;

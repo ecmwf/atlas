@@ -43,89 +43,89 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-double dual_volume( Mesh& mesh ) {
+double dual_volume(Mesh& mesh) {
     mesh::Nodes& nodes = mesh.nodes();
-    mesh::IsGhostNode is_ghost_node( nodes );
+    mesh::IsGhostNode is_ghost_node(nodes);
     idx_t nb_nodes                           = nodes.size();
-    array::ArrayView<double, 1> dual_volumes = array::make_view<double, 1>( nodes.field( "dual_volumes" ) );
+    array::ArrayView<double, 1> dual_volumes = array::make_view<double, 1>(nodes.field("dual_volumes"));
     double area                              = 0;
 
-    for ( idx_t node = 0; node < nb_nodes; ++node ) {
-        if ( !is_ghost_node( node ) ) {
-            area += dual_volumes( node );
+    for (idx_t node = 0; node < nb_nodes; ++node) {
+        if (!is_ghost_node(node)) {
+            area += dual_volumes(node);
         }
     }
 
-    ATLAS_TRACE_MPI( ALLREDUCE ) { mpi::comm().allReduceInPlace( area, eckit::mpi::sum() ); }
+    ATLAS_TRACE_MPI(ALLREDUCE) { mpi::comm().allReduceInPlace(area, eckit::mpi::sum()); }
 
     return area;
 }
 
 //-----------------------------------------------------------------------------
 
-CASE( "test_distribute_t63" ) {
+CASE("test_distribute_t63") {
     // Every task builds full mesh
     //  meshgenerator::StructuredMeshGenerator generate( util::Config
     //      ("nb_parts",1)
     //      ("part",0) );
-    StructuredMeshGenerator generate( util::Config( "partitioner", "equal_regions" ) );
+    StructuredMeshGenerator generate(util::Config("partitioner", "equal_regions"));
 
     // long lon[] = {4,6,8,8,8};
     // test::TestGrid grid(5,lon);
 
     //  GG grid(120,60);
-    Grid grid( "N16" );
+    Grid grid("N16");
 
-    Mesh m( generate( grid ) );
+    Mesh m(generate(grid));
 
     //  actions::distribute_mesh(m);
 
-    mesh::actions::build_parallel_fields( m );
-    mesh::actions::build_periodic_boundaries( m );
-    mesh::actions::build_halo( m, 1 );
+    mesh::actions::build_parallel_fields(m);
+    mesh::actions::build_periodic_boundaries(m);
+    mesh::actions::build_halo(m, 1);
     // mesh::actions::renumber_nodes_glb_idx(m.nodes());
-    mesh::actions::build_edges( m );
+    mesh::actions::build_edges(m);
 
-    Gmsh( "dist.msh", util::Config( "ghost", true ) ).write( m );
+    Gmsh("dist.msh", util::Config("ghost", true)).write(m);
 
 
-    mesh::actions::build_edges_parallel_fields( m );
-    mesh::actions::build_median_dual_mesh( m );
+    mesh::actions::build_edges_parallel_fields(m);
+    mesh::actions::build_median_dual_mesh(m);
 
-    double computed_dual_volume = test::dual_volume( m );
-    EXPECT( eckit::types::is_approximately_equal( computed_dual_volume, 360. * 180., 0.0001 ) );
+    double computed_dual_volume = test::dual_volume(m);
+    EXPECT(eckit::types::is_approximately_equal(computed_dual_volume, 360. * 180., 0.0001));
     double difference = 360. * 180. - computed_dual_volume;
-    if ( difference > 1e-8 ) {
+    if (difference > 1e-8) {
         std::cout << "difference = " << difference << std::endl;
     }
 
-    Gmsh( "dist.msh" ).write( m );
+    Gmsh("dist.msh").write(m);
 
-    mesh::actions::write_load_balance_report( m, "load_balance.dat" );
+    mesh::actions::write_load_balance_report(m, "load_balance.dat");
 
     Mesh& mesh1 = m;
-    EXPECT( mesh1.nodes().size() == m.nodes().size() );
+    EXPECT(mesh1.nodes().size() == m.nodes().size());
 
-    const array::ArrayView<int, 1> part  = array::make_view<int, 1>( m.nodes().partition() );
-    const array::ArrayView<int, 1> ghost = array::make_view<int, 1>( m.nodes().ghost() );
-    const array::ArrayView<int, 1> flags = array::make_view<int, 1>( m.nodes().flags() );
+    const array::ArrayView<int, 1> part  = array::make_view<int, 1>(m.nodes().partition());
+    const array::ArrayView<int, 1> ghost = array::make_view<int, 1>(m.nodes().ghost());
+    const array::ArrayView<int, 1> flags = array::make_view<int, 1>(m.nodes().flags());
 
     Log::info() << "partition = [ ";
-    for ( idx_t jnode = 0; jnode < part.size(); ++jnode ) {
-        Log::info() << part( jnode ) << " ";
+    for (idx_t jnode = 0; jnode < part.size(); ++jnode) {
+        Log::info() << part(jnode) << " ";
     }
     Log::info() << "]" << std::endl;
 
     Log::info() << "ghost     = [ ";
-    for ( idx_t jnode = 0; jnode < part.size(); ++jnode ) {
-        Log::info() << ghost( jnode ) << " ";
+    for (idx_t jnode = 0; jnode < part.size(); ++jnode) {
+        Log::info() << ghost(jnode) << " ";
     }
     Log::info() << "]" << std::endl;
 
     Log::info() << "flags     = [ ";
-    for ( idx_t jnode = 0; jnode < part.size(); ++jnode ) {
-        Log::info() << mesh::Nodes::Topology::check( flags( jnode ), mesh::Nodes::Topology::GHOST ) << " ";
-        EXPECT( mesh::Nodes::Topology::check( flags( jnode ), mesh::Nodes::Topology::GHOST ) == ghost( jnode ) );
+    for (idx_t jnode = 0; jnode < part.size(); ++jnode) {
+        Log::info() << mesh::Nodes::Topology::check(flags(jnode), mesh::Nodes::Topology::GHOST) << " ";
+        EXPECT(mesh::Nodes::Topology::check(flags(jnode), mesh::Nodes::Topology::GHOST) == ghost(jnode));
     }
     Log::info() << "]" << std::endl;
 }
@@ -134,6 +134,6 @@ CASE( "test_distribute_t63" ) {
 }  // namespace test
 }  // namespace atlas
 
-int main( int argc, char** argv ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
 }
