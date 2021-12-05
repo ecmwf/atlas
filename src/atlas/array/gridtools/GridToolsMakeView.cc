@@ -136,8 +136,8 @@ ArrayView<const Value, Rank> make_view(const Array& array) {
 template <typename Value, int Rank>
 IndexView<Value, Rank> make_host_indexview(Array& array) {
     using value_t = typename std::remove_const<Value>::type;
-    typedef gridtools::storage_traits::storage_info_t<0, Rank> storage_info_ty;
-    typedef gridtools::storage_traits::data_store_t<value_t, storage_info_ty> data_store_t;
+    using storage_info_ty = gridtools::storage_traits::storage_info_t<0, Rank>;
+    using data_store_t = gridtools::storage_traits::data_store_t<value_t, storage_info_ty>;
 
     data_store_t* ds = reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage()));
 
@@ -147,8 +147,8 @@ IndexView<Value, Rank> make_host_indexview(Array& array) {
 template <typename Value, int Rank>
 IndexView<const Value, Rank> make_host_indexview(const Array& array) {
     using value_t = typename std::remove_const<Value>::type;
-    typedef gridtools::storage_traits::storage_info_t<0, Rank> storage_info_ty;
-    typedef gridtools::storage_traits::data_store_t<value_t, storage_info_ty> data_store_t;
+    using storage_info_ty = gridtools::storage_traits::storage_info_t<0, Rank>;
+    using data_store_t = gridtools::storage_traits::data_store_t<value_t, storage_info_ty> ;
 
     data_store_t* ds = reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage()));
 
