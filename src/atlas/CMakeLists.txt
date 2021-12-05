@@ -650,6 +650,7 @@ array/helpers/ArrayInitializer.h
 array/helpers/ArrayAssigner.h
 array/helpers/ArrayWriter.h
 array/helpers/ArraySlicer.h
+array/helpers/ArrayCopier.h
 #array/Table.h
 #array/Table.cc
 #array/TableView.h

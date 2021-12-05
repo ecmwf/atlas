@@ -144,6 +144,9 @@ public:
     ENABLE_IF_NON_CONST
     void assign(const std::initializer_list<value_type>& list);
 
+    ENABLE_IF_NON_CONST
+    void assign(const ArrayView<Value, Rank>& other);
+
     const idx_t* strides() const { return strides_; }
 
     const idx_t* shape() const { return shape_; }
