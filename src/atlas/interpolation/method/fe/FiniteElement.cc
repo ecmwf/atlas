@@ -132,11 +132,9 @@ struct Stencil {
 void FiniteElement::print(std::ostream& out) const {
     functionspace::NodeColumns src(source_);
     functionspace::NodeColumns tgt(target_);
-    if ( mpi::rank() == 0 ) {
-        out << "atlas::interpolation::method::FiniteElement" << std::endl;
-        out << "maxFractionElemsToTry_: " << maxFractionElemsToTry_;
-        out << " treat_failure_as_missing_value_: " << treat_failure_as_missing_value_ << std::endl;
-    }
+    out << "atlas::interpolation::method::FiniteElement" << std::endl;
+    out << "maxFractionElemsToTry_: " << maxFractionElemsToTry_;
+    out << " treat_failure_as_missing_value_: " << treat_failure_as_missing_value_ << std::endl;
     if ( not tgt ) {
         return;
     }
@@ -181,22 +179,20 @@ void FiniteElement::print(std::ostream& out) const {
     tgt.gather().gather(stencil_points_loc, stencil_points_glb);
     tgt.gather().gather(stencil_weights_loc, stencil_weights_glb);
 
-    if (mpi::rank() == 0) {
-        int precision = std::numeric_limits<double>::max_digits10;
-        for (idx_t i = 0; i < global_size; ++i) {
-            out << std::setw(10) << i + 1 << " : ";
-            for (idx_t j = 0; j < stencil_size_glb(i); ++j) {
-                out << std::setw(10) << stencil_points_glb(i, j);
-            }
-            for (idx_t j = stencil_size_glb(i); j < Stencil::max_stencil_size; ++j) {
-                out << "          ";
-            }
-            for (idx_t j = 0; j < stencil_size_glb(i); ++j) {
-                out << std::setw(precision + 5) << std::left << std::setprecision(precision)
-                    << stencil_weights_glb(i, j);
-            }
-            out << std::endl;
+    int precision = std::numeric_limits<double>::max_digits10;
+    for (idx_t i = 0; i < global_size; ++i) {
+        out << std::setw(10) << i + 1 << " : ";
+        for (idx_t j = 0; j < stencil_size_glb(i); ++j) {
+            out << std::setw(10) << stencil_points_glb(i, j);
         }
+        for (idx_t j = stencil_size_glb(i); j < Stencil::max_stencil_size; ++j) {
+            out << "          ";
+        }
+        for (idx_t j = 0; j < stencil_size_glb(i); ++j) {
+            out << std::setw(precision + 5) << std::left << std::setprecision(precision)
+                << stencil_weights_glb(i, j);
+        }
+        out << std::endl;
     }
 }
 
