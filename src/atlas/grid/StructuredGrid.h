@@ -145,6 +145,7 @@ public:
 /// @brief Specialization of StructuredGrid, where all rows have the same number of grid points
 class RegularGrid : public StructuredGrid {
 public:
+    using StructuredGrid::dx;
     using StructuredGrid::StructuredGrid;
     using StructuredGrid::x;
     using StructuredGrid::xy;
@@ -155,7 +156,9 @@ public:
 
     idx_t nx() const { return nxmax(); }
 
-    inline double x( idx_t i ) const { return x( i, 0 ); }
+    inline double dx() const { return dx(0); }
+
+    inline double x(idx_t i) const { return x(i, 0); }
 
     PointXY xy( idx_t i, idx_t j ) const { return PointXY( x( i ), y( j ) ); }
 };
