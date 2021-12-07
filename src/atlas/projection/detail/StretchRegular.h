@@ -15,6 +15,8 @@ namespace atlas {
 namespace projection {
 namespace detail {
 
+
+
 template <typename Rotation>
 class StretchLAM final : public ProjectionImpl {
 public:
@@ -27,13 +29,16 @@ public:
     std::string type() const override { return static_type(); }
 
     ///< projection and inverse projection
-    void xy2lonlat( double crd[] ) const override;
+    /// //void xy2lonlat( double crd[] ) const override;
+
+    void xy2lonlat( double crd[]) const override;
+
     void lonlat2xy( double crd[] ) const override;
 
     ///< specification for stretching
     Spec spec() const override;
 
-    std::string units() const override { return "meters"; }
+    std::string units() const override { return "degree"; }
 
     void hash( eckit::Hash& ) const override;
 
@@ -46,9 +51,9 @@ public:
      }
 
     void checkvalue(const double&, const double&) const;
-    double general_stretch (double&, const bool&, int&, const int&, const int&) const;
+    double general_stretch (double&, const bool&, int, const int, const int) const;
 
-protected:
+    protected:
 
     double delta_low_; ///< resolution of the external regular grid (rim) it should be larger than the last stretch
     double delta_high_; ///< /< resolution of the regional model (regular grid)
@@ -63,6 +68,17 @@ protected:
     double endy_; ///< original domain endy
     double rim_widthx_; ///< xsize of the rim
     double rim_widthy_; ///< ysize of the rim
+
+    //< variables derived from the configuration used for the projection
+    double deltax_all, deltay_all;
+    double add_xf_, add_yf_;
+    int n_stretchedx_, n_stretchedy_, n_x_rim_, n_y_rim_;
+    int nx_, ny_;
+    double check_x, check_y, check_st;
+    double lam_hires_size; ///< size regular grid x
+    double phi_hires_size; ///< size regular grid y
+    double lambda_start; ///< start grid x
+    double phi_start; ///< start grid y
 
     void setup( const eckit::Parametrisation& p );
 

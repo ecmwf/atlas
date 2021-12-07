@@ -67,6 +67,7 @@ typename StretchLAM<Rotation>::Spec StretchLAM<Rotation>::spec() const {
     return proj_st;
 }
 
+
 ///< constructors
 template <typename Rotation>
 StretchLAM<Rotation>::StretchLAM(const eckit::Parametrisation& proj_st) :
@@ -86,17 +87,82 @@ StretchLAM<Rotation>::StretchLAM(const eckit::Parametrisation& proj_st) :
     proj_st.get( "endy", endy_ = 0. ); ///< original domain endy
     proj_st.get( "rim_widthx", rim_widthx_ ); ///< xsize of the rim
     proj_st.get( "rim_widthy", rim_widthy_ ); ///< ysize of the rim
+
+
+            constexpr float epsilon = std::numeric_limits<float>::epsilon(); ///< value used to check if the values are equal
+            constexpr float epstest = std::numeric_limits<float>::epsilon(); ///< correction used to change from double to intege
+
+            ///< original domain size includes the points for the rim
+            deltax_all = (endx_ - startx_);
+            deltay_all = (endy_ - starty_);
+
+            n_stretchedx_ = 0;
+            n_stretchedy_= 0;
+            n_x_rim_ = 0 ;
+            n_y_rim_ = 0;
+            nx_ = 0;
+            ny_ = 0;
+
+            if (var_ratio_ == 1) {
+                   lam_hires_size = deltax_all;
+                   phi_hires_size = deltay_all;
+                   lambda_start = x_reg_start_;
+                   phi_start = y_reg_start_;
+
+                 } else {
+                      lam_hires_size = x_reg_end_ - x_reg_start_;
+                      phi_hires_size = y_reg_end_ - y_reg_start_;
+
+                      /** check for start of the new regular LAM grid x and y
+                      * in the middle of the previous regular grid
+                      */
+
+                      ///< distance end of the grid and internal regular grid
+                      add_xf_ = (deltax_all + epstest - lam_hires_size) / 2.;
+                      add_yf_ = (deltay_all + epstest - phi_hires_size) / 2.;
+                      /**
+                       *  Compute the number of points for different part of the grid
+                       *  internal regular grid high resolution
+                       *  stretched grid
+                       *  external regular grid low resolution
+                       *  +1 otherwise I have the intervals not the points
+                      */
+                      n_x_rim_ = rim_widthx_/delta_low_ ;
+                      n_y_rim_ = rim_widthy_/delta_low_ ;
+                      n_stretchedx_ = ((deltax_all + epstest - lam_hires_size) / delta_high_) - n_x_rim_;
+                      n_stretchedy_ = ((deltay_all + epstest - phi_hires_size) / delta_high_) - n_y_rim_ ;
+                      lambda_start = x_reg_start_;
+                      phi_start = y_reg_start_;
+                      /**
+                       *  check if stretched grid is in the middle
+                       *  of the previous regular grid
+                      */
+                      check_x = startx_ + add_xf_ - lambda_start;
+                      check_y = starty_ + add_yf_ - phi_start;
+                      check_st = n_stretchedx_ - n_stretchedy_;
+                      checkvalue(epsilon, check_x);
+                      checkvalue(epsilon, check_y);
+                      checkvalue(epsilon, check_st);
+
+                 }
+
+            nx_ = ((deltax_all + epstest) / delta_high_) + 1;
+            ny_ = ((deltay_all + epstest) / delta_high_ ) + 1;
+
+
+
 }
+
 
 template<typename Rotation>
 void StretchLAM<Rotation>::checkvalue(const double & epsilon,
                                         const double & value_check) const {
     std::string err_message;
     std::string str = std::to_string(value_check);
-    err_message = "USER defined limits not in the middle of the area " + str;
+    //err_message = "USER defined limits not in the middle of the area " + str;
     if (value_check > epsilon || value_check < (-1. * epsilon))
           {
-             throw eckit::BadValue(err_message, Here());
+             throw eckit::BadValue("USER defined limits not in the middle of the area " + str, Here());
           }
 }
 
@@ -107,7 +173,7 @@ void StretchLAM<Rotation>::checkvalue(const double & epsilon,
 
 template<typename Rotation>
 double StretchLAM<Rotation>::general_stretch(double& lamphi, const bool& L_long,
-                                             int& n_int, const int& n_stretched_, const int& n_rim_) const {
+                                             int n_int, const int n_stretched_, const int n_rim_) const {
 
        double high_size; ///< number of new internal regular grid in double
        double lamphi_start; ///< start of the regular grid
@@ -287,6 +353,7 @@ void StretchLAM<Rotation>::lonlat2xy( double crd[] ) const {
 template <typename Rotation>
 void StretchLAM<Rotation>::xy2lonlat( double crd[] ) const {
 
+
     /** PUT here the stretch for a point that come input
     * give number of power as input,work it out using as from the start of regular grid.
     * atlas::PointXY unstretchedXY = crd;
@@ -294,64 +361,7 @@ void StretchLAM<Rotation>::xy2lonlat( double crd[] ) const {
     * stretch_LAM_gen(crd[]);
     */
 
-    double lam_hires_size; ///< size regular grid x
-    double phi_hires_size; ///< size regular grid y
-    double lambda_start; ///< start grid x
-    double phi_start; ///< start grid y
-    constexpr float epsilon = std::numeric_limits<float>::epsilon(); ///< value used to check if the values are equal
-    constexpr float epstest = std::numeric_limits<float>::epsilon(); ///< correction used to change from double to integer
 
-    int n_stretchedx_ = 0, n_stretchedy_ = 0, n_x_rim_ = 0, n_y_rim_ = 0;
-
-    ///< original domain size includes the points for the rim
-    double deltax_all = (endx_ - startx_);
-    double deltay_all = (endy_ - starty_);
-
-    if (var_ratio_ == 1) {
-           lam_hires_size = deltax_all;
-           phi_hires_size = deltay_all;
-           lambda_start = x_reg_start_;
-           phi_start = y_reg_start_;
-
-         } else {
-              lam_hires_size = x_reg_end_ - x_reg_start_;
-              phi_hires_size = y_reg_end_ - y_reg_start_;
-
-              /** check for start of the new regular LAM grid x and y
-              * in the middle of the previous regular grid
-              */
-
-              ///< distance end of the grid and internal regular grid
-              double add_xf_ = (deltax_all + epstest - lam_hires_size) / 2.;
-              double add_yf_ = (deltay_all + epstest - phi_hires_size) / 2.;
-              /**
-               *  Compute the number of points for different part of the grid
-               *  internal regular grid high resolution
-               *  stretched grid
-               *  external regular grid low resolution
-               *  +1 otherwise I have the intervals not the points
-              */
-              n_x_rim_ = rim_widthx_/delta_low_ ;
-              n_y_rim_ = rim_widthy_/delta_low_ ;
-              n_stretchedx_ = ((deltax_all + epstest - lam_hires_size) / delta_high_) - n_x_rim_;
-              n_stretchedy_ = ((deltay_all + epstest - phi_hires_size) / delta_high_) - n_y_rim_ ;
-              lambda_start = x_reg_start_;
-              phi_start = y_reg_start_;
-              /**
-               *  check if stretched grid is in the middle
-               *  of the previous regular grid
-              */
-              double check_x = startx_ + add_xf_ - lambda_start;
-              double check_y = starty_ + add_yf_ - phi_start;
-              double check_st = n_stretchedx_ - n_stretchedy_;
-              checkvalue(epsilon, check_x);
-              checkvalue(epsilon, check_y);
-              checkvalue(epsilon, check_st);
-
-         }
-
-    int nx_ = ((deltax_all + epstest) / delta_high_) + 1;
-    int ny_ = ((deltay_all + epstest) / delta_high_ ) + 1;
 
     crd[0] = general_stretch(crd[0], true, nx_, n_stretchedx_, n_x_rim_);
     crd[1] = general_stretch(crd[1], false, ny_, n_stretchedy_, n_y_rim_);
