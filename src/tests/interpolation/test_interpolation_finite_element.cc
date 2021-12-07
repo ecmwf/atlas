@@ -43,8 +43,7 @@ CASE("test_interpolation_finite_element") {
 
     auto func = [](double x) -> double { return std::sin(x * M_PI / 180.); };
 
-    util::Config config = util::Config("type", "finite-element").set("max_fraction_elems_to_try", 0.4);
-    Interpolation interpolation(config, fs, pointcloud);
+    Interpolation interpolation(option::type("finite-element")|util.Config("max_fraction_elems_to_try", 0.4), fs, pointcloud);
 
     SECTION("test maximum nearest neighbour settings") {
         std::stringstream test_stream;

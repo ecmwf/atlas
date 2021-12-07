@@ -29,7 +29,7 @@ namespace method {
 class FiniteElement : public Method {
 public:
     FiniteElement(const Config& config): Method(config) {
-        if (config.has("max_fraction_elems_to_try") ) { config.get("max_fraction_elems_to_try", maxFractionElemsToTry_); }
+        config.get("max_fraction_elems_to_try", maxFractionElemsToTry_);
     }
 
     virtual ~FiniteElement() override {}
