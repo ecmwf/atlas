@@ -11,6 +11,7 @@
 #pragma once
 
 #include <vector>
+#include <array>
 
 #include "atlas/grid/detail/partitioner/Partitioner.h"
 

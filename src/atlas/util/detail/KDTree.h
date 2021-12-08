@@ -72,7 +72,6 @@ public:
 
     class ValueList : public std::vector<Value> {
     public:
-        using std::vector<Value>::vector;
         PayloadList payloads() const {
             PayloadList list;
             list.reserve(this->size());
