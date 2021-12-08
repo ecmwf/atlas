@@ -11,8 +11,8 @@
 #include "ArrayMetadata.h"
 
 #include <algorithm>
-#include <numeric>
 #include <functional>
+#include <numeric>
 
 #include "atlas/runtime/Exception.h"
 

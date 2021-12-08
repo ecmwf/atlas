@@ -135,7 +135,7 @@ void FiniteElement::print(std::ostream& out) const {
     out << "atlas::interpolation::method::FiniteElement{" << std::endl;
     out << "max_fraction_elems_to_try: " << max_fraction_elems_to_try_;
     out << ", treat_failure_as_missing_value: " << treat_failure_as_missing_value_;
-    if ( not tgt ) {
+    if (not tgt) {
         out << "}" << std::endl;
         return;
     }
@@ -190,8 +190,7 @@ void FiniteElement::print(std::ostream& out) const {
             out << "          ";
         }
         for (idx_t j = 0; j < stencil_size_glb(i); ++j) {
-            out << std::setw(precision + 5) << std::left << std::setprecision(precision)
-                << stencil_weights_glb(i, j);
+            out << std::setw(precision + 5) << std::left << std::setprecision(precision) << stencil_weights_glb(i, j);
         }
         out << std::endl;
     }
@@ -235,7 +234,7 @@ void FiniteElement::setup(const FunctionSpace& source) {
 
     array::ArrayView<double, 2> out_lonlat = array::make_view<double, 2>(target_lonlat_);
 
-    idx_t Nelements                    = meshSource.cells().size();
+    idx_t Nelements = meshSource.cells().size();
 
     // weights -- one per vertex of element, triangles (3) or quads (4)
 
