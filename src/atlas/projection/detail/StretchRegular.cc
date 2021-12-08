@@ -173,7 +173,8 @@ void StretchLAM<Rotation>::checkvalue(const double & epsilon,
  */
 
 template<typename Rotation>
-double StretchLAM<Rotation>::general_stretch(double& lamphi, const bool& L_long, int n_int, const int n_stretched_, const int n_rim_) const {
+double StretchLAM<Rotation>::general_stretch(double & lamphi, const bool & L_long, int n_int,
+                                             const int n_stretched_, const int n_rim_) const {
 
        double high_size; ///< number of new internal regular grid in double
        double lamphi_start; ///< start of the regular grid
