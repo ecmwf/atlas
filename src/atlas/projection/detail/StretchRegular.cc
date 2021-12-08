@@ -157,11 +157,12 @@ StretchLAM<Rotation>::StretchLAM(const eckit::Parametrisation& proj_st) :
 template<typename Rotation>
 void StretchLAM<Rotation>::checkvalue(const double & epsilon,
                                         const double & value_check) const {
-    std::string err_message;
-    std::string str = std::to_string(value_check);
+
     //err_message = "USER defined limits not in the middle of the area " + str;
     if (value_check > epsilon || value_check < (-1. * epsilon))
           {
+             std::string err_message;
+             std::string str = std::to_string(value_check);
              throw eckit::BadValue("USER defined limits not in the middle of the area " + str, Here());
           }
 }
@@ -193,17 +194,24 @@ double StretchLAM<Rotation>::general_stretch(double& lamphi, const bool& L_long,
           double p_rem; ///< remaining part in stretch if delta_dist not multiple of delta_high_
           double p_rem_low; ///< remaining part in rim if delta_dist not multiple of delta_high_
 
-          n_int -= 1; ///< input number of points, output intervals
+          n_int -= 1; ///< input number of points whole grid, output intervals
+          ///< n_rim_ are the number of points in the rim area
           high_size = (n_int - n_stretched_ - n_rim_) * delta_high_;
+          ///< number of regular internal grid points, integer
           int ints_high = (high_size + epstest) / delta_high_;
 
-          ///< number of variable grid points
+          ///< number of variable (stretched) grid points in one side, integer
           int var_ints = (n_int + epstest - n_rim_ - ints_high)/2.;
-          ///< compute ratio
+          /** compute ratio,
+           *  change stretching factor so that high and low grids
+           *   retain original sizes
+           */
+          ///< number of variable (stretched) grid points in one side,double
           double var_ints_f = (n_int - n_rim_- ints_high)/2.;
           double logr = log(var_ratio_);
           double log_ratio = (var_ints_f - 0.5) * logr;
           double new_ratio = exp(log_ratio / var_ints);
+
 
           /**
            *  SECTION 1

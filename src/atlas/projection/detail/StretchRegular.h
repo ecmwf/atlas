@@ -29,7 +29,6 @@ public:
     std::string type() const override { return static_type(); }
 
     ///< projection and inverse projection
-    /// //void xy2lonlat( double crd[] ) const override;
 
     void xy2lonlat( double crd[]) const override;
 
