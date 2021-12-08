@@ -37,7 +37,7 @@ public:
     ///< specification for stretching
     Spec spec() const override;
 
-    std::string units() const override { return "degree"; }
+    std::string units() const override { return "degrees"; }
 
     void hash( eckit::Hash& ) const override;
 
