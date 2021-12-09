@@ -50,7 +50,7 @@ public:
      }
 
     void checkvalue(const double&, const double&) const;
-    double general_stretch (double&, const bool&, int, const int, const int) const;
+    double general_stretch (const double, const bool, int, const int, const int) const;
 
     protected:
 

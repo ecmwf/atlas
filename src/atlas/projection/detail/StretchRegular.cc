@@ -173,12 +173,13 @@ void StretchLAM<Rotation>::checkvalue(const double & epsilon,
  */
 
 template<typename Rotation>
-double StretchLAM<Rotation>::general_stretch(double & lamphi, const bool & L_long, int n_int,
+double StretchLAM<Rotation>::general_stretch(const double crd, const bool L_long, int n_int,
                                              const int n_stretched_, const int n_rim_) const {
 
        double high_size; ///< number of new internal regular grid in double
        double lamphi_start; ///< start of the regular grid
        double lamphi_end; ///< end of the regular grid
+       double lamphi = crd;
        double point = lamphi; ///< starting point
        constexpr float epstest = std::numeric_limits<float>::epsilon(); ///< correction used to change from double to integer
        constexpr double epsrem = 0.1 * std::numeric_limits<double>::epsilon()/std::numeric_limits<float>::epsilon(); ///< correction used to part the find a part of an integer
@@ -353,7 +354,8 @@ void StretchLAM<Rotation>::lonlat2xy( double crd[] ) const {
     ///<unrotate
     rotation_.rotate( crd );
 
-    ///< PUT the unstretch, I don't have it nows
+    ///< PUT the unstretch, I don't have it now
+    ATLAS_NOTIMPLEMENTED;
 
 }
 
