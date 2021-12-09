@@ -200,9 +200,9 @@ double StretchLAM<Rotation>::general_stretch(const double crd, const bool L_long
            */
         ///< number of variable (stretched) grid points in one side,double
         double var_ints_f = (n_int - n_rim_ - ints_high) / 2.;
-        double logr       = log(var_ratio_);
+        double logr       = std::log(var_ratio_);
         double log_ratio  = (var_ints_f - 0.5) * logr;
-        double new_ratio  = exp(log_ratio / var_ints);
+        double new_ratio  = std::exp(log_ratio / var_ints);
 
 
         /**
@@ -292,7 +292,7 @@ double StretchLAM<Rotation>::general_stretch(const double crd, const bool L_long
             }
 
             ///< SECTION 3 last part of stretch adding the remaing non integer part with the same ratio as in the stretching
-            double delta_r    = p_rem * pow(new_ratio, (n_high_st + 1));
+            double delta_r    = p_rem * std::pow(new_ratio, (n_high_st + 1));
             double delta_addr = delta_r - p_rem;
 
             if (point > lamphi_start) {
