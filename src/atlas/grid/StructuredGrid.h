@@ -145,10 +145,10 @@ public:
 /// @brief Specialization of StructuredGrid, where all rows have the same number of grid points
 class RegularGrid : public StructuredGrid {
 public:
+    using StructuredGrid::dx;
     using StructuredGrid::StructuredGrid;
     using StructuredGrid::x;
     using StructuredGrid::xy;
-    using StructuredGrid::dx;
 
     operator bool() const { return valid(); }
 

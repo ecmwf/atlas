@@ -20,8 +20,8 @@
 #include "atlas/projection/detail/LambertConformalConicProjection.h"
 #include "atlas/projection/detail/LonLatProjection.h"
 #include "atlas/projection/detail/MercatorProjection.h"
-#include "atlas/projection/detail/StretchRegular.h"
 #include "atlas/projection/detail/SchmidtProjection.h"
+#include "atlas/projection/detail/StretchRegular.h"
 
 namespace atlas {
 namespace projection {
