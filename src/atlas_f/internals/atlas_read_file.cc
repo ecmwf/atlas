@@ -20,12 +20,12 @@
 
 namespace atlas {
 
-void read_file( const eckit::PathName& p, std::ostream& out ) {
-    if ( p.exists() ) {
+void read_file(const eckit::PathName& p, std::ostream& out) {
+    if (p.exists()) {
         std::ifstream in;
-        in.open( p.asString().c_str() );
-        if ( !in ) {
-            throw_CantOpenFile( p.asString(), Here() );
+        in.open(p.asString().c_str());
+        if (!in) {
+            throw_CantOpenFile(p.asString(), Here());
         }
         else {
             out << in.rdbuf();
@@ -40,7 +40,7 @@ extern "C" {
 
 //-----------------------------------------------------------------------------
 
-int atlas__read_file( const char* path, char*& content, int& size ) {
+int atlas__read_file(const char* path, char*& content, int& size) {
     // eckit::FileReadPolicy p =
     // eckit::Main::instance().behavior().fileReadPolicy();
 
@@ -56,11 +56,11 @@ int atlas__read_file( const char* path, char*& content, int& size ) {
     // }
 
     std::stringstream ss;
-    atlas::read_file( path, ss );
+    atlas::read_file(path, ss);
     std::string s = ss.str();
-    size          = static_cast<int>( s.size() );
+    size          = static_cast<int>(s.size());
     content       = new char[size + 1];
-    std::strncpy( content, s.c_str(), size + 1 );
+    std::strncpy(content, s.c_str(), size + 1);
     return true;
 }
 

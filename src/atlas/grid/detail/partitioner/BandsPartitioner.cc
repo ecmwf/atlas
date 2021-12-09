@@ -22,46 +22,44 @@ namespace grid {
 namespace detail {
 namespace partitioner {
 
-size_t BandsPartitioner::blocksize( const Grid& grid ) const {
-    if ( blocksize_ == BLOCKSIZE_NX ) {
-        if ( auto regular = RegularGrid( grid ) ) {
+size_t BandsPartitioner::blocksize(const Grid& grid) const {
+    if (blocksize_ == BLOCKSIZE_NX) {
+        if (auto regular = RegularGrid(grid)) {
             return regular.nx();
         }
         return 1;
     }
-    ATLAS_ASSERT( blocksize_ > 0 );
-    return size_t( blocksize_ );
+    ATLAS_ASSERT(blocksize_ > 0);
+    return size_t(blocksize_);
 }
 
-BandsPartitioner::BandsPartitioner() : Partitioner(), blocksize_{1} {}
+BandsPartitioner::BandsPartitioner(): Partitioner(), blocksize_{1} {}
 
-BandsPartitioner::BandsPartitioner( int N, int blocksize ) : Partitioner( N ), blocksize_( blocksize ) {}
+BandsPartitioner::BandsPartitioner(int N, int blocksize): Partitioner(N), blocksize_(blocksize) {}
 
-Distribution BandsPartitioner::partition( const Partitioner::Grid& grid ) const {
-    if ( not distribution::BandsDistribution<int32_t>::detectOverflow( grid.size(), nb_partitions(),
-                                                                       blocksize( ( grid ) ) ) ) {
+Distribution BandsPartitioner::partition(const Partitioner::Grid& grid) const {
+    if (not distribution::BandsDistribution<int32_t>::detectOverflow(grid.size(), nb_partitions(), blocksize((grid)))) {
         return Distribution{
-            new distribution::BandsDistribution<int32_t>{grid, nb_partitions(), type(), blocksize( grid )}};
+            new distribution::BandsDistribution<int32_t>{grid, nb_partitions(), type(), blocksize(grid)}};
     }
     else {
         return Distribution{
-            new distribution::BandsDistribution<int64_t>{grid, nb_partitions(), type(), blocksize( grid )}};
+            new distribution::BandsDistribution<int64_t>{grid, nb_partitions(), type(), blocksize(grid)}};
     }
 }
 
-void BandsPartitioner::partition( const Partitioner::Grid& grid, int part[] ) const {
+void BandsPartitioner::partition(const Partitioner::Grid& grid, int part[]) const {
     gidx_t gridsize = grid.size();
-    if ( not distribution::BandsDistribution<int32_t>::detectOverflow( grid.size(), nb_partitions(),
-                                                                       blocksize( ( grid ) ) ) ) {
-        distribution::BandsDistribution<int32_t> distribution{grid, nb_partitions(), type(), blocksize( grid )};
-        for ( gidx_t n = 0; n < gridsize; ++n ) {
-            part[n] = distribution.function( n );
+    if (not distribution::BandsDistribution<int32_t>::detectOverflow(grid.size(), nb_partitions(), blocksize((grid)))) {
+        distribution::BandsDistribution<int32_t> distribution{grid, nb_partitions(), type(), blocksize(grid)};
+        for (gidx_t n = 0; n < gridsize; ++n) {
+            part[n] = distribution.function(n);
         }
     }
     else {
-        distribution::BandsDistribution<int64_t> distribution{grid, nb_partitions(), type(), blocksize( grid )};
-        for ( gidx_t n = 0; n < gridsize; ++n ) {
-            part[n] = distribution.function( n );
+        distribution::BandsDistribution<int64_t> distribution{grid, nb_partitions(), type(), blocksize(grid)};
+        for (gidx_t n = 0; n < gridsize; ++n) {
+            part[n] = distribution.function(n);
         }
     }
 }
@@ -73,5 +71,5 @@ void BandsPartitioner::partition( const Partitioner::Grid& grid, int part[] ) co
 
 namespace {
 atlas::grid::detail::partitioner::PartitionerBuilder<atlas::grid::detail::partitioner::BandsPartitioner> __Bands(
-    atlas::grid::detail::partitioner::BandsPartitioner::static_type() );
+    atlas::grid::detail::partitioner::BandsPartitioner::static_type());
 }

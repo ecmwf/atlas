@@ -17,7 +17,7 @@ namespace mesh {
 
 //------------------------------------------------------------------------------
 
-ElementType* ElementType::create( const std::string& ) {
+ElementType* ElementType::create(const std::string&) {
     ATLAS_NOTIMPLEMENTED;
 }
 
@@ -27,7 +27,7 @@ ElementType::~ElementType() = default;
 //-----------------------------------------------------------------------------
 
 extern "C" {
-void atlas__mesh__ElementType__delete( ElementType* This ) {
+void atlas__mesh__ElementType__delete(ElementType* This) {
     delete This;
 }
 ElementType* atlas__mesh__Triangle__create() {
@@ -40,23 +40,23 @@ ElementType* atlas__mesh__Line__create() {
     return new temporary::Line();
 }
 
-const char* atlas__mesh__ElementType__name( const ElementType* This ) {
-    ATLAS_ASSERT( This );
+const char* atlas__mesh__ElementType__name(const ElementType* This) {
+    ATLAS_ASSERT(This);
     return This->name().c_str();
 }
 
-idx_t atlas__mesh__ElementType__nb_nodes( const ElementType* This ) {
-    ATLAS_ASSERT( This );
+idx_t atlas__mesh__ElementType__nb_nodes(const ElementType* This) {
+    ATLAS_ASSERT(This);
     return This->nb_nodes();
 }
 
-idx_t atlas__mesh__ElementType__nb_edges( const ElementType* This ) {
-    ATLAS_ASSERT( This );
+idx_t atlas__mesh__ElementType__nb_edges(const ElementType* This) {
+    ATLAS_ASSERT(This);
     return This->nb_edges();
 }
 
-int atlas__mesh__ElementType__parametric( const ElementType* This ) {
-    ATLAS_ASSERT( This );
+int atlas__mesh__ElementType__parametric(const ElementType* This) {
+    ATLAS_ASSERT(This);
     return This->parametric();
 }
 }

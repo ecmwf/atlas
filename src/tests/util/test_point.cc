@@ -22,42 +22,42 @@ namespace atlas {
 namespace test {
 
 
-CASE( "test PointLonLat normalisation" ) {
+CASE("test PointLonLat normalisation") {
     // latitude at Valparaíso-Shanghai mid-point
     PointLonLat p;
 
-    p = PointLonLat( -71.6, -33. );
+    p = PointLonLat(-71.6, -33.);
     p.normalise();
-    EXPECT( is_approximately_equal( p.lon(), -71.6 + 360. ) );
-    p.normalise( -180., 180. );
-    EXPECT( is_approximately_equal( p.lon(), -71.6 ) );
+    EXPECT(is_approximately_equal(p.lon(), -71.6 + 360.));
+    p.normalise(-180., 180.);
+    EXPECT(is_approximately_equal(p.lon(), -71.6));
 
-    p = PointLonLat( 121.8, 31.4 );
-    p.normalise( -180., 180. );
-    EXPECT( is_approximately_equal( p.lon(), 121.8 ) );
+    p = PointLonLat(121.8, 31.4);
+    p.normalise(-180., 180.);
+    EXPECT(is_approximately_equal(p.lon(), 121.8));
 
-    p = PointLonLat( 181., 31.4 );
-    p.normalise( -180., 180. );
-    EXPECT( is_approximately_equal( p.lon(), 181. - 360. ) );
+    p = PointLonLat(181., 31.4);
+    p.normalise(-180., 180.);
+    EXPECT(is_approximately_equal(p.lon(), 181. - 360.));
 
-    p = PointLonLat( 180., 31.4 );
-    p.normalise( -180., 180. );
-    EXPECT( is_approximately_equal( p.lon(), 180. ) );
+    p = PointLonLat(180., 31.4);
+    p.normalise(-180., 180.);
+    EXPECT(is_approximately_equal(p.lon(), 180.));
 
-    p = PointLonLat( 180., 31.4 );
-    p.normalise( -180 );
-    EXPECT( is_approximately_equal( p.lon(), -180. ) );
+    p = PointLonLat(180., 31.4);
+    p.normalise(-180);
+    EXPECT(is_approximately_equal(p.lon(), -180.));
 
-    p = PointLonLat( -180., 31.4 );
-    p.normalise( -180., 180. );
-    EXPECT( is_approximately_equal( p.lon(), -180. ) );
+    p = PointLonLat(-180., 31.4);
+    p.normalise(-180., 180.);
+    EXPECT(is_approximately_equal(p.lon(), -180.));
 
-    p = PointLonLat( -180., 31.4 );
-    p.normalise( -180. );
-    EXPECT( is_approximately_equal( p.lon(), -180. ) );
+    p = PointLonLat(-180., 31.4);
+    p.normalise(-180.);
+    EXPECT(is_approximately_equal(p.lon(), -180.));
 }
 
-CASE( "test output vector<PointXY>" ) {
+CASE("test output vector<PointXY>") {
     // clang-format off
     std::vector<PointXY> points = {
         {0.,1.},
@@ -78,6 +78,6 @@ CASE( "test output vector<PointXY>" ) {
 }  // namespace test
 }  // namespace atlas
 
-int main( int argc, char** argv ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
 }

@@ -99,14 +99,13 @@ class ArrayView {
     template <typename T>
     using is_non_const_value_type = typename std::is_same<T, typename std::remove_const<Value>::type>;
 
-#define ENABLE_IF_NON_CONST                                                                               \
-    template <bool EnableBool                                                                     = true, \
-              typename std::enable_if<( !std::is_const<Value>::value && EnableBool ), int>::type* = nullptr>
+#define ENABLE_IF_NON_CONST                                                                             \
+    template <bool EnableBool                                                                   = true, \
+              typename std::enable_if<(!std::is_const<Value>::value && EnableBool), int>::type* = nullptr>
 
-#define ENABLE_IF_CONST_WITH_NON_CONST( T )                                                                 \
-    template <typename T,                                                                                   \
-              typename std::enable_if<( std::is_const<Value>::value && is_non_const_value_type<T>::value ), \
-                                      int>::type* = nullptr>
+#define ENABLE_IF_CONST_WITH_NON_CONST(T)                                                                             \
+    template <typename T, typename std::enable_if<(std::is_const<Value>::value && is_non_const_value_type<T>::value), \
+                                                  int>::type* = nullptr>
 
 public:
     // -- Type definitions
@@ -133,46 +132,46 @@ private:
 public:
     // -- Constructors
 
-    ArrayView( const ArrayView& other ) :
-        data_( other.data_ ), size_( other.size_ ), shape_( other.shape_ ), strides_( other.strides_ ) {}
+    ArrayView(const ArrayView& other):
+        data_(other.data_), size_(other.size_), shape_(other.shape_), strides_(other.strides_) {}
 
-    ENABLE_IF_CONST_WITH_NON_CONST( value_type )
-    ArrayView( const ArrayView<value_type, Rank>& other ) : data_( other.data() ), size_( other.size() ) {
-        for ( idx_t j = 0; j < Rank; ++j ) {
-            shape_[j]   = other.shape( j );
-            strides_[j] = other.stride( j );
+    ENABLE_IF_CONST_WITH_NON_CONST(value_type)
+    ArrayView(const ArrayView<value_type, Rank>& other): data_(other.data()), size_(other.size()) {
+        for (idx_t j = 0; j < Rank; ++j) {
+            shape_[j]   = other.shape(j);
+            strides_[j] = other.stride(j);
         }
     }
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     // This constructor should not be used directly, but only through a array::make_view() function.
-    ArrayView( value_type* data, const ArrayShape& shape, const ArrayStrides& strides ) : data_( data ) {
+    ArrayView(value_type* data, const ArrayShape& shape, const ArrayStrides& strides): data_(data) {
         size_ = 1;
-        for ( int j = 0; j < Rank; ++j ) {
+        for (int j = 0; j < Rank; ++j) {
             shape_[j]   = shape[j];
             strides_[j] = strides[j];
-            size_ *= size_t( shape_[j] );
+            size_ *= size_t(shape_[j]);
         }
     }
 #endif
 
-    ENABLE_IF_CONST_WITH_NON_CONST( value_type )
-    operator const ArrayView<value_type, Rank>&() const { return *(const ArrayView<value_type, Rank>*)( this ); }
+    ENABLE_IF_CONST_WITH_NON_CONST(value_type)
+    operator const ArrayView<value_type, Rank>&() const { return *(const ArrayView<value_type, Rank>*)(this); }
 
 
     // -- Access methods
 
     /// @brief Multidimensional index operator: view(i,j,k,...)
     template <typename... Idx>
-    value_type& operator()( Idx... idx ) {
-        check_bounds( idx... );
-        return data_[index( idx... )];
+    value_type& operator()(Idx... idx) {
+        check_bounds(idx...);
+        return data_[index(idx...)];
     }
 
     /// @brief Multidimensional index operator: view(i,j,k,...)
     template <typename... Ints>
-    const value_type& operator()( Ints... idx ) const {
-        return data_[index( idx... )];
+    const value_type& operator()(Ints... idx) const {
+        return data_[index(idx...)];
     }
 
     /// @brief Access to data using square bracket [idx] operator @m_class{m-label m-warning} **Rank==1**.
@@ -180,13 +179,13 @@ public:
     /// Note that this function is only present when Rank == 1
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     template <typename Int, bool EnableBool = true>
-    typename std::enable_if<( Rank == 1 && EnableBool ), const value_type&>::type operator[]( Int idx ) const {
+    typename std::enable_if<(Rank == 1 && EnableBool), const value_type&>::type operator[](Int idx) const {
 #else
     // Doxygen API is cleaner!
     template <typename Int>
-    value_type operator[]( Int idx ) const {
+    value_type operator[](Int idx) const {
 #endif
-        check_bounds( idx );
+        check_bounds(idx);
         return data_[idx * strides_[0]];
     }
 
@@ -195,13 +194,13 @@ public:
     /// Note that this function is only present when Rank == 1
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     template <typename Int, bool EnableBool = true>
-    typename std::enable_if<( Rank == 1 && EnableBool ), value_type&>::type operator[]( Int idx ) {
+    typename std::enable_if<(Rank == 1 && EnableBool), value_type&>::type operator[](Int idx) {
 #else
     // Doxygen API is cleaner!
     template <typename Int>
-    value_type operator[]( Int idx ) {
+    value_type operator[](Int idx) {
 #endif
-        check_bounds( idx );
+        check_bounds(idx);
         return data_[idx * strides_[0]];
     }
 
@@ -238,13 +237,13 @@ public:
 
     /// @brief Return number of values in dimension idx
     template <typename Int>
-    idx_t shape( Int idx ) const {
+    idx_t shape(Int idx) const {
         return shape_[idx];
     }
 
     /// @brief Return stride for values in dimension idx
     template <typename Int>
-    idx_t stride( Int idx ) const {
+    idx_t stride(Int idx) const {
         return strides_[idx];
     }
 
@@ -260,15 +259,18 @@ public:
     ///
     /// This means that if there is e.g. padding in the fastest dimension, or if
     /// the ArrayView represents a slice, the returned value will be false.
-    bool contiguous() const { return ( size_ == size_t( shape_[0] ) * size_t( strides_[0] ) ? true : false ); }
+    bool contiguous() const { return (size_ == size_t(shape_[0]) * size_t(strides_[0]) ? true : false); }
 
     ENABLE_IF_NON_CONST
-    void assign( const value_type& value );
+    void assign(const value_type& value);
 
     ENABLE_IF_NON_CONST
-    void assign( const std::initializer_list<value_type>& list );
+    void assign(const std::initializer_list<value_type>& list);
 
-    void dump( std::ostream& os ) const;
+    ENABLE_IF_NON_CONST
+    void assign(const ArrayView& other);
+
+    void dump(std::ostream& os) const;
 
     /// @brief Obtain a slice from this view:  view.slice( Range, Range, ... )
     ///
@@ -290,75 +292,75 @@ public:
     /// @endcode
     template <typename... Args>
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-    typename slice_t<Args...>::type slice( Args... args ) {
+    typename slice_t<Args...>::type slice(Args... args) {
 #else
     // C++14 will allow auto return type
-    auto slice( Args... args ) {
+    auto slice(Args... args) {
 #endif
-        return slicer_t( *this ).apply( args... );
+        return slicer_t(*this).apply(args...);
     }
 
 
     /// @brief Obtain a slice from this view:  view.slice( Range, Range, ... )
     template <typename... Args>
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-    typename const_slice_t<Args...>::type slice( Args... args ) const {
+    typename const_slice_t<Args...>::type slice(Args... args) const {
 #else
     // C++14 will allow auto return type
-    auto slice( Args... args ) const {
+    auto slice(Args... args) const {
 #endif
-        return const_slicer_t( *this ).apply( args... );
+        return const_slicer_t(*this).apply(args...);
     }
 
 private:
     // -- Private methods
 
     template <int Dim, typename Int, typename... Ints>
-    constexpr idx_t index_part( Int idx, Ints... next_idx ) const {
-        return idx * strides_[Dim] + index_part<Dim + 1>( next_idx... );
+    constexpr idx_t index_part(Int idx, Ints... next_idx) const {
+        return idx * strides_[Dim] + index_part<Dim + 1>(next_idx...);
     }
 
     template <int Dim, typename Int>
-    constexpr idx_t index_part( Int last_idx ) const {
+    constexpr idx_t index_part(Int last_idx) const {
         return last_idx * strides_[Dim];
     }
 
     template <typename... Ints>
-    constexpr idx_t index( Ints... idx ) const {
-        return index_part<0>( idx... );
+    constexpr idx_t index(Ints... idx) const {
+        return index_part<0>(idx...);
     }
 
 #if ATLAS_ARRAYVIEW_BOUNDS_CHECKING
     template <typename... Ints>
-    void check_bounds( Ints... idx ) const {
-        static_assert( sizeof...( idx ) == Rank, "Expected number of indices is different from rank of array" );
-        return check_bounds_part<0>( idx... );
+    void check_bounds(Ints... idx) const {
+        static_assert(sizeof...(idx) == Rank, "Expected number of indices is different from rank of array");
+        return check_bounds_part<0>(idx...);
     }
 #else
     template <typename... Ints>
-    void check_bounds( Ints... idx ) const {
-        static_assert( sizeof...( idx ) == Rank, "Expected number of indices is different from rank of array" );
+    void check_bounds(Ints... idx) const {
+        static_assert(sizeof...(idx) == Rank, "Expected number of indices is different from rank of array");
     }
 #endif
 
     template <typename... Ints>
-    void check_bounds_force( Ints... idx ) const {
-        static_assert( sizeof...( idx ) == Rank, "Expected number of indices is different from rank of array" );
-        return check_bounds_part<0>( idx... );
+    void check_bounds_force(Ints... idx) const {
+        static_assert(sizeof...(idx) == Rank, "Expected number of indices is different from rank of array");
+        return check_bounds_part<0>(idx...);
     }
 
     template <int Dim, typename Int, typename... Ints>
-    void check_bounds_part( Int idx, Ints... next_idx ) const {
-        if ( idx_t( idx ) >= shape_[Dim] ) {
-            throw_OutOfRange( "ArrayView", array_dim<Dim>(), idx, shape_[Dim] );
+    void check_bounds_part(Int idx, Ints... next_idx) const {
+        if (idx_t(idx) >= shape_[Dim]) {
+            throw_OutOfRange("ArrayView", array_dim<Dim>(), idx, shape_[Dim]);
         }
-        check_bounds_part<Dim + 1>( next_idx... );
+        check_bounds_part<Dim + 1>(next_idx...);
     }
 
     template <int Dim, typename Int>
-    void check_bounds_part( Int last_idx ) const {
-        if ( idx_t( last_idx ) >= shape_[Dim] ) {
-            throw_OutOfRange( "ArrayView", array_dim<Dim>(), last_idx, shape_[Dim] );
+    void check_bounds_part(Int last_idx) const {
+        if (idx_t(last_idx) >= shape_[Dim]) {
+            throw_OutOfRange("ArrayView", array_dim<Dim>(), last_idx, shape_[Dim]);
         }
     }
 

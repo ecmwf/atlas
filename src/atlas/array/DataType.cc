@@ -19,16 +19,16 @@
 namespace atlas {
 namespace array {
 
-void DataType::throw_not_recognised( kind_t kind ) {
+void DataType::throw_not_recognised(kind_t kind) {
     std::stringstream msg;
     msg << "kind " << kind << " not recognised.";
-    throw_Exception( msg.str(), Here() );
+    throw_Exception(msg.str(), Here());
 }
 
-void DataType::throw_not_recognised( std::string datatype ) {
+void DataType::throw_not_recognised(std::string datatype) {
     std::stringstream msg;
     msg << "datatype " << datatype << " not recognised.";
-    throw_Exception( msg.str(), Here() );
+    throw_Exception(msg.str(), Here());
 }
 
 

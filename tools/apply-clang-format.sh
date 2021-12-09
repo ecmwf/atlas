@@ -8,7 +8,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-_REQUIRED_CLANG_VERSION='9.0.1'
+_REQUIRED_CLANG_VERSION='13.0.0'
 
 function help() {
     cat <<EOF

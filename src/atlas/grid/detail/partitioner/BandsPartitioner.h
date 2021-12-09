@@ -23,30 +23,29 @@ namespace partitioner {
 class BandsPartitioner : public Partitioner {
 private:
     int blocksize_;
-    static size_t extract_blocksize( const eckit::Parametrisation& config ) {
+    static size_t extract_blocksize(const eckit::Parametrisation& config) {
         size_t blocksize{1};
-        config.get( "blocksize", blocksize );
+        config.get("blocksize", blocksize);
         return blocksize;
     }
 
-    size_t blocksize( const Grid& grid ) const;
+    size_t blocksize(const Grid& grid) const;
 
 protected:
     static constexpr int BLOCKSIZE_NX{-1};
 
 public:
     BandsPartitioner();
-    BandsPartitioner( int N ) : BandsPartitioner( N, 1 ) {}
-    BandsPartitioner( int N, int blocksize );
-    BandsPartitioner( int N, const eckit::Parametrisation& config ) :
-        BandsPartitioner( N, extract_blocksize( config ) ) {}
+    BandsPartitioner(int N): BandsPartitioner(N, 1) {}
+    BandsPartitioner(int N, int blocksize);
+    BandsPartitioner(int N, const eckit::Parametrisation& config): BandsPartitioner(N, extract_blocksize(config)) {}
 
     std::string type() const override { return static_type(); }
     static std::string static_type() { return "bands"; }
 
-    Distribution partition( const Grid& grid ) const override;
+    Distribution partition(const Grid& grid) const override;
 
-    void partition( const Grid& grid, int part[] ) const override;
+    void partition(const Grid& grid, int part[]) const override;
 };
 
 }  // namespace partitioner

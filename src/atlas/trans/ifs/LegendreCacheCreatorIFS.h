@@ -23,7 +23,7 @@ namespace trans {
 
 class LegendreCacheCreatorIFS : public trans::LegendreCacheCreatorImpl {
 public:
-    LegendreCacheCreatorIFS( const Grid&, int truncation, const eckit::Configuration& = util::NoConfig() );
+    LegendreCacheCreatorIFS(const Grid&, int truncation, const eckit::Configuration& = util::NoConfig());
 
     virtual ~LegendreCacheCreatorIFS();
 
@@ -31,7 +31,7 @@ public:
 
     virtual std::string uid() const override;
 
-    virtual void create( const std::string& path ) const override;
+    virtual void create(const std::string& path) const override;
 
     virtual Cache create() const override;
 

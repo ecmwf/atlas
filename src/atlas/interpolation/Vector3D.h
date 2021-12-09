@@ -41,13 +41,13 @@ typedef Eigen::Vector3d Vector3D;
 
 class Vector3D {
 public:
-    Vector3D( const double* d ) {
+    Vector3D(const double* d) {
         xyz_[0] = d[0];
         xyz_[1] = d[1];
         xyz_[2] = d[2];
     }
 
-    Vector3D( double x, double y, double z ) {
+    Vector3D(double x, double y, double z) {
         xyz_[0] = x;
         xyz_[1] = y;
         xyz_[2] = z;
@@ -57,42 +57,42 @@ public:
         // Warning, data_ is uninitialised
     }
 
-    static Vector3D Map( const double* data ) { return Vector3D( data ); }
+    static Vector3D Map(const double* data) { return Vector3D(data); }
 
     // Operators
 
-    double operator[]( size_t i ) const { return xyz_[i]; }
+    double operator[](size_t i) const { return xyz_[i]; }
 
     // Vector3D operator*(const Vector3D &) const;
-    Vector3D operator-( const Vector3D& other ) const {
-        return Vector3D( x() - other.x(), y() - other.y(), z() - other.z() );
+    Vector3D operator-(const Vector3D& other) const {
+        return Vector3D(x() - other.x(), y() - other.y(), z() - other.z());
     }
 
-    Vector3D operator+( const Vector3D& other ) const {
-        return Vector3D( x() + other.x(), y() + other.y(), z() + other.z() );
+    Vector3D operator+(const Vector3D& other) const {
+        return Vector3D(x() + other.x(), y() + other.y(), z() + other.z());
     }
 
-    Vector3D operator-() const { return Vector3D( -x(), -y(), -z() ); }
+    Vector3D operator-() const { return Vector3D(-x(), -y(), -z()); }
 
-    Vector3D operator/( double a ) const { return Vector3D( x() / a, y() / a, z() / a ); }
+    Vector3D operator/(double a) const { return Vector3D(x() / a, y() / a, z() / a); }
 
-    Vector3D operator*( double a ) const { return Vector3D( x() * a, y() * a, z() * a ); }
+    Vector3D operator*(double a) const { return Vector3D(x() * a, y() * a, z() * a); }
 
-    double norm() const { return std::sqrt( squaredNorm() ); }
+    double norm() const { return std::sqrt(squaredNorm()); }
 
     double squaredNorm() const { return x() * x() + y() * y() + z() * z(); }
 
-    double dot( const Vector3D& other ) const { return x() * other.x() + y() * other.y() + z() * other.z(); }
+    double dot(const Vector3D& other) const { return x() * other.x() + y() * other.y() + z() * other.z(); }
 
-    Vector3D cross( const Vector3D& other ) const {
-        return Vector3D( y() * other.z() - z() * other.y(), z() * other.x() - x() * other.z(),
-                         x() * other.y() - y() * other.x() );
+    Vector3D cross(const Vector3D& other) const {
+        return Vector3D(y() * other.z() - z() * other.y(), z() * other.x() - x() * other.z(),
+                        x() * other.y() - y() * other.x());
     }
 
-    void print( std::ostream& s ) const;
+    void print(std::ostream& s) const;
 
-    friend std::ostream& operator<<( std::ostream& s, const Vector3D& p ) {
-        p.print( s );
+    friend std::ostream& operator<<(std::ostream& s, const Vector3D& p) {
+        p.print(s);
         return s;
     }
 
@@ -107,7 +107,7 @@ private:
     double xyz_[3];
 };
 
-Vector3D operator*( double, const Vector3D& );
+Vector3D operator*(double, const Vector3D&);
 
 #endif
 

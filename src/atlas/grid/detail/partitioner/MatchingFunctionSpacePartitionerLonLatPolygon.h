@@ -22,11 +22,11 @@ public:
     static std::string static_type() { return "lonlat-polygon"; }
 
 public:
-    MatchingFunctionSpacePartitionerLonLatPolygon() : MatchingFunctionSpacePartitioner() {}
-    MatchingFunctionSpacePartitionerLonLatPolygon( const size_t nb_partitions ) :
-        MatchingFunctionSpacePartitioner( nb_partitions ) {}
-    MatchingFunctionSpacePartitionerLonLatPolygon( const FunctionSpace& FunctionSpace ) :
-        MatchingFunctionSpacePartitioner( FunctionSpace ) {}
+    MatchingFunctionSpacePartitionerLonLatPolygon(): MatchingFunctionSpacePartitioner() {}
+    MatchingFunctionSpacePartitionerLonLatPolygon(const size_t nb_partitions):
+        MatchingFunctionSpacePartitioner(nb_partitions) {}
+    MatchingFunctionSpacePartitionerLonLatPolygon(const FunctionSpace& FunctionSpace):
+        MatchingFunctionSpacePartitioner(FunctionSpace) {}
 
     using MatchingFunctionSpacePartitioner::partition;
     /**
@@ -37,7 +37,7 @@ public:
    * @param[in] grid grid to be partitioned
    * @param[out] partitioning partitioning result
    */
-    void partition( const Grid& grid, int partitioning[] ) const;
+    void partition(const Grid& grid, int partitioning[]) const;
 
     virtual std::string type() const { return static_type(); }
 };

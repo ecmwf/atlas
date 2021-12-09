@@ -12,6 +12,10 @@
 
 #include <map>
 
+#include "eckit/linalg/LinearAlgebra.h"
+#include "eckit/utils/Tokenizer.h"
+
+#include "atlas/library.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 
@@ -20,45 +24,85 @@ namespace linalg {
 namespace sparse {
 
 namespace {
+
+
 struct backends {
     std::map<std::string, sparse::Backend> map_;
-    std::string current_backend_{backend::omp::type()};
+    std::string current_backend_;
 
     static backends& instance() {
         static backends x;
         return x;
     }
 
-    void set( const std::string& current_backend ) { current_backend_ = current_backend; }
+    void set(const std::string& current_backend) { current_backend_ = current_backend; }
 
-    sparse::Backend& get( const std::string& type ) {
-        if ( map_.find( type ) == map_.end() ) {
-            map_.emplace( type, util::Config( "type", type ) );
+    sparse::Backend& get(const std::string& type) {
+        if (map_.find(type) == map_.end()) {
+            std::vector<std::string> tokens;
+            eckit::Tokenizer{'.'}(type, tokens);
+            ATLAS_ASSERT(tokens.size() <= 2);
+            if (tokens.size() == 1) {
+                map_.emplace(type, util::Config("type", type));
+            }
+            else {
+                util::Config b;
+                b.set("type", tokens[0]);
+                b.set("backend", tokens[1]);
+                map_.emplace(type, b);
+            }
         }
         return map_[type];
     }
 
-    sparse::Backend& get() { return get( current_backend_ ); }
+    sparse::Backend& get() { return get(current_backend_); }
 
 private:
-    backends() = default;
+    backends() {
+        auto configured  = atlas::Library::instance().linalgSparseBackend();
+        current_backend_ = configured.empty() ? backend::openmp::type() : configured;
+    }
 };
 }  // namespace
 
-void current_backend( const std::string& backend ) {
-    backends::instance().set( backend );
+void current_backend(const std::string& backend) {
+    backends::instance().set(backend);
 }
 sparse::Backend& current_backend() {
     return backends::instance().get();
 }
 
-sparse::Backend& default_backend( const std::string& backend ) {
-    return backends::instance().get( backend );
+sparse::Backend& default_backend(const std::string& backend) {
+    return backends::instance().get(backend);
 }
 
-Backend::Backend( const eckit::Configuration& other ) : util::Config( other ) {
-    ATLAS_ASSERT( has( "type" ) );
+Backend::Backend(const std::string& type): util::Config() {
+    if (not type.empty()) {
+        set(default_backend(type));
+    }
+    else {
+        set(current_backend());
+    }
 }
+
+Backend::Backend(const eckit::Configuration& other): util::Config(other) {
+    ATLAS_ASSERT(has("type"));
+}
+
+bool Backend::available() const {
+    std::string t = type();
+    if (t == backend::openmp::type()) {
+        return true;
+    }
+    if (t == backend::eckit_linalg::type()) {
+        if (has("backend")) {
+            return eckit::linalg::LinearAlgebra::hasBackend(getString("backend"));
+        }
+        return true;
+    }
+    return eckit::linalg::LinearAlgebra::hasBackend(t);
+}
+
 
 }  // namespace sparse
 }  // namespace linalg

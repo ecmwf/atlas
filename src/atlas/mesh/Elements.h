@@ -39,15 +39,15 @@ public:
     //-- Constructors
 
     /// @brief Constructor that treats elements as sub-elements in HybridElements
-    Elements( HybridElements& elements, idx_t type_idx );
+    Elements(HybridElements& elements, idx_t type_idx);
 
     /// @brief Constructor that internally creates a HybridElements that owns the
     /// data
-    Elements( ElementType*, idx_t nb_elements, const std::vector<idx_t>& node_connectivity );
+    Elements(ElementType*, idx_t nb_elements, const std::vector<idx_t>& node_connectivity);
 
     /// @brief Constructor that internally creates a HybridElements that owns the
     /// data
-    Elements( ElementType*, idx_t nb_elements, const idx_t node_connectivity[], bool fortran_array = false );
+    Elements(ElementType*, idx_t nb_elements, const idx_t node_connectivity[], bool fortran_array = false);
 
     /// @brief Destructor
     virtual ~Elements();
@@ -94,12 +94,12 @@ public:
     /// @brief End of elements in hybrid_elements
     idx_t end() const;
 
-    const Field& field( const std::string& name ) const { return hybrid_elements_->field( name ); }
-    Field& field( const std::string& name ) { return hybrid_elements_->field( name ); }
-    bool has_field( const std::string& name ) const { return hybrid_elements_->has_field( name ); }
+    const Field& field(const std::string& name) const { return hybrid_elements_->field(name); }
+    Field& field(const std::string& name) { return hybrid_elements_->field(name); }
+    bool has_field(const std::string& name) const { return hybrid_elements_->has_field(name); }
 
-    const Field& field( idx_t idx ) const { return hybrid_elements_->field( idx ); }
-    Field& field( idx_t idx ) { return hybrid_elements_->field( idx ); }
+    const Field& field(idx_t idx) const { return hybrid_elements_->field(idx); }
+    Field& field(idx_t idx) { return hybrid_elements_->field(idx); }
     idx_t nb_fields() const { return hybrid_elements_->nb_fields(); }
 
     const Field& global_index() const { return hybrid_elements_->global_index(); }
@@ -118,18 +118,18 @@ public:
     Field& flags() { return hybrid_elements_->flags(); }
 
     template <typename DATATYPE, int RANK>
-    array::LocalView<const DATATYPE, RANK> view( const Field& ) const;
+    array::LocalView<const DATATYPE, RANK> view(const Field&) const;
 
     template <typename DATATYPE, int RANK>
-    array::LocalView<DATATYPE, RANK> view( Field& ) const;
+    array::LocalView<DATATYPE, RANK> view(Field&) const;
 
     template <typename DATATYPE, int RANK>
-    array::LocalIndexView<DATATYPE, RANK> indexview( const Field& ) const;
+    array::LocalIndexView<DATATYPE, RANK> indexview(const Field&) const;
 
     template <typename DATATYPE, int RANK>
-    array::LocalIndexView<DATATYPE, RANK> indexview( Field& ) const;
+    array::LocalIndexView<DATATYPE, RANK> indexview(Field&) const;
 
-    idx_t add( const idx_t nb_elements );
+    idx_t add(const idx_t nb_elements);
 
 private:
     friend class HybridElements;
@@ -171,8 +171,8 @@ inline idx_t Elements::nb_edges() const {
 //}
 
 inline const BlockConnectivity& Elements::node_connectivity() const {
-    if ( hybrid_elements_->node_connectivity().blocks() ) {
-        return hybrid_elements_->node_connectivity().block( type_idx_ );
+    if (hybrid_elements_->node_connectivity().blocks()) {
+        return hybrid_elements_->node_connectivity().block(type_idx_);
     }
     else {
         static BlockConnectivity dummy;
@@ -181,8 +181,8 @@ inline const BlockConnectivity& Elements::node_connectivity() const {
 }
 
 inline BlockConnectivity& Elements::node_connectivity() {
-    if ( hybrid_elements_->node_connectivity().blocks() ) {
-        return hybrid_elements_->node_connectivity().block( type_idx_ );
+    if (hybrid_elements_->node_connectivity().blocks()) {
+        return hybrid_elements_->node_connectivity().block(type_idx_);
     }
     else {
         static BlockConnectivity dummy;
@@ -191,8 +191,8 @@ inline BlockConnectivity& Elements::node_connectivity() {
 }
 
 inline const BlockConnectivity& Elements::edge_connectivity() const {
-    if ( hybrid_elements_->edge_connectivity().blocks() ) {
-        return hybrid_elements_->edge_connectivity().block( type_idx_ );
+    if (hybrid_elements_->edge_connectivity().blocks()) {
+        return hybrid_elements_->edge_connectivity().block(type_idx_);
     }
     else {
         static BlockConnectivity dummy;
@@ -201,8 +201,8 @@ inline const BlockConnectivity& Elements::edge_connectivity() const {
 }
 
 inline BlockConnectivity& Elements::edge_connectivity() {
-    if ( hybrid_elements_->edge_connectivity().blocks() ) {
-        return hybrid_elements_->edge_connectivity().block( type_idx_ );
+    if (hybrid_elements_->edge_connectivity().blocks()) {
+        return hybrid_elements_->edge_connectivity().block(type_idx_);
     }
     else {
         static BlockConnectivity dummy;
@@ -211,8 +211,8 @@ inline BlockConnectivity& Elements::edge_connectivity() {
 }
 
 inline const BlockConnectivity& Elements::cell_connectivity() const {
-    if ( hybrid_elements_->cell_connectivity().blocks() ) {
-        return hybrid_elements_->cell_connectivity().block( type_idx_ );
+    if (hybrid_elements_->cell_connectivity().blocks()) {
+        return hybrid_elements_->cell_connectivity().block(type_idx_);
     }
     else {
         static BlockConnectivity dummy;
@@ -221,8 +221,8 @@ inline const BlockConnectivity& Elements::cell_connectivity() const {
 }
 
 inline BlockConnectivity& Elements::cell_connectivity() {
-    if ( hybrid_elements_->cell_connectivity().blocks() ) {
-        return hybrid_elements_->cell_connectivity().block( type_idx_ );
+    if (hybrid_elements_->cell_connectivity().blocks()) {
+        return hybrid_elements_->cell_connectivity().block(type_idx_);
     }
     else {
         static BlockConnectivity dummy;
@@ -231,7 +231,7 @@ inline BlockConnectivity& Elements::cell_connectivity() {
 }
 
 inline const ElementType& Elements::element_type() const {
-    return hybrid_elements_->element_type( type_idx_ );
+    return hybrid_elements_->element_type(type_idx_);
 }
 
 inline idx_t Elements::begin() const {
@@ -245,23 +245,23 @@ inline idx_t Elements::end() const {
 // ------------------------------------------------------------------------------------------------------
 
 extern "C" {
-void atlas__mesh__Elements__delete( Elements* This );
-idx_t atlas__mesh__Elements__size( const Elements* This );
-idx_t atlas__mesh__Elements__begin( const Elements* This );
-idx_t atlas__mesh__Elements__end( const Elements* This );
-BlockConnectivity* atlas__mesh__Elements__node_connectivity( Elements* This );
-BlockConnectivity* atlas__mesh__Elements__edge_connectivity( Elements* This );
-BlockConnectivity* atlas__mesh__Elements__cell_connectivity( Elements* This );
-int atlas__mesh__Elements__has_field( const Elements* This, char* name );
-int atlas__mesh__Elements__nb_fields( const Elements* This );
-field::FieldImpl* atlas__mesh__Elements__field_by_idx( Elements* This, idx_t idx );
-field::FieldImpl* atlas__mesh__Elements__field_by_name( Elements* This, char* name );
-field::FieldImpl* atlas__mesh__Elements__global_index( Elements* This );
-field::FieldImpl* atlas__mesh__Elements__remote_index( Elements* This );
-field::FieldImpl* atlas__mesh__Elements__partition( Elements* This );
-field::FieldImpl* atlas__mesh__Elements__halo( Elements* This );
-const ElementType* atlas__mesh__Elements__element_type( const Elements* This );
-void atlas__mesh__Elements__add( Elements* This, idx_t nb_elements );
+void atlas__mesh__Elements__delete(Elements* This);
+idx_t atlas__mesh__Elements__size(const Elements* This);
+idx_t atlas__mesh__Elements__begin(const Elements* This);
+idx_t atlas__mesh__Elements__end(const Elements* This);
+BlockConnectivity* atlas__mesh__Elements__node_connectivity(Elements* This);
+BlockConnectivity* atlas__mesh__Elements__edge_connectivity(Elements* This);
+BlockConnectivity* atlas__mesh__Elements__cell_connectivity(Elements* This);
+int atlas__mesh__Elements__has_field(const Elements* This, char* name);
+int atlas__mesh__Elements__nb_fields(const Elements* This);
+field::FieldImpl* atlas__mesh__Elements__field_by_idx(Elements* This, idx_t idx);
+field::FieldImpl* atlas__mesh__Elements__field_by_name(Elements* This, char* name);
+field::FieldImpl* atlas__mesh__Elements__global_index(Elements* This);
+field::FieldImpl* atlas__mesh__Elements__remote_index(Elements* This);
+field::FieldImpl* atlas__mesh__Elements__partition(Elements* This);
+field::FieldImpl* atlas__mesh__Elements__halo(Elements* This);
+const ElementType* atlas__mesh__Elements__element_type(const Elements* This);
+void atlas__mesh__Elements__add(Elements* This, idx_t nb_elements);
 }
 
 //------------------------------------------------------------------------------------------------------

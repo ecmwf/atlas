@@ -18,38 +18,38 @@ using namespace atlas::array;
 namespace atlas {
 namespace test {
 
-CASE( "test_svector" ) {
-    SVector<int> list_ints( 2 );
+CASE("test_svector") {
+    SVector<int> list_ints(2);
 
     list_ints[0] = 3;
     list_ints[1] = 4;
 
-    EXPECT( list_ints[0] == 3 );
-    EXPECT( list_ints[1] == 4 );
+    EXPECT(list_ints[0] == 3);
+    EXPECT(list_ints[1] == 4);
 
-    EXPECT( list_ints.size() == 2 );
+    EXPECT(list_ints.size() == 2);
 
     list_ints[0]++;
     list_ints[1]++;
 
-    EXPECT( list_ints[0] == 4 );
-    EXPECT( list_ints[1] == 5 );
+    EXPECT(list_ints[0] == 4);
+    EXPECT(list_ints[1] == 5);
 }
 
-CASE( "test_svector_resize" ) {
-    SVector<int> list_ints( 2 );
+CASE("test_svector_resize") {
+    SVector<int> list_ints(2);
 
     list_ints[0] = 3;
     list_ints[1] = 4;
 
-    EXPECT( list_ints[0] == 3 );
-    EXPECT( list_ints[1] == 4 );
+    EXPECT(list_ints[0] == 3);
+    EXPECT(list_ints[1] == 4);
 
-    EXPECT( list_ints.size() == 2 );
+    EXPECT(list_ints.size() == 2);
 
-    list_ints.resize( 5 );
+    list_ints.resize(5);
 
-    EXPECT( list_ints.size() == 5 );
+    EXPECT(list_ints.size() == 5);
 
     list_ints[3] = 5;
     list_ints[4] = 6;
@@ -57,15 +57,15 @@ CASE( "test_svector_resize" ) {
     list_ints[3]++;
     list_ints[4]++;
 
-    EXPECT( list_ints[0] == 3 );
-    EXPECT( list_ints[1] == 4 );
-    EXPECT( list_ints[3] == 6 );
-    EXPECT( list_ints[4] == 7 );
+    EXPECT(list_ints[0] == 3);
+    EXPECT(list_ints[1] == 4);
+    EXPECT(list_ints[3] == 6);
+    EXPECT(list_ints[4] == 7);
 }
 
 }  // namespace test
 }  // namespace atlas
 
-int main( int argc, char** argv ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
 }

@@ -19,14 +19,14 @@ namespace numerics {
 
 // C wrapper interfaces to C++ routines
 extern "C" {
-void atlas__Method__delete( Method* This ) {
-    ATLAS_ASSERT( This != nullptr );
+void atlas__Method__delete(Method* This) {
+    ATLAS_ASSERT(This != nullptr);
     delete This;
     This = nullptr;
 }
 
-const char* atlas__Method__name( Method* This ) {
-    ATLAS_ASSERT( This != nullptr );
+const char* atlas__Method__name(Method* This) {
+    ATLAS_ASSERT(This != nullptr);
     return This->name().c_str();
 }
 }

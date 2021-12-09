@@ -24,12 +24,12 @@ class MeshGeneratorImpl;
 class MeshGeneratorFactory : public util::Factory<MeshGeneratorFactory> {
 public:
     static std::string className() { return "MeshGeneratorFactory"; }
-    static const MeshGeneratorImpl* build( const std::string& );
-    static const MeshGeneratorImpl* build( const std::string&, const eckit::Parametrisation& );
+    static const MeshGeneratorImpl* build(const std::string&);
+    static const MeshGeneratorImpl* build(const std::string&, const eckit::Parametrisation&);
     using Factory::Factory;
 
 private:
-    virtual const MeshGeneratorImpl* make( const eckit::Parametrisation& ) = 0;
+    virtual const MeshGeneratorImpl* make(const eckit::Parametrisation&) = 0;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -37,7 +37,7 @@ private:
 template <class T>
 class MeshGeneratorBuilder : public MeshGeneratorFactory {
 private:
-    virtual const MeshGeneratorImpl* make( const eckit::Parametrisation& param ) { return new T( param ); }
+    virtual const MeshGeneratorImpl* make(const eckit::Parametrisation& param) { return new T(param); }
 
 public:
     using MeshGeneratorFactory::MeshGeneratorFactory;

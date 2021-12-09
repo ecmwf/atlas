@@ -29,9 +29,9 @@ void force_link() {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-redistribution::detail::RedistributionImpl* RedistributionImplFactory::build( const std::string& builder ) {
+redistribution::detail::RedistributionImpl* RedistributionImplFactory::build(const std::string& builder) {
     force_link();
-    auto factory = get( builder );
+    auto factory = get(builder);
     return factory->make();
 }
 

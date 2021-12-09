@@ -19,9 +19,9 @@
 
 extern "C" {
 using PJ = struct PJconsts;
-PJ* proj_destroy( PJ* );
+PJ* proj_destroy(PJ*);
 using PJ_CONTEXT = struct projCtx_t;
-PJ_CONTEXT* proj_context_destroy( PJ_CONTEXT* );
+PJ_CONTEXT* proj_context_destroy(PJ_CONTEXT*);
 }
 
 
@@ -40,7 +40,7 @@ public:
 
     // Constructors
 
-    ProjProjection( const eckit::Parametrisation& );
+    ProjProjection(const eckit::Parametrisation&);
 
     // Destructor
     // None
@@ -53,19 +53,19 @@ public:
 
     std::string type() const override { return static_type(); }
 
-    void xy2lonlat( double[] ) const override;
-    void lonlat2xy( double[] ) const override;
+    void xy2lonlat(double[]) const override;
+    void lonlat2xy(double[]) const override;
 
-    Jacobian jacobian( const PointLonLat& ) const override;
+    Jacobian jacobian(const PointLonLat&) const override;
 
-    PointXYZ xyz( const PointLonLat& ) const override;
+    PointXYZ xyz(const PointLonLat&) const override;
 
     bool strictlyRegional() const override { return false; }
-    RectangularLonLatDomain lonlatBoundingBox( const Domain& ) const override;
+    RectangularLonLatDomain lonlatBoundingBox(const Domain&) const override;
 
     Spec spec() const override;
     std::string units() const override;
-    void hash( eckit::Hash& ) const override;
+    void hash(eckit::Hash&) const override;
 
     // -- Class members
     // None
@@ -94,15 +94,15 @@ public:
 public:
     // -- Types
 
-    struct pj_t : std::unique_ptr<PJ, decltype( &proj_destroy )> {
-        using t = std::unique_ptr<PJ, decltype( &proj_destroy )>;
-        explicit pj_t( PJ* ptr ) : t( ptr, &proj_destroy ) {}
+    struct pj_t : std::unique_ptr<PJ, decltype(&proj_destroy)> {
+        using t = std::unique_ptr<PJ, decltype(&proj_destroy)>;
+        explicit pj_t(PJ* ptr): t(ptr, &proj_destroy) {}
         operator PJ*() const { return t::get(); }
     };
 
-    struct ctx_t : std::unique_ptr<PJ_CONTEXT, decltype( &proj_context_destroy )> {
-        using t = std::unique_ptr<PJ_CONTEXT, decltype( &proj_context_destroy )>;
-        explicit ctx_t( PJ_CONTEXT* ptr ) : t( ptr, &proj_context_destroy ) {}
+    struct ctx_t : std::unique_ptr<PJ_CONTEXT, decltype(&proj_context_destroy)> {
+        using t = std::unique_ptr<PJ_CONTEXT, decltype(&proj_context_destroy)>;
+        explicit ctx_t(PJ_CONTEXT* ptr): t(ptr, &proj_context_destroy) {}
         operator PJ_CONTEXT*() const { return t::get(); }
     };
 

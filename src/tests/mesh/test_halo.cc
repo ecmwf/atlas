@@ -42,19 +42,19 @@ using namespace atlas::meshgenerator;
 namespace atlas {
 namespace test {
 
-double dual_volume( Mesh& mesh ) {
+double dual_volume(Mesh& mesh) {
     mesh::Nodes& nodes = mesh.nodes();
-    mesh::IsGhostNode is_ghost_node( nodes );
+    mesh::IsGhostNode is_ghost_node(nodes);
     int nb_nodes                             = nodes.size();
-    array::ArrayView<double, 1> dual_volumes = array::make_view<double, 1>( nodes.field( "dual_volumes" ) );
+    array::ArrayView<double, 1> dual_volumes = array::make_view<double, 1>(nodes.field("dual_volumes"));
     double area                              = 0;
-    for ( int node = 0; node < nb_nodes; ++node ) {
-        if ( !is_ghost_node( node ) ) {
-            area += dual_volumes( node );
+    for (int node = 0; node < nb_nodes; ++node) {
+        if (!is_ghost_node(node)) {
+            area += dual_volumes(node);
         }
     }
 
-    ATLAS_TRACE_MPI( ALLREDUCE ) { mpi::comm().allReduceInPlace( area, eckit::mpi::sum() ); }
+    ATLAS_TRACE_MPI(ALLREDUCE) { mpi::comm().allReduceInPlace(area, eckit::mpi::sum()); }
 
     return area;
 }
@@ -104,28 +104,28 @@ CASE( "test_small" )
 #endif
 
 #if 1
-CASE( "test_custom" ) {
+CASE("test_custom") {
     // Mesh m = test::generate_mesh( T63() );
 
-    Mesh m = test::generate_mesh( {10, 12, 14, 16, 16, 16, 16, 14, 12, 10} );
+    Mesh m = test::generate_mesh({10, 12, 14, 16, 16, 16, 16, 14, 12, 10});
 
-    mesh::actions::build_nodes_parallel_fields( m.nodes() );
-    mesh::actions::build_periodic_boundaries( m );
-    mesh::actions::build_halo( m, 1 );
+    mesh::actions::build_nodes_parallel_fields(m.nodes());
+    mesh::actions::build_periodic_boundaries(m);
+    mesh::actions::build_halo(m, 1);
 
     std::stringstream filename;
     filename << "custom.msh";
-    Gmsh( filename.str(), util::Config( "ghost", true ) ).write( m );
+    Gmsh(filename.str(), util::Config("ghost", true)).write(m);
 
     //  EXPECT( eckit::types::is_approximately_equal( test::dual_volume(m),
     //  2.*M_PI*M_PI, 1e-6 ));
 
-    auto lonlat = array::make_view<double, 2>( m.nodes().lonlat() );
+    auto lonlat = array::make_view<double, 2>(m.nodes().lonlat());
 
 #if ATLAS_BITS_GLOBAL == 64
 
     std::vector<uidx_t> check;
-    switch ( mpi::comm().rank() ) {
+    switch (mpi::comm().rank()) {
         case 0:
             check = {607990293346953216, 607990293382953216, 607990293418953216, 607990293454953216, 607990293490953216,
                      607990293526953216, 607990293562953216, 607990293598953216, 607990293634953216, 607990293670953216,
@@ -205,29 +205,29 @@ CASE( "test_custom" ) {
         default:
             check.clear();
     }
-    std::vector<uidx_t> uid( m.nodes().size() );
-    for ( idx_t j = 0; j < m.nodes().size(); ++j ) {
-        uid[j] = util::unique_lonlat( lonlat( j, 0 ), lonlat( j, 1 ) );
+    std::vector<uidx_t> uid(m.nodes().size());
+    for (idx_t j = 0; j < m.nodes().size(); ++j) {
+        uid[j] = util::unique_lonlat(lonlat(j, 0), lonlat(j, 1));
     }
-    if ( check.size() && mpi::comm().size() == 5 ) {
-        EXPECT_EQ( uid.size(), check.size() );
+    if (check.size() && mpi::comm().size() == 5) {
+        EXPECT_EQ(uid.size(), check.size());
 
-        if ( uid != check ) {
-            for ( idx_t i = 0; i < uid.size(); ++i ) {
-                if ( uid[i] != check[i] ) {
+        if (uid != check) {
+            for (idx_t i = 0; i < uid.size(); ++i) {
+                if (uid[i] != check[i]) {
                     Log::warning() << "uid[" << i << "] != check[" << i << "] : " << uid[i] << " expected to be "
-                                   << check[i] << "   point = " << std::setprecision( 7 ) << std::fixed
-                                   << PointLonLat{lonlat( i, LON ), lonlat( i, LAT )}
-                                   << "   microdeg(lon) = " << microdeg( lonlat( i, LON ) ) << std::endl;
+                                   << check[i] << "   point = " << std::setprecision(7) << std::fixed
+                                   << PointLonLat{lonlat(i, LON), lonlat(i, LAT)}
+                                   << "   microdeg(lon) = " << microdeg(lonlat(i, LON)) << std::endl;
                 }
             }
             Log::info() << "uid = { ";
-            for ( idx_t i = 0; i < uid.size(); ++i ) {
-                Log::info() << uid[i] << std::string( i < uid.size() - 1 ? ", " : " " );
+            for (idx_t i = 0; i < uid.size(); ++i) {
+                Log::info() << uid[i] << std::string(i < uid.size() - 1 ? ", " : " ");
             }
             Log::info() << "};" << std::endl;
         }
-        EXPECT( uid == check );
+        EXPECT(uid == check);
     }
 #endif
     //  FunctionSpace& edges = m.function_space("edges");
@@ -249,6 +249,6 @@ CASE( "test_custom" ) {
 }  // namespace test
 }  // namespace atlas
 
-int main( int argc, char** argv ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
 }

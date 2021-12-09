@@ -30,57 +30,57 @@ namespace detail {
 namespace partitioner {
 
 namespace {
-PartitionerBuilder<MatchingMeshPartitionerSphericalPolygon> __builder( "spherical-polygon" );
+PartitionerBuilder<MatchingMeshPartitionerSphericalPolygon> __builder("spherical-polygon");
 }
 
-void MatchingMeshPartitionerSphericalPolygon::partition( const Grid& grid, int partitioning[] ) const {
+void MatchingMeshPartitionerSphericalPolygon::partition(const Grid& grid, int partitioning[]) const {
     const eckit::mpi::Comm& comm = atlas::mpi::comm();
-    const int mpi_rank           = int( comm.rank() );
-    const int mpi_size           = int( comm.size() );
+    const int mpi_rank           = int(comm.rank());
+    const int mpi_size           = int(comm.size());
 
-    ATLAS_TRACE( "MatchingMeshPartitionerSphericalPolygon::partition" );
+    ATLAS_TRACE("MatchingMeshPartitionerSphericalPolygon::partition");
 
-    ATLAS_ASSERT( grid.domain().global() );
+    ATLAS_ASSERT(grid.domain().global());
 
-    if ( mpi_size == 1 ) {
+    if (mpi_size == 1) {
         Log::debug() << "MatchingMeshPartionerSphericalPolygon [mpi_size=0] --> trivial solution" << std::endl;
-        omp::fill( partitioning, partitioning + grid.size(), 0 );
+        omp::fill(partitioning, partitioning + grid.size(), 0);
         return;
     }
 
     // FIXME: THIS IS A HACK! the coordinates include North/South Pole (first/last
     // partitions only)
-    bool includesNorthPole = ( mpi_rank == 0 );
-    bool includesSouthPole = ( mpi_rank == mpi_size - 1 );
+    bool includesNorthPole = (mpi_rank == 0);
+    bool includesSouthPole = (mpi_rank == mpi_size - 1);
 
-    if ( prePartitionedMesh_.projection() ) {
+    if (prePartitionedMesh_.projection()) {
         ATLAS_NOTIMPLEMENTED;
     }
-    const util::SphericalPolygon poly{prePartitionedMesh_.polygon( 0 )};
+    const util::SphericalPolygon poly{prePartitionedMesh_.polygon(0)};
     const double maxlat = poly.coordinatesMax()[LAT];
     const double minlat = poly.coordinatesMin()[LAT];
-    auto at_the_pole    = [&]( const PointLonLat& P ) {
-        return ( includesNorthPole && P[LAT] >= maxlat ) || ( includesSouthPole && P[LAT] < minlat );
+    auto at_the_pole    = [&](const PointLonLat& P) {
+        return (includesNorthPole && P[LAT] >= maxlat) || (includesSouthPole && P[LAT] < minlat);
     };
 
     {
-        eckit::ProgressTimer timer( "Partitioning", grid.size(), "point", double( 10 ), atlas::Log::trace() );
+        eckit::ProgressTimer timer("Partitioning", grid.size(), "point", double(10), atlas::Log::trace());
         size_t i = 0;
 
-        for ( const PointLonLat& P : grid.lonlat() ) {
+        for (const PointLonLat& P : grid.lonlat()) {
             ++timer;
-            partitioning[i++] = at_the_pole( P ) || poly.contains( P ) ? mpi_rank : -1;
+            partitioning[i++] = at_the_pole(P) || poly.contains(P) ? mpi_rank : -1;
         }
     }
 
     // Synchronize partitioning, do a sanity check
-    comm.allReduceInPlace( partitioning, grid.size(), eckit::mpi::Operation::MAX );
-    const int min = *std::min_element( partitioning, partitioning + grid.size() );
-    if ( min < 0 ) {
+    comm.allReduceInPlace(partitioning, grid.size(), eckit::mpi::Operation::MAX);
+    const int min = *std::min_element(partitioning, partitioning + grid.size());
+    if (min < 0) {
         throw_Exception(
             "Could not find partition for target node (source "
             "mesh does not contain all target grid points)",
-            Here() );
+            Here());
     }
 }
 

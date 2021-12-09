@@ -33,14 +33,13 @@ class ArrayView {
     template <typename T>
     using is_non_const_value_type = typename std::is_same<T, typename std::remove_const<Value>::type>;
 
-#define ENABLE_IF_NON_CONST                                                                               \
-    template <bool EnableBool                                                                     = true, \
-              typename std::enable_if<( !std::is_const<Value>::value && EnableBool ), int>::type* = nullptr>
+#define ENABLE_IF_NON_CONST                                                                             \
+    template <bool EnableBool                                                                   = true, \
+              typename std::enable_if<(!std::is_const<Value>::value && EnableBool), int>::type* = nullptr>
 
-#define ENABLE_IF_CONST_WITH_NON_CONST( T )                                                                 \
-    template <typename T,                                                                                   \
-              typename std::enable_if<( std::is_const<Value>::value && is_non_const_value_type<T>::value ), \
-                                      int>::type* = nullptr>
+#define ENABLE_IF_CONST_WITH_NON_CONST(T)                                                                             \
+    template <typename T, typename std::enable_if<(std::is_const<Value>::value && is_non_const_value_type<T>::value), \
+                                                  int>::type* = nullptr>
 
 public:
     // -- Type definitions
@@ -71,49 +70,49 @@ private:
 
 public:
     ATLAS_HOST_DEVICE
-    ArrayView( const ArrayView& other );
-    ArrayView( const Array& array, bool device_view );
+    ArrayView(const ArrayView& other);
+    ArrayView(const Array& array, bool device_view);
 
-    ENABLE_IF_CONST_WITH_NON_CONST( value_type )
-    ArrayView( const ArrayView<value_type, Rank>& other ) :
-        gt_data_view_( other.is_device_view_ ? gridtools::make_gt_device_view<Value, Rank>( *other.array_ )
-                                             : gridtools::make_gt_host_view<Value, Rank>( *other.array_ ) ),
-        data_store_orig_( other.data_store_orig_ ),
-        array_( other.array_ ),
-        is_device_view_( other.is_device_view_ ) {
-        std::memcpy( shape_, other.shape_, sizeof( ArrayShape::value_type ) * Rank );
-        std::memcpy( strides_, other.strides_, sizeof( ArrayStrides::value_type ) * Rank );
+    ENABLE_IF_CONST_WITH_NON_CONST(value_type)
+    ArrayView(const ArrayView<value_type, Rank>& other):
+        gt_data_view_(other.is_device_view_ ? gridtools::make_gt_device_view<Value, Rank>(*other.array_)
+                                            : gridtools::make_gt_host_view<Value, Rank>(*other.array_)),
+        data_store_orig_(other.data_store_orig_),
+        array_(other.array_),
+        is_device_view_(other.is_device_view_) {
+        std::memcpy(shape_, other.shape_, sizeof(ArrayShape::value_type) * Rank);
+        std::memcpy(strides_, other.strides_, sizeof(ArrayStrides::value_type) * Rank);
         size_ = other.size_;
         // TODO: check compatibility
     }
 
-    ENABLE_IF_CONST_WITH_NON_CONST( value_type )
-    operator const ArrayView<value_type, Rank>&() const { return *(const ArrayView<value_type, Rank>*)( this ); }
+    ENABLE_IF_CONST_WITH_NON_CONST(value_type)
+    operator const ArrayView<value_type, Rank>&() const { return *(const ArrayView<value_type, Rank>*)(this); }
 
     value_type* data() { return gt_data_view_.data(); }
     value_type const* data() const { return gt_data_view_.data(); }
 
-    template <typename... Coords, typename = typename std::enable_if<( sizeof...( Coords ) == Rank ), int>::type>
-    ATLAS_HOST_DEVICE value_type& operator()( Coords... c ) {
-        assert( sizeof...( Coords ) == Rank );
-        return gt_data_view_( c... );
+    template <typename... Coords, typename = typename std::enable_if<(sizeof...(Coords) == Rank), int>::type>
+    ATLAS_HOST_DEVICE value_type& operator()(Coords... c) {
+        assert(sizeof...(Coords) == Rank);
+        return gt_data_view_(c...);
     }
 
-    template <typename... Coords, typename = typename std::enable_if<( sizeof...( Coords ) == Rank ), int>::type>
-    ATLAS_HOST_DEVICE value_type const& operator()( Coords... c ) const {
-        assert( sizeof...( Coords ) == Rank );
-        return gt_data_view_( c... );
-    }
-
-    template <typename Int, bool EnableBool = true>
-    ATLAS_HOST_DEVICE typename std::enable_if<( Rank == 1 && EnableBool ), const value_type&>::type operator[](
-        Int idx ) const {
-        return gt_data_view_( idx );
+    template <typename... Coords, typename = typename std::enable_if<(sizeof...(Coords) == Rank), int>::type>
+    ATLAS_HOST_DEVICE value_type const& operator()(Coords... c) const {
+        assert(sizeof...(Coords) == Rank);
+        return gt_data_view_(c...);
     }
 
     template <typename Int, bool EnableBool = true>
-    ATLAS_HOST_DEVICE typename std::enable_if<( Rank == 1 && EnableBool ), value_type&>::type operator[]( Int idx ) {
-        return gt_data_view_( idx );
+    ATLAS_HOST_DEVICE typename std::enable_if<(Rank == 1 && EnableBool), const value_type&>::type operator[](
+        Int idx) const {
+        return gt_data_view_(idx);
+    }
+
+    template <typename Int, bool EnableBool = true>
+    ATLAS_HOST_DEVICE typename std::enable_if<(Rank == 1 && EnableBool), value_type&>::type operator[](Int idx) {
+        return gt_data_view_(idx);
     }
 
     template <unsigned int Dim>
@@ -135,38 +134,41 @@ public:
     size_t size() const { return size_; }
     bool valid() const;
 
-    bool contiguous() const { return ( size_ == size_t( shape_[0] ) * size_t( strides_[0] ) ? true : false ); }
+    bool contiguous() const { return (size_ == size_t(shape_[0]) * size_t(strides_[0]) ? true : false); }
 
-    void dump( std::ostream& os ) const;
-
-    ENABLE_IF_NON_CONST
-    void assign( const value_type& value );
+    void dump(std::ostream& os) const;
 
     ENABLE_IF_NON_CONST
-    void assign( const std::initializer_list<value_type>& list );
+    void assign(const value_type& value);
+
+    ENABLE_IF_NON_CONST
+    void assign(const std::initializer_list<value_type>& list);
+
+    ENABLE_IF_NON_CONST
+    void assign(const ArrayView<Value, Rank>& other);
 
     const idx_t* strides() const { return strides_; }
 
     const idx_t* shape() const { return shape_; }
 
     template <typename Int>
-    idx_t shape( Int idx ) const {
+    idx_t shape(Int idx) const {
         return shape_[idx];
     }
 
     template <typename Int>
-    idx_t stride( Int idx ) const {
+    idx_t stride(Int idx) const {
         return strides_[idx];
     }
 
     template <typename... Args>
-    typename slice_t<Args...>::type slice( Args... args ) {
-        return slicer_t( *this ).apply( args... );
+    typename slice_t<Args...>::type slice(Args... args) {
+        return slicer_t(*this).apply(args...);
     }
 
     template <typename... Args>
-    typename const_slice_t<Args...>::type slice( Args... args ) const {
-        return const_slicer_t( *this ).apply( args... );
+    typename const_slice_t<Args...>::type slice(Args... args) const {
+        return const_slicer_t(*this).apply(args...);
     }
 
     bool isDeviceView() const { return is_device_view_; }

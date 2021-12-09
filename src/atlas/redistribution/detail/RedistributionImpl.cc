@@ -11,7 +11,7 @@ namespace atlas {
 namespace redistribution {
 namespace detail {
 
-void RedistributionImpl::setup( const FunctionSpace& source, const FunctionSpace& target ) {
+void RedistributionImpl::setup(const FunctionSpace& source, const FunctionSpace& target) {
     source_ = source;
     target_ = target;
     do_setup();

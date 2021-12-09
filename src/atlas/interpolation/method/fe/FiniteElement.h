@@ -28,11 +28,13 @@ namespace method {
 
 class FiniteElement : public Method {
 public:
-    FiniteElement( const Config& config ) : Method( config ) {}
+    FiniteElement(const Config& config): Method(config) {
+        config.get("max_fraction_elems_to_try", max_fraction_elems_to_try_);
+    }
 
     virtual ~FiniteElement() override {}
 
-    virtual void print( std::ostream& ) const override;
+    virtual void print(std::ostream&) const override;
 
 protected:
     /**
@@ -46,7 +48,7 @@ protected:
    * @param meshSource mesh containing source elements
    * @param meshTarget mesh containing target points
    */
-    void setup( const FunctionSpace& source );
+    void setup(const FunctionSpace& source);
 
     /**
    * Find in which element the point is contained by projecting (ray-tracing)
@@ -54,16 +56,16 @@ protected:
    * point to the nearest element(s), returning the (normalized) interpolation
    * weights
    */
-    Triplets projectPointToElements( size_t ip, const ElemIndex3::NodeList& elems, std::ostream& failures_log ) const;
+    Triplets projectPointToElements(size_t ip, const ElemIndex3::NodeList& elems, std::ostream& failures_log) const;
 
     virtual const FunctionSpace& source() const override { return source_; }
     virtual const FunctionSpace& target() const override { return target_; }
 
 private:
     using Method::do_setup;
-    virtual void do_setup( const FunctionSpace& source, const FunctionSpace& target ) override;
+    virtual void do_setup(const FunctionSpace& source, const FunctionSpace& target) override;
 
-    virtual void do_setup( const Grid& source, const Grid& target, const Cache& ) override;
+    virtual void do_setup(const Grid& source, const Grid& target, const Cache&) override;
 
 protected:
     mesh::MultiBlockConnectivity* connectivity_;
@@ -79,6 +81,7 @@ protected:
     FunctionSpace target_;
 
     bool treat_failure_as_missing_value_{true};
+    double max_fraction_elems_to_try_{0.2};
 };
 
 }  // namespace method

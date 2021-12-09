@@ -20,7 +20,7 @@ namespace util {
 //----------------------------------------------------------------------------------------------------------------------
 
 int ObjectHandleBase::owners() const {
-    return static_cast<int>( object_->owners() );
+    return static_cast<int>(object_->owners());
 }
 
 void ObjectHandleBase::release() {
@@ -28,7 +28,7 @@ void ObjectHandleBase::release() {
     object_->detach(); /* lock/unlock in detach() isn't sufficient, else there is race
                                condition on owners() */
 
-    if ( object_->owners() == 0 ) {
+    if (object_->owners() == 0) {
         object_->unlock();
         delete object_;
         object_ = nullptr;
@@ -38,23 +38,23 @@ void ObjectHandleBase::release() {
     object_ = nullptr;
 }
 
-void ObjectHandleBase::assign( const ObjectHandleBase& other ) {
-    assign( other.object_ );
+void ObjectHandleBase::assign(const ObjectHandleBase& other) {
+    assign(other.object_);
 }
 
-void ObjectHandleBase::assign( const Object* other ) {
-    if ( object_ ) {
+void ObjectHandleBase::assign(const Object* other) {
+    if (object_) {
         release();
     }
 
-    object_ = const_cast<Object*>( other );
+    object_ = const_cast<Object*>(other);
 
     attach();
 }
 
 
 void ObjectHandleBase::attach() {
-    if ( !null() ) {
+    if (!null()) {
         object_->attach();
     }
 }

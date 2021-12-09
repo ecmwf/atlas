@@ -42,36 +42,36 @@ public:
     int numberOfPositionalArguments() override { return 1; }
     int minimumPositionalArguments() override { return 1; }
 
-    AtlasLoadbalance( int argc, char** argv ) : AtlasTool( argc, argv ) {
-        add_option( new SimpleOption<std::string>(
-            "meshgenerator", "Mesh generator [structured,regular,delaunay,cubedsphere] (default depends on GRID)" ) );
-        add_option( new SimpleOption<std::string>(
+    AtlasLoadbalance(int argc, char** argv): AtlasTool(argc, argv) {
+        add_option(new SimpleOption<std::string>(
+            "meshgenerator", "Mesh generator [structured,regular,delaunay,cubedsphere] (default depends on GRID)"));
+        add_option(new SimpleOption<std::string>(
             "partitioner",
-            "Grid partitioner [equal_regions,checkerboard,equal_bands,regular_bands] (default depends on GRID)" ) );
-        add_option( new Separator( "Advanced" ) );
-        add_option( new SimpleOption<long>( "halo", "Halo size" ) );
+            "Grid partitioner [equal_regions,checkerboard,equal_bands,regular_bands] (default depends on GRID)"));
+        add_option(new Separator("Advanced"));
+        add_option(new SimpleOption<long>("halo", "Halo size"));
     }
 
-    int execute( const Args& args ) override {
-        std::string key = get_positional_arg( args, 0 );
+    int execute(const Args& args) override {
+        std::string key = get_positional_arg(args, 0);
 
         Grid grid;
-        if ( key.size() ) {
+        if (key.size()) {
             eckit::PathName path_in{key};
             try {
-                if ( path_in.exists() ) {
+                if (path_in.exists()) {
                     Log::info() << "Creating grid from file " << path_in << std::endl;
-                    Log::debug() << Config( path_in ) << std::endl;
-                    grid = Grid( Config{path_in} );
+                    Log::debug() << Config(path_in) << std::endl;
+                    grid = Grid(Config{path_in});
                 }
                 else {
                     Log::info() << "Creating grid from name " << key << std::endl;
-                    grid = Grid( key );
+                    grid = Grid(key);
                 }
             }
-            catch ( eckit::Exception& e ) {
+            catch (eckit::Exception& e) {
                 Log::error() << e.what() << std::endl;
-                if ( path_in.exists() ) {
+                if (path_in.exists()) {
                     Log::error() << "Could not generate mesh for grid defined in file \"" << path_in << "\""
                                  << std::endl;
                 }
@@ -87,9 +87,9 @@ public:
         }
 
 
-        auto meshgenerator = make_meshgenerator( grid, args );
-        auto partitioner   = make_partitioner( grid, args );
-        int halo           = args.getInt( "halo", 0 );
+        auto meshgenerator = make_meshgenerator(grid, args);
+        auto partitioner   = make_partitioner(grid, args);
+        int halo           = args.getInt("halo", 0);
 
         Log::info() << "Input:" << std::endl;
         Log::info() << "- grid:          " << grid.name() << std::endl;
@@ -98,41 +98,41 @@ public:
         Log::info() << "- halo:          " << halo << std::endl;
 
 
-        auto mesh = meshgenerator.generate( grid, partitioner );
-        functionspace::NodeColumns nodes( mesh, option::halo( halo ) );
+        auto mesh = meshgenerator.generate(grid, partitioner);
+        functionspace::NodeColumns nodes(mesh, option::halo(halo));
 
         {
             std::stringstream s;
-            mesh::actions::write_load_balance_report( mesh, s );
+            mesh::actions::write_load_balance_report(mesh, s);
 
-            if ( mpi::comm().rank() == 0 ) {
+            if (mpi::comm().rank() == 0) {
                 std::cout << s.str() << std::endl;
             }
         }
         return success();
     }
 
-    MeshGenerator make_meshgenerator( const Grid& grid, const Args& args ) {
+    MeshGenerator make_meshgenerator(const Grid& grid, const Args& args) {
         auto config = grid.meshgenerator();  // recommended by the grid itself
-        if ( args.has( "meshgenerator" ) ) {
-            config.set( "type", args.getString( "meshgenerator" ) );
+        if (args.has("meshgenerator")) {
+            config.set("type", args.getString("meshgenerator"));
         }
-        if ( args.has( "halo" ) ) {
-            config.set( "halo", args.getInt( "halo" ) );
+        if (args.has("halo")) {
+            config.set("halo", args.getInt("halo"));
         }
         return MeshGenerator{config};
     }
 
-    grid::Partitioner make_partitioner( const Grid& grid, const Args& args ) {
+    grid::Partitioner make_partitioner(const Grid& grid, const Args& args) {
         auto config = grid.partitioner();  // recommended by the grid itself
-        if ( args.has( "partitioner" ) ) {
-            config.set( "type", args.getString( "partitioner" ) );
+        if (args.has("partitioner")) {
+            config.set("type", args.getString("partitioner"));
         }
-        if ( args.has( "regular" ) ) {
-            config.set( "regular", args.getBool( "regular" ) );
+        if (args.has("regular")) {
+            config.set("regular", args.getBool("regular"));
         }
-        if ( args.has( "partitions" ) ) {
-            config.set( "partitions", args.getInt( "partitions" ) );
+        if (args.has("partitions")) {
+            config.set("partitions", args.getInt("partitions"));
         }
         return grid::Partitioner{config};
     }
@@ -140,7 +140,7 @@ public:
 
 //------------------------------------------------------------------------------------------------------
 
-int main( int argc, char** argv ) {
-    AtlasLoadbalance tool( argc, argv );
+int main(int argc, char** argv) {
+    AtlasLoadbalance tool(argc, argv);
     return tool.start();
 }

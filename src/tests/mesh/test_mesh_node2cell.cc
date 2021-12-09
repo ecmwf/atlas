@@ -71,42 +71,42 @@ void print_check( Mesh& mesh ) {
 
 // Routine that checks if the connectivity-table matches a given array "check"
 template <typename T>
-void check_node_cell_connectivity( Mesh& mesh, const T& check ) {
-    auto cell_glb_idx = array::make_view<gidx_t, 1>( mesh.cells().global_index() );
+void check_node_cell_connectivity(Mesh& mesh, const T& check) {
+    auto cell_glb_idx = array::make_view<gidx_t, 1>(mesh.cells().global_index());
 
     size_t c{0};
-    for ( idx_t jnode = 0; jnode < mesh.nodes().size(); ++jnode ) {
-        for ( idx_t jcell = 0; jcell < mesh.nodes().cell_connectivity().cols( jnode ); ++jcell ) {
-            idx_t icell = mesh.nodes().cell_connectivity()( jnode, jcell );
-            EXPECT( c < check.size() );
-            EXPECT( cell_glb_idx( icell ) == check[c++] );
+    for (idx_t jnode = 0; jnode < mesh.nodes().size(); ++jnode) {
+        for (idx_t jcell = 0; jcell < mesh.nodes().cell_connectivity().cols(jnode); ++jcell) {
+            idx_t icell = mesh.nodes().cell_connectivity()(jnode, jcell);
+            EXPECT(c < check.size());
+            EXPECT(cell_glb_idx(icell) == check[c++]);
         }
     }
-    EXPECT( c == check.size() );
+    EXPECT(c == check.size());
 }
 
 //-----------------------------------------------------------------------------
 
 struct PrettyPrintNodeCellConnectivity {
     const Mesh& mesh;
-    PrettyPrintNodeCellConnectivity( const Mesh& _mesh ) : mesh{_mesh} {}
+    PrettyPrintNodeCellConnectivity(const Mesh& _mesh): mesh{_mesh} {}
 
-    void print( std::ostream& out ) const {
-        auto node_glb_idx = array::make_view<gidx_t, 1>( mesh.nodes().global_index() );
-        auto cell_glb_idx = array::make_view<gidx_t, 1>( mesh.cells().global_index() );
+    void print(std::ostream& out) const {
+        auto node_glb_idx = array::make_view<gidx_t, 1>(mesh.nodes().global_index());
+        auto cell_glb_idx = array::make_view<gidx_t, 1>(mesh.cells().global_index());
 
-        for ( idx_t jnode = 0; jnode < mesh.nodes().size(); ++jnode ) {
-            out << node_glb_idx( jnode ) << " : ";
-            for ( idx_t jcell = 0; jcell < mesh.nodes().cell_connectivity().cols( jnode ); ++jcell ) {
-                idx_t icell = mesh.nodes().cell_connectivity()( jnode, jcell );
-                out << cell_glb_idx( icell ) << " ";
+        for (idx_t jnode = 0; jnode < mesh.nodes().size(); ++jnode) {
+            out << node_glb_idx(jnode) << " : ";
+            for (idx_t jcell = 0; jcell < mesh.nodes().cell_connectivity().cols(jnode); ++jcell) {
+                idx_t icell = mesh.nodes().cell_connectivity()(jnode, jcell);
+                out << cell_glb_idx(icell) << " ";
             }
             out << '\n';
         }
     }
 
-    friend std::ostream& operator<<( std::ostream& out, const PrettyPrintNodeCellConnectivity& p ) {
-        p.print( out );
+    friend std::ostream& operator<<(std::ostream& out, const PrettyPrintNodeCellConnectivity& p) {
+        p.print(out);
         return out;
     }
 };
@@ -114,14 +114,14 @@ struct PrettyPrintNodeCellConnectivity {
 
 //-----------------------------------------------------------------------------
 
-CASE( "test_node2cell" ) {
+CASE("test_node2cell") {
     // Create mesh
-    Grid grid( "O2" );
+    Grid grid("O2");
     StructuredMeshGenerator generator;
-    Mesh mesh = generator.generate( grid );
+    Mesh mesh = generator.generate(grid);
 
     // Create node to cell connectivity within mesh
-    mesh::actions::build_node_to_cell_connectivity( mesh );
+    mesh::actions::build_node_to_cell_connectivity(mesh);
 
     Log::info() << "Connectivity without halo :\n" << PrettyPrintNodeCellConnectivity{mesh} << std::endl;
 
@@ -130,7 +130,7 @@ CASE( "test_node2cell" ) {
 
     // mpi-size 1
     {
-        if ( mpi::comm().rank() == 0 && mpi::comm().size() == 1 ) {
+        if (mpi::comm().rank() == 0 && mpi::comm().size() == 1) {
             auto node_cell_connectivity_check = std::array<gidx_t, 468>{
                 113, 26,  25,  113, 115, 114, 26,  28,  27,  115, 117, 116, 28,  30,  29,  117, 119, 118, 30,  32,  31,
                 119, 121, 120, 32,  34,  33,  121, 123, 122, 34,  37,  35,  36,  123, 125, 124, 37,  39,  38,  125, 127,
@@ -156,12 +156,12 @@ CASE( "test_node2cell" ) {
                 138, 136, 106, 105, 107, 135, 136, 134, 108, 107, 109, 133, 134, 132, 110, 109, 111, 131, 132, 67,  68,
                 68,  24,  24,  112, 112, 111,
             };
-            check_node_cell_connectivity( mesh, node_cell_connectivity_check );
+            check_node_cell_connectivity(mesh, node_cell_connectivity_check);
         }
     }
     // mpi-size 4
     {
-        if ( mpi::comm().rank() == 0 && mpi::comm().size() == 4 ) {
+        if (mpi::comm().rank() == 0 && mpi::comm().size() == 4) {
             auto node_cell_connectivity_check = std::array<gidx_t, 187>{
                 45, 3,  2,  45, 47, 46, 3,  5,  4,  47, 49, 48, 5,  7,  6,  49, 51, 50, 7,  9,  8,  51, 53, 52,
                 9,  11, 10, 53, 55, 54, 11, 14, 12, 13, 55, 57, 56, 14, 16, 15, 57, 59, 58, 16, 18, 17, 59, 61,
@@ -172,26 +172,26 @@ CASE( "test_node2cell" ) {
                 17, 19, 20, 19, 21, 22, 21, 23, 23, 24, 25, 24, 26, 27, 26, 28, 29, 28, 30, 31, 30, 32, 33, 32,
                 34, 34, 35, 36, 35, 37, 38, 37, 39, 40, 39, 41, 42, 41, 43, 44, 43, 1,  1,
             };
-            check_node_cell_connectivity( mesh, node_cell_connectivity_check );
+            check_node_cell_connectivity(mesh, node_cell_connectivity_check);
         }
 
-        if ( mpi::comm().rank() == 1 && mpi::comm().size() == 4 ) {
+        if (mpi::comm().rank() == 1 && mpi::comm().size() == 4) {
             auto node_cell_connectivity_check = std::array<gidx_t, 44>{
                 63, 64, 64, 65, 65, 66, 66, 67, 67, 68, 68, 69, 69, 70, 70, 71, 71, 72, 72, 73, 63, 63,
                 64, 64, 65, 65, 66, 66, 67, 67, 68, 68, 69, 69, 70, 70, 71, 71, 72, 72, 73, 63, 73, 73,
             };
-            check_node_cell_connectivity( mesh, node_cell_connectivity_check );
+            check_node_cell_connectivity(mesh, node_cell_connectivity_check);
         }
 
-        if ( mpi::comm().rank() == 2 && mpi::comm().size() == 4 ) {
+        if (mpi::comm().rank() == 2 && mpi::comm().size() == 4) {
             auto node_cell_connectivity_check = std::array<gidx_t, 51>{
                 74, 74, 75, 75, 76, 76, 77, 77, 78, 78, 79, 79, 80, 80, 81, 81, 82, 82, 83, 83, 84, 86, 84, 85, 74, 74,
                 75, 75, 76, 76, 77, 77, 78, 78, 79, 79, 80, 80, 81, 81, 82, 82, 83, 86, 86, 85, 83, 84, 84, 85, 85,
             };
-            check_node_cell_connectivity( mesh, node_cell_connectivity_check );
+            check_node_cell_connectivity(mesh, node_cell_connectivity_check);
         }
 
-        if ( mpi::comm().rank() == 3 && mpi::comm().size() == 4 ) {
+        if (mpi::comm().rank() == 3 && mpi::comm().size() == 4) {
             auto node_cell_connectivity_check = std::array<gidx_t, 186>{
                 126, 128, 127, 128, 130, 129, 87,  88,  131, 89,  88,  90,  131, 133, 132, 91,  90,  92,  133, 135, 134,
                 93,  92,  94,  135, 137, 136, 95,  94,  96,  137, 139, 138, 97,  98,  96,  99,  139, 141, 140, 100, 99,
@@ -203,23 +203,23 @@ CASE( "test_node2cell" ) {
                 104, 103, 104, 106, 105, 106, 108, 107, 108, 109, 109, 111, 110, 111, 113, 112, 113, 115, 114, 115, 117,
                 116, 117, 119, 118, 119, 120, 120, 122, 121, 122, 124, 123, 124, 126, 125, 130, 130, 129,
             };
-            check_node_cell_connectivity( mesh, node_cell_connectivity_check );
+            check_node_cell_connectivity(mesh, node_cell_connectivity_check);
         }
     }
 }
 
 //-----------------------------------------------------------------------------
 
-CASE( "test_node2cell_with_halo" ) {
-    Grid grid( "O2" );
+CASE("test_node2cell_with_halo") {
+    Grid grid("O2");
     StructuredMeshGenerator generator;
-    Mesh mesh = generator.generate( grid );
+    Mesh mesh = generator.generate(grid);
 
-    mesh::actions::build_parallel_fields( mesh );
-    mesh::actions::build_periodic_boundaries( mesh );
-    mesh::actions::build_halo( mesh, 1 );
+    mesh::actions::build_parallel_fields(mesh);
+    mesh::actions::build_periodic_boundaries(mesh);
+    mesh::actions::build_halo(mesh, 1);
 
-    mesh::actions::build_node_to_cell_connectivity( mesh );
+    mesh::actions::build_node_to_cell_connectivity(mesh);
 
     Log::info() << "Connectivity with halo :\n" << PrettyPrintNodeCellConnectivity{mesh} << std::endl;
 
@@ -229,7 +229,7 @@ CASE( "test_node2cell_with_halo" ) {
 
     // mpi-size 1
     {
-        if ( mpi::comm().rank() == 0 && mpi::comm().size() == 1 ) {
+        if (mpi::comm().rank() == 0 && mpi::comm().size() == 1) {
             auto node_cell_connectivity_check = std::array<gidx_t, 500>{
                 113, 149, 26,  151, 25,  113, 115, 114, 26,  28,  27,  115, 117, 116, 28,  30,  29,  117, 119, 118, 30,
                 32,  31,  119, 121, 120, 32,  34,  33,  121, 123, 122, 34,  37,  35,  36,  123, 125, 124, 37,  39,  38,
@@ -256,12 +256,12 @@ CASE( "test_node2cell_with_halo" ) {
                 132, 110, 109, 111, 131, 132, 67,  150, 68,  152, 68,  152, 24,  154, 24,  154, 112, 156, 112, 156, 111,
                 158, 149, 149, 151, 153, 153, 155, 157, 157, 150, 150, 152, 154, 154, 156, 158, 158,
             };
-            check_node_cell_connectivity( mesh, node_cell_connectivity_check );
+            check_node_cell_connectivity(mesh, node_cell_connectivity_check);
         }
     }
     // mpi-size 4
     {
-        if ( mpi::comm().rank() == 0 && mpi::comm().size() == 4 ) {
+        if (mpi::comm().rank() == 0 && mpi::comm().size() == 4) {
             auto node_cell_connectivity_check = std::array<gidx_t, 310>{
                 45, 149, 3,   151, 2,   45, 47, 46,  3,   5,   4,   47,  49,  48,  5,   7,   6,  49, 51, 50,  7,
                 9,  8,   51,  53,  52,  9,  11, 10,  53,  55,  54,  11,  14,  12,  13,  55,  57, 56, 14, 16,  15,
@@ -279,10 +279,10 @@ CASE( "test_node2cell_with_halo" ) {
                 74, 75,  75,  76,  76,  77, 77, 78,  78,  79,  79,  80,  80,  81,  81,  82,  82, 83, 83, 84,  84,
                 85, 85,  155, 87,  88,  89, 88, 149, 149, 151, 153, 153, 155, 150, 150, 152,
             };
-            check_node_cell_connectivity( mesh, node_cell_connectivity_check );
+            check_node_cell_connectivity(mesh, node_cell_connectivity_check);
         }
 
-        if ( mpi::comm().rank() == 1 && mpi::comm().size() == 4 ) {
+        if (mpi::comm().rank() == 1 && mpi::comm().size() == 4) {
             auto node_cell_connectivity_check = std::array<gidx_t, 190>{
                 5,  4,  6,   63,  64,  7,  6,   8,   64,  65,  9,   8,   10,  65,  66,  11,  10,  12,  66,
                 67, 12, 13,  67,  68,  14, 13,  15,  68,  69,  16,  15,  17,  69,  70,  18,  17,  19,  70,
@@ -295,10 +295,10 @@ CASE( "test_node2cell_with_halo" ) {
                 1,  24, 74,  74,  109, 87, 88,  89,  88,  90,  91,  90,  92,  93,  92,  94,  95,  94,  96,
                 97, 98, 96,  99,  100, 99, 101, 102, 101, 103, 104, 103, 105, 106, 105, 107, 108, 109, 107,
             };
-            check_node_cell_connectivity( mesh, node_cell_connectivity_check );
+            check_node_cell_connectivity(mesh, node_cell_connectivity_check);
         }
 
-        if ( mpi::comm().rank() == 2 && mpi::comm().size() == 4 ) {
+        if (mpi::comm().rank() == 2 && mpi::comm().size() == 4) {
             auto node_cell_connectivity_check = std::array<gidx_t, 203>{
                 23,  24,  73,  74,  25,  24,  26,  74,  75,  27,  26,  28,  75,  76,  29,  28,  30,  76,  77,  31,  30,
                 32,  77,  78,  33,  32,  34,  78,  79,  34,  35,  79,  80,  36,  35,  37,  80,  81,  38,  37,  39,  81,
@@ -311,10 +311,10 @@ CASE( "test_node2cell_with_halo" ) {
                 112, 113, 112, 114, 115, 114, 116, 117, 116, 118, 119, 120, 118, 121, 122, 121, 123, 124, 123, 125, 126,
                 125, 127, 128, 127, 129, 130, 156, 129, 150, 150, 152, 154, 154, 156,
             };
-            check_node_cell_connectivity( mesh, node_cell_connectivity_check );
+            check_node_cell_connectivity(mesh, node_cell_connectivity_check);
         }
 
-        if ( mpi::comm().rank() == 3 && mpi::comm().size() == 4 ) {
+        if (mpi::comm().rank() == 3 && mpi::comm().size() == 4) {
             auto node_cell_connectivity_check = std::array<gidx_t, 302>{
                 83,  84,  126, 128, 127, 84,  85,  128, 130, 129, 155, 87,  157, 88,  131, 89,  88,  90,  131, 133, 132,
                 91,  90,  92,  133, 135, 134, 93,  92,  94,  135, 137, 136, 95,  94,  96,  137, 139, 138, 97,  98,  96,
@@ -332,7 +332,7 @@ CASE( "test_node2cell_with_halo" ) {
                 77,  77,  78,  78,  79,  79,  80,  80,  81,  81,  82,  82,  83,  83,  84,  84,  85,  85,  154, 153, 153,
                 155, 157, 157, 154, 154, 156, 158, 158,
             };
-            check_node_cell_connectivity( mesh, node_cell_connectivity_check );
+            check_node_cell_connectivity(mesh, node_cell_connectivity_check);
         }
     }
 }
@@ -342,6 +342,6 @@ CASE( "test_node2cell_with_halo" ) {
 }  // namespace test
 }  // namespace atlas
 
-int main( int argc, char** argv ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
 }

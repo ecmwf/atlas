@@ -19,16 +19,16 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-CASE( "test_gmsh_read" ) {
+CASE("test_gmsh_read") {
     output::detail::GmshIO gmsh_reader;
-    std::string file = eckit::Resource<std::string>( "--mesh", "" );
-    if ( file.empty() ) {
+    std::string file = eckit::Resource<std::string>("--mesh", "");
+    if (file.empty()) {
         Log::error() << "Argument --mesh missing" << std::endl;
     }
-    Mesh mesh = gmsh_reader.read( file );
+    Mesh mesh = gmsh_reader.read(file);
 
-    output::Gmsh gmsh( "test_gmsh_read_output.msh" );
-    gmsh.write( mesh );
+    output::Gmsh gmsh("test_gmsh_read_output.msh");
+    gmsh.write(mesh);
 }
 
 //-----------------------------------------------------------------------------
@@ -36,6 +36,6 @@ CASE( "test_gmsh_read" ) {
 }  // namespace test
 }  // namespace atlas
 
-int main( int argc, char** argv ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
 }

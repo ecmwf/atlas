@@ -18,32 +18,32 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
-Ray::Ray( const double* p ) {
-    orig = Vector3D::Map( p );
+Ray::Ray(const double* p) {
+    orig = Vector3D::Map(p);
     dir  = -orig;
 }
 
-Ray::Ray( const double* o, const double* d ) {
-    orig = Vector3D::Map( o );
-    dir  = Vector3D::Map( d );
+Ray::Ray(const double* o, const double* d) {
+    orig = Vector3D::Map(o);
+    dir  = Vector3D::Map(d);
 }
 
-Ray::Ray( const PointXYZ& p ) {
-    orig = Vector3D::Map( p.data() );
+Ray::Ray(const PointXYZ& p) {
+    orig = Vector3D::Map(p.data());
     dir  = -orig;
 }
 
-Ray::Ray( const PointXYZ& o, const Vector3D& d ) {
-    orig = Vector3D::Map( o.data() );
+Ray::Ray(const PointXYZ& o, const Vector3D& d) {
+    orig = Vector3D::Map(o.data());
     dir  = d;
 }
 
-void Ray::print( std::ostream& s ) const {
+void Ray::print(std::ostream& s) const {
     s << "Ray[orig=" << orig << ",dir=" << dir << "]";
 }
 
-std::ostream& operator<<( std::ostream& s, const Ray& p ) {
-    p.print( s );
+std::ostream& operator<<(std::ostream& s, const Ray& p) {
+    p.print(s);
     return s;
 }
 

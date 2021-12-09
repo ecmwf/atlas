@@ -19,10 +19,10 @@ namespace io {
 class Checksum {
 public:
     Checksum() = default;
-    Checksum( const std::string& checksum );
+    Checksum(const std::string& checksum);
     bool available() const;
     std::string str() const;
-    std::string str( size_t size ) const;
+    std::string str(size_t size) const;
     std::string algorithm() const { return algorithm_; }
 
 private:
@@ -30,7 +30,7 @@ private:
     std::string checksum_;
 };
 
-std::string checksum( const void* buffer, size_t size, const std::string& algorithm = "" );
+std::string checksum(const void* buffer, size_t size, const std::string& algorithm = "");
 
 
 }  // namespace io

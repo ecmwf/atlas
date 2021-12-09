@@ -20,14 +20,14 @@ namespace mesh {
 // C wrapper interfaces to C++ routines
 extern "C" {
 Mesh::Implementation* atlas__Mesh__new();
-void atlas__Mesh__delete( Mesh::Implementation* This );
-Nodes* atlas__Mesh__nodes( Mesh::Implementation* This );
-Edges* atlas__Mesh__edges( Mesh::Implementation* This );
-Cells* atlas__Mesh__cells( Mesh::Implementation* This );
-size_t atlas__Mesh__footprint( Mesh::Implementation* This );
-void atlas__Mesh__update_device( Mesh::Implementation* This );
-void atlas__Mesh__update_host( Mesh::Implementation* This );
-void atlas__Mesh__sync_host_device( Mesh::Implementation* This );
+void atlas__Mesh__delete(Mesh::Implementation* This);
+Nodes* atlas__Mesh__nodes(Mesh::Implementation* This);
+Edges* atlas__Mesh__edges(Mesh::Implementation* This);
+Cells* atlas__Mesh__cells(Mesh::Implementation* This);
+size_t atlas__Mesh__footprint(Mesh::Implementation* This);
+void atlas__Mesh__update_device(Mesh::Implementation* This);
+void atlas__Mesh__update_host(Mesh::Implementation* This);
+void atlas__Mesh__sync_host_device(Mesh::Implementation* This);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

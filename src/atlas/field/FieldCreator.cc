@@ -43,13 +43,13 @@ namespace field {
 namespace {
 
 template <typename T>
-void load_builder( const std::string& name ) {
-    FieldCreatorBuilder<T> tmp( name );
+void load_builder(const std::string& name) {
+    FieldCreatorBuilder<T> tmp(name);
 }
 struct force_link {
     force_link() {
-        load_builder<FieldCreatorIFS>( "tmp_IFS" );
-        load_builder<FieldCreatorArraySpec>( "tmp_ArraySpec" );
+        load_builder<FieldCreatorIFS>("tmp_IFS");
+        load_builder<FieldCreatorArraySpec>("tmp_ArraySpec");
     }
 };
 
@@ -61,77 +61,76 @@ FieldCreator::FieldCreator() = default;
 
 FieldCreator::~FieldCreator() = default;
 
-FieldCreatorFactory::FieldCreatorFactory( const std::string& name ) : name_( name ) {
-    pthread_once( &once, init );
+FieldCreatorFactory::FieldCreatorFactory(const std::string& name): name_(name) {
+    pthread_once(&once, init);
 
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
-    if ( m->find( name ) != m->end() ) {
-        throw_Exception( "FieldCreatorFactory [" + name + "] already registered\n\nBacktrace:\n" + backtrace(),
-                         Here() );
+    if (m->find(name) != m->end()) {
+        throw_Exception("FieldCreatorFactory [" + name + "] already registered\n\nBacktrace:\n" + backtrace(), Here());
     }
-    ( *m )[name] = this;
+    (*m)[name] = this;
 }
 
 FieldCreatorFactory::~FieldCreatorFactory() {
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
-    m->erase( name_ );
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
+    m->erase(name_);
 }
 
-void FieldCreatorFactory::list( std::ostream& out ) {
-    pthread_once( &once, init );
+void FieldCreatorFactory::list(std::ostream& out) {
+    pthread_once(&once, init);
 
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
     static force_link static_linking;
 
     const char* sep = "";
-    for ( std::map<std::string, FieldCreatorFactory*>::const_iterator j = m->begin(); j != m->end(); ++j ) {
-        out << sep << ( *j ).first;
+    for (std::map<std::string, FieldCreatorFactory*>::const_iterator j = m->begin(); j != m->end(); ++j) {
+        out << sep << (*j).first;
         sep = ", ";
     }
 }
 
-FieldCreator* FieldCreatorFactory::build( const std::string& name ) {
-    pthread_once( &once, init );
+FieldCreator* FieldCreatorFactory::build(const std::string& name) {
+    pthread_once(&once, init);
 
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
     static force_link static_linking;
 
-    std::map<std::string, FieldCreatorFactory*>::const_iterator j = m->find( name );
+    std::map<std::string, FieldCreatorFactory*>::const_iterator j = m->find(name);
 
-    if ( j == m->end() ) {
+    if (j == m->end()) {
         Log::error() << "No FieldCreatorFactory for [" << name << "]" << '\n';
         Log::error() << "FieldCreatorFactories are:" << '\n';
-        for ( j = m->begin(); j != m->end(); ++j ) {
-            Log::error() << "   " << ( *j ).first << '\n';
+        for (j = m->begin(); j != m->end(); ++j) {
+            Log::error() << "   " << (*j).first << '\n';
         }
-        throw_Exception( std::string( "No FieldCreatorFactory called " ) + name );
+        throw_Exception(std::string("No FieldCreatorFactory called ") + name);
     }
 
-    return ( *j ).second->make();
+    return (*j).second->make();
 }
 
-FieldCreator* FieldCreatorFactory::build( const std::string& name, const eckit::Parametrisation& param ) {
-    pthread_once( &once, init );
+FieldCreator* FieldCreatorFactory::build(const std::string& name, const eckit::Parametrisation& param) {
+    pthread_once(&once, init);
 
-    eckit::AutoLock<eckit::Mutex> lock( local_mutex );
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
     static force_link static_linking;
 
-    std::map<std::string, FieldCreatorFactory*>::const_iterator j = m->find( name );
+    std::map<std::string, FieldCreatorFactory*>::const_iterator j = m->find(name);
 
-    if ( j == m->end() ) {
+    if (j == m->end()) {
         Log::error() << "No FieldCreatorFactory for [" << name << "]" << '\n';
         Log::error() << "FieldCreatorFactories are:" << '\n';
-        for ( j = m->begin(); j != m->end(); ++j ) {
-            Log::error() << "   " << ( *j ).first << '\n';
+        for (j = m->begin(); j != m->end(); ++j) {
+            Log::error() << "   " << (*j).first << '\n';
         }
-        throw_Exception( std::string( "No FieldCreatorFactory called " ) + name );
+        throw_Exception(std::string("No FieldCreatorFactory called ") + name);
     }
 
-    return ( *j ).second->make( param );
+    return (*j).second->make(param);
 }
 
 }  // namespace field

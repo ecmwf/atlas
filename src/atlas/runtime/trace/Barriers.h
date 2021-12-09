@@ -20,7 +20,7 @@ namespace trace {
 
 class NoBarriers {
 public:
-    NoBarriers( bool state ) {}
+    NoBarriers(bool state) {}
     void restore() {}
 
 public:  // static methods
@@ -32,7 +32,7 @@ public:  // static methods
 
 class Barriers {
 public:
-    Barriers( bool state );
+    Barriers(bool state);
     ~Barriers();
     void restore();
 

@@ -49,9 +49,9 @@
 ///         // trace "custom" ends
 ///     }
 ///
-#define ATLAS_TRACE( ... )
-#define ATLAS_TRACE_SCOPE( ... )
-#define ATLAS_TRACE_BARRIERS( enabled )
+#define ATLAS_TRACE(...)
+#define ATLAS_TRACE_SCOPE(...)
+#define ATLAS_TRACE_BARRIERS(enabled)
 
 //-----------------------------------------------------------------------------------------------------------
 
@@ -91,9 +91,9 @@ public:
 #undef ATLAS_TRACE_SCOPE
 #undef ATLAS_TRACE_BARRIERS
 
-#define ATLAS_TRACE( ... ) __ATLAS_TYPE( ::atlas::Trace, Here() __ATLAS_COMMA_ARGS( __VA_ARGS__ ) )
-#define ATLAS_TRACE_SCOPE( ... ) __ATLAS_TYPE_SCOPE( ::atlas::Trace, Here() __ATLAS_COMMA_ARGS( __VA_ARGS__ ) )
-#define ATLAS_TRACE_BARRIERS( enabled ) __ATLAS_TYPE( ::atlas::Trace::Barriers, enabled )
+#define ATLAS_TRACE(...) __ATLAS_TYPE(::atlas::Trace, Here() __ATLAS_COMMA_ARGS(__VA_ARGS__))
+#define ATLAS_TRACE_SCOPE(...) __ATLAS_TYPE_SCOPE(::atlas::Trace, Here() __ATLAS_COMMA_ARGS(__VA_ARGS__))
+#define ATLAS_TRACE_BARRIERS(enabled) __ATLAS_TYPE(::atlas::Trace::Barriers, enabled)
 
 #endif
 

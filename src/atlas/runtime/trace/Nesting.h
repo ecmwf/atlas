@@ -26,20 +26,20 @@ private:
     CallStack stack_;
 
 public:
-    CurrentCallStack( CurrentCallStack const& ) = delete;
-    CurrentCallStack& operator=( CurrentCallStack const& ) = delete;
+    CurrentCallStack(CurrentCallStack const&) = delete;
+    CurrentCallStack& operator=(CurrentCallStack const&) = delete;
     static CurrentCallStack& instance() {
         static CurrentCallStack state;
         return state;
     }
     operator CallStack() const { return stack_; }
-    CallStack& push( const CodeLocation& loc, const std::string& id ) {
-        if ( Control::enabled() )
-            stack_.push_front( loc, id );
+    CallStack& push(const CodeLocation& loc, const std::string& id) {
+        if (Control::enabled())
+            stack_.push_front(loc, id);
         return stack_;
     }
     void pop() {
-        if ( Control::enabled() )
+        if (Control::enabled())
             stack_.pop_front();
     }
 };

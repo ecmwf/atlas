@@ -33,7 +33,7 @@ public:
 
     // -- Constructors
 
-    GridBox( double north, double west, double south, double east );
+    GridBox(double north, double west, double south, double east);
 
     // -- Destructor
     // None
@@ -48,7 +48,7 @@ public:
 
     double area() const;
     double diagonal() const;
-    bool intersects( GridBox& ) const;
+    bool intersects(GridBox&) const;
 
     // -- Overridden methods
     // None
@@ -88,7 +88,7 @@ private:
 
     // -- Methods
 
-    void print( std::ostream& ) const;
+    void print(std::ostream&) const;
 
     // -- Overridden methods
     // None
@@ -101,17 +101,16 @@ private:
 
     // -- Friends
 
-    friend std::ostream& operator<<( std::ostream& s, const GridBox& p ) {
-        p.print( s );
+    friend std::ostream& operator<<(std::ostream& s, const GridBox& p) {
+        p.print(s);
         return s;
     }
 };
 
 
 struct GridBoxes : std::vector<GridBox> {
-    GridBoxes( const Grid&, bool gaussianWeightedLatitudes = true );
+    GridBoxes(const Grid&, bool gaussianWeightedLatitudes = true);
     GridBoxes();
-    using std::vector<GridBox>::vector;
     double getLongestGridBoxDiagonal() const;
 };
 

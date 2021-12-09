@@ -56,7 +56,7 @@ public:
      * @param [in] f field
      * @return if NonLinear applies to field
      */
-    virtual bool applicable( const Field& f ) const = 0;
+    virtual bool applicable(const Field& f) const = 0;
 
     /**
      * @brief Apply non-linear corrections to interpolation matrix
@@ -64,16 +64,16 @@ public:
      * @param [in] f field with missing values information
      * @return if W was modified
      */
-    virtual bool execute( Matrix& W, const Field& f ) const = 0;
+    virtual bool execute(Matrix& W, const Field& f) const = 0;
 
 protected:
     template <typename Value, int Rank>
-    static array::ArrayView<typename std::add_const<Value>::type, Rank> make_view_field_values( const Field& field ) {
-        ATLAS_ASSERT( field );
+    static array::ArrayView<typename std::add_const<Value>::type, Rank> make_view_field_values(const Field& field) {
+        ATLAS_ASSERT(field);
         ATLAS_ASSERT_MSG(
             field.datatype().kind() == array::DataType::kind<Value>(),
-            "Field(name:" + field.name() + ",DataType:" + field.datatype().str() + ") is not of required DataType" );
-        return array::make_view<typename std::add_const<Value>::type, Rank>( field );
+            "Field(name:" + field.name() + ",DataType:" + field.datatype().str() + ") is not of required DataType");
+        return array::make_view<typename std::add_const<Value>::type, Rank>(field);
     }
 };
 
@@ -83,18 +83,18 @@ public:
     using Config = NonLinear::Config;
 
     static std::string className() { return "NonLinearFactory"; }
-    static const NonLinear* build( const std::string&, const Config& );
+    static const NonLinear* build(const std::string&, const Config&);
     using Factory::Factory;
 
 private:
-    virtual const NonLinear* make( const Config& ) = 0;
+    virtual const NonLinear* make(const Config&) = 0;
 };
 
 
 template <class T>
 class NonLinearFactoryBuilder : public NonLinearFactory {
 private:
-    virtual const NonLinear* make( const Config& /*config*/ ) override { return new T( /*config*/ ); }
+    virtual const NonLinear* make(const Config& /*config*/) override { return new T(/*config*/); }
 
 public:
     using NonLinearFactory::NonLinearFactory;

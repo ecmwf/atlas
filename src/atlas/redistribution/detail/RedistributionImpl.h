@@ -33,7 +33,7 @@ public:
     ///
     /// \param[in]  source  Function space of source fields.
     /// \param[in]  target  Function space of target fields.
-    void setup( const FunctionSpace& source, const FunctionSpace& target );
+    void setup(const FunctionSpace& source, const FunctionSpace& target);
 
     /// \Setup class.
     virtual void do_setup() = 0;
@@ -42,10 +42,10 @@ public:
     virtual std::string type() const = 0;
 
     /// \brief  Maps source field to target field.
-    virtual void execute( const Field& source, Field& target ) const = 0;
+    virtual void execute(const Field& source, Field& target) const = 0;
 
     /// \brief  Maps source field set to target field set.
-    virtual void execute( const FieldSet& source, FieldSet& target ) const = 0;
+    virtual void execute(const FieldSet& source, FieldSet& target) const = 0;
 
     /// \brief  Get const reference to source function space.
     const FunctionSpace& source() const;

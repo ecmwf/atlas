@@ -42,7 +42,7 @@ using eckit::PathName;
 //------------------------------------------------------------------------------
 
 class Tool : public AtlasTool {
-    int execute( const Args& args ) override;
+    int execute(const Args& args) override;
     std::string briefDescription() override {
         return "Tool to generate a python script that plots the grid-distribution "
                "of a given grid";
@@ -50,7 +50,7 @@ class Tool : public AtlasTool {
     std::string usage() override { return name() + " (--grid.name=name|--grid.json=path) [OPTION]... OUTPUT [--help]"; }
 
 public:
-    Tool( int argc, char** argv );
+    Tool(int argc, char** argv);
 
 private:
     std::string key;
@@ -60,41 +60,41 @@ private:
 
 //-----------------------------------------------------------------------------
 
-Tool::Tool( int argc, char** argv ) : AtlasTool( argc, argv ) {
-    add_option( new SimpleOption<std::string>(
-        "grid.name", "Grid unique identifier\n" + indent() + "     Example values: N80, F40, O24, L32" ) );
-    add_option( new SimpleOption<PathName>( "grid.json", "Grid described by json file" ) );
-    add_option( new SimpleOption<std::string>( "partitioner", "Partitioner to be used" ) );
-    add_option( new SimpleOption<long>( "partitions", "Number of partitions" ) );
+Tool::Tool(int argc, char** argv): AtlasTool(argc, argv) {
+    add_option(new SimpleOption<std::string>(
+        "grid.name", "Grid unique identifier\n" + indent() + "     Example values: N80, F40, O24, L32"));
+    add_option(new SimpleOption<PathName>("grid.json", "Grid described by json file"));
+    add_option(new SimpleOption<std::string>("partitioner", "Partitioner to be used"));
+    add_option(new SimpleOption<long>("partitions", "Number of partitions"));
 }
 
 //-----------------------------------------------------------------------------
 
-int Tool::execute( const Args& args ) {
+int Tool::execute(const Args& args) {
     key = "";
-    args.get( "grid.name", key );
+    args.get("grid.name", key);
 
     std::string path_in_str = "";
-    if ( args.get( "grid.json", path_in_str ) ) {
+    if (args.get("grid.json", path_in_str)) {
         path_in = path_in_str;
     }
 
     StructuredGrid grid;
-    if ( key.size() ) {
+    if (key.size()) {
         try {
-            grid = Grid( key );
+            grid = Grid(key);
         }
-        catch ( eckit::Exception& ) {
+        catch (eckit::Exception&) {
             return failed();
         }
     }
-    else if ( path_in.path().size() ) {
+    else if (path_in.path().size()) {
         Log::info() << "Creating grid from file " << path_in << std::endl;
-        Log::debug() << Config( path_in ) << std::endl;
+        Log::debug() << Config(path_in) << std::endl;
         try {
-            grid = Grid( Config( path_in ) );
+            grid = Grid(Config(path_in));
         }
-        catch ( eckit::Exception& e ) {
+        catch (eckit::Exception& e) {
             return failed();
         }
     }
@@ -102,7 +102,7 @@ int Tool::execute( const Args& args ) {
         Log::error() << "No grid specified." << std::endl;
     }
 
-    if ( !grid ) {
+    if (!grid) {
         return failed();
     }
 
@@ -110,35 +110,35 @@ int Tool::execute( const Args& args ) {
     Log::debug() << "Periodic: " << grid.periodic() << std::endl;
 
     std::string partitioner_type;
-    if ( not args.get( "partitioner", partitioner_type ) ) {
+    if (not args.get("partitioner", partitioner_type)) {
         partitioner_type = "equal_regions";
     }
 
     long N = mpi::comm().size();
-    args.get( "partitions", N );
+    args.get("partitions", N);
 
-    if ( mpi::comm().rank() == 0 ) {
-        grid::Partitioner partitioner( partitioner_type, N );
-        grid::Distribution distribution = partitioner.partition( grid );
+    if (mpi::comm().rank() == 0) {
+        grid::Partitioner partitioner(partitioner_type, N);
+        grid::Distribution distribution = partitioner.partition(grid);
 
         Log::info() << distribution << std::endl;
 
-        std::vector<std::vector<double>> x( N );
-        std::vector<std::vector<double>> y( N );
-        for ( long p = 0; p < N; ++p ) {
+        std::vector<std::vector<double>> x(N);
+        std::vector<std::vector<double>> y(N);
+        for (long p = 0; p < N; ++p) {
             size_t nb_pts = distribution.nb_pts()[p];
-            x[p].reserve( nb_pts );
-            y[p].reserve( nb_pts );
+            x[p].reserve(nb_pts);
+            y[p].reserve(nb_pts);
         }
 
         size_t n = 0;
-        for ( PointXY pxy : grid.xy() ) {
-            size_t p = distribution.partition( n++ );
-            x[p].push_back( pxy.x() );
-            y[p].push_back( pxy.y() );
+        for (PointXY pxy : grid.xy()) {
+            size_t p = distribution.partition(n++);
+            x[p].push_back(pxy.x());
+            y[p].push_back(pxy.y());
         }
 
-        std::ofstream f( "grid-distribution.py", std::ios::trunc );
+        std::ofstream f("grid-distribution.py", std::ios::trunc);
         f << "\n"
              "import matplotlib.pyplot as plt"
              "\n"
@@ -165,16 +165,16 @@ int Tool::execute( const Args& args ) {
              "\n"
              "";
 
-        for ( long p = 0; p < N; ++p ) {
+        for (long p = 0; p < N; ++p) {
             f << "\n"
                  "x = [";
-            for ( const double& _x : x[p] ) {
+            for (const double& _x : x[p]) {
                 f << _x << ", ";
             }
             f << "]";
             f << "\n"
                  "y = [";
-            for ( const double& _y : y[p] ) {
+            for (const double& _y : y[p]) {
                 f << _y << ", ";
             }
             f << "]";
@@ -203,7 +203,7 @@ int Tool::execute( const Args& args ) {
 
 //------------------------------------------------------------------------------
 
-int main( int argc, char** argv ) {
-    Tool tool( argc, argv );
+int main(int argc, char** argv) {
+    Tool tool(argc, argv);
     return tool.start();
 }

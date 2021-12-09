@@ -56,17 +56,17 @@ struct TileEdge {
 };
 
 /// Cast Projection to CubedSphereProjectionBase.
-const CubedSphereProjectionBase* castProjection( const ProjectionImpl* projectionPtr );
+const CubedSphereProjectionBase* castProjection(const ProjectionImpl* projectionPtr);
 
 /// Class to store (i, j) indices as a Point2 coordinate.
 class PointIJ : public Point2 {
 public:
     using Point2::Point2;
-    PointIJ() : Point2() {}
+    PointIJ(): Point2() {}
 
     /// Index constructor.
     template <typename IndexI, typename IndexJ>
-    inline PointIJ( IndexI i, IndexJ j ) : Point2( static_cast<double>( i ), static_cast<double>( j ) ) {}
+    inline PointIJ(IndexI i, IndexJ j): Point2(static_cast<double>(i), static_cast<double>(j)) {}
 
     /// @{
     ///  Return i or j by value.
@@ -82,14 +82,14 @@ public:
 
     /// @{
     /// Round i or j to node index.
-    inline idx_t iNode() const { return static_cast<idx_t>( std::round( i() ) ); }
-    inline idx_t jNode() const { return static_cast<idx_t>( std::round( j() ) ); }
+    inline idx_t iNode() const { return static_cast<idx_t>(std::round(i())); }
+    inline idx_t jNode() const { return static_cast<idx_t>(std::round(j())); }
     /// @}
 
     /// @{
     /// Round i or j to cell index.
-    inline idx_t iCell() const { return static_cast<idx_t>( std::floor( i() ) ); }
-    inline idx_t jCell() const { return static_cast<idx_t>( std::floor( j() ) ); }
+    inline idx_t iCell() const { return static_cast<idx_t>(std::floor(i())); }
+    inline idx_t jCell() const { return static_cast<idx_t>(std::floor(j())); }
     /// @}
 };
 
@@ -136,25 +136,25 @@ public:
     Jacobian2() = default;
 
     /// Partial derivative constructor.
-    Jacobian2( double df0_by_dx0, double df0_by_dx1, double df1_by_dx0, double df1_by_dx1 );
+    Jacobian2(double df0_by_dx0, double df0_by_dx1, double df1_by_dx0, double df1_by_dx1);
 
     /// Discrete point constructor (explicit dx).
-    Jacobian2( const Point2& f00, const Point2& f10, const Point2& f01, double dx0, double dx1 );
+    Jacobian2(const Point2& f00, const Point2& f10, const Point2& f01, double dx0, double dx1);
 
     /// Discrete point contructor (implicit dx).
-    Jacobian2( const Point2& f00, const Point2& f10, const Point2& f01 );
+    Jacobian2(const Point2& f00, const Point2& f10, const Point2& f01);
 
     /// Determinant of Jacobian.
     double det() const;
 
     /// Jacobian-scalar multiplication.
-    Jacobian2 operator*( double a ) const;
+    Jacobian2 operator*(double a) const;
 
     /// Jacobian-vector multiplication.
-    Point2 operator*( const Point2& dx ) const;
+    Point2 operator*(const Point2& dx) const;
 
     /// Jacobian-Jacobian multiplication.
-    Jacobian2 operator*( const Jacobian2& Jb ) const;
+    Jacobian2 operator*(const Jacobian2& Jb) const;
 
     /// Inverse Jacobian (partial derivatives of x(f)).
     Jacobian2 inverse() const;
@@ -183,31 +183,31 @@ public:
     NeighbourJacobian() = default;
 
     /// Grid-data constructor.
-    NeighbourJacobian( const CubedSphereGrid& csGrid );
+    NeighbourJacobian(const CubedSphereGrid& csGrid);
 
     /// Convert ij on local tile t to xy.
-    PointXY xy( const PointIJ& ij, idx_t t ) const;
+    PointXY xy(const PointIJ& ij, idx_t t) const;
 
     /// Convert xy on local tile t to ij.
-    PointIJ ij( const PointXY& xy, idx_t t ) const;
+    PointIJ ij(const PointXY& xy, idx_t t) const;
 
     /// Convert extrapolated xy on tile t to global xy and t (needed for halos).
-    PointTXY xyLocalToGlobal( const PointXY& xyLocal, idx_t tLocal ) const;
+    PointTXY xyLocalToGlobal(const PointXY& xyLocal, idx_t tLocal) const;
 
     /// Convert extrapolated ij on tile t to global ij and t (needed for halos).
-    PointTIJ ijLocalToGlobal( const PointIJ& ijLocal, idx_t tLocal ) const;
+    PointTIJ ijLocalToGlobal(const PointIJ& ijLocal, idx_t tLocal) const;
 
     /// Return true if ij is interior or on the edge of a tile.
-    bool ijInterior( const PointIJ& ij ) const;
+    bool ijInterior(const PointIJ& ij) const;
 
     /// Return true if ij is on the edge of a tile.
-    bool ijEdge( const PointIJ& ij ) const;
+    bool ijEdge(const PointIJ& ij) const;
 
     /// Return true if ij is in the valid "+" halo extension of at tile.
-    bool ijCross( const PointIJ& ij ) const;
+    bool ijCross(const PointIJ& ij) const;
 
     /// Makes sure points near tile edges are *exactly* on the edge.
-    PointXY snapToEdge( const PointXY& xy, idx_t t ) const;
+    PointXY snapToEdge(const PointXY& xy, idx_t t) const;
 
 private:
     // Pointer to grid projection.

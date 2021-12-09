@@ -19,50 +19,50 @@
 namespace atlas {
 namespace io {
 
-JSONFormat::JSONFormat( const Record::URI& record, const util::Config& config ) :
-    record_( Session::record( record.path, record.offset ) ) {
-    for ( const auto& key : record_.keys() ) {
-        items_.emplace( key, Metadata() );
-        RecordItemReader{RecordItem::URI{record.path, record.offset, key}}.read( items_.at( key ) );
+JSONFormat::JSONFormat(const Record::URI& record, const util::Config& config):
+    record_(Session::record(record.path, record.offset)) {
+    for (const auto& key : record_.keys()) {
+        items_.emplace(key, Metadata());
+        RecordItemReader{RecordItem::URI{record.path, record.offset, key}}.read(items_.at(key));
     }
 
-    config.get( "details", print_details_ );
+    config.get("details", print_details_);
 }
 
-void JSONFormat::print( std::ostream& out ) const {
-    eckit::JSON js( out, eckit::JSON::Formatting::indent( 4 ) );
+void JSONFormat::print(std::ostream& out) const {
+    eckit::JSON js(out, eckit::JSON::Formatting::indent(4));
 
     Metadata metadata;
-    for ( const auto& key : record_.keys() ) {
-        const auto& item = items_.at( key );
+    for (const auto& key : record_.keys()) {
+        const auto& item = items_.at(key);
 
-        Metadata m = record_.metadata( key );
+        Metadata m = record_.metadata(key);
 
-        if ( record_.metadata( key ).link() ) {
-            m.set( item );
-            if ( m.has( "data" ) ) {  // removes data.section
-                m.remove( "data" );
+        if (record_.metadata(key).link()) {
+            m.set(item);
+            if (m.has("data")) {  // removes data.section
+                m.remove("data");
             }
         }
 
-        if ( not print_details_ ) {
-            if ( m.has( "data" ) ) {
-                m.remove( "data" );
+        if (not print_details_) {
+            if (m.has("data")) {
+                m.remove("data");
             }
         }
 
-        if ( print_details_ ) {
-            m.set( "data.compression.type", item.data.compression() );
-            m.set( "data.compression.size", item.data.compressed_size() );
-            m.set( "data.size", item.data.size() );
-            m.set( "data.byte_order", ( item.data.endian() == Endian::little ) ? "little endian" : "big endian" );
-            m.set( "data.checksum", item.data.checksum().str() );
-            m.set( "version", item.record.version().str() );
-            m.set( "created", item.record.created().str() );
+        if (print_details_) {
+            m.set("data.compression.type", item.data.compression());
+            m.set("data.compression.size", item.data.compressed_size());
+            m.set("data.size", item.data.size());
+            m.set("data.byte_order", (item.data.endian() == Endian::little) ? "little endian" : "big endian");
+            m.set("data.checksum", item.data.checksum().str());
+            m.set("version", item.record.version().str());
+            m.set("created", item.record.created().str());
         }
 
 
-        metadata.set( key, m );
+        metadata.set(key, m);
     }
     js << metadata;
 }

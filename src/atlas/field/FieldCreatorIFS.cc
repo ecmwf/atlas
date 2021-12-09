@@ -25,58 +25,58 @@
 namespace atlas {
 namespace field {
 
-FieldImpl* FieldCreatorIFS::createField( const eckit::Parametrisation& params ) const {
+FieldImpl* FieldCreatorIFS::createField(const eckit::Parametrisation& params) const {
     size_t ngptot;
     size_t nblk;
     size_t nvar   = 1;
     size_t nproma = 1;
     size_t nlev   = 1;
 
-    if ( !params.get( "ngptot", ngptot ) ) {
-        throw_Exception( "Could not find parameter 'ngptot' in Parametrisation" );
+    if (!params.get("ngptot", ngptot)) {
+        throw_Exception("Could not find parameter 'ngptot' in Parametrisation");
     }
-    params.get( "nproma", nproma );
-    params.get( "nlev", nlev );
-    params.get( "nvar", nvar );
+    params.get("nproma", nproma);
+    params.get("nlev", nlev);
+    params.get("nvar", nvar);
 
     array::DataType datatype = array::DataType::create<double>();
     std::string datatype_str;
-    if ( params.get( "datatype", datatype_str ) ) {
-        datatype = array::DataType( datatype_str );
+    if (params.get("datatype", datatype_str)) {
+        datatype = array::DataType(datatype_str);
     }
     else {
-        array::DataType::kind_t kind( array::DataType::kind<double>() );
-        params.get( "kind", kind );
-        if ( !array::DataType::kind_valid( kind ) ) {
+        array::DataType::kind_t kind(array::DataType::kind<double>());
+        params.get("kind", kind);
+        if (!array::DataType::kind_valid(kind)) {
             std::stringstream msg;
             msg << "Could not create field. kind parameter unrecognized";
-            throw_Exception( msg.str() );
+            throw_Exception(msg.str());
         }
-        datatype = array::DataType( kind );
+        datatype = array::DataType(kind);
     }
 
-    nblk = std::ceil( static_cast<double>( ngptot ) / static_cast<double>( nproma ) );
+    nblk = std::ceil(static_cast<double>(ngptot) / static_cast<double>(nproma));
 
     array::ArrayShape s;
-    bool fortran( false );
-    params.get( "fortran", fortran );
-    if ( fortran ) {
-        s = array::make_shape( nproma, nlev, nvar, nblk );
+    bool fortran(false);
+    params.get("fortran", fortran);
+    if (fortran) {
+        s = array::make_shape(nproma, nlev, nvar, nblk);
     }
     else {
-        s = array::make_shape( nblk, nvar, nlev, nproma );
+        s = array::make_shape(nblk, nvar, nlev, nproma);
     }
 
     std::string name;
-    params.get( "name", name );
+    params.get("name", name);
     Log::debug() << "Creating IFS " << datatype.str() << " field: " << name << "[nblk=" << nblk << "][nvar=" << nvar
                  << "][nlev=" << nlev << "][nproma=" << nproma << "]\n";
 
-    return FieldImpl::create( name, datatype, s );
+    return FieldImpl::create(name, datatype, s);
 }
 
 namespace {
-static FieldCreatorBuilder<FieldCreatorIFS> __IFS( "IFS" );
+static FieldCreatorBuilder<FieldCreatorIFS> __IFS("IFS");
 }
 
 // ------------------------------------------------------------------

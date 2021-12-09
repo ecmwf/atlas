@@ -32,7 +32,7 @@ class Method;
 
 namespace atlas {
 
-class Interpolation : DOXYGEN_HIDE( public util::ObjectHandle<interpolation::Method> ) {
+class Interpolation : DOXYGEN_HIDE(public util::ObjectHandle<interpolation::Method>) {
 public:
     using Config = eckit::Parametrisation;
     using Cache  = interpolation::Cache;
@@ -41,33 +41,33 @@ public:
     Interpolation() = default;
 
     // Setup Interpolation from source to target function space
-    Interpolation( const Config&, const FunctionSpace& source, const FunctionSpace& target ) noexcept( false );
+    Interpolation(const Config&, const FunctionSpace& source, const FunctionSpace& target) noexcept(false);
 
     // Setup Interpolation from source to coordinates given in a field with multiple components
-    Interpolation( const Config&, const FunctionSpace& source, const Field& target ) noexcept( false );
+    Interpolation(const Config&, const FunctionSpace& source, const Field& target) noexcept(false);
 
     // Setup Interpolation from source to coordinates given by separate fields for each component
-    Interpolation( const Config&, const FunctionSpace& source, const FieldSet& target ) noexcept( false );
+    Interpolation(const Config&, const FunctionSpace& source, const FieldSet& target) noexcept(false);
 
     // Setup Interpolation from source grid to target grid
-    Interpolation( const Config&, const Grid& source, const Grid& target ) noexcept( false );
+    Interpolation(const Config&, const Grid& source, const Grid& target) noexcept(false);
 
-    void execute( const FieldSet& source, FieldSet& target ) const;
+    void execute(const FieldSet& source, FieldSet& target) const;
 
-    void execute( const Field& source, Field& target ) const;
+    void execute(const Field& source, Field& target) const;
 
-    void execute_adjoint( FieldSet& source, const FieldSet& target ) const;
+    void execute_adjoint(FieldSet& source, const FieldSet& target) const;
 
-    void execute_adjoint( Field& source, const Field& target ) const;
+    void execute_adjoint(Field& source, const Field& target) const;
 
-    void print( std::ostream& out ) const;
+    void print(std::ostream& out) const;
 
     const FunctionSpace& source() const;
     const FunctionSpace& target() const;
 
     Cache createCache() const;
 
-    Interpolation( const Config&, const Grid& source, const Grid& target, const Cache& ) noexcept( false );
+    Interpolation(const Config&, const Grid& source, const Grid& target, const Cache&) noexcept(false);
 };
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
@@ -81,23 +81,23 @@ class FieldSetImpl;
 
 extern "C" {
 
-Interpolation::Implementation* atlas__Interpolation__new( const eckit::Parametrisation* config,
-                                                          const functionspace::FunctionSpaceImpl* source,
-                                                          const functionspace::FunctionSpaceImpl* target );
+Interpolation::Implementation* atlas__Interpolation__new(const eckit::Parametrisation* config,
+                                                         const functionspace::FunctionSpaceImpl* source,
+                                                         const functionspace::FunctionSpaceImpl* target);
 
-Interpolation::Implementation* atlas__Interpolation__new_tgt_field( const eckit::Parametrisation* config,
-                                                                    const functionspace::FunctionSpaceImpl* source,
-                                                                    const field::FieldImpl* target );
+Interpolation::Implementation* atlas__Interpolation__new_tgt_field(const eckit::Parametrisation* config,
+                                                                   const functionspace::FunctionSpaceImpl* source,
+                                                                   const field::FieldImpl* target);
 
-Interpolation::Implementation* atlas__Interpolation__new_tgt_fieldset( const eckit::Parametrisation* config,
-                                                                       const functionspace::FunctionSpaceImpl* source,
-                                                                       const field::FieldSetImpl* target );
+Interpolation::Implementation* atlas__Interpolation__new_tgt_fieldset(const eckit::Parametrisation* config,
+                                                                      const functionspace::FunctionSpaceImpl* source,
+                                                                      const field::FieldSetImpl* target);
 
-void atlas__Interpolation__delete( Interpolation::Implementation* This );
-void atlas__Interpolation__execute_field( Interpolation::Implementation* This, const field::FieldImpl* source,
-                                          field::FieldImpl* target );
-void atlas__Interpolation__execute_fieldset( Interpolation::Implementation* This, const field::FieldSetImpl* source,
-                                             field::FieldSetImpl* target );
+void atlas__Interpolation__delete(Interpolation::Implementation* This);
+void atlas__Interpolation__execute_field(Interpolation::Implementation* This, const field::FieldImpl* source,
+                                         field::FieldImpl* target);
+void atlas__Interpolation__execute_fieldset(Interpolation::Implementation* This, const field::FieldSetImpl* source,
+                                            field::FieldSetImpl* target);
 }
 #endif
 

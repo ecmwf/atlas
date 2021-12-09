@@ -28,11 +28,11 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-CASE( "test_accumulate_facets" ) {
-    Grid grid( "O2" );
-    StructuredMeshGenerator generator( Config( "angle", 29.0 )( "triangulate", false )( "ghost_at_end", false ) );
+CASE("test_accumulate_facets") {
+    Grid grid("O2");
+    StructuredMeshGenerator generator(Config("angle", 29.0)("triangulate", false)("ghost_at_end", false));
 
-    Mesh mesh = generator.generate( grid );
+    Mesh mesh = generator.generate(grid);
 
     // storage for edge-to-node-connectivity shape=(nb_edges,2)
     std::vector<idx_t> edge_nodes_data;
@@ -45,8 +45,8 @@ CASE( "test_accumulate_facets" ) {
     idx_t missing_value;
 
     // Accumulate facets of cells ( edges in 2D )
-    mesh::detail::accumulate_facets( mesh.cells(), mesh.nodes(), edge_nodes_data, edge_to_cell_data, nb_edges,
-                                     nb_inner_edges, missing_value );
+    mesh::detail::accumulate_facets(mesh.cells(), mesh.nodes(), edge_nodes_data, edge_to_cell_data, nb_edges,
+                                    nb_inner_edges, missing_value);
 
     idx_t edge_nodes_check[] = {
         0,  21, 21, 22, 22, 1,  1,  0,  22, 23, 23, 2,  2,  1,  3,  25, 25, 26, 26, 4,  4,  3,  26, 27, 27, 5,  5,
@@ -62,7 +62,7 @@ CASE( "test_accumulate_facets" ) {
         85, 63, 85, 86, 86, 64, 86, 87, 87, 65, 87, 88, 88, 66, 68, 89, 89, 90, 90, 69, 90, 91, 91, 70, 24, 2,  24,
         3,  3,  2,  30, 7,  30, 8,  8,  7,  36, 12, 36, 13, 13, 12, 42, 17, 42, 18, 18, 17, 73, 49, 73, 74, 74, 49,
         78, 55, 78, 79, 79, 55, 83, 61, 83, 84, 84, 61, 88, 67, 88, 89, 89, 67};
-    EXPECT( edge_nodes_data == eckit::testing::make_view( edge_nodes_check, edge_nodes_check + 2 * nb_edges ) );
+    EXPECT(edge_nodes_data == eckit::testing::make_view(edge_nodes_check, edge_nodes_check + 2 * nb_edges));
 
     idx_t edge_to_cell_check[] = {0,  missing_value,
                                   0,  16,
@@ -235,17 +235,17 @@ CASE( "test_accumulate_facets" ) {
                                   77, 78,
                                   78, missing_value,
                                   78, 79};
-    EXPECT( edge_to_cell_data == eckit::testing::make_view( edge_to_cell_check, edge_to_cell_check + 2 * nb_edges ) );
+    EXPECT(edge_to_cell_data == eckit::testing::make_view(edge_to_cell_check, edge_to_cell_check + 2 * nb_edges));
 }
 
-CASE( "test_build_edges" ) {
+CASE("test_build_edges") {
     idx_t missing_value = -1;
-    Grid grid( "O2" );
-    StructuredMeshGenerator generator( Config( "angle", 29.0 )( "triangulate", false )( "ghost_at_end", false ) );
-    Mesh mesh = generator.generate( grid );
+    Grid grid("O2");
+    StructuredMeshGenerator generator(Config("angle", 29.0)("triangulate", false)("ghost_at_end", false));
+    Mesh mesh = generator.generate(grid);
 
     // Accumulate facets of cells ( edges in 2D )
-    mesh::actions::build_edges( mesh, option::pole_edges( false ) );
+    mesh::actions::build_edges(mesh, option::pole_edges(false));
 
     idx_t edge_nodes_check[] = {
         0,  21, 21, 22, 22, 1,  1,  0,  22, 23, 23, 2,  2,  1,  3,  25, 25, 26, 26, 4,  4,  3,  26, 27, 27, 5,  5,
@@ -264,16 +264,16 @@ CASE( "test_build_edges" ) {
 
     {
         const mesh::HybridElements::Connectivity& edge_node_connectivity = mesh.edges().node_connectivity();
-        EXPECT( mesh.projection().units() == "degrees" );
-        const util::UniqueLonLat compute_uid( mesh );
-        for ( idx_t jedge = 0; jedge < mesh.edges().size(); ++jedge ) {
-            if ( compute_uid( edge_nodes_check[2 * jedge + 0] ) < compute_uid( edge_nodes_check[2 * jedge + 1] ) ) {
-                EXPECT( edge_nodes_check[2 * jedge + 0] == edge_node_connectivity( jedge, 0 ) );
-                EXPECT( edge_nodes_check[2 * jedge + 1] == edge_node_connectivity( jedge, 1 ) );
+        EXPECT(mesh.projection().units() == "degrees");
+        const util::UniqueLonLat compute_uid(mesh);
+        for (idx_t jedge = 0; jedge < mesh.edges().size(); ++jedge) {
+            if (compute_uid(edge_nodes_check[2 * jedge + 0]) < compute_uid(edge_nodes_check[2 * jedge + 1])) {
+                EXPECT(edge_nodes_check[2 * jedge + 0] == edge_node_connectivity(jedge, 0));
+                EXPECT(edge_nodes_check[2 * jedge + 1] == edge_node_connectivity(jedge, 1));
             }
             else {
-                EXPECT( edge_nodes_check[2 * jedge + 0] == edge_node_connectivity( jedge, 1 ) );
-                EXPECT( edge_nodes_check[2 * jedge + 1] == edge_node_connectivity( jedge, 0 ) );
+                EXPECT(edge_nodes_check[2 * jedge + 0] == edge_node_connectivity(jedge, 1));
+                EXPECT(edge_nodes_check[2 * jedge + 1] == edge_node_connectivity(jedge, 0));
             }
         }
     }
@@ -453,54 +453,54 @@ CASE( "test_build_edges" ) {
     {
         const mesh::HybridElements::Connectivity& cell_node_connectivity = mesh.cells().node_connectivity();
         const mesh::HybridElements::Connectivity& edge_cell_connectivity = mesh.edges().cell_connectivity();
-        const util::UniqueLonLat compute_uid( mesh );
-        for ( idx_t jedge = 0; jedge < mesh.edges().size(); ++jedge ) {
+        const util::UniqueLonLat compute_uid(mesh);
+        for (idx_t jedge = 0; jedge < mesh.edges().size(); ++jedge) {
             idx_t e1 = edge_to_cell_check[2 * jedge + 0];
             idx_t e2 = edge_to_cell_check[2 * jedge + 1];
-            if ( e2 == edge_cell_connectivity.missing_value() ||
-                 compute_uid( cell_node_connectivity.row( e1 ) ) < compute_uid( cell_node_connectivity.row( e2 ) ) ) {
-                EXPECT( edge_to_cell_check[2 * jedge + 0] == edge_cell_connectivity( jedge, 0 ) );
-                EXPECT( edge_to_cell_check[2 * jedge + 1] == edge_cell_connectivity( jedge, 1 ) );
+            if (e2 == edge_cell_connectivity.missing_value() ||
+                compute_uid(cell_node_connectivity.row(e1)) < compute_uid(cell_node_connectivity.row(e2))) {
+                EXPECT(edge_to_cell_check[2 * jedge + 0] == edge_cell_connectivity(jedge, 0));
+                EXPECT(edge_to_cell_check[2 * jedge + 1] == edge_cell_connectivity(jedge, 1));
             }
             else {
                 std::cout << "jedge " << jedge << std::endl;
-                EXPECT( edge_to_cell_check[2 * jedge + 0] == edge_cell_connectivity( jedge, 1 ) );
-                EXPECT( edge_to_cell_check[2 * jedge + 1] == edge_cell_connectivity( jedge, 0 ) );
+                EXPECT(edge_to_cell_check[2 * jedge + 0] == edge_cell_connectivity(jedge, 1));
+                EXPECT(edge_to_cell_check[2 * jedge + 1] == edge_cell_connectivity(jedge, 0));
             }
         }
     }
 
     {
         const MultiBlockConnectivity& elem_edge_connectivity = mesh.cells().edge_connectivity();
-        for ( idx_t jelem = 0; jelem < mesh.cells().size(); ++jelem ) {
+        for (idx_t jelem = 0; jelem < mesh.cells().size(); ++jelem) {
             std::cout << jelem << " : ";
-            for ( idx_t jedge = 0; jedge < elem_edge_connectivity.cols( jelem ); ++jedge ) {
-                std::cout << elem_edge_connectivity( jelem, jedge ) << "  ";
+            for (idx_t jedge = 0; jedge < elem_edge_connectivity.cols(jelem); ++jedge) {
+                std::cout << elem_edge_connectivity(jelem, jedge) << "  ";
             }
             std::cout << std::endl;
         }
     }
 }
 
-CASE( "test_build_edges_triangles_only" ) {
-    Grid grid( "O2" );
-    StructuredMeshGenerator generator( Config( "angle", 29.0 )( "triangulate", true )( "ghost_at_end", false ) );
-    Mesh mesh = generator.generate( grid );
+CASE("test_build_edges_triangles_only") {
+    Grid grid("O2");
+    StructuredMeshGenerator generator(Config("angle", 29.0)("triangulate", true)("ghost_at_end", false));
+    Mesh mesh = generator.generate(grid);
 
     // Accumulate facets of cells ( edges in 2D )
-    mesh::actions::build_edges( mesh, option::pole_edges( false ) );
+    mesh::actions::build_edges(mesh, option::pole_edges(false));
 
     {
         const MultiBlockConnectivity& elem_edge_connectivity = mesh.cells().edge_connectivity();
         const MultiBlockConnectivity& elem_node_connectivity = mesh.cells().node_connectivity();
-        for ( idx_t jelem = 0; jelem < mesh.cells().size(); ++jelem ) {
+        for (idx_t jelem = 0; jelem < mesh.cells().size(); ++jelem) {
             std::cout << jelem << " : edges (  ";
-            for ( idx_t jedge = 0; jedge < elem_edge_connectivity.cols( jelem ); ++jedge ) {
-                std::cout << elem_edge_connectivity( jelem, jedge ) << "  ";
+            for (idx_t jedge = 0; jedge < elem_edge_connectivity.cols(jelem); ++jedge) {
+                std::cout << elem_edge_connectivity(jelem, jedge) << "  ";
             }
             std::cout << ")     |    nodes ( ";
-            for ( idx_t jnode = 0; jnode < elem_node_connectivity.cols( jelem ); ++jnode ) {
-                std::cout << elem_node_connectivity( jelem, jnode ) << "  ";
+            for (idx_t jnode = 0; jnode < elem_node_connectivity.cols(jelem); ++jnode) {
+                std::cout << elem_node_connectivity(jelem, jnode) << "  ";
             }
             std::cout << ")" << std::endl;
         }
@@ -510,19 +510,19 @@ CASE( "test_build_edges_triangles_only" ) {
 
 //-----------------------------------------------------------------------------
 
-CASE( "test_pole_edge_default" ) {
-    auto pole_edges = []( const Grid& grid ) {
-        auto mesh = StructuredMeshGenerator().generate( grid );
-        mesh::actions::build_edges( mesh );
-        return mesh.edges().metadata().getBool( "pole_edges" );
+CASE("test_pole_edge_default") {
+    auto pole_edges = [](const Grid& grid) {
+        auto mesh = StructuredMeshGenerator().generate(grid);
+        mesh::actions::build_edges(mesh);
+        return mesh.edges().metadata().getBool("pole_edges");
     };
-    EXPECT( pole_edges( Grid( "L10x11" ) ) == false );
-    EXPECT( pole_edges( Grid( "F4" ) ) == true );
-    EXPECT( pole_edges( Grid( "S4" ) ) == true );
-    EXPECT( pole_edges( Grid( "Slat4" ) ) == true );
-    EXPECT( pole_edges( Grid( "Slon4" ) ) == false );
-    EXPECT( pole_edges( Grid( Config( "type", "regional" )( "nx", 35 )( "ny", 25 )( "north", -10 )( "south", -50 )(
-                "east", 170 )( "west", 100 ) ) ) == false );
+    EXPECT(pole_edges(Grid("L10x11")) == false);
+    EXPECT(pole_edges(Grid("F4")) == true);
+    EXPECT(pole_edges(Grid("S4")) == true);
+    EXPECT(pole_edges(Grid("Slat4")) == true);
+    EXPECT(pole_edges(Grid("Slon4")) == false);
+    EXPECT(pole_edges(Grid(Config("type", "regional")("nx", 35)("ny", 25)("north", -10)("south", -50)("east", 170)(
+               "west", 100))) == false);
 }
 
 //-----------------------------------------------------------------------------
@@ -530,6 +530,6 @@ CASE( "test_pole_edge_default" ) {
 }  // namespace test
 }  // namespace atlas
 
-int main( int argc, char** argv ) {
-    return atlas::test::run( argc, argv );
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
 }

@@ -41,7 +41,7 @@ namespace grid {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-class Spacing : DOXYGEN_HIDE( public util::ObjectHandle<atlas::grid::spacing::Spacing> ) {
+class Spacing : DOXYGEN_HIDE(public util::ObjectHandle<atlas::grid::spacing::Spacing>) {
 public:
     using const_iterator = std::vector<double>::const_iterator;
     using Interval       = std::array<double, 2>;
@@ -50,11 +50,11 @@ public:
 public:
     using Handle::Handle;
     Spacing() = default;
-    Spacing( const eckit::Parametrisation& );
+    Spacing(const eckit::Parametrisation&);
 
     size_t size() const;
 
-    double operator[]( size_t i ) const;
+    double operator[](size_t i) const;
 
     const_iterator begin() const;
     const_iterator end() const;
@@ -81,8 +81,8 @@ public:
 public:
     using Spacing::Spacing;
     LinearSpacing() = default;
-    LinearSpacing( double start, double stop, long N, bool endpoint = true );
-    LinearSpacing( const Interval&, long N, bool endpoint = true );
+    LinearSpacing(double start, double stop, long N, bool endpoint = true);
+    LinearSpacing(const Interval&, long N, bool endpoint = true);
     double step() const;
 };
 
@@ -92,7 +92,7 @@ class GaussianSpacing : public Spacing {
 public:
     using Spacing::Spacing;
     GaussianSpacing() = default;
-    GaussianSpacing( long N );
+    GaussianSpacing(long N);
 };
 
 //---------------------------------------------------------------------------------------------------------------------

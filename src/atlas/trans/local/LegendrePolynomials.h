@@ -32,26 +32,26 @@ namespace trans {
 // Ported to C++ by:
 // Andreas Mueller *ECMWF*
 //
-void compute_zfn( const int trc, double zfn[] );
+void compute_zfn(const int trc, double zfn[]);
 
-void compute_legendre_polynomials_lat( const int trc,     // truncation (in)
-                                       const double lat,  // latitude in radians (in)
-                                       double legpol[],   // legendre polynomials
-                                       double zfn[] );
+void compute_legendre_polynomials_lat(const int trc,     // truncation (in)
+                                      const double lat,  // latitude in radians (in)
+                                      double legpol[],   // legendre polynomials
+                                      double zfn[]);
 
 void compute_legendre_polynomials(
-    const int trc,              // truncation (in)
-    const int nlats,            // number of latitudes
-    const double lats[],        // latitudes in radians (in)
-    double legendre_sym[],      // values of associated Legendre functions, symmetric part
-    double legendre_asym[],     // values of associated Legendre functions, asymmetric part
-    size_t leg_start_sym[],     // start indices for different zonal wave numbers, symmetric part
-    size_t leg_start_asym[] );  // start indices for different zonal wave numbers, asymmetric part
+    const int trc,             // truncation (in)
+    const int nlats,           // number of latitudes
+    const double lats[],       // latitudes in radians (in)
+    double legendre_sym[],     // values of associated Legendre functions, symmetric part
+    double legendre_asym[],    // values of associated Legendre functions, asymmetric part
+    size_t leg_start_sym[],    // start indices for different zonal wave numbers, symmetric part
+    size_t leg_start_asym[]);  // start indices for different zonal wave numbers, asymmetric part
 
-void compute_legendre_polynomials_all( const int trc,        // truncation (in)
-                                       const int nlats,      // number of latitudes
-                                       const double lats[],  // latitudes in radians (in)
-                                       double legendre[] );  // legendre polynomials for all latitudes
+void compute_legendre_polynomials_all(const int trc,        // truncation (in)
+                                      const int nlats,      // number of latitudes
+                                      const double lats[],  // latitudes in radians (in)
+                                      double legendre[]);   // legendre polynomials for all latitudes
 
 // --------------------------------------------------------------------------------------------------------------------
 

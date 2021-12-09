@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <array>
 #include <vector>
 
 #include "atlas/grid/detail/partitioner/Partitioner.h"
@@ -23,14 +24,14 @@ class CubedSpherePartitioner : public Partitioner {
 public:
     CubedSpherePartitioner();
 
-    CubedSpherePartitioner( int N );  // N is the number of parts (aka MPI tasks)
-    CubedSpherePartitioner( int N, const eckit::Parametrisation& );
+    CubedSpherePartitioner(int N);  // N is the number of parts (aka MPI tasks)
+    CubedSpherePartitioner(int N, const eckit::Parametrisation&);
 
-    CubedSpherePartitioner( const int N, const std::vector<int>& globalProcStartPE,
-                            const std::vector<int>& globalProcEndPE, const std::vector<int>& nprocx,
-                            const std::vector<int>& nprocy );
+    CubedSpherePartitioner(const int N, const std::vector<int>& globalProcStartPE,
+                           const std::vector<int>& globalProcEndPE, const std::vector<int>& nprocx,
+                           const std::vector<int>& nprocy);
 
-    CubedSpherePartitioner( const int N, const bool regularGrid );
+    CubedSpherePartitioner(const int N, const bool regularGrid);
 
 
     // Cell struct that holds the x and y and t indices
@@ -74,15 +75,15 @@ public:
         }
     };
 
-    CubedSphere cubedsphere( const Grid& ) const;
+    CubedSphere cubedsphere(const Grid&) const;
 
-    void partition( CubedSphere& cb, const int nb_nodes, const CellInt nodes[], int part[] ) const;
+    void partition(CubedSphere& cb, const int nb_nodes, const CellInt nodes[], int part[]) const;
 
     virtual std::string type() const { return "cubedsphere"; }
 
 private:
     using Partitioner::partition;
-    virtual void partition( const Grid&, int part[] ) const;
+    virtual void partition(const Grid&, int part[]) const;
 
     void check() const;
 

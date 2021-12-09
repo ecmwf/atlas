@@ -20,14 +20,14 @@ using namespace atlas::grid;
 namespace atlas {
 namespace test {
 
-Mesh generate_mesh( const StructuredGrid& grid ) {
-    auto config = util::Config( "partitioner", "equal_regions" );
-    StructuredMeshGenerator generate( config );
-    return generate( grid );
+Mesh generate_mesh(const StructuredGrid& grid) {
+    auto config = util::Config("partitioner", "equal_regions");
+    StructuredMeshGenerator generate(config);
+    return generate(grid);
 }
 
-Mesh generate_mesh( std::initializer_list<long> nx ) {
-    return generate_mesh( ReducedGaussianGrid( nx ) );
+Mesh generate_mesh(std::initializer_list<long> nx) {
+    return generate_mesh(ReducedGaussianGrid(nx));
 }
 
 }  // end namespace test

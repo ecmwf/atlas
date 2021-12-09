@@ -21,23 +21,23 @@ struct Version {             // 8 bytes
     std::uint32_t major{0};  ///<  Major version
     std::uint32_t minor{2};  ///<  Minor version
 
-    std::string str() const { return std::to_string( major ) + "." + std::to_string( minor ); }
+    std::string str() const { return std::to_string(major) + "." + std::to_string(minor); }
     operator std::string() const { return str(); }
     operator eckit::SemanticVersion() const { return eckit::SemanticVersion{major, minor, 0}; }
 
-    bool operator<( const Version& v ) const {
+    bool operator<(const Version& v) const {
         return eckit::SemanticVersion{major, minor, 0} < eckit::SemanticVersion{v.major, v.minor, 0};
     }
-    bool operator==( const Version& v ) const {
+    bool operator==(const Version& v) const {
         return eckit::SemanticVersion{major, minor, 0} == eckit::SemanticVersion{v.major, v.minor, 0};
     }
-    bool operator!=( const Version& v ) const { return !( *this == v ); }
-    bool operator<=( const Version& v ) const { return ( *this < v ) or ( *this == v ); }
-    bool operator>( const Version& v ) const { return !( *this <= v ); }
-    bool operator>=( const Version& v ) const { return ( *this > v ) or ( *this == v ); }
+    bool operator!=(const Version& v) const { return !(*this == v); }
+    bool operator<=(const Version& v) const { return (*this < v) or (*this == v); }
+    bool operator>(const Version& v) const { return !(*this <= v); }
+    bool operator>=(const Version& v) const { return (*this > v) or (*this == v); }
 
 
-    friend std::ostream& operator<<( std::ostream& out, const Version& v ) {
+    friend std::ostream& operator<<(std::ostream& out, const Version& v) {
         out << v.str();
         return out;
     }

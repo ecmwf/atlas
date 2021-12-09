@@ -30,8 +30,8 @@ inline Method::~Method() {}
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 extern "C" {
-void atlas__Method__delete( Method* This );
-const char* atlas__Method__name( Method* This );
+void atlas__Method__delete(Method* This);
+const char* atlas__Method__name(Method* This);
 }
 #endif
 

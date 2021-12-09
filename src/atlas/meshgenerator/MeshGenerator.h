@@ -41,24 +41,24 @@ class MeshGeneratorImpl;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class MeshGenerator : DOXYGEN_HIDE( public util::ObjectHandle<meshgenerator::MeshGeneratorImpl> ) {
+class MeshGenerator : DOXYGEN_HIDE(public util::ObjectHandle<meshgenerator::MeshGeneratorImpl>) {
 public:
     using Parameters = atlas::util::Config;
 
 public:
     using Handle::Handle;
-    MeshGenerator( const std::string&, const eckit::Parametrisation& = util::NoConfig() );
-    MeshGenerator( const eckit::Parametrisation& );
+    MeshGenerator(const std::string&, const eckit::Parametrisation& = util::NoConfig());
+    MeshGenerator(const eckit::Parametrisation&);
 
-    void hash( eckit::Hash& ) const;
+    void hash(eckit::Hash&) const;
 
-    Mesh generate( const Grid&, const grid::Distribution& ) const;
-    Mesh generate( const Grid&, const grid::Partitioner& ) const;
-    Mesh generate( const Grid& ) const;
+    Mesh generate(const Grid&, const grid::Distribution&) const;
+    Mesh generate(const Grid&, const grid::Partitioner&) const;
+    Mesh generate(const Grid&) const;
 
-    Mesh operator()( const Grid&, const grid::Distribution& ) const;
-    Mesh operator()( const Grid&, const grid::Partitioner& ) const;
-    Mesh operator()( const Grid& ) const;
+    Mesh operator()(const Grid&, const grid::Distribution&) const;
+    Mesh operator()(const Grid&, const grid::Partitioner&) const;
+    Mesh operator()(const Grid&) const;
 
     std::string type() const;
 };
@@ -68,8 +68,8 @@ public:
 // Shorthands
 class StructuredMeshGenerator : public MeshGenerator {
 public:
-    StructuredMeshGenerator( const eckit::Parametrisation& config = util::NoConfig() ) :
-        MeshGenerator( "structured", config ) {}
+    StructuredMeshGenerator(const eckit::Parametrisation& config = util::NoConfig()):
+        MeshGenerator("structured", config) {}
 };
 
 //----------------------------------------------------------------------------------------------------------------------

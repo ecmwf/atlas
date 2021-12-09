@@ -22,11 +22,11 @@
 namespace atlas {
 namespace io {
 
-Checksum::Checksum( const std::string& checksum ) {
+Checksum::Checksum(const std::string& checksum) {
     std::vector<std::string> tokens;
-    eckit::Tokenizer tokenizer( ':' );
-    eckit::Tokenizer{':'}( checksum, tokens );
-    if ( tokens.size() == 1 ) {
+    eckit::Tokenizer tokenizer(':');
+    eckit::Tokenizer{':'}(checksum, tokens);
+    if (tokens.size() == 1) {
         algorithm_ = "none";
         checksum_  = "";
     }
@@ -41,35 +41,35 @@ bool Checksum::available() const {
 }
 
 std::string Checksum::str() const {
-    if ( algorithm_.empty() ) {
+    if (algorithm_.empty()) {
         return "";
     }
     return algorithm_ + ":" + checksum_;
 }
 
-std::string Checksum::str( size_t size ) const {
-    if ( algorithm_.empty() ) {
+std::string Checksum::str(size_t size) const {
+    if (algorithm_.empty()) {
         return "";
     }
-    return algorithm_ + ":" + checksum_.substr( 0, std::min( size, checksum_.size() ) );
+    return algorithm_ + ":" + checksum_.substr(0, std::min(size, checksum_.size()));
 }
 
-std::string checksum( const void* buffer, size_t size, const std::string& algorithm ) {
-    auto is_available = []( const std::string& alg ) -> bool { return eckit::HashFactory::instance().has( alg ); };
+std::string checksum(const void* buffer, size_t size, const std::string& algorithm) {
+    auto is_available = [](const std::string& alg) -> bool { return eckit::HashFactory::instance().has(alg); };
 
-    auto hash = [&]( const std::string& alg ) -> std::string {
-        std::unique_ptr<eckit::Hash> hasher( eckit::HashFactory::instance().build( alg ) );
-        ATLAS_TRACE( "checksum(" + alg + ")" );
-        return std::string( alg ) + ":" + hasher->compute( buffer, long( size ) );
+    auto hash = [&](const std::string& alg) -> std::string {
+        std::unique_ptr<eckit::Hash> hasher(eckit::HashFactory::instance().build(alg));
+        ATLAS_TRACE("checksum(" + alg + ")");
+        return std::string(alg) + ":" + hasher->compute(buffer, long(size));
     };
 
     std::string alg = algorithm.empty() ? defaults::checksum_algorithm() : algorithm;
 
-    if ( is_available( alg ) ) {
-        return hash( alg );
+    if (is_available(alg)) {
+        return hash(alg);
     }
     else {
-        return hash( "none" );
+        return hash("none");
     }
 }
 

@@ -19,7 +19,7 @@ namespace method {
 
 class Cubic2D : public StructuredInterpolation2D<CubicHorizontalKernel> {
 public:
-    Cubic2D( const Config& );
+    Cubic2D(const Config&);
 };
 
 }  // namespace method

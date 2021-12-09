@@ -25,40 +25,40 @@ namespace atlas {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-MeshGenerator::MeshGenerator( const std::string& key, const eckit::Parametrisation& config ) :
-    Handle( meshgenerator::MeshGeneratorFactory::build( key, config ) ) {}
+MeshGenerator::MeshGenerator(const std::string& key, const eckit::Parametrisation& config):
+    Handle(meshgenerator::MeshGeneratorFactory::build(key, config)) {}
 
-MeshGenerator::MeshGenerator( const eckit::Parametrisation& config ) :
-    Handle( meshgenerator::MeshGeneratorFactory::build(
+MeshGenerator::MeshGenerator(const eckit::Parametrisation& config):
+    Handle(meshgenerator::MeshGeneratorFactory::build(
         [&config]() {
             std::string key;
-            ATLAS_ASSERT( config.get( "type", key ), "type must be specified in MeshGenerator configuration" );
+            ATLAS_ASSERT(config.get("type", key), "type must be specified in MeshGenerator configuration");
             return key;
         }(),
-        config ) ) {}
+        config)) {}
 
-void MeshGenerator::hash( eckit::Hash& h ) const {
-    get()->hash( h );
-}
-
-Mesh MeshGenerator::generate( const Grid& g, const grid::Distribution& d ) const {
-    return get()->generate( g, d );
-}
-Mesh MeshGenerator::generate( const Grid& g, const grid::Partitioner& p ) const {
-    return get()->generate( g, p );
-}
-Mesh MeshGenerator::generate( const Grid& g ) const {
-    return get()->generate( g );
+void MeshGenerator::hash(eckit::Hash& h) const {
+    get()->hash(h);
 }
 
-Mesh MeshGenerator::operator()( const Grid& g, const grid::Distribution& d ) const {
-    return get()->operator()( g, d );
+Mesh MeshGenerator::generate(const Grid& g, const grid::Distribution& d) const {
+    return get()->generate(g, d);
 }
-Mesh MeshGenerator::operator()( const Grid& g, const grid::Partitioner& p ) const {
-    return get()->operator()( g, p );
+Mesh MeshGenerator::generate(const Grid& g, const grid::Partitioner& p) const {
+    return get()->generate(g, p);
 }
-Mesh MeshGenerator::operator()( const Grid& g ) const {
-    return get()->operator()( g );
+Mesh MeshGenerator::generate(const Grid& g) const {
+    return get()->generate(g);
+}
+
+Mesh MeshGenerator::operator()(const Grid& g, const grid::Distribution& d) const {
+    return get()->operator()(g, d);
+}
+Mesh MeshGenerator::operator()(const Grid& g, const grid::Partitioner& p) const {
+    return get()->operator()(g, p);
+}
+Mesh MeshGenerator::operator()(const Grid& g) const {
+    return get()->operator()(g);
 }
 
 std::string MeshGenerator::type() const {

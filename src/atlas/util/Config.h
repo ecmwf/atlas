@@ -31,49 +31,49 @@ public:
     Config();
 
     /// @brief Constructor starting from a path
-    Config( const eckit::PathName& );
+    Config(const eckit::PathName&);
 
     /// @brief Constructor starting from a stream
-    Config( std::istream&, const std::string& format = "json" );
+    Config(std::istream&, const std::string& format = "json");
 
     /// @brief Constructor starting from a Configuration
-    Config( const eckit::Configuration& );
+    Config(const eckit::Configuration&);
 
     /// @brief Constructor immediately setting a value.
     template <typename ValueT>
-    Config( const std::string& name, const ValueT& value );
+    Config(const std::string& name, const ValueT& value);
 
     template <typename ValueT>
-    Config( const std::string& name, std::initializer_list<ValueT>&& value );
+    Config(const std::string& name, std::initializer_list<ValueT>&& value);
 
     // -- Mutators
 
     /// @brief Operator that sets a key-value pair.
     template <typename ValueT>
-    Config operator()( const std::string& name, const ValueT& value );
+    Config operator()(const std::string& name, const ValueT& value);
 
     template <typename ValueT>
-    Config operator()( const std::string& name, std::initializer_list<ValueT>&& value );
+    Config operator()(const std::string& name, std::initializer_list<ValueT>&& value);
 
     // Overload operators to merge two Config objects.
-    Config operator|( const Config& other ) const;
+    Config operator|(const Config& other) const;
 
     /// @brief Set a key-value parameter
     using eckit::LocalConfiguration::set;
 
-    Config& set( const std::string& name, const std::vector<Config>& );
+    Config& set(const std::string& name, const std::vector<Config>&);
 
-    Config& set( const eckit::LocalConfiguration& );
+    Config& set(const eckit::LocalConfiguration&);
 
     template <typename T>
-    Config& set( const std::string& name, std::initializer_list<T>&& value );
+    Config& set(const std::string& name, std::initializer_list<T>&& value);
 
-    Config& remove( const std::string& name );
+    Config& remove(const std::string& name);
 
     // -- Accessors, overloaded from eckit::Parametrisation
 
     using eckit::LocalConfiguration::get;
-    bool get( const std::string& name, std::vector<Config>& value ) const;
+    bool get(const std::string& name, std::vector<Config>& value) const;
 
     std::vector<std::string> keys() const;
 };
@@ -81,30 +81,30 @@ public:
 // ------------------------------------------------------------------
 
 template <typename ValueT>
-inline Config::Config( const std::string& name, const ValueT& value ) : eckit::LocalConfiguration() {
-    set( name, value );
+inline Config::Config(const std::string& name, const ValueT& value): eckit::LocalConfiguration() {
+    set(name, value);
 }
 
 template <typename ValueT>
-inline Config::Config( const std::string& name, std::initializer_list<ValueT>&& value ) : eckit::LocalConfiguration() {
-    set( name, value );
+inline Config::Config(const std::string& name, std::initializer_list<ValueT>&& value): eckit::LocalConfiguration() {
+    set(name, value);
 }
 
 template <typename ValueT>
-inline Config Config::operator()( const std::string& name, const ValueT& value ) {
-    set( name, value );
+inline Config Config::operator()(const std::string& name, const ValueT& value) {
+    set(name, value);
     return *this;
 }
 
 template <typename ValueT>
-inline Config& Config::set( const std::string& name, std::initializer_list<ValueT>&& value ) {
-    set( name, std::vector<ValueT>( value.begin(), value.end() ) );
+inline Config& Config::set(const std::string& name, std::initializer_list<ValueT>&& value) {
+    set(name, std::vector<ValueT>(value.begin(), value.end()));
     return *this;
 }
 
 template <typename ValueT>
-inline Config Config::operator()( const std::string& name, std::initializer_list<ValueT>&& value ) {
-    set( name, std::vector<ValueT>( value.begin(), value.end() ) );
+inline Config Config::operator()(const std::string& name, std::initializer_list<ValueT>&& value) {
+    set(name, std::vector<ValueT>(value.begin(), value.end()));
     return *this;
 }
 
@@ -150,24 +150,24 @@ public:  // methods
     /// Destructor redundant but fixes sanity compiler warnings
     virtual ~NoConfig() {}
 
-    virtual bool has( const std::string& name ) const { return false; }
+    virtual bool has(const std::string& name) const { return false; }
 
-    virtual bool get( const std::string& name, std::string& value ) const { return false; }
-    virtual bool get( const std::string& name, bool& value ) const { return false; }
-    virtual bool get( const std::string& name, int& value ) const { return false; }
-    virtual bool get( const std::string& name, long& value ) const { return false; }
-    virtual bool get( const std::string& name, long long& value ) const { return false; }
-    virtual bool get( const std::string& name, std::size_t& value ) const { return false; }
-    virtual bool get( const std::string& name, float& value ) const { return false; }
-    virtual bool get( const std::string& name, double& value ) const { return false; }
+    virtual bool get(const std::string& name, std::string& value) const { return false; }
+    virtual bool get(const std::string& name, bool& value) const { return false; }
+    virtual bool get(const std::string& name, int& value) const { return false; }
+    virtual bool get(const std::string& name, long& value) const { return false; }
+    virtual bool get(const std::string& name, long long& value) const { return false; }
+    virtual bool get(const std::string& name, std::size_t& value) const { return false; }
+    virtual bool get(const std::string& name, float& value) const { return false; }
+    virtual bool get(const std::string& name, double& value) const { return false; }
 
-    virtual bool get( const std::string& name, std::vector<std::string>& value ) const { return false; }
-    virtual bool get( const std::string& name, std::vector<int>& value ) const { return false; }
-    virtual bool get( const std::string& name, std::vector<long>& value ) const { return false; }
-    virtual bool get( const std::string& name, std::vector<long long>& value ) const { return false; }
-    virtual bool get( const std::string& name, std::vector<std::size_t>& value ) const { return false; }
-    virtual bool get( const std::string& name, std::vector<float>& value ) const { return false; }
-    virtual bool get( const std::string& name, std::vector<double>& value ) const { return false; }
+    virtual bool get(const std::string& name, std::vector<std::string>& value) const { return false; }
+    virtual bool get(const std::string& name, std::vector<int>& value) const { return false; }
+    virtual bool get(const std::string& name, std::vector<long>& value) const { return false; }
+    virtual bool get(const std::string& name, std::vector<long long>& value) const { return false; }
+    virtual bool get(const std::string& name, std::vector<std::size_t>& value) const { return false; }
+    virtual bool get(const std::string& name, std::vector<float>& value) const { return false; }
+    virtual bool get(const std::string& name, std::vector<double>& value) const { return false; }
 };
 
 }  // namespace util

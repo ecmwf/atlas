@@ -22,19 +22,17 @@ namespace grid {
 
 using namespace detail::distribution;
 
-Distribution::Distribution( const Grid& grid ) : Handle( new SerialDistribution{grid} ) {}
+Distribution::Distribution(const Grid& grid): Handle(new SerialDistribution{grid}) {}
 
-Distribution::Distribution( const Grid& grid, const Config& config ) :
-    Handle( Partitioner( config ).partition( grid ).get() ) {}
+Distribution::Distribution(const Grid& grid, const Config& config): Handle(Partitioner(config).partition(grid).get()) {}
 
-Distribution::Distribution( const Grid& grid, const Partitioner& partitioner ) :
-    Handle( partitioner.partition( grid ) ) {}
+Distribution::Distribution(const Grid& grid, const Partitioner& partitioner): Handle(partitioner.partition(grid)) {}
 
-Distribution::Distribution( int nb_partitions, idx_t npts, int part[], int part0 ) :
-    Handle( new DistributionArray( nb_partitions, npts, part, part0 ) ) {}
+Distribution::Distribution(int nb_partitions, idx_t npts, int part[], int part0):
+    Handle(new DistributionArray(nb_partitions, npts, part, part0)) {}
 
-Distribution::Distribution( int nb_partitions, partition_t&& part ) :
-    Handle( new DistributionArray( nb_partitions, std::move( part ) ) ) {}
+Distribution::Distribution(int nb_partitions, partition_t&& part):
+    Handle(new DistributionArray(nb_partitions, std::move(part))) {}
 
 Distribution::~Distribution() = default;
 
@@ -54,18 +52,18 @@ const std::string& Distribution::type() const {
     return get()->type();
 }
 
-std::ostream& operator<<( std::ostream& os, const Distribution& distribution ) {
-    distribution.get()->print( os );
+std::ostream& operator<<(std::ostream& os, const Distribution& distribution) {
+    distribution.get()->print(os);
     return os;
 }
 
-void Distribution::hash( eckit::Hash& hash ) const {
-    get()->hash( hash );
+void Distribution::hash(eckit::Hash& hash) const {
+    get()->hash(hash);
 }
 
 std::string Distribution::hash() const {
     eckit::MD5 h;
-    hash( h );
+    hash(h);
     return h.digest();
 }
 

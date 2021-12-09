@@ -26,13 +26,13 @@ std::string backtrace() {
 
 namespace detail {
 
-void debug_parallel_here( const eckit::CodeLocation& here ) {
+void debug_parallel_here(const eckit::CodeLocation& here) {
     const auto& comm = mpi::comm();
     comm.barrier();
     Log::info() << "DEBUG_PARALLEL() @ " << here << std::endl;
 }
 
-void debug_parallel_what( const eckit::CodeLocation& here, const std::string& what ) {
+void debug_parallel_what(const eckit::CodeLocation& here, const std::string& what) {
     const auto& comm = mpi::comm();
     comm.barrier();
     Log::info() << "DEBUG_PARALLEL(" << what << ") @ " << here << std::endl;
@@ -56,17 +56,17 @@ Log::Channel& Log::debug() {
     return atlas::Library::instance().debugChannel();
 }
 
-void Log::addFortranUnit( int unit, Style style, const char* prefix ) {
+void Log::addFortranUnit(int unit, Style style, const char* prefix) {
 #if ATLAS_HAVE_FORTRAN
-    fckit::Log::addFortranUnit( unit, fckit::Log::Style( style ), prefix );
+    fckit::Log::addFortranUnit(unit, fckit::Log::Style(style), prefix);
 #else
 /*NOTIMP*/
 #endif
 }
 
-void Log::setFortranUnit( int unit, Style style, const char* prefix ) {
+void Log::setFortranUnit(int unit, Style style, const char* prefix) {
 #if ATLAS_HAVE_FORTRAN
-    fckit::Log::setFortranUnit( unit, fckit::Log::Style( style ), prefix );
+    fckit::Log::setFortranUnit(unit, fckit::Log::Style(style), prefix);
 #else
 /*NOTIMP*/
 #endif

@@ -21,18 +21,18 @@ namespace interpolation {
 struct PartitionedMesh {
     typedef grid::Partitioner Partitioner;
 
-    PartitionedMesh( const std::string& partitioner, const std::string& generator,
-                     bool meshGeneratorTriangulate = false, double meshGeneratorAngle = 0 );
+    PartitionedMesh(const std::string& partitioner, const std::string& generator, bool meshGeneratorTriangulate = false,
+                    double meshGeneratorAngle = 0);
 
     virtual ~PartitionedMesh() {}
 
     const Mesh& mesh() const { return mesh_; }
     Mesh& mesh() { return mesh_; }
 
-    void writeGmsh( const std::string& fileName, const FieldSet& fields = FieldSet() );
+    void writeGmsh(const std::string& fileName, const FieldSet& fields = FieldSet());
 
-    void partition( const Grid& );
-    void partition( const Grid&, const PartitionedMesh& );
+    void partition(const Grid&);
+    void partition(const Grid&, const PartitionedMesh&);
 
 protected:
     const std::string optionPartitioner_;

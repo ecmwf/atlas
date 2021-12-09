@@ -25,48 +25,48 @@ using std::declval;
 using std::is_pod;
 
 template <class, class>
-std::false_type can_interprete( ... ) noexcept( false );
+std::false_type can_interprete(...) noexcept(false);
 
-template <class T, class A, class = decltype( interprete( declval<const T&>(), declval<A&>() ) )>
-std::true_type can_interprete( int ) noexcept( noexcept( interprete( declval<const T&>(), declval<A&>() ) ) );
-
-template <class>
-std::false_type can_encode_data( ... ) noexcept( false );
-
-template <class T, class = decltype( encode_data( declval<const T&>(), declval<Data&>() ) )>
-std::true_type can_encode_data( int ) noexcept( noexcept( encode_data( declval<const T&>(), declval<Data&>() ) ) );
+template <class T, class A, class = decltype(interprete(declval<const T&>(), declval<A&>()))>
+std::true_type can_interprete(int) noexcept(noexcept(interprete(declval<const T&>(), declval<A&>())));
 
 template <class>
-std::false_type can_encode_metadata( ... ) noexcept( false );
+std::false_type can_encode_data(...) noexcept(false);
 
-template <class T, class = decltype( encode_metadata( declval<const T&>(), declval<atlas::io::Metadata&>() ) )>
-std::true_type can_encode_metadata( int ) noexcept( noexcept( encode_metadata( declval<const T&>(),
-                                                                               declval<atlas::io::Metadata&>() ) ) );
+template <class T, class = decltype(encode_data(declval<const T&>(), declval<Data&>()))>
+std::true_type can_encode_data(int) noexcept(noexcept(encode_data(declval<const T&>(), declval<Data&>())));
+
+template <class>
+std::false_type can_encode_metadata(...) noexcept(false);
+
+template <class T, class = decltype(encode_metadata(declval<const T&>(), declval<atlas::io::Metadata&>()))>
+std::true_type can_encode_metadata(int) noexcept(noexcept(encode_metadata(declval<const T&>(),
+                                                                          declval<atlas::io::Metadata&>())));
 
 
 template <class>
-std::false_type can_decode( ... ) noexcept( false );
+std::false_type can_decode(...) noexcept(false);
 
-template <class T, class = decltype( decode( declval<const Metadata&>(), declval<const Data&>(), declval<T&>() ) )>
-std::true_type can_decode( int ) noexcept( noexcept( decode( declval<const Metadata&>(), declval<const Data&>(),
-                                                             declval<T&>() ) ) );
+template <class T, class = decltype(decode(declval<const Metadata&>(), declval<const Data&>(), declval<T&>()))>
+std::true_type can_decode(int) noexcept(noexcept(decode(declval<const Metadata&>(), declval<const Data&>(),
+                                                        declval<T&>())));
 }  // namespace adl_tests
 
 
 template <class T, class A>
 static constexpr bool is_interpretable() {
-    return decltype( adl_tests::can_interprete<typename std::decay<T>::type, A>( 0 ) )::value;
+    return decltype(adl_tests::can_interprete<typename std::decay<T>::type, A>(0))::value;
 }
 
 
 template <class T>
 static constexpr bool can_encode_data() {
-    return decltype( adl_tests::can_encode_data<typename std::decay<T>::type>( 0 ) )::value;
+    return decltype(adl_tests::can_encode_data<typename std::decay<T>::type>(0))::value;
 }
 
 template <class T>
 static constexpr bool can_encode_metadata() {
-    return decltype( adl_tests::can_encode_metadata<typename std::decay<T>::type>( 0 ) )::value;
+    return decltype(adl_tests::can_encode_metadata<typename std::decay<T>::type>(0))::value;
 }
 
 
@@ -77,7 +77,7 @@ static constexpr bool is_encodable() {
 
 template <typename T>
 static constexpr bool is_decodable() {
-    return decltype( adl_tests::can_decode<typename std::decay<T>::type>( 0 ) )::value;
+    return decltype(adl_tests::can_decode<typename std::decay<T>::type>(0))::value;
 }
 
 

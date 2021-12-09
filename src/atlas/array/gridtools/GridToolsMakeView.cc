@@ -28,16 +28,16 @@ namespace array {
 
 namespace {
 template <typename Value, unsigned Rank>
-static void check_metadata( const Array& array ) {
-    if ( array.rank() != Rank ) {
+static void check_metadata(const Array& array) {
+    if (array.rank() != Rank) {
         std::stringstream err;
         err << "Number of dimensions do not match: template argument " << Rank << " expected to be " << array.rank();
-        throw_Exception( err.str(), Here() );
+        throw_Exception(err.str(), Here());
     }
-    if ( array.datatype() != array::DataType::create<Value>() ) {
+    if (array.datatype() != array::DataType::create<Value>()) {
         std::stringstream err;
         err << "Data Type does not match: template argument expected to be " << array.datatype().str();
-        throw_Exception( err.str(), Here() );
+        throw_Exception(err.str(), Here());
     }
 }
 }  // namespace
@@ -46,26 +46,26 @@ namespace gridtools {
 
 
 template <typename Value, unsigned int Rank>
-typename gt_view<Value, Rank>::type make_gt_host_view( const Array& array ) {
+typename gt_view<Value, Rank>::type make_gt_host_view(const Array& array) {
     using value_t         = typename std::remove_const<Value>::type;
     using storage_info_ty = storage_traits::storage_info_t<0, Rank>;
     using data_store_t    = storage_traits::data_store_t<value_t, storage_info_ty>;
 
-    data_store_t* ds = reinterpret_cast<data_store_t*>( const_cast<void*>( array.storage() ) );
-    return ::gridtools::make_host_view<get_access_mode<Value>()>( *ds );
+    data_store_t* ds = reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage()));
+    return ::gridtools::make_host_view<get_access_mode<Value>()>(*ds);
 }
 
 template <typename Value, unsigned int Rank>
-typename gt_view<Value, Rank>::type make_gt_device_view( const Array& array ) {
+typename gt_view<Value, Rank>::type make_gt_device_view(const Array& array) {
     using value_t         = typename std::remove_const<Value>::type;
     using storage_info_ty = storage_traits::storage_info_t<0, Rank>;
     using data_store_t    = storage_traits::data_store_t<value_t, storage_info_ty>;
 
-    data_store_t* ds = reinterpret_cast<data_store_t*>( const_cast<void*>( array.storage() ) );
+    data_store_t* ds = reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage()));
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    return ::gridtools::make_device_view<get_access_mode<Value>()>( *ds );
+    return ::gridtools::make_device_view<get_access_mode<Value>()>(*ds);
 #else
-    return ::gridtools::make_host_view<get_access_mode<Value>()>( *ds );
+    return ::gridtools::make_host_view<get_access_mode<Value>()>(*ds);
 #endif
 }
 
@@ -77,37 +77,37 @@ constexpr bool device_view = true;
 
 
 template <typename Value, int Rank>
-ArrayView<Value, Rank> make_host_view( Array& array ) {
-    check_metadata<Value, Rank>( array );
-    return ArrayView<Value, Rank>( array, host_view );
+ArrayView<Value, Rank> make_host_view(Array& array) {
+    check_metadata<Value, Rank>(array);
+    return ArrayView<Value, Rank>(array, host_view);
 }
 
 template <typename Value, int Rank>
-ArrayView<const Value, Rank> make_host_view( const Array& array ) {
-    check_metadata<Value, Rank>( array );
-    return ArrayView<const Value, Rank>( array, host_view );
+ArrayView<const Value, Rank> make_host_view(const Array& array) {
+    check_metadata<Value, Rank>(array);
+    return ArrayView<const Value, Rank>(array, host_view);
 }
 
 template <typename Value, int Rank>
-ArrayView<Value, Rank> make_device_view( Array& array ) {
-    check_metadata<Value, Rank>( array );
-    return ArrayView<Value, Rank>( array, device_view );
+ArrayView<Value, Rank> make_device_view(Array& array) {
+    check_metadata<Value, Rank>(array);
+    return ArrayView<Value, Rank>(array, device_view);
 }
 
 template <typename Value, int Rank>
-ArrayView<const Value, Rank> make_device_view( const Array& array ) {
-    check_metadata<Value, Rank>( array );
-    return ArrayView<const Value, Rank>( array, device_view );
+ArrayView<const Value, Rank> make_device_view(const Array& array) {
+    check_metadata<Value, Rank>(array);
+    return ArrayView<const Value, Rank>(array, device_view);
 }
 
 template <typename Value, int Rank>
-ArrayView<Value, Rank> make_view( Array& array ) {
-    return make_host_view<Value, Rank>( array );
+ArrayView<Value, Rank> make_view(Array& array) {
+    return make_host_view<Value, Rank>(array);
 }
 
 template <typename Value, int Rank>
-ArrayView<const Value, Rank> make_view( const Array& array ) {
-    return make_host_view<Value, Rank>( array );
+ArrayView<const Value, Rank> make_view(const Array& array) {
+    return make_host_view<Value, Rank>(array);
 }
 
 //template <typename Value, int Rank>
@@ -134,41 +134,40 @@ ArrayView<const Value, Rank> make_view( const Array& array ) {
 
 
 template <typename Value, int Rank>
-IndexView<Value, Rank> make_host_indexview( Array& array ) {
-    using value_t = typename std::remove_const<Value>::type;
-    typedef gridtools::storage_traits::storage_info_t<0, Rank> storage_info_ty;
-    typedef gridtools::storage_traits::data_store_t<value_t, storage_info_ty> data_store_t;
+IndexView<Value, Rank> make_host_indexview(Array& array) {
+    using value_t         = typename std::remove_const<Value>::type;
+    using storage_info_ty = gridtools::storage_traits::storage_info_t<0, Rank>;
+    using data_store_t    = gridtools::storage_traits::data_store_t<value_t, storage_info_ty>;
 
-    data_store_t* ds = reinterpret_cast<data_store_t*>( const_cast<void*>( array.storage() ) );
+    data_store_t* ds = reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage()));
 
-    return IndexView<Value, Rank>( ::gridtools::make_host_view<gridtools::get_access_mode<Value>()>( *ds ) );
+    return IndexView<Value, Rank>(::gridtools::make_host_view<gridtools::get_access_mode<Value>()>(*ds));
 }
 
 template <typename Value, int Rank>
-IndexView<const Value, Rank> make_host_indexview( const Array& array ) {
-    using value_t = typename std::remove_const<Value>::type;
-    typedef gridtools::storage_traits::storage_info_t<0, Rank> storage_info_ty;
-    typedef gridtools::storage_traits::data_store_t<value_t, storage_info_ty> data_store_t;
+IndexView<const Value, Rank> make_host_indexview(const Array& array) {
+    using value_t         = typename std::remove_const<Value>::type;
+    using storage_info_ty = gridtools::storage_traits::storage_info_t<0, Rank>;
+    using data_store_t    = gridtools::storage_traits::data_store_t<value_t, storage_info_ty>;
 
-    data_store_t* ds = reinterpret_cast<data_store_t*>( const_cast<void*>( array.storage() ) );
+    data_store_t* ds = reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage()));
 
-    return IndexView<const Value, Rank>(
-        ::gridtools::make_host_view<gridtools::get_access_mode<const Value>()>( *ds ) );
+    return IndexView<const Value, Rank>(::gridtools::make_host_view<gridtools::get_access_mode<const Value>()>(*ds));
 }
 
 
 // --------------------------------------------------------------------------------------------
 
 template <typename Value, int Rank>
-IndexView<Value, Rank> make_indexview( Array& array ) {
-    check_metadata<Value, Rank>( array );
-    return make_host_indexview<Value, Rank>( array );
+IndexView<Value, Rank> make_indexview(Array& array) {
+    check_metadata<Value, Rank>(array);
+    return make_host_indexview<Value, Rank>(array);
 }
 
 template <typename Value, int Rank>
-IndexView<const Value, Rank> make_indexview( const Array& array ) {
-    check_metadata<Value, Rank>( array );
-    return make_host_indexview<Value, Rank>( array );
+IndexView<const Value, Rank> make_indexview(const Array& array) {
+    check_metadata<Value, Rank>(array);
+    return make_host_indexview<Value, Rank>(array);
 }
 
 }  // namespace array
@@ -230,68 +229,68 @@ namespace array {
 //#undef EXPLICIT_TEMPLATE_INSTANTIATION
 
 
-#define EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK( TYPE, RANK )                                                    \
-    template ArrayView<TYPE, RANK> make_view<TYPE, RANK>( Array& );                                                \
-    template ArrayView<const TYPE, RANK> make_view<const TYPE, RANK>( Array& );                                    \
-    template ArrayView<const TYPE, RANK> make_view<TYPE, RANK>( const Array& );                                    \
-    template ArrayView<const TYPE, RANK> make_view<const TYPE, RANK>( const Array& );                              \
-                                                                                                                   \
-    template ArrayView<TYPE, RANK> make_host_view<TYPE, RANK>( Array& );                                           \
-    template ArrayView<const TYPE, RANK> make_host_view<const TYPE, RANK>( Array& );                               \
-    template ArrayView<const TYPE, RANK> make_host_view<TYPE, RANK>( const Array& );                               \
-    template ArrayView<const TYPE, RANK> make_host_view<const TYPE, RANK>( const Array& );                         \
-                                                                                                                   \
-    template ArrayView<TYPE, RANK> make_device_view<TYPE, RANK>( Array& );                                         \
-    template ArrayView<const TYPE, RANK> make_device_view<const TYPE, RANK>( Array& );                             \
-    template ArrayView<const TYPE, RANK> make_device_view<TYPE, RANK>( const Array& );                             \
-    template ArrayView<const TYPE, RANK> make_device_view<const TYPE, RANK>( const Array& );                       \
-                                                                                                                   \
-    namespace gridtools {                                                                                          \
-    template typename gt_view<TYPE, RANK>::type make_gt_host_view<TYPE, RANK>( const Array& array );               \
-    template typename gt_view<const TYPE, RANK>::type make_gt_host_view<const TYPE, RANK>( const Array& array );   \
-    template typename gt_view<TYPE, RANK>::type make_gt_device_view<TYPE, RANK>( const Array& array );             \
-    template typename gt_view<const TYPE, RANK>::type make_gt_device_view<const TYPE, RANK>( const Array& array ); \
+#define EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(TYPE, RANK)                                                    \
+    template ArrayView<TYPE, RANK> make_view<TYPE, RANK>(Array&);                                                \
+    template ArrayView<const TYPE, RANK> make_view<const TYPE, RANK>(Array&);                                    \
+    template ArrayView<const TYPE, RANK> make_view<TYPE, RANK>(const Array&);                                    \
+    template ArrayView<const TYPE, RANK> make_view<const TYPE, RANK>(const Array&);                              \
+                                                                                                                 \
+    template ArrayView<TYPE, RANK> make_host_view<TYPE, RANK>(Array&);                                           \
+    template ArrayView<const TYPE, RANK> make_host_view<const TYPE, RANK>(Array&);                               \
+    template ArrayView<const TYPE, RANK> make_host_view<TYPE, RANK>(const Array&);                               \
+    template ArrayView<const TYPE, RANK> make_host_view<const TYPE, RANK>(const Array&);                         \
+                                                                                                                 \
+    template ArrayView<TYPE, RANK> make_device_view<TYPE, RANK>(Array&);                                         \
+    template ArrayView<const TYPE, RANK> make_device_view<const TYPE, RANK>(Array&);                             \
+    template ArrayView<const TYPE, RANK> make_device_view<TYPE, RANK>(const Array&);                             \
+    template ArrayView<const TYPE, RANK> make_device_view<const TYPE, RANK>(const Array&);                       \
+                                                                                                                 \
+    namespace gridtools {                                                                                        \
+    template typename gt_view<TYPE, RANK>::type make_gt_host_view<TYPE, RANK>(const Array& array);               \
+    template typename gt_view<const TYPE, RANK>::type make_gt_host_view<const TYPE, RANK>(const Array& array);   \
+    template typename gt_view<TYPE, RANK>::type make_gt_device_view<TYPE, RANK>(const Array& array);             \
+    template typename gt_view<const TYPE, RANK>::type make_gt_device_view<const TYPE, RANK>(const Array& array); \
     }
 
 
-#define EXPLICIT_TEMPLATE_INSTATIATION( RANK )                \
-    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK( int, RANK )    \
-    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK( long, RANK )   \
-    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK( float, RANK )  \
-    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK( double, RANK ) \
-    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK( unsigned long, RANK )
+#define EXPLICIT_TEMPLATE_INSTATIATION(RANK)                \
+    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(int, RANK)    \
+    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(long, RANK)   \
+    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(float, RANK)  \
+    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(double, RANK) \
+    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(unsigned long, RANK)
 
 
-EXPLICIT_TEMPLATE_INSTATIATION( 1 )
-EXPLICIT_TEMPLATE_INSTATIATION( 2 )
-EXPLICIT_TEMPLATE_INSTATIATION( 3 )
-EXPLICIT_TEMPLATE_INSTATIATION( 4 )
-EXPLICIT_TEMPLATE_INSTATIATION( 5 )
-EXPLICIT_TEMPLATE_INSTATIATION( 6 )
-EXPLICIT_TEMPLATE_INSTATIATION( 7 )
-EXPLICIT_TEMPLATE_INSTATIATION( 8 )
-EXPLICIT_TEMPLATE_INSTATIATION( 9 )
+EXPLICIT_TEMPLATE_INSTATIATION(1)
+EXPLICIT_TEMPLATE_INSTATIATION(2)
+EXPLICIT_TEMPLATE_INSTATIATION(3)
+EXPLICIT_TEMPLATE_INSTATIATION(4)
+EXPLICIT_TEMPLATE_INSTATIATION(5)
+EXPLICIT_TEMPLATE_INSTATIATION(6)
+EXPLICIT_TEMPLATE_INSTATIATION(7)
+EXPLICIT_TEMPLATE_INSTATIATION(8)
+EXPLICIT_TEMPLATE_INSTATIATION(9)
 
 #undef EXPLICIT_TEMPLATE_INSTATIATION_TYPE_RANK
 #undef EXPLICIT_TEMPLATE_INSTATIATION
 
-#define EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW_TYPE_RANK( TYPE, RANK )                       \
-    template IndexView<TYPE, RANK> make_host_indexview<TYPE, RANK>( Array& );                   \
-    template IndexView<const TYPE, RANK> make_host_indexview<const TYPE, RANK>( Array& );       \
-    template IndexView<const TYPE, RANK> make_host_indexview<TYPE, RANK>( const Array& );       \
-    template IndexView<const TYPE, RANK> make_host_indexview<const TYPE, RANK>( const Array& ); \
-                                                                                                \
-    template IndexView<TYPE, RANK> make_indexview<TYPE, RANK>( Array& );                        \
-    template IndexView<const TYPE, RANK> make_indexview<const TYPE, RANK>( Array& );            \
-    template IndexView<const TYPE, RANK> make_indexview<TYPE, RANK>( const Array& );            \
-    template IndexView<const TYPE, RANK> make_indexview<const TYPE, RANK>( const Array& );
+#define EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW_TYPE_RANK(TYPE, RANK)                       \
+    template IndexView<TYPE, RANK> make_host_indexview<TYPE, RANK>(Array&);                   \
+    template IndexView<const TYPE, RANK> make_host_indexview<const TYPE, RANK>(Array&);       \
+    template IndexView<const TYPE, RANK> make_host_indexview<TYPE, RANK>(const Array&);       \
+    template IndexView<const TYPE, RANK> make_host_indexview<const TYPE, RANK>(const Array&); \
+                                                                                              \
+    template IndexView<TYPE, RANK> make_indexview<TYPE, RANK>(Array&);                        \
+    template IndexView<const TYPE, RANK> make_indexview<const TYPE, RANK>(Array&);            \
+    template IndexView<const TYPE, RANK> make_indexview<TYPE, RANK>(const Array&);            \
+    template IndexView<const TYPE, RANK> make_indexview<const TYPE, RANK>(const Array&);
 
-#define EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW( RANK )            \
-    EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW_TYPE_RANK( int, RANK ) \
-    EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW_TYPE_RANK( long, RANK )
+#define EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW(RANK)            \
+    EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW_TYPE_RANK(int, RANK) \
+    EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW_TYPE_RANK(long, RANK)
 
-EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW( 1 )
-EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW( 2 )
+EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW(1)
+EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW(2)
 
 #undef EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW
 #undef EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW_TYPE_RANK

@@ -42,21 +42,21 @@ namespace meshgenerator {
 
 class HealpixMeshGenerator : public MeshGenerator::Implementation {
 public:
-    HealpixMeshGenerator( const eckit::Parametrisation& = util::NoConfig() );
+    HealpixMeshGenerator(const eckit::Parametrisation& = util::NoConfig());
 
-    virtual void generate( const Grid&, const grid::Distribution&, Mesh& ) const override;
-    virtual void generate( const Grid&, Mesh& ) const override;
+    virtual void generate(const Grid&, const grid::Distribution&, Mesh&) const override;
+    virtual void generate(const Grid&, Mesh&) const override;
 
     using MeshGenerator::Implementation::generate;
 
-    virtual void hash( eckit::Hash& ) const override;
+    virtual void hash(eckit::Hash&) const override;
     virtual std::string type() const override { return static_type(); }
     static std::string static_type() { return "healpix"; }
 
 private:
     void configure_defaults();
 
-    void generate_mesh( const StructuredGrid&, const grid::Distribution&, Mesh& m ) const;
+    void generate_mesh(const StructuredGrid&, const grid::Distribution&, Mesh& m) const;
 
 private:
     util::Metadata options;

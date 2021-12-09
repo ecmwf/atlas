@@ -32,10 +32,10 @@ namespace actions {
 /// Creates a XYZ field from the (lon,lat) field
 class BuildXYZField {
 public:
-    explicit BuildXYZField( const std::string& name = "xyz", bool force_recompute = false );
+    explicit BuildXYZField(const std::string& name = "xyz", bool force_recompute = false);
 
-    Field& operator()( Mesh& ) const;
-    Field& operator()( mesh::Nodes& ) const;
+    Field& operator()(Mesh&) const;
+    Field& operator()(mesh::Nodes&) const;
 
 private:
     std::string name_;

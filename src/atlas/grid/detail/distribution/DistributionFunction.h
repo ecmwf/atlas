@@ -23,9 +23,9 @@ namespace distribution {
 
 class DistributionFunction : public DistributionImpl {
 public:
-    DistributionFunction( const Grid& ) : DistributionImpl() {}
+    DistributionFunction(const Grid&): DistributionImpl() {}
     bool functional() const override { return true; }
-    size_t footprint() const override { return nb_pts_.size() * sizeof( nb_pts_[0] ); }
+    size_t footprint() const override { return nb_pts_.size() * sizeof(nb_pts_[0]); }
     const std::string& type() const override { return nb_partitions_ == 1 ? serial : type_; }
     idx_t nb_partitions() const override { return nb_partitions_; }
 
@@ -34,11 +34,11 @@ public:
     idx_t max_pts() const override { return max_pts_; }
     idx_t min_pts() const override { return min_pts_; }
 
-    void print( std::ostream& ) const override;
+    void print(std::ostream&) const override;
 
     gidx_t size() const override { return size_; }
 
-    void hash( eckit::Hash& ) const override;
+    void hash(eckit::Hash&) const override;
 
 protected:
     gidx_t size_;
@@ -54,16 +54,16 @@ protected:
 template <typename Derived>
 class DistributionFunctionT : public DistributionFunction {
 public:
-    DistributionFunctionT( const Grid& grid ) : DistributionFunction( grid ) {}
-    ATLAS_ALWAYS_INLINE int partition( gidx_t index ) const override {
-        return static_cast<const Derived*>( this )->function( index );
+    DistributionFunctionT(const Grid& grid): DistributionFunction(grid) {}
+    ATLAS_ALWAYS_INLINE int partition(gidx_t index) const override {
+        return static_cast<const Derived*>(this)->function(index);
     }
 
-    ATLAS_ALWAYS_INLINE void partition( gidx_t begin, gidx_t end, int partitions[] ) const override {
-        const Derived& derived = *static_cast<const Derived*>( this );
+    ATLAS_ALWAYS_INLINE void partition(gidx_t begin, gidx_t end, int partitions[]) const override {
+        const Derived& derived = *static_cast<const Derived*>(this);
         size_t i               = 0;
-        for ( gidx_t n = begin; n < end; ++n, ++i ) {
-            partitions[i] = derived.function( n );
+        for (gidx_t n = begin; n < end; ++n, ++i) {
+            partitions[i] = derived.function(n);
         }
     }
 };

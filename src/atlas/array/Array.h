@@ -39,36 +39,36 @@ public:
     Array() = default;
     virtual ~Array();
 
-    static Array* create( array::DataType, const ArrayShape& );
+    static Array* create(array::DataType, const ArrayShape&);
 
-    static Array* create( array::DataType, const ArrayShape&, const ArrayLayout& );
+    static Array* create(array::DataType, const ArrayShape&, const ArrayLayout&);
 
-    static Array* create( array::DataType, ArraySpec&& );
+    static Array* create(array::DataType, ArraySpec&&);
 
     virtual size_t footprint() const = 0;
 
     template <typename Value>
-    static Array* create( idx_t size0 );
+    static Array* create(idx_t size0);
     template <typename Value>
-    static Array* create( idx_t size0, idx_t size1 );
+    static Array* create(idx_t size0, idx_t size1);
     template <typename Value>
-    static Array* create( idx_t size0, idx_t size1, idx_t size2 );
+    static Array* create(idx_t size0, idx_t size1, idx_t size2);
     template <typename Value>
-    static Array* create( idx_t size0, idx_t size1, idx_t size2, idx_t size3 );
+    static Array* create(idx_t size0, idx_t size1, idx_t size2, idx_t size3);
     template <typename Value>
-    static Array* create( idx_t size0, idx_t size1, idx_t size2, idx_t size3, idx_t size4 );
+    static Array* create(idx_t size0, idx_t size1, idx_t size2, idx_t size3, idx_t size4);
 
     template <typename Value>
-    static Array* create( const ArrayShape& shape );
+    static Array* create(const ArrayShape& shape);
 
     template <typename Value>
-    static Array* create( const ArrayShape& shape, const ArrayLayout& layout );
+    static Array* create(const ArrayShape& shape, const ArrayLayout& layout);
 
     template <typename Value>
-    static Array* wrap( Value* data, const ArrayShape& shape );
+    static Array* wrap(Value* data, const ArrayShape& shape);
 
     template <typename Value>
-    static Array* wrap( Value* data, const ArraySpec& spec );
+    static Array* wrap(Value* data, const ArraySpec& spec);
 
     idx_t bytes() const { return datatype().size() * spec().allocatedSize(); }
 
@@ -76,9 +76,9 @@ public:
 
     idx_t rank() const { return spec_.rank(); }
 
-    idx_t stride( idx_t i ) const { return spec_.strides()[i]; }
+    idx_t stride(idx_t i) const { return spec_.strides()[i]; }
 
-    idx_t shape( idx_t i ) const { return spec_.shape()[i]; }
+    idx_t shape(idx_t i) const { return spec_.shape()[i]; }
 
     const ArrayStrides& strides() const { return spec_.strides(); }
 
@@ -94,17 +94,17 @@ public:
 
     virtual array::DataType datatype() const = 0;
 
-    virtual void resize( const ArrayShape& shape ) = 0;
+    virtual void resize(const ArrayShape& shape) = 0;
 
-    virtual void resize( idx_t size0 )                                                     = 0;
-    virtual void resize( idx_t size0, idx_t size1 )                                        = 0;
-    virtual void resize( idx_t size0, idx_t size1, idx_t size2 )                           = 0;
-    virtual void resize( idx_t size0, idx_t size1, idx_t size2, idx_t size3 )              = 0;
-    virtual void resize( idx_t size0, idx_t size1, idx_t size2, idx_t size3, idx_t size4 ) = 0;
+    virtual void resize(idx_t size0)                                                     = 0;
+    virtual void resize(idx_t size0, idx_t size1)                                        = 0;
+    virtual void resize(idx_t size0, idx_t size1, idx_t size2)                           = 0;
+    virtual void resize(idx_t size0, idx_t size1, idx_t size2, idx_t size3)              = 0;
+    virtual void resize(idx_t size0, idx_t size1, idx_t size2, idx_t size3, idx_t size4) = 0;
 
-    virtual void insert( idx_t idx1, idx_t size1 ) = 0;
+    virtual void insert(idx_t idx1, idx_t size1) = 0;
 
-    virtual void dump( std::ostream& os ) const = 0;
+    virtual void dump(std::ostream& os) const = 0;
 
     virtual bool accMap() const = 0;
 
@@ -161,12 +161,12 @@ public:
     const ArrayDataStore& data_store() const { return *data_store_; }
 
 protected:
-    Array( ArraySpec&& spec ) : spec_( std::move( spec ) ) {}
+    Array(ArraySpec&& spec): spec_(std::move(spec)) {}
     ArraySpec spec_;
     std::unique_ptr<ArrayDataStore> data_store_;
 
-    void replace( Array& array ) {
-        data_store_.swap( array.data_store_ );
+    void replace(Array& array) {
+        data_store_.swap(array.data_store_);
         spec_ = array.spec_;
     }
 };
@@ -176,37 +176,37 @@ protected:
 template <typename Value>
 class ArrayT : public Array {
 public:
-    ArrayT( idx_t size0 );
-    ArrayT( idx_t size0, idx_t size1 );
-    ArrayT( idx_t size0, idx_t size1, idx_t size2 );
-    ArrayT( idx_t size0, idx_t size1, idx_t size2, idx_t size3 );
-    ArrayT( idx_t size0, idx_t size1, idx_t size2, idx_t size3, idx_t size4 );
+    ArrayT(idx_t size0);
+    ArrayT(idx_t size0, idx_t size1);
+    ArrayT(idx_t size0, idx_t size1, idx_t size2);
+    ArrayT(idx_t size0, idx_t size1, idx_t size2, idx_t size3);
+    ArrayT(idx_t size0, idx_t size1, idx_t size2, idx_t size3, idx_t size4);
 
-    ArrayT( ArraySpec&& );
+    ArrayT(ArraySpec&&);
 
-    ArrayT( const ArrayShape& );
+    ArrayT(const ArrayShape&);
 
-    ArrayT( const ArrayShape&, const ArrayAlignment& );
+    ArrayT(const ArrayShape&, const ArrayAlignment&);
 
-    ArrayT( const ArrayShape&, const ArrayLayout& );
+    ArrayT(const ArrayShape&, const ArrayLayout&);
 
-    virtual void insert( idx_t idx1, idx_t size1 );
+    virtual void insert(idx_t idx1, idx_t size1);
 
-    virtual void resize( const ArrayShape& );
+    virtual void resize(const ArrayShape&);
 
-    virtual void resize( idx_t size0 );
-    virtual void resize( idx_t size0, idx_t size1 );
-    virtual void resize( idx_t size0, idx_t size1, idx_t size2 );
-    virtual void resize( idx_t size0, idx_t size1, idx_t size2, idx_t size3 );
-    virtual void resize( idx_t size0, idx_t size1, idx_t size2, idx_t size3, idx_t size4 );
+    virtual void resize(idx_t size0);
+    virtual void resize(idx_t size0, idx_t size1);
+    virtual void resize(idx_t size0, idx_t size1, idx_t size2);
+    virtual void resize(idx_t size0, idx_t size1, idx_t size2, idx_t size3);
+    virtual void resize(idx_t size0, idx_t size1, idx_t size2, idx_t size3, idx_t size4);
 
     virtual array::DataType datatype() const { return array::DataType::create<Value>(); }
 
-    virtual void dump( std::ostream& os ) const;
+    virtual void dump(std::ostream& os) const;
 
     // This constructor is used through the Array::create() or the Array::wrap()
     // methods
-    ArrayT( ArrayDataStore*, const ArraySpec& );
+    ArrayT(ArrayDataStore*, const ArraySpec&);
 
     virtual size_t footprint() const;
 

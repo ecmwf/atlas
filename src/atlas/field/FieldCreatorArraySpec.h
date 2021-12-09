@@ -44,8 +44,8 @@ namespace field {
 class FieldCreatorArraySpec : public FieldCreator {
 public:
     FieldCreatorArraySpec() {}
-    FieldCreatorArraySpec( const eckit::Parametrisation& ) {}
-    virtual FieldImpl* createField( const eckit::Parametrisation& ) const;
+    FieldCreatorArraySpec(const eckit::Parametrisation&) {}
+    virtual FieldImpl* createField(const eckit::Parametrisation&) const;
 };
 
 // ------------------------------------------------------------------

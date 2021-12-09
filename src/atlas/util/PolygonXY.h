@@ -28,13 +28,13 @@ class PolygonXY : public PolygonCoordinates {
 public:
     using Vector = ListPolygonXY;
 
-    PolygonXY( const PartitionPolygon& );
+    PolygonXY(const PartitionPolygon&);
 
     /// @brief Point-in-polygon test based on winding number
     /// @note reference <a href="http://geomalgorithms.com/a03-_inclusion.html">Inclusion of a Point in a Polygon</a>
     /// @param[in] P given point
     /// @return if point (x,y) is in polygon
-    bool contains( const Point2& Pxy ) const override;
+    bool contains(const Point2& Pxy) const override;
 
 private:
     PointLonLat centroid_;
@@ -49,10 +49,10 @@ private:
 /// @brief Vector of all polygons with functionality to find partition using a KDTree
 class ListPolygonXY : public PolygonCoordinates::Vector {
 public:
-    ListPolygonXY( const PartitionPolygons& partition_polygons ) {
-        reserve( partition_polygons.size() );
-        for ( auto& partition_polygon : partition_polygons ) {
-            emplace_back( new PolygonXY( partition_polygon ) );
+    ListPolygonXY(const PartitionPolygons& partition_polygons) {
+        reserve(partition_polygons.size());
+        for (auto& partition_polygon : partition_polygons) {
+            emplace_back(new PolygonXY(partition_polygon));
         }
     }
 };

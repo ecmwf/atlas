@@ -27,12 +27,12 @@ namespace projection {
 class ProjectionFactory : public util::Factory<ProjectionFactory> {
 public:
     static std::string className() { return "ProjectionFactory"; }
-    static const Projection::Implementation* build( const std::string& );
-    static const Projection::Implementation* build( const std::string&, const eckit::Parametrisation& );
+    static const Projection::Implementation* build(const std::string&);
+    static const Projection::Implementation* build(const std::string&, const eckit::Parametrisation&);
     using Factory::Factory;
 
 private:
-    virtual const Projection::Implementation* make( const eckit::Parametrisation& ) = 0;
+    virtual const Projection::Implementation* make(const eckit::Parametrisation&) = 0;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -40,7 +40,7 @@ private:
 template <class T>
 class ProjectionBuilder : public ProjectionFactory {
 private:
-    virtual const Projection::Implementation* make( const eckit::Parametrisation& param ) { return new T( param ); }
+    virtual const Projection::Implementation* make(const eckit::Parametrisation& param) { return new T(param); }
 
 public:
     using ProjectionFactory::ProjectionFactory;

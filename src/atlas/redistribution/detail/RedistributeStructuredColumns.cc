@@ -26,25 +26,25 @@ namespace {
 
 // Transform a vector element-by-element with a functor.
 template <typename outType, typename inType, typename functorType>
-std::vector<outType> transformVector( const std::vector<inType>& inVector, const functorType& functor ) {
+std::vector<outType> transformVector(const std::vector<inType>& inVector, const functorType& functor) {
     // Declare result.
     auto outVector = std::vector<outType>{};
-    outVector.reserve( inVector.size() );
+    outVector.reserve(inVector.size());
 
     // Transform vector.
-    std::transform( inVector.begin(), inVector.end(), std::back_inserter( outVector ), functor );
+    std::transform(inVector.begin(), inVector.end(), std::back_inserter(outVector), functor);
 
     return outVector;
 }
 
 // Visit each index in a StructuredIndexRangeVector.
 template <typename functorType>
-void forEachIndex( const StructuredIndexRangeVector& ranges, const functorType& functor ) {
+void forEachIndex(const StructuredIndexRangeVector& ranges, const functorType& functor) {
     // Loop over all ranges.
-    std::for_each( ranges.cbegin(), ranges.cend(), [&]( const StructuredIndexRange& range ) {
-        range.forEach( functor );
+    std::for_each(ranges.cbegin(), ranges.cend(), [&](const StructuredIndexRange& range) {
+        range.forEach(functor);
         return;
-    } );
+    });
     return;
 }
 
@@ -60,19 +60,19 @@ void RedistributeStructuredColumns::do_setup() {
     target_ = target();
 
     // Assert that functionspaces are StructuredColumns.
-    ATLAS_ASSERT( source_, source().type() + " must be StructuredColumns" );
-    ATLAS_ASSERT( target_, target().type() + " must be StructuredColumns" );
+    ATLAS_ASSERT(source_, source().type() + " must be StructuredColumns");
+    ATLAS_ASSERT(target_, target().type() + " must be StructuredColumns");
 
     // Check that grids match.
-    ATLAS_ASSERT( source_.grid().name() == target_.grid().name() );
+    ATLAS_ASSERT(source_.grid().name() == target_.grid().name());
 
     // Check levels match.
-    ATLAS_ASSERT( source_.levels() == target_.levels() );
+    ATLAS_ASSERT(source_.levels() == target_.levels());
 
 
     // Get source and target range of this function space.
-    const auto sourceRange = StructuredIndexRange( source_ );
-    const auto targetRange = StructuredIndexRange( target_ );
+    const auto sourceRange = StructuredIndexRange(source_);
+    const auto targetRange = StructuredIndexRange(target_);
 
 
     // Get source and target ranges over all PEs.
@@ -81,98 +81,95 @@ void RedistributeStructuredColumns::do_setup() {
 
 
     // Get intersections between sourceRange and targetRanges.
-    auto getIntersections = []( const StructuredIndexRange& range, const StructuredIndexRangeVector& ranges ) {
+    auto getIntersections = [](const StructuredIndexRange& range, const StructuredIndexRangeVector& ranges) {
         return transformVector<StructuredIndexRange>(
-            ranges, [&]( const StructuredIndexRange& rangesElem ) { return range & rangesElem; } );
+            ranges, [&](const StructuredIndexRange& rangesElem) { return range & rangesElem; });
     };
 
-    sendIntersections_ = getIntersections( sourceRange, targetRanges );
-    recvIntersections_ = getIntersections( targetRange, sourceRanges );
+    sendIntersections_ = getIntersections(sourceRange, targetRanges);
+    recvIntersections_ = getIntersections(targetRange, sourceRanges);
 
 
     // Get counts and displacements for MPI communication.
-    auto getCountsDisplacements = []( const StructuredIndexRangeVector& intersections, const idx_t levels ) {
-        const auto counts = transformVector<int>( intersections, [&]( const StructuredIndexRange& intersection ) {
-            return static_cast<int>( intersection.getElemCount() * levels );
-        } );
+    auto getCountsDisplacements = [](const StructuredIndexRangeVector& intersections, const idx_t levels) {
+        const auto counts = transformVector<int>(intersections, [&](const StructuredIndexRange& intersection) {
+            return static_cast<int>(intersection.getElemCount() * levels);
+        });
 
         auto displacements = std::vector<int>{0};
-        std::partial_sum( counts.cbegin(), counts.cend() - 1, std::back_inserter( displacements ) );
+        std::partial_sum(counts.cbegin(), counts.cend() - 1, std::back_inserter(displacements));
 
-        return std::make_pair( counts, displacements );
+        return std::make_pair(counts, displacements);
     };
 
-    std::tie( sendCounts_, sendDisplacements_ ) = getCountsDisplacements( sendIntersections_, source_.levels() );
+    std::tie(sendCounts_, sendDisplacements_) = getCountsDisplacements(sendIntersections_, source_.levels());
 
-    std::tie( recvCounts_, recvDisplacements_ ) = getCountsDisplacements( recvIntersections_, target_.levels() );
+    std::tie(recvCounts_, recvDisplacements_) = getCountsDisplacements(recvIntersections_, target_.levels());
 
 
     // Trim off invalid intersections.
-    auto trimIntersections = []( StructuredIndexRangeVector& intersections ) {
-        intersections.erase( std::remove_if( intersections.begin(), intersections.end(),
-                                             []( const StructuredIndexRange& intersection ) {
-                                                 return !( intersection.getElemCount() );
-                                             } ),
-                             intersections.end() );
+    auto trimIntersections = [](StructuredIndexRangeVector& intersections) {
+        intersections.erase(
+            std::remove_if(intersections.begin(), intersections.end(),
+                           [](const StructuredIndexRange& intersection) { return !(intersection.getElemCount()); }),
+            intersections.end());
 
         return;
     };
 
-    trimIntersections( sendIntersections_ );
-    trimIntersections( recvIntersections_ );
+    trimIntersections(sendIntersections_);
+    trimIntersections(recvIntersections_);
 
     return;
 }
 
-void RedistributeStructuredColumns::execute( const Field& sourceField, Field& targetField ) const {
+void RedistributeStructuredColumns::execute(const Field& sourceField, Field& targetField) const {
     // Assert that fields are defined on StructuredColumns.
-    ATLAS_ASSERT( functionspace::StructuredColumns( sourceField.functionspace() ) );
-    ATLAS_ASSERT( functionspace::StructuredColumns( targetField.functionspace() ) );
+    ATLAS_ASSERT(functionspace::StructuredColumns(sourceField.functionspace()));
+    ATLAS_ASSERT(functionspace::StructuredColumns(targetField.functionspace()));
 
     // Check that grids match.
-    ATLAS_ASSERT( functionspace::StructuredColumns( sourceField.functionspace() ).grid().name() ==
-                  source_.grid().name() );
-    ATLAS_ASSERT( functionspace::StructuredColumns( targetField.functionspace() ).grid().name() ==
-                  target_.grid().name() );
+    ATLAS_ASSERT(functionspace::StructuredColumns(sourceField.functionspace()).grid().name() == source_.grid().name());
+    ATLAS_ASSERT(functionspace::StructuredColumns(targetField.functionspace()).grid().name() == target_.grid().name());
 
     // Check levels match.
-    ATLAS_ASSERT( sourceField.levels() == source_.levels() );
-    ATLAS_ASSERT( targetField.levels() == target_.levels() );
+    ATLAS_ASSERT(sourceField.levels() == source_.levels());
+    ATLAS_ASSERT(targetField.levels() == target_.levels());
 
     // Determine data type of field and execute.
-    switch ( sourceField.datatype().kind() ) {
+    switch (sourceField.datatype().kind()) {
         case array::DataType::KIND_REAL64:
-            do_execute<double>( sourceField, targetField );
+            do_execute<double>(sourceField, targetField);
             break;
 
         case array::DataType::KIND_REAL32:
-            do_execute<float>( sourceField, targetField );
+            do_execute<float>(sourceField, targetField);
             break;
 
         case array::DataType::KIND_INT32:
-            do_execute<int>( sourceField, targetField );
+            do_execute<int>(sourceField, targetField);
             break;
 
         case array::DataType::KIND_INT64:
-            do_execute<long>( sourceField, targetField );
+            do_execute<long>(sourceField, targetField);
             break;
 
         default:
-            throw_NotImplemented( "No implementation for data type " + sourceField.datatype().str(), Here() );
+            throw_NotImplemented("No implementation for data type " + sourceField.datatype().str(), Here());
     }
 
     return;
 }
 
-void RedistributeStructuredColumns::execute( const FieldSet& sourceFieldSet, FieldSet& targetFieldSet ) const {
+void RedistributeStructuredColumns::execute(const FieldSet& sourceFieldSet, FieldSet& targetFieldSet) const {
     // Check that both FieldSets are the same size.
-    ATLAS_ASSERT( sourceFieldSet.size() == targetFieldSet.size() );
+    ATLAS_ASSERT(sourceFieldSet.size() == targetFieldSet.size());
 
     auto targetFieldSetIt = targetFieldSet.begin();
-    std::for_each( sourceFieldSet.cbegin(), sourceFieldSet.cend(), [&]( const Field& sourceField ) {
-        execute( sourceField, *targetFieldSetIt++ );
+    std::for_each(sourceFieldSet.cbegin(), sourceFieldSet.cend(), [&](const Field& sourceField) {
+        execute(sourceField, *targetFieldSetIt++);
         return;
-    } );
+    });
 
     return;
 }
@@ -182,10 +179,10 @@ void RedistributeStructuredColumns::execute( const FieldSet& sourceFieldSet, Fie
 //========================================================================
 
 template <typename fieldType>
-void RedistributeStructuredColumns::do_execute( const Field& sourceField, Field& targetField ) const {
+void RedistributeStructuredColumns::do_execute(const Field& sourceField, Field& targetField) const {
     // Make Atlas view objects.
-    const auto sourceView = array::make_view<fieldType, 2>( sourceField );
-    auto targetView       = array::make_view<fieldType, 2>( targetField );
+    const auto sourceView = array::make_view<fieldType, 2>(sourceField);
+    auto targetView       = array::make_view<fieldType, 2>(targetField);
 
 
     // Get buffer sizes.
@@ -194,18 +191,18 @@ void RedistributeStructuredColumns::do_execute( const Field& sourceField, Field&
 
 
     // Allocate send and receive buffers.
-    auto sendBuffer = std::vector<fieldType>( static_cast<size_t>( nSend ) );
-    auto recvBuffer = std::vector<fieldType>( static_cast<size_t>( nRecv ) );
+    auto sendBuffer = std::vector<fieldType>(static_cast<size_t>(nSend));
+    auto recvBuffer = std::vector<fieldType>(static_cast<size_t>(nRecv));
 
 
     // Set send functor.
     auto sendBufferIt = sendBuffer.begin();
-    auto sendFunctor  = [&]( const idx_t i, const idx_t j ) {
+    auto sendFunctor  = [&](const idx_t i, const idx_t j) {
         // Loop over levels
-        const auto iNode = source_.index( i, j );
+        const auto iNode = source_.index(i, j);
         const auto kEnd  = source_.levels();
-        for ( idx_t k = 0; k < kEnd; ++k ) {
-            *sendBufferIt++ = sourceView( iNode, k );
+        for (idx_t k = 0; k < kEnd; ++k) {
+            *sendBufferIt++ = sourceView(iNode, k);
         }
         return;
     };
@@ -213,26 +210,26 @@ void RedistributeStructuredColumns::do_execute( const Field& sourceField, Field&
 
     // Set receive functor.
     auto recvBufferIt = recvBuffer.cbegin();
-    auto recvFunctor  = [&]( const idx_t i, const idx_t j ) {
+    auto recvFunctor  = [&](const idx_t i, const idx_t j) {
         // Loop over levels
-        const auto iNode = target_.index( i, j );
+        const auto iNode = target_.index(i, j);
         const auto kEnd  = target_.levels();
-        for ( idx_t k = 0; k < kEnd; ++k ) {
-            targetView( iNode, k ) = *recvBufferIt++;
+        for (idx_t k = 0; k < kEnd; ++k) {
+            targetView(iNode, k) = *recvBufferIt++;
         }
         return;
     };
 
 
     // Write data to buffer.
-    forEachIndex( sendIntersections_, sendFunctor );
+    forEachIndex(sendIntersections_, sendFunctor);
 
     // Communicate.
-    mpi::comm().allToAllv( sendBuffer.data(), sendCounts_.data(), sendDisplacements_.data(), recvBuffer.data(),
-                           recvCounts_.data(), recvDisplacements_.data() );
+    mpi::comm().allToAllv(sendBuffer.data(), sendCounts_.data(), sendDisplacements_.data(), recvBuffer.data(),
+                          recvCounts_.data(), recvDisplacements_.data());
 
     // Read data from buffer.
-    forEachIndex( recvIntersections_, recvFunctor );
+    forEachIndex(recvIntersections_, recvFunctor);
 
     return;
 }
@@ -242,11 +239,11 @@ void RedistributeStructuredColumns::do_execute( const Field& sourceField, Field&
 //========================================================================
 
 // Constructor.
-StructuredIndexRange::StructuredIndexRange( const functionspace::StructuredColumns& structuredColumns ) {
-    jBeginEnd_ = std::make_pair( structuredColumns.j_begin(), structuredColumns.j_end() );
+StructuredIndexRange::StructuredIndexRange(const functionspace::StructuredColumns& structuredColumns) {
+    jBeginEnd_ = std::make_pair(structuredColumns.j_begin(), structuredColumns.j_end());
 
-    for ( auto j = jBeginEnd_.first; j < jBeginEnd_.second; ++j ) {
-        iBeginEnd_.push_back( std::make_pair( structuredColumns.i_begin( j ), structuredColumns.i_end( j ) ) );
+    for (auto j = jBeginEnd_.first; j < jBeginEnd_.second; ++j) {
+        iBeginEnd_.push_back(std::make_pair(structuredColumns.i_begin(j), structuredColumns.i_end(j)));
     }
 
     return;
@@ -255,39 +252,39 @@ StructuredIndexRange::StructuredIndexRange( const functionspace::StructuredColum
 // Get index ranges from all PEs.
 StructuredIndexRangeVector StructuredIndexRange::getStructuredIndexRanges() const {
     // Get MPI communicator size.
-    const auto mpiSize = static_cast<size_t>( atlas::mpi::comm().size() );
+    const auto mpiSize = static_cast<size_t>(atlas::mpi::comm().size());
 
     // Set recv buffer for j range.
-    auto jRecvBuffer = idxPairVector( mpiSize );
+    auto jRecvBuffer = idxPairVector(mpiSize);
 
     // Perform all gather.
-    atlas::mpi::comm().allGather( jBeginEnd_, jRecvBuffer.begin(), jRecvBuffer.end() );
+    atlas::mpi::comm().allGather(jBeginEnd_, jRecvBuffer.begin(), jRecvBuffer.end());
 
     // Set i receive counts.
     auto iRecvCounts = transformVector<int>(
-        jRecvBuffer, []( const idxPair& jElem ) { return static_cast<int>( jElem.second - jElem.first ); } );
+        jRecvBuffer, [](const idxPair& jElem) { return static_cast<int>(jElem.second - jElem.first); });
 
     // Set recv displacements for i range.
     auto iRecvDisplacements = std::vector<int>{0};
-    std::partial_sum( iRecvCounts.cbegin(), iRecvCounts.cend() - 1, std::back_inserter( iRecvDisplacements ) );
+    std::partial_sum(iRecvCounts.cbegin(), iRecvCounts.cend() - 1, std::back_inserter(iRecvDisplacements));
 
     // Set recv buffer for i range.
-    auto irecvBuffer = idxPairVector( static_cast<size_t>( iRecvDisplacements.back() + iRecvCounts.back() ) );
+    auto irecvBuffer = idxPairVector(static_cast<size_t>(iRecvDisplacements.back() + iRecvCounts.back()));
 
     // Perform all gather.
-    atlas::mpi::comm().allGatherv( iBeginEnd_.cbegin(), iBeginEnd_.cend(), irecvBuffer.begin(), iRecvCounts.data(),
-                                   iRecvDisplacements.data() );
+    atlas::mpi::comm().allGatherv(iBeginEnd_.cbegin(), iBeginEnd_.cend(), irecvBuffer.begin(), iRecvCounts.data(),
+                                  iRecvDisplacements.data());
 
     // Make vector of indexRange structs.
     auto indexRanges = StructuredIndexRangeVector{};
-    for ( size_t i = 0; i < mpiSize; ++i ) {
+    for (size_t i = 0; i < mpiSize; ++i) {
         auto indexRange       = StructuredIndexRange{};
         indexRange.jBeginEnd_ = jRecvBuffer[i];
         const auto iBegin     = irecvBuffer.cbegin() + iRecvDisplacements[i];
         const auto iEnd       = iBegin + iRecvCounts[i];
-        std::copy( iBegin, iEnd, std::back_inserter( indexRange.iBeginEnd_ ) );
+        std::copy(iBegin, iEnd, std::back_inserter(indexRange.iBeginEnd_));
 
-        indexRanges.push_back( indexRange );
+        indexRanges.push_back(indexRange);
     }
 
     return indexRanges;
@@ -297,36 +294,36 @@ StructuredIndexRangeVector StructuredIndexRange::getStructuredIndexRanges() cons
 idx_t StructuredIndexRange::getElemCount() const {
     // Accumulate size of positive i range.
     const auto count =
-        std::accumulate( iBeginEnd_.cbegin(), iBeginEnd_.cend(), 0, []( const idx_t cumulant, const idxPair iElem ) {
+        std::accumulate(iBeginEnd_.cbegin(), iBeginEnd_.cend(), 0, [](const idx_t cumulant, const idxPair iElem) {
             // Only count positive differences.
-            return cumulant + static_cast<idx_t>( std::max( iElem.second - iElem.first, idx_t( 0 ) ) );
-        } );
+            return cumulant + static_cast<idx_t>(std::max(iElem.second - iElem.first, idx_t(0)));
+        });
 
     return count;
 }
 
 // Return the intersection between two index ranges.
-StructuredIndexRange StructuredIndexRange::operator&( const StructuredIndexRange& indexRange ) const {
+StructuredIndexRange StructuredIndexRange::operator&(const StructuredIndexRange& indexRange) const {
     // Declare result.
     auto intersection = StructuredIndexRange{};
 
     // get j intersection range.
-    intersection.jBeginEnd_ = std::make_pair( std::max( jBeginEnd_.first, indexRange.jBeginEnd_.first ),
-                                              std::min( jBeginEnd_.second, indexRange.jBeginEnd_.second ) );
+    intersection.jBeginEnd_ = std::make_pair(std::max(jBeginEnd_.first, indexRange.jBeginEnd_.first),
+                                             std::min(jBeginEnd_.second, indexRange.jBeginEnd_.second));
 
     // get i intersection range.
-    if ( intersection.jBeginEnd_.first < intersection.jBeginEnd_.second ) {
+    if (intersection.jBeginEnd_.first < intersection.jBeginEnd_.second) {
         // get iterators.
         const auto iBeginA = iBeginEnd_.cbegin() + intersection.jBeginEnd_.first - jBeginEnd_.first;
         const auto iBeginB =
             indexRange.iBeginEnd_.cbegin() + intersection.jBeginEnd_.first - indexRange.jBeginEnd_.first;
         const auto iEndA = iBeginEnd_.cend() + intersection.jBeginEnd_.second - jBeginEnd_.second;
 
-        std::transform( iBeginA, iEndA, iBeginB, std::back_inserter( intersection.iBeginEnd_ ),
-                        []( const idxPair iElemA, const idxPair iElemB ) {
-                            return std::make_pair( std::max( iElemA.first, iElemB.first ),
-                                                   std::min( iElemA.second, iElemB.second ) );
-                        } );
+        std::transform(iBeginA, iEndA, iBeginB, std::back_inserter(intersection.iBeginEnd_),
+                       [](const idxPair iElemA, const idxPair iElemB) {
+                           return std::make_pair(std::max(iElemA.first, iElemB.first),
+                                                 std::min(iElemA.second, iElemB.second));
+                       });
     }
     return intersection;
 }
@@ -334,17 +331,17 @@ StructuredIndexRange StructuredIndexRange::operator&( const StructuredIndexRange
 // Loop over all indices. Functor should have signature
 // functor(const idx_t i, const idx_t j).
 template <typename functorType>
-void StructuredIndexRange::forEach( const functorType& functor ) const {
+void StructuredIndexRange::forEach(const functorType& functor) const {
     auto iBeginEndIt = iBeginEnd_.begin();
 
     // Loop over j.
-    for ( auto j = jBeginEnd_.first; j < jBeginEnd_.second; ++j ) {
+    for (auto j = jBeginEnd_.first; j < jBeginEnd_.second; ++j) {
         const auto iBeginEnd = *iBeginEndIt++;
 
         // Loop over i.
-        for ( auto i = iBeginEnd.first; i < iBeginEnd.second; ++i ) {
+        for (auto i = iBeginEnd.first; i < iBeginEnd.second; ++i) {
             // Call functor.
-            functor( i, j );
+            functor(i, j);
         }
     }
 
@@ -353,7 +350,7 @@ void StructuredIndexRange::forEach( const functorType& functor ) const {
 
 namespace {
 static RedistributionImplBuilder<RedistributeStructuredColumns> register_builder(
-    RedistributeStructuredColumns::static_type() );
+    RedistributeStructuredColumns::static_type());
 }
 
 }  // namespace detail

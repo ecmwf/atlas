@@ -23,20 +23,20 @@ namespace io {
 
 class RecordItemReader {
 public:
-    RecordItemReader( Stream, size_t offset, const std::string& key );
+    RecordItemReader(Stream, size_t offset, const std::string& key);
 
-    RecordItemReader( Stream, const std::string& key );
+    RecordItemReader(Stream, const std::string& key);
 
-    RecordItemReader( const std::string& uri );
+    RecordItemReader(const std::string& uri);
 
-    void read( RecordItem& item );
+    void read(RecordItem& item);
 
-    void read( Metadata&, bool follow_links = true );
+    void read(Metadata&, bool follow_links = true);
 
-    void read( Metadata&, Data& );
+    void read(Metadata&, Data&);
 
 private:
-    RecordItemReader( const std::string& ref, const std::string& uri );
+    RecordItemReader(const std::string& ref, const std::string& uri);
 
     Stream in_;
     Record record_;

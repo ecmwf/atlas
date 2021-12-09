@@ -40,12 +40,12 @@ private:
 
 public:
     ArraySpec();
-    ArraySpec( const ArrayShape& );
-    ArraySpec( const ArrayShape&, const ArrayStrides& );
-    ArraySpec( const ArrayShape&, const ArrayStrides&, const ArrayLayout& );
-    ArraySpec( const ArrayShape&, const ArrayAlignment& );
-    ArraySpec( const ArrayShape&, const ArrayStrides&, const ArrayAlignment& );
-    ArraySpec( const ArrayShape&, const ArrayStrides&, const ArrayLayout&, const ArrayAlignment& );
+    ArraySpec(const ArrayShape&);
+    ArraySpec(const ArrayShape&, const ArrayStrides&);
+    ArraySpec(const ArrayShape&, const ArrayStrides&, const ArrayLayout&);
+    ArraySpec(const ArrayShape&, const ArrayAlignment&);
+    ArraySpec(const ArrayShape&, const ArrayStrides&, const ArrayAlignment&);
+    ArraySpec(const ArrayShape&, const ArrayStrides&, const ArrayLayout&, const ArrayAlignment&);
     size_t allocatedSize() const { return allocated_size_; }
     size_t size() const { return size_; }
     idx_t rank() const { return rank_; }

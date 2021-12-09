@@ -14,56 +14,56 @@
 
 namespace atlas {
 
-void throw_NotImplemented( const eckit::CodeLocation& loc ) {
-    throw eckit::NotImplemented( loc );
+void throw_NotImplemented(const eckit::CodeLocation& loc) {
+    throw eckit::NotImplemented(loc);
 }
 
-void throw_NotImplemented( const std::string& msg, const eckit::CodeLocation& loc ) {
-    throw eckit::NotImplemented( msg, loc );
+void throw_NotImplemented(const std::string& msg, const eckit::CodeLocation& loc) {
+    throw eckit::NotImplemented(msg, loc);
 }
 
-void throw_AssertionFailed( const std::string& msg ) {
-    throw eckit::AssertionFailed( msg );
+void throw_AssertionFailed(const std::string& msg) {
+    throw eckit::AssertionFailed(msg);
 }
 
-void throw_AssertionFailed( const std::string& msg, const eckit::CodeLocation& loc ) {
-    throw eckit::AssertionFailed( msg, loc );
+void throw_AssertionFailed(const std::string& msg, const eckit::CodeLocation& loc) {
+    throw eckit::AssertionFailed(msg, loc);
 }
 
-void throw_AssertionFailed( const std::string& code, const std::string& msg, const eckit::CodeLocation& loc ) {
+void throw_AssertionFailed(const std::string& code, const std::string& msg, const eckit::CodeLocation& loc) {
     std::ostringstream ss;
     ss << " [[ " << code << " ]]\n" << msg;
-    throw eckit::AssertionFailed( ss.str(), loc );
+    throw eckit::AssertionFailed(ss.str(), loc);
 }
 
-void throw_Exception( const std::string& msg ) {
-    throw eckit::Exception( msg );
+void throw_Exception(const std::string& msg) {
+    throw eckit::Exception(msg);
 }
 
-void throw_Exception( const std::string& msg, const eckit::CodeLocation& loc ) {
-    throw eckit::Exception( msg, loc );
+void throw_Exception(const std::string& msg, const eckit::CodeLocation& loc) {
+    throw eckit::Exception(msg, loc);
 }
 
-void throw_CantOpenFile( const std::string& file ) {
-    throw eckit::CantOpenFile( file );
+void throw_CantOpenFile(const std::string& file) {
+    throw eckit::CantOpenFile(file);
 }
 
-void throw_CantOpenFile( const std::string& file, const eckit::CodeLocation& loc ) {
-    throw eckit::CantOpenFile( file, loc );
+void throw_CantOpenFile(const std::string& file, const eckit::CodeLocation& loc) {
+    throw eckit::CantOpenFile(file, loc);
 }
 
-void throw_OutOfRange( const std::string& varname, idx_t index, idx_t size ) {
+void throw_OutOfRange(const std::string& varname, idx_t index, idx_t size) {
     std::ostringstream ss;
     ss << "OutOfRange: Tried to access " << varname << " index " << index << " but maximum allowed index is "
        << size - 1;
-    throw eckit::Exception( ss.str() );
+    throw eckit::Exception(ss.str());
 }
 
-void throw_OutOfRange( const std::string& varname, idx_t index, idx_t size, const eckit::CodeLocation& loc ) {
+void throw_OutOfRange(const std::string& varname, idx_t index, idx_t size, const eckit::CodeLocation& loc) {
     std::ostringstream ss;
     ss << "OutOfRange: Tried to access " << varname << " index " << index << " but maximum allowed index is "
        << size - 1;
-    throw eckit::Exception( ss.str(), loc );
+    throw eckit::Exception(ss.str(), loc);
 }
 
 

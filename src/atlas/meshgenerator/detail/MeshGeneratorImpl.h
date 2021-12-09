@@ -41,27 +41,27 @@ public:
 
     virtual ~MeshGeneratorImpl();
 
-    virtual void hash( eckit::Hash& ) const = 0;
+    virtual void hash(eckit::Hash&) const = 0;
 
-    virtual void generate( const Grid&, const grid::Partitioner&, Mesh& ) const;
-    virtual void generate( const Grid&, const grid::Distribution&, Mesh& ) const = 0;
-    virtual void generate( const Grid&, Mesh& ) const                            = 0;
+    virtual void generate(const Grid&, const grid::Partitioner&, Mesh&) const;
+    virtual void generate(const Grid&, const grid::Distribution&, Mesh&) const = 0;
+    virtual void generate(const Grid&, Mesh&) const                            = 0;
 
-    Mesh generate( const Grid&, const grid::Partitioner& ) const;
-    Mesh generate( const Grid&, const grid::Distribution& ) const;
-    Mesh generate( const Grid& ) const;
+    Mesh generate(const Grid&, const grid::Partitioner&) const;
+    Mesh generate(const Grid&, const grid::Distribution&) const;
+    Mesh generate(const Grid&) const;
 
-    Mesh operator()( const Grid&, const grid::Distribution& ) const;
-    Mesh operator()( const Grid&, const grid::Partitioner& ) const;
-    Mesh operator()( const Grid& ) const;
+    Mesh operator()(const Grid&, const grid::Distribution&) const;
+    Mesh operator()(const Grid&, const grid::Partitioner&) const;
+    Mesh operator()(const Grid&) const;
 
     virtual std::string type() const = 0;
 
 protected:
-    void generateGlobalElementNumbering( Mesh& mesh ) const;
-    void setProjection( Mesh&, const Projection& ) const;
-    void setGrid( Mesh&, const Grid&, const grid::Distribution& ) const;
-    void setGrid( Mesh&, const Grid&, const std::string& distribution ) const;
+    void generateGlobalElementNumbering(Mesh& mesh) const;
+    void setProjection(Mesh&, const Projection&) const;
+    void setGrid(Mesh&, const Grid&, const grid::Distribution&) const;
+    void setGrid(Mesh&, const Grid&, const std::string& distribution) const;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -26,14 +26,14 @@ return "GaussianLatitudes";
 }
 #endif
 
-void GaussianLatitudes::assign( double lats[], const size_t size ) const {
-    ATLAS_ASSERT( size >= lats_.size() );
-    for ( size_t jlat = 0; jlat < lats_.size(); ++jlat ) {
+void GaussianLatitudes::assign(double lats[], const size_t size) const {
+    ATLAS_ASSERT(size >= lats_.size());
+    for (size_t jlat = 0; jlat < lats_.size(); ++jlat) {
         lats[jlat] = lats_[jlat];
     }
 }
 
-void GaussianLatitudes::assign( std::vector<double>& lats ) const {
+void GaussianLatitudes::assign(std::vector<double>& lats) const {
     lats = lats_;
 }
 

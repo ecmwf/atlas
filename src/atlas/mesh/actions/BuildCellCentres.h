@@ -25,11 +25,11 @@ namespace actions {
 /// Generates the cell centres on each cell
 class BuildCellCentres {
 public:
-    BuildCellCentres( const std::string& field_name = "centre", bool force_recompute = false );
-    BuildCellCentres( eckit::Configuration& );
+    BuildCellCentres(const std::string& field_name = "centre", bool force_recompute = false);
+    BuildCellCentres(eckit::Configuration&);
 
     /// @note Correct only for Linear Triangles and Quadrilaterals
-    Field& operator()( Mesh& ) const;
+    Field& operator()(Mesh&) const;
 
 private:
     std::string field_name_;

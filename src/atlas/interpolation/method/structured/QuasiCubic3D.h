@@ -19,7 +19,7 @@ namespace method {
 
 class QuasiCubic3D : public StructuredInterpolation3D<QuasiCubic3DKernel> {
 public:
-    QuasiCubic3D( const Config& );
+    QuasiCubic3D(const Config&);
 };
 
 }  // namespace method
