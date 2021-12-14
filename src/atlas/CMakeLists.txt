@@ -84,8 +84,6 @@ projection/detail/LambertConformalConicProjection.cc
 projection/detail/LambertConformalConicProjection.h
 projection/detail/LonLatProjection.cc
 projection/detail/LonLatProjection.h
-projection/detail/StretchRegular.cc
-projection/detail/StretchRegular.h
 projection/detail/MercatorProjection.cc
 projection/detail/MercatorProjection.h
 projection/detail/ProjectionFactory.cc
@@ -95,6 +93,8 @@ projection/detail/ProjectionImpl.h
 projection/detail/ProjectionUtilities.h
 projection/detail/SchmidtProjection.cc
 projection/detail/SchmidtProjection.h
+projection/detail/VariableResolutionProjection.cc
+projection/detail/VariableResolutionProjection.h
 
 domain.h
 domain/Domain.cc

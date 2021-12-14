@@ -26,7 +26,6 @@ foreach(test
         test_grid_iterator
         test_grids
         test_stretchedrotatedgaussian
-        test_stretchedRegular
         test_grid_cropping
         test_vertical
         test_spacing

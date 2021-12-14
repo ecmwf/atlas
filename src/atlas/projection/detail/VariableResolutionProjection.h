@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <array>
+
 #include "atlas/domain.h"
 #include "atlas/projection/detail/ProjectionImpl.h"
 #include "atlas/util/NormaliseLongitude.h"
@@ -17,14 +19,14 @@ namespace detail {
 
 
 template <typename Rotation>
-class StretchLAM final : public ProjectionImpl {
+class VariableResolutionProjectionT final : public ProjectionImpl {
 public:
     using Spec = ProjectionImpl::Spec;
 
     ///< constructor uses parametrisation and point to stretch
-    StretchLAM(const eckit::Parametrisation&);
+    VariableResolutionProjectionT(const eckit::Parametrisation&);
     ///< projection name
-    static std::string static_type() { return Rotation::typePrefix() + "stretch"; }
+    static std::string static_type() { return Rotation::typePrefix() + "variable_resolution"; }
     std::string type() const override { return static_type(); }
 
     ///< projection and inverse projection
@@ -49,11 +51,11 @@ public:
     }
 
     void checkvalue(const double&, const double&) const;
-    double general_stretch(const double, const bool, int, const int, const int) const;
+    double general_stretch(const double, const bool, const int, const int) const;
 
 protected:
-    double delta_low_;    ///< resolution of the external regular grid (rim) it should be larger than the last stretch
-    double delta_high_;   ///< /< resolution of the regional model (regular grid)
+    double delta_outer;   ///< resolution of the external regular grid (rim) it should be larger than the last stretch
+    double delta_inner;   ///< /< resolution of the regional model (regular grid)
     double var_ratio_;    ///< power used for the stretching
     double x_reg_start_;  ///< xstart of the internal regional grid
     double y_reg_start_;  ///< ystart of the internal regional grid
@@ -69,13 +71,14 @@ protected:
     //< variables derived from the configuration used for the projection
     double deltax_all, deltay_all;
     double add_xf_, add_yf_;
-    int n_stretchedx_, n_stretchedy_, n_x_rim_, n_y_rim_;
+    int nx_stretched, ny_stretched, nx_rim, ny_rim;
     int nx_, ny_;
     double check_x, check_y, check_st;
     double lam_hires_size;  ///< size regular grid x
     double phi_hires_size;  ///< size regular grid y
     double lambda_start;    ///< start grid x
     double phi_start;       ///< start grid y
+    std::array<double, 2> new_ratio_;
 
     void setup(const eckit::Parametrisation& p);
 
@@ -83,8 +86,8 @@ private:
     Rotation rotation_;
 };
 
-using StretchRegular        = StretchLAM<NotRotated>;
-using RotatedStretchRegular = StretchLAM<Rotated>;
+using VariableResolutionProjection        = VariableResolutionProjectionT<NotRotated>;
+using RotatedVariableResolutionProjection = VariableResolutionProjectionT<Rotated>;
 
 }  // namespace detail
 }  // namespace projection

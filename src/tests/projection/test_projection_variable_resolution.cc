@@ -61,37 +61,38 @@ const std::vector<double> lat_LAM_reg = {-8.264495551724226,     -7.613347275862
                                          9.31650789655281919,    9.967656172414931959,  10.61880444827704473,
                                          11.269952724139157,     11.92110100000127};
 
-const int nx               = 34;
-const int ny               = 32;
-const double xrange[2]     = {348.13120344827576, 369.6190965517242};
-const double yrange[2]     = {-8.264495551724226, 11.92110100000127};
-const double xrange_reg[2] = {351.386944827586319, 366.363355172413776};
-const double yrange_reg[2] = {-5.008754172413662, 8.665359620690706};
+const int nx                 = 34;  // How do you find this?
+const int ny                 = 32;
+const double xrange_outer[2] = {348.13120344827576, 369.6190965517242};
+const double yrange_outer[2] = {-8.264495551724226, 11.92110100000127};
+const double xrange_inner[2] = {351.386944827586319, 366.363355172413776};
+const double yrange_inner[2] = {-5.008754172413662, 8.665359620690706};
 
-const double rim_width = 4.;
-const double delta_low = 1.;
-const double delta_hi  = 0.6511482758621128;
+const double rim_width   = 4.;
+const double delta_outer = 1.;
+const double delta_inner = 0.6511482758621128;
 
 auto make_var_ratio_projection = [](double var_ratio) {
     Config conf;
-    conf.set("type", "stretch");
+    conf.set("type", "variable_resolution");
     conf.set("var_ratio", var_ratio);
-    conf.set("delta_low", delta_low);
-    conf.set("delta_hi", delta_hi);
-    conf.set("x_reg_start", xrange_reg[0]);
-    conf.set("x_reg_end", xrange_reg[1]);
-    conf.set("y_reg_start", yrange_reg[0]);
-    conf.set("y_reg_end", yrange_reg[1]);
-    conf.set("startx", xrange[0]);
-    conf.set("endx", xrange[1]);
-    conf.set("starty", yrange[0]);
-    conf.set("endy", yrange[1]);
+    conf.set("delta_low", delta_outer);
+    conf.set("delta_hi", delta_inner);
+    conf.set("x_reg_start", xrange_inner[0]);
+    conf.set("x_reg_end", xrange_inner[1]);
+    conf.set("y_reg_start", yrange_inner[0]);
+    conf.set("y_reg_end", yrange_inner[1]);
+    conf.set("startx", xrange_outer[0]);
+    conf.set("endx", xrange_outer[1]);
+    conf.set("starty", yrange_outer[0]);
+    conf.set("endy", yrange_outer[1]);
     conf.set("north_pole", {0.0, 90.0});
     conf.set("rim_widthx", rim_width);
     conf.set("rim_widthy", rim_width);
     return atlas::Projection(conf);
 };
 
+auto not_equal = [](double a, double b) { return std::abs(b - a) > 1.e-5; };
 
 };  // namespace
 
@@ -99,7 +100,7 @@ auto make_var_ratio_projection = [](double var_ratio) {
 namespace atlas {
 namespace test {
 
-CASE("print delta") {
+CASE("Understanding of the above data") {
     const std::vector<double>& v = lon_LAM_str;
     std::vector<double> delta(v.size() - 1);
     for (size_t i = 0; i < delta.size(); ++i) {
@@ -111,13 +112,81 @@ CASE("print delta") {
     //          0.651148,0.651148,0.651148,0.651148,0.651148,0.651148,0.651148,0.651148,
     //          0.651148,0.651148,0.651148,0.651148,0.651148,0.651148,0.651148,0.651148,
     //          0.651148,0.651148,0.651148,0.720961,0.798259,0.883845,1,1]
+
+    std::vector<double> delta_half(delta.begin() + delta.size() / 2, delta.end());
+    Log::info() << "delta_half = " << delta_half << std::endl;
+    // Outputs:
+    // delta_half = [0.651148,0.651148,0.651148,0.651148,0.651148,0.651148,0.651148,
+    //               0.651148,0.651148,0.651148,0.651148,0.651148,0.720961,0.798259,
+    //               0.883845,1,1]
+    std::vector<double> progression(delta_half.size() - 1);
+    for (size_t i = 0; i < progression.size(); ++i) {
+        progression[i] = delta_half[i + 1] / delta_half[i];
+    }
+    Log::info() << "progression = " << progression << std::endl;
+    // Outputs:
+    // progression = [1,1,1,1,1,1,1,1,1,1,1,1.10722,1.10722,1.10722,1.13142,1]
+
+    int nx           = 34;
+    int nx_var       = 6;
+    int nx_outer     = 4;
+    double var_ratio = 1.13;
+
+    constexpr double epstest =
+        std::numeric_limits<float>::epsilon();  ///< correction used to change from double to integer
+
+    int inner_i_begin = -1;
+    int inner_i_end   = -1;
+    for (int i = 0; i < nx; ++i) {
+        if (std::abs(v[i] - xrange_inner[0]) < 1.e-10) {
+            inner_i_begin = i;
+        }
+        if (std::abs(v[i] - xrange_inner[1]) < 1.e-10) {
+            inner_i_end = i + 1;
+        }
+    }
+
+    double inner_size = ((nx - 1) - nx_var - nx_outer) * delta_inner;
+    ///< number of regular internal grid points, integer
+    int nx_inner = (inner_size + epstest) / delta_inner + 1;
+
+    EXPECT_EQ(nx_inner, inner_i_end - inner_i_begin);
+    EXPECT_EQ(nx_inner, inner_i_end - inner_i_begin);
+    EXPECT_EQ(inner_i_begin, nx_outer / 2 + nx_var / 2);
+    EXPECT_EQ(inner_i_end, nx - nx_outer / 2 - nx_var / 2);
+    for (int i = 0; i < nx_outer / 2; ++i) {
+        EXPECT_APPROX_EQ(v[i + 1] - v[i], delta_outer, 1.e-10);
+    }
+    for (int i = nx_outer / 2; i < inner_i_begin; ++i) {
+        double d = v[i + 1] - v[i];
+        EXPECT(not_equal(d, delta_inner));
+        EXPECT(not_equal(d, delta_outer));
+    }
+    for (int i = inner_i_begin; i < inner_i_end - 1; ++i) {
+        EXPECT_APPROX_EQ(v[i + 1] - v[i], delta_inner, 1.e-10);
+    }
+    for (int i = inner_i_end - 1; i < nx - nx_outer / 2 - 1; ++i) {
+        double d = v[i + 1] - v[i];
+        EXPECT(not_equal(d, delta_inner));
+        EXPECT(not_equal(d, delta_outer));
+    }
+    for (int i = nx - nx_outer / 2 - 1; i < nx - 1; ++i) {
+        EXPECT_APPROX_EQ(v[i + 1] - v[i], delta_outer, 1.e-10);
+    }
+
+    double var_ints_f = ((nx - 1) - nx_outer - (nx_inner - 1)) / 2.;
+    double logr       = std::log(var_ratio);
+    double log_ratio  = (var_ints_f - 0.5) * logr;
+    double new_ratio  = std::exp(log_ratio / std::floor(var_ints_f));
+
+    EXPECT_APPROX_EQ(new_ratio, 1.10722, 1.e-5);
 }
 
 
 CASE("var_ratio = 1.13") {
     ///< definition of grid
-    auto grid = RegularGrid{grid::LinearSpacing{xrange[0], xrange[1], nx},
-                            grid::LinearSpacing{yrange[0], yrange[1], ny}, make_var_ratio_projection(1.13)};
+    auto grid = RegularGrid{grid::LinearSpacing{xrange_outer[0], xrange_outer[1], nx},
+                            grid::LinearSpacing{yrange_outer[0], yrange_outer[1], ny}, make_var_ratio_projection(1.13)};
 
     ///< check over regular grid points stretched using new atlas object and check using look-up table
     for (idx_t j = 0; j < grid.ny(); ++j) {
@@ -136,10 +205,19 @@ CASE("var_ratio = 1.13") {
     auto expect_equal_dlat = [&](int j, double dlat) {
         EXPECT_APPROX_EQ(grid.lonlat(xmid, j + 1).lat() - grid.lonlat(xmid, j).lat(), dlat, 1.e-10);
     };
-    expect_equal_dlon(0, delta_low);
-    expect_equal_dlon(xmid, delta_hi);
-    expect_equal_dlat(0, delta_low);
-    expect_equal_dlat(ymid, delta_hi);
+    expect_equal_dlon(0, delta_outer);
+    expect_equal_dlon(xmid, delta_inner);
+    expect_equal_dlat(0, delta_outer);
+    expect_equal_dlat(ymid, delta_inner);
+
+    // Check that the spacing in xy coordinates matches "delta_inner"
+    for (int i = 0; i < grid.nx() - 1; ++i) {
+        EXPECT_APPROX_EQ(grid.xy(i + 1, ymid).x() - grid.xy(i, ymid).x(), delta_inner, 1.e-10);
+    }
+    for (int j = 0; j < grid.ny() - 1; ++j) {
+        EXPECT_APPROX_EQ(grid.xy(xmid, j + 1).y() - grid.xy(xmid, j).y(), delta_inner, 1.e-10);
+    }
+
 
     ///< Set meshes
     ///< define mesh to write in file
@@ -164,11 +242,11 @@ CASE("var_ratio = 1.13") {
     int ny_new = 35;
 
     ///< 37 the exact range would have 36.52 points
-    double alpha    = ((delta_hi * nx_new) - (xrange[1] - xrange[0])) / 2.;
-    double startx_n = xrange[0] - alpha;
-    double endx_n   = xrange[1] + alpha;
-    double starty_n = yrange[0] - alpha;
-    double endy_n   = yrange[1] + alpha;
+    double alpha    = ((delta_inner * nx_new) - (xrange_outer[1] - xrange_outer[0])) / 2.;
+    double startx_n = xrange_outer[0] - alpha;
+    double endx_n   = xrange_outer[1] + alpha;
+    double starty_n = yrange_outer[0] - alpha;
+    double endy_n   = yrange_outer[1] + alpha;
 
 
     ///< create regular grid
@@ -188,18 +266,18 @@ CASE("var_ratio = 1.13") {
 CASE("var_ratio = 1.0") {
     ///< TEST of var_ratio = 1.0 configuration
     ///< definition of stretched grid
-    auto grid = RegularGrid{grid::LinearSpacing{xrange[0], xrange[1], nx},
-                            grid::LinearSpacing{yrange[0], yrange[1], ny}, make_var_ratio_projection(1.0)};
+    auto grid = RegularGrid{grid::LinearSpacing{xrange_outer[0], xrange_outer[1], nx},
+                            grid::LinearSpacing{yrange_outer[0], yrange_outer[1], ny}, make_var_ratio_projection(1.0)};
 
     ///< Check if bounding box is correct
     {
         auto bb = grid.lonlatBoundingBox();
         EXPECT(RectangularLonLatDomain(bb));
         const double tolerance = 1.e-6;
-        EXPECT_APPROX_EQ(bb.west(), xrange[0], tolerance);
-        EXPECT_APPROX_EQ(bb.east(), xrange[1], tolerance);
-        EXPECT_APPROX_EQ(bb.south(), yrange[0], tolerance);
-        EXPECT_APPROX_EQ(bb.north(), yrange[1], tolerance);
+        EXPECT_APPROX_EQ(bb.west(), xrange_outer[0], tolerance);
+        EXPECT_APPROX_EQ(bb.east(), xrange_outer[1], tolerance);
+        EXPECT_APPROX_EQ(bb.south(), yrange_outer[0], tolerance);
+        EXPECT_APPROX_EQ(bb.north(), yrange_outer[1], tolerance);
         for (PointLonLat p : grid.lonlat()) {
             EXPECT(bb.contains(p));
         }
