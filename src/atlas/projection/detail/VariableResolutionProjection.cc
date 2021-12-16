@@ -45,6 +45,24 @@ namespace projection {
 namespace detail {
 
 
+static double new_ratio(int n_stretched, double var_ratio) {
+    /**
+     *  compute ratio,
+     *  change stretching factor so that high and low grids
+     *  retain original sizes
+     */
+    ///< correction used to change from double to integer
+    constexpr float epstest = std::numeric_limits<float>::epsilon();
+
+    ///< number of variable (stretched) grid points in one side
+    int var_ints      = (n_stretched + epstest) / 2.;
+    double var_ints_f = n_stretched / 2.;
+    double logr       = std::log(var_ratio);
+    double log_ratio  = (var_ints_f - 0.5) * logr;
+    return std::exp(log_ratio / var_ints);
+};
+
+
 ///< specification parameters
 template <typename Rotation>
 typename VariableResolutionProjectionT<Rotation>::Spec VariableResolutionProjectionT<Rotation>::spec() const {
@@ -153,25 +171,11 @@ VariableResolutionProjectionT<Rotation>::VariableResolutionProjectionT(const eck
     ATLAS_ASSERT((nx_ - 1) - nx_rim - (nx_inner - 1) == nx_stretched);
     ATLAS_ASSERT((ny_ - 1) - ny_rim - (ny_inner - 1) == ny_stretched);
 
-
-    auto new_ratio = [&](int n_stretched) {
-        /**
-         *  compute ratio,
-         *  change stretching factor so that high and low grids
-         *  retain original sizes
-         */
-        ///< number of variable (stretched) grid points in one side
-        int var_ints      = (n_stretched + epstest) / 2.;
-        double var_ints_f = n_stretched / 2.;
-        double logr       = std::log(var_ratio_);
-        double log_ratio  = (var_ints_f - 0.5) * logr;
-        return std::exp(log_ratio / var_ints);
-    };
     new_ratio_[0] = var_ratio_;
     new_ratio_[1] = var_ratio_;
     if (var_ratio_ != 1) {
-        new_ratio_[0] = new_ratio(nx_stretched);
-        new_ratio_[1] = new_ratio(ny_stretched);
+        new_ratio_[0] = new_ratio(nx_stretched, var_ratio_);
+        new_ratio_[1] = new_ratio(ny_stretched, var_ratio_);
     }
 }
 
