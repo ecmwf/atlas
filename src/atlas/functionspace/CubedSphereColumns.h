@@ -60,9 +60,6 @@ public:
     /// Return tij field.
     Field tij() const;
 
-    /// Return ghost field.
-    Field ghost() const;
-
 private:
     class For {
     public:
