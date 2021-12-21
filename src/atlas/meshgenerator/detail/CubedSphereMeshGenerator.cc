@@ -830,10 +830,13 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, cons
     Field lonLatField = cells.add(Field("lonlat", make_datatype<double>(), make_shape(cells.size(), 2)));
     lonLatField.set_variables(2);
 
+    Field ghostField = cells.add(Field("ghost", make_datatype<int>(), make_shape(cells.size())));
+
     // Set field views.
     auto cellsGlobalIdx = array::make_view<gidx_t, 1>(cells.global_index());
     auto cellsRemoteIdx = array::make_indexview<idx_t, 1>(cells.remote_index());
     auto cellsPart      = array::make_view<int, 1>(cells.partition());
+    auto cellsGhost     = array::make_view<int, 1>(ghostField);
     auto cellsHalo      = array::make_view<int, 1>(cells.halo());
     auto cellsFlags     = array::make_view<int, 1>(cells.flags());
     auto cellsTij       = array::make_view<idx_t, 2>(tijField);
@@ -893,6 +896,9 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, cons
 
         // Set halo.
         cellsHalo(cellLocalIdx) = localCell.halo;
+
+        // Set ghost.
+        cellsGhost(cellLocalIdx) = cellsHalo(cellLocalIdx) > 0;
 
         // Set flags.
         Topology::reset(cellsFlags(cellLocalIdx));

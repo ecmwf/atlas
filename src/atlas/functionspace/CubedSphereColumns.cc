@@ -160,11 +160,6 @@ Field CubedSphereColumns<BaseFunctionSpace>::tij() const {
     return cubedSphereColumnsHandle_.get()->tij();
 }
 
-template <typename BaseFunctionSpace>
-Field CubedSphereColumns<BaseFunctionSpace>::ghost() const {
-    return cubedSphereColumnsHandle_.get()->ghost();
-}
-
 // Explicit instantiation of template classes.
 template class CubedSphereColumns<CellColumns>;
 template class CubedSphereColumns<NodeColumns>;

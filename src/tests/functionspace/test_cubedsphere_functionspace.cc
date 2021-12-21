@@ -207,6 +207,63 @@ CASE("test copies and up/down casting") {
     }
 }
 
+CASE("Cubed sphere demonstration") {
+
+    // Created a LFRic layout N12 cubedsphere grid.
+    // This is a global set of grid points with lonlats located at cell centres.
+    const auto grid = Grid("CS-LFR-12");
+
+    // Create domain decomposed mesh.
+    // We can generate two types of mesh, a primal and a dual.
+    // The primal mesh can have an arbitarily large halo (default = 1), whereas
+    // the dual mesh has a fixed halo size. The dual mesh is useful if you
+    // are interested in node connectivity, otherwise the primal mesh is the
+    // most general.
+    // The cell-centre (nodes) lonlats of the primal mesh are identical to the
+    // node (cell-centre) lonlats of the dual mesh.
+    const auto primalMesh = MeshGenerator("cubedsphere").generate(grid);
+    const auto dualMesh = MeshGenerator("cubedsphere_dual").generate(grid);
+
+    // Create cubed sphere function spaces (these have fancy features, such as
+    // (t, i, j) indexing and parallel_for methods.
+    const auto primalNodes = functionspace::CubedSphereNodeColumns(primalMesh);
+    const auto primalCells = functionspace::CubedSphereCellColumns(primalMesh);
+    const auto dualNodes = functionspace::CubedSphereNodeColumns(dualMesh);
+    const auto dualCells = functionspace::CubedSphereCellColumns(dualMesh);
+    // Note, the functionspaces we interested in are primalCells and dualNodes.
+    // The others are there for completeness.
+
+    // Field comparison function. Node that this upcasts everything to
+    // to the base FunctionSpace class.
+    const auto compareFields = [](const FunctionSpace& functionSpaceA,
+                                  const FunctionSpace& functionSpaceB){
+
+        // Make views to fields.
+        const auto lonLatFieldA =
+            array::make_view<double, 2>(functionSpaceA.lonlat());
+        const auto lonLatFieldB =
+            array::make_view<double, 2>(functionSpaceB.lonlat());
+        const auto ghostFieldA =
+            array::make_view<int, 1>(functionSpaceA.ghost());
+        const auto ghostFieldB =
+            array::make_view<int, 1>(functionSpaceB.ghost());
+
+        // Loop over functionspaces.
+        for (idx_t i = 0; i < functionSpaceA.size(); ++i) {
+            EXPECT_EQ(lonLatFieldA(i, LON), lonLatFieldB(i, LON));
+            EXPECT_EQ(lonLatFieldA(i, LAT), lonLatFieldB(i, LAT));
+            EXPECT_EQ(ghostFieldA(i), ghostFieldB(i));
+        }
+    };
+
+    // Check that primal cells and dual nodes are equivalent.
+    compareFields(primalCells, dualNodes);
+
+    // Check that dual cells and primal nodes are equivalent.
+    compareFields(dualCells, primalNodes);
+
+
+}
 
 }  // namespace test
 }  // namespace atlas
