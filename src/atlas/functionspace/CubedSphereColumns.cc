@@ -65,7 +65,7 @@ public:
         ATLAS_ASSERT(mesh);
         auto& mesh_impl = *mesh.get();
         registerMesh(mesh_impl);
-        creator_type creator                 = std::bind(&CubedSphereStructureCache::create, mesh);
+        creator_type creator                 = std::bind(&CubedSphereStructureCache::create, mesh, functionspace->size());
         util::ObjectHandle<value_type> value = Base::get_or_create(key(mesh_impl), creator);
         return value;
     }
@@ -78,8 +78,8 @@ private:
         return key.str();
     }
 
-    static value_type* create(const Mesh& mesh) {
-        value_type* value = new value_type(getTij<BaseFunctionSpace>(mesh), getGhost<BaseFunctionSpace>(mesh));
+    static value_type* create(const Mesh& mesh, idx_t size) {
+        value_type* value = new value_type(getTij<BaseFunctionSpace>(mesh), getGhost<BaseFunctionSpace>(mesh), size);
         return value;
     }
 };
@@ -121,12 +121,7 @@ idx_t CubedSphereColumns<BaseFunctionSpace>::invalid_index() const {
 }
 
 template <typename BaseFunctionSpace>
-idx_t CubedSphereColumns<BaseFunctionSpace>::nb_elems() const {
-    return cubedSphereColumnsHandle_.get()->nb_elems();
-}
-
-template <typename BaseFunctionSpace>
-idx_t CubedSphereColumns<BaseFunctionSpace>::nb_owned_elems() const {
+idx_t CubedSphereColumns<BaseFunctionSpace>::sizeOwned() const {
     return cubedSphereColumnsHandle_.get()->nb_owned_elems();
 }
 
