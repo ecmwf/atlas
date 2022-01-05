@@ -27,7 +27,7 @@ namespace detail {
 class CubedSphereStructure : public util::Object {
 public:
     CubedSphereStructure() = default;
-    CubedSphereStructure(const Field& tij, const Field& ghost);
+    CubedSphereStructure(const Field& tij, const Field& ghost, idx_t size);
 
     /// Invalid index.
     static constexpr idx_t invalid_index() { return -1; }
