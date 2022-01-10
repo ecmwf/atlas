@@ -83,6 +83,10 @@ public:
         return s;
     }
 
+    double* data() { return xy_; }
+
+    const double* data() const { return xy_; }
+
 private:
     double x() const { return xy_[0]; }
     double y() const { return xy_[1]; }
