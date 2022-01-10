@@ -122,7 +122,7 @@ idx_t CubedSphereColumns<BaseFunctionSpace>::invalid_index() const {
 
 template <typename BaseFunctionSpace>
 idx_t CubedSphereColumns<BaseFunctionSpace>::sizeOwned() const {
-    return cubedSphereColumnsHandle_.get()->nb_owned_elems();
+    return cubedSphereColumnsHandle_.get()->sizeOwned();
 }
 
 template <typename BaseFunctionSpace>
