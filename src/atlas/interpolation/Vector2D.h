@@ -40,7 +40,7 @@ typedef Eigen::Vector2d Vector2D;
 #else
 
 class Vector2D {
-private:
+public:
     Vector2D(const double* d) {
         xy_[0] = d[0];
         xy_[1] = d[1];
@@ -51,7 +51,6 @@ private:
         xy_[1] = y;
     }
 
-public:
     Vector2D() {
         // Warning, data_ is uninitialised
     }
