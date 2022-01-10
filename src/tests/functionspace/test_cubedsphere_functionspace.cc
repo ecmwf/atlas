@@ -225,9 +225,10 @@ CASE("Cubed sphere primal-dual equivalence") {
     const auto dualMesh = MeshGenerator("cubedsphere_dual").generate(grid);
 
     // Create cubed sphere function spaces (these have fancy features, such as
-    // (t, i, j) indexing and parallel_for methods.
-    const auto primalNodes = functionspace::CubedSphereNodeColumns(primalMesh);
-    const auto primalCells = functionspace::CubedSphereCellColumns(primalMesh);
+    // (t, i, j) indexing and parallel_for methods). The halo sizes of the primal
+    // functionspaces are set to match that of the dual functionspaces.
+    const auto primalNodes = functionspace::CubedSphereNodeColumns(primalMesh, util::Config("halo", 0));
+    const auto primalCells = functionspace::CubedSphereCellColumns(primalMesh, util::Config("halo", 1));
     const auto dualNodes = functionspace::CubedSphereNodeColumns(dualMesh);
     const auto dualCells = functionspace::CubedSphereCellColumns(dualMesh);
     // Note, the functionspaces we are usually interested in are primalCells and
@@ -237,6 +238,9 @@ CASE("Cubed sphere primal-dual equivalence") {
     // to the base FunctionSpace class.
     const auto compareFields = [](const FunctionSpace& functionSpaceA,
                                   const FunctionSpace& functionSpaceB){
+
+        // Check that function spaces are the same size.
+        EXPECT_EQ(functionSpaceA.size(), functionSpaceB.size());
 
         // Make views to fields.
         const auto lonLatFieldA =

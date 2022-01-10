@@ -33,10 +33,10 @@ public:
     static constexpr idx_t invalid_index() { return -1; }
 
     /// Number of elements.
-    idx_t nb_elems() const;
+    idx_t size() const;
 
     /// Number of owned elements.
-    idx_t nb_owned_elems() const;
+    idx_t sizeOwned() const;
 
     /// i lower bound for tile t (including halo)
     idx_t i_begin(idx_t) const;

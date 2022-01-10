@@ -75,11 +75,11 @@ CubedSphereStructure::CubedSphereStructure(
     }
 }
 
-idx_t CubedSphereStructure::nb_elems() const {
+idx_t CubedSphereStructure::size() const {
     return nElems_;
 }
 
-idx_t CubedSphereStructure::nb_owned_elems() const {
+idx_t CubedSphereStructure::sizeOwned() const {
     return nOwnedElems_;
 }
 
