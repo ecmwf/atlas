@@ -16,7 +16,7 @@ def run_program_get_error(file):
     
     from subprocess import Popen, PIPE
     
-    p = Popen(command, stdout=PIPE, stderr=PIPE)
+    p = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
     output, error = p.communicate()
     if p.returncode != 0:
        return str(error.strip(),'ascii')
