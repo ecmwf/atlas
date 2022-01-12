@@ -131,6 +131,19 @@ CASE("construction by integer") {
     EXPECT(HealpixGrid(3) == Grid("H3"));
 }
 
+//-----------------------------------------------------------------------------
+
+CASE("matching mesh partitioner") {
+    auto grid  = Grid{"H8"};
+    auto mesh  = HealpixMeshGenerator{}.generate(grid);
+    auto match = MatchingPartitioner{mesh};
+    EXPECT_NO_THROW(match.partition(Grid{"O64"}));
+    EXPECT_NO_THROW(match.partition(Grid{"L32x17"}));
+    EXPECT_NO_THROW(match.partition(Grid{"S32x17"}));
+    EXPECT_NO_THROW(match.partition(Grid{"F32"}));
+    EXPECT_NO_THROW(match.partition(Grid{"L64x33", GlobalDomain(-180.)}));
+}
+
 }  // namespace test
 }  // namespace atlas
 

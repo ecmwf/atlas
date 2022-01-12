@@ -19,6 +19,7 @@
 #include "atlas/grid/Iterator.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/omp/fill.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -44,31 +45,39 @@ void MatchingMeshPartitionerLonLatPolygon::partition(const Grid& grid, int parti
 
     Log::debug() << "MatchingMeshPartitionerLonLatPolygon::partition" << std::endl;
 
-    // FIXME: THIS IS A HACK! the coordinates include North/South Pole (first/last
-    // partitions only)
-    bool includesNorthPole = (mpi_rank == 0);
-    bool includesSouthPole = (mpi_rank == mpi_size - 1);
-
     const util::PolygonXY poly{prePartitionedMesh_.polygon(0)};
-    Projection projection = prePartitionedMesh_.projection();
 
-    {
-        eckit::ProgressTimer timer("Partitioning", grid.size(), "point", double(10), atlas::Log::trace());
+    double west = poly.coordinatesMin().x();
+    double east = poly.coordinatesMax().x();
+    comm.allReduceInPlace(west, eckit::mpi::Operation::MIN);
+    comm.allReduceInPlace(east, eckit::mpi::Operation::MAX);
+
+    Projection projection = prePartitionedMesh_.projection();
+    omp::fill(partitioning, partitioning + grid.size(), -1);
+
+    auto compute = [&](double west) {
         size_t i = 0;
 
         for (PointLonLat P : grid.lonlat()) {
-            ++timer;
-            projection.lonlat2xy(P);
-            const bool atThePole = (includesNorthPole && P[LAT] >= poly.coordinatesMax()[LAT]) ||
-                                   (includesSouthPole && P[LAT] < poly.coordinatesMin()[LAT]);
-
-            partitioning[i++] = atThePole || poly.contains(P) ? mpi_rank : -1;
+            if (partitioning[i] < 0) {
+                projection.lonlat2xy(P);
+                P.normalise(west);
+                partitioning[i] = poly.contains(P) ? mpi_rank : -1;
+            }
+            ++i;
         }
-    }
+        // Synchronize partitioning
+        comm.allReduceInPlace(partitioning, grid.size(), eckit::mpi::Operation::MAX);
 
-    // Synchronize partitioning, do a sanity check
-    comm.allReduceInPlace(partitioning, grid.size(), eckit::mpi::Operation::MAX);
-    const int min = *std::min_element(partitioning, partitioning + grid.size());
+        return *std::min_element(partitioning, partitioning + grid.size());
+    };
+
+    int min              = compute(west);
+    constexpr double eps = 1.e-10;
+    if (min < 0 && east - west > 360. + eps) {
+        west = east - 360.;
+        min  = compute(west);
+    }
     if (min < 0) {
         throw_Exception(
             "Could not find partition for target node (source "

@@ -369,6 +369,8 @@ void HealpixMeshGenerator::hash(eckit::Hash& h) const {
 }
 
 void HealpixMeshGenerator::generate(const Grid& grid, const grid::Distribution& distribution, Mesh& mesh) const {
+    ATLAS_TRACE();
+    Log::debug() << "HealpixMeshGenerator generating mesh from " << grid.name() << std::endl;
     ATLAS_ASSERT(HealpixGrid(grid), "Grid could not be cast to a HealpixGrid");
     ATLAS_ASSERT(!mesh.generated());
 
