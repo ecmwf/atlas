@@ -93,6 +93,8 @@ projection/detail/ProjectionImpl.h
 projection/detail/ProjectionUtilities.h
 projection/detail/SchmidtProjection.cc
 projection/detail/SchmidtProjection.h
+projection/detail/VariableResolutionProjection.cc
+projection/detail/VariableResolutionProjection.h
 
 domain.h
 domain/Domain.cc
