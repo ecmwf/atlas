@@ -257,6 +257,11 @@ void PolygonCoordinates::print(std::ostream& out) const {
     out << "]";
 }
 
+std::ostream& operator<<(std::ostream& out, const PolygonCoordinates& pc) {
+    pc.print(out);
+    return out;
+}
+
 Polygon::edge_set_t ExplicitPartitionPolygon::compute_edges(idx_t points_size) {
     util::Polygon::edge_set_t edges;
     auto add_edge = [&](idx_t p1, idx_t p2) {

@@ -188,6 +188,8 @@ public:
 
     void print(std::ostream&) const;
 
+    friend std::ostream& operator<<(std::ostream& out, const PolygonCoordinates& pc);
+
 protected:
     // -- Members
 
