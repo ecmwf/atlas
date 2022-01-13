@@ -63,8 +63,10 @@ method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, doubl
         double det = b * b - 4. * a * c;
         Roots roots;
         if (det >= 0.) {
-            roots.a = (-b + sqrt(det)) / (2 * a);
-            roots.b = (-b - sqrt(det)) / (2 * a);
+            double inv_two_a = 1. / (2. * a);
+            double sqrt_det = std::sqrt(det);
+            roots.a = (-b + sqrt_det) * inv_two_a;
+            roots.b = (-b - sqrt_det) * inv_two_a;
         }
         return roots;
     };
