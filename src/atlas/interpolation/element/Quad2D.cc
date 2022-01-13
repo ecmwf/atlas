@@ -74,7 +74,7 @@ method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, doubl
     // ax + b = 0
     auto solve_linear = [](const double a, const double b) { return -b / a; };
 
-    auto validWeight = [&](const double w) { return (w >= (0. - epsilon)) && (w <= (1. + epsilon)); };
+    auto validWeight = [&](const double w) { return (w > - epsilon) && (w < (1. + epsilon)); };
 
     // solve for u and v where:
     // w1 = ( 1 - u ) * ( 1 - v )
