@@ -60,7 +60,7 @@ method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, doubl
     //
     // ax**2 + bx + x = 0
     auto solve_quadratic = [](const double a, const double b, const double c) {
-        double det = b * b - 4 * a * c;
+        double det = b * b - 4. * a * c;
         Roots roots;
         if (det >= 0.) {
             roots.a = (-b + sqrt(det)) / (2 * a);
