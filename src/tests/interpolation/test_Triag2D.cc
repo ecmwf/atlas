@@ -122,7 +122,7 @@ CASE("test_intersection_rotatedtriangle") {
 
     EXPECT(triangle.validate());
 
-    PointXY orig(10.0/(3*root2), -2.0/(3*root2));
+    PointXY orig(10./(3.*root2), -2./(3.*root2));
 
     Intersect isect = triangle.intersects(orig);
 
