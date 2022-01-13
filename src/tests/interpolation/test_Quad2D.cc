@@ -36,7 +36,7 @@ CASE("test_quad_area") {
     double area = quad1.area();
 
     std::cout << "area " << area << std::endl;
-    EXPECT(eckit::types::is_approximately_equal(area, 1.0, relative_error));
+    EXPECT_APPROX_EQ(area, 1.0, relative_error);
 
     PointXY c0(-2., -2.);  // 4
     PointXY c1(3., -2.);   // 6
