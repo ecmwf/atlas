@@ -126,7 +126,7 @@ CASE("test_interpolation_N64_to_O32_bilinear_remapping") {
     static double interpolation_tolerance = 1.e-3;
     double std_dev = std::accumulate(diffs.begin(), diffs.end(), decltype(diffs)::value_type(0)) /
                      diffs.size();
-    double max_dev = sqrt(*std::max_element(diffs.begin(), diffs.end()));
+    double max_dev = std::sqrt(*std::max_element(diffs.begin(), diffs.end()));
     Log::info() << " standard deviation " << std_dev << " max " << max_dev << std::endl;
     EXPECT(eckit::types::is_approximately_equal(std_dev, 0.0, 1.e-6));
     EXPECT(eckit::types::is_approximately_equal(max_dev, 0.0, interpolation_tolerance));
