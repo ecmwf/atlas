@@ -54,7 +54,7 @@ CASE("test_triag_area") {
 CASE("test_intersection_equilateral_triangle") {
     PointXY v0(0., 0.);
     PointXY v1(1., 0.);
-    PointXY v2(0.5, sqrt(3.0)/2.0);
+    PointXY v2(0.5, std::sqrt(3.0)/2.0);
 
     Triag2D triangle(v0.data(), v1.data(), v2.data());
 
