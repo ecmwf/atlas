@@ -60,7 +60,7 @@ CASE("test_intersection_equilateral_triangle") {
 
     EXPECT(triangle.validate());
 
-    PointXY orig(0.5, sqrt(3.0)/6.0);
+    PointXY orig(0.5, std::sqrt(3.0)/6.0);
 
     Intersect isect = triangle.intersects(orig);
 
