@@ -93,7 +93,7 @@ method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, doubl
     double b = cross2d(vC, vB) + cross2d(vA, vD);
     double c = cross2d(vA, vB);
 
-    if (abs(a) > epsilon) {
+    if (std::abs(a) > epsilon) {
         Roots roots = solve_quadratic(a, b, c);
         if (validWeight(roots.a)) {
             isect.v = roots.a;
