@@ -113,7 +113,7 @@ CASE("test_intersection_offset_right_angled_triangle") {
 }
 
 CASE("test_intersection_rotatedtriangle") {
-    double root2 = sqrt(2);
+    constexpr double root2 = std::sqrt(2.);
     PointXY v0(0., 0.);
     PointXY v1(3./root2, -3./root2);
     PointXY v2(7./root2, 1./root2);
