@@ -105,7 +105,7 @@ method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, doubl
             isect.v = BAD_WEIGHT_VALUE;
         }
     }
-    else if (abs(b) > epsilon) {
+    else if (std::abs(b) > epsilon) {
         isect.v = solve_linear(b, c);
     }
     else {
