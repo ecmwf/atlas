@@ -184,6 +184,11 @@ public:
     const Point2& coordinatesMin() const;
     const Point2& centroid() const;
 
+    template <typename Index>
+    const Point2& operator[](Index i) const {
+        return coordinates_[i];
+    }
+
     idx_t size() const { return coordinates_.size(); }
 
     void print(std::ostream&) const;

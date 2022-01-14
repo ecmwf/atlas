@@ -10,6 +10,8 @@
 
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.h"
 
+#include <iomanip>
+#include <sstream>
 #include <vector>
 
 #include "eckit/config/Resource.h"
@@ -72,17 +74,36 @@ void MatchingMeshPartitionerLonLatPolygon::partition(const Grid& grid, int parti
         return *std::min_element(partitioning, partitioning + grid.size());
     };
 
-    int min              = compute(west);
+    int min              = compute(east - 360.);
     constexpr double eps = 1.e-10;
     if (min < 0 && east - west > 360. + eps) {
-        west = east - 360.;
-        min  = compute(west);
+        min = compute(west - eps);
     }
     if (min < 0) {
-        throw_Exception(
-            "Could not find partition for target node (source "
-            "mesh does not contain all target grid points)",
-            Here());
+        size_t i            = 0;
+        size_t max_failures = grid.size();
+        std::vector<size_t> failed_index;
+        std::vector<PointLonLat> failed_lonlat;
+        failed_index.reserve(max_failures);
+        failed_lonlat.reserve(max_failures);
+        for (PointLonLat P : grid.lonlat()) {
+            if (partitioning[i] < 0) {
+                failed_index.emplace_back(i);
+                failed_lonlat.emplace_back(P);
+            }
+            ++i;
+        }
+        size_t nb_failures = failed_index.size();
+        std::stringstream err;
+        err << "Could not find partition of " << nb_failures
+            << " target grid points (source "
+               "mesh does not contain all target grid points)\n"
+               "Failed target grid points with global index:\n";
+        for (size_t n = 0; n < nb_failures; ++n) {
+            err << "  - " << std::setw(10) << std::left << failed_index[n] + 1 << " {lon,lat} : " << failed_lonlat[n]
+                << "\n";
+        }
+        throw_Exception(err.str(), Here());
     }
 }
 
