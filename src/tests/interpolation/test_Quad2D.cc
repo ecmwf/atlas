@@ -50,7 +50,7 @@ CASE("test_quad_area") {
     area = quad2.area();
 
     std::cout << "area " << area << std::endl;
-    EXPECT(eckit::types::is_approximately_equal(area, 12.5, relative_error));
+    EXPECT_APPROX_EQ(area, 12.5, relative_error);
 }
 
 CASE("test_quadrilateral_intersection_refquad") {
@@ -68,8 +68,8 @@ CASE("test_quadrilateral_intersection_refquad") {
     Intersect isect = quad.intersects(orig);
 
     EXPECT(isect);
-    EXPECT(eckit::types::is_approximately_equal(isect.u, 0.25, relative_error));
-    EXPECT(eckit::types::is_approximately_equal(isect.v, 0.25, relative_error));
+    EXPECT_APPROX_EQ(isect.u, 0.25, relative_error);
+    EXPECT_APPROX_EQ(isect.v, 0.25, relative_error);
 }
 
 CASE("test_quadrilateral_remap_refquad") {
@@ -87,8 +87,8 @@ CASE("test_quadrilateral_remap_refquad") {
     Intersect isect = quad.localRemap(orig);
 
     EXPECT(isect);
-    EXPECT(eckit::types::is_approximately_equal(isect.u, 0.25, relative_error));
-    EXPECT(eckit::types::is_approximately_equal(isect.v, 0.25, relative_error));
+    EXPECT_APPROX_EQ(isect.u, 0.25, relative_error);
+    EXPECT_APPROX_EQ(isect.v, 0.25, relative_error);
 }
 
 CASE("test_quadrilateral_intersection_doublequad") {
@@ -106,8 +106,8 @@ CASE("test_quadrilateral_intersection_doublequad") {
     Intersect isect = quad.localRemap(orig);
 
     EXPECT(isect);
-    EXPECT(eckit::types::is_approximately_equal(isect.u, 0.25, relative_error));
-    EXPECT(eckit::types::is_approximately_equal(isect.v, 0.25, relative_error));
+    EXPECT_APPROX_EQ(isect.u, 0.25, relative_error);
+    EXPECT_APPROX_EQ(isect.v, 0.25, relative_error);
 }
 
 CASE("test_quadrilateral_intersection_rotatedquad") {
@@ -125,8 +125,8 @@ CASE("test_quadrilateral_intersection_rotatedquad") {
     Intersect isect = quad.localRemap(orig);
 
     EXPECT(isect);
-    EXPECT(eckit::types::is_approximately_equal(isect.u, 0.5, relative_error));
-    EXPECT(eckit::types::is_approximately_equal(isect.v, 0.5, relative_error));
+    EXPECT_APPROX_EQ(isect.u, 0.5, relative_error);
+    EXPECT_APPROX_EQ(isect.v, 0.5, relative_error);
 }
 
 CASE("test_quadrilateral_intersection_arbitrary") {
@@ -145,8 +145,8 @@ CASE("test_quadrilateral_intersection_arbitrary") {
 
     std::cout << isect.u << " " << isect.v << std::endl;
     EXPECT(isect);
-    EXPECT(eckit::types::is_approximately_equal(isect.u, 0.400390, relative_error));
-    EXPECT(eckit::types::is_approximately_equal(isect.v, 0.242483, relative_error));
+    EXPECT_APPROX_EQ(isect.u, 0.400390, relative_error);
+    EXPECT_APPROX_EQ(isect.v, 0.242483, relative_error);
 }
 
 CASE("test_quadrilateral_intersection_nointersect") {
@@ -193,8 +193,8 @@ CASE("test_quadrilateral_intersection_corners") {
         Intersect isect = quad.localRemap(orig);
 
         EXPECT(isect);
-        EXPECT(eckit::types::is_approximately_equal(isect.u, uvs[i].first, relative_error));
-        EXPECT(eckit::types::is_approximately_equal(isect.v, uvs[i].second, relative_error));
+        EXPECT_APPROX_EQ(isect.u, uvs[i].first, relative_error);
+        EXPECT_APPROX_EQ(isect.v, uvs[i].second, relative_error);
     }
 }
 

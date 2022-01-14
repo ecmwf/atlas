@@ -22,7 +22,7 @@ struct Ray;
 }
 namespace element {
 
-#define BAD_WEIGHT_VALUE -1
+static constexpr double BAD_WEIGHT_VALUE = -1.;
 
 //----------------------------------------------------------------------------------------------------------------------
 

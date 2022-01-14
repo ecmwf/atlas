@@ -74,7 +74,7 @@ CASE("test_interpolation_O64_to_points_bilinear_remapping") {
         for (idx_t j = 0; j < pointcloud.size(); ++j) {
             static double interpolation_tolerance = 1.e-4;
             Log::info() << target(j) << "  " << check[j] << std::endl;
-            EXPECT(eckit::types::is_approximately_equal(target(j), check[j], interpolation_tolerance));
+            EXPECT_APPROX_EQ(target(j), check[j], interpolation_tolerance);
         }
     }
 }
@@ -128,8 +128,8 @@ CASE("test_interpolation_N64_to_O32_bilinear_remapping") {
                      diffs.size();
     double max_dev = std::sqrt(*std::max_element(diffs.begin(), diffs.end()));
     Log::info() << " standard deviation " << std_dev << " max " << max_dev << std::endl;
-    EXPECT(eckit::types::is_approximately_equal(std_dev, 0.0, 1.e-6));
-    EXPECT(eckit::types::is_approximately_equal(max_dev, 0.0, interpolation_tolerance));
+    EXPECT_APPROX_EQ(std_dev, 0.0, 1.e-6);
+    EXPECT_APPROX_EQ(max_dev, 0.0, interpolation_tolerance);
 
 }
 //-----------------------------------------------------------------------------

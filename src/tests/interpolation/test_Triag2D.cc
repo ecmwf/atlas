@@ -35,7 +35,7 @@ CASE("test_triag_area") {
     double area = triangle1.area();
 
     std::cout << "area " << area << std::endl;
-    EXPECT(eckit::types::is_approximately_equal(area, 0.5, relative_error));
+    EXPECT_APPROX_EQ(area, 0.5, relative_error);
 
     PointXY c0(-2., -2.);  // 4
     PointXY c1(3., -2.);   // 6
@@ -48,7 +48,7 @@ CASE("test_triag_area") {
     area = triangle2.area();
 
     std::cout << "area " << area << std::endl;
-    EXPECT(eckit::types::is_approximately_equal(area, 6.25, relative_error));
+    EXPECT_APPROX_EQ(area, 6.25, relative_error);
 }
 
 CASE("test_intersection_equilateral_triangle") {
@@ -67,8 +67,8 @@ CASE("test_intersection_equilateral_triangle") {
     EXPECT(isect);
     std::cout << "isect.u " << isect.u << std::endl;
     std::cout << "isect.v " << isect.v << std::endl;
-    EXPECT(eckit::types::is_approximately_equal(isect.u, 1./3., relative_error));
-    EXPECT(eckit::types::is_approximately_equal(isect.v, 1./3., relative_error));
+    EXPECT_APPROX_EQ(isect.u, 1./3., relative_error);
+    EXPECT_APPROX_EQ(isect.v, 1./3., relative_error);
 }
 
 CASE("test_intersection_right_angled_triangle") {
@@ -88,8 +88,8 @@ CASE("test_intersection_right_angled_triangle") {
     EXPECT(isect);
     std::cout << "isect.u " << isect.u << std::endl;
     std::cout << "isect.v " << isect.v << std::endl;
-    EXPECT(eckit::types::is_approximately_equal(isect.u, 1./3., relative_error));
-    EXPECT(eckit::types::is_approximately_equal(isect.v, 1./3., relative_error));
+    EXPECT_APPROX_EQ(isect.u, 1./3., relative_error);
+    EXPECT_APPROX_EQ(isect.v, 1./3., relative_error);
 }
 
 CASE("test_intersection_offset_right_angled_triangle") {
@@ -108,8 +108,8 @@ CASE("test_intersection_offset_right_angled_triangle") {
     EXPECT(isect);
     std::cout << "isect.u " << isect.u << std::endl;
     std::cout << "isect.v " << isect.v << std::endl;
-    EXPECT(eckit::types::is_approximately_equal(isect.u, 0.25, relative_error));
-    EXPECT(eckit::types::is_approximately_equal(isect.v, 0.25, relative_error));
+    EXPECT_APPROX_EQ(isect.u, 0.25, relative_error);
+    EXPECT_APPROX_EQ(isect.v, 0.25, relative_error);
 }
 
 CASE("test_intersection_rotatedtriangle") {
@@ -129,8 +129,8 @@ CASE("test_intersection_rotatedtriangle") {
     EXPECT(isect);
     std::cout << "isect.u " << isect.u << std::endl;
     std::cout << "isect.v " << isect.v << std::endl;
-    EXPECT(eckit::types::is_approximately_equal(isect.u, 1./3., relative_error));
-    EXPECT(eckit::types::is_approximately_equal(isect.v, 1./3., relative_error));
+    EXPECT_APPROX_EQ(isect.u, 1./3., relative_error);
+    EXPECT_APPROX_EQ(isect.v, 1./3., relative_error);
 }
 
 CASE("test_intersection_nointersect") {
@@ -175,8 +175,8 @@ CASE("test_intersection_corners") {
         EXPECT(isect);
         std::cout << "isect.u " << isect.u << std::endl;
         std::cout << "isect.v " << isect.v << std::endl;
-        EXPECT(eckit::types::is_approximately_equal(isect.u, uvs[i].first, relative_error));
-        EXPECT(eckit::types::is_approximately_equal(isect.v, uvs[i].second, relative_error));
+        EXPECT_APPROX_EQ(isect.u, uvs[i].first, relative_error);
+        EXPECT_APPROX_EQ(isect.v, uvs[i].second, relative_error);
     }
 }
 
