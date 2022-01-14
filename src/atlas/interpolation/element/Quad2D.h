@@ -12,6 +12,7 @@
 
 #include "atlas/interpolation/Vector2D.h"
 #include "atlas/interpolation/method/Intersect.h"
+#include "atlas/interpolation/element/Triag2D.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Point.h"
 
@@ -21,8 +22,6 @@ namespace method {
 struct Ray;
 }
 namespace element {
-
-static constexpr double BAD_WEIGHT_VALUE = -1.;
 
 //----------------------------------------------------------------------------------------------------------------------
 
