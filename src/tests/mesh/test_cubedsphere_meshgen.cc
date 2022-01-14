@@ -419,7 +419,7 @@ CASE("cubedsphere_dual_mesh_test") {
         // Set grid, mesh and functionspace.
         const auto grid = Grid("CS-LFR-C-48");
         const auto mesh =
-            MeshGenerator("cubedsphere_dual", util::Config("partitioner", "equal_regions") | util::Config("halo", 3)).generate(grid);
+            MeshGenerator("cubedsphere_dual", util::Config("halo", 3)).generate(grid);
         const auto functionSpace = functionspace::CellColumns(mesh);
         auto field =
             functionSpace.createField<double>(util::Config("name", "targetField") | util::Config("levels", nLevels));
@@ -455,6 +455,9 @@ CASE("cubedsphere_dual_mesh_test") {
         }
 
         // gmsh output.
+        auto fieldSet = FieldSet{field};
+        fieldSet.add(mesh.cells().halo());
+
         const auto gmshConfigXy =
             util::Config("coordinates", "xy") | util::Config("ghost", true) | util::Config("info", true);
         const auto gmshConfigXyz =
@@ -463,8 +466,8 @@ CASE("cubedsphere_dual_mesh_test") {
         auto gmshXyz = output::Gmsh("dual_cells_xyz.msh", gmshConfigXyz);
         gmshXy.write(mesh);
         gmshXyz.write(mesh);
-        gmshXy.write(FieldSet{field}, functionSpace);
-        gmshXyz.write(FieldSet{field}, functionSpace);
+        gmshXy.write(fieldSet, functionSpace);
+        gmshXyz.write(fieldSet, functionSpace);
     }
 }
 

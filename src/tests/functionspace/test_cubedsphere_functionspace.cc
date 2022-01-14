@@ -134,9 +134,9 @@ CASE("cubedsphere_mesh_functionspace") {
 
     // Set dual mesh generator.
     const auto dualMeshGenEqualRegions =
-        MeshGenerator("cubedsphere_dual", meshConfigEqualRegions | util::Config("halo", 0));
+        MeshGenerator("cubedsphere_dual", meshConfigEqualRegions);
     const auto dualMeshGenCubedSphere =
-        MeshGenerator("cubedsphere_dual", meshConfigCubedSphere | util::Config("halo", 0));
+        MeshGenerator("cubedsphere_dual", meshConfigCubedSphere);
 
     // Set mesh
     const auto meshEqualRegions = meshGenEqualRegions.generate(grid);
@@ -162,6 +162,8 @@ CASE("cubedsphere_mesh_functionspace") {
     SECTION("CellColumns: cubedsphere") { testFunctionSpace(cubedSphereCellColumns); }
     SECTION("NodeColumns: equal_regions") { testFunctionSpace(equalRegionsNodeColumns); }
     SECTION("NodeColumns: cubedsphere") { testFunctionSpace(cubedSphereNodeColumns); }
+    SECTION("CellColumns: dual mesh, equal_regions") { testFunctionSpace(equalRegionsDualCellColumns); }
+    SECTION("CellColumns: dual mesh, cubedsphere") { testFunctionSpace(cubedSphereDualCellColumns); }
     SECTION("NodeColumns: dual mesh, equal_regions") { testFunctionSpace(equalRegionsDualNodeColumns); }
     SECTION("NodeColumns: dual mesh, cubedsphere") { testFunctionSpace(cubedSphereDualNodeColumns); }
 }
