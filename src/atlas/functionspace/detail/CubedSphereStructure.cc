@@ -120,6 +120,29 @@ idx_t CubedSphereStructure::index(idx_t t, idx_t i, idx_t j) const {
     return tijToIdx_[static_cast<size_t>(t)][vecIndex(t, i, j)];
 }
 
+bool CubedSphereStructure::is_valid_index(idx_t t, idx_t i, idx_t j) const {
+
+
+    // Check if t is in range.
+    if (t < 0 || t > 5) {
+        return false;
+    }
+
+    // Check if i and j are in range in index method.
+    if ( i < i_begin(t) || i >= i_end(t) ||
+         j < j_begin(t) || j >= j_end(t)) {
+        return false;
+    }
+
+    // Check if (t, i, j) is a valid index.
+    if (index(t, i, j) == invalid_index()) {
+        return false;
+    }
+
+    return true;
+
+}
+
 Field CubedSphereStructure::tij() const {
     return tij_;
 }

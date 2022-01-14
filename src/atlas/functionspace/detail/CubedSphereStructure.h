@@ -53,6 +53,10 @@ public:
     /// Return array_view index for (t, i, j).
     idx_t index(idx_t t, idx_t i, idx_t j) const;
 
+    /// Return true if (t, i, j) is a valid index.
+    bool is_valid_index(idx_t t, idx_t i, idx_t j) const;
+
+
     /// Return ijt field.
     Field tij() const;
 
