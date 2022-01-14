@@ -208,7 +208,6 @@ CASE("test copies and up/down casting") {
 }
 
 CASE("Cubed sphere primal-dual equivalence") {
-
     // Created a LFRic layout N12 cubedsphere grid.
     // This is a global set of grid points with lonlats located at cell centres.
     const auto grid = Grid("CS-LFR-12");
@@ -222,35 +221,29 @@ CASE("Cubed sphere primal-dual equivalence") {
     // The cell-centre (nodes) lonlats of the primal mesh are identical to the
     // node (cell-centre) lonlats of the dual mesh.
     const auto primalMesh = MeshGenerator("cubedsphere").generate(grid);
-    const auto dualMesh = MeshGenerator("cubedsphere_dual").generate(grid);
+    const auto dualMesh   = MeshGenerator("cubedsphere_dual").generate(grid);
 
     // Create cubed sphere function spaces (these have fancy features, such as
     // (t, i, j) indexing and parallel_for methods). The halo sizes of the primal
     // functionspaces are set to match that of the dual functionspaces.
     const auto primalNodes = functionspace::CubedSphereNodeColumns(primalMesh, util::Config("halo", 0));
     const auto primalCells = functionspace::CubedSphereCellColumns(primalMesh, util::Config("halo", 1));
-    const auto dualNodes = functionspace::CubedSphereNodeColumns(dualMesh);
-    const auto dualCells = functionspace::CubedSphereCellColumns(dualMesh);
+    const auto dualNodes   = functionspace::CubedSphereNodeColumns(dualMesh);
+    const auto dualCells   = functionspace::CubedSphereCellColumns(dualMesh);
     // Note, the functionspaces we are usually interested in are primalCells and
     // dualNodes. The others are there for completeness.
 
     // Field comparison function. Note that this upcasts everything to
     // to the base FunctionSpace class.
-    const auto compareFields = [](const FunctionSpace& functionSpaceA,
-                                  const FunctionSpace& functionSpaceB){
-
+    const auto compareFields = [](const FunctionSpace& functionSpaceA, const FunctionSpace& functionSpaceB) {
         // Check that function spaces are the same size.
         EXPECT_EQ(functionSpaceA.size(), functionSpaceB.size());
 
         // Make views to fields.
-        const auto lonLatFieldA =
-            array::make_view<double, 2>(functionSpaceA.lonlat());
-        const auto lonLatFieldB =
-            array::make_view<double, 2>(functionSpaceB.lonlat());
-        const auto ghostFieldA =
-            array::make_view<int, 1>(functionSpaceA.ghost());
-        const auto ghostFieldB =
-            array::make_view<int, 1>(functionSpaceB.ghost());
+        const auto lonLatFieldA = array::make_view<double, 2>(functionSpaceA.lonlat());
+        const auto lonLatFieldB = array::make_view<double, 2>(functionSpaceB.lonlat());
+        const auto ghostFieldA  = array::make_view<int, 1>(functionSpaceA.ghost());
+        const auto ghostFieldB  = array::make_view<int, 1>(functionSpaceB.ghost());
 
         // Loop over functionspaces.
         for (idx_t i = 0; i < functionSpaceA.size(); ++i) {
@@ -265,11 +258,9 @@ CASE("Cubed sphere primal-dual equivalence") {
 
     // Check that dual cells and primal nodes are equivalent.
     compareFields(dualCells, primalNodes);
-
 }
 
 CASE("Variable halo size functionspaces") {
-
     // Create a mesh with a large halo, and a few functionspaces with different
     // (smaller) halo sizes. These should create fields with a smaller memory
     // footprint.
@@ -301,7 +292,7 @@ CASE("Variable halo size functionspaces") {
     EXPECT(cellColumns2.size() < mesh.cells().size());
 
     // Make sure size of owned cell data matches grid.
-    auto checkSize = [&](idx_t sizeOwned){
+    auto checkSize = [&](idx_t sizeOwned) {
         mpi::comm().allReduceInPlace(sizeOwned, eckit::mpi::Operation::SUM);
         EXPECT_EQ(sizeOwned, grid.size());
     };
@@ -309,7 +300,6 @@ CASE("Variable halo size functionspaces") {
     checkSize(cellColumns0.sizeOwned());
     checkSize(cellColumns1.sizeOwned());
     checkSize(cellColumns2.sizeOwned());
-
 }
 
 }  // namespace test

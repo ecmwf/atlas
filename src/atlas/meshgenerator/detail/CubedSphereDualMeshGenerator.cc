@@ -195,10 +195,10 @@ void CubedSphereDualMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, 
     copyField<idx_t, 2>(csCells.field("tij"), nodes.field("tij"));
 
     // Need to decrement halo by one.
-    auto nodesHalo  = array::make_view<int, 1>(nodes.halo());
+    auto nodesHalo = array::make_view<int, 1>(nodes.halo());
 
     for (idx_t idx = 0; idx < nodes.size(); ++idx) {
-        nodesHalo(idx)  = std::max(0, nodesHalo(idx) - 1);
+        nodesHalo(idx) = std::max(0, nodesHalo(idx) - 1);
     }
 
     //--------------------------------------------------------------------------

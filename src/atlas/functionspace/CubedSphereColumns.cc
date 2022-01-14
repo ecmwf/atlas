@@ -65,7 +65,7 @@ public:
         ATLAS_ASSERT(mesh);
         auto& mesh_impl = *mesh.get();
         registerMesh(mesh_impl);
-        creator_type creator                 = std::bind(&CubedSphereStructureCache::create, mesh, functionspace->size());
+        creator_type creator = std::bind(&CubedSphereStructureCache::create, mesh, functionspace->size());
         util::ObjectHandle<value_type> value = Base::get_or_create(key(mesh_impl), creator);
         return value;
     }

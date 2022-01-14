@@ -32,8 +32,8 @@ CubedSphereStructure::BoundingBox::BoundingBox() {
     jEnd   = std::numeric_limits<idx_t>::min();
 }
 
-CubedSphereStructure::CubedSphereStructure(
-    const Field& tij, const Field& ghost, idx_t size): tij_(tij), ghost_(ghost), nElems_(size) {
+CubedSphereStructure::CubedSphereStructure(const Field& tij, const Field& ghost, idx_t size):
+    tij_(tij), ghost_(ghost), nElems_(size) {
     ATLAS_TRACE();
     Log::debug() << "CubedSphereStructure bounds checking is set to " + std::to_string(checkBounds) << std::endl;
 
