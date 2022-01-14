@@ -189,16 +189,15 @@ void CubedSphereDualMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, 
     copyField<int, 1>(csCells.partition(), nodes.partition());
     copyField<int, 1>(csCells.halo(), nodes.halo());
     copyField<int, 1>(csCells.flags(), nodes.flags());
+    copyField<int, 1>(csCells.field("ghost"), nodes.ghost());
     copyField<double, 2>(csCells.field("xy"), nodes.xy());
     copyField<double, 2>(csCells.field("lonlat"), nodes.lonlat());
     copyField<idx_t, 2>(csCells.field("tij"), nodes.field("tij"));
 
-    // Need to set a ghost field and decrement halo by one.
-    auto nodesGhost = array::make_view<int, 1>(nodes.ghost());
+    // Need to decrement halo by one.
     auto nodesHalo  = array::make_view<int, 1>(nodes.halo());
 
     for (idx_t idx = 0; idx < nodes.size(); ++idx) {
-        nodesGhost(idx) = nodesHalo(idx) > 0;
         nodesHalo(idx)  = std::max(0, nodesHalo(idx) - 1);
     }
 
@@ -278,10 +277,13 @@ void CubedSphereDualMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, 
 
     cells.add(Field("lonlat", array::make_datatype<double>(), array::make_shape(cells.size(), 2)));
 
+    cells.add(Field("ghost", array::make_datatype<int>(), array::make_shape(cells.size())));
+
     // Copy dual cells fields from nodes.
     copyField<gidx_t, 1>(csNodes.global_index(), cells.global_index());
     copyField<idx_t, 1>(csNodes.remote_index(), cells.remote_index());
     copyField<int, 1>(csNodes.partition(), cells.partition());
+    copyField<int, 1>(csNodes.ghost(), cells.field("ghost"));
     copyField<int, 1>(csNodes.halo(), cells.halo());
     copyField<int, 1>(csNodes.flags(), cells.flags());
     copyField<idx_t, 2>(csNodes.field("tij"), cells.field("tij"));

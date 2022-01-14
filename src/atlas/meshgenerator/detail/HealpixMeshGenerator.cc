@@ -369,6 +369,8 @@ void HealpixMeshGenerator::hash(eckit::Hash& h) const {
 }
 
 void HealpixMeshGenerator::generate(const Grid& grid, const grid::Distribution& distribution, Mesh& mesh) const {
+    ATLAS_TRACE();
+    Log::debug() << "HealpixMeshGenerator generating mesh from " << grid.name() << std::endl;
     ATLAS_ASSERT(HealpixGrid(grid), "Grid could not be cast to a HealpixGrid");
     ATLAS_ASSERT(!mesh.generated());
 
@@ -643,6 +645,7 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     auto remote_idx    = array::make_indexview<idx_t, 1>(nodes.remote_index());
     auto part          = array::make_view<int, 1>(nodes.partition());
     auto ghost         = array::make_view<int, 1>(nodes.ghost());
+    auto halo          = array::make_view<int, 1>(nodes.halo());
     auto flags         = array::make_view<int, 1>(nodes.flags());
 
     // define cells and associated properties
@@ -739,6 +742,7 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
 
                 part(inode)  = parts_SB[iil];
                 ghost(inode) = is_ghost_SB[iil];
+                halo(inode)  = 0;
 
                 if (ghost(inode)) {
                     Topology::set(flags(inode), Topology::GHOST);

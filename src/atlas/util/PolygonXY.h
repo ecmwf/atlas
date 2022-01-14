@@ -37,10 +37,10 @@ public:
     bool contains(const Point2& Pxy) const override;
 
 private:
-    PointLonLat centroid_;
+    Point2 centroid_;
     double inner_radius_squared_{0};
-    PointLonLat inner_coordinatesMin_;
-    PointLonLat inner_coordinatesMax_;
+    Point2 inner_coordinatesMin_;
+    Point2 inner_coordinatesMax_;
 };
 
 
