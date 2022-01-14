@@ -14,6 +14,7 @@
 #include "atlas/meshgenerator.h"
 #include "atlas/meshgenerator/detail/HealpixMeshGenerator.h"
 #include "atlas/output/Gmsh.h"
+#include "atlas/util/PolygonXY.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -129,6 +130,33 @@ CASE("test_create_healpix_mesh") {
 
 CASE("construction by integer") {
     EXPECT(HealpixGrid(3) == Grid("H3"));
+}
+
+//-----------------------------------------------------------------------------
+
+CASE("matching mesh partitioner") {
+    auto grid      = Grid{"H8"};
+    auto mesh      = HealpixMeshGenerator{}.generate(grid);
+    auto match     = MatchingPartitioner{mesh};
+    auto& polygons = mesh.polygons();
+
+    static bool do_once = [&]() {
+        for (idx_t i = 0; i < polygons.size(); ++i) {
+            auto poly = util::PolygonXY{polygons[i]};
+            Log::info() << "polygon[" << i << "]:\n";
+            for (idx_t j = 0; j < poly.size(); ++j) {
+                Log::info() << "  " << std::setw(5) << std::left << j << std::setprecision(16) << poly[j] << std::endl;
+            }
+        }
+        return true;
+    }();
+
+
+    SECTION("H8 -> O64") { EXPECT_NO_THROW(match.partition(Grid{"O64"})); }
+    SECTION("H8 -> L32x17") { EXPECT_NO_THROW(match.partition(Grid{"L32x17"})); }
+    SECTION("H8 -> S32x17") { EXPECT_NO_THROW(match.partition(Grid{"S32x17"})); }
+    SECTION("H8 -> F32") { EXPECT_NO_THROW(match.partition(Grid{"F32"})); }
+    SECTION("H8 -> L64x33 (west=-180)") { EXPECT_NO_THROW(match.partition(Grid{"L64x33", GlobalDomain(-180.)})); }
 }
 
 }  // namespace test

@@ -367,7 +367,7 @@ CASE("cubedsphere_dual_mesh_test") {
 
         // Set target grid, mesh and functionspace.
         const auto targetGrid          = Grid("CS-LFR-C-48");
-        const auto targetMesh          = MeshGenerator("cubedsphere_dual").generate(targetGrid, targetPartitioner);
+        const auto targetMesh          = MeshGenerator("cubedsphere_dual", util::Config("halo", 3)).generate(targetGrid, targetPartitioner);
         const auto targetFunctionSpace = functionspace::NodeColumns(targetMesh);
         auto targetField =
             targetFunctionSpace.createField<double>(util::Config("name", "targetField") | util::Config("levels", 5));
@@ -419,7 +419,7 @@ CASE("cubedsphere_dual_mesh_test") {
         // Set grid, mesh and functionspace.
         const auto grid = Grid("CS-LFR-C-48");
         const auto mesh =
-            MeshGenerator("cubedsphere_dual", util::Config("partitioner", "equal_regions")).generate(grid);
+            MeshGenerator("cubedsphere_dual", util::Config("partitioner", "equal_regions") | util::Config("halo", 3)).generate(grid);
         const auto functionSpace = functionspace::CellColumns(mesh);
         auto field =
             functionSpace.createField<double>(util::Config("name", "targetField") | util::Config("levels", nLevels));
