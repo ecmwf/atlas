@@ -10,6 +10,7 @@
 
 
 #include <cmath>
+#include <iomanip>
 #include <iostream>
 #include <stdexcept>
 
@@ -993,6 +994,7 @@ Field& build_cells_remote_idx(mesh::Cells& cells, const mesh::Nodes& nodes) {
 
     auto ridx                 = array::make_indexview<idx_t, 1>(cells.remote_index());
     auto part                 = array::make_view<int, 1>(cells.partition());
+    auto gidx                 = array::make_view<gidx_t, 1>(cells.global_index());
     const auto& element_nodes = cells.node_connectivity();
     idx_t nb_cells            = cells.size();
 
@@ -1009,7 +1011,7 @@ Field& build_cells_remote_idx(mesh::Cells& cells, const mesh::Nodes& nodes) {
             lookup[uid] = jcell;
             ridx(jcell) = jcell;
         }
-        else {
+        else if (ridx(jcell) < 0) {  // Only look for ridx which are negative
             ATLAS_ASSERT(jcell < part.shape(0));
             if (part(jcell) >= static_cast<int>(proc.size())) {
                 std::stringstream msg;
@@ -1034,37 +1036,38 @@ Field& build_cells_remote_idx(mesh::Cells& cells, const mesh::Nodes& nodes) {
     for (idx_t jpart = 0; jpart < nparts; ++jpart) {
         const std::vector<uid_t>& recv_cell = recv_needed[proc[jpart]];
         const idx_t nb_recv_cells           = idx_t(recv_cell.size()) / varsize;
-        // array::ArrayView<uid_t,2> recv_node( make_view( Array::wrap(shape,
-        // recv_needed[ proc[jpart] ].data()) ),
-        //     array::make_shape(recv_needed[ proc[jpart] ].size()/varsize,varsize)
-        //     );
         for (idx_t jcell = 0; jcell < nb_recv_cells; ++jcell) {
             uid_t uid = recv_cell[jcell * varsize + 0];
             int icell = recv_cell[jcell * varsize + 1];
-            if (lookup.count(uid)) {
-                send_found[proc[jpart]].push_back(icell);
-                send_found[proc[jpart]].push_back(lookup[uid]);
-            }
-            else {
-                std::stringstream msg;
-                msg << "[" << mpi::rank() << "] "
-                    << "Node requested by rank [" << jpart << "] with uid [" << uid
-                    << "] that should be owned is not found";
-                throw_Exception(msg.str(), Here());
-            }
+            send_found[proc[jpart]].push_back(icell);
+            send_found[proc[jpart]].push_back(lookup.count(uid) ? lookup[uid] : -1);
         }
     }
 
     ATLAS_TRACE_MPI(ALLTOALL) { mpi::comm().allToAll(send_found, recv_found); }
 
+    std::stringstream errstream;
+    size_t failed{0};
     for (idx_t jpart = 0; jpart < nparts; ++jpart) {
         const std::vector<int>& recv_cell = recv_found[proc[jpart]];
         const idx_t nb_recv_cells         = recv_cell.size() / 2;
         // array::ArrayView<int,2> recv_node( recv_found[ proc[jpart] ].data(),
         //     array::make_shape(recv_found[ proc[jpart] ].size()/2,2) );
         for (idx_t jcell = 0; jcell < nb_recv_cells; ++jcell) {
-            ridx(recv_cell[jcell * 2 + 0]) = recv_cell[jcell * 2 + 1];
+            idx_t icell      = recv_cell[jcell * 2 + 0];
+            idx_t ridx_icell = recv_cell[jcell * 2 + 1];
+            if (ridx_icell >= 0) {
+                ridx(icell) = ridx_icell;
+            }
+            else {
+                ++failed;
+                errstream << "\n[" << mpi::rank() << "] "
+                          << "Cell " << gidx(icell) << " not found on part [" << part(icell) << "]";
+            }
         }
+    }
+    if (failed) {
+        throw_AssertionFailed(errstream.str(), Here());
     }
     return cells.remote_index();
 }
