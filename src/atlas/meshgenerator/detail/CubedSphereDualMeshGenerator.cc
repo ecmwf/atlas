@@ -367,9 +367,9 @@ void CubedSphereDualMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, 
 
     // Figure out element types.
     // Set first element type. ( first = type, second = count )
-    // Types: 2 = line, 3 = triangle, 4 = quad.
-    auto typeCounts = std::vector<std::pair<size_t, idx_t>>{
-                        std::make_pair(nodeLists[0].nodes.size(), 1)};
+    enum struct ElemType : size_t {LINE = 2, TRIANGLE = 3, QUADRILATERAL = 4};
+    auto typeCounts = std::vector<std::pair<ElemType, idx_t>>{
+        std::make_pair(static_cast<ElemType>(nodeLists[0].nodes.size()), 1)};
 
     // Count the number of consecutive lines, triangles or quadtrilaterals in dual mesh.
     // This is an attempt to keep dual mesh cells in the same order as mesh nodes.
@@ -377,7 +377,7 @@ void CubedSphereDualMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, 
     for (size_t idx = 1; idx < nodeLists.size(); ++idx) {
 
         // Get the element type.
-        const auto elemType = nodeLists[idx].nodes.size();
+        const auto elemType = static_cast<ElemType>(nodeLists[idx].nodes.size());
 
         // Increment counter if this elemType is the same as last one
         if (elemType == typeCounts.back().first) {
@@ -397,23 +397,23 @@ void CubedSphereDualMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, 
         // Select element type.
         switch (typeCount.first) {
             // Add a block of lines.
-            case 2: {
+            case ElemType::LINE : {
                 cells.add(new mesh::temporary::Line(), typeCount.second);
                 break;
             }
             // Add a block of triangles.
-            case 3: {
+            case ElemType::TRIANGLE : {
                 cells.add(new mesh::temporary::Triangle(), typeCount.second);
                 break;
             }
             // Add a block of quadrilaterals.
-            case 4: {
+        case ElemType::QUADRILATERAL : {
                 cells.add(new mesh::temporary::Quadrilateral(), typeCount.second);
                 break;
             }
             default: {
                 ATLAS_THROW_EXCEPTION("Unknown element type with " +
-                                      std::to_string(typeCount.first) +
+                                      std::to_string(static_cast<size_t>(typeCount.first)) +
                                       " nodes.");
                 break;
             }
