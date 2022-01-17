@@ -12,7 +12,13 @@
 
 #include <map>
 
+#include "atlas/library/config.h"
+#if ATLAS_ECKIT_HAVE_ECKIT_585
+#include "eckit/linalg/LinearAlgebraDense.h"
+#else
 #include "eckit/linalg/LinearAlgebra.h"
+#endif
+
 #include "eckit/utils/Tokenizer.h"
 
 #include "atlas/library.h"
@@ -66,7 +72,11 @@ private:
             //
             // However to be identical in behaviour for TransLocal with atlas 0.26.0 and earlier before
             // any other codes can be adapted in short notice:
+#if ATLAS_ECKIT_HAVE_ECKIT_585
+            if (eckit::linalg::LinearAlgebraDense::hasBackend("mkl")) {
+#else
             if (eckit::linalg::LinearAlgebra::hasBackend("mkl")) {
+#endif
                 current_backend_ = "mkl";
             }
             else {
@@ -110,11 +120,19 @@ bool Backend::available() const {
     std::string t = type();
     if (t == backend::eckit_linalg::type()) {
         if (has("backend")) {
+#if ATLAS_ECKIT_HAVE_ECKIT_585
+            return eckit::linalg::LinearAlgebraDense::hasBackend(getString("backend"));
+#else
             return eckit::linalg::LinearAlgebra::hasBackend(getString("backend"));
+#endif
         }
         return true;
     }
+#if ATLAS_ECKIT_HAVE_ECKIT_585
+    return eckit::linalg::LinearAlgebraDense::hasBackend(t);
+#else
     return eckit::linalg::LinearAlgebra::hasBackend(t);
+#endif
 }
 
 }  // namespace dense

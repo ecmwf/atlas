@@ -11,6 +11,13 @@
 #include <tuple>
 #include <vector>
 
+#include "atlas/library/config.h"
+#if ATLAS_ECKIT_HAVE_ECKIT_585
+#include "eckit/linalg/LinearAlgebraDense.h"
+#else
+#include "eckit/linalg/LinearAlgebra.h"
+#endif
+
 #include "eckit/linalg/Matrix.h"
 #include "eckit/linalg/Vector.h"
 
@@ -67,7 +74,11 @@ void expect_equal(const T1& v, const T2& r) {
 
 CASE("test configuration via resource") {
     if (atlas::Library::instance().linalgDenseBackend().empty()) {
+#if ATLAS_ECKIT_HAVE_ECKIT_585
+        if (eckit::linalg::LinearAlgebraDense::hasBackend("mkl")) {
+#else
         if (eckit::linalg::LinearAlgebra::hasBackend("mkl")) {
+#endif
             EXPECT_EQ(dense::current_backend().type(), "mkl");
         }
         else {

@@ -10,14 +10,16 @@
 
 #include <cmath>
 #include <string>
+
+#include "eckit/config/Resource.h"
+#include "eckit/log/Plural.h"
+
 #include "atlas/field.h"
 #include "atlas/functionspace.h"
 #include "atlas/interpolation.h"
+#include "atlas/linalg/sparse/Backend.h"
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/runtime/Log.h"
-#include "eckit/config/Resource.h"
-#include "eckit/linalg/LinearAlgebra.h"
-#include "eckit/log/Plural.h"
 
 #include "PartitionedMesh.h"
 
@@ -122,7 +124,7 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
 
 
     if (args.get("backend", option)) {
-        eckit::linalg::LinearAlgebra::backend(option);
+        linalg::sparse::current_backend(option);
     }
 
     // Generate and partition source & target mesh
