@@ -982,8 +982,6 @@ Field& build_cells_remote_idx(mesh::Cells& cells, const mesh::Nodes& nodes) {
     idx_t mypart = static_cast<idx_t>(mpi::rank());
     idx_t nparts = static_cast<idx_t>(mpi::size());
 
-    UniqueLonLat compute_uid(nodes);
-
     // This piece should be somewhere central ... could be NPROMA ?
     // ---------->
     std::vector<idx_t> proc(nparts);
@@ -993,10 +991,28 @@ Field& build_cells_remote_idx(mesh::Cells& cells, const mesh::Nodes& nodes) {
     // <---------
 
     auto ridx                 = array::make_indexview<idx_t, 1>(cells.remote_index());
-    auto part                 = array::make_view<int, 1>(cells.partition());
-    auto gidx                 = array::make_view<gidx_t, 1>(cells.global_index());
+    const auto part           = array::make_view<int, 1>(cells.partition());
+    const auto gidx           = array::make_view<gidx_t, 1>(cells.global_index());
+    const auto flags          = array::make_view<int, 1>(cells.flags());
     const auto& element_nodes = cells.node_connectivity();
     idx_t nb_cells            = cells.size();
+
+    const PeriodicTransform transform_periodic_east(-360.);
+    const PeriodicTransform transform_periodic_west(+360.);
+    const UniqueLonLat compute_uid_lonlat(nodes);
+    auto compute_uid = [&](idx_t jcell) {
+        constexpr int PERIODIC = util::Topology::PERIODIC;
+        constexpr int EAST     = util::Topology::EAST;
+        constexpr int WEST     = util::Topology::WEST;
+        const auto flags_view  = util::Bitflags::view(flags(jcell));
+        if (flags_view.check(PERIODIC | EAST)) {
+            return compute_uid_lonlat(element_nodes.row(jcell), transform_periodic_east);
+        }
+        if (flags_view.check(PERIODIC | WEST)) {
+            return compute_uid_lonlat(element_nodes.row(jcell), transform_periodic_west);
+        }
+        return compute_uid_lonlat(element_nodes.row(jcell));
+    };
 
     idx_t varsize = 2;
 
@@ -1005,13 +1021,13 @@ Field& build_cells_remote_idx(mesh::Cells& cells, const mesh::Nodes& nodes) {
     int sendcnt = 0;
     std::map<uid_t, int> lookup;
     for (idx_t jcell = 0; jcell < nb_cells; ++jcell) {
-        uid_t uid = compute_uid(element_nodes.row(jcell));
+        uid_t uid = compute_uid(jcell);
 
         if (idx_t(part(jcell)) == mypart) {
             lookup[uid] = jcell;
             ridx(jcell) = jcell;
         }
-        else if (ridx(jcell) < 0) {  // Only look for ridx which are negative
+        else {
             ATLAS_ASSERT(jcell < part.shape(0));
             if (part(jcell) >= static_cast<int>(proc.size())) {
                 std::stringstream msg;
