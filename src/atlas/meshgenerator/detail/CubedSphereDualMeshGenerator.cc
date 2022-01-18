@@ -139,8 +139,6 @@ public:
     IJ(idx_t i, idx_t j) : i_(i), j_(j) {}
     idx_t i() const {return i_;}
     idx_t j() const {return j_;}
-    idx_t& i() {return i_;}
-    idx_t& j() {return j_;}
     IJ operator+(const IJ& ij) const {return IJ{i() + ij.i(), j() + ij.j()};}
     IJ operator-(const IJ& ij) const {return IJ{i() - ij.i(), j() - ij.j()};}
 private:
