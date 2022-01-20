@@ -130,14 +130,13 @@ CASE("MissingValue (DataType specialisations)") {
             auto mv = MissingValue(type + "-real64", config);
             EXPECT(bool(mv));
             EXPECT(mv(type == "nan" ? nan : n));
-            if( type == "nan" ) {
+            if (type == "nan") {
                 EXPECT(mv(n) != mv(nan));
             }
             EXPECT(mv(n + 1) == false);
             Log::info().unindent();
         }
         Log::info().unindent();
-
     }
 
 
@@ -157,7 +156,7 @@ CASE("MissingValue (DataType specialisations)") {
             auto mv = MissingValue(type + "-real32", config);
             EXPECT(bool(mv));
             EXPECT(mv(type == "nan" ? nan : n));
-            if( type == "nan" ) {
+            if (type == "nan") {
                 EXPECT(mv(n) != mv(nan));
             }
             EXPECT(mv(n + 1) == false);

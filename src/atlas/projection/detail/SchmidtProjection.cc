@@ -37,7 +37,7 @@ PointLonLat rotation_north_pole(const Rotated& rotation) {
 }
 
 PointLonLat rotation_north_pole(const NotRotated& rotation) {
-    return PointLonLat{0.,90.};
+    return PointLonLat{0., 90.};
 }
 
 // constructor
