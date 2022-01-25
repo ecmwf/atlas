@@ -14,6 +14,7 @@
 #include <string>
 
 #include "atlas/grid/detail/tiles/Tiles.h"
+#include "atlas/util/Matrix.h"
 #include "atlas/util/Point.h"
 
 namespace atlas {
@@ -48,6 +49,10 @@ public:
 
     virtual void print(std::ostream&) const override;
 
+    virtual const PointXY& tileCentre(size_t t) const override;
+
+    virtual const JacobianXY& tileJacobian(size_t t) const override;
+
 private:
     std::array<atlas::PointXY, 6> botLeftTile_;
     std::array<atlas::PointXY, 6> botRightTile_;
@@ -57,6 +62,13 @@ private:
     bool withinCross(const atlas::idx_t t, const atlas::PointXY& withinRange) const;
 
     void enforceWrapAround(const atlas::idx_t t, atlas::PointXY& withinRange) const;
+
+
+    // Centre of each tile in xy-space.
+    static const std::array<PointXY, 6> tileCentres_;
+    // Jacobian of xy with respect to tile curvilinear coordinates.
+    static const std::array<JacobianXY, 6> tileJacobians_;
+
 };
 
 }  // namespace detail

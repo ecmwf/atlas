@@ -28,3 +28,11 @@ endif()
 if( HAVE_FCTEST )
     add_fctest( TARGET atlas_fctest_projection SOURCES fctest_projection.F90 LINKER_LANGUAGE Fortran LIBS atlas_f ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )
 endif()
+
+ecbuild_add_test( TARGET atlas_test_cubedsphere_projection
+  MPI        6
+  CONDITION  eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 8
+  SOURCES test_cubedsphere_projection.cc
+  LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)

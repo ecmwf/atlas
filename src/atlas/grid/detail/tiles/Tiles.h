@@ -16,6 +16,7 @@
 #include "atlas/library/config.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Object.h"
+#include "atlas/util/Matrix.h"
 #include "atlas/util/Point.h"
 
 namespace eckit {
@@ -52,6 +53,10 @@ public:
     virtual idx_t indexFromLonLat(const double lonlat[]) const = 0;
 
     virtual void enforceXYdomain(double xy[]) const = 0;
+
+    virtual const PointXY& tileCentre(size_t t) const = 0;
+
+    virtual const JacobianXY& tileJacobian(size_t t) const = 0;
 
     idx_t size() const { return 6; }
 

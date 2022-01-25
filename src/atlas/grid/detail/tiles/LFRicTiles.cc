@@ -670,6 +670,35 @@ void LFRicCubedSphereTiles::enforceWrapAround(const atlas::idx_t t, atlas::Point
     return;
 }
 
+const PointXY& LFRicCubedSphereTiles::tileCentre(size_t t) const {
+    return tileCentres_[t];
+}
+
+const JacobianXY& LFRicCubedSphereTiles::tileJacobian(size_t t) const {
+    return tileJacobians_[t];
+}
+
+// Centre of each tile in xy space.
+const std::array<PointXY, 6> LFRicCubedSphereTiles::tileCentres_ {
+    PointXY{45., 0.},
+    PointXY{135., 0.},
+    PointXY{225., 0.},
+    PointXY{315., 0.},
+    PointXY{45., 90.},
+    PointXY{45., -90.}
+};
+
+// Jacobian of xy space with respect to curvilinear coordinates for each tile.
+const std::array<JacobianXY, 6> LFRicCubedSphereTiles::tileJacobians_{
+    JacobianXY{1., 0., 0., 1.},
+    JacobianXY{1., 0., 0., 1.},
+    JacobianXY{0., -1., 1., 0.},
+    JacobianXY{0., -1., 1., 0.},
+    JacobianXY{1., 0., 0., 1.},
+    JacobianXY{0., 1., -1., 0.}
+};
+
+
 namespace {
 static CubedSphereTilesBuilder<LFRicCubedSphereTiles> register_builder(LFRicCubedSphereTiles::static_type());
 }

@@ -98,9 +98,9 @@ void NodalCubedSphereMeshGenerator::generate(const Grid& grid, const grid::Distr
     }
 
     // Get tiles
-    auto csprojection = castProjection(csgrid.projection().get());
+    const auto& csprojection = csgrid.cubedSphereProjection();
     // grid must use FV3Tiles class.
-    if (csprojection->getCubedSphereTiles().type() != "cubedsphere_fv3") {
+    if (csprojection.getCubedSphereTiles().type() != "cubedsphere_fv3") {
         throw_Exception("NodalCubedSphereMeshGenerator only works with FV3 tiles", Here());
     }
 

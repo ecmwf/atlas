@@ -232,6 +232,22 @@ void CubedSphereProjectionBase::alphabetat2xy(const idx_t t, const double ab[], 
 
 // -------------------------------------------------------------------------------------------------
 
+Point2 CubedSphereProjectionBase::xy2alphabeta(const Point2& xy, idx_t t) const {
+    auto alphabeta = Point2(xy);
+    xy2alphabeta(alphabeta.data(), t);
+    return alphabeta;
+}
+
+// -------------------------------------------------------------------------------------------------
+
+Point2 CubedSphereProjectionBase::alphabeta2xy(const Point2& alphabeta, idx_t t) const {
+    auto xy = Point2(alphabeta);
+    alphabeta2xy(xy.data(), t);
+    return xy;
+}
+
+// -------------------------------------------------------------------------------------------------
+
 }  // namespace detail
 }  // namespace projection
 }  // namespace atlas

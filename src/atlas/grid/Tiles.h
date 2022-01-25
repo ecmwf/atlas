@@ -28,6 +28,7 @@ class Hash;
 //---------------------------------------------------------------------------------------------------------------------
 
 namespace atlas {
+class JacobianXY;
 class PointXY;
 class PointLonLat;
 
@@ -84,6 +85,13 @@ public:
     // in a cross-like fashion. Periodicity of this form does not allow
     // a "diagonal" extension over corners of the cube.
     atlas::PointXY tileCubePeriodicity(const atlas::PointXY& xyExtended, const atlas::idx_t tile) const;
+
+    /// @brief Return the position of the tile centre in xy space.
+    const PointXY& tileCentre(size_t t) const;
+
+    /// @brief Return the Jacobian of xy with respect to the curvilinear
+    ///        coordinates of the tile.
+    const JacobianXY& tileJacobian(size_t t) const;
 
 private:
     /// Output to stream

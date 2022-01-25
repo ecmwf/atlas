@@ -27,6 +27,12 @@ public:
     static std::string static_type() { return "cubedsphere_equidistant"; }
     std::string type() const override { return static_type(); }
 
+    /// @brief Convert (x, y) coordinate to (alpha, beta) on tile t.
+    void xy2alphabeta(double crd[], idx_t t) const override;
+
+    /// @brief Convert (alpha, beta) coordinate to (x, y) on tile t.
+    void alphabeta2xy(double crd[], idx_t t) const override;
+
     // projection and inverse projection
     void xy2lonlat(double crd[]) const override;
     void lonlat2xy(double crd[]) const override;
