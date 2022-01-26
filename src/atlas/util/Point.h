@@ -95,6 +95,21 @@ public:
         x_[1] = y;
         x_[2] = z;
     }
+
+    PointXYZ& operator*=(double m) {
+        x_[0] *= m;
+        x_[1] *= m;
+        x_[2] *= m;
+        return *this;
+    }
+
+    PointXYZ& operator/=(double m) {
+        double inv_m = 1. / m;
+        x_[0] *= inv_m;
+        x_[1] *= inv_m;
+        x_[2] *= inv_m;
+        return *this;
+    }
 };
 
 /// @brief Point in longitude-latitude coordinate system.
