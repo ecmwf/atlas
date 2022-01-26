@@ -701,6 +701,8 @@ runtime/Exception.h
 util/Config.cc
 util/Config.h
 util/Constants.h
+util/ConvexSphericalPolygon.cc
+util/ConvexSphericalPolygon.h
 util/Earth.h
 util/GaussianLatitudes.cc
 util/GaussianLatitudes.h
