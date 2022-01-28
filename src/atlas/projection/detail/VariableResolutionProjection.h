@@ -13,6 +13,7 @@
 #include "atlas/projection/detail/ProjectionImpl.h"
 #include "atlas/util/NormaliseLongitude.h"
 
+
 namespace atlas {
 namespace projection {
 namespace detail {
@@ -21,18 +22,21 @@ namespace detail {
 template <typename Rotation>
 class VariableResolutionProjectionT final : public ProjectionImpl {
 public:
-    using Spec = ProjectionImpl::Spec;
+    ///<using Spec = ProjectionImpl::Spec;
 
     ///< constructor uses parametrisation and point to stretch
-    VariableResolutionProjectionT(const eckit::Parametrisation&);
+    VariableResolutionProjectionT(const eckit::Parametrisation& p);
+    VariableResolutionProjectionT();
+
     ///< projection name
     static std::string static_type() { return Rotation::typePrefix() + "variable_resolution"; }
     std::string type() const override { return static_type(); }
 
     ///< projection and inverse projection
 
-    void xy2lonlat(double crd[]) const override;
+    // projection and inverse projection
 
+    void xy2lonlat(double crd[]) const override;
     void lonlat2xy(double crd[]) const override;
 
     ///< specification for stretching
@@ -51,7 +55,9 @@ public:
     }
 
     void checkvalue(const double&, const double&) const;
-    double general_stretch(const double, const bool, const int, const int) const;
+    double general_stretch(const double, const bool, const int) const;
+    double general_stretch_inv(const double, const bool, const int) const;
+    double normalised_360(double&);
 
 protected:
     double delta_outer;   ///< resolution of the external regular grid (rim) it should be larger than the last stretch
@@ -67,6 +73,8 @@ protected:
     double endy_;         ///< original domain endy
     double rim_widthx_;   ///< xsize of the rim
     double rim_widthy_;   ///< ysize of the rim
+    std::vector<double> north_pole_; ///< north_pole lon,lat
+
 
     //< variables derived from the configuration used for the projection
     double deltax_all, deltay_all;
