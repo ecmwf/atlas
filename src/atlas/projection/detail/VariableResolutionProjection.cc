@@ -26,6 +26,11 @@
 * Projection for LAM stretching
 *
 * The theory used in this code can be found under:
+* Lateral boundary conditions for limited area models
+* Terry Davies 2014
+*  https://doi.org/10.1002/qj.2127
+*
+* Some equations are under:
 * The benefits of the Met Office variable resolution NWP model for forecasting convection
 * Tang et al. 2013
 * https://doi.org/10.1002/met.1300
@@ -50,7 +55,6 @@ namespace atlas {
 namespace projection {
 namespace detail {
 
-
 static double new_ratio(int n_stretched, double var_ratio) {
     /**
      *  compute ratio,
@@ -65,6 +69,7 @@ static double new_ratio(int n_stretched, double var_ratio) {
     double var_ints_f        = n_stretched / 2.;
     double logr              = std::log(var_ratio);
     double log_ratio         = (var_ints_f - 0.5) * logr;
+
     return std::exp(log_ratio / var_ints);
 };
 
@@ -73,6 +78,7 @@ static double new_ratio(int n_stretched, double var_ratio) {
 template <typename Rotation>
 typename VariableResolutionProjectionT<Rotation>::Spec VariableResolutionProjectionT<Rotation>::spec() const {
     Spec proj_st;
+    proj_st.set("type", static_type());
     proj_st.set("delta_low", delta_outer);     ///< resolution of the external regular grid (rim)
     proj_st.set("delta_high", delta_inner);    ///< resolution of the regional model (regular grid)
     proj_st.set("var_ratio", var_ratio_);      ///< power used for the stretching
@@ -86,7 +92,8 @@ typename VariableResolutionProjectionT<Rotation>::Spec VariableResolutionProject
     proj_st.set("endy", endy_);                ///< original domain endy
     proj_st.set("rim_widthx", rim_widthx_);    ///< xsize of the rim
     proj_st.set("rim_widthy", rim_widthy_);    ///< ysize of the rim
-
+    proj_st.set("north_pole", north_pole_);    ///< north_pole
+    rotation_.spec(proj_st);
     return proj_st;
 }
 
@@ -108,7 +115,7 @@ VariableResolutionProjectionT<Rotation>::VariableResolutionProjectionT(const eck
     proj_st.get("endy", endy_ = 0.);                ///< original domain endy
     proj_st.get("rim_widthx", rim_widthx_);         ///< xsize of the rim
     proj_st.get("rim_widthy", rim_widthy_);         ///< ysize of the rim
-
+    proj_st.get("north_pole", north_pole_ = {0., 90.});    ///< north_pole
 
     constexpr float epsilon = std::numeric_limits<float>::epsilon();  ///< value used to check if the values are equal
     constexpr float epstest =
@@ -198,12 +205,12 @@ void VariableResolutionProjectionT<Rotation>::checkvalue(const double& epsilon, 
 
 /**
  * General stretch from a point in regular grid to the
- * a correspective point in a stretched grid
+ * a correspective point in a variable grid
  */
 
 template <typename Rotation>
 double VariableResolutionProjectionT<Rotation>::general_stretch(const double crd, const bool L_long,
-                                                                const int n_stretched, const int n_rim) const {
+                                                                const int n_stretched) const {
     constexpr float epstest =
         std::numeric_limits<float>::epsilon();  ///< correction used to change from double to integer
     constexpr double epsrem =
@@ -222,7 +229,6 @@ double VariableResolutionProjectionT<Rotation>::general_stretch(const double crd
         return p;
     };
 
-
     /*
      * regular grids
      */
@@ -234,6 +240,7 @@ double VariableResolutionProjectionT<Rotation>::general_stretch(const double crd
      *  SECTION 1
      *  INTERNAL REGULAR GRID the point is mapped to the same point
      */
+
     if (L_long) {
         inner_start = x_reg_start_;
         inner_size  = lam_hires_size;
@@ -352,15 +359,162 @@ double VariableResolutionProjectionT<Rotation>::general_stretch(const double crd
     return normalised(point);
 }
 
+
+/**
+ * Inverse of general stretch from a point in variable grid to the
+ * a correspective point in a regular grid
+ */
+
+template <typename Rotation>
+double VariableResolutionProjectionT<Rotation>::general_stretch_inv(const double crd, const bool L_long,
+                                                                const int n_stretched ) const {
+    constexpr float epstest =
+        std::numeric_limits<float>::epsilon();  ///< correction used to change from double to integer
+    constexpr double epsrem =
+        0.1 * std::numeric_limits<double>::epsilon() /
+        std::numeric_limits<float>::epsilon();  ///< correction used to part the find a part of an integer
+
+    double inner_size;   ///< number of new internal regular grid in double
+    double inner_start;  ///< start of the regular grid
+    double inner_end;    ///< end of the regular grid
+    double point_st = crd;  ///< input point in the variational grid
+    double point_reg = 0.; ///< point in the regular grid
+
+
+    auto normalised = [L_long](double p) {
+        if (L_long) {
+            p = (p < 180) ? p + 360.0 : p;
+        }
+        return p;
+    };
+
+    point_st = normalised(point_st);
+
+    /*
+     * regular grids
+     */
+    if (var_ratio_ == 1) {
+        point_reg = point_st;
+        return normalised(point_reg);
+    }
+
+    /*
+     *  SECTION 1
+     *  INTERNAL REGULAR GRID the point is mapped to the same point
+     */
+
+
+    if (L_long) {
+        inner_start = x_reg_start_;
+        inner_size  = lam_hires_size;
+    }
+    else {
+        inner_start = y_reg_start_;
+        inner_size  = phi_hires_size;
+    }
+
+    inner_end = inner_start + inner_size;
+
+    //< points in the internal regular grid
+    if ((point_st >= inner_start - epstest) && (point_st <= inner_end + epstest)) {
+        point_reg = point_st;
+        return normalised(point_reg);
+    }
+
+
+    /* SECTION 2
+     * Start variable res 'STRETCHED'
+     * The point is mapped in a regular grid
+     * from stretch internal grid: delta_dist
+     * simply using delta_high
+     */
+
+    double distance_to_inner;  ///< distance from point to reg. grid
+    double delta_add;          ///< additional part in stretch different from internal high resolution
+    double new_ratio = new_ratio_[L_long ? 1 : 0];
+
+    if (point_st < inner_start) {
+        distance_to_inner = inner_start - point_st;
+    }
+    else if (point_st > inner_end) {
+        distance_to_inner = point_st - inner_end;
+    }
+
+    /*
+     * number of high resolution points intervals, that are not
+     * in the internal regular grid on one side,
+     * this work just for the part of the stretch not the rim
+     */
+
+    ///< computation of the new stretched delta integer part
+    double delta = delta_inner;
+    ///< initialization if is not using the cycle (first interval)
+    double delta_last = delta;
+    double deltacheck = 0;
+    /*
+     * using difference in delta for stretch
+     * The point stretched is not in the regular grid and took out the points for the rim
+     */
+
+    double point_var = 0.;
+    for (int i = 1; i <  n_stretched / 2.; i += 1) {
+        delta_last = delta * new_ratio;
+        delta_add  = delta_last - delta_inner;
+        delta      = delta_last;
+        deltacheck += delta_add;
+        if (point_st > inner_start) {
+            point_reg = inner_end + (delta_inner * i);
+            point_var = point_reg + deltacheck;
+            if ((point_st <= point_var + epstest) && (point_st >= point_var - epstest)){
+                return normalised(point_reg);
+            }
+        }
+        else {
+            point_reg = inner_start - (delta_inner * i);
+            point_var = point_reg - deltacheck;
+            if ((point_st <= point_var + epstest) && (point_st >= point_var - epstest)){
+                return normalised(point_reg);
+            }
+        }
+
+    }
+
+    ///< SECTION 3_inv rim area
+    int n_rim;            ///< number of rim points
+    if  (point_st > point_var) {
+         n_rim = (point_st - point_var)/delta_outer;
+         point_reg = inner_end + (delta_inner * (n_stretched/2+n_rim));
+         return normalised(point_reg);
+    }
+    else{
+        if (point_st < point_var) {
+            n_rim = (point_var - point_st) / delta_outer;
+            point_reg = inner_start - (delta_inner * (n_stretched/2+n_rim));
+            return normalised(point_reg);
+        }
+    }
+    return normalised(point_reg);
+}
+
+
 ///< xy unstretched, only unrotation
 template <typename Rotation>
 void VariableResolutionProjectionT<Rotation>::lonlat2xy(double crd[]) const {
-    ///<unrotate
-    rotation_.rotate(crd);
 
-    ///< PUT the unstretch, I don't have it now
-    ATLAS_NOTIMPLEMENTED;
+
+    ///< unrotate
+    rotation_.unrotate(crd);
+    //< normalization
+    crd[0] = (crd[0] < 0) ? crd[0] + 360.0 : crd[0];
+    ///< PUT the unstretch
+    crd[0] = general_stretch_inv(crd[0], true, nx_stretched);
+    crd[1] = general_stretch_inv(crd[1], false, ny_stretched);
+
+
+
+
 }
+
 
 ///< From unstretched to stretched
 template <typename Rotation>
@@ -372,11 +526,12 @@ void VariableResolutionProjectionT<Rotation>::xy2lonlat(double crd[]) const {
     * stretch_LAM_gen(crd[]);
     */
 
-    crd[0] = general_stretch(crd[0], true, nx_stretched, nx_rim);
-    crd[1] = general_stretch(crd[1], false, ny_stretched, ny_rim);
 
-    ///< rotate
-    rotation_.unrotate(crd);
+    crd[0] = general_stretch(crd[0], true, nx_stretched);
+    crd[1] = general_stretch(crd[1], false, ny_stretched);
+
+    rotation_.rotate(crd);
+
 }
 
 template <typename Rotation>
@@ -396,8 +551,7 @@ template class VariableResolutionProjectionT<Rotated>;
 
 namespace {
 static ProjectionBuilder<VariableResolutionProjection> register_1(VariableResolutionProjection::static_type());
-static ProjectionBuilder<RotatedVariableResolutionProjection> register_2(
-    RotatedVariableResolutionProjection::static_type());
+static ProjectionBuilder<RotatedVariableResolutionProjection> register_2(RotatedVariableResolutionProjection::static_type());
 }  // namespace
 
 }  // namespace detail
