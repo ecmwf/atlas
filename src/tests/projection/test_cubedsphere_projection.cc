@@ -12,6 +12,7 @@
 #include "atlas/meshgenerator.h"
 #include "atlas/projection/detail/CubedSphereProjectionBase.h"
 #include "atlas/output/Gmsh.h"
+#include "atlas/util/Matrix.h"
 #include "tests/AtlasTestEnvironment.h"
 namespace atlas {
 namespace test {
@@ -27,6 +28,15 @@ void testProjection(const std::string& gridType, const std::string& meshType,
 
     // Get projection.
     const auto& csProjection = grid.cubedSphereProjection();
+
+    // Output tile centres and Jacobains.
+    for (size_t i = 0; i < 6; ++i) {
+        Log::info() << "Tile " << i << std::endl
+                    << "Centre:" << std::endl
+                    << csProjection.getCubedSphereTiles().tileCentre(i) << std::endl
+                    << "Jacobian:" << std::endl
+                    << csProjection.getCubedSphereTiles().tileJacobian(i) << std::endl << std::endl;
+    }
 
     // Create mesh.
     auto mesh = MeshGenerator(meshType, util::Config("halo", 3)).generate(grid);

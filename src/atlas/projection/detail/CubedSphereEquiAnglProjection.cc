@@ -36,7 +36,7 @@ constexpr double epsilon = std::numeric_limits<double>::epsilon() * 360.;
 
 // a is approximately equal to b.
 bool equal(double a, double b) {
-    return a <= b + epsilon && a >= b - epsilon;
+    return std::abs(a - b) <= epsilon;
 }
 // a is less than b.
 bool lessThan(double a, double b) {
