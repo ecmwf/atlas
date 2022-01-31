@@ -366,7 +366,7 @@ CASE("cubedsphere_dual_mesh_test") {
         const auto targetPartitioner = grid::MatchingPartitioner(sourceMesh);
 
         // Set target grid, mesh and functionspace.
-        const auto targetGrid          = Grid("CS-LFR-C-48");
+        const auto targetGrid          = Grid("CS-LFR-C-24");
         const auto targetMesh          = MeshGenerator("cubedsphere_dual", util::Config("halo", 3)).generate(targetGrid, targetPartitioner);
         const auto targetFunctionSpace = functionspace::NodeColumns(targetMesh);
         auto targetField =
@@ -417,7 +417,7 @@ CASE("cubedsphere_dual_mesh_test") {
         const idx_t nLevels = 5;
 
         // Set grid, mesh and functionspace.
-        const auto grid = Grid("CS-LFR-C-48");
+        const auto grid = Grid("CS-LFR-C-24");
         const auto mesh =
             MeshGenerator("cubedsphere_dual", util::Config("halo", 3)).generate(grid);
         const auto functionSpace = functionspace::CellColumns(mesh);
