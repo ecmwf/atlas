@@ -12,7 +12,8 @@
 #include "atlas/meshgenerator.h"
 #include "atlas/projection/detail/CubedSphereProjectionBase.h"
 #include "atlas/output/Gmsh.h"
-#include "atlas/util/Matrix.h"
+#include "atlas/util/Constants.h"
+#include "atlas/util/SquareMatrix.h"
 #include "tests/AtlasTestEnvironment.h"
 namespace atlas {
 namespace test {
@@ -89,6 +90,108 @@ CASE("cubedsphere_xy_to_alphabeta_test") {
     testProjection("CS-LFR-13", "cubedsphere", "cs_primal");
     testProjection("CS-LFR-13", "cubedsphere_dual", "cs_dual");
 
+}
+
+CASE("test_tiles") {
+    int resolution(2);
+    Grid gEA{"CS-EA-L-" + std::to_string(resolution)};
+    Grid gLFR{"CS-LFR-L-" + std::to_string(resolution)};
+
+    using util::Constants;
+
+    util::Config params;
+    grid::CubedSphereTiles f("cubedsphere_fv3");
+    grid::CubedSphereTiles l("cubedsphere_lfric");
+
+    double cd[2];
+
+    idx_t jn(0);
+
+    std::array<idx_t, 7> EAOffset{0,
+                                  resolution * resolution + 1,
+                                  2 * resolution * resolution + 2,
+                                  3 * resolution * resolution + 2,
+                                  4 * resolution * resolution + 2,
+                                  5 * resolution * resolution + 2,
+                                  6 * resolution * resolution + 2};
+
+    for (auto crd : gEA.lonlat()) {
+        atlas::PointLonLat pointLonLat = crd;
+        cd[LON]                        = pointLonLat.lon();
+        cd[LAT]                        = pointLonLat.lat();
+
+        int t = f.indexFromLonLat(cd);
+
+        gEA.projection().lonlat2xy(crd);
+        cd[LON] = crd.lon();
+        cd[LAT] = crd.lat();
+
+        int t2 = f.indexFromXY(cd);
+
+        for (std::size_t i = 0; i < 6; ++i) {
+            if (jn >= EAOffset[i] && jn < EAOffset[i + 1]) {
+                EXPECT(t == static_cast<idx_t>(i));
+                EXPECT(t2 == static_cast<idx_t>(i));
+            }
+        }
+        ++jn;
+    }
+
+    std::array<idx_t, 7> LFRicOffset{0,
+                                     resolution * resolution,
+                                     2 * resolution * resolution,
+                                     3 * resolution * resolution,
+                                     4 * resolution * resolution,
+                                     4 * resolution * resolution + (resolution + 1) * (resolution + 1),
+                                     6 * resolution * resolution + 2};
+
+    jn = 0;
+    for (auto crd : gLFR.lonlat()) {
+        atlas::PointLonLat pointLonLat = crd;
+
+        cd[LON] = pointLonLat.lon();
+        cd[LAT] = pointLonLat.lat();
+
+        int t3 = l.indexFromLonLat(cd);
+
+        gLFR.projection().lonlat2xy(crd);
+        cd[LON] = crd.lon();
+        cd[LAT] = crd.lat();
+
+        int t4 = l.indexFromXY(cd);
+
+        for (std::size_t i = 0; i < 6; ++i) {
+            if (jn >= LFRicOffset[i] && jn < LFRicOffset[i + 1]) {
+                EXPECT(t3 == static_cast<idx_t>(i));
+                EXPECT(t4 == static_cast<idx_t>(i));
+            }
+        }
+        ++jn;
+    }
+}
+
+CASE("test_projection_cubedsphere_xy_latlon") {
+    int resolution(12);
+    std::vector<std::string> grid_names{"CS-EA-L-" + std::to_string(resolution),
+                                        "CS-ED-L-" + std::to_string(resolution)};
+
+    for (std::string& s : grid_names) {
+        Grid g{s};
+        for (auto crd : g.lonlat()) {
+            Point2 lonlat{crd};
+            g->projection().lonlat2xy(crd);
+            g->projection().xy2lonlat(crd);
+            // except for point lonlat (90,82.5) on compiler pgc++
+            // we have a maximum error tolerance of 1e-11
+            EXPECT_APPROX_EQ(lonlat, crd, 1e-6);
+        }
+        for (auto crd : g.xy()) {
+            Point2 xy{crd};
+            g->projection().xy2lonlat(crd);
+            g->projection().lonlat2xy(crd);
+            EXPECT_APPROX_EQ(xy, crd, 1e-6);
+        }
+    }
 }
 
 

@@ -7,9 +7,9 @@
 
 #pragma once
 
-/// @file Matrix.h
+/// @file SquareMatrix.h
 ///
-/// This file contains classes and functions for working with small matrices.
+/// This file contains classes and functions for working with small square matrices.
 
 #include <iostream>
 

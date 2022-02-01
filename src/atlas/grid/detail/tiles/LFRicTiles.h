@@ -14,7 +14,6 @@
 #include <string>
 
 #include "atlas/grid/detail/tiles/Tiles.h"
-#include "atlas/util/Matrix.h"
 #include "atlas/util/Point.h"
 
 namespace atlas {
@@ -66,9 +65,9 @@ private:
 
 
     // Centre of each tile in xy-space.
-    static const std::array<const PointXY, 6> tileCentres_;
+    static const std::array<PointXY, 6> tileCentres_;
     // Jacobian of xy with respect to tile curvilinear coordinates.
-    static const std::array<const JacobianXY, 6> tileJacobians_;
+    static const std::array<JacobianXY, 6> tileJacobians_;
 
 };
 

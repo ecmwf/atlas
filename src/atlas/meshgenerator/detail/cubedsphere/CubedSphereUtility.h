@@ -9,7 +9,7 @@
 
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
-#include "atlas/util/Matrix.h"
+#include "atlas/util/SquareMatrix.h"
 #include "atlas/util/Point.h"
 
 namespace atlas {

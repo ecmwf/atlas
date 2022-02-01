@@ -677,7 +677,7 @@ PointXY LFRicCubedSphereTiles::topRightTile(size_t t) {
 
 
 // Centre of each tile in xy space.
-const std::array<const PointXY, 6> LFRicCubedSphereTiles::tileCentres_ {
+const std::array<PointXY, 6> LFRicCubedSphereTiles::tileCentres_ {
     PointXY{45., 0.},
     PointXY{135., 0.},
     PointXY{225., 0.},
@@ -687,7 +687,7 @@ const std::array<const PointXY, 6> LFRicCubedSphereTiles::tileCentres_ {
 };
 
 // Jacobian of xy space with respect to curvilinear coordinates for each tile.
-const std::array<const JacobianXY, 6> LFRicCubedSphereTiles::tileJacobians_{
+const std::array<JacobianXY, 6> LFRicCubedSphereTiles::tileJacobians_{
     JacobianXY{{1., 0.}, {0., 1.}},
     JacobianXY{{1., 0.}, {0., 1.}},
     JacobianXY{{0., -1.}, {1., 0.}},
