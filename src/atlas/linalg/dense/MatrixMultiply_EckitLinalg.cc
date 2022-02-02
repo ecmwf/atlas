@@ -20,7 +20,13 @@
 
 #include "MatrixMultiply_EckitLinalg.h"
 
+#include "atlas/library/config.h"
+#if ATLAS_ECKIT_HAVE_ECKIT_585
+#include "eckit/linalg/LinearAlgebraDense.h"
+#else
 #include "eckit/linalg/LinearAlgebra.h"
+#endif
+
 #include "eckit/linalg/Matrix.h"
 #include "eckit/linalg/Vector.h"
 
@@ -31,6 +37,17 @@ namespace linalg {
 namespace dense {
 
 namespace {
+#if ATLAS_ECKIT_HAVE_ECKIT_585
+const eckit::linalg::LinearAlgebraDense& eckit_linalg_backend(const Configuration& config) {
+    std::string backend = "default";
+    config.get("backend", backend);
+    if (backend == "default") {
+        return eckit::linalg::LinearAlgebraDense::backend();
+    }
+    ATLAS_ASSERT(eckit::linalg::LinearAlgebraDense::hasBackend(backend));
+    return eckit::linalg::LinearAlgebraDense::getBackend(backend);
+}
+#else
 const eckit::linalg::LinearAlgebra& eckit_linalg_backend(const Configuration& config) {
     std::string backend = "default";
     config.get("backend", backend);
@@ -40,6 +57,7 @@ const eckit::linalg::LinearAlgebra& eckit_linalg_backend(const Configuration& co
     ATLAS_ASSERT(eckit::linalg::LinearAlgebra::hasBackend(backend));
     return eckit::linalg::LinearAlgebra::getBackend(backend);
 }
+#endif
 
 }  // namespace
 

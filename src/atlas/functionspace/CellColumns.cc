@@ -575,7 +575,7 @@ Field CellColumns::global_index() const {
     return mesh_.cells().global_index();
 }
 
-Field CellColumns::ghost() const{
+Field CellColumns::ghost() const {
     return mesh_.cells().field("ghost");
 }
 

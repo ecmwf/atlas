@@ -935,7 +935,6 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, cons
 // -----------------------------------------------------------------------------
 
 void CubedSphereMeshGenerator::set_metadata(Mesh& mesh) const {
-
     const auto nHalo = options.get<int>("halo");
 
     // Set basic halo metadata.
@@ -945,7 +944,7 @@ void CubedSphereMeshGenerator::set_metadata(Mesh& mesh) const {
     mesh.cells().metadata().set("parallel", true);
 
     // Loop over nodes and count number of halo elements.
-    auto nNodes = std::vector<idx_t>(nHalo + 1, 0);
+    auto nNodes         = std::vector<idx_t>(nHalo + 1, 0);
     const auto nodeHalo = array::make_view<int, 1>(mesh.nodes().halo());
     for (idx_t i = 0; i < mesh.nodes().size(); ++i) {
         ++nNodes[static_cast<size_t>(nodeHalo(i))];
@@ -958,7 +957,7 @@ void CubedSphereMeshGenerator::set_metadata(Mesh& mesh) const {
         mesh.metadata().set(str, nNodes[i]);
     }
     // Loop over cells and count number of halo elements.
-    auto nCells = std::vector<idx_t>(nHalo + 1, 0);
+    auto nCells         = std::vector<idx_t>(nHalo + 1, 0);
     const auto cellHalo = array::make_view<int, 1>(mesh.cells().halo());
     for (idx_t i = 0; i < mesh.cells().size(); ++i) {
         ++nCells[static_cast<size_t>(cellHalo(i))];

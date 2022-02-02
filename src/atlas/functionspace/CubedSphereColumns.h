@@ -65,8 +65,7 @@ private:
     public:
         For(const CubedSphereColumns<BaseFunctionSpace>& functionSpace, const util::Config& config = util::NoConfig()):
             functionSpace_{functionSpace},
-            indexMax_{config.getBool("include_halo", false) ? functionSpace.size()
-                                                            : functionSpace.sizeOwned()},
+            indexMax_{config.getBool("include_halo", false) ? functionSpace.size() : functionSpace.sizeOwned()},
             levels_{config.getInt("levels", functionSpace_.levels())},
             tijView_(array::make_view<idx_t, 2>(functionSpace_.tij())) {}
 

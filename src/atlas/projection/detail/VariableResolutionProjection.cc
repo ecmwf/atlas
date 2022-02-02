@@ -40,6 +40,12 @@
 *
 */
 
+#ifdef __NVCOMPILER
+#define PREVENT_OPT volatile
+#else
+#define PREVENT_OPT
+#endif
+
 namespace atlas {
 namespace projection {
 namespace detail {
@@ -55,10 +61,10 @@ static double new_ratio(int n_stretched, double var_ratio) {
     constexpr float epstest = std::numeric_limits<float>::epsilon();
 
     ///< number of variable (stretched) grid points in one side
-    int var_ints      = (n_stretched + epstest) / 2.;
-    double var_ints_f = n_stretched / 2.;
-    double logr       = std::log(var_ratio);
-    double log_ratio  = (var_ints_f - 0.5) * logr;
+    PREVENT_OPT int var_ints = (n_stretched + epstest) / 2.;
+    double var_ints_f        = n_stretched / 2.;
+    double logr              = std::log(var_ratio);
+    double log_ratio         = (var_ints_f - 0.5) * logr;
     return std::exp(log_ratio / var_ints);
 };
 

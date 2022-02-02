@@ -14,6 +14,7 @@
 #include "eckit/linalg/Matrix.h"
 #include "eckit/linalg/Vector.h"
 
+#include "atlas/array.h"
 #include "atlas/linalg/sparse.h"
 
 #include "tests/AtlasTestEnvironment.h"

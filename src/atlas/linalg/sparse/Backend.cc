@@ -12,7 +12,12 @@
 
 #include <map>
 
+#include "atlas/library/config.h"
+#if ATLAS_ECKIT_HAVE_ECKIT_585
+#include "eckit/linalg/LinearAlgebraSparse.h"
+#else
 #include "eckit/linalg/LinearAlgebra.h"
+#endif
 #include "eckit/utils/Tokenizer.h"
 
 #include "atlas/library.h"
@@ -96,11 +101,19 @@ bool Backend::available() const {
     }
     if (t == backend::eckit_linalg::type()) {
         if (has("backend")) {
+#if ATLAS_ECKIT_HAVE_ECKIT_585
+            return eckit::linalg::LinearAlgebraSparse::hasBackend(getString("backend"));
+#else
             return eckit::linalg::LinearAlgebra::hasBackend(getString("backend"));
+#endif
         }
         return true;
     }
+#if ATLAS_ECKIT_HAVE_ECKIT_585
+    return eckit::linalg::LinearAlgebraSparse::hasBackend(t);
+#else
     return eckit::linalg::LinearAlgebra::hasBackend(t);
+#endif
 }
 
 

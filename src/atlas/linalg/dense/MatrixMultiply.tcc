@@ -12,13 +12,17 @@
 
 #include "MatrixMultiply.h"
 
-#include <type_traits>
-
 #include "atlas/linalg/Indexing.h"
 #include "atlas/linalg/Introspection.h"
 #include "atlas/linalg/View.h"
 #include "atlas/linalg/dense/Backend.h"
 #include "atlas/runtime/Exception.h"
+
+#if ATLAS_ECKIT_HAVE_ECKIT_585
+#include "eckit/linalg/LinearAlgebraDense.h"
+#else
+#include "eckit/linalg/LinearAlgebra.h"
+#endif
 
 namespace atlas {
 namespace linalg {
@@ -46,16 +50,14 @@ void matrix_multiply( const Mat& A, const Mat& B, Mat& C, const eckit::Configura
     }
     else {
         if( type == "openmp" ) {
-            // with ECKIT-578 it will be guaranteed that openmp backend is always available.
-            if( eckit::linalg::LinearAlgebra::hasBackend("openmp") ) {
-                type = "openmp";
-            }
-            else {
-                type = "generic";
-            }
+            type = "generic";
             dense::MatrixMultiplyHelper<dense::backend::eckit_linalg>::apply( A, B, C, util::Config("backend",type) );
         }
+#if ATLAS_ECKIT_HAVE_ECKIT_585
+        else if( eckit::linalg::LinearAlgebraDense::hasBackend(type) ) {
+#else
         else if( eckit::linalg::LinearAlgebra::hasBackend(type) ) {
+#endif
             dense::MatrixMultiplyHelper<dense::backend::eckit_linalg>::apply( A, B, C, util::Config("backend",type) );
         }
         else {

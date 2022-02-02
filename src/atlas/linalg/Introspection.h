@@ -12,14 +12,11 @@
 
 #include <type_traits>
 
-#include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/linalg/Matrix.h"
-#include "eckit/linalg/SparseMatrix.h"
 #include "eckit/linalg/Vector.h"
+#include "eckit/linalg/types.h"
 
-#include "atlas/array.h"
-#include "atlas/parallel/omp/omp.h"
-#include "atlas/runtime/Exception.h"
+#include "atlas/library/config.h"
 
 namespace atlas {
 namespace linalg {
