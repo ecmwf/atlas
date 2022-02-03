@@ -507,7 +507,7 @@ CASE("var_ratio_rot = 1.13") {
     config.set("north_pole", north_pole);
 
     ///< definition of grid I have to rotate this
-    auto proj_st = make_var_ratio_projection_rot(1.13, {-176., 40.});
+    auto proj_st = make_var_ratio_projection_rot(1.13, north_pole);
     auto grid    = RegularGrid{grid::LinearSpacing{xrange_outer[0], xrange_outer[1], nx},
                             grid::LinearSpacing{yrange_outer[0], yrange_outer[1], ny}, proj_st};
 
@@ -599,15 +599,11 @@ CASE("var_ratio_rot_inv = 1.13") {
     auto grid_nr    = RegularGrid{grid::LinearSpacing{xrange_outer[0], xrange_outer[1], nx},
                                grid::LinearSpacing{yrange_outer[0], yrange_outer[1], ny}, proj_st_nr};
 
-    std::vector<double> north_pole = {-176., 40.};
-    config.set("north_pole", north_pole);
     ///< definition of grid I have to rotate this
     auto proj_st = make_var_ratio_projection_rot(1.13, {-176., 40.});
     auto grid    = RegularGrid{grid::LinearSpacing{xrange_outer[0], xrange_outer[1], nx},
                             grid::LinearSpacing{yrange_outer[0], yrange_outer[1], ny}, proj_st};
 
-
-    Rotation rotation(config);
 
     ///< Test the inverse
     for (idx_t j = 0; j < grid.ny(); ++j) {

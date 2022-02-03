@@ -73,7 +73,6 @@ protected:
     double endy_;         ///< original domain endy
     double rim_widthx_;   ///< xsize of the rim
     double rim_widthy_;   ///< ysize of the rim
-    std::vector<double> north_pole_;  ///< north_pole lon,lat
 
 
     //< variables derived from the configuration used for the projection
