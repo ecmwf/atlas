@@ -29,7 +29,7 @@
 #include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "atlas/util/VortexRollup.h"
+#include "atlas/util/function/VortexRollup.h"
 
 using namespace atlas;
 
@@ -99,7 +99,7 @@ int Program::execute(const Args& args) {
 
     double meanA = 1.;
     for (idx_t n = 0; n < fsA.size(); ++n) {
-        A(n) = util::vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 1., meanA);
+        A(n) = meanA + util::function::vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 1.);
     }
     fieldA.set_dirty();
     fieldA.haloExchange();

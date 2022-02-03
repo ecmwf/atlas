@@ -21,7 +21,7 @@
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "atlas/util/VortexRollup.h"
+#include "atlas/util/function/VortexRollup.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -99,7 +99,7 @@ FieldSet create_source_fields(StructuredColumns& fs, idx_t nb_fields, idx_t nb_l
         auto source       = array::make_view<Value, 2>(field_source);
         for (idx_t n = 0; n < fs.size(); ++n) {
             for (idx_t k = 0; k < nb_levels; ++k) {
-                source(n, k) = util::vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 0.5 + double(k) / 2);
+                source(n, k) = util::function::vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 0.5 + double(k) / 2);
             }
         };
     }

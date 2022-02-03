@@ -724,12 +724,12 @@ util/SphericalPolygon.h
 util/UnitSphere.h
 util/vector.h
 util/VectorOfAbstract.h
-util/VortexRollup.h
-util/VortexRollup.cc
 util/detail/BlackMagic.h
 util/detail/Cache.h
 util/detail/Debug.h
 util/detail/KDTree.h
+util/function/VortexRollup.h
+util/function/VortexRollup.cc
 )
 
 list( APPEND atlas_internals_srcs

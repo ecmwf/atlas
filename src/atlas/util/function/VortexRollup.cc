@@ -8,25 +8,25 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/util/VortexRollup.h"
+#include "atlas/util/Constants.h"
+#include "atlas/util/Earth.h"
+
+#include "atlas/util/function/VortexRollup.h"
 
 namespace atlas {
 
 namespace util {
 
-double vortex_rollup(double lon, double lat, double t,
-                     const double mean, const bool degreesInput,
-                     const double timescale) {
+namespace function {
 
-  if (degreesInput) {
-    lon *= Constants::degreesToRadians();
-    lat *= Constants::degreesToRadians();
-  }
+double vortex_rollup(double lon, double lat, double t) {
+
+  lon *= Constants::degreesToRadians();
+  lat *= Constants::degreesToRadians();
 
   auto sqr           = [](const double x) { return x * x; };
   auto sech          = [](const double x) { return 1. / std::cosh(x); };
-  const double Omega = 2. * M_PI / timescale;
-  t *= timescale;
+  const double Omega = 2. * M_PI;
   const double lambda_prime = std::atan2(-std::cos(lon - Omega * t), std::tan(lat));
   const double rho = 3. * std::sqrt(1. - sqr(std::cos(lat)) * sqr(std::sin(lon - Omega * t)));
   double omega     = 0.;
@@ -34,8 +34,10 @@ double vortex_rollup(double lon, double lat, double t,
   if (rho != 0.) {
     omega = 0.5 * 3 * std::sqrt(3) * a * Omega * sqr(sech(rho)) * std::tanh(rho) / rho;
   }
-  double q = mean - std::tanh(0.2 * rho * std::sin(lambda_prime - omega / a * t));
+  double q = - std::tanh(0.2 * rho * std::sin(lambda_prime - omega / a * t));
   return q;
+}
+
 }
 
 }

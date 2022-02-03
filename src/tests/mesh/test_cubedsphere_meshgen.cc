@@ -22,7 +22,7 @@
 #include "atlas/option.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "atlas/util/VortexRollup.h"
+#include "atlas/util/function/VortexRollup.h"
 #include "tests/AtlasTestEnvironment.h"
 
 #include "eckit/mpi/Operation.h"
@@ -159,7 +159,7 @@ void testHaloExchange(const std::string& gridStr, const std::string& partitioner
             break;
         }
 
-        testView1(i) = util::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT), 1.0);
+        testView1(i) = util::function::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT), 1.0);
         ++testFuncCallCount;
     }
 
@@ -173,7 +173,7 @@ void testHaloExchange(const std::string& gridStr, const std::string& partitioner
     // Check all values after halo exchange.
     double maxError = 0;
     for (idx_t i = 0; i < nodeColumns.size(); ++i) {
-        const double testVal = util::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT), 1.0);
+        const double testVal = util::function::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT), 1.0);
         maxError             = std::max(maxError, std::abs(testView1(i) - testVal));
     }
 
@@ -204,7 +204,7 @@ void testHaloExchange(const std::string& gridStr, const std::string& partitioner
             break;
         }
 
-        testView2(i) = util::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT), 1.0);
+        testView2(i) = util::function::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT), 1.0);
         ++testFuncCallCount;
     }
 
@@ -219,7 +219,7 @@ void testHaloExchange(const std::string& gridStr, const std::string& partitioner
     maxError = 0;
     for (idx_t i = 0; i < cellColumns.size(); ++i) {
         // Test field and test function should be the same.
-        const double testVal = util::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT), 1.0);
+        const double testVal = util::function::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT), 1.0);
         maxError             = std::max(maxError, std::abs(testView2(i) - testVal));
     }
 
@@ -331,7 +331,7 @@ CASE("cubedsphere_dual_mesh_test") {
 
         for (idx_t i = 0; i < sourceView.shape(0); ++i) {
             for (idx_t j = 0; j < sourceView.shape(1); ++j) {
-                sourceView(i, j) = util::vortex_rollup(sourceLonLatView(i, LON), sourceLonLatView(i, LAT),
+                sourceView(i, j) = util::function::vortex_rollup(sourceLonLatView(i, LON), sourceLonLatView(i, LAT),
                                                 static_cast<double>(j) / (nLevels - 1));
             }
         }
@@ -358,7 +358,7 @@ CASE("cubedsphere_dual_mesh_test") {
         double maxError             = 0.;
         for (idx_t i = 0; i < targetView.shape(0); ++i) {
             for (idx_t j = 0; j < targetView.shape(1); ++j) {
-                double referenceVal =  util::vortex_rollup(targetLonLatView(i, LON), targetLonLatView(i, LAT),
+                double referenceVal =  util::function::vortex_rollup(targetLonLatView(i, LON), targetLonLatView(i, LAT),
                                                    static_cast<double>(j) / (nLevels - 1));
 
                 double relativeError = std::abs((targetView(i, j) - referenceVal) / referenceVal);
@@ -413,7 +413,7 @@ CASE("cubedsphere_dual_mesh_test") {
 
             for (idx_t j = 0; j < fieldView.shape(1); ++j) {
                 fieldView(i, j) =
-                     util::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT), static_cast<double>(j) / (nLevels - 1));
+                     util::function::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT), static_cast<double>(j) / (nLevels - 1));
             }
         }
 
@@ -423,7 +423,7 @@ CASE("cubedsphere_dual_mesh_test") {
         // Check test field on *all* cells.
         for (idx_t i = 0; i < fieldView.shape(0); ++i) {
             for (idx_t j = 0; j < fieldView.shape(1); ++j) {
-                EXPECT_APPROX_EQ(fieldView(i, j), util::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT),
+                EXPECT_APPROX_EQ(fieldView(i, j), util::function::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT),
                                                                static_cast<double>(j) / (nLevels - 1)));
             }
         }

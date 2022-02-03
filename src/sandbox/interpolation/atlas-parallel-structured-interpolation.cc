@@ -19,6 +19,7 @@
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/function/VortexRollup.h"
 
 
 using namespace atlas;
@@ -154,7 +155,7 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
         else {
             idx_t k = args.getInt("vortex-rollup", 0);
             atlas_omp_parallel_for(idx_t n = 0; n < size; ++n) {
-                source(n) = util::vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 0.5 + double(k) / 2);
+                source(n) = util::function::vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 0.5 + double(k) / 2);
             }
         }
     }

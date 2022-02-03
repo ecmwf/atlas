@@ -18,7 +18,7 @@
 #include "atlas/meshgenerator/detail/cubedsphere/CubedSphereUtility.h"
 #include "atlas/option.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "atlas/util/VortexRollup.h"
+#include "atlas/util/function/VortexRollup.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -59,7 +59,7 @@ void testFunctionSpace(const functionspace::CubedSphereColumns<BaseFunctionSpace
         EXPECT(!ghostView(index));
 
         // Set field values.
-        fieldView(index) = util::vortex_rollup(lonLatView(index, LON), lonLatView(index, LAT), 1.0);
+        fieldView(index) = util::function::vortex_rollup(lonLatView(index, LON), lonLatView(index, LAT), 1.0);
         ++testFuncCallCount;
     });
 
@@ -76,7 +76,7 @@ void testFunctionSpace(const functionspace::CubedSphereColumns<BaseFunctionSpace
         EXPECT(index == functionspace.index(t, i, j));
 
         // Set field values.
-        EXPECT_APPROX_EQ(fieldView(index), util::vortex_rollup(lonLatView(index, LON), lonLatView(index, LAT), 1.0), epsilon);
+        EXPECT_APPROX_EQ(fieldView(index), util::function::vortex_rollup(lonLatView(index, LON), lonLatView(index, LAT), 1.0), epsilon);
 
         ++testFuncCallCount;
     });

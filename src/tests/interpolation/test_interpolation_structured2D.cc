@@ -21,7 +21,7 @@
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "atlas/util/VortexRollup.h"
+#include "atlas/util/function/VortexRollup.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -138,7 +138,7 @@ CASE("test_interpolation_structured using functionspace API") {
         auto lonlat = array::make_view<double, 2>(input_fs.xy());
         auto source = array::make_view<double, 1>(field_source);
         for (idx_t n = 0; n < input_fs.size(); ++n) {
-            source(n) = util::vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 1.);
+            source(n) = util::function::vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 1.);
         }
 
         EXPECT(field_source.dirty());
@@ -178,7 +178,7 @@ CASE("test_interpolation_structured using grid API") {
 
         idx_t n{0};
         for (auto p : input_grid.lonlat()) {
-            src_data[n++] = util::vortex_rollup(p.lon(), p.lat(), 1.);
+            src_data[n++] = util::function::vortex_rollup(p.lon(), p.lat(), 1.);
         }
 
         // Wrap memory in atlas Fields and interpolate
@@ -235,7 +235,7 @@ CASE("test_interpolation_structured using fs API multiple levels") {
     auto source = array::make_view<double, 2>(field_source);
     for (idx_t n = 0; n < input_fs.size(); ++n) {
         for (idx_t k = 0; k < 3; ++k) {
-            source(n, k) = util::vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 0.5 + double(k) / 2);
+            source(n, k) = util::function::vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 0.5 + double(k) / 2);
         }
     }
     interpolation.execute(field_source, field_target);
@@ -283,7 +283,7 @@ void test_interpolation_structured_using_fs_API_for_fieldset() {
         auto source = array::make_view<Value, 2>(field_source);
         for (idx_t n = 0; n < input_fs.size(); ++n) {
             for (idx_t k = 0; k < 3; ++k) {
-                source(n, k) = util::vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 0.5 + double(k) / 2);
+                source(n, k) = util::function::vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 0.5 + double(k) / 2);
             }
         }
     }
@@ -459,7 +459,7 @@ CASE("ATLAS-315: Target grid with domain West of 0 degrees Lon") {
     auto source        = array::make_view<double, 1>(field_src);
     constexpr double k = 1;
     for (idx_t n = 0; n < source.size(); ++n) {
-        source(n) = util::vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 0.5 + double(k) / 2);
+        source(n) = util::function::vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 0.5 + double(k) / 2);
     }
 
     interpolation.execute(field_src, field_tgt);

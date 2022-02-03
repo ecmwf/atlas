@@ -20,7 +20,7 @@
 #include "atlas/linalg/sparse/Backend.h"
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/util/VortexRollup.h
+#include "atlas/util/function/VortexRollup.h"
 #include "PartitionedMesh.h"
 
 using namespace atlas;
@@ -223,7 +223,7 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
             //            src_scalar_1( j ) = -std::tanh( y / 10. * std::cos( 50. / std::sqrt( x * x + y * y ) ) -
             //                                            x / 10. * std::sin( 50. / std::sqrt( x * x + y * y ) ) );
 
-            src_scalar_1(j) = util::vortex_rollup(lon, lat, 1., 1., false);
+            src_scalar_1(j) = util::function::vortex_rollup(lonlat(j, 0), lonlat(j, 1), 1.);
         }
     }
 
