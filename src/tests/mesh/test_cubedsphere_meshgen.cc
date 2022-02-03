@@ -159,7 +159,7 @@ void testHaloExchange(const std::string& gridStr, const std::string& partitioner
             break;
         }
 
-        testView1(i) = util::function::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT), 1.0);
+        testView1(i) = 1.0 + util::function::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT), 1.0);
         ++testFuncCallCount;
     }
 
@@ -173,7 +173,7 @@ void testHaloExchange(const std::string& gridStr, const std::string& partitioner
     // Check all values after halo exchange.
     double maxError = 0;
     for (idx_t i = 0; i < nodeColumns.size(); ++i) {
-        const double testVal = util::function::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT), 1.0);
+        const double testVal = 1.0 + util::function::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT), 1.0);
         maxError             = std::max(maxError, std::abs(testView1(i) - testVal));
     }
 
@@ -204,7 +204,7 @@ void testHaloExchange(const std::string& gridStr, const std::string& partitioner
             break;
         }
 
-        testView2(i) = util::function::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT), 1.0);
+        testView2(i) = 1.0 + util::function::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT), 1.0);
         ++testFuncCallCount;
     }
 
@@ -219,7 +219,7 @@ void testHaloExchange(const std::string& gridStr, const std::string& partitioner
     maxError = 0;
     for (idx_t i = 0; i < cellColumns.size(); ++i) {
         // Test field and test function should be the same.
-        const double testVal = util::function::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT), 1.0);
+        const double testVal = 1.0 + util::function::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT), 1.0);
         maxError             = std::max(maxError, std::abs(testView2(i) - testVal));
     }
 
@@ -325,13 +325,13 @@ CASE("cubedsphere_dual_mesh_test") {
 
         // Make and set a source field.
         auto sourceField            = sourceFunctionSpace.createField<double>(util::Config("name", "source field") |
-                                                                   util::Config("levels", nLevels));
+                                                                              util::Config("levels", nLevels));
         auto sourceView             = array::make_view<double, 2>(sourceField);
         const auto sourceLonLatView = array::make_view<double, 2>(sourceFunctionSpace.lonlat());
 
         for (idx_t i = 0; i < sourceView.shape(0); ++i) {
             for (idx_t j = 0; j < sourceView.shape(1); ++j) {
-                sourceView(i, j) = util::function::vortex_rollup(sourceLonLatView(i, LON), sourceLonLatView(i, LAT),
+                sourceView(i, j) = 1.0 + util::function::vortex_rollup(sourceLonLatView(i, LON), sourceLonLatView(i, LAT),
                                                 static_cast<double>(j) / (nLevels - 1));
             }
         }
@@ -358,7 +358,7 @@ CASE("cubedsphere_dual_mesh_test") {
         double maxError             = 0.;
         for (idx_t i = 0; i < targetView.shape(0); ++i) {
             for (idx_t j = 0; j < targetView.shape(1); ++j) {
-                double referenceVal =  util::function::vortex_rollup(targetLonLatView(i, LON), targetLonLatView(i, LAT),
+                double referenceVal =  1.0 + util::function::vortex_rollup(targetLonLatView(i, LON), targetLonLatView(i, LAT),
                                                    static_cast<double>(j) / (nLevels - 1));
 
                 double relativeError = std::abs((targetView(i, j) - referenceVal) / referenceVal);
@@ -412,7 +412,7 @@ CASE("cubedsphere_dual_mesh_test") {
             }
 
             for (idx_t j = 0; j < fieldView.shape(1); ++j) {
-                fieldView(i, j) =
+                fieldView(i, j) = 1.0 +
                      util::function::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT), static_cast<double>(j) / (nLevels - 1));
             }
         }
@@ -423,7 +423,7 @@ CASE("cubedsphere_dual_mesh_test") {
         // Check test field on *all* cells.
         for (idx_t i = 0; i < fieldView.shape(0); ++i) {
             for (idx_t j = 0; j < fieldView.shape(1); ++j) {
-                EXPECT_APPROX_EQ(fieldView(i, j), util::function::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT),
+                EXPECT_APPROX_EQ(fieldView(i, j), 1.0 + util::function::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT),
                                                                static_cast<double>(j) / (nLevels - 1)));
             }
         }

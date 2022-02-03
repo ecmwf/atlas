@@ -257,7 +257,7 @@ struct AdjointTolerance {
 template <>
 const double AdjointTolerance<double>::value = 2.e-14;
 template <>
-const float AdjointTolerance<float>::value = 4.e-6;
+const float AdjointTolerance<float>::value = 2.e-5;
 
 
 template <typename Value>
