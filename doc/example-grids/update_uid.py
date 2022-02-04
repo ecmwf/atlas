@@ -16,7 +16,6 @@ def run_program_get_error(file):
     
     from subprocess import Popen, PIPE
     
-    #Marco Milan: add shell=True for run in linux
     p = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
     output, error = p.communicate()
     if p.returncode != 0:
@@ -56,21 +55,14 @@ def process_file( file, newfile ):
 
 
 import sys
-print(sys.argv)
 program = sys.argv[1]
 
 print( "Updating uids of grids with program [",program,"]")
 
 import os
-
-print('file: ', __file__)
 directory = os.path.dirname(os.path.realpath(__file__))
 
-print('directory:', directory)
-
-
 for root, dirs, files in os.walk(directory):
-    print('root: ', root)
     for file in files:
         if file.endswith('.yml'):
             file = root+"/"+file
