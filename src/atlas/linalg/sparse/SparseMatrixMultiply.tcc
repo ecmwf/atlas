@@ -12,13 +12,18 @@
 
 #include "SparseMatrixMultiply.h"
 
-#include <type_traits>
-
 #include "atlas/linalg/Indexing.h"
 #include "atlas/linalg/Introspection.h"
 #include "atlas/linalg/View.h"
 #include "atlas/linalg/sparse/Backend.h"
 #include "atlas/runtime/Exception.h"
+
+#if ATLAS_ECKIT_HAVE_ECKIT_585
+#include "eckit/linalg/LinearAlgebraSparse.h"
+#else
+#include "eckit/linalg/LinearAlgebra.h"
+#endif
+
 
 namespace atlas {
 namespace linalg {
@@ -75,7 +80,11 @@ void sparse_matrix_multiply( const Matrix& matrix, const SourceView& src, Target
     else if ( type == sparse::backend::eckit_linalg::type() ) {
         sparse::dispatch_sparse_matrix_multiply<sparse::backend::eckit_linalg>( matrix, src, tgt, indexing, config );
     }
+#if ATLAS_ECKIT_HAVE_ECKIT_585
+    else if( eckit::linalg::LinearAlgebraSparse::hasBackend(type) ) {
+#else
     else if( eckit::linalg::LinearAlgebra::hasBackend(type) ) {
+#endif
         sparse::dispatch_sparse_matrix_multiply<sparse::backend::eckit_linalg>( matrix, src, tgt, indexing, util::Config("backend",type)  );
     }
     else {

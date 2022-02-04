@@ -45,6 +45,12 @@
 *
 */
 
+#ifdef __NVCOMPILER
+#define PREVENT_OPT volatile
+#else
+#define PREVENT_OPT
+#endif
+
 namespace atlas {
 namespace projection {
 namespace detail {
@@ -59,10 +65,11 @@ static double new_ratio(int n_stretched, double var_ratio) {
     constexpr float epstest = std::numeric_limits<float>::epsilon();
 
     ///< number of variable (stretched) grid points in one side
-    int var_ints      = (n_stretched + epstest) / 2.;
-    double var_ints_f = n_stretched / 2.;
-    double logr       = std::log(var_ratio);
-    double log_ratio  = (var_ints_f - 0.5) * logr;
+    PREVENT_OPT int var_ints = (n_stretched + epstest) / 2.;
+    double var_ints_f        = n_stretched / 2.;
+    double logr              = std::log(var_ratio);
+    double log_ratio         = (var_ints_f - 0.5) * logr;
+
     return std::exp(log_ratio / var_ints);
 };
 
@@ -85,7 +92,6 @@ typename VariableResolutionProjectionT<Rotation>::Spec VariableResolutionProject
     proj_st.set("endy", endy_);                ///< original domain endy
     proj_st.set("rim_widthx", rim_widthx_);    ///< xsize of the rim
     proj_st.set("rim_widthy", rim_widthy_);    ///< ysize of the rim
-    proj_st.set("north_pole", north_pole_);    ///< north_pole
     rotation_.spec(proj_st);
     return proj_st;
 }
@@ -95,20 +101,19 @@ typename VariableResolutionProjectionT<Rotation>::Spec VariableResolutionProject
 template <typename Rotation>
 VariableResolutionProjectionT<Rotation>::VariableResolutionProjectionT(const eckit::Parametrisation& proj_st):
     ProjectionImpl(), rotation_(proj_st) {
-    proj_st.get("delta_low", delta_outer = 0.);          ///< resolution of the external regular grid (rim)
-    proj_st.get("delta_hi", delta_inner = 0.);           ///< resolution of the regional model (regular grid)
-    proj_st.get("var_ratio", var_ratio_ = 0.);           ///< power used for the stretching
-    proj_st.get("x_reg_start", x_reg_start_ = 0.);       ///< xstart of the internal regional grid
-    proj_st.get("y_reg_start", y_reg_start_ = 0.);       ///< ystart of the internal regional grid
-    proj_st.get("x_reg_end", x_reg_end_ = 0.);           ///< xend of the regular part of stretched internal grid
-    proj_st.get("y_reg_end", y_reg_end_ = 0.);           ///< yend of the regular part of stretched internal grid
-    proj_st.get("startx", startx_ = 0.);                 ///< original domain startx
-    proj_st.get("endx", endx_ = 0.);                     ///< original domain endx
-    proj_st.get("starty", starty_ = 0.);                 ///< original domain starty
-    proj_st.get("endy", endy_ = 0.);                     ///< original domain endy
-    proj_st.get("rim_widthx", rim_widthx_);              ///< xsize of the rim
-    proj_st.get("rim_widthy", rim_widthy_);              ///< ysize of the rim
-    proj_st.get("north_pole", north_pole_ = {0., 90.});  ///< north_pole
+    proj_st.get("delta_low", delta_outer = 0.);     ///< resolution of the external regular grid (rim)
+    proj_st.get("delta_hi", delta_inner = 0.);      ///< resolution of the regional model (regular grid)
+    proj_st.get("var_ratio", var_ratio_ = 0.);      ///< power used for the stretching
+    proj_st.get("x_reg_start", x_reg_start_ = 0.);  ///< xstart of the internal regional grid
+    proj_st.get("y_reg_start", y_reg_start_ = 0.);  ///< ystart of the internal regional grid
+    proj_st.get("x_reg_end", x_reg_end_ = 0.);      ///< xend of the regular part of stretched internal grid
+    proj_st.get("y_reg_end", y_reg_end_ = 0.);      ///< yend of the regular part of stretched internal grid
+    proj_st.get("startx", startx_ = 0.);            ///< original domain startx
+    proj_st.get("endx", endx_ = 0.);                ///< original domain endx
+    proj_st.get("starty", starty_ = 0.);            ///< original domain starty
+    proj_st.get("endy", endy_ = 0.);                ///< original domain endy
+    proj_st.get("rim_widthx", rim_widthx_);         ///< xsize of the rim
+    proj_st.get("rim_widthy", rim_widthy_);         ///< ysize of the rim
 
     constexpr float epsilon = std::numeric_limits<float>::epsilon();  ///< value used to check if the values are equal
     constexpr float epstest =

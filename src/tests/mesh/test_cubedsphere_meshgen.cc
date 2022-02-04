@@ -22,6 +22,7 @@
 #include "atlas/option.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/function/VortexRollup.h"
 #include "tests/AtlasTestEnvironment.h"
 
 #include "eckit/mpi/Operation.h"
@@ -119,33 +120,6 @@ CASE("cubedsphere_mesh_jacobian_test") {
     }
 }
 
-
-double testFunction(double lon, double lat, double t = 1.) {
-    // lon and lat in degrees!
-
-    // Formula found in "A Lagrangian Particle Method with Remeshing for Tracer Transport on the Sphere"
-    // by Peter Bosler, James Kent, Robert Krasny, CHristiane Jablonowski, JCP 2015
-
-    lon *= M_PI / 180.;
-    lat *= M_PI / 180.;
-
-    auto sqr           = [](const double x) { return x * x; };
-    auto sech          = [](const double x) { return 1. / std::cosh(x); };
-    const double T     = 1.;
-    const double Omega = 2. * M_PI / T;
-    t *= T;
-    const double lambda_prime = std::atan2(-std::cos(lon - Omega * t), std::tan(lat));
-    const double rho          = 3. * std::sqrt(1. - sqr(std::cos(lat)) * sqr(std::sin(lon - Omega * t)));
-    double omega              = 0.;
-    double a                  = util::Earth::radius();
-    if (rho != 0.) {
-        omega = 0.5 * 3 * std::sqrt(3) * a * Omega * sqr(sech(rho)) * std::tanh(rho) / rho;
-    }
-    double q = 1. - std::tanh(0.2 * rho * std::sin(lambda_prime - omega / a * t));
-    return q;
-};
-
-
 void testHaloExchange(const std::string& gridStr, const std::string& partitionerStr, idx_t halo, bool output = true) {
     // Set grid.
     const auto grid = Grid(gridStr);
@@ -185,7 +159,7 @@ void testHaloExchange(const std::string& gridStr, const std::string& partitioner
             break;
         }
 
-        testView1(i) = testFunction(lonLatView(i, LON), lonLatView(i, LAT));
+        testView1(i) = 1.0 + util::function::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT), 1.0);
         ++testFuncCallCount;
     }
 
@@ -199,7 +173,7 @@ void testHaloExchange(const std::string& gridStr, const std::string& partitioner
     // Check all values after halo exchange.
     double maxError = 0;
     for (idx_t i = 0; i < nodeColumns.size(); ++i) {
-        const double testVal = testFunction(lonLatView(i, LON), lonLatView(i, LAT));
+        const double testVal = 1.0 + util::function::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT), 1.0);
         maxError             = std::max(maxError, std::abs(testView1(i) - testVal));
     }
 
@@ -230,7 +204,7 @@ void testHaloExchange(const std::string& gridStr, const std::string& partitioner
             break;
         }
 
-        testView2(i) = testFunction(lonLatView(i, LON), lonLatView(i, LAT));
+        testView2(i) = 1.0 + util::function::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT), 1.0);
         ++testFuncCallCount;
     }
 
@@ -245,7 +219,7 @@ void testHaloExchange(const std::string& gridStr, const std::string& partitioner
     maxError = 0;
     for (idx_t i = 0; i < cellColumns.size(); ++i) {
         // Test field and test function should be the same.
-        const double testVal = testFunction(lonLatView(i, LON), lonLatView(i, LAT));
+        const double testVal = 1.0 + util::function::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT), 1.0);
         maxError             = std::max(maxError, std::abs(testView2(i) - testVal));
     }
 
@@ -357,8 +331,9 @@ CASE("cubedsphere_dual_mesh_test") {
 
         for (idx_t i = 0; i < sourceView.shape(0); ++i) {
             for (idx_t j = 0; j < sourceView.shape(1); ++j) {
-                sourceView(i, j) = testFunction(sourceLonLatView(i, LON), sourceLonLatView(i, LAT),
-                                                static_cast<double>(j) / (nLevels - 1));
+                sourceView(i, j) =
+                    1.0 + util::function::vortex_rollup(sourceLonLatView(i, LON), sourceLonLatView(i, LAT),
+                                                        static_cast<double>(j) / (nLevels - 1));
             }
         }
 
@@ -384,8 +359,9 @@ CASE("cubedsphere_dual_mesh_test") {
         double maxError             = 0.;
         for (idx_t i = 0; i < targetView.shape(0); ++i) {
             for (idx_t j = 0; j < targetView.shape(1); ++j) {
-                double referenceVal = testFunction(targetLonLatView(i, LON), targetLonLatView(i, LAT),
-                                                   static_cast<double>(j) / (nLevels - 1));
+                double referenceVal =
+                    1.0 + util::function::vortex_rollup(targetLonLatView(i, LON), targetLonLatView(i, LAT),
+                                                        static_cast<double>(j) / (nLevels - 1));
 
                 double relativeError = std::abs((targetView(i, j) - referenceVal) / referenceVal);
                 maxError             = std::max(maxError, relativeError);
@@ -438,8 +414,8 @@ CASE("cubedsphere_dual_mesh_test") {
             }
 
             for (idx_t j = 0; j < fieldView.shape(1); ++j) {
-                fieldView(i, j) =
-                    testFunction(lonLatView(i, LON), lonLatView(i, LAT), static_cast<double>(j) / (nLevels - 1));
+                fieldView(i, j) = 1.0 + util::function::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT),
+                                                                      static_cast<double>(j) / (nLevels - 1));
             }
         }
 
@@ -449,8 +425,9 @@ CASE("cubedsphere_dual_mesh_test") {
         // Check test field on *all* cells.
         for (idx_t i = 0; i < fieldView.shape(0); ++i) {
             for (idx_t j = 0; j < fieldView.shape(1); ++j) {
-                EXPECT_APPROX_EQ(fieldView(i, j), testFunction(lonLatView(i, LON), lonLatView(i, LAT),
-                                                               static_cast<double>(j) / (nLevels - 1)));
+                EXPECT_APPROX_EQ(fieldView(i, j),
+                                 1.0 + util::function::vortex_rollup(lonLatView(i, LON), lonLatView(i, LAT),
+                                                                     static_cast<double>(j) / (nLevels - 1)));
             }
         }
 

@@ -269,6 +269,10 @@ void cap_colats(int N, int n_collars, const double& c_polar, int n_regions[], do
     c_caps[n_collars + 1] = M_PI;
 }
 
+// Disable optimisation for Cray (See ATLAS-327)
+#ifdef _CRAYC
+#pragma _CRI noopt
+#endif
 void eq_caps(int N, std::vector<int>& n_regions, std::vector<double>& s_cap) {
     //
     // eq_regions uses the zonal equal area sphere partitioning algorithm to
@@ -291,14 +295,14 @@ void eq_caps(int N, std::vector<int>& n_regions, std::vector<double>& s_cap) {
         // Given N, determine c_polar
         // the colatitude of the North polar spherical cap.
         //
-        double c_polar = polar_colat(N);
+        const double c_polar = polar_colat(N);
 
         //
         // Given N, determine the ideal angle for spherical collars.
         // Based on N, this ideal angle, and c_polar,
         // determine n_collars, the number of collars between the polar caps.
         //
-        int n_collars = num_collars(N, c_polar, ideal_collar_angle(N));
+        const int n_collars = num_collars(N, c_polar, ideal_collar_angle(N));
 
         // int n_regions_ns=n_collars+2;
         //
@@ -337,6 +341,10 @@ void eq_caps(int N, std::vector<int>& n_regions, std::vector<double>& s_cap) {
     }
     // int n_regions_ew=maxval(n_regions(:));
 }
+// Reenable optimisation for Cray (See ATLAS-327)
+#ifdef _CRAYC
+#pragma _CRI opt
+#endif
 
 void eq_regions(int N, double xmin[], double xmax[], double ymin[], double ymax[]) {
     // EQ_REGIONS Recursive zonal equal area (EQ) partition of sphere

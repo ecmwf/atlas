@@ -11,10 +11,6 @@
 #include <algorithm>
 #include <iomanip>
 
-#include "eckit/linalg/LinearAlgebra.h"
-#include "eckit/linalg/Vector.h"
-#include "eckit/types/Types.h"
-
 #include "atlas/array.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/NodeColumns.h"
@@ -29,6 +25,16 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/MicroDeg.h"
+
+#if ATLAS_ECKIT_HAVE_ECKIT_585
+#include "eckit/linalg/LinearAlgebraSparse.h"
+#else
+#include "eckit/linalg/LinearAlgebra.h"
+#endif
+#include "eckit/linalg/SparseMatrix.h"
+#include "eckit/linalg/Vector.h"
+#include "eckit/types/Types.h"
+
 
 #include "CubicInterpolationPrototype.h"
 #include "tests/AtlasTestEnvironment.h"
@@ -233,7 +239,11 @@ CASE("test horizontal cubic interpolation triplets") {
     std::vector<double> tgt(departure_points.size());
     eckit::linalg::Vector v_src(const_cast<double*>(f.data()), f.size());
     eckit::linalg::Vector v_tgt(tgt.data(), tgt.size());
+#if ATLAS_ECKIT_HAVE_ECKIT_585
+    eckit::linalg::LinearAlgebraSparse::backend().spmv(matrix, v_src, v_tgt);
+#else
     eckit::linalg::LinearAlgebra::backend().spmv(matrix, v_src, v_tgt);
+#endif
     Log::info() << "output = " << tgt << std::endl;
 }
 

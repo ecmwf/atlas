@@ -29,10 +29,9 @@
 #include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/function/VortexRollup.h"
 
 using namespace atlas;
-
-double vortex_rollup(double lon, double lat, double t, double mean);
 
 //------------------------------------------------------------------------------
 
@@ -100,7 +99,7 @@ int Program::execute(const Args& args) {
 
     double meanA = 1.;
     for (idx_t n = 0; n < fsA.size(); ++n) {
-        A(n) = vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 1., meanA);
+        A(n) = meanA + util::function::vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 1.);
     }
     fieldA.set_dirty();
     fieldA.haloExchange();
@@ -201,33 +200,6 @@ int Program::execute(const Args& args) {
     }
     return status;
 }
-
-//------------------------------------------------------------------------------
-
-double vortex_rollup(double lon, double lat, double t, double mean) {
-    // lon and lat in degrees!
-
-    // Formula found in "A Lagrangian Particle Method with Remeshing for Tracer Transport on the Sphere"
-    // by Peter Bosler, James Kent, Robert Krasny, CHristiane Jablonowski, JCP 2015
-
-    lon *= util::Constants::degreesToRadians();
-    lat *= util::Constants::degreesToRadians();
-
-    auto sqr           = [](const double x) { return x * x; };
-    auto sech          = [](const double x) { return 1. / std::cosh(x); };
-    const double T     = 1.;
-    const double Omega = 2. * M_PI / T;
-    t *= T;
-    const double lambda_prime = std::atan2(-std::cos(lon - Omega * t), std::tan(lat));
-    const double rho          = 3. * std::sqrt(1. - sqr(std::cos(lat)) * sqr(std::sin(lon - Omega * t)));
-    double omega              = 0.;
-    double a                  = util::Earth::radius();
-    if (rho != 0.) {
-        omega = 0.5 * 3 * std::sqrt(3) * a * Omega * sqr(sech(rho)) * std::tanh(rho) / rho;
-    }
-    double q = mean - std::tanh(0.2 * rho * std::sin(lambda_prime - omega / a * t));
-    return q;
-};
 
 //------------------------------------------------------------------------------
 

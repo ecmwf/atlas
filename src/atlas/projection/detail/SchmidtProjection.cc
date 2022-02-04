@@ -7,7 +7,6 @@
  * granted to it by virtue of its status as an intergovernmental organisation
  * nor does it submit to any jurisdiction.
  */
-
 #include <cmath>
 
 #include "eckit/config/Parametrisation.h"
@@ -33,6 +32,14 @@ namespace atlas {
 namespace projection {
 namespace detail {
 
+PointLonLat rotation_north_pole(const Rotated& rotation) {
+    return rotation.northPole();
+}
+
+PointLonLat rotation_north_pole(const NotRotated& rotation) {
+    return PointLonLat{0., 90.};
+}
+
 // constructor
 template <typename Rotation>
 SchmidtProjectionT<Rotation>::SchmidtProjectionT(const eckit::Parametrisation& params):
@@ -40,6 +47,12 @@ SchmidtProjectionT<Rotation>::SchmidtProjectionT(const eckit::Parametrisation& p
     if (!params.get("stretching_factor", c_)) {
         throw_Exception("stretching_factor missing in Params", Here());
     }
+    ATLAS_ASSERT(c_ != 0.);
+
+    north0_ = {0.0, 0.0, 1.0};
+
+    atlas::util::UnitSphere::convertSphericalToCartesian(rotation_north_pole(rotation_), north1_);
+    north1_ = PointXYZ::normalize(north1_);
 }
 
 // constructor
@@ -75,36 +88,34 @@ ProjectionImpl::Jacobian SchmidtProjectionT<Rotation>::jacobian(const PointLonLa
 
     lonlat2xy(xy);
 
-    PointXYZ xyz, north1, north0(0.0, 0.0, 1.0);
-    atlas::util::UnitSphere::convertSphericalToCartesian(rotation_.northPole(), north1);
+    PointXYZ xyz;
     atlas::util::UnitSphere::convertSphericalToCartesian(lonlat, xyz);
 
-    north1 = PointXYZ::normalize(north1);
-
-    // Base vectors in unrotated frame
-    auto u0 = PointXYZ::normalize(PointXYZ::cross(north0, xyz));
-    auto v0 = PointXYZ::normalize(PointXYZ::cross(xyz, u0));
-
-    // Base vectors in rotated frame
-    auto u1 = PointXYZ::normalize(PointXYZ::cross(north1, xyz));
-    auto v1 = PointXYZ::normalize(PointXYZ::cross(xyz, u1));
-
-    double u0u1 = PointXYZ::dot(u0, u1);
-    double v0u1 = PointXYZ::dot(v0, u1);
-    double u0v1 = PointXYZ::dot(u0, v1);
-    double v0v1 = PointXYZ::dot(v0, v1);
-
-    Jacobian jac;
 
     double zomc2 = 1.0 - 1.0 / (c_ * c_);
     double zopc2 = 1.0 + 1.0 / (c_ * c_);
 
-    double zcosy = cos(D2R(xy[1])), zsiny = sin(D2R(xy[1]));
-    double zcoslat = cos(D2R(lonlat.lat()));
+    double zcosy   = std::cos(D2R(xy[1]));
+    double zsiny   = std::sin(D2R(xy[1]));
+    double zcoslat = std::cos(D2R(lonlat.lat()));
 
-    double zfactor = sqrt((zopc2 + zsiny * zomc2) * (zopc2 + zsiny * zomc2) / (zopc2 * zopc2 - zomc2 * zomc2));
+    double zfactor = std::sqrt((zopc2 + zsiny * zomc2) * (zopc2 + zsiny * zomc2) / (zopc2 * zopc2 - zomc2 * zomc2));
 
+    // Base vectors in unrotated frame
+    auto u0 = PointXYZ::normalize(PointXYZ::cross(north0_, xyz));
+    auto v0 = PointXYZ::normalize(PointXYZ::cross(xyz, u0));
 
+    // Base vectors in rotated frame
+    auto u1 = PointXYZ::normalize(PointXYZ::cross(north1_, xyz));
+    auto v1 = PointXYZ::normalize(PointXYZ::cross(xyz, u1));
+
+    double u0u1 = PointXYZ::dot(u0, u1);
+    double v0u1 = PointXYZ::dot(v0, u1);
+
+    double u0v1 = PointXYZ::dot(u0, v1);
+    double v0v1 = PointXYZ::dot(v0, v1);
+
+    Jacobian jac;
     jac[0] = {zcoslat * u0u1 * zfactor / zcosy, v0u1 * zfactor / zcosy};
     jac[1] = {zcoslat * u0v1 * zfactor, v0v1 * zfactor};
 

@@ -289,89 +289,6 @@ public:
     }
 };
 
-void accumulate_pole_edges(mesh::Nodes& nodes, std::vector<idx_t>& pole_edge_nodes, idx_t& nb_pole_edges) {
-    enum
-    {
-        NORTH = 0,
-        SOUTH = 1
-    };
-
-    const auto xy        = array::make_view<double, 2>(nodes.xy());
-    const auto flags     = array::make_view<int, 1>(nodes.flags());
-    const auto part      = array::make_view<int, 1>(nodes.partition());
-    const idx_t nb_nodes = nodes.size();
-
-    double min[2], max[2];
-    min[XX] = std::numeric_limits<double>::max();
-    min[YY] = std::numeric_limits<double>::max();
-    max[XX] = -std::numeric_limits<double>::max();
-    max[YY] = -std::numeric_limits<double>::max();
-    for (idx_t node = 0; node < nb_nodes; ++node) {
-        min[XX] = std::min(min[XX], xy(node, XX));
-        min[YY] = std::min(min[YY], xy(node, YY));
-        max[XX] = std::max(max[XX], xy(node, XX));
-        max[YY] = std::max(max[YY], xy(node, YY));
-    }
-
-    ATLAS_TRACE_MPI(ALLREDUCE) {
-        mpi::comm().allReduceInPlace(min, 2, eckit::mpi::min());
-        mpi::comm().allReduceInPlace(max, 2, eckit::mpi::max());
-    }
-
-    double tol = 1e-6;
-
-    // Collect all nodes closest to poles
-    std::vector<std::set<int>> pole_nodes(2);
-    for (idx_t node = 0; node < nb_nodes; ++node) {
-        if (std::abs(xy(node, YY) - max[YY]) < tol) {
-            pole_nodes[NORTH].insert(node);
-        }
-        else if (std::abs(xy(node, YY) - min[YY]) < tol) {
-            pole_nodes[SOUTH].insert(node);
-        }
-    }
-
-    // Sanity check
-    {
-        for (idx_t NS = 0; NS < 2; ++NS) {
-            int npart = -1;
-            for (std::set<int>::iterator it = pole_nodes[NS].begin(); it != pole_nodes[NS].end(); ++it) {
-                int node = *it;
-                if (npart == -1) {
-                    npart = part(node);
-                }
-                else if (part(node) != npart) {
-                    // Not implemented yet, when pole-lattitude is split.
-                    std::stringstream msg;
-                    msg << "Split pole-latitude is not supported yet...  node " << node << "[p" << part(node)
-                        << "] should belong to part " << npart;
-                    throw_NotImplemented(msg.str(), Here());
-                }
-            }
-        }
-    }
-
-    // Create connections over the poles and store in pole_edge_nodes
-    nb_pole_edges = 0;
-    for (idx_t NS = 0; NS < 2; ++NS) {
-        for (std::set<int>::iterator it = pole_nodes[NS].begin(); it != pole_nodes[NS].end(); ++it) {
-            int node = *it;
-            if (!Topology::check(flags(node), Topology::PERIODIC | Topology::GHOST)) {
-                int x2 = microdeg(xy(node, XX) + 180.);
-                for (std::set<int>::iterator itr = pole_nodes[NS].begin(); itr != pole_nodes[NS].end(); ++itr) {
-                    int other_node = *itr;
-                    if (microdeg(xy(other_node, XX)) == x2) {
-                        if (!Topology::check(flags(other_node), Topology::PERIODIC)) {
-                            pole_edge_nodes.push_back(node);
-                            pole_edge_nodes.push_back(other_node);
-                            ++nb_pole_edges;
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
 
 struct ComputeUniquePoleEdgeIndex {
     // Already assumes that the edges cross the pole
@@ -455,11 +372,6 @@ void build_edges(Mesh& mesh, const eckit::Configuration& config) {
 
     accumulate_facets_ordered_by_halo(mesh.cells(), mesh.nodes(), edge_nodes_data, edge_to_elem_data, nb_edges,
                                       nb_inner_edges, missing_value, edge_halo_offsets);
-
-    std::shared_ptr<AccumulatePoleEdges> pole_edge_accumulator;
-    if (pole_edges) {
-        pole_edge_accumulator = std::make_shared<AccumulatePoleEdges>(nodes);
-    }
 
     std::vector<idx_t> sorted_edge_nodes_data;
     std::vector<idx_t> sorted_edge_to_elem_data;
@@ -551,6 +463,8 @@ void build_edges(Mesh& mesh, const eckit::Configuration& config) {
                                              edge_to_elem_data.data() + edge_halo_offsets[halo] * 2);
 
         if (pole_edges) {
+            auto pole_edge_accumulator = std::make_shared<AccumulatePoleEdges>(nodes);
+
             idx_t nb_pole_edges;
             std::vector<idx_t> pole_edge_nodes;
 

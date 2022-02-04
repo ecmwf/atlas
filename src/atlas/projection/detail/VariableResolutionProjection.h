@@ -76,6 +76,7 @@ protected:
     std::vector<double> north_pole_;  ///< north_pole lon,lat
 
 
+
     //< variables derived from the configuration used for the projection
     double deltax_all, deltay_all;
     double add_xf_, add_yf_;

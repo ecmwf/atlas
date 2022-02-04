@@ -19,6 +19,7 @@
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/function/VortexRollup.h"
 
 
 using namespace atlas;
@@ -87,32 +88,6 @@ static Config processed_config(const eckit::Configuration& _config) {
     return config;
 }
 
-
-double vortex_rollup(double lon, double lat, double t) {
-    // lon and lat in degrees!
-
-    // Formula found in "A Lagrangian Particle Method with Remeshing for Tracer Transport on the Sphere"
-    // by Peter Bosler, James Kent, Robert Krasny, Christiane Jablonowski, JCP 2015
-
-    lon *= M_PI / 180.;
-    lat *= M_PI / 180.;
-
-    auto sqr           = [](const double x) { return x * x; };
-    auto sech          = [](const double x) { return 1. / std::cosh(x); };
-    const double T     = 1.;
-    const double Omega = 2. * M_PI / T;
-    t *= T;
-    const double lambda_prime = std::atan2(-std::cos(lon - Omega * t), std::tan(lat));
-    const double rho          = 3. * std::sqrt(1. - sqr(std::cos(lat)) * sqr(std::sin(lon - Omega * t)));
-    double omega              = 0.;
-    double a                  = util::Earth::radius();
-    if (rho != 0.) {
-        omega = 0.5 * 3 * std::sqrt(3) * a * Omega * sqr(sech(rho)) * std::tanh(rho) / rho;
-    }
-    double q = 1. - std::tanh(0.2 * rho * std::sin(lambda_prime - omega / a * t));
-    return q;
-};
-
 int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     ATLAS_TRACE("AtlasParallelInterpolation::execute");
     auto source_gridname = args.getString("source", "O32");
@@ -180,7 +155,7 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
         else {
             idx_t k = args.getInt("vortex-rollup", 0);
             atlas_omp_parallel_for(idx_t n = 0; n < size; ++n) {
-                source(n) = vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 0.5 + double(k) / 2);
+                source(n) = util::function::vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 0.5 + double(k) / 2);
             }
         }
     }

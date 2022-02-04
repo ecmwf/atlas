@@ -106,8 +106,8 @@ Test& current_test() {
 #undef CASE
 #define CASE(description)                                                                                              \
     void UNIQUE_NAME2(test_, __LINE__)(std::string&, int&, int);                                                       \
-    static eckit::testing::TestRegister UNIQUE_NAME2(test_registration_, __LINE__)(description,                        \
-                                                                                   &UNIQUE_NAME2(test_, __LINE__));    \
+    static const eckit::testing::TestRegister UNIQUE_NAME2(test_registration_, __LINE__)(                              \
+        description, &UNIQUE_NAME2(test_, __LINE__));                                                                  \
     void UNIQUE_NAME2(traced_test_, __LINE__)(std::string & _test_subsection, int& _num_subsections, int _subsection); \
     void UNIQUE_NAME2(test_, __LINE__)(std::string & _test_subsection, int& _num_subsections, int _subsection) {       \
         Test UNIQUE_NAME2(testobj_, __LINE__)(description, Here());                                                    \
