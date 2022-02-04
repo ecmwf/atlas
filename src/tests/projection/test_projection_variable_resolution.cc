@@ -12,9 +12,9 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/projection.h"
 #include "atlas/util/Config.h"
-#include "tests/AtlasTestEnvironment.h"
-#include "atlas/util/Rotation.h"
 #include "atlas/util/Point.h"
+#include "atlas/util/Rotation.h"
+#include "tests/AtlasTestEnvironment.h"
 
 using namespace atlas::util;
 using namespace atlas::grid;
@@ -111,7 +111,7 @@ auto make_var_ratio_projection_rot = [](double var_ratio, std::vector<double> no
     conf.set("rim_widthx", rim_width);
     conf.set("rim_widthy", rim_width);
     conf.set("north_pole", north_pole);
-    return atlas::Projection(conf );
+    return atlas::Projection(conf);
 };
 
 
@@ -323,7 +323,6 @@ CASE("var_ratio = 1.0") {
 
 
 CASE("var_ratio_rot = 1.13") {
-
     ///< check over regular grid points stretched using new atlas object and check using look-up table
     ///< in this case add a rotation
     Config config;
@@ -332,23 +331,23 @@ CASE("var_ratio_rot = 1.13") {
 
     ///< definition of grid I have to rotate this
     auto proj_st = make_var_ratio_projection_rot(1.13, {-176., 40.});
-    auto grid = RegularGrid{grid::LinearSpacing{xrange_outer[0], xrange_outer[1], nx},
+    auto grid    = RegularGrid{grid::LinearSpacing{xrange_outer[0], xrange_outer[1], nx},
                             grid::LinearSpacing{yrange_outer[0], yrange_outer[1], ny}, proj_st};
 
     Rotation rotation(config);
 
     for (idx_t j = 0; j < grid.ny(); ++j) {
-       for (idx_t i = 0; i < grid.nx(); ++i) {
-           ///<compare rotated stretched grid ll, with the defined array to rotate
-           auto ll = grid.lonlat(i, j);
-           auto ll_str = {lon_LAM_str[i], lat_LAM_str[j]};
-           EXPECT_APPROX_EQ(ll, rotation.rotate(ll_str), 1.e-8);
+        for (idx_t i = 0; i < grid.nx(); ++i) {
+            ///<compare rotated stretched grid ll, with the defined array to rotate
+            auto ll     = grid.lonlat(i, j);
+            auto ll_str = {lon_LAM_str[i], lat_LAM_str[j]};
+            EXPECT_APPROX_EQ(ll, rotation.rotate(ll_str), 1.e-8);
         }
-     }
+    }
 
-     idx_t ymid             = grid.ny() / 2;
-     idx_t xmid             = grid.nx() / 2;
-     /*In rotated coordinate, this is not true anymore
+    idx_t ymid = grid.ny() / 2;
+    idx_t xmid = grid.nx() / 2;
+    /*In rotated coordinate, this is not true anymore
      auto expect_equal_dlon = [&](int i, double dlon) {
      EXPECT_APPROX_EQ(grid.lonlat(i + 1, ymid).lon() - grid.lonlat(i, ymid).lon(), dlon, 1.e-8);
      };
@@ -361,74 +360,73 @@ CASE("var_ratio_rot = 1.13") {
      expect_equal_dlat(ymid, delta_inner);
      */
 
-     // Check that the spacing in xy coordinates matches "delta_inner"
-     for (int i = 0; i < grid.nx() - 1; ++i) {
-         EXPECT_APPROX_EQ(grid.xy(i + 1, ymid).x() - grid.xy(i, ymid).x(), delta_inner, 1.e-8);
-     }
-     for (int j = 0; j < grid.ny() - 1; ++j) {
-         EXPECT_APPROX_EQ(grid.xy(xmid, j + 1).y() - grid.xy(xmid, j).y(), delta_inner, 1.e-8);
-     }
-     ///< Set meshes
-     ///< define mesh to write in file
-     auto mesh = Mesh{grid};
+    // Check that the spacing in xy coordinates matches "delta_inner"
+    for (int i = 0; i < grid.nx() - 1; ++i) {
+        EXPECT_APPROX_EQ(grid.xy(i + 1, ymid).x() - grid.xy(i, ymid).x(), delta_inner, 1.e-8);
+    }
+    for (int j = 0; j < grid.ny() - 1; ++j) {
+        EXPECT_APPROX_EQ(grid.xy(xmid, j + 1).y() - grid.xy(xmid, j).y(), delta_inner, 1.e-8);
+    }
+    ///< Set meshes
+    ///< define mesh to write in file
+    auto mesh = Mesh{grid};
 
-     /**
+    /**
      *  Write mesh in gmsh object.
      *  output under:
      *   <build-directory>/atlas/src/tests/grid/
      */
 
-     output::Gmsh{"stretch_mesh_lonlat_rot.msh", Config("coordinates", "lonlat")("info", true)}.write(mesh);
-     output::Gmsh{"stretch_mesh_xy_rot.msh", Config("coordinates", "xy")("info", true)}.write(mesh);
+    output::Gmsh{"stretch_mesh_lonlat_rot.msh", Config("coordinates", "lonlat")("info", true)}.write(mesh);
+    output::Gmsh{"stretch_mesh_xy_rot.msh", Config("coordinates", "xy")("info", true)}.write(mesh);
 
 
-     /** Create additional regular grid with same delta_hi
+    /** Create additional regular grid with same delta_hi
      *  for additional .msh file with lon lat in approximately the same range
      *  as the stretched one.
      */
 
-     int nx_new = 37;
-     int ny_new = 35;
+    int nx_new = 37;
+    int ny_new = 35;
 
-     ///< 37 the exact range would have 36.52 points
-     double alpha    = ((delta_inner * nx_new) - (xrange_outer[1] - xrange_outer[0])) / 2.;
-     double startx_n = xrange_outer[0] - alpha;
-     double endx_n   = xrange_outer[1] + alpha;
-     double starty_n = yrange_outer[0] - alpha;
-     double endy_n   = yrange_outer[1] + alpha;
+    ///< 37 the exact range would have 36.52 points
+    double alpha    = ((delta_inner * nx_new) - (xrange_outer[1] - xrange_outer[0])) / 2.;
+    double startx_n = xrange_outer[0] - alpha;
+    double endx_n   = xrange_outer[1] + alpha;
+    double starty_n = yrange_outer[0] - alpha;
+    double endy_n   = yrange_outer[1] + alpha;
 
-     ///
-     ///< create regular grid
-     auto grid_reg_approx =
-          RegularGrid{LinearSpacing{startx_n, endx_n, nx_new}, LinearSpacing{starty_n, endy_n, ny_new}};
-     //auto grid_reg_approx =
-     //    RegularGrid{LinearSpacing{startx_n, endx_n, nx_new}, LinearSpacing{starty_n, endy_n, ny_new},proj};
+    ///
+    ///< create regular grid
+    auto grid_reg_approx =
+        RegularGrid{LinearSpacing{startx_n, endx_n, nx_new}, LinearSpacing{starty_n, endy_n, ny_new}};
+    //auto grid_reg_approx =
+    //    RegularGrid{LinearSpacing{startx_n, endx_n, nx_new}, LinearSpacing{starty_n, endy_n, ny_new},proj};
 
 
-     /**
+    /**
      *  Write mesh in gmsh object.
      *  output under:
      *   <build-directory>/atlas/src/tests/grid/
      */
-     output::Gmsh("grid_regrot_approx_lonlat.msh", Config("coordinates", "lonlat")("info", true))
-            .write(Mesh{grid_reg_approx});
+    output::Gmsh("grid_regrot_approx_lonlat.msh", Config("coordinates", "lonlat")("info", true))
+        .write(Mesh{grid_reg_approx});
 }
 
 CASE("var_ratio_rot_inv = 1.13") {
-
     ///< check over regular grid points stretched using new atlas object and check using look-up table
     ///< in this case add a rotation
     Config config;
     ///< definition of grid I have to rotate this
     auto proj_st_nr = make_var_ratio_projection(1.13);
-    auto grid_nr = RegularGrid{grid::LinearSpacing{xrange_outer[0], xrange_outer[1], nx},
-                            grid::LinearSpacing{yrange_outer[0], yrange_outer[1], ny}, proj_st_nr};
+    auto grid_nr    = RegularGrid{grid::LinearSpacing{xrange_outer[0], xrange_outer[1], nx},
+                               grid::LinearSpacing{yrange_outer[0], yrange_outer[1], ny}, proj_st_nr};
 
     std::vector<double> north_pole = {-176., 40.};
     config.set("north_pole", north_pole);
     ///< definition of grid I have to rotate this
     auto proj_st = make_var_ratio_projection_rot(1.13, {-176., 40.});
-    auto grid = RegularGrid{grid::LinearSpacing{xrange_outer[0], xrange_outer[1], nx},
+    auto grid    = RegularGrid{grid::LinearSpacing{xrange_outer[0], xrange_outer[1], nx},
                             grid::LinearSpacing{yrange_outer[0], yrange_outer[1], ny}, proj_st};
 
 
@@ -437,22 +435,18 @@ CASE("var_ratio_rot_inv = 1.13") {
     ///< Test the inverse
     for (idx_t j = 0; j < grid.ny(); ++j) {
         for (idx_t i = 0; i < grid.nx(); ++i) {
-        ///<compare rotated stretched grid ll, with the defined array to rotate
-        ///< rotated
+            ///<compare rotated stretched grid ll, with the defined array to rotate
+            ///< rotated
             Point2 ll_str = grid.lonlat(i, j);
             ///< unrotated
             Point2 ll_str1 = {lon_LAM_str[i], lat_LAM_str[j]};
             //< from stretched rotated to unrotated regular
             grid.projection().lonlat2xy(ll_str);
-            Point2 ll_reg =  {lon_LAM_reg[i], lat_LAM_reg[j]};
+            Point2 ll_reg = {lon_LAM_reg[i], lat_LAM_reg[j]};
             EXPECT_APPROX_EQ(ll_str, ll_reg, 1.e-8);
-         }
-     }
-
-
-  }
-
-
+        }
+    }
+}
 
 
 }  // namespace test
