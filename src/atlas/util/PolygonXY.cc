@@ -101,9 +101,10 @@ bool PolygonXY::contains(const Point2& P) const {
         return dx * dx + dy * dy;
     };
 
+    constexpr double eps = 1.e-10;
     // check first bounding box
-    if (coordinatesMax_.y() < P.y() || P.y() < coordinatesMin_.y() || coordinatesMax_.x() < P.x() ||
-        P.x() < coordinatesMin_.x()) {
+    if (coordinatesMax_.y() + eps < P.y() || P.y() < coordinatesMin_.y() - eps || coordinatesMax_.x() + eps < P.x() ||
+        P.x() < coordinatesMin_.x() - eps) {
         return false;
     }
 
@@ -137,6 +138,10 @@ bool PolygonXY::contains(const Point2& P) const {
 
         if (APB != BPA) {
             const double side = cross_product_analog(P, A, B);
+            bool on_edge      = std::abs(side) < eps;
+            if (on_edge) {
+                return true;
+            }
             if (APB && side > 0) {
                 ++wn;
             }
