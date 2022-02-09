@@ -51,14 +51,14 @@ public:
     /// @brief Default constructor.
     Matrix() : baseMatrix_{NRows, NCols} {}
 
-    /// @brief Data constructor.
+    /// @brief Data constructor (no bounds checking!).
     Matrix(const Value* data) : Matrix() {
         for (size_t i = 0; i < NRows * NCols; ++i) {
             baseMatrix_.data()[i] = data[i];
         }
     }
 
-    /// @brief Base matrix constructor.
+    /// @brief Base matrix constructor (no bounds checking in release build!).
     Matrix(const BaseType& baseMatrix) : baseMatrix_{baseMatrix} {
 #if ATLAS_BUILD_TYPE_DEBUG
         ATLAS_ASSERT(baseMatrix_.rows() == NRows);
@@ -66,11 +66,13 @@ public:
 #endif
     }
 
-    /// @brief List constructor.
+    /// @brief List constructor (always checks bounds).
     Matrix(std::initializer_list<std::initializer_list<Value>> list) : Matrix() {
         // Get pointer to first element of data_.
+        ATLAS_ASSERT(list.size() == NRows);
         int i = 0;
         for (const std::initializer_list<Value>& subList : list) {
+            ATLAS_ASSERT(subList.size() == NCols);
             int j = 0;
             for (const Value& elem : subList) {
                 baseMatrix_(i, j) = elem;
