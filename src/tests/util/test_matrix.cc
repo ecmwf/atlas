@@ -98,7 +98,8 @@ CASE("test matrix operations") {
 
     SECTION("transpose") {
 
-        const auto A = Matrix<double, 2, 2>{
+        // Issue: transpose() is non const in eckit/maths/MatrixLapack.h!
+        auto A = Matrix<double, 2, 2>{
             {1., 2.},
             {3., 4.}
         };
