@@ -16,6 +16,7 @@
 
 #include "atlas/library/config.h"
 #include "atlas/util/ObjectHandle.h"
+#include "atlas/util/Matrix.h"
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -28,7 +29,6 @@ class Hash;
 //---------------------------------------------------------------------------------------------------------------------
 
 namespace atlas {
-class JacobianXY;
 class PointXY;
 class PointLonLat;
 
@@ -91,7 +91,7 @@ public:
 
     /// @brief Return the Jacobian of xy with respect to the curvilinear
     ///        coordinates of the tile.
-    const JacobianXY& tileJacobian(size_t t) const;
+    const util::Matrix22& tileJacobian(size_t t) const;
 
 private:
     /// Output to stream

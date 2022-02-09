@@ -710,6 +710,7 @@ util/KDTree.cc
 util/KDTree.h
 util/PolygonXY.cc
 util/PolygonXY.h
+util/Matrix.h
 util/Metadata.cc
 util/Metadata.h
 util/Point.cc
@@ -721,7 +722,6 @@ util/Rotation.h
 util/Registry.h
 util/SphericalPolygon.cc
 util/SphericalPolygon.h
-util/SquareMatrix.h
 util/UnitSphere.h
 util/vector.h
 util/VectorOfAbstract.h

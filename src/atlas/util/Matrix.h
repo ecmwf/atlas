@@ -7,15 +7,197 @@
 
 #pragma once
 
-/// @file SquareMatrix.h
+/// @file Matrix.h
 ///
 /// This file contains classes and functions for working with small square matrices.
 
 #include <iostream>
 
+#include "atlas/library/config.h"
+#include "atlas/runtime/Exception.h"
+#include "eckit/geometry/KPoint.h"
+#include "eckit/maths/Matrix.h"
+
 #include "atlas/util/Point.h"
 
 namespace atlas {
+namespace util {
+
+
+/// @brief   Matrix class.
+///
+/// @details Matrix class which uses eckit::maths::Matrix as a backend.
+///          Matrix dimensions are strongly typed and class enables vector-
+///          matrix multiplication with KPoint classes.
+template <typename Value, int NRows, int NCols>
+class Matrix {
+public:
+
+    using BaseType = eckit::maths::Matrix<Value, int>;
+
+    using xPoint = eckit::geometry::KPoint<NRows>;
+    using yPoint = eckit::geometry::KPoint<NCols>;
+
+
+    /// @brief Default constructor.
+    Matrix() : baseMatrix_{NRows, NCols} {}
+
+    /// @brief base matrix constructor.
+    Matrix(const eckit::maths::Matrix<Value>& baseMatrix) : baseMatrix_{baseMatrix} {
+#if ATLAS_BUILD_TYPE_DEBUG
+        ATLAS_ASSERT(baseMatrix_.rows() == NRows);
+        ATLAS_ASSERT(baseMatrix_.cols() == NCols);
+#endif
+    }
+
+    /// @brief List constructor.
+    Matrix(std::initializer_list<std::initializer_list<Value>> list) : Matrix() {
+        // Get pointer to first element of data_.
+        int i = 0;
+        for (const std::initializer_list<Value>& subList : list) {
+            int j = 0;
+            for (const Value& elem : subList) {
+                baseMatrix_(i, j) = elem;
+                ++j;
+            }
+            ++i;
+        }
+    }
+
+    /// @brief Get element.
+    Value operator()(int i, int j) const {
+        return baseMatrix_(i, j);
+    }
+
+    /// @brief Set element.
+    Value& operator()(int i, int j) {
+        return baseMatrix_(i, j);
+    }
+
+    /// @brief Plus operator.
+    Matrix operator+(const Matrix& other) const {
+        return Matrix{baseMatrix_ + other.baseMatrix()};
+    }
+
+    /// @brief Minus operator.
+    Matrix operator-(const Matrix& other) const {
+        return Matrix{baseMatrix_ - other.baseMatrix()};
+    }
+
+    /// @brief Multiply operator.
+    template <int NCols2>
+    Matrix<Value, NRows, NCols2> operator*(const Matrix<Value, NCols, NCols2>& other) const {
+        return Matrix<Value, NRows, NCols2>{baseMatrix_ * other.baseMatrix()};
+    }
+
+    /// @brief Get row.
+    Matrix<Value, 1, NCols> row(int i) const {
+        return Matrix<Value, 1, NCols>{baseMatrix_.row(i)};
+    }
+
+    /// @brief Get col.
+    Matrix<Value, NRows, 1> col(int j) const {
+        return Matrix<Value, NRows, 1>{baseMatrix_.col(j)};
+    }
+
+    /// @brief Get inverse.
+    Matrix inverse() const {
+        return Matrix{baseMatrix_.inverse()};
+    }
+
+    /// @brief Get transpose.
+    Matrix transpose() const {
+        return Matrix{baseMatrix_.transpose()};
+    }
+
+    /// @brief Get determinant.
+    Value determinant() const {
+        return baseMatrix_.determinant();
+    }
+
+    /// @brief L2 norm.
+    Value norm() const {
+        Value n{};
+        for (size_t i = 0; i < NRows * NCols; ++i) {
+            const auto elem = baseMatrix_.data()[i];
+            n += std::abs(elem) * std::abs(elem);
+        }
+        return std::sqrt(n);
+    }
+
+    /// Get signed elements of matrix (i.e., 0, +1 or -1).
+    Matrix sign(Value tol = std::numeric_limits<Value>::epsilon()) const {
+
+        const Value smallNumber = norm() * tol;
+        auto sgn = Matrix{};
+        for (size_t i = 0; i < NRows * NCols; ++i) {
+            const auto elem = baseMatrix_.data()[i];
+            sgn.baseMatrix_.data()[i] = std::abs(elem) < tol ? 0. : elem < 0. ? -1. : 1.;
+        }
+        return sgn;
+    }
+
+    /// @brief Get base matrix object.
+    const BaseType& baseMatrix() const {
+        return baseMatrix_;
+    }
+
+    /// @brief Get matrix data pointer.
+    const Value* data() const {
+        return baseMatrix().data();
+    }
+
+    /// @brief KPoint linear transform.
+    yPoint operator*(const xPoint& x) const {
+
+        // Const cast needed due to issues with ConstProxy type.
+        auto xPtr = const_cast<double*>(x.data());
+        const Matrix<double, NRows, 1> xVec{typename BaseType::Proxy(xPtr, NRows, 1)};
+        const Matrix<double, NCols, 1> yVec = (*this) * xVec;
+
+        return yPoint{yVec.data()};
+    }
+
+    /// @brief Scalar mulitplication.
+    Matrix operator*(Value a) const {
+        auto mat = Matrix{};
+        for (size_t i = 0; i < NRows * NCols; ++i) {
+            mat.baseMatrix_.data()[i] = baseMatrix_.data()[i] * a;
+        }
+        return mat;
+    }
+
+    /// @brief Equality operator.
+    bool operator==(const Matrix& other) {
+        for (int i = 0; i < NRows * NCols; ++i) {
+            if (data()[i] != other.data()[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    template <typename value, int nrows, int ncols>
+    friend std::ostream& operator <<(std::ostream& os, const Matrix<value, nrows, ncols>& mat);
+
+private:
+
+    BaseType baseMatrix_{};
+
+};
+
+template <typename Value, int NRows, int NCols>
+std::ostream& operator <<(std::ostream& os, const Matrix<Value, NRows, NCols>& mat) {
+    return os << mat.baseMatrix_;
+}
+
+using Matrix22 = Matrix<double, 2, 2>;
+using Matrix33 = Matrix<double, 3, 3>;
+
+} // namespace util
+
+
+
 
 /// @brief   Simple 2x2 matrix with static memory allocation.
 ///

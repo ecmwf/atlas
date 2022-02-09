@@ -655,7 +655,7 @@ const PointXY& LFRicCubedSphereTiles::tileCentre(size_t t) const {
     return tileCentres_[t];
 }
 
-const JacobianXY& LFRicCubedSphereTiles::tileJacobian(size_t t) const {
+const util::Matrix22& LFRicCubedSphereTiles::tileJacobian(size_t t) const {
     return tileJacobians_[t];
 }
 
@@ -687,13 +687,13 @@ const std::array<PointXY, 6> LFRicCubedSphereTiles::tileCentres_ {
 };
 
 // Jacobian of xy space with respect to curvilinear coordinates for each tile.
-const std::array<JacobianXY, 6> LFRicCubedSphereTiles::tileJacobians_{
-    JacobianXY{{1., 0.}, {0., 1.}},
-    JacobianXY{{1., 0.}, {0., 1.}},
-    JacobianXY{{0., -1.}, {1., 0.}},
-    JacobianXY{{0., -1.}, {1., 0.}},
-    JacobianXY{{1., 0.}, {0., 1.}},
-    JacobianXY{{0., 1.}, {-1., 0.}}
+const std::array<util::Matrix22, 6> LFRicCubedSphereTiles::tileJacobians_{
+    util::Matrix22{{1., 0.}, {0., 1.}},
+    util::Matrix22{{1., 0.}, {0., 1.}},
+    util::Matrix22{{0., -1.}, {1., 0.}},
+    util::Matrix22{{0., -1.}, {1., 0.}},
+    util::Matrix22{{1., 0.}, {0., 1.}},
+    util::Matrix22{{0., 1.}, {-1., 0.}}
 };
 
 

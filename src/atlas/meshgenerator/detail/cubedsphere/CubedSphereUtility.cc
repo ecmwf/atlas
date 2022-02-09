@@ -106,7 +106,10 @@ NeighbourJacobian::NeighbourJacobian(const CubedSphereGrid& csGrid) {
             neighbours_[t].t_[k] = csTiles.indexFromXY(xy00Global.data());
 
             // Set Jacobian of global xy with respect to local ij.
-            auto dxyGlobal_by_dij = JacobianXY(xy00Global, xy10Global, xy01Global);
+            auto dxyGlobal_by_dij = util::Matrix22{
+                {xy10Global[0] - xy00Global[0], xy01Global[0] - xy00Global[0]},
+                {xy10Global[1] - xy00Global[1], xy01Global[1] - xy00Global[1]}
+            };
 
             // Rescale by cell width (gains an extra couple of decimal places of precision).
             dxyGlobal_by_dij = dxyGlobal_by_dij.sign() * cellWidth;
@@ -131,7 +134,7 @@ NeighbourJacobian::NeighbourJacobian(const CubedSphereGrid& csGrid) {
 
 PointXY NeighbourJacobian::xy(const PointIJ& ij, idx_t t) const {
     // Get jacobian.
-    const JacobianXY& jac = dxy_by_dij_[static_cast<size_t>(t)];
+    const util::Matrix22& jac = dxy_by_dij_[static_cast<size_t>(t)];
     const PointXY& xy00  = xy00_[static_cast<size_t>(t)];
 
     // Return ij
@@ -140,7 +143,7 @@ PointXY NeighbourJacobian::xy(const PointIJ& ij, idx_t t) const {
 
 PointIJ NeighbourJacobian::ij(const PointXY& xy, idx_t t) const {
     // Get jacobian.
-    const JacobianXY& jac = dij_by_dxy_[static_cast<size_t>(t)];
+    const util::Matrix22& jac = dij_by_dxy_[static_cast<size_t>(t)];
     const PointXY& xy00  = xy00_[static_cast<size_t>(t)];
 
     // Return ij
@@ -199,7 +202,7 @@ PointTXY NeighbourJacobian::xyLocalToGlobal(const PointXY& xyLocal, idx_t tLocal
         // Get reference points and jacobian.
         const PointXY& xy00Local_  = neighbours_[static_cast<size_t>(tLocal)].xy00Local_[k];
         const PointXY& xy00Global_ = neighbours_[static_cast<size_t>(tLocal)].xy00Global_[k];
-        const JacobianXY& jac       = neighbours_[static_cast<size_t>(tLocal)].dxyGlobal_by_dxyLocal_[k];
+        const util::Matrix22& jac       = neighbours_[static_cast<size_t>(tLocal)].dxyGlobal_by_dxyLocal_[k];
 
         // Get t.
         tGlobal = neighbours_[static_cast<size_t>(tLocal)].t_[k];

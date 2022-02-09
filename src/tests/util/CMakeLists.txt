@@ -73,3 +73,9 @@ ecbuild_add_test( TARGET atlas_test_kdtree
   LIBS     atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
+
+ecbuild_add_test( TARGET atlas_test_matrix
+  SOURCES  test_matrix.cc
+  LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
