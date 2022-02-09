@@ -87,7 +87,7 @@ CASE("test matrix operations") {
             {2., 2.}
         };
 
-        for (size_t i =0; i < 4; ++i) {
+        for (size_t i =0; i < A.size(); ++i) {
             EXPECT_APPROX_EQ(A.inverse().data()[i], invA.data()[i]);
         }
 

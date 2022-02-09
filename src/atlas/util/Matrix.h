@@ -9,7 +9,7 @@
 
 /// @file Matrix.h
 ///
-/// This file contains classes and functions for working with small square matrices.
+/// This file contains classes and functions for working with small matrices.
 
 #include <iostream>
 
@@ -17,8 +17,6 @@
 #include "atlas/runtime/Exception.h"
 #include "eckit/geometry/KPoint.h"
 #include "eckit/maths/Matrix.h"
-
-#include "atlas/util/Point.h"
 
 namespace atlas {
 namespace util {
@@ -28,21 +26,39 @@ namespace util {
 ///
 /// @details Matrix class which uses eckit::maths::Matrix as a backend.
 ///          Matrix dimensions are strongly typed and class enables vector-
-///          matrix multiplication with KPoint classes.
+///          matrix multiplication with KPoint objects.
 template <typename Value, int NRows, int NCols>
 class Matrix {
 public:
 
     using BaseType = eckit::maths::Matrix<Value, int>;
 
-    using xPoint = eckit::geometry::KPoint<NRows>;
-    using yPoint = eckit::geometry::KPoint<NCols>;
+    using xPoint = eckit::geometry::KPoint<NCols>;
+    using yPoint = eckit::geometry::KPoint<NRows>;
 
+    constexpr int rows() const {
+        return NRows;
+    }
+
+    constexpr int cols() const {
+        return NCols;
+    }
+
+    constexpr int size() const {
+        return NRows * NCols;
+    }
 
     /// @brief Default constructor.
     Matrix() : baseMatrix_{NRows, NCols} {}
 
-    /// @brief base matrix constructor.
+    /// @brief Data constructor.
+    Matrix(const Value* data) : Matrix() {
+        for (size_t i = 0; i < NRows * NCols; ++i) {
+            baseMatrix_.data()[i] = data[i];
+        }
+    }
+
+    /// @brief Base matrix constructor.
     Matrix(const BaseType& baseMatrix) : baseMatrix_{baseMatrix} {
 #if ATLAS_BUILD_TYPE_DEBUG
         ATLAS_ASSERT(baseMatrix_.rows() == NRows);
@@ -106,7 +122,7 @@ public:
     }
 
     /// @brief Get transpose.
-    Matrix transpose() {
+    Matrix<Value, NCols, NRows> transpose() {
         // Issue: transpose() is non const in eckit/maths/MatrixLapack.h!
         return Matrix<Value, NCols, NRows>{baseMatrix_.transpose()};
     }
@@ -162,12 +178,10 @@ public:
     yPoint operator*(const xPoint& x) const {
 
         // Copy point data into column vector.
-        Matrix<double, NRows, 1> xVec{};
-        for (int i = 0; i < NRows; ++i) {
-            xVec.data()[i] = x.data()[i];
-        }
+        Matrix<double, NCols, 1> xVec{x.data()};
 
-        const Matrix<double, NCols, 1> yVec = (*this) * xVec;
+        // Perform multiplication.
+        const Matrix<double, NRows, 1> yVec = (*this) * xVec;
 
         // Copy column vector data to point.
         return yPoint{yVec.data()};
@@ -193,7 +207,7 @@ public:
     }
 
     template <typename value, int nrows, int ncols>
-    friend std::ostream& operator <<(std::ostream& os, const Matrix<value, nrows, ncols>& mat);
+    friend std::ostream& operator<<(std::ostream& os, const Matrix<value, nrows, ncols>& mat);
 
 private:
 
@@ -202,7 +216,7 @@ private:
 };
 
 template <typename Value, int NRows, int NCols>
-std::ostream& operator <<(std::ostream& os, const Matrix<Value, NRows, NCols>& mat) {
+std::ostream& operator<<(std::ostream& os, const Matrix<Value, NRows, NCols>& mat) {
     return os << mat.baseMatrix();
 }
 
