@@ -43,7 +43,7 @@ public:
     Matrix() : baseMatrix_{NRows, NCols} {}
 
     /// @brief base matrix constructor.
-    Matrix(const eckit::maths::Matrix<Value>& baseMatrix) : baseMatrix_{baseMatrix} {
+    Matrix(const BaseType& baseMatrix) : baseMatrix_{baseMatrix} {
 #if ATLAS_BUILD_TYPE_DEBUG
         ATLAS_ASSERT(baseMatrix_.rows() == NRows);
         ATLAS_ASSERT(baseMatrix_.cols() == NCols);
