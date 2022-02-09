@@ -68,7 +68,6 @@ public:
 
     /// @brief List constructor (always checks bounds).
     Matrix(std::initializer_list<std::initializer_list<Value>> list) : Matrix() {
-        // Get pointer to first element of data_.
         ATLAS_ASSERT(list.size() == NRows);
         int i = 0;
         for (const std::initializer_list<Value>& subList : list) {
