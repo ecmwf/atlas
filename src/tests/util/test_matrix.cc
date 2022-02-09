@@ -195,13 +195,7 @@ CASE("test matrix operations") {
 
     }
 
-
-
-
-
 }
-
-
 
 } // namespace test
 } // namespace atlas
