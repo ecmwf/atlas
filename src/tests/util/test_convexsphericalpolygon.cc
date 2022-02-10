@@ -188,9 +188,11 @@ CASE("source_covered") {
     const double dlon = 90. / m;
     std::vector<ConvexSphericalPolygon> csp(n * m);
     std::vector<double> tgt_area(n * m);
+    ATLAS_TRACE_SCOPE("1")
     for (int j = 0; j < m; j++) {
         csp[j] = getCSPolygon({{0, 90}, {dlon * j, 90 - dlat}, {dlon * (j + 1), 90 - dlat}});
     }
+    ATLAS_TRACE_SCOPE("2")
     for (int i = 1; i < n; i++) {
         for (int j = 0; j < m; j++) {
             csp[i * m + j] = getCSPolygon({{dlon * j, 90 - dlat * i},
@@ -199,13 +201,22 @@ CASE("source_covered") {
                                            {dlon * (j + 1), 90 - dlat * i}});
         }
     }
+    ConvexSphericalPolygon cspi0;
+    ConvexSphericalPolygon csp0i;
+
+    ATLAS_TRACE_SCOPE("3")
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < m; j++) {
-            auto cspi0     = csp[i * m + j].intersect(csp0);
-            auto csp0i     = csp0.intersect(csp[i * m + j]);
-            double a_cspi0 = cspi0.area();
-            double a_csp0i = csp0i.area();
-            darea          = std::max(darea, a_cspi0 - a_csp0i);
+            cspi0 = csp[i * m + j].intersect(csp0);  // intersect small csp[...] with large polygon csp0
+                                                     // should be approx csp[...] as well
+            csp0i = csp0.intersect(csp[i * m + j]);  // opposite: intersect csp0 with small csp[...]
+                                                     // should be approx csp[...] as well
+            double a_csp   = csp[i * m + j].area();
+            double a_cspi0 = cspi0.area();  // should be approx csp[...].area()
+            double a_csp0i = csp0i.area();  // should approx match a_cspi0
+            EXPECT_APPROX_EQ(a_cspi0, a_csp, 1.e-10);
+            EXPECT_APPROX_EQ(a_csp0i, a_csp, 1.e-10);
+            darea = std::max(darea, a_cspi0 - a_csp0i);  // should remain approx zero
             dcov1 -= csp[i * m + j].area();
             dcov2 -= a_cspi0;
             tgt_area[i * m + j] = a_cspi0;
@@ -215,6 +226,7 @@ CASE("source_covered") {
 
     // normalize weights
     double norm_fac = csp0.area() / norm_area;
+    ATLAS_TRACE_SCOPE("4")
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < m; j++) {
             tgt_area[i * m + j] *= norm_fac;
@@ -227,8 +239,10 @@ CASE("source_covered") {
     Log::info() << " dcov1 : " << dcov1 << "\n";
     Log::info() << " dcov2 : " << dcov2 << "\n";
     Log::info() << " dcov3 : " << dcov3 << "\n";
-    Log::info() << " norm_area : " << norm_area << "\n";
-    Log::info() << " source_area : " << csp0.area() << "\n";
+    Log::info() << " accumulated small polygon area : " << norm_area << "\n";
+    Log::info() << " large polygon area             : " << csp0.area() << "\n";
+    EXPECT_APPROX_EQ(darea, 0., 1.e-10);
+    EXPECT_APPROX_EQ(norm_area, csp0.area(), 1.e-8);
 }
 
 
