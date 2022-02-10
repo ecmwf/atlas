@@ -143,7 +143,7 @@ CASE("analyse intersect") {
     Log::info() << "\n\n";
 
     double du = 5.;
-    double dv = 1e-14;
+    double dv = 1e-13;
 
     std::vector<PointLonLat> llp1 = {{70 - du, 0}, {70 + du, 0}};
     std::vector<PointLonLat> llp2 = {{70 - du, -dv}, {70 + du, dv}};
@@ -161,20 +161,13 @@ CASE("analyse intersect") {
 
     PointXYZ Isol = unit_sphere.xyz(PointLonLat(70, dv));
 
-    // BETWEEN
     auto btw1 = s1.contains(Isol);
     auto btw2 = s2.contains(Isol);
     EXPECT(btw1 && btw2);
 
-    // INTERSECT SEGMENTS
     PointXYZ I = s1.intersect(s2);
     Log::info() << " I = " << I << ", |I|-1 = " << PointXYZ::norm(I) - 1. << "\n";
-    Log::info() << " I - solution = " << std::setprecision(20) << I - Isol << "\n\n";
-
-    // INTERSECT SEGMENT-POLYGON
-    // (disabled as the intersect() API is now private)
-    //auto plg = make_polygon({{70 - du, 0}, {70 + du, 0}, {70 + du, dv}, {70 - du, dv}});
-    //Log::info() << plg.intersect(p1[0], p1[1], I, 0);
+    Log::info() << " |I - solution| = " << PointXYZ::norm(I - Isol) << "\n\n";
 }
 
 CASE("source_covered") {
@@ -251,6 +244,46 @@ CASE("source_covered") {
     Log::info() << " large polygon area             : " << csp0.area() << "\n";
     EXPECT_APPROX_EQ(darea, 0., 1.e-10);
     EXPECT_APPROX_EQ(accumulated_tarea, csp0.area(), 1.e-8);
+}
+
+CASE("edge cases") {
+    Log::info().precision(20);
+    SECTION("H128->H256 problem polygon intersection") {
+        const auto plg0 = make_polygon({{42.45283019, 50.48004426},
+                                        {43.33333333, 49.70239033},
+                                        {44.1509434, 50.48004426},
+                                        {43.26923077, 51.2558069}});
+        const auto plg1 = make_polygon({{43.30188679, 50.48004426},
+                                        {43.73831776, 50.0914568},
+                                        {44.1509434, 50.48004426},
+                                        {43.71428571, 50.86815893}});
+        auto iplg       = plg0.intersect(plg1);
+        auto jplg       = plg1.intersect(plg0);
+        EXPECT_APPROX_EQ(iplg.area(), jplg.area(), 1e-15);
+        EXPECT_EQ(iplg.size(), 4);
+        EXPECT_EQ(jplg.size(), 4);
+        EXPECT(iplg.equals(jplg, 1.e-12));
+        Log::info() << "Intersection area difference: " << std::abs(iplg.area() - jplg.area()) << "\n";
+    }
+
+    SECTION("intesection of epsilon-distorted polygons") {
+        const double eps = 1e-4;  // degrees
+        const auto plg0  = make_polygon({{42.45283019, 50.48004426},
+                                        {43.33333333, 49.70239033},
+                                        {44.1509434, 50.48004426},
+                                        {43.26923077, 51.2558069}});
+        const auto plg1  = make_polygon({{42.45283019, 50.48004426 - eps},
+                                        {43.33333333 + eps, 49.70239033},
+                                        {44.1509434, 50.48004426 + eps},
+                                        {43.26923077 - eps, 51.2558069}});
+        auto iplg        = plg0.intersect(plg1);
+        auto jplg        = plg1.intersect(plg0);
+        EXPECT_APPROX_EQ(iplg.area(), jplg.area(), 1e-10);
+        EXPECT_EQ(iplg.size(), 8);
+        EXPECT_EQ(jplg.size(), 8);
+        EXPECT(iplg.equals(jplg, 1.e-8));
+        Log::info() << "Intersection area difference: " << std::abs(iplg.area() - jplg.area()) << "\n";
+    }
 }
 
 //-----------------------------------------------------------------------------
