@@ -710,6 +710,7 @@ util/KDTree.cc
 util/KDTree.h
 util/PolygonXY.cc
 util/PolygonXY.h
+util/Matrix.h
 util/Metadata.cc
 util/Metadata.h
 util/Point.cc
@@ -910,6 +911,7 @@ target_link_libraries( atlas PUBLIC
   eckit
   eckit_geometry
   eckit_linalg
+  eckit_maths
   eckit_mpi
   eckit_option
 )
