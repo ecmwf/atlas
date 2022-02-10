@@ -87,7 +87,7 @@ CASE("test matrix operations") {
             {2., 2.}
         };
 
-        for (size_t i =0; i < A.size(); ++i) {
+        for (size_t i =0; i < 4; ++i) {
             EXPECT_APPROX_EQ(A.inverse().data()[i], invA.data()[i]);
         }
 
@@ -98,8 +98,7 @@ CASE("test matrix operations") {
 
     SECTION("transpose") {
 
-        // Issue: transpose() is non const in eckit/maths/MatrixLapack.h!
-        auto A = Matrix<double, 2, 2>{
+        const auto A = Matrix<double, 2, 2>{
             {1., 2.},
             {3., 4.}
         };
@@ -131,7 +130,7 @@ CASE("test matrix operations") {
 
     }
 
-    SECTION("Row/Col slice") {
+    SECTION("row/col slice") {
 
         const auto A = Matrix<double, 3, 3>{
             {1., 2., 1.},
@@ -158,7 +157,51 @@ CASE("test matrix operations") {
 
     }
 
-    SECTION("Point linear transform") {
+    SECTION("coefficient wise product") {
+
+        const auto A = Matrix<double, 2, 2>{
+            {1., 2.},
+            {3., 4.}
+        };
+
+        const auto B = Matrix<double, 2, 2>{
+            {5., 6.},
+            {7., 8.}
+        };
+
+        const auto ATimesB = Matrix<double, 2, 2>{
+            {5., 12.},
+            {21., 32.}
+        };
+
+        EXPECT(A.cwiseProduct(B) == ATimesB);
+        EXPECT(B.cwiseProduct(A) == ATimesB);
+
+        Log::info() << "A = " << std::endl << A << std::endl;
+        Log::info() << "B = " << std::endl << B << std::endl;
+        Log::info() << "cwiseProd(A, B) = " << std::endl << A.cwiseProduct(B) << std::endl << std::endl;
+
+    }
+
+    SECTION("sign") {
+
+        const auto A = Matrix<double, 2, 2>{
+            {3., 7.},
+            {0., -4.}
+        };
+
+        const auto signA = Matrix<double, 2, 2>{
+            {1., 1.},
+            {0., -1.}
+        };
+
+        EXPECT(A.sign() == signA);
+        Log::info() << "A = " << std::endl << A << std::endl;
+        Log::info() << "sign(A) = " << std::endl << signA << std::endl << std::endl;
+
+    }
+
+    SECTION("point linear transform") {
 
         const auto x = Point3{1., 0., 0.};
 
@@ -175,24 +218,6 @@ CASE("test matrix operations") {
         Log::info() << "A = " << std::endl << A << std::endl;
         Log::info() << "x = " << std::endl << x << std::endl;
         Log::info() << "Ax = " << std::endl << Ax << std::endl << std::endl;
-
-    }
-
-    SECTION("Sign") {
-
-        const auto A = Matrix<double, 2, 2>{
-            {3., 7.},
-            {0., -4.}
-        };
-
-        const auto signA = Matrix<double, 2, 2>{
-            {1., 1.},
-            {0., -1.}
-        };
-
-        EXPECT(A.sign() == signA);
-        Log::info() << "A = " << std::endl << A << std::endl;
-        Log::info() << "sign(A) = " << std::endl << signA << std::endl << std::endl;
 
     }
 

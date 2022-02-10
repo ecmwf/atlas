@@ -91,17 +91,17 @@ public:
         return baseMatrix_(i, j);
     }
 
-    /// @brief Plus operator.
+    /// @brief Addition operator.
     Matrix operator+(const Matrix& other) const {
         return Matrix{baseMatrix_ + other.baseMatrix()};
     }
 
-    /// @brief Minus operator.
+    /// @brief Subtraction operator.
     Matrix operator-(const Matrix& other) const {
         return Matrix{baseMatrix_ - other.baseMatrix()};
     }
 
-    /// @brief Multiply operator.
+    /// @brief Multiplication operator.
     template <int NCols2>
     Matrix<Value, NRows, NCols2> operator*(const Matrix<Value, NCols, NCols2>& other) const {
         return Matrix<Value, NRows, NCols2>{baseMatrix_ * other.baseMatrix()};
@@ -123,9 +123,25 @@ public:
     }
 
     /// @brief Get transpose.
-    Matrix<Value, NCols, NRows> transpose() {
+    Matrix<Value, NCols, NRows> transpose() const {
         // Issue: transpose() is non const in eckit/maths/MatrixLapack.h!
-        return Matrix<Value, NCols, NRows>{baseMatrix_.transpose()};
+        Matrix<Value, NCols, NRows> trans{};
+        for (int i = 0; i < NRows; ++i) {
+            for (int j = 0; j < NCols; ++j) {
+                trans(j, i) = (*this)(i, j);
+            }
+        }
+        return trans;
+    }
+
+    /// @brief Coefficient-wise multiplication.
+    Matrix cwiseProduct(const Matrix& other) const {
+        // Issue: cwiseProduct is cwise sum in eckit/maths/MatrixLapack.h!
+        auto prod = Matrix{};
+        for (size_t i = 0; i < NRows * NCols; ++i) {
+            prod.baseMatrix().data()[i] = baseMatrix_.data()[i] * other.baseMatrix().data()[i];
+        }
+        return prod;
     }
 
     /// @brief Get determinant.
@@ -141,6 +157,15 @@ public:
             n += std::abs(elem) * std::abs(elem);
         }
         return std::sqrt(n);
+    }
+
+    /// @brief Scalar mulitplication.
+    Matrix operator*(Value a) const {
+        auto prod = Matrix{};
+        for (size_t i = 0; i < NRows * NCols; ++i) {
+            prod.baseMatrix().data()[i] = baseMatrix_.data()[i] * a;
+        }
+        return prod;
     }
 
     /// Get signed elements of matrix (i.e., 0, +1 or -1).
@@ -186,15 +211,6 @@ public:
 
         // Copy column vector data to point.
         return yPoint{yVec.data()};
-    }
-
-    /// @brief Scalar mulitplication.
-    Matrix operator*(Value a) const {
-        auto mat = Matrix{};
-        for (size_t i = 0; i < NRows * NCols; ++i) {
-            mat.baseMatrix().data()[i] = baseMatrix_.data()[i] * a;
-        }
-        return mat;
     }
 
     /// @brief Equality operator.
