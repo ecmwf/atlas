@@ -52,9 +52,9 @@ public:
     Matrix() : baseMatrix_{NRows, NCols} {}
 
     /// @brief Data constructor (no bounds checking!).
-    Matrix(const Value* data) : Matrix() {
+    Matrix(const Value* valPtr) : Matrix() {
         for (size_t i = 0; i < NRows * NCols; ++i) {
-            baseMatrix_.data()[i] = data[i];
+            data()[i] = valPtr[i];
         }
     }
 
@@ -139,7 +139,7 @@ public:
         // Issue: cwiseProduct is cwise sum in eckit/maths/MatrixLapack.h!
         auto prod = Matrix{};
         for (size_t i = 0; i < NRows * NCols; ++i) {
-            prod.baseMatrix().data()[i] = baseMatrix_.data()[i] * other.baseMatrix().data()[i];
+            prod.data()[i] = data()[i] * other.data()[i];
         }
         return prod;
     }
@@ -153,7 +153,7 @@ public:
     Value norm() const {
         Value n{};
         for (size_t i = 0; i < NRows * NCols; ++i) {
-            const auto elem = baseMatrix().data()[i];
+            const auto elem = data()[i];
             n += std::abs(elem) * std::abs(elem);
         }
         return std::sqrt(n);
@@ -163,7 +163,7 @@ public:
     Matrix operator*(Value a) const {
         auto prod = Matrix{};
         for (size_t i = 0; i < NRows * NCols; ++i) {
-            prod.baseMatrix().data()[i] = baseMatrix_.data()[i] * a;
+            prod.data()[i] = data()[i] * a;
         }
         return prod;
     }
@@ -174,8 +174,8 @@ public:
         const Value smallNumber = norm() * tol;
         auto sgn = Matrix{};
         for (size_t i = 0; i < NRows * NCols; ++i) {
-            const auto elem = baseMatrix_.data()[i];
-            sgn.baseMatrix().data()[i] = std::abs(elem) < tol ? 0. : elem < 0. ? -1. : 1.;
+            const auto elem = data()[i];
+            sgn.data()[i] = std::abs(elem) < tol ? 0. : elem < 0. ? -1. : 1.;
         }
         return sgn;
     }
