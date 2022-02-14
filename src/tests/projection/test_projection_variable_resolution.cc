@@ -82,17 +82,17 @@ constexpr float epstest = std::numeric_limits<float>::epsilon();
 auto make_var_ratio_projection = [](double var_ratio) {
     Config conf;
     conf.set("type", "variable_resolution");
-    conf.set("var_ratio", var_ratio);
-    conf.set("delta_low", delta_outer);
-    conf.set("delta_hi", delta_inner);
-    conf.set("x_reg_start", xrange_inner[0]);
-    conf.set("x_reg_end", xrange_inner[1]);
-    conf.set("y_reg_start", yrange_inner[0]);
-    conf.set("y_reg_end", yrange_inner[1]);
-    conf.set("startx", xrange_outer[0]);
-    conf.set("endx", xrange_outer[1]);
-    conf.set("starty", yrange_outer[0]);
-    conf.set("endy", yrange_outer[1]);
+    conf.set("outer.dx", delta_outer );     ///< resolution of the external regular grid (rim)
+    conf.set("inner.dx", delta_inner );      ///< resolution of the regional model (regular grid)
+    conf.set("progression", var_ratio);      ///< power used for the stretching
+    conf.set("inner.xmin", xrange_inner[0]);  ///< xstart of the internal regional grid
+    conf.set("inner.ymin", yrange_inner[0]);  ///< ystart of the internal regional grid
+    conf.set("inner.xend", xrange_inner[1]);      ///< xend of the regular part of stretched internal grid
+    conf.set("inner.yend", yrange_inner[1]);      ///< yend of the regular part of stretched internal grid
+    conf.set("outer.xmin", xrange_outer[0]);            ///< original domain startx
+    conf.set("outer.xmax", xrange_outer[1]);                ///< original domain endx
+    conf.set("outer.ymin", yrange_outer[0]);            ///< original domain starty
+    conf.set("outer.ymax", yrange_outer[1]);                ///< original domain endy
     conf.set("rim_widthx", rim_width);
     conf.set("rim_widthy", rim_width);
     return atlas::Projection(conf);
@@ -101,17 +101,17 @@ auto make_var_ratio_projection = [](double var_ratio) {
 auto make_var_ratio_projection_rot = [](double var_ratio, std::vector<double> north_pole) {
     Config conf;
     conf.set("type", "rotated_variable_resolution");
-    conf.set("var_ratio", var_ratio);
-    conf.set("delta_low", delta_outer);
-    conf.set("delta_hi", delta_inner);
-    conf.set("x_reg_start", xrange_inner[0]);
-    conf.set("x_reg_end", xrange_inner[1]);
-    conf.set("y_reg_start", yrange_inner[0]);
-    conf.set("y_reg_end", yrange_inner[1]);
-    conf.set("startx", xrange_outer[0]);
-    conf.set("endx", xrange_outer[1]);
-    conf.set("starty", yrange_outer[0]);
-    conf.set("endy", yrange_outer[1]);
+    conf.set("outer.dx", delta_outer );     ///< resolution of the external regular grid (rim)
+    conf.set("inner.dx", delta_inner );      ///< resolution of the regional model (regular grid)
+    conf.set("progression", var_ratio);      ///< power used for the stretching
+    conf.set("inner.xmin", xrange_inner[0]);  ///< xstart of the internal regional grid
+    conf.set("inner.ymin", yrange_inner[0]);  ///< ystart of the internal regional grid
+    conf.set("inner.xend", xrange_inner[1]);      ///< xend of the regular part of stretched internal grid
+    conf.set("inner.yend", yrange_inner[1]);      ///< yend of the regular part of stretched internal grid
+    conf.set("outer.xmin", xrange_outer[0]);            ///< original domain startx
+    conf.set("outer.xmax", xrange_outer[1]);                ///< original domain endx
+    conf.set("outer.ymin", yrange_outer[0]);            ///< original domain starty
+    conf.set("outer.ymax", yrange_outer[1]);                ///< original domain endy
     conf.set("rim_widthx", rim_width);
     conf.set("rim_widthy", rim_width);
     conf.set("north_pole", north_pole);

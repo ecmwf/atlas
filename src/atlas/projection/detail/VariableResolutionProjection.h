@@ -79,7 +79,6 @@ protected:
     double deltax_all, deltay_all;
     double add_xf_, add_yf_;
     int nx_stretched, ny_stretched, nx_rim, ny_rim;
-    int nx_, ny_;
     double check_x, check_y, check_st;
     double lam_hires_size;  ///< size regular grid x
     double phi_hires_size;  ///< size regular grid y

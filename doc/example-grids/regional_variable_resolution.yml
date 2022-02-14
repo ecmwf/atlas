@@ -4,29 +4,32 @@
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 # regional projection using variable resolution
 
-type : "regional"
-nx : 34
-ny : 32
-xmin : 348.13120344827576
-xmax : 369.6190965517242
-ymin : -8.264495551724226
-ymax : 11.92110100000127
-ynumbering : 1
+proj_st.set("outer.dx", delta_outer );     ///< resolution of the external regular grid (rim)
+
+proj_st.set("outer.xmin", startx_);            ///< original domain startx
+proj_st.set("outer.xmax", endx_);                ///< original domain endx
+proj_st.set("outer.ymin", starty_);            ///< original domain starty
+proj_st.set("outer.ymax", endy_);                ///< original domain endy
+
+
+type : "regional_variable_resolution"
+rim_widthx : 4
+rim_widthy : 4
+progression : 1.13
+inner :
+      xmin : 351.386944827586319
+      ymin : -5.008754172413662
+      xend : 366.363355172413776
+      yend : 8.665359620690706
+      dx : 0.6511482758621128
+outer :
+      xmin : 348.13120344827576
+      xend : 369.6190965517242
+      ymin : -8.264495551724226
+      yend : 11.92110100000127
+      dx : 1
 projection :
     type: "variable_resolution"
-    var_ratio : 1.13
-    delta_low : 1.
-    delta_hi : 0.6511482758621128
-    x_reg_start : 351.386944827586319
-    x_reg_end : 366.363355172413776
-    y_reg_start : -5.008754172413662
-    y_reg_end : 8.665359620690706
-    startx : 348.13120344827576
-    endx : 369.6190965517242
-    starty : -8.264495551724226
-    endy : 11.92110100000127
-    rim_widthx : 4
-    rim_widthy : 4
 
 check :
   size : 1088
