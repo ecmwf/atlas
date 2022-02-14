@@ -4,14 +4,6 @@
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 # regional projection using variable resolution
 
-proj_st.set("outer.dx", delta_outer );     ///< resolution of the external regular grid (rim)
-
-proj_st.set("outer.xmin", startx_);            ///< original domain startx
-proj_st.set("outer.xmax", endx_);                ///< original domain endx
-proj_st.set("outer.ymin", starty_);            ///< original domain starty
-proj_st.set("outer.ymax", endy_);                ///< original domain endy
-
-
 type : "regional_variable_resolution"
 rim_widthx : 4
 rim_widthy : 4
