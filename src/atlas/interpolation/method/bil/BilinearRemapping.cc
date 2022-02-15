@@ -310,7 +310,6 @@ Method::Triplets BilinearRemapping::projectPointToElements(size_t ip, const Elem
     while (lon < 0.0) { lon += 360.0; }
     PointXY ob_loc{lon, (*olonlat_)(ip, 1)};  // lookup point
 
-    idx_t single_point;
     for (ElemIndex2::NodeList::const_iterator itc = elems.begin(); itc != elems.end(); ++itc) {
         const idx_t elem_id = idx_t((*itc).value().payload());
         ATLAS_ASSERT(elem_id < connectivity_->rows());
@@ -323,13 +322,11 @@ Method::Triplets BilinearRemapping::projectPointToElements(size_t ip, const Elem
             ATLAS_ASSERT(idx[i] < inp_points);
         }
 
-        constexpr double tolerance = 1.e-12;
-
         if (nb_cols == 3) {
             /* triangle */
-            element::Triag2D triag(PointXY{(*ilonlat_)(idx[0], size_t(0)), (*ilonlat_)(idx[0], size_t(1))},
-                                   PointXY{(*ilonlat_)(idx[1], size_t(0)), (*ilonlat_)(idx[1], size_t(1))},
-                                   PointXY{(*ilonlat_)(idx[2], size_t(0)), (*ilonlat_)(idx[2], size_t(1))});
+            element::Triag2D triag(PointXY{(*ilonlat_)(idx[0], 0), (*ilonlat_)(idx[0], 1)},
+                                   PointXY{(*ilonlat_)(idx[1], 0), (*ilonlat_)(idx[1], 1)},
+                                   PointXY{(*ilonlat_)(idx[2], 0), (*ilonlat_)(idx[2], 1)});
 
             // pick an epsilon based on a characteristic length (sqrt(area))
             // (this scales linearly so it better compares with linear weights u,v,w)
@@ -354,10 +351,10 @@ Method::Triplets BilinearRemapping::projectPointToElements(size_t ip, const Elem
         }
         else {
             /* quadrilateral */
-            element::Quad2D quad(PointXY{(*ilonlat_)(idx[0], (size_t)0), (*ilonlat_)(idx[0], (size_t)1)},
-                                 PointXY{(*ilonlat_)(idx[1], (size_t)0), (*ilonlat_)(idx[1], (size_t)1)},
-                                 PointXY{(*ilonlat_)(idx[2], (size_t)0), (*ilonlat_)(idx[2], (size_t)1)},
-                                 PointXY{(*ilonlat_)(idx[3], (size_t)0), (*ilonlat_)(idx[3], (size_t)1)});
+            element::Quad2D quad(PointXY{(*ilonlat_)(idx[0], 0), (*ilonlat_)(idx[0], 1)},
+                                 PointXY{(*ilonlat_)(idx[1], 0), (*ilonlat_)(idx[1], 1)},
+                                 PointXY{(*ilonlat_)(idx[2], 0), (*ilonlat_)(idx[2], 1)},
+                                 PointXY{(*ilonlat_)(idx[3], 0), (*ilonlat_)(idx[3], 1)});
 
             // pick an epsilon based on a characteristic length (sqrt(area))
             // (this scales linearly so it better compares with linear weights u,v,w)

@@ -12,7 +12,6 @@
 
 #include "atlas/interpolation/Vector2D.h"
 #include "atlas/interpolation/method/Intersect.h"
-#include "atlas/interpolation/element/Triag2D.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Point.h"
 
@@ -70,10 +69,6 @@ private:           // members
     Vector2D v10;  // aka v1
     Vector2D v11;  // aka v2
     Vector2D v01;  // aka v3
-
-    struct Roots {
-        double a, b = BAD_WEIGHT_VALUE;
-    };
 
     static double cross2d(const Vector2D& a, const Vector2D& b) { return a.x() * b.y() - a.y() * b.x(); }
 

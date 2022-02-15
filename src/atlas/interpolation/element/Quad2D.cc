@@ -55,26 +55,43 @@ method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, doubl
     if (!inQuadrilateral({p.x(), p.y()}))
         return isect.fail();
 
-    // calculate local coordinates via remapping technique
-    // if that fails fall back to finite-element scheme.
-    //
-    // ax**2 + bx + x = 0
-    auto solve_quadratic = [](const double a, const double b, const double c) {
-        double det = b * b - 4. * a * c;
-        Roots roots;
-        if (det >= 0.) {
-            double inv_two_a = 1. / (2. * a);
-            double sqrt_det = std::sqrt(det);
-            roots.a = (-b + sqrt_det) * inv_two_a;
-            roots.b = (-b - sqrt_det) * inv_two_a;
-        }
-        return roots;
-    };
-
-    // ax + b = 0
+    // solve ax + b = 0
     auto solve_linear = [](const double a, const double b) { return -b / a; };
 
     auto validWeight = [&](const double w) { return (w > - epsilon) && (w < (1. + epsilon)); };
+
+    auto solve_weight = [&](const double a, const double b, const double c, double& wght) {
+        if (std::abs(a) > epsilon) {
+            // if a is non-zero, we need to solve a quadratic equation for the weight
+            // ax**2 + bx + x = 0
+            double det = b * b - 4. * a * c;
+            if (det >= 0.) {
+                double inv_two_a = 1. / (2. * a);
+                double sqrt_det = std::sqrt(det);
+                double root_a = (-b + sqrt_det) * inv_two_a;
+                if (validWeight(root_a)) {
+                    wght = root_a;
+                    return true;
+                } else {
+                    double root_b = (-b - sqrt_det) * inv_two_a;
+                    if (validWeight(root_b)) {
+                        wght = root_b;
+                        return true;
+                    }
+                    else {
+                       return false;
+                    }
+                }
+            }
+        }
+        else if (std::abs(b) > epsilon) {
+          wght = solve_linear(b, c);
+          return true;
+        }
+        else {
+          return false;
+        }
+    };
 
     // solve for u and v where:
     // w1 = ( 1 - u ) * ( 1 - v )
@@ -93,55 +110,18 @@ method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, doubl
     double b = cross2d(vC, vB) + cross2d(vA, vD);
     double c = cross2d(vA, vB);
 
-    if (std::abs(a) > epsilon) {
-        Roots roots = solve_quadratic(a, b, c);
-        if (validWeight(roots.a)) {
-            isect.v = roots.a;
-        }
-        else if (validWeight(roots.b)) {
-            isect.v = roots.b;
-        }
-        else {
-            isect.v = BAD_WEIGHT_VALUE;
-        }
-    }
-    else if (std::abs(b) > epsilon) {
-        isect.v = solve_linear(b, c);
-    }
-    else {
-        isect.v = BAD_WEIGHT_VALUE;
-    }
+    if (!solve_weight(a, b, c, isect.v))
+      return isect.fail();
 
     // solve for u
     a = cross2d(vB, vD);
     b = cross2d(vB, vC) + cross2d(vA, vD);
     c = cross2d(vA, vC);
 
-    if (std::abs(a) > epsilon) {
-        Roots roots = solve_quadratic(a, b, c);
-        if (validWeight(roots.a)) {
-            isect.u = roots.a;
-        }
-        else if (validWeight(roots.b)) {
-            isect.u = roots.b;
-        }
-        else {
-            isect.u = BAD_WEIGHT_VALUE;
-        }
-    }
-    else if (abs(b) > epsilon) {
-        isect.u = solve_linear(b, c);
-    }
-    else {
-        isect.u = BAD_WEIGHT_VALUE;
-    }
+    if (!solve_weight(a, b, c, isect.u))
+      return isect.fail();
 
-    if ((isect.u == BAD_WEIGHT_VALUE) || (isect.v == BAD_WEIGHT_VALUE)) {
-        return isect.fail();
-    }
-    else {
-        return isect.success();
-    }
+    return isect.success();
 }
 
 bool Quad2D::validate() const {
@@ -192,20 +172,10 @@ double Quad2D::area() const {
 
 bool Quad2D::inQuadrilateral(const Vector2D& p) const {
     // point p must be on the inside of all quad edges to be inside the quad.
-    double zst1 = cross2d(p - v00, p - v10);
-    if (zst1 >= 0.0) {
-        double zst2 = cross2d(p - v10, p - v11);
-        if (zst2 >= 0.0) {
-            double zst3 = cross2d(p - v11, p - v01);
-            if (zst3 >= 0.0) {
-                double zst4 = cross2d(p - v01, p - v00);
-                if (zst4 >= 0.0)
-                    return true;
-            }
-        }
-    }
-
-    return false;
+    return cross2d(p - v00, p - v10) >= 0. &&
+           cross2d(p - v10, p - v11) >= 0. &&
+           cross2d(p - v11, p - v01) >= 0. &&
+           cross2d(p - v01, p - v00) >= 0;
 }
 
 void Quad2D::print(std::ostream& s) const {
