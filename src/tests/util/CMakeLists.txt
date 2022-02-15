@@ -79,3 +79,10 @@ ecbuild_add_test( TARGET atlas_test_kjacobian
   LIBS     atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
+
+ecbuild_add_test( TARGET atlas_test_convexsphericalpolygon
+  SOURCES test_convexsphericalpolygon.cc
+  LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
