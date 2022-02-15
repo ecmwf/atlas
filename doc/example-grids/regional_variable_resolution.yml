@@ -20,8 +20,8 @@ outer :
       ymin : -8.264495551724226
       yend : 11.92110100000127
       dx : 1
-projection :
-    type: "variable_resolution"
+#projection :
+#    type: "variable_resolution"
 
 check :
   size : 1088

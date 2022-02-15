@@ -85,12 +85,14 @@ bool ConfigParser::parse(const Projection& projection, const Grid::Config& confi
 
 static class regional_var_resolution : public GridBuilder {
 public:
-    regional_var_resolution(): GridBuilder("regional_variable_resolution") {}
+    regional_var_resolution(): GridBuilder("regional_variable_resolution") {
+    }
 
     void print(std::ostream&) const override {
         // os << std::left << std::setw(20) << "O<gauss>" << "Octahedral Gaussian
         // grid";
     }
+
 
     const Grid::Implementation* create(const std::string& /*name*/, const Grid::Config&) const override {
         throw_NotImplemented("There are no named regional_var_resolution grids implemented.", Here());
@@ -112,18 +114,32 @@ public:
         double delta_inner = 0.;
         Projection projection;
         {
-            util::Config config_all, config_proj, config_inner, config_outer, config_stretch;
+            util::Config config_all, config_proj, config_inner, config_outer;
+            util::Config config_pr, configwx, configwy;
             config.get("inner", config_inner);
+
             config.get("outer", config_outer);
 
             // merge of multiple configs use |
-            if (config.get("projection", config_proj)) {
-                config_all.set(config_outer | config_stretch| config_inner | config_proj);
-            }else{
-                config_all.set(config_outer | config_stretch | config_inner);
-            }
-             projection = Projection(config_all);
+            config.get("progression", config_pr);
+            config_all.set("progression", config_pr);
 
+            if (config.get("rim_widthx", configwx)){
+                config_all.set("rim_widthx", configwx);
+            }
+            if (config.get("rim_widthy", configwy)){
+                config_all.set("rim_widthy", configwy);
+            }
+
+            config_all.set("inner", config_inner);
+            config_all.set("outer", config_outer);
+            config_all.set("type", "variable_resolution" );
+            if (config.get("projection", config_proj)) {
+                //config_all.set(config_outer | config_inner | config_proj);
+                config_all.set("projection", config_proj);
+                config_all.set("type", "rotated_variable_resolution" );
+            }
+            projection = Projection(config_all);
         }
 
         //< Add different parts in the grid something like
@@ -132,25 +148,29 @@ public:
         // I think I can compute the outer bounds using n_rim and n_stretched
         util::Config config_grid;
 
-        config_grid.get("inner.xmin", inner_xmin);
-        config_grid.get("outer.xmin", outer_xmin);
-        config_grid.get("inner.xmin", inner_xmax);
-        config_grid.get("outer.xmin", outer_xmax);
-        config_grid.get("inner.dx", delta_inner);
+        config.get("inner.xmin", inner_xmin);
+        config.get("inner.xend", inner_xmax);
+        config.get("inner.ymin", inner_ymin);
+        config.get("inner.yend", inner_ymax);
+        config.get("outer.xmin", outer_xmin);
+        config.get("outer.xend", outer_xmax);
+        config.get("outer.ymin", outer_ymin);
+        config.get("outer.yend", outer_ymax);
+        config.get("inner.dx", delta_inner);
 
         constexpr float epstest = std::numeric_limits<float>::epsilon();
-
         int nx_reg  = ((outer_xmax - outer_xmin + epstest) / delta_inner) + 1;
         int ny_reg  = ((outer_ymax - outer_ymin + epstest) / delta_inner) + 1;
 
         YSpace yspace = LinearSpacing{outer_ymin, outer_ymax, ny_reg};
         XSpace xspace = LinearSpacing{outer_xmin, outer_xmax, nx_reg};
 
-
         //RegularGrid is a type of structuredGrid
         // allocate memory to make class, create an object using new "constructor"
+
         auto domain_ = RectangularDomain{{outer_xmin, outer_xmax}, {outer_ymin, outer_ymax}};
         //return new StructuredGrid::grid_t(xspace, yspace, projection, domain(config));
+
         return new StructuredGrid::grid_t(xspace, yspace, projection, domain_);
         //return new StructuredGrid::StructuredGrid
 
@@ -172,7 +192,6 @@ namespace detail {
 namespace grid {
 
 void force_link_Regional_var_resolution() {
-    //regional_.force_link();
     regional_var_resolution_.force_link();
 }
 

@@ -90,9 +90,9 @@ auto make_var_ratio_projection = [](double var_ratio) {
     conf.set("inner.xend", xrange_inner[1]);      ///< xend of the regular part of stretched internal grid
     conf.set("inner.yend", yrange_inner[1]);      ///< yend of the regular part of stretched internal grid
     conf.set("outer.xmin", xrange_outer[0]);            ///< original domain startx
-    conf.set("outer.xmax", xrange_outer[1]);                ///< original domain endx
+    conf.set("outer.xend", xrange_outer[1]);                ///< original domain endx
     conf.set("outer.ymin", yrange_outer[0]);            ///< original domain starty
-    conf.set("outer.ymax", yrange_outer[1]);                ///< original domain endy
+    conf.set("outer.yend", yrange_outer[1]);                ///< original domain endy
     conf.set("rim_widthx", rim_width);
     conf.set("rim_widthy", rim_width);
     return atlas::Projection(conf);
@@ -109,9 +109,9 @@ auto make_var_ratio_projection_rot = [](double var_ratio, std::vector<double> no
     conf.set("inner.xend", xrange_inner[1]);      ///< xend of the regular part of stretched internal grid
     conf.set("inner.yend", yrange_inner[1]);      ///< yend of the regular part of stretched internal grid
     conf.set("outer.xmin", xrange_outer[0]);            ///< original domain startx
-    conf.set("outer.xmax", xrange_outer[1]);                ///< original domain endx
+    conf.set("outer.xend", xrange_outer[1]);                ///< original domain endx
     conf.set("outer.ymin", yrange_outer[0]);            ///< original domain starty
-    conf.set("outer.ymax", yrange_outer[1]);                ///< original domain endy
+    conf.set("outer.yend", yrange_outer[1]);                ///< original domain endy
     conf.set("rim_widthx", rim_width);
     conf.set("rim_widthy", rim_width);
     conf.set("north_pole", north_pole);

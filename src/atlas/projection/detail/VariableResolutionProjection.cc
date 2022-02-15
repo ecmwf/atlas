@@ -87,9 +87,9 @@ typename VariableResolutionProjectionT<Rotation>::Spec VariableResolutionProject
     proj_st.set("inner.xend", x_reg_end_);      ///< xend of the regular part of stretched internal grid
     proj_st.set("inner.yend", y_reg_end_);      ///< yend of the regular part of stretched internal grid
     proj_st.set("outer.xmin", startx_);            ///< original domain startx
-    proj_st.set("outer.xmax", endx_);                ///< original domain endx
+    proj_st.set("outer.xend", endx_);                ///< original domain endx
     proj_st.set("outer.ymin", starty_);            ///< original domain starty
-    proj_st.set("outer.ymax", endy_);                ///< original domain endy
+    proj_st.set("outer.yend", endy_);                ///< original domain endy
     proj_st.set("rim_widthx", rim_widthx_);         ///< xsize of the rim
     proj_st.set("rim_widthy", rim_widthy_);         ///< ysize of the rim
     rotation_.spec(proj_st);
@@ -109,9 +109,9 @@ VariableResolutionProjectionT<Rotation>::VariableResolutionProjectionT(const eck
     proj_st.get("inner.xend", x_reg_end_ = 0.);      ///< xend of the regular part of stretched internal grid
     proj_st.get("inner.yend", y_reg_end_ = 0.);      ///< yend of the regular part of stretched internal grid
     proj_st.get("outer.xmin", startx_ = 0.);            ///< original domain startx
-    proj_st.get("outer.xmax", endx_ = 0.);                ///< original domain endx
+    proj_st.get("outer.xend", endx_ = 0.);                ///< original domain endx
     proj_st.get("outer.ymin", starty_ = 0.);            ///< original domain starty
-    proj_st.get("outer.ymax", endy_ = 0.);                ///< original domain endy
+    proj_st.get("outer.yend", endy_ = 0.);                ///< original domain endy
     proj_st.get("rim_widthx", rim_widthx_);         ///< xsize of the rim
     proj_st.get("rim_widthy", rim_widthy_);         ///< ysize of the rim
 
@@ -122,6 +122,7 @@ VariableResolutionProjectionT<Rotation>::VariableResolutionProjectionT(const eck
     ///< original domain size includes the points for the rim
     deltax_all = (endx_ - startx_);
     deltay_all = (endy_ - starty_);
+
 
     nx_stretched = 0;
     ny_stretched = 0;
@@ -514,7 +515,6 @@ void VariableResolutionProjectionT<Rotation>::xy2lonlat(double crd[]) const {
     * atlas::PointXY stretchedXY = stretch_LAM_gen(unstretchedXY);
     * stretch_LAM_gen(crd[]);
     */
-
 
     crd[0] = general_stretch(crd[0], true, nx_stretched);
     crd[1] = general_stretch(crd[1], false, ny_stretched);
