@@ -708,9 +708,9 @@ util/Geometry.cc
 util/Geometry.h
 util/KDTree.cc
 util/KDTree.h
+util/KJacobian.h
 util/PolygonXY.cc
 util/PolygonXY.h
-util/Matrix.h
 util/Metadata.cc
 util/Metadata.h
 util/Point.cc
