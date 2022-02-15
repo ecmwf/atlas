@@ -19,39 +19,23 @@ using namespace util;
 
 CASE("Test Jacobian") {
 
-    // Default constructor.
-    Jacobian2 a{};
+    // Make Jacobian object.
+    const auto a = make_Jacobian2({{-1., 1.5},
+                                   {1., -1.}});
 
     EXPECT_EQ(a.rows(), 2);
     EXPECT_EQ(a.cols(), 2);
+    EXPECT_EQ(a(0, 0), -1.);
+    EXPECT_EQ(a(0, 1), 1.5);
+    EXPECT_EQ(a(1, 0), 1.);
+    EXPECT_EQ(a(1, 1), -1.);
 
-
-    // Initialiser list constructor.
-    const Jacobian2 b = {{-1., 1.5},
-                         {1., -1.}};
-
-    EXPECT_EQ(b.rows(), 2);
-    EXPECT_EQ(b.cols(), 2);
-    EXPECT_EQ(b(0, 0), -1.);
-    EXPECT_EQ(b(0, 1), 1.5);
-    EXPECT_EQ(b(1, 0), 1.);
-    EXPECT_EQ(b(1, 1), -1.);
-
-
-    // Base class constructor (base class methods return base class objects).
-    const Jacobian2 c = b.inverse();
-
-    EXPECT_EQ(c.rows(), 2);
-    EXPECT_EQ(c.cols(), 2);
-    EXPECT_APPROX_EQ(c(0, 0), 2.);
-    EXPECT_APPROX_EQ(c(0, 1), 3.);
-    EXPECT_APPROX_EQ(c(1, 0), 2.);
-    EXPECT_APPROX_EQ(c(1, 1), 2.);
-
-    // Trigger exception on list constructor.
+    // Trigger exception on make_Jacobian.
     do {
         try {
-            const Jacobian3 d = {{-1., 1.5}, {1., -1.}};                                             }
+            const auto b = make_Jacobian3({{-1., 1.5},
+                                           {1., -1.}});
+        }
         catch (...) {
             break;
         }
@@ -60,24 +44,18 @@ CASE("Test Jacobian") {
 
 
     // Jacobian-Kpoint multiplication.
-    const Jacobian3 A = {{0., -1., 0.},
-                         {1., 0., 0.},
-                         {0., 0., 1.}};
+    const auto A = make_Jacobian3({{0., -1., 0.},
+                                   {1., 0., 0.},
+                                   {0., 0., 1.}});
 
     const Point3 x = {1., 0., 0.};
+    const PointXYZ xyz = x;
     const Point3 Ax = {0., 1., 0.};
 
     EXPECT_EQ(A.rows(), 3);
     EXPECT_EQ(A.cols(), 3);
     EXPECT_EQ(A * x, Ax);
-
-
-    // BaseMatrix-KPoint multiplication.
-    const Point3 y = A.inverse().inverse() * x;
-
-    EXPECT_APPROX_EQ(Ax[0], y[0]);
-    EXPECT_APPROX_EQ(Ax[1], y[1]);
-    EXPECT_APPROX_EQ(Ax[2], y[2]);
+    EXPECT_EQ(A * xyz, Ax);
 
 }
 
