@@ -79,6 +79,16 @@ public:
         return *this;
     }
 
+    FortranIndex<Value>& operator+=(Value v) {
+        *(idx_) += v;
+        return *this;
+    }
+
+    FortranIndex<Value>& operator-=(Value v) {
+        *(idx_) -= v;
+        return *this;
+    }
+
     // implicit conversion
     operator Value() const { return get(); }
 
