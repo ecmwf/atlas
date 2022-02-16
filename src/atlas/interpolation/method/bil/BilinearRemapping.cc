@@ -236,8 +236,12 @@ void BilinearRemapping::setup(const FunctionSpace& source) {
             }
 
             double lon{(*olonlat_)(ip, 0)};
-            //while (lon > 360.0) { lon -= 180.0; }
-            //while (lon < 0.0) { lon += 180.0; }
+            while (lon > 360.0) {
+                lon -= 360.0;
+            }
+            while (lon < 0.0) {
+                lon += 360.0;
+            }
             PointXY p{lon, (*olonlat_)(ip, 1)};  // lookup point
 
             idx_t kpts   = 1;
@@ -306,8 +310,12 @@ Method::Triplets BilinearRemapping::projectPointToElements(size_t ip, const Elem
     triplets.reserve(4);
 
     double lon{(*olonlat_)(ip, 0)};
-    while (lon > 360.0) { lon -= 360.0; }
-    while (lon < 0.0) { lon += 360.0; }
+    while (lon > 360.0) {
+        lon -= 360.0;
+    }
+    while (lon < 0.0) {
+        lon += 360.0;
+    }
     PointXY ob_loc{lon, (*olonlat_)(ip, 1)};  // lookup point
 
     for (ElemIndex2::NodeList::const_iterator itc = elems.begin(); itc != elems.end(); ++itc) {

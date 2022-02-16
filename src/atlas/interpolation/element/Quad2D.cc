@@ -85,12 +85,10 @@ method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, doubl
             }
         }
         else if (std::abs(b) > epsilon) {
-          wght = solve_linear(b, c);
-          return true;
+            wght = solve_linear(b, c);
+            return true;
         }
-        else {
-          return false;
-        }
+        return false;
     };
 
     // solve for u and v where:
