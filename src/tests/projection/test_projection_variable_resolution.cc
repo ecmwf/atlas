@@ -64,7 +64,7 @@ const std::vector<double> lat_LAM_reg = {-8.264495551724226,     -7.613347275862
                                          9.31650789655281919,    9.967656172414931959,  10.61880444827704473,
                                          11.269952724139157,     11.92110100000127};
 
-const int nx                 = 34;  // How do you find this? Now in a test using x/yrange_outer and delta_inner
+const int nx                 = 34;  // These number are here hardcoded, but there is a test using x/yrange_outer and delta_inner
 const int ny                 = 32;
 const double xrange_outer[2] = {348.13120344827576, 369.6190965517242};
 const double yrange_outer[2] = {-8.264495551724226, 11.92110100000127};
@@ -373,7 +373,7 @@ CASE("var_ratio_create = 1.13") {
     expect_equal_dlat(0, delta_outer);
     expect_equal_dlat(ymid, delta_inner);
 
-    // Check that the spacing in xy coordinates matches "delta_inner"
+    //< Check that the spacing in xy coordinates matches "delta_inner"
     for (int i = 0; i < grid_st.nx() - 1; ++i) {
         EXPECT_APPROX_EQ(grid_st.xy(i + 1, ymid).x() - grid_st.xy(i, ymid).x(), delta_inner, 1.e-10);
     }
@@ -411,7 +411,7 @@ CASE("var_ratio = 1.13") {
     expect_equal_dlat(0, delta_outer);
     expect_equal_dlat(ymid, delta_inner);
 
-    // Check that the spacing in xy coordinates matches "delta_inner"
+    //< Check that the spacing in xy coordinates matches "delta_inner"
     for (int i = 0; i < grid.nx() - 1; ++i) {
         EXPECT_APPROX_EQ(grid.xy(i + 1, ymid).x() - grid.xy(i, ymid).x(), delta_inner, 1.e-10);
     }
@@ -524,20 +524,8 @@ CASE("var_ratio_rot = 1.13") {
 
     idx_t ymid = grid.ny() / 2;
     idx_t xmid = grid.nx() / 2;
-    /*In rotated coordinate, this is not true anymore
-     auto expect_equal_dlon = [&](int i, double dlon) {
-     EXPECT_APPROX_EQ(grid.lonlat(i + 1, ymid).lon() - grid.lonlat(i, ymid).lon(), dlon, 1.e-8);
-     };
-     auto expect_equal_dlat = [&](int j, double dlat) {
-     EXPECT_APPROX_EQ(grid.lonlat(xmid, j + 1).lat() - grid.lonlat(xmid, j).lat(), dlat, 1.e-8);
-     };
-     expect_equal_dlon(0, delta_outer);
-     expect_equal_dlon(xmid, delta_inner);
-     expect_equal_dlat(0, delta_outer);
-     expect_equal_dlat(ymid, delta_inner);
-     */
 
-    // Check that the spacing in xy coordinates matches "delta_inner"
+    //< Check that the spacing in xy coordinates matches "delta_inner"
     for (int i = 0; i < grid.nx() - 1; ++i) {
         EXPECT_APPROX_EQ(grid.xy(i + 1, ymid).x() - grid.xy(i, ymid).x(), delta_inner, 1.e-8);
     }
@@ -577,9 +565,6 @@ CASE("var_ratio_rot = 1.13") {
     ///< create regular grid
     auto grid_reg_approx =
         RegularGrid{LinearSpacing{startx_n, endx_n, nx_new}, LinearSpacing{starty_n, endy_n, ny_new}};
-    //auto grid_reg_approx =
-    //    RegularGrid{LinearSpacing{startx_n, endx_n, nx_new}, LinearSpacing{starty_n, endy_n, ny_new},proj};
-
 
     /**
      *  Write mesh in gmsh object.

@@ -258,13 +258,13 @@ double VariableResolutionProjectionT<Rotation>::general_stretch(const double crd
      * distance from the regular grid and stretch internal grid: delta_dist
      */
 
-    double distance_to_inner;  ///< distance from point to reg. grid
-    double delta_add;          ///< additional part in stretch different from internal high resolution
-    int n_high;                ///< number of points, from point to reg. grid
-    int n_high_st;             ///< number of stretched points, from point to reg grid
-    int n_high_rim;            ///< number of rim points, from point to reg grid
-    double p_rem;              ///< remaining part in stretch if distance_to_inner not multiple of delta_high_
-    double p_rem_low;          ///< remaining part in rim if distance_to_inner not multiple of delta_high_
+    double distance_to_inner = 0.;  ///< distance from point to reg. grid
+    double delta_add = 0.;          ///< additional part in stretch different from internal high resolution
+    int n_high = 0;                ///< number of points, from point to reg. grid
+    int n_high_st = 0;             ///< number of stretched points, from point to reg grid
+    int n_high_rim = 0;            ///< number of rim points, from point to reg grid
+    double p_rem = 0.;              ///< remaining part in stretch if distance_to_inner not multiple of delta_high_
+    double p_rem_low = 0.;          ///< remaining part in rim if distance_to_inner not multiple of delta_high_
     double new_ratio = new_ratio_[L_long ? 1 : 0];
 
     if (point < inner_start) {
@@ -367,9 +367,6 @@ double VariableResolutionProjectionT<Rotation>::general_stretch_inv(const double
                                                                     const int n_stretched) const {
     constexpr float epstest =
         std::numeric_limits<float>::epsilon();  ///< correction used to change from double to integer
-    constexpr double epsrem =
-        0.1 * std::numeric_limits<double>::epsilon() /
-        std::numeric_limits<float>::epsilon();  ///< correction used to part the find a part of an integer
 
     double inner_size;       ///< number of new internal regular grid in double
     double inner_start;      ///< start of the regular grid

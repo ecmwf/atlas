@@ -145,7 +145,7 @@ public:
         //< Add different parts in the grid something like
         //< int inner_xmin = config.getInt("inner.xmin");
 
-        // I think I can compute the outer bounds using n_rim and n_stretched
+        //compute number of points in the regular grid
         util::Config config_grid;
 
         config.get("inner.xmin", inner_xmin);
@@ -165,20 +165,10 @@ public:
         YSpace yspace = LinearSpacing{outer_ymin, outer_ymax, ny_reg};
         XSpace xspace = LinearSpacing{outer_xmin, outer_xmax, nx_reg};
 
-        //RegularGrid is a type of structuredGrid
-        // allocate memory to make class, create an object using new "constructor"
-
+        //< RegularGrid is a type of structuredGrid
         auto domain_ = RectangularDomain{{outer_xmin, outer_xmax}, {outer_ymin, outer_ymax}};
-        //return new StructuredGrid::grid_t(xspace, yspace, projection, domain(config));
-
+        //< allocate memory to make class, create an object using new "constructor"
         return new StructuredGrid::grid_t(xspace, yspace, projection, domain_);
-        //return new StructuredGrid::StructuredGrid
-
-        //I need const implementation*: I need a type as grid_t
-       // auto grid_st = RegularGrid{grid::LinearSpacing{outer_xmin, outer_xmax, nx_reg},
-       //         grid::LinearSpacing{outer_ymin, outer_ymax, ny_reg}, projection};
-
-       // return new StructuredGrid::grid_st;
 
     }
 

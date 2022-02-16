@@ -32,8 +32,6 @@ public:
     static std::string static_type() { return Rotation::typePrefix() + "variable_resolution"; }
     std::string type() const override { return static_type(); }
 
-    ///< projection and inverse projection
-
     // projection and inverse projection
 
     void xy2lonlat(double crd[]) const override;
@@ -57,7 +55,6 @@ public:
     void checkvalue(const double&, const double&) const;
     double general_stretch(const double, const bool, const int) const;
     double general_stretch_inv(const double, const bool, const int) const;
-    double normalised_360(double&);
 
 protected:
     double delta_outer;   ///< resolution of the external regular grid (rim) it should be larger than the last stretch
