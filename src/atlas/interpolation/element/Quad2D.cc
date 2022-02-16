@@ -55,12 +55,7 @@ method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, doubl
     if (!inQuadrilateral({p.x(), p.y()}))
         return isect.fail();
 
-    // solve ax + b = 0
-    auto solve_linear = [](const double a, const double b) { return -b / a; };
-
-    auto validWeight = [&](const double w) { return (w > - epsilon) && (w < (1. + epsilon)); };
-
-    auto solve_weight = [&](const double a, const double b, const double c, double& wght) {
+    auto solve_weight = [epsilon](const double a, const double b, const double c, double& wght) -> bool {
         if (std::abs(a) > epsilon) {
             // if a is non-zero, we need to solve a quadratic equation for the weight
             // ax**2 + bx + x = 0
@@ -69,23 +64,21 @@ method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, doubl
                 double inv_two_a = 1. / (2. * a);
                 double sqrt_det = std::sqrt(det);
                 double root_a = (-b + sqrt_det) * inv_two_a;
-                if (validWeight(root_a)) {
+                if ((root_a > -epsilon) && (root_a < (1. + epsilon))) {
                     wght = root_a;
                     return true;
-                } else {
-                    double root_b = (-b - sqrt_det) * inv_two_a;
-                    if (validWeight(root_b)) {
-                        wght = root_b;
-                        return true;
-                    }
-                    else {
-                       return false;
-                    }
+                }
+                double root_b = (-b - sqrt_det) * inv_two_a;
+                if ((root_b > -epsilon) && (root_b < (1. + epsilon))) {
+                    wght = root_b;
+                    return true;
                 }
             }
+            return false;
         }
-        else if (std::abs(b) > epsilon) {
-            wght = solve_linear(b, c);
+        if (std::abs(b) > epsilon) {
+            // solve ax + b = 0
+            wght = -c / b;
             return true;
         }
         return false;
