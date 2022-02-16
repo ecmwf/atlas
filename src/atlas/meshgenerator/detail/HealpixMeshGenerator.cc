@@ -38,8 +38,8 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Topology.h"
 
-#define DEBUG_OUTPUT 0
-#define DEBUG_OUTPUT_DETAIL 0
+#define DEBUG_OUTPUT 1
+#define DEBUG_OUTPUT_DETAIL 1
 
 using atlas::util::Topology;
 
@@ -588,23 +588,24 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
 
                 ++ncells;
 
+                const int glb2loc_ghost_offset = -nnodes_SB + iy_max + 12 * ns * ns + 17;
                 // mark upper corner
                 iil = up_idx(ix, iy, ns);
-                iil -= (iil < 12 * ns * ns + 16 ? parts_sidx : -nnodes_SB + iy_max + 12 * ns * ns + 17);
+                iil -= (iil < 12 * ns * ns + 16 ? parts_sidx : glb2loc_ghost_offset);
                 if (!is_node_SB[iil]) {
                     ++nnodes;
                     is_node_SB[iil] = true;
                 }
                 // mark lower corner
                 iil = down_idx(ix, iy, ns);
-                iil -= (iil < 12 * ns * ns + 16 ? parts_sidx : -nnodes_SB + iy_max + 12 * ns * ns + 17);
+                iil -= (iil < 12 * ns * ns + 16 ? parts_sidx : glb2loc_ghost_offset);
                 if (!is_node_SB[iil]) {
                     ++nnodes;
                     is_node_SB[iil] = true;
                 }
                 // mark right corner
                 iil = right_idx(ix, iy, ns);
-                iil -= (iil < 12 * ns * ns + 16 ? parts_sidx : -nnodes_SB + iy_max + 12 * ns * ns + 17);
+                iil -= (iil < 12 * ns * ns + 16 ? parts_sidx : glb2loc_ghost_offset);
                 if (!is_node_SB[iil]) {
                     ++nnodes;
                     is_node_SB[iil] = true;
@@ -618,8 +619,8 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     ii_ghost = nnodes_SB - (iy_max - iy_min + 1);
     for (ii = 0; ii < iy_max - iy_min + 1; ii++) {
         if (!is_node_SB[ii_ghost + ii]) {
-            is_node_SB[ii_ghost + ii] = true;
-            ++nnodes;
+            // is_node_SB[ii_ghost + ii] = true;
+            // ++nnodes;
         }
     }
 
@@ -794,8 +795,8 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
                 cells_part(jcell) = mypart;
 #if DEBUG_OUTPUT_DETAIL
                 std::cout << "[" << mypart << "] : "
-                          << "New quad " << jcell << ": " << quad_nodes[0] << "," << quad_nodes[1] << ","
-                          << quad_nodes[2] << "," << quad_nodes[3] << std::endl;
+                          << "New quad " << jcell << ": " << glb_idx(quad_nodes[0]) << "," << glb_idx(quad_nodes[1])
+                          << "," << glb_idx(quad_nodes[2]) << "," << glb_idx(quad_nodes[3]) << std::endl;
 #endif
                 ++jcell;
             }
@@ -815,8 +816,9 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     int* cell_nodes;
     for (jcell = 0; jcell < ncells; jcell++) {
         std::cout << "[" << mypart << "] : "
-                  << " cell " << jcell << ": " << node_connectivity(jcell, 0) << "," << node_connectivity(jcell, 1)
-                  << "," << node_connectivity(jcell, 2) << "," << node_connectivity(jcell, 3) << std::endl;
+                  << " cell " << jcell << ": " << glb_idx(node_connectivity(jcell, 0)) << ","
+                  << glb_idx(node_connectivity(jcell, 1)) << "," << glb_idx(node_connectivity(jcell, 2)) << ","
+                  << glb_idx(node_connectivity(jcell, 3)) << std::endl;
     }
 #endif
 
