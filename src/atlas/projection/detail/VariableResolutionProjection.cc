@@ -79,19 +79,19 @@ template <typename Rotation>
 typename VariableResolutionProjectionT<Rotation>::Spec VariableResolutionProjectionT<Rotation>::spec() const {
     Spec proj_st;
     proj_st.set("type", static_type());
-    proj_st.set("outer.dx", delta_outer );     ///< resolution of the external regular grid (rim)
-    proj_st.set("inner.dx", delta_inner );      ///< resolution of the regional model (regular grid)
-    proj_st.set("progression", var_ratio_ );      ///< power used for the stretching
+    proj_st.set("outer.dx", delta_outer);     ///< resolution of the external regular grid (rim)
+    proj_st.set("inner.dx", delta_inner);     ///< resolution of the regional model (regular grid)
+    proj_st.set("progression", var_ratio_);   ///< power used for the stretching
     proj_st.set("inner.xmin", x_reg_start_);  ///< xstart of the internal regional grid
     proj_st.set("inner.ymin", y_reg_start_);  ///< ystart of the internal regional grid
-    proj_st.set("inner.xend", x_reg_end_);      ///< xend of the regular part of stretched internal grid
-    proj_st.set("inner.yend", y_reg_end_);      ///< yend of the regular part of stretched internal grid
-    proj_st.set("outer.xmin", startx_);            ///< original domain startx
-    proj_st.set("outer.xend", endx_);                ///< original domain endx
-    proj_st.set("outer.ymin", starty_);            ///< original domain starty
-    proj_st.set("outer.yend", endy_);                ///< original domain endy
-    proj_st.set("rim_widthx", rim_widthx_);         ///< xsize of the rim
-    proj_st.set("rim_widthy", rim_widthy_);         ///< ysize of the rim
+    proj_st.set("inner.xend", x_reg_end_);    ///< xend of the regular part of stretched internal grid
+    proj_st.set("inner.yend", y_reg_end_);    ///< yend of the regular part of stretched internal grid
+    proj_st.set("outer.xmin", startx_);       ///< original domain startx
+    proj_st.set("outer.xend", endx_);         ///< original domain endx
+    proj_st.set("outer.ymin", starty_);       ///< original domain starty
+    proj_st.set("outer.yend", endy_);         ///< original domain endy
+    proj_st.set("rim_widthx", rim_widthx_);   ///< xsize of the rim
+    proj_st.set("rim_widthy", rim_widthy_);   ///< ysize of the rim
     rotation_.spec(proj_st);
     return proj_st;
 }
@@ -102,18 +102,18 @@ template <typename Rotation>
 VariableResolutionProjectionT<Rotation>::VariableResolutionProjectionT(const eckit::Parametrisation& proj_st):
     ProjectionImpl(), rotation_(proj_st) {
     proj_st.get("outer.dx", delta_outer = 0.);     ///< resolution of the external regular grid (rim)
-    proj_st.get("inner.dx", delta_inner = 0.);      ///< resolution of the regional model (regular grid)
-    proj_st.get("progression", var_ratio_ = 0.);      ///< power used for the stretching
+    proj_st.get("inner.dx", delta_inner = 0.);     ///< resolution of the regional model (regular grid)
+    proj_st.get("progression", var_ratio_ = 0.);   ///< power used for the stretching
     proj_st.get("inner.xmin", x_reg_start_ = 0.);  ///< xstart of the internal regional grid
     proj_st.get("inner.ymin", y_reg_start_ = 0.);  ///< ystart of the internal regional grid
-    proj_st.get("inner.xend", x_reg_end_ = 0.);      ///< xend of the regular part of stretched internal grid
-    proj_st.get("inner.yend", y_reg_end_ = 0.);      ///< yend of the regular part of stretched internal grid
-    proj_st.get("outer.xmin", startx_ = 0.);            ///< original domain startx
-    proj_st.get("outer.xend", endx_ = 0.);                ///< original domain endx
-    proj_st.get("outer.ymin", starty_ = 0.);            ///< original domain starty
-    proj_st.get("outer.yend", endy_ = 0.);                ///< original domain endy
-    proj_st.get("rim_widthx", rim_widthx_);         ///< xsize of the rim
-    proj_st.get("rim_widthy", rim_widthy_);         ///< ysize of the rim
+    proj_st.get("inner.xend", x_reg_end_ = 0.);    ///< xend of the regular part of stretched internal grid
+    proj_st.get("inner.yend", y_reg_end_ = 0.);    ///< yend of the regular part of stretched internal grid
+    proj_st.get("outer.xmin", startx_ = 0.);       ///< original domain startx
+    proj_st.get("outer.xend", endx_ = 0.);         ///< original domain endx
+    proj_st.get("outer.ymin", starty_ = 0.);       ///< original domain starty
+    proj_st.get("outer.yend", endy_ = 0.);         ///< original domain endy
+    proj_st.get("rim_widthx", rim_widthx_);        ///< xsize of the rim
+    proj_st.get("rim_widthy", rim_widthy_);        ///< ysize of the rim
 
     constexpr float epsilon = std::numeric_limits<float>::epsilon();  ///< value used to check if the values are equal
     constexpr float epstest =
@@ -259,13 +259,13 @@ double VariableResolutionProjectionT<Rotation>::general_stretch(const double crd
      */
 
     double distance_to_inner = 0.;  ///< distance from point to reg. grid
-    double delta_add = 0.;          ///< additional part in stretch different from internal high resolution
-    int n_high = 0;                ///< number of points, from point to reg. grid
-    int n_high_st = 0;             ///< number of stretched points, from point to reg grid
-    int n_high_rim = 0;            ///< number of rim points, from point to reg grid
-    double p_rem = 0.;              ///< remaining part in stretch if distance_to_inner not multiple of delta_high_
-    double p_rem_low = 0.;          ///< remaining part in rim if distance_to_inner not multiple of delta_high_
-    double new_ratio = new_ratio_[L_long ? 1 : 0];
+    double delta_add         = 0.;  ///< additional part in stretch different from internal high resolution
+    int n_high               = 0;   ///< number of points, from point to reg. grid
+    int n_high_st            = 0;   ///< number of stretched points, from point to reg grid
+    int n_high_rim           = 0;   ///< number of rim points, from point to reg grid
+    double p_rem             = 0.;  ///< remaining part in stretch if distance_to_inner not multiple of delta_high_
+    double p_rem_low         = 0.;  ///< remaining part in rim if distance_to_inner not multiple of delta_high_
+    double new_ratio         = new_ratio_[L_long ? 1 : 0];
 
     if (point < inner_start) {
         distance_to_inner = inner_start - point;

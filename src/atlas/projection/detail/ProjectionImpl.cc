@@ -10,9 +10,9 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <iostream>
 #include <memory>
 #include <vector>
-#include <iostream>
 
 #include "eckit/types/FloatCompare.h"
 #include "eckit/utils/Hash.h"

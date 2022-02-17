@@ -74,7 +74,6 @@ bool ConfigParser::parse(const Projection& projection, const Grid::Config& confi
 }
 
 bool ConfigParser::parse(const Projection& projection, const Grid::Config& config, Parsed& x, Parsed& y) {
-
     // centre of domain and increments  (any projection allowed)
     if (ConfigParser::parse(projection, config, x, y)) {
         return true;
@@ -85,8 +84,7 @@ bool ConfigParser::parse(const Projection& projection, const Grid::Config& confi
 
 static class regional_var_resolution : public GridBuilder {
 public:
-    regional_var_resolution(): GridBuilder("regional_variable_resolution") {
-    }
+    regional_var_resolution(): GridBuilder("regional_variable_resolution") {}
 
     void print(std::ostream&) const override {
         // os << std::left << std::setw(20) << "O<gauss>" << "Octahedral Gaussian
@@ -101,16 +99,15 @@ public:
 
     //create return pointer, data type to return
     const Grid::Implementation* create(const Grid::Config& config) const override {
-
         // read projection subconfiguration
-        double inner_xmin = 0;
-        double inner_xmax = 0;
-        double inner_ymin = 0;
-        double inner_ymax = 0;
-        double outer_xmin = 0;
-        double outer_xmax = 0;
-        double outer_ymin = 0;
-        double outer_ymax = 0;
+        double inner_xmin  = 0;
+        double inner_xmax  = 0;
+        double inner_ymin  = 0;
+        double inner_ymax  = 0;
+        double outer_xmin  = 0;
+        double outer_xmax  = 0;
+        double outer_ymin  = 0;
+        double outer_ymax  = 0;
         double delta_inner = 0.;
         Projection projection;
         {
@@ -124,20 +121,20 @@ public:
             config.get("progression", config_pr);
             config_all.set("progression", config_pr);
 
-            if (config.get("rim_widthx", configwx)){
+            if (config.get("rim_widthx", configwx)) {
                 config_all.set("rim_widthx", configwx);
             }
-            if (config.get("rim_widthy", configwy)){
+            if (config.get("rim_widthy", configwy)) {
                 config_all.set("rim_widthy", configwy);
             }
 
             config_all.set("inner", config_inner);
             config_all.set("outer", config_outer);
-            config_all.set("type", "variable_resolution" );
+            config_all.set("type", "variable_resolution");
             if (config.get("projection", config_proj)) {
                 //config_all.set(config_outer | config_inner | config_proj);
                 config_all.set("projection", config_proj);
-                config_all.set("type", "rotated_variable_resolution" );
+                config_all.set("type", "rotated_variable_resolution");
             }
             projection = Projection(config_all);
         }
@@ -159,8 +156,8 @@ public:
         config.get("inner.dx", delta_inner);
 
         constexpr float epstest = std::numeric_limits<float>::epsilon();
-        int nx_reg  = ((outer_xmax - outer_xmin + epstest) / delta_inner) + 1;
-        int ny_reg  = ((outer_ymax - outer_ymin + epstest) / delta_inner) + 1;
+        int nx_reg              = ((outer_xmax - outer_xmin + epstest) / delta_inner) + 1;
+        int ny_reg              = ((outer_ymax - outer_ymin + epstest) / delta_inner) + 1;
 
         YSpace yspace = LinearSpacing{outer_ymin, outer_ymax, ny_reg};
         XSpace xspace = LinearSpacing{outer_xmin, outer_xmax, nx_reg};
@@ -169,7 +166,6 @@ public:
         auto domain_ = RectangularDomain{{outer_xmin, outer_xmax}, {outer_ymin, outer_ymax}};
         //< allocate memory to make class, create an object using new "constructor"
         return new StructuredGrid::grid_t(xspace, yspace, projection, domain_);
-
     }
 
     void force_link() {}
