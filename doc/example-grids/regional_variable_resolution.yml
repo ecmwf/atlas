@@ -5,8 +5,6 @@
 # regional projection using variable resolution
 
 type : "regional_variable_resolution"
-rim_widthx : 4
-rim_widthy : 4
 progression : 1.13
 inner :
       xmin : 351.386944827586319
@@ -20,8 +18,7 @@ outer :
       ymin : -8.264495551724226
       yend : 11.92110100000127
       dx : 1
-#projection :
-#    type: "variable_resolution"
+      width: 4.
 
 check :
   size : 1088

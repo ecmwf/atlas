@@ -5,7 +5,7 @@
 * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 */
 
-#include "Regional_var_resolution.h"
+#include "RegionalVariableResolution.h"
 
 #include "eckit/types/FloatCompare.h"
 
@@ -23,64 +23,6 @@ using YSpace = atlas::StructuredGrid::YSpace;
 namespace atlas {
 namespace grid {
 namespace {  // anonymous
-
-static Domain domain(const Grid::Config& grid) {
-    Grid::Config config;
-    if (grid.get("domain", config)) {
-        return Domain(config);
-    }
-    return Domain();
-}
-
-static Projection projection(const Grid::Config& grid) {
-    // Get the projection from the Grid::Config.
-    Grid::Config proj_config;
-    if (grid.get("projection", proj_config)) {
-        return Projection{proj_config};
-    }
-    return Projection();
-}
-
-
-struct ConfigParser {
-    struct Parsed {
-        Parsed() = default;
-        Parsed(std::initializer_list<double> interval): min(*interval.begin()), max(*(interval.begin() + 1)) {}
-        double min;
-        double max;
-        long N;
-        bool endpoint = {true};
-    };
-    bool valid = {false};
-    Parsed x;
-    Parsed y;
-
-    static bool parse(const Projection&, const Grid::Config&, Parsed& x, Parsed& y);
-
-    template <typename Parser>
-    static bool parse(const Projection&, const Grid::Config&, Parsed& x, Parsed& y);
-};
-
-
-template <typename Parser>
-bool ConfigParser::parse(const Projection& projection, const Grid::Config& config, Parsed& x, Parsed& y) {
-    Parser p(projection, config);
-    if (p.valid) {
-        x = p.x;
-        y = p.y;
-        return true;  // success
-    }
-    return false;  // failure
-}
-
-bool ConfigParser::parse(const Projection& projection, const Grid::Config& config, Parsed& x, Parsed& y) {
-    // centre of domain and increments  (any projection allowed)
-    if (ConfigParser::parse(projection, config, x, y)) {
-        return true;
-    }
-    return false;
-}
-
 
 static class regional_var_resolution : public GridBuilder {
 public:
@@ -113,6 +55,23 @@ public:
         {
             util::Config config_all, config_proj, config_inner, config_outer;
             util::Config config_pr, configwx, configwy;
+
+            config_all.set("type", "variable_resolution");
+
+            if (config.get("projection", config_proj)) {
+                config_all.set(config_proj);
+
+                if (config_proj.getString("type") == "lonlat") {
+                    config_all.set("type", "variable_resolution");
+                }
+                else if (config_proj.getString("type") == "rotated_lonlat") {
+                    config_all.set("type", "rotated_variable_resolution");
+                }
+                else {
+                    throw_Exception("Only \"lonlat\" or \"rotated_lonlat\" projection is supported");
+                }
+            }
+
             config.get("inner", config_inner);
 
             config.get("outer", config_outer);
@@ -121,21 +80,8 @@ public:
             config.get("progression", config_pr);
             config_all.set("progression", config_pr);
 
-            if (config.get("rim_widthx", configwx)) {
-                config_all.set("rim_widthx", configwx);
-            }
-            if (config.get("rim_widthy", configwy)) {
-                config_all.set("rim_widthy", configwy);
-            }
-
             config_all.set("inner", config_inner);
             config_all.set("outer", config_outer);
-            config_all.set("type", "variable_resolution");
-            if (config.get("projection", config_proj)) {
-                //config_all.set(config_outer | config_inner | config_proj);
-                config_all.set("projection", config_proj);
-                config_all.set("type", "rotated_variable_resolution");
-            }
             projection = Projection(config_all);
         }
 

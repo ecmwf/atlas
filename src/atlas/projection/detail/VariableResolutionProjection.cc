@@ -112,8 +112,36 @@ VariableResolutionProjectionT<Rotation>::VariableResolutionProjectionT(const eck
     proj_st.get("outer.xend", endx_ = 0.);         ///< original domain endx
     proj_st.get("outer.ymin", starty_ = 0.);       ///< original domain starty
     proj_st.get("outer.yend", endy_ = 0.);         ///< original domain endy
-    proj_st.get("rim_widthx", rim_widthx_);        ///< xsize of the rim
-    proj_st.get("rim_widthy", rim_widthy_);        ///< ysize of the rim
+
+    // To get the rim_widthx_ we can specify either:
+    //     - outer.nx
+    //     - outer.xwidth
+    //     - outer.width
+    //  The value for rim_widthy_ is copied from rim_widthx_ and can be overwritten with
+    //     - outer.ny
+    //     - outer.ywidth
+    if (proj_st.has("outer.nx")) {
+        long outer_nx;
+        proj_st.get("outer.nx", outer_nx);
+        rim_widthx_ = delta_outer * outer_nx;
+        rim_widthy_ = rim_widthx_;
+    }
+    else if (proj_st.has("outer.width")) {
+        proj_st.get("outer.width", rim_widthx_);
+        rim_widthy_ = rim_widthx_;
+    }
+    else if (proj_st.has("outer.xwidth")) {
+        proj_st.get("outer.xwidth", rim_widthx_);
+        rim_widthy_ = rim_widthx_;
+    }
+    if (proj_st.has("outer.ny")) {
+        long outer_ny;
+        proj_st.get("outer.ny", outer_ny);
+        rim_widthy_ = delta_outer * outer_ny;
+    }
+    else if (proj_st.has("outer.ywidth")) {
+        proj_st.get("outer.ywidth", rim_widthy_);
+    }
 
     constexpr float epsilon = std::numeric_limits<float>::epsilon();  ///< value used to check if the values are equal
     constexpr float epstest =

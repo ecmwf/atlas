@@ -160,8 +160,8 @@ grid/detail/grid/LonLat.h
 grid/detail/grid/LonLat.cc
 grid/detail/grid/Regional.h
 grid/detail/grid/Regional.cc
-grid/detail/grid/Regional_var_resolution.h
-grid/detail/grid/Regional_var_resolution.cc
+grid/detail/grid/RegionalVariableResolution.h
+grid/detail/grid/RegionalVariableResolution.cc
 grid/detail/grid/Healpix.h
 grid/detail/grid/Healpix.cc
 

@@ -93,8 +93,7 @@ auto make_var_ratio_projection = [](double var_ratio) {
     conf.set("outer.xend", xrange_outer[1]);  ///< original domain endx
     conf.set("outer.ymin", yrange_outer[0]);  ///< original domain starty
     conf.set("outer.yend", yrange_outer[1]);  ///< original domain endy
-    conf.set("rim_widthx", rim_width);
-    conf.set("rim_widthy", rim_width);
+    conf.set("outer.width", rim_width);
     return atlas::Projection(conf);
 };
 
@@ -112,8 +111,7 @@ auto make_var_ratio_projection_rot = [](double var_ratio, std::vector<double> no
     conf.set("outer.xend", xrange_outer[1]);  ///< original domain endx
     conf.set("outer.ymin", yrange_outer[0]);  ///< original domain starty
     conf.set("outer.yend", yrange_outer[1]);  ///< original domain endy
-    conf.set("rim_widthx", rim_width);
-    conf.set("rim_widthy", rim_width);
+    conf.set("outer.width", rim_width);
     conf.set("north_pole", north_pole);
     return atlas::Projection(conf);
 };
