@@ -38,8 +38,8 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Topology.h"
 
-#define DEBUG_OUTPUT 1
-#define DEBUG_OUTPUT_DETAIL 1
+#define DEBUG_OUTPUT 0
+#define DEBUG_OUTPUT_DETAIL 0
 
 using atlas::util::Topology;
 
@@ -751,6 +751,9 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
                 }
                 else {
                     remote_idx(inode) = -1;
+                }
+                if (Topology::check(flags(inode), Topology::BC | Topology::EAST)) {
+                    part(inode) = mypart;  // To be fixed later
                 }
                 local_idx_SB[iil] = inode;
 
