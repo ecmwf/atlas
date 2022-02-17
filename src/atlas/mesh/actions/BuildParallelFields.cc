@@ -298,31 +298,39 @@ Field& build_nodes_remote_idx(mesh::Nodes& nodes) {
         for (idx_t jnode = 0; jnode < nb_recv_nodes; ++jnode) {
             uid_t uid = recv_node[jnode * varsize + 0];
             int inode = recv_node[jnode * varsize + 1];
-            if (lookup.count(uid)) {
-                send_found[proc[jpart]].push_back(inode);
-                send_found[proc[jpart]].push_back(lookup[uid]);
-            }
-            else {
-                std::stringstream msg;
-                msg << "[" << mpi::rank() << "] "
-                    << "Node requested by rank [" << jpart << "] with uid [" << uid
-                    << "] that should be owned is not found";
-                throw_Exception(msg.str(), Here());
-            }
+            send_found[proc[jpart]].push_back(inode);
+            send_found[proc[jpart]].push_back(lookup.count(uid) ? lookup[uid] : -1);
         }
     }
 
     ATLAS_TRACE_MPI(ALLTOALL) { mpi::comm().allToAll(send_found, recv_found); }
 
+    std::stringstream errstream;
+    size_t failed{0};
+    const auto gidx = array::make_view<gidx_t, 1>(nodes.global_index());
     for (idx_t jpart = 0; jpart < nparts; ++jpart) {
         const std::vector<int>& recv_node = recv_found[proc[jpart]];
         const idx_t nb_recv_nodes         = recv_node.size() / 2;
         // array::ArrayView<int,2> recv_node( recv_found[ proc[jpart] ].data(),
         //     array::make_shape(recv_found[ proc[jpart] ].size()/2,2) );
         for (idx_t jnode = 0; jnode < nb_recv_nodes; ++jnode) {
-            ridx(recv_node[jnode * 2 + 0]) = recv_node[jnode * 2 + 1];
+            idx_t inode      = recv_node[jnode * 2 + 0];
+            idx_t ridx_inode = recv_node[jnode * 2 + 1];
+            if (ridx_inode >= 0) {
+                ridx(recv_node[jnode * 2 + 0]) = ridx_inode;
+            }
+            else {
+                ++failed;
+                errstream << "\n[" << mpi::rank() << "] "
+                          << "Node with global index " << gidx(inode) << " not found on part [" << part(inode) << "]";
+            }
         }
     }
+
+    if (failed) {
+        throw_AssertionFailed(errstream.str(), Here());
+    }
+
     return nodes.remote_index();
 }
 
