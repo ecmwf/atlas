@@ -48,6 +48,8 @@ public:
 
         static Jacobian identity() { return Jacobian{1., 0., 0., 1.}; }
 
+        Jacobian() = default;
+
         Jacobian(double j00, double j01, double j10, double j11):
             array{std::array<double, 2>{j00, j01}, std::array<double, 2>{j10, j11}} {}
 
