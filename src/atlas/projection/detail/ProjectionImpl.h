@@ -10,9 +10,12 @@
 
 #pragma once
 
+#include <initializer_list>
+#include <iostream>
 #include <memory>
 #include <string>
 
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/Factory.h"
 #include "atlas/util/NormaliseLongitude.h"
 #include "atlas/util/Object.h"
@@ -41,97 +44,68 @@ public:
     using Spec = atlas::util::Config;
     class Jacobian : public std::array<std::array<double, 2>, 2> {
     public:
-        static Jacobian identity() {
-            Jacobian id;
-            id[0] = {1.0, 0.0};
-            id[1] = {0.0, 1.0};
-            return id;
+        using std::array<std::array<double, 2>, 2>::array;
+
+        static Jacobian identity() { return Jacobian{1., 0., 0., 1.}; }
+
+        Jacobian(double j00, double j01, double j10, double j11):
+            array{std::array<double, 2>{j00, j01}, std::array<double, 2>{j10, j11}} {}
+
+        Jacobian(std::initializer_list<std::initializer_list<double>> list):
+            Jacobian{*(list.begin()->begin()), *(list.begin()->begin() + 1), *((list.begin() + 1)->begin()),
+                     *((list.begin() + 1)->begin() + 1)} {}
+
+        Jacobian operator-(const Jacobian& jac) const {
+            return Jacobian{(*this)[0][0] - jac[0][0], (*this)[0][1] - jac[0][1], (*this)[1][0] - jac[1][0],
+                            (*this)[1][1] - jac[1][1]};
         }
 
-        Jacobian inverse() const {
-            const Jacobian& jac = *this;
-            Jacobian inv;
-            double det = jac[0][0] * jac[1][1] - jac[0][1] * jac[1][0];
-            inv[0][0]  = +jac[1][1] / det;
-            inv[0][1]  = -jac[0][1] / det;
-            inv[1][0]  = -jac[1][0] / det;
-            inv[1][1]  = +jac[0][0] / det;
-            return inv;
-        };
-
-        Jacobian transpose() const {
-            Jacobian tra = *this;
-            std::swap(tra[0][1], tra[1][0]);
-            return tra;
-        };
-
-        Jacobian operator-(const Jacobian& jac2) const {
-            const Jacobian& jac1 = *this;
-            Jacobian jac;
-            jac[0][0] = jac1[0][0] - jac2[0][0];
-            jac[0][1] = jac1[0][1] - jac2[0][1];
-            jac[1][0] = jac1[1][0] - jac2[1][0];
-            jac[1][1] = jac1[1][1] - jac2[1][1];
-            return jac;
+        Jacobian operator+(const Jacobian& jac) const {
+            return Jacobian{(*this)[0][0] + jac[0][0], (*this)[0][1] + jac[0][1], (*this)[1][0] + jac[1][0],
+                            (*this)[1][1] + jac[1][1]};
         }
 
-        Jacobian operator+(const Jacobian& jac2) const {
-            const Jacobian& jac1 = *this;
-            Jacobian jac;
-            jac[0][0] = jac1[0][0] + jac2[0][0];
-            jac[0][1] = jac1[0][1] + jac2[0][1];
-            jac[1][0] = jac1[1][0] + jac2[1][0];
-            jac[1][1] = jac1[1][1] + jac2[1][1];
-            return jac;
+        Jacobian operator*(double a) const {
+            return Jacobian{(*this)[0][0] * a, (*this)[0][1] * a, (*this)[1][0] * a, (*this)[1][1] * a};
+        }
+
+        Jacobian operator*(const Jacobian& jac) const {
+            return Jacobian{(*this)[0][0] * jac[0][0] + (*this)[0][1] * jac[1][0],
+                            (*this)[0][0] * jac[0][1] + (*this)[0][1] * jac[1][1],
+                            (*this)[1][0] * jac[0][0] + (*this)[1][1] * jac[1][0],
+                            (*this)[1][0] * jac[0][1] + (*this)[1][1] * jac[1][1]};
+        }
+
+        Point2 operator*(const Point2& x) const {
+            return Point2{(*this)[0][0] * x[0] + (*this)[0][1] * x[1], (*this)[1][0] * x[0] + (*this)[1][1] * x[1]};
         }
 
         double norm() const {
-            const Jacobian& jac = *this;
-            return sqrt(jac[0][0] * jac[0][0] + jac[0][1] * jac[0][1] + jac[1][0] * jac[1][0] + jac[1][1] * jac[1][1]);
+            return std::sqrt((*this)[0][0] * (*this)[0][0] + (*this)[0][1] * (*this)[0][1] +
+                             (*this)[1][0] * (*this)[1][0] + (*this)[1][1] * (*this)[1][1]);
         }
 
-        Jacobian operator*(const Jacobian& jac2) const {
-            const Jacobian& jac1 = *this;
-            Jacobian jac;
-            jac[0][0] = jac1[0][0] * jac2[0][0] + jac1[0][1] * jac2[1][0];
-            jac[0][1] = jac1[0][0] * jac2[0][1] + jac1[0][1] * jac2[1][1];
-            jac[1][0] = jac1[1][0] * jac2[0][0] + jac1[1][1] * jac2[1][0];
-            jac[1][1] = jac1[1][0] * jac2[0][1] + jac1[1][1] * jac2[1][1];
-            return jac;
+        double determinant() const { return (*this)[0][0] * (*this)[1][1] - (*this)[0][1] * (*this)[1][0]; }
+
+        Jacobian inverse() const {
+            return Jacobian{(*this)[1][1], -(*this)[0][1], -(*this)[1][0], (*this)[0][0]} * (1. / determinant());
         }
 
-        double dx_dlon() const {
-            const Jacobian& jac = *this;
-            return jac[JDX][JDLON];
-        }
-        double dy_dlon() const {
-            const Jacobian& jac = *this;
-            return jac[JDY][JDLON];
-        }
-        double dx_dlat() const {
-            const Jacobian& jac = *this;
-            return jac[JDX][JDLAT];
-        }
-        double dy_dlat() const {
-            const Jacobian& jac = *this;
-            return jac[JDY][JDLAT];
-        }
+        Jacobian transpose() const { return Jacobian{(*this)[1][1], (*this)[0][1], (*this)[1][0], (*this)[0][0]}; }
 
-        double dlon_dx() const {
-            const Jacobian& jac = *this;
-            return jac[JDLON][JDX];
-        }
-        double dlon_dy() const {
-            const Jacobian& jac = *this;
-            return jac[JDLON][JDY];
-        }
-        double dlat_dx() const {
-            const Jacobian& jac = *this;
-            return jac[JDLAT][JDX];
-        }
-        double dlat_dy() const {
-            const Jacobian& jac = *this;
-            return jac[JDLAT][JDY];
+        double dx_dlon() const { return (*this)[JDX][JDLON]; }
+        double dy_dlon() const { return (*this)[JDY][JDLON]; }
+        double dx_dlat() const { return (*this)[JDX][JDLAT]; }
+        double dy_dlat() const { return (*this)[JDY][JDLAT]; }
+
+        double dlon_dx() const { return (*this)[JDLON][JDX]; }
+        double dlon_dy() const { return (*this)[JDLON][JDY]; }
+        double dlat_dx() const { return (*this)[JDLAT][JDX]; }
+        double dlat_dy() const { return (*this)[JDLAT][JDY]; }
+
+        friend std::ostream& operator<<(std::ostream& os, const Jacobian& jac) {
+            os << jac[0][0] << " " << jac[0][1] << "\n" << jac[1][0] << " " << jac[1][1];
+            return os;
         }
 
     private:
@@ -146,6 +120,7 @@ public:
             JDLAT = 1
         };
     };
+
 
 public:
     static const ProjectionImpl* create(const eckit::Parametrisation& p);
