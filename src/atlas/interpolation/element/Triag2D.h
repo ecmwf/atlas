@@ -25,9 +25,11 @@ static constexpr double BAD_WEIGHT_VALUE = -1.;
 
 class Triag2D {
 public:
-    Triag2D(const double* x0, const double* x1, const double* x2): v00(x0), v10(x1), v11(x2) {}
+    Triag2D(const double* x0, const double* x1, const double* x2):
+        v00(x0), v10(x1), v11(x2) {}
 
-    Triag2D(const PointXY& x0, const PointXY& x1, const PointXY& x2): Triag2D(x0.data(), x1.data(), x2.data()) {}
+    Triag2D(const PointXY& x0, const PointXY& x1, const PointXY& x2):
+        Triag2D(x0.data(), x1.data(), x2.data()) {}
 
     Triag2D(const Vector2D& x0, const Vector2D& x1, const Vector2D& x2): Triag2D(x0.data(), x1.data(), x2.data()) {}
 
@@ -62,7 +64,7 @@ private:           // members
 
     static double cross2d(const Vector2D& a, const Vector2D& b) { return a.x() * b.y() - a.y() * b.x(); }
 
-    bool inTriangle(const Vector2D& p) const;
+    bool inTriangle(const Vector2D& p, double epsilon = 5 * std::numeric_limits<double>::epsilon()) const;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -32,7 +32,7 @@ method::Intersect Triag2D::intersects(const PointXY& r, double edgeEpsilon, doub
 
     Vector2D rvec{r.data()};
 
-    if (!inTriangle(rvec)) {
+    if (!inTriangle(rvec, epsilon)) {
         return isect.fail();
     }
 
@@ -41,15 +41,17 @@ method::Intersect Triag2D::intersects(const PointXY& r, double edgeEpsilon, doub
     Vector2D pvec{rvec - v00};
 
     // solve u e1 + v e2 = pvec for u and v
-    float invDet = 1. / (e1.x() * e2.y() - e2.x() * e1.y());
-    isect.u      = (pvec.x() * e2.y() - e2.x() * pvec.y()) * invDet;
-    isect.v      = (e1.x() * pvec.y() - pvec.x() * e1.y()) * invDet;
+    float invDet = 1. /(e1.x() * e2.y() - e2.x() * e1.y());
+    isect.u = (pvec.x() * e2.y() - e2.x() * pvec.y()) * invDet;
+    isect.v = (e1.x() * pvec.y() - pvec.x() * e1.y()) * invDet;
 
-    // clamp values between 0 and 1
-    isect.u = std::max(0.0, std::min(isect.u, 1.0));
-    isect.v = std::max(0.0, std::min(isect.v, 1.0));
+    // Set weights validation function.
+    const auto validateWeights = [&](const method::Intersect& intersect) -> bool {
+        return intersect.u > -edgeEpsilon && intersect.u < 1 + edgeEpsilon &&
+               intersect.v > -edgeEpsilon && intersect.v < 1 + edgeEpsilon;
+    };
 
-    return isect.success();
+    return validateWeights(isect) ? isect.success() : isect.fail();
 }
 
 bool Triag2D::validate() const {
@@ -81,7 +83,8 @@ bool Triag2D::validate() const {
     double dot3 = N201 * N012;
 
     // all normals must point same way
-    bool is_inside = ((dot1 >= 0. && dot2 >= 0. && dot3 >= 0.) || (dot1 <= 0. && dot2 <= 0. && dot3 <= 0.));
+    bool is_inside = (dot1 >= 0. && dot2 >= 0. && dot3 >= 0.) ||
+                     (dot1 <= 0. && dot2 <= 0. && dot3 <= 0.);
     return is_inside;
 }
 
@@ -89,20 +92,12 @@ double Triag2D::area() const {
     return std::abs(0.5 * cross2d((v10 - v00), (v11 - v00)));
 }
 
-bool Triag2D::inTriangle(const Vector2D& p) const {
+bool Triag2D::inTriangle(const Vector2D& p, double epsilon) const {
     // point p must be on the inside of all triangle edges to be inside the triangle.
-    double zst1 = cross2d(p - v00, p - v10);
-    if (zst1 >= 0.0) {
-        double zst2 = cross2d(p - v10, p - v11);
-        if (zst2 >= 0.0) {
-            double zst3 = cross2d(p - v11, p - v00);
-            if (zst3 >= 0.0) {
-                return true;
-            }
-        }
-    }
-
-    return false;
+    const double tol = -epsilon;
+    return  cross2d(p - v00, p - v10) > tol &&
+            cross2d(p - v10, p - v11) > tol &&
+            cross2d(p - v11, p - v00) > tol;
 }
 
 void Triag2D::print(std::ostream& s) const {

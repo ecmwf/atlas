@@ -12,12 +12,13 @@
 
 #include "atlas/interpolation/Vector2D.h"
 #include "atlas/interpolation/method/Intersect.h"
+#include "atlas/interpolation/element/Triag2D.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/Point.h"
 
 namespace atlas {
 namespace interpolation {
 namespace method {
-struct Ray;
 }
 namespace element {
 
@@ -51,15 +52,28 @@ public:
         return s;
     }
 
+    const Vector2D& p(int i) {
+        if (i == 0)
+            return v00;
+        if (i == 1)
+            return v10;
+        if (i == 2)
+            return v11;
+        if (i == 3)
+            return v01;
+        throw_OutOfRange("Quad2D::p(i)", i, 4, Here());
+    }
+
 private:           // members
     Vector2D v00;  // aka v0
     Vector2D v10;  // aka v1
     Vector2D v11;  // aka v2
     Vector2D v01;  // aka v3
 
+
     static double cross2d(const Vector2D& a, const Vector2D& b) { return a.x() * b.y() - a.y() * b.x(); }
 
-    bool inQuadrilateral(const Vector2D& p) const;
+    bool inQuadrilateral(const Vector2D& p, double epsilon = 5 * std::numeric_limits<double>::epsilon()) const;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
