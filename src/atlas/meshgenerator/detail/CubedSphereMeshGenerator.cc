@@ -84,7 +84,7 @@ void CubedSphereMeshGenerator::configure_defaults() {
     options.set("part", mpi::rank());
 
     // This options sets the number of halo elements around each partition.
-    options.set("halo", 1);
+    options.set("halo", 0);
 
     // This options sets the default partitioner.
     options.set<std::string>("partitioner", "cubedsphere");
