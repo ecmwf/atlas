@@ -50,8 +50,12 @@ public:
 
         Jacobian() = default;
 
-        Jacobian(double j00, double j01, double j10, double j11):
-            array{std::array<double, 2>{j00, j01}, std::array<double, 2>{j10, j11}} {}
+        Jacobian(double j00, double j01, double j10, double j11) {
+            (*this)[0][0] = j00;
+            (*this)[0][1] = j01;
+            (*this)[1][0] = j10;
+            (*this)[1][1] = j11;
+        }
 
         Jacobian(std::initializer_list<std::initializer_list<double>> list):
             Jacobian{*(list.begin()->begin()), *(list.begin()->begin() + 1), *((list.begin() + 1)->begin()),
