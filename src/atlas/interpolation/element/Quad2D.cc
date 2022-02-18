@@ -52,8 +52,9 @@ method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, doubl
     method::Intersect isect;
 
     // work out if point is within the polygon
-    if (!inQuadrilateral({p.x(), p.y()}))
+    if (!inQuadrilateral({p.x(), p.y()})) {
         return isect.fail();
+    }
 
     auto solve_weight = [epsilon](const double a, const double b, const double c, double& wght) -> bool {
         if (std::abs(a) > epsilon) {
@@ -62,8 +63,8 @@ method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, doubl
             double det = b * b - 4. * a * c;
             if (det >= 0.) {
                 double inv_two_a = 1. / (2. * a);
-                double sqrt_det = std::sqrt(det);
-                double root_a = (-b + sqrt_det) * inv_two_a;
+                double sqrt_det  = std::sqrt(det);
+                double root_a    = (-b + sqrt_det) * inv_two_a;
                 if ((root_a > -epsilon) && (root_a < (1. + epsilon))) {
                     wght = root_a;
                     return true;
@@ -101,16 +102,18 @@ method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, doubl
     double b = cross2d(vC, vB) + cross2d(vA, vD);
     double c = cross2d(vA, vB);
 
-    if (!solve_weight(a, b, c, isect.v))
-      return isect.fail();
+    if (!solve_weight(a, b, c, isect.v)) {
+        return isect.fail();
+    }
 
     // solve for u
     a = cross2d(vB, vD);
     b = cross2d(vB, vC) + cross2d(vA, vD);
     c = cross2d(vA, vC);
 
-    if (!solve_weight(a, b, c, isect.u))
-      return isect.fail();
+    if (!solve_weight(a, b, c, isect.u)) {
+        return isect.fail();
+    }
 
     return isect.success();
 }
@@ -163,9 +166,7 @@ double Quad2D::area() const {
 
 bool Quad2D::inQuadrilateral(const Vector2D& p) const {
     // point p must be on the inside of all quad edges to be inside the quad.
-    return cross2d(p - v00, p - v10) >= 0. &&
-           cross2d(p - v10, p - v11) >= 0. &&
-           cross2d(p - v11, p - v01) >= 0. &&
+    return cross2d(p - v00, p - v10) >= 0. && cross2d(p - v10, p - v11) >= 0. && cross2d(p - v11, p - v01) >= 0. &&
            cross2d(p - v01, p - v00) >= 0;
 }
 

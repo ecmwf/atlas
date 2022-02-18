@@ -32,16 +32,18 @@ method::Intersect Triag2D::intersects(const PointXY& r, double edgeEpsilon, doub
 
     Vector2D rvec{r.data()};
 
-    if (!inTriangle(rvec)) return isect.fail();
+    if (!inTriangle(rvec)) {
+        return isect.fail();
+    }
 
     Vector2D e1{v10 - v00};
     Vector2D e2{v11 - v00};
     Vector2D pvec{rvec - v00};
 
     // solve u e1 + v e2 = pvec for u and v
-    float invDet = 1. /(e1.x() * e2.y() - e2.x() * e1.y());
-    isect.u = (pvec.x() * e2.y() - e2.x() * pvec.y()) * invDet;
-    isect.v = (e1.x() * pvec.y() - pvec.x() * e1.y()) * invDet;
+    float invDet = 1. / (e1.x() * e2.y() - e2.x() * e1.y());
+    isect.u      = (pvec.x() * e2.y() - e2.x() * pvec.y()) * invDet;
+    isect.v      = (e1.x() * pvec.y() - pvec.x() * e1.y()) * invDet;
 
     // clamp values between 0 and 1
     isect.u = std::max(0.0, std::min(isect.u, 1.0));
@@ -79,8 +81,7 @@ bool Triag2D::validate() const {
     double dot3 = N201 * N012;
 
     // all normals must point same way
-    bool is_inside = ((dot1 >= 0. && dot2 >= 0. && dot3 >= 0.) ||
-                      (dot1 <= 0. && dot2 <= 0. && dot3 <= 0.));
+    bool is_inside = ((dot1 >= 0. && dot2 >= 0. && dot3 >= 0.) || (dot1 <= 0. && dot2 <= 0. && dot3 <= 0.));
     return is_inside;
 }
 
@@ -95,8 +96,9 @@ bool Triag2D::inTriangle(const Vector2D& p) const {
         double zst2 = cross2d(p - v10, p - v11);
         if (zst2 >= 0.0) {
             double zst3 = cross2d(p - v11, p - v00);
-            if (zst3 >= 0.0)
+            if (zst3 >= 0.0) {
                 return true;
+            }
         }
     }
 

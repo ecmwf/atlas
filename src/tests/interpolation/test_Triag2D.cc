@@ -54,21 +54,21 @@ CASE("test_triag_area") {
 CASE("test_intersection_equilateral_triangle") {
     PointXY v0(0., 0.);
     PointXY v1(1., 0.);
-    PointXY v2(0.5, std::sqrt(3.0)/2.0);
+    PointXY v2(0.5, std::sqrt(3.0) / 2.0);
 
     Triag2D triangle(v0.data(), v1.data(), v2.data());
 
     EXPECT(triangle.validate());
 
-    PointXY orig(0.5, std::sqrt(3.0)/6.0);
+    PointXY orig(0.5, std::sqrt(3.0) / 6.0);
 
     Intersect isect = triangle.intersects(orig);
 
     EXPECT(isect);
     std::cout << "isect.u " << isect.u << std::endl;
     std::cout << "isect.v " << isect.v << std::endl;
-    EXPECT_APPROX_EQ(isect.u, 1./3., relative_error);
-    EXPECT_APPROX_EQ(isect.v, 1./3., relative_error);
+    EXPECT_APPROX_EQ(isect.u, 1. / 3., relative_error);
+    EXPECT_APPROX_EQ(isect.v, 1. / 3., relative_error);
 }
 
 CASE("test_intersection_right_angled_triangle") {
@@ -81,15 +81,15 @@ CASE("test_intersection_right_angled_triangle") {
     EXPECT(triangle.validate());
 
     // average of the coordinates is the centre
-    PointXY orig(2.0, (4.0/3.0));
+    PointXY orig(2.0, (4.0 / 3.0));
 
     Intersect isect = triangle.intersects(orig);
 
     EXPECT(isect);
     std::cout << "isect.u " << isect.u << std::endl;
     std::cout << "isect.v " << isect.v << std::endl;
-    EXPECT_APPROX_EQ(isect.u, 1./3., relative_error);
-    EXPECT_APPROX_EQ(isect.v, 1./3., relative_error);
+    EXPECT_APPROX_EQ(isect.u, 1. / 3., relative_error);
+    EXPECT_APPROX_EQ(isect.v, 1. / 3., relative_error);
 }
 
 CASE("test_intersection_offset_right_angled_triangle") {
@@ -115,22 +115,22 @@ CASE("test_intersection_offset_right_angled_triangle") {
 CASE("test_intersection_rotatedtriangle") {
     const double root2 = std::sqrt(2.);
     PointXY v0(0., 0.);
-    PointXY v1(3./root2, -3./root2);
-    PointXY v2(7./root2, 1./root2);
+    PointXY v1(3. / root2, -3. / root2);
+    PointXY v2(7. / root2, 1. / root2);
 
     Triag2D triangle(v0.data(), v1.data(), v2.data());
 
     EXPECT(triangle.validate());
 
-    PointXY orig(10./(3.*root2), -2./(3.*root2));
+    PointXY orig(10. / (3. * root2), -2. / (3. * root2));
 
     Intersect isect = triangle.intersects(orig);
 
     EXPECT(isect);
     std::cout << "isect.u " << isect.u << std::endl;
     std::cout << "isect.v " << isect.v << std::endl;
-    EXPECT_APPROX_EQ(isect.u, 1./3., relative_error);
-    EXPECT_APPROX_EQ(isect.v, 1./3., relative_error);
+    EXPECT_APPROX_EQ(isect.u, 1. / 3., relative_error);
+    EXPECT_APPROX_EQ(isect.v, 1. / 3., relative_error);
 }
 
 CASE("test_intersection_nointersect") {

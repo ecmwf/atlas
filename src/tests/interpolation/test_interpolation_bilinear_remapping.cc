@@ -95,9 +95,7 @@ CASE("test_interpolation_N64_to_O32_bilinear_remapping") {
     Field field_target = fs_tgt.createField<double>(option::name("target"));
 
     const double deg2rad = M_PI / 180., c_lat = 0. * M_PI, c_lon = 1. * M_PI, c_rad = 2. * M_PI / 9.;
-    auto func = [](double lon, double lat, double t) {
-      return std::cos(lat)*std::sin(lon);
-    };
+    auto func = [](double lon, double lat, double t) { return std::cos(lat) * std::sin(lon); };
 
     array::ArrayView<double, 2> lonlat = array::make_view<double, 2>(fs_src.nodes().lonlat());
     array::ArrayView<double, 1> source = array::make_view<double, 1>(field_source);
@@ -105,32 +103,31 @@ CASE("test_interpolation_N64_to_O32_bilinear_remapping") {
     for (idx_t j = 0; j < lonlat.shape(0); ++j) {
         const double lon = deg2rad * lonlat(j, 0);
         const double lat = deg2rad * lonlat(j, 1);
-        source(j) = func(lon, lat, 1.);
+        source(j)        = func(lon, lat, 1.);
     }
 
     interpolation.execute(field_source, field_target);
 
-    array::ArrayView<double, 1> target = array::make_view<double, 1>(field_target);
+    array::ArrayView<double, 1> target     = array::make_view<double, 1>(field_target);
     array::ArrayView<double, 2> lonlat_tgt = array::make_view<double, 2>(fs_tgt.nodes().lonlat());
     std::vector<double> diffs;
     ATLAS_ASSERT(target.shape(0) == lonlat_tgt.shape(0));
     for (idx_t j = 0; j < lonlat_tgt.shape(0); ++j) {
-        const double lon = deg2rad * lonlat_tgt(j, 0);
-        const double lat = deg2rad * lonlat_tgt(j, 1);
+        const double lon   = deg2rad * lonlat_tgt(j, 0);
+        const double lat   = deg2rad * lonlat_tgt(j, 1);
         const double check = func(lon, lat, 1.);
-        diffs.push_back((target(j)-check)*(target(j)-check));
-        if (std::abs(target(j)-check)>0.1)
-            Log::info() << "lon, lat:" << lon <<", " << lat << " target, check: " << target(j)
-                        << ", " << check << std::endl;
+        diffs.push_back((target(j) - check) * (target(j) - check));
+        if (std::abs(target(j) - check) > 0.1) {
+            Log::info() << "lon, lat:" << lon << ", " << lat << " target, check: " << target(j) << ", " << check
+                        << std::endl;
+        }
     }
     static double interpolation_tolerance = 1.e-3;
-    double std_dev = std::accumulate(diffs.begin(), diffs.end(), decltype(diffs)::value_type(0)) /
-                     diffs.size();
+    double std_dev = std::accumulate(diffs.begin(), diffs.end(), decltype(diffs)::value_type(0)) / diffs.size();
     double max_dev = std::sqrt(*std::max_element(diffs.begin(), diffs.end()));
     Log::info() << " standard deviation " << std_dev << " max " << max_dev << std::endl;
     EXPECT_APPROX_EQ(std_dev, 0.0, 1.e-6);
     EXPECT_APPROX_EQ(max_dev, 0.0, interpolation_tolerance);
-
 }
 //-----------------------------------------------------------------------------
 
