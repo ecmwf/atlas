@@ -160,6 +160,8 @@ grid/detail/grid/LonLat.h
 grid/detail/grid/LonLat.cc
 grid/detail/grid/Regional.h
 grid/detail/grid/Regional.cc
+grid/detail/grid/RegionalVariableResolution.h
+grid/detail/grid/RegionalVariableResolution.cc
 grid/detail/grid/Healpix.h
 grid/detail/grid/Healpix.cc
 
@@ -334,6 +336,8 @@ mesh/actions/ExtendNodesGlobal.cc
 mesh/actions/BuildDualMesh.h
 mesh/actions/BuildCellCentres.cc
 mesh/actions/BuildCellCentres.h
+mesh/actions/Build2DCellCentres.cc
+mesh/actions/Build2DCellCentres.h
 mesh/actions/BuildConvexHull3D.cc
 mesh/actions/BuildConvexHull3D.h
 mesh/actions/BuildDualMesh.cc
@@ -529,8 +533,12 @@ interpolation/Vector2D.cc
 interpolation/Vector2D.h
 interpolation/Vector3D.cc
 interpolation/Vector3D.h
+interpolation/element/Quad2D.h
+interpolation/element/Quad2D.cc
 interpolation/element/Quad3D.cc
 interpolation/element/Quad3D.h
+interpolation/element/Triag2D.cc
+interpolation/element/Triag2D.h
 interpolation/element/Triag3D.cc
 interpolation/element/Triag3D.h
 interpolation/method/Intersect.cc
@@ -541,12 +549,16 @@ interpolation/method/MethodFactory.cc
 interpolation/method/MethodFactory.h
 interpolation/method/PointIndex3.cc
 interpolation/method/PointIndex3.h
+interpolation/method/PointIndex2.cc
+interpolation/method/PointIndex2.h
 interpolation/method/PointSet.cc
 interpolation/method/PointSet.h
 interpolation/method/Ray.cc
 interpolation/method/Ray.h
 interpolation/method/fe/FiniteElement.cc
 interpolation/method/fe/FiniteElement.h
+interpolation/method/bil/BilinearRemapping.cc
+interpolation/method/bil/BilinearRemapping.h
 interpolation/method/knn/GridBox.cc
 interpolation/method/knn/GridBox.h
 interpolation/method/knn/GridBoxAverage.cc
@@ -701,6 +713,8 @@ runtime/Exception.h
 util/Config.cc
 util/Config.h
 util/Constants.h
+util/ConvexSphericalPolygon.cc
+util/ConvexSphericalPolygon.h
 util/Earth.h
 util/GaussianLatitudes.cc
 util/GaussianLatitudes.h
@@ -729,6 +743,8 @@ util/detail/BlackMagic.h
 util/detail/Cache.h
 util/detail/Debug.h
 util/detail/KDTree.h
+util/function/VortexRollup.h
+util/function/VortexRollup.cc
 )
 
 list( APPEND atlas_internals_srcs

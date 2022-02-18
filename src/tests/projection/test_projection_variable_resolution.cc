@@ -12,10 +12,13 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/projection.h"
 #include "atlas/util/Config.h"
+#include "atlas/util/Point.h"
+#include "atlas/util/Rotation.h"
 #include "tests/AtlasTestEnvironment.h"
 
 using namespace atlas::util;
 using namespace atlas::grid;
+using atlas::util::Rotation;
 
 namespace {
 
@@ -61,8 +64,8 @@ const std::vector<double> lat_LAM_reg = {-8.264495551724226,     -7.613347275862
                                          9.31650789655281919,    9.967656172414931959,  10.61880444827704473,
                                          11.269952724139157,     11.92110100000127};
 
-const int nx                 = 34;  // How do you find this?
-const int ny                 = 32;
+const int nx = 34;  // These number are here hardcoded, but there is a test using x/yrange_outer and delta_inner
+const int ny = 32;
 const double xrange_outer[2] = {348.13120344827576, 369.6190965517242};
 const double yrange_outer[2] = {-8.264495551724226, 11.92110100000127};
 const double xrange_inner[2] = {351.386944827586319, 366.363355172413776};
@@ -72,33 +75,174 @@ const double rim_width   = 4.;
 const double delta_outer = 1.;
 const double delta_inner = 0.6511482758621128;
 
+///< correction used
+constexpr float epstest = std::numeric_limits<float>::epsilon();
+
+
 auto make_var_ratio_projection = [](double var_ratio) {
     Config conf;
     conf.set("type", "variable_resolution");
-    conf.set("var_ratio", var_ratio);
-    conf.set("delta_low", delta_outer);
-    conf.set("delta_hi", delta_inner);
-    conf.set("x_reg_start", xrange_inner[0]);
-    conf.set("x_reg_end", xrange_inner[1]);
-    conf.set("y_reg_start", yrange_inner[0]);
-    conf.set("y_reg_end", yrange_inner[1]);
-    conf.set("startx", xrange_outer[0]);
-    conf.set("endx", xrange_outer[1]);
-    conf.set("starty", yrange_outer[0]);
-    conf.set("endy", yrange_outer[1]);
-    conf.set("north_pole", {0.0, 90.0});
-    conf.set("rim_widthx", rim_width);
-    conf.set("rim_widthy", rim_width);
+    conf.set("outer.dx", delta_outer);        ///< resolution of the external regular grid (rim)
+    conf.set("inner.dx", delta_inner);        ///< resolution of the regional model (regular grid)
+    conf.set("progression", var_ratio);       ///< power used for the stretching
+    conf.set("inner.xmin", xrange_inner[0]);  ///< xstart of the internal regional grid
+    conf.set("inner.ymin", yrange_inner[0]);  ///< ystart of the internal regional grid
+    conf.set("inner.xend", xrange_inner[1]);  ///< xend of the regular part of stretched internal grid
+    conf.set("inner.yend", yrange_inner[1]);  ///< yend of the regular part of stretched internal grid
+    conf.set("outer.xmin", xrange_outer[0]);  ///< original domain startx
+    conf.set("outer.xend", xrange_outer[1]);  ///< original domain endx
+    conf.set("outer.ymin", yrange_outer[0]);  ///< original domain starty
+    conf.set("outer.yend", yrange_outer[1]);  ///< original domain endy
+    conf.set("outer.width", rim_width);
     return atlas::Projection(conf);
 };
 
+auto make_var_ratio_projection_rot = [](double var_ratio, std::vector<double> north_pole) {
+    Config conf;
+    conf.set("type", "rotated_variable_resolution");
+    conf.set("outer.dx", delta_outer);        ///< resolution of the external regular grid (rim)
+    conf.set("inner.dx", delta_inner);        ///< resolution of the regional model (regular grid)
+    conf.set("progression", var_ratio);       ///< power used for the stretching
+    conf.set("inner.xmin", xrange_inner[0]);  ///< xstart of the internal regional grid
+    conf.set("inner.ymin", yrange_inner[0]);  ///< ystart of the internal regional grid
+    conf.set("inner.xend", xrange_inner[1]);  ///< xend of the regular part of stretched internal grid
+    conf.set("inner.yend", yrange_inner[1]);  ///< yend of the regular part of stretched internal grid
+    conf.set("outer.xmin", xrange_outer[0]);  ///< original domain startx
+    conf.set("outer.xend", xrange_outer[1]);  ///< original domain endx
+    conf.set("outer.ymin", yrange_outer[0]);  ///< original domain starty
+    conf.set("outer.yend", yrange_outer[1]);  ///< original domain endy
+    conf.set("outer.width", rim_width);
+    conf.set("north_pole", north_pole);
+    return atlas::Projection(conf);
+};
+
+
 auto not_equal = [](double a, double b) { return std::abs(b - a) > 1.e-5; };
+
+static double new_ratio(int n_stretched, double var_ratio) {
+    /**
+     *  compute ratio,
+     *  change stretching factor so that high and low grids
+     *  retain original sizes
+     */
+
+
+    ///< number of variable (stretched) grid points in one side
+    double var_ints_f = n_stretched * 1.;
+    double logr       = std::log(var_ratio);
+    double log_ratio  = (var_ints_f - 0.5) * logr;
+
+    return std::exp(log_ratio / n_stretched);
+};
+
+/**
+ *  n_stretched and n_rim. Outside the regular grid, only one side,
+ *  number of grid points in the stretched grid and in the rim region
+*/
+auto create_stretched_grid = [](const int& n_points_, const int& n_stretched_, const double& var_ratio_,
+                                const int& n_rim, double lamphi, const bool& L_long) {
+    double new_ratio_{};
+    double range_outer[2]{};
+
+    auto normalised = [L_long](double p) {
+        if (L_long) {
+            p = (p < 180) ? p + 360.0 : p;
+        }
+        return p;
+    };
+
+    lamphi = normalised(lamphi);
+
+    if (L_long) {
+        range_outer[0] = xrange_outer[0];
+        range_outer[1] = xrange_outer[1];
+    }
+    else {
+        range_outer[0] = yrange_outer[0];
+        range_outer[1] = yrange_outer[1];
+    }
+
+    if (var_ratio_ > 1.) {
+        //< compute number of points in the original regular grid
+        // THIS IS TO NORMALIZE
+        int n_idx_ = ((lamphi + epstest - range_outer[0]) / delta_inner) + 1;
+        // first point in the internal regular grid
+        int nstart_int = n_rim + n_stretched_ + 1;
+        // last point in the internal regular grid
+        int nend_int = n_points_ - (n_rim + n_stretched_);
+
+
+        double delta      = delta_inner;
+        double delta_last = delta_inner;
+        double delta_add{};
+        double delta_tot{};
+
+        new_ratio_ = new_ratio(n_stretched_, var_ratio_);
+
+        //< stretched area
+        //< n_idx_ start from 1
+        if (((n_idx_ < nstart_int) && (n_idx_ > n_rim)) || ((n_idx_ > nend_int) && (n_idx_ < n_points_ - n_rim + 1))) {
+            //< number of stretched points for the loop
+            int n_st{};
+            if (n_idx_ < nstart_int) {
+                n_st = nstart_int - n_idx_;
+            }
+            else {
+                n_st = n_idx_ - nend_int;
+            }
+
+            delta_tot = 0.;
+            for (int ix = 0; ix < n_st; ix += 1) {
+                delta_last = delta * new_ratio_;
+                delta_add  = delta_last - delta_inner;
+                delta      = delta_last;
+                delta_tot += delta_add;
+            }
+
+            if (n_idx_ < nstart_int) {
+                lamphi -= delta_tot;
+            }
+            else {
+                lamphi += delta_tot;
+            }
+        }
+
+        //< rim region
+        if (((n_idx_ < n_rim + 1)) || (n_idx_ > n_points_ - n_rim)) {
+            delta_tot = 0.;
+            //compute total stretched
+            for (int ix = 0; ix < n_stretched_; ix += 1) {
+                delta_last = delta * new_ratio_;
+                delta_add  = delta_last - delta_inner;
+                delta      = delta_last;
+                delta_tot += delta_add;
+            }
+
+
+            double drim_size = ((rim_width / 2.) / n_rim) - delta_inner;
+            int ndrim{};
+
+            if (n_idx_ < nstart_int) {
+                ndrim  = nstart_int - n_stretched_ - n_idx_;
+                lamphi = lamphi - delta_tot - (ndrim * drim_size);
+            }
+            else {
+                ndrim  = n_idx_ - (n_points_ - n_rim);
+                lamphi = lamphi + delta_tot + ndrim * drim_size;
+            }
+        }
+    }
+
+    //< return the new point in the stretched grid
+    return normalised(lamphi);
+};
 
 };  // namespace
 
 
 namespace atlas {
 namespace test {
+
 
 CASE("Understanding of the above data") {
     const std::vector<double>& v = lon_LAM_str;
@@ -131,9 +275,6 @@ CASE("Understanding of the above data") {
     int nx_var       = 6;
     int nx_outer     = 4;
     double var_ratio = 1.13;
-
-    constexpr double epstest =
-        std::numeric_limits<float>::epsilon();  ///< correction used to change from double to integer
 
     int inner_i_begin = -1;
     int inner_i_end   = -1;
@@ -182,11 +323,69 @@ CASE("Understanding of the above data") {
     EXPECT_APPROX_EQ(new_ratio, 1.10722, 1.e-5);
 }
 
+//< create stretched grid from regular grid
+
+CASE("var_ratio_create = 1.13") {
+    ///< definition of grid
+    constexpr float epstest = std::numeric_limits<float>::epsilon();
+    int nx_reg              = ((xrange_outer[1] - xrange_outer[0] + epstest) / delta_inner) + 1;
+    int ny_reg              = ((yrange_outer[1] - yrange_outer[0] + epstest) / delta_inner) + 1;
+
+
+    auto grid_st =
+        RegularGrid{grid::LinearSpacing{xrange_outer[0], xrange_outer[1], nx_reg},
+                    grid::LinearSpacing{yrange_outer[0], yrange_outer[1], ny_reg}, make_var_ratio_projection(1.13)};
+
+
+    ///< check over regular grid points stretched using new atlas object and check using look-up table
+    for (idx_t j = 0; j < grid_st.ny(); ++j) {
+        for (idx_t i = 0; i < grid_st.nx(); ++i) {
+            auto ll = grid_st.lonlat(i, j);
+            EXPECT_APPROX_EQ(ll.lon(), lon_LAM_str[i], 1.e-10);
+            EXPECT_APPROX_EQ(ll.lat(), lat_LAM_str[j], 1.e-10);
+        }
+    }
+
+
+    ///< check over regular grid points stretched using new atlas object and check using function above
+    for (idx_t j = 0; j < grid_st.ny(); ++j) {
+        for (idx_t i = 0; i < grid_st.nx(); ++i) {
+            auto ll_st_lon = create_stretched_grid(nx_reg, 3, 1.13, 2, lon_LAM_reg[i], true);
+            auto ll_st_lat = create_stretched_grid(ny_reg, 3, 1.13, 2, lat_LAM_reg[j], false);
+            EXPECT_APPROX_EQ(ll_st_lon, lon_LAM_str[i], 1.e-10);
+            EXPECT_APPROX_EQ(ll_st_lat, lat_LAM_str[j], 1.e-10);
+        }
+    }
+
+    ///< check internal regular grid
+    idx_t ymid             = grid_st.ny() / 2;
+    idx_t xmid             = grid_st.nx() / 2;
+    auto expect_equal_dlon = [&](int i, double dlon) {
+        EXPECT_APPROX_EQ(grid_st.lonlat(i + 1, ymid).lon() - grid_st.lonlat(i, ymid).lon(), dlon, 1.e-10);
+    };
+    auto expect_equal_dlat = [&](int j, double dlat) {
+        EXPECT_APPROX_EQ(grid_st.lonlat(xmid, j + 1).lat() - grid_st.lonlat(xmid, j).lat(), dlat, 1.e-10);
+    };
+    expect_equal_dlon(0, delta_outer);
+    expect_equal_dlon(xmid, delta_inner);
+    expect_equal_dlat(0, delta_outer);
+    expect_equal_dlat(ymid, delta_inner);
+
+    //< Check that the spacing in xy coordinates matches "delta_inner"
+    for (int i = 0; i < grid_st.nx() - 1; ++i) {
+        EXPECT_APPROX_EQ(grid_st.xy(i + 1, ymid).x() - grid_st.xy(i, ymid).x(), delta_inner, 1.e-10);
+    }
+    for (int j = 0; j < grid_st.ny() - 1; ++j) {
+        EXPECT_APPROX_EQ(grid_st.xy(xmid, j + 1).y() - grid_st.xy(xmid, j).y(), delta_inner, 1.e-10);
+    }
+}
+
 
 CASE("var_ratio = 1.13") {
     ///< definition of grid
     auto grid = RegularGrid{grid::LinearSpacing{xrange_outer[0], xrange_outer[1], nx},
                             grid::LinearSpacing{yrange_outer[0], yrange_outer[1], ny}, make_var_ratio_projection(1.13)};
+
 
     ///< check over regular grid points stretched using new atlas object and check using look-up table
     for (idx_t j = 0; j < grid.ny(); ++j) {
@@ -210,7 +409,7 @@ CASE("var_ratio = 1.13") {
     expect_equal_dlat(0, delta_outer);
     expect_equal_dlat(ymid, delta_inner);
 
-    // Check that the spacing in xy coordinates matches "delta_inner"
+    //< Check that the spacing in xy coordinates matches "delta_inner"
     for (int i = 0; i < grid.nx() - 1; ++i) {
         EXPECT_APPROX_EQ(grid.xy(i + 1, ymid).x() - grid.xy(i, ymid).x(), delta_inner, 1.e-10);
     }
@@ -296,6 +495,115 @@ CASE("var_ratio = 1.0") {
     output::Gmsh{"reg_mesh_lonlat.msh", Config("coordinates", "lonlat")("info", true)}.write(mesh);
     output::Gmsh{"reg_mesh_xy.msh", Config("coordinates", "xy")("info", true)}.write(mesh);
 }
+
+
+CASE("var_ratio_rot = 1.13") {
+    ///< check over regular grid points stretched using new atlas object and check using look-up table
+    ///< in this case add a rotation
+    Config config;
+    std::vector<double> north_pole = {-176., 40.};
+    config.set("north_pole", north_pole);
+
+    ///< definition of grid I have to rotate this
+    auto proj_st = make_var_ratio_projection_rot(1.13, north_pole);
+    auto grid    = RegularGrid{grid::LinearSpacing{xrange_outer[0], xrange_outer[1], nx},
+                            grid::LinearSpacing{yrange_outer[0], yrange_outer[1], ny}, proj_st};
+
+    Rotation rotation(config);
+
+    for (idx_t j = 0; j < grid.ny(); ++j) {
+        for (idx_t i = 0; i < grid.nx(); ++i) {
+            ///<compare rotated stretched grid ll, with the defined array to rotate
+            auto ll     = grid.lonlat(i, j);
+            auto ll_str = {lon_LAM_str[i], lat_LAM_str[j]};
+            EXPECT_APPROX_EQ(ll, rotation.rotate(ll_str), 1.e-8);
+        }
+    }
+
+    idx_t ymid = grid.ny() / 2;
+    idx_t xmid = grid.nx() / 2;
+
+    //< Check that the spacing in xy coordinates matches "delta_inner"
+    for (int i = 0; i < grid.nx() - 1; ++i) {
+        EXPECT_APPROX_EQ(grid.xy(i + 1, ymid).x() - grid.xy(i, ymid).x(), delta_inner, 1.e-8);
+    }
+    for (int j = 0; j < grid.ny() - 1; ++j) {
+        EXPECT_APPROX_EQ(grid.xy(xmid, j + 1).y() - grid.xy(xmid, j).y(), delta_inner, 1.e-8);
+    }
+    ///< Set meshes
+    ///< define mesh to write in file
+    auto mesh = Mesh{grid};
+
+    /**
+     *  Write mesh in gmsh object.
+     *  output under:
+     *   <build-directory>/atlas/src/tests/grid/
+     */
+
+    output::Gmsh{"stretch_mesh_lonlat_rot.msh", Config("coordinates", "lonlat")("info", true)}.write(mesh);
+    output::Gmsh{"stretch_mesh_xy_rot.msh", Config("coordinates", "xy")("info", true)}.write(mesh);
+
+
+    /** Create additional regular grid with same delta_hi
+     *  for additional .msh file with lon lat in approximately the same range
+     *  as the stretched one.
+     */
+
+    int nx_new = 37;
+    int ny_new = 35;
+
+    ///< 37 the exact range would have 36.52 points
+    double alpha    = ((delta_inner * nx_new) - (xrange_outer[1] - xrange_outer[0])) / 2.;
+    double startx_n = xrange_outer[0] - alpha;
+    double endx_n   = xrange_outer[1] + alpha;
+    double starty_n = yrange_outer[0] - alpha;
+    double endy_n   = yrange_outer[1] + alpha;
+
+    ///
+    ///< create regular grid
+    auto grid_reg_approx =
+        RegularGrid{LinearSpacing{startx_n, endx_n, nx_new}, LinearSpacing{starty_n, endy_n, ny_new}};
+
+    /**
+     *  Write mesh in gmsh object.
+     *  output under:
+     *   <build-directory>/atlas/src/tests/grid/
+     */
+    output::Gmsh("grid_regrot_approx_lonlat.msh", Config("coordinates", "lonlat")("info", true))
+        .write(Mesh{grid_reg_approx});
+}
+
+CASE("var_ratio_rot_inv = 1.13") {
+    ///< check over regular grid points stretched using new atlas object and check using look-up table
+    ///< in this case add a rotation
+    Config config;
+    ///< definition of grid I have to rotate this
+    auto proj_st_nr = make_var_ratio_projection(1.13);
+    auto grid_nr    = RegularGrid{grid::LinearSpacing{xrange_outer[0], xrange_outer[1], nx},
+                               grid::LinearSpacing{yrange_outer[0], yrange_outer[1], ny}, proj_st_nr};
+
+    ///< definition of grid I have to rotate this
+    auto proj_st = make_var_ratio_projection_rot(1.13, {-176., 40.});
+    auto grid    = RegularGrid{grid::LinearSpacing{xrange_outer[0], xrange_outer[1], nx},
+                            grid::LinearSpacing{yrange_outer[0], yrange_outer[1], ny}, proj_st};
+
+
+    ///< Test the inverse
+    for (idx_t j = 0; j < grid.ny(); ++j) {
+        for (idx_t i = 0; i < grid.nx(); ++i) {
+            ///<compare rotated stretched grid ll, with the defined array to rotate
+            ///< rotated
+            Point2 ll_str = grid.lonlat(i, j);
+            ///< unrotated
+            Point2 ll_str1 = {lon_LAM_str[i], lat_LAM_str[j]};
+            //< from stretched rotated to unrotated regular
+            grid.projection().lonlat2xy(ll_str);
+            Point2 ll_reg = {lon_LAM_reg[i], lat_LAM_reg[j]};
+            EXPECT_APPROX_EQ(ll_str, ll_reg, 1.e-8);
+        }
+    }
+}
+
 
 }  // namespace test
 }  // namespace atlas

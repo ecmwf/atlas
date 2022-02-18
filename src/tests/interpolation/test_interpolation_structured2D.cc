@@ -21,6 +21,7 @@
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/function/VortexRollup.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -116,31 +117,6 @@ FunctionSpace output_functionspace(const Grid& grid) {
     return NodeColumns{output_mesh};
 }
 
-double vortex_rollup(double lon, double lat, double t) {
-    // lon and lat in degrees!
-
-    // Formula found in "A Lagrangian Particle Method with Remeshing for Tracer Transport on the Sphere"
-    // by Peter Bosler, James Kent, Robert Krasny, CHristiane Jablonowski, JCP 2015
-
-    lon *= M_PI / 180.;
-    lat *= M_PI / 180.;
-
-    auto sqr           = [](const double x) { return x * x; };
-    auto sech          = [](const double x) { return 1. / std::cosh(x); };
-    const double T     = 1.;
-    const double Omega = 2. * M_PI / T;
-    t *= T;
-    const double lambda_prime = std::atan2(-std::cos(lon - Omega * t), std::tan(lat));
-    const double rho          = 3. * std::sqrt(1. - sqr(std::cos(lat)) * sqr(std::sin(lon - Omega * t)));
-    double omega              = 0.;
-    double a                  = util::Earth::radius();
-    if (rho != 0.) {
-        omega = 0.5 * 3 * std::sqrt(3) * a * Omega * sqr(sech(rho)) * std::tanh(rho) / rho;
-    }
-    double q = 1. - std::tanh(0.2 * rho * std::sin(lambda_prime - omega / a * t));
-    return q;
-};
-
 CASE("which scheme?") {
     Log::info() << scheme().getString("type") << std::endl;
 }
@@ -162,7 +138,7 @@ CASE("test_interpolation_structured using functionspace API") {
         auto lonlat = array::make_view<double, 2>(input_fs.xy());
         auto source = array::make_view<double, 1>(field_source);
         for (idx_t n = 0; n < input_fs.size(); ++n) {
-            source(n) = vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 1.);
+            source(n) = util::function::vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 1.);
         }
 
         EXPECT(field_source.dirty());
@@ -202,7 +178,7 @@ CASE("test_interpolation_structured using grid API") {
 
         idx_t n{0};
         for (auto p : input_grid.lonlat()) {
-            src_data[n++] = vortex_rollup(p.lon(), p.lat(), 1.);
+            src_data[n++] = util::function::vortex_rollup(p.lon(), p.lat(), 1.);
         }
 
         // Wrap memory in atlas Fields and interpolate
@@ -259,7 +235,7 @@ CASE("test_interpolation_structured using fs API multiple levels") {
     auto source = array::make_view<double, 2>(field_source);
     for (idx_t n = 0; n < input_fs.size(); ++n) {
         for (idx_t k = 0; k < 3; ++k) {
-            source(n, k) = vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 0.5 + double(k) / 2);
+            source(n, k) = util::function::vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 0.5 + double(k) / 2);
         }
     }
     interpolation.execute(field_source, field_target);
@@ -281,7 +257,7 @@ struct AdjointTolerance {
 template <>
 const double AdjointTolerance<double>::value = 2.e-14;
 template <>
-const float AdjointTolerance<float>::value = 4.e-6;
+const float AdjointTolerance<float>::value = 2.e-5;
 
 
 template <typename Value>
@@ -307,7 +283,7 @@ void test_interpolation_structured_using_fs_API_for_fieldset() {
         auto source = array::make_view<Value, 2>(field_source);
         for (idx_t n = 0; n < input_fs.size(); ++n) {
             for (idx_t k = 0; k < 3; ++k) {
-                source(n, k) = vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 0.5 + double(k) / 2);
+                source(n, k) = util::function::vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 0.5 + double(k) / 2);
             }
         }
     }
@@ -483,7 +459,7 @@ CASE("ATLAS-315: Target grid with domain West of 0 degrees Lon") {
     auto source        = array::make_view<double, 1>(field_src);
     constexpr double k = 1;
     for (idx_t n = 0; n < source.size(); ++n) {
-        source(n) = vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 0.5 + double(k) / 2);
+        source(n) = util::function::vortex_rollup(lonlat(n, LON), lonlat(n, LAT), 0.5 + double(k) / 2);
     }
 
     interpolation.execute(field_src, field_tgt);

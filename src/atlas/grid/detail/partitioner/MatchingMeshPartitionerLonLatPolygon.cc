@@ -76,9 +76,13 @@ void MatchingMeshPartitionerLonLatPolygon::partition(const Grid& grid, int parti
 
     int min              = compute(east - 360.);
     constexpr double eps = 1.e-10;
-    if (min < 0 && east - west > 360. + eps) {
-        min = compute(west - eps);
-    }
+    bool second_try      = [&]() {
+        if (min < 0 && east - west > 360. + eps) {
+            min = compute(west - eps);
+            return true;
+        }
+        return false;
+    }();
     if (min < 0) {
         size_t i            = 0;
         size_t max_failures = grid.size();
@@ -95,10 +99,14 @@ void MatchingMeshPartitionerLonLatPolygon::partition(const Grid& grid, int parti
         }
         size_t nb_failures = failed_index.size();
         std::stringstream err;
+        err.precision(20);
         err << "Could not find partition of " << nb_failures
-            << " target grid points (source "
-               "mesh does not contain all target grid points)\n"
-               "Failed target grid points with global index:\n";
+            << " target grid points (source mesh does not contain all target grid points)\n"
+            << "Tried first normalizing coordinates with west=" << east - 360.;
+        if (second_try) {
+            err << "Tried second time normalizing coordinates with west=" << west - eps << "\n";
+        }
+        err << "Failed target grid points with global index:\n";
         for (size_t n = 0; n < nb_failures; ++n) {
             err << "  - " << std::setw(10) << std::left << failed_index[n] + 1 << " {lon,lat} : " << failed_lonlat[n]
                 << "\n";

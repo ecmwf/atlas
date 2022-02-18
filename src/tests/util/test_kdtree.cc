@@ -153,7 +153,7 @@ static const IndexKDTree& search() {
 }  // namespace
 //------------------------------------------------------------------------------------------------
 
-static bool ECKIT_515_implemented = (ATLAS_ECKIT_VERSION_INT >= 11302);  // version 1.13.2
+static bool ECKIT_515_implemented = ATLAS_ECKIT_VERSION_AT_LEAST(1, 13, 2);
 // --> implements eckit::KDTree::size() and eckit::KDTree::empty()
 
 CASE("test kdtree") {

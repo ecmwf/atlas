@@ -58,6 +58,18 @@ public:
         return *this;
     }
 
+    ATLAS_HOST_DEVICE
+    FortranIndex<Value>& operator+=(Value v) {
+        *(idx_) += v;
+        return *this;
+    }
+
+    ATLAS_HOST_DEVICE
+    FortranIndex<Value>& operator-=(Value v) {
+        *(idx_) -= v;
+        return *this;
+    }
+
     // implicit conversion
     ATLAS_HOST_DEVICE
     operator Value() const { return get(); }

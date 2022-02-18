@@ -1,0 +1,29 @@
+# (C) Crown copyright 2022, Met Office
+#
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+# regional projection using variable resolution
+
+type : "regional_variable_resolution"
+progression : 1.13
+inner :
+      xmin : 351.386944827586319
+      ymin : -5.008754172413662
+      xend : 366.363355172413776
+      yend : 8.665359620690706
+      dx : 0.6511482758621128
+outer :
+      xmin : 348.13120344827576
+      xend : 369.6190965517242
+      ymin : -8.264495551724226
+      yend : 11.92110100000127
+      dx : 1
+      width: 4.
+
+check :
+  size : 1088
+  lonlat(first) : [346.9838795150958504,-9.41181948490414122]
+  lonlat(last)  : [370.7664204849036764,13.06842493318118414]
+  bounding_box(n,w,s,e) : [13.06842493318118414,346.9838795150958504,-9.41181948490414122,370.766420484903676]
+  uid : aca7861d7ddeb4f2448c57484946d44e
+

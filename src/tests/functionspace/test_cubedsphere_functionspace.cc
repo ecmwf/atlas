@@ -18,6 +18,7 @@
 #include "atlas/meshgenerator/detail/cubedsphere/CubedSphereUtility.h"
 #include "atlas/option.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/function/VortexRollup.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -26,11 +27,6 @@ namespace test {
 
 // Allow small differences in the last few bits of a double aprroximately equal to 1
 constexpr double epsilon = std::numeric_limits<double>::epsilon() * 16;
-
-
-double testFunction(double lon, double lat) {
-    return std::sin(3 * lon * M_PI / 180) * std::sin(2 * lat * M_PI / 180);
-}
 
 template <typename BaseFunctionSpace>
 void testFunctionSpace(const functionspace::CubedSphereColumns<BaseFunctionSpace>& functionspace) {
@@ -63,7 +59,7 @@ void testFunctionSpace(const functionspace::CubedSphereColumns<BaseFunctionSpace
         EXPECT(!ghostView(index));
 
         // Set field values.
-        fieldView(index) = testFunction(lonLatView(index, LON), lonLatView(index, LAT));
+        fieldView(index) = util::function::vortex_rollup(lonLatView(index, LON), lonLatView(index, LAT), 1.0);
         ++testFuncCallCount;
     });
 
@@ -80,7 +76,8 @@ void testFunctionSpace(const functionspace::CubedSphereColumns<BaseFunctionSpace
         EXPECT(index == functionspace.index(t, i, j));
 
         // Set field values.
-        EXPECT_APPROX_EQ(fieldView(index), testFunction(lonLatView(index, LON), lonLatView(index, LAT)), epsilon);
+        EXPECT_APPROX_EQ(fieldView(index),
+                         util::function::vortex_rollup(lonLatView(index, LON), lonLatView(index, LAT), 1.0), epsilon);
 
         ++testFuncCallCount;
     });

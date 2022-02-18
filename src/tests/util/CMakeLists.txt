@@ -74,8 +74,9 @@ ecbuild_add_test( TARGET atlas_test_kdtree
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
-ecbuild_add_test( TARGET atlas_test_matrix
-  SOURCES  test_matrix.cc
-  LIBS     atlas
+ecbuild_add_test( TARGET atlas_test_convexsphericalpolygon
+  SOURCES test_convexsphericalpolygon.cc
+  LIBS atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
+

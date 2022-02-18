@@ -13,6 +13,7 @@
 #include "atlas/projection/detail/ProjectionImpl.h"
 #include "atlas/util/NormaliseLongitude.h"
 
+
 namespace atlas {
 namespace projection {
 namespace detail {
@@ -21,18 +22,19 @@ namespace detail {
 template <typename Rotation>
 class VariableResolutionProjectionT final : public ProjectionImpl {
 public:
-    using Spec = ProjectionImpl::Spec;
+    ///<using Spec = ProjectionImpl::Spec;
 
     ///< constructor uses parametrisation and point to stretch
-    VariableResolutionProjectionT(const eckit::Parametrisation&);
+    VariableResolutionProjectionT(const eckit::Parametrisation& p);
+    VariableResolutionProjectionT();
+
     ///< projection name
     static std::string static_type() { return Rotation::typePrefix() + "variable_resolution"; }
     std::string type() const override { return static_type(); }
 
-    ///< projection and inverse projection
+    // projection and inverse projection
 
     void xy2lonlat(double crd[]) const override;
-
     void lonlat2xy(double crd[]) const override;
 
     ///< specification for stretching
@@ -51,7 +53,8 @@ public:
     }
 
     void checkvalue(const double&, const double&) const;
-    double general_stretch(const double, const bool, const int, const int) const;
+    double general_stretch(const double, const bool, const int) const;
+    double general_stretch_inv(const double, const bool, const int) const;
 
 protected:
     double delta_outer;   ///< resolution of the external regular grid (rim) it should be larger than the last stretch
@@ -68,11 +71,11 @@ protected:
     double rim_widthx_;   ///< xsize of the rim
     double rim_widthy_;   ///< ysize of the rim
 
+
     //< variables derived from the configuration used for the projection
     double deltax_all, deltay_all;
     double add_xf_, add_yf_;
     int nx_stretched, ny_stretched, nx_rim, ny_rim;
-    int nx_, ny_;
     double check_x, check_y, check_st;
     double lam_hires_size;  ///< size regular grid x
     double phi_hires_size;  ///< size regular grid y
