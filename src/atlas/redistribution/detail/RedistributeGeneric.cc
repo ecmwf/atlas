@@ -215,42 +215,35 @@ std::pair<std::vector<idx_t>, std::vector<int>> getUidIntersection(const std::ve
 // Iterate over a field, in the order of an index list, and apply a functor to
 // each element.
 
-// Recursive ForEach to visit all elements of field.
-template <int Rank, int Dim = 0>
-struct ForEach {
-    template <typename Value, typename Functor, typename... Idxs>
-    static void apply(const std::vector<idx_t>& idxList, array::ArrayView<Value, Rank>& fieldView,
-                      const Functor& f, Idxs... idxs) {
-        // Iterate over dimension Dim of array.
-        for (idx_t idx = 0; idx < fieldView.shape(Dim); ++idx) {
-            ForEach<Rank, Dim + 1>::apply(idxList, fieldView, f, idxs..., idx);
+// Rank 1 overload.
+template <typename Value, typename Functor>
+void iterateField(const std::vector<idx_t>& idxList, array::ArrayView<Value, 1>& fieldView, const Functor& f) {
+    for (const idx_t i : idxList) {
+        f(fieldView(i));
+    }
+}
+
+// Rank 2 overload.
+template <typename Value, typename Functor>
+void iterateField(const std::vector<idx_t>& idxList, array::ArrayView<Value, 2>& fieldView, const Functor f) {
+    for (const idx_t i : idxList) {
+        for (idx_t j = 0; j < fieldView.shape(1); ++j) {
+            f(fieldView(i, j));
         }
     }
-};
+}
 
-// Beginning of recursion when Dim == 0.
-template <int Rank>
-struct ForEach<Rank, 0> {
-    template <typename Value, typename Functor, typename... Idxs>
-    static void apply(const std::vector<idx_t>& idxList, array::ArrayView<Value, Rank>& fieldView,
-                      const Functor& f, Idxs... idxs) {
-        // Iterate over dimension 0 of array in order defined by idxList.
-        for (idx_t idx : idxList) {
-            ForEach<Rank, 1>::apply(idxList, fieldView, f, idxs..., idx);
+// Rank 3 overload.
+template <typename Value, typename Functor>
+void iterateField(const std::vector<idx_t>& idxList, array::ArrayView<Value, 3>& fieldView, const Functor f) {
+    for (const idx_t i : idxList) {
+        for (idx_t j = 0; j < fieldView.shape(1); ++j) {
+            for (idx_t k = 0; k < fieldView.shape(2); ++k) {
+                f(fieldView(i, j, k));
+            }
         }
     }
-};
-
-// End of recursion when Dim == Rank.
-template <int Rank>
-struct ForEach<Rank, Rank> {
-    template <typename Value, typename Functor, typename... Idxs>
-    static void apply(const std::vector<idx_t>& idxList, array::ArrayView<Value, Rank>& fieldView,
-                      const Functor& f, Idxs... idxs) {
-        // Apply functor.
-        f(fieldView(idxs...));
-    }
-};
+}
 
 }  // namespace
 
@@ -304,23 +297,25 @@ void RedistributeGeneric::execute(const FieldSet& sourceFieldSet, FieldSet& targ
 
 // Determine datatype.
 void RedistributeGeneric::do_execute(const Field& sourceField, Field& targetField) const {
-
-    // Available datatypes defined in array/LocalView.cc
     switch (sourceField.datatype().kind()) {
         case array::DataType::KIND_REAL64: {
-            return do_execute<double>(sourceField, targetField);
+            do_execute<double>(sourceField, targetField);
+            break;
         }
         case array::DataType::KIND_REAL32: {
-            return do_execute<float>(sourceField, targetField);
+            do_execute<float>(sourceField, targetField);
+            break;
         }
         case array::DataType::KIND_INT64: {
-            return do_execute<long>(sourceField, targetField);
+            do_execute<long>(sourceField, targetField);
+            break;
         }
         case array::DataType::KIND_INT32: {
-            return do_execute<int>(sourceField, targetField);
+            do_execute<int>(sourceField, targetField);
+            break;
         }
         default: {
-            ATLAS_THROW_EXCEPTION("No implementation for data type " + sourceField.datatype().str());
+            throw_NotImplemented("No implementation for data type " + sourceField.datatype().str(), Here());
         }
     }
 }
@@ -328,20 +323,21 @@ void RedistributeGeneric::do_execute(const Field& sourceField, Field& targetFiel
 // Determine rank.
 template <typename Value>
 void RedistributeGeneric::do_execute(const Field& sourceField, Field& targetField) const {
-
-    // Available ranks defined in array/LocalView.cc
     switch (sourceField.rank()) {
-        case 1: {return do_execute<Value, 1>(sourceField, targetField);}
-        case 2: {return do_execute<Value, 2>(sourceField, targetField);}
-        case 3: {return do_execute<Value, 3>(sourceField, targetField);}
-        case 4: {return do_execute<Value, 4>(sourceField, targetField);}
-        case 5: {return do_execute<Value, 5>(sourceField, targetField);}
-        case 6: {return do_execute<Value, 6>(sourceField, targetField);}
-        case 7: {return do_execute<Value, 7>(sourceField, targetField);}
-        case 8: {return do_execute<Value, 8>(sourceField, targetField);}
-        case 9: {return do_execute<Value, 9>(sourceField, targetField);}
+        case 1: {
+            do_execute<Value, 1>(sourceField, targetField);
+            break;
+        }
+        case 2: {
+            do_execute<Value, 2>(sourceField, targetField);
+            break;
+        }
+        case 3: {
+            do_execute<Value, 3>(sourceField, targetField);
+            break;
+        }
         default: {
-            ATLAS_THROW_EXCEPTION("No implementation for rank " + std::to_string(sourceField.rank()));
+            throw_NotImplemented("No implementation for rank " + std::to_string(sourceField.rank()), Here());
         }
     }
 }
@@ -384,17 +380,14 @@ void RedistributeGeneric::do_execute(const Field& sourceField, Field& targetFiel
     auto recvBufferIt = recvBuffer.cbegin();
 
     // Copy sourceField to sendBuffer.
-    ForEach<Rank>::apply(sourceLocalIdx_, sourceView,
-                         [&](const Value& elem){*sendBufferIt++ = elem;});
+    iterateField(sourceLocalIdx_, sourceView, [&](const Value& elem) { *sendBufferIt++ = elem; });
 
     // Perform MPI communication.
     mpi::comm().allToAllv(sendBuffer.data(), sendCounts.data(), sendDisps.data(), recvBuffer.data(), recvCounts.data(),
                           recvDisps.data());
 
     // Copy recvBuffer to targetField.
-    ForEach<Rank>::apply(targetLocalIdx_, targetView,
-                         [&](Value& elem){elem = *recvBufferIt++;});
-
+    iterateField(targetLocalIdx_, targetView, [&](Value& elem) { elem = *recvBufferIt++; });
 }
 
 namespace {
