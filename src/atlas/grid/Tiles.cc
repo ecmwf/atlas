@@ -76,7 +76,7 @@ const PointXY& CubedSphereTiles::tileCentre(size_t t) const {
     return get()->tileCentre(t);
 }
 
-const util::Matrix22& CubedSphereTiles::tileJacobian(size_t t) const {
+const Jacobian& CubedSphereTiles::tileJacobian(size_t t) const {
     return get()->tileJacobian(t);
 }
 

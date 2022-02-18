@@ -21,7 +21,6 @@
 #include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "atlas/util/Matrix.h"
 
 namespace {
 

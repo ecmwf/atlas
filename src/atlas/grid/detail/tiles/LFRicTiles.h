@@ -20,6 +20,8 @@ namespace atlas {
 namespace grid {
 namespace detail {
 
+using Jacobian = atlas::projection::detail::ProjectionImpl::Jacobian;
+
 class LFRicCubedSphereTiles : public CubedSphereTiles {
 public:
     // constructor
@@ -50,7 +52,7 @@ public:
 
     virtual const PointXY& tileCentre(size_t t) const override;
 
-    virtual const util::Matrix22& tileJacobian(size_t t) const override;
+    virtual const Jacobian& tileJacobian(size_t t) const override;
 
 private:
 
@@ -67,7 +69,7 @@ private:
     // Centre of each tile in xy-space.
     static const std::array<PointXY, 6> tileCentres_;
     // Jacobian of xy with respect to tile curvilinear coordinates.
-    static const std::array<util::Matrix22, 6> tileJacobians_;
+    static const std::array<Jacobian, 6> tileJacobians_;
 
 };
 

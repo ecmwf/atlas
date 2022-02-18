@@ -48,7 +48,7 @@ public:
 
     virtual const PointXY& tileCentre(size_t t) const override;
 
-    virtual const util::Matrix22& tileJacobian(size_t t) const override;
+    virtual const Jacobian& tileJacobian(size_t t) const override;
 
 
 private:

@@ -12,8 +12,8 @@
 #include <iostream>
 #include <ostream>
 
-#include "atlas/grid/detail/tiles/LFRicTiles.h"
 #include "atlas/grid/detail/tiles/Tiles.h"
+#include "atlas/grid/detail/tiles/LFRicTiles.h"
 #include "atlas/grid/detail/tiles/TilesFactory.h"
 #include "atlas/projection/detail/ProjectionUtilities.h"
 #include "atlas/runtime/Exception.h"
@@ -655,7 +655,7 @@ const PointXY& LFRicCubedSphereTiles::tileCentre(size_t t) const {
     return tileCentres_[t];
 }
 
-const util::Matrix22& LFRicCubedSphereTiles::tileJacobian(size_t t) const {
+const Jacobian& LFRicCubedSphereTiles::tileJacobian(size_t t) const {
     return tileJacobians_[t];
 }
 
@@ -687,13 +687,13 @@ const std::array<PointXY, 6> LFRicCubedSphereTiles::tileCentres_ {
 };
 
 // Jacobian of xy space with respect to curvilinear coordinates for each tile.
-const std::array<util::Matrix22, 6> LFRicCubedSphereTiles::tileJacobians_{
-    util::Matrix22{{1., 0.}, {0., 1.}},
-    util::Matrix22{{1., 0.}, {0., 1.}},
-    util::Matrix22{{0., -1.}, {1., 0.}},
-    util::Matrix22{{0., -1.}, {1., 0.}},
-    util::Matrix22{{1., 0.}, {0., 1.}},
-    util::Matrix22{{0., 1.}, {-1., 0.}}
+const std::array<Jacobian, 6> LFRicCubedSphereTiles::tileJacobians_{
+    Jacobian{{1., 0.}, {0., 1.}},
+    Jacobian{{1., 0.}, {0., 1.}},
+    Jacobian{{0., -1.}, {1., 0.}},
+    Jacobian{{0., -1.}, {1., 0.}},
+    Jacobian{{1., 0.}, {0., 1.}},
+    Jacobian{{0., 1.}, {-1., 0.}}
 };
 
 

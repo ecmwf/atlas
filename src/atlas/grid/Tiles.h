@@ -15,8 +15,8 @@
 #include <string>
 
 #include "atlas/library/config.h"
+#include "atlas/projection/detail/ProjectionImpl.h"
 #include "atlas/util/ObjectHandle.h"
-#include "atlas/util/Matrix.h"
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -44,6 +44,7 @@ class CubedSphereTiles;
 }  // namespace detail
 #endif
 
+using Jacobian = projection::detail::ProjectionImpl::Jacobian;
 //---------------------------------------------------------------------------------------------------------------------
 
 class CubedSphereTiles : DOXYGEN_HIDE(public util::ObjectHandle<atlas::grid::detail::CubedSphereTiles>) {
@@ -91,7 +92,7 @@ public:
 
     /// @brief Return the Jacobian of xy with respect to the curvilinear
     ///        coordinates of the tile.
-    const util::Matrix22& tileJacobian(size_t t) const;
+    const Jacobian& tileJacobian(size_t t) const;
 
 private:
     /// Output to stream

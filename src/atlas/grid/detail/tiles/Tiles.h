@@ -14,18 +14,24 @@
 #include <string>
 
 #include "atlas/library/config.h"
+#include "atlas/projection/detail/ProjectionImpl.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Object.h"
-#include "atlas/util/Matrix.h"
-#include "atlas/util/Point.h"
 
 namespace eckit {
 class Parametrisation;
 }
 
+
+namespace atlas {
+class PointXY;
+} // namespace atlas
+
 namespace atlas {
 namespace grid {
 namespace detail {
+
+using Jacobian = atlas::projection::detail::ProjectionImpl::Jacobian;
 
 class CubedSphereTiles : public util::Object {
 public:
@@ -56,7 +62,7 @@ public:
 
     virtual const PointXY& tileCentre(size_t t) const = 0;
 
-    virtual const util::Matrix22& tileJacobian(size_t t) const = 0;
+    virtual const Jacobian& tileJacobian(size_t t) const = 0;
 
     idx_t size() const { return 6; }
 

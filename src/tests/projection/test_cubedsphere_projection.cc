@@ -13,7 +13,6 @@
 #include "atlas/projection/detail/CubedSphereProjectionBase.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/util/Constants.h"
-#include "atlas/util/Matrix.h"
 #include "tests/AtlasTestEnvironment.h"
 namespace atlas {
 namespace test {

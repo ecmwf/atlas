@@ -8,8 +8,8 @@
 #pragma once
 
 #include "atlas/library/config.h"
+#include "atlas/projection/detail/ProjectionImpl.h"
 #include "atlas/runtime/Exception.h"
-#include "atlas/util/Matrix.h"
 #include "atlas/util/Point.h"
 
 namespace atlas {
@@ -33,6 +33,7 @@ namespace detail {
 namespace cubedsphere {
 
 using namespace projection::detail;
+using Jacobian = ProjectionImpl::Jacobian;
 
 /// Enum for (i, j, t) coordinate fields.
 struct Coordinates {
@@ -160,10 +161,10 @@ private:
     idx_t N_{};
 
     // Jacobian of xy with respect to ij for each tile.
-    std::array<util::Matrix22, 6> dxy_by_dij_{};
+    std::array<Jacobian, 6> dxy_by_dij_{};
 
     // Jacobian of ij with respect to xy for each tile.
-    std::array<util::Matrix22, 6> dij_by_dxy_{};
+    std::array<Jacobian, 6> dij_by_dxy_{};
 
     // Lower-left xy position on each tile.
     std::array<PointXY, 6> xy00_{};
@@ -180,7 +181,7 @@ private:
         std::array<idx_t, 4> t_{};
 
         // Jacobian of remote xy with respect to local xy.
-        std::array<util::Matrix22, 4> dxyGlobal_by_dxyLocal_{};
+        std::array<Jacobian, 4> dxyGlobal_by_dxyLocal_{};
 
         // Lower left most local xy position on neighbour tiles.
         std::array<PointXY, 4> xy00Local_;
