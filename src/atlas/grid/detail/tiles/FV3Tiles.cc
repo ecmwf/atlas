@@ -453,6 +453,15 @@ void FV3CubedSphereTiles::print(std::ostream& os) const {
 }
 
 
+const PointXY& FV3CubedSphereTiles::tileCentre(size_t t) const {
+    throw_NotImplemented("tileCentre not implemented for FV3Tiles", Here());
+}
+
+const Jacobian& FV3CubedSphereTiles::tileJacobian(size_t t) const {
+    throw_NotImplemented("tileJacobian not implemented for FV3Tiles", Here());;
+}
+
+
 namespace {
 static CubedSphereTilesBuilder<FV3CubedSphereTiles> register_builder(FV3CubedSphereTiles::static_type());
 }

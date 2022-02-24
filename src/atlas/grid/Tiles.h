@@ -15,6 +15,7 @@
 #include <string>
 
 #include "atlas/library/config.h"
+#include "atlas/projection/detail/ProjectionImpl.h"
 #include "atlas/util/ObjectHandle.h"
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -43,6 +44,7 @@ class CubedSphereTiles;
 }  // namespace detail
 #endif
 
+using Jacobian = projection::detail::ProjectionImpl::Jacobian;
 //---------------------------------------------------------------------------------------------------------------------
 
 class CubedSphereTiles : DOXYGEN_HIDE(public util::ObjectHandle<atlas::grid::detail::CubedSphereTiles>) {
@@ -84,6 +86,13 @@ public:
     // in a cross-like fashion. Periodicity of this form does not allow
     // a "diagonal" extension over corners of the cube.
     atlas::PointXY tileCubePeriodicity(const atlas::PointXY& xyExtended, const atlas::idx_t tile) const;
+
+    /// @brief Return the position of the tile centre in xy space.
+    const PointXY& tileCentre(size_t t) const;
+
+    /// @brief Return the Jacobian of xy with respect to the curvilinear
+    ///        coordinates of the tile.
+    const Jacobian& tileJacobian(size_t t) const;
 
 private:
     /// Output to stream

@@ -46,6 +46,11 @@ public:
 
     virtual void print(std::ostream&) const override;
 
+    virtual const PointXY& tileCentre(size_t t) const override;
+
+    virtual const Jacobian& tileJacobian(size_t t) const override;
+
+
 private:
 };
 

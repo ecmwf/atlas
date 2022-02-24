@@ -72,5 +72,13 @@ std::ostream& operator<<(std::ostream& os, const CubedSphereTiles& t) {
     return os;
 }
 
+const PointXY& CubedSphereTiles::tileCentre(size_t t) const {
+    return get()->tileCentre(t);
+}
+
+const Jacobian& CubedSphereTiles::tileJacobian(size_t t) const {
+    return get()->tileJacobian(t);
+}
+
 }  // namespace grid
 }  // namespace atlas
