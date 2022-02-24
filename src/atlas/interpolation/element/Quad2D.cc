@@ -21,7 +21,7 @@ namespace element {
 
 namespace  {
 
-constexpr double badRoot = -1.;
+constexpr double badRoot = std::numeric_limits<double>::lowest();
 
 struct Roots {
     double x1;

@@ -559,6 +559,8 @@ interpolation/method/fe/FiniteElement.cc
 interpolation/method/fe/FiniteElement.h
 interpolation/method/bil/BilinearRemapping.cc
 interpolation/method/bil/BilinearRemapping.h
+interpolation/method/cubedsphere/CellFinder.cc
+interpolation/method/cubedsphere/CellFinder.h
 interpolation/method/knn/GridBox.cc
 interpolation/method/knn/GridBox.h
 interpolation/method/knn/GridBoxAverage.cc
