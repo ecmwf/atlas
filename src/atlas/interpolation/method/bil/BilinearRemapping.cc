@@ -24,7 +24,8 @@
 #include "atlas/interpolation/method/Ray.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/mesh/actions/Build2DCellCentres.h"
+#include "atlas/mesh/actions/BuildCellCentres.h"
+#include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/mpi/Buffer.h"
@@ -89,13 +90,25 @@ void BilinearRemapping::do_setup(const FunctionSpace& source, const FunctionSpac
         if (functionspace::NodeColumns tgt = target) {
             Mesh meshTarget = tgt.mesh();
 
+            target_xyz_    = mesh::actions::BuildXYZField("xyz")(meshTarget);
             target_ghost_  = meshTarget.nodes().ghost();
             target_lonlat_ = meshTarget.nodes().lonlat();
         }
         else if (functionspace::PointCloud tgt = target) {
             const idx_t N  = tgt.size();
+            target_xyz_    = Field("xyz", array::make_datatype<double>(), array::make_shape(N, 3));
             target_ghost_  = tgt.ghost();
             target_lonlat_ = tgt.lonlat();
+            auto lonlat    = array::make_view<double, 2>(tgt.lonlat());
+            auto xyz       = array::make_view<double, 2>(target_xyz_);
+            PointXYZ p2;
+            for (idx_t n = 0; n < N; ++n) {
+                const PointLonLat p1(lonlat(n, 0), lonlat(n, 1));
+                util::Earth::convertSphericalToCartesian(p1, p2);
+                xyz(n, 0) = p2.x();
+                xyz(n, 1) = p2.y();
+                xyz(n, 2) = p2.z();
+            }
         }
         else {
             ATLAS_NOTIMPLEMENTED;
@@ -189,21 +202,22 @@ void BilinearRemapping::setup(const FunctionSpace& source) {
 
     auto trace_setup_source = atlas::Trace{Here(), "Setup source"};
 
-    // 2D point coordinates
-    auto source_lonlat = array::make_view<double, 2>(src.lonlat());
+    // 3D point coordinates
+    Field source_xyz = mesh::actions::BuildXYZField("xyz")(meshSource);
 
     // generate barycenters of each triangle & insert them on a kd-tree
     util::Config config;
     config.set("name", "centre ");
     config.set("flatten_virtual_elements", false);
-    Field cell_centres = mesh::actions::Build2DCellCentres(config)(meshSource);
+    Field cell_centres = mesh::actions::BuildCellCentres(config)(meshSource);
 
-    std::unique_ptr<ElemIndex2> eTree(create_element2D_kdtree(meshSource, cell_centres));
+    std::unique_ptr<ElemIndex3> eTree(create_element_kdtree(meshSource, cell_centres));
 
     trace_setup_source.stop();
 
     ilonlat_.reset(new array::ArrayView<double, 2>(array::make_view<double, 2>(meshSource.nodes().lonlat())));
     olonlat_.reset(new array::ArrayView<double, 2>(array::make_view<double, 2>(target_lonlat_)));
+    oxyz_.reset(new array::ArrayView<double, 2>(array::make_view<double, 2>(target_xyz_)));
     igidx_.reset(new array::ArrayView<gidx_t, 1>(array::make_view<gidx_t, 1>(src.nodes().global_index())));
     connectivity_              = &meshSource.cells().node_connectivity();
     const mesh::Nodes& i_nodes = meshSource.nodes();
@@ -224,7 +238,6 @@ void BilinearRemapping::setup(const FunctionSpace& source) {
     // search nearest k cell centres
 
     const idx_t maxNbElemsToTry = std::max<idx_t>(8, idx_t(Nelements * max_fraction_elems_to_try_));
-    idx_t max_neighbours        = 0;
 
     std::vector<size_t> failures;
 
@@ -235,30 +248,18 @@ void BilinearRemapping::setup(const FunctionSpace& source) {
                 continue;
             }
 
-            double lon{(*olonlat_)(ip, 0)};
-            while (lon > 360.0) {
-                lon -= 360.0;
-            }
-            while (lon < 0.0) {
-                lon += 360.0;
-            }
-            PointXY p{lon, (*olonlat_)(ip, 1)};  // lookup point
+            PointXYZ p{(*oxyz_)(ip, 0), (*oxyz_)(ip, 1), (*oxyz_)(ip, 2)};  // lookup point
 
-            idx_t kpts   = 1;
+            idx_t kpts   = 8;
             bool success = false;
             std::ostringstream failures_log;
 
-            while (!success && kpts <= maxNbElemsToTry) {
-                max_neighbours = std::max(kpts, max_neighbours);
+            ElemIndex3::NodeList cs = eTree->kNearestNeighbours(p, kpts);
+            Triplets triplets       = projectPointToElements(ip, cs, failures_log);
 
-                ElemIndex2::NodeList cs = eTree->kNearestNeighbours(p, kpts);
-                Triplets triplets       = projectPointToElements(ip, cs, failures_log);
-
-                if (triplets.size()) {
-                    std::copy(triplets.begin(), triplets.end(), std::back_inserter(weights_triplets));
-                    success = true;
-                }
-                kpts *= 2;
+            if (triplets.size()) {
+                std::copy(triplets.begin(), triplets.end(), std::back_inserter(weights_triplets));
+                success = true;
             }
 
             if (!success) {
@@ -266,13 +267,13 @@ void BilinearRemapping::setup(const FunctionSpace& source) {
                 if (not treat_failure_as_missing_value_) {
                     Log::debug() << "------------------------------------------------------"
                                     "---------------------\n";
-                    Log::debug() << "Failed to project point (lon,lat)=" << p << '\n';
+                    Log::debug() << "Failed to project point (lon,lat)=" << (*olonlat_)(ip, 0) << " "
+                                 << (*olonlat_)(ip, 1) << '\n';
                     Log::debug() << failures_log.str();
                 }
             }
         }
     }
-    Log::debug() << "Maximum neighbours searched was " << eckit::Plural(max_neighbours, "element") << std::endl;
 
     if (failures.size()) {
         if (treat_failure_as_missing_value_) {
@@ -298,27 +299,44 @@ void BilinearRemapping::setup(const FunctionSpace& source) {
     matrix_shared_->swap(A);
 }
 
-Method::Triplets BilinearRemapping::projectPointToElements(size_t ip, const ElemIndex2::NodeList& elems,
+Method::Triplets BilinearRemapping::projectPointToElements(size_t ip, const ElemIndex3::NodeList& elems,
                                                            std::ostream& /* failures_log */) const {
     ATLAS_ASSERT(elems.begin() != elems.end());
 
     const size_t inp_points = ilonlat_->shape(0);
     std::array<size_t, 4> idx;
     std::array<double, 4> w;
+    std::array<double, 4> inv_dist_w;
 
     Triplets triplets;
     triplets.reserve(4);
 
-    double lon{(*olonlat_)(ip, 0)};
-    while (lon > 360.0) {
-        lon -= 360.0;
+    double o_lon{(*olonlat_)(ip, 0)};
+    while (o_lon >= 360.0) {
+        o_lon -= 360.0;
     }
-    while (lon < 0.0) {
-        lon += 360.0;
+    while (o_lon < 0.0) {
+        o_lon += 360.0;
     }
-    PointXY ob_loc{lon, (*olonlat_)(ip, 1)};  // lookup point
+    PointXY o_loc{o_lon, (*olonlat_)(ip, 1)};  // lookup point
 
-    for (ElemIndex2::NodeList::const_iterator itc = elems.begin(); itc != elems.end(); ++itc) {
+    auto inv_dist_weight = [](element::Quad2D& q, const PointXY& loc, std::array<double, 4>& w) {
+        double d[4];
+        d[0] = util::Earth::distance({q.p(0).data()}, loc);
+        d[1] = util::Earth::distance({q.p(1).data()}, loc);
+        d[2] = util::Earth::distance({q.p(2).data()}, loc);
+        d[3] = util::Earth::distance({q.p(3).data()}, loc);
+        w[0] = d[1] * d[2] * d[3];
+        w[1] = d[0] * d[2] * d[3];
+        w[2] = d[1] * d[0] * d[3];
+        w[3] = d[1] * d[0] * d[2];
+
+        double suminv = 1. / (w[0] + w[1] + w[2] + w[3]);
+        for (size_t i = 0; i < 4; ++i)
+            w[i] *= suminv;
+    };
+
+    for (ElemIndex3::NodeList::const_iterator itc = elems.begin(); itc != elems.end(); ++itc) {
         const idx_t elem_id = idx_t((*itc).value().payload());
         ATLAS_ASSERT(elem_id < connectivity_->rows());
 
@@ -341,7 +359,7 @@ Method::Triplets BilinearRemapping::projectPointToElements(size_t ip, const Elem
             const double edgeEpsilon = parametricEpsilon * std::sqrt(triag.area());
             ATLAS_ASSERT(edgeEpsilon >= 0);
 
-            Intersect is = triag.intersects(ob_loc, edgeEpsilon);
+            Intersect is = triag.intersects(o_loc, edgeEpsilon);
 
             if (is) {
                 // weights are the linear Lagrange function evaluated at u,v (aka
@@ -359,35 +377,70 @@ Method::Triplets BilinearRemapping::projectPointToElements(size_t ip, const Elem
         }
         else {
             /* quadrilateral */
-            element::Quad2D quad(PointXY{(*ilonlat_)(idx[0], 0), (*ilonlat_)(idx[0], 1)},
-                                 PointXY{(*ilonlat_)(idx[1], 0), (*ilonlat_)(idx[1], 1)},
-                                 PointXY{(*ilonlat_)(idx[2], 0), (*ilonlat_)(idx[2], 1)},
-                                 PointXY{(*ilonlat_)(idx[3], 0), (*ilonlat_)(idx[3], 1)});
+            double lons[4];
+            lons[0] = (*ilonlat_)(idx[0], 0);
+            lons[1] = (*ilonlat_)(idx[1], 0);
+            lons[2] = (*ilonlat_)(idx[2], 0);
+            lons[3] = (*ilonlat_)(idx[3], 0);
+            // adjust quadrilaterals to lie within [0,360]
+            for (idx_t i = 0; i < 4; ++i) {
+                while (lons[i] > 360.0) {
+                    lons[i] -= 360.0;
+                }
+                while (lons[i] < 0.0) {
+                    lons[i] += 360.0;
+                }
+            }
+            // shift cells on the east-west periodic boundary from the east to the west
+            // so that the quad surrounds a point with output longitude in [0,360)
+            if (lons[0] > lons[1] || lons[3] > lons[2]) {
+                lons[0] -= 360;
+                lons[3] -= 360;
+            }
+
+            element::Quad2D quad(PointXY{lons[0], (*ilonlat_)(idx[0], 1)}, PointXY{lons[1], (*ilonlat_)(idx[1], 1)},
+                                 PointXY{lons[2], (*ilonlat_)(idx[2], 1)}, PointXY{lons[3], (*ilonlat_)(idx[3], 1)});
+
+            if (itc == elems.begin()) {
+                inv_dist_weight(quad, o_loc, inv_dist_w);
+            }
 
             // pick an epsilon based on a characteristic length (sqrt(area))
             // (this scales linearly so it better compares with linear weights u,v,w)
             const double edgeEpsilon = parametricEpsilon * std::sqrt(quad.area());
             ATLAS_ASSERT(edgeEpsilon >= 0);
 
-            Intersect is = quad.localRemap(ob_loc, edgeEpsilon);
+            Intersect is = quad.localRemap(o_loc, edgeEpsilon);
+
+            if (!is) {
+                // repeat the calculation to catch points which are near the east boundary of the grid.
+                is = quad.localRemap({o_lon - 360, (*olonlat_)(ip, 1)}, edgeEpsilon);
+            }
 
             if (is) {
-                //std::cout << "intersection found for p: ";
-                //std::cout << ob_loc << " and " << quad << std::endl;
                 // weights are the bilinear Lagrange function evaluated at u,v
                 w[0] = (1. - is.u) * (1. - is.v);
                 w[1] = is.u * (1. - is.v);
                 w[2] = is.u * is.v;
                 w[3] = (1. - is.u) * is.v;
-
                 for (size_t i = 0; i < 4; ++i) {
                     triplets.emplace_back(ip, idx[i], w[i]);
                 }
                 break;  // stop looking for elements
             }
         }
-
     }  // loop over nearest elements
+
+    if (triplets.empty()) {
+        // Crude inverse distance weighting to catch cells that are difficult
+        // to identify and interpolate in a lon/lat projection, near the north
+        // pole
+        const idx_t elem_id = idx_t((*elems.begin()).value().payload());
+        for (size_t i = 0; i < 4; ++i) {
+            idx[i] = (*connectivity_)(elem_id, i);
+            triplets.emplace_back(ip, idx[i], inv_dist_w[i]);
+        }
+    }
 
     if (!triplets.empty()) {
         normalise(triplets);
