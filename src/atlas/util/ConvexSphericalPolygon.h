@@ -114,14 +114,6 @@ public:
 
     const PointXYZ& operator[](idx_t n) const { return sph_coords_[n]; }
 
-    /*
-   * Point left of [p1,p2] ( deprecated, used in ConservativeMethod )
-   * @param[in] P, p1, p2 given point in xyz-coordinates
-   * @return false:P_right_of_[p1,p2], true:P_left_of_[p1,p2]
-   */
-    DEPRECATED("Use GreatCircleSegment{p1,p2}.inLeftHemisphere(P) instead")
-    static bool leftOf(const PointXYZ& P, const PointXYZ& p1, const PointXYZ& p2, const double tol);
-
     int next(const int index) const { return (index == size_ - 1) ? 0 : index + 1; };
 
 private:

@@ -139,9 +139,40 @@ CASE("Size of ConvexSphericalPolygon") {
     EXPECT(sizeof(ConvexSphericalPolygon) >= expected_size);  // greater because compiler may add some padding
 }
 
-CASE("analyse intersect") {
-    Log::info() << "\n\n";
+CASE("analyse intersect 1") {
+    const double EPS  = std::numeric_limits<double>::epsilon();
+    const double du   = 0.5;
+    const double dv   = 1.1 * EPS;
+    const double duc  = 0.5 * du;
+    const double sduc = std::sqrt(1. - 0.25 * du * du);
+    const double dvc  = 1. - 0.5 * dv * dv;
+    const double sdvc = dv * std::sqrt(1. - 0.25 * dv * dv);
+    PointXYZ s0p0{sduc, -duc, 0.};
+    PointXYZ s0p1{sduc, duc, 0.};
+    PointXYZ s1p0{dvc * sduc, -dvc * duc, -sdvc};
+    PointXYZ s1p1{dvc * sduc, dvc * duc, sdvc};
 
+    EXPECT_APPROX_EQ(dv, PointXYZ::norm(s0p0 - s1p0), EPS);
+    EXPECT_APPROX_EQ(du, PointXYZ::norm(s0p0 - s0p1), EPS);
+    EXPECT_APPROX_EQ(dv, PointXYZ::norm(s0p1 - s1p1), EPS);
+
+    ConvexSphericalPolygon::GreatCircleSegment s1(s0p0, s0p1);
+    ConvexSphericalPolygon::GreatCircleSegment s2(s1p0, s1p1);
+
+    // analytical solution
+    PointXYZ Isol{1., 0., 0.};
+
+    // test "intersection"
+    PointXYZ I = s1.intersect(s2);
+    EXPECT_APPROX_EQ(std::abs(PointXYZ::norm(I) - 1.), 0., EPS);
+    EXPECT_APPROX_EQ(PointXYZ::norm(I - Isol), 0., EPS);
+
+    // test "contains"
+    EXPECT(s1.contains(Isol) && s2.contains(Isol));
+    EXPECT(s1.contains(I) && s2.contains(I));
+}
+
+CASE("analyse intersect 2") {
     double du = 5.;
     double dv = 1e-13;
 
