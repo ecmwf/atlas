@@ -16,7 +16,7 @@
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/interpolation/method/PointIndex2.h"
+#include "atlas/interpolation/method/PointIndex3.h"
 #include "atlas/mesh/Elements.h"
 
 namespace atlas {
@@ -53,7 +53,7 @@ protected:
    * point to the nearest element(s), returning the (normalized) interpolation
    * weights
    */
-    Triplets projectPointToElements(size_t ip, const ElemIndex2::NodeList& elems, std::ostream& failures_log) const;
+    Triplets projectPointToElements(size_t ip, const ElemIndex3::NodeList& elems, std::ostream& failures_log) const;
 
     virtual const FunctionSpace& source() const override { return source_; }
     virtual const FunctionSpace& target() const override { return target_; }
@@ -68,6 +68,7 @@ protected:
     mesh::MultiBlockConnectivity* connectivity_;
     std::unique_ptr<array::ArrayView<double, 2>> ilonlat_;
     std::unique_ptr<array::ArrayView<double, 2>> olonlat_;
+    std::unique_ptr<array::ArrayView<double, 2>> oxyz_;
     std::unique_ptr<array::ArrayView<gidx_t, 1>> igidx_;
 
     Field target_lonlat_;
