@@ -139,7 +139,7 @@ CASE("Size of ConvexSphericalPolygon") {
     EXPECT(sizeof(ConvexSphericalPolygon) >= expected_size);  // greater because compiler may add some padding
 }
 
-CASE("analyse intersect 1") {
+CASE("analyse intersect") {
     const double EPS  = std::numeric_limits<double>::epsilon();
     const double du   = 0.5;
     const double dv   = 1.1 * EPS;
@@ -170,35 +170,6 @@ CASE("analyse intersect 1") {
     // test "contains"
     EXPECT(s1.contains(Isol) && s2.contains(Isol));
     EXPECT(s1.contains(I) && s2.contains(I));
-}
-
-CASE("analyse intersect 2") {
-    double du = 5.;
-    double dv = 1e-13;
-
-    std::vector<PointLonLat> llp1 = {{70 - du, 0}, {70 + du, 0}};
-    std::vector<PointLonLat> llp2 = {{70 - du, -dv}, {70 + du, dv}};
-    std::vector<PointXYZ> p1(2), p2(2);
-
-    auto unit_sphere = geometry::UnitSphere{};
-
-    for (int i = 0; i < 2; ++i) {
-        unit_sphere.lonlat2xyz(llp1[i], p1[i]);
-        unit_sphere.lonlat2xyz(llp2[i], p2[i]);
-    }
-
-    ConvexSphericalPolygon::GreatCircleSegment s1(p1[0], p1[1]);
-    ConvexSphericalPolygon::GreatCircleSegment s2(p2[0], p2[1]);
-
-    PointXYZ Isol = unit_sphere.xyz(PointLonLat(70, dv));
-
-    auto btw1 = s1.contains(Isol);
-    auto btw2 = s2.contains(Isol);
-    EXPECT(btw1 && btw2);
-
-    PointXYZ I = s1.intersect(s2);
-    Log::info() << " I = " << I << ", |I|-1 = " << PointXYZ::norm(I) - 1. << "\n";
-    Log::info() << " |I - solution| = " << PointXYZ::norm(I - Isol) << "\n\n";
 }
 
 CASE("source_covered") {
