@@ -1030,9 +1030,62 @@ public:
         }
     }
 
+    std::vector<std::vector<idx_t>> gather_nb_elements() {
+        idx_t nb_types = mesh.cells().nb_types();
+        idx_t mpi_size = mpi::comm().size();
+        std::vector<idx_t> elems_per_type(nb_types);
+        for (idx_t t = 0; t < nb_types; ++t) {
+            elems_per_type[t] = mesh.cells().elements(t).size();
+        }
+        atlas::mpi::Buffer<idx_t, 1> recv(mpi_size);
+        ATLAS_TRACE_MPI(ALLGATHER) { mpi::comm().allGatherv(elems_per_type.begin(), elems_per_type.end(), recv); }
+
+        std::vector<std::vector<idx_t>> result(nb_types, std::vector<idx_t>(mpi_size));
+        for (idx_t p = 0; p < mpi_size; ++p) {
+            auto recv_p = recv[p];
+            for (idx_t t = 0; t < nb_types; ++t) {
+                result[t][p] = recv_p[t];
+            }
+        }
+        return result;
+    };
+
+
     void add_buffers(Buffers& buf) {
         add_nodes(buf);
+
+        auto nb_elements_pre = gather_nb_elements();
+
         add_elements(buf);
+
+        auto nb_elements_post = gather_nb_elements();
+
+        // Renumber remote_index as the number of elements per type might have grown
+        {
+            auto nb_partitions = mpi::comm().size();
+            auto nb_types      = mesh.cells().nb_types();
+
+            std::vector<std::vector<idx_t>> accumulated_diff(nb_types, std::vector<idx_t>(nb_partitions));
+            for (idx_t t = 1; t < nb_types; ++t) {
+                for (idx_t p = 0; p < nb_partitions; ++p) {
+                    accumulated_diff[t][p] =
+                        accumulated_diff[t - 1][p] + nb_elements_post[t - 1][p] - nb_elements_pre[t - 1][p];
+                }
+            }
+
+            for (idx_t t = 0; t < nb_types; ++t) {
+                auto& elements = mesh.cells().elements(t);
+                auto partition = elements.view<int, 1>(mesh.cells().partition());
+                auto ridx      = elements.indexview<idx_t, 1>(mesh.cells().remote_index());
+
+                auto& accumulated_diff_t = accumulated_diff[t];
+
+                for (idx_t elem = 0; elem < elements.size(); ++elem) {
+                    ridx(elem) += accumulated_diff_t[partition(elem)];
+                }
+            }
+        }
+
         update();
     }
 };

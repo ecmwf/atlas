@@ -21,6 +21,7 @@
 #include "atlas/projection/detail/LonLatProjection.h"
 #include "atlas/projection/detail/MercatorProjection.h"
 #include "atlas/projection/detail/SchmidtProjection.h"
+#include "atlas/projection/detail/VariableResolutionProjection.h"
 
 namespace atlas {
 namespace projection {
@@ -38,6 +39,8 @@ void force_link() {
             ProjectionBuilder<detail::RotatedSchmidtProjection>();
             ProjectionBuilder<detail::MercatorProjection>();
             ProjectionBuilder<detail::RotatedMercatorProjection>();
+            ProjectionBuilder<detail::VariableResolutionProjection>();
+            ProjectionBuilder<detail::RotatedVariableResolutionProjection>();
             ProjectionBuilder<detail::LambertConformalConicProjection>();
             ProjectionBuilder<detail::LambertAzimuthalEqualAreaProjection>();
         }

@@ -218,6 +218,7 @@ void StructuredMeshGenerator::hash(eckit::Hash& h) const {
 
 void StructuredMeshGenerator::generate(const Grid& grid, const grid::Distribution& distribution, Mesh& mesh) const {
     ATLAS_TRACE();
+    Log::debug() << "StructuredMeshGenerator generating mesh from " << grid.name() << std::endl;
 
     const StructuredGrid rg = StructuredGrid(grid);
     if (!rg) {

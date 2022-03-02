@@ -11,6 +11,7 @@
 #include "MethodFactory.h"
 
 // for static linking
+#include "bil/BilinearRemapping.h"
 #include "fe/FiniteElement.h"
 #include "knn/GridBoxAverage.h"
 #include "knn/GridBoxMaximum.h"
@@ -31,6 +32,7 @@ namespace {
 void force_link() {
     static struct Link {
         Link() {
+            MethodBuilder<method::BilinearRemapping>();
             MethodBuilder<method::FiniteElement>();
             MethodBuilder<method::KNearestNeighbours>();
             MethodBuilder<method::NearestNeighbour>();

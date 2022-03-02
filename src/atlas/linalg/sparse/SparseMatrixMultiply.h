@@ -16,6 +16,7 @@
 #include "atlas/linalg/Indexing.h"
 #include "atlas/linalg/View.h"
 #include "atlas/linalg/sparse/Backend.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 
 namespace atlas {

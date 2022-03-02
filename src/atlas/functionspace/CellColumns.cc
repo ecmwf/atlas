@@ -272,10 +272,10 @@ CellColumns::CellColumns(const Mesh& mesh, const eckit::Configuration& config):
     mesh::actions::build_cells_parallel_fields(mesh_);
     mesh::actions::build_periodic_boundaries(mesh_);
 
-    if (halo_.size() > 0) {
-        mesh::actions::build_halo(mesh_, halo_.size());
-        nb_cells_ = get_nb_cells_from_metadata();
-    }
+
+    mesh::actions::build_halo(mesh_, halo_.size());
+    nb_cells_ = get_nb_cells_from_metadata();
+
     if (!nb_cells_) {
         nb_cells_ = mesh.cells().size();
     }
@@ -573,6 +573,10 @@ Field CellColumns::remote_index() const {
 
 Field CellColumns::global_index() const {
     return mesh_.cells().global_index();
+}
+
+Field CellColumns::ghost() const {
+    return mesh_.cells().field("ghost");
 }
 
 //------------------------------------------------------------------------------

@@ -38,11 +38,8 @@ public:
     /// Invalid index.
     idx_t invalid_index() const;
 
-    /// Get total number of elements.
-    idx_t nb_elems() const;
-
     /// Get number of owned elements.
-    idx_t nb_owned_elems() const;
+    idx_t sizeOwned() const;
 
     /// i lower bound for tile t (including halo)
     idx_t i_begin(idx_t t) const;
@@ -60,16 +57,12 @@ public:
     /// Return tij field.
     Field tij() const;
 
-    /// Return ghost field.
-    Field ghost() const;
-
 private:
     class For {
     public:
         For(const CubedSphereColumns<BaseFunctionSpace>& functionSpace, const util::Config& config = util::NoConfig()):
             functionSpace_{functionSpace},
-            indexMax_{config.getBool("include_halo", false) ? functionSpace.nb_elems()
-                                                            : functionSpace.nb_owned_elems()},
+            indexMax_{config.getBool("include_halo", false) ? functionSpace.size() : functionSpace.sizeOwned()},
             levels_{config.getInt("levels", functionSpace_.levels())},
             tijView_(array::make_view<idx_t, 2>(functionSpace_.tij())) {}
 
@@ -78,7 +71,7 @@ private:
         using EnableFunctor =
             typename std::enable_if<std::is_convertible<FuncType, std::function<void(ArgTypes...)>>::value>::type*;
 
-        // Functor: void f( index, t, i, j, k)
+        // Functor: void f(index, t, i, j, k)
         template <typename Functor, EnableFunctor<Functor, idx_t, idx_t, idx_t, idx_t, idx_t> = nullptr>
         void operator()(const Functor& f) const {
             using namespace meshgenerator::detail::cubedsphere;
@@ -94,7 +87,7 @@ private:
             }
         }
 
-        // Functor: void f( index, t, i, j)
+        // Functor: void f(index, t, i, j)
         template <typename Functor, EnableFunctor<Functor, idx_t, idx_t, idx_t, idx_t> = nullptr>
         void operator()(const Functor& f) const {
             using namespace meshgenerator::detail::cubedsphere;
@@ -108,7 +101,7 @@ private:
             }
         }
 
-        // Functor: void f( index, k)
+        // Functor: void f(index, k)
         template <typename Functor, EnableFunctor<Functor, idx_t, idx_t> = nullptr>
         void operator()(const Functor& f) const {
             using namespace meshgenerator::detail::cubedsphere;
@@ -121,7 +114,7 @@ private:
             }
         }
 
-        // Functor: void f( index )
+        // Functor: void f(index )
         template <typename Functor, EnableFunctor<Functor, idx_t> = nullptr>
         void operator()(const Functor& f) const {
             using namespace meshgenerator::detail::cubedsphere;

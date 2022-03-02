@@ -49,19 +49,19 @@ CubedSphereMeshGenerator::CubedSphereMeshGenerator(const eckit::Parametrisation&
     configure_defaults();
 
     // Get number of partitions.
-    size_t nb_parts;
+    int nb_parts;
     if (p.get("nb_parts", nb_parts)) {
         options.set("nb_parts", nb_parts);
     }
 
     // Get this partition.
-    size_t part;
+    int part;
     if (p.get("part", part)) {
         options.set("part", part);
     }
 
     // Get halo size.
-    idx_t halo;
+    int halo;
     if (p.get("halo", halo)) {
         options.set("halo", halo);
     }
@@ -84,7 +84,7 @@ void CubedSphereMeshGenerator::configure_defaults() {
     options.set("part", mpi::rank());
 
     // This options sets the number of halo elements around each partition.
-    options.set("halo", idx_t{1});
+    options.set("halo", 1);
 
     // This options sets the default partitioner.
     options.set<std::string>("partitioner", "cubedsphere");
@@ -231,7 +231,7 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, cons
         LocalElem* localPtr{};                 // Pointer to local element.
         gidx_t globalIdx{undefinedGlobalIdx};  // Global index.
         idx_t remoteIdx{undefinedIdx};         // Remote index.
-        idx_t part{undefinedIdx};              // Partition.
+        int part{undefinedIdx};                // Partition.
     };
 
     // Struct to store additional information of local cells/nodes.
@@ -240,7 +240,7 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, cons
     struct LocalElem {
         GlobalElem* globalPtr{};             // Pointer to global element.
         ElemType type{ElemType::UNDEFINED};  // Cell/node Type.
-        idx_t halo{undefinedIdx};            // Halo level.
+        int halo{undefinedIdx};              // Halo level.
         idx_t t{};                           // t, i and j.
         idx_t i{};
         idx_t j{};
@@ -258,7 +258,7 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, cons
     const idx_t N = csGrid.N();
 
     // Get size of halo.
-    idx_t nHalo = 0;
+    int nHalo = 0;
     options.get("halo", nHalo);
 
     // Unique non-halo nodes and cells.
@@ -278,8 +278,8 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, cons
     const auto jacobian            = NeighbourJacobian(csGrid);
 
     // Get partition information.
-    const size_t nParts   = options.get<size_t>("nb_parts");
-    const size_t thisPart = options.get<size_t>("part");
+    const int nParts   = options.get<int>("nb_parts");
+    const int thisPart = options.get<int>("part");
 
     // Define an index counter.
     const auto idxSum = [](const std::vector<idx_t>& idxCounts) -> idx_t {
@@ -367,7 +367,7 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, cons
     auto globalCells = std::vector<GlobalElem>(static_cast<size_t>(nCellsArray));
 
     // Initialise bounding box.
-    auto cellBounds = std::vector<BoundingBox>(static_cast<size_t>(6));
+    auto cellBounds = std::vector<BoundingBox>(6);
 
     // Set tij grid iterator.
     auto tijIt = csGrid.tij().begin();
@@ -830,10 +830,13 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, cons
     Field lonLatField = cells.add(Field("lonlat", make_datatype<double>(), make_shape(cells.size(), 2)));
     lonLatField.set_variables(2);
 
+    Field ghostField = cells.add(Field("ghost", make_datatype<int>(), make_shape(cells.size())));
+
     // Set field views.
     auto cellsGlobalIdx = array::make_view<gidx_t, 1>(cells.global_index());
     auto cellsRemoteIdx = array::make_indexview<idx_t, 1>(cells.remote_index());
     auto cellsPart      = array::make_view<int, 1>(cells.partition());
+    auto cellsGhost     = array::make_view<int, 1>(ghostField);
     auto cellsHalo      = array::make_view<int, 1>(cells.halo());
     auto cellsFlags     = array::make_view<int, 1>(cells.flags());
     auto cellsTij       = array::make_view<idx_t, 2>(tijField);
@@ -894,6 +897,9 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, cons
         // Set halo.
         cellsHalo(cellLocalIdx) = localCell.halo;
 
+        // Set ghost.
+        cellsGhost(cellLocalIdx) = cellsHalo(cellLocalIdx) > 0;
+
         // Set flags.
         Topology::reset(cellsFlags(cellLocalIdx));
         switch (localCell.type) {
@@ -921,16 +927,48 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, cons
     //    Done. That was rather a lot of bookkeeping!
     // ---------------------------------------------------------------------------
 
-    mesh.metadata().set("halo", nHalo);
-    mesh.metadata().set("halo_locked", true);
-
-    mesh.nodes().metadata().set("parallel", true);
-    mesh.nodes().metadata().set("nb_owned", nodeLocalIdxCount[thisPart]);
-
-    mesh.cells().metadata().set("parallel", true);
-    mesh.cells().metadata().set("nb_owned", cellLocalIdxCount[thisPart]);
+    set_metadata(mesh);
 
     return;
+}
+
+// -----------------------------------------------------------------------------
+
+void CubedSphereMeshGenerator::set_metadata(Mesh& mesh) const {
+    const auto nHalo = options.get<int>("halo");
+
+    // Set basic halo metadata.
+    mesh.metadata().set("halo", nHalo);
+    mesh.metadata().set("halo_locked", true);
+    mesh.nodes().metadata().set("parallel", true);
+    mesh.cells().metadata().set("parallel", true);
+
+    // Loop over nodes and count number of halo elements.
+    auto nNodes         = std::vector<idx_t>(nHalo + 1, 0);
+    const auto nodeHalo = array::make_view<int, 1>(mesh.nodes().halo());
+    for (idx_t i = 0; i < mesh.nodes().size(); ++i) {
+        ++nNodes[static_cast<size_t>(nodeHalo(i))];
+    }
+    std::partial_sum(nNodes.begin(), nNodes.end(), nNodes.begin());
+
+    // Set node halo metadata.
+    for (size_t i = 0; i < nNodes.size(); ++i) {
+        const auto str = "nb_nodes_including_halo[" + std::to_string(i) + "]";
+        mesh.metadata().set(str, nNodes[i]);
+    }
+    // Loop over cells and count number of halo elements.
+    auto nCells         = std::vector<idx_t>(nHalo + 1, 0);
+    const auto cellHalo = array::make_view<int, 1>(mesh.cells().halo());
+    for (idx_t i = 0; i < mesh.cells().size(); ++i) {
+        ++nCells[static_cast<size_t>(cellHalo(i))];
+    }
+    std::partial_sum(nCells.begin(), nCells.end(), nCells.begin());
+
+    // Set cell halo metadata.
+    for (size_t i = 0; i < nCells.size(); ++i) {
+        const auto str = "nb_cells_including_halo[0][" + std::to_string(i) + "]";
+        mesh.metadata().set(str, nCells[i]);
+    }
 }
 
 // -----------------------------------------------------------------------------

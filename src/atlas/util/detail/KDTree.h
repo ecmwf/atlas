@@ -72,7 +72,6 @@ public:
 
     class ValueList : public std::vector<Value> {
     public:
-        using std::vector<Value>::vector;
         PayloadList payloads() const {
             PayloadList list;
             list.reserve(this->size());
@@ -310,7 +309,7 @@ public:
     }
 
     idx_t size() const override {
-#if ATLAS_ECKIT_VERSION_INT >= 11302  // v1.13.2
+#if ATLAS_ECKIT_VERSION_AT_LEAST(1, 13, 2)
         return static_cast<idx_t>(tree_->size());
 #else
         // Assume ECKIT-515 not implemented.

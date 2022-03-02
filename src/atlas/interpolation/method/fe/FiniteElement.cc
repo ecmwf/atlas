@@ -132,20 +132,25 @@ struct Stencil {
 void FiniteElement::print(std::ostream& out) const {
     functionspace::NodeColumns src(source_);
     functionspace::NodeColumns tgt(target_);
+    out << "atlas::interpolation::method::FiniteElement{" << std::endl;
+    out << "max_fraction_elems_to_try: " << max_fraction_elems_to_try_;
+    out << ", treat_failure_as_missing_value: " << treat_failure_as_missing_value_;
     if (not tgt) {
-        ATLAS_NOTIMPLEMENTED;
+        out << "}" << std::endl;
+        return;
     }
+    out << ", NodeColumns to NodeColumns stencil weights: " << std::endl;
     auto gidx_src = array::make_view<gidx_t, 1>(src.nodes().global_index());
 
     ATLAS_ASSERT(tgt.nodes().size() == idx_t(matrix_->rows()));
 
 
     auto field_stencil_points_loc  = tgt.createField<gidx_t>(option::variables(Stencil::max_stencil_size));
-    auto field_stencil_weigths_loc = tgt.createField<double>(option::variables(Stencil::max_stencil_size));
+    auto field_stencil_weights_loc = tgt.createField<double>(option::variables(Stencil::max_stencil_size));
     auto field_stencil_size_loc    = tgt.createField<int>();
 
     auto stencil_points_loc  = array::make_view<gidx_t, 2>(field_stencil_points_loc);
-    auto stencil_weights_loc = array::make_view<double, 2>(field_stencil_weigths_loc);
+    auto stencil_weights_loc = array::make_view<double, 2>(field_stencil_weights_loc);
     auto stencil_size_loc    = array::make_view<idx_t, 1>(field_stencil_size_loc);
     stencil_size_loc.assign(0);
 
@@ -175,23 +180,21 @@ void FiniteElement::print(std::ostream& out) const {
     tgt.gather().gather(stencil_points_loc, stencil_points_glb);
     tgt.gather().gather(stencil_weights_loc, stencil_weights_glb);
 
-    if (mpi::rank() == 0) {
-        int precision = std::numeric_limits<double>::max_digits10;
-        for (idx_t i = 0; i < global_size; ++i) {
-            out << std::setw(10) << i + 1 << " : ";
-            for (idx_t j = 0; j < stencil_size_glb(i); ++j) {
-                out << std::setw(10) << stencil_points_glb(i, j);
-            }
-            for (idx_t j = stencil_size_glb(i); j < Stencil::max_stencil_size; ++j) {
-                out << "          ";
-            }
-            for (idx_t j = 0; j < stencil_size_glb(i); ++j) {
-                out << std::setw(precision + 5) << std::left << std::setprecision(precision)
-                    << stencil_weights_glb(i, j);
-            }
-            out << std::endl;
+    int precision = std::numeric_limits<double>::max_digits10;
+    for (idx_t i = 0; i < global_size; ++i) {
+        out << std::setw(10) << i + 1 << " : ";
+        for (idx_t j = 0; j < stencil_size_glb(i); ++j) {
+            out << std::setw(10) << stencil_points_glb(i, j);
         }
+        for (idx_t j = stencil_size_glb(i); j < Stencil::max_stencil_size; ++j) {
+            out << "          ";
+        }
+        for (idx_t j = 0; j < stencil_size_glb(i); ++j) {
+            out << std::setw(precision + 5) << std::left << std::setprecision(precision) << stencil_weights_glb(i, j);
+        }
+        out << std::endl;
     }
+    out << "}" << std::endl;
 }
 
 void FiniteElement::setup(const FunctionSpace& source) {
@@ -231,8 +234,7 @@ void FiniteElement::setup(const FunctionSpace& source) {
 
     array::ArrayView<double, 2> out_lonlat = array::make_view<double, 2>(target_lonlat_);
 
-    idx_t Nelements                    = meshSource.cells().size();
-    const double maxFractionElemsToTry = 0.2;
+    idx_t Nelements = meshSource.cells().size();
 
     // weights -- one per vertex of element, triangles (3) or quads (4)
 
@@ -241,7 +243,7 @@ void FiniteElement::setup(const FunctionSpace& source) {
 
     // search nearest k cell centres
 
-    const idx_t maxNbElemsToTry = std::max<idx_t>(8, idx_t(Nelements * maxFractionElemsToTry));
+    const idx_t maxNbElemsToTry = std::max<idx_t>(8, idx_t(Nelements * max_fraction_elems_to_try_));
     idx_t max_neighbours        = 0;
 
     std::vector<size_t> failures;

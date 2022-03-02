@@ -10,40 +10,20 @@
 
 #include <cmath>
 #include <string>
-#include "atlas/field.h"
-#include "atlas/functionspace.h"
-#include "atlas/interpolation.h"
-#include "atlas/runtime/AtlasTool.h"
-#include "atlas/runtime/Log.h"
+
 #include "eckit/config/Resource.h"
-#include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/log/Plural.h"
 
 #include "PartitionedMesh.h"
+#include "atlas/field.h"
+#include "atlas/functionspace.h"
+#include "atlas/interpolation.h"
+#include "atlas/linalg/sparse/Backend.h"
+#include "atlas/runtime/AtlasTool.h"
+#include "atlas/runtime/Log.h"
+#include "atlas/util/function/VortexRollup.h"
 
 using namespace atlas;
-
-auto vortex_rollup = [](double lon, double lat, double t) {
-    // lon and lat in radians!
-
-    // Formula found in "A Lagrangian Particle Method with Remeshing for Tracer Transport on the Sphere"
-    // by Peter Bosler, James Kent, Robert Krasny, CHristiane Jablonowski, JCP 2015
-
-    auto sqr           = [](const double x) { return x * x; };
-    auto sech          = [](const double x) { return 1. / std::cosh(x); };
-    const double T     = 1.;
-    const double Omega = 2. * M_PI / T;
-    t *= T;
-    const double lambda_prime = std::atan2(-std::cos(lon - Omega * t), std::tan(lat));
-    const double rho          = 3. * std::sqrt(1. - sqr(std::cos(lat)) * sqr(std::sin(lon - Omega * t)));
-    double omega              = 0.;
-    double a                  = util::Earth::radius();
-    if (rho != 0.) {
-        omega = 0.5 * 3 * std::sqrt(3) * a * Omega * sqr(sech(rho)) * std::tanh(rho) / rho;
-    }
-    double q = 1. - std::tanh(0.2 * rho * std::sin(lambda_prime - omega / a * t));
-    return q;
-};
 
 class AtlasParallelInterpolation : public AtlasTool {
     int execute(const AtlasTool::Args& args) override;
@@ -122,7 +102,7 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
 
 
     if (args.get("backend", option)) {
-        eckit::linalg::LinearAlgebra::backend(option);
+        linalg::sparse::current_backend(option);
     }
 
     // Generate and partition source & target mesh
@@ -243,7 +223,7 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
             //            src_scalar_1( j ) = -std::tanh( y / 10. * std::cos( 50. / std::sqrt( x * x + y * y ) ) -
             //                                            x / 10. * std::sin( 50. / std::sqrt( x * x + y * y ) ) );
 
-            src_scalar_1(j) = vortex_rollup(lon, lat, 1.);
+            src_scalar_1(j) = util::function::vortex_rollup(lonlat(j, 0), lonlat(j, 1), 1.);
         }
     }
 

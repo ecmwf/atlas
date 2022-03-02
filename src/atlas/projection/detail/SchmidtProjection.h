@@ -49,6 +49,8 @@ public:
 private:
     double c_;  // stretching factor
     Rotation rotation_;
+    PointXYZ north0_;
+    PointXYZ north1_;
 };
 
 using SchmidtProjection        = SchmidtProjectionT<NotRotated>;

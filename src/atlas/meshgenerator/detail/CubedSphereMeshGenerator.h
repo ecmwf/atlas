@@ -56,6 +56,8 @@ private:
 
     void generate_mesh(const CubedSphereGrid&, const grid::Distribution&, Mesh&) const;
 
+    void set_metadata(Mesh&) const;
+
 private:
     util::Metadata options;
 };

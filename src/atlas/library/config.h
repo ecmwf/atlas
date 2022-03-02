@@ -45,4 +45,14 @@ using idx_t  = long;
 /// @typedef uidx_t
 /// Integer type for unique indices
 typedef gidx_t uidx_t;
+
+#define ATLAS_ECKIT_VERSION_AT_LEAST(x, y, z) (ATLAS_ECKIT_VERSION_INT >= x * 10000 + y * 100 + z)
+
+#if ATLAS_ECKIT_VERSION_AT_LEAST(1, 19, 0)
+#define ATLAS_ECKIT_HAVE_ECKIT_585 1
+#else
+#define ATLAS_ECKIT_HAVE_ECKIT_585 0
+#endif
+
+
 }  // namespace atlas

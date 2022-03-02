@@ -28,7 +28,7 @@ namespace util {
 namespace {
 
 double cross_product_analog(const Point2& A, const Point2& B, const Point2& C) {
-    return (A[LON] - C[LON]) * (B[LAT] - C[LAT]) - (A[LAT] - C[LAT]) * (B[LON] - C[LON]);
+    return (A.x() - C.x()) * (B.y() - C.y()) - (A.y() - C.y()) * (B.x() - C.x());
 }
 
 
@@ -90,7 +90,7 @@ PolygonXY::PolygonXY(const PartitionPolygon& partition_polygon): PolygonCoordina
         centroid_             = compute_centroid(coordinates_);
         inner_radius_squared_ = compute_inner_radius_squared(coordinates_, centroid_);
 
-        ATLAS_ASSERT(contains(centroid_));
+        ATLAS_ASSERT(PolygonXY::contains(centroid_));
     }
 }
 
@@ -101,15 +101,16 @@ bool PolygonXY::contains(const Point2& P) const {
         return dx * dx + dy * dy;
     };
 
+    constexpr double eps = 1.e-10;
     // check first bounding box
-    if (coordinatesMax_[LAT] < P[LAT] || P[LAT] < coordinatesMin_[LAT] || coordinatesMax_[LON] < P[LON] ||
-        P[LON] < coordinatesMin_[LON]) {
+    if (coordinatesMax_.y() + eps < P.y() || P.y() < coordinatesMin_.y() - eps || coordinatesMax_.x() + eps < P.x() ||
+        P.x() < coordinatesMin_.x() - eps) {
         return false;
     }
 
     if (inner_radius_squared_ == 0) {  // check inner bounding box
-        if (inner_coordinatesMin_[LON] <= P[LON] && P[LON] <= inner_coordinatesMax_[LON] &&
-            inner_coordinatesMin_[LAT] <= P[LAT] && P[LAT] <= inner_coordinatesMax_[LAT]) {
+        if (inner_coordinatesMin_.x() <= P.x() && P.x() <= inner_coordinatesMax_.x() &&
+            inner_coordinatesMin_.y() <= P.y() && P.y() <= inner_coordinatesMax_.y()) {
             return true;
         }
     }
@@ -132,11 +133,15 @@ bool PolygonXY::contains(const Point2& P) const {
         // intersecting either:
         // - "up" on upward crossing & P left of edge, or
         // - "down" on downward crossing & P right of edge
-        const bool APB = (A[LAT] <= P[LAT] && P[LAT] <= B[LAT]);
-        const bool BPA = (B[LAT] <= P[LAT] && P[LAT] <= A[LAT]);
+        const bool APB = (A.y() <= P.y() && P.y() <= B.y());
+        const bool BPA = (B.y() <= P.y() && P.y() <= A.y());
 
         if (APB != BPA) {
             const double side = cross_product_analog(P, A, B);
+            bool on_edge      = std::abs(side) < eps;
+            if (on_edge) {
+                return true;
+            }
             if (APB && side > 0) {
                 ++wn;
             }

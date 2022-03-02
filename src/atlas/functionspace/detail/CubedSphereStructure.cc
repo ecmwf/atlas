@@ -32,15 +32,14 @@ CubedSphereStructure::BoundingBox::BoundingBox() {
     jEnd   = std::numeric_limits<idx_t>::min();
 }
 
-CubedSphereStructure::CubedSphereStructure(const Field& tij, const Field& ghost): tij_(tij), ghost_(ghost) {
+CubedSphereStructure::CubedSphereStructure(const Field& tij, const Field& ghost, idx_t size):
+    tij_(tij), ghost_(ghost), nElems_(size) {
     ATLAS_TRACE();
     Log::debug() << "CubedSphereStructure bounds checking is set to " + std::to_string(checkBounds) << std::endl;
 
     // Make array views.
     const auto tijView_   = array::make_view<idx_t, 2>(tij_);
     const auto ghostView_ = array::make_view<int, 1>(ghost_);
-
-    nElems_ = tijView_.shape(0);
 
     // loop over tij and find min and max ij bounds.
     for (idx_t index = 0; index < nElems_; ++index) {
@@ -76,11 +75,11 @@ CubedSphereStructure::CubedSphereStructure(const Field& tij, const Field& ghost)
     }
 }
 
-idx_t CubedSphereStructure::nb_elems() const {
+idx_t CubedSphereStructure::size() const {
     return nElems_;
 }
 
-idx_t CubedSphereStructure::nb_owned_elems() const {
+idx_t CubedSphereStructure::sizeOwned() const {
     return nOwnedElems_;
 }
 

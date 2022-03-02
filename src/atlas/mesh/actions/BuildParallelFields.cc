@@ -10,6 +10,7 @@
 
 
 #include <cmath>
+#include <iomanip>
 #include <iostream>
 #include <stdexcept>
 
@@ -297,31 +298,39 @@ Field& build_nodes_remote_idx(mesh::Nodes& nodes) {
         for (idx_t jnode = 0; jnode < nb_recv_nodes; ++jnode) {
             uid_t uid = recv_node[jnode * varsize + 0];
             int inode = recv_node[jnode * varsize + 1];
-            if (lookup.count(uid)) {
-                send_found[proc[jpart]].push_back(inode);
-                send_found[proc[jpart]].push_back(lookup[uid]);
-            }
-            else {
-                std::stringstream msg;
-                msg << "[" << mpi::rank() << "] "
-                    << "Node requested by rank [" << jpart << "] with uid [" << uid
-                    << "] that should be owned is not found";
-                throw_Exception(msg.str(), Here());
-            }
+            send_found[proc[jpart]].push_back(inode);
+            send_found[proc[jpart]].push_back(lookup.count(uid) ? lookup[uid] : -1);
         }
     }
 
     ATLAS_TRACE_MPI(ALLTOALL) { mpi::comm().allToAll(send_found, recv_found); }
 
+    std::stringstream errstream;
+    size_t failed{0};
+    const auto gidx = array::make_view<gidx_t, 1>(nodes.global_index());
     for (idx_t jpart = 0; jpart < nparts; ++jpart) {
         const std::vector<int>& recv_node = recv_found[proc[jpart]];
         const idx_t nb_recv_nodes         = recv_node.size() / 2;
         // array::ArrayView<int,2> recv_node( recv_found[ proc[jpart] ].data(),
         //     array::make_shape(recv_found[ proc[jpart] ].size()/2,2) );
         for (idx_t jnode = 0; jnode < nb_recv_nodes; ++jnode) {
-            ridx(recv_node[jnode * 2 + 0]) = recv_node[jnode * 2 + 1];
+            idx_t inode      = recv_node[jnode * 2 + 0];
+            idx_t ridx_inode = recv_node[jnode * 2 + 1];
+            if (ridx_inode >= 0) {
+                ridx(recv_node[jnode * 2 + 0]) = ridx_inode;
+            }
+            else {
+                ++failed;
+                errstream << "\n[" << mpi::rank() << "] "
+                          << "Node with global index " << gidx(inode) << " not found on part [" << part(inode) << "]";
+            }
         }
     }
+
+    if (failed) {
+        throw_AssertionFailed(errstream.str(), Here());
+    }
+
     return nodes.remote_index();
 }
 
@@ -981,8 +990,6 @@ Field& build_cells_remote_idx(mesh::Cells& cells, const mesh::Nodes& nodes) {
     idx_t mypart = static_cast<idx_t>(mpi::rank());
     idx_t nparts = static_cast<idx_t>(mpi::size());
 
-    UniqueLonLat compute_uid(nodes);
-
     // This piece should be somewhere central ... could be NPROMA ?
     // ---------->
     std::vector<idx_t> proc(nparts);
@@ -992,9 +999,28 @@ Field& build_cells_remote_idx(mesh::Cells& cells, const mesh::Nodes& nodes) {
     // <---------
 
     auto ridx                 = array::make_indexview<idx_t, 1>(cells.remote_index());
-    auto part                 = array::make_view<int, 1>(cells.partition());
+    const auto part           = array::make_view<int, 1>(cells.partition());
+    const auto gidx           = array::make_view<gidx_t, 1>(cells.global_index());
+    const auto flags          = array::make_view<int, 1>(cells.flags());
     const auto& element_nodes = cells.node_connectivity();
     idx_t nb_cells            = cells.size();
+
+    const PeriodicTransform transform_periodic_east(-360.);
+    const PeriodicTransform transform_periodic_west(+360.);
+    const UniqueLonLat compute_uid_lonlat(nodes);
+    auto compute_uid = [&](idx_t jcell) {
+        constexpr int PERIODIC = util::Topology::PERIODIC;
+        constexpr int EAST     = util::Topology::EAST;
+        constexpr int WEST     = util::Topology::WEST;
+        const auto flags_view  = util::Bitflags::view(flags(jcell));
+        if (flags_view.check(PERIODIC | EAST)) {
+            return compute_uid_lonlat(element_nodes.row(jcell), transform_periodic_east);
+        }
+        if (flags_view.check(PERIODIC | WEST)) {
+            return compute_uid_lonlat(element_nodes.row(jcell), transform_periodic_west);
+        }
+        return compute_uid_lonlat(element_nodes.row(jcell));
+    };
 
     idx_t varsize = 2;
 
@@ -1003,7 +1029,7 @@ Field& build_cells_remote_idx(mesh::Cells& cells, const mesh::Nodes& nodes) {
     int sendcnt = 0;
     std::map<uid_t, int> lookup;
     for (idx_t jcell = 0; jcell < nb_cells; ++jcell) {
-        uid_t uid = compute_uid(element_nodes.row(jcell));
+        uid_t uid = compute_uid(jcell);
 
         if (idx_t(part(jcell)) == mypart) {
             lookup[uid] = jcell;
@@ -1034,37 +1060,38 @@ Field& build_cells_remote_idx(mesh::Cells& cells, const mesh::Nodes& nodes) {
     for (idx_t jpart = 0; jpart < nparts; ++jpart) {
         const std::vector<uid_t>& recv_cell = recv_needed[proc[jpart]];
         const idx_t nb_recv_cells           = idx_t(recv_cell.size()) / varsize;
-        // array::ArrayView<uid_t,2> recv_node( make_view( Array::wrap(shape,
-        // recv_needed[ proc[jpart] ].data()) ),
-        //     array::make_shape(recv_needed[ proc[jpart] ].size()/varsize,varsize)
-        //     );
         for (idx_t jcell = 0; jcell < nb_recv_cells; ++jcell) {
             uid_t uid = recv_cell[jcell * varsize + 0];
             int icell = recv_cell[jcell * varsize + 1];
-            if (lookup.count(uid)) {
-                send_found[proc[jpart]].push_back(icell);
-                send_found[proc[jpart]].push_back(lookup[uid]);
-            }
-            else {
-                std::stringstream msg;
-                msg << "[" << mpi::rank() << "] "
-                    << "Node requested by rank [" << jpart << "] with uid [" << uid
-                    << "] that should be owned is not found";
-                throw_Exception(msg.str(), Here());
-            }
+            send_found[proc[jpart]].push_back(icell);
+            send_found[proc[jpart]].push_back(lookup.count(uid) ? lookup[uid] : -1);
         }
     }
 
     ATLAS_TRACE_MPI(ALLTOALL) { mpi::comm().allToAll(send_found, recv_found); }
 
+    std::stringstream errstream;
+    size_t failed{0};
     for (idx_t jpart = 0; jpart < nparts; ++jpart) {
         const std::vector<int>& recv_cell = recv_found[proc[jpart]];
         const idx_t nb_recv_cells         = recv_cell.size() / 2;
         // array::ArrayView<int,2> recv_node( recv_found[ proc[jpart] ].data(),
         //     array::make_shape(recv_found[ proc[jpart] ].size()/2,2) );
         for (idx_t jcell = 0; jcell < nb_recv_cells; ++jcell) {
-            ridx(recv_cell[jcell * 2 + 0]) = recv_cell[jcell * 2 + 1];
+            idx_t icell      = recv_cell[jcell * 2 + 0];
+            idx_t ridx_icell = recv_cell[jcell * 2 + 1];
+            if (ridx_icell >= 0) {
+                ridx(icell) = ridx_icell;
+            }
+            else {
+                ++failed;
+                errstream << "\n[" << mpi::rank() << "] "
+                          << "Cell " << gidx(icell) << " not found on part [" << part(icell) << "]";
+            }
         }
+    }
+    if (failed) {
+        throw_AssertionFailed(errstream.str(), Here());
     }
     return cells.remote_index();
 }

@@ -123,13 +123,20 @@ CASE("MissingValue (DataType specialisations)") {
         config.set("missing_value", n);
         config.set("missing_value_epsilon", eps);
 
+        Log::info().indent();
         for (std::string type : {"nan", "equals", "approximately-equals"}) {
+            Log::info() << "type " << type << std::endl;
+            Log::info().indent();
             auto mv = MissingValue(type + "-real64", config);
             EXPECT(bool(mv));
             EXPECT(mv(type == "nan" ? nan : n));
-            EXPECT(mv(n) != mv(nan));
+            if (type == "nan") {
+                EXPECT(mv(n) != mv(nan));
+            }
             EXPECT(mv(n + 1) == false);
+            Log::info().unindent();
         }
+        Log::info().unindent();
     }
 
 
@@ -142,13 +149,20 @@ CASE("MissingValue (DataType specialisations)") {
         config.set("missing_value", n);
         config.set("missing_value_epsilon", eps);
 
+        Log::info().indent();
         for (std::string type : {"nan", "equals", "approximately-equals"}) {
+            Log::info() << "type " << type << std::endl;
+            Log::info().indent();
             auto mv = MissingValue(type + "-real32", config);
             EXPECT(bool(mv));
             EXPECT(mv(type == "nan" ? nan : n));
-            EXPECT(mv(n) != mv(nan));
+            if (type == "nan") {
+                EXPECT(mv(n) != mv(nan));
+            }
             EXPECT(mv(n + 1) == false);
+            Log::info().unindent();
         }
+        Log::info().unindent();
     }
 
 
@@ -181,7 +195,7 @@ CASE("MissingValue (DataType specialisations)") {
 
 
 CASE("MissingValue from Field (basic)") {
-    std::vector<double> values{1., nan, missingValue, missingValue, missingValue + missingValueEps / 2., 6., 7.};
+    std::vector<double> values{1., missingValue, missingValue, missingValue + missingValueEps / 2., 6., 7.};
     Field field("field", values.data(), array::make_shape(values.size(), 1));
 
     field.metadata().set("missing_value_type", "not defined");
@@ -192,12 +206,15 @@ CASE("MissingValue from Field (basic)") {
 
 
     SECTION("nan") {
+        std::vector<double> values_with_nan = values;
+        values_with_nan.insert(values_with_nan.begin() + 1, nan);
+
         // missing value type from user
-        EXPECT(std::count_if(values.begin(), values.end(), MissingValue("nan", field)) == 1);
+        EXPECT(std::count_if(values_with_nan.begin(), values_with_nan.end(), MissingValue("nan", field)) == 1);
 
         // missing value type from field
         field.metadata().set("missing_value_type", "nan");
-        EXPECT(std::count_if(values.begin(), values.end(), MissingValue(field)) == 1);
+        EXPECT(std::count_if(values_with_nan.begin(), values_with_nan.end(), MissingValue(field)) == 1);
     }
 
 

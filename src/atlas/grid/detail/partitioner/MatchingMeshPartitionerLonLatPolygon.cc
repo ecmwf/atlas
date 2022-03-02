@@ -10,6 +10,8 @@
 
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.h"
 
+#include <iomanip>
+#include <sstream>
 #include <vector>
 
 #include "eckit/config/Resource.h"
@@ -19,6 +21,7 @@
 #include "atlas/grid/Iterator.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/omp/fill.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -44,36 +47,71 @@ void MatchingMeshPartitionerLonLatPolygon::partition(const Grid& grid, int parti
 
     Log::debug() << "MatchingMeshPartitionerLonLatPolygon::partition" << std::endl;
 
-    // FIXME: THIS IS A HACK! the coordinates include North/South Pole (first/last
-    // partitions only)
-    bool includesNorthPole = (mpi_rank == 0);
-    bool includesSouthPole = (mpi_rank == mpi_size - 1);
-
     const util::PolygonXY poly{prePartitionedMesh_.polygon(0)};
-    Projection projection = prePartitionedMesh_.projection();
 
-    {
-        eckit::ProgressTimer timer("Partitioning", grid.size(), "point", double(10), atlas::Log::trace());
+    double west = poly.coordinatesMin().x();
+    double east = poly.coordinatesMax().x();
+    comm.allReduceInPlace(west, eckit::mpi::Operation::MIN);
+    comm.allReduceInPlace(east, eckit::mpi::Operation::MAX);
+
+    Projection projection = prePartitionedMesh_.projection();
+    omp::fill(partitioning, partitioning + grid.size(), -1);
+
+    auto compute = [&](double west) {
         size_t i = 0;
 
         for (PointLonLat P : grid.lonlat()) {
-            ++timer;
-            projection.lonlat2xy(P);
-            const bool atThePole = (includesNorthPole && P[LAT] >= poly.coordinatesMax()[LAT]) ||
-                                   (includesSouthPole && P[LAT] < poly.coordinatesMin()[LAT]);
-
-            partitioning[i++] = atThePole || poly.contains(P) ? mpi_rank : -1;
+            if (partitioning[i] < 0) {
+                projection.lonlat2xy(P);
+                P.normalise(west);
+                partitioning[i] = poly.contains(P) ? mpi_rank : -1;
+            }
+            ++i;
         }
-    }
+        // Synchronize partitioning
+        comm.allReduceInPlace(partitioning, grid.size(), eckit::mpi::Operation::MAX);
 
-    // Synchronize partitioning, do a sanity check
-    comm.allReduceInPlace(partitioning, grid.size(), eckit::mpi::Operation::MAX);
-    const int min = *std::min_element(partitioning, partitioning + grid.size());
+        return *std::min_element(partitioning, partitioning + grid.size());
+    };
+
+    int min              = compute(east - 360.);
+    constexpr double eps = 1.e-10;
+    bool second_try      = [&]() {
+        if (min < 0 && east - west > 360. + eps) {
+            min = compute(west - eps);
+            return true;
+        }
+        return false;
+    }();
     if (min < 0) {
-        throw_Exception(
-            "Could not find partition for target node (source "
-            "mesh does not contain all target grid points)",
-            Here());
+        size_t i            = 0;
+        size_t max_failures = grid.size();
+        std::vector<size_t> failed_index;
+        std::vector<PointLonLat> failed_lonlat;
+        failed_index.reserve(max_failures);
+        failed_lonlat.reserve(max_failures);
+        for (PointLonLat P : grid.lonlat()) {
+            if (partitioning[i] < 0) {
+                failed_index.emplace_back(i);
+                failed_lonlat.emplace_back(P);
+            }
+            ++i;
+        }
+        size_t nb_failures = failed_index.size();
+        std::stringstream err;
+        err.precision(20);
+        err << "Could not find partition of " << nb_failures
+            << " target grid points (source mesh does not contain all target grid points)\n"
+            << "Tried first normalizing coordinates with west=" << east - 360.;
+        if (second_try) {
+            err << "Tried second time normalizing coordinates with west=" << west - eps << "\n";
+        }
+        err << "Failed target grid points with global index:\n";
+        for (size_t n = 0; n < nb_failures; ++n) {
+            err << "  - " << std::setw(10) << std::left << failed_index[n] + 1 << " {lon,lat} : " << failed_lonlat[n]
+                << "\n";
+        }
+        throw_Exception(err.str(), Here());
     }
 }
 

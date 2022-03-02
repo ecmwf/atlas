@@ -163,6 +163,61 @@ CASE("test_lonlat") {
     doTaylorTest(StructuredGrid("N16"), 1e-9);
 }
 
+CASE("test_constructors") {
+    Projection::Jacobian a = {};
+    Projection::Jacobian b = {1., 2., 3., 4.};
+    Projection::Jacobian c = {{5., 6.}, {7., 8.}};
+
+    Log::info() << "a =" << std::endl;
+    Log::info() << a << std::endl;
+    Log::info() << "b =" << std::endl;
+    Log::info() << b << std::endl;
+    Log::info() << "c =" << std::endl;
+    Log::info() << c << std::endl;
+
+    EXPECT_EQ(a[0][0], 0.);
+    EXPECT_EQ(a[0][1], 0.);
+    EXPECT_EQ(a[1][0], 0.);
+    EXPECT_EQ(a[1][1], 0.);
+
+    EXPECT_EQ(b[0][0], 1.);
+    EXPECT_EQ(b[0][1], 2.);
+    EXPECT_EQ(b[1][0], 3.);
+    EXPECT_EQ(b[1][1], 4.);
+
+    EXPECT_EQ(c[0][0], 5.);
+    EXPECT_EQ(c[0][1], 6.);
+    EXPECT_EQ(c[1][0], 7.);
+    EXPECT_EQ(c[1][1], 8.);
+}
+
+CASE("test_multiplication") {
+    const Projection::Jacobian A = {{0., -1.}, {1., 0.}};
+    const Point2 x               = {2., 1.};
+
+    const auto Ax      = A * x;
+    const auto AinvAx  = A.inverse() * Ax;
+    const auto Atimes2 = A * 2.;
+
+    Log::info() << "A =" << std::endl;
+    Log::info() << A << std::endl;
+    Log::info() << "2A =" << std::endl;
+    Log::info() << Atimes2 << std::endl;
+    Log::info() << "x =" << std::endl;
+    Log::info() << x << std::endl;
+    Log::info() << "Ax =" << std::endl;
+    Log::info() << Ax << std::endl;
+    Log::info() << "A^-1 Ax =" << std::endl;
+    Log::info() << AinvAx << std::endl;
+
+    EXPECT_EQ(Atimes2[0][0], 0.);
+    EXPECT_EQ(Atimes2[0][1], -2.);
+    EXPECT_EQ(Atimes2[1][0], 2.);
+    EXPECT_EQ(Atimes2[1][1], 0.);
+    EXPECT_EQ(Ax, Point2(-1., 2.));
+    EXPECT_EQ(AinvAx, x);
+}
+
 
 //-----------------------------------------------------------------------------
 

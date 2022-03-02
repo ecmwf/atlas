@@ -12,6 +12,7 @@
 #include <cassert>
 #include "atlas/array/gridtools/GridToolsArrayHelpers.h"
 #include "atlas/array/helpers/ArrayAssigner.h"
+#include "atlas/array/helpers/ArrayCopier.h"
 #include "atlas/array/helpers/ArrayInitializer.h"
 #include "atlas/array/helpers/ArrayWriter.h"
 #include "atlas/runtime/Exception.h"
@@ -34,7 +35,7 @@ struct host_device_array {
             data_[i++] = v;
         }
     }
-    ATLAS_HOST_DEVICE ~host_device_array() {}
+    ATLAS_HOST_DEVICE ~host_device_array() = default;
 
     ATLAS_HOST_DEVICE const T* data() const { return data_; }
 
@@ -127,6 +128,16 @@ ENABLE_IF_NON_CONST void ArrayView<Value, Rank>::assign(const std::initializer_l
     helpers::array_assigner<Value, Rank>::apply(*this, list);
 }
 
+//------------------------------------------------------------------------------------------------------
+
+
+template <typename Value, int Rank>
+ENABLE_IF_NON_CONST void ArrayView<Value, Rank>::assign(const ArrayView& other) {
+    helpers::array_copier<Value, Rank>::apply(other, *this);
+}
+
+//------------------------------------------------------------------------------------------------------
+
 template <typename Value, int Rank>
 void ArrayView<Value, Rank>::dump(std::ostream& os) const {
     os << "size: " << size() << " , values: ";
@@ -144,28 +155,32 @@ void ArrayView<Value, Rank>::dump(std::ostream& os) const {
 // Explicit instantiation
 namespace atlas {
 namespace array {
-#define EXPLICIT_TEMPLATE_INSTANTIATION(Rank)                                                           \
-    template class ArrayView<int, Rank>;                                                                \
-    template class ArrayView<int const, Rank>;                                                          \
-    template class ArrayView<long, Rank>;                                                               \
-    template class ArrayView<long const, Rank>;                                                         \
-    template class ArrayView<long unsigned, Rank>;                                                      \
-    template class ArrayView<long unsigned const, Rank>;                                                \
-    template class ArrayView<float, Rank>;                                                              \
-    template class ArrayView<float const, Rank>;                                                        \
-    template class ArrayView<double, Rank>;                                                             \
-    template class ArrayView<double const, Rank>;                                                       \
-                                                                                                        \
-    template void ArrayView<int, Rank>::assign<true, nullptr>(int const&);                              \
-    template void ArrayView<long, Rank>::assign<true, nullptr>(long const&);                            \
-    template void ArrayView<float, Rank>::assign<true, nullptr>(float const&);                          \
-    template void ArrayView<double, Rank>::assign<true, nullptr>(double const&);                        \
-    template void ArrayView<long unsigned, Rank>::assign<true, nullptr>(long unsigned const&);          \
-    template void ArrayView<int, Rank>::assign<true, nullptr>(std::initializer_list<int> const&);       \
-    template void ArrayView<long, Rank>::assign<true, nullptr>(std::initializer_list<long> const&);     \
-    template void ArrayView<float, Rank>::assign<true, nullptr>(std::initializer_list<float> const&);   \
-    template void ArrayView<double, Rank>::assign<true, nullptr>(std::initializer_list<double> const&); \
-    template void ArrayView<long unsigned, Rank>::assign<true, nullptr>(std::initializer_list<long unsigned> const&);
+#define EXPLICIT_TEMPLATE_INSTANTIATION(Rank)                                                                         \
+    template class ArrayView<int, Rank>;                                                                              \
+    template class ArrayView<int const, Rank>;                                                                        \
+    template class ArrayView<long, Rank>;                                                                             \
+    template class ArrayView<long const, Rank>;                                                                       \
+    template class ArrayView<long unsigned, Rank>;                                                                    \
+    template class ArrayView<long unsigned const, Rank>;                                                              \
+    template class ArrayView<float, Rank>;                                                                            \
+    template class ArrayView<float const, Rank>;                                                                      \
+    template class ArrayView<double, Rank>;                                                                           \
+    template class ArrayView<double const, Rank>;                                                                     \
+                                                                                                                      \
+    template void ArrayView<int, Rank>::assign<true, nullptr>(int const&);                                            \
+    template void ArrayView<long, Rank>::assign<true, nullptr>(long const&);                                          \
+    template void ArrayView<float, Rank>::assign<true, nullptr>(float const&);                                        \
+    template void ArrayView<double, Rank>::assign<true, nullptr>(double const&);                                      \
+    template void ArrayView<long unsigned, Rank>::assign<true, nullptr>(long unsigned const&);                        \
+    template void ArrayView<int, Rank>::assign<true, nullptr>(std::initializer_list<int> const&);                     \
+    template void ArrayView<long, Rank>::assign<true, nullptr>(std::initializer_list<long> const&);                   \
+    template void ArrayView<float, Rank>::assign<true, nullptr>(std::initializer_list<float> const&);                 \
+    template void ArrayView<double, Rank>::assign<true, nullptr>(std::initializer_list<double> const&);               \
+    template void ArrayView<long unsigned, Rank>::assign<true, nullptr>(std::initializer_list<long unsigned> const&); \
+    template void ArrayView<int, Rank>::assign<true, nullptr>(ArrayView<int, Rank> const&);                           \
+    template void ArrayView<long, Rank>::assign<true, nullptr>(ArrayView<long, Rank> const&);                         \
+    template void ArrayView<float, Rank>::assign<true, nullptr>(ArrayView<float, Rank> const&);                       \
+    template void ArrayView<double, Rank>::assign<true, nullptr>(ArrayView<double, Rank> const&);
 
 
 // For each Rank in [1..9]

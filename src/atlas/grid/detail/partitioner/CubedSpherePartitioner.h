@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <array>
 #include <vector>
 
 #include "atlas/grid/detail/partitioner/Partitioner.h"

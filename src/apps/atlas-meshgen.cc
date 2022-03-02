@@ -125,6 +125,7 @@ private:
     std::string key;
     long halo;
     bool edges;
+    bool cells;
     bool brick;
     bool stats;
     bool info;
@@ -165,6 +166,7 @@ Meshgen2Gmsh::Meshgen2Gmsh(int argc, char** argv): AtlasTool(argc, argv) {
     add_option(new Separator("Advanced"));
     add_option(new SimpleOption<long>("halo", "Halo size"));
     add_option(new SimpleOption<bool>("edges", "Build edge datastructure"));
+    add_option(new SimpleOption<bool>("cells", "Build cells datastructure"));
     add_option(new SimpleOption<bool>("brick", "Build brick dual mesh"));
     add_option(new SimpleOption<bool>("stats", "Write statistics file"));
     add_option(new SimpleOption<bool>("info", "Write Info"));
@@ -203,6 +205,8 @@ int Meshgen2Gmsh::execute(const Args& args) {
 
     edges = false;
     args.get("edges", edges);
+    cells = false;
+    args.get("cells", cells);
     stats = false;
     args.get("stats", stats);
     info = false;
@@ -280,6 +284,7 @@ int Meshgen2Gmsh::execute(const Args& args) {
         throw;
     }
 
+
     if (grid.projection().units() == "degrees") {
         functionspace::NodeColumns nodes_fs(mesh, option::halo(halo));
     }
@@ -297,6 +302,10 @@ int Meshgen2Gmsh::execute(const Args& args) {
         if (not brick) {
             build_median_dual_mesh(mesh);
         }
+    }
+
+    if (cells) {
+        functionspace::CellColumns cells_fs(mesh, option::halo(halo));
     }
 
     if (stats) {

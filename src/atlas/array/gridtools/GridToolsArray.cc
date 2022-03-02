@@ -162,49 +162,63 @@ public:
             case 1:
                 return construct(shape[0]);
             case 2: {
-                if (layout[0] == 0 && layout[1] == 1)
+                if (layout[0] == 0 && layout[1] == 1) {
                     return construct_with_layout<::gridtools::layout_map<0, 1>>(shape[0], shape[1]);
-                if (layout[0] == 1 && layout[1] == 0)
+                }
+                if (layout[0] == 1 && layout[1] == 0) {
                     return construct_with_layout<::gridtools::layout_map<1, 0>>(shape[0], shape[1]);
+                }
             }
             case 3: {
-                if (layout[0] == 0 && layout[1] == 1 && layout[2] == 2)
+                if (layout[0] == 0 && layout[1] == 1 && layout[2] == 2) {
                     return construct_with_layout<::gridtools::layout_map<0, 1, 2>>(shape[0], shape[1], shape[2]);
-                if (layout[0] == 0 && layout[1] == 2 && layout[2] == 1)
+                }
+                if (layout[0] == 0 && layout[1] == 2 && layout[2] == 1) {
                     return construct_with_layout<::gridtools::layout_map<0, 2, 1>>(shape[0], shape[1], shape[2]);
-                if (layout[0] == 1 && layout[1] == 0 && layout[2] == 2)
+                }
+                if (layout[0] == 1 && layout[1] == 0 && layout[2] == 2) {
                     return construct_with_layout<::gridtools::layout_map<1, 0, 2>>(shape[0], shape[1], shape[2]);
-                if (layout[0] == 1 && layout[1] == 2 && layout[2] == 0)
+                }
+                if (layout[0] == 1 && layout[1] == 2 && layout[2] == 0) {
                     return construct_with_layout<::gridtools::layout_map<1, 2, 0>>(shape[0], shape[1], shape[2]);
-                if (layout[0] == 2 && layout[1] == 0 && layout[2] == 1)
+                }
+                if (layout[0] == 2 && layout[1] == 0 && layout[2] == 1) {
                     return construct_with_layout<::gridtools::layout_map<2, 0, 1>>(shape[0], shape[1], shape[2]);
-                if (layout[0] == 2 && layout[1] == 1 && layout[2] == 0)
+                }
+                if (layout[0] == 2 && layout[1] == 1 && layout[2] == 0) {
                     return construct_with_layout<::gridtools::layout_map<2, 1, 0>>(shape[0], shape[1], shape[2]);
+                }
             }
             case 4: {
-                if (layout[0] == 0 && layout[1] == 1 && layout[2] == 2 && layout[3] == 3)
+                if (layout[0] == 0 && layout[1] == 1 && layout[2] == 2 && layout[3] == 3) {
                     return construct_with_layout<::gridtools::layout_map<0, 1, 2, 3>>(shape[0], shape[1], shape[2],
                                                                                       shape[3]);
-                if (layout[0] == 3 && layout[1] == 2 && layout[2] == 1 && layout[3] == 0)
+                }
+                if (layout[0] == 3 && layout[1] == 2 && layout[2] == 1 && layout[3] == 0) {
                     return construct_with_layout<::gridtools::layout_map<3, 2, 1, 0>>(shape[0], shape[1], shape[2],
                                                                                       shape[3]);
+                }
             }
             case 5: {
-                if (layout[0] == 0 && layout[1] == 1 && layout[2] == 2 && layout[3] == 3 && layout[4] == 4)
+                if (layout[0] == 0 && layout[1] == 1 && layout[2] == 2 && layout[3] == 3 && layout[4] == 4) {
                     return construct_with_layout<::gridtools::layout_map<0, 1, 2, 3, 4>>(shape[0], shape[1], shape[2],
                                                                                          shape[3], shape[4]);
-                if (layout[0] == 4 && layout[1] == 3 && layout[2] == 2 && layout[3] == 1 && layout[4] == 0)
+                }
+                if (layout[0] == 4 && layout[1] == 3 && layout[2] == 2 && layout[3] == 1 && layout[4] == 0) {
                     return construct_with_layout<::gridtools::layout_map<4, 3, 2, 1, 0>>(shape[0], shape[1], shape[2],
                                                                                          shape[3], shape[4]);
+                }
             }
             default: {
                 std::stringstream err;
-                if (shape.size() > 5)
+                if (shape.size() > 5) {
                     err << "shape not recognized";
+                }
                 else {
                     err << "Layout < ";
-                    for (size_t j = 0; j < layout.size(); ++j)
+                    for (size_t j = 0; j < layout.size(); ++j) {
                         err << layout[j] << " ";
+                    }
                     err << "> not implemented in Atlas.";
                 }
                 throw_Exception(err.str(), Here());
@@ -229,8 +243,9 @@ public:
             throw_Exception(err.str(), Here());
         }
 
-        if (array_.valid())
+        if (array_.valid()) {
             array_.syncHostDevice();
+        }
 
         Array* resized = Array::create<Value>(ArrayShape{(idx_t)c...});
 
@@ -397,7 +412,7 @@ Array* Array::create(DataType datatype, ArraySpec&& spec) {
 
 //------------------------------------------------------------------------------
 
-Array::~Array() {}
+Array::~Array() = default;
 
 //------------------------------------------------------------------------------
 
@@ -429,8 +444,9 @@ void ArrayT<Value>::insert(idx_t idx1, idx_t size1) {
     // if( hostNeedsUpdate() ) {
     //    updateHost();
     //}
-    if (not hasDefaultLayout())
+    if (not hasDefaultLayout()) {
         ATLAS_NOTIMPLEMENTED;
+    }
 
     ArrayShape nshape = shape();
     if (idx1 > nshape[0]) {

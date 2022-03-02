@@ -8,6 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <cstdlib>
+
 #include "eckit/exception/Exceptions.h"
 
 #include "atlas/runtime/Exception.h"
@@ -23,17 +25,23 @@ void throw_NotImplemented(const std::string& msg, const eckit::CodeLocation& loc
 }
 
 void throw_AssertionFailed(const std::string& msg) {
-    throw eckit::AssertionFailed(msg);
+    throw_AssertionFailed(msg, eckit::CodeLocation{});
 }
 
 void throw_AssertionFailed(const std::string& msg, const eckit::CodeLocation& loc) {
-    throw eckit::AssertionFailed(msg, loc);
+    if (loc) {
+        eckit::handle_assert(msg, loc);
+    }
+    else {
+        eckit::handle_assert(msg, eckit::CodeLocation{"unspecified file", 0, "unspecified function"});
+    }
+    std::abort();  // should never reach here, but makes sure we will never return from this
 }
 
 void throw_AssertionFailed(const std::string& code, const std::string& msg, const eckit::CodeLocation& loc) {
     std::ostringstream ss;
     ss << " [[ " << code << " ]]\n" << msg;
-    throw eckit::AssertionFailed(ss.str(), loc);
+    throw_AssertionFailed(ss.str(), loc);
 }
 
 void throw_Exception(const std::string& msg) {
@@ -63,6 +71,19 @@ void throw_OutOfRange(const std::string& varname, idx_t index, idx_t size, const
     std::ostringstream ss;
     ss << "OutOfRange: Tried to access " << varname << " index " << index << " but maximum allowed index is "
        << size - 1;
+    throw eckit::Exception(ss.str(), loc);
+}
+
+
+void throw_OutOfRange(idx_t index, idx_t size) {
+    std::ostringstream ss;
+    ss << "OutOfRange: Tried to access index " << index << " but maximum allowed index is " << size - 1;
+    throw eckit::Exception(ss.str());
+}
+
+void throw_OutOfRange(idx_t index, idx_t size, const eckit::CodeLocation& loc) {
+    std::ostringstream ss;
+    ss << "OutOfRange: Tried to access index " << index << " but maximum allowed index is " << size - 1;
     throw eckit::Exception(ss.str(), loc);
 }
 

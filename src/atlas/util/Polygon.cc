@@ -152,7 +152,7 @@ PolygonCoordinates::PolygonCoordinates(const Polygon& poly, const atlas::Field& 
         if ((coordinates_.size() >= 2) && removeAlignedPoints) {
             const Point2& B = coordinates_.back();
             const Point2& C = coordinates_[coordinates_.size() - 2];
-            if (eckit::types::is_approximately_equal(0., cross_product_analog(A, B, C))) {
+            if (eckit::types::is_approximately_equal(0., cross_product_analog(A, B, C), 1.e-10)) {
                 coordinates_.back() = A;
                 ++nb_removed_points_due_to_alignment;
                 continue;
@@ -208,7 +208,7 @@ PolygonCoordinates::PolygonCoordinates(const PointContainer& points, bool remove
         if ((coordinates_.size() >= 2) && removeAlignedPoints) {
             const Point2& B = coordinates_.back();
             const Point2& C = coordinates_[coordinates_.size() - 2];
-            if (eckit::types::is_approximately_equal(0., cross_product_analog(A, B, C))) {
+            if (eckit::types::is_approximately_equal(0., cross_product_analog(A, B, C), 1.e-10)) {
                 coordinates_.back() = A;
                 ++nb_removed_points_due_to_alignment;
                 continue;
@@ -255,6 +255,11 @@ void PolygonCoordinates::print(std::ostream& out) const {
         out << coordinates_[i];
     }
     out << "]";
+}
+
+std::ostream& operator<<(std::ostream& out, const PolygonCoordinates& pc) {
+    pc.print(out);
+    return out;
 }
 
 Polygon::edge_set_t ExplicitPartitionPolygon::compute_edges(idx_t points_size) {

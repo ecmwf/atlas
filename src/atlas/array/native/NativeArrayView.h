@@ -267,6 +267,9 @@ public:
     ENABLE_IF_NON_CONST
     void assign(const std::initializer_list<value_type>& list);
 
+    ENABLE_IF_NON_CONST
+    void assign(const ArrayView& other);
+
     void dump(std::ostream& os) const;
 
     /// @brief Obtain a slice from this view:  view.slice( Range, Range, ... )
