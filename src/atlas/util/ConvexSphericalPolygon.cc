@@ -548,7 +548,7 @@ double ConvexSphericalPolygon::compute_radius() const {
         PointXYZ centroid;
         centroid   = sph_coords_[0];
         size_t isp = 1;
-        for (size_t i = 1; i < size_ - 1; ++i) {
+        for (size_t i = 1; i < size_; ++i) {
             if (approx_eq(sph_coords_[isp], sph_coords_[isp - 1], TOL)) {
                 continue;
             }
