@@ -12,6 +12,7 @@
 
 // for static linking
 #include "bil/BilinearRemapping.h"
+#include "cubedsphere/CubedSphereBilinear.h"
 #include "fe/FiniteElement.h"
 #include "knn/GridBoxAverage.h"
 #include "knn/GridBoxMaximum.h"
@@ -44,6 +45,7 @@ void force_link() {
             MethodBuilder<method::QuasiCubic3D>();
             MethodBuilder<method::GridBoxAverage>();
             MethodBuilder<method::GridBoxMaximum>();
+            MethodBuilder<method::CubedSphereBilinear>();
         }
     } link;
 }

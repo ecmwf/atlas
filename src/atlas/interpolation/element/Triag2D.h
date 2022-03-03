@@ -57,6 +57,8 @@ public:
         throw_OutOfRange("Triag2D::p(i)", i, 3, Here());
     }
 
+    bool inTriangle(const Vector2D& p, double epsilon = 5 * std::numeric_limits<double>::epsilon()) const;
+
 private:           // members
     Vector2D v00;  // aka v0
     Vector2D v10;  // aka v1
@@ -64,7 +66,6 @@ private:           // members
 
     static double cross2d(const Vector2D& a, const Vector2D& b) { return a.x() * b.y() - a.y() * b.x(); }
 
-    bool inTriangle(const Vector2D& p, double epsilon = 5 * std::numeric_limits<double>::epsilon()) const;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
