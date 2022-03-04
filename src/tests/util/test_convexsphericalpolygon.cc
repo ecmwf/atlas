@@ -140,34 +140,36 @@ CASE("Size of ConvexSphericalPolygon") {
 }
 
 CASE("analyse intersect") {
-    Log::info() << "\n\n";
+    const double EPS  = std::numeric_limits<double>::epsilon();
+    const double du   = 0.5;
+    const double dv   = 1.1 * EPS;
+    const double duc  = 0.5 * du;
+    const double sduc = std::sqrt(1. - 0.25 * du * du);
+    const double dvc  = 1. - 0.5 * dv * dv;
+    const double sdvc = dv * std::sqrt(1. - 0.25 * dv * dv);
+    PointXYZ s0p0{sduc, -duc, 0.};
+    PointXYZ s0p1{sduc, duc, 0.};
+    PointXYZ s1p0{dvc * sduc, -dvc * duc, -sdvc};
+    PointXYZ s1p1{dvc * sduc, dvc * duc, sdvc};
 
-    double du = 5.;
-    double dv = 1e-13;
+    EXPECT_APPROX_EQ(dv, PointXYZ::norm(s0p0 - s1p0), EPS);
+    EXPECT_APPROX_EQ(du, PointXYZ::norm(s0p0 - s0p1), EPS);
+    EXPECT_APPROX_EQ(dv, PointXYZ::norm(s0p1 - s1p1), EPS);
 
-    std::vector<PointLonLat> llp1 = {{70 - du, 0}, {70 + du, 0}};
-    std::vector<PointLonLat> llp2 = {{70 - du, -dv}, {70 + du, dv}};
-    std::vector<PointXYZ> p1(2), p2(2);
+    ConvexSphericalPolygon::GreatCircleSegment s1(s0p0, s0p1);
+    ConvexSphericalPolygon::GreatCircleSegment s2(s1p0, s1p1);
 
-    auto unit_sphere = geometry::UnitSphere{};
+    // analytical solution
+    PointXYZ Isol{1., 0., 0.};
 
-    for (int i = 0; i < 2; ++i) {
-        unit_sphere.lonlat2xyz(llp1[i], p1[i]);
-        unit_sphere.lonlat2xyz(llp2[i], p2[i]);
-    }
-
-    ConvexSphericalPolygon::GreatCircleSegment s1(p1[0], p1[1]);
-    ConvexSphericalPolygon::GreatCircleSegment s2(p2[0], p2[1]);
-
-    PointXYZ Isol = unit_sphere.xyz(PointLonLat(70, dv));
-
-    auto btw1 = s1.contains(Isol);
-    auto btw2 = s2.contains(Isol);
-    EXPECT(btw1 && btw2);
-
+    // test "intersection"
     PointXYZ I = s1.intersect(s2);
-    Log::info() << " I = " << I << ", |I|-1 = " << PointXYZ::norm(I) - 1. << "\n";
-    Log::info() << " |I - solution| = " << PointXYZ::norm(I - Isol) << "\n\n";
+    EXPECT_APPROX_EQ(std::abs(PointXYZ::norm(I) - 1.), 0., EPS);
+    EXPECT_APPROX_EQ(PointXYZ::norm(I - Isol), 0., EPS);
+
+    // test "contains"
+    EXPECT(s1.contains(Isol) && s2.contains(Isol));
+    EXPECT(s1.contains(I) && s2.contains(I));
 }
 
 CASE("source_covered") {

@@ -7,6 +7,27 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.28.0] - 2021-03-02
+### Added
+- Assignment of ArrayView from ArrayView
+- Grid "regional_variable_resolution" via a new VariableResolutionProjection
+- CubedSphereDualMeshGenerator
+- VortexRollup function as analytical field for initialising data
+- ConvexSphericalPolygon utility class
+- Improve Projection::Jacobian
+- Initial implementation for bilinear interpolation for unstructured meshes
+
+### Changed
+- Use new eckit (1.19.0) Sparse and Dense linear algebra API
+- General robustness improvements to CubedSphere to using functionspaces with various halos
+
+### Fixed
+- Workarounds to fix compilation with Fujitsu compiler
+- Workarounds to avoid Cray compiler problems with certain flag combinations
+- CellColumns::haloExchange for meshes with multiple element types
+- Computation of HEALPix mesh remote indices.
+
+
 ## [0.27.0] - 2021-12-03
 ### Added
 - Adjoint interpolation with some restrictions
@@ -320,6 +341,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.28.0]: https://github.com/ecmwf/atlas/compare/0.27.0...0.28.0
 [0.27.0]: https://github.com/ecmwf/atlas/compare/0.26.0...0.27.0
 [0.26.0]: https://github.com/ecmwf/atlas/compare/0.25.0...0.26.0
 [0.25.0]: https://github.com/ecmwf/atlas/compare/0.24.1...0.25.0
