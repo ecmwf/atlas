@@ -341,8 +341,8 @@ CASE("cubedsphere_dual_mesh_test") {
         const auto targetPartitioner = grid::MatchingPartitioner(sourceMesh);
 
         // Set target grid, mesh and functionspace.
-        const auto targetGrid          = Grid("CS-LFR-C-48");
-        const auto targetMesh          = MeshGenerator("cubedsphere_dual").generate(targetGrid, targetPartitioner);
+        const auto targetGrid          = Grid("CS-LFR-C-24");
+        const auto targetMesh          = MeshGenerator("cubedsphere_dual", util::Config("halo", 3)).generate(targetGrid, targetPartitioner);
         const auto targetFunctionSpace = functionspace::NodeColumns(targetMesh);
         auto targetField =
             targetFunctionSpace.createField<double>(util::Config("name", "targetField") | util::Config("levels", 5));
@@ -393,9 +393,9 @@ CASE("cubedsphere_dual_mesh_test") {
         const idx_t nLevels = 5;
 
         // Set grid, mesh and functionspace.
-        const auto grid = Grid("CS-LFR-C-48");
+        const auto grid = Grid("CS-LFR-C-24");
         const auto mesh =
-            MeshGenerator("cubedsphere_dual", util::Config("partitioner", "equal_regions")).generate(grid);
+            MeshGenerator("cubedsphere_dual", util::Config("halo", 3)).generate(grid);
         const auto functionSpace = functionspace::CellColumns(mesh);
         auto field =
             functionSpace.createField<double>(util::Config("name", "targetField") | util::Config("levels", nLevels));
@@ -432,6 +432,9 @@ CASE("cubedsphere_dual_mesh_test") {
         }
 
         // gmsh output.
+        auto fieldSet = FieldSet{field};
+        fieldSet.add(mesh.cells().halo());
+
         const auto gmshConfigXy =
             util::Config("coordinates", "xy") | util::Config("ghost", true) | util::Config("info", true);
         const auto gmshConfigXyz =
@@ -440,8 +443,8 @@ CASE("cubedsphere_dual_mesh_test") {
         auto gmshXyz = output::Gmsh("dual_cells_xyz.msh", gmshConfigXyz);
         gmshXy.write(mesh);
         gmshXyz.write(mesh);
-        gmshXy.write(FieldSet{field}, functionSpace);
-        gmshXyz.write(FieldSet{field}, functionSpace);
+        gmshXy.write(fieldSet, functionSpace);
+        gmshXyz.write(fieldSet, functionSpace);
     }
 }
 

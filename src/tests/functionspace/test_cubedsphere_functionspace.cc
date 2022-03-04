@@ -131,9 +131,9 @@ CASE("cubedsphere_mesh_functionspace") {
 
     // Set dual mesh generator.
     const auto dualMeshGenEqualRegions =
-        MeshGenerator("cubedsphere_dual", meshConfigEqualRegions | util::Config("halo", 0));
+        MeshGenerator("cubedsphere_dual", meshConfigEqualRegions);
     const auto dualMeshGenCubedSphere =
-        MeshGenerator("cubedsphere_dual", meshConfigCubedSphere | util::Config("halo", 0));
+        MeshGenerator("cubedsphere_dual", meshConfigCubedSphere);
 
     // Set mesh
     const auto meshEqualRegions = meshGenEqualRegions.generate(grid);
@@ -159,6 +159,8 @@ CASE("cubedsphere_mesh_functionspace") {
     SECTION("CellColumns: cubedsphere") { testFunctionSpace(cubedSphereCellColumns); }
     SECTION("NodeColumns: equal_regions") { testFunctionSpace(equalRegionsNodeColumns); }
     SECTION("NodeColumns: cubedsphere") { testFunctionSpace(cubedSphereNodeColumns); }
+    SECTION("CellColumns: dual mesh, equal_regions") { testFunctionSpace(equalRegionsDualCellColumns); }
+    SECTION("CellColumns: dual mesh, cubedsphere") { testFunctionSpace(cubedSphereDualCellColumns); }
     SECTION("NodeColumns: dual mesh, equal_regions") { testFunctionSpace(equalRegionsDualNodeColumns); }
     SECTION("NodeColumns: dual mesh, cubedsphere") { testFunctionSpace(cubedSphereDualNodeColumns); }
 }
@@ -205,42 +207,49 @@ CASE("test copies and up/down casting") {
 }
 
 CASE("Cubed sphere primal-dual equivalence") {
+
     // Created a LFRic layout N12 cubedsphere grid.
     // This is a global set of grid points with lonlats located at cell centres.
     const auto grid = Grid("CS-LFR-12");
 
     // Create domain decomposed mesh.
     // We can generate two types of mesh, a primal and a dual.
-    // The primal mesh can have an arbitarily large halo (default = 1), whereas
-    // the dual mesh has a fixed halo size. The dual mesh is useful if you
-    // are interested in node connectivity, otherwise the primal mesh is the
-    // most general.
     // The cell-centre (nodes) lonlats of the primal mesh are identical to the
     // node (cell-centre) lonlats of the dual mesh.
-    const auto primalMesh = MeshGenerator("cubedsphere").generate(grid);
-    const auto dualMesh   = MeshGenerator("cubedsphere_dual").generate(grid);
+    const auto primalMesh = MeshGenerator("cubedsphere",
+                                          util::Config("halo", 5) |
+                                          util::Config("partitioner", "equal_regions")).generate(grid);
+    const auto dualMesh = MeshGenerator("cubedsphere_dual",
+                                        util::Config("halo", 4) |
+                                        util::Config("partitioner", "equal_regions")).generate(grid);
 
     // Create cubed sphere function spaces (these have fancy features, such as
     // (t, i, j) indexing and parallel_for methods). The halo sizes of the primal
     // functionspaces are set to match that of the dual functionspaces.
-    const auto primalNodes = functionspace::CubedSphereNodeColumns(primalMesh, util::Config("halo", 0));
-    const auto primalCells = functionspace::CubedSphereCellColumns(primalMesh, util::Config("halo", 1));
-    const auto dualNodes   = functionspace::CubedSphereNodeColumns(dualMesh);
-    const auto dualCells   = functionspace::CubedSphereCellColumns(dualMesh);
+    const auto primalNodes = functionspace::CubedSphereNodeColumns(primalMesh, util::Config("halo", 4));
+    const auto primalCells = functionspace::CubedSphereCellColumns(primalMesh, util::Config("halo", 5));
+    const auto dualNodes = functionspace::CubedSphereNodeColumns(dualMesh, util::Config("halo", 4));
+    const auto dualCells = functionspace::CubedSphereCellColumns(dualMesh, util::Config("halo", 4));
     // Note, the functionspaces we are usually interested in are primalCells and
     // dualNodes. The others are there for completeness.
 
     // Field comparison function. Note that this upcasts everything to
     // to the base FunctionSpace class.
-    const auto compareFields = [](const FunctionSpace& functionSpaceA, const FunctionSpace& functionSpaceB) {
+    const auto compareFields = [](const FunctionSpace& functionSpaceA,
+                                  const FunctionSpace& functionSpaceB){
+
         // Check that function spaces are the same size.
         EXPECT_EQ(functionSpaceA.size(), functionSpaceB.size());
 
         // Make views to fields.
-        const auto lonLatFieldA = array::make_view<double, 2>(functionSpaceA.lonlat());
-        const auto lonLatFieldB = array::make_view<double, 2>(functionSpaceB.lonlat());
-        const auto ghostFieldA  = array::make_view<int, 1>(functionSpaceA.ghost());
-        const auto ghostFieldB  = array::make_view<int, 1>(functionSpaceB.ghost());
+        const auto lonLatFieldA =
+            array::make_view<double, 2>(functionSpaceA.lonlat());
+        const auto lonLatFieldB =
+            array::make_view<double, 2>(functionSpaceB.lonlat());
+        const auto ghostFieldA =
+            array::make_view<int, 1>(functionSpaceA.ghost());
+        const auto ghostFieldB =
+            array::make_view<int, 1>(functionSpaceB.ghost());
 
         // Loop over functionspaces.
         for (idx_t i = 0; i < functionSpaceA.size(); ++i) {
@@ -255,9 +264,11 @@ CASE("Cubed sphere primal-dual equivalence") {
 
     // Check that dual cells and primal nodes are equivalent.
     compareFields(dualCells, primalNodes);
+
 }
 
-CASE("Variable halo size functionspaces") {
+CASE("Variable halo size functionspaces (primal mesh)") {
+
     // Create a mesh with a large halo, and a few functionspaces with different
     // (smaller) halo sizes. These should create fields with a smaller memory
     // footprint.
@@ -289,7 +300,7 @@ CASE("Variable halo size functionspaces") {
     EXPECT(cellColumns2.size() < mesh.cells().size());
 
     // Make sure size of owned cell data matches grid.
-    auto checkSize = [&](idx_t sizeOwned) {
+    auto checkSize = [&](idx_t sizeOwned){
         mpi::comm().allReduceInPlace(sizeOwned, eckit::mpi::Operation::SUM);
         EXPECT_EQ(sizeOwned, grid.size());
     };
@@ -297,6 +308,51 @@ CASE("Variable halo size functionspaces") {
     checkSize(cellColumns0.sizeOwned());
     checkSize(cellColumns1.sizeOwned());
     checkSize(cellColumns2.sizeOwned());
+
+}
+
+CASE("Variable halo size functionspaces (dual mesh)") {
+
+    // Create a mesh with a large halo, and a few functionspaces with different
+    // (smaller) halo sizes. These should create fields with a smaller memory
+    // footprint.
+
+    // Set grid.
+    const auto grid = Grid("CS-LFR-C-12");
+
+    // Set mesh config.
+    const auto meshConfig = util::Config("partitioner", "equal_regions") | util::Config("halo", 3);
+
+    // Set mesh.
+    const auto mesh = MeshGenerator("cubedsphere_dual", meshConfig).generate(grid);
+
+    // Set functionspaces.
+    const auto nodeColumns0 = functionspace::CubedSphereNodeColumns(mesh, util::Config("halo", 0));
+    const auto nodeColumns1 = functionspace::CubedSphereNodeColumns(mesh, util::Config("halo", 1));
+    const auto nodeColumns2 = functionspace::CubedSphereNodeColumns(mesh, util::Config("halo", 2));
+
+    const auto cellColumns0 = functionspace::CubedSphereCellColumns(mesh, util::Config("halo", 0));
+    const auto cellColumns1 = functionspace::CubedSphereCellColumns(mesh, util::Config("halo", 1));
+    const auto cellColumns2 = functionspace::CubedSphereCellColumns(mesh, util::Config("halo", 2));
+
+    // Check functionspace sizes.
+    EXPECT(nodeColumns0.size() < nodeColumns1.size());
+    EXPECT(nodeColumns1.size() < nodeColumns2.size());
+    EXPECT(nodeColumns2.size() < mesh.nodes().size());
+    EXPECT(cellColumns0.size() < cellColumns1.size());
+    EXPECT(cellColumns1.size() < cellColumns2.size());
+    EXPECT(cellColumns2.size() < mesh.cells().size());
+
+    // Make sure size of owned cell data matches grid.
+    auto checkSize = [&](idx_t sizeOwned){
+        mpi::comm().allReduceInPlace(sizeOwned, eckit::mpi::Operation::SUM);
+        EXPECT_EQ(sizeOwned, grid.size());
+    };
+
+    checkSize(nodeColumns0.sizeOwned());
+    checkSize(nodeColumns1.sizeOwned());
+    checkSize(nodeColumns2.sizeOwned());
+
 }
 
 }  // namespace test

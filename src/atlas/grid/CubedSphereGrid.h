@@ -295,8 +295,18 @@ public:
     // Return the size of the cubed sphere grid, where N is the number of grid boxes along the edge of a tile
     inline int N() const { return grid_->N(); }
 
-    // Return the number of tiles
+    /// @brief return tiles object.
     inline atlas::grid::CubedSphereTiles tiles() const { return grid_->tiles(); }
+
+    /// @brief return cubed sphere projection object.
+    inline const projection::detail::CubedSphereProjectionBase& cubedSphereProjection() const {
+
+        const auto projPtr =
+            dynamic_cast<const projection::detail::CubedSphereProjectionBase*>
+            (projection().get());
+
+        return *projPtr;
+    };
 
     temporary::IterateTIJ tij() const { return temporary::IterateTIJ(*grid_); }
 

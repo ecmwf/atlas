@@ -84,7 +84,7 @@ void CubedSphereMeshGenerator::configure_defaults() {
     options.set("part", mpi::rank());
 
     // This options sets the number of halo elements around each partition.
-    options.set("halo", 1);
+    options.set("halo", 0);
 
     // This options sets the default partitioner.
     options.set<std::string>("partitioner", "cubedsphere");
@@ -274,7 +274,7 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, cons
     const idx_t nCellsTotal = nCellsArray - 6 * 4 * nHalo * nHalo;
 
     // Projection and jacobian.
-    const auto* const csProjection = castProjection(csGrid.projection().get());
+    const auto& csProjection = csGrid.cubedSphereProjection();
     const auto jacobian            = NeighbourJacobian(csGrid);
 
     // Get partition information.
@@ -487,7 +487,7 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, cons
 
                     // This will only determine if tGlobal does not match t.
                     // This is cheaper than determining the correct tGlobal.
-                    idx_t tGlobal = csProjection->getCubedSphereTiles().indexFromXY(xy.data());
+                    idx_t tGlobal = csProjection.getCubedSphereTiles().indexFromXY(xy.data());
 
                     if (tGlobal == t) {
                         // Node is an owner.
@@ -773,7 +773,7 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, cons
         nodesXy(nodeLocalIdx, YY) = xyLocal.y();
 
         // Set lon-lat.
-        const PointLonLat lonLat       = csProjection->lonlat(xyGlobal);
+        const PointLonLat lonLat       = csProjection.lonlat(xyGlobal);
         nodesLonLat(nodeLocalIdx, LON) = lonLat.lon();
         nodesLonLat(nodeLocalIdx, LAT) = lonLat.lat();
 
@@ -884,7 +884,7 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, cons
         cellsXy(cellLocalIdx, YY) = xyLocal.y();
 
         // Set lon-lat.
-        const PointLonLat lonLat       = csProjection->lonlat(xyGlobal);
+        const PointLonLat lonLat       = csProjection.lonlat(xyGlobal);
         cellsLonLat(cellLocalIdx, LON) = lonLat.lon();
         cellsLonLat(cellLocalIdx, LAT) = lonLat.lat();
 

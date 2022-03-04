@@ -151,6 +151,11 @@ idx_t CubedSphereColumns<BaseFunctionSpace>::index(idx_t t, idx_t i, idx_t j) co
 }
 
 template <typename BaseFunctionSpace>
+bool CubedSphereColumns<BaseFunctionSpace>::is_valid_index(idx_t t, idx_t i, idx_t j) const {
+    return cubedSphereColumnsHandle_.get()->is_valid_index(t, i, j);
+}
+
+template <typename BaseFunctionSpace>
 Field CubedSphereColumns<BaseFunctionSpace>::tij() const {
     return cubedSphereColumnsHandle_.get()->tij();
 }

@@ -8,6 +8,7 @@
 #pragma once
 
 #include "atlas/library/config.h"
+#include "atlas/projection/detail/ProjectionImpl.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Point.h"
 
@@ -32,6 +33,7 @@ namespace detail {
 namespace cubedsphere {
 
 using namespace projection::detail;
+using Jacobian = ProjectionImpl::Jacobian;
 
 /// Enum for (i, j, t) coordinate fields.
 struct Coordinates {
@@ -54,9 +56,6 @@ struct TileEdge {
         UNDEFINED
     };
 };
-
-/// Cast Projection to CubedSphereProjectionBase.
-const CubedSphereProjectionBase* castProjection(const ProjectionImpl* projectionPtr);
 
 /// Class to store (i, j) indices as a Point2 coordinate.
 class PointIJ : public Point2 {
@@ -115,61 +114,6 @@ public:
     const PointIJ& ij() const { return second; }
 };
 
-/// \brief   Jacobian class for 2 dimensional vector fields.
-///
-/// \details Wrapper class for an Eigen matrix which stores the partial
-///          of f(x). Objects can be constructed directly from the four partial
-///          derivatives, or by supplying three Point2 objects with the
-///          following relative positions:
-///
-///             ^
-///             | *f(X0, X1 + dx1)
-///             |
-///          x1 |
-///             |
-///             | *f(X0, X1)  *f(X0 + dx0, X1)
-///             +---------------------------->
-///                          x0
-class Jacobian2 {
-public:
-    /// Default constructor.
-    Jacobian2() = default;
-
-    /// Partial derivative constructor.
-    Jacobian2(double df0_by_dx0, double df0_by_dx1, double df1_by_dx0, double df1_by_dx1);
-
-    /// Discrete point constructor (explicit dx).
-    Jacobian2(const Point2& f00, const Point2& f10, const Point2& f01, double dx0, double dx1);
-
-    /// Discrete point contructor (implicit dx).
-    Jacobian2(const Point2& f00, const Point2& f10, const Point2& f01);
-
-    /// Determinant of Jacobian.
-    double det() const;
-
-    /// Jacobian-scalar multiplication.
-    Jacobian2 operator*(double a) const;
-
-    /// Jacobian-vector multiplication.
-    Point2 operator*(const Point2& dx) const;
-
-    /// Jacobian-Jacobian multiplication.
-    Jacobian2 operator*(const Jacobian2& Jb) const;
-
-    /// Inverse Jacobian (partial derivatives of x(f)).
-    Jacobian2 inverse() const;
-
-    /// Get signed elements of matrix (i.e, 0, +1, -1).
-    Jacobian2 sign() const;
-
-private:
-    // Data storage.
-    double df0_by_dx0_;
-    double df0_by_dx1_;
-    double df1_by_dx0_;
-    double df1_by_dx1_;
-};
-
 /// \brief   Class to convert between ij and xy on a tile and its four
 ///          surrounding neighbours.
 ///
@@ -217,10 +161,10 @@ private:
     idx_t N_{};
 
     // Jacobian of xy with respect to ij for each tile.
-    std::array<Jacobian2, 6> dxy_by_dij_{};
+    std::array<Jacobian, 6> dxy_by_dij_{};
 
     // Jacobian of ij with respect to xy for each tile.
-    std::array<Jacobian2, 6> dij_by_dxy_{};
+    std::array<Jacobian, 6> dij_by_dxy_{};
 
     // Lower-left xy position on each tile.
     std::array<PointXY, 6> xy00_{};
@@ -237,7 +181,7 @@ private:
         std::array<idx_t, 4> t_{};
 
         // Jacobian of remote xy with respect to local xy.
-        std::array<Jacobian2, 4> dxyGlobal_by_dxyLocal_{};
+        std::array<Jacobian, 4> dxyGlobal_by_dxyLocal_{};
 
         // Lower left most local xy position on neighbour tiles.
         std::array<PointXY, 4> xy00Local_;
