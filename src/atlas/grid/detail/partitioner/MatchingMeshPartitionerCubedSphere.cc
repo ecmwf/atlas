@@ -18,13 +18,14 @@ namespace partitioner {
 void MatchingMeshPartitionerCubedSphere::partition(const Grid& grid, int partitioning[]) const {
 
     // Make cell finder from owned mesh cells.
-    // This is a little overkill, as it works out interpolation weights in the process.
     const auto finder = interpolation::method::cubedsphere::CellFinder(prePartitionedMesh_);
 
     // Loop over grid and set partioning[].
     auto lonlatIt = grid.lonlat().begin();
     for (gidx_t i = 0; i < grid.size(); ++i) {
 
+        // This is probably more expensive than it needs to be, as it performs
+        // a dry run of the cubedsphere interpolation method.
         const auto lonlat = *lonlatIt;
         partitioning[i] = finder.getCell(lonlat).isect ? mpi::rank() : -1;;
         ++lonlatIt;

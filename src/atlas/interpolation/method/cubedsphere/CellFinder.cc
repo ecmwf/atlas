@@ -36,10 +36,10 @@ CellFinder::CellFinder(const Mesh& mesh, const util::Config& config) : mesh_{mes
     auto payloads = std::array<std::vector<idx_t>, 6>{};
 
     // Iterate over cells.
-    auto includeHalo = config.getBool("include halo", false);
+    auto halo = config.getInt("halo", 0);
     for (idx_t i = 0; i < mesh_.cells().size(); ++i) {
 
-        if (includeHalo || !haloView(i)) {
+        if (haloView(i) <= halo) {
             const auto t = tijView(i, 0);
             const auto xy = PointXY(xyView(i, XX), xyView(i, YY));
 
@@ -54,7 +54,7 @@ CellFinder::CellFinder(const Mesh& mesh, const util::Config& config) : mesh_{mes
     }
 }
 
-CellFinder::Cell CellFinder::getCell(const PointXY &xy, double edgeEpsilon, double epsilon) const {
+CellFinder::Cell CellFinder::getCell(const PointXY &xy, size_t listSize, double edgeEpsilon, double epsilon) const {
 
     // Convert xy to alphabeta and t;
     const auto& tiles = projection_->getCubedSphereTiles();
@@ -69,10 +69,10 @@ CellFinder::Cell CellFinder::getCell(const PointXY &xy, double edgeEpsilon, doub
     // Get four nearest cell-centres to xy.
     const auto& tree = trees_[size_t(t)];
     if (tree.size() == 0) {
-        return Cell{invalidIndex(), Intersect{}.fail(), INVALID};
+        return Cell{{}, Intersect{}.fail()};
     }
 
-    const auto valueList = tree.closestPoints(alphabeta, std::min(size_t(4), tree.size()));
+    const auto valueList = tree.closestPoints(alphabeta, std::min(listSize, tree.size()));
 
     // Get view to cell flags.
     const auto cellFlagsView = array::make_view<int, 1>(mesh_.cells().flags());
@@ -100,7 +100,7 @@ CellFinder::Cell CellFinder::getCell(const PointXY &xy, double edgeEpsilon, doub
                 const auto isect = quad.localRemap(alphabeta, edgeEpsilon, epsilon);
 
                 if (isect) {
-                    return Cell{i, isect, QUAD};
+                    return Cell{{row(0), row(1), row(2), row(3)}, isect};
                 }
 
             }
@@ -118,7 +118,7 @@ CellFinder::Cell CellFinder::getCell(const PointXY &xy, double edgeEpsilon, doub
                 const auto isect = triag.intersects(alphabeta, edgeEpsilon, epsilon);
 
                 if (isect) {
-                    return Cell{i, isect, TRIAG};
+                    return Cell{{row(0), row(1), row(2)}, isect};
                 }
 
             }
@@ -126,15 +126,15 @@ CellFinder::Cell CellFinder::getCell(const PointXY &xy, double edgeEpsilon, doub
     }
 
     // Couldn't find a cell.
-    return Cell{invalidIndex(), Intersect{}.fail(), INVALID};
+    return Cell{{}, Intersect{}.fail()};
 
 }
 
-CellFinder::Cell CellFinder::getCell(const PointLonLat &lonlat, double edgeEpsilon, double epsilon) const {
+CellFinder::Cell CellFinder::getCell(const PointLonLat &lonlat, size_t listSize, double edgeEpsilon, double epsilon) const {
 
     auto xy = PointXY(lonlat.data());
     projection_->lonlat2xy(xy.data());
-    return getCell(xy, edgeEpsilon, epsilon);
+    return getCell(xy, listSize, edgeEpsilon, epsilon);
 }
 
 

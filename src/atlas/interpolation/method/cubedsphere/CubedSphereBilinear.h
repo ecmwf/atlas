@@ -14,30 +14,39 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
+/// @brief   Cubed sphere bilinear interpolation method.
+///
+/// @details Performs bilinear (quads) and baycentric (triangles) interpolation
+///          accross cubed sphere tiles in (alpha, beta) coordinates.
+///          Adding int "halo" (default 0) to the config controls the amount of
+///          halo to consider when seraching for interpolation polygons. Adding
+///          int "list size" (defualt 4) will change the number of cells
+///          returned by the internal kd-tree search. Increasing both values
+///          may resolve errors if setup method fails to find cells.
 class CubedSphereBilinear : public Method {
 public:
-    CubedSphereBilinear(const Config& config) : Method(config) {}
+    CubedSphereBilinear(const Config& config) : Method(config) {
+        config.get("halo", halo_);
+        config.get("list size", listSize_);
+    }
     virtual ~CubedSphereBilinear() override {}
 
-protected:
+    virtual void print(std::ostream &) const override;
     virtual const FunctionSpace& source() const override { return source_; }
     virtual const FunctionSpace& target() const override { return target_; }
 
+protected:
+
 private:
 
-    /**
-   * @brief Create an interpolant sparse matrix relating two (pre-partitioned)
-   * meshes,
-   * using nearest neighbour method
-   * @param source functionspace containing source elements
-   * @param target functionspace containing target points
-   */
     virtual void do_setup(const FunctionSpace& source, const FunctionSpace& target) override;
     virtual void do_setup(const Grid& source, const Grid& target, const Cache&) override;
 
     FunctionSpace source_;
     FunctionSpace target_;
 
+    int halo_{0};
+    int listSize_{4};
 
 };
 

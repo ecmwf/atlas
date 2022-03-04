@@ -85,6 +85,9 @@ public:
     void haloExchange(const Field&, bool on_device = false) const override;
     const parallel::HaloExchange& halo_exchange() const;
 
+    void adjointHaloExchange(const FieldSet&, bool on_device = false) const override;
+    void adjointHaloExchange(const Field&, bool on_device = false) const override;
+
     void gather(const FieldSet&, FieldSet&) const;
     void gather(const Field&, Field&) const;
     const parallel::GatherScatter& gather() const;

@@ -33,25 +33,24 @@ namespace cubedsphere {
 
 using namespace util;
 
+/// @brief class to find points within cells of cubedsphere mesh.
 class CellFinder {
 public:
 
-    enum CellType {QUAD, TRIAG, INVALID};
-
     struct Cell {
-        idx_t idx;
+        std::vector<idx_t> nodes;
         Intersect isect;
-        CellType type;
     };
 
-    constexpr idx_t invalidIndex() const {return -1;}
+    /// @brief Constructor.
+    CellFinder(const Mesh& mesh, const util::Config& config = util::Config("halo", 0));
 
-    CellFinder(const Mesh& mesh, const util::Config& config = util::Config("include halo", false));
-
-    Cell getCell(const PointXY& xy, double edgeEpsion = 5. * std::numeric_limits<double>::epsilon(),
+    /// @brief Find a cell which encompasses an xy point.
+    Cell getCell(const PointXY& xy, size_t listSize = 4, double edgeEpsion = 5. * std::numeric_limits<double>::epsilon(),
                  double Epsion = 5. * std::numeric_limits<double>::epsilon()) const;
 
-    Cell getCell(const PointLonLat& lonlat, double edgeEpsion = 5. * std::numeric_limits<double>::epsilon(),
+    /// @brief Find a cell which encompasses a lonlat point.
+    Cell getCell(const PointLonLat& lonlat, size_t listSize = 4, double edgeEpsion = 5. * std::numeric_limits<double>::epsilon(),
                  double Epsion = 5. * std::numeric_limits<double>::epsilon()) const;
 
 

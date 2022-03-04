@@ -14,6 +14,7 @@ namespace grid {
 namespace detail {
 namespace partitioner {
 
+
 class MatchingMeshPartitionerCubedSphere : public MatchingMeshPartitioner {
 public:
     static std::string static_type() { return "cubedsphere"; }
