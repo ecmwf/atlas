@@ -275,7 +275,7 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, cons
 
     // Projection and jacobian.
     const auto& csProjection = csGrid.cubedSphereProjection();
-    const auto jacobian            = NeighbourJacobian(csGrid);
+    const auto jacobian      = NeighbourJacobian(csGrid);
 
     // Get partition information.
     const int nParts   = options.get<int>("nb_parts");

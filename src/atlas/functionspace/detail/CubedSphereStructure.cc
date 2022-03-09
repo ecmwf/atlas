@@ -121,16 +121,13 @@ idx_t CubedSphereStructure::index(idx_t t, idx_t i, idx_t j) const {
 }
 
 bool CubedSphereStructure::is_valid_index(idx_t t, idx_t i, idx_t j) const {
-
-
     // Check if t is in range.
     if (t < 0 || t > 5) {
         return false;
     }
 
     // Check if i and j are in range in index method.
-    if ( i < i_begin(t) || i >= i_end(t) ||
-         j < j_begin(t) || j >= j_end(t)) {
+    if (i < i_begin(t) || i >= i_end(t) || j < j_begin(t) || j >= j_end(t)) {
         return false;
     }
 
@@ -140,7 +137,6 @@ bool CubedSphereStructure::is_valid_index(idx_t t, idx_t i, idx_t j) const {
     }
 
     return true;
-
 }
 
 Field CubedSphereStructure::tij() const {

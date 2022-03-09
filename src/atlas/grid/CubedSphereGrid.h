@@ -300,10 +300,7 @@ public:
 
     /// @brief return cubed sphere projection object.
     inline const projection::detail::CubedSphereProjectionBase& cubedSphereProjection() const {
-
-        const auto projPtr =
-            dynamic_cast<const projection::detail::CubedSphereProjectionBase*>
-            (projection().get());
+        const auto projPtr = dynamic_cast<const projection::detail::CubedSphereProjectionBase*>(projection().get());
 
         return *projPtr;
     };

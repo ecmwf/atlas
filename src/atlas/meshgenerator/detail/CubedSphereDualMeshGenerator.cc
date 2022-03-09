@@ -136,11 +136,12 @@ namespace {
 // (i, j) pair
 class IJ {
 public:
-    IJ(idx_t i, idx_t j) : i_(i), j_(j) {}
-    idx_t i() const {return i_;}
-    idx_t j() const {return j_;}
-    IJ operator+(const IJ& ij) const {return IJ{i() + ij.i(), j() + ij.j()};}
-    IJ operator-(const IJ& ij) const {return IJ{i() - ij.i(), j() - ij.j()};}
+    IJ(idx_t i, idx_t j): i_(i), j_(j) {}
+    idx_t i() const { return i_; }
+    idx_t j() const { return j_; }
+    IJ operator+(const IJ& ij) const { return IJ{i() + ij.i(), j() + ij.j()}; }
+    IJ operator-(const IJ& ij) const { return IJ{i() - ij.i(), j() - ij.j()}; }
+
 private:
     idx_t i_{};
     idx_t j_{};
@@ -155,26 +156,23 @@ void copyField(const Field& sourceField, Field& targetField) {
 
 // Get the surrounding node (i, j) pairs from a cell (i, j) pair.
 std::vector<IJ> getIjNodes(const IJ& ijCell, idx_t N) {
-
     // Rotate ij 90 degrees anitclockwise about ijPivot.
-    auto rotateAnticlockwise = [&](const IJ& ij, const IJ& ijPivot){
-
+    auto rotateAnticlockwise = [&](const IJ& ij, const IJ& ijPivot) {
         const auto ijTemp = ij - ijPivot;
         return IJ{-ijTemp.j(), ijTemp.i()} + ijPivot;
     };
 
     // Rotate ij 90 degrees clockwise about ijPivot.
-    auto rotateClockwise = [&](const IJ& ij, const IJ& ijPivot){
-
+    auto rotateClockwise = [&](const IJ& ij, const IJ& ijPivot) {
         const auto ijTemp = ij - ijPivot;
         return IJ{ijTemp.j(), -ijTemp.i()} + ijPivot;
     };
 
     // Set standard surrounding nodes.
     auto ijNodes = std::vector<IJ>{{ijCell.i() - 1, ijCell.j() - 1},
-                                   {ijCell.i()    , ijCell.j() - 1},
-                                   {ijCell.i()    , ijCell.j()    },
-                                   {ijCell.i() - 1, ijCell.j()    }};
+                                   {ijCell.i(), ijCell.j() - 1},
+                                   {ijCell.i(), ijCell.j()},
+                                   {ijCell.i() - 1, ijCell.j()}};
 
     // Modify nodes that lie in invalid corners of ij space.
     // Either remove a node to make cell triangular, or rotate two of the
@@ -182,7 +180,6 @@ std::vector<IJ> getIjNodes(const IJ& ijCell, idx_t N) {
 
     // Bottom-left corner.
     if (ijCell.i() <= 0 && ijCell.j() <= 0) {
-
         // Triangle.
         if (ijCell.i() == 0 && ijCell.j() == 0) {
             ijNodes.erase(ijNodes.begin());
@@ -193,14 +190,13 @@ std::vector<IJ> getIjNodes(const IJ& ijCell, idx_t N) {
             ijNodes[3] = rotateClockwise(ijNodes[2], IJ{0, 0});
         }
         else {
-        // Quad (ii)
+            // Quad (ii)
             ijNodes[0] = rotateAnticlockwise(ijNodes[3], IJ{0, 0});
             ijNodes[1] = rotateAnticlockwise(ijNodes[2], IJ{0, 0});
         }
     }
     // Bottom-right corner.
     else if (ijCell.i() >= N && ijCell.j() <= 0) {
-
         // Triangle.
         if (ijCell.i() == N && ijCell.j() == 0) {
             ijNodes.erase(ijNodes.begin() + 1);
@@ -215,11 +211,9 @@ std::vector<IJ> getIjNodes(const IJ& ijCell, idx_t N) {
             ijNodes[1] = rotateAnticlockwise(ijNodes[0], IJ{N - 1, 0});
             ijNodes[2] = rotateAnticlockwise(ijNodes[3], IJ{N - 1, 0});
         }
-
     }
     // Top-right corner.
     else if (ijCell.i() >= N && ijCell.j() >= N) {
-
         // Triangle.
         if (ijCell.i() == N && ijCell.j() == N) {
             ijNodes.erase(ijNodes.begin() + 2);
@@ -234,11 +228,9 @@ std::vector<IJ> getIjNodes(const IJ& ijCell, idx_t N) {
             ijNodes[2] = rotateAnticlockwise(ijNodes[1], IJ{N - 1, N - 1});
             ijNodes[3] = rotateAnticlockwise(ijNodes[0], IJ{N - 1, N - 1});
         }
-
     }
     // Top-left corner.
     else if (ijCell.i() <= 0 && ijCell.j() >= N) {
-
         // Triangle.
         if (ijCell.i() == 0 && ijCell.j() == N) {
             ijNodes.erase(ijNodes.begin() + 3);
@@ -247,7 +239,6 @@ std::vector<IJ> getIjNodes(const IJ& ijCell, idx_t N) {
         else if (ijCell.j() == N) {
             ijNodes[2] = rotateClockwise(ijNodes[1], IJ{0, N - 1});
             ijNodes[3] = rotateClockwise(ijNodes[0], IJ{0, N - 1});
-
         }
         // Quad (ii)
         else {
@@ -257,7 +248,6 @@ std::vector<IJ> getIjNodes(const IJ& ijCell, idx_t N) {
     }
 
     return ijNodes;
-
 }
 
 }  // namespace
@@ -328,8 +318,8 @@ void CubedSphereDualMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, 
 
     // Set of nodes around a cell.
     struct NodeList {
-        std::vector<idx_t> nodes{};          // Node indices.
-        bool               incomplete{};    // True if nodes are missing.
+        std::vector<idx_t> nodes{};  // Node indices.
+        bool incomplete{};           // True if nodes are missing.
     };
 
     auto nodeLists = std::vector<NodeList>{};
@@ -344,9 +334,8 @@ void CubedSphereDualMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, 
         auto& nodeList = nodeLists.back();
 
         // Get tij of cell.
-        const auto tCell = primalNodesTij(idx, Coordinates::T);
-        const auto ijCell = IJ{primalNodesTij(idx, Coordinates::I),
-                               primalNodesTij(idx, Coordinates::J)};
+        const auto tCell  = primalNodesTij(idx, Coordinates::T);
+        const auto ijCell = IJ{primalNodesTij(idx, Coordinates::I), primalNodesTij(idx, Coordinates::J)};
 
         // Get ij of surrounding nodes.
         auto ijNodes = getIjNodes(ijCell, N);
@@ -354,8 +343,7 @@ void CubedSphereDualMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, 
         // Add indices to nodes vector.
         for (const auto& ijNode : ijNodes) {
             if (primalCellsFunctionSpace.is_valid_index(tCell, ijNode.i(), ijNode.j())) {
-                nodeList.nodes.push_back(
-                    primalCellsFunctionSpace.index(tCell, ijNode.i(), ijNode.j()));
+                nodeList.nodes.push_back(primalCellsFunctionSpace.index(tCell, ijNode.i(), ijNode.j()));
             }
             else {
                 nodeList.incomplete = true;
@@ -365,15 +353,19 @@ void CubedSphereDualMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, 
 
     // Figure out element types.
     // Set first element type. ( first = type, second = count )
-    enum struct ElemType : size_t {LINE = 2, TRIANGLE = 3, QUADRILATERAL = 4};
-    auto typeCounts = std::vector<std::pair<ElemType, idx_t>>{
-        std::make_pair(static_cast<ElemType>(nodeLists[0].nodes.size()), 1)};
+    enum struct ElemType : size_t
+    {
+        LINE          = 2,
+        TRIANGLE      = 3,
+        QUADRILATERAL = 4
+    };
+    auto typeCounts =
+        std::vector<std::pair<ElemType, idx_t>>{std::make_pair(static_cast<ElemType>(nodeLists[0].nodes.size()), 1)};
 
     // Count the number of consecutive lines, triangles or quadtrilaterals in dual mesh.
     // This is an attempt to keep dual mesh cells in the same order as mesh nodes.
     // Otherwise, the halo exchange bookkeeping is invalidated.
     for (size_t idx = 1; idx < nodeLists.size(); ++idx) {
-
         // Get the element type.
         const auto elemType = static_cast<ElemType>(nodeLists[idx].nodes.size());
 
@@ -395,24 +387,23 @@ void CubedSphereDualMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, 
         // Select element type.
         switch (typeCount.first) {
             // Add a block of lines.
-            case ElemType::LINE : {
+            case ElemType::LINE: {
                 cells.add(new mesh::temporary::Line(), typeCount.second);
                 break;
             }
             // Add a block of triangles.
-            case ElemType::TRIANGLE : {
+            case ElemType::TRIANGLE: {
                 cells.add(new mesh::temporary::Triangle(), typeCount.second);
                 break;
             }
-            // Add a block of quadrilaterals.
-        case ElemType::QUADRILATERAL : {
+                // Add a block of quadrilaterals.
+            case ElemType::QUADRILATERAL: {
                 cells.add(new mesh::temporary::Quadrilateral(), typeCount.second);
                 break;
             }
             default: {
                 ATLAS_THROW_EXCEPTION("Unknown element type with " +
-                                      std::to_string(static_cast<size_t>(typeCount.first)) +
-                                      " nodes.");
+                                      std::to_string(static_cast<size_t>(typeCount.first)) + " nodes.");
                 break;
             }
         }
@@ -445,7 +436,6 @@ void CubedSphereDualMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, 
 
     // Loop over dual mesh cells and set connectivity.
     for (idx_t idx = 0; idx < nCells; ++idx) {
-
         // Set connectivity.
         nodeConnectivity.set(idx, nodeLists[idx].nodes.data());
 
@@ -464,7 +454,6 @@ void CubedSphereDualMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, 
 // -----------------------------------------------------------------------------
 
 void CubedSphereDualMeshGenerator::set_metadata(Mesh& mesh) const {
-
     const auto nHalo = options.get<int>("halo");
 
     // Set basic halo metadata.
@@ -474,7 +463,7 @@ void CubedSphereDualMeshGenerator::set_metadata(Mesh& mesh) const {
     mesh.cells().metadata().set("parallel", true);
 
     // Loop over nodes and count number of halo elements.
-    auto nNodes = std::vector<idx_t>(nHalo + 2, 0);
+    auto nNodes         = std::vector<idx_t>(nHalo + 2, 0);
     const auto nodeHalo = array::make_view<int, 1>(mesh.nodes().halo());
     for (idx_t i = 0; i < mesh.nodes().size(); ++i) {
         ++nNodes[static_cast<size_t>(nodeHalo(i))];
@@ -489,30 +478,25 @@ void CubedSphereDualMeshGenerator::set_metadata(Mesh& mesh) const {
 
 
     // Loop over cells and count number of halo elements.
-    auto nCells = std::vector<std::vector<idx_t>>(
-        mesh.cells().nb_types(), std::vector<idx_t>(nHalo + 1, 0));
+    auto nCells         = std::vector<std::vector<idx_t>>(mesh.cells().nb_types(), std::vector<idx_t>(nHalo + 1, 0));
     const auto cellHalo = array::make_view<int, 1>(mesh.cells().halo());
 
-    for (idx_t i = 0; i < mesh.cells().nb_types(); ++i){
+    for (idx_t i = 0; i < mesh.cells().nb_types(); ++i) {
         const auto& elems = mesh.cells().elements(i);
         for (idx_t j = elems.begin(); j < elems.end(); ++j) {
             ++nCells[static_cast<size_t>(i)][static_cast<size_t>(cellHalo(j))];
-
         }
-        std::partial_sum(nCells[static_cast<size_t>(i)].begin(),
-                         nCells[static_cast<size_t>(i)].end(),
+        std::partial_sum(nCells[static_cast<size_t>(i)].begin(), nCells[static_cast<size_t>(i)].end(),
                          nCells[static_cast<size_t>(i)].begin());
     }
 
     // Set cell halo metadata.
     for (size_t i = 0; i < nCells.size(); ++i) {
         for (size_t j = 0; j < nCells[i].size(); ++j) {
-            const auto str =
-                "nb_cells_including_halo[" + std::to_string(i) + "][" + std::to_string(j) + "]";
+            const auto str = "nb_cells_including_halo[" + std::to_string(i) + "][" + std::to_string(j) + "]";
             mesh.metadata().set(str, nCells[i][j]);
         }
     }
-
 }
 
 // -----------------------------------------------------------------------------

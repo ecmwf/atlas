@@ -107,19 +107,16 @@ NeighbourJacobian::NeighbourJacobian(const CubedSphereGrid& csGrid) {
             neighbours_[t].t_[k] = csTiles.indexFromXY(xy00Global.data());
 
             // Set Jacobian of global xy with respect to local ij.
-            auto dxyGlobal_by_dij = Jacobian{
-                {xy10Global[0] - xy00Global[0], xy01Global[0] - xy00Global[0]},
-                {xy10Global[1] - xy00Global[1], xy01Global[1] - xy00Global[1]}
-            };
+            auto dxyGlobal_by_dij = Jacobian{{xy10Global[0] - xy00Global[0], xy01Global[0] - xy00Global[0]},
+                                             {xy10Global[1] - xy00Global[1], xy01Global[1] - xy00Global[1]}};
 
             // Rescale by cell width (gains an extra couple of decimal places of precision).
-            const auto sign = [](double num, double tol = 360. * std::numeric_limits<double>::epsilon()){
+            const auto sign = [](double num, double tol = 360. * std::numeric_limits<double>::epsilon()) {
                 return std::abs(num) < tol ? 0 : num > 0 ? 1. : -1.;
             };
-            dxyGlobal_by_dij = Jacobian{sign(dxyGlobal_by_dij[0][0]),
-                                        sign(dxyGlobal_by_dij[0][1]),
-                                        sign(dxyGlobal_by_dij[1][0]),
-                                        sign(dxyGlobal_by_dij[1][1])} * cellWidth;
+            dxyGlobal_by_dij = Jacobian{sign(dxyGlobal_by_dij[0][0]), sign(dxyGlobal_by_dij[0][1]),
+                                        sign(dxyGlobal_by_dij[1][0]), sign(dxyGlobal_by_dij[1][1])} *
+                               cellWidth;
 
             // Chain rule to get Jacobian with respect to local xy.
             neighbours_[t].dxyGlobal_by_dxyLocal_[k] = dxyGlobal_by_dij * dij_by_dxy_[t];
@@ -142,7 +139,7 @@ NeighbourJacobian::NeighbourJacobian(const CubedSphereGrid& csGrid) {
 PointXY NeighbourJacobian::xy(const PointIJ& ij, idx_t t) const {
     // Get jacobian.
     const Jacobian& jac = dxy_by_dij_[static_cast<size_t>(t)];
-    const PointXY& xy00  = xy00_[static_cast<size_t>(t)];
+    const PointXY& xy00 = xy00_[static_cast<size_t>(t)];
 
     // Return ij
     return xy00 + jac * ij;
@@ -151,7 +148,7 @@ PointXY NeighbourJacobian::xy(const PointIJ& ij, idx_t t) const {
 PointIJ NeighbourJacobian::ij(const PointXY& xy, idx_t t) const {
     // Get jacobian.
     const Jacobian& jac = dij_by_dxy_[static_cast<size_t>(t)];
-    const PointXY& xy00  = xy00_[static_cast<size_t>(t)];
+    const PointXY& xy00 = xy00_[static_cast<size_t>(t)];
 
     // Return ij
     return jac * (xy - xy00);
@@ -209,7 +206,7 @@ PointTXY NeighbourJacobian::xyLocalToGlobal(const PointXY& xyLocal, idx_t tLocal
         // Get reference points and jacobian.
         const PointXY& xy00Local_  = neighbours_[static_cast<size_t>(tLocal)].xy00Local_[k];
         const PointXY& xy00Global_ = neighbours_[static_cast<size_t>(tLocal)].xy00Global_[k];
-        const Jacobian& jac       = neighbours_[static_cast<size_t>(tLocal)].dxyGlobal_by_dxyLocal_[k];
+        const Jacobian& jac        = neighbours_[static_cast<size_t>(tLocal)].dxyGlobal_by_dxyLocal_[k];
 
         // Get t.
         tGlobal = neighbours_[static_cast<size_t>(tLocal)].t_[k];

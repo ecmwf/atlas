@@ -55,7 +55,6 @@ bool greaterEqual(double a, double b) {
 }
 
 
-
 }  // namespace
 
 namespace atlas {
@@ -71,7 +70,6 @@ CubedSphereEquiAnglProjection::CubedSphereEquiAnglProjection(const eckit::Parame
 // -------------------------------------------------------------------------------------------------
 
 void CubedSphereEquiAnglProjection::xy2alphabeta(double crd[], idx_t t) const {
-
     // Get tile centre.
     const auto& xyCentre = getCubedSphereTiles().tileCentre(static_cast<size_t>(t));
 
@@ -87,18 +85,16 @@ void CubedSphereEquiAnglProjection::xy2alphabeta(double crd[], idx_t t) const {
     }
 
     // Get alphaBeta Jacobian.
-    const auto alphabetaJacobian =
-        getCubedSphereTiles().tileJacobian(static_cast<size_t>(t)).inverse();
+    const auto alphabetaJacobian = getCubedSphereTiles().tileJacobian(static_cast<size_t>(t)).inverse();
 
     // Set (alpha, beta) coord.
     const Point2 alphabeta = alphabetaJacobian * (Point2(crd) - xyCentre);
-    crd[0] = alphabeta[0];
-    crd[1] = alphabeta[1];
+    crd[0]                 = alphabeta[0];
+    crd[1]                 = alphabeta[1];
 
     // Define correction.
     const auto correction = [](const double crd[]) -> double {
-        return rad2deg * std::atan(std::tan(crd[0] * deg2rad) *
-                                   std::tan(crd[1] * deg2rad));
+        return rad2deg * std::atan(std::tan(crd[0] * deg2rad) * std::tan(crd[1] * deg2rad));
     };
 
     // Correct halo (alpha, beta) coord.
@@ -123,16 +119,12 @@ void CubedSphereEquiAnglProjection::xy2alphabeta(double crd[], idx_t t) const {
 // -------------------------------------------------------------------------------------------------
 
 void CubedSphereEquiAnglProjection::alphabeta2xy(double crd[], idx_t t) const {
-
-
     // Define correction.
     const auto correction1 = [](const double crd[]) -> double {
-        return rad2deg * std::atan(std::tan(crd[1] * deg2rad) /
-                                   std::tan(crd[0] * deg2rad));
+        return rad2deg * std::atan(std::tan(crd[1] * deg2rad) / std::tan(crd[0] * deg2rad));
     };
     const auto correction2 = [](const double crd[]) -> double {
-        return rad2deg * std::atan(std::tan(crd[0] * deg2rad) /
-                                   std::tan(crd[1] * deg2rad));
+        return rad2deg * std::atan(std::tan(crd[0] * deg2rad) / std::tan(crd[1] * deg2rad));
     };
 
     // Correct halo (alpha, beta) coord.
@@ -157,13 +149,12 @@ void CubedSphereEquiAnglProjection::alphabeta2xy(double crd[], idx_t t) const {
     const auto& xyCentre = getCubedSphereTiles().tileCentre(static_cast<size_t>(t));
 
     // Get xy Jacobian.
-    const auto xyJacobian =
-        getCubedSphereTiles().tileJacobian(static_cast<size_t>(t));
+    const auto xyJacobian = getCubedSphereTiles().tileJacobian(static_cast<size_t>(t));
 
     // Set xy coord.
     const Point2 xy = xyJacobian * Point2(crd) + xyCentre;
-    crd[XX] = xy[XX];
-    crd[YY] = xy[YY];
+    crd[XX]         = xy[XX];
+    crd[YY]         = xy[YY];
 }
 
 

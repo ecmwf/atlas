@@ -25,7 +25,7 @@ class Parametrisation;
 
 namespace atlas {
 class PointXY;
-} // namespace atlas
+}  // namespace atlas
 
 namespace atlas {
 namespace grid {
