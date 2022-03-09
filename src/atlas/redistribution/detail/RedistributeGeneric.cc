@@ -219,8 +219,8 @@ std::pair<std::vector<idx_t>, std::vector<int>> getUidIntersection(const std::ve
 template <int Rank, int Dim = 0>
 struct ForEach {
     template <typename Value, typename Functor, typename... Idxs>
-    static void apply(const std::vector<idx_t>& idxList, array::ArrayView<Value, Rank>& fieldView,
-                      const Functor& f, Idxs... idxs) {
+    static void apply(const std::vector<idx_t>& idxList, array::ArrayView<Value, Rank>& fieldView, const Functor& f,
+                      Idxs... idxs) {
         // Iterate over dimension Dim of array.
         for (idx_t idx = 0; idx < fieldView.shape(Dim); ++idx) {
             ForEach<Rank, Dim + 1>::apply(idxList, fieldView, f, idxs..., idx);
@@ -232,8 +232,8 @@ struct ForEach {
 template <int Rank>
 struct ForEach<Rank, 0> {
     template <typename Value, typename Functor, typename... Idxs>
-    static void apply(const std::vector<idx_t>& idxList, array::ArrayView<Value, Rank>& fieldView,
-                      const Functor& f, Idxs... idxs) {
+    static void apply(const std::vector<idx_t>& idxList, array::ArrayView<Value, Rank>& fieldView, const Functor& f,
+                      Idxs... idxs) {
         // Iterate over dimension 0 of array in order defined by idxList.
         for (idx_t idx : idxList) {
             ForEach<Rank, 1>::apply(idxList, fieldView, f, idxs..., idx);
@@ -245,8 +245,8 @@ struct ForEach<Rank, 0> {
 template <int Rank>
 struct ForEach<Rank, Rank> {
     template <typename Value, typename Functor, typename... Idxs>
-    static void apply(const std::vector<idx_t>& idxList, array::ArrayView<Value, Rank>& fieldView,
-                      const Functor& f, Idxs... idxs) {
+    static void apply(const std::vector<idx_t>& idxList, array::ArrayView<Value, Rank>& fieldView, const Functor& f,
+                      Idxs... idxs) {
         // Apply functor.
         f(fieldView(idxs...));
     }
@@ -304,7 +304,6 @@ void RedistributeGeneric::execute(const FieldSet& sourceFieldSet, FieldSet& targ
 
 // Determine datatype.
 void RedistributeGeneric::do_execute(const Field& sourceField, Field& targetField) const {
-
     // Available datatypes defined in array/LocalView.cc
     switch (sourceField.datatype().kind()) {
         case array::DataType::KIND_REAL64: {
@@ -328,18 +327,35 @@ void RedistributeGeneric::do_execute(const Field& sourceField, Field& targetFiel
 // Determine rank.
 template <typename Value>
 void RedistributeGeneric::do_execute(const Field& sourceField, Field& targetField) const {
-
     // Available ranks defined in array/LocalView.cc
     switch (sourceField.rank()) {
-        case 1: {return do_execute<Value, 1>(sourceField, targetField);}
-        case 2: {return do_execute<Value, 2>(sourceField, targetField);}
-        case 3: {return do_execute<Value, 3>(sourceField, targetField);}
-        case 4: {return do_execute<Value, 4>(sourceField, targetField);}
-        case 5: {return do_execute<Value, 5>(sourceField, targetField);}
-        case 6: {return do_execute<Value, 6>(sourceField, targetField);}
-        case 7: {return do_execute<Value, 7>(sourceField, targetField);}
-        case 8: {return do_execute<Value, 8>(sourceField, targetField);}
-        case 9: {return do_execute<Value, 9>(sourceField, targetField);}
+        case 1: {
+            return do_execute<Value, 1>(sourceField, targetField);
+        }
+        case 2: {
+            return do_execute<Value, 2>(sourceField, targetField);
+        }
+        case 3: {
+            return do_execute<Value, 3>(sourceField, targetField);
+        }
+        case 4: {
+            return do_execute<Value, 4>(sourceField, targetField);
+        }
+        case 5: {
+            return do_execute<Value, 5>(sourceField, targetField);
+        }
+        case 6: {
+            return do_execute<Value, 6>(sourceField, targetField);
+        }
+        case 7: {
+            return do_execute<Value, 7>(sourceField, targetField);
+        }
+        case 8: {
+            return do_execute<Value, 8>(sourceField, targetField);
+        }
+        case 9: {
+            return do_execute<Value, 9>(sourceField, targetField);
+        }
         default: {
             ATLAS_THROW_EXCEPTION("No implementation for rank " + std::to_string(sourceField.rank()));
         }
@@ -384,17 +400,14 @@ void RedistributeGeneric::do_execute(const Field& sourceField, Field& targetFiel
     auto recvBufferIt = recvBuffer.cbegin();
 
     // Copy sourceField to sendBuffer.
-    ForEach<Rank>::apply(sourceLocalIdx_, sourceView,
-                         [&](const Value& elem){*sendBufferIt++ = elem;});
+    ForEach<Rank>::apply(sourceLocalIdx_, sourceView, [&](const Value& elem) { *sendBufferIt++ = elem; });
 
     // Perform MPI communication.
     mpi::comm().allToAllv(sendBuffer.data(), sendCounts.data(), sendDisps.data(), recvBuffer.data(), recvCounts.data(),
                           recvDisps.data());
 
     // Copy recvBuffer to targetField.
-    ForEach<Rank>::apply(targetLocalIdx_, targetView,
-                         [&](Value& elem){elem = *recvBufferIt++;});
-
+    ForEach<Rank>::apply(targetLocalIdx_, targetView, [&](Value& elem) { elem = *recvBufferIt++; });
 }
 
 namespace {
