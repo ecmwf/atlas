@@ -21,7 +21,6 @@ namespace atlas {}
 namespace atlas {
 namespace projection {
 namespace detail {
-class ProjectionImpl;
 class CubedSphereProjectionBase;
 }  // namespace detail
 }  // namespace projection
@@ -31,9 +30,6 @@ namespace atlas {
 namespace meshgenerator {
 namespace detail {
 namespace cubedsphere {
-
-using namespace projection::detail;
-using Jacobian = ProjectionImpl::Jacobian;
 
 /// Enum for (i, j, t) coordinate fields.
 struct Coordinates {
@@ -122,6 +118,9 @@ public:
 ///          is specifcially written to comupute the (x, y) and (t, i, j)
 ///          coordinates of halos that extend across tile boundaries.
 class NeighbourJacobian {
+private:
+    using Jacobian = projection::Jacobian;
+
 public:
     /// Default constructor.
     NeighbourJacobian() = default;
@@ -155,7 +154,7 @@ public:
 
 private:
     // Pointer to grid projection.
-    const CubedSphereProjectionBase* csProjection_{};
+    const projection::detail::CubedSphereProjectionBase* csProjection_{};
 
     // Grid size.
     idx_t N_{};

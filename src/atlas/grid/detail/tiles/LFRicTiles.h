@@ -20,8 +20,6 @@ namespace atlas {
 namespace grid {
 namespace detail {
 
-using Jacobian = atlas::projection::detail::ProjectionImpl::Jacobian;
-
 class LFRicCubedSphereTiles : public CubedSphereTiles {
 public:
     // constructor

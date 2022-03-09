@@ -8,8 +8,8 @@
 #include "atlas/meshgenerator/detail/cubedsphere/CubedSphereUtility.h"
 #include "atlas/grid/CubedSphereGrid.h"
 #include "atlas/grid/Iterator.h"
+#include "atlas/projection/Jacobian.h"
 #include "atlas/projection/detail/CubedSphereProjectionBase.h"
-#include "atlas/projection/detail/ProjectionImpl.h"
 
 
 namespace atlas {

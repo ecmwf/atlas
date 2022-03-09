@@ -31,11 +31,10 @@ namespace atlas {
 namespace grid {
 namespace detail {
 
-using Jacobian = atlas::projection::detail::ProjectionImpl::Jacobian;
-
 class CubedSphereTiles : public util::Object {
 public:
-    using Spec = util::Config;
+    using Spec     = util::Config;
+    using Jacobian = projection::Jacobian;
 
 public:
     static const CubedSphereTiles* create();

@@ -457,7 +457,7 @@ const PointXY& FV3CubedSphereTiles::tileCentre(size_t t) const {
     throw_NotImplemented("tileCentre not implemented for FV3Tiles", Here());
 }
 
-const Jacobian& FV3CubedSphereTiles::tileJacobian(size_t t) const {
+const FV3CubedSphereTiles::Jacobian& FV3CubedSphereTiles::tileJacobian(size_t t) const {
     throw_NotImplemented("tileJacobian not implemented for FV3Tiles", Here());
     ;
 }
