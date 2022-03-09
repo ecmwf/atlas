@@ -8,70 +8,14 @@
 #include "atlas/meshgenerator/detail/cubedsphere/CubedSphereUtility.h"
 #include "atlas/grid/CubedSphereGrid.h"
 #include "atlas/grid/Iterator.h"
+#include "atlas/projection/Jacobian.h"
 #include "atlas/projection/detail/CubedSphereProjectionBase.h"
+
 
 namespace atlas {
 namespace meshgenerator {
 namespace detail {
 namespace cubedsphere {
-
-
-// -----------------------------------------------------------------------------
-// Projection cast
-// -----------------------------------------------------------------------------
-
-const CubedSphereProjectionBase* castProjection(const ProjectionImpl* projectionPtr) {
-    const auto* const csProjectionPtr = dynamic_cast<const CubedSphereProjectionBase*>(projectionPtr);
-
-    if (!csProjectionPtr) {
-        throw_Exception("Cannot cast ProjectionImpl* to CubedSphereProjectionBase*.", Here());
-    }
-    return csProjectionPtr;
-}
-
-// -----------------------------------------------------------------------------
-// Jacobian2 class
-// -----------------------------------------------------------------------------
-
-Jacobian2::Jacobian2(double df0_by_dx0, double df0_by_dx1, double df1_by_dx0, double df1_by_dx1):
-    df0_by_dx0_(df0_by_dx0), df0_by_dx1_(df0_by_dx1), df1_by_dx0_(df1_by_dx0), df1_by_dx1_(df1_by_dx1) {}
-
-Jacobian2::Jacobian2(const Point2& f00, const Point2& f10, const Point2& f01, double dx0, double dx1):
-    Jacobian2((f10[0] - f00[0]) / dx0, (f01[0] - f00[0]) / dx1, (f10[1] - f00[1]) / dx0, (f01[1] - f00[1]) / dx1) {}
-
-Jacobian2::Jacobian2(const Point2& f00, const Point2& f10, const Point2& f01): Jacobian2(f00, f10, f01, 1., 1.) {}
-
-double Jacobian2::det() const {
-    return df0_by_dx0_ * df1_by_dx1_ - df0_by_dx1_ * df1_by_dx0_;
-}
-
-Jacobian2 Jacobian2::operator*(double a) const {
-    return Jacobian2(df0_by_dx0_ * a, df0_by_dx1_ * a, df1_by_dx0_ * a, df1_by_dx1_ * a);
-}
-
-Point2 Jacobian2::operator*(const Point2& dx) const {
-    return Point2(dx[0] * df0_by_dx0_ + df0_by_dx1_ * dx[1], dx[0] * df1_by_dx0_ + df1_by_dx1_ * dx[1]);
-}
-
-Jacobian2 Jacobian2::operator*(const Jacobian2& Jb) const {
-    return Jacobian2(df0_by_dx0_ * Jb.df0_by_dx0_ + df0_by_dx1_ * Jb.df1_by_dx0_,
-                     df0_by_dx0_ * Jb.df0_by_dx1_ + df0_by_dx1_ * Jb.df1_by_dx1_,
-                     df1_by_dx0_ * Jb.df0_by_dx0_ + df1_by_dx1_ * Jb.df1_by_dx0_,
-                     df1_by_dx0_ * Jb.df0_by_dx1_ + df1_by_dx1_ * Jb.df1_by_dx1_);
-}
-
-Jacobian2 Jacobian2::inverse() const {
-    return Jacobian2(df1_by_dx1_, -df0_by_dx1_, -df1_by_dx0_, df0_by_dx0_) * (1. / det());
-}
-
-Jacobian2 Jacobian2::sign() const {
-    const double smallNumber = det() * std::numeric_limits<double>::epsilon();
-    const auto signValue     = [&](double number) -> double {
-        return std::abs(number) < smallNumber ? 0. : number < 0. ? -1. : 1.;
-    };
-    return Jacobian2(signValue(df0_by_dx0_), signValue(df0_by_dx1_), signValue(df1_by_dx0_), signValue(df1_by_dx1_));
-}
-
 
 // -----------------------------------------------------------------------------
 // NeighbourJacobian class
@@ -89,7 +33,7 @@ NeighbourJacobian::NeighbourJacobian(const CubedSphereGrid& csGrid) {
     }
 
     // Get projection.
-    csProjection_ = castProjection(csGrid.projection().get());
+    csProjection_ = &csGrid.cubedSphereProjection();
 
     // Get tiles.
     const auto& csTiles = csProjection_->getCubedSphereTiles();
@@ -101,78 +45,42 @@ NeighbourJacobian::NeighbourJacobian(const CubedSphereGrid& csGrid) {
     // Get cell width.
     const double cellWidth = 90. / N_;
 
-    // Get xy of points (i = 0, j = 0), (i = 1, j = 0) and (i = 0, j = 1) on tiles.
-    std::array<PointXY, 6> xy00;
-    std::array<PointXY, 6> xy10;
-    std::array<PointXY, 6> xy01;
-
-    // Loop over grid points.
-    auto tijIt = csGrid.tij().begin();
-    for (const PointXY& xy : csGrid.xy()) {
-        const auto t  = static_cast<size_t>((*tijIt).t());
-        const idx_t i = (*tijIt).i();
-        const idx_t j = (*tijIt).j();
-
-
-        if (i == 0 && j == 0) {
-            xy00[t] = xy;
-        }
-        else if (i == 1 && j == 0) {
-            xy10[t] = xy;
-        }
-        else if (i == 0 && j == 1) {
-            xy01[t] = xy;
-        }
-        ++tijIt;
-    }
 
     for (size_t t = 0; t < 6; ++t) {
         // Calculate tile Jacobians.
-        dxy_by_dij_[t] = Jacobian2(xy00[t], xy10[t], xy01[t]);
-
-        // Rescale by cell width (gains an extra couple of decimal places of precision).
-        dxy_by_dij_[t] = dxy_by_dij_[t].sign() * cellWidth;
+        dxy_by_dij_[t] = csTiles.tileJacobian(t) * cellWidth;
 
         // Get inverse.
         dij_by_dxy_[t] = dxy_by_dij_[t].inverse();
 
         // Set xy00. Grid point needs moving to (i = 0, j = 0).
-        xy00_[t] = xy00[t] + dxy_by_dij_[t] * PointIJ(-0.5, -0.5);
-
-        // Get other three corners so we can work out xy min/max.
-        const PointXY xyN0 = xy00_[t] + dxy_by_dij_[t] * PointIJ(N_, 0);
-        const PointXY xyNN = xy00_[t] + dxy_by_dij_[t] * PointIJ(N_, N_);
-        const PointXY xy0N = xy00_[t] + dxy_by_dij_[t] * PointIJ(0, N_);
+        xy00_[t] = csTiles.tileCentre(t) + dxy_by_dij_[t] * PointIJ(-0.5 * N_, -0.5 * N_);
 
         // Get xy min/max.
-        std::tie(xyMin_[t].x(), xyMax_[t].x()) = std::minmax({xy00_[t].x(), xyN0.x(), xyNN.x(), xy0N.x()});
-        std::tie(xyMin_[t].y(), xyMax_[t].y()) = std::minmax({xy00_[t].y(), xyN0.y(), xyNN.y(), xy0N.y()});
-
-        // Round to nearest degree.
-        xyMin_[t].x() = std::round(xyMin_[t].x());
-        xyMax_[t].x() = std::round(xyMax_[t].x());
-        xyMin_[t].y() = std::round(xyMin_[t].y());
-        xyMax_[t].y() = std::round(xyMax_[t].y());
+        xyMin_[t].x() = csTiles.tileCentre(t).x() + 45.;
+        xyMax_[t].x() = csTiles.tileCentre(t).x() - 45.;
+        xyMin_[t].y() = csTiles.tileCentre(t).y() + 45.;
+        xyMax_[t].y() = csTiles.tileCentre(t).y() - 45.;
 
         // Neighbour assignment lambda.
         const auto neighbourAssignment = [&](TileEdge::k k) -> void {
             // Shift points in to neighbouring tiles.
-            PointIJ ijDisplacement;
+            PointIJ Dij;
             switch (k) {
                 case TileEdge::LEFT: {
-                    ijDisplacement = PointIJ(-2, 0);
+                    Dij = PointIJ(-2, 0);
                     break;
                 }
                 case TileEdge::BOTTOM: {
-                    ijDisplacement = PointIJ(0, -2);
+                    Dij = PointIJ(0, -2);
                     break;
                 }
                 case TileEdge::RIGHT: {
-                    ijDisplacement = PointIJ(N_, 0);
+                    Dij = PointIJ(N_, 0);
                     break;
                 }
                 case TileEdge::TOP: {
-                    ijDisplacement = PointIJ(0, N_);
+                    Dij = PointIJ(0, N_);
                     break;
                 }
                 case TileEdge::UNDEFINED: {
@@ -180,13 +88,15 @@ NeighbourJacobian::NeighbourJacobian(const CubedSphereGrid& csGrid) {
                 }
             }
 
-            // Convert displacement from ij to xy.
-            const PointXY xyDisplacement = dxy_by_dij_[t] * ijDisplacement;
+            // half-index displacements.
+            const auto dij00 = PointIJ(0.5, 0.5);
+            const auto dij10 = PointIJ(1.5, 0.5);
+            const auto dij01 = PointIJ(0.5, 1.5);
 
             // Get neighbour xy points in xy space local to tile.
-            const PointXY xy00Local = xy00[t] + xyDisplacement;
-            const PointXY xy10Local = xy10[t] + xyDisplacement;
-            const PointXY xy01Local = xy01[t] + xyDisplacement;
+            const PointXY xy00Local = xy00_[t] + dxy_by_dij_[t] * (Dij + dij00);
+            const PointXY xy10Local = xy00_[t] + dxy_by_dij_[t] * (Dij + dij10);
+            const PointXY xy01Local = xy00_[t] + dxy_by_dij_[t] * (Dij + dij01);
 
             // Convert from local xy to global xy.
             const PointXY xy00Global = csTiles.tileCubePeriodicity(xy00Local, static_cast<idx_t>(t));
@@ -197,10 +107,16 @@ NeighbourJacobian::NeighbourJacobian(const CubedSphereGrid& csGrid) {
             neighbours_[t].t_[k] = csTiles.indexFromXY(xy00Global.data());
 
             // Set Jacobian of global xy with respect to local ij.
-            auto dxyGlobal_by_dij = Jacobian2(xy00Global, xy10Global, xy01Global);
+            auto dxyGlobal_by_dij = Jacobian{{xy10Global[0] - xy00Global[0], xy01Global[0] - xy00Global[0]},
+                                             {xy10Global[1] - xy00Global[1], xy01Global[1] - xy00Global[1]}};
 
             // Rescale by cell width (gains an extra couple of decimal places of precision).
-            dxyGlobal_by_dij = dxyGlobal_by_dij.sign() * cellWidth;
+            const auto sign = [](double num, double tol = 360. * std::numeric_limits<double>::epsilon()) {
+                return std::abs(num) < tol ? 0 : num > 0 ? 1. : -1.;
+            };
+            dxyGlobal_by_dij = Jacobian{sign(dxyGlobal_by_dij[0][0]), sign(dxyGlobal_by_dij[0][1]),
+                                        sign(dxyGlobal_by_dij[1][0]), sign(dxyGlobal_by_dij[1][1])} *
+                               cellWidth;
 
             // Chain rule to get Jacobian with respect to local xy.
             neighbours_[t].dxyGlobal_by_dxyLocal_[k] = dxyGlobal_by_dij * dij_by_dxy_[t];
@@ -222,8 +138,8 @@ NeighbourJacobian::NeighbourJacobian(const CubedSphereGrid& csGrid) {
 
 PointXY NeighbourJacobian::xy(const PointIJ& ij, idx_t t) const {
     // Get jacobian.
-    const Jacobian2& jac = dxy_by_dij_[static_cast<size_t>(t)];
-    const PointXY& xy00  = xy00_[static_cast<size_t>(t)];
+    const Jacobian& jac = dxy_by_dij_[static_cast<size_t>(t)];
+    const PointXY& xy00 = xy00_[static_cast<size_t>(t)];
 
     // Return ij
     return xy00 + jac * ij;
@@ -231,8 +147,8 @@ PointXY NeighbourJacobian::xy(const PointIJ& ij, idx_t t) const {
 
 PointIJ NeighbourJacobian::ij(const PointXY& xy, idx_t t) const {
     // Get jacobian.
-    const Jacobian2& jac = dij_by_dxy_[static_cast<size_t>(t)];
-    const PointXY& xy00  = xy00_[static_cast<size_t>(t)];
+    const Jacobian& jac = dij_by_dxy_[static_cast<size_t>(t)];
+    const PointXY& xy00 = xy00_[static_cast<size_t>(t)];
 
     // Return ij
     return jac * (xy - xy00);
@@ -290,7 +206,7 @@ PointTXY NeighbourJacobian::xyLocalToGlobal(const PointXY& xyLocal, idx_t tLocal
         // Get reference points and jacobian.
         const PointXY& xy00Local_  = neighbours_[static_cast<size_t>(tLocal)].xy00Local_[k];
         const PointXY& xy00Global_ = neighbours_[static_cast<size_t>(tLocal)].xy00Global_[k];
-        const Jacobian2& jac       = neighbours_[static_cast<size_t>(tLocal)].dxyGlobal_by_dxyLocal_[k];
+        const Jacobian& jac        = neighbours_[static_cast<size_t>(tLocal)].dxyGlobal_by_dxyLocal_[k];
 
         // Get t.
         tGlobal = neighbours_[static_cast<size_t>(tLocal)].t_[k];

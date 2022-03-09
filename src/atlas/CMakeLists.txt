@@ -925,6 +925,7 @@ target_link_libraries( atlas PUBLIC
   eckit
   eckit_geometry
   eckit_linalg
+  eckit_maths
   eckit_mpi
   eckit_option
 )

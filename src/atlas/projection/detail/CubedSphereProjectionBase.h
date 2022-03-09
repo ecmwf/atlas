@@ -30,6 +30,31 @@ public:
 
     atlas::grid::CubedSphereTiles getCubedSphereTiles() const { return tiles_; };
 
+    /// @brief   Convert (x, y) coordinate to (alpha, beta) on tile t.
+    ///
+    /// @details Converts the Atlas xy coordinates to the angular coordinates
+    ///          described of tile t, described by by Ronchi et al. (1996,
+    ///          Journal of Computational Physics, 124, 93).
+    ///          Note that the xy coordinate must lie within the domain
+    ///          (x <= xmin && x >= xmax) || (y <= ymin && y >= ymax) where
+    ///          xmin, xmax, ymin and ymax are the boundaries of tile t.
+    ///@{
+    Point2 xy2alphabeta(const Point2& xy, idx_t t) const;
+    virtual void xy2alphabeta(double crd[], idx_t t) const = 0;
+    ///@}
+
+    /// @brief   Convert (alpha, beta) coordinate to (x, y) on tile t.
+    ///
+    /// @details Performs the inverse of xy2alpha beta. Note that the result is
+    ///          degenerate when abs(alpha) > 45 && abs(beta) > 45 &&
+    ///          abs(alpha) == abs(beta). In these circumstances, the method
+    ///          will return the anticlockwise-most of the two possible
+    ///          values.
+    ///@{
+    Point2 alphabeta2xy(const Point2& alphabeta, idx_t t) const;
+    virtual void alphabeta2xy(double crd[], idx_t) const = 0;
+    ///@}
+
 protected:
     // projection and inverse projection
     void xy2lonlat_post(double xyz[], const idx_t t, double crd[]) const;

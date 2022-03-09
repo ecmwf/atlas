@@ -27,6 +27,34 @@ namespace {
 static constexpr bool debug     = false;  // constexpr so compiler can optimize `if ( debug ) { ... }` out
 static constexpr double deg2rad = atlas::util::Constants::degreesToRadians();
 static constexpr double rad2deg = atlas::util::Constants::radiansToDegrees();
+
+// Define small number relative to 360.
+constexpr double epsilon = std::numeric_limits<double>::epsilon() * 360.;
+
+// Define some "fuzzy" comparison operators.
+
+// a is approximately equal to b.
+bool equal(double a, double b) {
+    return std::abs(a - b) <= epsilon;
+}
+// a is less than b.
+bool lessThan(double a, double b) {
+    return a < b && !equal(a, b);
+}
+// a is greater than b.
+bool greaterThan(double a, double b) {
+    return a > b && !equal(a, b);
+}
+// a is less than or approximately equal to b.
+bool lessEqual(double a, double b) {
+    return a < b || equal(a, b);
+}
+// a is greater than or approximately equal to b.
+bool greaterEqual(double a, double b) {
+    return a > b || equal(a, b);
+}
+
+
 }  // namespace
 
 namespace atlas {
@@ -38,6 +66,97 @@ namespace detail {
 
 CubedSphereEquiAnglProjection::CubedSphereEquiAnglProjection(const eckit::Parametrisation& params):
     CubedSphereProjectionBase(params) {}
+
+// -------------------------------------------------------------------------------------------------
+
+void CubedSphereEquiAnglProjection::xy2alphabeta(double crd[], idx_t t) const {
+    // Get tile centre.
+    const auto& xyCentre = getCubedSphereTiles().tileCentre(static_cast<size_t>(t));
+
+    // Check that xy coordinate is within valid "+" shaped halo region.
+    const auto inCross = [&](const double crd[]) -> bool {
+        return (greaterEqual(crd[XX], xyCentre[XX] - 45.) && lessEqual(crd[XX], xyCentre[XX] + 45.)) ||
+               (greaterEqual(crd[YY], xyCentre[YY] - 45.) && lessEqual(crd[YY], xyCentre[YY] + 45.));
+    };
+    if (!inCross(crd)) {
+        auto sStream = std::stringstream();
+        sStream << "xy coordinate (" << crd[0] << ", " << crd[1] << ") is not in range for tile " << t << ".";
+        ATLAS_THROW_EXCEPTION(sStream.str());
+    }
+
+    // Get alphaBeta Jacobian.
+    const auto alphabetaJacobian = getCubedSphereTiles().tileJacobian(static_cast<size_t>(t)).inverse();
+
+    // Set (alpha, beta) coord.
+    const Point2 alphabeta = alphabetaJacobian * (Point2(crd) - xyCentre);
+    crd[0]                 = alphabeta[0];
+    crd[1]                 = alphabeta[1];
+
+    // Define correction.
+    const auto correction = [](const double crd[]) -> double {
+        return rad2deg * std::atan(std::tan(crd[0] * deg2rad) * std::tan(crd[1] * deg2rad));
+    };
+
+    // Correct halo (alpha, beta) coord.
+    if (lessThan(crd[0], -45.)) {
+        // Left.
+        crd[1] = -correction(crd);
+    }
+    else if (greaterThan(crd[0], 45.)) {
+        // Right.
+        crd[1] = correction(crd);
+    }
+    else if (lessThan(crd[1], -45.)) {
+        // Bottom.
+        crd[0] = -correction(crd);
+    }
+    else if (greaterThan(crd[1], 45.)) {
+        // Top.
+        crd[0] = correction(crd);
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+void CubedSphereEquiAnglProjection::alphabeta2xy(double crd[], idx_t t) const {
+    // Define correction.
+    const auto correction1 = [](const double crd[]) -> double {
+        return rad2deg * std::atan(std::tan(crd[1] * deg2rad) / std::tan(crd[0] * deg2rad));
+    };
+    const auto correction2 = [](const double crd[]) -> double {
+        return rad2deg * std::atan(std::tan(crd[0] * deg2rad) / std::tan(crd[1] * deg2rad));
+    };
+
+    // Correct halo (alpha, beta) coord.
+    if (lessThan(crd[0], -45.) && greaterThan(crd[1], crd[0]) && lessEqual(crd[1], -crd[0])) {
+        // Left trapezium.
+        crd[1] = -correction1(crd);
+    }
+    else if (greaterThan(crd[0], 45.) && greaterEqual(crd[1], -crd[0]) && lessThan(crd[1], crd[0])) {
+        // Right trapezium.
+        crd[1] = correction1(crd);
+    }
+    else if (lessThan(crd[1], -45.) && greaterEqual(crd[0], crd[1]) && lessThan(crd[0], -crd[1])) {
+        // Bottom trapezium.
+        crd[0] = -correction2(crd);
+    }
+    else if (greaterThan(crd[1], 45.) && greaterThan(crd[0], -crd[1]) && lessEqual(crd[0], crd[1])) {
+        // Top trapezium.
+        crd[0] = correction2(crd);
+    }
+
+    // Get tile centre.
+    const auto& xyCentre = getCubedSphereTiles().tileCentre(static_cast<size_t>(t));
+
+    // Get xy Jacobian.
+    const auto xyJacobian = getCubedSphereTiles().tileJacobian(static_cast<size_t>(t));
+
+    // Set xy coord.
+    const Point2 xy = xyJacobian * Point2(crd) + xyCentre;
+    crd[XX]         = xy[XX];
+    crd[YY]         = xy[YY];
+}
+
 
 // -------------------------------------------------------------------------------------------------
 

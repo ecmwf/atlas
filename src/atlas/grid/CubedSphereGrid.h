@@ -263,7 +263,9 @@ private:
 
 class CubedSphereGrid : public Grid {
 public:
-    using grid_t = grid::detail::grid::CubedSphere;
+    using grid_t                = grid::detail::grid::CubedSphere;
+    using CubedSphereProjection = projection::detail::CubedSphereProjectionBase;
+    using CubedSphereTiles      = grid::CubedSphereTiles;
 
 public:
     CubedSphereGrid();
@@ -295,8 +297,13 @@ public:
     // Return the size of the cubed sphere grid, where N is the number of grid boxes along the edge of a tile
     inline int N() const { return grid_->N(); }
 
-    // Return the number of tiles
-    inline atlas::grid::CubedSphereTiles tiles() const { return grid_->tiles(); }
+    /// @brief return tiles object.
+    inline CubedSphereTiles tiles() const { return grid_->tiles(); }
+
+    /// @brief return cubed sphere projection object.
+    inline const CubedSphereProjection& cubedSphereProjection() const {
+        return dynamic_cast<const CubedSphereProjection&>(*projection().get());
+    };
 
     temporary::IterateTIJ tij() const { return temporary::IterateTIJ(*grid_); }
 
