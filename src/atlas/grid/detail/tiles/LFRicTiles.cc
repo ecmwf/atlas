@@ -12,8 +12,8 @@
 #include <iostream>
 #include <ostream>
 
-#include "atlas/grid/detail/tiles/Tiles.h"
 #include "atlas/grid/detail/tiles/LFRicTiles.h"
+#include "atlas/grid/detail/tiles/Tiles.h"
 #include "atlas/grid/detail/tiles/TilesFactory.h"
 #include "atlas/projection/detail/ProjectionUtilities.h"
 #include "atlas/runtime/Exception.h"
@@ -26,42 +26,42 @@ namespace detail {
 
 namespace {
 
-constexpr bool debug = false;  // constexpr so compiler can optimize `if ( debug ) { ... }` out
-constexpr double epsilon = 1.e-12;
+static constexpr bool debug     = false;  // constexpr so compiler can optimize `if ( debug ) { ... }` out
+static constexpr double epsilon = 1.e-12;
 
 using projection::detail::ProjectionUtilities;
 
-bool is_tiny(const double& x) {
+static bool is_tiny(const double& x) {
     return (std::abs(x) < epsilon);
 }
 
-bool is_same(const double& x, const double& y, const double& tol = 1.0) {
+static bool is_same(const double& x, const double& y, const double& tol = 1.0) {
     return (std::abs(x - y) < epsilon * tol);
 }
 
-bool is_less(const double& lhs, const double& rhs) {
+static bool is_less(const double& lhs, const double& rhs) {
     return lhs < rhs - epsilon;
 }
 
-bool is_geq(const double& lhs, const double& rhs) {
+static bool is_geq(const double& lhs, const double& rhs) {
     return lhs >= rhs - epsilon;
 }
 
-void sphericalToCartesian(const double lonlat[], double xyz[]) {
+static void sphericalToCartesian(const double lonlat[], double xyz[]) {
     auto crd_sys            = ProjectionUtilities::CoordinateSystem::LEFT_HAND;
     constexpr double radius = 1.;
     ProjectionUtilities::sphericalToCartesian(lonlat, xyz, crd_sys, radius);
 }
 
-PointXY rotatePlus90AboutPt(const PointXY& xy, const PointXY& origin) {
+static PointXY rotatePlus90AboutPt(const PointXY& xy, const PointXY& origin) {
     return PointXY{-xy.y() + origin.x() + origin.y(), xy.x() - origin.x() + origin.y()};
 }
 
-PointXY rotateMinus90AboutPt(const PointXY& xy, const PointXY& origin) {
+static PointXY rotateMinus90AboutPt(const PointXY& xy, const PointXY& origin) {
     return PointXY{xy.y() + origin.x() - origin.y(), -xy.x() + origin.x() + origin.y()};
 }
 
-PointXY rotatePlus180AboutPt(const PointXY& xy, const PointXY& origin) {
+static PointXY rotatePlus180AboutPt(const PointXY& xy, const PointXY& origin) {
     return PointXY{2.0 * origin.x() - xy.x(), 2.0 * origin.y() - xy.y()};
 }
 
@@ -361,8 +361,7 @@ void LFRicCubedSphereTiles::enforceXYdomain(double xy[]) const {
 
 // input is the xy value as PointXY that is a continous "cross " extension in terms of xy space from the tile in question
 // the output is an xy value that lives on the standard "|---" shape
-PointXY LFRicCubedSphereTiles::tileCubePeriodicity(const PointXY& xyExtended,
-                                                          const idx_t t) const {
+PointXY LFRicCubedSphereTiles::tileCubePeriodicity(const PointXY& xyExtended, const idx_t t) const {
     // xy space is a function of tiles--Tile 0)                    // xy space for Tile 1
     //                                                             //
     //   y ^                                                       //   y ^
@@ -473,8 +472,7 @@ PointXY LFRicCubedSphereTiles::tileCubePeriodicity(const PointXY& xyExtended,
 
     switch (t) {
         case 0:
-            finalXY = (withinRange.y() > 135.0) ? rotatePlus180AboutPt(withinRange, PointXY{135.0, 90.0})
-                                                : withinRange;
+            finalXY = (withinRange.y() > 135.0) ? rotatePlus180AboutPt(withinRange, PointXY{135.0, 90.0}) : withinRange;
             break;
         case 1:
             if ((withinRange.x() >= 90.0) && (withinRange.x() <= 180.0)) {
@@ -655,7 +653,7 @@ const PointXY& LFRicCubedSphereTiles::tileCentre(size_t t) const {
     return tileCentres_[t];
 }
 
-const Jacobian& LFRicCubedSphereTiles::tileJacobian(size_t t) const {
+const LFRicCubedSphereTiles::Jacobian& LFRicCubedSphereTiles::tileJacobian(size_t t) const {
     return tileJacobians_[t];
 }
 
@@ -677,24 +675,13 @@ PointXY LFRicCubedSphereTiles::topRightTile(size_t t) {
 
 
 // Centre of each tile in xy space.
-const std::array<PointXY, 6> LFRicCubedSphereTiles::tileCentres_ {
-    PointXY{45., 0.},
-    PointXY{135., 0.},
-    PointXY{225., 0.},
-    PointXY{315., 0.},
-    PointXY{45., 90.},
-    PointXY{45., -90.}
-};
+const std::array<PointXY, 6> LFRicCubedSphereTiles::tileCentres_{
+    PointXY{45., 0.}, PointXY{135., 0.}, PointXY{225., 0.}, PointXY{315., 0.}, PointXY{45., 90.}, PointXY{45., -90.}};
 
 // Jacobian of xy space with respect to curvilinear coordinates for each tile.
-const std::array<Jacobian, 6> LFRicCubedSphereTiles::tileJacobians_{
-    Jacobian{{1., 0.}, {0., 1.}},
-    Jacobian{{1., 0.}, {0., 1.}},
-    Jacobian{{0., -1.}, {1., 0.}},
-    Jacobian{{0., -1.}, {1., 0.}},
-    Jacobian{{1., 0.}, {0., 1.}},
-    Jacobian{{0., 1.}, {-1., 0.}}
-};
+const std::array<LFRicCubedSphereTiles::Jacobian, 6> LFRicCubedSphereTiles::tileJacobians_{
+    Jacobian{{1., 0.}, {0., 1.}},  Jacobian{{1., 0.}, {0., 1.}}, Jacobian{{0., -1.}, {1., 0.}},
+    Jacobian{{0., -1.}, {1., 0.}}, Jacobian{{1., 0.}, {0., 1.}}, Jacobian{{0., 1.}, {-1., 0.}}};
 
 
 namespace {

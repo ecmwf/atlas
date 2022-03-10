@@ -72,6 +72,7 @@ option/TransOptions.cc
 projection.h
 projection/Projection.cc
 projection/Projection.h
+projection/Jacobian.h
 projection/detail/CubedSphereEquiAnglProjection.cc
 projection/detail/CubedSphereEquiAnglProjection.h
 projection/detail/CubedSphereEquiDistProjection.cc

@@ -15,7 +15,6 @@
 #include <string>
 
 #include "atlas/library/config.h"
-#include "atlas/projection/detail/ProjectionImpl.h"
 #include "atlas/util/ObjectHandle.h"
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -36,6 +35,10 @@ namespace util {
 class Config;
 }  // namespace util
 
+namespace projection {
+class Jacobian;
+}
+
 namespace grid {
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
@@ -44,7 +47,6 @@ class CubedSphereTiles;
 }  // namespace detail
 #endif
 
-using Jacobian = projection::detail::ProjectionImpl::Jacobian;
 //---------------------------------------------------------------------------------------------------------------------
 
 class CubedSphereTiles : DOXYGEN_HIDE(public util::ObjectHandle<atlas::grid::detail::CubedSphereTiles>) {
@@ -92,7 +94,7 @@ public:
 
     /// @brief Return the Jacobian of xy with respect to the curvilinear
     ///        coordinates of the tile.
-    const Jacobian& tileJacobian(size_t t) const;
+    const projection::Jacobian& tileJacobian(size_t t) const;
 
 private:
     /// Output to stream

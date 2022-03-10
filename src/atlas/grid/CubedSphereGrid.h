@@ -263,7 +263,9 @@ private:
 
 class CubedSphereGrid : public Grid {
 public:
-    using grid_t = grid::detail::grid::CubedSphere;
+    using grid_t                = grid::detail::grid::CubedSphere;
+    using CubedSphereProjection = projection::detail::CubedSphereProjectionBase;
+    using CubedSphereTiles      = grid::CubedSphereTiles;
 
 public:
     CubedSphereGrid();
@@ -296,16 +298,11 @@ public:
     inline int N() const { return grid_->N(); }
 
     /// @brief return tiles object.
-    inline atlas::grid::CubedSphereTiles tiles() const { return grid_->tiles(); }
+    inline CubedSphereTiles tiles() const { return grid_->tiles(); }
 
     /// @brief return cubed sphere projection object.
-    inline const projection::detail::CubedSphereProjectionBase& cubedSphereProjection() const {
-
-        const auto projPtr =
-            dynamic_cast<const projection::detail::CubedSphereProjectionBase*>
-            (projection().get());
-
-        return *projPtr;
+    inline const CubedSphereProjection& cubedSphereProjection() const {
+        return dynamic_cast<const CubedSphereProjection&>(*projection().get());
     };
 
     temporary::IterateTIJ tij() const { return temporary::IterateTIJ(*grid_); }

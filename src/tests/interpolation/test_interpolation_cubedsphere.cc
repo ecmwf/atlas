@@ -68,7 +68,7 @@ CASE("cubedsphere_interpolation") {
 
     // Create target grid, mesh and functionspace.
     const auto partitioner = grid::MatchingPartitioner(sourceMesh, util::Config("type", "cubedsphere"));
-    const auto targetGrid = Grid("O48");
+    const auto targetGrid = Grid("O24");
     const auto targetMesh = MeshGenerator("structured").generate(targetGrid, partitioner);
     const auto targetFunctionspace = functionspace::NodeColumns(targetMesh);
 
@@ -98,16 +98,12 @@ CASE("cubedsphere_interpolation") {
     }
     partField.haloExchange();
 
-    // Make a cubed sphere primal mesh so that we can plot dual nodes as primal cells.
-    const auto tempMesh = MeshGenerator("cubedsphere", util::Config("halo", 1)).generate(sourceGrid);
-    const auto tempFunctionspace = functionspace::CellColumns(tempMesh);
-
     // Output source mesh.
     const auto gmshConfig =
         util::Config("coordinates", "xyz") | util::Config("ghost", true) | util::Config("info", true);
     const auto sourceGmsh = output::Gmsh("cubedsphere_source.msh", gmshConfig);
-    sourceGmsh.write(tempMesh);
-    sourceGmsh.write(FieldSet(sourceField), tempFunctionspace);
+    sourceGmsh.write(sourceMesh);
+    sourceGmsh.write(FieldSet(sourceField), sourceFunctionspace);
 
     // Output target mesh.
     const auto targetGmsh = output::Gmsh("cubedsphere_target.msh", gmshConfig);

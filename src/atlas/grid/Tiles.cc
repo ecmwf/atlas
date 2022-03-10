@@ -12,6 +12,7 @@
 #include "atlas/grid/detail/tiles/FV3Tiles.h"
 #include "atlas/grid/detail/tiles/LFRicTiles.h"
 #include "atlas/grid/detail/tiles/Tiles.h"
+#include "atlas/projection/Jacobian.h"
 
 
 namespace atlas {
@@ -76,7 +77,7 @@ const PointXY& CubedSphereTiles::tileCentre(size_t t) const {
     return get()->tileCentre(t);
 }
 
-const Jacobian& CubedSphereTiles::tileJacobian(size_t t) const {
+const projection::Jacobian& CubedSphereTiles::tileJacobian(size_t t) const {
     return get()->tileJacobian(t);
 }
 
