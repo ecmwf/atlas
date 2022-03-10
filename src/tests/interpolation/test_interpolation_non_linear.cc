@@ -136,6 +136,62 @@ CASE("Interpolation with MissingValue") {
     }
 }
 
+CASE("Interpolation of rank 2 field with MissingValue") {
+
+    RectangularDomain domain({0, 2}, {0, 2}, "degrees");
+    Grid gridA("L90", domain);
+
+    Mesh meshA = MeshGenerator("structured").generate(gridA);
+
+    functionspace::NodeColumns fsA(meshA);
+    Field fieldA = fsA.createField<double>(option::name("A") | option::levels(2) );
+
+    fieldA.metadata().set("missing_value", missingValue);
+    fieldA.metadata().set("missing_value_epsilon", missingValueEps);
+
+    auto viewA = array::make_view<double, 2>(fieldA);
+    for (idx_t j = 0; j < viewA.shape(0); ++j) {
+        for (idx_t k = 0; k < viewA.shape(1); ++k) {
+            viewA(j,k) = 1;
+        }
+    }
+
+    // Set output field (2 points)
+    functionspace::PointCloud fsB({PointLonLat{0.1, 0.1}, PointLonLat{0.9, 0.9}});
+
+    SECTION("missing-if-all-missing") {
+        Interpolation interpolation(Config("type", "finite-element").set("non_linear", "missing-if-all-missing"), fsA,
+                                    fsB);
+
+        for (std::string type : {"equals", "approximately-equals", "nan"}) {
+            Field fieldB("B", array::make_datatype<double>(), array::make_shape(fsB.size()));
+            auto viewB = array::make_view<double, 1>(fieldB);
+
+            fieldA.metadata().set("missing_value_type", type);
+            viewA(4) = type == "nan" ? nan : missingValue;
+
+            EXPECT(MissingValue(fieldA));
+            interpolation.execute(fieldA, fieldB);
+
+            MissingValue mv(fieldB);
+            EXPECT(mv);
+            EXPECT(mv(viewB(0)) == false);
+            EXPECT(mv(viewB(1)) == false);
+
+            Field fieldBr2("B", array::make_datatype<double>(), array::make_shape(fsB.size(),2));
+            auto viewBr2 = array::make_view<double, 2>(fieldBr2);
+
+            interpolation.execute(fieldA, fieldBr2);
+
+            EXPECT(mv(viewBr2(0,0)) == false);
+            EXPECT(mv(viewBr2(1,0)) == false);
+            EXPECT(mv(viewBr2(0,1)) == false);
+            EXPECT(mv(viewBr2(1,1)) == false);
+        }
+    }
+
+}
+
 
 }  // namespace test
 }  // namespace atlas
