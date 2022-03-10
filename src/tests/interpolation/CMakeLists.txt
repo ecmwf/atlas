@@ -102,6 +102,6 @@ ecbuild_add_test( TARGET atlas_test_interpolation_cubedsphere
   SOURCES  test_interpolation_cubedsphere.cc
   LIBS     atlas
   MPI      6
-  CONDITION eckit_HAVE_MPI AND eckit_EIGEN_FOUND
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 6 AND eckit_EIGEN_FOUND
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )

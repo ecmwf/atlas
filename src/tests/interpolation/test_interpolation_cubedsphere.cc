@@ -7,6 +7,7 @@
 
 
 #include "atlas/field/FieldSet.h"
+#include "atlas/functionspace/CellColumns.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Partitioner.h"
@@ -97,12 +98,16 @@ CASE("cubedsphere_interpolation") {
     }
     partField.haloExchange();
 
+    // Make a cubed sphere primal mesh so that we can plot dual nodes as primal cells.
+    const auto tempMesh = MeshGenerator("cubedsphere", util::Config("halo", 1)).generate(sourceGrid);
+    const auto tempFunctionspace = functionspace::CellColumns(tempMesh);
+
     // Output source mesh.
     const auto gmshConfig =
-        util::Config("coordinates", "xy") | util::Config("ghost", true) | util::Config("info", true);
+        util::Config("coordinates", "xyz") | util::Config("ghost", true) | util::Config("info", true);
     const auto sourceGmsh = output::Gmsh("cubedsphere_source.msh", gmshConfig);
-    sourceGmsh.write(sourceMesh);
-    sourceGmsh.write(sourceField, sourceFunctionspace);
+    sourceGmsh.write(tempMesh);
+    sourceGmsh.write(FieldSet(sourceField), tempFunctionspace);
 
     // Output target mesh.
     const auto targetGmsh = output::Gmsh("cubedsphere_target.msh", gmshConfig);
@@ -125,7 +130,7 @@ CASE("cubedsphere_interpolation") {
     const auto yDotY = dotProd(targetField, targetField);
     const auto xDotXAdj = dotProd(sourceField, sourceAdjoint);
 
-    EXPECT_APPROX_EQ(yDotY / xDotXAdj, 1., 1e-15);
+    EXPECT_APPROX_EQ(yDotY / xDotXAdj, 1., 1e-14);
 }
 
 }  // namespace test
