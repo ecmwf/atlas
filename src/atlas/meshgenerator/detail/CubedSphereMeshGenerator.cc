@@ -676,7 +676,7 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, cons
                             // non-null local cell pointer.
                             if (globalCell.localPtr) {
                                 isGhost = true;
-                                halo    = std::min(halo, globalCell.localPtr->halo);
+                                halo    = std::min<idx_t>(halo, globalCell.localPtr->halo);
                             }
                         }
                     }

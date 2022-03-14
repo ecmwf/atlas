@@ -7,6 +7,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.28.1] - 2021-03-14
+### Fixed
+- Fix compilation for GNU 7.3
+
 ## [0.28.0] - 2021-03-02
 ### Added
 - Assignment of ArrayView from ArrayView
@@ -341,6 +345,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.28.1]: https://github.com/ecmwf/atlas/compare/0.28.0...0.28.1
 [0.28.0]: https://github.com/ecmwf/atlas/compare/0.27.0...0.28.0
 [0.27.0]: https://github.com/ecmwf/atlas/compare/0.26.0...0.27.0
 [0.26.0]: https://github.com/ecmwf/atlas/compare/0.25.0...0.26.0
