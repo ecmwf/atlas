@@ -32,6 +32,21 @@ private:
 template <typename T>
 struct MissingIfAllMissing : Missing {
     bool execute(NonLinear::Matrix& W, const Field& field) const {
+    if (field.rank() == 1) {
+        return execute_rank1(W, field);
+    }
+    //else if (field.rank() == 2) {
+    //    return execute_rank2(W, field);
+    //}
+    //else if (field.rank() == 3) {
+    //    return execute_rank3(W, field);
+    //}
+    else {
+        ATLAS_NOTIMPLEMENTED;
+    }
+    }
+
+    bool execute_rank1(NonLinear::Matrix& W, const Field& field) const {
         field::MissingValue mv(field);
         auto& missingValue = mv.ref();
 

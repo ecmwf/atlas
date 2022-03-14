@@ -164,29 +164,23 @@ CASE("Interpolation of rank 2 field with MissingValue") {
                                     fsB);
 
         for (std::string type : {"equals", "approximately-equals", "nan"}) {
-            Field fieldB("B", array::make_datatype<double>(), array::make_shape(fsB.size()));
-            auto viewB = array::make_view<double, 1>(fieldB);
 
             fieldA.metadata().set("missing_value_type", type);
-            viewA(4) = type == "nan" ? nan : missingValue;
+            viewA(4,0) = type == "nan" ? nan : missingValue;
+            viewA(4,1) = type == "nan" ? nan : missingValue;
 
             EXPECT(MissingValue(fieldA));
+
+            Field fieldB("B", array::make_datatype<double>(), array::make_shape(fsB.size(),2));
+            auto viewB = array::make_view<double, 2>(fieldB);
+
             interpolation.execute(fieldA, fieldB);
 
             MissingValue mv(fieldB);
-            EXPECT(mv);
-            EXPECT(mv(viewB(0)) == false);
-            EXPECT(mv(viewB(1)) == false);
-
-            Field fieldBr2("B", array::make_datatype<double>(), array::make_shape(fsB.size(),2));
-            auto viewBr2 = array::make_view<double, 2>(fieldBr2);
-
-            interpolation.execute(fieldA, fieldBr2);
-
-            EXPECT(mv(viewBr2(0,0)) == false);
-            EXPECT(mv(viewBr2(1,0)) == false);
-            EXPECT(mv(viewBr2(0,1)) == false);
-            EXPECT(mv(viewBr2(1,1)) == false);
+            EXPECT(mv(viewB(0,0)) == false);
+            EXPECT(mv(viewB(1,0)) == false);
+            EXPECT(mv(viewB(0,1)) == false);
+            EXPECT(mv(viewB(1,1)) == false);
         }
     }
 
