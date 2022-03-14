@@ -151,9 +151,8 @@ CASE("Interpolation of rank 2 field with MissingValue") {
 
     auto viewA = array::make_view<double, 2>(fieldA);
     for (idx_t j = 0; j < viewA.shape(0); ++j) {
-        for (idx_t k = 0; k < viewA.shape(1); ++k) {
-            viewA(j,k) = 1;
-        }
+        viewA(j,0) = 1;
+        viewA(j,1) = missingValue;
     }
 
     // Set output field (2 points)
@@ -166,12 +165,11 @@ CASE("Interpolation of rank 2 field with MissingValue") {
         for (std::string type : {"equals", "approximately-equals", "nan"}) {
 
             fieldA.metadata().set("missing_value_type", type);
-            viewA(4,0) = type == "nan" ? nan : missingValue;
             viewA(4,1) = type == "nan" ? nan : missingValue;
 
             EXPECT(MissingValue(fieldA));
 
-            Field fieldB("B", array::make_datatype<double>(), array::make_shape(fsB.size(),2));
+            Field fieldB = fsB.createField<double>(option::name("B") | option::levels(2) );
             auto viewB = array::make_view<double, 2>(fieldB);
 
             interpolation.execute(fieldA, fieldB);
@@ -179,8 +177,8 @@ CASE("Interpolation of rank 2 field with MissingValue") {
             MissingValue mv(fieldB);
             EXPECT(mv(viewB(0,0)) == false);
             EXPECT(mv(viewB(1,0)) == false);
-            EXPECT(mv(viewB(0,1)) == false);
-            EXPECT(mv(viewB(1,1)) == false);
+            EXPECT(mv(viewB(0,1)) == true);
+            EXPECT(mv(viewB(1,1)) == true);
         }
     }
 
