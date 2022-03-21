@@ -143,16 +143,43 @@ CASE("Interpolation of rank 2 field with MissingValue") {
 
     Mesh meshA = MeshGenerator("structured").generate(gridA);
 
+    int nlevels = 3;
     functionspace::NodeColumns fsA(meshA);
-    Field fieldA = fsA.createField<double>(option::name("A") | option::levels(2) );
+    Field fieldA = fsA.createField<double>(option::name("A") | option::levels(nlevels) );
 
     fieldA.metadata().set("missing_value", missingValue);
     fieldA.metadata().set("missing_value_epsilon", missingValueEps);
 
     auto viewA = array::make_view<double, 2>(fieldA);
     for (idx_t j = 0; j < viewA.shape(0); ++j) {
-        viewA(j,0) = 1;
+        viewA(j,0) = 10;
         viewA(j,1) = missingValue;
+        viewA(j,2) = 10;
+        //viewA(j,0) = 10+j;
+        //viewA(j,1) = 20+j;
+        //viewA(j,2) = 30+j;
+        std::cout <<  "viewA(" << j << ",0) " << viewA(j,0);
+        std::cout << " viewA(" << j << ",1) " << viewA(j,1);
+        std::cout << " viewA(" << j << ",2) " << viewA(j,2) << std::endl;
+    }
+
+    const array::ArraySpec spec(array::ArrayShape{fieldA.shape(0)}, array::ArrayStrides{fieldA.shape(1)});
+
+    SECTION("check array slicing is compatible") {
+        for (int lev=0; lev < nlevels; ++lev) {
+              double* data = const_cast<double*>(fieldA.array().data<double>()) + lev;
+              atlas::Field fieldA_slice = atlas::Field("s", data, spec);
+              fieldA_slice.metadata().set("missing_value", fieldA.metadata().get<double>("missing_value"));
+
+              auto FlatViewA1 = array::make_view<double, 1>(fieldA_slice);
+              auto viewA_slice = viewA.slice(array::Range::all(), lev);
+              EXPECT(FlatViewA1.shape(0) == viewA_slice.shape(0));
+              for (idx_t j = 0; j < FlatViewA1.shape(0); ++j) {
+                  std::cout <<  "FlatViewA1(" << j << ") " << FlatViewA1[j];
+                  std::cout <<  " viewA_slice(" << j << ") " << viewA_slice(j) << std::endl;
+                  EXPECT(FlatViewA1[j] == viewA_slice(j));
+              }
+        }
     }
 
     // Set output field (2 points)
@@ -169,16 +196,24 @@ CASE("Interpolation of rank 2 field with MissingValue") {
 
             EXPECT(MissingValue(fieldA));
 
-            Field fieldB = fsB.createField<double>(option::name("B") | option::levels(2) );
+            Field fieldB = fsB.createField<double>(option::name("B") | option::levels(nlevels) );
             auto viewB = array::make_view<double, 2>(fieldB);
 
             interpolation.execute(fieldA, fieldB);
 
             MissingValue mv(fieldB);
+            std::cout <<  "viewB MissingValue: " << mv << std::endl;
+            for (idx_t j = 0; j < viewB.shape(0); ++j) {
+                std::cout <<  "viewB(" << j << ",0) " << viewB(j,0);
+                std::cout << " viewB(" << j << ",1) " << viewB(j,1);
+                std::cout << " viewB(" << j << ",2) " << viewB(j,2) << std::endl;
+            }
             EXPECT(mv(viewB(0,0)) == false);
             EXPECT(mv(viewB(1,0)) == false);
             EXPECT(mv(viewB(0,1)) == true);
             EXPECT(mv(viewB(1,1)) == true);
+            EXPECT(mv(viewB(0,2)) == false);
+            EXPECT(mv(viewB(1,2)) == false);
         }
     }
 

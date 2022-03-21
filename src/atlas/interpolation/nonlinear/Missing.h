@@ -32,21 +32,6 @@ private:
 template <typename T>
 struct MissingIfAllMissing : Missing {
     bool execute(NonLinear::Matrix& W, const Field& field) const {
-    if (field.rank() == 1) {
-        return execute_rank1(W, field);
-    }
-    else if (field.rank() == 2) {
-        return execute_rank2(W, field);
-    }
-    //else if (field.rank() == 3) {
-    //    return execute_rank3(W, field);
-    //}
-    else {
-        ATLAS_NOTIMPLEMENTED;
-    }
-    }
-
-    bool execute_rank1(NonLinear::Matrix& W, const Field& field) const {
         field::MissingValue mv(field);
         auto& missingValue = mv.ref();
 
@@ -73,7 +58,7 @@ struct MissingIfAllMissing : Missing {
             Matrix::iterator kt(it);
             Size k = i;
             for (; it != end; ++it, ++i, ++N_entries) {
-                const bool miss = missingValue(values[it.col()]);
+                const bool miss = missingValue(values(it.col()));
 
                 if (miss) {
                     ++N_missing;
@@ -95,7 +80,7 @@ struct MissingIfAllMissing : Missing {
                 else {
                     const Scalar factor = 1. / sum;
                     for (Size j = k; j < k + N_entries; ++j, ++kt) {
-                        if (missingValue(values[kt.col()])) {
+                        if (missingValue(values(kt.col()))) {
                             data[j] = 0.;
                             zeros   = true;
                         }
@@ -114,82 +99,8 @@ struct MissingIfAllMissing : Missing {
 
         return modif;
     }
-
-    bool execute_rank2(NonLinear::Matrix& W, const Field& field) const {
-
-        field::MissingValue mv(field);
-        auto& missingValue = mv.ref();
-
-        ATLAS_ASSERT(field.rank() == 2);
-
-        auto values = make_view_field_values<T, 2>(field);
-        ATLAS_ASSERT(idx_t(W.cols()) == values.shape(0));
-
-        auto data  = const_cast<Scalar*>(W.data());
-        bool modif = false;
-        bool zeros = false;
-
-        Size i = 0;
-        Matrix::iterator it(W);
-        for (Size r = 0; r < W.rows(); ++r) {
-            const Matrix::iterator end = W.end(r);
-
-            // count missing values, accumulate weights (disregarding missing values)
-            size_t i_missing = i;
-            size_t N_missing = 0;
-            size_t N_entries = 0;
-            Scalar sum       = 0.;
-
-            Matrix::iterator kt(it);
-            Size k = i;
-            for (; it != end; ++it, ++i, ++N_entries) {
-                bool miss = false;
-                for (int lev=0; lev < values.shape(1); ++lev) {
-                    miss = miss || missingValue(values(it.col(), lev));
-                }
-
-                if (miss) {
-                    ++N_missing;
-                    i_missing = i;
-                }
-                else {
-                    sum += *it;
-                }
-            }
-
-            // weights redistribution: zero-weight all missing values, linear re-weighting for the others;
-            // the result is missing value if all values in row are missing
-            if (N_missing > 0) {
-                if (N_missing == N_entries || eckit::types::is_approximately_equal(sum, 0.)) {
-                    for (Size j = k; j < k + N_entries; ++j) {
-                        data[j] = j == i_missing ? 1. : 0.;
-                    }
-                }
-                else {
-                    const Scalar factor = 1. / sum;
-                    for (Size j = k; j < k + N_entries; ++j, ++kt) {
-                        bool miss = false;
-                        for (int lev=0; lev < values.shape(1); ++lev) {
-                            miss = miss || missingValue(values(kt.col(), lev));
-                        }
-                        if (miss) {
-                            data[j] = 0.;
-                            zeros   = true;
-                        }
-                        else {
-                            data[j] *= factor;
-                        }
-                    }
-                }
-                modif = true;
-            }
-        }
-
-        if (zeros && missingValue.isnan()) {
-            W.prune(0.);
-        }
-
-        return modif;
+    bool execute_rank2(NonLinear::Matrix& W, const Field& field, int lev) const {
+        ATLAS_NOTIMPLEMENTED;
     }
 
     static std::string static_type() { return "missing-if-all-missing"; }
@@ -223,7 +134,7 @@ struct MissingIfAnyMissing : Missing {
             Matrix::iterator kt(it);
             Size k = i;
             for (; it != end; ++it, ++i, ++N_entries) {
-                const bool miss = missingValue(values[it.col()]);
+                const bool miss = missingValue(values(it.col()));
 
                 if (miss) {
                     ++N_missing;
@@ -251,6 +162,9 @@ struct MissingIfAnyMissing : Missing {
         }
 
         return modif;
+    }
+    bool execute_rank2(NonLinear::Matrix& W, const Field& field, int lev) const {
+      ATLAS_NOTIMPLEMENTED;
     }
 
     static std::string static_type() { return "missing-if-any-missing"; }
@@ -287,7 +201,7 @@ struct MissingIfHeaviestMissing : Missing {
             Matrix::iterator kt(it);
             Size k = i;
             for (; it != end; ++it, ++i, ++N_entries) {
-                const bool miss = missingValue(values[it.col()]);
+                const bool miss = missingValue(values(it.col()));
 
                 if (miss) {
                     ++N_missing;
@@ -314,7 +228,7 @@ struct MissingIfHeaviestMissing : Missing {
                 else {
                     const Scalar factor = 1. / sum;
                     for (Size j = k; j < k + N_entries; ++j, ++kt) {
-                        if (missingValue(values[kt.col()])) {
+                        if (missingValue(values(kt.col()))) {
                             data[j] = 0.;
                             zeros   = true;
                         }
@@ -332,6 +246,10 @@ struct MissingIfHeaviestMissing : Missing {
         }
 
         return modif;
+    }
+
+    bool execute_rank2(NonLinear::Matrix& W, const Field& field, int lev) const {
+      ATLAS_NOTIMPLEMENTED;
     }
 
     static std::string static_type() { return "missing-if-heaviest-missing"; }

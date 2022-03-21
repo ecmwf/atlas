@@ -99,22 +99,60 @@ void set_missing_values(Field& tgt, const std::vector<idx_t>& missing) {
 
 template <typename Value>
 void Method::interpolate_field_rank1(const Field& src, Field& tgt, const Matrix& W) const {
+
+    // non-linearities: a non-empty M matrix contains the corrections applied to matrix_
+    Matrix M;
+    if (not W.empty() && nonLinear_(src)) {
+        Matrix W_nl(W);  // copy (a big penalty -- copy-on-write would definitely be better)
+        if (nonLinear_->execute(W_nl, src)) {
+            M.swap(W_nl);
+        }
+    }
+
     auto src_v = array::make_view<Value, 1>(src);
     auto tgt_v = array::make_view<Value, 1>(tgt);
     if (std::is_same<Value, float>::value) {
-        sparse_matrix_multiply(W, src_v, tgt_v, sparse::backend::openmp());
+        sparse_matrix_multiply(M.empty() ? W : M, src_v, tgt_v, sparse::backend::openmp());
     }
     else {
-        sparse_matrix_multiply(W, src_v, tgt_v, sparse::Backend{linalg_backend_});
+        sparse_matrix_multiply(M.empty() ? W : M, src_v, tgt_v, sparse::Backend{linalg_backend_});
     }
 }
 
 template <typename Value>
 void Method::interpolate_field_rank2(const Field& src, Field& tgt, const Matrix& W) const {
     sparse::Backend backend{linalg_backend_};
+
     auto src_v = array::make_view<Value, 2>(src);
     auto tgt_v = array::make_view<Value, 2>(tgt);
-    sparse_matrix_multiply(W, src_v, tgt_v, sparse::backend::openmp());
+
+    if (not W.empty() && nonLinear_(src)) {
+        for (idx_t lev=0; lev<src_v.shape(1); ++lev) {
+            Matrix W_nl(W);
+            // non-linearities: a non-empty M matrix contains the corrections applied to matrix_
+            Matrix M;
+
+            const array::ArraySpec spec(array::ArrayShape{src.shape(0)}, array::ArrayStrides{src.shape(1)});
+            Value* data = const_cast<Value*>(src.array().data<Value>()) + lev;
+            atlas::Field src_slice = atlas::Field("s", data, spec);
+            src_slice.metadata() = src.metadata();
+            if (nonLinear_->execute(W_nl, src_slice)) {
+                M.swap(W_nl);
+            }
+            // would be nice to do it the following way, but this is incompatible with sparse_matrix_multiply
+            //auto src_v_slice = src_v.slice(array::Range::all(), lev);
+            //auto tgt_v_slice = tgt_v.slice(array::Range::all(), lev);
+            const array::ArraySpec spec_t(array::ArrayShape{tgt.shape(0)}, array::ArrayStrides{tgt.shape(1)});
+            Value* data_t = const_cast<Value*>(tgt.array().data<Value>()) + lev;
+            atlas::Field tgt_slice = atlas::Field("s", data_t, spec_t);
+            tgt_slice.metadata() = tgt.metadata();
+            auto src_v_slice = array::make_view<Value, 1>(src_slice);
+            auto tgt_v_slice = array::make_view<Value, 1>(tgt_slice);
+            sparse_matrix_multiply(M.empty() ? W : M, src_v_slice, tgt_v_slice, sparse::backend::openmp());
+        }
+    } else {
+        sparse_matrix_multiply(W, src_v, tgt_v, sparse::backend::openmp());
+    }
 }
 
 
@@ -123,6 +161,9 @@ void Method::interpolate_field_rank3(const Field& src, Field& tgt, const Matrix&
     sparse::Backend backend{linalg_backend_};
     auto src_v = array::make_view<Value, 3>(src);
     auto tgt_v = array::make_view<Value, 3>(tgt);
+    if (not W.empty() && nonLinear_(src)) {
+        ATLAS_ASSERT_MSG(false, "nonLinear interpolation not supported for rank-3 fields.");
+    }
     sparse_matrix_multiply(W, src_v, tgt_v, sparse::backend::openmp());
 }
 
@@ -328,20 +369,11 @@ void Method::do_execute(const Field& src, Field& tgt) const {
 
     haloExchange(src);
 
-    // non-linearities: a non-empty M matrix contains the corrections applied to matrix_
-    Matrix M;
-    if (not matrix_->empty() && nonLinear_(src)) {
-        Matrix W(*matrix_);  // copy (a big penalty -- copy-on-write would definitely be better)
-        if (nonLinear_->execute(W, src)) {
-            M.swap(W);
-        }
-    }
-
     if (src.datatype().kind() == array::DataType::KIND_REAL64) {
-        interpolate_field<double>(src, tgt, M.empty() ? *matrix_ : M);
+        interpolate_field<double>(src, tgt, *matrix_);
     }
     else if (src.datatype().kind() == array::DataType::KIND_REAL32) {
-        interpolate_field<float>(src, tgt, M.empty() ? *matrix_ : M);
+        interpolate_field<float>(src, tgt, *matrix_);
     }
     else {
         ATLAS_NOTIMPLEMENTED;
