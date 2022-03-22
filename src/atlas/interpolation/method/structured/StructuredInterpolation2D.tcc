@@ -196,16 +196,16 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source ) {
 
 
 template <typename Kernel>
-void StructuredInterpolation2D<Kernel>::do_execute( const Field& src_field, Field& tgt_field ) const {
+void StructuredInterpolation2D<Kernel>::do_execute( const Field& src_field, Field& tgt_field, Metadata& metadata ) const {
     FieldSet tgt( tgt_field );
-    do_execute( FieldSet( src_field ), tgt );
+    do_execute( FieldSet( src_field ), tgt, metadata );
 }
 
 
 template <typename Kernel>
-void StructuredInterpolation2D<Kernel>::do_execute( const FieldSet& src_fields, FieldSet& tgt_fields ) const {
+void StructuredInterpolation2D<Kernel>::do_execute( const FieldSet& src_fields, FieldSet& tgt_fields, Metadata& metadata ) const {
     if ( not matrix_free_ ) {
-        Method::do_execute( src_fields, tgt_fields );
+        Method::do_execute( src_fields, tgt_fields, metadata );
         return;
     }
 

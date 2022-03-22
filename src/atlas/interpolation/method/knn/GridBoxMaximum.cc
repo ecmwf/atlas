@@ -34,16 +34,16 @@ MethodBuilder<GridBoxMaximum> __builder("grid-box-maximum");
 }
 
 
-void GridBoxMaximum::do_execute(const FieldSet& source, FieldSet& target) const {
+void GridBoxMaximum::do_execute(const FieldSet& source, FieldSet& target, Metadata& metadata) const {
     ATLAS_ASSERT(source.size() == target.size());
 
     for (idx_t i = 0; i < source.size(); ++i) {
-        do_execute(source[i], target[i]);
+        do_execute(source[i], target[i], metadata);
     }
 }
 
 
-void GridBoxMaximum::do_execute(const Field& source, Field& target) const {
+void GridBoxMaximum::do_execute(const Field& source, Field& target, Metadata&) const {
     ATLAS_TRACE("atlas::interpolation::method::GridBoxMaximum::do_execute()");
 
     // set arrays

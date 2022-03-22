@@ -16,6 +16,7 @@
 
 #include "atlas/interpolation/Cache.h"
 #include "atlas/interpolation/NonLinear.h"
+#include "atlas/util/Metadata.h"
 #include "atlas/util/Object.h"
 #include "eckit/config/Configuration.h"
 #include "eckit/linalg/SparseMatrix.h"
@@ -38,7 +39,8 @@ namespace interpolation {
 
 class Method : public util::Object {
 public:
-    typedef eckit::Parametrisation Config;
+    using Config   = eckit::Parametrisation;
+    using Metadata = util::Metadata;
 
     Method(const Config&);
     virtual ~Method() {}
@@ -54,8 +56,8 @@ public:
     void setup(const FunctionSpace& source, const FieldSet& target);
     void setup(const Grid& source, const Grid& target, const Cache&);
 
-    void execute(const FieldSet& source, FieldSet& target) const;
-    void execute(const Field& source, Field& target) const;
+    Metadata execute(const FieldSet& source, FieldSet& target) const;
+    Metadata execute(const Field& source, Field& target) const;
 
     /**
      * @brief execute_adjoint
@@ -66,8 +68,8 @@ public:
      *                 to zero. This is not done for efficiency reasons and
      *                 because in most cases it is not necessary.
      */
-    void execute_adjoint(FieldSet& source, const FieldSet& target) const;
-    void execute_adjoint(Field& source, const Field& target) const;
+    Metadata execute_adjoint(FieldSet& source, const FieldSet& target) const;
+    Metadata execute_adjoint(Field& source, const Field& target) const;
 
     virtual void print(std::ostream&) const = 0;
 
@@ -77,11 +79,11 @@ public:
     virtual interpolation::Cache createCache() const;
 
 protected:
-    virtual void do_execute(const FieldSet& source, FieldSet& target) const;
-    virtual void do_execute(const Field& source, Field& target) const;
+    virtual void do_execute(const FieldSet& source, FieldSet& target, Metadata&) const;
+    virtual void do_execute(const Field& source, Field& target, Metadata&) const;
 
-    virtual void do_execute_adjoint(FieldSet& source, const FieldSet& target) const;
-    virtual void do_execute_adjoint(Field& source, const Field& target) const;
+    virtual void do_execute_adjoint(FieldSet& source, const FieldSet& target, Metadata&) const;
+    virtual void do_execute_adjoint(Field& source, const Field& target, Metadata&) const;
 
     using Triplet  = eckit::linalg::Triplet;
     using Triplets = std::vector<Triplet>;

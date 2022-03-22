@@ -79,20 +79,20 @@ Interpolation::Interpolation(const Interpolation::Config& config, const Function
     }
 }
 
-void Interpolation::execute(const FieldSet& source, FieldSet& target) const {
-    get()->execute(source, target);
+Interpolation::Metadata Interpolation::execute(const FieldSet& source, FieldSet& target) const {
+    return get()->execute(source, target);
 }
 
-void Interpolation::execute(const Field& source, Field& target) const {
-    get()->execute(source, target);
+Interpolation::Metadata Interpolation::execute(const Field& source, Field& target) const {
+    return get()->execute(source, target);
 }
 
-void Interpolation::execute_adjoint(FieldSet& source, const FieldSet& target) const {
-    get()->execute_adjoint(source, target);
+Interpolation::Metadata Interpolation::execute_adjoint(FieldSet& source, const FieldSet& target) const {
+    return get()->execute_adjoint(source, target);
 }
 
-void Interpolation::execute_adjoint(Field& source, const Field& target) const {
-    get()->execute_adjoint(source, target);
+Interpolation::Metadata Interpolation::execute_adjoint(Field& source, const Field& target) const {
+    return get()->execute_adjoint(source, target);
 }
 
 void Interpolation::print(std::ostream& out) const {

@@ -284,24 +284,32 @@ void Method::setup(const Grid& source, const Grid& target, const Cache& cache) {
     this->do_setup(source, target, cache);
 }
 
-void Method::execute(const FieldSet& source, FieldSet& target) const {
+Method::Metadata Method::execute(const FieldSet& source, FieldSet& target) const {
     ATLAS_TRACE("atlas::interpolation::method::Method::execute(FieldSet, FieldSet)");
-    this->do_execute(source, target);
+    Metadata metadata;
+    this->do_execute(source, target, metadata);
+    return metadata;
 }
 
-void Method::execute(const Field& source, Field& target) const {
+Method::Metadata Method::execute(const Field& source, Field& target) const {
     ATLAS_TRACE("atlas::interpolation::method::Method::execute(Field, Field)");
-    this->do_execute(source, target);
+    Metadata metadata;
+    this->do_execute(source, target, metadata);
+    return metadata;
 }
 
-void Method::execute_adjoint(FieldSet& source, const FieldSet& target) const {
+Method::Metadata Method::execute_adjoint(FieldSet& source, const FieldSet& target) const {
     ATLAS_TRACE("atlas::interpolation::method::Method::execute(FieldSet, FieldSet)");
-    this->do_execute_adjoint(source, target);
+    Metadata metadata;
+    this->do_execute_adjoint(source, target, metadata);
+    return metadata;
 }
 
-void Method::execute_adjoint(Field& source, const Field& target) const {
+Method::Metadata Method::execute_adjoint(Field& source, const Field& target) const {
     ATLAS_TRACE("atlas::interpolation::method::Method::execute(Field, Field)");
-    this->do_execute_adjoint(source, target);
+    Metadata metadata;
+    this->do_execute_adjoint(source, target, metadata);
+    return metadata;
 }
 
 void Method::do_setup(const FunctionSpace& /*source*/, const Field& /*target*/) {
@@ -312,18 +320,18 @@ void Method::do_setup(const FunctionSpace& /*source*/, const FieldSet& /*target*
     ATLAS_NOTIMPLEMENTED;
 }
 
-void Method::do_execute(const FieldSet& fieldsSource, FieldSet& fieldsTarget) const {
+void Method::do_execute(const FieldSet& fieldsSource, FieldSet& fieldsTarget, Metadata& metadata) const {
     ATLAS_TRACE("atlas::interpolation::method::Method::do_execute()");
 
     const idx_t N = fieldsSource.size();
     ATLAS_ASSERT(N == fieldsTarget.size());
 
     for (idx_t i = 0; i < fieldsSource.size(); ++i) {
-        Method::do_execute(fieldsSource[i], fieldsTarget[i]);
+        Method::do_execute(fieldsSource[i], fieldsTarget[i], metadata);
     }
 }
 
-void Method::do_execute(const Field& src, Field& tgt) const {
+void Method::do_execute(const Field& src, Field& tgt, Metadata&) const {
     ATLAS_TRACE("atlas::interpolation::method::Method::do_execute()");
 
     haloExchange(src);
@@ -368,18 +376,18 @@ void Method::do_execute(const Field& src, Field& tgt) const {
     tgt.set_dirty();
 }
 
-void Method::do_execute_adjoint(FieldSet& fieldsSource, const FieldSet& fieldsTarget) const {
+void Method::do_execute_adjoint(FieldSet& fieldsSource, const FieldSet& fieldsTarget, Metadata& metadata) const {
     ATLAS_TRACE("atlas::interpolation::method::Method::do_execute_adjoint()");
 
     const idx_t N = fieldsSource.size();
     ATLAS_ASSERT(N == fieldsTarget.size());
 
     for (idx_t i = 0; i < fieldsSource.size(); ++i) {
-        Method::do_execute_adjoint(fieldsSource[i], fieldsTarget[i]);
+        Method::do_execute_adjoint(fieldsSource[i], fieldsTarget[i], metadata);
     }
 }
 
-void Method::do_execute_adjoint(Field& src, const Field& tgt) const {
+void Method::do_execute_adjoint(Field& src, const Field& tgt, Metadata&) const {
     ATLAS_TRACE("atlas::interpolation::method::Method::do_execute_adjoint()");
 
     if (nonLinear_(src)) {

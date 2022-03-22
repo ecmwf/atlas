@@ -46,8 +46,8 @@ protected:
 
     bool intersect(size_t i, const GridBox& iBox, const util::IndexKDTree::ValueList&, std::vector<Triplet>&) const;
 
-    virtual void do_execute(const FieldSet& source, FieldSet& target) const override = 0;
-    virtual void do_execute(const Field& source, Field& target) const override       = 0;
+    virtual void do_execute(const FieldSet& source, FieldSet& target, Metadata&) const override = 0;
+    virtual void do_execute(const Field& source, Field& target, Metadata&) const override       = 0;
 
     virtual Cache createCache() const override;
 

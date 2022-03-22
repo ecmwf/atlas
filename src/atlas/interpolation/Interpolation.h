@@ -34,8 +34,9 @@ namespace atlas {
 
 class Interpolation : DOXYGEN_HIDE(public util::ObjectHandle<interpolation::Method>) {
 public:
-    using Config = eckit::Parametrisation;
-    using Cache  = interpolation::Cache;
+    using Config   = eckit::Parametrisation;
+    using Cache    = interpolation::Cache;
+    using Metadata = interpolation::Method::Metadata;
 
     using Handle::Handle;
     Interpolation() = default;
@@ -52,13 +53,13 @@ public:
     // Setup Interpolation from source grid to target grid
     Interpolation(const Config&, const Grid& source, const Grid& target) noexcept(false);
 
-    void execute(const FieldSet& source, FieldSet& target) const;
+    Metadata execute(const FieldSet& source, FieldSet& target) const;
 
-    void execute(const Field& source, Field& target) const;
+    Metadata execute(const Field& source, Field& target) const;
 
-    void execute_adjoint(FieldSet& source, const FieldSet& target) const;
+    Metadata execute_adjoint(FieldSet& source, const FieldSet& target) const;
 
-    void execute_adjoint(Field& source, const Field& target) const;
+    Metadata execute_adjoint(Field& source, const Field& target) const;
 
     void print(std::ostream& out) const;
 
