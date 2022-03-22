@@ -49,6 +49,7 @@ class Cache {
 public:
     Cache() = default;
     Cache(const Cache& other);
+    Cache(const Cache& other, const std::string& filter);
     Cache(const Interpolation&);
     operator bool() const { return not cache_.empty(); }
     virtual ~Cache();

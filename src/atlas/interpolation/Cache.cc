@@ -24,6 +24,20 @@ Cache::Cache(const Cache& other) {
     add(other);
 }
 
+Cache::Cache(const Cache& other, const std::string& filter): Cache(other) {
+    std::shared_ptr<InterpolationCacheEntry> filtered;
+    for (auto& entry : cache_) {
+        if (entry.first == filter) {
+            filtered = entry.second;
+        }
+    }
+    cache_.clear();
+    if (filtered) {
+        cache_[filtered->type()] = filtered;
+    }
+}
+
+
 Cache::Cache(const Interpolation& interpolation): Cache(interpolation.createCache()) {}
 
 Cache::~Cache() = default;
@@ -57,7 +71,8 @@ private:
 
 
 MatrixCache::MatrixCache(const Cache& c):
-    Cache(c), matrix_{dynamic_cast<const MatrixCacheEntry*>(c.get(MatrixCacheEntry::static_type()))} {}
+    Cache(c, MatrixCacheEntry::static_type()),
+    matrix_{dynamic_cast<const MatrixCacheEntry*>(c.get(MatrixCacheEntry::static_type()))} {}
 
 MatrixCache::MatrixCache(Matrix&& m): MatrixCache(std::make_shared<MatrixCacheEntryOwned>(std::move(m))) {}
 
@@ -95,7 +110,8 @@ const IndexKDTreeCacheEntry::IndexKDTree& IndexKDTreeCacheEntry::tree() const {
 }
 
 IndexKDTreeCache::IndexKDTreeCache(const Cache& c):
-    Cache(c), tree_{dynamic_cast<const IndexKDTreeCacheEntry*>(c.get(IndexKDTreeCacheEntry::static_type()))} {}
+    Cache(c, IndexKDTreeCacheEntry::static_type()),
+    tree_{dynamic_cast<const IndexKDTreeCacheEntry*>(c.get(IndexKDTreeCacheEntry::static_type()))} {}
 
 IndexKDTreeCache::IndexKDTreeCache(const IndexKDTree& tree): Cache(std::make_shared<IndexKDTreeCacheEntry>(tree)) {
     tree_ = dynamic_cast<const IndexKDTreeCacheEntry*>(get(IndexKDTreeCacheEntry::static_type()));
