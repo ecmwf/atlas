@@ -107,10 +107,6 @@ CASE("Interpolation with MissingValue") {
             interpolation.execute(fieldA, fieldB);
 
             MissingValue mv(fieldB);
-            if (fieldB.metadata().has("missing_value"))
-                std::cout <<  "viewB MissingValue value: " << fieldB.metadata().getDouble("missing_value") << std::endl;
-            std::cout <<  "mv(viewB(0)) " << mv(viewB(0));
-            std::cout <<  " viewB(0) " << viewB(0) << std::endl;
             EXPECT(mv);
             EXPECT(mv(viewB(0)));
             EXPECT(mv(viewB(1)));
@@ -156,15 +152,9 @@ CASE("Interpolation of rank 2 field with MissingValue") {
 
     auto viewA = array::make_view<double, 2>(fieldA);
     for (idx_t j = 0; j < viewA.shape(0); ++j) {
-        viewA(j,0) = 10;
+        viewA(j,0) = 10+j;
         viewA(j,1) = missingValue;
-        viewA(j,2) = 10;
-        //viewA(j,0) = 10+j;
-        //viewA(j,1) = 20+j;
-        //viewA(j,2) = 30+j;
-        std::cout <<  "viewA(" << j << ",0) " << viewA(j,0);
-        std::cout << " viewA(" << j << ",1) " << viewA(j,1);
-        std::cout << " viewA(" << j << ",2) " << viewA(j,2) << std::endl;
+        viewA(j,2) = 30+j;
     }
 
     const array::ArraySpec spec(array::ArrayShape{fieldA.shape(0)}, array::ArrayStrides{fieldA.shape(1)});
@@ -206,13 +196,6 @@ CASE("Interpolation of rank 2 field with MissingValue") {
             interpolation.execute(fieldA, fieldB);
 
             MissingValue mv(fieldB);
-            if (fieldB.metadata().has("missing_value"))
-                std::cout <<  "viewB MissingValue value: " << fieldB.metadata().getDouble("missing_value") << std::endl;
-            for (idx_t j = 0; j < viewB.shape(0); ++j) {
-                std::cout <<  "viewB(" << j << ",0) " << viewB(j,0);
-                std::cout << " viewB(" << j << ",1) " << viewB(j,1);
-                std::cout << " viewB(" << j << ",2) " << viewB(j,2) << std::endl;
-            }
             EXPECT(mv(viewB(0,0)) == false);
             EXPECT(mv(viewB(1,0)) == false);
             EXPECT(mv(viewB(0,1)));
