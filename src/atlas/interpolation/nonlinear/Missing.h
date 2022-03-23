@@ -58,7 +58,7 @@ struct MissingIfAllMissing : Missing {
             Matrix::iterator kt(it);
             Size k = i;
             for (; it != end; ++it, ++i, ++N_entries) {
-                const bool miss = missingValue(values(it.col()));
+                const bool miss = missingValue(values[it.col()]);
 
                 if (miss) {
                     ++N_missing;
@@ -80,7 +80,7 @@ struct MissingIfAllMissing : Missing {
                 else {
                     const Scalar factor = 1. / sum;
                     for (Size j = k; j < k + N_entries; ++j, ++kt) {
-                        if (missingValue(values(kt.col()))) {
+                        if (missingValue(values[kt.col()])) {
                             data[j] = 0.;
                             zeros   = true;
                         }
@@ -98,9 +98,6 @@ struct MissingIfAllMissing : Missing {
         }
 
         return modif;
-    }
-    bool execute_rank2(NonLinear::Matrix& W, const Field& field, int lev) const {
-        ATLAS_NOTIMPLEMENTED;
     }
 
     static std::string static_type() { return "missing-if-all-missing"; }
@@ -134,7 +131,7 @@ struct MissingIfAnyMissing : Missing {
             Matrix::iterator kt(it);
             Size k = i;
             for (; it != end; ++it, ++i, ++N_entries) {
-                const bool miss = missingValue(values(it.col()));
+                const bool miss = missingValue(values[it.col()]);
 
                 if (miss) {
                     ++N_missing;
@@ -162,9 +159,6 @@ struct MissingIfAnyMissing : Missing {
         }
 
         return modif;
-    }
-    bool execute_rank2(NonLinear::Matrix& W, const Field& field, int lev) const {
-      ATLAS_NOTIMPLEMENTED;
     }
 
     static std::string static_type() { return "missing-if-any-missing"; }
@@ -201,7 +195,7 @@ struct MissingIfHeaviestMissing : Missing {
             Matrix::iterator kt(it);
             Size k = i;
             for (; it != end; ++it, ++i, ++N_entries) {
-                const bool miss = missingValue(values(it.col()));
+                const bool miss = missingValue(values[it.col()]);
 
                 if (miss) {
                     ++N_missing;
@@ -228,7 +222,7 @@ struct MissingIfHeaviestMissing : Missing {
                 else {
                     const Scalar factor = 1. / sum;
                     for (Size j = k; j < k + N_entries; ++j, ++kt) {
-                        if (missingValue(values(kt.col()))) {
+                        if (missingValue(values[kt.col()])) {
                             data[j] = 0.;
                             zeros   = true;
                         }
@@ -246,10 +240,6 @@ struct MissingIfHeaviestMissing : Missing {
         }
 
         return modif;
-    }
-
-    bool execute_rank2(NonLinear::Matrix& W, const Field& field, int lev) const {
-      ATLAS_NOTIMPLEMENTED;
     }
 
     static std::string static_type() { return "missing-if-heaviest-missing"; }

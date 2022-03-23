@@ -132,23 +132,25 @@ void Method::interpolate_field_rank2(const Field& src, Field& tgt, const Matrix&
             // non-linearities: a non-empty M matrix contains the corrections applied to matrix_
             Matrix M;
 
-            const array::ArraySpec spec(array::ArrayShape{src.shape(0)}, array::ArrayStrides{src.shape(1)});
-            Value* data = const_cast<Value*>(src.array().data<Value>()) + lev;
-            atlas::Field src_slice = atlas::Field("s", data, spec);
-            src_slice.metadata() = src.metadata();
-            if (nonLinear_->execute(W_nl, src_slice)) {
+            const array::DataType dtype = array::DataType::create<Value>();
+            atlas::Field src_tmp_slice = atlas::Field("s", dtype, array::ArraySpec(array::ArrayShape{src.shape(0)}));
+            if (src.metadata().has("missing_value"))
+               src_tmp_slice.metadata().set("missing_value", src.metadata().get<Value>("missing_value"));
+            if (src.metadata().has("missing_value_type"))
+               src_tmp_slice.metadata().set("missing_value_type", src.metadata().getString("missing_value_type"));
+            auto src_tmp_slice_v = array::make_view<Value, 1>(src_tmp_slice);
+            for (idx_t i = 0; i < src.shape(0); ++i) {
+                src_tmp_slice_v(i) = src_v(i, lev);
+            }
+            if (nonLinear_->execute(W_nl, src_tmp_slice)) {
                 M.swap(W_nl);
             }
-            // would be nice to do it the following way, but this is incompatible with sparse_matrix_multiply
-            //auto src_v_slice = src_v.slice(array::Range::all(), lev);
-            //auto tgt_v_slice = tgt_v.slice(array::Range::all(), lev);
-            const array::ArraySpec spec_t(array::ArrayShape{tgt.shape(0)}, array::ArrayStrides{tgt.shape(1)});
-            Value* data_t = const_cast<Value*>(tgt.array().data<Value>()) + lev;
-            atlas::Field tgt_slice = atlas::Field("s", data_t, spec_t);
-            tgt_slice.metadata() = tgt.metadata();
-            auto src_v_slice = array::make_view<Value, 1>(src_slice);
-            auto tgt_v_slice = array::make_view<Value, 1>(tgt_slice);
-            sparse_matrix_multiply(M.empty() ? W : M, src_v_slice, tgt_v_slice, sparse::backend::openmp());
+            atlas::Field tgt_tmp_slice = atlas::Field("s", dtype, array::ArraySpec(array::ArrayShape{tgt.shape(0)}));
+            auto tgt_tmp_slice_v = array::make_view<Value, 1>(tgt_tmp_slice);
+            sparse_matrix_multiply(M.empty() ? W : M, src_tmp_slice_v, tgt_tmp_slice_v, sparse::backend::openmp());
+            for (idx_t i = 0; i < tgt.shape(0); ++i) {
+                tgt_v(i, lev) = tgt_tmp_slice_v(i);
+            }
         }
     } else {
         sparse_matrix_multiply(W, src_v, tgt_v, sparse::backend::openmp());

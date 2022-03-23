@@ -107,6 +107,10 @@ CASE("Interpolation with MissingValue") {
             interpolation.execute(fieldA, fieldB);
 
             MissingValue mv(fieldB);
+            if (fieldB.metadata().has("missing_value"))
+                std::cout <<  "viewB MissingValue value: " << fieldB.metadata().getDouble("missing_value") << std::endl;
+            std::cout <<  "mv(viewB(0)) " << mv(viewB(0));
+            std::cout <<  " viewB(0) " << viewB(0) << std::endl;
             EXPECT(mv);
             EXPECT(mv(viewB(0)));
             EXPECT(mv(viewB(1)));
@@ -165,25 +169,23 @@ CASE("Interpolation of rank 2 field with MissingValue") {
 
     const array::ArraySpec spec(array::ArrayShape{fieldA.shape(0)}, array::ArrayStrides{fieldA.shape(1)});
 
-    SECTION("check array slicing is compatible") {
-        for (int lev=0; lev < nlevels; ++lev) {
-              double* data = const_cast<double*>(fieldA.array().data<double>()) + lev;
-              atlas::Field fieldA_slice = atlas::Field("s", data, spec);
-              fieldA_slice.metadata().set("missing_value", fieldA.metadata().get<double>("missing_value"));
-
-              auto FlatViewA1 = array::make_view<double, 1>(fieldA_slice);
-              auto viewA_slice = viewA.slice(array::Range::all(), lev);
-              EXPECT(FlatViewA1.shape(0) == viewA_slice.shape(0));
-              for (idx_t j = 0; j < FlatViewA1.shape(0); ++j) {
-                  std::cout <<  "FlatViewA1(" << j << ") " << FlatViewA1[j];
-                  std::cout <<  " viewA_slice(" << j << ") " << viewA_slice(j) << std::endl;
-                  EXPECT(FlatViewA1[j] == viewA_slice(j));
-              }
-        }
-    }
-
     // Set output field (2 points)
     functionspace::PointCloud fsB({PointLonLat{0.1, 0.1}, PointLonLat{0.9, 0.9}});
+
+    SECTION("check wrapped data can be indexed with []") {
+        for (int lev=0; lev < nlevels; ++lev) {
+            double* data = const_cast<double*>(fieldA.array().data<double>()) + lev;
+            atlas::Field fieldA_slice = atlas::Field("s", data, spec);
+            fieldA_slice.metadata().set("missing_value", fieldA.metadata().get<double>("missing_value"));
+
+            auto FlatViewA1 = array::make_view<double, 1>(fieldA_slice);
+            auto viewA_slice = viewA.slice(array::Range::all(), lev);
+            EXPECT(FlatViewA1.shape(0) == viewA_slice.shape(0));
+            for (idx_t j = 0; j < FlatViewA1.shape(0); ++j) {
+                EXPECT(FlatViewA1[j] == viewA_slice(j));
+            }
+        }
+    }
 
     SECTION("missing-if-all-missing") {
         Interpolation interpolation(Config("type", "finite-element").set("non_linear", "missing-if-all-missing"), fsA,
@@ -192,7 +194,9 @@ CASE("Interpolation of rank 2 field with MissingValue") {
         for (std::string type : {"equals", "approximately-equals", "nan"}) {
 
             fieldA.metadata().set("missing_value_type", type);
-            viewA(4,1) = type == "nan" ? nan : missingValue;
+            for (idx_t j = 0; j < viewA.shape(0); ++j) {
+                viewA(j,1) = type == "nan" ? nan : missingValue;
+            }
 
             EXPECT(MissingValue(fieldA));
 
@@ -202,7 +206,8 @@ CASE("Interpolation of rank 2 field with MissingValue") {
             interpolation.execute(fieldA, fieldB);
 
             MissingValue mv(fieldB);
-            std::cout <<  "viewB MissingValue: " << mv << std::endl;
+            if (fieldB.metadata().has("missing_value"))
+                std::cout <<  "viewB MissingValue value: " << fieldB.metadata().getDouble("missing_value") << std::endl;
             for (idx_t j = 0; j < viewB.shape(0); ++j) {
                 std::cout <<  "viewB(" << j << ",0) " << viewB(j,0);
                 std::cout << " viewB(" << j << ",1) " << viewB(j,1);
@@ -210,8 +215,8 @@ CASE("Interpolation of rank 2 field with MissingValue") {
             }
             EXPECT(mv(viewB(0,0)) == false);
             EXPECT(mv(viewB(1,0)) == false);
-            EXPECT(mv(viewB(0,1)) == true);
-            EXPECT(mv(viewB(1,1)) == true);
+            EXPECT(mv(viewB(0,1)));
+            EXPECT(mv(viewB(1,1)));
             EXPECT(mv(viewB(0,2)) == false);
             EXPECT(mv(viewB(1,2)) == false);
         }
