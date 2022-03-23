@@ -11,7 +11,6 @@
 #include "MethodFactory.h"
 
 // for static linking
-#include "bil/BilinearRemapping.h"
 #include "fe/FiniteElement.h"
 #include "knn/GridBoxAverage.h"
 #include "knn/GridBoxMaximum.h"
@@ -23,6 +22,8 @@
 #include "structured/Linear3D.h"
 #include "structured/QuasiCubic2D.h"
 #include "structured/QuasiCubic3D.h"
+#include "unstructured/UnstructuredBilinearLonLat.h"
+
 
 namespace atlas {
 namespace interpolation {
@@ -32,7 +33,7 @@ namespace {
 void force_link() {
     static struct Link {
         Link() {
-            MethodBuilder<method::BilinearRemapping>();
+            MethodBuilder<method::UnstructuredBilinearLonLat>();
             MethodBuilder<method::FiniteElement>();
             MethodBuilder<method::KNearestNeighbours>();
             MethodBuilder<method::NearestNeighbour>();

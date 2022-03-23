@@ -33,8 +33,8 @@ ecbuild_add_test( TARGET atlas_test_interpolation_finite_element
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
-ecbuild_add_test( TARGET atlas_test_interpolation_bilinear_remapping
-  SOURCES   test_interpolation_bilinear_remapping.cc
+ecbuild_add_test( TARGET atlas_test_interpolation_unstructured_bilinear_lonlat
+  SOURCES   test_interpolation_unstructured_bilinear_lonlat.cc
   LIBS      atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )

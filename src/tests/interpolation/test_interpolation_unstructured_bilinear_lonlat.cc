@@ -44,8 +44,8 @@ CASE("test_interpolation_O64_to_points_bilinear_remapping") {
 
     auto func = [](double x) -> double { return std::sin(x * M_PI / 180.); };
 
-    Interpolation interpolation(option::type("bilinear-remapping") | util::Config("max_fraction_elems_to_try", 0.4), fs,
-                                pointcloud);
+    Interpolation interpolation(
+        option::type("unstructured-bilinear-lonlat") | util::Config("max_fraction_elems_to_try", 0.4), fs, pointcloud);
 
     SECTION("test maximum nearest neighbour settings") {
         std::stringstream test_stream;
@@ -88,8 +88,8 @@ CASE("test_interpolation_N64_to_O32_bilinear_remapping") {
     Mesh mesh_tgt(grid_tgt);
     NodeColumns fs_tgt(mesh_tgt);
 
-    Interpolation interpolation(option::type("bilinear-remapping") | util::Config("max_fraction_elems_to_try", 0.4),
-                                fs_src, fs_tgt);
+    Interpolation interpolation(
+        option::type("unstructured-bilinear-lonlat") | util::Config("max_fraction_elems_to_try", 0.4), fs_src, fs_tgt);
 
     Field field_source = fs_src.createField<double>(option::name("source"));
     Field field_target = fs_tgt.createField<double>(option::name("target"));

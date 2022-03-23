@@ -9,7 +9,7 @@
 #include <iomanip>
 #include <limits>
 
-#include "BilinearRemapping.h"
+#include "UnstructuredBilinearLonLat.h"
 
 #include "eckit/log/Plural.h"
 #include "eckit/log/ProgressTimer.h"
@@ -44,7 +44,7 @@ namespace method {
 
 namespace {
 
-MethodBuilder<BilinearRemapping> __builder("bilinear-remapping");
+MethodBuilder<UnstructuredBilinearLonLat> __builder_2("unstructured-bilinear-lonlat");
 
 // epsilon used to scale edge tolerance when projecting ray to intesect element
 static const double parametricEpsilon = 1e-15;
@@ -52,7 +52,7 @@ static const double parametricEpsilon = 1e-15;
 }  // namespace
 
 
-void BilinearRemapping::do_setup(const Grid& source, const Grid& target, const Cache& cache) {
+void UnstructuredBilinearLonLat::do_setup(const Grid& source, const Grid& target, const Cache& cache) {
     allow_halo_exchange_ = false;
     //  no halo_exchange because we don't have any halo with delaunay or 3d structured meshgenerator
 
@@ -80,7 +80,7 @@ void BilinearRemapping::do_setup(const Grid& source, const Grid& target, const C
     do_setup(make_nodecolumns(source), functionspace::PointCloud{target});
 }
 
-void BilinearRemapping::do_setup(const FunctionSpace& source, const FunctionSpace& target) {
+void UnstructuredBilinearLonLat::do_setup(const FunctionSpace& source, const FunctionSpace& target) {
     ATLAS_TRACE("atlas::interpolation::method::BilinearRemapping::do_setup()");
 
     source_ = source;
@@ -125,7 +125,7 @@ struct Stencil {
     };
 };
 
-void BilinearRemapping::print(std::ostream& out) const {
+void UnstructuredBilinearLonLat::print(std::ostream& out) const {
     functionspace::NodeColumns src(source_);
     functionspace::NodeColumns tgt(target_);
     out << "atlas::interpolation::method::BilinearRemapping{" << std::endl;
@@ -193,7 +193,7 @@ void BilinearRemapping::print(std::ostream& out) const {
     out << "}" << std::endl;
 }
 
-void BilinearRemapping::setup(const FunctionSpace& source) {
+void UnstructuredBilinearLonLat::setup(const FunctionSpace& source) {
     const functionspace::NodeColumns src = source;
     ATLAS_ASSERT(src);
 
@@ -299,7 +299,7 @@ void BilinearRemapping::setup(const FunctionSpace& source) {
     matrix_shared_->swap(A);
 }
 
-Method::Triplets BilinearRemapping::projectPointToElements(size_t ip, const ElemIndex3::NodeList& elems,
+Method::Triplets UnstructuredBilinearLonLat::projectPointToElements(size_t ip, const ElemIndex3::NodeList& elems,
                                                            std::ostream& /* failures_log */) const {
     ATLAS_ASSERT(elems.begin() != elems.end());
 

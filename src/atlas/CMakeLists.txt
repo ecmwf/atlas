@@ -558,8 +558,6 @@ interpolation/method/Ray.cc
 interpolation/method/Ray.h
 interpolation/method/fe/FiniteElement.cc
 interpolation/method/fe/FiniteElement.h
-interpolation/method/bil/BilinearRemapping.cc
-interpolation/method/bil/BilinearRemapping.h
 interpolation/method/knn/GridBox.cc
 interpolation/method/knn/GridBox.h
 interpolation/method/knn/GridBoxAverage.cc
@@ -599,6 +597,8 @@ interpolation/method/structured/kernels/LinearVerticalKernel.h
 interpolation/method/structured/kernels/QuasiCubic3DKernel.cc
 interpolation/method/structured/kernels/QuasiCubic3DKernel.h
 interpolation/method/structured/kernels/QuasiCubicHorizontalKernel.h
+interpolation/method/unstructured/UnstructuredBilinearLonLat.cc
+interpolation/method/unstructured/UnstructuredBilinearLonLat.h
 interpolation/nonlinear/Missing.cc
 interpolation/nonlinear/Missing.h
 interpolation/nonlinear/NonLinear.cc

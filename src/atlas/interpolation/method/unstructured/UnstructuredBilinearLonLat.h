@@ -23,13 +23,13 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
-class BilinearRemapping : public Method {
+class UnstructuredBilinearLonLat : public Method {
 public:
-    BilinearRemapping(const Config& config): Method(config) {
+    UnstructuredBilinearLonLat(const Config& config): Method(config) {
         config.get("max_fraction_elems_to_try", max_fraction_elems_to_try_);
     }
 
-    virtual ~BilinearRemapping() override {}
+    virtual ~UnstructuredBilinearLonLat() override {}
 
     virtual void print(std::ostream&) const override;
 
