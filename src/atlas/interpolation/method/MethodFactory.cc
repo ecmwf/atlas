@@ -11,7 +11,6 @@
 #include "MethodFactory.h"
 
 // for static linking
-#include "fe/FiniteElement.h"
 #include "knn/GridBoxAverage.h"
 #include "knn/GridBoxMaximum.h"
 #include "knn/KNearestNeighbours.h"
@@ -23,6 +22,7 @@
 #include "structured/QuasiCubic2D.h"
 #include "structured/QuasiCubic3D.h"
 #include "unstructured/UnstructuredBilinearLonLat.h"
+#include "unstructured/FiniteElement.h"
 
 
 namespace atlas {
