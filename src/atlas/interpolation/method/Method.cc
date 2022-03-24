@@ -97,24 +97,61 @@ void set_missing_values(Field& tgt, const std::vector<idx_t>& missing) {
 
 }  // anonymous namespace
 
+
 template <typename Value>
 void Method::interpolate_field_rank1(const Field& src, Field& tgt, const Matrix& W) const {
-    auto src_v = array::make_view<Value, 1>(src);
-    auto tgt_v = array::make_view<Value, 1>(tgt);
-    if (std::is_same<Value, float>::value) {
-        sparse_matrix_multiply(W, src_v, tgt_v, sparse::backend::openmp());
+    auto backend = std::is_same<Value, float>::value ? sparse::backend::openmp() : sparse::Backend{linalg_backend_};
+    auto src_v   = array::make_view<Value, 1>(src);
+    auto tgt_v   = array::make_view<Value, 1>(tgt);
+
+    if (nonLinear_(src)) {
+        Matrix W_nl(W);  // copy (a big penalty -- copy-on-write would definitely be better)
+        nonLinear_->execute(W_nl, src);
+        sparse_matrix_multiply(W_nl, src_v, tgt_v, backend);
     }
     else {
-        sparse_matrix_multiply(W, src_v, tgt_v, sparse::Backend{linalg_backend_});
+        sparse_matrix_multiply(W, src_v, tgt_v, backend);
     }
 }
+
 
 template <typename Value>
 void Method::interpolate_field_rank2(const Field& src, Field& tgt, const Matrix& W) const {
     sparse::Backend backend{linalg_backend_};
     auto src_v = array::make_view<Value, 2>(src);
     auto tgt_v = array::make_view<Value, 2>(tgt);
-    sparse_matrix_multiply(W, src_v, tgt_v, sparse::backend::openmp());
+
+    if (nonLinear_(src)) {
+        // We cannot apply the same matrix to full columns as e.g. missing values could be present in only certain parts.
+
+        // Allocate temporary rank-1 fields corresponding to one horizontal level
+        auto src_slice = Field("s", array::make_datatype<Value>(), {src.shape(0)});
+        auto tgt_slice = Field("t", array::make_datatype<Value>(), {tgt.shape(0)});
+
+        // Copy metadata to the source rank-1 field
+        src_slice.metadata() = src.metadata();
+
+        auto src_slice_v = array::make_view<Value, 1>(src_slice);
+        auto tgt_slice_v = array::make_view<Value, 1>(tgt_slice);
+
+        for (idx_t lev = 0; lev < src_v.shape(1); ++lev) {
+            // Copy this level to temporary rank-1 field
+            for (idx_t i = 0; i < src.shape(0); ++i) {
+                src_slice_v(i) = src_v(i, lev);
+            }
+
+            // Interpolate between rank-1 fields
+            interpolate_field_rank1<Value>(src_slice, tgt_slice, W);
+
+            // Copy rank-1 field to this level in the rank-2 field
+            for (idx_t i = 0; i < tgt.shape(0); ++i) {
+                tgt_v(i, lev) = tgt_slice_v(i);
+            }
+        }
+    }
+    else {
+        sparse_matrix_multiply(W, src_v, tgt_v, sparse::backend::openmp());
+    }
 }
 
 
@@ -123,6 +160,9 @@ void Method::interpolate_field_rank3(const Field& src, Field& tgt, const Matrix&
     sparse::Backend backend{linalg_backend_};
     auto src_v = array::make_view<Value, 3>(src);
     auto tgt_v = array::make_view<Value, 3>(tgt);
+    if (not W.empty() && nonLinear_(src)) {
+        ATLAS_ASSERT(false, "nonLinear interpolation not supported for rank-3 fields.");
+    }
     sparse_matrix_multiply(W, src_v, tgt_v, sparse::backend::openmp());
 }
 
@@ -333,20 +373,11 @@ void Method::do_execute(const Field& src, Field& tgt, Metadata&) const {
 
     haloExchange(src);
 
-    // non-linearities: a non-empty M matrix contains the corrections applied to matrix_
-    Matrix M;
-    if (not matrix_->empty() && nonLinear_(src)) {
-        Matrix W(*matrix_);  // copy (a big penalty -- copy-on-write would definitely be better)
-        if (nonLinear_->execute(W, src)) {
-            M.swap(W);
-        }
-    }
-
     if (src.datatype().kind() == array::DataType::KIND_REAL64) {
-        interpolate_field<double>(src, tgt, M.empty() ? *matrix_ : M);
+        interpolate_field<double>(src, tgt, *matrix_);
     }
     else if (src.datatype().kind() == array::DataType::KIND_REAL32) {
-        interpolate_field<float>(src, tgt, M.empty() ? *matrix_ : M);
+        interpolate_field<float>(src, tgt, *matrix_);
     }
     else {
         ATLAS_NOTIMPLEMENTED;
