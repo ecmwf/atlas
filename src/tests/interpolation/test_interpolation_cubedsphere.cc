@@ -14,8 +14,8 @@
 #include "atlas/interpolation/Interpolation.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator/MeshGenerator.h"
-#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/output/Gmsh.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/function/VortexRollup.h"
 
@@ -26,12 +26,10 @@ namespace atlas {
 namespace test {
 
 double dotProd(const Field& a, const Field& b) {
-
     double prod{};
 
     const auto aView = array::make_view<double, 1>(a);
     const auto bView = array::make_view<double, 1>(b);
-
 
 
     for (size_t i = 0; i < a.size(); ++i) {
@@ -42,10 +40,9 @@ double dotProd(const Field& a, const Field& b) {
 }
 
 CASE("cubedsphere_interpolation") {
-
     // Create a source cubed sphere grid, mesh and functionspace.
-    const auto sourceGrid = Grid("CS-LFR-24");
-    const auto sourceMesh = MeshGenerator("cubedsphere_dual").generate(sourceGrid);
+    const auto sourceGrid          = Grid("CS-LFR-24");
+    const auto sourceMesh          = MeshGenerator("cubedsphere_dual").generate(sourceGrid);
     const auto sourceFunctionspace = functionspace::NodeColumns(sourceMesh);
 
     // Populate analytic source field.
@@ -53,8 +50,8 @@ CASE("cubedsphere_interpolation") {
     auto sourceField = sourceFunctionspace.createField<double>(option::name("test_field"));
     {
         const auto lonlat = array::make_view<double, 2>(sourceFunctionspace.lonlat());
-        const auto ghost = array::make_view<int, 1>(sourceFunctionspace.ghost());
-        auto view = array::make_view<double, 1>(sourceField);
+        const auto ghost  = array::make_view<int, 1>(sourceFunctionspace.ghost());
+        auto view         = array::make_view<double, 1>(sourceField);
         for (idx_t i = 0; i < sourceFunctionspace.size(); ++i) {
             view(i) = util::function::vortex_rollup(lonlat(i, LON), lonlat(i, LAT), 1.);
             if (!ghost(i)) {
@@ -67,9 +64,9 @@ CASE("cubedsphere_interpolation") {
 
 
     // Create target grid, mesh and functionspace.
-    const auto partitioner = grid::MatchingPartitioner(sourceMesh, util::Config("type", "cubedsphere"));
-    const auto targetGrid = Grid("O24");
-    const auto targetMesh = MeshGenerator("structured").generate(targetGrid, partitioner);
+    const auto partitioner         = grid::MatchingPartitioner(sourceMesh, util::Config("type", "cubedsphere"));
+    const auto targetGrid          = Grid("O24");
+    const auto targetMesh          = MeshGenerator("structured").generate(targetGrid, partitioner);
     const auto targetFunctionspace = functionspace::NodeColumns(targetMesh);
 
     // Set up interpolation object.
@@ -83,17 +80,16 @@ CASE("cubedsphere_interpolation") {
 
     // Make some diagnostic output fields.
     auto errorField = targetFunctionspace.createField<double>(option::name("error_field"));
-    auto partField = targetFunctionspace.createField<int>(option::name("partition"));
+    auto partField  = targetFunctionspace.createField<int>(option::name("partition"));
     {
         const auto lonlat = array::make_view<double, 2>(targetFunctionspace.lonlat());
-        auto targetView = array::make_view<double, 1>(targetField);
-        auto errorView = array::make_view<double, 1>(errorField);
-        auto partView = array::make_view<int, 1>(partField);
+        auto targetView   = array::make_view<double, 1>(targetField);
+        auto errorView    = array::make_view<double, 1>(errorField);
+        auto partView     = array::make_view<int, 1>(partField);
         for (idx_t i = 0; i < targetFunctionspace.size(); ++i) {
-
             const auto val = util::function::vortex_rollup(lonlat(i, LON), lonlat(i, LAT), 1.);
-            errorView(i) = std::abs((targetView(i) - val) / stDev);
-            partView(i) = mpi::rank();
+            errorView(i)   = std::abs((targetView(i) - val) / stDev);
+            partView(i)    = mpi::rank();
         }
     }
     partField.haloExchange();
@@ -123,7 +119,7 @@ CASE("cubedsphere_interpolation") {
     array::make_view<double, 1>(sourceAdjoint).assign(0.);
     interp.execute_adjoint(sourceAdjoint, targetAdjoint);
 
-    const auto yDotY = dotProd(targetField, targetField);
+    const auto yDotY    = dotProd(targetField, targetField);
     const auto xDotXAdj = dotProd(sourceField, sourceAdjoint);
 
     EXPECT_APPROX_EQ(yDotY / xDotXAdj, 1., 1e-14);

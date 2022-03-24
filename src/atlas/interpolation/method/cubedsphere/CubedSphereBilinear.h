@@ -25,20 +25,18 @@ namespace method {
 ///          may resolve errors if setup method fails to find cells.
 class CubedSphereBilinear : public Method {
 public:
-    CubedSphereBilinear(const Config& config) : Method(config) {
+    CubedSphereBilinear(const Config& config): Method(config) {
         config.get("halo", halo_);
         config.get("list size", listSize_);
     }
     virtual ~CubedSphereBilinear() override {}
 
-    virtual void print(std::ostream &) const override;
+    virtual void print(std::ostream&) const override;
     virtual const FunctionSpace& source() const override { return source_; }
     virtual const FunctionSpace& target() const override { return target_; }
 
 protected:
-
 private:
-
     virtual void do_setup(const FunctionSpace& source, const FunctionSpace& target) override;
     virtual void do_setup(const Grid& source, const Grid& target, const Cache&) override;
 
@@ -47,10 +45,8 @@ private:
 
     int halo_{0};
     int listSize_{4};
-
 };
 
-}
-} // namespace interpolation
-} // namespace atlas
-
+}  // namespace method
+}  // namespace interpolation
+}  // namespace atlas

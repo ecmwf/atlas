@@ -14,12 +14,11 @@
 #include "atlas/runtime/Log.h"
 
 
-
 namespace atlas {
 namespace interpolation {
 namespace element {
 
-namespace  {
+namespace {
 
 constexpr double badRoot = std::numeric_limits<double>::lowest();
 
@@ -32,18 +31,15 @@ struct Roots {
 
 // Solve ax^2 + bx + c = 0 for x
 Roots solveQuadratic(double a, double b, double c, double epsilon, double rootEpsilon) {
-
-    if (std::abs(a) < epsilon ) {
+    if (std::abs(a) < epsilon) {
         const auto x = -c / b;
         return Roots{x, x, rootEpsilon};
     }
     else {
-
         // x = (-b +/- sqrt(b^2 - 4ac)) / (2a)
 
         const auto det = b * b - 4. * a * c;
         if (det >= -epsilon) {
-
             const auto sqrtDet = std::sqrt(std::max(0., det));
 
             const auto inv2a = 0.5 / a;
@@ -55,12 +51,10 @@ Roots solveQuadratic(double a, double b, double c, double epsilon, double rootEp
             rootEpsilon *= std::max({1., std::abs(f1), std::abs(f2)});
 
             return Roots{f1 + f2, f1 - f2, rootEpsilon};
-
         }
         else {
             return Roots{badRoot, badRoot, rootEpsilon};
         }
-
     }
 }
 
@@ -68,7 +62,7 @@ bool validRoot(double root, double rootEpsilon) {
     return root > -rootEpsilon && root < 1. + rootEpsilon;
 }
 
-}
+}  // namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -102,7 +96,6 @@ method::Intersect Quad2D::intersects(const PointXY& r, double edgeEpsilon, doubl
 }
 
 method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, double epsilon) const {
-
     // Perform "inverse" bilinear interpolation.
     // Method described by Inigo Quilez:
     // https://www.iquilezles.org/www/articles/ibilinear/ibilinear.htm
@@ -134,14 +127,13 @@ method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, doubl
 
     // Solve for u.
     const auto uRoots = solveQuadratic(e, c + d, b, epsilon, edgeEpsilon);
-    isect.u = validRoot(uRoots.x1, uRoots.epsilon) ? uRoots.x1 : uRoots.x2;
+    isect.u           = validRoot(uRoots.x1, uRoots.epsilon) ? uRoots.x1 : uRoots.x2;
 
     // Solve for v.
     const auto vRoots = solveQuadratic(f, c - d, a, epsilon, edgeEpsilon);
-    isect.v = validRoot(vRoots.x1, vRoots.epsilon) ? vRoots.x1 : vRoots.x2;
+    isect.v           = validRoot(vRoots.x1, vRoots.epsilon) ? vRoots.x1 : vRoots.x2;
 
-    return validRoot(isect.u, uRoots.epsilon) && validRoot(isect.u, vRoots.epsilon) ?
-                isect.success() : isect.fail();
+    return validRoot(isect.u, uRoots.epsilon) && validRoot(isect.u, vRoots.epsilon) ? isect.success() : isect.fail();
 }
 
 bool Quad2D::validate() const {
@@ -193,9 +185,7 @@ double Quad2D::area() const {
 bool Quad2D::inQuadrilateral(const Vector2D& p, double epsilon) const {
     // point p must be on the inside of all quad edges to be inside the quad.
     const double tol = -epsilon;
-    return cross2d(p - v00, p - v10) > tol &&
-           cross2d(p - v10, p - v11) > tol &&
-           cross2d(p - v11, p - v01) > tol &&
+    return cross2d(p - v00, p - v10) > tol && cross2d(p - v10, p - v11) > tol && cross2d(p - v11, p - v01) > tol &&
            cross2d(p - v01, p - v00) > tol;
 }
 

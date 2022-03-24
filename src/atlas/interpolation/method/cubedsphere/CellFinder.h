@@ -20,10 +20,9 @@ namespace atlas {
 namespace projection {
 namespace detail {
 class CubedSphereProjectionBase;
-} // namespace detail
-} // namespace projection
-} // namespace atlas
-
+}  // namespace detail
+}  // namespace projection
+}  // namespace atlas
 
 
 namespace atlas {
@@ -36,7 +35,6 @@ using namespace util;
 /// @brief class to find points within cells of cubedsphere mesh.
 class CellFinder {
 public:
-
     struct Cell {
         std::vector<idx_t> nodes;
         Intersect isect;
@@ -46,27 +44,23 @@ public:
     CellFinder(const Mesh& mesh, const util::Config& config = util::Config("halo", 0));
 
     /// @brief Find a cell which encompasses an xy point.
-    Cell getCell(const PointXY& xy, size_t listSize = 4, double edgeEpsion = 5. * std::numeric_limits<double>::epsilon(),
-                 double Epsion = 5. * std::numeric_limits<double>::epsilon()) const;
+    Cell getCell(const PointXY& xy, size_t listSize = 4,
+                 double edgeEpsion = 5. * std::numeric_limits<double>::epsilon(),
+                 double Epsion     = 5. * std::numeric_limits<double>::epsilon()) const;
 
     /// @brief Find a cell which encompasses a lonlat point.
-    Cell getCell(const PointLonLat& lonlat, size_t listSize = 4, double edgeEpsion = 5. * std::numeric_limits<double>::epsilon(),
-                 double Epsion = 5. * std::numeric_limits<double>::epsilon()) const;
-
-
+    Cell getCell(const PointLonLat& lonlat, size_t listSize = 4,
+                 double edgeEpsion = 5. * std::numeric_limits<double>::epsilon(),
+                 double Epsion     = 5. * std::numeric_limits<double>::epsilon()) const;
 
 
 private:
-
     Mesh mesh_{};
     const projection::detail::CubedSphereProjectionBase* projection_{};
     std::array<util::IndexKDTree2D, 6> trees_{};
-
-
-
 };
 
-} // namespace cubedsphere
-} // namespace method
-} // namespace interpolation
-} // namespace atlas
+}  // namespace cubedsphere
+}  // namespace method
+}  // namespace interpolation
+}  // namespace atlas
