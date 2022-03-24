@@ -13,56 +13,9 @@
 #include "atlas/interpolation/element/Triag2D.h"
 #include "atlas/runtime/Log.h"
 
-
 namespace atlas {
 namespace interpolation {
 namespace element {
-
-namespace {
-
-constexpr double badRoot = std::numeric_limits<double>::lowest();
-
-struct Roots {
-    double x1;
-    double x2;
-    double epsilon;
-};
-
-
-// Solve ax^2 + bx + c = 0 for x
-Roots solveQuadratic(double a, double b, double c, double epsilon, double rootEpsilon) {
-    if (std::abs(a) < epsilon) {
-        const auto x = -c / b;
-        return Roots{x, x, rootEpsilon};
-    }
-    else {
-        // x = (-b +/- sqrt(b^2 - 4ac)) / (2a)
-
-        const auto det = b * b - 4. * a * c;
-        if (det >= -epsilon) {
-            const auto sqrtDet = std::sqrt(std::max(0., det));
-
-            const auto inv2a = 0.5 / a;
-
-            const auto f1 = -b * inv2a;
-            const auto f2 = sqrtDet * inv2a;
-
-            // Scale root epsilon by larger term.
-            rootEpsilon *= std::max({1., std::abs(f1), std::abs(f2)});
-
-            return Roots{f1 + f2, f1 - f2, rootEpsilon};
-        }
-        else {
-            return Roots{badRoot, badRoot, rootEpsilon};
-        }
-    }
-}
-
-bool validRoot(double root, double rootEpsilon) {
-    return root > -rootEpsilon && root < 1. + rootEpsilon;
-}
-
-}  // namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -96,44 +49,73 @@ method::Intersect Quad2D::intersects(const PointXY& r, double edgeEpsilon, doubl
 }
 
 method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, double epsilon) const {
-    // Perform "inverse" bilinear interpolation.
-    // Method described by Inigo Quilez:
-    // https://www.iquilezles.org/www/articles/ibilinear/ibilinear.htm
-    // This implementation follows the notation given on wikipedia (01/02/2022):
-    // https://en.wikipedia.org/wiki/Bilinear_interpolation#Inverse_and_generalization
-
-    method::Intersect isect{};
+    method::Intersect isect;
 
     // work out if point is within the polygon
-    const Vector2D point = Vector2D(p.data());
-    if (!inQuadrilateral(point, epsilon)) {
+    if (!inQuadrilateral({p.x(), p.y()})) {
         return isect.fail();
     }
 
-    // Get helper vectors.
-    const Vector2D A = v00 - point;
-    const Vector2D B = v10 - v00;
-    const Vector2D C = v01 - v00;
-    const Vector2D D = v00 - v10 + v11 - v01;
+    auto solve_weight = [epsilon](const double a, const double b, const double c, double& wght) -> bool {
+        if (std::abs(a) > epsilon) {
+            // if a is non-zero, we need to solve a quadratic equation for the weight
+            // ax**2 + bx + x = 0
+            double det = b * b - 4. * a * c;
+            if (det >= 0.) {
+                double inv_two_a = 1. / (2. * a);
+                double sqrt_det  = std::sqrt(det);
+                double root_a    = (-b + sqrt_det) * inv_two_a;
+                if ((root_a > -epsilon) && (root_a < (1. + epsilon))) {
+                    wght = root_a;
+                    return true;
+                }
+                double root_b = (-b - sqrt_det) * inv_two_a;
+                if ((root_b > -epsilon) && (root_b < (1. + epsilon))) {
+                    wght = root_b;
+                    return true;
+                }
+            }
+            return false;
+        }
+        if (std::abs(b) > epsilon) {
+            // solve ax + b = 0
+            wght = -c / b;
+            return true;
+        }
+        return false;
+    };
 
-    // Get helper scalars.
-    const double a = cross2d(A, B);
-    const double b = cross2d(A, C);
-    const double c = cross2d(A, D);
-    const double d = cross2d(B, C);
-    const double e = cross2d(B, D);
-    const double f = cross2d(C, D);
+    // solve for u and v where:
+    // w1 = ( 1 - u ) * ( 1 - v )
+    // w2 = u * ( 1 - v )
+    // w3 = u * v
+    // w4 = ( 1 - u ) * v
 
+    Vector2D ray(p.x(), p.y());
+    Vector2D vA = v00 - ray;
+    Vector2D vB = v10 - v00;
+    Vector2D vC = v01 - v00;
+    Vector2D vD = v00 - v10 - v01 + v11;
 
-    // Solve for u.
-    const auto uRoots = solveQuadratic(e, c + d, b, epsilon, edgeEpsilon);
-    isect.u           = validRoot(uRoots.x1, uRoots.epsilon) ? uRoots.x1 : uRoots.x2;
+    // solve for v
+    double a = cross2d(vC, vD);
+    double b = cross2d(vC, vB) + cross2d(vA, vD);
+    double c = cross2d(vA, vB);
 
-    // Solve for v.
-    const auto vRoots = solveQuadratic(f, c - d, a, epsilon, edgeEpsilon);
-    isect.v           = validRoot(vRoots.x1, vRoots.epsilon) ? vRoots.x1 : vRoots.x2;
+    if (!solve_weight(a, b, c, isect.v)) {
+        return isect.fail();
+    }
 
-    return validRoot(isect.u, uRoots.epsilon) && validRoot(isect.u, vRoots.epsilon) ? isect.success() : isect.fail();
+    // solve for u
+    a = cross2d(vB, vD);
+    b = cross2d(vB, vC) + cross2d(vA, vD);
+    c = cross2d(vA, vC);
+
+    if (!solve_weight(a, b, c, isect.u)) {
+        return isect.fail();
+    }
+
+    return isect.success();
 }
 
 bool Quad2D::validate() const {
@@ -173,8 +155,8 @@ bool Quad2D::validate() const {
     double dot10 = N302 * N231;
 
     // all normals must point same way
-    bool is_inside = (dot02 >= 0. && dot23 >= 0. && dot31 >= 0. && dot10 >= 0.) ||
-                     (dot02 <= 0. && dot23 <= 0. && dot31 <= 0. && dot10 <= 0.);
+    bool is_inside = ((dot02 >= 0. && dot23 >= 0. && dot31 >= 0. && dot10 >= 0.) ||
+                      (dot02 <= 0. && dot23 <= 0. && dot31 <= 0. && dot10 <= 0.));
     return is_inside;
 }
 
@@ -182,11 +164,10 @@ double Quad2D::area() const {
     return std::abs(0.5 * cross2d((v01 - v00), (v11 - v00))) + std::abs(0.5 * cross2d((v10 - v11), (v01 - v11)));
 }
 
-bool Quad2D::inQuadrilateral(const Vector2D& p, double epsilon) const {
+bool Quad2D::inQuadrilateral(const Vector2D& p) const {
     // point p must be on the inside of all quad edges to be inside the quad.
-    const double tol = -epsilon;
-    return cross2d(p - v00, p - v10) > tol && cross2d(p - v10, p - v11) > tol && cross2d(p - v11, p - v01) > tol &&
-           cross2d(p - v01, p - v00) > tol;
+    return cross2d(p - v00, p - v10) >= 0. && cross2d(p - v10, p - v11) >= 0. && cross2d(p - v11, p - v01) >= 0. &&
+           cross2d(p - v01, p - v00) >= 0;
 }
 
 void Quad2D::print(std::ostream& s) const {
