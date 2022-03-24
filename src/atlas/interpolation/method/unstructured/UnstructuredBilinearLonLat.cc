@@ -57,10 +57,9 @@ void UnstructuredBilinearLonLat::do_setup(const Grid& source, const Grid& target
     //  no halo_exchange because we don't have any halo with delaunay or 3d structured meshgenerator
 
     if (interpolation::MatrixCache(cache)) {
-        matrix_cache_ = cache;
-        matrix_       = &matrix_cache_.matrix();
-        ATLAS_ASSERT(matrix_cache_.matrix().rows() == target.size());
-        ATLAS_ASSERT(matrix_cache_.matrix().cols() == source.size());
+        setMatrix(cache);
+        ATLAS_ASSERT(matrix().rows() == target.size());
+        ATLAS_ASSERT(matrix().cols() == source.size());
         return;
     }
     if (mpi::size() > 1) {
@@ -138,7 +137,7 @@ void UnstructuredBilinearLonLat::print(std::ostream& out) const {
     out << ", NodeColumns to NodeColumns stencil weights: " << std::endl;
     auto gidx_src = array::make_view<gidx_t, 1>(src.nodes().global_index());
 
-    ATLAS_ASSERT(tgt.nodes().size() == idx_t(matrix_->rows()));
+    ATLAS_ASSERT(tgt.nodes().size() == idx_t(matrix().rows()));
 
 
     auto field_stencil_points_loc  = tgt.createField<gidx_t>(option::variables(Stencil::max_stencil_size));
@@ -150,7 +149,7 @@ void UnstructuredBilinearLonLat::print(std::ostream& out) const {
     auto stencil_size_loc    = array::make_view<idx_t, 1>(field_stencil_size_loc);
     stencil_size_loc.assign(0);
 
-    for (Matrix::const_iterator it = matrix_->begin(); it != matrix_->end(); ++it) {
+    for (auto it = matrix().begin(); it != matrix().end(); ++it) {
         idx_t p                   = idx_t(it.row());
         idx_t& i                  = stencil_size_loc(p);
         stencil_points_loc(p, i)  = gidx_src(it.col());
@@ -296,11 +295,11 @@ void UnstructuredBilinearLonLat::setup(const FunctionSpace& source) {
 
     // fill sparse matrix and return
     Matrix A(out_npts, inp_npts, weights_triplets);
-    matrix_shared_->swap(A);
+    setMatrix(A);
 }
 
 Method::Triplets UnstructuredBilinearLonLat::projectPointToElements(size_t ip, const ElemIndex3::NodeList& elems,
-                                                           std::ostream& /* failures_log */) const {
+                                                                    std::ostream& /* failures_log */) const {
     ATLAS_ASSERT(elems.begin() != elems.end());
 
     const size_t inp_points = ilonlat_->shape(0);

@@ -21,8 +21,8 @@
 #include "structured/Linear3D.h"
 #include "structured/QuasiCubic2D.h"
 #include "structured/QuasiCubic3D.h"
-#include "unstructured/UnstructuredBilinearLonLat.h"
 #include "unstructured/FiniteElement.h"
+#include "unstructured/UnstructuredBilinearLonLat.h"
 
 
 namespace atlas {

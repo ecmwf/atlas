@@ -189,7 +189,7 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source ) {
             }
             // fill sparse matrix and return
             Matrix A( out_npts, inp_npts, triplets );
-            matrix_shared_->swap( A );
+            setMatrix(A);
         }
     }
 }

@@ -100,18 +100,28 @@ protected:
     // NOTE : Matrix-free or non-linear interpolation operators do not have matrices, so do not expose here
     friend class atlas::test::Access;
     friend class interpolation::MatrixCache;
-    const Matrix* matrix_;
-    std::shared_ptr<Matrix> matrix_shared_;
-    interpolation::MatrixCache matrix_cache_;
-    NonLinear nonLinear_;
-    std::string linalg_backend_;
-    bool allow_halo_exchange_{true};
-    std::vector<idx_t> missing_;
-    bool adjoint_{false};
-    Matrix matrix_transpose_;
-
 
 protected:
+    void setMatrix(Matrix& m, const std::string& uid = "") {
+        if (not matrix_shared_) {
+            matrix_shared_ = std::make_shared<Matrix>();
+        }
+        matrix_shared_->swap(m);
+        matrix_cache_ = interpolation::MatrixCache(matrix_shared_, uid);
+        matrix_       = &matrix_cache_.matrix();
+    }
+
+    void setMatrix(interpolation::MatrixCache matrix_cache) {
+        ATLAS_ASSERT(matrix_cache);
+        matrix_cache_ = matrix_cache;
+        matrix_       = &matrix_cache_.matrix();
+        matrix_shared_.reset();
+    }
+
+    bool matrixAllocated() const { return matrix_shared_.use_count(); }
+
+    const Matrix& matrix() const { return *matrix_; }
+
     virtual void do_setup(const FunctionSpace& source, const FunctionSpace& target) = 0;
     virtual void do_setup(const Grid& source, const Grid& target, const Cache&)     = 0;
     virtual void do_setup(const FunctionSpace& source, const Field& target);
@@ -143,6 +153,19 @@ private:
     void adjoint_interpolate_field_rank3(Field& src, const Field& tgt, const Matrix&) const;
 
     void check_compatibility(const Field& src, const Field& tgt, const Matrix& W) const;
+
+private:
+    const Matrix* matrix_;
+    std::shared_ptr<Matrix> matrix_shared_;
+    interpolation::MatrixCache matrix_cache_;
+    NonLinear nonLinear_;
+    std::string linalg_backend_;
+    bool adjoint_{false};
+    Matrix matrix_transpose_;
+
+protected:
+    bool allow_halo_exchange_{true};
+    std::vector<idx_t> missing_;
 };
 
 }  // namespace interpolation

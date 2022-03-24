@@ -60,7 +60,7 @@ void GridBoxMaximum::do_execute(const Field& source, Field& target, Metadata&) c
 
 
     if (!matrixFree_) {
-        const Matrix& m = *matrix_;
+        const Matrix& m = matrix();
         Matrix::const_iterator k(m);
 
         for (decltype(m.rows()) i = 0, j = 0; i < m.rows(); ++i) {

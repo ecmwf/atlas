@@ -243,9 +243,6 @@ Method::Method(const Method::Config& config) {
     if (config.get("non_linear", non_linear)) {
         nonLinear_ = NonLinear(non_linear, config);
     }
-    matrix_shared_ = std::make_shared<Matrix>();
-    matrix_cache_  = interpolation::MatrixCache(matrix_shared_);
-    matrix_        = matrix_shared_.get();
 
     config.get("adjoint", adjoint_);
 }
