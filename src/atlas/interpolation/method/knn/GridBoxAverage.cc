@@ -31,28 +31,28 @@ MethodBuilder<GridBoxAverage> __builder("grid-box-average");
 }
 
 
-void GridBoxAverage::do_execute(const FieldSet& source, FieldSet& target) const {
+void GridBoxAverage::do_execute(const FieldSet& source, FieldSet& target, Metadata& metadata) const {
     ATLAS_ASSERT(source.size() == target.size());
 
     // Matrix-based interpolation is handled by base (Method) class
     // TODO: exploit sparse/dense matrix multiplication
     for (idx_t i = 0; i < source.size(); ++i) {
         if (matrixFree_) {
-            GridBoxAverage::do_execute(source[i], target[i]);
+            GridBoxAverage::do_execute(source[i], target[i], metadata);
         }
         else {
-            Method::do_execute(source[i], target[i]);
+            Method::do_execute(source[i], target[i], metadata);
         }
     }
 }
 
 
-void GridBoxAverage::do_execute(const Field& source, Field& target) const {
+void GridBoxAverage::do_execute(const Field& source, Field& target, Metadata& metadata) const {
     ATLAS_TRACE("atlas::interpolation::method::GridBoxAverage::do_execute()");
 
     // Matrix-based interpolation is handled by base (Method) class
     if (!matrixFree_) {
-        Method::do_execute(source, target);
+        Method::do_execute(source, target, metadata);
         return;
     }
 

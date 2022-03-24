@@ -80,7 +80,7 @@ void CubedSphereBilinear::do_setup(const FunctionSpace &source, const FunctionSp
 
         // fill sparse matrix and return.
         Matrix A(target_.size(), source_.size(), weights);
-        matrix_shared_->swap(A);
+        setMatrix(A);
     }
 
 }
