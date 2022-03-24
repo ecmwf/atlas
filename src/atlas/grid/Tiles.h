@@ -74,9 +74,11 @@ public:
 
     // tile index from xy space
     idx_t indexFromXY(const double xy[]) const;
+    idx_t indexFromXY(const PointXY& xy) const;
 
     // tile index from longitude and latitude space
     idx_t indexFromLonLat(const double lonlat[]) const;
+    idx_t indexFromLonLat(const PointLonLat& lonlat) const;
 
     // enforceXYdomain reinforces the tile shape in xy space;
     // if values move a miniscule amount outside the domain, it will be brought back in.

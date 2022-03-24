@@ -49,6 +49,14 @@ const CubedSphereTiles* CubedSphereTiles::create(const eckit::Parametrisation& p
     }
 }
 
+idx_t CubedSphereTiles::indexFromXY(const PointXY& xy) const {
+    return indexFromXY(xy.data());
+}
+
+idx_t CubedSphereTiles::indexFromLonLat(const PointLonLat& lonlat) const {
+    return indexFromXY(lonlat.data());
+}
+
 }  // namespace detail
 }  // namespace grid
 }  // namespace atlas

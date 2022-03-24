@@ -157,6 +157,53 @@ void CubedSphereEquiAnglProjection::alphabeta2xy(double crd[], idx_t t) const {
     crd[YY]         = xy[YY];
 }
 
+// -------------------------------------------------------------------------------------------------
+
+Jacobian CubedSphereEquiAnglProjection::jacobian(const PointLonLat& lonlat, idx_t t) const {
+
+    // Note: angular units cancel, so we leave all values in radians.
+
+    // Convert lonlat to xyz on unit sphere.
+    const double lambda = lonlat.lon() * deg2rad;
+    const double phi = lonlat.lat() * deg2rad;
+    auto xyz = PointXYZ{std::cos(lambda) * std::cos(phi),
+                        std::sin(lambda) * std::cos(phi),
+                        -std::sin(phi)};
+
+    // Get derivatives of xyz with respect to lambda and phi.
+    auto dxyz_by_dlambda = PointXYZ{-std::sin(lambda) * std::cos(phi),
+                                     std::cos(lambda) * std::cos(phi),
+                                     0.};
+    auto dxyz_by_dphi = PointXYZ{-std::cos(lambda) * std::sin(phi),
+                                 -std::sin(lambda) * std::sin(phi),
+                                 -std::cos(phi)};
+
+    // Rotate vectors.
+    const auto& tiles = getCubedSphereTiles();
+    tiles.unrotate(t, xyz.data());
+    tiles.unrotate(t, dxyz_by_dlambda.data());
+    tiles.unrotate(t, dxyz_by_dphi.data());
+
+    // Get derivatives of a and b with respect to xyz.
+    // Note: a and b are xy displacements from the tile centre, *not* the
+    // (alpha, beta) coordinates defined in the tileJacobian method.
+
+    const double inv_x2y2 = 1. / (xyz.x() * xyz.x() + xyz.y() * xyz.y());
+    const double inv_x2z2 = 1. / (xyz.x() * xyz.x() + xyz.z() * xyz.z());
+
+    const auto da_by_dxyz = PointXYZ{-xyz.y() * inv_x2y2, xyz.x() * inv_x2y2, 0.};
+    const auto db_by_dxyz = PointXYZ{xyz.z() * inv_x2z2, 0., -xyz.x() * inv_x2z2};
+
+    // Use chain rule to get Jacobian.
+    const auto& dot = eckit::geometry::Point3::dot;
+    return Jacobian{{dot(da_by_dxyz, dxyz_by_dlambda), dot(da_by_dxyz, dxyz_by_dphi)},
+                    {dot(db_by_dxyz, dxyz_by_dlambda), dot(db_by_dxyz, dxyz_by_dphi)}};
+}
+
+Jacobian CubedSphereEquiAnglProjection::alphabetaJacobian(const PointLonLat& lonlat, idx_t t) const {
+    const auto& tiles = getCubedSphereTiles();
+    return tiles.tileJacobian(t).inverse() * jacobian(lonlat, t);
+}
 
 // -------------------------------------------------------------------------------------------------
 
@@ -223,8 +270,10 @@ void CubedSphereEquiAnglProjection::xy2lonlat(double crd[]) const {
 
 // -------------------------------------------------------------------------------------------------
 
-ProjectionImpl::Jacobian CubedSphereEquiAnglProjection::jacobian(const PointLonLat&) const {
-    ATLAS_NOTIMPLEMENTED;
+Jacobian CubedSphereEquiAnglProjection::jacobian(const PointLonLat& lonlat) const {
+    const auto& tiles = getCubedSphereTiles();
+    const idx_t t = tiles.indexFromLonLat(lonlat.data());
+    return jacobian(lonlat, t);
 }
 
 // -------------------------------------------------------------------------------------------------

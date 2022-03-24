@@ -33,6 +33,9 @@ void CubedSphereBilinear::do_setup(const FunctionSpace &source, const FunctionSp
 
     const auto finder = cubedsphere::CellFinder(ncSource.mesh(), util::Config("halo", halo_));
 
+    // Enable or disable halo exchange.
+    this->allow_halo_exchange_ = halo_exchange_;
+
     // Loop over target at calculate interpolation weights.
     auto weights = std::vector<Triplet>{};
     const auto ghostView = array::make_view<int, 1>(target_.ghost());
