@@ -63,7 +63,8 @@ private:
 
 class MatrixCacheEntryShared : public MatrixCacheEntry {
 public:
-    MatrixCacheEntryShared(std::shared_ptr<const Matrix> matrix): MatrixCacheEntry(matrix.get()), matrix_{matrix} {}
+    MatrixCacheEntryShared(std::shared_ptr<const Matrix> matrix, const std::string& uid = ""):
+        MatrixCacheEntry(matrix.get(), uid), matrix_{matrix} {}
 
 private:
     const std::shared_ptr<const Matrix> matrix_;
@@ -76,7 +77,8 @@ MatrixCache::MatrixCache(const Cache& c):
 
 MatrixCache::MatrixCache(Matrix&& m): MatrixCache(std::make_shared<MatrixCacheEntryOwned>(std::move(m))) {}
 
-MatrixCache::MatrixCache(std::shared_ptr<const Matrix> m): MatrixCache(std::make_shared<MatrixCacheEntryShared>(m)) {}
+MatrixCache::MatrixCache(std::shared_ptr<const Matrix> m, const std::string& uid):
+    MatrixCache(std::make_shared<MatrixCacheEntryShared>(m, uid)) {}
 
 MatrixCache::MatrixCache(const Matrix* m): MatrixCache(std::make_shared<MatrixCacheEntry>(m)) {}
 
@@ -89,6 +91,11 @@ MatrixCache::operator bool() const {
 const MatrixCache::Matrix& MatrixCache::matrix() const {
     ATLAS_ASSERT(matrix_);
     return matrix_->matrix();
+}
+
+const std::string& MatrixCache::uid() const {
+    ATLAS_ASSERT(matrix_);
+    return matrix_->uid();
 }
 
 size_t MatrixCache::footprint() const {

@@ -84,8 +84,11 @@ class MatrixCacheEntry : public InterpolationCacheEntry {
 public:
     using Matrix = eckit::linalg::SparseMatrix;
     ~MatrixCacheEntry() override;
-    MatrixCacheEntry(const Matrix* matrix): matrix_{matrix} { ATLAS_ASSERT(matrix_ != nullptr); }
+    MatrixCacheEntry(const Matrix* matrix, const std::string& uid = ""): matrix_{matrix}, uid_(uid) {
+        ATLAS_ASSERT(matrix_ != nullptr);
+    }
     const Matrix& matrix() const { return *matrix_; }
+    const std::string& uid() const { return uid_; }
     size_t footprint() const override { return matrix_->footprint(); }
     operator bool() const { return not matrix_->empty(); }
     static std::string static_type() { return "Matrix"; }
@@ -93,6 +96,7 @@ public:
 
 private:
     const Matrix* matrix_;
+    const std::string uid_;
 };
 
 //-----------------------------------------------------------------------------
@@ -105,11 +109,12 @@ public:
     MatrixCache() = default;
     MatrixCache(const Cache& c);
     MatrixCache(Matrix&& m);
-    MatrixCache(std::shared_ptr<const Matrix> m);
+    MatrixCache(std::shared_ptr<const Matrix> m, const std::string& uid = "");
     MatrixCache(const Matrix* m);
     MatrixCache(const Interpolation&);
     operator bool() const;
     const Matrix& matrix() const;
+    const std::string& uid() const;
     size_t footprint() const;
 
 private:
