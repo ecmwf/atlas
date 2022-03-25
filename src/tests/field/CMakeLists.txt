@@ -23,6 +23,11 @@ ecbuild_add_test( TARGET atlas_test_field_foreach
   LIBS     atlas
   OMP      4
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+
+ecbuild_add_test( TARGET atlas_test_multifield_ifs
+    SOURCES     test_multifield_ifs.cc
+    LIBS        atlas
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 ecbuild_add_test( TARGET atlas_test_field_acc
