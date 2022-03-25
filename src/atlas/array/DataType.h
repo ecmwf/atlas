@@ -86,6 +86,7 @@ public:
     DataType(const std::string&);
     DataType(long);
     DataType(const DataType&);
+    DataType& operator=(const DataType&);
     std::string str() const { return kind_to_str(kind_); }
     kind_t kind() const { return kind_; }
     size_t size() const { return (kind_ == KIND_UINT64) ? 8 : std::abs(kind_); }
@@ -360,6 +361,11 @@ inline bool DataType::kind_valid(kind_t kind) {
 }
 
 inline DataType::DataType(const DataType& other): kind_(other.kind_) {}
+
+inline DataType& DataType::operator=(const DataType& other) {
+    kind_ = other.kind_;
+    return *this;
+}
 
 inline DataType::DataType(const std::string& datatype): kind_(str_to_kind(datatype)) {}
 
