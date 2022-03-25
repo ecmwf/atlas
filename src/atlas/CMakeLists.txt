@@ -474,6 +474,8 @@ field/FieldSet.cc
 field/FieldSet.h
 field/MissingValue.cc
 field/MissingValue.h
+field/MultiField.cc
+field/MultiField.h
 field/State.cc
 field/State.h
 field/detail/FieldImpl.cc
