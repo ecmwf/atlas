@@ -11,6 +11,7 @@
 #include "MethodFactory.h"
 
 // for static linking
+#include "cubedsphere/CubedSphereBilinear.h"
 #include "knn/GridBoxAverage.h"
 #include "knn/GridBoxMaximum.h"
 #include "knn/KNearestNeighbours.h"
@@ -45,6 +46,7 @@ void force_link() {
             MethodBuilder<method::QuasiCubic3D>();
             MethodBuilder<method::GridBoxAverage>();
             MethodBuilder<method::GridBoxMaximum>();
+            MethodBuilder<method::CubedSphereBilinear>();
         }
     } link;
 }

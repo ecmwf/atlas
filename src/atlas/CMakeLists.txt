@@ -204,6 +204,8 @@ grid/detail/partitioner/MatchingMeshPartitioner.h
 grid/detail/partitioner/MatchingMeshPartitioner.cc
 grid/detail/partitioner/MatchingMeshPartitionerBruteForce.cc
 grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h
+grid/detail/partitioner/MatchingMeshPartitionerCubedSphere.cc
+grid/detail/partitioner/MatchingMeshPartitionerCubedSphere.h
 grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.cc
 grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.h
 grid/detail/partitioner/MatchingMeshPartitionerSphericalPolygon.cc
@@ -556,6 +558,10 @@ interpolation/method/PointSet.cc
 interpolation/method/PointSet.h
 interpolation/method/Ray.cc
 interpolation/method/Ray.h
+interpolation/method/cubedsphere/CellFinder.cc
+interpolation/method/cubedsphere/CellFinder.h
+interpolation/method/cubedsphere/CubedSphereBilinear.cc
+interpolation/method/cubedsphere/CubedSphereBilinear.h
 interpolation/method/knn/GridBox.cc
 interpolation/method/knn/GridBox.h
 interpolation/method/knn/GridBoxAverage.cc

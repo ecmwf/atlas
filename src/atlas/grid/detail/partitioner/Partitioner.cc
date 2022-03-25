@@ -29,6 +29,7 @@
 #include "atlas/grid/detail/partitioner/MatchingFunctionSpacePartitionerLonLatPolygon.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitioner.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h"
+#include "atlas/grid/detail/partitioner/MatchingMeshPartitionerCubedSphere.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.h"
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerSphericalPolygon.h"
 #include "atlas/grid/detail/partitioner/RegularBandsPartitioner.h"
@@ -201,6 +202,9 @@ Partitioner* MatchingPartitionerFactory::build(const std::string& type, const Me
     }
     else if (type == MatchingMeshPartitionerBruteForce::static_type()) {
         return new MatchingMeshPartitionerBruteForce(partitioned);
+    }
+    else if (type == MatchingMeshPartitionerCubedSphere::static_type()) {
+        return new MatchingMeshPartitionerCubedSphere(partitioned);
     }
     else {
         ATLAS_NOTIMPLEMENTED;
