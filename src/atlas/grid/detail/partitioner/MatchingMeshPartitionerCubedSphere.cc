@@ -25,7 +25,7 @@ void MatchingMeshPartitionerCubedSphere::partition(const Grid& grid, int partiti
         // This is probably more expensive than it needs to be, as it performs
         // a dry run of the cubedsphere interpolation method.
         const auto& lonlat = *lonlatIt;
-        partitioning[i]   = finder.getCell(lonlat).isect ? mpi::rank() : -1;
+        partitioning[i]    = finder.getCell(lonlat).isect ? mpi::rank() : -1;
         ;
         ++lonlatIt;
     }
