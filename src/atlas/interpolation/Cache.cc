@@ -24,6 +24,20 @@ Cache::Cache(const Cache& other) {
     add(other);
 }
 
+Cache::Cache(const Cache& other, const std::string& filter): Cache(other) {
+    std::shared_ptr<InterpolationCacheEntry> filtered;
+    for (auto& entry : cache_) {
+        if (entry.first == filter) {
+            filtered = entry.second;
+        }
+    }
+    cache_.clear();
+    if (filtered) {
+        cache_[filtered->type()] = filtered;
+    }
+}
+
+
 Cache::Cache(const Interpolation& interpolation): Cache(interpolation.createCache()) {}
 
 Cache::~Cache() = default;
@@ -49,7 +63,8 @@ private:
 
 class MatrixCacheEntryShared : public MatrixCacheEntry {
 public:
-    MatrixCacheEntryShared(std::shared_ptr<const Matrix> matrix): MatrixCacheEntry(matrix.get()), matrix_{matrix} {}
+    MatrixCacheEntryShared(std::shared_ptr<const Matrix> matrix, const std::string& uid = ""):
+        MatrixCacheEntry(matrix.get(), uid), matrix_{matrix} {}
 
 private:
     const std::shared_ptr<const Matrix> matrix_;
@@ -57,11 +72,13 @@ private:
 
 
 MatrixCache::MatrixCache(const Cache& c):
-    Cache(c), matrix_{dynamic_cast<const MatrixCacheEntry*>(c.get(MatrixCacheEntry::static_type()))} {}
+    Cache(c, MatrixCacheEntry::static_type()),
+    matrix_{dynamic_cast<const MatrixCacheEntry*>(c.get(MatrixCacheEntry::static_type()))} {}
 
 MatrixCache::MatrixCache(Matrix&& m): MatrixCache(std::make_shared<MatrixCacheEntryOwned>(std::move(m))) {}
 
-MatrixCache::MatrixCache(std::shared_ptr<const Matrix> m): MatrixCache(std::make_shared<MatrixCacheEntryShared>(m)) {}
+MatrixCache::MatrixCache(std::shared_ptr<const Matrix> m, const std::string& uid):
+    MatrixCache(std::make_shared<MatrixCacheEntryShared>(m, uid)) {}
 
 MatrixCache::MatrixCache(const Matrix* m): MatrixCache(std::make_shared<MatrixCacheEntry>(m)) {}
 
@@ -74,6 +91,11 @@ MatrixCache::operator bool() const {
 const MatrixCache::Matrix& MatrixCache::matrix() const {
     ATLAS_ASSERT(matrix_);
     return matrix_->matrix();
+}
+
+const std::string& MatrixCache::uid() const {
+    ATLAS_ASSERT(matrix_);
+    return matrix_->uid();
 }
 
 size_t MatrixCache::footprint() const {
@@ -95,7 +117,8 @@ const IndexKDTreeCacheEntry::IndexKDTree& IndexKDTreeCacheEntry::tree() const {
 }
 
 IndexKDTreeCache::IndexKDTreeCache(const Cache& c):
-    Cache(c), tree_{dynamic_cast<const IndexKDTreeCacheEntry*>(c.get(IndexKDTreeCacheEntry::static_type()))} {}
+    Cache(c, IndexKDTreeCacheEntry::static_type()),
+    tree_{dynamic_cast<const IndexKDTreeCacheEntry*>(c.get(IndexKDTreeCacheEntry::static_type()))} {}
 
 IndexKDTreeCache::IndexKDTreeCache(const IndexKDTree& tree): Cache(std::make_shared<IndexKDTreeCacheEntry>(tree)) {
     tree_ = dynamic_cast<const IndexKDTreeCacheEntry*>(get(IndexKDTreeCacheEntry::static_type()));

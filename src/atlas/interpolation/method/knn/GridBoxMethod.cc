@@ -107,10 +107,9 @@ void GridBoxMethod::do_setup(const Grid& source, const Grid& target, const Cache
     target_ = tgt;
 
     if (not matrixFree_ && interpolation::MatrixCache(cache)) {
-        matrix_cache_ = cache;
-        matrix_       = &matrix_cache_.matrix();
-        ATLAS_ASSERT(matrix_cache_.matrix().rows() == target.size());
-        ATLAS_ASSERT(matrix_cache_.matrix().cols() == source.size());
+        setMatrix(cache);
+        ATLAS_ASSERT(matrix().rows() == target.size());
+        ATLAS_ASSERT(matrix().cols() == source.size());
         return;
     }
 
@@ -125,8 +124,6 @@ void GridBoxMethod::do_setup(const Grid& source, const Grid& target, const Cache
     failures_.clear();
 
     if (matrixFree_) {
-        Matrix A;
-        matrix_shared_->swap(A);
         return;
     }
 
@@ -158,7 +155,7 @@ void GridBoxMethod::do_setup(const Grid& source, const Grid& target, const Cache
     {
         ATLAS_TRACE("GridBoxMethod::setup: build interpolant matrix");
         Matrix A(targetBoxes_.size(), sourceBoxes_.size(), allTriplets);
-        matrix_shared_->swap(A);
+        setMatrix(A);
     }
 }
 
@@ -184,7 +181,7 @@ void GridBoxMethod::giveUp(const std::forward_list<size_t>& failures) {
 Cache GridBoxMethod::createCache() const {
     Cache cache;
     cache.add(interpolation::IndexKDTreeCache(pTree_));
-    if (not matrix_->empty()) {
+    if (not matrix().empty()) {
         cache.add(Method::createCache());
     }
     return cache;

@@ -136,6 +136,74 @@ CASE("Interpolation with MissingValue") {
     }
 }
 
+CASE("Interpolation of rank 2 field with MissingValue") {
+    RectangularDomain domain({0, 2}, {0, 2}, "degrees");
+    Grid gridA("L90", domain);
+
+    Mesh meshA = MeshGenerator("structured").generate(gridA);
+
+    int nlevels = 3;
+    functionspace::NodeColumns fsA(meshA);
+    Field fieldA = fsA.createField<double>(option::name("A") | option::levels(nlevels));
+
+    fieldA.metadata().set("missing_value", missingValue);
+    fieldA.metadata().set("missing_value_epsilon", missingValueEps);
+
+    auto viewA = array::make_view<double, 2>(fieldA);
+    for (idx_t j = 0; j < viewA.shape(0); ++j) {
+        viewA(j, 0) = 10 + j;
+        viewA(j, 1) = missingValue;
+        viewA(j, 2) = 30 + j;
+    }
+
+    const array::ArraySpec spec(array::ArrayShape{fieldA.shape(0)}, array::ArrayStrides{fieldA.shape(1)});
+
+    // Set output field (2 points)
+    functionspace::PointCloud fsB({PointLonLat{0.1, 0.1}, PointLonLat{0.9, 0.9}});
+
+    SECTION("check wrapped data can be indexed with []") {
+        for (int lev = 0; lev < nlevels; ++lev) {
+            double* data              = const_cast<double*>(fieldA.array().data<double>()) + lev;
+            atlas::Field fieldA_slice = atlas::Field("s", data, spec);
+            fieldA_slice.metadata().set("missing_value", fieldA.metadata().get<double>("missing_value"));
+
+            auto FlatViewA1  = array::make_view<double, 1>(fieldA_slice);
+            auto viewA_slice = viewA.slice(array::Range::all(), lev);
+            EXPECT(FlatViewA1.shape(0) == viewA_slice.shape(0));
+            for (idx_t j = 0; j < FlatViewA1.shape(0); ++j) {
+                EXPECT(FlatViewA1[j] == viewA_slice(j));
+            }
+        }
+    }
+
+    SECTION("missing-if-all-missing") {
+        Interpolation interpolation(Config("type", "finite-element").set("non_linear", "missing-if-all-missing"), fsA,
+                                    fsB);
+
+        for (std::string type : {"equals", "approximately-equals", "nan"}) {
+            fieldA.metadata().set("missing_value_type", type);
+            for (idx_t j = 0; j < viewA.shape(0); ++j) {
+                viewA(j, 1) = type == "nan" ? nan : missingValue;
+            }
+
+            EXPECT(MissingValue(fieldA));
+
+            Field fieldB = fsB.createField<double>(option::name("B") | option::levels(nlevels));
+            auto viewB   = array::make_view<double, 2>(fieldB);
+
+            interpolation.execute(fieldA, fieldB);
+
+            MissingValue mv(fieldB);
+            EXPECT(mv(viewB(0, 0)) == false);
+            EXPECT(mv(viewB(1, 0)) == false);
+            EXPECT(mv(viewB(0, 1)));
+            EXPECT(mv(viewB(1, 1)));
+            EXPECT(mv(viewB(0, 2)) == false);
+            EXPECT(mv(viewB(1, 2)) == false);
+        }
+    }
+}
+
 
 }  // namespace test
 }  // namespace atlas

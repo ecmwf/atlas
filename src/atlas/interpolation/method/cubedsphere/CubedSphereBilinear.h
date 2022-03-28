@@ -27,21 +27,18 @@ namespace method {
 ///          by setting "halo_exchange" to false.
 class CubedSphereBilinear : public Method {
 public:
-    CubedSphereBilinear(const Config& config) : Method(config) {
+    CubedSphereBilinear(const Config& config): Method(config) {
         config.get("halo", halo_);
         config.get("list_size", listSize_);
         config.get("halo_exchange", halo_exchange_);
     }
     virtual ~CubedSphereBilinear() override {}
 
-    virtual void print(std::ostream &) const override;
+    virtual void print(std::ostream&) const override;
     virtual const FunctionSpace& source() const override { return source_; }
     virtual const FunctionSpace& target() const override { return target_; }
 
-protected:
-
 private:
-
     virtual void do_setup(const FunctionSpace& source, const FunctionSpace& target) override;
     virtual void do_setup(const Grid& source, const Grid& target, const Cache&) override;
 
@@ -54,7 +51,6 @@ private:
 
 };
 
-}
-} // namespace interpolation
-} // namespace atlas
-
+}  // namespace method
+}  // namespace interpolation
+}  // namespace atlas
