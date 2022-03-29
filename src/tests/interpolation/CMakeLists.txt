@@ -14,14 +14,12 @@ ecbuild_add_test( TARGET atlas_test_Quad3D
 )
 
 ecbuild_add_test( TARGET atlas_test_Quad2D
-  CONDITION eckit_EIGEN_FOUND
   SOURCES   test_Quad2D.cc
   LIBS      atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 ecbuild_add_test( TARGET atlas_test_Triag2D
-  CONDITION eckit_EIGEN_FOUND
   SOURCES   test_Triag2D.cc
   LIBS      atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}

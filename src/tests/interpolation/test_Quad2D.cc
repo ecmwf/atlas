@@ -214,9 +214,8 @@ CASE("test_quadrilateral_intersection_arbitrary_corners") {
 
     for (size_t i = 0; i < 4; ++i) {
 
-        Intersect isect = quad.localRemap(orig[i], relative_error, relative_error);
+        Intersect isect = quad.localRemap(orig[i]);
 
-        std::cout << i << " " << isect.u << " " << isect.v << std::endl;
         EXPECT(isect);
         EXPECT_APPROX_EQ(isect.u, uTarget[i], relative_error);
         EXPECT_APPROX_EQ(isect.v, vTarget[i], relative_error);
@@ -245,9 +244,8 @@ CASE("test_quadrilateral_intersection_arbitrary_edges") {
 
     for (size_t i = 0; i < 4; ++i) {
 
-        Intersect isect = quad.localRemap(orig[i], relative_error, relative_error);
+        Intersect isect = quad.localRemap(orig[i]);
 
-        std::cout << i << " " << isect.u << " " << isect.v << std::endl;
         EXPECT(isect);
         EXPECT_APPROX_EQ(isect.u, uTarget[i], relative_error);
         EXPECT_APPROX_EQ(isect.v, vTarget[i], relative_error);
