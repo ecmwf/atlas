@@ -45,7 +45,7 @@ method::Intersect Triag2D::intersects(const PointXY& r, double edgeEpsilon, doub
     isect.u      = (pvec.x() * e2.y() - e2.x() * pvec.y()) * invDet;
     isect.v      = (e1.x() * pvec.y() - pvec.x() * e1.y()) * invDet;
 
-    // clamp values between 0 and 1
+    // make sure weights are valid
     if (isect.u > -edgeEpsilon || isect.u < 1. + edgeEpsilon ||
         isect.v > -edgeEpsilon || isect.v < 1. + edgeEpsilon) {
 
