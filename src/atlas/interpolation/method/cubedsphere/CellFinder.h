@@ -45,12 +45,12 @@ public:
 
     /// @brief Find a cell which encompasses an xy point.
     Cell getCell(const PointXY& xy, size_t listSize = 4,
-                 double edgeepsilon = 5. * std::numeric_limits<double>::epsilon(),
+                 double edgeEpsilon = 5. * std::numeric_limits<double>::epsilon(),
                  double epsilon     = 5. * std::numeric_limits<double>::epsilon()) const;
 
     /// @brief Find a cell which encompasses a lonlat point.
     Cell getCell(const PointLonLat& lonlat, size_t listSize = 4,
-                 double edgeepsilon = 5. * std::numeric_limits<double>::epsilon(),
+                 double edgeEpsilon = 5. * std::numeric_limits<double>::epsilon(),
                  double epsilon     = 5. * std::numeric_limits<double>::epsilon()) const;
 
 
