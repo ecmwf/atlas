@@ -32,7 +32,8 @@ method::Intersect Triag2D::intersects(const PointXY& r, double edgeEpsilon, doub
 
     Vector2D rvec{r.data()};
 
-    if (!inTriangle(rvec, epsilon)) {
+
+    if (!inTriangle(rvec, epsilon * area())) {
         return isect.fail();
     }
 
@@ -93,11 +94,11 @@ double Triag2D::area() const {
     return std::abs(0.5 * cross2d((v10 - v00), (v11 - v00)));
 }
 
-bool Triag2D::inTriangle(const Vector2D& p, double epsilon) const {
+bool Triag2D::inTriangle(const Vector2D& p, double tolerance) const {
     // point p must be on the inside of all triangle edges to be inside the triangle.
-    return cross2d(p - v00, p - v10) > -epsilon &&
-           cross2d(p - v10, p - v11) > -epsilon &&
-           cross2d(p - v11, p - v00) > -epsilon;
+    return cross2d(p - v00, p - v10) > -tolerance &&
+           cross2d(p - v10, p - v11) > -tolerance &&
+           cross2d(p - v11, p - v00) > -tolerance;
 }
 
 void Triag2D::print(std::ostream& s) const {

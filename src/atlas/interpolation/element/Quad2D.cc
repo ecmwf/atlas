@@ -51,17 +51,30 @@ method::Intersect Quad2D::intersects(const PointXY& r, double edgeEpsilon, doubl
 method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, double epsilon) const {
     method::Intersect isect;
 
+    // get area of quad.
+    double quadArea = area();
+
+    // Epsilon is compared against areas. Scale value accordingly.
+    double areaEpsilon = epsilon * quadArea;
+
     // work out if point is within the polygon
-    if (!inQuadrilateral({p.x(), p.y()}, epsilon)) {
+    if (!inQuadrilateral({p.x(), p.y()}, areaEpsilon)) {
         return isect.fail();
     }
 
-    auto solve_weight = [&](const double a, const double b, const double c, double& wght) -> bool {
-        if (std::abs(a) > epsilon) {
+    auto solve_weight = [&](double a, double b, double c, double& wght) -> bool {
+
+        auto check_weight = [](double wght, double tol) -> bool {
+            return ((wght > -tol) && (wght < (1. + tol)));
+        };
+
+        if (std::abs(a) > areaEpsilon) {
             // if a is non-zero, we need to solve a quadratic equation for the weight.
-            // ax**2 + bx + x = 0
+            // ax**2 + bx + c = 0
             double det = b * b - 4. * a * c;
-            if (det > -epsilon) {
+
+            // det has dimensions of area squared.
+            if (det > -areaEpsilon * quadArea) {
 
                 double inv_two_a = 1. / (2. * a);
                 double sqrt_det  = std::sqrt(std::max(det, 0.));
@@ -74,27 +87,19 @@ method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, doubl
                 double B = sqrt_det * inv_two_a;
 
                 // Scale epsilon by magnitude of A or B.
-                double weightEpsilon = edgeEpsilon *
-                                       std::max({1., std::abs(A), std::abs(B)});
+                double edgeEpsilonScaled = edgeEpsilon *
+                                           std::max({1., std::abs(A), std::abs(B)});
 
-                double root_a = A + B;
-                if ((root_a > -weightEpsilon) && (root_a < (1. + weightEpsilon))) {
-                    wght = root_a;
-                    return true;
-                }
-                double root_b = A - B;
-                if ((root_b > -weightEpsilon) && (root_b < (1. + weightEpsilon))) {
-                    wght = root_b;
-                    return true;
-                }
+                return check_weight(wght = A + B, edgeEpsilonScaled) ? true :
+                       check_weight(wght = A - B, edgeEpsilonScaled) ? true : false;
             }
-            return false;
+
         }
-        if (std::abs(b) > epsilon) {
-            // solve ax + b = 0
-            wght = -c / b;
-            return true;
+        else if (std::abs(b) > areaEpsilon) {
+            // solve bx + c = 0
+            return check_weight(wght = -c / b, edgeEpsilon);
         }
+
         return false;
     };
 
@@ -177,12 +182,12 @@ double Quad2D::area() const {
     return std::abs(0.5 * cross2d((v01 - v00), (v11 - v00))) + std::abs(0.5 * cross2d((v10 - v11), (v01 - v11)));
 }
 
-bool Quad2D::inQuadrilateral(const Vector2D& p, double epsilon) const {
+bool Quad2D::inQuadrilateral(const Vector2D& p, double tolerance) const {
     // point p must be on the inside of all quad edges to be inside the quad.
-    return cross2d(p - v00, p - v10) > -epsilon &&
-           cross2d(p - v10, p - v11) > -epsilon &&
-           cross2d(p - v11, p - v01) > -epsilon &&
-           cross2d(p - v01, p - v00) > -epsilon;
+    return cross2d(p - v00, p - v10) > -tolerance &&
+           cross2d(p - v10, p - v11) > -tolerance &&
+           cross2d(p - v11, p - v01) > -tolerance &&
+           cross2d(p - v01, p - v00) > -tolerance;
 }
 
 void Quad2D::print(std::ostream& s) const {
