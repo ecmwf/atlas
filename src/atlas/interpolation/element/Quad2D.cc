@@ -74,7 +74,7 @@ method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, doubl
             double det = b * b - 4. * a * c;
 
             // det has dimensions of area squared.
-            if (det > -areaEpsilon * quadArea) {
+            if (det > -areaEpsilon * 2. * quadArea) {
 
                 double inv_two_a = 1. / (2. * a);
                 double sqrt_det  = std::sqrt(std::max(det, 0.));
