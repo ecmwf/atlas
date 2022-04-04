@@ -64,7 +64,7 @@ method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, doubl
 
     auto solve_weight = [&](double a, double b, double c, double& weight) -> bool {
 
-        auto check_weight = [](double weight, double tol) -> bool {
+        auto checkWeight = [](double weight, double tol) -> bool {
             return ((weight > -tol) && (weight < (1. + tol)));
         };
 
@@ -86,21 +86,13 @@ method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, doubl
                 // "Classic" solution to quadratic formula with no cancelation
                 // on numerator.
                 weight = (-b - sign(b) * sqrtDet) / (2. * a);
-                if (check_weight(weight, edgeEpsilon)) {
+                if (checkWeight(weight, edgeEpsilon)) {
                     return true;
                 }
 
                 // Use Vieta's formula x1 * x2 = c / a;
-                else {
-                    weight = c / (a * weight);
-                    return check_weight(weight, edgeEpsilon);
-                }
-
-            }
-            else {
-
-                // Solution is complex.
-                return false;
+                weight = c / (a * weight);
+                return checkWeight(weight, edgeEpsilon);
 
             }
         }
@@ -108,15 +100,13 @@ method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, doubl
 
             // Linear case bx + c = 0.
             weight = -c / b;
-            return check_weight(weight, edgeEpsilon);
+            return checkWeight(weight, edgeEpsilon);
 
         }
-        else {
 
-            // No solution.
-            return false;
+        // No real solutions to equation.
+        return false;
 
-        }
     };
 
     // solve for u and v where:
