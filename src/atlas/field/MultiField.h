@@ -18,6 +18,7 @@
 #include "atlas/array/Array.h"
 #include "atlas/field/Field.h"
 #include "atlas/util/Config.h"
+#include "atlas/util/Factory.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/util/Object.h"
 
@@ -98,52 +99,32 @@ public:
 
 //------------------------------------------------------------------------------------------------------
 
-class MultiFieldCreatorFactory {
+
+class MultiFieldCreatorFactory : public util::Factory<MultiFieldCreatorFactory> {
 public:
-    /*!
-   * \brief build FieldPoolCreator with options specified in parametrisation
-   * \return mesh generator
-   */
-    static MultiFieldCreator* build(const std::string& FieldPool_generator,
-                                    const eckit::Parametrisation& = util::Config());
+    static std::string className() { return "MultiFieldCreatorFactory"; }
 
     /*!
-   * \brief list all registered field creators
+   * \brief build MultiFieldCreator with options specified in parametrisation
+   * \return MutliField creator
    */
-    static void list(std::ostream&);
-    static bool has(const std::string& name);
+    static MultiFieldCreator* build(const std::string&, const eckit::Parametrisation& = util::NoConfig());
+
+    using Factory::Factory;
 
 private:
-    virtual MultiFieldCreator* make(const eckit::Parametrisation& = util::Config()) = 0;
-
-    std::string name_;
-
-protected:
-    MultiFieldCreatorFactory(const std::string&);
-    virtual ~MultiFieldCreatorFactory();
+    virtual MultiFieldCreator* make(const eckit::Parametrisation&) = 0;
 };
 
 template <class T>
 class MultiFieldCreatorBuilder : public MultiFieldCreatorFactory {
-    virtual MultiFieldCreator* make(const eckit::Parametrisation& param = util::Config()) { return new T(param); }
+    virtual MultiFieldCreator* make(const eckit::Parametrisation& param) override { return new T(param); }
 
 public:
-    MultiFieldCreatorBuilder(const std::string& name): MultiFieldCreatorFactory(name) {}
+    using MultiFieldCreatorFactory::MultiFieldCreatorFactory;
 };
 
 // ------------------------------------------------------------------------------------
-
-// C wrapper interfaces to C++ routines
-extern "C" {
-MultiField* atlas__FieldPool__new();
-void atlas__FieldPool__initialize(MultiField* This, const char* generator, const eckit::Parametrisation* params);
-void atlas__FieldPool__delete(MultiField* This);
-int atlas__FieldPool__has(MultiField* This, const char* name);
-FieldImpl* atlas__FieldPool__field_by_name(MultiField* This, const char* name);
-FieldImpl* atlas__FieldPool__field_by_index(MultiField* This, idx_t index);
-idx_t atlas__FieldPool__size(const MultiField* This);
-util::Metadata* atlas__FieldPool__metadata(MultiField* This);
-}
 
 }  // namespace field
 }  // namespace atlas
