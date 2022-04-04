@@ -22,7 +22,9 @@ void MatchingMeshPartitionerCubedSphere::partition(const Grid& grid, int partiti
 
     // Numeric tolerance should scale with N.
     const auto N = CubedSphereGrid(prePartitionedMesh_.grid()).N();
-    const auto tolerance = 2. * std::numeric_limits<double>::epsilon() * N;
+    const auto epsilon     = 2. * std::numeric_limits<double>::epsilon() * N;
+    const auto edgeEpsilon = epsilon;
+    const size_t listSize  = 4;
 
     // Loop over grid and set partioning[].
     auto lonlatIt = grid.lonlat().begin();
