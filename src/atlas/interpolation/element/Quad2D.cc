@@ -63,25 +63,20 @@ method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, doubl
     }
 
     auto solve_weight = [&](double a, double b, double c, double& weight) -> bool {
-
-        auto checkWeight = [](double weight, double tol) -> bool {
-            return ((weight > -tol) && (weight < (1. + tol)));
-        };
+        auto checkWeight = [](double weight, double tol) -> bool { return ((weight > -tol) && (weight < (1. + tol))); };
 
         // Quadratic equation ax^2 + bx + c = 0.
         if (std::abs(a) >= areaEpsilon) {
-
             // Solve numerically stable form of quadratic formula:
             //   x1 = (-b - sign(b) sqrt(b^2 - 4ac)) / 2a
             //   x2 = c / ax1
 
             double det = b * b - 4. * a * c;
             if (det > -areaEpsilon * 2. * quadArea) {
-
                 // Solution is real.
-                const auto sign = [](double a){return std::signbit(a) ? -1. : 1.;};
+                const auto sign = [](double a) { return std::signbit(a) ? -1. : 1.; };
 
-                double sqrtDet =  std::sqrt(std::max(0., det));
+                double sqrtDet = std::sqrt(std::max(0., det));
 
                 // "Classic" solution to quadratic formula with no cancelation
                 // on numerator.
@@ -93,20 +88,16 @@ method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, doubl
                 // Use Vieta's formula x1 * x2 = c / a;
                 weight = c / (a * weight);
                 return checkWeight(weight, edgeEpsilon);
-
             }
         }
         else if (std::abs(b) >= areaEpsilon) {
-
             // Linear case bx + c = 0.
             weight = -c / b;
             return checkWeight(weight, edgeEpsilon);
-
         }
 
         // No real solutions to equation.
         return false;
-
     };
 
     // solve for u and v where:
@@ -190,10 +181,8 @@ double Quad2D::area() const {
 
 bool Quad2D::inQuadrilateral(const Vector2D& p, double tolerance) const {
     // point p must be on the inside of all quad edges to be inside the quad.
-    return cross2d(p - v00, p - v10) > -tolerance &&
-           cross2d(p - v10, p - v11) > -tolerance &&
-           cross2d(p - v11, p - v01) > -tolerance &&
-           cross2d(p - v01, p - v00) > -tolerance;
+    return cross2d(p - v00, p - v10) > -tolerance && cross2d(p - v10, p - v11) > -tolerance &&
+           cross2d(p - v11, p - v01) > -tolerance && cross2d(p - v01, p - v00) > -tolerance;
 }
 
 void Quad2D::print(std::ostream& s) const {

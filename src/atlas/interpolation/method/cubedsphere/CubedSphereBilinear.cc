@@ -5,9 +5,9 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "atlas/grid/CubedSphereGrid.h"
-#include "atlas/functionspace/NodeColumns.h"
 #include "atlas/interpolation/method/cubedsphere/CubedSphereBilinear.h"
+#include "atlas/functionspace/NodeColumns.h"
+#include "atlas/grid/CubedSphereGrid.h"
 #include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/interpolation/method/cubedsphere/CellFinder.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -36,7 +36,7 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
     const auto finder = cubedsphere::CellFinder(ncSource.mesh(), util::Config("halo", halo_));
 
     // Numeric tolerance should scale with N.
-    const auto N = CubedSphereGrid(ncSource.mesh().grid()).N();
+    const auto N         = CubedSphereGrid(ncSource.mesh().grid()).N();
     const auto tolerance = 2. * std::numeric_limits<double>::epsilon() * N;
 
     // Loop over target at calculate interpolation weights.
@@ -46,8 +46,8 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
 
     for (idx_t i = 0; i < target_.size(); ++i) {
         if (!ghostView(i)) {
-            const auto cell = finder.getCell(PointLonLat(lonlatView(i, LON), lonlatView(i, LAT)),
-                                             listSize_, tolerance, tolerance);
+            const auto cell =
+                finder.getCell(PointLonLat(lonlatView(i, LON), lonlatView(i, LAT)), listSize_, tolerance, tolerance);
 
             if (!cell.isect) {
                 ATLAS_THROW_EXCEPTION(

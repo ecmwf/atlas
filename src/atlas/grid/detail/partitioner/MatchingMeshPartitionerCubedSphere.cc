@@ -5,9 +5,9 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
+#include "atlas/grid/detail/partitioner/MatchingMeshPartitionerCubedSphere.h"
 #include "atlas/grid/CubedSphereGrid.h"
 #include "atlas/grid/Iterator.h"
-#include "atlas/grid/detail/partitioner/MatchingMeshPartitionerCubedSphere.h"
 #include "atlas/interpolation/method/cubedsphere/CellFinder.h"
 #include "atlas/parallel/mpi/mpi.h"
 
@@ -21,7 +21,7 @@ void MatchingMeshPartitionerCubedSphere::partition(const Grid& grid, int partiti
     const auto finder = interpolation::method::cubedsphere::CellFinder(prePartitionedMesh_);
 
     // Numeric tolerance should scale with N.
-    const auto N = CubedSphereGrid(prePartitionedMesh_.grid()).N();
+    const auto N           = CubedSphereGrid(prePartitionedMesh_.grid()).N();
     const auto epsilon     = 2. * std::numeric_limits<double>::epsilon() * N;
     const auto edgeEpsilon = epsilon;
     const size_t listSize  = 4;

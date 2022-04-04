@@ -47,9 +47,7 @@ method::Intersect Triag2D::intersects(const PointXY& r, double edgeEpsilon, doub
     isect.v      = (e1.x() * pvec.y() - pvec.x() * e1.y()) * invDet;
 
     // make sure weights are valid
-    if (isect.u > -edgeEpsilon || isect.u < 1. + edgeEpsilon ||
-        isect.v > -edgeEpsilon || isect.v < 1. + edgeEpsilon) {
-
+    if (isect.u > -edgeEpsilon || isect.u < 1. + edgeEpsilon || isect.v > -edgeEpsilon || isect.v < 1. + edgeEpsilon) {
         return isect.success();
     }
     else {
@@ -96,8 +94,7 @@ double Triag2D::area() const {
 
 bool Triag2D::inTriangle(const Vector2D& p, double tolerance) const {
     // point p must be on the inside of all triangle edges to be inside the triangle.
-    return cross2d(p - v00, p - v10) > -tolerance &&
-           cross2d(p - v10, p - v11) > -tolerance &&
+    return cross2d(p - v00, p - v10) > -tolerance && cross2d(p - v10, p - v11) > -tolerance &&
            cross2d(p - v11, p - v00) > -tolerance;
 }
 

@@ -213,14 +213,12 @@ CASE("test_quadrilateral_intersection_arbitrary_corners") {
     std::array<double, 4> vTarget{0., 0., 1., 1.};
 
     for (size_t i = 0; i < 4; ++i) {
-
         Intersect isect = quad.localRemap(orig[i]);
 
         EXPECT(isect);
         EXPECT_APPROX_EQ(isect.u, uTarget[i], relative_error);
         EXPECT_APPROX_EQ(isect.v, vTarget[i], relative_error);
     }
-
 }
 
 CASE("test_quadrilateral_intersection_arbitrary_edges") {
@@ -233,24 +231,18 @@ CASE("test_quadrilateral_intersection_arbitrary_edges") {
 
     EXPECT(quad.validate());
 
-    std::array<PointXY, 4> orig{
-        (v0 + v1) * 0.5,
-        (v1 + v2) * 0.5,
-        (v2 + v3) * 0.5,
-        (v3 + v0) * 0.5};
+    std::array<PointXY, 4> orig{(v0 + v1) * 0.5, (v1 + v2) * 0.5, (v2 + v3) * 0.5, (v3 + v0) * 0.5};
 
     std::array<double, 4> uTarget{0.5, 1., 0.5, 0.};
     std::array<double, 4> vTarget{0., 0.5, 1., 0.5};
 
     for (size_t i = 0; i < 4; ++i) {
-
         Intersect isect = quad.localRemap(orig[i]);
 
         EXPECT(isect);
         EXPECT_APPROX_EQ(isect.u, uTarget[i], relative_error);
         EXPECT_APPROX_EQ(isect.v, vTarget[i], relative_error);
     }
-
 }
 
 
