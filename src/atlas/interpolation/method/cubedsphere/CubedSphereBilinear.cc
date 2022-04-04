@@ -6,7 +6,8 @@
  */
 
 #include "atlas/interpolation/method/cubedsphere/CubedSphereBilinear.h"
-#include "atlas/functionspace/CubedSphereColumns.h"
+#include "atlas/functionspace/NodeColumns.h"
+#include "atlas/grid/CubedSphereGrid.h"
 #include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/interpolation/method/cubedsphere/CellFinder.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -34,6 +35,10 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
 
     const auto finder = cubedsphere::CellFinder(ncSource.mesh(), util::Config("halo", halo_));
 
+    // Numeric tolerance should scale with N.
+    const auto N         = CubedSphereGrid(ncSource.mesh().grid()).N();
+    const auto tolerance = 2. * std::numeric_limits<double>::epsilon() * N;
+
     // Enable or disable halo exchange.
     this->allow_halo_exchange_ = halo_exchange_;
 
@@ -44,7 +49,8 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
 
     for (idx_t i = 0; i < target_.size(); ++i) {
         if (!ghostView(i)) {
-            const auto cell = finder.getCell(PointLonLat(lonlatView(i, LON), lonlatView(i, LAT)), listSize_);
+            const auto cell =
+                finder.getCell(PointLonLat(lonlatView(i, LON), lonlatView(i, LAT)), listSize_, tolerance, tolerance);
 
             if (!cell.isect) {
                 ATLAS_THROW_EXCEPTION(

@@ -51,37 +51,52 @@ method::Intersect Quad2D::intersects(const PointXY& r, double edgeEpsilon, doubl
 method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, double epsilon) const {
     method::Intersect isect;
 
+    // get area of quad.
+    double quadArea = area();
+
+    // Epsilon is compared against areas. Scale value accordingly.
+    double areaEpsilon = epsilon * quadArea;
+
     // work out if point is within the polygon
-    if (!inQuadrilateral({p.x(), p.y()})) {
+    if (!inQuadrilateral({p.x(), p.y()}, areaEpsilon)) {
         return isect.fail();
     }
 
-    auto solve_weight = [epsilon](const double a, const double b, const double c, double& wght) -> bool {
-        if (std::abs(a) > epsilon) {
-            // if a is non-zero, we need to solve a quadratic equation for the weight
-            // ax**2 + bx + x = 0
+    auto solve_weight = [&](double a, double b, double c, double& weight) -> bool {
+        auto checkWeight = [](double weight, double tol) -> bool { return ((weight > -tol) && (weight < (1. + tol))); };
+
+        // Quadratic equation ax^2 + bx + c = 0.
+        if (std::abs(a) >= areaEpsilon) {
+            // Solve numerically stable form of quadratic formula:
+            //   x1 = (-b - sign(b) sqrt(b^2 - 4ac)) / 2a
+            //   x2 = c / ax1
+
             double det = b * b - 4. * a * c;
-            if (det >= 0.) {
-                double inv_two_a = 1. / (2. * a);
-                double sqrt_det  = std::sqrt(det);
-                double root_a    = (-b + sqrt_det) * inv_two_a;
-                if ((root_a > -epsilon) && (root_a < (1. + epsilon))) {
-                    wght = root_a;
+            if (det > -areaEpsilon * 2. * quadArea) {
+                // Solution is real.
+                const auto sign = [](double a) { return std::signbit(a) ? -1. : 1.; };
+
+                double sqrtDet = std::sqrt(std::max(0., det));
+
+                // "Classic" solution to quadratic formula with no cancelation
+                // on numerator.
+                weight = (-b - sign(b) * sqrtDet) / (2. * a);
+                if (checkWeight(weight, edgeEpsilon)) {
                     return true;
                 }
-                double root_b = (-b - sqrt_det) * inv_two_a;
-                if ((root_b > -epsilon) && (root_b < (1. + epsilon))) {
-                    wght = root_b;
-                    return true;
-                }
+
+                // Use Vieta's formula x1 * x2 = c / a;
+                weight = c / (a * weight);
+                return checkWeight(weight, edgeEpsilon);
             }
-            return false;
         }
-        if (std::abs(b) > epsilon) {
-            // solve ax + b = 0
-            wght = -c / b;
-            return true;
+        else if (std::abs(b) >= areaEpsilon) {
+            // Linear case bx + c = 0.
+            weight = -c / b;
+            return checkWeight(weight, edgeEpsilon);
         }
+
+        // No real solutions to equation.
         return false;
     };
 
@@ -91,8 +106,8 @@ method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, doubl
     // w3 = u * v
     // w4 = ( 1 - u ) * v
 
-    Vector2D ray(p.x(), p.y());
-    Vector2D vA = v00 - ray;
+    Vector2D point(p.x(), p.y());
+    Vector2D vA = v00 - point;
     Vector2D vB = v10 - v00;
     Vector2D vC = v01 - v00;
     Vector2D vD = v00 - v10 - v01 + v11;
@@ -164,10 +179,10 @@ double Quad2D::area() const {
     return std::abs(0.5 * cross2d((v01 - v00), (v11 - v00))) + std::abs(0.5 * cross2d((v10 - v11), (v01 - v11)));
 }
 
-bool Quad2D::inQuadrilateral(const Vector2D& p) const {
+bool Quad2D::inQuadrilateral(const Vector2D& p, double tolerance) const {
     // point p must be on the inside of all quad edges to be inside the quad.
-    return cross2d(p - v00, p - v10) >= 0. && cross2d(p - v10, p - v11) >= 0. && cross2d(p - v11, p - v01) >= 0. &&
-           cross2d(p - v01, p - v00) >= 0;
+    return cross2d(p - v00, p - v10) > -tolerance && cross2d(p - v10, p - v11) > -tolerance &&
+           cross2d(p - v11, p - v01) > -tolerance && cross2d(p - v01, p - v00) > -tolerance;
 }
 
 void Quad2D::print(std::ostream& s) const {

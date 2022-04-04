@@ -198,6 +198,54 @@ CASE("test_quadrilateral_intersection_corners") {
     }
 }
 
+CASE("test_quadrilateral_intersection_arbitrary_corners") {
+    PointXY v0(338.14, 54.6923);
+    PointXY v1(340.273, 54.6778);
+    PointXY v2(340.312, 55.9707);
+    PointXY v3(338.155, 55.9852);
+
+    Quad2D quad(v0.data(), v1.data(), v2.data(), v3.data());
+
+    EXPECT(quad.validate());
+
+    std::array<PointXY, 4> orig{v0, v1, v2, v3};
+    std::array<double, 4> uTarget{0., 1., 1., 0.};
+    std::array<double, 4> vTarget{0., 0., 1., 1.};
+
+    for (size_t i = 0; i < 4; ++i) {
+        Intersect isect = quad.localRemap(orig[i]);
+
+        EXPECT(isect);
+        EXPECT_APPROX_EQ(isect.u, uTarget[i], relative_error);
+        EXPECT_APPROX_EQ(isect.v, vTarget[i], relative_error);
+    }
+}
+
+CASE("test_quadrilateral_intersection_arbitrary_edges") {
+    PointXY v0(338.14, 54.6923);
+    PointXY v1(340.273, 54.6778);
+    PointXY v2(340.312, 55.9707);
+    PointXY v3(338.155, 55.9852);
+
+    Quad2D quad(v0.data(), v1.data(), v2.data(), v3.data());
+
+    EXPECT(quad.validate());
+
+    std::array<PointXY, 4> orig{(v0 + v1) * 0.5, (v1 + v2) * 0.5, (v2 + v3) * 0.5, (v3 + v0) * 0.5};
+
+    std::array<double, 4> uTarget{0.5, 1., 0.5, 0.};
+    std::array<double, 4> vTarget{0., 0.5, 1., 0.5};
+
+    for (size_t i = 0; i < 4; ++i) {
+        Intersect isect = quad.localRemap(orig[i]);
+
+        EXPECT(isect);
+        EXPECT_APPROX_EQ(isect.u, uTarget[i], relative_error);
+        EXPECT_APPROX_EQ(isect.v, vTarget[i], relative_error);
+    }
+}
+
+
 //-----------------------------------------------------------------------------
 
 }  // namespace test
