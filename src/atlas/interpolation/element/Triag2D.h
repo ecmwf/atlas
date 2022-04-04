@@ -62,7 +62,7 @@ private:           // members
 
     static double cross2d(const Vector2D& a, const Vector2D& b) { return a.x() * b.y() - a.y() * b.x(); }
 
-    bool inTriangle(const Vector2D& p) const;
+    bool inTriangle(const Vector2D& p, double tolerance = 5 * std::numeric_limits<double>::epsilon()) const;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

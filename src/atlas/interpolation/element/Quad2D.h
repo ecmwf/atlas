@@ -74,7 +74,7 @@ private:           // members
     Vector2D v11;  // aka v2
     Vector2D v01;  // aka v3
 
-    bool inQuadrilateral(const Vector2D& p) const;
+    bool inQuadrilateral(const Vector2D& p, double tolerance = 5 * std::numeric_limits<double>::epsilon()) const;
 
     static double cross2d(const Vector2D& a, const Vector2D& b) { return a.x() * b.y() - a.y() * b.x(); }
 };
