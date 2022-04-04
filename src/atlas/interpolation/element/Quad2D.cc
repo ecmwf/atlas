@@ -62,45 +62,61 @@ method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, doubl
         return isect.fail();
     }
 
-    auto solve_weight = [&](double a, double b, double c, double& wght) -> bool {
+    auto solve_weight = [&](double a, double b, double c, double& weight) -> bool {
 
-        auto check_weight = [](double wght, double tol) -> bool {
-            return ((wght > -tol) && (wght < (1. + tol)));
+        auto check_weight = [](double weight, double tol) -> bool {
+            return ((weight > -tol) && (weight < (1. + tol)));
         };
 
-        if (std::abs(a) > areaEpsilon) {
-            // if a is non-zero, we need to solve a quadratic equation for the weight.
-            // ax**2 + bx + c = 0
-            double det = b * b - 4. * a * c;
+        // Quadratic equation ax^2 + bx + c = 0.
+        if (std::abs(a) >= areaEpsilon) {
 
-            // det has dimensions of area squared.
+            // Solve numerically stable form of quadratic formula:
+            //   x1 = (-b - sign(b) sqrt(b^2 - 4ac)) / 2a
+            //   x2 = c / ax1
+
+            double det = b * b - 4. * a * c;
             if (det > -areaEpsilon * 2. * quadArea) {
 
-                double inv_two_a = 1. / (2. * a);
-                double sqrt_det  = std::sqrt(std::max(det, 0.));
+                // Solution is real.
+                const auto sign = [](double a){return std::signbit(a) ? -1. : 1.;};
 
-                // x = A +/- B,
-                // A = -b / 2a,
-                // B sqrt_det / 2a.
+                double sqrtDet =  std::sqrt(std::max(0., det));
 
-                double A = -b * inv_two_a;
-                double B = sqrt_det * inv_two_a;
+                // "Classic" solution to quadratic formula with no cancelation
+                // on numerator.
+                weight = (-b - sign(b) * sqrtDet) / (2. * a);
+                if (check_weight(weight, edgeEpsilon)) {
+                    return true;
+                }
 
-                // Scale epsilon by magnitude of A or B.
-                double edgeEpsilonScaled = edgeEpsilon *
-                                           std::max({1., std::abs(A), std::abs(B)});
+                // Use Vieta's formula x1 * x2 = c / a;
+                else {
+                    weight = c / (a * weight);
+                    return check_weight(weight, edgeEpsilon);
+                }
 
-                return check_weight(wght = A + B, edgeEpsilonScaled) ? true :
-                       check_weight(wght = A - B, edgeEpsilonScaled) ? true : false;
             }
+            else {
+
+                // Solution is complex.
+                return false;
+
+            }
+        }
+        else if (std::abs(b) >= areaEpsilon) {
+
+            // Linear case bx + c = 0.
+            weight = -c / b;
+            return check_weight(weight, edgeEpsilon);
 
         }
-        else if (std::abs(b) > areaEpsilon) {
-            // solve bx + c = 0
-            return check_weight(wght = -c / b, edgeEpsilon);
-        }
+        else {
 
-        return false;
+            // No solution.
+            return false;
+
+        }
     };
 
     // solve for u and v where:
