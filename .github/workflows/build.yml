@@ -91,6 +91,7 @@ jobs:
             compiler_cxx: ~
             compiler_fc: gfortran-11
             caching: true
+            cmake_options: -DMPI_SLOTS=4
 
     runs-on: ${{ matrix.os }}
     steps:
