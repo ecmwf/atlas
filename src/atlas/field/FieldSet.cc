@@ -40,12 +40,13 @@ Field FieldSetImpl::add(const Field& field) {
     return field;
 }
 
-bool FieldSetImpl::has_field(const std::string& name) const {
+bool FieldSetImpl::has(const std::string& name) const {
     return index_.count(name);
 }
 
+
 Field& FieldSetImpl::field(const std::string& name) const {
-    if (!has_field(name)) {
+    if (!has(name)) {
         const std::string msg("FieldSet" + (name_.length() ? " \"" + name_ + "\"" : "") + ": cannot find field \"" +
                               name + "\"");
         throw_Exception(msg, Here());
@@ -104,7 +105,7 @@ void atlas__FieldSet__add_field(FieldSetImpl* This, FieldImpl* field) {
 
 int atlas__FieldSet__has_field(const FieldSetImpl* This, char* name) {
     ATLAS_ASSERT(This != nullptr, "Reason: Use of uninitialised atlas_FieldSet");
-    return This->has_field(std::string(name));
+    return This->has(std::string(name));
 }
 
 idx_t atlas__FieldSet__size(const FieldSetImpl* This) {
