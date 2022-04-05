@@ -410,6 +410,10 @@ Array* Array::create(DataType datatype, ArraySpec&& spec) {
     }
 }
 
+Array* Array::create(ArraySpec&& spec) {
+    return create(spec.datatype(), std::move(spec));
+}
+
 //------------------------------------------------------------------------------
 
 Array::~Array() = default;
