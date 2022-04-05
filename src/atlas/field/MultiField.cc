@@ -39,54 +39,25 @@ void force_link() {
 }
 }  // namespace
 
-void MultiField::initialize(const std::string& creator, const eckit::Parametrisation& params) {
-    std::unique_ptr<MultiFieldCreator> MultiField_creator(MultiFieldCreatorFactory::build(creator, params));
-    MultiField_creator->generate(*this, params);
-}
-
-array::Array& MultiField::allocate(array::DataType datatype, array::ArraySpec&& spec) {
-    array_.reset(array::Array::create(datatype, std::move(spec)));
-    return *array_;
-}
-
-//------------------------------------------------------------------------------------------------------
-
-MultiField::MultiField() = default;
-
-MultiField::MultiField(const std::string& creator, const eckit::Parametrisation& params) {
-    initialize(creator, params);
-}
-
-const util::Metadata& MultiField::metadata() const {
-    return metadata_;
-}
-
-util::Metadata& MultiField::metadata() {
-    return metadata_;
-}
-
-std::vector<std::string> MultiField::field_names() const {
-    std::vector<std::string> ret;
-    if (fields_.size()) {
-        ret.reserve(fields_.size());
-    }
-
-    for (auto it = field_index_.begin(); it != field_index_.end(); ++it) {
-        ret.push_back(it->first);
-    }
-    return ret;
-}
-
 //-----------------------------------------------------------------------------
 
-MultiFieldCreator::MultiFieldCreator(const eckit::Parametrisation&) {}
+MultiFieldCreator::MultiFieldCreator(const eckit::Configuration&) {}
 
 MultiFieldCreator::~MultiFieldCreator() = default;
 
-MultiFieldCreator* MultiFieldCreatorFactory::build(const std::string& builder, const eckit::Parametrisation& config) {
+MultiFieldCreator* MultiFieldCreatorFactory::build(const std::string& builder, const eckit::Configuration& config) {
     force_link();
     auto factory = get(builder);
     return factory->make(config);
+}
+
+atlas::field::MultiField::MultiField(const eckit::Configuration& config) {
+    std::string type;
+    if (!config.get("type", type)) {
+        ATLAS_THROW_EXCEPTION("Could not find \"type\" in configuration");
+    }
+    std::unique_ptr<MultiFieldCreator> creator(MultiFieldCreatorFactory::build(type, config));
+    reset(creator->create(config));
 }
 
 //-----------------------------------------------------------------------------

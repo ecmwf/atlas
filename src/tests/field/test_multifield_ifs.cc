@@ -11,8 +11,7 @@
 #include <cmath>
 #include <string>
 
-#include "eckit/log/JSON.h"
-#include "eckit/parser/JSONParser.h"
+#include "eckit/config/YAMLConfiguration.h"
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/DataType.h"
@@ -20,7 +19,6 @@
 #include "atlas/field/Field.h"
 #include "atlas/field/MultiField.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/mesh/Mesh.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 
@@ -38,44 +36,27 @@ namespace test {
 // ---  Declaration (in .h file)
 class MultiFieldCreatorIFS : public MultiFieldCreator {
 public:
-    MultiFieldCreatorIFS(const eckit::Parametrisation& p = util::Config()): MultiFieldCreator(p) {}
+    MultiFieldCreatorIFS(const eckit::Configuration& config = util::Config()): MultiFieldCreator(config) {}
     ~MultiFieldCreatorIFS() override = default;
-    void generate(MultiField& fieldpool, const eckit::Parametrisation& p = util::Config()) const override;
+    MultiFieldImpl* create(const eckit::Configuration& = util::Config()) const override;
 };
 
 // ---  Implementation (in .cc file)
-void MultiFieldCreatorIFS::generate(MultiField& multifield, const eckit::Parametrisation& p) const {
-    const eckit::LocalConfiguration* params = dynamic_cast<const eckit::LocalConfiguration*>(&p);
-    if (!params) {
-        throw_Exception("Parametrisation has to be of atlas::util::Config type");
-    }
-
-    long nproma = 0;
-    long ngptot = 0;
-    long nfld   = 0;
-    long nlev   = 0;
+MultiFieldImpl* MultiFieldCreatorIFS::create(const eckit::Configuration& config) const {
+    long ngptot = config.getLong("ngptot");
+    long nproma = config.getLong("nproma");
+    long nlev   = config.getLong("nlev");
     long nblk   = 0;
 
-    if (!p.get("ngptot", ngptot)) {
-        throw_Exception("Could not find 'ngptot' in Parametrisation");
-    }
-
-    if (!p.get("nproma", nproma)) {
-        throw_Exception("Could not find 'nproma' in Parametrisation");
-    }
-
-    if (!p.get("nlev", nlev)) {
-        throw_Exception("Could not find 'nlev' in Parametrisation");
-    }
 
     array::DataType datatype = array::DataType::create<double>();
     std::string datatype_str;
-    if (p.get("datatype", datatype_str)) {
+    if (config.get("datatype", datatype_str)) {
         datatype = array::DataType(datatype_str);
     }
     else {
         array::DataType::kind_t kind(array::DataType::kind<double>());
-        p.get("kind", kind);
+        config.get("kind", kind);
         if (!array::DataType::kind_valid(kind)) {
             std::stringstream msg;
             msg << "Could not create field. kind parameter unrecognized";
@@ -86,18 +67,20 @@ void MultiFieldCreatorIFS::generate(MultiField& multifield, const eckit::Paramet
 
     nblk = std::ceil(static_cast<double>(ngptot) / static_cast<double>(nproma));
 
-    std::vector<eckit::LocalConfiguration> fields;
-    params->get("fields", fields);
-    nfld            = fields.size();
-    size_t nvar_tot = 0;
+    auto fields = config.getSubConfigurations("fields");
+    long nfld   = 0;
     for (const auto& field_config : fields) {
-        size_t nvar = 1;
+        long nvar = 1;
         field_config.get("nvar", nvar);
-        nvar_tot += nvar;
+        nfld += nvar;
     }
 
-    auto multiarray_spec = array::make_shape(nblk, nvar_tot, nlev, nproma);
-    auto& multiarray     = multifield.allocate(datatype, multiarray_spec);
+    auto multiarray_shape = array::make_shape(nblk, nfld, nlev, nproma);
+
+    MultiFieldImpl* multifield = new MultiFieldImpl{array::ArraySpec{datatype, multiarray_shape}};
+
+    auto& multiarray = multifield->array();
+    auto& fieldset   = multifield->fieldset();
 
     size_t multiarray_field_idx = 0;
     for (size_t i = 0; i < fields.size(); ++i) {
@@ -146,12 +129,13 @@ void MultiFieldCreatorIFS::generate(MultiField& multifield, const eckit::Paramet
             }
         }
         field.set_levels(nlev);
-        multifield.fields_.emplace_back(field);
-        ATLAS_ASSERT(multifield.field_index_.find(field.name()) == multifield.field_index_.end(),
-                     "Field with name already exists!");
-        multifield.field_index_[field.name()] = i;
+        ATLAS_ASSERT(not fieldset.has(field.name()), "Field with name \"" + field.name() + "\" already exists!");
+
+        fieldset.add(field);
+
         multiarray_field_idx += field_vars;
     }
+    return multifield;
 }
 
 // Register in factory
@@ -169,50 +153,37 @@ CASE("multifield_generator") {
 
 
 CASE("multifield_create") {
-    int nproma = 16;
-    int nlev   = 100;
-    int ngptot = 2000;
+    using Value = float;
+    int nproma  = 16;
+    int nlev    = 100;
+    int ngptot  = 2000;
 
     auto json = [&]() -> std::string {
         util::Config p;
+        p.set("type", "MultiFieldCreatorIFS");
         p.set("ngptot", ngptot);
         p.set("nproma", nproma);
         p.set("nlev", nlev);
-        p.set("datatype", array::make_datatype<double>().str());
-        p.set("fields", [] {
-            std::vector<util::Config> fields(5);
-            fields[0].set("name", "temperature");
-
-            fields[1].set("name", "pressure");
-
-            fields[2].set("name", "density");
-
-            fields[3].set("name", "clv");
-            fields[3].set("nvar", 5);
-
-            fields[4].set("name", "wind_u");
-            return fields;
-        }());
-
-        // We can also translate parameters to a json:
-        std::stringstream json;
-        eckit::JSON js(json);
-        js << p;
-        return json.str();
+        p.set("datatype", array::make_datatype<Value>().str());
+        p.set("fields", {
+                            util::Config("name", "temperature"),     //
+                            util::Config("name", "pressure"),        //
+                            util::Config("name", "density"),         //
+                            util::Config("name", "clv")("nvar", 5),  //
+                            util::Config("name", "wind_u")           //
+                        });
+        return p.json();
     };
 
-
-    // And we can create back parameters from json:
     Log::info() << "json = " << json() << std::endl;
-    std::stringstream json_stream;
-    json_stream << json();
-    util::Config config(json_stream);
 
-    MultiField multifield("MultiFieldCreatorIFS", config);
+    MultiField multifield{eckit::YAMLConfiguration{json()}};
 
     const auto nblk = multifield.array().shape(0);
+    const auto nvar = multifield.array().shape(1);
     const auto nfld = multifield.size();
     EXPECT_EQ(nfld, 5);
+    EXPECT_EQ(nvar, 9);
 
     EXPECT_EQ(multifield.size(), 5);
     EXPECT(multifield.has("temperature"));
@@ -227,20 +198,17 @@ CASE("multifield_create") {
     Log::info() << multifield.field("clv") << std::endl;
     Log::info() << multifield.field("wind_u") << std::endl;
 
-    auto temp   = array::make_view<double, 3>(multifield.field("temperature"));
-    auto pres   = array::make_view<double, 3>(multifield.field("pressure"));
-    auto dens   = array::make_view<double, 3>(multifield.field("density"));
-    auto clv    = array::make_view<double, 4>(multifield.field("clv"));  // note rank 4
-    auto wind_u = array::make_view<double, 3>(multifield.field("wind_u"));
+    auto temp   = array::make_view<Value, 3>(multifield.field("temperature"));
+    auto pres   = array::make_view<Value, 3>(multifield.field("pressure"));
+    auto dens   = array::make_view<Value, 3>(multifield.field("density"));
+    auto clv    = array::make_view<Value, 4>(multifield.field("clv"));  // note rank 4
+    auto wind_u = array::make_view<Value, 3>(multifield.field("wind_u"));
 
-    // or
-    {
-        auto temp   = array::make_view<double, 3>(multifield[0]);
-        auto pres   = array::make_view<double, 3>(multifield[1]);
-        auto dens   = array::make_view<double, 3>(multifield[2]);
-        auto clv    = array::make_view<double, 4>(multifield[3]);  // note rank 4
-        auto wind_u = array::make_view<double, 3>(multifield[4]);
-    }
+    EXPECT_EQ(multifield[0].name(), "temperature");
+    EXPECT_EQ(multifield[1].name(), "pressure");
+    EXPECT_EQ(multifield[2].name(), "density");
+    EXPECT_EQ(multifield[3].name(), "clv");
+    EXPECT_EQ(multifield[4].name(), "wind_u");
 
     auto block_stride  = multifield.array().stride(0);
     auto field_stride  = nproma * nlev;
@@ -266,9 +234,10 @@ CASE("multifield_create") {
     EXPECT_EQ(clv.size(), nblk * 5 * nlev * nproma);
 
 
-    // Underlying array of MultiField
+    // Advanced usage, to access underlying array. This should only be used
+    // in a driver and not be exposed to algorithms.
     {
-        auto multiarray = array::make_view<double, 4>(multifield);
+        auto multiarray = array::make_view<Value, 4>(multifield);
         EXPECT_EQ(multiarray.stride(0), block_stride);
         EXPECT_EQ(multiarray.stride(1), field_stride);
         EXPECT_EQ(multiarray.stride(2), level_stride);
@@ -280,8 +249,7 @@ CASE("multifield_create") {
         EXPECT_EQ(multiarray(13, 5, 14, 15), 16.);
         EXPECT_EQ(multiarray(17, 8, 18, 3), 19.);
 
-
-        EXPECT_EQ(multiarray.size(), nblk * (nfld - 1 + 5) * nlev * nproma);
+        EXPECT_EQ(multiarray.size(), nblk * nvar * nlev * nproma);
     }
 }
 

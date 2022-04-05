@@ -14,13 +14,16 @@
 #pragma once
 
 #include <map>
+#include <vector>
 
 #include "atlas/array/Array.h"
 #include "atlas/field/Field.h"
+#include "atlas/field/FieldSet.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Factory.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/util/Object.h"
+#include "atlas/util/ObjectHandle.h"
 
 namespace eckit {
 class Parametrisation;
@@ -37,68 +40,161 @@ namespace field {
  *
  * Fields have to all be of same memory layout and data type
  */
-class MultiField : public util::Object {
-public:  // methods
-         //-- Constructors
-    MultiField();
 
-    MultiField(const std::string& generator, const eckit::Parametrisation& = util::Config());
+namespace detail {
+class ArrayAllocator {
+public:
+    virtual array::Array* allocate(const array::ArraySpec&) = 0;
+    virtual void deallocate()                               = 0;
+    virtual ~ArrayAllocator()                               = default;
+};
+
+class NoArrayAllocator : public ArrayAllocator {
+public:
+    virtual array::Array* allocate(const array::ArraySpec& arrayspec) override { return nullptr; }
+    virtual void deallocate() override {}
+};
+
+class StandardArrayAllocator : public ArrayAllocator {
+public:
+    virtual array::Array* allocate(const array::ArraySpec& arrayspec) override {
+        array::ArraySpec spec(arrayspec);
+        return array::Array::create(std::move(spec));
+    }
+    virtual void deallocate() override {
+        // Nothing to deallocate.
+        // The Array owns the allocated data.
+    }
+};
+}  // namespace detail
+
+class MultiFieldImpl : public util::Object {
+public:  // methods
+    //-- Constructors
+
+    MultiFieldImpl() { allocator_ = std::unique_ptr<detail::ArrayAllocator>(new detail::NoArrayAllocator()); }
+
+    MultiFieldImpl(const array::ArraySpec& spec, detail::ArrayAllocator* allocator = nullptr) {
+        if (allocator) {
+            allocator_ = std::unique_ptr<detail::ArrayAllocator>(allocator);
+        }
+        else {
+            allocator_ = std::unique_ptr<detail::ArrayAllocator>(new detail::StandardArrayAllocator());
+        }
+        ATLAS_ASSERT(allocator_);
+        array_ = std::unique_ptr<array::Array>(allocator_->allocate(spec));
+    }
+
+    virtual ~MultiFieldImpl() { allocator_->deallocate(); }
+
 
     //-- Accessors
 
-    const Field& field(const std::string& name) const { return fields_[field_index_.at(name)]; }
-    Field& field(const std::string& name) { return fields_[field_index_.at(name)]; }
-    bool has(const std::string& name) const { return (field_index_.find(name) != field_index_.end()); }
-    std::vector<std::string> field_names() const;
+    const Field& field(const std::string& name) const { return fieldset_.field(name); }
+    Field& field(const std::string& name) { return fieldset_.field(name); }
+    bool has(const std::string& name) const { return fieldset_.has(name); }
+    std::vector<std::string> field_names() const { return fieldset_.field_names(); }
 
-    const Field& field(const idx_t idx) const { return fields_[idx]; }
-    Field& field(const idx_t idx) { return fields_[idx]; }
-    idx_t size() const { return static_cast<idx_t>(fields_.size()); }
+    const Field& field(const idx_t idx) const { return fieldset_[idx]; }
+    Field& field(const idx_t idx) { return fieldset_[idx]; }
+    idx_t size() const { return fieldset_.size(); }
 
-    const Field& operator[](const idx_t idx) const { return fields_[idx]; }
-    Field& operator[](const idx_t idx) { return fields_[idx]; }
+    const Field& operator[](const idx_t idx) const { return fieldset_[idx]; }
+    Field& operator[](const idx_t idx) { return fieldset_[idx]; }
 
-    const Field& operator[](const std::string& name) const { return field(name); }
-    Field& operator[](const std::string& name) { return field(name); }
+    const Field& operator[](const std::string& name) const { return fieldset_.field(name); }
+    Field& operator[](const std::string& name) { return fieldset_.field(name); }
 
-    const util::Metadata& metadata() const;
-    util::Metadata& metadata();
+    const util::Metadata& metadata() const { return metadata_; }
+    util::Metadata& metadata() { return metadata_; }
 
     // -- Modifiers
 
-    void initialize(const std::string& generator, const eckit::Parametrisation& = util::Config());
-
-    array::Array& allocate(array::DataType datatype, array::ArraySpec&&);
-
     /// @brief Implicit conversion to Array
-    operator const array::Array&() const { return *array_; }
-    operator array::Array&() { return *array_; }
+    operator const array::Array&() const { return array(); }
+    operator array::Array&() { return array(); }
+
+    operator const FieldSet&() const { return fieldset_; }
+
+    operator FieldSet&() { return fieldset_; }
 
     /// @brief Access contained Array
-    const array::Array& array() const { return *array_; }
-    array::Array& array() { return *array_; }
+    const array::Array& array() const {
+        ATLAS_ASSERT(array_);
+        return *array_;
+    }
+    array::Array& array() {
+        ATLAS_ASSERT(array_);
+        return *array_;
+    }
+
+    /// @brief Access contained FieldSet
+    const FieldSet& fieldset() const { return fieldset_; }
+    FieldSet& fieldset() { return fieldset_; }
 
 
 public:  // temporary public for prototyping
-    std::map<std::string, int> field_index_;
-    std::vector<Field> fields_;
+    FieldSet fieldset_;
     std::unique_ptr<array::Array> array_;
+    std::unique_ptr<detail::ArrayAllocator> allocator_;
     util::Metadata metadata_;
 };
+
+
+class MultiField : public util::ObjectHandle<MultiFieldImpl> {
+public:  // methods
+         //-- Constructors
+    using Handle::Handle;
+
+    MultiField(const eckit::Configuration&);
+
+    //-- Accessors
+
+    const Field& field(const std::string& name) const { return get()->field(name); }
+    Field& field(const std::string& name) { return get()->field(name); }
+    bool has(const std::string& name) const { return get()->has(name); }
+    std::vector<std::string> field_names() const { return get()->field_names(); }
+
+    const Field& field(const idx_t idx) const { return get()->field(idx); }
+    Field& field(const idx_t idx) { return get()->field(idx); }
+    idx_t size() const { return get()->size(); }
+
+    const Field& operator[](const idx_t idx) const { return get()->field(idx); }
+    Field& operator[](const idx_t idx) { return get()->field(idx); }
+
+    const Field& operator[](const std::string& name) const { return get()->field(name); }
+    Field& operator[](const std::string& name) { return get()->field(name); }
+
+    const util::Metadata& metadata() const { return get()->metadata(); }
+    util::Metadata& metadata() { return get()->metadata(); }
+
+    // -- Modifiers
+
+    /// @brief Implicit conversion to Array
+    operator const array::Array&() const { return get()->array(); }
+    operator array::Array&() { return get()->array(); }
+
+    operator const FieldSet&() const { return get()->fieldset_; }
+    operator FieldSet&() { return get()->fieldset_; }
+
+    /// @brief Access contained Array
+    const array::Array& array() const { return get()->array(); }
+    array::Array& array() { return get()->array(); }
+};
+
 
 //------------------------------------------------------------------------------------------------------
 
 class MultiFieldCreator : public util::Object {
 public:
-    MultiFieldCreator(const eckit::Parametrisation& = util::Config());
+    MultiFieldCreator(const eckit::Configuration& = util::Config());
 
     virtual ~MultiFieldCreator();
 
-    virtual void generate(MultiField&, const eckit::Parametrisation& = util::Config()) const = 0;
+    virtual MultiFieldImpl* create(const eckit::Configuration& = util::Config()) const = 0;
 };
 
 //------------------------------------------------------------------------------------------------------
-
 
 class MultiFieldCreatorFactory : public util::Factory<MultiFieldCreatorFactory> {
 public:
@@ -108,17 +204,17 @@ public:
    * \brief build MultiFieldCreator with options specified in parametrisation
    * \return MutliField creator
    */
-    static MultiFieldCreator* build(const std::string&, const eckit::Parametrisation& = util::NoConfig());
+    static MultiFieldCreator* build(const std::string&, const eckit::Configuration& = util::NoConfig());
 
     using Factory::Factory;
 
 private:
-    virtual MultiFieldCreator* make(const eckit::Parametrisation&) = 0;
+    virtual MultiFieldCreator* make(const eckit::Configuration&) = 0;
 };
 
 template <class T>
 class MultiFieldCreatorBuilder : public MultiFieldCreatorFactory {
-    virtual MultiFieldCreator* make(const eckit::Parametrisation& param) override { return new T(param); }
+    virtual MultiFieldCreator* make(const eckit::Configuration& config) override { return new T(config); }
 
 public:
     using MultiFieldCreatorFactory::MultiFieldCreatorFactory;
