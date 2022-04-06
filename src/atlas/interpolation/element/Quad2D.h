@@ -29,16 +29,16 @@ public:
     Quad2D(const double* x0, const double* x1, const double* x2, const double* x3):
         v00(x0), v10(x1), v11(x2), v01(x3) {}
 
-    Quad2D(const PointXY& x0, const PointXY& x1, const PointXY& x2, const PointXY& x3):
+    Quad2D(const Point2& x0, const Point2& x1, const Point2& x2, const Point2& x3):
         Quad2D(x0.data(), x1.data(), x2.data(), x3.data()) {}
 
     Quad2D(const Vector2D& x0, const Vector2D& x1, const Vector2D& x2, const Vector2D& x3):
         Quad2D(x0.data(), x1.data(), x2.data(), x3.data()) {}
 
-    method::Intersect intersects(const PointXY& r, double edgeEpsilon = 5 * std::numeric_limits<double>::epsilon(),
+    method::Intersect intersects(const Point2& r, double edgeEpsilon = 5 * std::numeric_limits<double>::epsilon(),
                                  double epsilon = 5 * std::numeric_limits<double>::epsilon()) const;
 
-    method::Intersect localRemap(const PointXY& r, double edgeEpsilon = 5 * std::numeric_limits<double>::epsilon(),
+    method::Intersect localRemap(const Point2& r, double edgeEpsilon = 5 * std::numeric_limits<double>::epsilon(),
                                  double epsilon = 5 * std::numeric_limits<double>::epsilon()) const;
 
     bool validate() const;

@@ -19,7 +19,7 @@ namespace element {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-method::Intersect Quad2D::intersects(const PointXY& r, double edgeEpsilon, double epsilon) const {
+method::Intersect Quad2D::intersects(const Point2& r, double edgeEpsilon, double epsilon) const {
     method::Intersect isect;  // intersection is false
 
     /* Split quadrilateral into two triangles, points are labelled counter-clockwise.
@@ -48,7 +48,7 @@ method::Intersect Quad2D::intersects(const PointXY& r, double edgeEpsilon, doubl
     return isect.fail();
 }
 
-method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, double epsilon) const {
+method::Intersect Quad2D::localRemap(const Point2& p, double edgeEpsilon, double epsilon) const {
     method::Intersect isect;
 
     // get area of quad.
