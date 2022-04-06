@@ -22,7 +22,7 @@ namespace test {
 //-----------------------------------------------------------------------------
 
 CASE("test_var_size") {
-    Array* ds = Array::create<double>(4ul, 5ul, 7ul, 9ul);
+    std::unique_ptr<Array> ds{Array::create<double>(4ul, 5ul, 7ul, 9ul)};
 
     auto arrv = make_host_view<double, 4>(*ds);
     EXPECT(ds->size() == 1260);
@@ -31,12 +31,10 @@ CASE("test_var_size") {
     EXPECT(get_var_size<1>(arrv) == 252);
     EXPECT(get_var_size<2>(arrv) == 180);
     EXPECT(get_var_size<3>(arrv) == 140);
-
-    delete ds;
 }
 
 CASE("test_get_parallel_dim") {
-    Array* ds = Array::create<double>(4ul, 5ul, 7ul, 9ul);
+    std::unique_ptr<Array> ds{Array::create<double>(4ul, 5ul, 7ul, 9ul)};
 
     auto arrv = make_host_view<double, 4>(*ds);
     EXPECT(ds->size() == 1260);
@@ -45,8 +43,14 @@ CASE("test_get_parallel_dim") {
     EXPECT(get_parallel_dim<LastDim>(arrv) == 3);
     EXPECT(get_parallel_dim<Dim<1>>(arrv) == 1);
     EXPECT(get_parallel_dim<Dim<2>>(arrv) == 2);
+}
 
-    delete ds;
+CASE("test mixed index types") {
+    std::unique_ptr<Array> ds{Array::create<double>(4ul, 5ul, 7ul, 9ul)};
+
+    auto arrv = make_host_view<double, 4>(*ds);
+
+    arrv(long(0), size_t(0), int(0), unsigned(0)) = 0.;
 }
 
 //-----------------------------------------------------------------------------
