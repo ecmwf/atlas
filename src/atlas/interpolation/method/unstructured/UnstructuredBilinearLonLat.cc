@@ -238,7 +238,7 @@ void UnstructuredBilinearLonLat::setup(const FunctionSpace& source) {
 
     const idx_t maxNbElemsToTry = std::max<idx_t>(8, idx_t(Nelements * max_fraction_elems_to_try_));
 
-    std::vector<size_t> failures;
+    std::vector<idx_t> failures;
 
     ATLAS_TRACE_SCOPE("Computing interpolation matrix") {
         eckit::ProgressTimer progress("Computing interpolation weights", out_npts, "point", double(5), Log::debug());
@@ -247,7 +247,7 @@ void UnstructuredBilinearLonLat::setup(const FunctionSpace& source) {
                 continue;
             }
 
-            PointXYZ p{(*oxyz_)(ip, 0), (*oxyz_)(ip, 1), (*oxyz_)(ip, 2)};  // lookup point
+            PointXYZ p{(*oxyz_)(ip, XX), (*oxyz_)(ip, YY), (*oxyz_)(ip, ZZ)};  // lookup point
 
             idx_t kpts   = 8;
             bool success = false;
@@ -266,8 +266,8 @@ void UnstructuredBilinearLonLat::setup(const FunctionSpace& source) {
                 if (not treat_failure_as_missing_value_) {
                     Log::debug() << "------------------------------------------------------"
                                     "---------------------\n";
-                    Log::debug() << "Failed to project point (lon,lat)=" << (*olonlat_)(ip, 0) << " "
-                                 << (*olonlat_)(ip, 1) << '\n';
+                    Log::debug() << "Failed to project point (lon,lat)=" << (*olonlat_)(ip, LON) << " "
+                                 << (*olonlat_)(ip, LAT) << '\n';
                     Log::debug() << failures_log.str();
                 }
             }
@@ -283,8 +283,8 @@ void UnstructuredBilinearLonLat::setup(const FunctionSpace& source) {
             // If this fails, consider lowering atlas::grid::parametricEpsilon
             std::ostringstream msg;
             msg << "Rank " << mpi::rank() << " failed to project points:\n";
-            for (std::vector<size_t>::const_iterator i = failures.begin(); i != failures.end(); ++i) {
-                const PointLonLat pll{(*olonlat_)(*i, (size_t)0), (*olonlat_)(*i, (size_t)1)};  // lookup point
+            for (auto i : failures) {
+                const PointLonLat pll{(*olonlat_)(i, LON), (*olonlat_)(i, LAT)};  // lookup point
                 msg << "\t(lon,lat) = " << pll << "\n";
             }
 
@@ -310,14 +310,14 @@ Method::Triplets UnstructuredBilinearLonLat::projectPointToElements(size_t ip, c
     Triplets triplets;
     triplets.reserve(4);
 
-    double o_lon{(*olonlat_)(ip, 0)};
+    double o_lon{(*olonlat_)(ip, LON)};
     while (o_lon >= 360.0) {
         o_lon -= 360.0;
     }
     while (o_lon < 0.0) {
         o_lon += 360.0;
     }
-    PointXY o_loc{o_lon, (*olonlat_)(ip, 1)};  // lookup point
+    PointLonLat o_loc{o_lon, (*olonlat_)(ip, LAT)};  // lookup point
 
     auto inv_dist_weight = [](element::Quad2D& q, const PointXY& loc, std::array<double, 4>& w) {
         double d[4];
@@ -350,9 +350,9 @@ Method::Triplets UnstructuredBilinearLonLat::projectPointToElements(size_t ip, c
 
         if (nb_cols == 3) {
             /* triangle */
-            element::Triag2D triag(PointXY{(*ilonlat_)(idx[0], 0), (*ilonlat_)(idx[0], 1)},
-                                   PointXY{(*ilonlat_)(idx[1], 0), (*ilonlat_)(idx[1], 1)},
-                                   PointXY{(*ilonlat_)(idx[2], 0), (*ilonlat_)(idx[2], 1)});
+            element::Triag2D triag(PointLonLat{(*ilonlat_)(idx[0], LON), (*ilonlat_)(idx[0], LAT)},
+                                   PointLonLat{(*ilonlat_)(idx[1], LON), (*ilonlat_)(idx[1], LAT)},
+                                   PointLonLat{(*ilonlat_)(idx[2], LON), (*ilonlat_)(idx[2], LAT)});
 
             // pick an epsilon based on a characteristic length (sqrt(area))
             // (this scales linearly so it better compares with linear weights u,v,w)
@@ -378,10 +378,10 @@ Method::Triplets UnstructuredBilinearLonLat::projectPointToElements(size_t ip, c
         else {
             /* quadrilateral */
             double lons[4];
-            lons[0] = (*ilonlat_)(idx[0], 0);
-            lons[1] = (*ilonlat_)(idx[1], 0);
-            lons[2] = (*ilonlat_)(idx[2], 0);
-            lons[3] = (*ilonlat_)(idx[3], 0);
+            lons[0] = (*ilonlat_)(idx[0], LON);
+            lons[1] = (*ilonlat_)(idx[1], LON);
+            lons[2] = (*ilonlat_)(idx[2], LON);
+            lons[3] = (*ilonlat_)(idx[3], LON);
             // adjust quadrilaterals to lie within [0,360]
             for (idx_t i = 0; i < 4; ++i) {
                 while (lons[i] > 360.0) {
@@ -398,8 +398,9 @@ Method::Triplets UnstructuredBilinearLonLat::projectPointToElements(size_t ip, c
                 lons[3] -= 360;
             }
 
-            element::Quad2D quad(PointXY{lons[0], (*ilonlat_)(idx[0], 1)}, PointXY{lons[1], (*ilonlat_)(idx[1], 1)},
-                                 PointXY{lons[2], (*ilonlat_)(idx[2], 1)}, PointXY{lons[3], (*ilonlat_)(idx[3], 1)});
+            element::Quad2D quad(
+                PointLonLat{lons[0], (*ilonlat_)(idx[0], LAT)}, PointLonLat{lons[1], (*ilonlat_)(idx[1], LAT)},
+                PointLonLat{lons[2], (*ilonlat_)(idx[2], LAT)}, PointLonLat{lons[3], (*ilonlat_)(idx[3], LAT)});
 
             if (itc == elems.begin()) {
                 inv_dist_weight(quad, o_loc, inv_dist_w);
@@ -414,7 +415,7 @@ Method::Triplets UnstructuredBilinearLonLat::projectPointToElements(size_t ip, c
 
             if (!is) {
                 // repeat the calculation to catch points which are near the east boundary of the grid.
-                is = quad.localRemap({o_lon - 360, (*olonlat_)(ip, 1)}, edgeEpsilon);
+                is = quad.localRemap({o_lon - 360, (*olonlat_)(ip, LAT)}, edgeEpsilon);
             }
 
             if (is) {
