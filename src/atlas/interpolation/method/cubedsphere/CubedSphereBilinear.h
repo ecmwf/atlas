@@ -48,7 +48,6 @@ private:
     int halo_{0};
     int listSize_{4};
     bool halo_exchange_{true};
-
 };
 
 }  // namespace method

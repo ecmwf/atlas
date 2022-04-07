@@ -6,8 +6,8 @@
  */
 
 #include "atlas/array/MakeView.h"
-#include "atlas/functionspace/NodeColumns.h"
 #include "atlas/field/FieldSet.h"
+#include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid.h"
 #include "atlas/grid/CubedSphereGrid.h"
 #include "atlas/mesh.h"
@@ -88,32 +88,23 @@ void testJacobian(const std::string& gridType, const std::string& meshType, cons
     const auto& csProjection = grid.cubedSphereProjection();
 
     // Set xy0 values on different tiles.
-    const auto xy0 = std::array<PointXY, 6>{PointXY{10. , -35 },
-                                            PointXY{100., -35 },
-                                            PointXY{190., -35 },
-                                            PointXY{280., -35 },
-                                            PointXY{10. ,  55 },
-                                            PointXY{10. , -125}};
+    const auto xy0 = std::array<PointXY, 6>{PointXY{10., -35},  PointXY{100., -35}, PointXY{190., -35},
+                                            PointXY{280., -35}, PointXY{10., 55},   PointXY{10., -125}};
 
     // Get equivalent lonlat values.
-    const auto lonlat0 = std::array<PointLonLat, 6>{csProjection.lonlat(xy0[0]),
-                                                    csProjection.lonlat(xy0[1]),
-                                                    csProjection.lonlat(xy0[2]),
-                                                    csProjection.lonlat(xy0[3]),
-                                                    csProjection.lonlat(xy0[4]),
-                                                    csProjection.lonlat(xy0[5])};
+    const auto lonlat0 = std::array<PointLonLat, 6>{csProjection.lonlat(xy0[0]), csProjection.lonlat(xy0[1]),
+                                                    csProjection.lonlat(xy0[2]), csProjection.lonlat(xy0[3]),
+                                                    csProjection.lonlat(xy0[4]), csProjection.lonlat(xy0[5])};
     // Set lonlat step size.
     const auto hLonlat0 = PointLonLat{5., 10.};
 
     // Perform first order extrapolation test on each tile.
     for (size_t t = 0; t < 6; ++t) {
-
         const auto jac = csProjection.jacobian(lonlat0[t]);
 
         double dxyOld{};
 
         for (int i = 0; i < 5; ++i) {
-
             // Sequentially halve lonlat increment.
             const auto hLonlat = hLonlat0 * std::pow(0.5, i);
 
@@ -122,7 +113,7 @@ void testJacobian(const std::string& gridType, const std::string& meshType, cons
 
             // Get true xy values.
             const auto xyTarget = csProjection.xy(lonlat0[t] + hLonlat);
-            double dxy = Point2::distance(xyTarget, xy);
+            double dxy          = Point2::distance(xyTarget, xy);
 
             // Error should reduce roughly by a factor of four every iteration.
             if (i > 0) {
@@ -146,19 +137,19 @@ void testJacobian(const std::string& gridType, const std::string& meshType, cons
     fieldSet.add(functionspace.createField<double>(option::name("dy_by_dlambda")));
     fieldSet.add(functionspace.createField<double>(option::name("dy_by_dphi")));
 
-    auto dx_dlambda     = array::make_view<double, 1>(fieldSet["dx_by_dlambda"]);
-    auto dx_dphi        = array::make_view<double, 1>(fieldSet["dx_by_dphi"]);
-    auto dy_dlambda     = array::make_view<double, 1>(fieldSet["dy_by_dlambda"]);
-    auto dy_dphi        = array::make_view<double, 1>(fieldSet["dy_by_dphi"]);
+    auto dx_dlambda   = array::make_view<double, 1>(fieldSet["dx_by_dlambda"]);
+    auto dx_dphi      = array::make_view<double, 1>(fieldSet["dx_by_dphi"]);
+    auto dy_dlambda   = array::make_view<double, 1>(fieldSet["dy_by_dlambda"]);
+    auto dy_dphi      = array::make_view<double, 1>(fieldSet["dy_by_dphi"]);
     const auto lonlat = array::make_view<double, 2>(functionspace.lonlat());
 
     for (idx_t i = 0; i < functionspace.size(); ++i) {
-        const auto ll = PointLonLat(lonlat(i, LON), lonlat(i, LAT));
+        const auto ll  = PointLonLat(lonlat(i, LON), lonlat(i, LAT));
         const auto jac = csProjection.jacobian(ll);
-        dx_dlambda(i)     = jac.dx_dlon();
-        dx_dphi(i)        = jac.dx_dlat();
-        dy_dlambda(i)     = jac.dy_dlon();
-        dy_dphi(i)        = jac.dy_dlat();
+        dx_dlambda(i)  = jac.dx_dlon();
+        dx_dphi(i)     = jac.dx_dlat();
+        dy_dlambda(i)  = jac.dy_dlon();
+        dy_dphi(i)     = jac.dy_dlat();
     }
 
     // Output mesh.
@@ -167,7 +158,6 @@ void testJacobian(const std::string& gridType, const std::string& meshType, cons
     auto gmsh = output::Gmsh(outputID + "_jacobian.msh", gmshConfig);
     gmsh.write(mesh);
     gmsh.write(fieldSet, functionspace);
-
 }
 
 

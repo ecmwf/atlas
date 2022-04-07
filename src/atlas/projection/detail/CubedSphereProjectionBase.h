@@ -24,7 +24,6 @@ namespace detail {
 
 class CubedSphereProjectionBase : public ProjectionImpl {
 public:
-
     using ProjectionImpl::jacobian;
 
     // constructor

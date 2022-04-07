@@ -160,23 +160,16 @@ void CubedSphereEquiAnglProjection::alphabeta2xy(double crd[], idx_t t) const {
 // -------------------------------------------------------------------------------------------------
 
 Jacobian CubedSphereEquiAnglProjection::jacobian(const PointLonLat& lonlat, idx_t t) const {
-
     // Note: angular units cancel, so we leave all values in radians.
 
     // Convert lonlat to xyz on unit sphere.
     const double lambda = lonlat.lon() * deg2rad;
-    const double phi = lonlat.lat() * deg2rad;
-    auto xyz = PointXYZ{std::cos(lambda) * std::cos(phi),
-                        std::sin(lambda) * std::cos(phi),
-                        -std::sin(phi)};
+    const double phi    = lonlat.lat() * deg2rad;
+    auto xyz            = PointXYZ{std::cos(lambda) * std::cos(phi), std::sin(lambda) * std::cos(phi), -std::sin(phi)};
 
     // Get derivatives of xyz with respect to lambda and phi.
-    auto dxyz_by_dlambda = PointXYZ{-std::sin(lambda) * std::cos(phi),
-                                     std::cos(lambda) * std::cos(phi),
-                                     0.};
-    auto dxyz_by_dphi = PointXYZ{-std::cos(lambda) * std::sin(phi),
-                                 -std::sin(lambda) * std::sin(phi),
-                                 -std::cos(phi)};
+    auto dxyz_by_dlambda = PointXYZ{-std::sin(lambda) * std::cos(phi), std::cos(lambda) * std::cos(phi), 0.};
+    auto dxyz_by_dphi = PointXYZ{-std::cos(lambda) * std::sin(phi), -std::sin(lambda) * std::sin(phi), -std::cos(phi)};
 
     // Rotate vectors.
     const auto& tiles = getCubedSphereTiles();
@@ -272,7 +265,7 @@ void CubedSphereEquiAnglProjection::xy2lonlat(double crd[]) const {
 
 Jacobian CubedSphereEquiAnglProjection::jacobian(const PointLonLat& lonlat) const {
     const auto& tiles = getCubedSphereTiles();
-    const idx_t t = tiles.indexFromLonLat(lonlat.data());
+    const idx_t t     = tiles.indexFromLonLat(lonlat.data());
     return jacobian(lonlat, t);
 }
 

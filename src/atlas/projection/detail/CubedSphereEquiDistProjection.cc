@@ -47,13 +47,13 @@ void CubedSphereEquiDistProjection::alphabeta2xy(double crd[], idx_t t) const {
 
 // -------------------------------------------------------------------------------------------------
 
-Jacobian CubedSphereEquiDistProjection::jacobian(const PointLonLat &lonlat, idx_t t) const {
+Jacobian CubedSphereEquiDistProjection::jacobian(const PointLonLat& lonlat, idx_t t) const {
     throw_NotImplemented("jacobian not implemented for CubedSphereEquiDistProjection", Here());
 }
 
 // -------------------------------------------------------------------------------------------------
 
-Jacobian CubedSphereEquiDistProjection::alphabetaJacobian(const PointLonLat &lonlat, idx_t t) const {
+Jacobian CubedSphereEquiDistProjection::alphabetaJacobian(const PointLonLat& lonlat, idx_t t) const {
     throw_NotImplemented("alphabetaJacobian not implemented for CubedSphereEquiDistProjection", Here());
 }
 
