@@ -45,6 +45,8 @@ public:
 
     static Array* create(array::DataType, ArraySpec&&);
 
+    static Array* create(ArraySpec&&);
+
     virtual size_t footprint() const = 0;
 
     template <typename Value>

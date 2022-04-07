@@ -22,6 +22,8 @@
 #include <type_traits>
 #include <vector>
 
+#include "eckit/deprecated.h"
+
 #include "atlas/field/Field.h"
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
@@ -99,7 +101,7 @@ public:  // methods
 
     Field add(const Field&);
 
-    bool has_field(const std::string& name) const;
+    bool has(const std::string& name) const;
 
     Field& field(const std::string& name) const;
 
@@ -195,7 +197,7 @@ public:  // methods
 
     Field add(const Field& field) { return get()->add(field); }
 
-    bool has_field(const std::string& name) const { return get()->has_field(name); }
+    bool has(const std::string& name) const { return get()->has(name); }
 
     Field& field(const std::string& name) const { return get()->field(name); }
 
@@ -208,6 +210,9 @@ public:  // methods
 
     void haloExchange(bool on_device = false) const { get()->haloExchange(on_device); }
     void set_dirty(bool = true) const;
+
+    // Deprecated API
+    DEPRECATED("use 'has' instead") bool has_field(const std::string& name) const { return get()->has(name); }
 };
 
 }  // namespace atlas

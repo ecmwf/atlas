@@ -92,16 +92,18 @@ public:
     value_type* data() { return gt_data_view_.data(); }
     value_type const* data() const { return gt_data_view_.data(); }
 
-    template <typename... Coords, typename = typename std::enable_if<(sizeof...(Coords) == Rank), int>::type>
-    ATLAS_HOST_DEVICE value_type& operator()(Coords... c) {
-        assert(sizeof...(Coords) == Rank);
-        return gt_data_view_(c...);
+    template <typename... Ints, typename = typename std::enable_if<(sizeof...(Ints) == Rank), int>::type>
+    ATLAS_HOST_DEVICE value_type& operator()(Ints... c) {
+        assert(sizeof...(Ints) == Rank);
+        using common_type = typename std::common_type<Ints...>::type;
+        return gt_data_view_(static_cast<common_type>(c)...);
     }
 
-    template <typename... Coords, typename = typename std::enable_if<(sizeof...(Coords) == Rank), int>::type>
-    ATLAS_HOST_DEVICE value_type const& operator()(Coords... c) const {
-        assert(sizeof...(Coords) == Rank);
-        return gt_data_view_(c...);
+    template <typename... Ints, typename = typename std::enable_if<(sizeof...(Ints) == Rank), int>::type>
+    ATLAS_HOST_DEVICE value_type const& operator()(Ints... c) const {
+        assert(sizeof...(Ints) == Rank);
+        using common_type = typename std::common_type<Ints...>::type;
+        return gt_data_view_(static_cast<common_type>(c)...);
     }
 
     template <typename Int, bool EnableBool = true>

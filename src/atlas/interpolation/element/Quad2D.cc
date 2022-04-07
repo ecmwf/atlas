@@ -19,7 +19,7 @@ namespace element {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-method::Intersect Quad2D::intersects(const PointXY& r, double edgeEpsilon, double epsilon) const {
+method::Intersect Quad2D::intersects(const Point2& r, double edgeEpsilon, double epsilon) const {
     method::Intersect isect;  // intersection is false
 
     /* Split quadrilateral into two triangles, points are labelled counter-clockwise.
@@ -48,7 +48,7 @@ method::Intersect Quad2D::intersects(const PointXY& r, double edgeEpsilon, doubl
     return isect.fail();
 }
 
-method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, double epsilon) const {
+method::Intersect Quad2D::localRemap(const Point2& p, double edgeEpsilon, double epsilon) const {
     method::Intersect isect;
 
     // get area of quad.
@@ -71,16 +71,25 @@ method::Intersect Quad2D::localRemap(const PointXY& p, double edgeEpsilon, doubl
             //   x1 = (-b - sign(b) sqrt(b^2 - 4ac)) / 2a
             //   x2 = c / ax1
 
-            double det = b * b - 4. * a * c;
-            if (det > -areaEpsilon * 2. * quadArea) {
-                // Solution is real.
-                const auto sign = [](double a) { return std::signbit(a) ? -1. : 1.; };
+            // Kahan's algorithm for accurate difference of products.
+            const auto prodDiff = [](double a, double b, double c, double d){
+              // return ab - cd
+              const double w = d * c;
+              const double e = std::fma(-d, c, w);
+              const double f = std::fma(a, b, -w);
+              return f + e;
+            };
 
-                double sqrtDet = std::sqrt(std::max(0., det));
+            double discriminant = prodDiff(b, b, 4. * a, c);
+
+            if (discriminant > -areaEpsilon * 2. * quadArea) {
+                // Solution is real.
+
+                double sqrtDiscriminant = std::sqrt(std::max(0., discriminant));
 
                 // "Classic" solution to quadratic formula with no cancelation
                 // on numerator.
-                weight = (-b - sign(b) * sqrtDet) / (2. * a);
+                weight = (-b - std::copysign(sqrtDiscriminant, b)) / (2. * a);
                 if (checkWeight(weight, edgeEpsilon)) {
                     return true;
                 }

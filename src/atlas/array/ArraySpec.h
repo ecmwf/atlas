@@ -17,6 +17,7 @@
 #include "atlas/array/ArrayLayout.h"
 #include "atlas/array/ArrayShape.h"
 #include "atlas/array/ArrayStrides.h"
+#include "atlas/array/DataType.h"
 #include "atlas/library/config.h"
 
 //------------------------------------------------------------------------------------------------------
@@ -29,6 +30,7 @@ private:
     size_t size_;
     idx_t rank_;
     size_t allocated_size_;
+    DataType datatype_;
     ArrayShape shape_;
     ArrayStrides strides_;
     ArrayLayout layout_;
@@ -46,9 +48,16 @@ public:
     ArraySpec(const ArrayShape&, const ArrayAlignment&);
     ArraySpec(const ArrayShape&, const ArrayStrides&, const ArrayAlignment&);
     ArraySpec(const ArrayShape&, const ArrayStrides&, const ArrayLayout&, const ArrayAlignment&);
+    ArraySpec(DataType, const ArrayShape&);
+    ArraySpec(DataType, const ArrayShape&, const ArrayStrides&);
+    ArraySpec(DataType, const ArrayShape&, const ArrayStrides&, const ArrayLayout&);
+    ArraySpec(DataType, const ArrayShape&, const ArrayAlignment&);
+    ArraySpec(DataType, const ArrayShape&, const ArrayStrides&, const ArrayAlignment&);
+    ArraySpec(DataType, const ArrayShape&, const ArrayStrides&, const ArrayLayout&, const ArrayAlignment&);
     size_t allocatedSize() const { return allocated_size_; }
     size_t size() const { return size_; }
     idx_t rank() const { return rank_; }
+    DataType datatype() const { return datatype_; }
     const ArrayShape& shape() const { return shape_; }
     const ArrayAlignment& alignment() const { return alignment_; }
     const ArrayStrides& strides() const { return strides_; }
