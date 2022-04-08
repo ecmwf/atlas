@@ -82,7 +82,7 @@ public:
         return Jacobian{(*this)[1][1], -(*this)[0][1], -(*this)[1][0], (*this)[0][0]} * (1. / determinant());
     }
 
-    Jacobian transpose() const { return Jacobian{(*this)[1][1], (*this)[0][1], (*this)[1][0], (*this)[0][0]}; }
+    Jacobian transpose() const { return Jacobian{(*this)[0][0], (*this)[1][0], (*this)[0][1], (*this)[1][1]}; }
 
     double dx_dlon() const { return (*this)[JDX][JDLON]; }
     double dy_dlon() const { return (*this)[JDY][JDLON]; }
