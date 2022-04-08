@@ -57,6 +57,10 @@ public:
 
     virtual idx_t indexFromLonLat(const double lonlat[]) const = 0;
 
+    idx_t indexFromXY(const PointXY& xy) const;
+
+    idx_t indexFromLonLat(const PointLonLat& lonlat) const;
+
     virtual void enforceXYdomain(double xy[]) const = 0;
 
     virtual const PointXY& tileCentre(size_t t) const = 0;

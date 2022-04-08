@@ -39,6 +39,9 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
     const auto N         = CubedSphereGrid(ncSource.mesh().grid()).N();
     const auto tolerance = 2. * std::numeric_limits<double>::epsilon() * N;
 
+    // Enable or disable halo exchange.
+    this->allow_halo_exchange_ = halo_exchange_;
+
     // Loop over target at calculate interpolation weights.
     auto weights          = std::vector<Triplet>{};
     const auto ghostView  = array::make_view<int, 1>(target_.ghost());

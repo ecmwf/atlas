@@ -20,14 +20,17 @@ namespace method {
 ///          accross cubed sphere tiles in (alpha, beta) coordinates.
 ///          Adding int "halo" (default 0) to the config controls the amount of
 ///          halo to consider when seraching for interpolation polygons. Adding
-///          int "list size" (defualt 4) will change the number of cells
+///          int "list_size" (defualt 4) will change the number of cells
 ///          returned by the internal kd-tree search. Increasing both values
 ///          may resolve errors if setup method fails to find cells.
+///          The automatic halo exchange in the execute method can be disabled
+///          by setting "halo_exchange" to false.
 class CubedSphereBilinear : public Method {
 public:
     CubedSphereBilinear(const Config& config): Method(config) {
         config.get("halo", halo_);
-        config.get("list size", listSize_);
+        config.get("list_size", listSize_);
+        config.get("halo_exchange", halo_exchange_);
     }
     virtual ~CubedSphereBilinear() override {}
 
@@ -44,6 +47,7 @@ private:
 
     int halo_{0};
     int listSize_{4};
+    bool halo_exchange_{true};
 };
 
 }  // namespace method

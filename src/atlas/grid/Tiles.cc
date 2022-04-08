@@ -48,8 +48,16 @@ idx_t CubedSphereTiles::indexFromXY(const double xy[]) const {
     return get()->indexFromXY(xy);
 }
 
+idx_t CubedSphereTiles::indexFromXY(const PointXY& xy) const {
+    return get()->indexFromXY(xy);
+}
+
 idx_t CubedSphereTiles::indexFromLonLat(const double lonlat[]) const {
     return get()->indexFromLonLat(lonlat);
+}
+
+idx_t CubedSphereTiles::indexFromLonLat(const PointLonLat& lonlat) const {
+    return get()->indexFromLonLat(lonlat.data());
 }
 
 idx_t CubedSphereTiles::size() const {

@@ -72,12 +72,12 @@ method::Intersect Quad2D::localRemap(const Point2& p, double edgeEpsilon, double
             //   x2 = c / ax1
 
             // Kahan's algorithm for accurate difference of products.
-            const auto prodDiff = [](double a, double b, double c, double d){
-              // return ab - cd
-              const double w = d * c;
-              const double e = std::fma(-d, c, w);
-              const double f = std::fma(a, b, -w);
-              return f + e;
+            const auto prodDiff = [](double a, double b, double c, double d) {
+                // return ab - cd
+                const double w = d * c;
+                const double e = std::fma(-d, c, w);
+                const double f = std::fma(a, b, -w);
+                return f + e;
             };
 
             double discriminant = prodDiff(b, b, 4. * a, c);

@@ -9,6 +9,7 @@
 
 #include "atlas/grid/Tiles.h"
 #include "atlas/library/config.h"
+#include "atlas/projection/Jacobian.h"
 #include "atlas/projection/detail/ProjectionImpl.h"
 #include "eckit/config/Parametrisation.h"
 #include "eckit/utils/Hash.h"
@@ -23,6 +24,8 @@ namespace detail {
 
 class CubedSphereProjectionBase : public ProjectionImpl {
 public:
+    using ProjectionImpl::jacobian;
+
     // constructor
     CubedSphereProjectionBase(const eckit::Parametrisation&);
 
@@ -54,6 +57,22 @@ public:
     Point2 alphabeta2xy(const Point2& alphabeta, idx_t t) const;
     virtual void alphabeta2xy(double crd[], idx_t) const = 0;
     ///@}
+
+    /// @brief   Jacobian of (x, y) with respect to (lon, lat) on tile t
+    ///
+    /// @details Returns the Jacobian
+    ///                     ∂x/∂λ, ∂x/∂φ
+    ///                     ∂y/∂λ, ∂y/∂φ
+    ///          for tile t.
+    virtual Jacobian jacobian(const PointLonLat& lonlat, idx_t t) const = 0;
+
+    /// @brief   Jacobian of (alpha, beta) with respect to (lon, lat) on tile t
+    ///
+    /// @details Returns the Jacobian
+    ///                     ∂α/∂λ, ∂α/∂φ
+    ///                     ∂β/∂λ, ∂β/∂φ
+    ///          for tile t.
+    virtual Jacobian alphabetaJacobian(const PointLonLat& lonlat, idx_t t) const = 0;
 
 protected:
     // projection and inverse projection
