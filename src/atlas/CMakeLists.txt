@@ -923,8 +923,8 @@ if( atlas_HAVE_TRANS )
 endif()
 
 if( atlas_HAVE_PROJ )
-    target_link_libraries( atlas PRIVATE ${PROJ4_LIBRARIES} )
-    target_include_directories( atlas PRIVATE ${PROJ4_INCLUDE_DIRS} )
+    target_link_libraries( atlas PRIVATE ${PROJ_LIBRARIES} )
+    target_include_directories( atlas PRIVATE ${PROJ_INCLUDE_DIRS} )
 endif()
 
 target_link_libraries( atlas PUBLIC
