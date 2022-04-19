@@ -25,10 +25,15 @@ void throw_NotImplemented(const std::string& msg, const eckit::CodeLocation& loc
 }
 
 void throw_AssertionFailed(const std::string& msg) {
+#if ATLAS_ECKIT_VERSION_AT_LEAST(1, 18, 5)
     throw_AssertionFailed(msg, eckit::CodeLocation{});
+#else
+    throw eckit::AssertionFailed(msg);
+#endif
 }
 
 void throw_AssertionFailed(const std::string& msg, const eckit::CodeLocation& loc) {
+#if ATLAS_ECKIT_VERSION_AT_LEAST(1, 18, 5)
     if (loc) {
         eckit::handle_assert(msg, loc);
     }
@@ -36,6 +41,9 @@ void throw_AssertionFailed(const std::string& msg, const eckit::CodeLocation& lo
         eckit::handle_assert(msg, eckit::CodeLocation{"unspecified file", 0, "unspecified function"});
     }
     std::abort();  // should never reach here, but makes sure we will never return from this
+#else
+    throw eckit::AssertionFailed(msg, loc);
+#endif
 }
 
 void throw_AssertionFailed(const std::string& code, const std::string& msg, const eckit::CodeLocation& loc) {
