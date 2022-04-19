@@ -7,11 +7,32 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
-## [0.28.1] - 2021-03-14
+## [0.29.0] - 2022-04-21
+### Added
+- MatchingMeshPartitioner "cubedsphere"
+- Interpolator "cubedsphere-bilinear"
+- Improvements to Interpolation::Cache
+- Add support for rank 2 fields when a nonlinear action is added to the interpolator
+- Create Array using ArraySpec only
+
+### Changed
+- FieldSet::has(...) replaces FieldSet::has_field(...)
+- Metadata return value to Interpolation::execute()
+- Rename BilinearRemapping to UnstructuredBilinearLonLat
+
+### Fixed
+- Compatibility with proj version >= 8
+- Compatibility with eckit version <= 1.18.5
+- Compatibility with GridTools backend and using 64bit idx_t
+- Wrongly computed Jacobian::transpose() introduced in 0.28.0
+- Fix bug where using ectrans was not enabling adjoint of invtrans
+- Avoid segfault when OpenMP tasking is broken, as it is with AppleClang and LLVM libomp
+
+## [0.28.1] - 2022-03-14
 ### Fixed
 - Fix compilation for GNU 7.3
 
-## [0.28.0] - 2021-03-02
+## [0.28.0] - 2022-03-02
 ### Added
 - Assignment of ArrayView from ArrayView
 - Grid "regional_variable_resolution" via a new VariableResolutionProjection
@@ -345,6 +366,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.29.0]: https://github.com/ecmwf/atlas/compare/0.28.1...0.29.0
 [0.28.1]: https://github.com/ecmwf/atlas/compare/0.28.0...0.28.1
 [0.28.0]: https://github.com/ecmwf/atlas/compare/0.27.0...0.28.0
 [0.27.0]: https://github.com/ecmwf/atlas/compare/0.26.0...0.27.0
