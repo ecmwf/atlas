@@ -107,6 +107,7 @@ jobs:
 
         if [[ "${{ matrix.os }}" =~ macos ]]; then
           brew install ninja
+          brew install libomp
         else
           sudo apt-get update
           sudo apt-get install ninja-build
