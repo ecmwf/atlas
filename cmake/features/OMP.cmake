@@ -24,18 +24,18 @@ endif()
 if( HAVE_OMP_CXX )
 
   if( NOT CMAKE_CXX_COMPILER_ID MATCHES Clang )
-    set( ATLAS_OMP_TASK_UNTIED_SUPPORTED 1 )
+    set( ATLAS_OMP_TASK_SUPPORTED 1 )
   endif()
 
-  if( NOT DEFINED ATLAS_OMP_TASK_UNTIED_SUPPORTED )
-    try_run( execute_result compile_result 
+  if( NOT DEFINED ATLAS_OMP_TASK_SUPPORTED )
+    try_run( execute_result compile_result
                      ${CMAKE_CURRENT_BINARY_DIR}
-                     ${PROJECT_SOURCE_DIR}/cmake/features/OMP/test_omp_untied.cc
+                     ${PROJECT_SOURCE_DIR}/cmake/features/OMP/test_omp_task.cc
                      LINK_LIBRARIES ${OMP_CXX}
                      COMPILE_OUTPUT_VARIABLE compile_output
                      RUN_OUTPUT_VARIABLE execute_output )
 
-    ecbuild_debug("Compiling and running ${PROJECT_SOURCE_DIR}/cmake/features/OMP/test_omp_untied.cc")
+    ecbuild_debug("Compiling and running ${PROJECT_SOURCE_DIR}/cmake/features/OMP/test_omp_task.cc")
     ecbuild_debug_var( compile_result )
     ecbuild_debug_var( compile_output )
     ecbuild_debug_var( execute_result )
@@ -43,15 +43,53 @@ if( HAVE_OMP_CXX )
 
     if( compile_result )
       if( execute_result MATCHES 0 )
-        set( ATLAS_OMP_TASK_UNTIED_SUPPORTED 1 )
+        set( ATLAS_OMP_TASK_SUPPORTED 1 )
       else()
-        ecbuild_info("    Compiler failed to run program with omp pragma with 'untied if' construct."
-                     "Workaround will be enabled.")
-        set( ATLAS_OMP_TASK_UNTIED_SUPPORTED 0 )
+        ecbuild_info("    Compiler failed to correctly run program with 'omp task' pragma."
+                     "Sorting with OMP is disabled.")
+        set( ATLAS_OMP_TASK_SUPPORTED 0 )
       endif()
-    else() 
-      set( ATLAS_OMP_TASK_UNTIED_SUPPORTED 0 )
+    else()
+      set( ATLAS_OMP_TASK_SUPPORTED 0 )
     endif()
   endif()
 
+
+  if( ATLAS_OMP_TASK_SUPPORTED )
+    if( NOT CMAKE_CXX_COMPILER_ID MATCHES Clang )
+      set( ATLAS_OMP_TASK_UNTIED_SUPPORTED 1 )
+    endif()
+
+    if( NOT DEFINED ATLAS_OMP_TASK_UNTIED_SUPPORTED )
+      try_run( execute_result compile_result
+                       ${CMAKE_CURRENT_BINARY_DIR}
+                       ${PROJECT_SOURCE_DIR}/cmake/features/OMP/test_omp_untied.cc
+                       LINK_LIBRARIES ${OMP_CXX}
+                       COMPILE_OUTPUT_VARIABLE compile_output
+                       RUN_OUTPUT_VARIABLE execute_output )
+
+      ecbuild_debug("Compiling and running ${PROJECT_SOURCE_DIR}/cmake/features/OMP/test_omp_untied.cc")
+      ecbuild_debug_var( compile_result )
+      ecbuild_debug_var( compile_output )
+      ecbuild_debug_var( execute_result )
+      ecbuild_debug_var( execute_output )
+
+      if( compile_result )
+        if( execute_result MATCHES 0 )
+          set( ATLAS_OMP_TASK_UNTIED_SUPPORTED 1 )
+        else()
+          ecbuild_info("    Compiler failed to run program with omp pragma with 'untied if' construct."
+                       "Workaround will be enabled.")
+          set( ATLAS_OMP_TASK_UNTIED_SUPPORTED 0 )
+        endif()
+      else()
+        set( ATLAS_OMP_TASK_UNTIED_SUPPORTED 0 )
+      endif()
+    endif()
+  else()
+    set( ATLAS_OMP_TASK_UNTIED_SUPPORTED 0 )
+  endif()
+else()
+  set( ATLAS_OMP_TASK_SUPPORTED 0 )
+  set( ATLAS_OMP_TASK_UNTIED_SUPPORTED 0 )
 endif()

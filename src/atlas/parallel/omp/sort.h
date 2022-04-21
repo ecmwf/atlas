@@ -17,7 +17,7 @@
 #include "atlas/library/config.h"
 #include "atlas/parallel/omp/omp.h"
 
-#if ATLAS_HAVE_OMP
+#if ATLAS_HAVE_OMP && ATLAS_OMP_TASK_SUPPORTED
 #include <omp.h>
 #define ATLAS_HAVE_OMP_SORTING 1
 #else

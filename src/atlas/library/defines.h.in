@@ -15,6 +15,7 @@
 #define atlas_library_defines_h
 
 #define ATLAS_HAVE_OMP                       @atlas_HAVE_OMP_CXX@
+#define ATLAS_OMP_TASK_SUPPORTED             @ATLAS_OMP_TASK_SUPPORTED@
 #define ATLAS_OMP_TASK_UNTIED_SUPPORTED      @ATLAS_OMP_TASK_UNTIED_SUPPORTED@
 #define ATLAS_HAVE_ACC                       @atlas_HAVE_ACC@
 #define ATLAS_HAVE_TESSELATION               @atlas_HAVE_TESSELATION@
