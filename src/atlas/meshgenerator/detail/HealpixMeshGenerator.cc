@@ -498,7 +498,7 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     }
 
 #if DEBUG_OUTPUT
-    std::cout << "[" << mypart << "] : nnodes_SB = " << nnodes_SB << "\n";
+    Log::info() << "[" << mypart << "] : nnodes_SB = " << nnodes_SB << "\n";
 #endif
 
     // partitions and local indices in SB
@@ -546,24 +546,24 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     }
 
 #if DEBUG_OUTPUT_DETAIL
-    std::cout << "[" << mypart << "] : "
-              << "parts_SB = ";
+    Log::info() << "[" << mypart << "] : "
+                << "parts_SB = ";
     for (ii = 0; ii < nnodes_SB; ii++) {
-        std::cout << parts_SB[ii] << ",";
+        Log::info() << parts_SB[ii] << ",";
     }
-    std::cout << std::endl;
-    std::cout << "[" << mypart << "] : "
-              << "local_idx_SB = ";
+    Log::info() << std::endl;
+    Log::info() << "[" << mypart << "] : "
+                << "local_idx_SB = ";
     for (ii = 0; ii < nnodes_SB; ii++) {
-        std::cout << local_idx_SB[ii] << ",";
+        Log::info() << local_idx_SB[ii] << ",";
     }
-    std::cout << std::endl;
-    std::cout << "[" << mypart << "] : "
-              << "is_ghost_SB = ";
+    Log::info() << std::endl;
+    Log::info() << "[" << mypart << "] : "
+                << "is_ghost_SB = ";
     for (ii = 0; ii < nnodes_SB; ii++) {
-        std::cout << is_ghost_SB[ii] << ",";
+        Log::info() << is_ghost_SB[ii] << ",";
     }
-    std::cout << std::endl;
+    Log::info() << std::endl;
 #endif
 
     // vectors marking nodes that are necessary for this proc's cells
@@ -577,9 +577,9 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     for (iy = iy_min; iy <= iy_max; iy++) {
         int nx = latPoints(iy);
         for (ix = 0; ix < nx; ix++) {
-            int is_cell = (iy == 0 ? ix % 2 : 1) * (iy == ny - 1 ? ix % 2 : 1);
+            int not_duplicate_cell = (iy == 0 ? ix % 2 : 1) * (iy == ny - 1 ? ix % 2 : 1);
 
-            if (!is_ghost_SB[ii] && is_cell) {
+            if (!is_ghost_SB[ii] && not_duplicate_cell) {
                 // mark this node as being used
                 if (!is_node_SB[ii]) {
                     ++nnodes;
@@ -625,16 +625,18 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     }
 
 #if DEBUG_OUTPUT
-    std::cout << "[" << mypart << "] : "
-              << "nnodes = " << nnodes << ", ncells = " << ncells << ", parts_sidx = " << parts_sidx << std::endl;
+    Log::info() << "[" << mypart << "] : "
+                << "nnodes = " << nnodes << ", ncells = " << ncells << ", parts_sidx = " << parts_sidx << std::endl;
+    Log::info() << "[" << mypart << "] : "
+                << "iy_min = " << iy_min << ", iy_max = " << iy_max << std::endl;
 #endif
 #if DEBUG_OUTPUT_DETAIL
-    std::cout << "[" << mypart << "] : "
-              << "is_node_SB = ";
+    Log::info() << "[" << mypart << "] : "
+                << "is_node_SB = ";
     for (int ii = 0; ii < nnodes_SB; ii++) {
-        std::cout << is_node_SB[ii] << ",";
+        Log::info() << is_node_SB[ii] << ",";
     }
-    std::cout << std::endl;
+    Log::info() << std::endl;
 #endif
 
     // define nodes and associated properties
@@ -651,9 +653,10 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
 
     // define cells and associated properties
     mesh.cells().add(new mesh::temporary::Quadrilateral(), ncells);
-    int quad_begin                                        = mesh.cells().elements(0).begin();
-    auto cells_part                                       = array::make_view<int, 1>(mesh.cells().partition());
-    mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
+    int quad_begin          = mesh.cells().elements(0).begin();
+    auto cells_part         = array::make_view<int, 1>(mesh.cells().partition());
+    auto cells_glb_idx      = array::make_view<gidx_t, 1>(mesh.cells().global_index());
+    auto& node_connectivity = mesh.cells().node_connectivity();
 
     idx_t quad_nodes[4];
     int jcell = quad_begin;
@@ -758,24 +761,25 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
                 local_idx_SB[iil] = inode;
 
 #if DEBUG_OUTPUT_DETAIL
-                std::cout << "[" << mypart << "] : "
-                          << "New node \tinode=" << inode << "; iil= " << iil << "; ix=" << ix << "; iy=" << iy
-                          << "; glon=" << lonlat(inode, 0) << "; glat=" << lonlat(inode, 1)
-                          << "; glb_idx=" << glb_idx(inode) << "; loc_idx=" << local_idx_SB[iil] << std::endl;
+                Log::info() << "[" << mypart << "] : "
+                            << "New node \tinode=" << inode << "; iil= " << iil << "; ix=" << ix << "; iy=" << iy
+                            << "; glon=" << lonlat(inode, 0) << "; glat=" << lonlat(inode, 1)
+                            << "; glb_idx=" << glb_idx(inode) << "; loc_idx=" << local_idx_SB[iil] << std::endl;
 #endif
             }
             ii += (ix != nx - 1 ? 1 : 0);
         }
     }
 
-    ii = 0;  // index inside SB (surrounding belt)
+    ii               = 0;  // index inside SB (surrounding belt)
+    int jcell_offset = 0;
     for (iy = iy_min; iy <= iy_max; iy++) {
         int nx = latPoints(iy) + 1;
         for (ix = 0; ix < nx; ix++) {
-            int is_cell = (iy == 0 ? ix % 2 : 1) * (iy == ny - 1 ? ix % 2 : 1);
-            int iil     = idx_xy_to_x(ix, iy, ns);
+            int not_duplicate_cell = (iy == 0 ? ix % 2 : 1) * (iy == ny - 1 ? ix % 2 : 1);
+            int iil                = idx_xy_to_x(ix, iy, ns);
             iil -= (iil < 12 * ns * ns + 16 ? parts_sidx : -nnodes_SB + iy_max + 12 * ns * ns + 17);
-            if (!is_ghost_SB[iil] && is_cell) {
+            if (!is_ghost_SB[iil] && not_duplicate_cell) {
                 // define cell corners (local indices)
                 quad_nodes[0] = local_idx_SB[iil];
 
@@ -795,11 +799,23 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
                 quad_nodes[3] = local_idx_SB[quad_nodes[3]];
 
                 node_connectivity.set(jcell, quad_nodes);
+                if (iy == 0) {
+                    cells_glb_idx(jcell) = 12 * ns * ns + 1 + ix / 2;
+                    jcell_offset++;
+                }
+                else if (iy == ny - 1) {
+                    cells_glb_idx(jcell) = 12 * ns * ns + 5 + ix / 2;
+                    jcell_offset++;
+                }
+                else {
+                    cells_glb_idx(jcell) = parts_sidx + iil - 3 - (mypart != 0 ? 4 : jcell_offset);
+                }
                 cells_part(jcell) = mypart;
 #if DEBUG_OUTPUT_DETAIL
-                std::cout << "[" << mypart << "] : "
-                          << "New quad " << jcell << ": " << glb_idx(quad_nodes[0]) << "," << glb_idx(quad_nodes[1])
-                          << "," << glb_idx(quad_nodes[2]) << "," << glb_idx(quad_nodes[3]) << std::endl;
+                Log::info() << "[" << mypart << "] : "
+                            << "New quad: loc-idx " << jcell << ", glb-idx " << cells_glb_idx(jcell) << ": "
+                            << glb_idx(quad_nodes[0]) << "," << glb_idx(quad_nodes[1]) << "," << glb_idx(quad_nodes[2])
+                            << "," << glb_idx(quad_nodes[3]) << std::endl;
 #endif
                 ++jcell;
             }
@@ -810,18 +826,18 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
 #if DEBUG_OUTPUT_DETAIL
     // list nodes
     for (inode = 0; inode < nnodes; inode++) {
-        std::cout << "[" << mypart << "] : "
-                  << " node " << inode << ": ghost = " << ghost(inode) << ", glb_idx = " << glb_idx(inode)
-                  << ", part = " << part(inode) << ", lon = " << lonlat(inode, 0) << ", lat = " << lonlat(inode, 1)
-                  << ", remote_idx = " << remote_idx(inode) << std::endl;
+        Log::info() << "[" << mypart << "] : "
+                    << " node " << inode << ": ghost = " << ghost(inode) << ", glb_idx = " << glb_idx(inode)
+                    << ", part = " << part(inode) << ", lon = " << lonlat(inode, 0) << ", lat = " << lonlat(inode, 1)
+                    << ", remote_idx = " << remote_idx(inode) << std::endl;
     }
 
     int* cell_nodes;
     for (jcell = 0; jcell < ncells; jcell++) {
-        std::cout << "[" << mypart << "] : "
-                  << " cell " << jcell << ": " << glb_idx(node_connectivity(jcell, 0)) << ","
-                  << glb_idx(node_connectivity(jcell, 1)) << "," << glb_idx(node_connectivity(jcell, 2)) << ","
-                  << glb_idx(node_connectivity(jcell, 3)) << std::endl;
+        Log::info() << "[" << mypart << "] : "
+                    << " cell " << jcell << ", glb-idx " << cells_glb_idx(jcell) << ": "
+                    << glb_idx(node_connectivity(jcell, 0)) << "," << glb_idx(node_connectivity(jcell, 1)) << ","
+                    << glb_idx(node_connectivity(jcell, 2)) << "," << glb_idx(node_connectivity(jcell, 3)) << std::endl;
     }
 #endif
 
@@ -832,8 +848,7 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     nodes.global_index().metadata().set("min", 1);
     nodes.global_index().metadata().set("max", nvertices + grid.ny() + 2);
 
-
-    generateGlobalElementNumbering(mesh);
+    //generateGlobalElementNumbering(mesh);
 
 }  // generate_mesh
 
