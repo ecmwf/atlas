@@ -14,6 +14,7 @@
 
 #include "atlas/domain/Domain.h"
 #include "atlas/library/config.h"
+#include "atlas/projection/Jacobian.h"
 #include "atlas/projection/detail/ProjectionImpl.h"
 #include "atlas/util/ObjectHandle.h"
 
@@ -49,7 +50,7 @@ class ProjectionImpl;
 class Projection : DOXYGEN_HIDE(public util::ObjectHandle<projection::detail::ProjectionImpl>) {
 public:
     using Spec     = util::Config;
-    using Jacobian = projection::detail::ProjectionImpl::Jacobian;
+    using Jacobian = projection::Jacobian;
 
 public:
     using Handle::Handle;

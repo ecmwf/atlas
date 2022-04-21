@@ -76,6 +76,8 @@ public:
     bool get(const std::string& name, std::vector<Config>& value) const;
 
     std::vector<std::string> keys() const;
+
+    std::string json() const;
 };
 
 // ------------------------------------------------------------------

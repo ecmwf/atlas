@@ -35,9 +35,10 @@ struct MissingIfAllMissing : Missing {
         field::MissingValue mv(field);
         auto& missingValue = mv.ref();
 
-        // NOTE only for scalars (for now)
+        ATLAS_ASSERT(field.rank() == 1);
+
         auto values = make_view_field_values<T, 1>(field);
-        ATLAS_ASSERT(idx_t(W.cols()) == values.size());
+        ATLAS_ASSERT(idx_t(W.cols()) == values.shape(0));
 
         auto data  = const_cast<Scalar*>(W.data());
         bool modif = false;

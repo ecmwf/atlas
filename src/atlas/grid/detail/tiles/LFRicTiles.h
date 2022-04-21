@@ -43,20 +43,29 @@ public:
 
     virtual void enforceXYdomain(double xy[]) const override;
 
-    virtual atlas::PointXY tileCubePeriodicity(const atlas::PointXY& xyExtended,
-                                               const atlas::idx_t tile) const override;
+    virtual PointXY tileCubePeriodicity(const PointXY& xyExtended, const idx_t tile) const override;
 
     virtual void print(std::ostream&) const override;
 
+    virtual const PointXY& tileCentre(size_t t) const override;
+
+    virtual const Jacobian& tileJacobian(size_t t) const override;
+
 private:
-    std::array<atlas::PointXY, 6> botLeftTile_;
-    std::array<atlas::PointXY, 6> botRightTile_;
-    std::array<atlas::PointXY, 6> topLeftTile_;
-    std::array<atlas::PointXY, 6> topRightTile_;
+    static PointXY botLeftTile(size_t t);
+    static PointXY botRightTile(size_t t);
+    static PointXY topLeftTile(size_t t);
+    static PointXY topRightTile(size_t t);
 
-    bool withinCross(const atlas::idx_t t, const atlas::PointXY& withinRange) const;
+    bool withinCross(const idx_t t, const PointXY& withinRange) const;
 
-    void enforceWrapAround(const atlas::idx_t t, atlas::PointXY& withinRange) const;
+    void enforceWrapAround(const idx_t t, PointXY& withinRange) const;
+
+
+    // Centre of each tile in xy-space.
+    static const std::array<PointXY, 6> tileCentres_;
+    // Jacobian of xy with respect to tile curvilinear coordinates.
+    static const std::array<Jacobian, 6> tileJacobians_;
 };
 
 }  // namespace detail

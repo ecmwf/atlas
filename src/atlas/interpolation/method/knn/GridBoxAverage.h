@@ -24,8 +24,8 @@ public:
     using GridBoxMethod::GridBoxMethod;
 
 private:
-    void do_execute(const FieldSet& source, FieldSet& target) const override;
-    void do_execute(const Field& source, Field& target) const override;
+    void do_execute(const FieldSet& source, FieldSet& target, Metadata&) const override;
+    void do_execute(const Field& source, Field& target, Metadata&) const override;
 };
 
 

@@ -14,14 +14,12 @@ ecbuild_add_test( TARGET atlas_test_Quad3D
 )
 
 ecbuild_add_test( TARGET atlas_test_Quad2D
-  CONDITION eckit_EIGEN_FOUND
   SOURCES   test_Quad2D.cc
   LIBS      atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 ecbuild_add_test( TARGET atlas_test_Triag2D
-  CONDITION eckit_EIGEN_FOUND
   SOURCES   test_Triag2D.cc
   LIBS      atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
@@ -33,8 +31,8 @@ ecbuild_add_test( TARGET atlas_test_interpolation_finite_element
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
-ecbuild_add_test( TARGET atlas_test_interpolation_bilinear_remapping
-  SOURCES   test_interpolation_bilinear_remapping.cc
+ecbuild_add_test( TARGET atlas_test_interpolation_unstructured_bilinear_lonlat
+  SOURCES   test_interpolation_unstructured_bilinear_lonlat.cc
   LIBS      atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
@@ -95,5 +93,13 @@ ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_to_unstructured
   LIBS     atlas
   MPI      2
   CONDITION eckit_HAVE_MPI
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+ecbuild_add_test( TARGET atlas_test_interpolation_cubedsphere
+  SOURCES  test_interpolation_cubedsphere.cc
+  LIBS     atlas
+  MPI      6
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 6
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )

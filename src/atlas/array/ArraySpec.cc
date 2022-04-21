@@ -29,11 +29,15 @@ size_t compute_aligned_size(size_t size, size_t alignment) {
 }
 }  // namespace
 
-ArraySpec::ArraySpec(): size_(), rank_(), allocated_size_(), contiguous_(true), default_layout_(true) {}
+ArraySpec::ArraySpec():
+    size_(), rank_(), datatype_(DataType::KIND_REAL64), allocated_size_(), contiguous_(true), default_layout_(true) {}
 
 ArraySpec::ArraySpec(const ArrayShape& shape): ArraySpec(shape, ArrayAlignment()) {}
+ArraySpec::ArraySpec(DataType datatype, const ArrayShape& shape): ArraySpec(shape) {
+    datatype_ = datatype;
+}
 
-ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayAlignment& alignment) {
+ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayAlignment& alignment): datatype_(DataType::KIND_REAL64) {
     ArrayShape aligned_shape = shape;
     aligned_shape.back()     = compute_aligned_size(aligned_shape.back(), alignment);
 
@@ -60,10 +64,16 @@ ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayAlignment& alignment) {
 #endif
 };
 
+ArraySpec::ArraySpec(DataType datatype, const ArrayShape& shape, const ArrayAlignment& alignment):
+    ArraySpec(shape, alignment) {
+    datatype_ = datatype;
+}
+
 ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayStrides& strides):
     ArraySpec(shape, strides, ArrayAlignment()) {}
 
-ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayStrides& strides, const ArrayAlignment& alignment) {
+ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayStrides& strides, const ArrayAlignment& alignment):
+    datatype_(DataType::KIND_REAL64) {
     ATLAS_ASSERT(shape.size() == strides.size(), "dimensions of shape and stride don't match");
 
     rank_ = static_cast<int>(shape.size());
@@ -86,11 +96,24 @@ ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayStrides& strides, const
 #endif
 }
 
+ArraySpec::ArraySpec(DataType datatype, const ArrayShape& shape, const ArrayStrides& strides,
+                     const ArrayAlignment& alignment):
+    ArraySpec(shape, strides, alignment) {
+    datatype_ = datatype;
+}
+
 ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayStrides& strides, const ArrayLayout& layout):
     ArraySpec(shape, strides, layout, ArrayAlignment()) {}
 
+ArraySpec::ArraySpec(DataType datatype, const ArrayShape& shape, const ArrayStrides& strides,
+                     const ArrayLayout& layout):
+    ArraySpec(shape, strides, layout) {
+    datatype_ = datatype;
+}
+
 ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayStrides& strides, const ArrayLayout& layout,
-                     const ArrayAlignment& alignment) {
+                     const ArrayAlignment& alignment):
+    datatype_(DataType::KIND_REAL64) {
     ATLAS_ASSERT(shape.size() == strides.size(), "dimensions of shape and stride don't match");
 
     rank_ = static_cast<int>(shape.size());
@@ -116,6 +139,11 @@ ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayStrides& strides, const
 #endif
 }
 
+ArraySpec::ArraySpec(DataType datatype, const ArrayShape& shape, const ArrayStrides& strides, const ArrayLayout& layout,
+                     const ArrayAlignment& alignment):
+    ArraySpec(shape, strides, layout, alignment) {
+    datatype_ = datatype;
+}
 const std::vector<int>& ArraySpec::shapef() const {
     return shapef_;
 }

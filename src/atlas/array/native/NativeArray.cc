@@ -102,6 +102,11 @@ Array* Array::create(DataType datatype, ArraySpec&& spec) {
     }
 }
 
+Array* Array::create(ArraySpec&& spec) {
+    return create(spec.datatype(), std::move(spec));
+}
+
+
 template <typename Value>
 ArrayT<Value>::ArrayT(ArrayDataStore* ds, const ArraySpec& spec) {
     data_store_ = std::unique_ptr<ArrayDataStore>(ds);

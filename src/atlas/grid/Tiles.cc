@@ -12,6 +12,7 @@
 #include "atlas/grid/detail/tiles/FV3Tiles.h"
 #include "atlas/grid/detail/tiles/LFRicTiles.h"
 #include "atlas/grid/detail/tiles/Tiles.h"
+#include "atlas/projection/Jacobian.h"
 
 
 namespace atlas {
@@ -47,8 +48,16 @@ idx_t CubedSphereTiles::indexFromXY(const double xy[]) const {
     return get()->indexFromXY(xy);
 }
 
+idx_t CubedSphereTiles::indexFromXY(const PointXY& xy) const {
+    return get()->indexFromXY(xy);
+}
+
 idx_t CubedSphereTiles::indexFromLonLat(const double lonlat[]) const {
     return get()->indexFromLonLat(lonlat);
+}
+
+idx_t CubedSphereTiles::indexFromLonLat(const PointLonLat& lonlat) const {
+    return get()->indexFromLonLat(lonlat.data());
 }
 
 idx_t CubedSphereTiles::size() const {
@@ -70,6 +79,14 @@ void CubedSphereTiles::print(std::ostream& os) const {
 std::ostream& operator<<(std::ostream& os, const CubedSphereTiles& t) {
     t.print(os);
     return os;
+}
+
+const PointXY& CubedSphereTiles::tileCentre(size_t t) const {
+    return get()->tileCentre(t);
+}
+
+const projection::Jacobian& CubedSphereTiles::tileJacobian(size_t t) const {
+    return get()->tileJacobian(t);
 }
 
 }  // namespace grid

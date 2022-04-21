@@ -35,6 +35,10 @@ namespace util {
 class Config;
 }  // namespace util
 
+namespace projection {
+class Jacobian;
+}
+
 namespace grid {
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
@@ -70,9 +74,11 @@ public:
 
     // tile index from xy space
     idx_t indexFromXY(const double xy[]) const;
+    idx_t indexFromXY(const PointXY& xy) const;
 
     // tile index from longitude and latitude space
     idx_t indexFromLonLat(const double lonlat[]) const;
+    idx_t indexFromLonLat(const PointLonLat& lonlat) const;
 
     // enforceXYdomain reinforces the tile shape in xy space;
     // if values move a miniscule amount outside the domain, it will be brought back in.
@@ -84,6 +90,13 @@ public:
     // in a cross-like fashion. Periodicity of this form does not allow
     // a "diagonal" extension over corners of the cube.
     atlas::PointXY tileCubePeriodicity(const atlas::PointXY& xyExtended, const atlas::idx_t tile) const;
+
+    /// @brief Return the position of the tile centre in xy space.
+    const PointXY& tileCentre(size_t t) const;
+
+    /// @brief Return the Jacobian of xy with respect to the curvilinear
+    ///        coordinates of the tile.
+    const projection::Jacobian& tileJacobian(size_t t) const;
 
 private:
     /// Output to stream

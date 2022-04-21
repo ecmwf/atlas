@@ -35,6 +35,30 @@ CubedSphereEquiDistProjection::CubedSphereEquiDistProjection(const eckit::Parame
 
 // -------------------------------------------------------------------------------------------------
 
+void CubedSphereEquiDistProjection::xy2alphabeta(double crd[], idx_t t) const {
+    throw_NotImplemented("xy2alphabeta not implemented for CubedSphereEquiDistProjection", Here());
+}
+
+// -------------------------------------------------------------------------------------------------
+
+void CubedSphereEquiDistProjection::alphabeta2xy(double crd[], idx_t t) const {
+    throw_NotImplemented("alphabeta2xy not implemented for CubedSphereEquiDistProjection", Here());
+}
+
+// -------------------------------------------------------------------------------------------------
+
+Jacobian CubedSphereEquiDistProjection::jacobian(const PointLonLat& lonlat, idx_t t) const {
+    throw_NotImplemented("jacobian not implemented for CubedSphereEquiDistProjection", Here());
+}
+
+// -------------------------------------------------------------------------------------------------
+
+Jacobian CubedSphereEquiDistProjection::alphabetaJacobian(const PointLonLat& lonlat, idx_t t) const {
+    throw_NotImplemented("alphabetaJacobian not implemented for CubedSphereEquiDistProjection", Here());
+}
+
+// -------------------------------------------------------------------------------------------------
+
 void CubedSphereEquiDistProjection::lonlat2xy(double crd[]) const {
     if (debug) {
         Log::info() << "equidist lonlat2xy start : lonlat = " << crd[LON] << " " << crd[LAT] << std::endl;
@@ -93,7 +117,7 @@ void CubedSphereEquiDistProjection::xy2lonlat(double crd[]) const {
 
 // -------------------------------------------------------------------------------------------------
 
-ProjectionImpl::Jacobian CubedSphereEquiDistProjection::jacobian(const PointLonLat&) const {
+Jacobian CubedSphereEquiDistProjection::jacobian(const PointLonLat&) const {
     ATLAS_NOTIMPLEMENTED;
 }
 

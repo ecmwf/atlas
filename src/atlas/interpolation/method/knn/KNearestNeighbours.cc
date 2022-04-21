@@ -130,7 +130,7 @@ void KNearestNeighbours::do_setup(const FunctionSpace& source, const FunctionSpa
 
     // fill sparse matrix and return
     Matrix A(out_npts, inp_npts, weights_triplets);
-    matrix_shared_->swap(A);
+    setMatrix(A);
 }
 
 }  // namespace method

@@ -96,8 +96,8 @@ private:
 public:
     static From from(int start) { return From(start); }
     static To to(int end) { return To(end); }
-    static All all() { return All(); }
-    static Dummy dummy() { return Dummy(); }
+    static constexpr All all() { return All(); }
+    static constexpr Dummy dummy() { return Dummy(); }
 
 public:
     template <typename Start, typename End>

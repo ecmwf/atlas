@@ -91,6 +91,7 @@ jobs:
             compiler_cxx: ~
             compiler_fc: gfortran-11
             caching: true
+            cmake_options: -DMPI_SLOTS=4
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -106,6 +107,7 @@ jobs:
 
         if [[ "${{ matrix.os }}" =~ macos ]]; then
           brew install ninja
+          brew install libomp
         else
           sudo apt-get update
           sudo apt-get install ninja-build

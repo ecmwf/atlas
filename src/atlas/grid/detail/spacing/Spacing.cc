@@ -8,9 +8,10 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "Spacing.h"
+
 #include "eckit/config/Parametrisation.h"
 
-#include "atlas/grid/detail/spacing/Spacing.h"
 #include "atlas/grid/detail/spacing/SpacingFactory.h"
 #include "atlas/runtime/Exception.h"
 

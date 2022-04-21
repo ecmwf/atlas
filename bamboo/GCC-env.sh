@@ -16,4 +16,4 @@ module unload metview
 module unload netcdf4
 
 module load cmake/3.16.5
-module load proj/6.1.1
+module load proj/8.2.1

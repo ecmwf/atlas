@@ -9,6 +9,7 @@
 
 #include "atlas/array.h"
 #include "atlas/domain.h"
+#include "atlas/projection/Jacobian.h"
 #include "atlas/projection/detail/CubedSphereProjectionBase.h"
 #include "atlas/projection/detail/ProjectionImpl.h"
 
@@ -26,6 +27,18 @@ public:
     // projection name
     static std::string static_type() { return "cubedsphere_equiangular"; }
     std::string type() const override { return static_type(); }
+
+    /// @brief Convert (x, y) coordinate to (alpha, beta) on tile t.
+    void xy2alphabeta(double crd[], idx_t t) const override;
+
+    /// @brief Convert (alpha, beta) coordinate to (x, y) on tile t.
+    void alphabeta2xy(double crd[], idx_t t) const override;
+
+    /// @brief Jacobian of (x, y) with respect to (lon, lat) on tile t
+    Jacobian jacobian(const PointLonLat& lonlat, idx_t t) const override;
+
+    /// @brief Jacobian of (alpha, beta) with respect to (lon, lat) on tile t
+    Jacobian alphabetaJacobian(const PointLonLat& lonlat, idx_t t) const override;
 
     // projection and inverse projection
     void xy2lonlat(double crd[]) const override;

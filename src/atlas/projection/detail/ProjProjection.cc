@@ -26,9 +26,19 @@ namespace projection {
 namespace detail {
 
 namespace {
+struct pj_t : std::unique_ptr<PJ, decltype(&proj_destroy)> {
+    using t = std::unique_ptr<PJ, decltype(&proj_destroy)>;
+    explicit pj_t(PJ* ptr): t(ptr, &proj_destroy) {}
+    operator PJ*() const { return t::get(); }
+};
+
+struct ctx_t : std::unique_ptr<PJ_CONTEXT, decltype(&proj_context_destroy)> {
+    using t = std::unique_ptr<PJ_CONTEXT, decltype(&proj_context_destroy)>;
+    explicit ctx_t(PJ_CONTEXT* ptr): t(ptr, &proj_context_destroy) {}
+    operator PJ_CONTEXT*() const { return t::get(); }
+};
 
 bool proj_ellipsoid_params(PJ_CONTEXT* ctxt, const std::string& proj_str, double& a, double& b) {
-    using pj_t   = ProjProjection::pj_t;
     bool success = false;
     pj_t identity(proj_create_crs_to_crs(ctxt, proj_str.c_str(), proj_str.c_str(), nullptr));
     pj_t proj(proj_get_target_crs(ctxt, identity));
@@ -66,32 +76,37 @@ std::string geocentric_str(PJ_CONTEXT* ctxt, const std::string& proj_str) {
 
 }  // namespace
 
-ProjProjection::ProjProjection(const eckit::Parametrisation& param):
-    normalise_(param), sourceToTarget_(nullptr), sourceToGeocentric_(nullptr), context_(PJ_DEFAULT_CTX) {
-    ATLAS_ASSERT(param.get("proj", proj_) && !proj_.empty());
-    source_encoded_     = param.get("proj_source", source_ = source_str(context_, proj_));
-    geocentric_encoded_ = param.get("proj_geocentric", geocentric_ = geocentric_str(context_, proj_));
 
+struct Proj {
+    pj_t sourceToTarget_{nullptr};
+    pj_t sourceToGeocentric_{nullptr};
+    ctx_t context_{PJ_DEFAULT_CTX};
+};
+
+ProjProjection::ProjProjection(const eckit::Parametrisation& param): normalise_(param), proj_(new Proj()) {
+    ATLAS_ASSERT(param.get("proj", proj_string_) && !proj_string_.empty());
+    source_encoded_     = param.get("proj_source", source_ = source_str(proj_->context_, proj_string_));
+    geocentric_encoded_ = param.get("proj_geocentric", geocentric_ = geocentric_str(proj_->context_, proj_string_));
 
     // set x/y transformations to/from lon/lat and to/from geocentric coordinates
     {
-        pj_t p1(proj_create_crs_to_crs(context_, source_.c_str(), proj_.c_str(), nullptr));
+        pj_t p1(proj_create_crs_to_crs(proj_->context_, source_.c_str(), proj_string_.c_str(), nullptr));
         ATLAS_ASSERT(p1);
-        sourceToTarget_.reset(proj_normalize_for_visualization(context_, p1));
-        ATLAS_ASSERT(sourceToTarget_);
+        proj_->sourceToTarget_.reset(proj_normalize_for_visualization(proj_->context_, p1));
+        ATLAS_ASSERT(proj_->sourceToTarget_);
     }
 
     {
-        pj_t p2(proj_create_crs_to_crs(context_, source_.c_str(), geocentric_.c_str(), nullptr));
+        pj_t p2(proj_create_crs_to_crs(proj_->context_, source_.c_str(), geocentric_.c_str(), nullptr));
         ATLAS_ASSERT(p2);
-        sourceToGeocentric_.reset(proj_normalize_for_visualization(context_, p2));
-        ATLAS_ASSERT(sourceToGeocentric_);
+        proj_->sourceToGeocentric_.reset(proj_normalize_for_visualization(proj_->context_, p2));
+        ATLAS_ASSERT(proj_->sourceToGeocentric_);
     }
 
     // set semi-major/minor axis
     {
         double a, b;
-        if (proj_ellipsoid_params(context_, proj_, a, b)) {
+        if (proj_ellipsoid_params(proj_->context_, proj_string_, a, b)) {
             eckit::types::is_approximately_equal(a, b) ? extraSpec_.set("radius", a)
                                                        : extraSpec_.set("semi_major_axis", a).set("semi_minor_axis", b);
         }
@@ -99,12 +114,12 @@ ProjProjection::ProjProjection(const eckit::Parametrisation& param):
 
     // set units
     {
-        pj_t target(proj_get_target_crs(context_, sourceToTarget_));
+        pj_t target(proj_get_target_crs(proj_->context_, proj_->sourceToTarget_));
         ATLAS_ASSERT(target);
 
-        pj_t coord(proj_crs_get_coordinate_system(context_, target));
+        pj_t coord(proj_crs_get_coordinate_system(proj_->context_, target));
         ATLAS_ASSERT(coord);
-        ATLAS_ASSERT(proj_cs_get_axis_count(context_, coord) > 0);
+        ATLAS_ASSERT(proj_cs_get_axis_count(proj_->context_, coord) > 0);
 
         const char* units_c_str;
         if (proj_cs_get_axis_info(nullptr, coord, 0, nullptr, nullptr, nullptr, nullptr, &units_c_str, nullptr,
@@ -123,7 +138,7 @@ ProjProjection::ProjProjection(const eckit::Parametrisation& param):
 
 void ProjProjection::xy2lonlat(double crd[]) const {
     PJ_COORD P = proj_coord(crd[XX], crd[YY], 0, 0);
-    P          = proj_trans(sourceToTarget_, PJ_INV, P);
+    P          = proj_trans(proj_->sourceToTarget_, PJ_INV, P);
 
     //    std::memcpy(crd, &P, 2 * sizeof(double));
     crd[LON] = P.enu.e;
@@ -135,7 +150,7 @@ void ProjProjection::xy2lonlat(double crd[]) const {
 
 void ProjProjection::lonlat2xy(double crd[]) const {
     PJ_COORD P = proj_coord(crd[LON], crd[LAT], 0, 0);
-    P          = proj_trans(sourceToTarget_, PJ_FWD, P);
+    P          = proj_trans(proj_->sourceToTarget_, PJ_FWD, P);
 
     //    std::memcpy(crd, &P, 2 * sizeof(double));
     crd[XX] = P.xy.x;
@@ -149,7 +164,7 @@ ProjectionImpl::Jacobian ProjProjection::jacobian(const PointLonLat&) const {
 
 PointXYZ ProjProjection::xyz(const PointLonLat& lonlat) const {
     PJ_COORD P = proj_coord(lonlat.lon(), lonlat.lat(), 0, 0);
-    P          = proj_trans(sourceToGeocentric_, PJ_FWD, P);
+    P          = proj_trans(proj_->sourceToGeocentric_, PJ_FWD, P);
     return {P.xyz.x, P.xyz.y, P.xyz.z};
 }
 
@@ -162,7 +177,7 @@ RectangularLonLatDomain ProjProjection::lonlatBoundingBox(const Domain& domain) 
 ProjProjection::Spec ProjProjection::spec() const {
     Spec spec;
     spec.set("type", type());
-    spec.set("proj", proj_);
+    spec.set("proj", proj_string_);
     if (source_encoded_) {
         spec.set("proj_source", source_);
     }
@@ -181,7 +196,7 @@ std::string ProjProjection::units() const {
 
 void ProjProjection::hash(eckit::Hash& h) const {
     h.add(type());
-    h.add(proj_);
+    h.add(proj_string_);
     if (source_encoded_) {
         h.add(source_);
     }

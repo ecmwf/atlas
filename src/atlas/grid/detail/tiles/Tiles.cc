@@ -22,7 +22,7 @@ namespace grid {
 namespace detail {
 
 const CubedSphereTiles* CubedSphereTiles::create() {
-    // default: FV3 version (for now)
+    // default: LFRic version (for now)
     util::Config params;
     params.set("type", "cubedsphere_lfric");
     return CubedSphereTiles::create(params);
@@ -47,6 +47,14 @@ const CubedSphereTiles* CubedSphereTiles::create(const eckit::Parametrisation& p
     else {
         return create();
     }
+}
+
+idx_t CubedSphereTiles::indexFromXY(const PointXY& xy) const {
+    return indexFromXY(xy.data());
+}
+
+idx_t CubedSphereTiles::indexFromLonLat(const PointLonLat& lonlat) const {
+    return indexFromXY(lonlat.data());
 }
 
 }  // namespace detail
