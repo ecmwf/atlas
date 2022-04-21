@@ -11,6 +11,7 @@
 #pragma once
 
 #include <array>
+#include <string>
 #include <vector>
 
 #include "atlas/util/Object.h"
