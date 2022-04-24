@@ -80,6 +80,8 @@ public:
     /// @return uidx_t Return type depends on ATLAS_BITS_GLOBAL [32/64] bits
     uidx_t operator()(int node) const;
 
+    uidx_t operator()(int node, const PeriodicTransform& transform) const;
+
     /// @brief Compute unique positive index of element defined by node indices.
     /// The assumption is that the elements exist in a lon-lat domain and don't
     //  degenerate to a line.

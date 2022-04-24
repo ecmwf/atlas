@@ -36,6 +36,12 @@ uidx_t UniqueLonLat::operator()(const mesh::Connectivity::Row& elem_nodes, const
     return unique_lonlat(centroid);
 }
 
+uidx_t atlas::util::UniqueLonLat::operator()(int node, const PeriodicTransform& transform) const {
+    std::array<double, 2> _lonlat{lonlat(node, LON), lonlat(node, LAT)};
+    transform(_lonlat);
+    return unique_lonlat(_lonlat[LON], _lonlat[LAT]);
+}
+
 
 }  // namespace util
 }  // namespace atlas
