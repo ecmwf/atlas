@@ -38,7 +38,10 @@ TYPE, extends(fckit_owned_object) :: atlas_Interpolation
 contains
   procedure, private :: execute_field
   procedure, private :: execute_fieldset
+  procedure, private :: execute_adjoint_field
+  procedure, private :: execute_adjoint_fieldset
   generic, public :: execute => execute_field, execute_fieldset
+  generic, public :: execute_adjoint => execute_adjoint_field, execute_adjoint_fieldset
 
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_Interpolation__final_auto
@@ -123,6 +126,25 @@ subroutine execute_fieldset(this,source,target)
   class(atlas_FieldSet), intent(inout) :: target
   call atlas__Interpolation__execute_fieldset(this%CPTR_PGIBUG_A,source%CPTR_PGIBUG_A,target%CPTR_PGIBUG_A)
 end subroutine
+
+subroutine execute_adjoint_field(this,source,target)
+  use atlas_Interpolation_c_binding
+  use atlas_Field_module, only : atlas_Field
+  class(atlas_Interpolation), intent(in) :: this
+  class(atlas_Field), intent(inout) :: source
+  class(atlas_Field), intent(in) :: target
+  call atlas__Interpolation__execute_adjoint_field(this%CPTR_PGIBUG_A,source%CPTR_PGIBUG_A,target%CPTR_PGIBUG_A)
+end subroutine
+
+subroutine execute_adjoint_fieldset(this,source,target)
+  use atlas_Interpolation_c_binding
+  use atlas_FieldSet_module, only : atlas_FieldSet
+  class(atlas_Interpolation), intent(in) :: this
+  class(atlas_FieldSet), intent(inout) :: source
+  class(atlas_FieldSet), intent(in) :: target
+  call atlas__Interpolation__execute_adjoint_fieldset(this%CPTR_PGIBUG_A,source%CPTR_PGIBUG_A,target%CPTR_PGIBUG_A)
+end subroutine
+
 
 !-------------------------------------------------------------------------------
 

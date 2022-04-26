@@ -99,6 +99,10 @@ void atlas__Interpolation__execute_field(Interpolation::Implementation* This, co
                                          field::FieldImpl* target);
 void atlas__Interpolation__execute_fieldset(Interpolation::Implementation* This, const field::FieldSetImpl* source,
                                             field::FieldSetImpl* target);
+void atlas__Interpolation__execute_adjoint_field(Interpolation::Implementation* This, field::FieldImpl* source,
+                                                 const field::FieldImpl* target);
+void atlas__Interpolation__execute_adjoint_fieldset(Interpolation::Implementation* This, field::FieldSetImpl* source,
+                                                    const field::FieldSetImpl* target);
 }
 #endif
 

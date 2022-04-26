@@ -177,6 +177,20 @@ void atlas__Interpolation__execute_fieldset(Interpolation::Implementation* This,
     This->execute(FieldSet(source), t);
 }
 
+
+void atlas__Interpolation__execute_adjoint_field(Interpolation::Implementation* This, field::FieldImpl* source,
+                                                 const field::FieldImpl* target) {
+    Field s(source);
+    This->execute_adjoint(s, Field(target));
+}
+
+void atlas__Interpolation__execute_adjoint_fieldset(Interpolation::Implementation* This, field::FieldSetImpl* source,
+                                                    const field::FieldSetImpl* target) {
+    FieldSet s(source);
+    This->execute_adjoint(s, FieldSet(target));
+}
+
+
 }  // extern "C"
 
 }  // namespace atlas
