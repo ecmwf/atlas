@@ -72,6 +72,7 @@ public:
     }
 
     idx_t size() const { return static_cast<idx_t>(gp_.size()); }
+    idx_t capacity() const { return static_cast<idx_t>(gp_.capacity()); }
 
     const GridPoint& operator[](idx_t i) const { return gp_[i]; }
 
@@ -93,6 +94,8 @@ void StructuredColumns::setup(const grid::Distribution& distribution, const ecki
     bool periodic_x = false, periodic_y = false;
     config.get("periodic_x", periodic_x);
     config.get("periodic_y", periodic_y);
+
+    bool regional = (!periodic_x && !periodic_y && !grid_->domain().global());
 
     const double eps = 1.e-12;
 
@@ -225,6 +228,10 @@ void StructuredColumns::setup(const grid::Distribution& distribution, const ecki
     j_end_halo_   = j_end_ + halo;
     i_begin_halo_.resize(-halo, grid_->ny() - 1 + halo);
     i_end_halo_.resize(-halo, grid_->ny() - 1 + halo);
+    if (regional) {
+        j_begin_halo_ = std::max(j_begin_halo_, 0);
+        j_end_halo_   = std::min(j_end_halo_, grid_->ny());
+    }
 
     auto compute_i = [this](idx_t i, idx_t j) -> idx_t {
         const idx_t nx = grid_->nx(j);
@@ -345,7 +352,7 @@ void StructuredColumns::setup(const grid::Distribution& distribution, const ecki
         idx_t jmax = -std::numeric_limits<idx_t>::max();
 
         ATLAS_TRACE_SCOPE("Compute bounds halo") {
-            for (idx_t j = j_begin_halo_; j < j_end_halo_; ++j) {
+            for (idx_t j = j_begin_ - halo; j < j_end_ + halo; ++j) {
                 i_begin_halo_(j) = imin;
                 i_end_halo_(j)   = imax;
             }
@@ -362,7 +369,13 @@ void StructuredColumns::setup(const grid::Distribution& distribution, const ecki
 
                     double x_next = grid_->x(i + 1, j);
                     double x_prev = grid_->x(i - 1, j);
-                    for (idx_t jj = j - halo; jj <= j + halo; ++jj) {
+                    idx_t jj_min  = j - halo;
+                    idx_t jj_max  = j + halo;
+                    if (regional) {
+                        jj_min = std::max(jj_min, 0);
+                        jj_max = std::min(jj_max, grid_->nx(j) - 1);
+                    }
+                    for (idx_t jj = jj_min; jj <= jj_max; ++jj) {
                         idx_t jjj    = compute_j(jj);
                         idx_t nx_jjj = grid_->nx(jjj);
                         idx_t last   = grid_->nx(jjj) - 1;
@@ -412,6 +425,11 @@ void StructuredColumns::setup(const grid::Distribution& distribution, const ecki
                         iii               = std::min(iii, last);
                         idx_t i_plus_halo = iii + halo;
 
+                        if (regional) {
+                            i_minus_halo = std::max(i_minus_halo, 0);
+                            i_plus_halo  = std::min(i_plus_halo, grid_->nx(jj) - 1);
+                        }
+
                         imin              = std::min(imin, i_minus_halo);
                         imax              = std::max(imax, i_plus_halo);
                         i_begin_halo_(jj) = std::min(i_begin_halo_(jj), i_minus_halo);
@@ -432,7 +450,6 @@ void StructuredColumns::setup(const grid::Distribution& distribution, const ecki
         for (idx_t j = j_end_; j < j_end_halo_; ++j) {
             extra_halo += i_end_halo_(j) - i_begin_halo_(j);
         }
-
 
         ATLAS_TRACE_SCOPE("Assemble gridpoints") {
             gridpoints.reserve(owned + extra_halo);

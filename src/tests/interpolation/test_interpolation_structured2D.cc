@@ -197,7 +197,7 @@ CASE("test_interpolation_structured using grid API") {
         ATLAS_TRACE_SCOPE("output") {
             output::Gmsh gmsh(scheme().getString("name") + "-output-section" + std::to_string(_subsection) + ".msh",
                               Config("coordinates", "xy"));
-            gmsh.write(MeshGenerator("structured").generate(output_grid));
+            gmsh.write(Mesh(output_grid));
             gmsh.write(field_target, StructuredColumns(output_grid));
         }
     };

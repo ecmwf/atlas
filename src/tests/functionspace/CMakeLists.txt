@@ -51,6 +51,13 @@ ecbuild_add_test( TARGET test_structuredcolumns_biperiodic
   CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 5
 )
 
+ecbuild_add_test( TARGET test_structuredcolumns_regional
+  SOURCES  test_structuredcolumns_regional.cc
+  LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+
 ecbuild_add_test( TARGET atlas_test_structuredcolumns
   SOURCES  test_structuredcolumns.cc
   LIBS     atlas
