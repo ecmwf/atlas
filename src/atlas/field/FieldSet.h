@@ -130,6 +130,7 @@ FieldSetImpl* atlas__FieldSet__new(char* name);
 void atlas__FieldSet__delete(FieldSetImpl* This);
 void atlas__FieldSet__add_field(FieldSetImpl* This, FieldImpl* field);
 int atlas__FieldSet__has_field(const FieldSetImpl* This, char* name);
+const char* atlas__FieldSet__name(FieldSetImpl* This);
 idx_t atlas__FieldSet__size(const FieldSetImpl* This);
 FieldImpl* atlas__FieldSet__field_by_name(FieldSetImpl* This, char* name);
 FieldImpl* atlas__FieldSet__field_by_idx(FieldSetImpl* This, idx_t idx);

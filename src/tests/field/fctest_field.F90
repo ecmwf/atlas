@@ -72,6 +72,9 @@ implicit none
   call state%remove("field_test_owners")
   FCTEST_CHECK_EQUAL( f%owners() , 1 )
   fields = atlas_FieldSet("fields")
+
+  FCTEST_CHECK_EQUAL( fields%name() , "fields" )
+
   call fields%add(f)
   FCTEST_CHECK_EQUAL( f%owners() , 2 )
 
