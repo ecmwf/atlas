@@ -115,11 +115,11 @@ public:
 
     virtual const void* storage() const { return data_store_->voidDataStore(); }
 
+    bool valid() const { return data_store_->valid(); }
+
     void updateDevice() const { data_store_->updateDevice(); }
 
     void updateHost() const { data_store_->updateHost(); }
-
-    bool valid() const { return data_store_->valid(); }
 
     void syncHostDevice() const { data_store_->syncHostDevice(); }
 
@@ -127,9 +127,15 @@ public:
 
     bool deviceNeedsUpdate() const { return data_store_->deviceNeedsUpdate(); }
 
-    void reactivateDeviceWriteViews() const { data_store_->reactivateDeviceWriteViews(); }
+    void setHostNeedsUpdate(bool v) const { return data_store_->setHostNeedsUpdate(v); }
 
-    void reactivateHostWriteViews() const { data_store_->reactivateHostWriteViews(); }
+    void setDeviceNeedsUpdate(bool v) const { return data_store_->setDeviceNeedsUpdate(v); }
+
+    bool deviceAllocated() { return data_store_->deviceAllocated(); }
+
+    void allocateDevice() { data_store_->allocateDevice(); }
+
+    void deallocateDevice() { data_store_->deallocateDevice(); }
 
     const ArraySpec& spec() const { return spec_; }
 
