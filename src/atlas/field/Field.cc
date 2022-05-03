@@ -244,11 +244,11 @@ bool Field::hostNeedsUpdate() const {
 bool Field::deviceNeedsUpdate() const {
     return get()->deviceNeedsUpdate();
 }
-void Field::reactivateDeviceWriteViews() const {
-    get()->reactivateDeviceWriteViews();
+void Field::setHostNeedsUpdate(bool v) const {
+    return get()->setHostNeedsUpdate(v);
 }
-void Field::reactivateHostWriteViews() const {
-    get()->reactivateHostWriteViews();
+void Field::setDeviceNeedsUpdate(bool v) const {
+    return get()->setDeviceNeedsUpdate(v);
 }
 
 // ------------------------------------------------------------------

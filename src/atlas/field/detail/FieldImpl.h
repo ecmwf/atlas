@@ -201,10 +201,13 @@ public:  // Destructor
     void updateHost() const { array_->updateHost(); }
     void updateDevice() const { array_->updateDevice(); }
     void syncHostDevice() const { array_->syncHostDevice(); }
+    bool deviceAllocated() const { return array_->deviceAllocated(); }
+    void allocateDevice() const { array_->allocateDevice(); }
+    void deallocateDevice() const { array_->deallocateDevice(); }
     bool hostNeedsUpdate() const { return array_->hostNeedsUpdate(); }
     bool deviceNeedsUpdate() const { return array_->deviceNeedsUpdate(); }
-    void reactivateDeviceWriteViews() const { array_->reactivateDeviceWriteViews(); }
-    void reactivateHostWriteViews() const { array_->reactivateHostWriteViews(); }
+    void setHostNeedsUpdate(bool v) const { return array_->setHostNeedsUpdate(v); }
+    void setDeviceNeedsUpdate(bool v) const { return array_->setDeviceNeedsUpdate(v); }
 
     void haloExchange(bool on_device = false) const;
     void adjointHaloExchange(bool on_device = false) const;

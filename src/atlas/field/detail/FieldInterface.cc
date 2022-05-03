@@ -198,6 +198,10 @@ int atlas__Field__device_needs_update(const FieldImpl* This) {
     return This->deviceNeedsUpdate();
 }
 
+int atlas__Field__device_allocated(const FieldImpl* This) {
+    return This->deviceAllocated();
+}
+
 void atlas__Field__rename(FieldImpl* This, const char* name) {
     ATLAS_ASSERT(This, "Cannot rename uninitialised atlas_Field");
     This->rename(std::string(name));
@@ -219,6 +223,16 @@ void atlas__Field__set_functionspace(FieldImpl* This, const functionspace::Funct
 #endif
 }
 
+void atlas__Field__set_host_needs_update(const FieldImpl* This, int value) {
+    ATLAS_ASSERT(This != nullptr, "Cannot set value for uninitialised atlas_Field");
+    This->setHostNeedsUpdate(value);
+}
+
+void atlas__Field__set_device_needs_update(const FieldImpl* This, int value) {
+    ATLAS_ASSERT(This != nullptr, "Cannot set value for uninitialised atlas_Field");
+    This->setDeviceNeedsUpdate(value);
+}
+
 void atlas__Field__update_device(FieldImpl* This) {
     ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_Field");
     This->updateDevice();
@@ -232,6 +246,16 @@ void atlas__Field__update_host(FieldImpl* This) {
 void atlas__Field__sync_host_device(FieldImpl* This) {
     ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_Field");
     This->syncHostDevice();
+}
+
+void atlas__Field__allocate_device(FieldImpl* This) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_Field");
+    This->allocateDevice();
+}
+
+void atlas__Field__deallocate_device(FieldImpl* This) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_Field");
+    This->deallocateDevice();
 }
 
 void atlas__Field__set_dirty(FieldImpl* This, int value) {
