@@ -1609,8 +1609,6 @@ CASE("test_2level_adjoint_test_with_powerspectrum_convolution") {
     Log::info() << "transIFS backend" << transIFS.backend() << std::endl;
 
     std::vector<float> powerSpectrum(2 * N, 0.0);
-    float i(1.0);
-    float t(0.0);
 
     for (std::size_t w = 0; w < powerSpectrum.size(); ++w) {
         powerSpectrum[w] = 1.0 / static_cast<float>(w + 1);
@@ -1651,8 +1649,8 @@ CASE("test_2level_adjoint_test_with_powerspectrum_convolution") {
     auto spfView                   = atlas::array::make_view<double, 2>(spf);
     const auto zonal_wavenumbers   = specFS.zonal_wavenumbers();
     const int nb_zonal_wavenumbers = zonal_wavenumbers.size();
-    i                              = 0;
     double adj_value(0.0);
+    int i{0};
     for (int jm = 0; jm < nb_zonal_wavenumbers; ++jm) {
         const std::size_t m1 = zonal_wavenumbers(jm);
         for (std::size_t n1 = m1; n1 <= static_cast<std::size_t>(2 * N - 1); ++n1) {
