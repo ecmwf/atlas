@@ -106,13 +106,19 @@ public:
 
     virtual void syncHostDevice() const override {}
 
+    virtual bool deviceAllocated() const override { return false; }
+
+    virtual void allocateDevice() const override {}
+
+    virtual void deallocateDevice() const override {}
+
     virtual bool hostNeedsUpdate() const override { return false; }
 
     virtual bool deviceNeedsUpdate() const override { return false; }
 
-    virtual void reactivateDeviceWriteViews() const override {}
+    virtual void setHostNeedsUpdate(bool) const override {}
 
-    virtual void reactivateHostWriteViews() const override {}
+    virtual void setDeviceNeedsUpdate(bool) const override {}
 
     virtual void* voidDataStore() override { return static_cast<void*>(data_store_); }
 
@@ -172,13 +178,19 @@ public:
 
     virtual void syncHostDevice() const override {}
 
+    virtual bool deviceAllocated() const override { return false; }
+
+    virtual void allocateDevice() const override {}
+
+    virtual void deallocateDevice() const override {}
+
     virtual bool hostNeedsUpdate() const override { return true; }
 
     virtual bool deviceNeedsUpdate() const override { return false; }
 
-    virtual void reactivateDeviceWriteViews() const override {}
+    virtual void setHostNeedsUpdate(bool) const override {}
 
-    virtual void reactivateHostWriteViews() const override {}
+    virtual void setDeviceNeedsUpdate(bool) const override {}
 
     virtual void* voidDataStore() override { return static_cast<void*>(data_store_); }
 

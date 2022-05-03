@@ -46,17 +46,20 @@ struct add_const<T const> {
 class ArrayDataStore {
 public:
     virtual ~ArrayDataStore() {}
-    virtual void updateDevice() const               = 0;
-    virtual void updateHost() const                 = 0;
-    virtual bool valid() const                      = 0;
-    virtual void syncHostDevice() const             = 0;
-    virtual bool hostNeedsUpdate() const            = 0;
-    virtual bool deviceNeedsUpdate() const          = 0;
-    virtual void reactivateDeviceWriteViews() const = 0;
-    virtual void reactivateHostWriteViews() const   = 0;
-    virtual void* voidDataStore()                   = 0;
-    virtual void* voidHostData()                    = 0;
-    virtual void* voidDeviceData()                  = 0;
+    virtual void updateDevice() const             = 0;
+    virtual void updateHost() const               = 0;
+    virtual bool valid() const                    = 0;
+    virtual void syncHostDevice() const           = 0;
+    virtual void allocateDevice() const           = 0;
+    virtual void deallocateDevice() const         = 0;
+    virtual bool deviceAllocated() const          = 0;
+    virtual bool hostNeedsUpdate() const          = 0;
+    virtual bool deviceNeedsUpdate() const        = 0;
+    virtual void setHostNeedsUpdate(bool) const   = 0;
+    virtual void setDeviceNeedsUpdate(bool) const = 0;
+    virtual void* voidDataStore()                 = 0;
+    virtual void* voidHostData()                  = 0;
+    virtual void* voidDeviceData()                = 0;
     template <typename Value>
     Value* hostData() {
         return static_cast<Value*>(voidHostData());

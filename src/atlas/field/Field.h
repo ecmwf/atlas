@@ -190,8 +190,8 @@ public:
     void syncHostDevice() const;
     bool hostNeedsUpdate() const;
     bool deviceNeedsUpdate() const;
-    void reactivateDeviceWriteViews() const;
-    void reactivateHostWriteViews() const;
+    void setHostNeedsUpdate(bool) const;
+    void setDeviceNeedsUpdate(bool) const;
 };
 
 extern template Field::Field(const std::string&, float*, const array::ArraySpec&);
