@@ -419,6 +419,12 @@ Array::~Array() = default;
 
 //------------------------------------------------------------------------------
 
+
+template <typename Value>
+ArrayT<Value>::~ArrayT() {
+  accUnmap();
+}
+
 template <typename Value>
 size_t ArrayT<Value>::footprint() const {
     size_t size = sizeof(*this);
@@ -435,6 +441,19 @@ bool ArrayT<Value>::accMap() const {
         atlas_acc_map_data((void*)host_data<Value>(), (void*)device_data<Value>(),
                            spec_.allocatedSize() * sizeof(Value));
         acc_map_ = true;
+#endif
+    }
+    return acc_map_;
+}
+
+//------------------------------------------------------------------------------
+
+template <typename Value>
+bool ArrayT<Value>::accUnmap() const {
+    if (acc_map_) {
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA && ATLAS_HAVE_ACC
+        atlas_acc_unmap_data((void*)host_data<Value>());
+        acc_map_ = false;
 #endif
     }
     return acc_map_;

@@ -171,6 +171,10 @@ ArrayT<Value>::ArrayT(ArraySpec&& spec): Array(std::move(spec)) {
 }
 
 template <typename Value>
+ArrayT<Value>::~ArrayT() {
+}
+
+template <typename Value>
 void ArrayT<Value>::resize(const ArrayShape& _shape) {
     if (rank() != static_cast<idx_t>(_shape.size())) {
         std::stringstream msg;
@@ -281,6 +285,11 @@ size_t ArrayT<Value>::footprint() const {
 
 template <typename Value>
 bool ArrayT<Value>::accMap() const {
+    return false;
+}
+
+template <typename Value>
+bool ArrayT<Value>::accUnmap() const {
     return false;
 }
 
