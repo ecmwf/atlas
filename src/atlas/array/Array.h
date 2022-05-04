@@ -210,6 +210,8 @@ public:
 
     ArrayT(const ArrayShape&, const ArrayLayout&);
 
+    virtual ~ArrayT();
+
     virtual void insert(idx_t idx1, idx_t size1);
 
     virtual void resize(const ArrayShape&);
@@ -233,6 +235,7 @@ public:
     virtual size_t footprint() const;
 
     virtual bool accMap() const;
+    virtual bool accUnmap() const;
 
 private:
     template <typename T>
