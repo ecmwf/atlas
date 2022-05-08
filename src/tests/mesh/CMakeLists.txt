@@ -140,3 +140,8 @@ atlas_add_cuda_test(
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_pentagon_element
+  SOURCES test_pentagon_element.cc
+  LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)

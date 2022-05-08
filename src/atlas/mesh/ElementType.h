@@ -200,6 +200,38 @@ public:
         return s;
     }
 };
+
+class Pentagon : public Face {
+public:
+    enum
+    {
+        EDGES = 5
+    };
+    enum
+    {
+        VERTICES = 5
+    };
+    enum
+    {
+        FACETS = EDGES
+    };
+    enum
+    {
+        RIDGES = VERTICES
+    };
+    virtual ~Pentagon() {}
+    virtual bool parametric() const { return false; }
+    virtual idx_t nb_vertices() const { return VERTICES; }
+    virtual idx_t nb_edges() const { return EDGES; }
+    virtual idx_t nb_nodes() const { return VERTICES; }
+    virtual idx_t nb_facets() const { return FACETS; }
+    virtual idx_t nb_ridges() const { return RIDGES; }
+    virtual const std::string& name() const {
+        static std::string s("Pentagon");
+        return s;
+    }
+};
+
 }  // namespace temporary
 
 extern "C" {
