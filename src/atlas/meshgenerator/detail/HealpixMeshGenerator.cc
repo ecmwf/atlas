@@ -846,10 +846,12 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     nodes.metadata().set<size_t>("NbVirtualPts", size_t(0));
     nodes.global_index().metadata().set("human_readable", true);
     nodes.global_index().metadata().set("min", 1);
-    nodes.global_index().metadata().set("max", nvertices + grid.ny() + 2);
+    nodes.global_index().metadata().set("max", nvertices + 4 * ns + 1);
+    mesh.cells().global_index().metadata().set("human_readable", true);
+    mesh.cells().global_index().metadata().set("min", 1);
+    mesh.cells().global_index().metadata().set("max", grid.size() + 8);
 
     //generateGlobalElementNumbering(mesh);
-
 }  // generate_mesh
 
 namespace {
