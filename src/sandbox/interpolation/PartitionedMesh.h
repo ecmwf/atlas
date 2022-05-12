@@ -22,7 +22,7 @@ struct PartitionedMesh {
     typedef grid::Partitioner Partitioner;
 
     PartitionedMesh(const std::string& partitioner, const std::string& generator, bool meshGeneratorTriangulate = false,
-                    double meshGeneratorAngle = 0);
+                    double meshGeneratorAngle = 0, bool patchPole = true);
 
     virtual ~PartitionedMesh() {}
 

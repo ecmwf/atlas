@@ -19,10 +19,10 @@ namespace atlas {
 namespace interpolation {
 
 PartitionedMesh::PartitionedMesh(const std::string& partitioner, const std::string& generator,
-                                 bool generatorTriangulate, double generatorAngle):
+                                 bool generatorTriangulate, double generatorAngle, bool patchPole):
     optionPartitioner_(partitioner), optionGenerator_(generator) {
     generatorParams_.set("three_dimensional", false);
-    generatorParams_.set("patch_pole", true);
+    generatorParams_.set("patch_pole", patchPole);
     generatorParams_.set("include_pole", false);
     generatorParams_.set("triangulate", generatorTriangulate);
     generatorParams_.set("angle", generatorAngle);
