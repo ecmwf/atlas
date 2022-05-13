@@ -8,7 +8,10 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "atlas/functionspace.h"
+#include "atlas/interpolation.h"
 #include "atlas/mesh.h"
+#include "atlas/option.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/output/Output.h"
 
@@ -88,6 +91,30 @@ CASE("test_pentagon_like_healpix") {
     {
         output::Gmsh gmsh("test_pentagon_lonlat.msh", util::Config("coordinates", "lonlat"));
         gmsh.write(mesh);
+    }
+
+    auto src_fs = functionspace::NodeColumns(mesh);
+    auto tgt_fs = functionspace::PointCloud({{45, 80}, {0, 89}, {180, 89}, {170, 89}});
+
+    Interpolation interpolation(option::type("finite-element"), src_fs, tgt_fs);
+
+    auto src_field = src_fs.createField<double>();
+    auto tgt_field = tgt_fs.createField<double>();
+
+    auto src_lonlat = array::make_view<double, 2>(src_fs.lonlat());
+    auto src        = array::make_view<double, 1>(src_field);
+    for (auto i = 0; i < src_fs.size(); ++i) {
+        src(i) = std::cos(src_lonlat(i, LAT)) * std::sin(src_lonlat(i, LON));
+    }
+
+    interpolation.execute(src_field, tgt_field);
+
+    auto tgt_lonlat = array::make_view<double, 2>(tgt_fs.lonlat());
+    auto tgt        = array::make_view<double, 1>(tgt_field);
+    for (auto i = 0; i < tgt_fs.size(); ++i) {
+        double analytical = std::cos(tgt_lonlat(i, LAT)) * std::sin(tgt_lonlat(i, LON));
+        Log::info() << i << " " << PointLonLat{tgt_lonlat(i, LON), tgt_lonlat(i, LAT)} << " : interpolated=" << tgt(i)
+                    << "; expected=" << analytical << std::endl;
     }
 }
 
