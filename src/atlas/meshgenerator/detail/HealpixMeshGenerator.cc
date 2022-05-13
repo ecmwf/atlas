@@ -59,6 +59,11 @@ HealpixMeshGenerator::HealpixMeshGenerator(const eckit::Parametrisation& p) {
         options.set("part", part);
     }
 
+    bool three_dimensional;
+    if (p.get("3d", three_dimensional)) {
+        options.set("3d", three_dimensional);
+    }
+
     std::string partitioner;
     if (p.get("partitioner", partitioner)) {
         if (not grid::Partitioner::exists(partitioner)) {
@@ -77,6 +82,9 @@ void HealpixMeshGenerator::configure_defaults() {
     // This option sets the part that will be generated
     options.set("part", mpi::rank());
 
+    // This option switches between original HEALPix (=1) or HEALPix with 8 points are the pole (=8)
+    options.set("3d", false);
+
     // This options sets the default partitioner
     std::string partitioner;
     if (grid::Partitioner::exists("equal_regions") && mpi::size() > 1) {
@@ -88,66 +96,97 @@ void HealpixMeshGenerator::configure_defaults() {
     options.set<std::string>("partitioner", partitioner);
 }
 
-namespace {
-int idx_xy_to_x(const int xidx, const int yidx, const int ns) {
+
+// match glb_idx of node in (nb_pole_nodes==8)-mesh to glb_idx of nodes in (nb_pole_nodes==1)-mesh
+gidx_t HealpixMeshGenerator::match_idx(gidx_t gidx, const int ns) const {
+    const gidx_t nb_nodes_orig = 12 * ns * ns;
+    if (nb_pole_nodes_ == 1 or gidx >= nb_nodes_) {
+        return gidx;
+    }
+    if (gidx == 4) {
+        return 0;
+    }
+    if (gidx == nb_nodes_ - 4) {
+        return nb_nodes_orig + 1;
+    }
+    bool at_north_pole = (gidx < 8);
+    bool at_south_pole = (gidx <= nb_nodes_ and gidx >= nb_nodes_orig + nb_pole_nodes_);
+    if (at_north_pole) {
+        return nb_nodes_orig + 2 + gidx - (gidx > 4 ? 1 : 0);
+    }
+    if (at_south_pole) {
+        return gidx - nb_pole_nodes_ + 9 - (gidx > nb_nodes_orig + 12 ? 1 : 0);
+    }
+    return gidx - nb_pole_nodes_ + 1;
+}
+
+
+// return "global_id - 1"
+gidx_t HealpixMeshGenerator::idx_xy_to_x(const int xidx, const int yidx, const int ns) const {
     ATLAS_ASSERT(yidx < 4 * ns + 1 && yidx >= 0);
     ATLAS_ASSERT(xidx >= 0);
 
-    auto ghostIdx = [ns](int latid) { return 12 * ns * ns + 16 + latid; };
+    const gidx_t nb_nodes_orig = 12 * ns * ns;
+    auto ghostIdx              = [ns, this](int latid) { return this->nb_nodes_ + latid; };
+    gidx_t ret;
 
     if (yidx == 0) {
-        ATLAS_ASSERT(xidx < 9 && xidx >= 0);
-        return (xidx != 8 ? xidx : ghostIdx(yidx));
+        ATLAS_ASSERT(xidx <= nb_pole_nodes_ && xidx >= 0);
+        ret = (xidx != nb_pole_nodes_ ? xidx : ghostIdx(yidx));
     }
     else if (yidx < ns) {
         ATLAS_ASSERT(xidx < 4 * yidx + 1 && xidx >= 0);
-        return (xidx != 4 * yidx ? 2 * yidx * (yidx - 1) + 8 + xidx : ghostIdx(yidx));
+        ret = (xidx != 4 * yidx ? 2 * yidx * (yidx - 1) + nb_pole_nodes_ + xidx : ghostIdx(yidx));
     }
     else if (yidx <= 2 * ns) {
         ATLAS_ASSERT(xidx < 4 * ns + 1 && xidx >= 0);
-        return (xidx != 4 * ns ? 2 * ns * (ns - 1) + 4 * ns * (yidx - ns) + 8 + xidx : ghostIdx(yidx));
+        ret = (xidx != 4 * ns ? 2 * ns * (ns - 1) + 4 * ns * (yidx - ns) + nb_pole_nodes_ + xidx : ghostIdx(yidx));
     }
     else if (yidx <= 3 * ns) {
         ATLAS_ASSERT(xidx < 4 * ns + 1 && xidx >= 0);
-        return (xidx != 4 * ns ? 2 * ns * (3 * ns + 1) + 4 * ns * (yidx - 2 * ns - 1) + 8 + xidx : ghostIdx(yidx));
+        ret = (xidx != 4 * ns ? 2 * ns * (3 * ns + 1) + 4 * ns * (yidx - 2 * ns - 1) + nb_pole_nodes_ + xidx
+                              : ghostIdx(yidx));
     }
     else if (yidx == 3 * ns + 1 && ns > 1) {
         ATLAS_ASSERT(xidx < 4 * (ns - 1) + 1 && xidx >= 0);
-        return (xidx != 4 * (ns - 1) ? 2 * ns * (5 * ns + 1) + 4 * ns * (yidx - 3 * ns - 1) + 8 + xidx
-                                     : ghostIdx(yidx));
+        ret = (xidx != 4 * (ns - 1) ? 2 * ns * (5 * ns + 1) + 4 * ns * (yidx - 3 * ns - 1) + nb_pole_nodes_ + xidx
+                                    : ghostIdx(yidx));
     }
     else if (yidx < 4 * ns) {
         ATLAS_ASSERT(xidx < 4 * (ns - (yidx - 3 * ns)) + 1 && xidx >= 0);
-        return (xidx != 4 * (ns - (yidx - 3 * ns)) ? 2 * ns * (5 * ns + 1) + 4 * ns * (yidx - 3 * ns - 1) -
-                                                         2 * (yidx - 3 * ns) * (yidx - 3 * ns - 1) + 8 + xidx
-                                                   : ghostIdx(yidx));
+        ret =
+            (xidx != 4 * (ns - (yidx - 3 * ns)) ? 2 * ns * (5 * ns + 1) + 4 * ns * (yidx - 3 * ns - 1) -
+                                                      2 * (yidx - 3 * ns) * (yidx - 3 * ns - 1) + nb_pole_nodes_ + xidx
+                                                : ghostIdx(yidx));
     }
     else {
-        ATLAS_ASSERT(xidx < 9 && xidx >= 0);
-        return (xidx != 8 ? 12 * ns * ns + 8 + xidx : ghostIdx(yidx));
+        ATLAS_ASSERT(xidx <= nb_pole_nodes_ && xidx >= 0);
+        ret = (xidx != nb_pole_nodes_ ? nb_nodes_orig + nb_pole_nodes_ + xidx : ghostIdx(yidx));
     }
+    return ret;
 }
 
-int up_idx(const int xidx, const int yidx, const int ns) {
+// return global_id of the node "above" (xidx,yidx) node
+gidx_t HealpixMeshGenerator::up_idx(const int xidx, const int yidx, const int ns) const {
     ATLAS_ASSERT(yidx <= 4 * ns && yidx >= 0);
 
-    auto ghostIdx = [ns](int latid) { return 12 * ns * ns + 16 + latid; };
+    const gidx_t nb_nodes_orig = 12 * ns * ns;
+    auto ghostIdx              = [ns, this](int latid) { return this->nb_nodes_ + latid; };
 
     int ret;
 
-    // global idx
     if (yidx == 0) {
-        ATLAS_ASSERT(xidx < 8);
-        ret = (xidx != 7 ? xidx + 1 : ghostIdx(0));
+        ATLAS_ASSERT(xidx < nb_pole_nodes_);
+        ret = (xidx != nb_pole_nodes_ - 1 ? xidx + 1 : ghostIdx(0));
     }
     else if (yidx == 1) {
         ATLAS_ASSERT(xidx < 4);
-        ret = 2 * xidx;
+        ret = (nb_pole_nodes_ == 8 ? 2 * xidx : 0);
     }
     else if (yidx < ns) {
         ATLAS_ASSERT(xidx < 4 * yidx);
         if (xidx != 4 * yidx - 1) {
-            ret = 2 * (yidx - 2) * (yidx - 1) + 8 + xidx - std::floor(xidx / (double)yidx);
+            ret = 2 * (yidx - 2) * (yidx - 1) + nb_pole_nodes_ + xidx - std::floor(xidx / (double)yidx);
         }
         else {
             ret = ghostIdx(yidx - 1);
@@ -156,7 +195,7 @@ int up_idx(const int xidx, const int yidx, const int ns) {
     else if (yidx == ns && ns < 3) {
         ATLAS_ASSERT(xidx < 4 * ns);
         if (xidx != 4 * ns - 1) {
-            ret = 2 * ns * (ns - 1) + 8 - 4 * (ns - 1) + (xidx + 1) / 2;
+            ret = 2 * ns * (ns - 1) + nb_pole_nodes_ - 4 * (ns - 1) + (xidx + 1) / 2;
         }
         else {
             ret = ghostIdx(yidx - 1);
@@ -165,7 +204,7 @@ int up_idx(const int xidx, const int yidx, const int ns) {
     else if (yidx == ns) {
         ATLAS_ASSERT(xidx < 4 * ns);
         if (xidx != 4 * ns - 1) {
-            ret = 2 * (ns - 2) * (ns - 1) + 8 + xidx - std::floor(xidx / (double)yidx);
+            ret = 2 * (ns - 2) * (ns - 1) + nb_pole_nodes_ + xidx - std::floor(xidx / (double)yidx);
         }
         else {
             ret = ghostIdx(yidx - 1);
@@ -173,9 +212,9 @@ int up_idx(const int xidx, const int yidx, const int ns) {
     }
     else if (yidx <= 3 * ns) {
         ATLAS_ASSERT(xidx < 4 * ns);
-        int stg = (yidx - ns) % 2;
-        if (xidx != 4 * ns - 1 || (xidx == 4 * ns - 1 && stg)) {
-            ret = 2 * ns * (ns - 1) + 8 + 4 * ns * (yidx - ns - 1) + xidx + 1 - stg;
+        int staggering = (yidx - ns) % 2;
+        if (xidx != 4 * ns - 1 || (xidx == 4 * ns - 1 && staggering)) {
+            ret = 2 * ns * (ns - 1) + nb_pole_nodes_ + 4 * ns * (yidx - ns - 1) + xidx + 1 - staggering;
         }
         else {
             ret = ghostIdx(yidx - 1);
@@ -184,70 +223,76 @@ int up_idx(const int xidx, const int yidx, const int ns) {
     else if (yidx < 4 * ns - 1) {
         int yidxl = 4 * ns - yidx;
         ATLAS_ASSERT(xidx < 4 * yidxl);
-        ret = 12 * ns * ns + 9 - 2 * (yidxl + 2) * (yidxl + 1) + xidx + std::floor(xidx / (double)yidxl);
+        ret = nb_nodes_orig + nb_pole_nodes_ + 1 - 2 * (yidxl + 2) * (yidxl + 1) + xidx +
+              std::floor(xidx / (double)yidxl);
     }
     else if (yidx == 4 * ns - 1) {
         ATLAS_ASSERT(xidx < 4);
-        ret = 12 * ns * ns + 5 - (ns == 1 ? 4 : 8) + 2 * xidx;
+        ret = nb_nodes_orig + nb_pole_nodes_ - 3 - (ns == 1 ? 4 : 8) + 2 * xidx;
     }
     else {
-        ATLAS_ASSERT(xidx < 8);
+        ATLAS_ASSERT(xidx < nb_pole_nodes_);
         if (ns == 1) {
-            if (xidx != 7) {
-                ret = 12 * ns * ns + 4 + (xidx % 2 ? -4 + (xidx + 1) / 2 : xidx / 2);
+            if (xidx != nb_pole_nodes_ - 1) {
+                ret = nb_nodes_orig + nb_pole_nodes_ - 4 + (xidx % 2 ? -4 + (xidx + 1) / 2 : xidx / 2);
             }
             else {
-                ret = ghostIdx(4 * ns - 2);
+                ret = (nb_pole_nodes_ == 8 ? ghostIdx(4 * ns - 2) : ghostIdx(4 * ns));
             }
         }
         else {
-            ret = 12 * ns * ns + 8 + (xidx % 2 ? xidx - 12 : xidx - 4 - xidx / 2);
+            ret = nb_nodes_orig + nb_pole_nodes_ + (xidx % 2 ? xidx - 12 : xidx - 4 - xidx / 2);
         }
     }
     return ret;
 }
 
-int down_idx(const int xidx, const int yidx, const int ns) {
+// return global_id of the node "below" (xidx,yidx) node
+gidx_t HealpixMeshGenerator::down_idx(const int xidx, const int yidx, const int ns) const {
     ATLAS_ASSERT(yidx <= 4 * ns);
 
-    auto ghostIdx = [ns](int latid) { return 12 * ns * ns + 16 + latid; };
+    const gidx_t nb_nodes_orig = 12 * ns * ns;
+    auto ghostIdx              = [ns, this](int latid) { return this->nb_nodes_ + latid; };
 
     int ret;
 
-    // global idx
     if (yidx == 0) {
-        if (xidx < 8) {
-            ATLAS_ASSERT(xidx < 8);
-        }
+        ATLAS_ASSERT(xidx < nb_pole_nodes_);
         if (ns == 1) {
-            if (xidx != 7) {
-                ret = 8 + (xidx % 2 ? 4 + (xidx + 1) / 2 : xidx / 2);
+            if (xidx != nb_pole_nodes_ - 1) {
+                if (nb_pole_nodes_ == 8) {
+                    ret = 8 + (xidx % 2 ? 4 + (xidx + 1) / 2 : xidx / 2);
+                }
+                else {
+                    ret = 1 + xidx;
+                }
             }
             else {
                 ret = ghostIdx(2);
             }
         }
         else {
-            ret = 8 + ((xidx + 1) % 2 ? xidx / 2 : 4 + xidx);
+            ret = nb_pole_nodes_ + ((xidx + 1) % 2 ? xidx / 2 : 4 + xidx);
         }
     }
     else if (yidx < ns) {
         ATLAS_ASSERT(xidx < 4 * yidx);
-        ret = 2 * yidx * (yidx + 1) + 9 + xidx + std::floor(xidx / (double)yidx);
+        ret = 2 * yidx * (yidx + 1) + nb_pole_nodes_ + 1 + xidx + std::floor(xidx / (double)yidx);
     }
     else if (yidx == ns && ns == 1) {
         ATLAS_ASSERT(xidx < 4);
-        ret = (xidx != 3 ? 13 + xidx : ghostIdx(2));
+        ret = (xidx != 3 ? nb_pole_nodes_ + 5 + xidx : ghostIdx(2));
     }
     else if (yidx == 2 * ns && ns == 1) {
         ATLAS_ASSERT(xidx < 4);
-        ret = 16 + xidx;
+        ret = (nb_pole_nodes_ == 8 ? 16 + xidx : 9 + xidx);
     }
     else if (yidx < 3 * ns && ns > 1) {
         ATLAS_ASSERT(xidx < 4 * ns);
-        int stg = (yidx - ns) % 2;
-        if (xidx != 4 * ns - 1 || (xidx == 4 * ns - 1 && stg)) {
-            ret = 2 * ns * (ns - 1) + 8 + 4 * ns * (yidx - ns + 1) + xidx + (yidx != 3 * ns ? 1 - stg : 0);
+        int staggering = (yidx - ns) % 2;
+        if (xidx != 4 * ns - 1 || (xidx == 4 * ns - 1 && staggering)) {
+            ret = 2 * ns * (ns - 1) + nb_pole_nodes_ + 4 * ns * (yidx - ns + 1) + xidx +
+                  (yidx != 3 * ns ? 1 - staggering : 0);
         }
         else {
             ret = ghostIdx(yidx + 1);
@@ -255,17 +300,27 @@ int down_idx(const int xidx, const int yidx, const int ns) {
     }
     else if (yidx == 4 * ns - 2) {
         ATLAS_ASSERT(xidx < 8);
-        ret = (xidx != 7 ? 12 * ns * ns + 4 + (xidx + 1) / 2 : ghostIdx(4 * ns - 1));
+        if (nb_pole_nodes_ == 8) {
+            ret = (xidx != 7 ? nb_nodes_orig + 4 + (xidx + 1) / 2 : ghostIdx(4 * ns - 1));
+        }
+        else {
+            ret = (xidx != 7 ? nb_nodes_orig - 3 + (xidx + 1) / 2 : ghostIdx(4 * ns - 1));
+        }
     }
     else if (yidx == 4 * ns - 1) {
         ATLAS_ASSERT(xidx < 4);
-        ret = 12 * ns * ns + 8 + 2 * xidx;
+        if (nb_pole_nodes_ == 8) {
+            ret = nb_nodes_orig + nb_pole_nodes_ + 2 * xidx;
+        }
+        else {
+            ret = nb_nodes_orig + 1;
+        }
     }
     else if (yidx < 4 * ns - 1) {
         int yidxl = yidx - 3 * ns;
         ATLAS_ASSERT(xidx < 4 * (ns - yidxl));
         if (xidx != 4 * (ns - yidxl) - 1) {
-            ret = 2 * ns * (5 * ns + 1) + 8 + 4 * ns * yidxl - 2 * (yidxl + 1) * yidxl + xidx -
+            ret = 2 * ns * (5 * ns + 1) + nb_pole_nodes_ + 4 * ns * yidxl - 2 * (yidxl + 1) * yidxl + xidx -
                   std::floor(xidx / (double)(ns - yidxl));
         }
         else {
@@ -273,8 +328,8 @@ int down_idx(const int xidx, const int yidx, const int ns) {
         }
     }
     else if (yidx == 4 * ns) {
-        ATLAS_ASSERT(xidx < 8);
-        ret = (xidx != 7 ? 12 * ns * ns + 8 + xidx + 1 : ghostIdx(yidx));
+        ATLAS_ASSERT(xidx < nb_pole_nodes_);
+        ret = (xidx != nb_pole_nodes_ - 1 ? nb_nodes_orig + nb_pole_nodes_ + xidx + 1 : ghostIdx(yidx));
     }
     else {
         throw_AssertionFailed("Invalid value of yidx", Here());
@@ -282,45 +337,54 @@ int down_idx(const int xidx, const int yidx, const int ns) {
     return ret;
 }
 
-int right_idx(const int xidx, const int yidx, const int ns) {
+// return global_id of the node "to the right of" (xidx,yidx) node
+gidx_t HealpixMeshGenerator::right_idx(const int xidx, const int yidx, const int ns) const {
     ATLAS_ASSERT(yidx <= 4 * ns);
 
-    auto ghostIdx = [ns](int latid) { return 12 * ns * ns + 16 + latid; };
-    int ret       = -1;
+    const gidx_t nb_nodes_orig = 12 * ns * ns;
+    auto ghostIdx              = [ns, this](int latid) { return this->nb_nodes_ + latid; };
+    int ret                    = -1;
 
     if (yidx == 0) {
-        if (xidx < 8) {
-            ATLAS_ASSERT(xidx < 8);
-        }
+        ATLAS_ASSERT(xidx < nb_pole_nodes_);
         if (ns == 1) {
-            ret = (xidx != 7 ? (xidx % 2 ? 8 + (xidx + 1) / 2 : 13 + xidx / 2) : ghostIdx(1));
+            ret = (xidx != nb_pole_nodes_ - 1
+                       ? (xidx % 2 ? nb_pole_nodes_ + (xidx + 1) / 2 : nb_pole_nodes_ + 5 + xidx / 2)
+                       : ghostIdx(1));
         }
         else {
-            ret = (xidx < 7 ? (xidx % 2 ? 8 + (xidx + 1) / 2 : 13 + xidx) : ghostIdx(1));
+            ret = (xidx != nb_pole_nodes_ - 1 ? (xidx % 2 ? nb_pole_nodes_ + (xidx + 1) / 2 : nb_pole_nodes_ + 5 + xidx)
+                                              : ghostIdx(1));
         }
     }
     else if (yidx == 1) {
         ATLAS_ASSERT(xidx < 4);
-        ret = (xidx < 7 ? 1 + 2 * xidx : ghostIdx(0));
+        if (nb_pole_nodes_ == 8) {
+            ret = 1 + 2 * xidx;
+        }
+        else {
+            ret = (xidx != 3 ? xidx + 2 : ghostIdx(1));
+        }
     }
     else if (yidx < ns) {
         ATLAS_ASSERT(xidx < 4 * yidx);
-        ret = (xidx != 4 * yidx - 1 ? 2 * yidx * (yidx - 1) + 9 + xidx : ghostIdx(yidx));
+        ret = (xidx != 4 * yidx - 1 ? 2 * yidx * (yidx - 1) + nb_pole_nodes_ + 1 + xidx : ghostIdx(yidx));
     }
     else if (yidx == 3 && ns == 1) {
         ATLAS_ASSERT(xidx < 4);
-        ret = 21 + 2 * xidx;
+        ret = (nb_pole_nodes_ == 8 ? 21 + 2 * xidx : (xidx != 3 ? 10 + xidx : ghostIdx(yidx)));
     }
     else if (yidx <= 3 * ns) {
         ATLAS_ASSERT(xidx < 4 * ns + 1);
-        ret = (xidx != 4 * ns - 1 ? 2 * ns * (ns - 1) + 4 * ns * (yidx - ns) + 9 + xidx : ghostIdx(yidx));
+        ret = (xidx != 4 * ns - 1 ? 2 * ns * (ns - 1) + 4 * ns * (yidx - ns) + nb_pole_nodes_ + 1 + xidx
+                                  : ghostIdx(yidx));
     }
     else if (yidx < 4 * ns - 1 && ns > 1) {
         int yidxl = yidx - 3 * ns;
         ATLAS_ASSERT(xidx < 4 * (ns - yidxl));
         if (xidx != 4 * (ns - yidxl) - 1) {
-            ret = 2 * ns * (5 * ns + 1) + 4 * ns * (yidx - 3 * ns - 1) - 2 * (yidx - 3 * ns) * (yidx - 3 * ns - 1) + 9 +
-                  xidx;
+            ret = 2 * ns * (5 * ns + 1) + 4 * ns * (yidx - 3 * ns - 1) - 2 * (yidx - 3 * ns) * (yidx - 3 * ns - 1) +
+                  nb_pole_nodes_ + 1 + xidx;
         }
         else {
             ret = ghostIdx(yidx);
@@ -328,12 +392,17 @@ int right_idx(const int xidx, const int yidx, const int ns) {
     }
     else if (yidx == 4 * ns - 1) {
         ATLAS_ASSERT(xidx < 4);
-        ret = 12 * ns * ns + 9 + 2 * xidx;
+        if (nb_pole_nodes_ == 8) {
+            ret = nb_nodes_orig + nb_pole_nodes_ + 1 + 2 * xidx;
+        }
+        else {
+            ret = (xidx != 3 ? nb_nodes_orig - 2 + xidx : ghostIdx(yidx));
+        }
     }
     else if (yidx == 4 * ns) {
-        ATLAS_ASSERT(xidx < 8);
-        if (xidx != 7) {
-            ret = (xidx % 2 ? 12 * ns * ns + 4 + (xidx + 1) / 2 : 12 * ns * ns + 4 - (ns == 1 ? 3 : 7) + xidx);
+        ATLAS_ASSERT(xidx < nb_pole_nodes_);
+        if (xidx != nb_pole_nodes_ - 1) {
+            ret = (xidx % 2 ? nb_nodes_orig + 4 + (xidx + 1) / 2 : nb_nodes_orig + 4 - (ns == 1 ? 3 : 7) + xidx);
         }
         else {
             ret = ghostIdx(yidx - 1);
@@ -341,7 +410,6 @@ int right_idx(const int xidx, const int yidx, const int ns) {
     }
     return ret;
 }
-}  // namespace
 
 void HealpixMeshGenerator::generate(const Grid& grid, Mesh& mesh) const {
     ATLAS_ASSERT(HealpixGrid(grid), "Grid could not be cast to a HealpixGrid");
@@ -422,14 +490,23 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
 
     ATLAS_ASSERT(HealpixGrid(grid));
 
-    const int mypart    = options.get<size_t>("part");
-    const int nparts    = options.get<size_t>("nb_parts");
-    const int ny        = grid.ny() + 2;
-    const int ns        = (ny - 1) / 4;
-    const int nvertices = 12 * ns * ns + 16;
+    const int mypart             = options.get<size_t>("part");
+    const int nparts             = options.get<size_t>("nb_parts");
+    const bool three_dimensional = options.get<bool>("3d");
+    const int nb_pole_nodes      = three_dimensional ? 1 : 8;
+    const int ny                 = grid.ny() + 2;
+    const int ns                 = (ny - 1) / 4;
+    const int nvertices          = 12 * ns * ns + 2 * nb_pole_nodes;
+
+
+    nb_pole_nodes_ = nb_pole_nodes;
+    nb_points_     = 12 * ns * ns + (nb_pole_nodes == 8 ? 8 : 0);
+    nb_nodes_      = nvertices;
 
     int inode;
-    auto latPoints = [ny, &grid](int latid) { return (latid == 0 ? 8 : (latid == ny - 1 ? 8 : grid.nx()[latid - 1])); };
+    auto nb_lat_nodes = [ny, nb_pole_nodes, &grid](int latid) {
+        return ((latid == 0) or (latid == ny - 1) ? nb_pole_nodes : grid.nx()[latid - 1]);
+    };
 
     int ii, ix, iy, ii_ghost, ii_glb;
     int iy_min, iy_max;   // a belt (iy_min:iy_max) surrounding the nodes on this processor
@@ -439,22 +516,40 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     std::vector<int> local_idx(nvertices, -1);
     std::vector<int> current_idx(nparts, 0);  // index counter for each proc
 
+    auto compute_part = [&](int iy, gidx_t ii_glb) -> int {
+        // nodes at the pole belong to proc_0 (north) and proc_maxRank (south)
+        // a node gets its proc rank from the element for which this node would be its west vertex
+        return (iy == 0 ? 0 : (iy == ny - 1 ? mpi::comm().size() - 1 : distribution.partition(ii_glb - nb_pole_nodes)));
+    };
+
+#if DEBUG_OUTPUT_DETAIL
+    for (iy = 0; iy < ny; iy++) {
+        int nx = nb_lat_nodes(iy);
+        for (ix = 0; ix < nx; ix++) {
+            Log::info() << "iy, ix, glb_idx, up_idx, down_idx, right_idx : " << iy << ", " << ix << ", "
+                        << idx_xy_to_x(ix, iy, ns) + 1 << ", " << up_idx(ix, iy, ns) + 1 << ", "
+                        << down_idx(ix, iy, ns) + 1 << ", " << right_idx(ix, iy, ns) + 1 << std::endl;
+        }
+        Log::info() << std::endl;
+    }
+#endif
+
     // loop over all points to determine local indices and surrounding rectangle
-    ii_glb          = 0;
+    ii_glb          = 0;  // global index starting from 0
     iy_min          = ny + 1;
     iy_max          = 0;
     nnodes_nonghost = 0;
     for (iy = 0; iy < ny; iy++) {
-        int nx = latPoints(iy);
+        int nx = nb_lat_nodes(iy);
         for (ix = 0; ix < nx; ix++) {
-            int proc_id = (iy == 0 ? 0 : (iy == ny - 1 ? mpi::comm().size() - 1 : distribution.partition(ii_glb - 8)));
+            int proc_id       = compute_part(iy, ii_glb);
             local_idx[ii_glb] = current_idx[proc_id]++;
             if (proc_id == mypart) {
                 ++nnodes_nonghost;
                 iy_min = std::min(iy_min, iy);
                 iy_max = std::max(iy_max, iy);
             }
-            ++ii_glb;  // global index
+            ++ii_glb;
         }
     }
 
@@ -462,7 +557,7 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     inode = 0;
     Log::info() << "local_idx : " << std::endl;
     for (size_t ilat = 0; ilat < ny; ilat++) {
-        for (size_t ilon = 0; ilon < latPoints(ilat); ilon++) {
+        for (size_t ilon = 0; ilon < nb_lat_nodes(ilat); ilon++) {
             Log::info() << std::setw(4) << local_idx[inode];
             inode++;
         }
@@ -471,7 +566,7 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     inode = 0;
     Log::info() << "global_idx : " << std::endl;
     for (size_t ilat = 0; ilat < ny; ilat++) {
-        for (size_t ilon = 0; ilon < latPoints(ilat); ilon++) {
+        for (size_t ilon = 0; ilon < nb_lat_nodes(ilat); ilon++) {
             Log::info() << std::setw(4) << inode;
             inode++;
         }
@@ -494,7 +589,8 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
         ++iy_max;
     }
     for (int iy = iy_min; iy <= iy_max; iy++) {
-        nnodes_SB += latPoints(iy) + 1;
+        // (east) periodic point adds +1 here
+        nnodes_SB += nb_lat_nodes(iy) + 1;
     }
 
 #if DEBUG_OUTPUT
@@ -506,38 +602,23 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     std::vector<int> local_idx_SB(nnodes_SB, -1);
     std::vector<bool> is_ghost_SB(nnodes_SB, true);
 
-    // global starting node index for the partition
+    // starting from index 0, first global node-index for this partition
     int parts_sidx = idx_xy_to_x(0, iy_min, ns);
 
-    auto compute_part = [&](int ix, int iy, gidx_t ii_glb) -> int {
-        if (ii_glb < 8) {
-            // HACK! expects equal_regions partitioner. Better would be partition of attached element of which this node would be the North-West point.
-            return 0;
-        }
-        if (ii_glb > nvertices - 9) {
-            // HACK! expects equal_regions partitioner. Better would be partition of attached element of which this node would be the South-West point.
-            // Also, we should not have mpi here.
-            return mpi::comm().size() - 1;
-        }
-        return distribution.partition(idx_xy_to_x(ix, iy, ns) - 8);
-    };
-
-    ii       = 0;  // index inside SB
-    ii_ghost = nnodes_SB - (iy_max - iy_min + 1);
+    ii       = 0;                                  // index inside SB
+    ii_ghost = nnodes_SB - (iy_max - iy_min + 1);  // first local ghost idx
     for (iy = iy_min; iy <= iy_max; iy++) {
-        int nx    = latPoints(iy) + 1;
-        ii_glb    = ii + parts_sidx;
-        int part0 = compute_part(0, iy, ii_glb);
+        int nx = nb_lat_nodes(iy) + 1;
         for (ix = 0; ix < nx; ix++) {
             if (ix != nx - 1) {
                 ii_glb           = ii + parts_sidx;
-                parts_SB[ii]     = compute_part(ix, iy, ii_glb);
+                parts_SB[ii]     = compute_part(iy, ii_glb);
                 local_idx_SB[ii] = ii;
-                is_ghost_SB[ii]  = !((parts_SB[ii] == mypart));
+                is_ghost_SB[ii]  = !(parts_SB[ii] == mypart);
                 ++ii;
             }
             else {
-                parts_SB[ii_ghost]     = part0;
+                parts_SB[ii_ghost]     = compute_part(iy, ii_glb);
                 local_idx_SB[ii_ghost] = ii_ghost;
                 is_ghost_SB[ii_ghost]  = true;
                 ++ii_ghost;
@@ -575,38 +656,41 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     ii         = 0;
     int iil;
     for (iy = iy_min; iy <= iy_max; iy++) {
-        int nx = latPoints(iy);
+        int nx = nb_lat_nodes(iy);
         for (ix = 0; ix < nx; ix++) {
             int not_duplicate_cell = (iy == 0 ? ix % 2 : 1) * (iy == ny - 1 ? ix % 2 : 1);
+            if ((iy == 0 or iy == ny - 1) and nb_pole_nodes == 1) {
+                not_duplicate_cell = false;
+            }
 
-            if (!is_ghost_SB[ii] && not_duplicate_cell) {
+            if (not is_ghost_SB[ii] && not_duplicate_cell) {
                 // mark this node as being used
-                if (!is_node_SB[ii]) {
+                if (not is_node_SB[ii]) {
                     ++nnodes;
                     is_node_SB[ii] = true;
                 }
 
                 ++ncells;
 
-                const int glb2loc_ghost_offset = -nnodes_SB + iy_max + 12 * ns * ns + 17;
+                const int glb2loc_ghost_offset = -nnodes_SB + iy_max + nb_nodes_ + 1;
                 // mark upper corner
                 iil = up_idx(ix, iy, ns);
-                iil -= (iil < 12 * ns * ns + 16 ? parts_sidx : glb2loc_ghost_offset);
-                if (!is_node_SB[iil]) {
+                iil -= (iil < nb_nodes_ ? parts_sidx : glb2loc_ghost_offset);
+                if (not is_node_SB[iil]) {
                     ++nnodes;
                     is_node_SB[iil] = true;
                 }
                 // mark lower corner
                 iil = down_idx(ix, iy, ns);
-                iil -= (iil < 12 * ns * ns + 16 ? parts_sidx : glb2loc_ghost_offset);
-                if (!is_node_SB[iil]) {
+                iil -= (iil < nb_nodes_ ? parts_sidx : glb2loc_ghost_offset);
+                if (not is_node_SB[iil]) {
                     ++nnodes;
                     is_node_SB[iil] = true;
                 }
                 // mark right corner
                 iil = right_idx(ix, iy, ns);
-                iil -= (iil < 12 * ns * ns + 16 ? parts_sidx : glb2loc_ghost_offset);
-                if (!is_node_SB[iil]) {
+                iil -= (iil < nb_nodes_ ? parts_sidx : glb2loc_ghost_offset);
+                if (not is_node_SB[iil]) {
                     ++nnodes;
                     is_node_SB[iil] = true;
                 }
@@ -668,10 +752,10 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     inode_ghost    = nnodes_nonghost;  // ghost nodes start counting after nonghost nodes
     ii             = 0;                // index inside SB
     for (iy = iy_min; iy <= iy_max; iy++) {
-        int nx = latPoints(iy) + 1;
+        int nx = nb_lat_nodes(iy) + 1;
         for (ix = 0; ix < nx; ix++) {
             int iil = idx_xy_to_x(ix, iy, ns);
-            iil -= (iil < 12 * ns * ns + 16 ? parts_sidx : -nnodes_SB + iy_max + 12 * ns * ns + 17);
+            iil -= (iil < nb_nodes_ ? parts_sidx : -nnodes_SB + iy_max + nb_nodes_ + 1);
             if (is_node_SB[iil]) {
                 // set node counter
                 if (is_ghost_SB[iil]) {
@@ -684,18 +768,18 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
                 // flags
                 Topology::reset(flags(inode));
 
-                glb_idx(inode) = idx_xy_to_x(ix, iy, ns) + 1;
+                glb_idx(inode) = 1 + match_idx(idx_xy_to_x(ix, iy, ns), ns);
 
                 // grid coordinates
                 double _xy[2];
                 double xy1[2], xy2[2];
                 if (iy == 0) {
-                    _xy[0] = 45. * ix;
+                    _xy[0] = (nb_pole_nodes == 8 ? 45. * ix : 180.);
                     _xy[1] = 90.;
                     Topology::set(flags(inode), Topology::BC);
                 }
                 else if (iy == ny - 1) {
-                    _xy[0] = 45. * ix;
+                    _xy[0] = (nb_pole_nodes == 8 ? 45. * ix : 180.);
                     _xy[1] = -90.;
                     Topology::set(flags(inode), Topology::BC);
                 }
@@ -772,43 +856,49 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     }
 
     ii               = 0;  // index inside SB (surrounding belt)
-    int jcell_offset = 0;
+    int jcell_offset = 0;  // global index offset due to extra points at the north pole
     for (iy = iy_min; iy <= iy_max; iy++) {
-        int nx = latPoints(iy) + 1;
+        int nx = nb_lat_nodes(iy) + 1;
         for (ix = 0; ix < nx; ix++) {
             int not_duplicate_cell = (iy == 0 ? ix % 2 : 1) * (iy == ny - 1 ? ix % 2 : 1);
             int iil                = idx_xy_to_x(ix, iy, ns);
-            iil -= (iil < 12 * ns * ns + 16 ? parts_sidx : -nnodes_SB + iy_max + 12 * ns * ns + 17);
+            iil -= (iil < nb_nodes_ ? parts_sidx : -nnodes_SB + iy_max + nb_nodes_ + 1);
             if (!is_ghost_SB[iil] && not_duplicate_cell) {
                 // define cell corners (local indices)
                 quad_nodes[0] = local_idx_SB[iil];
 
-                quad_nodes[1] = down_idx(ix, iy, ns);  // point to the right
-                quad_nodes[1] -=
-                    (quad_nodes[1] < 12 * ns * ns + 16 ? parts_sidx : -nnodes_SB + iy_max + 12 * ns * ns + 17);
-                quad_nodes[1] = local_idx_SB[quad_nodes[1]];
+                quad_nodes[1] = down_idx(ix, iy, ns);  // point to the right, global idx
+                quad_nodes[1] -= (quad_nodes[1] < nb_nodes_ ? parts_sidx : -nnodes_SB + iy_max + nb_nodes_ + 1);
+                quad_nodes[1] = local_idx_SB[quad_nodes[1]];  // now, local idx
 
-                quad_nodes[2] = right_idx(ix, iy, ns);  // point above right
-                quad_nodes[2] -=
-                    (quad_nodes[2] < 12 * ns * ns + 16 ? parts_sidx : -nnodes_SB + iy_max + 12 * ns * ns + 17);
-                quad_nodes[2] = local_idx_SB[quad_nodes[2]];
+                quad_nodes[2] = right_idx(ix, iy, ns);  // point above right, global idx
+                quad_nodes[2] -= (quad_nodes[2] < nb_nodes_ ? parts_sidx : -nnodes_SB + iy_max + nb_nodes_ + 1);
+                quad_nodes[2] = local_idx_SB[quad_nodes[2]];  // now, local idx
 
-                quad_nodes[3] = up_idx(ix, iy, ns);  // point above
-                quad_nodes[3] -=
-                    (quad_nodes[3] < 12 * ns * ns + 16 ? parts_sidx : -nnodes_SB + iy_max + 12 * ns * ns + 17);
-                quad_nodes[3] = local_idx_SB[quad_nodes[3]];
+                quad_nodes[3] = up_idx(ix, iy, ns);  // point above, global idx
+                quad_nodes[3] -= (quad_nodes[3] < nb_nodes_ ? parts_sidx : -nnodes_SB + iy_max + nb_nodes_ + 1);
+                quad_nodes[3] = local_idx_SB[quad_nodes[3]];  // now, local idx
 
                 node_connectivity.set(jcell, quad_nodes);
                 if (iy == 0) {
-                    cells_glb_idx(jcell) = 12 * ns * ns + 1 + ix / 2;
-                    jcell_offset++;
+                    if (nb_pole_nodes == 8) {
+                        cells_glb_idx(jcell) = 12 * ns * ns + 1 + ix / 2;
+                        jcell_offset++;
+                    }
                 }
                 else if (iy == ny - 1) {
-                    cells_glb_idx(jcell) = 12 * ns * ns + 5 + ix / 2;
-                    jcell_offset++;
+                    if (nb_pole_nodes == 8) {
+                        cells_glb_idx(jcell) = 12 * ns * ns + 5 + ix / 2;
+                        jcell_offset++;
+                    }
                 }
                 else {
-                    cells_glb_idx(jcell) = parts_sidx + iil - 3 - (mypart != 0 ? 4 : jcell_offset);
+                    if (nb_pole_nodes == 8) {
+                        cells_glb_idx(jcell) = parts_sidx + iil - 3 - (mypart != 0 ? 4 : jcell_offset);
+                    }
+                    else {
+                        cells_glb_idx(jcell) = parts_sidx + iil;
+                    }
                 }
                 cells_part(jcell) = mypart;
 #if DEBUG_OUTPUT_DETAIL
@@ -846,10 +936,10 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     nodes.metadata().set<size_t>("NbVirtualPts", size_t(0));
     nodes.global_index().metadata().set("human_readable", true);
     nodes.global_index().metadata().set("min", 1);
-    nodes.global_index().metadata().set("max", nvertices + 4 * ns + 1);
+    nodes.global_index().metadata().set("max", nb_nodes_ + grid.ny() + 2);
     mesh.cells().global_index().metadata().set("human_readable", true);
     mesh.cells().global_index().metadata().set("min", 1);
-    mesh.cells().global_index().metadata().set("max", grid.size() + 8);
+    mesh.cells().global_index().metadata().set("max", nb_points_);
 
     //generateGlobalElementNumbering(mesh);
 }  // generate_mesh
