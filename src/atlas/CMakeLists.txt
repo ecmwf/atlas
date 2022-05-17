@@ -749,6 +749,8 @@ util/detail/BlackMagic.h
 util/detail/Cache.h
 util/detail/Debug.h
 util/detail/KDTree.h
+util/function/SphericalHarmonic.h
+util/function/SphericalHarmonic.cc
 util/function/VortexRollup.h
 util/function/VortexRollup.cc
 )
