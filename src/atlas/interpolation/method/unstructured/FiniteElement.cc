@@ -337,7 +337,22 @@ Method::Triplets FiniteElement::projectPointToElements(size_t ip, const ElemInde
         const idx_t elem_id = idx_t((*itc).value().payload());
         ATLAS_ASSERT(elem_id < connectivity_->rows());
 
-        const idx_t nb_cols = connectivity_->cols(elem_id);
+        const idx_t nb_cols = [&]() {
+            int nb_cols = connectivity_->cols(elem_id);
+            if (nb_cols == 5) {
+                // Check if pentagon degenerates to quad. Otherwise abort.
+                // For now only check if first and last point coincide.
+                auto i1    = (*connectivity_)(elem_id, 0);
+                auto iN    = (*connectivity_)(elem_id, nb_cols - 1);
+                auto first = PointXYZ{(*icoords_)(i1, XX), (*icoords_)(i1, YY), (*icoords_)(i1, ZZ)};
+                auto last  = PointXYZ{(*icoords_)(iN, XX), (*icoords_)(iN, YY), (*icoords_)(iN, ZZ)};
+                if (first == last) {
+                    return 4;
+                }
+            }
+            return nb_cols;
+        }();
+
         ATLAS_ASSERT(nb_cols == 3 || nb_cols == 4);
 
         for (idx_t i = 0; i < nb_cols; ++i) {
@@ -437,12 +452,9 @@ Method::Triplets FiniteElement::projectPointToElements(size_t ip, const ElemInde
 
         if (nb_cols == 3) {
             /* triangle */
-            element::Triag3D triag(PointXYZ{(*icoords_)(idx[0], size_t(0)), (*icoords_)(idx[0], size_t(1)),
-                                            (*icoords_)(idx[0], size_t(2))},
-                                   PointXYZ{(*icoords_)(idx[1], size_t(0)), (*icoords_)(idx[1], size_t(1)),
-                                            (*icoords_)(idx[1], size_t(2))},
-                                   PointXYZ{(*icoords_)(idx[2], size_t(0)), (*icoords_)(idx[2], size_t(1)),
-                                            (*icoords_)(idx[2], size_t(2))});
+            element::Triag3D triag(PointXYZ{(*icoords_)(idx[0], XX), (*icoords_)(idx[0], YY), (*icoords_)(idx[0], ZZ)},
+                                   PointXYZ{(*icoords_)(idx[1], XX), (*icoords_)(idx[1], YY), (*icoords_)(idx[1], ZZ)},
+                                   PointXYZ{(*icoords_)(idx[2], XX), (*icoords_)(idx[2], YY), (*icoords_)(idx[2], ZZ)});
 
             // pick an epsilon based on a characteristic length (sqrt(area))
             // (this scales linearly so it better compares with linear weights u,v,w)
@@ -483,14 +495,10 @@ Method::Triplets FiniteElement::projectPointToElements(size_t ip, const ElemInde
         }
         else {
             /* quadrilateral */
-            element::Quad3D quad(PointXYZ{(*icoords_)(idx[0], (size_t)0), (*icoords_)(idx[0], (size_t)1),
-                                          (*icoords_)(idx[0], (size_t)2)},
-                                 PointXYZ{(*icoords_)(idx[1], (size_t)0), (*icoords_)(idx[1], (size_t)1),
-                                          (*icoords_)(idx[1], (size_t)2)},
-                                 PointXYZ{(*icoords_)(idx[2], (size_t)0), (*icoords_)(idx[2], (size_t)1),
-                                          (*icoords_)(idx[2], (size_t)2)},
-                                 PointXYZ{(*icoords_)(idx[3], (size_t)0), (*icoords_)(idx[3], (size_t)1),
-                                          (*icoords_)(idx[3], (size_t)2)});
+            element::Quad3D quad(PointXYZ{(*icoords_)(idx[0], XX), (*icoords_)(idx[0], YY), (*icoords_)(idx[0], ZZ)},
+                                 PointXYZ{(*icoords_)(idx[1], XX), (*icoords_)(idx[1], YY), (*icoords_)(idx[1], ZZ)},
+                                 PointXYZ{(*icoords_)(idx[2], XX), (*icoords_)(idx[2], YY), (*icoords_)(idx[2], ZZ)},
+                                 PointXYZ{(*icoords_)(idx[3], XX), (*icoords_)(idx[3], YY), (*icoords_)(idx[3], ZZ)});
 
             // pick an epsilon based on a characteristic length (sqrt(area))
             // (this scales linearly so it better compares with linear weights u,v,w)

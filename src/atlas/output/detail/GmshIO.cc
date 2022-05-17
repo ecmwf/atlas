@@ -1024,8 +1024,11 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
 
         for (const mesh::HybridElements* hybrid : grouped_elements) {
             for (idx_t etype = 0; etype < hybrid->nb_types(); ++etype) {
-                const mesh::Elements& elements        = hybrid->elements(etype);
-                const mesh::ElementType& element_type = elements.element_type();
+                const mesh::Elements& elements                   = hybrid->elements(etype);
+                const mesh::ElementType& element_type            = elements.element_type();
+                const mesh::BlockConnectivity& node_connectivity = elements.node_connectivity();
+                size_t nb_nodes                                  = node_connectivity.cols();
+
                 int gmsh_elem_type;
                 if (element_type.name() == "Line") {
                     gmsh_elem_type = 1;
@@ -1036,11 +1039,15 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
                 else if (element_type.name() == "Quadrilateral") {
                     gmsh_elem_type = 3;
                 }
+                else if (element_type.name() == "Pentagon") {
+                    // Hack: treat as quadrilateral and ignore 5th point
+                    gmsh_elem_type = 3;
+                    nb_nodes       = 4;
+                }
                 else {
                     ATLAS_NOTIMPLEMENTED;
                 }
 
-                const mesh::BlockConnectivity& node_connectivity = elements.node_connectivity();
 
                 auto elems_glb_idx   = elements.view<gidx_t, 1>(elements.global_index());
                 auto elems_partition = elements.view<int, 1>(elements.partition());
@@ -1092,12 +1099,12 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
                     data[1]         = 1;
                     data[2]         = 1;
                     data[3]         = 1;
-                    size_t datasize = sizeof(int) * (5 + node_connectivity.cols());
+                    size_t datasize = sizeof(int) * (5 + nb_nodes);
                     for (idx_t elem = 0; elem < nb_elems; ++elem) {
                         if (include_ghost || !elems_halo(elem)) {
                             data[0] = elems_glb_idx(elem);
                             data[4] = elems_partition(elem);
-                            for (idx_t n = 0; n < node_connectivity.cols(); ++n) {
+                            for (idx_t n = 0; n < nb_nodes; ++n) {
                                 data[5 + n] = glb_idx(node_connectivity(elem, n));
                             }
                             file.write(reinterpret_cast<const char*>(&data), datasize);
@@ -1111,7 +1118,7 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
                     for (idx_t elem = 0; elem < elements.size(); ++elem) {
                         if (include(elem)) {
                             file << elems_glb_idx(elem) << elem_info << elems_partition(elem);
-                            for (idx_t n = 0; n < node_connectivity.cols(); ++n) {
+                            for (idx_t n = 0; n < nb_nodes; ++n) {
                                 file << " " << glb_idx(node_connectivity(elem, n));
                             }
                             file << "\n";

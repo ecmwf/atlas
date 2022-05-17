@@ -62,6 +62,10 @@ MeshGenerator make_meshgenerator(const Grid& grid, const AtlasTool::Args& args) 
         config.set("type", args.getString("generator"));
     }
 
+    if (args.has("3d")) {
+        config.set("3d", true);
+    }
+
     if (mpi::comm().size() > 1 || args.getBool("edges", false)) {
         config.set("3d", false);
     }
@@ -139,8 +143,10 @@ private:
 //-----------------------------------------------------------------------------
 
 Meshgen2Gmsh::Meshgen2Gmsh(int argc, char** argv): AtlasTool(argc, argv) {
-    add_option(new SimpleOption<bool>("lonlat", "Output mesh in lon,lat coordinates"));
-    add_option(new SimpleOption<bool>("ij", "Output mesh in i,j coordinates"));
+    add_option(new SimpleOption<std::string>("coordinates", "Output mesh in given coordinates"));
+    add_option(
+        new SimpleOption<bool>("lonlat", "Output mesh in lon,lat coordinates (shorthand for --coordinates=lonlat)"));
+    add_option(new SimpleOption<bool>("ij", "Output mesh in i,j coordinates (shorthand for --coordinates=ij)"));
     add_option(new SimpleOption<bool>("3d",
                                       "Output mesh as sphere, and generate "
                                       "mesh connecting East and West in "
@@ -319,6 +325,7 @@ int Meshgen2Gmsh::execute(const Args& args) {
     bool lonlat             = args.getBool("lonlat", false);
     bool ij                 = args.getBool("ij", false);
     std::string coordinates = dim_3d ? "xyz" : lonlat ? "lonlat" : ij ? "ij" : "xy";
+    args.get("coordinates", coordinates);
 
     if (args.getBool("gmsh", true)) {
         bool torus = false;

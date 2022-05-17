@@ -90,13 +90,6 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     bool log_statistics = false;
     args.get("log-statistics", log_statistics);
 
-    idx_t log_rank = 0;
-    args.get("log-rank", log_rank);
-
-    if (idx_t(eckit::mpi::comm().rank()) != log_rank) {
-        Log::reset();
-    }
-
     std::string interpolation_method = "finite-element";
     args.get("method", interpolation_method);
 
@@ -104,6 +97,9 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     if (args.get("backend", option)) {
         linalg::sparse::current_backend(option);
     }
+
+    bool with_backward = false;
+    args.get("with-backward", with_backward);
 
     // Generate and partition source & target mesh
     // source mesh is partitioned on its own, the target mesh uses
@@ -121,19 +117,15 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     interpolation::PartitionedMesh src(args.get("source-mesh-partitioner", option) ? option : "default",
                                        args.get("source-mesh-generator", option) ? option : "default",
                                        args.get("source-mesh-generator-triangulate", trigs) ? trigs : false,
-                                       args.get("source-mesh-generator-angle", angle) ? angle : 0.);
-
-    Grid tgt_grid(target_gridname);
-
-    idx_t target_mesh_halo = args.getInt("target-mesh-halo", 0);
-
-    interpolation::PartitionedMesh tgt(args.get("target-mesh-partitioner", option) ? option : "spherical-polygon",
-                                       args.get("target-mesh-generator", option) ? option : "default",
-                                       args.get("target-mesh-generator-triangulate", trigs) ? trigs : false,
-                                       args.get("target-mesh-generator-angle", angle) ? angle : 0.);
+                                       args.get("source-mesh-generator-angle", angle) ? angle : 0., true);
 
     Log::info() << "Partitioning source grid, halo of " << eckit::Plural(source_mesh_halo, "element") << std::endl;
     src.partition(src_grid);
+
+    if (eckit::Resource<bool>("--output-polygons", false)) {
+        src.mesh().polygon(0).outputPythonScript("src-polygons.py");
+    }
+
     FunctionSpace src_functionspace;
     bool structured = false;
     for (auto& is_structured : {"structured-bicubic", "bicubic", "structured-bilinear", "bilinear"}) {
@@ -152,15 +144,24 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     }
     src.writeGmsh("src-mesh.msh");
 
+    Grid tgt_grid(target_gridname);
+
+    idx_t target_mesh_halo = args.getInt("target-mesh-halo", 0);
+
+    interpolation::PartitionedMesh tgt(args.get("target-mesh-partitioner", option) ? option : "spherical-polygon",
+                                       args.get("target-mesh-generator", option) ? option : "default",
+                                       args.get("target-mesh-generator-triangulate", trigs) ? trigs : false,
+                                       args.get("target-mesh-generator-angle", angle) ? angle : 0.,
+                                       with_backward ? true : false);
 
     Log::info() << "Partitioning target grid, halo of " << eckit::Plural(target_mesh_halo, "element") << std::endl;
     tgt.partition(tgt_grid, src);
+
     functionspace::NodeColumns tgt_functionspace(tgt.mesh(), option::halo(target_mesh_halo));
     tgt.writeGmsh("tgt-mesh.msh");
 
-    /// For debugging purposes
     if (eckit::Resource<bool>("--output-polygons", false)) {
-        src.mesh().polygon(0).outputPythonScript("polygons.py");
+        tgt.mesh().polygon(0).outputPythonScript("tgt-polygons.py");
     }
 
     // Setup interpolator relating source & target meshes before setting a source
@@ -170,8 +171,6 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     Interpolation interpolator_forward(option::type(interpolation_method), src_functionspace, tgt_functionspace);
     Interpolation interpolator_backward;
 
-    bool with_backward = false;
-    args.get("with-backward", with_backward);
     if (with_backward) {
         std::string backward_interpolation_method = "finite-element";
         args.get("method", backward_interpolation_method);
