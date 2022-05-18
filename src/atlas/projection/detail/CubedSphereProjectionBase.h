@@ -31,7 +31,7 @@ public:
 
     void hash(eckit::Hash&) const;
 
-    atlas::grid::CubedSphereTiles getCubedSphereTiles() const { return tiles_; };
+    const atlas::grid::CubedSphereTiles& getCubedSphereTiles() const { return tiles_; };
 
     /// @brief   Convert (x, y) coordinate to (alpha, beta) on tile t.
     ///
