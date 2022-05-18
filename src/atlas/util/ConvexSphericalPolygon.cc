@@ -297,6 +297,9 @@ bool ConvexSphericalPolygon::validate() {
 }
 
 bool ConvexSphericalPolygon::equals(const ConvexSphericalPolygon& plg, const double deg_prec) const {
+    if (size_ == 0 and plg.size_ == 0) {
+        return true;
+    }
     if ((not plg.valid_) || (not valid_) || size_ != plg.size()) {
         Log::info() << " ConvexSphericalPolygon::equals == not compatible\n";
         return false;
@@ -439,7 +442,7 @@ void ConvexSphericalPolygon::clip(const GreatCircleSegment& great_circle) {
     StackVector<int> vertex_in(size_);
     int num_vertices_in = 0;
     for (int i = 0; i < size_; i++) {
-        vertex_in[i] = great_circle.inLeftHemisphere(sph_coords_[i], -EPS);
+        vertex_in[i] = great_circle.inLeftHemisphere(sph_coords_[i], -10. * TOL);
         num_vertices_in += vertex_in[i] ? 1 : 0;
     }
 
@@ -526,6 +529,9 @@ ConvexSphericalPolygon ConvexSphericalPolygon::intersect(const ConvexSphericalPo
         }
     }
     intersection.simplify();
+    intersection.computed_area_     = false;
+    intersection.computed_radius_   = false;
+    intersection.computed_centroid_ = false;
     return intersection;
 }
 

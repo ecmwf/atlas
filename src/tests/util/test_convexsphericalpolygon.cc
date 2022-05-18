@@ -250,14 +250,58 @@ CASE("source_covered") {
 
 CASE("edge cases") {
     Log::info().precision(20);
+    SECTION("CS-LFR-256 -> H1280 problem polygon intersection") {
+        const auto plg0 = make_polygon({{-23.55468749999994, -41.11286269132660},
+                                        {-23.20312500000000, -41.18816845938357},
+                                        {-23.20312500000000, -40.83947225425061},
+                                        {-23.55468749999994, -40.76429594967151}});
+        const auto plg1 = make_polygon({{-23.30859375000000, -40.81704944888558},
+                                        {-23.27343750000000, -40.85649237345376},
+                                        {-23.23828125000000, -40.81704944888558},
+                                        {-23.27343750000000, -40.77762996221442}});
+        auto iplg       = plg0.intersect(plg1);
+        auto jplg       = plg1.intersect(plg0);
+        EXPECT_APPROX_EQ(iplg.area(), jplg.area(), 2e-12);  // can not take 1e-15
+        EXPECT_EQ(iplg.size(), 3);
+        EXPECT_EQ(jplg.size(), 3);
+        EXPECT(iplg.equals(jplg, 5.e-7));
+        Log::info() << "Intersection area difference: " << std::abs(iplg.area() - jplg.area()) << "\n";
+    }
+    SECTION("CS-LFR-16 -> O32 problem polygon intersection") {
+        const auto plg0 = make_polygon({{174.3750000000001, -16.79832945594544},
+                                        {174.3750000000001, -11.19720014633353},
+                                        {168.7500000000000, -11.03919441545243},
+                                        {168.7500000000000, -16.56868711281520}});
+        const auto plg1 = make_polygon({{174.3750000000000, -12.55775611523100},
+                                        {174.1935483870968, -15.34836475949100},
+                                        {177.0967741935484, -15.34836475949100}});
+        auto iplg       = plg0.intersect(plg1);
+        auto jplg       = plg1.intersect(plg0);
+        EXPECT_APPROX_EQ(iplg.area(), jplg.area(), 1e-13);  // can not take 1e-15
+        EXPECT_EQ(iplg.size(), 3);
+        EXPECT_EQ(jplg.size(), 3);
+        EXPECT(iplg.equals(jplg, 1.e-11));
+        Log::info() << "Intersection area difference: " << std::abs(iplg.area() - jplg.area()) << "\n";
+    }
+    SECTION("CS-LFR-2 -> O48 problem polygon intersection") {
+        const auto plg0 = make_polygon({{180, -45}, {180, 0}, {135, 0}, {135, -35.26438968}});
+        const auto plg1 = make_polygon({{180, -23.31573073}, {180, -25.18098558}, {-177.75, -23.31573073}});
+        auto iplg       = plg0.intersect(plg1);
+        auto jplg       = plg1.intersect(plg0);
+        EXPECT_APPROX_EQ(iplg.area(), jplg.area(), 1e-15);
+        EXPECT_EQ(iplg.size(), 0);
+        EXPECT_EQ(jplg.size(), 0);
+        EXPECT(iplg.equals(jplg, 1.e-12));
+        Log::info() << "Intersection area difference: " << std::abs(iplg.area() - jplg.area()) << "\n";
+    }
     SECTION("H128->H256 problem polygon intersection") {
         const auto plg0 = make_polygon({{42.45283019, 50.48004426},
                                         {43.33333333, 49.70239033},
-                                        {44.1509434, 50.48004426},
-                                        {43.26923077, 51.2558069}});
+                                        {44.15094340, 50.48004426},
+                                        {43.26923077, 51.25580690}});
         const auto plg1 = make_polygon({{43.30188679, 50.48004426},
-                                        {43.73831776, 50.0914568},
-                                        {44.1509434, 50.48004426},
+                                        {43.73831776, 50.09145680},
+                                        {44.15094340, 50.48004426},
                                         {43.71428571, 50.86815893}});
         auto iplg       = plg0.intersect(plg1);
         auto jplg       = plg1.intersect(plg0);
