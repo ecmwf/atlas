@@ -69,6 +69,11 @@ public:
     Cache createCache() const;
 
     Interpolation(const Config&, const Grid& source, const Grid& target, const Cache&) noexcept(false);
+
+    friend std::ostream& operator<<(std::ostream& out, const Interpolation& i) {
+        i.print(out);
+        return out;
+    }
 };
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
