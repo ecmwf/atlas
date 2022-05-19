@@ -114,8 +114,6 @@ if( TEST atlas_test_cubedsphere_meshgen )
     set_tests_properties( atlas_test_cubedsphere_meshgen PROPERTIES TIMEOUT 30 )
 endif()
 
-
-
 ecbuild_add_executable( TARGET atlas_test_mesh_reorder
   SOURCES  test_mesh_reorder.cc
   LIBS     atlas

@@ -601,6 +601,8 @@ interpolation/method/structured/kernels/LinearVerticalKernel.h
 interpolation/method/structured/kernels/QuasiCubic3DKernel.cc
 interpolation/method/structured/kernels/QuasiCubic3DKernel.h
 interpolation/method/structured/kernels/QuasiCubicHorizontalKernel.h
+interpolation/method/unstructured/ConservativeSphericalPolygonInterpolation.cc
+interpolation/method/unstructured/ConservativeSphericalPolygonInterpolation.h
 interpolation/method/unstructured/FiniteElement.cc
 interpolation/method/unstructured/FiniteElement.h
 interpolation/method/unstructured/UnstructuredBilinearLonLat.cc
