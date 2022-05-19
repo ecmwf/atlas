@@ -90,6 +90,7 @@ Structured::Structured(const std::string& name, XSpace xspace, YSpace yspace, Pr
                "Recompile atlas with idx_t 64bits, or wait for pending development where grid index to become gidx_t");
     }
     crop(domain);
+    ny = nx_.size();
 
     computeTruePeriodicity();
 

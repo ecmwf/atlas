@@ -42,20 +42,20 @@ struct Trace {
     }
 };
 
-constexpr size_t Mbytes = 1000000;
+constexpr size_t MB = 1024 * 1024;
 
 CASE("test resources for cropping large grids") {
     std::vector<std::string> gridnames{"L40000x20000", "N8000", "O8000"};
 
     for (auto& gridname : gridnames) {
-        EXPECT(Trace::peakMemory() < 100 * Mbytes);
+        EXPECT(Trace::peakMemory() < 100 * MB);
 
         SECTION(std::string("section") + gridname) {
             Trace trace(Here(), "Grid{" + gridname + ", GlobalDomain{-180}}");
             auto grid = Grid{gridname, GlobalDomain{-180}};
             trace.stopAndReport();
             EXPECT(trace.elapsed() < 10.);
-            EXPECT(trace.peakMemory() < 100 * Mbytes);
+            EXPECT(trace.peakMemory() < 100 * MB);
         }
     }
 }
