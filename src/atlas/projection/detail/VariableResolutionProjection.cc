@@ -20,7 +20,6 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Constants.h"
-#include "eckit/testing/Test.h"
 
 /**
 * Projection for LAM stretching
@@ -224,7 +223,7 @@ void VariableResolutionProjectionT<Rotation>::checkvalue(const double& epsilon, 
     if (value_check > epsilon || value_check < (-1. * epsilon)) {
         std::string err_message;
         std::string str = std::to_string(value_check);
-        throw eckit::BadValue("USER defined limits not in the middle of the area " + str, Here());
+        throw_Exception("USER defined limits not in the middle of the area " + str, Here());
     }
 }
 
