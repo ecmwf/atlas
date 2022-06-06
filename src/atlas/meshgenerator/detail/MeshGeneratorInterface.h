@@ -37,6 +37,16 @@ class MeshImpl;
 }  // namespace detail
 }  // namespace mesh
 }  // namespace atlas
+namespace atlas {
+namespace grid {
+namespace detail {
+namespace partitioner {
+class Partitioner;
+}  // namespace partitioner
+}  // namespace detail
+}  // namespace grid
+using PartitionerImpl = grid::detail::partitioner::Partitioner;
+}  // namespace atlas
 
 
 namespace atlas {
@@ -54,6 +64,9 @@ mesh::detail::MeshImpl* atlas__MeshGenerator__generate__grid_griddist(const Mesh
                                                                       const GridImpl* grid,
                                                                       const grid::DistributionImpl* distribution);
 mesh::detail::MeshImpl* atlas__MeshGenerator__generate__grid(const MeshGeneratorImpl* This, const GridImpl* grid);
+mesh::detail::MeshImpl* atlas__MeshGenerator__generate__grid_partitioner(const MeshGeneratorImpl* This,
+                                                                         const GridImpl* grid,
+                                                                         const PartitionerImpl* partitioner);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
