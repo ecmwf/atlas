@@ -1239,6 +1239,13 @@ void GmshIO::write_delegate(const Field& field, const functionspace::NoFunctionS
 
 // ----------------------------------------------------------------------------
 
+void GmshIO::write_delegate(const Field& field, const functionspace::CellColumns& functionspace,
+                            const eckit::PathName& file_path, GmshIO::openmode mode) const {
+    FieldSet fieldset;
+    fieldset.add(field);
+    write_delegate(fieldset, functionspace, file_path, mode);
+}
+
 // ----------------------------------------------------------------------------
 void GmshIO::write_delegate(const Field& field, const functionspace::StructuredColumns& functionspace,
                             const PathName& file_path, openmode mode) const {
@@ -1437,6 +1444,9 @@ void GmshIO::write(const Field& field, const FunctionSpace& funcspace, const eck
     }
     else if (functionspace::StructuredColumns(funcspace)) {
         write_delegate(field, functionspace::StructuredColumns(funcspace), file_path, mode);
+    }
+    else if (functionspace::CellColumns(funcspace)) {
+        write_delegate(field, functionspace::CellColumns(funcspace), file_path, mode);
     }
     else {
         ATLAS_NOTIMPLEMENTED;
