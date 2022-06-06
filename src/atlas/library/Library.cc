@@ -238,6 +238,10 @@ void Library::initialise(int argc, char** argv) {
 
 
 void Library::initialise(const eckit::Parametrisation& config) {
+    if (initialized_) {
+        return;
+    }
+    initialized_ = true;
     if (config.has("log")) {
         config.get("log.info", info_);
         config.get("log.trace", trace_);
@@ -336,6 +340,7 @@ void Library::finalise() {
         warning_ = false;
         warning_channel_.reset(new eckit::Channel(new eckit::PrefixTarget("ATLAS_WARNING")));
     }
+    initialized_ = false;
 }
 
 eckit::Channel& Library::infoChannel() const {
