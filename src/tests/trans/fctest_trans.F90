@@ -61,6 +61,7 @@ TEST( test_trans )
   type(atlas_StructuredGrid) :: grid
   type(atlas_StructuredGrid) :: trans_grid
   type(atlas_MeshGenerator) :: meshgenerator
+  type(atlas_Partitioner) :: partitioner
   type(atlas_Mesh) :: mesh
   type(atlas_Trans) :: trans
   type(atlas_mesh_Nodes) :: nodes
@@ -87,8 +88,10 @@ TEST( test_trans )
 
   FCTEST_CHECK_EQUAL( grid%owners(), 1 )
 
+  partitioner = atlas_Partitioner(type="trans")
+
   meshgenerator = atlas_MeshGenerator()
-  mesh = meshgenerator%generate(grid)
+  mesh = meshgenerator%generate(grid,partitioner)
 
   call meshgenerator%final()
 

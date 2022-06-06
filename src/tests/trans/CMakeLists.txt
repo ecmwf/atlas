@@ -14,7 +14,7 @@ if( HAVE_FCTEST )
       LINKER_LANGUAGE Fortran
       SOURCES         fctest_trans.F90
       LIBS            atlas_f
-      CONDITION       eckit_HAVE_MPI AND transi_HAVE_MPI
+      CONDITION       eckit_HAVE_MPI AND ( transi_HAVE_MPI OR ectrans_HAVE_MPI )
       MPI             4
       ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
     )
@@ -40,7 +40,7 @@ endif()
 ecbuild_add_test( TARGET atlas_test_trans
   MPI      4
   SOURCES   test_trans.cc
-  CONDITION atlas_HAVE_TRANS AND eckit_HAVE_MPI AND transi_HAVE_MPI
+  CONDITION atlas_HAVE_TRANS AND eckit_HAVE_MPI AND ( transi_HAVE_MPI OR ectrans_HAVE_MPI )
   LIBS      atlas transi
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
               # There seems to be a issue with vd2uv raising FE_INVALID, only on specific arch (bamboo-leap42-gnu63)

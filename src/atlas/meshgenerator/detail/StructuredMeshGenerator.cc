@@ -133,9 +133,6 @@ StructuredMeshGenerator::StructuredMeshGenerator(const eckit::Parametrisation& p
             partitioner = "equal_regions";
         }
     }
-    else if (grid::Partitioner::exists("trans")) {
-        partitioner = "trans";
-    }
     else {
         partitioner = "equal_regions";
     }

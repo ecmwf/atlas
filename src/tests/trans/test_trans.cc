@@ -310,7 +310,7 @@ CASE("test_spectral_fields") {
 
     Grid g("O48");
     StructuredMeshGenerator generate(atlas::util::Config("angle", 0)("triangulate", false));
-    Mesh m = generate(g);
+    Mesh m = generate(g, grid::Partitioner("trans"));
 
     trans::Trans trans(g, 47);
 
@@ -463,7 +463,7 @@ CASE("test_trans_using_grid") {
 CASE("test_trans_using_functionspace_NodeColumns") {
     Log::info() << "test_trans_using_functionspace_NodeColumns" << std::endl;
 
-    functionspace::NodeColumns gp(MeshGenerator("structured").generate(Grid("O48")));
+    functionspace::NodeColumns gp(MeshGenerator("structured").generate(Grid("O48"), grid::Partitioner("trans")));
     functionspace::Spectral sp(47);
 
     trans::Trans trans(gp, sp);
