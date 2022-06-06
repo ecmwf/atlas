@@ -47,9 +47,9 @@ END_TESTSUITE_FINALIZE
 TEST( test_trans_backend )
   type(atlas_Trans) :: trans
   FCTEST_CHECK( trans%has_backend("local") )
-  FCTEST_CHECK( trans%has_backend("ifs") )
-  if( trans%has_backend("ifs") ) then
-    FCTEST_CHECK_EQUAL( trans%backend(), "ifs" )
+  FCTEST_CHECK( trans%has_backend("ectrans") )
+  if( trans%has_backend("ectrans") ) then
+    FCTEST_CHECK_EQUAL( trans%backend(), "ectrans" )
   else
     FCTEST_CHECK_EQUAL( trans%backend(), "local" )
   endif  
@@ -88,7 +88,7 @@ TEST( test_trans )
 
   FCTEST_CHECK_EQUAL( grid%owners(), 1 )
 
-  partitioner = atlas_Partitioner(type="trans")
+  partitioner = atlas_Partitioner(type="ectrans")
 
   meshgenerator = atlas_MeshGenerator()
   mesh = meshgenerator%generate(grid,partitioner)
@@ -264,7 +264,7 @@ TEST( test_trans_nomesh )
   grid = atlas_StructuredGrid("O24")
   trans = atlas_Trans(grid,truncation)
 
-  partitioner = atlas_Partitioner(type="ifs")
+  partitioner = atlas_Partitioner(type="ectrans")
   gridpoints_fs = atlas_functionspace_StructuredColumns(grid,partitioner)
   scalarfield1 = gridpoints_fs%create_field(name="scalar1",kind=atlas_real(c_double),levels=nlev)
   scalarfield2 = gridpoints_fs%create_field(name="scalar2",kind=atlas_real(c_double))
@@ -350,7 +350,7 @@ real(c_double), pointer :: gvar(:)
 
 grid = atlas_StructuredGrid("O24")
 trans = atlas_Trans(grid,23)
-partitioner = atlas_Partitioner("ifs")
+partitioner = atlas_Partitioner("ectrans")
 gridpoints = atlas_functionspace_StructuredColumns(grid,partitioner)
 spectral = atlas_functionspace_Spectral(trans)
 

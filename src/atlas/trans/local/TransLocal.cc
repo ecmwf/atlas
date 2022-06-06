@@ -750,7 +750,9 @@ const functionspace::Spectral& TransLocal::spectral() const {
 
 void TransLocal::invtrans(const Field& spfield, Field& gpfield, const eckit::Configuration& config) const {
     // VERY PRELIMINARY IMPLEMENTATION WITHOUT ANY GUARANTEES
-    int nb_scalar_fields      = 1;
+    int nb_scalar_fields = 1;
+    ATLAS_ASSERT(spfield.rank() == 1, "Only rank-1 fields supported at the moment");
+    ATLAS_ASSERT(gpfield.rank() == 1, "Only rank-1 fields supported at the moment");
     const auto scalar_spectra = array::make_view<double, 1>(spfield);
     auto gp_fields            = array::make_view<double, 1>(gpfield);
 
@@ -802,6 +804,8 @@ void gp_transpose(const int nb_size, const int nb_fields, const double gp_tmp[],
 void TransLocal::invtrans_vordiv2wind(const Field& spvor, const Field& spdiv, Field& gpwind,
                                       const eckit::Configuration& config) const {
     // VERY PRELIMINARY IMPLEMENTATION WITHOUT ANY GUARANTEES
+    ATLAS_ASSERT(spvor.rank() == 1, "Only rank-1 fields supported at the moment");
+    ATLAS_ASSERT(spdiv.rank() == 1, "Only rank-1 fields supported at the moment");
     int nb_vordiv_fields          = 1;
     const auto vorticity_spectra  = array::make_view<double, 1>(spvor);
     const auto divergence_spectra = array::make_view<double, 1>(spdiv);

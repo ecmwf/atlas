@@ -90,7 +90,7 @@ public:
         return array::make_view<const int, 1>(trans_->nasm0, array::make_shape(trans_->nsmax + 1));
     }
 
-    std::string distribution() const { return "trans"; }
+    std::string distribution() const { return "ectrans"; }
     operator ::Trans_t*() const { return trans_.get(); }
     std::shared_ptr<::Trans_t> trans_;
 };

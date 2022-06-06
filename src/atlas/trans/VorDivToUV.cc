@@ -24,7 +24,7 @@
 // For factory registration only
 #if ATLAS_HAVE_TRANS
 #include "atlas/trans/ifs/VorDivToUVIFS.h"
-#define TRANS_DEFAULT "ifs"
+#define TRANS_DEFAULT "ectrans"
 #else
 #define TRANS_DEFAULT "local"
 #endif

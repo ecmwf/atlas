@@ -179,6 +179,7 @@ void StructuredMeshGenerator::configure_defaults() {
 }
 
 void StructuredMeshGenerator::generate(const Grid& grid, Mesh& mesh) const {
+    ATLAS_TRACE();
     ATLAS_ASSERT(!mesh.generated());
 
     const StructuredGrid rg = StructuredGrid(grid);
@@ -191,7 +192,7 @@ void StructuredMeshGenerator::generate(const Grid& grid, Mesh& mesh) const {
     std::string partitioner_type = "equal_regions";
     options.get("partitioner", partitioner_type);
 
-    if (partitioner_type == "trans") {
+    if (partitioner_type == "ectrans") {
         if (rg.ny() % 2 == 1) {
             partitioner_type = "equal_regions";  // Odd number of latitudes
         }

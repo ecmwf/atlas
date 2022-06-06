@@ -25,8 +25,9 @@ namespace atlas {
 namespace trans {
 
 namespace {
-static LegendreCacheCreatorBuilder<LegendreCacheCreatorIFS> builder("ifs");
-}
+static LegendreCacheCreatorBuilder<LegendreCacheCreatorIFS> builder_ifs("ifs");  // Deprecated
+static LegendreCacheCreatorBuilder<LegendreCacheCreatorIFS> builder_ectrans("ectrans");
+}  // namespace
 
 namespace {
 
@@ -126,11 +127,11 @@ LegendreCacheCreatorIFS::LegendreCacheCreatorIFS(const Grid& grid, int truncatio
     grid_(grid), truncation_(truncation), config_(config) {}
 
 void LegendreCacheCreatorIFS::create(const std::string& path) const {
-    Trans(grid_, truncation_, config_ | option::type("ifs") | option::write_legendre(path));
+    Trans(grid_, truncation_, config_ | option::type("ectrans") | option::write_legendre(path));
 }
 
 Cache LegendreCacheCreatorIFS::create() const {
-    return TransCache(Trans(grid_, truncation_, config_ | option::type("ifs")));
+    return TransCache(Trans(grid_, truncation_, config_ | option::type("ectrans")));
 }
 
 size_t LegendreCacheCreatorIFS::estimate() const {

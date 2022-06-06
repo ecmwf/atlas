@@ -54,7 +54,7 @@ void force_link() {
 namespace {
 struct default_backend {
 #if ATLAS_HAVE_TRANS
-    std::string value = "ifs";
+    std::string value = "ectrans";
 #else
     std::string value = "local";
 #endif

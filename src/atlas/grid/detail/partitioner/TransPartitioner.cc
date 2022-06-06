@@ -117,6 +117,8 @@ int TransPartitioner::nb_regions(int b) const {
 }  // namespace atlas
 
 namespace {
+atlas::grid::detail::partitioner::PartitionerBuilder<atlas::grid::detail::partitioner::TransPartitioner> __ecTrans(
+    "ectrans");
 atlas::grid::detail::partitioner::PartitionerBuilder<atlas::grid::detail::partitioner::TransPartitioner> __Trans(
     "trans");
 atlas::grid::detail::partitioner::PartitionerBuilder<atlas::grid::detail::partitioner::TransPartitioner> __TransIFS(

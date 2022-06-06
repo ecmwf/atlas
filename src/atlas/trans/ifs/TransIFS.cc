@@ -47,8 +47,9 @@ namespace atlas {
 namespace trans {
 
 namespace {
-static TransBuilderGrid<TransIFS> builder("ifs", "ifs");
-}
+static TransBuilderGrid<TransIFS> builder_ifs("ifs", "ifs");  // deprecated
+static TransBuilderGrid<TransIFS> builder_ectrans("ectrans", "ectrans");
+}  // namespace
 
 class TransParameters {
 public:
@@ -156,6 +157,7 @@ void TransIFS::dirtrans(const Field& gpfield, Field& spfield, const eckit::Confi
 }
 
 void TransIFS::dirtrans(const FieldSet& gpfields, FieldSet& spfields, const eckit::Configuration& config) const {
+    ATLAS_TRACE();
     assert_spectral_functionspace(spfields);
     std::string functionspace(fieldset_functionspace(gpfields));
 
@@ -173,6 +175,7 @@ void TransIFS::dirtrans(const FieldSet& gpfields, FieldSet& spfields, const ecki
 }
 
 void TransIFS::invtrans(const Field& spfield, Field& gpfield, const eckit::Configuration& config) const {
+    ATLAS_TRACE();
     ATLAS_ASSERT(Spectral(spfield.functionspace()));
     if (StructuredColumns(gpfield.functionspace())) {
         __invtrans(Spectral(spfield.functionspace()), spfield, StructuredColumns(gpfield.functionspace()), gpfield,
@@ -187,6 +190,7 @@ void TransIFS::invtrans(const Field& spfield, Field& gpfield, const eckit::Confi
 }
 
 void TransIFS::invtrans(const FieldSet& spfields, FieldSet& gpfields, const eckit::Configuration& config) const {
+    ATLAS_TRACE();
     assert_spectral_functionspace(spfields);
     std::string functionspace(fieldset_functionspace(gpfields));
 
@@ -742,9 +746,9 @@ namespace trans {
 
 void TransIFS::assertCompatibleDistributions(const FunctionSpace& gp, const FunctionSpace& /*sp*/) const {
     std::string gp_dist = gp.distribution();
-    if (gp_dist != "trans" &&   // distribution computed by TransPartitioner
-        gp_dist != "serial" &&  // serial distribution always works
-        gp_dist != "custom") {  // trust user that he knows what he is doing
+    if (gp_dist != "ectrans" &&  // distribution computed by TransPartitioner
+        gp_dist != "serial" &&   // serial distribution always works
+        gp_dist != "custom") {   // trust user that he knows what he is doing
         throw_Exception(gp.type() + " functionspace has unsupported distribution (" + gp_dist +
                             ") "
                             "to do spectral transforms. Please "

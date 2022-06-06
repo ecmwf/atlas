@@ -28,8 +28,9 @@ namespace atlas {
 namespace trans {
 
 namespace {
-static VorDivToUVBuilder<VorDivToUVIFS> builder("ifs");
-}
+static VorDivToUVBuilder<VorDivToUVIFS> builder_ifs("ifs");  // Deprecated
+static VorDivToUVBuilder<VorDivToUVIFS> builder_ectrans("ectrans");
+}  // namespace
 
 namespace {
 void trans_check(const int code, const char* msg, const eckit::CodeLocation& location) {

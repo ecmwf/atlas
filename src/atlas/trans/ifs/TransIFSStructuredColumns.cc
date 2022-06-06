@@ -32,8 +32,12 @@ TransIFSStructuredColumns::TransIFSStructuredColumns(const Cache& cache, const f
 TransIFSStructuredColumns::~TransIFSStructuredColumns() = default;
 
 namespace {
-static TransBuilderFunctionSpace<TransIFSStructuredColumns> builder("ifs(StructuredColumns,Spectral)", "ifs");
-}
+static TransBuilderFunctionSpace<TransIFSStructuredColumns> builder_ifs("ifs(StructuredColumns,Spectral)", "ifs");
+// Deprecated, use below
+
+static TransBuilderFunctionSpace<TransIFSStructuredColumns> builder_ectrans("ectrans(StructuredColumns,Spectral)",
+                                                                            "ectrans");
+}  // namespace
 
 }  // namespace trans
 }  // namespace atlas
