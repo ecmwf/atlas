@@ -94,19 +94,19 @@ public:
     Output(const std::string&, std::ostream&, const eckit::Parametrisation& = util::NoConfig());
 
     /// Write mesh file
-    void write(const Mesh&, const eckit::Parametrisation& = util::NoConfig()) const;
+    const Output& write(const Mesh&, const eckit::Parametrisation& = util::NoConfig()) const;
 
     /// Write field to file
-    void write(const Field&, const eckit::Parametrisation& = util::NoConfig()) const;
+    const Output& write(const Field&, const eckit::Parametrisation& = util::NoConfig()) const;
 
     /// Write fieldset to file using FunctionSpace
-    void write(const FieldSet&, const eckit::Parametrisation& = util::NoConfig()) const;
+    const Output& write(const FieldSet&, const eckit::Parametrisation& = util::NoConfig()) const;
 
     /// Write field to file using Functionspace
-    void write(const Field&, const FunctionSpace&, const eckit::Parametrisation& = util::NoConfig()) const;
+    const Output& write(const Field&, const FunctionSpace&, const eckit::Parametrisation& = util::NoConfig()) const;
 
     /// Write fieldset to file using FunctionSpace
-    void write(const FieldSet&, const FunctionSpace&, const eckit::Parametrisation& = util::NoConfig()) const;
+    const Output& write(const FieldSet&, const FunctionSpace&, const eckit::Parametrisation& = util::NoConfig()) const;
 };
 
 namespace detail {
