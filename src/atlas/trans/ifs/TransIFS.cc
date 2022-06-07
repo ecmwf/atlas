@@ -1162,8 +1162,8 @@ void TransIFS::__dirtrans(const StructuredColumns& gp, const Field& gpfield, con
     if (compute_nfld(gpfield) != compute_nfld(spfield)) {
         throw_Exception("dirtrans: different number of gridpoint fields than spectral fields", Here());
     }
-    if ((int)gpfield.shape(0) != ngptot()) {
-        throw_Exception("dirtrans: slowest moving index must be ngptot", Here());
+    if ((int)gpfield.shape(0) < ngptot()) {
+        throw_Exception("dirtrans: slowest moving index must be >= ngptot", Here());
     }
     const int nfld = compute_nfld(gpfield);
 
@@ -1536,10 +1536,10 @@ void TransIFS::__invtrans(const functionspace::Spectral& sp, const Field& spfiel
     ATLAS_ASSERT(gpfield.functionspace() == 0 || functionspace::StructuredColumns(gpfield.functionspace()));
     ATLAS_ASSERT(spfield.functionspace() == 0 || functionspace::Spectral(spfield.functionspace()));
     if (compute_nfld(gpfield) != compute_nfld(spfield)) {
-        throw_Exception("dirtrans: different number of gridpoint fields than spectral fields", Here());
+        throw_Exception("invtrans: different number of gridpoint fields than spectral fields", Here());
     }
-    if ((int)gpfield.shape(0) != ngptot()) {
-        throw_Exception("dirtrans: slowest moving index must be ngptot", Here());
+    if ((int)gpfield.shape(0) < ngptot()) {
+        throw_Exception("invtrans: slowest moving index must be >= ngptot", Here());
     }
     const int nfld = compute_nfld(gpfield);
 
@@ -1587,8 +1587,8 @@ void TransIFS::__invtrans_adj(const functionspace::Spectral& sp, Field& spfield,
     if (compute_nfld(gpfield) != compute_nfld(spfield)) {
         throw_Exception("dirtrans: different number of gridpoint fields than spectral fields", Here());
     }
-    if ((int)gpfield.shape(0) != ngptot()) {
-        throw_Exception("dirtrans: slowest moving index must be ngptot", Here());
+    if ((int)gpfield.shape(0) < ngptot()) {
+        throw_Exception("dirtrans: slowest moving index must be >= ngptot", Here());
     }
     const int nfld = compute_nfld(gpfield);
 
