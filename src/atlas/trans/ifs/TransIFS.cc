@@ -246,12 +246,12 @@ void TransIFS::invtrans_grad(const Field& spfield, Field& gradfield, const eckit
     ATLAS_ASSERT(Spectral(spfield.functionspace()));
     ATLAS_ASSERT(NodeColumns(gradfield.functionspace()));
     if (StructuredColumns(gradfield.functionspace())) {
-      __invtrans_grad(Spectral(spfield.functionspace()), spfield, StructuredColumns(gradfield.functionspace()), gradfield,
-                      config);
+        __invtrans_grad(Spectral(spfield.functionspace()), spfield, StructuredColumns(gradfield.functionspace()),
+                        gradfield, config);
     }
     else if (NodeColumns(gradfield.functionspace())) {
-      __invtrans_grad(Spectral(spfield.functionspace()), spfield, NodeColumns(gradfield.functionspace()), gradfield,
-                      config);
+        __invtrans_grad(Spectral(spfield.functionspace()), spfield, NodeColumns(gradfield.functionspace()), gradfield,
+                        config);
     }
     else {
         ATLAS_NOTIMPLEMENTED;
@@ -263,8 +263,8 @@ void TransIFS::invtrans_grad(const FieldSet& spfields, FieldSet& gradfields, con
     std::string functionspace(fieldset_functionspace(gradfields));
 
     if (functionspace == StructuredColumns::type()) {
-      __invtrans_grad(Spectral(spfields[0].functionspace()), spfields, StructuredColumns(gradfields[0].functionspace()),
-                      gradfields, config);
+        __invtrans_grad(Spectral(spfields[0].functionspace()), spfields,
+                        StructuredColumns(gradfields[0].functionspace()), gradfields, config);
     }
     else if (functionspace == NodeColumns::type()) {
         __invtrans_grad(Spectral(spfields[0].functionspace()), spfields, NodeColumns(gradfields[0].functionspace()),
@@ -299,8 +299,8 @@ void TransIFS::invtrans_grad_adj(const FieldSet& gradfields, FieldSet& spfields,
     std::string functionspace(fieldset_functionspace(gradfields));
 
     if (functionspace == StructuredColumns::type()) {
-      __invtrans_grad_adj(Spectral(spfields[0].functionspace()), spfields, StructuredColumns(gradfields[0].functionspace()),
-                          gradfields, config);
+        __invtrans_grad_adj(Spectral(spfields[0].functionspace()), spfields,
+                            StructuredColumns(gradfields[0].functionspace()), gradfields, config);
     }
     else if (functionspace == NodeColumns::type()) {
         __invtrans_grad_adj(Spectral(spfields[0].functionspace()), spfields, NodeColumns(gradfields[0].functionspace()),
@@ -318,12 +318,12 @@ void TransIFS::dirtrans_wind2vordiv(const Field& gpwind, Field& spvor, Field& sp
     ATLAS_ASSERT(Spectral(spvor.functionspace()));
     ATLAS_ASSERT(Spectral(spdiv.functionspace()));
     if (StructuredColumns(gpwind.functionspace())) {
-      __dirtrans_wind2vordiv(StructuredColumns(gpwind.functionspace()), gpwind, Spectral(spvor.functionspace()), spvor, spdiv,
-                           config);
+        __dirtrans_wind2vordiv(StructuredColumns(gpwind.functionspace()), gpwind, Spectral(spvor.functionspace()),
+                               spvor, spdiv, config);
     }
     else if (NodeColumns(gpwind.functionspace())) {
-      __dirtrans_wind2vordiv(NodeColumns(gpwind.functionspace()), gpwind, Spectral(spvor.functionspace()), spvor, spdiv,
-                           config);
+        __dirtrans_wind2vordiv(NodeColumns(gpwind.functionspace()), gpwind, Spectral(spvor.functionspace()), spvor,
+                               spdiv, config);
     }
     else {
         ATLAS_NOTIMPLEMENTED;
@@ -355,8 +355,8 @@ void TransIFS::invtrans_vordiv2wind_adj(const Field& gpwind, Field& spvor, Field
     ATLAS_ASSERT(Spectral(spdiv.functionspace()));
     ATLAS_ASSERT(NodeColumns(gpwind.functionspace()));
     if (StructuredColumns(gpwind.functionspace())) {
-        __invtrans_vordiv2wind_adj(Spectral(spvor.functionspace()), spvor, spdiv, StructuredColumns(gpwind.functionspace()),
-                                   gpwind, config);
+        __invtrans_vordiv2wind_adj(Spectral(spvor.functionspace()), spvor, spdiv,
+                                   StructuredColumns(gpwind.functionspace()), gpwind, config);
     }
     else if (NodeColumns(gpwind.functionspace())) {
         __invtrans_vordiv2wind_adj(Spectral(spvor.functionspace()), spvor, spdiv, NodeColumns(gpwind.functionspace()),
@@ -1336,9 +1336,8 @@ void TransIFS::__dirtrans(const functionspace::NodeColumns& gp, const FieldSet& 
 
 // --------------------------------------------------------------------------------------------
 
-void TransIFS::__dirtrans_wind2vordiv(const functionspace::StructuredColumns& gp,
-                                      const Field& gpwind, const Spectral& sp,
-                                      Field& spvor, Field& spdiv,
+void TransIFS::__dirtrans_wind2vordiv(const functionspace::StructuredColumns& gp, const Field& gpwind,
+                                      const Spectral& sp, Field& spvor, Field& spdiv,
                                       const eckit::Configuration&) const {
     assertCompatibleDistributions(gp, sp);
 
@@ -1407,8 +1406,7 @@ void TransIFS::__dirtrans_wind2vordiv(const functionspace::StructuredColumns& gp
 
 // -----------------------------------------------------------------------------------------------
 
-void TransIFS::__dirtrans_wind2vordiv(const functionspace::NodeColumns& gp, const Field& gpwind,
-                                      const Spectral& sp,
+void TransIFS::__dirtrans_wind2vordiv(const functionspace::NodeColumns& gp, const Field& gpwind, const Spectral& sp,
                                       Field& spvor, Field& spdiv, const eckit::Configuration&) const {
     assertCompatibleDistributions(gp, sp);
 
@@ -1658,10 +1656,8 @@ void TransIFS::__invtrans_grad(const Spectral& sp, const Field& spfield, const f
 
 // --------------------------------------------------------------------------------------------
 
-void TransIFS::__invtrans_grad(const Spectral& sp, const FieldSet& spfields,
-                               const functionspace::StructuredColumns& gp,
-                               FieldSet& gradfields,
-                               const eckit::Configuration& config) const {
+void TransIFS::__invtrans_grad(const Spectral& sp, const FieldSet& spfields, const functionspace::StructuredColumns& gp,
+                               FieldSet& gradfields, const eckit::Configuration& config) const {
     assertCompatibleDistributions(gp, sp);
 
     // Count total number of fields and do sanity checks
@@ -1713,7 +1709,7 @@ void TransIFS::__invtrans_grad(const Spectral& sp, const FieldSet& spfields,
                     auto field = make_view<double, 3>(gradfields[jfld]);
                     for (idx_t jlev = 0; jlev < nlev; ++jlev) {
                         for (idx_t jnode = 0; jnode < nb_nodes; ++jnode) {
-                             field(jnode, jlev, 1 - dim) = rgpview(f, jnode);
+                            field(jnode, jlev, 1 - dim) = rgpview(f, jnode);
                         }
                     }
                 }
@@ -1731,8 +1727,7 @@ void TransIFS::__invtrans_grad(const Spectral& sp, const FieldSet& spfields,
 
 // --------------------------------------------------------------------------------------------
 
-void TransIFS::__invtrans_grad(const Spectral& sp, const FieldSet& spfields,
-                               const functionspace::NodeColumns& gp,
+void TransIFS::__invtrans_grad(const Spectral& sp, const FieldSet& spfields, const functionspace::NodeColumns& gp,
                                FieldSet& gradfields, const eckit::Configuration& config) const {
     assertCompatibleDistributions(gp, sp);
 
@@ -2135,8 +2130,7 @@ void TransIFS::__invtrans_adj(const Spectral& sp, FieldSet& spfields, const func
 
 //---------------------------------------------------------------------------------------------
 
-void TransIFS::__invtrans_grad_adj(const Spectral& sp, Field& spfield,
-                                   const functionspace::StructuredColumns& gp,
+void TransIFS::__invtrans_grad_adj(const Spectral& sp, Field& spfield, const functionspace::StructuredColumns& gp,
                                    const Field& gradfield, const eckit::Configuration& config) const {
     FieldSet spfields;
     spfields.add(spfield);
@@ -2147,8 +2141,7 @@ void TransIFS::__invtrans_grad_adj(const Spectral& sp, Field& spfield,
 
 //---------------------------------------------------------------------------------------------
 
-void TransIFS::__invtrans_grad_adj(const Spectral& sp, Field& spfield,
-                                   const functionspace::NodeColumns& gp,
+void TransIFS::__invtrans_grad_adj(const Spectral& sp, Field& spfield, const functionspace::NodeColumns& gp,
                                    const Field& gradfield, const eckit::Configuration& config) const {
     FieldSet spfields;
     spfields.add(spfield);
@@ -2159,8 +2152,7 @@ void TransIFS::__invtrans_grad_adj(const Spectral& sp, Field& spfield,
 
 //---------------------------------------------------------------------------------------------
 
-void TransIFS::__invtrans_grad_adj(const Spectral& sp, FieldSet& spfields,
-                                   const functionspace::StructuredColumns& gp,
+void TransIFS::__invtrans_grad_adj(const Spectral& sp, FieldSet& spfields, const functionspace::StructuredColumns& gp,
                                    const FieldSet& gradfields, const eckit::Configuration& config) const {
 #if ATLAS_HAVE_ECTRANS || defined(TRANS_HAVE_INVTRANS_ADJ)
     assertCompatibleDistributions(gp, sp);
@@ -2273,9 +2265,8 @@ void TransIFS::__invtrans_grad_adj(const Spectral& sp, FieldSet& spfields, const
 // --------------------------------------------------------------------------------------------
 
 void TransIFS::__invtrans_vordiv2wind_adj(const Spectral& sp, Field& spvor, Field& spdiv,
-                                                           const functionspace::StructuredColumns& gp,
-                                                           const Field& gpwind,
-                                                           const eckit::Configuration&) const {
+                                          const functionspace::StructuredColumns& gp, const Field& gpwind,
+                                          const eckit::Configuration&) const {
 #if ATLAS_HAVE_ECTRANS || defined(TRANS_HAVE_INVTRANS_ADJ)
 
     assertCompatibleDistributions(gp, sp);

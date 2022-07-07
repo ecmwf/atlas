@@ -243,8 +243,9 @@ public:
     void __dirtrans(const functionspace::NodeColumns&, const FieldSet& gpfields, const functionspace::Spectral&,
                     FieldSet& spfields, const eckit::Configuration& = util::NoConfig()) const;
 
-    void __dirtrans_wind2vordiv(const functionspace::StructuredColumns&, const Field& gpwind, const functionspace::Spectral&,
-                                Field& spvor, Field& spdiv, const eckit::Configuration& = util::NoConfig()) const;
+    void __dirtrans_wind2vordiv(const functionspace::StructuredColumns&, const Field& gpwind,
+                                const functionspace::Spectral&, Field& spvor, Field& spdiv,
+                                const eckit::Configuration& = util::NoConfig()) const;
     void __dirtrans_wind2vordiv(const functionspace::NodeColumns&, const Field& gpwind, const functionspace::Spectral&,
                                 Field& spvor, Field& spdiv, const eckit::Configuration& = util::NoConfig()) const;
 
@@ -258,8 +259,9 @@ public:
     void __invtrans(const functionspace::Spectral&, const FieldSet& spfields, const functionspace::NodeColumns&,
                     FieldSet& gpfields, const eckit::Configuration& = util::NoConfig()) const;
 
-    void __invtrans_grad(const functionspace::Spectral& sp, const Field& spfield, const functionspace::StructuredColumns& gp,
-                         Field& gradfield, const eckit::Configuration& = util::NoConfig()) const;
+    void __invtrans_grad(const functionspace::Spectral& sp, const Field& spfield,
+                         const functionspace::StructuredColumns& gp, Field& gradfield,
+                         const eckit::Configuration& = util::NoConfig()) const;
     void __invtrans_grad(const functionspace::Spectral& sp, const Field& spfield, const functionspace::NodeColumns& gp,
                          Field& gradfield, const eckit::Configuration& = util::NoConfig()) const;
 
@@ -287,8 +289,9 @@ public:
     void __invtrans_adj(const functionspace::Spectral&, FieldSet& spfields, const functionspace::NodeColumns&,
                         const FieldSet& gpfields, const eckit::Configuration& = util::NoConfig()) const;
 
-    void __invtrans_grad_adj(const functionspace::Spectral& sp, Field& spfield, const functionspace::StructuredColumns& gp,
-                             const Field& gradfield, const eckit::Configuration& = util::NoConfig()) const;
+    void __invtrans_grad_adj(const functionspace::Spectral& sp, Field& spfield,
+                             const functionspace::StructuredColumns& gp, const Field& gradfield,
+                             const eckit::Configuration& = util::NoConfig()) const;
     void __invtrans_grad_adj(const functionspace::Spectral& sp, Field& spfield, const functionspace::NodeColumns& gp,
                              const Field& gradfield, const eckit::Configuration& = util::NoConfig()) const;
 
@@ -305,6 +308,7 @@ public:
     void __invtrans_vordiv2wind_adj(const functionspace::Spectral&, Field& spvor, Field& spdiv,
                                     const functionspace::NodeColumns&, const Field& gpwind,
                                     const eckit::Configuration& = util::NoConfig()) const;
+
 public:
     void specnorm(const int nb_fields, const double spectra[], double norms[], int rank = 0) const;
 
