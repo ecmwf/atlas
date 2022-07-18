@@ -82,7 +82,7 @@ struct Node {
         auto this_stack_hash   = TimingsRegistry::instance().stack_[index].hash();
         auto is_child          = [&](size_t i) -> bool {
             CallStack child_stack = TimingsRegistry::instance().stack_[i];
-            child_stack.pop_front();
+            child_stack.pop();
             auto child_stack_hash = child_stack.hash();
             return child_stack_hash == this_stack_hash;
         };
@@ -353,10 +353,9 @@ void TimingsRegistry::report(std::ostream& out, const eckit::Configuration& conf
             }
             const CallStack& next_stack = *next_stack_ptr;
 
-            auto this_it = this_stack.rbegin();
-            auto next_it = next_stack.rbegin();
-            for (size_t i = 0; this_it != this_stack.rend() && next_it != next_stack.rend();
-                 ++i, ++this_it, ++next_it) {
+            auto this_it = this_stack.begin();
+            auto next_it = next_stack.begin();
+            for (size_t i = 0; this_it != this_stack.end() && next_it != next_stack.end(); ++i, ++this_it, ++next_it) {
                 if (*this_it == *next_it) {
                     active[i] = active[i] or false;
                 }
