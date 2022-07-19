@@ -51,12 +51,12 @@ while test $# -gt 0; do
     ;;
     --c++|--cxx)
     WITH_CXX=true
-    LANGUAGES="${LANGUAGES} CXX" 
+    LANGUAGES="${LANGUAGES} CXX"
     shift
     ;;
     --fortran)
     WITH_Fortran=true
-    LANGUAGES="${LANGUAGES} Fortran" 
+    LANGUAGES="${LANGUAGES} Fortran"
     shift
     ;;
     --build)
@@ -69,7 +69,7 @@ while test $# -gt 0; do
     ;;
     *)
     # unknown option
-	help
+    help
     break
     ;;
   esac
@@ -83,6 +83,7 @@ fi
 if ( ! $WITH_Fortran && ! $WITH_CXX ) ; then
   echo "No language specified. Defaulting to use C++."
   WITH_CXX=true
+  LANGUAGES="${LANGUAGES} CXX"
 fi
 
 mkdir -p $PROJECT_DIR
@@ -95,6 +96,7 @@ project( ${PROJECT_NAME} VERSION 0.0.0 LANGUAGES ${LANGUAGES} )
 find_package( atlas REQUIRED )
 
 EOF
+
 if ( $WITH_CXX ) ; then
   cat <<- EOF >> CMakeLists.txt
 	add_executable( main )
