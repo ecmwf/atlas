@@ -187,9 +187,10 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     timers.target_setup.stop();
 
     timers.source_setup.start();
-    auto src_meshgenerator = MeshGenerator{src_grid.meshgenerator() | option::halo(2)};
-    auto src_partitioner   = grid::MatchingPartitioner{tgt_mesh};
-    auto src_mesh          = src_meshgenerator.generate(src_grid, src_partitioner);
+    auto src_meshgenerator =
+        MeshGenerator{src_grid.meshgenerator() | option::halo(2) | util::Config("pole_elements", "pentagons")};
+    auto src_partitioner = grid::MatchingPartitioner{tgt_mesh};
+    auto src_mesh        = src_meshgenerator.generate(src_grid, src_partitioner);
     auto src_functionspace =
         create_functionspace(src_mesh, args.getLong("source.halo", 2), args.getString("source.functionspace", ""));
     auto src_field = src_functionspace.createField<double>();
