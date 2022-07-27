@@ -20,6 +20,7 @@
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/IsGhostNode.h"
 #include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/actions/Build2DCellCentres.h"
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/mesh/actions/BuildParallelFields.h"
 #include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
@@ -564,6 +565,9 @@ const parallel::Checksum& CellColumns::checksum() const {
 }
 
 Field CellColumns::lonlat() const {
+    if (!mesh_.cells().has_field("lonlat")) {
+        mesh::actions::Build2DCellCentres("lonlat")(const_cast<Mesh&>(mesh_));
+    }
     return mesh_.cells().field("lonlat");
 }
 
