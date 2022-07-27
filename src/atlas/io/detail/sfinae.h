@@ -11,7 +11,6 @@
 #pragma once
 
 #include "atlas/io/detail/TypeTraits.h"
-#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 namespace io {

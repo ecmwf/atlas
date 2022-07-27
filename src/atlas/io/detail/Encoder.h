@@ -95,12 +95,12 @@ private:
 };
 
 inline size_t encode_metadata(const Encoder& encoder, atlas::io::Metadata& metadata) {
-    ATLAS_ASSERT(encoder);
+    ASSERT(encoder);
     return encoder.self_->encode_metadata_(metadata);
 }
 
 inline void encode_data(const Encoder& encoder, atlas::io::Data& out) {
-    ATLAS_ASSERT(encoder);
+    ASSERT(encoder);
     ATLAS_TRACE();
     encoder.self_->encode_data_(out);
 }

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "eckit/eckit.h"
+#include "atlas/library/defines.h"
 
 namespace atlas {
 namespace io {
@@ -19,14 +19,14 @@ enum class Endian
 {
     little = 0,
     big    = 1,
-#if ECKIT_BIG_ENDIAN
+#if ATLAS_BIG_ENDIAN
     native  = big,
     swapped = little
-#elif ECKIT_LITTLE_ENDIAN
+#elif ATLAS_LITTLE_ENDIAN
     native  = little,
     swapped = big
 #else
-#error Neither ECKIT_BIG_ENDIAN nor ECKIT_LITTLE_ENDIAN equals true
+#error Neither ATLAS_BIG_ENDIAN nor ATLAS_LITTLE_ENDIAN equals true
 #endif
 };
 

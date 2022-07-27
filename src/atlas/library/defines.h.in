@@ -22,6 +22,7 @@
 #define ATLAS_HAVE_FORTRAN                   @atlas_HAVE_FORTRAN@
 #define ATLAS_HAVE_EIGEN                     @atlas_HAVE_EIGEN@
 #define ATLAS_HAVE_FFTW                      @atlas_HAVE_FFTW@
+#define ATLAS_HAVE_MPI                       @atlas_HAVE_MPI@
 #define ATLAS_BITS_GLOBAL                    @ATLAS_BITS_GLOBAL@
 #define ATLAS_ARRAYVIEW_BOUNDS_CHECKING      @atlas_HAVE_BOUNDSCHECKING@
 #define ATLAS_INDEXVIEW_BOUNDS_CHECKING      @atlas_HAVE_BOUNDSCHECKING@
@@ -37,6 +38,10 @@
 #define ATLAS_BUILD_TYPE_DEBUG               @atlas_BUILD_TYPE_DEBUG@
 #define ATLAS_BUILD_TYPE_RELEASE             @atlas_BUILD_TYPE_RELEASE@
 #define ATLAS_ECKIT_VERSION_INT              @ATLAS_ECKIT_VERSION_INT@
+
+#cmakedefine01 ATLAS_HAVE_CXXABI_H
+#cmakedefine01 ATLAS_LITTLE_ENDIAN
+#cmakedefine01 ATLAS_BIG_ENDIAN
 
 #ifdef __CUDACC__
 #define ATLAS_HOST_DEVICE __host__ __device__

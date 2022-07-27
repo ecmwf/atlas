@@ -11,7 +11,7 @@
 #include "Exceptions.h"
 
 #include "eckit/eckit_config.h"
-#ifdef eckit_HAVE_CXXABI_H
+#if ATLAS_HAVE_CXXABI_H
 #include <cxxabi.h>
 #endif
 
@@ -24,7 +24,7 @@ namespace io {
 //---------------------------------------------------------------------------------------------------------------------
 
 std::string demangle(const char* name) {
-#ifdef eckit_HAVE_CXXABI_H
+#if ATLAS_HAVE_CXXABI_H
     int status = -4;
 
     std::unique_ptr<char, void (*)(void*)> res{abi::__cxa_demangle(name, nullptr, nullptr, &status), std::free};

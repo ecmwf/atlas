@@ -69,6 +69,19 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   set( atlas_BUILD_TYPE_DEBUG 1 )
 endif()
 
+check_cxx_source_compiles( "#include <cxxabi.h>\n int main() { char * type; int status; char * r = abi::__cxa_demangle(type, 0, 0, &status); }"
+    ATLAS_HAVE_CXXABI_H )
+
+test_big_endian( _BIG_ENDIAN )
+
+if( _BIG_ENDIAN )
+  set( ATLAS_BIG_ENDIAN    1 )
+  set( ATLAS_LITTLE_ENDIAN 0 )
+else()
+  set( ATLAS_BIG_ENDIAN    0 )
+  set( ATLAS_LITTLE_ENDIAN 1 )
+endif()
+
 ecbuild_parse_version( ${eckit_VERSION} PREFIX ATLAS_ECKIT )
 math( EXPR ATLAS_ECKIT_VERSION_INT "( 10000 * ${ATLAS_ECKIT_VERSION_MAJOR} ) + ( 100 * ${ATLAS_ECKIT_VERSION_MINOR} ) + ${ATLAS_ECKIT_VERSION_PATCH}" )
 
