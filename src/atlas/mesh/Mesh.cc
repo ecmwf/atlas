@@ -29,6 +29,17 @@ Mesh::Mesh(const Grid& grid):
     get()->detach();
 }
 
+Mesh::Mesh(const Grid& grid, const grid::Partitioner& partitioner):
+    Handle([&]() {
+        auto meshgenerator = MeshGenerator{grid.meshgenerator()};
+        auto mesh          = meshgenerator.generate(grid, partitioner);
+        mesh.get()->attach();
+        return mesh.get();
+    }()) {
+    get()->detach();
+}
+
+
 Mesh::Mesh(eckit::Stream& stream): Handle(new Implementation(stream)) {}
 
 //----------------------------------------------------------------------------------------------------------------------
