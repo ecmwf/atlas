@@ -1154,8 +1154,8 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
             lat(n) = lonlat(n, 1);
         }
         write(fieldset, function_space, mesh_info, std::ios_base::out);
-        std::vector<std::string> extra_fields = {"partition",      "water", "dual_volumes",
-                                                 "dual_delta_sph", "ghost", "halo"};
+        std::vector<std::string> extra_fields = {"partition", "water", "dual_volumes", "dual_delta_sph",
+                                                 "ghost",     "halo",  "remote_index"};
         for (auto& f : extra_fields) {
             if (nodes.has_field(f)) {
                 write(nodes.field(f), function_space, mesh_info, std::ios_base::app);
