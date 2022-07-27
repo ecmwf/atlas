@@ -49,3 +49,8 @@ ecbuild_add_option( FEATURE PROJ
                     DESCRIPTION "PROJ-based projections"
                     DEFAULT OFF
                     CONDITION PROJ_FOUND )
+
+if( NOT HAVE_PROJ )
+  unset( PROJ_LIBRARIES )
+  unset( PROJ_INCLUDE_DIRS )
+endif()

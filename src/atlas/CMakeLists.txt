@@ -916,60 +916,36 @@ ecbuild_add_library( TARGET atlas
 
   SOURCES
     ${source_list}
-)
 
-if( atlas_HAVE_FORTRAN )
-  target_link_libraries( atlas PRIVATE fckit )
-endif()
+  PRIVATE_LIBS
+    $<${atlas_HAVE_FORTRAN}:fckit>
+    $<${atlas_HAVE_TRANS}:transi>
+    $<${atlas_HAVE_ACC}:atlas_acc_support>
+    ${CGAL_LIBRARIES}
+    ${FFTW_LIBRARIES}
+    ${PROJ_LIBRARIES}
 
-if( atlas_HAVE_TRANS )
-    target_link_libraries( atlas PRIVATE transi )
-endif()
+  PUBLIC_LIBS
+    eckit
+    eckit_geometry
+    eckit_linalg
+    eckit_maths
+    eckit_mpi
+    eckit_option
+    $<${atlas_HAVE_EIGEN}:Eigen3::Eigen>
+    $<${atlas_HAVE_OMP_CXX}:OpenMP::OpenMP_CXX>
+    $<${atlas_HAVE_GRIDTOOLS_STORAGE}:GridTools::gridtools>
 
-if( atlas_HAVE_PROJ )
-    target_link_libraries( atlas PRIVATE ${PROJ_LIBRARIES} )
-    target_include_directories( atlas PRIVATE ${PROJ_INCLUDE_DIRS} )
-endif()
+  PRIVATE_INCLUDES
+    ${CGAL_INCLUDE_DIRS}
+    ${FFTW_INCLUDES}
+    ${PROJ_INCLUDE_DIRS}
 
-target_link_libraries( atlas PUBLIC
-  eckit
-  eckit_geometry
-  eckit_linalg
-  eckit_maths
-  eckit_mpi
-  eckit_option
-)
-
-target_include_directories( atlas PUBLIC
+  PUBLIC_INCLUDES
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
     $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/src>
     $<INSTALL_INTERFACE:include>
+
 )
-
-if( atlas_HAVE_TESSELATION )
-  target_link_libraries( atlas PRIVATE ${CGAL_LIBRARIES} )
-  target_include_directories( atlas PRIVATE ${CGAL_INCLUDE_DIRS} )
-endif()
-
-if( atlas_HAVE_FFTW )
-  target_link_libraries( atlas PRIVATE ${FFTW_LIBRARIES} )
-  target_include_directories( atlas PRIVATE ${FFTW_INCLUDES} )
-endif()
-
-if( atlas_HAVE_EIGEN )
-  target_link_libraries( atlas PUBLIC Eigen3::Eigen )
-endif()
-
-if( atlas_HAVE_OMP_CXX )
-  target_link_libraries( atlas PUBLIC OpenMP::OpenMP_CXX )
-endif()
-
-if( atlas_HAVE_GRIDTOOLS_STORAGE )
-  target_link_libraries( atlas PUBLIC GridTools::gridtools )
-endif()
-
-if( atlas_HAVE_ACC )
-  target_link_libraries( atlas PRIVATE atlas_acc_support )
-endif()
 
 target_compile_features( atlas PUBLIC cxx_std_11 )

@@ -204,35 +204,25 @@ ecbuild_add_library( TARGET atlas_f
         runtime/atlas_trace.cc
         runtime/atlas_Trace_module.F90
 
-  PRIVATE_INCLUDES
-        ${FCKIT_INCLUDE_DIRS}
+  PUBLIC_LIBS
+        $<LINK_ONLY:atlas>
+        fckit
+
+  PRIVATE_LIBS
+        $<${atlas_HAVE_OMP_Fortran}:OpenMP::OpenMP_Fortran>
+
+  PUBLIC_INCLUDES
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+        $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/src>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+        $<BUILD_INTERFACE:${CMAKE_Fortran_MODULE_DIRECTORY}>
+        $<INSTALL_INTERFACE:include>
+        $<INSTALL_INTERFACE:module/atlas>
+
+   PRIVATE_INCLUDES
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )
-
-target_link_libraries( atlas_f PUBLIC
-  $<LINK_ONLY:atlas> )
-
-target_link_libraries( atlas_f PUBLIC
-  fckit )
-
-if( atlas_HAVE_OMP_Fortran )
-  target_link_libraries( atlas_f PRIVATE OpenMP::OpenMP_Fortran )
-endif()
-
-target_include_directories( atlas_f PUBLIC
-  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
-  $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/src>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-  $<BUILD_INTERFACE:${CMAKE_Fortran_MODULE_DIRECTORY}>
-  $<INSTALL_INTERFACE:include>
-  $<INSTALL_INTERFACE:module/atlas>
-)
-target_include_directories( atlas_f PRIVATE
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-)
-if( ECKIT_INCLUDE_DIRS )
-  target_include_directories( atlas_f PRIVATE ${ECKIT_INCLUDE_DIRS} )
-endif()
 
 fckit_target_preprocess_fypp( atlas_f
   DEPENDS

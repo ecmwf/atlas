@@ -8,7 +8,7 @@ ecbuild_add_option( FEATURE TESSELATION
                       "CGAL QUIET"
                       "Boost VERSION 1.45.0 QUIET" )
 
-if( atlas_HAVE_TESSELATION )
+if( HAVE_TESSELATION )
     list( APPEND CGAL_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} )
     if ( TARGET CGAL::CGAL )
       list( APPEND CGAL_LIBRARIES CGAL::CGAL ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
@@ -23,4 +23,9 @@ if( atlas_HAVE_TESSELATION )
     else()
       list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
     endif()
+endif()
+
+if( NOT HAVE_TESSELATION )
+    unset( CGAL_LIBRARIES )
+    unset( CGAL_INCLUDE_DIRS )
 endif()
