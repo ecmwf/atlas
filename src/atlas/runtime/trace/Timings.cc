@@ -232,7 +232,7 @@ void TimingsRegistry::report(std::ostream& out, const eckit::Configuration& conf
     auto digits = [](long x) -> long { return std::floor(std::log10(std::max(1l, x))) + 1l; };
 
     std::vector<size_t> excluded_timers_vector;
-    for (auto label : labels_) {
+    for (auto& label : labels_) {
         auto name = label.first;
         if (excluded_labels.count(name)) {
             auto timers = label.second;
@@ -428,7 +428,7 @@ void TimingsRegistry::report(std::ostream& out, const eckit::Configuration& conf
     out << std::left << std::setw(40) << "Timers accumulated by label" << sep << std::left << std::setw(5) << "count"
         << sep << "time" << std::endl;
     out << std::left << box_horizontal(40) << seph << box_horizontal(5) << seph << box_horizontal(12) << "\n";
-    for (auto label : labels_) {
+    for (auto& label : labels_) {
         auto name   = label.first;
         auto timers = label.second;
         double tot(0);
@@ -444,18 +444,15 @@ void TimingsRegistry::report(std::ostream& out, const eckit::Configuration& conf
 }
 
 std::string TimingsRegistry::filter_filepath(const std::string& filepath) const {
-    std::regex filepath_re("(.*)?/atlas/src/(.*)");
     std::smatch matches;
-    std::string filtered("");
-    if (std::regex_search(filepath, matches, filepath_re)) {
-        // filtered = matches[2];
-        filtered = "[atlas] ";
+    std::string basename = eckit::PathName(filepath).baseName();
+    if (std::regex_search(filepath, matches, std::regex{"(.*)?/atlas/src/(.*)"})) {
+        return "[atlas] " + basename;
     }
-    filtered += eckit::PathName(filepath).baseName();
-    return filtered;
-    //
-    // return filtered;
-    // return filepath;
+    if (std::regex_search(filepath, matches, std::regex{"(.*)?/atlas-io/src/(.*)"})) {
+        return "[atlas-io] " + basename;
+    }
+    return basename;
 }
 
 Timings::Identifier Timings::add(const CodeLocation& loc, const CallStack& stack, const std::string& title,

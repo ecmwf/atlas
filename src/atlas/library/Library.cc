@@ -43,6 +43,8 @@ static bool feature_MKL() {
 }  // namespace
 #endif
 
+#include "atlas_io/Trace.h"
+
 #include "atlas/library/FloatingPointExceptions.h"
 #include "atlas/library/Plugin.h"
 #include "atlas/library/config.h"
@@ -295,6 +297,15 @@ void Library::initialise(const eckit::Parametrisation& config) {
     if (data_paths_.empty()) {
         init_data_paths(data_paths_);
     }
+
+    atlas::io::TraceHookRegistry::add([](const eckit::CodeLocation& loc, const std::string& title) {
+        struct Adaptor : public atlas::io::TraceHook {
+            Adaptor(const eckit::CodeLocation& loc, const std::string& title): trace{loc, title} {}
+            atlas::Trace trace;
+        };
+        return std::unique_ptr<Adaptor>(new Adaptor{loc, title});
+    });
+
 
     // Summary
     if (getEnv("ATLAS_LOG_RANK", 0) == int(mpi::rank())) {

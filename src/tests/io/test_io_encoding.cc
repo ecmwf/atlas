@@ -15,10 +15,8 @@
 #include "atlas/array/ArrayView.h"
 
 #include "atlas/io/atlas-io.h"
-#include "atlas/io/types/array/ArrayReference.h"
-#include "tests/AtlasTestEnvironment.h"
 
-#include "atlas/io/types/array/adaptors/ArrayAdaptor.h"
+#include "tests/AtlasTestEnvironment.h"
 
 namespace atlas {
 namespace test {
@@ -348,7 +346,7 @@ CASE("encoding atlas::array::Array") {
 
     {
         auto interpreted = io::interprete<ArrayReference>(in);
-        EXPECT(interpreted.datatype() == in.datatype());
+        EXPECT_EQ(interpreted.datatype().str(), in.datatype().str());
         EXPECT_EQ(interpreted.rank(), 2);
         EXPECT_EQ(interpreted.shape(0), 4);
         EXPECT_EQ(interpreted.shape(1), 2);
@@ -360,7 +358,7 @@ CASE("encoding atlas::array::Array") {
     EXPECT_NO_THROW(encode(in, metadata, data));
 
     io::ArrayMetadata array_metadata{metadata};
-    EXPECT(array_metadata.datatype() == in.datatype());
+    EXPECT_EQ(array_metadata.datatype().str(), in.datatype().str());
     EXPECT_EQ(array_metadata.rank(), 2);
     EXPECT_EQ(array_metadata.shape(0), 4);
     EXPECT_EQ(array_metadata.shape(1), 2);
@@ -383,6 +381,8 @@ CASE("test Encoder") {
         io::Data data;
         EXPECT_THROWS_AS(encode(encoder, metadata, data), eckit::AssertionFailed);
     }
+
+    Log::info() << "here" << std::endl;
 
     SECTION("Encoder via reference") {
         io::Encoder encoder;

@@ -350,8 +350,6 @@ void setEnv(const std::string& env, bool value) {
 }  // namespace
 
 struct AtlasTestEnvironment {
-    using Config = util::Config;
-
     AtlasTestEnvironment(int argc, char* argv[]) {
         eckit::Main::initialise(argc, argv);
         eckit::Main::instance().taskID(eckit::mpi::comm("world").rank());
@@ -414,6 +412,7 @@ struct AtlasTestEnvironment {
 
 
 //----------------------------------------------------------------------------------------------------------------------
+
 
 template <typename Environment>
 int run(int argc, char* argv[]) {

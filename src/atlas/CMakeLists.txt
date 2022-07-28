@@ -790,9 +790,12 @@ list( APPEND atlas_io_srcs
     io/detail/Checksum.h
     io/detail/Checksum.cc
     io/detail/DataInfo.h
+    io/detail/DataType.cc
+    io/detail/DataType.h
     io/detail/Decoder.cc
     io/detail/Decoder.h
     io/detail/Defaults.h
+    io/detail/Encoder.cc
     io/detail/Encoder.h
     io/detail/Endian.h
     io/detail/Link.cc
@@ -844,14 +847,19 @@ list( APPEND atlas_io_srcs
     io/types/array/ArrayMetadata.h
     io/types/array/ArrayReference.cc
     io/types/array/ArrayReference.h
-    io/types/array/adaptors/ArrayAdaptor.cc
-    io/types/array/adaptors/ArrayAdaptor.h
     io/types/array/adaptors/StdVectorAdaptor.h
-    io/types/array/adaptors/VectorAdaptor.h
     io/types/string.h
     io/types/scalar.h
     io/types/scalar.cc
 )
+
+
+list( APPEND atlas_io_adaptor_srcs
+  io/ArrayAdaptor.cc
+  io/ArrayAdaptor.h
+  io/VectorAdaptor.h
+)
+
 
 ### atlas c++ library
 
@@ -885,7 +893,7 @@ list( APPEND source_list
   ${atlas_numerics_srcs}
   ${atlas_output_srcs}
   ${atlas_util_srcs}
-  ${atlas_io_srcs}
+  ${atlas_io_adaptor_srcs}
   ${atlas_internals_srcs}
   ${CMAKE_CURRENT_BINARY_DIR}/library/git_sha1.h
   ${CMAKE_CURRENT_BINARY_DIR}/library/defines.h
@@ -905,6 +913,20 @@ atlas_host_device( source_list
     array/gridtools/GridToolsIndexView.cc
     mesh/Connectivity.cc
 )
+
+#ecbuild_add_library( TARGET atlas_io
+
+#    INSTALL_HEADERS    ALL
+#    HEADER_DESTINATION include/atlas_io
+#    SOURCES            ${atlas_io_srcs}
+#    PUBLIC_LIBS        eckit
+#    PUBLIC_INCLUDES
+#      $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+#      $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/src>
+
+
+#)
+
 
 ecbuild_add_library( TARGET atlas
 
@@ -932,6 +954,7 @@ ecbuild_add_library( TARGET atlas
     eckit_maths
     eckit_mpi
     eckit_option
+    atlas_io
     $<${atlas_HAVE_EIGEN}:Eigen3::Eigen>
     $<${atlas_HAVE_OMP_CXX}:OpenMP::OpenMP_CXX>
     $<${atlas_HAVE_GRIDTOOLS_STORAGE}:GridTools::gridtools>

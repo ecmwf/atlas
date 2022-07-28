@@ -39,10 +39,6 @@
 #define ATLAS_BUILD_TYPE_RELEASE             @atlas_BUILD_TYPE_RELEASE@
 #define ATLAS_ECKIT_VERSION_INT              @ATLAS_ECKIT_VERSION_INT@
 
-#cmakedefine01 ATLAS_HAVE_CXXABI_H
-#cmakedefine01 ATLAS_LITTLE_ENDIAN
-#cmakedefine01 ATLAS_BIG_ENDIAN
-
 #ifdef __CUDACC__
 #define ATLAS_HOST_DEVICE __host__ __device__
 #define ATLAS_DEVICE __device__
