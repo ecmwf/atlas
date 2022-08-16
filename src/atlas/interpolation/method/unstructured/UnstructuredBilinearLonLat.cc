@@ -225,6 +225,13 @@ void UnstructuredBilinearLonLat::setup(const FunctionSpace& source) {
     idx_t inp_npts = i_nodes.size();
     idx_t out_npts = olonlat_->shape(0);
 
+     // return early if no output points on this partition reserve is called on
+     // the triplets but also during the sparseMatrix constructor. This won't
+     // work for empty matrices
+     if (out_npts == 0) {
+         return;
+     }
+
     array::ArrayView<int, 1> out_ghosts = array::make_view<int, 1>(target_ghost_);
 
     idx_t Nelements = meshSource.cells().size();
