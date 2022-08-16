@@ -16,7 +16,7 @@ find_package( ecbuild 3.4 REQUIRED HINTS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CUR
 ################################################################################
 # Initialise project Atlas
 
-project( atlas-io VERSION ${atlas_VERSION} LANGUAGES CXX )
+project( atlas_io VERSION ${atlas_VERSION} LANGUAGES CXX )
 
 ################################################################################
 # Required packages
@@ -59,7 +59,7 @@ add_subdirectory( tests )
 # Export and summarize
 
 ecbuild_add_resources(
-    TARGET atlas-io-others
+    TARGET atlas_io-others
     SOURCES_PACK
         README.md
         CHANGELOG.md

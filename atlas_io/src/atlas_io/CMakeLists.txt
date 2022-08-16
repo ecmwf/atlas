@@ -1,4 +1,9 @@
 configure_file( detail/defines.h.in   detail/defines.h   )
+install( FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/detail/defines.h
+  DESTINATION
+  ${INSTALL_INCLUDE_DIR}/atlas_io/detail
+)
 
 ecbuild_add_library( TARGET atlas_io
 
