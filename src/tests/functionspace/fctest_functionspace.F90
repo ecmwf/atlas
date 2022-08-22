@@ -585,6 +585,62 @@ call grid%final()
 #endif
 END_TEST
 
+TEST( test_pointcloud )
+#if 1
+type(atlas_StructuredGrid) :: grid
+type(atlas_functionspace_PointCloud) :: fs
+type(atlas_functionspace) :: fs_base
+character(len=10) str
+
+type(atlas_Field) :: field, field2
+type(atlas_Field) :: field_lonlat
+real(8), pointer  :: lonlat(:,:), x(:)
+
+grid = atlas_Grid("O8")
+fs = atlas_functionspace_PointCloud(grid)
+
+field = fs%create_field(name="field",kind=atlas_real(8))
+FCTEST_CHECK_EQUAL( field%owners(), 1 )
+FCTEST_CHECK_EQUAL( field%levels(), 0 )
+field_lonlat = fs%lonlat()
+FCTEST_CHECK_EQUAL( field_lonlat%owners(), 2 )
+call field%data(x)
+call field_lonlat%data(lonlat)
+
+FCTEST_CHECK_EQUAL( field_lonlat%owners(), 2 )
+fs = atlas_functionspace_PointCloud(grid)
+
+field = fs%create_field(atlas_real(c_float), levels=5)
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
+
+
+write(0,*) "before: name = ", fs%name()
+write(0,*) "before: owners = ", fs%owners()
+fs_base = field%functionspace()
+write(0,*) "after: name = " , fs%name()
+write(0,*) "after: owners = " , fs%owners()
+
+field2 = fs%create_field(name="field2",kind=atlas_real(8),levels=3,variables=2)
+
+FCTEST_CHECK_EQUAL( field%shape(), ([5,grid%size()]) )
+FCTEST_CHECK_EQUAL( field2%shape(), ([2,3,grid%size()]) )
+
+
+FCTEST_CHECK_EQUAL( field%owners(), 1 )
+call field%final()
+FCTEST_CHECK_EQUAL( field_lonlat%owners(), 1 )
+call field_lonlat%final()
+call fs%final()
+call fs_base%final()
+call grid%final()
+#else
+#warning test test_pointcloud disabled
+#endif
+END_TEST
+
+
 
 ! -----------------------------------------------------------------------------
 

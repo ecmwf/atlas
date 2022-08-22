@@ -17,6 +17,7 @@
 #include "atlas/option/Options.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/Metadata.h"
 
 #if ATLAS_HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1
@@ -76,32 +77,87 @@ Field PointCloud::ghost() const {
     return ghost_;
 }
 
-Field PointCloud::createField(const eckit::Configuration& config) const {
+array::ArrayShape PointCloud::config_shape(const eckit::Configuration& config) const {
+    array::ArrayShape shape;
+
+    shape.emplace_back(size());
+
+    idx_t levels(levels_);
+    config.get("levels", levels);
+    if (levels > 0) {
+        shape.emplace_back(levels);
+    }
+
+    idx_t variables(0);
+    config.get("variables", variables);
+    if (variables > 0) {
+        shape.emplace_back(variables);
+    }
+
+    return shape;
+}
+
+array::ArrayAlignment PointCloud::config_alignment(const eckit::Configuration& config) const {
+    int alignment(1);
+    config.get("alignment", alignment);
+    return alignment;
+}
+
+array::ArraySpec PointCloud::config_spec(const eckit::Configuration& config) const {
+    return array::ArraySpec(config_shape(config), config_alignment(config));
+}
+
+array::DataType PointCloud::config_datatype(const eckit::Configuration& config) const {
     array::DataType::kind_t kind;
     if (!config.get("datatype", kind)) {
         throw_Exception("datatype missing", Here());
     }
-    auto datatype = array::DataType(kind);
+    return array::DataType(kind);
+}
 
+std::string PointCloud::config_name(const eckit::Configuration& config) const {
     std::string name;
     config.get("name", name);
-    idx_t levels = levels_;
-    config.get("levels", levels);
-    Field field;
-    if (levels) {
-        field = Field(name, datatype, array::make_shape(size(), levels));
-        field.set_levels(levels);
-    }
-    else {
-        field = Field(name, datatype, array::make_shape(size()));
-    }
+    return name;
+}
+
+void PointCloud::set_field_metadata(const eckit::Configuration& config, Field& field) const {
     field.set_functionspace(this);
+
+    bool global(false);
+    if (config.get("global", global)) {
+        if (global) {
+            idx_t owner(0);
+            config.get("owner", owner);
+            field.metadata().set("owner", owner);
+        }
+    }
+    field.metadata().set("global", global);
+
+    idx_t levels(levels_);
+    config.get("levels", levels);
+    field.set_levels(levels);
+
+    idx_t variables(0);
+    config.get("variables", variables);
+    field.set_variables(variables);
+
+    if (config.has("type")) {
+        field.metadata().set("type", config.getString("type"));
+    }
+}
+
+
+Field PointCloud::createField(const eckit::Configuration& options) const {
+    Field field(config_name(options), config_datatype(options), config_spec(options));
+    set_field_metadata(options, field);
     return field;
 }
 
 Field PointCloud::createField(const Field& other, const eckit::Configuration& config) const {
     return createField(option::datatype(other.datatype()) | option::levels(other.levels()) |
-                       option::variables(other.variables()) | config);
+                       option::variables(other.variables()) |
+                       option::type(other.metadata().getString("type", "scalar")) | config);
 }
 
 std::string PointCloud::distribution() const {

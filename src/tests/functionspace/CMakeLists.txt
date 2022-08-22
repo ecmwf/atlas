@@ -6,15 +6,22 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+ecbuild_warn_var( HAVE_FCTEST )
 if( HAVE_FCTEST )
 
   if( NOT HAVE_TRANS )
     set( transi_HAVE_MPI 1 )
+    set( ectrans_HAVE_MPI 1 )
   endif()
+
+  ecbuild_warn_var( HAVE_TRANS )
+  ecbuild_warn_var( eckit_HAVE_MPI )
+  ecbuild_warn_var( transi_HAVE_MPI )
+
 
   add_fctest( TARGET atlas_fctest_functionspace
     MPI             4
-    CONDITION       eckit_HAVE_MPI AND transi_HAVE_MPI
+    CONDITION       eckit_HAVE_MPI AND (transi_HAVE_MPI OR ectrans_HAVE_MPI)
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_functionspace.F90
     LIBS            atlas_f
