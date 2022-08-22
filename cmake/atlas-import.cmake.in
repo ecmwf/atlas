@@ -22,6 +22,8 @@ if( atlas_HAVE_FORTRAN )
   find_dependency( fckit HINTS ${CMAKE_CURRENT_LIST_DIR}/../fckit @fckit_DIR@ @fckit_BINARY_DIR@ )
 endif()
 
+find_dependency( atlas_io HINTS ${CMAKE_CURRENT_LIST_DIR}/../atlas_io @atlas_io_DIR@ @atlas_io_BINARY_DIR@ )
+
 ## Eigen3
 set( Eigen3_HINT @Eigen3_DIR@ )
 if( atlas_HAVE_EIGEN AND Eigen3_HINT )

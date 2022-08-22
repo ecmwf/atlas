@@ -117,6 +117,19 @@ public:
     Iterate iterate() const { return Iterate(*this); }
 
 private:
+    array::ArrayShape config_shape(const eckit::Configuration& config) const;
+
+    array::ArrayAlignment config_alignment(const eckit::Configuration& config) const;
+
+    array::ArraySpec config_spec(const eckit::Configuration& config) const;
+
+    array::DataType config_datatype(const eckit::Configuration& config) const;
+
+    std::string config_name(const eckit::Configuration& config) const;
+
+    void set_field_metadata(const eckit::Configuration& config, Field& field) const;
+
+private:
     Field lonlat_;
     Field vertical_;
     mutable Field ghost_;

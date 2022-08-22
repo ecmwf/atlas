@@ -128,15 +128,15 @@ int Tool::execute(const Args& args) {
             Log::error() << "Atlas was not compiled with support for '" << types[0] << "' backend." << std::endl;
             return failed();
         }
-        if (not domain.global() && types[0] == "ifs") {
-            Log::error() << "The 'ifs' backend for Trans can only use global domains." << std::endl;
+        if (not domain.global() && types[0] == "ectrans") {
+            Log::error() << "The 'ectrans' backend for Trans can only use global domains." << std::endl;
             return failed();
         }
     }
     else {
         types.emplace_back("local");
-        if (trans::Trans::hasBackend("ifs") && domain.global()) {
-            types.emplace_back("ifs");
+        if (trans::Trans::hasBackend("ectrans") && domain.global()) {
+            types.emplace_back("ectrans");
         }
     }
 
@@ -175,7 +175,7 @@ int Tool::execute(const Args& args) {
     }
 
     std::map<std::string, std::vector<std::string>> linalg_backends{
-        {"ifs", {"lapack"}}, {"local", {"generic", "openmp", "lapack", "eigen"}}};
+        {"ectrans", {"lapack"}}, {"local", {"generic", "openmp", "lapack", "eigen"}}};
     if (args.has("matrix_multiply")) {
         std::string backend      = args.getString("matrix_multiply");
         linalg_backends["local"] = {backend};

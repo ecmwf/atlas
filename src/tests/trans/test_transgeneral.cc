@@ -505,7 +505,7 @@ CASE("test_trans_vordiv_with_translib") {
     //int trc  = ndgl - 1;  // linear
     int trc = ndgl / 2. - 1;  // cubic
 #if ATLAS_HAVE_TRANS
-    trans::Trans transIFS(g, trc, util::Config("type", "ifs"));
+    trans::Trans transIFS(g, trc, util::Config("type", "ectrans"));
     double rav = 0.;  // compute average rms error of trans library in rav
 #endif
     trans::Trans transLocal1(g, trc, util::Config("type", "local"));
@@ -653,7 +653,7 @@ CASE("test_trans_hires") {
     double tolerance  = 1.e-13;
 
     //#if ATLAS_HAVE_TRANS
-    //    //std::string transTypes[4] = {"localopt", "localopt2", "Local", "ifs"};
+    //    //std::string transTypes[4] = {"localopt", "localopt2", "Local", "ectrans"};
     //    //std::string transTypes[2] = {"localopt2", "Local"};
     //    //std::string transTypes[3] = {"Local", "localopt2", "localopt"};
     //    //std::string transTypes[1] = {"Local"};
@@ -662,10 +662,10 @@ CASE("test_trans_hires") {
     //#endif
     std::vector<util::Config> trans_configs;
     std::vector<std::string> transTypes = {"local"};
-    if (trans::Trans::hasBackend("ifs")) {
-        transTypes.emplace_back("ifs");
+    if (trans::Trans::hasBackend("ectrans")) {
+        transTypes.emplace_back("ectrans");
     }
-    std::map<std::string, std::vector<std::string>> backends{{"ifs", {"lapack"}},
+    std::map<std::string, std::vector<std::string>> backends{{"ectrans", {"lapack"}},
                                                              {"local", {"generic", "openmp", "eigen"}}};
 
     //Domain testdomain =F ZonalBandDomain( {-90., 90.} );
@@ -1609,8 +1609,6 @@ CASE("test_2level_adjoint_test_with_powerspectrum_convolution") {
     Log::info() << "transIFS backend" << transIFS.backend() << std::endl;
 
     std::vector<float> powerSpectrum(2 * N, 0.0);
-    float i(1.0);
-    float t(0.0);
 
     for (std::size_t w = 0; w < powerSpectrum.size(); ++w) {
         powerSpectrum[w] = 1.0 / static_cast<float>(w + 1);
@@ -1651,8 +1649,8 @@ CASE("test_2level_adjoint_test_with_powerspectrum_convolution") {
     auto spfView                   = atlas::array::make_view<double, 2>(spf);
     const auto zonal_wavenumbers   = specFS.zonal_wavenumbers();
     const int nb_zonal_wavenumbers = zonal_wavenumbers.size();
-    i                              = 0;
     double adj_value(0.0);
+    int i{0};
     for (int jm = 0; jm < nb_zonal_wavenumbers; ++jm) {
         const std::size_t m1 = zonal_wavenumbers(jm);
         for (std::size_t n1 = m1; n1 <= static_cast<std::size_t>(2 * N - 1); ++n1) {

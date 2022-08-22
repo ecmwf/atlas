@@ -11,6 +11,7 @@
 #include "atlas/meshgenerator/detail/MeshGeneratorInterface.h"
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/Partitioner.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/meshgenerator/detail/MeshGeneratorImpl.h"
@@ -79,6 +80,23 @@ Mesh::Implementation* atlas__MeshGenerator__generate__grid(const MeshGenerator::
     {
         Mesh mesh = This->generate(Grid(grid));
         ;
+        mesh.get()->attach();
+        m = mesh.get();
+    }
+    m->detach();
+    return m;
+}
+
+Mesh::Implementation* atlas__MeshGenerator__generate__grid_partitioner(
+    const MeshGenerator::Implementation* This, const Grid::Implementation* grid,
+    const grid::Partitioner::Implementation* partitioner) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_MeshGenerator");
+    ATLAS_ASSERT(grid != nullptr, "Cannot access uninitialised atlas_Grid");
+    ATLAS_ASSERT(partitioner != nullptr, "Cannot access uninitialised atlas_Partitioner");
+
+    Mesh::Implementation* m;
+    {
+        Mesh mesh = This->generate(Grid(grid), grid::Partitioner(partitioner));
         mesh.get()->attach();
         m = mesh.get();
     }

@@ -246,18 +246,38 @@ Field& build_nodes_remote_idx(mesh::Nodes& nodes) {
     idx_t mypart = static_cast<idx_t>(mpi::rank());
     idx_t nparts = static_cast<idx_t>(mpi::size());
 
-    UniqueLonLat compute_uid(nodes);
 
     std::vector<idx_t> proc(nparts);
     for (idx_t jpart = 0; jpart < nparts; ++jpart) {
         proc[jpart] = jpart;
     }
 
-    auto ridx      = array::make_indexview<idx_t, 1>(nodes.remote_index());
-    auto part      = array::make_view<int, 1>(nodes.partition());
+    auto ridx         = array::make_indexview<idx_t, 1>(nodes.remote_index());
+    const auto part   = array::make_view<int, 1>(nodes.partition());
+    const auto flags  = array::make_view<int, 1>(nodes.flags());
+    const auto lonlat = array::make_view<double, 2>(nodes.lonlat());
+
+    const PeriodicTransform transform_periodic_east(-360.);
+    const PeriodicTransform transform_periodic_west(+360.);
+    const UniqueLonLat compute_uid_lonlat(nodes);
+
+    auto compute_uid = [&](idx_t jnode) {
+        constexpr int PERIODIC = util::Topology::PERIODIC;
+        constexpr int EAST     = util::Topology::EAST;
+        constexpr int WEST     = util::Topology::WEST;
+        const auto flags_view  = util::Bitflags::view(flags(jnode));
+        if (flags_view.check(PERIODIC | EAST)) {
+            return compute_uid_lonlat(jnode, transform_periodic_east);
+        }
+        if (flags_view.check(PERIODIC | WEST)) {
+            return compute_uid_lonlat(jnode, transform_periodic_west);
+        }
+        return compute_uid_lonlat(jnode);
+    };
+
     idx_t nb_nodes = nodes.size();
 
-    idx_t varsize = 2;
+    constexpr idx_t varsize = 2;
 
     std::vector<std::vector<uid_t>> send_needed(mpi::size());
     std::vector<std::vector<uid_t>> recv_needed(mpi::size());

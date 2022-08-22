@@ -55,28 +55,33 @@ Output::Output(const std::string& key, std::ostream& stream, const eckit::Parame
     Handle(detail::OutputFactory::build(key, stream, params)) {}
 
 /// Write mesh file
-void Output::write(const Mesh& m, const eckit::Parametrisation& c) const {
+const Output& Output::write(const Mesh& m, const eckit::Parametrisation& c) const {
     get()->write(m, c);
+    return *this;
 }
 
 /// Write field to file
-void Output::write(const Field& f, const eckit::Parametrisation& c) const {
+const Output& Output::write(const Field& f, const eckit::Parametrisation& c) const {
     get()->write(f, c);
+    return *this;
 }
 
 /// Write fieldset to file using FunctionSpace
-void Output::write(const FieldSet& f, const eckit::Parametrisation& c) const {
+const Output& Output::write(const FieldSet& f, const eckit::Parametrisation& c) const {
     get()->write(f, c);
+    return *this;
 }
 
 /// Write field to file using Functionspace
-void Output::write(const Field& f, const FunctionSpace& fs, const eckit::Parametrisation& c) const {
+const Output& Output::write(const Field& f, const FunctionSpace& fs, const eckit::Parametrisation& c) const {
     get()->write(f, fs, c);
+    return *this;
 }
 
 /// Write fieldset to file using FunctionSpace
-void Output::write(const FieldSet& f, const FunctionSpace& fs, const eckit::Parametrisation& c) const {
+const Output& Output::write(const FieldSet& f, const FunctionSpace& fs, const eckit::Parametrisation& c) const {
     get()->write(f, fs, c);
+    return *this;
 }
 
 namespace detail {

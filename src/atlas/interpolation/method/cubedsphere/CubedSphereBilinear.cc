@@ -83,11 +83,11 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
                 }
             }
         }
-
-        // fill sparse matrix and return.
-        Matrix A(target_.size(), source_.size(), weights);
-        setMatrix(A);
     }
+
+    // fill sparse matrix and return.
+    Matrix A(target_.size(), source_.size(), weights);
+    setMatrix(A);
 }
 
 void CubedSphereBilinear::print(std::ostream&) const {

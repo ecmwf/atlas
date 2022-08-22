@@ -11,10 +11,12 @@ if( ECKIT_INCLUDE_DIRS ) # eckit not yet ported to CMake3
 endif()
 
 add_subdirectory( apps )
+if( HAVE_FORTRAN )
 add_subdirectory( fortran_submodule )
 add_subdirectory( fortran_object )
 add_subdirectory( example_fortran )
 add_subdirectory( fortran_acc_fields )
+endif()
 add_subdirectory( interpolation )
 add_subdirectory( interpolation-fortran )
 add_subdirectory( grid_distribution )

@@ -337,6 +337,21 @@ CASE("test_node2cell_with_halo") {
     }
 }
 
+CASE("test_node2cell_AtlasGrids") {
+    std::vector<std::string> gridnames{"N16", "O2", "F2", "L2", "H2"};
+    for (auto& gridname : gridnames) {
+        auto grid = Grid(gridname);
+        Mesh mesh = MeshGenerator(grid.meshgenerator()).generate(grid);
+        mesh::actions::build_parallel_fields(mesh);
+        mesh::actions::build_periodic_boundaries(mesh);
+        mesh::actions::build_halo(mesh, 1);
+        mesh::actions::build_node_to_cell_connectivity(mesh);
+        for (idx_t jnode = 0; jnode < mesh.nodes().size(); ++jnode) {
+            EXPECT(mesh.nodes().cell_connectivity().cols(jnode) > 0);
+        }
+    }
+}
+
 //-----------------------------------------------------------------------------
 
 }  // namespace test

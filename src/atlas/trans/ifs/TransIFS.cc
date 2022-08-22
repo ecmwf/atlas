@@ -47,8 +47,9 @@ namespace atlas {
 namespace trans {
 
 namespace {
-static TransBuilderGrid<TransIFS> builder("ifs", "ifs");
-}
+static TransBuilderGrid<TransIFS> builder_ifs("ifs", "ifs");  // deprecated
+static TransBuilderGrid<TransIFS> builder_ectrans("ectrans", "ectrans");
+}  // namespace
 
 class TransParameters {
 public:
@@ -156,6 +157,7 @@ void TransIFS::dirtrans(const Field& gpfield, Field& spfield, const eckit::Confi
 }
 
 void TransIFS::dirtrans(const FieldSet& gpfields, FieldSet& spfields, const eckit::Configuration& config) const {
+    ATLAS_TRACE();
     assert_spectral_functionspace(spfields);
     std::string functionspace(fieldset_functionspace(gpfields));
 
@@ -173,6 +175,7 @@ void TransIFS::dirtrans(const FieldSet& gpfields, FieldSet& spfields, const ecki
 }
 
 void TransIFS::invtrans(const Field& spfield, Field& gpfield, const eckit::Configuration& config) const {
+    ATLAS_TRACE();
     ATLAS_ASSERT(Spectral(spfield.functionspace()));
     if (StructuredColumns(gpfield.functionspace())) {
         __invtrans(Spectral(spfield.functionspace()), spfield, StructuredColumns(gpfield.functionspace()), gpfield,
@@ -187,6 +190,7 @@ void TransIFS::invtrans(const Field& spfield, Field& gpfield, const eckit::Confi
 }
 
 void TransIFS::invtrans(const FieldSet& spfields, FieldSet& gpfields, const eckit::Configuration& config) const {
+    ATLAS_TRACE();
     assert_spectral_functionspace(spfields);
     std::string functionspace(fieldset_functionspace(gpfields));
 
@@ -241,15 +245,28 @@ void TransIFS::invtrans_adj(const FieldSet& gpfields, FieldSet& spfields, const 
 void TransIFS::invtrans_grad(const Field& spfield, Field& gradfield, const eckit::Configuration& config) const {
     ATLAS_ASSERT(Spectral(spfield.functionspace()));
     ATLAS_ASSERT(NodeColumns(gradfield.functionspace()));
-    __invtrans_grad(Spectral(spfield.functionspace()), spfield, NodeColumns(gradfield.functionspace()), gradfield,
-                    config);
+    if (StructuredColumns(gradfield.functionspace())) {
+        __invtrans_grad(Spectral(spfield.functionspace()), spfield, StructuredColumns(gradfield.functionspace()),
+                        gradfield, config);
+    }
+    else if (NodeColumns(gradfield.functionspace())) {
+        __invtrans_grad(Spectral(spfield.functionspace()), spfield, NodeColumns(gradfield.functionspace()), gradfield,
+                        config);
+    }
+    else {
+        ATLAS_NOTIMPLEMENTED;
+    }
 }
 
 void TransIFS::invtrans_grad(const FieldSet& spfields, FieldSet& gradfields, const eckit::Configuration& config) const {
     assert_spectral_functionspace(spfields);
     std::string functionspace(fieldset_functionspace(gradfields));
 
-    if (functionspace == NodeColumns::type()) {
+    if (functionspace == StructuredColumns::type()) {
+        __invtrans_grad(Spectral(spfields[0].functionspace()), spfields,
+                        StructuredColumns(gradfields[0].functionspace()), gradfields, config);
+    }
+    else if (functionspace == NodeColumns::type()) {
         __invtrans_grad(Spectral(spfields[0].functionspace()), spfields, NodeColumns(gradfields[0].functionspace()),
                         gradfields, config);
     }
@@ -263,8 +280,17 @@ void TransIFS::invtrans_grad(const FieldSet& spfields, FieldSet& gradfields, con
 void TransIFS::invtrans_grad_adj(const Field& gradfield, Field& spfield, const eckit::Configuration& config) const {
     ATLAS_ASSERT(Spectral(spfield.functionspace()));
     ATLAS_ASSERT(NodeColumns(gradfield.functionspace()));
-    __invtrans_grad_adj(Spectral(spfield.functionspace()), spfield, NodeColumns(gradfield.functionspace()), gradfield,
-                        config);
+    if (StructuredColumns(gradfield.functionspace())) {
+        __invtrans_grad_adj(Spectral(spfield.functionspace()), spfield, StructuredColumns(gradfield.functionspace()),
+                            gradfield, config);
+    }
+    else if (NodeColumns(gradfield.functionspace())) {
+        __invtrans_grad_adj(Spectral(spfield.functionspace()), spfield, NodeColumns(gradfield.functionspace()),
+                            gradfield, config);
+    }
+    else {
+        ATLAS_NOTIMPLEMENTED;
+    }
 }
 
 void TransIFS::invtrans_grad_adj(const FieldSet& gradfields, FieldSet& spfields,
@@ -272,7 +298,11 @@ void TransIFS::invtrans_grad_adj(const FieldSet& gradfields, FieldSet& spfields,
     assert_spectral_functionspace(spfields);
     std::string functionspace(fieldset_functionspace(gradfields));
 
-    if (functionspace == NodeColumns::type()) {
+    if (functionspace == StructuredColumns::type()) {
+        __invtrans_grad_adj(Spectral(spfields[0].functionspace()), spfields,
+                            StructuredColumns(gradfields[0].functionspace()), gradfields, config);
+    }
+    else if (functionspace == NodeColumns::type()) {
         __invtrans_grad_adj(Spectral(spfields[0].functionspace()), spfields, NodeColumns(gradfields[0].functionspace()),
                             gradfields, config);
     }
@@ -287,18 +317,35 @@ void TransIFS::dirtrans_wind2vordiv(const Field& gpwind, Field& spvor, Field& sp
                                     const eckit::Configuration& config) const {
     ATLAS_ASSERT(Spectral(spvor.functionspace()));
     ATLAS_ASSERT(Spectral(spdiv.functionspace()));
-    ATLAS_ASSERT(NodeColumns(gpwind.functionspace()));
-    __dirtrans_wind2vordiv(NodeColumns(gpwind.functionspace()), gpwind, Spectral(spvor.functionspace()), spvor, spdiv,
-                           config);
+    if (StructuredColumns(gpwind.functionspace())) {
+        __dirtrans_wind2vordiv(StructuredColumns(gpwind.functionspace()), gpwind, Spectral(spvor.functionspace()),
+                               spvor, spdiv, config);
+    }
+    else if (NodeColumns(gpwind.functionspace())) {
+        __dirtrans_wind2vordiv(NodeColumns(gpwind.functionspace()), gpwind, Spectral(spvor.functionspace()), spvor,
+                               spdiv, config);
+    }
+    else {
+        ATLAS_NOTIMPLEMENTED;
+    }
 }
+
 
 void TransIFS::invtrans_vordiv2wind(const Field& spvor, const Field& spdiv, Field& gpwind,
                                     const eckit::Configuration& config) const {
     ATLAS_ASSERT(Spectral(spvor.functionspace()));
     ATLAS_ASSERT(Spectral(spdiv.functionspace()));
-    ATLAS_ASSERT(NodeColumns(gpwind.functionspace()));
-    __invtrans_vordiv2wind(Spectral(spvor.functionspace()), spvor, spdiv, NodeColumns(gpwind.functionspace()), gpwind,
-                           config);
+    if (StructuredColumns(gpwind.functionspace())) {
+        __invtrans_vordiv2wind(Spectral(spvor.functionspace()), spvor, spdiv, StructuredColumns(gpwind.functionspace()),
+                               gpwind, config);
+    }
+    else if (NodeColumns(gpwind.functionspace())) {
+        __invtrans_vordiv2wind(Spectral(spvor.functionspace()), spvor, spdiv, NodeColumns(gpwind.functionspace()),
+                               gpwind, config);
+    }
+    else {
+        ATLAS_NOTIMPLEMENTED;
+    }
 }
 
 
@@ -307,8 +354,17 @@ void TransIFS::invtrans_vordiv2wind_adj(const Field& gpwind, Field& spvor, Field
     ATLAS_ASSERT(Spectral(spvor.functionspace()));
     ATLAS_ASSERT(Spectral(spdiv.functionspace()));
     ATLAS_ASSERT(NodeColumns(gpwind.functionspace()));
-    __invtrans_vordiv2wind_adj(Spectral(spvor.functionspace()), spvor, spdiv, NodeColumns(gpwind.functionspace()),
-                               gpwind, config);
+    if (StructuredColumns(gpwind.functionspace())) {
+        __invtrans_vordiv2wind_adj(Spectral(spvor.functionspace()), spvor, spdiv,
+                                   StructuredColumns(gpwind.functionspace()), gpwind, config);
+    }
+    else if (NodeColumns(gpwind.functionspace())) {
+        __invtrans_vordiv2wind_adj(Spectral(spvor.functionspace()), spvor, spdiv, NodeColumns(gpwind.functionspace()),
+                                   gpwind, config);
+    }
+    else {
+        ATLAS_NOTIMPLEMENTED;
+    }
 }
 
 // --------------------------------------------------------------------------------------------
@@ -504,13 +560,16 @@ struct PackStructuredColumns {
 
     PackStructuredColumns(LocalView<double, 2>& rgpview): rgpview_(rgpview), f(0) {}
 
-    void operator()(const StructuredColumns& sc, const Field& field) {
+    void operator()(const StructuredColumns& sc, const Field& field, idx_t components = 0) {
         switch (field.rank()) {
             case 1:
-                pack_1(sc, field);
+                pack_1(sc, field, components);
                 break;
             case 2:
-                pack_2(sc, field);
+                pack_2(sc, field, components);
+                break;
+            case 3:
+                pack_3(sc, field, components);
                 break;
             default:
                 ATLAS_DEBUG_VAR(field.rank());
@@ -519,7 +578,7 @@ struct PackStructuredColumns {
         }
     }
 
-    void pack_1(const StructuredColumns& sc, const Field& field) {
+    void pack_1(const StructuredColumns& sc, const Field& field, idx_t) {
         auto gpfield = make_view<double, 1>(field);
 
         for (idx_t jnode = 0; jnode < sc.sizeOwned(); ++jnode) {
@@ -527,7 +586,7 @@ struct PackStructuredColumns {
         }
         ++f;
     }
-    void pack_2(const StructuredColumns& sc, const Field& field) {
+    void pack_2(const StructuredColumns& sc, const Field& field, idx_t) {
         auto gpfield      = make_view<double, 2>(field);
         const idx_t nvars = gpfield.shape(1);
         for (idx_t jvar = 0; jvar < nvars; ++jvar) {
@@ -535,6 +594,21 @@ struct PackStructuredColumns {
                 rgpview_(f, jnode) = gpfield(jnode, jvar);
             }
             ++f;
+        }
+    }
+    void pack_3(const StructuredColumns& sc, const Field& field, idx_t components) {
+        auto gpfield = make_view<double, 3>(field);
+        if (not components) {
+            components = gpfield.shape(2);
+        }
+        for (idx_t jcomp = 0; jcomp < components; ++jcomp) {
+            const idx_t nvars = gpfield.shape(1);
+            for (idx_t jvar = 0; jvar < nvars; ++jvar) {
+                for (idx_t jnode = 0; jnode < sc.sizeOwned(); ++jnode) {
+                    rgpview_(f, jnode) = gpfield(jnode, jvar, jcomp);
+                }
+                ++f;
+            }
         }
     }
 };
@@ -658,13 +732,16 @@ struct UnpackStructuredColumns {
 
     UnpackStructuredColumns(const LocalView<double, 2>& rgpview): rgpview_(rgpview), f(0) {}
 
-    void operator()(const StructuredColumns& sc, Field& field) {
+    void operator()(const StructuredColumns& sc, Field& field, int components = 0) {
         switch (field.rank()) {
             case 1:
-                unpack_1(sc, field);
+                unpack_1(sc, field, components);
                 break;
             case 2:
-                unpack_2(sc, field);
+                unpack_2(sc, field, components);
+                break;
+            case 3:
+                unpack_3(sc, field, components);
                 break;
             default:
                 ATLAS_DEBUG_VAR(field.rank());
@@ -673,14 +750,14 @@ struct UnpackStructuredColumns {
         }
     }
 
-    void unpack_1(const StructuredColumns& sc, Field& field) {
+    void unpack_1(const StructuredColumns& sc, Field& field, idx_t) {
         auto gpfield = make_view<double, 1>(field);
         for (idx_t jnode = 0; jnode < sc.sizeOwned(); ++jnode) {
             gpfield(jnode) = rgpview_(f, jnode);
         }
         ++f;
     }
-    void unpack_2(const StructuredColumns& sc, Field& field) {
+    void unpack_2(const StructuredColumns& sc, Field& field, idx_t) {
         auto gpfield      = make_view<double, 2>(field);
         const idx_t nvars = gpfield.shape(1);
         for (idx_t jvar = 0; jvar < nvars; ++jvar) {
@@ -688,6 +765,20 @@ struct UnpackStructuredColumns {
                 gpfield(jnode, jvar) = rgpview_(f, jnode);
             }
             ++f;
+        }
+    }
+    void unpack_3(const StructuredColumns& sc, Field& field, idx_t components) {
+        auto gpfield = make_view<double, 3>(field);
+        if (not components) {
+            components = gpfield.shape(2);
+        }
+        for (idx_t jcomp = 0; jcomp < components; ++jcomp) {
+            for (idx_t jlev = 0; jlev < gpfield.shape(1); ++jlev) {
+                for (idx_t jnode = 0; jnode < sc.sizeOwned(); ++jnode) {
+                    gpfield(jnode, jlev, jcomp) = rgpview_(f, jnode);
+                }
+                ++f;
+            }
         }
     }
 };
@@ -742,9 +833,9 @@ namespace trans {
 
 void TransIFS::assertCompatibleDistributions(const FunctionSpace& gp, const FunctionSpace& /*sp*/) const {
     std::string gp_dist = gp.distribution();
-    if (gp_dist != "trans" &&   // distribution computed by TransPartitioner
-        gp_dist != "serial" &&  // serial distribution always works
-        gp_dist != "custom") {  // trust user that he knows what he is doing
+    if (gp_dist != "ectrans" &&  // distribution computed by TransPartitioner
+        gp_dist != "serial" &&   // serial distribution always works
+        gp_dist != "custom") {   // trust user that he knows what he is doing
         throw_Exception(gp.type() + " functionspace has unsupported distribution (" + gp_dist +
                             ") "
                             "to do spectral transforms. Please "
@@ -1089,62 +1180,6 @@ void TransIFS::ctor_lonlat(const long nlon, const long nlat, long truncation, co
     TRANS_CHECK(::trans_setup(trans_.get()));
 }
 
-// --------------------------------------------------------------------------------------------
-
-void TransIFS::__dirtrans(const functionspace::NodeColumns& gp, const Field& gpfield, const Spectral& sp,
-                          Field& spfield, const eckit::Configuration& config) const {
-    FieldSet gpfields;
-    gpfields.add(gpfield);
-    FieldSet spfields;
-    spfields.add(spfield);
-    __dirtrans(gp, gpfields, sp, spfields, config);
-}
-
-// --------------------------------------------------------------------------------------------
-
-void TransIFS::__dirtrans(const functionspace::NodeColumns& gp, const FieldSet& gpfields, const Spectral& sp,
-                          FieldSet& spfields, const eckit::Configuration&) const {
-    assertCompatibleDistributions(gp, sp);
-
-    // Count total number of fields and do sanity checks
-    const int nfld          = compute_nfld(gpfields);
-    const int trans_sp_nfld = compute_nfld(spfields);
-
-    if (nfld != trans_sp_nfld) {
-        throw_Exception("dirtrans: different number of gridpoint fields than spectral fields", Here());
-    }
-
-    // Arrays Trans expects
-    std::vector<double> rgp(nfld * ngptot());
-    std::vector<double> rsp(nspec2() * nfld);
-    auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
-    auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-
-    // Pack gridpoints
-    {
-        PackNodeColumns pack(rgpview, gp);
-        for (idx_t jfld = 0; jfld < gpfields.size(); ++jfld) {
-            pack(gpfields[jfld]);
-        }
-    }
-
-    // Do transform
-    {
-        struct ::DirTrans_t transform = ::new_dirtrans(trans_.get());
-        transform.nscalar             = nfld;
-        transform.rgp                 = rgp.data();
-        transform.rspscalar           = rsp.data();
-        TRANS_CHECK(::trans_dirtrans(&transform));
-    }
-
-    // Unpack the spectral fields
-    {
-        UnpackSpectral unpack(rspview);
-        for (idx_t jfld = 0; jfld < spfields.size(); ++jfld) {
-            unpack(spfields[jfld]);
-        }
-    }
-}
 
 // --------------------------------------------------------------------------------------------
 
@@ -1158,8 +1193,8 @@ void TransIFS::__dirtrans(const StructuredColumns& gp, const Field& gpfield, con
     if (compute_nfld(gpfield) != compute_nfld(spfield)) {
         throw_Exception("dirtrans: different number of gridpoint fields than spectral fields", Here());
     }
-    if ((int)gpfield.shape(0) != ngptot()) {
-        throw_Exception("dirtrans: slowest moving index must be ngptot", Here());
+    if ((int)gpfield.shape(0) < ngptot()) {
+        throw_Exception("dirtrans: slowest moving index must be >= ngptot", Here());
     }
     const int nfld = compute_nfld(gpfield);
 
@@ -1190,6 +1225,19 @@ void TransIFS::__dirtrans(const StructuredColumns& gp, const Field& gpfield, con
         unpack(spfield);
     }
 }
+
+// --------------------------------------------------------------------------------------------
+
+void TransIFS::__dirtrans(const functionspace::NodeColumns& gp, const Field& gpfield, const Spectral& sp,
+                          Field& spfield, const eckit::Configuration& config) const {
+    FieldSet gpfields;
+    gpfields.add(gpfield);
+    FieldSet spfields;
+    spfields.add(spfield);
+    __dirtrans(gp, gpfields, sp, spfields, config);
+}
+
+// --------------------------------------------------------------------------------------------
 
 void TransIFS::__dirtrans(const StructuredColumns& gp, const FieldSet& gpfields, const Spectral& sp, FieldSet& spfields,
                           const eckit::Configuration&) const {
@@ -1242,6 +1290,361 @@ void TransIFS::__dirtrans(const StructuredColumns& gp, const FieldSet& gpfields,
 
 // --------------------------------------------------------------------------------------------
 
+void TransIFS::__dirtrans(const functionspace::NodeColumns& gp, const FieldSet& gpfields, const Spectral& sp,
+                          FieldSet& spfields, const eckit::Configuration&) const {
+    assertCompatibleDistributions(gp, sp);
+
+    // Count total number of fields and do sanity checks
+    const int nfld          = compute_nfld(gpfields);
+    const int trans_sp_nfld = compute_nfld(spfields);
+
+    if (nfld != trans_sp_nfld) {
+        throw_Exception("dirtrans: different number of gridpoint fields than spectral fields", Here());
+    }
+
+    // Arrays Trans expects
+    std::vector<double> rgp(nfld * ngptot());
+    std::vector<double> rsp(nspec2() * nfld);
+    auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
+    auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
+
+    // Pack gridpoints
+    {
+        PackNodeColumns pack(rgpview, gp);
+        for (idx_t jfld = 0; jfld < gpfields.size(); ++jfld) {
+            pack(gpfields[jfld]);
+        }
+    }
+
+    // Do transform
+    {
+        struct ::DirTrans_t transform = ::new_dirtrans(trans_.get());
+        transform.nscalar             = nfld;
+        transform.rgp                 = rgp.data();
+        transform.rspscalar           = rsp.data();
+        TRANS_CHECK(::trans_dirtrans(&transform));
+    }
+
+    // Unpack the spectral fields
+    {
+        UnpackSpectral unpack(rspview);
+        for (idx_t jfld = 0; jfld < spfields.size(); ++jfld) {
+            unpack(spfields[jfld]);
+        }
+    }
+}
+
+// --------------------------------------------------------------------------------------------
+
+void TransIFS::__dirtrans_wind2vordiv(const functionspace::StructuredColumns& gp, const Field& gpwind,
+                                      const Spectral& sp, Field& spvor, Field& spdiv,
+                                      const eckit::Configuration&) const {
+    assertCompatibleDistributions(gp, sp);
+
+    // Count total number of fields and do sanity checks
+    const size_t nfld = compute_nfld(spvor);
+    if (spdiv.shape(0) != spvor.shape(0)) {
+        throw_Exception("dirtrans:vorticity not compatible with divergence for 1st dimension", Here());
+    }
+    if (spdiv.shape(1) != spvor.shape(1)) {
+        throw_Exception("dirtrans:vorticity not compatible with divergence for 2st dimension", Here());
+    }
+    const size_t nwindfld = compute_nfld(gpwind);
+    if (nwindfld != 2 * nfld && nwindfld != 3 * nfld) {
+        throw_Exception("dirtrans:wind field is not compatible with vorticity, divergence.", Here());
+    }
+
+    if (spdiv.shape(0) != nspec2()) {
+        std::stringstream msg;
+        msg << "dirtrans: Spectral vorticity and divergence have wrong dimension: "
+               "nspec2 "
+            << spdiv.shape(0) << " should be " << nspec2();
+        throw_Exception(msg.str(), Here());
+    }
+
+    if (spvor.size() == 0) {
+        throw_Exception("dirtrans: spectral vorticity field is empty.");
+    }
+    if (spdiv.size() == 0) {
+        throw_Exception("dirtrans: spectral divergence field is empty.");
+    }
+
+    // Arrays Trans expects
+    std::vector<double> rgp(2 * nfld * ngptot());
+    std::vector<double> rspvor(nspec2() * nfld);
+    std::vector<double> rspdiv(nspec2() * nfld);
+    auto rgpview    = LocalView<double, 2>(rgp.data(), make_shape(2 * nfld, ngptot()));
+    auto rspvorview = LocalView<double, 2>(rspvor.data(), make_shape(nspec2(), nfld));
+    auto rspdivview = LocalView<double, 2>(rspdiv.data(), make_shape(nspec2(), nfld));
+
+    // Pack gridpoints
+    {
+        PackStructuredColumns pack(rgpview);
+        int wind_components = 2;
+        pack(gpwind.functionspace(), gpwind, wind_components);
+    }
+
+    // Do transform
+    {
+        struct ::DirTrans_t transform = ::new_dirtrans(trans_.get());
+        transform.nvordiv             = int(nfld);
+        transform.rgp                 = rgp.data();
+        transform.rspvor              = rspvor.data();
+        transform.rspdiv              = rspdiv.data();
+
+        ATLAS_ASSERT(transform.rspvor);
+        ATLAS_ASSERT(transform.rspdiv);
+        TRANS_CHECK(::trans_dirtrans(&transform));
+    }
+
+    // Pack spectral fields
+    UnpackSpectral unpack_vor(rspvorview);
+    unpack_vor(spvor);
+    UnpackSpectral unpack_div(rspdivview);
+    unpack_div(spdiv);
+}
+
+// -----------------------------------------------------------------------------------------------
+
+void TransIFS::__dirtrans_wind2vordiv(const functionspace::NodeColumns& gp, const Field& gpwind, const Spectral& sp,
+                                      Field& spvor, Field& spdiv, const eckit::Configuration&) const {
+    assertCompatibleDistributions(gp, sp);
+
+    // Count total number of fields and do sanity checks
+    const size_t nfld = compute_nfld(spvor);
+    if (spdiv.shape(0) != spvor.shape(0)) {
+        throw_Exception("dirtrans: vorticity not compatible with divergence for 1st dimension.", Here());
+    }
+    if (spdiv.shape(1) != spvor.shape(1)) {
+        throw_Exception("dirtrans: vorticity not compatible with divergence for 2nd dimension.", Here());
+    }
+    const size_t nwindfld = compute_nfld(gpwind);
+    if (nwindfld != 2 * nfld && nwindfld != 3 * nfld) {
+        throw_Exception("dirtrans: wind field is not compatible with vorticity, divergence.", Here());
+    }
+
+    if (spdiv.shape(0) != nspec2()) {
+        std::stringstream msg;
+        msg << "dirtrans: Spectral vorticity and divergence have wrong dimension: "
+               "nspec2 "
+            << spdiv.shape(0) << " should be " << nspec2();
+        throw_Exception(msg.str(), Here());
+    }
+
+    if (spvor.size() == 0) {
+        throw_Exception("dirtrans: spectral vorticity field is empty.");
+    }
+    if (spdiv.size() == 0) {
+        throw_Exception("dirtrans: spectral divergence field is empty.");
+    }
+
+    // Arrays Trans expects
+    std::vector<double> rgp(2 * nfld * ngptot());
+    std::vector<double> rspvor(nspec2() * nfld);
+    std::vector<double> rspdiv(nspec2() * nfld);
+    auto rgpview    = LocalView<double, 2>(rgp.data(), make_shape(2 * nfld, ngptot()));
+    auto rspvorview = LocalView<double, 2>(rspvor.data(), make_shape(nspec2(), nfld));
+    auto rspdivview = LocalView<double, 2>(rspdiv.data(), make_shape(nspec2(), nfld));
+
+    // Pack gridpoints
+    {
+        PackNodeColumns pack(rgpview, gp);
+        int wind_components = 2;
+        pack(gpwind, wind_components);
+    }
+
+    // Do transform
+    {
+        struct ::DirTrans_t transform = ::new_dirtrans(trans_.get());
+        transform.nvordiv             = int(nfld);
+        transform.rgp                 = rgp.data();
+        transform.rspvor              = rspvor.data();
+        transform.rspdiv              = rspdiv.data();
+
+        ATLAS_ASSERT(transform.rspvor);
+        ATLAS_ASSERT(transform.rspdiv);
+        TRANS_CHECK(::trans_dirtrans(&transform));
+    }
+
+    // Pack spectral fields
+    UnpackSpectral unpack_vor(rspvorview);
+    unpack_vor(spvor);
+    UnpackSpectral unpack_div(rspdivview);
+    unpack_div(spdiv);
+}
+
+// --------------------------------------------------------------------------------------------
+
+void TransIFS::__invtrans(const functionspace::Spectral& sp, const Field& spfield,
+                          const functionspace::StructuredColumns& gp, Field& gpfield,
+                          const eckit::Configuration& config) const {
+    assertCompatibleDistributions(gp, sp);
+
+    ATLAS_ASSERT(gpfield.functionspace() == 0 || functionspace::StructuredColumns(gpfield.functionspace()));
+    ATLAS_ASSERT(spfield.functionspace() == 0 || functionspace::Spectral(spfield.functionspace()));
+    if (compute_nfld(gpfield) != compute_nfld(spfield)) {
+        throw_Exception("invtrans: different number of gridpoint fields than spectral fields", Here());
+    }
+    if ((int)gpfield.shape(0) < ngptot()) {
+        throw_Exception("invtrans: slowest moving index must be >= ngptot", Here());
+    }
+    const int nfld = compute_nfld(gpfield);
+
+    // Arrays Trans expects
+    std::vector<double> rgp(nfld * ngptot());
+    std::vector<double> rsp(nspec2() * nfld);
+    auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
+    auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
+
+    // Pack spectral fields
+    {
+        PackSpectral pack(rspview);
+        pack(spfield);
+    }
+
+    // Do transform
+    {
+        struct ::InvTrans_t transform = ::new_invtrans(trans_.get());
+        transform.nscalar             = nfld;
+        transform.rgp                 = rgp.data();
+        transform.rspscalar           = rsp.data();
+        TRANS_CHECK(::trans_invtrans(&transform));
+    }
+
+    // Unpack gridpoint fields
+    {
+        UnpackStructuredColumns unpack(rgpview);
+        unpack(gp, gpfield);
+    }
+}
+
+// --------------------------------------------------------------------------------------------
+
+void TransIFS::__invtrans(const Spectral& sp, const Field& spfield, const functionspace::NodeColumns& gp,
+                          Field& gpfield, const eckit::Configuration& config) const {
+    FieldSet spfields;
+    spfields.add(spfield);
+    FieldSet gpfields;
+    gpfields.add(gpfield);
+    __invtrans(sp, spfields, gp, gpfields, config);
+}
+
+// --------------------------------------------------------------------------------------------
+
+void TransIFS::__invtrans(const functionspace::Spectral& sp, const FieldSet& spfields,
+                          const functionspace::StructuredColumns& gp, FieldSet& gpfields,
+                          const eckit::Configuration& config) const {
+    assertCompatibleDistributions(gp, sp);
+
+    // Count total number of fields and do sanity checks
+    const int nfld = compute_nfld(gpfields);
+    for (idx_t jfld = 0; jfld < gpfields.size(); ++jfld) {
+        const Field& f = gpfields[jfld];
+        ATLAS_ASSERT(f.functionspace() == 0 || functionspace::StructuredColumns(f.functionspace()));
+    }
+
+    const int nb_spectral_fields = compute_nfld(spfields);
+
+    if (nfld != nb_spectral_fields) {
+        std::stringstream msg;
+        msg << "invtrans: different number of gridpoint fields than spectral fields"
+            << "[ " << nfld << " != " << nb_spectral_fields << " ]";
+        throw_Exception(msg.str(), Here());
+    }
+
+    // Arrays Trans expects
+    std::vector<double> rgp(nfld * ngptot());
+    std::vector<double> rsp(nspec2() * nfld);
+    auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
+    auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
+
+    // Pack spectral fields
+    {
+        PackSpectral pack(rspview);
+        for (idx_t jfld = 0; jfld < spfields.size(); ++jfld) {
+            pack(spfields[jfld]);
+        }
+    }
+
+    // Do transform
+    {
+        struct ::InvTrans_t transform = ::new_invtrans(trans_.get());
+        transform.nscalar             = nfld;
+        transform.rgp                 = rgp.data();
+        transform.rspscalar           = rsp.data();
+
+        TRANS_CHECK(::trans_invtrans(&transform));
+    }
+
+    // Unpack the gridpoint fields
+    {
+        UnpackStructuredColumns unpack(rgpview);
+        for (idx_t jfld = 0; jfld < gpfields.size(); ++jfld) {
+            unpack(gp, gpfields[jfld]);
+        }
+    }
+}
+
+// --------------------------------------------------------------------------------------------
+
+void TransIFS::__invtrans(const Spectral& sp, const FieldSet& spfields, const functionspace::NodeColumns& gp,
+                          FieldSet& gpfields, const eckit::Configuration& config) const {
+    assertCompatibleDistributions(gp, sp);
+
+
+    // Count total number of fields and do sanity checks
+    const int nfld               = compute_nfld(gpfields);
+    const int nb_spectral_fields = compute_nfld(spfields);
+
+    if (nfld != nb_spectral_fields) {
+        throw_Exception("invtrans: different number of gridpoint fields than spectral fields", Here());
+    }
+
+    // Arrays Trans expects
+    std::vector<double> rgp(nfld * ngptot());
+    std::vector<double> rsp(nspec2() * nfld);
+    auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
+    auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
+
+    // Pack spectral fields
+    {
+        PackSpectral pack(rspview);
+        for (idx_t jfld = 0; jfld < spfields.size(); ++jfld) {
+            pack(spfields[jfld]);
+        }
+    }
+
+    // Do transform
+    {
+        struct ::InvTrans_t transform = ::new_invtrans(trans_.get());
+        transform.nscalar             = nfld;
+        transform.rgp                 = rgp.data();
+        transform.rspscalar           = rsp.data();
+        TRANS_CHECK(::trans_invtrans(&transform));
+    }
+
+    // Unpack the gridpoint fields
+    {
+        UnpackNodeColumns unpack(rgpview, gp);
+        for (idx_t jfld = 0; jfld < gpfields.size(); ++jfld) {
+            unpack(gpfields[jfld]);
+        }
+    }
+}
+
+// --------------------------------------------------------------------------------------------
+
+void TransIFS::__invtrans_grad(const Spectral& sp, const Field& spfield, const functionspace::StructuredColumns& gp,
+                               Field& gradfield, const eckit::Configuration& config) const {
+    FieldSet spfields;
+    spfields.add(spfield);
+    FieldSet gradfields;
+    gradfields.add(gradfield);
+    __invtrans_grad(sp, spfields, gp, gradfields, config);
+}
+
+// --------------------------------------------------------------------------------------------
+
 void TransIFS::__invtrans_grad(const Spectral& sp, const Field& spfield, const functionspace::NodeColumns& gp,
                                Field& gradfield, const eckit::Configuration& config) const {
     FieldSet spfields;
@@ -1250,6 +1653,79 @@ void TransIFS::__invtrans_grad(const Spectral& sp, const Field& spfield, const f
     gradfields.add(gradfield);
     __invtrans_grad(sp, spfields, gp, gradfields, config);
 }
+
+// --------------------------------------------------------------------------------------------
+
+void TransIFS::__invtrans_grad(const Spectral& sp, const FieldSet& spfields, const functionspace::StructuredColumns& gp,
+                               FieldSet& gradfields, const eckit::Configuration& config) const {
+    assertCompatibleDistributions(gp, sp);
+
+    // Count total number of fields and do sanity checks
+    const int nb_gridpoint_field = compute_nfld(gradfields);
+    const int nfld               = compute_nfld(spfields);
+
+    if (nb_gridpoint_field != 2 * nfld) {  // factor 2 because N-S and E-W derivatives
+        throw_Exception(
+            "invtrans_grad: different number of gridpoint "
+            "fields than spectral fields",
+            Here());
+    }
+
+    // Arrays Trans expects
+    // Allocate space for
+    std::vector<double> rgp(3 * nfld * ngptot());  // (scalars) + (NS ders) + (EW ders)
+    std::vector<double> rsp(nspec2() * nfld);
+    auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(3 * nfld, ngptot()));
+    auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
+
+
+    // Pack spectral fields
+    {
+        PackSpectral pack(rspview);
+        for (idx_t jfld = 0; jfld < spfields.size(); ++jfld) {
+            pack(spfields[jfld]);
+        }
+    }
+
+    // Do transform
+    {
+        struct ::InvTrans_t transform = ::new_invtrans(trans_.get());
+        transform.nscalar             = nfld;
+        transform.rgp                 = rgp.data();
+        transform.rspscalar           = rsp.data();
+        transform.lscalarders         = true;
+
+        TRANS_CHECK(::trans_invtrans(&transform));
+    }
+
+    // Unpack the gridpoint fields
+    {
+        int f = nfld;  // skip to where derivatives start
+        for (idx_t dim = 0; dim < 2; ++dim) {
+            for (idx_t jfld = 0; jfld < gradfields.size(); ++jfld) {
+                const idx_t nb_nodes = StructuredColumns(gradfields[jfld].functionspace()).sizeOwned();
+                const idx_t nlev     = gradfields[jfld].levels();
+                if (nlev) {
+                    auto field = make_view<double, 3>(gradfields[jfld]);
+                    for (idx_t jlev = 0; jlev < nlev; ++jlev) {
+                        for (idx_t jnode = 0; jnode < nb_nodes; ++jnode) {
+                            field(jnode, jlev, 1 - dim) = rgpview(f, jnode);
+                        }
+                    }
+                }
+                else {
+                    auto field = make_view<double, 2>(gradfields[jfld]);
+                    for (idx_t jnode = 0; jnode < nb_nodes; ++jnode) {
+                        field(jnode, 1 - dim) = rgpview(f, jnode);
+                    }
+                }
+                ++f;
+            }
+        }
+    }
+}
+
+// --------------------------------------------------------------------------------------------
 
 void TransIFS::__invtrans_grad(const Spectral& sp, const FieldSet& spfields, const functionspace::NodeColumns& gp,
                                FieldSet& gradfields, const eckit::Configuration& config) const {
@@ -1331,442 +1807,40 @@ void TransIFS::__invtrans_grad(const Spectral& sp, const FieldSet& spfields, con
     }
 }
 
-//---------------------------------------------------------------------------------------------
-
-void TransIFS::__invtrans_grad_adj(const Spectral& sp, Field& spfield, const functionspace::NodeColumns& gp,
-                                   const Field& gradfield, const eckit::Configuration& config) const {
-    FieldSet spfields;
-    spfields.add(spfield);
-    FieldSet gradfields;
-    gradfields.add(gradfield);
-    __invtrans_grad_adj(sp, spfields, gp, gradfields, config);
-}
-
-void TransIFS::__invtrans_grad_adj(const Spectral& sp, FieldSet& spfields, const functionspace::NodeColumns& gp,
-                                   const FieldSet& gradfields, const eckit::Configuration& config) const {
-#if ATLAS_HAVE_ECTRANS || defined(TRANS_HAVE_INVTRANS_ADJ)
+// --------------------------------------------------------------------------------------------
+void TransIFS::__invtrans_vordiv2wind(const Spectral& sp, const Field& spvor, const Field& spdiv,
+                                      const functionspace::StructuredColumns& gp, Field& gpwind,
+                                      const eckit::Configuration&) const {
     assertCompatibleDistributions(gp, sp);
 
     // Count total number of fields and do sanity checks
-    const idx_t nfld = compute_nfld(gradfields);
-    for (idx_t jfld = 0; jfld < gradfields.size(); ++jfld) {
-        const Field& f = gradfields[jfld];
-        ATLAS_ASSERT(f.functionspace() == 0 || functionspace::StructuredColumns(f.functionspace()));
-    }
-
-    const int trans_sp_nfld = compute_nfld(spfields);
-
-    if (nfld != trans_sp_nfld) {
-        throw_Exception("dirtrans: different number of gridpoint fields than spectral fields", Here());
-    }
-    // Arrays Trans expects
-    std::vector<double> rgp(nfld * ngptot());
-    std::vector<double> rsp(nspec2() * nfld);
-    auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
-    auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-
-    // Pack gridpoints
-    {
-        PackNodeColumns pack(rgpview, gp);
-        for (idx_t jfld = 0; jfld < gradfields.size(); ++jfld) {
-            pack(gradfields[jfld]);
-        }
-    }
-
-    // Do transform
-    {
-        struct ::InvTransAdj_t transform = ::new_invtrans_adj(trans_.get());
-        transform.nscalar                = nfld;
-        transform.rgp                    = rgp.data();
-        transform.rspscalar              = rsp.data();
-        transform.lscalarders            = true;
-
-        TRANS_CHECK(::trans_invtrans_adj(&transform));
-    }
-
-    // Unpack the spectral fields
-    {
-        UnpackSpectral unpack(rspview);
-        for (idx_t jfld = 0; jfld < spfields.size(); ++jfld) {
-            unpack(spfields[jfld]);
-        }
-    }
-#else
-    ATLAS_NOTIMPLEMENTED;
-#endif
-}
-
-// --------------------------------------------------------------------------------------------
-
-void TransIFS::__invtrans(const Spectral& sp, const Field& spfield, const functionspace::NodeColumns& gp,
-                          Field& gpfield, const eckit::Configuration& config) const {
-    FieldSet spfields;
-    spfields.add(spfield);
-    FieldSet gpfields;
-    gpfields.add(gpfield);
-    __invtrans(sp, spfields, gp, gpfields, config);
-}
-
-// --------------------------------------------------------------------------------------------
-
-void TransIFS::__invtrans_adj(const Spectral& sp, Field& spfield, const functionspace::NodeColumns& gp,
-                              const Field& gpfield, const eckit::Configuration& config) const {
-    FieldSet spfields;
-    spfields.add(spfield);
-    FieldSet gpfields;
-    gpfields.add(gpfield);
-    __invtrans_adj(sp, spfields, gp, gpfields, config);
-}
-
-// --------------------------------------------------------------------------------------------
-
-void TransIFS::__invtrans(const Spectral& sp, const FieldSet& spfields, const functionspace::NodeColumns& gp,
-                          FieldSet& gpfields, const eckit::Configuration& config) const {
-    assertCompatibleDistributions(gp, sp);
-
-
-    // Count total number of fields and do sanity checks
-    const int nfld               = compute_nfld(gpfields);
-    const int nb_spectral_fields = compute_nfld(spfields);
-
-    if (nfld != nb_spectral_fields) {
-        throw_Exception("invtrans: different number of gridpoint fields than spectral fields", Here());
-    }
-
-    // Arrays Trans expects
-    std::vector<double> rgp(nfld * ngptot());
-    std::vector<double> rsp(nspec2() * nfld);
-    auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
-    auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-
-    // Pack spectral fields
-    {
-        PackSpectral pack(rspview);
-        for (idx_t jfld = 0; jfld < spfields.size(); ++jfld) {
-            pack(spfields[jfld]);
-        }
-    }
-
-    // Do transform
-    {
-        struct ::InvTrans_t transform = ::new_invtrans(trans_.get());
-        transform.nscalar             = nfld;
-        transform.rgp                 = rgp.data();
-        transform.rspscalar           = rsp.data();
-        TRANS_CHECK(::trans_invtrans(&transform));
-    }
-
-    // Unpack the gridpoint fields
-    {
-        UnpackNodeColumns unpack(rgpview, gp);
-        for (idx_t jfld = 0; jfld < gpfields.size(); ++jfld) {
-            unpack(gpfields[jfld]);
-        }
-    }
-}
-
-// --------------------------------------------------------------------------------------------
-
-void TransIFS::__invtrans_adj(const Spectral& sp, FieldSet& spfields, const functionspace::NodeColumns& gp,
-                              const FieldSet& gpfields, const eckit::Configuration& config) const {
-#if ATLAS_HAVE_ECTRANS || defined(TRANS_HAVE_INVTRANS_ADJ)
-
-    assertCompatibleDistributions(gp, sp);
-
-    // Count total number of fields and do sanity checks
-    const idx_t nfld = compute_nfld(gpfields);
-    for (idx_t jfld = 0; jfld < gpfields.size(); ++jfld) {
-        const Field& f = gpfields[jfld];
-        ATLAS_ASSERT(f.functionspace() == 0 || functionspace::StructuredColumns(f.functionspace()));
-    }
-
-    const int trans_sp_nfld = compute_nfld(spfields);
-
-    if (nfld != trans_sp_nfld) {
-        throw_Exception("invtrans_adj: different number of gridpoint fields than spectral fields", Here());
-    }
-    // Arrays Trans expects
-    std::vector<double> rgp(nfld * ngptot());
-    std::vector<double> rsp(nspec2() * nfld);
-    auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
-    auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-
-    // Pack gridpoints
-    {
-        PackNodeColumns pack(rgpview, gp);
-        for (idx_t jfld = 0; jfld < gpfields.size(); ++jfld) {
-            pack(gpfields[jfld]);
-        }
-    }
-
-    // Do transform
-    {
-        struct ::InvTransAdj_t transform = ::new_invtrans_adj(trans_.get());
-        transform.nscalar                = int(nfld);
-        transform.rgp                    = rgp.data();
-        transform.rspscalar              = rsp.data();
-
-        TRANS_CHECK(::trans_invtrans_adj(&transform));
-    }
-
-    // Unpack the spectral fields
-    {
-        UnpackSpectral unpack(rspview);
-        for (idx_t jfld = 0; jfld < spfields.size(); ++jfld) {
-            unpack(spfields[jfld]);
-        }
-    }
-#else
-    ATLAS_NOTIMPLEMENTED;
-#endif
-}
-
-
-// --------------------------------------------------------------------------------------------
-
-void TransIFS::__invtrans(const functionspace::Spectral& sp, const Field& spfield,
-                          const functionspace::StructuredColumns& gp, Field& gpfield,
-                          const eckit::Configuration& config) const {
-    assertCompatibleDistributions(gp, sp);
-
-    ATLAS_ASSERT(gpfield.functionspace() == 0 || functionspace::StructuredColumns(gpfield.functionspace()));
-    ATLAS_ASSERT(spfield.functionspace() == 0 || functionspace::Spectral(spfield.functionspace()));
-    if (compute_nfld(gpfield) != compute_nfld(spfield)) {
-        throw_Exception("dirtrans: different number of gridpoint fields than spectral fields", Here());
-    }
-    if ((int)gpfield.shape(0) != ngptot()) {
-        throw_Exception("dirtrans: slowest moving index must be ngptot", Here());
-    }
-    const int nfld = compute_nfld(gpfield);
-
-    // Arrays Trans expects
-    std::vector<double> rgp(nfld * ngptot());
-    std::vector<double> rsp(nspec2() * nfld);
-    auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
-    auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-
-    // Pack spectral fields
-    {
-        PackSpectral pack(rspview);
-        pack(spfield);
-    }
-
-    // Do transform
-    {
-        struct ::InvTrans_t transform = ::new_invtrans(trans_.get());
-        transform.nscalar             = nfld;
-        transform.rgp                 = rgp.data();
-        transform.rspscalar           = rsp.data();
-        TRANS_CHECK(::trans_invtrans(&transform));
-    }
-
-    // Unpack gridpoint fields
-    {
-        UnpackStructuredColumns unpack(rgpview);
-        unpack(gp, gpfield);
-    }
-}
-
-
-// --------------------------------------------------------------------------------------------
-
-void TransIFS::__invtrans_adj(const functionspace::Spectral& sp, Field& spfield,
-                              const functionspace::StructuredColumns& gp, const Field& gpfield,
-                              const eckit::Configuration& config) const {
-#if ATLAS_HAVE_ECTRANS || defined(TRANS_HAVE_INVTRANS_ADJ)
-
-    ATLAS_ASSERT(gpfield.functionspace() == 0 || functionspace::StructuredColumns(gpfield.functionspace()));
-    ATLAS_ASSERT(spfield.functionspace() == 0 || functionspace::Spectral(spfield.functionspace()));
-
-    assertCompatibleDistributions(gp, sp);
-
-    if (compute_nfld(gpfield) != compute_nfld(spfield)) {
-        throw_Exception("dirtrans: different number of gridpoint fields than spectral fields", Here());
-    }
-    if ((int)gpfield.shape(0) != ngptot()) {
-        throw_Exception("dirtrans: slowest moving index must be ngptot", Here());
-    }
-    const int nfld = compute_nfld(gpfield);
-
-    // Arrays Trans expects
-    std::vector<double> rgp(nfld * ngptot());
-    std::vector<double> rsp(nspec2() * nfld);
-    auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
-    auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-
-    // Pack gridpoints
-    {
-        PackStructuredColumns pack(rgpview);
-        pack(gp, gpfield);
-    }
-
-    // Do transform
-    {
-        struct ::InvTransAdj_t transform = ::new_invtrans_adj(trans_.get());
-        transform.nscalar                = nfld;
-        transform.rgp                    = rgp.data();
-        transform.rspscalar              = rsp.data();
-        TRANS_CHECK(::trans_invtrans_adj(&transform));
-    }
-
-    // Unpack spectral
-    {
-        UnpackSpectral unpack(rspview);
-        unpack(spfield);
-    }
-
-#else
-    ATLAS_NOTIMPLEMENTED;
-#endif
-}
-
-// --------------------------------------------------------------------------------------------
-
-void TransIFS::__invtrans(const functionspace::Spectral& sp, const FieldSet& spfields,
-                          const functionspace::StructuredColumns& gp, FieldSet& gpfields,
-                          const eckit::Configuration& config) const {
-    assertCompatibleDistributions(gp, sp);
-
-    // Count total number of fields and do sanity checks
-    const int nfld = compute_nfld(gpfields);
-    for (idx_t jfld = 0; jfld < gpfields.size(); ++jfld) {
-        const Field& f = gpfields[jfld];
-        ATLAS_ASSERT(f.functionspace() == 0 || functionspace::StructuredColumns(f.functionspace()));
-    }
-
-    const int nb_spectral_fields = compute_nfld(spfields);
-
-    if (nfld != nb_spectral_fields) {
-        std::stringstream msg;
-        msg << "invtrans: different number of gridpoint fields than spectral fields"
-            << "[ " << nfld << " != " << nb_spectral_fields << " ]";
-        throw_Exception(msg.str(), Here());
-    }
-
-    // Arrays Trans expects
-    std::vector<double> rgp(nfld * ngptot());
-    std::vector<double> rsp(nspec2() * nfld);
-    auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
-    auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-
-    // Pack spectral fields
-    {
-        PackSpectral pack(rspview);
-        for (idx_t jfld = 0; jfld < spfields.size(); ++jfld) {
-            pack(spfields[jfld]);
-        }
-    }
-
-    // Do transform
-    {
-        struct ::InvTrans_t transform = ::new_invtrans(trans_.get());
-        transform.nscalar             = nfld;
-        transform.rgp                 = rgp.data();
-        transform.rspscalar           = rsp.data();
-
-        TRANS_CHECK(::trans_invtrans(&transform));
-    }
-
-    // Unpack the gridpoint fields
-    {
-        UnpackStructuredColumns unpack(rgpview);
-        for (idx_t jfld = 0; jfld < gpfields.size(); ++jfld) {
-            unpack(gp, gpfields[jfld]);
-        }
-    }
-}
-
-
-void TransIFS::__invtrans_adj(const functionspace::Spectral& sp, FieldSet& spfields,
-                              const functionspace::StructuredColumns& gp, const FieldSet& gpfields,
-                              const eckit::Configuration& config) const {
-#if ATLAS_HAVE_ECTRANS || defined(TRANS_HAVE_INVTRANS_ADJ)
-
-    assertCompatibleDistributions(gp, sp);
-
-    // Count total number of fields and do sanity checks
-    const idx_t nfld = compute_nfld(gpfields);
-    for (idx_t jfld = 0; jfld < gpfields.size(); ++jfld) {
-        const Field& f = gpfields[jfld];
-        ATLAS_ASSERT(f.functionspace() == 0 || functionspace::StructuredColumns(f.functionspace()));
-    }
-
-    const int trans_sp_nfld = compute_nfld(spfields);
-
-    if (nfld != trans_sp_nfld) {
-        throw_Exception("invtrans_adj: different number of gridpoint fields than spectral fields", Here());
-    }
-
-    // Arrays Trans expects
-    std::vector<double> rgp(nfld * ngptot());
-    std::vector<double> rsp(nspec2() * nfld);
-    auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
-    auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-
-    // Pack gridpoints
-    {
-        PackStructuredColumns pack(rgpview);
-        for (idx_t jfld = 0; jfld < gpfields.size(); ++jfld) {
-            pack(gp, gpfields[jfld]);
-        }
-    }
-
-    // Do transform
-    {
-        struct ::InvTransAdj_t transform = ::new_invtrans_adj(trans_.get());
-        transform.nscalar                = int(nfld);
-        transform.rgp                    = rgp.data();
-        transform.rspscalar              = rsp.data();
-
-        TRANS_CHECK(::trans_invtrans_adj(&transform));
-    }
-
-    // Unpack the spectral fields
-    {
-        UnpackSpectral unpack(rspview);
-        for (idx_t jfld = 0; jfld < spfields.size(); ++jfld) {
-            unpack(spfields[jfld]);
-        }
-    }
-
-#else
-    ATLAS_NOTIMPLEMENTED;
-#endif
-}
-
-
-// -----------------------------------------------------------------------------------------------
-
-void TransIFS::__dirtrans_wind2vordiv(const functionspace::NodeColumns& gp, const Field& gpwind, const Spectral& sp,
-                                      Field& spvor, Field& spdiv, const eckit::Configuration&) const {
-    assertCompatibleDistributions(gp, sp);
-
-    // Count total number of fields and do sanity checks
-    const size_t nfld = compute_nfld(spvor);
+    const int nfld = compute_nfld(spvor);
     if (spdiv.shape(0) != spvor.shape(0)) {
         throw_Exception("invtrans: vorticity not compatible with divergence.", Here());
     }
     if (spdiv.shape(1) != spvor.shape(1)) {
         throw_Exception("invtrans: vorticity not compatible with divergence.", Here());
     }
-    const size_t nwindfld = compute_nfld(gpwind);
+    const int nwindfld = compute_nfld(gpwind);
     if (nwindfld != 2 * nfld && nwindfld != 3 * nfld) {
-        throw_Exception("dirtrans: wind field is not compatible with vorticity, divergence.", Here());
+        throw_Exception("invtrans: wind field is not compatible with vorticity, divergence.", Here());
     }
 
     if (spdiv.shape(0) != nspec2()) {
         std::stringstream msg;
-        msg << "dirtrans: Spectral vorticity and divergence have wrong dimension: "
+        msg << "invtrans: Spectral vorticity and divergence have wrong dimension: "
                "nspec2 "
             << spdiv.shape(0) << " should be " << nspec2();
         throw_Exception(msg.str(), Here());
     }
 
+    ATLAS_ASSERT(spvor.rank() == 2);
+    ATLAS_ASSERT(spdiv.rank() == 2);
     if (spvor.size() == 0) {
-        throw_Exception("dirtrans: spectral vorticity field is empty.");
+        throw_Exception("invtrans: spectral vorticity field is empty.");
     }
     if (spdiv.size() == 0) {
-        throw_Exception("dirtrans: spectral divergence field is empty.");
+        throw_Exception("invtrans: spectral divergence field is empty.");
     }
 
     // Arrays Trans expects
@@ -1777,32 +1851,34 @@ void TransIFS::__dirtrans_wind2vordiv(const functionspace::NodeColumns& gp, cons
     auto rspvorview = LocalView<double, 2>(rspvor.data(), make_shape(nspec2(), nfld));
     auto rspdivview = LocalView<double, 2>(rspdiv.data(), make_shape(nspec2(), nfld));
 
-    // Pack gridpoints
-    {
-        PackNodeColumns pack(rgpview, gp);
-        int wind_components = 2;
-        pack(gpwind, wind_components);
-    }
+    // Pack spectral fields
+    PackSpectral pack_vor(rspvorview);
+    pack_vor(spvor);
+    PackSpectral pack_div(rspdivview);
+    pack_div(spdiv);
 
     // Do transform
     {
-        struct ::DirTrans_t transform = ::new_dirtrans(trans_.get());
-        transform.nvordiv             = int(nfld);
+        struct ::InvTrans_t transform = ::new_invtrans(trans_.get());
+        transform.nvordiv             = nfld;
         transform.rgp                 = rgp.data();
         transform.rspvor              = rspvor.data();
         transform.rspdiv              = rspdiv.data();
 
         ATLAS_ASSERT(transform.rspvor);
         ATLAS_ASSERT(transform.rspdiv);
-        TRANS_CHECK(::trans_dirtrans(&transform));
+        TRANS_CHECK(::trans_invtrans(&transform));
     }
 
-    // Pack spectral fields
-    UnpackSpectral unpack_vor(rspvorview);
-    unpack_vor(spvor);
-    UnpackSpectral unpack_div(rspdivview);
-    unpack_div(spdiv);
+    // Unpack the gridpoint fields
+    {
+        UnpackStructuredColumns unpack(rgpview);
+        int wind_components = 2;
+        unpack(gp, gpwind, wind_components);
+    }
 }
+
+//---------------------------------------------------------------------------------------------
 
 void TransIFS::__invtrans_vordiv2wind(const Spectral& sp, const Field& spvor, const Field& spdiv,
                                       const functionspace::NodeColumns& gp, Field& gpwind,
@@ -1872,6 +1948,394 @@ void TransIFS::__invtrans_vordiv2wind(const Spectral& sp, const Field& spvor, co
         int wind_components = 2;
         unpack(gpwind, wind_components);
     }
+}
+
+// --------------------------------------------------------------------------------------------
+
+void TransIFS::__invtrans_adj(const functionspace::Spectral& sp, Field& spfield,
+                              const functionspace::StructuredColumns& gp, const Field& gpfield,
+                              const eckit::Configuration& config) const {
+#if ATLAS_HAVE_ECTRANS || defined(TRANS_HAVE_INVTRANS_ADJ)
+
+    ATLAS_ASSERT(gpfield.functionspace() == 0 || functionspace::StructuredColumns(gpfield.functionspace()));
+    ATLAS_ASSERT(spfield.functionspace() == 0 || functionspace::Spectral(spfield.functionspace()));
+
+    assertCompatibleDistributions(gp, sp);
+
+    if (compute_nfld(gpfield) != compute_nfld(spfield)) {
+        throw_Exception("dirtrans: different number of gridpoint fields than spectral fields", Here());
+    }
+    if ((int)gpfield.shape(0) < ngptot()) {
+        throw_Exception("dirtrans: slowest moving index must be >= ngptot", Here());
+    }
+    const int nfld = compute_nfld(gpfield);
+
+    // Arrays Trans expects
+    std::vector<double> rgp(nfld * ngptot());
+    std::vector<double> rsp(nspec2() * nfld);
+    auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
+    auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
+
+    // Pack gridpoints
+    {
+        PackStructuredColumns pack(rgpview);
+        pack(gp, gpfield);
+    }
+
+    // Do transform
+    {
+        struct ::InvTransAdj_t transform = ::new_invtrans_adj(trans_.get());
+        transform.nscalar                = nfld;
+        transform.rgp                    = rgp.data();
+        transform.rspscalar              = rsp.data();
+        TRANS_CHECK(::trans_invtrans_adj(&transform));
+    }
+
+    // Unpack spectral
+    {
+        UnpackSpectral unpack(rspview);
+        unpack(spfield);
+    }
+
+#else
+    ATLAS_NOTIMPLEMENTED;
+#endif
+}
+
+// --------------------------------------------------------------------------------------------
+
+void TransIFS::__invtrans_adj(const Spectral& sp, Field& spfield, const functionspace::NodeColumns& gp,
+                              const Field& gpfield, const eckit::Configuration& config) const {
+    FieldSet spfields;
+    spfields.add(spfield);
+    FieldSet gpfields;
+    gpfields.add(gpfield);
+    __invtrans_adj(sp, spfields, gp, gpfields, config);
+}
+
+// --------------------------------------------------------------------------------------------
+
+void TransIFS::__invtrans_adj(const functionspace::Spectral& sp, FieldSet& spfields,
+                              const functionspace::StructuredColumns& gp, const FieldSet& gpfields,
+                              const eckit::Configuration& config) const {
+#if ATLAS_HAVE_ECTRANS || defined(TRANS_HAVE_INVTRANS_ADJ)
+
+    assertCompatibleDistributions(gp, sp);
+
+    // Count total number of fields and do sanity checks
+    const idx_t nfld = compute_nfld(gpfields);
+    for (idx_t jfld = 0; jfld < gpfields.size(); ++jfld) {
+        const Field& f = gpfields[jfld];
+        ATLAS_ASSERT(f.functionspace() == 0 || functionspace::StructuredColumns(f.functionspace()));
+    }
+
+    const int trans_sp_nfld = compute_nfld(spfields);
+
+    if (nfld != trans_sp_nfld) {
+        throw_Exception("invtrans_adj: different number of gridpoint fields than spectral fields", Here());
+    }
+
+    // Arrays Trans expects
+    std::vector<double> rgp(nfld * ngptot());
+    std::vector<double> rsp(nspec2() * nfld);
+    auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
+    auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
+
+    // Pack gridpoints
+    {
+        PackStructuredColumns pack(rgpview);
+        for (idx_t jfld = 0; jfld < gpfields.size(); ++jfld) {
+            pack(gp, gpfields[jfld]);
+        }
+    }
+
+    // Do transform
+    {
+        struct ::InvTransAdj_t transform = ::new_invtrans_adj(trans_.get());
+        transform.nscalar                = int(nfld);
+        transform.rgp                    = rgp.data();
+        transform.rspscalar              = rsp.data();
+
+        TRANS_CHECK(::trans_invtrans_adj(&transform));
+    }
+
+    // Unpack the spectral fields
+    {
+        UnpackSpectral unpack(rspview);
+        for (idx_t jfld = 0; jfld < spfields.size(); ++jfld) {
+            unpack(spfields[jfld]);
+        }
+    }
+
+#else
+    ATLAS_NOTIMPLEMENTED;
+#endif
+}
+
+// --------------------------------------------------------------------------------------------
+
+void TransIFS::__invtrans_adj(const Spectral& sp, FieldSet& spfields, const functionspace::NodeColumns& gp,
+                              const FieldSet& gpfields, const eckit::Configuration& config) const {
+#if ATLAS_HAVE_ECTRANS || defined(TRANS_HAVE_INVTRANS_ADJ)
+
+    assertCompatibleDistributions(gp, sp);
+
+    // Count total number of fields and do sanity checks
+    const idx_t nfld = compute_nfld(gpfields);
+    for (idx_t jfld = 0; jfld < gpfields.size(); ++jfld) {
+        const Field& f = gpfields[jfld];
+        ATLAS_ASSERT(f.functionspace() == 0 || functionspace::StructuredColumns(f.functionspace()));
+    }
+
+    const int trans_sp_nfld = compute_nfld(spfields);
+
+    if (nfld != trans_sp_nfld) {
+        throw_Exception("invtrans_adj: different number of gridpoint fields than spectral fields", Here());
+    }
+    // Arrays Trans expects
+    std::vector<double> rgp(nfld * ngptot());
+    std::vector<double> rsp(nspec2() * nfld);
+    auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
+    auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
+
+    // Pack gridpoints
+    {
+        PackNodeColumns pack(rgpview, gp);
+        for (idx_t jfld = 0; jfld < gpfields.size(); ++jfld) {
+            pack(gpfields[jfld]);
+        }
+    }
+
+    // Do transform
+    {
+        struct ::InvTransAdj_t transform = ::new_invtrans_adj(trans_.get());
+        transform.nscalar                = int(nfld);
+        transform.rgp                    = rgp.data();
+        transform.rspscalar              = rsp.data();
+
+        TRANS_CHECK(::trans_invtrans_adj(&transform));
+    }
+
+    // Unpack the spectral fields
+    {
+        UnpackSpectral unpack(rspview);
+        for (idx_t jfld = 0; jfld < spfields.size(); ++jfld) {
+            unpack(spfields[jfld]);
+        }
+    }
+#else
+    ATLAS_NOTIMPLEMENTED;
+#endif
+}
+
+//---------------------------------------------------------------------------------------------
+
+void TransIFS::__invtrans_grad_adj(const Spectral& sp, Field& spfield, const functionspace::StructuredColumns& gp,
+                                   const Field& gradfield, const eckit::Configuration& config) const {
+    FieldSet spfields;
+    spfields.add(spfield);
+    FieldSet gradfields;
+    gradfields.add(gradfield);
+    __invtrans_grad_adj(sp, spfields, gp, gradfields, config);
+}
+
+//---------------------------------------------------------------------------------------------
+
+void TransIFS::__invtrans_grad_adj(const Spectral& sp, Field& spfield, const functionspace::NodeColumns& gp,
+                                   const Field& gradfield, const eckit::Configuration& config) const {
+    FieldSet spfields;
+    spfields.add(spfield);
+    FieldSet gradfields;
+    gradfields.add(gradfield);
+    __invtrans_grad_adj(sp, spfields, gp, gradfields, config);
+}
+
+//---------------------------------------------------------------------------------------------
+
+void TransIFS::__invtrans_grad_adj(const Spectral& sp, FieldSet& spfields, const functionspace::StructuredColumns& gp,
+                                   const FieldSet& gradfields, const eckit::Configuration& config) const {
+#if ATLAS_HAVE_ECTRANS || defined(TRANS_HAVE_INVTRANS_ADJ)
+    assertCompatibleDistributions(gp, sp);
+
+    // Count total number of fields and do sanity checks
+    const idx_t nfld = compute_nfld(gradfields);
+    for (idx_t jfld = 0; jfld < gradfields.size(); ++jfld) {
+        const Field& f = gradfields[jfld];
+        ATLAS_ASSERT(f.functionspace() == 0 || functionspace::StructuredColumns(f.functionspace()));
+    }
+
+    const int trans_sp_nfld = compute_nfld(spfields);
+
+    if (nfld != trans_sp_nfld) {
+        throw_Exception("__invtrans_grad_adj: different number of gridpoint fields than spectral fields", Here());
+    }
+    // Arrays Trans expects
+    std::vector<double> rgp(nfld * ngptot());
+    std::vector<double> rsp(nspec2() * nfld);
+    auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
+    auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
+
+    // Pack gridpoints
+    {
+        PackStructuredColumns pack(rgpview);
+        for (idx_t jfld = 0; jfld < gradfields.size(); ++jfld) {
+            pack(gp, gradfields[jfld]);
+        }
+    }
+
+    // Do transform
+    {
+        struct ::InvTransAdj_t transform = ::new_invtrans_adj(trans_.get());
+        transform.nscalar                = nfld;
+        transform.rgp                    = rgp.data();
+        transform.rspscalar              = rsp.data();
+        transform.lscalarders            = true;
+
+        TRANS_CHECK(::trans_invtrans_adj(&transform));
+    }
+
+    // Unpack the spectral fields
+    {
+        UnpackSpectral unpack(rspview);
+        for (idx_t jfld = 0; jfld < spfields.size(); ++jfld) {
+            unpack(spfields[jfld]);
+        }
+    }
+#else
+    ATLAS_NOTIMPLEMENTED;
+#endif
+}
+
+//---------------------------------------------------------------------------------------------
+
+void TransIFS::__invtrans_grad_adj(const Spectral& sp, FieldSet& spfields, const functionspace::NodeColumns& gp,
+                                   const FieldSet& gradfields, const eckit::Configuration& config) const {
+#if ATLAS_HAVE_ECTRANS || defined(TRANS_HAVE_INVTRANS_ADJ)
+    assertCompatibleDistributions(gp, sp);
+
+    // Count total number of fields and do sanity checks
+    const idx_t nfld = compute_nfld(gradfields);
+    for (idx_t jfld = 0; jfld < gradfields.size(); ++jfld) {
+        const Field& f = gradfields[jfld];
+        ATLAS_ASSERT(f.functionspace() == 0 || functionspace::StructuredColumns(f.functionspace()));
+    }
+
+    const int trans_sp_nfld = compute_nfld(spfields);
+
+    if (nfld != trans_sp_nfld) {
+        throw_Exception("dirtrans: different number of gridpoint fields than spectral fields", Here());
+    }
+    // Arrays Trans expects
+    std::vector<double> rgp(nfld * ngptot());
+    std::vector<double> rsp(nspec2() * nfld);
+    auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
+    auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
+
+    // Pack gridpoints
+    {
+        PackNodeColumns pack(rgpview, gp);
+        for (idx_t jfld = 0; jfld < gradfields.size(); ++jfld) {
+            pack(gradfields[jfld]);
+        }
+    }
+
+    // Do transform
+    {
+        struct ::InvTransAdj_t transform = ::new_invtrans_adj(trans_.get());
+        transform.nscalar                = nfld;
+        transform.rgp                    = rgp.data();
+        transform.rspscalar              = rsp.data();
+        transform.lscalarders            = true;
+
+        TRANS_CHECK(::trans_invtrans_adj(&transform));
+    }
+
+    // Unpack the spectral fields
+    {
+        UnpackSpectral unpack(rspview);
+        for (idx_t jfld = 0; jfld < spfields.size(); ++jfld) {
+            unpack(spfields[jfld]);
+        }
+    }
+#else
+    ATLAS_NOTIMPLEMENTED;
+#endif
+}
+
+// --------------------------------------------------------------------------------------------
+
+void TransIFS::__invtrans_vordiv2wind_adj(const Spectral& sp, Field& spvor, Field& spdiv,
+                                          const functionspace::StructuredColumns& gp, const Field& gpwind,
+                                          const eckit::Configuration&) const {
+#if ATLAS_HAVE_ECTRANS || defined(TRANS_HAVE_INVTRANS_ADJ)
+
+    assertCompatibleDistributions(gp, sp);
+
+    // Count total number of fields and do sanity checks
+    const size_t nfld = compute_nfld(spvor);
+    if (spdiv.shape(0) != spvor.shape(0)) {
+        throw_Exception("invtrans_vordiv2wind_adj: vorticity not compatible with divergence.", Here());
+    }
+    if (spdiv.shape(1) != spvor.shape(1)) {
+        throw_Exception("invtrans_vordiv2wind_adj: vorticity not compatible with divergence.", Here());
+    }
+    const size_t nwindfld = compute_nfld(gpwind);
+    if (nwindfld != 2 * nfld && nwindfld != 3 * nfld) {
+        throw_Exception("dirtrans: wind field is not compatible with vorticity, divergence.", Here());
+    }
+
+    if (spdiv.shape(0) != nspec2()) {
+        std::stringstream msg;
+        msg << "invtrans_vordiv2wind_adj: Spectral vorticity and divergence have wrong dimension: "
+               "nspec2 "
+            << spdiv.shape(0) << " should be " << nspec2();
+        throw_Exception(msg.str(), Here());
+    }
+
+    if (spvor.size() == 0) {
+        throw_Exception("invtrans_vordiv2wind_adj: spectral vorticity field is empty.");
+    }
+    if (spdiv.size() == 0) {
+        throw_Exception("invtrans_vordiv2wind_adj: spectral divergence field is empty.");
+    }
+
+    // Arrays Trans expects
+    std::vector<double> rgp(2 * nfld * ngptot());
+    std::vector<double> rspvor(nspec2() * nfld);
+    std::vector<double> rspdiv(nspec2() * nfld);
+    auto rgpview    = LocalView<double, 2>(rgp.data(), make_shape(2 * nfld, ngptot()));
+    auto rspvorview = LocalView<double, 2>(rspvor.data(), make_shape(nspec2(), nfld));
+    auto rspdivview = LocalView<double, 2>(rspdiv.data(), make_shape(nspec2(), nfld));
+
+    // Pack gridpoints
+    {
+        PackStructuredColumns pack(rgpview);
+        int wind_components = 2;
+        pack(gp, gpwind, wind_components);
+    }
+
+    // Do transform
+    {
+        struct ::InvTransAdj_t transform = ::new_invtrans_adj(trans_.get());
+        transform.nvordiv                = int(nfld);
+        transform.rgp                    = rgp.data();
+        transform.rspvor                 = rspvor.data();
+        transform.rspdiv                 = rspdiv.data();
+
+        ATLAS_ASSERT(transform.rspvor);
+        ATLAS_ASSERT(transform.rspdiv);
+        TRANS_CHECK(::trans_invtrans_adj(&transform));
+    }
+
+    // Pack spectral fields
+    UnpackSpectral unpack_vor(rspvorview);
+    unpack_vor(spvor);
+    UnpackSpectral unpack_div(rspdivview);
+    unpack_div(spdiv);
+
+#else
+    ATLAS_NOTIMPLEMENTED;
+#endif
 }
 
 void TransIFS::__invtrans_vordiv2wind_adj(const Spectral& sp, Field& spvor, Field& spdiv,

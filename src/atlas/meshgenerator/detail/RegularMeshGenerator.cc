@@ -95,8 +95,8 @@ void RegularMeshGenerator::configure_defaults() {
 
     // This options sets the default partitioner
     std::string partitioner;
-    if (grid::Partitioner::exists("trans") && mpi::size() > 1) {
-        partitioner = "trans";
+    if (grid::Partitioner::exists("ectrans") && mpi::size() > 1) {
+        partitioner = "ectrans";
     }
     else {
         partitioner = "checkerboard";

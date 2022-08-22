@@ -92,6 +92,7 @@ public:
     const Domain& domain() const;
     RectangularLonLatDomain lonlatBoundingBox() const;
     std::string name() const;
+    std::string type() const;
     std::string uid() const;
 
     /// Adds to the hash the information that makes this Grid unique

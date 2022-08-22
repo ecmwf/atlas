@@ -89,6 +89,7 @@ public:
 protected:
     virtual const void* addr() const override;
 
+    bool initialized_{false};
     bool debug_{false};
     bool info_{true};
     bool warning_{true};

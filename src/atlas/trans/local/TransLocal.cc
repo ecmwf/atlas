@@ -18,6 +18,7 @@
 #include "eckit/config/YAMLConfiguration.h"
 #include "eckit/eckit.h"
 #include "eckit/io/DataHandle.h"
+#include "eckit/linalg/LinearAlgebra.h"
 #include "eckit/log/Bytes.h"
 #include "eckit/log/JSON.h"
 #include "eckit/types/FloatCompare.h"
@@ -88,11 +89,10 @@ public:
         static const std::map<std::string, int> string_to_FFT = {{"OFF", static_cast<int>(option::FFT::OFF)},
                                                                  {"FFTW", static_cast<int>(option::FFT::FFTW)}};
 #ifdef ATLAS_HAVE_FFTW
-        std::string fft_default = "FFTW";
+        return string_to_FFT.at(config_.getString("fft", "FFTW"));
 #else
-        std::string fft_default = "OFF";
+        return string_to_FFT.at("OFF");
 #endif
-        return string_to_FFT.at(config_.getString("fft", fft_default));
     }
 
     std::string matrix_multiply() const { return config_.getString("matrix_multiply", ""); }
@@ -208,13 +208,43 @@ void alloc_aligned(double*& ptr, size_t n, const char* msg) {
 
 void free_aligned(double*& ptr, const char* msg) {
     ATLAS_ASSERT(msg);
-    Log::debug() << "TransLocal: dellocating '" << msg << "'" << std::endl;
+    Log::debug() << "TransLocal: deallocating '" << msg << "'" << std::endl;
     free_aligned(ptr);
 }
 
 size_t add_padding(size_t n) {
     return size_t(std::ceil(n / 8.)) * 8;
 }
+
+std::string detect_linalg_backend(const std::string& linalg_backend_) {
+    linalg::dense::Backend linalg_backend = linalg::dense::Backend{linalg_backend_};
+    if (linalg_backend.type() == linalg::dense::backend::eckit_linalg::type()) {
+        std::string backend;
+        linalg_backend.get("backend", backend);
+        if (backend.empty() || backend == "default") {
+#if ATLAS_ECKIT_HAVE_ECKIT_585
+            return eckit::linalg::LinearAlgebraDense::backend().name();
+#else
+            return eckit::linalg::LinearAlgebra::backend().name();
+#endif
+        }
+        return backend;
+    }
+    return linalg_backend.type();
+};
+
+bool using_eckit_default_backend(const std::string& linalg_backend_) {
+    linalg::dense::Backend linalg_backend = linalg::dense::Backend{linalg_backend_};
+    if (linalg_backend.type() == linalg::dense::backend::eckit_linalg::type()) {
+        std::string backend;
+        linalg_backend.get("backend", backend);
+        if (backend.empty() || backend == "default") {
+            return true;
+        }
+    }
+    return false;
+};
+
 
 }  // namespace
 
@@ -283,6 +313,11 @@ TransLocal::TransLocal(const Cache& cache, const Grid& grid, const Domain& domai
     linalg_backend_(TransParameters{config}.matrix_multiply()),
     warning_(TransParameters{config}.warning()) {
     ATLAS_TRACE("TransLocal constructor");
+
+    if (mpi::size() > 1) {
+        ATLAS_THROW_EXCEPTION("TransLocal is not implemented for more than 1 MPI task.");
+    }
+
     double fft_threshold = 0.0;  // fraction of latitudes of the full grid down to which FFT is used.
     // This threshold needs to be adjusted depending on the dgemm and FFT performance of the machine
     // on which this code is running!
@@ -495,6 +530,30 @@ TransLocal::TransLocal(const Cache& cache, const Grid& grid, const Domain& domai
         }
         Log::info() << std::endl;*/
 
+
+        Log::debug() << "TransLocal set up with:\n"
+                     << " - grid: " << grid.name() << '\n'
+                     << " - truncation: " << truncation << '\n';
+        if (not domain.global()) {
+            Log::debug() << " - domain: " << domain << '\n';
+        }
+        if (GlobalDomain(domain)) {
+            if (GlobalDomain(domain).west() != 0.) {
+                Log::debug() << " - global domain with modified west: " << GlobalDomain(domain).west() << '\n';
+            }
+        }
+        Log::debug() << " - fft: " << std::boolalpha << useFFT_ << '\n';
+        Log::debug() << " - linalg_backend: ";
+        if (using_eckit_default_backend(linalg_backend_)) {
+            Log::debug() << "eckit_linalg default (currently \"" << detect_linalg_backend(linalg_backend_)
+                         << "\" but could be changed after setup, check invtrans debug output)" << '\n';
+        }
+        else {
+            Log::debug() << detect_linalg_backend(linalg_backend_) << '\n';
+        }
+        Log::debug() << " - legendre_cache: " << std::boolalpha << bool(legendre_cache_) << std::endl;
+
+
         // precomputations for Legendre polynomials:
         {
             const auto nlatsLeg = size_t(nlatsLeg_);
@@ -533,8 +592,8 @@ TransLocal::TransLocal(const Cache& cache, const Grid& grid, const Domain& domai
                     legendre_asym_ = legendre.read<double>(size_asym);
                 }
                 else {
-                    alloc_aligned(legendre_sym_, size_sym, "symmetric");
-                    alloc_aligned(legendre_asym_, size_asym, "asymmetric");
+                    alloc_aligned(legendre_sym_, size_sym, "Legendre coeffs symmetric");
+                    alloc_aligned(legendre_asym_, size_asym, "Legendre coeffs asymmetric");
                 }
 
                 ATLAS_TRACE_SCOPE("Legendre precomputations (structured)") {
@@ -629,7 +688,7 @@ TransLocal::TransLocal(const Cache& cache, const Grid& grid, const Domain& domai
                 << "WARNING: Spectral transform results may contain aliasing errors. This will be addressed soon."
                 << std::endl;
 
-            alloc_aligned(fourier_, 2 * (truncation_ + 1) * nlonsMax, "Fourier coeffs.");
+            alloc_aligned(fourier_, 2 * (truncation_ + 1) * nlonsMax, "Fourier coeffs");
 #if !TRANSLOCAL_DGEMM2
             {
                 ATLAS_TRACE("Fourier precomputations (NoFFT)");
@@ -750,7 +809,9 @@ const functionspace::Spectral& TransLocal::spectral() const {
 
 void TransLocal::invtrans(const Field& spfield, Field& gpfield, const eckit::Configuration& config) const {
     // VERY PRELIMINARY IMPLEMENTATION WITHOUT ANY GUARANTEES
-    int nb_scalar_fields      = 1;
+    int nb_scalar_fields = 1;
+    ATLAS_ASSERT(spfield.rank() == 1, "Only rank-1 fields supported at the moment");
+    ATLAS_ASSERT(gpfield.rank() == 1, "Only rank-1 fields supported at the moment");
     const auto scalar_spectra = array::make_view<double, 1>(spfield);
     auto gp_fields            = array::make_view<double, 1>(gpfield);
 
@@ -802,6 +863,8 @@ void gp_transpose(const int nb_size, const int nb_fields, const double gp_tmp[],
 void TransLocal::invtrans_vordiv2wind(const Field& spvor, const Field& spdiv, Field& gpwind,
                                       const eckit::Configuration& config) const {
     // VERY PRELIMINARY IMPLEMENTATION WITHOUT ANY GUARANTEES
+    ATLAS_ASSERT(spvor.rank() == 1, "Only rank-1 fields supported at the moment");
+    ATLAS_ASSERT(spdiv.rank() == 1, "Only rank-1 fields supported at the moment");
     int nb_vordiv_fields          = 1;
     const auto vorticity_spectra  = array::make_view<double, 1>(spvor);
     const auto divergence_spectra = array::make_view<double, 1>(spdiv);
@@ -866,9 +929,10 @@ void TransLocal::invtrans_legendre(const int truncation, const int nlats, const 
                                    const eckit::Configuration&) const {
     // Legendre transform:
     {
+        Log::debug() << "TransLocal::invtrans_legendre: Legendre GEMM with \"" << detect_linalg_backend(linalg_backend_)
+                     << "\" using " << nlatsLegReduced_ - nlat0_[0] << " latitudes out of " << nlatsGlobal_ / 2
+                     << std::endl;
         linalg::dense::Backend linalg_backend{linalg_backend_};
-        Log::debug() << "Legendre dgemm: using " << nlatsLegReduced_ - nlat0_[0] << " latitudes out of "
-                     << nlatsGlobal_ / 2 << std::endl;
         ATLAS_TRACE("Inverse Legendre Transform (GEMM)");
         for (int jm = 0; jm <= truncation_; jm++) {
             size_t size_sym  = num_n(truncation_ + 1, jm, true);
@@ -1067,7 +1131,8 @@ void TransLocal::invtrans_fourier_regular(const int nlats, const int nlons, cons
 #if !TRANSLOCAL_DGEMM2
         // dgemm-method 1
         {
-            ATLAS_TRACE("Inverse Fourier Transform (NoFFT,matrix_multiply=" + std::string(linalg_backend) + ")");
+            ATLAS_TRACE("Inverse Fourier Transform (NoFFT,matrix_multiply=" + detect_linalg_backend(linalg_backend_) +
+                        ")");
             linalg::Matrix A(fourier_, nlons, (truncation_ + 1) * 2);
             linalg::Matrix B(scl_fourier, (truncation_ + 1) * 2, nb_fields * nlats);
             linalg::Matrix C(gp_fields, nlons, nb_fields * nlats);

@@ -38,6 +38,9 @@ extern "C" {
 
 const detail::PointCloud* atlas__functionspace__PointCloud__new__lonlat(const field::FieldImpl* lonlat);
 
+const detail::PointCloud* atlas__functionspace__PointCloud__new__lonlat_ghost(const field::FieldImpl* lonlat,
+                                                                              const field::FieldImpl* ghost);
+
 const detail::PointCloud* atlas__functionspace__PointCloud__new__grid(const GridImpl* grid);
 
 void atlas__functionspace__PointCloud__delete(detail::PointCloud* This);

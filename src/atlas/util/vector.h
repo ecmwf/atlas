@@ -106,6 +106,8 @@ public:
 
     idx_t size() const { return size_; }
 
+    idx_t capacity() const { return capacity_; }
+
     template <typename Size, typename std::enable_if<std::is_integral<Size>::value, int>::type = 0>
     void assign(Size n, const value_type& value) {
         resize(n);

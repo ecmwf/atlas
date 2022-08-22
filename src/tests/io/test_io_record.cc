@@ -20,6 +20,10 @@
 
 #include "tests/AtlasTestEnvironment.h"
 
+
+#include "atlas/io/atlas-io.h"
+
+
 namespace atlas {
 namespace test {
 

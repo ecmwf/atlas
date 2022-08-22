@@ -79,7 +79,7 @@ void CubedSphereEquiAnglProjection::xy2alphabeta(double crd[], idx_t t) const {
                (greaterEqual(crd[YY], xyCentre[YY] - 45.) && lessEqual(crd[YY], xyCentre[YY] + 45.));
     };
     if (!inCross(crd)) {
-        auto sStream = std::stringstream();
+        std::stringstream sStream;
         sStream << "xy coordinate (" << crd[0] << ", " << crd[1] << ") is not in range for tile " << t << ".";
         ATLAS_THROW_EXCEPTION(sStream.str());
     }

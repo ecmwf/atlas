@@ -85,6 +85,10 @@ std::string Grid::name() const {
     return get()->name();
 }
 
+std::string Grid::type() const {
+    return get()->type();
+}
+
 std::string Grid::uid() const {
     return get()->uid();
 }

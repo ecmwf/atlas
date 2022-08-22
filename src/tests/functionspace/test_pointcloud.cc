@@ -147,6 +147,12 @@ CASE("test_createField") {
     EXPECT_EQ(f2.levels(), 3);
     EXPECT_EQ(f2.shape(0), 4);
     EXPECT_EQ(f2.shape(1), 3);
+
+    Field f3 = p2.createField(f1, option::variables(5));
+    EXPECT_EQ(f3.levels(), 3);
+    EXPECT_EQ(f3.shape(0), 4);
+    EXPECT_EQ(f3.shape(1), 3);
+    EXPECT_EQ(f3.shape(2), 5);
 }
 
 

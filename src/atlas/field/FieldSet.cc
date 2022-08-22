@@ -97,6 +97,11 @@ void atlas__FieldSet__delete(FieldSetImpl* This) {
     delete This;
 }
 
+const char* atlas__FieldSet__name(FieldSetImpl* This) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access name of uninitialised atlas_FieldSet");
+    return This->name().c_str();
+}
+
 void atlas__FieldSet__add_field(FieldSetImpl* This, FieldImpl* field) {
     ATLAS_ASSERT(This != nullptr, "Reason: Use of uninitialised atlas_FieldSet");
     ATLAS_ASSERT(field != nullptr, "Reason: Use of uninitialised atlas_Field");

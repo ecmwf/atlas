@@ -32,6 +32,24 @@ namespace linalg {
 namespace dense {
 
 namespace {
+
+util::Config to_config(const std::string& type) {
+    util::Config b;
+    std::vector<std::string> tokens;
+    eckit::Tokenizer{'.'}(type, tokens);
+    ATLAS_ASSERT(tokens.size() <= 2);
+    ATLAS_ASSERT(tokens.size() > 0);
+    if (tokens.size() == 1) {
+        b.set("type", type);
+    }
+    else {
+        util::Config b;
+        b.set("type", tokens[0]);
+        b.set("backend", tokens[1]);
+    }
+    return b;
+}
+
 struct backends {
     std::map<std::string, dense::Backend> map_;
     std::string current_backend_;
@@ -44,19 +62,9 @@ struct backends {
     void set(const std::string& current_backend) { current_backend_ = current_backend; }
 
     dense::Backend& get(const std::string& type) {
+        ATLAS_ASSERT(!type.empty());
         if (map_.find(type) == map_.end()) {
-            std::vector<std::string> tokens;
-            eckit::Tokenizer{'.'}(type, tokens);
-            ATLAS_ASSERT(tokens.size() <= 2);
-            if (tokens.size() == 1) {
-                map_.emplace(type, util::Config("type", type));
-            }
-            else {
-                util::Config b;
-                b.set("type", tokens[0]);
-                b.set("backend", tokens[1]);
-                map_.emplace(type, b);
-            }
+            map_.emplace(type, to_config(type));
         }
         return map_[type];
     }
@@ -82,8 +90,12 @@ private:
             else {
                 current_backend_ = backend::eckit_linalg::type();
             }
+            map_.emplace("default", util::Config("type", current_backend_));
         }
-        map_.emplace("default", util::Config("type", current_backend_));
+        else {
+            current_backend_ = configured;
+            map_.emplace("default", to_config(configured));
+        }
     }
 };
 }  // namespace

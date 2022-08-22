@@ -41,6 +41,7 @@ TYPE, extends(fckit_owned_object) :: atlas_FieldSet
 
 !------------------------------------------------------------------------------
 contains
+  procedure, public  :: name => FieldSet__name
   procedure, public  :: size => FieldSet__size
   procedure, public  :: has
   procedure, private :: field_by_name
@@ -93,6 +94,17 @@ function atlas_FieldSet__ctor(name) result(fieldset)
   endif
   call fieldset%return()
 end function
+
+function FieldSet__name(this) result(fieldset_name)
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  use fckit_c_interop_module, only : c_ptr_to_string, c_str
+  use atlas_fieldset_c_binding
+  class(atlas_FieldSet), intent(in) :: this
+  character(len=:), allocatable :: fieldset_name
+  type(c_ptr) :: fieldset_name_c_str
+  fieldset_name_c_str = atlas__FieldSet__name(this%CPTR_PGIBUG_A)
+  fieldset_name = c_ptr_to_string(fieldset_name_c_str)
+end function FieldSet__name
 
 subroutine add(this,field)
   use atlas_fieldset_c_binding

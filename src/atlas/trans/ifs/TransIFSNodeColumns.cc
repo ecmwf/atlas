@@ -30,8 +30,11 @@ TransIFSNodeColumns::TransIFSNodeColumns(const Cache& cache, const functionspace
 TransIFSNodeColumns::~TransIFSNodeColumns() = default;
 
 namespace {
-static TransBuilderFunctionSpace<TransIFSNodeColumns> builder("ifs(NodeColumns,Spectral)", "ifs");
-}
+static TransBuilderFunctionSpace<TransIFSNodeColumns> builder_ifs("ifs(NodeColumns,Spectral)", "ifs");
+// Deprecated, use below
+
+static TransBuilderFunctionSpace<TransIFSNodeColumns> builder_ectrans("ectrans(NodeColumns,Spectral)", "ectrans");
+}  // namespace
 
 }  // namespace trans
 }  // namespace atlas

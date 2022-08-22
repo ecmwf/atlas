@@ -13,8 +13,6 @@
 #include <sstream>
 #include <string>
 
-#include <dlfcn.h>  // for dynamic loading (should be delegated to eckit)
-
 #include "eckit/config/LibEcKit.h"
 #include "eckit/config/Resource.h"
 #include "eckit/eckit.h"
@@ -28,6 +26,24 @@
 #include "eckit/system/SystemInfo.h"
 #include "eckit/types/Types.h"
 #include "eckit/utils/Translator.h"
+
+#if ATLAS_ECKIT_HAVE_ECKIT_585
+#include "eckit/linalg/LinearAlgebraDense.h"
+namespace {
+static bool feature_MKL() {
+    return eckit::linalg::LinearAlgebraDense::hasBackend("mkl");
+}
+}  // namespace
+#else
+#include "eckit/linalg/LinearAlgebra.h"
+namespace {
+static bool feature_MKL() {
+    return eckit::linalg::LinearAlgebra::hasBackend("mkl");
+}
+}  // namespace
+#endif
+
+#include "atlas_io/Trace.h"
 
 #include "atlas/library/FloatingPointExceptions.h"
 #include "atlas/library/Plugin.h"
@@ -238,6 +254,10 @@ void Library::initialise(int argc, char** argv) {
 
 
 void Library::initialise(const eckit::Parametrisation& config) {
+    if (initialized_) {
+        return;
+    }
+    initialized_ = true;
     if (config.has("log")) {
         config.get("log.info", info_);
         config.get("log.trace", trace_);
@@ -277,6 +297,15 @@ void Library::initialise(const eckit::Parametrisation& config) {
     if (data_paths_.empty()) {
         init_data_paths(data_paths_);
     }
+
+    atlas::io::TraceHookRegistry::add([](const eckit::CodeLocation& loc, const std::string& title) {
+        struct Adaptor : public atlas::io::TraceHook {
+            Adaptor(const eckit::CodeLocation& loc, const std::string& title): trace{loc, title} {}
+            atlas::Trace trace;
+        };
+        return std::unique_ptr<Adaptor>(new Adaptor{loc, title});
+    });
+
 
     // Summary
     if (getEnv("ATLAS_LOG_RANK", 0) == int(mpi::rank())) {
@@ -336,6 +365,7 @@ void Library::finalise() {
         warning_ = false;
         warning_channel_.reset(new eckit::Channel(new eckit::PrefixTarget("ATLAS_WARNING")));
     }
+    initialized_ = false;
 }
 
 eckit::Channel& Library::infoChannel() const {
@@ -421,12 +451,8 @@ void Library::Information::print(std::ostream& out) const {
     bool feature_BoundsChecking(ATLAS_ARRAYVIEW_BOUNDS_CHECKING);
     bool feature_Init_sNaN(ATLAS_INIT_SNAN);
     bool feature_MPI(false);
-#if ECKIT_HAVE_MPI
+#if ATLAS_HAVE_MPI
     feature_MPI = true;
-#endif
-    bool feature_MKL(false);
-#if ECKIT_HAVE_MKL
-    feature_MKL = true;
 #endif
     std::string array_data_store = "Native";
 #if ATLAS_HAVE_GRIDTOOLS_STORAGE
@@ -444,7 +470,7 @@ void Library::Information::print(std::ostream& out) const {
         << "    Trans          : " << str(feature_Trans) << '\n'
         << "    FFTW           : " << str(feature_FFTW) << '\n'
         << "    Eigen          : " << str(feature_Eigen) << '\n'
-        << "    MKL            : " << str(feature_MKL) << '\n'
+        << "    MKL            : " << str(feature_MKL()) << '\n'
         << "    Tesselation    : " << str(feature_Tesselation) << '\n'
         << "    ArrayDataStore : " << array_data_store << '\n'
         << "    idx_t          : " << ATLAS_BITS_LOCAL << " bit integer" << '\n'

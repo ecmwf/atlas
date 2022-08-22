@@ -110,7 +110,7 @@ void read_rspecg(Field spec) {
 //-----------------------------------------------------------------------------
 
 CASE("test_trans_distribution_matches_atlas") {
-    EXPECT(grid::Partitioner::exists("trans"));
+    EXPECT(grid::Partitioner::exists("ectrans"));
 
     // Create grid and trans object
     Grid g("N80");
@@ -310,7 +310,7 @@ CASE("test_spectral_fields") {
 
     Grid g("O48");
     StructuredMeshGenerator generate(atlas::util::Config("angle", 0)("triangulate", false));
-    Mesh m = generate(g);
+    Mesh m = generate(g, grid::Partitioner("ectrans"));
 
     trans::Trans trans(g, 47);
 
@@ -344,7 +344,7 @@ CASE("test_nomesh") {
     trans::Trans trans(g, 47);
 
     functionspace::Spectral spectral(trans);
-    functionspace::StructuredColumns gridpoints(g, grid::Partitioner("trans"));
+    functionspace::StructuredColumns gridpoints(g, grid::Partitioner("ectrans"));
 
     Field spfg = spectral.createField<double>(option::name("spf") | option::global());
     Field spf  = spectral.createField<double>(option::name("spf"));
@@ -422,7 +422,7 @@ CASE("test_trans_factory") {
     trans::TransFactory::list(Log::info());
     Log::info() << std::endl;
 
-    functionspace::StructuredColumns gp(Grid("O48"), grid::Partitioner("trans"));
+    functionspace::StructuredColumns gp(Grid("O48"), grid::Partitioner("ectrans"));
     functionspace::Spectral sp(47);
 
     trans::Trans trans1 = trans::Trans(gp, sp);
@@ -437,7 +437,7 @@ CASE("test_trans_using_grid") {
 
     trans::Trans trans(Grid("O48"), 47);
 
-    functionspace::StructuredColumns gp(trans.grid(), grid::Partitioner("trans"));
+    functionspace::StructuredColumns gp(trans.grid(), grid::Partitioner("ectrans"));
     functionspace::Spectral sp(trans.truncation());
 
     Field spf = sp.createField<double>(option::name("spf"));
@@ -463,7 +463,7 @@ CASE("test_trans_using_grid") {
 CASE("test_trans_using_functionspace_NodeColumns") {
     Log::info() << "test_trans_using_functionspace_NodeColumns" << std::endl;
 
-    functionspace::NodeColumns gp(MeshGenerator("structured").generate(Grid("O48")));
+    functionspace::NodeColumns gp(MeshGenerator("structured").generate(Grid("O48"), grid::Partitioner("ectrans")));
     functionspace::Spectral sp(47);
 
     trans::Trans trans(gp, sp);
@@ -491,7 +491,7 @@ CASE("test_trans_using_functionspace_NodeColumns") {
 CASE("test_trans_using_functionspace_StructuredColumns") {
     Log::info() << "test_trans_using_functionspace_StructuredColumns" << std::endl;
 
-    functionspace::StructuredColumns gp(Grid("O48"), grid::Partitioner("trans"));
+    functionspace::StructuredColumns gp(Grid("O48"), grid::Partitioner("ectrans"));
     functionspace::Spectral sp(47);
 
     trans::Trans trans(gp, sp);
@@ -554,8 +554,8 @@ CASE("test_trans_VorDivToUV") {
         Log::info() << std::endl;
 
         // With IFS
-        if (trans::VorDivToUVFactory::has("ifs")) {
-            trans::VorDivToUV vordiv_to_UV(truncation, option::type("ifs"));
+        if (trans::VorDivToUVFactory::has("ectrans")) {
+            trans::VorDivToUV vordiv_to_UV(truncation, option::type("ectrans"));
             EXPECT(vordiv_to_UV.truncation() == truncation);
 
             std::vector<double> field_U(nfld * nspec2);
@@ -597,7 +597,7 @@ CASE("test_trans_VorDivToUV") {
 CASE("ATLAS-256: Legendre coefficient expected unique identifiers") {
     if (mpi::comm().size() == 1) {
         util::Config options;
-        options.set(option::type("ifs"));
+        options.set(option::type("ectrans"));
         options.set("flt", false);
 
         auto uids = {

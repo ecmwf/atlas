@@ -22,3 +22,9 @@ ecbuild_add_executable(
     NOINSTALL
 )
 
+ecbuild_add_executable(
+    TARGET  atlas-conservative-interpolation
+    SOURCES atlas-conservative-interpolation.cc
+    LIBS    atlas
+    NOINSTALL
+)

@@ -69,6 +69,11 @@ public:
     Cache createCache() const;
 
     Interpolation(const Config&, const Grid& source, const Grid& target, const Cache&) noexcept(false);
+
+    friend std::ostream& operator<<(std::ostream& out, const Interpolation& i) {
+        i.print(out);
+        return out;
+    }
 };
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
@@ -99,6 +104,10 @@ void atlas__Interpolation__execute_field(Interpolation::Implementation* This, co
                                          field::FieldImpl* target);
 void atlas__Interpolation__execute_fieldset(Interpolation::Implementation* This, const field::FieldSetImpl* source,
                                             field::FieldSetImpl* target);
+void atlas__Interpolation__execute_adjoint_field(Interpolation::Implementation* This, field::FieldImpl* source,
+                                                 const field::FieldImpl* target);
+void atlas__Interpolation__execute_adjoint_fieldset(Interpolation::Implementation* This, field::FieldSetImpl* source,
+                                                    const field::FieldSetImpl* target);
 }
 #endif
 

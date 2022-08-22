@@ -28,7 +28,10 @@ private
 !------------------------------------------------------------------------------
 TYPE, extends(fckit_owned_object) :: atlas_MeshGenerator
 contains
-  procedure, public :: generate => atlas_MeshGenerator__generate
+  procedure, private :: atlas_MeshGenerator__generate
+  procedure, private :: atlas_MeshGenerator__generate_partitioner
+  generic :: generate => atlas_MeshGenerator__generate, atlas_MeshGenerator__generate_partitioner
+
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_MeshGenerator__final_auto
 #endif
@@ -104,6 +107,22 @@ function atlas_MeshGenerator__generate(this,grid,distribution) result(mesh)
    endif
    call mesh%return()
 end function
+
+function atlas_MeshGenerator__generate_partitioner(this,grid,partitioner) result(mesh)
+   use atlas_MeshGenerator_c_binding
+   use atlas_Grid_module, only: atlas_Grid
+   use atlas_Partitioner_module, only: atlas_Partitioner
+   use atlas_Mesh_module, only: atlas_Mesh
+   type(atlas_Mesh) :: mesh
+   class(atlas_MeshGenerator), intent(in) :: this
+   class(atlas_Grid), intent(in) :: grid
+   class(atlas_Partitioner), intent(in) :: partitioner
+   call mesh%reset_c_ptr() ! Somehow needed with PGI/16.7 and build-type "bit"
+   mesh = atlas_Mesh( atlas__MeshGenerator__generate__grid_partitioner( &
+       this%CPTR_PGIBUG_A,grid%CPTR_PGIBUG_A,partitioner%CPTR_PGIBUG_A) )
+   call mesh%return()
+end function
+
 
 !-------------------------------------------------------------------------------
 
