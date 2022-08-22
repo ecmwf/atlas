@@ -37,13 +37,11 @@ CASE("test_interpolation_O64_to_empty_PointCloud") {
     Mesh mesh(grid);
     NodeColumns fs(mesh);
 
-    atlas::Field points("lonlat", atlas::array::make_datatype<double>(),
-                                  atlas::array::make_shape(0, 2));
+    atlas::Field points("lonlat", atlas::array::make_datatype<double>(), atlas::array::make_shape(0, 2));
     // Some points at the equator
     PointCloud pointcloud(points);
 
-    Interpolation interpolation(
-    option::type("unstructured-bilinear-lonlat"), fs, pointcloud);
+    Interpolation interpolation(option::type("unstructured-bilinear-lonlat"), fs, pointcloud);
 
     Field field_source = fs.createField<double>(option::name("source"));
     Field field_target("target", array::make_datatype<double>(), array::make_shape(pointcloud.size()));
