@@ -32,6 +32,27 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 //
+CASE("test_interpolation_O64_to_empty_PointCloud") {
+    Grid grid("O64");
+    Mesh mesh(grid);
+    NodeColumns fs(mesh);
+
+    atlas::Field points("lonlat", atlas::array::make_datatype<double>(), atlas::array::make_shape(0, 2));
+    // Some points at the equator
+    PointCloud pointcloud(points);
+
+    Interpolation interpolation(option::type("unstructured-bilinear-lonlat"), fs, pointcloud);
+
+    Field field_source = fs.createField<double>(option::name("source"));
+    Field field_target("target", array::make_datatype<double>(), array::make_shape(pointcloud.size()));
+
+    auto source = array::make_view<double, 1>(field_source);
+    for (idx_t j = 0; j < fs.nodes().size(); ++j) {
+        source(j) = 0;
+    }
+
+    interpolation.execute(field_source, field_target);
+}
 
 CASE("test_interpolation_O64_to_points_bilinear_remapping") {
     Grid grid("O64");
