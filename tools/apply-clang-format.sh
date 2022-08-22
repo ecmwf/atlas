@@ -103,7 +103,7 @@ if [[ $all =~ "yes" ]]; then
         find . -iname *.h -o -iname *.cc | xargs clang-format -i -style=file
     fi
    
-    cd $SCRIPTDIR/../atlas-io
+    cd $SCRIPTDIR/../atlas_io
     if [[ $dryrun =~ "yes" ]]; then
         echo "+ find . -iname *.h -o -iname *.cc | xargs clang-format -i -style=file"
     else
