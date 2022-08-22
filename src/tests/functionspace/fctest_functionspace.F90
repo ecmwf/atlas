@@ -627,10 +627,13 @@ field2 = fs%create_field(name="field2",kind=atlas_real(8),levels=3,variables=2)
 FCTEST_CHECK_EQUAL( field%shape(), ([5,grid%size()]) )
 FCTEST_CHECK_EQUAL( field2%shape(), ([2,3,grid%size()]) )
 
-
+#ifndef _CRAYFTN
 FCTEST_CHECK_EQUAL( field%owners(), 1 )
+#endif
 call field%final()
+#ifndef _CRAYFTN
 FCTEST_CHECK_EQUAL( field_lonlat%owners(), 1 )
+#endif
 call field_lonlat%final()
 call fs%final()
 call fs_base%final()
