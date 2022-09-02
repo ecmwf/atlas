@@ -31,12 +31,26 @@ struct TraceHook {
 struct TraceHookRegistry {
     using TraceHookBuilder = std::function<std::unique_ptr<TraceHook>(const eckit::CodeLocation&, const std::string&)>;
     std::vector<TraceHookBuilder> hooks;
+    std::vector<int> enabled_;
     static TraceHookRegistry& instance() {
         static TraceHookRegistry instance;
         return instance;
     }
-    static void add(TraceHookBuilder&& hook) { instance().hooks.emplace_back(hook); }
-    static void add(const TraceHookBuilder& hook) { instance().hooks.emplace_back(hook); }
+    static size_t add(TraceHookBuilder&& hook) {
+        instance().hooks.emplace_back(hook);
+        instance().enabled_.emplace_back(true);
+        return instance().hooks.size() - 1;
+    }
+    static size_t add(const TraceHookBuilder& hook) {
+        instance().hooks.emplace_back(hook);
+        instance().enabled_.emplace_back(true);
+        return instance().hooks.size() - 1;
+    }
+    static void enable(size_t id) { instance().enabled_[id] = true; }
+    static void disable(size_t id) { instance().enabled_[id] = false; }
+    static bool enabled(size_t id) { return instance().enabled_[id]; }
+    static size_t size() { return instance().hooks.size(); }
+    static TraceHookBuilder& hook(size_t id) { return instance().hooks[id]; }
 
 private:
     TraceHookRegistry() = default;

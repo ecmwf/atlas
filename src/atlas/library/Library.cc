@@ -298,13 +298,14 @@ void Library::initialise(const eckit::Parametrisation& config) {
         init_data_paths(data_paths_);
     }
 
-    atlas::io::TraceHookRegistry::add([](const eckit::CodeLocation& loc, const std::string& title) {
-        struct Adaptor : public atlas::io::TraceHook {
-            Adaptor(const eckit::CodeLocation& loc, const std::string& title): trace{loc, title} {}
-            atlas::Trace trace;
-        };
-        return std::unique_ptr<Adaptor>(new Adaptor{loc, title});
-    });
+    atlas_io_trace_hook_ =
+        atlas::io::TraceHookRegistry::add([](const eckit::CodeLocation& loc, const std::string& title) {
+            struct Adaptor : public atlas::io::TraceHook {
+                Adaptor(const eckit::CodeLocation& loc, const std::string& title): trace{loc, title} {}
+                atlas::Trace trace;
+            };
+            return std::unique_ptr<Adaptor>(new Adaptor{loc, title});
+        });
 
 
     // Summary
@@ -336,6 +337,8 @@ void Library::initialise() {
 }
 
 void Library::finalise() {
+    atlas::io::TraceHookRegistry::disable(atlas_io_trace_hook_);
+
     if (ATLAS_HAVE_TRACE && trace_report_) {
         Log::info() << atlas::Trace::report() << std::endl;
     }
