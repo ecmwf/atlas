@@ -24,6 +24,9 @@
 #include "atlas_io/detail/TypeTraits.h"
 
 #include "atlas_io/types/array/ArrayReference.h"
+#include "atlas_io/types/scalar.h"
+#include "atlas_io/types/string.h"
+
 
 #include "atlas_io/detail/Defaults.h"
 
@@ -86,6 +89,14 @@ public:
     template <typename Value, disable_if_interpretable_t<Value, ArrayReference> = 0>
     void set(const Key& key, const Value& value, const eckit::Configuration& config = NoConfig()) {
         set(key, Encoder{value}, config);
+    }
+
+    void set(const Key& key, const char* value, const eckit::Configuration& config = NoConfig()) {
+        set(key, Encoder{std::string(value)}, config);
+    }
+
+    void set(const Key& key, const std::string& value, const eckit::Configuration& config = NoConfig()) {
+        set(key, Encoder{std::string(value)}, config);
     }
 
     /// @brief Write new record to path

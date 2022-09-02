@@ -12,6 +12,7 @@
 
 #include <type_traits>
 
+#include "atlas_io/detail/DataType.h"
 
 namespace atlas {
 namespace io {
@@ -133,6 +134,20 @@ using enable_if_move_constructible_encodable_rvalue_t =
 template <typename T>
 using enable_if_move_constructible_decodable_rvalue_t =
     enable_if_t<is_decodable<T>() && std::is_rvalue_reference<T&&>() && std::is_move_constructible<T>()>;
+
+template <typename T, bool EnableBool = true>
+using enable_if_scalar_t = enable_if_t<std::is_scalar<T>::value && EnableBool>;
+
+
+template <typename T>
+constexpr bool is_array_datatype() {
+    return std::is_same<T, double>::value || std::is_same<T, float>::value ||
+                                std::is_same<T, int>::value || std::is_same<T, long>::value ||
+                                std::is_same<T, size_t>::value || std::is_same<T, std::byte>::value;
+}
+
+template <typename T>
+using enable_if_array_datatype = typename std::enable_if<is_array_datatype<T>(), int>::type;
 
 
 }  // namespace io

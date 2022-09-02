@@ -137,9 +137,15 @@ CASE("Write records, each in separate file (offset=0)") {
         write_length(length, path + ".length");
     };
 
-    SECTION("record1.atlas" + suffix()) { write_record(globals::record1.data, "record1.atlas" + suffix()); }
-    SECTION("record2.atlas" + suffix()) { write_record(globals::record2.data, "record2.atlas" + suffix()); }
-    SECTION("record3.atlas" + suffix()) { write_record(globals::record3.data, "record3.atlas" + suffix()); }
+    SECTION("record1.atlas" + suffix()) {
+        write_record(globals::record1.data, "record1.atlas" + suffix());
+    }
+    SECTION("record2.atlas" + suffix()) {
+        write_record(globals::record2.data, "record2.atlas" + suffix());
+    }
+    SECTION("record3.atlas" + suffix()) {
+        write_record(globals::record3.data, "record3.atlas" + suffix());
+    }
 }
 
 //-----------------------------------------------------------------------------

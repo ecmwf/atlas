@@ -135,16 +135,16 @@ void encode_data(const double&, atlas::io::Data&) {}
 //---------------------------------------------------------------------------------------------------------------------
 
 void decode(const atlas::io::Metadata& metadata, const atlas::io::Data&, int& value) {
-    decode_scalar_b64(metadata, value);
+    decode_scalar(metadata, value);
 }
 void decode(const atlas::io::Metadata& metadata, const atlas::io::Data&, long& value) {
-    decode_scalar_b64(metadata, value);
+    decode_scalar(metadata, value);
 }
 void decode(const atlas::io::Metadata& metadata, const atlas::io::Data&, long long& value) {
-    decode_scalar_b64(metadata, value);
+    decode_scalar(metadata, value);
 }
 void decode(const atlas::io::Metadata& metadata, const atlas::io::Data&, unsigned long& value) {
-    decode_scalar_b64(metadata, value);
+    decode_scalar(metadata, value);
 }
 void decode(const atlas::io::Metadata& metadata, const atlas::io::Data&, unsigned long long& value) {
     decode_scalar_b64(metadata, value);

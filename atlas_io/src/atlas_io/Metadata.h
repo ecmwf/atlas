@@ -83,6 +83,14 @@ public:
         root.remove(name);
         return *this;
     }
+
+
+    std::vector<std::string> keys() const {
+        // Preserves order of keys
+        std::vector<std::string> result;
+        eckit::fromValue(result, get().keys());
+        return result;
+    }
 };
 
 //---------------------------------------------------------------------------------------------------------------------
