@@ -272,39 +272,88 @@ void StructuredMeshGenerator::generate_region(const StructuredGrid& rg, const gr
     bool unique_pole        = options.getBool("unique_pole") && three_dimensional && has_north_pole && has_south_pole;
     bool periodic_east_west = rg.periodic();
 
-    int n;
-    /*
+
+    idx_t lat_north = -1;
+    idx_t lat_south = -1;
+
+    if (distribution.nb_partitions() == 1) {
+        lat_north = 0;
+        lat_south = rg.ny() - 1;
+    }
+    else {
+        ATLAS_TRACE_SCOPE("compute bounds") {
+            // This part does not scale
+            /*
 Find min and max latitudes used by this part.
 */
-    n               = 0;
-    idx_t lat_north = -1;
-    for (idx_t jlat = 0; jlat < rg.ny(); ++jlat) {
-        for (idx_t jlon = 0; jlon < rg.nx(jlat); ++jlon) {
-            if (distribution.partition(n) == mypart) {
-                lat_north = jlat;
-                goto end_north;
-            }
-            ++n;
-        }
-    }
-end_north:
 
-    n               = rg.size() - 1;
-    idx_t lat_south = -1;
-    for (idx_t jlat = rg.ny() - 1; jlat >= 0; --jlat) {
-        for (idx_t jlon = rg.nx(jlat) - 1; jlon >= 0; --jlon) {
-            if (distribution.partition(n) == mypart) {
-                lat_south = jlat;
-                goto end_south;
+            size_t num_threads = atlas_omp_get_max_threads();
+            if (num_threads == 1) {
+                int n = 0;
+                for (idx_t jlat = 0; jlat < rg.ny(); ++jlat) {
+                    for (idx_t jlon = 0; jlon < rg.nx(jlat); ++jlon) {
+                        if (distribution.partition(n) == mypart) {
+                            lat_north = jlat;
+                            goto end_north;
+                        }
+                        ++n;
+                    }
+                }
+            end_north:;
+
+                n = rg.size() - 1;
+                for (idx_t jlat = rg.ny() - 1; jlat >= 0; --jlat) {
+                    for (idx_t jlon = rg.nx(jlat) - 1; jlon >= 0; --jlon) {
+                        if (distribution.partition(n) == mypart) {
+                            lat_south = jlat;
+                            goto end_south;
+                        }
+                        --n;
+                    }
+                }
+            end_south:;
             }
-            --n;
+            else {
+                std::vector<idx_t> thread_reduce_lat_north(num_threads, std::numeric_limits<idx_t>::max());
+                std::vector<idx_t> thread_reduce_lat_south(num_threads, std::numeric_limits<idx_t>::min());
+
+                atlas_omp_parallel {
+                    const idx_t thread_num = atlas_omp_get_thread_num();
+                    const idx_t jbegin = static_cast<int>(size_t(thread_num) * size_t(rg.ny()) / size_t(num_threads));
+                    const idx_t jend = static_cast<int>(size_t(thread_num + 1) * size_t(rg.ny()) / size_t(num_threads));
+
+                    auto& thread_lat_north = thread_reduce_lat_north[thread_num];
+                    auto& thread_lat_south = thread_reduce_lat_south[thread_num];
+
+                    for (idx_t jlat = jbegin; jlat < jend && thread_lat_north > jend; ++jlat) {
+                        int n = rg.index(0, jlat);
+                        for (idx_t jlon = 0; jlon < rg.nx(jlat); ++jlon, ++n) {
+                            if (distribution.partition(n) == mypart) {
+                                thread_lat_north = jlat;
+                                break;
+                            }
+                        }
+                    }
+
+                    for (idx_t jlat = jend - 1; jlat >= jbegin && thread_lat_south < jbegin; --jlat) {
+                        int n = rg.index(0, jlat);
+                        for (idx_t jlon = 0; jlon < rg.nx(jlat); ++jlon, ++n) {
+                            if (distribution.partition(n) == mypart) {
+                                thread_lat_south = jlat;
+                                break;
+                            }
+                        }
+                    }
+                }
+                lat_north = *std::min_element(thread_reduce_lat_north.begin(), thread_reduce_lat_north.end());
+                lat_south = *std::max_element(thread_reduce_lat_south.begin(), thread_reduce_lat_south.end());
+            }
         }
     }
-end_south:
 
     std::vector<idx_t> offset(rg.ny(), 0);
 
-    n = 0;
+    int n = 0;
     for (idx_t jlat = 0; jlat < rg.ny(); ++jlat) {
         offset.at(jlat) = n;
         n += rg.nx(jlat);
