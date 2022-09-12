@@ -14,12 +14,16 @@
 #include <sstream>
 #include <stdexcept>
 
+#include "eckit/log/Bytes.h"
+
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/mpi/Statistics.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
+
+#include "atlas/parallel/omp/sort.h"
 
 namespace atlas {
 namespace parallel {
@@ -80,70 +84,135 @@ GatherScatter::GatherScatter(const std::string& name): name_(name), is_setup_(fa
 void GatherScatter::setup(const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
                           const int mask[], const idx_t parsize) {
     ATLAS_TRACE("GatherScatter::setup");
-
     parsize_ = parsize;
 
     glbcounts_.resize(nproc);
     glbcounts_.assign(nproc, 0);
     glbdispls_.resize(nproc);
     glbdispls_.assign(nproc, 0);
-    const idx_t nvar = 3;
 
-    std::vector<gidx_t> sendnodes(parsize_ * nvar);
+    std::vector<gidx_t> sendnodes_gidx(parsize_);
+    std::vector<int> sendnodes_part(parsize_);
+    std::vector<idx_t> sendnodes_ridx(parsize_);
 
     loccnt_ = 0;
     for (idx_t n = 0; n < parsize_; ++n) {
         if (!mask[n]) {
-            sendnodes[loccnt_++] = glb_idx[n];
-            sendnodes[loccnt_++] = part[n];
-            sendnodes[loccnt_++] = remote_idx[n] - base;
+            sendnodes_gidx[loccnt_] = glb_idx[n];
+            sendnodes_part[loccnt_] = part[n];
+            sendnodes_ridx[loccnt_] = remote_idx[n] - base;
+            ++loccnt_;
         }
     }
 
-    ATLAS_TRACE_MPI(ALLGATHER) { mpi::comm().allGather(loccnt_, glbcounts_.begin(), glbcounts_.end()); }
+    ATLAS_TRACE_MPI(ALLGATHER) {
+        mpi::comm().allGather(loccnt_, glbcounts_.begin(), glbcounts_.end());
+    }
 
-    glbcnt_ = std::accumulate(glbcounts_.begin(), glbcounts_.end(), 0);
+    size_t glbcnt_size_t = std::accumulate(glbcounts_.begin(), glbcounts_.end(), size_t(0));
+    if (glbcnt_size_t > std::numeric_limits<int>::max()) {
+        ATLAS_THROW_EXCEPTION("Due to limitation of MPI we cannot use larger counts");
+    }
+
+    glbcnt_ = std::accumulate(glbcounts_.begin(), glbcounts_.end(), size_t(0));
 
     glbdispls_[0] = 0;
     for (idx_t jproc = 1; jproc < nproc; ++jproc)  // start at 1
     {
         glbdispls_[jproc] = glbcounts_[jproc - 1] + glbdispls_[jproc - 1];
     }
-    std::vector<gidx_t> recvnodes(glbcnt_);
 
-    ATLAS_TRACE_MPI(ALLGATHER) {
-        mpi::comm().allGatherv(sendnodes.begin(), sendnodes.begin() + loccnt_, recvnodes.data(), glbcounts_.data(),
-                               glbdispls_.data());
+    idx_t nb_recv_nodes = glbcnt_;
+    std::vector<Node> node_sort;
+
+    try {
+        node_sort.resize(nb_recv_nodes);
+    }
+    catch (const std::bad_alloc& e) {
+        ATLAS_THROW_EXCEPTION("Could not allocate node_sort with size " << eckit::Bytes(nb_recv_nodes * sizeof(Node)));
     }
 
-    // Load recvnodes in sorting structure
-    idx_t nb_recv_nodes = glbcnt_ / nvar;
-    std::vector<Node> node_sort(nb_recv_nodes);
-    for (idx_t n = 0; n < nb_recv_nodes; ++n) {
-        node_sort[n].g = recvnodes[n * nvar + 0];
-        node_sort[n].p = recvnodes[n * nvar + 1];
-        node_sort[n].i = recvnodes[n * nvar + 2];
+    {
+        std::vector<gidx_t> recvnodes_gidx;
+        try {
+            recvnodes_gidx.resize(glbcnt_);
+        }
+        catch (const std::bad_alloc& e) {
+            ATLAS_THROW_EXCEPTION("Could not allocate recvnodes_gidx with size "
+                                  << eckit::Bytes(glbcnt_ * sizeof(gidx_t)));
+        }
+        ATLAS_TRACE_MPI(ALLGATHER) {
+            mpi::comm().allGatherv(sendnodes_gidx.begin(), sendnodes_gidx.begin() + loccnt_, recvnodes_gidx.data(),
+                                   glbcounts_.data(), glbdispls_.data());
+        }
+        atlas_omp_parallel_for(idx_t n = 0; n < nb_recv_nodes; ++n) {
+            node_sort[n].g = recvnodes_gidx[n];
+        }
+        sendnodes_gidx.clear();
     }
 
-    recvnodes.clear();
+
+    {
+        std::vector<int> recvnodes_part;
+        try {
+            recvnodes_part.resize(glbcnt_);
+        }
+        catch (const std::bad_alloc& e) {
+            ATLAS_THROW_EXCEPTION("Could not allocate recvnodes_part with size "
+                                  << eckit::Bytes(glbcnt_ * sizeof(int)));
+        }
+        ATLAS_TRACE_MPI(ALLGATHER) {
+            mpi::comm().allGatherv(sendnodes_part.begin(), sendnodes_part.begin() + loccnt_, recvnodes_part.data(),
+                                   glbcounts_.data(), glbdispls_.data());
+        }
+        atlas_omp_parallel_for(idx_t n = 0; n < nb_recv_nodes; ++n) {
+            node_sort[n].p = recvnodes_part[n];
+        }
+        sendnodes_part.clear();
+    }
+
+    {
+        std::vector<idx_t> recvnodes_ridx;
+        try {
+            recvnodes_ridx.resize(glbcnt_);
+        }
+        catch (const std::bad_alloc& e) {
+            ATLAS_THROW_EXCEPTION("Could not allocate recvnodes_ridx with size "
+                                  << eckit::Bytes(glbcnt_ * sizeof(idx_t)));
+        }
+        ATLAS_TRACE_MPI(ALLGATHER) {
+            mpi::comm().allGatherv(sendnodes_ridx.begin(), sendnodes_ridx.begin() + loccnt_, recvnodes_ridx.data(),
+                                   glbcounts_.data(), glbdispls_.data());
+        }
+        atlas_omp_parallel_for(idx_t n = 0; n < nb_recv_nodes; ++n) {
+            node_sort[n].i = recvnodes_ridx[n];
+        }
+        sendnodes_ridx.clear();
+    }
+
 
     // Sort on "g" member, and remove duplicates
     ATLAS_TRACE_SCOPE("sorting") {
+        //        omp::sort(node_sort.begin(), node_sort.end());
         std::sort(node_sort.begin(), node_sort.end());
         node_sort.erase(std::unique(node_sort.begin(), node_sort.end()), node_sort.end());
     }
+
     glbcounts_.assign(nproc, 0);
     glbdispls_.assign(nproc, 0);
+
     for (size_t n = 0; n < node_sort.size(); ++n) {
         ++glbcounts_[node_sort[n].p];
     }
+
     glbdispls_[0] = 0;
 
     for (idx_t jproc = 1; jproc < nproc; ++jproc)  // start at 1
     {
         glbdispls_[jproc] = glbcounts_[jproc - 1] + glbdispls_[jproc - 1];
     }
-    glbcnt_ = std::accumulate(glbcounts_.begin(), glbcounts_.end(), 0);
+
+    glbcnt_ = std::accumulate(glbcounts_.begin(), glbcounts_.end(), size_t(0));
     loccnt_ = glbcounts_[myproc];
 
     glbmap_.clear();
@@ -152,7 +221,7 @@ void GatherScatter::setup(const int part[], const idx_t remote_idx[], const int 
     locmap_.resize(loccnt_);
     std::vector<int> idx(nproc, 0);
 
-    int n{0};
+    size_t n{0};
     for (const auto& node : node_sort) {
         idx_t jproc                             = node.p;
         glbmap_[glbdispls_[jproc] + idx[jproc]] = n++;
