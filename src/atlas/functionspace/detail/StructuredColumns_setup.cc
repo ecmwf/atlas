@@ -367,18 +367,18 @@ void StructuredColumns::setup(const grid::Distribution& distribution, const ecki
 
                     double x = grid_->x(i, j);
 
-                    double x_next = grid_->x(i + 1, j);
-                    double x_prev = grid_->x(i - 1, j);
+                    double x_next = grid_->x(i + idx_t{1}, j);
+                    double x_prev = grid_->x(i - idx_t{1}, j);
                     idx_t jj_min  = j - halo;
                     idx_t jj_max  = j + halo;
                     if (regional) {
                         jj_min = std::max(jj_min, idx_t{0});
-                        jj_max = std::min(jj_max, grid_->nx(j) - 1);
+                        jj_max = std::min(jj_max, grid_->nx(j) - idx_t{1});
                     }
                     for (idx_t jj = jj_min; jj <= jj_max; ++jj) {
                         idx_t jjj    = compute_j(jj);
                         idx_t nx_jjj = grid_->nx(jjj);
-                        idx_t last   = grid_->nx(jjj) - 1;
+                        idx_t last   = grid_->nx(jjj) - idx_t{1};
                         if (i == grid_->nx(j)) {
                             ++last;
                         }
@@ -427,13 +427,13 @@ void StructuredColumns::setup(const grid::Distribution& distribution, const ecki
 
                         if (regional) {
                             i_minus_halo = std::max(i_minus_halo, idx_t{0});
-                            i_plus_halo  = std::min(i_plus_halo, grid_->nx(jj) - 1);
+                            i_plus_halo  = std::min(i_plus_halo, grid_->nx(jj) - idx_t{1});
                         }
 
                         imin              = std::min(imin, i_minus_halo);
                         imax              = std::max(imax, i_plus_halo);
                         i_begin_halo_(jj) = std::min(i_begin_halo_(jj), i_minus_halo);
-                        i_end_halo_(jj)   = std::max(i_end_halo_(jj), i_plus_halo + 1);
+                        i_end_halo_(jj)   = std::max(i_end_halo_(jj), i_plus_halo + idx_t{1});
                     }
                 }
             }
