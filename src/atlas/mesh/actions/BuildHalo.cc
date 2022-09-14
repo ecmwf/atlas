@@ -14,6 +14,8 @@
 #include <limits>
 #include <numeric>
 #include <stdexcept>
+#include <unordered_map>
+#include <unordered_set>
 
 #include "atlas/array.h"
 #include "atlas/array/IndexView.h"
@@ -28,6 +30,8 @@
 #include "atlas/mesh/detail/AccumulateFacets.h"
 #include "atlas/parallel/mpi/Buffer.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/omp/omp.h"
+#include "atlas/parallel/omp/sort.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
@@ -428,7 +432,11 @@ private:
     std::vector<std::string> notes;
 };
 
-using Uid2Node = std::map<uid_t, idx_t>;
+using Uid2Node = std::unordered_map<uid_t, idx_t>;
+
+
+
+
 void build_lookup_uid2node(Mesh& mesh, Uid2Node& uid2node) {
     ATLAS_TRACE();
     Notification notes;
@@ -466,10 +474,12 @@ void build_lookup_uid2node(Mesh& mesh, Uid2Node& uid2node) {
     }
 }
 
+/// For given nodes, find new connected elements
 void accumulate_elements(const Mesh& mesh, const mpi::BufferView<uid_t>& request_node_uid, const Uid2Node& uid2node,
                          const Node2Elem& node2elem, std::vector<idx_t>& found_elements,
                          std::set<uid_t>& new_nodes_uid) {
-    // ATLAS_TRACE();
+
+    ATLAS_TRACE();
     const mesh::HybridElements::Connectivity& elem_nodes = mesh.cells().node_connectivity();
     const auto elem_part                                 = array::make_view<int, 1>(mesh.cells().partition());
 
@@ -477,7 +487,8 @@ void accumulate_elements(const Mesh& mesh, const mpi::BufferView<uid_t>& request
     const idx_t nb_request_nodes = static_cast<idx_t>(request_node_uid.size());
     const int mpi_rank           = static_cast<int>(mpi::rank());
 
-    std::set<idx_t> found_elements_set;
+    std::unordered_set<idx_t> found_elements_set;
+    found_elements_set.reserve(nb_request_nodes*2);
 
     for (idx_t jnode = 0; jnode < nb_request_nodes; ++jnode) {
         uid_t uid = request_node_uid(jnode);
@@ -682,7 +693,7 @@ public:
 
     template <typename NodeContainer, typename ElementContainer>
     void fill_sendbuffer(Buffers& buf, const NodeContainer& nodes_uid, const ElementContainer& elems, const int p) {
-        // ATLAS_TRACE();
+        ATLAS_TRACE();
 
         idx_t nb_nodes = static_cast<idx_t>(nodes_uid.size());
         buf.node_glb_idx[p].resize(nb_nodes);
@@ -692,7 +703,7 @@ public:
         buf.node_xy[p].resize(2 * nb_nodes);
 
         idx_t jnode = 0;
-        typename NodeContainer::iterator it;
+        typename NodeContainer::const_iterator it;
         for (it = nodes_uid.begin(); it != nodes_uid.end(); ++it, ++jnode) {
             uid_t uid = *it;
 
@@ -758,7 +769,7 @@ public:
         buf.node_xy[p].resize(2 * nb_nodes);
 
         int jnode = 0;
-        typename NodeContainer::iterator it;
+        typename NodeContainer::const_iterator it;
         for (it = nodes_uid.begin(); it != nodes_uid.end(); ++it, ++jnode) {
             uid_t uid = *it;
 
@@ -938,11 +949,11 @@ public:
         std::set<uid_t> new_elem_uid;
         {
             ATLAS_TRACE("compute elem_uid");
-            for (int jelem = 0; jelem < nb_elems; ++jelem) {
+            atlas_omp_parallel_for (int jelem = 0; jelem < nb_elems; ++jelem) {
                 elem_uid[jelem * 2 + 0] = -compute_uid(elem_nodes->row(jelem));
                 elem_uid[jelem * 2 + 1] = cell_gidx(jelem);
             }
-            std::sort(elem_uid.begin(), elem_uid.end());
+            omp::sort(elem_uid.begin(), elem_uid.end());
         }
         auto element_already_exists = [&elem_uid, &new_elem_uid](uid_t uid) -> bool {
             std::vector<uid_t>::iterator it = std::lower_bound(elem_uid.begin(), elem_uid.end(), uid);
@@ -1202,15 +1213,17 @@ void increase_halo_interior(BuildHaloHelper& helper) {
 
     gather_bdry_nodes(helper, send_bdry_nodes_uid, recv_bdry_nodes_uid_from_parts);
 
+    {
+        runtime::trace::Barriers set_barriers(false);
+        runtime::trace::Logging set_logging(false);
 #ifndef ATLAS_103
     /* deprecated */
-    for (idx_t jpart = 0; jpart < mpi_size; ++jpart)
+    atlas_omp_parallel_for (idx_t jpart = 0; jpart < mpi_size; ++jpart)
 #else
     const Mesh::PartitionGraph::Neighbours neighbours = helper.mesh.nearestNeighbourPartitions();
     for (idx_t jpart : neighbours)
 #endif
     {
-
         // 3) Find elements and nodes completing these elements in
         //    other tasks that have my nodes through its UID
 
@@ -1224,6 +1237,7 @@ void increase_halo_interior(BuildHaloHelper& helper) {
 
         // 4) Fill node and element buffers to send back
         helper.fill_sendbuffer(sendmesh, found_bdry_nodes_uid, found_bdry_elems, jpart);
+    }
     }
 
     // 5) Now communicate all buffers
@@ -1312,9 +1326,12 @@ void increase_halo_periodic(BuildHaloHelper& helper, const PeriodicPoints& perio
     gather_bdry_nodes(helper, send_bdry_nodes_uid, recv_bdry_nodes_uid_from_parts,
                       /* periodic = */ true);
 
+    {
+        runtime::trace::Barriers set_barriers(false);
+        runtime::trace::Logging set_logging(false);
 #ifndef ATLAS_103
     /* deprecated */
-    for (idx_t jpart = 0; jpart < mpi_size; ++jpart)
+    atlas_omp_parallel_for (idx_t jpart = 0; jpart < mpi_size; ++jpart)
 #else
     Mesh::PartitionGraph::Neighbours neighbours = helper.mesh.nearestNeighbourPartitions();
     // add own rank to neighbours to allow periodicity with self (pole caps)
@@ -1323,6 +1340,7 @@ void increase_halo_periodic(BuildHaloHelper& helper, const PeriodicPoints& perio
     for (idx_t jpart : neighbours)
 #endif
     {
+
         // 3) Find elements and nodes completing these elements in
         //    other tasks that have my nodes through its UID
 
@@ -1336,6 +1354,7 @@ void increase_halo_periodic(BuildHaloHelper& helper, const PeriodicPoints& perio
 
         // 4) Fill node and element buffers to send back
         helper.fill_sendbuffer(sendmesh, found_bdry_nodes_uid, found_bdry_elems, transform, newflags, jpart);
+    }
     }
 
     // 5) Now communicate all buffers
