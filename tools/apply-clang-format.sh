@@ -105,9 +105,9 @@ if [[ $all =~ "yes" ]]; then
    
     cd $SCRIPTDIR/../atlas_io
     if [[ $dryrun =~ "yes" ]]; then
-        echo "+ find . -iname *.h -o -iname *.cc | xargs clang-format -i -style=file"
+        echo "+ find . -iname \"*.h\" -o -iname \"*.cc\" | xargs clang-format -i -style=file"
     else
-        find . -iname *.h -o -iname *.cc | xargs clang-format -i -style=file
+        find . -iname "*.h" -o -iname "*.cc" | xargs clang-format -i -style=file
     fi
 
 else
@@ -120,10 +120,10 @@ else
             fi
             cd $1
             if [[ $dryrun =~ "yes" ]]; then
-                echo "+ find . -iname *.h -o -iname *.cc | xargs clang-format -i -style=file"
-                find . -iname *.h -o -iname *.cc | xargs echo
+                echo "+ find . -iname \"*.h\" -o -iname \"*.cc\" | xargs clang-format -i -style=file"
+                find . -iname "*.h" -o -iname "*.cc" | xargs echo
             else
-                find . -iname *.h -o -iname *.cc | xargs clang-format -i -style=file
+                find . -iname "*.h" -o -iname "*.cc" | xargs clang-format -i -style=file
             fi
             shift
         else
