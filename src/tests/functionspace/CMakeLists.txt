@@ -76,7 +76,9 @@ ecbuild_add_test( TARGET atlas_test_structuredcolumns
 ecbuild_add_test( TARGET atlas_test_pointcloud
   SOURCES  test_pointcloud.cc
   LIBS     atlas
+  MPI 2
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION eckit_HAVE_MPI
 )
 
 ecbuild_add_test( TARGET atlas_test_reduced_halo

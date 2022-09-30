@@ -12,6 +12,7 @@
 #include "atlas/functionspace/PointCloud.h"
 #include "atlas/array.h"
 #include "atlas/field/Field.h"
+#include "atlas/field/FieldSet.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Iterator.h"
 #include "atlas/option/Options.h"
@@ -56,6 +57,9 @@ PointCloud::PointCloud(const std::vector<PointXYZ>& points) {
 PointCloud::PointCloud(const Field& lonlat): lonlat_(lonlat) {}
 
 PointCloud::PointCloud(const Field& lonlat, const Field& ghost): lonlat_(lonlat), ghost_(ghost) {}
+
+PointCloud::PointCloud(const FieldSet &flds): lonlat_(flds["lonlat"]),
+  ghost_(flds["ghost"]), remote_index_(flds["remote index"]), partition_(flds["partition"]) {}
 
 PointCloud::PointCloud(const Grid& grid) {
     lonlat_     = Field("lonlat", array::make_datatype<double>(), array::make_shape(grid.size(), 2));

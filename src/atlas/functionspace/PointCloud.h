@@ -33,6 +33,9 @@ public:
     PointCloud(const std::vector<Point>&);
     PointCloud(const Field& lonlat);
     PointCloud(const Field& lonlat, const Field& ghost);
+
+    PointCloud(const FieldSet& flds);  // assuming lonlat ghost ridx and partition present.
+
     PointCloud(const Grid&);
     virtual ~PointCloud() override {}
     virtual std::string type() const override { return "PointCloud"; }
@@ -133,6 +136,8 @@ private:
     Field lonlat_;
     Field vertical_;
     mutable Field ghost_;
+    Field remote_index_;
+    Field partition_;
     idx_t levels_{0};
 };
 
@@ -146,6 +151,7 @@ class PointCloud : public FunctionSpace {
 public:
     PointCloud(const FunctionSpace&);
     PointCloud(const Field& points);
+    PointCloud(const FieldSet& flds);
     PointCloud(const std::vector<PointXY>&);
     PointCloud(const std::vector<PointXYZ>&);
     PointCloud(const std::initializer_list<std::initializer_list<double>>&);
