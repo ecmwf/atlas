@@ -248,6 +248,27 @@ void dispatch_haloExchange(Field& field, const parallel::HaloExchange& halo_exch
     }
     field.set_dirty(false);
 }
+
+template <int RANK>
+void dispatch_adjointHaloExchange(Field& field, const parallel::HaloExchange& halo_exchange, bool on_device) {
+    if (field.datatype() == array::DataType::kind<int>()) {
+        halo_exchange.template execute_adjoint<int, RANK>(field.array(), on_device);
+    }
+    else if (field.datatype() == array::DataType::kind<long>()) {
+        halo_exchange.template execute_adjoint<long, RANK>(field.array(), on_device);
+    }
+    else if (field.datatype() == array::DataType::kind<float>()) {
+        halo_exchange.template execute_adjoint<float, RANK>(field.array(), on_device);
+    }
+    else if (field.datatype() == array::DataType::kind<double>()) {
+        halo_exchange.template execute_adjoint<double, RANK>(field.array(), on_device);
+    }
+    else {
+        throw_Exception("datatype not supported", Here());
+    }
+    field.set_dirty(false);
+}
+
 }  // namespace
 
 void PointCloud::haloExchange(const FieldSet& fieldset, bool on_device) const {
@@ -272,10 +293,39 @@ void PointCloud::haloExchange(const FieldSet& fieldset, bool on_device) const {
         field.set_dirty(false);
     }
 }
+
 void PointCloud::haloExchange(const Field& field, bool on_device) const {
     FieldSet fieldset;
     fieldset.add(field);
     haloExchange(fieldset, on_device);
+}
+
+void PointCloud::adjointHaloExchange(const FieldSet& fieldset, bool on_device) const {
+    for (idx_t f = 0; f < fieldset.size(); ++f) {
+        Field& field = const_cast<FieldSet&>(fieldset)[f];
+        switch (field.rank()) {
+            case 1:
+                dispatch_adjointHaloExchange<1>(field, halo_exchange(), on_device);
+                break;
+            case 2:
+                dispatch_adjointHaloExchange<2>(field, halo_exchange(), on_device);
+                break;
+            case 3:
+                dispatch_adjointHaloExchange<3>(field, halo_exchange(), on_device);
+                break;
+            case 4:
+                dispatch_adjointHaloExchange<4>(field, halo_exchange(), on_device);
+                break;
+            default:
+                throw_Exception("Rank not supported", Here());
+        }
+    }
+}
+
+void PointCloud::adjointHaloExchange(const Field& field, bool) const {
+    FieldSet fieldset;
+    fieldset.add(field);
+    adjointHaloExchange(fieldset);
 }
 
 

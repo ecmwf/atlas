@@ -63,6 +63,10 @@ public:
 
     virtual void haloExchange(const FieldSet&, bool on_device = false) const override;
     virtual void haloExchange(const Field&, bool on_device = false) const override;
+
+    virtual void adjointHaloExchange(const FieldSet&, bool on_device = false) const override;
+    virtual void adjointHaloExchange(const Field&, bool on_device = false) const override;
+
     const parallel::HaloExchange& halo_exchange() const;
 
     template <typename Point>
