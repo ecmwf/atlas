@@ -19,7 +19,6 @@
 #include "atlas/parallel/HaloExchange.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
-#include "atlas/util/detail/Cache.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Metadata.h"
 
