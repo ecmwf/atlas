@@ -64,11 +64,13 @@ PointCloud::PointCloud(const Field& lonlat, const Field& ghost): lonlat_(lonlat)
 PointCloud::PointCloud(const FieldSet & flds): lonlat_(flds["lonlat"]),
   ghost_(flds["ghost"]), remote_index_(flds["remote_index"]), partition_(flds["partition"])
 {
-  halo_exchange_ = std::make_unique<parallel::HaloExchange>();
-  halo_exchange_->setup(array::make_view<int, 1>( partition_).data(),
-                        array::make_view<idx_t, 1>(remote_index_).data(),
-                        0,
-                        ghost_.size());
+    ATLAS_ASSERT(ghost_.size() == remote_index_.size());
+    ATLAS_ASSERT(ghost_.size() == partition_.size());
+    halo_exchange_ = std::make_unique<parallel::HaloExchange>();
+    halo_exchange_->setup(array::make_view<int, 1>( partition_).data(),
+                          array::make_view<idx_t, 1>(remote_index_).data(),
+                          0,
+                          ghost_.size());
 }
 
 PointCloud::PointCloud(const Grid& grid) {
