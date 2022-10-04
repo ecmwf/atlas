@@ -16,7 +16,10 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Iterator.h"
 #include "atlas/option/Options.h"
+#include "atlas/parallel/HaloExchange.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
+#include "atlas/util/detail/Cache.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Metadata.h"
 
@@ -58,8 +61,15 @@ PointCloud::PointCloud(const Field& lonlat): lonlat_(lonlat) {}
 
 PointCloud::PointCloud(const Field& lonlat, const Field& ghost): lonlat_(lonlat), ghost_(ghost) {}
 
-PointCloud::PointCloud(const FieldSet &flds): lonlat_(flds["lonlat"]),
-  ghost_(flds["ghost"]), remote_index_(flds["remote index"]), partition_(flds["partition"]) {}
+PointCloud::PointCloud(const FieldSet & flds): lonlat_(flds["lonlat"]),
+  ghost_(flds["ghost"]), remote_index_(flds["remote_index"]), partition_(flds["partition"])
+{
+  halo_exchange_ = std::make_unique<parallel::HaloExchange>();
+  halo_exchange_->setup(array::make_view<int, 1>( partition_).data(),
+                        array::make_view<idx_t, 1>(remote_index_).data(),
+                        0,
+                        ghost_.size());
+}
 
 PointCloud::PointCloud(const Grid& grid) {
     lonlat_     = Field("lonlat", array::make_datatype<double>(), array::make_shape(grid.size(), 2));
@@ -125,6 +135,12 @@ std::string PointCloud::config_name(const eckit::Configuration& config) const {
     return name;
 }
 
+
+const parallel::HaloExchange& PointCloud::halo_exchange() const {
+    return *halo_exchange_;
+}
+
+
 void PointCloud::set_field_metadata(const eckit::Configuration& config, Field& field) const {
     field.set_functionspace(this);
 
@@ -165,7 +181,7 @@ Field PointCloud::createField(const Field& other, const eckit::Configuration& co
 }
 
 std::string PointCloud::distribution() const {
-    return std::string("serial");
+    return (partition_ ?  std::string("pointcloud") : std::string("serial"));
 }
 
 static const array::Array& get_dummy() {
@@ -210,12 +226,68 @@ template class PointCloud::IteratorT<PointXYZ>;
 template class PointCloud::IteratorT<PointXY>;
 template class PointCloud::IteratorT<PointLonLat>;
 
+
+namespace {
+
+template <int RANK>
+void dispatch_haloExchange(Field& field, const parallel::HaloExchange& halo_exchange, bool on_device) {
+    if (field.datatype() == array::DataType::kind<int>()) {
+        halo_exchange.template execute<int, RANK>(field.array(), on_device);
+    }
+    else if (field.datatype() == array::DataType::kind<long>()) {
+        halo_exchange.template execute<long, RANK>(field.array(), on_device);
+    }
+    else if (field.datatype() == array::DataType::kind<float>()) {
+        halo_exchange.template execute<float, RANK>(field.array(), on_device);
+    }
+    else if (field.datatype() == array::DataType::kind<double>()) {
+        halo_exchange.template execute<double, RANK>(field.array(), on_device);
+    }
+    else {
+        throw_Exception("datatype not supported", Here());
+    }
+    field.set_dirty(false);
+}
+}  // namespace
+
+void PointCloud::haloExchange(const FieldSet& fieldset, bool on_device) const {
+    for (idx_t f = 0; f < fieldset.size(); ++f) {
+        Field& field = const_cast<FieldSet&>(fieldset)[f];
+        switch (field.rank()) {
+            case 1:
+                dispatch_haloExchange<1>(field, halo_exchange(), on_device);
+                break;
+            case 2:
+                dispatch_haloExchange<2>(field, halo_exchange(), on_device);
+                break;
+            case 3:
+                dispatch_haloExchange<3>(field, halo_exchange(), on_device);
+                break;
+            case 4:
+                dispatch_haloExchange<4>(field, halo_exchange(), on_device);
+                break;
+            default:
+                throw_Exception("Rank not supported", Here());
+        }
+        field.set_dirty(false);
+    }
+}
+void PointCloud::haloExchange(const Field& field, bool on_device) const {
+    FieldSet fieldset;
+    fieldset.add(field);
+    haloExchange(fieldset, on_device);
+}
+
+
 }  // namespace detail
 
 PointCloud::PointCloud(const FunctionSpace& functionspace):
     FunctionSpace(functionspace), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
 
 PointCloud::PointCloud(const Field& points):
+    FunctionSpace(new detail::PointCloud(points)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
+
+PointCloud::PointCloud(const FieldSet& points):
     FunctionSpace(new detail::PointCloud(points)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
 
 PointCloud::PointCloud(const std::vector<PointXY>& points):

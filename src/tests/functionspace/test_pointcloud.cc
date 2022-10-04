@@ -9,8 +9,10 @@
  */
 
 #include "atlas/array.h"
+#include "atlas/field.h"
 #include "atlas/functionspace/PointCloud.h"
 #include "atlas/option.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -157,6 +159,78 @@ CASE("test_createField") {
 
 CASE("test_createFieldSet") {
 
+  Field lonlat("lonlat", array::make_datatype<double>(), array::make_shape(12, 2));
+  Field ghost("ghost", array::make_datatype<int>(), array::make_shape(12));
+  Field remote_index("remote_index", array::make_datatype<int>(), array::make_shape(12));
+  Field partition("partition", array::make_datatype<int>(), array::make_shape(12));
+
+  auto lonlatv = array::make_view<double, 2>(lonlat);
+  auto ghostv = array::make_view<int, 1>(ghost);
+  auto remote_indexv = array::make_view<int, 1>(remote_index);
+  auto partitionv = array::make_view<int, 1>(partition);
+
+  ghostv.assign({ 0, 0, 0, 0,
+                  1, 1, 1, 1, 1, 1, 1, 1});
+
+  remote_indexv.assign({0, 1, 2, 3, 1, 0, 0, 2, 2, 3, 1});
+
+
+  if (atlas::mpi::rank() == 0) {
+    // center followed by clockwise halo starting from top left
+    lonlatv.assign({-45.0, 45.0,
+                    45.0,  45.0,
+                   -45.0, -45.0,
+                    -45.0, 45.0,  // center
+                    225.0, 45.0, 135.0, 45.0,  // up
+                    135.0, 45.0, 135.0, -45.0,  //left
+                    135.0, -45.0, 135.0, 45.0,  // down
+                    135.0, 45.0,   225.0, 45.0}); // right
+
+    partitionv.assign({0, 0, 0, 0,
+                       1, 1, 1, 1, 1, 1, 1, 1});
+
+
+
+  } else if (atlas::mpi::rank() == 1) {
+    // center followed by clockwise halo starting from top left
+    lonlatv.assign({135.0, 45.0, 225.0, 45.0, 135.0, -45.0, 135.0, 45.0, // center
+                    45.0, 45.0, -45.0, 45.0, // up
+                   -45.0, 45.0, -45.0, -45.0, // left
+                   -45.0, -45.0, -45.0, 45.0, // down
+                   -45.0, 45.0,   45.0, 45.0}); // right
+
+    partitionv.assign({1, 1, 1, 1,
+                       0, 0, 0, 0, 0, 0, 0, 0});
+
+  }
+
+  atlas::FieldSet fset;
+  fset.add(lonlat);
+  fset.add(ghost);
+  fset.add(remote_index);
+  fset.add(partition);
+
+  auto fs2 = functionspace::PointCloud(fset);
+  Field f2 = fs2.createField<double>(option::name("f1") | option::levels(2) | option::halo(1));
+  auto f2v = array::make_view<double, 2>(f2);
+
+  f2v.assign(0.0);
+  for (idx_t i = 0; i < f2v.shape(0); ++i) {
+    for (idx_t l = 0; l < f2v.shape(1); ++l) {
+      auto ghostv2 = array::make_view<int, 1>(fs2.ghost());
+      if (ghostv2(i) == 0) {
+        f2v(i, l) = (atlas::mpi::rank() +1) * 10.0  + i;
+      }
+    }
+  }
+
+  f2.haloExchange();
+
+  for (idx_t i = 0; i < f2v.shape(0); ++i) {
+    for (idx_t l = 0; l < f2v.shape(1); ++l) {
+      std::cout << "i l rank value = " << i << " " << l << " " << atlas::mpi::rank() << " " << f2v(i, l) << std::endl;
+    }
+  }
 
 
 
