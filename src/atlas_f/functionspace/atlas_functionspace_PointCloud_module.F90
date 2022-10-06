@@ -14,6 +14,7 @@ use fckit_c_interop_module, only : c_str, c_ptr_to_string, c_ptr_free
 use atlas_functionspace_module, only : atlas_FunctionSpace
 use atlas_Grid_module, only: atlas_Grid
 use atlas_Field_module, only: atlas_Field
+use atlas_FieldSet_module, only: atlas_FieldSet
 use atlas_kinds_module, only: ATLAS_KIND_GIDX
 
 implicit none
@@ -21,6 +22,7 @@ implicit none
 private :: c_str, c_ptr_to_string, c_ptr_free
 private :: atlas_FunctionSpace
 private :: atlas_Field
+private :: atlas_FieldSet
 private :: atlas_Grid
 private :: ATLAS_KIND_GIDX
 
@@ -54,6 +56,7 @@ interface atlas_functionspace_PointCloud
   module procedure ctor_cptr
   module procedure ctor_lonlat
   module procedure ctor_lonlat_ghost
+  module procedure ctor_fieldset
   module procedure ctor_grid
 end interface
 
@@ -91,6 +94,16 @@ function ctor_lonlat_ghost(lonlat,ghost) result(this)
   class(atlas_Field), intent(in) :: lonlat
   class(atlas_Field), intent(in) :: ghost
   call this%reset_c_ptr( atlas__functionspace__PointCloud__new__lonlat_ghost( lonlat%CPTR_PGIBUG_A, ghost%CPTR_PGIBUG_A  ) )
+  call this%return()
+end function
+
+!------------------------------------------------------------------------------
+
+function ctor_fieldset(fset) result(this)
+  use atlas_functionspace_PointCloud_c_binding
+  type(atlas_functionspace_PointCloud) :: this
+  class(atlas_FieldSet), intent(in) :: fset
+  call this%reset_c_ptr( atlas__functionspace__PointCloud__new__fieldset( fset%CPTR_PGIBUG_A  ) )
   call this%return()
 end function
 

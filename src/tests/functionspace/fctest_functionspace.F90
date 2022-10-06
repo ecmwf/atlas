@@ -587,14 +587,18 @@ END_TEST
 
 TEST( test_pointcloud )
 #if 1
+implicit none
 type(atlas_StructuredGrid) :: grid
 type(atlas_functionspace_PointCloud) :: fs
 type(atlas_functionspace) :: fs_base
+type(atlas_trace) :: trace
 character(len=10) str
 
 type(atlas_Field) :: field, field2
 type(atlas_Field) :: field_lonlat
 real(8), pointer  :: lonlat(:,:), x(:)
+
+trace = atlas_Trace("fctest_functionspace.F90",__LINE__,"test_pointcloud")
 
 grid = atlas_Grid("O8")
 fs = atlas_functionspace_PointCloud(grid)
@@ -642,6 +646,112 @@ call grid%final()
 #warning test test_pointcloud disabled
 #endif
 END_TEST
+
+TEST( test_pointcloud_partition_remote )
+#if 1
+use fckit_module
+implicit none
+
+type(atlas_functionspace_PointCloud) :: fs
+type(atlas_Field) :: fld_points
+type(atlas_Field) :: fld_ghost
+type(atlas_Field) :: fld_partition
+type(atlas_Field) :: fld_remote_index
+type(atlas_Field) :: fld_values
+type(atlas_Field) :: fld_values_save
+type(atlas_FieldSet) :: fset
+
+type(atlas_functionspace) :: fs_base
+type(atlas_trace) :: trace
+
+integer i, k
+integer rank
+real space
+real(c_double), allocatable :: point_values(:,:)
+integer(c_int), dimension(4) :: ghost_values
+integer(c_int), dimension(4) :: partition_index
+integer(c_int), dimension(4) :: remote_index
+integer(c_int), pointer :: field_values(:,:)
+integer(c_int), pointer :: field_values_save(:,:)
+
+trace = atlas_Trace("fctest_functionspace.F90",__LINE__,"test_pointcloud_partition_remote")
+rank = fckit_mpi%rank()
+
+space = 360.0 /(2.0 * rank)
+fset = atlas_FieldSet()
+
+allocate(point_values(2, 4))
+
+point_values = reshape((/space * (2 * rank - 1), 0.0, &
+                         space * (2 * rank), 0.0, &
+                         space * (2 * rank + 1), 0.0, &
+                         space * (2 * rank + 2), 0.0/), shape(point_values))
+fld_points = atlas_Field("lonlat", point_values(:, :))
+call fset%add(fld_points)
+
+trace = atlas_Trace("fctest_functionspace.F90",__LINE__,"test_pointcloud_partition_remote")
+
+ghost_values = (/ 0, 0, 1, 1 /)
+fld_ghost = atlas_Field("ghost", ghost_values(:))
+call fset%add(fld_ghost)
+
+partition_index = (/ rank, rank, rank - 1,  rank + 1 /)
+if (partition_index(3) < 0) partition_index(3) = fckit_mpi%size() - 1
+if (partition_index(4) == fckit_mpi%size()) partition_index(4) = 0
+fld_partition = atlas_Field("partition", ghost_values(:))
+call fset%add(fld_partition)
+
+trace = atlas_Trace("fctest_functionspace.F90",__LINE__,"test_pointcloud_partition_remote")
+
+remote_index = (/ 0, 1, 1, 0 /)
+fld_remote_index = atlas_Field("remote_index", remote_index(:))
+call fset%add(fld_remote_index)
+
+trace = atlas_Trace("fctest_functionspace.F90",__LINE__,"test_pointcloud_partition_remote")
+
+fs = atlas_functionspace_PointCloud(fset)
+fld_values = fs%create_field(name="values", kind=atlas_integer(c_int), levels=2)
+call fld_values%data(field_values)
+fld_values_save = fs%create_field(name="values_save", kind=atlas_integer(c_int), levels=2)
+call fld_values_save%data(field_values_save)
+
+do i = 1, 4
+  do k = 1, 2
+    if (i > 2) then
+      field_values_save(i, k) = 0
+      field_values(i, k) = 0
+    else
+      field_values(i, k) = 2 * rank + (i - 1)
+      field_values_save(i, k) =  2 * rank + (i - 1)
+    end if
+  end do
+end do
+
+trace = atlas_Trace("fctest_functionspace.F90",__LINE__,"test_pointcloud_partition_remote")
+
+do i = 1, 4
+  do k = 1, 1
+    print*, "before halo_exchange", rank, i , k, field_values(i, k), field_values_save(i, k)
+  end do
+end do
+
+call fs%halo_exchange(fld_values)
+
+trace = atlas_Trace("fctest_functionspace.F90",__LINE__,"test_pointcloud_partition_remote")
+
+do i = 1, 4
+  do k = 1, 1
+    print*, "halo_exchange effect", rank, i , k, field_values(i, k), field_values_save(i, k)
+  end do
+end do
+
+trace = atlas_Trace("fctest_functionspace.F90",__LINE__,"test_pointcloud_partition_remote")
+
+#else
+#warning test_pointcloud_partition_remote disabled
+#endif
+END_TEST
+
 
 
 
