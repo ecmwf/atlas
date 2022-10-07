@@ -670,14 +670,17 @@ real space
 real(c_double), allocatable :: point_values(:,:)
 integer(c_int), dimension(4) :: ghost_values
 integer(c_int), dimension(4) :: partition_index
-integer(c_int), dimension(4) :: remote_index
+integer(ATLAS_KIND_IDX), dimension(4) :: remote_index
 integer(c_int), pointer :: field_values(:,:)
 integer(c_int), pointer :: field_values_save(:,:)
+
+
+integer(c_int), pointer :: field_values_tmp(:,:)
 
 trace = atlas_Trace("fctest_functionspace.F90",__LINE__,"test_pointcloud_partition_remote")
 rank = fckit_mpi%rank()
 
-space = 360.0 /(2.0 * rank)
+space = 360.0 /(2.0 * fckit_mpi%size())
 fset = atlas_FieldSet()
 
 allocate(point_values(2, 4))
@@ -698,7 +701,7 @@ call fset%add(fld_ghost)
 partition_index = (/ rank, rank, rank - 1,  rank + 1 /)
 if (partition_index(3) < 0) partition_index(3) = fckit_mpi%size() - 1
 if (partition_index(4) == fckit_mpi%size()) partition_index(4) = 0
-fld_partition = atlas_Field("partition", ghost_values(:))
+fld_partition = atlas_Field("partition", partition_index(:))
 call fset%add(fld_partition)
 
 trace = atlas_Trace("fctest_functionspace.F90",__LINE__,"test_pointcloud_partition_remote")
@@ -710,10 +713,12 @@ call fset%add(fld_remote_index)
 trace = atlas_Trace("fctest_functionspace.F90",__LINE__,"test_pointcloud_partition_remote")
 
 fs = atlas_functionspace_PointCloud(fset)
+
 fld_values = fs%create_field(name="values", kind=atlas_integer(c_int), levels=2)
 call fld_values%data(field_values)
 fld_values_save = fs%create_field(name="values_save", kind=atlas_integer(c_int), levels=2)
 call fld_values_save%data(field_values_save)
+
 
 do i = 1, 4
   do k = 1, 2
@@ -726,6 +731,7 @@ do i = 1, 4
     end if
   end do
 end do
+
 
 trace = atlas_Trace("fctest_functionspace.F90",__LINE__,"test_pointcloud_partition_remote")
 
