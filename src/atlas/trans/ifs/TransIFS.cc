@@ -353,7 +353,6 @@ void TransIFS::invtrans_vordiv2wind_adj(const Field& gpwind, Field& spvor, Field
                                         const eckit::Configuration& config) const {
     ATLAS_ASSERT(Spectral(spvor.functionspace()));
     ATLAS_ASSERT(Spectral(spdiv.functionspace()));
-    ATLAS_ASSERT(NodeColumns(gpwind.functionspace()));
     if (StructuredColumns(gpwind.functionspace())) {
         __invtrans_vordiv2wind_adj(Spectral(spvor.functionspace()), spvor, spdiv,
                                    StructuredColumns(gpwind.functionspace()), gpwind, config);
