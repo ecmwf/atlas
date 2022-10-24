@@ -70,18 +70,6 @@ PointCloud::PointCloud(const FieldSet & flds): lonlat_(flds["lonlat"]),
                           array::make_view<idx_t, 1>(remote_index_).data(),
                           0,
                           ghost_.size());
-
-    auto lonlat = array::make_view<double, 2>(lonlat_);
-    auto ghost = array::make_view<int, 1>(ghost_);
-    auto partition = array::make_view<int, 1>(partition_);
-    auto remote_index = array::make_view<idx_t, 1>(remote_index_);
-    for (idx_t j = 0; j < ghost_.size(); ++j ) {
-      std::cout << "pointcloud constructor " << atlas::mpi::rank() << " " << j
-                << " lonlat " << lonlat(j, 0) << " " << lonlat(j, 1)  << " "
-                << " ghost " << ghost(j) << " "
-                << " partition " << partition(j) << " "
-                << " remote_index " << remote_index(j) << std::endl;
-    }
 }
 
 PointCloud::PointCloud(const Grid& grid) {
@@ -310,24 +298,9 @@ void PointCloud::haloExchange(const FieldSet& fieldset, bool on_device) const {
 }
 
 void PointCloud::haloExchange(const Field& field, bool on_device) const {
-
-    auto fldv = array::make_view<double, 2>(field);
-    for (idx_t j = 0; j < fldv.shape(0); ++j) {
-      std::cout << " PointCloud::haloExchange field before halo " << atlas::mpi::rank() << " "
-                << fldv(j, 0)
-                << std::endl;
-    }
-
     FieldSet fieldset;
     fieldset.add(field);
     haloExchange(fieldset, on_device);
-
-    auto fldv2 = array::make_view<double, 2>(fieldset[field.name()]);
-    for (idx_t j = 0; j < fldv2.shape(0); ++j) {
-      std::cout << "field after halo " << atlas::mpi::rank() << " "
-                << fldv2(j, 0)
-                << std::endl;
-    }
 }
 
 void PointCloud::adjointHaloExchange(const FieldSet& fieldset, bool on_device) const {

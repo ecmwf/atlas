@@ -704,14 +704,11 @@ point_values = reshape((/space * (2 * rank), 0.0, &
                          space * (2 * rank + 1), 0.0, &
                          space * (2 * rank - 1), 0.0, &
                          space * (2 * rank + 2), 0.0/), shape(point_values))
-print*, "point_values first ", rank, point_values(1,3)
 
-if (point_values(1,3) < 0.0) point_values(1,3) = 360.0 + point_values(1,3)
-if (point_values(1,4) > 360.0 - tol) point_values(1,4) = 0.0d0
+if (point_values(1, 3) < 0.0) point_values(1, 3) = 360.0 + point_values(1, 3)
+if (point_values(1, 4) > 360.0 - tol) point_values(1, 4) = 0.0d0
 fld_points = atlas_Field("lonlat", point_values(:, :))
 call fset%add(fld_points)
-
-trace = atlas_Trace("fctest_functionspace.F90",__LINE__,"test_pointcloud_partition_remote 1")
 
 ghost_values = (/ 0, 0, 1, 1 /)
 fld_ghost = atlas_Field("ghost", ghost_values(:))
@@ -723,13 +720,9 @@ if (partition_index(4) == fckit_mpi%size()) partition_index(4) = 0
 fld_partition = atlas_Field("partition", partition_index(:))
 call fset%add(fld_partition)
 
-trace = atlas_Trace("fctest_functionspace.F90",__LINE__,"test_pointcloud_partition_remote 2")
-
 remote_index = (/ 0, 1, 1, 0 /)
 fld_remote_index = atlas_Field("remote_index", remote_index(:))
 call fset%add(fld_remote_index)
-
-trace = atlas_Trace("fctest_functionspace.F90",__LINE__,"test_pointcloud_partition_remote 3")
 
 fs = atlas_functionspace_PointCloud(fset)
 fld_values = fs%create_field(name="values", kind=atlas_real(c_double), levels=1)
@@ -737,8 +730,6 @@ call fld_values%data(field_values)
 fld_values_save = fs%create_field(name="values_save", kind=atlas_real(c_double), levels=1)
 call fld_values_save%data(field_values_save)
 
-print*, "shape of field_values_save", shape(field_values_save)
-print*, "shape of field_values", shape(field_values)
 do i = 1, 4
   do k = 1, 1
     field_values(k, i) = point_values(1, i)
@@ -746,36 +737,26 @@ do i = 1, 4
   end do
 end do
 
-trace = atlas_Trace("fctest_functionspace.F90",__LINE__,"test_pointcloud_partition_remote 4")
-do i = 1, 4
-  do k = 1, 1
-    print*, "before halo_exchange", rank, i , k, field_values(k, i), field_values_save(k, i)
-  end do
-end do
-
 call fs%halo_exchange(fld_values)
 call fld_values%data(field_values_new)
 
-trace = atlas_Trace("fctest_functionspace.F90",__LINE__,"test_pointcloud_partition_remote 5")
 do i = 1, 4
   do k = 1, 1
     FCTEST_CHECK_CLOSE(field_values_new(k, i), field_values_save(k, i), tol)
-    print*, "halo_exchange effect", rank, i , k, field_values_new(k, i), field_values_save(k, i)
   end do
 end do
 
 call fs%adjoint_halo_exchange(fld_values)
 
-do i = 1, 2
+do i = 1, 4
   do k = 1, 1
-    FCTEST_CHECK_CLOSE(field_values_new(k, i), 2.0 * field_values_save(k, i), tol)
-
-    print*, "halo_exchange effect after adjoint", rank, i , k, field_values_new(k, i), &
-    field_values_save(k, i)
+    if (i < 3) then
+      FCTEST_CHECK_CLOSE(field_values_new(k, i), 2.0 * field_values_save(k, i), tol)
+    else
+      FCTEST_CHECK_CLOSE(field_values_new(k, i), 0.0_dp, tol)
+    end if
 end do
 end do
-
-trace = atlas_Trace("fctest_functionspace.F90",__LINE__,"test_pointcloud_partition_remote 6")
 
 #else
 #warning test_pointcloud_partition_remote disabled
