@@ -311,7 +311,7 @@ void PointCloud::haloExchange(const FieldSet& fieldset, bool on_device) const {
 
 void PointCloud::haloExchange(const Field& field, bool on_device) const {
 
-    auto fldv = array::make_view<int, 2>(field);
+    auto fldv = array::make_view<double, 2>(field);
     for (idx_t j = 0; j < fldv.shape(0); ++j) {
       std::cout << " PointCloud::haloExchange field before halo " << atlas::mpi::rank() << " "
                 << fldv(j, 0)
@@ -322,7 +322,7 @@ void PointCloud::haloExchange(const Field& field, bool on_device) const {
     fieldset.add(field);
     haloExchange(fieldset, on_device);
 
-    auto fldv2 = array::make_view<int, 2>(fieldset[field.name()]);
+    auto fldv2 = array::make_view<double, 2>(fieldset[field.name()]);
     for (idx_t j = 0; j < fldv2.shape(0); ++j) {
       std::cout << "field after halo " << atlas::mpi::rank() << " "
                 << fldv2(j, 0)
