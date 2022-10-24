@@ -674,6 +674,7 @@ integer(ATLAS_KIND_IDX), dimension(4) :: remote_index
 real(c_double), pointer :: field_values(:,:)
 real(c_double), pointer :: field_values_save(:,:)
 real(c_double), pointer :: field_values_new(:,:)
+real(c_double), parameter :: tol = 1.e-12_dp
 
 trace = atlas_Trace("fctest_functionspace.F90",__LINE__,"test_pointcloud_partition_remote")
 rank = fckit_mpi%rank()
@@ -706,6 +707,7 @@ point_values = reshape((/space * (2 * rank), 0.0, &
 print*, "point_values first ", rank, point_values(1,3)
 
 if (point_values(1,3) < 0.0) point_values(1,3) = 360.0 + point_values(1,3)
+if (point_values(1,4) > 360.0 - tol) point_values(1,4) = 0.0d0
 fld_points = atlas_Field("lonlat", point_values(:, :))
 call fset%add(fld_points)
 
@@ -757,8 +759,20 @@ call fld_values%data(field_values_new)
 trace = atlas_Trace("fctest_functionspace.F90",__LINE__,"test_pointcloud_partition_remote 5")
 do i = 1, 4
   do k = 1, 1
+    FCTEST_CHECK_CLOSE(field_values_new(k, i), field_values_save(k, i), tol)
     print*, "halo_exchange effect", rank, i , k, field_values_new(k, i), field_values_save(k, i)
   end do
+end do
+
+call fs%adjoint_halo_exchange(fld_values)
+
+do i = 1, 2
+  do k = 1, 1
+    FCTEST_CHECK_CLOSE(field_values_new(k, i), 2.0 * field_values_save(k, i), tol)
+
+    print*, "halo_exchange effect after adjoint", rank, i , k, field_values_new(k, i), &
+    field_values_save(k, i)
+end do
 end do
 
 trace = atlas_Trace("fctest_functionspace.F90",__LINE__,"test_pointcloud_partition_remote 6")
