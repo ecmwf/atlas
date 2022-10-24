@@ -80,27 +80,7 @@ void atlas__FunctionSpace__halo_exchange_field(const FunctionSpaceImpl* This, fi
     ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_FunctionSpace");
     ATLAS_ASSERT(field != nullptr, "Cannot access uninitialised atlas_Field");
     Field f(field);
-
-    if (f.datatype().kind() == array::DataType::KIND_INT32) {
-    auto fldv = array::make_view<int, 2>(f);
-    for (idx_t j = 0; j < fldv.shape(0); ++j) {
-      std::cout << "atlas__FunctionSpace__halo_exchange_field before halo " << atlas::mpi::rank() << " "
-                << fldv(j, 0)
-                << std::endl;
-    }
-    }
-
     This->haloExchange(f);
-
-    if (f.datatype().kind() == array::DataType::KIND_INT32) {
-    auto fldv2 = array::make_view<int, 2>(f);
-    for (idx_t j = 0; j < fldv2.shape(0); ++j) {
-      std::cout << "atlas__FunctionSpace__halo_exchange_field after halo " << atlas::mpi::rank() << " "
-                << fldv2(j, 0)
-                << std::endl;
-    }
-    }
-
 }
 
 //------------------------------------------------------------------------------
