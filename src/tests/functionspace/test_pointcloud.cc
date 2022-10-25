@@ -233,12 +233,12 @@ CASE("test_createFieldSet") {
   double tolerance(1e-16);
   Field lonlat("lonlat", array::make_datatype<double>(), array::make_shape(12, 2));
   Field ghost("ghost", array::make_datatype<int>(), array::make_shape(12));
-  Field remote_index("remote_index", array::make_datatype<int>(), array::make_shape(12));
+  Field remote_index("remote_index", array::make_datatype<idx_t>(), array::make_shape(12));
   Field partition("partition", array::make_datatype<int>(), array::make_shape(12));
 
   auto lonlatv = array::make_view<double, 2>(lonlat);
   auto ghostv = array::make_view<int, 1>(ghost);
-  auto remote_indexv = array::make_view<int, 1>(remote_index);
+  auto remote_indexv = array::make_indexview<idx_t, 1>(remote_index);
   auto partitionv = array::make_view<int, 1>(partition);
 
   ghostv.assign({ 0, 0, 0, 0,

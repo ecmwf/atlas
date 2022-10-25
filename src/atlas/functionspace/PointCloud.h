@@ -44,7 +44,7 @@ public:
     PointCloud(const Field& lonlat);
     PointCloud(const Field& lonlat, const Field& ghost);
 
-    PointCloud(const FieldSet& flds);  // assuming lonlat ghost ridx and partition present.
+    PointCloud(const FieldSet&);  // assuming lonlat ghost ridx and partition present.
 
     PointCloud(const Grid&);
     virtual ~PointCloud() override {}
