@@ -351,7 +351,6 @@ PointCloud::PointCloud(const std::vector<PointXY>& points):
 PointCloud::PointCloud(const std::vector<PointXYZ>& points):
     FunctionSpace(new detail::PointCloud(points)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
 
-
 PointCloud::PointCloud(const std::initializer_list<std::initializer_list<double>>& points):
     FunctionSpace((points.begin()->size() == 2
                        ? new detail::PointCloud{std::vector<PointXY>(points.begin(), points.end())}
