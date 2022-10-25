@@ -720,7 +720,7 @@ if (partition_index(4) == fckit_mpi%size()) partition_index(4) = 0
 fld_partition = atlas_Field("partition", partition_index(:))
 call fset%add(fld_partition)
 
-remote_index = (/ 0, 1, 1, 0 /)
+remote_index = (/ 1, 2, 2, 1 /)
 fld_remote_index = atlas_Field("remote_index", remote_index(:))
 call fset%add(fld_remote_index)
 
