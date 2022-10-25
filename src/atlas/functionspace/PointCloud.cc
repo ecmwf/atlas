@@ -68,7 +68,7 @@ PointCloud::PointCloud(const FieldSet & flds): lonlat_(flds["lonlat"]),
     halo_exchange_.reset(new parallel::HaloExchange());
     halo_exchange_->setup(array::make_view<int, 1>( partition_).data(),
                           array::make_view<idx_t, 1>(remote_index_).data(),
-                          0,
+                          REMOTE_IDX_BASE,
                           ghost_.size());
 }
 
