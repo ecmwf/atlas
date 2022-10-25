@@ -14,11 +14,6 @@ if( HAVE_FCTEST )
     set( ectrans_HAVE_MPI 1 )
   endif()
 
-  ecbuild_warn_var( HAVE_TRANS )
-  ecbuild_warn_var( eckit_HAVE_MPI )
-  ecbuild_warn_var( transi_HAVE_MPI )
-
-
   add_fctest( TARGET atlas_fctest_functionspace
     MPI             4
     CONDITION       eckit_HAVE_MPI AND (transi_HAVE_MPI OR ectrans_HAVE_MPI)
@@ -76,7 +71,9 @@ ecbuild_add_test( TARGET atlas_test_structuredcolumns
 ecbuild_add_test( TARGET atlas_test_pointcloud
   SOURCES  test_pointcloud.cc
   LIBS     atlas
+  MPI 2
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION eckit_HAVE_MPI AND NOT HAVE_GRIDTOOLS_STORAGE
 )
 
 ecbuild_add_test( TARGET atlas_test_reduced_halo
