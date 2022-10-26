@@ -435,8 +435,6 @@ private:
 using Uid2Node = std::unordered_map<uid_t, idx_t>;
 
 
-
-
 void build_lookup_uid2node(Mesh& mesh, Uid2Node& uid2node) {
     ATLAS_TRACE();
     Notification notes;
@@ -452,21 +450,21 @@ void build_lookup_uid2node(Mesh& mesh, Uid2Node& uid2node) {
         uid_t uid     = compute_uid(jnode);
         bool inserted = uid2node.insert(std::make_pair(uid, jnode)).second;
         if (not inserted) {
-            int other = uid2node[uid];
-            std::stringstream msg;
-            msg << std::setprecision(10) << std::fixed << "Node uid: " << uid << "   " << glb_idx(jnode) << " xy("
-                << xy(jnode, XX) << "," << xy(jnode, YY) << ")";
-            if (nodes.has_field("ij")) {
-                auto ij = array::make_view<idx_t, 2>(nodes.field("ij"));
-                msg << " ij(" << ij(jnode, XX) << "," << ij(jnode, YY) << ")";
-            }
-            msg << " has already been added as node " << glb_idx(other) << " (" << xy(other, XX) << "," << xy(other, YY)
-                << ")";
-            if (nodes.has_field("ij")) {
-                auto ij = array::make_view<idx_t, 2>(nodes.field("ij"));
-                msg << " ij(" << ij(other, XX) << "," << ij(other, YY) << ")";
-            }
-            notes.add_error(msg.str());
+                int other = uid2node[uid];
+                std::stringstream msg;
+                msg << std::setprecision(10) << std::fixed << "Node uid: " << uid << "   " << glb_idx(jnode) << " xy("
+                    << xy(jnode, XX) << "," << xy(jnode, YY) << ")";
+                if (nodes.has_field("ij")) {
+                    auto ij = array::make_view<idx_t, 2>(nodes.field("ij"));
+                    msg << " ij(" << ij(jnode, XX) << "," << ij(jnode, YY) << ")";
+                }
+                msg << " has already been added as node " << glb_idx(other) << " (" << xy(other, XX) << "," << xy(other, YY)
+                    << ")";
+                if (nodes.has_field("ij")) {
+                    auto ij = array::make_view<idx_t, 2>(nodes.field("ij"));
+                    msg << " ij(" << ij(other, XX) << "," << ij(other, YY) << ")";
+                }
+                notes.add_error(msg.str());
         }
     }
     if (notes.error()) {
@@ -495,7 +493,7 @@ void accumulate_elements(const Mesh& mesh, const mpi::BufferView<uid_t>& request
 
         idx_t inode = -1;
         // search and get node index for uid
-        Uid2Node::const_iterator found = uid2node.find(uid);
+        auto found = uid2node.find(uid);
         if (found != uid2node.end()) {
             inode = found->second;
         }
@@ -707,7 +705,7 @@ public:
         for (it = nodes_uid.begin(); it != nodes_uid.end(); ++it, ++jnode) {
             uid_t uid = *it;
 
-            Uid2Node::iterator found = uid2node.find(uid);
+            auto found = uid2node.find(uid);
             if (found != uid2node.end())  // Point exists inside domain
             {
                 idx_t node                     = found->second;
@@ -773,7 +771,7 @@ public:
         for (it = nodes_uid.begin(); it != nodes_uid.end(); ++it, ++jnode) {
             uid_t uid = *it;
 
-            Uid2Node::iterator found = uid2node.find(uid);
+            auto found = uid2node.find(uid);
             if (found != uid2node.end())  // Point exists inside domain
             {
                 int node                       = found->second;
@@ -919,7 +917,7 @@ public:
                 // make sure new node was not already there
                 {
                     uid_t uid                = compute_uid(loc_idx);
-                    Uid2Node::iterator found = uid2node.find(uid);
+                    auto found = uid2node.find(uid);
                     if (found != uid2node.end()) {
                         int other = found->second;
                         std::stringstream msg;
