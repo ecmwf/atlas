@@ -1674,6 +1674,29 @@ void TransLocal::dirtrans_wind2vordiv(const Field& gpwind, Field& spvor, Field& 
     // Use the TransIFS implementation instead.
 }
 
+
+void TransLocal::dirtrans_adj(const Field& spfield, Field& gpfield,
+                              const eckit::Configuration& config) const {
+  ATLAS_NOTIMPLEMENTED;
+  // Not implemented and not planned.
+  // Use the TransIFS implementation instead.
+}
+
+void TransLocal::dirtrans_adj(const FieldSet& spfields, FieldSet& gpfields,
+                              const eckit::Configuration& config) const {
+  ATLAS_NOTIMPLEMENTED;
+  // Not implemented and not planned.
+  // Use the TransIFS implementation instead.
+}
+
+void TransLocal::dirtrans_wind2vordiv_adj(const Field& spvor, const Field& spdiv, Field& gpwind,
+                                          const eckit::Configuration& config) const {
+  ATLAS_NOTIMPLEMENTED;
+  // Not implemented and not planned.
+  // Use the TransIFS implementation instead.
+}
+
+
 // --------------------------------------------------------------------------------------------------------------------
 
 void TransLocal::dirtrans(const int nb_fields, const double scalar_fields[], double scalar_spectra[],
