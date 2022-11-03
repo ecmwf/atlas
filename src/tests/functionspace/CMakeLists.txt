@@ -6,7 +6,6 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-ecbuild_warn_var( HAVE_FCTEST )
 if( HAVE_FCTEST )
 
   if( NOT HAVE_TRANS )
