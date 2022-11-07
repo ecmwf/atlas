@@ -18,19 +18,23 @@ namespace atlas {
 namespace runtime {
 namespace trace {
 
-void CallStack::push_front(const CodeLocation& loc, const std::string& id) {
-    stack_.push_front(std::hash<std::string>{}(loc.asString() + id));
+void CallStack::push(const CodeLocation& loc, const std::string& id) {
+    if (stack_.size() == size_) {
+        stack_.resize(2 * size_);
+    }
+    stack_[size_++] = std::hash<std::string>{}(loc.asString() + id);
 }
 
-void CallStack::pop_front() {
-    stack_.pop_front();
+void CallStack::pop() {
+    --size_;
 }
 
 size_t CallStack::hash() const {
     if (hash_) {
         return hash_;
     }
-    for (auto h : stack_) {
+    for (long i = size_ - 1; i >= 0; --i) {
+        auto h = stack_[i];
         hash_ ^= (h << 1);
     }
     return hash_;

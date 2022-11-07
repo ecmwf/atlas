@@ -19,6 +19,8 @@
 #if __cplusplus >= 201703L
 #include <cstddef>
 #else
+#ifndef STD_BYTE_DEFINED
+#define STD_BYTE_DEFINED
 namespace std {
 #ifdef _CRAYC
 struct byte {
@@ -30,6 +32,7 @@ enum class byte : unsigned char
 };
 #endif
 }  // namespace std
+#endif
 #endif
 
 //------------------------------------------------------------------------------------------------------

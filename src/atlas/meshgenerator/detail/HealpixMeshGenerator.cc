@@ -64,6 +64,15 @@ HealpixMeshGenerator::HealpixMeshGenerator(const eckit::Parametrisation& p) {
         options.set("3d", three_dimensional);
     }
 
+    std::string pole_elements{"quqds"};
+    if (p.get("pole_elements", pole_elements)) {
+        if (pole_elements != "pentagons" and pole_elements != "quads") {
+            Log::warning() << "Atlas::HealpixMeshGenerator accepts \"pentagons\" or \"quads\" for \"pole_elements\"."
+                           << "Defaulting to pole_elements = quads" << std::endl;
+        }
+    }
+    options.set("pole_elements", pole_elements);
+
     std::string partitioner;
     if (p.get("partitioner", partitioner)) {
         if (not grid::Partitioner::exists(partitioner)) {
@@ -82,8 +91,12 @@ void HealpixMeshGenerator::configure_defaults() {
     // This option sets the part that will be generated
     options.set("part", mpi::rank());
 
-    // This option switches between original HEALPix (=1) or HEALPix with 8 points are the pole (=8)
+    // This option switches between original HEALPix with 1 point at the pole (3d -> true)
+    // or HEALPix with 8 or 4 points at the pole (3d -> false)
     options.set("3d", false);
+
+    // This options switches between pentagons and quads as the pole elements for (3d -> false)
+    options.set("pole_elements", "quads");
 
     // This options sets the default partitioner
     std::string partitioner;
@@ -97,27 +110,32 @@ void HealpixMeshGenerator::configure_defaults() {
 }
 
 
-// match glb_idx of node in (nb_pole_nodes==8)-mesh to glb_idx of nodes in (nb_pole_nodes==1)-mesh
-gidx_t HealpixMeshGenerator::match_idx(gidx_t gidx, const int ns) const {
+// match glb_idx of node in (nb_pole_nodes==8 and ==4)-meshes to glb_idx of nodes in (nb_pole_nodes==1)-mesh
+gidx_t HealpixMeshGenerator::match_node_idx(const gidx_t& gidx, const int ns) const {
     const gidx_t nb_nodes_orig = 12 * ns * ns;
-    if (nb_pole_nodes_ == 1 or gidx >= nb_nodes_) {
+    if (gidx > nb_nodes_ - 1) {
+        // no change in index for the periodic nodes
         return gidx;
     }
-    if (gidx == 4) {
-        return 0;
+    if (nb_pole_nodes_ > 1) {
+        if (gidx == nb_pole_nodes_ / 2) {
+            return 0;
+        }
+        if (gidx == nb_nodes_ - nb_pole_nodes_ / 2) {
+            return nb_nodes_orig + 1;
+        }
+        bool at_north_pole = (gidx < nb_pole_nodes_);
+        bool at_south_pole = (gidx < nb_nodes_ and gidx >= nb_nodes_orig + nb_pole_nodes_);
+        if (at_north_pole) {
+            return nb_nodes_orig + 2 + gidx - (gidx > nb_pole_nodes_ / 2 ? 1 : 0);
+        }
+        if (at_south_pole) {
+            return gidx - nb_pole_nodes_ + nb_pole_nodes_ + 1 - (gidx > nb_nodes_orig + nb_pole_nodes_ * 3 / 2 ? 1 : 0);
+        }
+        return gidx - nb_pole_nodes_ + 1;
     }
-    if (gidx == nb_nodes_ - 4) {
-        return nb_nodes_orig + 1;
-    }
-    bool at_north_pole = (gidx < 8);
-    bool at_south_pole = (gidx <= nb_nodes_ and gidx >= nb_nodes_orig + nb_pole_nodes_);
-    if (at_north_pole) {
-        return nb_nodes_orig + 2 + gidx - (gidx > 4 ? 1 : 0);
-    }
-    if (at_south_pole) {
-        return gidx - nb_pole_nodes_ + 9 - (gidx > nb_nodes_orig + 12 ? 1 : 0);
-    }
-    return gidx - nb_pole_nodes_ + 1;
+    // no change for 3d healpix mesh with one node per pole, i.e. nb_pole_nodes = 1
+    return gidx;
 }
 
 
@@ -181,7 +199,7 @@ gidx_t HealpixMeshGenerator::up_idx(const int xidx, const int yidx, const int ns
     }
     else if (yidx == 1) {
         ATLAS_ASSERT(xidx < 4);
-        ret = (nb_pole_nodes_ == 8 ? 2 * xidx : 0);
+        ret = (nb_pole_nodes_ == 8 ? 2 * xidx : (nb_pole_nodes_ == 4 ? xidx : 0));
     }
     else if (yidx < ns) {
         ATLAS_ASSERT(xidx < 4 * yidx);
@@ -234,10 +252,12 @@ gidx_t HealpixMeshGenerator::up_idx(const int xidx, const int yidx, const int ns
         ATLAS_ASSERT(xidx < nb_pole_nodes_);
         if (ns == 1) {
             if (xidx != nb_pole_nodes_ - 1) {
-                ret = nb_nodes_orig + nb_pole_nodes_ - 4 + (xidx % 2 ? -4 + (xidx + 1) / 2 : xidx / 2);
+                ret = nb_nodes_orig + nb_pole_nodes_ - 4 +
+                      (nb_pole_nodes_ != 4 ? (xidx % 2 ? -4 + (xidx + 1) / 2 : xidx / 2) : xidx);
             }
             else {
-                ret = (nb_pole_nodes_ == 8 ? ghostIdx(4 * ns - 2) : ghostIdx(4 * ns));
+                ret = (nb_pole_nodes_ == 4 ? nb_nodes_orig + xidx
+                                           : (nb_pole_nodes_ == 8 ? ghostIdx(4 * ns - 2) : ghostIdx(4 * ns)));
             }
         }
         else {
@@ -285,7 +305,7 @@ gidx_t HealpixMeshGenerator::down_idx(const int xidx, const int yidx, const int 
     }
     else if (yidx == 2 * ns && ns == 1) {
         ATLAS_ASSERT(xidx < 4);
-        ret = (nb_pole_nodes_ == 8 ? 16 + xidx : 9 + xidx);
+        ret = (nb_pole_nodes_ == 8 ? 16 + xidx : (nb_pole_nodes_ == 4 ? 12 + xidx : 9 + xidx));
     }
     else if (yidx < 3 * ns && ns > 1) {
         ATLAS_ASSERT(xidx < 4 * ns);
@@ -303,6 +323,9 @@ gidx_t HealpixMeshGenerator::down_idx(const int xidx, const int yidx, const int 
         if (nb_pole_nodes_ == 8) {
             ret = (xidx != 7 ? nb_nodes_orig + 4 + (xidx + 1) / 2 : ghostIdx(4 * ns - 1));
         }
+        else if (nb_pole_nodes_ == 4) {
+            ret = (xidx != 7 ? nb_nodes_orig + (xidx + 1) / 2 : ghostIdx(4 * ns - 1));
+        }
         else {
             ret = (xidx != 7 ? nb_nodes_orig - 3 + (xidx + 1) / 2 : ghostIdx(4 * ns - 1));
         }
@@ -311,6 +334,9 @@ gidx_t HealpixMeshGenerator::down_idx(const int xidx, const int yidx, const int 
         ATLAS_ASSERT(xidx < 4);
         if (nb_pole_nodes_ == 8) {
             ret = nb_nodes_orig + nb_pole_nodes_ + 2 * xidx;
+        }
+        else if (nb_pole_nodes_ == 4) {
+            ret = nb_nodes_orig + nb_pole_nodes_ + xidx;
         }
         else {
             ret = nb_nodes_orig + 1;
@@ -362,6 +388,9 @@ gidx_t HealpixMeshGenerator::right_idx(const int xidx, const int yidx, const int
         if (nb_pole_nodes_ == 8) {
             ret = 1 + 2 * xidx;
         }
+        else if (nb_pole_nodes_ == 4) {
+            ret = (xidx != 3 ? xidx + 1 : ghostIdx(0));
+        }
         else {
             ret = (xidx != 3 ? xidx + 2 : ghostIdx(1));
         }
@@ -372,7 +401,15 @@ gidx_t HealpixMeshGenerator::right_idx(const int xidx, const int yidx, const int
     }
     else if (yidx == 3 && ns == 1) {
         ATLAS_ASSERT(xidx < 4);
-        ret = (nb_pole_nodes_ == 8 ? 21 + 2 * xidx : (xidx != 3 ? 10 + xidx : ghostIdx(yidx)));
+        if (nb_pole_nodes_ == 8) {
+            ret = 21 + 2 * xidx;
+        }
+        else if (nb_pole_nodes_ == 4) {
+            ret = (xidx != 3 ? 17 + xidx : ghostIdx(yidx + 1));
+        }
+        else {
+            ret = (xidx != 3 ? 10 + xidx : ghostIdx(yidx));
+        }
     }
     else if (yidx <= 3 * ns) {
         ATLAS_ASSERT(xidx < 4 * ns + 1);
@@ -395,6 +432,9 @@ gidx_t HealpixMeshGenerator::right_idx(const int xidx, const int yidx, const int
         if (nb_pole_nodes_ == 8) {
             ret = nb_nodes_orig + nb_pole_nodes_ + 1 + 2 * xidx;
         }
+        else if (nb_pole_nodes_ == 4) {
+            ret = (xidx != 3 ? nb_nodes_orig + nb_pole_nodes_ + 1 + xidx : ghostIdx(yidx + 1));
+        }
         else {
             ret = (xidx != 3 ? nb_nodes_orig - 2 + xidx : ghostIdx(yidx));
         }
@@ -409,6 +449,21 @@ gidx_t HealpixMeshGenerator::right_idx(const int xidx, const int yidx, const int
         }
     }
     return ret;
+}
+
+// return global_id - 1 of the pentagon node "to the right of" (xidx,yidx) node
+// pentagon points are only needed for yidx == 1 and yidx == 4 * ns - 1
+gidx_t HealpixMeshGenerator::pentagon_right_idx(const int xidx, const int yidx, const int ns) const {
+    auto ghostIdx = [ns, this](int latid) { return this->nb_nodes_ + latid; };
+    if (yidx == 1) {
+        return (xidx != 3 ? nb_pole_nodes_ + xidx + 1 : ghostIdx(1));
+    }
+    else if (yidx == 4 * ns - 1) {
+        return (xidx != 3 ? (12 * ns * ns + xidx + 1) : ghostIdx(yidx));
+    }
+    else {
+        return -2;
+    }
 }
 
 void HealpixMeshGenerator::generate(const Grid& grid, Mesh& mesh) const {
@@ -471,6 +526,7 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     //      array::ArrayView<int,   1> flags         ( nodes.flags() );
     // - define cells (only quadrilaterals for now) with
     //      mesh.cells().add( new mesh::temporary::Quadrilateral(), nquads  );
+    //      mesh.cells().add( new mesh::temporary::Pentagon(), npents  );
     //    further define cells with
     //      array::ArrayView<gidx_t,1> cells_glb_idx( mesh.cells().global_index()
     //      );
@@ -478,8 +534,8 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     // - define connectivity with
     //      mesh::HybridElements::Connectivity& node_connectivity =
     //      mesh.cells().node_connectivity();
-    //      node_connectivity.set( jcell, quad_nodes );
-    //    where quad_nodes is a 4-element integer array containing the LOCAL
+    //      node_connectivity.set( jcell, cell_nodes );
+    //    where cell_nodes is a 4-element or 5-element integer array containing the LOCAL
     //    indices of the nodes
     //
     // The rule do determine if a cell belongs to a proc is the following with some
@@ -490,13 +546,14 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
 
     ATLAS_ASSERT(HealpixGrid(grid));
 
-    const int mypart             = options.get<size_t>("part");
-    const int nparts             = options.get<size_t>("nb_parts");
-    const bool three_dimensional = options.get<bool>("3d");
-    const int nb_pole_nodes      = three_dimensional ? 1 : 8;
-    const int ny                 = grid.ny() + 2;
-    const int ns                 = (ny - 1) / 4;
-    const int nvertices          = 12 * ns * ns + 2 * nb_pole_nodes;
+    const int mypart                = options.get<size_t>("part");
+    const int nparts                = options.get<size_t>("nb_parts");
+    const bool three_dimensional    = options.get<bool>("3d");
+    const std::string pole_elements = options.get<std::string>("pole_elements");
+    const int nb_pole_nodes         = (pole_elements == "pentagons") ? 4 : (three_dimensional ? 1 : 8);
+    const int ny                    = grid.ny() + 2;
+    const int ns                    = (ny - 1) / 4;
+    const int nvertices             = 12 * ns * ns + 2 * nb_pole_nodes;
 
 
     nb_pole_nodes_ = nb_pole_nodes;
@@ -516,6 +573,7 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     std::vector<int> local_idx(nvertices, -1);
     std::vector<int> current_idx(nparts, 0);  // index counter for each proc
 
+    // ANSATZ: requirement on the partitioner
     auto compute_part = [&](int iy, gidx_t ii_glb) -> int {
         // nodes at the pole belong to proc_0 (north) and proc_maxRank (south)
         // a node gets its proc rank from the element for which this node would be its west vertex
@@ -526,9 +584,10 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     for (iy = 0; iy < ny; iy++) {
         int nx = nb_lat_nodes(iy);
         for (ix = 0; ix < nx; ix++) {
-            Log::info() << "iy, ix, glb_idx, up_idx, down_idx, right_idx : " << iy << ", " << ix << ", "
+            Log::info() << "iy, ix, glb_idx, up_idx, down_idx, right_idx, pent_right_idx : " << iy << ", " << ix << ", "
                         << idx_xy_to_x(ix, iy, ns) + 1 << ", " << up_idx(ix, iy, ns) + 1 << ", "
-                        << down_idx(ix, iy, ns) + 1 << ", " << right_idx(ix, iy, ns) + 1 << std::endl;
+                        << down_idx(ix, iy, ns) + 1 << ", " << right_idx(ix, iy, ns) + 1 << ", "
+                        << pentagon_right_idx(ix, iy, ns) + 1 << std::endl;
         }
         Log::info() << std::endl;
     }
@@ -652,65 +711,74 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
 
     // determine number of cells and number of nodes
     int nnodes = 0;
-    int ncells = 0;
+    int nquads = 0;
+    int npents = 0;
     ii         = 0;
-    int iil;
+
+    int glb2loc_ghost_offset = -nnodes_SB + iy_max + nb_nodes_ + 1;
+    auto get_local_id        = [this, &parts_sidx, &glb2loc_ghost_offset](gidx_t gidx) {
+        return gidx - (gidx < nb_nodes_ ? parts_sidx : glb2loc_ghost_offset);
+    };
+
     for (iy = iy_min; iy <= iy_max; iy++) {
         int nx = nb_lat_nodes(iy);
         for (ix = 0; ix < nx; ix++) {
-            int not_duplicate_cell = (iy == 0 ? ix % 2 : 1) * (iy == ny - 1 ? ix % 2 : 1);
-            if ((iy == 0 or iy == ny - 1) and nb_pole_nodes == 1) {
-                not_duplicate_cell = false;
-            }
-
-            if (not is_ghost_SB[ii] && not_duplicate_cell) {
-                // mark this node as being used
-                if (not is_node_SB[ii]) {
-                    ++nnodes;
-                    is_node_SB[ii] = true;
+            if (not is_ghost_SB[ii]) {
+                const bool at_pole      = (iy == 0 or iy == ny - 1);
+                bool not_duplicate_cell = (at_pole ? (ix % 2) : 1);
+                if (at_pole and nb_pole_nodes < 8) {
+                    // nodes at the poles do not own any pentagons
+                    // if nb_pole_node=1, the node at the poles does not own any quads
+                    not_duplicate_cell = false;
                 }
-
-                ++ncells;
-
-                const int glb2loc_ghost_offset = -nnodes_SB + iy_max + nb_nodes_ + 1;
-                // mark upper corner
-                iil = up_idx(ix, iy, ns);
-                iil -= (iil < nb_nodes_ ? parts_sidx : glb2loc_ghost_offset);
-                if (not is_node_SB[iil]) {
-                    ++nnodes;
-                    is_node_SB[iil] = true;
-                }
-                // mark lower corner
-                iil = down_idx(ix, iy, ns);
-                iil -= (iil < nb_nodes_ ? parts_sidx : glb2loc_ghost_offset);
-                if (not is_node_SB[iil]) {
-                    ++nnodes;
-                    is_node_SB[iil] = true;
-                }
-                // mark right corner
-                iil = right_idx(ix, iy, ns);
-                iil -= (iil < nb_nodes_ ? parts_sidx : glb2loc_ghost_offset);
-                if (not is_node_SB[iil]) {
-                    ++nnodes;
-                    is_node_SB[iil] = true;
+                if (not at_pole or not_duplicate_cell) {
+                    if (not is_node_SB[ii]) {
+                        ++nnodes;
+                        is_node_SB[ii] = true;
+                    }
+                    bool is_pentagon = (pole_elements == "pentagons" and (iy == 1 or iy == ny - 2));
+                    if (is_pentagon) {
+                        ++npents;
+                        // mark the pentagon right node
+                        idx_t iil = get_local_id(pentagon_right_idx(ix, iy, ns));
+                        if (not is_node_SB[iil]) {
+                            ++nnodes;
+                            is_node_SB[iil] = true;
+                        }
+                    }
+                    else {
+                        ++nquads;
+                    }
+                    // mark upper corner
+                    idx_t iil = get_local_id(up_idx(ix, iy, ns));
+                    if (not is_node_SB[iil]) {
+                        ++nnodes;
+                        is_node_SB[iil] = true;
+                    }
+                    // mark lower corner
+                    iil = get_local_id(down_idx(ix, iy, ns));
+                    if (not is_node_SB[iil]) {
+                        ++nnodes;
+                        is_node_SB[iil] = true;
+                    }
+                    // mark right corner
+                    iil = get_local_id(right_idx(ix, iy, ns));
+                    if (not is_node_SB[iil]) {
+                        ++nnodes;
+                        is_node_SB[iil] = true;
+                    }
                 }
             }
             ++ii;
         }
     }
-
-    // periodic points are always needed, even if they don't belong to a cell
-    ii_ghost = nnodes_SB - (iy_max - iy_min + 1);
-    for (ii = 0; ii < iy_max - iy_min + 1; ii++) {
-        if (!is_node_SB[ii_ghost + ii]) {
-            // is_node_SB[ii_ghost + ii] = true;
-            // ++nnodes;
-        }
-    }
+    int ncells = nquads + npents;
+    ATLAS_ASSERT(ncells > 0);
 
 #if DEBUG_OUTPUT
     Log::info() << "[" << mypart << "] : "
-                << "nnodes = " << nnodes << ", ncells = " << ncells << ", parts_sidx = " << parts_sidx << std::endl;
+                << "nnodes = " << nnodes << ", nquads = " << nquads << ", npents = " << npents
+                << ", parts_sidx = " << parts_sidx << std::endl;
     Log::info() << "[" << mypart << "] : "
                 << "iy_min = " << iy_min << ", iy_max = " << iy_max << std::endl;
 #endif
@@ -736,14 +804,17 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     auto flags         = array::make_view<int, 1>(nodes.flags());
 
     // define cells and associated properties
-    mesh.cells().add(new mesh::temporary::Quadrilateral(), ncells);
+    mesh.cells().add(new mesh::temporary::Quadrilateral(), nquads);
+    mesh.cells().add(new mesh::temporary::Pentagon(), npents);
     int quad_begin          = mesh.cells().elements(0).begin();
+    int pent_begin          = mesh.cells().elements(1).begin();
     auto cells_part         = array::make_view<int, 1>(mesh.cells().partition());
     auto cells_glb_idx      = array::make_view<gidx_t, 1>(mesh.cells().global_index());
     auto& node_connectivity = mesh.cells().node_connectivity();
 
-    idx_t quad_nodes[4];
-    int jcell = quad_begin;
+    idx_t cell_nodes[5];
+    int jquadcell = quad_begin;
+    int jpentcell = pent_begin;
 
     int inode_nonghost, inode_ghost;
 
@@ -768,18 +839,18 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
                 // flags
                 Topology::reset(flags(inode));
 
-                glb_idx(inode) = 1 + match_idx(idx_xy_to_x(ix, iy, ns), ns);
+                glb_idx(inode) = 1 + match_node_idx(idx_xy_to_x(ix, iy, ns), ns);
 
                 // grid coordinates
                 double _xy[2];
                 double xy1[2], xy2[2];
                 if (iy == 0) {
-                    _xy[0] = (nb_pole_nodes == 8 ? 45. * ix : 180.);
+                    _xy[0] = (nb_pole_nodes == 8 ? 45. * ix : (nb_pole_nodes == 4 ? 90. * ix : 180.));
                     _xy[1] = 90.;
                     Topology::set(flags(inode), Topology::BC);
                 }
                 else if (iy == ny - 1) {
-                    _xy[0] = (nb_pole_nodes == 8 ? 45. * ix : 180.);
+                    _xy[0] = (nb_pole_nodes == 8 ? 45. * ix : (nb_pole_nodes == 4 ? 90. * ix : 180.));
                     _xy[1] = -90.;
                     Topology::set(flags(inode), Topology::BC);
                 }
@@ -855,59 +926,92 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
         }
     }
 
+    auto get_local_idx_SB = [&local_idx_SB, &get_local_id](gidx_t gidx) { return local_idx_SB[get_local_id(gidx)]; };
+
     ii               = 0;  // index inside SB (surrounding belt)
     int jcell_offset = 0;  // global index offset due to extra points at the north pole
+    gidx_t jcell     = 0;  // global cell counter
     for (iy = iy_min; iy <= iy_max; iy++) {
         int nx = nb_lat_nodes(iy) + 1;
         for (ix = 0; ix < nx; ix++) {
-            int not_duplicate_cell = (iy == 0 ? ix % 2 : 1) * (iy == ny - 1 ? ix % 2 : 1);
-            int iil                = idx_xy_to_x(ix, iy, ns);
+            const bool at_pole     = (iy == 0 or iy == ny - 1);
+            int not_duplicate_cell = (at_pole ? ix % 2 : 1);
+            if (at_pole and (not not_duplicate_cell or nb_pole_nodes < 8)) {
+                // if nb_pole_nodes = 4 : the pole nodes do not own any pentagons
+                // if nb_pole_nodes = 1 : the pole nodes do not own any quads
+                continue;
+            }
+            bool pentagon = (iy == 1 or iy == 4 * ns - 1) and pole_elements == "pentagons";
+            int iil       = idx_xy_to_x(ix, iy, ns);
             iil -= (iil < nb_nodes_ ? parts_sidx : -nnodes_SB + iy_max + nb_nodes_ + 1);
-            if (!is_ghost_SB[iil] && not_duplicate_cell) {
-                // define cell corners (local indices)
-                quad_nodes[0] = local_idx_SB[iil];
+            if (not is_ghost_SB[iil]) {
+                jcell++;  // a cell will be added
+                // define cell vertices (in local indices) in cell_nodes
+                int node_id           = 0;
+                cell_nodes[node_id++] = get_local_idx_SB(idx_xy_to_x(ix, iy, ns));
+                cell_nodes[node_id++] = get_local_idx_SB(down_idx(ix, iy, ns));
+                bool south_hemisphere = (iy > 2 * ns);
+                if (pentagon && not south_hemisphere) {
+                    cell_nodes[node_id++] = get_local_idx_SB(pentagon_right_idx(ix, iy, ns));
+                }
+                cell_nodes[node_id++] = get_local_idx_SB(right_idx(ix, iy, ns));
+                if (pentagon && south_hemisphere) {
+                    // in the south hemisphere the pentagon point comes in a different clock-wise ordering
+                    cell_nodes[node_id++] = get_local_idx_SB(pentagon_right_idx(ix, iy, ns));
+                }
+                cell_nodes[node_id++] = get_local_idx_SB(up_idx(ix, iy, ns));
 
-                quad_nodes[1] = down_idx(ix, iy, ns);  // point to the right, global idx
-                quad_nodes[1] -= (quad_nodes[1] < nb_nodes_ ? parts_sidx : -nnodes_SB + iy_max + nb_nodes_ + 1);
-                quad_nodes[1] = local_idx_SB[quad_nodes[1]];  // now, local idx
-
-                quad_nodes[2] = right_idx(ix, iy, ns);  // point above right, global idx
-                quad_nodes[2] -= (quad_nodes[2] < nb_nodes_ ? parts_sidx : -nnodes_SB + iy_max + nb_nodes_ + 1);
-                quad_nodes[2] = local_idx_SB[quad_nodes[2]];  // now, local idx
-
-                quad_nodes[3] = up_idx(ix, iy, ns);  // point above, global idx
-                quad_nodes[3] -= (quad_nodes[3] < nb_nodes_ ? parts_sidx : -nnodes_SB + iy_max + nb_nodes_ + 1);
-                quad_nodes[3] = local_idx_SB[quad_nodes[3]];  // now, local idx
-
-                node_connectivity.set(jcell, quad_nodes);
-                if (iy == 0) {
-                    if (nb_pole_nodes == 8) {
-                        cells_glb_idx(jcell) = 12 * ns * ns + 1 + ix / 2;
+                // match global cell indexing for the three healpix versions
+                if (nb_pole_nodes == 1) {
+                    cells_glb_idx(jquadcell) = jquadcell + 1;
+                }
+                else if (nb_pole_nodes == 8) {
+                    if (iy == 0) {
+                        cells_glb_idx(jquadcell) = 12 * ns * ns + 1 + ix / 2;
                         jcell_offset++;
                     }
-                }
-                else if (iy == ny - 1) {
-                    if (nb_pole_nodes == 8) {
-                        cells_glb_idx(jcell) = 12 * ns * ns + 5 + ix / 2;
+                    else if (iy == ny - 1) {
+                        cells_glb_idx(jquadcell) = 12 * ns * ns + 5 + ix / 2;
                         jcell_offset++;
-                    }
-                }
-                else {
-                    if (nb_pole_nodes == 8) {
-                        cells_glb_idx(jcell) = parts_sidx + iil - 3 - (mypart != 0 ? 4 : jcell_offset);
                     }
                     else {
-                        cells_glb_idx(jcell) = parts_sidx + iil;
+                        cells_glb_idx(jquadcell) = parts_sidx + iil - 3 - (mypart != 0 ? 4 : jcell_offset);
                     }
                 }
-                cells_part(jcell) = mypart;
+                else if (nb_pole_nodes == 4) {
+                    if (pentagon) {
+                        cells_glb_idx(jpentcell) = jcell;
+                    }
+                    else {
+                        cells_glb_idx(jquadcell) = jcell;
+                    }
+                }
 #if DEBUG_OUTPUT_DETAIL
-                Log::info() << "[" << mypart << "] : "
-                            << "New quad: loc-idx " << jcell << ", glb-idx " << cells_glb_idx(jcell) << ": "
-                            << glb_idx(quad_nodes[0]) << "," << glb_idx(quad_nodes[1]) << "," << glb_idx(quad_nodes[2])
-                            << "," << glb_idx(quad_nodes[3]) << std::endl;
+                std::cout << "[" << mypart << "] : ";
+                if (pentagon) {
+                    std::cout << "New pent: loc-idx " << jpentcell << ", glb-idx " << cells_glb_idx(jpentcell) << ": ";
+                }
+                else {
+                    std::cout << "New quad: loc-idx " << jquadcell << ", glb-idx " << cells_glb_idx(jquadcell) << ": ";
+                }
+                std::cout << glb_idx(cell_nodes[0]) << "," << glb_idx(cell_nodes[1]) << "," << glb_idx(cell_nodes[2])
+                          << "," << glb_idx(cell_nodes[3]);
+                if (pentagon) {
+                    std::cout << "," << glb_idx(cell_nodes[4]);
+                }
+                std::cout << std::endl;
 #endif
-                ++jcell;
+                // add cell to the node connectivity table
+                if (pentagon) {
+                    cells_part(jpentcell) = mypart;
+                    node_connectivity.set(jpentcell, cell_nodes);
+                    ++jpentcell;
+                }
+                else {
+                    cells_part(jquadcell) = mypart;
+                    node_connectivity.set(jquadcell, cell_nodes);
+                    ++jquadcell;
+                }
             }
             ii += (ix != nx - 1 ? 1 : 0);
         }
@@ -915,19 +1019,25 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
 
 #if DEBUG_OUTPUT_DETAIL
     // list nodes
+    Log::info() << "Listing nodes ...";
     for (inode = 0; inode < nnodes; inode++) {
-        Log::info() << "[" << mypart << "] : "
-                    << " node " << inode << ": ghost = " << ghost(inode) << ", glb_idx = " << glb_idx(inode)
-                    << ", part = " << part(inode) << ", lon = " << lonlat(inode, 0) << ", lat = " << lonlat(inode, 1)
-                    << ", remote_idx = " << remote_idx(inode) << std::endl;
+        std::cout << "[" << mypart << "] : "
+                  << " node " << inode << ": ghost = " << ghost(inode) << ", glb_idx = " << glb_idx(inode)
+                  << ", part = " << part(inode) << ", lon = " << lonlat(inode, 0) << ", lat = " << lonlat(inode, 1)
+                  << ", remote_idx = " << remote_idx(inode) << std::endl;
     }
 
-    int* cell_nodes;
-    for (jcell = 0; jcell < ncells; jcell++) {
-        Log::info() << "[" << mypart << "] : "
-                    << " cell " << jcell << ", glb-idx " << cells_glb_idx(jcell) << ": "
-                    << glb_idx(node_connectivity(jcell, 0)) << "," << glb_idx(node_connectivity(jcell, 1)) << ","
-                    << glb_idx(node_connectivity(jcell, 2)) << "," << glb_idx(node_connectivity(jcell, 3)) << std::endl;
+    for (gidx_t jcell = quad_begin; jcell < nquads; jcell++) {
+        std::cout << "[" << mypart << "] : "
+                  << " cell " << jcell << ", glb-idx " << cells_glb_idx(jcell) << ": "
+                  << glb_idx(node_connectivity(jcell, 0)) << "," << glb_idx(node_connectivity(jcell, 1)) << ","
+                  << glb_idx(node_connectivity(jcell, 2)) << "," << glb_idx(node_connectivity(jcell, 3)) << std::endl;
+    }
+    for (gidx_t jcell = pent_begin; jcell < nquads; jcell++) {
+        std::cout << "[" << mypart << "] : "
+                  << " cell " << jcell << ", glb-idx " << cells_glb_idx(jcell) << ": "
+                  << glb_idx(node_connectivity(jcell, 0)) << "," << glb_idx(node_connectivity(jcell, 1)) << ","
+                  << glb_idx(node_connectivity(jcell, 2)) << "," << glb_idx(node_connectivity(jcell, 3)) << std::endl;
     }
 #endif
 

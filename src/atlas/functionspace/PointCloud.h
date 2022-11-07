@@ -10,13 +10,23 @@
 
 #pragma once
 
+#include <memory>
+
 #include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
+#include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/detail/FunctionSpaceImpl.h"
+#include "atlas/parallel/HaloExchange.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Point.h"
+
+namespace atlas {
+namespace parallel {
+class HaloExchange;
+}  // namespace parallel
+}  // namespace atlas
 
 namespace atlas {
 class Grid;
@@ -33,6 +43,9 @@ public:
     PointCloud(const std::vector<Point>&);
     PointCloud(const Field& lonlat);
     PointCloud(const Field& lonlat, const Field& ghost);
+
+    PointCloud(const FieldSet&);  // assuming lonlat ghost ridx and partition present.
+
     PointCloud(const Grid&);
     virtual ~PointCloud() override {}
     virtual std::string type() const override { return "PointCloud"; }
@@ -48,8 +61,13 @@ public:
     virtual Field createField(const eckit::Configuration&) const override;
     virtual Field createField(const Field&, const eckit::Configuration&) const override;
 
-    void haloExchange(const FieldSet&, bool /*on_device*/ = false) const override {}
-    void haloExchange(const Field&, bool /*on_device*/ = false) const override {}
+    virtual void haloExchange(const FieldSet&, bool on_device = false) const override;
+    virtual void haloExchange(const Field&, bool on_device = false) const override;
+
+    virtual void adjointHaloExchange(const FieldSet&, bool on_device = false) const override;
+    virtual void adjointHaloExchange(const Field&, bool on_device = false) const override;
+
+    const parallel::HaloExchange& halo_exchange() const;
 
     template <typename Point>
     class IteratorT {
@@ -117,9 +135,27 @@ public:
     Iterate iterate() const { return Iterate(*this); }
 
 private:
+    array::ArrayShape config_shape(const eckit::Configuration& config) const;
+
+    array::ArrayAlignment config_alignment(const eckit::Configuration& config) const;
+
+    array::ArraySpec config_spec(const eckit::Configuration& config) const;
+
+    array::DataType config_datatype(const eckit::Configuration& config) const;
+
+    std::string config_name(const eckit::Configuration& config) const;
+
+    void set_field_metadata(const eckit::Configuration& config, Field& field) const;
+
+
+
+private:
     Field lonlat_;
     Field vertical_;
     mutable Field ghost_;
+    Field remote_index_;
+    Field partition_;
+    std::unique_ptr<parallel::HaloExchange> halo_exchange_;
     idx_t levels_{0};
 };
 
@@ -133,6 +169,7 @@ class PointCloud : public FunctionSpace {
 public:
     PointCloud(const FunctionSpace&);
     PointCloud(const Field& points);
+    PointCloud(const FieldSet& flds);
     PointCloud(const std::vector<PointXY>&);
     PointCloud(const std::vector<PointXYZ>&);
     PointCloud(const std::initializer_list<std::initializer_list<double>>&);

@@ -229,7 +229,7 @@ void StructuredColumns::setup(const grid::Distribution& distribution, const ecki
     i_begin_halo_.resize(-halo, grid_->ny() - 1 + halo);
     i_end_halo_.resize(-halo, grid_->ny() - 1 + halo);
     if (regional) {
-        j_begin_halo_ = std::max(j_begin_halo_, 0);
+        j_begin_halo_ = std::max(j_begin_halo_, idx_t{0});
         j_end_halo_   = std::min(j_end_halo_, grid_->ny());
     }
 
@@ -372,7 +372,7 @@ void StructuredColumns::setup(const grid::Distribution& distribution, const ecki
                     idx_t jj_min  = j - halo;
                     idx_t jj_max  = j + halo;
                     if (regional) {
-                        jj_min = std::max(jj_min, 0);
+                        jj_min = std::max(jj_min, idx_t{0});
                         jj_max = std::min(jj_max, grid_->nx(j) - 1);
                     }
                     for (idx_t jj = jj_min; jj <= jj_max; ++jj) {
@@ -426,7 +426,7 @@ void StructuredColumns::setup(const grid::Distribution& distribution, const ecki
                         idx_t i_plus_halo = iii + halo;
 
                         if (regional) {
-                            i_minus_halo = std::max(i_minus_halo, 0);
+                            i_minus_halo = std::max(i_minus_halo, idx_t{0});
                             i_plus_halo  = std::min(i_plus_halo, grid_->nx(jj) - 1);
                         }
 

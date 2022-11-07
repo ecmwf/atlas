@@ -58,11 +58,12 @@ private:
 
     void generate_mesh(const StructuredGrid&, const grid::Distribution&, Mesh& m) const;
 
-    gidx_t match_idx(gidx_t gidx, const int ns) const;
+    gidx_t match_node_idx(const gidx_t& gidx, const int ns) const;
     gidx_t idx_xy_to_x(const int xidx, const int yidx, const int ns) const;
     gidx_t up_idx(const int xidx, const int yidx, const int ns) const;
     gidx_t down_idx(const int xidx, const int yidx, const int ns) const;
     gidx_t right_idx(const int xidx, const int yidx, const int ns) const;
+    gidx_t pentagon_right_idx(const int xidx, const int yidx, const int ns) const;
 
 private:
     util::Metadata options;

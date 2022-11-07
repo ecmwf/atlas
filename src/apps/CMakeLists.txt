@@ -6,10 +6,6 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-if( ECKIT_INCLUDE_DIRS ) # eckit not yet ported to CMake3
-    include_directories( ${ECKIT_INCLUDE_DIRS} )
-endif()
-
 ecbuild_add_executable(
   TARGET      atlas-main
   OUTPUT_NAME atlas
@@ -30,9 +26,3 @@ ecbuild_add_executable(
   TARGET      atlas-gaussian-latitudes
   SOURCES     atlas-gaussian-latitudes.cc
   LIBS        atlas )
-
-ecbuild_add_executable(
-  TARGET      atlas-io-list
-  SOURCES     atlas-io-list.cc
-  LIBS        atlas )
-

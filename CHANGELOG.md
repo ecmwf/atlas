@@ -7,6 +7,26 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.30.0] - 2022-08-22
+### Added
+- Fortran API for Interpolation::execute_adjoint()
+- Fortran API for FieldSet::name()
+- Fortran API for MeshGenerator::generate(grid,partitioner)
+- Pentagon element type
+- SphericalHarmonic function
+- New interpolation method: ConservativeSphericalPolygonInterpolation
+- Support 'variables' option in functionspace::PointCloud::createField
+
+### Changed
+- Atlas-IO is now standalone project, still embedded but only depending on eckit
+- Deprecate Trans naming of 'ifs' or 'trans' in favour of 'ectrans'
+- Default StructuredMeshGenerator partitioner is equal_regions instead of trans/ectrans
+
+### Fixed
+- Fix global numbering HEALPix grid to standard
+- Fix NodeColumns remote_index for parallel orca grids
+- Fix use of ATLAS_LINALG_DENSE_BACKEND environment variable
+
 ## [0.29.0] - 2022-04-21
 ### Added
 - MatchingMeshPartitioner "cubedsphere"
@@ -366,6 +386,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.30.0]: https://github.com/ecmwf/atlas/compare/0.29.0...0.30.0
 [0.29.0]: https://github.com/ecmwf/atlas/compare/0.28.1...0.29.0
 [0.28.1]: https://github.com/ecmwf/atlas/compare/0.28.0...0.28.1
 [0.28.0]: https://github.com/ecmwf/atlas/compare/0.27.0...0.28.0

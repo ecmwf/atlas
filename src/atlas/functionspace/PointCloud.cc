@@ -12,11 +12,15 @@
 #include "atlas/functionspace/PointCloud.h"
 #include "atlas/array.h"
 #include "atlas/field/Field.h"
+#include "atlas/field/FieldSet.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Iterator.h"
 #include "atlas/option/Options.h"
+#include "atlas/parallel/HaloExchange.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/Metadata.h"
 
 #if ATLAS_HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1
@@ -56,6 +60,18 @@ PointCloud::PointCloud(const Field& lonlat): lonlat_(lonlat) {}
 
 PointCloud::PointCloud(const Field& lonlat, const Field& ghost): lonlat_(lonlat), ghost_(ghost) {}
 
+PointCloud::PointCloud(const FieldSet & flds): lonlat_(flds["lonlat"]),
+  ghost_(flds["ghost"]), remote_index_(flds["remote_index"]), partition_(flds["partition"])
+{
+    ATLAS_ASSERT(ghost_.size() == remote_index_.size());
+    ATLAS_ASSERT(ghost_.size() == partition_.size());
+    halo_exchange_.reset(new parallel::HaloExchange());
+    halo_exchange_->setup(array::make_view<int, 1>( partition_).data(),
+                          array::make_view<idx_t, 1>(remote_index_).data(),
+                          REMOTE_IDX_BASE,
+                          ghost_.size());
+}
+
 PointCloud::PointCloud(const Grid& grid) {
     lonlat_     = Field("lonlat", array::make_datatype<double>(), array::make_shape(grid.size(), 2));
     auto lonlat = array::make_view<double, 2>(lonlat_);
@@ -76,36 +92,97 @@ Field PointCloud::ghost() const {
     return ghost_;
 }
 
-Field PointCloud::createField(const eckit::Configuration& config) const {
+array::ArrayShape PointCloud::config_shape(const eckit::Configuration& config) const {
+    array::ArrayShape shape;
+
+    shape.emplace_back(size());
+
+    idx_t levels(levels_);
+    config.get("levels", levels);
+    if (levels > 0) {
+        shape.emplace_back(levels);
+    }
+
+    idx_t variables(0);
+    config.get("variables", variables);
+    if (variables > 0) {
+        shape.emplace_back(variables);
+    }
+
+    return shape;
+}
+
+array::ArrayAlignment PointCloud::config_alignment(const eckit::Configuration& config) const {
+    int alignment(1);
+    config.get("alignment", alignment);
+    return alignment;
+}
+
+array::ArraySpec PointCloud::config_spec(const eckit::Configuration& config) const {
+    return array::ArraySpec(config_shape(config), config_alignment(config));
+}
+
+array::DataType PointCloud::config_datatype(const eckit::Configuration& config) const {
     array::DataType::kind_t kind;
     if (!config.get("datatype", kind)) {
         throw_Exception("datatype missing", Here());
     }
-    auto datatype = array::DataType(kind);
+    return array::DataType(kind);
+}
 
+std::string PointCloud::config_name(const eckit::Configuration& config) const {
     std::string name;
     config.get("name", name);
-    idx_t levels = levels_;
-    config.get("levels", levels);
-    Field field;
-    if (levels) {
-        field = Field(name, datatype, array::make_shape(size(), levels));
-        field.set_levels(levels);
-    }
-    else {
-        field = Field(name, datatype, array::make_shape(size()));
-    }
+    return name;
+}
+
+
+const parallel::HaloExchange& PointCloud::halo_exchange() const {
+    return *halo_exchange_;
+}
+
+
+void PointCloud::set_field_metadata(const eckit::Configuration& config, Field& field) const {
     field.set_functionspace(this);
+
+    bool global(false);
+    if (config.get("global", global)) {
+        if (global) {
+            idx_t owner(0);
+            config.get("owner", owner);
+            field.metadata().set("owner", owner);
+        }
+    }
+    field.metadata().set("global", global);
+
+    idx_t levels(levels_);
+    config.get("levels", levels);
+    field.set_levels(levels);
+
+    idx_t variables(0);
+    config.get("variables", variables);
+    field.set_variables(variables);
+
+    if (config.has("type")) {
+        field.metadata().set("type", config.getString("type"));
+    }
+}
+
+
+Field PointCloud::createField(const eckit::Configuration& options) const {
+    Field field(config_name(options), config_datatype(options), config_spec(options));
+    set_field_metadata(options, field);
     return field;
 }
 
 Field PointCloud::createField(const Field& other, const eckit::Configuration& config) const {
     return createField(option::datatype(other.datatype()) | option::levels(other.levels()) |
-                       option::variables(other.variables()) | config);
+                       option::variables(other.variables()) |
+                       option::type(other.metadata().getString("type", "scalar")) | config);
 }
 
 std::string PointCloud::distribution() const {
-    return std::string("serial");
+    return (partition_ ?  std::string("pointcloud") : std::string("serial"));
 }
 
 static const array::Array& get_dummy() {
@@ -150,6 +227,113 @@ template class PointCloud::IteratorT<PointXYZ>;
 template class PointCloud::IteratorT<PointXY>;
 template class PointCloud::IteratorT<PointLonLat>;
 
+
+namespace {
+
+template <int RANK>
+void dispatch_haloExchange(Field& field, const parallel::HaloExchange& halo_exchange, bool on_device) {
+    if (field.datatype() == array::DataType::kind<int>()) {
+        halo_exchange.template execute<int, RANK>(field.array(), on_device);
+    }
+    else if (field.datatype() == array::DataType::kind<long>()) {
+        halo_exchange.template execute<long, RANK>(field.array(), on_device);
+    }
+    else if (field.datatype() == array::DataType::kind<float>()) {
+        halo_exchange.template execute<float, RANK>(field.array(), on_device);
+    }
+    else if (field.datatype() == array::DataType::kind<double>()) {
+        halo_exchange.template execute<double, RANK>(field.array(), on_device);
+    }
+    else {
+        throw_Exception("datatype not supported", Here());
+    }
+    field.set_dirty(false);
+}
+
+template <int RANK>
+void dispatch_adjointHaloExchange(Field& field, const parallel::HaloExchange& halo_exchange, bool on_device) {
+    if (field.datatype() == array::DataType::kind<int>()) {
+        halo_exchange.template execute_adjoint<int, RANK>(field.array(), on_device);
+    }
+    else if (field.datatype() == array::DataType::kind<long>()) {
+        halo_exchange.template execute_adjoint<long, RANK>(field.array(), on_device);
+    }
+    else if (field.datatype() == array::DataType::kind<float>()) {
+        halo_exchange.template execute_adjoint<float, RANK>(field.array(), on_device);
+    }
+    else if (field.datatype() == array::DataType::kind<double>()) {
+        halo_exchange.template execute_adjoint<double, RANK>(field.array(), on_device);
+    }
+    else {
+        throw_Exception("datatype not supported", Here());
+    }
+    field.set_dirty(false);
+}
+
+}  // namespace
+
+void PointCloud::haloExchange(const FieldSet& fieldset, bool on_device) const {
+    if (halo_exchange_) {
+        for (idx_t f = 0; f < fieldset.size(); ++f) {
+            Field& field = const_cast<FieldSet&>(fieldset)[f];
+            switch (field.rank()) {
+                case 1:
+                    dispatch_haloExchange<1>(field, halo_exchange(), on_device);
+                    break;
+                case 2:
+                    dispatch_haloExchange<2>(field, halo_exchange(), on_device);
+                   break;
+                case 3:
+                    dispatch_haloExchange<3>(field, halo_exchange(), on_device);
+                    break;
+                case 4:
+                    dispatch_haloExchange<4>(field, halo_exchange(), on_device);
+                    break;
+                default:
+                    throw_Exception("Rank not supported", Here());
+            }
+            field.set_dirty(false);
+        }
+    }
+}
+
+void PointCloud::haloExchange(const Field& field, bool on_device) const {
+    FieldSet fieldset;
+    fieldset.add(field);
+    haloExchange(fieldset, on_device);
+}
+
+void PointCloud::adjointHaloExchange(const FieldSet& fieldset, bool on_device) const {
+    if (halo_exchange_) {
+        for (idx_t f = 0; f < fieldset.size(); ++f) {
+            Field& field = const_cast<FieldSet&>(fieldset)[f];
+            switch (field.rank()) {
+                case 1:
+                    dispatch_adjointHaloExchange<1>(field, halo_exchange(), on_device);
+                    break;
+                case 2:
+                    dispatch_adjointHaloExchange<2>(field, halo_exchange(), on_device);
+                    break;
+                case 3:
+                    dispatch_adjointHaloExchange<3>(field, halo_exchange(), on_device);
+                    break;
+                case 4:
+                    dispatch_adjointHaloExchange<4>(field, halo_exchange(), on_device);
+                    break;
+                default:
+                    throw_Exception("Rank not supported", Here());
+            }
+        }
+    }
+}
+
+void PointCloud::adjointHaloExchange(const Field& field, bool) const {
+    FieldSet fieldset;
+    fieldset.add(field);
+    adjointHaloExchange(fieldset);
+}
+
+
 }  // namespace detail
 
 PointCloud::PointCloud(const FunctionSpace& functionspace):
@@ -158,12 +342,14 @@ PointCloud::PointCloud(const FunctionSpace& functionspace):
 PointCloud::PointCloud(const Field& points):
     FunctionSpace(new detail::PointCloud(points)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
 
+PointCloud::PointCloud(const FieldSet& points):
+    FunctionSpace(new detail::PointCloud(points)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
+
 PointCloud::PointCloud(const std::vector<PointXY>& points):
     FunctionSpace(new detail::PointCloud(points)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
 
 PointCloud::PointCloud(const std::vector<PointXYZ>& points):
     FunctionSpace(new detail::PointCloud(points)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
-
 
 PointCloud::PointCloud(const std::initializer_list<std::initializer_list<double>>& points):
     FunctionSpace((points.begin()->size() == 2

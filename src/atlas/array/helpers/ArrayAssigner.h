@@ -83,6 +83,14 @@ struct array_assigner {
         ATLAS_ASSERT(it = iterable.end());
     }
 
+    template <typename Iterable>
+    static void apply(IndexView<Value, Rank>& arr, const Iterable& iterable) {
+        typename Iterable::const_iterator it = iterable.begin();
+        array_assigner_impl<Value, Rank, 0u>::apply(arr, it);
+        ATLAS_ASSERT(it = iterable.end());
+    }
+
+
     static void apply(LocalView<Value, Rank>& arr, Value value) {
         array_assigner_impl<Value, Rank, 0u>::apply(arr, value);
         // Note: no need to apply variadic pack (idxs...)

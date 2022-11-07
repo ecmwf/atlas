@@ -93,15 +93,21 @@ if ! [[ $(clang-format --version) =~ ${_REQUIRED_CLANG_VERSION} ]]; then
 fi
 
 if [[ $all =~ "yes" ]]; then
+    echo "Applying $(clang-format --version) to all files ..."
 
     SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
     cd $SCRIPTDIR/../src
-
-    echo "Applying $(clang-format --version) to all files ..."
     if [[ $dryrun =~ "yes" ]]; then
         echo "+ find . -iname *.h -o -iname *.cc | xargs clang-format -i -style=file"
     else
         find . -iname *.h -o -iname *.cc | xargs clang-format -i -style=file
+    fi
+   
+    cd $SCRIPTDIR/../atlas_io
+    if [[ $dryrun =~ "yes" ]]; then
+        echo "+ find . -iname \"*.h\" -o -iname \"*.cc\" | xargs clang-format -i -style=file"
+    else
+        find . -iname "*.h" -o -iname "*.cc" | xargs clang-format -i -style=file
     fi
 
 else
@@ -114,10 +120,10 @@ else
             fi
             cd $1
             if [[ $dryrun =~ "yes" ]]; then
-                echo "+ find . -iname *.h -o -iname *.cc | xargs clang-format -i -style=file"
-                find . -iname *.h -o -iname *.cc | xargs echo
+                echo "+ find . -iname \"*.h\" -o -iname \"*.cc\" | xargs clang-format -i -style=file"
+                find . -iname "*.h" -o -iname "*.cc" | xargs echo
             else
-                find . -iname *.h -o -iname *.cc | xargs clang-format -i -style=file
+                find . -iname "*.h" -o -iname "*.cc" | xargs clang-format -i -style=file
             fi
             shift
         else

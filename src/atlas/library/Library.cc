@@ -13,8 +13,6 @@
 #include <sstream>
 #include <string>
 
-#include <dlfcn.h>  // for dynamic loading (should be delegated to eckit)
-
 #include "eckit/config/LibEcKit.h"
 #include "eckit/config/Resource.h"
 #include "eckit/eckit.h"
@@ -28,6 +26,24 @@
 #include "eckit/system/SystemInfo.h"
 #include "eckit/types/Types.h"
 #include "eckit/utils/Translator.h"
+
+#if ATLAS_ECKIT_HAVE_ECKIT_585
+#include "eckit/linalg/LinearAlgebraDense.h"
+namespace {
+static bool feature_MKL() {
+    return eckit::linalg::LinearAlgebraDense::hasBackend("mkl");
+}
+}  // namespace
+#else
+#include "eckit/linalg/LinearAlgebra.h"
+namespace {
+static bool feature_MKL() {
+    return eckit::linalg::LinearAlgebra::hasBackend("mkl");
+}
+}  // namespace
+#endif
+
+#include "atlas_io/Trace.h"
 
 #include "atlas/library/FloatingPointExceptions.h"
 #include "atlas/library/Plugin.h"
@@ -282,6 +298,16 @@ void Library::initialise(const eckit::Parametrisation& config) {
         init_data_paths(data_paths_);
     }
 
+    atlas_io_trace_hook_ =
+        atlas::io::TraceHookRegistry::add([](const eckit::CodeLocation& loc, const std::string& title) {
+            struct Adaptor : public atlas::io::TraceHook {
+                Adaptor(const eckit::CodeLocation& loc, const std::string& title): trace{loc, title} {}
+                atlas::Trace trace;
+            };
+            return std::unique_ptr<Adaptor>(new Adaptor{loc, title});
+        });
+
+
     // Summary
     if (getEnv("ATLAS_LOG_RANK", 0) == int(mpi::rank())) {
         out << "Executable        [" << Main::instance().name() << "]\n";
@@ -311,6 +337,8 @@ void Library::initialise() {
 }
 
 void Library::finalise() {
+    atlas::io::TraceHookRegistry::disable(atlas_io_trace_hook_);
+
     if (ATLAS_HAVE_TRACE && trace_report_) {
         Log::info() << atlas::Trace::report() << std::endl;
     }
@@ -426,12 +454,8 @@ void Library::Information::print(std::ostream& out) const {
     bool feature_BoundsChecking(ATLAS_ARRAYVIEW_BOUNDS_CHECKING);
     bool feature_Init_sNaN(ATLAS_INIT_SNAN);
     bool feature_MPI(false);
-#if ECKIT_HAVE_MPI
+#if ATLAS_HAVE_MPI
     feature_MPI = true;
-#endif
-    bool feature_MKL(false);
-#if ECKIT_HAVE_MKL
-    feature_MKL = true;
 #endif
     std::string array_data_store = "Native";
 #if ATLAS_HAVE_GRIDTOOLS_STORAGE
@@ -449,7 +473,7 @@ void Library::Information::print(std::ostream& out) const {
         << "    Trans          : " << str(feature_Trans) << '\n'
         << "    FFTW           : " << str(feature_FFTW) << '\n'
         << "    Eigen          : " << str(feature_Eigen) << '\n'
-        << "    MKL            : " << str(feature_MKL) << '\n'
+        << "    MKL            : " << str(feature_MKL()) << '\n'
         << "    Tesselation    : " << str(feature_Tesselation) << '\n'
         << "    ArrayDataStore : " << array_data_store << '\n'
         << "    idx_t          : " << ATLAS_BITS_LOCAL << " bit integer" << '\n'

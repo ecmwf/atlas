@@ -18,6 +18,7 @@
 #include "eckit/log/ProgressTimer.h"
 #include "eckit/types/FloatCompare.h"
 
+#include "atlas/functionspace.h"
 #include "atlas/grid.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
@@ -45,7 +46,12 @@ void GridBoxMethod::print(std::ostream& out) const {
 }
 
 
-void GridBoxMethod::do_setup(const FunctionSpace& /*source*/, const FunctionSpace& /*target*/) {
+void GridBoxMethod::do_setup(const FunctionSpace& source, const FunctionSpace& target) {
+    if (functionspace::StructuredColumns(source) && functionspace::StructuredColumns(target)) {
+        do_setup(functionspace::StructuredColumns(source).grid(), functionspace::StructuredColumns(target).grid(),
+                 Cache());
+        return;
+    }
     ATLAS_NOTIMPLEMENTED;
 }
 
@@ -93,7 +99,7 @@ void GridBoxMethod::do_setup(const Grid& source, const Grid& target, const Cache
     ATLAS_TRACE("GridBoxMethod::setup()");
 
     if (mpi::size() > 1) {
-        ATLAS_NOTIMPLEMENTED;
+        ATLAS_THROW_EXCEPTION("Not implemented for MPI-parallel runs");
     }
 
     ATLAS_ASSERT(source);

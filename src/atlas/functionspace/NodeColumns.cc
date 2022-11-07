@@ -537,8 +537,10 @@ void NodeColumns::scatter(const FieldSet& global_fieldset, FieldSet& local_field
             throw_Exception("datatype not supported", Here());
         }
 
+        auto name = loc.name();
         glb.metadata().broadcast(loc.metadata(), root);
         loc.metadata().set("global", false);
+        loc.metadata().set("name", name);
     }
 }
 

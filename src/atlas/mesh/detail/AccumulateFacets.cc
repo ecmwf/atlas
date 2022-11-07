@@ -52,7 +52,21 @@ void accumulate_facets(const mesh::HybridElements& cells, const mesh::Nodes& nod
 
         std::vector<std::vector<int>> facet_node_numbering;
         idx_t nb_facets_in_elem;
-        if (elements.name() == "Quadrilateral") {
+        if (elements.name() == "Pentagon") {
+            nb_facets_in_elem = 5;
+            facet_node_numbering.resize(nb_facets_in_elem, std::vector<int>(nb_nodes_in_facet));
+            facet_node_numbering[0][0] = 0;
+            facet_node_numbering[0][1] = 1;
+            facet_node_numbering[1][0] = 1;
+            facet_node_numbering[1][1] = 2;
+            facet_node_numbering[2][0] = 2;
+            facet_node_numbering[2][1] = 3;
+            facet_node_numbering[3][0] = 3;
+            facet_node_numbering[3][1] = 4;
+            facet_node_numbering[4][0] = 4;
+            facet_node_numbering[4][1] = 0;
+        }
+        else if (elements.name() == "Quadrilateral") {
             nb_facets_in_elem = 4;
             facet_node_numbering.resize(nb_facets_in_elem, std::vector<int>(nb_nodes_in_facet));
             facet_node_numbering[0][0] = 0;
@@ -75,7 +89,7 @@ void accumulate_facets(const mesh::HybridElements& cells, const mesh::Nodes& nod
             facet_node_numbering[2][1] = 0;
         }
         else {
-            throw_Exception(elements.name() + " is not \"Quadrilateral\" or \"Triangle\"", Here());
+            throw_Exception(elements.name() + " is not \"Pentagon\", \"Quadrilateral\", or \"Triangle\"", Here());
         }
 
         std::vector<idx_t> facet_nodes(nb_nodes_in_facet);
@@ -156,7 +170,21 @@ void accumulate_facets_in_range(std::vector<array::Range>& range, const mesh::Hy
 
         std::vector<std::vector<int>> facet_node_numbering;
         idx_t nb_facets_in_elem;
-        if (elements.name() == "Quadrilateral") {
+        if (elements.name() == "Pentagon") {
+            nb_facets_in_elem = 5;
+            facet_node_numbering.resize(nb_facets_in_elem, std::vector<int>(nb_nodes_in_facet));
+            facet_node_numbering[0][0] = 0;
+            facet_node_numbering[0][1] = 1;
+            facet_node_numbering[1][0] = 1;
+            facet_node_numbering[1][1] = 2;
+            facet_node_numbering[2][0] = 2;
+            facet_node_numbering[2][1] = 3;
+            facet_node_numbering[3][0] = 3;
+            facet_node_numbering[3][1] = 4;
+            facet_node_numbering[4][0] = 4;
+            facet_node_numbering[4][1] = 0;
+        }
+        else if (elements.name() == "Quadrilateral") {
             nb_facets_in_elem = 4;
             facet_node_numbering.resize(nb_facets_in_elem, std::vector<int>(nb_nodes_in_facet));
             facet_node_numbering[0][0] = 0;
@@ -179,7 +207,7 @@ void accumulate_facets_in_range(std::vector<array::Range>& range, const mesh::Hy
             facet_node_numbering[2][1] = 0;
         }
         else {
-            throw_Exception(elements.name() + " is not \"Quadrilateral\" or \"Triangle\"", Here());
+            throw_Exception(elements.name() + " is not \"Pentagon\", \"Quadrilateral\", or \"Triangle\"", Here());
         }
 
         std::vector<idx_t> facet_nodes(nb_nodes_in_facet);
