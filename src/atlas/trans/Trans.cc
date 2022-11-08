@@ -103,6 +103,19 @@ void Trans::dirtrans_wind2vordiv(const Field& gpwind, Field& spvor, Field& spdiv
     get()->dirtrans_wind2vordiv(gpwind, spvor, spdiv, options(config));
 }
 
+void Trans::dirtrans_adj(const Field& spfield, Field& gpfield, const eckit::Configuration& config) const {
+    get()->dirtrans_adj(spfield, gpfield, options(config));
+}
+
+void Trans::dirtrans_adj(const FieldSet& spfields, FieldSet& gpfields, const eckit::Configuration& config) const {
+    get()->dirtrans_adj(spfields, gpfields, options(config));
+}
+
+void Trans::dirtrans_wind2vordiv_adj(const Field& spvor, const Field& spdiv, Field& gpwind,
+                                     const eckit::Configuration& config) const {
+    get()->dirtrans_wind2vordiv_adj(spvor, spdiv, gpwind, options(config));
+}
+
 void Trans::invtrans(const Field& spfield, Field& gpfield, const eckit::Configuration& config) const {
     get()->invtrans(spfield, gpfield, options(config));
 }

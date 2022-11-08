@@ -108,6 +108,15 @@ public:
     virtual void dirtrans_wind2vordiv(const Field& gpwind, Field& spvor, Field& spdiv,
                                       const eckit::Configuration& = util::NoConfig()) const override;
 
+    virtual void dirtrans_adj(const Field& spfield, Field& gpfield,
+                              const eckit::Configuration& = util::NoConfig()) const override;
+
+    virtual void dirtrans_adj(const FieldSet& spfields, FieldSet& gpfields,
+                              const eckit::Configuration& = util::NoConfig()) const override;
+
+    virtual void dirtrans_wind2vordiv_adj(const Field& spvor, const Field& spdiv, Field& gpwind,
+                                          const eckit::Configuration& = util::NoConfig()) const override;
+
     virtual void invtrans(const Field& spfield, Field& gpfield,
                           const eckit::Configuration& = util::NoConfig()) const override;
 
@@ -248,6 +257,27 @@ public:
                                 const eckit::Configuration& = util::NoConfig()) const;
     void __dirtrans_wind2vordiv(const functionspace::NodeColumns&, const Field& gpwind, const functionspace::Spectral&,
                                 Field& spvor, Field& spdiv, const eckit::Configuration& = util::NoConfig()) const;
+
+    void __dirtrans_adj(const functionspace::Spectral&, const Field& spfield,
+                        const functionspace::StructuredColumns&, Field& gpfield,
+                        const eckit::Configuration& = util::NoConfig()) const;
+    void __dirtrans_adj(const functionspace::Spectral&, const Field& spfield,
+                        const functionspace::NodeColumns&, Field& gpfield,
+                        const eckit::Configuration& = util::NoConfig()) const;
+
+    void __dirtrans_adj(const functionspace::Spectral&, const FieldSet& spfields,
+                        const functionspace::StructuredColumns&, FieldSet& gpfields,
+                        const eckit::Configuration& = util::NoConfig()) const;
+    void __dirtrans_adj(const functionspace::Spectral&, const FieldSet& spfields,
+                        const functionspace::NodeColumns&, FieldSet& gpfields,
+                        const eckit::Configuration& = util::NoConfig()) const;
+
+    void __dirtrans_wind2vordiv_adj(const functionspace::Spectral&, const Field& spvor, const Field& spdiv,
+                                    const functionspace::StructuredColumns&, Field& gpwind,
+                                    const eckit::Configuration& = util::NoConfig()) const;
+    void __dirtrans_wind2vordiv_adj(const functionspace::Spectral&, const Field& spvor, const Field& spdiv,
+                                    const functionspace::NodeColumns&, Field& gpwind,
+                                    const eckit::Configuration& = util::NoConfig()) const;
 
     void __invtrans(const functionspace::Spectral&, const Field& spfield, const functionspace::StructuredColumns&,
                     Field& gpfield, const eckit::Configuration& = util::NoConfig()) const;
