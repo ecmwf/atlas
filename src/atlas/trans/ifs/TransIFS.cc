@@ -1531,6 +1531,7 @@ void TransIFS::__dirtrans_wind2vordiv(const functionspace::NodeColumns& gp, cons
 void TransIFS::__dirtrans_adj(const Spectral& sp, const FieldSet& spfields,
                               const StructuredColumns& gp, FieldSet& gpfields,
                               const eckit::Configuration&) const {
+#if ATLAS_HAVE_ECTRANS
     assertCompatibleDistributions(gp, sp);
 
     // Count total number of fields and do sanity checks
@@ -1576,6 +1577,9 @@ void TransIFS::__dirtrans_adj(const Spectral& sp, const FieldSet& spfields,
             unpack(gp, gpfields[jfld]);
         }
     }
+#else
+    ATLAS_NOTIMPLEMENTED;
+#endif
 }
 
 // --------------------------------------------------------------------------------------------
@@ -1583,6 +1587,7 @@ void TransIFS::__dirtrans_adj(const Spectral& sp, const FieldSet& spfields,
 void TransIFS::__dirtrans_adj( const Spectral& sp, const Field& spfield,
                                const NodeColumns& gp, Field& gpfield,
                                const eckit::Configuration& ) const {
+#if ATLAS_HAVE_ECTRANS
     ATLAS_ASSERT(gpfield.functionspace() == 0 || functionspace::NodeColumns(gpfield.functionspace()));
     ATLAS_ASSERT(spfield.functionspace() == 0 || functionspace::Spectral(spfield.functionspace()));
 
@@ -1622,6 +1627,9 @@ void TransIFS::__dirtrans_adj( const Spectral& sp, const Field& spfield,
         UnpackNodeColumns unpack(rgpview, gp);
         unpack(gpfield);
     }
+#else
+    ATLAS_NOTIMPLEMENTED;
+#endif
 }
 
 // --------------------------------------------------------------------------------------------
@@ -1629,6 +1637,7 @@ void TransIFS::__dirtrans_adj( const Spectral& sp, const Field& spfield,
 void TransIFS::__dirtrans_adj( const Spectral& sp, const Field& spfield,
                                const StructuredColumns& gp, Field& gpfield,
                                const eckit::Configuration& ) const {
+#if ATLAS_HAVE_ECTRANS
     ATLAS_ASSERT(gpfield.functionspace() == 0 || functionspace::StructuredColumns(gpfield.functionspace()));
     ATLAS_ASSERT(spfield.functionspace() == 0 || functionspace::Spectral(spfield.functionspace()));
 
@@ -1668,6 +1677,9 @@ void TransIFS::__dirtrans_adj( const Spectral& sp, const Field& spfield,
         UnpackStructuredColumns unpack(rgpview);
         unpack(gp, gpfield);
     }
+#else
+    ATLAS_NOTIMPLEMENTED;
+#endif
 }
 
 
@@ -1676,6 +1688,7 @@ void TransIFS::__dirtrans_adj( const Spectral& sp, const Field& spfield,
 void TransIFS::__dirtrans_adj(const Spectral& sp, const FieldSet& spfields,
                               const NodeColumns& gp, FieldSet& gpfields,
                               const eckit::Configuration&) const {
+#if ATLAS_HAVE_ECTRANS
     assertCompatibleDistributions(gp, sp);
 
     // Count total number of fields and do sanity checks
@@ -1721,6 +1734,9 @@ void TransIFS::__dirtrans_adj(const Spectral& sp, const FieldSet& spfields,
             unpack(gpfields[jfld]);
         }
     }
+#else
+    ATLAS_NOTIMPLEMENTED;
+#endif
 }
 
 // --------------------------------------------------------------------------------------------
@@ -1728,6 +1744,7 @@ void TransIFS::__dirtrans_adj(const Spectral& sp, const FieldSet& spfields,
 void TransIFS::__dirtrans_wind2vordiv_adj(const Spectral& sp, const Field& spvor, const Field& spdiv,
                                           const functionspace::StructuredColumns& gp, Field& gpwind,
                                           const eckit::Configuration&) const {
+#if ATLAS_HAVE_ECTRANS
     assertCompatibleDistributions(gp, sp);
 
     // Count total number of fields and do sanity checks
@@ -1791,6 +1808,9 @@ void TransIFS::__dirtrans_wind2vordiv_adj(const Spectral& sp, const Field& spvor
         int wind_components = 2;
         unpack(gp, gpwind, wind_components);
     }
+#else
+    ATLAS_NOTIMPLEMENTED;
+#endif
 }
 
 // --------------------------------------------------------------------------------------------
@@ -1798,6 +1818,7 @@ void TransIFS::__dirtrans_wind2vordiv_adj(const Spectral& sp, const Field& spvor
 void TransIFS::__dirtrans_wind2vordiv_adj(const Spectral& sp, const Field& spvor, const Field& spdiv,
                                           const functionspace::NodeColumns& gp, Field& gpwind,
                                           const eckit::Configuration&) const {
+#if ATLAS_HAVE_ECTRANS
     assertCompatibleDistributions(gp, sp);
 
     // Count total number of fields and do sanity checks
@@ -1861,6 +1882,9 @@ void TransIFS::__dirtrans_wind2vordiv_adj(const Spectral& sp, const Field& spvor
         int wind_components = 2;
         unpack(gpwind, wind_components);
     }
+#else
+    ATLAS_NOTIMPLEMENTED;
+#endif
 }
 
 
