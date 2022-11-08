@@ -23,7 +23,7 @@ static size_t hash_cstr(const char *s) {
     // http://www.cse.yorku.ca/~oz/hash.html
     size_t h = 5381;
     int c;
-    while (c = *s++) {
+    while ((c = *s++)) {
         h = ((h << 5) + h) + c;
     }
     return h;
