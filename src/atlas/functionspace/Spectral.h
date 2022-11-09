@@ -65,21 +65,21 @@ public:
 
     Spectral(const trans::Trans&, const eckit::Configuration& = util::NoConfig());
 
-    virtual ~Spectral() override;
+    ~Spectral() override;
 
-    virtual std::string type() const override { return "Spectral"; }
+    std::string type() const override { return "Spectral"; }
 
-    virtual std::string distribution() const override;
+    std::string distribution() const override;
 
     using FunctionSpaceImpl::createField;
-    virtual Field createField(const eckit::Configuration&) const override;
-    virtual Field createField(const Field&, const eckit::Configuration&) const override;
+    Field createField(const eckit::Configuration&) const override;
+    Field createField(const Field&, const eckit::Configuration&) const override;
 
-    void gather(const FieldSet&, FieldSet&) const;
-    void gather(const Field&, Field&) const;
+    void gather(const FieldSet&, FieldSet&) const override;
+    void gather(const Field&, Field&) const override;
 
-    void scatter(const FieldSet&, FieldSet&) const;
-    void scatter(const Field&, Field&) const;
+    void scatter(const FieldSet&, FieldSet&) const override;
+    void scatter(const Field&, Field&) const override;
 
     std::string checksum(const FieldSet&) const;
     std::string checksum(const Field&) const;
@@ -180,7 +180,7 @@ public:  // methods
     idx_t nb_spectral_coefficients_global() const;
     int truncation() const { return truncation_; }
 
-    virtual idx_t size() const override { return nb_spectral_coefficients(); }
+    idx_t size() const override { return nb_spectral_coefficients(); }
 
 private:  // methods
     array::DataType config_datatype(const eckit::Configuration&) const;

@@ -43,11 +43,11 @@ class EdgeColumns : public functionspace::FunctionSpaceImpl {
 public:
     EdgeColumns(const Mesh&, const eckit::Configuration& = util::NoConfig());
 
-    virtual ~EdgeColumns() override;
+    ~EdgeColumns() override;
 
-    virtual std::string type() const override { return "Edges"; }
+    std::string type() const override { return "Edges"; }
 
-    virtual std::string distribution() const override;
+    std::string distribution() const override;
 
     idx_t nb_edges() const;
     idx_t nb_edges_global() const;  // Only on MPI rank 0, will this be different from 0
@@ -61,29 +61,29 @@ public:
 
     // -- Field creation methods
 
-    virtual Field createField(const eckit::Configuration&) const override;
+    Field createField(const eckit::Configuration&) const override;
 
-    virtual Field createField(const Field&, const eckit::Configuration&) const override;
+    Field createField(const Field&, const eckit::Configuration&) const override;
 
     // -- Parallelisation aware methods
 
-    virtual void haloExchange(const FieldSet&, bool on_device = false) const override;
-    virtual void haloExchange(const Field&, bool on_device = false) const override;
+    void haloExchange(const FieldSet&, bool on_device = false) const override;
+    void haloExchange(const Field&, bool on_device = false) const override;
     const parallel::HaloExchange& halo_exchange() const;
 
-    void gather(const FieldSet&, FieldSet&) const;
-    void gather(const Field&, Field&) const;
-    const parallel::GatherScatter& gather() const;
+    void gather(const FieldSet&, FieldSet&) const override;
+    void gather(const Field&, Field&) const override;
+    const parallel::GatherScatter& gather() const override;
 
-    void scatter(const FieldSet&, FieldSet&) const;
-    void scatter(const Field&, Field&) const;
-    const parallel::GatherScatter& scatter() const;
+    void scatter(const FieldSet&, FieldSet&) const override;
+    void scatter(const Field&, Field&) const override;
+    const parallel::GatherScatter& scatter() const override;
 
     std::string checksum(const FieldSet&) const;
     std::string checksum(const Field&) const;
     const parallel::Checksum& checksum() const;
 
-    virtual idx_t size() const override { return nb_edges_; }
+    idx_t size() const override { return nb_edges_; }
 
     Field lonlat() const override;
 
@@ -98,7 +98,7 @@ private:  // methods
     idx_t config_levels(const eckit::Configuration&) const;
     array::ArrayShape config_shape(const eckit::Configuration&) const;
     void set_field_metadata(const eckit::Configuration&, Field&) const;
-    virtual size_t footprint() const override;
+    size_t footprint() const override;
 
 private:                           // data
     Mesh mesh_;                    // non-const because functionspace may modify mesh

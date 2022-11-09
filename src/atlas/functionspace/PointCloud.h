@@ -47,25 +47,25 @@ public:
     PointCloud(const FieldSet&);  // assuming lonlat ghost ridx and partition present.
 
     PointCloud(const Grid&);
-    virtual ~PointCloud() override {}
-    virtual std::string type() const override { return "PointCloud"; }
-    virtual operator bool() const override { return true; }
-    virtual size_t footprint() const override { return sizeof(*this); }
-    virtual std::string distribution() const override;
+    ~PointCloud() override {}
+    std::string type() const override { return "PointCloud"; }
+    operator bool() const override { return true; }
+    size_t footprint() const override { return sizeof(*this); }
+    std::string distribution() const override;
     Field lonlat() const override { return lonlat_; }
     const Field& vertical() const { return vertical_; }
     Field ghost() const override;
     virtual idx_t size() const override { return lonlat_.shape(0); }
 
     using FunctionSpaceImpl::createField;
-    virtual Field createField(const eckit::Configuration&) const override;
-    virtual Field createField(const Field&, const eckit::Configuration&) const override;
+    Field createField(const eckit::Configuration&) const override;
+    Field createField(const Field&, const eckit::Configuration&) const override;
 
-    virtual void haloExchange(const FieldSet&, bool on_device = false) const override;
-    virtual void haloExchange(const Field&, bool on_device = false) const override;
+    void haloExchange(const FieldSet&, bool on_device = false) const override;
+    void haloExchange(const Field&, bool on_device = false) const override;
 
-    virtual void adjointHaloExchange(const FieldSet&, bool on_device = false) const override;
-    virtual void adjointHaloExchange(const Field&, bool on_device = false) const override;
+    void adjointHaloExchange(const FieldSet&, bool on_device = false) const override;
+    void adjointHaloExchange(const Field&, bool on_device = false) const override;
 
     const parallel::HaloExchange& halo_exchange() const;
 

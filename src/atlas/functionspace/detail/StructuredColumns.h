@@ -78,32 +78,32 @@ public:
     StructuredColumns(const Grid&, const Vertical&, const grid::Partitioner&,
                       const eckit::Configuration& = util::NoConfig());
 
-    virtual ~StructuredColumns() override;
+    ~StructuredColumns() override;
 
     static std::string static_type() { return "StructuredColumns"; }
-    virtual std::string type() const override { return static_type(); }
-    virtual std::string distribution() const override;
+    std::string type() const override { return static_type(); }
+    std::string distribution() const override;
 
     /// @brief Create a Structured field
-    virtual Field createField(const eckit::Configuration&) const override;
+    Field createField(const eckit::Configuration&) const override;
 
-    virtual Field createField(const Field&, const eckit::Configuration&) const override;
+    Field createField(const Field&, const eckit::Configuration&) const override;
 
-    void gather(const FieldSet&, FieldSet&) const;
-    void gather(const Field&, Field&) const;
+    void gather(const FieldSet&, FieldSet&) const override;
+    void gather(const Field&, Field&) const override;
 
-    void scatter(const FieldSet&, FieldSet&) const;
-    void scatter(const Field&, Field&) const;
+    void scatter(const FieldSet&, FieldSet&) const override;
+    void scatter(const Field&, Field&) const override;
 
-    virtual void haloExchange(const FieldSet&, bool on_device = false) const override;
-    virtual void haloExchange(const Field&, bool on_device = false) const override;
+    void haloExchange(const FieldSet&, bool on_device = false) const override;
+    void haloExchange(const Field&, bool on_device = false) const override;
 
-    virtual void adjointHaloExchange(const FieldSet&, bool on_device = false) const override;
-    virtual void adjointHaloExchange(const Field&, bool on_device = false) const override;
+    void adjointHaloExchange(const FieldSet&, bool on_device = false) const override;
+    void adjointHaloExchange(const Field&, bool on_device = false) const override;
 
     idx_t sizeOwned() const { return size_owned_; }
     idx_t sizeHalo() const { return size_halo_; }
-    virtual idx_t size() const override { return size_halo_; }
+    idx_t size() const override { return size_halo_; }
 
     idx_t levels() const { return nb_levels_; }
 
@@ -192,8 +192,8 @@ private:  // methods
     }
     [[noreturn]] void throw_outofbounds(idx_t i, idx_t j) const;
 
-    const parallel::GatherScatter& gather() const;
-    const parallel::GatherScatter& scatter() const;
+    const parallel::GatherScatter& gather() const override;
+    const parallel::GatherScatter& scatter() const override;
     const parallel::Checksum& checksum() const;
     const parallel::HaloExchange& halo_exchange() const;
 

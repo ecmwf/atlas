@@ -52,12 +52,12 @@ public:
     NodeColumns(Mesh mesh, const eckit::Configuration&);
     NodeColumns(Mesh mesh);
 
-    virtual ~NodeColumns() override;
+    ~NodeColumns() override;
 
     static std::string static_type() { return "NodeColumns"; }
-    virtual std::string type() const override { return static_type(); }
+    std::string type() const override { return static_type(); }
 
-    virtual std::string distribution() const override;
+    std::string distribution() const override;
 
     idx_t nb_nodes() const;
     idx_t nb_nodes_global() const;  // All MPI ranks will have same output
@@ -73,9 +73,9 @@ public:
     using FunctionSpaceImpl::createField;
 
     /// @brief Create a field
-    virtual Field createField(const eckit::Configuration&) const override;
+    Field createField(const eckit::Configuration&) const override;
 
-    virtual Field createField(const Field&, const eckit::Configuration&) const override;
+    Field createField(const Field&, const eckit::Configuration&) const override;
 
     // -- Parallelisation aware methods
 
@@ -88,13 +88,13 @@ public:
     void adjointHaloExchange(const FieldSet&, bool on_device = false) const override;
     void adjointHaloExchange(const Field&, bool on_device = false) const override;
 
-    void gather(const FieldSet&, FieldSet&) const;
-    void gather(const Field&, Field&) const;
-    const parallel::GatherScatter& gather() const;
+    void gather(const FieldSet&, FieldSet&) const override;
+    void gather(const Field&, Field&) const override;
+    const parallel::GatherScatter& gather() const override;
 
-    void scatter(const FieldSet&, FieldSet&) const;
-    void scatter(const Field&, Field&) const;
-    const parallel::GatherScatter& scatter() const;
+    void scatter(const FieldSet&, FieldSet&) const override;
+    void scatter(const Field&, Field&) const override;
+    const parallel::GatherScatter& scatter() const override;
 
     std::string checksum(const FieldSet&) const;
     std::string checksum(const Field&) const;
