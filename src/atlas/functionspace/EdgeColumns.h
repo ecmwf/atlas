@@ -173,14 +173,6 @@ public:
     // -- Parallelisation aware methods
     const parallel::HaloExchange& halo_exchange() const;
 
-    void gather(const FieldSet&, FieldSet&) const;
-    void gather(const Field&, Field&) const;
-    const parallel::GatherScatter& gather() const;
-
-    void scatter(const FieldSet&, FieldSet&) const;
-    void scatter(const Field&, Field&) const;
-    const parallel::GatherScatter& scatter() const;
-
     std::string checksum(const FieldSet&) const;
     std::string checksum(const Field&) const;
     const parallel::Checksum& checksum() const;

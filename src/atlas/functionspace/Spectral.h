@@ -75,9 +75,11 @@ public:
     Field createField(const eckit::Configuration&) const override;
     Field createField(const Field&, const eckit::Configuration&) const override;
 
+    using FunctionSpaceImpl::gather;
     void gather(const FieldSet&, FieldSet&) const override;
     void gather(const Field&, Field&) const override;
 
+    using FunctionSpaceImpl::scatter;
     void scatter(const FieldSet&, FieldSet&) const override;
     void scatter(const Field&, Field&) const override;
 
@@ -220,12 +222,6 @@ public:
 
     operator bool() const { return valid(); }
     bool valid() const { return functionspace_; }
-
-    void gather(const FieldSet&, FieldSet&) const;
-    void gather(const Field&, Field&) const;
-
-    void scatter(const FieldSet&, FieldSet&) const;
-    void scatter(const Field&, Field&) const;
 
     std::string checksum(const FieldSet&) const;
     std::string checksum(const Field&) const;
