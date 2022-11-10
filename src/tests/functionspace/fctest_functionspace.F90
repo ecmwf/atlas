@@ -587,14 +587,18 @@ END_TEST
 
 TEST( test_pointcloud )
 #if 1
+implicit none
 type(atlas_StructuredGrid) :: grid
 type(atlas_functionspace_PointCloud) :: fs
 type(atlas_functionspace) :: fs_base
+type(atlas_trace) :: trace
 character(len=10) str
 
 type(atlas_Field) :: field, field2
 type(atlas_Field) :: field_lonlat
 real(8), pointer  :: lonlat(:,:), x(:)
+
+trace = atlas_Trace("fctest_functionspace.F90",__LINE__,"test_pointcloud")
 
 grid = atlas_Grid("O8")
 fs = atlas_functionspace_PointCloud(grid)
@@ -624,8 +628,8 @@ write(0,*) "after: owners = " , fs%owners()
 
 field2 = fs%create_field(name="field2",kind=atlas_real(8),levels=3,variables=2)
 
-FCTEST_CHECK_EQUAL( field%shape(), ([5,grid%size()]) )
-FCTEST_CHECK_EQUAL( field2%shape(), ([2,3,grid%size()]) )
+FCTEST_CHECK_EQUAL( field%shape(), ([5,int(grid%size())]) )
+FCTEST_CHECK_EQUAL( field2%shape(), ([2,3,int(grid%size())]) )
 
 #ifndef _CRAYFTN
 FCTEST_CHECK_EQUAL( field%owners(), 1 )
@@ -642,6 +646,123 @@ call grid%final()
 #warning test test_pointcloud disabled
 #endif
 END_TEST
+
+TEST( test_pointcloud_partition_remote )
+#if 1
+use fckit_module
+implicit none
+
+type(atlas_functionspace_PointCloud) :: fs
+type(atlas_Field) :: fld_points
+type(atlas_Field) :: fld_ghost
+type(atlas_Field) :: fld_partition
+type(atlas_Field) :: fld_remote_index
+type(atlas_Field) :: fld_values
+type(atlas_Field) :: fld_values_save
+type(atlas_FieldSet) :: fset
+
+type(atlas_functionspace) :: fs_base
+type(atlas_trace) :: trace
+
+integer i, k
+integer rank
+real space
+real(c_double), allocatable :: point_values(:,:)
+integer(c_int), dimension(4) :: ghost_values
+integer(c_int), dimension(4) :: partition_index
+integer(ATLAS_KIND_IDX), dimension(4) :: remote_index
+real(c_double), pointer :: field_values(:,:)
+real(c_double), pointer :: field_values_save(:,:)
+real(c_double), pointer :: field_values_new(:,:)
+real(c_double), parameter :: tol = 1.e-12_dp
+
+trace = atlas_Trace("fctest_functionspace.F90",__LINE__,"test_pointcloud_partition_remote")
+rank = fckit_mpi%rank()
+
+! the idea here is that we have a latitudinal circle around the equator
+! that is partitioned equally
+!
+! test here is for 4 PEs (but could be more!)
+!   PE 0          PE 1        PE 2      PE 3
+!
+! Owned values
+!    0  45       90 135      180 225   270 315
+!
+! Each PE has owned data followed by ghost data
+! Ghost data is 1 before followed by 1 point after owned data ie.
+!
+! Correct halo_exchange for PE 0
+! 0  45 | 315  90
+
+
+space = 360.0 /(2.0 * fckit_mpi%size())
+fset = atlas_FieldSet()
+
+allocate(point_values(2, 4))
+
+point_values = reshape((/space * (2 * rank), 0.0, &
+                         space * (2 * rank + 1), 0.0, &
+                         space * (2 * rank - 1), 0.0, &
+                         space * (2 * rank + 2), 0.0/), shape(point_values))
+
+if (point_values(1, 3) < 0.0) point_values(1, 3) = 360.0 + point_values(1, 3)
+if (point_values(1, 4) > 360.0 - tol) point_values(1, 4) = 0.0d0
+fld_points = atlas_Field("lonlat", point_values(:, :))
+call fset%add(fld_points)
+
+ghost_values = (/ 0, 0, 1, 1 /)
+fld_ghost = atlas_Field("ghost", ghost_values(:))
+call fset%add(fld_ghost)
+
+partition_index = (/ rank, rank, rank - 1,  rank + 1 /)
+if (partition_index(3) < 0) partition_index(3) = fckit_mpi%size() - 1
+if (partition_index(4) == fckit_mpi%size()) partition_index(4) = 0
+fld_partition = atlas_Field("partition", partition_index(:))
+call fset%add(fld_partition)
+
+remote_index = (/ 1, 2, 2, 1 /)
+fld_remote_index = atlas_Field("remote_index", remote_index(:))
+call fset%add(fld_remote_index)
+
+fs = atlas_functionspace_PointCloud(fset)
+fld_values = fs%create_field(name="values", kind=atlas_real(c_double), levels=1)
+call fld_values%data(field_values)
+fld_values_save = fs%create_field(name="values_save", kind=atlas_real(c_double), levels=1)
+call fld_values_save%data(field_values_save)
+
+do i = 1, 4
+  do k = 1, 1
+    field_values(k, i) = point_values(1, i)
+    field_values_save(k, i) = point_values(1, i)
+  end do
+end do
+
+call fs%halo_exchange(fld_values)
+call fld_values%data(field_values_new)
+
+do i = 1, 4
+  do k = 1, 1
+    FCTEST_CHECK_CLOSE(field_values_new(k, i), field_values_save(k, i), tol)
+  end do
+end do
+
+call fs%adjoint_halo_exchange(fld_values)
+
+do i = 1, 4
+  do k = 1, 1
+    if (i < 3) then
+      FCTEST_CHECK_CLOSE(field_values_new(k, i), 2.0 * field_values_save(k, i), tol)
+    else
+      FCTEST_CHECK_CLOSE(field_values_new(k, i), 0.0_dp, tol)
+    end if
+end do
+end do
+
+#else
+#warning test_pointcloud_partition_remote disabled
+#endif
+END_TEST
+
 
 
 

@@ -11,11 +11,16 @@
 #include <iostream>
 
 #include "atlas/array/native/NativeIndexView.h"
+#include "atlas/array/helpers/ArrayAssigner.h"
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 namespace array {
+
+#undef ENABLE_IF_NON_CONST
+#define ENABLE_IF_NON_CONST \
+    template <bool EnableBool, typename std::enable_if<(!std::is_const<Value>::value && EnableBool), int>::type*>
 
 //------------------------------------------------------------------------------------------------------
 
@@ -42,12 +47,20 @@ void IndexView<Value, Rank>::dump(std::ostream& os) const {
     os << "]" << std::endl;
 }
 
+template <typename Value, int Rank>
+ENABLE_IF_NON_CONST void IndexView<Value, Rank>::assign(const std::initializer_list<value_type>& list) {
+    helpers::array_assigner<Value, Rank>::apply(*this, list);
+}
+
+
 //------------------------------------------------------------------------------------------------------
 // Explicit template instatiation
 
 #define EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(TYPE, RANK) \
     template class IndexView<TYPE, RANK>;                     \
-    template class IndexView<const TYPE, RANK>;
+    template class IndexView<const TYPE, RANK>;               \
+    template void IndexView<TYPE, RANK>::assign<true, nullptr>(std::initializer_list<TYPE> const&);
+
 
 #define EXPLICIT_TEMPLATE_INSTANTIATION(RANK)            \
     EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(int, RANK) \

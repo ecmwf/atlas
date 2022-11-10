@@ -15,6 +15,7 @@
 #include <numeric>
 #include <vector>
 
+#include "eckit/log/ProgressTimer.h"
 #include "eckit/types/FloatCompare.h"
 #include "eckit/utils/Hash.h"
 
@@ -271,39 +272,88 @@ void StructuredMeshGenerator::generate_region(const StructuredGrid& rg, const gr
     bool unique_pole        = options.getBool("unique_pole") && three_dimensional && has_north_pole && has_south_pole;
     bool periodic_east_west = rg.periodic();
 
-    int n;
-    /*
+
+    idx_t lat_north = -1;
+    idx_t lat_south = -1;
+
+    if (distribution.nb_partitions() == 1) {
+        lat_north = 0;
+        lat_south = rg.ny() - 1;
+    }
+    else {
+        ATLAS_TRACE_SCOPE("compute bounds") {
+            // This part does not scale
+            /*
 Find min and max latitudes used by this part.
 */
-    n               = 0;
-    idx_t lat_north = -1;
-    for (idx_t jlat = 0; jlat < rg.ny(); ++jlat) {
-        for (idx_t jlon = 0; jlon < rg.nx(jlat); ++jlon) {
-            if (distribution.partition(n) == mypart) {
-                lat_north = jlat;
-                goto end_north;
-            }
-            ++n;
-        }
-    }
-end_north:
 
-    n               = rg.size() - 1;
-    idx_t lat_south = -1;
-    for (idx_t jlat = rg.ny() - 1; jlat >= 0; --jlat) {
-        for (idx_t jlon = rg.nx(jlat) - 1; jlon >= 0; --jlon) {
-            if (distribution.partition(n) == mypart) {
-                lat_south = jlat;
-                goto end_south;
+            size_t num_threads = atlas_omp_get_max_threads();
+            if (num_threads == 1) {
+                int n = 0;
+                for (idx_t jlat = 0; jlat < rg.ny(); ++jlat) {
+                    for (idx_t jlon = 0; jlon < rg.nx(jlat); ++jlon) {
+                        if (distribution.partition(n) == mypart) {
+                            lat_north = jlat;
+                            goto end_north;
+                        }
+                        ++n;
+                    }
+                }
+            end_north:;
+
+                n = rg.size() - 1;
+                for (idx_t jlat = rg.ny() - 1; jlat >= 0; --jlat) {
+                    for (idx_t jlon = rg.nx(jlat) - 1; jlon >= 0; --jlon) {
+                        if (distribution.partition(n) == mypart) {
+                            lat_south = jlat;
+                            goto end_south;
+                        }
+                        --n;
+                    }
+                }
+            end_south:;
             }
-            --n;
+            else {
+                std::vector<idx_t> thread_reduce_lat_north(num_threads, std::numeric_limits<idx_t>::max());
+                std::vector<idx_t> thread_reduce_lat_south(num_threads, std::numeric_limits<idx_t>::min());
+
+                atlas_omp_parallel {
+                    const idx_t thread_num = atlas_omp_get_thread_num();
+                    const idx_t jbegin = static_cast<int>(size_t(thread_num) * size_t(rg.ny()) / size_t(num_threads));
+                    const idx_t jend = static_cast<int>(size_t(thread_num + 1) * size_t(rg.ny()) / size_t(num_threads));
+
+                    auto& thread_lat_north = thread_reduce_lat_north[thread_num];
+                    auto& thread_lat_south = thread_reduce_lat_south[thread_num];
+
+                    for (idx_t jlat = jbegin; jlat < jend && thread_lat_north > jend; ++jlat) {
+                        int n = rg.index(0, jlat);
+                        for (idx_t jlon = 0; jlon < rg.nx(jlat); ++jlon, ++n) {
+                            if (distribution.partition(n) == mypart) {
+                                thread_lat_north = jlat;
+                                break;
+                            }
+                        }
+                    }
+
+                    for (idx_t jlat = jend - 1; jlat >= jbegin && thread_lat_south < jbegin; --jlat) {
+                        int n = rg.index(0, jlat);
+                        for (idx_t jlon = 0; jlon < rg.nx(jlat); ++jlon, ++n) {
+                            if (distribution.partition(n) == mypart) {
+                                thread_lat_south = jlat;
+                                break;
+                            }
+                        }
+                    }
+                }
+                lat_north = *std::min_element(thread_reduce_lat_north.begin(), thread_reduce_lat_north.end());
+                lat_south = *std::max_element(thread_reduce_lat_south.begin(), thread_reduce_lat_south.end());
+            }
         }
     }
-end_south:
 
     std::vector<idx_t> offset(rg.ny(), 0);
 
-    n = 0;
+    int n = 0;
     for (idx_t jlat = 0; jlat < rg.ny(); ++jlat) {
         offset.at(jlat) = n;
         n += rg.nx(jlat);
@@ -335,411 +385,419 @@ We need to connect to next region
     array::ArrayView<int, 3> elemview = array::make_view<int, 3>(*region.elems);
     elemview.assign(-1);
 
-    for (idx_t jlat = lat_north; jlat < lat_south; ++jlat) {
-        //    std::stringstream filename; filename << "/tmp/debug/"<<jlat;
+    ATLAS_TRACE_SCOPE("generate elements") {
+        eckit::Channel blackhole;
 
-        idx_t ilat, latN, latS;
-        idx_t ipN1, ipN2, ipS1, ipS2;
-        double xN1, xN2, yN, xS1, xS2, yS;
-        double dN1S2, dS1N2;  // dN2S2;
-        bool try_make_triangle_up, try_make_triangle_down, try_make_quad;
-        bool add_triag, add_quad;
+        eckit::ProgressTimer progress("Generating elements for " + std::to_string(lat_south - lat_north) + " rows",
+                                      lat_south - lat_north, " row", 5.,
+                                      lat_south - lat_north > 1280 ? Log::trace() : blackhole);
 
-        ilat = jlat - region.north;
+        for (idx_t jlat = lat_north; jlat < lat_south; ++jlat, ++progress) {
+            //    std::stringstream filename; filename << "/tmp/debug/"<<jlat;
 
-        auto lat_elems_view = elemview.slice(ilat, Range::all(), Range::all());
+            idx_t ilat, latN, latS;
+            idx_t ipN1, ipN2, ipS1, ipS2;
+            double xN1, xN2, yN, xS1, xS2, yS;
+            double dN1S2, dS1N2;  // dN2S2;
+            bool try_make_triangle_up, try_make_triangle_down, try_make_quad;
+            bool add_triag, add_quad;
 
-        latN = jlat;
-        latS = jlat + 1;
-        yN   = rg.y(latN);
-        yS   = rg.y(latS);
+            ilat = jlat - region.north;
 
-        idx_t beginN, beginS, endN, endS;
+            auto lat_elems_view = elemview.slice(ilat, Range::all(), Range::all());
 
-        beginN = 0;
-        endN   = rg.nx(latN) - (periodic_east_west ? 0 : 1);
-        if (eckit::types::is_approximately_equal(yN, 90.) && unique_pole) {
-            endN = beginN;
-        }
+            latN = jlat;
+            latS = jlat + 1;
+            yN   = rg.y(latN);
+            yS   = rg.y(latS);
 
-        beginS = 0;
-        endS   = rg.nx(latS) - (periodic_east_west ? 0 : 1);
-        if (eckit::types::is_approximately_equal(yS, -90.) && unique_pole) {
-            endS = beginS;
-        }
+            idx_t beginN, beginS, endN, endS;
 
-        ipN1 = beginN;
-        ipS1 = beginS;
-        ipN2 = std::min(ipN1 + 1, endN);
-        ipS2 = std::min(ipS1 + 1, endS);
+            beginN = 0;
+            endN   = rg.nx(latN) - (periodic_east_west ? 0 : 1);
+            if (eckit::types::is_approximately_equal(yN, 90.) && unique_pole) {
+                endN = beginN;
+            }
 
-        idx_t jelem = 0;
-        int pE      = distribution.partition(offset.at(latN));
+            beginS = 0;
+            endS   = rg.nx(latS) - (periodic_east_west ? 0 : 1);
+            if (eckit::types::is_approximately_equal(yS, -90.) && unique_pole) {
+                endS = beginS;
+            }
+
+            ipN1 = beginN;
+            ipS1 = beginS;
+            ipN2 = std::min(ipN1 + 1, endN);
+            ipS2 = std::min(ipS1 + 1, endS);
+
+            idx_t jelem = 0;
+            int pE      = distribution.partition(offset.at(latN));
 
 #if DEBUG_OUTPUT
-        Log::info() << "=================\n";
-        Log::info() << "latN, latS : " << latN << ", " << latS << '\n';
+            Log::info() << "=================\n";
+            Log::info() << "latN, latS : " << latN << ", " << latS << '\n';
 #endif
 
-        while (true) {
-            if (ipN1 == endN && ipS1 == endS) {
-                break;
-            }
+            while (true) {
+                if (ipN1 == endN && ipS1 == endS) {
+                    break;
+                }
 
 #if DEBUG_OUTPUT
-            Log::info() << "-------\n";
+                Log::info() << "-------\n";
 #endif
 
-            // ATLAS_ASSERT(offset.at(latN)+ipN1 < parts.size());
-            // ATLAS_ASSERT(offset.at(latS)+ipS1 < parts.size());
+                // ATLAS_ASSERT(offset.at(latN)+ipN1 < parts.size());
+                // ATLAS_ASSERT(offset.at(latS)+ipS1 < parts.size());
 
-            int pN1, pS1, pN2, pS2;
-            if (ipN1 != rg.nx(latN)) {
-                pN1 = distribution.partition(offset.at(latN) + ipN1);
-            }
-            else {
-                pN1 = distribution.partition(offset.at(latN));
-            }
-            if (ipS1 != rg.nx(latS)) {
-                pS1 = distribution.partition(offset.at(latS) + ipS1);
-            }
-            else {
-                pS1 = distribution.partition(offset.at(latS));
-            }
+                int pN1, pS1, pN2, pS2;
+                if (ipN1 != rg.nx(latN)) {
+                    pN1 = distribution.partition(offset.at(latN) + ipN1);
+                }
+                else {
+                    pN1 = distribution.partition(offset.at(latN));
+                }
+                if (ipS1 != rg.nx(latS)) {
+                    pS1 = distribution.partition(offset.at(latS) + ipS1);
+                }
+                else {
+                    pS1 = distribution.partition(offset.at(latS));
+                }
 
-            if (ipN2 == rg.nx(latN)) {
-                pN2 = distribution.partition(offset.at(latN));
-            }
-            else {
-                pN2 = distribution.partition(offset.at(latN) + ipN2);
-            }
-            if (ipS2 == rg.nx(latS)) {
-                pS2 = distribution.partition(offset.at(latS));
-            }
-            else {
-                pS2 = distribution.partition(offset.at(latS) + ipS2);
-            }
+                if (ipN2 == rg.nx(latN)) {
+                    pN2 = distribution.partition(offset.at(latN));
+                }
+                else {
+                    pN2 = distribution.partition(offset.at(latN) + ipN2);
+                }
+                if (ipS2 == rg.nx(latS)) {
+                    pS2 = distribution.partition(offset.at(latS));
+                }
+                else {
+                    pS2 = distribution.partition(offset.at(latS) + ipS2);
+                }
 
-            // Log::info()  << ipN1 << "("<<pN1<<") " << ipN2 <<"("<<pN2<<")" <<  std::endl;
-            // Log::info()  << ipS1 << "("<<pS2<<") " << ipS2 <<"("<<pS2<<")" <<  std::endl;
+                // Log::info()  << ipN1 << "("<<pN1<<") " << ipN2 <<"("<<pN2<<")" <<  std::endl;
+                // Log::info()  << ipS1 << "("<<pS2<<") " << ipS2 <<"("<<pS2<<")" <<  std::endl;
 
 #if DEBUG_OUTPUT
-            Log::info() << ipN1 << "(" << pN1 << ") " << ipN2 << "(" << pN2 << ")" << std::endl;
-            Log::info() << ipS1 << "(" << pS2 << ") " << ipS2 << "(" << pS2 << ")" << std::endl;
+                Log::info() << ipN1 << "(" << pN1 << ") " << ipN2 << "(" << pN2 << ")" << std::endl;
+                Log::info() << ipS1 << "(" << pS2 << ") " << ipS2 << "(" << pS2 << ")" << std::endl;
 #endif
 
-            xN1 = rg.x(ipN1, latN) * to_rad;
-            xN2 = rg.x(ipN2, latN) * to_rad;
-            xS1 = rg.x(ipS1, latS) * to_rad;
-            xS2 = rg.x(ipS2, latS) * to_rad;
+                xN1 = rg.x(ipN1, latN) * to_rad;
+                xN2 = rg.x(ipN2, latN) * to_rad;
+                xS1 = rg.x(ipS1, latS) * to_rad;
+                xS2 = rg.x(ipS2, latS) * to_rad;
 
 #if DEBUG_OUTPUT
-            Log::info() << "-------\n";
+                Log::info() << "-------\n";
 #endif
-            // Log::info()  << "  access  " <<
-            // region.elems.stride(0)*(jlat-region.north) +
-            // region.elems.stride(1)*jelem + 5 << std::endl;
-            //      Log::info()  << ipN1 << "("<< xN1 << ")  " << ipN2 <<  "("<< xN2
-            //      << ")  " << std::endl;
-            //      Log::info()  << ipS1 << "("<< xS1 << ")  " << ipS2 <<  "("<< xS2
-            //      << ")  " << std::endl;
-            try_make_triangle_up   = false;
-            try_make_triangle_down = false;
-            try_make_quad          = false;
+                // Log::info()  << "  access  " <<
+                // region.elems.stride(0)*(jlat-region.north) +
+                // region.elems.stride(1)*jelem + 5 << std::endl;
+                //      Log::info()  << ipN1 << "("<< xN1 << ")  " << ipN2 <<  "("<< xN2
+                //      << ")  " << std::endl;
+                //      Log::info()  << ipS1 << "("<< xS1 << ")  " << ipS2 <<  "("<< xS2
+                //      << ")  " << std::endl;
+                try_make_triangle_up   = false;
+                try_make_triangle_down = false;
+                try_make_quad          = false;
 
-            // ------------------------------------------------
-            // START RULES
-            // ------------------------------------------------
+                // ------------------------------------------------
+                // START RULES
+                // ------------------------------------------------
 
-            const double dxN    = std::abs(xN2 - xN1);
-            const double dxS    = std::abs(xS2 - xS1);
-            const double dx     = std::min(dxN, dxS);
-            const double alpha1 = (dx == 0. ? 0. : std::atan2((xN1 - xS1), dx) * to_deg);
-            const double alpha2 = (dx == 0. ? 0. : std::atan2((xN2 - xS2), dx) * to_deg);
-            if (std::abs(alpha1) <= max_angle && std::abs(alpha2) <= max_angle) {
-                if (triangulate_quads) {
-                    if (false)  // std::abs(alpha1) < 1 && std::abs(alpha2) < 1)
-                    {
-                        try_make_triangle_up   = (jlat + ipN1) % 2;
-                        try_make_triangle_down = (jlat + ipN1 + 1) % 2;
-                    }
-                    else {
-                        dN1S2 = std::abs(xN1 - xS2);
-                        dS1N2 = std::abs(xS1 - xN2);
-                        // dN2S2 = std::abs(xN2-xS2);
-                        // Log::info()  << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "
-                        // dN2S2 " << dN2S2 << std::endl;
-                        if (dN1S2 == dS1N2) {
+                const double dxN    = std::abs(xN2 - xN1);
+                const double dxS    = std::abs(xS2 - xS1);
+                const double dx     = std::min(dxN, dxS);
+                const double alpha1 = (dx == 0. ? 0. : std::atan2((xN1 - xS1), dx) * to_deg);
+                const double alpha2 = (dx == 0. ? 0. : std::atan2((xN2 - xS2), dx) * to_deg);
+                if (std::abs(alpha1) <= max_angle && std::abs(alpha2) <= max_angle) {
+                    if (triangulate_quads) {
+                        if (false)  // std::abs(alpha1) < 1 && std::abs(alpha2) < 1)
+                        {
                             try_make_triangle_up   = (jlat + ipN1) % 2;
                             try_make_triangle_down = (jlat + ipN1 + 1) % 2;
                         }
-                        else if (dN1S2 < dS1N2) {
-                            if (ipS1 != ipS2) {
-                                try_make_triangle_up = true;
+                        else {
+                            dN1S2 = std::abs(xN1 - xS2);
+                            dS1N2 = std::abs(xS1 - xN2);
+                            // dN2S2 = std::abs(xN2-xS2);
+                            // Log::info()  << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "
+                            // dN2S2 " << dN2S2 << std::endl;
+                            if (dN1S2 == dS1N2) {
+                                try_make_triangle_up   = (jlat + ipN1) % 2;
+                                try_make_triangle_down = (jlat + ipN1 + 1) % 2;
+                            }
+                            else if (dN1S2 < dS1N2) {
+                                if (ipS1 != ipS2) {
+                                    try_make_triangle_up = true;
+                                }
+                                else {
+                                    try_make_triangle_down = true;
+                                }
+                            }
+                            else if (dN1S2 > dS1N2) {
+                                if (ipN1 != ipN2) {
+                                    try_make_triangle_down = true;
+                                }
+                                else {
+                                    try_make_triangle_up = true;
+                                }
                             }
                             else {
-                                try_make_triangle_down = true;
+                                throw_Exception("Should not be here", Here());
                             }
                         }
-                        else if (dN1S2 > dS1N2) {
-                            if (ipN1 != ipN2) {
-                                try_make_triangle_down = true;
-                            }
-                            else {
-                                try_make_triangle_up = true;
-                            }
+                    }
+                    else {
+                        if (ipN1 == ipN2) {
+                            try_make_triangle_up = true;
+                        }
+                        else if (ipS1 == ipS2) {
+                            try_make_triangle_down = true;
                         }
                         else {
-                            throw_Exception("Should not be here", Here());
+                            try_make_quad = true;
+                        }
+
+                        //          try_make_quad          = true;
+                    }
+                }
+                else {
+                    dN1S2 = std::abs(xN1 - xS2);
+                    dS1N2 = std::abs(xS1 - xN2);
+                    // dN2S2 = std::abs(xN2-xS2);
+                    // Log::info()  << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "
+                    // dN2S2 " << dN2S2 << std::endl;
+                    if ((dN1S2 <= dS1N2) && (ipS1 != ipS2)) {
+                        try_make_triangle_up = true;
+                    }
+                    else if ((dN1S2 >= dS1N2) && (ipN1 != ipN2)) {
+                        try_make_triangle_down = true;
+                    }
+                    else {
+                        if (ipN1 == ipN2) {
+                            try_make_triangle_up = true;
+                        }
+                        else if (ipS1 == ipS2) {
+                            try_make_triangle_down = true;
+                        }
+                        else {
+                            ATLAS_DEBUG_VAR(dN1S2);
+                            ATLAS_DEBUG_VAR(dS1N2);
+                            ATLAS_DEBUG_VAR(jlat);
+                            Log::info() << ipN1 << "(" << xN1 << ")  " << ipN2 << "(" << xN2 << ")  " << std::endl;
+                            Log::info() << ipS1 << "(" << xS1 << ")  " << ipS2 << "(" << xS2 << ")  " << std::endl;
+                            throw_Exception("Should not try to make a quadrilateral!", Here());
                         }
                     }
                 }
-                else {
-                    if (ipN1 == ipN2) {
-                        try_make_triangle_up = true;
-                    }
-                    else if (ipS1 == ipS2) {
-                        try_make_triangle_down = true;
-                    }
-                    else {
-                        try_make_quad = true;
-                    }
-
-                    //          try_make_quad          = true;
-                }
-            }
-            else {
-                dN1S2 = std::abs(xN1 - xS2);
-                dS1N2 = std::abs(xS1 - xN2);
-                // dN2S2 = std::abs(xN2-xS2);
-                // Log::info()  << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "
-                // dN2S2 " << dN2S2 << std::endl;
-                if ((dN1S2 <= dS1N2) && (ipS1 != ipS2)) {
-                    try_make_triangle_up = true;
-                }
-                else if ((dN1S2 >= dS1N2) && (ipN1 != ipN2)) {
-                    try_make_triangle_down = true;
-                }
-                else {
-                    if (ipN1 == ipN2) {
-                        try_make_triangle_up = true;
-                    }
-                    else if (ipS1 == ipS2) {
-                        try_make_triangle_down = true;
-                    }
-                    else {
-                        ATLAS_DEBUG_VAR(dN1S2);
-                        ATLAS_DEBUG_VAR(dS1N2);
-                        ATLAS_DEBUG_VAR(jlat);
-                        Log::info() << ipN1 << "(" << xN1 << ")  " << ipN2 << "(" << xN2 << ")  " << std::endl;
-                        Log::info() << ipS1 << "(" << xS1 << ")  " << ipS2 << "(" << xS2 << ")  " << std::endl;
-                        throw_Exception("Should not try to make a quadrilateral!", Here());
-                    }
-                }
-            }
-            // ------------------------------------------------
-            // END RULES
-            // ------------------------------------------------
+                // ------------------------------------------------
+                // END RULES
+                // ------------------------------------------------
 
 #if DEBUG_OUTPUT
-            ATLAS_DEBUG_VAR(jelem);
+                ATLAS_DEBUG_VAR(jelem);
 #endif
 
-            auto elem = lat_elems_view.slice(jelem, Range::all());
+                auto elem = lat_elems_view.slice(jelem, Range::all());
 
-            if (try_make_quad) {
+                if (try_make_quad) {
 // add quadrilateral
 #if DEBUG_OUTPUT
-                Log::info() << "          " << ipN1 << "  " << ipN2 << '\n';
-                Log::info() << "          " << ipS1 << "  " << ipS2 << '\n';
+                    Log::info() << "          " << ipN1 << "  " << ipN2 << '\n';
+                    Log::info() << "          " << ipS1 << "  " << ipS2 << '\n';
 #endif
-                elem(0)  = ipN1;
-                elem(1)  = ipS1;
-                elem(2)  = ipS2;
-                elem(3)  = ipN2;
-                add_quad = false;
-                std::array<int, 4> np{pN1, pN2, pS1, pS2};
-                std::array<int, 4> pcnts;
-                for (int j = 0; j < 4; ++j) {
-                    pcnts[j] = static_cast<int>(std::count(np.begin(), np.end(), np[j]));
-                }
-                if (pcnts[0] > 2) {  // 3 or more of pN1
-                    pE = pN1;
-                    if (latS == rg.ny() - 1) {
-                        pE = pS1;
+                    elem(0)  = ipN1;
+                    elem(1)  = ipS1;
+                    elem(2)  = ipS2;
+                    elem(3)  = ipN2;
+                    add_quad = false;
+                    std::array<int, 4> np{pN1, pN2, pS1, pS2};
+                    std::array<int, 4> pcnts;
+                    for (int j = 0; j < 4; ++j) {
+                        pcnts[j] = static_cast<int>(std::count(np.begin(), np.end(), np[j]));
                     }
-                }
-                else if (pcnts[2] > 2) {  // 3 or more of pS1
-                    pE = pS1;
-                    if (latN == 0) {
-                        pE = pN1;
-                    }
-                }
-                else {
-                    std::array<int, 4>::iterator p_max = std::max_element(pcnts.begin(), pcnts.end());
-                    if (*p_max > 2) {  // 3 or 4 points belong to same part
-                        pE = np[std::distance(np.begin(), p_max)];
-                    }
-                    else {  // 3 or 4 points don't belong to mypart
+                    if (pcnts[0] > 2) {  // 3 or more of pN1
                         pE = pN1;
                         if (latS == rg.ny() - 1) {
                             pE = pS1;
                         }
                     }
-                }
-                add_quad = (pE == mypart);
-                if (add_quad) {
-                    ++region.nquads;
-                    ++jelem;
-                    ++nelems;
+                    else if (pcnts[2] > 2) {  // 3 or more of pS1
+                        pE = pS1;
+                        if (latN == 0) {
+                            pE = pN1;
+                        }
+                    }
+                    else {
+                        std::array<int, 4>::iterator p_max = std::max_element(pcnts.begin(), pcnts.end());
+                        if (*p_max > 2) {  // 3 or 4 points belong to same part
+                            pE = np[std::distance(np.begin(), p_max)];
+                        }
+                        else {  // 3 or 4 points don't belong to mypart
+                            pE = pN1;
+                            if (latS == rg.ny() - 1) {
+                                pE = pS1;
+                            }
+                        }
+                    }
+                    add_quad = (pE == mypart);
+                    if (add_quad) {
+                        ++region.nquads;
+                        ++jelem;
+                        ++nelems;
 
-                    if (region.lat_begin.at(latN) == -1) {
-                        region.lat_begin.at(latN) = ipN1;
+                        if (region.lat_begin.at(latN) == -1) {
+                            region.lat_begin.at(latN) = ipN1;
+                        }
+                        if (region.lat_begin.at(latS) == -1) {
+                            region.lat_begin.at(latS) = ipS1;
+                        }
+                        region.lat_begin.at(latN) = std::min<int>(region.lat_begin.at(latN), ipN1);
+                        region.lat_begin.at(latS) = std::min<int>(region.lat_begin.at(latS), ipS1);
+                        region.lat_end.at(latN)   = std::max<int>(region.lat_end.at(latN), ipN2);
+                        region.lat_end.at(latS)   = std::max<int>(region.lat_end.at(latS), ipS2);
                     }
-                    if (region.lat_begin.at(latS) == -1) {
-                        region.lat_begin.at(latS) = ipS1;
-                    }
-                    region.lat_begin.at(latN) = std::min<int>(region.lat_begin.at(latN), ipN1);
-                    region.lat_begin.at(latS) = std::min<int>(region.lat_begin.at(latS), ipS1);
-                    region.lat_end.at(latN)   = std::max<int>(region.lat_end.at(latN), ipN2);
-                    region.lat_end.at(latS)   = std::max<int>(region.lat_end.at(latS), ipS2);
-                }
-                else {
+                    else {
 #if DEBUG_OUTPUT
-                    Log::info() << "Quad belongs to other partition" << std::endl;
+                        Log::info() << "Quad belongs to other partition" << std::endl;
 #endif
+                    }
+                    ipN1 = ipN2;
+                    ipS1 = ipS2;
                 }
-                ipN1 = ipN2;
-                ipS1 = ipS2;
-            }
-            else if (try_make_triangle_down)  // make triangle down
-            {
+                else if (try_make_triangle_down)  // make triangle down
+                {
 // triangle without ip3
 #if DEBUG_OUTPUT
-                Log::info() << "          " << ipN1 << "  " << ipN2 << '\n';
-                Log::info() << "          " << ipS1 << '\n';
+                    Log::info() << "          " << ipN1 << "  " << ipN2 << '\n';
+                    Log::info() << "          " << ipS1 << '\n';
 #endif
-                elem(0) = ipN1;
-                elem(1) = ipS1;
-                elem(2) = -1;
-                elem(3) = ipN2;
+                    elem(0) = ipN1;
+                    elem(1) = ipS1;
+                    elem(2) = -1;
+                    elem(3) = ipN2;
 
-                pE = pN1;
-                if (latS == rg.ny() - 1) {
-                    pE = pS1;
-                }
-                add_triag = (mypart == pE);
-
-                if (add_triag) {
-                    ++region.ntriags;
-                    ++jelem;
-                    ++nelems;
-
-                    if (region.lat_begin.at(latN) == -1) {
-                        region.lat_begin.at(latN) = ipN1;
+                    pE = pN1;
+                    if (latS == rg.ny() - 1) {
+                        pE = pS1;
                     }
-                    if (region.lat_begin.at(latS) == -1) {
-                        region.lat_begin.at(latS) = ipS1;
+                    add_triag = (mypart == pE);
+
+                    if (add_triag) {
+                        ++region.ntriags;
+                        ++jelem;
+                        ++nelems;
+
+                        if (region.lat_begin.at(latN) == -1) {
+                            region.lat_begin.at(latN) = ipN1;
+                        }
+                        if (region.lat_begin.at(latS) == -1) {
+                            region.lat_begin.at(latS) = ipS1;
+                        }
+                        region.lat_begin.at(latN) = std::min<int>(region.lat_begin.at(latN), ipN1);
+                        region.lat_begin.at(latS) = std::min<int>(region.lat_begin.at(latS), ipS1);
+                        region.lat_end.at(latN)   = std::max<int>(region.lat_end.at(latN), ipN2);
+                        region.lat_end.at(latS)   = std::max<int>(region.lat_end.at(latS), ipS1);
                     }
-                    region.lat_begin.at(latN) = std::min<int>(region.lat_begin.at(latN), ipN1);
-                    region.lat_begin.at(latS) = std::min<int>(region.lat_begin.at(latS), ipS1);
-                    region.lat_end.at(latN)   = std::max<int>(region.lat_end.at(latN), ipN2);
-                    region.lat_end.at(latS)   = std::max<int>(region.lat_end.at(latS), ipS1);
-                }
-                else {
+                    else {
 #if DEBUG_OUTPUT
-                    Log::info() << "Downward Triag belongs to other partition" << std::endl;
+                        Log::info() << "Downward Triag belongs to other partition" << std::endl;
 #endif
+                    }
+                    ipN1 = ipN2;
+                    // and ipS1=ipS1;
                 }
-                ipN1 = ipN2;
-                // and ipS1=ipS1;
-            }
-            else if (try_make_triangle_up)  // make triangle up
-            {
+                else if (try_make_triangle_up)  // make triangle up
+                {
 // triangle without ip4
 #if DEBUG_OUTPUT
-                Log::info() << "          " << ipN1 << " (" << pN1 << ")" << '\n';
-                Log::info() << "          " << ipS1 << " (" << pS1 << ")"
-                            << "  " << ipS2 << " (" << pS2 << ")" << '\n';
+                    Log::info() << "          " << ipN1 << " (" << pN1 << ")" << '\n';
+                    Log::info() << "          " << ipS1 << " (" << pS1 << ")"
+                                << "  " << ipS2 << " (" << pS2 << ")" << '\n';
 #endif
-                elem(0) = ipN1;
-                elem(1) = ipS1;
-                elem(2) = ipS2;
-                elem(3) = -1;
+                    elem(0) = ipN1;
+                    elem(1) = ipS1;
+                    elem(2) = ipS2;
+                    elem(3) = -1;
 
-                if (pS1 == pE && pN1 != pE) {
-                    if (xN1 < 0.5 * (xS1 + xS2)) {
+                    if (pS1 == pE && pN1 != pE) {
+                        if (xN1 < 0.5 * (xS1 + xS2)) {
+                            pE = pN1;
+                        }  // else pE of previous element
+                    }
+                    else {
                         pE = pN1;
-                    }  // else pE of previous element
+                    }
+                    if (ipN1 == rg.nx(latN)) {
+                        pE = pS1;
+                    }
+                    if (latS == rg.ny() - 1) {
+                        pE = pS1;
+                    }
+
+                    add_triag = (mypart == pE);
+
+                    if (add_triag) {
+                        ++region.ntriags;
+                        ++jelem;
+                        ++nelems;
+
+                        if (region.lat_begin.at(latN) == -1) {
+                            region.lat_begin.at(latN) = ipN1;
+                        }
+                        if (region.lat_begin.at(latS) == -1) {
+                            region.lat_begin.at(latS) = ipS1;
+                        }
+                        region.lat_begin.at(latN) = std::min(region.lat_begin.at(latN), ipN1);
+                        region.lat_begin.at(latS) = std::min(region.lat_begin.at(latS), ipS1);
+                        region.lat_end.at(latN)   = std::max(region.lat_end.at(latN), ipN1);
+                        region.lat_end.at(latS)   = std::max(region.lat_end.at(latS), ipS2);
+                    }
+                    else {
+#if DEBUG_OUTPUT
+                        Log::info() << "Upward Triag belongs to other partition" << std::endl;
+#endif
+                    }
+                    ipS1 = ipS2;
+                    // and ipN1=ipN1;
                 }
                 else {
-                    pE = pN1;
+                    throw_Exception("Could not detect which element to create", Here());
                 }
-                if (ipN1 == rg.nx(latN)) {
-                    pE = pS1;
-                }
-                if (latS == rg.ny() - 1) {
-                    pE = pS1;
-                }
-
-                add_triag = (mypart == pE);
-
-                if (add_triag) {
-                    ++region.ntriags;
-                    ++jelem;
-                    ++nelems;
-
-                    if (region.lat_begin.at(latN) == -1) {
-                        region.lat_begin.at(latN) = ipN1;
-                    }
-                    if (region.lat_begin.at(latS) == -1) {
-                        region.lat_begin.at(latS) = ipS1;
-                    }
-                    region.lat_begin.at(latN) = std::min(region.lat_begin.at(latN), ipN1);
-                    region.lat_begin.at(latS) = std::min(region.lat_begin.at(latS), ipS1);
-                    region.lat_end.at(latN)   = std::max(region.lat_end.at(latN), ipN1);
-                    region.lat_end.at(latS)   = std::max(region.lat_end.at(latS), ipS2);
-                }
-                else {
-#if DEBUG_OUTPUT
-                    Log::info() << "Upward Triag belongs to other partition" << std::endl;
-#endif
-                }
-                ipS1 = ipS2;
-                // and ipN1=ipN1;
+                ipN2 = std::min(endN, ipN1 + 1);
+                ipS2 = std::min(endS, ipS1 + 1);
             }
-            else {
-                throw_Exception("Could not detect which element to create", Here());
-            }
-            ipN2 = std::min(endN, ipN1 + 1);
-            ipS2 = std::min(endS, ipS1 + 1);
-        }
-        region.nb_lat_elems.at(jlat) = jelem;
+            region.nb_lat_elems.at(jlat) = jelem;
 #if DEBUG_OUTPUT
-        ATLAS_DEBUG_VAR(region.nb_lat_elems.at(jlat));
+            ATLAS_DEBUG_VAR(region.nb_lat_elems.at(jlat));
 #endif
-        if (region.nb_lat_elems.at(jlat) == 0 && latN == region.north) {
-            ++region.north;
-        }
-        if (region.nb_lat_elems.at(jlat) == 0 && latS == region.south) {
-            --region.south;
-        }
-        //    region.lat_end.at(latN) = std::min(region.lat_end.at(latN),
-        //    int(rg.nx(latN)-1));
-        //    region.lat_end.at(latS) = std::min(region.lat_end.at(latS),
-        //    int(rg.nx(latS)-1));
-        if (yN == 90 && unique_pole) {
-            region.lat_end.at(latN) = rg.nx(latN) - 1;
-        }
-        if (yS == -90 && unique_pole) {
-            region.lat_end.at(latS) = rg.nx(latS) - 1;
-        }
+            if (region.nb_lat_elems.at(jlat) == 0 && latN == region.north) {
+                ++region.north;
+            }
+            if (region.nb_lat_elems.at(jlat) == 0 && latS == region.south) {
+                --region.south;
+            }
+            //    region.lat_end.at(latN) = std::min(region.lat_end.at(latN),
+            //    int(rg.nx(latN)-1));
+            //    region.lat_end.at(latS) = std::min(region.lat_end.at(latS),
+            //    int(rg.nx(latS)-1));
+            if (yN == 90 && unique_pole) {
+                region.lat_end.at(latN) = rg.nx(latN) - 1;
+            }
+            if (yS == -90 && unique_pole) {
+                region.lat_end.at(latS) = rg.nx(latS) - 1;
+            }
 
-        if (region.nb_lat_elems.at(jlat) > 0) {
-            region.lat_end.at(latN) = std::max(region.lat_end.at(latN), region.lat_begin.at(latN));
-            region.lat_end.at(latS) = std::max(region.lat_end.at(latS), region.lat_begin.at(latS));
-        }
-    }  // for jlat
+            if (region.nb_lat_elems.at(jlat) > 0) {
+                region.lat_end.at(latN) = std::max(region.lat_end.at(latN), region.lat_begin.at(latN));
+                region.lat_end.at(latS) = std::max(region.lat_end.at(latS), region.lat_begin.at(latS));
+            }
+        }  // for jlat
+    }
 
     //  Log::info()  << "nb_triags = " << region.ntriags << std::endl;
     //  Log::info()  << "nb_quads = " << region.nquads << std::endl;
@@ -1205,6 +1263,10 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
         nodes[1] = tmp;
     };
 
+    bool regular_cells_glb_idx = atlas::RegularLonLatGrid(rg);
+    if( options.getBool("triangulate") ) {
+        regular_cells_glb_idx = false;
+    }
 
     for (idx_t jlat = region.north; jlat < region.south; ++jlat) {
         idx_t ilat  = jlat - region.north;
@@ -1239,6 +1301,13 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
                 node_connectivity.set(jcell, quad_nodes);
                 cells_glb_idx(jcell) = jcell + 1;
                 cells_part(jcell)    = mypart;
+                if( regular_cells_glb_idx ) {
+                    gidx_t nx = rg.nx(jlatN) - 1;
+                    if (periodic_east_west) {
+                        ++nx;
+                    }
+                    cells_glb_idx(jcell) = jlatN * nx + region.lat_begin[jlat] + jelem;
+                }
             }
             else  // This is a triag
             {
@@ -1499,7 +1568,9 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
             }
         }
     }
-    generateGlobalElementNumbering(mesh);
+    if (not regular_cells_glb_idx) {
+        generateGlobalElementNumbering(mesh);
+    }
 }
 
 namespace {

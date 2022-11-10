@@ -22,6 +22,7 @@
 #include "atlas/mesh/Nodes.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/omp/fill.h"
+#include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -51,27 +52,65 @@ void MatchingMeshPartitionerLonLatPolygon::partition(const Grid& grid, int parti
 
     double west = poly.coordinatesMin().x();
     double east = poly.coordinatesMax().x();
-    comm.allReduceInPlace(west, eckit::mpi::Operation::MIN);
-    comm.allReduceInPlace(east, eckit::mpi::Operation::MAX);
+    ATLAS_TRACE_MPI(ALLREDUCE) {
+      comm.allReduceInPlace(west, eckit::mpi::Operation::MIN);
+      comm.allReduceInPlace(east, eckit::mpi::Operation::MAX);
+    }
 
     Projection projection = prePartitionedMesh_.projection();
     omp::fill(partitioning, partitioning + grid.size(), -1);
 
     auto compute = [&](double west) {
-        size_t i = 0;
-
-        for (PointLonLat P : grid.lonlat()) {
-            if (partitioning[i] < 0) {
-                projection.lonlat2xy(P);
-                P.normalise(west);
-                partitioning[i] = poly.contains(P) ? mpi_rank : -1;
+#if !defined(__NVCOMPILER)
+        atlas_omp_parallel
+#elif (__NVCOMPILER_MAJOR__ >= 21) && (__NVCOMPILER_MINOR__ > 9 )
+        // Internal compiler error with nvhpc 21.9:
+        //
+        //    NVC++-S-0000-Internal compiler error. BAD sptr in var_refsym       0  (MatchingMeshPartitionerLonLatPolygon.cc: 64) (=following line)
+        //    NVC++/x86-64 Linux 21.9-0: compilation completed with severe errors
+        atlas_omp_parallel
+#endif
+        {
+            const idx_t num_threads = atlas_omp_get_num_threads();
+            const idx_t thread_num  = atlas_omp_get_thread_num();
+            const idx_t begin = static_cast<idx_t>(thread_num * size_t(grid.size()) / num_threads);
+            const idx_t end =
+                static_cast<idx_t>((thread_num + 1) * size_t(grid.size()) / num_threads);
+            size_t i = begin;
+            auto it = grid.lonlat().begin() + i;
+            for(; i < end; ++i, ++it) {
+                PointLonLat P = *it;
+                if (partitioning[i] < 0) {
+                    projection.lonlat2xy(P);
+                    P.normalise(west);
+                    partitioning[i] = poly.contains(P) ? mpi_rank : -1;
+                }
             }
-            ++i;
         }
         // Synchronize partitioning
-        comm.allReduceInPlace(partitioning, grid.size(), eckit::mpi::Operation::MAX);
+        ATLAS_TRACE_MPI(ALLREDUCE) {
+          comm.allReduceInPlace(partitioning, grid.size(), eckit::mpi::Operation::MAX);
+        }
 
-        return *std::min_element(partitioning, partitioning + grid.size());
+        std::vector<int> thread_min(atlas_omp_get_max_threads(),std::numeric_limits<int>::max());
+#if !defined(__NVCOMPILER)
+        atlas_omp_parallel
+#elif (__NVCOMPILER_MAJOR__ >= 21) && (__NVCOMPILER_MINOR__ > 9 )
+        // Internal compiler error with nvhpc 21.9:
+        //
+        //    NVC++-S-0000-Internal compiler error. BAD sptr in var_refsym       0  (MatchingMeshPartitionerLonLatPolygon.cc: 64) (=following line)
+        //    NVC++/x86-64 Linux 21.9-0: compilation completed with severe errors
+        atlas_omp_parallel
+#endif
+       {
+            const idx_t num_threads = atlas_omp_get_num_threads();
+            const idx_t thread_num  = atlas_omp_get_thread_num();
+            const idx_t begin = static_cast<idx_t>(thread_num * size_t(grid.size()) / num_threads);
+            const idx_t end =
+                static_cast<idx_t>((thread_num + 1) * size_t(grid.size()) / num_threads);
+            thread_min[thread_num] = *std::min_element(partitioning+begin,partitioning+end);
+        }
+        return *std::min_element(thread_min.begin(), thread_min.end());
     };
 
     int min              = compute(east - 360.);

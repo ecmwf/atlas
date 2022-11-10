@@ -823,30 +823,6 @@ const parallel::HaloExchange& CellColumns::halo_exchange() const {
     return functionspace_->halo_exchange();
 }
 
-void CellColumns::gather(const FieldSet& local, FieldSet& global) const {
-    functionspace_->gather(local, global);
-}
-
-void CellColumns::gather(const Field& local, Field& global) const {
-    functionspace_->gather(local, global);
-}
-
-const parallel::GatherScatter& CellColumns::gather() const {
-    return functionspace_->gather();
-}
-
-void CellColumns::scatter(const FieldSet& global, FieldSet& local) const {
-    functionspace_->scatter(global, local);
-}
-
-void CellColumns::scatter(const Field& global, Field& local) const {
-    functionspace_->scatter(global, local);
-}
-
-const parallel::GatherScatter& CellColumns::scatter() const {
-    return functionspace_->scatter();
-}
-
 std::string CellColumns::checksum(const FieldSet& fieldset) const {
     return functionspace_->checksum(fieldset);
 }

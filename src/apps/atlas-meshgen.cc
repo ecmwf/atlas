@@ -88,6 +88,9 @@ MeshGenerator make_meshgenerator(const Grid& grid, const AtlasTool::Args& args) 
         config.set("halo", args.getInt("halo"));
     }
 
+    if (args.has("angle")) {
+        config.set("angle", args.getDouble("angle"));
+    }
 
     return MeshGenerator{config};
 }

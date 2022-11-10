@@ -282,9 +282,10 @@ int AtlasGrids::execute(const Args& args) {
                     Log::info() << "   x : [ " << std::setw(10) << std::fixed << structuredgrid.xspace().min() << " , "
                                 << std::setw(10) << std::fixed << structuredgrid.xspace().max() << " ] deg"
                                 << std::endl;
-                    Log::info() << "   y : [ " << std::setw(10) << std::fixed << structuredgrid.yspace().min() << " , "
-                                << std::setw(10) << std::fixed << structuredgrid.yspace().max() << " ] deg"
-                                << std::endl;
+                    double ymin = std::min(structuredgrid.yspace().front(), structuredgrid.yspace().back());
+                    double ymax = std::max(structuredgrid.yspace().front(), structuredgrid.yspace().back());
+                    Log::info() << "   y : [ " << std::setw(10) << std::fixed << ymin << " , " << std::setw(10)
+                                << std::fixed << ymax << " ] deg" << std::endl;
                 }
                 auto it = grid.lonlat().begin();
                 Log::info() << "   lonlat(first)     : " << *it << std::endl;

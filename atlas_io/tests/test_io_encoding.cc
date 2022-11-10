@@ -635,11 +635,21 @@ void test_encode_decode_scalar() {
 
 CASE("Encode/Decode scalar") {
     // bit identical encoding via Base64 string within the metadata!
-    SECTION("int32") { test_encode_decode_scalar<std::int32_t>(); }
-    SECTION("int64") { test_encode_decode_scalar<std::int64_t>(); }
-    SECTION("real32") { test_encode_decode_scalar<float>(); }
-    SECTION("real64") { test_encode_decode_scalar<double>(); }
-    SECTION("uint64") { test_encode_decode_scalar<std::uint64_t>(); }
+    SECTION("int32") {
+        test_encode_decode_scalar<std::int32_t>();
+    }
+    SECTION("int64") {
+        test_encode_decode_scalar<std::int64_t>();
+    }
+    SECTION("real32") {
+        test_encode_decode_scalar<float>();
+    }
+    SECTION("real64") {
+        test_encode_decode_scalar<double>();
+    }
+    SECTION("uint64") {
+        test_encode_decode_scalar<std::uint64_t>();
+    }
 }
 
 // -------------------------------------------------------------------------------------------------------

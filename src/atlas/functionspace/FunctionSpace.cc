@@ -86,6 +86,30 @@ void FunctionSpace::adjointHaloExchange(const FieldSet& fields, bool on_device) 
     get()->adjointHaloExchange(fields, on_device);
 }
 
+void FunctionSpace::gather(const FieldSet& local, FieldSet& global) const {
+    get()->gather(local, global);
+}
+
+void FunctionSpace::gather(const Field& local, Field& global) const {
+    get()->gather(local, global);
+}
+
+void FunctionSpace::scatter(const FieldSet& global, FieldSet& local) const {
+    get()->scatter(global, local);
+}
+
+void FunctionSpace::scatter(const Field& global, Field& local) const {
+    get()->scatter(global, local);
+}
+
+const parallel::GatherScatter& FunctionSpace::gather() const {
+    return get()->gather();
+}
+
+const parallel::GatherScatter& FunctionSpace::scatter() const {
+    return get()->scatter();
+}
+
 const util::PartitionPolygon& FunctionSpace::polygon(idx_t halo) const {
     return get()->polygon(halo);
 }

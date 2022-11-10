@@ -16,20 +16,26 @@ namespace atlas {
 namespace io {
 
 atlas::io::Trace::Trace(const eckit::CodeLocation& loc) {
-    for (auto& hook : TraceHookRegistry::instance().hooks) {
-        hooks_.emplace_back(hook(loc, loc.func()));
+    for (size_t id = 0; id < TraceHookRegistry::size(); ++id) {
+        if (TraceHookRegistry::enabled(id)) {
+            hooks_.emplace_back(TraceHookRegistry::hook(id)(loc, loc.func()));
+        }
     }
 }
 
 Trace::Trace(const eckit::CodeLocation& loc, const std::string& title) {
-    for (auto& hook : TraceHookRegistry::instance().hooks) {
-        hooks_.emplace_back(hook(loc, title));
+    for (size_t id = 0; id < TraceHookRegistry::size(); ++id) {
+        if (TraceHookRegistry::enabled(id)) {
+            hooks_.emplace_back(TraceHookRegistry::hook(id)(loc, title));
+        }
     }
 }
 
 Trace::Trace(const eckit::CodeLocation& loc, const std::string& title, const Labels& labels) {
-    for (auto& hook : TraceHookRegistry::instance().hooks) {
-        hooks_.emplace_back(hook(loc, title));
+    for (size_t id = 0; id < TraceHookRegistry::size(); ++id) {
+        if (TraceHookRegistry::enabled(id)) {
+            hooks_.emplace_back(TraceHookRegistry::hook(id)(loc, title));
+        }
     }
 }
 

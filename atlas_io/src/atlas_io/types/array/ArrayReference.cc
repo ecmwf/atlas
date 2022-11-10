@@ -75,8 +75,8 @@ ArrayReference::ArrayReference(ArrayReference&& other): ArrayMetadata(std::move(
 
 ArrayReference& ArrayReference::operator=(ArrayReference&& rhs) {
     ArrayMetadata::operator=(std::move(rhs));
-    data_                  = rhs.data_;
-    rhs.data_              = nullptr;
+    data_     = rhs.data_;
+    rhs.data_ = nullptr;
     return *this;
 }
 

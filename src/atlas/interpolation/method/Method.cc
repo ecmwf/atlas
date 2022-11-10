@@ -242,6 +242,11 @@ void Method::check_compatibility(const Field& src, const Field& tgt, const Matri
 
 template <typename Value>
 void Method::interpolate_field(const Field& src, Field& tgt, const Matrix& W) const {
+    // do nothing if there are no observations to interpolate (W will be NULL
+    // and would fail the compatibility check)
+    if (tgt.shape(0) == 0) {
+        return;
+    }
     check_compatibility(src, tgt, W);
 
     if (src.rank() == 1) {
@@ -260,6 +265,11 @@ void Method::interpolate_field(const Field& src, Field& tgt, const Matrix& W) co
 
 template <typename Value>
 void Method::adjoint_interpolate_field(Field& src, const Field& tgt, const Matrix& W) const {
+    // do nothing if there are no observations to interpolate (W will be NULL
+    // and would fail the compatibility check)
+    if (tgt.shape(0) == 0) {
+        return;
+    }
     check_compatibility(tgt, src, W);
 
     if (src.rank() == 1) {

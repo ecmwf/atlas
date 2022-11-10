@@ -51,6 +51,7 @@ static bool feature_MKL() {
 #include "atlas/library/git_sha1.h"
 #include "atlas/library/version.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
@@ -298,13 +299,14 @@ void Library::initialise(const eckit::Parametrisation& config) {
         init_data_paths(data_paths_);
     }
 
-    atlas::io::TraceHookRegistry::add([](const eckit::CodeLocation& loc, const std::string& title) {
-        struct Adaptor : public atlas::io::TraceHook {
-            Adaptor(const eckit::CodeLocation& loc, const std::string& title): trace{loc, title} {}
-            atlas::Trace trace;
-        };
-        return std::unique_ptr<Adaptor>(new Adaptor{loc, title});
-    });
+    atlas_io_trace_hook_ =
+        atlas::io::TraceHookRegistry::add([](const eckit::CodeLocation& loc, const std::string& title) {
+            struct Adaptor : public atlas::io::TraceHook {
+                Adaptor(const eckit::CodeLocation& loc, const std::string& title): trace{loc, title} {}
+                atlas::Trace trace;
+            };
+            return std::unique_ptr<Adaptor>(new Adaptor{loc, title});
+        });
 
 
     // Summary
@@ -317,6 +319,8 @@ void Library::initialise(const eckit::Parametrisation& config) {
         out << "    communicator  [" << mpi::comm() << "] \n";
         out << "    size          [" << mpi::size() << "] \n";
         out << "    rank          [" << mpi::rank() << "] \n";
+        out << "  OMP\n";
+        out << "    max_threads   [" << atlas_omp_get_max_threads() << "] \n";
         out << " \n";
         out << "  log.info        [" << str(info_) << "] \n";
         out << "  log.trace       [" << str(trace()) << "] \n";
@@ -336,6 +340,8 @@ void Library::initialise() {
 }
 
 void Library::finalise() {
+    atlas::io::TraceHookRegistry::disable(atlas_io_trace_hook_);
+
     if (ATLAS_HAVE_TRACE && trace_report_) {
         Log::info() << atlas::Trace::report() << std::endl;
     }

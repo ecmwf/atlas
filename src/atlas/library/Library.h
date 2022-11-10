@@ -105,6 +105,7 @@ protected:
 private:
     std::vector<eckit::system::Plugin*> plugins_;
     std::vector<std::string> data_paths_;
+    size_t atlas_io_trace_hook_;
 };
 
 using Atlas = Library;

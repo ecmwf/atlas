@@ -135,7 +135,6 @@ public:
         std::string type = metadata_.getString("type");
         ATLAS_IO_ASSERT(type == "scalar");
         std::string datatype = metadata_.getString("datatype");
-        std::string base64   = metadata_.getString("base64");
         out << std::setw(7) << std::left << datatype << ": ";
         if (datatype == DataType::str<double>()) {
             out << decode<double>();

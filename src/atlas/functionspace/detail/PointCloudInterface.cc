@@ -35,6 +35,9 @@ const detail::PointCloud* atlas__functionspace__PointCloud__new__lonlat_ghost(co
     return new detail::PointCloud(Field(lonlat), Field(ghost));
 }
 
+const detail::PointCloud* atlas__functionspace__PointCloud__new__fieldset(const field::FieldSetImpl* fset) {
+    return new detail::PointCloud(FieldSet(fset));
+}
 
 const detail::PointCloud* atlas__functionspace__PointCloud__new__grid(const Grid::Implementation* grid) {
     return new detail::PointCloud(Grid(grid));

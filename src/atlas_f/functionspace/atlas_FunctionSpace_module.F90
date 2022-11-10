@@ -55,6 +55,9 @@ contains
   procedure, private :: halo_exchange_field
   procedure, private :: halo_exchange_fieldset
 
+  procedure, private :: adjoint_halo_exchange_field
+  procedure, private :: adjoint_halo_exchange_fieldset
+
   generic, public :: create_field => &
     & create_field_args, &
     & create_field_template, &
@@ -62,6 +65,7 @@ contains
     & deprecated_create_field_2
 
   generic, public :: halo_exchange => halo_exchange_field, halo_exchange_fieldset
+  generic, public :: adjoint_halo_exchange => adjoint_halo_exchange_field, adjoint_halo_exchange_fieldset
 
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_FunctionSpace__final_auto
@@ -177,6 +181,25 @@ subroutine halo_exchange_field(this,field)
   class(atlas_Functionspace), intent(in) :: this
   type(atlas_Field), intent(inout) :: field
   call atlas__FunctionSpace__halo_exchange_field(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A)
+end subroutine
+
+
+!------------------------------------------------------------------------------
+
+subroutine adjoint_halo_exchange_fieldset(this,fieldset)
+  use atlas_functionspace_c_binding
+  class(atlas_Functionspace), intent(in) :: this
+  type(atlas_FieldSet), intent(inout) :: fieldset
+  call atlas__FunctionSpace__adjoint_halo_exchange_fieldset(this%CPTR_PGIBUG_A,fieldset%CPTR_PGIBUG_A)
+end subroutine
+
+!------------------------------------------------------------------------------
+
+subroutine adjoint_halo_exchange_field(this,field)
+  use atlas_functionspace_c_binding
+  class(atlas_Functionspace), intent(in) :: this
+  type(atlas_Field), intent(inout) :: field
+  call atlas__FunctionSpace__adjoint_halo_exchange_field(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A)
 end subroutine
 
 !------------------------------------------------------------------------------
