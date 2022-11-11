@@ -64,7 +64,7 @@ HealpixMeshGenerator::HealpixMeshGenerator(const eckit::Parametrisation& p) {
         options.set("3d", three_dimensional);
     }
 
-    std::string pole_elements{"quqds"};
+    std::string pole_elements{"quads"};
     if (p.get("pole_elements", pole_elements)) {
         if (pole_elements != "pentagons" and pole_elements != "quads") {
             Log::warning() << "Atlas::HealpixMeshGenerator accepts \"pentagons\" or \"quads\" for \"pole_elements\"."
@@ -931,8 +931,10 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     ii               = 0;  // index inside SB (surrounding belt)
     int jcell_offset = 0;  // global index offset due to extra points at the north pole
     gidx_t jcell     = 0;  // global cell counter
+    gidx_t points_in_partition = 0;
     for (iy = iy_min; iy <= iy_max; iy++) {
         int nx = nb_lat_nodes(iy) + 1;
+        points_in_partition += (nx - 1);
         for (ix = 0; ix < nx; ix++) {
             const bool at_pole     = (iy == 0 or iy == ny - 1);
             int not_duplicate_cell = (at_pole ? ix % 2 : 1);
@@ -963,7 +965,7 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
 
                 // match global cell indexing for the three healpix versions
                 if (nb_pole_nodes == 1) {
-                    cells_glb_idx(jquadcell) = jquadcell + 1;
+                    cells_glb_idx(jquadcell) = parts_sidx + points_in_partition - nx + ix + 1;
                 }
                 else if (nb_pole_nodes == 8) {
                     if (iy == 0) {
@@ -979,11 +981,15 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
                     }
                 }
                 else if (nb_pole_nodes == 4) {
+                    if (iy == 0 or iy == ny - 1) {
+                        continue;
+                    }
                     if (pentagon) {
-                        cells_glb_idx(jpentcell) = jcell;
+                        cells_glb_idx(jpentcell) = (mypart != 0 ? 12 * ns * ns - 3 + ix : jcell);
+                        jcell_offset++;
                     }
                     else {
-                        cells_glb_idx(jquadcell) = jcell;
+                        cells_glb_idx(jquadcell) = parts_sidx + points_in_partition - nx - 6 + ix + (mypart != 0 ? 4 : jcell_offset);
                     }
                 }
 #if DEBUG_OUTPUT_DETAIL

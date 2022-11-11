@@ -18,7 +18,6 @@
 #include "atlas/grid/detail/grid/Healpix.h"
 #include "atlas/grid/detail/grid/Structured.h"
 
-
 namespace atlas {
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -275,7 +274,11 @@ public:
     HealpixGrid(const Grid&);
     HealpixGrid(int N);
 
-    bool valid() { return grid_; }
+    operator bool() const { return valid(); }
+
+    bool valid() const { return grid_; }
+
+    long N() const { return grid_->nxmax() / 4; }
 
 private:
     const grid_t* grid_;
