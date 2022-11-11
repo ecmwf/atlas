@@ -1264,7 +1264,7 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
     };
 
     bool regular_cells_glb_idx = atlas::RegularLonLatGrid(rg);
-    if( options.getBool("triangulate") ) {
+    if( options.getBool("triangulate") || y_numbering > 0) {
         regular_cells_glb_idx = false;
     }
 
@@ -1306,7 +1306,7 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
                     if (periodic_east_west) {
                         ++nx;
                     }
-                    cells_glb_idx(jcell) = jlatN * nx + region.lat_begin[jlat] + jelem;
+                    cells_glb_idx(jcell) = glb_idx( quad_nodes[0] );
                 }
             }
             else  // This is a triag
