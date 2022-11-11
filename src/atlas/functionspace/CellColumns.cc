@@ -318,7 +318,7 @@ Field CellColumns::createField(const eckit::Configuration& options) const {
 }
 
 Field CellColumns::createField(const Field& other, const eckit::Configuration& config) const {
-    return createField(option::datatype(other.datatype()) | option::levels(other.levels()) |
+    return createField(option::name(other.name()) | option::datatype(other.datatype()) | option::levels(other.levels()) |
                        option::variables(other.variables()) | config);
 }
 
@@ -472,8 +472,12 @@ void CellColumns::scatter(const FieldSet& global_fieldset, FieldSet& local_field
             throw_Exception("datatype not supported", Here());
         }
 
+        auto name = loc.name();
         glb.metadata().broadcast(loc.metadata(), root);
         loc.metadata().set("global", false);
+        if( !name.empty() ) {
+            loc.metadata().set("name", name);
+        }
     }
 }
 void CellColumns::scatter(const Field& global, Field& local) const {

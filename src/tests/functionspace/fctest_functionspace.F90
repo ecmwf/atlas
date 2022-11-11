@@ -84,7 +84,7 @@ template = field
 
 field = fs%create_field(template)
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
-FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%name() , template%name() )
 call field%final()
 
 field = fs%create_field(template,name="field")
@@ -118,7 +118,7 @@ template = field
 
 field = fs%create_field(template,global=.True.)
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
-FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%name() , template%name() )
 call field%final()
 
 field = fs%create_field(template,name="field",global=.True.)
@@ -182,7 +182,7 @@ template = field
 
 field = fs%create_field(template)
 FCTEST_CHECK_EQUAL( field%rank() , 3 )
-FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%name() , template%name() )
 call field%final()
 
 field = fs%create_field(template,name="field")
@@ -216,7 +216,7 @@ template = field
 
 field = fs%create_field(template,global=.True.)
 FCTEST_CHECK_EQUAL( field%rank() , 3 )
-FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%name() , template%name() )
 call field%final()
 
 field = fs%create_field(template,name="field",global=.True.)
