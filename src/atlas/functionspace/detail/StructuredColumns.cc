@@ -46,9 +46,10 @@ namespace atlas {
 namespace functionspace {
 namespace detail {
 
+namespace {
 
 template <typename T, typename Field>
-array::LocalView<T, 3> StructuredColumns::make_leveled_view(Field& field) const {
+array::LocalView<T, 3> make_leveled_view(Field& field) {
     using namespace array;
     if (field.levels()) {
         if (field.variables()) {
@@ -69,7 +70,7 @@ array::LocalView<T, 3> StructuredColumns::make_leveled_view(Field& field) const 
 }
 
 template <typename T>
-std::string StructuredColumns::checksum_3d_field(const parallel::Checksum& checksum, const Field& field) const {
+std::string checksum_3d_field(const parallel::Checksum& checksum, const Field& field) {
     auto values = make_leveled_view<const T>(field);
     array::ArrayT<T> surface_field(values.shape(0), values.shape(2));
     auto surface     = array::make_view<T, 2>(surface_field);
@@ -84,6 +85,8 @@ std::string StructuredColumns::checksum_3d_field(const parallel::Checksum& check
     }
     return checksum.execute(surface.data(), surface_field.stride(0));
 }
+
+} // namespace
 
 class StructuredColumnsHaloExchangeCache : public util::Cache<std::string, parallel::HaloExchange>,
                                            public grid::detail::grid::GridObserver {

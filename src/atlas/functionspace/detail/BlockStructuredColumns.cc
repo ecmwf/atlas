@@ -38,8 +38,11 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/detail/Cache.h"
 
+namespace atlas {
+namespace functionspace {
+namespace detail {
+
 namespace {
-using namespace atlas;
 
 template <class ValueType>
 void block_copy(const Field sloc, Field loc, const functionspace::detail::BlockStructuredColumns& fs) {
@@ -153,12 +156,47 @@ void rev_block_copy(const Field loc, Field sloc, const functionspace::detail::Bl
     }
 }
 
+
+void transpose_nonblocked_to_blocked(const Field& nonblocked, Field& blocked, const functionspace::detail::BlockStructuredColumns& fs) {
+    auto kind = nonblocked.datatype().kind();
+    if (kind == array::DataType::kind<int>()) {
+        block_copy<int>(nonblocked, blocked, fs);
+    }
+    else if (kind == array::DataType::kind<long>()) {
+        block_copy<long>(nonblocked, blocked, fs);
+    }
+    else if (kind == array::DataType::kind<float>()) {
+        block_copy<float>(nonblocked, blocked, fs);
+    }
+    else if (kind == array::DataType::kind<double>()) {
+        block_copy<double>(nonblocked, blocked, fs);
+    }
+    else {
+        throw_Exception("datatype not supported", Here());
+    }
+}
+
+void transpose_blocked_to_nonblocked(const Field& blocked, Field& nonblocked, const functionspace::detail::BlockStructuredColumns& fs) {
+    auto kind = blocked.datatype().kind();
+    if (kind == array::DataType::kind<int>()) {
+        rev_block_copy<int>(blocked, nonblocked, fs);
+    }
+    else if (kind == array::DataType::kind<long>()) {
+        rev_block_copy<long>(blocked, nonblocked, fs);
+    }
+    else if (kind == array::DataType::kind<float>()) {
+        rev_block_copy<float>(blocked, nonblocked, fs);
+    }
+    else if (kind == array::DataType::kind<double>()) {
+        rev_block_copy<double>(blocked, nonblocked, fs);
+    }
+    else {
+        throw_Exception("datatype not supported", Here());
+    }
+}
+
+
 }// namespace
-
-namespace atlas {
-namespace functionspace {
-namespace detail {
-
 
 array::ArrayShape BlockStructuredColumns::config_shape(const eckit::Configuration& config) const {
     array::ArrayShape shape;
@@ -230,8 +268,8 @@ Field BlockStructuredColumns::createField(const eckit::Configuration& options) c
 }
 
 Field BlockStructuredColumns::createField(const Field& other, const eckit::Configuration& config) const {
-    return createField(option::datatype(other.datatype()) | option::levels(other.levels()) |
-                       option::variables(other.variables()) |
+    return createField(option::name(other.name()) | option::datatype(other.datatype()) |
+                       option::levels(other.levels()) |option::variables(other.variables()) |
                        option::type(other.metadata().getString("type", "scalar")) | config);
 }
 // ----------------------------------------------------------------------------
@@ -242,47 +280,14 @@ Field BlockStructuredColumns::createField(const Field& other, const eckit::Confi
 void BlockStructuredColumns::scatter(const FieldSet& global_fieldset, FieldSet& local_fieldset) const {
     ATLAS_ASSERT(local_fieldset.size() == global_fieldset.size());
     for (idx_t f = 0; f < local_fieldset.size(); ++f) {
-        const Field& glb      = global_fieldset[f];
-        auto config = option::datatype(glb.datatype()) | option::levels(glb.levels()) | option::variables(glb.variables());
-        auto sloc             = structuredcolumns_->createField(config);
-        const idx_t nb_fields = 1;
-        idx_t root(0);
-        glb.metadata().get("owner", root);
-
-        Field& loc            = local_fieldset[f];
-        glb.metadata().broadcast(loc.metadata(), root);
-        loc.metadata().set("global", false);
-
-        if (sloc.datatype().kind() == array::DataType::kind<int>()) {
-            parallel::Field<int const> glb_field(structuredcolumns_->make_leveled_view<const int>(glb));
-            parallel::Field<int> sloc_field(structuredcolumns_->make_leveled_view<int>(sloc));
-            structuredcolumns_->scatter().scatter(&glb_field, &sloc_field, nb_fields, root);
-            block_copy<int>(sloc, loc, *this);
-        }
-        else if (sloc.datatype().kind() == array::DataType::kind<long>()) {
-            parallel::Field<long const> glb_field(structuredcolumns_->make_leveled_view<const long>(glb));
-            parallel::Field<long> sloc_field(structuredcolumns_->make_leveled_view<long>(sloc));
-            structuredcolumns_->scatter().scatter(&glb_field, &sloc_field, nb_fields, root);
-            block_copy<long>(sloc, loc, *this);
-        }
-        else if (sloc.datatype().kind() == array::DataType::kind<float>()) {
-            parallel::Field<float const> glb_field(structuredcolumns_->make_leveled_view<const float>(glb));
-            parallel::Field<float> sloc_field(structuredcolumns_->make_leveled_view<float>(sloc));
-            structuredcolumns_->scatter().scatter(&glb_field, &sloc_field, nb_fields, root);
-            block_copy<float>(sloc, loc, *this);
-        }
-        else if (sloc.datatype().kind() == array::DataType::kind<double>()) {
-            parallel::Field<double const> glb_field(structuredcolumns_->make_leveled_view<const double>(glb));
-            parallel::Field<double> sloc_field(structuredcolumns_->make_leveled_view<double>(sloc));
-            structuredcolumns_->scatter().scatter(&glb_field, &sloc_field, nb_fields, root);
-            block_copy<double>(sloc, loc, *this);
-        }
-        else {
-            throw_Exception("datatype not supported", Here());
-        }
+        const Field& glb  = global_fieldset[f];
+        Field& loc        = local_fieldset[f];
+        auto sloc         = structuredcolumns_->createField(glb, util::Config("global",false));
+        structuredcolumns_->scatter(glb, sloc);
+        loc.metadata() = sloc.metadata();
+        transpose_nonblocked_to_blocked(sloc, loc, *this);
     }
 }
-// ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------
 // Scatter Field
@@ -294,7 +299,6 @@ void BlockStructuredColumns::scatter(const Field& global, Field& local) const {
     local_fields.add(local);
     scatter(global_fields, local_fields);
 }
-// ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------
 // Gather FieldSet
@@ -302,45 +306,13 @@ void BlockStructuredColumns::scatter(const Field& global, Field& local) const {
 void BlockStructuredColumns::gather(const FieldSet& local_fieldset, FieldSet& global_fieldset) const {
     ATLAS_ASSERT(local_fieldset.size() == global_fieldset.size());
     for (idx_t f = 0; f < local_fieldset.size(); ++f) {
-        const Field& loc      = local_fieldset[f];
-        auto config = option::datatype(loc.datatype()) | option::levels(loc.levels()) | option::variables(loc.variables());
-        auto sloc             = structuredcolumns_->createField(config);
-
-
-        idx_t root(0);
-        sloc.metadata().set("global", false);
-        Field& glb            = global_fieldset[f];
-        glb.metadata().broadcast(sloc.metadata(), root);
-        const idx_t nb_fields = 1;
-        glb.metadata().get("owner", root);
-
-        if (sloc.datatype().kind() == array::DataType::kind<int>()) {
-            rev_block_copy<int>(loc, sloc, *this);
-            parallel::Field<int const> sloc_field(structuredcolumns_->make_leveled_view<int>(sloc));
-            parallel::Field<int> glb_field(structuredcolumns_->make_leveled_view<int>(glb));
-            structuredcolumns_->gather().gather(&sloc_field, &glb_field, nb_fields, root);
-        }
-        else if (sloc.datatype().kind() == array::DataType::kind<long>()) {
-            rev_block_copy<long>(loc, sloc, *this);
-            parallel::Field<long const> sloc_field(structuredcolumns_->make_leveled_view<long>(sloc));
-            parallel::Field<long> glb_field(structuredcolumns_->make_leveled_view<long>(glb));
-            structuredcolumns_->gather().gather(&sloc_field, &glb_field, nb_fields, root);
-        }
-        else if (sloc.datatype().kind() == array::DataType::kind<float>()) {
-            rev_block_copy<float>(loc, sloc, *this);
-            parallel::Field<float const> sloc_field(structuredcolumns_->make_leveled_view<float>(sloc));
-            parallel::Field<float> glb_field(structuredcolumns_->make_leveled_view<float>(glb));
-            structuredcolumns_->gather().gather(&sloc_field, &glb_field, nb_fields, root);
-        }
-        else if (sloc.datatype().kind() == array::DataType::kind<double>()) {
-            rev_block_copy<double>(loc, sloc, *this);
-            parallel::Field<double const> sloc_field(structuredcolumns_->make_leveled_view<double>(sloc));
-            parallel::Field<double> glb_field(structuredcolumns_->make_leveled_view<double>(glb));
-            structuredcolumns_->gather().gather(&sloc_field, &glb_field, nb_fields, root);
-        }
-        else {
-            throw_Exception("datatype not supported", Here());
-        }
+        const Field& loc = local_fieldset[f];
+        Field& glb       = global_fieldset[f];
+        auto sloc = structuredcolumns_->createField(loc, util::Config("global",false));
+        transpose_blocked_to_nonblocked(loc, sloc, *this);
+        structuredcolumns_->gather(sloc, glb);
+        glb.metadata() = loc.metadata();
+        glb.metadata().set("global", false);
     }
 }
 // ----------------------------------------------------------------------------
@@ -371,6 +343,10 @@ void BlockStructuredColumns::gather(const Field& local, Field& global) const {
     global_fields.add(global);
     gather(local_fields, global_fields);
 }
+
+// ----------------------------------------------------------------------------
+// Checksum Field
+// ----------------------------------------------------------------------------
 
 std::string BlockStructuredColumns::checksum(const Field&) const {
     ATLAS_NOTIMPLEMENTED;

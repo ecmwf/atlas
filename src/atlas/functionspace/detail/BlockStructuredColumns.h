@@ -124,8 +124,6 @@ private:  // methods
     array::ArrayAlignment config_alignment(const eckit::Configuration&) const;
     array::ArraySpec config_spec(const eckit::Configuration&) const;
 
-    void create_remote_index() const { structuredcolumns_->create_remote_index(); }
-
 private:  // data
     idx_t nproma_;
     idx_t endblk_size_;
