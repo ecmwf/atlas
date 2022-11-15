@@ -22,6 +22,15 @@ if( HAVE_FCTEST )
     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
 
+  add_fctest( TARGET atlas_fctest_blockstructuredcolumns
+    MPI             4
+    CONDITION       eckit_HAVE_MPI
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_blockstructuredcolumns.F90
+    LIBS            atlas_f
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 endif()
 
 ecbuild_add_test( TARGET atlas_test_functionspace
@@ -65,6 +74,14 @@ ecbuild_add_test( TARGET atlas_test_structuredcolumns
   MPI 5
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 5
+)
+
+ecbuild_add_test( TARGET atlas_test_blockstructuredcolumns
+  MPI        3
+  SOURCES  test_blockstructuredcolumns.cc
+  LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 3
 )
 
 ecbuild_add_test( TARGET atlas_test_pointcloud

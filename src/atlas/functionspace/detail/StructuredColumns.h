@@ -298,6 +298,12 @@ private:  // data
         }
     };
 
+    template <typename T, typename Field>
+    array::LocalView<T, 3> make_leveled_view(Field& field) const;
+
+    template <typename T>
+    std::string checksum_3d_field(const parallel::Checksum& checksum, const Field& field) const;
+
     idx_t j_begin_;
     idx_t j_end_;
     std::vector<idx_t> i_begin_;
@@ -314,8 +320,10 @@ private:  // data
     idx_t nb_partitions_;
 
     friend struct StructuredColumnsFortranAccess;
+    friend struct BlockStructuredColumnsFortranAccess;
     Map2to1 ij2gp_;
 
+    friend class BlockStructuredColumns;
     void setup(const grid::Distribution& distribution, const eckit::Configuration& config);
 };
 
