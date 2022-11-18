@@ -326,7 +326,7 @@ Method::Triplets UnstructuredBilinearLonLat::projectPointToElements(size_t ip, c
     }
     PointLonLat o_loc{o_lon, (*olonlat_)(ip, LAT)};  // lookup point
 
-    auto inv_dist_weight = [](element::Quad2D& q, const PointXY& loc, std::array<double, 4>& w) {
+    auto inv_dist_weight_quad = [](element::Quad2D& q, const PointXY& loc, std::array<double, 4>& w) {
         double d[4];
         d[0] = util::Earth::distance({q.p(0).data()}, loc);
         d[1] = util::Earth::distance({q.p(1).data()}, loc);
@@ -342,6 +342,22 @@ Method::Triplets UnstructuredBilinearLonLat::projectPointToElements(size_t ip, c
             w[i] *= suminv;
         }
     };
+    auto inv_dist_weight_triag = [](element::Triag2D& q, const PointXY& loc, std::array<double, 4>& w) {
+        double d[3];
+        d[0] = util::Earth::distance({q.p(0).data()}, loc);
+        d[1] = util::Earth::distance({q.p(1).data()}, loc);
+        d[2] = util::Earth::distance({q.p(2).data()}, loc);
+        w[0] = d[1] * d[2];
+        w[1] = d[0] * d[2];
+        w[2] = d[1] * d[0];
+        w[3] = 0.;
+
+        double suminv = 1. / (w[0] + w[1] + w[2]);
+        for (size_t i = 0; i < 3; ++i) {
+            w[i] *= suminv;
+        }
+    };
+
 
     for (ElemIndex3::NodeList::const_iterator itc = elems.begin(); itc != elems.end(); ++itc) {
         const idx_t elem_id = idx_t((*itc).value().payload());
@@ -360,6 +376,10 @@ Method::Triplets UnstructuredBilinearLonLat::projectPointToElements(size_t ip, c
             element::Triag2D triag(PointLonLat{(*ilonlat_)(idx[0], LON), (*ilonlat_)(idx[0], LAT)},
                                    PointLonLat{(*ilonlat_)(idx[1], LON), (*ilonlat_)(idx[1], LAT)},
                                    PointLonLat{(*ilonlat_)(idx[2], LON), (*ilonlat_)(idx[2], LAT)});
+
+            if (itc == elems.begin()) {
+                inv_dist_weight_triag(triag, o_loc, inv_dist_w);
+            }
 
             // pick an epsilon based on a characteristic length (sqrt(area))
             // (this scales linearly so it better compares with linear weights u,v,w)
@@ -410,7 +430,7 @@ Method::Triplets UnstructuredBilinearLonLat::projectPointToElements(size_t ip, c
                 PointLonLat{lons[2], (*ilonlat_)(idx[2], LAT)}, PointLonLat{lons[3], (*ilonlat_)(idx[3], LAT)});
 
             if (itc == elems.begin()) {
-                inv_dist_weight(quad, o_loc, inv_dist_w);
+                inv_dist_weight_quad(quad, o_loc, inv_dist_w);
             }
 
             // pick an epsilon based on a characteristic length (sqrt(area))
@@ -444,7 +464,7 @@ Method::Triplets UnstructuredBilinearLonLat::projectPointToElements(size_t ip, c
         // to identify and interpolate in a lon/lat projection, near the north
         // pole
         const idx_t elem_id = idx_t((*elems.begin()).value().payload());
-        for (size_t i = 0; i < 4; ++i) {
+        for (size_t i = 0; i < connectivity_->cols(elem_id); ++i) {
             idx[i] = (*connectivity_)(elem_id, i);
             triplets.emplace_back(ip, idx[i], inv_dist_w[i]);
         }
