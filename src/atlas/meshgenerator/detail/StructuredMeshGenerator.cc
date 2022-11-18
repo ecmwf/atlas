@@ -98,7 +98,7 @@ StructuredMeshGenerator::StructuredMeshGenerator(const eckit::Parametrisation& p
 
     bool three_dimensional;
     if (p.get("three_dimensional", three_dimensional) || p.get("3d", three_dimensional)) {
-        options.set("3d", three_dimensional);
+        options.set("three_dimensional", three_dimensional);
     }
 
     size_t nb_parts;
@@ -151,14 +151,14 @@ void StructuredMeshGenerator::configure_defaults() {
     // connects elements
     // to the first node only. Note this option will only be looked at in case
     // other option
-    // "3d"==true
+    // "three_dimensional"==true
     options.set("unique_pole", true);
 
     // This option creates elements that connect east to west at greenwich
     // meridian
     // when true, instead of creating periodic ghost-points at east boundary when
     // false
-    options.set("3d", false);
+    options.set("three_dimensional", false);
 
     // This option sets number of parts the mesh will be split in
     options.set("nb_parts", mpi::size());
@@ -266,7 +266,7 @@ void StructuredMeshGenerator::generate_region(const StructuredGrid& rg, const gr
 
     double max_angle        = options.getDouble("angle");
     bool triangulate_quads  = options.getBool("triangulate");
-    bool three_dimensional  = options.getBool("3d");
+    bool three_dimensional  = options.getBool("three_dimensional");
     bool has_north_pole     = eckit::types::is_approximately_equal(rg.y().front(), 90.);
     bool has_south_pole     = eckit::types::is_approximately_equal(rg.y().back(), -90.);
     bool unique_pole        = options.getBool("unique_pole") && three_dimensional && has_north_pole && has_south_pole;
@@ -874,7 +874,7 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
     bool mypart_at_north = std::any_of(part_north.begin(), part_north.end(), [&](int p) { return p == mypart; });
     bool mypart_at_south = std::any_of(part_south.begin(), part_south.end(), [&](int p) { return p == mypart; });
 
-    bool three_dimensional             = options.getBool("3d");
+    bool three_dimensional             = options.getBool("three_dimensional");
     bool periodic_east_west            = rg.periodic();
     bool include_periodic_ghost_points = periodic_east_west && !three_dimensional;
     bool remove_periodic_ghost_points  = periodic_east_west && three_dimensional;
