@@ -9,6 +9,7 @@
  */
 
 #include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Partitioner.h"
 #include "atlas/meshgenerator/MeshGenerator.h"
@@ -41,6 +42,8 @@ Mesh::Mesh(const Grid& grid, const grid::Partitioner& partitioner):
 
 
 Mesh::Mesh(eckit::Stream& stream): Handle(new Implementation(stream)) {}
+
+Mesh::operator bool() const { return get()->nodes().size() > 0; }
 
 //----------------------------------------------------------------------------------------------------------------------
 
