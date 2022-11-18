@@ -839,5 +839,9 @@ const parallel::Checksum& CellColumns::checksum() const {
     return functionspace_->checksum();
 }
 
+const mesh::Halo& CellColumns::halo() const {
+    return functionspace_->halo();
+}
+
 }  // namespace functionspace
 }  // namespace atlas
