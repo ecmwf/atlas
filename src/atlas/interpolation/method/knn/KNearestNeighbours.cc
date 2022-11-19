@@ -78,16 +78,16 @@ void KNearestNeighbours::do_setup(const FunctionSpace& source, const FunctionSpa
     std::vector<Triplet> weights_triplets;
     weights_triplets.reserve(out_npts * k_);
     {
-        Trace timer(Here(), "atlas::interpolation::method::NearestNeighbour::do_setup()");
+        Trace timer(Here(), "atlas::interpolation::method::KNearestNeighbour::do_setup()");
 
         std::vector<double> weights;
 
         Log::debug() << "Computing interpolation weights for " << out_npts << " points." << std::endl;
         for (size_t ip = 0; ip < out_npts; ++ip) {
             if (ip && (ip % 1000 == 0)) {
-                timer.stop();
+                timer.pause();
                 auto elapsed = timer.elapsed();
-                timer.start();
+                timer.resume();
                 auto rate = eckit::types::is_approximately_equal(elapsed, 0.) ? std::numeric_limits<double>::infinity()
                                                                               : (ip / elapsed);
                 Log::debug() << eckit::BigNum(ip) << " (at " << size_t(rate) << " points/s)... after " << elapsed << " s" << std::endl;
