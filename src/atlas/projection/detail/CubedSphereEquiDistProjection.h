@@ -33,6 +33,12 @@ public:
     /// @brief Convert (alpha, beta) coordinate to (x, y) on tile t.
     void alphabeta2xy(double crd[], idx_t t) const override;
 
+    /// @brief Convert (lon, lat) coordinate to (alpha, beta) on tile t.
+    void lonlat2alphabeta(double crd[], idx_t t) const override;
+
+    /// @brief Convert (alpha, beta) coordinate to (lon, lat) on tile t.
+    void alphabeta2lonlat(double crd[], idx_t t) const override;
+
     /// @brief Jacobian of (alpha, beta) with respect to (lon, lat) on tile t
     Jacobian alphabetaJacobian(const PointLonLat& lonlat, idx_t t) const override;
 
