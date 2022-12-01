@@ -15,6 +15,7 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/projection/detail/CubedSphereProjectionBase.h"
 #include "atlas/util/Constants.h"
+#include "atlas/util/Point.h"
 #include "tests/AtlasTestEnvironment.h"
 namespace atlas {
 namespace test {
@@ -51,12 +52,20 @@ void testProjection(const std::string& gridType, const std::string& meshType, co
 
     // "Hack" mesh xy coordinates.
     auto xyView        = array::make_view<double, 2>(mesh.nodes().xy());
+    auto lonlatView    = array::make_view<double, 2>(mesh.nodes().lonlat());
     const auto tijView = array::make_view<idx_t, 2>(mesh.nodes().field("tij"));
     for (idx_t i = 0; i < mesh.nodes().size(); ++i) {
         const auto t = tijView(i, 0);
 
-        const auto xy        = PointXY(xyView(i, XX), xyView(i, YY));
+        auto xy        = PointXY(xyView(i, XX), xyView(i, YY));
         const auto alphabeta = csProjection.xy2alphabeta(xy, t);
+
+        const auto lonlat = PointLonLat{lonlatView(i, LON), lonlatView(i, LAT)};
+
+        Log::info() << lonlat << std::endl;
+        Log::info() << csProjection.xy2alphabeta(xy, t) << std::endl;
+        Log::info() << csProjection.lonlat2alphabeta(lonlat, t) << std::endl;
+        Log::info() << csProjection.alphabeta2lonlat(csProjection.lonlat2alphabeta(lonlat, t), t) << std::endl << std::endl;
 
         // Inverse function is degenerate when abs(alpha) == abs(beta) and
         // abs(alpha) > 45.
