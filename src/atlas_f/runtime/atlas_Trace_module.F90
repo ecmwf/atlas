@@ -77,6 +77,7 @@ function atlas_Trace__labels_1(file,line,title,label) result(this)
   character(len=*) , intent(in) :: label
   call this%reset_c_ptr( new_atlas_Trace_labels_1( c_str(file), line, c_str(title), c_str(label) ), &
     &  fckit_c_deleter(delete_atlas_Trace) )
+  call this%return()
 end function
 function atlas_Trace__labels_2(file,line,title,label1,label2) result(this)
   use, intrinsic :: iso_c_binding, only : c_ptr
@@ -90,6 +91,7 @@ function atlas_Trace__labels_2(file,line,title,label1,label2) result(this)
   character(len=*) , intent(in) :: label2
   call this%reset_c_ptr( new_atlas_Trace_labels_2( c_str(file), line, c_str(title), c_str(label1), c_str(label2) ), &
     &  fckit_c_deleter(delete_atlas_Trace) )
+  call this%return()
 end function
 function atlas_Trace__labels_3(file,line,title,label1,label2,label3) result(this)
   use, intrinsic :: iso_c_binding, only : c_ptr
@@ -104,6 +106,7 @@ function atlas_Trace__labels_3(file,line,title,label1,label2,label3) result(this
   character(len=*) , intent(in) :: label3
   call this%reset_c_ptr( new_atlas_Trace_labels_3( c_str(file), line, c_str(title), c_str(label1), c_str(label2), &
     & c_str(label3) ), fckit_c_deleter(delete_atlas_Trace) )
+  call this%return()
 end function
 function atlas_Trace__labels_4(file,line,title,label1,label2,label3,label4) result(this)
   use, intrinsic :: iso_c_binding, only : c_ptr
@@ -119,6 +122,7 @@ function atlas_Trace__labels_4(file,line,title,label1,label2,label3,label4) resu
   character(len=*) , intent(in) :: label4
   call this%reset_c_ptr( new_atlas_Trace_labels_4( c_str(file), line, c_str(title), c_str(label1), c_str(label2), &
     & c_str(label3), c_str(label4) ), fckit_c_deleter(delete_atlas_Trace) )
+  call this%return()
 end function
 function atlas_Trace__labels_5(file,line,title,label1,label2,label3,label4,label5) result(this)
   use, intrinsic :: iso_c_binding, only : c_ptr
@@ -135,6 +139,7 @@ function atlas_Trace__labels_5(file,line,title,label1,label2,label3,label4,label
   character(len=*) , intent(in) :: label5
   call this%reset_c_ptr( new_atlas_Trace_labels_5( c_str(file), line, c_str(title), c_str(label1), c_str(label2), &
     & c_str(label3), c_str(label4), c_str(label5) ), fckit_c_deleter(delete_atlas_Trace) )
+  call this%return()
 end function
 !-------------------------------------------------------------------------------
 

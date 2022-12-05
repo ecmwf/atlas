@@ -7,6 +7,31 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.31.1] - 2022-11-11
+### Fixed
+- Fix bug introduced in StructuredMeshGenerator global numbering with release 0.31.0 in commit a63fc62a2
+- Fix healpix global numbering for pentagon pole elements in parallel
+- Fix validity check of atlas::HealpixGrid
+
+## [0.31.0] - 2022-11-10
+### Added
+- Extend PointCloud functionspace to do halo exchanges, including Fortran API
+- Add FunctionSpace::gather and FunctionSpace::scatter abstraction
+
+### Changed
+- Improve performance of MatchingMeshPartitionerLonLatPolygon using OpenMP
+- Improve performance of BuildHalo using OpenMP and unordered_map
+- Improve performance of StructuredMeshGenerator using OpenMP
+- Improve performance of ATLAS_TRACE
+- Reduce memory peak in GatherScatter setup
+- Global element numbering of RegularLonLat grids is now following rows independent of partitioning
+
+### Fixed
+- Running CI with Github Actions
+- Fix output of atlas-grids y-range for shifted grids
+- Fix building with ATLAS_BITS_LOCAL=64
+
+
 ## [0.30.0] - 2022-08-22
 ### Added
 - Fortran API for Interpolation::execute_adjoint()
@@ -386,6 +411,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.31.1]: https://github.com/ecmwf/atlas/compare/0.31.0...0.31.1
+[0.31.0]: https://github.com/ecmwf/atlas/compare/0.30.0...0.31.0
 [0.30.0]: https://github.com/ecmwf/atlas/compare/0.29.0...0.30.0
 [0.29.0]: https://github.com/ecmwf/atlas/compare/0.28.1...0.29.0
 [0.28.1]: https://github.com/ecmwf/atlas/compare/0.28.0...0.28.1

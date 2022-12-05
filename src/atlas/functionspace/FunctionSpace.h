@@ -26,6 +26,10 @@ class Projection;
 namespace functionspace {
 class FunctionSpaceImpl;
 }
+namespace parallel {
+class GatherScatter;
+}  // namespace parallel
+
 namespace util {
 class PartitionPolygon;
 class PartitionPolygons;
@@ -63,6 +67,12 @@ public:
     void adjointHaloExchange(const FieldSet&, bool on_device = false) const;
     void adjointHaloExchange(const Field&, bool on_device = false) const;
 
+    void gather(const FieldSet&, FieldSet&) const;
+    void gather(const Field&, Field&) const;
+
+    void scatter(const FieldSet&, FieldSet&) const;
+    void scatter(const Field&, Field&) const;
+
     const util::PartitionPolygon& polygon(idx_t halo = 0) const;
 
     const util::PartitionPolygons& polygons() const;
@@ -80,6 +90,9 @@ public:
     Field global_index() const;
 
     Field remote_index() const;
+
+    const parallel::GatherScatter& gather() const;
+    const parallel::GatherScatter& scatter() const;
 };
 
 //------------------------------------------------------------------------------------------------------

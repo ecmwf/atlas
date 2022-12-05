@@ -115,6 +115,9 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/Spectra
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/StructuredColumnsInterface.h
     MODULE    atlas_functionspace_StructuredColumns_c_binding
     OUTPUT    functionspace_StructuredColumns_c_binding.f90 )
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/BlockStructuredColumnsInterface.h
+    MODULE    atlas_functionspace_BlockStructuredColumns_c_binding
+    OUTPUT    functionspace_BlockStructuredColumns_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/NodeColumnsInterface.h
     MODULE    atlas_functionspace_NodeColumns_c_binding
     OUTPUT    functionspace_NodeColumns_c_binding.f90)
@@ -169,6 +172,7 @@ ecbuild_add_library( TARGET atlas_f
         functionspace/atlas_functionspace_EdgeColumns_module.F90
         functionspace/atlas_functionspace_NodeColumns_module.fypp
         functionspace/atlas_functionspace_StructuredColumns_module.F90
+        functionspace/atlas_functionspace_BlockStructuredColumns_module.F90
         functionspace/atlas_functionspace_Spectral_module.F90
         functionspace/atlas_functionspace_PointCloud_module.F90
         field/atlas_FieldSet_module.F90

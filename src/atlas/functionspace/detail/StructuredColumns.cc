@@ -48,7 +48,6 @@ namespace detail {
 
 namespace {
 
-
 template <typename T, typename Field>
 array::LocalView<T, 3> make_leveled_view(Field& field) {
     using namespace array;
@@ -87,8 +86,7 @@ std::string checksum_3d_field(const parallel::Checksum& checksum, const Field& f
     return checksum.execute(surface.data(), surface_field.stride(0));
 }
 
-}  // namespace
-
+} // namespace
 
 class StructuredColumnsHaloExchangeCache : public util::Cache<std::string, parallel::HaloExchange>,
                                            public grid::detail::grid::GridObserver {

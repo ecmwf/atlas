@@ -59,22 +59,14 @@ void NearestNeighbour::do_setup(const Grid& source, const Grid& target, const Ca
 void NearestNeighbour::do_setup(const FunctionSpace& source, const FunctionSpace& target) {
     source_                        = source;
     target_                        = target;
-    functionspace::NodeColumns src = source;
-    functionspace::NodeColumns tgt = target;
-    ATLAS_ASSERT(src);
-    ATLAS_ASSERT(tgt);
-
-    Mesh meshSource = src.mesh();
-    Mesh meshTarget = tgt.mesh();
 
     // build point-search tree
-    buildPointSearchTree(meshSource, src.halo());
+    buildPointSearchTree(source);
 
-    array::ArrayView<double, 2> lonlat = array::make_view<double, 2>(meshTarget.nodes().lonlat());
+    array::ArrayView<double, 2> lonlat = array::make_view<double, 2>(target.lonlat());
 
-    size_t inp_npts = meshSource.nodes().size();
-    meshSource.metadata().get("nb_nodes_including_halo[" + std::to_string(src.halo().size()) + "]", inp_npts);
-    size_t out_npts = meshTarget.nodes().size();
+    size_t inp_npts = source.size();
+    size_t out_npts = target.size();
 
     // fill the sparse matrix
     std::vector<Triplet> weights_triplets;
@@ -83,10 +75,12 @@ void NearestNeighbour::do_setup(const FunctionSpace& source, const FunctionSpace
         Trace timer(Here(), "atlas::interpolation::method::NearestNeighbour::do_setup()");
         for (size_t ip = 0; ip < out_npts; ++ip) {
             if (ip && (ip % 1000 == 0)) {
+                timer.pause();
                 auto elapsed = timer.elapsed();
+                timer.resume();
                 auto rate = eckit::types::is_approximately_equal(elapsed, 0.) ? std::numeric_limits<double>::infinity()
                                                                               : (ip / elapsed);
-                Log::debug() << eckit::BigNum(ip) << " (at " << rate << " points/s)..." << std::endl;
+                Log::debug() << eckit::BigNum(ip) << " (at " << rate << " points/s)... after " << elapsed << " s" << std::endl;
             }
 
             // find the closest input point to the output point

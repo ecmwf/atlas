@@ -333,7 +333,7 @@ Field NodeColumns::createField(const eckit::Configuration& config) const {
 }
 
 Field NodeColumns::createField(const Field& other, const eckit::Configuration& config) const {
-    return createField(option::datatype(other.datatype()) | option::levels(other.levels()) |
+    return createField(option::name(other.name()) | option::datatype(other.datatype()) | option::levels(other.levels()) |
                        option::variables(other.variables()) | config);
 }
 
@@ -540,7 +540,9 @@ void NodeColumns::scatter(const FieldSet& global_fieldset, FieldSet& local_field
         auto name = loc.name();
         glb.metadata().broadcast(loc.metadata(), root);
         loc.metadata().set("global", false);
-        loc.metadata().set("name", name);
+        if( !name.empty() ) {
+            loc.metadata().set("name", name);
+        }
     }
 }
 
@@ -684,30 +686,6 @@ void NodeColumns::haloExchange(const Field& field, bool on_device) const {
 
 const parallel::HaloExchange& NodeColumns::halo_exchange() const {
     return functionspace_->halo_exchange();
-}
-
-void NodeColumns::gather(const FieldSet& local, FieldSet& global) const {
-    functionspace_->gather(local, global);
-}
-
-void NodeColumns::gather(const Field& local, Field& global) const {
-    functionspace_->gather(local, global);
-}
-
-const parallel::GatherScatter& NodeColumns::gather() const {
-    return functionspace_->gather();
-}
-
-void NodeColumns::scatter(const FieldSet& global, FieldSet& local) const {
-    functionspace_->scatter(global, local);
-}
-
-void NodeColumns::scatter(const Field& global, Field& local) const {
-    functionspace_->scatter(global, local);
-}
-
-const parallel::GatherScatter& NodeColumns::scatter() const {
-    return functionspace_->scatter();
 }
 
 std::string NodeColumns::checksum(const FieldSet& fieldset) const {

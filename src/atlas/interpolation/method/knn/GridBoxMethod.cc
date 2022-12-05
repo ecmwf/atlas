@@ -45,14 +45,31 @@ void GridBoxMethod::print(std::ostream& out) const {
     out << "GridBoxMethod[]";
 }
 
+namespace {
+StructuredGrid extract_structured_grid(const FunctionSpace& fs) {
+    if (functionspace::StructuredColumns{fs}) {
+        return functionspace::StructuredColumns(fs).grid();
+    }
+    if (functionspace::NodeColumns{fs}) {
+        return functionspace::NodeColumns(fs).mesh().grid();
+    }
+    return Grid();
+}
+}
 
 void GridBoxMethod::do_setup(const FunctionSpace& source, const FunctionSpace& target) {
-    if (functionspace::StructuredColumns(source) && functionspace::StructuredColumns(target)) {
-        do_setup(functionspace::StructuredColumns(source).grid(), functionspace::StructuredColumns(target).grid(),
-                 Cache());
-        return;
+    if( mpi::size() > 1 ) {
+        ATLAS_THROW_EXCEPTION("Cannot use GridBoxMethod in parallel yet.");
     }
-    ATLAS_NOTIMPLEMENTED;
+    auto src_grid = extract_structured_grid(source);
+    auto tgt_grid = extract_structured_grid(target);
+    if( not src_grid ) {
+        ATLAS_THROW_EXCEPTION("Could not extract StructuredGrid from source function space " << source.type() );
+    }
+    if( not tgt_grid ) {
+        ATLAS_THROW_EXCEPTION("Could not extract StructuredGrid from target function space " << target.type() );
+    }
+    do_setup(src_grid,tgt_grid,Cache());
 }
 
 bool GridBoxMethod::intersect(size_t i, const GridBox& box, const util::IndexKDTree::ValueList& closest,

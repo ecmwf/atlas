@@ -467,22 +467,6 @@ int Spectral::truncation() const {
     return functionspace_->truncation();
 }
 
-void Spectral::gather(const FieldSet& local_fieldset, FieldSet& global_fieldset) const {
-    functionspace_->gather(local_fieldset, global_fieldset);
-}
-
-void Spectral::gather(const Field& local, Field& global) const {
-    functionspace_->gather(local, global);
-}
-
-void Spectral::scatter(const FieldSet& global_fieldset, FieldSet& local_fieldset) const {
-    functionspace_->scatter(global_fieldset, local_fieldset);
-}
-
-void Spectral::scatter(const Field& global, Field& local) const {
-    functionspace_->scatter(global, local);
-}
-
 std::string Spectral::checksum(const FieldSet& fieldset) const {
     return functionspace_->checksum(fieldset);
 }

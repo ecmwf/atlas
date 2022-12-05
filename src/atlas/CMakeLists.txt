@@ -438,6 +438,8 @@ field/detail/MissingValue.h
 
 list( APPEND atlas_functionspace_srcs
 functionspace.h
+functionspace/BlockStructuredColumns.h
+functionspace/BlockStructuredColumns.cc
 functionspace/CellColumns.h
 functionspace/CellColumns.cc
 functionspace/EdgeColumns.h
@@ -454,6 +456,10 @@ functionspace/PointCloud.h
 functionspace/PointCloud.cc
 functionspace/CubedSphereColumns.h
 functionspace/CubedSphereColumns.cc
+functionspace/detail/BlockStructuredColumns.h
+functionspace/detail/BlockStructuredColumns.cc
+functionspace/detail/BlockStructuredColumnsInterface.h
+functionspace/detail/BlockStructuredColumnsInterface.cc
 functionspace/detail/FunctionSpaceImpl.h
 functionspace/detail/FunctionSpaceImpl.cc
 functionspace/detail/FunctionSpaceInterface.h

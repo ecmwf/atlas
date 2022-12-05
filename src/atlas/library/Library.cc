@@ -51,6 +51,7 @@ static bool feature_MKL() {
 #include "atlas/library/git_sha1.h"
 #include "atlas/library/version.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
@@ -318,6 +319,8 @@ void Library::initialise(const eckit::Parametrisation& config) {
         out << "    communicator  [" << mpi::comm() << "] \n";
         out << "    size          [" << mpi::size() << "] \n";
         out << "    rank          [" << mpi::rank() << "] \n";
+        out << "  OMP\n";
+        out << "    max_threads   [" << atlas_omp_get_max_threads() << "] \n";
         out << " \n";
         out << "  log.info        [" << str(info_) << "] \n";
         out << "  log.trace       [" << str(trace()) << "] \n";

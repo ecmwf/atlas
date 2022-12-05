@@ -84,7 +84,7 @@ template = field
 
 field = fs%create_field(template)
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
-FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%name() , template%name() )
 call field%final()
 
 field = fs%create_field(template,name="field")
@@ -118,7 +118,7 @@ template = field
 
 field = fs%create_field(template,global=.True.)
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
-FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%name() , template%name() )
 call field%final()
 
 field = fs%create_field(template,name="field",global=.True.)
@@ -182,7 +182,7 @@ template = field
 
 field = fs%create_field(template)
 FCTEST_CHECK_EQUAL( field%rank() , 3 )
-FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%name() , template%name() )
 call field%final()
 
 field = fs%create_field(template,name="field")
@@ -216,7 +216,7 @@ template = field
 
 field = fs%create_field(template,global=.True.)
 FCTEST_CHECK_EQUAL( field%rank() , 3 )
-FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%name() , template%name() )
 call field%final()
 
 field = fs%create_field(template,name="field",global=.True.)
@@ -569,8 +569,8 @@ FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 write(0,*) "before: name = ", fs%name()
 write(0,*) "before: owners = ", fs%owners()
 fs_base = field%functionspace()
-write(0,*) "after: name = " , fs%name()
-write(0,*) "after: owners = " , fs%owners()
+write(0,*) "after: name = " , fs_base%name()
+write(0,*) "after: owners = " , fs_base%owners()
 
 FCTEST_CHECK_EQUAL( field%owners(), 1 )
 call field%final()
