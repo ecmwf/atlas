@@ -10,7 +10,7 @@
 
 #pragma once
 
-
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/grid/detail/distribution/DistributionFunction.h"
 
 namespace atlas {
@@ -22,7 +22,7 @@ class SerialDistribution : public DistributionFunctionT<SerialDistribution> {
 public:
     SerialDistribution(const Grid& grid);
 
-    ATLAS_ALWAYS_INLINE int function(gidx_t gidx) const { return 0; }
+    ATLAS_ALWAYS_INLINE int function(gidx_t gidx) const { return mpi::rank(); }
 };
 
 }  // namespace distribution
