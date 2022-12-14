@@ -117,7 +117,8 @@ public:
         if (partition < 0) {
             std::stringstream out;
             out << "Could not find find point {lon,lat} = " << point
-                << " or " << Point2{point.x() < 0 ? point.x() + 360.0 : (point.x() > 360.0) ? point.x() - 360.0 : point.x(), point.y()}
+                << " or " << Point2{point.x() + 360.0, point.y()}
+                << " or " << Point2{point.x() - 360.0, point.y()}
                 << " in `k=" << k_ << "` \"nearest\" polygons [";
             for (size_t i = 0; i < found.size(); ++i) {
                 if (i > 0) {
