@@ -67,6 +67,12 @@ TEST( test_spec )
   json = spec%json()
   FCTEST_CHECK( json == json_sorted .or. json == json_ordered )
 
+  grid = atlas_RegularGaussianGrid(8)
+  grid = atlas_RegularLonLatGrid(8,8)
+  grid = atlas_ShiftedLonLatGrid(8,8)
+  grid = atlas_ShiftedLonGrid(8,8)
+  grid = atlas_ShiftedLatGrid(8,8)
+
   call spec%final()
   call grid%final()
 
