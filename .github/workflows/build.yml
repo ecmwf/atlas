@@ -110,6 +110,9 @@ jobs:
         echo "FC=${{ matrix.compiler_fc }}"     >> $GITHUB_ENV
 
         if [[ "${{ matrix.os }}" =~ macos ]]; then
+          export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1
+          export HOMEBREW_NO_AUTO_UPDATE=1
+          export HOMEBREW_NO_INSTALL_CLEANUP=1
           brew install ninja
           brew install libomp
         else
