@@ -206,7 +206,6 @@ NodeColumns::NodeColumns(Mesh mesh, const eckit::Configuration& config):
     else {
         halo_ = mesh::Halo(mesh);
     }
-    ATLAS_ASSERT(mesh_);
     mesh::actions::build_nodes_parallel_fields(mesh_.nodes());
     mesh::actions::build_periodic_boundaries(mesh_);
 
