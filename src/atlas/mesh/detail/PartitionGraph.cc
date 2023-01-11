@@ -29,6 +29,7 @@ namespace detail {
 //----------------------------------------------------------------------------------------------------------------------
 
 PartitionGraph* build_partition_graph(const MeshImpl& mesh) {
+    ATLAS_TRACE("build_partition_graph...");
     const eckit::mpi::Comm& comm = mpi::comm();
     const int mpi_size           = int(comm.size());
 
