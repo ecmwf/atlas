@@ -185,7 +185,7 @@ void CubedSphereEquiAnglProjection::lonlat2alphabeta(double crd[], idx_t t) cons
     const auto& tiles = getCubedSphereTiles();
     tiles.unrotate(t, xyz.data());
 
-    // project into xy and rotate into alphabeta coordinats
+    // project into xy and rotate into alphabeta coordinates.
     auto alphaBeta = tiles.tileJacobian(t).inverse() *
                      Point2{std::atan2(xyz.y(), xyz.x()), -std::atan2(xyz.z(), xyz.x())};
 
@@ -206,12 +206,11 @@ void CubedSphereEquiAnglProjection::alphabeta2lonlat(double crd[], idx_t t) cons
     alphaBeta = alphaBeta * deg2rad;
 
     // project alphabeta into xyz space.
-    auto xyz = PointXYZ{-1., std::tan(alphaBeta[0]), std::tan(alphaBeta[1])};
-
+    auto xyz = PointXYZ{-1., -std::tan(alphaBeta[0]), std::tan(alphaBeta[1])};
 
     tiles.rotate(t, xyz.data());
 
-
+    // Honestly, I figured out some of the -1 factors by trial and error.
     const auto r = PointXYZ::norm(xyz);
 
     auto lonlat = PointLonLat{};
@@ -219,9 +218,9 @@ void CubedSphereEquiAnglProjection::alphabeta2lonlat(double crd[], idx_t t) cons
         lonlat.lon() = 0.;
     }
     else {
-        lonlat.lon() = std::atan2(xyz.y(), xyz.x());
+        lonlat.lon() = std::atan2(-xyz.y(), -xyz.x());
     }
-    lonlat.lat() = -std::asin(xyz.z() / r);
+    lonlat.lat() = std::asin(xyz.z() / r);
 
     lonlat = lonlat * rad2deg;
     lonlat.normalise();

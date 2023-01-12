@@ -20,7 +20,7 @@ namespace method {
 ///          accross cubed sphere tiles in (alpha, beta) coordinates.
 ///          Adding int "halo" (default 0) to the config controls the amount of
 ///          halo to consider when seraching for interpolation polygons. Adding
-///          int "list_size" (defualt 4) will change the number of cells
+///          int "list_size" (defualt 8) will change the number of cells
 ///          returned by the internal kd-tree search. Increasing both values
 ///          may resolve errors if setup method fails to find cells.
 ///          The automatic halo exchange in the execute method can be disabled
@@ -46,7 +46,7 @@ private:
     FunctionSpace target_;
 
     int halo_{0};
-    int listSize_{4};
+    int listSize_{8};
     bool halo_exchange_{true};
 };
 
