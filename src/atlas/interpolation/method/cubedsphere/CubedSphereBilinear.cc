@@ -33,6 +33,13 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
     ATLAS_ASSERT(ncSource);
     ATLAS_ASSERT(target_);
 
+    // return early if no output points on this partition reserve is called on
+    // the triplets but also during the sparseMatrix constructor. This won't
+    // work for empty matrices
+    if (target_.size() == 0) {
+        return;
+    }
+
     const auto finder = cubedsphere::CellFinder(ncSource.mesh(), util::Config("halo", halo_));
 
     // Numeric tolerance should scale with N.

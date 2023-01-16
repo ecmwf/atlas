@@ -68,6 +68,13 @@ void NearestNeighbour::do_setup(const FunctionSpace& source, const FunctionSpace
     size_t inp_npts = source.size();
     size_t out_npts = target.size();
 
+    // return early if no output points on this partition reserve is called on
+    // the triplets but also during the sparseMatrix constructor. This won't
+    // work for empty matrices
+    if (out_npts == 0) {
+        return;
+    }
+
     // fill the sparse matrix
     std::vector<Triplet> weights_triplets;
     weights_triplets.reserve(out_npts);
