@@ -45,6 +45,7 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/util/Config.h"
+#include "atlas/util/function/SolidBodyRotation.h"
 #include "atlas/util/function/SphericalHarmonic.h"
 #include "atlas/util/function/VortexRollup.h"
 
@@ -107,7 +108,8 @@ public:
         add_option(new eckit::option::Separator("Initial condition options"));
 
         add_option(new SimpleOption<std::string>(
-            "init", "Setup initial source field [ constant, spherical_harmonic, vortex_rollup (default) ]"));
+            "init", "Setup initial source field [ constant, spherical_harmonic, vortex_rollup (default), solid_body_rotation_wind_magnitude ]"));
+        add_option(new SimpleOption<double>("solid_body_rotation.angle", "Angle of solid body rotation (default = 0.)"));
         add_option(new SimpleOption<double>("vortex_rollup.t", "Value that controls vortex rollup (default = 0.5)"));
         add_option(new SimpleOption<double>("constant.value", "Value that is assigned in case init==constant)"));
         add_option(new SimpleOption<long>("spherical_harmonic.n", "total wave number 'n' of a spherical harmonic"));
@@ -146,6 +148,12 @@ std::function<double(const PointLonLat&)> get_init(const AtlasTool::Args& args) 
         double value;
         args.get("constant.value", value = 1.);
         return [value](const PointLonLat&) { return value; };
+    }
+    else if (init == "solid_body_rotation_wind_magnitude") {
+        double beta;
+        args.get("solid_body_rotation.angle", beta = 0.);
+        util::function::SolidBodyRotation sbr(beta);
+        return [sbr](const PointLonLat& p) { return sbr.windMagnitude(p.lon(), p.lat()); };
     }
     else {
         if (args.has("init")) {
