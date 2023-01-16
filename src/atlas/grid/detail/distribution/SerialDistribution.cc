@@ -14,6 +14,7 @@
 #include <ostream>
 
 #include "atlas/grid/Grid.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 namespace atlas {
 namespace grid {
@@ -23,6 +24,7 @@ namespace distribution {
 SerialDistribution::SerialDistribution(const Grid& grid): DistributionFunctionT<SerialDistribution>(grid) {
     type_          = "serial";
     nb_partitions_ = 1;
+    rank_          = mpi::rank();
     size_          = grid.size();
     nb_pts_.resize(nb_partitions_, grid.size());
     max_pts_ = *std::max_element(nb_pts_.begin(), nb_pts_.end());
