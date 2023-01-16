@@ -54,12 +54,12 @@ static double to_deg = 180. * M_1_PI;
 }  // namespace
 
 struct Region {
-    int north;
-    int south;
+    int north {-1};
+    int south {-1};
     std::unique_ptr<array::Array> elems;
-    int ntriags;
-    int nquads;
-    int nnodes;
+    int ntriags {0};
+    int nquads {0};
+    int nnodes {0};
     std::vector<idx_t> lat_begin;
     std::vector<idx_t> lat_end;
     std::vector<idx_t> nb_lat_elems;
@@ -272,6 +272,9 @@ void StructuredMeshGenerator::generate_region(const StructuredGrid& rg, const gr
     bool unique_pole        = options.getBool("unique_pole") && three_dimensional && has_north_pole && has_south_pole;
     bool periodic_east_west = rg.periodic();
 
+    region.lat_begin.resize(rg.ny(), -1);
+    region.lat_end.resize(rg.ny(), -1);
+    region.nb_lat_elems.resize(rg.ny(), 0);
 
     idx_t lat_north = -1;
     idx_t lat_south = -1;
@@ -351,6 +354,13 @@ Find min and max latitudes used by this part.
         }
     }
 
+    if (lat_north == -1 && lat_south == -1 ) {
+        return;
+    }
+
+    ATLAS_ASSERT(lat_north >= 0);
+    ATLAS_ASSERT(lat_south < rg.ny() );
+
     std::vector<idx_t> offset(rg.ny(), 0);
 
     int n = 0;
@@ -368,9 +378,7 @@ We need to connect to next region
     if (idx_t(lat_south + 1) <= rg.ny() - 1 && rg.nx(lat_south + 1) > 0) {
         ++lat_south;
     }
-    region.lat_begin.resize(rg.ny(), -1);
-    region.lat_end.resize(rg.ny(), -1);
-    region.nb_lat_elems.resize(rg.ny(), 0);
+
     region.north = lat_north;
     region.south = lat_south;
 
@@ -993,8 +1001,11 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
     auto flags   = array::make_view<int, 1>(nodes.flags());
     auto halo    = array::make_view<int, 1>(nodes.halo());
 
+    idx_t jnorth = -1;
+    idx_t jsouth = -1;
 
     std::vector<idx_t> node_numbering(node_numbering_size, -1);
+    if (nnodes > 0) {
     if (options.getBool("ghost_at_end")) {
         std::vector<GhostNode> ghost_nodes;
         ghost_nodes.reserve(nnodes);
@@ -1165,7 +1176,6 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
         }
     }
 
-    idx_t jnorth = -1;
     if (include_north_pole) {
         idx_t inode   = node_numbering.at(jnode);
         jnorth        = jnode;
@@ -1189,7 +1199,6 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
         ++jnode;
     }
 
-    idx_t jsouth = -1;
     if (include_south_pole) {
         idx_t inode   = node_numbering.at(jnode);
         jsouth        = jnode;
@@ -1211,6 +1220,7 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
         Topology::reset(flags(inode));
         Topology::set(flags(inode), Topology::SOUTH);
         ++jnode;
+    }
     }
 
     mesh.metadata().set<size_t>("nb_nodes_including_halo[0]", nodes.size());
@@ -1268,6 +1278,7 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
         regular_cells_glb_idx = false;
     }
 
+    if ((region.nquads + region.ntriags) > 0) {
     for (idx_t jlat = region.north; jlat < region.south; ++jlat) {
         idx_t ilat  = jlat - region.north;
         idx_t jlatN = jlat;
@@ -1567,6 +1578,7 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
                 }
             }
         }
+    }
     }
     if (not regular_cells_glb_idx) {
         generateGlobalElementNumbering(mesh);
