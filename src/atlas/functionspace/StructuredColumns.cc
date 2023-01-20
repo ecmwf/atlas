@@ -48,22 +48,6 @@ StructuredColumns::StructuredColumns(const Grid& grid, const grid::Distribution&
     FunctionSpace(new detail::StructuredColumns(grid, distribution, vertical, config)),
     functionspace_(dynamic_cast<const detail::StructuredColumns*>(get())) {}
 
-void StructuredColumns::gather(const FieldSet& local, FieldSet& global) const {
-    functionspace_->gather(local, global);
-}
-
-void StructuredColumns::gather(const Field& local, Field& global) const {
-    functionspace_->gather(local, global);
-}
-
-void StructuredColumns::scatter(const FieldSet& global, FieldSet& local) const {
-    functionspace_->scatter(global, local);
-}
-
-void StructuredColumns::scatter(const Field& global, Field& local) const {
-    functionspace_->scatter(global, local);
-}
-
 std::string StructuredColumns::checksum(const FieldSet& fieldset) const {
     return functionspace_->checksum(fieldset);
 }

@@ -61,7 +61,10 @@ CubedSphereStructure::CubedSphereStructure(const Field& tij, const Field& ghost,
     // Set tijToIdx vectors
     for (idx_t t = 0; t < 6; ++t) {
         // Set data array.
-        const size_t vecSize = static_cast<size_t>((j_end(t) - j_begin(t)) * (i_end(t) - i_begin(t)));
+        size_t vecSize = 0;
+        if( j_end(t) >= j_begin(t) && i_end(t) >= i_begin(t) ) {
+            vecSize = static_cast<size_t>((j_end(t) - j_begin(t)) * (i_end(t) - i_begin(t)));
+        }
         tijToIdx_.emplace_back(vecSize, invalid_index());
     }
 

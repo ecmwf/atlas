@@ -15,6 +15,7 @@
 #include "atlas_io/Data.h"
 #include "atlas_io/Exceptions.h"
 #include "atlas_io/Metadata.h"
+#include "atlas_io/detail/TypeTraits.h"
 #include "atlas_io/types/array/ArrayMetadata.h"
 #include "atlas_io/types/array/ArrayReference.h"
 
@@ -22,7 +23,7 @@ namespace std {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-template <typename T>
+template <typename T, atlas::io::enable_if_array_datatype<T> = 0>
 void interprete(const std::vector<T>& vector, atlas::io::ArrayReference& out) {
     using atlas::io::ArrayReference;
     out = ArrayReference{vector.data(), {int(vector.size())}};
@@ -30,7 +31,7 @@ void interprete(const std::vector<T>& vector, atlas::io::ArrayReference& out) {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-template <typename T>
+template <typename T, atlas::io::enable_if_array_datatype<T> = 0>
 void decode(const atlas::io::Metadata& m, const atlas::io::Data& encoded, std::vector<T>& out) {
     atlas::io::ArrayMetadata array(m);
     if (array.datatype().kind() != atlas::io::ArrayMetadata::DataType::kind<T>()) {

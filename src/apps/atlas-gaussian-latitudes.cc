@@ -39,6 +39,8 @@ class AtlasGaussianLatitudes : public eckit::Tool {
 
 public:
     AtlasGaussianLatitudes(int argc, char** argv): eckit::Tool(argc, argv) {
+        atlas::initialise(argc,argv);
+
         do_run = false;
 
         bool help = Resource<bool>("--help", false);
@@ -132,6 +134,7 @@ void AtlasGaussianLatitudes::run() {
         }
         std::cout << "};" << std::endl;
     }
+    atlas::finalise();
 }
 
 //------------------------------------------------------------------------------

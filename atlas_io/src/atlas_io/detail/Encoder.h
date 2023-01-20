@@ -38,6 +38,10 @@ public:
 
     Encoder(Encoder&& other): self_(std::move(other.self_)) {}
 
+    template <typename T, enable_if_scalar_t<T> = 0>
+    explicit Encoder(const T& x): self_(new EncodableValue<T>(x)) {}
+
+
     Encoder& operator=(Encoder&& rhs) {
         self_ = std::move(rhs.self_);
         return *this;
@@ -60,6 +64,11 @@ private:
     template <typename Value>
     struct EncodableValue : Encodable {
         EncodableValue(Value&& v): value_{std::move(v)} { sfinae::encode_metadata(value_, metadata_, data_size_); }
+
+        template <bool EnableBool = true, enable_if_scalar_t<Value, EnableBool> = 0>
+        EncodableValue(const Value& v): value_{v} {
+            sfinae::encode_metadata(value_, metadata_, data_size_);
+        }
 
         size_t encode_metadata_(atlas::io::Metadata& metadata) const override {
             metadata.set(metadata_);

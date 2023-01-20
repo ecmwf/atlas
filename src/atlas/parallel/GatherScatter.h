@@ -193,7 +193,7 @@ private:  // data
     idx_t parsize_;
     friend class Checksum;
 
-    int glb_cnt(idx_t root) const { return myproc == root ? glbcnt_ : 0; }
+    size_t glb_cnt(idx_t root) const { return myproc == root ? glbcnt_ : 0; }
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -212,8 +212,8 @@ void GatherScatter::gather(parallel::Field<DATA_TYPE const> lfields[], parallel:
         const idx_t gvar_size =
             std::accumulate(gfields[jfield].var_shape.data(),
                             gfields[jfield].var_shape.data() + gfields[jfield].var_rank, 1, std::multiplies<idx_t>());
-        const int loc_size = loccnt_ * lvar_size;
-        const int glb_size = glb_cnt(root) * gvar_size;
+        const size_t loc_size = loccnt_ * lvar_size;
+        const size_t glb_size = glb_cnt(root) * gvar_size;
         std::vector<DATA_TYPE> loc_buffer(loc_size);
         std::vector<DATA_TYPE> glb_buffer(glb_size);
         std::vector<int> glb_displs(nproc);
@@ -230,7 +230,9 @@ void GatherScatter::gather(parallel::Field<DATA_TYPE const> lfields[], parallel:
 
         /// Gather
 
-        ATLAS_TRACE_MPI(GATHER) { mpi::comm().gatherv(loc_buffer, glb_buffer, glb_counts, glb_displs, root); }
+        ATLAS_TRACE_MPI(GATHER) {
+            mpi::comm().gatherv(loc_buffer, glb_buffer, glb_counts, glb_displs, root);
+        }
 
         /// Unpack
         if (myproc == root)
@@ -261,8 +263,8 @@ void GatherScatter::scatter(parallel::Field<DATA_TYPE const> gfields[], parallel
         const int gvar_size =
             std::accumulate(gfields[jfield].var_shape.data(),
                             gfields[jfield].var_shape.data() + gfields[jfield].var_rank, 1, std::multiplies<int>());
-        const int loc_size = loccnt_ * lvar_size;
-        const int glb_size = glb_cnt(root) * gvar_size;
+        const size_t loc_size = loccnt_ * lvar_size;
+        const size_t glb_size = glb_cnt(root) * gvar_size;
         std::vector<DATA_TYPE> loc_buffer(loc_size);
         std::vector<DATA_TYPE> glb_buffer(glb_size);
         std::vector<int> glb_displs(nproc);
@@ -351,7 +353,7 @@ void GatherScatter::unpack_recv_buffer(const std::vector<int>& recvmap, const DA
                                        const parallel::Field<DATA_TYPE>& field) const {
     const idx_t recvcnt = static_cast<idx_t>(recvmap.size());
 
-    int ibuf                = 0;
+    size_t ibuf             = 0;
     const idx_t recv_stride = field.var_strides[0] * field.var_shape[0];
 
     switch (field.var_rank) {

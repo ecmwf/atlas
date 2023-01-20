@@ -89,32 +89,31 @@ void FiniteElement::do_setup(const FunctionSpace& source, const FunctionSpace& t
     target_ = target;
 
     ATLAS_TRACE_SCOPE("Setup target") {
-        if (functionspace::NodeColumns tgt = target) {
-            Mesh meshTarget = tgt.mesh();
 
-            // generate 3D point coordinates
-            target_xyz_    = mesh::actions::BuildXYZField("xyz")(meshTarget);
-            target_ghost_  = meshTarget.nodes().ghost();
-            target_lonlat_ = meshTarget.nodes().lonlat();
-        }
-        else if (functionspace::PointCloud tgt = target) {
-            const idx_t N  = tgt.size();
-            target_xyz_    = Field("xyz", array::make_datatype<double>(), array::make_shape(N, 3));
-            target_ghost_  = tgt.ghost();
-            target_lonlat_ = tgt.lonlat();
-            auto lonlat    = array::make_view<double, 2>(tgt.lonlat());
-            auto xyz       = array::make_view<double, 2>(target_xyz_);
+
+        auto create_xyz = [](Field lonlat_field) {
+            auto xyz_field = Field("xyz", array::make_datatype<double>(), array::make_shape(lonlat_field.shape(0), 3));
+            auto lonlat    = array::make_view<double, 2>(lonlat_field);
+            auto xyz       = array::make_view<double, 2>(xyz_field);
             PointXYZ p2;
-            for (idx_t n = 0; n < N; ++n) {
+            for (idx_t n = 0; n < lonlat.shape(0); ++n) {
                 const PointLonLat p1(lonlat(n, 0), lonlat(n, 1));
                 util::Earth::convertSphericalToCartesian(p1, p2);
                 xyz(n, 0) = p2.x();
                 xyz(n, 1) = p2.y();
                 xyz(n, 2) = p2.z();
             }
+            return xyz_field;
+        };
+
+        target_ghost_  = target.ghost();
+        target_lonlat_ = target.lonlat();
+        if (functionspace::NodeColumns tgt = target) {
+            auto meshTarget = tgt.mesh();
+            target_xyz_    = mesh::actions::BuildXYZField("xyz")(meshTarget);
         }
         else {
-            ATLAS_NOTIMPLEMENTED;
+            target_xyz_    = create_xyz(target_lonlat_);
         }
     }
 
@@ -227,6 +226,13 @@ void FiniteElement::setup(const FunctionSpace& source) {
 
     idx_t inp_npts = i_nodes.size();
     idx_t out_npts = ocoords_->shape(0);
+
+    // return early if no output points on this partition reserve is called on
+    // the triplets but also during the sparseMatrix constructor. This won't
+    // work for empty matrices
+    if (out_npts == 0) {
+        return;
+    }
 
     array::ArrayView<int, 1> out_ghosts = array::make_view<int, 1>(target_ghost_);
 

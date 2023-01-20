@@ -6,18 +6,12 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-ecbuild_warn_var( HAVE_FCTEST )
 if( HAVE_FCTEST )
 
   if( NOT HAVE_TRANS )
     set( transi_HAVE_MPI 1 )
     set( ectrans_HAVE_MPI 1 )
   endif()
-
-  ecbuild_warn_var( HAVE_TRANS )
-  ecbuild_warn_var( eckit_HAVE_MPI )
-  ecbuild_warn_var( transi_HAVE_MPI )
-
 
   add_fctest( TARGET atlas_fctest_functionspace
     MPI             4
@@ -27,6 +21,15 @@ if( HAVE_FCTEST )
     LIBS            atlas_f
     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
+
+  add_fctest( TARGET atlas_fctest_blockstructuredcolumns
+    MPI             4
+    CONDITION       eckit_HAVE_MPI
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_blockstructuredcolumns.F90
+    LIBS            atlas_f
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
 
 endif()
 
@@ -73,10 +76,20 @@ ecbuild_add_test( TARGET atlas_test_structuredcolumns
   CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 5
 )
 
+ecbuild_add_test( TARGET atlas_test_blockstructuredcolumns
+  MPI        3
+  SOURCES  test_blockstructuredcolumns.cc
+  LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 3
+)
+
 ecbuild_add_test( TARGET atlas_test_pointcloud
   SOURCES  test_pointcloud.cc
   LIBS     atlas
+  MPI 2
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION eckit_HAVE_MPI AND NOT HAVE_GRIDTOOLS_STORAGE
 )
 
 ecbuild_add_test( TARGET atlas_test_reduced_halo

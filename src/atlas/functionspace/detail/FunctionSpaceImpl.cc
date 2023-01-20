@@ -95,6 +95,30 @@ idx_t FunctionSpaceImpl::nb_partitions() const {
     ATLAS_NOTIMPLEMENTED;
 }
 
+void FunctionSpaceImpl::gather(const FieldSet& local, FieldSet& global) const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
+void FunctionSpaceImpl::gather(const Field& local, Field& global) const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
+void FunctionSpaceImpl::scatter(const FieldSet& global, FieldSet& local) const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
+void FunctionSpaceImpl::scatter(const Field& global, Field& local) const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
+const parallel::GatherScatter& FunctionSpaceImpl::gather() const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
+const parallel::GatherScatter& FunctionSpaceImpl::scatter() const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
 
 template Field FunctionSpaceImpl::createField<double>() const;
 template Field FunctionSpaceImpl::createField<float>() const;

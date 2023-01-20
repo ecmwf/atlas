@@ -60,6 +60,15 @@ public:
     virtual void dirtrans_wind2vordiv(const Field& gpwind, Field& spvor, Field& spdiv,
                                       const eckit::Configuration& = util::NoConfig()) const = 0;
 
+    virtual void dirtrans_adj(const Field& spfield, Field& gpfield,
+                              const eckit::Configuration& = util::NoConfig()) const = 0;
+
+    virtual void dirtrans_adj(const FieldSet& spfields, FieldSet& gpfields,
+                              const eckit::Configuration& = util::NoConfig()) const = 0;
+
+    virtual void dirtrans_wind2vordiv_adj(const Field& spvor, const Field& spdiv, Field& gpwind,
+                                          const eckit::Configuration& = util::NoConfig()) const = 0;
+
     virtual void invtrans(const Field& spfield, Field& gpfield,
                           const eckit::Configuration& = util::NoConfig()) const = 0;
 

@@ -23,7 +23,7 @@ class Data {
 public:
     Data() = default;
     Data(void*, size_t);
-    Data(Data&&)  = default;
+    Data(Data&&)            = default;
     Data& operator=(Data&&) = default;
 
     operator const void*() const { return data(); }

@@ -39,6 +39,8 @@
 #pragma once
 
 #include <iosfwd>
+#include <type_traits>
+#include <initializer_list>
 
 #include "atlas/array/ArrayUtil.h"
 #include "atlas/library/config.h"
@@ -108,6 +110,11 @@ private:
 #define TO_FORTRAN
 #endif
 
+
+#define ENABLE_IF_NON_CONST                                                                             \
+    template <bool EnableBool                                                                   = true, \
+              typename std::enable_if<(!std::is_const<Value>::value && EnableBool), int>::type* = nullptr>
+
 //------------------------------------------------------------------------------------------------------
 
 ///@brief Multidimensional access to Array or Field objects containing index fields
@@ -150,6 +157,14 @@ public:
     template <typename... Ints>
     const value_type operator()(Ints... idx) const {
         return data_[index(idx...)] FROM_FORTRAN;
+    }
+
+    ENABLE_IF_NON_CONST
+    void assign(const std::initializer_list<value_type>& list);
+
+    template <typename Int>
+    idx_t shape(Int idx) const {
+        return shape_[idx];
     }
 
 private:
@@ -223,7 +238,7 @@ public:
 #undef INDEX_REF
 #undef FROM_FORTRAN
 #undef TO_FORTRAN
-
+#undef ENABLE_IF_NON_CONST
 
 //------------------------------------------------------------------------------------------------------
 

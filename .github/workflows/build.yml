@@ -85,8 +85,8 @@ jobs:
 
           - name: macos
             # Xcode compiler requires empty environment variables, so we pass null (~) here
-            os: macos-11
-            compiler: clang-12
+            os: macos-12
+            compiler: clang-14
             compiler_cc: ~
             compiler_cxx: ~
             compiler_fc: gfortran-11
@@ -98,6 +98,10 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v2
 
+    - name: Set up Homebrew
+      id: set-up-homebrew
+      uses: Homebrew/actions/setup-homebrew@master
+
     - name: Environment
       run:  |
         echo "DEPS_DIR=${{ runner.temp }}/deps" >> $GITHUB_ENV
@@ -106,6 +110,12 @@ jobs:
         echo "FC=${{ matrix.compiler_fc }}"     >> $GITHUB_ENV
 
         if [[ "${{ matrix.os }}" =~ macos ]]; then
+          export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1
+          export HOMEBREW_NO_AUTO_UPDATE=1
+          export HOMEBREW_NO_INSTALL_CLEANUP=1
+          echo "HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1" >> $GITHUB_ENV
+          echo "HOMEBREW_NO_AUTO_UPDATE=1"                >> $GITHUB_ENV
+          echo "HOMEBREW_NO_INSTALL_CLEANUP=1"            >> $GITHUB_ENV
           brew install ninja
           brew install libomp
         else

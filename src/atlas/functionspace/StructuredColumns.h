@@ -50,12 +50,6 @@ public:
 
     const StructuredGrid& grid() const { return functionspace_->grid(); }
 
-    void gather(const FieldSet&, FieldSet&) const;
-    void gather(const Field&, Field&) const;
-
-    void scatter(const FieldSet&, FieldSet&) const;
-    void scatter(const Field&, Field&) const;
-
     std::string checksum(const FieldSet&) const;
     std::string checksum(const Field&) const;
 

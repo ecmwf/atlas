@@ -426,19 +426,19 @@ private:
 
 extern "C" {
 void atlas__grid__Structured__delete(Structured* This);
-const Structured* atlas__grid__Structured(char* identifier);
+const Structured* atlas__grid__Structured(const char* identifier);
 const Structured* atlas__grid__Structured__config(util::Config* conf);
-Structured* atlas__grid__regular__RegularGaussian(long N);
+const Structured* atlas__grid__regular__RegularGaussian(long N);
 Structured* atlas__grid__reduced__ReducedGaussian_int(int nx[], long ny);
 Structured* atlas__grid__reduced__ReducedGaussian_long(long nx[], long ny);
 Structured* atlas__grid__reduced__ReducedGaussian_int_projection(int nx[], long ny,
                                                                  const Projection::Implementation* projection);
 Structured* atlas__grid__reduced__ReducedGaussian_long_projection(long nx[], long ny,
                                                                   const Projection::Implementation* projection);
-Structured* atlas__grid__regular__RegularLonLat(long nx, long ny);
-Structured* atlas__grid__regular__ShiftedLonLat(long nx, long ny);
-Structured* atlas__grid__regular__ShiftedLon(long nx, long ny);
-Structured* atlas__grid__regular__ShiftedLat(long nx, long ny);
+const Structured* atlas__grid__regular__RegularLonLat(long nx, long ny);
+const Structured* atlas__grid__regular__ShiftedLonLat(long nx, long ny);
+const Structured* atlas__grid__regular__ShiftedLon(long nx, long ny);
+const Structured* atlas__grid__regular__ShiftedLat(long nx, long ny);
 
 void atlas__grid__Structured__nx_array(Structured* This, const idx_t*& nx, idx_t& size);
 idx_t atlas__grid__Structured__nx(Structured* This, idx_t j);

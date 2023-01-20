@@ -31,6 +31,10 @@ class Metadata;
 class PartitionPolygon;
 class PartitionPolygons;
 }  // namespace util
+namespace parallel {
+class GatherScatter;
+}  // namespace parallel
+
 }  // namespace atlas
 
 namespace atlas {
@@ -77,6 +81,15 @@ public:
 
     virtual void adjointHaloExchange(const FieldSet&, bool /*on_device*/ = false) const;
     virtual void adjointHaloExchange(const Field&, bool /* on_device*/ = false) const;
+
+    virtual void gather(const FieldSet&, FieldSet&) const;
+    virtual void gather(const Field&, Field&) const;
+
+    virtual void scatter(const FieldSet&, FieldSet&) const;
+    virtual void scatter(const Field&, Field&) const;
+
+    virtual const parallel::GatherScatter& gather() const;
+    virtual const parallel::GatherScatter& scatter() const;
 
     virtual idx_t size() const = 0;
 

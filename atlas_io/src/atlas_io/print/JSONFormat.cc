@@ -52,11 +52,13 @@ void JSONFormat::print(std::ostream& out) const {
         }
 
         if (print_details_) {
-            m.set("data.compression.type", item.data.compression());
-            m.set("data.compression.size", item.data.compressed_size());
-            m.set("data.size", item.data.size());
-            m.set("data.byte_order", (item.data.endian() == Endian::little) ? "little endian" : "big endian");
-            m.set("data.checksum", item.data.checksum().str());
+            if (item.data.size()) {
+                m.set("data.compression.type", item.data.compression());
+                m.set("data.compression.size", item.data.compressed_size());
+                m.set("data.size", item.data.size());
+                m.set("data.byte_order", (item.data.endian() == Endian::little) ? "little endian" : "big endian");
+                m.set("data.checksum", item.data.checksum().str());
+            }
             m.set("version", item.record.version().str());
             m.set("created", item.record.created().str());
         }

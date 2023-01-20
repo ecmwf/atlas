@@ -2,7 +2,7 @@
 
 set( atlas_HAVE_ECTRANS 0 )
 if( ENABLE_TRANS OR NOT DEFINED ENABLE_TRANS )
-    find_package( ectrans 1.0 COMPONENTS transi double QUIET )
+    find_package( ectrans 1.1 COMPONENTS transi double QUIET )
     if( TARGET transi_dp )
         set( transi_FOUND TRUE )
         if( NOT TARGET transi )

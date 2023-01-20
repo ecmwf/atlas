@@ -806,30 +806,6 @@ const parallel::HaloExchange& EdgeColumns::halo_exchange() const {
     return functionspace_->halo_exchange();
 }
 
-void EdgeColumns::gather(const FieldSet& local, FieldSet& global) const {
-    functionspace_->gather(local, global);
-}
-
-void EdgeColumns::gather(const Field& local, Field& global) const {
-    functionspace_->gather(local, global);
-}
-
-const parallel::GatherScatter& EdgeColumns::gather() const {
-    return functionspace_->gather();
-}
-
-void EdgeColumns::scatter(const FieldSet& global, FieldSet& local) const {
-    functionspace_->scatter(global, local);
-}
-
-void EdgeColumns::scatter(const Field& global, Field& local) const {
-    functionspace_->scatter(global, local);
-}
-
-const parallel::GatherScatter& EdgeColumns::scatter() const {
-    return functionspace_->scatter();
-}
-
 std::string EdgeColumns::checksum(const FieldSet& fieldset) const {
     return functionspace_->checksum(fieldset);
 }

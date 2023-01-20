@@ -132,6 +132,20 @@ Record::operator const ParsedRecord&() const {
 
 //---------------------------------------------------------------------------------------------------------------------
 
+static void parse_record(ParsedRecord& record, const std::string& key, const Metadata& metadata) {
+    if (metadata.type() || metadata.link()) {
+        record.items.emplace(key, metadata);
+        record.keys.emplace_back(key);
+    }
+    else {
+        for (auto& next_key : metadata.keys()) {
+            parse_record(record, key + "." + next_key, metadata.getSubConfiguration(next_key));
+        }
+    }
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+
 Record& Record::read(Stream& in, bool read_to_end) {
     if (not empty()) {
         return *this;
@@ -206,9 +220,9 @@ Record& Record::read(Stream& in, bool read_to_end) {
 
     ATLAS_IO_ASSERT(r.metadata_format == "yaml");
     Metadata metadata = eckit::YAMLConfiguration(metadata_str);
-    record_->keys     = metadata.keys();
-    for (const auto& key : record_->keys) {
-        record_->items.emplace(key, metadata.getSubConfiguration(key));
+
+    for (auto& key : metadata.keys()) {
+        parse_record(*record_, key, metadata.getSubConfiguration(key));
     }
 
 

@@ -86,31 +86,30 @@ void UnstructuredBilinearLonLat::do_setup(const FunctionSpace& source, const Fun
     target_ = target;
 
     ATLAS_TRACE_SCOPE("Setup target") {
-        if (functionspace::NodeColumns tgt = target) {
-            Mesh meshTarget = tgt.mesh();
 
-            target_xyz_    = mesh::actions::BuildXYZField("xyz")(meshTarget);
-            target_ghost_  = meshTarget.nodes().ghost();
-            target_lonlat_ = meshTarget.nodes().lonlat();
-        }
-        else if (functionspace::PointCloud tgt = target) {
-            const idx_t N  = tgt.size();
-            target_xyz_    = Field("xyz", array::make_datatype<double>(), array::make_shape(N, 3));
-            target_ghost_  = tgt.ghost();
-            target_lonlat_ = tgt.lonlat();
-            auto lonlat    = array::make_view<double, 2>(tgt.lonlat());
-            auto xyz       = array::make_view<double, 2>(target_xyz_);
+        auto create_xyz = [](Field lonlat_field) {
+            auto xyz_field = Field("xyz", array::make_datatype<double>(), array::make_shape(lonlat_field.shape(0), 3));
+            auto lonlat    = array::make_view<double, 2>(lonlat_field);
+            auto xyz       = array::make_view<double, 2>(xyz_field);
             PointXYZ p2;
-            for (idx_t n = 0; n < N; ++n) {
+            for (idx_t n = 0; n < lonlat.shape(0); ++n) {
                 const PointLonLat p1(lonlat(n, 0), lonlat(n, 1));
                 util::Earth::convertSphericalToCartesian(p1, p2);
                 xyz(n, 0) = p2.x();
                 xyz(n, 1) = p2.y();
                 xyz(n, 2) = p2.z();
             }
+            return xyz_field;
+        };
+
+        target_ghost_  = target.ghost();
+        target_lonlat_ = target.lonlat();
+        if (functionspace::NodeColumns tgt = target) {
+            auto meshTarget = tgt.mesh();
+            target_xyz_    = mesh::actions::BuildXYZField("xyz")(meshTarget);
         }
         else {
-            ATLAS_NOTIMPLEMENTED;
+            target_xyz_    = create_xyz(target_lonlat_);
         }
     }
 
@@ -225,6 +224,13 @@ void UnstructuredBilinearLonLat::setup(const FunctionSpace& source) {
     idx_t inp_npts = i_nodes.size();
     idx_t out_npts = olonlat_->shape(0);
 
+    // return early if no output points on this partition reserve is called on
+    // the triplets but also during the sparseMatrix constructor. This won't
+    // work for empty matrices
+    if (out_npts == 0) {
+        return;
+    }
+
     array::ArrayView<int, 1> out_ghosts = array::make_view<int, 1>(target_ghost_);
 
     idx_t Nelements = meshSource.cells().size();
@@ -319,7 +325,7 @@ Method::Triplets UnstructuredBilinearLonLat::projectPointToElements(size_t ip, c
     }
     PointLonLat o_loc{o_lon, (*olonlat_)(ip, LAT)};  // lookup point
 
-    auto inv_dist_weight = [](element::Quad2D& q, const PointXY& loc, std::array<double, 4>& w) {
+    auto inv_dist_weight_quad = [](element::Quad2D& q, const PointXY& loc, std::array<double, 4>& w) {
         double d[4];
         d[0] = util::Earth::distance({q.p(0).data()}, loc);
         d[1] = util::Earth::distance({q.p(1).data()}, loc);
@@ -335,6 +341,22 @@ Method::Triplets UnstructuredBilinearLonLat::projectPointToElements(size_t ip, c
             w[i] *= suminv;
         }
     };
+    auto inv_dist_weight_triag = [](element::Triag2D& q, const PointXY& loc, std::array<double, 4>& w) {
+        double d[3];
+        d[0] = util::Earth::distance({q.p(0).data()}, loc);
+        d[1] = util::Earth::distance({q.p(1).data()}, loc);
+        d[2] = util::Earth::distance({q.p(2).data()}, loc);
+        w[0] = d[1] * d[2];
+        w[1] = d[0] * d[2];
+        w[2] = d[1] * d[0];
+        w[3] = 0.;
+
+        double suminv = 1. / (w[0] + w[1] + w[2]);
+        for (size_t i = 0; i < 3; ++i) {
+            w[i] *= suminv;
+        }
+    };
+
 
     for (ElemIndex3::NodeList::const_iterator itc = elems.begin(); itc != elems.end(); ++itc) {
         const idx_t elem_id = idx_t((*itc).value().payload());
@@ -353,6 +375,10 @@ Method::Triplets UnstructuredBilinearLonLat::projectPointToElements(size_t ip, c
             element::Triag2D triag(PointLonLat{(*ilonlat_)(idx[0], LON), (*ilonlat_)(idx[0], LAT)},
                                    PointLonLat{(*ilonlat_)(idx[1], LON), (*ilonlat_)(idx[1], LAT)},
                                    PointLonLat{(*ilonlat_)(idx[2], LON), (*ilonlat_)(idx[2], LAT)});
+
+            if (itc == elems.begin()) {
+                inv_dist_weight_triag(triag, o_loc, inv_dist_w);
+            }
 
             // pick an epsilon based on a characteristic length (sqrt(area))
             // (this scales linearly so it better compares with linear weights u,v,w)
@@ -403,7 +429,7 @@ Method::Triplets UnstructuredBilinearLonLat::projectPointToElements(size_t ip, c
                 PointLonLat{lons[2], (*ilonlat_)(idx[2], LAT)}, PointLonLat{lons[3], (*ilonlat_)(idx[3], LAT)});
 
             if (itc == elems.begin()) {
-                inv_dist_weight(quad, o_loc, inv_dist_w);
+                inv_dist_weight_quad(quad, o_loc, inv_dist_w);
             }
 
             // pick an epsilon based on a characteristic length (sqrt(area))
@@ -437,7 +463,7 @@ Method::Triplets UnstructuredBilinearLonLat::projectPointToElements(size_t ip, c
         // to identify and interpolate in a lon/lat projection, near the north
         // pole
         const idx_t elem_id = idx_t((*elems.begin()).value().payload());
-        for (size_t i = 0; i < 4; ++i) {
+        for (size_t i = 0; i < connectivity_->cols(elem_id); ++i) {
             idx[i] = (*connectivity_)(elem_id, i);
             triplets.emplace_back(ip, idx[i], inv_dist_w[i]);
         }
