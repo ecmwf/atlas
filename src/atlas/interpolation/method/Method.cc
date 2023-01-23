@@ -383,14 +383,16 @@ void Method::do_execute(const Field& src, Field& tgt, Metadata&) const {
 
     haloExchange(src);
 
-    if (src.datatype().kind() == array::DataType::KIND_REAL64) {
-        interpolate_field<double>(src, tgt, *matrix_);
-    }
-    else if (src.datatype().kind() == array::DataType::KIND_REAL32) {
-        interpolate_field<float>(src, tgt, *matrix_);
-    }
-    else {
-        ATLAS_NOTIMPLEMENTED;
+    if( matrix_ ) { // (matrix == nullptr) when a partition is empty
+        if (src.datatype().kind() == array::DataType::KIND_REAL64) {
+            interpolate_field<double>(src, tgt, *matrix_);
+        }
+        else if (src.datatype().kind() == array::DataType::KIND_REAL32) {
+            interpolate_field<float>(src, tgt, *matrix_);
+        }
+        else {
+            ATLAS_NOTIMPLEMENTED;
+        }
     }
 
     // carry over missing value metadata

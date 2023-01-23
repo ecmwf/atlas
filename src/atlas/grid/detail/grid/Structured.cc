@@ -852,7 +852,7 @@ int atlas__grid__Structured__reduced(Structured* This) {
     return This->reduced();
 }
 
-const Structured* atlas__grid__Structured(char* identifier) {
+const Structured* atlas__grid__Structured(const char* identifier) {
     const Structured* grid = dynamic_cast<const Structured*>(Grid::create(std::string(identifier)));
     ATLAS_ASSERT(grid != nullptr);
     return grid;
@@ -870,20 +870,25 @@ void atlas__grid__Structured__delete(Structured* This) {
     delete This;
 }
 
-Structured* atlas__grid__regular__RegularGaussian(long N) {
-    ATLAS_NOTIMPLEMENTED;
+const Structured* atlas__grid__regular__RegularGaussian(long N) {
+    std::string gridname = "F"+std::to_string(N);
+    return atlas__grid__Structured(gridname.c_str());
 }
-Structured* atlas__grid__regular__RegularLonLat(long nlon, long nlat) {
-    ATLAS_NOTIMPLEMENTED;
+const Structured* atlas__grid__regular__RegularLonLat(long nlon, long nlat) {
+    std::string gridname = "L"+std::to_string(nlon)+"x"+std::to_string(nlat);
+    return atlas__grid__Structured(gridname.c_str());
 }
-Structured* atlas__grid__regular__ShiftedLonLat(long nlon, long nlat) {
-    ATLAS_NOTIMPLEMENTED;
+const Structured* atlas__grid__regular__ShiftedLonLat(long nlon, long nlat) {
+    std::string gridname = "S"+std::to_string(nlon)+"x"+std::to_string(nlat);
+    return atlas__grid__Structured(gridname.c_str());
 }
-Structured* atlas__grid__regular__ShiftedLon(long nlon, long nlat) {
-    ATLAS_NOTIMPLEMENTED;
+const Structured* atlas__grid__regular__ShiftedLon(long nlon, long nlat) {
+    std::string gridname = "Slon"+std::to_string(nlon)+"x"+std::to_string(nlat);
+    return atlas__grid__Structured(gridname.c_str());
 }
-Structured* atlas__grid__regular__ShiftedLat(long nlon, long nlat) {
-    ATLAS_NOTIMPLEMENTED;
+const Structured* atlas__grid__regular__ShiftedLat(long nlon, long nlat) {
+    std::string gridname = "Slat"+std::to_string(nlon)+"x"+std::to_string(nlat);
+    return atlas__grid__Structured(gridname.c_str());
 }
 
 idx_t atlas__grid__Gaussian__N(Structured* This) {

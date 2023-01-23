@@ -32,6 +32,7 @@
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Earth.h"
+#include "atlas/util/function/SolidBodyRotation.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -79,77 +80,10 @@ static int metric_approach() {
     return 0;
 }
 
-class SolidBodyRotation {
-    double radius;
-    double beta;
-    double sin_beta;
-    double cos_beta;
-
-public:
-    SolidBodyRotation(const double _radius, const double _beta): radius{_radius}, beta{_beta} {
-        sin_beta = std::sin(beta);
-        cos_beta = std::cos(beta);
-    }
-    void wind(const double x, const double y, double& u, double& v) {
-        double cos_x = std::cos(x);
-        double cos_y = std::cos(y);
-        double sin_x = std::sin(x);
-        double sin_y = std::sin(y);
-        u            = cos_y * cos_beta + cos_x * sin_y * sin_beta;
-        v            = -sin_x * sin_beta;
-    }
-
-    void vordiv(const double x, const double y, double& vor, double& div) {
-        double cos_x = std::cos(x);
-        double cos_y = std::cos(y);
-        double sin_x = std::sin(x);
-        double sin_y = std::sin(y);
-
-        // Divergence = 1./(R*cos(y)) * ( d/dx( u ) + d/dy( v * cos(y) ) )
-        // Vorticity  = 1./(R*cos(y)) * ( d/dx( v ) - d/dy( u * cos(y) ) )
-        double ddx_u      = -sin_x * sin_y * sin_beta;
-        double ddy_cosy_v = (-sin_x * sin_beta) * (-sin_y);
-        double ddx_v      = -cos_x * sin_beta;
-        double ddy_cosy_u =
-            2 * cos_y * (-sin_y) * cos_beta + (-sin_y) * cos_x * sin_y * sin_beta + cos_y * cos_x * cos_y * sin_beta;
-
-        double metric = 1. / (radius * cos_y);
-
-        div = metric * (ddx_u + ddy_cosy_v);
-        vor = metric * (ddx_v - ddy_cosy_u);
-    }
-
-    void wind_magnitude_squared(const double x, const double y, double& f) {
-        double u, v;
-        wind(x, y, u, v);
-        f = u * u + v * v;
-    }
-
-    void wind_magnitude_squared_gradient(const double x, const double y, double& dfdx, double& dfdy) {
-        double cos_x = std::cos(x);
-        double cos_y = std::cos(y);
-        double sin_x = std::sin(x);
-        double sin_y = std::sin(y);
-
-        double metric_y = 1. / radius;
-        double metric_x = metric_y / cos_y;
-
-        double u    = cos_y * cos_beta + cos_x * sin_y * sin_beta;
-        double v    = -sin_x * sin_beta;
-        double dudx = metric_x * (-sin_x * sin_y * sin_beta);
-        double dudy = metric_y * (-sin_y * cos_beta + cos_x * cos_y * sin_beta);
-        double dvdx = metric_x * (-cos_x * sin_beta);
-        double dvdy = metric_y * (0.);
-        dfdx        = 2 * u * dudx + 2 * v * dvdx;
-        dfdy        = 2 * u * dudy + 2 * v * dvdy;
-    }
-};
-
 FieldSet analytical_fields(const fvm::Method& fvm) {
-    constexpr double deg2rad = M_PI / 180.;
     const double radius      = fvm.radius();
 
-    auto lonlat_deg = array::make_view<double, 2>(fvm.mesh().nodes().lonlat());
+    auto lonlat = array::make_view<double, 2>(fvm.mesh().nodes().lonlat());
 
     FieldSet fields;
     auto add_scalar_field = [&](const std::string& name) {
@@ -169,20 +103,20 @@ FieldSet analytical_fields(const fvm::Method& fvm) {
     auto div    = add_scalar_field("ref_div");
     auto vor    = add_scalar_field("ref_vor");
 
-    auto flow          = SolidBodyRotation{radius, beta_in_degrees() * deg2rad};
+    auto flow          = atlas::util::function::SolidBodyRotation{beta_in_degrees(), radius};
     auto is_ghost      = array::make_view<int, 1>(fvm.mesh().nodes().ghost());
     const idx_t nnodes = fvm.mesh().nodes().size();
     for (idx_t jnode = 0; jnode < nnodes; ++jnode) {
         if (is_ghost(jnode)) {
             continue;
         }
-        double x = lonlat_deg(jnode, LON) * deg2rad;
-        double y = lonlat_deg(jnode, LAT) * deg2rad;
+        double x = lonlat(jnode, LON);
+        double y = lonlat(jnode, LAT);
 
         flow.wind(x, y, u(jnode), v(jnode));
         flow.vordiv(x, y, vor(jnode), div(jnode));
-        flow.wind_magnitude_squared(x, y, f(jnode));
-        flow.wind_magnitude_squared_gradient(x, y, dfdx(jnode), dfdy(jnode));
+        f(jnode) = flow.windMagnitudeSquared(x, y);
+        flow.windMagnitudeSquaredGradient(x, y, dfdx(jnode), dfdy(jnode));
 
         uv(jnode, XX)     = u(jnode);
         uv(jnode, YY)     = v(jnode);

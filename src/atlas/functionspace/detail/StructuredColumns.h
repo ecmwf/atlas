@@ -314,9 +314,12 @@ private:  // data
     idx_t nb_partitions_;
 
     friend struct StructuredColumnsFortranAccess;
+    friend struct BlockStructuredColumnsFortranAccess;
     Map2to1 ij2gp_;
 
     void setup(const grid::Distribution& distribution, const eckit::Configuration& config);
+
+    friend class BlockStructuredColumns;
 };
 
 // -------------------------------------------------------------------

@@ -81,6 +81,9 @@ use atlas_Grid_module, only: &
     & atlas_ReducedGaussianGrid, &
     & atlas_RegularGaussianGrid, &
     & atlas_RegularLonLatGrid, &
+    & atlas_ShiftedLonLatGrid, &
+    & atlas_ShiftedLonGrid, &
+    & atlas_ShiftedLatGrid, &
     & atlas_RegionalGrid
 use atlas_Vertical_module, only :&
     & atlas_Vertical

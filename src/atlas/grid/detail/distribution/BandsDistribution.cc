@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <limits>
 
 #include "atlas/grid/Grid.h"
 #include "atlas/runtime/Exception.h"

@@ -155,7 +155,7 @@ private:
     void check_compatibility(const Field& src, const Field& tgt, const Matrix& W) const;
 
 private:
-    const Matrix* matrix_;
+    const Matrix* matrix_ = nullptr;
     std::shared_ptr<Matrix> matrix_shared_;
     interpolation::MatrixCache matrix_cache_;
     NonLinear nonLinear_;

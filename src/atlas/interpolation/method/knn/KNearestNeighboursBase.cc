@@ -13,6 +13,9 @@
 
 #include "atlas/array.h"
 #include "atlas/functionspace/PointCloud.h"
+#include "atlas/functionspace/NodeColumns.h"
+#include "atlas/functionspace/CellColumns.h"
+#include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/interpolation/method/knn/KNearestNeighboursBase.h"
 #include "atlas/library/Library.h"
 #include "atlas/mesh/Nodes.h"
@@ -46,8 +49,8 @@ void KNearestNeighboursBase::buildPointSearchTree(Mesh& meshSource, const mesh::
     pTree_.build();
 
 
-    // generate 3D point coordinates
-    mesh::actions::BuildXYZField("xyz")(meshSource);
+//    // generate 3D point coordinates
+//    mesh::actions::BuildXYZField("xyz")(meshSource);
 }
 
 namespace {
@@ -60,18 +63,60 @@ void insert_tree(util::IndexKDTree& tree, const FunctionSpace_type& functionspac
     }
 }
 
+void insert_tree(util::IndexKDTree& tree, const functionspace::NodeColumns& functionspace) {
+    auto lonlat = array::make_view<double, 2>(functionspace.lonlat());
+    auto halo   = array::make_view<int, 1>(functionspace.nodes().halo());
+    int h       = functionspace.halo().size();
+
+    for (idx_t ip = 0; ip < lonlat.shape(0); ++ip) {
+        if (halo(ip) <= h) {
+            tree.insert(PointLonLat(lonlat(ip, LON), lonlat(ip, LAT)), ip);
+        }
+    }
+}
+
+void insert_tree(util::IndexKDTree& tree, const functionspace::CellColumns& functionspace) {
+    auto lonlat = array::make_view<double, 2>(functionspace.lonlat());
+    auto halo   = array::make_view<int, 1>(functionspace.cells().halo());
+    int h       = functionspace.halo().size();
+
+    for (idx_t ip = 0; ip < lonlat.shape(0); ++ip) {
+        if (halo(ip) <= h) {
+            tree.insert(PointLonLat(lonlat(ip, LON), lonlat(ip, LAT)), ip);
+        }
+    }
+}
+
+void insert_tree(util::IndexKDTree& tree, const functionspace::StructuredColumns& functionspace) {
+    auto lonlat = array::make_view<double, 2>(functionspace.lonlat());
+
+    for (idx_t ip = 0; ip < lonlat.shape(0); ++ip) {
+        tree.insert(PointLonLat(lonlat(ip, LON), lonlat(ip, LAT)), ip);
+    }
+}
+
 }  // namespace
 
 void KNearestNeighboursBase::buildPointSearchTree(const FunctionSpace& functionspace) {
     ATLAS_TRACE();
-    eckit::TraceTimer<Atlas> tim("KNearestNeighboursBase::buildPointSearchTree()");
+    eckit::TraceTimer<Atlas> timer("KNearestNeighboursBase::buildPointSearchTree()");
 
     static bool fastBuildKDTrees = eckit::Resource<bool>("$ATLAS_FAST_BUILD_KDTREES", true);
 
     if (fastBuildKDTrees) {
         pTree_.reserve(functionspace.size());
     }
+
     if (functionspace::PointCloud fs = functionspace) {
+        insert_tree(pTree_, fs);
+    }
+    else if (functionspace::NodeColumns fs = functionspace) {
+        insert_tree(pTree_, fs);
+    }
+    else if (functionspace::CellColumns fs = functionspace) {
+        insert_tree(pTree_, fs);
+    }
+    else if (functionspace::StructuredColumns fs = functionspace) {
         insert_tree(pTree_, fs);
     }
     else {

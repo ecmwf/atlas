@@ -72,6 +72,8 @@ public:
     using Handle::Handle;
     Mesh();
 
+    operator bool() const;
+
     /// @brief Generate a mesh from a Grid with recommended mesh generator and partitioner strategy
     Mesh(const Grid&);
 

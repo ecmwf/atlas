@@ -95,9 +95,31 @@ public:
             Log::info() << "NOT_FOUND" << std::endl;
 #endif
         }
+
+        auto try_shifted_point = [&](double x) {
+            const Point2 shifted{x, point.y()};
+            const auto shifted_found = kdtree_.closestPoints(shifted, k_);
+            for (size_t i = 0; i < shifted_found.size(); ++i) {
+                idx_t ii = shifted_found[i].payload();
+                if (polygons_[ii].contains(lonlat2xy(shifted))) {
+                    return ii;
+                }
+            }
+            return idx_t{-1};
+        };
+
+        if (partition < 0) {
+            partition = try_shifted_point(point.x() + 360.0);
+        }
+        if (partition < 0) {
+            partition = try_shifted_point(point.x() - 360.0);
+        }
         if (partition < 0) {
             std::stringstream out;
-            out << "Could not find find point {lon,lat} = " << point << " in `k=" << k_ << "` \"nearest\" polygons [";
+            out << "Could not find find point {lon,lat} = " << point
+                << " or " << Point2{point.x() + 360.0, point.y()}
+                << " or " << Point2{point.x() - 360.0, point.y()}
+                << " in `k=" << k_ << "` \"nearest\" polygons [";
             for (size_t i = 0; i < found.size(); ++i) {
                 if (i > 0) {
                     out << ", ";

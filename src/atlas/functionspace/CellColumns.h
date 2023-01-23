@@ -69,6 +69,8 @@ public:
 
     // -- Parallelisation aware methods
 
+    const mesh::Halo& halo() const { return halo_; }
+
     void haloExchange(const FieldSet&, bool on_device = false) const override;
     void haloExchange(const Field&, bool on_device = false) const override;
     const parallel::HaloExchange& halo_exchange() const;
@@ -181,6 +183,8 @@ public:
     const mesh::HybridElements& cells() const;
 
     // -- Parallelisation aware methods
+    const mesh::Halo& halo() const;
+
     const parallel::HaloExchange& halo_exchange() const;
 
     std::string checksum(const FieldSet&) const;

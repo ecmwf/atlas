@@ -31,6 +31,9 @@ public :: atlas_GaussianGrid
 public :: atlas_ReducedGaussianGrid
 public :: atlas_RegularGaussianGrid
 public :: atlas_RegularLonLatGrid
+public :: atlas_ShiftedLonLatGrid
+public :: atlas_ShiftedLonGrid
+public :: atlas_ShiftedLatGrid
 public :: atlas_RegionalGrid
 
 private
@@ -276,6 +279,87 @@ end interface
 
 !------------------------------------------------------------------------------
 
+TYPE, extends(atlas_StructuredGrid) :: atlas_ShiftedLonLatGrid
+
+! Purpose :
+! -------
+!   *atlas_ShiftedLonLatGrid* : Object Grid specifications for LonLat Grids
+
+! Methods :
+! -------
+
+! Author :
+! ------
+!   9-Oct-2014 Willem Deconinck     *ECMWF*
+
+!------------------------------------------------------------------------------
+contains
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_ShiftedLonLatGrid__final_auto
+#endif
+END TYPE atlas_ShiftedLonLatGrid
+
+interface atlas_ShiftedLonLatGrid
+  module procedure atlas_grid_ShiftedLonLat__ctor_int32
+  module procedure atlas_grid_ShiftedLonLat__ctor_int64
+end interface
+
+!------------------------------------------------------------------------------
+
+TYPE, extends(atlas_StructuredGrid) :: atlas_ShiftedLonGrid
+
+! Purpose :
+! -------
+!   *atlas_ShiftedLonGrid* : Object Grid specifications for LonLat Grids
+
+! Methods :
+! -------
+
+! Author :
+! ------
+!   9-Oct-2014 Willem Deconinck     *ECMWF*
+
+!------------------------------------------------------------------------------
+contains
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_ShiftedLonGrid__final_auto
+#endif
+END TYPE atlas_ShiftedLonGrid
+
+interface atlas_ShiftedLonGrid
+  module procedure atlas_grid_ShiftedLon__ctor_int32
+  module procedure atlas_grid_ShiftedLon__ctor_int64
+end interface
+
+!------------------------------------------------------------------------------
+
+TYPE, extends(atlas_StructuredGrid) :: atlas_ShiftedLatGrid
+
+! Purpose :
+! -------
+!   *atlas_ShiftedLatGrid* : Object Grid specifications for LonLat Grids
+
+! Methods :
+! -------
+
+! Author :
+! ------
+!   9-Oct-2014 Willem Deconinck     *ECMWF*
+
+!------------------------------------------------------------------------------
+contains
+#if FCKIT_FINAL_NOT_INHERITING
+  final :: atlas_ShiftedLatGrid__final_auto
+#endif
+END TYPE atlas_ShiftedLatGrid
+
+interface atlas_ShiftedLatGrid
+  module procedure atlas_grid_ShiftedLat__ctor_int32
+  module procedure atlas_grid_ShiftedLat__ctor_int64
+end interface
+
+!------------------------------------------------------------------------------
+
 interface atlas_RegionalGrid
     module procedure atlas_RegionalGrid_ctor_int32
     module procedure atlas_RegionalGrid_ctor_int64
@@ -376,6 +460,30 @@ end subroutine
 
 ATLAS_FINAL subroutine atlas_RegularLonLatGrid__final_auto(this)
   type(atlas_RegularLonLatGrid), intent(inout) :: this
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
+
+ATLAS_FINAL subroutine atlas_ShiftedLonLatGrid__final_auto(this)
+  type(atlas_ShiftedLonLatGrid), intent(inout) :: this
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
+
+ATLAS_FINAL subroutine atlas_ShiftedLonGrid__final_auto(this)
+  type(atlas_ShiftedLonGrid), intent(inout) :: this
+#if FCKIT_FINAL_NOT_PROPAGATING
+  call this%final()
+#endif
+  FCKIT_SUPPRESS_UNUSED( this )
+end subroutine
+
+ATLAS_FINAL subroutine atlas_ShiftedLatGrid__final_auto(this)
+  type(atlas_ShiftedLatGrid), intent(inout) :: this
 #if FCKIT_FINAL_NOT_PROPAGATING
   call this%final()
 #endif
@@ -577,6 +685,66 @@ function atlas_grid_RegularLonLat__ctor_int64(nlon,nlat) result(this)
   type(atlas_RegularLonLatGrid) :: this
   integer(c_long), intent(in) :: nlon, nlat
   call this%reset_c_ptr( atlas__grid__regular__RegularLonLat( nlon, nlat ) )
+  call this%return()
+end function
+
+!-----------------------------------------------------------------------------
+
+function atlas_grid_ShiftedLonLat__ctor_int32(nlon,nlat) result(this)
+  use, intrinsic :: iso_c_binding, only: c_int, c_long
+  use atlas_grid_Structured_c_binding
+  type(atlas_ShiftedLonLatGrid) :: this
+  integer(c_int), intent(in) :: nlon, nlat
+  call this%reset_c_ptr( atlas__grid__regular__ShiftedLonLat(int(nlon,c_long),int(nlat,c_long)) )
+  call this%return()
+end function
+
+function atlas_grid_ShiftedLonLat__ctor_int64(nlon,nlat) result(this)
+  use, intrinsic :: iso_c_binding, only: c_long
+  use atlas_grid_Structured_c_binding
+  type(atlas_ShiftedLonLatGrid) :: this
+  integer(c_long), intent(in) :: nlon, nlat
+  call this%reset_c_ptr( atlas__grid__regular__ShiftedLonLat( nlon, nlat ) )
+  call this%return()
+end function
+
+!-----------------------------------------------------------------------------
+
+function atlas_grid_ShiftedLon__ctor_int32(nlon,nlat) result(this)
+  use, intrinsic :: iso_c_binding, only: c_int, c_long
+  use atlas_grid_Structured_c_binding
+  type(atlas_ShiftedLonGrid) :: this
+  integer(c_int), intent(in) :: nlon, nlat
+  call this%reset_c_ptr( atlas__grid__regular__ShiftedLon(int(nlon,c_long),int(nlat,c_long)) )
+  call this%return()
+end function
+
+function atlas_grid_ShiftedLon__ctor_int64(nlon,nlat) result(this)
+  use, intrinsic :: iso_c_binding, only: c_long
+  use atlas_grid_Structured_c_binding
+  type(atlas_ShiftedLonGrid) :: this
+  integer(c_long), intent(in) :: nlon, nlat
+  call this%reset_c_ptr( atlas__grid__regular__ShiftedLon( nlon, nlat ) )
+  call this%return()
+end function
+
+!-----------------------------------------------------------------------------
+
+function atlas_grid_ShiftedLat__ctor_int32(nlon,nlat) result(this)
+  use, intrinsic :: iso_c_binding, only: c_int, c_long
+  use atlas_grid_Structured_c_binding
+  type(atlas_ShiftedLatGrid) :: this
+  integer(c_int), intent(in) :: nlon, nlat
+  call this%reset_c_ptr( atlas__grid__regular__ShiftedLat(int(nlon,c_long),int(nlat,c_long)) )
+  call this%return()
+end function
+
+function atlas_grid_ShiftedLat__ctor_int64(nlon,nlat) result(this)
+  use, intrinsic :: iso_c_binding, only: c_long
+  use atlas_grid_Structured_c_binding
+  type(atlas_ShiftedLatGrid) :: this
+  integer(c_long), intent(in) :: nlon, nlat
+  call this%reset_c_ptr( atlas__grid__regular__ShiftedLat( nlon, nlat ) )
   call this%return()
 end function
 
