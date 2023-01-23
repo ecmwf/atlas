@@ -105,7 +105,7 @@ public:
                     return ii;
                 }
             }
-            return -1;
+            return idx_t{-1};
         };
 
         if (partition < 0) {
