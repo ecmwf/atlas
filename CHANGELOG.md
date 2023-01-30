@@ -7,6 +7,23 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.32.0] - 2023-01-23
+### Added
+- Added BlockStructuredColumns FunctionSpace
+- Added function SolidBodyRotation
+- Added convenience Fortran constructors for ShiftedLonLat, SHiftedLon, ShiftedLat
+- Support for more FunctionSpaces in various interpolation methods
+
+### Changed
+- PolygonLocator now wraps around longitudes for non-matching domains
+- StructuredMeshGenerator can generate meshes with partitions without elements
+- SerialDistribution makes every MPI task have the entire mesh
+
+### Fixed
+- Remove assertion for checking of empty mesh in NodeColumns FunctionSpace
+- Gaussian latitudes can now be computed for very high resolution, without running out of memory.
+- Interpolation to functionspaces with empty partitions
+
 ## [0.31.1] - 2022-11-11
 ### Fixed
 - Fix bug introduced in StructuredMeshGenerator global numbering with release 0.31.0 in commit a63fc62a2
@@ -411,6 +428,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.32.0]: https://github.com/ecmwf/atlas/compare/0.31.1...0.32.0
 [0.31.1]: https://github.com/ecmwf/atlas/compare/0.31.0...0.31.1
 [0.31.0]: https://github.com/ecmwf/atlas/compare/0.30.0...0.31.0
 [0.30.0]: https://github.com/ecmwf/atlas/compare/0.29.0...0.30.0
