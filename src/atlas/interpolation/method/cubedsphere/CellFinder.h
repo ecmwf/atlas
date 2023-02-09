@@ -12,6 +12,7 @@
 #include "atlas/interpolation/method/Intersect.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/util/Config.h"
+#include "atlas/util/Geometry.h"
 #include "atlas/util/KDTree.h"
 #include "atlas/util/Point.h"
 
@@ -36,6 +37,7 @@ using namespace util;
 class CellFinder {
 public:
     struct Cell {
+        idx_t idx;
         std::vector<idx_t> nodes;
         Intersect isect;
     };
@@ -57,7 +59,7 @@ public:
 private:
     Mesh mesh_{};
     const projection::detail::CubedSphereProjectionBase* projection_{};
-    std::array<util::IndexKDTree2D, 6> trees_{};
+    util::IndexKDTree tree_{Geometry{}};
 };
 
 }  // namespace cubedsphere

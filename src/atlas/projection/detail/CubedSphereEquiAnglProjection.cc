@@ -22,6 +22,12 @@
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
 
+
+
+namespace atlas {
+namespace projection {
+namespace detail {
+
 namespace {
 
 static constexpr bool debug     = false;  // constexpr so compiler can optimize `if ( debug ) { ... }` out
@@ -54,13 +60,23 @@ bool greaterEqual(double a, double b) {
     return a > b || equal(a, b);
 }
 
+// Sine/cosine helper struct.
+struct SineCosine {
+    double sinLambda{};
+    double cosLambda{};
+    double sinPhi{};
+    double cosPhi{};
+    explicit SineCosine(const PointLonLat& lonlat) {
+        const double lambda = lonlat.lon() * deg2rad;
+        const double phi    = lonlat.lat() * deg2rad;
+        sinLambda           = std::sin(lambda);
+        cosLambda           = std::cos(lambda);
+        sinPhi              = std::sin(phi);
+        cosPhi              = std::sqrt(1. - sinPhi * sinPhi); // Safe, as phi is between +/- 90 degrees
+    }
+};
 
 }  // namespace
-
-namespace atlas {
-namespace projection {
-namespace detail {
-
 
 // -------------------------------------------------------------------------------------------------
 
@@ -85,10 +101,10 @@ void CubedSphereEquiAnglProjection::xy2alphabeta(double crd[], idx_t t) const {
     }
 
     // Get alphaBeta Jacobian.
-    const auto alphabetaJacobian = getCubedSphereTiles().tileJacobian(static_cast<size_t>(t)).inverse();
+    const auto abJacobian = getCubedSphereTiles().tileJacobian(static_cast<size_t>(t)).inverse();
 
     // Set (alpha, beta) coord.
-    const Point2 alphabeta = alphabetaJacobian * (Point2(crd) - xyCentre);
+    const Point2 alphabeta = abJacobian * (Point2(crd) - xyCentre);
     crd[0]                 = alphabeta[0];
     crd[1]                 = alphabeta[1];
 
@@ -159,17 +175,73 @@ void CubedSphereEquiAnglProjection::alphabeta2xy(double crd[], idx_t t) const {
 
 // -------------------------------------------------------------------------------------------------
 
+void CubedSphereEquiAnglProjection::lonlat2alphabeta(double crd[], idx_t t) const {
+
+    const auto angles = SineCosine(PointLonLat(crd));
+
+    // Convert lonlat to xyz on unit sphere.
+    auto xyz = PointXYZ{angles.cosLambda * angles.cosPhi, angles.sinLambda * angles.cosPhi, -angles.sinPhi};
+
+    const auto& tiles = getCubedSphereTiles();
+    tiles.unrotate(t, xyz.data());
+
+    // project into xy and rotate into alphabeta coordinates.
+    auto alphaBeta = tiles.tileJacobian(t).inverse() *
+                     Point2{std::atan2(xyz.y(), xyz.x()), -std::atan2(xyz.z(), xyz.x())};
+
+    alphaBeta = alphaBeta * rad2deg;
+
+    crd[0] = alphaBeta[0];
+    crd[1] = alphaBeta[1];
+}
+
+
+// -------------------------------------------------------------------------------------------------
+
+void CubedSphereEquiAnglProjection::alphabeta2lonlat(double crd[], idx_t t) const {
+
+    // Rotate alphabeta into xy direction.
+    const auto& tiles = getCubedSphereTiles();
+    auto alphaBeta = tiles.tileJacobian(t) * Point2{crd};
+    alphaBeta = alphaBeta * deg2rad;
+
+    // project alphabeta into xyz space.
+    auto xyz = PointXYZ{-1., -std::tan(alphaBeta[0]), std::tan(alphaBeta[1])};
+
+    tiles.rotate(t, xyz.data());
+
+    // Honestly, I figured out some of the -1 factors by trial and error.
+    const auto r = PointXYZ::norm(xyz);
+
+    auto lonlat = PointLonLat{};
+    if (equal(xyz.x(), 0.) && equal(xyz.y(), 0.)) {
+        lonlat.lon() = 0.;
+    }
+    else {
+        lonlat.lon() = std::atan2(-xyz.y(), -xyz.x());
+    }
+    lonlat.lat() = std::asin(xyz.z() / r);
+
+    lonlat = lonlat * rad2deg;
+    lonlat.normalise();
+
+    crd[0] = lonlat.lon();
+    crd[1] = lonlat.lat();
+}
+
+// -------------------------------------------------------------------------------------------------
+
 Jacobian CubedSphereEquiAnglProjection::jacobian(const PointLonLat& lonlat, idx_t t) const {
     // Note: angular units cancel, so we leave all values in radians.
 
+    const auto angles = SineCosine(lonlat);
+
     // Convert lonlat to xyz on unit sphere.
-    const double lambda = lonlat.lon() * deg2rad;
-    const double phi    = lonlat.lat() * deg2rad;
-    auto xyz            = PointXYZ{std::cos(lambda) * std::cos(phi), std::sin(lambda) * std::cos(phi), -std::sin(phi)};
+    auto xyz = PointXYZ{angles.cosLambda * angles.cosPhi, angles.sinLambda * angles.cosPhi, -angles.sinPhi};
 
     // Get derivatives of xyz with respect to lambda and phi.
-    auto dxyz_by_dlambda = PointXYZ{-std::sin(lambda) * std::cos(phi), std::cos(lambda) * std::cos(phi), 0.};
-    auto dxyz_by_dphi = PointXYZ{-std::cos(lambda) * std::sin(phi), -std::sin(lambda) * std::sin(phi), -std::cos(phi)};
+    auto dxyz_by_dlambda = PointXYZ{-angles.sinLambda * angles.cosPhi, angles.cosLambda * angles.cosPhi, 0.};
+    auto dxyz_by_dphi = PointXYZ{-angles.cosLambda * angles.sinPhi, -angles.sinLambda * angles.sinPhi, -angles.cosPhi};
 
     // Rotate vectors.
     const auto& tiles = getCubedSphereTiles();
@@ -218,14 +290,14 @@ void CubedSphereEquiAnglProjection::lonlat2xy(double crd[]) const {
     // left coordinate system
 
     if (debug) {
-        Log::info() << "equiangular lonlat2xy xyz ab : " << xyz[XX] << " " << xyz[YY] << " " << xyz[ZZ] << " "
+        Log::debug() << "equiangular lonlat2xy xyz ab : " << xyz[XX] << " " << xyz[YY] << " " << xyz[ZZ] << " "
                     << ab[LON] << " " << ab[LAT] << std::endl;
     }
 
     CubedSphereProjectionBase::alphabetat2xy(t, ab, crd);
 
     if (debug) {
-        Log::info() << "equiangular lonlat2xy end : xy = " << crd[LON] << " " << crd[LAT] << std::endl;
+        Log::debug() << "equiangular lonlat2xy end : xy = " << crd[LON] << " " << crd[LAT] << std::endl;
     }
 }
 
@@ -234,7 +306,7 @@ void CubedSphereEquiAnglProjection::lonlat2xy(double crd[]) const {
 //
 void CubedSphereEquiAnglProjection::xy2lonlat(double crd[]) const {
     if (debug) {
-        Log::info() << "xy2lonlat start xy = " << crd[LON] << " " << crd[LAT] << std::endl;
+        Log::debug() << "xy2lonlat start xy = " << crd[LON] << " " << crd[LAT] << std::endl;
     }
 
     static const double rsq3 = 1.0 / std::sqrt(3.0);
@@ -257,7 +329,7 @@ void CubedSphereEquiAnglProjection::xy2lonlat(double crd[]) const {
     CubedSphereProjectionBase::xy2lonlat_post(xyz, t, crd);
 
     if (debug) {
-        Log::info() << "end of equiangular xy2lonlat lonlat = " << crd[LON] << " " << crd[LAT] << std::endl;
+        Log::debug() << "end of equiangular xy2lonlat lonlat = " << crd[LON] << " " << crd[LAT] << std::endl;
     }
 }
 

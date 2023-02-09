@@ -53,6 +53,10 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
     auto weights          = std::vector<Triplet>{};
     const auto ghostView  = array::make_view<int, 1>(target_.ghost());
     const auto lonlatView = array::make_view<double, 2>(target_.lonlat());
+    const auto tijView    = array::make_view<idx_t, 2>(ncSource.mesh().cells().field("tij"));
+
+    // Make vector of tile indices for each target point (needed for vector field interpolation).
+    std::vector<idx_t> tileIndex{};
 
     for (idx_t i = 0; i < target_.size(); ++i) {
         if (!ghostView(i)) {
@@ -66,6 +70,7 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
                     std::to_string(i) + ".");
             }
 
+            tileIndex.push_back(tijView(cell.idx, 0));
             const auto& isect = cell.isect;
             const auto& j     = cell.nodes;
 
@@ -95,6 +100,9 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
     // fill sparse matrix and return.
     Matrix A(target_.size(), source_.size(), weights);
     setMatrix(A);
+
+    // Add tile index metadata to target.
+    target_->metadata().set("tile index", tileIndex);
 }
 
 void CubedSphereBilinear::print(std::ostream&) const {

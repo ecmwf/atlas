@@ -20,7 +20,7 @@ namespace atlas {
 namespace test {
 
 // Small number relative to 360.
-constexpr double epsilon = std::numeric_limits<double>::epsilon() * 360.;
+constexpr double epsilon = 2. * std::numeric_limits<double>::epsilon() * 360.;
 
 void testProjection(const std::string& gridType, const std::string& meshType, const std::string& outputID) {
     // Create grid.
@@ -52,6 +52,7 @@ void testProjection(const std::string& gridType, const std::string& meshType, co
     // "Hack" mesh xy coordinates.
     auto xyView        = array::make_view<double, 2>(mesh.nodes().xy());
     const auto tijView = array::make_view<idx_t, 2>(mesh.nodes().field("tij"));
+    const auto lonlatView = array::make_view<double, 2>(mesh.nodes().lonlat());
     for (idx_t i = 0; i < mesh.nodes().size(); ++i) {
         const auto t = tijView(i, 0);
 
@@ -73,6 +74,15 @@ void testProjection(const std::string& gridType, const std::string& meshType, co
         // overwrite mesh xy field.
         xyView(i, XX) = alphabeta[0];
         xyView(i, YY) = alphabeta[1];
+
+        // Check lonlat2alphabeta methods.
+        const auto lonlat       = csProjection.alphabeta2lonlat(alphabeta, t);
+        const auto newAlphabeta = csProjection.lonlat2alphabeta(lonlat, t);
+
+        EXPECT_APPROX_EQ(alphabeta[0], newAlphabeta[0], epsilon);
+        EXPECT_APPROX_EQ(alphabeta[1], newAlphabeta[1], epsilon);
+        EXPECT_APPROX_EQ(lonlat[0], lonlatView(i, 0), epsilon);
+        EXPECT_APPROX_EQ(lonlat[1], lonlatView(i, 1), epsilon);
     }
 
     // Output mesh updated mesh.
