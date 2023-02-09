@@ -221,7 +221,8 @@ std::vector<int> get_levels(int nlev, const Metadata& gmsh_options) {
 std::string field_lev(const Field& field, int jlev) {
     if (field.levels()) {
         char str[6] = {0, 0, 0, 0, 0, 0};
-        std::sprintf(str, "[%03d]", jlev);
+        auto str_len = std::snprintf(str, sizeof(str), "[%03d]", jlev);
+        ATLAS_ASSERT(str_len == 5);
         return std::string(str);
     }
     else {
@@ -388,8 +389,9 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NoFunc
 
 // ----------------------------------------------------------------------------
 
-void print_field_lev(char field_lev[], int jlev) {
-    std::sprintf(field_lev, "[%03d]", jlev);
+void print_field_lev(char field_lev[], size_t size, int jlev) {
+    ATLAS_ASSERT(size > 5);
+    auto str_len = std::snprintf(field_lev, size, "[%03d]", jlev);
 }
 
 /* unused
@@ -433,7 +435,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::Struct
         char field_lev[6] = {0, 0, 0, 0, 0, 0};
 
         if (field.levels()) {
-            print_field_lev(field_lev, jlev);
+            print_field_lev(field_lev, sizeof(field_lev), jlev);
         }
 
         out << "$NodeData\n";

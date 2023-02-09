@@ -58,6 +58,23 @@ public:
     virtual void alphabeta2xy(double crd[], idx_t) const = 0;
     ///@}
 
+    /// @brief   Convert (lon, lat) coordinate to (alpha, beta) on tile t
+    ///
+    /// @details Converts the lon lat coordinates to the angular coordinates
+    ///          described of tile t, described by by Ronchi et al. (1996,
+    ///          Journal of Computational Physics, 124, 93).
+    /// @{
+    Point2 lonlat2alphabeta(const Point2& lonlat, idx_t t) const;
+    virtual void lonlat2alphabeta(double crd[], idx_t) const = 0;
+    /// @}
+
+    /// @brief   Convert (lon, lat) coordinate to (alpha, beta) on tile t
+    ///
+    /// @details Performs the inverse of lonlat2alphabeta.
+    ///
+    Point2 alphabeta2lonlat(const Point2& alphabeta, idx_t t) const;
+    virtual void alphabeta2lonlat(double crd[], idx_t) const = 0;
+
     /// @brief   Jacobian of (x, y) with respect to (lon, lat) on tile t
     ///
     /// @details Returns the Jacobian

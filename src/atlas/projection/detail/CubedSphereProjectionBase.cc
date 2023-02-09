@@ -248,6 +248,22 @@ Point2 CubedSphereProjectionBase::alphabeta2xy(const Point2& alphabeta, idx_t t)
 
 // -------------------------------------------------------------------------------------------------
 
+Point2 CubedSphereProjectionBase::lonlat2alphabeta(const Point2& lonlat, idx_t t) const {
+    auto alphabeta = Point2(lonlat);
+    lonlat2alphabeta(alphabeta.data(), t);
+    return alphabeta;
+}
+
+// -------------------------------------------------------------------------------------------------
+
+Point2 CubedSphereProjectionBase::alphabeta2lonlat(const Point2& alphabeta, idx_t t) const {
+    auto lonlat = Point2(alphabeta);
+    alphabeta2lonlat(lonlat.data(), t);
+    return lonlat;
+}
+
+// -------------------------------------------------------------------------------------------------
+
 }  // namespace detail
 }  // namespace projection
 }  // namespace atlas
