@@ -91,6 +91,4 @@ ecbuild_add_library( TARGET atlas_io
         ${CMAKE_CURRENT_BINARY_DIR}/detail/defines.h
 )
 
-target_compile_features( atlas_io PUBLIC
-    cxx_std_11
-    $<${HAVE_CXX17}:cxx_std_17> )
+target_compile_features( atlas_io PUBLIC cxx_std_17 )
