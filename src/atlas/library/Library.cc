@@ -305,7 +305,7 @@ void Library::initialise(const eckit::Parametrisation& config) {
                 Adaptor(const eckit::CodeLocation& loc, const std::string& title): trace{loc, title} {}
                 atlas::Trace trace;
             };
-            return std::unique_ptr<Adaptor>(new Adaptor{loc, title});
+            return std::make_unique<Adaptor>(loc, title);
         });
 
 
