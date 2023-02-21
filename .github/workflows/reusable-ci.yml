@@ -1,0 +1,28 @@
+name: reusable-ci
+
+on:
+  workflow_call:
+    atlas:
+      required: false
+      type: string
+    eckit:
+      required: false
+      type: string
+
+jobs:
+  ci:
+    name: atlas-ci
+    uses: ecmwf-actions/reusable-workflows/.github/workflows/ci.yml@v2
+    with:
+      repository: ${{ inputs.atlas || 'ecmwf/atlas@develop' }}
+      name-prefix: atlas-
+      build_package_inputs: |
+        repository: ${{ inputs.atlas || 'ecmwf/atlas@develop' }}
+        self_coverage: true
+        dependencies: |
+          ecmwf/ecbuild
+          ${{ inputs.eckit || 'ecmwf/eckit' }}
+          ecmwf/fckit
+        dependency_branch: develop
+        parallelism_factor: 8
+    secrets: inherit
