@@ -30,6 +30,8 @@ jobs:
     needs: [downstream-ci]
     if: success() || failure()
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     steps:
       - name: Dispatch private downstream CI
         uses: ecmwf-actions/dispatch-private-downstream-ci@v1
