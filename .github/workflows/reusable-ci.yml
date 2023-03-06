@@ -23,7 +23,6 @@ jobs:
         dependencies: |
           ecmwf/ecbuild
           ${{ inputs.eckit || 'ecmwf/eckit' }}
-          ecmwf/fckit
         dependency_branch: develop
         parallelism_factor: 8
     secrets: inherit
