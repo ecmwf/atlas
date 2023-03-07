@@ -15,11 +15,16 @@ on:
   # Trigger the workflow manually
   workflow_dispatch: ~
 
+  # Trigger after public PR approved for CI
+  pull_request_target:
+    types: [labeled]
+
 jobs:
   # Run CI including downstream packages on self-hosted runners
   downstream-ci:
     name: downstream-ci
-    uses: ecmwf-actions/downstream-ci/.github/workflows/downstream-ci.yml@atlas
+    if: ${{ !github.event.pull_request.head.repo.fork && github.event.action != 'labeled' || github.event.label.name == 'approved-for-ci' }}
+    uses: ecmwf-actions/downstream-ci/.github/workflows/downstream-ci.yml@main
     with:
       atlas: ecmwf/atlas@${{ github.event.pull_request.head.sha || github.sha }}
     secrets: inherit
@@ -28,7 +33,7 @@ jobs:
   private-downstream-ci:
     name: private-downstream-ci
     needs: [downstream-ci]
-    if: success() || failure()
+    if: (success() || failure()) && ${{ !github.event.pull_request.head.repo.fork && github.event.action != 'labeled' || github.event.label.name == 'approved-for-ci' }}
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -40,4 +45,31 @@ jobs:
           owner: ecmwf-actions
           repository: private-downstream-ci
           event_type: downstream-ci
+          payload: '{"atlas": "ecmwf/atlas@${{ github.event.pull_request.head.sha || github.sha }}"}'
+
+  # Build downstream packages on HPC
+  downstream-ci-hpc:
+    name: downstream-ci-hpc
+    if: ${{ !github.event.pull_request.head.repo.fork && github.event.action != 'labeled' || github.event.label.name == 'approved-for-ci' }}
+    uses: ecmwf-actions/downstream-ci/.github/workflows/downstream-ci-hpc.yml@main
+    with:
+      atlas: ecmwf/atlas@${{ github.event.pull_request.head.sha || github.sha }}
+    secrets: inherit
+
+  # Run CI of private downstream packages on HPC
+  private-downstream-ci-hpc:
+    name: private-downstream-ci-hpc
+    needs: [downstream-ci-hpc]
+    if: (success() || failure()) && ${{ !github.event.pull_request.head.repo.fork && github.event.action != 'labeled' || github.event.label.name == 'approved-for-ci' }}
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Dispatch private downstream CI
+        uses: ecmwf-actions/dispatch-private-downstream-ci@v1
+        with:
+          token: ${{ secrets.GH_REPO_READ_TOKEN }}
+          owner: ecmwf-actions
+          repository: private-downstream-ci
+          event_type: downstream-ci-hpc
           payload: '{"atlas": "ecmwf/atlas@${{ github.event.pull_request.head.sha || github.sha }}"}'
