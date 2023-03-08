@@ -22,6 +22,8 @@ jobs:
           ninja
         --modules-package: |
           openmpi
+          fftw
+          eigen
         --dependencies: |
           ${{ inputs.eckit || 'ecmwf/eckit@develop' }}
         --parallel: 64
