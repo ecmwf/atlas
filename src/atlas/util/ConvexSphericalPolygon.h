@@ -16,6 +16,9 @@
 
 #include "atlas/util/Point.h"
 #include "atlas/util/Polygon.h"
+#include "atlas/runtime/Log.h"
+
+#define DEBUG_OUTPUT 1
 
 namespace atlas {
 namespace util {
@@ -31,16 +34,19 @@ public:
     class GreatCircleSegment {
     public:
         GreatCircleSegment(const PointXYZ& p1, const PointXYZ& p2): p1_(p1), p2_(p2), cross_(PointXYZ::cross(p1, p2)) {}
-        bool contains(const PointXYZ&) const;
 
-        PointXYZ intersect(const GreatCircleSegment&) const;
-
-        // Hemisphere is defined by segment when walking from first() to second()
-        // Positive offset: distance into left hemisphere, e.g. to exclude segment itself with tolerance
-        // Negative offset: distance into right hemisphere, e.g. to include segment with tolerance
-        bool inLeftHemisphere(const PointXYZ& P, const double offset = 0.) const {
-            return (PointXYZ::dot(cross(), P) > offset);
+        // For a given segment, the "left" hemisphere is defined on the left of the segment when walking from first() to second()
+        inline bool inLeftHemisphere(const PointXYZ& P, const double offset = 0., std::ostream* out = NULL) const {
+#if DEBUG_OUTPUT
+           if (out) {
+            *out << " inLeftHemi: " <<PointXYZ::dot(cross(), P) << " >= " << offset << " ? " 
+                   << (PointXYZ::dot(cross(), P) >= offset) << std::endl;
+           }
+#endif
+            return (PointXYZ::dot(cross(), P) >= offset); // has to have = included
         }
+
+        PointXYZ intersect(const GreatCircleSegment&, std::ostream* f = NULL, double pointsSameEPS = std::numeric_limits<double>::epsilon()) const;
 
         const PointXYZ& first() const { return p1_; }
 
@@ -96,7 +102,7 @@ public:
         return radius_;
     }
 
-    ConvexSphericalPolygon intersect(const ConvexSphericalPolygon& pol) const;
+    ConvexSphericalPolygon intersect(const ConvexSphericalPolygon& pol, std::ostream* f = nullptr, double pointsEqualEPS = std::numeric_limits<double>::epsilon()) const;
 
     /*
    * @brief check if two spherical polygons area equal
@@ -106,6 +112,8 @@ public:
     bool equals(const ConvexSphericalPolygon& plg, const double deg_prec = 1e-10) const;
 
     void print(std::ostream&) const;
+
+    std::string json(int precision = 0) const;
 
     friend std::ostream& operator<<(std::ostream& out, const ConvexSphericalPolygon& p) {
         p.print(out);
@@ -136,28 +144,14 @@ private:
 
     double compute_radius() const;
 
-    SubTriangles triangulate(const double radius) const;
+    SubTriangles triangulate() const;
 
-    void clip(const GreatCircleSegment&);
+    void clip(const GreatCircleSegment&, std::ostream* f = nullptr, double pointsSameEPS = std::numeric_limits<double>::epsilon());
 
     /*
    * @return true:polygon is convex
    */
     bool validate();
-
-    /*
-   * @brief Segment-sph_polygon intersection
-   * @param[in] s1, s2 segment endpoints in (x,y,z) coordinates
-   * @param[in] start start with polygon segments [pol[start],pol[start+1]],...
-   * @param[out] ip intersection point or nullptr
-   * @return -1: overlap with one of polygon edges,
-   *          0: no_intersect,
-   *          1 + (id of this polygon's segment intersecting [s1,s2)): otherwise
-   */
-    int intersect(const int start, const GreatCircleSegment&, PointXYZ& ip) const;
-
-    /// Makes the polygon convex and skips consequtive node that is too close to previous
-    void simplify();
 
 private:
     std::array<PointXYZ, MAX_SIZE> sph_coords_;
