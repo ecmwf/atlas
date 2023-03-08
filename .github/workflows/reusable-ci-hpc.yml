@@ -21,12 +21,9 @@ jobs:
           ecbuild
           ninja
         --modules-package: |
-          openmpi
           fftw
           eigen
         --dependencies: |
           ${{ inputs.eckit || 'ecmwf/eckit@develop' }}
         --parallel: 64
-        --env: |
-          ATLAS_RUN_MPI_ARGS=--oversubscribe
     secrets: inherit
