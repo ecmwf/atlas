@@ -58,7 +58,6 @@ static bool feature_MKL() {
 #include "atlas/util/Config.h"
 
 #if ATLAS_HAVE_TRANS
-#include "atlas/library/config.h"
 #if ATLAS_HAVE_ECTRANS
 #include "ectrans/transi.h"
 #else
