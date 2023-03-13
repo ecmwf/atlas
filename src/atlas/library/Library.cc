@@ -454,6 +454,7 @@ void Library::Information::print(std::ostream& out) const {
     bool feature_FFTW(ATLAS_HAVE_FFTW);
     bool feature_Eigen(ATLAS_HAVE_EIGEN);
     bool feature_Tesselation(ATLAS_HAVE_TESSELATION);
+    bool feature_PROJ(ATLAS_HAVE_PROJ);
     bool feature_BoundsChecking(ATLAS_ARRAYVIEW_BOUNDS_CHECKING);
     bool feature_Init_sNaN(ATLAS_INIT_SNAN);
     bool feature_MPI(false);
@@ -478,6 +479,7 @@ void Library::Information::print(std::ostream& out) const {
         << "    Eigen          : " << str(feature_Eigen) << '\n'
         << "    MKL            : " << str(feature_MKL()) << '\n'
         << "    Tesselation    : " << str(feature_Tesselation) << '\n'
+        << "    PROJ           : " << str(feature_PROJ) << '\n'
         << "    ArrayDataStore : " << array_data_store << '\n'
         << "    idx_t          : " << ATLAS_BITS_LOCAL << " bit integer" << '\n'
         << "    gidx_t         : " << ATLAS_BITS_GLOBAL << " bit integer" << '\n';
