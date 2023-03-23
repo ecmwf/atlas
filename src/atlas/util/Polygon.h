@@ -113,6 +113,9 @@ public:
     /// @brief Output a python script that plots the partition
     virtual void outputPythonScript(const eckit::PathName&, const eckit::Configuration& = util::NoConfig()) const {}
 
+    /// @brief Output a JSON file with partition polygons
+    virtual std::string json(const eckit::Configuration& = util::NoConfig()) const;
+
     /// @brief All (x,y) coordinates defining a polygon. Last point should match first.
     virtual PointsXY xy() const = 0;
 
@@ -152,7 +155,10 @@ private:
 
 //------------------------------------------------------------------------------------------------------
 
-class PartitionPolygons : public VectorOfAbstract<PartitionPolygon> {};
+class PartitionPolygons : public VectorOfAbstract<PartitionPolygon> {
+public:
+    std::string json(const eckit::Configuration& = util::NoConfig()) const;
+};
 
 //------------------------------------------------------------------------------------------------------
 
