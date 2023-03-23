@@ -485,18 +485,23 @@ void StructuredColumns::Map2to1::resize(std::array<idx_t, 2> i_range, std::array
 }
 
 const util::PartitionPolygon& StructuredColumns::polygon(idx_t halo) const {
-    if (not polygon_) {
-        polygon_.reset(new grid::StructuredPartitionPolygon(*this, halo));
+    if (halo >= static_cast<idx_t>(polygons_.size())) {
+        polygons_.resize(halo + 1);
     }
-    return *polygon_;
+    if (not polygons_[halo]) {
+        if (halo > this->halo()) {
+            throw_Exception("StructuredColumsn does not contain a halo of size " + std::to_string(halo) + ".", Here());
+        }
+        polygons_[halo].reset(new grid::StructuredPartitionPolygon(*this, halo));
+    }
+    return *polygons_[halo];
 }
 
 const util::PartitionPolygons& StructuredColumns::polygons() const {
-    if (polygons_.size()) {
-        return polygons_;
+    if (all_polygons_.size() == 0) {
+        polygon().allGather(all_polygons_);
     }
-    polygon().allGather(polygons_);
-    return polygons_;
+    return all_polygons_;
 }
 
 // ----------------------------------------------------------------------------
