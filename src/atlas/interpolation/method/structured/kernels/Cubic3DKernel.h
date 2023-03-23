@@ -73,13 +73,13 @@ public:
     };
 
     template <typename stencil_t>
-    void compute_stencil(const double x, const double y, const double z, stencil_t& stencil) const {
+    void compute_stencil(double& x, const double y, const double z, stencil_t& stencil) const {
         horizontal_interpolation_.compute_stencil(x, y, stencil);
         vertical_interpolation_.compute_stencil(z, stencil);
     }
 
     template <typename weights_t>
-    void compute_weights(const double x, const double y, const double z, weights_t& weights) const {
+    void compute_weights(double x, double y, double z, weights_t& weights) const {
         Stencil stencil;
         compute_stencil(x, y, z, stencil);
         compute_weights(x, y, z, stencil, weights);
