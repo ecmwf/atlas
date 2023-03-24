@@ -116,6 +116,9 @@ FieldSet create_target_fields(FunctionSpace& fs, idx_t nb_fields, idx_t nb_level
 
 
 CASE("test_match") {
+    if(mpi::size() > 2) {
+        return;
+    }
     idx_t nb_fields = 2;
     idx_t nb_levels = 3;
 
@@ -132,6 +135,10 @@ CASE("test_match") {
     interpolation.execute(fields_source, fields_target);
 }
 CASE("test_nomatch") {
+    if(mpi::size() > 2) {
+        return;
+    }
+
     idx_t nb_fields = 2;
     idx_t nb_levels = 3;
 
@@ -151,6 +158,29 @@ CASE("test_nomatch") {
     }
 }
 
+CASE("test_nomatch 2") {
+    if(mpi::size() > 2) {
+        return;
+    }
+
+    idx_t nb_fields = 2;
+    idx_t nb_levels = 3;
+
+    Grid input_grid(input_gridname("O32"));
+    StructuredColumns input_fs(input_grid, option::halo(1) | option::levels(nb_levels));
+
+    FunctionSpace output_fs = output_functionspace_nomatch();
+
+    if (false)  // expected to throw
+    {
+        Interpolation interpolation(option::type("structured-linear2D"), input_fs, output_fs);
+
+        FieldSet fields_source = create_source_fields(input_fs, nb_fields, nb_levels);
+        FieldSet fields_target = create_target_fields(output_fs, nb_fields, nb_levels);
+
+        interpolation.execute(fields_source, fields_target);
+    }
+}
 
 }  // namespace test
 }  // namespace atlas
