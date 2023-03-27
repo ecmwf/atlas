@@ -249,14 +249,12 @@ CASE("test_createFieldSet") {
 
   if (atlas::mpi::rank() == 0) {
     // center followed by clockwise halo starting from top left
-    lonlatv.assign({-45.0, 45.0,
-                    45.0,  45.0,
-                   -45.0, -45.0,
-                    -45.0, 45.0,  // center
-                    225.0, 45.0, 135.0, 45.0,  // up
-                    135.0, 45.0, 135.0, -45.0,  //left
-                    135.0, -45.0, 135.0, 45.0,  // down
-                    135.0, 45.0,   225.0, 45.0}); // right
+    lonlatv.assign({-45.0,  45.0,  45.0,  45.0,    // center, first row
+                    -45.0, -45.0,  45.0, -45.0,    // center, second row
+                    225.0,  45.0, 135.0,  45.0,    // up
+                    135.0,  45.0, 135.0, -45.0,    // right
+                    135.0, -45.0, 225.0, -45.0,    // down
+                    225.0, -45.0, 225.0,  45.0});  // left
 
     partitionv.assign({0, 0, 0, 0,
                        1, 1, 1, 1, 1, 1, 1, 1});
@@ -265,11 +263,12 @@ CASE("test_createFieldSet") {
 
   } else if (atlas::mpi::rank() == 1) {
     // center followed by clockwise halo starting from top left
-    lonlatv.assign({135.0, 45.0, 225.0, 45.0, 135.0, -45.0, 135.0, 45.0, // center
-                    45.0, 45.0, -45.0, 45.0, // up
-                   -45.0, 45.0, -45.0, -45.0, // left
-                   -45.0, -45.0, -45.0, 45.0, // down
-                   -45.0, 45.0,   45.0, 45.0}); // right
+    lonlatv.assign({135.0,  45.0, 225.0,  45.0,
+                    135.0, -45.0, 225.0, -45.0,
+                     45.0,  45.0, -45.0,  45.0,
+                    -45.0,  45.0, -45.0, -45.0,
+                    -45.0, -45.0,  45.0, -45.0,
+                     45.0, -45.0,  45.0,  45.0});
 
     partitionv.assign({1, 1, 1, 1,
                        0, 0, 0, 0, 0, 0, 0, 0});
