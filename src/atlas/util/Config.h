@@ -13,6 +13,7 @@
 #include <string>
 
 #include "eckit/config/LocalConfiguration.h"
+#include "eckit/log/JSON.h"
 
 namespace eckit {
 class PathName;
@@ -77,7 +78,7 @@ public:
 
     std::vector<std::string> keys() const;
 
-    std::string json() const;
+    std::string json(eckit::JSON::Formatting = eckit::JSON::Formatting::indent()) const;
 };
 
 // ------------------------------------------------------------------
