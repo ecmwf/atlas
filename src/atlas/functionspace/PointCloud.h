@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2013 ECMWF.
+ * (C) Copyright 2013-2023 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -157,6 +157,8 @@ private:
     Field partition_;
     std::unique_ptr<parallel::HaloExchange> halo_exchange_;
     idx_t levels_{0};
+
+    void setupHaloExchange(void);
 };
 
 //------------------------------------------------------------------------------------------------------
