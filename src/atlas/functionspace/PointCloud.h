@@ -41,11 +41,9 @@ class PointCloud : public functionspace::FunctionSpaceImpl {
 public:
     template <typename Point>
     PointCloud(const std::vector<Point>&);
-    PointCloud(const Field& lonlat);
-    PointCloud(const Field& lonlat, const Field& ghost);
-
-    PointCloud(const FieldSet&);  // assuming lonlat ghost ridx and partition present.
-
+    PointCloud(const Field&);
+    PointCloud(const Field&, const Field&);
+    PointCloud(const FieldSet&);  // assuming lonlat ghost ridx and partition present
     PointCloud(const Grid&);
     ~PointCloud() override {}
     std::string type() const override { return "PointCloud"; }
@@ -148,7 +146,6 @@ private:
     void set_field_metadata(const eckit::Configuration& config, Field& field) const;
 
 
-
 private:
     Field lonlat_;
     Field vertical_;
@@ -158,7 +155,9 @@ private:
     std::unique_ptr<parallel::HaloExchange> halo_exchange_;
     idx_t levels_{0};
 
-    void setupHaloExchange(void);
+    void setupHaloExchange_01(void);
+    void setupHaloExchange_02(void);
+
 };
 
 //------------------------------------------------------------------------------------------------------
@@ -170,12 +169,13 @@ private:
 class PointCloud : public FunctionSpace {
 public:
     PointCloud(const FunctionSpace&);
-    PointCloud(const Field& points);
-    PointCloud(const FieldSet& flds);
+    PointCloud(const Field&);
+    PointCloud(const Field&, const Field&);
+    PointCloud(const FieldSet&);
     PointCloud(const std::vector<PointXY>&);
     PointCloud(const std::vector<PointXYZ>&);
     PointCloud(const std::initializer_list<std::initializer_list<double>>&);
-    PointCloud(const Grid& grid);
+    PointCloud(const Grid&);
 
     operator bool() const { return valid(); }
     bool valid() const { return functionspace_; }
