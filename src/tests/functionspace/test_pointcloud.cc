@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2013 ECMWF.
+ * (C) Copyright 2013-2023 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -7,6 +7,10 @@
  * granted to it by virtue of its status as an intergovernmental organisation
  * nor does it submit to any jurisdiction.
  */
+
+
+// ...XX...
+#include <iostream>
 
 #include "atlas/array.h"
 #include "atlas/field.h"
@@ -176,7 +180,7 @@ double innerproductwithhalo(const atlas::Field& f1, const atlas::Field& f2) {
 }
 
 
-CASE("test_createFieldSet") { 
+CASE("test_halo_exchange_01") { 
   // Here is some ascii art to describe the test.
   // Remote index is the same for both PEs in this case
   //
@@ -325,6 +329,94 @@ CASE("test_createFieldSet") {
   atlas::Log::info() << "values from halo followed by halo adjoint are as expected "
                      << std::endl;
 }
+
+
+CASE("test_halo_exchange_02") { 
+
+  double tolerance(1e-16);
+
+  Field lonlat("lonlat", array::make_datatype<double>(), array::make_shape(12, 2));
+  Field ghost("ghost", array::make_datatype<int>(), array::make_shape(12));
+
+  auto lonlatv = array::make_view<double, 2>(lonlat);
+  auto ghostv = array::make_view<int, 1>(ghost);
+
+  if (atlas::mpi::rank() == 0) {
+    // center followed by clockwise halo starting from top left
+    lonlatv.assign({-45.0,  45.0,  45.0,  45.0,    // center, first row
+                    -45.0, -45.0,  45.0, -45.0,    // center, second row
+                    225.0,  45.0, 135.0,  45.0,    // up
+                    135.0,  45.0, 135.0, -45.0,    // right
+                    135.0, -45.0, 225.0, -45.0,    // down
+                    225.0, -45.0, 225.0,  45.0});  // left
+
+    ghostv.assign({ 0, 0, 0, 0,
+                    1, 1, 1, 1, 1, 1, 1, 1});
+
+  } else if (atlas::mpi::rank() == 1) {
+    // center followed by clockwise halo starting from top left
+    lonlatv.assign({135.0,  45.0, 225.0,  45.0,
+                    135.0, -45.0, 225.0, -45.0,
+                     45.0,  45.0, -45.0,  45.0,
+                    -45.0,  45.0, -45.0, -45.0,
+                    -45.0, -45.0,  45.0, -45.0,
+                     45.0, -45.0,  45.0,  45.0});
+
+    ghostv.assign({ 0, 0, 0, 0,
+                    1, 1, 1, 1, 1, 1, 1, 1});
+  }
+
+ 
+
+
+  auto pcfs = functionspace::PointCloud(lonlat, ghost);
+
+  Field f1 = pcfs.createField<double>(option::name("f1") | option::levels(2));
+  Field f2 = pcfs.createField<double>(option::name("f2") | option::levels(2));
+  auto f1v = array::make_view<double, 2>(f1);
+  auto f2v = array::make_view<double, 2>(f2);
+
+  f1v.assign(0.0);
+  f2v.assign(0.0);
+
+  for (idx_t i = 0; i < f2v.shape(0); ++i) {
+    for (idx_t l = 0; l < f2v.shape(1); ++l) {
+      auto ghostv2 = array::make_view<int, 1>(pcfs.ghost());
+      if (ghostv2(i) == 0) {
+        f1v(i, l) = (atlas::mpi::rank() +1) * 10.0  + i;
+        f2v(i, l) =  f1v(i, l);
+      }
+    }
+  }
+
+  f2.haloExchange();
+
+   // adjoint test
+  double sum1 = innerproductwithhalo(f2, f2);
+
+  f2.adjointHaloExchange();
+
+  double sum2 = innerproductwithhalo(f1, f2);
+
+  atlas::mpi::comm().allReduceInPlace(sum1, eckit::mpi::sum());
+  atlas::mpi::comm().allReduceInPlace(sum2, eckit::mpi::sum());
+  EXPECT(std::abs(sum1 - sum2)/ std::abs(sum1) < tolerance);
+  atlas::Log::info() << "adjoint test passed :: "
+                     << "sum1 " << sum1 << " sum2 " << sum2 << " normalised difference "
+                     << std::abs(sum1 - sum2)/ std::abs(sum1) << std::endl;
+
+  // In this case the effect of the halo exchange followed by the adjoint halo exchange
+  // multiples the values by a factor of 3 (see pictures above)
+  for (idx_t i = 0; i < f2v.shape(0); ++i) {
+    for (idx_t l = 0; l < f2v.shape(1); ++l) {
+       EXPECT( std::abs(f2v(i, l) - 3.0 * f1v(i, l)) < tolerance);
+    }
+  }
+  atlas::Log::info() << "values from halo followed by halo adjoint are as expected "
+                     << std::endl;
+
+}
+
 
 
 
