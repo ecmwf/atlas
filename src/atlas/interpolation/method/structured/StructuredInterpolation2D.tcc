@@ -41,6 +41,22 @@
 #include "atlas/util/NormaliseLongitude.h"
 #include "atlas/util/Point.h"
 
+// With nvidia/22.1, following error is encountered during interpolation.
+//     NVC++-S-0000-Internal compiler error. BAD sptr in var_refsym       0
+// It is observed to have been fixed with nvidia/22.11
+// Disabling OpenMP in this routine for nvidia < 22.11 seems to fix things
+#if defined(__NVCOMPILER)
+#if (__NVCOMPILER_MAJOR__*100) + __NVCOMPILER_MINOR__ < 2211
+#warning "Disabled OpenMP for StructuredInterpolation2D due to internal compiler error"
+#undef atlas_omp_parallel
+#define atlas_omp_parallel
+#undef atlas_omp_for
+#define atlas_omp_for for
+#endif
+#endif
+
+
+
 namespace atlas {
 namespace interpolation {
 namespace method {
@@ -365,7 +381,7 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source ) {
             return 1;
         };
 
-        auto interpolate_omp = [&]( idx_t out_npts, auto lonlat, auto ghost) {
+        auto interpolate_omp = [&failed_points,interpolate_point]( idx_t out_npts, auto lonlat, auto ghost) {
             atlas_omp_parallel {
                 WorkSpace workspace;
                 atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
@@ -523,7 +539,7 @@ void StructuredInterpolation2D<Kernel>::execute_impl( const Kernel& kernel, cons
 
     std::vector<idx_t> failed_points;
 
-    auto interpolate_omp = [&]( idx_t out_npts, auto lonlat, auto ghost) {
+    auto interpolate_omp = [&failed_points,interpolate_point]( idx_t out_npts, auto lonlat, auto ghost) {
         atlas_omp_parallel {
             WorkSpace workspace;
             atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
