@@ -9,9 +9,6 @@
  */
 
 
-// ...XX...
-#include <iostream>
-
 #include "atlas/array.h"
 #include "atlas/field.h"
 #include "atlas/functionspace/PointCloud.h"
