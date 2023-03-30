@@ -92,6 +92,22 @@ ecbuild_add_test( TARGET atlas_test_pointcloud
   CONDITION eckit_HAVE_MPI AND NOT HAVE_GRIDTOOLS_STORAGE
 )
 
+ecbuild_add_test( TARGET atlas_test_pointcloud_he_2PE
+  SOURCES  test_pointcloud_haloexchange_2PE.cc
+  LIBS     atlas
+  MPI 2
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION eckit_HAVE_MPI AND NOT HAVE_GRIDTOOLS_STORAGE
+)
+
+ecbuild_add_test( TARGET atlas_test_pointcloud_he_3PE
+  SOURCES  test_pointcloud_haloexchange_3PE.cc
+  LIBS     atlas
+  MPI 3
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION eckit_HAVE_MPI AND NOT HAVE_GRIDTOOLS_STORAGE
+)
+
 ecbuild_add_test( TARGET atlas_test_reduced_halo
   SOURCES test_reduced_halo.cc
   LIBS    atlas
