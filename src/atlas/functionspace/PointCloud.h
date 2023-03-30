@@ -53,6 +53,7 @@ public:
     Field lonlat() const override { return lonlat_; }
     const Field& vertical() const { return vertical_; }
     Field ghost() const override;
+    Field remote_index() const override { return remote_index_; }
     virtual idx_t size() const override { return lonlat_.shape(0); }
 
     using FunctionSpaceImpl::createField;
