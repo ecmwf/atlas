@@ -61,10 +61,10 @@ CASE("test_halo_exchange_01") {
     no_points = 12;
   }
 
-  Field lonlat("lonlat", atlas::array::make_datatype<double>(),
+  Field lonlat("lonlat", array::make_datatype<double>(),
     array::make_shape(no_points, 2));
   // ghost points flags: 0={is not a ghost point}, 1={is a ghost point}
-  Field gpoints("ghost", atlas::array::make_datatype<int>(),
+  Field gpoints("ghost", array::make_datatype<int>(),
     array::make_shape(no_points));
 
   auto lonlatv = array::make_view<double, 2>(lonlat);
