@@ -72,12 +72,37 @@ public:
     };
 
     template <typename stencil_t>
-    void compute_stencil(const double x, const double y, stencil_t& stencil) const {
+    void compute_stencil(double& x, const double y, stencil_t& stencil, bool retry = true) const {
         compute_horizontal_stencil_(x, y, stencil);
+        for (idx_t j = 0; j < stencil_width(); ++j) {
+            idx_t imin = stencil.i(0, j);
+            idx_t imax = stencil.i(stencil_width()-1, j);
+            if (imin < src_.i_begin_halo(stencil.j(j))) {
+                if (retry ) {
+                    x += 360.;
+                    compute_stencil(x, y, stencil, false);
+                }
+                else {
+                    Log::error() << "Stencil out of bounds" << std::endl;
+                    ATLAS_THROW_EXCEPTION("stencil out of bounds");
+                }
+            }
+            if (imax >= src_.i_end_halo(stencil.j(j))) {
+                if (retry ) {
+                    x -= 360.;
+                    compute_stencil(x, y, stencil, false);
+                }
+                else {
+                    Log::error() << "Stencil out of bounds" << std::endl;
+                    ATLAS_THROW_EXCEPTION("Stencil out of bounds");
+                }
+            }
+        }
+
     }
 
     template <typename weights_t>
-    void compute_weights(const double x, const double y, weights_t& weights) const {
+    void compute_weights(double x, const double y, weights_t& weights) const {
         Stencil stencil;
         compute_stencil(x, y, stencil);
         compute_weights(x, y, stencil, weights);
@@ -204,7 +229,7 @@ public:
     }
 
     template <typename array_t>
-    typename array_t::value_type operator()(const double x, const double y, const array_t& input) const {
+    typename array_t::value_type operator()(double x, double y, const array_t& input) const {
         Stencil stencil;
         compute_stencil(x, y, stencil);
         Weights weights;
@@ -213,9 +238,9 @@ public:
     }
 
     template <typename array_t>
-    typename array_t::value_type interpolate(const PointLonLat& p, const array_t& input, WorkSpace& ws) const {
-        compute_stencil(p.lon(), p.lat(), ws.stencil);
-        compute_weights(p.lon(), p.lat(), ws.stencil, ws.weights);
+    typename array_t::value_type interpolate(PointXY p, const array_t& input, WorkSpace& ws) const {
+        compute_stencil(p.x(), p.y(), ws.stencil);
+        compute_weights(p.x(), p.y(), ws.stencil, ws.weights);
         return interpolate(ws.stencil, ws.weights, input);
     }
 
@@ -239,8 +264,8 @@ public:
         insert_triplets(row, p.x(), p.y(), triplets, ws);
     }
 
-    void insert_triplets(const idx_t row, const double x, const double y, Triplets& triplets, WorkSpace& ws) const {
-        compute_horizontal_stencil_(x, y, ws.stencil);
+    void insert_triplets(const idx_t row, double x, double y, Triplets& triplets, WorkSpace& ws) const {
+        compute_stencil(x, y, ws.stencil);
         compute_weights(x, y, ws.stencil, ws.weights);
         const auto& wj = ws.weights.weights_j;
 

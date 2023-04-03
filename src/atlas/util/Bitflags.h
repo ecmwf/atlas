@@ -17,14 +17,6 @@ namespace util {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-// Forward declaration of BitflagsView, defined further down in this file
-namespace detail {
-template <typename T>
-class BitflagsView {};
-}  // namespace detail
-
-//----------------------------------------------------------------------------------------------------------------------
-
 /// @brief Convenience class to modify and interpret bitflags
 class Bitflags {
 public:
@@ -53,17 +45,22 @@ public:
     }
 
     /// @brief Create convenience accessor to modify flags
-    /// @note Use `auto` for return type! (will be more clear with C++14)
-    static detail::BitflagsView<int> view(int& flags);
+    /// @note `auto` for return type! BitflagsView is a detail
+    static auto view(int& flags);
 
     /// @brief Create convenience accessor to modify flags
-    /// @note Use `auto` for return type! (will be more clear with C++14)
-    static detail::BitflagsView<const int> view(const int& flags);
+    /// @note `auto` for return type! BitflagsView is a detail
+    static auto view(const int& flags);
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
 namespace detail {
+
+//----------------------------------------------------------------------------------------------------------------------
+
+template <typename T>
+class BitflagsView {};
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -103,10 +100,10 @@ public:
 
 //----------------------------------------------------------------------------------------------------------------------
 
-inline detail::BitflagsView<const int> Bitflags::view(const int& flags) {
+inline auto Bitflags::view(const int& flags) {
     return detail::BitflagsView<const int>(flags);
 }
-inline detail::BitflagsView<int> Bitflags::view(int& flags) {
+inline auto Bitflags::view(int& flags) {
     return detail::BitflagsView<int>(flags);
 }
 

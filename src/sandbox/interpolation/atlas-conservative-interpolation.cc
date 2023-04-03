@@ -45,6 +45,7 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/util/Config.h"
+#include "atlas/util/function/MDPI_functions.h"
 #include "atlas/util/function/SolidBodyRotation.h"
 #include "atlas/util/function/SphericalHarmonic.h"
 #include "atlas/util/function/VortexRollup.h"
@@ -154,6 +155,22 @@ std::function<double(const PointLonLat&)> get_init(const AtlasTool::Args& args) 
         args.get("solid_body_rotation.angle", beta = 0.);
         util::function::SolidBodyRotation sbr(beta);
         return [sbr](const PointLonLat& p) { return sbr.windMagnitude(p.lon(), p.lat()); };
+    }
+    else if (init == "MDPI_sinusoid") {
+        auto sbr = util::function::MDPI_sinusoid;
+        return [sbr](const PointLonLat& p) { return sbr(p.lon(), p.lat()); };
+    }
+    else if (init == "MDPI_harmonic") {
+        auto sbr = util::function::MDPI_harmonic;
+        return [sbr](const PointLonLat& p) { return sbr(p.lon(), p.lat()); };
+    }
+    else if (init == "MDPI_vortex") {
+        auto sbr = util::function::MDPI_vortex;
+        return [sbr](const PointLonLat& p) { return sbr(p.lon(), p.lat()); };
+    }
+    else if (init == "MDPI_gulfstream") {
+        auto sbr = util::function::MDPI_gulfstream;
+        return [sbr](const PointLonLat& p) { return sbr(p.lon(), p.lat()); };
     }
     else {
         if (args.has("init")) {

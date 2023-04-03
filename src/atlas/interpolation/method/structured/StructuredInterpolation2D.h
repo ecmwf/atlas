@@ -35,17 +35,18 @@ class StructuredInterpolation2D : public Method {
 public:
     StructuredInterpolation2D(const Config& config);
 
-    virtual ~StructuredInterpolation2D() override {}
+    ~StructuredInterpolation2D() override {}
 
-    virtual void print(std::ostream&) const override;
+    void print(std::ostream&) const override;
 
+    const Kernel& kernel() const { return *kernel_; }
+
+    const FunctionSpace& source() const override { return source_; }
+
+    const FunctionSpace& target() const override { return target_; }
 
 protected:
     void setup(const FunctionSpace& source);
-
-    virtual const FunctionSpace& source() const override { return source_; }
-
-    virtual const FunctionSpace& target() const override { return target_; }
 
 private:
     virtual void do_setup(const Grid& source, const Grid& target, const Cache&) override;
@@ -75,6 +76,9 @@ protected:
     FunctionSpace target_;
 
     bool matrix_free_;
+    bool verbose_;
+    double convert_units_;
+    idx_t out_npts_;
 
     std::unique_ptr<Kernel> kernel_;
 };
