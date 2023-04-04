@@ -156,8 +156,7 @@ private:
     std::unique_ptr<parallel::HaloExchange> halo_exchange_;
     idx_t levels_{0};
 
-    void setupHaloExchange_01(void);
-    void setupHaloExchange_02(void);
+    void setupHaloExchange();
 
 };
 
