@@ -25,6 +25,7 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/util/Point.h"
+#include "atlas/util/Unique.h"
 
 #include "eckit/mpi/Comm.h"
 
@@ -315,6 +316,12 @@ void PointCloud::setupHaloExchange(){
 
       std::vector<PointXY> opoints_local;
       std::vector<PointXY> gpoints_local;
+      std::vector<uidx_t> lonlat_u;
+      std::vector<uidx_t> opoints_local_u;
+
+      for (idx_t i = 0; i < lonlat_v.shape(0); ++i){
+        lonlat_u.emplace_back(util::unique_lonlat(lonlat_v(i, XX), lonlat_v(i, YY)));
+      }
 
       idx_t j {0};
       for (idx_t i = 0; i < is_ghost.shape(0); ++i) {
@@ -323,6 +330,7 @@ void PointCloud::setupHaloExchange(){
 	  gpoints_local.emplace_back(loc);
 	} else {
 	  opoints_local.emplace_back(loc);
+          opoints_local_u.emplace_back(util::unique_lonlat(loc.x(), loc.y()));
 	}
 	++j;
       }
@@ -349,16 +357,21 @@ void PointCloud::setupHaloExchange(){
 	}
       }
 
+      std::vector<uidx_t> gpoints_global_u;
+      for (atlas::PointXY& loc : gpoints_global) {
+        gpoints_global_u.emplace_back(util::unique_lonlat(loc.x(), loc.y()));
+      }
+
       std::vector<int> partition_ids_gp_global(gpoints_global.size(), -1);
       std::vector<int> remote_index_gp_global(gpoints_global.size(), -1);
 
-      std::vector<PointXY>::iterator iter_xy_gp_01;
+      std::vector<uidx_t>::iterator iter_xy_gp_01;
 
-      for (std::size_t idx = 0; idx < gpoints_global.size(); ++idx) {
-	iter_xy_gp_01 = std::find(opoints_local.begin(),
-				  opoints_local.end(), gpoints_global.at(idx));
-	if (iter_xy_gp_01 != opoints_local.end()) {
-	  std::size_t ridx = std::distance(opoints_local.begin(), iter_xy_gp_01);
+      for (std::size_t idx = 0; idx < gpoints_global_u.size(); ++idx) {
+	iter_xy_gp_01 = std::find(opoints_local_u.begin(),
+				  opoints_local_u.end(), gpoints_global_u.at(idx));
+	if (iter_xy_gp_01 != opoints_local_u.end()) {
+	  std::size_t ridx = std::distance(opoints_local_u.begin(), iter_xy_gp_01);
 	  partition_ids_gp_global.at(idx) = mpi_rank;
 	  remote_index_gp_global.at(idx) = ridx;
 	}
@@ -373,13 +386,13 @@ void PointCloud::setupHaloExchange(){
       std::vector<idx_t> remote_index_local(lonlat_v.shape(0), -1);
 
       idx_t idx_loc {0};
-      std::vector<PointXY>::iterator iter_xy_gp_02;
+      std::vector<uidx_t>::iterator iter_xy_gp_02;
 
       for (idx_t i = 0; i < lonlat_v.shape(0); ++i){
-	PointXY loc(lonlat_v(i, XX), lonlat_v(i, YY));
-	iter_xy_gp_02 = std::find(gpoints_global.begin(), gpoints_global.end(), loc);
-	if (iter_xy_gp_02 != gpoints_global.end()) {
-	  std::size_t idx_gp = std::distance(gpoints_global.begin(), iter_xy_gp_02);
+        iter_xy_gp_02 = std::find(gpoints_global_u.begin(),
+                                  gpoints_global_u.end(), lonlat_u.at(i));
+	if (iter_xy_gp_02 != gpoints_global_u.end()) {
+	  std::size_t idx_gp = std::distance(gpoints_global_u.begin(), iter_xy_gp_02);
 	  partition_ids_local[idx_loc] = partition_ids_gp_global[idx_gp];
 	  remote_index_local[idx_loc] = remote_index_gp_global[idx_gp];
 	} else {
