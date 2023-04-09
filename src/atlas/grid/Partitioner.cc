@@ -39,6 +39,9 @@ namespace {
 detail::partitioner::Partitioner* partitioner_from_config(const std::string& type, const Partitioner::Config& config) {
     long partitions = mpi::size();
     config.get("partitions", partitions);
+    if (partitions==1) {
+        return Factory::build("serial");
+    }
     return Factory::build(type, partitions, config);
 }
 detail::partitioner::Partitioner* partitioner_from_config(const Partitioner::Config& config) {
