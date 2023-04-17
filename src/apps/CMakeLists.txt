@@ -25,6 +25,11 @@ ecbuild_add_executable(
   CONDITION   atlas_HAVE_ATLAS_GRID )
 
 ecbuild_add_executable(
+  TARGET      atlas-grid-points
+  SOURCES     atlas-grid-points.cc
+  LIBS        atlas )
+
+ecbuild_add_executable(
   TARGET      atlas-gaussian-latitudes
   SOURCES     atlas-gaussian-latitudes.cc
   LIBS        atlas
