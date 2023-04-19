@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "atlas/array/ArrayUtil.h"
+#include "atlas/array/ArrayDataStore.h"
 #include "atlas/array/gridtools/GridToolsTraits.h"
 
 //------------------------------------------------------------------------------

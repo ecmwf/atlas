@@ -165,6 +165,8 @@ public:  // methods
     FieldSet(const std::string& name);
     FieldSet(const Field&);
 
+    FieldSet clone(const eckit::Parametrisation& config = util::Config()) const;
+
     idx_t size() const { return get()->size(); }
     bool empty() const { return get()->empty(); }
 
