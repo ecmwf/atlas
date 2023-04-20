@@ -210,6 +210,8 @@ public:  // methods
     const_iterator cend() const { return get()->end(); }
 
     void haloExchange(bool on_device = false) const { get()->haloExchange(on_device); }
+    void adjointHaloExchange(bool on_device = false) const { get()->adjointHaloExchange(on_device); }
+
     void set_dirty(bool = true) const;
 
     // Deprecated API
