@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2013 ECMWF.
+ * (C) Copyright 2013-2023 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -150,6 +150,14 @@ FieldSet::FieldSet(const std::string& name): Handle(new Implementation(name)) {}
 
 FieldSet::FieldSet(const Field& field): Handle(new Implementation()) {
     get()->add(field);
+}
+
+const util::Metadata& FieldSet::metadata() const {
+    return get()->metadata();
+}
+
+util::Metadata& FieldSet::metadata() {
+    return get()->metadata();
 }
 
 void FieldSet::set_dirty(bool value) const {
