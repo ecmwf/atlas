@@ -311,6 +311,8 @@ endif()
 
 list( APPEND atlas_mesh_srcs
 mesh.h
+mesh/BuildMeshFromConnectivities.cc
+mesh/BuildMeshFromConnectivities.h
 mesh/Connectivity.cc
 mesh/Connectivity.h
 mesh/ElementType.cc

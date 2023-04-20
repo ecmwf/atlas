@@ -114,6 +114,20 @@ if( TEST atlas_test_cubedsphere_meshgen )
     set_tests_properties( atlas_test_cubedsphere_meshgen PROPERTIES TIMEOUT 30 )
 endif()
 
+ecbuild_add_test( TARGET atlas_test_build_mesh_from_connectivities
+  SOURCES test_build_mesh_from_connectivities.cc
+  LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+ecbuild_add_test( TARGET atlas_test_build_mesh_from_connectivities_parallel
+  MPI        6
+  CONDITION  eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 6
+  SOURCES test_build_mesh_from_connectivities_parallel.cc
+  LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_executable( TARGET atlas_test_mesh_reorder
   SOURCES  test_mesh_reorder.cc
   LIBS     atlas
