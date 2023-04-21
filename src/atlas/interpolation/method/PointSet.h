@@ -72,6 +72,31 @@ public:  // methods
         }
     }
 
+    void list_unique_points(std::vector<size_t>& opts) {
+        ATLAS_TRACE("Finding unique points");
+
+        ATLAS_ASSERT(opts.empty());
+
+        opts.reserve(npts_);
+
+        for (PointIndex3::iterator i = tree_->begin(); i != tree_->end(); ++i) {
+            Point p(i->point());
+            size_t ip = i->payload();
+            //            std::cout << "point " << ip << " " << p << std::endl;
+            size_t uidx = unique(p, ip);
+            if (ip == uidx) {
+                opts.push_back(ip);
+                //                std::cout << "----> UNIQ " << ip << std::endl;
+            }
+            else {
+                //                std::cout << "----> DUP " << ip << " -> " << uidx <<
+                //                std::endl;
+            }
+            //            ++show_progress;
+        }
+    }
+
+
     size_t unique(const Point& p, size_t idx = std::numeric_limits<size_t>::max()) {
         DupStore_t::iterator dit = duplicates_.find(idx);
         if (dit != duplicates_.end()) {

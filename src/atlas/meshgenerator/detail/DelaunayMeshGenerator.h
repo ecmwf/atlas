@@ -39,7 +39,9 @@ private:  // methods
     virtual void generate(const Grid&, const grid::Distribution&, Mesh&) const override;
     virtual void generate(const Grid&, Mesh&) const override;
 
-    void createNodes(const Grid&, Mesh&) const;
+    int part_;
+    bool remove_duplicate_points_;
+    bool reshuffle_;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

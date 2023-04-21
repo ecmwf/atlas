@@ -66,6 +66,8 @@ void ExtendNodesGlobal::operator()(const Grid& grid, Mesh& mesh) const {
     array::ArrayView<double, 2> xy     = array::make_view<double, 2>(nodes.xy());
     array::ArrayView<double, 2> lonlat = array::make_view<double, 2>(nodes.lonlat());
     array::ArrayView<gidx_t, 1> gidx   = array::make_view<gidx_t, 1>(nodes.global_index());
+    array::ArrayView<int, 1>    ghost  = array::make_view<int, 1>(nodes.ghost());
+    array::ArrayView<int, 1>    partition  = array::make_view<int, 1>(nodes.partition());
 
     for (idx_t i = 0; i < nb_extension_pts; ++i) {
         const idx_t n         = nb_real_pts + i;
@@ -82,6 +84,8 @@ void ExtendNodesGlobal::operator()(const Grid& grid, Mesh& mesh) const {
         lonlat(n, LON) = pLL.lon();
         lonlat(n, LAT) = pLL.lat();
         gidx(n)        = n + 1;
+        ghost(n)       = true;
+        partition(n)   = -1;
     }
 }
 
