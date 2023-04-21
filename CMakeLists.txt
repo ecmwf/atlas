@@ -61,6 +61,7 @@ include( features/ATLAS_RUN )
 
 include( atlas_compile_flags )
 
+add_subdirectory(stripack)
 add_subdirectory( src )
 add_subdirectory( doc )
 

@@ -13,7 +13,7 @@
 #include <memory>
 #include <vector>
 #include "eckit/log/BigNum.h"
-
+#include "stripack/stripack.h"
 #include "atlas/library/config.h"
 
 #if ATLAS_HAVE_TESSELATION
@@ -129,7 +129,10 @@ static void cgal_polyhedron_to_atlas_mesh(Mesh& mesh, Polyhedron_3& poly, PointS
             Polyhedron_3::Vertex_const_handle vh = edge->vertex();
             const Polyhedron_3::Point_3& p       = vh->point();
 
-            pt.assign(p);
+            pt[0] = p.x();
+            pt[1] = p.y();
+            pt[2] = p.z();
+            // pt.assign(p);
 
             idx[iedge] = points.unique(pt);
 
@@ -187,6 +190,7 @@ static void cgal_polyhedron_to_atlas_mesh(Mesh& mesh, Polyhedron_3& poly, PointS
 
 //----------------------------------------------------------------------------------------------------------------------
 
+#if 0
 void BuildConvexHull3D::operator()(Mesh& mesh) const {
     // don't tesselate meshes already with triags or quads
     if (mesh.cells().size()) {
@@ -217,6 +221,63 @@ void BuildConvexHull3D::operator()(Mesh& mesh) const {
 
     cgal_polyhedron_to_atlas_mesh(mesh, *poly, points);
 }
+#else
+void BuildConvexHull3D::operator()(Mesh& mesh) const {
+    // don't tesselate meshes already with triags or quads
+    if (mesh.cells().size()) {
+        return;
+    }
+
+    std::vector<size_t> local_index;
+    if (remove_duplicate_points_) {
+        PointSet points(mesh);
+        points.list_unique_points(local_index);
+    }
+
+    ATLAS_TRACE();
+
+    std::vector<std::array<int,3>> triangles;
+
+    if( local_index.size() == mesh.nodes().size() or local_index.empty() ) {
+        auto lonlat = array::make_view<double,2>(mesh.nodes().lonlat());
+        triangles = std::move( stripack::Triangulation(lonlat.shape(0),lonlat,reshuffle_).triangles());
+        local_index.clear();
+    }
+    else {
+        auto lonlat_view = array::make_view<double,2>(mesh.nodes().lonlat());
+
+        std::vector<PointLonLat> lonlat(local_index.size());
+        size_t jnode = 0;
+        for( auto& ip: local_index ) {
+            lonlat[jnode] = {lonlat_view(ip,0),lonlat_view(ip,1)};
+            ++jnode;
+        }
+        triangles = std::move( stripack::Triangulation(lonlat.size(),lonlat,reshuffle_).triangles() );
+    }
+
+    const idx_t nb_triags = triangles.size();
+    mesh.cells().add(new mesh::temporary::Triangle(), nb_triags);
+    mesh::HybridElements::Connectivity& triag_nodes = mesh.cells().node_connectivity();
+    auto triag_gidx = array::make_view<gidx_t, 1>(mesh.cells().global_index());
+    auto triag_part = array::make_view<int, 1>(mesh.cells().partition());
+
+    Log::debug() << "Inserting triags (" << eckit::BigNum(nb_triags) << ")" << std::endl;
+
+    idx_t tidx = 0;
+    for (idx_t tidx = 0; tidx<nb_triags; ++tidx) {
+        auto& t = triangles[tidx];
+        std::array<idx_t,3> idx{t[0],t[1],t[2]};
+        if( local_index.size() ) {
+            idx[0] = local_index[idx[0]];
+            idx[1] = local_index[idx[1]];
+            idx[2] = local_index[idx[2]];
+        }
+        triag_nodes.set(tidx, idx.data());
+        triag_gidx(tidx) = tidx + 1;
+        triag_part(tidx) = 0;
+    }
+}
+#endif
 
 //----------------------------------------------------------------------------------------------------------------------
 
