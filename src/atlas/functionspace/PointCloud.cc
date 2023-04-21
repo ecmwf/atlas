@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2013-2023 ECMWF
+ * (C) Copyright 2013 ECMWF
  * (C) Crown Copyright 2023 Met Office
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
