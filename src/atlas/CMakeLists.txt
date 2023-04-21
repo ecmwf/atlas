@@ -657,14 +657,14 @@ list( APPEND atlas_array_srcs
 array.h
 array_fwd.h
 array/Array.h
+array/ArrayDataStore.cc
+array/ArrayDataStore.h
 array/ArrayIdx.h
 array/ArrayLayout.h
 array/ArrayShape.h
 array/ArraySpec.cc
 array/ArraySpec.h
 array/ArrayStrides.h
-array/ArrayUtil.cc
-array/ArrayUtil.h
 array/ArrayView.h
 array/ArrayViewUtil.h
 array/ArrayViewDefs.h

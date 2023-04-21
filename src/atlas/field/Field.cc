@@ -57,6 +57,17 @@ array::Array& Field::array() {
     return get()->array();
 }
 
+/// @brief Clone
+Field Field::clone(const eckit::Parametrisation& config) const {
+    Field tmp(get()->name(), get()->datatype(), get()->shape());
+    tmp.metadata() = this->metadata();
+    tmp.set_functionspace(this->functionspace());
+    array::Array::CopyPolicy cp;
+      // To be set up via config. For now use default, as Array does not yet implement it.
+    tmp.array().copy(this->array(),cp);
+    return tmp;
+}
+
 // -- Accessors
 
 /// @brief Access to raw data

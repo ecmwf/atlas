@@ -16,10 +16,13 @@
 #include <iosfwd>
 #include <string>
 
+#include "eckit/config/Parametrisation.h"
+
 #include "atlas/array/ArrayShape.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array_fwd.h"
 #include "atlas/library/config.h"
+#include "atlas/util/Config.h"
 #include "atlas/util/ObjectHandle.h"
 
 namespace eckit {
@@ -32,6 +35,7 @@ class FieldImpl;
 }  // namespace atlas
 namespace atlas {
 namespace util {
+class Config;
 class Metadata;
 }
 }  // namespace atlas
@@ -82,6 +86,9 @@ public:
     /// ArrayShape
     template <typename DATATYPE>
     Field(const std::string& name, DATATYPE* data, const array::ArrayShape&);
+
+    /// @brief Deep copy
+    Field clone(const eckit::Parametrisation& = util::Config()) const;
 
     // -- Conversion
 

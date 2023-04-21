@@ -10,7 +10,7 @@
 
 #include <algorithm>
 
-#include "atlas/array/ArrayUtil.h"
+#include "atlas/array/ArrayDataStore.h"
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
 
