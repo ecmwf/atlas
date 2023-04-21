@@ -165,6 +165,7 @@ FieldSet FieldSet::clone(const eckit::Parametrisation& config) const {
     for (idx_t jj = 0; jj < size(); ++jj) {
         fset.add(field(jj).clone(config));
     }
+    fset.metadata() = metadata();
     return fset;
 }
 
