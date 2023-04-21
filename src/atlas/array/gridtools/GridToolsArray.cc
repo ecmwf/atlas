@@ -67,7 +67,7 @@ public:
         static_assert(sizeof...(UInts) > 0, "1");
         auto gt_storage    = create_gt_storage<Value, typename default_layout_t<sizeof...(dims)>::type>(dims...);
         using data_store_t = typename std::remove_pointer<decltype(gt_storage)>::type;
-        array_.data_store_ = std::unique_ptr<GridToolsDataStore<data_store_t>>(gt_storage);
+        array_.data_store_ = std::make_unique<GridToolsDataStore<data_store_t>>(gt_storage);
         array_.spec_       = make_spec(gt_storage, dims...);
     }
 
