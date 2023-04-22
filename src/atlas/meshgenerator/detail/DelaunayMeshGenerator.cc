@@ -65,6 +65,7 @@ void DelaunayMeshGenerator::generate(const Grid& grid, const grid::Distribution&
         auto ghost  = array::make_view<int, 1>(mesh.nodes().ghost());
         auto gidx   = array::make_view<gidx_t, 1>(mesh.nodes().global_index());
         auto part   = array::make_view<int, 1>(mesh.nodes().partition());
+        auto flags  = array::make_view<int, 1>(mesh.nodes().flags());
 
         size_t jnode{0};
         Projection projection = grid.projection();
@@ -81,6 +82,10 @@ void DelaunayMeshGenerator::generate(const Grid& grid, const grid::Distribution&
             ghost(jnode) = part(jnode) != part_;
 
             gidx(jnode) = jnode + 1;
+
+            if (ghost(jnode)) {
+                util::Topology::view(flags(jnode)).set(util::Topology::GHOST);
+            }
 
             ++jnode;
         }
@@ -296,7 +301,7 @@ void DelaunayMeshGenerator::generate(const Grid& grid, const grid::Distribution&
         auto gidx   = array::make_view<gidx_t, 1>(mesh.nodes().global_index());
         auto part   = array::make_view<int, 1>(mesh.nodes().partition());
         auto halo   = array::make_view<int, 1>(mesh.nodes().halo());
-
+        auto flags  = array::make_view<int,1>(mesh.nodes().flags());
         halo.assign(0.);
         std::unordered_map<idx_t,idx_t> from_gnode;
         for (idx_t jnode=0; jnode<owned_nodes.size(); ++jnode) {
@@ -312,6 +317,7 @@ void DelaunayMeshGenerator::generate(const Grid& grid, const grid::Distribution&
             ghost(jnode) = 0;
             gidx(jnode) = g_gidx(gnode);
             part(jnode) = part_;
+            util::Topology::view(flags(jnode)).reset(util::Topology::NONE);
         }
         idx_t jnode = owned_nodes.size();
         for (idx_t gnode: ghost_nodes) {
@@ -323,7 +329,8 @@ void DelaunayMeshGenerator::generate(const Grid& grid, const grid::Distribution&
             lonlat(jnode,idx_t(YY)) = g_lonlat(gnode,idx_t(YY));
             ghost(jnode) = 1;
             gidx(jnode) = g_gidx(gnode);
-            part(jnode) = dist.partition(gnode);
+            part(jnode) = g_part(gnode);
+            util::Topology::view(flags(jnode)).reset(util::Topology::GHOST);
             ++jnode;
         }
 
