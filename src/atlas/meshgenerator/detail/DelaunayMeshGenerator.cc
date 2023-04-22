@@ -122,32 +122,171 @@ void DelaunayMeshGenerator::generate(const Grid& grid, const grid::Distribution&
         std::set<idx_t> ghost_nodes;
         std::vector<idx_t> owned_elements;
         owned_elements.reserve(1.4*owned_nodes_count);
-        for (idx_t jelem=0; jelem<global_mesh.cells().size(); ++jelem) {
-            std::array<idx_t,3> elem_nodes {
-            g_node_connectivity(jelem,0),
-            g_node_connectivity(jelem,1),
-            g_node_connectivity(jelem,2)
-            };
-            std::array<idx_t,3> elem_nodes_partition;
+        std::set<idx_t> element_nodes_uncertainty;
+        std::set<idx_t> element_uncertainty;
+        constexpr idx_t OWNED = -1;
+        constexpr idx_t GHOST = -2;
+        constexpr idx_t UNCERTAIN = -3;
+        constexpr idx_t CERTAIN = -4;
+
+        auto elem_node_partition = [&](idx_t jelem, idx_t jnode) -> int {
+            return g_part(g_node_connectivity(jelem,jnode));
+        };
+
+        auto get_elem_ownership = [&](idx_t jelem) -> int {
+            int p0 = elem_node_partition(jelem,0);
+            int p1 = elem_node_partition(jelem,1);
+            int p2 = elem_node_partition(jelem,2);
+            if (p0 != part_ && p1 != part_ && p2 != part_) {
+                return GHOST;
+            }
+            if ((p0 == p1 || p0 == p2) && p0 == part_) {
+                return OWNED;
+            }
+            else if (p1 == p2 && p1 == part_) {
+                return OWNED;
+            }
+            else if ( p0 == p1 || p0 == p2 || p1 == p2 ) {
+                return CERTAIN;
+            }
+            return UNCERTAIN;
+        };
+
+        auto get_elem_part = [&](idx_t jelem) -> int {
+            int p0 = elem_node_partition(jelem,0);
+            int p1 = elem_node_partition(jelem,1);
+            int p2 = elem_node_partition(jelem,2);
+            if (p0 == p1 || p0 == p2) {
+                return p0;
+            }
+            else if (p1 == p2) {
+                return p1;
+            }
+            return UNCERTAIN;
+        };
+
+
+        auto collect_element = [&](idx_t jelem){
+            owned_elements.emplace_back(jelem);
             for (idx_t j=0; j<3; ++j) {
-                elem_nodes_partition[j] = g_part(elem_nodes[j]);
+                if (elem_node_partition(jelem,j) != part_) {
+                    ghost_nodes.insert(g_node_connectivity(jelem,j));
+                }
             }
-            idx_t elem_partition = -1;
-            if (elem_nodes_partition[0] >= 0 ) {
-                elem_partition = elem_nodes_partition[0];
+        };
+
+        for (idx_t jelem=0; jelem<global_mesh.cells().size(); ++jelem) {
+            idx_t elem_ownership = get_elem_ownership(jelem);
+            if (elem_ownership == OWNED) {
+                collect_element(jelem);
             }
-            if (elem_nodes_partition[1] == elem_nodes_partition[2] && elem_nodes_partition[1] >= 0) {
-            elem_partition = elem_nodes_partition[1];
+            else if (elem_ownership == UNCERTAIN) {
+                // all three are different
+                element_nodes_uncertainty.insert(g_node_connectivity(jelem,0));
+                element_nodes_uncertainty.insert(g_node_connectivity(jelem,1));
+                element_nodes_uncertainty.insert(g_node_connectivity(jelem,2));
+                element_uncertainty.insert(jelem);
             }
-            if (elem_partition == part_) {
-                owned_elements.emplace_back(jelem);
-                for (idx_t j=0; j<3; ++j) {
-                    if (elem_nodes_partition[j] != elem_partition) {
-                        ghost_nodes.insert(elem_nodes[j]);
+        }
+        // Log::info() << "element_uncertainty" << std::endl;
+        // for( auto& jelem: element_uncertainty ) {
+        //     Log::info() << jelem << std::endl;
+        // }
+
+        if( element_uncertainty.size() ) {
+            std::map<idx_t,std::vector<idx_t>> node2element;
+            for (idx_t jelem=0; jelem<global_mesh.cells().size(); ++jelem) {
+                for (idx_t jj=0; jj<3; ++jj) {
+                    idx_t n = g_node_connectivity(jelem,jj);
+                    if (element_nodes_uncertainty.find(n) != element_nodes_uncertainty.end()) {
+                        auto it = node2element.find(n);
+                        if (it == node2element.end()) {
+                            node2element[n].emplace_back(jelem);
+                        }
+                        else {
+                            it->second.emplace_back(jelem);
+                        }
                     }
                 }
             }
-        }
+            // Log::info() << "node2element" << std::endl;
+            // for( auto& pair: node2element ) {
+            //     idx_t jnode = pair.first;
+            //     auto& elems = pair.second;
+            //     // Log::info() << jnode << " : " << elems << std::endl;
+            // }
+
+            auto get_elem_edge = [&](idx_t jelem, idx_t jedge) {
+                if (jedge == 0) {
+                    return std::array<idx_t,2>{
+                        g_node_connectivity(jelem,0),
+                        g_node_connectivity(jelem,1),
+                    };
+                }
+                else if(jedge == 1) {
+                    return std::array<idx_t,2>{
+                        g_node_connectivity(jelem,1),
+                        g_node_connectivity(jelem,2),
+                    };
+                }
+                else if(jedge == 2) {
+                    return std::array<idx_t,2>{
+                        g_node_connectivity(jelem,2),
+                        g_node_connectivity(jelem,0),
+                    };
+                }
+                return std::array<idx_t,2>{-1,-1};
+            };
+
+            auto get_elem_neighbours = [&](idx_t jelem) -> std::array<idx_t,3> {
+                std::array<idx_t,3> elem_neighbours{-1,-1,-1};
+                idx_t jneighbour=0;
+                for (idx_t jedge=0; jedge<3; ++jedge) {
+                    auto edge = get_elem_edge(jelem,jedge);
+                    // Log::info() << "jelem,jedge " << jelem << "," << jedge << " : " << edge << "   p: " << g_part(edge[0]) << " " <<   g_part(edge[1]) << std::endl;
+                    auto& elem_candidates = node2element.at(edge[0]);
+                    for (auto& ielem : elem_candidates) {
+                        for (idx_t iedge=0; iedge<3; ++iedge) {
+                            auto candidate_edge = get_elem_edge(ielem,iedge);
+                            if ( edge[0] == candidate_edge[1] && edge[1] == candidate_edge[0] ) {
+                                elem_neighbours[jneighbour++] = ielem;
+                                goto next_neighbour;
+                            }
+                        }
+                    }
+                    next_neighbour:;
+                }
+                return elem_neighbours;
+            };
+            
+            for( idx_t jelem : element_uncertainty ) {
+                auto elem_neighbours = get_elem_neighbours(jelem);
+                idx_t e0 = elem_neighbours[0] >= 0 ? get_elem_part(elem_neighbours[0]) : UNCERTAIN;
+                idx_t e1 = elem_neighbours[1] >= 0 ? get_elem_part(elem_neighbours[1]) : UNCERTAIN;
+                idx_t e2 = elem_neighbours[2] >= 0 ? get_elem_part(elem_neighbours[2]) : UNCERTAIN;
+
+                idx_t elem_part = UNCERTAIN;
+                if (e0 == e1 || e0 == e2) {
+                    elem_part = e0;
+                }
+                else if (e1 == e2) {
+                    elem_part = e1;
+                }
+                else if (e0 != UNCERTAIN) {
+                    elem_part = e0;
+                }
+                else if (e1 != UNCERTAIN) {
+                    elem_part = e1;
+                }
+                else if (e2 != UNCERTAIN) {
+                    elem_part = e2;
+                }
+                if (elem_part == part_) {
+                    collect_element(jelem);
+                }
+            }
+        } 
+
         size_t nb_nodes = owned_nodes.size() + ghost_nodes.size();
 
         mesh.nodes().resize(nb_nodes);
