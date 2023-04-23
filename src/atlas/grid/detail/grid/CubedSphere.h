@@ -345,7 +345,7 @@ public:
 
     // Note that i is the fastest index, followed by j, followed by t
     std::unique_ptr<int[]> nextElement(const idx_t i, const idx_t j, const idx_t t) const {
-        std::unique_ptr<int[]> ijt(new int[3]);
+        auto ijt = std::make_unique<int[]>(3);
 
         ijt[0] = i;
         ijt[1] = j;
@@ -396,22 +396,22 @@ public:
     // ----------------------------
 
     virtual std::unique_ptr<Grid::IteratorXY> xy_begin() const override {
-        return std::unique_ptr<Grid::IteratorXY>(new IteratorXY(*this));
+        return std::make_unique<IteratorXY>(*this);
     }
     virtual std::unique_ptr<Grid::IteratorXY> xy_end() const override {
-        return std::unique_ptr<Grid::IteratorXY>(new IteratorXY(*this, false));
+        return std::make_unique<IteratorXY>(*this, false);
     }
     virtual std::unique_ptr<Grid::IteratorLonLat> lonlat_begin() const override {
-        return std::unique_ptr<Grid::IteratorLonLat>(new IteratorLonLat(*this));
+        return std::make_unique<IteratorLonLat>(*this);
     }
     virtual std::unique_ptr<Grid::IteratorLonLat> lonlat_end() const override {
-        return std::unique_ptr<Grid::IteratorLonLat>(new IteratorLonLat(*this, false));
+        return std::make_unique<IteratorLonLat>(*this, false);
     }
     virtual std::unique_ptr<IteratorTIJ> tij_begin() const {
-        return std::unique_ptr<IteratorTIJ>(new IteratorTIJ(*this));
+        return std::make_unique<IteratorTIJ>(*this);
     }
     virtual std::unique_ptr<IteratorTIJ> tij_end() const {
-        return std::unique_ptr<IteratorTIJ>(new IteratorTIJ(*this, false));
+        return std::make_unique<IteratorTIJ>(*this, false);
     }
 
     // Default configurations

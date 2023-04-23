@@ -27,6 +27,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
+#include "atlas/util/Metadata.h"
 #include "atlas/util/Object.h"
 #include "atlas/util/ObjectHandle.h"
 
@@ -112,6 +113,9 @@ public:  // methods
     const_iterator cbegin() const { return fields_.begin(); }
     const_iterator cend() const { return fields_.end(); }
 
+    const util::Metadata& metadata() const { return metadata_; }
+    util::Metadata& metadata() { return metadata_; }
+
     void haloExchange(bool on_device = false) const;
     void adjointHaloExchange(bool on_device = false) const;
     void set_dirty(bool = true) const;
@@ -119,6 +123,7 @@ public:  // methods
 protected:                                // data
     std::vector<Field> fields_;           ///< field storage
     std::string name_;                    ///< internal name
+    util::Metadata metadata_;             ///< metadata associated with the FieldSet
     std::map<std::string, idx_t> index_;  ///< name-to-index map, to refer fields by name
 };
 
@@ -159,6 +164,8 @@ public:  // methods
     FieldSet();
     FieldSet(const std::string& name);
     FieldSet(const Field&);
+
+    FieldSet clone(const eckit::Parametrisation& config = util::Config()) const;
 
     idx_t size() const { return get()->size(); }
     bool empty() const { return get()->empty(); }
@@ -209,7 +216,12 @@ public:  // methods
     const_iterator cbegin() const { return get()->begin(); }
     const_iterator cend() const { return get()->end(); }
 
+    const util::Metadata& metadata() const;
+    util::Metadata& metadata();
+
     void haloExchange(bool on_device = false) const { get()->haloExchange(on_device); }
+    void adjointHaloExchange(bool on_device = false) const { get()->adjointHaloExchange(on_device); }
+
     void set_dirty(bool = true) const;
 
     // Deprecated API

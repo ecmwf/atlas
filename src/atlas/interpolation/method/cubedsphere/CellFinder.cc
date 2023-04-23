@@ -37,8 +37,8 @@ CellFinder::CellFinder(const Mesh& mesh, const util::Config& config): mesh_{mesh
     auto halo = config.getInt("halo", 0);
     for (idx_t i = 0; i < mesh_.cells().size(); ++i) {
         if (haloView(i) <= halo) {
-            points.push_back(PointLonLat(lonlatView(i, LON), lonlatView(i, LAT)));
-            payloads.push_back(i);
+            points.emplace_back(PointLonLat(lonlatView(i, LON), lonlatView(i, LAT)));
+            payloads.emplace_back(i);
         }
     }
 
@@ -73,7 +73,7 @@ CellFinder::Cell CellFinder::getCell(const PointLonLat& lonlat, size_t listSize,
             break;
         }
 
-        const auto t   = cellTijView(i);
+        const auto t   = cellTijView(i,0);
         const auto row = nodeConnectivity.row(i);
 
         if (row.size() == 4) {

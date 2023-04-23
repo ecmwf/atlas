@@ -83,8 +83,10 @@ public:
     Field createField(const eckit::Configuration&) const override;
     Field createField(const Field&, const eckit::Configuration&) const override;
 
+    using FunctionSpaceImpl::scatter;
     void scatter(const FieldSet&, FieldSet&) const override;
     void scatter(const Field&, Field&) const override;
+    using FunctionSpaceImpl::gather;
     void gather(const FieldSet&, FieldSet&) const override;
     void gather(const Field&, Field&) const override;
 

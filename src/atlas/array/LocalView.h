@@ -18,7 +18,7 @@
 #include <cstddef>
 #include <type_traits>
 
-#include "atlas/array/ArrayUtil.h"
+#include "atlas/array/ArrayDataStore.h"
 #include "atlas/array/ArrayViewDefs.h"
 #include "atlas/array/helpers/ArraySlicer.h"
 #include "atlas/library/config.h"

@@ -58,7 +58,6 @@ static bool feature_MKL() {
 #include "atlas/util/Config.h"
 
 #if ATLAS_HAVE_TRANS
-#include "atlas/library/config.h"
 #if ATLAS_HAVE_ECTRANS
 #include "ectrans/transi.h"
 #else
@@ -305,7 +304,7 @@ void Library::initialise(const eckit::Parametrisation& config) {
                 Adaptor(const eckit::CodeLocation& loc, const std::string& title): trace{loc, title} {}
                 atlas::Trace trace;
             };
-            return std::unique_ptr<Adaptor>(new Adaptor{loc, title});
+            return std::make_unique<Adaptor>(loc, title);
         });
 
 
@@ -454,6 +453,7 @@ void Library::Information::print(std::ostream& out) const {
     bool feature_FFTW(ATLAS_HAVE_FFTW);
     bool feature_Eigen(ATLAS_HAVE_EIGEN);
     bool feature_Tesselation(ATLAS_HAVE_TESSELATION);
+    bool feature_PROJ(ATLAS_HAVE_PROJ);
     bool feature_BoundsChecking(ATLAS_ARRAYVIEW_BOUNDS_CHECKING);
     bool feature_Init_sNaN(ATLAS_INIT_SNAN);
     bool feature_MPI(false);
@@ -478,6 +478,7 @@ void Library::Information::print(std::ostream& out) const {
         << "    Eigen          : " << str(feature_Eigen) << '\n'
         << "    MKL            : " << str(feature_MKL()) << '\n'
         << "    Tesselation    : " << str(feature_Tesselation) << '\n'
+        << "    PROJ           : " << str(feature_PROJ) << '\n'
         << "    ArrayDataStore : " << array_data_store << '\n'
         << "    idx_t          : " << ATLAS_BITS_LOCAL << " bit integer" << '\n'
         << "    gidx_t         : " << ATLAS_BITS_GLOBAL << " bit integer" << '\n';

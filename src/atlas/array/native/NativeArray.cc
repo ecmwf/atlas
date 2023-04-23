@@ -11,7 +11,7 @@
 #include <iostream>
 
 #include "atlas/array.h"
-#include "atlas/array/ArrayUtil.h"
+#include "atlas/array/ArrayDataStore.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/array/helpers/ArrayInitializer.h"
 #include "atlas/array/helpers/ArrayWriter.h"
@@ -116,27 +116,27 @@ ArrayT<Value>::ArrayT(ArrayDataStore* ds, const ArraySpec& spec) {
 template <typename Value>
 ArrayT<Value>::ArrayT(idx_t dim0) {
     spec_       = ArraySpec(make_shape(dim0));
-    data_store_ = std::unique_ptr<ArrayDataStore>(new native::DataStore<Value>(spec_.size()));
+    data_store_ = std::make_unique<native::DataStore<Value>>(spec_.size());
 }
 template <typename Value>
 ArrayT<Value>::ArrayT(idx_t dim0, idx_t dim1) {
     spec_       = ArraySpec(make_shape(dim0, dim1));
-    data_store_ = std::unique_ptr<ArrayDataStore>(new native::DataStore<Value>(spec_.size()));
+    data_store_ = std::make_unique<native::DataStore<Value>>(spec_.size());
 }
 template <typename Value>
 ArrayT<Value>::ArrayT(idx_t dim0, idx_t dim1, idx_t dim2) {
     spec_       = ArraySpec(make_shape(dim0, dim1, dim2));
-    data_store_ = std::unique_ptr<ArrayDataStore>(new native::DataStore<Value>(spec_.size()));
+    data_store_ = std::make_unique<native::DataStore<Value>>(spec_.size());
 }
 template <typename Value>
 ArrayT<Value>::ArrayT(idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3) {
     spec_       = ArraySpec(make_shape(dim0, dim1, dim2, dim3));
-    data_store_ = std::unique_ptr<ArrayDataStore>(new native::DataStore<Value>(spec_.size()));
+    data_store_ = std::make_unique<native::DataStore<Value>>(spec_.size());
 }
 template <typename Value>
 ArrayT<Value>::ArrayT(idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3, idx_t dim4) {
     spec_       = ArraySpec(make_shape(dim0, dim1, dim2, dim3, dim4));
-    data_store_ = std::unique_ptr<ArrayDataStore>(new native::DataStore<Value>(spec_.size()));
+    data_store_ = std::make_unique<native::DataStore<Value>>(spec_.size());
 }
 
 template <typename Value>
@@ -146,20 +146,20 @@ ArrayT<Value>::ArrayT(const ArrayShape& shape) {
     for (size_t j = 0; j < shape.size(); ++j) {
         size *= size_t(shape[j]);
     }
-    data_store_ = std::unique_ptr<ArrayDataStore>(new native::DataStore<Value>(size));
+    data_store_ = std::make_unique<native::DataStore<Value>>(size);
     spec_       = ArraySpec(shape);
 }
 
 template <typename Value>
 ArrayT<Value>::ArrayT(const ArrayShape& shape, const ArrayAlignment& alignment) {
     spec_       = ArraySpec(shape, alignment);
-    data_store_ = std::unique_ptr<ArrayDataStore>(new native::DataStore<Value>(spec_.allocatedSize()));
+    data_store_ = std::make_unique<native::DataStore<Value>>(spec_.allocatedSize());
 }
 
 template <typename Value>
 ArrayT<Value>::ArrayT(const ArrayShape& shape, const ArrayLayout& layout) {
     spec_       = ArraySpec(shape);
-    data_store_ = std::unique_ptr<ArrayDataStore>(new native::DataStore<Value>(spec_.size()));
+    data_store_ = std::make_unique<native::DataStore<Value>>(spec_.size());
     for (size_t j = 0; j < layout.size(); ++j) {
         ATLAS_ASSERT(spec_.layout()[j] == layout[j]);
     }
@@ -167,7 +167,7 @@ ArrayT<Value>::ArrayT(const ArrayShape& shape, const ArrayLayout& layout) {
 
 template <typename Value>
 ArrayT<Value>::ArrayT(ArraySpec&& spec): Array(std::move(spec)) {
-    data_store_ = std::unique_ptr<ArrayDataStore>(new native::DataStore<Value>(spec_.allocatedSize()));
+    data_store_ = std::make_unique<native::DataStore<Value>>(spec_.allocatedSize());
 }
 
 template <typename Value>
@@ -180,40 +180,16 @@ void ArrayT<Value>::resize(const ArrayShape& _shape) {
 
     Array* resized = Array::create<Value>(_shape);
 
-    switch (rank()) {
-        case 1:
-            array_initializer<1>::apply(*this, *resized);
-            break;
-        case 2:
-            array_initializer<2>::apply(*this, *resized);
-            break;
-        case 3:
-            array_initializer<3>::apply(*this, *resized);
-            break;
-        case 4:
-            array_initializer<4>::apply(*this, *resized);
-            break;
-        case 5:
-            array_initializer<5>::apply(*this, *resized);
-            break;
-        case 6:
-            array_initializer<6>::apply(*this, *resized);
-            break;
-        case 7:
-            array_initializer<7>::apply(*this, *resized);
-            break;
-        case 8:
-            array_initializer<8>::apply(*this, *resized);
-            break;
-        case 9:
-            array_initializer<9>::apply(*this, *resized);
-            break;
-        default:
-            ATLAS_NOTIMPLEMENTED;
-    }
-
+    array_initializer::apply(*this,*resized);
+    
     replace(*resized);
     delete resized;
+}
+
+
+template <typename Value>
+void ArrayT<Value>::copy(const Array& other, const CopyPolicy&) {
+    array_initializer::apply(other,*this);
 }
 
 template <typename Value>

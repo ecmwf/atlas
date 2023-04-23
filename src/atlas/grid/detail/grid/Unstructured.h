@@ -175,16 +175,16 @@ public:  // methods
     }
 
     virtual std::unique_ptr<Grid::IteratorXY> xy_begin() const override {
-        return std::unique_ptr<Grid::IteratorXY>(new IteratorXY(*this));
+        return std::make_unique<IteratorXY>(*this);
     }
     virtual std::unique_ptr<Grid::IteratorXY> xy_end() const override {
-        return std::unique_ptr<Grid::IteratorXY>(new IteratorXY(*this, false));
+        return std::make_unique<IteratorXY>(*this, false);
     }
     virtual std::unique_ptr<Grid::IteratorLonLat> lonlat_begin() const override {
-        return std::unique_ptr<Grid::IteratorLonLat>(new IteratorLonLat(*this));
+        return std::make_unique<IteratorLonLat>(*this);
     }
     virtual std::unique_ptr<Grid::IteratorLonLat> lonlat_end() const override {
-        return std::unique_ptr<Grid::IteratorLonLat>(new IteratorLonLat(*this, false));
+        return std::make_unique<IteratorLonLat>(*this, false);
     }
 
     Config meshgenerator() const override;

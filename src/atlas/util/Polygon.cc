@@ -12,6 +12,7 @@
 #include <cmath>
 #include <iostream>
 #include <limits>
+#include <sstream>
 
 #include "eckit/types/FloatCompare.h"
 
@@ -278,6 +279,35 @@ Polygon::edge_set_t ExplicitPartitionPolygon::compute_edges(idx_t points_size) {
 
 void ExplicitPartitionPolygon::allGather(PartitionPolygons&) const {
     ATLAS_NOTIMPLEMENTED;
+}
+
+std::string PartitionPolygons::json(const eckit::Configuration& config) const {
+    std::ostringstream out;
+    out << "[\n";
+    for (size_t i=0; i<size(); ++i) {
+        out << at(i).json(config);
+        if (i<size()-1) {
+            out << ",\n";
+        }
+    }
+    out << "\n]";
+    return out.str();
+}
+
+
+std::string PartitionPolygon::json(const eckit::Configuration& ) const {
+    auto points = xy();
+    std::ostringstream out;
+    out << "[";
+    for (size_t i=0; i<points.size(); ++i) {
+        auto& p = points[i];
+        out << "["<< p[0] << "," << p[1] << "]";
+        if (i<points.size()-1) {
+            out << ",";
+        }
+    }
+    out << "]";
+    return out.str();
 }
 
 //------------------------------------------------------------------------------------------------------

@@ -51,6 +51,7 @@ static Config scheme() {
         scheme.set("halo", 2);
     }
     scheme.set("name", scheme_str);
+    scheme.set("verbose",eckit::Resource<bool>("--verbose",false));
     return scheme;
 }
 

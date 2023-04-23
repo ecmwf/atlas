@@ -655,10 +655,7 @@ Grid::Config Structured::meshgenerator() const {
 
 Grid::Config Structured::partitioner() const {
     Config config;
-    if (mpi::size() == 1) {
-        config.set("type", "serial");
-    }
-    else if (reduced()) {
+    if (reduced()) {
         config.set("type", "equal_regions");
     }
     else {

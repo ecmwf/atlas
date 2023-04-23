@@ -55,7 +55,7 @@
 #include <iostream>
 #include <type_traits>
 
-#include "atlas/array/ArrayUtil.h"
+#include "atlas/array/ArrayDataStore.h"
 #include "atlas/array/ArrayViewDefs.h"
 #include "atlas/array/LocalView.h"
 #include "atlas/array/Range.h"
@@ -291,24 +291,14 @@ public:
     ///   auto slice3 = view.slice( Range::all(), Range::all(), Range::dummy() );
     /// @endcode
     template <typename... Args>
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-    typename slice_t<Args...>::type slice(Args... args) {
-#else
-    // C++14 will allow auto return type
     auto slice(Args... args) {
-#endif
         return slicer_t(*this).apply(args...);
     }
 
 
     /// @brief Obtain a slice from this view:  view.slice( Range, Range, ... )
     template <typename... Args>
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-    typename const_slice_t<Args...>::type slice(Args... args) const {
-#else
-    // C++14 will allow auto return type
     auto slice(Args... args) const {
-#endif
         return const_slicer_t(*this).apply(args...);
     }
 

@@ -28,14 +28,10 @@ ecbuild_debug( "   eckit_FEATURES : [${eckit_FEATURES}]" )
 ################################################################################
 # Features that can be enabled / disabled with -DENABLE_<FEATURE>
 
-ecbuild_add_option( FEATURE CXX17
-                    DESCRIPTION "Use C++17 standard"
-                    DEFAULT OFF )
-
 ################################################################################
 # sources
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 check_cxx_source_compiles( "#include <cxxabi.h>\n int main() { char * type; int status; char * r = abi::__cxa_demangle(type, 0, 0, &status); }"

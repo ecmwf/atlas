@@ -53,7 +53,7 @@ ecbuild_add_test( TARGET atlas_test_cubedsphere_functionspace
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
-ecbuild_add_test( TARGET test_structuredcolumns_biperiodic
+ecbuild_add_test( TARGET atlas_test_structuredcolumns_biperiodic
   SOURCES  test_structuredcolumns_biperiodic.cc
   LIBS     atlas
   MPI 5

@@ -20,7 +20,7 @@
 #include "atlas/util/Object.h"
 
 #include "atlas/array.h"
-#include "atlas/array/ArrayUtil.h"
+#include "atlas/array/ArrayDataStore.h"
 #include "atlas/array/DataType.h"
 #include "atlas/util/Metadata.h"
 

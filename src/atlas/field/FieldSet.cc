@@ -152,6 +152,22 @@ FieldSet::FieldSet(const Field& field): Handle(new Implementation()) {
     get()->add(field);
 }
 
+const util::Metadata& FieldSet::metadata() const {
+    return get()->metadata();
+}
+
+util::Metadata& FieldSet::metadata() {
+    return get()->metadata();
+}
+
+FieldSet FieldSet::clone(const eckit::Parametrisation& config) const {
+    FieldSet fset;
+    for (idx_t jj = 0; jj < size(); ++jj) {
+        fset.add(field(jj).clone(config));
+    }
+    return fset;
+}
+
 void FieldSet::set_dirty(bool value) const {
     get()->set_dirty(value);
 }
