@@ -13,6 +13,12 @@ ecbuild_add_test( TARGET atlas_test_array_slicer
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_array_visitor
+  SOURCES  test_array_visitor.cc
+  LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_array
   SOURCES  test_array.cc
   LIBS     atlas
