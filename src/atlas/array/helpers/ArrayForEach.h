@@ -49,35 +49,39 @@ void forEach(idx_t idxMax, const Functor& functor) {
   }
 }
 
-template <size_t ViewIdx = 0, typename... ArrayViews, typename... SlicerArgs>
-auto makeSlices(std::tuple<ArrayViews...>& arrayViews,
+template <template<typename, int> typename View, typename Value, int Rank,
+         typename... ArrayViews, typename... SlicerArgs>
+auto makeSlices(std::tuple<View<Value, Rank>, ArrayViews...>& arrayViews,
                 const std::tuple<SlicerArgs...>& slicerArgs) {
 
-  // Loop over all views in tuple and make slices.
-  if constexpr(ViewIdx < std::tuple_size_v<std::tuple<ArrayViews...>>) {
+  auto& view = std::get<0>(arrayViews);
 
-      auto& view = std::get<ViewIdx>(arrayViews);
-      constexpr auto rank = std::get<ViewIdx>(arrayViews).rank();
+  // "Lambdafy" slicer apply method to work with std::apply.
+  const auto slicer = [&view](const auto&... args) {
+    return view.slice(args...);
+  };
 
-      // "Lambdafy" slicer apply method to work with std::apply.
-      const auto slicer = [&view](const auto&... args) {
-        return view.slice(args...);
+  // Fill out the remaining slicerArgs with Range::all().
+  constexpr auto Dim = std::tuple_size_v<std::tuple<SlicerArgs...>>;
+  auto argPadding = std::array<decltype(Range::all()), Rank - Dim>();
+  argPadding.fill(Range::all());
+  const auto paddedArgs = std::tuple_cat(slicerArgs, argPadding);
+
+  if constexpr(sizeof...(ArrayViews)) {
+
+      // Pop first element off of tuple.
+      const auto popFront = [](auto arg, auto... args) {
+        return std::make_tuple(args...);
       };
-
-      // Fill out the remaining slicerArgs with Range::all().
-      constexpr auto dim = std::tuple_size_v<std::tuple<SlicerArgs...>>;
-      auto argPadding = std::array<decltype(Range::all()), rank - dim>();
-      argPadding.fill(Range::all());
-      const auto paddedArgs = std::tuple_cat(slicerArgs, argPadding);
+      auto reducedArrayViews = std::apply(popFront, arrayViews);
 
       // Recurse until all views are sliced.
-      return std::tuple_cat(std::make_tuple(std::apply(slicer, paddedArgs)),
-                            makeSlices<ViewIdx + 1>(arrayViews, slicerArgs));
+      return std::tuple_cat(
+          std::make_tuple(std::apply(slicer, paddedArgs)),
+          makeSlices(reducedArrayViews, slicerArgs));
     }
   else {
-
-    // No more ArrayViews. Finish recursion.
-    return std::make_tuple();
+    return std::make_tuple(std::apply(slicer, paddedArgs));
   }
 }
 
@@ -105,11 +109,9 @@ struct ArrayForEachImpl<Policy, Dim, ItrDim, ItrDims...> {
         forEach<Policy>(idxMax, [&](idx_t idx) {
 
           // Always set Policy to serial after one loop.
-          ArrayForEachImpl<ExecutionPolicy::serial, Dim + 1,
-                           ItrDims...>::apply(arrayViews, loopFunctor,
-                                              ghostFunctor,
-                                              tuplePushBack(slicerArgs, idx),
-                                              tuplePushBack(ghostArgs, idx));
+          ArrayForEachImpl<ExecutionPolicy::serial, Dim + 1, ItrDims...>::apply(
+              arrayViews, loopFunctor, ghostFunctor,
+              tuplePushBack(slicerArgs, idx), tuplePushBack(ghostArgs, idx));
         });
       }
 
@@ -142,7 +144,6 @@ struct ArrayForEachImpl<Policy, Dim> {
   }
 };
 }  // namespace detail
-
 
 /// brief  Array "For-Each" helper struct.
 ///
