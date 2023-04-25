@@ -21,8 +21,6 @@ using namespace atlas::array::helpers;
 namespace atlas {
 namespace test {
 
-auto serialConf() { return util::Config("executionpolicy", "serial"); }
-
 CASE("test_array_foreach_1_view") {
 
   const auto arr = ArrayT<double>(2, 3);
@@ -58,7 +56,7 @@ CASE("test_array_foreach_1_view") {
   auto count = int {};
   const auto countGhosts = [&count](auto&...) { ++count; };
   ArrayForEach<0>::apply(std::make_tuple(view), countGhosts, ghostView,
-                         serialConf());
+                         array::helpers::detail::sequencedConf());
   EXPECT_EQ(count, 1);
 
   count = 0;
@@ -67,7 +65,7 @@ CASE("test_array_foreach_1_view") {
     return ghostView(idx);
   };
   ArrayForEach<0, 1>::apply(std::make_tuple(view), countGhosts, ghostWrap,
-                            serialConf());
+                            array::helpers::detail::sequencedConf());
   EXPECT_EQ(count, 3);
 }
 
@@ -117,7 +115,7 @@ CASE("test_array_foreach_2_views") {
   auto count = int {};
   const auto countGhosts = [&count](auto&...) { ++count; };
   ArrayForEach<0>::apply(std::make_tuple(view2), countGhosts, ghostView,
-                         serialConf());
+                         array::helpers::detail::sequencedConf());
   EXPECT_EQ(count, 1);
 
   count = 0;
@@ -126,12 +124,12 @@ CASE("test_array_foreach_2_views") {
     return ghostView(idx);
   };
   ArrayForEach<0, 1>::apply(std::make_tuple(view2), countGhosts, ghostWrap,
-                            serialConf());
+                            array::helpers::detail::sequencedConf());
   EXPECT_EQ(count, 3);
 
   count = 0;
   ArrayForEach<0, 1, 2>::apply(std::make_tuple(view2), countGhosts, ghostWrap,
-                               serialConf());
+                               array::helpers::detail::sequencedConf());
   EXPECT_EQ(count, 12);
 }
 
@@ -194,7 +192,7 @@ CASE("test_array_foreach_3_views") {
   auto count = int {};
   const auto countGhosts = [&count](auto&...) { ++count; };
   ArrayForEach<0>::apply(std::make_tuple(view3), countGhosts, ghostView,
-                         serialConf());
+                         array::helpers::detail::sequencedConf());
   EXPECT_EQ(count, 1);
 
   count = 0;
@@ -203,17 +201,18 @@ CASE("test_array_foreach_3_views") {
     return ghostView(idx);
   };
   ArrayForEach<0, 1>::apply(std::make_tuple(view3), countGhosts, ghostWrap,
-                            serialConf());
+                            array::helpers::detail::sequencedConf());
   EXPECT_EQ(count, 3);
 
   count = 0;
   ArrayForEach<0, 1, 2>::apply(std::make_tuple(view3), countGhosts, ghostWrap,
-                               serialConf());
+                               array::helpers::detail::sequencedConf());
   EXPECT_EQ(count, 12);
 
   count = 0;
   ArrayForEach<0, 1, 2, 3>::apply(std::make_tuple(view3), countGhosts,
-                                  ghostWrap, serialConf());
+                                  ghostWrap,
+                                  array::helpers::detail::sequencedConf());
   EXPECT_EQ(count, 60);
 }
 
@@ -244,7 +243,7 @@ CASE("test_array_foreach_data_integrity") {
       slice *= 3.;
     };
     ArrayForEach<0>::apply(std::make_tuple(slice2), scaleDataDim1,
-                           serialConf());
+                           array::helpers::detail::sequencedConf());
   };
   ArrayForEach<0, 1>::apply(std::make_tuple(view1, view2), scaleDataDim0);
 

@@ -24,6 +24,14 @@ namespace helpers {
 
 namespace detail {
 
+auto sequencedConf() {
+  return util::Config("execution_policy", "sequenced");
+}
+
+auto parallelUnsequencedConf() {
+    return util::Config("execution_policy", "parallel_unsequenced");
+}
+
 enum class ExecutionPolicy {
   parallelUnsequenced,
   sequenced
@@ -164,15 +172,15 @@ struct ArrayForEach {
   template <typename... ArrayViews, typename Function, typename Mask>
   static void apply(const std::tuple<ArrayViews...>& arrayViews,
                     const Function& function, const Mask& mask,
-                    const util::Config& conf = util::Config()) {
+                    const util::Config& conf =
+                    detail::parallelUnsequencedConf()) {
 
     using namespace detail;
 
     // Make a copy of views to simplify constness and forwarding.
     auto arrayViewsCopy = arrayViews;
 
-    const auto executionPolicy =
-        conf.getString("execution_policy", "parallel_unsequenced");
+    const auto executionPolicy = conf.getString("execution_policy");
 
     if (executionPolicy == "parallel_unsequenced") {
       ArrayForEachImpl<ExecutionPolicy::parallelUnsequenced, 0,
@@ -193,7 +201,8 @@ struct ArrayForEach {
   template <typename... ArrayViews, typename Function>
   static void apply(const std::tuple<ArrayViews...>& arrayViews,
                     const Function& function,
-                    const util::Config& conf = util::Config()) {
+                    const util::Config& conf =
+                    detail::parallelUnsequencedConf()) {
     apply(arrayViews, function, [](auto args...) { return 0; }, conf);
   }
 };
