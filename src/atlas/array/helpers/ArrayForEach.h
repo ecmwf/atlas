@@ -81,11 +81,11 @@ struct ArrayForEachImpl;
 template <ExecutionPolicy Policy, int Dim, int ItrDim, int... ItrDims>
 struct ArrayForEachImpl<Policy, Dim, ItrDim, ItrDims...> {
   template <typename... ArrayViews, typename Function, typename Mask,
-            typename... SlicerArgs, typename... MarkArgs>
+            typename... SlicerArgs, typename... MaskArgs>
   static void apply(std::tuple<ArrayViews...>& arrayViews,
                     const Function& function, const Mask& mask,
                     const std::tuple<SlicerArgs...>& slicerArgs,
-                    const std::tuple<MarkArgs...>& maskArgs) {
+                    const std::tuple<MaskArgs...>& maskArgs) {
 
     using namespace detail;
 
@@ -117,11 +117,11 @@ struct ArrayForEachImpl<Policy, Dim, ItrDim, ItrDims...> {
 template <ExecutionPolicy Policy, int Dim>
 struct ArrayForEachImpl<Policy, Dim> {
   template <typename... ArrayViews, typename Function, typename Mask,
-            typename... SlicerArgs, typename... MarkArgs>
+            typename... SlicerArgs, typename... MaskArgs>
   static void apply(std::tuple<ArrayViews...>& arrayViews,
                     const Function& function, const Mask& mask,
                     const std::tuple<SlicerArgs...>& slicerArgs,
-                    const std::tuple<MarkArgs...>& maskArgs) {
+                    const std::tuple<MaskArgs...>& maskArgs) {
 
     // Skip iteration if mask evaluates to true.
     if (std::apply(mask, maskArgs)) {
