@@ -54,11 +54,9 @@ template <template <typename, int> typename View, typename Value, int Rank,
 auto makeSlices(std::tuple<View<Value, Rank>, ArrayViews...>& arrayViews,
                 const std::tuple<SlicerArgs...>& slicerArgs) {
 
-  auto& view = std::get<0>(arrayViews);
-
   // "Lambdafy" slicer apply method to work with std::apply.
-  const auto slicer = [&view](const auto&... args) {
-    return view.slice(args...);
+  const auto slicer = [&arrayViews](const auto&... args) {
+    return std::get<0>(arrayViews).slice(args...);
   };
 
   // Fill out the remaining slicerArgs with Range::all().
@@ -70,8 +68,9 @@ auto makeSlices(std::tuple<View<Value, Rank>, ArrayViews...>& arrayViews,
   if constexpr(sizeof...(ArrayViews) > 0) {
 
       // Pop first element off of tuple.
-      const auto popFront = [](
-          auto arg, auto... args) { return std::make_tuple(args...); };
+      const auto popFront = [](const auto& arg, const auto&... args) {
+        return std::make_tuple(args...);
+      };
       auto reducedArrayViews = std::apply(popFront, arrayViews);
 
       // Recurse until all views are sliced.
