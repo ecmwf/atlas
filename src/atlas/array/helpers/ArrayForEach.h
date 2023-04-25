@@ -49,33 +49,26 @@ void forEach(idx_t idxMax, const Functor& functor) {
   }
 }
 
-template <template <typename, int> typename View, typename Value, int Rank,
-          typename... ArrayViews, typename... SlicerArgs>
-auto makeSlices(std::tuple<View<Value, Rank>, ArrayViews...>& arrayViews,
-                const std::tuple<SlicerArgs...>& slicerArgs) {
+template <typename... SlicerArgs, template <typename, int> typename View,
+          typename Value, int Rank, typename... ArrayViews>
+auto makeSlices(const std::tuple<SlicerArgs...>& slicerArgs,
+                View<Value, Rank>& arrayView, ArrayViews&... arrayViews) {
 
   // "Lambdafy" slicer apply method to work with std::apply.
-  const auto slicer = [&arrayViews](const auto&... args) {
-    return std::get<0>(arrayViews).slice(args...);
+  const auto slicer = [&arrayView](const auto&... args) {
+    return arrayView.slice(args...);
   };
 
   // Fill out the remaining slicerArgs with Range::all().
-  constexpr auto Dim = std::tuple_size_v<std::tuple<SlicerArgs...>>;
-  auto argPadding = std::array<decltype(Range::all()), Rank - Dim>();
-  argPadding.fill(Range::all());
+  constexpr auto Dim = sizeof...(SlicerArgs);
+  constexpr auto argPadding = std::array<decltype(Range::all()), Rank - Dim>();
   const auto paddedArgs = std::tuple_cat(slicerArgs, argPadding);
 
   if constexpr(sizeof...(ArrayViews) > 0) {
 
-      // Pop first element off of tuple.
-      const auto popFront = [](const auto& arg, const auto&... args) {
-        return std::make_tuple(args...);
-      };
-      auto reducedArrayViews = std::apply(popFront, arrayViews);
-
       // Recurse until all views are sliced.
       return std::tuple_cat(std::make_tuple(std::apply(slicer, paddedArgs)),
-                            makeSlices(reducedArrayViews, slicerArgs));
+                            makeSlices(slicerArgs, arrayViews...));
     }
   else {
     return std::make_tuple(std::apply(slicer, paddedArgs));
@@ -135,7 +128,11 @@ struct ArrayForEachImpl<Policy, Dim> {
       return;
     }
 
-    auto slices = makeSlices(arrayViews, slicerArgs);
+    const auto slicerWrapper = [&slicerArgs](auto&... args) {
+      return makeSlices(slicerArgs, args...);
+    };
+
+    auto slices = std::apply(slicerWrapper, arrayViews);
     std::apply(function, slices);
   }
 };

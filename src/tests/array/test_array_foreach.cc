@@ -21,7 +21,7 @@ using namespace atlas::array::helpers;
 namespace atlas {
 namespace test {
 
-auto serialConf() { return util::Config("execution_policy", "sequenced"); }
+auto serialConf() { return util::Config("executionpolicy", "serial"); }
 
 CASE("test_array_foreach_1_view") {
 
