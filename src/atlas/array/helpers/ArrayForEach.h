@@ -25,8 +25,8 @@ namespace helpers {
 namespace detail {
 
 enum class ExecutionPolicy {
-  parallel,
-  serial
+  parallelUnsequenced,
+  sequenced
 };
 
 template <typename... Ts, typename T>
@@ -37,7 +37,7 @@ constexpr auto tuplePushBack(const std::tuple<Ts...>& tuple, T value) {
 template <ExecutionPolicy Policy, typename Functor>
 void forEach(idx_t idxMax, const Functor& functor) {
 
-  if constexpr(Policy == ExecutionPolicy::parallel) {
+  if constexpr(Policy == ExecutionPolicy::parallelUnsequenced) {
       atlas_omp_parallel_for(auto idx = idx_t{}; idx < idxMax; ++idx) {
         functor(idx);
       }
@@ -49,8 +49,8 @@ void forEach(idx_t idxMax, const Functor& functor) {
   }
 }
 
-template <template<typename, int> typename View, typename Value, int Rank,
-         typename... ArrayViews, typename... SlicerArgs>
+template <template <typename, int> typename View, typename Value, int Rank,
+          typename... ArrayViews, typename... SlicerArgs>
 auto makeSlices(std::tuple<View<Value, Rank>, ArrayViews...>& arrayViews,
                 const std::tuple<SlicerArgs...>& slicerArgs) {
 
@@ -70,15 +70,13 @@ auto makeSlices(std::tuple<View<Value, Rank>, ArrayViews...>& arrayViews,
   if constexpr(sizeof...(ArrayViews) > 0) {
 
       // Pop first element off of tuple.
-      const auto popFront = [](auto arg, auto... args) {
-        return std::make_tuple(args...);
-      };
+      const auto popFront = [](
+          auto arg, auto... args) { return std::make_tuple(args...); };
       auto reducedArrayViews = std::apply(popFront, arrayViews);
 
       // Recurse until all views are sliced.
-      return std::tuple_cat(
-          std::make_tuple(std::apply(slicer, paddedArgs)),
-          makeSlices(reducedArrayViews, slicerArgs));
+      return std::tuple_cat(std::make_tuple(std::apply(slicer, paddedArgs)),
+                            makeSlices(reducedArrayViews, slicerArgs));
     }
   else {
     return std::make_tuple(std::apply(slicer, paddedArgs));
@@ -90,13 +88,12 @@ struct ArrayForEachImpl;
 
 template <ExecutionPolicy Policy, int Dim, int ItrDim, int... ItrDims>
 struct ArrayForEachImpl<Policy, Dim, ItrDim, ItrDims...> {
-  template <typename... ArrayViews, typename LoopFunctor, typename GhostFunctor,
-            typename... SlicerArgs, typename... GhostArgs>
+  template <typename... ArrayViews, typename Function, typename Mask,
+            typename... SlicerArgs, typename... MarkArgs>
   static void apply(std::tuple<ArrayViews...>& arrayViews,
-                    const LoopFunctor& loopFunctor,
-                    const GhostFunctor& ghostFunctor,
+                    const Function& function, const Mask& mask,
                     const std::tuple<SlicerArgs...>& slicerArgs,
-                    const std::tuple<GhostArgs...>& ghostArgs) {
+                    const std::tuple<MarkArgs...>& maskArgs) {
 
     using namespace detail;
 
@@ -109,38 +106,38 @@ struct ArrayForEachImpl<Policy, Dim, ItrDim, ItrDims...> {
         forEach<Policy>(idxMax, [&](idx_t idx) {
 
           // Always set Policy to serial after one loop.
-          ArrayForEachImpl<ExecutionPolicy::serial, Dim + 1, ItrDims...>::apply(
-              arrayViews, loopFunctor, ghostFunctor,
-              tuplePushBack(slicerArgs, idx), tuplePushBack(ghostArgs, idx));
+          ArrayForEachImpl<ExecutionPolicy::sequenced, Dim + 1,
+                           ItrDims...>::apply(arrayViews, function, mask,
+                                              tuplePushBack(slicerArgs, idx),
+                                              tuplePushBack(maskArgs, idx));
         });
       }
 
     // Add a RangeAll to arguments.
     else {
       ArrayForEachImpl<Policy, Dim + 1, ItrDim, ItrDims...>::apply(
-          arrayViews, loopFunctor, ghostFunctor,
-          tuplePushBack(slicerArgs, Range::all()), ghostArgs);
+          arrayViews, function, mask, tuplePushBack(slicerArgs, Range::all()),
+          maskArgs);
     }
   }
 };
 
 template <ExecutionPolicy Policy, int Dim>
 struct ArrayForEachImpl<Policy, Dim> {
-  template <typename... ArrayViews, typename LoopFunctor, typename GhostFunctor,
-            typename... SlicerArgs, typename... GhostArgs>
+  template <typename... ArrayViews, typename Function, typename Mask,
+            typename... SlicerArgs, typename... MarkArgs>
   static void apply(std::tuple<ArrayViews...>& arrayViews,
-                    const LoopFunctor& loopFunctor,
-                    const GhostFunctor& ghostFunctor,
+                    const Function& function, const Mask& mask,
                     const std::tuple<SlicerArgs...>& slicerArgs,
-                    const std::tuple<GhostArgs...>& ghostArgs) {
+                    const std::tuple<MarkArgs...>& maskArgs) {
 
-    // Skip iteration if ghostFunctor evaluates to true.
-    if (std::apply(ghostFunctor, ghostArgs)) {
+    // Skip iteration if mask evaluates to true.
+    if (std::apply(mask, maskArgs)) {
       return;
     }
 
     auto slices = makeSlices(arrayViews, slicerArgs);
-    std::apply(loopFunctor, slices);
+    std::apply(function, slices);
   }
 };
 }  // namespace detail
@@ -156,21 +153,21 @@ struct ArrayForEach {
   /// brief   Apply "For-Each" method.
   ///
   /// detials Vists all elements indexed by ItrDims and creates a slice from
-  ///         each ArrayView in arrayViews. Slices are sent to loopFunctor
+  ///         each ArrayView in arrayViews. Slices are sent to function
   ///         which is executed with the signature f(slice1, slice2,...).
-  ///         Iterations are skipped when ghostFunctor evaluates to "true"
+  ///         Iterations are skipped when mask evaluates to "true"
   ///         and is executed with signature g(idx_i, idx_j,...), where the idxs
   ///         are indices of ItrDims.
-  ///         When the config contains "execution policy" = "parallel" (default)
-  ///         the first loop is executed using OpenMP. The remaining loops are
-  ///         executed in serial. When "execution policy" = "serial", all loops
-  ///         are executed in serial.
+  ///         When the config contains "execution_policy" =
+  ///         "parallel_unsequenced" (default) the first loop is executed using
+  ///         OpenMP. The remaining loops are executed in serial. When
+  ///         "execution_policy" = "sequenced", all loops are executed in
+  ///         serial.
   ///         Note: The lowest ArrayView.rank() must be greater than or equal
   ///         to the highest dim in ItrDims. TODO: static checking for this.
-  template <typename... ArrayViews, typename LoopFunctor, typename GhostFunctor>
+  template <typename... ArrayViews, typename Function, typename Mask>
   static void apply(const std::tuple<ArrayViews...>& arrayViews,
-                    const LoopFunctor& loopFunctor,
-                    const GhostFunctor& ghostFunctor,
+                    const Function& function, const Mask& mask,
                     const util::Config& conf = util::Config()) {
 
     using namespace detail;
@@ -178,16 +175,16 @@ struct ArrayForEach {
     // Make a copy of views to simplify constness and forwarding.
     auto arrayViewsCopy = arrayViews;
 
-    const auto executionPolicy = conf.getString("execution policy", "parallel");
+    const auto executionPolicy =
+        conf.getString("execution_policy", "parallel_unsequenced");
 
-    if (executionPolicy == "parallel") {
-      ArrayForEachImpl<ExecutionPolicy::parallel, 0, ItrDims...>::apply(
-          arrayViewsCopy, loopFunctor, ghostFunctor, std::make_tuple(),
-          std::make_tuple());
-    } else if (executionPolicy == "serial") {
-      ArrayForEachImpl<ExecutionPolicy::serial, 0, ItrDims...>::apply(
-          arrayViewsCopy, loopFunctor, ghostFunctor, std::make_tuple(),
-          std::make_tuple());
+    if (executionPolicy == "parallel_unsequenced") {
+      ArrayForEachImpl<ExecutionPolicy::parallelUnsequenced, 0,
+                       ItrDims...>::apply(arrayViewsCopy, function, mask,
+                                          std::make_tuple(), std::make_tuple());
+    } else if (executionPolicy == "sequenced") {
+      ArrayForEachImpl<ExecutionPolicy::sequenced, 0, ItrDims...>::apply(
+          arrayViewsCopy, function, mask, std::make_tuple(), std::make_tuple());
     } else {
       throw eckit::BadParameter("Unknown execution policy: " + executionPolicy,
                                 Here());
@@ -196,12 +193,12 @@ struct ArrayForEach {
 
   /// brief   Apply "For-Each" method.
   ///
-  /// details Apply "For-Each" without a ghostFunctor.
-  template <typename... ArrayViews, typename LoopFunctor>
+  /// details Apply "For-Each" without a mask.
+  template <typename... ArrayViews, typename Function>
   static void apply(const std::tuple<ArrayViews...>& arrayViews,
-                    const LoopFunctor& loopFunctor,
+                    const Function& function,
                     const util::Config& conf = util::Config()) {
-    apply(arrayViews, loopFunctor, [](auto args...) { return 0; }, conf);
+    apply(arrayViews, function, [](auto args...) { return 0; }, conf);
   }
 };
 
