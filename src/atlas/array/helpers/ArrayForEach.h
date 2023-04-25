@@ -57,6 +57,7 @@ auto makeSlices(std::tuple<ArrayViews...>& arrayViews,
   if constexpr(ViewIdx < std::tuple_size_v<std::tuple<ArrayViews...>>) {
 
       auto& view = std::get<ViewIdx>(arrayViews);
+      constexpr auto rank = std::get<ViewIdx>(arrayViews).rank();
 
       // "Lambdafy" slicer apply method to work with std::apply.
       const auto slicer = [&view](const auto&... args) {
@@ -65,7 +66,6 @@ auto makeSlices(std::tuple<ArrayViews...>& arrayViews,
 
       // Fill out the remaining slicerArgs with Range::all().
       constexpr auto dim = std::tuple_size_v<std::tuple<SlicerArgs...>>;
-      constexpr auto rank = view.rank();
       auto argPadding = std::array<decltype(Range::all()), rank - dim>();
       argPadding.fill(Range::all());
       const auto paddedArgs = std::tuple_cat(slicerArgs, argPadding);
