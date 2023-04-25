@@ -67,7 +67,7 @@ auto makeSlices(std::tuple<View<Value, Rank>, ArrayViews...>& arrayViews,
   argPadding.fill(Range::all());
   const auto paddedArgs = std::tuple_cat(slicerArgs, argPadding);
 
-  if constexpr(sizeof...(ArrayViews)) {
+  if constexpr(sizeof...(ArrayViews) > 0) {
 
       // Pop first element off of tuple.
       const auto popFront = [](auto arg, auto... args) {
