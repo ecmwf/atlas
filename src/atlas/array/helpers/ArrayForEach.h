@@ -57,6 +57,17 @@ void forEach(idx_t idxMax, const Functor& functor) {
   }
 }
 
+template <int NPad>
+constexpr auto argPadding() {
+  if constexpr(NPad > 0) {
+      return std::tuple_cat(std::make_tuple(Range::all()),
+                            argPadding<NPad - 1>());
+    }
+  else {
+    return std::make_tuple();
+  }
+}
+
 template <typename... SlicerArgs, template <typename, int> typename View,
           typename Value, int Rank, typename... ArrayViews>
 auto makeSlices(const std::tuple<SlicerArgs...>& slicerArgs,
@@ -69,8 +80,7 @@ auto makeSlices(const std::tuple<SlicerArgs...>& slicerArgs,
 
   // Fill out the remaining slicerArgs with Range::all().
   constexpr auto Dim = sizeof...(SlicerArgs);
-  constexpr auto argPadding = std::array<decltype(Range::all()), Rank - Dim>();
-  const auto paddedArgs = std::tuple_cat(slicerArgs, argPadding);
+  const auto paddedArgs = std::tuple_cat(slicerArgs, argPadding<Rank - Dim>());
 
   if constexpr(sizeof...(ArrayViews) > 0) {
 
