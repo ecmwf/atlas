@@ -191,7 +191,7 @@ struct ArrayForEach {
   ///         "parallel_unsequenced" (default) the first loop is executed using
   ///         OpenMP. The remaining loops are executed in serial. When
   ///         "execution_policy" = "sequenced", all loops are executed in
-  ///         serial.
+  ///         sequential (row-major) order.
   ///         Note: The lowest ArrayView.rank() must be greater than or equal
   ///         to the highest dim in ItrDims. TODO: static checking for this.
   template <typename... ArrayViews, typename Function, typename Mask>
