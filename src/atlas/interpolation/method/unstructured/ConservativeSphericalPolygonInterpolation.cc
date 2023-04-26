@@ -896,30 +896,6 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
     }
 }
 
-namespace {
-// needed for intersect_polygons only, merely for detecting duplicate points
-struct ComparePointXYZ {
-    bool operator()(const PointXYZ& f, const PointXYZ& s) const {
-        // eps = ConvexSphericalPolygon::EPS which is the threshold when two points are "same"
-        double eps = 1e4 * std::numeric_limits<double>::epsilon();
-        if (f[0] < s[0] - eps) {
-            return true;
-        }
-        else if (std::abs(f[0] - s[0]) < eps) {
-            if (f[1] < s[1] - eps) {
-                return true;
-            }
-            else if (std::abs(f[1] - s[1]) < eps) {
-                if (f[2] < s[2] - eps) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-};
-}  // namespace
-
 void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolygonArray& src_csp,
                                                                    const CSPolygonArray& tgt_csp) {
     ATLAS_TRACE();
@@ -947,7 +923,33 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
     StopWatch stopwatch_polygon_intersections;
 
     stopwatch_src_already_in.start();
-    std::set<PointXYZ, ComparePointXYZ> src_cent;
+
+
+    // needed for intersect_polygons only, merely for detecting duplicate points
+    // Treshold at which points are considered same
+    double compare_pointxyz_eps = 1.e8 * std::numeric_limits<double>::epsilon();
+    if (::getenv("ATLAS_COMPAREPOINTXYZ_EPS_FACTOR")) {
+        compare_pointxyz_eps = std::atof(::getenv("ATLAS_COMPAREPOINTXYZ_EPS_FACTOR")) * std::numeric_limits<double>::epsilon();
+    }
+
+    auto compare_pointxyz = [eps=compare_pointxyz_eps] (const PointXYZ& f, const PointXYZ& s) -> bool {
+        if (f[0] < s[0] - eps) {
+            return true;
+        }
+        else if (std::abs(f[0] - s[0]) < eps) {
+            if (f[1] < s[1] - eps) {
+                return true;
+            }
+            else if (std::abs(f[1] - s[1]) < eps) {
+                if (f[2] < s[2] - eps) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+
+    std::set<PointXYZ, decltype(compare_pointxyz)> src_cent(compare_pointxyz);
     auto src_already_in = [&](const PointXYZ& halo_cent) {
         if (src_cent.find(halo_cent) == src_cent.end()) {
             atlas_omp_critical{
