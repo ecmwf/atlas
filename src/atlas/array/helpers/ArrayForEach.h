@@ -28,13 +28,18 @@ auto sequencedConf() {
   return util::Config("execution_policy", "sequenced");
 }
 
+auto unsequencedConf() {
+  return util::Config("execution_policy", "unsequenced");
+}
+
 auto parallelUnsequencedConf() {
-    return util::Config("execution_policy", "parallel_unsequenced");
+  return util::Config("execution_policy", "parallel_unsequenced");
 }
 
 enum class ExecutionPolicy {
-  parallelUnsequenced,
-  sequenced
+  parallel_unsequenced_policy,
+  unsequenced_policy,
+  sequenced_policy
 };
 
 template <typename... Ts, typename T>
@@ -45,12 +50,13 @@ constexpr auto tuplePushBack(const std::tuple<Ts...>& tuple, T value) {
 template <ExecutionPolicy Policy, typename Functor>
 void forEach(idx_t idxMax, const Functor& functor) {
 
-  if constexpr(Policy == ExecutionPolicy::parallelUnsequenced) {
+  if constexpr(Policy == ExecutionPolicy::parallel_unsequenced_policy) {
       atlas_omp_parallel_for(auto idx = idx_t{}; idx < idxMax; ++idx) {
         functor(idx);
       }
     }
   else {
+    // Simple for-loop for sequenced or unsequenced execution policies.
     for (auto idx = idx_t{}; idx < idxMax; ++idx) {
       functor(idx);
     }
@@ -115,11 +121,20 @@ struct ArrayForEachImpl<Policy, Dim, ItrDim, ItrDims...> {
 
         forEach<Policy>(idxMax, [&](idx_t idx) {
 
-          // Always set Policy to serial after one loop.
-          ArrayForEachImpl<ExecutionPolicy::sequenced, Dim + 1,
-                           ItrDims...>::apply(arrayViews, function, mask,
-                                              tuplePushBack(slicerArgs, idx),
-                                              tuplePushBack(maskArgs, idx));
+          // Decay from parallel_unsequenced to unsequenced policy
+          if constexpr(Policy == ExecutionPolicy::parallel_unsequenced_policy) {
+              ArrayForEachImpl<ExecutionPolicy::unsequenced_policy, Dim + 1,
+                               ItrDims...>::apply(arrayViews, function, mask,
+                                                  tuplePushBack(slicerArgs,
+                                                                idx),
+                                                  tuplePushBack(maskArgs, idx));
+            }
+          else {
+            // Retain current execution policy.
+            ArrayForEachImpl<Policy, Dim + 1, ItrDims...>::apply(
+                arrayViews, function, mask, tuplePushBack(slicerArgs, idx),
+                tuplePushBack(maskArgs, idx));
+          }
         });
       }
 
@@ -183,7 +198,7 @@ struct ArrayForEach {
   static void apply(const std::tuple<ArrayViews...>& arrayViews,
                     const Function& function, const Mask& mask,
                     const util::Config& conf =
-                    detail::parallelUnsequencedConf()) {
+                        detail::parallelUnsequencedConf()) {
 
     using namespace detail;
 
@@ -193,11 +208,15 @@ struct ArrayForEach {
     const auto executionPolicy = conf.getString("execution_policy");
 
     if (executionPolicy == "parallel_unsequenced") {
-      ArrayForEachImpl<ExecutionPolicy::parallelUnsequenced, 0,
+      ArrayForEachImpl<ExecutionPolicy::parallel_unsequenced_policy, 0,
+                       ItrDims...>::apply(arrayViewsCopy, function, mask,
+                                          std::make_tuple(), std::make_tuple());
+    } else if (executionPolicy == "unsequenced") {
+      ArrayForEachImpl<ExecutionPolicy::unsequenced_policy, 0,
                        ItrDims...>::apply(arrayViewsCopy, function, mask,
                                           std::make_tuple(), std::make_tuple());
     } else if (executionPolicy == "sequenced") {
-      ArrayForEachImpl<ExecutionPolicy::sequenced, 0, ItrDims...>::apply(
+      ArrayForEachImpl<ExecutionPolicy::sequenced_policy, 0, ItrDims...>::apply(
           arrayViewsCopy, function, mask, std::make_tuple(), std::make_tuple());
     } else {
       throw eckit::BadParameter("Unknown execution policy: " + executionPolicy,
@@ -212,7 +231,7 @@ struct ArrayForEach {
   static void apply(const std::tuple<ArrayViews...>& arrayViews,
                     const Function& function,
                     const util::Config& conf =
-                    detail::parallelUnsequencedConf()) {
+                        detail::parallelUnsequencedConf()) {
     apply(arrayViews, function, [](auto args...) { return 0; }, conf);
   }
 };

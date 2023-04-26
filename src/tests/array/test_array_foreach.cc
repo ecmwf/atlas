@@ -5,6 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
+#include <chrono>
 #include <type_traits>
 
 #include "atlas/array.h"
@@ -128,7 +129,8 @@ CASE("test_array_foreach_2_views") {
   EXPECT_EQ(count, 3);
 
   count = 0;
-  ArrayForEach<0, 1, 2>::apply(std::make_tuple(view2), countNonGhosts, ghostWrap,
+  ArrayForEach<0, 1, 2>::apply(std::make_tuple(view2), countNonGhosts,
+                               ghostWrap,
                                array::helpers::detail::sequencedConf());
   EXPECT_EQ(count, 12);
 }
@@ -205,7 +207,8 @@ CASE("test_array_foreach_3_views") {
   EXPECT_EQ(count, 3);
 
   count = 0;
-  ArrayForEach<0, 1, 2>::apply(std::make_tuple(view3), countNonGhosts, ghostWrap,
+  ArrayForEach<0, 1, 2>::apply(std::make_tuple(view3), countNonGhosts,
+                               ghostWrap,
                                array::helpers::detail::sequencedConf());
   EXPECT_EQ(count, 12);
 
@@ -254,6 +257,106 @@ CASE("test_array_foreach_data_integrity") {
   for (auto idx = size_t{}; idx < arr2.size(); ++idx) {
     EXPECT_EQ(static_cast<double*>(arr2.data())[idx], 3. * idx);
   }
+}
+
+template <typename IterationMethod, typename Operation>
+void timeLoop(const IterationMethod& iterationMethod,
+              const Operation& operation, const std::string& output) {
+  const auto start = std::chrono::steady_clock::now();
+  iterationMethod(operation);
+  const auto end = std::chrono::steady_clock::now();
+  const auto duration = std::chrono::duration<double>{end - start};
+
+  Log::info() << "Elapsed time: " + output + "= " << duration.count() << "s\n";
+}
+
+CASE("test_array_foreach_performance") {
+
+  auto arr1 = ArrayT<double>(50000, 100);
+  auto view1 = make_view<double, 2>(arr1);
+
+  auto arr2 = ArrayT<double>(50000, 100);
+  auto view2 = make_view<double, 2>(arr2);
+
+  for (auto idx = size_t{}; idx < arr2.size(); ++idx) {
+    static_cast<double*>(arr2.data())[idx] = 2 * idx + 1;
+  }
+
+  auto arr3 = ArrayT<double>(50000, 100);
+  auto view3 = make_view<double, 2>(arr2);
+
+  for (auto idx = size_t{}; idx < arr3.size(); ++idx) {
+    static_cast<double*>(arr3.data())[idx] = 3 * idx + 1;
+  }
+
+  const auto add = [](double& a1, const double& a2,
+                      const double& a3) { a1 = a2 + a3; };
+
+  const auto trig = [](double& a1, const double& a2,
+                       const double& a3) { a1 = std::sin(a2) + std::cos(a3); };
+
+  const auto rawPointer = [&](const auto& operation) {
+    auto* p1 = static_cast<double*>(arr1.data());
+    const auto* p2 = static_cast<double*>(arr2.data());
+    const auto* p3 = static_cast<double*>(arr3.data());
+    for (auto idx = size_t{}; idx < arr1.size(); ++idx) {
+      operation(p1[idx], p2[idx], p3[idx]);
+    }
+  };
+
+  const auto ijLoop = [&](const auto& operation) {
+    for (auto i = idx_t{}; i < view1.shape(0); ++i) {
+      for (auto j = idx_t{}; j < view1.shape(1); ++j) {
+        operation(view1(i, j), view2(i, j), view3(i, j));
+      }
+    }
+  };
+
+  const auto jiLoop = [&](const auto& operation) {
+    for (auto j = idx_t{}; j < view1.shape(1); ++j) {
+      for (auto i = idx_t{}; i < view1.shape(0); ++i) {
+        operation(view1(i, j), view2(i, j), view3(i, j));
+      }
+    }
+  };
+
+  const auto forEachCol = [&](const auto& operation) {
+    const auto function = [&](auto& slice1, auto& slice2, auto& slice3) {
+      for (auto idx = idx_t{}; idx < slice1.shape(0); ++idx) {
+        operation(slice1(idx), slice2(idx), slice3(idx));
+      }
+    };
+    ArrayForEach<0>::apply(std::make_tuple(view1, view2, view3), function,
+                           array::helpers::detail::sequencedConf());
+  };
+
+  const auto forEachLevel = [&](const auto& operation) {
+    const auto function = [&](auto& slice1, auto& slice2, auto& slice3) {
+      for (auto idx = idx_t{}; idx < slice1.shape(0); ++idx) {
+        operation(slice1(idx), slice2(idx), slice3(idx));
+      }
+    };
+    ArrayForEach<1>::apply(std::make_tuple(view1, view2, view3), function,
+                           array::helpers::detail::sequencedConf());
+  };
+
+  const auto forEachAll = [&](const auto& operation) {
+    ArrayForEach<0, 1>::apply(std::make_tuple(view1, view2, view3), operation,
+                              array::helpers::detail::sequencedConf());
+  };
+
+  timeLoop(rawPointer, add, "Addition; raw pointer             ");
+  timeLoop(ijLoop, add, "Addition; for loop (i, j)         ");
+  timeLoop(jiLoop, add, "Addition; for loop (j, i)         ");
+  timeLoop(forEachCol, add, "Addition; for each (columns)      ");
+  timeLoop(forEachLevel, add, "Addition; for each (levels)       ");
+  timeLoop(forEachAll, add, "Addition; for each (all elements) ");
+  timeLoop(rawPointer, trig, "Trig    ; raw pointer             ");
+  timeLoop(ijLoop, trig, "Trig    ; for loop (i, j)         ");
+  timeLoop(jiLoop, trig, "Trig    ; for loop (j, i)         ");
+  timeLoop(forEachCol, trig, "Trig    ; for each (columns)      ");
+  timeLoop(forEachLevel, trig, "Trig    ; for each (levels)       ");
+  timeLoop(forEachAll, trig, "Trig    ; for each (all elements) ");
 }
 
 }  // namespace test
