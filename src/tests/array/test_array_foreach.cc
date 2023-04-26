@@ -54,8 +54,8 @@ CASE("test_array_foreach_1_view") {
   ghostView.assign({0, 1});
 
   auto count = int {};
-  const auto countGhosts = [&count](auto&...) { ++count; };
-  ArrayForEach<0>::apply(std::make_tuple(view), countGhosts, ghostView,
+  const auto countNonGhosts = [&count](auto&...) { ++count; };
+  ArrayForEach<0>::apply(std::make_tuple(view), countNonGhosts, ghostView,
                          array::helpers::detail::sequencedConf());
   EXPECT_EQ(count, 1);
 
@@ -64,7 +64,7 @@ CASE("test_array_foreach_1_view") {
     // Wrap ghostView to use correct number of indices.
     return ghostView(idx);
   };
-  ArrayForEach<0, 1>::apply(std::make_tuple(view), countGhosts, ghostWrap,
+  ArrayForEach<0, 1>::apply(std::make_tuple(view), countNonGhosts, ghostWrap,
                             array::helpers::detail::sequencedConf());
   EXPECT_EQ(count, 3);
 }
@@ -113,8 +113,8 @@ CASE("test_array_foreach_2_views") {
   ghostView.assign({0, 1});
 
   auto count = int {};
-  const auto countGhosts = [&count](auto&...) { ++count; };
-  ArrayForEach<0>::apply(std::make_tuple(view2), countGhosts, ghostView,
+  const auto countNonGhosts = [&count](auto&...) { ++count; };
+  ArrayForEach<0>::apply(std::make_tuple(view2), countNonGhosts, ghostView,
                          array::helpers::detail::sequencedConf());
   EXPECT_EQ(count, 1);
 
@@ -123,12 +123,12 @@ CASE("test_array_foreach_2_views") {
     // Wrap ghostView to use correct number of indices.
     return ghostView(idx);
   };
-  ArrayForEach<0, 1>::apply(std::make_tuple(view2), countGhosts, ghostWrap,
+  ArrayForEach<0, 1>::apply(std::make_tuple(view2), countNonGhosts, ghostWrap,
                             array::helpers::detail::sequencedConf());
   EXPECT_EQ(count, 3);
 
   count = 0;
-  ArrayForEach<0, 1, 2>::apply(std::make_tuple(view2), countGhosts, ghostWrap,
+  ArrayForEach<0, 1, 2>::apply(std::make_tuple(view2), countNonGhosts, ghostWrap,
                                array::helpers::detail::sequencedConf());
   EXPECT_EQ(count, 12);
 }
@@ -190,8 +190,8 @@ CASE("test_array_foreach_3_views") {
   ghostView.assign({0, 1});
 
   auto count = int {};
-  const auto countGhosts = [&count](auto&...) { ++count; };
-  ArrayForEach<0>::apply(std::make_tuple(view3), countGhosts, ghostView,
+  const auto countNonGhosts = [&count](auto&...) { ++count; };
+  ArrayForEach<0>::apply(std::make_tuple(view3), countNonGhosts, ghostView,
                          array::helpers::detail::sequencedConf());
   EXPECT_EQ(count, 1);
 
@@ -200,17 +200,17 @@ CASE("test_array_foreach_3_views") {
     // Wrap ghostView to use correct number of indices.
     return ghostView(idx);
   };
-  ArrayForEach<0, 1>::apply(std::make_tuple(view3), countGhosts, ghostWrap,
+  ArrayForEach<0, 1>::apply(std::make_tuple(view3), countNonGhosts, ghostWrap,
                             array::helpers::detail::sequencedConf());
   EXPECT_EQ(count, 3);
 
   count = 0;
-  ArrayForEach<0, 1, 2>::apply(std::make_tuple(view3), countGhosts, ghostWrap,
+  ArrayForEach<0, 1, 2>::apply(std::make_tuple(view3), countNonGhosts, ghostWrap,
                                array::helpers::detail::sequencedConf());
   EXPECT_EQ(count, 12);
 
   count = 0;
-  ArrayForEach<0, 1, 2, 3>::apply(std::make_tuple(view3), countGhosts,
+  ArrayForEach<0, 1, 2, 3>::apply(std::make_tuple(view3), countNonGhosts,
                                   ghostWrap,
                                   array::helpers::detail::sequencedConf());
   EXPECT_EQ(count, 60);
