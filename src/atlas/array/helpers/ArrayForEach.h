@@ -9,6 +9,7 @@
 
 #include <array>
 #include <tuple>
+#include <type_traits>
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/Range.h"
@@ -22,39 +23,49 @@ namespace atlas {
 namespace array {
 namespace helpers {
 
-namespace detail {
+namespace execution {
 
-auto sequencedConf() {
-  return util::Config("execution_policy", "sequenced");
-}
-
-auto unsequencedConf() {
-  return util::Config("execution_policy", "unsequenced");
-}
-
-auto parallelUnsequencedConf() {
-  return util::Config("execution_policy", "parallel_unsequenced");
-}
-
-enum class ExecutionPolicy {
-  parallel_unsequenced_policy,
-  unsequenced_policy,
-  sequenced_policy
+class sequenced_policy {
+ public:
+  static std::string getName() { return "sequenced_policy"; }
+  static util::Config conf() {
+    return util::Config("execution_policy", "sequenced_policy");
+  }
 };
+
+class unsequenced_policy {
+ public:
+  static std::string getName() { return "unsequenced_policy"; }
+  static util::Config conf() {
+    return util::Config("execution_policy", "unsequenced_policy");
+  }
+};
+
+class parallel_unsequenced_policy {
+ public:
+  static std::string getName() { return "parallel_unsequenced_policy"; }
+  static util::Config conf() {
+    return util::Config("execution_policy", "parallel_unsequenced_policy");
+  }
+};
+
+}  // namespace execution
+
+namespace detail {
 
 template <typename... Ts, typename T>
 constexpr auto tuplePushBack(const std::tuple<Ts...>& tuple, T value) {
   return std::tuple_cat(tuple, std::make_tuple(value));
 }
 
-template <ExecutionPolicy Policy, typename Functor>
+template <typename Policy, typename Functor>
 void forEach(idx_t idxMax, const Functor& functor) {
 
-  if constexpr(Policy == ExecutionPolicy::parallel_unsequenced_policy) {
-      atlas_omp_parallel_for(auto idx = idx_t{}; idx < idxMax; ++idx) {
-        functor(idx);
-      }
+  if constexpr(std::is_same_v<Policy, execution::parallel_unsequenced_policy>) {
+    atlas_omp_parallel_for(auto idx = idx_t{}; idx < idxMax; ++idx) {
+      functor(idx);
     }
+  }
   else {
     // Simple for-loop for sequenced or unsequenced execution policies.
     for (auto idx = idx_t{}; idx < idxMax; ++idx) {
@@ -66,9 +77,9 @@ void forEach(idx_t idxMax, const Functor& functor) {
 template <int NPad>
 constexpr auto argPadding() {
   if constexpr(NPad > 0) {
-      return std::tuple_cat(std::make_tuple(Range::all()),
-                            argPadding<NPad - 1>());
-    }
+    return std::tuple_cat(std::make_tuple(Range::all()),
+                          argPadding<NPad - 1>());
+  }
   else {
     return std::make_tuple();
   }
@@ -81,7 +92,7 @@ auto makeSlices(const std::tuple<SlicerArgs...>& slicerArgs,
 
   // "Lambdafy" slicer apply method to work with std::apply.
   const auto slicer = [&arrayView](const auto&... args) {
-    return arrayView.slice(args...);
+    return std::make_tuple(arrayView.slice(args...));
   };
 
   // Fill out the remaining slicerArgs with Range::all().
@@ -90,19 +101,19 @@ auto makeSlices(const std::tuple<SlicerArgs...>& slicerArgs,
 
   if constexpr(sizeof...(ArrayViews) > 0) {
 
-      // Recurse until all views are sliced.
-      return std::tuple_cat(std::make_tuple(std::apply(slicer, paddedArgs)),
-                            makeSlices(slicerArgs, arrayViews...));
-    }
+    // Recurse until all views are sliced.
+    return std::tuple_cat(std::apply(slicer, paddedArgs),
+                          makeSlices(slicerArgs, arrayViews...));
+  }
   else {
-    return std::make_tuple(std::apply(slicer, paddedArgs));
+    return std::apply(slicer, paddedArgs);
   }
 }
 
-template <ExecutionPolicy Policy, int Dim, int... ItrDims>
+template <typename Policy, int Dim, int... ItrDims>
 struct ArrayForEachImpl;
 
-template <ExecutionPolicy Policy, int Dim, int ItrDim, int... ItrDims>
+template <typename Policy, int Dim, int ItrDim, int... ItrDims>
 struct ArrayForEachImpl<Policy, Dim, ItrDim, ItrDims...> {
   template <typename... ArrayViews, typename Function, typename Mask,
             typename... SlicerArgs, typename... MaskArgs>
@@ -116,28 +127,27 @@ struct ArrayForEachImpl<Policy, Dim, ItrDim, ItrDims...> {
     // Iterate over this dimension.
     if constexpr(Dim == ItrDim) {
 
-        // Get size of iteration dimenion from first view argument.
-        const auto idxMax = std::get<0>(arrayViews).shape(ItrDim);
+      // Get size of iteration dimenion from first view argument.
+      const auto idxMax = std::get<0>(arrayViews).shape(ItrDim);
 
-        forEach<Policy>(idxMax, [&](idx_t idx) {
+      forEach<Policy>(idxMax, [&](idx_t idx) {
 
-          // Decay from parallel_unsequenced to unsequenced policy
-          if constexpr(Policy == ExecutionPolicy::parallel_unsequenced_policy) {
-              ArrayForEachImpl<ExecutionPolicy::unsequenced_policy, Dim + 1,
-                               ItrDims...>::apply(arrayViews, function, mask,
-                                                  tuplePushBack(slicerArgs,
-                                                                idx),
-                                                  tuplePushBack(maskArgs, idx));
-            }
-          else {
-            // Retain current execution policy.
-            ArrayForEachImpl<Policy, Dim + 1, ItrDims...>::apply(
-                arrayViews, function, mask, tuplePushBack(slicerArgs, idx),
-                tuplePushBack(maskArgs, idx));
-          }
-        });
-      }
-
+        // Decay from parallel_unsequenced to unsequenced policy
+        if constexpr(std::is_same_v<Policy,
+                                    execution::parallel_unsequenced_policy>) {
+          ArrayForEachImpl<execution::unsequenced_policy, Dim + 1,
+                         ItrDims...>::apply(arrayViews, function, mask,
+                                            tuplePushBack(slicerArgs, idx),
+                                            tuplePushBack(maskArgs, idx));
+        }
+        else {
+          // Retain current execution policy.
+          ArrayForEachImpl<Policy, Dim + 1, ItrDims...>::apply(
+              arrayViews, function, mask, tuplePushBack(slicerArgs, idx),
+              tuplePushBack(maskArgs, idx));
+        }
+      });
+    }
     // Add a RangeAll to arguments.
     else {
       ArrayForEachImpl<Policy, Dim + 1, ItrDim, ItrDims...>::apply(
@@ -147,7 +157,7 @@ struct ArrayForEachImpl<Policy, Dim, ItrDim, ItrDims...> {
   }
 };
 
-template <ExecutionPolicy Policy, int Dim>
+template <typename Policy, int Dim>
 struct ArrayForEachImpl<Policy, Dim> {
   template <typename... ArrayViews, typename Function, typename Mask,
             typename... SlicerArgs, typename... MaskArgs>
@@ -198,7 +208,7 @@ struct ArrayForEach {
   static void apply(const std::tuple<ArrayViews...>& arrayViews,
                     const Function& function, const Mask& mask,
                     const util::Config& conf =
-                        detail::parallelUnsequencedConf()) {
+                        execution::parallel_unsequenced_policy::conf()) {
 
     using namespace detail;
 
@@ -207,16 +217,15 @@ struct ArrayForEach {
 
     const auto executionPolicy = conf.getString("execution_policy");
 
-    if (executionPolicy == "parallel_unsequenced") {
-      ArrayForEachImpl<ExecutionPolicy::parallel_unsequenced_policy, 0,
+    if (executionPolicy == execution::parallel_unsequenced_policy::getName()) {
+      ArrayForEachImpl<execution::parallel_unsequenced_policy, 0,
                        ItrDims...>::apply(arrayViewsCopy, function, mask,
                                           std::make_tuple(), std::make_tuple());
-    } else if (executionPolicy == "unsequenced") {
-      ArrayForEachImpl<ExecutionPolicy::unsequenced_policy, 0,
-                       ItrDims...>::apply(arrayViewsCopy, function, mask,
-                                          std::make_tuple(), std::make_tuple());
-    } else if (executionPolicy == "sequenced") {
-      ArrayForEachImpl<ExecutionPolicy::sequenced_policy, 0, ItrDims...>::apply(
+    } else if (executionPolicy == execution::unsequenced_policy::getName()) {
+      ArrayForEachImpl<execution::unsequenced_policy, 0, ItrDims...>::apply(
+          arrayViewsCopy, function, mask, std::make_tuple(), std::make_tuple());
+    } else if (executionPolicy == execution::sequenced_policy::getName()) {
+      ArrayForEachImpl<execution::sequenced_policy, 0, ItrDims...>::apply(
           arrayViewsCopy, function, mask, std::make_tuple(), std::make_tuple());
     } else {
       throw eckit::BadParameter("Unknown execution policy: " + executionPolicy,
@@ -231,7 +240,7 @@ struct ArrayForEach {
   static void apply(const std::tuple<ArrayViews...>& arrayViews,
                     const Function& function,
                     const util::Config& conf =
-                        detail::parallelUnsequencedConf()) {
+                        execution::parallel_unsequenced_policy::conf()) {
     apply(arrayViews, function, [](auto args...) { return 0; }, conf);
   }
 };
