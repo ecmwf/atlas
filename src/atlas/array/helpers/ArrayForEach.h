@@ -29,7 +29,7 @@ class sequenced_policy {
  public:
   static std::string getName() { return "sequenced_policy"; }
   static util::Config conf() {
-    return util::Config("execution_policy", "sequenced_policy");
+    return util::Config("execution_policy", getName());
   }
 };
 
@@ -37,7 +37,7 @@ class unsequenced_policy {
  public:
   static std::string getName() { return "unsequenced_policy"; }
   static util::Config conf() {
-    return util::Config("execution_policy", "unsequenced_policy");
+    return util::Config("execution_policy", getName());
   }
 };
 
@@ -45,7 +45,7 @@ class parallel_unsequenced_policy {
  public:
   static std::string getName() { return "parallel_unsequenced_policy"; }
   static util::Config conf() {
-    return util::Config("execution_policy", "parallel_unsequenced_policy");
+    return util::Config("execution_policy", getName());
   }
 };
 
@@ -197,10 +197,10 @@ struct ArrayForEach {
   ///         Iterations are skipped when mask evaluates to "true"
   ///         and is executed with signature g(idx_i, idx_j,...), where the idxs
   ///         are indices of ItrDims.
-  ///         When the config contains "execution_policy" =
-  ///         "parallel_unsequenced" (default) the first loop is executed using
-  ///         OpenMP. The remaining loops are executed in serial. When
-  ///         "execution_policy" = "sequenced", all loops are executed in
+  ///         When a config is supplied containing "execution_policy" =
+  ///         "parallel_unsequenced_policy" (default) the first loop is executed
+  ///         using OpenMP. The remaining loops are executed in serial. When
+  ///         "execution_policy" = "sequenced_policy", all loops are executed in
   ///         sequential (row-major) order.
   ///         Note: The lowest ArrayView.rank() must be greater than or equal
   ///         to the highest dim in ItrDims. TODO: static checking for this.
