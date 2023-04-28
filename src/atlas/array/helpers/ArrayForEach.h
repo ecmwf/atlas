@@ -10,6 +10,7 @@
 #include <array>
 #include <tuple>
 #include <type_traits>
+#include <execution>
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/Range.h"
@@ -20,36 +21,61 @@
 #include "eckit/exception/Exceptions.h"
 
 namespace atlas {
-namespace array {
-namespace helpers {
-
 namespace execution {
 
-class sequenced_policy {
- public:
-  static std::string getName() { return "sequenced_policy"; }
-  static util::Config conf() {
-    return util::Config("execution_policy", getName());
-  }
+class sequenced_policy {};
+class unsequenced_policy {};
+class parallel_unsequenced_policy {};
+class parallel_policy {};
+
+// execution policy objects
+inline constexpr sequenced_policy            seq{ /*unspecified*/ };
+inline constexpr parallel_policy             par{ /*unspecified*/ };
+inline constexpr parallel_unsequenced_policy par_unseq{ /*unspecified*/ };
+inline constexpr unsequenced_policy          unseq{ /*unspecified*/ };
+
+
+template <typename execution_policy>
+std::string policy_name() {
+  return "unsupported";
+};
+template <>
+std::string policy_name<sequenced_policy>() {
+  return "sequenced_policy";
+};
+template <>
+std::string policy_name<unsequenced_policy>() {
+  return "unsequenced_policy";
+};
+template <>
+std::string policy_name<parallel_unsequenced_policy>() {
+  return "parallel_unsequenced_policy";
 };
 
-class unsequenced_policy {
- public:
-  static std::string getName() { return "unsequenced_policy"; }
-  static util::Config conf() {
-    return util::Config("execution_policy", getName());
-  }
-};
-
-class parallel_unsequenced_policy {
- public:
-  static std::string getName() { return "parallel_unsequenced_policy"; }
-  static util::Config conf() {
-    return util::Config("execution_policy", getName());
-  }
-};
+template <typename execution_policy>
+std::string policy_name(execution_policy) {
+  return policy_name<execution_policy>();
+}
 
 }  // namespace execution
+
+namespace option {
+
+template <typename T>
+util::Config execution_policy() {
+  return util::Config("execution_policy", execution::policy_name<T>());
+}
+
+template <typename T>
+util::Config execution_policy(T) {
+  return execution_policy<T>();
+}
+
+
+} // namespace option
+
+namespace array {
+namespace helpers {
 
 namespace detail {
 
@@ -207,8 +233,7 @@ struct ArrayForEach {
   template <typename... ArrayViews, typename Function, typename Mask>
   static void apply(const std::tuple<ArrayViews...>& arrayViews,
                     const Function& function, const Mask& mask,
-                    const util::Config& conf =
-                        execution::parallel_unsequenced_policy::conf()) {
+                    const util::Config& conf = option::execution_policy<execution::parallel_unsequenced_policy>()) {
 
     using namespace detail;
 
@@ -217,14 +242,17 @@ struct ArrayForEach {
 
     const auto executionPolicy = conf.getString("execution_policy");
 
-    if (executionPolicy == execution::parallel_unsequenced_policy::getName()) {
+    if (executionPolicy == execution::policy_name<execution::parallel_unsequenced_policy>()) {
       ArrayForEachImpl<execution::parallel_unsequenced_policy, 0,
                        ItrDims...>::apply(arrayViewsCopy, function, mask,
                                           std::make_tuple(), std::make_tuple());
-    } else if (executionPolicy == execution::unsequenced_policy::getName()) {
+    } else if (executionPolicy == execution::policy_name<execution::parallel_policy>()) {
+      ArrayForEachImpl<execution::parallel_policy, 0, ItrDims...>::apply(
+          arrayViewsCopy, function, mask, std::make_tuple(), std::make_tuple());
+    } else if (executionPolicy == execution::policy_name<execution::unsequenced_policy>()) {
       ArrayForEachImpl<execution::unsequenced_policy, 0, ItrDims...>::apply(
           arrayViewsCopy, function, mask, std::make_tuple(), std::make_tuple());
-    } else if (executionPolicy == execution::sequenced_policy::getName()) {
+    } else if (executionPolicy == execution::policy_name<execution::sequenced_policy>()) {
       ArrayForEachImpl<execution::sequenced_policy, 0, ItrDims...>::apply(
           arrayViewsCopy, function, mask, std::make_tuple(), std::make_tuple());
     } else {
@@ -239,8 +267,7 @@ struct ArrayForEach {
   template <typename... ArrayViews, typename Function>
   static void apply(const std::tuple<ArrayViews...>& arrayViews,
                     const Function& function,
-                    const util::Config& conf =
-                        execution::parallel_unsequenced_policy::conf()) {
+                    const util::Config& conf = option::execution_policy<execution::parallel_unsequenced_policy>()) {
     apply(arrayViews, function, [](auto args...) { return 0; }, conf);
   }
 };

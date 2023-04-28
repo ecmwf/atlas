@@ -56,8 +56,7 @@ CASE("test_array_foreach_1_view") {
 
   auto count = int {};
   const auto countNonGhosts = [&count](auto&...) { ++count; };
-  ArrayForEach<0>::apply(std::make_tuple(view), countNonGhosts, ghostView,
-                         array::helpers::execution::sequenced_policy::conf());
+  ArrayForEach<0>::apply(std::make_tuple(view), countNonGhosts, ghostView, option::execution_policy(execution::seq));
   EXPECT_EQ(count, 1);
 
   count = 0;
@@ -65,8 +64,7 @@ CASE("test_array_foreach_1_view") {
     // Wrap ghostView to use correct number of indices.
     return ghostView(idx);
   };
-  ArrayForEach<0, 1>::apply(std::make_tuple(view), countNonGhosts, ghostWrap,
-                            array::helpers::execution::sequenced_policy::conf());
+  ArrayForEach<0, 1>::apply(std::make_tuple(view), countNonGhosts, ghostWrap, option::execution_policy(execution::seq));
   EXPECT_EQ(count, 3);
 }
 
@@ -115,8 +113,7 @@ CASE("test_array_foreach_2_views") {
 
   auto count = int {};
   const auto countNonGhosts = [&count](auto&...) { ++count; };
-  ArrayForEach<0>::apply(std::make_tuple(view2), countNonGhosts, ghostView,
-                         array::helpers::execution::sequenced_policy::conf());
+  ArrayForEach<0>::apply(std::make_tuple(view2), countNonGhosts, ghostView, option::execution_policy(execution::seq));
   EXPECT_EQ(count, 1);
 
   count = 0;
@@ -124,14 +121,12 @@ CASE("test_array_foreach_2_views") {
     // Wrap ghostView to use correct number of indices.
     return ghostView(idx);
   };
-  ArrayForEach<0, 1>::apply(std::make_tuple(view2), countNonGhosts, ghostWrap,
-                            array::helpers::execution::sequenced_policy::conf());
+  ArrayForEach<0, 1>::apply(std::make_tuple(view2), countNonGhosts, ghostWrap,option::execution_policy(execution::seq));
   EXPECT_EQ(count, 3);
 
   count = 0;
   ArrayForEach<0, 1, 2>::apply(std::make_tuple(view2), countNonGhosts,
-                               ghostWrap,
-                               array::helpers::execution::sequenced_policy::conf());
+                               ghostWrap,option::execution_policy(execution::seq));
   EXPECT_EQ(count, 12);
 }
 
@@ -193,8 +188,7 @@ CASE("test_array_foreach_3_views") {
 
   auto count = int {};
   const auto countNonGhosts = [&count](auto&...) { ++count; };
-  ArrayForEach<0>::apply(std::make_tuple(view3), countNonGhosts, ghostView,
-                         array::helpers::execution::sequenced_policy::conf());
+  ArrayForEach<0>::apply(std::make_tuple(view3), countNonGhosts, ghostView,option::execution_policy(execution::seq));
   EXPECT_EQ(count, 1);
 
   count = 0;
@@ -202,20 +196,17 @@ CASE("test_array_foreach_3_views") {
     // Wrap ghostView to use correct number of indices.
     return ghostView(idx);
   };
-  ArrayForEach<0, 1>::apply(std::make_tuple(view3), countNonGhosts, ghostWrap,
-                            array::helpers::execution::sequenced_policy::conf());
+  ArrayForEach<0, 1>::apply(std::make_tuple(view3), countNonGhosts, ghostWrap,option::execution_policy(execution::seq));
   EXPECT_EQ(count, 3);
 
   count = 0;
   ArrayForEach<0, 1, 2>::apply(std::make_tuple(view3), countNonGhosts,
-                               ghostWrap,
-                               array::helpers::execution::sequenced_policy::conf());
+                               ghostWrap, option::execution_policy(execution::seq));
   EXPECT_EQ(count, 12);
 
   count = 0;
   ArrayForEach<0, 1, 2, 3>::apply(std::make_tuple(view3), countNonGhosts,
-                                  ghostWrap,
-                                  array::helpers::execution::sequenced_policy::conf());
+                                  ghostWrap, option::execution_policy(execution::seq));
   EXPECT_EQ(count, 60);
 }
 
@@ -245,8 +236,7 @@ CASE("test_array_foreach_data_integrity") {
       static_assert(std::is_convertible_v<decltype(slice), double&>);
       slice *= 3.;
     };
-    ArrayForEach<0>::apply(std::make_tuple(slice2), scaleDataDim1,
-                           array::helpers::execution::sequenced_policy::conf());
+    ArrayForEach<0>::apply(std::make_tuple(slice2), scaleDataDim1, option::execution_policy(execution::seq));
   };
   ArrayForEach<0, 1>::apply(std::make_tuple(view1, view2), scaleDataDim0);
 
@@ -344,8 +334,7 @@ CASE("test_array_foreach_performance") {
         operation(slice1(idx), slice2(idx), slice3(idx));
       }
     };
-    ArrayForEach<0>::apply(std::make_tuple(view1, view2, view3), function,
-                           array::helpers::execution::sequenced_policy::conf());
+    ArrayForEach<0>::apply(std::make_tuple(view1, view2, view3), function, option::execution_policy(execution::seq));
   };
 
   const auto forEachLevel = [&](const auto& operation) {
@@ -355,13 +344,11 @@ CASE("test_array_foreach_performance") {
         operation(slice1(idx), slice2(idx), slice3(idx));
       }
     };
-    ArrayForEach<1>::apply(std::make_tuple(view1, view2, view3), function,
-                           array::helpers::execution::sequenced_policy::conf());
+    ArrayForEach<1>::apply(std::make_tuple(view1, view2, view3), function, option::execution_policy(execution::seq));
   };
 
   const auto forEachAll = [&](const auto& operation) {
-    ArrayForEach<0, 1>::apply(std::make_tuple(view1, view2, view3), operation,
-                              array::helpers::execution::sequenced_policy::conf());
+    ArrayForEach<0, 1>::apply(std::make_tuple(view1, view2, view3), operation, option::execution_policy(execution::seq));
   };
 
 
