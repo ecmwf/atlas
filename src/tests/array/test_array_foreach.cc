@@ -272,7 +272,7 @@ double timeLoop(const IterationMethod& iterationMethod, int num_iter, int num_fi
       time += duration.count();
     }
   }
-  time /= double(num_iter-num_first);
+  time /= double(num_iter);
   Log::info() << "Elapsed time: " + output + "= " << time << "s";
   if (baseline != 0) {
     Log::info() << "\t;   relative to baseline : " << 100.*time/baseline << "%";
