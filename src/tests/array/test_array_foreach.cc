@@ -272,18 +272,32 @@ double timeLoop(const IterationMethod& iterationMethod, int num_iter, int num_fi
 }
 
 CASE("test_array_foreach_performance") {
+  int ni = 50000;
+  int nj = 100;
+  int num_iter = 20;
+  int num_first = 3;
 
-  auto arr1 = ArrayT<double>(50000, 100);
+  if( ATLAS_ARRAYVIEW_BOUNDS_CHECKING ) {
+    ni = 5000;
+    nj = 20;
+    num_iter = 1;
+    num_first = 0;
+    Log::info() << "WARNING: Following timings contain very expensive bounds checking. Compile with -DENABLE_BOUNDSCHECKING=OFF for fair comparison" << std::endl;
+  }
+
+
+
+  auto arr1 = ArrayT<double>(ni, nj);
   auto view1 = make_view<double, 2>(arr1);
 
-  auto arr2 = ArrayT<double>(50000, 100);
+  auto arr2 = ArrayT<double>(ni, nj);
   auto view2 = make_view<double, 2>(arr2);
 
   for (auto idx = size_t{}; idx < arr2.size(); ++idx) {
     static_cast<double*>(arr2.data())[idx] = 2 * idx + 1;
   }
 
-  auto arr3 = ArrayT<double>(50000, 100);
+  auto arr3 = ArrayT<double>(ni, nj);
   auto view3 = make_view<double, 2>(arr2);
 
 
@@ -352,8 +366,7 @@ CASE("test_array_foreach_performance") {
   };
 
 
-  int num_iter = 20;
-  int num_first = 3;
+
   double baseline;
   baseline = timeLoop(rawPointer, num_iter, num_first, add, 0, "Addition; raw pointer             ");
   timeLoop(ijLoop, num_iter, num_first, add, baseline, "Addition; for loop (i, j)         ");
