@@ -10,7 +10,6 @@
 #include <array>
 #include <tuple>
 #include <type_traits>
-#include <execution>
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/Range.h"
