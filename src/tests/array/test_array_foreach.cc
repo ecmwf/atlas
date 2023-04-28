@@ -260,14 +260,25 @@ CASE("test_array_foreach_data_integrity") {
 }
 
 template <typename IterationMethod, typename Operation>
-void timeLoop(const IterationMethod& iterationMethod,
-              const Operation& operation, const std::string& output) {
-  const auto start = std::chrono::steady_clock::now();
-  iterationMethod(operation);
-  const auto end = std::chrono::steady_clock::now();
-  const auto duration = std::chrono::duration<double>{end - start};
-
-  Log::info() << "Elapsed time: " + output + "= " << duration.count() << "s\n";
+double timeLoop(const IterationMethod& iterationMethod, int num_iter, int num_first,
+                const Operation& operation, double baseline, const std::string& output) {
+  double time{0};
+  for (int i=0; i<num_first + num_iter; ++i) {
+    const auto start = std::chrono::steady_clock::now();
+    iterationMethod(operation);
+    const auto stop = std::chrono::steady_clock::now();
+    const auto duration = std::chrono::duration<double>{stop - start};
+    if (i>=num_first) {
+      time += duration.count();
+    }
+  }
+  time /= double(num_iter-num_first);
+  Log::info() << "Elapsed time: " + output + "= " << time << "s";
+  if (baseline != 0) {
+    Log::info() << "\t;   relative to baseline : " << 100.*time/baseline << "%";
+  }
+  Log::info() << std::endl;
+  return time;
 }
 
 CASE("test_array_foreach_performance") {
@@ -285,36 +296,42 @@ CASE("test_array_foreach_performance") {
   auto arr3 = ArrayT<double>(50000, 100);
   auto view3 = make_view<double, 2>(arr2);
 
+
   for (auto idx = size_t{}; idx < arr3.size(); ++idx) {
     static_cast<double*>(arr3.data())[idx] = 3 * idx + 1;
   }
 
-  const auto add = [](double& a1, const double& a2,
-                      const double& a3) { a1 = a2 + a3; };
+  const auto add = [](double& __restrict__ a1, const double& __restrict__ a2,
+                      const double& __restrict__ a3) { a1 = a2 + a3; };
 
   const auto trig = [](double& a1, const double& a2,
                        const double& a3) { a1 = std::sin(a2) + std::cos(a3); };
 
   const auto rawPointer = [&](const auto& operation) {
-    auto* p1 = static_cast<double*>(arr1.data());
-    const auto* p2 = static_cast<double*>(arr2.data());
-    const auto* p3 = static_cast<double*>(arr3.data());
-    for (auto idx = size_t{}; idx < arr1.size(); ++idx) {
+    const size_t size = arr1.size();
+    auto* p1 = view1.data();
+    const auto* p2 = view2.data();
+    const auto* p3 = view3.data();
+    for (size_t idx = 0; idx < size; ++idx) {
       operation(p1[idx], p2[idx], p3[idx]);
     }
   };
 
   const auto ijLoop = [&](const auto& operation) {
-    for (auto i = idx_t{}; i < view1.shape(0); ++i) {
-      for (auto j = idx_t{}; j < view1.shape(1); ++j) {
+    const idx_t ni = view1.shape(0);
+    const idx_t nj = view1.shape(1);
+    for (idx_t i = 0; i < ni; ++i) {
+      for (idx_t j = 0; j < nj; ++j) {
         operation(view1(i, j), view2(i, j), view3(i, j));
       }
     }
   };
 
   const auto jiLoop = [&](const auto& operation) {
-    for (auto j = idx_t{}; j < view1.shape(1); ++j) {
-      for (auto i = idx_t{}; i < view1.shape(0); ++i) {
+    const idx_t ni = view1.shape(0);
+    const idx_t nj = view1.shape(1);
+    for (idx_t j = 0; j < nj; ++j) {
+      for (idx_t i = 0; i < ni; ++i) {
         operation(view1(i, j), view2(i, j), view3(i, j));
       }
     }
@@ -322,7 +339,8 @@ CASE("test_array_foreach_performance") {
 
   const auto forEachCol = [&](const auto& operation) {
     const auto function = [&](auto& slice1, auto& slice2, auto& slice3) {
-      for (auto idx = idx_t{}; idx < slice1.shape(0); ++idx) {
+      const idx_t size = slice1.shape(0);
+      for (idx_t idx = 0; idx < size; ++idx) {
         operation(slice1(idx), slice2(idx), slice3(idx));
       }
     };
@@ -332,7 +350,8 @@ CASE("test_array_foreach_performance") {
 
   const auto forEachLevel = [&](const auto& operation) {
     const auto function = [&](auto& slice1, auto& slice2, auto& slice3) {
-      for (auto idx = idx_t{}; idx < slice1.shape(0); ++idx) {
+      const idx_t size = slice1.shape(0);
+      for (idx_t idx = 0; idx < size; ++idx) {
         operation(slice1(idx), slice2(idx), slice3(idx));
       }
     };
@@ -345,18 +364,26 @@ CASE("test_array_foreach_performance") {
                               array::helpers::execution::sequenced_policy::conf());
   };
 
-  timeLoop(rawPointer, add, "Addition; raw pointer             ");
-  timeLoop(ijLoop, add, "Addition; for loop (i, j)         ");
-  timeLoop(jiLoop, add, "Addition; for loop (j, i)         ");
-  timeLoop(forEachCol, add, "Addition; for each (columns)      ");
-  timeLoop(forEachLevel, add, "Addition; for each (levels)       ");
-  timeLoop(forEachAll, add, "Addition; for each (all elements) ");
-  timeLoop(rawPointer, trig, "Trig    ; raw pointer             ");
-  timeLoop(ijLoop, trig, "Trig    ; for loop (i, j)         ");
-  timeLoop(jiLoop, trig, "Trig    ; for loop (j, i)         ");
-  timeLoop(forEachCol, trig, "Trig    ; for each (columns)      ");
-  timeLoop(forEachLevel, trig, "Trig    ; for each (levels)       ");
-  timeLoop(forEachAll, trig, "Trig    ; for each (all elements) ");
+
+  int num_iter = 20;
+  int num_first = 3;
+  double baseline;
+  baseline = timeLoop(rawPointer, num_iter, num_first, add, 0, "Addition; raw pointer             ");
+  timeLoop(ijLoop, num_iter, num_first, add, baseline, "Addition; for loop (i, j)         ");
+  timeLoop(jiLoop, num_iter, num_first, add, baseline, "Addition; for loop (j, i)         ");
+  timeLoop(forEachCol, num_iter, num_first, add, baseline, "Addition; for each (columns)      ");
+  timeLoop(forEachLevel, num_iter, num_first, add, baseline, "Addition; for each (levels)       ");
+  timeLoop(forEachAll, num_iter, num_first, add, baseline, "Addition; for each (all elements) ");
+  Log::info() << std::endl;
+
+  num_first = 2;
+  num_iter = 5;
+  baseline = timeLoop(rawPointer, num_iter, num_first, trig, 0, "Trig    ; raw pointer             ");
+  timeLoop(ijLoop, num_iter, num_first, trig, baseline, "Trig    ; for loop (i, j)         ");
+  timeLoop(jiLoop, num_iter, num_first, trig, baseline, "Trig    ; for loop (j, i)         ");
+  timeLoop(forEachCol, num_iter, num_first, trig, baseline, "Trig    ; for each (columns)      ");
+  timeLoop(forEachLevel, num_iter, num_first, trig, baseline, "Trig    ; for each (levels)       ");
+  timeLoop(forEachAll, num_iter, num_first, trig, baseline, "Trig    ; for each (all elements) ");
 }
 
 }  // namespace test
