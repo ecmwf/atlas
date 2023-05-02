@@ -10,6 +10,7 @@
 #include <array>
 #include <tuple>
 #include <type_traits>
+#include <string_view>
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/Range.h"
@@ -37,24 +38,24 @@ inline constexpr unsequenced_policy          unseq{ /*unspecified*/ };
 
 // Type names for execution policy (Not in C++ standard)
 template <typename execution_policy>
-std::string policy_name() {
+constexpr std::string_view policy_name() {
   return "unsupported";
 };
 template <>
-std::string policy_name<sequenced_policy>() {
+constexpr std::string_view policy_name<sequenced_policy>() {
   return "sequenced_policy";
 };
 template <>
-std::string policy_name<unsequenced_policy>() {
+constexpr std::string_view policy_name<unsequenced_policy>() {
   return "unsequenced_policy";
 };
 template <>
-std::string policy_name<parallel_unsequenced_policy>() {
+constexpr std::string_view policy_name<parallel_unsequenced_policy>() {
   return "parallel_unsequenced_policy";
 };
 
 template <typename execution_policy>
-std::string policy_name(execution_policy) {
+constexpr std::string_view policy_name(execution_policy) {
   return policy_name<execution_policy>();
 }
 
