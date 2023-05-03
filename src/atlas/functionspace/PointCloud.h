@@ -43,8 +43,8 @@ class PointCloud : public functionspace::FunctionSpaceImpl {
 public:
     template <typename Point>
     PointCloud(const std::vector<Point>&);
-    PointCloud(const Field&);
-    PointCloud(const Field&, const Field&);
+    PointCloud(const Field& lonlat);
+    PointCloud(const Field& lonlat, const Field& ghost);
     PointCloud(const FieldSet&);  // assuming lonlat ghost ridx and partition present
     PointCloud(const Grid&);
     ~PointCloud() override {}
@@ -171,9 +171,9 @@ private:
 class PointCloud : public FunctionSpace {
 public:
     PointCloud(const FunctionSpace&);
-    PointCloud(const Field&);
+    PointCloud(const Field& points);
     PointCloud(const Field&, const Field&);
-    PointCloud(const FieldSet&);
+    PointCloud(const FieldSet& flds);
     PointCloud(const std::vector<PointXY>&);
     PointCloud(const std::vector<PointXYZ>&);
     PointCloud(const std::initializer_list<std::initializer_list<double>>&);

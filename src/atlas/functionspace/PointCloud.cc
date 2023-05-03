@@ -306,7 +306,7 @@ void PointCloud::haloExchange(const Field& field, bool on_device) const {
 void PointCloud::setupHaloExchange(){
     const eckit::mpi::Comm& comm = atlas::mpi::comm();
     std::size_t mpi_rank = comm.rank();
-    const std::size_t no_mpi_ranks = comm.size();
+    const std::size_t mpi_size = comm.size();
 
     if (not partition_ and not remote_index_) {
 
@@ -344,13 +344,13 @@ void PointCloud::setupHaloExchange(){
 	coords_gp_local.push_back(gp[YY]);
       }
 
-      eckit::mpi::Buffer<double> buffers_rec(no_mpi_ranks);
+      eckit::mpi::Buffer<double> buffers_rec(mpi_size);
 
       comm.allGatherv(coords_gp_local.begin(), coords_gp_local.end(), buffers_rec);
 
       std::vector<PointXY> gpoints_global;
 
-      for (std::size_t pe = 0; pe < no_mpi_ranks; ++pe) {
+      for (std::size_t pe = 0; pe < mpi_size; ++pe) {
 	for (std::size_t j = 0; j < buffers_rec.counts[pe]/2; ++j) {
 	  PointXY loc_gp(*(buffers_rec.begin() + buffers_rec.displs[pe] + 2 * j + XX),
 			 *(buffers_rec.begin() + buffers_rec.displs[pe] + 2 * j + YY));
