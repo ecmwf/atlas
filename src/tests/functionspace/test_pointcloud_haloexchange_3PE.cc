@@ -45,10 +45,6 @@ CASE("test_halo_exchange_01") {
   // 'own points': clockwise starting from top left
   //
 
-  const eckit::mpi::Comm& comm = atlas::mpi::comm();
-  std::size_t mpi_rank = comm.rank();
-  const std::size_t no_mpi_ranks = comm.size();
-
 
   // number of points (own + ghost)
   int no_points;
