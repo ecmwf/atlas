@@ -118,6 +118,18 @@ void Metadata::broadcast(Metadata& dest, idx_t root) const {
     }
 }
 
+
+Metadata& Metadata::set(const eckit::LocalConfiguration& other) {
+    eckit::Value& root = const_cast<eckit::Value&>(get());
+    auto& other_root   = other.get();
+    std::vector<string> other_keys;
+    eckit::fromValue(other_keys, other_root.keys());
+    for (auto& key : other_keys) {
+        root[key] = other_root[key];
+    }
+    return *this;
+}
+
 Metadata::Metadata(const eckit::Value& value): eckit::LocalConfiguration(value) {}
 
 // ------------------------------------------------------------------
