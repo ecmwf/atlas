@@ -8,19 +8,6 @@
  * nor does it submit to any jurisdiction.
  */
 
-
-// TODO:
-// -----
-// * Fix abort encountered with
-//       mpirun -np 4 atlas-conservative-interpolation --source.grid=O20 --target.grid=H8 --order=2
-//
-// QUESTIONS:
-// ----------
-// * Why sqrt in ConservativeSphericalPolygon in line
-//       remap_stat.errors[Statistics::Errors::REMAP_CONS] = std::sqrt(std::abs(err_remap_cons) / unit_sphere_area());
-//   used to compute conservation_error
-
-
 #include <cmath>
 #include <fstream>
 #include <map>
@@ -35,6 +22,8 @@
 #include "atlas/array/MakeView.h"
 #include "atlas/field.h"
 #include "atlas/grid.h"
+#include "atlas/grid/Spacing.h"
+#include "atlas/grid/detail/spacing/CustomSpacing.h"
 #include "atlas/interpolation/Interpolation.h"
 #include "atlas/interpolation/method/unstructured/ConservativeSphericalPolygonInterpolation.h"
 #include "atlas/mesh.h"
@@ -73,13 +62,15 @@ public:
         add_option(new eckit::option::Separator("Source/Target options"));
 
         add_option(new SimpleOption<std::string>("source.grid", "source gridname"));
+        add_option(new SimpleOption<std::string>("source.partitioner", "source partitioner name (spherical-polygon, lonlat-polygon, brute-force)"));
         add_option(new SimpleOption<std::string>("target.grid", "target gridname"));
+        add_option(new SimpleOption<std::string>("target.partitioner", "target partitioner name (equal_regions, regular_bands, equal_bands)"));
         add_option(new SimpleOption<std::string>("source.functionspace",
                                                  "source functionspace, to override source grid default"));
         add_option(new SimpleOption<std::string>("target.functionspace",
                                                  "target functionspace, to override target grid default"));
         add_option(new SimpleOption<long>("source.halo", "default=2"));
-        add_option(new SimpleOption<long>("target.halo", "default=0"));
+        add_option(new SimpleOption<long>("target.halo", "default=0 for CellColumns and 1 for NodeColumns"));
 
         add_option(new eckit::option::Separator("Interpolation options"));
         add_option(new SimpleOption<long>("order", "Interpolation order. Supported: 1, 2 (default=1)"));
@@ -182,8 +173,22 @@ std::function<double(const PointLonLat&)> get_init(const AtlasTool::Args& args) 
 }
 
 int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
-    auto src_grid = Grid{args.getString("source.grid", "H16")};
-    auto tgt_grid = Grid{args.getString("target.grid", "H32")};
+    auto get_grid = [](std::string grid_name) {
+        int grid_number = std::atoi( grid_name.substr(1, grid_name.size()).c_str() );
+        if (grid_name.at(0) == 'P') {
+            Log::info() << "P-grid number: " << grid_number << std::endl;
+            ATLAS_ASSERT(grid_number > 3);
+            std::vector<double> y = {90, 89.9999, 0, -90};
+            auto xspace = StructuredGrid::XSpace( grid::LinearSpacing(0, 360, grid_number, false) );
+            auto yspace = StructuredGrid::YSpace( new grid::spacing::CustomSpacing( y.size(), y.data() ) );
+            return StructuredGrid(xspace, yspace);
+        }
+        else {
+            return StructuredGrid{grid_name};
+        }
+    };
+    auto src_grid = get_grid(args.getString("source.grid", "H32"));
+    auto tgt_grid = get_grid(args.getString("target.grid", "H32"));
 
     auto create_functionspace = [&](Mesh& mesh, int halo, std::string type) -> FunctionSpace {
         if (type.empty()) {
@@ -199,13 +204,13 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
             return functionspace::CellColumns(mesh, option::halo(halo));
         }
         else if (type == "NodeColumns") {
-            return functionspace::NodeColumns(mesh, option::halo(halo));
+            return functionspace::NodeColumns(mesh, option::halo(std::max(1,halo)));
         }
         ATLAS_THROW_EXCEPTION("FunctionSpace " << type << " is not recognized.");
     };
 
     timers.target_setup.start();
-    auto tgt_mesh = Mesh{tgt_grid};
+    auto tgt_mesh = Mesh{tgt_grid, grid::Partitioner(args.getString("target.partitioner", "regular_bands"))};
     auto tgt_functionspace =
         create_functionspace(tgt_mesh, args.getLong("target.halo", 0), args.getString("target.functionspace", ""));
     auto tgt_field = tgt_functionspace.createField<double>();
@@ -213,8 +218,8 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
 
     timers.source_setup.start();
     auto src_meshgenerator =
-        MeshGenerator{src_grid.meshgenerator() | option::halo(2) | util::Config("pole_elements", "pentagons")};
-    auto src_partitioner = grid::MatchingPartitioner{tgt_mesh};
+        MeshGenerator{src_grid.meshgenerator() | option::halo(2) | util::Config("pole_elements", "")};
+    auto src_partitioner = grid::MatchingPartitioner{tgt_mesh, util::Config("partitioner",args.getString("source.partitioner", "spherical-polygon"))};
     auto src_mesh        = src_meshgenerator.generate(src_grid, src_partitioner);
     auto src_functionspace =
         create_functionspace(src_mesh, args.getLong("source.halo", 2), args.getString("source.functionspace", ""));
@@ -230,14 +235,14 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
         for (idx_t n = 0; n < lonlat.shape(0); ++n) {
             src_view(n) = f(PointLonLat{lonlat(n, LON), lonlat(n, LAT)});
         }
-        src_field.set_dirty(false);
+        src_field.set_dirty(true);
         timers.initial_condition.start();
     }
-
 
     timers.interpolation_setup.start();
     auto interpolation =
         Interpolation(option::type("conservative-spherical-polygon") | args, src_functionspace, tgt_functionspace);
+    Log::info() << interpolation << std::endl;
     timers.interpolation_setup.stop();
 
 
@@ -251,11 +256,13 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
         using Statistics = interpolation::method::ConservativeSphericalPolygonInterpolation::Statistics;
         Statistics stats(metadata);
         if (args.getBool("statistics.accuracy", false)) {
-            stats.accuracy(interpolation, tgt_field, get_init(args));
+            metadata.set( stats.accuracy(interpolation, tgt_field, get_init(args) ) );
         }
         if (args.getBool("statistics.conservation", false)) {
             // compute difference field
             src_conservation_field = stats.diff(interpolation, src_field, tgt_field);
+            src_conservation_field.set_dirty(true);
+            src_conservation_field.haloExchange();
         }
     }
 

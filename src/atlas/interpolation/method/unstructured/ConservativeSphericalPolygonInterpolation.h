@@ -25,10 +25,8 @@ public:
     struct InterpolationParameters {      // one polygon intersection
         std::vector<idx_t> cell_idx;      // target cells used for intersection
         std::vector<PointXYZ> centroids;  // intersection cell centroids
-        std::vector<double> src_weights;  // intersection cell areas
-
-        // TODO: tgt_weights can be computed on the fly
-        std::vector<double> tgt_weights;  // (intersection cell areas) / (target cell area)
+        std::vector<double> weights;  // intersection cell areas
+        std::vector<double> tgt_weights;  // (intersection cell areas) / (target cell area) // TODO: tgt_weights vector should be removed for the sake of highres
     };
 
 private:
@@ -54,7 +52,6 @@ private:
         std::vector<idx_t> tgt_csp2node_;
         std::vector<std::vector<idx_t>> src_node2csp_;
         std::vector<std::vector<idx_t>> tgt_node2csp_;
-
 
         // Timings
         struct Timings {
@@ -102,18 +99,20 @@ public:
         std::array<int, 4> counts;
         enum Errors
         {
-            SRC_PLG_L1 = 0,  // index, over/undershoot in source subpolygon creation
-            SRC_PLG_LINF,
-            TGT_PLG_L1,  // index, over/untershoot in target subpolygon creation
-            TGT_PLG_LINF,
-            GEO_L1,      // index, cumulative area mismatch in polygon intersections
-            GEO_LINF,    // index, like GEO_L1 but in L_infinity norm
-            GEO_DIFF,    // index, difference in earth area coverages
+            SRC_SUBPLG_L1 = 0,  // index, \sum_{cell of mesh} {cell.area - \sum_{subpol of cell} subpol.area}
+            SRC_SUBPLG_LINF,    // index, \max_-||-
+            TGT_SUBPLG_L1,      // see above
+            TGT_SUBPLG_LINF,    // see above
+            SRC_INTERSECTPLG_L1,      // index, \sum_{cell of src-mesh} {cell.area - \sum_{intersect of cell} intersect.area}
+            SRC_INTERSECTPLG_LINF,    // index, \max_-||-
+            TGT_INTERSECTPLG_L1,      // see above
+            TGT_INTERSECTPLG_LINF,    // see above
+            SRCTGT_INTERSECTPLG_DIFF,    // index, 1/(unit_sphere.area) ( \sum_{scell} scell.area - \sum{tcell} tcell.area )
             REMAP_CONS,  // index, error in mass conservation
             REMAP_L2,    // index, error accuracy for given analytical function
             REMAP_LINF   // index, like REMAP_L2 but in L_infinity norm
         };
-        std::array<double, 10> errors;
+        std::array<double, 11> errors;
 
         double tgt_area_sum;
         double src_area_sum;
@@ -123,8 +122,8 @@ public:
         Statistics();
         Statistics(const Metadata&);
 
-        void accuracy(const Interpolation& interpolation, const Field target,
-                      std::function<double(const PointLonLat&)> func);
+        Metadata accuracy(const Interpolation& interpolation, const Field target,
+                          std::function<double(const PointLonLat&)> func);
 
 
         // compute difference field of source and target mass
@@ -139,6 +138,7 @@ public:
     void do_setup(const FunctionSpace& src_fs, const FunctionSpace& tgt_fs) override;
     void do_setup(const Grid& src_grid, const Grid& tgt_grid, const interpolation::Cache&) override;
     void do_execute(const Field& src_field, Field& tgt_field, Metadata&) const override;
+    void do_execute(const FieldSet& src_fields, FieldSet& tgt_fields, Metadata&) const override;
 
     void print(std::ostream& out) const override;
 
@@ -160,17 +160,17 @@ private:
     void intersect_polygons(const CSPolygonArray& src_csp, const CSPolygonArray& tgt_scp);
     Matrix compute_1st_order_matrix();
     Matrix compute_2nd_order_matrix();
-    void dump_intersection(const ConvexSphericalPolygon& plg_1, const CSPolygonArray& plg_2_array,
+    void dump_intersection(const std::string, const ConvexSphericalPolygon& plg_1, const CSPolygonArray& plg_2_array,
                            const std::vector<idx_t>& plg_2_idx_array) const;
     template <class TargetCellsIDs>
-    void dump_intersection(const ConvexSphericalPolygon& plg_1, const CSPolygonArray& plg_2_array,
+    void dump_intersection(const std::string, const ConvexSphericalPolygon& plg_1, const CSPolygonArray& plg_2_array,
                            const TargetCellsIDs& plg_2_idx_array) const;
     std::vector<idx_t> sort_cell_edges(Mesh& mesh, idx_t cell_id) const;
     std::vector<idx_t> sort_node_edges(Mesh& mesh, idx_t cell_id) const;
-    std::vector<idx_t> get_cell_neighbours(Mesh& mesh, idx_t jcell) const;
-    std::vector<idx_t> get_node_neighbours(Mesh& mesh, idx_t jcell) const;
-    CSPolygonArray get_polygons_celldata(Mesh& mesh) const;
-    CSPolygonArray get_polygons_nodedata(Mesh& mesh, std::vector<idx_t>& csp2node,
+    std::vector<idx_t> get_cell_neighbours(Mesh&, idx_t jcell) const;
+    std::vector<idx_t> get_node_neighbours(Mesh&, idx_t jcell) const;
+    CSPolygonArray get_polygons_celldata(FunctionSpace) const;
+    CSPolygonArray get_polygons_nodedata(FunctionSpace, std::vector<idx_t>& csp2node,
                                          std::vector<std::vector<idx_t>>& node2csp,
                                          std::array<double, 2>& errors) const;
 
