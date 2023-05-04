@@ -1,5 +1,6 @@
 /*
- * (C) Copyright 2013 ECMWF.
+ * (C) Copyright 2013 ECMWF
+ * (C) Crown Copyright 2023 Met Office
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -8,6 +9,9 @@
  * nor does it submit to any jurisdiction.
  */
 
+
+#include <string>
+#include <vector>
 
 #include "atlas/functionspace/PointCloud.h"
 #include "atlas/array.h"
@@ -21,6 +25,10 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Metadata.h"
+#include "atlas/util/Point.h"
+#include "atlas/util/Unique.h"
+
+#include "eckit/mpi/Comm.h"
 
 #if ATLAS_HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1
@@ -58,18 +66,13 @@ PointCloud::PointCloud(const std::vector<PointXYZ>& points) {
 
 PointCloud::PointCloud(const Field& lonlat): lonlat_(lonlat) {}
 
-PointCloud::PointCloud(const Field& lonlat, const Field& ghost): lonlat_(lonlat), ghost_(ghost) {}
+PointCloud::PointCloud(const Field& lonlat, const Field& ghost): lonlat_(lonlat), ghost_(ghost) {
+    setupHaloExchange();
+}
 
 PointCloud::PointCloud(const FieldSet & flds): lonlat_(flds["lonlat"]),
-  ghost_(flds["ghost"]), remote_index_(flds["remote_index"]), partition_(flds["partition"])
-{
-    ATLAS_ASSERT(ghost_.size() == remote_index_.size());
-    ATLAS_ASSERT(ghost_.size() == partition_.size());
-    halo_exchange_.reset(new parallel::HaloExchange());
-    halo_exchange_->setup(array::make_view<int, 1>( partition_).data(),
-                          array::make_view<idx_t, 1>(remote_index_).data(),
-                          REMOTE_IDX_BASE,
-                          ghost_.size());
+  ghost_(flds["ghost"]), remote_index_(flds["remote_index"]), partition_(flds["partition"]) {
+    setupHaloExchange();
 }
 
 PointCloud::PointCloud(const Grid& grid) {
@@ -136,11 +139,9 @@ std::string PointCloud::config_name(const eckit::Configuration& config) const {
     return name;
 }
 
-
 const parallel::HaloExchange& PointCloud::halo_exchange() const {
     return *halo_exchange_;
 }
-
 
 void PointCloud::set_field_metadata(const eckit::Configuration& config, Field& field) const {
     field.set_functionspace(this);
@@ -167,7 +168,6 @@ void PointCloud::set_field_metadata(const eckit::Configuration& config, Field& f
         field.metadata().set("type", config.getString("type"));
     }
 }
-
 
 Field PointCloud::createField(const eckit::Configuration& options) const {
     Field field(config_name(options), config_datatype(options), config_spec(options));
@@ -303,6 +303,135 @@ void PointCloud::haloExchange(const Field& field, bool on_device) const {
     haloExchange(fieldset, on_device);
 }
 
+void PointCloud::setupHaloExchange(){
+    const eckit::mpi::Comm& comm = atlas::mpi::comm();
+    std::size_t mpi_rank = comm.rank();
+    const std::size_t mpi_size = comm.size();
+
+    if (not partition_ and not remote_index_) {
+
+      auto lonlat_v = array::make_view<double, 2>(lonlat_);
+      // data structure containing a flag to identify the 'ghost points';
+      // 0={is not a ghost point}, 1={is a ghost point}
+      auto is_ghost = array::make_view<int, 1>(ghost_);
+
+      std::vector<PointXY> opoints_local;
+      std::vector<PointXY> gpoints_local;
+      std::vector<uidx_t> lonlat_u;
+      std::vector<uidx_t> opoints_local_u;
+
+      for (idx_t i = 0; i < lonlat_v.shape(0); ++i){
+        lonlat_u.emplace_back(util::unique_lonlat(lonlat_v(i, XX), lonlat_v(i, YY)));
+      }
+
+      idx_t j {0};
+      for (idx_t i = 0; i < is_ghost.shape(0); ++i) {
+	PointXY loc(lonlat_v(j, XX), lonlat_v(j, YY));
+	if (is_ghost(i)) {
+	  gpoints_local.emplace_back(loc);
+	} else {
+	  opoints_local.emplace_back(loc);
+          opoints_local_u.emplace_back(util::unique_lonlat(loc.x(), loc.y()));
+	}
+	++j;
+      }
+
+      std::vector<double> coords_gp_local;
+      coords_gp_local.reserve(gpoints_local.size() * 2);
+
+      for (auto& gp : gpoints_local) {
+	coords_gp_local.push_back(gp[XX]);
+	coords_gp_local.push_back(gp[YY]);
+      }
+
+      eckit::mpi::Buffer<double> buffers_rec(mpi_size);
+
+      comm.allGatherv(coords_gp_local.begin(), coords_gp_local.end(), buffers_rec);
+
+      std::vector<PointXY> gpoints_global;
+
+      for (std::size_t pe = 0; pe < mpi_size; ++pe) {
+	for (std::size_t j = 0; j < buffers_rec.counts[pe]/2; ++j) {
+	  PointXY loc_gp(*(buffers_rec.begin() + buffers_rec.displs[pe] + 2 * j + XX),
+			 *(buffers_rec.begin() + buffers_rec.displs[pe] + 2 * j + YY));
+	  gpoints_global.emplace_back(loc_gp);
+	}
+      }
+
+      std::vector<uidx_t> gpoints_global_u;
+      for (atlas::PointXY& loc : gpoints_global) {
+        gpoints_global_u.emplace_back(util::unique_lonlat(loc.x(), loc.y()));
+      }
+
+      std::vector<int> partition_ids_gp_global(gpoints_global.size(), -1);
+      std::vector<int> remote_index_gp_global(gpoints_global.size(), -1);
+
+      std::vector<uidx_t>::iterator iter_xy_gp_01;
+
+      for (std::size_t idx = 0; idx < gpoints_global_u.size(); ++idx) {
+	iter_xy_gp_01 = std::find(opoints_local_u.begin(),
+				  opoints_local_u.end(), gpoints_global_u.at(idx));
+	if (iter_xy_gp_01 != opoints_local_u.end()) {
+	  std::size_t ridx = std::distance(opoints_local_u.begin(), iter_xy_gp_01);
+	  partition_ids_gp_global.at(idx) = mpi_rank;
+	  remote_index_gp_global.at(idx) = ridx;
+	}
+      }
+
+      comm.allReduceInPlace(partition_ids_gp_global.begin(),
+			    partition_ids_gp_global.end(), eckit::mpi::max());
+      comm.allReduceInPlace(remote_index_gp_global.begin(),
+			    remote_index_gp_global.end(), eckit::mpi::max());
+
+      std::vector<int> partition_ids_local(lonlat_v.shape(0), -1);
+      std::vector<idx_t> remote_index_local(lonlat_v.shape(0), -1);
+
+      idx_t idx_loc {0};
+      std::vector<uidx_t>::iterator iter_xy_gp_02;
+
+      for (idx_t i = 0; i < lonlat_v.shape(0); ++i){
+        iter_xy_gp_02 = std::find(gpoints_global_u.begin(),
+                                  gpoints_global_u.end(), lonlat_u.at(i));
+	if (iter_xy_gp_02 != gpoints_global_u.end()) {
+	  std::size_t idx_gp = std::distance(gpoints_global_u.begin(), iter_xy_gp_02);
+	  partition_ids_local[idx_loc] = partition_ids_gp_global[idx_gp];
+	  remote_index_local[idx_loc] = remote_index_gp_global[idx_gp];
+	} else {
+	  partition_ids_local[idx_loc] = mpi_rank;
+	  remote_index_local[idx_loc] = idx_loc;
+	}
+	++idx_loc;
+      }
+
+      partition_ = Field("partition", array::make_datatype<int>(),
+			 array::make_shape(partition_ids_local.size()));
+
+      auto partitionv = array::make_view<int, 1>(partition_);  
+      for (idx_t i = 0; i < partitionv.shape(0); ++i) {
+	partitionv(i) = partition_ids_local.at(i);
+      }
+
+      remote_index_ = Field("remote_index", array::make_datatype<idx_t>(),
+			    array::make_shape(remote_index_local.size()));
+
+      auto remote_indexv = array::make_indexview<idx_t, 1>(remote_index_);
+      for (idx_t i = 0; i < remote_indexv.shape(0); ++i) {
+	remote_indexv(i) = remote_index_local.at(i);
+      }
+
+    }
+
+    ATLAS_ASSERT(ghost_.size() == remote_index_.size());
+    ATLAS_ASSERT(ghost_.size() == partition_.size());
+ 
+    halo_exchange_.reset(new parallel::HaloExchange());
+    halo_exchange_->setup(array::make_view<int, 1>(partition_).data(),
+                          array::make_view<idx_t, 1>(remote_index_).data(),
+                          REMOTE_IDX_BASE,
+                          ghost_.size());
+
+}
+
 void PointCloud::adjointHaloExchange(const FieldSet& fieldset, bool on_device) const {
     if (halo_exchange_) {
         for (idx_t f = 0; f < fieldset.size(); ++f) {
@@ -339,11 +468,14 @@ void PointCloud::adjointHaloExchange(const Field& field, bool) const {
 PointCloud::PointCloud(const FunctionSpace& functionspace):
     FunctionSpace(functionspace), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
 
-PointCloud::PointCloud(const Field& points):
-    FunctionSpace(new detail::PointCloud(points)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
+PointCloud::PointCloud(const Field& field):
+    FunctionSpace(new detail::PointCloud(field)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
 
-PointCloud::PointCloud(const FieldSet& points):
-    FunctionSpace(new detail::PointCloud(points)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
+PointCloud::PointCloud(const Field& field1, const Field& field2):
+    FunctionSpace(new detail::PointCloud(field1, field2)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
+
+PointCloud::PointCloud(const FieldSet& fset):
+    FunctionSpace(new detail::PointCloud(fset)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
 
 PointCloud::PointCloud(const std::vector<PointXY>& points):
     FunctionSpace(new detail::PointCloud(points)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
