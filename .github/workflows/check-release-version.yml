@@ -1,0 +1,10 @@
+name: Check VERSION file
+
+on:
+  push:
+    branches:
+      - "release/**"
+
+jobs:
+  check_version:
+    uses: ecmwf-actions/reusable-workflows/.github/workflows/check-release-version.yml@v2
