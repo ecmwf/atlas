@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "release/**"
+      - "hotfix/**"
 
 jobs:
   check_version:
