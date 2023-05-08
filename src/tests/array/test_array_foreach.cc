@@ -29,21 +29,21 @@ CASE("test_array_foreach_1_view") {
 
   // Test slice shapes.
 
-  const auto loopFunctorDim0 = [](auto& slice) {
-    EXPECT_EQUAL(slice.rank(), 1);
-    EXPECT_EQUAL(slice.shape(0), 3);
+  const auto loopFunctorDim0 = [](auto&& slice) {
+    EXPECT_EQ(slice.rank(), 1);
+    EXPECT_EQ(slice.shape(0), 3);
   };
   ArrayForEach<0>::apply(std::tie(view), loopFunctorDim0);
 
-  const auto loopFunctorDim1 = [](auto& slice) {
-    EXPECT_EQUAL(slice.rank(), 1);
-    EXPECT_EQUAL(slice.shape(0), 2);
+  const auto loopFunctorDim1 = [](auto&& slice) {
+    EXPECT_EQ(slice.rank(), 1);
+    EXPECT_EQ(slice.shape(0), 2);
   };
   ArrayForEach<1>::apply(std::tie(view), loopFunctorDim1);
 
   // Test that slice resolves to double.
 
-  const auto loopFunctorDimAll = [](auto& slice) {
+  const auto loopFunctorDimAll = [](auto&& slice) {
     static_assert(std::is_convertible_v<decltype(slice), const double&>);
   };
   ArrayForEach<0, 1>::apply(std::tie(view), loopFunctorDimAll);
@@ -55,12 +55,12 @@ CASE("test_array_foreach_1_view") {
   ghostView.assign({0, 1});
 
   auto count = int {};
-  const auto countNonGhosts = [&count](auto&...) { ++count; };
+  const auto countNonGhosts = [&count](auto&&...) { ++count; };
   ArrayForEach<0>::apply(execution::seq, std::tie(view), ghostView, countNonGhosts);
   EXPECT_EQ(count, 1);
 
   count = 0;
-  const auto ghostWrap = [&ghostView](idx_t idx, auto&...) {
+  const auto ghostWrap = [&ghostView](idx_t idx, auto&&...) {
     // Wrap ghostView to use correct number of indices.
     return ghostView(idx);
   };
@@ -78,29 +78,29 @@ CASE("test_array_foreach_2_views") {
 
   // Test slice shapes.
 
-  const auto loopFunctorDim0 = [](auto& slice1, auto& slice2) {
-    EXPECT_EQUAL(slice1.rank(), 1);
-    EXPECT_EQUAL(slice1.shape(0), 3);
+  const auto loopFunctorDim0 = [](auto&& slice1, auto&& slice2) {
+    EXPECT_EQ(slice1.rank(), 1);
+    EXPECT_EQ(slice1.shape(0), 3);
 
-    EXPECT_EQUAL(slice2.rank(), 2);
-    EXPECT_EQUAL(slice2.shape(0), 3);
-    EXPECT_EQUAL(slice2.shape(1), 4);
+    EXPECT_EQ(slice2.rank(), 2);
+    EXPECT_EQ(slice2.shape(0), 3);
+    EXPECT_EQ(slice2.shape(1), 4);
   };
   ArrayForEach<0>::apply(std::tie(view1, view2), loopFunctorDim0);
 
-  const auto loopFunctorDim1 = [](auto& slice1, auto& slice2) {
-    EXPECT_EQUAL(slice1.rank(), 1);
-    EXPECT_EQUAL(slice1.shape(0), 2);
+  const auto loopFunctorDim1 = [](auto&& slice1, auto&& slice2) {
+    EXPECT_EQ(slice1.rank(), 1);
+    EXPECT_EQ(slice1.shape(0), 2);
 
-    EXPECT_EQUAL(slice2.rank(), 2);
-    EXPECT_EQUAL(slice2.shape(0), 2);
-    EXPECT_EQUAL(slice2.shape(1), 4);
+    EXPECT_EQ(slice2.rank(), 2);
+    EXPECT_EQ(slice2.shape(0), 2);
+    EXPECT_EQ(slice2.shape(1), 4);
   };
   ArrayForEach<1>::apply(std::tie(view1, view2), loopFunctorDim1);
 
   // Test that slice resolves to double.
 
-  const auto loopFunctorDimAll = [](auto& slice2) {
+  const auto loopFunctorDimAll = [](auto&& slice2) {
     static_assert(std::is_convertible_v<decltype(slice2), const double&>);
   };
   ArrayForEach<0, 1, 2>::apply(std::tie(view2), loopFunctorDimAll);
@@ -112,12 +112,12 @@ CASE("test_array_foreach_2_views") {
   ghostView.assign({0, 1});
 
   auto count = int {};
-  const auto countNonGhosts = [&count](auto&...) { ++count; };
+  const auto countNonGhosts = [&count](auto&&...) { ++count; };
   ArrayForEach<0>::apply(execution::seq, std::tie(view2), ghostView, countNonGhosts);
   EXPECT_EQ(count, 1);
 
   count = 0;
-  const auto ghostWrap = [&ghostView](idx_t idx, auto&...) {
+  const auto ghostWrap = [&ghostView](idx_t idx, auto&&...) {
     // Wrap ghostView to use correct number of indices.
     return ghostView(idx);
   };
@@ -142,39 +142,39 @@ CASE("test_array_foreach_3_views") {
 
   // Test slice shapes.
 
-  const auto loopFunctorDim0 = [](auto& slice1, auto& slice2, auto& slice3) {
-    EXPECT_EQUAL(slice1.rank(), 1);
-    EXPECT_EQUAL(slice1.shape(0), 3);
+  const auto loopFunctorDim0 = [](auto&& slice1, auto&& slice2, auto&& slice3) {
+    EXPECT_EQ(slice1.rank(), 1);
+    EXPECT_EQ(slice1.shape(0), 3);
 
-    EXPECT_EQUAL(slice2.rank(), 2);
-    EXPECT_EQUAL(slice2.shape(0), 3);
-    EXPECT_EQUAL(slice2.shape(1), 4);
+    EXPECT_EQ(slice2.rank(), 2);
+    EXPECT_EQ(slice2.shape(0), 3);
+    EXPECT_EQ(slice2.shape(1), 4);
 
-    EXPECT_EQUAL(slice3.rank(), 3);
-    EXPECT_EQUAL(slice3.shape(0), 3);
-    EXPECT_EQUAL(slice3.shape(1), 4);
-    EXPECT_EQUAL(slice3.shape(2), 5);
+    EXPECT_EQ(slice3.rank(), 3);
+    EXPECT_EQ(slice3.shape(0), 3);
+    EXPECT_EQ(slice3.shape(1), 4);
+    EXPECT_EQ(slice3.shape(2), 5);
   };
   ArrayForEach<0>::apply(std::tie(view1, view2, view3), loopFunctorDim0);
 
-  const auto loopFunctorDim1 = [](auto& slice1, auto& slice2, auto& slice3) {
-    EXPECT_EQUAL(slice1.rank(), 1);
-    EXPECT_EQUAL(slice1.shape(0), 2);
+  const auto loopFunctorDim1 = [](auto&& slice1, auto&& slice2, auto&& slice3) {
+    EXPECT_EQ(slice1.rank(), 1);
+    EXPECT_EQ(slice1.shape(0), 2);
 
-    EXPECT_EQUAL(slice2.rank(), 2);
-    EXPECT_EQUAL(slice2.shape(0), 2);
-    EXPECT_EQUAL(slice2.shape(1), 4);
+    EXPECT_EQ(slice2.rank(), 2);
+    EXPECT_EQ(slice2.shape(0), 2);
+    EXPECT_EQ(slice2.shape(1), 4);
 
-    EXPECT_EQUAL(slice3.rank(), 3);
-    EXPECT_EQUAL(slice3.shape(0), 2);
-    EXPECT_EQUAL(slice3.shape(1), 4);
-    EXPECT_EQUAL(slice3.shape(2), 5);
+    EXPECT_EQ(slice3.rank(), 3);
+    EXPECT_EQ(slice3.shape(0), 2);
+    EXPECT_EQ(slice3.shape(1), 4);
+    EXPECT_EQ(slice3.shape(2), 5);
   };
   ArrayForEach<1>::apply(std::tie(view1, view2, view3), loopFunctorDim1);
 
   // Test that slice resolves to double.
 
-  const auto loopFunctorDimAll = [](auto& slice3) {
+  const auto loopFunctorDimAll = [](auto&& slice3) {
     static_assert(std::is_convertible_v<decltype(slice3), const double&>);
   };
   ArrayForEach<0, 1, 2, 3>::apply(std::tie(view3), loopFunctorDimAll);
@@ -186,12 +186,12 @@ CASE("test_array_foreach_3_views") {
   ghostView.assign({0, 1});
 
   auto count = int {};
-  const auto countNonGhosts = [&count](auto&...) { ++count; };
+  const auto countNonGhosts = [&count](auto&&...) { ++count; };
   ArrayForEach<0>::apply(execution::seq, std::tie(view3), ghostView, countNonGhosts);
   EXPECT_EQ(count, 1);
 
   count = 0;
-  const auto ghostWrap = [&ghostView](idx_t idx, auto&...) {
+  const auto ghostWrap = [&ghostView](idx_t idx, auto&&...) {
     // Wrap ghostView to use correct number of indices.
     return ghostView(idx);
   };
@@ -216,7 +216,7 @@ CASE("test_array_foreach_forwarding") {
   auto arr2 = ArrayT<double>(2, 3, 4);
   auto view2 = make_view<double, 3>(arr2);
 
-  const auto loopFunctorDim0 = [](auto& slice1, auto& slice2) {
+  const auto loopFunctorDim0 = [](auto&& slice1, auto&& slice2) {
     EXPECT_EQUAL(slice1.rank(), 1);
     EXPECT_EQUAL(slice1.shape(0), 3);
 
@@ -246,12 +246,12 @@ CASE("test_array_foreach_data_integrity") {
     static_cast<double*>(arr2.data())[idx] = idx;
   }
 
-  const auto scaleDataDim0 = [](auto& slice1, auto& slice2) {
+  const auto scaleDataDim0 = [](auto&& slice1, auto&& slice2) {
 
     static_assert(std::is_convertible_v<decltype(slice1), double&>);
     slice1 *= 2.;
 
-    const auto scaleDataDim1 = [](auto& slice) {
+    const auto scaleDataDim1 = [](auto&& slice) {
 
       static_assert(std::is_convertible_v<decltype(slice), double&>);
       slice *= 3.;
@@ -325,8 +325,8 @@ CASE("test_array_foreach_performance") {
     static_cast<double*>(arr3.data())[idx] = 3 * idx + 1;
   }
 
-  const auto add = [](double& __restrict__ a1, const double& __restrict__ a2,
-                      const double& __restrict__ a3) { a1 = a2 + a3; };
+  const auto add = [](double& a1, const double& a2,
+                      const double& a3) { a1 = a2 + a3; };
 
   const auto trig = [](double& a1, const double& a2,
                        const double& a3) { a1 = std::sin(a2) + std::cos(a3); };
@@ -362,7 +362,7 @@ CASE("test_array_foreach_performance") {
   };
 
   const auto forEachCol = [&](const auto& operation) {
-    const auto function = [&](auto& slice1, auto& slice2, auto& slice3) {
+    const auto function = [&](auto&& slice1, auto&& slice2, auto&& slice3) {
       const idx_t size = slice1.shape(0);
       for (idx_t idx = 0; idx < size; ++idx) {
         operation(slice1(idx), slice2(idx), slice3(idx));
@@ -372,7 +372,7 @@ CASE("test_array_foreach_performance") {
   };
 
   const auto forEachLevel = [&](const auto& operation) {
-    const auto function = [&](auto& slice1, auto& slice2, auto& slice3) {
+    const auto function = [&](auto&& slice1, auto&& slice2, auto&& slice3) {
       const idx_t size = slice1.shape(0);
       for (idx_t idx = 0; idx < size; ++idx) {
         operation(slice1(idx), slice2(idx), slice3(idx));
@@ -386,14 +386,14 @@ CASE("test_array_foreach_performance") {
   };
 
   const auto forEachNested = [&](const auto& operation) {
-      const auto function = [&](auto& slice1, auto& slice2, auto& slice3) {
+      const auto function = [&](auto&& slice1, auto&& slice2, auto&& slice3) {
           ArrayForEach<0>::apply(execution::seq, std::tie(slice1, slice2, slice3), operation);
       };
       ArrayForEach<0>::apply(execution::seq, std::tie(view1, view2, view3), function);
   };
 
   const auto forEachConf = [&](const auto& operation) {
-      const auto function = [&](auto& slice1, auto& slice2, auto& slice3) {
+      const auto function = [&](auto&& slice1, auto&& slice2, auto&& slice3) {
           ArrayForEach<0>::apply(option::execution_policy(execution::seq), std::tie(slice1, slice2, slice3), operation);
       };
       ArrayForEach<0>::apply(option::execution_policy(execution::seq), std::tie(view1, view2, view3), function);
