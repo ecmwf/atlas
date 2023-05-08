@@ -12,6 +12,12 @@ ecbuild_add_test( TARGET atlas_test_field_missingvalue
     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_field_foreach
+  SOURCES  test_field_foreach.cc
+  LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 if( HAVE_FCTEST )
 
   add_fctest( TARGET atlas_fctest_field
