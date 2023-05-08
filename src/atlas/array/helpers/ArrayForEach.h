@@ -24,10 +24,11 @@ namespace atlas {
 namespace execution {
 
 // As in C++17 std::execution namespace. Note: unsequenced_policy is a C++20 addition.
-class sequenced_policy {};
-class unsequenced_policy {};
-class parallel_unsequenced_policy {};
-class parallel_policy {};
+class policy_base {};
+class sequenced_policy : policy_base {};
+class unsequenced_policy : policy_base {};
+class parallel_unsequenced_policy : policy_base {};
+class parallel_policy : policy_base {};
 
 // execution policy objects as in C++ std::execution namespace. Note: unseq is a C++20 addition.
 inline constexpr sequenced_policy            seq{ /*unspecified*/ };
@@ -242,11 +243,12 @@ struct ArrayForEach {
                     const Mask& mask, const Function& function) {
 
     auto execute = [&](auto execution_policy) {
-        // Make a copy of views to simplify constness and forwarding.
-        auto arrayViewsCopy = arrayViews;
+
+        // Constness of array-view tuple doesn't really matter.
+        auto& arrayViewsRef = const_cast<std::tuple<ArrayViews...>&>(arrayViews);
 
         detail::ArrayForEachImpl<decltype(execution_policy), 0, ItrDims...>::apply(
-            arrayViewsCopy, mask, function, std::make_tuple(), std::make_tuple());
+            arrayViewsRef, mask, function, std::make_tuple(), std::make_tuple());
     };
 
     using namespace execution;
@@ -270,10 +272,18 @@ struct ArrayForEach {
     }
   }
 
-  template <typename ExecutionPolicy, typename... ArrayViews, typename Mask,
-            typename Function, std::enable_if_t<!std::is_base_of_v<eckit::Parametrisation,ExecutionPolicy>,int> =0>
+  template <typename ExecutionPolicy, typename... ArrayViews, typename Mask, typename Function,
+      std::enable_if_t<!std::is_base_of_v<eckit::Parametrisation, ExecutionPolicy>, int> = 0>
   static void apply(ExecutionPolicy, const std::tuple<ArrayViews...>& arrayViews, const Mask& mask, const Function& function) {
-      apply(option::execution_policy<ExecutionPolicy>(), arrayViews, mask, function);
+
+    static_assert(std::is_base_of_v<execution::policy_base, ExecutionPolicy>,
+                  "Execution policty must be a C++17 execution policy");
+
+    // Constness of array-view tuple doesn't really matter.
+    auto& arrayViewsRef = const_cast<std::tuple<ArrayViews...>&>(arrayViews);
+
+    detail::ArrayForEachImpl<ExecutionPolicy, 0, ItrDims...>::apply(
+        arrayViewsRef, mask, function, std::make_tuple(), std::make_tuple());
   }
 
   template <typename... ArrayViews, typename Mask, typename Function>
@@ -292,13 +302,14 @@ struct ArrayForEach {
 
   template <typename ExecutionPolicy, typename... ArrayViews,
             typename Function, std::enable_if_t<!std::is_base_of_v<eckit::Parametrisation,ExecutionPolicy>,int> =0>
-  static void apply(ExecutionPolicy, const std::tuple<ArrayViews...>& arrayViews, const Function& function) {
-    apply(option::execution_policy<ExecutionPolicy>(), arrayViews, function);
+  static void apply(ExecutionPolicy executionPolicy, const std::tuple<ArrayViews...>& arrayViews, const Function& function) {
+    constexpr auto no_mask = [](auto args...) { return 0; };
+    apply(executionPolicy, arrayViews, no_mask, function);
   }
 
   template <typename... ArrayViews, typename Function>
   static void apply(const std::tuple<ArrayViews...>& arrayViews, const Function& function) {
-    apply(util::NoConfig{}, arrayViews, function);
+    apply(execution::par_unseq, arrayViews, function);
   }
 
 };

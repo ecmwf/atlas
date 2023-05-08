@@ -362,7 +362,12 @@ CASE("test_array_foreach_performance") {
     ArrayForEach<0, 1>::apply(execution::seq, std::make_tuple(view1, view2, view3), operation);
   };
 
-
+  const auto forEachNested = [&](const auto& operation) {
+      const auto function = [&](auto& slice1, auto& slice2, auto& slice3) {
+          ArrayForEach<0>::apply(execution::seq, std::forward_as_tuple(slice1, slice2, slice3), operation);
+      };
+      ArrayForEach<0>::apply(execution::seq, std::forward_as_tuple(view1, view2, view3), function);
+  };
 
   double baseline;
   baseline = timeLoop(rawPointer, num_iter, num_first, add, 0, "Addition; raw pointer             ");
@@ -371,6 +376,7 @@ CASE("test_array_foreach_performance") {
   timeLoop(forEachCol, num_iter, num_first, add, baseline, "Addition; for each (columns)      ");
   timeLoop(forEachLevel, num_iter, num_first, add, baseline, "Addition; for each (levels)       ");
   timeLoop(forEachAll, num_iter, num_first, add, baseline, "Addition; for each (all elements) ");
+  timeLoop(forEachNested, num_iter, num_first, add, baseline, "Addition; for each (nested)       ");
   Log::info() << std::endl;
 
   num_first = 2;
@@ -381,6 +387,7 @@ CASE("test_array_foreach_performance") {
   timeLoop(forEachCol, num_iter, num_first, trig, baseline, "Trig    ; for each (columns)      ");
   timeLoop(forEachLevel, num_iter, num_first, trig, baseline, "Trig    ; for each (levels)       ");
   timeLoop(forEachAll, num_iter, num_first, trig, baseline, "Trig    ; for each (all elements) ");
+  timeLoop(forEachNested, num_iter, num_first, trig, baseline, "Trig    ; for each (nested)       ");
 }
 
 }  // namespace test
