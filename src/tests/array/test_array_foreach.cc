@@ -392,25 +392,34 @@ CASE("test_array_foreach_performance") {
       ArrayForEach<0>::apply(execution::seq, std::tie(view1, view2, view3), function);
   };
 
+  const auto forEachConf = [&](const auto& operation) {
+      const auto function = [&](auto& slice1, auto& slice2, auto& slice3) {
+          ArrayForEach<0>::apply(option::execution_policy(execution::seq), std::tie(slice1, slice2, slice3), operation);
+      };
+      ArrayForEach<0>::apply(option::execution_policy(execution::seq), std::tie(view1, view2, view3), function);
+  };
+
   double baseline;
-  baseline = timeLoop(rawPointer, num_iter, num_first, add, 0, "Addition; raw pointer             ");
-  timeLoop(ijLoop, num_iter, num_first, add, baseline, "Addition; for loop (i, j)         ");
-  timeLoop(jiLoop, num_iter, num_first, add, baseline, "Addition; for loop (j, i)         ");
-  timeLoop(forEachCol, num_iter, num_first, add, baseline, "Addition; for each (columns)      ");
-  timeLoop(forEachLevel, num_iter, num_first, add, baseline, "Addition; for each (levels)       ");
-  timeLoop(forEachAll, num_iter, num_first, add, baseline, "Addition; for each (all elements) ");
-  timeLoop(forEachNested, num_iter, num_first, add, baseline, "Addition; for each (nested)       ");
+  baseline = timeLoop(rawPointer, num_iter, num_first, add, 0, "Addition; raw pointer               ");
+  timeLoop(ijLoop, num_iter, num_first, add, baseline, "Addition; for loop (i, j)           ");
+  timeLoop(jiLoop, num_iter, num_first, add, baseline, "Addition; for loop (j, i)           ");
+  timeLoop(forEachCol, num_iter, num_first, add, baseline, "Addition; for each (columns)        ");
+  timeLoop(forEachLevel, num_iter, num_first, add, baseline, "Addition; for each (levels)         ");
+  timeLoop(forEachAll, num_iter, num_first, add, baseline, "Addition; for each (all elements)   ");
+  timeLoop(forEachNested, num_iter, num_first, add, baseline, "Addition; for each (nested)         ");
+  timeLoop(forEachConf, num_iter, num_first, add, baseline, "Addition; for each (nested, config) ");
   Log::info() << std::endl;
 
   num_first = 2;
   num_iter = 5;
-  baseline = timeLoop(rawPointer, num_iter, num_first, trig, 0, "Trig    ; raw pointer             ");
-  timeLoop(ijLoop, num_iter, num_first, trig, baseline, "Trig    ; for loop (i, j)         ");
-  timeLoop(jiLoop, num_iter, num_first, trig, baseline, "Trig    ; for loop (j, i)         ");
-  timeLoop(forEachCol, num_iter, num_first, trig, baseline, "Trig    ; for each (columns)      ");
-  timeLoop(forEachLevel, num_iter, num_first, trig, baseline, "Trig    ; for each (levels)       ");
-  timeLoop(forEachAll, num_iter, num_first, trig, baseline, "Trig    ; for each (all elements) ");
-  timeLoop(forEachNested, num_iter, num_first, trig, baseline, "Trig    ; for each (nested)       ");
+  baseline = timeLoop(rawPointer, num_iter, num_first, trig, 0, "Trig    ; raw pointer               ");
+  timeLoop(ijLoop, num_iter, num_first, trig, baseline, "Trig    ; for loop (i, j)           ");
+  timeLoop(jiLoop, num_iter, num_first, trig, baseline, "Trig    ; for loop (j, i)           ");
+  timeLoop(forEachCol, num_iter, num_first, trig, baseline, "Trig    ; for each (columns)        ");
+  timeLoop(forEachLevel, num_iter, num_first, trig, baseline, "Trig    ; for each (levels)         ");
+  timeLoop(forEachAll, num_iter, num_first, trig, baseline, "Trig    ; for each (all elements)   ");
+  timeLoop(forEachNested, num_iter, num_first, trig, baseline, "Trig    ; for each (nested)         ");
+  timeLoop(forEachConf, num_iter, num_first, trig, baseline, "Trig    ; for each (nested, config) ");
 }
 
 }  // namespace test

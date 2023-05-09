@@ -91,6 +91,15 @@ namespace helpers {
 
 namespace detail {
 
+template <typename>
+struct IsTupleImpl : std::false_type {};
+
+template <typename... Args>
+struct IsTupleImpl<std::tuple<Args...>> : std::true_type {};
+
+template <typename Tuple>
+using IsTuple = std::enable_if_t<IsTupleImpl<Tuple>::value>*;
+
 template <typename... Ts, typename T>
 constexpr auto tuplePushBack(const std::tuple<Ts...>& tuple, T value) {
   return std::tuple_cat(tuple, std::make_tuple(value));
@@ -122,12 +131,6 @@ constexpr auto argPadding() {
     return std::make_tuple();
   }
 }
-
-//template <template <typename, int> typename View, typename Value, int Rank>
-//constexpr auto getRank(const View<Value, Rank>&) {return Rank;}
-
-//template <template <typename, int> typename View, typename Value, int Rank>
-//constexpr auto getRank(const View<Value, Rank>&&) {return Rank;}
 
 template<int Rank>
 struct GetRankImpl {
@@ -169,7 +172,7 @@ auto makeSlices(const std::tuple<SlicerArgs...>& slicerArgs,
     };
 
     return std::tuple_cat(std::apply(slicer, paddedArgs),
-                          makeSlices<ViewIdx + 1>(slicerArgs, arrayViews));
+      makeSlices<ViewIdx + 1>(slicerArgs, std::forward<ArrayViewTuple>(arrayViews)));
   }
   else {
     return std::make_tuple();
@@ -269,7 +272,8 @@ struct ArrayForEach {
   ///         sequential (row-major) order.
   ///         Note: The lowest ArrayView.rank() must be greater than or equal
   ///         to the highest dim in ItrDims. TODO: static checking for this.
-  template <typename ArrayViewTuple, typename Mask, typename Function>
+  template <typename ArrayViewTuple, typename Mask, typename Function,
+            detail::IsTuple<ArrayViewTuple> = nullptr>
   static void apply(const eckit::Parametrisation& conf,
                     ArrayViewTuple&& arrayViews,
                     const Mask& mask, const Function& function) {
@@ -296,34 +300,54 @@ struct ArrayForEach {
     }
   }
 
+  /// brief   Apply "For-Each" method.
+  ///
+  /// details As above, but Execution policy is determined at compile-time.
   template <typename ExecutionPolicy, typename ArrayViewTuple, typename Mask, typename Function,
-            execution::is_execution_policy<ExecutionPolicy> = nullptr>
+            execution::is_execution_policy<ExecutionPolicy> = nullptr,
+            detail::IsTuple<ArrayViewTuple> = nullptr>
   static void apply(ExecutionPolicy, ArrayViewTuple&& arrayViews, const Mask& mask, const Function& function) {
 
     detail::ArrayForEachImpl<ExecutionPolicy, 0, ItrDims...>::apply(
         std::forward<ArrayViewTuple>(arrayViews), mask, function, std::make_tuple(), std::make_tuple());
   }
 
-  template <typename ArrayViewTuple, typename Mask, typename Function>
+  /// brief   Apply "For-Each" method
+  ///
+  /// detials Apply ForEach with default execution policy.
+  template <typename ArrayViewTuple, typename Mask, typename Function,
+            detail::IsTuple<ArrayViewTuple> = nullptr>
   static void apply(ArrayViewTuple&& arrayViews, const Mask& mask, const Function& function) {
-      apply(util::NoConfig(), std::forward<ArrayViewTuple>(arrayViews), mask, function);
+      apply(std::forward<ArrayViewTuple>(arrayViews), mask, function);
   }
 
-  template <typename ArrayViewTuple, typename Function>
+  /// brief   Apply "For-Each" method
+  ///
+  /// detials Apply ForEach with run-time determined execution policy and no mask.
+  template <typename ArrayViewTuple, typename Function,
+            detail::IsTuple<ArrayViewTuple> = nullptr>
   static void apply(const eckit::Parametrisation& conf, ArrayViewTuple&& arrayViews, const Function& function) {
     constexpr auto no_mask = [](auto args...) { return 0; };
     apply(conf, std::forward<ArrayViewTuple>(arrayViews), no_mask, function);
   }
 
+  /// brief   Apply "For-Each" method
+  ///
+  /// detials Apply ForEach with compile-time determined execution policy and no mask.
   template <typename ExecutionPolicy, typename ArrayViewTuple,
-            typename Function, execution::is_execution_policy<ExecutionPolicy> = nullptr>
+            typename Function, detail::IsTuple<ArrayViewTuple> = nullptr,
+            execution::is_execution_policy<ExecutionPolicy> = nullptr>
   static void apply(ExecutionPolicy executionPolicy, ArrayViewTuple&& arrayViews, const Function& function) {
     constexpr auto no_mask = [](auto args...) { return 0; };
     apply(executionPolicy, std::forward<ArrayViewTuple>(arrayViews), no_mask, function);
   }
 
-  template <typename ArrayViewTuple, typename Function>
-  static void apply(ArrayViewTuple&& arrayViews, const Function& function) {
+  /// brief   Apply "For-Each" method
+  ///
+  /// detials Apply ForEach with default execution policy and no mask.
+  template <typename ArrayViewTuple, typename Function,
+            detail::IsTuple<ArrayViewTuple> = nullptr>
+  static void apply(ArrayViewTuple arrayViews, const Function& function) {
     apply(execution::par_unseq, std::forward<ArrayViewTuple>(arrayViews), function);
   }
 
