@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <array>
+#include <functional>
 #include <tuple>
 #include <type_traits>
 #include <string_view>
@@ -60,6 +60,14 @@ constexpr std::string_view policy_name(execution_policy) {
   return policy_name<execution_policy>();
 }
 
+// Type check for execution policy (Not in C++ standard)
+template <typename execution_policy>
+using is_execution_policy = std::enable_if_t<
+    std::is_same_v<execution_policy, sequenced_policy> ||
+    std::is_same_v<execution_policy, parallel_policy> ||
+    std::is_same_v<execution_policy, parallel_unsequenced_policy> ||
+    std::is_same_v<execution_policy, unsequenced_policy>>*;
+
 }  // namespace execution
 
 namespace option {
@@ -82,6 +90,15 @@ namespace array {
 namespace helpers {
 
 namespace detail {
+
+template <typename...>
+struct is_tuple_impl : std::false_type {};
+
+template <typename... Args>
+struct is_tuple_impl<std::tuple<Args...>> : std::true_type {};
+
+template <typename Tuple>
+using is_tuple = std::enable_if_t<is_tuple_impl<std::decay<Tuple>>::value>*;
 
 template <typename... Ts, typename T>
 constexpr auto tuplePushBack(const std::tuple<Ts...>& tuple, T value) {
@@ -244,11 +261,7 @@ struct ArrayForEach {
 
     auto execute = [&](auto execution_policy) {
 
-        // Constness of array-view tuple doesn't really matter.
-        auto& arrayViewsRef = const_cast<std::tuple<ArrayViews...>&>(arrayViews);
-
-        detail::ArrayForEachImpl<decltype(execution_policy), 0, ItrDims...>::apply(
-            arrayViewsRef, mask, function, std::make_tuple(), std::make_tuple());
+        apply(execution_policy, arrayViews, mask, function);
     };
 
     using namespace execution;
@@ -273,11 +286,8 @@ struct ArrayForEach {
   }
 
   template <typename ExecutionPolicy, typename... ArrayViews, typename Mask, typename Function,
-      std::enable_if_t<!std::is_base_of_v<eckit::Parametrisation, ExecutionPolicy>, int> = 0>
+            execution::is_execution_policy<ExecutionPolicy> = nullptr>
   static void apply(ExecutionPolicy, const std::tuple<ArrayViews...>& arrayViews, const Mask& mask, const Function& function) {
-
-    static_assert(std::is_base_of_v<execution::policy_base, ExecutionPolicy>,
-                  "Execution policty must be a C++17 execution policy");
 
     // Constness of array-view tuple doesn't really matter.
     auto& arrayViewsRef = const_cast<std::tuple<ArrayViews...>&>(arrayViews);
@@ -291,9 +301,6 @@ struct ArrayForEach {
       apply(util::NoConfig(), arrayViews, mask, function);
   }
 
-  /// brief   Apply "For-Each" method.
-  ///
-  /// details Apply "For-Each" without a mask.
   template <typename... ArrayViews, typename Function>
   static void apply(const eckit::Parametrisation& conf, const std::tuple<ArrayViews...>& arrayViews, const Function& function) {
     constexpr auto no_mask = [](auto args...) { return 0; };
@@ -301,7 +308,7 @@ struct ArrayForEach {
   }
 
   template <typename ExecutionPolicy, typename... ArrayViews,
-            typename Function, std::enable_if_t<!std::is_base_of_v<eckit::Parametrisation,ExecutionPolicy>,int> =0>
+            typename Function, execution::is_execution_policy<ExecutionPolicy> = nullptr>
   static void apply(ExecutionPolicy executionPolicy, const std::tuple<ArrayViews...>& arrayViews, const Function& function) {
     constexpr auto no_mask = [](auto args...) { return 0; };
     apply(executionPolicy, arrayViews, no_mask, function);
