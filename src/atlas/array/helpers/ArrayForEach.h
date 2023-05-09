@@ -129,35 +129,24 @@ constexpr auto argPadding() {
   }
 }
 
-template<int Rank>
-struct GetRankImpl {
-  constexpr static int rank = Rank;
-};
-
 template<typename>
 struct GetRank;
 
 template<template <typename, int> typename View, typename Value, int Rank>
-struct GetRank<View<Value, Rank>> : GetRankImpl<Rank> {};
-template<template <typename, int> typename View, typename Value, int Rank>
-struct GetRank<View<Value, Rank>&> : GetRankImpl<Rank> {};
-template<template <typename, int> typename View, typename Value, int Rank>
-struct GetRank<const View<Value, Rank>&> : GetRankImpl<Rank> {};
-template<template <typename, int> typename View, typename Value, int Rank>
-struct GetRank<View<Value, Rank>&&> : GetRankImpl<Rank> {};
-template<template <typename, int> typename View, typename Value, int Rank>
-struct GetRank<const View<Value, Rank>&&> : GetRankImpl<Rank> {};
+struct GetRank<View<Value, Rank>> {
+  constexpr static int rank = Rank;
+};
 
 template <size_t ViewIdx = 0, typename... SlicerArgs, typename ArrayViewTuple>
 auto makeSlices(const std::tuple<SlicerArgs...>& slicerArgs,
                 ArrayViewTuple&& arrayViews) {
 
-  using ViewTupleType = std::decay_t<ArrayViewTuple>;
+  using ViewTupleType = std::remove_reference_t<ArrayViewTuple>;
 
   if constexpr(ViewIdx < std::tuple_size_v<ViewTupleType>) {
 
     auto&& view = std::get<ViewIdx>(arrayViews);
-    using View = std::tuple_element_t<ViewIdx, ViewTupleType>;
+    using View = std::decay_t<std::tuple_element_t<ViewIdx, ViewTupleType>>;
 
     constexpr auto Dim = sizeof...(SlicerArgs);
     constexpr auto Rank = GetRank<View>::rank;
