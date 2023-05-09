@@ -24,11 +24,10 @@ namespace atlas {
 namespace execution {
 
 // As in C++17 std::execution namespace. Note: unsequenced_policy is a C++20 addition.
-class policy_base {};
-class sequenced_policy : policy_base {};
-class unsequenced_policy : policy_base {};
-class parallel_unsequenced_policy : policy_base {};
-class parallel_policy : policy_base {};
+class sequenced_policy {};
+class unsequenced_policy {};
+class parallel_unsequenced_policy {};
+class parallel_policy {};
 
 // execution policy objects as in C++ std::execution namespace. Note: unseq is a C++20 addition.
 inline constexpr sequenced_policy            seq{ /*unspecified*/ };
