@@ -12,11 +12,9 @@
 #include <string_view>
 
 #include "atlas/array/ArrayView.h"
-#include "atlas/array/IndexView.h"
 #include "atlas/array/Range.h"
 #include "atlas/array/helpers/ArraySlicer.h"
 #include "atlas/parallel/omp/omp.h"
-#include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 
 namespace atlas {
