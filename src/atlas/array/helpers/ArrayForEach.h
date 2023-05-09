@@ -7,12 +7,12 @@
 
 #pragma once
 
-#include <functional>
 #include <tuple>
 #include <type_traits>
 #include <string_view>
 
 #include "atlas/array/ArrayView.h"
+#include "atlas/array/IndexView.h"
 #include "atlas/array/Range.h"
 #include "atlas/array/helpers/ArraySlicer.h"
 #include "atlas/parallel/omp/omp.h"
@@ -91,15 +91,6 @@ namespace helpers {
 
 namespace detail {
 
-template <typename...>
-struct is_tuple_impl : std::false_type {};
-
-template <typename... Args>
-struct is_tuple_impl<std::tuple<Args...>> : std::true_type {};
-
-template <typename Tuple>
-using is_tuple = std::enable_if_t<is_tuple_impl<std::decay<Tuple>>::value>*;
-
 template <typename... Ts, typename T>
 constexpr auto tuplePushBack(const std::tuple<Ts...>& tuple, T value) {
   return std::tuple_cat(tuple, std::make_tuple(value));
@@ -132,28 +123,56 @@ constexpr auto argPadding() {
   }
 }
 
-template <typename... SlicerArgs, template <typename, int> typename View,
-          typename Value, int Rank, typename... ArrayViews>
+//template <template <typename, int> typename View, typename Value, int Rank>
+//constexpr auto getRank(const View<Value, Rank>&) {return Rank;}
+
+//template <template <typename, int> typename View, typename Value, int Rank>
+//constexpr auto getRank(const View<Value, Rank>&&) {return Rank;}
+
+template<int Rank>
+struct GetRankImpl {
+  constexpr static int rank = Rank;
+};
+
+template<typename>
+struct GetRank;
+
+template<template <typename, int> typename View, typename Value, int Rank>
+struct GetRank<View<Value, Rank>> : GetRankImpl<Rank> {};
+template<template <typename, int> typename View, typename Value, int Rank>
+struct GetRank<View<Value, Rank>&> : GetRankImpl<Rank> {};
+template<template <typename, int> typename View, typename Value, int Rank>
+struct GetRank<const View<Value, Rank>&> : GetRankImpl<Rank> {};
+template<template <typename, int> typename View, typename Value, int Rank>
+struct GetRank<View<Value, Rank>&&> : GetRankImpl<Rank> {};
+template<template <typename, int> typename View, typename Value, int Rank>
+struct GetRank<const View<Value, Rank>&&> : GetRankImpl<Rank> {};
+
+template <size_t ViewIdx = 0, typename... SlicerArgs, typename ArrayViewTuple>
 auto makeSlices(const std::tuple<SlicerArgs...>& slicerArgs,
-                View<Value, Rank>& arrayView, ArrayViews&... arrayViews) {
+                ArrayViewTuple&& arrayViews) {
 
-  // "Lambdafy" slicer apply method to work with std::apply.
-  const auto slicer = [&arrayView](const auto&... args) {
-    return std::make_tuple(arrayView.slice(args...));
-  };
+  using ViewTupleType = std::decay_t<ArrayViewTuple>;
 
-  // Fill out the remaining slicerArgs with Range::all().
-  constexpr auto Dim = sizeof...(SlicerArgs);
-  const auto paddedArgs = std::tuple_cat(slicerArgs, argPadding<Rank - Dim>());
+  if constexpr(ViewIdx < std::tuple_size_v<ViewTupleType>) {
 
-  if constexpr(sizeof...(ArrayViews) > 0) {
+    auto&& view = std::get<ViewIdx>(arrayViews);
+    using View = std::tuple_element_t<ViewIdx, ViewTupleType>;
 
-    // Recurse until all views are sliced.
+    constexpr auto Dim = sizeof...(SlicerArgs);
+    constexpr auto Rank = GetRank<View>::rank;
+    const auto paddedArgs =
+      std::tuple_cat(slicerArgs, argPadding<Rank - Dim>());
+
+    const auto slicer = [&view](const auto&... args) {
+      return std::make_tuple(view.slice(args...));
+    };
+
     return std::tuple_cat(std::apply(slicer, paddedArgs),
-                          makeSlices(slicerArgs, arrayViews...));
+                          makeSlices<ViewIdx + 1>(slicerArgs, arrayViews));
   }
   else {
-    return std::apply(slicer, paddedArgs);
+    return std::make_tuple();
   }
 }
 
@@ -162,9 +181,9 @@ struct ArrayForEachImpl;
 
 template <typename ExecutionPolicy, int Dim, int ItrDim, int... ItrDims>
 struct ArrayForEachImpl<ExecutionPolicy, Dim, ItrDim, ItrDims...> {
-  template <typename... ArrayViews, typename Mask, typename Function,
+  template <typename ArrayViewTuple, typename Mask, typename Function,
             typename... SlicerArgs, typename... MaskArgs>
-  static void apply(std::tuple<ArrayViews...>& arrayViews,
+  static void apply(ArrayViewTuple&& arrayViews,
                     const Mask& mask,
                     const Function& function,
                     const std::tuple<SlicerArgs...>& slicerArgs,
@@ -183,14 +202,14 @@ struct ArrayForEachImpl<ExecutionPolicy, Dim, ItrDim, ItrDims...> {
         // Decay from parallel_unsequenced to unsequenced policy
         if constexpr(std::is_same_v<ExecutionPolicy, execution::parallel_unsequenced_policy>) {
           ArrayForEachImpl<execution::unsequenced_policy, Dim + 1, ItrDims...>::apply(
-              arrayViews, mask, function,
+              std::forward<ArrayViewTuple>(arrayViews), mask, function,
               tuplePushBack(slicerArgs, idx),
               tuplePushBack(maskArgs, idx));
         }
         else {
           // Retain current execution policy.
           ArrayForEachImpl<ExecutionPolicy, Dim + 1, ItrDims...>::apply(
-              arrayViews, mask, function,
+              std::forward<ArrayViewTuple>(arrayViews), mask, function,
               tuplePushBack(slicerArgs, idx),
               tuplePushBack(maskArgs, idx));
         }
@@ -199,7 +218,7 @@ struct ArrayForEachImpl<ExecutionPolicy, Dim, ItrDim, ItrDims...> {
     // Add a RangeAll to arguments.
     else {
       ArrayForEachImpl<ExecutionPolicy, Dim + 1, ItrDim, ItrDims...>::apply(
-          arrayViews, mask, function,
+          std::forward<ArrayViewTuple>(arrayViews), mask, function,
           tuplePushBack(slicerArgs, Range::all()),
           maskArgs);
     }
@@ -208,9 +227,9 @@ struct ArrayForEachImpl<ExecutionPolicy, Dim, ItrDim, ItrDims...> {
 
 template <typename ExecutionPolicy, int Dim>
 struct ArrayForEachImpl<ExecutionPolicy, Dim> {
-  template <typename... ArrayViews, typename Mask, typename Function,
+  template <typename ArrayViewTuple, typename Mask, typename Function,
             typename... SlicerArgs, typename... MaskArgs>
-  static void apply(std::tuple<ArrayViews...>& arrayViews,
+  static void apply(ArrayViewTuple&& arrayViews,
                     const Mask& mask,
                     const Function& function,
                     const std::tuple<SlicerArgs...>& slicerArgs,
@@ -221,11 +240,7 @@ struct ArrayForEachImpl<ExecutionPolicy, Dim> {
       return;
     }
 
-    const auto slicerWrapper = [&slicerArgs](auto&... args) {
-      return makeSlices(slicerArgs, args...);
-    };
-
-    auto slices = std::apply(slicerWrapper, arrayViews);
+    auto slices = makeSlices(slicerArgs, std::forward<ArrayViewTuple>(arrayViews));
     std::apply(function, slices);
   }
 };
@@ -254,69 +269,62 @@ struct ArrayForEach {
   ///         sequential (row-major) order.
   ///         Note: The lowest ArrayView.rank() must be greater than or equal
   ///         to the highest dim in ItrDims. TODO: static checking for this.
-  template <typename... ArrayViews, typename Mask, typename Function>
+  template <typename ArrayViewTuple, typename Mask, typename Function>
   static void apply(const eckit::Parametrisation& conf,
-                    const std::tuple<ArrayViews...>& arrayViews,
+                    ArrayViewTuple&& arrayViews,
                     const Mask& mask, const Function& function) {
 
     auto execute = [&](auto execution_policy) {
-
-        apply(execution_policy, arrayViews, mask, function);
+      apply(execution_policy, std::forward<ArrayViewTuple>(arrayViews), mask, function);
     };
 
     using namespace execution;
     std::string execution_policy;
     if( conf.get("execution_policy",execution_policy) ) {
-        if (execution_policy == policy_name(par_unseq)) {
-            execute(par_unseq);
-        }
-        else if (execution_policy == policy_name(par)) {
-            execute(par);
-        }
-        else if (execution_policy == policy_name(unseq)) {
-            execute(unseq);
-        }
-        else if (execution_policy == policy_name(seq)) {
-            execute(seq);
-        }
+      if (execution_policy == policy_name(par_unseq)) {
+        execute(par_unseq);
+      } else if (execution_policy == policy_name(par)) {
+        execute(par);
+      } else if (execution_policy == policy_name(unseq)) {
+        execute(unseq);
+      } else if (execution_policy == policy_name(seq)) {
+        execute(seq);
+      }
     }
     else {
       execute(par_unseq);
     }
   }
 
-  template <typename ExecutionPolicy, typename... ArrayViews, typename Mask, typename Function,
+  template <typename ExecutionPolicy, typename ArrayViewTuple, typename Mask, typename Function,
             execution::is_execution_policy<ExecutionPolicy> = nullptr>
-  static void apply(ExecutionPolicy, const std::tuple<ArrayViews...>& arrayViews, const Mask& mask, const Function& function) {
-
-    // Constness of array-view tuple doesn't really matter.
-    auto& arrayViewsRef = const_cast<std::tuple<ArrayViews...>&>(arrayViews);
+  static void apply(ExecutionPolicy, ArrayViewTuple&& arrayViews, const Mask& mask, const Function& function) {
 
     detail::ArrayForEachImpl<ExecutionPolicy, 0, ItrDims...>::apply(
-        arrayViewsRef, mask, function, std::make_tuple(), std::make_tuple());
+        std::forward<ArrayViewTuple>(arrayViews), mask, function, std::make_tuple(), std::make_tuple());
   }
 
-  template <typename... ArrayViews, typename Mask, typename Function>
-  static void apply(const std::tuple<ArrayViews...>& arrayViews, const Mask& mask, const Function& function) {
-      apply(util::NoConfig(), arrayViews, mask, function);
+  template <typename ArrayViewTuple, typename Mask, typename Function>
+  static void apply(ArrayViewTuple&& arrayViews, const Mask& mask, const Function& function) {
+      apply(util::NoConfig(), std::forward<ArrayViewTuple>(arrayViews), mask, function);
   }
 
-  template <typename... ArrayViews, typename Function>
-  static void apply(const eckit::Parametrisation& conf, const std::tuple<ArrayViews...>& arrayViews, const Function& function) {
+  template <typename ArrayViewTuple, typename Function>
+  static void apply(const eckit::Parametrisation& conf, ArrayViewTuple&& arrayViews, const Function& function) {
     constexpr auto no_mask = [](auto args...) { return 0; };
-    apply(conf, arrayViews, no_mask, function);
+    apply(conf, std::forward<ArrayViewTuple>(arrayViews), no_mask, function);
   }
 
-  template <typename ExecutionPolicy, typename... ArrayViews,
+  template <typename ExecutionPolicy, typename ArrayViewTuple,
             typename Function, execution::is_execution_policy<ExecutionPolicy> = nullptr>
-  static void apply(ExecutionPolicy executionPolicy, const std::tuple<ArrayViews...>& arrayViews, const Function& function) {
+  static void apply(ExecutionPolicy executionPolicy, ArrayViewTuple&& arrayViews, const Function& function) {
     constexpr auto no_mask = [](auto args...) { return 0; };
-    apply(executionPolicy, arrayViews, no_mask, function);
+    apply(executionPolicy, std::forward<ArrayViewTuple>(arrayViews), no_mask, function);
   }
 
-  template <typename... ArrayViews, typename Function>
-  static void apply(const std::tuple<ArrayViews...>& arrayViews, const Function& function) {
-    apply(execution::par_unseq, arrayViews, function);
+  template <typename ArrayViewTuple, typename Function>
+  static void apply(ArrayViewTuple&& arrayViews, const Function& function) {
+    apply(execution::par_unseq, std::forward<ArrayViewTuple>(arrayViews), function);
   }
 
 };
