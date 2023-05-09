@@ -37,11 +37,12 @@ struct QuadConnectivityData {
  * Given a list of nodes and corresponding cell-to-node connectivity, sets up a Mesh. Not all Mesh
  * fields are initialized, but enough are to build halos and construct a NodeColumns FunctionSpace.
  *
- * The inputs lons, lats, ghosts, global_indices, and partitions are vectors ranging over the nodes
- * locally owned by (or in the ghost nodes of) the MPI task. The tri/quad connectivities are vectors
- * ranging over the cells owned by the MPI task. Each cell is defined by a list of nodes defining
- * its boundary; note that each boundary node must be locally known (whether as an owned or ghost
- * node on the MPI task), in other words, must be included in the vectors over nodes.
+ * The inputs lons, lats, ghosts, global_indices, remote_indices, and partitions are vectors ranging
+ * over the nodes locally owned by (or in the ghost nodes of) the MPI task. The tri/quad
+ * connectivities are vectors ranging over the cells owned by the MPI task. Each cell is defined by
+ * a list of nodes defining its boundary; note that each boundary node must be locally known
+ * (whether as an owned or ghost node on the MPI task), in other words, must be included in the
+ * vectors over nodes.
  *
  * The inputs tri/quad_connectivities give a local and a global index to each cell. The local index
  * is 0-based and counts the cells on the MPI task. The global index is a uniform labeling over the
@@ -57,9 +58,8 @@ struct QuadConnectivityData {
  * - currently, no support for importing node-to-cell connectivity information (but could be added)
  */
 Mesh build_mesh_from_connectivities(const std::vector<double>& lons, const std::vector<double>& lats,
-                                    const std::vector<int>& ghosts,
-                                    const std::vector<gidx_t>& global_indices,
-                                    const std::vector<int>& partitions,
+                                    const std::vector<int>& ghosts, const std::vector<gidx_t>& global_indices,
+                                    const std::vector<idx_t>& remote_index, const std::vector<int>& partitions,
                                     const std::vector<TriConnectivityData>& tri_connectivities,
                                     const std::vector<QuadConnectivityData>& quad_connectivities);
 

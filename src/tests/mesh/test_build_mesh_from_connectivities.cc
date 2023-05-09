@@ -26,12 +26,14 @@ namespace test {
 
 void test_mesh_setup(const Mesh& mesh, const std::vector<double>& lons, const std::vector<double>& lats,
                      const std::vector<int>& ghosts, const std::vector<gidx_t>& global_indices,
-                     const std::vector<int>& partitions, const std::vector<atlas::TriConnectivityData>& tris,
+                     const std::vector<idx_t>& remote_indices, const std::vector<int>& partitions,
+                     const std::vector<atlas::TriConnectivityData>& tris,
                      const std::vector<atlas::QuadConnectivityData>& quads) {
     const auto mesh_xy        = array::make_view<double, 2>(mesh.nodes().xy());
     const auto mesh_lonlat    = array::make_view<double, 2>(mesh.nodes().lonlat());
     const auto mesh_ghost     = array::make_view<int, 1>(mesh.nodes().ghost());
     const auto mesh_gidx      = array::make_view<gidx_t, 1>(mesh.nodes().global_index());
+    const auto mesh_ridx      = array::make_view<idx_t, 1>(mesh.nodes().remote_index());
     const auto mesh_partition = array::make_view<int, 1>(mesh.nodes().partition());
     const auto mesh_halo      = array::make_view<int, 1>(mesh.nodes().halo());
 
@@ -43,6 +45,7 @@ void test_mesh_setup(const Mesh& mesh, const std::vector<double>& lons, const st
         EXPECT(mesh_lonlat(i, 1) == lats[i]);
         EXPECT(mesh_ghost(i) == ghosts[i]);
         EXPECT(mesh_gidx(i) == global_indices[i]);
+        EXPECT(mesh_ridx(i) == remote_indices[i]);
         EXPECT(mesh_partition(i) == partitions[i]);
         EXPECT(mesh_halo(i) == 0.);
         // Don't expect (or test) any node-to-cell connectivities
@@ -85,6 +88,8 @@ CASE("test_tiny_mesh") {
     std::vector<int> ghosts(6, 0);  // all points owned
     std::vector<gidx_t> global_indices(6);
     std::iota(global_indices.begin(), global_indices.end(), 1);  // 1-based numbering
+    std::vector<idx_t> remote_indices(6);
+    std::iota(remote_indices.begin(), remote_indices.end(), 0);  // 0-based numbering
     std::vector<int> partitions(6, 0);                           // all points on proc 0
 
     // triangles
@@ -94,9 +99,10 @@ CASE("test_tiny_mesh") {
     // quads
     std::vector<atlas::QuadConnectivityData> quads = {{{2, 3, {{0, 1, 2, 4}}}}};
 
-    Mesh mesh = build_mesh_from_connectivities(lons, lats, ghosts, global_indices, partitions, tris, quads);
+    Mesh mesh =
+        build_mesh_from_connectivities(lons, lats, ghosts, global_indices, remote_indices, partitions, tris, quads);
 
-    test_mesh_setup(mesh, lons, lats, ghosts, global_indices, partitions, tris, quads);
+    test_mesh_setup(mesh, lons, lats, ghosts, global_indices, remote_indices, partitions, tris, quads);
 
     //Gmsh gmsh("out.msh", util::Config("coordinates", "xyz"));
     //gmsh.write(mesh);
@@ -121,6 +127,8 @@ CASE("test_cs_c2_mesh_serial") {
     std::vector<int> ghosts(24, 0);
     std::vector<gidx_t> global_indices(24);
     std::iota(global_indices.begin(), global_indices.end(), 1);
+    std::vector<idx_t> remote_indices(24);
+    std::iota(remote_indices.begin(), remote_indices.end(), 0);
     std::vector<int> partitions(24, 0);
 
     // triangles
@@ -155,9 +163,10 @@ CASE("test_cs_c2_mesh_serial") {
                                                        {24, 25, {{21, 20, 12, 14}}},
                                                        {25, 26, {{20, 22, 1, 0}}}}};
 
-    Mesh mesh = build_mesh_from_connectivities(lons, lats, ghosts, global_indices, partitions, tris, quads);
+    Mesh mesh =
+        build_mesh_from_connectivities(lons, lats, ghosts, global_indices, remote_indices, partitions, tris, quads);
 
-    test_mesh_setup(mesh, lons, lats, ghosts, global_indices, partitions, tris, quads);
+    test_mesh_setup(mesh, lons, lats, ghosts, global_indices, remote_indices, partitions, tris, quads);
 
     //Gmsh gmsh("out.msh", util::Config("coordinates", "xyz"));
     //gmsh.write(mesh);

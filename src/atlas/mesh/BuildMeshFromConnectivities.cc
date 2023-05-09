@@ -23,15 +23,15 @@ namespace atlas {
 //----------------------------------------------------------------------------------------------------------------------
 
 Mesh build_mesh_from_connectivities(const std::vector<double>& lons, const std::vector<double>& lats,
-                                    const std::vector<int>& ghosts,
-                                    const std::vector<gidx_t>& global_indices,
-                                    const std::vector<int>& partitions,
+                                    const std::vector<int>& ghosts, const std::vector<gidx_t>& global_indices,
+                                    const std::vector<idx_t>& remote_indices, const std::vector<int>& partitions,
                                     const std::vector<TriConnectivityData>& tri_connectivities,
                                     const std::vector<QuadConnectivityData>& quad_connectivities) {
     const size_t nb_points = lons.size();
     ATLAS_ASSERT(nb_points == lats.size());
     ATLAS_ASSERT(nb_points == ghosts.size());
     ATLAS_ASSERT(nb_points == global_indices.size());
+    ATLAS_ASSERT(nb_points == remote_indices.size());
     ATLAS_ASSERT(nb_points == partitions.size());
 
     Mesh mesh;
@@ -43,6 +43,7 @@ Mesh build_mesh_from_connectivities(const std::vector<double>& lons, const std::
     auto lonlat    = array::make_view<double, 2>(mesh.nodes().lonlat());
     auto ghost     = array::make_view<int, 1>(mesh.nodes().ghost());
     auto gidx      = array::make_view<gidx_t, 1>(mesh.nodes().global_index());
+    auto ridx      = array::make_view<idx_t, 1>(mesh.nodes().remote_index());
     auto partition = array::make_view<int, 1>(mesh.nodes().partition());
     auto halo      = array::make_view<int, 1>(mesh.nodes().halo());
 
@@ -54,6 +55,7 @@ Mesh build_mesh_from_connectivities(const std::vector<double>& lons, const std::
         lonlat(i, size_t(LAT)) = lats[i];
         ghost(i)               = ghosts[i];
         gidx(i)                = global_indices[i];
+        ridx(i)                = remote_indices[i];
         partition(i)           = partitions[i];
     }
     halo.assign(0);
@@ -82,7 +84,6 @@ Mesh build_mesh_from_connectivities(const std::vector<double>& lons, const std::
     atlas::mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
     auto cells_part = array::make_view<int, 1>(mesh.cells().partition());
     auto cells_gidx = array::make_view<gidx_t, 1>(mesh.cells().global_index());
-    auto cells_ridx = array::make_view<idx_t, 1>(mesh.cells().remote_index());
 
     size_t index = 0;
     if (add_tris) {
@@ -90,7 +91,6 @@ Mesh build_mesh_from_connectivities(const std::vector<double>& lons, const std::
             ATLAS_ASSERT(conn.local_cell_index < nb_tris);  // check triangle cells come first
             node_connectivity.set(index, conn.boundary_nodes_of_cell.data());
             cells_gidx(index) = conn.global_cell_index;
-            cells_ridx(index) = conn.local_cell_index;
             index++;
         }
     }
@@ -99,7 +99,6 @@ Mesh build_mesh_from_connectivities(const std::vector<double>& lons, const std::
             ATLAS_ASSERT(conn.local_cell_index >= nb_tris);  // check quad cells come last
             node_connectivity.set(index, conn.boundary_nodes_of_cell.data());
             cells_gidx(index) = conn.global_cell_index;
-            cells_ridx(index) = conn.local_cell_index;
             index++;
         }
     }

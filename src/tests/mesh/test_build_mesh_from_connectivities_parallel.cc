@@ -31,12 +31,14 @@ namespace test {
 
 void test_mesh_setup(const Mesh& mesh, const std::vector<double>& lons, const std::vector<double>& lats,
                      const std::vector<int>& ghosts, const std::vector<gidx_t>& global_indices,
-                     const std::vector<int>& partitions, const std::vector<atlas::TriConnectivityData>& tris,
+                     const std::vector<idx_t>& remote_indices, const std::vector<int>& partitions,
+                     const std::vector<atlas::TriConnectivityData>& tris,
                      const std::vector<atlas::QuadConnectivityData>& quads) {
     const auto mesh_xy        = array::make_view<double, 2>(mesh.nodes().xy());
     const auto mesh_lonlat    = array::make_view<double, 2>(mesh.nodes().lonlat());
     const auto mesh_ghost     = array::make_view<int, 1>(mesh.nodes().ghost());
     const auto mesh_gidx      = array::make_view<gidx_t, 1>(mesh.nodes().global_index());
+    const auto mesh_ridx      = array::make_view<idx_t, 1>(mesh.nodes().remote_index());
     const auto mesh_partition = array::make_view<int, 1>(mesh.nodes().partition());
     const auto mesh_halo      = array::make_view<int, 1>(mesh.nodes().halo());
 
@@ -48,6 +50,7 @@ void test_mesh_setup(const Mesh& mesh, const std::vector<double>& lons, const st
         EXPECT(mesh_lonlat(i, 1) == lats[i]);
         EXPECT(mesh_ghost(i) == ghosts[i]);
         EXPECT(mesh_gidx(i) == global_indices[i]);
+        EXPECT(mesh_ridx(i) == remote_indices[i]);
         EXPECT(mesh_partition(i) == partitions[i]);
         EXPECT(mesh_halo(i) == 0.);
         // Don't expect (or test) any node-to-cell connectivities
@@ -103,6 +106,12 @@ CASE("test_cs_c2_mesh_parallel") {
                                                  4, 4, 4, 4,    // +z
                                                  5, 5, 5, 5}};  // -z
 
+    const std::vector<int> local_indices = {{0, 1, 2, 3,    // +x
+                                             0, 1, 2, 3,    // +y
+                                             0, 1, 2, 3,    // -x
+                                             0, 1, 2, 3,    // -y
+                                             0, 1, 2, 3,    // +z
+                                             0, 1, 2, 3}};  // -z
     // Declare early for lambda capture
     std::vector<gidx_t> global_indices;
 
@@ -182,18 +191,22 @@ CASE("test_cs_c2_mesh_parallel") {
                    [&global_lats](const gidx_t idx) { return global_lats[idx - 1]; });
 
     std::vector<int> ghosts;
-    std::transform(global_indices.begin(), global_indices.end(), std::back_inserter(ghosts),
-                   [&global_partitions, &rank](const gidx_t idx) {
-                       return static_cast<int>(global_partitions[idx - 1] != rank);
-                   });
+    std::transform(
+        global_indices.begin(), global_indices.end(), std::back_inserter(ghosts),
+        [&global_partitions, &rank](const gidx_t idx) { return static_cast<int>(global_partitions[idx - 1] != rank); });
+
+    std::vector<idx_t> remote_indices;
+    std::transform(global_indices.begin(), global_indices.end(), std::back_inserter(remote_indices),
+                   [&local_indices](const gidx_t idx) { return static_cast<idx_t>(local_indices[idx - 1]); });
 
     std::vector<int> partitions;
     std::transform(global_indices.begin(), global_indices.end(), std::back_inserter(partitions),
                    [&global_partitions](const gidx_t idx) { return global_partitions[idx - 1]; });
 
-    Mesh mesh = build_mesh_from_connectivities(lons, lats, ghosts, global_indices, partitions, tris, quads);
+    Mesh mesh =
+        build_mesh_from_connectivities(lons, lats, ghosts, global_indices, remote_indices, partitions, tris, quads);
 
-    test_mesh_setup(mesh, lons, lats, ghosts, global_indices, partitions, tris, quads);
+    test_mesh_setup(mesh, lons, lats, ghosts, global_indices, remote_indices, partitions, tris, quads);
 
     //Gmsh gmsh("fh_debug_out.msh", util::Config("coordinates", "xyz"));
     //gmsh.write(mesh);
