@@ -132,16 +132,11 @@ private:
 public:
     // -- Constructors
 
-    ArrayView(const ArrayView& other):
-        data_(other.data_), size_(other.size_), shape_(other.shape_), strides_(other.strides_) {}
+    template <typename ValueTp, typename = std::enable_if_t<std::is_convertible_v<ValueTp*,value_type*>>>
+    ArrayView(const ArrayView<ValueTp, Rank>& other): data_(other.data()), size_(other.size()), shape_(other.shape_), strides_(other.strides_) {}
 
-    ENABLE_IF_CONST_WITH_NON_CONST(value_type)
-    ArrayView(const ArrayView<value_type, Rank>& other): data_(other.data()), size_(other.size()) {
-        for (idx_t j = 0; j < Rank; ++j) {
-            shape_[j]   = other.shape(j);
-            strides_[j] = other.stride(j);
-        }
-    }
+    template <typename ValueTp, typename = std::enable_if_t<std::is_convertible_v<ValueTp*,value_type*>>>
+    ArrayView(ArrayView<ValueTp, Rank>&& other):data_(other.data()), size_(other.size()), shape_(other.shape_), strides_(other.strides_) {}
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     // This constructor should not be used directly, but only through a array::make_view() function.
@@ -157,7 +152,6 @@ public:
 
     ENABLE_IF_CONST_WITH_NON_CONST(value_type)
     operator const ArrayView<value_type, Rank>&() const { return *(const ArrayView<value_type, Rank>*)(this); }
-
 
     // -- Access methods
 
@@ -178,8 +172,8 @@ public:
     ///
     /// Note that this function is only present when Rank == 1
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-    template <typename Int, bool EnableBool = true>
-    typename std::enable_if<(Rank == 1 && EnableBool), const value_type&>::type operator[](Int idx) const {
+    template <typename Int, int Rank_ = Rank>
+    typename std::enable_if<Rank_ == 1, const value_type&>::type operator[](Int idx) const {
 #else
     // Doxygen API is cleaner!
     template <typename Int>
@@ -193,8 +187,8 @@ public:
     ///
     /// Note that this function is only present when Rank == 1
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-    template <typename Int, bool EnableBool = true>
-    typename std::enable_if<(Rank == 1 && EnableBool), value_type&>::type operator[](Int idx) {
+    template <typename Int, int Rank_ = Rank>
+    typename std::enable_if<Rank_ == 1, value_type&>::type operator[](Int idx) {
 #else
     // Doxygen API is cleaner!
     template <typename Int>
@@ -355,6 +349,8 @@ private:
     }
 
     // -- Private data
+
+    template<typename,int> friend class ArrayView;
 
     value_type* data_;
     size_t size_;
