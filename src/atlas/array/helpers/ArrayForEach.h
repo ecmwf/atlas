@@ -96,7 +96,7 @@ template <typename... Args>
 struct IsTupleImpl<std::tuple<Args...>> : std::true_type {};
 
 template <typename Tuple>
-constexpr auto IsTuple() {
+constexpr auto is_tuple() {
   return IsTupleImpl<Tuple>::value;
 }
 
@@ -252,7 +252,7 @@ struct ArrayForEach {
   ///         Note: The lowest ArrayView.rank() must be greater than or equal
   ///         to the highest dim in ItrDims. TODO: static checking for this.
   template <typename ArrayViewTuple, typename Mask, typename Function,
-            typename = std::enable_if_t<detail::IsTuple<ArrayViewTuple>()>>
+            typename = std::enable_if_t<detail::is_tuple<ArrayViewTuple>()>>
   static void apply(const eckit::Parametrisation& conf,
                     ArrayViewTuple&& arrayViews,
                     const Mask& mask, const Function& function) {
@@ -284,7 +284,7 @@ struct ArrayForEach {
   /// details As above, but Execution policy is determined at compile-time.
   template <typename ExecutionPolicy, typename ArrayViewTuple, typename Mask, typename Function,
             typename = std::enable_if_t<execution::is_execution_policy<ExecutionPolicy>()>,
-            typename = std::enable_if_t<detail::IsTuple<ArrayViewTuple>()>>
+            typename = std::enable_if_t<detail::is_tuple<ArrayViewTuple>()>>
   static void apply(ExecutionPolicy, ArrayViewTuple&& arrayViews, const Mask& mask, const Function& function) {
 
     detail::ArrayForEachImpl<ExecutionPolicy, 0, ItrDims...>::apply(
@@ -295,7 +295,7 @@ struct ArrayForEach {
   ///
   /// detials Apply ForEach with default execution policy.
   template <typename ArrayViewTuple, typename Mask, typename Function,
-            typename = std::enable_if_t<detail::IsTuple<ArrayViewTuple>()>>
+            typename = std::enable_if_t<detail::is_tuple<ArrayViewTuple>()>>
   static void apply(ArrayViewTuple&& arrayViews, const Mask& mask, const Function& function) {
       apply(std::forward<ArrayViewTuple>(arrayViews), mask, function);
   }
@@ -304,7 +304,7 @@ struct ArrayForEach {
   ///
   /// detials Apply ForEach with run-time determined execution policy and no mask.
   template <typename ArrayViewTuple, typename Function,
-            typename = std::enable_if_t<detail::IsTuple<ArrayViewTuple>()>>
+            typename = std::enable_if_t<detail::is_tuple<ArrayViewTuple>()>>
   static void apply(const eckit::Parametrisation& conf, ArrayViewTuple&& arrayViews, const Function& function) {
     constexpr auto no_mask = [](auto args...) { return 0; };
     apply(conf, std::forward<ArrayViewTuple>(arrayViews), no_mask, function);
@@ -314,7 +314,7 @@ struct ArrayForEach {
   ///
   /// detials Apply ForEach with compile-time determined execution policy and no mask.
   template <typename ExecutionPolicy, typename ArrayViewTuple, typename Function,
-            typename = std::enable_if_t<detail::IsTuple<ArrayViewTuple>()>,
+            typename = std::enable_if_t<detail::is_tuple<ArrayViewTuple>()>,
             typename = std::enable_if_t<execution::is_execution_policy<ExecutionPolicy>()>>
   static void apply(ExecutionPolicy executionPolicy, ArrayViewTuple&& arrayViews, const Function& function) {
     constexpr auto no_mask = [](auto args...) { return 0; };
@@ -325,7 +325,7 @@ struct ArrayForEach {
   ///
   /// detials Apply ForEach with default execution policy and no mask.
   template <typename ArrayViewTuple, typename Function,
-            typename = std::enable_if_t<detail::IsTuple<ArrayViewTuple>()>>
+            typename = std::enable_if_t<detail::is_tuple<ArrayViewTuple>()>>
   static void apply(ArrayViewTuple arrayViews, const Function& function) {
     apply(execution::par_unseq, std::forward<ArrayViewTuple>(arrayViews), function);
   }
