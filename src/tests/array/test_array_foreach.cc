@@ -33,20 +33,20 @@ CASE("test_array_foreach_1_view") {
     EXPECT_EQUAL(slice.rank(), 1);
     EXPECT_EQUAL(slice.shape(0), 3);
   };
-  ArrayForEach<0>::apply(std::make_tuple(view), loopFunctorDim0);
+  ArrayForEach<0>::apply(std::tie(view), loopFunctorDim0);
 
   const auto loopFunctorDim1 = [](auto& slice) {
     EXPECT_EQUAL(slice.rank(), 1);
     EXPECT_EQUAL(slice.shape(0), 2);
   };
-  ArrayForEach<1>::apply(std::make_tuple(view), loopFunctorDim1);
+  ArrayForEach<1>::apply(std::tie(view), loopFunctorDim1);
 
   // Test that slice resolves to double.
 
   const auto loopFunctorDimAll = [](auto& slice) {
     static_assert(std::is_convertible_v<decltype(slice), const double&>);
   };
-  ArrayForEach<0, 1>::apply(std::make_tuple(view), loopFunctorDimAll);
+  ArrayForEach<0, 1>::apply(std::tie(view), loopFunctorDimAll);
 
   // Test ghost functionality.
 
@@ -56,7 +56,7 @@ CASE("test_array_foreach_1_view") {
 
   auto count = int {};
   const auto countNonGhosts = [&count](auto&...) { ++count; };
-  ArrayForEach<0>::apply(execution::seq, std::make_tuple(view), ghostView, countNonGhosts);
+  ArrayForEach<0>::apply(execution::seq, std::tie(view), ghostView, countNonGhosts);
   EXPECT_EQ(count, 1);
 
   count = 0;
@@ -64,7 +64,7 @@ CASE("test_array_foreach_1_view") {
     // Wrap ghostView to use correct number of indices.
     return ghostView(idx);
   };
-  ArrayForEach<0, 1>::apply(execution::seq, std::make_tuple(view), ghostWrap, countNonGhosts);
+  ArrayForEach<0, 1>::apply(execution::seq, std::tie(view), ghostWrap, countNonGhosts);
   EXPECT_EQ(count, 3);
 }
 
@@ -86,7 +86,7 @@ CASE("test_array_foreach_2_views") {
     EXPECT_EQUAL(slice2.shape(0), 3);
     EXPECT_EQUAL(slice2.shape(1), 4);
   };
-  ArrayForEach<0>::apply(std::make_tuple(view1, view2), loopFunctorDim0);
+  ArrayForEach<0>::apply(std::tie(view1, view2), loopFunctorDim0);
 
   const auto loopFunctorDim1 = [](auto& slice1, auto& slice2) {
     EXPECT_EQUAL(slice1.rank(), 1);
@@ -96,14 +96,14 @@ CASE("test_array_foreach_2_views") {
     EXPECT_EQUAL(slice2.shape(0), 2);
     EXPECT_EQUAL(slice2.shape(1), 4);
   };
-  ArrayForEach<1>::apply(std::make_tuple(view1, view2), loopFunctorDim1);
+  ArrayForEach<1>::apply(std::tie(view1, view2), loopFunctorDim1);
 
   // Test that slice resolves to double.
 
   const auto loopFunctorDimAll = [](auto& slice2) {
     static_assert(std::is_convertible_v<decltype(slice2), const double&>);
   };
-  ArrayForEach<0, 1, 2>::apply(std::make_tuple(view2), loopFunctorDimAll);
+  ArrayForEach<0, 1, 2>::apply(std::tie(view2), loopFunctorDimAll);
 
   // Test ghost functionality.
 
@@ -113,7 +113,7 @@ CASE("test_array_foreach_2_views") {
 
   auto count = int {};
   const auto countNonGhosts = [&count](auto&...) { ++count; };
-  ArrayForEach<0>::apply(execution::seq, std::make_tuple(view2), ghostView, countNonGhosts);
+  ArrayForEach<0>::apply(execution::seq, std::tie(view2), ghostView, countNonGhosts);
   EXPECT_EQ(count, 1);
 
   count = 0;
@@ -121,11 +121,11 @@ CASE("test_array_foreach_2_views") {
     // Wrap ghostView to use correct number of indices.
     return ghostView(idx);
   };
-  ArrayForEach<0, 1>::apply(execution::seq, std::make_tuple(view2), ghostWrap, countNonGhosts);
+  ArrayForEach<0, 1>::apply(execution::seq, std::tie(view2), ghostWrap, countNonGhosts);
   EXPECT_EQ(count, 3);
 
   count = 0;
-  ArrayForEach<0, 1, 2>::apply(execution::seq, std::make_tuple(view2), ghostWrap, countNonGhosts);
+  ArrayForEach<0, 1, 2>::apply(execution::seq, std::tie(view2), ghostWrap, countNonGhosts);
   EXPECT_EQ(count, 12);
 }
 
@@ -155,7 +155,7 @@ CASE("test_array_foreach_3_views") {
     EXPECT_EQUAL(slice3.shape(1), 4);
     EXPECT_EQUAL(slice3.shape(2), 5);
   };
-  ArrayForEach<0>::apply(std::make_tuple(view1, view2, view3), loopFunctorDim0);
+  ArrayForEach<0>::apply(std::tie(view1, view2, view3), loopFunctorDim0);
 
   const auto loopFunctorDim1 = [](auto& slice1, auto& slice2, auto& slice3) {
     EXPECT_EQUAL(slice1.rank(), 1);
@@ -170,14 +170,14 @@ CASE("test_array_foreach_3_views") {
     EXPECT_EQUAL(slice3.shape(1), 4);
     EXPECT_EQUAL(slice3.shape(2), 5);
   };
-  ArrayForEach<1>::apply(std::make_tuple(view1, view2, view3), loopFunctorDim1);
+  ArrayForEach<1>::apply(std::tie(view1, view2, view3), loopFunctorDim1);
 
   // Test that slice resolves to double.
 
   const auto loopFunctorDimAll = [](auto& slice3) {
     static_assert(std::is_convertible_v<decltype(slice3), const double&>);
   };
-  ArrayForEach<0, 1, 2, 3>::apply(std::make_tuple(view3), loopFunctorDimAll);
+  ArrayForEach<0, 1, 2, 3>::apply(std::tie(view3), loopFunctorDimAll);
 
   // Test ghost functionality.
 
@@ -187,7 +187,7 @@ CASE("test_array_foreach_3_views") {
 
   auto count = int {};
   const auto countNonGhosts = [&count](auto&...) { ++count; };
-  ArrayForEach<0>::apply(execution::seq, std::make_tuple(view3), ghostView, countNonGhosts);
+  ArrayForEach<0>::apply(execution::seq, std::tie(view3), ghostView, countNonGhosts);
   EXPECT_EQ(count, 1);
 
   count = 0;
@@ -195,16 +195,39 @@ CASE("test_array_foreach_3_views") {
     // Wrap ghostView to use correct number of indices.
     return ghostView(idx);
   };
-  ArrayForEach<0, 1>::apply(execution::seq, std::make_tuple(view3), ghostWrap, countNonGhosts);
+  ArrayForEach<0, 1>::apply(execution::seq, std::tie(view3), ghostWrap, countNonGhosts);
   EXPECT_EQ(count, 3);
 
   count = 0;
-  ArrayForEach<0, 1, 2>::apply(execution::seq, std::make_tuple(view3), ghostWrap, countNonGhosts);
+  ArrayForEach<0, 1, 2>::apply(execution::seq, std::tie(view3), ghostWrap, countNonGhosts);
   EXPECT_EQ(count, 12);
 
   count = 0;
-  ArrayForEach<0, 1, 2, 3>::apply(execution::seq, std::make_tuple(view3), ghostWrap, countNonGhosts);
+  ArrayForEach<0, 1, 2, 3>::apply(execution::seq, std::tie(view3), ghostWrap, countNonGhosts);
   EXPECT_EQ(count, 60);
+}
+
+
+CASE("test_array_foreach_forwarding") {
+
+  const auto arr1 = ArrayT<double>(2, 3);
+  const auto view1 = make_view<double, 2>(arr1);
+
+  auto arr2 = ArrayT<double>(2, 3, 4);
+  auto view2 = make_view<double, 3>(arr2);
+
+  const auto loopFunctorDim0 = [](auto& slice1, auto& slice2) {
+    EXPECT_EQUAL(slice1.rank(), 1);
+    EXPECT_EQUAL(slice1.shape(0), 3);
+
+    EXPECT_EQUAL(slice2.rank(), 2);
+    EXPECT_EQUAL(slice2.shape(0), 3);
+    EXPECT_EQUAL(slice2.shape(1), 4);
+  };
+
+  ArrayForEach<0>::apply(std::make_tuple(view1, view2), loopFunctorDim0);
+  ArrayForEach<0>::apply(std::tie(view1, view2), loopFunctorDim0);
+  ArrayForEach<0>::apply(std::forward_as_tuple(view1, view2), loopFunctorDim0);
 }
 
 CASE("test_array_foreach_data_integrity") {
@@ -233,9 +256,9 @@ CASE("test_array_foreach_data_integrity") {
       static_assert(std::is_convertible_v<decltype(slice), double&>);
       slice *= 3.;
     };
-    ArrayForEach<0>::apply(execution::seq, std::make_tuple(slice2), scaleDataDim1);
+    ArrayForEach<0>::apply(execution::seq, std::tie(slice2), scaleDataDim1);
   };
-  ArrayForEach<0, 1>::apply(std::make_tuple(view1, view2), scaleDataDim0);
+  ArrayForEach<0, 1>::apply(std::tie(view1, view2), scaleDataDim0);
 
   for (auto idx = size_t{}; idx < arr1.size(); ++idx) {
     EXPECT_EQ(static_cast<double*>(arr1.data())[idx], 2. * idx);
@@ -345,7 +368,7 @@ CASE("test_array_foreach_performance") {
         operation(slice1(idx), slice2(idx), slice3(idx));
       }
     };
-    ArrayForEach<0>::apply(execution::seq, std::make_tuple(view1, view2, view3), function);
+    ArrayForEach<0>::apply(execution::seq, std::tie(view1, view2, view3), function);
   };
 
   const auto forEachLevel = [&](const auto& operation) {
@@ -355,32 +378,48 @@ CASE("test_array_foreach_performance") {
         operation(slice1(idx), slice2(idx), slice3(idx));
       }
     };
-    ArrayForEach<1>::apply(execution::seq, std::make_tuple(view1, view2, view3), function);
+    ArrayForEach<1>::apply(execution::seq, std::tie(view1, view2, view3), function);
   };
 
   const auto forEachAll = [&](const auto& operation) {
-    ArrayForEach<0, 1>::apply(execution::seq, std::make_tuple(view1, view2, view3), operation);
+    ArrayForEach<0, 1>::apply(execution::seq, std::tie(view1, view2, view3), operation);
   };
 
+  const auto forEachNested = [&](const auto& operation) {
+      const auto function = [&](auto& slice1, auto& slice2, auto& slice3) {
+          ArrayForEach<0>::apply(execution::seq, std::tie(slice1, slice2, slice3), operation);
+      };
+      ArrayForEach<0>::apply(execution::seq, std::tie(view1, view2, view3), function);
+  };
 
+  const auto forEachConf = [&](const auto& operation) {
+      const auto function = [&](auto& slice1, auto& slice2, auto& slice3) {
+          ArrayForEach<0>::apply(option::execution_policy(execution::seq), std::tie(slice1, slice2, slice3), operation);
+      };
+      ArrayForEach<0>::apply(option::execution_policy(execution::seq), std::tie(view1, view2, view3), function);
+  };
 
   double baseline;
-  baseline = timeLoop(rawPointer, num_iter, num_first, add, 0, "Addition; raw pointer             ");
-  timeLoop(ijLoop, num_iter, num_first, add, baseline, "Addition; for loop (i, j)         ");
-  timeLoop(jiLoop, num_iter, num_first, add, baseline, "Addition; for loop (j, i)         ");
-  timeLoop(forEachCol, num_iter, num_first, add, baseline, "Addition; for each (columns)      ");
-  timeLoop(forEachLevel, num_iter, num_first, add, baseline, "Addition; for each (levels)       ");
-  timeLoop(forEachAll, num_iter, num_first, add, baseline, "Addition; for each (all elements) ");
+  baseline = timeLoop(rawPointer, num_iter, num_first, add, 0, "Addition; raw pointer               ");
+  timeLoop(ijLoop, num_iter, num_first, add, baseline, "Addition; for loop (i, j)           ");
+  timeLoop(jiLoop, num_iter, num_first, add, baseline, "Addition; for loop (j, i)           ");
+  timeLoop(forEachCol, num_iter, num_first, add, baseline, "Addition; for each (columns)        ");
+  timeLoop(forEachLevel, num_iter, num_first, add, baseline, "Addition; for each (levels)         ");
+  timeLoop(forEachAll, num_iter, num_first, add, baseline, "Addition; for each (all elements)   ");
+  timeLoop(forEachNested, num_iter, num_first, add, baseline, "Addition; for each (nested)         ");
+  timeLoop(forEachConf, num_iter, num_first, add, baseline, "Addition; for each (nested, config) ");
   Log::info() << std::endl;
 
   num_first = 2;
   num_iter = 5;
-  baseline = timeLoop(rawPointer, num_iter, num_first, trig, 0, "Trig    ; raw pointer             ");
-  timeLoop(ijLoop, num_iter, num_first, trig, baseline, "Trig    ; for loop (i, j)         ");
-  timeLoop(jiLoop, num_iter, num_first, trig, baseline, "Trig    ; for loop (j, i)         ");
-  timeLoop(forEachCol, num_iter, num_first, trig, baseline, "Trig    ; for each (columns)      ");
-  timeLoop(forEachLevel, num_iter, num_first, trig, baseline, "Trig    ; for each (levels)       ");
-  timeLoop(forEachAll, num_iter, num_first, trig, baseline, "Trig    ; for each (all elements) ");
+  baseline = timeLoop(rawPointer, num_iter, num_first, trig, 0, "Trig    ; raw pointer               ");
+  timeLoop(ijLoop, num_iter, num_first, trig, baseline, "Trig    ; for loop (i, j)           ");
+  timeLoop(jiLoop, num_iter, num_first, trig, baseline, "Trig    ; for loop (j, i)           ");
+  timeLoop(forEachCol, num_iter, num_first, trig, baseline, "Trig    ; for each (columns)        ");
+  timeLoop(forEachLevel, num_iter, num_first, trig, baseline, "Trig    ; for each (levels)         ");
+  timeLoop(forEachAll, num_iter, num_first, trig, baseline, "Trig    ; for each (all elements)   ");
+  timeLoop(forEachNested, num_iter, num_first, trig, baseline, "Trig    ; for each (nested)         ");
+  timeLoop(forEachConf, num_iter, num_first, trig, baseline, "Trig    ; for each (nested, config) ");
 }
 
 }  // namespace test
