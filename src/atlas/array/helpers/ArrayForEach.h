@@ -305,10 +305,10 @@ struct ArrayForEach {
   ///         and is executed with signature g(idx_i, idx_j,...), where the idxs
   ///         are indices of ItrDims.
   ///         When a config is supplied containing "execution_policy" =
-  ///         "parallel_unsequenced_policy" (default) the first loop is executed
-  ///         using OpenMP. The remaining loops are executed in serial. When
-  ///         "execution_policy" = "sequenced_policy", all loops are executed in
-  ///         sequential (row-major) order.
+  ///         "sequenced_policy" (default). All loops are then executed in sequential
+  ///         (row-major) order.
+  ///         With "execution_policy" = "parallel_unsequenced" the first loop is executed
+  ///         using OpenMP. The remaining loops are executed in serial.
   ///         Note: The lowest ArrayView.rank() must be greater than or equal
   ///         to the highest dim in ItrDims. TODO: static checking for this.
   template <typename... ArrayView, typename Mask, typename Function>
@@ -340,7 +340,7 @@ struct ArrayForEach {
       }
     }
     else {
-      execute(par_unseq);
+      execute(seq);
     }
   }
 
