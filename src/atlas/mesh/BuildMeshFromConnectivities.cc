@@ -25,14 +25,21 @@ namespace atlas {
 Mesh build_mesh_from_connectivities(const std::vector<double>& lons, const std::vector<double>& lats,
                                     const std::vector<int>& ghosts, const std::vector<gidx_t>& global_indices,
                                     const std::vector<idx_t>& remote_indices, const std::vector<int>& partitions,
-                                    const std::vector<TriConnectivityData>& tri_connectivities,
-                                    const std::vector<QuadConnectivityData>& quad_connectivities) {
+                                    const std::vector<std::array<gidx_t, 3>>& tri_boundary_nodes,
+                                    const std::vector<gidx_t>& tri_global_indices,
+                                    const std::vector<std::array<gidx_t, 4>>& quad_boundary_nodes,
+                                    const std::vector<gidx_t>& quad_global_indices) {
     const size_t nb_points = lons.size();
     ATLAS_ASSERT(nb_points == lats.size());
     ATLAS_ASSERT(nb_points == ghosts.size());
     ATLAS_ASSERT(nb_points == global_indices.size());
     ATLAS_ASSERT(nb_points == remote_indices.size());
     ATLAS_ASSERT(nb_points == partitions.size());
+
+    const size_t nb_tris = tri_boundary_nodes.size();
+    ATLAS_ASSERT(nb_tris == tri_global_indices.size());
+    const size_t nb_quads = quad_boundary_nodes.size();
+    ATLAS_ASSERT(nb_quads == quad_global_indices.size());
 
     Mesh mesh;
 
@@ -64,13 +71,11 @@ Mesh build_mesh_from_connectivities(const std::vector<double>& lons, const std::
 
     // First, count how many cells of each type are on this processor
     // Then optimize away the element type if globally nb_tris or nb_quads is zero
-    const size_t nb_tris = tri_connectivities.size();
-    size_t sum_nb_tris   = 0;
+    size_t sum_nb_tris = 0;
     atlas::mpi::comm().allReduce(nb_tris, sum_nb_tris, eckit::mpi::sum());
     const bool add_tris = (sum_nb_tris > 0);
 
-    const size_t nb_quads = quad_connectivities.size();
-    size_t sum_nb_quads   = 0;
+    size_t sum_nb_quads = 0;
     atlas::mpi::comm().allReduce(nb_quads, sum_nb_quads, eckit::mpi::sum());
     const bool add_quads = (sum_nb_quads > 0);
 
@@ -85,25 +90,37 @@ Mesh build_mesh_from_connectivities(const std::vector<double>& lons, const std::
     auto cells_part = array::make_view<int, 1>(mesh.cells().partition());
     auto cells_gidx = array::make_view<gidx_t, 1>(mesh.cells().global_index());
 
-    size_t index = 0;
+    // Find position of idx inside global_indices
+    const auto position_of = [&global_indices](const gidx_t idx) {
+        const auto& it = std::find(global_indices.begin(), global_indices.end(), idx);
+        ATLAS_ASSERT(it != global_indices.end());
+        return std::distance(global_indices.begin(), it);
+    };
+    // Find array of positions inside global_indices from an array of ixds
+    // (In C++20 we can template the lambda on array size; for now we use an auto argument...)
+    const auto positions_of = [&position_of](const auto idxs) {
+        std::array<idx_t, idxs.size()> result{};  // go from input gidx_t to output idx_t
+        std::transform(idxs.begin(), idxs.end(), result.begin(), position_of);
+        return result;
+    };
+
+    size_t idx = 0;
     if (add_tris) {
-        for (const auto& conn : tri_connectivities) {
-            ATLAS_ASSERT(conn.local_cell_index < nb_tris);  // check triangle cells come first
-            node_connectivity.set(index, conn.boundary_nodes_of_cell.data());
-            cells_gidx(index) = conn.global_cell_index;
-            index++;
+        for (size_t tri = 0; tri < nb_tris; ++tri) {
+            node_connectivity.set(idx, positions_of(tri_boundary_nodes[tri]).data());
+            cells_gidx(idx) = tri_global_indices[tri];
+            idx++;
         }
     }
     if (add_quads) {
-        for (const auto& conn : quad_connectivities) {
-            ATLAS_ASSERT(conn.local_cell_index >= nb_tris);  // check quad cells come last
-            node_connectivity.set(index, conn.boundary_nodes_of_cell.data());
-            cells_gidx(index) = conn.global_cell_index;
-            index++;
+        for (size_t quad = 0; quad < nb_quads; ++quad) {
+            node_connectivity.set(idx, positions_of(quad_boundary_nodes[quad]).data());
+            cells_gidx(idx) = quad_global_indices[quad];
+            idx++;
         }
     }
 
-    ATLAS_ASSERT(index == nb_tris + nb_quads);
+    ATLAS_ASSERT(idx == nb_tris + nb_quads);
 
     cells_part.assign(atlas::mpi::comm().rank());
 

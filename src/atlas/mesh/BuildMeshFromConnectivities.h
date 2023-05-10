@@ -19,18 +19,6 @@ namespace atlas {
 
 //-----------------------------------------------------------------------------
 
-struct TriConnectivityData {
-    const idx_t local_cell_index;
-    const gidx_t global_cell_index;
-    const std::array<idx_t, 3> boundary_nodes_of_cell;
-};
-
-struct QuadConnectivityData {
-    const idx_t local_cell_index;
-    const gidx_t global_cell_index;
-    const std::array<idx_t, 4> boundary_nodes_of_cell;
-};
-
 /**
  * \brief Construct a Mesh by importing external connectivity data
  *
@@ -60,8 +48,10 @@ struct QuadConnectivityData {
 Mesh build_mesh_from_connectivities(const std::vector<double>& lons, const std::vector<double>& lats,
                                     const std::vector<int>& ghosts, const std::vector<gidx_t>& global_indices,
                                     const std::vector<idx_t>& remote_index, const std::vector<int>& partitions,
-                                    const std::vector<TriConnectivityData>& tri_connectivities,
-                                    const std::vector<QuadConnectivityData>& quad_connectivities);
+                                    const std::vector<std::array<gidx_t, 3>>& tri_boundary_nodes,
+                                    const std::vector<gidx_t>& tri_global_indices,
+                                    const std::vector<std::array<gidx_t, 4>>& quad_boundary_nodes,
+                                    const std::vector<gidx_t>& quad_global_indices);
 
 //-----------------------------------------------------------------------------
 

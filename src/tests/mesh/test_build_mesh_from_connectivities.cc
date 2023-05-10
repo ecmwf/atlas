@@ -27,8 +27,10 @@ namespace test {
 void test_mesh_setup(const Mesh& mesh, const std::vector<double>& lons, const std::vector<double>& lats,
                      const std::vector<int>& ghosts, const std::vector<gidx_t>& global_indices,
                      const std::vector<idx_t>& remote_indices, const std::vector<int>& partitions,
-                     const std::vector<atlas::TriConnectivityData>& tris,
-                     const std::vector<atlas::QuadConnectivityData>& quads) {
+                     const std::vector<std::array<gidx_t, 3>>& tri_boundary_nodes,
+                     const std::vector<gidx_t>& tri_global_indices,
+                     const std::vector<std::array<gidx_t, 4>>& quad_boundary_nodes,
+                     const std::vector<gidx_t>& quad_global_indices) {
     const auto mesh_xy        = array::make_view<double, 2>(mesh.nodes().xy());
     const auto mesh_lonlat    = array::make_view<double, 2>(mesh.nodes().lonlat());
     const auto mesh_ghost     = array::make_view<int, 1>(mesh.nodes().ghost());
@@ -52,23 +54,30 @@ void test_mesh_setup(const Mesh& mesh, const std::vector<double>& lons, const st
     }
 
     EXPECT(mesh.cells().nb_types() == 2);
-    EXPECT(mesh.cells().size() == tris.size() + quads.size());
+    EXPECT(mesh.cells().size() == tri_boundary_nodes.size() + quad_boundary_nodes.size());
+
+    const auto position_of = [&global_indices](const gidx_t idx) {
+        const auto& it = std::find(global_indices.begin(), global_indices.end(), idx);
+        ATLAS_ASSERT(it != global_indices.end());
+        return std::distance(global_indices.begin(), it);
+    };
 
     // Check triangle cell-to-node connectivities
-    EXPECT(mesh.cells().elements(0).size() == tris.size());
+    EXPECT(mesh.cells().elements(0).size() == tri_boundary_nodes.size());
     EXPECT(mesh.cells().elements(0).nb_nodes() == 3);
     for (size_t tri = 0; tri < mesh.cells().elements(0).size(); ++tri) {
         for (size_t node = 0; node < mesh.cells().elements(0).nb_nodes(); ++node) {
-            EXPECT(mesh.cells().elements(0).node_connectivity()(tri, node) == tris[tri].boundary_nodes_of_cell[node]);
+            EXPECT(mesh.cells().elements(0).node_connectivity()(tri, node) ==
+                   position_of(tri_boundary_nodes[tri][node]));
         }
     }
     // Check quad cell-to-node connectivities
-    EXPECT(mesh.cells().elements(1).size() == quads.size());
+    EXPECT(mesh.cells().elements(1).size() == quad_boundary_nodes.size());
     EXPECT(mesh.cells().elements(1).nb_nodes() == 4);
     for (size_t quad = 0; quad < mesh.cells().elements(1).size(); ++quad) {
         for (size_t node = 0; node < mesh.cells().elements(1).nb_nodes(); ++node) {
             EXPECT(mesh.cells().elements(1).node_connectivity()(quad, node) ==
-                   quads[quad].boundary_nodes_of_cell[node]);
+                   position_of(quad_boundary_nodes[quad][node]));
         }
     }
 }
@@ -76,11 +85,11 @@ void test_mesh_setup(const Mesh& mesh, const std::vector<double>& lons, const st
 //-----------------------------------------------------------------------------
 
 CASE("test_tiny_mesh") {
-    // small regional grid whose cell-centers are connected as:
+    // small regional grid whose cell-centers are connected as (global nodes and cells):
     //
-    //   0 - 4 ----- 5
-    //   |     \   / |  <-- cells 3,1,2 respectively
-    //   1 ----- 2 - 3
+    //   1 - 5 ----- 6
+    //   |  3  \ 1 /2|
+    //   2 ----- 3 - 4
     //
     std::vector<double> lons{{0.0, 0.0, 10.0, 15.0, 5.0, 15.0}};
     std::vector<double> lats{{5.0, 0.0, 0.0, 0.0, 5.0, 5.0}};
@@ -93,16 +102,19 @@ CASE("test_tiny_mesh") {
     std::vector<int> partitions(6, 0);                           // all points on proc 0
 
     // triangles
-    std::vector<atlas::TriConnectivityData> tris = {{// local cell index is 0-based; global cell index is 1-based
-                                                     {0, 1, {{2, 5, 4}}},
-                                                     {1, 2, {{2, 3, 5}}}}};
+    std::vector<std::array<gidx_t, 3>> tri_boundary_nodes = {{{3, 6, 5}}, {{3, 4, 6}}};
+    std::vector<gidx_t> tri_global_indices                = {1, 2};
+
     // quads
-    std::vector<atlas::QuadConnectivityData> quads = {{{2, 3, {{0, 1, 2, 4}}}}};
+    std::vector<std::array<gidx_t, 4>> quad_boundary_nodes = {{{1, 2, 3, 5}}};
+    std::vector<gidx_t> quad_global_indices                = {3};
 
-    Mesh mesh =
-        build_mesh_from_connectivities(lons, lats, ghosts, global_indices, remote_indices, partitions, tris, quads);
+    Mesh mesh = build_mesh_from_connectivities(lons, lats, ghosts, global_indices, remote_indices, partitions,
+                                               tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
+                                               quad_global_indices);
 
-    test_mesh_setup(mesh, lons, lats, ghosts, global_indices, remote_indices, partitions, tris, quads);
+    test_mesh_setup(mesh, lons, lats, ghosts, global_indices, remote_indices, partitions, tri_boundary_nodes,
+                    tri_global_indices, quad_boundary_nodes, quad_global_indices);
 
     //Gmsh gmsh("out.msh", util::Config("coordinates", "xyz"));
     //gmsh.write(mesh);
@@ -110,19 +122,19 @@ CASE("test_tiny_mesh") {
 
 CASE("test_cs_c2_mesh_serial") {
     // coordinates of C2 lfric cubed-sphere grid: grid("CS-LFR-2");
-    std::vector<double> lons = {{337.5, 22.5,  337.5, 22.5,   // +x
-                                 67.5,  112.5, 67.5,  112.5,  // +y
-                                 202.5, 202.5, 157.5, 157.5,  // -x
-                                 292.5, 292.5, 247.5, 247.5,  // -y
-                                 315,   45,    225,   135,    // +z
-                                 315,   225,   45,    135}};  // -z
+    std::vector<double> lons = {337.5, 22.5,  337.5, 22.5,   // +x
+                                67.5,  112.5, 67.5,  112.5,  // +y
+                                202.5, 202.5, 157.5, 157.5,  // -x
+                                292.5, 292.5, 247.5, 247.5,  // -y
+                                315,   45,    225,   135,    // +z
+                                315,   225,   45,    135};   // -z
 
-    std::vector<double> lats = {{-20.941,  -20.941,  20.941,   20.941,      // +x
-                                 -20.941,  -20.941,  20.941,   20.941,      // +y
-                                 -20.941,  20.941,   -20.941,  20.941,      // -x
-                                 -20.941,  20.941,   -20.941,  20.941,      // -y
-                                 59.6388,  59.6388,  59.6388,  59.6388,     // +z
-                                 -59.6388, -59.6388, -59.6388, -59.6388}};  // -z
+    std::vector<double> lats = {-20.941,  -20.941,  20.941,   20.941,     // +x
+                                -20.941,  -20.941,  20.941,   20.941,     // +y
+                                -20.941,  20.941,   -20.941,  20.941,     // -x
+                                -20.941,  20.941,   -20.941,  20.941,     // -y
+                                59.6388,  59.6388,  59.6388,  59.6388,    // +z
+                                -59.6388, -59.6388, -59.6388, -59.6388};  // -z
 
     std::vector<int> ghosts(24, 0);
     std::vector<gidx_t> global_indices(24);
@@ -132,41 +144,48 @@ CASE("test_cs_c2_mesh_serial") {
     std::vector<int> partitions(24, 0);
 
     // triangles
-    std::vector<atlas::TriConnectivityData> tris = {{// corners
-                                                     {0, 1, {{16, 13, 2}}},
-                                                     {1, 2, {{17, 3, 6}}},
-                                                     {2, 3, {{19, 7, 11}}},
-                                                     {3, 4, {{18, 9, 15}}},
-                                                     {4, 5, {{20, 0, 12}}},
-                                                     {5, 6, {{22, 4, 1}}},
-                                                     {6, 7, {{23, 10, 5}}},
-                                                     {7, 8, {{21, 14, 8}}}}};
+    std::vector<std::array<gidx_t, 3>> tri_boundary_nodes = {//corners
+                                                             {{17, 14, 3}},
+                                                             {{18, 4, 7}},
+                                                             {{20, 8, 12}},
+                                                             {{19, 10, 16}},
+                                                             {{21, 1, 13}},
+                                                             {{23, 5, 2}},
+                                                             {{24, 11, 6}},
+                                                             {{22, 15, 9}}};
+    std::vector<gidx_t> tri_global_indices(8);
+    std::iota(tri_global_indices.begin(), tri_global_indices.end(), 1);
+
     // quads
-    std::vector<atlas::QuadConnectivityData> quads = {{// faces
-                                                       {8, 9, {{0, 1, 3, 2}}},
-                                                       {9, 10, {{4, 5, 7, 6}}},
-                                                       {10, 11, {{10, 8, 9, 11}}},
-                                                       {11, 12, {{14, 12, 13, 15}}},
-                                                       {12, 13, {{16, 17, 19, 18}}},
-                                                       {13, 14, {{20, 21, 23, 22}}},
-                                                       // edges between faces
-                                                       {14, 15, {{1, 4, 6, 3}}},
-                                                       {15, 16, {{5, 10, 11, 7}}},
-                                                       {16, 17, {{8, 14, 15, 9}}},
-                                                       {17, 18, {{12, 0, 2, 13}}},
-                                                       {18, 19, {{6, 7, 19, 17}}},
-                                                       {19, 20, {{11, 9, 18, 19}}},
-                                                       {20, 21, {{15, 13, 16, 18}}},
-                                                       {21, 22, {{2, 3, 17, 16}}},
-                                                       {22, 23, {{22, 23, 5, 4}}},
-                                                       {23, 24, {{23, 21, 8, 10}}},
-                                                       {24, 25, {{21, 20, 12, 14}}},
-                                                       {25, 26, {{20, 22, 1, 0}}}}};
+    std::vector<std::array<gidx_t, 4>> quad_boundary_nodes = {// faces
+                                                              {{1, 2, 4, 3}},
+                                                              {{5, 6, 8, 7}},
+                                                              {{11, 9, 10, 12}},
+                                                              {{15, 13, 14, 16}},
+                                                              {{17, 18, 20, 19}},
+                                                              {{21, 22, 24, 23}},
+                                                              // edges between faces
+                                                              {{2, 5, 7, 4}},
+                                                              {{6, 11, 12, 8}},
+                                                              {{9, 15, 16, 10}},
+                                                              {{13, 1, 3, 14}},
+                                                              {{7, 8, 20, 18}},
+                                                              {{12, 10, 19, 20}},
+                                                              {{16, 14, 17, 19}},
+                                                              {{3, 4, 18, 17}},
+                                                              {{23, 24, 6, 5}},
+                                                              {{24, 22, 9, 11}},
+                                                              {{22, 21, 13, 15}},
+                                                              {{21, 23, 2, 1}}};
+    std::vector<gidx_t> quad_global_indices(18);
+    std::iota(quad_global_indices.begin(), quad_global_indices.end(), 9);  // nb_tris + 1
 
-    Mesh mesh =
-        build_mesh_from_connectivities(lons, lats, ghosts, global_indices, remote_indices, partitions, tris, quads);
+    Mesh mesh = build_mesh_from_connectivities(lons, lats, ghosts, global_indices, remote_indices, partitions,
+                                               tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
+                                               quad_global_indices);
 
-    test_mesh_setup(mesh, lons, lats, ghosts, global_indices, remote_indices, partitions, tris, quads);
+    test_mesh_setup(mesh, lons, lats, ghosts, global_indices, remote_indices, partitions, tri_boundary_nodes,
+                    tri_global_indices, quad_boundary_nodes, quad_global_indices);
 
     //Gmsh gmsh("out.msh", util::Config("coordinates", "xyz"));
     //gmsh.write(mesh);
