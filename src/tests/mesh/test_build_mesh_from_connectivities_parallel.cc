@@ -157,7 +157,7 @@ CASE("test_cs_c2_mesh_parallel") {
                                        tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
                                        quad_global_indices);
 
-    //Gmsh gmsh("fh_debug_out.msh", util::Config("coordinates", "xyz"));
+    //Gmsh gmsh("out.msh", util::Config("coordinates", "xyz"));
     //gmsh.write(mesh);
 }
 
