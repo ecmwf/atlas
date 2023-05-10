@@ -23,24 +23,21 @@ namespace atlas {
  * fields are initialized, but enough are to build halos and construct a NodeColumns FunctionSpace.
  *
  * The inputs lons, lats, ghosts, global_indices, remote_indices, and partitions are vectors ranging
- * over the nodes locally owned by (or in the ghost nodes of) the MPI task. The tri/quad
- * connectivities are vectors ranging over the cells owned by the MPI task. Each cell is defined by
- * a list of nodes defining its boundary; note that each boundary node must be locally known
- * (whether as an owned or ghost node on the MPI task), in other words, must be included in the
- * vectors over nodes.
+ * over the nodes locally owned by (or in the ghost nodes of) the MPI task. The global index is a
+ * uniform labeling of the nodes across all MPI tasks; the remote index is the 0-based vector index
+ * for the node on its owning task.
  *
- * The inputs tri/quad_connectivities give a local and a global index to each cell. The local index
- * is 0-based and counts the cells on the MPI task. The global index is a uniform labeling over the
- * entire grid. The local cell index must range over triangle cells *first* and quad cells *after*.
+ * The tri/quad connectivities (boundary_nodes and global_indices) are vectors ranging over the
+ * cells owned by the MPI task. Each cell is defined by a list of nodes defining its boundary;
+ * note that each boundary node must be locally known (whether as an owned of ghost node on the
+ * MPI task), in other words, must be an element of the node global_indices. The cell global index
+ * is, here also, a uniform labeling over the of the cells across all MPI tasks.
  *
- * The boundary nodes of each cell are the *local* indices into the *local* vector global_indices.
- * For example, an MPI task may have nodes with global_indices {2,5,18,42,200}, and it may own a
- * triangular cell defined by nodes {2,5,42}, in this case the boundary nodes are the local indices
- * {0,1,3} of the boundary nodes within the vector global_indices.
- *
- * Some restrictions:
- * - currently, only triangle and quad cells are supported (but others could be added)
- * - currently, no support for importing node-to-cell connectivity information (but could be added)
+ * Some limitations of the current implementation (but not inherent):
+ * - can only set up triangle and quad cells.
+ * - cannot import halos, i.e., cells owned by other MPI tasks; halos can still be subsequently
+ *   computed by calling the BuildMesh action.
+ * - cannot import node-to-cell connectivity information.
  */
 Mesh build_mesh_from_connectivities(const std::vector<double>& lons, const std::vector<double>& lats,
                                     const std::vector<int>& ghosts, const std::vector<gidx_t>& global_indices,
