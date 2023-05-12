@@ -311,8 +311,6 @@ endif()
 
 list( APPEND atlas_mesh_srcs
 mesh.h
-mesh/BuildMeshFromConnectivities.cc
-mesh/BuildMeshFromConnectivities.h
 mesh/Connectivity.cc
 mesh/Connectivity.h
 mesh/ElementType.cc
@@ -325,6 +323,8 @@ mesh/HybridElements.cc
 mesh/HybridElements.h
 mesh/Mesh.cc
 mesh/Mesh.h
+mesh/MeshBuilder.cc
+mesh/MeshBuilder.h
 mesh/Nodes.cc
 mesh/Nodes.h
 mesh/PartitionPolygon.cc

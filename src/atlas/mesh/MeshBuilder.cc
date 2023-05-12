@@ -5,7 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "atlas/mesh/BuildMeshFromConnectivities.h"
+#include "atlas/mesh/MeshBuilder.h"
 
 #include "atlas/array/MakeView.h"
 #include "atlas/mesh/ElementType.h"

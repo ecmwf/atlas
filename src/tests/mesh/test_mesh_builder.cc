@@ -10,14 +10,14 @@
 #include <vector>
 
 #include "atlas/array/MakeView.h"
-#include "atlas/mesh/BuildMeshFromConnectivities.h"
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/MeshBuilder.h"
 #include "atlas/mesh/Nodes.h"
 
 #include "tests/AtlasTestEnvironment.h"
-#include "tests/mesh/helper_build_mesh_from_connectivities.h"
+#include "tests/mesh/helper_mesh_builder.h"
 
 //#include "atlas/output/Gmsh.h"
 //using namespace atlas::output;
