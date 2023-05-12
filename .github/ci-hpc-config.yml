@@ -1,0 +1,9 @@
+build:
+  modules:
+    - ecbuild
+    - ninja
+  modules_package:
+    - atlas:fftw,eigen
+  dependencies:
+    - ecmwf/eckit@develop
+  parallel: 64
