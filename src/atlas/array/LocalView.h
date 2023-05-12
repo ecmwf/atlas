@@ -270,5 +270,8 @@ private:
 #undef ENABLE_IF_CONST_WITH_NON_CONST
 };
 
+template<typename Value, int Rank>
+using View = LocalView<Value,Rank>;
+
 }  // namespace array
 }  // namespace atlas
