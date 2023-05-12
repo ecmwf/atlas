@@ -141,6 +141,7 @@ CASE("test_cs_c2_mesh_parallel") {
         global_indices.begin(), global_indices.end(), std::back_inserter(ghosts),
         [&global_partitions, &rank](const gidx_t idx) { return static_cast<int>(global_partitions[idx - 1] != rank); });
 
+    const idx_t remote_index_base = 0;  // 0-based indexing used in local_indices above
     std::vector<idx_t> remote_indices;
     std::transform(global_indices.begin(), global_indices.end(), std::back_inserter(remote_indices),
                    [&local_indices](const gidx_t idx) { return static_cast<idx_t>(local_indices[idx - 1]); });
@@ -149,12 +150,12 @@ CASE("test_cs_c2_mesh_parallel") {
     std::transform(global_indices.begin(), global_indices.end(), std::back_inserter(partitions),
                    [&global_partitions](const gidx_t idx) { return global_partitions[idx - 1]; });
 
-    Mesh mesh = build_mesh_from_connectivities(lons, lats, ghosts, global_indices, remote_indices, partitions,
-                                               tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
+    Mesh mesh = build_mesh_from_connectivities(lons, lats, ghosts, global_indices, remote_indices, remote_index_base,
+                                               partitions, tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
                                                quad_global_indices);
 
-    helper::check_mesh_nodes_and_cells(mesh, lons, lats, ghosts, global_indices, remote_indices, partitions,
-                                       tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
+    helper::check_mesh_nodes_and_cells(mesh, lons, lats, ghosts, global_indices, remote_indices, remote_index_base,
+                                       partitions, tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
                                        quad_global_indices);
 
     //Gmsh gmsh("out.msh", util::Config("coordinates", "xyz"));

@@ -38,9 +38,10 @@ CASE("test_tiny_mesh") {
     std::vector<int> ghosts(6, 0);  // all points owned
     std::vector<gidx_t> global_indices(6);
     std::iota(global_indices.begin(), global_indices.end(), 1);  // 1-based numbering
+    const idx_t remote_index_base = 0;                           // 0-based numbering
     std::vector<idx_t> remote_indices(6);
-    std::iota(remote_indices.begin(), remote_indices.end(), 0);  // 0-based numbering
-    std::vector<int> partitions(6, 0);                           // all points on proc 0
+    std::iota(remote_indices.begin(), remote_indices.end(), remote_index_base);
+    std::vector<int> partitions(6, 0);  // all points on proc 0
 
     // triangles
     std::vector<std::array<gidx_t, 3>> tri_boundary_nodes = {{{3, 6, 5}}, {{3, 4, 6}}};
@@ -50,12 +51,12 @@ CASE("test_tiny_mesh") {
     std::vector<std::array<gidx_t, 4>> quad_boundary_nodes = {{{1, 2, 3, 5}}};
     std::vector<gidx_t> quad_global_indices                = {3};
 
-    Mesh mesh = build_mesh_from_connectivities(lons, lats, ghosts, global_indices, remote_indices, partitions,
-                                               tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
+    Mesh mesh = build_mesh_from_connectivities(lons, lats, ghosts, global_indices, remote_indices, remote_index_base,
+                                               partitions, tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
                                                quad_global_indices);
 
-    helper::check_mesh_nodes_and_cells(mesh, lons, lats, ghosts, global_indices, remote_indices, partitions,
-                                       tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
+    helper::check_mesh_nodes_and_cells(mesh, lons, lats, ghosts, global_indices, remote_indices, remote_index_base,
+                                       partitions, tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
                                        quad_global_indices);
 
     //Gmsh gmsh("out.msh", util::Config("coordinates", "xyz"));
@@ -81,8 +82,9 @@ CASE("test_cs_c2_mesh_serial") {
     std::vector<int> ghosts(24, 0);
     std::vector<gidx_t> global_indices(24);
     std::iota(global_indices.begin(), global_indices.end(), 1);
+    const idx_t remote_index_base = 1;  // test with 1-based numbering
     std::vector<idx_t> remote_indices(24);
-    std::iota(remote_indices.begin(), remote_indices.end(), 0);
+    std::iota(remote_indices.begin(), remote_indices.end(), remote_index_base);
     std::vector<int> partitions(24, 0);
 
     // triangles
@@ -122,12 +124,12 @@ CASE("test_cs_c2_mesh_serial") {
     std::vector<gidx_t> quad_global_indices(18);
     std::iota(quad_global_indices.begin(), quad_global_indices.end(), 9);  // nb_tris + 1
 
-    Mesh mesh = build_mesh_from_connectivities(lons, lats, ghosts, global_indices, remote_indices, partitions,
-                                               tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
+    Mesh mesh = build_mesh_from_connectivities(lons, lats, ghosts, global_indices, remote_indices, remote_index_base,
+                                               partitions, tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
                                                quad_global_indices);
 
-    helper::check_mesh_nodes_and_cells(mesh, lons, lats, ghosts, global_indices, remote_indices, partitions,
-                                       tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
+    helper::check_mesh_nodes_and_cells(mesh, lons, lats, ghosts, global_indices, remote_indices, remote_index_base,
+                                       partitions, tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
                                        quad_global_indices);
 
     //Gmsh gmsh("out.msh", util::Config("coordinates", "xyz"));

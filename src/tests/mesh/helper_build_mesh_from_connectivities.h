@@ -21,7 +21,8 @@ namespace helper {
 
 void check_mesh_nodes_and_cells(const Mesh& mesh, const std::vector<double>& lons, const std::vector<double>& lats,
                                 const std::vector<int>& ghosts, const std::vector<gidx_t>& global_indices,
-                                const std::vector<idx_t>& remote_indices, const std::vector<int>& partitions,
+                                const std::vector<idx_t>& remote_indices, const idx_t remote_index_base,
+                                const std::vector<int>& partitions,
                                 const std::vector<std::array<gidx_t, 3>>& tri_boundary_nodes,
                                 const std::vector<gidx_t>& tri_global_indices,
                                 const std::vector<std::array<gidx_t, 4>>& quad_boundary_nodes,
@@ -30,7 +31,7 @@ void check_mesh_nodes_and_cells(const Mesh& mesh, const std::vector<double>& lon
     const auto mesh_lonlat    = array::make_view<double, 2>(mesh.nodes().lonlat());
     const auto mesh_ghost     = array::make_view<int, 1>(mesh.nodes().ghost());
     const auto mesh_gidx      = array::make_view<gidx_t, 1>(mesh.nodes().global_index());
-    const auto mesh_ridx      = array::make_view<idx_t, 1>(mesh.nodes().remote_index());
+    const auto mesh_ridx      = array::make_indexview<idx_t, 1>(mesh.nodes().remote_index());
     const auto mesh_partition = array::make_view<int, 1>(mesh.nodes().partition());
     const auto mesh_halo      = array::make_view<int, 1>(mesh.nodes().halo());
 
@@ -42,7 +43,7 @@ void check_mesh_nodes_and_cells(const Mesh& mesh, const std::vector<double>& lon
         EXPECT(mesh_lonlat(i, 1) == lats[i]);
         EXPECT(mesh_ghost(i) == ghosts[i]);
         EXPECT(mesh_gidx(i) == global_indices[i]);
-        EXPECT(mesh_ridx(i) == remote_indices[i]);
+        EXPECT(mesh_ridx(i) == remote_indices[i] - remote_index_base);
         EXPECT(mesh_partition(i) == partitions[i]);
         EXPECT(mesh_halo(i) == 0.);
         // Don't expect (or test) any node-to-cell connectivities

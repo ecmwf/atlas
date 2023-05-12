@@ -21,7 +21,8 @@ namespace atlas {
 
 Mesh build_mesh_from_connectivities(const std::vector<double>& lons, const std::vector<double>& lats,
                                     const std::vector<int>& ghosts, const std::vector<gidx_t>& global_indices,
-                                    const std::vector<idx_t>& remote_indices, const std::vector<int>& partitions,
+                                    const std::vector<idx_t>& remote_indices, const idx_t remote_index_base,
+                                    const std::vector<int>& partitions,
                                     const std::vector<std::array<gidx_t, 3>>& tri_boundary_nodes,
                                     const std::vector<gidx_t>& tri_global_indices,
                                     const std::vector<std::array<gidx_t, 4>>& quad_boundary_nodes,
@@ -59,7 +60,7 @@ Mesh build_mesh_from_connectivities(const std::vector<double>& lons, const std::
         lonlat(i, size_t(LAT)) = lats[i];
         ghost(i)               = ghosts[i];
         gidx(i)                = global_indices[i];
-        ridx(i)                = remote_indices[i];
+        ridx(i)                = remote_indices[i] - remote_index_base;
         partition(i)           = partitions[i];
     }
     halo.assign(0);
