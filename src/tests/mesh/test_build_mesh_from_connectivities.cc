@@ -5,7 +5,9 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
+#include <array>
 #include <numeric>
+#include <vector>
 
 #include "atlas/array/MakeView.h"
 #include "atlas/mesh/BuildMeshFromConnectivities.h"
@@ -51,9 +53,9 @@ CASE("test_tiny_mesh") {
     std::vector<std::array<gidx_t, 4>> quad_boundary_nodes = {{{1, 2, 3, 5}}};
     std::vector<gidx_t> quad_global_indices                = {3};
 
-    Mesh mesh = build_mesh_from_connectivities(lons, lats, ghosts, global_indices, remote_indices, remote_index_base,
-                                               partitions, tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
-                                               quad_global_indices);
+    const MeshBuilder mesh_builder{};
+    const Mesh mesh = mesh_builder(lons, lats, ghosts, global_indices, remote_indices, remote_index_base, partitions,
+                                   tri_boundary_nodes, tri_global_indices, quad_boundary_nodes, quad_global_indices);
 
     helper::check_mesh_nodes_and_cells(mesh, lons, lats, ghosts, global_indices, remote_indices, remote_index_base,
                                        partitions, tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
@@ -124,9 +126,9 @@ CASE("test_cs_c2_mesh_serial") {
     std::vector<gidx_t> quad_global_indices(18);
     std::iota(quad_global_indices.begin(), quad_global_indices.end(), 9);  // nb_tris + 1
 
-    Mesh mesh = build_mesh_from_connectivities(lons, lats, ghosts, global_indices, remote_indices, remote_index_base,
-                                               partitions, tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
-                                               quad_global_indices);
+    const MeshBuilder mesh_builder{};
+    const Mesh mesh = mesh_builder(lons, lats, ghosts, global_indices, remote_indices, remote_index_base, partitions,
+                                   tri_boundary_nodes, tri_global_indices, quad_boundary_nodes, quad_global_indices);
 
     helper::check_mesh_nodes_and_cells(mesh, lons, lats, ghosts, global_indices, remote_indices, remote_index_base,
                                        partitions, tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,

@@ -8,7 +8,6 @@
 #include <algorithm>
 #include <array>
 #include <iterator>
-#include <type_traits>
 #include <vector>
 
 #include "atlas/array/MakeView.h"
@@ -150,9 +149,9 @@ CASE("test_cs_c2_mesh_parallel") {
     std::transform(global_indices.begin(), global_indices.end(), std::back_inserter(partitions),
                    [&global_partitions](const gidx_t idx) { return global_partitions[idx - 1]; });
 
-    Mesh mesh = build_mesh_from_connectivities(lons, lats, ghosts, global_indices, remote_indices, remote_index_base,
-                                               partitions, tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
-                                               quad_global_indices);
+    const MeshBuilder mesh_builder{};
+    const Mesh mesh = mesh_builder(lons, lats, ghosts, global_indices, remote_indices, remote_index_base, partitions,
+                                   tri_boundary_nodes, tri_global_indices, quad_boundary_nodes, quad_global_indices);
 
     helper::check_mesh_nodes_and_cells(mesh, lons, lats, ghosts, global_indices, remote_indices, remote_index_base,
                                        partitions, tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,

@@ -19,31 +19,42 @@ namespace atlas {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Mesh build_mesh_from_connectivities(const std::vector<double>& lons, const std::vector<double>& lats,
-                                    const std::vector<int>& ghosts, const std::vector<gidx_t>& global_indices,
-                                    const std::vector<idx_t>& remote_indices, const idx_t remote_index_base,
-                                    const std::vector<int>& partitions,
-                                    const std::vector<std::array<gidx_t, 3>>& tri_boundary_nodes,
-                                    const std::vector<gidx_t>& tri_global_indices,
-                                    const std::vector<std::array<gidx_t, 4>>& quad_boundary_nodes,
-                                    const std::vector<gidx_t>& quad_global_indices) {
-    const size_t nb_points = lons.size();
-    ATLAS_ASSERT(nb_points == lats.size());
-    ATLAS_ASSERT(nb_points == ghosts.size());
-    ATLAS_ASSERT(nb_points == global_indices.size());
-    ATLAS_ASSERT(nb_points == remote_indices.size());
-    ATLAS_ASSERT(nb_points == partitions.size());
+Mesh MeshBuilder::operator()(const std::vector<double>& lons, const std::vector<double>& lats,
+                             const std::vector<int>& ghosts, const std::vector<gidx_t>& global_indices,
+                             const std::vector<idx_t>& remote_indices, const idx_t remote_index_base,
+                             const std::vector<int>& partitions,
+                             const std::vector<std::array<gidx_t, 3>>& tri_boundary_nodes,
+                             const std::vector<gidx_t>& tri_global_indices,
+                             const std::vector<std::array<gidx_t, 4>>& quad_boundary_nodes,
+                             const std::vector<gidx_t>& quad_global_indices) const {
+    const size_t nb_nodes = global_indices.size();
+    const size_t nb_tris  = tri_global_indices.size();
+    const size_t nb_quads = quad_global_indices.size();
 
-    const size_t nb_tris = tri_boundary_nodes.size();
-    ATLAS_ASSERT(nb_tris == tri_global_indices.size());
-    const size_t nb_quads = quad_boundary_nodes.size();
-    ATLAS_ASSERT(nb_quads == quad_global_indices.size());
+    ATLAS_ASSERT(nb_nodes == lons.size());
+    ATLAS_ASSERT(nb_nodes == lats.size());
+    ATLAS_ASSERT(nb_nodes == ghosts.size());
+    ATLAS_ASSERT(nb_nodes == remote_indices.size());
+    ATLAS_ASSERT(nb_nodes == partitions.size());
+    ATLAS_ASSERT(nb_tris == tri_boundary_nodes.size());
+    ATLAS_ASSERT(nb_quads == quad_boundary_nodes.size());
 
-    Mesh mesh;
+    return operator()(nb_nodes, lons.data(), lats.data(), ghosts.data(), global_indices.data(), remote_indices.data(),
+                      remote_index_base, partitions.data(), nb_tris,
+                      reinterpret_cast<const gidx_t*>(tri_boundary_nodes.data()), tri_global_indices.data(), nb_quads,
+                      reinterpret_cast<const gidx_t*>(quad_boundary_nodes.data()), quad_global_indices.data());
+}
 
-    // nodes
+Mesh MeshBuilder::operator()(size_t nb_nodes, const double lons[], const double lats[], const int ghosts[],
+                             const gidx_t global_indices[], const idx_t remote_indices[], const idx_t remote_index_base,
+                             const int partitions[], size_t nb_tris, const gidx_t tri_boundary_nodes[],
+                             const gidx_t tri_global_indices[], size_t nb_quads, const gidx_t quad_boundary_nodes[],
+                             const gidx_t quad_global_indices[]) const {
+    Mesh mesh{};
 
-    mesh.nodes().resize(nb_points);
+    // Populate node data
+
+    mesh.nodes().resize(nb_nodes);
     auto xy        = array::make_view<double, 2>(mesh.nodes().xy());
     auto lonlat    = array::make_view<double, 2>(mesh.nodes().lonlat());
     auto ghost     = array::make_view<int, 1>(mesh.nodes().ghost());
@@ -52,10 +63,10 @@ Mesh build_mesh_from_connectivities(const std::vector<double>& lons, const std::
     auto partition = array::make_view<int, 1>(mesh.nodes().partition());
     auto halo      = array::make_view<int, 1>(mesh.nodes().halo());
 
-    for (size_t i = 0; i < nb_points; ++i) {
+    for (size_t i = 0; i < nb_nodes; ++i) {
         xy(i, size_t(XX)) = lons[i];
         xy(i, size_t(YY)) = lats[i];
-        // identity projection, therefore (lon,lat) = (x,y)
+        // Identity projection, therefore (lon,lat) = (x,y)
         lonlat(i, size_t(LON)) = lons[i];
         lonlat(i, size_t(LAT)) = lats[i];
         ghost(i)               = ghosts[i];
@@ -65,7 +76,7 @@ Mesh build_mesh_from_connectivities(const std::vector<double>& lons, const std::
     }
     halo.assign(0);
 
-    // cells
+    // Populate cell/element data
 
     // First, count how many cells of each type are on this processor
     // Then optimize away the element type if globally nb_tris or nb_quads is zero
@@ -89,30 +100,31 @@ Mesh build_mesh_from_connectivities(const std::vector<double>& lons, const std::
     auto cells_gidx = array::make_view<gidx_t, 1>(mesh.cells().global_index());
 
     // Find position of idx inside global_indices
-    const auto position_of = [&global_indices](const gidx_t idx) {
-        const auto& it = std::find(global_indices.begin(), global_indices.end(), idx);
-        ATLAS_ASSERT(it != global_indices.end());
-        return std::distance(global_indices.begin(), it);
-    };
-    // Find array of positions inside global_indices from an array of ixds
-    // (In C++20 we can template the lambda on array size; for now we use an auto argument...)
-    const auto positions_of = [&position_of](const auto idxs) {
-        std::array<idx_t, idxs.size()> result{};  // go from input gidx_t to output idx_t
-        std::transform(idxs.begin(), idxs.end(), result.begin(), position_of);
-        return result;
+    const auto position_of = [&nb_nodes, &global_indices](const gidx_t idx) {
+        const auto& it = std::find(global_indices, global_indices + nb_nodes, idx);
+        ATLAS_ASSERT(it != global_indices + nb_nodes);
+        return std::distance(global_indices, it);
     };
 
     size_t idx = 0;
     if (add_tris) {
+        idx_t buffer[3];
         for (size_t tri = 0; tri < nb_tris; ++tri) {
-            node_connectivity.set(idx, positions_of(tri_boundary_nodes[tri]).data());
+            for (size_t i = 0; i < 3; ++i) {
+                buffer[i] = position_of(tri_boundary_nodes[3 * tri + i]);
+            }
+            node_connectivity.set(idx, buffer);
             cells_gidx(idx) = tri_global_indices[tri];
             idx++;
         }
     }
     if (add_quads) {
+        idx_t buffer[4];
         for (size_t quad = 0; quad < nb_quads; ++quad) {
-            node_connectivity.set(idx, positions_of(quad_boundary_nodes[quad]).data());
+            for (size_t i = 0; i < 4; ++i) {
+                buffer[i] = position_of(quad_boundary_nodes[4 * quad + i]);
+            }
+            node_connectivity.set(idx, buffer);
             cells_gidx(idx) = quad_global_indices[quad];
             idx++;
         }
