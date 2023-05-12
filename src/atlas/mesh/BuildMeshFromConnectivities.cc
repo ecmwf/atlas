@@ -47,7 +47,7 @@ Mesh build_mesh_from_connectivities(const std::vector<double>& lons, const std::
     auto lonlat    = array::make_view<double, 2>(mesh.nodes().lonlat());
     auto ghost     = array::make_view<int, 1>(mesh.nodes().ghost());
     auto gidx      = array::make_view<gidx_t, 1>(mesh.nodes().global_index());
-    auto ridx      = array::make_view<idx_t, 1>(mesh.nodes().remote_index());
+    auto ridx      = array::make_indexview<idx_t, 1>(mesh.nodes().remote_index());
     auto partition = array::make_view<int, 1>(mesh.nodes().partition());
     auto halo      = array::make_view<int, 1>(mesh.nodes().halo());
 
