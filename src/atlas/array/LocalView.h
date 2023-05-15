@@ -137,26 +137,26 @@ public:
 
     // -- Access methods
 
-    template <typename... Ints>
-    value_type& operator()(Ints... idx) {
+    template <typename... Idx, int Rank_ = Rank, typename = std::enable_if_t<sizeof...(Idx) == Rank_>>
+    value_type& operator()(Idx... idx) {
         check_bounds(idx...);
         return data_[index(idx...)];
     }
 
-    template <typename... Ints>
-    const value_type& operator()(Ints... idx) const {
+    template <typename... Idx, int Rank_ = Rank, typename = std::enable_if_t<sizeof...(Idx) == Rank_>>
+    const value_type& operator()(Idx... idx) const {
         check_bounds(idx...);
         return data_[index(idx...)];
     }
 
-    template <typename Int, int Rank_ = Rank>
-    typename std::enable_if_t<Rank_, const value_type&> operator[](Int idx) const {
+    template <typename Idx, int Rank_ = Rank, typename = std::enable_if_t<Rank_ == 1>>
+    const value_type& operator[](Idx idx) const {
         check_bounds(idx);
         return data_[index(idx)];
     }
 
-    template <typename Int, int Rank_ = Rank>
-    typename std::enable_if_t<Rank_ == 1, value_type&> operator[](Int idx) {
+    template <typename Idx, int Rank_ = Rank, typename = std::enable_if_t<Rank_ == 1>>
+    value_type& operator[](Idx idx) {
         check_bounds(idx);
         return data_[index(idx)];
     }

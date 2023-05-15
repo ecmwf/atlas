@@ -156,15 +156,15 @@ public:
     // -- Access methods
 
     /// @brief Multidimensional index operator: view(i,j,k,...)
-    template <typename... Idx>
+    template <typename... Idx, int Rank_ = Rank, typename = std::enable_if_t<sizeof...(Idx) == Rank_>>
     value_type& operator()(Idx... idx) {
         check_bounds(idx...);
         return data_[index(idx...)];
     }
 
     /// @brief Multidimensional index operator: view(i,j,k,...)
-    template <typename... Ints>
-    const value_type& operator()(Ints... idx) const {
+    template <typename... Idx, int Rank_ = Rank, typename = std::enable_if_t<sizeof...(Idx) == Rank_>>
+    const value_type& operator()(Idx... idx) const {
         return data_[index(idx...)];
     }
 
@@ -172,8 +172,8 @@ public:
     ///
     /// Note that this function is only present when Rank == 1
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-    template <typename Int, int Rank_ = Rank>
-    typename std::enable_if<Rank_ == 1, const value_type&>::type operator[](Int idx) const {
+    template <typename Idx, int Rank_ = Rank, typename = std::enable_if_t<Rank_ == 1>>
+    const value_type& operator[](Idx idx) const {
 #else
     // Doxygen API is cleaner!
     template <typename Int>
@@ -187,12 +187,12 @@ public:
     ///
     /// Note that this function is only present when Rank == 1
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-    template <typename Int, int Rank_ = Rank>
-    typename std::enable_if<Rank_ == 1, value_type&>::type operator[](Int idx) {
+    template <typename Idx, int Rank_ = Rank, typename = std::enable_if_t<Rank_ == 1>>
+    value_type& operator[](Idx idx) {
 #else
     // Doxygen API is cleaner!
-    template <typename Int>
-    value_type operator[](Int idx) {
+    template <typename Idx>
+    value_type operator[](Idx idx) {
 #endif
         check_bounds(idx);
         return data_[idx * strides_[0]];
