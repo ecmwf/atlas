@@ -982,4 +982,4 @@ ecbuild_add_library( TARGET atlas
 
 )
 
-target_compile_features( atlas PUBLIC cxx_std_11 )
+target_compile_features( atlas PUBLIC cxx_std_17 )
