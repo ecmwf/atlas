@@ -168,6 +168,9 @@ public:
     void set_variables(idx_t n);
     idx_t variables() const;
 
+    void set_horizontal_dimension(const std::vector<idx_t>&);
+    std::vector<idx_t> horizontal_dimension() const;
+
     void set_functionspace(const FunctionSpace& functionspace);
     const FunctionSpace& functionspace() const;
 

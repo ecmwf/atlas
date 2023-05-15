@@ -177,6 +177,14 @@ idx_t Field::variables() const {
     return get()->variables();
 }
 
+void Field::set_horizontal_dimension(const std::vector<idx_t>& h_dim) {
+    get()->set_horizontal_dimension(h_dim);
+}
+
+std::vector<idx_t> Field::horizontal_dimension() const {
+    return get()->horizontal_dimension();
+}
+
 void Field::set_functionspace(const FunctionSpace& functionspace) {
     get()->set_functionspace(functionspace);
 }

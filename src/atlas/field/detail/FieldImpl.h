@@ -149,6 +149,13 @@ public:  // Destructor
     idx_t levels() const { return metadata().get<idx_t>("levels"); }
     idx_t variables() const { return metadata().get<idx_t>("variables"); }
 
+    void set_horizontal_dimension(const std::vector<idx_t>& h_dim) { metadata().set("horizontal_dimension", h_dim); }
+    std::vector<idx_t> horizontal_dimension() const {
+        std::vector<idx_t> h_dim{0};
+        metadata().get("horizontal_dimension", h_dim);
+        return h_dim;
+    }
+
     void set_functionspace(const FunctionSpace&);
     const FunctionSpace& functionspace() const;
 
