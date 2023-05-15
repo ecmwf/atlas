@@ -264,6 +264,13 @@ Field BlockStructuredColumns::createField(const eckit::Configuration& options) c
     Field field(structuredcolumns_->config_name(options), structuredcolumns_->config_datatype(options), config_spec(options));
     structuredcolumns_->set_field_metadata(options, field);
     field.set_functionspace(this);
+
+    bool global = false;
+    options.get("global", global);
+    if (not global) {
+        field.set_horizontal_dimension({0,field.rank()-1});
+    }
+
     return field;
 }
 
