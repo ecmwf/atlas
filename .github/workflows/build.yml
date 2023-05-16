@@ -32,6 +32,7 @@ jobs:
         build_type: [Release,Debug]
         name:
           - linux gnu-10
+          - linux gnu-7
           - linux clang-12
           - linux nvhpc-21.9
           - linux intel
@@ -46,6 +47,16 @@ jobs:
             compiler_cxx: g++-10
             compiler_fc: gfortran-10
             caching: true
+            coverage: true
+
+          - name: linux gnu-7
+            os: ubuntu-20.04
+            compiler: gnu-7
+            compiler_cc: gcc-7
+            compiler_cxx: g++-7
+            compiler_fc: gfortran-7
+            caching: true
+            coverage: false
 
           - name: linux clang-12
             os: ubuntu-20.04
@@ -54,6 +65,7 @@ jobs:
             compiler_cxx: clang++-12
             compiler_fc: gfortran-10
             caching: true
+            coverage: false
 
           - name: linux clang-12
             build_type: Release
@@ -64,6 +76,7 @@ jobs:
             compiler_fc: gfortran-10
             ctest_options: "-LE mpi" # For now until Checkerboard fixed
             caching: true
+            coverage: false
 
           - name: linux nvhpc-21.9
             os: ubuntu-20.04
@@ -74,6 +87,7 @@ jobs:
             cmake_options: -DCMAKE_CXX_FLAGS=--diag_suppress177
             ctest_options: "-LE mpi" # For now until Checkerboard fixed
             caching: false
+            coverage: false
 
           - name : linux intel
             os: ubuntu-20.04
@@ -82,6 +96,7 @@ jobs:
             compiler_cxx: icpc
             compiler_fc: ifort
             caching: true
+            coverage: false
 
           - name: macos
             # Xcode compiler requires empty environment variables, so we pass null (~) here
@@ -91,6 +106,7 @@ jobs:
             compiler_cxx: ~
             compiler_fc: gfortran-11
             caching: true
+            coverage: false
             cmake_options: -DMPI_SLOTS=4
 
     runs-on: ${{ matrix.os }}
@@ -120,6 +136,9 @@ jobs:
           brew install libomp
         else
           sudo apt-get update
+          if [[ "${{ matrix.compiler }}" =~ gnu-7 ]]; then
+            sudo apt-get install gcc-7 g++-7 gfortran-7
+          fi
           sudo apt-get install ninja-build
         fi
 
@@ -189,7 +208,7 @@ jobs:
       id: build-test
       uses: ecmwf-actions/build-package@v2
       with:
-        self_coverage: true
+        self_coverage: ${{ matrix.coverage }}
         force_build: true
         cache_suffix: "${{ matrix.build_type }}-${{ env.CACHE_SUFFIX }}"
         recreate_cache: ${{ matrix.caching == false }}
