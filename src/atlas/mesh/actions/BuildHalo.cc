@@ -752,6 +752,7 @@ public:
             for (idx_t jnode = 0; jnode < elem_nodes->cols(ielem); ++jnode) {
                 buf.elem_nodes_id[p][jelemnode++] = compute_uid((*elem_nodes)(ielem, jnode));
             }
+            Topology::set(buf.elem_flags[p][jelem], Topology::GHOST);
         }
     }
 
