@@ -72,7 +72,7 @@ class GeometrySphere : public GeometryBase {
 public:
     GeometrySphere(double radius): radius_(radius) {}
     void lonlat2xyz(const Point2& lonlat, Point3& xyz) const override {
-        Sphere::convertSphericalToCartesian(radius_, lonlat, xyz);
+        Sphere::convertSphericalToCartesian(radius_, lonlat, xyz, 0., true);
     }
     void xyz2lonlat(const Point3& xyz, Point2& lonlat) const override {
         Sphere::convertCartesianToSpherical(radius_, xyz, lonlat);
