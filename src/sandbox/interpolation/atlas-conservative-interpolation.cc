@@ -279,9 +279,10 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
             ATLAS_TRACE("halo exchange target");
             tgt_field.haloExchange();
         }
-        util::Config config(args.getSubConfiguration("gmsh"));
+        util::Config config = util::Config(args.getSubConfiguration("gmsh"))("info",true);
         output::Gmsh{"src_mesh.msh", config}.write(src_mesh);
         output::Gmsh{"src_field.msh", config}.write(src_field);
+        output::Gmsh{"src_included.msh", config}.write(src_mesh.cells().field("included"),functionspace::CellColumns(src_mesh));
         output::Gmsh{"tgt_mesh.msh", config}.write(tgt_mesh);
         output::Gmsh{"tgt_field.msh", config}.write(tgt_field);
         if (src_conservation_field) {

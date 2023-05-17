@@ -1141,28 +1141,72 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
         PathName mesh_info(file_path);
         mesh_info = mesh_info.dirName() + "/" + mesh_info.baseName(false) + "_info.msh";
 
-        //[next]  make NodesFunctionSpace accept const mesh
-        functionspace::NodeColumns function_space(const_cast<Mesh&>(mesh));
+        {
+            //[next]  make NodesFunctionSpace accept const mesh
+            functionspace::NodeColumns function_space(const_cast<Mesh&>(mesh));
 
-        FieldSet fieldset;
-        auto lat =
-            array::make_view<double, 1>(fieldset.add(Field("lat", array::make_datatype<double>(), {nodes.size()})));
-        auto lon =
-            array::make_view<double, 1>(fieldset.add(Field("lon", array::make_datatype<double>(), {nodes.size()})));
+            FieldSet fieldset;
+            auto lat =
+                array::make_view<double, 1>(fieldset.add(Field("nodes.lat", array::make_datatype<double>(), {nodes.size()})));
+            auto lon =
+                array::make_view<double, 1>(fieldset.add(Field("nodes.lon", array::make_datatype<double>(), {nodes.size()})));
 
-        auto lonlat = array::make_view<double, 2>(nodes.lonlat());
-        for (idx_t n = 0; n < nodes.size(); ++n) {
-            lon(n) = lonlat(n, 0);
-            lat(n) = lonlat(n, 1);
-        }
-        write(fieldset, function_space, mesh_info, std::ios_base::out);
-        std::vector<std::string> extra_fields = {"partition", "water", "dual_volumes", "dual_delta_sph",
-                                                 "ghost",     "halo",  "remote_index"};
-        for (auto& f : extra_fields) {
-            if (nodes.has_field(f)) {
-                write(nodes.field(f), function_space, mesh_info, std::ios_base::app);
+            auto flags_periodic =
+                array::make_view<int, 1>(fieldset.add(Field("nodes.flags[periodic]", array::make_datatype<int>(), {nodes.size()})));
+            auto flags_ghost =
+                array::make_view<int, 1>(fieldset.add(Field("nodes.flags[ghost]", array::make_datatype<int>(), {nodes.size()})));
+
+            auto lonlat = array::make_view<double, 2>(nodes.lonlat());
+            auto flags = array::make_view<int, 1>(nodes.flags());
+            for (idx_t n = 0; n < nodes.size(); ++n) {
+                lon(n) = lonlat(n, 0);
+                lat(n) = lonlat(n, 1);
+                flags_periodic(n) = util::Topology::check(flags(n),util::Topology::PERIODIC);
+                flags_ghost(n) = util::Topology::check(flags(n),util::Topology::GHOST);
+            }
+            write(fieldset, function_space, mesh_info, std::ios_base::out);
+            std::vector<std::string> extra_fields = {"partition", "water", "dual_volumes", "dual_delta_sph",
+                                                    "ghost",     "halo",  "remote_index"};
+            for (auto& f : extra_fields) {
+                if (nodes.has_field(f)) {
+                    write(nodes.field(f), function_space, mesh_info, std::ios_base::app);
+                }
             }
         }
+
+        {
+            functionspace::CellColumns cells_function_space(const_cast<Mesh&>(mesh));
+            FieldSet fieldset;
+            auto flags_periodic =
+                array::make_view<int, 1>(fieldset.add(Field("cells.flags[periodic]", array::make_datatype<int>(), {mesh.cells().size()})));
+            auto flags_ghost =
+                array::make_view<int, 1>(fieldset.add(Field("cells.flags[ghost]", array::make_datatype<int>(), {mesh.cells().size()})));
+            auto flags_ghost_periodic =
+                array::make_view<int, 1>(fieldset.add(Field("cells.flags[ghost|periodic]", array::make_datatype<int>(), {mesh.cells().size()})));
+            auto flags_periodic_east =
+                array::make_view<int, 1>(fieldset.add(Field("cells.flags[periodic|east]", array::make_datatype<int>(), {mesh.cells().size()})));
+            auto flags_periodic_west =
+                array::make_view<int, 1>(fieldset.add(Field("cells.flags[periodic|west]", array::make_datatype<int>(), {mesh.cells().size()})));
+            fieldset.add(mesh.cells().partition());
+            fieldset.add(mesh.cells().remote_index());
+            fieldset.add(mesh.cells().halo());
+
+            auto flags = array::make_view<int, 1>(mesh.cells().flags());
+
+            for (idx_t n = 0; n < flags.size(); ++n) {
+                flags_periodic(n) = util::Topology::check(flags(n),util::Topology::PERIODIC);
+                flags_ghost(n) = util::Topology::check(flags(n),util::Topology::GHOST);
+                flags_ghost_periodic(n) = util::Topology::check(flags(n),util::Topology::GHOST|util::Topology::PERIODIC);
+                flags_periodic_east(n) = util::Topology::check(flags(n),util::Topology::PERIODIC|util::Topology::EAST);
+                flags_periodic_west(n) = util::Topology::check(flags(n),util::Topology::PERIODIC|util::Topology::WEST);
+            }
+
+            write(fieldset, cells_function_space, mesh_info, std::ios_base::app);
+        }
+
+
+        
+
 
 
         //[next] if( mesh.has_function_space("edges") )

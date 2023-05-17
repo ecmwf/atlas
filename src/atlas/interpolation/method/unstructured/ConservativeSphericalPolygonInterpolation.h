@@ -152,8 +152,8 @@ public:
 
 private:
     using ConvexSphericalPolygon = util::ConvexSphericalPolygon;
-    using PolygonArray           = std::vector<std::pair<ConvexSphericalPolygon, int>>;
-    using CSPolygonArray         = std::vector<std::tuple<ConvexSphericalPolygon, int>>;
+    // using PolygonArray           = std::vector<std::pair<ConvexSphericalPolygon, int>>;
+    using CSPolygonArray         = std::vector<std::tuple<ConvexSphericalPolygon, int, int, int>>;
 
     void do_setup_impl(const Grid& src_grid, const Grid& tgt_grid);
 
@@ -169,10 +169,11 @@ private:
     std::vector<idx_t> sort_node_edges(Mesh& mesh, idx_t cell_id) const;
     std::vector<idx_t> get_cell_neighbours(Mesh&, idx_t jcell) const;
     std::vector<idx_t> get_node_neighbours(Mesh&, idx_t jcell) const;
-    CSPolygonArray get_polygons_celldata(FunctionSpace) const;
+    CSPolygonArray get_polygons_celldata(FunctionSpace, int halo=-1) const;
     CSPolygonArray get_polygons_nodedata(FunctionSpace, std::vector<idx_t>& csp2node,
                                          std::vector<std::vector<idx_t>>& node2csp,
-                                         std::array<double, 2>& errors) const;
+                                         std::array<double, 2>& errors,
+                                         int halo = -1) const;
 
     int next_index(int current_index, int size, int offset = 1) const;
     int prev_index(int current_index, int size, int offset = 1) const;

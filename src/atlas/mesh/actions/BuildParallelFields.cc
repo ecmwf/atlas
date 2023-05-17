@@ -1022,6 +1022,7 @@ Field& build_cells_remote_idx(mesh::Cells& cells, const mesh::Nodes& nodes) {
     const auto part           = array::make_view<int, 1>(cells.partition());
     const auto gidx           = array::make_view<gidx_t, 1>(cells.global_index());
     const auto flags          = array::make_view<int, 1>(cells.flags());
+    const auto halo           = array::make_view<int, 1>(cells.halo());
     const auto& element_nodes = cells.node_connectivity();
     idx_t nb_cells            = cells.size();
 
@@ -1042,16 +1043,20 @@ Field& build_cells_remote_idx(mesh::Cells& cells, const mesh::Nodes& nodes) {
         return compute_uid_lonlat(element_nodes.row(jcell));
     };
 
-    idx_t varsize = 2;
+    constexpr idx_t varsize = 2;
+    const idx_t debug_gidx_west = 10367;
+    const idx_t debug_gidx_in = 44;
+    const uid_t debug_uid = 588369824384386752;
 
     std::vector<std::vector<uid_t>> send_needed(mpi::size());
     std::vector<std::vector<uid_t>> recv_needed(mpi::size());
     int sendcnt = 0;
     std::map<uid_t, int> lookup;
     for (idx_t jcell = 0; jcell < nb_cells; ++jcell) {
+
         uid_t uid = compute_uid(jcell);
 
-        if (idx_t(part(jcell)) == mypart) {
+        if (idx_t(part(jcell)) == mypart && halo(jcell) == 0) {
             lookup[uid] = jcell;
             ridx(jcell) = jcell;
         }
@@ -1070,6 +1075,14 @@ Field& build_cells_remote_idx(mesh::Cells& cells, const mesh::Nodes& nodes) {
             send_needed[proc[part(jcell)]].push_back(jcell);
             sendcnt++;
         }
+        if( gidx(jcell) == debug_gidx_west ||  gidx(jcell) == debug_gidx_in ) {
+            ATLAS_DEBUG_VAR(gidx(jcell));
+            ATLAS_DEBUG_VAR(jcell);
+            ATLAS_DEBUG_VAR(part(jcell));
+            ATLAS_DEBUG_VAR(uid);
+        }
+
+
     }
 
     ATLAS_TRACE_MPI(ALLTOALL) { mpi::comm().allToAll(send_needed, recv_needed); }
@@ -1083,6 +1096,9 @@ Field& build_cells_remote_idx(mesh::Cells& cells, const mesh::Nodes& nodes) {
         for (idx_t jcell = 0; jcell < nb_recv_cells; ++jcell) {
             uid_t uid = recv_cell[jcell * varsize + 0];
             int icell = recv_cell[jcell * varsize + 1];
+            if( uid == debug_uid ) {
+                std::cout << mpi::rank() << " found " << uid << std::endl;;
+            }
             send_found[proc[jpart]].push_back(icell);
             send_found[proc[jpart]].push_back(lookup.count(uid) ? lookup[uid] : -1);
         }
