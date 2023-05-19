@@ -32,6 +32,7 @@ jobs:
         build_type: [Release,Debug]
         name:
           - linux gnu-10
+          - linux gnu-12
           - linux gnu-7
           - linux clang-12
           - linux nvhpc-21.9
@@ -48,6 +49,15 @@ jobs:
             compiler_fc: gfortran-10
             caching: true
             coverage: true
+
+          - name: linux gnu-12
+            os: ubuntu-22.04
+            compiler: gnu-12
+            compiler_cc: gcc-12
+            compiler_cxx: g++-12
+            compiler_fc: gfortran-12
+            caching: true
+            coverage: false
 
           - name: linux gnu-7
             os: ubuntu-20.04
