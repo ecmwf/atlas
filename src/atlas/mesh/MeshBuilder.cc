@@ -16,6 +16,7 @@
 #include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {
+namespace mesh {
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -139,4 +140,5 @@ Mesh MeshBuilder::operator()(size_t nb_nodes, const double lons[], const double 
 
 //----------------------------------------------------------------------------------------------------------------------
 
+}  // namespace mesh
 }  // namespace atlas

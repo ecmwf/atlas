@@ -19,6 +19,8 @@
 #include "tests/AtlasTestEnvironment.h"
 #include "tests/mesh/helper_mesh_builder.h"
 
+using namespace atlas::mesh;
+
 //#include "atlas/output/Gmsh.h"
 //using namespace atlas::output;
 
