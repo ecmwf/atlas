@@ -323,6 +323,8 @@ mesh/HybridElements.cc
 mesh/HybridElements.h
 mesh/Mesh.cc
 mesh/Mesh.h
+mesh/MeshBuilder.cc
+mesh/MeshBuilder.h
 mesh/Nodes.cc
 mesh/Nodes.h
 mesh/PartitionPolygon.cc
