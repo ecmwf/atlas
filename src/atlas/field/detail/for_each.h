@@ -36,7 +36,7 @@ struct function_traits<ReturnType(ClassType::*)(Arguments...)> :
 
 template <typename ReturnType, typename... Arguments>
 struct function_traits<ReturnType(*)(Arguments...)> {
-    typedef ReturnType result_type;
+    using result_type = ReturnType;
 
     template <std::size_t Index>
     using arg_t = typename std::tuple_element<
@@ -74,40 +74,23 @@ void for_each_value_masked_view(std::index_sequence<Dims...>, const Config& conf
     array::helpers::ArrayForEach<Dims...>::apply(config,std::move(views),mask,function);
 }
 
+template <int FieldIdx, typename Value, int Rank, typename... Field>
+auto make_view_tuple(std::tuple<Field...>&& fields) {
+    constexpr auto num_fields = std::tuple_size_v<std::tuple<Field...>>;
+    if constexpr (FieldIdx < num_fields) {
+        return std::tuple_cat(std::make_tuple(
+            array::make_view<Value, Rank>(std::get<FieldIdx>(fields))),
+            make_view_tuple<FieldIdx + 1, Value, Rank>(std::move(fields)));
+    } else {
+        return std::make_tuple();
+    }
+}
+
 template <typename Value, int Rank, typename Config,  typename Mask, typename... Field, typename Function>
 void for_each_value_masked_rank(const Config& config, const Mask& mask, std::tuple<Field...>&& fields, const Function& function ) {
-    constexpr auto num_fields = std::tuple_size_v<std::tuple<Field...>>;
     constexpr auto dims = std::make_index_sequence<Rank>();
-    if constexpr (valid_value_function<Function,Value>())
-    {
-        // Surely this can be improved to be more generic w.r.t. num_fields
-        if constexpr (num_fields == 1) {
-            for_each_value_masked_view(dims, config, mask, function, std::forward_as_tuple(
-                array::make_view<Value,Rank>(std::get<0>(fields))));
-            return;
-        }
-        if constexpr(num_fields == 2) {
-            for_each_value_masked_view(dims, config, mask, function, std::forward_as_tuple(
-                array::make_view<Value,Rank>(std::get<0>(fields)),
-                array::make_view<Value,Rank>(std::get<1>(fields))));
-            return;
-        }
-        if constexpr(num_fields == 3) {
-            for_each_value_masked_view(dims, config, mask, function, std::forward_as_tuple(
-                array::make_view<Value,Rank>(std::get<0>(fields)),
-                array::make_view<Value,Rank>(std::get<1>(fields)),
-                array::make_view<Value,Rank>(std::get<2>(fields))));
-            return;
-        }
-        if constexpr(num_fields == 4) {
-            for_each_value_masked_view(dims, config, mask, function, std::forward_as_tuple(
-                array::make_view<Value,Rank>(std::get<0>(fields)),
-                array::make_view<Value,Rank>(std::get<1>(fields)),
-                array::make_view<Value,Rank>(std::get<2>(fields)),
-                array::make_view<Value,Rank>(std::get<3>(fields))));
-            return;
-        }
-        ATLAS_THROW_EXCEPTION("Unsupported number of arguments in function");
+    if constexpr (valid_value_function<Function,Value>()) {
+        return for_each_value_masked_view(dims, config, mask, function, make_view_tuple<0, Value, Rank>(std::move(fields)));
     }
 }
 
@@ -236,38 +219,19 @@ void for_each_column_masked_view(const Config& config, const Mask& mask, const s
     ATLAS_THROW_EXCEPTION("Not implemented for rank="<<rank);
 }
 
-template <int Rank, typename Mask, typename... Field, typename Function>
-void for_each_column_masked_rank(const eckit::Parametrisation& config, const Mask& mask, std::tuple<Field...>&& fields, const Function& function) {
+template <int Rank, typename Mask, typename... Fields, typename Function>
+void for_each_column_masked_rank(const eckit::Parametrisation& config, const Mask& mask, std::tuple<Fields...>&& fields, const Function& function) {
 
-    constexpr auto num_fields = std::tuple_size_v<std::tuple<Field...>>;
+    constexpr auto num_fields = std::tuple_size_v<std::tuple<Fields...>>;
     ATLAS_ASSERT(num_fields == detail::function_traits<Function>::arity);
 
     using value_type = detail::function_argument_data_type<Function>;
     ATLAS_ASSERT( std::get<0>(fields).datatype() == array::make_datatype<value_type>() );
 
     auto h_dim = std::get<0>(fields).horizontal_dimension();
-
     ATLAS_ASSERT(Rank ==  detail::function_argument_rank<Function>() + h_dim.size());
 
-    if constexpr (num_fields == 1) {
-        detail::for_each_column_masked_view(config, mask, h_dim, function, std::make_tuple(
-            array::make_view<value_type,Rank>(std::get<0>(fields))));
-        return;
-    }
-    if constexpr(num_fields == 2) {
-        detail::for_each_column_masked_view(config, mask, h_dim, function, std::make_tuple(
-            array::make_view<value_type,Rank>(std::get<0>(fields)),
-            array::make_view<value_type,Rank>(std::get<1>(fields))));
-        return;
-    }
-    if constexpr(num_fields == 3) {
-        detail::for_each_column_masked_view(config, mask, h_dim, function, std::make_tuple(
-            array::make_view<value_type,Rank>(std::get<0>(fields)),
-            array::make_view<value_type,Rank>(std::get<1>(fields)),
-            array::make_view<value_type,Rank>(std::get<2>(fields))));
-        return;
-    }
-    ATLAS_THROW_EXCEPTION("Unsupported number of arguments in function");
+    return for_each_column_masked_view(config, mask, h_dim, function, make_view_tuple<0, value_type, Rank>(std::move(fields)));
 }
 
 } // namespace detail
