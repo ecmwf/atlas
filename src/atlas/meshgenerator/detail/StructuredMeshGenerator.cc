@@ -1580,7 +1580,11 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
         }
     }
     }
-    if (not regular_cells_glb_idx) {
+    if (regular_cells_glb_idx) {
+        mesh.cells().global_index().metadata().set("min", 1);
+        mesh.cells().global_index().metadata().set("max", rg.nx(0) * (rg.ny()-1) );
+    }
+    else {
         generateGlobalElementNumbering(mesh);
     }
 }
