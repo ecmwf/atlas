@@ -153,8 +153,7 @@ Triangulation::Triangulation(size_t N, const double lon[], const double lat[], i
   }
   else {
     for (size_t i = 0; i < num_nodes_; ++i) {
-      const size_t ip = inverse_random_permutation_[i];
-      lonlat2xyz(lon[ip*lon_stride], lat[ip*lat_stride] , xs_[i], ys_[i], zs_[i]);
+      lonlat2xyz(lon[i*lon_stride], lat[i*lat_stride] , xs_[i], ys_[i], zs_[i]);
     }
   }
 
