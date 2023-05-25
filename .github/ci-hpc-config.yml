@@ -14,7 +14,7 @@ nvidia-22.11:
       - ecbuild
       - ninja
     modules_package:
-      - atlas:fftw
+      - atlas:fftw,eigen/3.4.0
     dependencies:
       - ecmwf/eckit@develop
     parallel: 64
