@@ -18,3 +18,5 @@ nvidia-22.11:
     dependencies:
       - ecmwf/eckit@develop
     parallel: 64
+    env:
+      - ATLAS_FPE=0
