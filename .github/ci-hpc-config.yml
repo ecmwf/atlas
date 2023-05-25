@@ -7,3 +7,14 @@ build:
   dependencies:
     - ecmwf/eckit@develop
   parallel: 64
+
+nvidia-22.11:
+  build:
+    modules:
+      - ecbuild
+      - ninja
+    modules_package:
+      - atlas:fftw
+    dependencies:
+      - ecmwf/eckit@develop
+    parallel: 64
