@@ -14,6 +14,7 @@
 #include <vector>
 #include "eckit/log/BigNum.h"
 #include "stripack/stripack.h"
+#include "atlas/util/QhullSphericalTriangulation.h"
 #include "atlas/library/config.h"
 
 #if ATLAS_HAVE_TESSELATION
@@ -61,13 +62,6 @@ using atlas::interpolation::method::PointSet;
 namespace atlas {
 namespace mesh {
 namespace actions {
-
-//----------------------------------------------------------------------------------------------------------------------
-
-BuildConvexHull3D::BuildConvexHull3D(const eckit::Parametrisation& config) {
-    config.get("remove_duplicate_points", remove_duplicate_points_ = true);
-    config.get("reshuffle", reshuffle_ = true);
-}
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -172,32 +166,11 @@ static void cgal_polyhedron_to_atlas_mesh(Mesh& mesh, Polyhedron_3& poly, PointS
     ATLAS_ASSERT(tidx == nb_triags);
 }
 
-#else
-
-struct Polyhedron_3 {
-    idx_t size_of_vertices() const { return 0; }
-};
-
-static Polyhedron_3* create_convex_hull_from_points(const std::vector<Point3>& pts) {
-    throw_NotImplemented("CGAL package not found -- Delaunay triangulation is disabled", Here());
-}
-
-static void cgal_polyhedron_to_atlas_mesh(Mesh& mesh, Polyhedron_3& poly, PointSet& points) {
-    throw_NotImplemented("CGAL package not found -- Delaunay triangulation is disabled", Here());
-}
-
-#endif
-
-//----------------------------------------------------------------------------------------------------------------------
-
-#if 0
-void BuildConvexHull3D::operator()(Mesh& mesh) const {
+void build_cgal_convex_hull(Mesh& mesh) {
     // don't tesselate meshes already with triags or quads
     if (mesh.cells().size()) {
         return;
     }
-
-    ATLAS_TRACE();
 
     // remove duplicate points
 
@@ -221,10 +194,34 @@ void BuildConvexHull3D::operator()(Mesh& mesh) const {
 
     cgal_polyhedron_to_atlas_mesh(mesh, *poly, points);
 }
+
 #else
+void build_cgal_convex_hull(Mesh& mesh) {
+    throw_NotImplemented("CGAL package not found -- Delaunay triangulation is disabled", Here());
+}
+#endif
+
+//----------------------------------------------------------------------------------------------------------------------
+
+BuildConvexHull3D::BuildConvexHull3D(const eckit::Parametrisation& config) {
+    config.get("remove_duplicate_points", remove_duplicate_points_ = true);
+    config.get("reshuffle", reshuffle_ = true);
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 void BuildConvexHull3D::operator()(Mesh& mesh) const {
     // don't tesselate meshes already with triags or quads
     if (mesh.cells().size()) {
+        return;
+    }
+
+    std::string backend = eckit::Resource<std::string>("$ATLAS_DELAUNAY_BACKEND","qhull");
+
+    ATLAS_TRACE("BuildConvexHull3D [" + backend + "]");
+
+    if( backend == "cgal") {
+        build_cgal_convex_hull(mesh);
         return;
     }
 
@@ -233,14 +230,21 @@ void BuildConvexHull3D::operator()(Mesh& mesh) const {
         PointSet points(mesh);
         points.list_unique_points(local_index);
     }
-
-    ATLAS_TRACE();
-
     std::vector<std::array<int,3>> triangles;
 
     if( local_index.size() == mesh.nodes().size() or local_index.empty() ) {
         auto lonlat = array::make_view<double,2>(mesh.nodes().lonlat());
-        triangles = std::move( stripack::Triangulation(static_cast<size_t>(lonlat.shape(0)),lonlat.data(),reshuffle_).triangles());
+        if( backend == "stripack" ) {
+            ATLAS_TRACE("stripack");
+            triangles = std::move( stripack::Triangulation{static_cast<size_t>(lonlat.shape(0)),lonlat.data(),reshuffle_}.triangles());
+        }
+        else if (backend == "qhull") {
+            ATLAS_TRACE("qhull");
+            triangles = std::move( util::QhullSphericalTriangulation{static_cast<size_t>(lonlat.shape(0)),lonlat.data()}.triangles() );
+        }
+        else {
+            ATLAS_THROW_EXCEPTION("backend" << backend << "not supported");
+        }
         local_index.clear();
     }
     else {
@@ -252,7 +256,17 @@ void BuildConvexHull3D::operator()(Mesh& mesh) const {
             lonlat[jnode] = {lonlat_view(ip,0),lonlat_view(ip,1)};
             ++jnode;
         }
-        triangles = std::move( stripack::Triangulation(lonlat,reshuffle_).triangles() );
+        if( backend == "stripack" ) {
+            ATLAS_TRACE("stripack");
+            triangles = std::move( stripack::Triangulation{lonlat,reshuffle_}.triangles() );
+        }
+        else if (backend == "qhull") {
+            ATLAS_TRACE("qhull");
+            triangles = std::move( util::QhullSphericalTriangulation{lonlat}.triangles() );
+        }
+        else {
+            ATLAS_THROW_EXCEPTION("backend" << backend << "not supported");
+        }
     }
 
     const idx_t nb_triags = triangles.size();
@@ -277,7 +291,6 @@ void BuildConvexHull3D::operator()(Mesh& mesh) const {
         triag_part(tidx) = 0;
     }
 }
-#endif
 
 //----------------------------------------------------------------------------------------------------------------------
 
