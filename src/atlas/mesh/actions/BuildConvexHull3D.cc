@@ -225,22 +225,49 @@ void BuildConvexHull3D::operator()(Mesh& mesh) const {
         return;
     }
 
+
     std::vector<size_t> local_index;
     if (remove_duplicate_points_) {
         PointSet points(mesh);
         points.list_unique_points(local_index);
     }
-    std::vector<std::array<int,3>> triangles;
+    
+    auto add_triangles = [&]( const auto& triangles ) {
+        const idx_t nb_triags = triangles.size();
+        mesh.cells().add(new mesh::temporary::Triangle(), nb_triags);
+        mesh::HybridElements::Connectivity& triag_nodes = mesh.cells().node_connectivity();
+        auto triag_gidx = array::make_view<gidx_t, 1>(mesh.cells().global_index());
+        auto triag_part = array::make_view<int, 1>(mesh.cells().partition());
+
+        Log::debug() << "Inserting triags (" << eckit::BigNum(nb_triags) << ")" << std::endl;
+
+        idx_t tidx = 0;
+        for (idx_t tidx = 0; tidx<nb_triags; ++tidx) {
+            auto& t = triangles[tidx];
+            std::array<idx_t,3> idx{t[0],t[1],t[2]};
+            if( local_index.size() ) {
+                idx[0] = local_index[idx[0]];
+                idx[1] = local_index[idx[1]];
+                idx[2] = local_index[idx[2]];
+            }
+            triag_nodes.set(tidx, idx.data());
+            triag_gidx(tidx) = tidx + 1;
+            triag_part(tidx) = 0;
+        }
+    };
+
 
     if( local_index.size() == mesh.nodes().size() or local_index.empty() ) {
         auto lonlat = array::make_view<double,2>(mesh.nodes().lonlat());
         if( backend == "stripack" ) {
             ATLAS_TRACE("stripack");
-            triangles = std::move( stripack::Triangulation{static_cast<size_t>(lonlat.shape(0)),lonlat.data(),reshuffle_}.triangles());
+            auto triangles = stripack::Triangulation{static_cast<size_t>(lonlat.shape(0)),lonlat.data(),reshuffle_}.triangles();
+            add_triangles(triangles);
         }
         else if (backend == "qhull") {
             ATLAS_TRACE("qhull");
-            triangles = std::move( util::QhullSphericalTriangulation{static_cast<size_t>(lonlat.shape(0)),lonlat.data()}.triangles() );
+            auto triangles = util::QhullSphericalTriangulation{static_cast<size_t>(lonlat.shape(0)),lonlat.data()}.triangles();
+            add_triangles(triangles);
         }
         else {
             ATLAS_THROW_EXCEPTION("backend" << backend << "not supported");
@@ -258,38 +285,19 @@ void BuildConvexHull3D::operator()(Mesh& mesh) const {
         }
         if( backend == "stripack" ) {
             ATLAS_TRACE("stripack");
-            triangles = std::move( stripack::Triangulation{lonlat,reshuffle_}.triangles() );
+            auto triangles = stripack::Triangulation{lonlat,reshuffle_}.triangles();
+            add_triangles(triangles);
         }
         else if (backend == "qhull") {
             ATLAS_TRACE("qhull");
-            triangles = std::move( util::QhullSphericalTriangulation{lonlat}.triangles() );
+            auto triangles = util::QhullSphericalTriangulation{lonlat}.triangles();
+            add_triangles(triangles);
         }
         else {
             ATLAS_THROW_EXCEPTION("backend" << backend << "not supported");
         }
     }
 
-    const idx_t nb_triags = triangles.size();
-    mesh.cells().add(new mesh::temporary::Triangle(), nb_triags);
-    mesh::HybridElements::Connectivity& triag_nodes = mesh.cells().node_connectivity();
-    auto triag_gidx = array::make_view<gidx_t, 1>(mesh.cells().global_index());
-    auto triag_part = array::make_view<int, 1>(mesh.cells().partition());
-
-    Log::debug() << "Inserting triags (" << eckit::BigNum(nb_triags) << ")" << std::endl;
-
-    idx_t tidx = 0;
-    for (idx_t tidx = 0; tidx<nb_triags; ++tidx) {
-        auto& t = triangles[tidx];
-        std::array<idx_t,3> idx{t[0],t[1],t[2]};
-        if( local_index.size() ) {
-            idx[0] = local_index[idx[0]];
-            idx[1] = local_index[idx[1]];
-            idx[2] = local_index[idx[2]];
-        }
-        triag_nodes.set(tidx, idx.data());
-        triag_gidx(tidx) = tidx + 1;
-        triag_part(tidx) = 0;
-    }
 }
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -72,10 +72,18 @@ QhullSphericalTriangulation::QhullSphericalTriangulation(size_t N, const double 
     qhull_ = std::make_unique<Qhull>(comment, dim, N, coordinates, command);
 }
 
-std::vector<std::array<int,3>> QhullSphericalTriangulation::triangles() const {
+size_t QhullSphericalTriangulation::size() const {
 #if ATLAS_HAVE_QHULL
-    std::vector<std::array<int,3>> triangles(qhull_->facetList().size());
+    return qhull_->facetList().size();
+#else
+    return 0;
+#endif
+}
 
+
+template <typename Qhull, typename Points, typename Value>
+static inline void qhull_get_triangles(const Qhull& qhull, const Points& points_xyz_, std::array<Value,3> triangles[]) {
+#if ATLAS_HAVE_QHULL
     auto ensure_outward_normal = [&](auto& tri) {
 
         auto dot = [](const auto& p1, const auto& p2) {
@@ -102,7 +110,7 @@ std::vector<std::array<int,3>> QhullSphericalTriangulation::triangles() const {
     };
 
     size_t jtri{0};
-    for (const auto& facet : qhull_->facetList()){
+    for (const auto& facet : qhull.facetList()){
         auto& tri = triangles[jtri++];
         size_t jvrt{0};
         for( const auto& vertex: facet.vertices()){
@@ -111,11 +119,27 @@ std::vector<std::array<int,3>> QhullSphericalTriangulation::triangles() const {
 
         ensure_outward_normal(tri);
     }
-
-    return triangles;
-#else
-    return std::vector<std::array<int,3>>{};
 #endif
+}
+
+void QhullSphericalTriangulation::triangles(std::array<int,3> triangles[]) const {
+    qhull_get_triangles(*qhull_,points_xyz_,triangles);
+}
+
+void QhullSphericalTriangulation::triangles(std::array<long,3> triangles[]) const {
+    qhull_get_triangles(*qhull_,points_xyz_,triangles);
+}
+
+void QhullSphericalTriangulation::triangles(std::array<long long,3> triangles[]) const {
+    qhull_get_triangles(*qhull_,points_xyz_,triangles);
+}
+
+void QhullSphericalTriangulation::triangles(std::array<size_t,3> triangles[]) const {
+    qhull_get_triangles(*qhull_,points_xyz_,triangles);
+}
+
+std::vector<std::array<idx_t,3>> QhullSphericalTriangulation::triangles() const {
+    return triangles<idx_t>();
 }
 
 } // namespace util
