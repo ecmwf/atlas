@@ -38,7 +38,7 @@ void write_gmsh( const std::string& file, const std::vector<std::array<double,2>
 int main() {
     auto points = points_1();
 
-    stripack::Triangulation t(points.size(),points,true);
+    stripack::Triangulation t(points,true);
 
     write_gmsh("stripack.msh",points,t.triangles());
 }

@@ -240,7 +240,7 @@ void BuildConvexHull3D::operator()(Mesh& mesh) const {
 
     if( local_index.size() == mesh.nodes().size() or local_index.empty() ) {
         auto lonlat = array::make_view<double,2>(mesh.nodes().lonlat());
-        triangles = std::move( stripack::Triangulation(lonlat.shape(0),lonlat,reshuffle_).triangles());
+        triangles = std::move( stripack::Triangulation(static_cast<size_t>(lonlat.shape(0)),lonlat.data(),reshuffle_).triangles());
         local_index.clear();
     }
     else {
@@ -252,7 +252,7 @@ void BuildConvexHull3D::operator()(Mesh& mesh) const {
             lonlat[jnode] = {lonlat_view(ip,0),lonlat_view(ip,1)};
             ++jnode;
         }
-        triangles = std::move( stripack::Triangulation(lonlat.size(),lonlat,reshuffle_).triangles() );
+        triangles = std::move( stripack::Triangulation(lonlat,reshuffle_).triangles() );
     }
 
     const idx_t nb_triags = triangles.size();

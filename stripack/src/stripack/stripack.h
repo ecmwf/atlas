@@ -20,8 +20,8 @@ class Triangulation {
   Triangulation(size_t N, const double lonlat[], bool reshuffle = true);
 
   template <typename LonLatVector>
-  Triangulation(size_t N, const LonLatVector& lonlat, bool reshuffle = true):
-    Triangulation(N,reinterpret_cast<const double*>(lonlat.data()),reshuffle) {}
+  Triangulation(const LonLatVector& lonlat, bool reshuffle = true):
+    Triangulation(lonlat.size(),reinterpret_cast<const double*>(lonlat.data()),reshuffle) {}
 
 
   /// Returns true if there is a containing triangle; false if point is outside triangulation
