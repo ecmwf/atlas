@@ -756,6 +756,8 @@ util/SphericalPolygon.h
 util/UnitSphere.h
 util/vector.h
 util/VectorOfAbstract.h
+util/QhullSphericalTriangulation.h
+util/QhullSphericalTriangulation.cc
 util/detail/BlackMagic.h
 util/detail/Cache.h
 util/detail/Debug.h
@@ -959,6 +961,7 @@ ecbuild_add_library( TARGET atlas
     ${CGAL_LIBRARIES}
     ${FFTW_LIBRARIES}
     ${PROJ_LIBRARIES}
+    ${QHULL_LIBRARIES}
 
   PUBLIC_LIBS
     eckit

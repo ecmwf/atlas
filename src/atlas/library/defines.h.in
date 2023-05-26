@@ -18,6 +18,7 @@
 #define ATLAS_OMP_TASK_SUPPORTED             @ATLAS_OMP_TASK_SUPPORTED@
 #define ATLAS_OMP_TASK_UNTIED_SUPPORTED      @ATLAS_OMP_TASK_UNTIED_SUPPORTED@
 #define ATLAS_HAVE_ACC                       @atlas_HAVE_ACC@
+#define ATLAS_HAVE_QHULL                     @atlas_HAVE_QHULL@
 #define ATLAS_HAVE_TESSELATION               @atlas_HAVE_TESSELATION@
 #define ATLAS_HAVE_FORTRAN                   @atlas_HAVE_FORTRAN@
 #define ATLAS_HAVE_EIGEN                     @atlas_HAVE_EIGEN@

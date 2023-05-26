@@ -1,5 +1,13 @@
 ### tesselation ...
 
+ecbuild_find_package(Qhull)
+if(Qhull_FOUND)
+  set(QHULL_LIBRARIES Qhull::qhullcpp Qhull::qhull_r)
+  set(atlas_HAVE_QHULL 1)
+else()
+  set(atlas_HAVE_QHULL 0)
+endif()
+
 set(Boost_USE_MULTITHREADED      ON )
 
 ecbuild_add_option( FEATURE TESSELATION
