@@ -548,6 +548,85 @@ CASE( "test field::for_each_column multiple" ) {
 
 }
 
+
+CASE( "test execution policy" ) {
+  idx_t ni = 1000;
+  idx_t nj = 100;
+  idx_t nk = 16;
+  // ni /= 4;
+  nj /= 4;
+  nk /= 4;
+  Field f1("f1", array::make_datatype<double>(),array::make_shape({ni,nj,nk}));
+  Field f2("f2", array::make_datatype<double>(),array::make_shape({ni,nj,nk}));
+  Field f3("f2", array::make_datatype<double>(),array::make_shape({ni,nj,nk}));
+
+  int v=0;
+  field::for_each_value(f1, f2, [&](double& x1, double& x2) {
+    auto [i,j,k] = split_index_3d(v,f1.shape());
+    x1 = 100*i + 10*j + k;
+    x2 = 2*x1;
+    v++;
+  });
+
+  auto time_function = [](const auto& function) -> double {
+    runtime::trace::StopWatch stopwatch;
+    for (size_t j=0; j<5; ++j) {
+      function();
+    }
+    size_t N=10;
+    stopwatch.start();
+    for (size_t j=0; j<N; ++j) {
+      function();
+    }
+    stopwatch.stop();
+    return stopwatch.elapsed()/double(N);
+  };
+
+  double time_for_seq = time_function([&]{
+    auto v1 = array::make_view<const double,3>(f1);
+    auto v2 = array::make_view<const double,3>(f2);
+    auto v3 = array::make_view<double,3>(f3);
+    for (size_t i=0; i<ni; ++i) {
+      for (size_t j=0; j<nj; ++j) {
+        for (size_t k=0; k<nk; ++k) {
+          v3(i,j,k) = v1(i,j,k) + v2(i,j,k);
+        }
+      }
+    }
+  });
+  Log::info() << "timing with for loops seq  = " << time_for_seq << std::endl;
+
+  double time_for_par = time_function([&]{
+    auto v1 = array::make_view<const double,3>(f1);
+    auto v2 = array::make_view<const double,3>(f2);
+    auto v3 = array::make_view<double,3>(f3);
+    atlas_omp_parallel_for (size_t i=0; i<ni; ++i) {
+      for (size_t j=0; j<nj; ++j) {
+        for (size_t k=0; k<nk; ++k) {
+          v3(i,j,k) = v1(i,j,k) + v2(i,j,k);
+        }
+      }
+    }
+  });
+  Log::info() << "timing with for loops par  = " << time_for_par << std::endl;
+
+  double time_seq = time_function([&]{
+    field::for_each_value(execution::seq, f1, f2, f3, [&](const double& x1, const double& x2, double& x3) {
+      x3 = x1 + x2;
+    });
+  });
+  Log::info() << "timing with execution::seq = " << time_seq << std::endl;
+
+  double time_par = time_function([&]{
+    field::for_each_value(execution::par, f1, f2, f3, [&](const double& x1, const double& x2, double& x3) {
+      x3 = x1 + x2;
+    });
+  });
+  Log::info() << "timing with execution::par = " << time_par << std::endl;
+}
+
+
+
 }  // namespace test
 }  // namespace atlas
 
