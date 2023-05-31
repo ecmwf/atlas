@@ -450,16 +450,8 @@ double VariableResolutionProjectionT<Rotation>::general_stretch_inv(const double
      * simply using delta_high
      */
 
-    double distance_to_inner;  ///< distance from point to reg. grid
     double delta_add;          ///< additional part in stretch different from internal high resolution
     double new_ratio = new_ratio_[L_long ? 1 : 0];
-
-    if (point_st < inner_start) {
-        distance_to_inner = inner_start - point_st;
-    }
-    else if (point_st > inner_end) {
-        distance_to_inner = point_st - inner_end;
-    }
 
     /*
      * number of high resolution points intervals, that are not
