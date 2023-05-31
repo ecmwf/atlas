@@ -35,7 +35,7 @@ jobs:
           - linux gnu-12
           - linux gnu-7
           - linux clang-12
-          - linux nvhpc-21.9
+          - linux nvhpc-22.11
           - linux intel
           - macos
 
@@ -89,9 +89,9 @@ jobs:
             caching: true
             coverage: false
 
-          - name: linux nvhpc-21.9
+          - name: linux nvhpc-22.11
             os: ubuntu-20.04
-            compiler: nvhpc-21.9
+            compiler: nvhpc-22.11
             compiler_cc: nvc
             compiler_cxx: nvc++
             compiler_fc: nvfortran
@@ -168,7 +168,7 @@ jobs:
       if: contains( matrix.compiler, 'nvhpc' )
       shell: bash -eux {0}
       run: |
-        ${ATLAS_TOOLS}/install-nvhpc.sh --prefix ${DEPS_DIR}/nvhpc
+        ${ATLAS_TOOLS}/install-nvhpc.sh --prefix ${DEPS_DIR}/nvhpc --version 22.11
         source ${DEPS_DIR}/nvhpc/env.sh
         echo "${NVHPC_DIR}/compilers/bin"                   >> $GITHUB_PATH
         [ -z ${MPI_HOME+x} ] || echo "MPI_HOME=${MPI_HOME}" >> $GITHUB_ENV
