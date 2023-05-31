@@ -1701,6 +1701,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
         const auto tgt_vals = array::make_view<double, 1>(tgt_field);
 
         double err_remap_cons     = 0.;
+        double tgt_mass           = 0.;
         const auto& tgt_csp2node_ = data_->tgt_csp2node_;
         const auto& src_iparam_   = data_->src_iparam_;
         if (src_cell_data_) {
@@ -1726,7 +1727,9 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                 if (tgt_cell_halo(tpt)) {
                     continue;
                 }
-                err_remap_cons -= tgt_vals(tpt) * tgt_areas_v[tpt];
+                double tmp = tgt_vals(tpt) * tgt_areas_v[tpt];
+                err_remap_cons -= tmp;
+                tgt_mass += tmp;
             }
         }
         else {
@@ -1734,13 +1737,18 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                 if (tgt_node_halo(tpt) or tgt_node_ghost(tpt)) {
                     continue;
                 }
-                err_remap_cons -= tgt_vals(tpt) * tgt_areas_v[tpt];
+                double tmp = tgt_vals(tpt) * tgt_areas_v[tpt];
+                err_remap_cons -= tmp;
+                tgt_mass += tmp;
             }
         }
         ATLAS_TRACE_MPI(ALLREDUCE) { mpi::comm().allReduceInPlace(&err_remap_cons, 1, eckit::mpi::sum()); }
+        ATLAS_TRACE_MPI(ALLREDUCE) { mpi::comm().allReduceInPlace(&tgt_mass, 1, eckit::mpi::sum()); }
         remap_stat.errors[Statistics::Errors::REMAP_CONS] = err_remap_cons / unit_sphere_area();
+        remap_stat.errors[Statistics::Errors::REMAP_RELCONS] = 100. * err_remap_cons / (tgt_mass > 0. ? tgt_mass : unit_sphere_area());
 
         metadata.set("conservation_error", remap_stat.errors[Statistics::Errors::REMAP_CONS]);
+        metadata.set("relative_conservation_error", remap_stat.errors[Statistics::Errors::REMAP_RELCONS]);
     }
     if (statistics_intersection_) {
         metadata.set("polygons.source", remap_stat.counts[Statistics::Counts::SRC_PLG]);
@@ -2121,6 +2129,7 @@ void ConservativeSphericalPolygonInterpolation::Statistics::fillMetadata(Metadat
     metadata.set("errors.TGT_INTERSECTPLG_LINF", errors[TGT_INTERSECTPLG_LINF]);
     metadata.set("errors.SRCTGT_INTERSECTPLG_DIFF", errors[SRCTGT_INTERSECTPLG_DIFF]);
     metadata.set("errors.REMAP_CONS", errors[REMAP_CONS]);
+    metadata.set("errors.REMAP_RELCONS", errors[REMAP_RELCONS]);
     metadata.set("errors.REMAP_L2", errors[REMAP_L2]);
     metadata.set("errors.REMAP_LINF", errors[REMAP_LINF]);
 }
@@ -2142,6 +2151,7 @@ ConservativeSphericalPolygonInterpolation::Statistics::Statistics(const Metadata
     metadata.get("errors.TGT_INTERSECTPLG_LINF", errors[TGT_INTERSECTPLG_LINF]);
     metadata.get("errors.SRCTGT_INTERSECTPLG_DIFF", errors[SRCTGT_INTERSECTPLG_DIFF]);
     metadata.get("errors.REMAP_CONS", errors[REMAP_CONS]);
+    metadata.get("errors.REMAP_RELCONS", errors[REMAP_RELCONS]);
     metadata.get("errors.REMAP_L2", errors[REMAP_L2]);
     metadata.get("errors.REMAP_LINF", errors[REMAP_LINF]);
 }
