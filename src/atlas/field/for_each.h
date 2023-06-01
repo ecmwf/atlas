@@ -32,7 +32,7 @@ namespace field {
 template <typename Mask, typename... Field, typename Function>
 void for_each_value_masked(const eckit::Parametrisation& config, const Mask& mask, std::tuple<Field...>&& fields, const Function& function) {
     auto field_1 = std::get<0>(fields);
-    if constexpr (std::is_same_v<Mask,atlas::Field>) {
+    if constexpr (std::is_same_v<std::decay_t<Mask>,atlas::Field>) {
         auto h_dim = field_1.horizontal_dimension();
 
         ATLAS_ASSERT( mask.datatype() == array::make_datatype<int>() );
@@ -259,7 +259,7 @@ void for_each_value(Field field_1, Field field_2, Field field_3, Field field_4, 
 
 template <typename Mask, typename... Field, typename Function>
 void for_each_column_masked(const eckit::Parametrisation& config, const Mask& mask, std::tuple<Field...>&& fields, const Function& function) {
-    if constexpr (std::is_same_v<Mask,atlas::Field>) {
+    if constexpr (std::is_same_v<std::decay_t<Mask>,atlas::Field>) {
         auto field_1 = std::get<0>(fields);
         auto h_dim = field_1.horizontal_dimension();
 
