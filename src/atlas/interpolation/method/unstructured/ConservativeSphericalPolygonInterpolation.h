@@ -109,10 +109,14 @@ public:
             TGT_INTERSECTPLG_LINF,    // see above
             SRCTGT_INTERSECTPLG_DIFF,    // index, 1/(unit_sphere.area) ( \sum_{scell} scell.area - \sum{tcell} tcell.area )
             REMAP_CONS,  // index, error in mass conservation
+            REMAP_RELCONS,  // index, error in relative mass conservation
             REMAP_L2,    // index, error accuracy for given analytical function
-            REMAP_LINF   // index, like REMAP_L2 but in L_infinity norm
+            REMAP_LINF,  // index, like REMAP_L2 but in L_infinity norm
+            MISFIT_RMS,   // index, RMS misfit accuracy for given analytical function, cf. Valcke, Piancentini, Jonville (2022)
+            MISFIT_AVG,  // index, average misfit
+            MISFIT_MAX   // index, maximum misfit
         };
-        std::array<double, 11> errors;
+        std::array<double, 15> errors;
 
         double tgt_area_sum;
         double src_area_sum;

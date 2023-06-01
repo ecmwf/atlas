@@ -1979,6 +1979,10 @@ ConservativeSphericalPolygonInterpolation::Metadata ConservativeSphericalPolygon
     const auto& tgt_areas_v   = cachable_data_->tgt_areas_;
     auto& tgt_points_         = cachable_data_->tgt_points_;
     double err_remap_l2       = 0.;
+    double err_misfit_avg     = 0.;
+    gidx_t tgt_tot_npoints    = 0;
+    double err_misfit_max     = 0.;
+    double err_misfit_rms     = 0.;
     double err_remap_linf     = 0.;
     if (tgt_cell_data_) {
         size_t ncells = std::min<size_t>(tgt_vals.size(), tgt_mesh_.cells().size());
@@ -1987,10 +1991,16 @@ ConservativeSphericalPolygonInterpolation::Metadata ConservativeSphericalPolygon
             if (tgt_cell_halo(tpt)) {
                 continue;
             }
+            tgt_tot_npoints++;
             auto p = tgt_points_[tpt];
             PointLonLat pll;
             eckit::geometry::Sphere::convertCartesianToSpherical(1., p, pll);
-            double err_l = std::abs(tgt_vals(tpt) - func(pll));
+            double fval = func(pll);
+            double err_l = std::abs(tgt_vals(tpt) - fval);
+            double err_l_rel = err_l / (std::abs(fval) > 0. ? fval : 1.);
+            err_misfit_rms += err_l_rel * err_l_rel;
+            err_misfit_avg += err_l_rel;
+            err_misfit_max = std::max(err_misfit_max, err_l_rel);
             err_remap_l2 += err_l * err_l * tgt_areas_v[tpt];
             err_remap_linf = std::max(err_remap_linf, err_l);
         }
@@ -2001,21 +2011,37 @@ ConservativeSphericalPolygonInterpolation::Metadata ConservativeSphericalPolygon
             if (tgt_node_ghost(tpt) or tgt_node_halo(tpt)) {
                 continue;
             }
+            tgt_tot_npoints++;
             auto p = tgt_points_[tpt];
             PointLonLat pll;
             eckit::geometry::Sphere::convertCartesianToSpherical(1., p, pll);
-            double err_l = std::abs(tgt_vals(tpt) - func(pll));
+            double fval = func(pll);
+            double err_l = std::abs(tgt_vals(tpt) - fval);
+            double err_l_rel = err_l / (std::abs(fval) > 0. ? fval : 1.);
+            err_misfit_rms += err_l_rel * err_l_rel;
+            err_misfit_avg += err_l_rel;
+            err_misfit_max = std::max(err_misfit_max, err_l_rel);
             err_remap_l2 += err_l * err_l * tgt_areas_v[tpt];
             err_remap_linf = std::max(err_remap_linf, err_l);
         }
     }
     ATLAS_TRACE_MPI(ALLREDUCE) {
+        mpi::comm().allReduceInPlace(&tgt_tot_npoints, 1, eckit::mpi::sum());
+        mpi::comm().allReduceInPlace(&err_misfit_rms, 1, eckit::mpi::sum());
+        mpi::comm().allReduceInPlace(&err_misfit_avg, 1, eckit::mpi::sum());
+        mpi::comm().allReduceInPlace(&err_misfit_max, 1, eckit::mpi::max());
         mpi::comm().allReduceInPlace(&err_remap_l2, 1, eckit::mpi::sum());
         mpi::comm().allReduceInPlace(&err_remap_linf, 1, eckit::mpi::max());
     }
+    errors[Statistics::Errors::MISFIT_RMS] = std::sqrt(err_misfit_rms / double(tgt_tot_npoints));
+    errors[Statistics::Errors::MISFIT_AVG] = err_misfit_avg / double(tgt_tot_npoints);
+    errors[Statistics::Errors::MISFIT_MAX] = err_misfit_max;
     errors[Statistics::Errors::REMAP_L2]   = std::sqrt(err_remap_l2 / unit_sphere_area());
     errors[Statistics::Errors::REMAP_LINF] = err_remap_linf;
     Metadata metadata;
+    metadata.set("errors.MISFIT_RMS", errors[Statistics::Errors::MISFIT_RMS]);
+    metadata.set("errors.MISFIT_AVG", errors[Statistics::Errors::MISFIT_AVG]);
+    metadata.set("errors.MISFIT_MAX", errors[Statistics::Errors::MISFIT_MAX]);
     metadata.set("errors.REMAP_L2", errors[Statistics::Errors::REMAP_L2]);
     metadata.set("errors.REMAP_LINF", errors[Statistics::Errors::REMAP_LINF]);
     return metadata;
