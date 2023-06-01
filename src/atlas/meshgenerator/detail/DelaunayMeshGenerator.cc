@@ -101,6 +101,7 @@ void DelaunayMeshGenerator::generate(const Grid& grid, const grid::Distribution&
 
     if( dist.nb_partitions() == 1 ) {
         build_global_mesh(mesh);
+        setGrid(mesh, grid, dist.type());
         return;
     }
 
