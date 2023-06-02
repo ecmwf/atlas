@@ -5,12 +5,12 @@ matrix:
 mpi_on:
   build:
     modules:
-      - ecbuild
       - ninja
-      - openmpi
     modules_package:
-      - atlas:fftw,eigen
+      - atlas:fftw,eigen,openmpi
+      - eckit:openmpi
     dependencies:
+      - ecmwf/ecbuild@develop
       - ecmwf/eckit@develop
     parallel: 64
     ntasks: 16
@@ -20,11 +20,11 @@ mpi_on:
 mpi_off:
   build:
     modules:
-      - ecbuild
       - ninja
     modules_package:
       - atlas:fftw,eigen
     dependencies:
+      - ecmwf/ecbuild@develop
       - ecmwf/eckit@develop
     parallel: 64
     env:
