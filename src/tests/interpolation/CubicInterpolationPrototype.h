@@ -138,7 +138,7 @@ public:
         double d3 = z - zvec[3];
 
         w[0] = (d1 * d2 * d3) / dc0;
-#if defined(_CRAYC) && ATLAS_BUILD_TYPE_RELEASE
+#if defined(_CRAYC) || defined(__NVCOMPILER) && ATLAS_BUILD_TYPE_RELEASE
         // prevents FE_INVALID somehow (tested with Cray 8.7)
         ATLAS_ASSERT(!std::isnan(w[0]));
 #endif
@@ -256,7 +256,7 @@ public:
 
         auto& weights_j = weights.weights_j;
         weights_j[0]    = (dl2 * dl3 * dl4) / dcl1;
-#if defined(_CRAYC) && ATLAS_BUILD_TYPE_RELEASE
+#if defined(_CRAYC) || defined(__NVCOMPILER) && ATLAS_BUILD_TYPE_RELEASE
         // prevents FE_INVALID somehow (tested with Cray 8.7)
         ATLAS_ASSERT(!std::isnan(weights_j[0]));
 #endif
