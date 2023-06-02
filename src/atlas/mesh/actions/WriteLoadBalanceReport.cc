@@ -21,6 +21,7 @@
 #include "atlas/mesh/actions/WriteLoadBalanceReport.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
+#include "atlas/library/FloatingPointExceptions.h"
 
 using atlas::mesh::IsGhostNode;
 
@@ -80,6 +81,8 @@ void write_load_balance_report(const Mesh& mesh, std::ostream& ofs) {
             mpi::comm().gather(nghost, nb_ghost_nodes, root);
         }
 
+        bool disabled_fpe = library::disable_floating_point_exception(FE_INVALID);
+
         for (idx_t p = 0; p < npart; ++p) {
             if (nb_owned_nodes[p]) {
                 ghost_ratio_nodes[p] = static_cast<double>(nb_ghost_nodes[p]) / static_cast<double>(nb_owned_nodes[p]);
@@ -87,6 +90,9 @@ void write_load_balance_report(const Mesh& mesh, std::ostream& ofs) {
             else {
                 ghost_ratio_nodes[p] = -1;
             }
+        }
+        if (disabled_fpe) {
+            library::enable_floating_point_exception(FE_INVALID);
         }
     }
 
