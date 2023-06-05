@@ -41,7 +41,7 @@ void for_each_value_masked(const eckit::Parametrisation& config, const Mask& mas
         if (h_dim.size() == 1) {
             ATLAS_ASSERT(h_dim[0] == 0);
             auto mask_view = array::make_view<const int,1>(mask);
-            auto mask_wrap = [mask_view](idx_t i, auto&&... ) { return mask_view(i); };
+            auto mask_wrap = [mask_view](idx_t i, auto&&... args) { return mask_view(i); };
             return for_each_value_masked(config, mask_wrap, std::move(fields), function);
         }
         else if (h_dim.size() == 2) {
@@ -50,24 +50,24 @@ void for_each_value_masked(const eckit::Parametrisation& config, const Mask& mas
                 auto mask_view_shape2d = array::make_shape(field_1.shape(h_dim[0]), field_1.shape(h_dim[1]));
                 auto mask_view         = array::View<const int,2>( mask_view_1d.data(), mask_view_shape2d );
                 if( h_dim[0] == 0 && h_dim[1] == 2) {
-                    auto mask_wrap = [mask_view](idx_t i, idx_t /*dummy*/, idx_t j, auto&&... ) { return mask_view(i,j); };
+                    auto mask_wrap = [mask_view](idx_t i, idx_t /*dummy*/, idx_t j, auto&&... args) { return mask_view(i,j); };
                     return for_each_value_masked(config, mask_wrap, std::move(fields), function);
                 }
                 else {
                     ATLAS_ASSERT(h_dim[0] == 0 && h_dim[1] == 1);
-                    auto mask_wrap = [mask_view](idx_t i, idx_t j, auto&&... ) { return mask_view(i,j); };
+                    auto mask_wrap = [mask_view](idx_t i, idx_t j, auto&&... args) { return mask_view(i,j); };
                     return for_each_value_masked(config, mask_wrap, std::move(fields), function);
                 }
             }
             else {
                 auto mask_view = array::make_view<const int,2>(mask);
                 if( h_dim[0] == 0 && h_dim[1] == 2) {
-                    auto mask_wrap = [mask_view](idx_t i, idx_t /*dummy*/, idx_t j, auto&&... ) { return mask_view(i,j); };
+                    auto mask_wrap = [mask_view](idx_t i, idx_t /*dummy*/, idx_t j, auto&&... args) { return mask_view(i,j); };
                     return for_each_value_masked(config, mask_wrap, std::move(fields), function);
                 }
                 else {
                     ATLAS_ASSERT(h_dim[0] == 0 && h_dim[1] == 1);
-                    auto mask_wrap = [mask_view](idx_t i, idx_t j, auto&&... ) { return mask_view(i,j); };
+                    auto mask_wrap = [mask_view](idx_t i, idx_t j, auto&&... args) { return mask_view(i,j); };
                     return for_each_value_masked(config, mask_wrap, std::move(fields), function);
                 }
             }
