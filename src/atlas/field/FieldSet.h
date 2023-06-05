@@ -24,6 +24,7 @@
 
 #include "eckit/deprecated.h"
 
+#include "atlas/array_fwd.h"
 #include "atlas/field/Field.h"
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
@@ -139,6 +140,22 @@ const char* atlas__FieldSet__name(FieldSetImpl* This);
 idx_t atlas__FieldSet__size(const FieldSetImpl* This);
 FieldImpl* atlas__FieldSet__field_by_name(FieldSetImpl* This, char* name);
 FieldImpl* atlas__FieldSet__field_by_idx(FieldSetImpl* This, idx_t idx);
+void atlas__FieldSet__data_int_specf(FieldSetImpl* This, char* name, int*& field_data, int& rank, int*& field_shapef,
+                                  int*& field_stridesf);
+void atlas__FieldSet__data_long_specf(FieldSetImpl* This, char* name, long*& field_data, int& rank, int*& field_shapef,
+                                   int*& field_stridesf);
+void atlas__FieldSet__data_float_specf(FieldSetImpl* This, char* name, float*& field_data, int& rank, int*& field_shapef,
+                                    int*& field_stridesf);
+void atlas__FieldSet__data_double_specf(FieldSetImpl* This, char* name, double*& field_data, int& rank, int*& field_shapef,
+                                     int*& field_stridesf);
+void atlas__FieldSet__data_int_specf_by_idx(FieldSetImpl* This, int& idx, int*& field_data, int& rank, int*& field_shapef,
+                                  int*& field_stridesf);
+void atlas__FieldSet__data_long_specf_by_idx(FieldSetImpl* This, int& idx, long*& field_data, int& rank, int*& field_shapef,
+                                   int*& field_stridesf);
+void atlas__FieldSet__data_float_specf_by_idx(FieldSetImpl* This, int& idx, float*& field_data, int& rank, int*& field_shapef,
+                                    int*& field_stridesf);
+void atlas__FieldSet__data_double_specf_by_idx(FieldSetImpl* This, int& idx, double*& field_data, int& rank, int*& field_shapef,
+                                     int*& field_stridesf);
 void atlas__FieldSet__set_dirty(FieldSetImpl* This, int value);
 void atlas__FieldSet__halo_exchange(FieldSetImpl* This, int on_device);
 }

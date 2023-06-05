@@ -175,7 +175,7 @@ ecbuild_add_library( TARGET atlas_f
         functionspace/atlas_functionspace_BlockStructuredColumns_module.F90
         functionspace/atlas_functionspace_Spectral_module.F90
         functionspace/atlas_functionspace_PointCloud_module.F90
-        field/atlas_FieldSet_module.F90
+        field/atlas_FieldSet_module.fypp
         field/atlas_State_module.F90
         field/atlas_Field_module.fypp
         grid/atlas_Grid_module.F90

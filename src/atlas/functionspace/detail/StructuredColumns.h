@@ -317,6 +317,7 @@ private:  // data
     friend struct BlockStructuredColumnsFortranAccess;
     Map2to1 ij2gp_;
 
+    friend class BlockStructuredColumns;
     void setup(const grid::Distribution& distribution, const eckit::Configuration& config);
 
     friend class BlockStructuredColumns;

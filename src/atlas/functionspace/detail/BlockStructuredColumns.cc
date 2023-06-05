@@ -156,7 +156,6 @@ void rev_block_copy(const Field loc, Field sloc, const functionspace::detail::Bl
     }
 }
 
-
 void transpose_nonblocked_to_blocked(const Field& nonblocked, Field& blocked, const functionspace::detail::BlockStructuredColumns& fs) {
     auto kind = nonblocked.datatype().kind();
     if (kind == array::DataType::kind<int>()) {
