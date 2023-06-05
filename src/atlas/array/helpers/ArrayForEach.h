@@ -9,7 +9,6 @@
 
 #include <tuple>
 #include <type_traits>
-#include <sstream>
 #include <string_view>
 
 #include "atlas/array/ArrayView.h"
