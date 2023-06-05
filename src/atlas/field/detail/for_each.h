@@ -71,7 +71,12 @@ constexpr bool valid_column_function() {
 
 template <typename Config,  typename Mask, typename Function, typename... Views, std::size_t... Dims>
 void for_each_value_masked_view(std::index_sequence<Dims...>, const Config& config, const Mask& mask, const Function& function, std::tuple<Views...>&& views ) {
-    array::helpers::ArrayForEach<Dims...>::apply(config,std::move(views),mask,function);
+    if constexpr (std::is_invocable_r_v<int, Mask, decltype (Dims)...>) {
+        array::helpers::ArrayForEach<Dims...>::apply(config,std::move(views),mask,function);
+    }
+    else {
+        ATLAS_THROW_EXCEPTION("Invalid mask function passed");
+    }
 }
 
 template <int FieldIdx, typename Value, int Rank, typename... Field>
@@ -126,7 +131,8 @@ void for_each_column_masked_view(const Config& config, const Mask& mask, const s
         ATLAS_THROW_EXCEPTION("Cannot use for_each_column with Rank=1 fields");
     }
     if constexpr (rank==2) {
-        if constexpr (valid_column_function<Function,value_type,rank-1>()) {
+        if constexpr (valid_column_function<Function,value_type,rank-1>() &&
+                      std::is_invocable_r_v<int, Mask, idx_t>) {
             switch (h_dim[0]) {
                 case 0: array::helpers::ArrayForEach<0>::apply(config,std::move(views),mask,function); return;
                 case 1: array::helpers::ArrayForEach<1>::apply(config,std::move(views),mask,function); return;
@@ -138,7 +144,8 @@ void for_each_column_masked_view(const Config& config, const Mask& mask, const s
     }
     if constexpr (rank==3) {
         if (h_dim.size() == 1) {
-            if constexpr (valid_column_function<Function,value_type,rank-1>()) {
+            if constexpr (valid_column_function<Function,value_type,rank-1>() &&
+                          std::is_invocable_r_v<int, Mask, idx_t>) {
                 switch (h_dim[0]) {
                     case 0: array::helpers::ArrayForEach<0>::apply(config,std::move(views),mask,function); return;
                     case 1: array::helpers::ArrayForEach<1>::apply(config,std::move(views),mask,function); return;
@@ -150,7 +157,8 @@ void for_each_column_masked_view(const Config& config, const Mask& mask, const s
             ATLAS_THROW_EXCEPTION("Invalid function passed");
         }
         else if (h_dim.size() == 2) {
-            if constexpr (valid_column_function<Function,value_type,rank-2>()) {
+            if constexpr (valid_column_function<Function,value_type,rank-2>() &&
+                          std::is_invocable_r_v<int, Mask, idx_t, idx_t>) {
                 switch (h_dim[0]) {
                     case 0: {
                         switch (h_dim[1]) {
@@ -174,7 +182,8 @@ void for_each_column_masked_view(const Config& config, const Mask& mask, const s
     }
     if constexpr (rank==4) {
         if (h_dim.size() == 1) {
-            if constexpr (valid_column_function<Function,value_type,rank-1>()) {
+            if constexpr (valid_column_function<Function,value_type,rank-1>() &&
+                          std::is_invocable_r_v<int, Mask, idx_t>) {
                 switch (h_dim[0]) {
                     case 0: array::helpers::ArrayForEach<0>::apply(config,std::move(views),mask,function); return;
                     case 1: array::helpers::ArrayForEach<1>::apply(config,std::move(views),mask,function); return;
@@ -185,7 +194,8 @@ void for_each_column_masked_view(const Config& config, const Mask& mask, const s
             }
         }
         else if (h_dim.size() == 2) {
-            if constexpr (valid_column_function<Function,value_type,rank-2>()) {
+            if constexpr (valid_column_function<Function,value_type,rank-2>() &&
+                          std::is_invocable_r_v<int, Mask, idx_t, idx_t>) {
                 switch (h_dim[0]) {
                     case 0: {
                         switch (h_dim[1]) {
