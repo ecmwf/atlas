@@ -27,7 +27,6 @@ namespace helpers {
 
 //------------------------------------------------------------------------------
 
-template <idx_t Rank>
 struct array_initializer;
 
 template <idx_t PartDim>
@@ -65,9 +64,45 @@ struct array_initializer_impl<Value, Rank, Rank> {
 
 //------------------------------------------------------------------------------
 
-template <idx_t Rank>
 struct array_initializer {
-    static void apply(Array const& orig, Array& array_resized) {
+
+    static void apply(Array const& from, Array& to) {
+        ATLAS_ASSERT(from.rank() == to.rank());
+        switch (from.rank()) {
+            case 1:
+                apply_rank<1>(from, to);
+                break;
+            case 2:
+                apply_rank<2>(from, to);
+                break;
+            case 3:
+                apply_rank<3>(from, to);
+                break;
+            case 4:
+                apply_rank<4>(from, to);
+                break;
+            case 5:
+                apply_rank<5>(from, to);
+                break;
+            case 6:
+                apply_rank<6>(from, to);
+                break;
+            case 7:
+                apply_rank<7>(from, to);
+                break;
+            case 8:
+                apply_rank<8>(from, to);
+                break;
+            case 9:
+                apply_rank<9>(from, to);
+                break;
+            default:
+                ATLAS_NOTIMPLEMENTED;
+        }
+    }
+
+    template <idx_t Rank>
+    static void apply_rank(Array const& orig, Array& array_resized) {
         switch (orig.datatype().kind()) {
             case DataType::KIND_REAL64:
                 return array_initializer_impl<double, Rank, 0>::apply(orig, array_resized);

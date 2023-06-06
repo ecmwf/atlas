@@ -1,5 +1,6 @@
 /*
- * (C) Copyright 2013 ECMWF.
+ * (C) Copyright 2013 ECMWF
+ * (C) Crown Copyright 2023 Met Office
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -7,6 +8,7 @@
  * granted to it by virtue of its status as an intergovernmental organisation
  * nor does it submit to any jurisdiction.
  */
+
 
 #pragma once
 
@@ -43,9 +45,7 @@ public:
     PointCloud(const std::vector<Point>&);
     PointCloud(const Field& lonlat);
     PointCloud(const Field& lonlat, const Field& ghost);
-
-    PointCloud(const FieldSet&);  // assuming lonlat ghost ridx and partition present.
-
+    PointCloud(const FieldSet&);  // assuming lonlat ghost ridx and partition present
     PointCloud(const Grid&);
     ~PointCloud() override {}
     std::string type() const override { return "PointCloud"; }
@@ -55,6 +55,7 @@ public:
     Field lonlat() const override { return lonlat_; }
     const Field& vertical() const { return vertical_; }
     Field ghost() const override;
+    Field remote_index() const override { return remote_index_; }
     virtual idx_t size() const override { return lonlat_.shape(0); }
 
     using FunctionSpaceImpl::createField;
@@ -148,7 +149,6 @@ private:
     void set_field_metadata(const eckit::Configuration& config, Field& field) const;
 
 
-
 private:
     Field lonlat_;
     Field vertical_;
@@ -157,6 +157,9 @@ private:
     Field partition_;
     std::unique_ptr<parallel::HaloExchange> halo_exchange_;
     idx_t levels_{0};
+
+    void setupHaloExchange();
+
 };
 
 //------------------------------------------------------------------------------------------------------
@@ -169,11 +172,12 @@ class PointCloud : public FunctionSpace {
 public:
     PointCloud(const FunctionSpace&);
     PointCloud(const Field& points);
+    PointCloud(const Field&, const Field&);
     PointCloud(const FieldSet& flds);
     PointCloud(const std::vector<PointXY>&);
     PointCloud(const std::vector<PointXYZ>&);
     PointCloud(const std::initializer_list<std::initializer_list<double>>&);
-    PointCloud(const Grid& grid);
+    PointCloud(const Grid&);
 
     operator bool() const { return valid(); }
     bool valid() const { return functionspace_; }

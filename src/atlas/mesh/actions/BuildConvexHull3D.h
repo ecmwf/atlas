@@ -10,6 +10,10 @@
 
 #pragma once
 
+#include "eckit/config/Parametrisation.h"
+
+#include "atlas/util/Config.h"
+
 namespace atlas {
 
 class Mesh;
@@ -20,7 +24,11 @@ namespace actions {
 /// Creates a 3D convex-hull on the mesh points
 class BuildConvexHull3D {
 public:
+    BuildConvexHull3D(const eckit::Parametrisation& = util::NoConfig());
     void operator()(Mesh&) const;
+private:
+    bool remove_duplicate_points_;
+    bool reshuffle_;
 };
 
 }  // namespace actions

@@ -12,9 +12,11 @@
 #include <iosfwd>
 #include <map>
 #include <string>
+#include <cfenv>
 
 namespace atlas {
 namespace library {
+
 // ------------------------------------------------------------------------------------
 
 /* @brief Enable floating point exceptions
@@ -29,6 +31,26 @@ namespace library {
  *       not be called directly
  */
 void enable_floating_point_exceptions();
+
+/* @brief Enable floating point exception
+ * 
+ * Valid codes: 
+ *   FE_INVALID, FE_DIVBYZERO, FE_OVERFLOW, FE_UNDERFLOW, FE_INEXACT, FE_ALL_EXCEPT
+ * 
+ * @return false when the exception was already enabled, true when change was made
+ */
+bool enable_floating_point_exception(const std::string&);
+bool enable_floating_point_exception(int);
+
+/* @brief Disable floating point exception
+ * 
+ * Valid codes: 
+ *   FE_INVALID, FE_DIVBYZERO, FE_OVERFLOW, FE_UNDERFLOW, FE_INEXACT, FE_ALL_EXCEPT
+ * 
+ * @return false when the exception was already disabled, true when change was made
+ */
+bool disable_floating_point_exception(const std::string&);
+bool disable_floating_point_exception(int);
 
 // ------------------------------------------------------------------------------------
 

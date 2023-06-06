@@ -73,7 +73,7 @@ CellFinder::Cell CellFinder::getCell(const PointLonLat& lonlat, size_t listSize,
             break;
         }
 
-        const auto t   = cellTijView(i);
+        const auto t   = cellTijView(i,0);
         const auto row = nodeConnectivity.row(i);
 
         if (row.size() == 4) {

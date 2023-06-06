@@ -64,6 +64,13 @@ namespace actions {
 
 //----------------------------------------------------------------------------------------------------------------------
 
+BuildConvexHull3D::BuildConvexHull3D(const eckit::Parametrisation& config) {
+    config.get("remove_duplicate_points", remove_duplicate_points_ = true);
+    config.get("reshuffle", reshuffle_ = true);
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 #if ATLAS_HAVE_TESSELATION
 
 static Polyhedron_3* create_convex_hull_from_points(const std::vector<Point3>& pts) {

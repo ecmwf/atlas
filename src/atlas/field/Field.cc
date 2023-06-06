@@ -57,6 +57,17 @@ array::Array& Field::array() {
     return get()->array();
 }
 
+/// @brief Clone
+Field Field::clone(const eckit::Parametrisation& config) const {
+    Field tmp(get()->name(), get()->datatype(), get()->shape());
+    tmp.metadata() = this->metadata();
+    tmp.set_functionspace(this->functionspace());
+    array::Array::CopyPolicy cp;
+      // To be set up via config. For now use default, as Array does not yet implement it.
+    tmp.array().copy(this->array(),cp);
+    return tmp;
+}
+
 // -- Accessors
 
 /// @brief Access to raw data
@@ -164,6 +175,14 @@ void Field::set_variables(idx_t n) {
 }
 idx_t Field::variables() const {
     return get()->variables();
+}
+
+void Field::set_horizontal_dimension(const std::vector<idx_t>& h_dim) {
+    get()->set_horizontal_dimension(h_dim);
+}
+
+std::vector<idx_t> Field::horizontal_dimension() const {
+    return get()->horizontal_dimension();
 }
 
 void Field::set_functionspace(const FunctionSpace& functionspace) {

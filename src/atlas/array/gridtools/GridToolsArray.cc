@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "atlas/array.h"
-#include "atlas/array/ArrayUtil.h"
+#include "atlas/array/ArrayDataStore.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/MakeView.h"
@@ -67,7 +67,7 @@ public:
         static_assert(sizeof...(UInts) > 0, "1");
         auto gt_storage    = create_gt_storage<Value, typename default_layout_t<sizeof...(dims)>::type>(dims...);
         using data_store_t = typename std::remove_pointer<decltype(gt_storage)>::type;
-        array_.data_store_ = std::unique_ptr<GridToolsDataStore<data_store_t>>(gt_storage);
+        array_.data_store_ = std::make_unique<GridToolsDataStore<data_store_t>>(gt_storage);
         array_.spec_       = make_spec(gt_storage, dims...);
     }
 
@@ -249,7 +249,7 @@ public:
 
         Array* resized = Array::create<Value>(ArrayShape{(idx_t)c...});
 
-        array_initializer<sizeof...(c)>::apply(array_, *resized);
+        array_initializer::apply(array_, *resized);
         array_.replace(*resized);
         delete resized;
     }
@@ -258,7 +258,6 @@ public:
     void apply_resize(const ArrayShape& shape, std::integer_sequence<UInt, Indices...>) {
         return resize_variadic(shape[Indices]...);
     }
-
 private:
     ArrayT<Value>& array_;
 };
@@ -491,6 +490,11 @@ void ArrayT<Value>::resize(idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3) {
 template <typename Value>
 void ArrayT<Value>::resize(idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3, idx_t dim4) {
     ArrayT_impl<Value>(*this).resize_variadic(dim0, dim1, dim2, dim3, dim4);
+}
+
+template <typename Value>
+void ArrayT<Value>::copy(const Array& other, const Array::CopyPolicy&) {
+        array_initializer::apply(other, *this);
 }
 
 template <typename Value>

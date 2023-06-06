@@ -49,6 +49,9 @@ void run_scatter_gather(const Grid& grid, const BlockStructuredColumns& fs, int 
 
     auto field = fs.createField(glb_field);
 
+    EXPECT_EQ(glb_field.horizontal_dimension(), (std::vector<idx_t>{0}));
+    EXPECT_EQ(field.horizontal_dimension(), (std::vector<idx_t>{0,3}));
+
     fs.scatter(glb_field, field);
 
     auto glb_field_2 = fs.createField(glb_field , option::global(atlas::mpi::comm().size()-1));
@@ -179,7 +182,7 @@ CASE("test_BlockStructuredColumns") {
     }
 
     SECTION("test_BlockStructuredColumns scatter/gather") {
-        auto fs     = functionspace::StructuredColumns(grid, config);
+        auto fs     = functionspace::BlockStructuredColumns(grid, config);
         run_scatter_gather<idx_t>(grid, fs, nlev, nvar);
         run_scatter_gather<gidx_t>(grid, fs, nlev, nvar);
         run_scatter_gather<float>(grid, fs, nlev, nvar);

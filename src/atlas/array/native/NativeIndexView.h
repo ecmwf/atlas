@@ -42,7 +42,7 @@
 #include <type_traits>
 #include <initializer_list>
 
-#include "atlas/array/ArrayUtil.h"
+#include "atlas/array/ArrayDataStore.h"
 #include "atlas/library/config.h"
 
 //------------------------------------------------------------------------------------------------------
