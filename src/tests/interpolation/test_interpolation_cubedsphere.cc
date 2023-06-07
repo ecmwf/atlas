@@ -10,14 +10,19 @@
 #include "atlas/functionspace/CellColumns.h"
 #include "atlas/functionspace/CubedSphereColumns.h"
 #include "atlas/functionspace/NodeColumns.h"
+#include "atlas/functionspace/PointCloud.h"
+#include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/grid/CubedSphereGrid.h"
+#include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/Iterator.h"
 #include "atlas/grid/Partitioner.h"
 #include "atlas/interpolation/Interpolation.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator/MeshGenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/redistribution/Redistribution.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/function/VortexRollup.h"
@@ -47,9 +52,9 @@ void gmshOutput(const std::string& fileName, const FieldSet& fieldSet) {
 
     const auto gmshConfig =
         util::Config("coordinates", "xyz") | util::Config("ghost", true) | util::Config("info", true);
-    const auto sourceGmsh = output::Gmsh(fileName, gmshConfig);
-    sourceGmsh.write(mesh);
-    sourceGmsh.write(fieldSet, functionSpace);
+    const auto gmsh = output::Gmsh(fileName, gmshConfig);
+    gmsh.write(mesh);
+    gmsh.write(fieldSet, functionSpace);
 }
 
 
@@ -375,7 +380,80 @@ CASE("cubedsphere_wind_interpolation") {
     EXPECT_APPROX_EQ(yDotY / xDotXAdj, 1., 1e-14);
 }
 
+CASE("cubedsphere_node_columns_to_structured_columns") {
 
+    const auto fixture = CubedSphereInterpolationFixture{};
+
+    // Can't (easily) redistribute directly from a cubedsphere functionspace to a structured columns.
+    // Solution is to build two intermediate PointClouds functions spaces, and copy fields in and out.
+
+
+    const auto targetStructuredColumns = functionspace::StructuredColumns(fixture.targetGrid_, grid::Partitioner("equal_regions"));
+    const auto& targetCubedSphereParitioner = fixture.targetPartitioner_;
+    const auto targetNativePartitioner = grid::Partitioner(targetStructuredColumns.distribution());
+
+    // This should be a PointCloud constructor.
+    const auto makePointCloud = [](const Grid& grid, const grid::Partitioner partitioner) {
+
+        const auto distribution = grid::Distribution(grid, partitioner);
+
+        auto lonLats = std::vector<PointXY>{};
+        auto idx = gidx_t{0};
+        for (const auto& lonLat : grid.lonlat()) {
+            if (distribution.partition(idx++) == mpi::rank()) {
+                lonLats.emplace_back(lonLat.data());
+            }
+        }
+        return functionspace::PointCloud(lonLats);
+    };
+
+    const auto targetNativePointCloud = makePointCloud(fixture.targetGrid_, targetNativePartitioner);
+    const auto targetCubedSpherePointCloud = makePointCloud(fixture.targetGrid_, targetCubedSphereParitioner);
+
+
+    // Populate analytic source field.
+    auto sourceField = fixture.sourceFunctionSpace_.createField<double>(option::name("test_field"));
+    {
+        const auto lonlat = array::make_view<double, 2>(fixture.sourceFunctionSpace_.lonlat());
+        const auto ghost  = array::make_view<int, 1>(fixture.sourceFunctionSpace_.ghost());
+        auto view         = array::make_view<double, 1>(sourceField);
+        for (idx_t i = 0; i < fixture.sourceFunctionSpace_.size(); ++i) {
+            view(i) = util::function::vortex_rollup(lonlat(i, LON), lonlat(i, LAT), 1.);
+            if (!ghost(i)) {
+            }
+        }
+    }
+
+    // Interpolate from source field to targetCubedSpherePointCloud field.
+    const auto scheme = util::Config("type", "cubedsphere-bilinear") | util::Config("adjoint", true) |
+                        util::Config("halo_exchange", false);
+    const auto interp = Interpolation(scheme, fixture.sourceFunctionSpace_, targetCubedSpherePointCloud);
+    auto targetCubedSphereField = targetCubedSpherePointCloud.createField<double>(option::name("test_field"));
+    interp.execute(sourceField, targetCubedSphereField);
+
+    // Redistribute from targetCubedSpherePointCloud to targetNativePointCloud
+    const auto redist = Redistribution(targetCubedSpherePointCloud, targetNativePointCloud);
+    auto targetNativeField = targetNativePointCloud.createField<double>(option::name("test_field"));
+    redist.execute(targetCubedSphereField, targetNativeField);
+
+    // copy temp field to target field.
+    auto targetField = targetStructuredColumns.createField<double>(option::name("test_field"));
+    array::make_view<double, 1>(targetField).assign(array::make_view<double, 1>(targetNativeField));
+
+    // Done. Tidy up and write output.
+
+    targetField.haloExchange();
+
+    gmshOutput("cubedsphere_to_structured_cols_source.msh", FieldSet{sourceField});
+
+    // gmsh needs a target mesh...
+    const auto mesh = MeshGenerator("structured").generate(fixture.targetGrid_, targetNativePartitioner);
+    const auto gmshConfig =
+        util::Config("coordinates", "xyz") | util::Config("ghost", true) | util::Config("info", true);
+    const auto targetGmsh = output::Gmsh("cubedsphere_to_structured_cols_target.msh", gmshConfig);
+    targetGmsh.write(mesh);
+    targetGmsh.write(targetField, functionspace::NodeColumns(mesh));
+}
 
 }  // namespace test
 }  // namespace atlas
