@@ -418,11 +418,12 @@ CASE("cubedsphere_node_columns_to_structured_columns") {
         const auto ghost  = array::make_view<int, 1>(fixture.sourceFunctionSpace_.ghost());
         auto view         = array::make_view<double, 1>(sourceField);
         for (idx_t i = 0; i < fixture.sourceFunctionSpace_.size(); ++i) {
-            view(i) = util::function::vortex_rollup(lonlat(i, LON), lonlat(i, LAT), 1.);
             if (!ghost(i)) {
+                view(i) = util::function::vortex_rollup(lonlat(i, LON), lonlat(i, LAT), 1.);
             }
         }
     }
+    sourceField.haloExchange();
 
     // Interpolate from source field to targetCubedSpherePointCloud field.
     const auto scheme = util::Config("type", "cubedsphere-bilinear") | util::Config("adjoint", true) |
