@@ -7,6 +7,11 @@ if( HAVE_CUDA )
   endif()
 endif()
 
+if( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
+  set( ENABLE_ACC OFF )
+  set( atlas_HAVE_ACC 0 )
+endif()
+
 ecbuild_add_option( FEATURE ACC
                     DESCRIPTION  "OpenACC capable data structures"
                     CONDITION ATLAS_ACC_CAPABLE )
