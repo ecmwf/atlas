@@ -173,7 +173,6 @@ std::string Library::cachePath() const {
 }
 
 void Library::registerDataPath(const std::string& path) {
-    ATLAS_DEBUG_VAR(path);
     if (data_paths_.empty()) {
         init_data_paths(data_paths_);
     }
@@ -183,7 +182,7 @@ void Library::registerDataPath(const std::string& path) {
 
 std::string Library::dataPath() const {
     if (data_paths_.empty()) {
-        ATLAS_THROW_EXCEPTION("Attempted to access atlas::Library function before atlas was initialized");
+        init_data_paths(data_paths_);
     }
     std::vector<std::string> paths = data_paths_;
     auto join                      = [](const std::vector<std::string>& v, const std::string& sep) -> std::string {
