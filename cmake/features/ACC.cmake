@@ -10,11 +10,12 @@ endif()
 if( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
   set( ENABLE_ACC OFF )
   set( atlas_HAVE_ACC 0 )
-endif()
+else()
 
 ecbuild_add_option( FEATURE ACC
                     DESCRIPTION  "OpenACC capable data structures"
                     CONDITION ATLAS_ACC_CAPABLE )
+endif()
 
 if( atlas_HAVE_ACC )
   if( CMAKE_Fortran_COMPILER_ID MATCHES "PGI|NVHPC" )
