@@ -71,12 +71,8 @@ class GeometrySphere : public GeometryBase {
 
 public:
     GeometrySphere(double radius): radius_(radius) {}
-    void lonlat2xyz(const Point2& lonlat, Point3& xyz) const override {
-        Sphere::convertSphericalToCartesian(radius_, lonlat, xyz);
-    }
-    void xyz2lonlat(const Point3& xyz, Point2& lonlat) const override {
-        Sphere::convertCartesianToSpherical(radius_, xyz, lonlat);
-    }
+    void lonlat2xyz(const Point2& lonlat, Point3& xyz) const override;
+    void xyz2lonlat(const Point3& xyz, Point2& lonlat) const override;
     double distance(const Point2& p1, const Point2& p2) const override { return Sphere::distance(radius_, p1, p2); }
     double distance(const Point3& p1, const Point3& p2) const override { return Sphere::distance(radius_, p1, p2); }
     double radius() const override { return radius_; }

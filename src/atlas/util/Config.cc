@@ -109,9 +109,9 @@ std::vector<std::string> Config::keys() const {
     return result;
 }
 
-std::string Config::json() const {
+std::string Config::json(eckit::JSON::Formatting formatting) const {
     std::stringstream json;
-    eckit::JSON js(json);
+    eckit::JSON js(json,formatting);
     js << *this;
     return json.str();
 }

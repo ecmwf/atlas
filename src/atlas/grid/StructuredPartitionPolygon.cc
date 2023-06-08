@@ -35,9 +35,31 @@ void compute(const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vect
     const auto grid = fs.grid();
     const auto dom  = RectangularDomain(grid.domain());
 
-    if (_halo > 0) {
-        throw_Exception("halo must be smaller than that of StructuredColumns", Here());
+    if (_halo > 0 && _halo != fs.halo()) {
+        throw_Exception("halo must zero or matching the one of the StructuredColumns", Here());
     }
+
+    bool north_pole_included = 90. - grid.y(0) == 0.;
+    bool south_pole_included = 90. + grid.y(grid.ny() - 1) == 0;
+
+    auto compute_j = [&](const idx_t j) {
+        idx_t jj;
+        if (j < 0) {
+            return -j - 1 + north_pole_included;
+        }
+        else if (j >= grid.ny()) {
+            return 2 * grid.ny() - j - 1 - south_pole_included;
+        }
+        return j;
+    };
+
+    auto compute_y = [&](const idx_t j) {
+        return fs.compute_xy(0,j).y();
+    };
+
+    auto compute_x = [&](const idx_t i, const idx_t j) {
+        return fs.compute_xy(i,j).x();
+    };
 
     auto equal = [](const double& a, const double& b) { return std::abs(a - b) < 1.e-12; };
 
@@ -58,11 +80,10 @@ void compute(const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vect
 
     PointXY p;
     idx_t c{0};
-    idx_t i, j;
 
     auto add_point = [&](const Point2& point) {
         points.emplace_back(point);
-        //        Log::info() << "add point (" << points.size() - 1 << ")  " << point << std::endl;
+        // Log::info() << "add point (" << points.size() - 1 << ")  " << point << std::endl;
     };
 
     auto add_vertical_edge = [&](const Point2& point) {
@@ -91,38 +112,38 @@ void compute(const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vect
     // Top
     // Top left point
     {
-        j = fs.j_begin();
-        i = fs.i_begin(j);
-        if (j == 0) {
+        idx_t j = _halo ? fs.j_begin_halo() : fs.j_begin();
+        idx_t i = _halo ? fs.i_begin_halo(j) : fs.i_begin(j);
+        if (j == 0 && _halo == 0) {
             p[YY] = dom.ymax();
         }
         else {
-            p[YY] = 0.5 * (grid.y(j - 1) + grid.y(j));
+            p[YY] = 0.5 * (compute_y(j - 1) + compute_y(j));
         }
-        if (i == 0) {
+        if (i == 0 && _halo == 0) {
             p[XX] = dom.xmin();
         }
         else {
-            p[XX] = 0.5 * (grid.x(i - 1, j) + grid.x(i, j));
+            p[XX] = 0.5 * (compute_x(i - 1, j) + compute_x(i, j));
         }
         add_point(p);
     }
 
     // Top right point
     {
-        j = fs.j_begin();
-        i = fs.i_end(j) - 1;
-        if (j == 0) {
+        idx_t j = _halo ? fs.j_begin_halo() :  fs.j_begin();
+        idx_t i = _halo ? fs.i_end_halo(j) - 1 : fs.i_end(j) - 1;
+        if (j == 0 && _halo == 0) {
             p[YY] = dom.ymax();
         }
         else {
-            p[YY] = 0.5 * (grid.y(j - 1) + grid.y(j));
+            p[YY] = 0.5 * (compute_y(j - 1) + compute_y(j));
         }
-        if (i == grid.nx(j) - 1) {
+        if (i == grid.nx(compute_j(j)) - 1 && _halo == 0) {
             p[XX] = dom.xmax();
         }
         else {
-            p[XX] = 0.5 * (grid.x(i, j) + grid.x(i + 1, j));
+            p[XX] = 0.5 * (compute_x(i, j) + compute_x(i + 1, j));
         }
         add_horizontal_edge(p);
 
@@ -131,14 +152,16 @@ void compute(const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vect
     }
     // Right side
     {
-        for (j = fs.j_begin(); j < fs.j_end() - 1; ++j) {
-            p[YY] = grid.y(j);
-            i     = fs.i_end(j) - 1;
-            if (i == grid.nx(j) - 1) {
+        idx_t j_begin = _halo ? fs.j_begin_halo() : fs.j_begin();
+        idx_t j_end = _halo ? fs.j_end_halo() : fs.j_end();
+        for (idx_t j = j_begin; j < j_end - 1 ; ++j) {
+            p[YY] = compute_y(j);
+            idx_t i = _halo ? fs.i_end_halo(j) - 1 : fs.i_end(j) - 1;
+            if (i == grid.nx(compute_j(j)) - 1 && _halo == 0) {
                 p[XX] = dom.xmax();
             }
             else {
-                p[XX] = 0.5 * (grid.x(i, j) + grid.x(i + 1, j));
+                p[XX] = 0.5 * (compute_x(i, j) + compute_x(i + 1, j));
             }
             if (p == points.back()) {
                 continue;
@@ -168,19 +191,20 @@ void compute(const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vect
     // Bottom
     // Bottom right point(s)
     {
-        j = fs.j_end() - 1;
-        i = fs.i_end(j) - 1;
-        if (j == grid.ny() - 1) {
+        idx_t j = _halo ? fs.j_end_halo() - 1 : fs.j_end() - 1;
+        idx_t i = _halo ? fs.i_end_halo(j) - 1 : fs.i_end(j) - 1;
+
+        if (j == grid.ny() - 1 && _halo == 0) {
             p[YY] = dom.ymin();
         }
         else {
-            p[YY] = 0.5 * (grid.y(j) + grid.y(j + 1));
+            p[YY] = 0.5 * (compute_y(j) + compute_y(j + 1));
         }
-        if (i == grid.nx(j) - 1) {
+        if (i == grid.nx(compute_j(j)) - 1 && _halo == 0) {
             p[XX] = dom.xmax();
         }
         else {
-            p[XX] = 0.5 * (grid.x(i, j) + grid.x(i + 1, j));
+            p[XX] = 0.5 * (compute_x(i, j) + compute_x(i + 1, j));
         }
 
         ymin = p[YY];
@@ -191,7 +215,7 @@ void compute(const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vect
             PointXY ptmp;
             ptmp  = p;
             p[XX] = points.back()[XX];
-            p[YY] = 0.5 * (points.back()[YY] + grid.y(j));
+            p[YY] = 0.5 * (points.back()[YY] + compute_y(j));
             add_vertical_edge(p);
 
             pmin = p;
@@ -202,11 +226,12 @@ void compute(const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vect
 
             ptmp  = p;
             p[YY] = points.back()[YY];
+
             add_horizontal_edge(p);
             p = ptmp;
         }
-        if (xmax - grid.xspace().dx()[j] < grid.x(i, j)) {
-            xmax = std::min(xmax, 0.5 * (grid.x(i + 1, j) + grid.x(i, j)));
+        if (xmax - grid.xspace().dx()[compute_j(j)] < compute_x(i, j)) {
+            xmax = std::min(xmax, 0.5 * (compute_x(i + 1, j) + compute_x(i, j)));
         }
         else {
             ymin = pmin[YY];
@@ -216,46 +241,48 @@ void compute(const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vect
 
     // Bottom left point
     {
-        j = fs.j_end() - 1;
-        i = fs.i_begin(j);
-        if (j == grid.ny() - 1) {
+        idx_t j = _halo ? fs.j_end_halo() - 1 : fs.j_end() - 1;
+        idx_t i = _halo ? fs.i_begin_halo(j) : fs.i_begin(j);
+        if (j == grid.ny() - 1 && _halo == 0) {
             p[YY] = dom.ymin();
         }
         else {
-            p[YY] = 0.5 * (grid.y(j) + grid.y(j + 1));
+            p[YY] = 0.5 * (compute_y(j) + compute_y(j + 1));
         }
-        if (i == 0) {
+        if (i == 0 && _halo == 0) {
             p[XX] = dom.xmin();
         }
         else {
-            p[XX] = 0.5 * (grid.x(i - 1, j) + grid.x(i, j));
+            p[XX] = 0.5 * (compute_x(i - 1, j) + compute_x(i, j));
         }
         add_horizontal_edge(p);
         xmin = p[XX];
     }
     // Left side
     {
-        for (j = fs.j_end() - 1; j >= fs.j_begin(); --j) {
-            p[YY] = grid.y(j);
-            i     = fs.i_begin(j);
-            if (i == 0) {
+        idx_t j_end = _halo ? fs.j_end_halo() : fs.j_end();
+        idx_t j_begin = _halo ? fs.j_begin_halo() : fs.j_begin();
+        for (idx_t j = j_end - 1; j >= j_begin; --j) {
+            p[YY] = compute_y(j);
+            idx_t i = _halo ? fs.i_begin_halo(j) : fs.i_begin(j);
+            if (i == 0 && _halo == 0) {
                 p[XX] = dom.xmin();
             }
             else {
-                p[XX] = 0.5 * (grid.x(i - 1, j) + grid.x(i, j));
+                p[XX] = 0.5 * (compute_x(i - 1, j) + compute_x(i, j));
             }
 
-            if (j > fs.j_begin()) {
+            if (j > j_begin) {
                 xmin = std::max(xmin, p[XX]);
             }
-            if (j == fs.j_begin() + 1 && xmin < points[0][XX]) {
-                idx_t jtop = fs.j_begin();
-                idx_t itop = fs.i_begin(jtop);
-                if (xmin + grid.xspace().dx()[jtop] > grid.x(itop, jtop)) {
-                    xmin = std::max(xmin, 0.5 * (grid.x(itop - 1, jtop) + grid.x(itop, jtop)));
+            if (j == j_begin && xmin < points[0][XX]) {
+                idx_t jtop = j_begin;
+                idx_t itop = _halo ? fs.i_begin_halo(jtop) : fs.i_begin(jtop);
+                if (xmin + grid.xspace().dx()[compute_j(jtop)] > compute_x(itop, jtop)) {
+                    xmin = std::max(xmin, 0.5 * (compute_x(itop - 1, jtop) + compute_x(itop, jtop)));
                 }
                 else {
-                    ymax = 0.5 * (p[YY] + grid.y(jtop));
+                    ymax = 0.5 * (p[YY] + compute_y(jtop));
                 }
             }
 
@@ -269,7 +296,7 @@ void compute(const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vect
 
                 // vertical edge
                 p[XX] = points.back()[XX];
-                p[YY] = 0.5 * (points.back()[YY] + grid.y(j));
+                p[YY] = 0.5 * (points.back()[YY] + compute_y(j));
                 add_vertical_edge(p);
                 p = ptmp;
 
@@ -358,8 +385,7 @@ void StructuredPartitionPolygon::outputPythonScript(const eckit::PathName& filep
                      "\n" "from itertools import cycle"
                      "\n" "import matplotlib.cm as cm"
                      "\n" "import numpy as np"
-                     "\n" "cycol = cycle([cm.Paired(i) for i in "
-                          "np.linspace(0,1,12,endpoint=True)]).next"
+                     "\n" "colours = cycle([cm.Paired(i) for i in np.linspace(0,1,12,endpoint=True)])"
                      "\n"
                      "\n" "fig = plt.figure()"
                      "\n" "ax = fig.add_subplot(111,aspect='equal')"
@@ -391,8 +417,8 @@ void StructuredPartitionPolygon::outputPythonScript(const eckit::PathName& filep
                 f << "]";
             }
             f << "\n"
-                 "\n" "c = cycol()"
-                 "\n" "ax.add_patch(patches.PathPatch(Path(verts_" << r << ", codes_" << r << "), facecolor=c, color=c, alpha=0.3, lw=1))";
+                 "\n" "c = next(colours)"
+                 "\n" "ax.add_patch(patches.PathPatch(Path(verts_" << r << ", codes_" << r << "), edgecolor=c, facecolor=c, alpha=0.3, lw=1))";
             if ( plot_nodes ) {
                 f << "\n" "if plot_nodes:"
                      "\n" "    ax.scatter(x_" << r << ", y_" << r << ", color=c, marker='o')";

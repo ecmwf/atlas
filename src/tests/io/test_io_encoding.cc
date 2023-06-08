@@ -825,15 +825,14 @@ CASE("Encode/Decode byte array") {
     auto validate = [&]() {
         EXPECT(out == encoded);
 
-        auto str = [](std::byte byte) {
-            std::bitset<8> bitset(reinterpret_cast<unsigned char&>(byte));
-            return bitset.to_string();
+        auto to_byte = []( const char* str) {
+            return std::byte(std::bitset<8>(str).to_ulong());
         };
-        EXPECT_EQ(str(out[0]), "00000001");
-        EXPECT_EQ(str(out[1]), "00000011");
-        EXPECT_EQ(str(out[2]), "00000111");
-        EXPECT_EQ(str(out[3]), "00001111");
-        EXPECT_EQ(str(out[4]), "00011111");
+        EXPECT(out[0] == to_byte("00000001"));
+        EXPECT(out[1] == to_byte("00000011"));
+        EXPECT(out[2] == to_byte("00000111"));
+        EXPECT(out[3] == to_byte("00001111"));
+        EXPECT(out[4] == to_byte("00011111"));
     };
 
 

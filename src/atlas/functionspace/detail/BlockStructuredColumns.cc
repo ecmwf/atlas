@@ -156,7 +156,6 @@ void rev_block_copy(const Field loc, Field sloc, const functionspace::detail::Bl
     }
 }
 
-
 void transpose_nonblocked_to_blocked(const Field& nonblocked, Field& blocked, const functionspace::detail::BlockStructuredColumns& fs) {
     auto kind = nonblocked.datatype().kind();
     if (kind == array::DataType::kind<int>()) {
@@ -264,6 +263,13 @@ Field BlockStructuredColumns::createField(const eckit::Configuration& options) c
     Field field(structuredcolumns_->config_name(options), structuredcolumns_->config_datatype(options), config_spec(options));
     structuredcolumns_->set_field_metadata(options, field);
     field.set_functionspace(this);
+
+    bool global = false;
+    options.get("global", global);
+    if (not global) {
+        field.set_horizontal_dimension({0,field.rank()-1});
+    }
+
     return field;
 }
 

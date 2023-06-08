@@ -55,7 +55,7 @@
 #include <iostream>
 #include <type_traits>
 
-#include "atlas/array/ArrayUtil.h"
+#include "atlas/array/ArrayDataStore.h"
 #include "atlas/array/ArrayViewDefs.h"
 #include "atlas/array/LocalView.h"
 #include "atlas/array/Range.h"
@@ -132,16 +132,11 @@ private:
 public:
     // -- Constructors
 
-    ArrayView(const ArrayView& other):
-        data_(other.data_), size_(other.size_), shape_(other.shape_), strides_(other.strides_) {}
+    template <typename ValueTp, typename = std::enable_if_t<std::is_convertible_v<ValueTp*,value_type*>>>
+    ArrayView(const ArrayView<ValueTp, Rank>& other): data_(other.data()), size_(other.size()), shape_(other.shape_), strides_(other.strides_) {}
 
-    ENABLE_IF_CONST_WITH_NON_CONST(value_type)
-    ArrayView(const ArrayView<value_type, Rank>& other): data_(other.data()), size_(other.size()) {
-        for (idx_t j = 0; j < Rank; ++j) {
-            shape_[j]   = other.shape(j);
-            strides_[j] = other.stride(j);
-        }
-    }
+    template <typename ValueTp, typename = std::enable_if_t<std::is_convertible_v<ValueTp*,value_type*>>>
+    ArrayView(ArrayView<ValueTp, Rank>&& other):data_(other.data()), size_(other.size()), shape_(other.shape_), strides_(other.strides_) {}
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     // This constructor should not be used directly, but only through a array::make_view() function.
@@ -158,19 +153,18 @@ public:
     ENABLE_IF_CONST_WITH_NON_CONST(value_type)
     operator const ArrayView<value_type, Rank>&() const { return *(const ArrayView<value_type, Rank>*)(this); }
 
-
     // -- Access methods
 
     /// @brief Multidimensional index operator: view(i,j,k,...)
-    template <typename... Idx>
+    template <typename... Idx, int Rank_ = Rank, typename = std::enable_if_t<sizeof...(Idx) == Rank_>>
     value_type& operator()(Idx... idx) {
         check_bounds(idx...);
         return data_[index(idx...)];
     }
 
     /// @brief Multidimensional index operator: view(i,j,k,...)
-    template <typename... Ints>
-    const value_type& operator()(Ints... idx) const {
+    template <typename... Idx, int Rank_ = Rank, typename = std::enable_if_t<sizeof...(Idx) == Rank_>>
+    const value_type& operator()(Idx... idx) const {
         return data_[index(idx...)];
     }
 
@@ -178,8 +172,8 @@ public:
     ///
     /// Note that this function is only present when Rank == 1
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-    template <typename Int, bool EnableBool = true>
-    typename std::enable_if<(Rank == 1 && EnableBool), const value_type&>::type operator[](Int idx) const {
+    template <typename Idx, int Rank_ = Rank, typename = std::enable_if_t<Rank_ == 1>>
+    const value_type& operator[](Idx idx) const {
 #else
     // Doxygen API is cleaner!
     template <typename Int>
@@ -193,12 +187,12 @@ public:
     ///
     /// Note that this function is only present when Rank == 1
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-    template <typename Int, bool EnableBool = true>
-    typename std::enable_if<(Rank == 1 && EnableBool), value_type&>::type operator[](Int idx) {
+    template <typename Idx, int Rank_ = Rank, typename = std::enable_if_t<Rank_ == 1>>
+    value_type& operator[](Idx idx) {
 #else
     // Doxygen API is cleaner!
-    template <typename Int>
-    value_type operator[](Int idx) {
+    template <typename Idx>
+    value_type operator[](Idx idx) {
 #endif
         check_bounds(idx);
         return data_[idx * strides_[0]];
@@ -291,24 +285,14 @@ public:
     ///   auto slice3 = view.slice( Range::all(), Range::all(), Range::dummy() );
     /// @endcode
     template <typename... Args>
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-    typename slice_t<Args...>::type slice(Args... args) {
-#else
-    // C++14 will allow auto return type
     auto slice(Args... args) {
-#endif
         return slicer_t(*this).apply(args...);
     }
 
 
     /// @brief Obtain a slice from this view:  view.slice( Range, Range, ... )
     template <typename... Args>
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-    typename const_slice_t<Args...>::type slice(Args... args) const {
-#else
-    // C++14 will allow auto return type
     auto slice(Args... args) const {
-#endif
         return const_slicer_t(*this).apply(args...);
     }
 
@@ -365,6 +349,8 @@ private:
     }
 
     // -- Private data
+
+    template<typename,int> friend class ArrayView;
 
     value_type* data_;
     size_t size_;

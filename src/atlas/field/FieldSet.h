@@ -24,9 +24,11 @@
 
 #include "eckit/deprecated.h"
 
+#include "atlas/array_fwd.h"
 #include "atlas/field/Field.h"
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
+#include "atlas/util/Metadata.h"
 #include "atlas/util/Object.h"
 #include "atlas/util/ObjectHandle.h"
 
@@ -112,6 +114,9 @@ public:  // methods
     const_iterator cbegin() const { return fields_.begin(); }
     const_iterator cend() const { return fields_.end(); }
 
+    const util::Metadata& metadata() const { return metadata_; }
+    util::Metadata& metadata() { return metadata_; }
+
     void haloExchange(bool on_device = false) const;
     void adjointHaloExchange(bool on_device = false) const;
     void set_dirty(bool = true) const;
@@ -119,6 +124,7 @@ public:  // methods
 protected:                                // data
     std::vector<Field> fields_;           ///< field storage
     std::string name_;                    ///< internal name
+    util::Metadata metadata_;             ///< metadata associated with the FieldSet
     std::map<std::string, idx_t> index_;  ///< name-to-index map, to refer fields by name
 };
 
@@ -134,6 +140,22 @@ const char* atlas__FieldSet__name(FieldSetImpl* This);
 idx_t atlas__FieldSet__size(const FieldSetImpl* This);
 FieldImpl* atlas__FieldSet__field_by_name(FieldSetImpl* This, char* name);
 FieldImpl* atlas__FieldSet__field_by_idx(FieldSetImpl* This, idx_t idx);
+void atlas__FieldSet__data_int_specf(FieldSetImpl* This, char* name, int*& field_data, int& rank, int*& field_shapef,
+                                  int*& field_stridesf);
+void atlas__FieldSet__data_long_specf(FieldSetImpl* This, char* name, long*& field_data, int& rank, int*& field_shapef,
+                                   int*& field_stridesf);
+void atlas__FieldSet__data_float_specf(FieldSetImpl* This, char* name, float*& field_data, int& rank, int*& field_shapef,
+                                    int*& field_stridesf);
+void atlas__FieldSet__data_double_specf(FieldSetImpl* This, char* name, double*& field_data, int& rank, int*& field_shapef,
+                                     int*& field_stridesf);
+void atlas__FieldSet__data_int_specf_by_idx(FieldSetImpl* This, int& idx, int*& field_data, int& rank, int*& field_shapef,
+                                  int*& field_stridesf);
+void atlas__FieldSet__data_long_specf_by_idx(FieldSetImpl* This, int& idx, long*& field_data, int& rank, int*& field_shapef,
+                                   int*& field_stridesf);
+void atlas__FieldSet__data_float_specf_by_idx(FieldSetImpl* This, int& idx, float*& field_data, int& rank, int*& field_shapef,
+                                    int*& field_stridesf);
+void atlas__FieldSet__data_double_specf_by_idx(FieldSetImpl* This, int& idx, double*& field_data, int& rank, int*& field_shapef,
+                                     int*& field_stridesf);
 void atlas__FieldSet__set_dirty(FieldSetImpl* This, int value);
 void atlas__FieldSet__halo_exchange(FieldSetImpl* This, int on_device);
 }
@@ -159,6 +181,8 @@ public:  // methods
     FieldSet();
     FieldSet(const std::string& name);
     FieldSet(const Field&);
+
+    FieldSet clone(const eckit::Parametrisation& config = util::Config()) const;
 
     idx_t size() const { return get()->size(); }
     bool empty() const { return get()->empty(); }
@@ -209,7 +233,12 @@ public:  // methods
     const_iterator cbegin() const { return get()->begin(); }
     const_iterator cend() const { return get()->end(); }
 
+    const util::Metadata& metadata() const;
+    util::Metadata& metadata();
+
     void haloExchange(bool on_device = false) const { get()->haloExchange(on_device); }
+    void adjointHaloExchange(bool on_device = false) const { get()->adjointHaloExchange(on_device); }
+
     void set_dirty(bool = true) const;
 
     // Deprecated API

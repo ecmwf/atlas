@@ -42,8 +42,6 @@ public:
     bool valid() const { return functionspace_; }
 
     idx_t size() const { return functionspace_->size(); }
-//    idx_t sizeOwned() const { return functionspace_->sizeOwned(); }
-//    idx_t sizeHalo() const { return functionspace_->sizeHalo(); }
     idx_t levels() const { return functionspace_->levels(); }
 
     const Vertical& vertical() const { return functionspace_->vertical(); }
@@ -54,10 +52,6 @@ public:
     std::string checksum(const Field&) const;
 
     idx_t index(idx_t blk, idx_t rof) const { return functionspace_->index(blk, rof); }
-//    idx_t i_begin(idx_t j) const { return functionspace_->i_begin(j); }
-//    idx_t i_end(idx_t j) const { return functionspace_->i_end(j); }
-//    idx_t j_begin() const { return functionspace_->j_begin(); }
-//    idx_t j_end() const { return functionspace_->j_end(); }
     idx_t k_begin() const { return functionspace_->k_begin(); }
     idx_t k_end() const { return functionspace_->k_end(); }
     idx_t nproma() const { return functionspace_->nproma(); }

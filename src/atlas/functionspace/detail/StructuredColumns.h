@@ -218,8 +218,8 @@ private:  // data
     mutable util::ObjectHandle<parallel::GatherScatter> gather_scatter_;
     mutable util::ObjectHandle<parallel::Checksum> checksum_;
     mutable util::ObjectHandle<parallel::HaloExchange> halo_exchange_;
-    mutable std::unique_ptr<util::PartitionPolygon> polygon_;
-    mutable util::PartitionPolygons polygons_;
+    mutable std::vector<util::ObjectHandle<util::PartitionPolygon>> polygons_;
+    mutable util::PartitionPolygons all_polygons_;
 
     Field field_xy_;
     Field field_partition_;
@@ -317,6 +317,7 @@ private:  // data
     friend struct BlockStructuredColumnsFortranAccess;
     Map2to1 ij2gp_;
 
+    friend class BlockStructuredColumns;
     void setup(const grid::Distribution& distribution, const eckit::Configuration& config);
 
     friend class BlockStructuredColumns;

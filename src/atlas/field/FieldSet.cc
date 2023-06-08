@@ -11,6 +11,7 @@
 #include <sstream>
 
 #include "atlas/field/Field.h"
+#include "atlas/field/detail/FieldInterface.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/runtime/Exception.h"
@@ -86,6 +87,39 @@ std::vector<std::string> FieldSetImpl::field_names() const {
 // C wrapper interfaces to C++ routines
 extern "C" {
 
+void atlas__FieldSet__data_int_specf(FieldSetImpl* This, char* name, int*& data, int& rank, int*& shapef, int*& stridesf) {
+    atlas__Field__data_int_specf(This->field(name).get(), data, rank, shapef, stridesf);
+}
+
+void atlas__FieldSet__data_long_specf(FieldSetImpl* This, char* name, long*& data, int& rank, int*& shapef, int*& stridesf) {
+    atlas__Field__data_long_specf(This->field(name).get(), data, rank, shapef, stridesf);
+}
+
+void atlas__FieldSet__data_float_specf(FieldSetImpl* This, char* name, float*& data, int& rank, int*& shapef, int*& stridesf) {
+    atlas__Field__data_float_specf(This->field(name).get(), data, rank, shapef, stridesf);
+}
+
+void atlas__FieldSet__data_double_specf(FieldSetImpl* This, char* name, double*& data, int& rank, int*& shapef, int*& stridesf) {
+    atlas__Field__data_double_specf(This->field(name).get(), data, rank, shapef, stridesf);
+}
+
+void atlas__FieldSet__data_int_specf_by_idx(FieldSetImpl* This, int& idx, int*& data, int& rank, int*& shapef, int*& stridesf) {
+    atlas__Field__data_int_specf(This->operator[](idx).get(), data, rank, shapef, stridesf);
+}
+
+void atlas__FieldSet__data_long_specf_by_idx(FieldSetImpl* This, int& idx, long*& data, int& rank, int*& shapef, int*& stridesf) {
+    atlas__Field__data_long_specf(This->operator[](idx).get(), data, rank, shapef, stridesf);
+}
+
+void atlas__FieldSet__data_float_specf_by_idx(FieldSetImpl* This, int& idx, float*& data, int& rank, int*& shapef, int*& stridesf) {
+    atlas__Field__data_float_specf(This->operator[](idx).get(), data, rank, shapef, stridesf);
+}
+
+void atlas__FieldSet__data_double_specf_by_idx(FieldSetImpl* This, int& idx, double*& data, int& rank, int*& shapef, int*& stridesf) {
+    atlas__Field__data_double_specf(This->operator[](idx).get(), data, rank, shapef, stridesf);
+}
+
+
 FieldSetImpl* atlas__FieldSet__new(char* name) {
     FieldSetImpl* fset = new FieldSetImpl(std::string(name));
     fset->name()       = name;
@@ -150,6 +184,23 @@ FieldSet::FieldSet(const std::string& name): Handle(new Implementation(name)) {}
 
 FieldSet::FieldSet(const Field& field): Handle(new Implementation()) {
     get()->add(field);
+}
+
+const util::Metadata& FieldSet::metadata() const {
+    return get()->metadata();
+}
+
+util::Metadata& FieldSet::metadata() {
+    return get()->metadata();
+}
+
+FieldSet FieldSet::clone(const eckit::Parametrisation& config) const {
+    FieldSet fset;
+    for (idx_t jj = 0; jj < size(); ++jj) {
+        fset.add(field(jj).clone(config));
+    }
+    fset.metadata() = metadata();
+    return fset;
 }
 
 void FieldSet::set_dirty(bool value) const {

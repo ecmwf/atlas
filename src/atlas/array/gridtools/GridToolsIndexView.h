@@ -11,6 +11,7 @@
 #pragma once
 #include <type_traits>
 
+#include "atlas/array/Array.h"
 #include "atlas/array/gridtools/GridToolsTraits.h"
 #include "atlas/library/config.h"
 
@@ -100,13 +101,11 @@ public:
     using data_view_t =
         gridtools::data_view_tt<typename std::remove_const<Value>::type, Rank, gridtools::get_access_mode<Value>()>;
 
+    using value_type                   = Value;
+
 public:
-    IndexView(data_view_t data_view): gt_data_view_(data_view) {
-        if (data_view.valid())
-            size_ = gt_data_view_.storage_info().total_length();
-        else
-            size_ = 0;
-    }
+    IndexView(data_view_t);
+    IndexView(const Array&, bool device_view);
 
     template <typename... Coords, typename = typename std::enable_if<(sizeof...(Coords) == Rank), int>::type>
     Index ATLAS_HOST_DEVICE operator()(Coords... c) {
@@ -121,11 +120,27 @@ public:
 
     idx_t size() const { return size_; }
 
+    template <typename Int>
+    idx_t shape(Int idx) const {
+        return shape_[idx];
+    }
+
+    template <typename Int>
+    idx_t stride(Int idx) const {
+        return strides_[idx];
+    }
+
+
     void dump(std::ostream& os) const;
 
 private:
     data_view_t gt_data_view_;
     idx_t size_;
+    idx_t shape_[Rank];
+    idx_t strides_[Rank];
+    bool is_device_view_;
+    ArrayDataStore const* data_store_orig_;
+    Array const* array_;
 
 #undef INDEX_REF
 #undef TO_FORTRAN

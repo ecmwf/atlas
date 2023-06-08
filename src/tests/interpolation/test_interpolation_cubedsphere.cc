@@ -262,10 +262,12 @@ CASE("cubedsphere_wind_interpolation") {
         const auto vBeta  = array::make_view<double, 1>(targetFieldSet["v_beta"]);
         auto error0       = array::make_view<double, 1>(targetFieldSet["error_field_0"]);
         auto error1       = array::make_view<double, 1>(targetFieldSet["error_field_1"]);
+        const auto& tVec  = interp.target()->metadata().getIntVector("tile index");
+
         for (idx_t idx = 0; idx < targetFunctionspace.size(); ++idx) {
             if (!ghost(idx)) {
                 const auto ll = PointLonLat(lonlat(idx, LON), lonlat(idx, LAT));
-                const idx_t t = proj.getCubedSphereTiles().indexFromLonLat(ll);
+                const idx_t t = tVec[idx];
 
                 // Get inverse wind transform jacobian.
                 auto jac = windTransform(ll, t).inverse();
@@ -322,12 +324,13 @@ CASE("cubedsphere_wind_interpolation") {
         const auto vAdj   = array::make_view<double, 1>(targetFieldSet["v_adjoint"]);
         auto vAlphaAdj    = array::make_view<double, 1>(targetFieldSet["v_alpha_adjoint"]);
         auto vBetaAdj     = array::make_view<double, 1>(targetFieldSet["v_beta_adjoint"]);
+        const auto& tVec  = interp.target()->metadata().getIntVector("tile index");
         vAlphaAdj.assign(0.);
         vBetaAdj.assign(0.);
         for (idx_t idx = 0; idx < targetFunctionspace.size(); ++idx) {
             if (!ghost(idx)) {
                 const auto ll = PointLonLat(lonlat(idx, LON), lonlat(idx, LAT));
-                const idx_t t = proj.getCubedSphereTiles().indexFromLonLat(ll);
+                const idx_t t = tVec[idx];
 
                 // Get adjoint of inverse wind transform jacobian.
                 auto jac = windTransform(ll, t).inverse().transpose();

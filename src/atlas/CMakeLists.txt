@@ -323,6 +323,8 @@ mesh/HybridElements.cc
 mesh/HybridElements.h
 mesh/Mesh.cc
 mesh/Mesh.h
+mesh/MeshBuilder.cc
+mesh/MeshBuilder.h
 mesh/Nodes.cc
 mesh/Nodes.h
 mesh/PartitionPolygon.cc
@@ -657,14 +659,14 @@ list( APPEND atlas_array_srcs
 array.h
 array_fwd.h
 array/Array.h
+array/ArrayDataStore.cc
+array/ArrayDataStore.h
 array/ArrayIdx.h
 array/ArrayLayout.h
 array/ArrayShape.h
 array/ArraySpec.cc
 array/ArraySpec.h
 array/ArrayStrides.h
-array/ArrayUtil.cc
-array/ArrayUtil.h
 array/ArrayView.h
 array/ArrayViewUtil.h
 array/ArrayViewDefs.h
@@ -682,6 +684,7 @@ array/helpers/ArrayAssigner.h
 array/helpers/ArrayWriter.h
 array/helpers/ArraySlicer.h
 array/helpers/ArrayCopier.h
+array/helpers/ArrayForEach.h
 #array/Table.h
 #array/Table.cc
 #array/TableView.h
@@ -757,6 +760,8 @@ util/detail/BlackMagic.h
 util/detail/Cache.h
 util/detail/Debug.h
 util/detail/KDTree.h
+util/function/MDPI_functions.h
+util/function/MDPI_functions.cc
 util/function/SolidBodyRotation.h
 util/function/SolidBodyRotation.cc
 util/function/SphericalHarmonic.h
@@ -979,4 +984,4 @@ ecbuild_add_library( TARGET atlas
 
 )
 
-target_compile_features( atlas PUBLIC cxx_std_11 )
+target_compile_features( atlas PUBLIC cxx_std_17 )

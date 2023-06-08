@@ -63,8 +63,9 @@ CheckerboardPartitioner::Checkerboard CheckerboardPartitioner::checkerboard(cons
     }
     else {
         // default number of bands
-        double zz = std::sqrt((double)(nparts * cb.ny) / cb.nx);  // aim at +/-square regions
-        cb.nbands = (idx_t)zz + 0.5;
+        double zz = std::sqrt(double(nparts * cb.ny) / double(cb.nx));  // aim at +/-square regions
+        cb.nbands = std::floor(zz + 0.5);
+
         if (cb.nbands < 1) {
             cb.nbands = 1;  // at least one band
         }

@@ -696,13 +696,13 @@ CASE("test_trans_hires") {
         trans::Trans trans(g, trc, option::type(trans_type));
         for (int ivar_in = 2; ivar_in < 3; ivar_in++) {         // vorticity, divergence, scalar
             for (int ivar_out = 2; ivar_out < 3; ivar_out++) {  // u, v, scalar
-                int nb_fld = 1;
-                if (ivar_out == 2) {
-                    nb_fld = nb_scalar;
-                }
-                else {
-                    nb_fld = nb_vordiv;
-                }
+                // int nb_fld = 1;
+                // if (ivar_out == 2) {
+                //     nb_fld = nb_scalar;
+                // }
+                // else {
+                //     nb_fld = nb_vordiv;
+                // }
                 for (int jfld = 0; jfld < 1; jfld++) {  // multiple fields
                     int k = 0;
                     for (int m = 0; m <= trc; m++) {                 // zonal wavenumber

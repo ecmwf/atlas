@@ -20,7 +20,7 @@
 #include "atlas/util/Object.h"
 
 #include "atlas/array.h"
-#include "atlas/array/ArrayUtil.h"
+#include "atlas/array/ArrayDataStore.h"
 #include "atlas/array/DataType.h"
 #include "atlas/util/Metadata.h"
 
@@ -148,6 +148,13 @@ public:  // Destructor
     void set_variables(idx_t n) { metadata().set("variables", n); }
     idx_t levels() const { return metadata().get<idx_t>("levels"); }
     idx_t variables() const { return metadata().get<idx_t>("variables"); }
+
+    void set_horizontal_dimension(const std::vector<idx_t>& h_dim) { metadata().set("horizontal_dimension", h_dim); }
+    std::vector<idx_t> horizontal_dimension() const {
+        std::vector<idx_t> h_dim{0};
+        metadata().get("horizontal_dimension", h_dim);
+        return h_dim;
+    }
 
     void set_functionspace(const FunctionSpace&);
     const FunctionSpace& functionspace() const;

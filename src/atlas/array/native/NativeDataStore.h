@@ -16,7 +16,7 @@
 #include <limits>   // std::numeric_limits<T>::signaling_NaN
 #include <sstream>
 
-#include "atlas/array/ArrayUtil.h"
+#include "atlas/array/ArrayDataStore.h"
 #include "atlas/library/Library.h"
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"

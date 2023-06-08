@@ -42,7 +42,6 @@ static int atlas_feenableexcept(int excepts) {
 #endif
 }
 
-#ifdef UNUSED
 static int atlas_fedisableexcept(int excepts) {
 #if ATLAS_HAVE_FEDISABLEEXCEPT
     return ::fedisableexcept(excepts);
@@ -50,7 +49,6 @@ static int atlas_fedisableexcept(int excepts) {
     return 0;
 #endif
 }
-#endif
 
 namespace atlas {
 namespace library {
@@ -315,6 +313,41 @@ void enable_floating_point_exceptions() {
         }
     }
 }
+
+bool enable_floating_point_exception(int except) {
+    auto check_flag = [](int flags, int bits) -> bool { return (flags & bits) == bits; };
+    int previous = atlas_feenableexcept(except);
+    return !check_flag(previous,except);
+}
+
+bool disable_floating_point_exception(int except) {
+    auto check_flag = [](int flags, int bits) -> bool { return (flags & bits) == bits; };
+    int previous = atlas_fedisableexcept(except);
+    return !check_flag(previous,except);
+}
+
+bool enable_floating_point_exception(const std::string& floating_point_exception) {
+    auto it = str_to_except.find(floating_point_exception);
+    if (it == str_to_except.end()) {
+        throw eckit::UserError(
+            floating_point_exception + " is not a valid floating point exception code. "
+                "Valid codes: [FE_INVALID,FE_INEXACT,FE_DIVBYZERO,FE_OVERFLOW,FE_ALL_EXCEPT]",
+            Here());
+    }
+    return enable_floating_point_exception(it->second);
+}
+
+bool disable_floating_point_exception(const std::string& floating_point_exception) {
+    auto it = str_to_except.find(floating_point_exception);
+    if (it == str_to_except.end()) {
+        throw eckit::UserError(
+            floating_point_exception + " is not a valid floating point exception code. "
+                "Valid codes: [FE_INVALID,FE_INEXACT,FE_DIVBYZERO,FE_OVERFLOW,FE_ALL_EXCEPT]",
+            Here());
+    }
+    return disable_floating_point_exception(it->second);
+}
+
 
 void enable_atlas_signal_handler() {
     if (eckit::Resource<bool>("atlasSignalHandler;$ATLAS_SIGNAL_HANDLER", false)) {

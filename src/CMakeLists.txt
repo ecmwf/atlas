@@ -24,6 +24,12 @@ else()
   set( atlas_HAVE_TESSELATION 0 )
 endif()
 
+if( atlas_HAVE_PROJ )
+  set( atlas_HAVE_PROJ 1 )
+else()
+  set( atlas_HAVE_PROJ 0 )
+endif()
+
 if( atlas_HAVE_FORTRAN )
   set( atlas_HAVE_FORTRAN 1 )
 else()

@@ -6,7 +6,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if( CMAKE_CXX_COMPILER_ID MATCHES Cray )
@@ -19,4 +19,9 @@ if( CMAKE_CXX_COMPILER_ID MATCHES Cray )
 #  The IPA optimization level was changed to "1" due to the presence of OMP
 #          directives, ACC directives, or ASM intrinsics.
 
+endif()
+
+if( CMAKE_CXX_COMPILER_ID MATCHES NVHPC )
+  ecbuild_add_cxx_flags("--diag_suppress declared_but_not_referenced --display_error_number" NAME atlas_cxx_disable_warnings )
+  # For all the variables with side effects (constructor/dectructor functionality)
 endif()

@@ -11,8 +11,10 @@
 #pragma once
 #include <initializer_list>
 #include <string>
+#include <string_view>
 
 #include "eckit/config/LocalConfiguration.h"
+#include "eckit/log/JSON.h"
 
 namespace eckit {
 class PathName;
@@ -42,6 +44,9 @@ public:
     /// @brief Constructor immediately setting a value.
     template <typename ValueT>
     Config(const std::string& name, const ValueT& value);
+
+    Config(const std::string& name, const std::string_view value) :
+        Config(name, std::string(value)) {}
 
     template <typename ValueT>
     Config(const std::string& name, std::initializer_list<ValueT>&& value);
@@ -77,7 +82,7 @@ public:
 
     std::vector<std::string> keys() const;
 
-    std::string json() const;
+    std::string json(eckit::JSON::Formatting = eckit::JSON::Formatting::indent()) const;
 };
 
 // ------------------------------------------------------------------

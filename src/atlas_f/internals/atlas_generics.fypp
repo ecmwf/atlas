@@ -10,6 +10,7 @@
 
 #:set ranks  = [1,2,3,4]
 #:set dim    = ['',':',':,:',':,:,:',':,:,:,:',':,:,:,:,:']
+#:set dimr   = ['','',':',':,:',':,:,:',':,:,:,:']
 
 #:set ftypes = ['integer(c_int)','integer(c_long)','real(c_float)','real(c_double)', 'logical']
 #:set ctypes = ['int','long','float','double', 'int']

@@ -172,7 +172,7 @@ TEST( test_field_aligned )
     implicit none
     type(atlas_Field) :: field
     real(c_double), pointer :: view(:,:,:)
-    field = atlas_Field("field_2",atlas_real(c_double),(/3,5,10/),alignment=4)
+    field = atlas_Field("field_3",atlas_real(c_double),(/3,5,10/),alignment=4)
     call field%data(view)
     FCTEST_CHECK_EQUAL( size(view,1) , 3 )
     FCTEST_CHECK_EQUAL( size(view,2) , 5 )
@@ -183,6 +183,72 @@ TEST( test_field_aligned )
     FCTEST_CHECK_EQUAL( field%stride(1), 1 )
     FCTEST_CHECK_EQUAL( field%stride(2), 4 )
     FCTEST_CHECK_EQUAL( field%stride(3), 4*5 )
+    call field%final()
+END_TEST
+
+TEST( test_fieldset_slice )
+    implicit none
+    type(atlas_FieldSet) :: fieldset
+    type(atlas_Field) :: field
+    integer, pointer :: view1d(:), view3d(:,:,:)
+    integer, pointer :: slice0d, slice2d(:,:)
+
+    ! slicing of a three-dimensional field
+    field = atlas_Field("field_4",atlas_integer(),(/3,5,10/))
+    call field%data(view3d)
+    view3d(1,2,3) = 123
+    call field%data(slice2d,3)
+    FCTEST_CHECK_EQUAL( size(slice2d,1) , 3 )
+    FCTEST_CHECK_EQUAL( size(slice2d,2) , 5 )
+    FCTEST_CHECK_EQUAL( slice2d(1,2), 123 )
+    slice2d(1,2) = slice2d(1,2) * 2
+    call field%data(view3d)
+    FCTEST_CHECK_EQUAL( view3d(1,2,3), 246 )
+
+    ! slicing of a one-dimensional field
+    field = atlas_Field("field_5",atlas_integer(),(/3/))
+    call field%data(view1d)
+    view1d(2) = 123
+    call field%data(slice0d,2)
+    FCTEST_CHECK_EQUAL( slice0d, 123 )
+    slice0d = slice0d * 2
+    call field%data(view1d)
+    FCTEST_CHECK_EQUAL( view1d(2), 246 )
+    call field%final()
+
+    ! slicing of a three-dimensional field through a fieldset by name and by idx
+    fieldset = atlas_FieldSet()
+    field = atlas_Field("field_6",atlas_integer(),(/3,5,10/))
+    call fieldset%add(field)
+    field = atlas_Field("field_7",atlas_integer(),(/3/))
+    call fieldset%add(field)
+    call fieldset%data("field_6", view3d)
+    view3d(1,2,3) = 122
+    call fieldset%data(1, view3d)
+    view3d(1,2,3) = 123
+    call fieldset%data("field_6", slice2d, 3)
+    slice2d(1,2) = slice2d(1,2) + 1
+    call fieldset%data(1, slice2d, 3)
+    slice2d(1,2) = slice2d(1,2) - 1
+    FCTEST_CHECK_EQUAL( size(slice2d,1) , 3 )
+    FCTEST_CHECK_EQUAL( size(slice2d,2) , 5 )
+    FCTEST_CHECK_EQUAL( slice2d(1,2), 123 )
+    slice2d(1,2) = slice2d(1,2) * 2
+    call fieldset%data('field_6', view3d)
+    FCTEST_CHECK_EQUAL( view3d(1,2,3), 246 )
+
+    ! slicing of a one-dimensional field through a fieldset by name and by idx
+    call fieldset%data('field_7', view1d)
+    view1d(2) = 122
+    call fieldset%data(2, view1d)
+    view1d(2) = 123
+    call field%data(slice0d, 2)
+    FCTEST_CHECK_EQUAL( slice0d, 123 )
+    slice0d = slice0d * 2
+    call field%data(view1d)
+    FCTEST_CHECK_EQUAL( view1d(2), 246 )
+    call field%final()
+    call fieldset%final()
 END_TEST
 
 ! -----------------------------------------------------------------------------

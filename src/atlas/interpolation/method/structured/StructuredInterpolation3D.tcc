@@ -322,9 +322,9 @@ void StructuredInterpolation3D<Kernel>::execute_impl( const Kernel& kernel, cons
             typename Kernel::Weights weights;
             atlas_omp_for( idx_t n = 0; n < out_npts; ++n ) {
                 for ( idx_t k = 0; k < out_nlev; ++k ) {
-                    const double x = xcoords( n, k ) * convert_units;
-                    const double y = ycoords( n, k ) * convert_units;
-                    const double z = zcoords( n, k );
+                    double x = xcoords( n, k ) * convert_units;
+                    double y = ycoords( n, k ) * convert_units;
+                    double z = zcoords( n, k );
                     kernel.compute_stencil( x, y, z, stencil );
                     kernel.compute_weights( x, y, z, stencil, weights );
                     for ( idx_t i = 0; i < N; ++i ) {

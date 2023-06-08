@@ -7,6 +7,21 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.33.0] - 2023-04-03
+### Added
+- Add support for StructuredPartitionPolygon with halo > 0
+- Add information on atlas having PROJ support
+
+### Changed
+- C++17 standard is now a requirement
+
+### Fixed
+Fix StructuredInterpolation2D with retry for failed stencils
+
+## [0.32.1] - 2023-02-09
+### Added
+- Added (lon, lat) to (alpha, beta) transforms to cubed sphere projection
+
 ## [0.32.0] - 2023-01-23
 ### Added
 - Added BlockStructuredColumns FunctionSpace
@@ -428,6 +443,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.33.0]: https://github.com/ecmwf/atlas/compare/0.32.1...0.33.0
+[0.32.1]: https://github.com/ecmwf/atlas/compare/0.32.0...0.32.1
 [0.32.0]: https://github.com/ecmwf/atlas/compare/0.31.1...0.32.0
 [0.31.1]: https://github.com/ecmwf/atlas/compare/0.31.0...0.31.1
 [0.31.0]: https://github.com/ecmwf/atlas/compare/0.30.0...0.31.0
