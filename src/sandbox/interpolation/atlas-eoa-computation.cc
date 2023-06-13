@@ -61,6 +61,7 @@ public:
     AtlasEOAComputation(int argc, char* argv[]): AtlasTool(argc, argv) {
         add_option(new Separator("Interpolation options"));
         add_option(new SimpleOption<std::string>("type","Type of interpolation"));
+        add_option(new SimpleOption<std::string>("order","Order of interpolation, when applicable"));
         add_option(new SimpleOption<std::string>("interpolation.structured","Is the interpolation for structured grids"));
         
         add_option(new Separator("Initial data"));
@@ -179,33 +180,64 @@ FunctionSpace create_functionspace(Mesh& mesh, int halo, std::string type, bool 
 }
 
 
-double compute_analytical_error(const Field target, std::function<double(const PointLonLat&)> func, Mesh src_mesh, Mesh tgt_mesh, double& err_remap_linf){
+void compute_errors(const Field source, const Field target,
+        std::function<double(const PointLonLat&)> func,
+        Mesh src_mesh, Mesh tgt_mesh) {
+    auto src_vals             = array::make_view<double, 1>(source);
     auto tgt_vals             = array::make_view<double, 1>(target);
+    const auto src_node_ghost = array::make_view<int, 1>(src_mesh.nodes().ghost());
+    const auto src_node_halo  = array::make_view<int, 1>(src_mesh.nodes().halo());
     const auto tgt_node_ghost = array::make_view<int, 1>(tgt_mesh.nodes().ghost());
     const auto tgt_node_halo  = array::make_view<int, 1>(tgt_mesh.nodes().halo());
 
-    // to get tgt_points and tgt_areas
-    // note: no need for polygon intersections here!!!
-    auto src_fs = create_functionspace(src_mesh, 1, "NodeColumns", false);
-    auto tgt_fs = create_functionspace(tgt_mesh, 1, "NodeColumns", false);
+    // get tgt_points and tgt_areas
+    // TODO: no need for polygon intersections here!!!
+    auto src_fs = create_functionspace(src_mesh, 0, "NodeColumns", 0);
+    auto tgt_fs = create_functionspace(tgt_mesh, 0, "NodeColumns", 0);
     auto interpolation = CSPInterpolation();
     interpolation.do_setup(src_fs, tgt_fs);
 
-    double err_remap_l2 = 0;
-    err_remap_linf = -1.;
+    // compute error to the analytical solution on the target
+    double err_cons = 0.;
+    double terr_remap_l2 = 0;
+    double terr_remap_linf = -1.;
     for (idx_t tpt = 0; tpt < interpolation.tgt_npoints(); ++tpt) {
         //if (tgt_cell_halo(tpt)) { // in case of cell data
         if (tgt_node_ghost(tpt) or tgt_node_halo(tpt)) { // for node data
             continue;
         }
+        err_cons += tgt_vals(tpt) * interpolation.tgt_areas(tpt);
         auto p = interpolation.tgt_points(tpt);
         PointLonLat pll;
         eckit::geometry::Sphere::convertCartesianToSpherical(1., p, pll);
         double err_l = std::abs(tgt_vals(tpt) - func(pll));
-        err_remap_l2 += err_l * err_l * interpolation.tgt_areas(tpt);
-        err_remap_linf = std::max(err_remap_linf, err_l);
+        terr_remap_l2 += err_l * err_l * interpolation.tgt_areas(tpt);
+        terr_remap_linf = std::max(terr_remap_linf, err_l);
     }
-    return err_remap_l2;
+
+    // compute the conservation error and the projection errors serr_remap_*
+    double serr_remap_l2 = 0;
+    double serr_remap_linf = -1.;
+    for (idx_t spt = 0; spt < interpolation.src_npoints(); ++spt) {
+        //if (tgt_cell_halo(tpt)) { // in case of cell data
+        if (src_node_ghost(spt) or src_node_halo(spt)) { // for node data
+            continue;
+        }
+        err_cons -= src_vals(spt) * interpolation.src_areas(spt);
+        auto p = interpolation.tgt_points(spt);
+        PointLonLat pll;
+        eckit::geometry::Sphere::convertCartesianToSpherical(1., p, pll);
+        double err_l = std::abs(src_vals(spt) - func(pll));
+        serr_remap_l2 += err_l * err_l * interpolation.src_areas(spt);
+        serr_remap_linf = std::max(serr_remap_linf, err_l);
+    }
+    serr_remap_l2 = std::sqrt(serr_remap_l2);
+    terr_remap_l2 = std::sqrt(terr_remap_l2);
+    std::cout << "src l2 error: " << serr_remap_l2 << std::endl;
+    std::cout << "src l_inf error: " << serr_remap_linf << std::endl;
+    std::cout << "tgt l2 error: " << terr_remap_l2 << std::endl;
+    std::cout << "tgt l_inf error: " << terr_remap_linf << std::endl;
+    std::cout << "conservation error: " << err_cons << std::endl;
 }
 
 int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
@@ -217,7 +249,7 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
     timers.target_setup.start();
     auto tgt_mesh = Mesh{tgt_grid, grid::Partitioner(args.getString("target.partitioner", "serial"))};
     auto tgt_functionspace =
-        create_functionspace(tgt_mesh, 2, args.getString("target.functionspace", ""), args.getBool("interpolation.structured", 0));
+        create_functionspace(tgt_mesh, 2, args.getString("target.functionspace", ""), args.getBool("interpolation.structured", false));
     auto tgt_field = tgt_functionspace.createField<double>();
     timers.target_setup.stop();
 
@@ -227,7 +259,7 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
     auto src_partitioner = grid::MatchingPartitioner{tgt_mesh, util::Config("partitioner",args.getString("source.partitioner", "spherical-polygon"))};
     auto src_mesh        = src_meshgenerator.generate(src_grid, src_partitioner);
     auto src_functionspace =
-        create_functionspace(src_mesh, 2, args.getString("source.functionspace", ""), args.getBool("interpolation.structured", 0));
+        create_functionspace(src_mesh, 2, args.getString("source.functionspace", ""), args.getBool("interpolation.structured", false));
     auto src_field = src_functionspace.createField<double>();
     timers.source_setup.stop();
 
@@ -255,16 +287,13 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
     auto metadata = interpolation.execute(src_field, tgt_field);
     timers.interpolation_execute.stop();
 
-    double err_remap_linf;
-    double err_remap_l2 = compute_analytical_error(tgt_field, get_init(args), src_mesh, tgt_mesh, err_remap_linf);
-    std::cout << "L2 error: " << err_remap_l2 << std::endl;
-    std::cout << "L_inf error: " << err_remap_linf << std::endl;
+    compute_errors(src_field, tgt_field, get_init(args), src_mesh, tgt_mesh);
 
     // API not yet acceptable
     Field src_conservation_field;
     {
-        using Statistics = interpolation::method::ConservativeSphericalPolygonInterpolation::Statistics;
-        Statistics stats(metadata);
+        //using Statistics = interpolation::method::ConservativeSphericalPolygonInterpolation::Statistics;
+        //Statistics stats(metadata);
         //stats.accuracy(interpolation, tgt_field, get_init(args), &metadata);
         //src_conservation_field = stats.diff(interpolation, src_field, tgt_field);
         //src_conservation_field.set_dirty(true);
