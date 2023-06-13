@@ -7,6 +7,13 @@
 # does it submit to any jurisdiction.
 
 ecbuild_add_executable(
+    TARGET  atlas-eoa-computation
+    SOURCES atlas-eoa-computation.cc
+    LIBS    atlas
+    NOINSTALL
+)
+
+ecbuild_add_executable(
     TARGET  atlas-parallel-interpolation
     SOURCES atlas-parallel-interpolation.cc
             PartitionedMesh.h
