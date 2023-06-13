@@ -151,6 +151,10 @@ public:
 
     inline const PointXYZ& src_points(size_t id) const { return data_->src_points_[id]; }
     inline const PointXYZ& tgt_points(size_t id) const { return data_->tgt_points_[id]; }
+    double src_areas(size_t id) const { return data_->src_areas_[id]; }
+    double tgt_areas(size_t id) const { return data_->tgt_areas_[id]; }
+    gidx_t src_npoints() const { return n_spoints_; }
+    gidx_t tgt_npoints() const { return n_tpoints_; }
 
     interpolation::Cache createCache() const override;
 
