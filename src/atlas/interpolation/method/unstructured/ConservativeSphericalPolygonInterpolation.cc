@@ -1702,8 +1702,6 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
 
         double err_remap_cons     = 0.;
         double tgt_mass           = 0.;
-        const auto& tgt_csp2node_ = data_->tgt_csp2node_;
-        const auto& src_iparam_   = data_->src_iparam_;
         if (src_cell_data_) {
             for (idx_t spt = 0; spt < src_vals.size(); ++spt) {
                 if (src_cell_halo(spt)) {
