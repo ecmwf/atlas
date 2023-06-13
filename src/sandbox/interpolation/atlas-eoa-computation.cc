@@ -181,21 +181,18 @@ FunctionSpace create_functionspace(Mesh& mesh, int halo, std::string type, bool 
 
 double compute_analytical_error(const Field target, std::function<double(const PointLonLat&)> func, Mesh src_mesh, Mesh tgt_mesh, double& err_remap_linf){
     auto tgt_vals             = array::make_view<double, 1>(target);
-    const auto tgt_cell_halo  = array::make_view<int, 1>(tgt_mesh.cells().halo());
     const auto tgt_node_ghost = array::make_view<int, 1>(tgt_mesh.nodes().ghost());
     const auto tgt_node_halo  = array::make_view<int, 1>(tgt_mesh.nodes().halo());
 
     // to get tgt_points and tgt_areas
     // note: no need for polygon intersections here!!!
-    auto src_fs = create_functionspace(src_mesh, 2, "NodeColumns", false);
+    auto src_fs = create_functionspace(src_mesh, 1, "NodeColumns", false);
     auto tgt_fs = create_functionspace(tgt_mesh, 1, "NodeColumns", false);
     auto interpolation = CSPInterpolation();
     interpolation.do_setup(src_fs, tgt_fs);
 
     double err_remap_l2 = 0;
     err_remap_linf = -1.;
-    size_t ncells = std::min<size_t>(tgt_vals.size(), tgt_mesh.cells().size());
-    size_t nnodes = std::min<size_t>(tgt_vals.size(), tgt_mesh.nodes().size());
     for (idx_t tpt = 0; tpt < interpolation.tgt_npoints(); ++tpt) {
         //if (tgt_cell_halo(tpt)) { // in case of cell data
         if (tgt_node_ghost(tpt) or tgt_node_halo(tpt)) { // for node data
@@ -218,9 +215,9 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
     auto tgt_grid = StructuredGrid(args.getString("target.grid", "O128"));
 
     timers.target_setup.start();
-    auto tgt_mesh = Mesh{tgt_grid, grid::Partitioner(args.getString("target.partitioner", "regular_bands"))};
+    auto tgt_mesh = Mesh{tgt_grid, grid::Partitioner(args.getString("target.partitioner", "serial"))};
     auto tgt_functionspace =
-        create_functionspace(tgt_mesh, args.getLong("target.halo", 0), args.getString("target.functionspace", ""), args.getBool("interpolation.structured", 0));
+        create_functionspace(tgt_mesh, 2, args.getString("target.functionspace", ""), args.getBool("interpolation.structured", 0));
     auto tgt_field = tgt_functionspace.createField<double>();
     timers.target_setup.stop();
 
@@ -230,7 +227,7 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
     auto src_partitioner = grid::MatchingPartitioner{tgt_mesh, util::Config("partitioner",args.getString("source.partitioner", "spherical-polygon"))};
     auto src_mesh        = src_meshgenerator.generate(src_grid, src_partitioner);
     auto src_functionspace =
-        create_functionspace(src_mesh, args.getLong("source.halo", 2), args.getString("source.functionspace", ""), args.getBool("interpolation.structured", 0));
+        create_functionspace(src_mesh, 2, args.getString("source.functionspace", ""), args.getBool("interpolation.structured", 0));
     auto src_field = src_functionspace.createField<double>();
     timers.source_setup.stop();
 
