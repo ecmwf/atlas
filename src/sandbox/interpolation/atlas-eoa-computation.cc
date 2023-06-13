@@ -80,6 +80,7 @@ public:
         //add_option(new SimpleOption<std::string>("input.gmsh.coordinates", "Mesh coordinates: [xy, lonlat, xyz]"));
 
         add_option(new Separator("Output options"));
+        add_option(new SimpleOption<bool>("output-gmsh", "Output gmsh file"));
         //add_option(new SimpleOption<bool>("output.cell_centred", "Overwrite defaults"));
         //add_option(new SimpleOption<std::string>("output.meshgenerator.pole_elements", "default = pentagons"));
         //add_option(new SimpleOption<bool>("output.meshed", "Use function spaces based on mesh, also required for gmsh output"));
@@ -192,20 +193,30 @@ void compute_errors(const Field source, const Field target,
 
     // get tgt_points and tgt_areas
     // TODO: no need for polygon intersections here!!!
-    auto src_fs = create_functionspace(src_mesh, 0, "NodeColumns", 0);
-    auto tgt_fs = create_functionspace(tgt_mesh, 0, "NodeColumns", 0);
+    auto src_fs = create_functionspace(src_mesh, 2, "NodeColumns", 0);
+    auto tgt_fs = create_functionspace(tgt_mesh, 2, "NodeColumns", 0);
     auto interpolation = CSPInterpolation();
     interpolation.do_setup(src_fs, tgt_fs);
+
+    std::cout << "source.size :" << source.size() << std::endl;
+    std::cout << "target.size :" << target.size() << std::endl;
+    std::cout << "src_mesh.nodes :" << src_mesh.nodes().size() << std::endl;
+    std::cout << "tgt_mesh.nodes :" << tgt_mesh.nodes().size() << std::endl;
+    std::cout << "interpolation.src_npoints: " << interpolation.src_npoints() << std::endl;
+    std::cout << "interpolation.tgt_npoints: " << interpolation.tgt_npoints() << std::endl;
 
     // compute error to the analytical solution on the target
     double err_cons = 0.;
     double terr_remap_l2 = 0;
     double terr_remap_linf = -1.;
+    int cc = 0;
+    int ncc = 0;
     for (idx_t tpt = 0; tpt < interpolation.tgt_npoints(); ++tpt) {
-        //if (tgt_cell_halo(tpt)) { // in case of cell data
-        if (tgt_node_ghost(tpt) or tgt_node_halo(tpt)) { // for node data
+        if (tgt_node_ghost(tpt) or tgt_node_halo(tpt)) {
+            cc++;
             continue;
         }
+        ncc++;
         err_cons += tgt_vals(tpt) * interpolation.tgt_areas(tpt);
         auto p = interpolation.tgt_points(tpt);
         PointLonLat pll;
@@ -214,15 +225,19 @@ void compute_errors(const Field source, const Field target,
         terr_remap_l2 += err_l * err_l * interpolation.tgt_areas(tpt);
         terr_remap_linf = std::max(terr_remap_linf, err_l);
     }
-
+    std::cout << "tgt cc, ncc : " << cc << ", " << ncc << std::endl;
+    cc = 0;
+    ncc = 0;
     // compute the conservation error and the projection errors serr_remap_*
     double serr_remap_l2 = 0;
     double serr_remap_linf = -1.;
     for (idx_t spt = 0; spt < interpolation.src_npoints(); ++spt) {
         //if (tgt_cell_halo(tpt)) { // in case of cell data
         if (src_node_ghost(spt) or src_node_halo(spt)) { // for node data
+            cc++;
             continue;
         }
+        ncc++;
         err_cons -= src_vals(spt) * interpolation.src_areas(spt);
         auto p = interpolation.tgt_points(spt);
         PointLonLat pll;
@@ -231,6 +246,8 @@ void compute_errors(const Field source, const Field target,
         serr_remap_l2 += err_l * err_l * interpolation.src_areas(spt);
         serr_remap_linf = std::max(serr_remap_linf, err_l);
     }
+    std::cout << "src cc, ncc : " << cc << ", " << ncc << std::endl;
+
     serr_remap_l2 = std::sqrt(serr_remap_l2);
     terr_remap_l2 = std::sqrt(terr_remap_l2);
     std::cout << "src l2 error: " << serr_remap_l2 << std::endl;
@@ -239,6 +256,7 @@ void compute_errors(const Field source, const Field target,
     std::cout << "tgt l_inf error: " << terr_remap_linf << std::endl;
     std::cout << "conservation error: " << err_cons << std::endl;
 }
+
 
 int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
     ATLAS_ASSERT(atlas::mpi::size() == 1);
@@ -279,7 +297,7 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
     timers.interpolation_setup.start();
     auto interpolation =
         Interpolation(args, src_functionspace, tgt_functionspace);
-    Log::info() << interpolation << std::endl;
+    //Log::info() << interpolation << std::endl;
     timers.interpolation_setup.stop();
 
 
