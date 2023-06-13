@@ -334,7 +334,7 @@ void StructuredInterpolation2D<Kernel>::do_setup( const FunctionSpace& source, c
 
 template <typename Kernel>
 void StructuredInterpolation2D<Kernel>::print( std::ostream& ) const {
-    ATLAS_NOTIMPLEMENTED;
+    //ATLAS_NOTIMPLEMENTED;
 }
 
 
