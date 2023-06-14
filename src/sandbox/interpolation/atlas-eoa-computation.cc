@@ -393,19 +393,21 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
                 tgt_field.haloExchange();
             }
             util::Config config(args.getSubConfiguration("gmsh"));
-            output::Gmsh{"src_mesh.msh", config}.write(src_mesh);
-            output::Gmsh{"src_field.msh", config}.write(src_field);
-            output::Gmsh{"tgt_mesh.msh", config}.write(tgt_mesh);
-            output::Gmsh{"tgt_field.msh", config}.write(tgt_field);
+            sstream.str(src_grid.name());
+            output::Gmsh{sstream.str()+".msh", config}.write(src_mesh);
+            output::Gmsh{sstream.str()+"_field.msh", config}.write(src_field);
+            sstream.str(tgt_grid.name());
+            output::Gmsh{sstream.str()+".msh", config}.write(tgt_mesh);
+            output::Gmsh{sstream.str()+"_field.msh", config}.write(tgt_field);
             if (src_conservation_field) {
                 output::Gmsh{"src_conservation_field.msh", config}.write(src_conservation_field);
             }
         }
 
-        if (args.getBool("output-json", false)) {
+        if (args.getBool("output-json", true)) {
             util::Config output;
-            output.set("setup.source.grid", args.getString("source.grid"));
-            output.set("setup.target.grid", args.getString("target.grid"));
+            output.set("setup.source.grid", src_grid.name());
+            output.set("setup.target.grid", tgt_grid.name());
             output.set("setup.source.functionspace", src_functionspace.type());
             output.set("setup.target.functionspace", tgt_functionspace.type());
             output.set("setup.source.halo", args.getLong("source.halo", 2));
@@ -428,7 +430,10 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
 
             output.set("interpolation", metadata);
 
-            eckit::PathName json_filepath(args.getString("json.file", "out.json"));
+            sstream.str("");
+            sstream << "json_" << src_grid.name() << "_" << tgt_grid.name();
+            std::cout << "output to: " <<  sstream.str() << std::endl;
+            eckit::PathName json_filepath(sstream.str());
             std::ostringstream ss;
             eckit::JSON json(ss, eckit::JSON::Formatting::indent(4));
             json << output;
