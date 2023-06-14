@@ -59,8 +59,15 @@ class AtlasEOAComputation : public AtlasTool {
 
 public:
     AtlasEOAComputation(int argc, char* argv[]): AtlasTool(argc, argv) {
+        add_option(new Separator("EOC options"));
+        add_option(new SimpleOption<long>("eoc.grid.cycles","Simulation cycles for determining EOC"));
+        add_option(new SimpleOption<long>("eoc.grid.maxres","Maximal grid resolution in computing EOC"));
+        add_option(new SimpleOption<std::string>("source.grid_type", "Source grid type: O, N, L, ..."));
+        add_option(new SimpleOption<std::string>("target.grid_type", "Target grid type: O, N, L, ..."));
+        add_option(new SimpleOption<long>("eoc.refine-source","Refine source to compute EOC, otherwise refine target"));
+
         add_option(new Separator("Interpolation options"));
-        add_option(new SimpleOption<std::string>("type","Type of interpolation"));
+        add_option(new SimpleOption<std::string>("type","Type of interpolation: bilinear, cubic, ..."));
         add_option(new SimpleOption<std::string>("order","Order of interpolation, when applicable"));
         add_option(new SimpleOption<std::string>("interpolation.structured","Is the interpolation for structured grids"));
         
@@ -74,8 +81,6 @@ public:
         add_option(new SimpleOption<long>("spherical_harmonic.m", "zonal wave number 'm' of a spherical harmonic"));
     
         add_option(new Separator("Input options"));
-        add_option(new SimpleOption<std::string>("source.grid", "Source grid"));
-        add_option(new SimpleOption<std::string>("target.grid", "Target grid"));
         //add_option(new SimpleOption<std::string>("input.meshgenerator.pole_elements", "default = pentagons"));
         //add_option(new SimpleOption<bool>("input.meshed",  "Use function spaces based on mesh, also required for gmsh output"));
         //add_option(new SimpleOption<eckit::PathName>("input.gmsh.file", "Input gmsh file. If not provided, no gmsh output will be performed"));
@@ -194,7 +199,7 @@ void compute_errors(const Field source, const Field target,
     const auto tgt_node_halo  = array::make_view<int, 1>(tgt_mesh.nodes().halo());
 
     // get tgt_points and tgt_areas
-    // TODO: no need for polygon intersections here!!!
+    // TODO: no need for polygon intersections here, we just need src_points and src_areas
     auto src_fs = create_functionspace(src_mesh, 2, "NodeColumns", 0);
     auto tgt_fs = create_functionspace(tgt_mesh, 2, "NodeColumns", 0);
     auto interpolation = CSPInterpolation();
@@ -234,6 +239,7 @@ void compute_errors(const Field source, const Field target,
         terr_remap_linf = std::max(terr_remap_linf, err_l);
     }
     std::cout << "tgt points (omitted), (considered) : " << cc << ", " << ncc << std::endl;
+
     cc = 0;
     ncc = 0;
     // compute the conservation error and the projection errors serr_remap_*
@@ -284,123 +290,154 @@ void compute_errors(const Field source, const Field target,
 int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
     ATLAS_ASSERT(atlas::mpi::size() == 1);
 
-    auto src_grid = StructuredGrid(args.getString("source.grid", "N32"));
-    auto tgt_grid = StructuredGrid(args.getString("target.grid", "O64"));
+    std::stringstream sstream;
+    int eoc_cycles = args.getInt("eoc.grid.cycles", 3); 
+    int eoc_maxres = args.getInt("eoc.grid.maxres", 128); 
+    std::string sgrid_type = args.getString("source.grid_type", "O");
+    std::string tgrid_type = args.getString("target.grid_type", "O");
+    bool refine_source = args.getBool("eoc.refine-source", true);
 
-    timers.target_setup.start();
-    auto tgt_mesh = Mesh{tgt_grid, grid::Partitioner(args.getString("target.partitioner", "serial"))};
-    auto tgt_functionspace =
-        create_functionspace(tgt_mesh, 2, args.getString("target.functionspace", ""), args.getBool("interpolation.structured", false));
-    auto tgt_field = tgt_functionspace.createField<double>();
-    timers.target_setup.stop();
+    Grid src_grid;
+    Grid tgt_grid;
+    if (refine_source) {
+        sstream << tgrid_type << eoc_maxres;
+        tgt_grid = StructuredGrid(sstream.str());
+    }
+    else {
+        int gres = eoc_maxres;
+        int cycles = eoc_cycles;
+        for (; cycles--; gres/=2);
+        sstream << sgrid_type << gres;
+        src_grid = StructuredGrid(sstream.str());
+    }
 
-    timers.source_setup.start();
-    auto src_meshgenerator =
-        MeshGenerator{src_grid.meshgenerator() | option::halo(2) | util::Config("pole_elements", "")};
-    auto src_partitioner = grid::MatchingPartitioner{tgt_mesh, util::Config("partitioner",args.getString("source.partitioner", "spherical-polygon"))};
-    auto src_mesh        = src_meshgenerator.generate(src_grid, src_partitioner);
-    auto src_functionspace =
-        create_functionspace(src_mesh, 2, args.getString("source.functionspace", ""), args.getBool("interpolation.structured", false));
-    auto src_field = src_functionspace.createField<double>();
-    timers.source_setup.stop();
-
-    {
-        ATLAS_TRACE("Initial condition");
-        timers.initial_condition.start();
-        const auto lonlat = array::make_view<double, 2>(src_functionspace.lonlat());
-        auto src_view     = array::make_view<double, 1>(src_field);
-        auto f            = get_init(args);
-        for (idx_t n = 0; n < lonlat.shape(0); ++n) {
-            src_view(n) = f(PointLonLat{lonlat(n, LON), lonlat(n, LAT)});
+    for (int gres = eoc_maxres; eoc_cycles--; gres/=2) {
+        sstream.str("");
+        if (refine_source) {
+            sstream << sgrid_type << gres;
+            src_grid = StructuredGrid(sstream.str());
         }
-        src_field.set_dirty(true);
-        timers.initial_condition.start();
-    }
-
-    timers.interpolation_setup.start();
-    auto interpolation =
-        Interpolation(args, src_functionspace, tgt_functionspace);
-    //Log::info() << interpolation << std::endl;
-    timers.interpolation_setup.stop();
-
-
-    timers.interpolation_execute.start();
-    auto metadata = interpolation.execute(src_field, tgt_field);
-    timers.interpolation_execute.stop();
-
-    compute_errors(src_field, tgt_field, get_init(args), src_mesh, tgt_mesh);
-
-    // API not yet acceptable
-    Field src_conservation_field;
-    {
-        //using Statistics = interpolation::method::ConservativeSphericalPolygonInterpolation::Statistics;
-        //Statistics stats(metadata);
-        //stats.accuracy(interpolation, tgt_field, get_init(args), &metadata);
-        //src_conservation_field = stats.diff(interpolation, src_field, tgt_field);
-        //src_conservation_field.set_dirty(true);
-        //src_conservation_field.haloExchange();
-    }
-
-    // skip metadata, most interpolation methods do not provide them anyways
-    /*
-    Log::info() << "interpolation metadata: \n";
-    {
-        eckit::JSON json(Log::info(), eckit::JSON::Formatting::indent(2));
-        json << metadata;
-    }
-    Log::info() << std::endl;
-    */
-
-    if (args.getBool("output-gmsh", false)) {
-        if (args.getBool("gmsh.ghost", false)) {
-            ATLAS_TRACE("halo exchange target");
-            tgt_field.haloExchange();
+        else {
+            sstream << tgrid_type << gres;
+            tgt_grid = StructuredGrid(sstream.str());
         }
-        util::Config config(args.getSubConfiguration("gmsh"));
-        output::Gmsh{"src_mesh.msh", config}.write(src_mesh);
-        output::Gmsh{"src_field.msh", config}.write(src_field);
-        output::Gmsh{"tgt_mesh.msh", config}.write(tgt_mesh);
-        output::Gmsh{"tgt_field.msh", config}.write(tgt_field);
-        if (src_conservation_field) {
-            output::Gmsh{"src_conservation_field.msh", config}.write(src_conservation_field);
+        std::cout << src_grid.name() << " --> " << tgt_grid.name() << std::endl;
+
+        timers.target_setup.start();
+        auto tgt_mesh = Mesh{tgt_grid, grid::Partitioner(args.getString("target.partitioner", "serial"))};
+        auto tgt_functionspace =
+            create_functionspace(tgt_mesh, 2, args.getString("target.functionspace", ""), args.getBool("interpolation.structured", false));
+        auto tgt_field = tgt_functionspace.createField<double>();
+        timers.target_setup.stop();
+
+        timers.source_setup.start();
+        auto src_meshgenerator =
+            MeshGenerator{src_grid.meshgenerator() | option::halo(2) | util::Config("pole_elements", "")};
+        auto src_partitioner = grid::MatchingPartitioner{tgt_mesh, util::Config("partitioner",args.getString("source.partitioner", "spherical-polygon"))};
+        auto src_mesh        = src_meshgenerator.generate(src_grid, src_partitioner);
+        auto src_functionspace =
+            create_functionspace(src_mesh, 2, args.getString("source.functionspace", ""), args.getBool("interpolation.structured", false));
+        auto src_field = src_functionspace.createField<double>();
+        timers.source_setup.stop();
+
+        {
+            ATLAS_TRACE("Initial condition");
+            timers.initial_condition.start();
+            const auto lonlat = array::make_view<double, 2>(src_functionspace.lonlat());
+            auto src_view     = array::make_view<double, 1>(src_field);
+            auto f            = get_init(args);
+            for (idx_t n = 0; n < lonlat.shape(0); ++n) {
+                src_view(n) = f(PointLonLat{lonlat(n, LON), lonlat(n, LAT)});
+            }
+            src_field.set_dirty(true);
+            timers.initial_condition.start();
         }
-    }
 
-    if (args.getBool("output-json", false)) {
-        util::Config output;
-        output.set("setup.source.grid", args.getString("source.grid"));
-        output.set("setup.target.grid", args.getString("target.grid"));
-        output.set("setup.source.functionspace", src_functionspace.type());
-        output.set("setup.target.functionspace", tgt_functionspace.type());
-        output.set("setup.source.halo", args.getLong("source.halo", 2));
-        output.set("setup.target.halo", args.getLong("target.halo", 0));
-        output.set("setup.interpolation.order", args.getInt("order", 1));
-        output.set("setup.interpolation.normalise_intersections", args.getBool("normalise_intersections", false));
-        output.set("setup.interpolation.validate", args.getBool("validate", false));
-        output.set("setup.interpolation.matrix_free", args.getBool("matrix-free", false));
-        output.set("setup.init", args.getString("init", "vortex_rollup"));
+        timers.interpolation_setup.start();
+        auto interpolation =
+            Interpolation(args, src_functionspace, tgt_functionspace);
+        //Log::info() << interpolation << std::endl;
+        timers.interpolation_setup.stop();
 
-        output.set("runtime.mpi", mpi::size());
-        output.set("runtime.omp", atlas_omp_get_max_threads());
-        output.set("atlas.build_type", ATLAS_BUILD_TYPE);
 
-        output.set("timings.target.setup", timers.target_setup.elapsed());
-        output.set("timings.source.setup", timers.source_setup.elapsed());
-        output.set("timings.initial_condition", timers.initial_condition.elapsed());
-        output.set("timings.interpolation.setup", timers.interpolation_setup.elapsed());
-        output.set("timings.interpolation.execute", timers.interpolation_execute.elapsed());
+        timers.interpolation_execute.start();
+        auto metadata = interpolation.execute(src_field, tgt_field);
+        timers.interpolation_execute.stop();
 
-        output.set("interpolation", metadata);
+        compute_errors(src_field, tgt_field, get_init(args), src_mesh, tgt_mesh);
 
-        eckit::PathName json_filepath(args.getString("json.file", "out.json"));
-        std::ostringstream ss;
-        eckit::JSON json(ss, eckit::JSON::Formatting::indent(4));
-        json << output;
+        // API not yet acceptable
+        Field src_conservation_field;
+        {
+            //using Statistics = interpolation::method::ConservativeSphericalPolygonInterpolation::Statistics;
+            //Statistics stats(metadata);
+            //stats.accuracy(interpolation, tgt_field, get_init(args), &metadata);
+            //src_conservation_field = stats.diff(interpolation, src_field, tgt_field);
+            //src_conservation_field.set_dirty(true);
+            //src_conservation_field.haloExchange();
+        }
 
-        eckit::FileStream file(json_filepath, "w");
-        std::string str = ss.str();
-        file.write(str.data(), str.size());
-        file.close();
+        // skip metadata, most interpolation methods do not provide them anyways
+        /*
+        Log::info() << "interpolation metadata: \n";
+        {
+            eckit::JSON json(Log::info(), eckit::JSON::Formatting::indent(2));
+            json << metadata;
+        }
+        Log::info() << std::endl;
+        */
+
+        if (args.getBool("output-gmsh", false)) {
+            if (args.getBool("gmsh.ghost", false)) {
+                ATLAS_TRACE("halo exchange target");
+                tgt_field.haloExchange();
+            }
+            util::Config config(args.getSubConfiguration("gmsh"));
+            output::Gmsh{"src_mesh.msh", config}.write(src_mesh);
+            output::Gmsh{"src_field.msh", config}.write(src_field);
+            output::Gmsh{"tgt_mesh.msh", config}.write(tgt_mesh);
+            output::Gmsh{"tgt_field.msh", config}.write(tgt_field);
+            if (src_conservation_field) {
+                output::Gmsh{"src_conservation_field.msh", config}.write(src_conservation_field);
+            }
+        }
+
+        if (args.getBool("output-json", false)) {
+            util::Config output;
+            output.set("setup.source.grid", args.getString("source.grid"));
+            output.set("setup.target.grid", args.getString("target.grid"));
+            output.set("setup.source.functionspace", src_functionspace.type());
+            output.set("setup.target.functionspace", tgt_functionspace.type());
+            output.set("setup.source.halo", args.getLong("source.halo", 2));
+            output.set("setup.target.halo", args.getLong("target.halo", 0));
+            output.set("setup.interpolation.order", args.getInt("order", 1));
+            output.set("setup.interpolation.normalise_intersections", args.getBool("normalise-intersections", false));
+            output.set("setup.interpolation.validate", args.getBool("validate", false));
+            output.set("setup.interpolation.matrix_free", args.getBool("matrix-free", false));
+            output.set("setup.init", args.getString("init", "vortex_rollup"));
+
+            output.set("runtime.mpi", mpi::size());
+            output.set("runtime.omp", atlas_omp_get_max_threads());
+            output.set("atlas.build_type", ATLAS_BUILD_TYPE);
+
+            output.set("timings.target.setup", timers.target_setup.elapsed());
+            output.set("timings.source.setup", timers.source_setup.elapsed());
+            output.set("timings.initial_condition", timers.initial_condition.elapsed());
+            output.set("timings.interpolation.setup", timers.interpolation_setup.elapsed());
+            output.set("timings.interpolation.execute", timers.interpolation_execute.elapsed());
+
+            output.set("interpolation", metadata);
+
+            eckit::PathName json_filepath(args.getString("json.file", "out.json"));
+            std::ostringstream ss;
+            eckit::JSON json(ss, eckit::JSON::Formatting::indent(4));
+            json << output;
+
+            eckit::FileStream file(json_filepath, "w");
+            std::string str = ss.str();
+            file.write(str.data(), str.size());
+            file.close();
+        }
     }
 
     return success();
