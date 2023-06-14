@@ -190,7 +190,7 @@ FunctionSpace create_functionspace(Mesh& mesh, int halo, std::string type, bool 
 
 void compute_errors(const Field source, const Field target,
         std::function<double(const PointLonLat&)> func,
-        Mesh src_mesh, Mesh tgt_mesh) {
+        Mesh src_mesh, Mesh tgt_mesh, util::Config& stats) {
     auto src_vals             = array::make_view<double, 1>(source);
     auto tgt_vals             = array::make_view<double, 1>(target);
     const auto src_node_ghost = array::make_view<int, 1>(src_mesh.nodes().ghost());
@@ -275,6 +275,8 @@ void compute_errors(const Field source, const Field target,
     double err_cons = err_cons_pos - err_cons_neg;
     double src_mass = src_mass_pos + src_mass_neg;
     double tgt_mass = tgt_mass_pos + tgt_mass_neg;
+    double relcons_src = 100. * err_cons/src_mass;
+    double relcons_tgt = 100. * err_cons/tgt_mass;
     std::cout << "src l2 error            : " << serr_remap_l2 << std::endl;
     std::cout << "src l_inf error         : " << serr_remap_linf << std::endl;
     std::cout << "tgt l2 error            : " << terr_remap_l2 << std::endl;
@@ -284,6 +286,15 @@ void compute_errors(const Field source, const Field target,
     std::cout << "total src mas           : " << src_mass << std::endl;
     std::cout << "rel. cons. error on src : " << 100. * err_cons/src_mass << " %" << std::endl;
     std::cout << "rel. cons. error on tgt : " << 100. * err_cons/tgt_mass << " %" << std::endl;
+    stats.set("err.ana2src_l2", serr_remap_l2);
+    stats.set("err.ana2src_linf", serr_remap_linf);
+    stats.set("err.ana2tgt_l2", terr_remap_l2);
+    stats.set("err.ana2tgt_linf", terr_remap_linf);
+    stats.set("err.cons", err_cons);
+    stats.set("mass.src", src_mass);
+    stats.set("mass.tgt", tgt_mass);
+    stats.set("err.rel_cons_src", relcons_src);
+    stats.set("err.rel_cons_tgt", relcons_tgt);
 }
 
 
@@ -311,7 +322,9 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
         src_grid = StructuredGrid(sstream.str());
     }
 
-    for (int gres = eoc_maxres; eoc_cycles--; gres/=2) {
+    double err[eoc_cycles];
+    int counter = 0;
+    for (int gres = eoc_maxres; eoc_cycles--; counter++, gres/=2) {
         sstream.str("");
         if (refine_source) {
             sstream << sgrid_type << gres;
@@ -364,7 +377,15 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
         auto metadata = interpolation.execute(src_field, tgt_field);
         timers.interpolation_execute.stop();
 
-        compute_errors(src_field, tgt_field, get_init(args), src_mesh, tgt_mesh);
+        // compute EOCs
+        util::Config stats;
+        compute_errors(src_field, tgt_field, get_init(args), src_mesh, tgt_mesh, stats);
+        stats.get("err.ana2tgt_l2", err[counter]);
+        std::cout << "setting : " << err[counter] << std::endl;
+        if (counter > 1) {
+            double eoc = log( err[counter-1] / err[counter] ) / std::log( err[counter-2] / err[counter-1]);
+            std::cout << "EOC : " << eoc << std::endl;
+        }
 
         // API not yet acceptable
         Field src_conservation_field;
