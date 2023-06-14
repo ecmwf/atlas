@@ -206,7 +206,8 @@ void compute_errors(const Field source, const Field target,
     std::cout << "interpolation.tgt_npoints: " << interpolation.tgt_npoints() << std::endl;
 
     // compute error to the analytical solution on the target
-    double err_cons = 0.;
+    double tgt_mass_pos = 0.;
+    double tgt_mass_neg = 0.;
     double terr_remap_l2 = 0;
     double terr_remap_linf = -1.;
     int cc = 0;
@@ -217,7 +218,12 @@ void compute_errors(const Field source, const Field target,
             continue;
         }
         ncc++;
-        err_cons += tgt_vals(tpt) * interpolation.tgt_areas(tpt);
+        if (tgt_vals(tpt)) {
+            tgt_mass_pos += tgt_vals(tpt) * interpolation.tgt_areas(tpt);
+        }
+        else {
+            tgt_mass_neg -= tgt_vals(tpt) * interpolation.tgt_areas(tpt);
+        }
         auto p = interpolation.tgt_points(tpt);
         PointLonLat pll;
         eckit::geometry::Sphere::convertCartesianToSpherical(1., p, pll);
@@ -229,6 +235,8 @@ void compute_errors(const Field source, const Field target,
     cc = 0;
     ncc = 0;
     // compute the conservation error and the projection errors serr_remap_*
+    double src_mass_pos = 0.;
+    double src_mass_neg = 0.;
     double serr_remap_l2 = 0;
     double serr_remap_linf = -1.;
     for (idx_t spt = 0; spt < interpolation.src_npoints(); ++spt) {
@@ -237,7 +245,12 @@ void compute_errors(const Field source, const Field target,
             continue;
         }
         ncc++;
-        err_cons -= src_vals(spt) * interpolation.src_areas(spt);
+        if (src_vals(spt) > 0) {
+            src_mass_pos += src_vals(spt) * interpolation.src_areas(spt);
+        }
+        else {
+            src_mass_neg -= src_vals(spt) * interpolation.src_areas(spt);
+        }
         auto p = interpolation.src_points(spt);
         PointLonLat pll;
         eckit::geometry::Sphere::convertCartesianToSpherical(1., p, pll);
@@ -249,11 +262,20 @@ void compute_errors(const Field source, const Field target,
 
     serr_remap_l2 = std::sqrt(serr_remap_l2);
     terr_remap_l2 = std::sqrt(terr_remap_l2);
-    std::cout << "src l2 error: " << serr_remap_l2 << std::endl;
-    std::cout << "src l_inf error: " << serr_remap_linf << std::endl;
-    std::cout << "tgt l2 error: " << terr_remap_l2 << std::endl;
-    std::cout << "tgt l_inf error: " << terr_remap_linf << std::endl;
-    std::cout << "conservation error: " << err_cons << std::endl;
+    double err_cons_pos = tgt_mass_pos - src_mass_pos;
+    double err_cons_neg = tgt_mass_neg - src_mass_neg;
+    double err_cons = err_cons_pos - err_cons_neg;
+    double src_mass = src_mass_pos + src_mass_neg;
+    double tgt_mass = tgt_mass_pos + tgt_mass_neg;
+    std::cout << "src l2 error            : " << serr_remap_l2 << std::endl;
+    std::cout << "src l_inf error         : " << serr_remap_linf << std::endl;
+    std::cout << "tgt l2 error            : " << terr_remap_l2 << std::endl;
+    std::cout << "tgt l_inf error         : " << terr_remap_linf << std::endl;
+    std::cout << "conservation error      : " << err_cons << std::endl;
+    std::cout << "total tgt mas           : " << tgt_mass << std::endl;
+    std::cout << "total src mas           : " << src_mass << std::endl;
+    std::cout << "rel. cons. error on src : " << 100. * err_cons/src_mass << " %" << std::endl;
+    std::cout << "rel. cons. error on tgt : " << 100. * err_cons/tgt_mass << " %" << std::endl;
 }
 
 
