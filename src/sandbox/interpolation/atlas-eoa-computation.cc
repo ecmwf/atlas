@@ -232,14 +232,13 @@ void compute_errors(const Field source, const Field target,
     double serr_remap_l2 = 0;
     double serr_remap_linf = -1.;
     for (idx_t spt = 0; spt < interpolation.src_npoints(); ++spt) {
-        //if (tgt_cell_halo(tpt)) { // in case of cell data
-        if (src_node_ghost(spt) or src_node_halo(spt)) { // for node data
+        if (src_node_ghost(spt) or src_node_halo(spt)) {
             cc++;
             continue;
         }
         ncc++;
         err_cons -= src_vals(spt) * interpolation.src_areas(spt);
-        auto p = interpolation.tgt_points(spt);
+        auto p = interpolation.src_points(spt);
         PointLonLat pll;
         eckit::geometry::Sphere::convertCartesianToSpherical(1., p, pll);
         double err_l = std::abs(src_vals(spt) - func(pll));
@@ -261,8 +260,8 @@ void compute_errors(const Field source, const Field target,
 int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
     ATLAS_ASSERT(atlas::mpi::size() == 1);
 
-    auto src_grid = StructuredGrid(args.getString("source.grid", "O16"));
-    auto tgt_grid = StructuredGrid(args.getString("target.grid", "O128"));
+    auto src_grid = StructuredGrid(args.getString("source.grid", "N32"));
+    auto tgt_grid = StructuredGrid(args.getString("target.grid", "O64"));
 
     timers.target_setup.start();
     auto tgt_mesh = Mesh{tgt_grid, grid::Partitioner(args.getString("target.partitioner", "serial"))};
@@ -318,12 +317,15 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
         //src_conservation_field.haloExchange();
     }
 
+    // skip metadata, most interpolation methods do not provide them anyways
+    /*
     Log::info() << "interpolation metadata: \n";
     {
         eckit::JSON json(Log::info(), eckit::JSON::Formatting::indent(2));
         json << metadata;
     }
     Log::info() << std::endl;
+    */
 
     if (args.getBool("output-gmsh", false)) {
         if (args.getBool("gmsh.ghost", false)) {
