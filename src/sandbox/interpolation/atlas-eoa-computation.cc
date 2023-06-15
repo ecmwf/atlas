@@ -417,12 +417,8 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
                 tgt_field.haloExchange();
             }
             util::Config config(args.getSubConfiguration("gmsh"));
-            sstream.str(src_grid.name());
-            output::Gmsh{sstream.str()+".msh", config}.write(src_mesh);
-            output::Gmsh{sstream.str()+"_field.msh", config}.write(src_field);
-            sstream.str(tgt_grid.name());
-            output::Gmsh{sstream.str()+".msh", config}.write(tgt_mesh);
-            output::Gmsh{sstream.str()+"_field.msh", config}.write(tgt_field);
+            output::Gmsh{tgt_grid.name()+"_tgt.msh", config}.write(tgt_mesh);
+            output::Gmsh{tgt_grid.name()+"_tgtfield_from_"+src_grid.name()+".msh", config}.write(tgt_field);
             if (src_conservation_field) {
                 output::Gmsh{"src_conservation_field.msh", config}.write(src_conservation_field);
             }
