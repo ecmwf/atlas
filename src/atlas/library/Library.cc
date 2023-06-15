@@ -114,7 +114,7 @@ static void add_tokens(std::vector<std::string>& tokens, const std::string& str,
 };
 
 static void init_data_paths(std::vector<std::string>& data_paths) {
-    ATLAS_ASSERT(eckit::Main::instance().ready());
+    ATLAS_ASSERT(eckit::Main::ready());
     add_tokens(data_paths, eckit::LibResource<std::string, Library>("atlas-data-path;$ATLAS_DATA_PATH", ""), ":");
     add_tokens(data_paths, "~atlas/share", ":");
 }
@@ -152,7 +152,8 @@ Library::Library():
     trace_(getEnv("ATLAS_TRACE", false)),
     trace_memory_(getEnv("ATLAS_TRACE_MEMORY", false)),
     trace_barriers_(getEnv("ATLAS_TRACE_BARRIERS", false)),
-    trace_report_(getEnv("ATLAS_TRACE_REPORT", false)) {}
+    trace_report_(getEnv("ATLAS_TRACE_REPORT", false)),
+    atlas_io_trace_hook_(::atlas::io::TraceHookRegistry::invalidId()) {}
 
 void Library::registerPlugin(eckit::system::Plugin& plugin) {
     plugins_.push_back(&plugin);
@@ -253,6 +254,8 @@ void Library::initialise(int argc, char** argv) {
 
 
 void Library::initialise(const eckit::Parametrisation& config) {
+    ATLAS_ASSERT(eckit::Main::ready());
+
     if (initialized_) {
         return;
     }
@@ -338,7 +341,10 @@ void Library::initialise() {
 }
 
 void Library::finalise() {
-    atlas::io::TraceHookRegistry::disable(atlas_io_trace_hook_);
+    if( atlas_io_trace_hook_ != atlas::io::TraceHookRegistry::invalidId() ) {
+        atlas::io::TraceHookRegistry::disable(atlas_io_trace_hook_);
+        atlas_io_trace_hook_ = atlas::io::TraceHookRegistry::invalidId();
+    }
 
     if (ATLAS_HAVE_TRACE && trace_report_) {
         Log::info() << atlas::Trace::report() << std::endl;
