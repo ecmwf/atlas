@@ -240,13 +240,13 @@ void compute_errors(const Field source, const Field target,
     }
     std::cout << "tgt points (omitted), (considered) : " << cc << ", " << ncc << std::endl;
 
-    cc = 0;
-    ncc = 0;
     // compute the conservation error and the projection errors serr_remap_*
     double src_mass_pos = 0.;
     double src_mass_neg = 0.;
     double serr_remap_l2 = 0;
     double serr_remap_linf = -1.;
+    cc = 0;
+    ncc = 0;
     for (idx_t spt = 0; spt < interpolation.src_npoints(); ++spt) {
         if (src_node_ghost(spt) or src_node_halo(spt)) {
             cc++;
@@ -307,6 +307,8 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
     std::string sgrid_type = args.getString("source.grid_type", "O");
     std::string tgrid_type = args.getString("target.grid_type", "O");
     bool refine_source = args.getBool("eoc.refine-source", true);
+    int eoc_startres = eoc_maxres;
+    for (int cycles = eoc_cycles; cycles--; eoc_startres/=2);
 
     Grid src_grid;
     Grid tgt_grid;
@@ -315,23 +317,20 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
         tgt_grid = StructuredGrid(sstream.str());
     }
     else {
-        int gres = eoc_maxres;
-        int cycles = eoc_cycles;
-        for (; cycles--; gres/=2);
-        sstream << sgrid_type << gres;
+        sstream << sgrid_type << eoc_startres;
         src_grid = StructuredGrid(sstream.str());
     }
 
     double err[eoc_cycles];
     int counter = 0;
-    for (int gres = eoc_maxres; eoc_cycles--; counter++, gres/=2) {
+    for (int gres = eoc_startres; eoc_cycles--; counter++, gres*=2) {
         sstream.str("");
         if (refine_source) {
             sstream << sgrid_type << gres;
             src_grid = StructuredGrid(sstream.str());
         }
         else {
-            sstream << tgrid_type << gres;
+            sstream << tgrid_type << 2 * gres;
             tgt_grid = StructuredGrid(sstream.str());
         }
         std::cout << src_grid.name() << " --> " << tgt_grid.name() << std::endl;
@@ -381,10 +380,14 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
         util::Config stats;
         compute_errors(src_field, tgt_field, get_init(args), src_mesh, tgt_mesh, stats);
         stats.get("err.ana2tgt_l2", err[counter]);
-        std::cout << "setting : " << err[counter] << std::endl;
+        std::cout << "l2-error to analytical solution : " << err[counter] << std::endl;
         if (counter > 1) {
-            double eoc = log( err[counter-1] / err[counter] ) / std::log( err[counter-2] / err[counter-1]);
-            std::cout << "EOC : " << eoc << std::endl;
+            double eoc = std::log( err[counter-1] / err[counter] ) / std::log( err[counter-2] / err[counter-1]);
+            std::cout << "EOC_error_based      : " << eoc << std::endl;
+        }
+        if (counter > 0) {
+            double eoc = std::log( err[counter-1] / err[counter] ) / std::log(2.);
+            std::cout << "EOC_resolution_based : " << eoc << std::endl;
         }
 
         // API not yet acceptable
