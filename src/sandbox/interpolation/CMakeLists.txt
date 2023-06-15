@@ -7,8 +7,8 @@
 # does it submit to any jurisdiction.
 
 ecbuild_add_executable(
-    TARGET  atlas-eoa-computation
-    SOURCES atlas-eoa-computation.cc
+    TARGET  atlas-interpolation-eoc
+    SOURCES atlas-interpolation-eoc.cc
     LIBS    atlas
     NOINSTALL
 )

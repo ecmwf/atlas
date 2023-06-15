@@ -47,7 +47,7 @@ using CSPInterpolation = interpolation::method::ConservativeSphericalPolygonInte
 
 class AtlasEOAComputation : public AtlasTool {
     int execute(const AtlasTool::Args& args) override;
-    std::string briefDescription() override { return "Computation of experimental order of accuracy for Atlas' interpolation methods"; }
+    std::string briefDescription() override { return "Computation of experimental order of convergence for Atlas' interpolation methods"; }
     std::string usage() override {
         return name() +
                " [--source.grid=gridname] "
