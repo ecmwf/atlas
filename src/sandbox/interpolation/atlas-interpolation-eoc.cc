@@ -72,6 +72,7 @@ public:
         add_option(new SimpleOption<std::string>("interpolation.structured","Is the interpolation for structured grids"));
         
         add_option(new Separator("Initial data"));
+        add_option(new SimpleOption<bool>("init_via_highres", "Get initial data by remapping a highres grid data"));
         add_option(new SimpleOption<std::string>(
             "init", "Setup initial source field [ constant, spherical_harmonic, vortex_rollup (default), solid_body_rotation_wind_magnitude, MDPI_sinusoid, MDPI_harmonic, MDPI_vortex, MDPI_gulfstream ]"));
         add_option(new SimpleOption<double>("solid_body_rotation.angle", "Angle of solid body rotation (default = 0.)"));
@@ -91,8 +92,8 @@ public:
         //add_option(new SimpleOption<bool>("output.cell_centred", "Overwrite defaults"));
         //add_option(new SimpleOption<std::string>("output.meshgenerator.pole_elements", "default = pentagons"));
         //add_option(new SimpleOption<bool>("output.meshed", "Use function spaces based on mesh, also required for gmsh output"));
-        //add_option(new SimpleOption<eckit::PathName>("output.gmsh.file", "Output gmsh file. If not provided, no gmsh output will be performed"));
-        //add_option(new SimpleOption<std::string>("output.gmsh.coordinates", "Mesh coordinates: [xy, lonlat, xyz]"));
+        add_option(new SimpleOption<eckit::PathName>("output.gmsh.file", "Output gmsh file. If not provided, no gmsh output will be performed"));
+        add_option(new SimpleOption<std::string>("output.gmsh.coordinates", "Mesh coordinates: [xy, lonlat, xyz]"));
        
         add_option(new Separator("Advanced / Debugging"));
         //add_option(new SimpleOption<bool>("double_remap", "default: true for target data on nodes"));
@@ -110,7 +111,7 @@ public:
 
 std::function<double(const PointLonLat&)> get_init(const AtlasTool::Args& args) {
     std::string init;
-    args.get("init", init = "vortex_rollup");
+    args.get("init", init = "MDPI_vortex");
     if (init == "vortex_rollup") {
         double t;
         args.get("vortex_rollup.t", t = 1.);
@@ -270,22 +271,24 @@ void compute_errors(const Field source, const Field target,
 
     serr_remap_l2 = std::sqrt(serr_remap_l2);
     terr_remap_l2 = std::sqrt(terr_remap_l2);
+    double src_mass = src_mass_pos + src_mass_neg;
+    double tgt_mass = tgt_mass_pos + tgt_mass_neg;
     double err_cons_pos = tgt_mass_pos - src_mass_pos;
     double err_cons_neg = tgt_mass_neg - src_mass_neg;
     double err_cons = err_cons_pos - err_cons_neg;
-    double src_mass = src_mass_pos + src_mass_neg;
-    double tgt_mass = tgt_mass_pos + tgt_mass_neg;
+    double err_cons2 = tgt_mass - src_mass;
     double relcons_src = 100. * err_cons/src_mass;
     double relcons_tgt = 100. * err_cons/tgt_mass;
     std::cout << "src l2 error            : " << serr_remap_l2 << std::endl;
     std::cout << "src l_inf error         : " << serr_remap_linf << std::endl;
     std::cout << "tgt l2 error            : " << terr_remap_l2 << std::endl;
     std::cout << "tgt l_inf error         : " << terr_remap_linf << std::endl;
-    std::cout << "conservation error      : " << err_cons << std::endl;
-    std::cout << "total tgt mas           : " << tgt_mass << std::endl;
-    std::cout << "total src mas           : " << src_mass << std::endl;
+    std::cout << "conservation error      : " << err_cons2 << std::endl;
+    std::cout << "total src mass          : " << src_mass << std::endl;
+    std::cout << "total tgt mass          : " << tgt_mass << std::endl;
     std::cout << "rel. cons. error on src : " << 100. * err_cons/src_mass << " %" << std::endl;
     std::cout << "rel. cons. error on tgt : " << 100. * err_cons/tgt_mass << " %" << std::endl;
+    std::cout << "==================" << std::endl;
     stats.set("err.ana2src_l2", serr_remap_l2);
     stats.set("err.ana2src_linf", serr_remap_linf);
     stats.set("err.ana2tgt_l2", terr_remap_l2);
@@ -321,6 +324,29 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
         src_grid = StructuredGrid(sstream.str());
     }
 
+    timers.initial_condition.start();
+    Grid highres_grid;
+    Mesh highres_mesh;
+    FunctionSpace highres_src_fs;
+    Field highres_src_field;
+    if (args.getBool("init_via_highres", false)) {
+        // project solution to the finest mesh for intialising the source fields
+        sstream.str("");
+        sstream << sgrid_type << 2 * eoc_maxres;
+        highres_grid = Grid(sstream.str());
+        highres_mesh = Mesh(highres_grid);
+        highres_src_fs = create_functionspace(highres_mesh, 2, "NodeColumns", 0);
+        const auto lonlat = array::make_view<double, 2>(highres_src_fs.lonlat());
+        highres_src_field = highres_src_fs.createField<double>();
+        auto highres_src_view     = array::make_view<double, 1>(highres_src_field);
+        auto f            = get_init(args);
+        for (idx_t n = 0; n < lonlat.shape(0); ++n) {
+            highres_src_view(n) = f(PointLonLat{lonlat(n, LON), lonlat(n, LAT)});
+        }
+        highres_src_field.set_dirty(true);
+    }
+    timers.initial_condition.stop();
+
     double err[eoc_cycles];
     int counter = 0;
     for (int gres = eoc_startres; eoc_cycles--; counter++, gres*=2) {
@@ -337,9 +363,9 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
 
         timers.target_setup.start();
         auto tgt_mesh = Mesh{tgt_grid, grid::Partitioner(args.getString("target.partitioner", "serial"))};
-        auto tgt_functionspace =
+        auto tgt_fs =
             create_functionspace(tgt_mesh, 2, args.getString("target.functionspace", ""), args.getBool("interpolation.structured", false));
-        auto tgt_field = tgt_functionspace.createField<double>();
+        auto tgt_field = tgt_fs.createField<double>();
         timers.target_setup.stop();
 
         timers.source_setup.start();
@@ -347,27 +373,35 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
             MeshGenerator{src_grid.meshgenerator() | option::halo(2) | util::Config("pole_elements", "")};
         auto src_partitioner = grid::MatchingPartitioner{tgt_mesh, util::Config("partitioner",args.getString("source.partitioner", "spherical-polygon"))};
         auto src_mesh        = src_meshgenerator.generate(src_grid, src_partitioner);
-        auto src_functionspace =
+        auto src_fs =
             create_functionspace(src_mesh, 2, args.getString("source.functionspace", ""), args.getBool("interpolation.structured", false));
-        auto src_field = src_functionspace.createField<double>();
+        auto src_field = src_fs.createField<double>();
         timers.source_setup.stop();
 
-        {
-            ATLAS_TRACE("Initial condition");
-            timers.initial_condition.start();
-            const auto lonlat = array::make_view<double, 2>(src_functionspace.lonlat());
+        if (args.getBool("init_via_highres", false)) {
+            std::cout << "Prepare the initial data on " << src_grid.name() << " from " << highres_grid.name() << std::endl;
+            auto init_interpolation = Interpolation(option::type("conservative-spherical-polygon") | args, highres_src_fs, src_fs);
+            init_interpolation.execute(highres_src_field, src_field);
+            util::Config stats;
+            compute_errors(highres_src_field, src_field, get_init(args), highres_mesh, src_mesh, stats);
+            double errcons;
+            stats.get("err.cons", errcons);
+            std::cout << "highres_src -> src :: cons : " << errcons << std::endl;
+        }
+        else {
+            const auto lonlat = array::make_view<double, 2>(src_fs.lonlat());
+            auto src_field    = src_fs.createField<double>();
             auto src_view     = array::make_view<double, 1>(src_field);
             auto f            = get_init(args);
             for (idx_t n = 0; n < lonlat.shape(0); ++n) {
                 src_view(n) = f(PointLonLat{lonlat(n, LON), lonlat(n, LAT)});
             }
             src_field.set_dirty(true);
-            timers.initial_condition.start();
         }
 
         timers.interpolation_setup.start();
         auto interpolation =
-            Interpolation(args, src_functionspace, tgt_functionspace);
+            Interpolation(args, src_fs, tgt_fs);
         //Log::info() << interpolation << std::endl;
         timers.interpolation_setup.stop();
 
@@ -428,8 +462,8 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
             util::Config output;
             output.set("setup.source.grid", src_grid.name());
             output.set("setup.target.grid", tgt_grid.name());
-            output.set("setup.source.functionspace", src_functionspace.type());
-            output.set("setup.target.functionspace", tgt_functionspace.type());
+            output.set("setup.source.functionspace", src_fs.type());
+            output.set("setup.target.functionspace", tgt_fs.type());
             output.set("setup.source.halo", args.getLong("source.halo", 2));
             output.set("setup.target.halo", args.getLong("target.halo", 0));
             output.set("setup.interpolation.order", args.getInt("order", 1));
