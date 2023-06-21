@@ -25,6 +25,8 @@ install( FILES
 ### sources
 
 list( APPEND atlas_srcs
+${CMAKE_CURRENT_BINARY_DIR}/library/git_sha1.h
+${CMAKE_CURRENT_BINARY_DIR}/library/defines.h
 library.h
 library/config.h
 library/FloatingPointExceptions.h
@@ -51,6 +53,13 @@ runtime/trace/Logging.cc
 runtime/trace/Logging.h
 runtime/trace/Timings.h
 runtime/trace/Timings.cc
+runtime/Exception.cc
+runtime/Exception.h
+
+library/detail/BlackMagic.h
+library/detail/Debug.h
+
+
 parallel/mpi/mpi.cc
 parallel/mpi/mpi.h
 parallel/omp/omp.cc
@@ -58,6 +67,10 @@ parallel/omp/omp.h
 parallel/omp/copy.h
 parallel/omp/fill.h
 parallel/omp/sort.h
+
+util/Config.cc
+util/Config.h
+
 )
 
 list( APPEND atlas_grid_srcs
@@ -125,21 +138,16 @@ grid/StructuredGrid.h
 grid/UnstructuredGrid.cc
 grid/UnstructuredGrid.h
 
-grid/Distribution.cc
-grid/Distribution.h
+util/GaussianLatitudes.cc
+util/GaussianLatitudes.h
+
 grid/Spacing.cc
 grid/Spacing.h
-grid/Partitioner.h
-grid/Partitioner.cc
 grid/Iterator.h
 grid/Iterator.cc
-grid/Vertical.h
-grid/Vertical.cc
 grid/Stencil.h
 grid/StencilComputer.h
 grid/StencilComputer.cc
-grid/StructuredPartitionPolygon.h
-grid/StructuredPartitionPolygon.cc
 grid/Tiles.h
 grid/Tiles.cc
 
@@ -166,18 +174,6 @@ grid/detail/grid/RegionalVariableResolution.cc
 grid/detail/grid/Healpix.h
 grid/detail/grid/Healpix.cc
 
-grid/detail/distribution/DistributionImpl.h
-grid/detail/distribution/DistributionImpl.cc
-grid/detail/distribution/DistributionArray.cc
-grid/detail/distribution/DistributionArray.h
-grid/detail/distribution/DistributionFunction.cc
-grid/detail/distribution/DistributionFunction.h
-
-grid/detail/distribution/BandsDistribution.cc
-grid/detail/distribution/BandsDistribution.h
-grid/detail/distribution/SerialDistribution.cc
-grid/detail/distribution/SerialDistribution.h
-
 grid/detail/tiles/Tiles.cc
 grid/detail/tiles/Tiles.h
 grid/detail/tiles/TilesFactory.h
@@ -187,39 +183,6 @@ grid/detail/tiles/FV3Tiles.h
 grid/detail/tiles/LFRicTiles.cc
 grid/detail/tiles/LFRicTiles.h
 
-grid/detail/vertical/VerticalInterface.h
-grid/detail/vertical/VerticalInterface.cc
-
-grid/detail/partitioner/BandsPartitioner.cc
-grid/detail/partitioner/BandsPartitioner.h
-grid/detail/partitioner/CheckerboardPartitioner.cc
-grid/detail/partitioner/CheckerboardPartitioner.h
-grid/detail/partitioner/CubedSpherePartitioner.cc
-grid/detail/partitioner/CubedSpherePartitioner.h
-grid/detail/partitioner/EqualBandsPartitioner.cc
-grid/detail/partitioner/EqualBandsPartitioner.h
-grid/detail/partitioner/EqualRegionsPartitioner.cc
-grid/detail/partitioner/EqualRegionsPartitioner.h
-grid/detail/partitioner/MatchingMeshPartitioner.h
-grid/detail/partitioner/MatchingMeshPartitioner.cc
-grid/detail/partitioner/MatchingMeshPartitionerBruteForce.cc
-grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h
-grid/detail/partitioner/MatchingMeshPartitionerCubedSphere.cc
-grid/detail/partitioner/MatchingMeshPartitionerCubedSphere.h
-grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.cc
-grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.h
-grid/detail/partitioner/MatchingMeshPartitionerSphericalPolygon.cc
-grid/detail/partitioner/MatchingMeshPartitionerSphericalPolygon.h
-grid/detail/partitioner/MatchingFunctionSpacePartitioner.h
-grid/detail/partitioner/MatchingFunctionSpacePartitioner.cc
-grid/detail/partitioner/MatchingFunctionSpacePartitionerLonLatPolygon.cc
-grid/detail/partitioner/MatchingFunctionSpacePartitionerLonLatPolygon.h
-grid/detail/partitioner/Partitioner.cc
-grid/detail/partitioner/Partitioner.h
-grid/detail/partitioner/RegularBandsPartitioner.cc
-grid/detail/partitioner/RegularBandsPartitioner.h
-grid/detail/partitioner/SerialPartitioner.cc
-grid/detail/partitioner/SerialPartitioner.h
 
 grid/detail/spacing/Spacing.cc
 grid/detail/spacing/Spacing.h
@@ -288,9 +251,69 @@ grid/detail/pl/classic_gaussian/N1600.cc  # TL3199
 grid/detail/pl/classic_gaussian/N2000.cc  # TL3999
 grid/detail/pl/classic_gaussian/N4000.cc  # TL7999
 grid/detail/pl/classic_gaussian/N8000.cc  # TL15999
+
+grid/Vertical.h
+grid/Vertical.cc
+
 )
+
+list( APPEND atlas_grid_partitioning_srcs
+
+grid/StructuredPartitionPolygon.h
+grid/StructuredPartitionPolygon.cc
+
+
+grid/Distribution.cc
+grid/Distribution.h
+grid/Partitioner.h
+grid/Partitioner.cc
+
+grid/detail/distribution/DistributionImpl.h
+grid/detail/distribution/DistributionImpl.cc
+grid/detail/distribution/DistributionArray.cc
+grid/detail/distribution/DistributionArray.h
+grid/detail/distribution/DistributionFunction.cc
+grid/detail/distribution/DistributionFunction.h
+
+grid/detail/distribution/BandsDistribution.cc
+grid/detail/distribution/BandsDistribution.h
+grid/detail/distribution/SerialDistribution.cc
+grid/detail/distribution/SerialDistribution.h
+
+grid/detail/partitioner/BandsPartitioner.cc
+grid/detail/partitioner/BandsPartitioner.h
+grid/detail/partitioner/CheckerboardPartitioner.cc
+grid/detail/partitioner/CheckerboardPartitioner.h
+grid/detail/partitioner/CubedSpherePartitioner.cc
+grid/detail/partitioner/CubedSpherePartitioner.h
+grid/detail/partitioner/EqualBandsPartitioner.cc
+grid/detail/partitioner/EqualBandsPartitioner.h
+grid/detail/partitioner/EqualRegionsPartitioner.cc
+grid/detail/partitioner/EqualRegionsPartitioner.h
+grid/detail/partitioner/MatchingMeshPartitioner.h
+grid/detail/partitioner/MatchingMeshPartitioner.cc
+grid/detail/partitioner/MatchingMeshPartitionerBruteForce.cc
+grid/detail/partitioner/MatchingMeshPartitionerBruteForce.h
+grid/detail/partitioner/MatchingMeshPartitionerCubedSphere.cc
+grid/detail/partitioner/MatchingMeshPartitionerCubedSphere.h
+grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.cc
+grid/detail/partitioner/MatchingMeshPartitionerLonLatPolygon.h
+grid/detail/partitioner/MatchingMeshPartitionerSphericalPolygon.cc
+grid/detail/partitioner/MatchingMeshPartitionerSphericalPolygon.h
+grid/detail/partitioner/MatchingFunctionSpacePartitioner.h
+grid/detail/partitioner/MatchingFunctionSpacePartitioner.cc
+grid/detail/partitioner/MatchingFunctionSpacePartitionerLonLatPolygon.cc
+grid/detail/partitioner/MatchingFunctionSpacePartitionerLonLatPolygon.h
+grid/detail/partitioner/Partitioner.cc
+grid/detail/partitioner/Partitioner.h
+grid/detail/partitioner/RegularBandsPartitioner.cc
+grid/detail/partitioner/RegularBandsPartitioner.h
+grid/detail/partitioner/SerialPartitioner.cc
+grid/detail/partitioner/SerialPartitioner.h
+)
+
 if( atlas_HAVE_TRANS )
-list( APPEND atlas_grid_srcs
+list( APPEND atlas_grid_partitioning_srcs
   grid/detail/partitioner/TransPartitioner.h
   grid/detail/partitioner/TransPartitioner.cc
 )
@@ -310,6 +333,9 @@ if( CGAL_COMPILE_FLAGS )
 endif()
 
 list( APPEND atlas_mesh_srcs
+grid/detail/vertical/VerticalInterface.h     # Uses Field
+grid/detail/vertical/VerticalInterface.cc    # Uses Field
+
 mesh.h
 mesh/Connectivity.cc
 mesh/Connectivity.h
@@ -327,6 +353,7 @@ mesh/MeshBuilder.cc
 mesh/MeshBuilder.h
 mesh/Nodes.cc
 mesh/Nodes.h
+mesh/IsGhostNode.h
 mesh/PartitionPolygon.cc
 mesh/PartitionPolygon.h
 mesh/detail/MeshImpl.cc
@@ -335,6 +362,11 @@ mesh/detail/MeshIntf.cc
 mesh/detail/MeshIntf.h
 mesh/detail/PartitionGraph.cc
 mesh/detail/PartitionGraph.h
+mesh/detail/AccumulateFacets.h
+mesh/detail/AccumulateFacets.cc
+
+util/Unique.h
+util/Unique.cc
 
 mesh/actions/ExtendNodesGlobal.h
 mesh/actions/ExtendNodesGlobal.cc
@@ -482,6 +514,31 @@ functionspace/detail/PointCloudInterface.cc
 functionspace/detail/CubedSphereStructure.h
 functionspace/detail/CubedSphereStructure.cc
 
+# for cubedsphere matching mesh partitioner
+interpolation/method/cubedsphere/CellFinder.cc
+interpolation/method/cubedsphere/CellFinder.h
+interpolation/Vector2D.cc
+interpolation/Vector2D.h
+interpolation/Vector3D.cc
+interpolation/Vector3D.h
+interpolation/element/Quad2D.h
+interpolation/element/Quad2D.cc
+interpolation/element/Quad3D.cc
+interpolation/element/Quad3D.h
+interpolation/element/Triag2D.cc
+interpolation/element/Triag2D.h
+interpolation/element/Triag3D.cc
+interpolation/element/Triag3D.h
+interpolation/method/Intersect.cc
+interpolation/method/Intersect.h
+interpolation/method/Ray.cc # For testing Quad
+interpolation/method/Ray.h  # For testing Quad
+
+# for BuildConvexHull3D
+
+interpolation/method/PointSet.cc
+interpolation/method/PointSet.h
+
 )
 
 list( APPEND atlas_numerics_srcs
@@ -540,20 +597,6 @@ interpolation/Interpolation.cc
 interpolation/Interpolation.h
 interpolation/NonLinear.cc
 interpolation/NonLinear.h
-interpolation/Vector2D.cc
-interpolation/Vector2D.h
-interpolation/Vector3D.cc
-interpolation/Vector3D.h
-interpolation/element/Quad2D.h
-interpolation/element/Quad2D.cc
-interpolation/element/Quad3D.cc
-interpolation/element/Quad3D.h
-interpolation/element/Triag2D.cc
-interpolation/element/Triag2D.h
-interpolation/element/Triag3D.cc
-interpolation/element/Triag3D.h
-interpolation/method/Intersect.cc
-interpolation/method/Intersect.h
 interpolation/method/Method.cc
 interpolation/method/Method.h
 interpolation/method/MethodFactory.cc
@@ -562,12 +605,6 @@ interpolation/method/PointIndex3.cc
 interpolation/method/PointIndex3.h
 interpolation/method/PointIndex2.cc
 interpolation/method/PointIndex2.h
-interpolation/method/PointSet.cc
-interpolation/method/PointSet.h
-interpolation/method/Ray.cc
-interpolation/method/Ray.h
-interpolation/method/cubedsphere/CellFinder.cc
-interpolation/method/cubedsphere/CellFinder.h
 interpolation/method/cubedsphere/CubedSphereBilinear.cc
 interpolation/method/cubedsphere/CubedSphereBilinear.h
 interpolation/method/knn/GridBox.cc
@@ -619,7 +656,9 @@ interpolation/nonlinear/Missing.cc
 interpolation/nonlinear/Missing.h
 interpolation/nonlinear/NonLinear.cc
 interpolation/nonlinear/NonLinear.h
+)
 
+list( APPEND atlas_linalg_srcs
 linalg/Indexing.h
 linalg/Introspection.h
 linalg/View.h
@@ -715,28 +754,42 @@ array/native/NativeMakeView.cc
 )
 endif()
 
+list( APPEND atlas_parallel_srcs
+  parallel/Checksum.cc
+  parallel/Checksum.h
+  parallel/GatherScatter.cc
+  parallel/GatherScatter.h
+  parallel/HaloExchange.cc
+  parallel/HaloExchange.h
+  parallel/HaloAdjointExchangeImpl.h
+  parallel/HaloExchangeImpl.h
+  parallel/mpi/Buffer.h
+)
+
 list( APPEND atlas_util_srcs
-parallel/Checksum.cc
-parallel/Checksum.h
-parallel/GatherScatter.cc
-parallel/GatherScatter.h
-parallel/HaloExchange.cc
-parallel/HaloExchange.h
-parallel/HaloAdjointExchangeImpl.h
-parallel/HaloExchangeImpl.h
-parallel/mpi/Buffer.h
-runtime/Exception.cc
-runtime/Exception.h
-util/Config.cc
-util/Config.h
+util/Object.h
+util/Object.cc
+util/ObjectHandle.h
+util/ObjectHandle.cc
+util/Factory.h
+util/Factory.cc
+util/Bitflags.h
+util/Checksum.h
+util/Checksum.cc
+util/MicroDeg.h
+util/LonLatMicroDeg.h
+util/CoordinateEnums.h
+util/PeriodicTransform.h
+util/Topology.h
+util/Allocate.h
+util/Allocate.cc
+
 util/Constants.h
 util/ConvexSphericalPolygon.cc
 util/ConvexSphericalPolygon.h
 util/DataType.cc
 util/DataType.h
 util/Earth.h
-util/GaussianLatitudes.cc
-util/GaussianLatitudes.h
 util/Geometry.cc
 util/Geometry.h
 util/KDTree.cc
@@ -756,6 +809,8 @@ util/SphericalPolygon.cc
 util/SphericalPolygon.h
 util/UnitSphere.h
 util/vector.h
+util/mdspan.h
+util/detail/mdspan/mdspan.hpp
 util/VectorOfAbstract.h
 util/detail/Cache.h
 util/detail/KDTree.h
@@ -767,104 +822,6 @@ util/function/SphericalHarmonic.h
 util/function/SphericalHarmonic.cc
 util/function/VortexRollup.h
 util/function/VortexRollup.cc
-)
-
-list( APPEND atlas_internals_srcs
-mesh/detail/AccumulateFacets.h
-mesh/detail/AccumulateFacets.cc
-util/Object.h
-util/Object.cc
-util/ObjectHandle.h
-util/ObjectHandle.cc
-util/Factory.h
-util/Factory.cc
-util/Bitflags.h
-util/Checksum.h
-util/Checksum.cc
-util/MicroDeg.h
-mesh/IsGhostNode.h
-util/LonLatMicroDeg.h
-util/CoordinateEnums.h
-util/PeriodicTransform.h
-util/Topology.h
-util/Unique.h
-util/Unique.cc
-util/Allocate.h
-util/Allocate.cc
-util/mdspan.h
-util/detail/mdspan/mdspan.hpp
-)
-
-list( APPEND atlas_io_srcs
-    io/atlas-io.h
-    io/Data.cc
-    io/Data.h
-    io/detail/Base64.cc
-    io/detail/Base64.h
-    io/detail/Checksum.h
-    io/detail/Checksum.cc
-    io/detail/DataInfo.h
-    io/detail/DataType.cc
-    io/detail/DataType.h
-    io/detail/Decoder.cc
-    io/detail/Decoder.h
-    io/detail/Defaults.h
-    io/detail/Encoder.cc
-    io/detail/Encoder.h
-    io/detail/Endian.h
-    io/detail/Link.cc
-    io/detail/Link.h
-    io/detail/ParsedRecord.h
-    io/detail/RecordInfo.h
-    io/detail/RecordSections.h
-    io/detail/Reference.h
-    io/detail/sfinae.h
-    io/detail/StaticAssert.h
-    io/detail/tag.h
-    io/detail/Time.cc
-    io/detail/Time.h
-    io/detail/Type.h
-    io/detail/TypeTraits.h
-    io/detail/Version.h
-    io/Exceptions.cc
-    io/Exceptions.h
-    io/FileStream.cc
-    io/FileStream.h
-    io/Metadata.cc
-    io/Metadata.h
-    io/print/TableFormat.cc
-    io/print/TableFormat.h
-    io/print/JSONFormat.cc
-    io/print/JSONFormat.h
-    io/print/Bytes.cc
-    io/print/Bytes.h
-    io/ReadRequest.cc
-    io/ReadRequest.h
-    io/Record.cc
-    io/Record.h
-    io/RecordItem.cc
-    io/RecordItem.h
-    io/RecordItemReader.cc
-    io/RecordItemReader.h
-    io/RecordPrinter.cc
-    io/RecordPrinter.h
-    io/RecordReader.cc
-    io/RecordReader.h
-    io/RecordWriter.cc
-    io/RecordWriter.h
-    io/Session.cc
-    io/Session.h
-    io/Stream.cc
-    io/Stream.h
-    io/types/array.h
-    io/types/array/ArrayMetadata.cc
-    io/types/array/ArrayMetadata.h
-    io/types/array/ArrayReference.cc
-    io/types/array/ArrayReference.h
-    io/types/array/adaptors/StdVectorAdaptor.h
-    io/types/string.h
-    io/types/scalar.h
-    io/types/scalar.cc
 )
 
 
@@ -897,20 +854,20 @@ endif()
 
 list( APPEND source_list
   ${atlas_srcs}
-  ${atlas_array_srcs}
+  ${atlas_util_srcs}
   ${atlas_grid_srcs}
+  ${atlas_array_srcs}
+  ${atlas_linalg_srcs}
+  ${atlas_grid_partitioning_srcs}
   ${atlas_mesh_srcs}
   ${atlas_field_srcs}
+  ${atlas_parallel_srcs}
   ${atlas_functionspace_srcs}
   ${atlas_interpolation_srcs}
   ${atlas_redistribution_srcs}
   ${atlas_numerics_srcs}
   ${atlas_output_srcs}
-  ${atlas_util_srcs}
   ${atlas_io_adaptor_srcs}
-  ${atlas_internals_srcs}
-  ${CMAKE_CURRENT_BINARY_DIR}/library/git_sha1.h
-  ${CMAKE_CURRENT_BINARY_DIR}/library/defines.h
 )
 
 if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )

@@ -22,20 +22,24 @@ endif()
 
 foreach(test
         test_domain
-        test_field
         test_grid_iterator
-        test_grids
         test_stretchedrotatedgaussian
         test_grid_cropping
         test_vertical
         test_spacing
-        test_state
         test_largegrid
         test_grid_hash
-        test_cubedsphere)
-
+        )
     ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc LIBS atlas ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )
+endforeach()
 
+foreach(test
+        test_field
+        test_grids
+        test_state
+        test_cubedsphere
+        )
+    ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc LIBS atlas ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )
 endforeach()
 
 set( _WITH_MPI )
