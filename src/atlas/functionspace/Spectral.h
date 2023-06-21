@@ -63,8 +63,6 @@ public:
 
     Spectral(const int truncation, const eckit::Configuration& = util::NoConfig());
 
-    Spectral(const trans::Trans&, const eckit::Configuration& = util::NoConfig());
-
     ~Spectral() override;
 
     std::string type() const override { return "Spectral"; }

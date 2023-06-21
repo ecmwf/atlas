@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "atlas/array.h"
 #include "atlas/domain.h"
 #include "atlas/projection/detail/CubedSphereProjectionBase.h"
 #include "atlas/projection/detail/ProjectionImpl.h"

@@ -574,6 +574,13 @@ void StructuredColumns::setup(const grid::Distribution& distribution, const ecki
         field_index_j_      = Field("index_j", array::make_datatype<idx_t>(), array::make_shape(size_halo_));
         field_xy_           = Field("xy", array::make_datatype<double>(), array::make_shape(size_halo_, 2));
 
+        field_z_            = Field("z", array::make_datatype<double>(), array::make_shape(vertical_.size()));
+        {
+            auto z  = array::make_view<double, 1>(field_z_);
+            for (idx_t k = 0; k < z.size(); ++k) {
+                z(k) = vertical_[k];
+            }
+        }
         auto xy         = array::make_view<double, 2>(field_xy_);
         auto part       = array::make_view<int, 1>(field_partition_);
         auto ghost      = array::make_view<int, 1>(field_ghost_);

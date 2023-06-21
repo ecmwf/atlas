@@ -54,5 +54,4 @@ typedef gidx_t uidx_t;
 #define ATLAS_ECKIT_HAVE_ECKIT_585 0
 #endif
 
-
 }  // namespace atlas
