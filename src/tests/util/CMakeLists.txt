@@ -72,6 +72,7 @@ ecbuild_add_test( TARGET atlas_test_kdtree
   SOURCES  test_kdtree.cc
   LIBS     atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION atlas_HAVE_ATLAS_GRID
 )
 
 ecbuild_add_test( TARGET atlas_test_convexsphericalpolygon

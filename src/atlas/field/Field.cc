@@ -11,9 +11,15 @@
 #include <iostream>
 #include <string>
 
+#include "atlas/library/config.h"
+
 #include "atlas/field/Field.h"
 #include "atlas/field/detail/FieldImpl.h"
+#include "atlas/runtime/Exception.h"
+
+#if ATLAS_HAVE_FUNCTIONSPACE
 #include "atlas/functionspace/FunctionSpace.h"
+#endif
 
 namespace atlas {
 
@@ -186,10 +192,18 @@ std::vector<idx_t> Field::horizontal_dimension() const {
 }
 
 void Field::set_functionspace(const FunctionSpace& functionspace) {
+#if ATLAS_HAVE_FUNCTIONSPACE
     get()->set_functionspace(functionspace);
+#else
+    throw_Exception("Atlas has been compiled without FunctionSpace support",Here());
+#endif
 }
 const FunctionSpace& Field::functionspace() const {
+#if ATLAS_HAVE_FUNCTIONSPACE
     return get()->functionspace();
+#else
+    throw_Exception("Atlas has been compiled without FunctionSpace support",Here());
+#endif
 }
 
 /// @brief Return the memory footprint of the Field

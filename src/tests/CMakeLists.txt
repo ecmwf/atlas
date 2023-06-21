@@ -110,17 +110,20 @@ endif()
 
 add_subdirectory( util )
 add_subdirectory( runtime )
-add_subdirectory( projection )
-add_subdirectory( grid )
+
+if (atlas_HAVE_ATLAS_GRID)
+  add_subdirectory( projection )
+  add_subdirectory( grid )
+endif()
 
 if (atlas_HAVE_ATLAS_FIELD)
   add_subdirectory( acc )
   add_subdirectory( array )
+  add_subdirectory( field )
 endif()
 
 if (atlas_HAVE_ATLAS_FUNCTIONSPACE)
   add_subdirectory( parallel )
-  add_subdirectory( field )
   add_subdirectory( mesh )
   add_subdirectory( functionspace )
   add_subdirectory( io )

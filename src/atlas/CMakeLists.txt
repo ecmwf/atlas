@@ -841,7 +841,6 @@ endif()
 if( NOT atlas_HAVE_ATLAS_FUNCTIONSPACE )
   unset( atlas_grid_partitioning_srcs )
   unset( atlas_mesh_srcs )
-  unset( atlas_field_srcs )
   unset( atlas_functionspace_srcs )
   unset( atlas_parallel_srcs )
   unset( atlas_output_srcs )
@@ -872,10 +871,10 @@ list( APPEND source_list
   ${atlas_util_srcs}
   ${atlas_grid_srcs}
   ${atlas_array_srcs}
+  ${atlas_field_srcs}
   ${atlas_linalg_srcs}
   ${atlas_grid_partitioning_srcs}
   ${atlas_mesh_srcs}
-  ${atlas_field_srcs}
   ${atlas_parallel_srcs}
   ${atlas_functionspace_srcs}
   ${atlas_interpolation_srcs}
