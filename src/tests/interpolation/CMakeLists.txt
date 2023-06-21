@@ -13,12 +13,6 @@ ecbuild_add_test( TARGET atlas_test_Quad3D
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
-ecbuild_add_test( TARGET atlas_test_interpolation_conservative
-  SOURCES   test_interpolation_conservative.cc
-  LIBS      atlas
-  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
-)
-
 ecbuild_add_test( TARGET atlas_test_Quad2D
   SOURCES   test_Quad2D.cc
   LIBS      atlas
@@ -27,6 +21,14 @@ ecbuild_add_test( TARGET atlas_test_Quad2D
 
 ecbuild_add_test( TARGET atlas_test_Triag2D
   SOURCES   test_Triag2D.cc
+  LIBS      atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+if( atlas_HAVE_ATLAS_NUMERICS )
+
+ecbuild_add_test( TARGET atlas_test_interpolation_conservative
+  SOURCES   test_interpolation_conservative.cc
   LIBS      atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
@@ -119,3 +121,5 @@ ecbuild_add_test( TARGET atlas_test_interpolation_cubedsphere
   CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 6
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
+
+endif()

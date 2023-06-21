@@ -6,6 +6,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+if( atlas_HAVE_ATLAS_FUNCTIONSPACE )
 if( HAVE_FCTEST )
     foreach(test
             fctest_griddistribution
@@ -18,6 +19,7 @@ if( HAVE_FCTEST )
 
     endforeach()
     add_fctest( TARGET atlas_fctest_unstructuredgrid SOURCES fctest_unstructuredgrid.F90 LINKER_LANGUAGE Fortran LIBS atlas_f CONDITION HAVE_TESSELATION )
+endif()
 endif()
 
 foreach(test
@@ -33,6 +35,7 @@ foreach(test
     ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc LIBS atlas ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )
 endforeach()
 
+if( atlas_HAVE_ATLAS_FUNCTIONSPACE )
 foreach(test
         test_field
         test_grids
@@ -41,6 +44,7 @@ foreach(test
         )
     ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc LIBS atlas ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )
 endforeach()
+endif()
 
 set( _WITH_MPI )
 if( eckit_HAVE_MPI )
@@ -52,6 +56,7 @@ ecbuild_add_test( TARGET  atlas_test_distribution_regular_bands
   SOURCES test_distribution_regular_bands.cc
   LIBS atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION atlas_HAVE_ATLAS_FUNCTIONSPACE
 )
 
 

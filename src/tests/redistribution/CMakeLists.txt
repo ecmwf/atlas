@@ -5,6 +5,8 @@
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 #
 
+if( atlas_HAVE_ATLAS_NUMERICS )
+
 ecbuild_add_test( TARGET atlas_test_redistribution_structured
   SOURCES   test_redistribution_structured.cc
   MPI       8
@@ -21,3 +23,4 @@ ecbuild_add_test( TARGET atlas_test_redistribution_generic
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+endif()

@@ -6,6 +6,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+if( atlas_HAVE_ATLAS_NUMERICS )
 ecbuild_add_executable( TARGET atlas_test_fvm_nabla_exe
   SOURCES   test_fvm_nabla.cc
   LIBS      atlas ${OMP_CXX}
@@ -48,4 +49,5 @@ if( HAVE_FCTEST)
     LIBS            atlas_f
     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
+endif()
 endif()

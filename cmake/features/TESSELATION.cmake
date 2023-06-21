@@ -4,6 +4,7 @@ set(Boost_USE_MULTITHREADED      ON )
 
 ecbuild_add_option( FEATURE TESSELATION
                     DESCRIPTION "Support for unstructured mesh generation"
+                    CONDITION atlas_HAVE_ATLAS_FUNCTIONSPACE
                     REQUIRED_PACKAGES
                       "CGAL QUIET"
                       "Boost VERSION 1.45.0 QUIET" )

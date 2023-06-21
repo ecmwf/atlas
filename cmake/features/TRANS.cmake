@@ -1,7 +1,7 @@
 ### trans ...
 
 set( atlas_HAVE_ECTRANS 0 )
-if( ENABLE_TRANS OR NOT DEFINED ENABLE_TRANS )
+if( atlas_HAVE_ATLAS_NUMERICS AND (ENABLE_TRANS OR NOT DEFINED ENABLE_TRANS) )
     find_package( ectrans 1.1 COMPONENTS transi double QUIET )
     if( TARGET transi_dp )
         set( transi_FOUND TRUE )
@@ -17,7 +17,6 @@ if( ENABLE_TRANS OR NOT DEFINED ENABLE_TRANS )
         find_package( transi 0.8 QUIET )
     endif()
 endif()
-
 ecbuild_add_option( FEATURE TRANS
                     DESCRIPTION "Support for IFS spectral transforms"
-                    CONDITION transi_FOUND )
+                    CONDITION atlas_HAVE_ATLAS_NUMERICS AND transi_FOUND )

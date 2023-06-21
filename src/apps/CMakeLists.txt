@@ -15,7 +15,8 @@ ecbuild_add_executable(
 ecbuild_add_executable(
   TARGET      atlas-meshgen
   SOURCES     atlas-meshgen.cc
-  LIBS        atlas )
+  LIBS        atlas
+  CONDITION   atlas_HAVE_ATLAS_FUNCTIONSPACE )
 
 ecbuild_add_executable(
   TARGET      atlas-grids

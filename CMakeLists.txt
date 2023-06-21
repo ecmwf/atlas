@@ -38,6 +38,20 @@ find_package(atlas_io)
 ################################################################################
 # Features that can be enabled / disabled with -DENABLE_<FEATURE>
 
+ecbuild_add_option( FEATURE ATLAS_GRID
+                    DESCRIPTION "Build grid related features" )
+
+ecbuild_add_option( FEATURE ATLAS_FIELD
+                    DESCRIPTION "Build grid related features" )
+
+ecbuild_add_option( FEATURE ATLAS_FUNCTIONSPACE
+                    DESCRIPTION "Build Array related features"
+                    CONDITION atlas_HAVE_ATLAS_GRID AND atlas_HAVE_ATLAS_FIELD )
+
+ecbuild_add_option( FEATURE ATLAS_NUMERICS
+                    DESCRIPTION "Build numerics related features"
+                    CONDITION atlas_HAVE_ATLAS_FUNCTIONSPACE )
+
 include( features/BOUNDSCHECKING )
 include( features/FORTRAN )
 include( features/MPI )

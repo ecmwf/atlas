@@ -834,24 +834,39 @@ list( APPEND atlas_io_adaptor_srcs
 
 ### atlas c++ library
 
-if( NOT atlas_HAVE_TRANS )
-  unset( TRANSI_INCLUDE_DIRS )
-  unset( TRANSI_LIBRARIES )
+if( NOT atlas_HAVE_ATLAS_GRID )
+  unset( atlas_grid_srcs)
 endif()
 
-if( SHORTCUT_COMPILATION )
-  unset( atlas_grid_srcs )
+if( NOT atlas_HAVE_ATLAS_FUNCTIONSPACE )
+  unset( atlas_grid_partitioning_srcs )
   unset( atlas_mesh_srcs )
   unset( atlas_field_srcs )
   unset( atlas_functionspace_srcs )
+  unset( atlas_parallel_srcs )
+  unset( atlas_output_srcs )
+endif()
+
+if( NOT atlas_HAVE_ATLAS_NUMERICS  )
+  unset( atlas_linalg_srcs ) # only depends on array
   unset( atlas_interpolation_srcs )
   unset( atlas_redistribution_srcs )
   unset( atlas_numerics_srcs )
-  unset( atlas_output_srcs )
-  unset( atlas_util_srcs )
-  unset( atlas_internals_srcs )
 endif()
 
+#
+# atlas_src     _________ io_adaptor
+#  |          /  
+#  array   -------------- linalg
+#  |
+#  util
+#   |
+#  grid
+#   |
+#  mesh + field + functionspace + parallel
+#    _____________________________________________________________________________   
+#                  |                  |                  |                  | 
+#             interpolation         redistribution      output           numerics
 list( APPEND source_list
   ${atlas_srcs}
   ${atlas_util_srcs}
