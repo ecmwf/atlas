@@ -19,7 +19,7 @@
 
 #if ATLAS_HAVE_TRACE
 
-#include "atlas/util/detail/BlackMagic.h"
+#include "atlas/library/detail/BlackMagic.h"
 
 #undef ATLAS_TRACE_MPI
 #define ATLAS_TRACE_MPI(...) ATLAS_TRACE_MPI_(::atlas::mpi::Trace, Here(), __VA_ARGS__)

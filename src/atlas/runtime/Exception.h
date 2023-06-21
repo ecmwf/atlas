@@ -53,7 +53,7 @@ inline void Assert(bool success, const char* code, const std::string& msg, const
 }  // namespace detail
 }  // namespace atlas
 
-#include "atlas/util/detail/BlackMagic.h"
+#include "atlas/library/detail/BlackMagic.h"
 
 #define ATLAS_NOTIMPLEMENTED ::atlas::throw_NotImplemented(Here())
 

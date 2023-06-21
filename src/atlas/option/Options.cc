@@ -26,15 +26,15 @@ halo::halo(size_t size) {
     set("halo", size);
 }
 
-datatype::datatype(array::DataType::kind_t kind) {
+datatype::datatype(DataType::kind_t kind) {
     set("datatype", kind);
 }
 
 datatype::datatype(const std::string& str) {
-    set("datatype", array::DataType::str_to_kind(str));
+    set("datatype", DataType::str_to_kind(str));
 }
 
-datatype::datatype(array::DataType dtype) {
+datatype::datatype(DataType dtype) {
     set("datatype", dtype.kind());
 }
 

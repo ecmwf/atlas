@@ -144,6 +144,15 @@ ecbuild_add_test( TARGET atlas_test_mesh_reorder_unstructured
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+foreach( test footprint )
+  ecbuild_add_test( TARGET atlas_test_${test}
+    SOURCES test_${test}.cc
+    LIBS atlas
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  )
+endforeach()
+
+
 
 atlas_add_cuda_test(
   TARGET atlas_test_connectivity_kernel

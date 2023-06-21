@@ -670,7 +670,6 @@ array/ArrayStrides.h
 array/ArrayView.h
 array/ArrayViewUtil.h
 array/ArrayViewDefs.h
-array/DataType.cc
 array/DataType.h
 array/IndexView.h
 array/LocalView.cc
@@ -733,6 +732,8 @@ util/Config.h
 util/Constants.h
 util/ConvexSphericalPolygon.cc
 util/ConvexSphericalPolygon.h
+util/DataType.cc
+util/DataType.h
 util/Earth.h
 util/GaussianLatitudes.cc
 util/GaussianLatitudes.h
@@ -756,9 +757,7 @@ util/SphericalPolygon.h
 util/UnitSphere.h
 util/vector.h
 util/VectorOfAbstract.h
-util/detail/BlackMagic.h
 util/detail/Cache.h
-util/detail/Debug.h
 util/detail/KDTree.h
 util/function/MDPI_functions.h
 util/function/MDPI_functions.cc
