@@ -792,6 +792,8 @@ util/Unique.h
 util/Unique.cc
 util/Allocate.h
 util/Allocate.cc
+util/mdspan.h
+util/detail/mdspan/mdspan.hpp
 )
 
 list( APPEND atlas_io_srcs
