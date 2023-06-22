@@ -390,7 +390,6 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
         }
         else {
             const auto lonlat = array::make_view<double, 2>(src_fs.lonlat());
-            auto src_field    = src_fs.createField<double>();
             auto src_view     = array::make_view<double, 1>(src_field);
             auto f            = get_init(args);
             for (idx_t n = 0; n < lonlat.shape(0); ++n) {
