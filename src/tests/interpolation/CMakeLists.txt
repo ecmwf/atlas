@@ -25,7 +25,7 @@ ecbuild_add_test( TARGET atlas_test_Triag2D
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
-if( atlas_HAVE_ATLAS_NUMERICS )
+if( atlas_HAVE_ATLAS_INTERPOLATION )
 
 ecbuild_add_test( TARGET atlas_test_interpolation_conservative
   SOURCES   test_interpolation_conservative.cc

@@ -1,3 +1,5 @@
+if( atlas_HAVE_ATLAS_GRID )
+
 ### Proj
 
 # From proj 9 onwards, it is guaranteed that it was built/installed using CMake and the CMake export is available.
@@ -53,4 +55,6 @@ ecbuild_add_option( FEATURE PROJ
 if( NOT HAVE_PROJ )
   unset( PROJ_LIBRARIES )
   unset( PROJ_INCLUDE_DIRS )
+endif()
+
 endif()

@@ -42,11 +42,19 @@ ecbuild_add_option( FEATURE ATLAS_GRID
                     DESCRIPTION "Build grid related features" )
 
 ecbuild_add_option( FEATURE ATLAS_FIELD
-                    DESCRIPTION "Build grid related features" )
+                    DESCRIPTION "Build field and memory management related features" )
 
 ecbuild_add_option( FEATURE ATLAS_FUNCTIONSPACE
-                    DESCRIPTION "Build Array related features"
+                    DESCRIPTION "Build functionspace related features (mesh, functionspace, parallel)"
                     CONDITION atlas_HAVE_ATLAS_GRID AND atlas_HAVE_ATLAS_FIELD )
+
+ecbuild_add_option( FEATURE ATLAS_INTERPOLATION
+                    DESCRIPTION "Build interpolation related features"
+                    CONDITION atlas_HAVE_ATLAS_FUNCTIONSPACE )
+
+ecbuild_add_option( FEATURE ATLAS_TRANS
+                    DESCRIPTION "Build transform related features"
+                    CONDITION atlas_HAVE_ATLAS_FUNCTIONSPACE )
 
 ecbuild_add_option( FEATURE ATLAS_NUMERICS
                     DESCRIPTION "Build numerics related features"
@@ -57,7 +65,7 @@ include( features/FORTRAN )
 include( features/MPI )
 include( features/OMP )
 include( features/FFTW )
-include( features/TRANS )
+include( features/ECTRANS )
 include( features/TESSELATION )
 include( features/GRIDTOOLS_STORAGE )
 include( features/ACC )

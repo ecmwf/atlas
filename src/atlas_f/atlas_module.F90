@@ -63,8 +63,10 @@ use atlas_mesh_Nodes_module, only: &
     & atlas_mesh_Nodes
 use atlas_HaloExchange_module, only: &
     & atlas_HaloExchange
+#if ATLAS_HAVE_INTERPOLATION
 use atlas_Interpolation_module, only: &
     & atlas_Interpolation
+#endif
 use atlas_GatherScatter_module, only: &
     & atlas_GatherScatter
 use atlas_Checksum_module, only: &
@@ -102,8 +104,10 @@ use atlas_Projection_module, only : &
     & atlas_RotatedLonLatProjection, &
     & atlas_LambertConformalConicProjection, &
     & atlas_RotatedSchmidtProjection
+#if ATLAS_HAVE_TRANS
 use atlas_Trans_module, only : &
     & atlas_Trans
+#endif
 use atlas_kinds_module, only: &
     & ATLAS_KIND_GIDX, &
     & ATLAS_KIND_IDX, &
@@ -117,12 +121,14 @@ use atlas_Partitioner_module, only: &
     & atlas_MatchingMeshPartitioner ! Deprecated ! use atlas_MatchingPartitioner instead
 use atlas_MeshGenerator_module, only: &
     & atlas_MeshGenerator
+#ifdef ATLAS_HAVE_NUMERICS
 use atlas_Method_module, only: &
     & atlas_Method
 use atlas_fvm_module, only: &
     & atlas_fvm_Method
 use atlas_Nabla_module, only: &
     & atlas_Nabla
+#endif
 use atlas_mesh_actions_module, only: &
     & atlas_build_parallel_fields, &
     & atlas_build_nodes_parallel_fields, &

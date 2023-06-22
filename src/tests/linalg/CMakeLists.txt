@@ -6,7 +6,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-if( atlas_HAVE_ATLAS_NUMERICS )
+if( atlas_HAVE_ATLAS_FUNCTIONSPACE )
 
 ecbuild_add_test( TARGET atlas_test_linalg_sparse
     SOURCES test_linalg_sparse.cc

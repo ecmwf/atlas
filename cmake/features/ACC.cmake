@@ -1,5 +1,7 @@
 ### OpenACC
 
+if( atlas_HAVE_ATLAS_FIELD )
+
 set( ATLAS_ACC_CAPABLE FALSE )
 if( HAVE_CUDA )
   if( CMAKE_Fortran_COMPILER_ID MATCHES "PGI|NVHPC" )
@@ -20,4 +22,9 @@ if( atlas_HAVE_ACC )
       ecbuild_error( "Could not find OpenACC capable C compiler" )
     endif()
   endif()
+endif()
+
+else()
+  set( HAVE_ACC 0 )
+  set( atlas_HAVE_ACC 0 )
 endif()

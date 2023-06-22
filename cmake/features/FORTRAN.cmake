@@ -3,7 +3,7 @@
 ecbuild_add_option( FEATURE FORTRAN
                     DESCRIPTION "Provide Fortran bindings"
                     REQUIRED_PACKAGES "fckit VERSION 0.6.2 COMPONENTS ECKIT"
-                    CONDITION atlas_HAVE_ATLAS_NUMERICS )
+                    CONDITION atlas_HAVE_ATLAS_FUNCTIONSPACE )
 
 if( atlas_HAVE_FORTRAN )
 

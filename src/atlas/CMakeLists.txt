@@ -312,7 +312,7 @@ grid/detail/partitioner/SerialPartitioner.cc
 grid/detail/partitioner/SerialPartitioner.h
 )
 
-if( atlas_HAVE_TRANS )
+if( atlas_HAVE_ECTRANS )
 list( APPEND atlas_grid_partitioning_srcs
   grid/detail/partitioner/TransPartitioner.h
   grid/detail/partitioner/TransPartitioner.cc
@@ -550,7 +550,9 @@ numerics/fvm/Method.h
 numerics/fvm/Method.cc
 numerics/fvm/Nabla.h
 numerics/fvm/Nabla.cc
+)
 
+list( APPEND atlas_trans_srcs
 trans/Cache.h
 trans/Cache.cc
 trans/Trans.h
@@ -574,8 +576,9 @@ trans/detail/TransImpl.cc
 trans/detail/TransInterface.h
 trans/detail/TransInterface.cc
 )
-if( atlas_HAVE_TRANS )
-list( APPEND atlas_numerics_srcs
+
+if( atlas_HAVE_ECTRANS )
+list( APPEND atlas_trans_srcs
   trans/ifs/LegendreCacheCreatorIFS.h
   trans/ifs/LegendreCacheCreatorIFS.cc
   trans/ifs/TransIFS.h
@@ -844,28 +847,35 @@ if( NOT atlas_HAVE_ATLAS_FUNCTIONSPACE )
   unset( atlas_functionspace_srcs )
   unset( atlas_parallel_srcs )
   unset( atlas_output_srcs )
+  unset( atlas_redistribution_srcs )
+  unset( atlas_linalg_srcs ) # only depends on array
+endif()
+
+if( NOT atlas_HAVE_ATLAS_INTERPOLATION  )
+  unset( atlas_interpolation_srcs )
+endif()
+
+if( NOT atlas_HAVE_ATLAS_TRANS )
+  unset( atlas_trans_srcs )
 endif()
 
 if( NOT atlas_HAVE_ATLAS_NUMERICS  )
-  unset( atlas_linalg_srcs ) # only depends on array
-  unset( atlas_interpolation_srcs )
-  unset( atlas_redistribution_srcs )
   unset( atlas_numerics_srcs )
 endif()
 
 #
-# atlas_src     _________ io_adaptor
-#  |          /  
+# atlas_src           _________ io_adaptor
+#   |               /  
 #  array   -------------- linalg
-#  |
-#  util
-#   |
-#  grid
-#   |
-#  mesh + field + functionspace + parallel
-#    _____________________________________________________________________________   
-#                  |                  |                  |                  | 
-#             interpolation         redistribution      output           numerics
+#  |                \________________________field
+#  util                /
+#   |                /
+#  grid            / ( optional link )
+#   |            /
+#  mesh + functionspace + parallel
+#    ___________________________________________________________________
+#    |              |                  |                  |             |
+#    trans      interpolation        output           numerics       redistribution
 list( APPEND source_list
   ${atlas_srcs}
   ${atlas_util_srcs}
@@ -877,6 +887,7 @@ list( APPEND source_list
   ${atlas_mesh_srcs}
   ${atlas_parallel_srcs}
   ${atlas_functionspace_srcs}
+  ${atlas_trans_srcs}
   ${atlas_interpolation_srcs}
   ${atlas_redistribution_srcs}
   ${atlas_numerics_srcs}
@@ -899,20 +910,6 @@ atlas_host_device( source_list
     mesh/Connectivity.cc
 )
 
-#ecbuild_add_library( TARGET atlas_io
-
-#    INSTALL_HEADERS    ALL
-#    HEADER_DESTINATION include/atlas_io
-#    SOURCES            ${atlas_io_srcs}
-#    PUBLIC_LIBS        eckit
-#    PUBLIC_INCLUDES
-#      $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
-#      $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/src>
-
-
-#)
-
-
 ecbuild_add_library( TARGET atlas
 
   AUTO_VERSION
@@ -926,7 +923,7 @@ ecbuild_add_library( TARGET atlas
 
   PRIVATE_LIBS
     $<${atlas_HAVE_FORTRAN}:fckit>
-    $<${atlas_HAVE_TRANS}:transi>
+    $<${atlas_HAVE_ECTRANS}:transi>
     $<${atlas_HAVE_ACC}:atlas_acc_support>
     ${CGAL_LIBRARIES}
     ${FFTW_LIBRARIES}

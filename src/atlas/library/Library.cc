@@ -454,7 +454,7 @@ void Library::Information::print(std::ostream& out) const {
 
     bool feature_fortran(ATLAS_HAVE_FORTRAN);
     bool feature_OpenMP(ATLAS_HAVE_OMP);
-    bool feature_Trans(ATLAS_HAVE_TRANS);
+    bool feature_ecTrans(ATLAS_HAVE_ECTRANS);
     bool feature_FFTW(ATLAS_HAVE_FFTW);
     bool feature_Eigen(ATLAS_HAVE_EIGEN);
     bool feature_Tesselation(ATLAS_HAVE_TESSELATION);
@@ -478,7 +478,7 @@ void Library::Information::print(std::ostream& out) const {
         << "    OpenMP         : " << str(feature_OpenMP) << '\n'
         << "    BoundsChecking : " << str(feature_BoundsChecking) << '\n'
         << "    Init_sNaN      : " << str(feature_Init_sNaN) << '\n'
-        << "    Trans          : " << str(feature_Trans) << '\n'
+        << "    ecTrans        : " << str(feature_ecTrans) << '\n'
         << "    FFTW           : " << str(feature_FFTW) << '\n'
         << "    Eigen          : " << str(feature_Eigen) << '\n'
         << "    MKL            : " << str(feature_MKL()) << '\n'

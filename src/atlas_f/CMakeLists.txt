@@ -127,18 +127,28 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/EdgeColumns.h
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/PointCloudInterface.h
     MODULE    atlas_functionspace_PointCloud_c_binding
     OUTPUT    functionspace_PointCloud_c_binding.f90)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Nabla.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Nabla.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Method.h )
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/fvm/Method.h
-    MODULE    atlas_fvm_method_c_binding
-    OUTPUT    fvm_method_c_binding.f90 )
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/interpolation/Interpolation.h
-    MODULE    atlas_interpolation_c_binding
-    OUTPUT    interpolation_c_binding.f90 )
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/trans/detail/TransInterface.h
-    MODULE    atlas_trans_c_binding
-    OUTPUT    trans_c_binding.f90 )
+
+if( atlas_HAVE_ATLAS_NUMERICS )
+    generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Nabla.h)
+    generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Nabla.h)
+    generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Method.h )
+    generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/fvm/Method.h
+        MODULE    atlas_fvm_method_c_binding
+        OUTPUT    fvm_method_c_binding.f90 )
+endif()
+
+if( atlas_HAVE_ATLAS_INTERPOLATION )
+    generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/interpolation/Interpolation.h
+        MODULE    atlas_interpolation_c_binding
+        OUTPUT    interpolation_c_binding.f90 )
+endif()
+
+if( atlas_HAVE_ATLAS_TRANS )
+    generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/trans/detail/TransInterface.h
+        MODULE    atlas_trans_c_binding
+        OUTPUT    trans_c_binding.f90 )
+endif()
+
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Allocate.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Metadata.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/Config.h)
@@ -151,6 +161,33 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/parallel/Checksum.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/atlas_read_file.h)
 generate_fortran_bindings(FORTRAN_BINDINGS internals/Library.h)
 generate_fortran_bindings(FORTRAN_BINDINGS runtime/atlas_trace.h MODULE atlas_trace_c_binding OUTPUT atlas_trace_c_binding.f90 )
+
+
+list( APPEND atlas_trans_srcs 
+    trans/atlas_Trans_module.F90
+)
+
+list( APPEND atlas_interpolation_srcs 
+    interpolation/atlas_Interpolation_module.F90
+)
+
+list( APPEND atlas_numerics_srcs 
+    numerics/atlas_Method_module.F90
+    numerics/atlas_fvm_module.F90
+    numerics/atlas_Nabla_module.F90
+)
+
+if( NOT atlas_HAVE_ATLAS_TRANS )
+    unset( atlas_trans_srcs )
+endif()
+
+if( NOT atlas_HAVE_ATLAS_INTERPOLATION )
+    unset( atlas_interpolation_srcs )
+endif()
+
+if( NOT atlas_HAVE_ATLAS_NUMERICS )
+    unset( atlas_numerics_srcs )
+endif()
 
 
 ### atlas fortran lib
@@ -192,21 +229,19 @@ ecbuild_add_library( TARGET atlas_f
         mesh/atlas_Elements_module.F90
         mesh/atlas_ElementType_module.F90
         mesh/atlas_mesh_actions_module.F90
-        numerics/atlas_Method_module.F90
-        numerics/atlas_fvm_module.F90
-        numerics/atlas_Nabla_module.F90
-        interpolation/atlas_Interpolation_module.F90
         parallel/atlas_GatherScatter_module.fypp
         parallel/atlas_Checksum_module.fypp
         parallel/atlas_HaloExchange_module.fypp
         projection/atlas_Projection_module.F90
-        trans/atlas_Trans_module.F90
         internals/atlas_read_file.h
         internals/atlas_read_file.cc
         internals/Library.h
         internals/Library.cc
         runtime/atlas_trace.cc
         runtime/atlas_Trace_module.F90
+        ${atlas_trans_srcs}
+        ${atlas_interpolation_srcs}
+        ${atlas_numerics_srcs}
 
   PUBLIC_LIBS
         $<LINK_ONLY:atlas>

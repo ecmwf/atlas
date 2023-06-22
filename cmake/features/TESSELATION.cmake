@@ -1,3 +1,4 @@
+if( atlas_HAVE_ATLAS_FUNCTIONSPACE )
 ### tesselation ...
 
 set(Boost_USE_MULTITHREADED      ON )
@@ -29,4 +30,5 @@ endif()
 if( NOT HAVE_TESSELATION )
     unset( CGAL_LIBRARIES )
     unset( CGAL_INCLUDE_DIRS )
+endif()
 endif()

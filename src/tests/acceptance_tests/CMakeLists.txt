@@ -24,7 +24,7 @@ set( HAVE_ACCEPTANCE_TESTS_LARGE ON )
 
 function( atlas_atest_mgrids category case nprocs )
 
-    if( HAVE_TRANS )
+    if( atlas_HAVE_ECTRANS )
       set( PARTITIONER "--partitioner=trans" )
     endif()
 
