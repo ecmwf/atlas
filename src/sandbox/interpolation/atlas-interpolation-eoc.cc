@@ -324,7 +324,6 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
         src_grid = StructuredGrid(sstream.str());
     }
 
-    timers.initial_condition.start();
     Grid highres_grid;
     Mesh highres_mesh;
     FunctionSpace highres_src_fs;
@@ -345,7 +344,6 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
         }
         highres_src_field.set_dirty(true);
     }
-    timers.initial_condition.stop();
 
     double err[eoc_cycles];
     int counter = 0;
@@ -378,7 +376,8 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
         auto src_field = src_fs.createField<double>();
         timers.source_setup.stop();
 
-        if (args.getBool("init_via_highres", false)) {
+        timers.initial_condition.start();
+        if (args.getBool("init_via_highres", false) and (refine_source or gres == eoc_startres)) {
             std::cout << "Prepare the initial data on " << src_grid.name() << " from " << highres_grid.name() << std::endl;
             auto init_interpolation = Interpolation(option::type("conservative-spherical-polygon") | args, highres_src_fs, src_fs);
             init_interpolation.execute(highres_src_field, src_field);
@@ -397,6 +396,7 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
             }
             src_field.set_dirty(true);
         }
+        timers.initial_condition.stop();
 
         timers.interpolation_setup.start();
         auto interpolation =
