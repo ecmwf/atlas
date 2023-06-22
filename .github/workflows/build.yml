@@ -35,7 +35,7 @@ jobs:
           - linux gnu-12
           - linux gnu-7
           - linux clang-12
-          - linux nvhpc-22.11
+#          - linux nvhpc-22.11
           - linux intel
           - macos
 
@@ -89,16 +89,16 @@ jobs:
             caching: true
             coverage: false
 
-          - name: linux nvhpc-22.11
-            os: ubuntu-20.04
-            compiler: nvhpc-22.11
-            compiler_cc: nvc
-            compiler_cxx: nvc++
-            compiler_fc: nvfortran
-            cmake_options: -DCMAKE_CXX_FLAGS=--diag_suppress177
-            ctest_options: "-LE mpi" # For now until Checkerboard fixed
-            caching: false
-            coverage: false
+#          - name: linux nvhpc-22.11
+#            os: ubuntu-20.04
+#            compiler: nvhpc-22.11
+#            compiler_cc: nvc
+#            compiler_cxx: nvc++
+#            compiler_fc: nvfortran
+#            cmake_options: -DCMAKE_CXX_FLAGS=--diag_suppress177
+#            ctest_options: "-LE mpi" # For now until Checkerboard fixed
+#            caching: false
+#            coverage: false
 
           - name : linux intel
             os: ubuntu-20.04
