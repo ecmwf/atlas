@@ -21,9 +21,35 @@ namespace field {
 
 //------------------------------------------------------------------------------------------------------
 
-FieldSetImpl::FieldSetImpl(const std::string& /*name*/): name_() {}
+void FieldSetImpl::FieldObserver::onFieldRename(FieldImpl& field) {
+    std::string name = field.name();
+    for (auto& kv: fieldset_.index_) {
+        const auto old_name = kv.first;
+        const auto idx      = kv.second;
+        if (&field == fieldset_.fields_[idx].get()) {
+            if (name.empty()) {
+                std::stringstream ss;
+                ss << fieldset_.name_ << "[" << idx << "]";
+                name = ss.str();
+            }
+            fieldset_.index_.erase(old_name);
+            fieldset_.index_[name] = idx;
+            return;
+        }
+    }
+    throw_AssertionFailed("Should not be here",Here());
+}
+
+
+FieldSetImpl::FieldSetImpl(const std::string& /*name*/): name_(), field_observer_(*this) {}
+FieldSetImpl::~FieldSetImpl() {
+    clear();
+}
 
 void FieldSetImpl::clear() {
+    for( auto& field : fields_ ) {
+        field->detachObserver(field_observer_);
+    }
     index_.clear();
     fields_.clear();
 }
@@ -38,6 +64,8 @@ Field FieldSetImpl::add(const Field& field) {
         index_[name.str()] = size();
     }
     fields_.push_back(field);
+
+    field.get()->attachObserver(field_observer_);
     return field;
 }
 

@@ -147,6 +147,13 @@ std::string vector_to_str(const std::vector<T>& t) {
 
 }  // namespace
 
+void FieldImpl::rename(const std::string& name) {
+    metadata().set("name", name);
+    for (FieldObserver* observer : field_observers_) {
+        observer->onFieldRename(*this);
+    }
+}
+
 const std::string& FieldImpl::name() const {
     name_ = metadata().get<std::string>("name");
     return name_;
@@ -216,6 +223,18 @@ void FieldImpl::adjointHaloExchange(bool on_device) const {
     throw_Exception("Atlas is compiled without FunctionSpace support", Here());
 #endif
 }
+
+void FieldImpl::attachObserver(FieldObserver& observer) const {
+    if (std::find(field_observers_.begin(), field_observers_.end(), &observer) == field_observers_.end()) {
+        field_observers_.push_back(&observer);
+    }
+}
+
+void FieldImpl::detachObserver(FieldObserver& observer) const {
+    field_observers_.erase(std::remove(field_observers_.begin(), field_observers_.end(), &observer),
+                          field_observers_.end());
+}
+
 
 // ------------------------------------------------------------------
 

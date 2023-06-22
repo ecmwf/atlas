@@ -31,6 +31,7 @@
 #include "atlas/util/Metadata.h"
 #include "atlas/util/Object.h"
 #include "atlas/util/ObjectHandle.h"
+#include "atlas/field/detail/FieldImpl.h"
 
 namespace atlas {
 
@@ -59,10 +60,24 @@ public:  // types
     template <typename T>
     using enable_if_index_t = enable_if_t<is_index<T>()>;
 
+private:
+
+    class FieldObserver : public field::FieldObserver {
+    public:
+        FieldObserver(FieldSetImpl& fieldset) : fieldset_(fieldset) {}
+
+    private:
+        void onFieldRename(FieldImpl& field) override;
+
+    private:
+        FieldSetImpl& fieldset_;
+    };
+
 
 public:  // methods
     /// Constructs an empty FieldSet
     FieldSetImpl(const std::string& name = "untitled");
+    virtual ~FieldSetImpl();
 
     idx_t size() const { return static_cast<idx_t>(fields_.size()); }
     bool empty() const { return !fields_.size(); }
@@ -126,9 +141,10 @@ protected:                                // data
     std::string name_;                    ///< internal name
     util::Metadata metadata_;             ///< metadata associated with the FieldSet
     std::map<std::string, idx_t> index_;  ///< name-to-index map, to refer fields by name
-};
 
-class FieldImpl;
+    friend class FieldObserver;
+    FieldObserver field_observer_;
+};
 
 // C wrapper interfaces to C++ routines
 extern "C" {
