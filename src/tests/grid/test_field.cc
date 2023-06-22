@@ -164,12 +164,12 @@ CASE("test_field_aligned") {
         EXPECT_EQ(field.strides()[2], 1);
     };
     SECTION("field(name,datatype,spec)") {
-        Field field("name", make_datatype<double>(), ArraySpec{make_shape(10, 5, 3), ArrayAlignment(4)});
+        Field field("name", array::make_datatype<double>(), ArraySpec{make_shape(10, 5, 3), ArrayAlignment(4)});
         check_field(field);
     }
     SECTION("field(config)") {
         Field field(util::Config("creator", "ArraySpec") |                     //
-                    util::Config("datatype", make_datatype<double>().str()) |  //
+                    util::Config("datatype", array::make_datatype<double>().str()) |  //
                     option::shape({10, 5, 3}) |                                //
                     option::alignment(4));
         check_field(field);

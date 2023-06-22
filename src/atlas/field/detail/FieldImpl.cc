@@ -11,14 +11,17 @@
 #include <memory>
 #include <sstream>
 
+#include "atlas/library/config.h"
+
 #include "atlas/array/MakeView.h"
 #include "atlas/field/FieldCreator.h"
 #include "atlas/field/detail/FieldImpl.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/runtime/Exception.h"
-
-
 #include "atlas/runtime/Log.h"
+
+#if ATLAS_HAVE_FUNCTIONSPACE
+#include "atlas/functionspace/FunctionSpace.h"
+#endif
 
 namespace atlas {
 namespace field {
@@ -53,8 +56,11 @@ FieldImpl* FieldImpl::create(const std::string& name, array::Array* array) {
 
 // -------------------------------------------------------------------------
 
-FieldImpl::FieldImpl(const std::string& name, array::DataType datatype, const array::ArrayShape& shape):
-    functionspace_(new FunctionSpace()) {
+FieldImpl::FieldImpl(const std::string& name, array::DataType datatype, const array::ArrayShape& shape)
+#if ATLAS_HAVE_FUNCTIONSPACE
+    :functionspace_(new FunctionSpace())
+#endif
+{
     array_ = array::Array::create(datatype, shape);
     array_->attach();
     rename(name);
@@ -62,8 +68,11 @@ FieldImpl::FieldImpl(const std::string& name, array::DataType datatype, const ar
     set_variables(0);
 }
 
-FieldImpl::FieldImpl(const std::string& name, array::DataType datatype, array::ArraySpec&& spec):
-    functionspace_(new FunctionSpace()) {
+FieldImpl::FieldImpl(const std::string& name, array::DataType datatype, array::ArraySpec&& spec)
+#if ATLAS_HAVE_FUNCTIONSPACE
+    :functionspace_(new FunctionSpace())
+#endif
+{
     array_ = array::Array::create(datatype, std::move(spec));
     array_->attach();
     rename(name);
@@ -72,7 +81,11 @@ FieldImpl::FieldImpl(const std::string& name, array::DataType datatype, array::A
 }
 
 
-FieldImpl::FieldImpl(const std::string& name, array::Array* array): functionspace_(new FunctionSpace()) {
+FieldImpl::FieldImpl(const std::string& name, array::Array* array)
+#if ATLAS_HAVE_FUNCTIONSPACE
+    :functionspace_(new FunctionSpace())
+#endif
+{
     array_ = array;
     array_->attach();
     rename(name);
@@ -88,12 +101,16 @@ FieldImpl::~FieldImpl() {
         }
         delete array_;
     }
+#if ATLAS_HAVE_FUNCTIONSPACE
     delete functionspace_;
+#endif
 }
 
 size_t FieldImpl::footprint() const {
     size_t size = sizeof(*this);
+#if ATLAS_HAVE_FUNCTIONSPACE
     size += functionspace_->footprint();
+#endif
     size += array_->footprint();
     size += metadata_.footprint();
     size += name_.capacity() * sizeof(std::string::value_type);
@@ -130,6 +147,13 @@ std::string vector_to_str(const std::vector<T>& t) {
 
 }  // namespace
 
+void FieldImpl::rename(const std::string& name) {
+    metadata().set("name", name);
+    for (FieldObserver* observer : field_observers_) {
+        observer->onFieldRename(*this);
+    }
+}
+
 const std::string& FieldImpl::name() const {
     name_ = metadata().get<std::string>("name");
     return name_;
@@ -164,28 +188,53 @@ void FieldImpl::insert(idx_t idx1, idx_t size1) {
 }
 
 void FieldImpl::set_functionspace(const FunctionSpace& functionspace) {
+#if ATLAS_HAVE_FUNCTIONSPACE
     *functionspace_ = functionspace;
+#else
+    throw_Exception("Atlas is compiled without FunctionSpace support", Here());
+#endif
 }
 
 const FunctionSpace& FieldImpl::functionspace() const {
+#if ATLAS_HAVE_FUNCTIONSPACE
     return *functionspace_;
+#else
+    throw_Exception("Atlas is compiled without FunctionSpace support", Here());
+#endif
 }
 
 void FieldImpl::haloExchange(bool on_device) const {
     if (dirty()) {
+#if ATLAS_HAVE_FUNCTIONSPACE
         ATLAS_ASSERT(functionspace());
         functionspace().haloExchange(Field(this), on_device);
         set_dirty(false);
+#else
+    throw_Exception("Atlas is compiled without FunctionSpace support", Here());
+#endif
     }
 }
 void FieldImpl::adjointHaloExchange(bool on_device) const {
-    {
-        set_dirty();
+#if ATLAS_HAVE_FUNCTIONSPACE
+    set_dirty();
+    ATLAS_ASSERT(functionspace());
+    functionspace().adjointHaloExchange(Field(this), on_device);
+#else
+    throw_Exception("Atlas is compiled without FunctionSpace support", Here());
+#endif
+}
 
-        ATLAS_ASSERT(functionspace());
-        functionspace().adjointHaloExchange(Field(this), on_device);
+void FieldImpl::attachObserver(FieldObserver& observer) const {
+    if (std::find(field_observers_.begin(), field_observers_.end(), &observer) == field_observers_.end()) {
+        field_observers_.push_back(&observer);
     }
 }
+
+void FieldImpl::detachObserver(FieldObserver& observer) const {
+    field_observers_.erase(std::remove(field_observers_.begin(), field_observers_.end(), &observer),
+                          field_observers_.end());
+}
+
 
 // ------------------------------------------------------------------
 

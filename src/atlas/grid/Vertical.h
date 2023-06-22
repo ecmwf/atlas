@@ -18,8 +18,6 @@
 
 namespace atlas {
 
-class Field;
-
 //---------------------------------------------------------------------------------------------------------------------
 
 class Vertical {
@@ -31,8 +29,6 @@ public:
     Vertical(idx_t levels, const vector_t& z, const Interval& interval, const util::Config& config = util::NoConfig());
 
     Vertical(const util::Config& config = util::NoConfig());
-
-    Field z() const;
 
 public:
     idx_t k_begin() const { return k_begin_; }

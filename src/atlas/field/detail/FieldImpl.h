@@ -37,6 +37,10 @@ namespace field {
 
 //----------------------------------------------------------------------------------------------------------------------
 
+class FieldObserver; // Definition below
+
+//----------------------------------------------------------------------------------------------------------------------
+
 class FieldImpl : public util::Object {
 public:  // Static methods
     /// @brief Create field from parametrisation
@@ -99,7 +103,7 @@ public:  // Destructor
     const std::string& name() const;
 
     /// @brief Rename this field
-    void rename(const std::string& name) { metadata().set("name", name); }
+    void rename(const std::string& name);
 
     /// @brief Access to metadata associated to this field
     const util::Metadata& metadata() const { return metadata_; }
@@ -205,7 +209,8 @@ public:  // Destructor
     void haloExchange(bool on_device = false) const;
     void adjointHaloExchange(bool on_device = false) const;
 
-
+    void attachObserver(FieldObserver&) const;
+    void detachObserver(FieldObserver&) const;
     void callbackOnDestruction(std::function<void()>&& f) { callback_on_destruction_.emplace_back(std::move(f)); }
 
 private:  // methods
@@ -216,7 +221,37 @@ private:  // members
     util::Metadata metadata_;
     array::Array* array_;
     FunctionSpace* functionspace_;
+    mutable std::vector<FieldObserver*> field_observers_;
     std::vector<std::function<void()>> callback_on_destruction_;
+};
+
+//----------------------------------------------------------------------------------------------------------------------
+
+class FieldObserver {
+private:
+    std::vector<const FieldImpl*> registered_fields_;
+
+public:
+    void registerField(const FieldImpl& field) {
+        if (std::find(registered_fields_.begin(), registered_fields_.end(), &field) == registered_fields_.end()) {
+            registered_fields_.push_back(&field);
+            field.attachObserver(*this);
+        }
+    }
+    void unregisterField(const FieldImpl& field) {
+        auto found = std::find(registered_fields_.begin(), registered_fields_.end(), &field);
+        if (found != registered_fields_.end()) {
+            registered_fields_.erase(found);
+            field.detachObserver(*this);
+        }
+    }
+    virtual ~FieldObserver() {
+        for (auto field : registered_fields_) {
+            field->detachObserver(*this);
+        }
+    }
+
+    virtual void onFieldRename(FieldImpl&) = 0;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

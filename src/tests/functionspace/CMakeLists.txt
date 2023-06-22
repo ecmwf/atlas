@@ -8,7 +8,7 @@
 
 if( HAVE_FCTEST )
 
-  if( NOT HAVE_TRANS )
+  if( NOT atlas_HAVE_ECTRANS )
     set( transi_HAVE_MPI 1 )
     set( ectrans_HAVE_MPI 1 )
   endif()

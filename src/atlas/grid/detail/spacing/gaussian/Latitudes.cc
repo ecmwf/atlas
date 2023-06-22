@@ -17,7 +17,6 @@
 
 #include "eckit/log/Bytes.h"
 
-#include "atlas/array.h"
 #include "atlas/grid/detail/spacing/gaussian/Latitudes.h"
 #include "atlas/grid/detail/spacing/gaussian/N.h"
 #include "atlas/library/config.h"
@@ -27,12 +26,6 @@
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
 
-//using eckit::ConcreteBuilderT0;
-//using eckit::Factory;
-
-using atlas::array::Array;
-using atlas::array::ArrayView;
-using atlas::array::make_view;
 
 namespace atlas {
 namespace grid {

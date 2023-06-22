@@ -36,8 +36,12 @@ field::FieldImpl* atlas__Vertical__z(const Vertical* This) {
     ATLAS_ASSERT(This != nullptr);
     field::FieldImpl* field;
     {
-        Field f = This->z();
-        field   = f.get();
+        auto zfield = Field("z", array::make_datatype<double>(), array::make_shape(This->size()));
+        auto zview  = array::make_view<double, 1>(zfield);
+        for (idx_t k = 0; k < zview.size(); ++k) {
+            zview(k) = (*This)[k];
+        }
+        field   = zfield.get();
         field->attach();
     }
     field->detach();

@@ -8,7 +8,7 @@
 
 if( HAVE_FCTEST )
 
-  if( atlas_HAVE_TRANS )
+  if( atlas_HAVE_ECTRANS )
       
     add_fctest( TARGET atlas_fctest_trans
       LINKER_LANGUAGE Fortran
@@ -20,7 +20,7 @@ if( HAVE_FCTEST )
     )
   endif()
 
-  if( atlas_HAVE_TRANS )
+  if( atlas_HAVE_ECTRANS )
     add_fctest( TARGET atlas_fctest_trans_invtrans_grad
       LINKER_LANGUAGE Fortran
       SOURCES         fctest_trans_invtrans_grad.F90
@@ -40,7 +40,7 @@ endif()
 ecbuild_add_test( TARGET atlas_test_trans
   MPI      4
   SOURCES   test_trans.cc
-  CONDITION atlas_HAVE_TRANS AND eckit_HAVE_MPI AND ( transi_HAVE_MPI OR ectrans_HAVE_MPI )
+  CONDITION atlas_HAVE_ECTRANS AND eckit_HAVE_MPI AND ( transi_HAVE_MPI OR ectrans_HAVE_MPI )
   LIBS      atlas transi
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
               # There seems to be a issue with vd2uv raising FE_INVALID, only on specific arch (bamboo-leap42-gnu63)
@@ -49,7 +49,7 @@ ecbuild_add_test( TARGET atlas_test_trans
 
 ecbuild_add_test( TARGET atlas_test_trans_serial
   SOURCES   test_trans.cc
-  CONDITION atlas_HAVE_TRANS
+  CONDITION atlas_HAVE_ECTRANS
   LIBS      atlas transi
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
               # There seems to be a issue with vd2uv raising FE_INVALID, only on specific arch (bamboo-leap42-gnu63)
@@ -58,7 +58,7 @@ ecbuild_add_test( TARGET atlas_test_trans_serial
 
 ecbuild_add_test( TARGET atlas_test_trans_invtrans_grad
   SOURCES   test_trans_invtrans_grad.cc
-  CONDITION atlas_HAVE_TRANS
+  CONDITION atlas_HAVE_ECTRANS
   LIBS      atlas transi
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
@@ -66,7 +66,7 @@ ecbuild_add_test( TARGET atlas_test_trans_invtrans_grad
 # Note: This duplication is needed because transi is a private library of atlas,
 #       and this tests needs access to the transi include directories.
 # ToDo: Fix this inside the test code so that we don't directly need to include transi headers.
-if( atlas_HAVE_TRANS )
+if( atlas_HAVE_ECTRANS )
 ecbuild_add_test( TARGET atlas_test_transgeneral
   SOURCES   test_transgeneral.cc
   LIBS      atlas transi
@@ -87,5 +87,6 @@ ecbuild_add_test( TARGET atlas_test_trans_localcache
   SOURCES   test_trans_localcache.cc
   LIBS      atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_TRACE_REPORT=1
+  CONDITION atlas_HAVE_ATLAS_TRANS
 )
 

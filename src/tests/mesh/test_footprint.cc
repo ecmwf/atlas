@@ -35,7 +35,7 @@ static std::string griduid() {
 
 //-----------------------------------------------------------------------------
 
-CASE("test_broadcast_to_self") {
+CASE("test_footprint") {
     array::ArrayT<double> array(10, 2);
     Log::info() << "array.footprint = " << eckit::Bytes(array.footprint()) << std::endl;
 

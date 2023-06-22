@@ -21,23 +21,17 @@
 #include <utility>
 #include <vector>
 
+#include "atlas/util/mdspan.h"
+
 #include "atlas/library/config.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Object.h"
 #include "atlas/util/Point.h"
 #include "atlas/util/VectorOfAbstract.h"
 
-#include "atlas/projection/Projection.h"  // for ExplicitPartitionPolygon
-
 namespace eckit {
 class PathName;
 }
-
-namespace atlas {
-class Field;
-class RectangularDomain;
-class Projection;
-}  // namespace atlas
 
 namespace atlas {
 namespace util {
@@ -100,9 +94,25 @@ public:
     using Polygon::Polygon;
     using PointsXY     = std::vector<Point2>;
     using PointsLonLat = std::vector<Point2>;
+    class RectangleXY {
+    public:
+        RectangleXY() = default;
+        RectangleXY(const std::array<double,2>& x, const std::array<double,2>& y) :
+            xmin_{x[0]}, xmax_{x[1]}, ymin_{y[0]}, ymax_{y[1]} {}
+
+        double xmin() const { return xmin_; }
+        double xmax() const { return xmax_; }
+        double ymin() const { return ymin_; }
+        double ymax() const { return ymax_; }
+    private:
+        double xmin_{std::numeric_limits<double>::max()};
+        double xmax_{std::numeric_limits<double>::max()};
+        double ymin_{std::numeric_limits<double>::max()};
+        double ymax_{std::numeric_limits<double>::max()};
+    };
 
     /// @brief Return inscribed rectangular domain (not rotated)
-    virtual const RectangularDomain& inscribedDomain() const;
+    virtual const RectangleXY& inscribedDomain() const;
 
     /// @brief Return value of halo
     virtual idx_t halo() const { return 0; }
@@ -130,9 +140,9 @@ public:
 class ExplicitPartitionPolygon : public util::PartitionPolygon {
 public:
     explicit ExplicitPartitionPolygon(PointsXY&& points):
-        ExplicitPartitionPolygon(std::move(points), RectangularDomain()) {}
+        ExplicitPartitionPolygon(std::move(points), RectangleXY()) {}
 
-    explicit ExplicitPartitionPolygon(PointsXY&& points, const RectangularDomain& inscribed):
+    explicit ExplicitPartitionPolygon(PointsXY&& points, const RectangleXY& inscribed):
         points_(std::move(points)), inscribed_(inscribed) {
         setup(compute_edges(points_.size()));
     }
@@ -142,7 +152,7 @@ public:
 
     void allGather(util::PartitionPolygons&) const override;
 
-    const RectangularDomain& inscribedDomain() const override { return inscribed_; }
+    const RectangleXY& inscribedDomain() const override { return inscribed_; }
 
 private:
     static util::Polygon::edge_set_t compute_edges(idx_t points_size);
@@ -150,7 +160,7 @@ private:
 
 private:
     std::vector<Point2> points_;
-    RectangularDomain inscribed_;
+    RectangleXY inscribed_;
 };  // namespace util
 
 //------------------------------------------------------------------------------------------------------
@@ -167,7 +177,11 @@ public:
     using Vector = VectorOfAbstract<PolygonCoordinates>;
     // -- Constructors
 
-    PolygonCoordinates(const Polygon&, const atlas::Field& coordinates, bool removeAlignedPoints);
+    PolygonCoordinates(const Polygon&, const double x[], const double y[], size_t xstride, size_t ystride, bool removeAlignedPoints);
+
+    template <typename Extents, typename LayoutPolicy, typename AccessorPolicy>
+    PolygonCoordinates(const Polygon& poly, atlas::mdspan<const double, Extents, LayoutPolicy, AccessorPolicy> coordinates, bool removeAlignedPoints): 
+        PolygonCoordinates(poly, &coordinates(0,0), &coordinates(0,1), coordinates.stride(1), coordinates.stride(1), removeAlignedPoints ) {}
 
     template <typename PointContainer>
     PolygonCoordinates(const PointContainer& points);

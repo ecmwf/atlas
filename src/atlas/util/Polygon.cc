@@ -16,9 +16,7 @@
 
 #include "eckit/types/FloatCompare.h"
 
-#include "atlas/array.h"
 #include "atlas/domain/Domain.h"
-#include "atlas/field/Field.h"
 #include "atlas/projection/Projection.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -117,15 +115,14 @@ void Polygon::print(std::ostream& s) const {
     s << '}';
 }
 
-const RectangularDomain& PartitionPolygon::inscribedDomain() const {
-    static RectangularDomain inscribed;
+const PartitionPolygon::RectangleXY& PartitionPolygon::inscribedDomain() const {
+    static RectangleXY inscribed;
     return inscribed;
 }
 
 //------------------------------------------------------------------------------------------------------
 
-
-PolygonCoordinates::PolygonCoordinates(const Polygon& poly, const atlas::Field& coordinates, bool removeAlignedPoints) {
+PolygonCoordinates::PolygonCoordinates(const Polygon& poly, const double x[], const double y[], size_t xstride, size_t ystride, bool removeAlignedPoints) {
     ATLAS_ASSERT(poly.size() > 2);
     ATLAS_ASSERT(poly.front() == poly.back());
 
@@ -136,15 +133,14 @@ PolygonCoordinates::PolygonCoordinates(const Polygon& poly, const atlas::Field& 
     coordinates_.clear();
     coordinates_.reserve(poly.size());
 
-    auto coord      = array::make_view<double, 2>(coordinates);
-    coordinatesMin_ = Point2(coord(poly[0], XX), coord(poly[0], YY));
+    coordinatesMin_ = Point2(x[poly[0]], y[poly[0]]);
     coordinatesMax_ = coordinatesMin_;
 
     size_t nb_removed_points_due_to_alignment = 0;
 
 
     for (size_t i = 0; i < poly.size(); ++i) {
-        Point2 A(coord(poly[i], XX), coord(poly[i], YY));
+        Point2 A(x[poly[i*xstride]], y[poly[i*ystride]]);
         coordinatesMin_ = Point2::componentsMin(coordinatesMin_, A);
         coordinatesMax_ = Point2::componentsMax(coordinatesMax_, A);
 
