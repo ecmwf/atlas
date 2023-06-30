@@ -6,18 +6,24 @@
  */
 
 
+#include "atlas/array/helpers/ArrayForEach.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/CellColumns.h"
 #include "atlas/functionspace/CubedSphereColumns.h"
 #include "atlas/functionspace/NodeColumns.h"
+#include "atlas/functionspace/PointCloud.h"
+#include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/grid/CubedSphereGrid.h"
+#include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/Iterator.h"
 #include "atlas/grid/Partitioner.h"
 #include "atlas/interpolation/Interpolation.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator/MeshGenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/redistribution/Redistribution.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/function/VortexRollup.h"
@@ -28,10 +34,57 @@
 namespace atlas {
 namespace test {
 
+struct CubedSphereInterpolationFixture {
+    atlas::Grid sourceGrid_ = Grid("CS-LFR-24");
+    atlas::MeshGenerator sourceMeshGenerator_ = MeshGenerator("cubedsphere_dual");
+    atlas::grid::Partitioner sourcePartitioner_ = sourceGrid_.partitioner();
+    atlas::Mesh sourceMesh_ = sourceMeshGenerator_.generate(sourceGrid_, sourcePartitioner_);
+    atlas::FunctionSpace sourceFunctionSpace_ = functionspace::NodeColumns(sourceMesh_);
+    atlas::Grid targetGrid_ = Grid("O24");
+    atlas::MeshGenerator targetMeshGenerator_ =  MeshGenerator("structured");
+    atlas::grid::Partitioner targetPartitioner_ =
+        grid::MatchingPartitioner(sourceMesh_, util::Config("type", "cubedsphere"));
+    atlas::Mesh targetMesh_ = targetMeshGenerator_.generate(targetGrid_, targetPartitioner_);
+    atlas::FunctionSpace targetFunctionSpace_ = functionspace::NodeColumns(targetMesh_);
+};
+
+void gmshOutput(const std::string& fileName, const FieldSet& fieldSet) {
+
+
+    const auto& functionSpace = fieldSet[0].functionspace();
+    const auto& mesh = functionspace::NodeColumns(functionSpace).mesh();
+
+    const auto gmshConfig =
+        util::Config("coordinates", "xyz") | util::Config("ghost", true) | util::Config("info", true);
+    const auto gmsh = output::Gmsh(fileName, gmshConfig);
+    gmsh.write(mesh);
+    gmsh.write(fieldSet, functionSpace);
+}
+
+atlas::util::Config interpScheme() {
+    return util::Config("type", "cubedsphere-bilinear") | util::Config("adjoint", true) |
+           util::Config("halo_exchange", false);
+}
+
+atlas::Field generateScalarField(const FunctionSpace& functionspace) {
+
+    auto field = functionspace.createField<double>(option::name("test_field"));
+    auto fieldView = array::make_view<double, 1>(field);
+    const auto lonlLatView = array::make_view<double, 2>(functionspace.lonlat());
+
+    using for_each = array::helpers::ArrayForEach<0>;
+
+    for_each::apply(std::make_tuple(fieldView, lonlLatView), [&](auto&& fieldElem, auto&& lonLat){
+        fieldElem = util::function::vortex_rollup(lonLat(LON), lonLat(LAT), 1.);
+    });
+    return field;
+};
+
 
 // Return (u, v) field with vortex_rollup as the streamfunction.
 // This has no physical significance, but it makes a nice swirly field.
-std::pair<double, double> vortexField(double lon, double lat) {
+std::pair<double, double> vortexVectorField(double lon, double lat) {
+
     // set hLon and hLat step size.
     const double hLon = 0.0001;
     const double hLat = 0.0001;
@@ -50,7 +103,6 @@ std::pair<double, double> vortexField(double lon, double lat) {
     return std::make_pair(u, v);
 }
 
-
 double dotProd(const Field& a, const Field& b) {
     double prod{};
 
@@ -65,11 +117,12 @@ double dotProd(const Field& a, const Field& b) {
     return prod;
 }
 
+
+
+
 CASE("cubedsphere_scalar_interpolation") {
-    // Create a source cubed sphere grid, mesh and functionspace.
-    const auto sourceGrid          = Grid("CS-LFR-24");
-    const auto sourceMesh          = MeshGenerator("cubedsphere_dual").generate(sourceGrid);
-    const auto sourceFunctionspace = functionspace::NodeColumns(sourceMesh);
+
+    const auto fixture = CubedSphereInterpolationFixture{};
 
     //--------------------------------------------------------------------------
     // Interpolation test.
@@ -77,12 +130,12 @@ CASE("cubedsphere_scalar_interpolation") {
 
     // Populate analytic source field.
     double stDev{};
-    auto sourceField = sourceFunctionspace.createField<double>(option::name("test_field"));
+    auto sourceField = fixture.sourceFunctionSpace_.createField<double>(option::name("test_field"));
     {
-        const auto lonlat = array::make_view<double, 2>(sourceFunctionspace.lonlat());
-        const auto ghost  = array::make_view<int, 1>(sourceFunctionspace.ghost());
+        const auto lonlat = array::make_view<double, 2>(fixture.sourceFunctionSpace_.lonlat());
+        const auto ghost  = array::make_view<int, 1>(fixture.sourceFunctionSpace_.ghost());
         auto view         = array::make_view<double, 1>(sourceField);
-        for (idx_t i = 0; i < sourceFunctionspace.size(); ++i) {
+        for (idx_t i = 0; i < fixture.sourceFunctionSpace_.size(); ++i) {
             view(i) = util::function::vortex_rollup(lonlat(i, LON), lonlat(i, LAT), 1.);
             if (!ghost(i)) {
                 stDev += view(i) * view(i);
@@ -90,33 +143,25 @@ CASE("cubedsphere_scalar_interpolation") {
         }
     }
     mpi::comm().allReduceInPlace(stDev, eckit::mpi::Operation::SUM);
-    stDev = std::sqrt(stDev / sourceGrid.size());
-
-
-    // Create target grid, mesh and functionspace.
-    const auto partitioner         = grid::MatchingPartitioner(sourceMesh, util::Config("type", "cubedsphere"));
-    const auto targetGrid          = Grid("O24");
-    const auto targetMesh          = MeshGenerator("structured").generate(targetGrid, partitioner);
-    const auto targetFunctionspace = functionspace::NodeColumns(targetMesh);
+    stDev = std::sqrt(stDev / fixture.sourceGrid_.size());
 
     // Set up interpolation object.
-    const auto scheme = util::Config("type", "cubedsphere-bilinear") | util::Config("adjoint", true);
-    const auto interp = Interpolation(scheme, sourceFunctionspace, targetFunctionspace);
+    const auto interp = Interpolation(interpScheme(), fixture.sourceFunctionSpace_, fixture.targetFunctionSpace_);
 
     // Interpolate from source to target field.
-    auto targetField = targetFunctionspace.createField<double>(option::name("test_field"));
+    auto targetField = fixture.targetFunctionSpace_.createField<double>(option::name("test_field"));
     interp.execute(sourceField, targetField);
     targetField.haloExchange();
 
     // Make some diagnostic output fields.
-    auto errorField = targetFunctionspace.createField<double>(option::name("error_field"));
-    auto partField  = targetFunctionspace.createField<int>(option::name("partition"));
+    auto errorField = fixture.targetFunctionSpace_.createField<double>(option::name("error_field"));
+    auto partField  = fixture.targetFunctionSpace_.createField<int>(option::name("partition"));
     {
-        const auto lonlat = array::make_view<double, 2>(targetFunctionspace.lonlat());
+        const auto lonlat = array::make_view<double, 2>(fixture.targetFunctionSpace_.lonlat());
         auto targetView   = array::make_view<double, 1>(targetField);
         auto errorView    = array::make_view<double, 1>(errorField);
         auto partView     = array::make_view<int, 1>(partField);
-        for (idx_t i = 0; i < targetFunctionspace.size(); ++i) {
+        for (idx_t i = 0; i < fixture.targetFunctionSpace_.size(); ++i) {
             const auto val = util::function::vortex_rollup(lonlat(i, LON), lonlat(i, LAT), 1.);
             errorView(i)   = std::abs((targetView(i) - val) / stDev);
             partView(i)    = mpi::rank();
@@ -124,32 +169,24 @@ CASE("cubedsphere_scalar_interpolation") {
     }
     partField.haloExchange();
 
-    // Output source mesh.
-    const auto gmshConfig =
-        util::Config("coordinates", "xyz") | util::Config("ghost", true) | util::Config("info", true);
-    const auto sourceGmsh = output::Gmsh("cubedsphere_source.msh", gmshConfig);
-    sourceGmsh.write(sourceMesh);
-    sourceGmsh.write(FieldSet(sourceField), sourceFunctionspace);
+    gmshOutput("cubedsphere_source.msh", FieldSet(sourceField));
 
-    // Output target mesh.
-    const auto targetGmsh = output::Gmsh("cubedsphere_target.msh", gmshConfig);
-    targetGmsh.write(targetMesh);
     auto targetFields = FieldSet{};
     targetFields.add(targetField);
     targetFields.add(errorField);
     targetFields.add(partField);
-    targetGmsh.write(targetFields, targetFunctionspace);
+    gmshOutput("cubedsphere_target.msh", targetFields);
 
     //--------------------------------------------------------------------------
     // Adjoint test.
     //--------------------------------------------------------------------------
 
     // Ensure that the adjoint identity relationship holds.
-    auto targetAdjoint = targetFunctionspace.createField<double>(option::name("target adjoint"));
+    auto targetAdjoint = fixture.targetFunctionSpace_.createField<double>(option::name("target adjoint"));
     array::make_view<double, 1>(targetAdjoint).assign(array::make_view<double, 1>(targetField));
     targetAdjoint.adjointHaloExchange();
 
-    auto sourceAdjoint = sourceFunctionspace.createField<double>(option::name("source adjoint"));
+    auto sourceAdjoint = fixture.sourceFunctionSpace_.createField<double>(option::name("source adjoint"));
     array::make_view<double, 1>(sourceAdjoint).assign(0.);
     interp.execute_adjoint(sourceAdjoint, targetAdjoint);
 
@@ -160,13 +197,11 @@ CASE("cubedsphere_scalar_interpolation") {
 }
 
 CASE("cubedsphere_wind_interpolation") {
-    // Create a source cubed sphere grid, mesh and functionspace.
-    const auto sourceGrid          = CubedSphereGrid("CS-LFR-48");
-    const auto sourceMesh          = MeshGenerator("cubedsphere_dual").generate(sourceGrid);
-    const auto sourceFunctionspace = functionspace::CubedSphereNodeColumns(sourceMesh);
+
+    const auto fixture = CubedSphereInterpolationFixture{};
 
     // Get projection.
-    const auto& proj = sourceGrid.cubedSphereProjection();
+    const auto& proj = CubedSphereGrid(fixture.sourceGrid_).cubedSphereProjection();
 
     // Set wind transform Jacobian.
     const auto windTransform = [&](const PointLonLat& lonlat, idx_t t) {
@@ -189,12 +224,12 @@ CASE("cubedsphere_wind_interpolation") {
 
     // Populate analytic source field.
     auto sourceFieldSet = FieldSet{};
-    sourceFieldSet.add(sourceFunctionspace.createField<double>(option::name("u_orig")));
-    sourceFieldSet.add(sourceFunctionspace.createField<double>(option::name("v_orig")));
-    sourceFieldSet.add(sourceFunctionspace.createField<double>(option::name("v_alpha")));
-    sourceFieldSet.add(sourceFunctionspace.createField<double>(option::name("v_beta")));
+    sourceFieldSet.add(fixture.sourceFunctionSpace_.createField<double>(option::name("u_orig")));
+    sourceFieldSet.add(fixture.sourceFunctionSpace_.createField<double>(option::name("v_orig")));
+    sourceFieldSet.add(fixture.sourceFunctionSpace_.createField<double>(option::name("v_alpha")));
+    sourceFieldSet.add(fixture.sourceFunctionSpace_.createField<double>(option::name("v_beta")));
     {
-        const auto lonlat = array::make_view<double, 2>(sourceFunctionspace.lonlat());
+        const auto lonlat = array::make_view<double, 2>(fixture.sourceFunctionSpace_.lonlat());
         auto u            = array::make_view<double, 1>(sourceFieldSet["u_orig"]);
         auto v            = array::make_view<double, 1>(sourceFieldSet["v_orig"]);
         auto vAlpha       = array::make_view<double, 1>(sourceFieldSet["v_alpha"]);
@@ -205,12 +240,13 @@ CASE("cubedsphere_wind_interpolation") {
         // wind transform. Then the transform is applied to the entire field,
         // *including* the halo.
 
-        sourceFunctionspace.parallel_for(util::Config("include_halo", true), [&](idx_t idx, idx_t t, idx_t i, idx_t j) {
+        functionspace::CubedSphereNodeColumns(fixture.sourceFunctionSpace_).parallel_for(
+            util::Config("include_halo", true), [&](idx_t idx, idx_t t, idx_t i, idx_t j) {
             // Get lonlat
             const auto ll = PointLonLat(lonlat(idx, LON), lonlat(idx, LAT));
 
             // Set (u, v) wind
-            std::tie(u(idx), v(idx)) = vortexField(ll.lon(), ll.lat());
+            std::tie(u(idx), v(idx)) = vortexVectorField(ll.lon(), ll.lat());
 
             // Get wind transform jacobian.
             auto jac = windTransform(ll, t);
@@ -220,26 +256,18 @@ CASE("cubedsphere_wind_interpolation") {
         });
     }
 
-    // Create target grid, mesh and functionspace.
-    const auto partitioner         = grid::MatchingPartitioner(sourceMesh, util::Config("type", "cubedsphere"));
-    const auto targetGrid          = Grid("O48");
-    const auto targetMesh          = MeshGenerator("structured").generate(targetGrid, partitioner);
-    const auto targetFunctionspace = functionspace::NodeColumns(targetMesh);
-
     // Set up interpolation object.
     // Note: We have to disable the source field halo exhange in the
     // interpolation execute and excute_adjoint methods. If left on, the halo
     // exchange will corrupt the transformed wind field.
-    const auto scheme = util::Config("type", "cubedsphere-bilinear") | util::Config("adjoint", true) |
-                        util::Config("halo_exchange", false);
-    const auto interp = Interpolation(scheme, sourceFunctionspace, targetFunctionspace);
+    const auto interp = Interpolation(interpScheme(), fixture.sourceFunctionSpace_, fixture.targetFunctionSpace_);
 
     // Make target fields.
     auto targetFieldSet = FieldSet{};
-    targetFieldSet.add(targetFunctionspace.createField<double>(option::name("u_orig")));
-    targetFieldSet.add(targetFunctionspace.createField<double>(option::name("v_orig")));
-    targetFieldSet.add(targetFunctionspace.createField<double>(option::name("v_alpha")));
-    targetFieldSet.add(targetFunctionspace.createField<double>(option::name("v_beta")));
+    targetFieldSet.add(fixture.targetFunctionSpace_.createField<double>(option::name("u_orig")));
+    targetFieldSet.add(fixture.targetFunctionSpace_.createField<double>(option::name("v_orig")));
+    targetFieldSet.add(fixture.targetFunctionSpace_.createField<double>(option::name("v_alpha")));
+    targetFieldSet.add(fixture.targetFunctionSpace_.createField<double>(option::name("v_beta")));
 
     // Interpolate from source to target fields.
     array::make_view<double, 1>(targetFieldSet["v_alpha"]).assign(0.);
@@ -247,13 +275,13 @@ CASE("cubedsphere_wind_interpolation") {
     interp.execute(sourceFieldSet, targetFieldSet);
 
     // Make new (u, v) fields from (v_alpha, v_beta)
-    targetFieldSet.add(targetFunctionspace.createField<double>(option::name("error_field_0")));
-    targetFieldSet.add(targetFunctionspace.createField<double>(option::name("error_field_1")));
-    targetFieldSet.add(targetFunctionspace.createField<double>(option::name("u_new")));
-    targetFieldSet.add(targetFunctionspace.createField<double>(option::name("v_new")));
+    targetFieldSet.add(fixture.targetFunctionSpace_.createField<double>(option::name("error_field_0")));
+    targetFieldSet.add(fixture.targetFunctionSpace_.createField<double>(option::name("error_field_1")));
+    targetFieldSet.add(fixture.targetFunctionSpace_.createField<double>(option::name("u_new")));
+    targetFieldSet.add(fixture.targetFunctionSpace_.createField<double>(option::name("v_new")));
     {
-        const auto lonlat = array::make_view<double, 2>(targetFunctionspace.lonlat());
-        const auto ghost  = array::make_view<int, 1>(targetFunctionspace.ghost());
+        const auto lonlat = array::make_view<double, 2>(fixture.targetFunctionSpace_.lonlat());
+        const auto ghost  = array::make_view<int, 1>(fixture.targetFunctionSpace_.ghost());
         auto u            = array::make_view<double, 1>(targetFieldSet["u_new"]);
         auto v            = array::make_view<double, 1>(targetFieldSet["v_new"]);
         const auto uOrig  = array::make_view<double, 1>(targetFieldSet["u_orig"]);
@@ -264,7 +292,7 @@ CASE("cubedsphere_wind_interpolation") {
         auto error1       = array::make_view<double, 1>(targetFieldSet["error_field_1"]);
         const auto& tVec  = interp.target()->metadata().getIntVector("tile index");
 
-        for (idx_t idx = 0; idx < targetFunctionspace.size(); ++idx) {
+        for (idx_t idx = 0; idx < fixture.targetFunctionSpace_.size(); ++idx) {
             if (!ghost(idx)) {
                 const auto ll = PointLonLat(lonlat(idx, LON), lonlat(idx, LAT));
                 const idx_t t = tVec[idx];
@@ -276,7 +304,7 @@ CASE("cubedsphere_wind_interpolation") {
                 std::tie(u(idx), v(idx)) = matMul(jac, vAlpha(idx), vBeta(idx));
 
                 // Get error.
-                const auto uvTarget = vortexField(ll.lon(), ll.lat());
+                const auto uvTarget = vortexVectorField(ll.lon(), ll.lat());
 
                 error0(idx) = Point2::distance(Point2(uvTarget.first, uvTarget.second), Point2(uOrig(idx), vOrig(idx)));
                 error1(idx) = Point2::distance(Point2(uvTarget.first, uvTarget.second), Point2(u(idx), v(idx)));
@@ -285,26 +313,16 @@ CASE("cubedsphere_wind_interpolation") {
     }
     targetFieldSet.haloExchange();
 
-    // Output source mesh.
-    const auto gmshConfig =
-        util::Config("coordinates", "xyz") | util::Config("ghost", true) | util::Config("info", true);
-    const auto sourceGmsh = output::Gmsh("cubedsphere_vec_source.msh", gmshConfig);
-    sourceGmsh.write(sourceMesh);
-    sourceGmsh.write(sourceFieldSet, sourceFunctionspace);
-
-    // Output target mesh.
-    const auto targetGmsh = output::Gmsh("cubedsphere_vec_target.msh", gmshConfig);
-    targetGmsh.write(targetMesh);
-    targetGmsh.write(targetFieldSet, targetFunctionspace);
-
+    gmshOutput("cubedsphere_vec_source.msh", sourceFieldSet);
+    gmshOutput("cubedsphere_vec_target.msh", targetFieldSet);
 
     //--------------------------------------------------------------------------
     // Adjoint test.
     //--------------------------------------------------------------------------
 
     // Ensure that the adjoint identity relationship holds.
-    targetFieldSet.add(targetFunctionspace.createField<double>(option::name("u_adjoint")));
-    targetFieldSet.add(targetFunctionspace.createField<double>(option::name("v_adjoint")));
+    targetFieldSet.add(fixture.targetFunctionSpace_.createField<double>(option::name("u_adjoint")));
+    targetFieldSet.add(fixture.targetFunctionSpace_.createField<double>(option::name("v_adjoint")));
     array::make_view<double, 1>(targetFieldSet["u_adjoint"])
         .assign(array::make_view<double, 1>(targetFieldSet["u_new"]));
     array::make_view<double, 1>(targetFieldSet["v_adjoint"])
@@ -315,11 +333,11 @@ CASE("cubedsphere_wind_interpolation") {
     targetFieldSet["v_adjoint"].adjointHaloExchange();
 
     // Adjoint of inverse wind transform.
-    targetFieldSet.add(targetFunctionspace.createField<double>(option::name("v_alpha_adjoint")));
-    targetFieldSet.add(targetFunctionspace.createField<double>(option::name("v_beta_adjoint")));
+    targetFieldSet.add(fixture.targetFunctionSpace_.createField<double>(option::name("v_alpha_adjoint")));
+    targetFieldSet.add(fixture.targetFunctionSpace_.createField<double>(option::name("v_beta_adjoint")));
     {
-        const auto lonlat = array::make_view<double, 2>(targetFunctionspace.lonlat());
-        const auto ghost  = array::make_view<int, 1>(targetFunctionspace.ghost());
+        const auto lonlat = array::make_view<double, 2>(fixture.targetFunctionSpace_.lonlat());
+        const auto ghost  = array::make_view<int, 1>(fixture.targetFunctionSpace_.ghost());
         const auto uAdj   = array::make_view<double, 1>(targetFieldSet["u_adjoint"]);
         const auto vAdj   = array::make_view<double, 1>(targetFieldSet["v_adjoint"]);
         auto vAlphaAdj    = array::make_view<double, 1>(targetFieldSet["v_alpha_adjoint"]);
@@ -327,7 +345,7 @@ CASE("cubedsphere_wind_interpolation") {
         const auto& tVec  = interp.target()->metadata().getIntVector("tile index");
         vAlphaAdj.assign(0.);
         vBetaAdj.assign(0.);
-        for (idx_t idx = 0; idx < targetFunctionspace.size(); ++idx) {
+        for (idx_t idx = 0; idx < fixture.targetFunctionSpace_.size(); ++idx) {
             if (!ghost(idx)) {
                 const auto ll = PointLonLat(lonlat(idx, LON), lonlat(idx, LAT));
                 const idx_t t = tVec[idx];
@@ -342,18 +360,18 @@ CASE("cubedsphere_wind_interpolation") {
     }
 
     // Adjoint of interpolation.
-    sourceFieldSet.add(sourceFunctionspace.createField<double>(option::name("v_alpha_adjoint")));
-    sourceFieldSet.add(sourceFunctionspace.createField<double>(option::name("v_beta_adjoint")));
+    sourceFieldSet.add(fixture.sourceFunctionSpace_.createField<double>(option::name("v_alpha_adjoint")));
+    sourceFieldSet.add(fixture.sourceFunctionSpace_.createField<double>(option::name("v_beta_adjoint")));
     array::make_view<double, 1>(sourceFieldSet["v_alpha_adjoint"]).assign(0.);
     array::make_view<double, 1>(sourceFieldSet["v_beta_adjoint"]).assign(0.);
     interp.execute_adjoint(sourceFieldSet["v_alpha_adjoint"], targetFieldSet["v_alpha_adjoint"]);
     interp.execute_adjoint(sourceFieldSet["v_beta_adjoint"], targetFieldSet["v_beta_adjoint"]);
 
     // Adjoint of wind transform.
-    sourceFieldSet.add(sourceFunctionspace.createField<double>(option::name("u_adjoint")));
-    sourceFieldSet.add(sourceFunctionspace.createField<double>(option::name("v_adjoint")));
+    sourceFieldSet.add(fixture.sourceFunctionSpace_.createField<double>(option::name("u_adjoint")));
+    sourceFieldSet.add(fixture.sourceFunctionSpace_.createField<double>(option::name("v_adjoint")));
     {
-        const auto lonlat = array::make_view<double, 2>(sourceFunctionspace.lonlat());
+        const auto lonlat = array::make_view<double, 2>(fixture.sourceFunctionSpace_.lonlat());
         auto uAdj         = array::make_view<double, 1>(sourceFieldSet["u_adjoint"]);
         auto vAdj         = array::make_view<double, 1>(sourceFieldSet["v_adjoint"]);
         uAdj.assign(0.);
@@ -361,7 +379,8 @@ CASE("cubedsphere_wind_interpolation") {
         const auto vAlphaAdj = array::make_view<double, 1>(sourceFieldSet["v_alpha_adjoint"]);
         const auto vBetaAdj  = array::make_view<double, 1>(sourceFieldSet["v_beta_adjoint"]);
 
-        sourceFunctionspace.parallel_for(util::Config("include_halo", true), [&](idx_t idx, idx_t t, idx_t i, idx_t j) {
+        functionspace::CubedSphereNodeColumns(fixture.sourceFunctionSpace_).parallel_for(
+            util::Config("include_halo", true), [&](idx_t idx, idx_t t, idx_t i, idx_t j) {
             // Get lonlat
             const auto ll = PointLonLat(lonlat(idx, LON), lonlat(idx, LAT));
 
@@ -382,6 +401,141 @@ CASE("cubedsphere_wind_interpolation") {
 
     EXPECT_APPROX_EQ(yDotY / xDotXAdj, 1., 1e-14);
 }
+
+CASE("cubedsphere_node_columns_to_structured_columns") {
+
+    const auto fixture = CubedSphereInterpolationFixture{};
+
+    // Can't (easily) redistribute directly from a cubedsphere functionspace to a structured columns.
+    // Solution is to build two intermediate PointClouds functions spaces, and copy fields in and out.
+
+
+    const auto targetStructuredColumns = functionspace::StructuredColumns(fixture.targetGrid_, grid::Partitioner("equal_regions"));
+    const auto& targetCubedSphereParitioner = fixture.targetPartitioner_;
+    const auto targetNativePartitioner = grid::Partitioner(targetStructuredColumns.distribution());
+
+    // This should be a PointCloud constructor.
+    const auto makePointCloud = [](const Grid& grid, const grid::Partitioner partitioner) {
+
+        const auto distribution = grid::Distribution(grid, partitioner);
+
+        auto lonLats = std::vector<PointXY>{};
+        auto idx = gidx_t{0};
+        for (const auto& lonLat : grid.lonlat()) {
+            if (distribution.partition(idx++) == mpi::rank()) {
+                lonLats.emplace_back(lonLat.data());
+            }
+        }
+        return functionspace::PointCloud(lonLats);
+    };
+
+    const auto targetNativePointCloud = makePointCloud(fixture.targetGrid_, targetNativePartitioner);
+    const auto targetCubedSpherePointCloud = makePointCloud(fixture.targetGrid_, targetCubedSphereParitioner);
+
+
+    // Populate analytic source field.
+    auto sourceField = generateScalarField(fixture.sourceFunctionSpace_);
+
+    // Interpolate from source field to targetCubedSpherePointCloud field.
+    const auto scheme = util::Config("type", "cubedsphere-bilinear") | util::Config("adjoint", true) |
+                        util::Config("halo_exchange", false);
+    const auto interp = Interpolation(scheme, fixture.sourceFunctionSpace_, targetCubedSpherePointCloud);
+    auto targetCubedSphereField = targetCubedSpherePointCloud.createField<double>(option::name("test_field"));
+    interp.execute(sourceField, targetCubedSphereField);
+
+    // Redistribute from targetCubedSpherePointCloud to targetNativePointCloud
+    const auto redist = Redistribution(targetCubedSpherePointCloud, targetNativePointCloud);
+    auto targetNativeField = targetNativePointCloud.createField<double>(option::name("test_field"));
+    redist.execute(targetCubedSphereField, targetNativeField);
+
+    // copy temp field to target field.
+    auto targetField = targetStructuredColumns.createField<double>(option::name("test_field"));
+    array::make_view<double, 1>(targetField).assign(array::make_view<double, 1>(targetNativeField));
+
+    // Done. Tidy up and write output.
+
+    targetField.haloExchange();
+
+    gmshOutput("cubedsphere_to_structured_cols_source.msh", FieldSet{sourceField});
+
+    // gmsh needs a target mesh...
+    const auto mesh = MeshGenerator("structured").generate(fixture.targetGrid_, targetNativePartitioner);
+    const auto gmshConfig =
+        util::Config("coordinates", "xyz") | util::Config("ghost", true) | util::Config("info", true);
+    const auto targetGmsh = output::Gmsh("cubedsphere_to_structured_cols_target.msh", gmshConfig);
+    targetGmsh.write(mesh);
+    targetGmsh.write(targetField, functionspace::NodeColumns(mesh));
+}
+
+CASE("cubedsphere_paritioning_consistency") {
+
+    const auto fixture = CubedSphereInterpolationFixture{};
+
+    const auto makeFunctionSpace = [](const Grid& grid,
+                                      const MeshGenerator& meshGenerator,
+                                      const grid::Partitioner& partitioner) -> FunctionSpace {
+        const auto mesh = meshGenerator.generate(grid, partitioner);
+        return functionspace::NodeColumns(mesh);
+    };
+
+    const auto& sourceFunctionSpaceCubedSphere = fixture.sourceFunctionSpace_;
+    const auto sourceFunctionSpaceEqualRegions = makeFunctionSpace(fixture.sourceGrid_,
+                                                                   fixture.sourceMeshGenerator_,
+                                                                   grid::Partitioner("equal_regions"));
+
+    const auto& targetFunctionSpaceCubedSphere = fixture.targetFunctionSpace_;
+
+    const auto& targetMeshEqualRegions = functionspace::NodeColumns(sourceFunctionSpaceEqualRegions).mesh();
+    const auto targetFunctionSpaceEqualRegions = makeFunctionSpace(fixture.targetGrid_,
+                                                                   fixture.targetMeshGenerator_,
+                                                                   grid::MatchingPartitioner(
+                                                                   targetMeshEqualRegions, util::Config("type", "cubedsphere")));
+
+    const auto interpCubedSphere = Interpolation(interpScheme(), sourceFunctionSpaceCubedSphere, targetFunctionSpaceCubedSphere);
+    const auto interpEqualRegions = Interpolation(interpScheme(), sourceFunctionSpaceEqualRegions, targetFunctionSpaceEqualRegions);
+
+    const auto sourceFieldCubedSphere = generateScalarField(sourceFunctionSpaceCubedSphere);
+    const auto sourceFieldEqualRegions = generateScalarField(sourceFunctionSpaceEqualRegions);
+    auto targetFieldCubedSphere = targetFunctionSpaceCubedSphere.createField<double>(option::name("test field"));
+    auto targetFieldEqualRegions = targetFunctionSpaceEqualRegions.createField<double>(option::name("test field"));
+
+    interpCubedSphere.execute(sourceFieldCubedSphere, targetFieldCubedSphere);
+    interpEqualRegions.execute(sourceFieldEqualRegions, targetFieldEqualRegions);
+
+    auto targetFieldCubedSphereGlobal = targetFunctionSpaceCubedSphere.createField<double>(option::name("test field global") | option::global(0));
+    auto targetFieldEqualRegionsGlobal = targetFunctionSpaceEqualRegions.createField<double>(option::name("test field global") | option::global(0));
+
+    targetFunctionSpaceCubedSphere.gather(targetFieldCubedSphere, targetFieldCubedSphereGlobal);
+    targetFunctionSpaceEqualRegions.gather(targetFieldEqualRegions, targetFieldEqualRegionsGlobal);
+
+
+
+    auto targetFieldDiffGlobal = targetFunctionSpaceCubedSphere.createField<double>(option::name("test field diff") | option::global(0));
+    auto targetFieldDiff = targetFunctionSpaceCubedSphere.createField<double>(option::name("test field diff"));
+    auto maxDiff = 0.;
+
+    const auto targetViewCubedSphere = array::make_view<double, 1>(targetFieldCubedSphereGlobal);
+    const auto targetViewEqualRegions = array::make_view<double, 1>(targetFieldEqualRegionsGlobal);
+    auto targetViewDiff = array::make_view<double, 1>(targetFieldDiffGlobal);
+
+    using for_each = array::helpers::ArrayForEach<0>;
+
+    for_each::apply(std::tie(targetViewDiff ,targetViewCubedSphere, targetViewEqualRegions),
+        [&](auto&& diff, auto&& elem1, auto&& elem2) {
+        diff = static_cast<double>(elem1) - static_cast<double>(elem2);
+        maxDiff = std::max(maxDiff, std::abs(diff));
+    });
+
+    targetFunctionSpaceCubedSphere.scatter(targetFieldDiffGlobal, targetFieldDiff);
+    targetFieldDiff.haloExchange();
+
+    gmshOutput("interpolation_diff.msh", FieldSet(targetFieldDiff));
+    EXPECT_APPROX_EQ(maxDiff, 0., 4 * std::numeric_limits<double>::epsilon());
+
+
+
+}
+
 
 
 }  // namespace test
