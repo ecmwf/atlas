@@ -9,6 +9,7 @@
 #include "atlas/grid/CubedSphereGrid.h"
 #include "atlas/grid/Iterator.h"
 #include "atlas/interpolation/method/cubedsphere/CellFinder.h"
+#include "atlas/mesh/HybridElements.h"
 #include "atlas/parallel/mpi/mpi.h"
 
 namespace atlas {
@@ -24,16 +25,27 @@ void MatchingMeshPartitionerCubedSphere::partition(const Grid& grid, int partiti
     const auto N           = CubedSphereGrid(prePartitionedMesh_.grid()).N();
     const auto epsilon     = 2. * std::numeric_limits<double>::epsilon() * N;
     const auto edgeEpsilon = epsilon;
-    const size_t listSize  = 4;
+    const size_t listSize  = 8;
 
     // Loop over grid and set partioning[].
     auto lonlatIt = grid.lonlat().begin();
+    const auto ghost = array::make_view<int, 1>(prePartitionedMesh_.cells().field("ghost"));
     for (gidx_t i = 0; i < grid.size(); ++i) {
         // This is probably more expensive than it needs to be, as it performs
         // a dry run of the cubedsphere interpolation method.
-        const auto& lonlat = *lonlatIt;
-        partitioning[i]    = finder.getCell(lonlat, listSize, edgeEpsilon, epsilon).isect ? mpi::rank() : -1;
+        const auto cell = finder.getCell(*lonlatIt, listSize, edgeEpsilon, epsilon);
         ++lonlatIt;
+        partitioning[i] = -1;
+
+        if (!cell.isect) {
+            continue;
+        }
+
+//        if (ghost(cell.idx)) {
+//            continue;
+//        }
+
+        partitioning[i] = mpi::rank();
     }
 
     // AllReduce to get full partitioning array.
