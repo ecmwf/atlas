@@ -15,6 +15,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <limits>
 
 namespace eckit {
 class CodeLocation;
@@ -51,6 +52,7 @@ struct TraceHookRegistry {
     static bool enabled(size_t id) { return instance().enabled_[id]; }
     static size_t size() { return instance().hooks.size(); }
     static TraceHookBuilder& hook(size_t id) { return instance().hooks[id]; }
+    static size_t invalidId() { return std::numeric_limits<size_t>::max(); }
 
 private:
     TraceHookRegistry() = default;

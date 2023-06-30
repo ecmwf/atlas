@@ -103,6 +103,7 @@ std::pair<double, double> vortexVectorField(double lon, double lat) {
     return std::make_pair(u, v);
 }
 
+
 double dotProd(const Field& a, const Field& b) {
     double prod{};
 
@@ -116,9 +117,6 @@ double dotProd(const Field& a, const Field& b) {
     mpi::comm().allReduceInPlace(prod, eckit::mpi::Operation::SUM);
     return prod;
 }
-
-
-
 
 CASE("cubedsphere_scalar_interpolation") {
 

@@ -133,7 +133,9 @@ CASE( "test field::for_each_column" ) {
   auto print_column_1d =  [&](const array::View<double,1>& column) {
       Log::info() << "";
       for( idx_t jlev=0; jlev<column.shape(0); ++jlev) {
-        if (jlev != 0 ) Log::info() << ", ";
+        if (jlev != 0 ) {
+          Log::info() << ", ";
+        }
         Log::info() << column(jlev);
       }
       Log::info() << "," << std::endl;
@@ -142,9 +144,13 @@ CASE( "test field::for_each_column" ) {
   auto print_column_2d = [&](array::View<double,2>& column) {
     Log::info() << "";
     for( idx_t jlev=0; jlev<column.shape(0); ++jlev) {
-      if (jlev != 0 ) Log::info() << ",\n";
+      if (jlev != 0 ) {
+        Log::info() << ",\n";
+      }
       for( idx_t jvar=0; jvar<column.shape(1); ++jvar ) {
-        if (jvar != 0 ) Log::info() << ", ";
+        if (jvar != 0 ) {
+          Log::info() << ", ";
+        }
         Log::info() << column(jlev,jvar);
       }
     }

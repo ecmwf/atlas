@@ -178,19 +178,6 @@ Spectral::Spectral(const int truncation, const eckit::Configuration& config):
     config.get("levels", nb_levels_);
 }
 
-Spectral::Spectral(const trans::Trans& trans, const eckit::Configuration& config):
-    nb_levels_(0), truncation_(trans.truncation()), parallelisation_([&trans, this]() -> Parallelisation* {
-#if ATLAS_HAVE_TRANS
-        const auto* trans_ifs = dynamic_cast<const trans::TransIFS*>(trans.get());
-        if (trans_ifs) {
-            return new Parallelisation(trans_ifs->trans_);
-        }
-#endif
-        return new Parallelisation(truncation_);
-    }()) {
-    config.get("levels", nb_levels_);
-}
-
 Spectral::~Spectral() = default;
 
 std::string Spectral::distribution() const {

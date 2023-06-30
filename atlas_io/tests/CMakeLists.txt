@@ -28,7 +28,7 @@ foreach( algorithm none bzip2 aec lz4 snappy )
     string( TOUPPER ${algorithm} feature )
     if( eckit_HAVE_${feature} OR algorithm MATCHES "none" )
         ecbuild_add_test( TARGET atlas_io_test_record_COMPRESSION_${algorithm}
-            COMMAND atlas_test_io_record
+            COMMAND atlas_io_test_record
             ARGS --suffix ".${algorithm}"
             ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_IO_COMPRESSION=${algorithm}
         )

@@ -10,7 +10,8 @@
 
 #pragma once
 
-#include "atlas/array/DataType.h"
+#include "atlas/util/DataType.h"
+
 #include "atlas/util/Config.h"
 
 // ----------------------------------------------------------------------------
@@ -72,9 +73,9 @@ public:
 
 class datatype : public util::Config {
 public:
-    datatype(array::DataType::kind_t);
+    datatype(DataType::kind_t);
     datatype(const std::string&);
-    datatype(array::DataType);
+    datatype(DataType);
 };
 
 // ----------------------------------------------------------------------------
@@ -120,7 +121,7 @@ public:
 
 template <typename T>
 datatypeT<T>::datatypeT() {
-    set("datatype", array::DataType::kind<T>());
+    set("datatype", DataType::kind<T>());
 }
 
 }  // namespace option

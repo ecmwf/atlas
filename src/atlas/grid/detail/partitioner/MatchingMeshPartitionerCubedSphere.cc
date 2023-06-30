@@ -41,9 +41,9 @@ void MatchingMeshPartitionerCubedSphere::partition(const Grid& grid, int partiti
             continue;
         }
 
-//        if (ghost(cell.idx)) {
-//            continue;
-//        }
+        if (ghost(cell.idx)) {
+            continue;
+        }
 
         partitioning[i] = mpi::rank();
     }

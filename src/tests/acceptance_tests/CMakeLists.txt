@@ -10,6 +10,7 @@ ecbuild_add_executable(
     TARGET atlas-atest-mgrids
     SOURCES atest_mgrids.cc
     LIBS atlas
+    CONDITION atlas_HAVE_ATLAS_NUMERICS
 )
 
 if( HAVE_TESTS )
@@ -23,7 +24,7 @@ set( HAVE_ACCEPTANCE_TESTS_LARGE ON )
 
 function( atlas_atest_mgrids category case nprocs )
 
-    if( HAVE_TRANS )
+    if( atlas_HAVE_ECTRANS )
       set( PARTITIONER "--partitioner=trans" )
     endif()
 
@@ -65,6 +66,7 @@ function( atlas_atest_mgrids category case nprocs )
     endforeach()
 endfunction()
 
+if( atlas_HAVE_ATLAS_NUMERICS )
 if( HAVE_ACCEPTANCE_TESTS_SMALL )
     unset( cases )
     list( APPEND cases
@@ -92,6 +94,6 @@ if( HAVE_ACCEPTANCE_TESTS_LARGE )
         atlas_atest_mgrids( large ${case} "${nprocs}" )
     endforeach()
 endif()
-
+endif()
 endif()
 

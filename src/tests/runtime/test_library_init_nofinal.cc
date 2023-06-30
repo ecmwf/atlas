@@ -8,7 +8,16 @@
  * nor does it submit to any jurisdiction.
  */
 
-#pragma once
+#include <iostream>
 
-#include "atlas/util/DataType.h"
+#include "atlas/library.h"
 
+int main(int argc, char** argv) {
+    atlas::initialise(argc,argv);
+
+    atlas::Library::instance().registerDataPath("bogus");
+
+    std::cout << "atlas::Library::instance().dataPath() : " <<  atlas::Library::instance().dataPath() << std::endl;
+
+    return 0;
+}

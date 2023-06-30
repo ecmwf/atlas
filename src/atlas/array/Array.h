@@ -13,12 +13,13 @@
 #include <memory>
 #include <vector>
 
+#include "atlas/library/config.h"
+
 #include "atlas/util/Object.h"
 
 #include "atlas/array/ArrayDataStore.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array_fwd.h"
-#include "atlas/library/config.h"
 
 namespace atlas {
 namespace array {
