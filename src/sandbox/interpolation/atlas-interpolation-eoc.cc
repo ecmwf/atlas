@@ -206,12 +206,14 @@ void compute_errors(const Field source, const Field target,
     auto interpolation = CSPInterpolation();
     interpolation.do_setup(src_fs, tgt_fs);
 
+    /*
     std::cout << "source field size             : " << source.size() << std::endl;
     std::cout << "target field size             : " << target.size() << std::endl;
     std::cout << "src_mesh nodes                : " << src_mesh.nodes().size() << std::endl;
     std::cout << "tgt_mesh nodes                : " << tgt_mesh.nodes().size() << std::endl;
     std::cout << "CSP-interpolation.src_npoints : " << interpolation.src_npoints() << std::endl;
     std::cout << "CSP-interpolation.tgt_npoints : " << interpolation.tgt_npoints() << std::endl;
+    */
 
     // compute error to the analytical solution on the target
     double tgt_mass_pos = 0.;
@@ -239,7 +241,7 @@ void compute_errors(const Field source, const Field target,
         terr_remap_l2 += err_l * err_l * interpolation.tgt_areas(tpt);
         terr_remap_linf = std::max(terr_remap_linf, err_l);
     }
-    std::cout << "tgt points (omitted), (considered) : " << cc << ", " << ncc << std::endl;
+    //std::cout << "tgt points (omitted), (considered) : " << cc << ", " << ncc << std::endl;
 
     // compute the conservation error and the projection errors serr_remap_*
     double src_mass_pos = 0.;
@@ -267,7 +269,7 @@ void compute_errors(const Field source, const Field target,
         serr_remap_l2 += err_l * err_l * interpolation.src_areas(spt);
         serr_remap_linf = std::max(serr_remap_linf, err_l);
     }
-    std::cout << "src points (omitted), (considered) : " << cc << ", " << ncc << std::endl;
+    //std::cout << "src points (omitted), (considered) : " << cc << ", " << ncc << std::endl;
 
     serr_remap_l2 = std::sqrt(serr_remap_l2);
     terr_remap_l2 = std::sqrt(terr_remap_l2);
@@ -279,6 +281,7 @@ void compute_errors(const Field source, const Field target,
     double err_cons2 = tgt_mass - src_mass;
     double relcons_src = 100. * err_cons/src_mass;
     double relcons_tgt = 100. * err_cons/tgt_mass;
+    /*
     std::cout << "src l2 error            : " << serr_remap_l2 << std::endl;
     std::cout << "src l_inf error         : " << serr_remap_linf << std::endl;
     std::cout << "tgt l2 error            : " << terr_remap_l2 << std::endl;
@@ -289,6 +292,7 @@ void compute_errors(const Field source, const Field target,
     std::cout << "rel. cons. error on src : " << 100. * err_cons/src_mass << " %" << std::endl;
     std::cout << "rel. cons. error on tgt : " << 100. * err_cons/tgt_mass << " %" << std::endl;
     std::cout << "==================" << std::endl;
+    */
     stats.set("err.ana2src_l2", serr_remap_l2);
     stats.set("err.ana2src_linf", serr_remap_linf);
     stats.set("err.ana2tgt_l2", terr_remap_l2);
@@ -465,6 +469,7 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
             output.set("setup.target.functionspace", tgt_fs.type());
             output.set("setup.source.halo", args.getLong("source.halo", 2));
             output.set("setup.target.halo", args.getLong("target.halo", 0));
+            output.set("setup.interpolation.type", args.getInt("order", 1));
             output.set("setup.interpolation.order", args.getInt("order", 1));
             output.set("setup.interpolation.normalise_intersections", args.getBool("normalise-intersections", false));
             output.set("setup.interpolation.validate", args.getBool("validate", false));
@@ -474,6 +479,27 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
             output.set("runtime.mpi", mpi::size());
             output.set("runtime.omp", atlas_omp_get_max_threads());
             output.set("atlas.build_type", ATLAS_BUILD_TYPE);
+
+            double serr_remap_l2, serr_remap_linf, terr_remap_l2, terr_remap_linf;
+            double err_cons, src_mass, tgt_mass, relcons_src, relcons_tgt;
+            stats.get("err.ana2src_l2", serr_remap_l2);
+            stats.get("err.ana2src_linf", serr_remap_linf);
+            stats.get("err.ana2tgt_l2", terr_remap_l2);
+            stats.get("err.ana2tgt_linf", terr_remap_linf);
+            stats.get("err.cons", err_cons);
+            stats.get("mass.src", src_mass);
+            stats.get("mass.tgt", tgt_mass);
+            stats.get("err.rel_cons_src", relcons_src);
+            stats.get("err.rel_cons_tgt", relcons_tgt);
+            output.set("err.ana2src_l2", serr_remap_l2);
+            output.set("err.ana2src_linf", serr_remap_linf);
+            output.set("err.ana2tgt_l2", terr_remap_l2);
+            output.set("err.ana2tgt_linf", terr_remap_linf);
+            output.set("err.cons", err_cons);
+            output.set("err.src_mass", src_mass);
+            output.set("err.tgt_mass", tgt_mass);
+            output.set("err.src_rel_cons", relcons_src);
+            output.set("err.src_rel_cons", relcons_tgt);
 
             output.set("timings.target.setup", timers.target_setup.elapsed());
             output.set("timings.source.setup", timers.source_setup.elapsed());
