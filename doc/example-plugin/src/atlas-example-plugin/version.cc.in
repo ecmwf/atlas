@@ -1,0 +1,31 @@
+/*
+ * (C) Copyright 2023- ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
+ */
+
+#include "atlas-example-plugin/version.h"
+
+#define ATLAS_EXAMPLE_PLUGIN_MAJOR_VERSION @atlas-example-plugin_VERSION_MAJOR@
+#define ATLAS_EXAMPLE_PLUGIN_MINOR_VERSION @atlas-example-plugin_VERSION_MINOR@
+#define ATLAS_EXAMPLE_PLUGIN_PATCH_VERSION @atlas-example-plugin_VERSION_PATCH@
+
+const char* atlas_example_plugin_git_sha1() {
+    return "@atlas-example-plugin_GIT_SHA1@";
+}
+
+const char* atlas_example_plugin_version() {
+    return "@atlas-example-plugin_VERSION@";
+}
+
+const char* atlas_example_plugin_version_str() {
+    return "@atlas-example-plugin_VERSION_STR@";
+}
+
+unsigned int atlas_example_plugin_version_int() {
+    return 10000 * ATLAS_EXAMPLE_PLUGIN_MAJOR_VERSION + 100 * ATLAS_EXAMPLE_PLUGIN_MINOR_VERSION + 1 * ATLAS_EXAMPLE_PLUGIN_PATCH_VERSION;
+}
