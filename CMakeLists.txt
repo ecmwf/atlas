@@ -60,6 +60,11 @@ ecbuild_add_option( FEATURE ATLAS_NUMERICS
                     DESCRIPTION "Build numerics related features"
                     CONDITION atlas_HAVE_ATLAS_FUNCTIONSPACE )
 
+ecbuild_add_option( FEATURE ECKIT_DEVELOP
+                    DESCRIPTION "Used to enable new features or API depending on eckit develop branch, not yet in a tagged release"
+                    DEFAULT OFF )
+
+
 include( features/BOUNDSCHECKING )
 include( features/FORTRAN )
 include( features/MPI )

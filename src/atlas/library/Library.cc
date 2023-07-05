@@ -26,6 +26,7 @@
 #include "eckit/system/SystemInfo.h"
 #include "eckit/types/Types.h"
 #include "eckit/utils/Translator.h"
+#include "eckit/system/LibraryManager.h"
 
 #if ATLAS_ECKIT_HAVE_ECKIT_585
 #include "eckit/linalg/LinearAlgebraDense.h"
@@ -86,6 +87,11 @@ std::string str(const eckit::system::Library& lib) {
         ss << "  git-sha1 " << lib.gitsha1(7);
     }
     return ss.str();
+}
+
+std::string getEnv(const std::string& env, const std::string& default_value = "") {
+    char const* val = ::getenv(env.c_str());
+    return val == nullptr ? default_value : std::string(val);
 }
 
 bool getEnv(const std::string& env, bool default_value) {
@@ -153,7 +159,22 @@ Library::Library():
     trace_memory_(getEnv("ATLAS_TRACE_MEMORY", false)),
     trace_barriers_(getEnv("ATLAS_TRACE_BARRIERS", false)),
     trace_report_(getEnv("ATLAS_TRACE_REPORT", false)),
-    atlas_io_trace_hook_(::atlas::io::TraceHookRegistry::invalidId()) {}
+    atlas_io_trace_hook_(::atlas::io::TraceHookRegistry::invalidId()) {
+    std::string ATLAS_PLUGIN_PATH = getEnv("ATLAS_PLUGIN_PATH");
+#if ATLAS_ECKIT_VERSION_AT_LEAST(1, 25, 0) || ATLAS_ECKIT_DEVELOP
+    eckit::system::LibraryManager::addPluginSearchPath(ATLAS_PLUGIN_PATH);
+#else
+    if (ATLAS_PLUGIN_PATH.size()) {
+        std::cout << "WARNING: atlas::Library discovered environment variable ATLAS_PLUGIN_PATH. "
+                  << "Currently used version of eckit (" << eckit_version_str() << " [" << eckit_git_sha1() << "]) "
+                  << "does not support adding plugin search paths. "
+                  << "When using latest eckit develop branch, please rebuild Atlas with "
+                  << "CMake argument -DENABLE_ECKIT_DEVELOP=ON\n"
+                  << "Alternatively, use combination of environment variables 'PLUGINS_MANIFEST_PATH' "
+                  << "and 'LD_LIBRARY_PATH (for UNIX) / DYLD_LIBRARY_PATH (for macOS)' (colon-separated lists)\n" << std::endl;
+    }
+#endif
+}
 
 void Library::registerPlugin(eckit::system::Plugin& plugin) {
     plugins_.push_back(&plugin);
