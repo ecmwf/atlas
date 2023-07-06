@@ -21,6 +21,10 @@ def real_name(name):
         "benjaminmenetrier"     : "Benjamin Menetrier",
         "danholdaway"           : "Daniel Holdaway",
         "MarekWlasak"           : "Marek Wlasak",
+        "odlomax"               : "Oliver Lomax",
+        "MO-marcomilan"         : "Marco Milan",
+        "twsearle"              : "Toby Searle",
+        "Dusan Figala"          : "Dušan Figala",
     }
     if name in alias:
         return alias[name]
