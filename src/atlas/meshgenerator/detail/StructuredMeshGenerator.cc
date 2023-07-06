@@ -1273,8 +1273,8 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
         nodes[1] = tmp;
     };
 
-    bool regular_cells_glb_idx = atlas::RegularLonLatGrid(rg);
-    if( options.getBool("triangulate") || y_numbering > 0) {
+    bool regular_cells_glb_idx = rg.regular();
+    if (options.getBool("triangulate") || y_numbering > 0 || rg.y().front() != 90. || rg.y().back() != -90.) {
         regular_cells_glb_idx = false;
     }
 
