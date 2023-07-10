@@ -20,7 +20,7 @@
 #include "atlas/util/Object.h"
 
 #include "atlas/array.h"
-#include "atlas/array/ArrayUtil.h"
+#include "atlas/array/ArrayDataStore.h"
 #include "atlas/array/DataType.h"
 #include "atlas/util/Metadata.h"
 
@@ -34,6 +34,10 @@ class FunctionSpace;
 
 namespace atlas {
 namespace field {
+
+//----------------------------------------------------------------------------------------------------------------------
+
+class FieldObserver; // Definition below
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -99,7 +103,7 @@ public:  // Destructor
     const std::string& name() const;
 
     /// @brief Rename this field
-    void rename(const std::string& name) { metadata().set("name", name); }
+    void rename(const std::string& name);
 
     /// @brief Access to metadata associated to this field
     const util::Metadata& metadata() const { return metadata_; }
@@ -148,6 +152,13 @@ public:  // Destructor
     void set_variables(idx_t n) { metadata().set("variables", n); }
     idx_t levels() const { return metadata().get<idx_t>("levels"); }
     idx_t variables() const { return metadata().get<idx_t>("variables"); }
+
+    void set_horizontal_dimension(const std::vector<idx_t>& h_dim) { metadata().set("horizontal_dimension", h_dim); }
+    std::vector<idx_t> horizontal_dimension() const {
+        std::vector<idx_t> h_dim{0};
+        metadata().get("horizontal_dimension", h_dim);
+        return h_dim;
+    }
 
     void set_functionspace(const FunctionSpace&);
     const FunctionSpace& functionspace() const;
@@ -198,7 +209,8 @@ public:  // Destructor
     void haloExchange(bool on_device = false) const;
     void adjointHaloExchange(bool on_device = false) const;
 
-
+    void attachObserver(FieldObserver&) const;
+    void detachObserver(FieldObserver&) const;
     void callbackOnDestruction(std::function<void()>&& f) { callback_on_destruction_.emplace_back(std::move(f)); }
 
 private:  // methods
@@ -209,7 +221,37 @@ private:  // members
     util::Metadata metadata_;
     array::Array* array_;
     FunctionSpace* functionspace_;
+    mutable std::vector<FieldObserver*> field_observers_;
     std::vector<std::function<void()>> callback_on_destruction_;
+};
+
+//----------------------------------------------------------------------------------------------------------------------
+
+class FieldObserver {
+private:
+    std::vector<const FieldImpl*> registered_fields_;
+
+public:
+    void registerField(const FieldImpl& field) {
+        if (std::find(registered_fields_.begin(), registered_fields_.end(), &field) == registered_fields_.end()) {
+            registered_fields_.push_back(&field);
+            field.attachObserver(*this);
+        }
+    }
+    void unregisterField(const FieldImpl& field) {
+        auto found = std::find(registered_fields_.begin(), registered_fields_.end(), &field);
+        if (found != registered_fields_.end()) {
+            registered_fields_.erase(found);
+            field.detachObserver(*this);
+        }
+    }
+    virtual ~FieldObserver() {
+        for (auto field : registered_fields_) {
+            field->detachObserver(*this);
+        }
+    }
+
+    virtual void onFieldRename(FieldImpl&) = 0;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -8,7 +8,7 @@
 
 if( HAVE_FCTEST )
 
-  if( NOT HAVE_TRANS )
+  if( NOT atlas_HAVE_ECTRANS )
     set( transi_HAVE_MPI 1 )
     set( ectrans_HAVE_MPI 1 )
   endif()
@@ -88,6 +88,22 @@ ecbuild_add_test( TARGET atlas_test_pointcloud
   SOURCES  test_pointcloud.cc
   LIBS     atlas
   MPI 2
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION eckit_HAVE_MPI AND NOT HAVE_GRIDTOOLS_STORAGE
+)
+
+ecbuild_add_test( TARGET atlas_test_pointcloud_he_2PE
+  SOURCES  test_pointcloud_haloexchange_2PE.cc
+  LIBS     atlas
+  MPI 2
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION eckit_HAVE_MPI AND NOT HAVE_GRIDTOOLS_STORAGE
+)
+
+ecbuild_add_test( TARGET atlas_test_pointcloud_he_3PE
+  SOURCES  test_pointcloud_haloexchange_3PE.cc
+  LIBS     atlas
+  MPI 3
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   CONDITION eckit_HAVE_MPI AND NOT HAVE_GRIDTOOLS_STORAGE
 )

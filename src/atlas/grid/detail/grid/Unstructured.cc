@@ -19,12 +19,9 @@
 #include "eckit/utils/Hash.h"
 
 #include "atlas/array/ArrayView.h"
-#include "atlas/field/Field.h"
 #include "atlas/grid/Iterator.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
 #include "atlas/grid/detail/grid/GridFactory.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/Nodes.h"
 #include "atlas/option.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
@@ -39,22 +36,6 @@ namespace grid {
 namespace {
 static GridFactoryBuilder<Unstructured> __register_Unstructured(Unstructured::static_type());
 }
-
-
-Unstructured::Unstructured(const Mesh& m): Grid(), points_(new std::vector<PointXY>(m.nodes().size())) {
-    util::Config config_domain;
-    config_domain.set("type", "global");
-    domain_ = Domain(config_domain);
-
-    auto xy                 = array::make_view<double, 2>(m.nodes().xy());
-    std::vector<PointXY>& p = *points_;
-    const idx_t npts        = static_cast<idx_t>(p.size());
-
-    for (idx_t n = 0; n < npts; ++n) {
-        p[n].assign(xy(n, XX), xy(n, YY));
-    }
-}
-
 
 namespace {
 class Normalise {
@@ -158,6 +139,23 @@ Unstructured::Unstructured(std::initializer_list<PointXY> initializer_list):
     Grid(), points_(new std::vector<PointXY>(initializer_list)) {
     domain_ = GlobalDomain();
 }
+
+Unstructured::Unstructured(size_t N, const double x[], const double y[], size_t xstride, size_t ystride):
+ Grid(), points_(new std::vector<PointXY>(N)) {
+    util::Config config_domain;
+    config_domain.set("type", "global");
+    domain_ = Domain(config_domain);
+
+    std::vector<PointXY>& p = *points_;
+    const idx_t npts        = static_cast<idx_t>(p.size());
+
+    for (idx_t n = 0; n < npts; ++n) {
+        p[n].assign(x[n*xstride], y[n*ystride]);
+    }
+}
+
+Unstructured::Unstructured(size_t N, const double xy[]):
+    Unstructured(N,xy,xy+1,2,2) {}
 
 Unstructured::~Unstructured() = default;
 

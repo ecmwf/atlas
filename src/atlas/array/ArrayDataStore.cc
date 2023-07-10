@@ -10,7 +10,7 @@
 
 #include <sstream>
 
-#include "atlas/array/ArrayUtil.h"
+#include "atlas/array/ArrayDataStore.h"
 #include "atlas/runtime/Exception.h"
 
 namespace atlas {

@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <ostream>
+
 //------------------------------------------------------------------------------
 
 namespace atlas {
@@ -74,6 +76,10 @@ public:
     template <typename View>
     int end(const View& view, int i) const {
         return view.shape(i);
+    }
+    friend std::ostream& operator<<(std::ostream& out, const RangeAll& range) {
+        out << ":";
+        return out;
     }
 };
 

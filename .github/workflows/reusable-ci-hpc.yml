@@ -21,8 +21,7 @@ jobs:
           ecbuild
           ninja
         --modules-package: |
-          fftw
-          eigen
+          atlas:fftw,eigen
         --dependencies: |
           ${{ inputs.eckit || 'ecmwf/eckit@develop' }}
         --parallel: 64

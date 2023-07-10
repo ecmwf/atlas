@@ -13,12 +13,13 @@
 #include <memory>
 #include <vector>
 
+#include "atlas/library/config.h"
+
 #include "atlas/util/Object.h"
 
-#include "atlas/array/ArrayUtil.h"
+#include "atlas/array/ArrayDataStore.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array_fwd.h"
-#include "atlas/library/config.h"
 
 namespace atlas {
 namespace array {
@@ -132,6 +133,17 @@ public:
 
     const ArraySpec& spec() const { return spec_; }
 
+    struct CopyPolicy {
+        enum class Execution {
+            SERIAL=0,
+            OMP=1
+        };
+        bool on_device = false;
+        Execution execution {Execution::SERIAL};
+    };
+    virtual void copy(const Array&, const CopyPolicy&) = 0;
+    void copy(const Array& other) { return copy(other,CopyPolicy{}); }
+
     // -- dangerous methods... You're on your own interpreting the raw data
     template <typename DATATYPE>
     DATATYPE const* host_data() const {
@@ -201,6 +213,8 @@ public:
     virtual void resize(idx_t size0, idx_t size1, idx_t size2);
     virtual void resize(idx_t size0, idx_t size1, idx_t size2, idx_t size3);
     virtual void resize(idx_t size0, idx_t size1, idx_t size2, idx_t size3, idx_t size4);
+
+    virtual void copy(const Array&, const CopyPolicy&);
 
     virtual array::DataType datatype() const { return array::DataType::create<Value>(); }
 

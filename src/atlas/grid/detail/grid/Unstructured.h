@@ -20,13 +20,10 @@
 #include <memory>
 #include <vector>
 
+#include "atlas/util/mdspan.h"
 #include "atlas/grid/detail/grid/Grid.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Point.h"
-
-namespace atlas {
-class Mesh;
-}
 
 namespace atlas {
 namespace grid {
@@ -147,8 +144,17 @@ public:  // methods
     /// Constructor taking a list of points (makes copy)
     Unstructured(const std::vector<PointXY>& pts);
 
-    /// Constructor taking a mesh
-    Unstructured(const Mesh& m);
+    /// Constructor taking a list of points (makes copy)
+    Unstructured(size_t N, const double x[], const double y[], size_t xstride = 1, size_t ystride = 1);
+
+    /// Constructor taking a list of points (makes copy)
+    Unstructured(size_t N, const double xy[]);
+
+    /// Constructor taking a mdspan (makes copy)
+    /// First dimension is number of points, second dimension is coordinate. First X (lon), then Y (lat)
+    template <typename Extents, typename LayoutPolicy, typename AccessorPolicy>
+    Unstructured(atlas::mdspan<const double, Extents, LayoutPolicy, AccessorPolicy> xy):
+        Unstructured(xy.extent(0), &xy(0,0), &xy(0,1), xy.stride(1), xy.stride(1)) {}
 
     /// Constructor from initializer list
     Unstructured(std::initializer_list<PointXY>);

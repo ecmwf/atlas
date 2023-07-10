@@ -40,6 +40,13 @@ void Version::run() {
         Log::info() << atlas::Library::instance().information() << std::endl;
         return;
     }
+    else if (Resource<bool>("--init", false)) {
+        Log::info() << "+ atlas::initialize()" << std::endl;
+        atlas::initialize();
+        Log::info() << "+ atlas::finalize()" << std::endl;
+        atlas::finalize();
+        return;
+    }
     else if (Resource<bool>("--help", false)) {
         Log::info() << "NAME\n"
                        "       atlas - Framework for parallel flexible data structures on "
@@ -60,7 +67,10 @@ void Version::run() {
                        "           Print short version string 'MAJOR.MINOR.PATCH' \n"
                        "\n"
                        "       --info\n"
-                       "           Print build configuration anad features\n"
+                       "           Print build configuration and features\n"
+                       "\n"
+                       "       --init\n"
+                       "           Initialise and finalise atlas library, useful for printing debug information (environment ATLAS_DEBUG=1)\n"
                        "\n"
                        "AUTHOR\n"
                        "       Written by Willem Deconinck.\n"
@@ -70,7 +80,7 @@ void Version::run() {
         return;
     }
     else {
-        Log::info() << "usage: atlas [--help] [--version] [--git] [--info]" << std::endl;
+        Log::info() << "usage: atlas [--help] [--version] [--git] [--info] [--init]" << std::endl;
     }
 }
 

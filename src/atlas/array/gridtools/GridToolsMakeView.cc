@@ -135,24 +135,30 @@ ArrayView<const Value, Rank> make_view(const Array& array) {
 
 template <typename Value, int Rank>
 IndexView<Value, Rank> make_host_indexview(Array& array) {
-    using value_t         = typename std::remove_const<Value>::type;
-    using storage_info_ty = gridtools::storage_traits::storage_info_t<0, Rank>;
-    using data_store_t    = gridtools::storage_traits::data_store_t<value_t, storage_info_ty>;
+    // using value_t         = typename std::remove_const<Value>::type;
+    // using storage_info_ty = gridtools::storage_traits::storage_info_t<0, Rank>;
+    // using data_store_t    = gridtools::storage_traits::data_store_t<value_t, storage_info_ty>;
 
-    data_store_t* ds = reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage()));
+    // data_store_t* ds = reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage()));
 
-    return IndexView<Value, Rank>(::gridtools::make_host_view<gridtools::get_access_mode<Value>()>(*ds));
+    // return IndexView<Value, Rank>(::gridtools::make_host_view<gridtools::get_access_mode<Value>()>(*ds));
+    check_metadata<Value, Rank>(array);
+    constexpr bool device_view = false;
+    return IndexView<Value, Rank>(array, device_view);
 }
 
 template <typename Value, int Rank>
 IndexView<const Value, Rank> make_host_indexview(const Array& array) {
-    using value_t         = typename std::remove_const<Value>::type;
-    using storage_info_ty = gridtools::storage_traits::storage_info_t<0, Rank>;
-    using data_store_t    = gridtools::storage_traits::data_store_t<value_t, storage_info_ty>;
+    // using value_t         = typename std::remove_const<Value>::type;
+    // using storage_info_ty = gridtools::storage_traits::storage_info_t<0, Rank>;
+    // using data_store_t    = gridtools::storage_traits::data_store_t<value_t, storage_info_ty>;
 
-    data_store_t* ds = reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage()));
+    // data_store_t* ds = reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage()));
 
-    return IndexView<const Value, Rank>(::gridtools::make_host_view<gridtools::get_access_mode<const Value>()>(*ds));
+    // return IndexView<const Value, Rank>(::gridtools::make_host_view<gridtools::get_access_mode<const Value>()>(*ds));
+    check_metadata<Value, Rank>(array);
+    constexpr bool device_view = false;
+    return IndexView<const Value, Rank>(array, device_view);
 }
 
 
@@ -160,14 +166,16 @@ IndexView<const Value, Rank> make_host_indexview(const Array& array) {
 
 template <typename Value, int Rank>
 IndexView<Value, Rank> make_indexview(Array& array) {
-    check_metadata<Value, Rank>(array);
-    return make_host_indexview<Value, Rank>(array);
+    // check_metadata<Value, Rank>(array);
+    // constexpr bool device_view = false;
+    // return IndexView<cValue, Rank>(array, device_view);
+    return make_host_indexview<Value,Rank>(array);
+
 }
 
 template <typename Value, int Rank>
 IndexView<const Value, Rank> make_indexview(const Array& array) {
-    check_metadata<Value, Rank>(array);
-    return make_host_indexview<Value, Rank>(array);
+    return make_host_indexview<const Value, Rank>(array);
 }
 
 }  // namespace array

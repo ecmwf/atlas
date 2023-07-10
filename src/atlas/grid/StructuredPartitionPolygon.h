@@ -46,7 +46,7 @@ public:  // methods
     PointsXY xy() const override;
     PointsLonLat lonlat() const override;
 
-    const RectangularDomain& inscribedDomain() const override { return inscribed_domain_; }
+    const RectangleXY& inscribedDomain() const override { return inscribed_domain_; }
 
     void allGather(util::PartitionPolygons&) const override;
 
@@ -64,7 +64,7 @@ private:
 private:
     PointsXY points_;
     PointsXY inner_bounding_box_;
-    RectangularDomain inscribed_domain_;
+    RectangleXY inscribed_domain_;
     const functionspace::FunctionSpaceImpl& fs_;
     idx_t halo_;
 };

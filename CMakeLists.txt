@@ -38,12 +38,39 @@ find_package(atlas_io)
 ################################################################################
 # Features that can be enabled / disabled with -DENABLE_<FEATURE>
 
+ecbuild_add_option( FEATURE ATLAS_GRID
+                    DESCRIPTION "Build grid related features" )
+
+ecbuild_add_option( FEATURE ATLAS_FIELD
+                    DESCRIPTION "Build field and memory management related features" )
+
+ecbuild_add_option( FEATURE ATLAS_FUNCTIONSPACE
+                    DESCRIPTION "Build functionspace related features (mesh, functionspace, parallel)"
+                    CONDITION atlas_HAVE_ATLAS_GRID AND atlas_HAVE_ATLAS_FIELD )
+
+ecbuild_add_option( FEATURE ATLAS_INTERPOLATION
+                    DESCRIPTION "Build interpolation related features"
+                    CONDITION atlas_HAVE_ATLAS_FUNCTIONSPACE )
+
+ecbuild_add_option( FEATURE ATLAS_TRANS
+                    DESCRIPTION "Build transform related features"
+                    CONDITION atlas_HAVE_ATLAS_FUNCTIONSPACE )
+
+ecbuild_add_option( FEATURE ATLAS_NUMERICS
+                    DESCRIPTION "Build numerics related features"
+                    CONDITION atlas_HAVE_ATLAS_FUNCTIONSPACE )
+
+ecbuild_add_option( FEATURE ECKIT_DEVELOP
+                    DESCRIPTION "Used to enable new features or API depending on eckit develop branch, not yet in a tagged release"
+                    DEFAULT OFF )
+
+
 include( features/BOUNDSCHECKING )
 include( features/FORTRAN )
 include( features/MPI )
 include( features/OMP )
 include( features/FFTW )
-include( features/TRANS )
+include( features/ECTRANS )
 include( features/TESSELATION )
 include( features/GRIDTOOLS_STORAGE )
 include( features/ACC )

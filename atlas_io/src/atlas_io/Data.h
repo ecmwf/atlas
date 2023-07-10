@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 #include "eckit/io/Buffer.h"
 
 namespace atlas {

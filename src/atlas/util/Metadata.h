@@ -35,6 +35,8 @@ public:
         return *this;
     }
 
+    Metadata& set(const eckit::LocalConfiguration&);
+
     using eckit::LocalConfiguration::get;
 
     template <typename ValueT>

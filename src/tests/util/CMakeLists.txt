@@ -46,7 +46,7 @@ if( HAVE_FCTEST )
   )
 endif()
 
-foreach( test util earth flags footprint indexview polygon point )
+foreach( test util earth flags polygon point )
   ecbuild_add_test( TARGET atlas_test_${test}
     SOURCES test_${test}.cc
     LIBS atlas
@@ -72,6 +72,7 @@ ecbuild_add_test( TARGET atlas_test_kdtree
   SOURCES  test_kdtree.cc
   LIBS     atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION atlas_HAVE_ATLAS_GRID
 )
 
 ecbuild_add_test( TARGET atlas_test_convexsphericalpolygon

@@ -14,13 +14,33 @@
 
 #if ATLAS_HAVE_EIGEN
 
+#if defined(__NVCOMPILER)
+#    if !defined(ATLAS_START_WARNINGS_SUPPRESSION)
+#        define ATLAS_START_WARNINGS_SUPPRESSION _Pragma( "diag push" )
+#        define ATLAS_STOP_WARNINGS_SUPPRESSION  _Pragma( "diag pop" )
+#    endif
+#    if !defined(ATLAS_SUPPRESS_INTEGER_SIGN_CHANGE_WARNINGS)
+#        define ATLAS_SUPPRESS_INTEGER_SIGN_CHANGE_WARNINGS _Pragma( "diag_suppress 68" )
+#    endif
+#else
+#    if !defined(ATLAS_START_WARNINGS_SUPPRESSION)
+#        define ATLAS_START_WARNINGS_SUPPRESSION
+#        define ATLAS_STOP_WARNINGS_SUPPRESSION
+#    endif
+#    if !defined(ATLAS_SUPPRESS_INTEGER_SIGN_CHANGE_WARNINGS)
+#        define ATLAS_SUPPRESS_INTEGER_SIGN_CHANGE_WARNINGS
+#    endif
+#endif
+
 #define EIGEN_NO_AUTOMATIC_RESIZING
 //#define EIGEN_DONT_ALIGN
 //#define EIGEN_DONT_VECTORIZE
 
+ATLAS_START_WARNINGS_SUPPRESSION
+ATLAS_SUPPRESS_INTEGER_SIGN_CHANGE_WARNINGS
 #include <Eigen/Core>
 #include <Eigen/Dense>
-
+ATLAS_STOP_WARNINGS_SUPPRESSION
 #else
 
 #include <cmath>

@@ -35,7 +35,7 @@ std::string backtrace();
 }  // namespace atlas
 
 #include <sstream>
-#include "atlas/util/detail/BlackMagic.h"
+#include "atlas/library/detail/BlackMagic.h"
 #include "eckit/log/CodeLocation.h"
 
 namespace atlas {

@@ -16,7 +16,6 @@
 
 #include "eckit/types/Types.h"
 
-#include "atlas/array.h"
 #include "atlas/grid/Spacing.h"
 #include "atlas/grid/Tiles.h"
 #include "atlas/grid/detail/grid/Grid.h"

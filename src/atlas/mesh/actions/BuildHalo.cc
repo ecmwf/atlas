@@ -576,8 +576,10 @@ public:
                << "-----\n";
             idx_t n(0);
             for (idx_t jpart = 0; jpart < mpi_size; ++jpart) {
-                for (auto g : node_glb_idx[jpart]) {
-                    os << std::setw(4) << n++ << " : " << g << "\n";
+                for (idx_t jnode = 0; jnode < node_glb_idx[jpart].size(); ++jnode ) {
+                    auto g = node_glb_idx[jpart][jnode];
+                    auto p = node_part[jpart][jnode];
+                    os << std::setw(4) << n++ << " : [ p" << p << " ]  " << g << "\n";
                 }
             }
             os << std::flush;
@@ -704,7 +706,6 @@ public:
         typename NodeContainer::const_iterator it;
         for (it = nodes_uid.begin(); it != nodes_uid.end(); ++it, ++jnode) {
             uid_t uid = *it;
-
             auto found = uid2node.find(uid);
             if (found != uid2node.end())  // Point exists inside domain
             {
@@ -751,6 +752,7 @@ public:
             for (idx_t jnode = 0; jnode < elem_nodes->cols(ielem); ++jnode) {
                 buf.elem_nodes_id[p][jelemnode++] = compute_uid((*elem_nodes)(ielem, jnode));
             }
+            Topology::set(buf.elem_flags[p][jelem], Topology::GHOST);
         }
     }
 
@@ -868,7 +870,9 @@ public:
         for (idx_t jpart = 0; jpart < mpi_size; ++jpart) {
             const idx_t nb_nodes_on_part = static_cast<idx_t>(buf.node_glb_idx[jpart].size());
             for (idx_t n = 0; n < nb_nodes_on_part; ++n) {
-                double crd[] = {buf.node_xy[jpart][n * 2 + XX], buf.node_xy[jpart][n * 2 + YY]};
+                std::array<double,2> crd{buf.node_xy[jpart][n * 2 + XX], buf.node_xy[jpart][n * 2 + YY]};
+                mesh.projection().xy2lonlat(crd.data());
+
                 if (not node_already_exists(util::unique_lonlat(crd))) {
                     rfn_idx[jpart].push_back(n);
                 }
@@ -921,7 +925,7 @@ public:
                     if (found != uid2node.end()) {
                         int other = found->second;
                         std::stringstream msg;
-                        msg << "New node with uid " << uid << ":\n"
+                        msg << "New node loc " << loc_idx << " with uid " << uid << ":\n"
                             << glb_idx(loc_idx) << "(" << xy(loc_idx, XX) << "," << xy(loc_idx, YY) << ")\n";
                         msg << "Existing already loc " << other << "  :  " << glb_idx(other) << "(" << xy(other, XX)
                             << "," << xy(other, YY) << ")\n";

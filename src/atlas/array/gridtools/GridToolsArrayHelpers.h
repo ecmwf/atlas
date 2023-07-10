@@ -16,7 +16,7 @@
 #include <vector>
 
 #include "atlas/array.h"
-#include "atlas/array/ArrayUtil.h"
+#include "atlas/array/ArrayDataStore.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/gridtools/GridToolsTraits.h"
 #include "atlas/array_fwd.h"

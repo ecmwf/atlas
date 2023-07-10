@@ -144,8 +144,8 @@ public:
 
         auto& weights_j = weights.weights_j;
         weights_j[0]    = (dl2 * dl3 * dl4) / dcl1;
-#if defined(_CRAYC) && ATLAS_BUILD_TYPE_RELEASE
-        // prevents FE_INVALID somehow (tested with Cray 8.7)
+#if defined(_CRAYC) || defined(__NVCOMPILER) && ATLAS_BUILD_TYPE_RELEASE
+        // prevents FE_INVALID somehow (tested with Cray 8.7, nvhpc-22.11)
         ATLAS_ASSERT(!std::isnan(weights_j[0]));
 #endif
         weights_j[1] = (dl1 * dl3 * dl4) / dcl2;

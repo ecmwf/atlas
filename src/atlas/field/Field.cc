@@ -11,9 +11,15 @@
 #include <iostream>
 #include <string>
 
+#include "atlas/library/config.h"
+
 #include "atlas/field/Field.h"
 #include "atlas/field/detail/FieldImpl.h"
+#include "atlas/runtime/Exception.h"
+
+#if ATLAS_HAVE_FUNCTIONSPACE
 #include "atlas/functionspace/FunctionSpace.h"
+#endif
 
 namespace atlas {
 
@@ -55,6 +61,17 @@ const array::Array& Field::array() const {
 }
 array::Array& Field::array() {
     return get()->array();
+}
+
+/// @brief Clone
+Field Field::clone(const eckit::Parametrisation& config) const {
+    Field tmp(get()->name(), get()->datatype(), get()->shape());
+    tmp.metadata() = this->metadata();
+    tmp.set_functionspace(this->functionspace());
+    array::Array::CopyPolicy cp;
+      // To be set up via config. For now use default, as Array does not yet implement it.
+    tmp.array().copy(this->array(),cp);
+    return tmp;
 }
 
 // -- Accessors
@@ -166,11 +183,27 @@ idx_t Field::variables() const {
     return get()->variables();
 }
 
+void Field::set_horizontal_dimension(const std::vector<idx_t>& h_dim) {
+    get()->set_horizontal_dimension(h_dim);
+}
+
+std::vector<idx_t> Field::horizontal_dimension() const {
+    return get()->horizontal_dimension();
+}
+
 void Field::set_functionspace(const FunctionSpace& functionspace) {
+#if ATLAS_HAVE_FUNCTIONSPACE
     get()->set_functionspace(functionspace);
+#else
+    throw_Exception("Atlas has been compiled without FunctionSpace support",Here());
+#endif
 }
 const FunctionSpace& Field::functionspace() const {
+#if ATLAS_HAVE_FUNCTIONSPACE
     return get()->functionspace();
+#else
+    throw_Exception("Atlas has been compiled without FunctionSpace support",Here());
+#endif
 }
 
 /// @brief Return the memory footprint of the Field

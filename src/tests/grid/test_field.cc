@@ -95,6 +95,38 @@ CASE("test_implicit_conversion") {
     TakeArray cta(f);
 }
 
+CASE("test_clone") {
+    Field org("origin", array::make_datatype<double>(), array::make_shape(10, 2));
+    array::ArrayView<double, 2> orgv = array::make_view<double, 2>(org);
+    double zz = 0.0;
+    for (size_t ii = 0; ii < org.shape()[0]; ++ii) {
+      for (size_t jj = 0; jj < org.shape()[1]; ++jj) {
+        zz += 1.0;
+        orgv(ii, jj) = zz;
+      }
+    }
+
+    Field dst = org.clone();
+
+    for (size_t ii = 0; ii < org.shape()[0]; ++ii) {
+      for (size_t jj = 0; jj < org.shape()[1]; ++jj) {
+        orgv(ii, jj) = -999.999;
+      }
+    }
+
+    EXPECT(dst.rank() == 2);
+    EXPECT(dst.shape()[0] == 10);
+    EXPECT(dst.shape()[1] == 2);
+    array::ArrayView<const double, 2> dstv = array::make_view<const double, 2>(dst);
+    zz = 0.0;
+    for (size_t ii = 0; ii < dst.shape()[0]; ++ii) {
+      for (size_t jj = 0; jj < dst.shape()[1]; ++jj) {
+        zz += 1.0;
+        EXPECT(dstv(ii, jj) == zz);
+      }
+    }
+}
+
 CASE("test_wrap_rawdata_through_array") {
     std::vector<double> rawdata(20, 8.);
     util::ObjectHandle<array::Array> array(array::Array::wrap(rawdata.data(), array::make_shape(10, 2)));
@@ -132,12 +164,12 @@ CASE("test_field_aligned") {
         EXPECT_EQ(field.strides()[2], 1);
     };
     SECTION("field(name,datatype,spec)") {
-        Field field("name", make_datatype<double>(), ArraySpec{make_shape(10, 5, 3), ArrayAlignment(4)});
+        Field field("name", array::make_datatype<double>(), ArraySpec{make_shape(10, 5, 3), ArrayAlignment(4)});
         check_field(field);
     }
     SECTION("field(config)") {
         Field field(util::Config("creator", "ArraySpec") |                     //
-                    util::Config("datatype", make_datatype<double>().str()) |  //
+                    util::Config("datatype", array::make_datatype<double>().str()) |  //
                     option::shape({10, 5, 3}) |                                //
                     option::alignment(4));
         check_field(field);

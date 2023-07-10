@@ -1,3 +1,5 @@
+if( atlas_HAVE_ATLAS_FIELD )
+
 ### GridTools storage module
 
     ### GridTools may search for CUDA, which searches for "Threads"
@@ -60,4 +62,11 @@ if( atlas_HAVE_GRIDTOOLS_STORAGE )
 
   endif()
 
+endif()
+
+else()
+  set( HAVE_GRIDTOOLS_STORAGE 1 )
+  set( atlas_HAVE_GRIDTOOLS_STORAGE 0 )
+  set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 0 )
+  set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 0 )
 endif()

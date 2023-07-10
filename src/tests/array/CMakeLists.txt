@@ -13,6 +13,12 @@ ecbuild_add_test( TARGET atlas_test_array_slicer
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_array_foreach
+  SOURCES  test_array_foreach.cc
+  LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_array
   SOURCES  test_array.cc
   LIBS     atlas
@@ -45,6 +51,11 @@ ecbuild_add_test( TARGET atlas_test_array_view_util
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_array_indexview
+  SOURCES  test_indexview.cc
+  LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
 
 if( CMAKE_BUILD_TYPE MATCHES "DEBUG" )
   set ( CMAKE_NVCC_FLAGS "-G" )

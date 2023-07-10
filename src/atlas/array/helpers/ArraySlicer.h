@@ -26,6 +26,7 @@ template <typename Value>
 struct Reference {
     Value& value;
     operator Value&() { return value; }
+    operator const Value&() const { return value; }
     template <typename T>
     void operator=(const T a) {
         value = a;
@@ -48,6 +49,21 @@ struct Reference {
         ++value;
         return *this;
     }
+    template <typename T>
+    bool operator==(const T a) {
+        return value == a;
+    }
+    template <typename T>
+    bool operator!=(const T a) {
+        return value != a;
+    }
+    friend std::ostream& operator<<(std::ostream& out, const Reference& ref) {
+        out << ref.value;
+        return out;
+    }
+    constexpr int shape(idx_t) { return 0; }
+    constexpr int stride(idx_t) { return 0; }
+    constexpr int rank() { return 0; }
 };
 
 template <typename Value, int Rank>

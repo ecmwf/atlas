@@ -23,6 +23,7 @@ public :: atlas_real
 public :: atlas_integer
 public :: atlas_logical
 public :: atlas_data_type
+public :: array_c_to_f
 
 private
 
@@ -75,6 +76,7 @@ contains
 #:for dtype in dtypes
   procedure, private :: access_data_${dtype}$_r${rank}$
   procedure, private :: access_data_${dtype}$_r${rank}$_shape
+  procedure, private :: access_data_${dtype}$_r${rank}$_slice
 #:endfor
 #:endfor
 
@@ -83,6 +85,7 @@ contains
 #:for dtype in dtypes
       & access_data_${dtype}$_r${rank}$, &
       & access_data_${dtype}$_r${rank}$_shape, &
+      & access_data_${dtype}$_r${rank}$_slice, &
 #:endfor
 #:endfor
       & dummy
@@ -135,7 +138,6 @@ interface array_c_to_f
 end interface
 !-------------------------------------------------------------------------------
 
-
 private :: fckit_owned_object
 private :: atlas_Config
 
@@ -161,6 +163,7 @@ subroutine array_c_to_f_${dtype}$_r${rank}$(array_cptr,rank,shape_cptr,strides_c
   integer :: j
 
   if( rank /= ${rank}$ ) then
+    write(0,*) rank, "!=", ${rank}$
     @:ATLAS_ABORT("Rank mismatch")
   endif
 
@@ -198,6 +201,29 @@ subroutine access_data_${dtype}$_r${rank}$(this, field)
   integer(c_int) :: rank
   call atlas__Field__data_${ctype}$_specf(this%CPTR_PGIBUG_A, field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
+end subroutine
+subroutine access_data_${dtype}$_r${rank}$_slice(this, slice, iblk)
+  use atlas_field_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
+  class(atlas_Field), intent(in) :: this
+  ${ftype}$, pointer :: field(${dim[rank]}$)
+#:if rank > 1
+  ${ftype}$, pointer, intent(inout) :: slice(${dimr[rank]}$)
+#:else
+  ${ftype}$, pointer, intent(inout) :: slice
+#:endif
+  integer, intent(in) :: iblk
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__Field__data_${ctype}$_specf(this%CPTR_PGIBUG_A, field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr, rank, shape_cptr, strides_cptr, field)
+#:if rank > 1
+  slice => field(${dimr[rank]}$, iblk)
+#:else
+  slice => field(iblk)
+#:endif
 end subroutine
 
 !-------------------------------------------------------------------------------
