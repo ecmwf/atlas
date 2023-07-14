@@ -152,15 +152,69 @@ CASE("test_cs_c2_mesh_parallel") {
                    [&global_partitions](const gidx_t idx) { return global_partitions[idx - 1]; });
 
     const MeshBuilder mesh_builder{};
-    const Mesh mesh = mesh_builder(lons, lats, ghosts, global_indices, remote_indices, remote_index_base, partitions,
-                                   tri_boundary_nodes, tri_global_indices, quad_boundary_nodes, quad_global_indices);
 
-    helper::check_mesh_nodes_and_cells(mesh, lons, lats, ghosts, global_indices, remote_indices, remote_index_base,
-                                       partitions, tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
-                                       quad_global_indices);
+    SECTION("Build Mesh without a Grid") {
+        const Mesh mesh = mesh_builder(lons, lats, ghosts, global_indices, remote_indices, remote_index_base, partitions,
+                                       tri_boundary_nodes, tri_global_indices, quad_boundary_nodes, quad_global_indices);
 
-    //Gmsh gmsh("out.msh", util::Config("coordinates", "xyz"));
-    //gmsh.write(mesh);
+        helper::check_mesh_nodes_and_cells(mesh, lons, lats, ghosts, global_indices, remote_indices, remote_index_base,
+                                           partitions, tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
+                                           quad_global_indices);
+        EXPECT(!mesh.grid());
+
+        //Gmsh gmsh("out.msh", util::Config("coordinates", "xyz"));
+        //gmsh.write(mesh);
+    }
+
+    SECTION("Build Mesh with an UnstructuredGrid from config") {
+        const size_t nb_owned_nodes = std::count(ghosts.begin(), ghosts.end(), 0);
+        std::vector<double> owned_lonlats(2 * nb_owned_nodes);
+        int counter = 0;
+        for (size_t i = 0; i < lons.size(); ++i) {
+            if (ghosts[i] == 0) {
+                owned_lonlats[counter] = lons[i];
+                counter++;
+                owned_lonlats[counter] = lats[i];
+                counter++;
+            }
+        }
+        size_t nb_nodes_global = 0;
+        mpi::comm().allReduce(nb_owned_nodes, nb_nodes_global, eckit::mpi::Operation::SUM);
+        std::vector<double> global_lonlats(2 * nb_nodes_global);
+        eckit::mpi::Buffer<double> buffer(mpi::comm().size());
+        mpi::comm().allGatherv(owned_lonlats.begin(), owned_lonlats.end(), buffer);
+        global_lonlats = std::move(buffer.buffer);
+
+        util::Config config{};
+        config.set("grid.type", "unstructured");
+        config.set("grid.xy", global_lonlats);
+        config.set("grid.validate grid vs mesh", true);
+
+        const Mesh mesh = mesh_builder(lons, lats, ghosts, global_indices, remote_indices, remote_index_base, partitions,
+                                       tri_boundary_nodes, tri_global_indices, quad_boundary_nodes, quad_global_indices,
+                                       config);
+
+        helper::check_mesh_nodes_and_cells(mesh, lons, lats, ghosts, global_indices, remote_indices, remote_index_base,
+                                           partitions, tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
+                                           quad_global_indices);
+        EXPECT(mesh.grid());
+        EXPECT(mesh.grid().type() == "unstructured");
+    }
+
+    SECTION("Build Mesh with an UnstructuredGrid, with Grid assembled from MeshBuilder arguments") {
+        util::Config config{};
+        config.set("grid.type", "unstructured");
+
+        const Mesh mesh = mesh_builder(lons, lats, ghosts, global_indices, remote_indices, remote_index_base, partitions,
+                                       tri_boundary_nodes, tri_global_indices, quad_boundary_nodes, quad_global_indices,
+                                       config);
+
+        helper::check_mesh_nodes_and_cells(mesh, lons, lats, ghosts, global_indices, remote_indices, remote_index_base,
+                                           partitions, tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
+                                           quad_global_indices);
+        EXPECT(mesh.grid());
+        EXPECT(mesh.grid().type() == "unstructured");
+    }
 }
 
 //-----------------------------------------------------------------------------

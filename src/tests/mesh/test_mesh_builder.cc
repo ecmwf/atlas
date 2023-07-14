@@ -10,11 +10,13 @@
 #include <vector>
 
 #include "atlas/array/MakeView.h"
+#include "atlas/grid.h"
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/MeshBuilder.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/util/Config.h"
 
 #include "tests/AtlasTestEnvironment.h"
 #include "tests/mesh/helper_mesh_builder.h"
@@ -129,15 +131,78 @@ CASE("test_cs_c2_mesh_serial") {
     std::iota(quad_global_indices.begin(), quad_global_indices.end(), 9);  // nb_tris + 1
 
     const MeshBuilder mesh_builder{};
-    const Mesh mesh = mesh_builder(lons, lats, ghosts, global_indices, remote_indices, remote_index_base, partitions,
-                                   tri_boundary_nodes, tri_global_indices, quad_boundary_nodes, quad_global_indices);
 
-    helper::check_mesh_nodes_and_cells(mesh, lons, lats, ghosts, global_indices, remote_indices, remote_index_base,
-                                       partitions, tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
-                                       quad_global_indices);
+    SECTION("Build Mesh without a Grid") {
+        const Mesh mesh = mesh_builder(lons, lats, ghosts, global_indices, remote_indices, remote_index_base, partitions,
+                                       tri_boundary_nodes, tri_global_indices, quad_boundary_nodes, quad_global_indices);
 
-    //Gmsh gmsh("out.msh", util::Config("coordinates", "xyz"));
-    //gmsh.write(mesh);
+        helper::check_mesh_nodes_and_cells(mesh, lons, lats, ghosts, global_indices, remote_indices, remote_index_base,
+                                           partitions, tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
+                                           quad_global_indices);
+        EXPECT(!mesh.grid());
+
+        //Gmsh gmsh("out.msh", util::Config("coordinates", "xyz"));
+        //gmsh.write(mesh);
+    }
+
+    SECTION("Build Mesh with an UnstructuredGrid from config") {
+        std::vector<double> lonlats(2 * lons.size());
+        int counter = 0;
+        for (size_t i = 0; i < lons.size(); ++i) {
+            lonlats[counter] = lons[i];
+            counter++;
+            lonlats[counter] = lats[i];
+            counter++;
+        }
+
+        util::Config config{};
+        config.set("grid.type", "unstructured");
+        config.set("grid.xy", lonlats);
+        config.set("grid.validate grid vs mesh", true);
+
+        const Mesh mesh = mesh_builder(lons, lats, ghosts, global_indices, remote_indices, remote_index_base, partitions,
+                                       tri_boundary_nodes, tri_global_indices, quad_boundary_nodes, quad_global_indices,
+                                       config);
+
+        helper::check_mesh_nodes_and_cells(mesh, lons, lats, ghosts, global_indices, remote_indices, remote_index_base,
+                                           partitions, tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
+                                           quad_global_indices);
+
+        EXPECT(mesh.grid());
+        EXPECT(mesh.grid().type() == "unstructured");
+    }
+
+    SECTION("Build Mesh with an UnstructuredGrid, with Grid assembled from MeshBuilder arguments") {
+        util::Config config{};
+        config.set("grid.type", "unstructured");
+
+        const Mesh mesh = mesh_builder(lons, lats, ghosts, global_indices, remote_indices, remote_index_base, partitions,
+                                       tri_boundary_nodes, tri_global_indices, quad_boundary_nodes, quad_global_indices,
+                                       config);
+
+        helper::check_mesh_nodes_and_cells(mesh, lons, lats, ghosts, global_indices, remote_indices, remote_index_base,
+                                           partitions, tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
+                                           quad_global_indices);
+
+        EXPECT(mesh.grid());
+        EXPECT(mesh.grid().type() == "unstructured");
+    }
+
+    SECTION("Build Mesh with a CubedSphereGrid from config") {  // but can't validate this
+        util::Config config{};
+        config.set("grid.name", "CS-LFR-2");
+
+        const Mesh mesh = mesh_builder(lons, lats, ghosts, global_indices, remote_indices, remote_index_base, partitions,
+                                       tri_boundary_nodes, tri_global_indices, quad_boundary_nodes, quad_global_indices,
+                                       config);
+
+        helper::check_mesh_nodes_and_cells(mesh, lons, lats, ghosts, global_indices, remote_indices, remote_index_base,
+                                           partitions, tri_boundary_nodes, tri_global_indices, quad_boundary_nodes,
+                                           quad_global_indices);
+
+        EXPECT(mesh.grid());
+        EXPECT(mesh.grid().type() == "cubedsphere");
+    }
 }
 
 //-----------------------------------------------------------------------------
