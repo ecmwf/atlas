@@ -258,6 +258,7 @@ void BuildConvexHull3D::operator()(Mesh& mesh) const {
 
 
     if( local_index.size() == mesh.nodes().size() or local_index.empty() ) {
+        local_index.clear();
         auto lonlat = array::make_view<double,2>(mesh.nodes().lonlat());
         if( backend == "stripack" ) {
             ATLAS_TRACE("stripack");
@@ -272,7 +273,6 @@ void BuildConvexHull3D::operator()(Mesh& mesh) const {
         else {
             ATLAS_THROW_EXCEPTION("backend" << backend << "not supported");
         }
-        local_index.clear();
     }
     else {
         auto lonlat_view = array::make_view<double,2>(mesh.nodes().lonlat());
