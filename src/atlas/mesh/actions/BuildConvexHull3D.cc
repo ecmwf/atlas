@@ -241,7 +241,6 @@ void BuildConvexHull3D::operator()(Mesh& mesh) const {
 
         Log::debug() << "Inserting triags (" << eckit::BigNum(nb_triags) << ")" << std::endl;
 
-        idx_t tidx = 0;
         for (idx_t tidx = 0; tidx<nb_triags; ++tidx) {
             auto& t = triangles[tidx];
             std::array<idx_t,3> idx{t[0],t[1],t[2]};
