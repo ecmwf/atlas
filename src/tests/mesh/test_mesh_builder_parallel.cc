@@ -179,7 +179,7 @@ CASE("test_cs_c2_mesh_parallel") {
             }
         }
         size_t nb_nodes_global = 0;
-        mpi::comm().allReduce(nb_owned_nodes, nb_nodes_global, eckit::mpi::Operation::SUM);
+        mpi::comm().allReduce(nb_owned_nodes, nb_nodes_global, eckit::mpi::sum());
         std::vector<double> global_lonlats(2 * nb_nodes_global);
         eckit::mpi::Buffer<double> buffer(mpi::comm().size());
         mpi::comm().allGatherv(owned_lonlats.begin(), owned_lonlats.end(), buffer);
