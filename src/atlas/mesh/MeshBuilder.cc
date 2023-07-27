@@ -153,9 +153,10 @@ Mesh MeshBuilder::operator()(size_t nb_nodes, const double lons[], const double 
                              const gidx_t quad_global_indices[],
                              const eckit::Configuration& config) const {
     // Get MPI comm from config name or fall back to atlas default comm
-    const eckit::mpi::Comm& comm = (config.has("mpi comm name") ?
-                                    eckit::mpi::comm(config.getString("mpi comm name").c_str())
-                                    : atlas::mpi::comm());
+    auto mpi_comm_name = [](const auto& config) {
+        return  config.getString("mpi_comm", atlas::mpi::comm().name()).c_str();
+    };
+    const eckit::mpi::Comm& comm = eckit::mpi::comm(mpi_comm_name(config));
 
     Mesh mesh{};
 
