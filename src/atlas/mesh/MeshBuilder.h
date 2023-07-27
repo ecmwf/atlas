@@ -56,11 +56,10 @@ public:
      *
      * The config argument can be used to
      * - Request the Mesh's Grid to be constructed, usually from the config. If the Grid is either
-     *   an UnstructuredGrid or a Structured grid, the `validate grid vs mesh` bool option can be
-     *   used to trigger a simple check that the grid is consistent with the lons/lats passed in to
-     *   the MeshBuilder. In the special case where `grid.type` is unstructured and the `grid.xy`
-     *   coordinates are _not_ given, then the grid is constructed from the lons/lats passed to the
-     *   MeshBuilder.
+     *   an UnstructuredGrid or a Structured grid, the `validate` bool option can be used to trigger
+     *   a simple check that the grid is consistent with the lons/lats passed in to the MeshBuilder.
+     *   In the special case where `grid.type` is unstructured and the `grid.xy` coordinates are
+     *   _not_ given, then the grid is constructed from the lons/lats passed to the MeshBuilder.
      * - Select which MPI communicator to use.
      */
     Mesh operator()(size_t nb_nodes, const double lons[], const double lats[], const int ghosts[],
