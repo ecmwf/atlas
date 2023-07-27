@@ -71,7 +71,7 @@ void validate_grid_vs_mesh(const atlas::Grid& grid, size_t nb_nodes, const doubl
     // Check assumption that global_indices look like a 1-based contiguous index
     const size_t nb_owned_nodes = std::count(ghosts, ghosts + nb_nodes, 0);
     size_t nb_nodes_global = 0;
-    comm.allReduce(nb_owned_nodes, nb_nodes_global, eckit::mpi::Operation::SUM);
+    comm.allReduce(nb_owned_nodes, nb_nodes_global, eckit::mpi::sum());
     for (size_t i = 0; i < nb_nodes; ++i) {
         if (ghosts[i] == 0) {
             // Check global_indices is consistent with a 1-based contiguous index over nodes
