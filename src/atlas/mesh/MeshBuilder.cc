@@ -42,7 +42,7 @@ atlas::UnstructuredGrid assemble_unstructured_grid(size_t nb_nodes, const double
 
     // Gather points across MPI ranks
     size_t nb_nodes_global = 0;
-    comm.allReduce(nb_owned_nodes, nb_nodes_global, eckit::mpi::Operation::SUM);
+    comm.allReduce(nb_owned_nodes, nb_nodes_global, eckit::mpi::sum());
 
     std::vector<double> global_lonlats(2 * nb_nodes_global);
     eckit::mpi::Buffer<double> buffer(comm.size());
