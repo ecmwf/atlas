@@ -188,7 +188,7 @@ CASE("test_cs_c2_mesh_parallel") {
         util::Config config{};
         config.set("grid.type", "unstructured");
         config.set("grid.xy", global_lonlats);
-        config.set("grid.validate grid vs mesh", true);
+        config.set("validate", true);
 
         const Mesh mesh = mesh_builder(lons, lats, ghosts, global_indices, remote_indices, remote_index_base, partitions,
                                        tri_boundary_nodes, tri_global_indices, quad_boundary_nodes, quad_global_indices,
