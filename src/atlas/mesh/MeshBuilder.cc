@@ -109,7 +109,14 @@ void validate_grid_vs_mesh(const atlas::Grid& grid, size_t nb_nodes, const doubl
             }
         }
     } else {
-        throw_Exception("In MeshBuilder: can't validate a grid of type " + grid.type() + " from config");
+        for (size_t i = 0; i < nb_nodes; ++i) {
+            if (ghosts[i] == 0) {
+                auto point = *(grid.lonlat().begin() + global_indices[i] - 1);
+                if (!equal_within_roundoff(point.lon(), lons[i]) || !equal_within_roundoff(point.lat(), lats[i])) {
+                    throw_Exception("In MeshBuilder: Grid from config does not match mesh coordinates", Here());
+                }
+            }
+        }
     }
 }
 }  // namespace detail
@@ -154,7 +161,7 @@ Mesh MeshBuilder::operator()(size_t nb_nodes, const double lons[], const double 
                              const eckit::Configuration& config) const {
     // Get MPI comm from config name or fall back to atlas default comm
     auto mpi_comm_name = [](const auto& config) {
-        return  config.getString("mpi_comm", atlas::mpi::comm().name()).c_str();
+        return config.getString("mpi_comm", atlas::mpi::comm().name()).c_str();
     };
     const eckit::mpi::Comm& comm = eckit::mpi::comm(mpi_comm_name(config));
 
