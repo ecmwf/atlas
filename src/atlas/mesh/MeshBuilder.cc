@@ -170,7 +170,7 @@ Mesh MeshBuilder::operator()(size_t nb_nodes, const double lons[], const double 
         } else {
             // Build grid directly from config
             grid = atlas::Grid(config.getSubConfiguration("grid"));
-            const bool validate = config.getBool("grid.validate grid vs mesh", false);
+            const bool validate = config.getBool("validate", false);
             if (validate) {
                 ::atlas::detail::validate_grid_vs_mesh(grid, nb_nodes, lons, lats, ghosts, global_indices, comm);
             }
