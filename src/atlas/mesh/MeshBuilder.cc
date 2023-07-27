@@ -11,6 +11,7 @@
 
 #include "atlas/array/MakeView.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/Iterator.h"
 #include "atlas/grid/StructuredGrid.h"
 #include "atlas/grid/UnstructuredGrid.h"
 #include "atlas/mesh/ElementType.h"
@@ -111,7 +112,7 @@ void validate_grid_vs_mesh(const atlas::Grid& grid, size_t nb_nodes, const doubl
     } else {
         for (size_t i = 0; i < nb_nodes; ++i) {
             if (ghosts[i] == 0) {
-                auto point = *(grid.lonlat().begin() + global_indices[i] - 1);
+                auto point = *(grid.lonlat().begin() + static_cast<size_t>(global_indices[i] - 1));
                 if (!equal_within_roundoff(point.lon(), lons[i]) || !equal_within_roundoff(point.lat(), lats[i])) {
                     throw_Exception("In MeshBuilder: Grid from config does not match mesh coordinates", Here());
                 }
