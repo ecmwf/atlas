@@ -15,9 +15,6 @@ use fckit_c_interop_module, only : c_str, c_ptr_to_string, c_ptr_free
 use atlas_functionspace_module, only : atlas_FunctionSpace
 use atlas_Field_module, only: atlas_Field
 use atlas_FieldSet_module, only: atlas_FieldSet
-#if ATLAS_HAVE_TRANS
-use atlas_Trans_module, only: atlas_Trans
-#endif
 use atlas_Config_module, only: atlas_Config
 
 implicit none
@@ -28,9 +25,6 @@ private :: atlas_FunctionSpace
 private :: atlas_Field
 private :: atlas_FieldSet
 private :: atlas_Config
-#if ATLAS_HAVE_TRANS
-private :: atlas_Trans
-#endif
 
 public :: atlas_functionspace_Spectral
 
@@ -84,9 +78,6 @@ END TYPE atlas_functionspace_Spectral
 interface atlas_functionspace_Spectral
   module procedure atlas_functionspace_Spectral__cptr
   module procedure atlas_functionspace_Spectral__config
-#if ATLAS_HAVE_TRANS
-  module procedure atlas_functionspace_Spectral__trans
-#endif
 end interface
 
 !------------------------------------------------------------------------------
@@ -119,26 +110,6 @@ function atlas_functionspace_Spectral__config(truncation,levels) result(this)
 
   call this%return()
 end function
-
-#if ATLAS_HAVE_TRANS
-function atlas_functionspace_Spectral__trans(trans,levels) result(this)
-  use atlas_functionspace_spectral_c_binding
-  type(atlas_functionspace_Spectral) :: this
-  type(atlas_Trans), intent(in) :: trans
-  integer(c_int), intent(in), optional :: levels
-
-  type(atlas_Config) :: options
-  options = atlas_Config()
-
-  if( present(levels) ) call options%set("levels",levels)
-
-  call this%reset_c_ptr( atlas__SpectralFunctionSpace__new__trans(trans%CPTR_PGIBUG_A, &
-      options%CPTR_PGIBUG_B ) )
-  call options%final()
-
-  call this%return()
-end function
-#endif
 
 subroutine gather_field(this,local,global)
   use atlas_functionspace_spectral_c_binding

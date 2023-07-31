@@ -439,9 +439,6 @@ Spectral::Spectral(const int truncation, const eckit::Configuration& config):
     FunctionSpace(new detail::Spectral(truncation, config)),
     functionspace_(dynamic_cast<const detail::Spectral*>(get())) {}
 
-Spectral::Spectral(const trans::Trans& trans, const eckit::Configuration& config):
-    FunctionSpace(new detail::Spectral(trans, config)), functionspace_(dynamic_cast<const detail::Spectral*>(get())) {}
-
 idx_t Spectral::nb_spectral_coefficients() const {
     return functionspace_->nb_spectral_coefficients();
 }

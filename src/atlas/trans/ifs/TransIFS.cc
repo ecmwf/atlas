@@ -1143,7 +1143,7 @@ size_t TransIFS::nb_spectral_coefficients_global() const {
 
 const functionspace::Spectral& TransIFS::spectral() const {
     if (not spectral_) {
-        spectral_ = functionspace::Spectral(Trans(this));
+        spectral_ = functionspace::Spectral( truncation() );
     }
     return spectral_;
 }

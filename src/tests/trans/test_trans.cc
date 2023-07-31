@@ -343,7 +343,7 @@ CASE("test_nomesh") {
     Grid g("O48");
     trans::Trans trans(g, 47);
 
-    functionspace::Spectral spectral(trans);
+    functionspace::Spectral spectral(trans.truncation());
     functionspace::StructuredColumns gridpoints(g, grid::Partitioner("ectrans"));
 
     Field spfg = spectral.createField<double>(option::name("spf") | option::global());

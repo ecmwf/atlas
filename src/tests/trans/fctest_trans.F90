@@ -109,8 +109,8 @@ TEST( test_trans )
   FCTEST_CHECK( .not. trans%is_null() )
   FCTEST_CHECK_EQUAL( trans%truncation(), truncation )
   
-  trans_spectral = trans%spectral()
-  FCTEST_CHECK_EQUAL( trans_spectral%nb_spectral_coefficients_global(), (truncation+1)*(truncation+2) )
+  spectral_fs = trans%spectral()
+  FCTEST_CHECK_EQUAL( spectral_fs%nb_spectral_coefficients_global(), (truncation+1)*(truncation+2) )
 
   nodes = mesh%nodes()
   nodes_fs = atlas_functionspace_NodeColumns(mesh,0)
@@ -123,7 +123,6 @@ TEST( test_trans )
   scalarfield2 = nodes_fs%create_field(name="scalar2",kind=atlas_real(c_double))
   write(msg,*) "nodes_fs%owners()",nodes_fs%owners(); call fckit_log%info(msg)
 
-  spectral_fs = atlas_functionspace_Spectral(trans)
   write(msg,*) "spectral_fs%owners()",spectral_fs%owners(); call fckit_log%info(msg)
 
   FCTEST_CHECK_EQUAL( spectral_fs%nb_spectral_coefficients_global(), (truncation+1)*(truncation+2) )
@@ -269,7 +268,7 @@ TEST( test_trans_nomesh )
   scalarfield1 = gridpoints_fs%create_field(name="scalar1",kind=atlas_real(c_double),levels=nlev)
   scalarfield2 = gridpoints_fs%create_field(name="scalar2",kind=atlas_real(c_double))
 
-  spectral_fs = atlas_functionspace_Spectral(trans)
+  spectral_fs = atlas_functionspace_Spectral(trans%truncation())
   spectralfield1 = spectral_fs%create_field(name="spectral1",kind=atlas_real(c_double),levels=nlev)
   spectralfield2 = spectral_fs%create_field(name="spectral2",kind=atlas_real(c_double))
 
@@ -352,7 +351,7 @@ grid = atlas_StructuredGrid("O24")
 trans = atlas_Trans(grid,23)
 partitioner = atlas_Partitioner("ectrans")
 gridpoints = atlas_functionspace_StructuredColumns(grid,partitioner)
-spectral = atlas_functionspace_Spectral(trans)
+spectral = atlas_functionspace_Spectral(trans%truncation())
 
 gpfields = atlas_FieldSet("gridpoint")
 spfields = atlas_FieldSet("spectral")
@@ -488,7 +487,6 @@ function sp_value(m,n,complex_component)
     endif
   endif
 end function
-
 END_TEST
 
 
