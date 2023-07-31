@@ -111,7 +111,7 @@ TEST( test_trans_invtrans_grad )
   trans = atlas_Trans(grid, int(grid%N()-1) )
 
   nodes_fs    = atlas_functionspace_NodeColumns(mesh,0)
-  spectral_fs = atlas_functionspace_Spectral(trans)
+  spectral_fs = atlas_functionspace_Spectral(trans%truncation())
 
   scalar = nodes_fs%create_field(name="scalar",kind=atlas_real(c_double))
   grad   = nodes_fs%create_field(name="grad",kind=atlas_real(c_double),variables=2)

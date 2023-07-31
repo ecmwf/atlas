@@ -68,6 +68,21 @@ CASE("test_create_mesh") {
 
 //-----------------------------------------------------------------------------
 
+CASE("METV-3396 / ATLAS-375") {
+    auto opts = util::Config("triangulate", true);
+    StructuredMeshGenerator generate(opts);
+    SECTION("N16 [-180,180]") {
+        auto mesh = generate(Grid("N16", RectangularDomain({-180., 180.}, {-90., 90.})));
+        Gmsh{"N16.msh"}.write(mesh);
+    }
+    SECTION("O8 [-45,315]") {
+        auto mesh = generate(Grid("O8", RectangularDomain({-45., 315.}, {-90., 90.})));
+        Gmsh{"O8.msh"}.write(mesh);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 }  // namespace test
 }  // namespace atlas
 

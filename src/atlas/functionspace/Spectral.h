@@ -216,7 +216,6 @@ public:
     Spectral(const FunctionSpace&);
     Spectral(const eckit::Configuration&);
     Spectral(const int truncation, const eckit::Configuration& = util::NoConfig());
-    Spectral(const trans::Trans&, const eckit::Configuration& = util::NoConfig());
 
     operator bool() const { return valid(); }
     bool valid() const { return functionspace_; }
