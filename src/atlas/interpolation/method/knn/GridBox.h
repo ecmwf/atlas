@@ -50,6 +50,10 @@ public:
     double diagonal() const;
     bool intersects(GridBox&) const;
 
+    double north() const { return north_; }
+    double west() const { return west_; }
+    double south() const { return south_; }
+    double east() const { return east_; }
     // -- Overridden methods
     // None
 
