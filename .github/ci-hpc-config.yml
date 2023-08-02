@@ -1,22 +1,27 @@
-build:
-  modules:
-    - ecbuild
-    - ninja
-  modules_package:
-    - atlas:fftw,eigen
-  dependencies:
-    - ecmwf/eckit@develop
-  parallel: 64
+matrix:
+  - mpi_on
+  - mpi_off
 
-nvidia-22.11:
+mpi_on:
   build:
     modules:
-      - ecbuild
       - ninja
     modules_package:
-      - atlas:fftw,eigen/3.4.0
+      - atlas:fftw,eigen,openmpi
+      - eckit:openmpi
     dependencies:
+      - ecmwf/ecbuild@develop
       - ecmwf/eckit@develop
     parallel: 64
-    env:
-      - ATLAS_FPE=0
+    ntasks: 16
+
+mpi_off:
+  build:
+    modules:
+      - ninja
+    modules_package:
+      - atlas:fftw,eigen
+    dependencies:
+      - ecmwf/ecbuild@develop
+      - ecmwf/eckit@develop
+    parallel: 64

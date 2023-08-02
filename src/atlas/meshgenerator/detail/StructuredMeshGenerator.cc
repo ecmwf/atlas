@@ -448,6 +448,7 @@ We need to connect to next region
 
             while (true) {
                 if (ipN1 == endN && ipS1 == endS) {
+                    // ATLAS_DEBUG("ipN1 == endN && ipS1 == endS");
                     break;
                 }
 
@@ -602,6 +603,19 @@ We need to connect to next region
                         }
                     }
                 }
+
+                ATLAS_ASSERT( (ipN1!=ipN2) || (ipS1 != ipS2) );
+                if( ipN1 == ipN2 ) {
+                    try_make_triangle_up = true;
+                    try_make_triangle_down = false;
+                    try_make_quad = false;
+                }
+                if( ipS1 == ipS2 ) {
+                    try_make_triangle_up = false;
+                    try_make_triangle_down = true;
+                    try_make_quad = false;
+                }
+
                 // ------------------------------------------------
                 // END RULES
                 // ------------------------------------------------
@@ -681,8 +695,8 @@ We need to connect to next region
                 {
 // triangle without ip3
 #if DEBUG_OUTPUT
-                    Log::info() << "          " << ipN1 << "  " << ipN2 << '\n';
-                    Log::info() << "          " << ipS1 << '\n';
+                    Log::info() << "v          " << ipN1 << "  " << ipN2 << '\n';
+                    Log::info() << "           " << ipS1 << '\n';
 #endif
                     elem(0) = ipN1;
                     elem(1) = ipS1;
@@ -696,6 +710,7 @@ We need to connect to next region
                     add_triag = (mypart == pE);
 
                     if (add_triag) {
+                        ATLAS_ASSERT(ipN1 != ipN2, "Faulty triangle with latN = "+std::to_string(latN)+"("+std::to_string(rg.y(latN))+")");
                         ++region.ntriags;
                         ++jelem;
                         ++nelems;
@@ -723,8 +738,8 @@ We need to connect to next region
                 {
 // triangle without ip4
 #if DEBUG_OUTPUT
-                    Log::info() << "          " << ipN1 << " (" << pN1 << ")" << '\n';
-                    Log::info() << "          " << ipS1 << " (" << pS1 << ")"
+                    Log::info() << "^          " << ipN1 << " (" << pN1 << ")" << '\n';
+                    Log::info() << "           " << ipS1 << " (" << pS1 << ")"
                                 << "  " << ipS2 << " (" << pS2 << ")" << '\n';
 #endif
                     elem(0) = ipN1;
@@ -1273,8 +1288,8 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
         nodes[1] = tmp;
     };
 
-    bool regular_cells_glb_idx = atlas::RegularLonLatGrid(rg);
-    if( options.getBool("triangulate") || y_numbering > 0) {
+    bool regular_cells_glb_idx = rg.regular();
+    if (options.getBool("triangulate") || y_numbering > 0 || rg.y().front() != 90. || rg.y().back() != -90.) {
         regular_cells_glb_idx = false;
     }
 
@@ -1580,7 +1595,11 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
         }
     }
     }
-    if (not regular_cells_glb_idx) {
+    if (regular_cells_glb_idx) {
+        mesh.cells().global_index().metadata().set("min", 1);
+        mesh.cells().global_index().metadata().set("max", rg.nx(0) * (rg.ny()-1) );
+    }
+    else {
         generateGlobalElementNumbering(mesh);
     }
 }

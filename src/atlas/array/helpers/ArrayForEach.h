@@ -167,6 +167,8 @@ auto makeSlices(const std::tuple<SlicerArgs...>& slicerArgs,
 
   constexpr auto Dim    = sizeof...(SlicerArgs);
   constexpr auto Rank   = ArrayView::rank();
+
+  static_assert (Dim <= Rank, "Error: number of slicer arguments exceeds the rank of ArrayView.");
   const auto paddedArgs = std::tuple_cat(slicerArgs, argPadding<Rank - Dim>());
 
   const auto slicer = [&arrayView](const auto&... args) {
@@ -217,31 +219,6 @@ struct ArrayForEachImpl<ExecutionPolicy, Dim, ItrDim, ItrDims...> {
           maskArgs);
     }
   }
-
-  template <typename ArrayViewTuple,typename Function, typename... SlicerArgs>
-  static void apply(ArrayViewTuple&& arrayViews,
-                    const Function& function,
-                    const std::tuple<SlicerArgs...>& slicerArgs) {
-    // Iterate over this dimension.
-    if constexpr(Dim == ItrDim) {
-
-      // Get size of iteration dimenion from first view argument.
-      const auto idxMax = std::get<0>(arrayViews).shape(ItrDim);
-
-      forEach<ExecutionPolicy>(idxMax, [&](idx_t idx) {
-          // Demote parallel execution policy to a non-parallel one in further recursion
-          ArrayForEachImpl<execution::demote_policy_t<ExecutionPolicy>, Dim + 1, ItrDims...>::apply(
-              std::forward<ArrayViewTuple>(arrayViews), function,
-              tuplePushBack(slicerArgs, idx));
-      });
-    }
-    // Add a RangeAll to arguments.
-    else {
-      ArrayForEachImpl<ExecutionPolicy, Dim + 1, ItrDim, ItrDims...>::apply(
-          std::forward<ArrayViewTuple>(arrayViews), function,
-          tuplePushBack(slicerArgs, Range::all()));
-    }
-  }
 };
 
 template <typename...>
@@ -255,6 +232,7 @@ inline constexpr bool is_applicable_v = is_applicable<Function,Tuple>::value;
 
 template <typename ExecutionPolicy, int Dim>
 struct ArrayForEachImpl<ExecutionPolicy, Dim> {
+
   template <typename ArrayViewTuple, typename Mask, typename Function,
             typename... SlicerArgs, typename... MaskArgs>
   static void apply(ArrayViewTuple&& arrayViews,
@@ -262,27 +240,30 @@ struct ArrayForEachImpl<ExecutionPolicy, Dim> {
                     const Function& function,
                     const std::tuple<SlicerArgs...>& slicerArgs,
                     const std::tuple<MaskArgs...>& maskArgs) {
-    ATLAS_ASSERT((std::is_invocable_v<Mask,MaskArgs...>));
-    if constexpr (std::is_invocable_v<Mask,MaskArgs...>) {
-      if (std::apply(mask, maskArgs)) {
-        return;
-      }
-    }
-    apply( std::forward<ArrayViewTuple>(arrayViews), function, slicerArgs);
-  }
 
-  template <typename ArrayViewTuple, typename Function, typename... SlicerArgs>
-  static void apply(ArrayViewTuple&& arrayViews,
-                    const Function& function,
-                    const std::tuple<SlicerArgs...>& slicerArgs) {
+    constexpr auto maskPresent = !std::is_same_v<Mask, NoMask>;
+
+    if constexpr (maskPresent) {
+
+        constexpr auto invocableMask = std::is_invocable_r_v<int, Mask, MaskArgs...>;
+        static_assert (invocableMask,
+            "Cannot invoke mask function with given arguments.\n"
+            "Make sure you arguments are N integers (or auto...) "
+            "where N == sizeof...(ItrDims). Function must return an int."
+            );
+
+        if (std::apply(mask, maskArgs)) {
+            return;
+        }
+
+    }
+
     auto slices = makeSlices(slicerArgs, std::forward<ArrayViewTuple>(arrayViews));
 
     constexpr auto applicable = is_applicable_v<Function,decltype(slices)>;
     static_assert(applicable, "Cannot invoke function with given arguments. "
       "Make sure you the arguments are rvalue references (Slice&&) or const references (const Slice&) or regular value (Slice)" );
-    if constexpr (applicable) {
-      std::apply(function, std::move(slices));
-    }
+    std::apply(function, std::move(slices));
   }
 
 };
@@ -350,14 +331,8 @@ struct ArrayForEach {
   template <typename ExecutionPolicy, typename... ArrayView, typename Mask, typename Function,
             typename = std::enable_if_t<execution::is_execution_policy<ExecutionPolicy>()>>
   static void apply(ExecutionPolicy, std::tuple<ArrayView...>&& arrayViews, const Mask& mask, const Function& function) {
-    if constexpr (std::is_same_v<std::decay_t<Mask>,detail::NoMask>) {
       detail::ArrayForEachImpl<ExecutionPolicy, 0, ItrDims...>::apply(
-        std::move(arrayViews), function, std::make_tuple());
-    }
-    else {
-      detail::ArrayForEachImpl<ExecutionPolicy, 0, ItrDims...>::apply(
-        std::move(arrayViews), mask, function, std::make_tuple(), std::make_tuple());
-    }
+          std::move(arrayViews), mask, function, std::make_tuple(), std::make_tuple());
   }
 
   /// brief   Apply "For-Each" method

@@ -17,7 +17,6 @@
 
 #include "eckit/log/Bytes.h"
 
-#include "atlas/array.h"
 #include "atlas/grid/detail/spacing/gaussian/Latitudes.h"
 #include "atlas/grid/detail/spacing/gaussian/N.h"
 #include "atlas/library/config.h"
@@ -27,12 +26,6 @@
 #include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
 
-//using eckit::ConcreteBuilderT0;
-//using eckit::Factory;
-
-using atlas::array::Array;
-using atlas::array::ArrayView;
-using atlas::array::make_view;
 
 namespace atlas {
 namespace grid {
@@ -111,7 +104,8 @@ void legpol_newton_iteration(size_t kn, const double pfn[], double px, double& p
     //          PXN      :  new abscissa (Newton iteration)                (out)
     //          PXMOD    :  PXN-PX                                         (out)
 
-    double zdlx, zdlk, zdlldn, zdlxn, zdlmod;
+    double zdlx, zdlk, zdlldn, zdlxn;
+    double zdlmod = 0;
     size_t ik;
     size_t kodd = kn % 2;  // mod(kn,2)
 
@@ -134,7 +128,9 @@ void legpol_newton_iteration(size_t kn, const double pfn[], double px, double& p
         ++ik;
     }
     // Newton method
-    zdlmod = -zdlk / zdlldn;
+    if( zdlldn != 0 ) {
+        zdlmod = -zdlk / zdlldn;
+    }
     zdlxn  = zdlx + zdlmod;
     pxn    = zdlxn;
     pxmod  = zdlmod;

@@ -24,7 +24,7 @@ void MatchingMeshPartitionerCubedSphere::partition(const Grid& grid, int partiti
     const auto N           = CubedSphereGrid(prePartitionedMesh_.grid()).N();
     const auto epsilon     = 2. * std::numeric_limits<double>::epsilon() * N;
     const auto edgeEpsilon = epsilon;
-    const size_t listSize  = 4;
+    const size_t listSize  = 8;
 
     // Loop over grid and set partioning[].
     auto lonlatIt = grid.lonlat().begin();

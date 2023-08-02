@@ -141,7 +141,7 @@ public:
 
     Field lonlat() const override { return field_xy_; }
     Field xy() const { return field_xy_; }
-    Field z() const { return vertical().z(); }
+    Field z() const { return field_z_; }
     Field partition() const { return field_partition_; }
     Field global_index() const override { return field_global_index_; }
     Field remote_index() const override {
@@ -222,6 +222,7 @@ private:  // data
     mutable util::PartitionPolygons all_polygons_;
 
     Field field_xy_;
+    Field field_z_;
     Field field_partition_;
     Field field_global_index_;
     mutable Field field_remote_index_;
@@ -317,6 +318,7 @@ private:  // data
     friend struct BlockStructuredColumnsFortranAccess;
     Map2to1 ij2gp_;
 
+    friend class BlockStructuredColumns;
     void setup(const grid::Distribution& distribution, const eckit::Configuration& config);
 
     friend class BlockStructuredColumns;

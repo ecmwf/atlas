@@ -9,7 +9,6 @@
 foreach(test
           test_bounding_box
           test_projection_LAEA
-          test_projection_variable_resolution
           test_rotation )
 
     ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc LIBS atlas ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )
@@ -28,9 +27,13 @@ if( HAVE_FCTEST )
     add_fctest( TARGET atlas_fctest_projection SOURCES fctest_projection.F90 LINKER_LANGUAGE Fortran LIBS atlas_f ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )
 endif()
 
+
+ecbuild_add_test( TARGET atlas_test_projection_variable_resolution SOURCES test_projection_variable_resolution.cc LIBS atlas ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION atlas_HAVE_ATLAS_FUNCTIONSPACE )
+
 ecbuild_add_test( TARGET atlas_test_cubedsphere_projection
   MPI        6
-  CONDITION  eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 6
+  CONDITION  eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 6 AND atlas_HAVE_ATLAS_FUNCTIONSPACE
   SOURCES test_cubedsphere_projection.cc
   LIBS atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}

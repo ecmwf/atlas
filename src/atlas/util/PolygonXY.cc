@@ -81,8 +81,8 @@ double compute_inner_radius_squared(const PointContainer& points, const PointLon
 //------------------------------------------------------------------------------------------------------
 
 PolygonXY::PolygonXY(const PartitionPolygon& partition_polygon): PolygonCoordinates(partition_polygon.xy(), true) {
-    RectangularLonLatDomain inscribed = partition_polygon.inscribedDomain();
-    if (inscribed) {
+    const auto& inscribed = partition_polygon.inscribedDomain();
+    if( inscribed.xmin() != inscribed.xmax() && inscribed.ymin() != inscribed.ymax() ) {
         inner_coordinatesMin_ = {inscribed.xmin(), inscribed.ymin()};
         inner_coordinatesMax_ = {inscribed.xmax(), inscribed.ymax()};
     }

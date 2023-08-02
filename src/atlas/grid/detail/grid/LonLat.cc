@@ -124,7 +124,7 @@ StructuredGrid::grid_t* create_lonlat(const Grid::Config& config, Shift shift) {
 static class regular_lonlat : public GridBuilder {
 public:
     regular_lonlat():
-        GridBuilder("regular_lonlat", {"^[Ll]([0-9]+)x([0-9]+)$", "^[Ll]([0-9]+)$"}, {"L<nx>x<ny>", "L<gauss>"}) {}
+        GridBuilder("regular_lonlat", {"^[Ll]([1-9][0-9]*)x([1-9][0-9]*)$", "^[Ll]([1-9][0-9]*)$"}, {"L<nx>x<ny>", "L<gauss>"}) {}
 
     void print(std::ostream& os) const override {
         os << std::left << std::setw(20) << "L<nx>x<ny> / L<gauss>"
@@ -165,7 +165,7 @@ public:
 static class shifted_lonlat : public GridBuilder {
 public:
     shifted_lonlat():
-        GridBuilder("shifted_lonlat", {"^[Ss]([0-9]+)x([0-9]+)$", "^[Ss]([0-9]+)$"}, {"S<nx>x<ny>", "S<gauss>"}) {}
+        GridBuilder("shifted_lonlat", {"^[Ss]([1-9][0-9]*)x([1-9][0-9]*)$", "^[Ss]([1-9][0-9]*)$"}, {"S<nx>x<ny>", "S<gauss>"}) {}
 
     void print(std::ostream& os) const override {
         os << std::left << std::setw(20) << "S<nx>x<ny> / S<gauss>"
@@ -206,7 +206,7 @@ public:
 static class shifted_lon : public GridBuilder {
 public:
     shifted_lon():
-        GridBuilder("shifted_lon", {"^[Ss][Ll][Oo][Nn]([0-9]+)x([0-9]+)$", "^[Ss][Ll][Oo][Nn]([0-9]+)$"},
+        GridBuilder("shifted_lon", {"^[Ss][Ll][Oo][Nn]([1-9][0-9]*)x([1-9][0-9]*)$", "^[Ss][Ll][Oo][Nn]([1-9][0-9]*)$"},
                     {"Slon<nx>x<ny>", "Slon<gauss>"}) {}
 
     void print(std::ostream& os) const override {
@@ -248,7 +248,7 @@ public:
 static class shifted_lat : public GridBuilder {
 public:
     shifted_lat():
-        GridBuilder("shifted_lat", {"^[Ss][Ll][Aa][Tt]([0-9]+)x([0-9]+)$", "^[Ss][Ll][Aa][Tt]([0-9]+)$"},
+        GridBuilder("shifted_lat", {"^[Ss][Ll][Aa][Tt]([1-9][0-9]*)x([1-9][0-9]*)$", "^[Ss][Ll][Aa][Tt]([1-9][0-9]*)$"},
                     {"Slat<nx>x<ny>", "Slat<gauss>"}) {}
 
     void print(std::ostream& os) const override {

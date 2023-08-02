@@ -11,5 +11,6 @@ ecbuild_add_executable(
     SOURCES atlas-benchmark-ifs-setup.cc
     LIBS    atlas
 #    NOINSTALL
+    CONDITION atlas_HAVE_ATLAS_NUMERICS
 )
 

@@ -24,12 +24,14 @@
 
 #include "eckit/deprecated.h"
 
+#include "atlas/array_fwd.h"
 #include "atlas/field/Field.h"
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/util/Object.h"
 #include "atlas/util/ObjectHandle.h"
+#include "atlas/field/detail/FieldImpl.h"
 
 namespace atlas {
 
@@ -58,10 +60,24 @@ public:  // types
     template <typename T>
     using enable_if_index_t = enable_if_t<is_index<T>()>;
 
+private:
+
+    class FieldObserver : public field::FieldObserver {
+    public:
+        FieldObserver(FieldSetImpl& fieldset) : fieldset_(fieldset) {}
+
+    private:
+        void onFieldRename(FieldImpl& field) override;
+
+    private:
+        FieldSetImpl& fieldset_;
+    };
+
 
 public:  // methods
     /// Constructs an empty FieldSet
     FieldSetImpl(const std::string& name = "untitled");
+    virtual ~FieldSetImpl();
 
     idx_t size() const { return static_cast<idx_t>(fields_.size()); }
     bool empty() const { return !fields_.size(); }
@@ -125,9 +141,10 @@ protected:                                // data
     std::string name_;                    ///< internal name
     util::Metadata metadata_;             ///< metadata associated with the FieldSet
     std::map<std::string, idx_t> index_;  ///< name-to-index map, to refer fields by name
-};
 
-class FieldImpl;
+    friend class FieldObserver;
+    FieldObserver field_observer_;
+};
 
 // C wrapper interfaces to C++ routines
 extern "C" {
@@ -139,6 +156,22 @@ const char* atlas__FieldSet__name(FieldSetImpl* This);
 idx_t atlas__FieldSet__size(const FieldSetImpl* This);
 FieldImpl* atlas__FieldSet__field_by_name(FieldSetImpl* This, char* name);
 FieldImpl* atlas__FieldSet__field_by_idx(FieldSetImpl* This, idx_t idx);
+void atlas__FieldSet__data_int_specf(FieldSetImpl* This, char* name, int*& field_data, int& rank, int*& field_shapef,
+                                  int*& field_stridesf);
+void atlas__FieldSet__data_long_specf(FieldSetImpl* This, char* name, long*& field_data, int& rank, int*& field_shapef,
+                                   int*& field_stridesf);
+void atlas__FieldSet__data_float_specf(FieldSetImpl* This, char* name, float*& field_data, int& rank, int*& field_shapef,
+                                    int*& field_stridesf);
+void atlas__FieldSet__data_double_specf(FieldSetImpl* This, char* name, double*& field_data, int& rank, int*& field_shapef,
+                                     int*& field_stridesf);
+void atlas__FieldSet__data_int_specf_by_idx(FieldSetImpl* This, int& idx, int*& field_data, int& rank, int*& field_shapef,
+                                  int*& field_stridesf);
+void atlas__FieldSet__data_long_specf_by_idx(FieldSetImpl* This, int& idx, long*& field_data, int& rank, int*& field_shapef,
+                                   int*& field_stridesf);
+void atlas__FieldSet__data_float_specf_by_idx(FieldSetImpl* This, int& idx, float*& field_data, int& rank, int*& field_shapef,
+                                    int*& field_stridesf);
+void atlas__FieldSet__data_double_specf_by_idx(FieldSetImpl* This, int& idx, double*& field_data, int& rank, int*& field_shapef,
+                                     int*& field_stridesf);
 void atlas__FieldSet__set_dirty(FieldSetImpl* This, int value);
 void atlas__FieldSet__halo_exchange(FieldSetImpl* This, int on_device);
 }

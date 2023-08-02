@@ -16,6 +16,7 @@
 
 #include "eckit/config/LibEcKit.h"
 #include "eckit/config/Resource.h"
+#include "eckit/runtime/Main.h"
 #include "eckit/utils/StringTools.h"
 #include "eckit/utils/Translator.h"
 
@@ -273,7 +274,9 @@ void enable_floating_point_exceptions() {
         // Above trick with "tmp" is what avoids the Cray 8.6 compiler bug
     }
     else {
-        floating_point_exceptions = eckit::Resource<std::vector<std::string>>("atlasFPE", {"false"});
+        if (eckit::Main::ready()) {
+            floating_point_exceptions = eckit::Resource<std::vector<std::string>>("atlasFPE", {"false"});
+        }
     }
     {
         bool _enable = false;
@@ -350,7 +353,20 @@ bool disable_floating_point_exception(const std::string& floating_point_exceptio
 
 
 void enable_atlas_signal_handler() {
-    if (eckit::Resource<bool>("atlasSignalHandler;$ATLAS_SIGNAL_HANDLER", false)) {
+    bool enable = false;
+    if (::getenv("ATLAS_SIGNAL_HANDLER")) {
+        std::string env(::getenv("ATLAS_SIGNAL_HANDLER"));
+        bool tmp = eckit::Translator<std::string, bool>()(env);
+        enable   = tmp;
+        // Above trick with "tmp" is what avoids the Cray 8.6 compiler bug
+    }
+    else {
+        if (eckit::Main::ready()) {
+            enable = eckit::Resource<bool>("atlasSignalHandler", false);
+        }
+    }
+
+    if (enable) {
         Signals::instance().setSignalHandlers();
     }
 }

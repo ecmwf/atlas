@@ -8,9 +8,13 @@
 
 #include "atlas/atlas_f.h"
 
+#:include "atlas/atlas_f.fypp"
+#:include "internals/atlas_generics.fypp"
+
 module atlas_FieldSet_module
 
 use fckit_owned_object_module, only: fckit_owned_object
+use atlas_field_module, only: atlas_field, array_c_to_f
 use atlas_kinds_module, only : ATLAS_KIND_IDX
 
 implicit none
@@ -53,10 +57,33 @@ contains
   procedure, public :: set_dirty
   procedure, public :: halo_exchange
 
+#:for rank in ranks
+#:for dtype in dtypes
+  procedure, private :: access_data_${dtype}$_r${rank}$_by_name
+  procedure, private :: access_data_${dtype}$_r${rank}$_by_idx
+  procedure, private :: access_data_${dtype}$_r${rank}$_slice_by_name
+  procedure, private :: access_data_${dtype}$_r${rank}$_slice_by_idx
+#:endfor
+#:endfor
+
+  generic, public :: data => &
+#:for rank in ranks
+#:for dtype in dtypes
+      & access_data_${dtype}$_r${rank}$_by_name, &
+      & access_data_${dtype}$_r${rank}$_by_idx, &
+      & access_data_${dtype}$_r${rank}$_slice_by_name, &
+      & access_data_${dtype}$_r${rank}$_slice_by_idx, &
+#:endfor
+#:endfor
+      & dummy
+
+  procedure, private :: dummy
+
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_FieldSet__final_auto
 #endif
   procedure, public  :: has_field => has ! deprecated !
+
 END TYPE atlas_FieldSet
 !------------------------------------------------------------------------------
 
@@ -73,6 +100,86 @@ contains
 !========================================================
 ! -----------------------------------------------------------------------------
 ! FieldSet routines
+
+#:for rank  in ranks
+#:for dtype,ftype,ctype in types
+subroutine access_data_${dtype}$_r${rank}$_by_name(this, name, field)
+  use fckit_c_interop_module, only: c_str
+  use atlas_fieldset_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
+  class(atlas_FieldSet), intent(in) :: this
+  character(len=*), intent(in) :: name
+  ${ftype}$, pointer, intent(inout) :: field(${dim[rank]}$)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__FieldSet__data_${ctype}$_specf(this%CPTR_PGIBUG_A, c_str(name), field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr, rank, shape_cptr, strides_cptr, field)
+end subroutine
+subroutine access_data_${dtype}$_r${rank}$_by_idx(this, idx, field)
+  use fckit_c_interop_module, only: c_str
+  use atlas_fieldset_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
+  class(atlas_FieldSet), intent(in) :: this
+  integer, intent(in) :: idx
+  ${ftype}$, pointer, intent(inout) :: field(${dim[rank]}$)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  call atlas__FieldSet__data_${ctype}$_specf_by_idx(this%CPTR_PGIBUG_A, idx-1, field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr, rank, shape_cptr, strides_cptr, field)
+end subroutine
+subroutine access_data_${dtype}$_r${rank}$_slice_by_name(this, name, slice, iblk)
+  use fckit_c_interop_module, only: c_str
+  use atlas_fieldset_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
+  class(atlas_FieldSet), intent(in) :: this
+  character(len=*), intent(in) :: name
+#:if rank > 1
+  ${ftype}$, pointer, intent(inout) :: slice(${dimr[rank]}$)
+#:else
+  ${ftype}$, pointer, intent(inout) :: slice
+#:endif
+  integer, intent(in) :: iblk
+  ${ftype}$, pointer :: field(${dim[rank]}$)
+  call access_data_${dtype}$_r${rank}$_by_name(this, c_str(name), field)
+#:if rank > 1
+  slice => field(${dimr[rank]}$, iblk)
+#:else
+  slice => field(iblk)
+#:endif 
+end subroutine
+subroutine access_data_${dtype}$_r${rank}$_slice_by_idx(this, idx, slice, iblk)
+  use fckit_c_interop_module, only: c_str
+  use atlas_fieldset_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
+  class(atlas_FieldSet), intent(in) :: this
+  integer, intent(in) :: idx
+#:if rank > 1
+  ${ftype}$, pointer, intent(inout) :: slice(${dimr[rank]}$)
+#:else
+  ${ftype}$, pointer, intent(inout) :: slice
+#:endif
+  integer, intent(in) :: iblk
+  ${ftype}$, pointer :: field(${dim[rank]}$)
+  call access_data_${dtype}$_r${rank}$_by_idx(this, idx, field)
+#:if rank > 1
+  slice => field(${dimr[rank]}$, iblk)
+#:else
+  slice => field(iblk)
+#:endif 
+end subroutine
+!-------------------------------------------------------------------------------
+
+#:endfor
+#:endfor
+subroutine dummy(this)
+  use atlas_fieldset_c_binding
+  class(atlas_FieldSet), intent(in) :: this
+  FCKIT_SUPPRESS_UNUSED(this)
+end subroutine
 
 function atlas_FieldSet__cptr(cptr) result(fieldset)
   use, intrinsic :: iso_c_binding, only: c_ptr

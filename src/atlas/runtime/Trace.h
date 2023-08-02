@@ -85,7 +85,7 @@ public:
 
 #if ATLAS_HAVE_TRACE
 
-#include "atlas/util/detail/BlackMagic.h"
+#include "atlas/library/detail/BlackMagic.h"
 
 #undef ATLAS_TRACE
 #undef ATLAS_TRACE_SCOPE

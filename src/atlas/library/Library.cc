@@ -26,6 +26,7 @@
 #include "eckit/system/SystemInfo.h"
 #include "eckit/types/Types.h"
 #include "eckit/utils/Translator.h"
+#include "eckit/system/LibraryManager.h"
 
 #if ATLAS_ECKIT_HAVE_ECKIT_585
 #include "eckit/linalg/LinearAlgebraDense.h"
@@ -88,6 +89,11 @@ std::string str(const eckit::system::Library& lib) {
     return ss.str();
 }
 
+std::string getEnv(const std::string& env, const std::string& default_value = "") {
+    char const* val = ::getenv(env.c_str());
+    return val == nullptr ? default_value : std::string(val);
+}
+
 bool getEnv(const std::string& env, bool default_value) {
     if (::getenv(env.c_str())) {
         return eckit::Translator<std::string, bool>()(::getenv(env.c_str()));
@@ -114,7 +120,7 @@ static void add_tokens(std::vector<std::string>& tokens, const std::string& str,
 };
 
 static void init_data_paths(std::vector<std::string>& data_paths) {
-    ATLAS_ASSERT(eckit::Main::instance().ready());
+    ATLAS_ASSERT(eckit::Main::ready());
     add_tokens(data_paths, eckit::LibResource<std::string, Library>("atlas-data-path;$ATLAS_DATA_PATH", ""), ":");
     add_tokens(data_paths, "~atlas/share", ":");
 }
@@ -152,7 +158,23 @@ Library::Library():
     trace_(getEnv("ATLAS_TRACE", false)),
     trace_memory_(getEnv("ATLAS_TRACE_MEMORY", false)),
     trace_barriers_(getEnv("ATLAS_TRACE_BARRIERS", false)),
-    trace_report_(getEnv("ATLAS_TRACE_REPORT", false)) {}
+    trace_report_(getEnv("ATLAS_TRACE_REPORT", false)),
+    atlas_io_trace_hook_(::atlas::io::TraceHookRegistry::invalidId()) {
+    std::string ATLAS_PLUGIN_PATH = getEnv("ATLAS_PLUGIN_PATH");
+#if ATLAS_ECKIT_VERSION_AT_LEAST(1, 25, 0) || ATLAS_ECKIT_DEVELOP
+    eckit::system::LibraryManager::addPluginSearchPath(ATLAS_PLUGIN_PATH);
+#else
+    if (ATLAS_PLUGIN_PATH.size()) {
+        std::cout << "WARNING: atlas::Library discovered environment variable ATLAS_PLUGIN_PATH. "
+                  << "Currently used version of eckit (" << eckit_version_str() << " [" << eckit_git_sha1() << "]) "
+                  << "does not support adding plugin search paths. "
+                  << "When using latest eckit develop branch, please rebuild Atlas with "
+                  << "CMake argument -DENABLE_ECKIT_DEVELOP=ON\n"
+                  << "Alternatively, use combination of environment variables 'PLUGINS_MANIFEST_PATH' "
+                  << "and 'LD_LIBRARY_PATH (for UNIX) / DYLD_LIBRARY_PATH (for macOS)' (colon-separated lists)\n" << std::endl;
+    }
+#endif
+}
 
 void Library::registerPlugin(eckit::system::Plugin& plugin) {
     plugins_.push_back(&plugin);
@@ -173,7 +195,6 @@ std::string Library::cachePath() const {
 }
 
 void Library::registerDataPath(const std::string& path) {
-    ATLAS_DEBUG_VAR(path);
     if (data_paths_.empty()) {
         init_data_paths(data_paths_);
     }
@@ -183,7 +204,7 @@ void Library::registerDataPath(const std::string& path) {
 
 std::string Library::dataPath() const {
     if (data_paths_.empty()) {
-        ATLAS_THROW_EXCEPTION("Attempted to access atlas::Library function before atlas was initialized");
+        init_data_paths(data_paths_);
     }
     std::vector<std::string> paths = data_paths_;
     auto join                      = [](const std::vector<std::string>& v, const std::string& sep) -> std::string {
@@ -254,6 +275,8 @@ void Library::initialise(int argc, char** argv) {
 
 
 void Library::initialise(const eckit::Parametrisation& config) {
+    ATLAS_ASSERT(eckit::Main::ready());
+
     if (initialized_) {
         return;
     }
@@ -339,7 +362,10 @@ void Library::initialise() {
 }
 
 void Library::finalise() {
-    atlas::io::TraceHookRegistry::disable(atlas_io_trace_hook_);
+    if( atlas_io_trace_hook_ != atlas::io::TraceHookRegistry::invalidId() ) {
+        atlas::io::TraceHookRegistry::disable(atlas_io_trace_hook_);
+        atlas_io_trace_hook_ = atlas::io::TraceHookRegistry::invalidId();
+    }
 
     if (ATLAS_HAVE_TRACE && trace_report_) {
         Log::info() << atlas::Trace::report() << std::endl;
@@ -449,7 +475,7 @@ void Library::Information::print(std::ostream& out) const {
 
     bool feature_fortran(ATLAS_HAVE_FORTRAN);
     bool feature_OpenMP(ATLAS_HAVE_OMP);
-    bool feature_Trans(ATLAS_HAVE_TRANS);
+    bool feature_ecTrans(ATLAS_HAVE_ECTRANS);
     bool feature_FFTW(ATLAS_HAVE_FFTW);
     bool feature_Eigen(ATLAS_HAVE_EIGEN);
     bool feature_Tesselation(ATLAS_HAVE_TESSELATION);
@@ -473,7 +499,7 @@ void Library::Information::print(std::ostream& out) const {
         << "    OpenMP         : " << str(feature_OpenMP) << '\n'
         << "    BoundsChecking : " << str(feature_BoundsChecking) << '\n'
         << "    Init_sNaN      : " << str(feature_Init_sNaN) << '\n'
-        << "    Trans          : " << str(feature_Trans) << '\n'
+        << "    ecTrans        : " << str(feature_ecTrans) << '\n'
         << "    FFTW           : " << str(feature_FFTW) << '\n'
         << "    Eigen          : " << str(feature_Eigen) << '\n'
         << "    MKL            : " << str(feature_MKL()) << '\n'

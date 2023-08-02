@@ -154,11 +154,11 @@ const std::vector<int>& ArraySpec::stridesf() const {
 
 void ArraySpec::allocate_fortran_specs() {
     shapef_.resize(rank_);
+    stridesf_.resize(rank_);
     for (idx_t j = 0; j < rank_; ++j) {
         shapef_[j] = shape_[rank_ - 1 - layout_[j]];
+        stridesf_[j] = strides_[rank_ -1 - layout_[j]];
     }
-    stridesf_.resize(strides_.size());
-    std::reverse_copy(strides_.begin(), strides_.end(), stridesf_.begin());
 }
 
 }  // namespace array

@@ -26,8 +26,6 @@ namespace functionspace {
 
 extern "C" {
 const detail::Spectral* atlas__SpectralFunctionSpace__new__config(const eckit::Configuration* config);
-const detail::Spectral* atlas__SpectralFunctionSpace__new__trans(trans::TransImpl* trans,
-                                                                 const eckit::Configuration* config);
 void atlas__SpectralFunctionSpace__delete(detail::Spectral* This);
 field::FieldImpl* atlas__fs__Spectral__create_field(const detail::Spectral* This, const eckit::Configuration* options);
 void atlas__SpectralFunctionSpace__gather(const detail::Spectral* This, const field::FieldImpl* local,

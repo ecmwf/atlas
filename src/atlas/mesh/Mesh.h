@@ -39,6 +39,7 @@ class PartitionPolygons;
 
 namespace atlas {
 namespace mesh {
+class MeshBuilder;
 class Nodes;
 class HybridElements;
 typedef HybridElements Edges;
@@ -140,6 +141,7 @@ private:  // methods
         return s;
     }
 
+    friend class mesh::MeshBuilder;
     friend class meshgenerator::MeshGeneratorImpl;
     void setProjection(const Projection& p) { get()->setProjection(p); }
     void setGrid(const Grid& p) { get()->setGrid(p); }

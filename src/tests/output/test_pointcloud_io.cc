@@ -34,6 +34,11 @@
 
 namespace {
 
+using mdspan_xy = atlas::mdspan<const double, atlas::extents<size_t, atlas::dynamic_extent, 2>>;
+mdspan_xy make_mdspan(const atlas::Field& xy) {
+    return mdspan_xy{xy.array().host_data<const double>(), xy.shape(0), 2 };
+}
+
 namespace test_arrays {
 
 const size_t nb_pts     = 5;
@@ -121,7 +126,7 @@ CASE("read_grid_sample_file") {
     Mesh mesh = output::detail::PointCloudIO::read("pointcloud.txt");
 
     Log::info() << "Mesh created" << std::endl;
-    Grid grid(new grid::detail::grid::Unstructured(mesh));
+    Grid grid(new grid::detail::grid::Unstructured(make_mdspan(mesh.nodes().xy())));
     EXPECT(grid);
 
     EXPECT(grid.size() == test_arrays::nb_pts);
@@ -137,7 +142,7 @@ CASE("read_grid_sample_file_header_less_rows") {
     Log::info() << "Creating Mesh..." << std::endl;
     Mesh mesh = output::detail::PointCloudIO::read("pointcloud.txt");
     Log::info() << "Creating Mesh...done" << std::endl;
-    Grid grid(new grid::detail::grid::Unstructured(mesh));
+    Grid grid(new grid::detail::grid::Unstructured(make_mdspan(mesh.nodes().xy())));
     EXPECT(grid);
 
     EXPECT(grid.size() == test_arrays::nb_pts - 2);
@@ -150,7 +155,7 @@ CASE("read_grid_sample_file_header_less_columns_1") {
     test_write_file("pointcloud.txt", test_arrays::nb_pts, test_arrays::nb_columns - 1);
 
     Mesh mesh = output::detail::PointCloudIO::read("pointcloud.txt");
-    Grid grid(new grid::detail::grid::Unstructured(mesh));
+    Grid grid(new grid::detail::grid::Unstructured(make_mdspan(mesh.nodes().xy())));
     EXPECT(grid);
 
     EXPECT(grid.size() == test_arrays::nb_pts);
@@ -163,7 +168,7 @@ CASE("read_grid_sample_file_header_less_columns_2") {
     test_write_file("pointcloud.txt", test_arrays::nb_pts, test_arrays::nb_columns - test_arrays::nb_fld);
 
     Mesh mesh = output::detail::PointCloudIO::read("pointcloud.txt");
-    Grid grid(new grid::detail::grid::Unstructured(mesh));
+    Grid grid(new grid::detail::grid::Unstructured(make_mdspan(mesh.nodes().xy())));
     EXPECT(grid);
 
     EXPECT(grid.size() == test_arrays::nb_pts);
@@ -310,7 +315,7 @@ CASE("write_read_write_field") {
     Log::info() << "Part 2" << std::endl;
 
     Mesh mesh = output::detail::PointCloudIO::read("pointcloud.txt");
-    Grid grid(new grid::detail::grid::Unstructured(mesh));
+    Grid grid(new grid::detail::grid::Unstructured(make_mdspan(mesh.nodes().xy())));
     EXPECT(grid);
 
     EXPECT(grid.size() == test_vectors::nb_pts);
@@ -351,10 +356,10 @@ CASE("write_read_write_field") {
     EXPECT_NO_THROW(output::detail::PointCloudIO::write("pointcloud_Grid.txt", mesh));
 
     Mesh mesh_from_FieldSet = output::detail::PointCloudIO::read("pointcloud_FieldSet.txt");
-    Grid grid_from_FieldSet(new grid::detail::grid::Unstructured(mesh_from_FieldSet));
+    Grid grid_from_FieldSet(new grid::detail::grid::Unstructured(make_mdspan(mesh_from_FieldSet.nodes().xy())));
 
     Mesh mesh_from_Grid(output::detail::PointCloudIO::read("pointcloud_Grid.txt"));
-    Grid grid_from_Grid(new grid::detail::grid::Unstructured(mesh_from_Grid));
+    Grid grid_from_Grid(new grid::detail::grid::Unstructured(make_mdspan(mesh_from_Grid.nodes().xy())));
 
     EXPECT(grid_from_FieldSet);
     EXPECT(grid_from_Grid);

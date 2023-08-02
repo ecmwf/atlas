@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <vector>
 
-#include "atlas/array.h"
 #include "atlas/grid.h"
 #include "atlas/option.h"
 #include "atlas/util/Config.h"

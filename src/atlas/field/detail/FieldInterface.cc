@@ -10,11 +10,15 @@
 
 #include <cstring>
 
+#include "atlas/library/config.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/detail/FieldImpl.h"
-#include "atlas/functionspace/FunctionSpace.h"
+#include "atlas/field/detail/FieldInterface.h"
 #include "atlas/runtime/Exception.h"
 
+#if ATLAS_HAVE_FUNCTIONSPACE
+#include "atlas/functionspace/FunctionSpace.h"
+#endif
 namespace atlas {
 namespace field {
 
@@ -142,12 +146,20 @@ util::Metadata* atlas__Field__metadata(FieldImpl* This) {
 
 int atlas__Field__has_functionspace(FieldImpl* This) {
     ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_Field");
+#if ATLAS_HAVE_FUNCTIONSPACE
     return (This->functionspace() != 0);
+#else
+    return 0;
+#endif
 }
 
 const functionspace::FunctionSpaceImpl* atlas__Field__functionspace(FieldImpl* This) {
     ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_Field");
+#if ATLAS_HAVE_FUNCTIONSPACE
     return This->functionspace().get();
+#else
+    throw_Exception("Atlas is not compiled with FunctionSpace support", Here());
+#endif
 }
 
 void atlas__Field__shapef(FieldImpl* This, int*& shape, int& rank) {
@@ -196,10 +208,15 @@ void atlas__Field__set_levels(FieldImpl* This, int levels) {
     This->set_levels(levels);
 }
 
+#
 void atlas__Field__set_functionspace(FieldImpl* This, const functionspace::FunctionSpaceImpl* functionspace) {
     ATLAS_ASSERT(This != nullptr, "Cannot set functionspace in uninitialised atlas_Field");
     ATLAS_ASSERT(functionspace != nullptr, "Cannot set uninitialised atlas_FunctionSpace in atlas_Field");
+#if ATLAS_HAVE_FUNCTIONSPACE
     This->set_functionspace(functionspace);
+#else
+    throw_Exception("Atlas is not compiled with FunctionSpace support", Here());
+#endif
 }
 
 void atlas__Field__update_device(FieldImpl* This) {

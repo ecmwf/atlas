@@ -104,7 +104,7 @@ ecbuild_add_test( TARGET atlas_test_healpixmeshgen
 
 ecbuild_add_test( TARGET atlas_test_cubedsphere_meshgen
   MPI        8
-  CONDITION  eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 8
+  CONDITION  eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 8 AND atlas_HAVE_ATLAS_INTERPOLATION
   SOURCES test_cubedsphere_meshgen.cc
   LIBS atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
@@ -144,6 +144,15 @@ ecbuild_add_test( TARGET atlas_test_mesh_reorder_unstructured
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+foreach( test footprint )
+  ecbuild_add_test( TARGET atlas_test_${test}
+    SOURCES test_${test}.cc
+    LIBS atlas
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  )
+endforeach()
+
+
 
 atlas_add_cuda_test(
   TARGET atlas_test_connectivity_kernel
@@ -156,4 +165,5 @@ ecbuild_add_test( TARGET atlas_test_pentagon_element
   SOURCES test_pentagon_element.cc
   LIBS atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION atlas_HAVE_ATLAS_INTERPOLATION
 )

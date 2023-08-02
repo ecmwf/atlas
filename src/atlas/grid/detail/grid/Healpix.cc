@@ -31,7 +31,7 @@ namespace {  // anonymous
 
 static class HealpixGridBuilder : GridBuilder {
 public:
-    HealpixGridBuilder(): GridBuilder("healpix", {"^[Hh]([0-9]+)$"}, {"H<n>"}) {}
+    HealpixGridBuilder(): GridBuilder("healpix", {"^[Hh]([1-9][0-9]*)$"}, {"H<n>"}) {}
 
     void print(std::ostream& os) const override {
         os << std::left << std::setw(20) << "H<n>"

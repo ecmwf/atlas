@@ -7,6 +7,27 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.34.0] - 2023-07-10
+### Added
+- Fieldset::metadata (#126)
+- Fieldset::adjointHaloExchange
+- Field/Fieldset::clone method
+- Functions to enable/disable FPE
+- Add function to build mesh from imported connectivity data (#135)
+- Implement field::for_each capabilities (#139)
+- Introduce colon-separated environment variable ATLAS_PLUGIN_PATH to simplify plugin detection
+- Introduce atlas::mdspan, contributed from github.com/kokkos/mdspan
+- Add function Field::horizontal_dimension() -> std::vector<idx_t>
+- Setup horizontal_dimensions() for BlockStructuredColumns fields
+- Upgrade the halo exchange procedure for the function space 'PointCloud' (#120)
+
+### Fixed
+- Enable latitude normalisation in KDTree coordinate transform (#140)
+- Fix LocalView indexing bug for non-contiguous slices
+- C++17 flag public propagation to downstream C++ CMake packages
+- Fix cells().global_index() metadata for RegularLonLat grids in StructuredMeshGenerator
+- BuildHalo: mark interior added cells as ghost
+
 ## [0.33.0] - 2023-04-03
 ### Added
 - Add support for StructuredPartitionPolygon with halo > 0
@@ -443,6 +464,7 @@ Fix StructuredInterpolation2D with retry for failed stencils
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.33.0]: https://github.com/ecmwf/atlas/compare/0.33.0...0.34.0
 [0.33.0]: https://github.com/ecmwf/atlas/compare/0.32.1...0.33.0
 [0.32.1]: https://github.com/ecmwf/atlas/compare/0.32.0...0.32.1
 [0.32.0]: https://github.com/ecmwf/atlas/compare/0.31.1...0.32.0
