@@ -42,6 +42,14 @@ public:
 //------------------------------------------------------------------------------------------------------
 
 } // namespace elementtypes
+
+namespace temporary {
+  class Quadrilateral : public elementtypes::Quadrilateral {
+    public:
+    [[deprecated("Use 'atlas::mesh::ElementType::create(\"Quadrilateral\")' instead")]] Quadrilateral() {}
+  };
+}
+
 } // namespace mesh
 } // namespace atlas
 

@@ -68,3 +68,10 @@ const char* atlas__mesh__ElementType__name(const ElementType* This);
 
 }  // namespace mesh
 }  // namespace atlas
+
+// Following includes are added for backwards compatibility with temporary elementtypes.
+// They contain deprecation warnings.
+// When deprecation is final, these lines can be removed.
+#include "atlas/mesh/elementtypes/Quadrilateral.h"
+#include "atlas/mesh/elementtypes/Triangle.h"
+#include "atlas/mesh/elementtypes/Line.h"

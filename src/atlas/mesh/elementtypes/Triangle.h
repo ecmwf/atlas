@@ -42,5 +42,13 @@ public:
 //------------------------------------------------------------------------------------------------------
 
 } // namespace elementtypes
+
+namespace temporary {
+  class Triangle : public elementtypes::Triangle {
+    public:
+    [[deprecated("Use 'atlas::mesh::ElementType::create(\"Triangle\")' instead")]] Triangle() {}
+  };
+}
+
 } // namespace mesh
 } // namespace atlas

@@ -40,5 +40,13 @@ public:
 //------------------------------------------------------------------------------------------------------
 
 } // namespace elementtypes
+
+namespace temporary {
+  class Line : public elementtypes::Line {
+    public:
+    [[deprecated("Use 'atlas::mesh::ElementType::create(\"Line\")' instead")]] Line() {}
+  };
+}
+
 } // namespace mesh
 } // namespace atlas
