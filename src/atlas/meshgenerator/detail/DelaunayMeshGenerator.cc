@@ -336,7 +336,7 @@ void DelaunayMeshGenerator::generate(const Grid& grid, const grid::Distribution&
         }
 
 
-        mesh.cells().add(new mesh::temporary::Triangle(), owned_elements.size());
+        mesh.cells().add(mesh::ElementType::create("Triangle"), owned_elements.size());
         auto& node_connectivity  = mesh.cells().node_connectivity();
         auto cell_gidx          = array::make_view<gidx_t, 1>(mesh.cells().global_index());
         auto cell_part          = array::make_view<int, 1>(mesh.cells().partition());

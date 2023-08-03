@@ -818,7 +818,7 @@ void CubedSphereMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, cons
     auto& cells = mesh.cells();
 
     // Resize cells.
-    cells.add(new mesh::temporary::Quadrilateral(), static_cast<idx_t>(localCells.size()));
+    cells.add(mesh::ElementType::create("Quadrilateral"), static_cast<idx_t>(localCells.size()));
 
     // Add extra fields.
     tijField = cells.add(Field("tij", make_datatype<idx_t>(), make_shape(cells.size(), 3)));

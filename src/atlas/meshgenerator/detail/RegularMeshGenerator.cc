@@ -189,7 +189,7 @@ void RegularMeshGenerator::generate_mesh(const RegularGrid& rg, const grid::Dist
     //      array::ArrayView<int,   1> ghost         ( nodes.ghost() );
     //      array::ArrayView<int,   1> flags         ( nodes.flags() );
     // - define cells (only quadrilaterals for now) with
-    //      mesh.cells().add( new mesh::temporary::Quadrilateral(), nquads  );
+    //      mesh.cells().add(mesh::ElementType::create("Quadrilateral"), nquads  );
     //    further define cells with
     //      array::ArrayView<gidx_t,1> cells_glb_idx( mesh.cells().global_index()
     //      );
@@ -396,7 +396,7 @@ void RegularMeshGenerator::generate_mesh(const RegularGrid& rg, const grid::Dist
     auto flags         = array::make_view<int, 1>(nodes.flags());
 
     // define cells and associated properties
-    mesh.cells().add(new mesh::temporary::Quadrilateral(), ncells);
+    mesh.cells().add(mesh::ElementType::create("Quadrilateral"), ncells);
     int quad_begin                                        = mesh.cells().elements(0).begin();
     auto cells_part                                       = array::make_view<int, 1>(mesh.cells().partition());
     mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();

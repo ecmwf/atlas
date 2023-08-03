@@ -9,6 +9,10 @@
  */
 
 #include "atlas/mesh/ElementType.h"
+#include "elementtypes/Line.h"
+#include "elementtypes/Triangle.h"
+#include "elementtypes/Quadrilateral.h"
+#include "elementtypes/Pentagon.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/CoordinateEnums.h"
 
@@ -17,8 +21,22 @@ namespace mesh {
 
 //------------------------------------------------------------------------------
 
-ElementType* ElementType::create(const std::string&) {
-    ATLAS_NOTIMPLEMENTED;
+ElementType* ElementType::create( const std::string& name )
+{
+  // currently naive implementation. This has to be replaced
+  // with self-registration and factory mechanism
+  if( name == "Triangle" )
+    return new elementtypes::Triangle();
+  else if( name == "Quadrilateral")
+    return new elementtypes::Quadrilateral();
+  else if( name == "Line" )
+    return new elementtypes::Line();
+  else if( name == "Pentagon")
+    return new elementtypes::Pentagon();
+  else {
+    throw_NotImplemented("Element type ["+name+"] does not exist", Here());
+  }
+  return 0;
 }
 
 ElementType::ElementType()  = default;
@@ -30,14 +48,10 @@ extern "C" {
 void atlas__mesh__ElementType__delete(ElementType* This) {
     delete This;
 }
-ElementType* atlas__mesh__Triangle__create() {
-    return new temporary::Triangle();
-}
-ElementType* atlas__mesh__Quadrilateral__create() {
-    return new temporary::Quadrilateral();
-}
-ElementType* atlas__mesh__Line__create() {
-    return new temporary::Line();
+
+ElementType* atlas__mesh__ElementType__create(const char* name)
+{
+  return ElementType::create( std::string(name) );
 }
 
 const char* atlas__mesh__ElementType__name(const ElementType* This) {

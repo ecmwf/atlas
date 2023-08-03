@@ -388,17 +388,17 @@ void CubedSphereDualMeshGenerator::generate_mesh(const CubedSphereGrid& csGrid, 
         switch (typeCount.first) {
             // Add a block of lines.
             case ElemType::LINE: {
-                cells.add(new mesh::temporary::Line(), typeCount.second);
+                cells.add(mesh::ElementType::create("Line"), typeCount.second);
                 break;
             }
             // Add a block of triangles.
             case ElemType::TRIANGLE: {
-                cells.add(new mesh::temporary::Triangle(), typeCount.second);
+                cells.add(mesh::ElementType::create("Triangle"), typeCount.second);
                 break;
             }
                 // Add a block of quadrilaterals.
             case ElemType::QUADRILATERAL: {
-                cells.add(new mesh::temporary::Quadrilateral(), typeCount.second);
+                cells.add(mesh::ElementType::create("Quadrilateral"), typeCount.second);
                 break;
             }
             default: {

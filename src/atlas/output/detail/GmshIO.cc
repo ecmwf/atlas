@@ -661,13 +661,13 @@ Mesh GmshIO::read(const PathName& file_path) const {
 namespace {
 mesh::ElementType* make_element_type(int type) {
     if (type == QUAD) {
-        return new mesh::temporary::Quadrilateral();
+        return mesh::ElementType::create("Quadrilateral");
     }
     if (type == TRIAG) {
-        return new mesh::temporary::Triangle();
+        return mesh::ElementType::create("Triangle");
     }
     if (type == LINE) {
-        return new mesh::temporary::Line();
+        return mesh::ElementType::create("Line");
     }
     throw_Exception("Element type not supported", Here());
 }

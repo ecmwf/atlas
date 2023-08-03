@@ -108,7 +108,7 @@ static void cgal_polyhedron_to_atlas_mesh(Mesh& mesh, Polyhedron_3& poly, PointS
     /* triangles */
 
     const idx_t nb_triags = poly.size_of_facets();
-    mesh.cells().add(new mesh::temporary::Triangle(), nb_triags);
+    mesh.cells().add(mesh::ElementType::create("Triangle"), nb_triags);
     mesh::HybridElements::Connectivity& triag_nodes = mesh.cells().node_connectivity();
     array::ArrayView<gidx_t, 1> triag_gidx          = array::make_view<gidx_t, 1>(mesh.cells().global_index());
     array::ArrayView<int, 1> triag_part             = array::make_view<int, 1>(mesh.cells().partition());

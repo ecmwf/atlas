@@ -341,6 +341,10 @@ mesh/Connectivity.cc
 mesh/Connectivity.h
 mesh/ElementType.cc
 mesh/ElementType.h
+mesh/elementtypes/Classification.h
+mesh/elementtypes/Triangle.h
+mesh/elementtypes/Quadrilateral.h
+mesh/elementtypes/Pentagon.h
 mesh/Elements.cc
 mesh/Elements.h
 mesh/Halo.cc
