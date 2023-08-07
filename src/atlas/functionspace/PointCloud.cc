@@ -70,9 +70,22 @@ PointCloud::PointCloud(const Field& lonlat, const Field& ghost): lonlat_(lonlat)
     setupHaloExchange();
 }
 
-PointCloud::PointCloud(const FieldSet & flds): lonlat_(flds["lonlat"]),
-  ghost_(flds["ghost"]), remote_index_(flds["remote_index"]), partition_(flds["partition"]) {
-    setupHaloExchange();
+PointCloud::PointCloud(const FieldSet & flds): lonlat_(flds["lonlat"]) {
+    if (flds.has("ghost")) {
+        ghost_ = flds["ghost"];
+    }
+    if (flds.has("remote_index")) {
+        remote_index_ = flds["remote_index"];
+    }
+    if (flds.has("partition")) {
+        partition_ = flds["partition"];
+    }
+    if (flds.has("global_index")) {
+        global_index_ = flds["global_index"];
+    }
+    if( ghost_ && remote_index_ && partition_ ) {
+        setupHaloExchange();
+    }
 }
 
 PointCloud::PointCloud(const Grid& grid) {
