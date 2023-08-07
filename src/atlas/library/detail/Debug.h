@@ -20,6 +20,12 @@
 namespace atlas {
 namespace debug {
 
+inline gidx_t global_index(int i = 0) {
+    static std::vector<gidx_t> g =
+        eckit::Resource<std::vector<gidx_t>>("$ATLAS_DEBUG_GLOBAL_INDEX", std::vector<gidx_t>{-1});
+    return g[i];
+}
+
 inline gidx_t node_global_index(int i = 0) {
     static std::vector<gidx_t> g =
         eckit::Resource<std::vector<gidx_t>>("$ATLAS_DEBUG_NODE_GLOBAL_INDEX", std::vector<gidx_t>{-1});
@@ -47,6 +53,16 @@ inline gidx_t node_uid(int i = 0) {
 inline bool is_node_global_index(gidx_t x) {
     static std::vector<gidx_t> v =
         eckit::Resource<std::vector<gidx_t>>("$ATLAS_DEBUG_NODE_GLOBAL_INDEX", std::vector<gidx_t>());
+    for (gidx_t g : v) {
+        if (x == g)
+            return true;
+    }
+    return false;
+}
+
+inline bool is_global_index(gidx_t x) {
+    static std::vector<gidx_t> v =
+        eckit::Resource<std::vector<gidx_t>>("$ATLAS_GLOBAL_INDEX", std::vector<gidx_t>());
     for (gidx_t g : v) {
         if (x == g)
             return true;
