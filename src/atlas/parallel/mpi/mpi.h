@@ -10,8 +10,9 @@
 
 #pragma once
 
-#include "eckit/mpi/Comm.h"
+#include <string_view>
 
+#include "eckit/mpi/Comm.h"
 #include "atlas/parallel/mpi/Statistics.h"
 
 namespace atlas {
@@ -21,6 +22,10 @@ using Comm = eckit::mpi::Comm;
 
 inline const Comm& comm() {
     return eckit::mpi::comm();
+}
+
+inline const Comm& comm(std::string_view name) {
+    return eckit::mpi::comm(name.data());
 }
 
 inline idx_t rank() {
