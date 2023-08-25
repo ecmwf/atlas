@@ -39,5 +39,45 @@ inline int size() {
 void finalize();
 void finalise();
 
+class CommStack {
+public:
+    using const_iterator = std::vector<std::string>::const_iterator;
+
+public:
+    void push(std::string_view name);
+    void pop();
+    void pop(std::string_view name); // verifies name matches compared to version above
+    const std::string& name() const;
+    const mpi::Comm& comm() const;
+
+    const_iterator begin() const { return stack_.begin(); }
+    const_iterator end() const { return stack_.begin() + size_; }
+
+    size_t size() const { return size_; }
+
+    static CommStack& instance() {
+        static CommStack instance;
+        return instance;
+    }
+
+private:
+    CommStack();
+private:
+    std::vector<std::string> stack_;
+    size_t size_{0};
+};
+void push(std::string_view name);
+void pop(std::string_view name);
+void pop();
+struct Scope {
+    Scope(std::string_view name) : name_(name) {
+        push(name_);
+    }
+    ~Scope() {
+        pop(name_);
+    }
+    std::string name_;
+};
+
 }  // namespace mpi
 }  // namespace atlas
