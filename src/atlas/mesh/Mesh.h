@@ -112,9 +112,9 @@ public:
     /// @brief Return the memory footprint of the mesh
     size_t footprint() const { return get()->footprint(); }
 
-    idx_t partition() const { return get()->partition(); }
+    idx_t part() const { return get()->part(); }
 
-    idx_t nb_partitions() const { return get()->nb_partitions(); }
+    idx_t nb_parts() const { return get()->nb_parts(); }
 
     std::string mpi_comm() const { return get()->mpi_comm(); }
 

@@ -167,7 +167,8 @@ public:
 
     const util::PartitionPolygons& polygons() const override;
 
-    idx_t nb_partitions() const override { return nb_partitions_; }
+    idx_t part() const override { return part_; }
+    idx_t nb_parts() const override { return nb_partitions_; }
 
 
 private:  // methods
@@ -312,6 +313,7 @@ private:  // data
     idx_t south_pole_included_;
     idx_t ny_;
 
+    idx_t part_;
     idx_t nb_partitions_;
 
     friend struct StructuredColumnsFortranAccess;

@@ -117,7 +117,7 @@ void MeshImpl::setGrid(const Grid& grid) {
     }
 }
 
-idx_t MeshImpl::nb_partitions() const {
+idx_t MeshImpl::nb_parts() const {
     idx_t n;
     if (not metadata().get("nb_parts", n)) {
         n = mpi::comm(mpi_comm()).size();
@@ -125,7 +125,7 @@ idx_t MeshImpl::nb_partitions() const {
     return n;
 }
 
-idx_t MeshImpl::partition() const {
+idx_t MeshImpl::part() const {
     idx_t p;
     if (not metadata().get("part", p)) {
         p = mpi::comm(mpi_comm()).rank();
@@ -200,7 +200,7 @@ const PartitionGraph& MeshImpl::partitionGraph() const {
 }
 
 PartitionGraph::Neighbours MeshImpl::nearestNeighbourPartitions() const {
-    return partitionGraph().nearestNeighbours(partition());
+    return partitionGraph().nearestNeighbours(part());
 }
 
 const PartitionPolygon& MeshImpl::polygon(idx_t halo) const {

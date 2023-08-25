@@ -58,8 +58,12 @@ idx_t FunctionSpace::size() const {
     return get()->size();
 }
 
-idx_t FunctionSpace::nb_partitions() const {
-    return get()->nb_partitions();
+idx_t FunctionSpace::part() const {
+    return get()->part();
+}
+
+idx_t FunctionSpace::nb_parts() const {
+    return get()->nb_parts();
 }
 
 Field FunctionSpace::lonlat() const {

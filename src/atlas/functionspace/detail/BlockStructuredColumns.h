@@ -111,7 +111,8 @@ public:
     Field index_j() const { return structuredcolumns_->index_j(); }
     Field ghost() const override { return structuredcolumns_->ghost(); }
     size_t footprint() const override { return structuredcolumns_->footprint(); }
-    idx_t nb_partitions() const override { return structuredcolumns_->nb_partitions(); }
+    idx_t part() const override { return structuredcolumns_->part(); }
+    idx_t nb_parts() const override { return structuredcolumns_->nb_parts(); }
     const StructuredColumns& structuredcolumns() const { return *structuredcolumns_; }
     idx_t block_begin(idx_t jblk) const { return jblk * nproma_; }
     idx_t block_size(idx_t jblk) const { return (jblk != nblks_-1 ? nproma_ : endblk_size_); }

@@ -258,7 +258,9 @@ public:
 
     virtual idx_t size() const override { return nb_nodes_; }
 
-    idx_t nb_partitions() const override { return mesh_.nb_partitions(); }
+    idx_t part() const override { return mesh_.part(); }
+
+    idx_t nb_parts() const override { return mesh_.nb_parts(); }
 
     Field lonlat() const override { return nodes_.lonlat(); }
 

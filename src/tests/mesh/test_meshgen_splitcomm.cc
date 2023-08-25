@@ -24,7 +24,6 @@ using namespace atlas::grid;
 namespace atlas {
 namespace test {
 
-
 //-----------------------------------------------------------------------------
 
 namespace option {
@@ -38,7 +37,7 @@ namespace option {
     };
 }
 
-CASE("test StructuredMeshGenerator directly") {
+CASE("test StructuredMeshGenerator") {
     auto& mpi_comm_world = mpi::comm("world");
     int color = mpi_comm_world.rank()%2;
     Grid grid;
@@ -52,7 +51,7 @@ CASE("test StructuredMeshGenerator directly") {
     mpi_comm_world.split(color,"split");
     StructuredMeshGenerator meshgen{option::mpi_comm("split")};
     mesh = meshgen.generate(grid);
-    EXPECT_EQUAL(mesh.nb_partitions(),2);
+    EXPECT_EQUAL(mesh.nb_parts(),2);
     EXPECT_EQUAL(mpi::comm().name(),"world");
     eckit::mpi::deleteComm("split");
 }
@@ -69,7 +68,7 @@ CASE("test Mesh") {
     }
     mpi_comm_world.split(color,"split");
     auto mesh = Mesh(grid,option::mpi_comm("split"));
-    EXPECT_EQUAL(mesh.nb_partitions(),2);
+    EXPECT_EQUAL(mesh.nb_parts(),2);
     EXPECT_EQUAL(mpi::comm().name(),"world");
     eckit::mpi::deleteComm("split");
     

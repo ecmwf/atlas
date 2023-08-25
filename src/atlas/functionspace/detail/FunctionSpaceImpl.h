@@ -93,7 +93,9 @@ public:
 
     virtual idx_t size() const = 0;
 
-    virtual idx_t nb_partitions() const;
+    virtual idx_t part() const;
+
+    virtual idx_t nb_parts() const;
 
     virtual const util::PartitionPolygon& polygon(idx_t halo = 0) const;
 

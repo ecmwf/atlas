@@ -94,8 +94,8 @@ public:  // methods
     /// @brief Return the memory footprint of the mesh
     size_t footprint() const;
 
-    idx_t partition() const;
-    idx_t nb_partitions() const;
+    idx_t part() const;
+    idx_t nb_parts() const;
     std::string mpi_comm() const;
 
     void updateDevice() const;

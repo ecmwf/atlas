@@ -25,7 +25,7 @@ MatchingMeshPartitioner::MatchingMeshPartitioner(const idx_t nb_partitions): Par
 }
 
 MatchingMeshPartitioner::MatchingMeshPartitioner(const Mesh& mesh):
-    Partitioner(mesh.nb_partitions()), prePartitionedMesh_(mesh) {}
+    Partitioner(mesh.nb_parts()), prePartitionedMesh_(mesh) {}
 
 }  // namespace partitioner
 }  // namespace detail

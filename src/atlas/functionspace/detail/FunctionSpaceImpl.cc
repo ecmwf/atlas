@@ -95,7 +95,11 @@ Field FunctionSpaceImpl::createField() const {
     return createField(option::datatypeT<DATATYPE>());
 }
 
-idx_t FunctionSpaceImpl::nb_partitions() const {
+idx_t FunctionSpaceImpl::part() const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
+idx_t FunctionSpaceImpl::nb_parts() const {
     ATLAS_NOTIMPLEMENTED;
 }
 

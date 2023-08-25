@@ -79,7 +79,9 @@ public:
 
     const Projection& projection() const;
 
-    idx_t nb_partitions() const;
+    idx_t part() const;
+
+    idx_t nb_parts() const;
 
     idx_t size() const;
 
