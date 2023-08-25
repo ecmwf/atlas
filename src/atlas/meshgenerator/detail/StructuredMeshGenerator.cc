@@ -209,11 +209,10 @@ void StructuredMeshGenerator::generate(const Grid& grid, Mesh& mesh) const {
     if (nb_parts == 1) {
         partitioner_type = "serial";
     }
-    std::string save_mpi_comm = mpi::comm().name();
-    eckit::mpi::setCommDefault(options.getString("mpi_comm").c_str());
+    mpi::push(options.getString("mpi_comm"));
     grid::Partitioner partitioner(partitioner_type, nb_parts);
     grid::Distribution distribution(partitioner.partition(grid));
-    eckit::mpi::setCommDefault(save_mpi_comm.c_str());
+    mpi::pop();
     generate(grid, distribution, mesh);
 }
 
@@ -223,7 +222,7 @@ void StructuredMeshGenerator::hash(eckit::Hash& h) const {
 }
 
 void StructuredMeshGenerator::generate(const Grid& grid, const grid::Distribution& distribution, Mesh& mesh) const {
-    ATLAS_TRACE();
+    ATLAS_TRACE("structuredmeshgenerator(grid,dist,mesh)");
     Log::debug() << "StructuredMeshGenerator generating mesh from " << grid.name() << std::endl;
 
     const StructuredGrid rg = StructuredGrid(grid);

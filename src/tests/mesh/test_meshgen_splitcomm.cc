@@ -24,47 +24,6 @@ using namespace atlas::grid;
 namespace atlas {
 namespace test {
 
-class CommStack {
-public:
-    using const_iterator = std::vector<std::string>::const_iterator;
-
-public:
-    void push(std::string_view name) {
-        if (stack_.size() == size_) {
-            stack_.resize(2 * size_);
-        }
-        stack_[size_++] = name;
-        eckit::mpi::setCommDefault(name.data());
-    }
-
-    void pop() {
-        --size_;
-        eckit::mpi::setCommDefault(name().c_str());
-    }
-
-    const std::string& name() const {
-        return stack_[size_-1];
-    }
-
-    const mpi::Comm& comm() const {
-        return mpi::comm(name());
-    }
-
-    const_iterator begin() const { return stack_.begin(); }
-    const_iterator end() const { return stack_.begin() + size_; }
-
-    size_t size() const { return size_; }
-
-public:
-    CommStack(): stack_(64){
-        stack_[size_++] = mpi::comm().name();
-    };
-
-private:
-    std::vector<std::string> stack_;
-    size_t size_{0};
-};
-
 
 //-----------------------------------------------------------------------------
 
@@ -80,8 +39,6 @@ namespace option {
 }
 
 CASE("test StructuredMeshGenerator directly") {
-    CommStack comms;
-
     auto& mpi_comm_world = mpi::comm("world");
     int color = mpi_comm_world.rank()%2;
     Grid grid;
@@ -98,6 +55,24 @@ CASE("test StructuredMeshGenerator directly") {
     EXPECT_EQUAL(mesh.nb_partitions(),2);
     EXPECT_EQUAL(mpi::comm().name(),"world");
     eckit::mpi::deleteComm("split");
+}
+
+CASE("test Mesh") {
+    auto& mpi_comm_world = mpi::comm("world");
+    int color = mpi_comm_world.rank()%2;
+    Grid grid;
+    if (color == 0) {
+        grid = Grid("O32");
+    }
+    else {
+        grid = Grid("N32");
+    }
+    mpi_comm_world.split(color,"split");
+    auto mesh = Mesh(grid,option::mpi_comm("split"));
+    EXPECT_EQUAL(mesh.nb_partitions(),2);
+    EXPECT_EQUAL(mpi::comm().name(),"world");
+    eckit::mpi::deleteComm("split");
+    
 }
 
 //-----------------------------------------------------------------------------

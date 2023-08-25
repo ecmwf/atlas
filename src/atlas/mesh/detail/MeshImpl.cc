@@ -39,6 +39,7 @@ void MeshImpl::encode(eckit::Stream&) const {
 }
 
 MeshImpl::MeshImpl(): nodes_(new mesh::Nodes()), dimensionality_(2) {
+    metadata_.set("mpi_comm",mpi::comm().name());
     createElements();
 }
 
@@ -133,11 +134,7 @@ idx_t MeshImpl::partition() const {
 }
 
 std::string MeshImpl::mpi_comm() const {
-    std::string name;
-    if (not metadata().get("mpi_comm",name)) {
-        name = mpi::comm().name();
-    } 
-    return name;
+    return metadata().getString("mpi_comm");
 }
 
 

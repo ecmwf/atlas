@@ -76,9 +76,9 @@ public:
     operator bool() const;
 
     /// @brief Generate a mesh from a Grid with recommended mesh generator and partitioner strategy
-    Mesh(const Grid&);
+    Mesh(const Grid&, const eckit::Configuration& = util::NoConfig());
 
-    Mesh(const Grid&, const grid::Partitioner&);
+    Mesh(const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig());
 
     /// @brief Construct a mesh from a Stream (serialization)
     explicit Mesh(eckit::Stream&);
