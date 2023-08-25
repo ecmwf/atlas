@@ -38,11 +38,12 @@ void build_periodic_boundaries(Mesh& mesh) {
     ATLAS_TRACE();
     bool periodic = false;
     mesh.metadata().get("periodic", periodic);
-
-    auto mpi_size = mpi::size();
-    auto mypart   = mpi::rank();
-
     if (!periodic) {
+        mpi::Scope mpi_scope(mesh.mpi_comm());
+
+        auto mpi_size = mpi::size();
+        auto mypart   = mpi::rank();
+
         mesh::Nodes& nodes = mesh.nodes();
 
         auto flags = array::make_view<int, 1>(nodes.flags());

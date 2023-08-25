@@ -94,10 +94,15 @@ struct Node {
 
 void build_parallel_fields(Mesh& mesh) {
     ATLAS_TRACE();
-    build_nodes_parallel_fields(mesh.nodes());
+    build_nodes_parallel_fields(mesh);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
+
+void build_nodes_parallel_fields(Mesh& mesh) {
+    mpi::Scope mpi_scope(mesh.mpi_comm());
+    build_nodes_parallel_fields(mesh.nodes());
+}
 
 void build_nodes_parallel_fields(mesh::Nodes& nodes) {
     ATLAS_TRACE();
@@ -115,6 +120,7 @@ void build_nodes_parallel_fields(mesh::Nodes& nodes) {
 
 void build_edges_parallel_fields(Mesh& mesh) {
     ATLAS_TRACE();
+    mpi::Scope mpi_scope(mesh.mpi_comm());
     build_edges_partition(mesh);
     build_edges_remote_idx(mesh);
     /*
@@ -140,6 +146,11 @@ Field& build_nodes_global_idx(mesh::Nodes& nodes) {
         }
     }
     return nodes.global_index();
+}
+
+void renumber_nodes_glb_idx(Mesh& mesh) {
+    mpi::Scope mpi_scope(mesh.mpi_comm());
+    renumber_nodes_glb_idx(mesh.nodes());
 }
 
 void renumber_nodes_glb_idx(mesh::Nodes& nodes) {
@@ -1117,6 +1128,8 @@ Field& build_cells_remote_idx(mesh::Cells& cells, const mesh::Nodes& nodes) {
 }
 
 void build_cells_parallel_fields(Mesh& mesh) {
+    mpi::Scope mpi_scope(mesh.mpi_comm());
+
     bool parallel = false;
     mesh.cells().metadata().get("parallel", parallel);
     if (!parallel) {
