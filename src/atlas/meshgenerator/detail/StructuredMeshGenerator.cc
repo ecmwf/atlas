@@ -101,6 +101,17 @@ StructuredMeshGenerator::StructuredMeshGenerator(const eckit::Parametrisation& p
         options.set("three_dimensional", three_dimensional);
     }
 
+    std::string mpi_comm_name = mpi::comm().name();
+    p.get("mpi_comm", mpi_comm_name);
+    options.set("mpi_comm",mpi_comm_name);
+    auto& comm = mpi::comm(mpi_comm_name);
+
+    // This option sets number of parts the mesh will be split in
+    options.set("nb_parts", comm.size());
+
+    // This option sets the part that will be generated
+    options.set("part", comm.rank());
+
     size_t nb_parts;
     if (p.get("nb_parts", nb_parts)) {
         options.set("nb_parts", nb_parts);
@@ -160,12 +171,6 @@ void StructuredMeshGenerator::configure_defaults() {
     // false
     options.set("three_dimensional", false);
 
-    // This option sets number of parts the mesh will be split in
-    options.set("nb_parts", mpi::size());
-
-    // This option sets the part that will be generated
-    options.set("part", mpi::rank());
-
     // Experimental option. This is what makes tripolar grid patched with quads
     options.set("patch_quads", false);
 
@@ -204,9 +209,11 @@ void StructuredMeshGenerator::generate(const Grid& grid, Mesh& mesh) const {
     if (nb_parts == 1) {
         partitioner_type = "serial";
     }
-
+    std::string save_mpi_comm = mpi::comm().name();
+    eckit::mpi::setCommDefault(options.getString("mpi_comm").c_str());
     grid::Partitioner partitioner(partitioner_type, nb_parts);
     grid::Distribution distribution(partitioner.partition(grid));
+    eckit::mpi::setCommDefault(save_mpi_comm.c_str());
     generate(grid, distribution, mesh);
 }
 
@@ -257,6 +264,10 @@ void StructuredMeshGenerator::generate(const Grid& grid, const grid::Distributio
     Region region;
     generate_region(rg, distribution, mypart, region);
 
+
+    mesh.metadata().set("nb_parts",options.getInt("nb_parts"));
+    mesh.metadata().set("part",options.getInt("part"));
+    mesh.metadata().set("mpi_comm",options.getString("mpi_comm"));
     generate_mesh(rg, distribution, region, mesh);
 }
 

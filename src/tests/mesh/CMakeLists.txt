@@ -87,6 +87,13 @@ ecbuild_add_test( TARGET atlas_test_mesh_node2cell
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_meshgen_splitcomm
+  MPI         4
+  CONDITION   eckit_HAVE_MPI
+  SOURCES     test_meshgen_splitcomm.cc
+  LIBS        atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
 
 foreach( test connectivity stream_connectivity elements ll meshgen3d rgg )
   ecbuild_add_test( TARGET atlas_test_${test}

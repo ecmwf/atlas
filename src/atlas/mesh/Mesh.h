@@ -116,6 +116,8 @@ public:
 
     idx_t nb_partitions() const { return get()->nb_partitions(); }
 
+    std::string mpi_comm() const { return get()->mpi_comm(); }
+
     void updateDevice() const { get()->updateDevice(); }
 
     void updateHost() const { get()->updateHost(); }

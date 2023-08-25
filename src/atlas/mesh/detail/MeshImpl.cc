@@ -117,12 +117,29 @@ void MeshImpl::setGrid(const Grid& grid) {
 }
 
 idx_t MeshImpl::nb_partitions() const {
-    return mpi::size();
+    idx_t n;
+    if (not metadata().get("nb_parts", n)) {
+        n = mpi::comm(mpi_comm()).size();
+    }
+    return n;
 }
 
 idx_t MeshImpl::partition() const {
-    return mpi::rank();
+    idx_t p;
+    if (not metadata().get("part", p)) {
+        p = mpi::comm(mpi_comm()).rank();
+    }
+    return p;
 }
+
+std::string MeshImpl::mpi_comm() const {
+    std::string name;
+    if (not metadata().get("mpi_comm",name)) {
+        name = mpi::comm().name();
+    } 
+    return name;
+}
+
 
 void MeshImpl::updateDevice() const {
     if (nodes_) {
