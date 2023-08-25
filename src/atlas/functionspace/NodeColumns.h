@@ -278,6 +278,8 @@ public:
 
     const Projection& projection() const override { return mesh_.projection(); }
 
+    std::string mpi_comm() const override { return mesh_.mpi_comm(); }
+
 private:  // methods
     void constructor();
 
