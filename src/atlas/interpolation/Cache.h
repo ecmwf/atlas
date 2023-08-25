@@ -108,6 +108,7 @@ public:
 public:
     MatrixCache() = default;
     MatrixCache(const Cache& c);
+    MatrixCache(const MatrixCache& c) : MatrixCache(Cache(c)) {}
     MatrixCache(Matrix&& m);
     MatrixCache(std::shared_ptr<const Matrix> m, const std::string& uid = "");
     MatrixCache(const Matrix* m);
@@ -146,6 +147,7 @@ public:
 public:
     IndexKDTreeCache() = default;
     IndexKDTreeCache(const Cache& c);
+    IndexKDTreeCache(const IndexKDTreeCache& c) : IndexKDTreeCache(Cache(c)) {}
     IndexKDTreeCache(const IndexKDTree&);
     IndexKDTreeCache(const Interpolation&);
     operator bool() const;
