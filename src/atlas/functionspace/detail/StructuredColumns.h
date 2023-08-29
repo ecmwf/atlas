@@ -169,7 +169,7 @@ public:
 
     idx_t part() const override { return part_; }
     idx_t nb_parts() const override { return nb_partitions_; }
-
+    std::string mpi_comm() const override { return mpi_comm_; }
 
 private:  // methods
     idx_t config_size(const eckit::Configuration& config) const;
@@ -315,6 +315,7 @@ private:  // data
 
     idx_t part_;
     idx_t nb_partitions_;
+    std::string mpi_comm_;
 
     friend struct StructuredColumnsFortranAccess;
     friend struct BlockStructuredColumnsFortranAccess;

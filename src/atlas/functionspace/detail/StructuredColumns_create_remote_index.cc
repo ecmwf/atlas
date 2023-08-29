@@ -42,7 +42,7 @@ void StructuredColumns::create_remote_index() const {
 
     ATLAS_TRACE_SCOPE("Parallelisation ...") {
         auto build_partition_graph = [this]() -> std::unique_ptr<Mesh::PartitionGraph> {
-            const eckit::mpi::Comm& comm = mpi::comm();
+            const eckit::mpi::Comm& comm = mpi::comm(mpi_comm());
             const int mpi_size           = int(comm.size());
             const int mpi_rank           = int(comm.rank());
 
@@ -80,7 +80,7 @@ void StructuredColumns::create_remote_index() const {
             auto p = array::make_view<int, 1>(partition());
             auto g = array::make_view<gidx_t, 1>(global_index());
 
-            const eckit::mpi::Comm& comm = mpi::comm();
+            const eckit::mpi::Comm& comm = mpi::comm(mpi_comm());
             const int mpi_rank           = int(comm.rank());
 
             auto neighbours           = graph.nearestNeighbours(mpi_rank);
