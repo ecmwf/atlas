@@ -34,6 +34,18 @@ public:  // methods
     std::string name() const { return name_; }
 
     /// @brief Setup
+    /// @param [in] mpi_comm     MPI communicator
+    /// @param [in] part         List of partitions
+    /// @param [in] remote_idx   List of local indices on remote partitions
+    /// @param [in] base         values of remote_idx start at "base"
+    /// @param [in] glb_idx      List of global indices
+    /// @param [in] max_glb_idx  maximum glb index we want to Checksum.
+    ///                          To Checksum everything, set to val > max value in
+    ///                          domain
+    /// @param [in] parsize      size of given lists
+    void setup(const std::string& mpi_comm, const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[], const int parsize);
+
+    /// @brief Setup
     /// @param [in] part         List of partitions
     /// @param [in] remote_idx   List of local indices on remote partitions
     /// @param [in] base         values of remote_idx start at "base"
@@ -43,6 +55,18 @@ public:  // methods
     ///                          domain
     /// @param [in] parsize      size of given lists
     void setup(const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[], const int parsize);
+
+    /// @brief Setup
+    /// @param [in] mpi_comm     MPI communicator
+    /// @param [in] part         List of partitions
+    /// @param [in] remote_idx   List of local indices on remote partitions
+    /// @param [in] base         values of remote_idx start at "base"
+    /// @param [in] glb_idx      List of global indices
+    /// @param [in] mask         Mask indices not to include in the communication
+    ///                          pattern (0=include,1=exclude)
+    /// @param [in] parsize      size of given lists
+    void setup(const std::string& mpi_comm, const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[], const int mask[],
+               const int parsize);
 
     /// @brief Setup
     /// @param [in] part         List of partitions
@@ -94,14 +118,14 @@ std::string Checksum::execute(const DATA_TYPE data[], const int var_strides[], c
         local_checksums[pp] = util::checksum(data + pp * var_size, var_size);
     }
 
-    std::vector<util::checksum_t> global_checksums(mpi::rank() == root ? gather_->glb_dof() : 0);
+    std::vector<util::checksum_t> global_checksums(gather_->comm().rank() == root ? gather_->glb_dof() : 0);
     parallel::Field<util::checksum_t const> loc(local_checksums.data(), 1);
     parallel::Field<util::checksum_t> glb(global_checksums.data(), 1);
     gather_->gather(&loc, &glb, 1);
 
     util::checksum_t glb_checksum = util::checksum(global_checksums.data(), global_checksums.size());
 
-    mpi::comm().broadcast(glb_checksum, root);
+    gather_->comm().broadcast(glb_checksum, root);
 
     return eckit::Translator<util::checksum_t, std::string>()(glb_checksum);
 }
