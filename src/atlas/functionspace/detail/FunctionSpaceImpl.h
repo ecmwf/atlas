@@ -113,6 +113,8 @@ public:
 
     virtual const Projection& projection() const;
 
+    virtual std::string mpi_comm() const;
+
 private:
     util::Metadata* metadata_;
 };

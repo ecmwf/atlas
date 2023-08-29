@@ -97,6 +97,8 @@ public:
 
     const parallel::GatherScatter& gather() const;
     const parallel::GatherScatter& scatter() const;
+
+    std::string mpi_comm() const;
 };
 
 //------------------------------------------------------------------------------------------------------

@@ -118,6 +118,10 @@ const parallel::GatherScatter& FunctionSpace::scatter() const {
     return get()->scatter();
 }
 
+std::string FunctionSpace::mpi_comm() const {
+    return get()->mpi_comm();
+}
+
 const util::PartitionPolygon& FunctionSpace::polygon(idx_t halo) const {
     return get()->polygon(halo);
 }

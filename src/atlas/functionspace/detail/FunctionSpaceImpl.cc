@@ -13,6 +13,7 @@
 #include "atlas/option/Options.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Metadata.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 namespace atlas {
 namespace functionspace {
@@ -125,6 +126,10 @@ const parallel::GatherScatter& FunctionSpaceImpl::gather() const {
 
 const parallel::GatherScatter& FunctionSpaceImpl::scatter() const {
     ATLAS_NOTIMPLEMENTED;
+}
+
+std::string FunctionSpaceImpl::mpi_comm() const {
+    return mpi::comm().name();
 }
 
 
