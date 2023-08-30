@@ -12,6 +12,8 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
+#include "atlas/grid/Partitioner.h"
+
 #include "tests/AtlasTestEnvironment.h"
 
 namespace atlas {
@@ -34,6 +36,11 @@ int color() {
 
 Grid grid() {
     static Grid g (color() == 0 ? "O32" : "N32" );
+    return g;
+}
+
+Grid grid_B() {
+    static Grid g (color() == 0 ? "F64" : "O64" );
     return g;
 }
 
@@ -82,6 +89,23 @@ CASE("Mesh constructor") {
     EXPECT_NO_THROW(mesh.polygons());
     mesh.polygon().outputPythonScript(grid().name()+"_polygons_2.py");
 }
+
+CASE("MatchingPartitioner") {
+    Fixture fixture;
+
+    auto mesh_A = Mesh(grid(), option::mpi_comm("split"));
+    auto mesh_B = Mesh(grid_B(), grid::MatchingPartitioner(mesh_A), option::mpi_comm("split"));
+
+    output::Gmsh gmsh_B(grid_B().name()+"_3.msh");
+    gmsh_B.write(mesh_B);
+
+    // partitioning graph and polygon output
+    EXPECT_NO_THROW(mesh_B.partitionGraph());
+    EXPECT_NO_THROW(mesh_B.polygons());
+    mesh_B.polygon().outputPythonScript(grid_B().name()+"_polygons_3.py");
+}
+
+
 
 }  // namespace test
 }  // namespace atlas
