@@ -40,14 +40,17 @@ void MatchingFunctionSpacePartitionerLonLatPolygon::partition(const Grid& grid, 
     ATLAS_TRACE("MatchingFunctionSpacePartitionerLonLatPolygon");
     //atlas::vector<int> part( grid.size() );
 
-    if (mpi::size() == 1) {
+    const auto& comm   = mpi::comm(partitioned_.mpi_comm());
+    const int mpi_rank = int(comm.rank());
+    const int mpi_size = int(comm.size());
+
+    if (mpi_size == 1) {
         // shortcut
         omp::fill(part, part + grid.size(), 0);
     }
     else {
         const auto& p = partitioned_.polygon();
 
-        int rank = mpi::rank();
         util::PolygonXY poly{p};
         {
             ATLAS_TRACE("point-in-polygon check for entire grid (" + std::to_string(grid.size()) + " points)");
@@ -61,7 +64,7 @@ void MatchingFunctionSpacePartitionerLonLatPolygon::partition(const Grid& grid, 
                 auto it            = grid.xy().begin() + chunk * grid.size() / chunks;
                 for (size_t n = begin; n < end; ++n) {
                     if (poly.contains(*it)) {
-                        part[n] = rank;
+                        part[n] = mpi_rank;
                     }
                     else {
                         part[n] = -1;
@@ -70,15 +73,15 @@ void MatchingFunctionSpacePartitionerLonLatPolygon::partition(const Grid& grid, 
                 }
             }
         }
-        ATLAS_TRACE_MPI(ALLREDUCE) { mpi::comm().allReduceInPlace(part, grid.size(), eckit::mpi::max()); }
+        ATLAS_TRACE_MPI(ALLREDUCE) { comm.allReduceInPlace(part, grid.size(), eckit::mpi::max()); }
     }
 }
 
 
 #if 0
-    const eckit::mpi::Comm& comm = atlas::mpi::comm();
-    const int mpi_rank           = int( comm.rank() );
-    const int mpi_size           = int( comm.size() );
+    const auto& comm   = mpi::comm(partitioned_.mpi_comm());
+    const int mpi_rank = int(comm.rank());
+    const int mpi_size = int(comm.size());
 
     ATLAS_TRACE( "MatchingFunctionSpacePartitionerLonLatPolygon::partition" );
 

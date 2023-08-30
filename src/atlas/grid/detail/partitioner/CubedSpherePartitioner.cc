@@ -19,7 +19,6 @@
 #include <vector>
 
 #include "atlas/grid/CubedSphereGrid.h"
-#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 

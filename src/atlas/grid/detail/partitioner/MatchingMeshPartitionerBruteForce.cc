@@ -75,9 +75,9 @@ bool point_in_quadrilateral(const PointLonLat& P, const PointLonLat& A, const Po
 void MatchingMeshPartitionerBruteForce::partition(const Grid& grid, int partitioning[]) const {
     ATLAS_TRACE("MatchingMeshPartitionerBruteForce::partition");
 
-
-    eckit::mpi::Comm& comm = eckit::mpi::comm();
-    const int mpi_rank     = int(comm.rank());
+    const auto& comm   = mpi::comm(prePartitionedMesh_.mpi_comm());
+    const int mpi_rank = int(comm.rank());
+    const int mpi_size = int(comm.size());
 
     // Point coordinates
     // - use a bounding box to quickly discard points,

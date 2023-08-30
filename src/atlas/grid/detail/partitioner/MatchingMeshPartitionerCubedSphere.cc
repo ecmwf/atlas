@@ -17,6 +17,10 @@ namespace detail {
 namespace partitioner {
 
 void MatchingMeshPartitionerCubedSphere::partition(const Grid& grid, int partitioning[]) const {
+    const auto& comm   = mpi::comm(prePartitionedMesh_.mpi_comm());
+    const int mpi_rank = int(comm.rank());
+    const int mpi_size = int(comm.size());
+
     // Make cell finder from owned mesh cells.
     const auto finder = interpolation::method::cubedsphere::CellFinder(prePartitionedMesh_);
 
@@ -32,12 +36,12 @@ void MatchingMeshPartitionerCubedSphere::partition(const Grid& grid, int partiti
         // This is probably more expensive than it needs to be, as it performs
         // a dry run of the cubedsphere interpolation method.
         const auto& lonlat = *lonlatIt;
-        partitioning[i]    = finder.getCell(lonlat, listSize, edgeEpsilon, epsilon).isect ? mpi::rank() : -1;
+        partitioning[i]    = finder.getCell(lonlat, listSize, edgeEpsilon, epsilon).isect ? mpi_rank : -1;
         ++lonlatIt;
     }
 
     // AllReduce to get full partitioning array.
-    mpi::comm().allReduceInPlace(partitioning, grid.size(), eckit::mpi::Operation::MAX);
+    comm.allReduceInPlace(partitioning, grid.size(), eckit::mpi::Operation::MAX);
     const auto misses = std::count_if(partitioning, partitioning + grid.size(), [](int elem) { return elem < 0; });
     if (misses > 0) {
         throw_Exception(
