@@ -342,9 +342,9 @@ size_t StructuredPartitionPolygon::footprint() const {
 void StructuredPartitionPolygon::outputPythonScript(const eckit::PathName& filepath,
                                                     const eckit::Configuration& config) const {
     ATLAS_TRACE("Output PartitionPolygon");
-    const eckit::mpi::Comm& comm = atlas::mpi::comm();
-    int mpi_rank                 = int(comm.rank());
-    int mpi_size                 = int(comm.size());
+    const auto& comm = atlas::mpi::comm(fs_.mpi_comm());
+    int mpi_rank     = int(comm.rank());
+    int mpi_size     = int(comm.size());
 
     auto xy = array::make_view<double, 2>(dynamic_cast<const functionspace::detail::StructuredColumns&>(fs_).xy());
 
@@ -449,11 +449,11 @@ util::PartitionPolygon::PointsXY StructuredPartitionPolygon::lonlat() const {
 void StructuredPartitionPolygon::allGather(util::PartitionPolygons& polygons_) const {
     ATLAS_TRACE();
 
-    polygons_.clear();
-    polygons_.reserve(mpi::size());
+    const auto& comm   = mpi::comm(fs_.mpi_comm());
+    const int mpi_size = int(comm.size());
 
-    const mpi::Comm& comm = mpi::comm();
-    const int mpi_size    = int(comm.size());
+    polygons_.clear();
+    polygons_.reserve(mpi_size);
 
     auto& poly = *this;
 
