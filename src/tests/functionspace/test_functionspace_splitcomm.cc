@@ -15,6 +15,7 @@
 #include "tests/AtlasTestEnvironment.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/StructuredColumns.h"
+#include "atlas/grid/Partitioner.h"
 #include "atlas/field/for_each.h"
 
 namespace atlas {
@@ -138,6 +139,17 @@ CASE("test FunctionSpace StructuredColumns") {
     // Checksum
     auto checksum = fs.checksum(field);
     EXPECT_EQ(checksum, expected_checksum());
+}
+
+//-----------------------------------------------------------------------------
+
+CASE("test FunctionSpace StructuredColumns with MatchingPartitioner") {
+    Fixture fixture;
+
+    auto fs_A = functionspace::StructuredColumns(grid(), option::mpi_split_comm());
+    auto fs_B = functionspace::StructuredColumns(grid(), grid::MatchingPartitioner(fs_A), option::mpi_split_comm());
+    fs_A.polygon().outputPythonScript("fs_A_polygons.py");
+    fs_B.polygon().outputPythonScript("fs_B_polygons.py");
 }
 
 //-----------------------------------------------------------------------------
