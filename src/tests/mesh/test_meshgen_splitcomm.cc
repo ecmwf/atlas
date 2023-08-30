@@ -11,6 +11,7 @@
 #include "atlas/grid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator.h"
+#include "atlas/output/Gmsh.h"
 #include "tests/AtlasTestEnvironment.h"
 
 namespace atlas {
@@ -56,6 +57,8 @@ CASE("StructuredMeshGenerator") {
     EXPECT_EQUAL(mesh.part(),mpi::comm("split").rank());
     EXPECT_EQUAL(mesh.mpi_comm(),"split");
     EXPECT_EQUAL(mpi::comm().name(),"world");
+    output::Gmsh gmsh(grid().name()+"_1.msh");
+    gmsh.write(mesh);
 }
 
 CASE("Mesh constructor") {
@@ -66,6 +69,8 @@ CASE("Mesh constructor") {
     EXPECT_EQUAL(mesh.part(),mpi::comm("split").rank());
     EXPECT_EQUAL(mesh.mpi_comm(),"split");
     EXPECT_EQUAL(mpi::comm().name(),"world");
+    output::Gmsh gmsh(grid().name()+"_2.msh");
+    gmsh.write(mesh);
 }
 
 }  // namespace test
