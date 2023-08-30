@@ -39,6 +39,15 @@ ecbuild_add_test( TARGET atlas_test_functionspace
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_functionspace_splitcomm
+  MPI         4
+  CONDITION   eckit_HAVE_MPI
+  SOURCES     test_functionspace_splitcomm.cc
+  LIBS        atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+
 ecbuild_add_test( TARGET atlas_test_cellcolumns
   SOURCES  test_cellcolumns.cc
   LIBS     atlas
