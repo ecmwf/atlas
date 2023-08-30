@@ -8,18 +8,10 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/array.h"
 #include "atlas/grid.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/Nodes.h"
 #include "atlas/meshgenerator.h"
-#include "atlas/option/Options.h"
-#include "atlas/output/Gmsh.h"
 #include "tests/AtlasTestEnvironment.h"
-
-using namespace atlas::output;
-using namespace atlas::meshgenerator;
-using namespace atlas::grid;
 
 namespace atlas {
 namespace test {
@@ -28,53 +20,53 @@ namespace test {
 
 namespace option {
     struct mpi_comm : public util::Config {
-        mpi_comm(const atlas::mpi::Comm& comm) {
-            set("mpi_comm",comm.name());
-        }
         mpi_comm(std::string_view name) {
             set("mpi_comm",std::string(name));
         }
     };
 }
 
-CASE("test StructuredMeshGenerator") {
-    auto& mpi_comm_world = mpi::comm("world");
-    int color = mpi_comm_world.rank()%2;
-    Grid grid;
-    Mesh mesh;
-    if (color == 0) {
-        grid = Grid("O32");
+int color() {
+    static int c = mpi::comm("world").rank()%2;
+    return c;
+}
+
+Grid grid() {
+    static Grid g (color() == 0 ? "O32" : "N32" );
+    return g;
+}
+
+struct Fixture {
+    Fixture() {
+        mpi::comm().split(color(),"split");
     }
-    else {
-        grid = Grid("N32");
+    ~Fixture() {
+        if (eckit::mpi::hasComm("split")) {
+            eckit::mpi::deleteComm("split");
+        }
     }
-    mpi_comm_world.split(color,"split");
+};
+
+CASE("StructuredMeshGenerator") {
+    Fixture fixture;
+
     StructuredMeshGenerator meshgen{option::mpi_comm("split")};
-    mesh = meshgen.generate(grid);
-    EXPECT_EQUAL(mesh.nb_parts(),2);
+    Mesh mesh = meshgen.generate(grid());
+    EXPECT_EQUAL(mesh.nb_parts(),mpi::comm("split").size());
+    EXPECT_EQUAL(mesh.part(),mpi::comm("split").rank());
+    EXPECT_EQUAL(mesh.mpi_comm(),"split");
     EXPECT_EQUAL(mpi::comm().name(),"world");
-    eckit::mpi::deleteComm("split");
 }
 
-CASE("test Mesh") {
-    auto& mpi_comm_world = mpi::comm("world");
-    int color = mpi_comm_world.rank()%2;
-    Grid grid;
-    if (color == 0) {
-        grid = Grid("O32");
-    }
-    else {
-        grid = Grid("N32");
-    }
-    mpi_comm_world.split(color,"split");
-    auto mesh = Mesh(grid,option::mpi_comm("split"));
-    EXPECT_EQUAL(mesh.nb_parts(),2);
-    EXPECT_EQUAL(mpi::comm().name(),"world");
-    eckit::mpi::deleteComm("split");
-    
-}
+CASE("Mesh constructor") {
+    Fixture fixture;
 
-//-----------------------------------------------------------------------------
+    auto mesh = Mesh(grid(), option::mpi_comm("split"));
+    EXPECT_EQUAL(mesh.nb_parts(),mpi::comm("split").size());
+    EXPECT_EQUAL(mesh.part(),mpi::comm("split").rank());
+    EXPECT_EQUAL(mesh.mpi_comm(),"split");
+    EXPECT_EQUAL(mpi::comm().name(),"world");
+}
 
 }  // namespace test
 }  // namespace atlas
