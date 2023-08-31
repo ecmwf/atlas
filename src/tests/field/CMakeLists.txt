@@ -23,11 +23,12 @@ ecbuild_add_test( TARGET atlas_test_field_foreach
   LIBS     atlas
   OMP      4
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
 
 ecbuild_add_test( TARGET atlas_test_multifield_ifs
-    SOURCES     test_multifield_ifs.cc
-    LIBS        atlas
-    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  SOURCES         test_multifield_ifs.cc
+  LIBS            atlas
+  ENVIRONMENT     ${ATLAS_TEST_ENVIRONMENT}
 )
 
 ecbuild_add_test( TARGET atlas_test_field_acc
@@ -51,6 +52,13 @@ if( TEST atlas_test_field_pinning )
 endif()
 
 if( HAVE_FCTEST )
+
+  add_fctest( TARGET atlas_fctest_multifield_ifs
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_multifield_ifs.F90
+    LIBS            atlas_f
+    ENVIRONMENT     ${ATLAS_TEST_ENVIRONMENT}
+  )
 
   add_fctest( TARGET atlas_fctest_field
     LINKER_LANGUAGE Fortran

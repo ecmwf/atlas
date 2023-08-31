@@ -476,6 +476,8 @@ field/detail/FieldImpl.cc
 field/detail/FieldImpl.h
 field/detail/FieldInterface.cc
 field/detail/FieldInterface.h
+field/detail/MultiFieldInterface.cc
+field/detail/MultiFieldInterface.h
 field/detail/MissingValue.cc
 field/detail/MissingValue.h
 )
