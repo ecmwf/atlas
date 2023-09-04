@@ -90,6 +90,24 @@ CASE("Mesh constructor") {
     mesh.polygon().outputPythonScript(grid().name()+"_polygons_2.py");
 }
 
+CASE("Mesh constructor with partitioner") {
+    Fixture fixture;
+    auto partitioner = grid::Partitioner("equal_regions", option::mpi_comm("split"));
+    auto mesh = Mesh(grid(), partitioner);
+    EXPECT_EQUAL(mesh.nb_parts(),mpi::comm("split").size());
+    EXPECT_EQUAL(mesh.part(),mpi::comm("split").rank());
+    EXPECT_EQUAL(mesh.mpi_comm(),"split");
+    EXPECT_EQUAL(mpi::comm().name(),"world");
+    output::Gmsh gmsh(grid().name()+"_2.msh");
+    gmsh.write(mesh);
+
+    // partitioning graph and polygon output
+    EXPECT_NO_THROW(mesh.partitionGraph());
+    EXPECT_NO_THROW(mesh.polygons());
+    mesh.polygon().outputPythonScript(grid().name()+"_polygons_2.py");
+}
+
+
 CASE("MatchingPartitioner") {
     Fixture fixture;
 
