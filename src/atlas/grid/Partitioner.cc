@@ -37,12 +37,24 @@ Partitioner::Partitioner(const std::string& type, const idx_t nb_partitions):
 
 namespace {
 detail::partitioner::Partitioner* partitioner_from_config(const std::string& type, const Partitioner::Config& config) {
-    long partitions = mpi::size();
-    config.get("partitions", partitions);
-    if (partitions==1) {
-        return Factory::build("serial");
+    long nb_parts = mpi::size();
+    long part     = mpi::rank();
+    if (config.has("mpi_comm")) {
+        std::string mpi_comm;
+        config.get("mpi_comm",mpi_comm);
+        nb_parts = mpi::comm(mpi_comm).size();
+        part = mpi::comm(mpi_comm).rank();
     }
-    return Factory::build(type, partitions, config);
+    config.get("partitions", nb_parts);
+    config.get("nb_parts", nb_parts);
+    config.get("nb_partitions", nb_parts);
+
+    if (nb_parts == 1) {
+        config.get("part", part);
+        config.get("partition", part);
+        return Factory::build("serial", nb_parts, util::Config("part",part));
+    }
+    return Factory::build(type, nb_parts, config);
 }
 detail::partitioner::Partitioner* partitioner_from_config(const Partitioner::Config& config) {
     std::string type;
