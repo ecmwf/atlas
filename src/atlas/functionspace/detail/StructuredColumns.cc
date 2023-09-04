@@ -442,27 +442,53 @@ StructuredColumns::StructuredColumns(const Grid& grid, const Vertical& vertical,
 
 StructuredColumns::StructuredColumns(const Grid& grid, const Vertical& vertical, const grid::Partitioner& p,
                                      const eckit::Configuration& config):
-    vertical_(vertical), nb_levels_(vertical_.size()), grid_(new StructuredGrid(grid)), mpi_comm_(extract_mpi_comm(config)) {
+    vertical_(vertical), nb_levels_(vertical_.size()), grid_(new StructuredGrid(grid)) {
     ATLAS_TRACE("StructuredColumns constructor");
+
+    grid::Partitioner partitioner(p);
+
+    if (config.has("mpi_comm")) {
+        mpi_comm_ = config.getString("mpi_comm");
+        if (partitioner) {
+            ATLAS_ASSERT(partitioner.mpi_comm() == mpi_comm_);
+        }
+        if (config.has("partitioner.mpi_comm")) {
+            ATLAS_ASSERT(config.getString("partitioner.mpi_comm") == mpi_comm_);
+        }
+    }
+    else if (config.has("partitioner.mpi_comm")) {
+        mpi_comm_ = config.getString("partitioner.mpi_comm");
+    }
+    else if (partitioner) {
+        mpi_comm_ = partitioner.mpi_comm();
+    }
+    else {
+        mpi_comm_ = mpi::comm().name();
+    }
+
+    if (not partitioner) {
+        util::Config partitioner_config;
+        if (config.has("partitioner")) {
+            partitioner_config = config.getSubConfiguration("partitioner");
+        }
+        else {
+            if (grid_->domain().global()) {
+                partitioner_config.set("type", "equal_regions");
+            }
+            else {
+                partitioner_config.set("type", "checkerboard");
+            }
+        }
+        if (not partitioner_config.has("mpi_comm")) {
+            partitioner_config.set("mpi_comm", mpi_comm_);
+        }
+        partitioner = grid::Partitioner(partitioner_config);
+    }
 
     grid::Distribution distribution;
 
     {
         mpi::Scope mpi_scope(mpi_comm_);
-        grid::Partitioner partitioner(p);
-        if (not partitioner) {
-            if (config.has("partitioner")) {
-                partitioner = grid::Partitioner(config.getSubConfiguration("partitioner"));
-            }
-            else {
-                if (grid_->domain().global()) {
-                    partitioner = grid::Partitioner("equal_regions");
-                }
-                else {
-                    partitioner = grid::Partitioner("checkerboard");
-                }
-            }
-        }
         ATLAS_TRACE_SCOPE("Partitioning grid") { distribution = grid::Distribution(grid, partitioner); }
     }
 
