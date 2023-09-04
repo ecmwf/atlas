@@ -24,9 +24,9 @@ class MatchingMeshPartitioner : public Partitioner {
 public:
     MatchingMeshPartitioner();
 
-    MatchingMeshPartitioner(const idx_t nb_partitions);
+    // MatchingMeshPartitioner(const idx_t nb_partitions);
 
-    MatchingMeshPartitioner(const Mesh&);
+    MatchingMeshPartitioner(const Mesh&, const eckit::Parametrisation&);
 
     virtual ~MatchingMeshPartitioner() override {}
 

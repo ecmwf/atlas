@@ -76,10 +76,21 @@ std::vector<std::vector<atlas::idx_t>> createOffset(const std::array<std::size_t
 
 CubedSpherePartitioner::CubedSpherePartitioner(): Partitioner() {}
 
-CubedSpherePartitioner::CubedSpherePartitioner(int N): Partitioner(N), regular_{true} {}
+CubedSpherePartitioner::CubedSpherePartitioner(int N): Partitioner(N, util::NoConfig()), regular_{true} {}
+
+CubedSpherePartitioner::CubedSpherePartitioner(const eckit::Parametrisation& config):
+    Partitioner(config), regular_{isConfigSufficient(config)} {
+    if (config.has("starting rank on tile") && config.has("final rank on tile") && config.has("nprocx") &&
+        config.has("nprocy")) {
+        config.get("starting rank on tile", globalProcStartPE_);
+        config.get("final rank on tile", globalProcEndPE_);
+        config.get("nprocx", nprocx_);
+        config.get("nprocy", nprocy_);
+    }
+}
 
 CubedSpherePartitioner::CubedSpherePartitioner(int N, const eckit::Parametrisation& config):
-    Partitioner(N), regular_{isConfigSufficient(config)} {
+    Partitioner(N, config), regular_{isConfigSufficient(config)} {
     if (config.has("starting rank on tile") && config.has("final rank on tile") && config.has("nprocx") &&
         config.has("nprocy")) {
         config.get("starting rank on tile", globalProcStartPE_);
@@ -92,7 +103,7 @@ CubedSpherePartitioner::CubedSpherePartitioner(int N, const eckit::Parametrisati
 CubedSpherePartitioner::CubedSpherePartitioner(const int N, const std::vector<int>& globalProcStartPE,
                                                const std::vector<int>& globalProcEndPE, const std::vector<int>& nprocx,
                                                const std::vector<int>& nprocy):
-    Partitioner(N),
+    Partitioner(N, util::NoConfig()),
     globalProcStartPE_(globalProcStartPE.begin(), globalProcStartPE.end()),
     globalProcEndPE_(globalProcEndPE.begin(), globalProcEndPE.end()),
     nprocx_{nprocx.begin(), nprocx.end()},

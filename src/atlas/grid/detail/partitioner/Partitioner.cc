@@ -61,9 +61,44 @@ namespace grid {
 namespace detail {
 namespace partitioner {
 
-Partitioner::Partitioner(): nb_partitions_(mpi::size()) {}
+int Partitioner::extract_nb_partitions(const eckit::Parametrisation& config) {
+    int N;
+    if (config.has("mpi_comm")) {
+        std::string mpi_comm;
+        config.get("mpi_comm",mpi_comm);
+        N = mpi::comm(mpi_comm).size();
+    }
+    else {
+        N = mpi::size();
+    }
+    config.get("partitions",N);
+    config.get("nb_partitions",N);
+    config.get("nb_parts",N);
+    return N;
+}
+std::string Partitioner::extract_mpi_comm(const eckit::Parametrisation& config) {
+    if (config.has("mpi_comm")) {
+        std::string mpi_comm;
+        config.get("mpi_comm",mpi_comm);
+        return mpi_comm;
+    }
+    return mpi::comm().name();
+}
 
-Partitioner::Partitioner(const idx_t nb_partitions): nb_partitions_(nb_partitions) {}
+
+Partitioner::Partitioner():
+    Partitioner(util::NoConfig()) {
+}
+
+Partitioner::Partitioner(const idx_t nb_partitions, const eckit::Parametrisation& config):
+    nb_partitions_(nb_partitions),
+    mpi_comm_(extract_mpi_comm(config)) {
+}
+
+Partitioner::Partitioner(const eckit::Parametrisation& config) :
+    nb_partitions_(extract_nb_partitions(config)),
+    mpi_comm_(extract_mpi_comm(config)) {
+}
 
 Partitioner::~Partitioner() = default;
 
@@ -74,6 +109,8 @@ idx_t Partitioner::nb_partitions() const {
 Distribution Partitioner::partition(const Grid& grid) const {
     return new distribution::DistributionArray{grid, atlas::grid::Partitioner(this)};
 }
+
+std::string Partitioner::mpi_comm() const { return mpi_comm_; }
 
 namespace {
 
@@ -164,8 +201,7 @@ Partitioner* PartitionerFactory::build(const std::string& name) {
 }
 
 Partitioner* PartitionerFactory::build(const std::string& name, const idx_t nb_partitions) {
-    atlas::util::Config config;
-    return build(name, nb_partitions, config);
+    return build(name, nb_partitions, util::NoConfig());
 }
 
 Partitioner* PartitionerFactory::build(const std::string& name, const idx_t nb_partitions,
@@ -192,28 +228,53 @@ Partitioner* PartitionerFactory::build(const std::string& name, const idx_t nb_p
     return (*j).second->make(nb_partitions, config);
 }
 
+Partitioner* PartitionerFactory::build(const std::string& name,
+                                       const eckit::Parametrisation& config) {
+    pthread_once(&once, init);
 
-Partitioner* MatchingPartitionerFactory::build(const std::string& type, const Mesh& partitioned) {
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
+
+    static force_link static_linking;
+
+    std::map<std::string, PartitionerFactory*>::const_iterator j = m->find(name);
+
+    Log::debug() << "Looking for PartitionerFactory [" << name << "]" << '\n';
+
+    if (j == m->end()) {
+        Log::error() << "No PartitionerFactory for [" << name << "]" << '\n';
+        Log::error() << "PartitionerFactories are:" << '\n';
+        for (j = m->begin(); j != m->end(); ++j) {
+            Log::error() << "   " << (*j).first << '\n';
+        }
+        throw_Exception(std::string("No PartitionerFactory called ") + name);
+    }
+
+    return (*j).second->make(config);
+}
+
+
+
+Partitioner* MatchingPartitionerFactory::build(const std::string& type, const Mesh& partitioned, const eckit::Parametrisation& config) {
     if (type == MatchingMeshPartitionerSphericalPolygon::static_type()) {
-        return new MatchingMeshPartitionerSphericalPolygon(partitioned);
+        return new MatchingMeshPartitionerSphericalPolygon(partitioned, config);
     }
     else if (type == MatchingMeshPartitionerLonLatPolygon::static_type()) {
-        return new MatchingMeshPartitionerLonLatPolygon(partitioned);
+        return new MatchingMeshPartitionerLonLatPolygon(partitioned, config);
     }
     else if (type == MatchingMeshPartitionerBruteForce::static_type()) {
-        return new MatchingMeshPartitionerBruteForce(partitioned);
+        return new MatchingMeshPartitionerBruteForce(partitioned, config);
     }
     else if (type == MatchingMeshPartitionerCubedSphere::static_type()) {
-        return new MatchingMeshPartitionerCubedSphere(partitioned);
+        return new MatchingMeshPartitionerCubedSphere(partitioned, config);
     }
     else {
         ATLAS_NOTIMPLEMENTED;
     }
 }
 
-Partitioner* MatchingPartitionerFactory::build(const std::string& type, const FunctionSpace& partitioned) {
+Partitioner* MatchingPartitionerFactory::build(const std::string& type, const FunctionSpace& partitioned, const eckit::Parametrisation& config) {
     if (type == MatchingFunctionSpacePartitionerLonLatPolygon::static_type()) {
-        return new MatchingFunctionSpacePartitionerLonLatPolygon(partitioned);
+        return new MatchingFunctionSpacePartitionerLonLatPolygon(partitioned, config);
     }
     else {
         ATLAS_NOTIMPLEMENTED;

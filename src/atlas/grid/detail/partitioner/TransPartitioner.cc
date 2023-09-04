@@ -33,7 +33,16 @@ TransPartitioner::TransPartitioner(): Partitioner() {
     }
 }
 
-TransPartitioner::TransPartitioner(const idx_t N, const eckit::Parametrisation&): Partitioner(N) {
+TransPartitioner::TransPartitioner(const eckit::Parametrisation& config): Partitioner(config) {
+    EqualRegionsPartitioner eqreg(config);
+    nbands_ = eqreg.nb_bands();
+    nregions_.resize(nbands_);
+    for (size_t b = 0; b < nbands_; ++b) {
+        nregions_[b] = eqreg.nb_regions(b);
+    }
+}
+
+TransPartitioner::TransPartitioner(const idx_t N, const eckit::Parametrisation& config): Partitioner(N,config) {
     EqualRegionsPartitioner eqreg(nb_partitions());
     nbands_ = eqreg.nb_bands();
     nregions_.resize(nbands_);

@@ -22,13 +22,13 @@ MatchingFunctionSpacePartitioner::MatchingFunctionSpacePartitioner(): Partitione
     ATLAS_NOTIMPLEMENTED;
 }
 
-MatchingFunctionSpacePartitioner::MatchingFunctionSpacePartitioner(const idx_t nb_partitions):
-    Partitioner(nb_partitions) {
-    ATLAS_NOTIMPLEMENTED;
-}
+// MatchingFunctionSpacePartitioner::MatchingFunctionSpacePartitioner(const idx_t nb_partitions):
+//     Partitioner(nb_partitions) {
+//     ATLAS_NOTIMPLEMENTED;
+// }
 
-MatchingFunctionSpacePartitioner::MatchingFunctionSpacePartitioner(const FunctionSpace& functionspace):
-    Partitioner(functionspace.nb_parts()), partitioned_(functionspace) {}
+MatchingFunctionSpacePartitioner::MatchingFunctionSpacePartitioner(const FunctionSpace& functionspace, const eckit::Parametrisation&):
+    Partitioner(functionspace.nb_parts(),util::Config("mpi_comm",functionspace.mpi_comm())), partitioned_(functionspace) {}
 
 }  // namespace partitioner
 }  // namespace detail
