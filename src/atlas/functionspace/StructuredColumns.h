@@ -110,7 +110,8 @@ public:
         void operator()(const Functor& f) const {
             ATLAS_ASSERT(levels);
             if (global) {
-                if (owner == mpi::rank()) {
+                auto mpi_rank = mpi::comm(fs_.mpi_comm()).rank();
+                if (owner == mpi_rank) {
                     const idx_t ny = fs_.grid().ny();
                     std::vector<idx_t> offset(ny);
                     offset[0] = 0;
@@ -143,7 +144,8 @@ public:
         void operator()(const Functor& f) const {
             ATLAS_ASSERT(levels == 0);
             if (global) {
-                if (owner == mpi::rank()) {
+                auto mpi_rank = mpi::comm(fs_.mpi_comm()).rank();
+                if (owner == mpi_rank) {
                     const idx_t ny = fs_.grid().ny();
                     std::vector<idx_t> offset(ny);
                     offset[0] = 0;
@@ -172,7 +174,8 @@ public:
         void operator()(const Functor& f) const {
             ATLAS_ASSERT(levels);
             if (global) {
-                if (owner == mpi::rank()) {
+                auto mpi_rank = mpi::comm(fs_.mpi_comm()).rank();
+                if (owner == mpi_rank) {
                     const idx_t size = fs_.grid().size();
                     atlas_omp_parallel_for(idx_t n = 0; n < size; ++n) {
                         for (idx_t k = 0; k < levels; ++k) {
@@ -197,7 +200,8 @@ public:
         void operator()(const Functor& f) const {
             ATLAS_ASSERT(levels == 0);
             if (global) {
-                if (owner == mpi::rank()) {
+                auto mpi_rank = mpi::comm(fs_.mpi_comm()).rank();
+                if (owner == mpi_rank) {
                     const idx_t size = fs_.grid().size();
                     atlas_omp_parallel_for(idx_t n = 0; n < size; ++n) { f(n); }
                 }
