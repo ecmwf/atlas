@@ -40,14 +40,14 @@ Mesh::Mesh(const Grid& grid, const eckit::Configuration& config):
 
 Mesh::Mesh(const Grid& grid, const grid::Partitioner& partitioner, const eckit::Configuration& config):
     Handle([&]() {
+        std::string mpi_comm = partitioner.mpi_comm();
         if(config.has("mpi_comm")) {
-            mpi::push(config.getString("mpi_comm"));
+            mpi_comm = config.getString("mpi_comm");
+            ATLAS_ASSERT(mpi_comm == partitioner.mpi_comm());
         }
+        mpi::Scope mpi_scope(mpi_comm);
         auto meshgenerator = MeshGenerator{grid.meshgenerator()|config};
         auto mesh          = meshgenerator.generate(grid, partitioner);
-        if(config.has("mpi_comm")) {
-            mpi::pop();
-        }
         mesh.get()->attach();
         return mesh.get();
     }()) {
