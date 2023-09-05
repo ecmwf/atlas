@@ -267,7 +267,8 @@ public:
         }
     }
 
-    virtual void onFieldRename(FieldImpl&) = 0;
+    virtual void onFieldRename(FieldImpl&) {}
+    virtual void onFieldDestruction(FieldImpl&) {}
 };
 
 //----------------------------------------------------------------------------------------------------------------------
