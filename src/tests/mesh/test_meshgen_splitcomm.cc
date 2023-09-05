@@ -55,6 +55,22 @@ struct Fixture {
     }
 };
 
+CASE("Partitioners") {
+    Fixture fixture;
+    SECTION("default") {
+        auto partitioner = grid::Partitioner("equal_regions");
+        EXPECT_EQ(partitioner.mpi_comm(),mpi::comm().name());
+        auto distribution = partitioner.partition(Grid("O8"));
+        EXPECT_EQ(distribution.nb_partitions(), mpi::comm().size());
+    }
+    SECTION("split") {
+        auto partitioner = grid::Partitioner("equal_regions", option::mpi_comm("split"));
+        EXPECT_EQ(partitioner.mpi_comm(),"split");
+        auto distribution = partitioner.partition(Grid("O8"));
+        EXPECT_EQ(distribution.nb_partitions(), mpi::comm("split").size());
+    }
+}
+
 CASE("StructuredMeshGenerator") {
     Fixture fixture;
 
@@ -93,6 +109,7 @@ CASE("Mesh constructor") {
 CASE("Mesh constructor with partitioner") {
     Fixture fixture;
     auto partitioner = grid::Partitioner("equal_regions", option::mpi_comm("split"));
+
     auto mesh = Mesh(grid(), partitioner);
     EXPECT_EQUAL(mesh.nb_parts(),mpi::comm("split").size());
     EXPECT_EQUAL(mesh.part(),mpi::comm("split").rank());
