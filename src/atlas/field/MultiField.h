@@ -41,51 +41,18 @@ namespace field {
  * Fields have to all be of same memory layout and data type
  */
 
-namespace detail {
-class ArrayAllocator {
-public:
-    virtual array::Array* allocate(const array::ArraySpec&) = 0;
-    virtual void deallocate()                               = 0;
-    virtual ~ArrayAllocator()                               = default;
-};
-
-class NoArrayAllocator : public ArrayAllocator {
-public:
-    virtual array::Array* allocate(const array::ArraySpec& arrayspec) override { return nullptr; }
-    virtual void deallocate() override {}
-};
-
-class StandardArrayAllocator : public ArrayAllocator {
-public:
-    virtual array::Array* allocate(const array::ArraySpec& arrayspec) override {
-        array::ArraySpec spec(arrayspec);
-        return array::Array::create(std::move(spec));
-    }
-    virtual void deallocate() override {
-        // Nothing to deallocate.
-        // The Array owns the allocated data.
-    }
-};
-}  // namespace detail
-
 class MultiFieldImpl : public util::Object {
 public:  // methods
     //-- Constructors
 
-    MultiFieldImpl() { allocator_ = std::unique_ptr<detail::ArrayAllocator>(new detail::NoArrayAllocator()); }
+    MultiFieldImpl() { }
 
-    MultiFieldImpl(const array::ArraySpec& spec, detail::ArrayAllocator* allocator = nullptr) {
-        if (allocator) {
-            allocator_ = std::unique_ptr<detail::ArrayAllocator>(allocator);
-        }
-        else {
-            allocator_ = std::unique_ptr<detail::ArrayAllocator>(new detail::StandardArrayAllocator());
-        }
-        ATLAS_ASSERT(allocator_);
-        array_ = std::unique_ptr<array::Array>(allocator_->allocate(spec));
+    MultiFieldImpl(const array::ArraySpec& spec) {
+        array::ArraySpec s(spec);
+        array_.reset(array::Array::create(std::move(s)));
     }
 
-    virtual ~MultiFieldImpl() { allocator_->deallocate(); }
+    virtual ~MultiFieldImpl() {}
 
 
     //-- Accessors
@@ -132,11 +99,11 @@ public:  // methods
     const FieldSet& fieldset() const { return fieldset_; }
     FieldSet& fieldset() { return fieldset_; }
 
+    void add(Field& field);
 
 public:  // temporary public for prototyping
     FieldSet fieldset_;
-    std::unique_ptr<array::Array> array_;
-    std::unique_ptr<detail::ArrayAllocator> allocator_;
+    std::shared_ptr<array::Array> array_;
     util::Metadata metadata_;
 };
 
