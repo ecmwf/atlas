@@ -39,8 +39,17 @@ Grid grid() {
     return g;
 }
 
+Grid grid_A() {
+    return grid();
+}
+
 Grid grid_B() {
     static Grid g (color() == 0 ? "F64" : "O64" );
+    return g;
+}
+
+Grid grid_CS() {
+    static Grid g (color() == 0 ? "CS-LFR-C-8" : "CS-LFR-C-16" );
     return g;
 }
 
@@ -74,7 +83,7 @@ CASE("Partitioners") {
 CASE("StructuredMeshGenerator") {
     Fixture fixture;
 
-    StructuredMeshGenerator meshgen{option::mpi_comm("split")};
+    MeshGenerator meshgen{"structured", option::mpi_comm("split")};
     Mesh mesh = meshgen.generate(grid());
     EXPECT_EQUAL(mesh.nb_parts(),mpi::comm("split").size());
     EXPECT_EQUAL(mesh.part(),mpi::comm("split").rank());
@@ -88,6 +97,33 @@ CASE("StructuredMeshGenerator") {
     EXPECT_NO_THROW(mesh.polygons());
     mesh.polygon().outputPythonScript(grid().name()+"_polygons_1.py");
 }
+
+CASE("CubedSphereDualMeshGenerator") {
+    Fixture fixture;
+
+    MeshGenerator meshgen{"cubedsphere_dual", option::mpi_comm("split")};
+    Mesh mesh = meshgen.generate(grid_CS());
+    EXPECT_EQUAL(mesh.nb_parts(),mpi::comm("split").size());
+    EXPECT_EQUAL(mesh.part(),mpi::comm("split").rank());
+    EXPECT_EQUAL(mesh.mpi_comm(),"split");
+    EXPECT_EQUAL(mpi::comm().name(),"world");
+    output::Gmsh gmsh(grid_CS().name()+"_1.msh");
+    gmsh.write(mesh);
+}
+
+CASE("CubedSphereMeshGenerator") {
+    Fixture fixture;
+
+    MeshGenerator meshgen{"cubedsphere", option::mpi_comm("split")};
+    Mesh mesh = meshgen.generate(grid_CS());
+    EXPECT_EQUAL(mesh.nb_parts(),mpi::comm("split").size());
+    EXPECT_EQUAL(mesh.part(),mpi::comm("split").rank());
+    EXPECT_EQUAL(mesh.mpi_comm(),"split");
+    EXPECT_EQUAL(mpi::comm().name(),"world");
+    output::Gmsh gmsh(grid_CS().name()+"_2.msh");
+    gmsh.write(mesh);
+}
+
 
 CASE("Mesh constructor") {
     Fixture fixture;
@@ -128,7 +164,7 @@ CASE("Mesh constructor with partitioner") {
 CASE("MatchingPartitioner") {
     Fixture fixture;
 
-    auto mesh_A = Mesh(grid(), option::mpi_comm("split"));
+    auto mesh_A = Mesh(grid_A(), option::mpi_comm("split"));
     auto mesh_B = Mesh(grid_B(), grid::MatchingPartitioner(mesh_A), option::mpi_comm("split"));
 
     output::Gmsh gmsh_B(grid_B().name()+"_3.msh");
