@@ -80,7 +80,6 @@ MultiFieldImpl* MultiFieldCreatorIFS::create(const eckit::Configuration& config)
     MultiFieldImpl* multifield = new MultiFieldImpl{array::ArraySpec{datatype, multiarray_shape}};
 
     auto& multiarray = multifield->array();
-    auto& fieldset   = multifield->fieldset();
 
     size_t multiarray_field_idx = 0;
     for (size_t i = 0; i < fields.size(); ++i) {
@@ -129,9 +128,8 @@ MultiFieldImpl* MultiFieldCreatorIFS::create(const eckit::Configuration& config)
             }
         }
         field.set_levels(nlev);
-        ATLAS_ASSERT(not fieldset.has(field.name()), "Field with name \"" + field.name() + "\" already exists!");
 
-        fieldset.add(field);
+        multifield->add(field);
 
         multiarray_field_idx += field_vars;
     }
@@ -175,81 +173,92 @@ CASE("multifield_create") {
         return p.json();
     };
 
-    Log::info() << "json = " << json() << std::endl;
+    SECTION("Print configuration") {
+        Log::info() << "json = " << json() << std::endl;
+    }
 
-    MultiField multifield{eckit::YAMLConfiguration{json()}};
+    SECTION("test") {
+        MultiField multifield{eckit::YAMLConfiguration{json()}};
 
-    const auto nblk = multifield.array().shape(0);
-    const auto nvar = multifield.array().shape(1);
-    const auto nfld = multifield.size();
-    EXPECT_EQ(nfld, 5);
-    EXPECT_EQ(nvar, 9);
+        const auto nblk = multifield.array().shape(0);
+        const auto nvar = multifield.array().shape(1);
+        const auto nfld = multifield.size();
+        EXPECT_EQ(nfld, 5);
+        EXPECT_EQ(nvar, 9);
 
-    EXPECT_EQ(multifield.size(), 5);
-    EXPECT(multifield.has("temperature"));
-    EXPECT(multifield.has("pressure"));
-    EXPECT(multifield.has("density"));
-    EXPECT(multifield.has("clv"));
-    EXPECT(multifield.has("wind_u"));
+        EXPECT_EQ(multifield.size(), 5);
+        EXPECT(multifield.has("temperature"));
+        EXPECT(multifield.has("pressure"));
+        EXPECT(multifield.has("density"));
+        EXPECT(multifield.has("clv"));
+        EXPECT(multifield.has("wind_u"));
 
-    Log::info() << multifield.field("temperature") << std::endl;
-    Log::info() << multifield.field("pressure") << std::endl;
-    Log::info() << multifield.field("density") << std::endl;
-    Log::info() << multifield.field("clv") << std::endl;
-    Log::info() << multifield.field("wind_u") << std::endl;
+        Log::info() << multifield.field("temperature") << std::endl;
+        Log::info() << multifield.field("pressure") << std::endl;
+        Log::info() << multifield.field("density") << std::endl;
+        Log::info() << multifield.field("clv") << std::endl;
+        Log::info() << multifield.field("wind_u") << std::endl;
 
-    auto temp   = array::make_view<Value, 3>(multifield.field("temperature"));
-    auto pres   = array::make_view<Value, 3>(multifield.field("pressure"));
-    auto dens   = array::make_view<Value, 3>(multifield.field("density"));
-    auto clv    = array::make_view<Value, 4>(multifield.field("clv"));  // note rank 4
-    auto wind_u = array::make_view<Value, 3>(multifield.field("wind_u"));
+        auto temp   = array::make_view<Value, 3>(multifield.field("temperature"));
+        auto pres   = array::make_view<Value, 3>(multifield.field("pressure"));
+        auto dens   = array::make_view<Value, 3>(multifield.field("density"));
+        auto clv    = array::make_view<Value, 4>(multifield.field("clv"));  // note rank 4
+        auto wind_u = array::make_view<Value, 3>(multifield.field("wind_u"));
 
-    EXPECT_EQ(multifield[0].name(), "temperature");
-    EXPECT_EQ(multifield[1].name(), "pressure");
-    EXPECT_EQ(multifield[2].name(), "density");
-    EXPECT_EQ(multifield[3].name(), "clv");
-    EXPECT_EQ(multifield[4].name(), "wind_u");
+        EXPECT_EQ(multifield[0].name(), "temperature");
+        EXPECT_EQ(multifield[1].name(), "pressure");
+        EXPECT_EQ(multifield[2].name(), "density");
+        EXPECT_EQ(multifield[3].name(), "clv");
+        EXPECT_EQ(multifield[4].name(), "wind_u");
 
-    auto block_stride  = multifield.array().stride(0);
-    auto field_stride  = nproma * nlev;
-    auto level_stride  = nproma;
-    auto nproma_stride = 1;
+        auto block_stride  = multifield.array().stride(0);
+        auto field_stride  = nproma * nlev;
+        auto level_stride  = nproma;
+        auto nproma_stride = 1;
 
-    temp(1, 2, 3)      = 4;
-    pres(5, 6, 7)      = 8;
-    dens(9, 10, 11)    = 12;
-    clv(13, 2, 14, 15) = 16;
-    wind_u(17, 18, 3)  = 19;
+        temp(1, 2, 3)      = 4;
+        pres(5, 6, 7)      = 8;
+        dens(9, 10, 11)    = 12;
+        clv(13, 2, 14, 15) = 16;
+        wind_u(17, 18, 3)  = 19;
 
-    EXPECT_EQ(temp.stride(0), block_stride);
-    EXPECT_EQ(temp.stride(1), level_stride);
-    EXPECT_EQ(temp.stride(2), nproma_stride);
-    EXPECT_EQ(temp.size(), nblk * nlev * nproma);
+        EXPECT_EQ(temp.stride(0), block_stride);
+        EXPECT_EQ(temp.stride(1), level_stride);
+        EXPECT_EQ(temp.stride(2), nproma_stride);
+        EXPECT_EQ(temp.size(), nblk * nlev * nproma);
 
-    EXPECT_EQ(clv.stride(0), block_stride);
-    EXPECT_EQ(clv.stride(1), field_stride);
-    EXPECT_EQ(clv.stride(2), level_stride);
-    EXPECT_EQ(clv.stride(3), nproma_stride);
+        EXPECT_EQ(clv.stride(0), block_stride);
+        EXPECT_EQ(clv.stride(1), field_stride);
+        EXPECT_EQ(clv.stride(2), level_stride);
+        EXPECT_EQ(clv.stride(3), nproma_stride);
 
-    EXPECT_EQ(clv.size(), nblk * 5 * nlev * nproma);
+        EXPECT_EQ(clv.size(), nblk * 5 * nlev * nproma);
 
 
-    // Advanced usage, to access underlying array. This should only be used
-    // in a driver and not be exposed to algorithms.
-    {
-        auto multiarray = array::make_view<Value, 4>(multifield);
-        EXPECT_EQ(multiarray.stride(0), block_stride);
-        EXPECT_EQ(multiarray.stride(1), field_stride);
-        EXPECT_EQ(multiarray.stride(2), level_stride);
-        EXPECT_EQ(multiarray.stride(3), nproma_stride);
+        // Advanced usage, to access underlying array. This should only be used
+        // in a driver and not be exposed to algorithms.
+        {
+            auto multiarray = array::make_view<Value, 4>(multifield);
+            EXPECT_EQ(multiarray.stride(0), block_stride);
+            EXPECT_EQ(multiarray.stride(1), field_stride);
+            EXPECT_EQ(multiarray.stride(2), level_stride);
+            EXPECT_EQ(multiarray.stride(3), nproma_stride);
 
-        EXPECT_EQ(multiarray(1, 0, 2, 3), 4.);
-        EXPECT_EQ(multiarray(5, 1, 6, 7), 8.);
-        EXPECT_EQ(multiarray(9, 2, 10, 11), 12.);
-        EXPECT_EQ(multiarray(13, 5, 14, 15), 16.);
-        EXPECT_EQ(multiarray(17, 8, 18, 3), 19.);
+            EXPECT_EQ(multiarray(1, 0, 2, 3), 4.);
+            EXPECT_EQ(multiarray(5, 1, 6, 7), 8.);
+            EXPECT_EQ(multiarray(9, 2, 10, 11), 12.);
+            EXPECT_EQ(multiarray(13, 5, 14, 15), 16.);
+            EXPECT_EQ(multiarray(17, 8, 18, 3), 19.);
 
-        EXPECT_EQ(multiarray.size(), nblk * nvar * nlev * nproma);
+            EXPECT_EQ(multiarray.size(), nblk * nvar * nlev * nproma);
+        }
+    }
+
+    SECTION("test registry") {
+        {
+            Field field = MultiField {eckit::YAMLConfiguration{json()}}.field("temperature");
+            auto temp = array::make_view<Value,3>(field);
+        }
     }
 }
 

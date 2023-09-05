@@ -59,9 +59,8 @@ MultiFieldImpl* atlas__MultiField__create(eckit::Configuration* config) {
     }
     auto multiarray_shape = array::make_shape(nblk, nfld, nlev, nproma);
 
-    MultiFieldImpl* field = new MultiFieldImpl{array::ArraySpec{datatype, multiarray_shape}};
-    auto& multiarray = field->array();
-    auto& fieldset   = field->fieldset();
+    MultiFieldImpl* multifield = new MultiFieldImpl{array::ArraySpec{datatype, multiarray_shape}};
+    auto& multiarray = multifield->array();
 
     size_t multiarray_field_idx = 0;
     for (size_t i = 0; i < fields.size(); ++i) {
@@ -111,14 +110,13 @@ MultiFieldImpl* atlas__MultiField__create(eckit::Configuration* config) {
         }
         field.set_levels(nlev);
         // field.set_blocks(nblk);
-        ATLAS_ASSERT(not fieldset.has(field.name()), "Field with name \"" + field.name() + "\" already exists!");
 
-        fieldset.add(field);
+        multifield->add(field);
 
         multiarray_field_idx += field_vars;
     }
-    ATLAS_ASSERT(field);
-    return field;
+    ATLAS_ASSERT(multifield);
+    return multifield;
 }
 
 void atlas__MultiField__delete(MultiFieldImpl* This) {
