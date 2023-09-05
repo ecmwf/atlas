@@ -619,7 +619,7 @@ void EqualRegionsPartitioner::partition(const Grid& grid, int part[]) const {
 
         ATLAS_ASSERT(grid.projection().units() == "degrees");
 
-        const auto& comm = mpi::comm();
+        const auto& comm = mpi::comm(mpi_comm());
         int mpi_rank     = static_cast<int>(comm.rank());
         int mpi_size     = static_cast<int>(comm.size());
 
