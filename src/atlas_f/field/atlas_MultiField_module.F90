@@ -8,13 +8,12 @@
 
 #include "atlas/atlas_f.h"
 
-#:include "atlas/atlas_f.fypp"
-#:include "internals/atlas_generics.fypp"
-
 module atlas_multifield_module
 
 use fckit_owned_object_module, only : fckit_owned_object
 use atlas_Config_module, only: atlas_Config
+use atlas_field_module, only: atlas_field, array_c_to_f
+use atlas_fieldset_module, only: atlas_fieldset
 
 implicit none
 
@@ -42,6 +41,10 @@ TYPE, extends(fckit_owned_object) :: atlas_MultiField
 
 !------------------------------------------------------------------------------
 contains
+  procedure, public  :: MultiField__fieldset
+  procedure, public  :: MultiField__size
+  generic :: fieldset => MultiField__fieldset
+  generic :: size => MultiField__size
 
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_MultiField__final_auto
@@ -52,6 +55,7 @@ END TYPE
 interface atlas_MultiField
   module procedure atlas_MultiField__cptr
   module procedure atlas_MultiField__create
+  module procedure atlas_MultiField__create_names
 end interface
 
 private :: fckit_owned_object
@@ -79,6 +83,66 @@ function atlas_MultiField__create(params) result(field)
   class(atlas_Config), intent(in) :: params
   field = atlas_MultiField__cptr( atlas__MultiField__create(params%CPTR_PGIBUG_B) )
   call field%return()
+end function
+
+!-------------------------------------------------------------------------------
+
+function atlas_MultiField__create_names(kind, shape, field_names) result(field)
+  use, intrinsic :: iso_c_binding, only : c_char, c_int, c_int32_t, c_size_t
+  use atlas_multifield_c_binding
+  type(atlas_MultiField) :: field
+  integer(c_int), intent(in) :: kind
+  integer, intent(in) :: shape(:)
+  character(*), intent(in) :: field_names(:)
+  character(kind=c_char,len=:), allocatable :: flat_field_names
+  integer(c_size_t) :: length
+  integer(c_int32_t) :: ii
+  integer(c_int32_t), allocatable :: field_name_sizes(:)
+
+  if (size(field_names) == 0 .or. size(shape) < 3) then
+    print *, "atlas_MultiField__create_names: must have at least one field name, and the size of shape", &
+        & " is minimum 3, e.g. [nproma,-1,nblk]"
+    stop -1
+  end if
+
+  length = len(field_names(1))
+  allocate(field_name_sizes(size(field_names)))
+  field_name_sizes = len(field_names(:))
+
+  if (any(field_name_sizes /= length)) then
+    print *, "atlas_MultiField__create_names: field_names have to have same length in characters"
+    stop -1
+  end if
+
+  allocate(character(len=length*size(field_names) ) :: flat_field_names)
+  do ii = 1, size(field_names)
+    flat_field_names((ii-1)*length+1:ii*length) = field_names(ii)
+  enddo
+
+  field = atlas_MultiField__cptr( atlas__MultiField__create_shape(kind, size(shape), shape, &
+        & flat_field_names, length, size(field_names,kind=c_size_t)) )
+  call field%return()
+end function
+
+!-------------------------------------------------------------------------------
+
+function MultiField__size(this) result(size)
+  use atlas_multifield_c_binding
+  class(atlas_MultiField), intent(in) :: this
+  integer :: size
+  size = atlas__MultiField__size(this%CPTR_PGIBUG_B)
+end function
+
+!-------------------------------------------------------------------------------
+function MultiField__fieldset(this) result(fset)
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  use atlas_multifield_c_binding
+  class(atlas_MultiField), intent(in) :: this
+  type(c_ptr) :: fset_cptr
+  type(atlas_FieldSet) :: fset
+  fset_cptr = atlas__MultiField__fieldset(this%CPTR_PGIBUG_B)
+  fset = atlas_FieldSet( fset_cptr )
+  call fset%return()
 end function
 
 !-------------------------------------------------------------------------------

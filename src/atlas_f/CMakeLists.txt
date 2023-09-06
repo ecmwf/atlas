@@ -234,7 +234,7 @@ ecbuild_add_library( TARGET atlas_f
         field/atlas_FieldSet_module.fypp
         field/atlas_State_module.F90
         field/atlas_Field_module.fypp
-        field/atlas_MultiField_module.fypp
+        field/atlas_MultiField_module.F90
         grid/atlas_Grid_module.F90
         grid/atlas_GridDistribution_module.F90
         grid/atlas_Vertical_module.F90

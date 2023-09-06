@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include "atlas/field/FieldSet.h"
 #include "atlas/field/MultiField.h"
 
 namespace atlas {
@@ -29,7 +30,11 @@ namespace field {
 // C wrapper interfaces to C++ routines
 extern "C" {
 MultiFieldImpl* atlas__MultiField__create(eckit::Configuration* config);
+MultiFieldImpl* atlas__MultiField__create_shape(int kind, int rank, int shapef[], const char* var_names,
+        size_t length, size_t size);
 void atlas__MultiField__delete(MultiFieldImpl* This);
+int atlas__MultiField__size(MultiFieldImpl* This);
+FieldSetImpl* atlas__MultiField__fieldset(MultiFieldImpl* This);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
