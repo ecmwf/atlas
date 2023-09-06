@@ -76,7 +76,7 @@ public:
 public:
     using Handle::Handle;
     Partitioner() = default;
-    Partitioner(const std::string& type);
+    explicit Partitioner(const std::string& type);
     Partitioner(const std::string& type, const idx_t nb_partitions);
     Partitioner(const Config&);
     Partitioner(const std::string& type, const Config&);
