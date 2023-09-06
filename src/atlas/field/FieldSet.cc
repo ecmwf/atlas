@@ -170,6 +170,14 @@ void atlas__FieldSet__add_field(FieldSetImpl* This, FieldImpl* field) {
     This->add(field);
 }
 
+void atlas__FieldSet__add_fieldset(FieldSetImpl* This, FieldSetImpl* fieldset) {
+    ATLAS_ASSERT(This != nullptr, "Reason: Use of uninitialised atlas_FieldSet");
+    ATLAS_ASSERT(fieldset != nullptr, "Reason: Use of uninitialised atlas_FieldSet");
+    for(int i = 0; i < fieldset->size(); i++) {
+        This->add(fieldset->operator[](i));
+    }
+}
+
 int atlas__FieldSet__has_field(const FieldSetImpl* This, char* name) {
     ATLAS_ASSERT(This != nullptr, "Reason: Use of uninitialised atlas_FieldSet");
     return This->has(std::string(name));

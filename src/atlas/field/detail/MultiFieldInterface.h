@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include "atlas/field/FieldSet.h"
 #include "atlas/field/MultiField.h"
 
 namespace atlas {
@@ -30,6 +31,7 @@ namespace field {
 extern "C" {
 MultiFieldImpl* atlas__MultiField__create(eckit::Configuration* config);
 void atlas__MultiField__delete(MultiFieldImpl* This);
+FieldSet* atlas__MultiField__fieldset(MultiFieldImpl* This);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -151,6 +151,7 @@ extern "C" {
 FieldSetImpl* atlas__FieldSet__new(char* name);
 void atlas__FieldSet__delete(FieldSetImpl* This);
 void atlas__FieldSet__add_field(FieldSetImpl* This, FieldImpl* field);
+void atlas__FieldSet__add_fieldset(FieldSetImpl* This, FieldSetImpl* fieldset);
 int atlas__FieldSet__has_field(const FieldSetImpl* This, char* name);
 const char* atlas__FieldSet__name(FieldSetImpl* This);
 idx_t atlas__FieldSet__size(const FieldSetImpl* This);

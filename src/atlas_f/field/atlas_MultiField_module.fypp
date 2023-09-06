@@ -15,6 +15,7 @@ module atlas_multifield_module
 
 use fckit_owned_object_module, only : fckit_owned_object
 use atlas_Config_module, only: atlas_Config
+use atlas_fieldset_module, only: atlas_fieldset
 
 implicit none
 
@@ -42,6 +43,8 @@ TYPE, extends(fckit_owned_object) :: atlas_MultiField
 
 !------------------------------------------------------------------------------
 contains
+  procedure, public  :: MultiField__fieldset
+  generic :: fieldset => MultiField__fieldset
 
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_MultiField__final_auto
@@ -79,6 +82,19 @@ function atlas_MultiField__create(params) result(field)
   class(atlas_Config), intent(in) :: params
   field = atlas_MultiField__cptr( atlas__MultiField__create(params%CPTR_PGIBUG_B) )
   call field%return()
+end function
+
+!-------------------------------------------------------------------------------
+
+function MultiField__fieldset(this) result(fset)
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  use atlas_multifield_c_binding
+  class(atlas_MultiField), intent(in) :: this
+  type(c_ptr) :: fset_cptr
+  type(atlas_FieldSet) :: fset
+  fset_cptr = atlas__MultiField__fieldset(this%CPTR_PGIBUG_B)
+  fset = atlas_FieldSet( fset_cptr )
+  call fset%return()
 end function
 
 !-------------------------------------------------------------------------------

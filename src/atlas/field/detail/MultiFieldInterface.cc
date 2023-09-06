@@ -19,7 +19,7 @@ namespace atlas {
 namespace field {
 
 extern "C" {
-::atlas::field::MultiFieldImpl* atlas__MultiField__create(eckit::Configuration* config) {
+MultiFieldImpl* atlas__MultiField__create(eckit::Configuration* config) {
     ATLAS_ASSERT(config != nullptr);
     long nproma = config->getLong("nproma");
     long nlev = config->getLong("nlev");
@@ -59,7 +59,7 @@ extern "C" {
     }
     auto multiarray_shape = array::make_shape(nblk, nfld, nlev, nproma);
 
-::atlas::field::MultiFieldImpl* multifield = new ::atlas::field::MultiFieldImpl{array::ArraySpec{datatype, multiarray_shape}};
+MultiFieldImpl* multifield = new MultiFieldImpl{array::ArraySpec{datatype, multiarray_shape}};
     auto& multiarray = multifield->array();
 
     size_t multiarray_field_idx = 0;
@@ -119,8 +119,12 @@ extern "C" {
     return multifield;
 }
 
-void atlas__MultiField__delete(::atlas::field::MultiFieldImpl* This) {
+void atlas__MultiField__delete(MultiFieldImpl* This) {
     delete This;
+}
+
+FieldSet* atlas__MultiField__fieldset(MultiFieldImpl* This) {
+    return &This->fieldset();
 }
 }
 

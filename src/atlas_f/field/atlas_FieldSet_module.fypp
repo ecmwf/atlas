@@ -51,7 +51,9 @@ contains
   procedure, private :: field_by_name
   procedure, private :: field_by_idx_int
   procedure, private :: field_by_idx_long
-  procedure, public  :: add
+  procedure, public  :: add_field
+  procedure, public  :: add_fset
+  generic :: add => add_field, add_fset
   generic :: field => field_by_name, field_by_idx_int, field_by_idx_long
 
   procedure, public :: set_dirty
@@ -259,12 +261,21 @@ end function FieldSet__name
 
 !-------------------------------------------------------------------------------
 
-subroutine add(this,field)
+subroutine add_field(this,field)
   use atlas_fieldset_c_binding
   use atlas_Field_module, only: atlas_Field
   class(atlas_FieldSet), intent(in) :: this
   type(atlas_Field), intent(in) :: field
   call atlas__FieldSet__add_field(this%CPTR_PGIBUG_A, field%CPTR_PGIBUG_A)
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine add_fset(this,fset)
+  use atlas_fieldset_c_binding
+  class(atlas_FieldSet), intent(inout) :: this
+  class(atlas_FieldSet), intent(in) :: fset
+  call atlas__FieldSet__add_fieldset(this%CPTR_PGIBUG_A, fset%CPTR_PGIBUG_A)
 end subroutine
 
 !-------------------------------------------------------------------------------
