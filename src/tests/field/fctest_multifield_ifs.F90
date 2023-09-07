@@ -82,11 +82,12 @@ TEST( test_multifield )
     call fieldset_2%add(multifield%fieldset())
     field = fieldset_2%field("density")
     call field%data(view)
-    view(1,1,1) = 2
+    view(1,1,1) = 2.
+    call field%rename("dens")
 
-    field = fieldset_1%field("density")
+    field = fieldset_1%field("dens")
     call field%data(view)
-    FCTEST_CHECK_EQUAL(view(1,1,1), 2)
+    FCTEST_CHECK_EQUAL(view(1,1,1), 2._c_double)
 END_TEST
 
 ! -----------------------------------------------------------------------------

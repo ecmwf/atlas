@@ -42,6 +42,7 @@ TYPE, extends(fckit_owned_object) :: atlas_MultiField
 contains
   procedure, public  :: MultiField__fieldset
   procedure, public  :: MultiField__size
+  !procedure, public  :: MultiField__data
   generic :: fieldset => MultiField__fieldset
   generic :: size => MultiField__size
 
