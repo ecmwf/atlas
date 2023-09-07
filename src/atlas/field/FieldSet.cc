@@ -70,8 +70,8 @@ Field FieldSetImpl::add(const Field& field) {
 }
 
 void FieldSetImpl::add_fieldset(const FieldSet& fieldset) {
-    for( auto& field : fieldset) {
-        add(field);
+    for( auto field : fieldset) {
+        this->add(field);
     }
 }
 

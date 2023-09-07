@@ -12,6 +12,7 @@
 #include <sstream>
 
 #include "atlas/library/config.h"
+#include "atlas/field/MultiField.h"
 #include "atlas/field/detail/MultiFieldInterface.h"
 #include "atlas/runtime/Exception.h"
 
@@ -21,6 +22,16 @@ namespace field {
 extern "C" {
 MultiFieldImpl* atlas__MultiField__create(eckit::Configuration* config) {
     ATLAS_ASSERT(config != nullptr);
+
+    // Register in factory
+    // TODO: move __multiFieldCreatorIFS out of test_multifield_ifs.cc
+    //MultiFieldCreatorBuilder<MultiFieldCreatorIFS> __MultiFieldCreatorIFS("MultiFieldCreatorIFS");
+
+    //MultiField* multifield = new MultiField(*config);
+    //return multifield->get();
+
+    // TODO
+    // repeat here the code for __multiFieldCreatorIFS out of test_multifield_ifs.cc
     long nproma = config->getLong("nproma");
     long nlev = config->getLong("nlev");
     long nblk = 0;
@@ -123,8 +134,12 @@ void atlas__MultiField__delete(MultiFieldImpl* This) {
     delete This;
 }
 
-FieldSet* atlas__MultiField__fieldset(MultiFieldImpl* This) {
-    return &This->fieldset();
+int atlas__MultiField__size(MultiFieldImpl* This) {
+    return This->size();
+}
+
+FieldSetImpl* atlas__MultiField__fieldset(MultiFieldImpl* This) {
+    return This->fieldset().get();
 }
 }
 

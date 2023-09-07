@@ -23,7 +23,7 @@ end module
 
 ! -----------------------------------------------------------------------------
 
-TESTSUITE_WITH_FIXTURE(fctest_atlas_MultiField,fcta_MultiField_fixture)
+TESTSUITE_WITH_FIXTURE(fctest_atlas_MultiField, fcta_MultiField_fixture)
 
 ! -----------------------------------------------------------------------------
 
@@ -46,6 +46,7 @@ TEST( test_multifield )
     type(atlas_FieldSet)    :: fieldset_1, fieldset_2
     type(atlas_Field)       :: field
     type(atlas_config)      :: config
+    real(c_double), pointer :: view(:,:,:)
 
     integer, parameter :: nvar = 5;
     integer, parameter :: nproma  = 16;
@@ -72,10 +73,20 @@ TEST( test_multifield )
     call config%set("fields", field_configs)
 
     multifield = atlas_MultiField(config)
+    FCTEST_CHECK_EQUAL(multifield%size(), 5)
 
     fieldset_1 = multifield%fieldset()
-    call fieldset_2%add(fieldset_1)
+    FCTEST_CHECK_EQUAL(fieldset_1%size(), 5)
+
+    fieldset_2 = atlas_FieldSet()
+    call fieldset_2%add(multifield%fieldset())
     field = fieldset_2%field("density")
+    call field%data(view)
+    view(1,1,1) = 2
+
+    field = fieldset_1%field("density")
+    call field%data(view)
+    FCTEST_CHECK_EQUAL(view(1,1,1), 2)
 END_TEST
 
 ! -----------------------------------------------------------------------------

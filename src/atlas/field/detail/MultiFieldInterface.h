@@ -31,7 +31,8 @@ namespace field {
 extern "C" {
 MultiFieldImpl* atlas__MultiField__create(eckit::Configuration* config);
 void atlas__MultiField__delete(MultiFieldImpl* This);
-FieldSet* atlas__MultiField__fieldset(MultiFieldImpl* This);
+int atlas__MultiField__size(MultiFieldImpl* This);
+FieldSetImpl* atlas__MultiField__fieldset(MultiFieldImpl* This);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

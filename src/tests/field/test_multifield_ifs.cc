@@ -252,6 +252,14 @@ CASE("multifield_create") {
 
             EXPECT_EQ(multiarray.size(), nblk * nvar * nlev * nproma);
         }
+
+        // access FieldSet through MultiField
+        auto fieldset = multifield->fieldset();
+        auto field_v = array::make_view<Value,3>(fieldset.field("temperature"));
+        EXPECT_EQ(fieldset.size(), 5);
+        EXPECT(fieldset.has("temperature"));
+        EXPECT(fieldset.has("wind_u"));
+        EXPECT_EQ(field_v(1,2,3), 4);
     }
 
     SECTION("test registry") {
