@@ -56,7 +56,22 @@ CASE("test_rename") {
     EXPECT(!fieldset.has("field_1"));
     EXPECT_EQ(fieldset.field(1).name(),std::string(""));
     EXPECT(fieldset.has("[1]"));
+}
 
+CASE("test_fieldset_concatenation") {
+    FieldSet fieldset_1;
+    FieldSet fieldset_2;
+    auto field_1 = fieldset_1.add(Field("0", make_datatype<double>(), array::make_shape(10,4)));
+    auto field_1_v = array::make_view<double,2>(field_1);
+    field_1_v(1,1) = 2.;
+
+    fieldset_2.add_fieldset(fieldset_1);
+    auto field_2 = fieldset_2.field("0");
+    field_2.rename("");
+    auto field_2_v = array::make_view<double,2>(field_2);
+    field_2_v(1,1) = 1.;
+
+    EXPECT_EQ( field_1_v(1,1), 1.);
 }
 
 //-----------------------------------------------------------------------------

@@ -117,6 +117,7 @@ public:  // methods
     std::vector<std::string> field_names() const;
 
     Field add(const Field&);
+    void add_fieldset(const FieldSet& fieldset);
 
     bool has(const std::string& name) const;
 
@@ -238,6 +239,7 @@ public:  // methods
     std::vector<std::string> field_names() const { return get()->field_names(); }
 
     Field add(const Field& field) { return get()->add(field); }
+    void add_fieldset(const FieldSet& fieldset) { return get()->add_fieldset(fieldset); }
 
     bool has(const std::string& name) const { return get()->has(name); }
 

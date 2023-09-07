@@ -69,6 +69,12 @@ Field FieldSetImpl::add(const Field& field) {
     return field;
 }
 
+void FieldSetImpl::add_fieldset(const FieldSet& fieldset) {
+    for( auto& field : fieldset) {
+        add(field);
+    }
+}
+
 bool FieldSetImpl::has(const std::string& name) const {
     return index_.count(name);
 }
@@ -173,9 +179,7 @@ void atlas__FieldSet__add_field(FieldSetImpl* This, FieldImpl* field) {
 void atlas__FieldSet__add_fieldset(FieldSetImpl* This, FieldSetImpl* fieldset) {
     ATLAS_ASSERT(This != nullptr, "Reason: Use of uninitialised atlas_FieldSet");
     ATLAS_ASSERT(fieldset != nullptr, "Reason: Use of uninitialised atlas_FieldSet");
-    for(int i = 0; i < fieldset->size(); i++) {
-        This->add(fieldset->operator[](i));
-    }
+    This->add_fieldset(fieldset);
 }
 
 int atlas__FieldSet__has_field(const FieldSetImpl* This, char* name) {

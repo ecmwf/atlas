@@ -42,13 +42,21 @@ END_TESTSUITE_FINALIZE
 TEST( test_multifield )
     implicit none
 
-    type(atlas_MultiField) :: mfield
-    type(atlas_config)     :: config
+    type(atlas_MultiField)  :: multifield
+    type(atlas_FieldSet)    :: fieldset_1, fieldset_2
+    type(atlas_Field)       :: field
+    type(atlas_config)      :: config
 
+    integer, parameter :: nvar = 5;
     integer, parameter :: nproma  = 16;
     integer, parameter :: nlev    = 100;
     integer, parameter :: ngptot  = 2000;
     type(atlas_Config), dimension(5) :: field_configs
+    character(len=12), parameter, dimension(nvar) :: var_names = (/ &
+        "temperature ", "pressure    ", "density     ", "clv         ", "wind_u      " &
+    /)
+
+    integer :: ivar
 
     config = atlas_Config()
     call config%set("type", "MultiFieldCreatorIFS");
@@ -56,20 +64,18 @@ TEST( test_multifield )
     call config%set("nproma", nproma);
     call config%set("nlev", nlev);
     call config%set("datatype", "real64");
-    field_configs(1) = atlas_Config()
-    field_configs(2) = atlas_Config()
-    field_configs(3) = atlas_Config()
-    field_configs(4) = atlas_Config()
-    field_configs(5) = atlas_Config()
-    call field_configs(1)%set("name", "temperature")
-    call field_configs(2)%set("name", "pressure")
-    call field_configs(3)%set("name", "density")
-    call field_configs(4)%set("name", "clv")
-    call field_configs(4)%set("nvar", 5)
-    call field_configs(5)%set("name", "wind_u")
+    do ivar = 1, 5
+        field_configs(ivar) = atlas_Config()
+        call field_configs(ivar)%set("name", trim(var_names(ivar)))
+    end do
+    call field_configs(4)%set("nvar", 5) ! clv has five subvariables
     call config%set("fields", field_configs)
 
-    mfield = atlas_MultiField(config)
+    multifield = atlas_MultiField(config)
+
+    fieldset_1 = multifield%fieldset()
+    call fieldset_2%add(fieldset_1)
+    field = fieldset_2%field("density")
 END_TEST
 
 ! -----------------------------------------------------------------------------
