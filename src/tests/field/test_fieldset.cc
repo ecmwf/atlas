@@ -71,7 +71,9 @@ CASE("test_fieldset_concatenation") {
     auto field_2_v = array::make_view<double,2>(field_2);
     field_2_v(1,1) = 1.;
 
-    EXPECT_EQ( field_1_v(1,1), 1.);
+    EXPECT(!fieldset_2.has(""));
+    EXPECT_EQ(fieldset_2.field(0).name(), "");
+    EXPECT_EQ(field_1_v(1,1), 1.);
 }
 
 //-----------------------------------------------------------------------------
