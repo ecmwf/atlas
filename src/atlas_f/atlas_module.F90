@@ -121,7 +121,7 @@ use atlas_Partitioner_module, only: &
     & atlas_MatchingMeshPartitioner ! Deprecated ! use atlas_MatchingPartitioner instead
 use atlas_MeshGenerator_module, only: &
     & atlas_MeshGenerator
-#ifdef ATLAS_HAVE_NUMERICS
+#if ATLAS_HAVE_NUMERICS
 use atlas_Method_module, only: &
     & atlas_Method
 use atlas_fvm_module, only: &
