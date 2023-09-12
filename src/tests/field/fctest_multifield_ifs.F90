@@ -46,7 +46,10 @@ TEST( test_multifield )
     type(atlas_FieldSet)    :: fieldset_1, fieldset_2
     type(atlas_Field)       :: field
     type(atlas_config)      :: config
-    real(c_double), pointer :: view(:,:,:)
+    integer, pointer :: fdata_int_2d(:,:)
+    real(c_float),  pointer :: fdata_real32_2d(:,:)
+    real(c_double), pointer :: fdata_real64_2d(:,:)
+    real(c_double), pointer :: fdata_real64(:,:,:)
 
     integer, parameter :: nvar = 5;
     integer, parameter :: nproma  = 16;
@@ -81,13 +84,19 @@ TEST( test_multifield )
     fieldset_2 = atlas_FieldSet()
     call fieldset_2%add(multifield%fieldset())
     field = fieldset_2%field("density")
-    call field%data(view)
-    view(1,1,1) = 2.
+    call field%data(fdata_real64)
+    fdata_real64(1,1,1) = 2.
     call field%rename("dens")
 
+    ! check data access directly though multifield
+    !call multifield%data("density", fdata_real64)
+    call multifield%data("dens", fdata_real64)
+    fdata_real64(1,1,1) = 3.
+
     field = fieldset_1%field("dens")
-    call field%data(view)
-    FCTEST_CHECK_EQUAL(view(1,1,1), 2._c_double)
+    call field%data(fdata_real64)
+    FCTEST_CHECK_EQUAL(fdata_real64(1,1,1), 3._c_double)
+
 END_TEST
 
 ! -----------------------------------------------------------------------------

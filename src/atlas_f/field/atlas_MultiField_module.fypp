@@ -8,10 +8,14 @@
 
 #include "atlas/atlas_f.h"
 
+#:include "atlas/atlas_f.fypp"
+#:include "internals/atlas_generics.fypp"
+
 module atlas_multifield_module
 
 use fckit_owned_object_module, only : fckit_owned_object
 use atlas_Config_module, only: atlas_Config
+use atlas_field_module, only: atlas_field, array_c_to_f
 use atlas_fieldset_module, only: atlas_fieldset
 
 implicit none
@@ -50,11 +54,40 @@ contains
   final :: atlas_MultiField__final_auto
 #endif
 
+#:for rank in ranks
+#:for dtype in dtypes
+  procedure, private :: access_data_${dtype}$_r${rank}$_by_name
+  procedure, private :: access_data_${dtype}$_r${rank}$_by_idx
+#:endfor
+#:endfor
+
+  generic, public :: data => &
+#:for rank in ranks
+#:for dtype in dtypes
+      & access_data_${dtype}$_r${rank}$_by_name, &
+      & access_data_${dtype}$_r${rank}$_by_idx, &
+#:endfor
+#:endfor
+      & dummy
+
+  procedure, private :: dummy
+
 END TYPE
 
 interface atlas_MultiField
   module procedure atlas_MultiField__cptr
   module procedure atlas_MultiField__create
+!#:for dtype in integer_dtypes
+!  module procedure atlas_MultiField__create_name_kind_shape_${dtype}$
+!  module procedure atlas_MultiField__create_kind_shape_${dtype}$
+!#:endfor
+
+!#:for rank in ranks
+!#:for dtype in dtypes
+!  module procedure atlas_MultiField__wrap_${dtype}$_r${rank}$
+!  module procedure atlas_MultiField__wrap_name_${dtype}$_r${rank}$
+!#:endfor
+!#:endfor
 end interface
 
 private :: fckit_owned_object
@@ -121,6 +154,50 @@ end subroutine
 #endif
 
 !-------------------------------------------------------------------------------
+
+#:for rank  in ranks
+#:for dtype,ftype,ctype in types
+subroutine access_data_${dtype}$_r${rank}$_by_name(this, name, field)
+  use fckit_c_interop_module, only: c_str
+  use atlas_fieldset_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
+  class(atlas_MultiField), intent(in) :: this
+  character(len=*), intent(in) :: name
+  ${ftype}$, pointer, intent(inout) :: field(${dim[rank]}$)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  type(atlas_FieldSet) :: fset
+  fset = this%fieldset()
+  call atlas__FieldSet__data_${ctype}$_specf(fset%CPTR_PGIBUG_A, c_str(name), field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr, rank, shape_cptr, strides_cptr, field)
+end subroutine
+subroutine access_data_${dtype}$_r${rank}$_by_idx(this, idx, field)
+  use fckit_c_interop_module, only: c_str
+  use atlas_fieldset_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
+  class(atlas_MultiField), intent(in) :: this
+  integer, intent(in) :: idx
+  ${ftype}$, pointer, intent(inout) :: field(${dim[rank]}$)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  type(atlas_FieldSet) :: fset
+  fset = this%fieldset()
+  call atlas__FieldSet__data_${ctype}$_specf_by_idx(fset%CPTR_PGIBUG_A, idx-1, field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr, rank, shape_cptr, strides_cptr, field)
+end subroutine
+!-------------------------------------------------------------------------------
+#:endfor
+#:endfor
+
+subroutine dummy(this)
+  use atlas_fieldset_c_binding
+  class(atlas_MultiField), intent(in) :: this
+  FCKIT_SUPPRESS_UNUSED(this)
+end subroutine
 
 end module atlas_multifield_module
 
