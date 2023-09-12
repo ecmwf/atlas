@@ -98,6 +98,24 @@ CASE("StructuredMeshGenerator") {
     mesh.polygon().outputPythonScript(grid().name()+"_polygons_1.py");
 }
 
+CASE("DelaunayMeshGenerator") {
+if( ATLAS_HAVE_TESSELATION ) {
+    Fixture fixture;
+
+    MeshGenerator meshgen{"delaunay", option::mpi_comm("split")};
+    Mesh mesh = meshgen.generate(grid_CS());
+    EXPECT_EQUAL(mesh.nb_parts(),mpi::comm("split").size());
+    EXPECT_EQUAL(mesh.part(),mpi::comm("split").rank());
+    EXPECT_EQUAL(mesh.mpi_comm(),"split");
+    EXPECT_EQUAL(mpi::comm().name(),"world");
+    output::Gmsh gmsh(grid_CS().name()+"_delaunay.msh",util::Config("coordinates","xyz"));
+    gmsh.write(mesh);
+}
+else {
+    Log::warning() << "Not testing DelaunayMeshGenerator as TESSELATION feature is OFF" << std::endl;
+}
+}
+
 CASE("CubedSphereDualMeshGenerator") {
     Fixture fixture;
 
@@ -175,7 +193,6 @@ CASE("MatchingPartitioner") {
     EXPECT_NO_THROW(mesh_B.polygons());
     mesh_B.polygon().outputPythonScript(grid_B().name()+"_polygons_3.py");
 }
-
 
 
 }  // namespace test
