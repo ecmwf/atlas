@@ -43,10 +43,10 @@ namespace detail {
 class PointCloud : public functionspace::FunctionSpaceImpl {
 public:
     template <typename Point>
-    PointCloud(const std::vector<Point>&);
-    PointCloud(const Field& lonlat);
-    PointCloud(const Field& lonlat, const Field& ghost);
-    PointCloud(const FieldSet&);  // assuming lonlat ghost ridx and partition present
+    PointCloud(const std::vector<Point>&, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const Field& lonlat, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const Field& lonlat, const Field& ghost, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const FieldSet&, const eckit::Configuration& = util::NoConfig());  // assuming lonlat ghost ridx and partition present
     PointCloud(const Grid&, const eckit::Configuration& = util::NoConfig());
     PointCloud(const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig());
     ~PointCloud() override {}

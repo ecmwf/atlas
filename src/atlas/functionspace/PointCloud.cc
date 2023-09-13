@@ -46,7 +46,7 @@ namespace functionspace {
 namespace detail {
 
 template <>
-PointCloud::PointCloud(const std::vector<PointXY>& points) {
+PointCloud::PointCloud(const std::vector<PointXY>& points, const eckit::Configuration& config) {
     lonlat_     = Field("lonlat", array::make_datatype<double>(), array::make_shape(points.size(), 2));
     auto lonlat = array::make_view<double, 2>(lonlat_);
     for (idx_t j = 0, size = points.size(); j < size; ++j) {
@@ -56,7 +56,7 @@ PointCloud::PointCloud(const std::vector<PointXY>& points) {
 }
 
 template <>
-PointCloud::PointCloud(const std::vector<PointXYZ>& points) {
+PointCloud::PointCloud(const std::vector<PointXYZ>& points, const eckit::Configuration& config) {
     lonlat_       = Field("lonlat", array::make_datatype<double>(), array::make_shape(points.size(), 2));
     vertical_     = Field("vertical", array::make_datatype<double>(), array::make_shape(points.size()));
     auto lonlat   = array::make_view<double, 2>(lonlat_);
@@ -68,13 +68,13 @@ PointCloud::PointCloud(const std::vector<PointXYZ>& points) {
     }
 }
 
-PointCloud::PointCloud(const Field& lonlat): lonlat_(lonlat) {}
+PointCloud::PointCloud(const Field& lonlat, const eckit::Configuration& config): lonlat_(lonlat) {}
 
-PointCloud::PointCloud(const Field& lonlat, const Field& ghost): lonlat_(lonlat), ghost_(ghost) {
+PointCloud::PointCloud(const Field& lonlat, const Field& ghost, const eckit::Configuration& config): lonlat_(lonlat), ghost_(ghost) {
     setupHaloExchange();
 }
 
-PointCloud::PointCloud(const FieldSet & flds): lonlat_(flds["lonlat"]) {
+PointCloud::PointCloud(const FieldSet& flds, const eckit::Configuration& config): lonlat_(flds["lonlat"]) {
     if (flds.has("ghost")) {
         ghost_ = flds["ghost"];
     }
