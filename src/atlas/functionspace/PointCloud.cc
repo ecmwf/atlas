@@ -45,8 +45,16 @@ namespace functionspace {
 
 namespace detail {
 
+static std::string get_mpi_comm(const eckit::Configuration& config) {
+    if(config.has("mpi_comm")) {
+        return config.getString("mpi_comm");
+    }
+    return mpi::comm().name();
+}
+
 template <>
 PointCloud::PointCloud(const std::vector<PointXY>& points, const eckit::Configuration& config) {
+    mpi_comm_ = get_mpi_comm(config);
     lonlat_     = Field("lonlat", array::make_datatype<double>(), array::make_shape(points.size(), 2));
     auto lonlat = array::make_view<double, 2>(lonlat_);
     for (idx_t j = 0, size = points.size(); j < size; ++j) {
@@ -57,6 +65,7 @@ PointCloud::PointCloud(const std::vector<PointXY>& points, const eckit::Configur
 
 template <>
 PointCloud::PointCloud(const std::vector<PointXYZ>& points, const eckit::Configuration& config) {
+    mpi_comm_ = get_mpi_comm(config);
     lonlat_       = Field("lonlat", array::make_datatype<double>(), array::make_shape(points.size(), 2));
     vertical_     = Field("vertical", array::make_datatype<double>(), array::make_shape(points.size()));
     auto lonlat   = array::make_view<double, 2>(lonlat_);
@@ -68,13 +77,17 @@ PointCloud::PointCloud(const std::vector<PointXYZ>& points, const eckit::Configu
     }
 }
 
-PointCloud::PointCloud(const Field& lonlat, const eckit::Configuration& config): lonlat_(lonlat) {}
+PointCloud::PointCloud(const Field& lonlat, const eckit::Configuration& config): lonlat_(lonlat) {
+        mpi_comm_ = get_mpi_comm(config);
+}
 
 PointCloud::PointCloud(const Field& lonlat, const Field& ghost, const eckit::Configuration& config): lonlat_(lonlat), ghost_(ghost) {
+    mpi_comm_ = get_mpi_comm(config);
     setupHaloExchange();
 }
 
 PointCloud::PointCloud(const FieldSet& flds, const eckit::Configuration& config): lonlat_(flds["lonlat"]) {
+    mpi_comm_ = get_mpi_comm(config);
     if (flds.has("ghost")) {
         ghost_ = flds["ghost"];
     }
@@ -93,6 +106,7 @@ PointCloud::PointCloud(const FieldSet& flds, const eckit::Configuration& config)
 }
 
 grid::Partitioner make_partitioner(const Grid& grid, const eckit::Configuration& config) {
+    auto mpi_comm = get_mpi_comm(config);
     auto partitioner = grid.partitioner();
     if( config.has("partitioner") ) {
         partitioner.set("type",config.getString("partitioner"));
@@ -100,6 +114,7 @@ grid::Partitioner make_partitioner(const Grid& grid, const eckit::Configuration&
     if( not partitioner.has("type") ) {
         partitioner.set("type","equal_regions");
     }
+    partitioner.set("mpi_comm",mpi_comm);
     return grid::Partitioner(partitioner);
 }
 
@@ -109,21 +124,23 @@ PointCloud::PointCloud(const Grid& grid, const eckit::Configuration& config) :
 
 PointCloud::PointCloud(const Grid& grid, const grid::Partitioner& _partitioner, const eckit::Configuration& config) {
     ATLAS_TRACE("PointCloud(grid,partitioner,config)");
-    int part = mpi::rank();
+    mpi_comm_ = get_mpi_comm(config);
+    auto& comm = mpi::comm(mpi_comm_);
     double halo_radius;
     config.get("halo_radius", halo_radius = 0.);
 
     grid::Partitioner partitioner(_partitioner);
     if ( not partitioner ) {
-        partitioner = grid::Partitioner("equal_regions");
+        partitioner = grid::Partitioner("equal_regions", util::Config("mpi_comm",mpi_comm_));
     }
+    part_ = comm.rank();
 
     nb_partitions_ = partitioner.nb_partitions();
     auto distribution = partitioner.partition(grid);
-    auto size_owned = distribution.nb_pts()[part];
+    auto size_owned = distribution.nb_pts()[part_];
     size_owned_ = size_owned;
 
-    if (halo_radius == 0. || mpi::size() == 1) {
+    if (halo_radius == 0. || nb_partitions_ == 1) {
         idx_t size_halo = size_owned;
         ATLAS_ASSERT(size_owned > 0);
         lonlat_       = Field("lonlat", array::make_datatype<double>(), array::make_shape(size_halo, 2));
@@ -136,12 +153,12 @@ PointCloud::PointCloud(const Grid& grid, const grid::Partitioner& _partitioner, 
         auto ridx = array::make_indexview<idx_t,1>(remote_index_);
         auto gidx = array::make_view<gidx_t,1>(global_index_);
         array::make_view<int,1>(ghost_).assign(0);
-        array::make_view<int,1>(partition_).assign(part);
+        array::make_view<int,1>(partition_).assign(part_);
 
         idx_t j{0};
         gidx_t g{0};
         for (auto p : grid.lonlat()) {
-            if( distribution.partition(g++) == part ) {
+            if( distribution.partition(g++) == part_ ) {
                 gidx(j) = g+1;
                 ridx(j) = j;
                 lonlat(j, 0) = p.lon();
@@ -167,7 +184,7 @@ PointCloud::PointCloud(const Grid& grid, const grid::Partitioner& _partitioner, 
                 kdtree.reserve(grid.size());
                 idx_t j{0};
                 for (auto p : grid.lonlat()) {
-                    if( distribution.partition(j) == part ) {
+                    if( distribution.partition(j) == part_ ) {
                         owned_lonlat.emplace_back(p);
                         owned_grid_idx.emplace_back(j);
                     }
@@ -213,7 +230,7 @@ PointCloud::PointCloud(const Grid& grid, const grid::Partitioner& _partitioner, 
                     lonlat(j, 0) = p.lon();
                     lonlat(j, 1) = p.lat();
                     partition(j) = distribution.partition(g);
-                    ghost(j) = partition(j) != part;
+                    ghost(j) = partition(j) != part_;
                     glb_idx(j) = g+1;
                     ++j;
                 }
@@ -446,7 +463,7 @@ void PointCloud::haloExchange(const Field& field, bool on_device) const {
 
 void PointCloud::create_remote_index() const {
     ATLAS_TRACE();
-    const eckit::mpi::Comm& comm = atlas::mpi::comm();
+    const auto& comm = mpi::comm(mpi_comm_);
     const int mpi_rank = comm.rank();
     const int mpi_size = comm.size();
     auto size_halo = lonlat_.shape(0);
@@ -690,16 +707,14 @@ void PointCloud::create_remote_index() const {
 
 void PointCloud::setupHaloExchange() {
     ATLAS_TRACE();
-    const eckit::mpi::Comm& comm = atlas::mpi::comm();
-    const int mpi_rank = comm.rank();
-    const int mpi_size = comm.size();
-
-
     if (ghost_ and partition_ and global_index_ and not remote_index_) {
         create_remote_index();
     }
     else if (not partition_ or not remote_index_) {
         ATLAS_TRACE("do setup");
+        const auto& comm = mpi::comm(mpi_comm_);
+        const int mpi_rank = comm.rank();
+        const int mpi_size = comm.size();
 
         auto lonlat_v = array::make_view<double, 2>(lonlat_);
         // data structure containing a flag to identify the 'ghost points';
@@ -826,11 +841,11 @@ void PointCloud::setupHaloExchange() {
     ATLAS_ASSERT(ghost_.size() == partition_.size());
  
     halo_exchange_.reset(new parallel::HaloExchange());
-    halo_exchange_->setup(array::make_view<int, 1>(partition_).data(),
+    halo_exchange_->setup(mpi_comm_,
+                          array::make_view<int, 1>(partition_).data(),
                           array::make_view<idx_t, 1>(remote_index_).data(),
                           REMOTE_IDX_BASE,
                           ghost_.size());
-
 }
 
 void PointCloud::adjointHaloExchange(const FieldSet& fieldset, bool on_device) const {
@@ -869,25 +884,25 @@ void PointCloud::adjointHaloExchange(const Field& field, bool) const {
 PointCloud::PointCloud(const FunctionSpace& functionspace):
     FunctionSpace(functionspace), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
 
-PointCloud::PointCloud(const Field& field):
-    FunctionSpace(new detail::PointCloud(field)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
+PointCloud::PointCloud(const Field& field, const eckit::Configuration& config):
+    FunctionSpace(new detail::PointCloud(field,config)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
 
-PointCloud::PointCloud(const Field& field1, const Field& field2):
-    FunctionSpace(new detail::PointCloud(field1, field2)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
+PointCloud::PointCloud(const Field& field1, const Field& field2, const eckit::Configuration& config):
+    FunctionSpace(new detail::PointCloud(field1, field2, config)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
 
-PointCloud::PointCloud(const FieldSet& fset):
-    FunctionSpace(new detail::PointCloud(fset)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
+PointCloud::PointCloud(const FieldSet& fset, const eckit::Configuration& config):
+    FunctionSpace(new detail::PointCloud(fset, config)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
 
-PointCloud::PointCloud(const std::vector<PointXY>& points):
-    FunctionSpace(new detail::PointCloud(points)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
+PointCloud::PointCloud(const std::vector<PointXY>& points, const eckit::Configuration& config):
+    FunctionSpace(new detail::PointCloud(points, config)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
 
-PointCloud::PointCloud(const std::vector<PointXYZ>& points):
-    FunctionSpace(new detail::PointCloud(points)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
+PointCloud::PointCloud(const std::vector<PointXYZ>& points, const eckit::Configuration& config):
+    FunctionSpace(new detail::PointCloud(points, config)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
 
-PointCloud::PointCloud(const std::initializer_list<std::initializer_list<double>>& points):
+PointCloud::PointCloud(const std::initializer_list<std::initializer_list<double>>& points, const eckit::Configuration& config):
     FunctionSpace((points.begin()->size() == 2
-                       ? new detail::PointCloud{std::vector<PointXY>(points.begin(), points.end())}
-                       : new detail::PointCloud{std::vector<PointXYZ>(points.begin(), points.end())})),
+                       ? new detail::PointCloud{std::vector<PointXY>(points.begin(), points.end()), config}
+                       : new detail::PointCloud{std::vector<PointXYZ>(points.begin(), points.end()), config})),
     functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
 
 PointCloud::PointCloud(const Grid& grid, const eckit::Configuration& config):

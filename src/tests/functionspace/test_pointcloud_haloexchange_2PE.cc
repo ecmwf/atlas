@@ -35,8 +35,8 @@ double innerproductwithhalo(const Field& f1, const Field& f2) {
             sum += view1(jn, jl) * view2(jn, jl);
         }
     }
-
-    atlas::mpi::comm().allReduceInPlace(sum, eckit::mpi::sum());
+    auto& comm = atlas::mpi::comm(f1.functionspace().mpi_comm());
+    comm.allReduceInPlace(sum, eckit::mpi::sum());
     return sum;
 }
 
@@ -111,8 +111,19 @@ CASE("test_halo_exchange_01") {
 
   remote_indexv.assign({0, 1, 2, 3, 1, 0, 0, 2, 2, 3, 3, 1});
 
-
-  if (atlas::mpi::rank() == 0) {
+  int color = 0;
+  if( mpi::rank() >= mpi::size() - 2) {
+    color = 1;
+  }
+  auto& comm = mpi::comm().split(color,"split");
+  if( color == 0 ) {
+    eckit::mpi::deleteComm("split");
+    return;
+  }
+  util::Config mpi_comm("mpi_comm","split");
+  int mpi_rank = comm.rank();
+  
+  if (mpi_rank == 0) {
     // center followed by clockwise halo starting from top left
     lonlatv.assign({-45.0,  45.0,  45.0,  45.0,    // center, first row
                     -45.0, -45.0,  45.0, -45.0,    // center, second row
@@ -126,7 +137,7 @@ CASE("test_halo_exchange_01") {
 
 
 
-  } else if (atlas::mpi::rank() == 1) {
+  } else if (mpi_rank == 1) {
     // center followed by clockwise halo starting from top left
     lonlatv.assign({135.0,  45.0, 225.0,  45.0,
                     135.0, -45.0, 225.0, -45.0,
@@ -146,7 +157,7 @@ CASE("test_halo_exchange_01") {
   fset.add(remote_index);
   fset.add(partition);
 
-  auto fs2 = functionspace::PointCloud(fset);
+  auto fs2 = functionspace::PointCloud(fset, mpi_comm);
   Field f1 = fs2.createField<double>(option::name("f1") | option::levels(2));
   Field f2 = fs2.createField<double>(option::name("f2") | option::levels(2));
   auto f1v = array::make_view<double, 2>(f1);
@@ -158,7 +169,7 @@ CASE("test_halo_exchange_01") {
     for (idx_t l = 0; l < f2v.shape(1); ++l) {
       auto ghostv2 = array::make_view<int, 1>(fs2.ghost());
       if (ghostv2(i) == 0) {
-        f1v(i, l) = (atlas::mpi::rank() +1) * 10.0  + i;
+        f1v(i, l) = (mpi_rank +1) * 10.0  + i;
         f2v(i, l) =  f1v(i, l);
       }
     }
@@ -173,8 +184,8 @@ CASE("test_halo_exchange_01") {
 
   double sum2 = innerproductwithhalo(f1, f2);
 
-  atlas::mpi::comm().allReduceInPlace(sum1, eckit::mpi::sum());
-  atlas::mpi::comm().allReduceInPlace(sum2, eckit::mpi::sum());
+  comm.allReduceInPlace(sum1, eckit::mpi::sum());
+  comm.allReduceInPlace(sum2, eckit::mpi::sum());
   EXPECT(std::abs(sum1 - sum2)/ std::abs(sum1) < tolerance);
   atlas::Log::info() << "adjoint test passed :: "
                      << "sum1 " << sum1 << " sum2 " << sum2 << " normalised difference "
@@ -189,6 +200,9 @@ CASE("test_halo_exchange_01") {
   }
   atlas::Log::info() << "values from halo followed by halo adjoint are as expected "
                      << std::endl;
+
+  eckit::mpi::deleteComm("split");
+
 }
 
 
@@ -202,7 +216,19 @@ CASE("test_halo_exchange_02") {
   auto lonlatv = array::make_view<double, 2>(lonlat);
   auto ghostv = array::make_view<int, 1>(ghost);
 
-  if (atlas::mpi::rank() == 0) {
+  int color = 0;
+  if( mpi::rank() >= mpi::size() - 2) {
+    color = 1;
+  }
+  auto& comm = mpi::comm().split(color,"split");
+  if( color == 0 ) {
+    eckit::mpi::deleteComm("split");
+    return;
+  }
+  util::Config mpi_comm("mpi_comm","split");
+  int mpi_rank = comm.rank();
+
+  if (mpi_rank == 0) {
     // center followed by clockwise halo starting from top left
     lonlatv.assign({-45.0,  45.0,  45.0,  45.0,    // center, first row
                     -45.0, -45.0,  45.0, -45.0,    // center, second row
@@ -214,7 +240,7 @@ CASE("test_halo_exchange_02") {
     ghostv.assign({ 0, 0, 0, 0,
                     1, 1, 1, 1, 1, 1, 1, 1});
 
-  } else if (atlas::mpi::rank() == 1) {
+  } else if (mpi_rank == 1) {
     // center followed by clockwise halo starting from top left
     lonlatv.assign({135.0,  45.0, 225.0,  45.0,
                     135.0, -45.0, 225.0, -45.0,
@@ -228,7 +254,7 @@ CASE("test_halo_exchange_02") {
   }
 
 
-  auto pcfs = functionspace::PointCloud(lonlat, ghost);
+  auto pcfs = functionspace::PointCloud(lonlat, ghost, mpi_comm);
 
   Field f1 = pcfs.createField<double>(option::name("f1") | option::levels(2));
   Field f2 = pcfs.createField<double>(option::name("f2") | option::levels(2));
@@ -242,7 +268,7 @@ CASE("test_halo_exchange_02") {
     for (idx_t l = 0; l < f2v.shape(1); ++l) {
       auto ghostv2 = array::make_view<int, 1>(pcfs.ghost());
       if (ghostv2(i) == 0) {
-        f1v(i, l) = (atlas::mpi::rank() +1) * 10.0  + i;
+        f1v(i, l) = (mpi_rank +1) * 10.0  + i;
         f2v(i, l) =  f1v(i, l);
       }
     }
@@ -257,8 +283,8 @@ CASE("test_halo_exchange_02") {
 
   double sum2 = innerproductwithhalo(f1, f2);
 
-  atlas::mpi::comm().allReduceInPlace(sum1, eckit::mpi::sum());
-  atlas::mpi::comm().allReduceInPlace(sum2, eckit::mpi::sum());
+  comm.allReduceInPlace(sum1, eckit::mpi::sum());
+  comm.allReduceInPlace(sum2, eckit::mpi::sum());
   EXPECT(std::abs(sum1 - sum2)/ std::abs(sum1) < tolerance);
   atlas::Log::info() << "adjoint test passed :: "
                      << "sum1 " << sum1 << " sum2 " << sum2 << " normalised difference "
@@ -273,6 +299,8 @@ CASE("test_halo_exchange_02") {
   }
   atlas::Log::info() << "values from halo followed by halo adjoint are as expected "
                      << std::endl;
+
+  eckit::mpi::deleteComm("split");
 
 }
 
