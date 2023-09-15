@@ -56,6 +56,7 @@ public:
     const Field& vertical() const { return vertical_; }
     Field ghost() const override;
     Field remote_index() const override { return remote_index_; }
+    Field global_index() const override { return global_index_; }
     virtual idx_t size() const override { return lonlat_.shape(0); }
 
     using FunctionSpaceImpl::createField;
@@ -154,6 +155,7 @@ private:
     Field vertical_;
     mutable Field ghost_;
     Field remote_index_;
+    Field global_index_;
     Field partition_;
     std::unique_ptr<parallel::HaloExchange> halo_exchange_;
     idx_t levels_{0};

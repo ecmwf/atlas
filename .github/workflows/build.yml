@@ -194,6 +194,12 @@ jobs:
         ${ATLAS_TOOLS}/install-fftw.sh --version 3.3.10 --prefix ${DEPS_DIR}/fftw
         echo "FFTW_ROOT=${DEPS_DIR}/fftw" >> $GITHUB_ENV
 
+    - name: Install Qhull
+      shell: bash -eux {0}
+      run: |
+        ${ATLAS_TOOLS}/install-qhull.sh --version 8.1-alpha3 --prefix ${DEPS_DIR}/qhull
+        echo "Qhull_ROOT=${DEPS_DIR}/qhull" >> $GITHUB_ENV
+
     - name: Install LZ4
       if: "!contains( matrix.compiler, 'nvhpc' )"
       run: |

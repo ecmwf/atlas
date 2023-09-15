@@ -1248,8 +1248,8 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
     // Now handle elements
     // -------------------
 
-    mesh.cells().add(new mesh::temporary::Quadrilateral(), nquads);
-    mesh.cells().add(new mesh::temporary::Triangle(), ntriags);
+    mesh.cells().add(mesh::ElementType::create("Quadrilateral"), nquads);
+    mesh.cells().add(mesh::ElementType::create("Triangle"), ntriags);
 
     mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
     array::ArrayView<gidx_t, 1> cells_glb_idx             = array::make_view<gidx_t, 1>(mesh.cells().global_index());

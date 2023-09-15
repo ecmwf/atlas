@@ -327,7 +327,7 @@ void NodalCubedSphereMeshGenerator::generate(const Grid& grid, const grid::Distr
     }
 
     // Cells in mesh
-    mesh.cells().add(new mesh::temporary::Quadrilateral(), nTiles * N * N);
+    mesh.cells().add(mesh::ElementType::create("Quadrilateral"), nTiles * N * N);
     //int quad_begin  = mesh.cells().elements( 0 ).begin();
     auto cells_part = array::make_view<int, 1>(mesh.cells().partition());
     auto cells_gidx = array::make_view<gidx_t, 1>(mesh.cells().global_index());

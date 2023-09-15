@@ -525,8 +525,8 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     //      array::ArrayView<int,   1> ghost         ( nodes.ghost() );
     //      array::ArrayView<int,   1> flags         ( nodes.flags() );
     // - define cells (only quadrilaterals for now) with
-    //      mesh.cells().add( new mesh::temporary::Quadrilateral(), nquads  );
-    //      mesh.cells().add( new mesh::temporary::Pentagon(), npents  );
+    //      mesh.cells().add( mesh::ElementType::create("Quadrilateral"), nquads  );
+    //      mesh.cells().add( mesh::ElementType::create("Pentagon"), npents  );
     //    further define cells with
     //      array::ArrayView<gidx_t,1> cells_glb_idx( mesh.cells().global_index()
     //      );
@@ -803,11 +803,17 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     auto halo          = array::make_view<int, 1>(nodes.halo());
     auto flags         = array::make_view<int, 1>(nodes.flags());
 
+    int quad_begin;
+    int pent_begin;
+
     // define cells and associated properties
-    mesh.cells().add(new mesh::temporary::Quadrilateral(), nquads);
-    mesh.cells().add(new mesh::temporary::Pentagon(), npents);
-    int quad_begin          = mesh.cells().elements(0).begin();
-    int pent_begin          = mesh.cells().elements(1).begin();
+    mesh.cells().add(mesh::ElementType::create("Quadrilateral"), nquads);
+    quad_begin = mesh.cells().elements(0).begin();
+    pent_begin = quad_begin + mesh.cells().elements(0).size();
+    if (pole_elements == "pentagons") {
+        mesh.cells().add(mesh::ElementType::create("Pentagon"), npents);
+        pent_begin = mesh.cells().elements(1).begin();
+    }
     auto cells_part         = array::make_view<int, 1>(mesh.cells().partition());
     auto cells_glb_idx      = array::make_view<gidx_t, 1>(mesh.cells().global_index());
     auto& node_connectivity = mesh.cells().node_connectivity();

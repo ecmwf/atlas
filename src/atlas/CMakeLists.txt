@@ -341,6 +341,10 @@ mesh/Connectivity.cc
 mesh/Connectivity.h
 mesh/ElementType.cc
 mesh/ElementType.h
+mesh/elementtypes/Classification.h
+mesh/elementtypes/Triangle.h
+mesh/elementtypes/Quadrilateral.h
+mesh/elementtypes/Pentagon.h
 mesh/Elements.cc
 mesh/Elements.h
 mesh/Halo.cc
@@ -815,6 +819,10 @@ util/vector.h
 util/mdspan.h
 util/detail/mdspan/mdspan.hpp
 util/VectorOfAbstract.h
+util/QhullSphericalTriangulation.h
+util/QhullSphericalTriangulation.cc
+util/CGALSphericalTriangulation.h
+util/CGALSphericalTriangulation.cc
 util/detail/Cache.h
 util/detail/KDTree.h
 util/function/MDPI_functions.h
@@ -928,6 +936,7 @@ ecbuild_add_library( TARGET atlas
     ${CGAL_LIBRARIES}
     ${FFTW_LIBRARIES}
     ${PROJ_LIBRARIES}
+    ${QHULL_LIBRARIES}
 
   PUBLIC_LIBS
     eckit

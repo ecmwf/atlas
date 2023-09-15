@@ -1,16 +1,32 @@
 if( atlas_HAVE_ATLAS_FUNCTIONSPACE )
 ### tesselation ...
 
-set(Boost_USE_MULTITHREADED      ON )
-
 ecbuild_add_option( FEATURE TESSELATION
                     DESCRIPTION "Support for unstructured mesh generation"
                     CONDITION atlas_HAVE_ATLAS_FUNCTIONSPACE
+                    REQUIRED_PACKAGES "Qhull" )
+if(HAVE_TESSELATION)
+  set(QHULL_LIBRARIES Qhull::qhullcpp Qhull::qhull_r)
+  set(atlas_HAVE_QHULL 1)
+else()
+  set(atlas_HAVE_QHULL 0)
+endif()
+
+### NOTE
+#
+# CGAL is deprecated as TESSELATION backend. Qhull is to be used instead.
+# To use CGAL regardless, turn ON CGAL feature (-DENABLE_CGAL=ON)
+
+set(Boost_USE_MULTITHREADED ON )
+ecbuild_add_option( FEATURE CGAL
+                    DEFAULT OFF
+                    DESCRIPTION "Support for unstructured mesh generation"
+                    CONDITION atlas_HAVE_ATLAS_FUNCTIONSPACE
                     REQUIRED_PACKAGES
-                      "CGAL QUIET"
+                      "CGAL"
                       "Boost VERSION 1.45.0 QUIET" )
 
-if( HAVE_TESSELATION )
+if( HAVE_CGAL )
     list( APPEND CGAL_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} )
     if ( TARGET CGAL::CGAL )
       list( APPEND CGAL_LIBRARIES CGAL::CGAL ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
@@ -27,7 +43,7 @@ if( HAVE_TESSELATION )
     endif()
 endif()
 
-if( NOT HAVE_TESSELATION )
+if( NOT HAVE_CGAL )
     unset( CGAL_LIBRARIES )
     unset( CGAL_INCLUDE_DIRS )
 endif()

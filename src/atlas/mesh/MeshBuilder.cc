@@ -223,10 +223,10 @@ Mesh MeshBuilder::operator()(size_t nb_nodes, const double lons[], const double 
     const bool add_quads = (sum_nb_quads > 0);
 
     if (add_tris) {
-        mesh.cells().add(new mesh::temporary::Triangle(), nb_tris);
+        mesh.cells().add(mesh::ElementType::create("Triangle"), nb_tris);
     }
     if (add_quads) {
-        mesh.cells().add(new mesh::temporary::Quadrilateral(), nb_quads);
+        mesh.cells().add(mesh::ElementType::create("Quadrilateral"), nb_quads);
     }
 
     atlas::mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();

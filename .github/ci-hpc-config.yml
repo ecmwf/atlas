@@ -12,6 +12,7 @@ mpi_on:
     dependencies:
       - ecmwf/ecbuild@develop
       - ecmwf/eckit@develop
+      - ecmwf/fckit@develop
     parallel: 64
     ntasks: 16
 
@@ -24,4 +25,5 @@ mpi_off:
     dependencies:
       - ecmwf/ecbuild@develop
       - ecmwf/eckit@develop
+      - ecmwf/fckit@develop
     parallel: 64
