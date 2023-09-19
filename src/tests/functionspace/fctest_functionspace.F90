@@ -628,8 +628,8 @@ write(0,*) "after: owners = " , fs%owners()
 
 field2 = fs%create_field(name="field2",kind=atlas_real(8),levels=3,variables=2)
 
-FCTEST_CHECK_EQUAL( field%shape(), ([5,int(grid%size())]) )
-FCTEST_CHECK_EQUAL( field2%shape(), ([2,3,int(grid%size())]) )
+FCTEST_CHECK_EQUAL( field%shape(), ([5,int(fs%size())]) )
+FCTEST_CHECK_EQUAL( field2%shape(), ([2,3,int(fs%size())]) )
 
 #ifndef _CRAYFTN
 FCTEST_CHECK_EQUAL( field%owners(), 1 )

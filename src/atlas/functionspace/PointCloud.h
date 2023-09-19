@@ -23,6 +23,7 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Point.h"
+#include "atlas/grid/Partitioner.h"
 
 namespace atlas {
 namespace parallel {
@@ -46,7 +47,8 @@ public:
     PointCloud(const Field& lonlat);
     PointCloud(const Field& lonlat, const Field& ghost);
     PointCloud(const FieldSet&);  // assuming lonlat ghost ridx and partition present
-    PointCloud(const Grid&);
+    PointCloud(const Grid&, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig());
     ~PointCloud() override {}
     std::string type() const override { return "PointCloud"; }
     operator bool() const override { return true; }
@@ -149,14 +151,17 @@ private:
 
     void set_field_metadata(const eckit::Configuration& config, Field& field) const;
 
+    void create_remote_index() const;
 
 private:
     Field lonlat_;
     Field vertical_;
     mutable Field ghost_;
-    Field remote_index_;
+    mutable Field remote_index_;
     Field global_index_;
     Field partition_;
+    idx_t size_owned_;
+    idx_t max_glb_idx_{0};
     std::unique_ptr<parallel::HaloExchange> halo_exchange_;
     idx_t levels_{0};
 
@@ -179,7 +184,8 @@ public:
     PointCloud(const std::vector<PointXY>&);
     PointCloud(const std::vector<PointXYZ>&);
     PointCloud(const std::initializer_list<std::initializer_list<double>>&);
-    PointCloud(const Grid&);
+    PointCloud(const Grid&, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig());
 
     operator bool() const { return valid(); }
     bool valid() const { return functionspace_; }
