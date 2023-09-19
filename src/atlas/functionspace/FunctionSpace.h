@@ -91,6 +91,8 @@ public:
 
     Field remote_index() const;
 
+    Field partition() const;
+
     const parallel::GatherScatter& gather() const;
     const parallel::GatherScatter& scatter() const;
 };

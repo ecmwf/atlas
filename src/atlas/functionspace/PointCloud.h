@@ -59,6 +59,7 @@ public:
     Field ghost() const override;
     Field remote_index() const override { return remote_index_; }
     Field global_index() const override { return global_index_; }
+    Field partition() const override { return partition_; }
     virtual idx_t size() const override { return lonlat_.shape(0); }
 
     using FunctionSpaceImpl::createField;

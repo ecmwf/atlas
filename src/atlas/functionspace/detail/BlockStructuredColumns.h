@@ -104,7 +104,7 @@ public:
     Field lonlat() const override { return structuredcolumns_->lonlat(); }
     Field xy() const { return structuredcolumns_->xy(); }
     Field z() const { return structuredcolumns_->z(); }
-    Field partition() const { return structuredcolumns_->partition(); }
+    Field partition() const override { return structuredcolumns_->partition(); }
     Field global_index() const override { return structuredcolumns_->global_index(); }
     Field remote_index() const override { return structuredcolumns_->remote_index(); }
     Field index_i() const { return structuredcolumns_->index_i(); }

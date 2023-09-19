@@ -91,6 +91,8 @@ public:
 
     Field remote_index() const override;
 
+    Field partition() const override;
+
 private:  // methods
     idx_t config_size(const eckit::Configuration& config) const;
     array::DataType config_datatype(const eckit::Configuration&) const;

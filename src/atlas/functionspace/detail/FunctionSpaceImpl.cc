@@ -65,6 +65,10 @@ Field FunctionSpaceImpl::remote_index() const {
     ATLAS_NOTIMPLEMENTED;
 }
 
+Field FunctionSpaceImpl::partition() const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
 Field FunctionSpaceImpl::global_index() const {
     ATLAS_NOTIMPLEMENTED;
 }

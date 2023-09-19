@@ -78,6 +78,10 @@ Field FunctionSpace::remote_index() const {
     return get()->remote_index();
 }
 
+Field FunctionSpace::partition() const {
+    return get()->partition();
+}
+
 void FunctionSpace::haloExchange(const FieldSet& fields, bool on_device) const {
     get()->haloExchange(fields, on_device);
 }

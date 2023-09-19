@@ -103,6 +103,8 @@ public:
 
     virtual atlas::Field remote_index() const;
 
+    virtual atlas::Field partition() const;
+
     virtual atlas::Field global_index() const;
 
     virtual const util::PartitionPolygons& polygons() const;

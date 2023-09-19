@@ -268,6 +268,8 @@ public:
 
     Field remote_index() const override { return nodes_.remote_index(); }
 
+    Field partition() const override { return nodes_.partition(); }
+
     const util::PartitionPolygon& polygon(idx_t halo = 0) const override { return mesh_.polygon(halo); }
 
     const util::PartitionPolygons& polygons() const override { return mesh_.polygons(); }
