@@ -118,6 +118,7 @@ PointCloud::PointCloud(const Grid& grid, const grid::Partitioner& _partitioner, 
         partitioner = grid::Partitioner("equal_regions");
     }
 
+    nb_partitions_ = partitioner.nb_partitions();
     auto distribution = partitioner.partition(grid);
     auto size_owned = distribution.nb_pts()[part];
     size_owned_ = size_owned;

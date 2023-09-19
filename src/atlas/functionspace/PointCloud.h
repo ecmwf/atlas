@@ -60,7 +60,8 @@ public:
     Field remote_index() const override { return remote_index_; }
     Field global_index() const override { return global_index_; }
     Field partition() const override { return partition_; }
-    virtual idx_t size() const override { return lonlat_.shape(0); }
+    idx_t size() const override { return lonlat_.shape(0); }
+    idx_t nb_partitions() const override { return nb_partitions_; }
 
     using FunctionSpaceImpl::createField;
     Field createField(const eckit::Configuration&) const override;
@@ -165,6 +166,7 @@ private:
     idx_t max_glb_idx_{0};
     std::unique_ptr<parallel::HaloExchange> halo_exchange_;
     idx_t levels_{0};
+    idx_t nb_partitions_{1};
 
     void setupHaloExchange();
 
