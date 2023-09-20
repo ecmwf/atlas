@@ -126,6 +126,24 @@ CASE("RegularMeshGenerator") {
     mesh.polygon().outputPythonScript(grid().name()+"_regular_polygons_1.py");
 }
 
+CASE("HealpixMeshGenerator") {
+    Fixture fixture;
+
+    MeshGenerator meshgen{"healpix", option::mpi_comm("split")};
+    Mesh mesh = meshgen.generate(grid_healpix());
+    EXPECT_EQUAL(mesh.nb_parts(),mpi::comm("split").size());
+    EXPECT_EQUAL(mesh.part(),mpi::comm("split").rank());
+    EXPECT_EQUAL(mesh.mpi_comm(),"split");
+    EXPECT_EQUAL(mpi::comm().name(),"world");
+    output::Gmsh gmsh(grid().name()+"_regular.msh");
+    gmsh.write(mesh);
+
+    // partitioning graph and polygon output
+    EXPECT_NO_THROW(mesh.partitionGraph());
+    EXPECT_NO_THROW(mesh.polygons());
+    mesh.polygon().outputPythonScript(grid().name()+"_regular_polygons_1.py");
+}
+
 CASE("DelaunayMeshGenerator") {
 if( ATLAS_HAVE_TESSELATION ) {
     Fixture fixture;
