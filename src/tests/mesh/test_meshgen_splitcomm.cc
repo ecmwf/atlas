@@ -53,6 +53,16 @@ Grid grid_CS() {
     return g;
 }
 
+Grid grid_Regular() {
+    static Grid g (color() == 0 ? "S8" : "L16" );
+    return g;
+}
+
+Grid grid_healpix() {
+    static Grid g (color() == 0 ? "H8" : "H16" );
+    return g;
+}
+
 struct Fixture {
     Fixture() {
         mpi::comm().split(color(),"split");
@@ -96,6 +106,24 @@ CASE("StructuredMeshGenerator") {
     EXPECT_NO_THROW(mesh.partitionGraph());
     EXPECT_NO_THROW(mesh.polygons());
     mesh.polygon().outputPythonScript(grid().name()+"_polygons_1.py");
+}
+
+CASE("RegularMeshGenerator") {
+    Fixture fixture;
+
+    MeshGenerator meshgen{"regular", option::mpi_comm("split")};
+    Mesh mesh = meshgen.generate(grid_Regular());
+    EXPECT_EQUAL(mesh.nb_parts(),mpi::comm("split").size());
+    EXPECT_EQUAL(mesh.part(),mpi::comm("split").rank());
+    EXPECT_EQUAL(mesh.mpi_comm(),"split");
+    EXPECT_EQUAL(mpi::comm().name(),"world");
+    output::Gmsh gmsh(grid().name()+"_regular.msh");
+    gmsh.write(mesh);
+
+    // partitioning graph and polygon output
+    EXPECT_NO_THROW(mesh.partitionGraph());
+    EXPECT_NO_THROW(mesh.polygons());
+    mesh.polygon().outputPythonScript(grid().name()+"_regular_polygons_1.py");
 }
 
 CASE("DelaunayMeshGenerator") {
@@ -193,7 +221,6 @@ CASE("MatchingPartitioner") {
     EXPECT_NO_THROW(mesh_B.polygons());
     mesh_B.polygon().outputPythonScript(grid_B().name()+"_polygons_3.py");
 }
-
 
 }  // namespace test
 }  // namespace atlas
