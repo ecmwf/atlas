@@ -27,11 +27,11 @@ namespace parallel {
 
 namespace {
 struct IsGhostPoint {
-    IsGhostPoint(const int part[], const idx_t ridx[], const idx_t base, const int /*N*/) {
+    IsGhostPoint(const int mypart, const int part[], const idx_t ridx[], const idx_t base, const int /*N*/) {
         part_   = part;
         ridx_   = ridx;
         base_   = base;
-        mypart_ = mpi::rank();
+        mypart_ = mypart;
     }
 
     bool operator()(idx_t idx) {
@@ -50,24 +50,34 @@ struct IsGhostPoint {
 };
 }  // namespace
 
-HaloExchange::HaloExchange(): name_(), is_setup_(false) {
-    myproc = mpi::rank();
-    nproc  = mpi::size();
+HaloExchange::HaloExchange() :
+    HaloExchange("") {
 }
 
-HaloExchange::HaloExchange(const std::string& name): name_(name), is_setup_(false) {
-    myproc = mpi::rank();
-    nproc  = mpi::size();
+HaloExchange::HaloExchange(const std::string& name):
+    name_(name),
+    is_setup_(false) {
 }
 
 HaloExchange::~HaloExchange() = default;
 
 void HaloExchange::setup(const int part[], const idx_t remote_idx[], const int base, const idx_t size) {
-    setup(part, remote_idx, base, size, 0);
+    setup(mpi::comm().name(), part, remote_idx, base, size);
 }
 
 void HaloExchange::setup(const int part[], const idx_t remote_idx[], const int base, idx_t parsize, idx_t halo_begin) {
+    setup(mpi::comm().name(), part, remote_idx, base, parsize, halo_begin);
+}
+
+void HaloExchange::setup(const std::string& mpi_comm, const int part[], const idx_t remote_idx[], const int base, const idx_t size) {
+    setup(mpi_comm, part, remote_idx, base, size, 0);
+}
+
+void HaloExchange::setup(const std::string& mpi_comm, const int part[], const idx_t remote_idx[], const int base, idx_t parsize, idx_t halo_begin) {
     ATLAS_TRACE("HaloExchange::setup");
+    comm_ = &mpi::comm(mpi_comm);
+    myproc = comm().rank();
+    nproc  = comm().size();
 
     parsize_ = parsize;
     sendcounts_.resize(nproc);
@@ -83,7 +93,7 @@ void HaloExchange::setup(const int part[], const idx_t remote_idx[], const int b
     Find the amount of nodes this proc has to receive from each other proc
     */
 
-    IsGhostPoint is_ghost(part, remote_idx, base, parsize_);
+    IsGhostPoint is_ghost(myproc, part, remote_idx, base, parsize_);
     atlas::vector<idx_t> ghost_points(parsize_);
     idx_t nghost = 0;
 
@@ -103,7 +113,7 @@ void HaloExchange::setup(const int part[], const idx_t remote_idx[], const int b
     /*
     Find the amount of nodes this proc has to send to each other proc
     */
-    ATLAS_TRACE_MPI(ALLTOALL) { mpi::comm().allToAll(recvcounts_, sendcounts_); }
+    ATLAS_TRACE_MPI(ALLTOALL) { comm().allToAll(recvcounts_, sendcounts_); }
 
     sendcnt_ = std::accumulate(sendcounts_.begin(), sendcounts_.end(), 0);
 
@@ -142,7 +152,7 @@ void HaloExchange::setup(const int part[], const idx_t remote_idx[], const int b
     */
 
     ATLAS_TRACE_MPI(ALLTOALL) {
-        mpi::comm().allToAllv(send_requests.data(), recvcounts_.data(), recvdispls_.data(), recv_requests.data(),
+        comm().allToAllv(send_requests.data(), recvcounts_.data(), recvdispls_.data(), recv_requests.data(),
                               sendcounts_.data(), senddispls_.data());
     }
 
@@ -163,7 +173,7 @@ void HaloExchange::wait_for_send(std::vector<int>& send_counts_init, std::vector
     ATLAS_TRACE_MPI(WAIT, "mpi-wait send") {
         for (int jproc = 0; jproc < nproc; ++jproc) {
             if (send_counts_init[jproc] > 0) {
-                mpi::comm().wait(send_req[jproc]);
+                comm().wait(send_req[jproc]);
             }
         }
     }

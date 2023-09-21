@@ -46,6 +46,11 @@ namespace meshgenerator {
 // -----------------------------------------------------------------------------
 
 CubedSphereMeshGenerator::CubedSphereMeshGenerator(const eckit::Parametrisation& p) {
+    // Get mpi_comm
+    std::string mpi_comm = mpi::comm().name();
+    p.get("mpi_comm", mpi_comm);
+    options.set("mpi_comm", mpi_comm);
+
     configure_defaults();
 
     // Get number of partitions.
@@ -68,7 +73,9 @@ CubedSphereMeshGenerator::CubedSphereMeshGenerator(const eckit::Parametrisation&
 
     // Get partitioner.
     std::string partitioner;
-    if (p.get("partitioner", partitioner)) {
+    try { p.get("partitioner.type", partitioner); } catch( std::exception& ) {}
+    p.get("partitioner", partitioner);
+    if( partitioner.size() ) {
         options.set("partitioner", partitioner);
     }
 }
@@ -77,11 +84,13 @@ CubedSphereMeshGenerator::CubedSphereMeshGenerator(const eckit::Parametrisation&
 
 
 void CubedSphereMeshGenerator::configure_defaults() {
+    auto& comm = mpi::comm(options.getString("mpi_comm"));
+
     // This option sets number of partitions.
-    options.set("nb_parts", mpi::size());
+    options.set("nb_parts", comm.size());
 
     // This option sets the part that will be generated.
-    options.set("part", mpi::rank());
+    options.set("part", comm.rank());
 
     // This options sets the number of halo elements around each partition.
     options.set("halo", 0);
@@ -107,6 +116,7 @@ void CubedSphereMeshGenerator::generate(const Grid& grid, Mesh& mesh) const {
     }
 
     // Set distribution.
+    mpi::Scope mpi_scope(options.getString("mpi_comm"));
     const auto partitioner  = grid::Partitioner(partConfig);
     const auto distribution = grid::Distribution(grid, partitioner);
 
@@ -149,6 +159,7 @@ void CubedSphereMeshGenerator::generate(const Grid& grid, const grid::Distributi
 
     // Clone some grid properties.
     setGrid(mesh, csGrid, distribution);
+    mesh.metadata().set("mpi_comm",options.getString("mpi_comm"));
 
     generate_mesh(csGrid, distribution, mesh);
 }

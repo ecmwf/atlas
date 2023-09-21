@@ -20,11 +20,12 @@ namespace distribution {
 class SerialDistribution : public DistributionFunctionT<SerialDistribution> {
 public:
     SerialDistribution(const Grid& grid);
+    SerialDistribution(const Grid& grid, int part);
 
-    ATLAS_ALWAYS_INLINE int function(gidx_t gidx) const { return rank_; }
+    ATLAS_ALWAYS_INLINE int function(gidx_t gidx) const { return part_; }
 
 private:
-    int rank_{0};
+    int part_{0};
 };
 
 }  // namespace distribution

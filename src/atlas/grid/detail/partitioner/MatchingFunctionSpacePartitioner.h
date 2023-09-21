@@ -24,9 +24,9 @@ class MatchingFunctionSpacePartitioner : public Partitioner {
 public:
     MatchingFunctionSpacePartitioner();
 
-    MatchingFunctionSpacePartitioner(const idx_t nb_partitions);
+    // MatchingFunctionSpacePartitioner(const idx_t nb_partitions);
 
-    MatchingFunctionSpacePartitioner(const FunctionSpace&);
+    MatchingFunctionSpacePartitioner(const FunctionSpace&, const eckit::Parametrisation&);
 
     virtual ~MatchingFunctionSpacePartitioner() override {}
 

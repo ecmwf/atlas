@@ -22,11 +22,14 @@ public:
     static std::string static_type() { return "lonlat-polygon"; }
 
 public:
+    MatchingMeshPartitionerLonLatPolygon(const Mesh& mesh, const eckit::Parametrisation& config): MatchingMeshPartitioner(mesh, config) {}
+
+
     MatchingMeshPartitionerLonLatPolygon(): MatchingMeshPartitioner() {}
-    MatchingMeshPartitionerLonLatPolygon(const size_t nb_partitions): MatchingMeshPartitioner(nb_partitions) {}
+    MatchingMeshPartitionerLonLatPolygon(const eckit::Parametrisation&): MatchingMeshPartitioner() {}
+    MatchingMeshPartitionerLonLatPolygon(const size_t nb_partitions): MatchingMeshPartitioner() {}
     MatchingMeshPartitionerLonLatPolygon(const size_t nb_partitions, const eckit::Parametrisation& config):
-        MatchingMeshPartitioner(nb_partitions) {}
-    MatchingMeshPartitionerLonLatPolygon(const Mesh& mesh): MatchingMeshPartitioner(mesh) {}
+        MatchingMeshPartitioner() {}
 
     using Partitioner::partition;
 

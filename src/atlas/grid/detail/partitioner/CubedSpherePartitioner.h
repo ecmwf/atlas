@@ -26,6 +26,7 @@ public:
 
     CubedSpherePartitioner(int N);  // N is the number of parts (aka MPI tasks)
     CubedSpherePartitioner(int N, const eckit::Parametrisation&);
+    CubedSpherePartitioner(const eckit::Parametrisation&);
 
     CubedSpherePartitioner(const int N, const std::vector<int>& globalProcStartPE,
                            const std::vector<int>& globalProcEndPE, const std::vector<int>& nprocx,

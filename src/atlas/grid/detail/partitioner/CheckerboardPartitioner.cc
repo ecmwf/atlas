@@ -33,17 +33,24 @@ namespace partitioner {
 
 CheckerboardPartitioner::CheckerboardPartitioner(): Partitioner() {}
 
-CheckerboardPartitioner::CheckerboardPartitioner(int N): Partitioner(N) {}
+// CheckerboardPartitioner::CheckerboardPartitioner(int N): Partitioner(N) {}
 
-CheckerboardPartitioner::CheckerboardPartitioner(int N, const eckit::Parametrisation& config): Partitioner(N) {
+CheckerboardPartitioner::CheckerboardPartitioner(int N, const eckit::Parametrisation& config):
+    Partitioner(N, config) {
     config.get("bands", nbands_);
     config.get("regular", regular_);
 }
 
-CheckerboardPartitioner::CheckerboardPartitioner(int N, int nbands): Partitioner(N), nbands_{nbands} {}
+CheckerboardPartitioner::CheckerboardPartitioner(const eckit::Parametrisation& config) :
+    Partitioner(config) {
+    config.get("bands", nbands_);
+    config.get("regular", regular_);
+}
 
-CheckerboardPartitioner::CheckerboardPartitioner(int N, int nbands, bool checkerboard):
-    Partitioner(N), nbands_{nbands} {}
+// CheckerboardPartitioner::CheckerboardPartitioner(int N, int nbands): Partitioner(N), nbands_{nbands} {}
+
+// CheckerboardPartitioner::CheckerboardPartitioner(int N, int nbands, bool checkerboard):
+    // Partitioner(N), nbands_{nbands} {}
 
 CheckerboardPartitioner::Checkerboard CheckerboardPartitioner::checkerboard(const Grid& grid) const {
     // grid dimensions

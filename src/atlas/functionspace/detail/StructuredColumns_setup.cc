@@ -105,10 +105,8 @@ void StructuredColumns::setup(const grid::Distribution& distribution, const ecki
 
     distribution_ = distribution.type();
 
+    part_ = mpi::comm(mpi_comm()).rank();
     nb_partitions_ = distribution.nb_partitions();
-
-    int mpi_rank = int(mpi::rank());
-    int mpi_size = int(mpi::size());
 
     j_begin_ = std::numeric_limits<idx_t>::max();
     j_end_   = std::numeric_limits<idx_t>::min();
@@ -117,7 +115,7 @@ void StructuredColumns::setup(const grid::Distribution& distribution, const ecki
     idx_t owned(0);
 
     ATLAS_TRACE_SCOPE("Compute bounds owned") {
-        if (mpi_size == 1) {
+        if (nb_partitions_ == 1) {
             j_begin_ = 0;
             j_end_   = grid_->ny();
             for (idx_t j = j_begin_; j < j_end_; ++j) {
@@ -132,7 +130,7 @@ void StructuredColumns::setup(const grid::Distribution& distribution, const ecki
                 idx_t c(0);
                 for (idx_t j = 0; j < grid_->ny(); ++j) {
                     for (idx_t i = 0; i < grid_->nx(j); ++i, ++c) {
-                        if (distribution.partition(c) == mpi_rank) {
+                        if (distribution.partition(c) == part_) {
                             j_begin_    = std::min<idx_t>(j_begin_, j);
                             j_end_      = std::max<idx_t>(j_end_, j + 1);
                             i_begin_[j] = std::min<idx_t>(i_begin_[j], i);
@@ -194,7 +192,7 @@ void StructuredColumns::setup(const grid::Distribution& distribution, const ecki
                         auto& __i_end   = thread_reduce_i_end[j][thread_num];
                         bool j_in_partition{false};
                         for (idx_t i = thread_i_begin[j]; i < thread_i_end[j]; ++i, ++c) {
-                            if (distribution.partition(c) == mpi_rank) {
+                            if (distribution.partition(c) == part_) {
                                 j_in_partition = true;
                                 __i_begin      = std::min<idx_t>(__i_begin, i);
                                 __i_end        = std::max<idx_t>(__i_end, i + 1);

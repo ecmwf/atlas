@@ -58,8 +58,12 @@ idx_t FunctionSpace::size() const {
     return get()->size();
 }
 
-idx_t FunctionSpace::nb_partitions() const {
-    return get()->nb_partitions();
+idx_t FunctionSpace::part() const {
+    return get()->part();
+}
+
+idx_t FunctionSpace::nb_parts() const {
+    return get()->nb_parts();
 }
 
 Field FunctionSpace::lonlat() const {
@@ -112,6 +116,10 @@ const parallel::GatherScatter& FunctionSpace::gather() const {
 
 const parallel::GatherScatter& FunctionSpace::scatter() const {
     return get()->scatter();
+}
+
+std::string FunctionSpace::mpi_comm() const {
+    return get()->mpi_comm();
 }
 
 const util::PartitionPolygon& FunctionSpace::polygon(idx_t halo) const {

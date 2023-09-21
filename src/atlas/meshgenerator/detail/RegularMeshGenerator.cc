@@ -45,6 +45,11 @@ namespace atlas {
 namespace meshgenerator {
 
 RegularMeshGenerator::RegularMeshGenerator(const eckit::Parametrisation& p) {
+
+    std::string mpi_comm = mpi::comm().name();
+    p.get("mpi_comm", mpi_comm);
+    options.set("mpi_comm",mpi_comm);
+
     configure_defaults();
 
     // options copied from Structured MeshGenerator
@@ -87,15 +92,19 @@ RegularMeshGenerator::RegularMeshGenerator(const eckit::Parametrisation& p) {
 }
 
 void RegularMeshGenerator::configure_defaults() {
+    std::string mpi_comm;
+    options.get("mpi_comm",mpi_comm);
+    auto& comm = mpi::comm(mpi_comm);
+
     // This option sets number of parts the mesh will be split in
-    options.set("nb_parts", mpi::size());
+    options.set("nb_parts", comm.size());
 
     // This option sets the part that will be generated
-    options.set("part", mpi::rank());
+    options.set("part", comm.rank());
 
     // This options sets the default partitioner
     std::string partitioner;
-    if (grid::Partitioner::exists("ectrans") && mpi::size() > 1) {
+    if (grid::Partitioner::exists("ectrans") && comm.size() > 1) {
         partitioner = "ectrans";
     }
     else {
@@ -126,8 +135,10 @@ void RegularMeshGenerator::generate(const Grid& grid, Mesh& mesh) const {
     // if ( nb_parts == 1 || eckit::mpi::size() == 1 ) partitioner_factory =
     // "equal_regions"; // Only one part --> Trans is slower
 
+    mpi::push(options.getString("mpi_comm"));
     grid::Partitioner partitioner(partitioner_type, nb_parts);
     grid::Distribution distribution(partitioner.partition(grid));
+    mpi::pop();
     generate(grid, distribution, mesh);
 }
 
@@ -162,6 +173,7 @@ void RegularMeshGenerator::generate(const Grid& grid, const grid::Distribution& 
 void RegularMeshGenerator::generate_mesh(const RegularGrid& rg, const grid::Distribution& distribution,
                                          // const Region& region,
                                          Mesh& mesh) const {
+    mpi::Scope mpi_scope(options.getString("mpi_comm"));
     int mypart = options.get<size_t>("part");
     int nparts = options.get<size_t>("nb_parts");
     int nx     = rg.nx();
@@ -551,6 +563,10 @@ void RegularMeshGenerator::generate_mesh(const RegularGrid& rg, const grid::Dist
                   << "," << node_connectivity(jcell, 2) << "," << node_connectivity(jcell, 3) << std::endl;
     }
 #endif
+
+    mesh.metadata().set("nb_parts",options.getInt("nb_parts"));
+    mesh.metadata().set("part",options.getInt("part"));
+    mesh.metadata().set("mpi_comm",options.getString("mpi_comm"));
 
     generateGlobalElementNumbering(mesh);
 

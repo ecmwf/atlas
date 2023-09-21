@@ -103,12 +103,33 @@ public:  // methods
     std::string name() const { return name_; }
 
     /// @brief Setup
+    /// @param [in] mpi_comm     Name of mpi communicator
+    /// @param [in] part         List of partitions
+    /// @param [in] remote_idx   List of local indices on remote partitions
+    /// @param [in] base         values of remote_idx start at "base"
+    /// @param [in] glb_idx      List of global indices
+    /// @param [in] parsize      size of given lists
+    void setup(const std::string& mpi_comm, const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[], const idx_t parsize);
+
+    /// @brief Setup
     /// @param [in] part         List of partitions
     /// @param [in] remote_idx   List of local indices on remote partitions
     /// @param [in] base         values of remote_idx start at "base"
     /// @param [in] glb_idx      List of global indices
     /// @param [in] parsize      size of given lists
     void setup(const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[], const idx_t parsize);
+
+    /// @brief Setup
+    /// @param [in] mpi_comm     Name of mpi communicator
+    /// @param [in] part         List of partitions
+    /// @param [in] remote_idx   List of local indices on remote partitions
+    /// @param [in] base         values of remote_idx start at "base"
+    /// @param [in] glb_idx      List of global indices
+    /// @param [in] parsize      size of given lists
+    /// @param [in] mask         Mask indices not to include in the communication
+    ///                          pattern (0=include,1=exclude)
+    void setup(const std::string& mpi_comm, const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[], const int mask[],
+               const idx_t parsize);
 
     /// @brief Setup
     /// @param [in] part         List of partitions
@@ -163,6 +184,8 @@ public:  // methods
 
     idx_t loc_dof() const { return loccnt_; }
 
+    const mpi::Comm& comm() const { return *comm_; }
+
 private:  // methods
     template <typename DATA_TYPE>
     void pack_send_buffer(const parallel::Field<DATA_TYPE const>& field, const std::vector<int>& sendmap,
@@ -185,6 +208,7 @@ private:  // data
     std::vector<int> locmap_;
     std::vector<int> glbmap_;
 
+    const mpi::Comm* comm_;
     idx_t nproc;
     idx_t myproc;
 
@@ -231,7 +255,7 @@ void GatherScatter::gather(parallel::Field<DATA_TYPE const> lfields[], parallel:
         /// Gather
 
         ATLAS_TRACE_MPI(GATHER) {
-            mpi::comm().gatherv(loc_buffer, glb_buffer, glb_counts, glb_displs, root);
+            comm().gatherv(loc_buffer, glb_buffer, glb_counts, glb_displs, root);
         }
 
         /// Unpack
@@ -282,8 +306,8 @@ void GatherScatter::scatter(parallel::Field<DATA_TYPE const> gfields[], parallel
         /// Scatter
 
         ATLAS_TRACE_MPI(SCATTER) {
-            mpi::comm().scatterv(glb_buffer.begin(), glb_buffer.end(), glb_counts, glb_displs, loc_buffer.begin(),
-                                 loc_buffer.end(), root);
+            comm().scatterv(glb_buffer.begin(), glb_buffer.end(), glb_counts, glb_displs, loc_buffer.begin(),
+                            loc_buffer.end(), root);
         }
 
         /// Unpack

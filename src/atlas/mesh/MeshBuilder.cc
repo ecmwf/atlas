@@ -164,9 +164,10 @@ Mesh MeshBuilder::operator()(size_t nb_nodes, const double lons[], const double 
     auto mpi_comm_name = [](const auto& config) {
         return config.getString("mpi_comm", atlas::mpi::comm().name());
     };
-    const eckit::mpi::Comm& comm = eckit::mpi::comm(mpi_comm_name(config).c_str());
 
     Mesh mesh{};
+    mesh.metadata().set("mpi_comm", mpi_comm_name(config));
+    auto& comm = mpi::comm(mesh.mpi_comm());
 
     // Setup a grid, if requested via config argument
     if (config.has("grid")) {

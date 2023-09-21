@@ -43,10 +43,10 @@ namespace detail {
 class PointCloud : public functionspace::FunctionSpaceImpl {
 public:
     template <typename Point>
-    PointCloud(const std::vector<Point>&);
-    PointCloud(const Field& lonlat);
-    PointCloud(const Field& lonlat, const Field& ghost);
-    PointCloud(const FieldSet&);  // assuming lonlat ghost ridx and partition present
+    PointCloud(const std::vector<Point>&, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const Field& lonlat, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const Field& lonlat, const Field& ghost, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const FieldSet&, const eckit::Configuration& = util::NoConfig());  // assuming lonlat ghost ridx and partition present
     PointCloud(const Grid&, const eckit::Configuration& = util::NoConfig());
     PointCloud(const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig());
     ~PointCloud() override {}
@@ -61,7 +61,9 @@ public:
     Field global_index() const override { return global_index_; }
     Field partition() const override { return partition_; }
     idx_t size() const override { return lonlat_.shape(0); }
-    idx_t nb_partitions() const override { return nb_partitions_; }
+    idx_t part() const override { return part_; }
+    idx_t nb_parts() const override { return nb_partitions_; }
+    std::string mpi_comm() const override { return mpi_comm_; }
 
     using FunctionSpaceImpl::createField;
     Field createField(const eckit::Configuration&) const override;
@@ -166,7 +168,9 @@ private:
     idx_t max_glb_idx_{0};
     std::unique_ptr<parallel::HaloExchange> halo_exchange_;
     idx_t levels_{0};
+    idx_t part_{0};
     idx_t nb_partitions_{1};
+    std::string mpi_comm_;
 
     void setupHaloExchange();
 
@@ -181,12 +185,12 @@ private:
 class PointCloud : public FunctionSpace {
 public:
     PointCloud(const FunctionSpace&);
-    PointCloud(const Field& points);
-    PointCloud(const Field&, const Field&);
-    PointCloud(const FieldSet& flds);
-    PointCloud(const std::vector<PointXY>&);
-    PointCloud(const std::vector<PointXYZ>&);
-    PointCloud(const std::initializer_list<std::initializer_list<double>>&);
+    PointCloud(const Field& points, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const Field&, const Field&, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const FieldSet& flds, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const std::vector<PointXY>&, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const std::vector<PointXYZ>&, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const std::initializer_list<std::initializer_list<double>>&, const eckit::Configuration& = util::NoConfig());
     PointCloud(const Grid&, const eckit::Configuration& = util::NoConfig());
     PointCloud(const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig());
 

@@ -39,6 +39,7 @@ private:  // methods
     virtual void generate(const Grid&, const grid::Distribution&, Mesh&) const override;
     virtual void generate(const Grid&, Mesh&) const override;
 
+    std::string mpi_comm_;
     int part_;
     bool remove_duplicate_points_;
     bool reshuffle_;

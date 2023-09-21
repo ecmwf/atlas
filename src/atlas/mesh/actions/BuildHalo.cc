@@ -1374,6 +1374,8 @@ BuildHalo::BuildHalo(Mesh& mesh): mesh_(mesh), periodic_cells_local_index_(mesh.
 void BuildHalo::operator()(int nb_elems) {
     ATLAS_TRACE("BuildHalo");
 
+    mpi::Scope mpi_scope(mesh_.mpi_comm());
+
     int halo = 0;
     mesh_.metadata().get("halo", halo);
 

@@ -76,20 +76,21 @@ Mesh MeshGeneratorImpl::generate(const Grid& grid, const grid::Distribution& dis
 //----------------------------------------------------------------------------------------------------------------------
 
 void MeshGeneratorImpl::generateGlobalElementNumbering(Mesh& mesh) const {
-    idx_t mpi_size = static_cast<idx_t>(mpi::size());
+    const auto& comm = mpi::comm(mesh.mpi_comm());
+    idx_t mpi_size = static_cast<idx_t>(comm.size());
 
     gidx_t loc_nb_elems = mesh.cells().size();
     std::vector<gidx_t> elem_counts(mpi_size);
     std::vector<gidx_t> elem_displs(mpi_size);
 
-    ATLAS_TRACE_MPI(ALLGATHER) { mpi::comm().allGather(loc_nb_elems, elem_counts.begin(), elem_counts.end()); }
+    ATLAS_TRACE_MPI(ALLGATHER) { comm.allGather(loc_nb_elems, elem_counts.begin(), elem_counts.end()); }
 
     elem_displs.at(0) = 0;
     for (idx_t jpart = 1; jpart < mpi_size; ++jpart) {
         elem_displs.at(jpart) = elem_displs.at(jpart - 1) + elem_counts.at(jpart - 1);
     }
 
-    gidx_t gid = 1 + elem_displs.at(mpi::rank());
+    gidx_t gid = 1 + elem_displs.at(comm.rank());
 
     array::ArrayView<gidx_t, 1> glb_idx = array::make_view<gidx_t, 1>(mesh.cells().global_index());
 

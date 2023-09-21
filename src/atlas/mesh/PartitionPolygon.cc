@@ -81,9 +81,9 @@ size_t PartitionPolygon::footprint() const {
 }
 
 void PartitionPolygon::outputPythonScript(const eckit::PathName& filepath, const eckit::Configuration& config) const {
-    const eckit::mpi::Comm& comm = atlas::mpi::comm();
-    int mpi_rank                 = int(comm.rank());
-    int mpi_size                 = int(comm.size());
+    const auto& comm = mpi::comm(mesh_.mpi_comm());
+    int mpi_rank     = int(comm.rank());
+    int mpi_size     = int(comm.size());
 
     std::string coordinates = config.getString("coordinates", "xy");
     if (coordinates == "ij") {
@@ -254,11 +254,11 @@ void PartitionPolygon::outputPythonScript(const eckit::PathName& filepath, const
 void PartitionPolygon::allGather(util::PartitionPolygons& polygons) const {
     ATLAS_TRACE();
 
-    polygons.clear();
-    polygons.reserve(mpi::size());
+    const auto& comm   = mpi::comm(mesh_.mpi_comm());
+    const int mpi_size = int(comm.size());
 
-    const mpi::Comm& comm = mpi::comm();
-    const int mpi_size    = int(comm.size());
+    polygons.clear();
+    polygons.reserve(mpi_size);
 
     auto& poly = *this;
 
