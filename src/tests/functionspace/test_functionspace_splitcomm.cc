@@ -15,6 +15,7 @@
 #include "tests/AtlasTestEnvironment.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/StructuredColumns.h"
+#include "atlas/functionspace/BlockStructuredColumns.h"
 #include "atlas/grid/Partitioner.h"
 #include "atlas/field/for_each.h"
 
@@ -63,7 +64,6 @@ struct Fixture {
         }
     }
 };
-
 
 void field_init(Field& field) {
     auto fs = field.functionspace();
@@ -139,6 +139,36 @@ CASE("test FunctionSpace StructuredColumns") {
     // Checksum
     auto checksum = fs.checksum(field);
     EXPECT_EQ(checksum, expected_checksum());
+}
+
+CASE("test FunctionSpace BlockStructuredColumns") {
+    Fixture fixture;
+
+    auto fs   = functionspace::BlockStructuredColumns(grid(),atlas::option::halo(1)|option::mpi_split_comm());
+    EXPECT_EQUAL(fs.part(),mpi::comm("split").rank());
+    EXPECT_EQUAL(fs.nb_parts(),mpi::comm("split").size());
+
+    auto field  = fs.createField<double>();
+    // field_init(field);
+
+    // HaloExchange
+    // field.haloExchange();
+    // TODO CHECK
+
+    // Gather
+    auto fieldg = fs.createField<double>(atlas::option::global());
+    // fs.gather(field,fieldg);
+
+    // if (fieldg.size()) {
+    //     idx_t g{0};
+    //     field::for_each_value(fieldg,[&](double x) {
+    //         EXPECT_EQ(++g,x);
+    //     });
+    // }
+
+    // // Checksum
+    // auto checksum = fs.checksum(field);
+    // EXPECT_EQ(checksum, expected_checksum());
 }
 
 //-----------------------------------------------------------------------------
