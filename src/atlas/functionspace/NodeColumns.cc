@@ -449,6 +449,8 @@ const parallel::HaloExchange& NodeColumns::halo_exchange() const {
 void NodeColumns::gather(const FieldSet& local_fieldset, FieldSet& global_fieldset) const {
     ATLAS_ASSERT(local_fieldset.size() == global_fieldset.size());
 
+    mpi::Scope mpi_scope(mpi_comm());
+
     for (idx_t f = 0; f < local_fieldset.size(); ++f) {
         const Field& loc      = local_fieldset[f];
         Field& glb            = global_fieldset[f];
@@ -507,6 +509,7 @@ const parallel::GatherScatter& NodeColumns::scatter() const {
 void NodeColumns::scatter(const FieldSet& global_fieldset, FieldSet& local_fieldset) const {
     ATLAS_ASSERT(local_fieldset.size() == global_fieldset.size());
 
+    mpi::Scope mpi_scope(mpi_comm());
     for (idx_t f = 0; f < local_fieldset.size(); ++f) {
         const Field& glb      = global_fieldset[f];
         Field& loc            = local_fieldset[f];
