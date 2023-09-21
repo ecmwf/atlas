@@ -16,6 +16,7 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/functionspace/BlockStructuredColumns.h"
+#include "atlas/functionspace/PointCloud.h"
 #include "atlas/grid/Partitioner.h"
 #include "atlas/field/for_each.h"
 
@@ -167,6 +168,38 @@ CASE("test FunctionSpace BlockStructuredColumns") {
     // }
 
     // // Checksum
+    // auto checksum = fs.checksum(field);
+    // EXPECT_EQ(checksum, expected_checksum());
+}
+
+//-----------------------------------------------------------------------------
+
+CASE("test FunctionSpace PointCloud") {
+    Fixture fixture;
+
+    auto fs   = functionspace::PointCloud(grid(),util::Config("halo_radius",400*1000)|option::mpi_split_comm());
+    EXPECT_EQUAL(fs.part(),mpi::comm("split").rank());
+    EXPECT_EQUAL(fs.nb_parts(),mpi::comm("split").size());
+
+    auto field  = fs.createField<double>();
+    field_init(field);
+
+    // HaloExchange
+    field.haloExchange();
+    // TODO CHECK
+
+    // Gather
+    auto fieldg = fs.createField<double>(atlas::option::global());
+    fs.gather(field,fieldg);
+
+    if (fieldg.size()) {
+        idx_t g{0};
+        field::for_each_value(fieldg,[&](double x) {
+            EXPECT_EQ(++g,x);
+        });
+    }
+
+    // Checksum
     // auto checksum = fs.checksum(field);
     // EXPECT_EQ(checksum, expected_checksum());
 }

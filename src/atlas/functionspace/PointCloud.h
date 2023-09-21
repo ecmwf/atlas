@@ -20,6 +20,7 @@
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/detail/FunctionSpaceImpl.h"
 #include "atlas/parallel/HaloExchange.h"
+#include "atlas/parallel/GatherScatter.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Point.h"
@@ -28,6 +29,7 @@
 namespace atlas {
 namespace parallel {
 class HaloExchange;
+class GatherScatter;
 }  // namespace parallel
 }  // namespace atlas
 
@@ -76,6 +78,15 @@ public:
     void adjointHaloExchange(const Field&, bool on_device = false) const override;
 
     const parallel::HaloExchange& halo_exchange() const;
+
+    void gather(const FieldSet&, FieldSet&) const override;
+    void gather(const Field&, Field&) const override;
+    const parallel::GatherScatter& gather() const override;
+
+    void scatter(const FieldSet&, FieldSet&) const override;
+    void scatter(const Field&, Field&) const override;
+    const parallel::GatherScatter& scatter() const override;
+
 
     template <typename Point>
     class IteratorT {
@@ -165,14 +176,19 @@ private:
     Field global_index_;
     Field partition_;
     idx_t size_owned_;
+    idx_t size_global_{0};
     idx_t max_glb_idx_{0};
-    std::unique_ptr<parallel::HaloExchange> halo_exchange_;
+
     idx_t levels_{0};
     idx_t part_{0};
     idx_t nb_partitions_{1};
     std::string mpi_comm_;
 
+    mutable std::unique_ptr<parallel::HaloExchange> halo_exchange_;
+    mutable std::unique_ptr<parallel::GatherScatter> gather_scatter_;
+
     void setupHaloExchange();
+    void setupGatherScatter();
 
 };
 

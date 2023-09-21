@@ -45,6 +45,32 @@ namespace functionspace {
 
 namespace detail {
 
+namespace {
+
+template <typename T, typename Field>
+array::LocalView<T, 3> make_leveled_view(Field& field) {
+    using namespace array;
+    if (field.levels()) {
+        if (field.variables()) {
+            return make_view<T, 3>(field).slice(Range::all(), Range::all(), Range::all());
+        }
+        else {
+            return make_view<T, 2>(field).slice(Range::all(), Range::all(), Range::dummy());
+        }
+    }
+    else {
+        if (field.variables()) {
+            return make_view<T, 2>(field).slice(Range::all(), Range::dummy(), Range::all());
+        }
+        else {
+            return make_view<T, 1>(field).slice(Range::all(), Range::dummy(), Range::dummy());
+        }
+    }
+}
+
+}  // namespace
+
+
 static std::string get_mpi_comm(const eckit::Configuration& config) {
     if(config.has("mpi_comm")) {
         return config.getString("mpi_comm");
@@ -84,6 +110,7 @@ PointCloud::PointCloud(const Field& lonlat, const eckit::Configuration& config):
 PointCloud::PointCloud(const Field& lonlat, const Field& ghost, const eckit::Configuration& config): lonlat_(lonlat), ghost_(ghost) {
     mpi_comm_ = get_mpi_comm(config);
     setupHaloExchange();
+    setupGatherScatter();
 }
 
 PointCloud::PointCloud(const FieldSet& flds, const eckit::Configuration& config): lonlat_(flds["lonlat"]) {
@@ -102,6 +129,7 @@ PointCloud::PointCloud(const FieldSet& flds, const eckit::Configuration& config)
     }
     if( ghost_ && remote_index_ && partition_ ) {
         setupHaloExchange();
+        setupGatherScatter();
     }
 }
 
@@ -243,6 +271,7 @@ PointCloud::PointCloud(const Grid& grid, const grid::Partitioner& _partitioner, 
     }
 
     setupHaloExchange();
+    setupGatherScatter();
 }
 
 
@@ -255,9 +284,20 @@ Field PointCloud::ghost() const {
 }
 
 array::ArrayShape PointCloud::config_shape(const eckit::Configuration& config) const {
+    idx_t _size  = size();
+    bool global(false);
+    if (config.get("global", global)) {
+        if (global) {
+            idx_t owner(0);
+            config.get("owner", owner);
+            idx_t rank = mpi::comm(mpi_comm()).rank();
+            _size = (rank == owner ? size_global_ : 0);
+        }
+    }
+
     array::ArrayShape shape;
 
-    shape.emplace_back(size());
+    shape.emplace_back(_size);
 
     idx_t levels(levels_);
     config.get("levels", levels);
@@ -301,6 +341,110 @@ std::string PointCloud::config_name(const eckit::Configuration& config) const {
 const parallel::HaloExchange& PointCloud::halo_exchange() const {
     return *halo_exchange_;
 }
+
+void PointCloud::gather(const FieldSet& local_fieldset, FieldSet& global_fieldset) const {
+    ATLAS_ASSERT(local_fieldset.size() == global_fieldset.size());
+
+    for (idx_t f = 0; f < local_fieldset.size(); ++f) {
+        const Field& loc      = local_fieldset[f];
+        Field& glb            = global_fieldset[f];
+        const idx_t nb_fields = 1;
+        idx_t root(0);
+        glb.metadata().get("owner", root);
+
+        if (loc.datatype() == array::DataType::kind<int>()) {
+            parallel::Field<int const> loc_field(make_leveled_view<const int>(loc));
+            parallel::Field<int> glb_field(make_leveled_view<int>(glb));
+            gather().gather(&loc_field, &glb_field, nb_fields, root);
+        }
+        else if (loc.datatype() == array::DataType::kind<long>()) {
+            parallel::Field<long const> loc_field(make_leveled_view<const long>(loc));
+            parallel::Field<long> glb_field(make_leveled_view<long>(glb));
+            gather().gather(&loc_field, &glb_field, nb_fields, root);
+        }
+        else if (loc.datatype() == array::DataType::kind<float>()) {
+            parallel::Field<float const> loc_field(make_leveled_view<const float>(loc));
+            parallel::Field<float> glb_field(make_leveled_view<float>(glb));
+            gather().gather(&loc_field, &glb_field, nb_fields, root);
+        }
+        else if (loc.datatype() == array::DataType::kind<double>()) {
+            parallel::Field<double const> loc_field(make_leveled_view<const double>(loc));
+            parallel::Field<double> glb_field(make_leveled_view<double>(glb));
+            gather().gather(&loc_field, &glb_field, nb_fields, root);
+        }
+        else {
+            throw_Exception("datatype not supported", Here());
+        }
+    }
+}
+
+void PointCloud::gather(const Field& local, Field& global) const {
+    FieldSet local_fields;
+    FieldSet global_fields;
+    local_fields.add(local);
+    global_fields.add(global);
+    gather(local_fields, global_fields);
+}
+const parallel::GatherScatter& PointCloud::gather() const {
+    ATLAS_ASSERT(gather_scatter_);
+    return *gather_scatter_;
+}
+const parallel::GatherScatter& PointCloud::scatter() const {
+    ATLAS_ASSERT(gather_scatter_);
+    return *gather_scatter_;
+}
+
+void PointCloud::scatter(const FieldSet& global_fieldset, FieldSet& local_fieldset) const {
+    ATLAS_ASSERT(local_fieldset.size() == global_fieldset.size());
+
+    for (idx_t f = 0; f < local_fieldset.size(); ++f) {
+        const Field& glb      = global_fieldset[f];
+        Field& loc            = local_fieldset[f];
+        const idx_t nb_fields = 1;
+        idx_t root(0);
+        glb.metadata().get("owner", root);
+
+        if (loc.datatype() == array::DataType::kind<int>()) {
+            parallel::Field<int const> glb_field(make_leveled_view<const int>(glb));
+            parallel::Field<int> loc_field(make_leveled_view<int>(loc));
+            scatter().scatter(&glb_field, &loc_field, nb_fields, root);
+        }
+        else if (loc.datatype() == array::DataType::kind<long>()) {
+            parallel::Field<long const> glb_field(make_leveled_view<const long>(glb));
+            parallel::Field<long> loc_field(make_leveled_view<long>(loc));
+            scatter().scatter(&glb_field, &loc_field, nb_fields, root);
+        }
+        else if (loc.datatype() == array::DataType::kind<float>()) {
+            parallel::Field<float const> glb_field(make_leveled_view<const float>(glb));
+            parallel::Field<float> loc_field(make_leveled_view<float>(loc));
+            scatter().scatter(&glb_field, &loc_field, nb_fields, root);
+        }
+        else if (loc.datatype() == array::DataType::kind<double>()) {
+            parallel::Field<double const> glb_field(make_leveled_view<const double>(glb));
+            parallel::Field<double> loc_field(make_leveled_view<double>(loc));
+            scatter().scatter(&glb_field, &loc_field, nb_fields, root);
+        }
+        else {
+            throw_Exception("datatype not supported", Here());
+        }
+
+        auto name = loc.name();
+        glb.metadata().broadcast(loc.metadata(), root);
+        loc.metadata().set("global", false);
+        if( !name.empty() ) {
+            loc.metadata().set("name", name);
+        }
+    }
+}
+
+void PointCloud::scatter(const Field& global, Field& local) const {
+    FieldSet global_fields;
+    FieldSet local_fields;
+    global_fields.add(global);
+    local_fields.add(local);
+    scatter(global_fields, local_fields);
+}
+
 
 void PointCloud::set_field_metadata(const eckit::Configuration& config, Field& field) const {
     field.set_functionspace(this);
@@ -848,6 +992,21 @@ void PointCloud::setupHaloExchange() {
                           REMOTE_IDX_BASE,
                           ghost_.size());
 }
+
+void PointCloud::setupGatherScatter() {
+    if (ghost_ and partition_ and remote_index_ and global_index_) {
+        gather_scatter_.reset(new parallel::GatherScatter());
+        gather_scatter_->setup(mpi_comm_,
+                            array::make_view<int, 1>(partition_).data(),
+                            array::make_view<idx_t, 1>(remote_index_).data(),
+                            REMOTE_IDX_BASE,
+                            array::make_view<gidx_t, 1>(global_index_).data(),
+                            array::make_view<idx_t, 1>(ghost_).data(),
+                            ghost_.size());
+        size_global_ = gather_scatter_->glb_dof();
+    }
+}
+
 
 void PointCloud::adjointHaloExchange(const FieldSet& fieldset, bool on_device) const {
     if (halo_exchange_) {

@@ -217,12 +217,27 @@ auto ghost  = array::make_view<int,1>(pointcloud.ghost());
 
 auto view = array::make_view<double,1>(field);
 
+
+auto fieldg_init = pointcloud.createField<double>(option::name("fieldg_init")|option::global());
+
+if (mpi::rank() == 0) {
+    auto viewg = array::make_view<double,1>(fieldg_init);
+    gidx_t g=0;
+    for (auto& p: grid.lonlat()) {
+        double lat = p.lat() * M_PI/180.;
+        viewg(g) = std::cos(4.*lat);
+        g++;
+    }
+}
+
+pointcloud.scatter(fieldg_init,field);
+
 size_t count_ghost{0};
 for (idx_t i=0; i<pointcloud.size(); ++i) {
     if( not ghost(i) ) {
         ++count_ghost;
         double lat = lonlat(i,1) * M_PI/180.;
-        view(i) = std::cos(4.*lat);
+        EXPECT_EQ(view(i), std::cos(4.*lat));
     }
     else {
         view(i) = 0.;
@@ -256,6 +271,28 @@ field.haloExchange();
 for (idx_t i=0; i<pointcloud.size(); ++i) {
     double lat = lonlat(i,1) * M_PI/180.;
     EXPECT_EQ( view(i), std::cos(4.*lat));
+}
+
+
+
+auto fieldg = pointcloud.createField<double>(option::name("field")|option::global());
+if( mpi::rank() == 0 ) {
+    EXPECT_EQ(fieldg.size(), grid.size());
+}
+else {
+    EXPECT_EQ(fieldg.size(), 0);
+}
+
+pointcloud.gather(field, fieldg);
+
+if (mpi::rank() == 0) {
+    auto viewg = array::make_view<double,1>(fieldg);
+    gidx_t g=0;
+    for (auto& p: grid.lonlat()) {
+        double lat = p.lat() * M_PI/180.;
+        EXPECT_EQ( viewg(g), std::cos(4.*lat));
+        g++;
+    }
 }
 
 }
