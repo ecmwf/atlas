@@ -8,6 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <cmath>
 #include <cstring>
 #include <sstream>
 
