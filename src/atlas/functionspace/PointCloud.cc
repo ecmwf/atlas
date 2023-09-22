@@ -158,13 +158,14 @@ PointCloud::PointCloud(const Grid& grid, const grid::Partitioner& _partitioner, 
         idx_t j{0};
         gidx_t g{0};
         for (auto p : grid.lonlat()) {
-            if( distribution.partition(g++) == part_ ) {
+            if( distribution.partition(g) == part_ ) {
                 gidx(j) = g+1;
                 ridx(j) = j;
                 lonlat(j, 0) = p.lon();
                 lonlat(j, 1) = p.lat();
                 ++j;
             }
+            ++g;
         }
     }
     else {
