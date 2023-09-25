@@ -116,6 +116,9 @@ public:
 
     idx_t nb_parts() const { return get()->nb_parts(); }
 
+    [[deprecated("Use 'atlas::mesh::Mesh::nb_parts() instead")]] // added in v0.35.0
+    idx_t nb_partitions() const { return nb_parts(); }
+
     std::string mpi_comm() const { return get()->mpi_comm(); }
 
     void updateDevice() const { get()->updateDevice(); }
