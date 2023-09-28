@@ -194,8 +194,8 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
     std::stringstream sstream;
     int nremaps = args.getInt("pingpong.nremaps", 1);
 
-    Grid src_grid = StructuredGrid( args.getString("source.grid", "O16") );
-    Grid tgt_grid = StructuredGrid( args.getString("source.grid", "O32") );
+    Grid src_grid = StructuredGrid( args.getString("source.grid", "H16") );
+    Grid tgt_grid = StructuredGrid( args.getString("source.grid", "H32") );
 
     // setup interpolators
     //
@@ -204,7 +204,7 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
         MeshGenerator{src_grid.meshgenerator() | option::halo(2) | util::Config("pole_elements", "")};
     auto src_mesh        = src_meshgenerator.generate(src_grid);
     auto src_fs =
-        create_functionspace(src_mesh, 4, args.getString("source.functionspace", ""), args.getBool("interpolation.structured", false));
+        create_functionspace(src_mesh, 2, args.getString("source.functionspace", ""), args.getBool("interpolation.structured", false));
     auto src_field = src_fs.createField<double>();
     timers.source_setup.stop();
 
@@ -224,7 +224,7 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
         MeshGenerator{tgt_grid.meshgenerator() | option::halo(2) | util::Config("pole_elements", "")};
     auto tgt_mesh        = tgt_meshgenerator.generate(tgt_grid);
     auto tgt_fs =
-        create_functionspace(tgt_mesh, 1, args.getString("target.functionspace", ""), args.getBool("interpolation.structured", false));
+        create_functionspace(tgt_mesh, 2, args.getString("target.functionspace", ""), args.getBool("interpolation.structured", false));
     auto tgt_field = tgt_fs.createField<double>();
     timers.target_setup.stop();
 
