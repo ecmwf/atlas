@@ -243,8 +243,8 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
             src_field.haloExchange();
         }
         util::Config config(args.getSubConfiguration("gmsh"));
-        output::Gmsh{src_grid.name()+"_src.msh", config}.write(tgt_mesh);
-        output::Gmsh{tgt_grid.name()+"_srcfield_init.msh", config}.write(src_field);
+        output::Gmsh{src_grid.name()+"_src.msh", config}.write(src_mesh);
+        output::Gmsh{src_grid.name()+"_srcfield_init.msh", config}.write(src_field);
     }
 
     for (int irepeat = 0; irepeat < nremaps; irepeat++) {
