@@ -50,8 +50,8 @@ class AtlasEOAComputation : public AtlasTool {
     std::string briefDescription() override { return "Computation of experimental order of convergence for Atlas' interpolation methods"; }
     std::string usage() override {
         return name() +
-               " [--source.grid=gridname] "
-               "[--target.grid=gridname] [OPTION]... [--help]";
+               " [--source.grid=gridname]"
+               " [--target.grid=gridname] [Options]... [--help]";
     }
 
     int numberOfPositionalArguments() override { return -1; }
@@ -59,20 +59,20 @@ class AtlasEOAComputation : public AtlasTool {
 
 public:
     AtlasEOAComputation(int argc, char* argv[]): AtlasTool(argc, argv) {
-        add_option(new Separator("EOC options"));
+        add_option(new Separator("Options: EOC"));
         add_option(new SimpleOption<long>("eoc.grid.cycles","Simulation cycles for determining EOC"));
         add_option(new SimpleOption<long>("eoc.grid.maxres","Maximal grid resolution in computing EOC"));
         add_option(new SimpleOption<std::string>("source.grid_type", "Source grid type: O, N, L, ..."));
         add_option(new SimpleOption<std::string>("target.grid_type", "Target grid type: O, N, L, ..."));
         add_option(new SimpleOption<long>("eoc.refine-source","Refine source to compute EOC, otherwise refine target"));
 
-        add_option(new Separator("Interpolation options"));
+        add_option(new Separator("Options: Interpolation"));
         add_option(new SimpleOption<std::string>("type","Type of interpolation: bilinear, cubic, ..."));
         add_option(new SimpleOption<std::string>("order","Order of interpolation, when applicable"));
         add_option(new SimpleOption<std::string>("interpolation.structured","Is the interpolation for structured grids"));
         add_option(new SimpleOption<long>("k-nearest-neighbours", "The number of neighbours in k-nearest-neighbours"));
         
-        add_option(new Separator("Initial data"));
+        add_option(new Separator("Options: Initial data"));
         add_option(new SimpleOption<bool>("init_via_highres", "Get initial data by remapping a highres grid data"));
         add_option(new SimpleOption<std::string>(
             "init", "Setup initial source field [ constant, spherical_harmonic, vortex_rollup (default), solid_body_rotation_wind_magnitude, MDPI_sinusoid, MDPI_harmonic, MDPI_vortex, MDPI_gulfstream ]"));
@@ -82,13 +82,13 @@ public:
         add_option(new SimpleOption<long>("spherical_harmonic.n", "total wave number 'n' of a spherical harmonic"));
         add_option(new SimpleOption<long>("spherical_harmonic.m", "zonal wave number 'm' of a spherical harmonic"));
     
-        add_option(new Separator("Input options"));
+        add_option(new Separator("Options: Input"));
         //add_option(new SimpleOption<std::string>("input.meshgenerator.pole_elements", "default = pentagons"));
         //add_option(new SimpleOption<bool>("input.meshed",  "Use function spaces based on mesh, also required for gmsh output"));
         //add_option(new SimpleOption<eckit::PathName>("input.gmsh.file", "Input gmsh file. If not provided, no gmsh output will be performed"));
         //add_option(new SimpleOption<std::string>("input.gmsh.coordinates", "Mesh coordinates: [xy, lonlat, xyz]"));
 
-        add_option(new Separator("Output options"));
+        add_option(new Separator("Options: Output"));
         add_option(new SimpleOption<bool>("output-gmsh", "Output gmsh file"));
         //add_option(new SimpleOption<bool>("output.cell_centred", "Overwrite defaults"));
         //add_option(new SimpleOption<std::string>("output.meshgenerator.pole_elements", "default = pentagons"));
@@ -96,7 +96,7 @@ public:
         add_option(new SimpleOption<eckit::PathName>("output.gmsh.file", "Output gmsh file. If not provided, no gmsh output will be performed"));
         add_option(new SimpleOption<std::string>("output.gmsh.coordinates", "Mesh coordinates: [xy, lonlat, xyz]"));
        
-        add_option(new Separator("Advanced / Debugging"));
+        //add_option(new Separator("Optinos: Advanced / Debugging"));
         //add_option(new SimpleOption<bool>("double_remap", "default: true for target data on nodes"));
     }
 

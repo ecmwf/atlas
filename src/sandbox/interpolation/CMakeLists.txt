@@ -7,6 +7,13 @@
 # does it submit to any jurisdiction.
 
 ecbuild_add_executable(
+    TARGET  atlas-interpolation-pingpong
+    SOURCES atlas-interpolation-pingpong.cc
+    LIBS    atlas
+    NOINSTALL
+)
+
+ecbuild_add_executable(
     TARGET  atlas-interpolation-eoc
     SOURCES atlas-interpolation-eoc.cc
     LIBS    atlas
