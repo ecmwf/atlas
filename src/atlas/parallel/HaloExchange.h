@@ -51,8 +51,10 @@ public:  // methods
     const std::string& name() const { return name_; }
 
     void setup(const int part[], const idx_t remote_idx[], const int base, idx_t size);
+    void setup(const std::string& mpi_comm, const int part[], const idx_t remote_idx[], const int base, idx_t size);
 
     void setup(const int part[], const idx_t remote_idx[], const int base, idx_t size, idx_t halo_begin);
+    void setup(const std::string& mpi_comm, const int part[], const idx_t remote_idx[], const int base, idx_t size, idx_t halo_begin);
 
     template <typename DATA_TYPE, int RANK, typename ParallelDim = array::FirstDim>
     void execute(array::Array& field, bool on_device = false) const;
@@ -118,6 +120,10 @@ private:  // methods
     void var_info(const array::ArrayView<DATA_TYPE, RANK>& arr, std::vector<idx_t>& varstrides,
                   std::vector<idx_t>& varshape) const;
 
+    const mpi::Comm& comm() const {
+        return *comm_;
+    }
+
 private:  // data
     std::string name_;
     bool is_setup_;
@@ -134,6 +140,7 @@ private:  // data
 
     int nproc;
     int myproc;
+    const mpi::Comm* comm_;
 
 public:
     struct Backdoor {
@@ -287,7 +294,7 @@ void HaloExchange::ireceive(int tag, std::vector<int>& recv_displs, std::vector<
         for (size_t jproc = 0; jproc < static_cast<size_t>(nproc); ++jproc) {
             if (recv_counts[jproc] > 0) {
                 recv_req[jproc] =
-                    mpi::comm().iReceive(&recv_buffer[recv_displs[jproc]], recv_counts[jproc], jproc, tag);
+                    comm().iReceive(&recv_buffer[recv_displs[jproc]], recv_counts[jproc], jproc, tag);
             }
         }
     }
@@ -302,7 +309,7 @@ void HaloExchange::isend_and_wait_for_receive(int tag, std::vector<int>& recv_co
     ATLAS_TRACE_MPI(ISEND) {
         for (size_t jproc = 0; jproc < static_cast<size_t>(nproc); ++jproc) {
             if (send_counts[jproc] > 0) {
-                send_req[jproc] = mpi::comm().iSend(&send_buffer[send_displs[jproc]], send_counts[jproc], jproc, tag);
+                send_req[jproc] = comm().iSend(&send_buffer[send_displs[jproc]], send_counts[jproc], jproc, tag);
             }
         }
     }
@@ -311,7 +318,7 @@ void HaloExchange::isend_and_wait_for_receive(int tag, std::vector<int>& recv_co
     ATLAS_TRACE_MPI(WAIT, "mpi-wait receive") {
         for (size_t jproc = 0; jproc < static_cast<size_t>(nproc); ++jproc) {
             if (recv_counts_init[jproc] > 0) {
-                mpi::comm().wait(recv_req[jproc]);
+                comm().wait(recv_req[jproc]);
             }
         }
     }

@@ -22,11 +22,14 @@ public:
     static std::string static_type() { return "brute-force"; }
 
 public:
+    MatchingMeshPartitionerBruteForce(const Mesh& mesh, const eckit::Parametrisation& config): MatchingMeshPartitioner(mesh, config) {}
+
+
     MatchingMeshPartitionerBruteForce(): MatchingMeshPartitioner() {}
-    MatchingMeshPartitionerBruteForce(const idx_t nb_partitions): MatchingMeshPartitioner(nb_partitions) {}
+    MatchingMeshPartitionerBruteForce(const eckit::Parametrisation&): MatchingMeshPartitioner() {}
+    MatchingMeshPartitionerBruteForce(const idx_t nb_partitions): MatchingMeshPartitioner() {}
     MatchingMeshPartitionerBruteForce(const idx_t nb_partitions, const eckit::Parametrisation&):
-        MatchingMeshPartitioner(nb_partitions) {}
-    MatchingMeshPartitionerBruteForce(const Mesh& mesh): MatchingMeshPartitioner(mesh) {}
+        MatchingMeshPartitioner() {}
 
     using MatchingMeshPartitioner::partition;
     virtual void partition(const Grid& grid, int partitioning[]) const;

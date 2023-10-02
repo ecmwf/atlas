@@ -661,13 +661,13 @@ Mesh GmshIO::read(const PathName& file_path) const {
 namespace {
 mesh::ElementType* make_element_type(int type) {
     if (type == QUAD) {
-        return new mesh::temporary::Quadrilateral();
+        return mesh::ElementType::create("Quadrilateral");
     }
     if (type == TRIAG) {
-        return new mesh::temporary::Triangle();
+        return mesh::ElementType::create("Triangle");
     }
     if (type == LINE) {
-        return new mesh::temporary::Line();
+        return mesh::ElementType::create("Line");
     }
     throw_Exception("Element type not supported", Here());
 }
@@ -896,6 +896,7 @@ void GmshIO::read(const PathName& file_path, Mesh& mesh) const {
 }
 
 void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
+    mpi::Scope scope(mesh.mpi_comm());
     int part           = mesh.metadata().has("part") ? mesh.metadata().get<size_t>("part") : mpi::rank();
     bool include_ghost = options.get<bool>("ghost") && options.get<bool>("elements");
 
@@ -1420,6 +1421,7 @@ void GmshIO::write_delegate(const FieldSet& fieldset, const functionspace::Struc
 // ----------------------------------------------------------------------------
 void GmshIO::write(const FieldSet& fieldset, const FunctionSpace& funcspace, const eckit::PathName& file_path,
                    openmode mode) const {
+    mpi::Scope scope(funcspace.mpi_comm());
     if (functionspace::NodeColumns(funcspace)) {
         write_delegate(fieldset, functionspace::NodeColumns(funcspace), file_path, mode);
     }
@@ -1441,6 +1443,7 @@ void GmshIO::write(const FieldSet& fieldset, const FunctionSpace& funcspace, con
 // ----------------------------------------------------------------------------
 void GmshIO::write(const Field& field, const FunctionSpace& funcspace, const eckit::PathName& file_path,
                    openmode mode) const {
+    mpi::Scope scope(funcspace.mpi_comm());
     if (functionspace::NodeColumns(funcspace)) {
         write_delegate(field, functionspace::NodeColumns(funcspace), file_path, mode);
     }

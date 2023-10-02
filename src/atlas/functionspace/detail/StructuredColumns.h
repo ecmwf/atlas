@@ -142,7 +142,7 @@ public:
     Field lonlat() const override { return field_xy_; }
     Field xy() const { return field_xy_; }
     Field z() const { return field_z_; }
-    Field partition() const { return field_partition_; }
+    Field partition() const override { return field_partition_; }
     Field global_index() const override { return field_global_index_; }
     Field remote_index() const override {
         if (not field_remote_index_) {
@@ -167,8 +167,9 @@ public:
 
     const util::PartitionPolygons& polygons() const override;
 
-    idx_t nb_partitions() const override { return nb_partitions_; }
-
+    idx_t part() const override { return part_; }
+    idx_t nb_parts() const override { return nb_partitions_; }
+    std::string mpi_comm() const override { return mpi_comm_; }
 
 private:  // methods
     idx_t config_size(const eckit::Configuration& config) const;
@@ -312,7 +313,9 @@ private:  // data
     idx_t south_pole_included_;
     idx_t ny_;
 
+    idx_t part_;
     idx_t nb_partitions_;
+    std::string mpi_comm_;
 
     friend struct StructuredColumnsFortranAccess;
     friend struct BlockStructuredColumnsFortranAccess;

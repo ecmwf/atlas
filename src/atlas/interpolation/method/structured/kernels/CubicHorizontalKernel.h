@@ -72,15 +72,20 @@ public:
     };
 
     template <typename stencil_t>
-    void compute_stencil(double& x, const double y, stencil_t& stencil, bool retry = true) const {
+    void compute_stencil(const double x, const double y, stencil_t& stencil) const {
         compute_horizontal_stencil_(x, y, stencil);
+    }
+
+    template <typename stencil_t>
+    void make_valid_stencil(double& x, const double y, stencil_t& stencil, bool retry = true) const {
         for (idx_t j = 0; j < stencil_width(); ++j) {
             idx_t imin = stencil.i(0, j);
             idx_t imax = stencil.i(stencil_width()-1, j);
             if (imin < src_.i_begin_halo(stencil.j(j))) {
                 if (retry ) {
                     x += 360.;
-                    compute_stencil(x, y, stencil, false);
+                    compute_stencil(x, y, stencil);
+                    return make_valid_stencil(x, y, stencil, false);
                 }
                 else {
                     Log::error() << "Stencil out of bounds" << std::endl;
@@ -90,7 +95,8 @@ public:
             if (imax >= src_.i_end_halo(stencil.j(j))) {
                 if (retry ) {
                     x -= 360.;
-                    compute_stencil(x, y, stencil, false);
+                    compute_stencil(x, y, stencil);
+                    return make_valid_stencil(x, y, stencil, false);
                 }
                 else {
                     Log::error() << "Stencil out of bounds" << std::endl;
@@ -102,7 +108,7 @@ public:
     }
 
     template <typename weights_t>
-    void compute_weights(double x, const double y, weights_t& weights) const {
+    void compute_weights(const double x, const double y, weights_t& weights) const {
         Stencil stencil;
         compute_stencil(x, y, stencil);
         compute_weights(x, y, stencil, weights);
@@ -234,6 +240,7 @@ public:
         compute_stencil(x, y, stencil);
         Weights weights;
         compute_weights(x, y, stencil, weights);
+        make_valid_stencil(x, y, stencil);
         return interpolate(stencil, weights, input);
     }
 
@@ -241,6 +248,7 @@ public:
     typename array_t::value_type interpolate(PointXY p, const array_t& input, WorkSpace& ws) const {
         compute_stencil(p.x(), p.y(), ws.stencil);
         compute_weights(p.x(), p.y(), ws.stencil, ws.weights);
+        make_valid_stencil(p.x(), p.y(), ws.stencil);
         return interpolate(ws.stencil, ws.weights, input);
     }
 
@@ -267,6 +275,8 @@ public:
     void insert_triplets(const idx_t row, double x, double y, Triplets& triplets, WorkSpace& ws) const {
         compute_stencil(x, y, ws.stencil);
         compute_weights(x, y, ws.stencil, ws.weights);
+
+        make_valid_stencil(x, y, ws.stencil);
         const auto& wj = ws.weights.weights_j;
 
         idx_t pos = row * stencil_size();

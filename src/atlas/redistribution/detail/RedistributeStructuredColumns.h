@@ -92,6 +92,8 @@ private:
     std::vector<int> sendDisplacements_{};
     std::vector<int> recvCounts_{};
     std::vector<int> recvDisplacements_{};
+
+    std::string mpi_comm_;
 };
 
 /// \brief    Helper class for function space intersections.
@@ -116,12 +118,16 @@ public:
     template <typename functorType>
     void forEach(const functorType&) const;
 
+    const std::string& mpi_comm() const { return mpi_comm_; }
+
 private:
     // Begin and end of j range.
     idxPair jBeginEnd_{};
 
     // Begin and end of i range for each j.
     idxPairVector iBeginEnd_{};
+
+    std::string mpi_comm_;
 };
 
 }  // namespace detail

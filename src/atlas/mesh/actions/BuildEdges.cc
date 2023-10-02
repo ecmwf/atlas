@@ -326,6 +326,8 @@ void build_edges(Mesh& mesh) {
 void build_edges(Mesh& mesh, const eckit::Configuration& config) {
     ATLAS_TRACE("BuildEdges");
 
+    mpi::Scope mpi_scope(mesh.mpi_comm());
+
     int mesh_halo(0);
     mesh.metadata().get("halo", mesh_halo);
 
@@ -415,7 +417,7 @@ void build_edges(Mesh& mesh, const eckit::Configuration& config) {
         }
 
         // Build edges
-        mesh.edges().add(new mesh::temporary::Line(), (edge_end - edge_start),
+        mesh.edges().add(mesh::ElementType::create("Line"), (edge_end - edge_start),
                          edge_nodes_data.data() + edge_halo_offsets[halo] * 2);
         auto& edge_nodes       = mesh.edges().node_connectivity();
         const auto& cell_nodes = mesh.cells().node_connectivity();
@@ -474,7 +476,7 @@ void build_edges(Mesh& mesh, const eckit::Configuration& config) {
                 edge_start = edge_end;
                 edge_end += nb_pole_edges;
 
-                mesh.edges().add(new mesh::temporary::Line(), nb_pole_edges, pole_edge_nodes.data());
+                mesh.edges().add(mesh::ElementType::create("Line"), nb_pole_edges, pole_edge_nodes.data());
 
                 auto edge_ridx    = array::make_indexview<idx_t, 1>(mesh.edges().remote_index());
                 auto edge_part    = array::make_view<int, 1>(mesh.edges().partition());

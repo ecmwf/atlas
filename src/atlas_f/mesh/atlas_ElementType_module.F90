@@ -71,22 +71,25 @@ end function
 
 function atlas_Quadrilateral__constructor() result(this)
   use atlas_elementtype_c_binding
+  use fckit_c_interop_module, only : c_str
   type(atlas_ElementType) :: this
-  call this%reset_c_ptr( atlas__mesh__Quadrilateral__create() )
+  call this%reset_c_ptr( atlas__mesh__ElementType__create(c_str("Quadrilateral")) )
   call this%return()
 end function
 
 function atlas_Triangle__constructor() result(this)
   use atlas_elementtype_c_binding
+  use fckit_c_interop_module, only : c_str
   type(atlas_ElementType) :: this
-  call this%reset_c_ptr( atlas__mesh__Triangle__create() )
+  call this%reset_c_ptr( atlas__mesh__ElementType__create(c_str("Triangle")) )
   call this%return()
 end function
 
 function atlas_Line__constructor() result(this)
   use atlas_elementtype_c_binding
+  use fckit_c_interop_module, only : c_str
   type(atlas_ElementType) :: this
-  call this%reset_c_ptr( atlas__mesh__Line__create() )
+  call this%reset_c_ptr( atlas__mesh__ElementType__create(c_str("Line")) )
   call this%return()
 end function
 

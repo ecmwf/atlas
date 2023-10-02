@@ -221,7 +221,7 @@ Grid::Config Unstructured::meshgenerator() const {
     return Config("type", "delaunay");
 }
 Grid::Config Unstructured::partitioner() const {
-    return Config("type", "serial");
+    return Config("type", "equal_regions");
 }
 
 void Unstructured::print(std::ostream& os) const {

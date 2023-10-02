@@ -40,13 +40,6 @@ const detail::Spectral* atlas__SpectralFunctionSpace__new__config(const eckit::C
     return new detail::Spectral(*config);
 }
 
-const detail::Spectral* atlas__SpectralFunctionSpace__new__trans(trans::TransImpl* trans,
-                                                                 const eckit::Configuration* config) {
-    ATLAS_ASSERT(trans != nullptr);
-    ATLAS_ASSERT(config != nullptr);
-    return new detail::Spectral(trans::Trans(trans), *config);
-}
-
 void atlas__SpectralFunctionSpace__delete(detail::Spectral* This) {
     ATLAS_ASSERT(This != nullptr);
     delete This;

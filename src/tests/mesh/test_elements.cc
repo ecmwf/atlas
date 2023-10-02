@@ -26,7 +26,6 @@
 #include "tests/AtlasTestEnvironment.h"
 
 using namespace atlas::mesh;
-using namespace atlas::mesh::temporary;
 
 namespace atlas {
 namespace test {
@@ -38,7 +37,7 @@ CASE("hybrid_elements") {
 
     idx_t triangle_nodes[] = {1, 5, 3, 1, 5, 2};
 
-    idx_t triags_type_idx = hybrid_elements.add(new Triangle(), 2, triangle_nodes);
+    idx_t triags_type_idx = hybrid_elements.add(ElementType::create("Triangle"), 2, triangle_nodes);
 
     EXPECT(triags_type_idx == 0);
 
@@ -50,7 +49,7 @@ CASE("hybrid_elements") {
     quad_nodes[2] = 2;
     quad_nodes[3] = 3;
 
-    idx_t quads_type_idx = hybrid_elements.add(new Quadrilateral(), 1, quad_nodes);
+    idx_t quads_type_idx = hybrid_elements.add(ElementType::create("Quadrilateral"), 1, quad_nodes);
 
     EXPECT(quads_type_idx == 1);
 
@@ -151,7 +150,7 @@ CASE("elements") {
     idx_t triangle_nodes[] = {1, 5, 3, 1, 5, 2};
     idx_t triag1[3]        = {9, 8, 7};
 
-    Elements elements(new Triangle(), 2, triangle_nodes);
+    Elements elements(ElementType::create("Triangle"), 2, triangle_nodes);
 
     EXPECT(elements.begin() == 0);
     EXPECT(elements.end() == 2);
@@ -247,8 +246,8 @@ CASE("zero_elements") {
     HybridElements hybrid_elements;
     idx_t* nodes = nullptr;
 
-    hybrid_elements.add(new Triangle(), 0, nodes);
-    hybrid_elements.add(new Quadrilateral(), 0, nodes);
+    hybrid_elements.add(ElementType::create("Triangle"), 0, nodes);
+    hybrid_elements.add(ElementType::create("Quadrilateral"), 0, nodes);
 
     EXPECT(hybrid_elements.size() == 0);
     EXPECT(hybrid_elements.nb_types() == 2);
@@ -335,9 +334,9 @@ CASE("cells_insert") {
     Log::info() << "\n\n\ncells_insert \n============ \n\n" << std::endl;
     HybridElements cells;
     idx_t c1[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
-    cells.add(new Quadrilateral(), 3, c1);
+    cells.add(ElementType::create("Quadrilateral"), 3, c1);
     idx_t c2[] = {13, 14, 15, 16, 17, 18};
-    cells.add(new Triangle(), 2, c2);
+    cells.add(ElementType::create("Triangle"), 2, c2);
 
     EXPECT(cells.elements(0).size() == 3);
     EXPECT(cells.elements(1).size() == 2);
@@ -383,8 +382,8 @@ CASE("cells_insert") {
 CASE("cells_add_add") {
     HybridElements cells;
 
-    cells.add(new Quadrilateral(), 3);
-    cells.add(new Triangle(), 2);
+    cells.add(ElementType::create("Quadrilateral"), 3);
+    cells.add(ElementType::create("Triangle"), 2);
 
     HybridElements::Connectivity& conn = cells.node_connectivity();
 

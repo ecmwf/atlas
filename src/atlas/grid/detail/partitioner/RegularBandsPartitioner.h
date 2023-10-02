@@ -22,7 +22,9 @@ class RegularBandsPartitioner : public BandsPartitioner {
 public:
     RegularBandsPartitioner();
     RegularBandsPartitioner(int N, const eckit::Parametrisation& config = util::NoConfig()):
-        BandsPartitioner(N, BLOCKSIZE_NX) {}
+        BandsPartitioner(N, BLOCKSIZE_NX, config) {}
+    RegularBandsPartitioner(const eckit::Parametrisation& config):
+        RegularBandsPartitioner(extract_nb_partitions(config), config) {}
     std::string type() const override { return static_type(); }
     static std::string static_type() { return "regular_bands"; }
 };

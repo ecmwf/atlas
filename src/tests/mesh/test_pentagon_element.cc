@@ -68,7 +68,7 @@ CASE("test_pentagon_like_healpix") {
 
     // elements
     {
-        mesh.cells().add(new mesh::temporary::Pentagon(), 4);
+        mesh.cells().add(mesh::ElementType::create("Pentagon"), 4);
         auto connect = [&](idx_t cell, std::array<idx_t, 5> nodes) {
             mesh.cells().node_connectivity().block(0).set(cell, nodes.data());
         };

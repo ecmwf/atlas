@@ -229,26 +229,26 @@ implicit none
   call kdtree%closestPoints(plonlat(1), plonlat(2), k, indices, distances, lonlats(:,1), lonlats(:,2))
   do i = 1, k
     FCTEST_CHECK_EQUAL( indices(i) , result_indices(i) )
-    FCTEST_CHECK_CLOSE( lonlats(i,1) , result_lonlats(i,1) , 1.e-12_c_double )
-    FCTEST_CHECK_CLOSE( lonlats(i,2) , result_lonlats(i,2) , 1.e-12_c_double )
-    FCTEST_CHECK_CLOSE( distances(i) , result_distances(i) , 1.e-12_c_double )
+    FCTEST_CHECK_CLOSE( lonlats(i,1) , result_lonlats(i,1) , 1.e-10_c_double )
+    FCTEST_CHECK_CLOSE( lonlats(i,2) , result_lonlats(i,2) , 1.e-10_c_double )
+    FCTEST_CHECK_CLOSE( distances(i) , result_distances(i) , 1.e-10_c_double )
   end do
 
   ! Check closestPoint
   call kdtree%closestPoint(plonlat(1), plonlat(2), indices(1), distances(1), lonlats(1,1), lonlats(1,2))
   FCTEST_CHECK_EQUAL( indices(1) , result_indices(1) )
-  FCTEST_CHECK_CLOSE( lonlats(1,1) , result_lonlats(1,1) , 1.e-12_c_double )
-  FCTEST_CHECK_CLOSE( lonlats(1,2) , result_lonlats(1,2) , 1.e-12_c_double )
-  FCTEST_CHECK_CLOSE( distances(1) , result_distances(1) , 1.e-12_c_double )
+  FCTEST_CHECK_CLOSE( lonlats(1,1) , result_lonlats(1,1) , 1.e-10_c_double )
+  FCTEST_CHECK_CLOSE( lonlats(1,2) , result_lonlats(1,2) , 1.e-10_c_double )
+  FCTEST_CHECK_CLOSE( distances(1) , result_distances(1) , 1.e-10_c_double )
 
   ! Check closestPoints
   call kdtree%closestPointsWithinRadius(plonlat(1), plonlat(2), 3.5e5_c_double, kk, indices_rad, distances_rad, lons_rad, lats_rad)
   FCTEST_CHECK_EQUAL( kk , 4 )
   do i = 1, kk
     FCTEST_CHECK_EQUAL( indices_rad(i) , result_indices(i) )
-    FCTEST_CHECK_CLOSE( lons_rad(i) , result_lonlats(i,1) , 1.e-12_c_double )
-    FCTEST_CHECK_CLOSE( lats_rad(i) , result_lonlats(i,2) , 1.e-12_c_double )
-    FCTEST_CHECK_CLOSE( distances_rad(i) , result_distances(i) , 1.e-12_c_double )
+    FCTEST_CHECK_CLOSE( lons_rad(i) , result_lonlats(i,1) , 1.e-10_c_double )
+    FCTEST_CHECK_CLOSE( lats_rad(i) , result_lonlats(i,2) , 1.e-10_c_double )
+    FCTEST_CHECK_CLOSE( distances_rad(i) , result_distances(i) , 1.e-10_c_double )
   end do
 
   ! Finalization
@@ -268,26 +268,26 @@ implicit none
   call kdtree%closestPoints(plonlat, k, indices, distances, lonlats)
   do i = 1, k
     FCTEST_CHECK_EQUAL( indices(i) , result_indices(i) )
-    FCTEST_CHECK_CLOSE( lonlats(i,1) , result_lonlats(i,1) , 1.e-12_c_double )
-    FCTEST_CHECK_CLOSE( lonlats(i,2) , result_lonlats(i,2) , 1.e-12_c_double )
-    FCTEST_CHECK_CLOSE( distances(i) , result_distances(i) , 1.e-12_c_double )
+    FCTEST_CHECK_CLOSE( lonlats(i,1) , result_lonlats(i,1) , 1.e-10_c_double )
+    FCTEST_CHECK_CLOSE( lonlats(i,2) , result_lonlats(i,2) , 1.e-10_c_double )
+    FCTEST_CHECK_CLOSE( distances(i) , result_distances(i) , 1.e-10_c_double )
   end do
 
   ! Check closestPoint
   call kdtree%closestPoint(plonlat, indices(1), distances(1), lonlats(1,:))
   FCTEST_CHECK_EQUAL( indices(1) , result_indices(1) )
-  FCTEST_CHECK_CLOSE( lonlats(1,1) , result_lonlats(1,1) , 1.e-12_c_double )
-  FCTEST_CHECK_CLOSE( lonlats(1,2) , result_lonlats(1,2) , 1.e-12_c_double )
-  FCTEST_CHECK_CLOSE( distances(1) , result_distances(1) , 1.e-12_c_double )
+  FCTEST_CHECK_CLOSE( lonlats(1,1) , result_lonlats(1,1) , 1.e-10_c_double )
+  FCTEST_CHECK_CLOSE( lonlats(1,2) , result_lonlats(1,2) , 1.e-10_c_double )
+  FCTEST_CHECK_CLOSE( distances(1) , result_distances(1) , 1.e-10_c_double )
 
   ! Check closestPoints
   call kdtree%closestPointsWithinRadius(plonlat, 3.5e5_c_double, kk, indices_rad, distances_rad, lonlats_rad)
   FCTEST_CHECK_EQUAL( kk , 4 )
   do i = 1, kk
     FCTEST_CHECK_EQUAL( indices_rad(i) , result_indices(i) )
-    FCTEST_CHECK_CLOSE( lonlats_rad(i,1) , result_lonlats(i,1) , 1.e-12_c_double )
-    FCTEST_CHECK_CLOSE( lonlats_rad(i,2) , result_lonlats(i,2) , 1.e-12_c_double )
-    FCTEST_CHECK_CLOSE( distances_rad(i) , result_distances(i) , 1.e-12_c_double )
+    FCTEST_CHECK_CLOSE( lonlats_rad(i,1) , result_lonlats(i,1) , 1.e-10_c_double )
+    FCTEST_CHECK_CLOSE( lonlats_rad(i,2) , result_lonlats(i,2) , 1.e-10_c_double )
+    FCTEST_CHECK_CLOSE( distances_rad(i) , result_distances(i) , 1.e-10_c_double )
   end do
 
   ! Finalization

@@ -30,11 +30,11 @@ namespace parallel {
 
 namespace {
 struct IsGhostPoint {
-    IsGhostPoint(const int part[], const idx_t ridx[], const idx_t base, const int N) {
+    IsGhostPoint(const int mypart, const int part[], const idx_t ridx[], const idx_t base, const int N) {
         part_   = part;
         ridx_   = ridx;
         base_   = base;
-        mypart_ = mpi::rank();
+        mypart_ = mypart;
     }
 
     bool operator()(idx_t idx) {
@@ -72,18 +72,22 @@ struct Node {
 }  // namespace
 
 GatherScatter::GatherScatter(): name_(), is_setup_(false) {
-    myproc = mpi::rank();
-    nproc  = mpi::size();
 }
 
 GatherScatter::GatherScatter(const std::string& name): name_(name), is_setup_(false) {
-    myproc = mpi::rank();
-    nproc  = mpi::size();
 }
 
 void GatherScatter::setup(const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
                           const int mask[], const idx_t parsize) {
+    setup(mpi::comm().name(), part, remote_idx, base, glb_idx, parsize);
+}
+
+void GatherScatter::setup(const std::string& mpi_comm, const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
+                          const int mask[], const idx_t parsize) {
     ATLAS_TRACE("GatherScatter::setup");
+    comm_ = &mpi::comm(mpi_comm);
+    myproc = comm().rank();
+    nproc  = comm().size();
     parsize_ = parsize;
 
     glbcounts_.resize(nproc);
@@ -106,7 +110,7 @@ void GatherScatter::setup(const int part[], const idx_t remote_idx[], const int 
     }
 
     ATLAS_TRACE_MPI(ALLGATHER) {
-        mpi::comm().allGather(loccnt_, glbcounts_.begin(), glbcounts_.end());
+        comm().allGather(loccnt_, glbcounts_.begin(), glbcounts_.end());
     }
 
     size_t glbcnt_size_t = std::accumulate(glbcounts_.begin(), glbcounts_.end(), size_t(0));
@@ -142,8 +146,8 @@ void GatherScatter::setup(const int part[], const idx_t remote_idx[], const int 
                                   << eckit::Bytes(glbcnt_ * sizeof(gidx_t)));
         }
         ATLAS_TRACE_MPI(ALLGATHER) {
-            mpi::comm().allGatherv(sendnodes_gidx.begin(), sendnodes_gidx.begin() + loccnt_, recvnodes_gidx.data(),
-                                   glbcounts_.data(), glbdispls_.data());
+            comm().allGatherv(sendnodes_gidx.begin(), sendnodes_gidx.begin() + loccnt_, recvnodes_gidx.data(),
+                              glbcounts_.data(), glbdispls_.data());
         }
         atlas_omp_parallel_for(idx_t n = 0; n < nb_recv_nodes; ++n) {
             node_sort[n].g = recvnodes_gidx[n];
@@ -162,8 +166,8 @@ void GatherScatter::setup(const int part[], const idx_t remote_idx[], const int 
                                   << eckit::Bytes(glbcnt_ * sizeof(int)));
         }
         ATLAS_TRACE_MPI(ALLGATHER) {
-            mpi::comm().allGatherv(sendnodes_part.begin(), sendnodes_part.begin() + loccnt_, recvnodes_part.data(),
-                                   glbcounts_.data(), glbdispls_.data());
+            comm().allGatherv(sendnodes_part.begin(), sendnodes_part.begin() + loccnt_, recvnodes_part.data(),
+                              glbcounts_.data(), glbdispls_.data());
         }
         atlas_omp_parallel_for(idx_t n = 0; n < nb_recv_nodes; ++n) {
             node_sort[n].p = recvnodes_part[n];
@@ -181,8 +185,8 @@ void GatherScatter::setup(const int part[], const idx_t remote_idx[], const int 
                                   << eckit::Bytes(glbcnt_ * sizeof(idx_t)));
         }
         ATLAS_TRACE_MPI(ALLGATHER) {
-            mpi::comm().allGatherv(sendnodes_ridx.begin(), sendnodes_ridx.begin() + loccnt_, recvnodes_ridx.data(),
-                                   glbcounts_.data(), glbdispls_.data());
+            comm().allGatherv(sendnodes_ridx.begin(), sendnodes_ridx.begin() + loccnt_, recvnodes_ridx.data(),
+                              glbcounts_.data(), glbdispls_.data());
         }
         atlas_omp_parallel_for(idx_t n = 0; n < nb_recv_nodes; ++n) {
             node_sort[n].i = recvnodes_ridx[n];
@@ -238,12 +242,20 @@ void GatherScatter::setup(const int part[], const idx_t remote_idx[], const int 
 
 void GatherScatter::setup(const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
                           const idx_t parsize) {
+    setup(mpi::comm().name(), part, remote_idx, base, glb_idx, parsize);
+}
+
+void GatherScatter::setup(const std::string& mpi_comm, const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
+                          const idx_t parsize) {
     std::vector<int> mask(parsize);
-    IsGhostPoint is_ghost(part, remote_idx, base, parsize);
-    for (idx_t jj = 0; jj < parsize; ++jj) {
-        mask[jj] = is_ghost(jj) ? 1 : 0;
+    {
+        int mypart = mpi::comm(mpi_comm).rank();
+        IsGhostPoint is_ghost(mypart, part, remote_idx, base, parsize);
+        for (idx_t jj = 0; jj < parsize; ++jj) {
+            mask[jj] = is_ghost(jj) ? 1 : 0;
+        }
     }
-    setup(part, remote_idx, base, glb_idx, mask.data(), parsize);
+    setup(mpi_comm, part, remote_idx, base, glb_idx, mask.data(), parsize);
 }
 
 /////////////////////

@@ -11,9 +11,26 @@
 
 #include "SerialPartitioner.h"
 
+#include "atlas/parallel/mpi/mpi.h"
+
 namespace {
 atlas::grid::detail::partitioner::PartitionerBuilder<atlas::grid::detail::partitioner::SerialPartitioner> __Serial(
     atlas::grid::detail::partitioner::SerialPartitioner::static_type());
 }
 
-atlas::grid::detail::partitioner::SerialPartitioner::SerialPartitioner(): Partitioner(1) {}
+namespace atlas {
+namespace grid {
+namespace detail {
+namespace partitioner {
+
+SerialPartitioner::SerialPartitioner(const eckit::Parametrisation& config): 
+    Partitioner(config) {
+    part_ = mpi::comm(mpi_comm()).rank();
+    config.get("part", part_);
+    config.get("partition", part_);
+}
+
+}
+}
+}
+}

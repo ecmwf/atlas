@@ -8,7 +8,10 @@
 #pragma once
 
 #include "atlas/mesh/Mesh.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
+
+#include "eckit/config/Configuration.h"
 
 #include <array>
 #include <vector>
@@ -29,6 +32,8 @@ namespace mesh {
  * - cannot import halos, i.e., cells owned by other MPI tasks; halos can still be subsequently
  *   computed by calling the BuildMesh action.
  * - cannot import node-to-cell connectivity information.
+ *
+ * The Mesh's Grid can be initialized via the call operator's optional config argument.
  */
 class MeshBuilder {
 public:
@@ -48,12 +53,21 @@ public:
      * MPI task), in other words, must be an element of the node global_indices. The boundary nodes
      * are ordered node-varies-fastest, element-varies-slowest order. The cell global index is,
      * here also, a uniform labeling over the of the cells across all MPI tasks.
+     *
+     * The config argument can be used to
+     * - Request the Mesh's Grid to be constructed, usually from the config. If the Grid is either
+     *   an UnstructuredGrid or a Structured grid, the `validate` bool option can be used to trigger
+     *   a simple check that the grid is consistent with the lons/lats passed in to the MeshBuilder.
+     *   In the special case where `grid.type` is unstructured and the `grid.xy` coordinates are
+     *   _not_ given, then the grid is constructed from the lons/lats passed to the MeshBuilder.
+     * - Select which MPI communicator to use.
      */
     Mesh operator()(size_t nb_nodes, const double lons[], const double lats[], const int ghosts[],
                     const gidx_t global_indices[], const idx_t remote_indices[], const idx_t remote_index_base,
                     const int partitions[], size_t nb_tris, const gidx_t tri_boundary_nodes[],
                     const gidx_t tri_global_indices[], size_t nb_quads, const gidx_t quad_boundary_nodes[],
-                    const gidx_t quad_global_indices[]) const;
+                    const gidx_t quad_global_indices[],
+                    const eckit::Configuration& config = util::NoConfig()) const;
 
     /**
      * \brief C++-interface to construct a Mesh from external connectivity data
@@ -66,7 +80,8 @@ public:
                     const std::vector<std::array<gidx_t, 3>>& tri_boundary_nodes,
                     const std::vector<gidx_t>& tri_global_indices,
                     const std::vector<std::array<gidx_t, 4>>& quad_boundary_nodes,
-                    const std::vector<gidx_t>& quad_global_indices) const;
+                    const std::vector<gidx_t>& quad_global_indices,
+                    const eckit::Configuration& config = util::NoConfig()) const;
 };
 
 //-----------------------------------------------------------------------------

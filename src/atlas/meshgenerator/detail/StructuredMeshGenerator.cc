@@ -101,6 +101,17 @@ StructuredMeshGenerator::StructuredMeshGenerator(const eckit::Parametrisation& p
         options.set("three_dimensional", three_dimensional);
     }
 
+    std::string mpi_comm_name = mpi::comm().name();
+    p.get("mpi_comm", mpi_comm_name);
+    options.set("mpi_comm",mpi_comm_name);
+    auto& comm = mpi::comm(mpi_comm_name);
+
+    // This option sets number of parts the mesh will be split in
+    options.set("nb_parts", comm.size());
+
+    // This option sets the part that will be generated
+    options.set("part", comm.rank());
+
     size_t nb_parts;
     if (p.get("nb_parts", nb_parts)) {
         options.set("nb_parts", nb_parts);
@@ -160,12 +171,6 @@ void StructuredMeshGenerator::configure_defaults() {
     // false
     options.set("three_dimensional", false);
 
-    // This option sets number of parts the mesh will be split in
-    options.set("nb_parts", mpi::size());
-
-    // This option sets the part that will be generated
-    options.set("part", mpi::rank());
-
     // Experimental option. This is what makes tripolar grid patched with quads
     options.set("patch_quads", false);
 
@@ -204,9 +209,10 @@ void StructuredMeshGenerator::generate(const Grid& grid, Mesh& mesh) const {
     if (nb_parts == 1) {
         partitioner_type = "serial";
     }
-
+    mpi::push(options.getString("mpi_comm"));
     grid::Partitioner partitioner(partitioner_type, nb_parts);
     grid::Distribution distribution(partitioner.partition(grid));
+    mpi::pop();
     generate(grid, distribution, mesh);
 }
 
@@ -216,7 +222,7 @@ void StructuredMeshGenerator::hash(eckit::Hash& h) const {
 }
 
 void StructuredMeshGenerator::generate(const Grid& grid, const grid::Distribution& distribution, Mesh& mesh) const {
-    ATLAS_TRACE();
+    ATLAS_TRACE("structuredmeshgenerator(grid,dist,mesh)");
     Log::debug() << "StructuredMeshGenerator generating mesh from " << grid.name() << std::endl;
 
     const StructuredGrid rg = StructuredGrid(grid);
@@ -257,6 +263,10 @@ void StructuredMeshGenerator::generate(const Grid& grid, const grid::Distributio
     Region region;
     generate_region(rg, distribution, mypart, region);
 
+
+    mesh.metadata().set("nb_parts",options.getInt("nb_parts"));
+    mesh.metadata().set("part",options.getInt("part"));
+    mesh.metadata().set("mpi_comm",options.getString("mpi_comm"));
     generate_mesh(rg, distribution, region, mesh);
 }
 
@@ -448,6 +458,7 @@ We need to connect to next region
 
             while (true) {
                 if (ipN1 == endN && ipS1 == endS) {
+                    // ATLAS_DEBUG("ipN1 == endN && ipS1 == endS");
                     break;
                 }
 
@@ -602,6 +613,19 @@ We need to connect to next region
                         }
                     }
                 }
+
+                ATLAS_ASSERT( (ipN1!=ipN2) || (ipS1 != ipS2) );
+                if( ipN1 == ipN2 ) {
+                    try_make_triangle_up = true;
+                    try_make_triangle_down = false;
+                    try_make_quad = false;
+                }
+                if( ipS1 == ipS2 ) {
+                    try_make_triangle_up = false;
+                    try_make_triangle_down = true;
+                    try_make_quad = false;
+                }
+
                 // ------------------------------------------------
                 // END RULES
                 // ------------------------------------------------
@@ -681,8 +705,8 @@ We need to connect to next region
                 {
 // triangle without ip3
 #if DEBUG_OUTPUT
-                    Log::info() << "          " << ipN1 << "  " << ipN2 << '\n';
-                    Log::info() << "          " << ipS1 << '\n';
+                    Log::info() << "v          " << ipN1 << "  " << ipN2 << '\n';
+                    Log::info() << "           " << ipS1 << '\n';
 #endif
                     elem(0) = ipN1;
                     elem(1) = ipS1;
@@ -696,6 +720,7 @@ We need to connect to next region
                     add_triag = (mypart == pE);
 
                     if (add_triag) {
+                        ATLAS_ASSERT(ipN1 != ipN2, "Faulty triangle with latN = "+std::to_string(latN)+"("+std::to_string(rg.y(latN))+")");
                         ++region.ntriags;
                         ++jelem;
                         ++nelems;
@@ -723,8 +748,8 @@ We need to connect to next region
                 {
 // triangle without ip4
 #if DEBUG_OUTPUT
-                    Log::info() << "          " << ipN1 << " (" << pN1 << ")" << '\n';
-                    Log::info() << "          " << ipS1 << " (" << pS1 << ")"
+                    Log::info() << "^          " << ipN1 << " (" << pN1 << ")" << '\n';
+                    Log::info() << "           " << ipS1 << " (" << pS1 << ")"
                                 << "  " << ipS2 << " (" << pS2 << ")" << '\n';
 #endif
                     elem(0) = ipN1;
@@ -1233,8 +1258,8 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
     // Now handle elements
     // -------------------
 
-    mesh.cells().add(new mesh::temporary::Quadrilateral(), nquads);
-    mesh.cells().add(new mesh::temporary::Triangle(), ntriags);
+    mesh.cells().add(mesh::ElementType::create("Quadrilateral"), nquads);
+    mesh.cells().add(mesh::ElementType::create("Triangle"), ntriags);
 
     mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
     array::ArrayView<gidx_t, 1> cells_glb_idx             = array::make_view<gidx_t, 1>(mesh.cells().global_index());

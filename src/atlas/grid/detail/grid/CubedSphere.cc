@@ -315,7 +315,7 @@ GridFactoryBuilder<CubedSphere> __register_CubedSphere(CubedSphere::static_type(
 static class cubedsphere_lfric : public GridBuilder {
 public:
     cubedsphere_lfric():
-        GridBuilder("cubedsphere_lfric", {"^[Cc][Ss][_-][Ll][Ff][Rr][-_](([CL])[-_])?([0-9]+)$"},
+        GridBuilder("cubedsphere_lfric", {"^[Cc][Ss][_-][Ll][Ff][Rr][-_](([CL])[-_])?([1-9][0-9]*)$"},
                     {"CS-LFR-<N>", "CS-LFR-{C,L}-<N>"}) {}
 
     void print(std::ostream& os) const override {
@@ -399,7 +399,7 @@ public:
 static class cubedsphere_equiangular : public GridBuilder {
 public:
     cubedsphere_equiangular():
-        GridBuilder("cubedsphere_equiangular", {"^[Cc][Ss][_-][Ee][Aa][-_](([CL])[-_])?([0-9]+)$"},
+        GridBuilder("cubedsphere_equiangular", {"^[Cc][Ss][_-][Ee][Aa][-_](([CL])[-_])?([1-9][0-9]*)$"},
                     {"CS-EA-<N>", "CS-EA-{C,L}-<N>"}) {}
 
     void print(std::ostream& os) const override {
@@ -481,7 +481,7 @@ public:
 static class cubedsphere_equidistant : public GridBuilder {
 public:
     cubedsphere_equidistant():
-        GridBuilder("cubedsphere_equidistant", {"^[Cc][Ss][_-][Ee][Dd][-_](([CL])[-_])?([0-9]+)$"},
+        GridBuilder("cubedsphere_equidistant", {"^[Cc][Ss][_-][Ee][Dd][-_](([CL])[-_])?([1-9][0-9]*)$"},
                     {"CS-ED-<N>", "CS-ED-{C,L}-<N>"}) {}
 
     void print(std::ostream& os) const override {

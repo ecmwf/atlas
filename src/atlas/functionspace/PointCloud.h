@@ -20,13 +20,16 @@
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/detail/FunctionSpaceImpl.h"
 #include "atlas/parallel/HaloExchange.h"
+#include "atlas/parallel/GatherScatter.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Point.h"
+#include "atlas/grid/Partitioner.h"
 
 namespace atlas {
 namespace parallel {
 class HaloExchange;
+class GatherScatter;
 }  // namespace parallel
 }  // namespace atlas
 
@@ -42,11 +45,12 @@ namespace detail {
 class PointCloud : public functionspace::FunctionSpaceImpl {
 public:
     template <typename Point>
-    PointCloud(const std::vector<Point>&);
-    PointCloud(const Field& lonlat);
-    PointCloud(const Field& lonlat, const Field& ghost);
-    PointCloud(const FieldSet&);  // assuming lonlat ghost ridx and partition present
-    PointCloud(const Grid&);
+    PointCloud(const std::vector<Point>&, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const Field& lonlat, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const Field& lonlat, const Field& ghost, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const FieldSet&, const eckit::Configuration& = util::NoConfig());  // assuming lonlat ghost ridx and partition present
+    PointCloud(const Grid&, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig());
     ~PointCloud() override {}
     std::string type() const override { return "PointCloud"; }
     operator bool() const override { return true; }
@@ -56,7 +60,12 @@ public:
     const Field& vertical() const { return vertical_; }
     Field ghost() const override;
     Field remote_index() const override { return remote_index_; }
-    virtual idx_t size() const override { return lonlat_.shape(0); }
+    Field global_index() const override { return global_index_; }
+    Field partition() const override { return partition_; }
+    idx_t size() const override { return lonlat_.shape(0); }
+    idx_t part() const override { return part_; }
+    idx_t nb_parts() const override { return nb_partitions_; }
+    std::string mpi_comm() const override { return mpi_comm_; }
 
     using FunctionSpaceImpl::createField;
     Field createField(const eckit::Configuration&) const override;
@@ -69,6 +78,15 @@ public:
     void adjointHaloExchange(const Field&, bool on_device = false) const override;
 
     const parallel::HaloExchange& halo_exchange() const;
+
+    void gather(const FieldSet&, FieldSet&) const override;
+    void gather(const Field&, Field&) const override;
+    const parallel::GatherScatter& gather() const override;
+
+    void scatter(const FieldSet&, FieldSet&) const override;
+    void scatter(const Field&, Field&) const override;
+    const parallel::GatherScatter& scatter() const override;
+
 
     template <typename Point>
     class IteratorT {
@@ -148,17 +166,29 @@ private:
 
     void set_field_metadata(const eckit::Configuration& config, Field& field) const;
 
+    void create_remote_index() const;
 
 private:
     Field lonlat_;
     Field vertical_;
     mutable Field ghost_;
-    Field remote_index_;
+    mutable Field remote_index_;
+    Field global_index_;
     Field partition_;
-    std::unique_ptr<parallel::HaloExchange> halo_exchange_;
+    idx_t size_owned_;
+    idx_t size_global_{0};
+    idx_t max_glb_idx_{0};
+
     idx_t levels_{0};
+    idx_t part_{0};
+    idx_t nb_partitions_{1};
+    std::string mpi_comm_;
+
+    mutable std::unique_ptr<parallel::HaloExchange> halo_exchange_;
+    mutable std::unique_ptr<parallel::GatherScatter> gather_scatter_;
 
     void setupHaloExchange();
+    void setupGatherScatter();
 
 };
 
@@ -171,13 +201,14 @@ private:
 class PointCloud : public FunctionSpace {
 public:
     PointCloud(const FunctionSpace&);
-    PointCloud(const Field& points);
-    PointCloud(const Field&, const Field&);
-    PointCloud(const FieldSet& flds);
-    PointCloud(const std::vector<PointXY>&);
-    PointCloud(const std::vector<PointXYZ>&);
-    PointCloud(const std::initializer_list<std::initializer_list<double>>&);
-    PointCloud(const Grid&);
+    PointCloud(const Field& points, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const Field&, const Field&, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const FieldSet& flds, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const std::vector<PointXY>&, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const std::vector<PointXYZ>&, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const std::initializer_list<std::initializer_list<double>>&, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const Grid&, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig());
 
     operator bool() const { return valid(); }
     bool valid() const { return functionspace_; }

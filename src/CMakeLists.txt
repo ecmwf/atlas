@@ -24,6 +24,18 @@ else()
   set( atlas_HAVE_TESSELATION 0 )
 endif()
 
+if( atlas_HAVE_QHULL )
+  set( atlas_HAVE_QHULL 1 )
+else()
+  set( atlas_HAVE_QHULL 0 )
+endif()
+
+if( atlas_HAVE_CGAL )
+  set( atlas_HAVE_CGAL 1 )
+else()
+  set( atlas_HAVE_CGAL 0 )
+endif()
+
 if( atlas_HAVE_PROJ )
   set( atlas_HAVE_PROJ 1 )
 else()

@@ -35,10 +35,9 @@ protected:
     static constexpr int BLOCKSIZE_NX{-1};
 
 public:
-    BandsPartitioner();
-    BandsPartitioner(int N): BandsPartitioner(N, 1) {}
-    BandsPartitioner(int N, int blocksize);
-    BandsPartitioner(int N, const eckit::Parametrisation& config): BandsPartitioner(N, extract_blocksize(config)) {}
+    BandsPartitioner(const eckit::Parametrisation& config = util::NoConfig());
+    BandsPartitioner(int N, const eckit::Parametrisation& config): BandsPartitioner(N, extract_blocksize(config), config) {}
+    BandsPartitioner(int N, int blocksize, const eckit::Parametrisation& config = util::NoConfig());
 
     std::string type() const override { return static_type(); }
     static std::string static_type() { return "bands"; }

@@ -105,18 +105,6 @@ namespace {
         return out.str();
     };
 
-    inline auto compute_src_west_east(functionspace::StructuredColumns src_fs) {
-        const auto& src_polygon = src_fs.polygon(0);
-        double src_west = std::numeric_limits<double>::max();
-        double src_east = std::numeric_limits<double>::min();
-        for( auto& p : src_polygon.lonlat() ) {
-            src_west = std::min(src_west, p[0]);
-            src_east = std::max(src_east, p[0]);
-        }
-        return std::make_tuple(src_west,src_east);
-    };
-
-
     inline void output_source_partition_polygon(const std::string& path, functionspace::StructuredColumns src_fs, idx_t halo) {
         auto& polygon = src_fs.polygon(halo);
         std::ofstream f(filename(path));
@@ -182,13 +170,11 @@ namespace {
             output_source_partition_polygon("atlas_source_partition_polygons_halo_0_p%p.json",src_fs,0);
             output_source_partition_polygon("atlas_source_partition_polygons_halo_" + halo_str + "_p%p.json",src_fs,src_fs.halo());
             output_target_points("atlas_target_failed_points_p%p.json", failed_points, lonlat);
-            auto [src_west, src_east] = compute_src_west_east(src_fs);
             idx_t my_rank = mpi::rank();
             for( idx_t p=0; p<mpi::size(); ++p ) {
                 if( p == my_rank && failed_points.size() ) {
                     Log::error() << "Failed to interpolate " << failed_points.size() << " points on rank " << p
-                                 << " after retrying with normalisation to (west=" << src_west-360 << ") and (east=" << src_west+360 << "). "
-                                 << "See " << filename("atlas_target_failed_points_p%p.json") ;
+                                 << ".\nSee " << filename("atlas_target_failed_points_p%p.json") ;
                     if( failed_points.size() <= 20 ) {
                         Log::error() << " :\n" << to_str(failed_points, lonlat);
                     }
@@ -207,7 +193,7 @@ namespace {
                 src_fs_config.set("source.grid",src_fs.grid().spec());
                 src_fs_config.set("source.halo",src_fs.halo());
                 src_fs_config.set("source.distribution",src_fs.distribution());
-                src_fs_config.set("source.partitions",src_fs.nb_partitions());
+                src_fs_config.set("source.partitions",src_fs.nb_parts());
                 src_fs_config.set("interpolation","StructuredInterpolation2D<"+interpolation.kernel().className()+">");
                 f << src_fs_config.json();
             }
@@ -366,11 +352,8 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source ) {
         auto triplets = kernel_->allocate_triplets( out_npts_ );
 
         using WorkSpace = typename Kernel::WorkSpace;
-        auto [west, east] = compute_src_west_east(source);
-        auto normalise = util::NormaliseLongitude(west);
         auto interpolate_point = [&]( idx_t n, PointLonLat&& p, WorkSpace& workspace ) -> int {
             try {
-                p.lon() = normalise(p.lon());
                 kernel_->insert_triplets( n, p, triplets, workspace );
                 return 0;
             }
@@ -518,13 +501,11 @@ void StructuredInterpolation2D<Kernel>::execute_impl( const Kernel& kernel, cons
 
     using WorkSpace = typename Kernel::WorkSpace;
 
-    auto [west, east] = compute_src_west_east(source());
-    util::NormaliseLongitude normalise{west};
     auto interpolate_point = [&]( idx_t n, PointLonLat&& p, WorkSpace& workspace ) -> int {
         try {
-            p.lon() = normalise(p.lon());
             kernel.compute_stencil( p.lon(), p.lat(), workspace.stencil );
             kernel.compute_weights( p.lon(), p.lat(), workspace.stencil, workspace.weights );
+            kernel.make_valid_stencil( p.lon(), p.lat(), workspace.stencil );
             for ( idx_t i = 0; i < N; ++i ) {
                 kernel.interpolate( workspace.stencil, workspace.weights, src_view[i], tgt_view[i], n );
             }
