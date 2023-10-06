@@ -27,6 +27,7 @@
 #include "atlas/grid/StructuredGrid.h"
 #include "atlas/grid/StructuredPartitionPolygon.h"
 #include "atlas/library/Library.h"
+#include "atlas/library/FloatingPointExceptions.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/parallel/Checksum.h"
 #include "atlas/parallel/GatherScatter.h"
@@ -71,6 +72,8 @@ array::LocalView<T, 3> make_leveled_view(Field& field) {
 
 template <typename T>
 std::string checksum_3d_field(const parallel::Checksum& checksum, const Field& field) {
+    bool disabled_fpe_overflow = library::disable_floating_point_exception(FE_OVERFLOW);
+    bool disabled_fpe_invalid  = library::disable_floating_point_exception(FE_INVALID);
     auto values = make_leveled_view<const T>(field);
     array::ArrayT<T> surface_field(values.shape(0), values.shape(2));
     auto surface     = array::make_view<T, 2>(surface_field);
@@ -82,6 +85,12 @@ std::string checksum_3d_field(const parallel::Checksum& checksum, const Field& f
                 surface(n, j) += values(n, l, j);
             }
         }
+    }
+    if (disabled_fpe_overflow) {
+        library::enable_floating_point_exception(FE_OVERFLOW);
+    }
+    if (disabled_fpe_invalid) {
+        library::enable_floating_point_exception(FE_INVALID);
     }
     return checksum.execute(surface.data(), surface_field.stride(0));
 }
