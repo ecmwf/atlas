@@ -250,6 +250,13 @@ void FiniteElement::setup(const FunctionSpace& source) {
     const idx_t maxNbElemsToTry = std::max<idx_t>(8, idx_t(Nelements * max_fraction_elems_to_try_));
     idx_t max_neighbours        = 0;
 
+    double search_radius = 0.;
+    if (meshSource.metadata().has("cell_maximum_diagonal_on_unit_sphere")) {
+        search_radius = Geometry("Earth").radius() * meshSource.metadata().getDouble("cell_maximum_diagonal_on_unit_sphere");
+        ASSERT(search_radius > 0.);
+        Log::debug() << "k-d tree: search radius = " << search_radius/1000. << " km" << std::endl;
+    }
+
     std::vector<size_t> failures;
 
     ATLAS_TRACE_SCOPE("Computing interpolation matrix") {
@@ -265,17 +272,29 @@ void FiniteElement::setup(const FunctionSpace& source) {
             bool success = false;
             std::ostringstream failures_log;
 
-            while (!success && kpts <= maxNbElemsToTry) {
-                max_neighbours = std::max(kpts, max_neighbours);
+            if (search_radius != 0.) {
+                ElemIndex3::NodeList cs = eTree->findInSphere(p,search_radius);
+                if (cs.size()) {
+                    Triplets triplets       = projectPointToElements(ip, cs, failures_log);
 
-                ElemIndex3::NodeList cs = eTree->kNearestNeighbours(p, kpts);
-                Triplets triplets       = projectPointToElements(ip, cs, failures_log);
-
-                if (triplets.size()) {
-                    std::copy(triplets.begin(), triplets.end(), std::back_inserter(weights_triplets));
-                    success = true;
+                    if (triplets.size()) {
+                        std::copy(triplets.begin(), triplets.end(), std::back_inserter(weights_triplets));
+                        success = true;
+                    }
                 }
-                kpts *= 2;
+            }
+            else {
+                while (!success && kpts <= maxNbElemsToTry) {
+                    max_neighbours = std::max(kpts, max_neighbours);
+                    ElemIndex3::NodeList cs = eTree->kNearestNeighbours(p, kpts);
+                    Triplets triplets       = projectPointToElements(ip, cs, failures_log);
+
+                    if (triplets.size()) {
+                        std::copy(triplets.begin(), triplets.end(), std::back_inserter(weights_triplets));
+                        success = true;
+                    }
+                    kpts *= 2;
+                }
             }
 
             if (!success) {
