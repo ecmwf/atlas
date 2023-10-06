@@ -141,9 +141,11 @@ using enable_if_scalar_t = enable_if_t<std::is_scalar<T>::value && EnableBool>;
 
 template <typename T>
 constexpr bool is_array_datatype() {
-    return std::is_same<T, double>::value || std::is_same<T, float>::value ||
-                                std::is_same<T, int>::value || std::is_same<T, long>::value ||
-                                std::is_same<T, size_t>::value || std::is_same<T, std::byte>::value;
+    return std::is_same_v<T, double>        || std::is_same_v<T, float> ||
+           std::is_same_v<T, int>           || std::is_same_v<T, long>  ||
+           std::is_same_v<T, std::int32_t>  || std::is_same_v<T, std::int64_t> ||
+           std::is_same_v<T, std::uint64_t> || std::is_same_v<T, size_t> ||
+           std::is_same_v<T, std::byte>;
 }
 
 template <typename T>
