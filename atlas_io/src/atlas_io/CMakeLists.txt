@@ -85,6 +85,7 @@ ecbuild_add_library( TARGET atlas_io
         types/array/ArrayReference.h
         types/array/adaptors/StdArrayAdaptor.h
         types/array/adaptors/StdVectorAdaptor.h
+        types/array/adaptors/StdVectorOfStdArrayAdaptor.h
         types/string.h
         types/scalar.h
         types/scalar.cc
