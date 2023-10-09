@@ -37,7 +37,7 @@ void decode(const atlas::io::Metadata& m, const atlas::io::Data& encoded, std::v
     if (array.datatype().kind() != atlas::io::ArrayMetadata::DataType::kind<T>()) {
         std::stringstream err;
         err << "Could not decode " << m.json() << " into std::vector<" << atlas::io::demangle<T>() << ">. "
-            << "Incompatible datatype!";
+            << "Incompatible datatypes: " << array.datatype().str() << " and " << atlas::io::ArrayMetadata::DataType::str<T>() << ".";
         throw atlas::io::Exception(err.str(), Here());
     }
     const T* data = static_cast<const T*>(encoded.data());
