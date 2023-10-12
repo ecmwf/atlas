@@ -65,11 +65,13 @@ public:
         add_option(new Separator("Options: Interpolation"));
         add_option(new SimpleOption<std::string>("type","Type of interpolation: bilinear, cubic, ..."));
         add_option(new SimpleOption<std::string>("order","Order of interpolation, when applicable"));
-        add_option(new SimpleOption<std::string>("interpolation.structured","Is the interpolation for structured grids"));
+        add_option(new SimpleOption<std::string>("source.grid", ""));
+        add_option(new SimpleOption<std::string>("target.grid", ""));
+        add_option(new SimpleOption<long>("source.halo", "Number of halo layers on source mesh"));
+        add_option(new SimpleOption<long>("target.halo", "Number of halo layers on target mesh"));
         add_option(new SimpleOption<long>("k-nearest-neighbours", "The number of neighbours in k-nearest-neighbours"));
         
         add_option(new Separator("Options: Initial data"));
-        add_option(new SimpleOption<bool>("init_via_highres", "Get initial data by remapping a highres grid data"));
         add_option(new SimpleOption<std::string>(
             "init", "Setup initial source field [ constant, spherical_harmonic, vortex_rollup (default), solid_body_rotation_wind_magnitude, MDPI_sinusoid, MDPI_harmonic, MDPI_vortex, MDPI_gulfstream ]"));
         add_option(new SimpleOption<double>("solid_body_rotation.angle", "Angle of solid body rotation (default = 0.)"));
@@ -83,6 +85,7 @@ public:
         //add_option(new SimpleOption<bool>("input.meshed",  "Use function spaces based on mesh, also required for gmsh output"));
         //add_option(new SimpleOption<eckit::PathName>("input.gmsh.file", "Input gmsh file. If not provided, no gmsh output will be performed"));
         //add_option(new SimpleOption<std::string>("input.gmsh.coordinates", "Mesh coordinates: [xy, lonlat, xyz]"));
+        add_option(new SimpleOption<std::string>("source.functionspace", "Source function space: CellColumns, NodeColumns"));
 
         add_option(new Separator("Options: Output"));
         add_option(new SimpleOption<bool>("output-gmsh", "Output gmsh file"));
@@ -91,6 +94,7 @@ public:
         //add_option(new SimpleOption<bool>("output.meshed", "Use function spaces based on mesh, also required for gmsh output"));
         add_option(new SimpleOption<eckit::PathName>("output.gmsh.file", "Output gmsh file. If not provided, no gmsh output will be performed"));
         add_option(new SimpleOption<std::string>("output.gmsh.coordinates", "Mesh coordinates: [xy, lonlat, xyz]"));
+        add_option(new SimpleOption<std::string>("target.functionspace", "Target function space: CellColumns, NodeColumns"));
        
         //add_option(new Separator("Optinos: Advanced / Debugging"));
         //add_option(new SimpleOption<bool>("double_remap", "default: true for target data on nodes"));
@@ -193,18 +197,20 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
 
     std::stringstream sstream;
     int nremaps = args.getInt("pingpong.nremaps", 1);
+    int shalo = args.getInt("source.halo", 2);
+    int thalo = args.getInt("target.halo", 2);
 
-    Grid src_grid = StructuredGrid( args.getString("source.grid", "H16") );
-    Grid tgt_grid = StructuredGrid( args.getString("source.grid", "H32") );
+    Grid src_grid = StructuredGrid( args.getString("source.grid", "O16") );
+    Grid tgt_grid = StructuredGrid( args.getString("target.grid", "O32") );
 
     // setup interpolators
     //
     timers.source_setup.start();
     auto src_meshgenerator =
-        MeshGenerator{src_grid.meshgenerator() | option::halo(2) | util::Config("pole_elements", "")};
+        MeshGenerator{src_grid.meshgenerator() | option::halo(shalo) | util::Config("pole_elements", "")};
     auto src_mesh        = src_meshgenerator.generate(src_grid);
     auto src_fs =
-        create_functionspace(src_mesh, 2, args.getString("source.functionspace", ""), args.getBool("interpolation.structured", false));
+        create_functionspace(src_mesh, shalo, args.getString("source.functionspace", ""), args.getBool("interpolation.structured", false));
     auto src_field = src_fs.createField<double>();
     timers.source_setup.stop();
 
@@ -221,10 +227,10 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
 
     timers.target_setup.start();
     auto tgt_meshgenerator =
-        MeshGenerator{tgt_grid.meshgenerator() | option::halo(2) | util::Config("pole_elements", "")};
+        MeshGenerator{tgt_grid.meshgenerator() | option::halo(thalo) | util::Config("pole_elements", "")};
     auto tgt_mesh        = tgt_meshgenerator.generate(tgt_grid);
     auto tgt_fs =
-        create_functionspace(tgt_mesh, 2, args.getString("target.functionspace", ""), args.getBool("interpolation.structured", false));
+        create_functionspace(tgt_mesh, thalo, args.getString("target.functionspace", ""), args.getBool("interpolation.structured", false));
     auto tgt_field = tgt_fs.createField<double>();
     timers.target_setup.stop();
 
@@ -251,9 +257,13 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
         std::cout << "== remap step " << irepeat + 1 << " / " << nremaps << std::endl;
         timers.interpolation_fw_execute.start();
         interpolation_fw.execute(src_field, tgt_field);
+        tgt_field.set_dirty(true);
+        tgt_field.haloExchange();
         timers.interpolation_fw_execute.stop();
         timers.interpolation_bw_execute.start();
         interpolation_bw.execute(tgt_field, src_field);
+        src_field.set_dirty(true);
+        src_field.haloExchange();
         timers.interpolation_bw_execute.stop();
     }
 
@@ -274,7 +284,7 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
         output.set("setup.source.functionspace", src_fs.type());
         output.set("setup.target.functionspace", tgt_fs.type());
         output.set("setup.source.halo", args.getLong("source.halo", 2));
-        output.set("setup.target.halo", args.getLong("target.halo", 0));
+        output.set("setup.target.halo", args.getLong("target.halo", 2));
         output.set("setup.interpolation.type", args.getInt("order", 1));
         output.set("setup.interpolation.order", args.getInt("order", 1));
         output.set("setup.interpolation.normalise_intersections", args.getBool("normalise-intersections", false));
