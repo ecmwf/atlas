@@ -17,6 +17,7 @@
 #include <stdexcept>
 
 #include "eckit/filesystem/PathName.h"
+#include "eckit/config/Resource.h"
 
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
@@ -915,6 +916,8 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
     auto coords_idx    = array::make_view<const idx_t, 2>(coords_is_idx ? coords_field.array() : dummy_idx);
     bool coords_is_lonlat = coords_field.name() == "lonlat";
 
+    double filter_edge_ratio = eckit::Resource<double>("$ATLAS_GMSH_FILTER_EDGE_RATIO",0.);
+
     auto glb_idx = array::make_view<gidx_t, 1>(nodes.global_index());
 
     const idx_t surfdim = nodes.field(nodes_field).shape(1);  // nb of variables in coords
@@ -1028,6 +1031,23 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
                         if (triangle_area <= 0 ) {
                             return false;
                         }
+                        // edge length comparison
+                        if (filter_edge_ratio > 0.) {
+                            auto dx10 = (x1()-x0());
+                            auto dx21 = (x2()-x1());
+                            auto dx02 = (x0()-x2());
+                            auto dy10 = (y1()-y0());
+                            auto dy21 = (y2()-y1());
+                            auto dy02 = (y0()-y2());
+                            auto d10 = dx10*dx10 + dy10*dy10;
+                            auto d21 = dx21*dx21 + dy21*dy21;
+                            auto d02 = dx02*dx02 + dy02*dy02;
+                            auto dmin = std::min(d10, std::min(d21, d02));
+                            auto dmax = std::max(d10, std::max(d21, d02));
+                            if (dmax > filter_edge_ratio * dmin) {
+                                return false;
+                            }
+                        }
                     }
                 }
                 return true;
@@ -1109,6 +1129,23 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
                             auto triangle_area = (x0() * (y1() - y2()) + x1() * (y2() - y0()) + x2() * (y0() - y1())) * 0.5;
                             if (triangle_area <= 0 ) {
                                 return false;
+                            }
+                            // edge length comparison
+                            if (filter_edge_ratio > 0.) {
+                                auto dx10 = (x1()-x0());
+                                auto dx21 = (x2()-x1());
+                                auto dx02 = (x0()-x2());
+                                auto dy10 = (y1()-y0());
+                                auto dy21 = (y2()-y1());
+                                auto dy02 = (y0()-y2());
+                                auto d10 = dx10*dx10 + dy10*dy10;
+                                auto d21 = dx21*dx21 + dy21*dy21;
+                                auto d02 = dx02*dx02 + dy02*dy02;
+                                auto dmin = std::min(d10, std::min(d21, d02));
+                                auto dmax = std::max(d10, std::max(d21, d02));
+                                if (dmax > filter_edge_ratio * dmin) {
+                                    return false;
+                                }
                             }
                         }
                     }
