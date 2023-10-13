@@ -36,7 +36,7 @@ ElementType* ElementType::create( const std::string& name )
   } else {
     throw_NotImplemented("Element type ["+name+"] does not exist", Here());
   }
-  return 0;
+  return nullptr;
 }
 
 ElementType::ElementType()  = default;
