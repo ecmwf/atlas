@@ -207,7 +207,7 @@ PointCloud::PointCloud(const Grid& grid, const grid::Partitioner& _partitioner, 
             owned_lonlat.reserve(size_owned);
             owned_grid_idx.reserve(size_owned);
 
-            auto kdtree = util::IndexKDTree();
+            auto kdtree = util::IndexKDTree(config);
             {
                 ATLAS_TRACE("build kdtree");
                 kdtree.reserve(grid.size());
