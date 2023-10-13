@@ -180,6 +180,7 @@ CASE("test kdtree") {
     EXPECT_EQ(neighbours, expected_neighbours);
 }
 
+
 CASE("test assertion") {
     auto grid = Grid{"O32"};
 
@@ -310,6 +311,27 @@ CASE("test IndexKDTree 2D vs 3D") {
     EXPECT_EQ(payloads2d, (std::vector<idx_t>{2, 3, 1, 4}));
     EXPECT_EQ(payloads3d, (std::vector<idx_t>{2, 1, 3, 0}));
     // Note that the expected values are different whether 2D search or 3D search is used
+}
+
+
+CASE("test kdtree with configured geometry") {
+    auto grid = Grid{"O32"};
+
+    IndexKDTree search_unit(util::Config("geometry","UnitSphere"));
+    IndexKDTree search_earth(util::Config("geometry","Earth"));
+
+    search_unit.build(grid.lonlat(),PayloadGenerator(grid.size()));
+    search_earth.build(grid.lonlat(),PayloadGenerator(grid.size()));
+
+    double km_unit                = 1000. / util::Earth::radius();
+    double km_earth               = 1000.;
+    auto neighbours_unit          = search_unit. closestPointsWithinRadius(PointLonLat{180., 45.}, 500 * km_unit ).payloads();
+    auto neighbours_earth         = search_earth.closestPointsWithinRadius(PointLonLat{180., 45.}, 500 * km_earth).payloads();
+
+    auto expected_neighbours = std::vector<idx_t>{760, 842, 759, 761, 841, 843, 682};
+
+    EXPECT_EQ(neighbours_unit,  expected_neighbours);
+    EXPECT_EQ(neighbours_earth, expected_neighbours);
 }
 
 //------------------------------------------------------------------------------------------------
