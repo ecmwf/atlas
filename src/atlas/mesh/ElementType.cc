@@ -25,15 +25,15 @@ ElementType* ElementType::create( const std::string& name )
 {
   // currently naive implementation. This has to be replaced
   // with self-registration and factory mechanism
-  if( name == "Triangle" )
+  if( name == "Triangle" ) {
     return new elementtypes::Triangle();
-  else if( name == "Quadrilateral")
+  } else if( name == "Quadrilateral") {
     return new elementtypes::Quadrilateral();
-  else if( name == "Line" )
+  } else if( name == "Line" ) {
     return new elementtypes::Line();
-  else if( name == "Pentagon")
+  } else if( name == "Pentagon") {
     return new elementtypes::Pentagon();
-  else {
+  } else {
     throw_NotImplemented("Element type ["+name+"] does not exist", Here());
   }
   return 0;
