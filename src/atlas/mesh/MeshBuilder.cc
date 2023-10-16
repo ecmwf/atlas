@@ -83,7 +83,7 @@ void validate_grid_vs_mesh(const atlas::Grid& grid, size_t nb_nodes, const doubl
 
     double lonlat[2];
     const auto equal_within_roundoff = [](const double a, const double b) -> bool {
-        return std::abs(a - b) <= 360.0 + 1.0e-16;
+        return std::abs(a - b) <= 360.0 * 1.0e-16;
     };
 
     // Check lonlats for each supported grid type
