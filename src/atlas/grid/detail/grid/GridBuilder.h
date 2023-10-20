@@ -39,9 +39,11 @@ public:
 
     virtual const Grid::Implementation* create(const std::string&, const Grid::Config& = Grid::Config()) const = 0;
 
-    const std::string& type() const;
+    virtual const std::string& type() const;
     const std::vector<std::string>& regexes() const;
     const std::vector<std::string>& names() const;
+
+    void registerNamedGrid(const std::string& name);
 
 protected:
     bool match(const std::string& string, std::vector<std::string>& matches, int& id) const;
