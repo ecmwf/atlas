@@ -14,6 +14,7 @@
 #include <iomanip>
 #include <limits>
 #include <ostream>
+#include <sstream>
 
 #include "atlas/grid/Spacing.h"
 #include "atlas/grid/StructuredGrid.h"
@@ -42,16 +43,17 @@ public:
         int id;
         std::vector<std::string> matches;
         if (match(name, matches, id)) {
-            int N = std::stoi(matches[0]);
-            return new detail::grid::Healpix(N);
+            int N                = std::stoi(matches[0]);
+            std::string ordering = config.getString("ordering", "ring");
+            return new detail::grid::Healpix(N, ordering);
         }
         return nullptr;
     }
 
     const Grid::Implementation* create(const Grid::Config& config) const override {
-        long N;
-        config.get("N", N);
-        return new detail::grid::Healpix(N);
+        long N               = config.getLong("N", 0);
+        std::string ordering = config.getString("ordering", "ring");
+        return new detail::grid::Healpix(N, ordering);
     }
 
 } healpix_builder_;
@@ -110,8 +112,12 @@ Healpix::YSpace healpix_yspace(long N) {
     return new spacing::CustomSpacing(y.size(), y.data());
 }
 
-Healpix::Healpix(long N):
-    Structured("H" + std::to_string(N), healpix_xspace(N), healpix_yspace(N), Projection(), GlobalDomain()) {}
+Healpix::Healpix(long N, const std::string& ordering):
+    Structured("H" + std::to_string(N), healpix_xspace(N), healpix_yspace(N), Projection(), GlobalDomain()) {
+        if (ordering != "ring") {
+            ATLAS_THROW_EXCEPTION("atlas Healpix Grid is only supported with ring ordering");
+        }
+    }
 
 
 Healpix::Config Healpix::meshgenerator() const {

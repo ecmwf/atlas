@@ -128,8 +128,28 @@ CASE("test_create_healpix_mesh") {
 
 //-----------------------------------------------------------------------------
 
+CASE("construction by config") {
+    EXPECT(Grid(util::Config("type", "healpix")("N", 3)) == Grid("H3"));
+}
+
 CASE("construction by integer") {
     EXPECT(HealpixGrid(3) == Grid("H3"));
+}
+
+CASE("construction by integer and ordering") {
+    EXPECT(HealpixGrid(3, "ring") == Grid("H3"));
+}
+
+CASE("failing construction by integer and unsupported ordering") {
+    EXPECT_THROWS(HealpixGrid grid(3, "nested"));
+}
+
+CASE("failing construction by config with unsupported ordering") {
+    EXPECT_THROWS(Grid grid(util::Config("name", "H3")("ordering", "nested")));
+}
+
+CASE("failing construction by config with unsupported ordering") {
+    EXPECT_THROWS(Grid grid(util::Config("type", "healpix")("N", 3)("ordering", "nested")));
 }
 
 //-----------------------------------------------------------------------------
