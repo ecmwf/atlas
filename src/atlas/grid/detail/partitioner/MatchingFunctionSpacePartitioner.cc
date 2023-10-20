@@ -10,6 +10,8 @@
 
 #include "atlas/grid/detail/partitioner/MatchingFunctionSpacePartitioner.h"
 
+#include <sstream>
+
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/runtime/Exception.h"
 
@@ -19,7 +21,7 @@ namespace detail {
 namespace partitioner {
 
 MatchingFunctionSpacePartitioner::MatchingFunctionSpacePartitioner(): Partitioner() {
-    ATLAS_NOTIMPLEMENTED;
+    ATLAS_THROW_EXCEPTION("Error: A MatchingFunctionPartitioner needs to be initialised with a FunctionSpace");
 }
 
 // MatchingFunctionSpacePartitioner::MatchingFunctionSpacePartitioner(const idx_t nb_partitions):

@@ -9,6 +9,9 @@
  */
 
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitioner.h"
+
+#include <sstream>
+
 #include "atlas/runtime/Exception.h"
 
 namespace atlas {
@@ -17,7 +20,7 @@ namespace detail {
 namespace partitioner {
 
 MatchingMeshPartitioner::MatchingMeshPartitioner(): Partitioner() {
-    ATLAS_NOTIMPLEMENTED;
+    ATLAS_THROW_EXCEPTION("Error: A MatchingMeshPartitioner needs to be initialised with a Mesh");
 }
 
 // MatchingMeshPartitioner::MatchingMeshPartitioner(const idx_t nb_partitions): Partitioner(nb_partitions) {
