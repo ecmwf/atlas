@@ -272,7 +272,7 @@ public:
 
 public:
     HealpixGrid(const Grid&);
-    HealpixGrid(int N);
+    HealpixGrid(int N, const std::string& ordering = "ring");
 
     operator bool() const { return valid(); }
 

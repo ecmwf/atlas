@@ -1,6 +1,6 @@
 #!/bin/sh
 
-KEY=GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+KEY=GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
 wget https://apt.repos.intel.com/intel-gpg-keys/$KEY
 sudo apt-key add $KEY
 rm $KEY

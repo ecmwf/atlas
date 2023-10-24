@@ -20,7 +20,7 @@ namespace grid {
 class Healpix : public Structured {
 public:
     using Structured::Structured;
-    Healpix(long N);
+    Healpix(long N, const std::string& ordering = "ring");
     Config meshgenerator() const override;
     Config partitioner() const override;
     static std::string static_type() { return "healpix"; }

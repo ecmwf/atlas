@@ -30,6 +30,7 @@ class FiniteElement : public Method {
 public:
     FiniteElement(const Config& config): Method(config) {
         config.get("max_fraction_elems_to_try", max_fraction_elems_to_try_);
+        config.get("treat_failure_as_missing_value", treat_failure_as_missing_value_);
     }
 
     virtual ~FiniteElement() override {}

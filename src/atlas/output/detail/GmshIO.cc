@@ -17,6 +17,7 @@
 #include <stdexcept>
 
 #include "eckit/filesystem/PathName.h"
+#include "eckit/config/Resource.h"
 
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
@@ -913,6 +914,9 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
     bool coords_is_idx = coords_field.datatype().kind() == array::make_datatype<idx_t>().kind();
     auto coords        = array::make_view<const double, 2>(coords_is_idx ? dummy_double : coords_field.array());
     auto coords_idx    = array::make_view<const idx_t, 2>(coords_is_idx ? coords_field.array() : dummy_idx);
+    bool coords_is_lonlat = coords_field.name() == "lonlat";
+
+    double filter_edge_ratio = eckit::Resource<double>("$ATLAS_GMSH_FILTER_EDGE_RATIO",0.);
 
     auto glb_idx = array::make_view<gidx_t, 1>(nodes.global_index());
 
@@ -989,6 +993,7 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
             nb_elements += hybrid->size();
             const auto hybrid_halo  = array::make_view<int, 1>(hybrid->halo());
             const auto hybrid_flags = array::make_view<int, 1>(hybrid->flags());
+            const auto& node_connectivity = hybrid->node_connectivity();
 
             auto include = [&](idx_t e) {
                 auto topology = Topology::view(hybrid_flags(e));
@@ -1012,6 +1017,38 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
                 }
                 if (topology.check(Topology::INVALID)) {
                     return false;
+                }
+
+                if (coords_is_lonlat) {
+                    if (node_connectivity.cols(e) == 3) {
+                        auto x0 = [&]() { return coords(node_connectivity(e,0),LON); };
+                        auto x1 = [&]() { return coords(node_connectivity(e,1),LON); };
+                        auto x2 = [&]() { return coords(node_connectivity(e,2),LON); };
+                        auto y0 = [&]() { return coords(node_connectivity(e,0),LAT); };
+                        auto y1 = [&]() { return coords(node_connectivity(e,1),LAT); };
+                        auto y2 = [&]() { return coords(node_connectivity(e,2),LAT); };
+                        auto triangle_area = (x0() * (y1() - y2()) + x1() * (y2() - y0()) + x2() * (y0() - y1())) * 0.5;
+                        if (triangle_area <= 0 ) {
+                            return false;
+                        }
+                        // edge length comparison
+                        if (filter_edge_ratio > 0.) {
+                            auto dx10 = (x1()-x0());
+                            auto dx21 = (x2()-x1());
+                            auto dx02 = (x0()-x2());
+                            auto dy10 = (y1()-y0());
+                            auto dy21 = (y2()-y1());
+                            auto dy02 = (y0()-y2());
+                            auto d10 = dx10*dx10 + dy10*dy10;
+                            auto d21 = dx21*dx21 + dy21*dy21;
+                            auto d02 = dx02*dx02 + dy02*dy02;
+                            auto dmin = std::min(d10, std::min(d21, d02));
+                            auto dmax = std::max(d10, std::max(d21, d02));
+                            if (dmax > filter_edge_ratio * dmin) {
+                                return false;
+                            }
+                        }
+                    }
                 }
                 return true;
             };
@@ -1080,6 +1117,37 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
                     }
                     if (topology.check(Topology::INVALID)) {
                         return false;
+                    }
+                    if (coords_is_lonlat) {
+                        if (nb_nodes == 3) {
+                            auto x0 = [&]() { return coords(node_connectivity(e,0),LON); };
+                            auto x1 = [&]() { return coords(node_connectivity(e,1),LON); };
+                            auto x2 = [&]() { return coords(node_connectivity(e,2),LON); };
+                            auto y0 = [&]() { return coords(node_connectivity(e,0),LAT); };
+                            auto y1 = [&]() { return coords(node_connectivity(e,1),LAT); };
+                            auto y2 = [&]() { return coords(node_connectivity(e,2),LAT); };
+                            auto triangle_area = (x0() * (y1() - y2()) + x1() * (y2() - y0()) + x2() * (y0() - y1())) * 0.5;
+                            if (triangle_area <= 0 ) {
+                                return false;
+                            }
+                            // edge length comparison
+                            if (filter_edge_ratio > 0.) {
+                                auto dx10 = (x1()-x0());
+                                auto dx21 = (x2()-x1());
+                                auto dx02 = (x0()-x2());
+                                auto dy10 = (y1()-y0());
+                                auto dy21 = (y2()-y1());
+                                auto dy02 = (y0()-y2());
+                                auto d10 = dx10*dx10 + dy10*dy10;
+                                auto d21 = dx21*dx21 + dy21*dy21;
+                                auto d02 = dx02*dx02 + dy02*dy02;
+                                auto dmin = std::min(d10, std::min(d21, d02));
+                                auto dmax = std::max(d10, std::max(d21, d02));
+                                if (dmax > filter_edge_ratio * dmin) {
+                                    return false;
+                                }
+                            }
+                        }
                     }
                     return true;
                 };

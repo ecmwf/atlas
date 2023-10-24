@@ -71,9 +71,8 @@ const Grid* Grid::create(const std::string& name) {
 }
 
 const Grid* Grid::create(const std::string& name, const Grid::Config& config) {
-    const GridBuilder::Registry& registry = GridBuilder::nameRegistry();
-    for (GridBuilder::Registry::const_iterator it = registry.begin(); it != registry.end(); ++it) {
-        const Grid* grid = it->second->create(name, config);
+    for (const auto& [key, builder]: GridBuilder::nameRegistry()) {
+        const Grid* grid = builder->create(name, config);
         if (grid) {
             return grid;
         }
@@ -83,11 +82,12 @@ const Grid* Grid::create(const std::string& name, const Grid::Config& config) {
     std::ostringstream log;
     log << "Could not construct Grid from the name \"" << name << "\"\n";
     log << "Accepted names are: \n";
-    for (GridBuilder::Registry::const_iterator it = registry.begin(); it != registry.end(); ++it) {
-        log << "  -  " << *it->second << "\n";
+    for (const auto& [key, grid_builder]: GridBuilder::typeRegistry()) {
+        for( auto& grid_name: grid_builder->names()) {
+            log << "  -  " << grid_name << "\n";
+        }
     }
     throw_Exception(log.str());
-    //    return GridBuilder::createNamed(name);
 }
 
 const Grid* Grid::create(const Grid& grid, const Domain& domain) {

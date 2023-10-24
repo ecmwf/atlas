@@ -196,6 +196,8 @@ public:  // methods
     Config meshgenerator() const override;
     Config partitioner() const override;
 
+    size_t footprint() const override;
+
 private:  // methods
     virtual void print(std::ostream&) const override;
 

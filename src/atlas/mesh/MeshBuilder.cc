@@ -31,11 +31,11 @@ atlas::UnstructuredGrid assemble_unstructured_grid(size_t nb_nodes, const double
     const size_t nb_owned_nodes = std::count(ghosts, ghosts + nb_nodes, 0);
     std::vector<double> owned_lonlats(2 * nb_owned_nodes);
     int counter = 0;
-    for (size_t i = 0; i < nb_nodes; ++i) {
-        if (ghosts[i] == 0) {
-            owned_lonlats[counter] = lons[i];
+    for (size_t n = 0; n < nb_nodes; ++n) {
+        if (ghosts[n] == 0) {
+            owned_lonlats[counter] = lons[n];
             counter++;
-            owned_lonlats[counter] = lats[i];
+            owned_lonlats[counter] = lats[n];
             counter++;
         }
     }
@@ -51,8 +51,8 @@ atlas::UnstructuredGrid assemble_unstructured_grid(size_t nb_nodes, const double
     global_lonlats = std::move(buffer.buffer);
 
     std::vector<atlas::PointXY> points(nb_nodes_global);
-    for (size_t i = 0; i < nb_nodes_global; ++i) {
-        points[i] = atlas::PointXY({global_lonlats[2*i], global_lonlats[2*i + 1]});
+    for (size_t n = 0; n < nb_nodes_global; ++n) {
+        points[n] = atlas::PointXY({global_lonlats[2*n], global_lonlats[2*n + 1]});
     }
 
     return atlas::UnstructuredGrid(new std::vector<atlas::PointXY>(points.begin(), points.end()));
@@ -73,47 +73,47 @@ void validate_grid_vs_mesh(const atlas::Grid& grid, size_t nb_nodes, const doubl
     const size_t nb_owned_nodes = std::count(ghosts, ghosts + nb_nodes, 0);
     size_t nb_nodes_global = 0;
     comm.allReduce(nb_owned_nodes, nb_nodes_global, eckit::mpi::sum());
-    for (size_t i = 0; i < nb_nodes; ++i) {
-        if (ghosts[i] == 0) {
+    for (size_t n = 0; n < nb_nodes; ++n) {
+        if (ghosts[n] == 0) {
             // Check global_indices is consistent with a 1-based contiguous index over nodes
-            ATLAS_ASSERT(global_indices[i] >= 1);
-            ATLAS_ASSERT(global_indices[i] <= nb_nodes_global);
+            ATLAS_ASSERT(global_indices[n] >= 1);
+            ATLAS_ASSERT(global_indices[n] <= nb_nodes_global);
         }
     }
 
     double lonlat[2];
     const auto equal_within_roundoff = [](const double a, const double b) -> bool {
-        return fabs(a - b) <= 360.0 * 1.0e-16;
+        return std::abs(a - b) <= 360.0 * 1.0e-16;
     };
 
     // Check lonlats for each supported grid type
     if (grid.type() == "unstructured") {
         const atlas::UnstructuredGrid ugrid(grid);
-        for (size_t i = 0; i < nb_nodes; ++i) {
-            if (ghosts[i] == 0) {
-                ugrid.lonlat(global_indices[i] - 1, lonlat);
-                if (!equal_within_roundoff(lonlat[0], lons[i]) || !equal_within_roundoff(lonlat[1], lats[i])) {
+        for (size_t n = 0; n < nb_nodes; ++n) {
+            if (ghosts[n] == 0) {
+                ugrid.lonlat(global_indices[n] - 1, lonlat);
+                if (!equal_within_roundoff(lonlat[0], lons[n]) || !equal_within_roundoff(lonlat[1], lats[n])) {
                     throw_Exception("In MeshBuilder: UnstructuredGrid from config does not match mesh coordinates", Here());
                 }
             }
         }
     } else if (grid.type() == "structured") {
         const atlas::StructuredGrid sgrid(grid);
-        for (size_t i = 0; i < nb_nodes; ++i) {
-            if (ghosts[i] == 0) {
+        for (size_t n = 0; n < nb_nodes; ++n) {
+            if (ghosts[n] == 0) {
                 idx_t i, j;
-                sgrid.index2ij(global_indices[i] - 1, i, j);
+                sgrid.index2ij(global_indices[n] - 1, i, j);
                 sgrid.lonlat(i, j, lonlat);
-                if (!equal_within_roundoff(lonlat[0], lons[i]) || !equal_within_roundoff(lonlat[1], lats[i])) {
+                if (!equal_within_roundoff(lonlat[0], lons[n]) || !equal_within_roundoff(lonlat[1], lats[n])) {
                     throw_Exception("In MeshBuilder: StructuredGrid from config does not match mesh coordinates", Here());
                 }
             }
         }
     } else {
-        for (size_t i = 0; i < nb_nodes; ++i) {
-            if (ghosts[i] == 0) {
-                auto point = *(grid.lonlat().begin() + static_cast<size_t>(global_indices[i] - 1));
-                if (!equal_within_roundoff(point.lon(), lons[i]) || !equal_within_roundoff(point.lat(), lats[i])) {
+        for (size_t n = 0; n < nb_nodes; ++n) {
+            if (ghosts[n] == 0) {
+                auto point = *(grid.lonlat().begin() + static_cast<size_t>(global_indices[n] - 1));
+                if (!equal_within_roundoff(point.lon(), lons[n]) || !equal_within_roundoff(point.lat(), lats[n])) {
                     throw_Exception("In MeshBuilder: Grid from config does not match mesh coordinates", Here());
                 }
             }

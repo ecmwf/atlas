@@ -182,6 +182,11 @@ void Unstructured::hash(eckit::Hash& h) const {
     projection().hash(h);
 }
 
+size_t Unstructured::footprint() const {
+    return sizeof(PointXY) * points_->size();
+}
+
+
 RectangularLonLatDomain Unstructured::lonlatBoundingBox() const {
     return projection_ ? projection_.lonlatBoundingBox(domain_) : domain_;
 }
