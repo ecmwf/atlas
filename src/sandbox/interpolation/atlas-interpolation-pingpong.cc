@@ -278,25 +278,25 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
     for (int irepeat = 0; irepeat < nremaps; irepeat++) {
         timers.src_redistribution_execute.start();
         src_redist.execute(src_field, src_field_tgtpart);
+        src_field_tgtpart.set_dirty(true);
+        src_field_tgtpart.haloExchange();
         timers.src_redistribution_execute.stop();
-
-        src_fs_tgtpart.haloExchange(src_field_tgtpart);
 
         timers.interpolation_fw_execute.start();
         interpolation_fw.execute(src_field_tgtpart, tgt_field);
-        tgt_fs.haloExchange(tgt_field);
         tgt_field.haloExchange();
         timers.interpolation_fw_execute.stop();
 
         timers.tgt_redistribution_execute.start();
         tgt_redist.execute(tgt_field, tgt_field_srcpart);
+        tgt_field_srcpart.set_dirty(true);
+        tgt_field_srcpart.haloExchange();
         timers.tgt_redistribution_execute.stop();
-
-        tgt_fs_srcpart.haloExchange(tgt_field_srcpart);
 
         timers.interpolation_bw_execute.start();
         interpolation_bw.execute(tgt_field_srcpart, src_field);
         src_fs.haloExchange(src_field);
+        src_field.haloExchange();
         timers.interpolation_bw_execute.stop();
     }
 
