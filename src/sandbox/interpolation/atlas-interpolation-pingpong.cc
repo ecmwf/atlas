@@ -32,6 +32,7 @@
 #include "atlas/meshgenerator.h"
 #include "atlas/option.h"
 #include "atlas/output/Gmsh.h"
+#include "atlas/redistribution/Redistribution.h"
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/function/MDPI_functions.h"
@@ -105,8 +106,12 @@ public:
         StopWatch target_setup;
         StopWatch source_setup;
         StopWatch initial_condition;
+        StopWatch src_redistribution_setup;
+        StopWatch tgt_redistribution_setup;
         StopWatch interpolation_fw_setup;
         StopWatch interpolation_bw_setup;
+        StopWatch src_redistribution_execute;
+        StopWatch tgt_redistribution_execute;
         StopWatch interpolation_fw_execute;
         StopWatch interpolation_bw_execute;
     } timers;
@@ -142,8 +147,9 @@ std::function<double(const PointLonLat&)> get_init(const AtlasTool::Args& args) 
         return [func](const PointLonLat& p) { return func.windMagnitude(p.lon(), p.lat()); };
     }
     else if (init == "MDPI_sinusoid") {
+        // modified to have only one hill over the whole domain
         auto func = util::function::MDPI_sinusoid;
-        return [func](const PointLonLat& p) { return func(p.lon(), p.lat()); };
+        return [func](const PointLonLat& p) { return std::max(2., func(p.lon(), p.lat())); };
     }
     else if (init == "MDPI_harmonic") {
         auto func = util::function::MDPI_harmonic;
@@ -193,8 +199,6 @@ FunctionSpace create_functionspace(Mesh& mesh, int halo, std::string type, bool 
 
 
 int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
-    ATLAS_ASSERT(atlas::mpi::size() == 1);
-
     std::stringstream sstream;
     int nremaps = args.getInt("pingpong.nremaps", 1);
     int shalo = args.getInt("source.halo", 2);
@@ -208,7 +212,7 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
     timers.source_setup.start();
     auto src_meshgenerator =
         MeshGenerator{src_grid.meshgenerator() | option::halo(shalo) | util::Config("pole_elements", "")};
-    auto src_mesh        = src_meshgenerator.generate(src_grid);
+    auto src_mesh        = src_meshgenerator.generate(src_grid, grid::Partitioner("equal_bands"));
     auto src_fs =
         create_functionspace(src_mesh, shalo, args.getString("source.functionspace", ""), args.getBool("interpolation.structured", false));
     auto src_field = src_fs.createField<double>();
@@ -221,7 +225,7 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
     for (idx_t n = 0; n < lonlat.shape(0); ++n) {
         src_view(n) = f(PointLonLat{lonlat(n, LON), lonlat(n, LAT)});
     }
-    src_field.set_dirty(true);
+    src_fs.haloExchange(src_field);
     src_field.haloExchange();
     timers.initial_condition.stop();
 
@@ -234,13 +238,31 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
     auto tgt_field = tgt_fs.createField<double>();
     timers.target_setup.stop();
 
+    // create distribution doubles on source and target meshes
+    auto src_partitioner = grid::MatchingPartitioner{src_mesh, util::Config("partitioner", "spherical-polygon")};
+    auto tgt_partitioner = grid::MatchingPartitioner{tgt_mesh, util::Config("partitioner", "spherical-polygon")};
+    auto src_mesh_tgtpart = src_meshgenerator.generate(src_grid, tgt_partitioner);
+    auto tgt_mesh_srcpart = tgt_meshgenerator.generate(tgt_grid, src_partitioner);
+    auto src_fs_tgtpart =
+        create_functionspace(src_mesh_tgtpart, shalo, args.getString("source.functionspace", ""), args.getBool("interpolation.structured", false));
+    auto tgt_fs_srcpart =
+        create_functionspace(tgt_mesh_srcpart, thalo, args.getString("target.functionspace", ""), args.getBool("interpolation.structured", false));
+    auto src_field_tgtpart = src_fs_tgtpart.createField<double>();
+    auto tgt_field_srcpart = tgt_fs_srcpart.createField<double>();
+    timers.src_redistribution_setup.start();
+    Redistribution src_redist(src_fs, src_fs_tgtpart);
+    timers.src_redistribution_setup.stop();
+    timers.tgt_redistribution_setup.start();
+    Redistribution tgt_redist(tgt_fs, tgt_fs_srcpart);
+    timers.tgt_redistribution_setup.stop();
+
     timers.interpolation_fw_setup.start();
     auto interpolation_fw =
-        Interpolation(args, src_fs, tgt_fs);
+        Interpolation(args, src_fs_tgtpart, tgt_fs);
     timers.interpolation_fw_setup.stop();
     timers.interpolation_bw_setup.start();
     auto interpolation_bw =
-        Interpolation(args, tgt_fs, src_fs);
+        Interpolation(args, tgt_fs_srcpart, src_fs);
     timers.interpolation_bw_setup.stop();
 
     if (args.getBool("output-gmsh", false)) {
@@ -254,16 +276,27 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
     }
 
     for (int irepeat = 0; irepeat < nremaps; irepeat++) {
-        std::cout << "== remap step " << irepeat + 1 << " / " << nremaps << std::endl;
+        timers.src_redistribution_execute.start();
+        src_redist.execute(src_field, src_field_tgtpart);
+        timers.src_redistribution_execute.stop();
+
+        src_fs_tgtpart.haloExchange(src_field_tgtpart);
+
         timers.interpolation_fw_execute.start();
-        interpolation_fw.execute(src_field, tgt_field);
-        tgt_field.set_dirty(true);
+        interpolation_fw.execute(src_field_tgtpart, tgt_field);
+        tgt_fs.haloExchange(tgt_field);
         tgt_field.haloExchange();
         timers.interpolation_fw_execute.stop();
+
+        timers.tgt_redistribution_execute.start();
+        tgt_redist.execute(tgt_field, tgt_field_srcpart);
+        timers.tgt_redistribution_execute.stop();
+
+        tgt_fs_srcpart.haloExchange(tgt_field_srcpart);
+
         timers.interpolation_bw_execute.start();
-        interpolation_bw.execute(tgt_field, src_field);
-        src_field.set_dirty(true);
-        src_field.haloExchange();
+        interpolation_bw.execute(tgt_field_srcpart, src_field);
+        src_fs.haloExchange(src_field);
         timers.interpolation_bw_execute.stop();
     }
 
@@ -299,8 +332,12 @@ int AtlasEOAComputation::execute(const AtlasTool::Args& args) {
         output.set("timings.target.setup", timers.target_setup.elapsed());
         output.set("timings.source.setup", timers.source_setup.elapsed());
         output.set("timings.initial_condition", timers.initial_condition.elapsed());
+        output.set("timings.src_redistribution.setup", timers.src_redistribution_setup.elapsed());
+        output.set("timings.tgt_redistribution.setup", timers.tgt_redistribution_setup.elapsed());
         output.set("timings.interpolation_fw.setup", timers.interpolation_fw_setup.elapsed());
         output.set("timings.interpolation_bw.setup", timers.interpolation_bw_setup.elapsed());
+        output.set("timings.src_redistribution.execute", timers.src_redistribution_execute.elapsed());
+        output.set("timings.tgt_redistribution.execute", timers.tgt_redistribution_execute.elapsed());
         output.set("timings.interpolation_fw.execute", timers.interpolation_fw_execute.elapsed());
         output.set("timings.interpolation_bw.execute", timers.interpolation_bw_execute.elapsed());
 
