@@ -9,53 +9,31 @@
  */
 #pragma once
 
-//#include "atlas/functionspace/detail/FunctionSpaceImpl.h"
-#include "atlas/redistribution/Redistribution.h"
+namespace eckit {
+class Configuration;
+}
 
 namespace atlas {
 namespace functionspace{
 class FunctionSpaceImpl;
 }
-namespace field {
-class FieldSetImpl;
-}
-namespace grid {
-class DistributionImpl;
-}
 }  // namespace atlas
 
 namespace atlas {
-namespace grid {
+namespace redistribution {
 namespace detail {
-namespace grid {
-class Grid;
-}  // namespace grid
-}  // namespace detail
-}  // namespace grid
-using GridImpl = grid::detail::grid::Grid;
-}  // namespace atlas
-
-namespace atlas {
-namespace grid {
-namespace detail {
-namespace partitioner {
-class Partitioner;
-}  // namespace partitioner
-}  // namespace detail
-}  // namespace grid
-using PartitionerImpl = grid::detail::partitioner::Partitioner;
-}  // namespace atlas
-
-
-namespace atlas {
+class RedistributionImpl;
+}
 
 // -------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 extern "C" {
 
-const Redistribution* atlas__Redistribution__new(
-    const functionspace::FunctionSpaceImpl* fspace1, const functionspace::FunctionSpaceImpl* fspace2);
+detail::RedistributionImpl* atlas__Redistribution__new__config(
+    const functionspace::FunctionSpaceImpl* fspace1, const functionspace::FunctionSpaceImpl* fspace2,
+    const eckit::Configuration* config);
 
 }
 
+}  // namespace redistribution
 }  // namespace atlas

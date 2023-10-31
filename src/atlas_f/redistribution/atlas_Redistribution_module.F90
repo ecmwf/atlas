@@ -11,6 +11,7 @@
 module atlas_Redistribution_module
 
 use, intrinsic :: iso_c_binding, only : c_ptr
+use atlas_config_module, only : atlas_Config
 use atlas_functionspace_module, only : atlas_FunctionSpace
 use fckit_owned_object_module, only: fckit_owned_object
 
@@ -49,8 +50,8 @@ END TYPE atlas_Redistribution
 !------------------------------------------------------------------------------
 
 interface atlas_Redistribution
-  module procedure atlas_Redistribution__cptr
-  module procedure atlas_Redistribution__ctor
+  module procedure ctor_cptr
+  module procedure ctor_create
 end interface
 
 private :: c_ptr
@@ -62,7 +63,13 @@ contains
 ! -----------------------------------------------------------------------------
 ! Redistribution routines
 
-function atlas_Redistribution__cptr( cptr ) result(this)
+function empty_config() result(config)
+  type(atlas_Config) :: config
+  config = atlas_Config()
+  call config%return()
+end function
+
+function ctor_cptr( cptr ) result(this)
   use atlas_redistribution_c_binding
   type(atlas_Redistribution) :: this
   type(c_ptr), intent(in) :: cptr
@@ -70,11 +77,17 @@ function atlas_Redistribution__cptr( cptr ) result(this)
   call this%return()
 end function
 
-function atlas_Redistribution__ctor( fspace1, fspace2 ) result(this)
+function ctor_create( fspace1, fspace2, redist_name ) result(this)
   use atlas_redistribution_c_binding
-  type(atlas_FunctionSpace), intent(in) :: fspace1, fspace2
+  class(atlas_FunctionSpace), intent(in) :: fspace1, fspace2
+  character(len=*), intent(in), optional :: redist_name
   type(atlas_Redistribution) :: this
-  call this%reset_c_ptr( atlas__Redistribution__new(fspace1%CPTR_PGIBUG_A, fspace2%CPTR_PGIBUG_A) )
+  type(atlas_Config) :: config
+  config = empty_config()
+  call config%set("type", "RedistributeGeneric")
+  if (present(redist_name)) call config%set("type", redist_name)
+  call this%reset_c_ptr( atlas__Redistribution__new__config(fspace1%CPTR_PGIBUG_A, fspace2%CPTR_PGIBUG_A, config%CPTR_PGIBUG_B) )
+  call config%final()
   call this%return()
 end function
 

@@ -10,12 +10,13 @@
 
 #include <cstring>
 
+#include "RedistributionImpl.h"
 #include "RedistributionInterface.h"
 
-//#include "atlas/functionspace/FunctionSpace.h"
-#include "atlas/functionspace/detail/FunctionSpaceImpl.h"
+#include "atlas/redistribution/detail/RedistributionImplFactory.h"
 
 namespace atlas {
+namespace redistribution {
 
 // ----------------------------------------------------------------------------
 // Fortran interfaces
@@ -23,13 +24,21 @@ namespace atlas {
 
 extern "C" {
 
-const Redistribution* atlas__Redistribution__new(
-    const functionspace::FunctionSpaceImpl* fspace1, const functionspace::FunctionSpaceImpl* fspace2) {
-    return new Redistribution(fspace1, fspace2);
+detail::RedistributionImpl* atlas__Redistribution__new__config(
+    const functionspace::FunctionSpaceImpl* fspace1, const functionspace::FunctionSpaceImpl* fspace2, 
+    const eckit::Configuration* config) {
+    ATLAS_ASSERT(config != nullptr);
+    std::string type;
+    config->get("type", type);
+    auto redist = redistribution::detail::RedistributionImplFactory::build(type);
+    redist->setup(fspace1, fspace2);
+    return redist;
 }
+
 }
 
 
 // ----------------------------------------------------------------------------
 
+}  // namespace redistribution
 }  // namespace atlas
