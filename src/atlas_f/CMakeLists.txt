@@ -130,6 +130,9 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/EdgeColumns.h
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/PointCloudInterface.h
     MODULE    atlas_functionspace_PointCloud_c_binding
     OUTPUT    functionspace_PointCloud_c_binding.f90)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/redistribution/detail/RedistributionInterface.h
+    MODULE    atlas_redistribution_c_binding
+    OUTPUT    redistribution_c_binding.f90)
 
 if( atlas_HAVE_ATLAS_NUMERICS )
     generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Nabla.h)
@@ -237,6 +240,7 @@ ecbuild_add_library( TARGET atlas_f
         parallel/atlas_Checksum_module.fypp
         parallel/atlas_HaloExchange_module.fypp
         projection/atlas_Projection_module.F90
+        redistribution/atlas_Redistribution_module.F90
         internals/atlas_read_file.h
         internals/atlas_read_file.cc
         internals/Library.h

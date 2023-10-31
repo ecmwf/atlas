@@ -693,6 +693,8 @@ linalg/dense/MatrixMultiply_EckitLinalg.cc
 list (APPEND atlas_redistribution_srcs
 redistribution/Redistribution.h
 redistribution/Redistribution.cc
+redistribution/detail/RedistributionInterface.h
+redistribution/detail/RedistributionInterface.cc
 redistribution/detail/RedistributionImpl.h
 redistribution/detail/RedistributionImpl.cc
 redistribution/detail/RedistributionImplFactory.h
