@@ -10,6 +10,7 @@
 
 #include <cstring>
 
+#include "RedistributeGeneric.h"
 #include "RedistributionImpl.h"
 #include "RedistributionInterface.h"
 
@@ -28,10 +29,8 @@ detail::RedistributionImpl* atlas__Redistribution__new__config(
     const functionspace::FunctionSpaceImpl* fspace1, const functionspace::FunctionSpaceImpl* fspace2, 
     const eckit::Configuration* config) {
     ATLAS_ASSERT(config != nullptr);
-    std::string type;
-    if (!config->get("type", type)) {
-        type = "RedistributeGeneric";
-    };
+    std::string type = detail::RedistributeGeneric::static_type();
+    config->get("type", type);
     auto redist = redistribution::detail::RedistributionImplFactory::build(type);
     redist->setup(fspace1, fspace2);
     return redist;
