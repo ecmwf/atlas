@@ -7,14 +7,16 @@
 
 if( atlas_HAVE_ATLAS_FUNCTIONSPACE )
 
-add_fctest( TARGET atlas_fctest_redistribution
-  MPI 4
-  CONDITION        eckit_HAVE_MPI
-  LINKER_LANGUAGE  Fortran
-  SOURCES          fctest_redistribution.F90
-  LIBS             atlas_f
-  ENVIRONMENT      ${ATLAS_TEST_ENVIRONMENT}
-)
+if( HAVE_FORTRAN )
+  add_fctest( TARGET atlas_fctest_redistribution
+    MPI 4
+    CONDITION        eckit_HAVE_MPI
+    LINKER_LANGUAGE  Fortran
+    SOURCES          fctest_redistribution.F90
+    LIBS             atlas_f
+    ENVIRONMENT      ${ATLAS_TEST_ENVIRONMENT}
+  )
+endif()
 
 ecbuild_add_test( TARGET atlas_test_redistribution_structured
   SOURCES   test_redistribution_structured.cc
