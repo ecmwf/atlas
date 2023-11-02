@@ -50,7 +50,7 @@ type(atlas_functionspace_StructuredColumns) :: fspace1, fspace2
 type(atlas_Redistribution) :: redist
 type(c_ptr) :: cptr
 grid = atlas_StructuredGrid("O16")
-fspace1 = atlas_functionspace_StructuredColumns(grid, atlas_Partitioner("equal_regions"))
+fspace1 = atlas_functionspace_StructuredColumns(grid, atlas_Partitioner("equal_regions"), halo=2)
 fspace2 = atlas_functionspace_StructuredColumns(grid, atlas_Partitioner("regular_bands"))
 
 redist = atlas_Redistribution(fspace1, fspace2)

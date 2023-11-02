@@ -29,7 +29,9 @@ detail::RedistributionImpl* atlas__Redistribution__new__config(
     const eckit::Configuration* config) {
     ATLAS_ASSERT(config != nullptr);
     std::string type;
-    config->get("type", type);
+    if (!config->get("type", type)) {
+        type = "RedistributeGeneric";
+    };
     auto redist = redistribution::detail::RedistributionImplFactory::build(type);
     redist->setup(fspace1, fspace2);
     return redist;

@@ -84,7 +84,6 @@ function ctor_create( fspace1, fspace2, redist_name ) result(this)
   type(atlas_Redistribution) :: this
   type(atlas_Config) :: config
   config = empty_config()
-  call config%set("type", "RedistributeGeneric")
   if (present(redist_name)) call config%set("type", redist_name)
   call this%reset_c_ptr( atlas__Redistribution__new__config(fspace1%CPTR_PGIBUG_A, fspace2%CPTR_PGIBUG_A, config%CPTR_PGIBUG_B) )
   call config%final()
