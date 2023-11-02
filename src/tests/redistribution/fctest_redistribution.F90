@@ -46,11 +46,10 @@ use atlas_redistribution_module
 
 implicit none
 type(atlas_StructuredGrid) :: grid
-type(atlas_FunctionSpace) :: fspace_1, fspace_2, fspace_hlp
-!type(atlas_functionspace_StructuredColumns) :: fspace_1, fspace_2
+type(atlas_functionspace_StructuredColumns) :: fspace_1, fspace_2, fspace_hlp
 type(atlas_Redistribution) :: redist, redist_hlp
 type(atlas_Field) :: field_1, field_2
-real(c_double), pointer :: field_1v(:), field_2v(:)
+real(c_float), pointer :: field_1v(:), field_2v(:)
 
 grid = atlas_StructuredGrid("O8")
 fspace_1 = atlas_functionspace_StructuredColumns(grid, atlas_Partitioner("equal_regions"), halo=2)
@@ -61,23 +60,19 @@ redist_hlp = atlas_Redistribution(redist%c_ptr())
 fspace_hlp = redist%source()
 fspace_hlp = redist%target()
 
-field_1 = fspace_1%create_field(kind=atlas_real(c_double))
-field_2 = fspace_2%create_field(kind=atlas_real(c_double))
+field_1 = fspace_1%create_field(atlas_real(c_float))
+field_2 = fspace_2%create_field(atlas_real(c_float))
 
 call field_1%data(field_1v)
-field_1v = 1._c_double
+field_1v = 1._c_float
 call field_2%data(field_2v)
-field_2v = 2._c_double
+field_2v = 2._c_float
 
-print *, "fields done"
-
-!call redist%execute(field_1, field_2)
-
-print *, "redist exe done"
+call redist%execute(field_1, field_2)
 
 call field_2%data(field_2v)
 call field_2%halo_exchange()
-!FCTEST_CHECK(all(field_2v == 1.))
+FCTEST_CHECK(all(field_2v == 1.))
 
 call field_2%final()
 call field_1%final()

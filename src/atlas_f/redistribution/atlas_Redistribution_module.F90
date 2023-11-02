@@ -96,7 +96,7 @@ subroutine atlas_Redistribution__execute(this, field_1, field_2)
   use atlas_Field_module
   class(atlas_Redistribution), intent(in) :: this
   type(atlas_Field), intent(in) :: field_1
-  type(atlas_Field), intent(out) :: field_2
+  type(atlas_Field), intent(inout) :: field_2
   call atlas__Redistribution__execute(this%CPTR_PGIBUG_A, field_1%CPTR_PGIBUG_A, field_2%CPTR_PGIBUG_A)
 end subroutine
 
