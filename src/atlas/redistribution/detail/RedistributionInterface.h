@@ -15,7 +15,11 @@ class Configuration;
 
 namespace atlas {
 namespace functionspace{
-class FunctionSpaceImpl;
+class FunctionSpace;
+}
+namespace field{
+class Field;
+class FieldSet;
 }
 }  // namespace atlas
 
@@ -23,17 +27,27 @@ namespace atlas {
 namespace redistribution {
 namespace detail {
 class RedistributionImpl;
-}
 
 // -------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 extern "C" {
 
-detail::RedistributionImpl* atlas__Redistribution__new__config(
+RedistributionImpl* atlas__Redistribution__new__config(
     const functionspace::FunctionSpaceImpl* fspace1, const functionspace::FunctionSpaceImpl* fspace2,
     const eckit::Configuration* config);
 
+void atlas__Redistribution__execute(
+    const RedistributionImpl* This, const Field* field_1, Field* field_2);
+
+const FunctionSpace* atlas__Redistribution__source(
+    const RedistributionImpl* This);
+
+const FunctionSpace* atlas__Redistribution__target(
+    const RedistributionImpl* This);
+
 }
 
+
+}  // namespace detail
 }  // namespace redistribution
 }  // namespace atlas

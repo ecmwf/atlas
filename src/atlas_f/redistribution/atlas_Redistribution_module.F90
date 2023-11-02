@@ -21,26 +21,27 @@ public :: atlas_Redistribution
 
 private
 
-!-----------------------------
-! atlas_Redistribution     !
-!-----------------------------
-
-
 !------------------------------------------------------------------------------
 TYPE, extends(fckit_owned_object) :: atlas_Redistribution
 
 ! Purpose :
 ! -------
-!   *Redistribution* : Object passed from atlas to inspect redistribution
+!   *atlas_Redistribution* : Object passed from atlas to inspect redistribution
 
 ! Methods :
 ! -------
 
 ! Author :
 ! ------
+!   October-2023  Slavko Brdar  *ECMWF*
+!   August-2015   Willem Deconinck  *ECMWF*
 
 !------------------------------------------------------------------------------
 contains
+ 
+  procedure, public :: execute => atlas_Redistribution__execute
+  procedure, public :: source  => atlas_Redistribution__source
+  procedure, public :: target  => atlas_Redistribution__target
 
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_Redistribution__final_auto
@@ -77,7 +78,7 @@ function ctor_cptr( cptr ) result(this)
   call this%return()
 end function
 
-function ctor_create( fspace1, fspace2, redist_name ) result(this)
+function ctor_create(fspace1, fspace2, redist_name) result(this)
   use atlas_redistribution_c_binding
   class(atlas_FunctionSpace), intent(in) :: fspace1, fspace2
   character(len=*), intent(in), optional :: redist_name
@@ -88,6 +89,31 @@ function ctor_create( fspace1, fspace2, redist_name ) result(this)
   call this%reset_c_ptr( atlas__Redistribution__new__config(fspace1%CPTR_PGIBUG_A, fspace2%CPTR_PGIBUG_A, config%CPTR_PGIBUG_B) )
   call config%final()
   call this%return()
+end function
+
+subroutine atlas_Redistribution__execute(this, field_1, field_2)
+  use atlas_redistribution_c_binding
+  use atlas_Field_module
+  class(atlas_Redistribution), intent(in) :: this
+  type(atlas_Field), intent(in) :: field_1
+  type(atlas_Field), intent(out) :: field_2
+  call atlas__Redistribution__execute(this%CPTR_PGIBUG_A, field_1%CPTR_PGIBUG_A, field_2%CPTR_PGIBUG_A)
+end subroutine
+
+function atlas_Redistribution__source(this) result(fspace)
+  use atlas_redistribution_c_binding
+  class(atlas_Redistribution), intent(in) :: this
+  type(atlas_FunctionSpace) :: fspace
+  call fspace%reset_c_ptr(atlas__Redistribution__source(this%CPTR_PGIBUG_A))
+  call fspace%return()
+end function
+
+function atlas_Redistribution__target(this) result(fspace)
+  use atlas_redistribution_c_binding
+  class(atlas_Redistribution), intent(in) :: this
+  type(atlas_FunctionSpace) :: fspace
+  call fspace%reset_c_ptr(atlas__Redistribution__target(this%CPTR_PGIBUG_A))
+  call fspace%return()
 end function
 
 ! ----------------------------------------------------------------------------------------
