@@ -47,14 +47,16 @@ use atlas_redistribution_module
 implicit none
 type(atlas_StructuredGrid) :: grid
 type(atlas_functionspace_StructuredColumns) :: fspace1, fspace2
-type(atlas_Redistribution) :: redist
+type(atlas_Redistribution) :: redist, redist_hlp
 type(c_ptr) :: cptr
 grid = atlas_StructuredGrid("O16")
 fspace1 = atlas_functionspace_StructuredColumns(grid, atlas_Partitioner("equal_regions"), halo=2)
 fspace2 = atlas_functionspace_StructuredColumns(grid, atlas_Partitioner("regular_bands"))
 
 redist = atlas_Redistribution(fspace1, fspace2)
+redist_hlp = atlas_Redistribution(redist%c_ptr())
 
+call redist_hlp%final()
 call redist%final()
 call fspace2%final()
 call fspace1%final()
