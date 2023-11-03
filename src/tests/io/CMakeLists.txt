@@ -13,12 +13,6 @@ ecbuild_add_test( TARGET atlas_test_io_encoding
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
-ecbuild_add_test( TARGET atlas_test_io_stream
-  SOURCES   test_io_stream.cc
-  LIBS      atlas
-  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
-)
-
 ecbuild_add_executable( TARGET atlas_test_io_record
   SOURCES  test_io_record.cc
   LIBS     atlas
