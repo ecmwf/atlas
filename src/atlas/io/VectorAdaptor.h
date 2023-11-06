@@ -12,9 +12,7 @@
 
 #include "atlas/util/vector.h"
 
-#include "atlas_io/Data.h"
-#include "atlas_io/Metadata.h"
-#include "atlas_io/types/array/ArrayReference.h"
+#include "atlas-io.h"
 
 namespace atlas {
 
