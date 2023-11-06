@@ -19,10 +19,11 @@ export PATH=$SCRIPT_DIR:$PATH
 PREFIX=$(pwd)/install
 CMAKE_OPTIONS=""
 with_gridtools=false
-with_trans=false
+with_ectrans=false
 with_fftw=false
 with_qhull=false
 with_deps=false
+with_atlas_orca=false
 WORK_DIR=$(pwd)
 BUILD_TYPE=RelWithDebInfo
 
@@ -33,7 +34,8 @@ function print_help {
     echo "Usage:"
     echo ""
     echo "  install.sh [--with-deps] [--prefix <prefix>] [--build-type <build-type>] [--cmake <cmake>] [--parallel <nthread>] \\"
-    echo "             [--enable-gridtools] [--enable-trans] [--enable-fftw] [--enable-qhull] [--work-dir <work-dir>] [--help]"
+    echo "             [--with-atlas-orca] \\"
+    echo "             [--enable-gridtools] [--enable-ectrans] [--enable-fftw] [--enable-qhull] [--work-dir <work-dir>] [--help]"
     echo ""
     echo "  "
     echo ""
@@ -44,11 +46,12 @@ function print_help {
     echo "  --build-type <build-type>    Build type for atlas (and its dependencies if requested with '--with-deps')"
     echo "                               Possible values are ( Release | RelWithDebInfo | Debug )"
     echo "  --cmake <cmake>              Extra CMake Options to configure atlas and its dependencies"
-    echo "  --enable-trans               Enable optional trans dependency"
+    echo "  --enable-ectrans             Enable optional trans dependency"
     echo "  --enable-gridtools           Enable optional gridtools dependency (only has effect when '--with-deps' is also used)"
     echo "                               ! Requires Boost ! Specify Boost_ROOT environment variable to a fairly recent Boost installation"
     echo "  --enable-fftw                Enable optional fftw dependency required for spectral transforms"
     echo "  --enable-qhull               Enable optional qhull required for meshing of unstructured grids"
+    echo "  --with-atlas-orca            Enable optional atlas-orca plugin for ORCA grids"
     echo "  --work-dir <workdir>         Working directory where sources and builds live"
     echo "  --help                       Print this help"
     echo ""
@@ -83,6 +86,9 @@ while [ $# != 0 ]; do
         ;;
     "--enable-qhull")
         with_qhull=true;
+        ;;
+    "--with-atlas-orca")
+        with_atlas_orca=true;
         ;;
     "--prefix")
         PREFIX="$2"; shift
@@ -137,7 +143,7 @@ if ${with_deps}; then
   echo "Installing ecbuild"
   [[ -d ${SOURCES_DIR}/ecbuild ]] || git clone -b master https://github.com/ecmwf/ecbuild ${SOURCES_DIR}/ecbuild
   cmake -S ${SOURCES_DIR}/ecbuild -B ${BUILDS_DIR}/ecbuild -DCMAKE_INSTALL_PREFIX=${PREFIX} -DENABLE_TESTS=OFF 
-  cmake --build ${BUILDS_DIR}/ecbuild
+  cmake --build   ${BUILDS_DIR}/ecbuild
   cmake --install ${BUILDS_DIR}/ecbuild
 
   ### Install eckit
@@ -156,12 +162,11 @@ if ${with_deps}; then
         -DENABLE_CUDA=OFF \
         -DENABLE_AEC=OFF \
         -DENABLE_XXHASH=OFF \
-        -DENABLE_LZ4=OFF \
         -DENABLE_JEMALLOC=OFF \
         -DENABLE_BZIP2=OFF \
         -DCMAKE_DISABLE_FIND_PACKAGE_Doxygen=ON \
         ${CMAKE_OPTIONS}
-  cmake --build ${BUILDS_DIR}/eckit
+  cmake --build   ${BUILDS_DIR}/eckit
   cmake --install ${BUILDS_DIR}/eckit
 
   ### Install fckit
@@ -177,17 +182,17 @@ if ${with_deps}; then
   ### Install fiat + ectrans (optional, off by default)
   if ${with_trans}; then
     echo "Installing fiat"
-    [[ -d ${SOURCES_DIR}/fiat ]] || git clone -b master https://github.com/ecmwf-ifs/fiat ${SOURCES_DIR}/fiat
+    [[ -d ${SOURCES_DIR}/fiat ]] || git clone -b main https://github.com/ecmwf-ifs/fiat ${SOURCES_DIR}/fiat
     cmake -S ${SOURCES_DIR}/fiat -B ${BUILDS_DIR}/fiat \
           -DCMAKE_INSTALL_PREFIX=${PREFIX} \
           -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
           -DENABLE_TESTS=OFF \
           ${CMAKE_OPTIONS}
-    cmake --build ${BUILDS_DIR}/fiat
+    cmake --build   ${BUILDS_DIR}/fiat
     cmake --install ${BUILDS_DIR}/fiat
 
     echo "Installing ectrans"
-    [[ -d ${SOURCES_DIR}/ectrans ]] || git clone -b master https://github.com/ecmwf-ifs/ectrans ${SOURCES_DIR}/ectrans
+    [[ -d ${SOURCES_DIR}/ectrans ]] || git clone -b main https://github.com/ecmwf-ifs/ectrans ${SOURCES_DIR}/ectrans
     cmake -S ${SOURCES_DIR}/ectrans -B ${BUILDS_DIR}/ectrans -DCMAKE_INSTALL_PREFIX=${PREFIX} \
           -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
           -DENABLE_TESTS=OFF \
@@ -203,14 +208,13 @@ if ${with_deps}; then
     # Note: known to work version: 80187f11
     [[ -d ${SOURCES_DIR}/gridtools ]] || git clone -b master https://github.com/gridtools/gridtools ${SOURCES_DIR}/gridtools
 	( cd ${SOURCES_DIR}/gridtools && git checkout 80187f11 )
-    cmake ${SOURCES_DIR}/gridtools -B ${BUILDS_DIR}/gridtools
-          ${ECBUILD_MODULE_PATH} \
+    cmake -S ${SOURCES_DIR}/gridtools -B ${BUILDS_DIR}/gridtools \
           -DCMAKE_INSTALL_PREFIX=${PREFIX} \
           -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
           -DBUILD_TESTING=OFF \
           -DGT_ENABLE_OPENMP=OFF \
           ${CMAKE_OPTIONS}
-    cmake --build ${BUILDS_DIR}/gridtools
+    cmake --build   ${BUILDS_DIR}/gridtools
     cmake --install ${BUILDS_DIR}/gridtools
     ### Fix non-standard GridTools installation detection
     if [[ -f ${PREFIX}/lib/cmake/GridToolsConfig.cmake ]]; then
@@ -227,6 +231,16 @@ cmake -S ${SCRIPT_DIR}/.. -B ${BUILDS_DIR}/atlas \
       -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
       -DENABLE_SANDBOX=ON \
       ${CMAKE_OPTIONS}
-cmake --build ${BUILDS_DIR}/atlas
+cmake --build   ${BUILDS_DIR}/atlas
 cmake --install ${BUILDS_DIR}/atlas
+
+if ${with_atlas_orca}; then
+  echo "Installing atlas-orca"
+  [[ -d ${SOURCES_DIR}/atlas-orca ]] || git clone -b master https://github.com/ecmwf/atlas-orca ${SOURCES_DIR}/atlas-orca
+  cmake -S ${SOURCES_DIR}/atlas-orca -B ${BUILDS_DIR}/atlas-orca -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+        -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+        ${CMAKE_OPTIONS}
+  cmake --build   ${BUILDS_DIR}/atlas-orca
+  cmake --install ${BUILDS_DIR}/atlas-orca
+fi
 
