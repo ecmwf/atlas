@@ -161,15 +161,13 @@ Library::Library():
     trace_report_(getEnv("ATLAS_TRACE_REPORT", false)),
     atlas_io_trace_hook_(::atlas::io::TraceHookRegistry::invalidId()) {
     std::string ATLAS_PLUGIN_PATH = getEnv("ATLAS_PLUGIN_PATH");
-#if ATLAS_ECKIT_VERSION_AT_LEAST(1, 25, 0) || ATLAS_ECKIT_DEVELOP
+#if ATLAS_ECKIT_VERSION_AT_LEAST(1, 24, 4)
     eckit::system::LibraryManager::addPluginSearchPath(ATLAS_PLUGIN_PATH);
 #else
     if (ATLAS_PLUGIN_PATH.size()) {
         std::cout << "WARNING: atlas::Library discovered environment variable ATLAS_PLUGIN_PATH. "
                   << "Currently used version of eckit (" << eckit_version_str() << " [" << eckit_git_sha1() << "]) "
-                  << "does not support adding plugin search paths. "
-                  << "When using latest eckit develop branch, please rebuild Atlas with "
-                  << "CMake argument -DENABLE_ECKIT_DEVELOP=ON\n"
+                  << "Support started in eckit version 1.24.4 .\n"
                   << "Alternatively, use combination of environment variables 'PLUGINS_MANIFEST_PATH' "
                   << "and 'LD_LIBRARY_PATH (for UNIX) / DYLD_LIBRARY_PATH (for macOS)' (colon-separated lists)\n" << std::endl;
     }
