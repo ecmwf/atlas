@@ -31,12 +31,12 @@ Redistribution::Redistribution(const FunctionSpace& sourceFunctionSpace, const F
     }()) {}
 
 void Redistribution::execute(const Field& source, Field& target) const {
-    get()->execute(source, target);
+    get()->execute(source.get(), target.get());
     return;
 }
 
 void Redistribution::execute(const FieldSet& source, FieldSet& target) const {
-    get()->execute(source, target);
+    get()->execute(source.get(), target.get());
     return;
 }
 

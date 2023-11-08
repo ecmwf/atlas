@@ -282,7 +282,9 @@ void RedistributeGeneric::do_setup() {
     std::tie(targetLocalIdx_, targetDisps_) = getUidIntersection(mpi_comm_, targetUidVec, sourceGlobalUids, sourceGlobalDisps);
 }
 
-void RedistributeGeneric::execute(const Field& sourceField, Field& targetField) const {
+void RedistributeGeneric::execute(const field::FieldImpl* sf, field::FieldImpl* tf) const {
+    const field::FieldImpl& sourceField = *sf;
+    field::FieldImpl& targetField = *tf;
     //Check functionspaces match.
     ATLAS_ASSERT(sourceField.functionspace().type() == source().type());
     ATLAS_ASSERT(targetField.functionspace().type() == target().type());
@@ -299,23 +301,23 @@ void RedistributeGeneric::execute(const Field& sourceField, Field& targetField) 
     }
 
     // Perform redistribution.
-    do_execute(sourceField, targetField);
+    do_execute(sf, tf);
 }
 
-void RedistributeGeneric::execute(const FieldSet& sourceFieldSet, FieldSet& targetFieldSet) const {
+void RedistributeGeneric::execute(const field::FieldSetImpl* sourceFieldSet, field::FieldSetImpl* targetFieldSet) const {
     // Check field set sizes match.
-    ATLAS_ASSERT(sourceFieldSet.size() == targetFieldSet.size());
+    ATLAS_ASSERT(sourceFieldSet->size() == targetFieldSet->size());
 
     // Redistribute fields.
-    for (idx_t i = 0; i < sourceFieldSet.size(); ++i) {
-        execute(sourceFieldSet[i], targetFieldSet[i]);
+    for (idx_t i = 0; i < sourceFieldSet->size(); ++i) {
+        execute(&sourceFieldSet[i], &targetFieldSet[i]);
     }
 }
 
 // Determine datatype.
-void RedistributeGeneric::do_execute(const Field& sourceField, Field& targetField) const {
+void RedistributeGeneric::do_execute(const field::FieldImpl* sourceField, field::FieldImpl* targetField) const {
     // Available datatypes defined in array/LocalView.cc
-    switch (sourceField.datatype().kind()) {
+    switch (sourceField->datatype().kind()) {
         case array::DataType::KIND_REAL64: {
             return do_execute<double>(sourceField, targetField);
         }
@@ -329,16 +331,16 @@ void RedistributeGeneric::do_execute(const Field& sourceField, Field& targetFiel
             return do_execute<int>(sourceField, targetField);
         }
         default: {
-            ATLAS_THROW_EXCEPTION("No implementation for data type " + sourceField.datatype().str());
+            ATLAS_THROW_EXCEPTION("No implementation for data type " + sourceField->datatype().str());
         }
     }
 }
 
 // Determine rank.
 template <typename Value>
-void RedistributeGeneric::do_execute(const Field& sourceField, Field& targetField) const {
+void RedistributeGeneric::do_execute(const field::FieldImpl* sourceField, field::FieldImpl* targetField) const {
     // Available ranks defined in array/LocalView.cc
-    switch (sourceField.rank()) {
+    switch (sourceField->rank()) {
         case 1: {
             return do_execute<Value, 1>(sourceField, targetField);
         }
@@ -367,17 +369,17 @@ void RedistributeGeneric::do_execute(const Field& sourceField, Field& targetFiel
             return do_execute<Value, 9>(sourceField, targetField);
         }
         default: {
-            ATLAS_THROW_EXCEPTION("No implementation for rank " + std::to_string(sourceField.rank()));
+            ATLAS_THROW_EXCEPTION("No implementation for rank " + std::to_string(sourceField->rank()));
         }
     }
 }
 
 // Perform redistribution.
 template <typename Value, int Rank>
-void RedistributeGeneric::do_execute(const Field& sourceField, Field& targetField) const {
+void RedistributeGeneric::do_execute(const field::FieldImpl* sourceField, field::FieldImpl* targetField) const {
     // Get array views.
-    auto sourceView = array::make_view<Value, Rank>(sourceField);
-    auto targetView = array::make_view<Value, Rank>(targetField);
+    auto sourceView = array::make_view<Value, Rank>(*sourceField);
+    auto targetView = array::make_view<Value, Rank>(*targetField);
 
     const auto& comm = mpi::comm(mpi_comm_);
     auto mpi_size = comm.size();

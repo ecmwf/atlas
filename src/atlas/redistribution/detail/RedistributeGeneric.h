@@ -9,6 +9,7 @@
 
 #include <string>
 
+#include "atlas/field/detail/FieldImpl.h"
 #include "atlas/redistribution/detail/RedistributionImpl.h"
 
 namespace atlas {
@@ -23,19 +24,19 @@ public:
 
     void do_setup() override;
 
-    void execute(const Field& source, Field& target) const override;
+    void execute(const field::FieldImpl* source, field::FieldImpl* target) const override;
 
-    void execute(const FieldSet& source, FieldSet& target) const override;
+    void execute(const field::FieldSetImpl* source, field::FieldSetImpl* target) const override;
 
 private:
     // Determine datatype.
-    void do_execute(const Field& source, Field& target) const;
+    void do_execute(const field::FieldImpl* source, field::FieldImpl* target) const;
     // Determine rank.
     template <typename Value>
-    void do_execute(const Field& source, Field& target) const;
+    void do_execute(const field::FieldImpl* source, field::FieldImpl* target) const;
     // Perform redistribution.
     template <typename Value, int Rank>
-    void do_execute(const Field& source, Field& target) const;
+    void do_execute(const field::FieldImpl* source, field::FieldImpl* target) const;
 
     // Local indices to send to each PE
     std::vector<idx_t> sourceLocalIdx_{};

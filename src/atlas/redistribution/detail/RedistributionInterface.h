@@ -15,11 +15,11 @@ class Configuration;
 
 namespace atlas {
 namespace functionspace{
-class FunctionSpace;
+class FunctionSpaceImpl;
 }
 namespace field{
-class Field;
-class FieldSet;
+class FieldImpl;
+class FieldSetImpl;
 }
 }  // namespace atlas
 
@@ -37,12 +37,12 @@ RedistributionImpl* atlas__Redistribution__new__config(
     const eckit::Configuration* config);
 
 void atlas__Redistribution__execute(
-    const RedistributionImpl* This, const Field* field_1, Field* field_2);
+    const RedistributionImpl* This, const field::FieldImpl* field_1, field::FieldImpl* field_2);
 
-const FunctionSpace* atlas__Redistribution__source(
+const functionspace::FunctionSpaceImpl* atlas__Redistribution__source(
     const RedistributionImpl* This);
 
-const FunctionSpace* atlas__Redistribution__target(
+const functionspace::FunctionSpaceImpl* atlas__Redistribution__target(
     const RedistributionImpl* This);
 
 }

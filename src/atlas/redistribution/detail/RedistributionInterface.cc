@@ -37,19 +37,18 @@ detail::RedistributionImpl* atlas__Redistribution__new__config(
 }
 
 void atlas__Redistribution__execute(
-    const detail::RedistributionImpl* This, const Field* field_1, Field* field_2) {
-    printf("redist execute");
-    This->execute(*field_1, *field_2);
+    const detail::RedistributionImpl* This, const field::FieldImpl* field_1, field::FieldImpl* field_2) {
+    This->execute(field_1, field_2);
 }
 
-const FunctionSpace* atlas__Redistribution__source(
+const functionspace::FunctionSpaceImpl* atlas__Redistribution__source(
     const detail::RedistributionImpl* This) {
-    return &This->source();
+    return This->source().get();
 }
 
-const FunctionSpace* atlas__Redistribution__target(
+const functionspace::FunctionSpaceImpl* atlas__Redistribution__target(
     const detail::RedistributionImpl* This) {
-    return &This->target();
+    return This->target().get();
 }
 
 }

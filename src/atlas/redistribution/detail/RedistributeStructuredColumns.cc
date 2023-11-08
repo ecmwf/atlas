@@ -127,7 +127,9 @@ void RedistributeStructuredColumns::do_setup() {
     return;
 }
 
-void RedistributeStructuredColumns::execute(const Field& sourceField, Field& targetField) const {
+void RedistributeStructuredColumns::execute(const field::FieldImpl* sf, field::FieldImpl* tf) const {
+    const field::FieldImpl& sourceField = *sf;
+    field::FieldImpl& targetField = *tf;
     // Assert that fields are defined on StructuredColumns.
     ATLAS_ASSERT(functionspace::StructuredColumns(sourceField.functionspace()));
     ATLAS_ASSERT(functionspace::StructuredColumns(targetField.functionspace()));
@@ -165,15 +167,18 @@ void RedistributeStructuredColumns::execute(const Field& sourceField, Field& tar
     return;
 }
 
-void RedistributeStructuredColumns::execute(const FieldSet& sourceFieldSet, FieldSet& targetFieldSet) const {
+void RedistributeStructuredColumns::execute(const field::FieldSetImpl* sourceFieldSet, field::FieldSetImpl* targetFieldSet) const {
     // Check that both FieldSets are the same size.
-    ATLAS_ASSERT(sourceFieldSet.size() == targetFieldSet.size());
+    ATLAS_ASSERT(sourceFieldSet->size() == targetFieldSet->size());
 
-    auto targetFieldSetIt = targetFieldSet.begin();
-    std::for_each(sourceFieldSet.cbegin(), sourceFieldSet.cend(), [&](const Field& sourceField) {
-        execute(sourceField, *targetFieldSetIt++);
-        return;
-    });
+    auto targetFieldSetIt = targetFieldSet->begin();
+    for (int i = 0; i < sourceFieldSet->size(); i++) {
+        execute(&sourceFieldSet[i], &targetFieldSet[i]);
+    }
+    //std::for_each(sourceFieldSet->cbegin(), sourceFieldSet->cend(), [&](const field::FieldImpl* sourceField) {
+    //    execute(sourceField, targetFieldSetIt++);
+    //    return;
+    //});
 
     return;
 }
@@ -183,7 +188,7 @@ void RedistributeStructuredColumns::execute(const FieldSet& sourceFieldSet, Fiel
 //========================================================================
 
 template <typename fieldType>
-void RedistributeStructuredColumns::do_execute(const Field& sourceField, Field& targetField) const {
+void RedistributeStructuredColumns::do_execute(const field::FieldImpl& sourceField, field::FieldImpl& targetField) const {
     // Make Atlas view objects.
     const auto sourceView = array::make_view<fieldType, 2>(sourceField);
     auto targetView       = array::make_view<fieldType, 2>(targetField);

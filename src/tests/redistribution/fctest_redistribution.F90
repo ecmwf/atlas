@@ -40,7 +40,7 @@ TESTSUITE_FINALIZE
   call atlas_library%finalise()
 END_TESTSUITE_FINALIZE
 
-TEST( test_resitribution )
+TEST( test_redistribution )
 use atlas_module
 use atlas_redistribution_module
 
