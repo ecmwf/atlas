@@ -14,12 +14,12 @@ class Configuration;
 }
 
 namespace atlas {
-namespace functionspace{
-class FunctionSpaceImpl;
+namespace functionspace {
+class FunctionSpace;
 }
-namespace field{
-class FieldImpl;
-class FieldSetImpl;
+namespace field {
+class Field;
+class FieldSet;
 }
 }  // namespace atlas
 

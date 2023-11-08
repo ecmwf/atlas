@@ -282,9 +282,7 @@ void RedistributeGeneric::do_setup() {
     std::tie(targetLocalIdx_, targetDisps_) = getUidIntersection(mpi_comm_, targetUidVec, sourceGlobalUids, sourceGlobalDisps);
 }
 
-void RedistributeGeneric::execute(const field::FieldImpl* sf, field::FieldImpl* tf) const {
-    const field::FieldImpl& sourceField = *sf;
-    field::FieldImpl& targetField = *tf;
+void RedistributeGeneric::execute(const Field& sourceField, Field& targetField) const {
     //Check functionspaces match.
     ATLAS_ASSERT(sourceField.functionspace().type() == source().type());
     ATLAS_ASSERT(targetField.functionspace().type() == target().type());
@@ -301,21 +299,23 @@ void RedistributeGeneric::execute(const field::FieldImpl* sf, field::FieldImpl* 
     }
 
     // Perform redistribution.
-    do_execute(sf, tf);
+    do_execute(sourceField, targetField);
 }
 
-void RedistributeGeneric::execute(const field::FieldSetImpl* sourceFieldSet, field::FieldSetImpl* targetFieldSet) const {
+void RedistributeGeneric::execute(const FieldSet& sourceFieldSet, FieldSet& targetFieldSet) const {
     // Check field set sizes match.
     ATLAS_ASSERT(sourceFieldSet->size() == targetFieldSet->size());
 
     // Redistribute fields.
-    for (idx_t i = 0; i < sourceFieldSet->size(); ++i) {
-        execute(&sourceFieldSet[i], &targetFieldSet[i]);
-    }
+    auto targetFieldSetIt = targetFieldSet->begin();
+    std::for_each(sourceFieldSet->cbegin(), sourceFieldSet->cend(), [&](const Field& sourceField) {
+        execute(sourceField, *targetFieldSetIt++);
+        return;
+    });
 }
 
 // Determine datatype.
-void RedistributeGeneric::do_execute(const field::FieldImpl* sourceField, field::FieldImpl* targetField) const {
+void RedistributeGeneric::do_execute(const Field& sourceField, Field& targetField) const {
     // Available datatypes defined in array/LocalView.cc
     switch (sourceField->datatype().kind()) {
         case array::DataType::KIND_REAL64: {
@@ -338,7 +338,7 @@ void RedistributeGeneric::do_execute(const field::FieldImpl* sourceField, field:
 
 // Determine rank.
 template <typename Value>
-void RedistributeGeneric::do_execute(const field::FieldImpl* sourceField, field::FieldImpl* targetField) const {
+void RedistributeGeneric::do_execute(const Field& sourceField, Field& targetField) const {
     // Available ranks defined in array/LocalView.cc
     switch (sourceField->rank()) {
         case 1: {
@@ -376,7 +376,7 @@ void RedistributeGeneric::do_execute(const field::FieldImpl* sourceField, field:
 
 // Perform redistribution.
 template <typename Value, int Rank>
-void RedistributeGeneric::do_execute(const field::FieldImpl* sourceField, field::FieldImpl* targetField) const {
+void RedistributeGeneric::do_execute(const Field& sourceField, Field& targetField) const {
     // Get array views.
     auto sourceView = array::make_view<Value, Rank>(*sourceField);
     auto targetView = array::make_view<Value, Rank>(*targetField);

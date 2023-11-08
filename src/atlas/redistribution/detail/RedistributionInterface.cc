@@ -14,6 +14,7 @@
 #include "RedistributionImpl.h"
 #include "RedistributionInterface.h"
 
+#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/redistribution/detail/RedistributionImplFactory.h"
 
 namespace atlas {
@@ -32,13 +33,17 @@ detail::RedistributionImpl* atlas__Redistribution__new__config(
     std::string type = detail::RedistributeGeneric::static_type();
     config->get("type", type);
     auto redist = redistribution::detail::RedistributionImplFactory::build(type);
-    redist->setup(fspace1, fspace2);
+    FunctionSpace fs1(fspace1);
+    FunctionSpace fs2(fspace2);
+    redist->setup(fs1, fs2);
     return redist;
 }
 
 void atlas__Redistribution__execute(
     const detail::RedistributionImpl* This, const field::FieldImpl* field_1, field::FieldImpl* field_2) {
-    This->execute(field_1, field_2);
+    Field f1(field_1);
+    Field f2(field_2);
+    This->execute(f1, f2);
 }
 
 const functionspace::FunctionSpaceImpl* atlas__Redistribution__source(

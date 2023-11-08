@@ -63,7 +63,7 @@ public:
     ///
     /// \param[in]  source  input field matching sourceFunctionSpace.
     /// \param[out] target  output field matching targetFunctionSpace.
-    void execute(const field::FieldImpl* source, field::FieldImpl* target) const override;
+    void execute(const Field& source, Field& target) const override;
 
     /// \brief    Redistributes source field set to target fields set.
     ///
@@ -72,12 +72,12 @@ public:
     ///
     /// \param[in]  source  input field set.
     /// \param[out] target  output field set.
-    void execute(const field::FieldSetImpl* source, field::FieldSetImpl* target) const override;
+    void execute(const FieldSet& source, FieldSet& target) const override;
 
 private:
     // Generic execute call to handle different field types.
     template <typename fieldType>
-    void do_execute(const field::FieldImpl& source, field::FieldImpl& target) const;
+    void do_execute(const Field& source, Field& target) const;
 
     // FunctionSpaces recast to StructuredColumns.
     functionspace::StructuredColumns source_;

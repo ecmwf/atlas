@@ -12,8 +12,8 @@
 
 namespace atlas {
     namespace field {
-class FieldImpl;
-class FieldSetImpl;
+class Field;
+class FieldSet;
     }
     namespace functionspace {
 class FunctionSpace;
@@ -46,10 +46,10 @@ public:
     virtual std::string type() const = 0;
 
     /// \brief  Maps source field to target field.
-    virtual void execute(const field::FieldImpl* source, field::FieldImpl* target) const = 0;
+    virtual void execute(const Field& source, Field& target) const = 0;
 
     /// \brief  Maps source field set to target field set.
-    virtual void execute(const field::FieldSetImpl* source, field::FieldSetImpl* target) const = 0;
+    virtual void execute(const FieldSet& source, FieldSet& target) const = 0;
 
     /// \brief  Get const reference to source function space.
     const FunctionSpace& source() const;
