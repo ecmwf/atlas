@@ -129,6 +129,8 @@ use atlas_fvm_module, only: &
 use atlas_Nabla_module, only: &
     & atlas_Nabla
 #endif
+use atlas_meshbuilder_module, only : &
+    & atlas_TriangularMeshBuilder
 use atlas_mesh_actions_module, only: &
     & atlas_build_parallel_fields, &
     & atlas_build_nodes_parallel_fields, &

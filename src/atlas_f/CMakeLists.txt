@@ -83,6 +83,9 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/domain/detail/Domain.h
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/detail/MeshIntf.h
     MODULE    atlas_mesh_c_binding
     OUTPUT    atlas_mesh_c_binding.f90 )
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/detail/MeshBuilderIntf.h
+    MODULE    atlas_meshbuilder_c_binding
+    OUTPUT    atlas_meshbuilder_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/Nodes.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/Connectivity.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/HybridElements.h)
@@ -219,6 +222,7 @@ ecbuild_add_library( TARGET atlas_f
         grid/atlas_GridDistribution_module.F90
         grid/atlas_Vertical_module.F90
         grid/atlas_Partitioner_module.F90
+        mesh/atlas_MeshBuilder_module.F90
         mesh/atlas_MeshGenerator_module.F90
         mesh/atlas_Mesh_module.F90
         mesh/atlas_mesh_Nodes_module.F90

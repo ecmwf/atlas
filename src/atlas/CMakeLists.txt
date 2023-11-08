@@ -364,6 +364,8 @@ mesh/detail/MeshImpl.cc
 mesh/detail/MeshImpl.h
 mesh/detail/MeshIntf.cc
 mesh/detail/MeshIntf.h
+mesh/detail/MeshBuilderIntf.cc
+mesh/detail/MeshBuilderIntf.h
 mesh/detail/PartitionGraph.cc
 mesh/detail/PartitionGraph.h
 mesh/detail/AccumulateFacets.h
