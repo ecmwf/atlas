@@ -50,8 +50,9 @@ type(atlas_FunctionSpace) :: fspace_1, fspace_2, fspace_hlp
 type(atlas_Redistribution) :: redist, redist_hlp
 type(atlas_Field) :: field_1, field_2
 real(c_float), pointer :: field_1v(:), field_2v(:)
+character(len=*), parameter :: gridname = "O8"
 
-grid = atlas_Grid("O8")
+grid = atlas_Grid(gridname)
 fspace_1 = atlas_functionspace_StructuredColumns(grid, atlas_Partitioner("equal_regions"), halo=2)
 fspace_2 = atlas_functionspace_StructuredColumns(grid, atlas_Partitioner("regular_bands"))
 
