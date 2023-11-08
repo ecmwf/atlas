@@ -40,30 +40,25 @@ TESTSUITE_FINALIZE
   call atlas_library%finalise()
 END_TESTSUITE_FINALIZE
 
-TEST( test_redistribution )
+! -----------------------------------------------------------------------------
+
+subroutine do_redistribute(fspace_1, fspace_2)
 use atlas_module
 use atlas_redistribution_module
 
 implicit none
-type(atlas_Grid) :: grid
-type(atlas_FunctionSpace) :: fspace_1, fspace_2, fspace_hlp
+
+type(atlas_FunctionSpace), intent(in) :: fspace_1, fspace_2
+
+type(atlas_FunctionSpace) :: fspace_hlp
 type(atlas_Redistribution) :: redist, redist_hlp
 type(atlas_Field) :: field_1, field_2
 real(c_float), pointer :: field_1v(:), field_2v(:)
-character(len=*), parameter :: gridname = "O8"
-
-grid = atlas_Grid(gridname)
-fspace_1 = atlas_functionspace_StructuredColumns(grid, atlas_Partitioner("equal_regions"), halo=2)
-fspace_2 = atlas_functionspace_StructuredColumns(grid, atlas_Partitioner("regular_bands"))
 
 redist = atlas_Redistribution(fspace_1, fspace_2)
-redist_hlp = atlas_Redistribution(redist%c_ptr())
-fspace_hlp = redist%source()
-fspace_hlp = redist%target()
 
 field_1 = fspace_1%create_field(atlas_real(c_float))
 field_2 = fspace_2%create_field(atlas_real(c_float))
-
 call field_1%data(field_1v)
 field_1v = 1._c_float
 call field_2%data(field_2v)
@@ -75,10 +70,51 @@ call field_2%data(field_2v)
 call field_2%halo_exchange()
 FCTEST_CHECK(all(field_2v == 1.))
 
+! check access to source and target function spaces
+redist_hlp = atlas_Redistribution(redist%c_ptr())
+fspace_hlp = redist%source()
+fspace_hlp = redist%target()
+
 call field_2%final()
 call field_1%final()
 call redist_hlp%final()
 call redist%final()
+end subroutine do_redistribute
+
+! -----------------------------------------------------------------------------
+
+TEST( test_redistribution )
+use atlas_module
+use atlas_redistribution_module
+
+implicit none
+type(atlas_Grid) :: grid
+type(atlas_Mesh) :: mesh
+type(atlas_MeshGenerator) :: meshgenerator
+type(atlas_FunctionSpace)  :: fspace_1, fspace_2
+type(atlas_Config) :: config
+character(len=*), parameter :: gridname = "O8"
+
+config = atlas_Config()
+call config%set("halo", 2)
+
+grid = atlas_Grid(gridname)
+fspace_1 = atlas_functionspace_StructuredColumns(grid, atlas_Partitioner("equal_regions"))
+fspace_2 = atlas_functionspace_StructuredColumns(grid, atlas_Partitioner("regular_bands"))
+call do_redistribute(fspace_1, fspace_2)
+
+meshgenerator = atlas_MeshGenerator()
+mesh = meshgenerator%generate(grid, atlas_Partitioner("equal_regions"))
+fspace_1 = atlas_functionspace_NodeColumns(mesh)
+mesh = meshgenerator%generate(grid, atlas_Partitioner("regular_bands"))
+fspace_2 = atlas_functionspace_NodeColumns(mesh)
+call do_redistribute(fspace_1, fspace_2)
+
+fspace_2 = atlas_functionspace_EdgeColumns(mesh)
+mesh = meshgenerator%generate(grid, atlas_Partitioner("equal_regions"))
+fspace_1 = atlas_functionspace_EdgeColumns(mesh)
+call do_redistribute(fspace_1, fspace_2)
+
 call fspace_2%final()
 call fspace_1%final()
 call grid%final()
