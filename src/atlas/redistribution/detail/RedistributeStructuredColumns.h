@@ -15,8 +15,8 @@
 
 namespace atlas {
 
-class FieldImpl;
-class FieldSetImpl;
+class Field;
+class FieldSet;
 class FunctionSpace;
 
 namespace functionspace {

@@ -167,10 +167,10 @@ void RedistributeStructuredColumns::execute(const Field& sourceField, Field& tar
 
 void RedistributeStructuredColumns::execute(const FieldSet& sourceFieldSet, FieldSet& targetFieldSet) const {
     // Check that both FieldSets are the same size.
-    ATLAS_ASSERT(sourceFieldSet->size() == targetFieldSet->size());
+    ATLAS_ASSERT(sourceFieldSet.size() == targetFieldSet.size());
 
-    auto targetFieldSetIt = targetFieldSet->begin();
-    std::for_each(sourceFieldSet->cbegin(), sourceFieldSet->cend(), [&](const Field& sourceField) {
+    auto targetFieldSetIt = targetFieldSet.begin();
+    std::for_each(sourceFieldSet.cbegin(), sourceFieldSet.cend(), [&](const Field& sourceField) {
         execute(sourceField, *targetFieldSetIt++);
         return;
     });

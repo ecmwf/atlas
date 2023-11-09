@@ -9,7 +9,6 @@
 
 #include <string>
 
-#include "atlas/field/detail/FieldImpl.h"
 #include "atlas/redistribution/detail/RedistributionImpl.h"
 
 namespace atlas {

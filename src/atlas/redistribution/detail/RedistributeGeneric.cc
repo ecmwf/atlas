@@ -304,20 +304,18 @@ void RedistributeGeneric::execute(const Field& sourceField, Field& targetField) 
 
 void RedistributeGeneric::execute(const FieldSet& sourceFieldSet, FieldSet& targetFieldSet) const {
     // Check field set sizes match.
-    ATLAS_ASSERT(sourceFieldSet->size() == targetFieldSet->size());
+    ATLAS_ASSERT(sourceFieldSet.size() == targetFieldSet.size());
 
     // Redistribute fields.
-    auto targetFieldSetIt = targetFieldSet->begin();
-    std::for_each(sourceFieldSet->cbegin(), sourceFieldSet->cend(), [&](const Field& sourceField) {
-        execute(sourceField, *targetFieldSetIt++);
-        return;
-    });
+    for (idx_t i = 0; i < sourceFieldSet.size(); ++i) {
+        execute(sourceFieldSet[i], targetFieldSet[i]);
+    }
 }
 
 // Determine datatype.
 void RedistributeGeneric::do_execute(const Field& sourceField, Field& targetField) const {
     // Available datatypes defined in array/LocalView.cc
-    switch (sourceField->datatype().kind()) {
+    switch (sourceField.datatype().kind()) {
         case array::DataType::KIND_REAL64: {
             return do_execute<double>(sourceField, targetField);
         }
@@ -331,7 +329,7 @@ void RedistributeGeneric::do_execute(const Field& sourceField, Field& targetFiel
             return do_execute<int>(sourceField, targetField);
         }
         default: {
-            ATLAS_THROW_EXCEPTION("No implementation for data type " + sourceField->datatype().str());
+            ATLAS_THROW_EXCEPTION("No implementation for data type " + sourceField.datatype().str());
         }
     }
 }
@@ -340,7 +338,7 @@ void RedistributeGeneric::do_execute(const Field& sourceField, Field& targetFiel
 template <typename Value>
 void RedistributeGeneric::do_execute(const Field& sourceField, Field& targetField) const {
     // Available ranks defined in array/LocalView.cc
-    switch (sourceField->rank()) {
+    switch (sourceField.rank()) {
         case 1: {
             return do_execute<Value, 1>(sourceField, targetField);
         }
@@ -369,7 +367,7 @@ void RedistributeGeneric::do_execute(const Field& sourceField, Field& targetFiel
             return do_execute<Value, 9>(sourceField, targetField);
         }
         default: {
-            ATLAS_THROW_EXCEPTION("No implementation for rank " + std::to_string(sourceField->rank()));
+            ATLAS_THROW_EXCEPTION("No implementation for rank " + std::to_string(sourceField.rank()));
         }
     }
 }
@@ -378,8 +376,8 @@ void RedistributeGeneric::do_execute(const Field& sourceField, Field& targetFiel
 template <typename Value, int Rank>
 void RedistributeGeneric::do_execute(const Field& sourceField, Field& targetField) const {
     // Get array views.
-    auto sourceView = array::make_view<Value, Rank>(*sourceField);
-    auto targetView = array::make_view<Value, Rank>(*targetField);
+    auto sourceView = array::make_view<Value, Rank>(sourceField);
+    auto targetView = array::make_view<Value, Rank>(targetField);
 
     const auto& comm = mpi::comm(mpi_comm_);
     auto mpi_size = comm.size();

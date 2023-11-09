@@ -11,13 +11,9 @@
 #include "atlas/util/Object.h"
 
 namespace atlas {
-    namespace field {
 class Field;
 class FieldSet;
-    }
-    namespace functionspace {
 class FunctionSpace;
-    }
 }  // namespace atlas
 
 namespace atlas {
