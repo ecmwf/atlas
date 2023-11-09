@@ -10,9 +10,10 @@
 
 #include <cstring>
 
+#include "RedistributionInterface.h"
+
 #include "RedistributeGeneric.h"
 #include "RedistributionImpl.h"
-#include "RedistributionInterface.h"
 
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/redistribution/detail/RedistributionImplFactory.h"
