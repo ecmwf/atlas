@@ -20,39 +20,21 @@ use atlas_module
 use, intrinsic :: iso_c_binding
 implicit none
 character(len=1024) :: msg
+
 contains
 
-end module
-
-! -----------------------------------------------------------------------------
-
-TESTSUITE_WITH_FIXTURE(fcta_Redistribution,fcta_Redistribution_fxt)
-
-! -----------------------------------------------------------------------------
-
-TESTSUITE_INIT
-  call atlas_library%initialise()
-END_TESTSUITE_INIT
-
-! -----------------------------------------------------------------------------
-
-TESTSUITE_FINALIZE
-  call atlas_library%finalise()
-END_TESTSUITE_FINALIZE
-
-! -----------------------------------------------------------------------------
-
-subroutine do_redistribute(fspace_1, fspace_2)
+function do_redistribute(fspace_1, fspace_2) result(field_2)
 use atlas_module
 use atlas_redistribution_module
 
 implicit none
 
 type(atlas_FunctionSpace), intent(in) :: fspace_1, fspace_2
+type(atlas_Field) :: field_2
 
 type(atlas_FunctionSpace) :: fspace_hlp
 type(atlas_Redistribution) :: redist, redist_hlp
-type(atlas_Field) :: field_1, field_2
+type(atlas_Field) :: field_1 !, field_2
 real(c_float), pointer :: field_1v(:), field_2v(:)
 
 redist = atlas_Redistribution(fspace_1, fspace_2)
@@ -68,52 +50,77 @@ call redist%execute(field_1, field_2)
 
 call field_2%data(field_2v)
 call field_2%halo_exchange()
-FCTEST_CHECK(all(field_2v == 1.))
 
 ! check access to source and target function spaces
 redist_hlp = atlas_Redistribution(redist%c_ptr())
 fspace_hlp = redist%source()
 fspace_hlp = redist%target()
 
-call field_2%final()
 call field_1%final()
 call redist_hlp%final()
 call redist%final()
-end subroutine do_redistribute
+end function do_redistribute
+
+end module
+
+! -----------------------------------------------------------------------------
+
+TESTSUITE(fcta_Redistribution)
+!TESTSUITE_WITH_FIXTURE(fcta_Redistribution,fcta_Redistribution_fxt)
+
+! -----------------------------------------------------------------------------
+
+TESTSUITE_INIT
+  use atlas_module
+  call atlas_library%initialise()
+END_TESTSUITE_INIT
+
+! -----------------------------------------------------------------------------
+
+TESTSUITE_FINALIZE
+  use atlas_module
+  call atlas_library%finalise()
+END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------
 
 TEST( test_redistribution )
 use atlas_module
+use fcta_Redistribution_fxt
 use atlas_redistribution_module
 
 implicit none
+
 type(atlas_Grid) :: grid
 type(atlas_Mesh) :: mesh
 type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_FunctionSpace)  :: fspace_1, fspace_2
-type(atlas_Config) :: config
-character(len=*), parameter :: gridname = "O8"
+type(atlas_Field) :: field
+real(c_float) , pointer :: field_v(:)
 
-config = atlas_Config()
-call config%set("halo", 2)
+grid = atlas_Grid("O8")
 
-grid = atlas_Grid(gridname)
 fspace_1 = atlas_functionspace_StructuredColumns(grid, atlas_Partitioner("equal_regions"))
 fspace_2 = atlas_functionspace_StructuredColumns(grid, atlas_Partitioner("regular_bands"))
-call do_redistribute(fspace_1, fspace_2)
+field = do_redistribute(fspace_1, fspace_2)
+call field%data(field_v)
+FCTEST_CHECK(maxval(field_v) == 1.)
 
 meshgenerator = atlas_MeshGenerator()
 mesh = meshgenerator%generate(grid, atlas_Partitioner("equal_regions"))
 fspace_1 = atlas_functionspace_NodeColumns(mesh)
 mesh = meshgenerator%generate(grid, atlas_Partitioner("regular_bands"))
 fspace_2 = atlas_functionspace_NodeColumns(mesh)
-call do_redistribute(fspace_1, fspace_2)
+field = do_redistribute(fspace_1, fspace_2)
+call field%data(field_v)
+FCTEST_CHECK(maxval(field_v) == 1.)
 
 fspace_2 = atlas_functionspace_EdgeColumns(mesh)
 mesh = meshgenerator%generate(grid, atlas_Partitioner("equal_regions"))
 fspace_1 = atlas_functionspace_EdgeColumns(mesh)
-call do_redistribute(fspace_1, fspace_2)
+field = do_redistribute(fspace_1, fspace_2)
+call field%data(field_v)
+FCTEST_CHECK(maxval(field_v) == 1.)
 
 call fspace_2%final()
 call fspace_1%final()
@@ -123,4 +130,3 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 END_TESTSUITE
-
