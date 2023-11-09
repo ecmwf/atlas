@@ -104,14 +104,15 @@ public:
     Field lonlat() const override { return structuredcolumns_->lonlat(); }
     Field xy() const { return structuredcolumns_->xy(); }
     Field z() const { return structuredcolumns_->z(); }
-    Field partition() const { return structuredcolumns_->partition(); }
+    Field partition() const override { return structuredcolumns_->partition(); }
     Field global_index() const override { return structuredcolumns_->global_index(); }
     Field remote_index() const override { return structuredcolumns_->remote_index(); }
     Field index_i() const { return structuredcolumns_->index_i(); }
     Field index_j() const { return structuredcolumns_->index_j(); }
     Field ghost() const override { return structuredcolumns_->ghost(); }
     size_t footprint() const override { return structuredcolumns_->footprint(); }
-    idx_t nb_partitions() const override { return structuredcolumns_->nb_partitions(); }
+    idx_t part() const override { return structuredcolumns_->part(); }
+    idx_t nb_parts() const override { return structuredcolumns_->nb_parts(); }
     const StructuredColumns& structuredcolumns() const { return *structuredcolumns_; }
     idx_t block_begin(idx_t jblk) const { return jblk * nproma_; }
     idx_t block_size(idx_t jblk) const { return (jblk != nblks_-1 ? nproma_ : endblk_size_); }

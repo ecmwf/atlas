@@ -22,6 +22,22 @@ namespace atlas {
 namespace test {
 
 
+int mpi_color() {
+    static int c = mpi::comm("world").rank()%2;
+    return c;
+}
+
+struct Fixture {
+    Fixture() {
+        mpi::comm().split(mpi_color(),"split");
+    }
+    ~Fixture() {
+        if (eckit::mpi::hasComm("split")) {
+            eckit::mpi::deleteComm("split");
+        }
+    }
+};
+
 // Define test pattern for grid.
 template <typename T>
 T testPattern(const double lambda, const double phi, const idx_t field, const idx_t level) {
@@ -128,7 +144,7 @@ bool testStructColsToStructCols(const atlas::Grid& grid, const idx_t nFields,
     // Write mesh and fields to file.
     if (gmshOutput) {
         // Generate meshes.
-        const auto meshGen    = atlas::MeshGenerator("structured");
+        const auto meshGen    = atlas::MeshGenerator("structured",util::Config("mpi_comm",sourceFunctionSpace.mpi_comm()));
         const auto sourceMesh = meshGen.generate(grid, sourcePartitioner);
         const auto targetMesh = meshGen.generate(grid, targetPartitioner);
 
@@ -328,6 +344,28 @@ CASE("Redistribute Structured Columns") {
                                                   sourceFunctionSpaceConfig, targetFunctionSpaceConfig));
 
         return;
+    }
+}
+
+CASE("Redistribute Structured Columns with split comms") {
+    Fixture fixture;
+    SECTION("lonlat: checkerboard to equal_regions") {
+        util::Config mpi_comm("mpi_comm","split");
+        std::string id = std::to_string(mpi_color());
+
+        // Set grid.
+        idx_t nFields = 5;
+
+        auto grid = atlas::Grid("L48x37");
+
+        // Set partitioners.
+        auto sourcePartitioner = atlas::grid::Partitioner(option::type("checkerboard")|mpi_comm);
+        auto targetPartitioner = atlas::grid::Partitioner(option::type("equal_regions")|mpi_comm);
+
+        // Check redistributer.
+        EXPECT(testStructColsToStructCols<double>(grid, nFields, sourcePartitioner, targetPartitioner,
+                                                  funcSpaceDefaultConfig(), funcSpaceDefaultConfig(),
+                                                  true, id));
     }
 }
 

@@ -13,6 +13,7 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Partitioner.h"
 #include "atlas/meshgenerator/MeshGenerator.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 namespace atlas {
 
@@ -20,19 +21,32 @@ namespace atlas {
 
 Mesh::Mesh(): Handle(new Implementation()) {}
 
-Mesh::Mesh(const Grid& grid):
+Mesh::Mesh(const Grid& grid, const eckit::Configuration& config):
     Handle([&]() {
-        auto meshgenerator = MeshGenerator{grid.meshgenerator()};
-        auto mesh          = meshgenerator.generate(grid, grid::Partitioner(grid.partitioner()));
+        if(config.has("mpi_comm")) {
+            mpi::push(config.getString("mpi_comm"));
+        }
+        util::Config cfg = grid.meshgenerator()|util::Config(config);
+        auto meshgenerator = MeshGenerator{grid.meshgenerator()|config};
+        auto mesh          = meshgenerator.generate(grid, grid::Partitioner(grid.partitioner()|config));
+        if(config.has("mpi_comm")) {
+            mpi::pop();
+        }
         mesh.get()->attach();
         return mesh.get();
     }()) {
     get()->detach();
 }
 
-Mesh::Mesh(const Grid& grid, const grid::Partitioner& partitioner):
+Mesh::Mesh(const Grid& grid, const grid::Partitioner& partitioner, const eckit::Configuration& config):
     Handle([&]() {
-        auto meshgenerator = MeshGenerator{grid.meshgenerator()};
+        std::string mpi_comm = partitioner.mpi_comm();
+        if(config.has("mpi_comm")) {
+            mpi_comm = config.getString("mpi_comm");
+            ATLAS_ASSERT(mpi_comm == partitioner.mpi_comm());
+        }
+        mpi::Scope mpi_scope(mpi_comm);
+        auto meshgenerator = MeshGenerator{grid.meshgenerator()|config};
         auto mesh          = meshgenerator.generate(grid, partitioner);
         mesh.get()->attach();
         return mesh.get();

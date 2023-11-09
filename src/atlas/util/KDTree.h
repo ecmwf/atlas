@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "eckit/config/Configuration.h"
+
 #include "atlas/util/Geometry.h"
 #include "atlas/util/ObjectHandle.h"
 #include "atlas/util/detail/KDTree.h"
@@ -70,6 +72,10 @@ public:
 
     /// @brief Construct an empty kd-tree with custom geometry
     KDTree(const Geometry& geometry): Handle(new detail::KDTreeMemory<Payload, Point>(geometry)) {}
+
+    /// @brief Construct an empty kd-tree with custom geometry
+    KDTree(const eckit::Configuration& config):
+        KDTree(Geometry(config.getString("geometry","Earth"))) {}
 
     /// @brief Construct a shared kd-tree with default geometry (Earth)
     template <typename Tree>

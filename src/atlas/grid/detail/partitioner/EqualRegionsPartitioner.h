@@ -81,6 +81,7 @@ public:
 
     EqualRegionsPartitioner(int N);
     EqualRegionsPartitioner(int N, const eckit::Parametrisation& config);
+    EqualRegionsPartitioner(const eckit::Parametrisation& config);
 
     void where(int partition, int& band, int& sector) const;
     int nb_bands() const { return bands_.size(); }

@@ -42,7 +42,8 @@ namespace meshgenerator {
 DelaunayMeshGenerator::DelaunayMeshGenerator() = default;
 
 DelaunayMeshGenerator::DelaunayMeshGenerator(const eckit::Parametrisation& p) {
-    p.get("part",part_=mpi::rank());
+    p.get("mpi_comm",mpi_comm_=mpi::comm().name());
+    p.get("part",part_=mpi::comm(mpi_comm_).rank());
     p.get("reshuffle",reshuffle_=true);
     p.get("remove_duplicate_points",remove_duplicate_points_=true);
 }
@@ -57,6 +58,8 @@ void DelaunayMeshGenerator::hash(eckit::Hash& h) const {
 
 void DelaunayMeshGenerator::generate(const Grid& grid, const grid::Distribution& dist, Mesh& mesh) const {
  
+    mpi::Scope mpi_scope(mpi_comm_);
+
     auto build_global_mesh = [&](Mesh& mesh) {
         idx_t nb_nodes = grid.size();
         mesh.nodes().resize(nb_nodes);
@@ -102,6 +105,7 @@ void DelaunayMeshGenerator::generate(const Grid& grid, const grid::Distribution&
     if( dist.nb_partitions() == 1 ) {
         build_global_mesh(mesh);
         setGrid(mesh, grid, dist.type());
+        mesh.metadata().set("mpi_comm",mpi_comm_);
         return;
     }
 
@@ -357,10 +361,12 @@ void DelaunayMeshGenerator::generate(const Grid& grid, const grid::Distribution&
     extract_mesh_partition(global_mesh, mesh);
 
     setGrid(mesh, grid, dist.type());
+    mesh.metadata().set("mpi_comm",mpi_comm_);
 }
 
 void DelaunayMeshGenerator::generate(const Grid& g, Mesh& mesh) const {
-    generate( g, grid::Distribution{g}, mesh);
+    mpi::Scope mpi_scope(mpi_comm_);
+    generate( g, grid::Distribution{g,g.partitioner()}, mesh);
 }
 
 namespace {

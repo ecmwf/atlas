@@ -38,6 +38,23 @@ CASE("test_setcomm") {
     std::cout << "----- STOP -----" << std::endl;
 }
 
+CASE("test_split") {
+    int irank = mpi::comm("world").rank();
+    auto& split_comm = mpi::comm("world").split(irank%2, "test_split");
+
+    EXPECT_EQ(mpi::comm("world").name(), "world");
+    EXPECT_EQ(split_comm.name(), "test_split");
+
+    if( mpi::comm("world").size()%2 == 0) { // even number
+       EXPECT_EQ( split_comm.size() , mpi::comm("world").size()/2);
+    }
+
+    auto& split_comm_by_name = mpi::comm("test_split");
+    EXPECT_EQ( &split_comm, &split_comm_by_name);
+}
+
+
+
 }  // namespace test
 }  // namespace atlas
 

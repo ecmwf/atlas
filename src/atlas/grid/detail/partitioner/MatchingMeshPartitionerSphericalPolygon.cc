@@ -34,9 +34,9 @@ PartitionerBuilder<MatchingMeshPartitionerSphericalPolygon> __builder("spherical
 }
 
 void MatchingMeshPartitionerSphericalPolygon::partition(const Grid& grid, int partitioning[]) const {
-    const eckit::mpi::Comm& comm = atlas::mpi::comm();
-    const int mpi_rank           = int(comm.rank());
-    const int mpi_size           = int(comm.size());
+    const auto& comm   = mpi::comm(prePartitionedMesh_.mpi_comm());
+    const int mpi_rank = int(comm.rank());
+    const int mpi_size = int(comm.size());
 
     ATLAS_TRACE("MatchingMeshPartitionerSphericalPolygon::partition");
 

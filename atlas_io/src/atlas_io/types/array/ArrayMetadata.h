@@ -12,6 +12,7 @@
 
 #include <cstdint>
 #include <string>
+#include <type_traits>
 
 #include "atlas_io/Metadata.h"
 #include "atlas_io/detail/DataType.h"
@@ -36,6 +37,32 @@ public:
     ArrayShape(const std::array<idx_t, N>& list): Base(list.begin(), list.end()) {}
     template <typename idx_t>
     ArrayShape(const std::vector<idx_t>& list): Base(list.begin(), list.end()) {}
+    template <typename Int1, typename = std::enable_if_t<std::is_integral_v<Int1>>>
+    ArrayShape(Int1 i) {
+        resize(1);
+        operator[](0) = i;
+    }
+    template <typename Int1, typename Int2, typename = std::enable_if_t<std::is_integral_v<Int1> && std::is_integral_v<Int2>>>
+    ArrayShape(Int1 i, Int2 j) {
+        resize(2);
+        operator[](0) = i;
+        operator[](1) = j;
+    }
+    template <typename Int1, typename Int2, typename Int3, typename = std::enable_if_t<std::is_integral_v<Int1> && std::is_integral_v<Int2> && std::is_integral_v<Int3>>>
+    ArrayShape(Int1 i, Int2 j, Int3 k) {
+        resize(3);
+        operator[](0) = i;
+        operator[](1) = j;
+        operator[](2) = k;
+    }
+    template <typename Int1, typename Int2, typename Int3, typename Int4, typename = std::enable_if_t<std::is_integral_v<Int1> && std::is_integral_v<Int2> && std::is_integral_v<Int3> && std::is_integral_v<Int4>>>
+    ArrayShape(Int1 i, Int2 j, Int3 k, Int4 l) {
+        resize(4);
+        operator[](0) = i;
+        operator[](1) = j;
+        operator[](2) = k;
+        operator[](3) = l;
+    }
 };
 
 //---------------------------------------------------------------------------------------------------------------------

@@ -69,6 +69,10 @@ void RedistributeStructuredColumns::do_setup() {
     // Check levels match.
     ATLAS_ASSERT(source_.levels() == target_.levels());
 
+    // Check that communicators match.
+    ATLAS_ASSERT(source_.mpi_comm() == target_.mpi_comm());
+    mpi_comm_ = source_.mpi_comm();
+
 
     // Get source and target range of this function space.
     const auto sourceRange = StructuredIndexRange(source_);
@@ -225,8 +229,8 @@ void RedistributeStructuredColumns::do_execute(const Field& sourceField, Field& 
     forEachIndex(sendIntersections_, sendFunctor);
 
     // Communicate.
-    mpi::comm().allToAllv(sendBuffer.data(), sendCounts_.data(), sendDisplacements_.data(), recvBuffer.data(),
-                          recvCounts_.data(), recvDisplacements_.data());
+    mpi::comm(mpi_comm_).allToAllv(sendBuffer.data(), sendCounts_.data(), sendDisplacements_.data(), recvBuffer.data(),
+                                   recvCounts_.data(), recvDisplacements_.data());
 
     // Read data from buffer.
     forEachIndex(recvIntersections_, recvFunctor);
@@ -246,19 +250,23 @@ StructuredIndexRange::StructuredIndexRange(const functionspace::StructuredColumn
         iBeginEnd_.push_back(std::make_pair(structuredColumns.i_begin(j), structuredColumns.i_end(j)));
     }
 
+    mpi_comm_ = structuredColumns.mpi_comm();
+
     return;
 }
 
 // Get index ranges from all PEs.
 StructuredIndexRangeVector StructuredIndexRange::getStructuredIndexRanges() const {
+    auto& comm = mpi::comm(mpi_comm());
+
     // Get MPI communicator size.
-    const auto mpiSize = static_cast<size_t>(atlas::mpi::comm().size());
+    const auto mpiSize = static_cast<size_t>(comm.size());
 
     // Set recv buffer for j range.
     auto jRecvBuffer = idxPairVector(mpiSize);
 
     // Perform all gather.
-    atlas::mpi::comm().allGather(jBeginEnd_, jRecvBuffer.begin(), jRecvBuffer.end());
+    comm.allGather(jBeginEnd_, jRecvBuffer.begin(), jRecvBuffer.end());
 
     // Set i receive counts.
     auto iRecvCounts = transformVector<int>(
@@ -272,8 +280,8 @@ StructuredIndexRangeVector StructuredIndexRange::getStructuredIndexRanges() cons
     auto irecvBuffer = idxPairVector(static_cast<size_t>(iRecvDisplacements.back() + iRecvCounts.back()));
 
     // Perform all gather.
-    atlas::mpi::comm().allGatherv(iBeginEnd_.cbegin(), iBeginEnd_.cend(), irecvBuffer.begin(), iRecvCounts.data(),
-                                  iRecvDisplacements.data());
+    comm.allGatherv(iBeginEnd_.cbegin(), iBeginEnd_.cend(), irecvBuffer.begin(), iRecvCounts.data(),
+                    iRecvDisplacements.data());
 
     // Make vector of indexRange structs.
     auto indexRanges = StructuredIndexRangeVector{};

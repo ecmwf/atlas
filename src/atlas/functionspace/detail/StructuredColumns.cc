@@ -27,6 +27,7 @@
 #include "atlas/grid/StructuredGrid.h"
 #include "atlas/grid/StructuredPartitionPolygon.h"
 #include "atlas/library/Library.h"
+#include "atlas/library/FloatingPointExceptions.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/parallel/Checksum.h"
 #include "atlas/parallel/GatherScatter.h"
@@ -71,6 +72,8 @@ array::LocalView<T, 3> make_leveled_view(Field& field) {
 
 template <typename T>
 std::string checksum_3d_field(const parallel::Checksum& checksum, const Field& field) {
+    bool disabled_fpe_overflow = library::disable_floating_point_exception(FE_OVERFLOW);
+    bool disabled_fpe_invalid  = library::disable_floating_point_exception(FE_INVALID);
     auto values = make_leveled_view<const T>(field);
     array::ArrayT<T> surface_field(values.shape(0), values.shape(2));
     auto surface     = array::make_view<T, 2>(surface_field);
@@ -82,6 +85,12 @@ std::string checksum_3d_field(const parallel::Checksum& checksum, const Field& f
                 surface(n, j) += values(n, l, j);
             }
         }
+    }
+    if (disabled_fpe_overflow) {
+        library::enable_floating_point_exception(FE_OVERFLOW);
+    }
+    if (disabled_fpe_invalid) {
+        library::enable_floating_point_exception(FE_INVALID);
     }
     return checksum.execute(surface.data(), surface_field.stride(0));
 }
@@ -129,7 +138,8 @@ private:
     static value_type* create(const detail::StructuredColumns* funcspace) {
         value_type* value = new value_type();
 
-        value->setup(array::make_view<int, 1>(funcspace->partition()).data(),
+        value->setup(funcspace->mpi_comm(),
+                     array::make_view<int, 1>(funcspace->partition()).data(),
                      array::make_view<idx_t, 1>(funcspace->remote_index()).data(), REMOTE_IDX_BASE,
                      funcspace->sizeHalo(), funcspace->sizeOwned());
         return value;
@@ -177,7 +187,8 @@ private:
     static value_type* create(const detail::StructuredColumns* funcspace) {
         value_type* value = new value_type();
 
-        value->setup(array::make_view<int, 1>(funcspace->partition()).data(),
+        value->setup(funcspace->mpi_comm(),
+                     array::make_view<int, 1>(funcspace->partition()).data(),
                      array::make_view<idx_t, 1>(funcspace->remote_index()).data(), REMOTE_IDX_BASE,
                      array::make_view<gidx_t, 1>(funcspace->global_index()).data(), funcspace->sizeOwned());
         return value;
@@ -383,7 +394,8 @@ idx_t StructuredColumns::config_size(const eckit::Configuration& config) const {
         if (global) {
             idx_t owner(0);
             config.get("owner", owner);
-            size = (mpi::rank() == owner ? grid_->size() : 0);
+            idx_t rank = mpi::comm(mpi_comm()).rank();
+            size = (rank == owner ? grid_->size() : 0);
         }
     }
     return size;
@@ -406,6 +418,15 @@ void StructuredColumns::throw_outofbounds(idx_t i, idx_t j) const {
     throw_Exception(ss.str(), Here());
 }
 
+namespace {
+    static std::string extract_mpi_comm(const eckit::Configuration& config) {
+        if(config.has("mpi_comm")){
+            return config.getString("mpi_comm");
+        }
+        return mpi::comm().name();
+    }
+}
+
 // ----------------------------------------------------------------------------
 // Constructor
 // ----------------------------------------------------------------------------
@@ -421,7 +442,7 @@ StructuredColumns::StructuredColumns(const Grid& grid, const grid::Distribution&
 
 StructuredColumns::StructuredColumns(const Grid& grid, const grid::Distribution& distribution, const Vertical& vertical,
                                      const eckit::Configuration& config):
-    vertical_(vertical), nb_levels_(vertical_.size()), grid_(new StructuredGrid(grid)) {
+    vertical_(vertical), nb_levels_(vertical_.size()), grid_(new StructuredGrid(grid)), mpi_comm_(extract_mpi_comm(config)) {
     setup(distribution, config);
 }
 
@@ -434,22 +455,51 @@ StructuredColumns::StructuredColumns(const Grid& grid, const Vertical& vertical,
     ATLAS_TRACE("StructuredColumns constructor");
 
     grid::Partitioner partitioner(p);
+
+    if (config.has("mpi_comm")) {
+        mpi_comm_ = config.getString("mpi_comm");
+        if (partitioner) {
+            ATLAS_ASSERT(partitioner.mpi_comm() == mpi_comm_);
+        }
+        if (config.has("partitioner.mpi_comm")) {
+            ATLAS_ASSERT(config.getString("partitioner.mpi_comm") == mpi_comm_);
+        }
+    }
+    else if (config.has("partitioner.mpi_comm")) {
+        mpi_comm_ = config.getString("partitioner.mpi_comm");
+    }
+    else if (partitioner) {
+        mpi_comm_ = partitioner.mpi_comm();
+    }
+    else {
+        mpi_comm_ = mpi::comm().name();
+    }
+
     if (not partitioner) {
+        util::Config partitioner_config;
         if (config.has("partitioner")) {
-            partitioner = grid::Partitioner(config.getSubConfiguration("partitioner"));
+            partitioner_config = config.getSubConfiguration("partitioner");
         }
         else {
             if (grid_->domain().global()) {
-                partitioner = grid::Partitioner("equal_regions");
+                partitioner_config.set("type", "equal_regions");
             }
             else {
-                partitioner = grid::Partitioner("checkerboard");
+                partitioner_config.set("type", "checkerboard");
             }
         }
+        if (not partitioner_config.has("mpi_comm")) {
+            partitioner_config.set("mpi_comm", mpi_comm_);
+        }
+        partitioner = grid::Partitioner(partitioner_config);
     }
 
     grid::Distribution distribution;
-    ATLAS_TRACE_SCOPE("Partitioning grid") { distribution = grid::Distribution(grid, partitioner); }
+
+    {
+        mpi::Scope mpi_scope(mpi_comm_);
+        ATLAS_TRACE_SCOPE("Partitioning grid") { distribution = grid::Distribution(grid, partitioner); }
+    }
 
     setup(distribution, config);
 }

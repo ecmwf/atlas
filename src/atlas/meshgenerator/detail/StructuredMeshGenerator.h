@@ -55,6 +55,7 @@ public:
 private:
     virtual void hash(eckit::Hash&) const override;
 
+
     void configure_defaults();
 
     void generate_region(const StructuredGrid&, const grid::Distribution& distribution, int mypart,

@@ -7,6 +7,42 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.35.1] - 2023-24-10
+### Added
+- Don't output with output::Gmsh the triangle elements with wrong orientation when coordinates are "lonlat"
+- Add control to skip Gmsh-output of triangles with too large edge length ratio
+- Configurable geometry in KDTree
+- Use configurable KDTree geometry in PointCloud
+- atlas-grid-points executable to list grid points
+- Allow constructor of atlas::io::ArrayShape with different integer types
+- Support atlas_io with vector<std::int64_t>
+
+### Fixed
+- Control FPE in StructuredColumns::checksum to avoid overflow and invalid in unimportant halo regions
+- Fixes to MeshBuilder validate_mesh_vs_grid
+
+### Changed
+- Use search radius in FiniteElement interpolation when mesh defines metadata to do so
+
+## [0.35.0] - 2023-02-10
+### Added
+- Add accessors for the GridBox class (MIR-632)
+- Add FunctionSpace::partition() field
+- Add configurable MPI communicator to data structures (#131)
+- Add single precision support for fvm::Nabla
+- Implement PointCloud parallel construction with halo_radius
+
+### Fixed
+- Fix StructuredMeshGenerator for Gaussian grids that don't start at 0 degrees (ATLAS-375)
+- Remove functionspace::Spectral via Trans initialisation (fixes #153)
+- Enable MeshBuilder to set up the Grid (#152)
+- Fix use of cmake option ATLAS_ENABLE_TRANS as in a bundle
+
+### Changed
+- Cleanup long-standing temporary element types. API change but with deprecated old API
+- Deprecated rename Mesh::nb_partitions -> Mesh::nb_parts
+- Implement Delaunay triangulation using Qhull instead of CGAL but CGAL can still be enabled instead for now
+
 ## [0.34.0] - 2023-07-10
 ### Added
 - Fieldset::metadata (#126)
@@ -464,7 +500,9 @@ Fix StructuredInterpolation2D with retry for failed stencils
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
-[0.33.0]: https://github.com/ecmwf/atlas/compare/0.33.0...0.34.0
+[0.35.1]: https://github.com/ecmwf/atlas/compare/0.35.0...0.35.1
+[0.35.0]: https://github.com/ecmwf/atlas/compare/0.34.0...0.35.0
+[0.34.0]: https://github.com/ecmwf/atlas/compare/0.33.0...0.34.0
 [0.33.0]: https://github.com/ecmwf/atlas/compare/0.32.1...0.33.0
 [0.32.1]: https://github.com/ecmwf/atlas/compare/0.32.0...0.32.1
 [0.32.0]: https://github.com/ecmwf/atlas/compare/0.31.1...0.32.0

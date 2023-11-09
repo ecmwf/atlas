@@ -11,11 +11,11 @@
 #pragma once
 
 #include <vector>
+#include <array>
 
 #include "atlas_io/Data.h"
 #include "atlas_io/Exceptions.h"
 #include "atlas_io/Metadata.h"
-#include "atlas_io/detail/TypeTraits.h"
 #include "atlas_io/types/array/ArrayMetadata.h"
 #include "atlas_io/types/array/ArrayReference.h"
 
@@ -23,27 +23,48 @@ namespace std {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-template <typename T, atlas::io::enable_if_array_datatype<T> = 0>
-void interprete(const std::vector<T>& vector, atlas::io::ArrayReference& out) {
+template <typename T, size_t N>
+void interprete(const std::vector<std::array<T, N>>& vector_of_array, atlas::io::ArrayReference& out) {
     using atlas::io::ArrayReference;
-    out = ArrayReference{vector.data(), {int(vector.size())}};
+    out = ArrayReference{vector_of_array.front().data(), {vector_of_array.size(),N}};
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
-template <typename T, atlas::io::enable_if_array_datatype<T> = 0>
-void decode(const atlas::io::Metadata& m, const atlas::io::Data& encoded, std::vector<T>& out) {
+template <typename T, size_t N>
+void decode(const atlas::io::Metadata& m, const atlas::io::Data& encoded, std::vector<std::array<T, N>>& out) {
     atlas::io::ArrayMetadata array(m);
     if (array.datatype().kind() != atlas::io::ArrayMetadata::DataType::kind<T>()) {
         std::stringstream err;
         err << "Could not decode " << m.json() << " into std::vector<" << atlas::io::demangle<T>() << ">. "
-            << "Incompatible datatypes: " << array.datatype().str() << " and " << atlas::io::ArrayMetadata::DataType::str<T>() << ".";
+            << "Incompatible datatype!";
         throw atlas::io::Exception(err.str(), Here());
     }
-    const T* data = static_cast<const T*>(encoded.data());
-    out.assign(data, data + array.size());
+    if (array.rank() != 2) {
+        std::stringstream err;
+        err << "Could not decode " << m.json() << " into std::vector<std::array<" << atlas::io::demangle<T>() << "," << N << ">>. "
+            << "Incompatible rank!";
+        throw atlas::io::Exception(err.str(), Here());
+    }
+    if (array.shape(1) != N) {
+        std::stringstream err;
+        err << "Could not decode " << m.json() << " into std::vector<std::array<" << atlas::io::demangle<T>() << "," << N << ">>. "
+            << "Incompatible size!";
+        throw atlas::io::Exception(err.str(), Here());
+    }
+    const std::array<T,N>* data = static_cast<const std::array<T,N>*>(encoded.data());
+    // std::copy(data, data + array.shape(0), out.begin());
+    out.assign(data, data + array.shape(0));
+
 }
 
 //---------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
 
 }  // end namespace std

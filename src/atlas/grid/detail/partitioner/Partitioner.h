@@ -36,7 +36,9 @@ public:
 
 public:
     Partitioner();
-    Partitioner(const idx_t nb_partitions);
+    Partitioner(const idx_t nb_partitions, const eckit::Parametrisation&);
+    Partitioner(const eckit::Parametrisation&);
+
     virtual ~Partitioner();
 
     virtual void partition(const Grid& grid, int part[]) const = 0;
@@ -47,8 +49,14 @@ public:
 
     virtual std::string type() const = 0;
 
+    std::string mpi_comm() const;
+
+    static int extract_nb_partitions(const eckit::Parametrisation&);
+    static std::string extract_mpi_comm(const eckit::Parametrisation&);
+
 private:
     idx_t nb_partitions_;
+    std::string mpi_comm_;
 };
 
 // ------------------------------------------------------------------
@@ -65,6 +73,7 @@ public:
     static Partitioner* build(const std::string&);
     static Partitioner* build(const std::string&, const idx_t nb_partitions);
     static Partitioner* build(const std::string&, const idx_t nb_partitions, const eckit::Parametrisation&);
+    static Partitioner* build(const std::string&, const eckit::Parametrisation&);
 
     /*!
    * \brief list all registered partioner builders
@@ -77,6 +86,7 @@ private:
     virtual Partitioner* make()                                                         = 0;
     virtual Partitioner* make(const idx_t nb_partitions)                                = 0;
     virtual Partitioner* make(const idx_t nb_partitions, const eckit::Parametrisation&) = 0;
+    virtual Partitioner* make(const eckit::Parametrisation&) = 0;
 
 protected:
     PartitionerFactory(const std::string&);
@@ -89,9 +99,12 @@ template <class T>
 class PartitionerBuilder : public PartitionerFactory {
     virtual Partitioner* make() { return new T(); }
 
-    virtual Partitioner* make(const idx_t nb_partitions) { return new T(nb_partitions); }
+    virtual Partitioner* make(const idx_t nb_partitions) { return new T(nb_partitions, util::NoConfig()); }
     virtual Partitioner* make(const idx_t nb_partitions, const eckit::Parametrisation& config) {
         return new T(nb_partitions, config);
+    }
+    virtual Partitioner* make(const eckit::Parametrisation& config) {
+        return new T(config);
     }
 
 public:
@@ -102,8 +115,8 @@ public:
 
 class MatchingPartitionerFactory {
 public:
-    static Partitioner* build(const std::string& type, const Mesh& partitioned);
-    static Partitioner* build(const std::string& type, const FunctionSpace& partitioned);
+    static Partitioner* build(const std::string& type, const Mesh& partitioned, const eckit::Parametrisation& config);
+    static Partitioner* build(const std::string& type, const FunctionSpace& partitioned, const eckit::Parametrisation& config);
 };
 
 // ------------------------------------------------------------------

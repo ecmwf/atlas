@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <string>
+
 #include "atlas/redistribution/detail/RedistributionImpl.h"
 
 namespace atlas {
@@ -46,6 +48,8 @@ private:
 
     // Partial sum of number of columns to receive from each PE.
     std::vector<int> targetDisps_{};
+
+    std::string mpi_comm_;
 };
 
 }  // namespace detail

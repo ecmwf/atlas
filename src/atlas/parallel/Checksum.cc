@@ -23,20 +23,30 @@ Checksum::Checksum(const std::string& name): name_(name) {
     is_setup_ = false;
 }
 
-void Checksum::setup(const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
+void Checksum::setup(const std::string& mpi_comm, const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
                      const int parsize) {
     parsize_ = parsize;
     gather_  = util::ObjectHandle<GatherScatter>(new GatherScatter());
-    gather_->setup(part, remote_idx, base, glb_idx, parsize);
+    gather_->setup(mpi_comm, part, remote_idx, base, glb_idx, parsize);
+    is_setup_ = true;
+}
+
+void Checksum::setup(const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
+                     const int parsize) {
+    setup(mpi::comm().name(), part, remote_idx, base, glb_idx, parsize);
+}
+
+void Checksum::setup(const std::string& mpi_comm, const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
+                     const int mask[], const int parsize) {
+    parsize_ = parsize;
+    gather_  = util::ObjectHandle<GatherScatter>(new GatherScatter());
+    gather_->setup(mpi_comm, part, remote_idx, base, glb_idx, mask, parsize);
     is_setup_ = true;
 }
 
 void Checksum::setup(const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
                      const int mask[], const int parsize) {
-    parsize_ = parsize;
-    gather_  = util::ObjectHandle<GatherScatter>(new GatherScatter());
-    gather_->setup(part, remote_idx, base, glb_idx, mask, parsize);
-    is_setup_ = true;
+    setup(mpi::comm().name(), part, remote_idx, base, glb_idx, mask, parsize);
 }
 
 void Checksum::setup(const util::ObjectHandle<GatherScatter>& gather) {

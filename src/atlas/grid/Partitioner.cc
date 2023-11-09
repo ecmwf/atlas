@@ -37,12 +37,10 @@ Partitioner::Partitioner(const std::string& type, const idx_t nb_partitions):
 
 namespace {
 detail::partitioner::Partitioner* partitioner_from_config(const std::string& type, const Partitioner::Config& config) {
-    long partitions = mpi::size();
-    config.get("partitions", partitions);
-    if (partitions==1) {
-        return Factory::build("serial");
+    if (detail::partitioner::Partitioner::extract_nb_partitions(config) == 1) {
+        return Factory::build("serial",config);
     }
-    return Factory::build(type, partitions, config);
+    return Factory::build(type, config);
 }
 detail::partitioner::Partitioner* partitioner_from_config(const Partitioner::Config& config) {
     std::string type;
@@ -75,13 +73,17 @@ std::string Partitioner::type() const {
     return get()->type();
 }
 
+std::string Partitioner::mpi_comm() const {
+    return get()->mpi_comm();
+}
+
 MatchingPartitioner::MatchingPartitioner(): Partitioner() {}
 
 grid::detail::partitioner::Partitioner* matching_mesh_partititioner(const Mesh& mesh,
                                                                     const Partitioner::Config& config) {
     std::string type("lonlat-polygon");
     config.get("type", type);
-    return grid::detail::partitioner::MatchingPartitionerFactory::build(type, mesh);
+    return grid::detail::partitioner::MatchingPartitionerFactory::build(type, mesh, config);
 }
 
 MatchingPartitioner::MatchingPartitioner(const Mesh& mesh): MatchingPartitioner(mesh, util::NoConfig()) {}
@@ -95,7 +97,7 @@ grid::detail::partitioner::Partitioner* matching_functionspace_partititioner(con
                                                                              const Partitioner::Config& config) {
     std::string type("lonlat-polygon");
     config.get("type", type);
-    return grid::detail::partitioner::MatchingPartitionerFactory::build(type, functionspace);
+    return grid::detail::partitioner::MatchingPartitionerFactory::build(type, functionspace, config);
 }
 
 MatchingPartitioner::MatchingPartitioner(const FunctionSpace& functionspace):

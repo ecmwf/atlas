@@ -33,9 +33,9 @@ size_t BandsPartitioner::blocksize(const Grid& grid) const {
     return size_t(blocksize_);
 }
 
-BandsPartitioner::BandsPartitioner(): Partitioner(), blocksize_{1} {}
+BandsPartitioner::BandsPartitioner( const eckit::Parametrisation& config): Partitioner(config), blocksize_{1} {}
 
-BandsPartitioner::BandsPartitioner(int N, int blocksize): Partitioner(N), blocksize_(blocksize) {}
+BandsPartitioner::BandsPartitioner(int N, int blocksize, const eckit::Parametrisation& config): Partitioner(N, config), blocksize_(blocksize) {}
 
 Distribution BandsPartitioner::partition(const Partitioner::Grid& grid) const {
     if (not distribution::BandsDistribution<int32_t>::detectOverflow(grid.size(), nb_partitions(), blocksize((grid)))) {

@@ -95,7 +95,8 @@ private:
 
     static value_type* create(const Mesh& mesh) {
         value_type* value = new value_type();
-        value->setup(array::make_view<int, 1>(mesh.cells().partition()).data(),
+        value->setup(mesh.mpi_comm(),
+                     array::make_view<int, 1>(mesh.cells().partition()).data(),
                      array::make_view<idx_t, 1>(mesh.cells().remote_index()).data(), REMOTE_IDX_BASE,
                      mesh.cells().size());
         return value;
@@ -129,7 +130,8 @@ private:
 
     static value_type* create(const Mesh& mesh) {
         value_type* value = new value_type();
-        value->setup(array::make_view<int, 1>(mesh.cells().partition()).data(),
+        value->setup(mesh.mpi_comm(),
+                     array::make_view<int, 1>(mesh.cells().partition()).data(),
                      array::make_view<idx_t, 1>(mesh.cells().remote_index()).data(), REMOTE_IDX_BASE,
                      array::make_view<gidx_t, 1>(mesh.cells().global_index()).data(), mesh.cells().size());
         return value;
@@ -193,7 +195,6 @@ void CellColumns::set_field_metadata(const eckit::Configuration& config, Field& 
 }
 
 idx_t CellColumns::config_size(const eckit::Configuration& config) const {
-    const idx_t rank = mpi::rank();
     idx_t size       = nb_cells();
     bool global(false);
     if (config.get("global", global)) {
@@ -201,6 +202,7 @@ idx_t CellColumns::config_size(const eckit::Configuration& config) const {
             idx_t owner(0);
             config.get("owner", owner);
             idx_t _nb_cells_global(nb_cells_global());
+            const idx_t rank = mpi::comm(mpi_comm()).rank();
             size = (rank == owner ? _nb_cells_global : 0);
         }
     }
@@ -269,7 +271,7 @@ CellColumns::CellColumns(const Mesh& mesh, const eckit::Configuration& config):
         return nb_cells;
     };
 
-    mesh::actions::build_nodes_parallel_fields(mesh_.nodes());
+    mesh::actions::build_nodes_parallel_fields(mesh_);
     mesh::actions::build_cells_parallel_fields(mesh_);
     mesh::actions::build_periodic_boundaries(mesh_);
 
@@ -585,6 +587,10 @@ Field CellColumns::global_index() const {
 
 Field CellColumns::ghost() const {
     return mesh_.cells().field("ghost");
+}
+
+Field CellColumns::partition() const {
+    return mesh_.cells().partition();
 }
 
 //------------------------------------------------------------------------------

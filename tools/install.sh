@@ -21,7 +21,7 @@ CMAKE_OPTIONS=""
 with_gridtools=false
 with_trans=false
 with_fftw=false
-with_cgal=false
+with_qhull=false
 with_deps=false
 WORK_DIR=$(pwd)
 BUILD_TYPE=RelWithDebInfo
@@ -32,14 +32,14 @@ function print_help {
     echo ""
     echo "Usage:"
     echo ""
-    echo "  install.sh [--with-deps] [--prefix <prefix>] [--build-type <build-type>] [--cmake <cmake>] \\"
-    echo "             [--enable-gridtools] [--enable-trans] [--enable-fftw] [--enable-cgal] [--work-dir <work-dir>] [--help]"
+    echo "  install.sh [--with-deps] [--prefix <prefix>] [--build-type <build-type>] [--cmake <cmake>] [--parallel <nthread>] \\"
+    echo "             [--enable-gridtools] [--enable-trans] [--enable-fftw] [--enable-qhull] [--work-dir <work-dir>] [--help]"
     echo ""
     echo "  "
     echo ""
     echo "Options:"
     echo ""
-    echo "  --with-deps                  Install dependencies together with Atlas: fftw, cgal, ecbuild, eckit, fckit, fiat, ectrans"
+    echo "  --with-deps                  Install dependencies together with Atlas: fftw, qhull, ecbuild, eckit, fckit, fiat, ectrans"
     echo "  --prefix <prefix>            Install prefix for atlas (and its dependencies if requested with '--with-deps')"
     echo "  --build-type <build-type>    Build type for atlas (and its dependencies if requested with '--with-deps')"
     echo "                               Possible values are ( Release | RelWithDebInfo | Debug )"
@@ -48,8 +48,7 @@ function print_help {
     echo "  --enable-gridtools           Enable optional gridtools dependency (only has effect when '--with-deps' is also used)"
     echo "                               ! Requires Boost ! Specify Boost_ROOT environment variable to a fairly recent Boost installation"
     echo "  --enable-fftw                Enable optional fftw dependency required for spectral transforms"
-    echo "  --enable-cgal                Enable optional cgal required for meshing of unstructured grids"
-    echo "                               ! Requires Boost ! Specify Boost_ROOT environment variable to a fairly recent Boost installation"
+    echo "  --enable-qhull               Enable optional qhull required for meshing of unstructured grids"
     echo "  --work-dir <workdir>         Working directory where sources and builds live"
     echo "  --help                       Print this help"
     echo ""
@@ -82,8 +81,8 @@ while [ $# != 0 ]; do
     "--enable-gridtools")
         with_gridtools=true;
         ;;
-    "--enable-cgal")
-        with_cgal=true;
+    "--enable-qhull")
+        with_qhull=true;
         ;;
     "--prefix")
         PREFIX="$2"; shift
@@ -93,6 +92,9 @@ while [ $# != 0 ]; do
         ;;
     "--work-dir")
         WORK_DIR="$2"; shift
+        ;;
+    "--parallel")
+        export CMAKE_BUILD_PARALLEL_LEVEL="$2"; shift
         ;;
     "--help")
         print_help;
@@ -114,7 +116,7 @@ SOURCES_DIR=${WORK_DIR}/sources
 BUILDS_DIR=${WORK_DIR}/builds
 export PATH=${PREFIX}/bin:${PATH}
 
-export CMAKE_PREFIX_PATH=${PREFIX}
+export CMAKE_PREFIX_PATH=${PREFIX}:${CMAKE_PREFIX_PATH}
 
 mkdir -p ${SOURCES_DIR}
 mkdir -p ${BUILDS_DIR}
@@ -126,32 +128,23 @@ if ${with_deps}; then
     install-fftw.sh --prefix ${PREFIX}
   fi
 
-  ### Install CGAL (optional, off by default)
-  if ${with_cgal}; then
-    echo "Installing CGAL"
-    [[ -d ${SOURCES_DIR}/cgal ]] || git clone https://github.com/CGAL/cgal.git ${SOURCES_DIR}/cgal
-    cd ${SOURCES_DIR}/cgal
-    git checkout releases/CGAL-5.0
-    mkdir -p ${BUILDS_DIR}/cgal && cd ${BUILDS_DIR}/cgal
-    cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DBUILD_TESTING=OFF \
-          ${SOURCES_DIR}/cgal
-    make -j8 install
+  ### Install qhull (optional, off by default)
+  if ${with_qhull}; then
+    install-qhull.sh --prefix ${PREFIX}
   fi
 
   ### Install ecbuild
   echo "Installing ecbuild"
   [[ -d ${SOURCES_DIR}/ecbuild ]] || git clone -b master https://github.com/ecmwf/ecbuild ${SOURCES_DIR}/ecbuild
-  mkdir -p ${BUILDS_DIR}/ecbuild && cd ${BUILDS_DIR}/ecbuild
-  cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} -DENABLE_TESTS=OFF ${SOURCES_DIR}/ecbuild
-  make -j8 install
+  cmake -S ${SOURCES_DIR}/ecbuild -B ${BUILDS_DIR}/ecbuild -DCMAKE_INSTALL_PREFIX=${PREFIX} -DENABLE_TESTS=OFF 
+  cmake --build ${BUILDS_DIR}/ecbuild
+  cmake --install ${BUILDS_DIR}/ecbuild
 
   ### Install eckit
   echo "Installing eckit"
   [[ -d ${SOURCES_DIR}/eckit ]] || git clone -b master https://github.com/ecmwf/eckit ${SOURCES_DIR}/eckit
-  mkdir -p ${BUILDS_DIR}/eckit && cd ${BUILDS_DIR}/eckit
-  cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+  cmake -S ${SOURCES_DIR}/eckit -B ${BUILDS_DIR}/eckit \
+        -DCMAKE_INSTALL_PREFIX=${PREFIX} \
         -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
         -DENABLE_TESTS=OFF \
         -DENABLE_ECKIT_SQL=OFF \
@@ -167,42 +160,40 @@ if ${with_deps}; then
         -DENABLE_JEMALLOC=OFF \
         -DENABLE_BZIP2=OFF \
         -DCMAKE_DISABLE_FIND_PACKAGE_Doxygen=ON \
-        ${CMAKE_OPTIONS} \
-        ${SOURCES_DIR}/eckit
-  make -j8 install
+        ${CMAKE_OPTIONS}
+  cmake --build ${BUILDS_DIR}/eckit
+  cmake --install ${BUILDS_DIR}/eckit
 
   ### Install fckit
   echo "Installing fckit"
   [[ -d ${SOURCES_DIR}/fckit ]] || git clone -b master https://github.com/ecmwf/fckit ${SOURCES_DIR}/fckit
-  mkdir -p ${BUILDS_DIR}/fckit && cd ${BUILDS_DIR}/fckit
-  cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+  cmake ${SOURCES_DIR}/fckit -B ${BUILDS_DIR}/fckit -DCMAKE_INSTALL_PREFIX=${PREFIX} \
         -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
         -DENABLE_TESTS=OFF \
-        ${CMAKE_OPTIONS} \
-        ${SOURCES_DIR}/fckit
-  make -j8 install
+        ${CMAKE_OPTIONS}
+  cmake --build ${BUILDS_DIR}/fckit
+  cmake --install ${BUILDS_DIR}/fckit
 
   ### Install fiat + ectrans (optional, off by default)
   if ${with_trans}; then
     echo "Installing fiat"
     [[ -d ${SOURCES_DIR}/fiat ]] || git clone -b master https://github.com/ecmwf-ifs/fiat ${SOURCES_DIR}/fiat
-    mkdir -p ${BUILDS_DIR}/fiat && cd ${BUILDS_DIR}/fiat
-    cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+    cmake -S ${SOURCES_DIR}/fiat -B ${BUILDS_DIR}/fiat \
+          -DCMAKE_INSTALL_PREFIX=${PREFIX} \
           -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
           -DENABLE_TESTS=OFF \
-          ${CMAKE_OPTIONS} \
-          ${SOURCES_DIR}/fiat
-    make -j8 install
+          ${CMAKE_OPTIONS}
+    cmake --build ${BUILDS_DIR}/fiat
+    cmake --install ${BUILDS_DIR}/fiat
 
     echo "Installing ectrans"
     [[ -d ${SOURCES_DIR}/ectrans ]] || git clone -b master https://github.com/ecmwf-ifs/ectrans ${SOURCES_DIR}/ectrans
-    mkdir -p ${BUILDS_DIR}/ectrans && cd ${BUILDS_DIR}/ectrans
-    cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+    cmake -S ${SOURCES_DIR}/ectrans -B ${BUILDS_DIR}/ectrans -DCMAKE_INSTALL_PREFIX=${PREFIX} \
           -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
           -DENABLE_TESTS=OFF \
-          ${CMAKE_OPTIONS} \
-          ${SOURCES_DIR}/ectrans
-    make -j8 install
+          ${CMAKE_OPTIONS}
+    cmake --build ${BUILDS_DIR}/ectrans
+    cmake --install ${BUILDS_DIR}/ectrans
   fi
 
 
@@ -212,15 +203,15 @@ if ${with_deps}; then
     # Note: known to work version: 80187f11
     [[ -d ${SOURCES_DIR}/gridtools ]] || git clone -b master https://github.com/gridtools/gridtools ${SOURCES_DIR}/gridtools
 	( cd ${SOURCES_DIR}/gridtools && git checkout 80187f11 )
-    mkdir -p ${BUILDS_DIR}/gridtools && cd ${BUILDS_DIR}/gridtools
-    cmake ${ECBUILD_MODULE_PATH} \
+    cmake ${SOURCES_DIR}/gridtools -B ${BUILDS_DIR}/gridtools
+          ${ECBUILD_MODULE_PATH} \
           -DCMAKE_INSTALL_PREFIX=${PREFIX} \
           -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
           -DBUILD_TESTING=OFF \
           -DGT_ENABLE_OPENMP=OFF \
-          ${CMAKE_OPTIONS} \
-          ${SOURCES_DIR}/gridtools
-    make -j8 install
+          ${CMAKE_OPTIONS}
+    cmake --build ${BUILDS_DIR}/gridtools
+    cmake --install ${BUILDS_DIR}/gridtools
     ### Fix non-standard GridTools installation detection
     if [[ -f ${PREFIX}/lib/cmake/GridToolsConfig.cmake ]]; then
     export GridTools_DIR=${PREFIX}/lib/cmake # see GridTools issue (https://github.com/GridTools/gridtools/issues/1395)
@@ -231,12 +222,11 @@ fi
 
 ### Install atlas
 echo "Installing atlas"
-mkdir -p ${BUILDS_DIR}/atlas && cd ${BUILDS_DIR}/atlas
-cmake ${ECBUILD_MODULE_PATH} \
+cmake -S ${SCRIPT_DIR}/.. -B ${BUILDS_DIR}/atlas \
       -DCMAKE_INSTALL_PREFIX=${PREFIX} \
       -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
       -DENABLE_SANDBOX=ON \
-      ${CMAKE_OPTIONS} \
-      ${SCRIPT_DIR}/..
-make -j8
-make install
+      ${CMAKE_OPTIONS}
+cmake --build ${BUILDS_DIR}/atlas
+cmake --install ${BUILDS_DIR}/atlas
+

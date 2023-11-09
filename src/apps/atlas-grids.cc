@@ -146,8 +146,12 @@ int AtlasGrids::execute(const Args& args) {
         Log::info() << "usage: atlas-grids <grid> [OPTION]... [--help]\n" << std::endl;
         Log::info() << "\n";
         Log::info() << "Available grid types:" << std::endl;
-        for (auto b : grid::GridBuilder::typeRegistry()) {
-            Log::info() << "  -- " << b.second->type() << '\n';
+        std::set<std::string> grid_types;
+        for (const auto& [key, builder] : grid::GridBuilder::typeRegistry()) {
+            grid_types.insert(builder->type());
+        }
+        for (const auto& b : grid_types) {
+            Log::info() << "  -- " << b << '\n';
         }
         Log::info() << "\n";
         Log::info() << "Available named grids:" << std::endl;
@@ -159,13 +163,13 @@ int AtlasGrids::execute(const Args& args) {
             }
         }
 
-        for (auto b : grid::GridBuilder::nameRegistry()) {
+        for (const auto& [key, builder] : grid::GridBuilder::typeRegistry()) {
             int c = 0;
-            for (const auto& name : b.second->names()) {
+            for (const auto& name : builder->names()) {
                 if (c == 0) {
                     Log::info() << "  -- " << std::left << std::setw(maxlen + 8) << name;
-                    if (!b.second->type().empty()) {
-                        Log::info() << "type: " << b.second->type();
+                    if (!builder->type().empty()) {
+                        Log::info() << "type: " << builder->type();
                     }
                     Log::info() << std::endl;
                 }

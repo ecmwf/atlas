@@ -193,7 +193,7 @@ namespace {
                 src_fs_config.set("source.grid",src_fs.grid().spec());
                 src_fs_config.set("source.halo",src_fs.halo());
                 src_fs_config.set("source.distribution",src_fs.distribution());
-                src_fs_config.set("source.partitions",src_fs.nb_partitions());
+                src_fs_config.set("source.partitions",src_fs.nb_parts());
                 src_fs_config.set("interpolation","StructuredInterpolation2D<"+interpolation.kernel().className()+">");
                 f << src_fs_config.json();
             }

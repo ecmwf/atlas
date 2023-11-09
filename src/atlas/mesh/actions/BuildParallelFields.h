@@ -39,7 +39,8 @@ void build_parallel_fields(Mesh& mesh);
  * - partition:  set to mpi::rank() for negative values
  * - remote_idx: rebuild from scratch
  */
-void build_nodes_parallel_fields(mesh::Nodes& nodes);
+void build_nodes_parallel_fields(Mesh& mesh);
+void build_nodes_parallel_fields(mesh::Nodes& nodes); // deprecated (WARNING: does not change MPI scope)
 
 /*
  * Build parallel fields for the "edges" function space if they don't exist.
@@ -57,7 +58,8 @@ void build_edges_parallel_fields(Mesh& mesh);
 
 void build_cells_parallel_fields(Mesh& mesh);
 
-void renumber_nodes_glb_idx(mesh::Nodes& nodes);
+void renumber_nodes_glb_idx(Mesh& mesh);
+void renumber_nodes_glb_idx(mesh::Nodes& nodes); // deprecated (WARNING: does not change MPI scope)
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines

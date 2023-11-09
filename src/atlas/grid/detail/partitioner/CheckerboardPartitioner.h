@@ -23,11 +23,13 @@ class CheckerboardPartitioner : public Partitioner {
 public:
     CheckerboardPartitioner();
 
-    CheckerboardPartitioner(int N);  // N is the number of parts (aka MPI tasks)
+    // CheckerboardPartitioner(int N);  // N is the number of parts (aka MPI tasks)
     CheckerboardPartitioner(int N, const eckit::Parametrisation&);
 
     CheckerboardPartitioner(int N, int nbands);
     CheckerboardPartitioner(int N, int nbands, bool checkerboard);
+
+    CheckerboardPartitioner(const eckit::Parametrisation&);
 
     // Node struct that holds the x and y indices (for global, it's longitude and
     // latitude in millidegrees (integers))

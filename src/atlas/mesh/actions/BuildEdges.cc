@@ -326,6 +326,8 @@ void build_edges(Mesh& mesh) {
 void build_edges(Mesh& mesh, const eckit::Configuration& config) {
     ATLAS_TRACE("BuildEdges");
 
+    mpi::Scope mpi_scope(mesh.mpi_comm());
+
     int mesh_halo(0);
     mesh.metadata().get("halo", mesh_halo);
 

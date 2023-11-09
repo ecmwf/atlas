@@ -76,6 +76,6 @@ inline const HealpixGrid::grid_t* healpix_grid(const Grid::Implementation* grid)
 
 HealpixGrid::HealpixGrid(const Grid& grid): StructuredGrid(grid), grid_(healpix_grid(get())) {}
 
-HealpixGrid::HealpixGrid(int N): HealpixGrid(Grid(new HealpixGrid::grid_t(N))) {}
+HealpixGrid::HealpixGrid(int N, const std::string& ordering): HealpixGrid(Grid(new HealpixGrid::grid_t(N, ordering))) {}
 
 }  // namespace atlas

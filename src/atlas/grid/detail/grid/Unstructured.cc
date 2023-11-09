@@ -182,6 +182,11 @@ void Unstructured::hash(eckit::Hash& h) const {
     projection().hash(h);
 }
 
+size_t Unstructured::footprint() const {
+    return sizeof(PointXY) * points_->size();
+}
+
+
 RectangularLonLatDomain Unstructured::lonlatBoundingBox() const {
     return projection_ ? projection_.lonlatBoundingBox(domain_) : domain_;
 }
@@ -221,7 +226,7 @@ Grid::Config Unstructured::meshgenerator() const {
     return Config("type", "delaunay");
 }
 Grid::Config Unstructured::partitioner() const {
-    return Config("type", "serial");
+    return Config("type", "equal_regions");
 }
 
 void Unstructured::print(std::ostream& os) const {

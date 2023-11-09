@@ -91,6 +91,10 @@ public:
 
     Field remote_index() const override;
 
+    Field partition() const override;
+
+    std::string mpi_comm() const override { return mesh_.mpi_comm(); }
+
 private:  // methods
     idx_t config_size(const eckit::Configuration& config) const;
     array::DataType config_datatype(const eckit::Configuration&) const;

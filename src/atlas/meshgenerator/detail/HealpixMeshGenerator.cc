@@ -47,6 +47,10 @@ namespace atlas {
 namespace meshgenerator {
 
 HealpixMeshGenerator::HealpixMeshGenerator(const eckit::Parametrisation& p) {
+    std::string mpi_comm = mpi::comm().name();
+    p.get("mpi_comm", mpi_comm);
+    options.set("mpi_comm",mpi_comm);
+
     configure_defaults();
 
     size_t nb_parts;
@@ -85,11 +89,15 @@ HealpixMeshGenerator::HealpixMeshGenerator(const eckit::Parametrisation& p) {
 }
 
 void HealpixMeshGenerator::configure_defaults() {
+    std::string mpi_comm;
+    options.get("mpi_comm",mpi_comm);
+    auto& comm = mpi::comm(mpi_comm);
+
     // This option sets number of parts the mesh will be split in
-    options.set("nb_parts", mpi::size());
+    options.set("nb_parts", comm.size());
 
     // This option sets the part that will be generated
-    options.set("part", mpi::rank());
+    options.set("part", comm.rank());
 
     // This option switches between original HEALPix with 1 point at the pole (3d -> true)
     // or HEALPix with 8 or 4 points at the pole (3d -> false)
@@ -100,7 +108,7 @@ void HealpixMeshGenerator::configure_defaults() {
 
     // This options sets the default partitioner
     std::string partitioner;
-    if (grid::Partitioner::exists("equal_regions") && mpi::size() > 1) {
+    if (grid::Partitioner::exists("equal_regions") && comm.size() > 1) {
         partitioner = "equal_regions";
     }
     else {
@@ -480,9 +488,10 @@ void HealpixMeshGenerator::generate(const Grid& grid, Mesh& mesh) const {
     std::string partitioner_type = "equal_regions";
     options.get("partitioner", partitioner_type);
 
+    mpi::push(options.getString("mpi_comm"));
     grid::Partitioner partitioner(partitioner_type, nb_parts);
     grid::Distribution distribution(partitioner.partition(grid));
-
+    mpi::pop();
     generate(grid, distribution, mesh);
 }
 
@@ -577,7 +586,7 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     auto compute_part = [&](int iy, gidx_t ii_glb) -> int {
         // nodes at the pole belong to proc_0 (north) and proc_maxRank (south)
         // a node gets its proc rank from the element for which this node would be its west vertex
-        return (iy == 0 ? 0 : (iy == ny - 1 ? mpi::comm().size() - 1 : distribution.partition(ii_glb - nb_pole_nodes)));
+        return (iy == 0 ? 0 : (iy == ny - 1 ? nparts - 1 : distribution.partition(ii_glb - nb_pole_nodes)));
     };
 
 #if DEBUG_OUTPUT_DETAIL
@@ -1053,6 +1062,9 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     }
 #endif
 
+    mesh.metadata().set("nb_parts",options.getInt("nb_parts"));
+    mesh.metadata().set("part",options.getInt("part"));
+    mesh.metadata().set("mpi_comm",options.getString("mpi_comm"));
     mesh.metadata().set<size_t>("nb_nodes_including_halo[0]", nodes.size());
     nodes.metadata().set<size_t>("NbRealPts", size_t(nnodes));
     nodes.metadata().set<size_t>("NbVirtualPts", size_t(0));

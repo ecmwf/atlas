@@ -441,6 +441,7 @@ void eq_regions(int N, double xmin[], double xmax[], double ymin[], double ymax[
 }
 
 void EqualRegionsPartitioner::init() {
+    N_ = nb_partitions();
     std::vector<double> s_cap;
     eq_caps(N_, sectors_, s_cap);
     bands_.resize(s_cap.size());
@@ -449,22 +450,35 @@ void EqualRegionsPartitioner::init() {
     }
 }
 
-EqualRegionsPartitioner::EqualRegionsPartitioner(): Partitioner(), N_(nb_partitions()) {
+EqualRegionsPartitioner::EqualRegionsPartitioner(): 
+    Partitioner() {
     init();
 }
 
-EqualRegionsPartitioner::EqualRegionsPartitioner(int N): Partitioner(N), N_(N) {
-    init();
+EqualRegionsPartitioner::EqualRegionsPartitioner(int N): 
+    EqualRegionsPartitioner(N, util::NoConfig()) {
 }
 
 EqualRegionsPartitioner::EqualRegionsPartitioner(int N, const eckit::Parametrisation& config):
-    EqualRegionsPartitioner(N) {
+    Partitioner(N,config) {
     std::string crds;
     if (config.get("coordinates", crds)) {
         if (crds == "lonlat") {
             coordinates_ = Coordinates::LONLAT;
         }
     }
+    init();
+}
+
+EqualRegionsPartitioner::EqualRegionsPartitioner(const eckit::Parametrisation& config):
+    Partitioner(config) {
+    std::string crds;
+    if (config.get("coordinates", crds)) {
+        if (crds == "lonlat") {
+            coordinates_ = Coordinates::LONLAT;
+        }
+    }
+    init();
 }
 
 int EqualRegionsPartitioner::partition(const double& x, const double& y) const {
@@ -605,7 +619,7 @@ void EqualRegionsPartitioner::partition(const Grid& grid, int part[]) const {
 
         ATLAS_ASSERT(grid.projection().units() == "degrees");
 
-        const auto& comm = mpi::comm();
+        const auto& comm = mpi::comm(mpi_comm());
         int mpi_rank     = static_cast<int>(comm.rank());
         int mpi_size     = static_cast<int>(comm.size());
 

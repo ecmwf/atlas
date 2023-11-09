@@ -179,6 +179,16 @@ GridBuilder::~GridBuilder() {
     }
 }
 
+void GridBuilder::registerNamedGrid(const std::string& name) {
+    pthread_once(&once, init);
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
+    std::string regex = "^"+name+"$";
+    ATLAS_ASSERT(named_grids->find(regex) == named_grids->end());
+    (*named_grids)[regex] = this;
+    names_.emplace_back(regex);
+    pretty_names_.emplace_back(name);
+}
+
 const Grid::Implementation* GridBuilder::create(const Grid::Config& config) const {
     //eckit::Factory<Grid::Implementation>& fact = eckit::Factory<Grid::Implementation>::instance();
 

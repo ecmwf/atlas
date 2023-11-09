@@ -27,6 +27,23 @@ namespace atlas {
 namespace test {
 
 
+int mpi_color() {
+    static int c = mpi::comm("world").rank()%2;
+    return c;
+}
+
+struct Fixture {
+    Fixture() {
+        mpi::comm().split(mpi_color(),"split");
+    }
+    ~Fixture() {
+        if (eckit::mpi::hasComm("split")) {
+            eckit::mpi::deleteComm("split");
+        }
+    }
+};
+
+
 // Set floating point tolerance.
 template <typename Value>
 Value tolerance() {
@@ -111,24 +128,27 @@ Value testPattern(const mesh::Connectivity::Row& elem, const array::ArrayView<do
 // Try and get a mesh from functionspace.
 Mesh getMesh(const FunctionSpace& functionSpace) {
     // Try and create a pointer to one of the mesh based functionspaces.
-    const auto* cellColumnsPtr       = functionSpace.get()->cast<functionspace::detail::CellColumns>();
-    const auto* edgeColumnsPtr       = functionSpace.get()->cast<functionspace::detail::EdgeColumns>();
-    const auto* nodeColumnsPtr       = functionSpace.get()->cast<functionspace::detail::NodeColumns>();
-    const auto* structuredColumnsPtr = functionSpace.get()->cast<functionspace::detail::StructuredColumns>();
+    const auto cellColumns       = functionspace::CellColumns(functionSpace);
+    const auto edgeColumns       = functionspace::EdgeColumns(functionSpace);
+    const auto nodeColumns       = functionspace::NodeColumns(functionSpace);
+    const auto structuredColumns = functionspace::StructuredColumns(functionSpace);
 
     auto mesh = Mesh();
 
-    if (cellColumnsPtr) {
-        mesh = cellColumnsPtr->mesh();
+    if (cellColumns) {
+        mesh = cellColumns.mesh();
     }
-    else if (edgeColumnsPtr) {
-        mesh = edgeColumnsPtr->mesh();
+    else if (edgeColumns) {
+        mesh = edgeColumns.mesh();
     }
-    else if (nodeColumnsPtr) {
-        mesh = nodeColumnsPtr->mesh();
+    else if (nodeColumns) {
+        mesh = nodeColumns.mesh();
     }
-    else if (structuredColumnsPtr) {
-        mesh = MeshGenerator("structured").generate(structuredColumnsPtr->grid(), structuredColumnsPtr->distribution());
+    else if (structuredColumns) {
+        auto mpi_comm = util::Config("mpi_comm",functionSpace.mpi_comm());
+        auto grid = structuredColumns.grid();
+        auto partitioner = grid::Partitioner(functionSpace.distribution(),mpi_comm);
+        mesh = MeshGenerator("structured",mpi_comm).generate(grid, partitioner);
     }
     return mesh;
 }
@@ -136,14 +156,14 @@ Mesh getMesh(const FunctionSpace& functionSpace) {
 // Try and get cells or edges node-connectivity from functionspace.
 const mesh::HybridElements::Connectivity* getConnectivity(const FunctionSpace& functionSpace) {
     // Try and create a pointer to CellColumns or EdgeColumns.
-    const auto* cellColumnsPtr = functionSpace.get()->cast<functionspace::detail::CellColumns>();
-    const auto* edgeColumnsPtr = functionSpace.get()->cast<functionspace::detail::EdgeColumns>();
+    const auto cellColumns = functionspace::CellColumns(functionSpace);
+    const auto edgeColumns = functionspace::EdgeColumns(functionSpace);
 
-    if (cellColumnsPtr) {
-        return &(cellColumnsPtr->cells().node_connectivity());
+    if (cellColumns) {
+        return &(cellColumns.cells().node_connectivity());
     }
-    else if (edgeColumnsPtr) {
-        return &(edgeColumnsPtr->edges().node_connectivity());
+    else if (edgeColumns) {
+        return &(edgeColumns.edges().node_connectivity());
     }
     else {
         return nullptr;
@@ -219,7 +239,7 @@ struct TestRedistributionPoints1 : public TestRedistribution<Value, 1> {
         // Perform redistribution.
         this->redist_.execute(this->sourceFieldSet_, this->targetFieldSet_);
 
-        // Perform halo excahnge;
+        // Perform halo exchange;
         this->targetFunctionSpace_.haloExchange(this->targetFieldSet_);
 
         // Check target field.
@@ -229,7 +249,8 @@ struct TestRedistributionPoints1 : public TestRedistribution<Value, 1> {
                               testPattern<Value>(targetLonlatView(i, LON), targetLonlatView(i, LAT), 0)));
             ++nCheck;
         }
-        mpi::comm().allReduceInPlace(nCheck, eckit::mpi::Operation::SUM);
+        const auto& comm = mpi::comm(this->sourceFunctionSpace_.mpi_comm());
+        comm.allReduceInPlace(nCheck, eckit::mpi::Operation::SUM);
         Log::debug() << "Checked " << nCheck << " elements." << std::endl;
     }
 };
@@ -252,7 +273,7 @@ struct TestRedistributionPoints2 : public TestRedistribution<Value, 2> {
         // Perform redistribution.
         this->redist_.execute(this->sourceFieldSet_, this->targetFieldSet_);
 
-        // Perform halo excahnge;
+        // Perform halo exchange;
         this->targetFunctionSpace_.haloExchange(this->targetFieldSet_);
 
         // Check target field.
@@ -264,7 +285,8 @@ struct TestRedistributionPoints2 : public TestRedistribution<Value, 2> {
                 ++nCheck;
             }
         }
-        mpi::comm().allReduceInPlace(nCheck, eckit::mpi::Operation::SUM);
+        const auto& comm = mpi::comm(this->sourceFunctionSpace_.mpi_comm());
+        comm.allReduceInPlace(nCheck, eckit::mpi::Operation::SUM);
         Log::debug() << "Checked " << nCheck << " elements." << std::endl;
     }
 };
@@ -288,7 +310,7 @@ struct TestRedistributionPoints3 : public TestRedistribution<Value, 3> {
         // Perform redistribution.
         this->redist_.execute(this->sourceFieldSet_, this->targetFieldSet_);
 
-        // Perform halo excahnge;
+        // Perform halo exchange;
         this->targetFunctionSpace_.haloExchange(this->targetFieldSet_);
 
 
@@ -304,7 +326,8 @@ struct TestRedistributionPoints3 : public TestRedistribution<Value, 3> {
                 ++nCheck;
             }
         }
-        mpi::comm().allReduceInPlace(nCheck, eckit::mpi::Operation::SUM);
+        const auto& comm = mpi::comm(this->sourceFunctionSpace_.mpi_comm());
+        comm.allReduceInPlace(nCheck, eckit::mpi::Operation::SUM);
         Log::debug() << "Checked " << nCheck << " elements." << std::endl;
     }
 };
@@ -330,7 +353,7 @@ struct TestRedistributionElems : public TestRedistribution<Value, 1> {
         // Perform redistribution.
         this->redist_.execute(this->sourceFieldSet_, this->targetFieldSet_);
 
-        // Perform halo excahnge;
+        // Perform halo exchange;
         this->targetFunctionSpace_.haloExchange(this->targetFieldSet_);
 
         // Check target field.
@@ -339,11 +362,11 @@ struct TestRedistributionElems : public TestRedistribution<Value, 1> {
             EXPECT(checkValue(this->targetView_(i), testPattern<Value>(targetConnectivity->row(i), targetLonLatView)));
             ++nCheck;
         }
-        mpi::comm().allReduceInPlace(nCheck, eckit::mpi::Operation::SUM);
+        const auto& comm = mpi::comm(this->sourceFunctionSpace_.mpi_comm());
+        comm.allReduceInPlace(nCheck, eckit::mpi::Operation::SUM);
         Log::debug() << "Checked " << nCheck << " elements." << std::endl;
     }
 };
-
 
 CASE("Structured grid") {
     auto grid = atlas::Grid("L24x19");
@@ -526,6 +549,209 @@ CASE("Cubed sphere dual grid") {
         test.execute();
 
         test.outputFields("CubedSphereDual_CellColumns");
+    }
+}
+
+CASE("Structured grid with split comms") {
+    Fixture fixture;
+
+    auto grid = mpi_color() == 0 ? atlas::Grid("L24x13") : atlas::Grid("O16");
+    auto mpi_comm = util::Config("mpi_comm","split");
+
+    // auto grid = atlas::Grid("O48");
+    // auto mpi_comm = util::Config("mpi_comm","world");
+
+    // Set mesh config.
+    const auto sourceMeshConfig = util::Config("partitioner", "equal_regions") | mpi_comm;
+    const auto targetMeshConfig = util::Config("partitioner", "equal_bands") | mpi_comm;
+
+    auto sourceMesh = MeshGenerator("structured", sourceMeshConfig).generate(grid);
+    auto targetMesh = MeshGenerator("structured", targetMeshConfig).generate(grid);
+
+    SECTION("NodeColumns") {
+        const auto sourceFunctionSpace = functionspace::NodeColumns(sourceMesh, util::Config("halo", 2));
+        const auto targetFunctionSpace = functionspace::NodeColumns(targetMesh, util::Config("halo", 2));
+
+        // Test double for different ranks.
+        auto test1 = TestRedistributionPoints1<double>(sourceFunctionSpace, targetFunctionSpace);
+        auto test2 = TestRedistributionPoints2<double>(sourceFunctionSpace, targetFunctionSpace);
+        auto test3 = TestRedistributionPoints3<double>(sourceFunctionSpace, targetFunctionSpace);
+
+        // Test float.
+        auto test4 = TestRedistributionPoints1<float>(sourceFunctionSpace, targetFunctionSpace);
+
+        // Test int.
+        auto test5 = TestRedistributionPoints1<int>(sourceFunctionSpace, targetFunctionSpace);
+
+        // Test long.
+        auto test6 = TestRedistributionPoints1<long>(sourceFunctionSpace, targetFunctionSpace);
+
+        test1.execute();
+        test2.execute();
+        test3.execute();
+        test4.execute();
+        test5.execute();
+        test6.execute();
+
+        test2.outputFields("StructuredGrid_NodeColumns_"+std::to_string(mpi_color()));
+    }
+    SECTION("CellColumns") {
+        // No build_cells_global_idx method implemented in mesh/actions/BuildParallelFields.cc.
+
+        Log::debug() << "Structured Grid Cell Columns currently unsupported." << std::endl;
+
+        //const auto sourceFunctionSpace = functionspace::CellColumns( sourceMesh, util::Config( "halo", 0 ) );
+        //const auto targetFunctionSpace = functionspace::CellColumns( targetMesh, util::Config( "halo", 0 ) );
+
+        //auto test = TestRedistributionElems<double>( sourceFunctionSpace, targetFunctionSpace );
+
+        //test.execute();
+
+        //test.outputFields( "StructuredGird_CellColumns_"+std::to_string(mpi_color()));
+    }
+    SECTION("EdgeColumns") {
+        // Note StructuredGrid EdegColumns redistribution only works for halo = 0;
+
+        const auto sourceFunctionSpace = functionspace::EdgeColumns(sourceMesh, util::Config("halo", 0));
+        const auto targetFunctionSpace = functionspace::EdgeColumns(targetMesh, util::Config("halo", 0));
+
+        // Test long int.
+        auto test = TestRedistributionElems<double>(sourceFunctionSpace, targetFunctionSpace);
+
+        test.execute();
+
+        // EdgeColumns not currently supported by gmsh IO.
+    }
+    SECTION("Structured Columns") {
+        const auto sourceFunctionSpace = functionspace::StructuredColumns(
+            grid, grid::Partitioner("equal_regions",mpi_comm), util::Config("halo", 2) | util::Config("periodic_points", true) | mpi_comm);
+        const auto targetFunctionSpace = functionspace::StructuredColumns(
+            grid, grid::Partitioner("regular_bands",mpi_comm), util::Config("halo", 2) | util::Config("periodic_points", true) | mpi_comm);
+
+        auto test = TestRedistributionPoints2<double>(sourceFunctionSpace, targetFunctionSpace);
+
+        test.execute();
+
+        test.outputFields("StructuredGrid_StructuredColumns_"+std::to_string(mpi_color()));
+    }
+    SECTION("Point Cloud") {
+        // Make a point cloud from NodeColumns functionspace.
+        const auto sourceFunctionSpace = functionspace::NodeColumns(sourceMesh, util::Config("halo", 0));
+        const auto targetFunctionSpace = functionspace::NodeColumns(targetMesh, util::Config("halo", 0));
+
+        // Make a vector of lonlats.
+        auto sourceLonLat = std::vector<PointXY>{};
+        auto targetLonLat = std::vector<PointXY>{};
+
+        const auto sourceGhostView  = array::make_view<int, 1>(sourceFunctionSpace.ghost());
+        const auto sourceLonLatView = array::make_view<double, 2>(sourceFunctionSpace.lonlat());
+        const auto targetGhostView  = array::make_view<int, 1>(targetFunctionSpace.ghost());
+        const auto targetLonLatView = array::make_view<double, 2>(targetFunctionSpace.lonlat());
+
+        // Add non-ghost lonlats to vector.
+        sourceLonLat.reserve(sourceFunctionSpace.size());
+        for (idx_t i = 0; i < sourceFunctionSpace.size(); ++i) {
+            if (!sourceGhostView(i)) {
+                sourceLonLat.emplace_back(sourceLonLatView(i, LON), sourceLonLatView(i, LAT));
+            }
+        }
+        targetLonLat.reserve(targetFunctionSpace.size());
+        for (idx_t i = 0; i < targetFunctionSpace.size(); ++i) {
+            if (!targetGhostView(i)) {
+                targetLonLat.emplace_back(targetLonLatView(i, LON), targetLonLatView(i, LAT));
+            }
+        }
+
+        // Make point cloud functionspaces.
+        const auto sourcePointCloud = functionspace::PointCloud(sourceLonLat);
+        const auto targetPointCloud = functionspace::PointCloud(targetLonLat);
+
+        auto test = TestRedistributionPoints2<double>(sourcePointCloud, targetPointCloud);
+
+        test.execute();
+    }
+}
+
+CASE("Cubed sphere grid with split comms") {
+    Fixture fixture;
+
+    auto grid = mpi_color() == 0 ? atlas::Grid("CS-LFR-C-8") : atlas::Grid("CS-LFR-C-16");
+    auto mpi_comm = util::Config("mpi_comm","split");
+
+    // Set mesh config.
+    const auto sourceMeshConfig = util::Config("partitioner", "equal_regions") | util::Config("halo", "2") | mpi_comm;
+    const auto targetMeshConfig = util::Config("partitioner", "cubedsphere") | util::Config("halo", "2") | mpi_comm;
+
+    auto sourceMesh = MeshGenerator("cubedsphere", sourceMeshConfig).generate(grid);
+    auto targetMesh = MeshGenerator("cubedsphere", targetMeshConfig).generate(grid);
+
+    SECTION("CubedSphereNodeColumns") {
+        const auto sourceFunctionSpace = functionspace::CubedSphereNodeColumns(sourceMesh);
+        const auto targetFunctionSpace = functionspace::CubedSphereNodeColumns(targetMesh);
+
+        EXPECT_EQ( sourceFunctionSpace.mpi_comm(), "split" );
+
+        auto test = TestRedistributionPoints2<double>(sourceFunctionSpace, targetFunctionSpace);
+
+        test.execute();
+
+        test.outputFields("CubedSphere_NodeColumns_"+std::to_string(mpi_color()));
+    }
+
+    SECTION("CubedSphereCellColumns") {
+        const auto sourceFunctionSpace = functionspace::CubedSphereCellColumns(sourceMesh);
+        const auto targetFunctionSpace = functionspace::CubedSphereCellColumns(targetMesh);
+
+        EXPECT_EQ( sourceFunctionSpace.mpi_comm(), "split" );
+
+        auto test = TestRedistributionElems<double>(sourceFunctionSpace, targetFunctionSpace);
+
+        test.execute();
+
+        test.outputFields("CubedSphere_CellColumns_"+std::to_string(mpi_color()));
+    }
+}
+
+CASE("Cubed sphere dual grid with split comms") {
+    Fixture fixture;
+
+    auto grid = mpi_color() == 0 ? atlas::Grid("CS-LFR-C-8") : atlas::Grid("CS-LFR-C-16");
+    auto mpi_comm = util::Config("mpi_comm","split");
+
+    // Set mesh config.
+    const auto sourceMeshConfig = util::Config("partitioner", "equal_regions") | util::Config("halo", "0") | mpi_comm;
+    const auto targetMeshConfig = util::Config("partitioner", "cubedsphere") | util::Config("halo", "0") | mpi_comm;
+
+    auto sourceMesh = MeshGenerator("cubedsphere_dual", sourceMeshConfig).generate(grid);
+    auto targetMesh = MeshGenerator("cubedsphere_dual", targetMeshConfig).generate(grid);
+
+    EXPECT_EQ( sourceMesh.mpi_comm(), "split" );
+
+    SECTION("CubedSphereDualNodeColumns") {
+        const auto sourceFunctionSpace = functionspace::CubedSphereNodeColumns(sourceMesh);
+        const auto targetFunctionSpace = functionspace::CubedSphereNodeColumns(targetMesh);
+
+        EXPECT_EQ( sourceFunctionSpace.mpi_comm(), "split" );
+
+
+        auto test = TestRedistributionPoints2<double>(sourceFunctionSpace, targetFunctionSpace);
+
+        test.execute();
+
+        test.outputFields("CubedSphereDual_NodeColumns_"+std::to_string(mpi_color()));
+    }
+
+    SECTION("CubedSphereDualCellColumns") {
+        const auto sourceFunctionSpace = functionspace::CubedSphereCellColumns(sourceMesh);
+        const auto targetFunctionSpace = functionspace::CubedSphereCellColumns(targetMesh);
+
+        EXPECT_EQ( sourceFunctionSpace.mpi_comm(), "split" );
+
+        auto test = TestRedistributionElems<double>(sourceFunctionSpace, targetFunctionSpace);
+
+        test.execute();
+
+        test.outputFields("CubedSphereDual_CellColumns_"+std::to_string(mpi_color()));
     }
 }
 

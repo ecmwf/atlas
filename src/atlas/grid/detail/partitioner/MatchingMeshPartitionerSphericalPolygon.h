@@ -22,11 +22,14 @@ public:
     static std::string static_type() { return "spherical-polygon"; }
 
 public:
+    MatchingMeshPartitionerSphericalPolygon(const Mesh& mesh, const eckit::Parametrisation& config): MatchingMeshPartitioner(mesh, config) {}
+
+    // Following throw ATLAS_NOT_IMPLEMENTED
     MatchingMeshPartitionerSphericalPolygon(): MatchingMeshPartitioner() {}
-    MatchingMeshPartitionerSphericalPolygon(const idx_t nb_partitions): MatchingMeshPartitioner(nb_partitions) {}
+    MatchingMeshPartitionerSphericalPolygon(const idx_t nb_partitions): MatchingMeshPartitioner() {}
     MatchingMeshPartitionerSphericalPolygon(const idx_t nb_partitions, const eckit::Parametrisation& config):
-        MatchingMeshPartitioner(nb_partitions) {}
-    MatchingMeshPartitionerSphericalPolygon(const Mesh& mesh): MatchingMeshPartitioner(mesh) {}
+        MatchingMeshPartitioner() {}
+    MatchingMeshPartitionerSphericalPolygon(const eckit::Parametrisation&): MatchingMeshPartitioner() {}
 
     using MatchingMeshPartitioner::partition;
     /**

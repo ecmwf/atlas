@@ -105,7 +105,7 @@ private:
         idx_t nb_nodes(mesh.nodes().size());
         mesh.metadata().get(ss.str(), nb_nodes);
 
-        value->setup(array::make_view<int, 1>(mesh.nodes().partition()).data(),
+        value->setup(mesh.mpi_comm(), array::make_view<int, 1>(mesh.nodes().partition()).data(),
                      array::make_view<idx_t, 1>(mesh.nodes().remote_index()).data(), REMOTE_IDX_BASE, nb_nodes);
 
         return value;
@@ -154,7 +154,8 @@ private:
             //}
         }
 
-        value->setup(array::make_view<int, 1>(mesh.nodes().partition()).data(),
+        value->setup(mesh.mpi_comm(),
+                     array::make_view<int, 1>(mesh.nodes().partition()).data(),
                      array::make_view<idx_t, 1>(mesh.nodes().remote_index()).data(), REMOTE_IDX_BASE,
                      array::make_view<gidx_t, 1>(mesh.nodes().global_index()).data(), mask.data(), mesh.nodes().size());
         return value;
@@ -206,7 +207,7 @@ NodeColumns::NodeColumns(Mesh mesh, const eckit::Configuration& config):
     else {
         halo_ = mesh::Halo(mesh);
     }
-    mesh::actions::build_nodes_parallel_fields(mesh_.nodes());
+    mesh::actions::build_nodes_parallel_fields(mesh_);
     mesh::actions::build_periodic_boundaries(mesh_);
 
     if (halo_.size() > 0) {
@@ -255,7 +256,8 @@ idx_t NodeColumns::config_nb_nodes(const eckit::Configuration& config) const {
             idx_t owner(0);
             config.get("owner", owner);
             idx_t _nb_nodes_global = nb_nodes_global();
-            size                   = (mpi::rank() == owner ? _nb_nodes_global : 0);
+            idx_t rank = mpi::comm(mpi_comm()).rank();
+            size = (rank == owner ? _nb_nodes_global : 0);
         }
     }
     return size;
@@ -447,6 +449,8 @@ const parallel::HaloExchange& NodeColumns::halo_exchange() const {
 void NodeColumns::gather(const FieldSet& local_fieldset, FieldSet& global_fieldset) const {
     ATLAS_ASSERT(local_fieldset.size() == global_fieldset.size());
 
+    mpi::Scope mpi_scope(mpi_comm());
+
     for (idx_t f = 0; f < local_fieldset.size(); ++f) {
         const Field& loc      = local_fieldset[f];
         Field& glb            = global_fieldset[f];
@@ -505,6 +509,7 @@ const parallel::GatherScatter& NodeColumns::scatter() const {
 void NodeColumns::scatter(const FieldSet& global_fieldset, FieldSet& local_fieldset) const {
     ATLAS_ASSERT(local_fieldset.size() == global_fieldset.size());
 
+    mpi::Scope mpi_scope(mpi_comm());
     for (idx_t f = 0; f < local_fieldset.size(); ++f) {
         const Field& glb      = global_fieldset[f];
         Field& loc            = local_fieldset[f];
