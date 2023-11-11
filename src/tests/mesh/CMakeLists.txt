@@ -24,6 +24,14 @@ if( HAVE_FCTEST )
     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
 
+  add_fctest( TARGET atlas_fctest_mesh_triangular_mesh_builder
+    LINKER_LANGUAGE Fortran
+    CONDITION       ON
+    SOURCES         fctest_mesh_triangular_mesh_builder.F90
+    LIBS            atlas_f
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  )
+
   add_fctest( TARGET atlas_fctest_connectivity
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_connectivity.F90
@@ -131,6 +139,12 @@ ecbuild_add_test( TARGET atlas_test_mesh_builder_parallel
   MPI        6
   CONDITION  eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 6
   SOURCES test_mesh_builder_parallel.cc
+  LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+ecbuild_add_test( TARGET atlas_test_mesh_triangular_mesh_builder
+  SOURCES test_mesh_triangular_mesh_builder.cc
   LIBS atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )

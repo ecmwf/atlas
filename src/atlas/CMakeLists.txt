@@ -364,6 +364,8 @@ mesh/detail/MeshImpl.cc
 mesh/detail/MeshImpl.h
 mesh/detail/MeshIntf.cc
 mesh/detail/MeshIntf.h
+mesh/detail/MeshBuilderIntf.cc
+mesh/detail/MeshBuilderIntf.h
 mesh/detail/PartitionGraph.cc
 mesh/detail/PartitionGraph.h
 mesh/detail/AccumulateFacets.h
@@ -691,6 +693,8 @@ linalg/dense/MatrixMultiply_EckitLinalg.cc
 list (APPEND atlas_redistribution_srcs
 redistribution/Redistribution.h
 redistribution/Redistribution.cc
+redistribution/detail/RedistributionInterface.h
+redistribution/detail/RedistributionInterface.cc
 redistribution/detail/RedistributionImpl.h
 redistribution/detail/RedistributionImpl.cc
 redistribution/detail/RedistributionImplFactory.h

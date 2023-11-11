@@ -14,12 +14,6 @@
 #include <sstream>
 
 #include "atlas/array/Array.h"
-#include "atlas_io/Data.h"
-#include "atlas_io/Exceptions.h"
-#include "atlas_io/Metadata.h"
-#include "atlas_io/atlas_compat.h"
-#include "atlas_io/detail/Assert.h"
-#include "atlas_io/types/array/ArrayReference.h"
 
 namespace atlas {
 namespace array {

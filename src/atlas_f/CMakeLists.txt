@@ -83,6 +83,9 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/domain/detail/Domain.h
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/detail/MeshIntf.h
     MODULE    atlas_mesh_c_binding
     OUTPUT    atlas_mesh_c_binding.f90 )
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/detail/MeshBuilderIntf.h
+    MODULE    atlas_meshbuilder_c_binding
+    OUTPUT    atlas_meshbuilder_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/Nodes.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/Connectivity.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/HybridElements.h)
@@ -127,6 +130,9 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/EdgeColumns.h
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/PointCloudInterface.h
     MODULE    atlas_functionspace_PointCloud_c_binding
     OUTPUT    functionspace_PointCloud_c_binding.f90)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/redistribution/detail/RedistributionInterface.h
+    MODULE    atlas_redistribution_c_binding
+    OUTPUT    redistribution_c_binding.f90)
 
 if( atlas_HAVE_ATLAS_NUMERICS )
     generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Nabla.h)
@@ -219,6 +225,7 @@ ecbuild_add_library( TARGET atlas_f
         grid/atlas_GridDistribution_module.F90
         grid/atlas_Vertical_module.F90
         grid/atlas_Partitioner_module.F90
+        mesh/atlas_MeshBuilder_module.F90
         mesh/atlas_MeshGenerator_module.F90
         mesh/atlas_Mesh_module.F90
         mesh/atlas_mesh_Nodes_module.F90
@@ -233,6 +240,7 @@ ecbuild_add_library( TARGET atlas_f
         parallel/atlas_Checksum_module.fypp
         parallel/atlas_HaloExchange_module.fypp
         projection/atlas_Projection_module.F90
+        redistribution/atlas_Redistribution_module.F90
         internals/atlas_read_file.h
         internals/atlas_read_file.cc
         internals/Library.h
