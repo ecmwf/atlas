@@ -21,81 +21,105 @@
 
 module filter_module
 
+use atlas_module
+use atlas_redistribution_module
+
 implicit none
 
-contains
-    
-TYPE(atlas_Redistribution) :: src_dist, tgt_dist
+INTEGER, PARAMETER :: JPRB = SELECTED_REAL_KIND(13,300)
+
+TYPE(atlas_Redistribution) :: src_redist, tgt_redist
 TYPE(atlas_Interpolation)  :: interpolation_st, interpolation_ts
-TYPE(atlas_Field)          :: src_field, tgt_field, src_field_tgtpart, tgt_field_srcpart
+TYPE(atlas_Field)          :: tgt_field, src_field_tgtpart, tgt_field_srcpart
 
-INTEGER(KIND=JPIM) :: INODE_SIZE
-LOGICAL   , POINTER :: LLIS_GHOST(:)
-INTEGER(KIND=JPIM),ALLOCATABLE :: IPA(:)
-
-PUBLIC :: FILTER_SETUP, FILTER_EXECUTE
-PRIVATE :: src_dist, tgt_dist, interpolation_st, interpolation_ts, &
-    & src_field, tgt_field, src_field_tgtpart, tgt_field_srcpart
-
-FINAL :: FILTER_FINALISE
+PUBLIC :: FILTER_SETUP, FILTER_EXECUTE, FILTER_FINALISE
+PRIVATE :: src_redist, tgt_redist, interpolation_st, interpolation_ts, &
+    & src_field_tgtpart, tgt_field_srcpart
 
 CONTAINS
 
-SUBROUTINE FILTER_SETUP(YDGEOMETRY,YDFIELDS,PGMV,PGMVS,PGMVO,PGMVSO)
-REAL(JPRB), POINTER :: SRC_VAL(:,:)
-TYPE(ATLAS_MESH_NODES) :: NODES
-TYPE(ATLAS_FIELD) :: GHOSTFIELD
-TYPE(ATLAS_FUNCTIONSPACE_NODECOLUMNS) :: NODES_FS
-type(atlas_Grid)           :: src_grid, tgt_grid
-type(atlas_Config)         :: interpolation_config
-class(atlas_FunctionSpace) :: src_fs, tgt_fs    !! source CellColumns/NodeColumns where source is independent of target
+! --------------------------------------------------------------------------------------------
 
-src_grid = atlas_StructuredGrid("O80")
-tgt_grid = atlas_StructuredGrid("O40")
-src_fs = atlas_functionspace_NodeColumns(grid, atlas_Partitioner("equal_regions"), halo=4)
-tgt_fs = atlas_functionspace_NodeColumns(grid, atlas_Partitioner("regular_bands"), halo=2)
+SUBROUTINE FILTER_SETUP()
+    type(atlas_Grid)           :: src_grid, tgt_grid
+    type(atlas_MeshGenerator)  :: meshgen
+    type(atlas_GridDistribution) :: griddist
+    type(atlas_Mesh)           :: src_mesh, tgt_mesh
+    type(atlas_Mesh)           :: src_mesh_tgtpart, tgt_mesh_srcpart
+    type(atlas_Config)         :: interpolation_config
+    type(atlas_FunctionSpace) :: src_fs, tgt_fs
+    type(atlas_FunctionSpace) :: src_fs_tgtpart, tgt_fs_srcpart
+    type(atlas_Redistribution) :: src_redist, tgt_redist
+    real(kind=JPRB), pointer :: src_val(:)
 
-! // redistribution setup
-src_mesh_tgtpart = altas_Mesh(src_grid, atlas_MatchingPartitioner(tgt_mesh))
-tgt_mesh_srcpart = atlas_Mesh(tgt_grid, atlas_MatchingPartitioner(src_mesh))
-src_fs_tgtpart = atlas_functionspace_NodeColumns(src_mesh_tgtpart)
-tgt_fs_srcpart = atlas_functionspace_NodeColumns(tgt_mesh_srcpart)
-src_redist = atlas_Redistribution(src_fs, src_fs_tgtpart)
-tgt_redist = atlas_Redistribution(tgt_fs, tgt_fs_srcpart)
+    src_grid = atlas_StructuredGrid("O80")
+    tgt_grid = atlas_StructuredGrid("O40")
+    meshgen = atlas_MeshGenerator()
+    griddist = atlas_GridDistribution(src_grid, atlas_Partitioner("equal_regions"))
+    src_mesh = meshgen%generate(src_grid, griddist)
+    griddist = atlas_GridDistribution(tgt_grid, atlas_Partitioner("regular_bands"))
+    tgt_mesh = meshgen%generate(tgt_grid, griddist)
+    src_fs = atlas_functionspace_NodeColumns(src_mesh, halo=4)
+    tgt_fs = atlas_functionspace_NodeColumns(tgt_mesh, halo=2)
 
-! // interpolation setup
-interpolation_config = atlas_Config()
-call interpolation_config%set("type", "conservative-spherical-polygon")
-interpolation_st = atlas_Interpolation(interpolation_config, src_fs_tgtpart, tgt_fs)   !! generate interpolation matrix (divided among the MPI-tasks)
-interpolation_ts = atlas_Interpolation(interpolation_config, tgt_fs_srcpart, src_fs)   !! generate interpolation matrix (divided among the MPI-tasks)
+    ! // redistribution setup
+    griddist = atlas_GridDistribution(src_grid, atlas_MatchingPartitioner(tgt_mesh))
+    src_mesh_tgtpart = meshgen%generate(src_grid, griddist)
+    griddist = atlas_GridDistribution(tgt_grid, atlas_MatchingPartitioner(src_mesh))
+    tgt_mesh_srcpart = meshgen%generate(tgt_grid, griddist)
+    src_fs_tgtpart = atlas_functionspace_NodeColumns(src_mesh_tgtpart)
+    tgt_fs_srcpart = atlas_functionspace_NodeColumns(tgt_mesh_srcpart)
+    src_redist = atlas_Redistribution(src_fs, src_fs_tgtpart)
+    tgt_redist = atlas_Redistribution(tgt_fs, tgt_fs_srcpart)
 
-! // fields and helper fields
-src_field = src_fs%create_field(name="var", kind=atlas_real(JPRB), IGPVARS)
-call src_field%data(src_val)
+    ! // interpolation setup
+    interpolation_config = atlas_Config()
+    call interpolation_config%set("type", "conservative-spherical-polygon")
+    interpolation_st = atlas_Interpolation(interpolation_config, src_fs_tgtpart, tgt_fs)
+    interpolation_ts = atlas_Interpolation(interpolation_config, tgt_fs_srcpart, src_fs)
 
-tgt_field = tgt_fs%create_field(name="var", kind=atlas_real(JPRB),IGPVARS)
-src_field_tgtpart = src_fs_tgtpart%create_field(name="var_tmp", kind=atlas_real(JPRB),IGPVARS)
-tgt_field_srcpart = tgt_fs_srcpart%create_field(name="var_tmp", kind=atlas_real(JPRB),IGPVARS)
+    ! // prepare helper fields
+    tgt_field = tgt_fs%create_field(name="var_tmp", kind=atlas_real(JPRB))
+    src_field_tgtpart = src_fs_tgtpart%create_field(name="var_tmp", kind=atlas_real(JPRB))
+    tgt_field_srcpart = tgt_fs_srcpart%create_field(name="var_tmp", kind=atlas_real(JPRB))
 
-! // free memory on all unnecessary Atlas structures by calling 'final' from each object
-call src_mesh%final()
-call tgt_mesh%final()
-call src_mesh_tgtpart%final()
-call tgt_mesh_srcpart%final()
-call src_fs_tgtpart%final()
-call tgt_fs_srcpart%final()
-call src_fs%final()
-call tgt_fs%final()
-CALL GHOSTFIELD%FINAL()
-CALL NODES_FS%FINAL()
-CALL NODES%FINAL()
-
-!     ------------------------------------------------------------------
-END ASSOCIATE
-
-END ASSOCIATE
-IF (LHOOK) CALL DR_HOOK('FILTER_SETUP',1,ZHOOK_HANDLE)
+    ! // free memory
+    call src_mesh%final()
+    call tgt_mesh%final()
+    call src_mesh_tgtpart%final()
+    call tgt_mesh_srcpart%final()
+    call src_fs_tgtpart%final()
+    call tgt_fs_srcpart%final()
+    call src_fs%final()
+    call tgt_fs%final()
 END SUBROUTINE FILTER_SETUP
+
+! --------------------------------------------------------------------------------------------
+
+SUBROUTINE FILTER_EXECUTE(src_field)
+    TYPE(atlas_Field), intent(inout)  :: src_field
+
+    call src_redist%execute(src_field, src_field_tgtpart)
+    call src_field_tgtpart%halo_exchange()
+    call interpolation_st%execute(src_field, tgt_field)
+    call tgt_redist%execute(tgt_field, tgt_field_srcpart)
+    call interpolation_ts%execute(tgt_field_srcpart, src_field)
+END SUBROUTINE FILTER_EXECUTE
+
+! --------------------------------------------------------------------------------------------
+
+SUBROUTINE FILTER_FINALISE()
+    call src_redist%final()
+    call tgt_redist%final()
+    call interpolation_st%final()
+    call interpolation_ts%final()
+    call src_field_tgtpart%final()
+    call tgt_field%final()
+    call tgt_field_srcpart%final()
+END SUBROUTINE FILTER_FINALISE
+
+! --------------------------------------------------------------------------------------------
+
 end module filter_module
 
 ! --------------------------------------------------------------------------------------------
@@ -108,8 +132,8 @@ use filter_module
 implicit none
 
 type(atlas_Grid) :: grid
-type(filter_module) :: filter
 
+call filter_setup()
 grid = atlas_Grid("O40")
 print *, "size ", grid%size()
 
