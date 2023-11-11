@@ -7,8 +7,22 @@
 # does it submit to any jurisdiction.
 
 ecbuild_add_executable(
-    TARGET  atlas-interpolation-pingpong
-    SOURCES atlas-interpolation-pingpong.cc
+    TARGET  atlas-conservative-interpolation
+    SOURCES atlas-conservative-interpolation.cc
+    LIBS    atlas
+    NOINSTALL
+)
+
+ecbuild_add_executable(
+    TARGET  atlas-filter-fortran
+    SOURCES atlas-filter.F90
+    LIBS    atlas_f
+    NOINSTALL
+)
+
+ecbuild_add_executable(
+    TARGET  atlas-filter
+    SOURCES atlas-filter.cc
     LIBS    atlas
     NOINSTALL
 )
@@ -16,6 +30,13 @@ ecbuild_add_executable(
 ecbuild_add_executable(
     TARGET  atlas-interpolation-eoc
     SOURCES atlas-interpolation-eoc.cc
+    LIBS    atlas
+    NOINSTALL
+)
+
+ecbuild_add_executable(
+    TARGET  atlas-interpolation-pingpong
+    SOURCES atlas-interpolation-pingpong.cc
     LIBS    atlas
     NOINSTALL
 )
@@ -32,13 +53,6 @@ ecbuild_add_executable(
 ecbuild_add_executable(
     TARGET  atlas-parallel-structured-interpolation
     SOURCES atlas-parallel-structured-interpolation.cc
-    LIBS    atlas
-    NOINSTALL
-)
-
-ecbuild_add_executable(
-    TARGET  atlas-conservative-interpolation
-    SOURCES atlas-conservative-interpolation.cc
     LIBS    atlas
     NOINSTALL
 )
