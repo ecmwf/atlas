@@ -14,9 +14,10 @@
 !   Smooth GMV and GMVS fields by conservative remapping to a lower resolution grid (and back)
 ! 
 ! Authors:
-!   Filip Vana, Slavko Brdar, Willem Deconinck
+!   Filip Vana, Slavko Brdar, Willem Deconinck (Nov 2023)
 ! 
 
+! --------------------------------------------------------------------------------------------
 ! --------------------------------------------------------------------------------------------
 
 module filter_module
@@ -26,21 +27,28 @@ use atlas_redistribution_module
 
 implicit none
 
-INTEGER, PARAMETER :: JPRB = SELECTED_REAL_KIND(13,300)
+public :: atlas_Filter
 
-TYPE(atlas_Redistribution) :: src_redist, tgt_redist
-TYPE(atlas_Interpolation)  :: interpolation_st, interpolation_ts
-TYPE(atlas_Field)          :: tgt_field, src_field_tgtpart, tgt_field_srcpart
+private
 
-PUBLIC :: FILTER_SETUP, FILTER_EXECUTE, FILTER_FINALISE
-PRIVATE :: src_redist, tgt_redist, interpolation_st, interpolation_ts, &
-    & src_field_tgtpart, tgt_field_srcpart
+    INTEGER, PARAMETER :: JPRB = SELECTED_REAL_KIND(13,300)
+
+type :: atlas_Filter
+    TYPE(atlas_Redistribution) :: src_redist, tgt_redist
+    TYPE(atlas_Interpolation)  :: interpolation_st, interpolation_ts
+    TYPE(atlas_Field)          :: tgt_field, src_field_tgtpart, tgt_field_srcpart
+contains
+    procedure, public :: setup => filter_setup
+    procedure, public :: execute => filter_execute
+    final :: filter_finalise
+end type atlas_Filter
 
 CONTAINS
 
 ! --------------------------------------------------------------------------------------------
 
-SUBROUTINE FILTER_SETUP()
+SUBROUTINE FILTER_SETUP(this)
+    class(atlas_Filter), intent(inout) :: this
     type(atlas_Grid)           :: src_grid, tgt_grid
     type(atlas_MeshGenerator)  :: meshgen
     type(atlas_GridDistribution) :: griddist
@@ -75,13 +83,13 @@ SUBROUTINE FILTER_SETUP()
     ! // interpolation setup
     interpolation_config = atlas_Config()
     call interpolation_config%set("type", "conservative-spherical-polygon")
-    interpolation_st = atlas_Interpolation(interpolation_config, src_fs_tgtpart, tgt_fs)
-    interpolation_ts = atlas_Interpolation(interpolation_config, tgt_fs_srcpart, src_fs)
+    this%interpolation_st = atlas_Interpolation(interpolation_config, src_fs_tgtpart, tgt_fs)
+    this%interpolation_ts = atlas_Interpolation(interpolation_config, tgt_fs_srcpart, src_fs)
 
     ! // prepare helper fields
-    tgt_field = tgt_fs%create_field(name="var_tmp", kind=atlas_real(JPRB))
-    src_field_tgtpart = src_fs_tgtpart%create_field(name="var_tmp", kind=atlas_real(JPRB))
-    tgt_field_srcpart = tgt_fs_srcpart%create_field(name="var_tmp", kind=atlas_real(JPRB))
+    this%tgt_field = tgt_fs%create_field(name="var_tmp", kind=atlas_real(JPRB))
+    this%src_field_tgtpart = src_fs_tgtpart%create_field(name="var_tmp", kind=atlas_real(JPRB))
+    this%tgt_field_srcpart = tgt_fs_srcpart%create_field(name="var_tmp", kind=atlas_real(JPRB))
 
     ! // free memory
     call src_mesh%final()
@@ -96,19 +104,35 @@ END SUBROUTINE FILTER_SETUP
 
 ! --------------------------------------------------------------------------------------------
 
-SUBROUTINE FILTER_EXECUTE(src_field)
+SUBROUTINE FILTER_EXECUTE(this, src_field)
+    class(atlas_Filter), intent(inout) :: this
     TYPE(atlas_Field), intent(inout)  :: src_field
+
+    ASSOCIATE(src_redist=>this%src_redist, src_field_tgtpart=>this%src_field_tgtpart, &
+            & tgt_redist=>this%tgt_redist, tgt_field_srcpart=>this%tgt_field_srcpart, &
+            & tgt_field=>this%tgt_field)
+    ASSOCIATE(interpolation_st=>this%interpolation_st, interpolation_ts=>this%interpolation_ts)
 
     call src_redist%execute(src_field, src_field_tgtpart)
     call src_field_tgtpart%halo_exchange()
     call interpolation_st%execute(src_field, tgt_field)
     call tgt_redist%execute(tgt_field, tgt_field_srcpart)
     call interpolation_ts%execute(tgt_field_srcpart, src_field)
+
+    END ASSOCIATE
+    END ASSOCIATE
 END SUBROUTINE FILTER_EXECUTE
 
 ! --------------------------------------------------------------------------------------------
 
-SUBROUTINE FILTER_FINALISE()
+SUBROUTINE FILTER_FINALISE(this)
+    type(atlas_Filter), intent(inout) :: this
+
+    ASSOCIATE(src_redist=>this%src_redist, src_field_tgtpart=>this%src_field_tgtpart, &
+            & tgt_redist=>this%tgt_redist, tgt_field_srcpart=>this%tgt_field_srcpart, &
+            & tgt_field=>this%tgt_field)
+    ASSOCIATE(interpolation_st=>this%interpolation_st, interpolation_ts=>this%interpolation_ts)
+
     call src_redist%final()
     call tgt_redist%final()
     call interpolation_st%final()
@@ -116,6 +140,9 @@ SUBROUTINE FILTER_FINALISE()
     call src_field_tgtpart%final()
     call tgt_field%final()
     call tgt_field_srcpart%final()
+
+    END ASSOCIATE
+    END ASSOCIATE
 END SUBROUTINE FILTER_FINALISE
 
 ! --------------------------------------------------------------------------------------------
@@ -123,18 +150,20 @@ END SUBROUTINE FILTER_FINALISE
 end module filter_module
 
 ! --------------------------------------------------------------------------------------------
+! --------------------------------------------------------------------------------------------
 
-program atlas_filter
+program filtering
 
 use atlas_module
-use filter_module
+use filter_module, only: atlas_Filter
 
 implicit none
 
 type(atlas_Grid) :: grid
+type(atlas_Filter) :: filter
 
-call filter_setup()
+call filter%setup()
 grid = atlas_Grid("O40")
 print *, "size ", grid%size()
 
-end program atlas_filter
+end program filtering
