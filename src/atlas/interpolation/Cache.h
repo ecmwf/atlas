@@ -108,7 +108,6 @@ public:
 public:
     MatrixCache() = default;
     MatrixCache(const Cache& c);
-    MatrixCache(const MatrixCache& c) : MatrixCache(Cache(c)) {}
     MatrixCache(Matrix&& m);
     MatrixCache(std::shared_ptr<const Matrix> m, const std::string& uid = "");
     MatrixCache(const Matrix* m);
