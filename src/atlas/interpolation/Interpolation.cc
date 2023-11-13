@@ -99,6 +99,10 @@ void Interpolation::print(std::ostream& out) const {
     get()->print(out);
 }
 
+const Interpolation::Matrix& Interpolation::matrix() const {
+    return get()->matrix();
+}
+
 const FunctionSpace& Interpolation::source() const {
     return get()->source();
 }

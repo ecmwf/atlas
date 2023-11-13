@@ -12,6 +12,7 @@
 
 #include "atlas/interpolation/method/Method.h"
 #include "atlas/library/config.h"
+#include "eckit/linalg/SparseMatrix.h"
 #include "atlas/util/ObjectHandle.h"
 
 #include "atlas/interpolation/Cache.h"
@@ -35,6 +36,7 @@ namespace atlas {
 class Interpolation : DOXYGEN_HIDE(public util::ObjectHandle<interpolation::Method>) {
 public:
     using Config   = eckit::Parametrisation;
+    using Matrix   = eckit::linalg::SparseMatrix;
     using Cache    = interpolation::Cache;
     using Metadata = interpolation::Method::Metadata;
 
@@ -62,6 +64,8 @@ public:
     Metadata execute_adjoint(Field& source, const Field& target) const;
 
     void print(std::ostream& out) const;
+
+    const Matrix& matrix() const;
 
     const FunctionSpace& source() const;
     const FunctionSpace& target() const;

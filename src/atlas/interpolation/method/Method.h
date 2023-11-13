@@ -41,6 +41,7 @@ class Method : public util::Object {
 public:
     using Config   = eckit::Parametrisation;
     using Metadata = util::Metadata;
+    using Matrix   = eckit::linalg::SparseMatrix;
 
     Method(const Config&);
     virtual ~Method() {}
@@ -71,6 +72,8 @@ public:
     Metadata execute_adjoint(FieldSet& source, const FieldSet& target) const;
     Metadata execute_adjoint(Field& source, const Field& target) const;
 
+    const Matrix& matrix() const { return *matrix_; }
+
     virtual void print(std::ostream&) const = 0;
 
     virtual const FunctionSpace& source() const = 0;
@@ -87,7 +90,6 @@ protected:
 
     using Triplet  = eckit::linalg::Triplet;
     using Triplets = std::vector<Triplet>;
-    using Matrix   = eckit::linalg::SparseMatrix;
 
     static void normalise(Triplets& triplets);
 
@@ -119,8 +121,6 @@ protected:
     }
 
     bool matrixAllocated() const { return matrix_shared_.use_count(); }
-
-    const Matrix& matrix() const { return *matrix_; }
 
     virtual void do_setup(const FunctionSpace& source, const FunctionSpace& target) = 0;
     virtual void do_setup(const Grid& source, const Grid& target, const Cache&)     = 0;
