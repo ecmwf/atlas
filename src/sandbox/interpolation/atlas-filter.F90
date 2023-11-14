@@ -27,38 +27,63 @@ use atlas_redistribution_module
 
 implicit none
 
-public :: atlas_Filter
+public :: atlas_Filter, JPRB
 
 private
 
-    INTEGER, PARAMETER :: JPRB = SELECTED_REAL_KIND(13,300)
+INTEGER, PARAMETER:: JPRB = SELECTED_REAL_KIND(13,300)
 
+! --------------------------------------------------------------------------------------------
 type :: atlas_Filter
-    TYPE(atlas_Redistribution) :: src_redist, tgt_redist
-    TYPE(atlas_Interpolation)  :: interpolation_st, interpolation_ts
-    TYPE(atlas_Field)          :: tgt_field, src_field_tgtpart, tgt_field_srcpart
+private
+    type(atlas_FunctionSpace) :: src_fs, tgt_fs
+    type(atlas_Redistribution):: src_redist, tgt_redist
+    type(atlas_Interpolation) :: interpolation_st, interpolation_ts
+    type(atlas_Field)         :: tgt_field, src_field_tgtpart, tgt_field_srcpart
 contains
-    procedure, public :: setup => filter_setup
     procedure, public :: execute => filter_execute
+    procedure, public :: source  => filter_src_fs
+    procedure, public :: target  => filter_tgt_fs
     final :: filter_finalise
 end type atlas_Filter
+! --------------------------------------------------------------------------------------------
+
+interface atlas_Filter
+    module procedure atlas_Filter__create
+end interface
 
 CONTAINS
 
 ! --------------------------------------------------------------------------------------------
 
-SUBROUTINE FILTER_SETUP(this)
-    class(atlas_Filter), intent(inout) :: this
-    type(atlas_Grid)           :: src_grid, tgt_grid
-    type(atlas_MeshGenerator)  :: meshgen
+function filter_src_fs(this) result(fs)
+    class(atlas_Filter), intent(in) :: this
+    type(atlas_FunctionSpace) :: fs
+    fs = this%src_fs
+end function filter_src_fs
+
+! --------------------------------------------------------------------------------------------
+
+function filter_tgt_fs(this) result(fs)
+    class(atlas_Filter), intent(in) :: this
+    type(atlas_FunctionSpace) :: fs
+    fs = this%tgt_fs
+end function filter_tgt_fs
+
+! --------------------------------------------------------------------------------------------
+
+function atlas_Filter__create() result(this)
+    type(atlas_Filter)           :: this
+    type(atlas_Grid)             :: src_grid, tgt_grid
+    type(atlas_MeshGenerator)    :: meshgen
     type(atlas_GridDistribution) :: griddist
-    type(atlas_Mesh)           :: src_mesh, tgt_mesh
-    type(atlas_Mesh)           :: src_mesh_tgtpart, tgt_mesh_srcpart
-    type(atlas_Config)         :: interpolation_config
-    type(atlas_FunctionSpace) :: src_fs, tgt_fs
-    type(atlas_FunctionSpace) :: src_fs_tgtpart, tgt_fs_srcpart
-    type(atlas_Redistribution) :: src_redist, tgt_redist
-    real(kind=JPRB), pointer :: src_val(:)
+    type(atlas_Redistribution)   :: src_redist, tgt_redist
+    type(atlas_Mesh)             :: src_mesh, tgt_mesh
+    type(atlas_Mesh)             :: src_mesh_tgtpart, tgt_mesh_srcpart
+    type(atlas_Config)           :: interpolation_config
+    type(atlas_FunctionSpace)    :: src_fs, tgt_fs
+    type(atlas_FunctionSpace)    :: src_fs_tgtpart, tgt_fs_srcpart
+    real(kind=JPRB), pointer     :: src_val(:)
 
     src_grid = atlas_StructuredGrid("O80")
     tgt_grid = atlas_StructuredGrid("O40")
@@ -69,6 +94,8 @@ SUBROUTINE FILTER_SETUP(this)
     tgt_mesh = meshgen%generate(tgt_grid, griddist)
     src_fs = atlas_functionspace_NodeColumns(src_mesh, halo=4)
     tgt_fs = atlas_functionspace_NodeColumns(tgt_mesh, halo=2)
+    this%src_fs = src_fs
+    this%tgt_fs = tgt_fs
 
     ! // redistribution setup
     griddist = atlas_GridDistribution(src_grid, atlas_MatchingPartitioner(tgt_mesh))
@@ -77,8 +104,9 @@ SUBROUTINE FILTER_SETUP(this)
     tgt_mesh_srcpart = meshgen%generate(tgt_grid, griddist)
     src_fs_tgtpart = atlas_functionspace_NodeColumns(src_mesh_tgtpart)
     tgt_fs_srcpart = atlas_functionspace_NodeColumns(tgt_mesh_srcpart)
-    src_redist = atlas_Redistribution(src_fs, src_fs_tgtpart)
-    tgt_redist = atlas_Redistribution(tgt_fs, tgt_fs_srcpart)
+
+    this%src_redist = atlas_Redistribution(src_fs, src_fs_tgtpart)
+    this%tgt_redist = atlas_Redistribution(tgt_fs, tgt_fs_srcpart)
 
     ! // interpolation setup
     interpolation_config = atlas_Config()
@@ -98,9 +126,7 @@ SUBROUTINE FILTER_SETUP(this)
     call tgt_mesh_srcpart%final()
     call src_fs_tgtpart%final()
     call tgt_fs_srcpart%final()
-    call src_fs%final()
-    call tgt_fs%final()
-END SUBROUTINE FILTER_SETUP
+end function atlas_Filter__create
 
 ! --------------------------------------------------------------------------------------------
 
@@ -155,15 +181,28 @@ end module filter_module
 program filtering
 
 use atlas_module
-use filter_module, only: atlas_Filter
+use filter_module, only: JPRB, atlas_Filter
 
 implicit none
 
-type(atlas_Grid) :: grid
-type(atlas_Filter) :: filter
+    type(atlas_Grid) :: grid
+    type(atlas_Filter) :: filter
+    type(atlas_FunctionSpace) :: fs, ts
+    type(atlas_Field) :: sfield
+    real(kind=JPRB), pointer :: sfield_v(:)
 
-call filter%setup()
-grid = atlas_Grid("O40")
-print *, "size ", grid%size()
+    call atlas_library%initialise()
+
+    filter = atlas_Filter()
+    fs = filter%source()
+    ts = filter%target()
+
+    sfield = fs%create_field(name="sfield", kind=atlas_real(JPRB))
+    call sfield%data(sfield_v)
+    sfield_v = 1._JPRB
+
+    call filter.execute(sfield)
+
+    call atlas_library%finalise()
 
 end program filtering
