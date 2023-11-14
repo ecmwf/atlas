@@ -184,6 +184,7 @@ implicit none
     type(atlas_MeshGenerator) :: meshgen
     type(atlas_Output) :: gmsh
 
+    real :: start_time, end_time
     real(kind=JPRB), pointer :: sfield_v(:)
 
     call atlas_library%initialise()
@@ -195,9 +196,10 @@ implicit none
     gmsh = atlas_output_Gmsh("mesh.msh", "w")
     call gmsh%write(mesh)
 
-    print *, " == setting up atlas_Filter ..."
+    call cpu_time(start_time)
     filter = atlas_Filter(grid, mesh)
-    print *, " == atlas_Filter is set up"
+    call cpu_time(end_time)
+    print *, " filter.setup in seconds: ", start_time - end_time
 
     fspace = filter%source()
     sfield = fspace%create_field(name="sfield", kind=atlas_real(JPRB))
@@ -206,7 +208,10 @@ implicit none
 
     call gmsh%write(sfield)
 
+    call cpu_time(start_time)
     call filter.execute(sfield)
+    call cpu_time(end_time)
+    print *, " filter.exe in seconds: ", start_time - end_time
 
     call gmsh%write(sfield)
 
