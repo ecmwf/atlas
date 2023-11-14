@@ -36,14 +36,13 @@ INTEGER, PARAMETER:: JPRB = SELECTED_REAL_KIND(13,300)
 ! --------------------------------------------------------------------------------------------
 type :: atlas_Filter
 private
-    type(atlas_FunctionSpace) :: src_fs, tgt_fs
+    type(atlas_FunctionSpace) :: src_fs
     type(atlas_Redistribution):: src_redist, tgt_redist
     type(atlas_Interpolation) :: interpolation_st, interpolation_ts
     type(atlas_Field)         :: tgt_field, src_field_tgtpart, tgt_field_srcpart
 contains
     procedure, public :: execute => filter_execute
     procedure, public :: source  => filter_src_fs
-    procedure, public :: target  => filter_tgt_fs
     final :: filter_finalise
 end type atlas_Filter
 ! --------------------------------------------------------------------------------------------
@@ -64,38 +63,27 @@ end function filter_src_fs
 
 ! --------------------------------------------------------------------------------------------
 
-function filter_tgt_fs(this) result(fs)
-    class(atlas_Filter), intent(in) :: this
-    type(atlas_FunctionSpace) :: fs
-    fs = this%tgt_fs
-end function filter_tgt_fs
-
-! --------------------------------------------------------------------------------------------
-
-function atlas_Filter__create() result(this)
+function atlas_Filter__create(src_grid, src_mesh) result(this)
+    type(atlas_Grid), intent(in) :: src_grid
+    type(atlas_Mesh), intent(inout) :: src_mesh
     type(atlas_Filter)           :: this
-    type(atlas_Grid)             :: src_grid, tgt_grid
+    type(atlas_Grid)             :: tgt_grid
     type(atlas_MeshGenerator)    :: meshgen
     type(atlas_GridDistribution) :: griddist
     type(atlas_Redistribution)   :: src_redist, tgt_redist
-    type(atlas_Mesh)             :: src_mesh, tgt_mesh
+    type(atlas_Mesh)             :: tgt_mesh
     type(atlas_Mesh)             :: src_mesh_tgtpart, tgt_mesh_srcpart
     type(atlas_Config)           :: interpolation_config
     type(atlas_FunctionSpace)    :: src_fs, tgt_fs
     type(atlas_FunctionSpace)    :: src_fs_tgtpart, tgt_fs_srcpart
-    real(kind=JPRB), pointer     :: src_val(:)
 
-    src_grid = atlas_StructuredGrid("O80")
     tgt_grid = atlas_StructuredGrid("O40")
     meshgen = atlas_MeshGenerator()
-    griddist = atlas_GridDistribution(src_grid, atlas_Partitioner("equal_regions"))
-    src_mesh = meshgen%generate(src_grid, griddist)
     griddist = atlas_GridDistribution(tgt_grid, atlas_Partitioner("regular_bands"))
     tgt_mesh = meshgen%generate(tgt_grid, griddist)
     src_fs = atlas_functionspace_NodeColumns(src_mesh, halo=4)
     tgt_fs = atlas_functionspace_NodeColumns(tgt_mesh, halo=2)
     this%src_fs = src_fs
-    this%tgt_fs = tgt_fs
 
     ! // redistribution setup
     griddist = atlas_GridDistribution(src_grid, atlas_MatchingPartitioner(tgt_mesh))
@@ -126,6 +114,8 @@ function atlas_Filter__create() result(this)
     call tgt_mesh_srcpart%final()
     call src_fs_tgtpart%final()
     call tgt_fs_srcpart%final()
+    call src_fs%final()
+    call tgt_fs%final()
 end function atlas_Filter__create
 
 ! --------------------------------------------------------------------------------------------
@@ -186,22 +176,39 @@ use filter_module, only: JPRB, atlas_Filter
 implicit none
 
     type(atlas_Grid) :: grid
-    type(atlas_Filter) :: filter
-    type(atlas_FunctionSpace) :: fs, ts
+    type(atlas_GridDistribution) :: griddist
     type(atlas_Field) :: sfield
+    type(atlas_Filter) :: filter
+    type(atlas_FunctionSpace) :: fspace
+    type(atlas_Mesh) :: mesh
+    type(atlas_MeshGenerator) :: meshgen
+    type(atlas_Output) :: gmsh
+
     real(kind=JPRB), pointer :: sfield_v(:)
 
     call atlas_library%initialise()
 
-    filter = atlas_Filter()
-    fs = filter%source()
-    ts = filter%target()
+    grid = atlas_StructuredGrid("O80")
+    meshgen = atlas_MeshGenerator()
+    griddist = atlas_GridDistribution(grid, atlas_Partitioner("equal_regions"))
+    mesh = meshgen%generate(grid, griddist)
+    gmsh = atlas_output_Gmsh("mesh.msh", "w")
+    call gmsh%write(mesh)
 
-    sfield = fs%create_field(name="sfield", kind=atlas_real(JPRB))
+    print *, " == setting up atlas_Filter ..."
+    filter = atlas_Filter(grid, mesh)
+    print *, " == atlas_Filter is set up"
+
+    fspace = filter%source()
+    sfield = fspace%create_field(name="sfield", kind=atlas_real(JPRB))
     call sfield%data(sfield_v)
     sfield_v = 1._JPRB
 
+    call gmsh%write(sfield)
+
     call filter.execute(sfield)
+
+    call gmsh%write(sfield)
 
     call atlas_library%finalise()
 
