@@ -81,6 +81,12 @@ ecbuild_add_test( TARGET atlas_test_interpolation_non_linear
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_interpolation_parallel_transport
+  SOURCES  test_interpolation_parallel_transport.cc
+  LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_interpolation_bilinear
   COMMAND atlas_test_interpolation_structured2D ARGS --scheme linear
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
