@@ -247,8 +247,8 @@ END_TEST
 
 ! -----------------------------------------------------------------------------
 
-TEST( test_collectives )
-#if 0
+TEST( test_node_collectives )
+#if 1
 use fckit_mpi_module
 type(atlas_StructuredGrid) :: grid
 type(atlas_MeshGenerator) :: meshgenerator
@@ -366,6 +366,91 @@ call grid%final()
 END_TEST
 
 ! -----------------------------------------------------------------------------
+
+TEST( test_cell_collectives )
+#if 1
+use fckit_mpi_module
+type(atlas_StructuredGrid) :: grid
+type(atlas_MeshGenerator) :: meshgenerator
+type(atlas_Mesh) :: mesh
+type(atlas_functionspace_CellColumns) :: fs2d
+type(atlas_Field) :: field, global, scal
+type(atlas_Metadata) :: metadata
+type(fckit_mpi_comm) :: mpi
+real(c_float), pointer :: scalvalues(:)
+real(c_float), pointer :: values(:,:)
+real(c_float), pointer :: values3d(:,:,:)
+!real(c_float) :: minimum, maximum, sum, oisum, mean, stddev
+!real(c_float), allocatable :: minimumv(:), maximumv(:), meanv(:), stddevv(:)
+integer :: halo_size, levels
+integer(ATLAS_KIND_GIDX) :: glb_idx
+integer(ATLAS_KIND_GIDX), allocatable :: glb_idxv (:)
+integer(c_int) :: test_broadcast
+mpi = fckit_mpi_comm()
+halo_size = 1
+levels = 10
+
+grid = atlas_StructuredGrid("N24")
+meshgenerator = atlas_MeshGenerator()
+mesh = meshgenerator%generate(grid)
+call meshgenerator%final()
+fs2d = atlas_functionspace_CellColumns(mesh,halo_size)
+
+field  = fs2d%create_field(kind=atlas_real(c_float),variables=2)
+global = fs2d%create_field(field,global=.True.)
+scal   = fs2d%create_field(kind=atlas_real(c_float))
+
+write(msg,*) "field:  rank",field%rank(), " shape [",field%shape(), "] size ", field%size();  call atlas_log%info(msg)
+write(msg,*) "global: rank",global%rank()," shape [",global%shape(),"] size ", global%size(); call atlas_log%info(msg)
+
+call fs2d%gather(field,global)
+call fs2d%halo_exchange(field)
+
+metadata = global%metadata()
+if( mpi%rank() == 0 ) then
+  call metadata%set("test_broadcast",123)
+endif
+
+call fs2d%scatter(global,field)
+metadata = field%metadata()
+call metadata%get("test_broadcast",test_broadcast)
+FCTEST_CHECK_EQUAL( test_broadcast, 123 )
+call field%data(values)
+call scal%data(scalvalues)
+values = 2.
+scalvalues = 2.
+
+call atlas_log%info(fs2d%checksum(field))
+
+values = mpi%rank()
+scalvalues = mpi%rank()
+
+call scal%final()
+call field%final()
+call global%final()
+
+field  = fs2d%create_field(kind=atlas_real(c_float),levels=levels,variables=2*3)
+global = fs2d%create_field(field,global=.True.,owner=mpi%size()-1)
+
+write(msg,*) "field:  rank",field%rank(), " shape [",field%shape(), "] size ", field%size();  call atlas_log%info(msg)
+write(msg,*) "global: rank",global%rank()," shape [",global%shape(),"] size ", global%size(); call atlas_log%info(msg)
+
+call fs2d%gather(field,global)
+call fs2d%halo_exchange(field)
+call fs2d%scatter(global,field)
+
+call field%data(values3d)
+values3d = 2.
+
+call atlas_log%info(fs2d%checksum(field))
+call field%final()
+call global%final()
+call fs2d%final()
+
+call mesh%final()
+call grid%final()
+#endif
+END_TEST
 
 TEST( test_cells )
 #if 1
