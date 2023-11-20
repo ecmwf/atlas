@@ -69,6 +69,7 @@ function atlas_Filter__create(src_grid, src_mesh) result(this)
     type(atlas_Filter)           :: this
     type(atlas_Grid)             :: tgt_grid
     type(atlas_MeshGenerator)    :: meshgen
+    type(atlas_Partitioner)      :: partitioner
     type(atlas_GridDistribution) :: griddist
     type(atlas_Redistribution)   :: src_redist, tgt_redist
     type(atlas_Mesh)             :: tgt_mesh
@@ -79,19 +80,25 @@ function atlas_Filter__create(src_grid, src_mesh) result(this)
 
     tgt_grid = atlas_StructuredGrid("O40")
     meshgen = atlas_MeshGenerator()
-    griddist = atlas_GridDistribution(tgt_grid, atlas_Partitioner("regular_bands"))
+    partitioner = atlas_Partitioner("regular_bands")
+    griddist = atlas_GridDistribution(tgt_grid, partitioner)
     tgt_mesh = meshgen%generate(tgt_grid, griddist)
     src_fs = atlas_functionspace_NodeColumns(src_mesh, halo=4)
     tgt_fs = atlas_functionspace_NodeColumns(tgt_mesh, halo=2)
+    !src_fs = atlas_functionspace_StructuredColumns(src_grid, partitioner, halo=4)
+    !tgt_fs = atlas_functionspace_StructuredColumns(tgt_grid, partitioner, halo=2)
     this%src_fs = src_fs
 
     ! // redistribution setup
-    griddist = atlas_GridDistribution(src_grid, atlas_MatchingPartitioner(tgt_mesh))
+    partitioner = atlas_MatchingPartitioner(tgt_mesh)
+    griddist = atlas_GridDistribution(src_grid, partitioner)
     src_mesh_tgtpart = meshgen%generate(src_grid, griddist)
-    griddist = atlas_GridDistribution(tgt_grid, atlas_MatchingPartitioner(src_mesh))
+    griddist = atlas_GridDistribution(tgt_grid, partitioner)
     tgt_mesh_srcpart = meshgen%generate(tgt_grid, griddist)
     src_fs_tgtpart = atlas_functionspace_NodeColumns(src_mesh_tgtpart)
     tgt_fs_srcpart = atlas_functionspace_NodeColumns(tgt_mesh_srcpart)
+    !src_fs_tgtpart = atlas_functionspace_StructuredColumns(src_grid, partitioner)
+    !tgt_fs_srcpart = atlas_functionspace_StructuredColumns(tgt_grid, partitioner)
 
     this%src_redist = atlas_Redistribution(src_fs, src_fs_tgtpart)
     this%tgt_redist = atlas_Redistribution(tgt_fs, tgt_fs_srcpart)
@@ -199,7 +206,7 @@ implicit none
     call cpu_time(start_time)
     filter = atlas_Filter(grid, mesh)
     call cpu_time(end_time)
-    print *, " filter.setup in seconds: ", start_time - end_time
+    print *, " filter.setup in seconds: ", end_time - start_time
 
     fspace = filter%source()
     sfield = fspace%create_field(name="sfield", kind=atlas_real(JPRB))
@@ -209,9 +216,9 @@ implicit none
     call gmsh%write(sfield)
 
     call cpu_time(start_time)
-    call filter.execute(sfield)
+    call filter%execute(sfield)
     call cpu_time(end_time)
-    print *, " filter.exe in seconds: ", start_time - end_time
+    print *, " filter.exe in seconds: ", end_time - start_time
 
     call gmsh%write(sfield)
 
