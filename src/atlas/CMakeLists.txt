@@ -500,6 +500,8 @@ functionspace/detail/BlockStructuredColumns.h
 functionspace/detail/BlockStructuredColumns.cc
 functionspace/detail/BlockStructuredColumnsInterface.h
 functionspace/detail/BlockStructuredColumnsInterface.cc
+functionspace/detail/CellColumnsInterface.h
+functionspace/detail/CellColumnsInterface.cc
 functionspace/detail/FunctionSpaceImpl.h
 functionspace/detail/FunctionSpaceImpl.cc
 functionspace/detail/FunctionSpaceInterface.h
