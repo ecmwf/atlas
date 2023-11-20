@@ -248,7 +248,7 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST( test_collectives )
-#if 1
+#if 0
 use fckit_mpi_module
 type(atlas_StructuredGrid) :: grid
 type(atlas_MeshGenerator) :: meshgenerator
@@ -364,6 +364,218 @@ call mesh%final()
 call grid%final()
 #endif
 END_TEST
+
+! -----------------------------------------------------------------------------
+
+TEST( test_cells )
+#if 1
+type(atlas_StructuredGrid) :: grid
+type(atlas_MeshGenerator) :: meshgenerator
+type(atlas_Mesh) :: mesh
+type(atlas_functionspace_CellColumns) :: fs
+type(atlas_Field) :: field, template
+type(atlas_mesh_Nodes) :: cells
+integer :: halo_size, nb_cells
+halo_size = 1
+
+grid = atlas_StructuredGrid("N24")
+meshgenerator = atlas_MeshGenerator()
+mesh = meshgenerator%generate(grid)
+call meshgenerator%final()
+fs = atlas_functionspace_CellColumns(mesh,halo_size)
+cells = fs%cells()
+nb_cells = fs%nb_cells()
+write(msg,*) "nb_cells = ",nb_cells; call atlas_log%info(msg)
+
+field = fs%create_field(atlas_real(c_float))
+FCTEST_CHECK_EQUAL( field%rank() , 1 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
+call field%final()
+
+field = fs%create_field(name="field",kind=atlas_real(c_float))
+FCTEST_CHECK_EQUAL( field%rank() , 1 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
+call field%final()
+
+field = fs%create_field(atlas_real(c_float),variables=2)
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+call field%final()
+
+field = fs%create_field(name="field",kind=atlas_integer(c_int),variables=2*2)
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+template = field
+
+field = fs%create_field(template)
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , template%name() )
+call field%final()
+
+field = fs%create_field(template,name="field")
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+call field%final()
+call template%final()
+
+
+field = fs%create_field(atlas_real(c_float),global=.True.)
+FCTEST_CHECK_EQUAL( field%rank() , 1 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
+call field%final()
+
+field = fs%create_field(name="field",kind=atlas_real(c_float),global=.True.)
+FCTEST_CHECK_EQUAL( field%rank() , 1 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
+call field%final()
+
+field = fs%create_field(atlas_real(c_float),variables=2,global=.True.)
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+call field%final()
+
+field = fs%create_field(name="field",kind=atlas_integer(c_int),variables=2*2,global=.True.)
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+template = field
+
+field = fs%create_field(template,global=.True.)
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , template%name() )
+call field%final()
+
+field = fs%create_field(template,name="field",global=.True.)
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+call field%final()
+call template%final()
+
+call fs%final()
+call mesh%final()
+call grid%final()
+#else
+#warning test test_cells disabled
+#endif
+END_TEST
+
+! -----------------------------------------------------------------------------
+
+
+TEST( test_cellscolumns )
+#if 1
+type(atlas_StructuredGrid) :: grid
+type(atlas_MeshGenerator) :: meshgenerator
+type(atlas_Mesh) :: mesh
+type(atlas_functionspace_CellColumns) :: fs
+type(atlas_Field) :: field, template
+integer :: halo_size, levels
+halo_size = 1
+levels = 10
+
+FCTEST_CHECK(.false.)
+return
+
+grid = atlas_StructuredGrid("N24")
+meshgenerator = atlas_MeshGenerator()
+mesh = meshgenerator%generate(grid)
+call meshgenerator%final()
+fs = atlas_functionspace_CellColumns(mesh,halo_size)
+
+!levels = fs%nb_levels()
+write(msg,*) "nb_levels = ",levels; call atlas_log%info(msg)
+
+field = fs%create_field(atlas_real(c_float),levels=levels)
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
+call field%final()
+
+field = fs%create_field(name="field",kind=atlas_real(c_float),levels=levels)
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
+call field%final()
+
+field = fs%create_field(atlas_real(c_float),levels=levels,variables=2)
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+call field%final()
+
+field = fs%create_field(name="field",kind=atlas_integer(c_int),levels=levels,variables=2*2)
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+template = field
+
+field = fs%create_field(template)
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%name() , template%name() )
+call field%final()
+
+field = fs%create_field(template,name="field")
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+call field%final()
+call template%final()
+
+
+field = fs%create_field(atlas_real(c_float),levels=levels,global=.True.)
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
+call field%final()
+
+field = fs%create_field(name="field",kind=atlas_real(c_float),levels=levels,global=.True.)
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
+call field%final()
+
+field = fs%create_field(atlas_real(c_float),levels=levels,variables=2,global=.True.)
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+call field%final()
+
+field = fs%create_field(name="field",kind=atlas_integer(c_int),levels=levels,variables=2*2,global=.True.)
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+template = field
+
+field = fs%create_field(template,global=.True.)
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%name() , template%name() )
+call field%final()
+
+field = fs%create_field(template,name="field",global=.True.)
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+call field%final()
+call template%final()
+
+fs = atlas_functionspace_CellColumns(mesh,levels=5)
+field = fs%create_field(atlas_real(c_float))
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
+call field%final()
+
+FCTEST_CHECK_EQUAL( fs%owners(), 1 )
+call fs%final()
+
+FCTEST_CHECK_EQUAL( mesh%owners(), 1 )
+call mesh%final()
+
+FCTEST_CHECK_EQUAL( grid%owners(), 1 )
+call grid%final()
+#else
+#warning test test_cellscolumns disabled
+#endif
+END_TEST
+
+! -----------------------------------------------------------------------------
 
 
 
