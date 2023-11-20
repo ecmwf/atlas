@@ -7,9 +7,6 @@
 ! does it submit to any jurisdiction.
 
 #include "atlas/atlas_f.h"
-#:include "internals/atlas_generics.fypp"
-
-#:set ranks = [0,1]
 
 module atlas_functionspace_CellColumns_module
 

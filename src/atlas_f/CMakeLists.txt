@@ -216,7 +216,7 @@ ecbuild_add_library( TARGET atlas_f
         domain/atlas_Domain_module.F90
         functionspace/atlas_FunctionSpace_module.F90
         functionspace/atlas_functionspace_EdgeColumns_module.F90
-        functionspace/atlas_functionspace_CellColumns_module.fypp
+        functionspace/atlas_functionspace_CellColumns_module.F90
         functionspace/atlas_functionspace_NodeColumns_module.fypp
         functionspace/atlas_functionspace_StructuredColumns_module.F90
         functionspace/atlas_functionspace_BlockStructuredColumns_module.F90
