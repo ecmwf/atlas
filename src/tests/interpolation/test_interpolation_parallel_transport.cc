@@ -161,10 +161,27 @@ CASE("cubed sphere vector interpolation") {
                                    .set("target_grid", "O48")
                                    .set("target_mesh", "structured")
                                    .set("file_id", "parallel_transport_cs")
+                                   .set("scheme", interpScheme);
+
+  testInterpolation((cubedSphereConf));
+}
+
+CASE("finite element vector interpolation") {
+
+  const auto baseInterpScheme =
+      util::Config("type", "finite-element").set("adjoint", true);
+  const auto interpScheme = util::Config("type", "parallel-transport")
+                                .set("scheme", baseInterpScheme);
+  const auto cubedSphereConf = Config("source_grid", "O48")
+                                   .set("source_mesh", "structured")
+                                   .set("target_grid", "CS-LFR-48")
+                                   .set("target_mesh", "cubedsphere_dual")
+                                   .set("file_id", "parallel_transport_fe")
                                    .set("scheme", baseInterpScheme);
 
   testInterpolation((cubedSphereConf));
 }
+
 }
 }
 

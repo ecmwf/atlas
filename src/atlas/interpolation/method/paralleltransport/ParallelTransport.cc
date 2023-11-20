@@ -12,6 +12,7 @@
 #include "atlas/array/helpers/ArrayForEach.h"
 #include "atlas/array/Range.h"
 #include "atlas/field/Field.h"
+#include "atlas/field/FieldSet.h"
 #include "atlas/interpolation/Cache.h"
 #include "atlas/interpolation/Interpolation.h"
 #include "atlas/interpolation/method/MethodFactory.h"
@@ -43,11 +44,20 @@ void spaceMatrixForEach(MatrixT&& matrix, const Functor& functor) {
   const auto colIndices = matrix.inner();
   auto valData = matrix.data();
 
-  atlas_omp_parallel_for (auto i = 0; i < nRows; ++i) {
+  atlas_omp_parallel_for (auto i = size_t{}; i < nRows; ++i) {
     for (auto dataIdx = rowIndices[i]; dataIdx < rowIndices[i+1]; ++dataIdx) {
-      const auto j = colIndices[dataIdx];
-      auto&& value = valData[dataIdx];
-      functor(value, i, j);
+      const auto j = size_t(colIndices[dataIdx]);
+      auto& value = valData[dataIdx];
+
+      if constexpr (std::is_invocable_v<Functor, decltype(value), size_t, size_t>) {
+        functor(value, i, j);
+      }
+      else if constexpr (std::is_invocable_v<Functor, decltype(value), size_t, size_t, size_t>) {
+        functor(value, i, j, dataIdx);
+      }
+      else {
+        ATLAS_NOTIMPLEMENTED;
+      }
     }
   }
 }
@@ -73,17 +83,18 @@ void ParallelTransport::do_setup(const FunctionSpace& source, const FunctionSpac
   // Get matrix dimensions.
   const auto nRows = matrix().rows();
   const auto nCols = matrix().cols();
+  const auto nNonZeros = matrix().nonZeros();
 
-  auto weights00 = std::vector<eckit::linalg::Triplet>();
-  auto weights01 = std::vector<eckit::linalg::Triplet>();
-  auto weights10 = std::vector<eckit::linalg::Triplet>();
-  auto weights11 = std::vector<eckit::linalg::Triplet>();
+  auto weights00 = std::vector<eckit::linalg::Triplet>(nNonZeros);
+  auto weights01 = std::vector<eckit::linalg::Triplet>(nNonZeros);
+  auto weights10 = std::vector<eckit::linalg::Triplet>(nNonZeros);
+  auto weights11 = std::vector<eckit::linalg::Triplet>(nNonZeros);
 
   const auto sourceLonLats = array::make_view<double, 2>(source_.lonlat());
   const auto targetLonLats = array::make_view<double, 2>(target_.lonlat());
 
 
-  spaceMatrixForEach(matrix(), [&](auto&& weight, int i, int j){
+  spaceMatrixForEach(matrix(), [&](auto&& weight, auto i, auto j, auto dataIdx){
     const auto sourceLonLat = PointLonLat(sourceLonLats(j, 0), sourceLonLats(j, 1));
     const auto targetLonLat = PointLonLat(targetLonLats(i, 0), targetLonLats(i, 1));
 
@@ -91,11 +102,10 @@ void ParallelTransport::do_setup(const FunctionSpace& source, const FunctionSpac
 
     auto deltaAlpha = (alpha.first - alpha.second) * util::Constants::degreesToRadians();
 
-
-    weights00.emplace_back(i, j, weight * std::cos(deltaAlpha));
-    weights01.emplace_back(i, j, -weight * std::sin(deltaAlpha));
-    weights10.emplace_back(i, j, weight * std::sin(deltaAlpha));
-    weights11.emplace_back(i, j, weight * std::cos(deltaAlpha));
+    weights00[dataIdx] = {i, j, weight * std::cos(deltaAlpha)};
+    weights01[dataIdx] = {i, j, -weight * std::sin(deltaAlpha)};
+    weights10[dataIdx] = {i, j, weight * std::sin(deltaAlpha)};
+    weights11[dataIdx] = {i, j, weight * std::cos(deltaAlpha)};
   });
 
 
@@ -116,14 +126,26 @@ void ParallelTransport::print(std::ostream&) const {
   ATLAS_NOTIMPLEMENTED;
 }
 
-void ParallelTransport::do_execute(const Field &source, Field &target, Metadata &) const
+void ParallelTransport::do_execute(const FieldSet& sourceFieldSet, FieldSet& targetFieldSet, Metadata& metadata) const
 {
   ATLAS_TRACE("atlas::interpolation::method::ParallelTransport::do_execute()");
 
-  if (!(source.variables() == 2 || source.variables() == 3)) {
+  const auto nFields = sourceFieldSet.size();
+  ATLAS_ASSERT(nFields == targetFieldSet.size());
+
+  for (auto i = 0; i < sourceFieldSet.size(); ++i) {
+    do_execute(sourceFieldSet[i], targetFieldSet[i], metadata);
+  }
+}
+
+void ParallelTransport::do_execute(const Field& sourceField, Field& targetField, Metadata &) const
+{
+  ATLAS_TRACE("atlas::interpolation::method::ParallelTransport::do_execute()");
+
+  if (!(sourceField.variables() == 2 || sourceField.variables() == 3)) {
 
     auto metadata = Metadata();
-    Method::do_execute(source, target, metadata);
+    Method::do_execute(sourceField, targetField, metadata);
 
     return;
 
@@ -133,29 +155,29 @@ void ParallelTransport::do_execute(const Field &source, Field &target, Metadata 
     return;
   }
 
-  haloExchange(source);
+  haloExchange(sourceField);
 
-  if (source.datatype().kind() == array::DataType::KIND_REAL64) {
-    interpolate_vector_field<double>(source, target);
+  if (sourceField.datatype().kind() == array::DataType::KIND_REAL64) {
+    interpolate_vector_field<double>(sourceField, targetField);
   }
-  else if (source.datatype().kind() == array::DataType::KIND_REAL32) {
-    interpolate_vector_field<float>(source, target);
+  else if (sourceField.datatype().kind() == array::DataType::KIND_REAL32) {
+    interpolate_vector_field<float>(sourceField, targetField);
   }
   else {
     ATLAS_NOTIMPLEMENTED;
   }
 
-  target.set_dirty();
+  targetField.set_dirty();
 }
 
 template<typename Value>
-void ParallelTransport::interpolate_vector_field(const Field &source, Field &target) const
+void ParallelTransport::interpolate_vector_field(const Field& sourceField, Field& targetField) const
 {
-  if (source.rank() == 2) {
-     interpolate_vector_field<Value, 2>(source, target);
+  if (sourceField.rank() == 2) {
+     interpolate_vector_field<Value, 2>(sourceField, targetField);
   }
-  else if (source.rank() == 3 ) {
-    interpolate_vector_field<Value, 3>(source, target);
+  else if (sourceField.rank() == 3 ) {
+    interpolate_vector_field<Value, 3>(sourceField, targetField);
   }
   else {
     ATLAS_NOTIMPLEMENTED;
@@ -163,20 +185,20 @@ void ParallelTransport::interpolate_vector_field(const Field &source, Field &tar
 }
 
 template<typename Value, int Rank>
-void ParallelTransport::interpolate_vector_field(const Field &source, Field &target) const
+void ParallelTransport::interpolate_vector_field(const Field& sourceField, Field& targetField) const
 {
   using namespace linalg;
 
-  const auto sourceView = array::make_view<Value, Rank>(source);
-  auto targetView = array::make_view<Value, Rank>(target);
+  const auto sourceView = array::make_view<Value, Rank>(sourceField);
+  auto targetView = array::make_view<Value, Rank>(targetField);
 
-  array::make_view<Value, Rank>(target).assign(0);
+  array::make_view<Value, Rank>(targetField).assign(0);
 
 
 
-  const auto matrixMultiply = [&](const auto& matrix, int sourceVariableIdx, int targetVariableIdx) {
+  const auto matrixMultiply = [&](const auto& matrix, auto sourceVariableIdx, auto targetVariableIdx) {
 
-    spaceMatrixForEach(matrix, [&](const auto& weight, int i, int j){
+    spaceMatrixForEach(matrix, [&](const auto& weight, auto i, auto j){
 
       const auto adder = [&](auto&& targetElem, auto&& sourceElem){
         targetElem += weight * sourceElem;
@@ -185,10 +207,13 @@ void ParallelTransport::interpolate_vector_field(const Field &source, Field &tar
       if constexpr (Rank == 2) {
         adder(targetView(i, targetVariableIdx), sourceView(j, sourceVariableIdx));
       }
-      else {
+      else if constexpr (Rank == 3) {
         const auto sourceSlice = sourceView.slice(j, array::Range::all(), sourceVariableIdx);
         auto targetSlice = targetView.slice(i, array::Range::all(), targetVariableIdx);
         array::helpers::ArrayForEach<0>::apply(std::tie(targetSlice, sourceSlice), adder);
+      }
+      else {
+        ATLAS_NOTIMPLEMENTED;
       }
 
     });
@@ -199,7 +224,7 @@ void ParallelTransport::interpolate_vector_field(const Field &source, Field &tar
   matrixMultiply(matrix10_, 0, 1);
   matrixMultiply(matrix11_, 1, 1);
 
-  if (source.variables() == 3) {
+  if (sourceField.variables() == 3) {
     matrixMultiply(matrix(), 2, 2);
   }
 

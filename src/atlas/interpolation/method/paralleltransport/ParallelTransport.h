@@ -29,7 +29,8 @@ class ParallelTransport : public Method {
   const FunctionSpace& source() const override { return source_; }
   const FunctionSpace& target() const override { return target_; }
 
-  void do_execute(const Field& source, Field& target, Metadata&) const override;
+  void do_execute(const FieldSet& sourceFieldSet, FieldSet& targetFieldSet, Metadata& metadata) const override;
+  void do_execute(const Field& sourceField, Field& targetField, Metadata& metadata) const override;
 
  private:
 

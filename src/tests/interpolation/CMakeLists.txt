@@ -82,6 +82,7 @@ ecbuild_add_test( TARGET atlas_test_interpolation_non_linear
 )
 
 ecbuild_add_test( TARGET atlas_test_interpolation_parallel_transport
+  OMP      4
   SOURCES  test_interpolation_parallel_transport.cc
   LIBS     atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
