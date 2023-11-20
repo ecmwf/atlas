@@ -476,9 +476,6 @@ integer :: halo_size, levels
 halo_size = 1
 levels = 10
 
-FCTEST_CHECK(.false.)
-return
-
 grid = atlas_StructuredGrid("N24")
 meshgenerator = atlas_MeshGenerator()
 mesh = meshgenerator%generate(grid)
