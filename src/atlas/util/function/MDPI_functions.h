@@ -30,6 +30,13 @@ double MDPI_harmonic(double lon, double lat);
 double MDPI_vortex(double lon, double lat);
 double MDPI_gulfstream(double lon, double lat);
 
+extern "C" {
+    double atlas__function__MDPI_sinusoid(double lon, double lat);
+    double atlas__function__MDPI_harmonic(double lon, double lat);
+    double atlas__function__MDPI_vortex(double lon, double lat);
+    double atlas__function__MDPI_gulfstream(double lon, double lat);
+}
+
 }  // namespace function
 
 }  // namespace util
