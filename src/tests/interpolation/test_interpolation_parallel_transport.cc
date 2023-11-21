@@ -177,7 +177,7 @@ CASE("finite element vector interpolation") {
                                    .set("target_grid", "CS-LFR-48")
                                    .set("target_mesh", "cubedsphere_dual")
                                    .set("file_id", "parallel_transport_fe")
-                                   .set("scheme", baseInterpScheme);
+                                   .set("scheme", interpScheme);
 
   testInterpolation((cubedSphereConf));
 }

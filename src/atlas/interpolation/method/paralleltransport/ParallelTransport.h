@@ -50,11 +50,10 @@ class ParallelTransport : public Method {
   FunctionSpace source_;
   FunctionSpace target_;
 
-  // Matrices for vector field interpolation
-  Matrix matrix00_;
-  Matrix matrix01_;
-  Matrix matrix10_;
-  Matrix matrix11_;
+  // Complex interpolation weights. We treat a (u, v) pair as a complex variable
+  // with u on the real number line and v on the imaginary number line.
+  Matrix matrixReal_;
+  Matrix matrixImag_;
 
 };
 
