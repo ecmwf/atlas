@@ -11,150 +11,42 @@
 module atlas_functions_module
 
 use, intrinsic :: iso_c_binding
-use fckit_owned_object_module, only : fckit_owned_object
+use atlas_functions_c_binding
 
 implicit none
 
-private :: fckit_owned_object
-
-public :: atlas_functions
-
-private
-
-!------------------------------------------------------------------------------
-TYPE, extends(fckit_owned_object) :: atlas_functions
-
-! Purpose :
-! -------
-!   *function* : Analytic functions for idealised initial data
-
-! Methods :
-! -------
-
-! Author :
-! ------
-!   Nov 2023 Slavko Brdar (ECMWF)
-
-!------------------------------------------------------------------------------
 contains
-  procedure, public :: MDPI_sinusoid_r8 => atlas_functions__MDPI_sinusoid_r8
-  procedure, public :: MDPI_sinusoid_r4 => atlas_functions__MDPI_sinusoid_r4
-  procedure, public :: MDPI_harmonic_r8 => atlas_functions__MDPI_harmonic_r8
-  procedure, public :: MDPI_harmonic_r4 => atlas_functions__MDPI_harmonic_r4
-  procedure, public :: MDPI_vortex_r8 => atlas_functions__MDPI_vortex_r8
-  procedure, public :: MDPI_vortex_r4 => atlas_functions__MDPI_vortex_r4
-  procedure, public :: MDPI_gulfstream_r8 => atlas_functions__MDPI_gulfstream_r8
-  procedure, public :: MDPI_gulfstream_r4 => atlas_functions__MDPI_gulfstream_r4
-  generic :: MDPI_sinusoid => MDPI_sinusoid_r8, MDPI_sinusoid_r4
-  generic :: MDPI_harmonic => MDPI_harmonic_r8, MDPI_harmonic_r4
-  generic :: MDPI_vortex => MDPI_vortex_r8, MDPI_vortex_r4
-  generic :: MDPI_gulfstream => MDPI_gulfstream_r8, MDPI_gulfstream_r4
-#if FCKIT_FINAL_NOT_INHERITING
-  final :: atlas_functions__final_auto
-#endif
 
-END TYPE atlas_functions
-
-!------------------------------------------------------------------------------
-
-!========================================================
-contains
-!========================================================
-
-
-! -----------------------------------------------------------------------------
-
-function atlas_functions__MDPI_sinusoid_r8(this, lon, lat) result(val)
-  use atlas_functions_c_binding
-  class(atlas_functions), intent(in) :: this
+function MDPI_sinusoid(lon, lat) result(val)
   real(c_double), intent(in) :: lon, lat
   real(c_double) :: val
-  val = atlas__functions__MDPI_sinusoid_r8(lon, lat)
-end function atlas_functions__MDPI_sinusoid_r8
+  val = atlas__functions__MDPI_sinusoid(lon, lat)
+end function MDPI_sinusoid
 
 ! -----------------------------------------------------------------------------
 
-function atlas_functions__MDPI_harmonic_r8(this, lon, lat) result(val)
-  use atlas_functions_c_binding
-  class(atlas_functions), intent(in) :: this
+function MDPI_harmonic(lon, lat) result(val)
   real(c_double), intent(in) :: lon, lat
   real(c_double) :: val
-  val = atlas__functions__MDPI_harmonic_r8(lon, lat)
-end function atlas_functions__MDPI_harmonic_r8
+  val = atlas__functions__MDPI_harmonic(lon, lat)
+end function MDPI_harmonic
 
 ! -----------------------------------------------------------------------------
 
-function atlas_functions__MDPI_vortex_r8(this, lon, lat) result(val)
-  use atlas_functions_c_binding
-  class(atlas_functions), intent(in) :: this
+function MDPI_vortex(lon, lat) result(val)
   real(c_double), intent(in) :: lon, lat
   real(c_double) :: val
-  val = atlas__functions__MDPI_vortex_r8(lon, lat)
-end function atlas_functions__MDPI_vortex_r8
+  val = atlas__functions__MDPI_vortex(lon, lat)
+end function MDPI_vortex
 
 ! -----------------------------------------------------------------------------
 
-function atlas_functions__MDPI_gulfstream_r8(this, lon, lat) result(val)
-  use atlas_functions_c_binding
-  class(atlas_functions), intent(in) :: this
+function MDPI_gulfstream(lon, lat) result(val)
   real(c_double), intent(in) :: lon, lat
   real(c_double) :: val
-  val = atlas__functions__MDPI_gulfstream_r8(lon, lat)
-end function atlas_functions__MDPI_gulfstream_r8
+  val = atlas__functions__MDPI_gulfstream(lon, lat)
+end function MDPI_gulfstream
 
 ! -----------------------------------------------------------------------------
-
-function atlas_functions__MDPI_sinusoid_r4(this, lon, lat) result(val)
-  use atlas_functions_c_binding
-  class(atlas_functions), intent(in) :: this
-  real(c_float), intent(in) :: lon, lat
-  real(c_float) :: val
-  val = atlas__functions__MDPI_sinusoid_r4(lon, lat)
-end function atlas_functions__MDPI_sinusoid_r4
-
-! -----------------------------------------------------------------------------
-
-function atlas_functions__MDPI_harmonic_r4(this, lon, lat) result(val)
-  use atlas_functions_c_binding
-  class(atlas_functions), intent(in) :: this
-  real(c_float), intent(in) :: lon, lat
-  real(c_float) :: val
-  val = atlas__functions__MDPI_harmonic_r4(lon, lat)
-end function atlas_functions__MDPI_harmonic_r4
-
-! -----------------------------------------------------------------------------
-
-function atlas_functions__MDPI_vortex_r4(this, lon, lat) result(val)
-  use atlas_functions_c_binding
-  class(atlas_functions), intent(in) :: this
-  real(c_float), intent(in) :: lon, lat
-  real(c_float) :: val
-  val = atlas__functions__MDPI_vortex_r4(lon, lat)
-end function atlas_functions__MDPI_vortex_r4
-
-! -----------------------------------------------------------------------------
-
-function atlas_functions__MDPI_gulfstream_r4(this, lon, lat) result(val)
-  use atlas_functions_c_binding
-  class(atlas_functions), intent(in) :: this
-  real(c_float), intent(in) :: lon, lat
-  real(c_float) :: val
-  val = atlas__functions__MDPI_gulfstream_r4(lon, lat)
-end function atlas_functions__MDPI_gulfstream_r4
-
-!-------------------------------------------------------------------------------
-
-#if FCKIT_FINAL_NOT_INHERITING
-ATLAS_FINAL subroutine atlas_functions__final_auto(this)
-  type(atlas_functions), intent(inout) :: this
-#if FCKIT_FINAL_DEBUGGING
-  write(0,*) "atlas_function__final_auto"
-#endif
-#if FCKIT_FINAL_NOT_PROPAGATING
-  call this%final()
-#endif
-  FCKIT_SUPPRESS_UNUSED( this )
-end subroutine
-#endif
 
 end module atlas_functions_module

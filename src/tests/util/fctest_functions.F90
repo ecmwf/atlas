@@ -15,7 +15,6 @@
 
 module fcta_functions_fxt
 use atlas_module
-!use atlas_functions_module
 use, intrinsic :: iso_c_binding
 implicit none
 character(len=1024) :: msg
@@ -40,13 +39,11 @@ END_TESTSUITE_FINALIZE
 ! -----------------------------------------------------------------------------
 
 TEST( test_atlas_Functions )
-  type(atlas_Functions) :: functions
-  real(c_double) :: val_r8
-  real(c_float) :: val_r4
-  val_r8 = functions%MDPI_sinusoid(1._c_double, 1._c_double)
-  val_r4 = functions%MDPI_harmonic(1., 1.)
-  val_r4 = functions%MDPI_vortex(1., 1.)
-  val_r8 = functions%MDPI_gulfstream(1., 1.)
+  real(c_double) :: val
+  val = MDPI_sinusoid(1._c_double, 1._c_double)
+  val = MDPI_harmonic(1._c_double, 1._c_double)
+  val = MDPI_vortex(1._c_double, 1._c_double)
+  val = MDPI_gulfstream(1._c_double, 1._c_double)
 END_TEST
 
 ! -----------------------------------------------------------------------------
