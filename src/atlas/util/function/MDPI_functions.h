@@ -31,10 +31,15 @@ double MDPI_vortex(double lon, double lat);
 double MDPI_gulfstream(double lon, double lat);
 
 extern "C" {
-    double atlas__function__MDPI_sinusoid(double lon, double lat);
-    double atlas__function__MDPI_harmonic(double lon, double lat);
-    double atlas__function__MDPI_vortex(double lon, double lat);
-    double atlas__function__MDPI_gulfstream(double lon, double lat);
+    double atlas__functions__MDPI_sinusoid_r8(double& lon, double& lat);
+    double atlas__functions__MDPI_harmonic_r8(double& lon, double& lat);
+    double atlas__functions__MDPI_vortex_r8(double& lon, double& lat);
+    double atlas__functions__MDPI_gulfstream_r8(double& lon, double& lat);
+
+    float atlas__functions__MDPI_sinusoid_r4(float& lon, float& lat);
+    float atlas__functions__MDPI_harmonic_r4(float& lon, float& lat);
+    float atlas__functions__MDPI_vortex_r4(float& lon, float& lat);
+    float atlas__functions__MDPI_gulfstream_r4(float& lon, float& lat);
 }
 
 }  // namespace function

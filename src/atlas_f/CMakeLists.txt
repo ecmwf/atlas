@@ -137,8 +137,8 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/redistribution/detail/Redist
     MODULE    atlas_redistribution_c_binding
     OUTPUT    redistribution_c_binding.f90)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/function/MDPI_functions.h
-    MODULE    atlas_function_c_binding
-    OUTPUT    function_c_binding.f90)
+    MODULE    atlas_functions_c_binding
+    OUTPUT    functions_c_binding.f90)
 
 if( atlas_HAVE_ATLAS_NUMERICS )
     generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Nabla.h)
@@ -208,7 +208,7 @@ ecbuild_add_library( TARGET atlas_f
     SOURCES
         ${FORTRAN_BINDINGS}
         atlas_module.F90
-        util/atlas_function_module.F90
+        util/atlas_functions_module.F90
         util/atlas_kinds_module.F90
         util/atlas_JSON_module.F90
         util/atlas_Config_module.F90
