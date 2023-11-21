@@ -121,6 +121,9 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/Structu
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/BlockStructuredColumnsInterface.h
     MODULE    atlas_functionspace_BlockStructuredColumns_c_binding
     OUTPUT    functionspace_BlockStructuredColumns_c_binding.f90 )
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/CellColumnsInterface.h
+    MODULE    atlas_functionspace_CellColumns_c_binding
+    OUTPUT    functionspace_CellColumns_c_binding.f90)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/NodeColumnsInterface.h
     MODULE    atlas_functionspace_NodeColumns_c_binding
     OUTPUT    functionspace_NodeColumns_c_binding.f90)
@@ -213,6 +216,7 @@ ecbuild_add_library( TARGET atlas_f
         domain/atlas_Domain_module.F90
         functionspace/atlas_FunctionSpace_module.F90
         functionspace/atlas_functionspace_EdgeColumns_module.F90
+        functionspace/atlas_functionspace_CellColumns_module.F90
         functionspace/atlas_functionspace_NodeColumns_module.fypp
         functionspace/atlas_functionspace_StructuredColumns_module.F90
         functionspace/atlas_functionspace_BlockStructuredColumns_module.F90

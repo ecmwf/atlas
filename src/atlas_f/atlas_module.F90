@@ -91,6 +91,8 @@ use atlas_Vertical_module, only :&
     & atlas_Vertical
 use atlas_functionspace_EdgeColumns_module, only: &
     & atlas_functionspace_EdgeColumns
+use atlas_functionspace_CellColumns_module, only: &
+    & atlas_functionspace_CellColumns
 use atlas_functionspace_NodeColumns_module, only: &
     & atlas_functionspace_NodeColumns
 use atlas_functionspace_PointCloud_module, only: &
