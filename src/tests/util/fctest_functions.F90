@@ -57,12 +57,15 @@ TEST( test_atlas_Functions_vector )
 END_TEST
 
 TEST( test_initialise_field )
-  type(atlas_Field) :: field
-  real(c_double), dimension(:,:), pointer :: fieldv
-  real(c_double), dimension(3) :: val
-  field = atlas_Field(kind=atlas_real(c_double), shape=[3,3])
-  call field%data(fieldv)
-  val = MDPI_sinusoid(fieldv(1,:), fieldv(2,:))
+  type(atlas_Field) :: field_xy, field_val
+  real(c_double), dimension(:,:), pointer :: field_xy_v
+  real(c_double), dimension(:), pointer :: field_val_v
+  field_xy = atlas_Field(kind=atlas_real(c_double), shape=[3,3])
+  field_val = atlas_Field(kind=atlas_real(c_double), shape=[3])
+  call field_xy%data(field_xy_v)
+  field_xy_v = 1._c_double
+  call field_val%data(field_val_v)
+  field_val_v = MDPI_sinusoid(field_xy_v(1,:), field_xy_v(2,:))
 END_TEST
 
 ! -----------------------------------------------------------------------------
