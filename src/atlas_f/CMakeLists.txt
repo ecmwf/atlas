@@ -136,9 +136,6 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/PointCl
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/redistribution/detail/RedistributionInterface.h
     MODULE    atlas_redistribution_c_binding
     OUTPUT    redistribution_c_binding.f90)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/util/function/MDPI_functions.h
-    MODULE    atlas_functions_c_binding
-    OUTPUT    functions_c_binding.f90)
 
 if( atlas_HAVE_ATLAS_NUMERICS )
     generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Nabla.h)

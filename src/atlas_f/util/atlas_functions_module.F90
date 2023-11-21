@@ -11,13 +11,44 @@
 module atlas_functions_module
 
 use, intrinsic :: iso_c_binding
-use atlas_functions_c_binding
 
 implicit none
 
+interface
+
+pure function atlas__functions__MDPI_sinusoid( lon, lat ) bind(C,name="atlas__functi&
+  &ons__MDPI_sinusoid")
+    use iso_c_binding, only: c_double
+    real(c_double) :: atlas__functions__MDPI_sinusoid
+    real(c_double), intent(in) :: lon, lat
+end function
+
+pure function atlas__functions__MDPI_harmonic( lon, lat ) bind(C,name="atlas__functi&
+  &ons__MDPI_harmonic")
+    use iso_c_binding, only: c_double
+    real(c_double) :: atlas__functions__MDPI_harmonic
+    real(c_double), intent(in) :: lon, lat
+end function
+
+pure function atlas__functions__MDPI_vortex( lon, lat ) bind(C,name="atlas__function&
+  &s__MDPI_vortex")
+    use iso_c_binding, only: c_double
+    real(c_double) :: atlas__functions__MDPI_vortex
+    real(c_double), intent(in) :: lon, lat
+end function
+
+pure function atlas__functions__MDPI_gulfstream( lon, lat ) bind(C,name="atlas__func&
+  &tions__MDPI_gulfstream")
+    use iso_c_binding, only: c_double
+    real(c_double) :: atlas__functions__MDPI_gulfstream
+    real(c_double), intent(in) :: lon, lat
+end function
+
+end interface
+
 contains
 
-function MDPI_sinusoid(lon, lat) result(val)
+elemental function MDPI_sinusoid(lon, lat) result(val)
   real(c_double), intent(in) :: lon, lat
   real(c_double) :: val
   val = atlas__functions__MDPI_sinusoid(lon, lat)
@@ -25,7 +56,7 @@ end function MDPI_sinusoid
 
 ! -----------------------------------------------------------------------------
 
-function MDPI_harmonic(lon, lat) result(val)
+elemental function MDPI_harmonic(lon, lat) result(val)
   real(c_double), intent(in) :: lon, lat
   real(c_double) :: val
   val = atlas__functions__MDPI_harmonic(lon, lat)
@@ -33,7 +64,7 @@ end function MDPI_harmonic
 
 ! -----------------------------------------------------------------------------
 
-function MDPI_vortex(lon, lat) result(val)
+elemental function MDPI_vortex(lon, lat) result(val)
   real(c_double), intent(in) :: lon, lat
   real(c_double) :: val
   val = atlas__functions__MDPI_vortex(lon, lat)
@@ -41,7 +72,7 @@ end function MDPI_vortex
 
 ! -----------------------------------------------------------------------------
 
-function MDPI_gulfstream(lon, lat) result(val)
+elemental function MDPI_gulfstream(lon, lat) result(val)
   real(c_double), intent(in) :: lon, lat
   real(c_double) :: val
   val = atlas__functions__MDPI_gulfstream(lon, lat)

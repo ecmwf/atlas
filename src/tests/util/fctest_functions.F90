@@ -46,6 +46,25 @@ TEST( test_atlas_Functions )
   val = MDPI_gulfstream(1._c_double, 1._c_double)
 END_TEST
 
+TEST( test_atlas_Functions_vector )
+  real(c_double), dimension(3) :: val, lon, lat
+  lon = [ 1._c_double, 1._c_double, 1._c_double ]
+  lat = [ 1._c_double, 1._c_double, 1._c_double ]
+  val = MDPI_sinusoid(lon, lat)
+  val = MDPI_harmonic(lon, lat)
+  val = MDPI_vortex(lon, lat)
+  val = MDPI_gulfstream(lon, lat)
+END_TEST
+
+TEST( test_initialise_field )
+  type(atlas_Field) :: field
+  real(c_double), dimension(:,:), pointer :: fieldv
+  real(c_double), dimension(3) :: val
+  field = atlas_Field(kind=atlas_real(c_double), shape=[3,3])
+  call field%data(fieldv)
+  val = MDPI_sinusoid(fieldv(1,:), fieldv(2,:))
+END_TEST
+
 ! -----------------------------------------------------------------------------
 
 END_TESTSUITE
