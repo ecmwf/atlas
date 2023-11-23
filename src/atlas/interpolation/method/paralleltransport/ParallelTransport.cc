@@ -35,7 +35,7 @@ namespace {
 MethodBuilder<ParallelTransport> __builder("parallel-transport");
 
 template <typename MatrixT, typename Functor>
-void spaceMatrixForEach(MatrixT&& matrix, const Functor& functor) {
+void sparseMatrixForEach(MatrixT&& matrix, const Functor& functor) {
 
   const auto nRows = matrix.rows();
   const auto nCols = matrix.cols();
@@ -48,14 +48,12 @@ void spaceMatrixForEach(MatrixT&& matrix, const Functor& functor) {
       const auto j = size_t(colIndices[dataIdx]);
       auto&& value = valData[dataIdx];
 
-      if
-        constexpr(
+      if constexpr(
             std::is_invocable_v<Functor, decltype(value), size_t, size_t>) {
           functor(value, i, j);
         }
-      else if
-        constexpr(std::is_invocable_v<Functor, decltype(value), size_t, size_t,
-                                      size_t>) {
+      else if constexpr(std::is_invocable_v<Functor, decltype(value), size_t,
+                                            size_t, size_t>) {
           functor(value, i, j, dataIdx);
         }
       else {
@@ -70,17 +68,15 @@ template <typename MatrixT, typename SourceView, typename TargetView,
 void matrixMultiply(const MatrixT& matrix, SourceView&& sourceView,
                     TargetView&& targetView, const Functor& mappingFunctor) {
 
-  spaceMatrixForEach(matrix, [&](const auto& weight, auto i, auto j) {
+  sparseMatrixForEach(matrix, [&](const auto& weight, auto i, auto j) {
 
     constexpr auto rank = std::decay_t<decltype(sourceView)>::rank();
-    if
-      constexpr(rank == 2) {
+    if constexpr(rank == 2) {
         const auto sourceSlice = sourceView.slice(j, array::Range::all());
         auto targetSlice = targetView.slice(i, array::Range::all());
         mappingFunctor(weight, sourceSlice, targetSlice);
       }
-    else if
-      constexpr(rank == 3) {
+    else if constexpr(rank == 3) {
         const auto iterationFuctor = [&](auto&& sourceVars, auto&& targetVars) {
           mappingFunctor(weight, sourceVars, targetVars);
         };
@@ -130,7 +126,7 @@ void ParallelTransport::do_setup(const FunctionSpace& source,
   const auto targetLonLats = array::make_view<double, 2>(target_.lonlat());
 
   // Make complex weights (would be nice if we could have a complex matrix).
-  spaceMatrixForEach(matrix(),
+  sparseMatrixForEach(matrix(),
                      [&](auto&& weight, auto i, auto j, auto dataIdx) {
     const auto sourceLonLat =
         PointLonLat(sourceLonLats(j, 0), sourceLonLats(j, 1));
