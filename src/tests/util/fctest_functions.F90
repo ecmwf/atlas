@@ -41,9 +41,13 @@ END_TESTSUITE_FINALIZE
 TEST( test_atlas_Functions )
   real(c_double) :: val
   val = MDPI_sinusoid(1._c_double, 1._c_double)
+  FCTEST_CHECK(abs(val - 1.0002115216773033_c_double) < 3e-16_c_double)
   val = MDPI_harmonic(1._c_double, 1._c_double)
+  FCTEST_CHECK(abs(val - 2.0000000000000000_c_double) < 3e-16_c_double)
   val = MDPI_vortex(1._c_double, 1._c_double)
+  FCTEST_CHECK(abs(val - 2.7267489215500755_c_double) < 3e-16_c_double)
   val = MDPI_gulfstream(1._c_double, 1._c_double)
+  FCTEST_CHECK(abs(val - 1.0002115216773033_c_double) < 3e-16_c_double)
 END_TEST
 
 TEST( test_atlas_Functions_vector )
@@ -51,21 +55,26 @@ TEST( test_atlas_Functions_vector )
   lon = [ 1._c_double, 1._c_double, 1._c_double ]
   lat = [ 1._c_double, 1._c_double, 1._c_double ]
   val = MDPI_sinusoid(lon, lat)
+  FCTEST_CHECK(val(1) - 1.0002115216773033_c_double < 3e-16_c_double)
   val = MDPI_harmonic(lon, lat)
+  FCTEST_CHECK(val(1) - 2.0000000000000000_c_double < 3e-16_c_double)
   val = MDPI_vortex(lon, lat)
+  FCTEST_CHECK(val(1) - 2.7267489215500755_c_double < 3e-16_c_double)
   val = MDPI_gulfstream(lon, lat)
+  FCTEST_CHECK(val(1) - 1.0002115216773033_c_double < 3e-16_c_double)
 END_TEST
 
 TEST( test_initialise_field )
   type(atlas_Field) :: field_xy, field_val
   real(c_double), dimension(:,:), pointer :: field_xy_v
   real(c_double), dimension(:), pointer :: field_val_v
-  field_xy = atlas_Field(kind=atlas_real(c_double), shape=[3,3])
+  field_xy = atlas_Field(kind=atlas_real(c_double), shape=[2,3])
   field_val = atlas_Field(kind=atlas_real(c_double), shape=[3])
   call field_xy%data(field_xy_v)
   field_xy_v = 1._c_double
   call field_val%data(field_val_v)
   field_val_v = MDPI_sinusoid(field_xy_v(1,:), field_xy_v(2,:))
+  FCTEST_CHECK(field_val_v(1) - 1.0002115216773033_c_double < 3e-16_c_double)
 END_TEST
 
 ! -----------------------------------------------------------------------------
