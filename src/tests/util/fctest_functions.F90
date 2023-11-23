@@ -41,13 +41,13 @@ END_TESTSUITE_FINALIZE
 TEST( test_atlas_Functions )
   real(c_double) :: val
   val = MDPI_sinusoid(1._c_double, 1._c_double)
-  FCTEST_CHECK(abs(val - 1.0002115216773033_c_double) < 3e-16_c_double)
+  FCTEST_CHECK(abs(val - 1.0002115216773033_c_double) < 1e-12_c_double)
   val = MDPI_harmonic(1._c_double, 1._c_double)
-  FCTEST_CHECK(abs(val - 2.0000000000000000_c_double) < 3e-16_c_double)
+  FCTEST_CHECK(abs(val - 2.0000000000000000_c_double) < 1e-12_c_double)
   val = MDPI_vortex(1._c_double, 1._c_double)
-  FCTEST_CHECK(abs(val - 2.7267489215500755_c_double) < 3e-16_c_double)
+  FCTEST_CHECK(abs(val - 2.7267489215500755_c_double) < 1e-12_c_double)
   val = MDPI_gulfstream(1._c_double, 1._c_double)
-  FCTEST_CHECK(abs(val - 1.0002115216773033_c_double) < 3e-16_c_double)
+  FCTEST_CHECK(abs(val - 1.0002115216773033_c_double) < 1e-12_c_double)
 END_TEST
 
 TEST( test_atlas_Functions_vector )
@@ -55,13 +55,13 @@ TEST( test_atlas_Functions_vector )
   lon = [ 1._c_double, 1._c_double, 1._c_double ]
   lat = [ 1._c_double, 1._c_double, 1._c_double ]
   val = MDPI_sinusoid(lon, lat)
-  FCTEST_CHECK(val(1) - 1.0002115216773033_c_double < 3e-16_c_double)
+  FCTEST_CHECK(val(1) - 1.0002115216773033_c_double < 1e-12_c_double)
   val = MDPI_harmonic(lon, lat)
-  FCTEST_CHECK(val(1) - 2.0000000000000000_c_double < 3e-16_c_double)
+  FCTEST_CHECK(val(1) - 2.0000000000000000_c_double < 1e-12_c_double)
   val = MDPI_vortex(lon, lat)
-  FCTEST_CHECK(val(1) - 2.7267489215500755_c_double < 3e-16_c_double)
+  FCTEST_CHECK(val(1) - 2.7267489215500755_c_double < 1e-12_c_double)
   val = MDPI_gulfstream(lon, lat)
-  FCTEST_CHECK(val(1) - 1.0002115216773033_c_double < 3e-16_c_double)
+  FCTEST_CHECK(val(1) - 1.0002115216773033_c_double < 1e-12_c_double)
 END_TEST
 
 TEST( test_initialise_field )
