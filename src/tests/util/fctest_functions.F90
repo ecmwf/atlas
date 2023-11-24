@@ -41,40 +41,46 @@ END_TESTSUITE_FINALIZE
 TEST( test_atlas_Functions )
   real(c_double) :: val
   val = MDPI_sinusoid(1._c_double, 1._c_double)
-  FCTEST_CHECK(abs(val - 1.0002115216773033_c_double) < 1e-12_c_double)
+  FCTEST_CHECK_CLOSE(val, 1.0002115216773033_c_double, 1e-12_c_double)
   val = MDPI_harmonic(1._c_double, 1._c_double)
-  FCTEST_CHECK(abs(val - 2.0000000000000000_c_double) < 1e-12_c_double)
+  FCTEST_CHECK_CLOSE(val, 2.0000000000000000_c_double, 1e-12_c_double)
   val = MDPI_vortex(1._c_double, 1._c_double)
-  FCTEST_CHECK(abs(val - 2.7267489215500755_c_double) < 1e-12_c_double)
+  FCTEST_CHECK_CLOSE(val, 2.7267489215500755_c_double, 1e-12_c_double)
   val = MDPI_gulfstream(1._c_double, 1._c_double)
-  FCTEST_CHECK(abs(val - 1.0002115216773033_c_double) < 1e-12_c_double)
+  FCTEST_CHECK_CLOSE(val, 1.0002115216773033_c_double, 1e-12_c_double)
 END_TEST
 
 TEST( test_atlas_Functions_vector )
-  real(c_double), dimension(3) :: val, lon, lat
-  lon = [ 1._c_double, 1._c_double, 1._c_double ]
-  lat = [ 1._c_double, 1._c_double, 1._c_double ]
+  real(c_double), dimension(3) :: val, lon, lat, val_ref
+  lon = [ 1._c_double, 2._c_double, 3._c_double ]
+  lat = [ 1._c_double, 2._c_double, 3._c_double ]
   val = MDPI_sinusoid(lon, lat)
-  FCTEST_CHECK(val(1) - 1.0002115216773033_c_double < 1e-12_c_double)
+  val_ref = [1.0002115216773033_c_double, 1.0008458683590891_c_double, 1.0019023851484181_c_double]
+  FCTEST_CHECK_CLOSE(val, val_ref, 1e-12_c_double)
   val = MDPI_harmonic(lon, lat)
-  FCTEST_CHECK(val(1) - 2.0000000000000000_c_double < 1e-12_c_double)
+  val_ref = [2.0000000000000000_c_double, 2.0000000000000000_c_double, 2.0000000000000000_c_double]
+  FCTEST_CHECK_CLOSE(val, val_ref, 1e-12_c_double)
   val = MDPI_vortex(lon, lat)
-  FCTEST_CHECK(val(1) - 2.7267489215500755_c_double < 1e-12_c_double)
+  val_ref = [2.7267489215500755_c_double, 2.7520839004022091_c_double, 2.7755506683886928_c_double]
+  FCTEST_CHECK_CLOSE(val, val_ref, 1e-12_c_double)
   val = MDPI_gulfstream(lon, lat)
-  FCTEST_CHECK(val(1) - 1.0002115216773033_c_double < 1e-12_c_double)
+  val_ref = [1.0002115216773033_c_double, 1.0008458683590891_c_double, 1.0019023851484181_c_double]
+  FCTEST_CHECK_CLOSE(val, val_ref, 1e-12_c_double)
 END_TEST
 
 TEST( test_initialise_field )
   type(atlas_Field) :: field_xy, field_val
   real(c_double), dimension(:,:), pointer :: field_xy_v
   real(c_double), dimension(:), pointer :: field_val_v
+  real(c_double), dimension(3) :: field_val_ref
   field_xy = atlas_Field(kind=atlas_real(c_double), shape=[2,3])
   field_val = atlas_Field(kind=atlas_real(c_double), shape=[3])
   call field_xy%data(field_xy_v)
   field_xy_v = 1._c_double
   call field_val%data(field_val_v)
   field_val_v = MDPI_sinusoid(field_xy_v(1,:), field_xy_v(2,:))
-  FCTEST_CHECK(field_val_v(1) - 1.0002115216773033_c_double < 3e-16_c_double)
+  field_val_ref = [1.0002115216773033_c_double, 1.0002115216773033_c_double, 1.0002115216773033_c_double]
+  FCTEST_CHECK_CLOSE(field_val_v, field_val_ref, 1e-12_c_double)
 END_TEST
 
 ! -----------------------------------------------------------------------------
