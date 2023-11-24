@@ -10,5 +10,5 @@ sudo apt-get update
 sudo apt-get install \
     intel-oneapi-compiler-fortran-$version \
     intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic-$version \
-    intel-oneapi-mpi \
+    intel-oneapi-mpi-devel-2021.10.0 \
     intel-oneapi-mkl-$version
