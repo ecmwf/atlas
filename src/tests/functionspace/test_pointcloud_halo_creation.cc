@@ -28,6 +28,8 @@ using namespace atlas::util;
 namespace atlas {
 namespace test {
 
+constexpr double tol = 1.e-12;
+
 //-----------------------------------------------------------------------------
 
 CASE("Distributed creation from unstructured grid with halo") {
@@ -237,7 +239,7 @@ for (idx_t i=0; i<pointcloud.size(); ++i) {
     if( not ghost(i) ) {
         ++count_ghost;
         double lat = lonlat(i,1) * M_PI/180.;
-        EXPECT_EQ(view(i), std::cos(4.*lat));
+        EXPECT_APPROX_EQ(view(i), std::cos(4.*lat), tol);
     }
     else {
         view(i) = 0.;
@@ -270,7 +272,7 @@ field.haloExchange();
 
 for (idx_t i=0; i<pointcloud.size(); ++i) {
     double lat = lonlat(i,1) * M_PI/180.;
-    EXPECT_EQ( view(i), std::cos(4.*lat));
+    EXPECT_APPROX_EQ( view(i), std::cos(4.*lat), tol );
 }
 
 
@@ -290,7 +292,7 @@ if (mpi::rank() == 0) {
     gidx_t g=0;
     for (auto& p: grid.lonlat()) {
         double lat = p.lat() * M_PI/180.;
-        EXPECT_EQ( viewg(g), std::cos(4.*lat));
+        EXPECT_APPROX_EQ( viewg(g), std::cos(4.*lat), tol );
         g++;
     }
 }

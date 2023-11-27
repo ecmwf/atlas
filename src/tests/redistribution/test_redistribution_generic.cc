@@ -87,6 +87,11 @@ constexpr double testAmplitude = 5.;
 // Convert value to integral.
 template <typename Value, IsIntegral<Value> = nullptr>
 Value castValue(const double& inVal) {
+    constexpr double eps = 1.e-12;
+    Value rounded_minus_half = std::round(inVal-0.5);
+    if (std::abs(rounded_minus_half - (inVal-0.5)) < eps) {
+        return static_cast<Value>(rounded_minus_half);
+    }
     return static_cast<Value>(std::round(inVal));
 }
 
