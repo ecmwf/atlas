@@ -107,10 +107,10 @@ void SphericalVector::do_setup(const FunctionSpace& source,
   complexWeights_ = std::make_shared<ComplexMatrix>(nRows, nCols);
   auto complexTriplets = ComplexTriplets(nNonZeros);
 
+  const auto sourceLonLats = array::make_view<double, 2>(source_.lonlat());
+  const auto targetLonLats = array::make_view<double, 2>(target_.lonlat());
+  
   sparseMatrixForEach(*realWeights_, [&](const auto& weight, auto i, auto j) {
-
-    const auto sourceLonLats = array::make_view<double, 2>(source_.lonlat());
-    const auto targetLonLats = array::make_view<double, 2>(target_.lonlat());
 
     const auto sourceLonLat =
         PointLonLat(sourceLonLats(j, 0), sourceLonLats(j, 1));
