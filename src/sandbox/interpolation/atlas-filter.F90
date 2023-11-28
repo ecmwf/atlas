@@ -36,10 +36,11 @@ INTEGER, PARAMETER:: JPRB = SELECTED_REAL_KIND(13,300)
 ! --------------------------------------------------------------------------------------------
 type :: atlas_Filter
 private
-    type(atlas_FunctionSpace) :: src_fs
-    type(atlas_Redistribution):: src_redist, tgt_redist
-    type(atlas_Interpolation) :: interpolation_st, interpolation_ts
-    type(atlas_Field)         :: tgt_field, src_field_tgtpart, tgt_field_srcpart
+    type(atlas_FunctionSpace)  :: src_fs
+    type(atlas_Redistribution) :: src_redist, tgt_redist
+    type(atlas_Interpolation)  :: interpolation_st, interpolation_ts
+    type(atlas_Field)          :: tgt_field, src_field_tgtpart, tgt_field_srcpart
+    character(len=64)          :: data_loc
 contains
     procedure, public :: execute => filter_execute
     procedure, public :: source  => filter_src_fs
@@ -56,17 +57,19 @@ CONTAINS
 ! --------------------------------------------------------------------------------------------
 
 function filter_src_fs(this) result(fs)
-    class(atlas_Filter), intent(in) :: this
+    class(atlas_Filter), intent(inout) :: this
     type(atlas_FunctionSpace) :: fs
     fs = this%src_fs
 end function filter_src_fs
 
 ! --------------------------------------------------------------------------------------------
 
-function atlas_Filter__create(src_grid, src_mesh) result(this)
-    type(atlas_Grid), intent(in) :: src_grid
-    type(atlas_Mesh), intent(inout) :: src_mesh
+function atlas_Filter__create(src_grid, src_mesh, data_loc_in) result(this)
+    class(atlas_Grid), intent(in)     :: src_grid
+    type(atlas_Mesh), intent(inout)   :: src_mesh
+    character(len=*), intent(in), optional :: data_loc_in
     type(atlas_Filter)           :: this
+
     type(atlas_Grid)             :: tgt_grid
     type(atlas_MeshGenerator)    :: meshgen
     type(atlas_Partitioner)      :: partitioner
@@ -78,17 +81,25 @@ function atlas_Filter__create(src_grid, src_mesh) result(this)
     type(atlas_FunctionSpace)    :: src_fs, tgt_fs
     type(atlas_FunctionSpace)    :: src_fs_tgtpart, tgt_fs_srcpart
 
+    this%data_loc = "CellColumns"
+    if (present(data_loc_in)) this%data_loc = trim(data_loc_in)
     tgt_grid = atlas_StructuredGrid("O40")
     meshgen = atlas_MeshGenerator()
     partitioner = atlas_Partitioner("regular_bands")
     griddist = atlas_GridDistribution(tgt_grid, partitioner)
     tgt_mesh = meshgen%generate(tgt_grid, griddist)
-    !src_fs = atlas_functionspace_CellColumns(src_mesh, halo=4)
-    !tgt_fs = atlas_functionspace_CellColumns(tgt_mesh, halo=2)
-    src_fs = atlas_functionspace_NodeColumns(src_mesh, halo=4)
-    tgt_fs = atlas_functionspace_NodeColumns(tgt_mesh, halo=2)
-    !src_fs = atlas_functionspace_StructuredColumns(src_grid, partitioner, halo=4)
-    !tgt_fs = atlas_functionspace_StructuredColumns(tgt_grid, partitioner, halo=2)
+    if (trim(this%data_loc) == "CellColumns") then
+        src_fs = atlas_functionspace_CellColumns(src_mesh, halo=4)
+        tgt_fs = atlas_functionspace_CellColumns(tgt_mesh, halo=2)
+    else if (trim(this%data_loc) == "NodeColumns") then
+        src_fs = atlas_functionspace_NodeColumns(src_mesh, halo=4)
+        tgt_fs = atlas_functionspace_NodeColumns(tgt_mesh, halo=2)
+    else if (trim(this%data_loc) == "StructuredColumns") then
+        src_fs = atlas_functionspace_StructuredColumns(src_grid, partitioner, halo=4)
+        tgt_fs = atlas_functionspace_StructuredColumns(tgt_grid, partitioner, halo=2)
+    else
+        stop "Unknown function space: "//data_loc_in
+    end if
     this%src_fs = src_fs
 
     ! // redistribution setup
@@ -97,12 +108,16 @@ function atlas_Filter__create(src_grid, src_mesh) result(this)
     src_mesh_tgtpart = meshgen%generate(src_grid, griddist)
     griddist = atlas_GridDistribution(tgt_grid, partitioner)
     tgt_mesh_srcpart = meshgen%generate(tgt_grid, griddist)
-    !src_fs_tgtpart = atlas_functionspace_CellColumns(src_mesh_tgtpart)
-    !tgt_fs_srcpart = atlas_functionspace_CellColumns(tgt_mesh_srcpart)
-    src_fs_tgtpart = atlas_functionspace_NodeColumns(src_mesh_tgtpart)
-    tgt_fs_srcpart = atlas_functionspace_NodeColumns(tgt_mesh_srcpart)
-    !src_fs_tgtpart = atlas_functionspace_StructuredColumns(src_grid, partitioner)
-    !tgt_fs_srcpart = atlas_functionspace_StructuredColumns(tgt_grid, partitioner)
+    if (trim(this%data_loc) == "CellColumns") then
+        src_fs_tgtpart = atlas_functionspace_CellColumns(src_mesh_tgtpart)
+        tgt_fs_srcpart = atlas_functionspace_CellColumns(tgt_mesh_srcpart)
+    else if (trim(this%data_loc) == "NodeColumns") then
+        src_fs_tgtpart = atlas_functionspace_NodeColumns(src_mesh_tgtpart)
+        tgt_fs_srcpart = atlas_functionspace_NodeColumns(tgt_mesh_srcpart)
+    else if (trim(this%data_loc) == "StructuredColumns") then
+        src_fs_tgtpart = atlas_functionspace_StructuredColumns(src_grid, partitioner)
+        tgt_fs_srcpart = atlas_functionspace_StructuredColumns(tgt_grid, partitioner)
+    endif
 
     this%src_redist = atlas_Redistribution(src_fs, src_fs_tgtpart)
     this%tgt_redist = atlas_Redistribution(tgt_fs, tgt_fs_srcpart)
@@ -114,9 +129,9 @@ function atlas_Filter__create(src_grid, src_mesh) result(this)
     this%interpolation_ts = atlas_Interpolation(interpolation_config, tgt_fs_srcpart, src_fs)
 
     ! // prepare helper fields
-    this%tgt_field = tgt_fs%create_field(name="var_tmp", kind=atlas_real(JPRB))
-    this%src_field_tgtpart = src_fs_tgtpart%create_field(name="var_tmp", kind=atlas_real(JPRB))
-    this%tgt_field_srcpart = tgt_fs_srcpart%create_field(name="var_tmp", kind=atlas_real(JPRB))
+    this%tgt_field = tgt_fs%create_field(kind=atlas_real(JPRB))
+    this%src_field_tgtpart = src_fs_tgtpart%create_field(kind=atlas_real(JPRB))
+    this%tgt_field_srcpart = tgt_fs_srcpart%create_field(kind=atlas_real(JPRB))
 
     ! // free memory
     call src_mesh%final()
@@ -186,7 +201,7 @@ use filter_module, only: JPRB, atlas_Filter
 
 implicit none
 
-    type(atlas_Grid) :: grid
+    type(atlas_StructuredGrid) :: grid
     type(atlas_GridDistribution) :: griddist
     type(atlas_Field) :: sfield
     type(atlas_Filter) :: filter
@@ -196,7 +211,9 @@ implicit none
     type(atlas_Output) :: gmsh
 
     real :: start_time, end_time
+    real(kind=JPRB), dimension(2) :: lonlat
     real(kind=JPRB), pointer :: sfield_v(:)
+    integer :: i, j, ijglb
 
     call atlas_library%initialise()
 
@@ -213,9 +230,16 @@ implicit none
     print *, " filter.setup in seconds: ", end_time - start_time
 
     fspace = filter%source()
-    sfield = fspace%create_field(name="sfield", kind=atlas_real(JPRB))
+    sfield = fspace%create_field(name="unfiltered", kind=atlas_real(JPRB))
     call sfield%data(sfield_v)
-    sfield_v = 1._JPRB
+    ijglb = 1
+    do j = 1, grid%ny()
+        do i = 1, grid%nx(j)
+            lonlat = grid%lonlat(i,j)
+            sfield_v(ijglb) = MDPI_gulfstream(lonlat(1), lonlat(2))
+            ijglb = ijglb + 1
+        end do
+    end do
 
     call gmsh%write(sfield)
 
@@ -224,6 +248,7 @@ implicit none
     call cpu_time(end_time)
     print *, " filter.exe in seconds: ", end_time - start_time
 
+    call sfield%rename("filtered")
     call gmsh%write(sfield)
 
     call atlas_library%finalise()
