@@ -150,6 +150,7 @@ use atlas_output_module, only: &
     & atlas_output_Gmsh
 use atlas_trace_module, only : &
     & atlas_Trace
+use atlas_functions_module
 
 use fckit_log_module,  only: atlas_log => fckit_log
 

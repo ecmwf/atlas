@@ -9,6 +9,13 @@
 
 if( HAVE_FCTEST )
 
+  add_fctest( TARGET atlas_fctest_functions
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_functions.F90
+    LIBS            atlas_f
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  )
+
   add_fctest( TARGET atlas_fctest_logging
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_logging.F90

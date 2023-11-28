@@ -118,6 +118,21 @@ double MDPI_gulfstream(double lon, double lat) {
     return background_func + dc * (std::max(1000. * std::sin(0.4 * (0.5 * dr + dth) + 0.007 * std::cos(50. * dth) + 0.37 * M_PI), 999.) - 999.);
 }
 
+extern "C" {
+    double atlas__functions__MDPI_sinusoid(double& lon, double& lat) {
+        return MDPI_sinusoid(lon, lat);
+    }
+    double atlas__functions__MDPI_harmonic(double& lon, double& lat) {
+        return MDPI_harmonic(lon, lat);
+    }
+    double atlas__functions__MDPI_vortex(double& lon, double& lat) {
+        return MDPI_vortex(lon, lat);
+    }
+    double atlas__functions__MDPI_gulfstream(double& lon, double& lat) {
+        return MDPI_gulfstream(lon, lat);
+    }
+}
+
 }  // namespace function
 }  // namespace util
 }  // namespace atlas
