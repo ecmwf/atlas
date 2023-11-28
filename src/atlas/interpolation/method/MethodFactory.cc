@@ -12,7 +12,7 @@
 
 // for static linking
 #include "cubedsphere/CubedSphereBilinear.h"
-#include "paralleltransport/ParallelTransport.h"
+#include "sphericalvector/SphericalVector.h"
 #include "knn/GridBoxAverage.h"
 #include "knn/GridBoxMaximum.h"
 #include "knn/KNearestNeighbours.h"
@@ -48,7 +48,7 @@ void force_link() {
             MethodBuilder<method::GridBoxAverage>();
             MethodBuilder<method::GridBoxMaximum>();
             MethodBuilder<method::CubedSphereBilinear>();
-            MethodBuilder<method::ParallelTransport>();
+            MethodBuilder<method::SphericalVector>();
         }
     } link;
 }

@@ -16,7 +16,7 @@
 #include "atlas/interpolation/Cache.h"
 #include "atlas/interpolation/Interpolation.h"
 #include "atlas/interpolation/method/MethodFactory.h"
-#include "atlas/interpolation/method/paralleltransport/ParallelTransport.h"
+#include "atlas/interpolation/method/sphericalvector/SphericalVector.h"
 #include "atlas/linalg/sparse.h"
 #include "atlas/option/Options.h"
 #include "atlas/parallel/omp/omp.h"
@@ -32,33 +32,14 @@ namespace interpolation {
 namespace method {
 
 namespace {
-MethodBuilder<ParallelTransport> __builder("parallel-transport");
+MethodBuilder<SphericalVector> __builder("spherical-vector");
 
 template <typename MatrixT, typename Functor>
-void sparseMatrixForEach(MatrixT&& matrix, const Functor& functor) {
+void sparseMatrixForEach(const MatrixT& matrix, const Functor& functor) {
 
-  const auto nRows = matrix.rows();
-  const auto nCols = matrix.cols();
-  const auto rowIndices = matrix.outer();
-  const auto colIndices = matrix.inner();
-  auto valData = matrix.data();
-
-  atlas_omp_parallel_for(auto i = size_t{}; i < nRows; ++i) {
-    for (auto dataIdx = rowIndices[i]; dataIdx < rowIndices[i + 1]; ++dataIdx) {
-      const auto j = size_t(colIndices[dataIdx]);
-      auto&& value = valData[dataIdx];
-
-      if constexpr(
-            std::is_invocable_v<Functor, decltype(value), size_t, size_t>) {
-          functor(value, i, j);
-        }
-      else if constexpr(std::is_invocable_v<Functor, decltype(value), size_t,
-                                            size_t, size_t>) {
-          functor(value, i, j, dataIdx);
-        }
-      else {
-        ATLAS_NOTIMPLEMENTED;
-      }
+  atlas_omp_parallel_for (auto k = 0; k < matrix.outerSize(); ++k) {
+    for (auto it = typename MatrixT::InnerIterator(matrix, k); it; ++it) {
+          functor(it.value(), it.row(), it.col());
     }
   }
 }
@@ -70,12 +51,12 @@ void matrixMultiply(const MatrixT& matrix, SourceView&& sourceView,
 
   sparseMatrixForEach(matrix, [&](const auto& weight, auto i, auto j) {
 
-    constexpr auto rank = std::decay_t<decltype(sourceView)>::rank();
+    constexpr auto rank = std::decay_t<SourceView>::rank();
     if constexpr(rank == 2) {
         const auto sourceSlice = sourceView.slice(j, array::Range::all());
         auto targetSlice = targetView.slice(i, array::Range::all());
         mappingFunctor(weight, sourceSlice, targetSlice);
-      }
+    }
     else if constexpr(rank == 3) {
         const auto iterationFuctor = [&](auto&& sourceVars, auto&& targetVars) {
           mappingFunctor(weight, sourceVars, targetVars);
@@ -86,7 +67,7 @@ void matrixMultiply(const MatrixT& matrix, SourceView&& sourceView,
             targetView.slice(i, array::Range::all(), array::Range::all());
         array::helpers::ArrayForEach<0>::apply(
             std::tie(sourceSlice, targetSlice), iterationFuctor);
-      }
+    }
     else {
       ATLAS_NOTIMPLEMENTED;
     }
@@ -95,14 +76,14 @@ void matrixMultiply(const MatrixT& matrix, SourceView&& sourceView,
 
 }  // namespace
 
-void ParallelTransport::do_setup(const Grid& source, const Grid& target,
+void SphericalVector::do_setup(const Grid& source, const Grid& target,
                                  const Cache&) {
   ATLAS_NOTIMPLEMENTED;
 }
 
-void ParallelTransport::do_setup(const FunctionSpace& source,
+void SphericalVector::do_setup(const FunctionSpace& source,
                                  const FunctionSpace& target) {
-  ATLAS_TRACE("interpolation::method::ParallelTransport::do_setup");
+  ATLAS_TRACE("interpolation::method::SphericalVector::do_setup");
   source_ = source;
   target_ = target;
 
@@ -114,20 +95,23 @@ void ParallelTransport::do_setup(const FunctionSpace& source,
       Interpolation(interpolationScheme_, source_, target_);
   setMatrix(MatrixCache(baseInterpolator));
 
-  // Get matrix dimensions.
+  // Get matrix data.
   const auto nRows = matrix().rows();
   const auto nCols = matrix().cols();
   const auto nNonZeros = matrix().nonZeros();
 
-  auto weightsReal = std::vector<eckit::linalg::Triplet>(nNonZeros);
-  auto weightsImag = std::vector<eckit::linalg::Triplet>(nNonZeros);
+  realWeights_ =
+      std::make_shared<RealMatrixMap>(nRows, nCols, nNonZeros, matrix().outer(),
+                                      matrix().inner(), matrix().data());
 
-  const auto sourceLonLats = array::make_view<double, 2>(source_.lonlat());
-  const auto targetLonLats = array::make_view<double, 2>(target_.lonlat());
+  complexWeights_ = std::make_shared<ComplexMatrix>(nRows, nCols);
+  auto complexTriplets = ComplexTriplets(nNonZeros);
 
-  // Make complex weights (would be nice if we could have a complex matrix).
-  sparseMatrixForEach(matrix(),
-                     [&](auto&& weight, auto i, auto j, auto dataIdx) {
+  sparseMatrixForEach(*realWeights_, [&](const auto& weight, auto i, auto j) {
+
+    const auto sourceLonLats = array::make_view<double, 2>(source_.lonlat());
+    const auto targetLonLats = array::make_view<double, 2>(target_.lonlat());
+
     const auto sourceLonLat =
         PointLonLat(sourceLonLats(j, 0), sourceLonLats(j, 1));
     const auto targetLonLat =
@@ -138,26 +122,23 @@ void ParallelTransport::do_setup(const FunctionSpace& source,
     auto deltaAlpha =
         (alpha.first - alpha.second) * util::Constants::degreesToRadians();
 
-    weightsReal[dataIdx] = {i, j, weight * std::cos(deltaAlpha)};
-    weightsImag[dataIdx] = {i, j, weight * std::sin(deltaAlpha)};
+    auto idx = &weight - realWeights_->valuePtr();
+
+    complexTriplets[idx] = {i, j, std::polar(weight, deltaAlpha)};
   });
+  complexWeights_->setFromTriplets(complexTriplets.begin(),
+                                   complexTriplets.end());
 
-  // Deal with slightly old fashioned Matrix interface
-  const auto buildMatrix = [&](auto& matrix, const auto& weights) {
-    auto tempMatrix = Matrix(nRows, nCols, weights);
-    matrix.swap(tempMatrix);
-  };
-
-  buildMatrix(matrixReal_, weightsReal);
-  buildMatrix(matrixImag_, weightsImag);
+  ATLAS_ASSERT(complexWeights_->nonZeros() == matrix().nonZeros());
+  ATLAS_ASSERT(realWeights_->nonZeros() == matrix().nonZeros());
 }
 
-void ParallelTransport::print(std::ostream&) const { ATLAS_NOTIMPLEMENTED; }
+void SphericalVector::print(std::ostream&) const { ATLAS_NOTIMPLEMENTED; }
 
-void ParallelTransport::do_execute(const FieldSet& sourceFieldSet,
+void SphericalVector::do_execute(const FieldSet& sourceFieldSet,
                                    FieldSet& targetFieldSet,
                                    Metadata& metadata) const {
-  ATLAS_TRACE("atlas::interpolation::method::ParallelTransport::do_execute()");
+  ATLAS_TRACE("atlas::interpolation::method::SphericalVector::do_execute()");
 
   const auto nFields = sourceFieldSet.size();
   ATLAS_ASSERT(nFields == targetFieldSet.size());
@@ -167,9 +148,9 @@ void ParallelTransport::do_execute(const FieldSet& sourceFieldSet,
   }
 }
 
-void ParallelTransport::do_execute(const Field& sourceField, Field& targetField,
+void SphericalVector::do_execute(const Field& sourceField, Field& targetField,
                                    Metadata&) const {
-  ATLAS_TRACE("atlas::interpolation::method::ParallelTransport::do_execute()");
+  ATLAS_TRACE("atlas::interpolation::method::SphericalVector::do_execute()");
 
   if (!(sourceField.variables() == 2 || sourceField.variables() == 3)) {
 
@@ -197,7 +178,7 @@ void ParallelTransport::do_execute(const Field& sourceField, Field& targetField,
 }
 
 template <typename Value>
-void ParallelTransport::interpolate_vector_field(const Field& sourceField,
+void SphericalVector::interpolate_vector_field(const Field& sourceField,
                                                  Field& targetField) const {
   if (sourceField.rank() == 2) {
     interpolate_vector_field<Value, 2>(sourceField, targetField);
@@ -209,32 +190,31 @@ void ParallelTransport::interpolate_vector_field(const Field& sourceField,
 }
 
 template <typename Value, int Rank>
-void ParallelTransport::interpolate_vector_field(const Field& sourceField,
+void SphericalVector::interpolate_vector_field(const Field& sourceField,
                                                  Field& targetField) const {
 
   const auto sourceView = array::make_view<Value, Rank>(sourceField);
   auto targetView = array::make_view<Value, Rank>(targetField);
   targetView.assign(0.);
 
-  // Matrix multiplication split in two to simulate complex variable
-  // multiplication.
-  matrixMultiply(matrixReal_, sourceView, targetView,
-                 [](const auto& weight, auto&& sourceVars, auto&& targetVars) {
-    targetVars(0) += weight * sourceVars(0);
-    targetVars(1) += weight * sourceVars(1);
-  });
-  matrixMultiply(matrixImag_, sourceView, targetView,
-                 [](const auto& weight, auto&& sourceVars, auto&& targetVars) {
-    targetVars(0) -= weight * sourceVars(1);
-    targetVars(1) += weight * sourceVars(0);
-  });
+  const auto horizontalComponent = [](const auto& weight, auto&& sourceVars,
+                                      auto&& targetVars) {
+    const auto targetVector =
+        weight * std::complex<double>(sourceVars(0), sourceVars(1));
 
-  if (sourceField.variables() == 3) {
-    matrixMultiply(
-        matrix(), sourceView, targetView,
-        [](const auto& weight, auto&& sourceVars,
-           auto&& targetVars) { targetVars(2) = weight * sourceVars(2); });
-  }
+    targetVars(0) += targetVector.real();
+    targetVars(1) += targetVector.imag();
+  };
+
+  const auto verticalComponent = [](
+      const auto& weight, auto&& sourceVars,
+      auto&& targetVars) { targetVars(2) += weight * sourceVars(2); };
+
+  matrixMultiply(*complexWeights_, sourceView, targetView, horizontalComponent);
+
+  if (sourceField.variables() == 2) return;
+
+  matrixMultiply(*realWeights_, sourceView, targetView, verticalComponent);
 }
 
 }  // namespace method

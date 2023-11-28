@@ -7,6 +7,11 @@
 
 #pragma once
 
+#include <complex>
+#include <memory>
+
+#include <Eigen/Sparse>
+
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/interpolation/method/Method.h"
 #include "atlas/linalg/sparse.h"
@@ -16,14 +21,19 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
-class ParallelTransport : public Method {
+using RealMatrix = Eigen::SparseMatrix<double, Eigen::RowMajor>;
+using RealMatrixMap = Eigen::Map<const RealMatrix>;
+using ComplexMatrix = Eigen::SparseMatrix<std::complex<double>, Eigen::RowMajor>;
+using ComplexTriplets = std::vector<Eigen::Triplet<std::complex<double>>>;
+
+class SphericalVector : public Method {
  public:
-  ParallelTransport(const Config& config): Method(config) {
+  SphericalVector(const Config& config): Method(config) {
     const auto& conf = dynamic_cast<const eckit::LocalConfiguration&>(config);
     interpolationScheme_ = conf.getSubConfiguration("scheme");
 
   }
-  virtual ~ParallelTransport() override {}
+  virtual ~SphericalVector() override {}
 
   void print(std::ostream&) const override;
   const FunctionSpace& source() const override { return source_; }
@@ -50,10 +60,8 @@ class ParallelTransport : public Method {
   FunctionSpace source_;
   FunctionSpace target_;
 
-  // Complex interpolation weights. We treat a (u, v) pair as a complex variable
-  // with u on the real number line and v on the imaginary number line.
-  Matrix matrixReal_;
-  Matrix matrixImag_;
+  std::shared_ptr<RealMatrixMap> realWeights_;
+  std::shared_ptr<ComplexMatrix> complexWeights_;
 
 };
 

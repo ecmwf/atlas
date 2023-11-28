@@ -525,8 +525,6 @@ functionspace/detail/CubedSphereStructure.cc
 # for cubedsphere matching mesh partitioner
 interpolation/method/cubedsphere/CellFinder.cc
 interpolation/method/cubedsphere/CellFinder.h
-interpolation/method/paralleltransport/ParallelTransport.h
-interpolation/method/paralleltransport/ParallelTransport.cc
 interpolation/Vector2D.cc
 interpolation/Vector2D.h
 interpolation/Vector3D.cc
@@ -670,6 +668,15 @@ interpolation/nonlinear/Missing.h
 interpolation/nonlinear/NonLinear.cc
 interpolation/nonlinear/NonLinear.h
 )
+
+if (eckit_EIGEN_FOUND)
+
+list (APPEND atlas_interpolation_srcs
+interpolation/method/sphericalvector/SphericalVector.h
+interpolation/method/sphericalvector/SphericalVector.cc
+)
+
+endif()
 
 list( APPEND atlas_linalg_srcs
 linalg/Indexing.h
