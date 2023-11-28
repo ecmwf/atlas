@@ -225,7 +225,7 @@ implicit none
     call gmsh%write(mesh)
 
     call cpu_time(start_time)
-    filter = atlas_Filter(grid, mesh)
+    filter = atlas_Filter(grid, mesh, "NodeColumns") ! TODO: CellColumns has an indexing problem in Redistribution
     call cpu_time(end_time)
     print *, " filter.setup in seconds: ", end_time - start_time
 
@@ -240,6 +240,7 @@ implicit none
             ijglb = ijglb + 1
         end do
     end do
+    call sfield%halo_exchange()
 
     call gmsh%write(sfield)
 
