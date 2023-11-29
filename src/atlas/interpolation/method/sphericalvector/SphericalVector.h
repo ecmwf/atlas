@@ -21,17 +21,18 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
-using RealMatrix = Eigen::SparseMatrix<double, Eigen::RowMajor>;
-using RealMatrixMap = Eigen::Map<const RealMatrix>;
-using ComplexMatrix = Eigen::SparseMatrix<std::complex<double>, Eigen::RowMajor>;
-using ComplexTriplets = std::vector<Eigen::Triplet<std::complex<double>>>;
-
 class SphericalVector : public Method {
  public:
-  SphericalVector(const Config& config): Method(config) {
+
+  using Complex = std::complex<double>;
+
+  template<typename Value>
+  using SparseMatrix = Eigen::SparseMatrix<Value, Eigen::RowMajor>;
+  using ComplexMatrix = SparseMatrix<Complex>;
+
+  SphericalVector(const Config& config) : Method(config) {
     const auto& conf = dynamic_cast<const eckit::LocalConfiguration&>(config);
     interpolationScheme_ = conf.getSubConfiguration("scheme");
-
   }
   virtual ~SphericalVector() override {}
 
@@ -39,20 +40,22 @@ class SphericalVector : public Method {
   const FunctionSpace& source() const override { return source_; }
   const FunctionSpace& target() const override { return target_; }
 
-  void do_execute(const FieldSet& sourceFieldSet, FieldSet& targetFieldSet, Metadata& metadata) const override;
-  void do_execute(const Field& sourceField, Field& targetField, Metadata& metadata) const override;
+  void do_execute(const FieldSet& sourceFieldSet, FieldSet& targetFieldSet,
+                  Metadata& metadata) const override;
+  void do_execute(const Field& sourceField, Field& targetField,
+                  Metadata& metadata) const override;
 
  private:
 
-  template<typename Value>
+  template <typename Value>
   void interpolate_vector_field(const Field& source, Field& target) const;
 
-  template<typename Value, int Rank>
+  template <typename Value, int Rank>
   void interpolate_vector_field(const Field& source, Field& target) const;
-
 
   using Method::do_setup;
-  void do_setup(const FunctionSpace& source, const FunctionSpace& target) override;
+  void do_setup(const FunctionSpace& source,
+                const FunctionSpace& target) override;
   void do_setup(const Grid& source, const Grid& target, const Cache&) override;
 
   eckit::LocalConfiguration interpolationScheme_;
@@ -60,9 +63,7 @@ class SphericalVector : public Method {
   FunctionSpace source_;
   FunctionSpace target_;
 
-  std::shared_ptr<RealMatrixMap> realWeights_;
   std::shared_ptr<ComplexMatrix> complexWeights_;
-
 };
 
 }  // namespace method

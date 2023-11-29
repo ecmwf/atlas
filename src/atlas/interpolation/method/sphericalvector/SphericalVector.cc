@@ -31,8 +31,23 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
+using Complex = SphericalVector::Complex;
+
+template <typename Value>
+using SparseMatrix = SphericalVector::SparseMatrix<Value>;
+using RealMatrixMap = Eigen::Map<const SparseMatrix<double>>;
+using ComplexTriplets = std::vector<Eigen::Triplet<Complex>>;
+using EckitMatrix = eckit::linalg::SparseMatrix;
+
 namespace {
+
 MethodBuilder<SphericalVector> __builder("spherical-vector");
+
+RealMatrixMap mapBaseMatrix(const EckitMatrix& baseMatrix) {
+  return RealMatrixMap(baseMatrix.rows(), baseMatrix.cols(),
+                       baseMatrix.nonZeros(), baseMatrix.outer(),
+                       baseMatrix.inner(), baseMatrix.data());
+}
 
 template <typename MatrixT, typename Functor>
 void sparseMatrixForEach(const MatrixT& matrix, const Functor& functor) {
@@ -99,18 +114,15 @@ void SphericalVector::do_setup(const FunctionSpace& source,
   const auto nRows = matrix().rows();
   const auto nCols = matrix().cols();
   const auto nNonZeros = matrix().nonZeros();
-
-  realWeights_ =
-      std::make_shared<RealMatrixMap>(nRows, nCols, nNonZeros, matrix().outer(),
-                                      matrix().inner(), matrix().data());
+  const auto realWeights = mapBaseMatrix(matrix());
 
   complexWeights_ = std::make_shared<ComplexMatrix>(nRows, nCols);
   auto complexTriplets = ComplexTriplets(nNonZeros);
 
-  sparseMatrixForEach(*realWeights_, [&](const auto& weight, auto i, auto j) {
+  const auto sourceLonLats = array::make_view<double, 2>(source_.lonlat());
+  const auto targetLonLats = array::make_view<double, 2>(target_.lonlat());
 
-    const auto sourceLonLats = array::make_view<double, 2>(source_.lonlat());
-    const auto targetLonLats = array::make_view<double, 2>(target_.lonlat());
+  sparseMatrixForEach(realWeights, [&](const auto& weight, auto i, auto j) {
 
     const auto sourceLonLat =
         PointLonLat(sourceLonLats(j, 0), sourceLonLats(j, 1));
@@ -119,10 +131,10 @@ void SphericalVector::do_setup(const FunctionSpace& source,
 
     const auto alpha = util::greatCircleCourse(sourceLonLat, targetLonLat);
 
-    auto deltaAlpha =
+    const auto deltaAlpha =
         (alpha.first - alpha.second) * util::Constants::degreesToRadians();
 
-    auto idx = &weight - realWeights_->valuePtr();
+    const auto idx = &weight - realWeights.valuePtr();
 
     complexTriplets[idx] = {i, j, std::polar(weight, deltaAlpha)};
   });
@@ -130,7 +142,6 @@ void SphericalVector::do_setup(const FunctionSpace& source,
                                    complexTriplets.end());
 
   ATLAS_ASSERT(complexWeights_->nonZeros() == matrix().nonZeros());
-  ATLAS_ASSERT(realWeights_->nonZeros() == matrix().nonZeros());
 }
 
 void SphericalVector::print(std::ostream&) const { ATLAS_NOTIMPLEMENTED; }
@@ -191,7 +202,7 @@ void SphericalVector::interpolate_vector_field(const Field& sourceField,
 
 template <typename Value, int Rank>
 void SphericalVector::interpolate_vector_field(const Field& sourceField,
-                                                 Field& targetField) const {
+                                               Field& targetField) const {
 
   const auto sourceView = array::make_view<Value, Rank>(sourceField);
   auto targetView = array::make_view<Value, Rank>(targetField);
@@ -199,22 +210,22 @@ void SphericalVector::interpolate_vector_field(const Field& sourceField,
 
   const auto horizontalComponent = [](const auto& weight, auto&& sourceVars,
                                       auto&& targetVars) {
-    const auto targetVector =
-        weight * std::complex<double>(sourceVars(0), sourceVars(1));
-
+    const auto sourceVector = Complex(sourceVars(0), sourceVars(1));
+    const auto targetVector = weight * sourceVector;
     targetVars(0) += targetVector.real();
     targetVars(1) += targetVector.imag();
   };
-
-  const auto verticalComponent = [](
-      const auto& weight, auto&& sourceVars,
-      auto&& targetVars) { targetVars(2) += weight * sourceVars(2); };
 
   matrixMultiply(*complexWeights_, sourceView, targetView, horizontalComponent);
 
   if (sourceField.variables() == 2) return;
 
-  matrixMultiply(*realWeights_, sourceView, targetView, verticalComponent);
+  const auto verticalComponent = [](
+      const auto& weight, auto&& sourceVars,
+      auto&& targetVars) { targetVars(2) += weight * sourceVars(2); };
+
+  const auto realWeights = mapBaseMatrix(matrix());
+  matrixMultiply(realWeights, sourceView, targetView, verticalComponent);
 }
 
 }  // namespace method

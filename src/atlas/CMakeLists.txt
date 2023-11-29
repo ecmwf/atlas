@@ -669,7 +669,7 @@ interpolation/nonlinear/NonLinear.cc
 interpolation/nonlinear/NonLinear.h
 )
 
-if (eckit_EIGEN_FOUND)
+if (atlas_HAVE_EIGEN)
 
 list (APPEND atlas_interpolation_srcs
 interpolation/method/sphericalvector/SphericalVector.h

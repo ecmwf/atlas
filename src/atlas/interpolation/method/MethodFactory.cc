@@ -12,7 +12,6 @@
 
 // for static linking
 #include "cubedsphere/CubedSphereBilinear.h"
-#include "sphericalvector/SphericalVector.h"
 #include "knn/GridBoxAverage.h"
 #include "knn/GridBoxMaximum.h"
 #include "knn/KNearestNeighbours.h"
@@ -26,6 +25,9 @@
 #include "unstructured/FiniteElement.h"
 #include "unstructured/UnstructuredBilinearLonLat.h"
 
+#if ATLAS_HAVE_EIGEN
+#include "sphericalvector/SphericalVector.h"
+#endif
 
 namespace atlas {
 namespace interpolation {
@@ -48,7 +50,9 @@ void force_link() {
             MethodBuilder<method::GridBoxAverage>();
             MethodBuilder<method::GridBoxMaximum>();
             MethodBuilder<method::CubedSphereBilinear>();
+#if ATLAS_HAVE_EIGEN
             MethodBuilder<method::SphericalVector>();
+#endif
         }
     } link;
 }
