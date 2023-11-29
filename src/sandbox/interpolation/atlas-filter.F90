@@ -134,7 +134,6 @@ function atlas_Filter__create(src_grid, src_mesh, data_loc_in) result(this)
     this%tgt_field_srcpart = tgt_fs_srcpart%create_field(kind=atlas_real(JPRB))
 
     ! // free memory
-    call src_mesh%final()
     call tgt_mesh%final()
     call src_mesh_tgtpart%final()
     call tgt_mesh_srcpart%final()
@@ -203,17 +202,17 @@ implicit none
 
     type(atlas_StructuredGrid) :: grid
     type(atlas_GridDistribution) :: griddist
-    type(atlas_Field) :: sfield
+    type(atlas_Field) :: sfield, field_lonlat
     type(atlas_Filter) :: filter
     type(atlas_FunctionSpace) :: fspace
     type(atlas_Mesh) :: mesh
     type(atlas_MeshGenerator) :: meshgen
     type(atlas_Output) :: gmsh
+    type(atlas_mesh_Nodes) :: nodes
 
     real :: start_time, end_time
-    real(kind=JPRB), dimension(2) :: lonlat
-    real(kind=JPRB), pointer :: sfield_v(:)
-    integer :: i, j, ijglb
+    real(kind=JPRB), pointer :: sfield_v(:), lonlat(:,:)
+    integer :: inode, nb_nodes
 
     call atlas_library%initialise()
 
@@ -231,17 +230,17 @@ implicit none
 
     fspace = filter%source()
     sfield = fspace%create_field(name="unfiltered", kind=atlas_real(JPRB))
+
+    ! initial data
     call sfield%data(sfield_v)
-    ijglb = 1
-    do j = 1, grid%ny()
-        do i = 1, grid%nx(j)
-            lonlat = grid%lonlat(i,j)
-            sfield_v(ijglb) = MDPI_gulfstream(lonlat(1), lonlat(2))
-            ijglb = ijglb + 1
-        end do
+    nodes = mesh%nodes()
+    nb_nodes = nodes%size()
+    field_lonlat = nodes%lonlat()
+    call field_lonlat%data(lonlat)
+    do inode = 1, nb_nodes
+        sfield_v(inode) = MDPI_gulfstream(lonlat(1,inode), lonlat(2,inode))
     end do
     call sfield%halo_exchange()
-
     call gmsh%write(sfield)
 
     call cpu_time(start_time)
@@ -253,5 +252,4 @@ implicit none
     call gmsh%write(sfield)
 
     call atlas_library%finalise()
-
 end program filtering
