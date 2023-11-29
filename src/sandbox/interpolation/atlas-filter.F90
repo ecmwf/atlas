@@ -249,6 +249,15 @@ implicit none
     print *, " filter.exe in seconds: ", end_time - start_time
 
     call sfield%rename("filtered")
+    call sfield%halo_exchange()
+    call gmsh%write(sfield)
+
+    ! output the difference of the unfiltered and the filtered field
+    do inode = 1, nb_nodes
+        sfield_v(inode) = sfield_v(inode) - MDPI_gulfstream(lonlat(1,inode), lonlat(2,inode))
+    end do
+    call sfield%rename("filt-unfilt")
+    call sfield%halo_exchange()
     call gmsh%write(sfield)
 
     call atlas_library%finalise()
