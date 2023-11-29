@@ -89,14 +89,17 @@ function atlas_Filter__create(src_grid, src_mesh, data_loc_in) result(this)
     griddist = atlas_GridDistribution(tgt_grid, partitioner)
     tgt_mesh = meshgen%generate(tgt_grid, griddist)
     if (trim(this%data_loc) == "CellColumns") then
-        src_fs = atlas_functionspace_CellColumns(src_mesh, halo=4)
-        tgt_fs = atlas_functionspace_CellColumns(tgt_mesh, halo=2)
+        src_fs = atlas_functionspace_CellColumns(src_mesh, halo=0)
+        tgt_fs = atlas_functionspace_CellColumns(tgt_mesh, halo=0)
     else if (trim(this%data_loc) == "NodeColumns") then
-        src_fs = atlas_functionspace_NodeColumns(src_mesh, halo=4)
-        tgt_fs = atlas_functionspace_NodeColumns(tgt_mesh, halo=2)
+        ! NodeColumns require halo>=1 for ConservativeSphericalInterpolation
+        src_fs = atlas_functionspace_NodeColumns(src_mesh, halo=1)
+        tgt_fs = atlas_functionspace_NodeColumns(tgt_mesh, halo=1)
     else if (trim(this%data_loc) == "StructuredColumns") then
-        src_fs = atlas_functionspace_StructuredColumns(src_grid, partitioner, halo=4)
-        tgt_fs = atlas_functionspace_StructuredColumns(tgt_grid, partitioner, halo=2)
+        ! NOTE: ConservativeSphericalInterpolation vdoes not support StructuredColumns
+        !       please use: call interpolation_config%set("type", "nearest-neighbour")
+        src_fs = atlas_functionspace_StructuredColumns(src_grid, partitioner, halo=1)
+        tgt_fs = atlas_functionspace_StructuredColumns(tgt_grid, partitioner, halo=1)
     else
         stop "Unknown function space: "//data_loc_in
     end if
@@ -109,14 +112,17 @@ function atlas_Filter__create(src_grid, src_mesh, data_loc_in) result(this)
     griddist = atlas_GridDistribution(tgt_grid, partitioner)
     tgt_mesh_srcpart = meshgen%generate(tgt_grid, griddist)
     if (trim(this%data_loc) == "CellColumns") then
-        src_fs_tgtpart = atlas_functionspace_CellColumns(src_mesh_tgtpart)
-        tgt_fs_srcpart = atlas_functionspace_CellColumns(tgt_mesh_srcpart)
+        src_fs_tgtpart = atlas_functionspace_CellColumns(src_mesh_tgtpart, halo=2)
+        tgt_fs_srcpart = atlas_functionspace_CellColumns(tgt_mesh_srcpart, halo=1)
     else if (trim(this%data_loc) == "NodeColumns") then
-        src_fs_tgtpart = atlas_functionspace_NodeColumns(src_mesh_tgtpart)
-        tgt_fs_srcpart = atlas_functionspace_NodeColumns(tgt_mesh_srcpart)
+        ! NOTE: source have to cover the added half-cell size layer on target partitions
+        !       For the backward remapping, target cell have to covert the added half-cell
+        !       size layer on the source partitions
+        src_fs_tgtpart = atlas_functionspace_NodeColumns(src_mesh_tgtpart, halo=2)
+        tgt_fs_srcpart = atlas_functionspace_NodeColumns(tgt_mesh_srcpart, halo=1)
     else if (trim(this%data_loc) == "StructuredColumns") then
-        src_fs_tgtpart = atlas_functionspace_StructuredColumns(src_grid, partitioner)
-        tgt_fs_srcpart = atlas_functionspace_StructuredColumns(tgt_grid, partitioner)
+        src_fs_tgtpart = atlas_functionspace_StructuredColumns(src_grid, partitioner, halo=2)
+        tgt_fs_srcpart = atlas_functionspace_StructuredColumns(tgt_grid, partitioner, halo=1)
     endif
 
     this%src_redist = atlas_Redistribution(src_fs, src_fs_tgtpart)
