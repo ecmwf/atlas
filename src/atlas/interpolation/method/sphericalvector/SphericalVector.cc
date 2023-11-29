@@ -43,7 +43,7 @@ namespace {
 
 MethodBuilder<SphericalVector> __builder("spherical-vector");
 
-RealMatrixMap mapBaseMatrix(const EckitMatrix& baseMatrix) {
+RealMatrixMap makeMatrixMap(const EckitMatrix& baseMatrix) {
   return RealMatrixMap(baseMatrix.rows(), baseMatrix.cols(),
                        baseMatrix.nonZeros(), baseMatrix.outer(),
                        baseMatrix.inner(), baseMatrix.data());
@@ -114,7 +114,7 @@ void SphericalVector::do_setup(const FunctionSpace& source,
   const auto nRows = matrix().rows();
   const auto nCols = matrix().cols();
   const auto nNonZeros = matrix().nonZeros();
-  const auto realWeights = mapBaseMatrix(matrix());
+  const auto realWeights = makeMatrixMap(matrix());
 
   complexWeights_ = std::make_shared<ComplexMatrix>(nRows, nCols);
   auto complexTriplets = ComplexTriplets(nNonZeros);
@@ -136,7 +136,7 @@ void SphericalVector::do_setup(const FunctionSpace& source,
 
     const auto idx = &weight - realWeights.valuePtr();
 
-    complexTriplets[idx] = {i, j, std::polar(weight, deltaAlpha)};
+    complexTriplets[idx] = {int(i), int(j), std::polar(weight, deltaAlpha)};
   });
   complexWeights_->setFromTriplets(complexTriplets.begin(),
                                    complexTriplets.end());
@@ -163,7 +163,8 @@ void SphericalVector::do_execute(const Field& sourceField, Field& targetField,
                                    Metadata&) const {
   ATLAS_TRACE("atlas::interpolation::method::SphericalVector::do_execute()");
 
-  if (!(sourceField.variables() == 2 || sourceField.variables() == 3)) {
+  const auto fieldType = targetField.metadata().getString("type", "");
+  if (fieldType != "vector") {
 
     auto metadata = Metadata();
     Method::do_execute(sourceField, targetField, metadata);
@@ -174,6 +175,11 @@ void SphericalVector::do_execute(const Field& sourceField, Field& targetField,
   if (target_.size() == 0) {
     return;
   }
+
+  ATLAS_ASSERT_MSG(sourceField.variables() == 2 || sourceField.variables() == 3,
+                   "Vector field can only have 2 or 3 components.");
+
+  Method::check_compatibility(sourceField, targetField, matrix());
 
   haloExchange(sourceField);
 
@@ -224,7 +230,7 @@ void SphericalVector::interpolate_vector_field(const Field& sourceField,
       const auto& weight, auto&& sourceVars,
       auto&& targetVars) { targetVars(2) += weight * sourceVars(2); };
 
-  const auto realWeights = mapBaseMatrix(matrix());
+  const auto realWeights = makeMatrixMap(matrix());
   matrixMultiply(realWeights, sourceView, targetView, verticalComponent);
 }
 

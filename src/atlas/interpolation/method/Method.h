@@ -127,6 +127,8 @@ protected:
     virtual void do_setup(const FunctionSpace& source, const Field& target);
     virtual void do_setup(const FunctionSpace& source, const FieldSet& target);
 
+    void check_compatibility(const Field& src, const Field& tgt, const Matrix& W) const;
+
 private:
     template <typename Value>
     void interpolate_field(const Field& src, Field& tgt, const Matrix&) const;
@@ -151,8 +153,6 @@ private:
 
     template <typename Value>
     void adjoint_interpolate_field_rank3(Field& src, const Field& tgt, const Matrix&) const;
-
-    void check_compatibility(const Field& src, const Field& tgt, const Matrix& W) const;
 
 private:
     const Matrix* matrix_ = nullptr;

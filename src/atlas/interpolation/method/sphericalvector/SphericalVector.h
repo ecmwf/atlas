@@ -23,13 +23,27 @@ namespace method {
 
 class SphericalVector : public Method {
  public:
-
   using Complex = std::complex<double>;
 
-  template<typename Value>
+  template <typename Value>
   using SparseMatrix = Eigen::SparseMatrix<Value, Eigen::RowMajor>;
   using ComplexMatrix = SparseMatrix<Complex>;
 
+  /// @brief   Interpolation post-processor for vector field interpolation
+  ///
+  /// @details Takes a base interpolation config keyed to "scheme" and creates
+  ///          A set of complex intepolation weights which rotate source vector
+  ///          elements into the target elements' individual frame of reference.
+  ///          Method works by creating a great-circle arc between the source
+  ///          and target locations; the amount of rotation is determined by the
+  ///          difference the in the great-cricle course (relative to north) at
+  ///          the source and target location.
+  ///          Both source and target fields require the "type" metadata to be
+  ///          set to "vector" for this method to be invoked. Otherwise, the
+  ///          base scalar interpolation method is invoked.
+  ///          Note: This method only works with matrix-based interpolation
+  ///          schemes.
+  ///
   SphericalVector(const Config& config) : Method(config) {
     const auto& conf = dynamic_cast<const eckit::LocalConfiguration&>(config);
     interpolationScheme_ = conf.getSubConfiguration("scheme");
@@ -45,8 +59,17 @@ class SphericalVector : public Method {
   void do_execute(const Field& sourceField, Field& targetField,
                   Metadata& metadata) const override;
 
- private:
+  void do_execute_adjoint(FieldSet& sourceFieldSet,
+                          const FieldSet& targetFieldSet,
+                          Metadata& metadata) const override {
+    ATLAS_NOTIMPLEMENTED;
+  }
+  void do_execute_adjoint(Field& sourceField, const Field& targetField,
+                          Metadata& metadata) const override {
+    ATLAS_NOTIMPLEMENTED;
+  }
 
+ private:
   template <typename Value>
   void interpolate_vector_field(const Field& source, Field& target) const;
 

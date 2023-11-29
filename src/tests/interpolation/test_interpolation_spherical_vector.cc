@@ -16,8 +16,8 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/util/Point.h"
 #include "atlas/util/Config.h"
+#include "atlas/util/Constants.h"
 #include "atlas/util/function/VortexRollup.h"
-#include "atlas/util/UnitSphere.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -42,9 +42,10 @@ std::pair<double, double> vortexField(double lon, double lat) {
                     util::function::vortex_rollup(lon, lat - 0.5 * hLat, 0.1)) /
                    hLat;
 
-  const double v = -(util::function::vortex_rollup(lon + 0.5 * hLon, lat, 0.1) -
-                     util::function::vortex_rollup(lon - 0.5 * hLon, lat, 0.1)) /
-                   (hLon * std::cos(lat * util::Constants::degreesToRadians()));
+  const double v =
+      -(util::function::vortex_rollup(lon + 0.5 * hLon, lat, 0.1) -
+        util::function::vortex_rollup(lon - 0.5 * hLon, lat, 0.1)) /
+      (hLon * std::cos(lat * util::Constants::degreesToRadians()));
 
   return std::make_pair(u, v);
 }
@@ -62,7 +63,7 @@ void gmshOutput(const std::string& fileName, const FieldSet& fieldSet) {
   gmsh.write(fieldSet, functionSpace);
 }
 
-void testInterpolation(const Config& config) {
+void testMeshInterpolation(const Config& config) {
 
   const auto sourceGrid = Grid(config.getString("source_grid"));
   const auto sourceMesh =
@@ -82,21 +83,22 @@ void testInterpolation(const Config& config) {
   const auto targetLonLat =
       array::make_view<double, 2>(targetFunctionSpace.lonlat());
 
-  auto sourceField = array::make_view<double, 3>(sourceFieldSet.add(
-      sourceFunctionSpace.createField<double>(option::name("test field") |
-                                              option::levels(1) |
-                                              option::variables(2))));
+  auto sourceField = array::make_view<double, 3>(
+      sourceFieldSet.add(sourceFunctionSpace.createField<double>(
+          option::name("test field") | option::levels(1) |
+          option::variables(3) | option::type("vector"))));
 
-  auto targetField = array::make_view<double, 3>(targetFieldSet.add(
-      targetFunctionSpace.createField<double>(option::name("test field") |
-                                              option::levels(1) |
-                                              option::variables(2))));
+  auto targetField = array::make_view<double, 3>(
+      targetFieldSet.add(targetFunctionSpace.createField<double>(
+          option::name("test field") | option::levels(1) |
+          option::variables(3) | option::type("vector"))));
 
   ArrayForEach<0>::apply(std::tie(sourceLonLat, sourceField),
                          [](auto&& lonLat, auto&& sourceColumn) {
     ArrayForEach<0>::apply(std::tie(sourceColumn), [&](auto&& sourceElem) {
       std::tie(sourceElem(0), sourceElem(1)) =
           vortexField(lonLat(0), lonLat(1));
+      sourceElem(2) = 0.;
     });
   });
 
@@ -110,9 +112,10 @@ void testInterpolation(const Config& config) {
       targetFieldSet.add(targetFunctionSpace.createField<double>(
           option::name("error field") | option::levels(1))));
 
+  auto maxError = 0.;
   ArrayForEach<0>::apply(
       std::tie(targetLonLat, targetField, errorField),
-      [](auto&& lonLat, auto&& targetColumn, auto&& errorColumn) {
+      [&](auto&& lonLat, auto&& targetColumn, auto&& errorColumn) {
         ArrayForEach<0>::apply(std::tie(targetColumn, errorColumn),
                                [&](auto&& targetElem, auto&& errorElem) {
 
@@ -122,66 +125,48 @@ void testInterpolation(const Config& config) {
 
           errorElem = std::sqrt(deltaVal.first * deltaVal.first +
                                 deltaVal.second * deltaVal.second);
+          maxError = std::max(maxError, static_cast<double>(errorElem));
         });
       });
 
+  EXPECT_APPROX_EQ(maxError, 0., config.getDouble("tol"));
   gmshOutput(config.getString("file_id") + "_source.msh", sourceFieldSet);
   gmshOutput(config.getString("file_id") + "_target.msh", targetFieldSet);
-}
-
-CASE("great-circle course") {
-
-  const auto point1 = PointLonLat(-71.6, -33.0);  // Valparaiso
-  const auto point2 = PointLonLat(121.8, 31.4);   // Shanghai
-  const auto point3 = PointLonLat(0., 89.);
-  const auto point4 = PointLonLat(180., 89.);
-
-  const auto targetCourse1 = -94.41;
-  const auto targetCourse2 = -78.42;
-  const auto targetCourse3 = 0.;
-  const auto targetCourse4 = 180.;
-
-  const auto[ course1, course2 ] = greatCircleCourse(point1, point2);
-  const auto[ course3, course4 ] = greatCircleCourse(point3, point4);
-
-  EXPECT_APPROX_EQ(course1, targetCourse1, 0.01);
-  EXPECT_APPROX_EQ(course2, targetCourse2, 0.01);
-  EXPECT_APPROX_EQ(course3, targetCourse3, 1.e-7);
-  EXPECT_APPROX_EQ(std::abs(course4), targetCourse4, 1.e-7);
 }
 
 CASE("cubed sphere vector interpolation") {
 
   const auto baseInterpScheme =
       util::Config("type", "cubedsphere-bilinear").set("adjoint", true);
-  const auto interpScheme = util::Config("type", "spherical-vector")
-                                .set("scheme", baseInterpScheme);
+  const auto interpScheme =
+      util::Config("type", "spherical-vector").set("scheme", baseInterpScheme);
   const auto cubedSphereConf = Config("source_grid", "CS-LFR-48")
                                    .set("source_mesh", "cubedsphere_dual")
                                    .set("target_grid", "O48")
                                    .set("target_mesh", "structured")
                                    .set("file_id", "spherical_vector_cs")
-                                   .set("scheme", interpScheme);
+                                   .set("scheme", interpScheme)
+                                   .set("tol", 0.00018);
 
-  testInterpolation((cubedSphereConf));
+  testMeshInterpolation((cubedSphereConf));
 }
 
 CASE("finite element vector interpolation") {
 
   const auto baseInterpScheme =
       util::Config("type", "finite-element").set("adjoint", true);
-  const auto interpScheme = util::Config("type", "spherical-vector")
-                                .set("scheme", baseInterpScheme);
+  const auto interpScheme =
+      util::Config("type", "spherical-vector").set("scheme", baseInterpScheme);
   const auto cubedSphereConf = Config("source_grid", "O48")
                                    .set("source_mesh", "structured")
                                    .set("target_grid", "CS-LFR-48")
                                    .set("target_mesh", "cubedsphere_dual")
                                    .set("file_id", "spherical_vector_fe")
-                                   .set("scheme", interpScheme);
+                                   .set("scheme", interpScheme)
+                                   .set("tol", 0.00015);
 
-  testInterpolation((cubedSphereConf));
+  testMeshInterpolation((cubedSphereConf));
 }
-
 }
 }
 

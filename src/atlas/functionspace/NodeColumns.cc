@@ -283,6 +283,10 @@ void NodeColumns::set_field_metadata(const eckit::Configuration& config, Field& 
     idx_t variables(0);
     config.get("variables", variables);
     field.set_variables(variables);
+
+    if (config.has("type")) {
+      field.metadata().set("type", config.getString("type"));
+    }
 }
 
 array::DataType NodeColumns::config_datatype(const eckit::Configuration& config) const {
