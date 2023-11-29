@@ -205,6 +205,7 @@ ecbuild_add_library( TARGET atlas_f
     SOURCES
         ${FORTRAN_BINDINGS}
         atlas_module.F90
+        util/atlas_functions_module.F90
         util/atlas_kinds_module.F90
         util/atlas_JSON_module.F90
         util/atlas_Config_module.F90
