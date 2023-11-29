@@ -156,7 +156,7 @@ SUBROUTINE FILTER_EXECUTE(this, src_field)
 
     call src_redist%execute(src_field, src_field_tgtpart)
     call src_field_tgtpart%halo_exchange()
-    call interpolation_st%execute(src_field, tgt_field)
+    call interpolation_st%execute(src_field_tgtpart, tgt_field)
     call tgt_redist%execute(tgt_field, tgt_field_srcpart)
     call interpolation_ts%execute(tgt_field_srcpart, src_field)
 
