@@ -5,6 +5,9 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
+#include "atlas/library/defines.h"
+#if ATLAS_HAVE_EIGEN
+
 #pragma once
 
 #include <complex>
@@ -92,3 +95,5 @@ class SphericalVector : public Method {
 }  // namespace method
 }  // namespace interpolation
 }  // namespace atlas
+
+#endif

@@ -8,6 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "atlas/library/defines.h"
 #include "MethodFactory.h"
 
 // for static linking
@@ -16,6 +17,9 @@
 #include "knn/GridBoxMaximum.h"
 #include "knn/KNearestNeighbours.h"
 #include "knn/NearestNeighbour.h"
+#if ATLAS_HAVE_EIGEN
+#include "sphericalvector/SphericalVector.h"
+#endif
 #include "structured/Cubic2D.h"
 #include "structured/Cubic3D.h"
 #include "structured/Linear2D.h"
@@ -24,10 +28,6 @@
 #include "structured/QuasiCubic3D.h"
 #include "unstructured/FiniteElement.h"
 #include "unstructured/UnstructuredBilinearLonLat.h"
-
-#if ATLAS_HAVE_EIGEN
-#include "sphericalvector/SphericalVector.h"
-#endif
 
 namespace atlas {
 namespace interpolation {

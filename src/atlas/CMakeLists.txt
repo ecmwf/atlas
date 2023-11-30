@@ -632,6 +632,8 @@ interpolation/method/knn/KNearestNeighboursBase.cc
 interpolation/method/knn/KNearestNeighboursBase.h
 interpolation/method/knn/NearestNeighbour.cc
 interpolation/method/knn/NearestNeighbour.h
+interpolation/method/sphericalvector/SphericalVector.h
+interpolation/method/sphericalvector/SphericalVector.cc
 interpolation/method/structured/Cubic2D.cc
 interpolation/method/structured/Cubic2D.h
 interpolation/method/structured/Cubic3D.cc
@@ -668,15 +670,6 @@ interpolation/nonlinear/Missing.h
 interpolation/nonlinear/NonLinear.cc
 interpolation/nonlinear/NonLinear.h
 )
-
-if (atlas_HAVE_EIGEN)
-
-list (APPEND atlas_interpolation_srcs
-interpolation/method/sphericalvector/SphericalVector.h
-interpolation/method/sphericalvector/SphericalVector.cc
-)
-
-endif()
 
 list( APPEND atlas_linalg_srcs
 linalg/Indexing.h

@@ -5,6 +5,9 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
+#include "atlas/library/defines.h"
+#if ATLAS_HAVE_EIGEN
+
 #include <cmath>
 #include <tuple>
 
@@ -237,3 +240,5 @@ void SphericalVector::interpolate_vector_field(const Field& sourceField,
 }  // namespace method
 }  // namespace interpolation
 }  // namespace atlas
+
+#endif
