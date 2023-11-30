@@ -14,7 +14,7 @@
 !   Smooth GMV and GMVS fields by conservative remapping to a lower resolution grid (and back)
 ! 
 ! Authors:
-!   Filip Vana, Slavko Brdar, Willem Deconinck (Nov 2023)
+!   Filip Vana, Slavko Brdar, Willem Deconinck (ECMWF, Nov 2023)
 ! 
 
 ! --------------------------------------------------------------------------------------------
@@ -74,9 +74,10 @@ end function filter_src_mesh
 
 ! --------------------------------------------------------------------------------------------
 
-function atlas_Filter__create(src_grid, partitioner, data_loc_in) result(this)
-    class(atlas_Grid), intent(in)     :: src_grid
-    type(atlas_Partitioner), intent(in)   :: partitioner
+function atlas_Filter__create(src_grid, partitioner, tgt_grid_name, data_loc_in) result(this)
+    class(atlas_Grid), intent(in)          :: src_grid
+    character(len=*), intent(in)          :: tgt_grid_name
+    type(atlas_Partitioner), intent(in)    :: partitioner
     character(len=*), intent(in), optional :: data_loc_in
     type(atlas_Filter)           :: this
 
@@ -93,7 +94,7 @@ function atlas_Filter__create(src_grid, partitioner, data_loc_in) result(this)
 
     this%data_loc = "CellColumns"
     if (present(data_loc_in)) this%data_loc = trim(data_loc_in)
-    tgt_grid = atlas_StructuredGrid("O40")
+    tgt_grid = atlas_StructuredGrid(tgt_grid_name)
     meshgen = atlas_MeshGenerator()
     griddist = atlas_GridDistribution(src_grid, partitioner)
     src_mesh = meshgen%generate(src_grid, griddist)
@@ -194,7 +195,7 @@ SUBROUTINE FILTER_FINALISE(this)
             & tgt_field=>this%tgt_field)
     ASSOCIATE(interpolation_st=>this%interpolation_st, interpolation_ts=>this%interpolation_ts)
 
-    ! destroy atlas structured created by this module
+    ! destroy atlas structures created by this module
     call src_mesh%final()
     call src_fs%final()
     call src_redist%final()
@@ -224,26 +225,28 @@ use filter_module, only: JPRB, atlas_Filter
 
 implicit none
 
-    type(atlas_StructuredGrid) :: grid
+    type(atlas_StructuredGrid)   :: grid
+    type(atlas_Partitioner)      :: partitioner
     type(atlas_GridDistribution) :: griddist
-    type(atlas_Field) :: sfield, field_lonlat
-    type(atlas_Filter) :: filter
-    type(atlas_FunctionSpace) :: fspace
-    type(atlas_Mesh) :: mesh
-    type(atlas_MeshGenerator) :: meshgen
-    type(atlas_Output) :: gmsh
-    type(atlas_mesh_Nodes) :: nodes
+    type(atlas_Field)            :: sfield, field_lonlat
+    type(atlas_Filter)           :: filter
+    type(atlas_FunctionSpace)    :: fspace
+    type(atlas_Mesh)             :: mesh
+    type(atlas_MeshGenerator)    :: meshgen
+    type(atlas_Output)           :: gmsh
+    type(atlas_mesh_Nodes)       :: nodes
 
-    real :: start_time, end_time
-    real(kind=JPRB), pointer :: sfield_v(:), lonlat(:,:)
-    integer :: inode, nb_nodes
+    real                         :: start_time, end_time
+    real(kind=JPRB), pointer     :: sfield_v(:), lonlat(:,:)
+    integer                      :: inode, nb_nodes
 
     call atlas_library%initialise()
 
     grid = atlas_StructuredGrid("O80")
+    partitioner = atlas_Partitioner("equal_regions")
 
     call cpu_time(start_time)
-    filter = atlas_Filter(grid, atlas_Partitioner("equal_regions"), "NodeColumns") ! TODO: CellColumns has an indexing problem in Redistribution
+    filter = atlas_Filter(grid, partitioner, "O40", "NodeColumns") ! TODO: CellColumns has a problem
     call cpu_time(end_time)
     print *, " filter.setup in seconds: ", end_time - start_time
 
@@ -279,5 +282,9 @@ implicit none
     call sfield%halo_exchange()
     call gmsh%write(sfield)
 
+    call gmsh%final()
+    call nodes%final()
+    call partitioner%final()
+    call grid%final()
     call atlas_library%finalise()
 end program filtering
