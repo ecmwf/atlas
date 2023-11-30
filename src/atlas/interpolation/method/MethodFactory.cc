@@ -8,7 +8,6 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/library/defines.h"
 #include "MethodFactory.h"
 
 // for static linking
@@ -17,7 +16,6 @@
 #include "knn/GridBoxMaximum.h"
 #include "knn/KNearestNeighbours.h"
 #include "knn/NearestNeighbour.h"
-#include "sphericalvector/SphericalVector.h"
 #include "structured/Cubic2D.h"
 #include "structured/Cubic3D.h"
 #include "structured/Linear2D.h"
@@ -48,9 +46,6 @@ void force_link() {
             MethodBuilder<method::GridBoxAverage>();
             MethodBuilder<method::GridBoxMaximum>();
             MethodBuilder<method::CubedSphereBilinear>();
-#if ATLAS_HAVE_EIGEN
-            MethodBuilder<method::SphericalVector>();
-#endif
         }
     } link;
 }
