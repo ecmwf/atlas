@@ -134,7 +134,7 @@ void SphericalVector::do_setup(const FunctionSpace& source,
     const auto deltaAlpha =
         (alpha.first - alpha.second) * util::Constants::degreesToRadians();
 
-    const auto idx = &weight - realWeights.valuePtr();
+    const auto idx = std::distance(realWeights.valuePtr(), &weight);
 
     complexTriplets[idx] = {int(i), int(j), std::polar(weight, deltaAlpha)};
   });
@@ -163,7 +163,7 @@ void SphericalVector::do_execute(const Field& sourceField, Field& targetField,
                                    Metadata&) const {
   ATLAS_TRACE("atlas::interpolation::method::SphericalVector::do_execute()");
 
-  const auto fieldType = targetField.metadata().getString("type", "");
+  const auto fieldType = sourceField.metadata().getString("type", "");
   if (fieldType != "vector") {
 
     auto metadata = Metadata();
