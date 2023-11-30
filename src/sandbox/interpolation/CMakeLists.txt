@@ -14,13 +14,6 @@ ecbuild_add_executable(
 )
 
 ecbuild_add_executable(
-    TARGET  atlas-filter-fortran
-    SOURCES atlas-filter.F90
-    LIBS    atlas_f
-    NOINSTALL
-)
-
-ecbuild_add_executable(
     TARGET  atlas-filter
     SOURCES atlas-filter.cc
     LIBS    atlas

@@ -9,11 +9,18 @@
 if( HAVE_FORTRAN )
 
   ecbuild_add_executable(
+    TARGET  atlas-filter-fortran
+    SOURCES atlas-filter.F90
+    LIBS    atlas_f
+    NOINSTALL
+  )
+
+  ecbuild_add_executable(
     TARGET  atlas-interpolation-fortran
     SOURCES atlas-interpolation-fortran.F90
     LIBS    atlas_f
     LINKER_LANGUAGE Fortran
     NOINSTALL
-)
+  )
 
 endif()
