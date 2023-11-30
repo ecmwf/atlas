@@ -36,6 +36,7 @@ INTEGER, PARAMETER:: JPRB = SELECTED_REAL_KIND(13,300)
 ! --------------------------------------------------------------------------------------------
 type :: atlas_Filter
 private
+    type(atlas_Mesh)           :: src_mesh
     type(atlas_FunctionSpace)  :: src_fs
     type(atlas_Redistribution) :: src_redist, tgt_redist
     type(atlas_Interpolation)  :: interpolation_st, interpolation_ts
@@ -43,7 +44,8 @@ private
     character(len=64)          :: data_loc
 contains
     procedure, public :: execute => filter_execute
-    procedure, public :: source  => filter_src_fs
+    procedure, public :: fspace  => filter_src_fs
+    procedure, public :: mesh    => filter_src_mesh
     final :: filter_finalise
 end type atlas_Filter
 ! --------------------------------------------------------------------------------------------
@@ -64,18 +66,26 @@ end function filter_src_fs
 
 ! --------------------------------------------------------------------------------------------
 
-function atlas_Filter__create(src_grid, src_mesh, data_loc_in) result(this)
+function filter_src_mesh(this) result(mesh)
+    class(atlas_Filter), intent(inout) :: this
+    type(atlas_Mesh) :: mesh
+    mesh = this%src_mesh
+end function filter_src_mesh
+
+! --------------------------------------------------------------------------------------------
+
+function atlas_Filter__create(src_grid, partitioner, data_loc_in) result(this)
     class(atlas_Grid), intent(in)     :: src_grid
-    type(atlas_Mesh), intent(inout)   :: src_mesh
+    type(atlas_Partitioner), intent(in)   :: partitioner
     character(len=*), intent(in), optional :: data_loc_in
     type(atlas_Filter)           :: this
 
     type(atlas_Grid)             :: tgt_grid
+    type(atlas_Partitioner)      :: mpart
     type(atlas_MeshGenerator)    :: meshgen
-    type(atlas_Partitioner)      :: partitioner
     type(atlas_GridDistribution) :: griddist
     type(atlas_Redistribution)   :: src_redist, tgt_redist
-    type(atlas_Mesh)             :: tgt_mesh
+    type(atlas_Mesh)             :: src_mesh, tgt_mesh
     type(atlas_Mesh)             :: src_mesh_tgtpart, tgt_mesh_srcpart
     type(atlas_Config)           :: interpolation_config
     type(atlas_FunctionSpace)    :: src_fs, tgt_fs
@@ -85,7 +95,8 @@ function atlas_Filter__create(src_grid, src_mesh, data_loc_in) result(this)
     if (present(data_loc_in)) this%data_loc = trim(data_loc_in)
     tgt_grid = atlas_StructuredGrid("O40")
     meshgen = atlas_MeshGenerator()
-    partitioner = atlas_Partitioner("regular_bands")
+    griddist = atlas_GridDistribution(src_grid, partitioner)
+    src_mesh = meshgen%generate(src_grid, griddist)
     griddist = atlas_GridDistribution(tgt_grid, partitioner)
     tgt_mesh = meshgen%generate(tgt_grid, griddist)
     if (trim(this%data_loc) == "CellColumns") then
@@ -96,20 +107,22 @@ function atlas_Filter__create(src_grid, src_mesh, data_loc_in) result(this)
         src_fs = atlas_functionspace_NodeColumns(src_mesh, halo=1)
         tgt_fs = atlas_functionspace_NodeColumns(tgt_mesh, halo=1)
     else if (trim(this%data_loc) == "StructuredColumns") then
-        ! NOTE: ConservativeSphericalInterpolation vdoes not support StructuredColumns
+        ! NOTE: ConservativeSphericalInterpolation does not support StructuredColumns
         !       please use: call interpolation_config%set("type", "nearest-neighbour")
         src_fs = atlas_functionspace_StructuredColumns(src_grid, partitioner, halo=1)
         tgt_fs = atlas_functionspace_StructuredColumns(tgt_grid, partitioner, halo=1)
     else
         stop "Unknown function space: "//data_loc_in
     end if
+    this%src_mesh = src_mesh
     this%src_fs = src_fs
 
     ! // redistribution setup
-    partitioner = atlas_MatchingPartitioner(tgt_mesh)
-    griddist = atlas_GridDistribution(src_grid, partitioner)
+    mpart = atlas_MatchingPartitioner(tgt_mesh)
+    griddist = atlas_GridDistribution(src_grid, mpart)
     src_mesh_tgtpart = meshgen%generate(src_grid, griddist)
-    griddist = atlas_GridDistribution(tgt_grid, partitioner)
+    mpart = atlas_MatchingPartitioner(src_mesh)
+    griddist = atlas_GridDistribution(tgt_grid, mpart)
     tgt_mesh_srcpart = meshgen%generate(tgt_grid, griddist)
     if (trim(this%data_loc) == "CellColumns") then
         src_fs_tgtpart = atlas_functionspace_CellColumns(src_mesh_tgtpart, halo=2)
@@ -118,8 +131,8 @@ function atlas_Filter__create(src_grid, src_mesh, data_loc_in) result(this)
         ! NOTE: source have to cover the added half-cell size layer on target partitions
         !       For the backward remapping, target cell have to covert the added half-cell
         !       size layer on the source partitions
-        src_fs_tgtpart = atlas_functionspace_NodeColumns(src_mesh_tgtpart, halo=2)
-        tgt_fs_srcpart = atlas_functionspace_NodeColumns(tgt_mesh_srcpart, halo=1)
+        src_fs_tgtpart = atlas_functionspace_NodeColumns(src_mesh_tgtpart, halo=5)
+        tgt_fs_srcpart = atlas_functionspace_NodeColumns(tgt_mesh_srcpart, halo=2)
     else if (trim(this%data_loc) == "StructuredColumns") then
         src_fs_tgtpart = atlas_functionspace_StructuredColumns(src_grid, partitioner, halo=2)
         tgt_fs_srcpart = atlas_functionspace_StructuredColumns(tgt_grid, partitioner, halo=1)
@@ -175,11 +188,15 @@ END SUBROUTINE FILTER_EXECUTE
 SUBROUTINE FILTER_FINALISE(this)
     type(atlas_Filter), intent(inout) :: this
 
+    ASSOCIATE(src_mesh=>this%src_mesh, src_fs => this%src_fs)
     ASSOCIATE(src_redist=>this%src_redist, src_field_tgtpart=>this%src_field_tgtpart, &
             & tgt_redist=>this%tgt_redist, tgt_field_srcpart=>this%tgt_field_srcpart, &
             & tgt_field=>this%tgt_field)
     ASSOCIATE(interpolation_st=>this%interpolation_st, interpolation_ts=>this%interpolation_ts)
 
+    ! destroy atlas structured created by this module
+    call src_mesh%final()
+    call src_fs%final()
     call src_redist%final()
     call tgt_redist%final()
     call interpolation_st%final()
@@ -188,6 +205,7 @@ SUBROUTINE FILTER_FINALISE(this)
     call tgt_field%final()
     call tgt_field_srcpart%final()
 
+    END ASSOCIATE
     END ASSOCIATE
     END ASSOCIATE
 END SUBROUTINE FILTER_FINALISE
@@ -223,18 +241,17 @@ implicit none
     call atlas_library%initialise()
 
     grid = atlas_StructuredGrid("O80")
-    meshgen = atlas_MeshGenerator()
-    griddist = atlas_GridDistribution(grid, atlas_Partitioner("equal_regions"))
-    mesh = meshgen%generate(grid, griddist)
-    gmsh = atlas_output_Gmsh("mesh.msh", "w")
-    call gmsh%write(mesh)
 
     call cpu_time(start_time)
-    filter = atlas_Filter(grid, mesh, "NodeColumns") ! TODO: CellColumns has an indexing problem in Redistribution
+    filter = atlas_Filter(grid, atlas_Partitioner("equal_regions"), "NodeColumns") ! TODO: CellColumns has an indexing problem in Redistribution
     call cpu_time(end_time)
     print *, " filter.setup in seconds: ", end_time - start_time
 
-    fspace = filter%source()
+    mesh = filter%mesh()
+    gmsh = atlas_output_Gmsh("mesh.msh", "w")
+    call gmsh%write(mesh)
+
+    fspace = filter%fspace()
     sfield = fspace%create_field(name="unfiltered", kind=atlas_real(JPRB))
 
     ! initial data
