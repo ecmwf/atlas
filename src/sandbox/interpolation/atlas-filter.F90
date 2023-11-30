@@ -243,9 +243,7 @@ implicit none
     nb_nodes = nodes%size()
     field_lonlat = nodes%lonlat()
     call field_lonlat%data(lonlat)
-    do inode = 1, nb_nodes
-        sfield_v(inode) = MDPI_gulfstream(lonlat(1,inode), lonlat(2,inode))
-    end do
+    sfield_v(:) = MDPI_gulfstream(lonlat(1,:), lonlat(2,:))
     call sfield%halo_exchange()
     call gmsh%write(sfield)
 
@@ -259,9 +257,7 @@ implicit none
     call gmsh%write(sfield)
 
     ! output the difference of the unfiltered and the filtered field
-    do inode = 1, nb_nodes
-        sfield_v(inode) = sfield_v(inode) - MDPI_gulfstream(lonlat(1,inode), lonlat(2,inode))
-    end do
+    sfield_v(:) = sfield_v(:) - MDPI_gulfstream(lonlat(1,:), lonlat(2,:))
     call sfield%rename("filt-unfilt")
     call sfield%halo_exchange()
     call gmsh%write(sfield)
