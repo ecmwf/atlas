@@ -110,6 +110,7 @@ function atlas_Filter__create(src_grid, partitioner, tgt_grid_name, data_loc_in)
     else if (trim(this%data_loc) == "StructuredColumns") then
         ! NOTE: ConservativeSphericalInterpolation does not support StructuredColumns
         !       please use: call interpolation_config%set("type", "nearest-neighbour")
+        !       or switch to functionspace_NodeColumns instead
         src_fs = atlas_functionspace_StructuredColumns(src_grid, partitioner, halo=1)
         tgt_fs = atlas_functionspace_StructuredColumns(tgt_grid, partitioner, halo=1)
     else
@@ -129,10 +130,12 @@ function atlas_Filter__create(src_grid, partitioner, tgt_grid_name, data_loc_in)
         src_fs_tgtpart = atlas_functionspace_CellColumns(src_mesh_tgtpart, halo=2)
         tgt_fs_srcpart = atlas_functionspace_CellColumns(tgt_mesh_srcpart, halo=1)
     else if (trim(this%data_loc) == "NodeColumns") then
-        ! NOTE: source have to cover the added half-cell size layer on target partitions
-        !       For the backward remapping, target cell have to covert the added half-cell
-        !       size layer on the source partitions
-        src_fs_tgtpart = atlas_functionspace_NodeColumns(src_mesh_tgtpart, halo=5)
+        ! NOTE: sources have to cover the added half-cell size layer on target partitions
+        !         For the backward remapping, target cell have to covert the added half-cell
+        !         size layer on the source partitions
+        !       In praxis, O80 needs 2 cell-layers to cover 1 cell-layer of O40, so O80-halo should be 2 + 1
+        !         O40 needs 1 cell-layers to cover 1 cell-layer of O80. O40-halo should be 1 + 1
+        src_fs_tgtpart = atlas_functionspace_NodeColumns(src_mesh_tgtpart, halo=9)
         tgt_fs_srcpart = atlas_functionspace_NodeColumns(tgt_mesh_srcpart, halo=2)
     else if (trim(this%data_loc) == "StructuredColumns") then
         src_fs_tgtpart = atlas_functionspace_StructuredColumns(src_grid, partitioner, halo=2)
@@ -223,6 +226,9 @@ program filtering
 use atlas_module
 use filter_module, only: JPRB, atlas_Filter
 
+use fckit_mpi_module
+use, intrinsic :: iso_c_binding
+
 implicit none
 
     type(atlas_StructuredGrid)   :: grid
@@ -236,19 +242,26 @@ implicit none
     type(atlas_Output)           :: gmsh
     type(atlas_mesh_Nodes)       :: nodes
 
-    real                         :: start_time, end_time
+    real                         :: start_time, end_time, mintime, maxtime
     real(kind=JPRB), pointer     :: sfield_v(:), lonlat(:,:)
     integer                      :: inode, nb_nodes
 
-    call atlas_library%initialise()
+    type(fckit_mpi_comm) :: comm
 
-    grid = atlas_StructuredGrid("O80")
+    call atlas_library%initialise()
+    comm = fckit_mpi_comm()
+
+    grid = atlas_StructuredGrid("O320")
     partitioner = atlas_Partitioner("equal_regions")
 
     call cpu_time(start_time)
     filter = atlas_Filter(grid, partitioner, "O40", "NodeColumns") ! TODO: CellColumns has a problem
     call cpu_time(end_time)
-    print *, " filter.setup in seconds: ", end_time - start_time
+    maxtime = end_time - start_time
+    mintime = maxtime
+    call comm%allreduce(mintime, fckit_mpi_min())
+    call comm%allreduce(maxtime, fckit_mpi_max())
+    if(comm%rank()==0) print *, "  filter.setup in seconds (min, max): ", mintime, maxtime
 
     mesh = filter%mesh()
     gmsh = atlas_output_Gmsh("mesh.msh", "w")
@@ -270,7 +283,11 @@ implicit none
     call cpu_time(start_time)
     call filter%execute(sfield)
     call cpu_time(end_time)
-    print *, " filter.exe in seconds: ", end_time - start_time
+    maxtime = end_time - start_time
+    mintime = maxtime
+    call comm%allreduce(mintime, fckit_mpi_min())
+    call comm%allreduce(maxtime, fckit_mpi_max())
+    if(comm%rank()==0) print *, "  filter.exe in seconds (min, max): ", mintime, maxtime
 
     call sfield%rename("filtered")
     call sfield%halo_exchange()
@@ -281,6 +298,7 @@ implicit none
     call sfield%rename("filt-unfilt")
     call sfield%halo_exchange()
     call gmsh%write(sfield)
+    if(comm%rank()==0) print *, "  output written to: mesh.msh (use GMesh: gmsh mesh.msh)"
 
     call gmsh%final()
     call nodes%final()
