@@ -10,6 +10,7 @@
 
 #include <cmath>
 #include <tuple>
+#include <utility>
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/helpers/ArrayForEach.h"
@@ -55,9 +56,9 @@ RealMatrixMap makeMatrixMap(const EckitMatrix& baseMatrix) {
 template <typename MatrixT, typename Functor>
 void sparseMatrixForEach(const MatrixT& matrix, const Functor& functor) {
 
-  atlas_omp_parallel_for (auto k = 0; k < matrix.outerSize(); ++k) {
+  atlas_omp_parallel_for(auto k = 0; k < matrix.outerSize(); ++k) {
     for (auto it = typename MatrixT::InnerIterator(matrix, k); it; ++it) {
-          functor(it.value(), it.row(), it.col());
+      functor(it.value(), it.row(), it.col());
     }
   }
 }
@@ -65,27 +66,25 @@ void sparseMatrixForEach(const MatrixT& matrix, const Functor& functor) {
 template <typename MatrixT, typename SourceView, typename TargetView,
           typename Functor>
 void matrixMultiply(const MatrixT& matrix, SourceView&& sourceView,
-                    TargetView&& targetView, const Functor& mappingFunctor) {
+                    TargetView&& targetView, const Functor& multiplyFunctor) {
 
   sparseMatrixForEach(matrix, [&](const auto& weight, auto i, auto j) {
 
-    constexpr auto rank = std::decay_t<SourceView>::rank();
-    if constexpr(rank == 2) {
+    constexpr auto Rank = std::decay_t<SourceView>::rank();
+    if constexpr (Rank == 2) {
         const auto sourceSlice = sourceView.slice(j, array::Range::all());
         auto targetSlice = targetView.slice(i, array::Range::all());
-        mappingFunctor(weight, sourceSlice, targetSlice);
-    }
-    else if constexpr(rank == 3) {
-        const auto iterationFuctor = [&](auto&& sourceVars, auto&& targetVars) {
-          mappingFunctor(weight, sourceVars, targetVars);
-        };
+        multiplyFunctor(weight, sourceSlice, targetSlice);
+      }
+    else if constexpr (Rank == 3) {
         const auto sourceSlice =
             sourceView.slice(j, array::Range::all(), array::Range::all());
         auto targetSlice =
             targetView.slice(i, array::Range::all(), array::Range::all());
         array::helpers::ArrayForEach<0>::apply(
-            std::tie(sourceSlice, targetSlice), iterationFuctor);
-    }
+            std::tie(sourceSlice, targetSlice),
+            [&](auto&&... slices) { multiplyFunctor(weight, slices...); });
+      }
     else {
       ATLAS_NOTIMPLEMENTED;
     }
@@ -95,12 +94,12 @@ void matrixMultiply(const MatrixT& matrix, SourceView&& sourceView,
 }  // namespace
 
 void SphericalVector::do_setup(const Grid& source, const Grid& target,
-                                 const Cache&) {
+                               const Cache&) {
   ATLAS_NOTIMPLEMENTED;
 }
 
 void SphericalVector::do_setup(const FunctionSpace& source,
-                                 const FunctionSpace& target) {
+                               const FunctionSpace& target) {
   ATLAS_TRACE("interpolation::method::SphericalVector::do_setup");
   source_ = source;
   target_ = target;
@@ -109,9 +108,7 @@ void SphericalVector::do_setup(const FunctionSpace& source,
     return;
   }
 
-  const auto baseInterpolator =
-      Interpolation(interpolationScheme_, source_, target_);
-  setMatrix(MatrixCache(baseInterpolator));
+  setMatrix(Interpolation(interpolationScheme_, source_, target_));
 
   // Get matrix data.
   const auto nRows = matrix().rows();
@@ -150,8 +147,8 @@ void SphericalVector::do_setup(const FunctionSpace& source,
 void SphericalVector::print(std::ostream&) const { ATLAS_NOTIMPLEMENTED; }
 
 void SphericalVector::do_execute(const FieldSet& sourceFieldSet,
-                                   FieldSet& targetFieldSet,
-                                   Metadata& metadata) const {
+                                 FieldSet& targetFieldSet,
+                                 Metadata& metadata) const {
   ATLAS_TRACE("atlas::interpolation::method::SphericalVector::do_execute()");
 
   const auto nFields = sourceFieldSet.size();
@@ -163,7 +160,7 @@ void SphericalVector::do_execute(const FieldSet& sourceFieldSet,
 }
 
 void SphericalVector::do_execute(const Field& sourceField, Field& targetField,
-                                   Metadata&) const {
+                                 Metadata&) const {
   ATLAS_TRACE("atlas::interpolation::method::SphericalVector::do_execute()");
 
   const auto fieldType = sourceField.metadata().getString("type", "");
@@ -199,7 +196,7 @@ void SphericalVector::do_execute(const Field& sourceField, Field& targetField,
 
 template <typename Value>
 void SphericalVector::interpolate_vector_field(const Field& sourceField,
-                                                 Field& targetField) const {
+                                               Field& targetField) const {
   if (sourceField.rank() == 2) {
     interpolate_vector_field<Value, 2>(sourceField, targetField);
   } else if (sourceField.rank() == 3) {
@@ -225,16 +222,32 @@ void SphericalVector::interpolate_vector_field(const Field& sourceField,
     targetVars(1) += targetVector.imag();
   };
 
-  matrixMultiply(*complexWeights_, sourceView, targetView, horizontalComponent);
+  if (sourceField.variables() == 2) {
+    matrixMultiply(*complexWeights_, sourceView, targetView,
+                   horizontalComponent);
+    return;
+  } else if (sourceField.variables() == 3) {
 
-  if (sourceField.variables() == 2) return;
+    const auto magnitudesArray = matrix().data();
+    const auto* weightsBegin = complexWeights_->valuePtr();
+    const auto weightMagnitude = [&](const auto& weight) {
+      const auto idx = std::distance(weightsBegin, &weight);
+      return magnitudesArray[idx];
+    };
 
-  const auto verticalComponent = [](
-      const auto& weight, auto&& sourceVars,
-      auto&& targetVars) { targetVars(2) += weight * sourceVars(2); };
+    const auto horizontalAndVerticalComponent = [&](
+        const auto& weight, auto&& sourceVars, auto&& targetVars) {
+      horizontalComponent(weight, sourceVars, targetVars);
+      targetVars(2) += weightMagnitude(weight) * sourceVars(2);
+    };
 
-  const auto realWeights = makeMatrixMap(matrix());
-  matrixMultiply(realWeights, sourceView, targetView, verticalComponent);
+    matrixMultiply(*complexWeights_, sourceView, targetView,
+                   horizontalAndVerticalComponent);
+
+    return;
+  }
+
+  ATLAS_NOTIMPLEMENTED;
 }
 
 }  // namespace method

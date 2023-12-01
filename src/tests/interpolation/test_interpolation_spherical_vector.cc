@@ -86,19 +86,18 @@ void testMeshInterpolation(const Config& config) {
   auto sourceField = array::make_view<double, 3>(
       sourceFieldSet.add(sourceFunctionSpace.createField<double>(
           option::name("test field") | option::levels(1) |
-          option::variables(3) | option::type("vector"))));
+          option::variables(2) | option::type("vector"))));
 
   auto targetField = array::make_view<double, 3>(
       targetFieldSet.add(targetFunctionSpace.createField<double>(
           option::name("test field") | option::levels(1) |
-          option::variables(3) | option::type("vector"))));
+          option::variables(2) | option::type("vector"))));
 
   ArrayForEach<0>::apply(std::tie(sourceLonLat, sourceField),
                          [](auto&& lonLat, auto&& sourceColumn) {
     ArrayForEach<0>::apply(std::tie(sourceColumn), [&](auto&& sourceElem) {
       std::tie(sourceElem(0), sourceElem(1)) =
           vortexField(lonLat(0), lonLat(1));
-      sourceElem(2) = 0.;
     });
   });
 
@@ -137,7 +136,7 @@ void testMeshInterpolation(const Config& config) {
 CASE("cubed sphere vector interpolation") {
 
   const auto baseInterpScheme =
-      util::Config("type", "cubedsphere-bilinear").set("adjoint", true);
+      util::Config("type", "cubedsphere-bilinear");
   const auto interpScheme =
       util::Config("type", "spherical-vector").set("scheme", baseInterpScheme);
   const auto cubedSphereConf = Config("source_grid", "CS-LFR-48")
@@ -154,7 +153,7 @@ CASE("cubed sphere vector interpolation") {
 CASE("finite element vector interpolation") {
 
   const auto baseInterpScheme =
-      util::Config("type", "finite-element").set("adjoint", true);
+      util::Config("type", "finite-element");
   const auto interpScheme =
       util::Config("type", "spherical-vector").set("scheme", baseInterpScheme);
   const auto cubedSphereConf = Config("source_grid", "O48")
@@ -167,6 +166,7 @@ CASE("finite element vector interpolation") {
 
   testMeshInterpolation((cubedSphereConf));
 }
+
 }
 }
 
