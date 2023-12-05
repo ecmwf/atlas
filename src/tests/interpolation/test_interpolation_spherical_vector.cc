@@ -27,9 +27,12 @@ namespace test {
 using namespace atlas::util;
 using namespace atlas::array::helpers;
 
+constexpr auto Rank2dField = 2;
+constexpr auto Rank3dField = 3;
+
 // Return (u, v) field with vortex_rollup as the streamfunction.
 // This has no physical significance, but it makes a nice swirly field.
-std::pair<double, double> vortexField(double lon, double lat) {
+std::pair<double, double> vortexHorizontal(double lon, double lat) {
 
   // set hLon and hLat step size.
   const double hLon = 0.0001;
@@ -38,16 +41,19 @@ std::pair<double, double> vortexField(double lon, double lat) {
   // Get finite differences.
 
   // Set u.
-  const double u = (util::function::vortex_rollup(lon, lat + 0.5 * hLat, 0.1) -
-                    util::function::vortex_rollup(lon, lat - 0.5 * hLat, 0.1)) /
+  const double u = (function::vortex_rollup(lon, lat + 0.5 * hLat, 0.1) -
+                    function::vortex_rollup(lon, lat - 0.5 * hLat, 0.1)) /
                    hLat;
 
-  const double v =
-      -(util::function::vortex_rollup(lon + 0.5 * hLon, lat, 0.1) -
-        util::function::vortex_rollup(lon - 0.5 * hLon, lat, 0.1)) /
-      (hLon * std::cos(lat * util::Constants::degreesToRadians()));
+  const double v = -(function::vortex_rollup(lon + 0.5 * hLon, lat, 0.1) -
+                     function::vortex_rollup(lon - 0.5 * hLon, lat, 0.1)) /
+                   (hLon * std::cos(lat * util::Constants::degreesToRadians()));
 
   return std::make_pair(u, v);
+}
+
+double vortexVertical(double lon, double lat) {
+  return function::vortex_rollup(lon, lat, 0.1);
 }
 
 void gmshOutput(const std::string& fileName, const FieldSet& fieldSet) {
@@ -63,17 +69,45 @@ void gmshOutput(const std::string& fileName, const FieldSet& fieldSet) {
   gmsh.write(fieldSet, functionSpace);
 }
 
-void testMeshInterpolation(const Config& config) {
+// Helper function to generate a NodeColumns functionspace
+const auto generateNodeColums(const std::string& gridName,
+                              const std::string& meshName) {
+  const auto grid = Grid(gridName);
+  const auto mesh = MeshGenerator(meshName).generate(grid);
+  return functionspace::NodeColumns(mesh);
+}
 
-  const auto sourceGrid = Grid(config.getString("source_grid"));
-  const auto sourceMesh =
-      MeshGenerator(config.getString("source_mesh")).generate(sourceGrid);
-  const auto sourceFunctionSpace = functionspace::NodeColumns(sourceMesh);
+// Helper struct to key different Functionspaces to strings
+struct FunctionSpaceFixtures {
+  static const FunctionSpace& get(const std::string& fixture) {
+    static std::map<std::string_view, FunctionSpace> functionSpaces = {
+        {"cubedsphere_mesh",
+         generateNodeColums("CS-LFR-48", "cubedsphere_dual")},
+        {"gaussian_mesh", generateNodeColums("O48", "structured")}};
+    return functionSpaces.at(fixture);
+  }
+};
 
-  const auto targetGrid = Grid(config.getString("target_grid"));
-  const auto targetMesh =
-      MeshGenerator(config.getString("target_mesh")).generate(targetGrid);
-  const auto targetFunctionSpace = functionspace::NodeColumns(targetMesh);
+// Helper struct to key different grid configs to strings
+struct FieldSpecFixtures {
+  static const Config& get(const std::string& fixture) {
+    static std::map<std::string_view, Config> fieldSpecs = {
+        {"2vector", option::name("test field") | option::variables(2) |
+                        option::type("vector")},
+        {"3vector", option::name("test field") | option::variables(3) |
+                        option::type("vector")}};
+    return fieldSpecs.at(fixture);
+  }
+};
+
+
+template <int Rank>
+void testInterpolation(const Config& config) {
+
+  const auto& sourceFunctionSpace =
+      FunctionSpaceFixtures::get(config.getString("source_fixture"));
+  const auto& targetFunctionSpace =
+      FunctionSpaceFixtures::get(config.getString("target_fixture"));
 
   auto sourceFieldSet = FieldSet{};
   auto targetFieldSet = FieldSet{};
@@ -83,23 +117,32 @@ void testMeshInterpolation(const Config& config) {
   const auto targetLonLat =
       array::make_view<double, 2>(targetFunctionSpace.lonlat());
 
-  auto sourceField = array::make_view<double, 3>(
-      sourceFieldSet.add(sourceFunctionSpace.createField<double>(
-          option::name("test field") | option::levels(1) |
-          option::variables(2) | option::type("vector"))));
+  auto fieldSpec =
+      FieldSpecFixtures::get(config.getString("field_spec_fixture"));
+  if constexpr (Rank == 3) fieldSpec.set("levels", 1);
 
-  auto targetField = array::make_view<double, 3>(
-      targetFieldSet.add(targetFunctionSpace.createField<double>(
-          option::name("test field") | option::levels(1) |
-          option::variables(2) | option::type("vector"))));
+  auto sourceField = array::make_view<double, Rank>(
+      sourceFieldSet.add(sourceFunctionSpace.createField<double>(fieldSpec)));
+
+  auto targetField = array::make_view<double, Rank>(
+      targetFieldSet.add(targetFunctionSpace.createField<double>(fieldSpec)));
 
   ArrayForEach<0>::apply(std::tie(sourceLonLat, sourceField),
                          [](auto&& lonLat, auto&& sourceColumn) {
-    ArrayForEach<0>::apply(std::tie(sourceColumn), [&](auto&& sourceElem) {
+
+    const auto setElems = [&](auto&& sourceElem) {
       std::tie(sourceElem(0), sourceElem(1)) =
-          vortexField(lonLat(0), lonLat(1));
-    });
+          vortexHorizontal(lonLat(0), lonLat(1));
+      if (sourceElem.size() == 3) {
+        sourceElem(2) = vortexVertical(lonLat(0), lonLat(1));
+      }
+    };
+    if constexpr (Rank == 2) { setElems(sourceColumn); }
+    else if constexpr (Rank == 3) {
+        ArrayForEach<0>::apply(std::tie(sourceColumn), setElems);
+    }
   });
+  sourceFieldSet.set_dirty(false);
 
   const auto interp = Interpolation(config.getSubConfiguration("scheme"),
                                     sourceFunctionSpace, targetFunctionSpace);
@@ -107,66 +150,91 @@ void testMeshInterpolation(const Config& config) {
   interp.execute(sourceFieldSet, targetFieldSet);
   targetFieldSet.haloExchange();
 
-  auto errorField = array::make_view<double, 2>(
-      targetFieldSet.add(targetFunctionSpace.createField<double>(
-          option::name("error field") | option::levels(1))));
+  auto errorFieldSpec = fieldSpec;
+  errorFieldSpec.remove("variables");
+
+  auto errorField = array::make_view<double, Rank - 1>(targetFieldSet.add(
+      targetFunctionSpace.createField<double>(errorFieldSpec)));
 
   auto maxError = 0.;
-  ArrayForEach<0>::apply(
-      std::tie(targetLonLat, targetField, errorField),
-      [&](auto&& lonLat, auto&& targetColumn, auto&& errorColumn) {
-        ArrayForEach<0>::apply(std::tie(targetColumn, errorColumn),
-                               [&](auto&& targetElem, auto&& errorElem) {
+  ArrayForEach<0>::apply(std::tie(targetLonLat, targetField, errorField),
+                         [&](auto&& lonLat, auto&& targetColumn,
+                             auto&& errorColumn) {
 
-          auto deltaVal = vortexField(lonLat(0), lonLat(1));
-          deltaVal.first -= targetElem(0);
-          deltaVal.second -= targetElem(1);
+    const auto calcError = [&](auto&& targetElem, auto&& errorElem) {
+      auto trueValue = std::vector<double>(targetElem.size());
+      std::tie(trueValue[0], trueValue[1]) =
+          vortexHorizontal(lonLat(0), lonLat(1));
+      if (targetElem.size() == 3) {
+        trueValue[2] = vortexVertical(lonLat(0), lonLat(1));
+      }
 
-          errorElem = std::sqrt(deltaVal.first * deltaVal.first +
-                                deltaVal.second * deltaVal.second);
-          maxError = std::max(maxError, static_cast<double>(errorElem));
-        });
-      });
+      auto errorSqrd = 0.;
+      for (auto k = 0; k < targetElem.size(); ++k) {
+        errorSqrd +=
+            (targetElem(k) - trueValue[k]) * (targetElem(k) - trueValue[k]);
+      }
+
+      errorElem = std::sqrt(errorSqrd);
+      maxError = std::max(maxError, static_cast<double>(errorElem));
+    };
+
+    if constexpr(Rank == 2) { calcError(targetColumn, errorColumn); }
+    else if constexpr (Rank == 3) {
+        ArrayForEach<0>::apply(std::tie(targetColumn, errorColumn), calcError);
+    }
+  });
 
   EXPECT_APPROX_EQ(maxError, 0., config.getDouble("tol"));
+
   gmshOutput(config.getString("file_id") + "_source.msh", sourceFieldSet);
   gmshOutput(config.getString("file_id") + "_target.msh", targetFieldSet);
 }
 
-CASE("cubed sphere vector interpolation") {
+CASE("cubed sphere vector interpolation (3d-field, 2-vector)") {
 
-  const auto baseInterpScheme =
-      util::Config("type", "cubedsphere-bilinear");
+  const auto baseInterpScheme = util::Config("type", "cubedsphere-bilinear");
   const auto interpScheme =
       util::Config("type", "spherical-vector").set("scheme", baseInterpScheme);
-  const auto cubedSphereConf = Config("source_grid", "CS-LFR-48")
-                                   .set("source_mesh", "cubedsphere_dual")
-                                   .set("target_grid", "O48")
-                                   .set("target_mesh", "structured")
-                                   .set("file_id", "spherical_vector_cs")
+  const auto cubedSphereConf = Config("source_fixture", "cubedsphere_mesh")
+                                   .set("target_fixture", "gaussian_mesh")
+                                   .set("field_spec_fixture", "2vector")
+                                   .set("file_id", "spherical_vector_cs2")
                                    .set("scheme", interpScheme)
                                    .set("tol", 0.00018);
 
-  testMeshInterpolation((cubedSphereConf));
+  testInterpolation<Rank3dField>((cubedSphereConf));
 }
 
-CASE("finite element vector interpolation") {
+CASE("cubed sphere vector interpolation (3d-field, 3-vector)") {
 
-  const auto baseInterpScheme =
-      util::Config("type", "finite-element");
+  const auto baseInterpScheme = util::Config("type", "cubedsphere-bilinear");
   const auto interpScheme =
       util::Config("type", "spherical-vector").set("scheme", baseInterpScheme);
-  const auto cubedSphereConf = Config("source_grid", "O48")
-                                   .set("source_mesh", "structured")
-                                   .set("target_grid", "CS-LFR-48")
-                                   .set("target_mesh", "cubedsphere_dual")
-                                   .set("file_id", "spherical_vector_fe")
+  const auto cubedSphereConf = Config("source_fixture", "cubedsphere_mesh")
+                                   .set("target_fixture", "gaussian_mesh")
+                                   .set("field_spec_fixture", "3vector")
+                                   .set("file_id", "spherical_vector_cs3")
+                                   .set("scheme", interpScheme)
+                                   .set("tol", 0.00096);
+
+  testInterpolation<Rank3dField>((cubedSphereConf));
+}
+
+CASE("finite element vector interpolation (2d-field, 2-vector)") {
+
+  const auto baseInterpScheme = util::Config("type", "finite-element");
+  const auto interpScheme =
+      util::Config("type", "spherical-vector").set("scheme", baseInterpScheme);
+  const auto cubedSphereConf = Config("source_fixture", "gaussian_mesh")
+                                   .set("target_fixture", "cubedsphere_mesh")
+                                   .set("field_spec_fixture", "2vector")
+                                   .set("file_id", "spherical_vector_cs")
                                    .set("scheme", interpScheme)
                                    .set("tol", 0.00015);
 
-  testMeshInterpolation((cubedSphereConf));
+  testInterpolation<Rank2dField>((cubedSphereConf));
 }
-
 }
 }
 

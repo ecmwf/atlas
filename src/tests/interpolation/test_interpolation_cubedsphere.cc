@@ -60,7 +60,7 @@ void gmshOutput(const std::string& fileName, const FieldSet& fieldSet) {
 
 // Return (u, v) field with vortex_rollup as the streamfunction.
 // This has no physical significance, but it makes a nice swirly field.
-std::pair<double, double> vortexField(double lon, double lat) {
+std::pair<double, double> vortexHorizontal(double lon, double lat) {
 
     // set hLon and hLat step size.
     const double hLon = 0.0001;
@@ -222,7 +222,7 @@ CASE("cubedsphere_wind_interpolation") {
             const auto ll = PointLonLat(lonlat(idx, LON), lonlat(idx, LAT));
 
             // Set (u, v) wind
-            std::tie(u(idx), v(idx)) = vortexField(ll.lon(), ll.lat());
+            std::tie(u(idx), v(idx)) = vortexHorizontal(ll.lon(), ll.lat());
 
             // Get wind transform jacobian.
             auto jac = windTransform(ll, t);
@@ -282,7 +282,7 @@ CASE("cubedsphere_wind_interpolation") {
                 std::tie(u(idx), v(idx)) = matMul(jac, vAlpha(idx), vBeta(idx));
 
                 // Get error.
-                const auto uvTarget = vortexField(ll.lon(), ll.lat());
+                const auto uvTarget = vortexHorizontal(ll.lon(), ll.lat());
 
                 error0(idx) = Point2::distance(Point2(uvTarget.first, uvTarget.second), Point2(uOrig(idx), vOrig(idx)));
                 error1(idx) = Point2::distance(Point2(uvTarget.first, uvTarget.second), Point2(u(idx), v(idx)));

@@ -41,6 +41,7 @@ template <typename Value>
 using SparseMatrix = SphericalVector::SparseMatrix<Value>;
 using RealMatrixMap = Eigen::Map<const SparseMatrix<double>>;
 using ComplexTriplets = std::vector<Eigen::Triplet<Complex>>;
+using RealTriplets = std::vector<Eigen::Triplet<double>>;
 using EckitMatrix = eckit::linalg::SparseMatrix;
 
 namespace {
@@ -53,24 +54,27 @@ RealMatrixMap makeMatrixMap(const EckitMatrix& baseMatrix) {
                        baseMatrix.inner(), baseMatrix.data());
 }
 
-template <typename MatrixT, typename Functor>
-void sparseMatrixForEach(const MatrixT& matrix, const Functor& functor) {
+template <typename Matrix>
+auto getInnerIt(const Matrix& matrix, int k) {
+  return typename Matrix::InnerIterator(matrix, k);
+}
+
+template <typename Functor, typename Matrix>
+void sparseMatrixForEach(const Functor& functor, const Matrix& matrix) {
 
   atlas_omp_parallel_for(auto k = 0; k < matrix.outerSize(); ++k) {
-    for (auto it = typename MatrixT::InnerIterator(matrix, k); it; ++it) {
+    for (auto it = getInnerIt(matrix, k); it; ++it) {
       functor(it.row(), it.col(), it.value());
     }
   }
 }
 
-template <typename MatrixT1, typename MatrixT2, typename Functor>
-void sparseMatrixForEach(const MatrixT1& matrix1, const MatrixT2& matrix2,
-                         const Functor& functor) {
-
+template <typename Functor, typename Matrix1, typename Matrix2>
+void sparseMatrixForEach(const Functor& functor, const Matrix1& matrix1,
+                         const Matrix2& matrix2) {
   atlas_omp_parallel_for(auto k = 0; k < matrix1.outerSize(); ++k) {
-    for (auto[it1, it2] =
-             std::make_pair(typename MatrixT1::InnerIterator(matrix1, k),
-                            typename MatrixT2::InnerIterator(matrix2, k));
+    for (auto [it1, it2] =
+             std::make_pair(getInnerIt(matrix1, k), getInnerIt(matrix2, k));
          it1; ++it1, ++it2) {
       functor(it1.row(), it1.col(), it1.value(), it2.value());
     }
@@ -83,14 +87,13 @@ void matrixMultiply(const SourceView& sourceView, TargetView& targetView,
                     const Functor& multiplyFunctor,
                     const Matrices&... matrices) {
 
-  sparseMatrixForEach(matrices..., [&](auto i, auto j, const auto&... weights) {
-
+  const auto multiplyColumn = [&](auto i, auto j, const auto&... weights) {
     constexpr auto Rank = std::decay_t<SourceView>::rank();
     if constexpr (Rank == 2) {
         const auto sourceSlice = sourceView.slice(j, array::Range::all());
         auto targetSlice = targetView.slice(i, array::Range::all());
         multiplyFunctor(sourceSlice, targetSlice, weights...);
-    } else if constexpr (Rank == 3) {
+    } else if constexpr(Rank == 3) {
         const auto sourceSlice =
             sourceView.slice(j, array::Range::all(), array::Range::all());
         auto targetSlice =
@@ -103,7 +106,9 @@ void matrixMultiply(const SourceView& sourceView, TargetView& targetView,
     } else {
       ATLAS_NOTIMPLEMENTED;
     }
-  });
+  };
+
+  sparseMatrixForEach(multiplyColumn, matrices...);
 }
 
 }  // namespace
@@ -129,16 +134,19 @@ void SphericalVector::do_setup(const FunctionSpace& source,
   const auto nRows = matrix().rows();
   const auto nCols = matrix().cols();
   const auto nNonZeros = matrix().nonZeros();
-  const auto realWeights = makeMatrixMap(matrix());
+  const auto baseWeights = makeMatrixMap(matrix());
 
+  // Note: need to store copy of weights as Eigen3 sorts compressed rows by j
+  // whereas eckit does not.
   complexWeights_ = std::make_shared<ComplexMatrix>(nRows, nCols);
+  realWeights_ = std::make_shared<RealMatrix>(nRows, nCols);
   auto complexTriplets = ComplexTriplets(nNonZeros);
+  auto realTriplets = RealTriplets(nNonZeros);
 
   const auto sourceLonLats = array::make_view<double, 2>(source_.lonlat());
   const auto targetLonLats = array::make_view<double, 2>(target_.lonlat());
 
-  sparseMatrixForEach(realWeights, [&](auto i, auto j, const auto& weight) {
-
+  const auto setComplexWeights = [&](auto i, auto j, const auto& weight) {
     const auto sourceLonLat =
         PointLonLat(sourceLonLats(j, 0), sourceLonLats(j, 1));
     const auto targetLonLat =
@@ -149,12 +157,16 @@ void SphericalVector::do_setup(const FunctionSpace& source,
     const auto deltaAlpha =
         (alpha.first - alpha.second) * util::Constants::degreesToRadians();
 
-    const auto idx = std::distance(realWeights.valuePtr(), &weight);
+    const auto idx = std::distance(baseWeights.valuePtr(), &weight);
 
     complexTriplets[idx] = {int(i), int(j), std::polar(weight, deltaAlpha)};
-  });
+    realTriplets[idx] = {int(i), int(j), weight};
+  };
+
+  sparseMatrixForEach(setComplexWeights, baseWeights);
   complexWeights_->setFromTriplets(complexTriplets.begin(),
                                    complexTriplets.end());
+  realWeights_->setFromTriplets(realTriplets.begin(), realTriplets.end());
 
   ATLAS_ASSERT(complexWeights_->nonZeros() == matrix().nonZeros());
 }
@@ -243,8 +255,6 @@ void SphericalVector::interpolate_vector_field(const Field& sourceField,
     return;
   } else if (sourceField.variables() == 3) {
 
-    const auto realWeights = makeMatrixMap(matrix());
-
     const auto horizontalAndVerticalComponent = [&](
         const auto& sourceVars, auto& targetVars, const auto& complexWeight,
         const auto& realWeight) {
@@ -253,7 +263,7 @@ void SphericalVector::interpolate_vector_field(const Field& sourceField,
     };
 
     matrixMultiply(sourceView, targetView, horizontalAndVerticalComponent,
-                   *complexWeights_, realWeights);
+                   *complexWeights_, *realWeights_);
 
     return;
   }

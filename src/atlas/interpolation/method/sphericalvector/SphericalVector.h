@@ -31,6 +31,7 @@ class SphericalVector : public Method {
   template <typename Value>
   using SparseMatrix = Eigen::SparseMatrix<Value, Eigen::RowMajor>;
   using ComplexMatrix = SparseMatrix<Complex>;
+  using RealMatrix = SparseMatrix<double>;
 
   /// @brief   Interpolation post-processor for vector field interpolation
   ///
@@ -90,6 +91,7 @@ class SphericalVector : public Method {
   FunctionSpace target_;
 
   std::shared_ptr<ComplexMatrix> complexWeights_;
+  std::shared_ptr<RealMatrix> realWeights_;
 };
 
 }  // namespace method
