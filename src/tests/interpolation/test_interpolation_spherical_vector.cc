@@ -119,7 +119,7 @@ void testInterpolation(const Config& config) {
 
   auto fieldSpec =
       FieldSpecFixtures::get(config.getString("field_spec_fixture"));
-  if constexpr (Rank == 3) fieldSpec.set("levels", 1);
+  if constexpr (Rank == 3) fieldSpec.set("levels", 2);
 
   auto sourceField = array::make_view<double, Rank>(
       sourceFieldSet.add(sourceFunctionSpace.createField<double>(fieldSpec)));
