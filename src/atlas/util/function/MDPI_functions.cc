@@ -93,7 +93,7 @@ double MDPI_gulfstream(double lon, double lat) {
     double dr1 = std::sqrt(sqr(gf_dmp_lon - gf_ori_lon) + sqr(gf_dmp_lat - gf_ori_lat));
 
     double gf_per_lon = [lon,d2r]() {
-        double gf_per_lon = lon - 180.;
+        double gf_per_lon = lon;
         while (gf_per_lon > 180.) {
             gf_per_lon -= 360.;
         }
