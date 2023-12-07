@@ -6,14 +6,15 @@
  */
 
 #include "atlas/library/defines.h"
-#if ATLAS_HAVE_EIGEN
 
 #pragma once
 
 #include <complex>
 #include <memory>
 
+#if ATLAS_HAVE_EIGEN
 #include <Eigen/Sparse>
+#endif
 
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/interpolation/method/Method.h"
@@ -28,10 +29,12 @@ class SphericalVector : public Method {
  public:
   using Complex = std::complex<double>;
 
+#if ATLAS_HAVE_EIGEN
   template <typename Value>
   using SparseMatrix = Eigen::SparseMatrix<Value, Eigen::RowMajor>;
   using ComplexMatrix = SparseMatrix<Complex>;
   using RealMatrix = SparseMatrix<double>;
+#endif
 
   /// @brief   Interpolation post-processor for vector field interpolation
   ///
@@ -90,12 +93,12 @@ class SphericalVector : public Method {
   FunctionSpace source_;
   FunctionSpace target_;
 
+#if ATLAS_HAVE_EIGEN
   std::shared_ptr<ComplexMatrix> complexWeights_;
   std::shared_ptr<RealMatrix> realWeights_;
+#endif
 };
 
 }  // namespace method
 }  // namespace interpolation
 }  // namespace atlas
-
-#endif

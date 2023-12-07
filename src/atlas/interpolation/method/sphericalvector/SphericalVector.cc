@@ -6,7 +6,6 @@
  */
 
 #include "atlas/library/defines.h"
-#if ATLAS_HAVE_EIGEN
 
 #include <cmath>
 #include <tuple>
@@ -37,17 +36,21 @@ namespace method {
 
 using Complex = SphericalVector::Complex;
 
+#if ATLAS_HAVE_EIGEN
 template <typename Value>
 using SparseMatrix = SphericalVector::SparseMatrix<Value>;
 using RealMatrixMap = Eigen::Map<const SparseMatrix<double>>;
 using ComplexTriplets = std::vector<Eigen::Triplet<Complex>>;
 using RealTriplets = std::vector<Eigen::Triplet<double>>;
+#endif
+
 using EckitMatrix = eckit::linalg::SparseMatrix;
 
 namespace {
 
 MethodBuilder<SphericalVector> __builder("spherical-vector");
 
+#if ATLAS_HAVE_EIGEN
 RealMatrixMap makeMatrixMap(const EckitMatrix& baseMatrix) {
   return RealMatrixMap(baseMatrix.rows(), baseMatrix.cols(),
                        baseMatrix.nonZeros(), baseMatrix.outer(),
@@ -110,6 +113,7 @@ void matrixMultiply(const SourceView& sourceView, TargetView& targetView,
 
   sparseMatrixForEach(multiplyColumn, matrices...);
 }
+#endif
 
 }  // namespace
 
@@ -127,6 +131,8 @@ void SphericalVector::do_setup(const FunctionSpace& source,
   if (target_.size() == 0) {
     return;
   }
+
+#if ATLAS_HAVE_EIGEN
 
   setMatrix(Interpolation(interpolationScheme_, source_, target_));
 
@@ -169,6 +175,10 @@ void SphericalVector::do_setup(const FunctionSpace& source,
   realWeights_->setFromTriplets(realTriplets.begin(), realTriplets.end());
 
   ATLAS_ASSERT(complexWeights_->nonZeros() == matrix().nonZeros());
+
+#else
+  ATLAS_THROW_EXCEPTION("atlas has been compiled without Eigen");
+#endif
 }
 
 void SphericalVector::print(std::ostream&) const { ATLAS_NOTIMPLEMENTED; }
@@ -241,6 +251,7 @@ void SphericalVector::interpolate_vector_field(const Field& sourceField,
   auto targetView = array::make_view<Value, Rank>(targetField);
   targetView.assign(0.);
 
+#if ATLAS_HAVE_EIGEN
   const auto horizontalComponent = [](const auto& sourceVars, auto& targetVars,
                                       const auto& complexWeight) {
     const auto sourceVector = Complex(sourceVars(0), sourceVars(1));
@@ -267,6 +278,9 @@ void SphericalVector::interpolate_vector_field(const Field& sourceField,
 
     return;
   }
+#else
+  ATLAS_THROW_EXCEPTION("atlas has been compiled without Eigen");
+#endif
 
   ATLAS_NOTIMPLEMENTED;
 }
@@ -274,5 +288,3 @@ void SphericalVector::interpolate_vector_field(const Field& sourceField,
 }  // namespace method
 }  // namespace interpolation
 }  // namespace atlas
-
-#endif
