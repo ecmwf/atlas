@@ -65,7 +65,8 @@ auto getInnerIt(const Matrix& matrix, int k) {
 template <typename Functor, typename Matrix>
 void sparseMatrixForEach(const Functor& functor, const Matrix& matrix) {
 
-  atlas_omp_parallel_for(auto k = 0; k < matrix.outerSize(); ++k) {
+  using Index = decltype (matrix.outerSize());
+  atlas_omp_parallel_for (auto k = Index{}; k < matrix.outerSize(); ++k) {
     for (auto it = getInnerIt(matrix, k); it; ++it) {
       functor(it.row(), it.col(), it.value());
     }
@@ -75,7 +76,8 @@ void sparseMatrixForEach(const Functor& functor, const Matrix& matrix) {
 template <typename Functor, typename Matrix1, typename Matrix2>
 void sparseMatrixForEach(const Functor& functor, const Matrix1& matrix1,
                          const Matrix2& matrix2) {
-  atlas_omp_parallel_for(auto k = 0; k < matrix1.outerSize(); ++k) {
+  using Index = decltype (matrix1.outerSize());
+  atlas_omp_parallel_for (auto k = Index{}; k < matrix1.outerSize(); ++k) {
     for (auto [it1, it2] =
              std::make_pair(getInnerIt(matrix1, k), getInnerIt(matrix2, k));
          it1; ++it1, ++it2) {
