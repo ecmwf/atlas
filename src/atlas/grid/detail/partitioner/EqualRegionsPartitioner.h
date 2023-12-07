@@ -75,6 +75,7 @@ namespace partitioner {
 void eq_caps(int N, std::vector<int>& n_regions, std::vector<double>& s_cap);
 void eq_regions(int N, double xmin[], double xmax[], double ymin[], double ymax[]);
 
+class EqualAreaPartitioner;
 class EqualRegionsPartitioner : public Partitioner {
 public:
     EqualRegionsPartitioner();
@@ -121,14 +122,15 @@ private:
     // algorithm is used internally
     void partition(int nb_nodes, NodeInt nodes[], int part[]) const;
 
-    // x and y in radians
-    int partition(const double& x, const double& y) const;
-
+    friend class EqualAreaPartitioner;
     // y in radians
     int band(const double& y) const;
 
     // x in radians
     int sector(int band, const double& x) const;
+
+    // x and y in radians
+    int partition(const double& x, const double& y) const;
 
 private:
     int N_;
