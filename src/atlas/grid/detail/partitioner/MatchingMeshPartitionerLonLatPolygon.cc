@@ -28,6 +28,9 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/PolygonXY.h"
 
+
+#include "atlas/util/KDTree.h"
+
 namespace atlas {
 namespace grid {
 namespace detail {
@@ -36,6 +39,12 @@ namespace partitioner {
 namespace {
 PartitionerBuilder<MatchingMeshPartitionerLonLatPolygon> __builder("lonlat-polygon");
 }
+
+MatchingMeshPartitionerLonLatPolygon::MatchingMeshPartitionerLonLatPolygon(const Mesh& mesh, const eckit::Parametrisation& config):
+    MatchingMeshPartitioner(mesh, config) {
+        config.get("fallback_nearest", fallback_nearest_);
+    }
+
 
 void MatchingMeshPartitionerLonLatPolygon::partition(const Grid& grid, int partitioning[]) const {
     const auto& comm   = mpi::comm(prePartitionedMesh_.mpi_comm());
@@ -122,6 +131,7 @@ void MatchingMeshPartitionerLonLatPolygon::partition(const Grid& grid, int parti
         }
         return false;
     }();
+
     if (min < 0) {
         size_t i            = 0;
         size_t max_failures = grid.size();
@@ -137,20 +147,41 @@ void MatchingMeshPartitionerLonLatPolygon::partition(const Grid& grid, int parti
             ++i;
         }
         size_t nb_failures = failed_index.size();
-        std::stringstream err;
-        err.precision(20);
-        err << "Could not find partition of " << nb_failures
-            << " target grid points (source mesh does not contain all target grid points)\n"
-            << "Tried first normalizing coordinates with west=" << east - 360.;
-        if (second_try) {
-            err << "Tried second time normalizing coordinates with west=" << west - eps << "\n";
+
+        if (fallback_nearest_) {
+            util::IndexKDTree3D kdtree;
+            kdtree.reserve(grid.size());
+            size_t j=0;
+            for (auto& p: grid.lonlat()) {
+                if (partitioning[j] >= 0) {
+                    kdtree.insert(p,partitioning[j]);
+                }
+                ++j;
+            }
+            kdtree.build();
+            for (size_t n = 0; n < nb_failures; ++n) {
+                auto closest = kdtree.closestPoint(failed_lonlat[n]);
+                partitioning[failed_index[n]] = closest.payload();
+            }
         }
-        err << "Failed target grid points with global index:\n";
-        for (size_t n = 0; n < nb_failures; ++n) {
-            err << "  - " << std::setw(10) << std::left << failed_index[n] + 1 << " {lon,lat} : " << failed_lonlat[n]
-                << "\n";
+        else {
+            std::stringstream err;
+            err.precision(20);
+            err << "Could not find partition of " << nb_failures
+                << " target grid points (source mesh does not contain all target grid points)\n"
+                << "Tried first normalizing coordinates with west=" << east - 360. << "\n";
+            if (second_try) {
+                err << "Tried second time normalizing coordinates with west=" << west - eps << "\n";
+            }
+
+            err << "Failed target grid points with global index:\n";
+            for (size_t n = 0; n < nb_failures; ++n) {
+                err << "  - " << std::setw(10) << std::left << failed_index[n] + 1 << " {lon,lat} : " << failed_lonlat[n]
+                    << "\n";
+            }
+            // prePartitionedMesh_.polygon(0).outputPythonScript("partitions.py");
+            throw_Exception(err.str(), Here());
         }
-        throw_Exception(err.str(), Here());
     }
 }
 
