@@ -57,8 +57,8 @@ RealMatrixMap makeMatrixMap(const EckitMatrix& baseMatrix) {
                        baseMatrix.inner(), baseMatrix.data());
 }
 
-template <typename Matrix>
-auto getInnerIt(const Matrix& matrix, int k) {
+template <typename Matrix, typename Index>
+auto getInnerIt(const Matrix& matrix, Index k) {
   return typename Matrix::InnerIterator(matrix, k);
 }
 
