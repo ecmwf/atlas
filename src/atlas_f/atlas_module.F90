@@ -151,7 +151,8 @@ use atlas_output_module, only: &
 use atlas_trace_module, only : &
     & atlas_Trace
 use atlas_functions_module
-
+use atlas_Redistribution_module, only : &
+    & atlas_Redistribution
 use fckit_log_module,  only: atlas_log => fckit_log
 
 implicit none
