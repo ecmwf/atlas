@@ -55,7 +55,7 @@ Program::Program(int argc, char** argv): AtlasTool(argc, argv) {
     add_option(new SimpleOption<std::string>("field","Field to output. [\"lonlat\"(D),\"index\",\"partition\"]"));
     add_option(new Separator("Advanced"));
     add_option(new SimpleOption<std::string>("partitioner.type",
-        "Partitioner [equal_regions,checkerboard,equal_bands,regular_bands]"));
+        "Partitioner [equal_regions,equal_area,checkerboard,equal_bands,regular_bands]"));
     add_option(new SimpleOption<long>("partition", "partition [0:partitions-1]"));
     add_option(new SimpleOption<long>("partitions", "Number of partitions"));
     add_option(new SimpleOption<long>("json.precision", "Number of digits after decimal in output"));

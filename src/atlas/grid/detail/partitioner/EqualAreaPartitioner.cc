@@ -10,7 +10,7 @@
 
 #include "atlas/grid/detail/partitioner/EqualAreaPartitioner.h"
 
-#include "atlas/grid/Grid.h"
+#include "atlas/grid.h"
 #include "atlas/grid/Iterator.h"
 #include "atlas/util/Constants.h"
 
@@ -35,13 +35,34 @@ EqualAreaPartitioner::EqualAreaPartitioner(const eckit::Parametrisation& config)
     Partitioner(config), partitioner_(config) {
 }
 
-void EqualAreaPartitioner::partition(const Grid& g, int part[]) const {
-    size_t j{0};
-    for (PointLonLat p : g.lonlat()) {
-        p.lon() *= util::Constants::degreesToRadians();
-        p.lat() *= util::Constants::degreesToRadians();
-        part[j++] = partitioner_.partition(p.lon(), p.lat());
+void EqualAreaPartitioner::partition(const Grid& grid, int part[]) const {
+
+    if( partitioner_.coordinates_ == EqualRegionsPartitioner::Coordinates::XY && StructuredGrid(grid) ) {
+        StructuredGrid g(grid);
+        size_t n = 0;
+        for (idx_t j=0; j<g.ny(); ++j) {
+            const double lat = g.y(j) * util::Constants::degreesToRadians();
+            int b = partitioner_.band(lat);
+            int p = 0;
+            for (int k = 0; k < b; ++k) {
+                p += partitioner_.nb_regions(k);
+            }
+            idx_t nx = g.nx(j);
+            for (idx_t i=0; i<nx; ++i) {
+                const double lon = g.x(i,j) * util::Constants::degreesToRadians();
+                part[n++] = p + partitioner_.sector(b, lon);
+            }
+        }
     }
+    else {
+        size_t j{0};
+        for (PointLonLat p : grid.lonlat()) {
+            p.lon() *= util::Constants::degreesToRadians();
+            p.lat() *= util::Constants::degreesToRadians();
+            part[j++] = partitioner_.partition(p.lon(), p.lat());
+        }
+    }
+
 }
 
 
