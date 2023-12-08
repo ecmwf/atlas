@@ -57,15 +57,15 @@ RealMatrixMap makeMatrixMap(const EckitMatrix& baseMatrix) {
                        baseMatrix.inner(), baseMatrix.data());
 }
 
-template <typename Matrix, typename Index>
-auto getInnerIt(const Matrix& matrix, Index k) {
+template <typename Matrix>
+auto getInnerIt(const Matrix& matrix, typename Matrix::Index k) {
   return typename Matrix::InnerIterator(matrix, k);
 }
 
 template <typename Functor, typename Matrix>
 void sparseMatrixForEach(const Functor& functor, const Matrix& matrix) {
 
-  using Index = decltype (matrix.outerSize());
+  using Index = typename Matrix::Index;
   atlas_omp_parallel_for (auto k = Index{}; k < matrix.outerSize(); ++k) {
     for (auto it = getInnerIt(matrix, k); it; ++it) {
       functor(it.row(), it.col(), it.value());
@@ -76,7 +76,7 @@ void sparseMatrixForEach(const Functor& functor, const Matrix& matrix) {
 template <typename Functor, typename Matrix1, typename Matrix2>
 void sparseMatrixForEach(const Functor& functor, const Matrix1& matrix1,
                          const Matrix2& matrix2) {
-  using Index = decltype (matrix1.outerSize());
+  using Index = typename Matrix1::Index;
   atlas_omp_parallel_for (auto k = Index{}; k < matrix1.outerSize(); ++k) {
     for (auto [it1, it2] =
              std::make_pair(getInnerIt(matrix1, k), getInnerIt(matrix2, k));
