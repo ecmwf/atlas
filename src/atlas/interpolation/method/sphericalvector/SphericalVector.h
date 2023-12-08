@@ -25,16 +25,16 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
+#if ATLAS_HAVE_EIGEN
 class SphericalVector : public Method {
  public:
   using Complex = std::complex<double>;
 
-#if ATLAS_HAVE_EIGEN
   template <typename Value>
   using SparseMatrix = Eigen::SparseMatrix<Value, Eigen::RowMajor>;
   using ComplexMatrix = SparseMatrix<Complex>;
   using RealMatrix = SparseMatrix<double>;
-#endif
+
 
   /// @brief   Interpolation post-processor for vector field interpolation
   ///
@@ -55,7 +55,7 @@ class SphericalVector : public Method {
     const auto& conf = dynamic_cast<const eckit::LocalConfiguration&>(config);
     interpolationScheme_ = conf.getSubConfiguration("scheme");
   }
-  virtual ~SphericalVector() override {}
+  ~SphericalVector() override {}
 
   void print(std::ostream&) const override;
   const FunctionSpace& source() const override { return source_; }
@@ -93,11 +93,34 @@ class SphericalVector : public Method {
   FunctionSpace source_;
   FunctionSpace target_;
 
-#if ATLAS_HAVE_EIGEN
   std::shared_ptr<ComplexMatrix> complexWeights_;
   std::shared_ptr<RealMatrix> realWeights_;
-#endif
+
 };
+#else
+  class SphericalVector : public Method {
+   public:
+    SphericalVector(const Config& config) : Method(config) {
+      ATLAS_THROW_EXCEPTION("atlas has been compiled without Eigen");
+    }
+
+    ~SphericalVector() override {}
+
+    void print(std::ostream&) const override {}
+    const FunctionSpace& source() const override {ATLAS_NOTIMPLEMENTED;}
+    const FunctionSpace& target() const override {ATLAS_NOTIMPLEMENTED;}
+
+    void do_execute(const FieldSet& sourceFieldSet, FieldSet& targetFieldSet,
+                    Metadata& metadata) const override {}
+    void do_execute(const Field& sourceField, Field& targetField,
+                    Metadata& metadata) const override {}
+   private:
+    void do_setup(const FunctionSpace& source,
+                  const FunctionSpace& target) override {}
+    void do_setup(const Grid& source, const Grid& target, const Cache&) override {}
+  };
+#endif
+
 
 }  // namespace method
 }  // namespace interpolation

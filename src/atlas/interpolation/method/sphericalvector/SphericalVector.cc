@@ -34,23 +34,24 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
-using Complex = SphericalVector::Complex;
+namespace  {
+MethodBuilder<SphericalVector> __builder("spherical-vector");
+}
 
 #if ATLAS_HAVE_EIGEN
+
+using Complex = SphericalVector::Complex;
+
 template <typename Value>
 using SparseMatrix = SphericalVector::SparseMatrix<Value>;
 using RealMatrixMap = Eigen::Map<const SparseMatrix<double>>;
 using ComplexTriplets = std::vector<Eigen::Triplet<Complex>>;
 using RealTriplets = std::vector<Eigen::Triplet<double>>;
-#endif
 
 using EckitMatrix = eckit::linalg::SparseMatrix;
 
 namespace {
 
-MethodBuilder<SphericalVector> __builder("spherical-vector");
-
-#if ATLAS_HAVE_EIGEN
 RealMatrixMap makeMatrixMap(const EckitMatrix& baseMatrix) {
   return RealMatrixMap(baseMatrix.rows(), baseMatrix.cols(),
                        baseMatrix.nonZeros(), baseMatrix.outer(),
@@ -64,7 +65,6 @@ auto getInnerIt(const Matrix& matrix, typename Matrix::Index k) {
 
 template <typename Functor, typename Matrix>
 void sparseMatrixForEach(const Functor& functor, const Matrix& matrix) {
-
   using Index = typename Matrix::Index;
   atlas_omp_parallel_for (auto k = Index{}; k < matrix.outerSize(); ++k) {
     for (auto it = getInnerIt(matrix, k); it; ++it) {
@@ -115,7 +115,6 @@ void matrixMultiply(const SourceView& sourceView, TargetView& targetView,
 
   sparseMatrixForEach(multiplyColumn, matrices...);
 }
-#endif
 
 }  // namespace
 
@@ -133,8 +132,6 @@ void SphericalVector::do_setup(const FunctionSpace& source,
   if (target_.size() == 0) {
     return;
   }
-
-#if ATLAS_HAVE_EIGEN
 
   setMatrix(Interpolation(interpolationScheme_, source_, target_));
 
@@ -154,7 +151,7 @@ void SphericalVector::do_setup(const FunctionSpace& source,
   const auto sourceLonLats = array::make_view<double, 2>(source_.lonlat());
   const auto targetLonLats = array::make_view<double, 2>(target_.lonlat());
 
-  const auto setComplexWeights = [&](auto i, auto j, const auto& weight) {
+  const auto setWeights = [&](auto i, auto j, const auto& baseWeight) {
     const auto sourceLonLat =
         PointLonLat(sourceLonLats(j, 0), sourceLonLats(j, 1));
     const auto targetLonLat =
@@ -165,22 +162,19 @@ void SphericalVector::do_setup(const FunctionSpace& source,
     const auto deltaAlpha =
         (alpha.first - alpha.second) * util::Constants::degreesToRadians();
 
-    const auto idx = std::distance(baseWeights.valuePtr(), &weight);
+    const auto idx = std::distance(baseWeights.valuePtr(), &baseWeight);
 
-    complexTriplets[idx] = {int(i), int(j), std::polar(weight, deltaAlpha)};
-    realTriplets[idx] = {int(i), int(j), weight};
+    complexTriplets[idx] = {int(i), int(j), std::polar(baseWeight, deltaAlpha)};
+    realTriplets[idx] = {int(i), int(j), baseWeight};
   };
 
-  sparseMatrixForEach(setComplexWeights, baseWeights);
+  sparseMatrixForEach(setWeights, baseWeights);
   complexWeights_->setFromTriplets(complexTriplets.begin(),
                                    complexTriplets.end());
   realWeights_->setFromTriplets(realTriplets.begin(), realTriplets.end());
 
   ATLAS_ASSERT(complexWeights_->nonZeros() == matrix().nonZeros());
-
-#else
-  ATLAS_THROW_EXCEPTION("atlas has been compiled without Eigen");
-#endif
+  ATLAS_ASSERT(realWeights_->nonZeros() == matrix().nonZeros());
 }
 
 void SphericalVector::print(std::ostream&) const { ATLAS_NOTIMPLEMENTED; }
@@ -253,7 +247,6 @@ void SphericalVector::interpolate_vector_field(const Field& sourceField,
   auto targetView = array::make_view<Value, Rank>(targetField);
   targetView.assign(0.);
 
-#if ATLAS_HAVE_EIGEN
   const auto horizontalComponent = [](const auto& sourceVars, auto& targetVars,
                                       const auto& complexWeight) {
     const auto sourceVector = Complex(sourceVars(0), sourceVars(1));
@@ -280,12 +273,11 @@ void SphericalVector::interpolate_vector_field(const Field& sourceField,
 
     return;
   }
-#else
-  ATLAS_THROW_EXCEPTION("atlas has been compiled without Eigen");
-#endif
 
   ATLAS_NOTIMPLEMENTED;
 }
+
+#endif
 
 }  // namespace method
 }  // namespace interpolation
