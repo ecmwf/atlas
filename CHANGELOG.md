@@ -7,7 +7,21 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
-## [0.35.1] - 2023-24-10
+## [0.36.0] - 2023-12-11
+### Added
+- Add TriangularMeshBuilder with Fortran API, so far for serial meshes only
+- Add Fortran API for CellCollumns functionspace
+- Add EqualAreaPartitioner which is geometry based rather than loadbalanced like EqualRegionsPartitioner
+
+### Fixed
+- Compilation with Intel LLVM compiler
+- Fix 180 degrees phase shift error in MDPI_gulfstream function
+
+### Changed
+- Update install scripts
+- Preparation for using eckit::codec as backend for atlas_io
+
+## [0.35.1] - 2023-10-24
 ### Added
 - Don't output with output::Gmsh the triangle elements with wrong orientation when coordinates are "lonlat"
 - Add control to skip Gmsh-output of triangles with too large edge length ratio
@@ -500,6 +514,7 @@ Fix StructuredInterpolation2D with retry for failed stencils
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.36.0]: https://github.com/ecmwf/atlas/compare/0.35.1...0.36.0
 [0.35.1]: https://github.com/ecmwf/atlas/compare/0.35.0...0.35.1
 [0.35.0]: https://github.com/ecmwf/atlas/compare/0.34.0...0.35.0
 [0.34.0]: https://github.com/ecmwf/atlas/compare/0.33.0...0.34.0
