@@ -160,6 +160,33 @@ Mesh MeshBuilder::operator()(size_t nb_nodes, const double lons[], const double 
                              const gidx_t tri_global_indices[], size_t nb_quads, const gidx_t quad_boundary_nodes[],
                              const gidx_t quad_global_indices[],
                              const eckit::Configuration& config) const {
+    return this->operator()(
+        nb_nodes, global_indices,
+        lons, lats, 1, 1,
+        lons, lats, 1, 1,
+        ghosts, partitions, remote_indices, remote_index_base,
+        nb_tris, tri_global_indices, tri_boundary_nodes,
+        nb_quads, quad_global_indices, quad_boundary_nodes,
+        config
+    );
+}
+
+Mesh MeshBuilder::operator()(size_t nb_nodes, const gidx_t global_indices[],
+                             const double x[], const double y[], size_t xstride, size_t ystride,
+                             const double lon[], const double lat[], size_t lonstride, size_t latstride,
+                             const int ghosts[], const int partitions[], const idx_t remote_index[], const idx_t remote_index_base,
+                             size_t nb_triags, const gidx_t triag_global_index[], const gidx_t triag_nodes_global[],
+                             size_t nb_quads,  const gidx_t quad_global_index[],  const gidx_t quad_nodes_global[],
+                             const eckit::Configuration& config) const {
+    auto* lons = lon;
+    auto* lats = lat;
+    auto* remote_indices = remote_index;
+    auto nb_tris = nb_triags;
+    auto* tri_boundary_nodes = triag_nodes_global;
+    auto* tri_global_indices = triag_global_index;
+    auto* quad_boundary_nodes = quad_nodes_global;
+    auto* quad_global_indices = quad_global_index;
+
     // Get MPI comm from config name or fall back to atlas default comm
     auto mpi_comm_name = [](const auto& config) {
         return config.getString("mpi_comm", atlas::mpi::comm().name());
@@ -199,9 +226,8 @@ Mesh MeshBuilder::operator()(size_t nb_nodes, const double lons[], const double 
     auto halo      = array::make_view<int, 1>(mesh.nodes().halo());
 
     for (size_t i = 0; i < nb_nodes; ++i) {
-        xy(i, size_t(XX)) = lons[i];
-        xy(i, size_t(YY)) = lats[i];
-        // Identity projection, therefore (lon,lat) = (x,y)
+        xy(i, size_t(XX))      = x[i];
+        xy(i, size_t(YY))      = y[i];
         lonlat(i, size_t(LON)) = lons[i];
         lonlat(i, size_t(LAT)) = lats[i];
         ghost(i)               = ghosts[i];
@@ -270,6 +296,28 @@ Mesh MeshBuilder::operator()(size_t nb_nodes, const double lons[], const double 
     cells_part.assign(comm.rank());
 
     return mesh;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+Mesh TriangularMeshBuilder::operator()(size_t nb_nodes,  const gidx_t nodes_global_index[], const double x[], const double y[], const double lon[], const double lat[],
+                                       size_t nb_triags, const gidx_t triangle_global_index[], const gidx_t triangle_nodes_global_index[]) const {
+    std::vector<int> ghost(nb_nodes,0);
+    std::vector<int> partition(nb_nodes,0);
+    std::vector<idx_t> remote_index(nb_nodes);
+    idx_t remote_index_base = 0;
+    std::iota(remote_index.begin(), remote_index.end(), remote_index_base);
+
+    size_t nb_quads = 0;
+    std::vector<gidx_t> quad_nodes_global_index;
+    std::vector<gidx_t> quad_global_index;
+
+    return meshbuilder_(
+        nb_nodes, nodes_global_index,
+        x, y, 1, 1, lon, lat, 1, 1,
+        ghost.data(), partition.data(), remote_index.data(), remote_index_base,
+        nb_triags, triangle_global_index, triangle_nodes_global_index,
+        nb_quads, quad_global_index.data(), quad_nodes_global_index.data());
 }
 
 //----------------------------------------------------------------------------------------------------------------------

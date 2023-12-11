@@ -25,3 +25,10 @@ if( CMAKE_CXX_COMPILER_ID MATCHES NVHPC )
   ecbuild_add_cxx_flags("--diag_suppress declared_but_not_referenced --display_error_number" NAME atlas_cxx_disable_warnings )
   # For all the variables with side effects (constructor/dectructor functionality)
 endif()
+
+if( CMAKE_CXX_COMPILER_ID MATCHES IntelLLVM )
+  # Turn off -ffinite-math-only which gets included by some optimisation levels which assumes values can never be NaN.
+  # Then results in std::isnan(value) always retrun false.
+  ecbuild_add_cxx_flags("-fno-finite-math-only")
+endif()
+

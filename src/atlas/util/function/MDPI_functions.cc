@@ -93,7 +93,7 @@ double MDPI_gulfstream(double lon, double lat) {
     double dr1 = std::sqrt(sqr(gf_dmp_lon - gf_ori_lon) + sqr(gf_dmp_lat - gf_ori_lat));
 
     double gf_per_lon = [lon,d2r]() {
-        double gf_per_lon = lon - 180.;
+        double gf_per_lon = lon;
         while (gf_per_lon > 180.) {
             gf_per_lon -= 360.;
         }
@@ -116,6 +116,21 @@ double MDPI_gulfstream(double lon, double lat) {
 
     double background_func = MDPI_sinusoid(lon, lat);
     return background_func + dc * (std::max(1000. * std::sin(0.4 * (0.5 * dr + dth) + 0.007 * std::cos(50. * dth) + 0.37 * M_PI), 999.) - 999.);
+}
+
+extern "C" {
+    double atlas__functions__MDPI_sinusoid(double& lon, double& lat) {
+        return MDPI_sinusoid(lon, lat);
+    }
+    double atlas__functions__MDPI_harmonic(double& lon, double& lat) {
+        return MDPI_harmonic(lon, lat);
+    }
+    double atlas__functions__MDPI_vortex(double& lon, double& lat) {
+        return MDPI_vortex(lon, lat);
+    }
+    double atlas__functions__MDPI_gulfstream(double& lon, double& lat) {
+        return MDPI_gulfstream(lon, lat);
+    }
 }
 
 }  // namespace function

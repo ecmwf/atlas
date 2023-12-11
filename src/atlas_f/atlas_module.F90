@@ -91,6 +91,8 @@ use atlas_Vertical_module, only :&
     & atlas_Vertical
 use atlas_functionspace_EdgeColumns_module, only: &
     & atlas_functionspace_EdgeColumns
+use atlas_functionspace_CellColumns_module, only: &
+    & atlas_functionspace_CellColumns
 use atlas_functionspace_NodeColumns_module, only: &
     & atlas_functionspace_NodeColumns
 use atlas_functionspace_PointCloud_module, only: &
@@ -129,6 +131,8 @@ use atlas_fvm_module, only: &
 use atlas_Nabla_module, only: &
     & atlas_Nabla
 #endif
+use atlas_meshbuilder_module, only : &
+    & atlas_TriangularMeshBuilder
 use atlas_mesh_actions_module, only: &
     & atlas_build_parallel_fields, &
     & atlas_build_nodes_parallel_fields, &
@@ -146,7 +150,9 @@ use atlas_output_module, only: &
     & atlas_output_Gmsh
 use atlas_trace_module, only : &
     & atlas_Trace
-
+use atlas_functions_module
+use atlas_Redistribution_module, only : &
+    & atlas_Redistribution
 use fckit_log_module,  only: atlas_log => fckit_log
 
 implicit none

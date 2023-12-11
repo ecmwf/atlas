@@ -18,23 +18,23 @@ namespace atlas {
 namespace io {
 namespace defaults {
 
-static std::string checksum_algorithm() {
+[[maybe_unused]] static std::string checksum_algorithm() {
     static std::string checksum =
         eckit::Resource<std::string>("atlas.io.checksum.algorithm;$ATLAS_IO_CHECKSUM", "xxh64");
     return checksum;
 }
 
-static bool checksum_read() {
+[[maybe_unused]] static bool checksum_read() {
     static bool checksum = eckit::Resource<bool>("atlas.io.checksum.read;$ATLAS_IO_CHECKSUM_READ", true);
     return checksum;
 }
 
-static bool checksum_write() {
+[[maybe_unused]] static bool checksum_write() {
     static bool checksum = eckit::Resource<bool>("atlas.io.checksum.write;$ATLAS_IO_CHECKSUM_WRITE", true);
     return checksum;
 }
 
-static const std::string& compression_algorithm() {
+[[maybe_unused]] static const std::string& compression_algorithm() {
     static std::string compression = eckit::Resource<std::string>("atlas.io.compression;$ATLAS_IO_COMPRESSION", "none");
     return compression;
 }

@@ -10,13 +10,7 @@
 
 #pragma once
 
-namespace atlas {
-namespace io {
-class Metadata;
-class Data;
-class ArrayReference;
-}  // namespace io
-}  // namespace atlas
+#include "atlas-io.h"
 
 namespace atlas {
 namespace array {
