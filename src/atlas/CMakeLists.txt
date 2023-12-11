@@ -288,6 +288,8 @@ grid/detail/partitioner/CubedSpherePartitioner.cc
 grid/detail/partitioner/CubedSpherePartitioner.h
 grid/detail/partitioner/EqualBandsPartitioner.cc
 grid/detail/partitioner/EqualBandsPartitioner.h
+grid/detail/partitioner/EqualAreaPartitioner.cc
+grid/detail/partitioner/EqualAreaPartitioner.h
 grid/detail/partitioner/EqualRegionsPartitioner.cc
 grid/detail/partitioner/EqualRegionsPartitioner.h
 grid/detail/partitioner/MatchingMeshPartitioner.h

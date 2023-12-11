@@ -495,14 +495,16 @@ int EqualRegionsPartitioner::band(const double& y) const {
 }
 
 int EqualRegionsPartitioner::sector(int band, const double& x) const {
+    constexpr double two_pi = 2. * M_PI;
+    constexpr double div_two_pi = 1. / (2. * M_PI + 1.e-8);
     double xreg = x;
     if (x < 0.) {
-        xreg += 2. * M_PI;
+        xreg += two_pi;
     }
-    else if (x > 2. * M_PI) {
-        xreg -= 2. * M_PI;
+    else if (x > two_pi) {
+        xreg -= two_pi;
     }
-    return std::floor(xreg * sectors_[band] / (2. * M_PI + 1e-8));
+    return std::floor(xreg * sectors_[band] * div_two_pi);
 }
 
 void EqualRegionsPartitioner::where(int partition, int& band, int& sector) const {

@@ -16,7 +16,7 @@
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
-#include "atlas/grid/Grid.h"
+#include "atlas/grid.h"
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -93,21 +93,23 @@ void MatchingMeshPartitionerBruteForce::partition(const Grid& grid, int partitio
     auto lonlat_src = array::make_view<double, 2>(prePartitionedMesh_.nodes().lonlat());
 
     std::vector<PointLonLat> coordinates;
+    coordinates.reserve(lonlat_src.shape(0));
     PointLonLat coordinatesMin = PointLonLat(lonlat_src(0, LON), lonlat_src(0, LAT));
     PointLonLat coordinatesMax = coordinatesMin;
 
-    for (idx_t i = 0; i < lonlat_src.size(); ++i) {
+    for (idx_t i = 0; i < lonlat_src.shape(0); ++i) {
         PointLonLat A(lonlat_src(i, LON), lonlat_src(i, LAT));
         coordinatesMin = PointLonLat::componentsMin(coordinatesMin, A);
         coordinatesMax = PointLonLat::componentsMax(coordinatesMax, A);
-        coordinates.push_back(A);
+        coordinates.emplace_back(A);
     }
 
     {
         eckit::ProgressTimer timer("Partitioning target", grid.size(), "point", double(10), atlas::Log::trace());
-        for (idx_t i = 0; i < grid.size(); ++i, ++timer) {
+        auto grid_iter = grid.lonlat().begin();
+        for (idx_t i = 0; i < grid.size(); ++i, ++grid_iter) {
             partitioning[i] = -1;
-            const PointLonLat& P(coordinates[i]);
+            const PointLonLat& P = *grid_iter;
 
             if (coordinatesMin[LON] <= P[LON] && P[LON] <= coordinatesMax[LON] && coordinatesMin[LAT] <= P[LAT] &&
                 P[LAT] <= coordinatesMax[LAT]) {

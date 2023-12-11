@@ -98,6 +98,11 @@ void GridPointsJSONWriter::write(std::ostream& out, eckit::Channel& info) const 
 //------------------------------------------------------------------------------
 
 void GridPointsJSONWriter::write(std::ostream& out, std::ostream* info) const {
+
+    if (field_ == "none") {
+        return;
+    }
+
     int points_newline = pretty_ ? true : false;
     int points_indent = pretty_ ? 2 : 0;
     int partition_indent = 0;
