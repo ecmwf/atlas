@@ -122,15 +122,12 @@ ecbuild_add_test( TARGET atlas_test_interpolation_cubedsphere
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
-if ( atlas_HAVE_EIGEN )
-
 ecbuild_add_test( TARGET atlas_test_interpolation_spherical_vector
   OMP      4
   SOURCES  test_interpolation_spherical_vector.cc
   LIBS     atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION atlas_HAVE_EIGEN
 )
-
-endif()
 
 endif()
