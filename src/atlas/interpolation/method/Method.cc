@@ -374,7 +374,7 @@ void Method::do_execute(const FieldSet& fieldsSource, FieldSet& fieldsTarget, Me
     ATLAS_ASSERT(N == fieldsTarget.size());
 
     for (idx_t i = 0; i < fieldsSource.size(); ++i) {
-      Method::do_execute(fieldsSource[i], fieldsTarget[i], metadata);
+        Method::do_execute(fieldsSource[i], fieldsTarget[i], metadata);
     }
 }
 
