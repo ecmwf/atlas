@@ -6,7 +6,7 @@
  */
 
 #include "atlas/util/Point.h"
-#include "atlas/util/UnitSphere.h"
+#include "atlas/util/Geometry.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -16,6 +16,8 @@ namespace test {
 using namespace atlas::util;
 
 CASE("great-circle course") {
+
+  geometry::UnitSphere g;
 
   const auto point1 = PointLonLat(-71.6, -33.0);  // Valparaiso
   const auto point2 = PointLonLat(121.8, 31.4);   // Shanghai
@@ -27,8 +29,8 @@ CASE("great-circle course") {
   const auto targetCourse3 = 0.;
   const auto targetCourse4 = 180.;
 
-  const auto[ course1, course2 ] = greatCircleCourse(point1, point2);
-  const auto[ course3, course4 ] = greatCircleCourse(point3, point4);
+  const auto[ course1, course2 ] = g.greatCircleCourse(point1, point2);
+  const auto[ course3, course4 ] = g.greatCircleCourse(point3, point4);
 
   EXPECT_APPROX_EQ(course1, targetCourse1, 0.01);
   EXPECT_APPROX_EQ(course2, targetCourse2, 0.01);

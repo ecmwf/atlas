@@ -26,7 +26,7 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/Constants.h"
-#include "atlas/util/UnitSphere.h"
+#include "atlas/util/Geometry.h"
 
 #include "eckit/linalg/Triplet.h"
 
@@ -161,13 +161,15 @@ void SphericalVector::do_setup(const FunctionSpace& source,
   const auto sourceLonLats = array::make_view<double, 2>(source_.lonlat());
   const auto targetLonLats = array::make_view<double, 2>(target_.lonlat());
 
+  geometry::UnitSphere unitSphere;
+
   const auto setWeights = [&](auto i, auto j, const auto& baseWeight) {
     const auto sourceLonLat =
         PointLonLat(sourceLonLats(j, 0), sourceLonLats(j, 1));
     const auto targetLonLat =
         PointLonLat(targetLonLats(i, 0), targetLonLats(i, 1));
 
-    const auto alpha = util::greatCircleCourse(sourceLonLat, targetLonLat);
+    const auto alpha = unitSphere.greatCircleCourse(sourceLonLat, targetLonLat);
 
     const auto deltaAlpha =
         (alpha.first - alpha.second) * util::Constants::degreesToRadians();

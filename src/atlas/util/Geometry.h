@@ -27,6 +27,20 @@ namespace geometry {
 
 namespace detail {
 
+// TODO: move greatCircleCourse to eckit::geometry::Sphere
+
+/// @brief   Calculate great-cricle course between points
+///
+/// @details Calculates the direction (clockwise from north) of a great-circle
+///          arc between lonLat1 and lonLat2. Returns the direction of the arc
+///          at lonLat1 (first) and lonLat2 (second). Angle is normalised to the
+///          range of atan2 (usually (-180, 180]). All input and output values
+///          are in units of degrees.
+/// @ref     https://en.wikipedia.org/wiki/Great-circle_navigation
+std::pair<double, double> greatCircleCourse(const Point2& lonLat1, const Point2& lonLat2);
+
+//------------------------------------------------------------------------------------------------------
+
 class GeometryBase : public util::Object {
 public:
     virtual ~GeometryBase()                                           = default;
@@ -36,6 +50,7 @@ public:
     virtual double distance(const Point3& p1, const Point3& p2) const = 0;
     virtual double radius() const                                     = 0;
     virtual double area() const                                       = 0;
+    virtual std::pair<double, double> greatCircleCourse(const Point2& p1, const Point2& p2) = 0;
 
     Point3 xyz(const Point2& lonlat) const {
         Point3 xyz;
@@ -64,6 +79,9 @@ public:
     double distance(const Point3& p1, const Point3& p2) const override { return SphereT::distance(p1, p2); }
     double radius() const override { return SphereT::radius(); }
     double area() const override { return SphereT::area(); }
+    std::pair<double, double> greatCircleCourse(const Point2& p1, const Point2& p2) override {
+        return atlas::geometry::detail::greatCircleCourse(p1, p2);
+    }
 };
 
 class GeometrySphere : public GeometryBase {
@@ -77,6 +95,9 @@ public:
     double distance(const Point3& p1, const Point3& p2) const override { return Sphere::distance(radius_, p1, p2); }
     double radius() const override { return radius_; }
     double area() const override { return Sphere::area(radius_); }
+    std::pair<double, double> greatCircleCourse(const Point2& p1, const Point2& p2) override {
+        return atlas::geometry::detail::greatCircleCourse(p1, p2);
+    }
 
 private:
     double radius_;
@@ -107,6 +128,7 @@ public:
     double distance(const Point3& p1, const Point3& p2) const { return get()->distance(p1, p2); }
     double radius() const { return get()->radius(); }
     double area() const { return get()->area(); }
+    std::pair<double, double> greatCircleCourse(const Point2& p1, const Point2& p2) { return get()->greatCircleCourse(p1, p2); }
 
 protected:
     template <typename GeometryT, typename... Args>
