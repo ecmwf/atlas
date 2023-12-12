@@ -40,6 +40,16 @@ MethodBuilder<SphericalVector> __builder("spherical-vector");
 
 #if ATLAS_HAVE_EIGEN
 
+// A bug exists in intel versions < intel/2022.2 with OpenMP
+// Intel OneAPI version 2022.2 corresponds to Intel classic (icpc) version 2021.6
+#if defined(__INTEL_COMPILER) && defined(__INTEL_COMPILER_UPDATE)
+#if (__INTEL_COMPILER <= 2021) && (__INTEL_COMPILER_UPDATE < 6)
+#warning Disabling OpenMP to prevent internal compiler error for intel-classic version < 2021.6 (intel-oneapi/2022.2)
+#undef atlas_omp_parallel_for
+#define atlas_omp_parallel_for for
+#endif
+#endif
+
 using Complex = SphericalVector::Complex;
 
 template <typename Value>
