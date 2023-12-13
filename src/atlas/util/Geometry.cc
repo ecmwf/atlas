@@ -10,6 +10,8 @@
 
 #include "atlas/util/Geometry.h"
 
+#include <cmath>
+
 #include "eckit/geometry/Point2.h"
 #include "eckit/geometry/Point3.h"
 

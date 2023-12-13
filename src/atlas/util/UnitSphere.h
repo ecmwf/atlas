@@ -10,12 +10,6 @@
 
 #pragma once
 
-#include <cmath>
-#include <utility>
-
-#include "atlas/util/Constants.h"
-#include "atlas/util/Point.h"
-
 #include "eckit/geometry/UnitSphere.h"
 
 //------------------------------------------------------------------------------------------------------
