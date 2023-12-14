@@ -13,6 +13,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <utility>
 
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Earth.h"
