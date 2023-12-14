@@ -19,7 +19,7 @@
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/interpolation/method/Method.h"
 #include "atlas/linalg/sparse.h"
-#include "eckit/config/Configuration.h"
+
 
 namespace atlas {
 namespace interpolation {
@@ -51,10 +51,7 @@ class SphericalVector : public Method {
   ///          Note: This method only works with matrix-based interpolation
   ///          schemes.
   ///
-  SphericalVector(const Config& config) : Method(config) {
-    const auto& conf = dynamic_cast<const eckit::LocalConfiguration&>(config);
-    interpolationScheme_ = conf.getSubConfiguration("scheme");
-  }
+  SphericalVector(const Config& config);
   ~SphericalVector() override {}
 
   void print(std::ostream&) const override;
@@ -68,13 +65,9 @@ class SphericalVector : public Method {
 
   void do_execute_adjoint(FieldSet& sourceFieldSet,
                           const FieldSet& targetFieldSet,
-                          Metadata& metadata) const override {
-    ATLAS_NOTIMPLEMENTED;
-  }
+                          Metadata& metadata) const override;
   void do_execute_adjoint(Field& sourceField, const Field& targetField,
-                          Metadata& metadata) const override {
-    ATLAS_NOTIMPLEMENTED;
-  }
+                          Metadata& metadata) const override;
 
  private:
   template <typename Value>

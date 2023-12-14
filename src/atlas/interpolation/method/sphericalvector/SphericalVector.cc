@@ -6,10 +6,14 @@
  */
 
 #include "atlas/library/defines.h"
+#include "atlas/interpolation/method/sphericalvector/SphericalVector.h"
 
 #include <cmath>
 #include <tuple>
+#include <type_traits>
 #include <utility>
+
+#include "eckit/config/LocalConfiguration.h"
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/helpers/ArrayForEach.h"
@@ -19,16 +23,11 @@
 #include "atlas/interpolation/Cache.h"
 #include "atlas/interpolation/Interpolation.h"
 #include "atlas/interpolation/method/MethodFactory.h"
-#include "atlas/interpolation/method/sphericalvector/SphericalVector.h"
-#include "atlas/linalg/sparse.h"
-#include "atlas/option/Options.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/Geometry.h"
-
-#include "eckit/linalg/Triplet.h"
 
 namespace atlas {
 namespace interpolation {
@@ -189,6 +188,11 @@ void SphericalVector::do_setup(const FunctionSpace& source,
   ATLAS_ASSERT(realWeights_->nonZeros() == matrix().nonZeros());
 }
 
+SphericalVector::SphericalVector(const Config& config) : Method(config) {
+  const auto& conf = dynamic_cast<const eckit::LocalConfiguration&>(config);
+  interpolationScheme_ = conf.getSubConfiguration("scheme");
+}
+
 void SphericalVector::print(std::ostream&) const { ATLAS_NOTIMPLEMENTED; }
 
 void SphericalVector::do_execute(const FieldSet& sourceFieldSet,
@@ -239,16 +243,32 @@ void SphericalVector::do_execute(const Field& sourceField, Field& targetField,
   targetField.set_dirty();
 }
 
+void SphericalVector::do_execute_adjoint(FieldSet& sourceFieldSet,
+                                         const FieldSet& targetFieldSet,
+                                         Metadata& metadata) const {
+  ATLAS_NOTIMPLEMENTED;
+}
+
+void SphericalVector::do_execute_adjoint(Field& sourceField,
+                                         const Field& targetField,
+                                         Metadata& metadata) const {
+  ATLAS_NOTIMPLEMENTED;
+}
+
 template <typename Value>
 void SphericalVector::interpolate_vector_field(const Field& sourceField,
                                                Field& targetField) const {
   if (sourceField.rank() == 2) {
     interpolate_vector_field<Value, 2>(sourceField, targetField);
-  } else if (sourceField.rank() == 3) {
-    interpolate_vector_field<Value, 3>(sourceField, targetField);
-  } else {
-    ATLAS_NOTIMPLEMENTED;
+    return;
   }
+
+  if (sourceField.rank() == 3) {
+    interpolate_vector_field<Value, 3>(sourceField, targetField);
+    return;
+  }
+
+  ATLAS_NOTIMPLEMENTED;
 }
 
 template <typename Value, int Rank>
@@ -271,7 +291,9 @@ void SphericalVector::interpolate_vector_field(const Field& sourceField,
     matrixMultiply(sourceView, targetView, horizontalComponent,
                    *complexWeights_);
     return;
-  } else if (sourceField.variables() == 3) {
+  }
+
+  if (sourceField.variables() == 3) {
 
     const auto horizontalAndVerticalComponent = [&](
         const auto& sourceVars, auto& targetVars, const auto& complexWeight,
@@ -282,7 +304,6 @@ void SphericalVector::interpolate_vector_field(const Field& sourceField,
 
     matrixMultiply(sourceView, targetView, horizontalAndVerticalComponent,
                    *complexWeights_, *realWeights_);
-
     return;
   }
 
