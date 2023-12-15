@@ -18,7 +18,6 @@
 
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/interpolation/method/Method.h"
-#include "atlas/linalg/sparse.h"
 
 
 namespace atlas {

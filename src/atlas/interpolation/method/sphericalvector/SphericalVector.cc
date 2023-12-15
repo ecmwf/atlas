@@ -14,6 +14,7 @@
 #include <utility>
 
 #include "eckit/config/LocalConfiguration.h"
+#include "eckit/linalg/types.h"
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/helpers/ArrayForEach.h"
@@ -53,19 +54,12 @@ using Complex = SphericalVector::Complex;
 
 template <typename Value>
 using SparseMatrix = SphericalVector::SparseMatrix<Value>;
-using RealMatrixMap = Eigen::Map<const SparseMatrix<double>>;
 using ComplexTriplets = std::vector<Eigen::Triplet<Complex>>;
 using RealTriplets = std::vector<Eigen::Triplet<double>>;
 
 using EckitMatrix = eckit::linalg::SparseMatrix;
 
 namespace {
-
-RealMatrixMap makeMatrixMap(const EckitMatrix& baseMatrix) {
-  return RealMatrixMap(baseMatrix.rows(), baseMatrix.cols(),
-                       baseMatrix.nonZeros(), baseMatrix.outer(),
-                       baseMatrix.inner(), baseMatrix.data());
-}
 
 template <typename Matrix>
 auto getInnerIt(const Matrix& matrix, typename Matrix::Index k) {
@@ -148,7 +142,11 @@ void SphericalVector::do_setup(const FunctionSpace& source,
   const auto nRows = matrix().rows();
   const auto nCols = matrix().cols();
   const auto nNonZeros = matrix().nonZeros();
-  const auto baseWeights = makeMatrixMap(matrix());
+  const auto outerIndices = matrix().outer();
+  const auto innerIndices = matrix().inner();
+  const auto baseWeights = matrix().data();
+
+  using Index = eckit::linalg::Index;
 
   // Note: need to store copy of weights as Eigen3 sorts compressed rows by j
   // whereas eckit does not.
@@ -162,24 +160,27 @@ void SphericalVector::do_setup(const FunctionSpace& source,
 
   const auto unitSphere = geometry::UnitSphere{};
 
-  const auto setWeights = [&](auto i, auto j, const auto& baseWeight) {
-    const auto sourceLonLat =
-        PointLonLat(sourceLonLats(j, 0), sourceLonLats(j, 1));
-    const auto targetLonLat =
-        PointLonLat(targetLonLats(i, 0), targetLonLats(i, 1));
+  for (auto i = Index{}; i < nRows; ++i) {
+    for (auto k = outerIndices[i]; k < outerIndices[i + 1]; ++k) {
+      const auto j = innerIndices[k];
+      const auto baseWeight = baseWeights[k];
 
-    const auto alpha = unitSphere.greatCircleCourse(sourceLonLat, targetLonLat);
+      const auto sourceLonLat =
+          PointLonLat(sourceLonLats(j, 0), sourceLonLats(j, 1));
+      const auto targetLonLat =
+          PointLonLat(targetLonLats(i, 0), targetLonLats(i, 1));
 
-    const auto deltaAlpha =
-        (alpha.first - alpha.second) * util::Constants::degreesToRadians();
+      const auto alpha =
+          unitSphere.greatCircleCourse(sourceLonLat, targetLonLat);
 
-    const auto idx = std::distance(baseWeights.valuePtr(), &baseWeight);
+      const auto deltaAlpha =
+          (alpha.first - alpha.second) * util::Constants::degreesToRadians();
 
-    complexTriplets[idx] = {int(i), int(j), std::polar(baseWeight, deltaAlpha)};
-    realTriplets[idx] = {int(i), int(j), baseWeight};
-  };
+      complexTriplets[k] = {i, j, std::polar(baseWeight, deltaAlpha)};
+      realTriplets[k] = {i, j, baseWeight};
+    }
+  }
 
-  sparseMatrixForEach(setWeights, baseWeights);
   complexWeights_->setFromTriplets(complexTriplets.begin(),
                                    complexTriplets.end());
   realWeights_->setFromTriplets(realTriplets.begin(), realTriplets.end());
