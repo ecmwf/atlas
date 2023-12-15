@@ -634,6 +634,8 @@ interpolation/method/knn/KNearestNeighboursBase.cc
 interpolation/method/knn/KNearestNeighboursBase.h
 interpolation/method/knn/NearestNeighbour.cc
 interpolation/method/knn/NearestNeighbour.h
+interpolation/method/sphericalvector/SphericalVector.h
+interpolation/method/sphericalvector/SphericalVector.cc
 interpolation/method/structured/Cubic2D.cc
 interpolation/method/structured/Cubic2D.h
 interpolation/method/structured/Cubic3D.cc
