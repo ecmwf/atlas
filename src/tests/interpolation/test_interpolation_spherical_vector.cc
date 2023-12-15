@@ -229,7 +229,7 @@ CASE("finite element vector interpolation (2d-field, 2-vector)") {
   const auto cubedSphereConf = Config("source_fixture", "gaussian_mesh")
                                    .set("target_fixture", "cubedsphere_mesh")
                                    .set("field_spec_fixture", "2vector")
-                                   .set("file_id", "spherical_vector_cs")
+                                   .set("file_id", "spherical_vector_fe")
                                    .set("scheme", interpScheme)
                                    .set("tol", 0.00015);
 
