@@ -27,13 +27,13 @@ namespace method {
 #if ATLAS_HAVE_EIGEN
 class SphericalVector : public Method {
  public:
-  using Complex = std::complex<double>;
+  using Real = double;
+  using Complex = std::complex<Real>;
 
   template <typename Value>
   using SparseMatrix = Eigen::SparseMatrix<Value, Eigen::RowMajor>;
   using ComplexMatrix = SparseMatrix<Complex>;
-  using RealMatrix = SparseMatrix<double>;
-
+  using RealMatrix = SparseMatrix<Real>;
 
   /// @brief   Interpolation post-processor for vector field interpolation
   ///

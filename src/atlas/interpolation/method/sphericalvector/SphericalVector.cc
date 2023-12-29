@@ -5,7 +5,6 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "atlas/library/defines.h"
 #include "atlas/interpolation/method/sphericalvector/SphericalVector.h"
 
 #include <cmath>
@@ -13,22 +12,23 @@
 #include <type_traits>
 #include <utility>
 
-#include "eckit/config/LocalConfiguration.h"
-#include "eckit/linalg/types.h"
-
 #include "atlas/array/ArrayView.h"
-#include "atlas/array/helpers/ArrayForEach.h"
 #include "atlas/array/Range.h"
+#include "atlas/array/helpers/ArrayForEach.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/interpolation/Cache.h"
 #include "atlas/interpolation/Interpolation.h"
 #include "atlas/interpolation/method/MethodFactory.h"
+#include "atlas/interpolation/method/sphericalvector/ComplexMatrixMultiply.h"
+#include "atlas/library/defines.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/Geometry.h"
+#include "eckit/config/LocalConfiguration.h"
+#include "eckit/linalg/types.h"
 
 namespace atlas {
 namespace interpolation {
@@ -51,11 +51,12 @@ MethodBuilder<SphericalVector> __builder("spherical-vector");
 #endif
 
 using Complex = SphericalVector::Complex;
+using Real = SphericalVector::Real;
 
 template <typename Value>
 using SparseMatrix = SphericalVector::SparseMatrix<Value>;
 using ComplexTriplets = std::vector<Eigen::Triplet<Complex>>;
-using RealTriplets = std::vector<Eigen::Triplet<double>>;
+using RealTriplets = std::vector<Eigen::Triplet<Real>>;
 
 using EckitMatrix = eckit::linalg::SparseMatrix;
 
@@ -275,7 +276,8 @@ void SphericalVector::interpolate_vector_field(const Field& sourceField,
 template <typename Value, int Rank>
 void SphericalVector::interpolate_vector_field(const Field& sourceField,
                                                Field& targetField) const {
-
+  const auto MatMul =
+      detail::ComplexMatrixMultiply(*complexWeights_, *realWeights_);
   const auto sourceView = array::make_view<Value, Rank>(sourceField);
   auto targetView = array::make_view<Value, Rank>(targetField);
   targetView.assign(0.);
@@ -289,8 +291,7 @@ void SphericalVector::interpolate_vector_field(const Field& sourceField,
   };
 
   if (sourceField.variables() == 2) {
-    matrixMultiply(sourceView, targetView, horizontalComponent,
-                   *complexWeights_);
+    MatMul.ApplyTwoVector(sourceView, targetView);
     return;
   }
 

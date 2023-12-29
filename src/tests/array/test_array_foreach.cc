@@ -14,7 +14,6 @@
 #include "atlas/array/helpers/ArrayForEach.h"
 #include "atlas/array/helpers/ArraySlicer.h"
 #include "atlas/util/Config.h"
-
 #include "tests/AtlasTestEnvironment.h"
 
 using namespace atlas::array;
