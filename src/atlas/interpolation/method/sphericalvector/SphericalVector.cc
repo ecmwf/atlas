@@ -7,14 +7,7 @@
 
 #include "atlas/interpolation/method/sphericalvector/SphericalVector.h"
 
-#include <cmath>
-#include <tuple>
-#include <type_traits>
-#include <utility>
-
 #include "atlas/array/ArrayView.h"
-#include "atlas/array/Range.h"
-#include "atlas/array/helpers/ArrayForEach.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/interpolation/Cache.h"
@@ -28,7 +21,6 @@
 #include "atlas/util/Constants.h"
 #include "atlas/util/Geometry.h"
 #include "eckit/config/LocalConfiguration.h"
-#include "eckit/linalg/types.h"
 
 namespace atlas {
 namespace interpolation {
@@ -40,87 +32,10 @@ MethodBuilder<SphericalVector> __builder("spherical-vector");
 
 #if ATLAS_HAVE_EIGEN
 
-// A bug exists in intel versions < intel/2022.2 with OpenMP
-// Intel OneAPI version 2022.2 corresponds to Intel classic (icpc) version 2021.6
-#if defined(__INTEL_COMPILER) && defined(__INTEL_COMPILER_UPDATE)
-#if (__INTEL_COMPILER <= 2021) && (__INTEL_COMPILER_UPDATE < 6)
-#warning Disabling OpenMP to prevent internal compiler error for intel-classic version < 2021.6 (intel-oneapi/2022.2)
-#undef atlas_omp_parallel_for
-#define atlas_omp_parallel_for for
-#endif
-#endif
-
 using Complex = SphericalVector::Complex;
 using Real = SphericalVector::Real;
-
-template <typename Value>
-using SparseMatrix = SphericalVector::SparseMatrix<Value>;
 using ComplexTriplets = std::vector<Eigen::Triplet<Complex>>;
 using RealTriplets = std::vector<Eigen::Triplet<Real>>;
-
-using EckitMatrix = eckit::linalg::SparseMatrix;
-
-namespace {
-
-template <typename Matrix>
-auto getInnerIt(const Matrix& matrix, typename Matrix::Index k) {
-  return typename Matrix::InnerIterator(matrix, k);
-}
-
-template <typename Functor, typename Matrix>
-void sparseMatrixForEach(const Functor& functor, const Matrix& matrix) {
-  using Index = typename Matrix::Index;
-  atlas_omp_parallel_for (auto k = Index{}; k < matrix.outerSize(); ++k) {
-    for (auto it = getInnerIt(matrix, k); it; ++it) {
-      functor(it.row(), it.col(), it.value());
-    }
-  }
-}
-
-template <typename Functor, typename Matrix1, typename Matrix2>
-void sparseMatrixForEach(const Functor& functor, const Matrix1& matrix1,
-                         const Matrix2& matrix2) {
-  using Index = typename Matrix1::Index;
-  atlas_omp_parallel_for (auto k = Index{}; k < matrix1.outerSize(); ++k) {
-    for (auto [it1, it2] =
-             std::make_pair(getInnerIt(matrix1, k), getInnerIt(matrix2, k));
-         it1; ++it1, ++it2) {
-      functor(it1.row(), it1.col(), it1.value(), it2.value());
-    }
-  }
-}
-
-template <typename SourceView, typename TargetView, typename Functor,
-          typename... Matrices>
-void matrixMultiply(const SourceView& sourceView, TargetView& targetView,
-                    const Functor& multiplyFunctor,
-                    const Matrices&... matrices) {
-
-  const auto multiplyColumn = [&](auto i, auto j, const auto&... weights) {
-    constexpr auto Rank = std::decay_t<SourceView>::rank();
-    if constexpr (Rank == 2) {
-        const auto sourceSlice = sourceView.slice(j, array::Range::all());
-        auto targetSlice = targetView.slice(i, array::Range::all());
-        multiplyFunctor(sourceSlice, targetSlice, weights...);
-    } else if constexpr(Rank == 3) {
-        const auto sourceSlice =
-            sourceView.slice(j, array::Range::all(), array::Range::all());
-        auto targetSlice =
-            targetView.slice(i, array::Range::all(), array::Range::all());
-        array::helpers::ArrayForEach<0>::apply(
-            std::tie(sourceSlice, targetSlice),
-            [&](auto&& sourceVars, auto&& targetVars) {
-              multiplyFunctor(sourceVars, targetVars, weights...);
-            });
-    } else {
-      ATLAS_NOTIMPLEMENTED;
-    }
-  };
-
-  sparseMatrixForEach(multiplyColumn, matrices...);
-}
-
-}  // namespace
 
 void SphericalVector::do_setup(const Grid& source, const Grid& target,
                                const Cache&) {
@@ -143,16 +58,16 @@ void SphericalVector::do_setup(const FunctionSpace& source,
   const auto nRows = matrix().rows();
   const auto nCols = matrix().cols();
   const auto nNonZeros = matrix().nonZeros();
-  const auto outerIndices = matrix().outer();
-  const auto innerIndices = matrix().inner();
-  const auto baseWeights = matrix().data();
+  const auto* outerIndices = matrix().outer();
+  const auto* innerIndices = matrix().inner();
+  const auto* baseWeights = matrix().data();
 
-  using Index = eckit::linalg::Index;
+  using Index = std::decay_t<decltype(*innerIndices)>;
 
   // Note: need to store copy of weights as Eigen3 sorts compressed rows by j
   // whereas eckit does not.
-  complexWeights_ = std::make_shared<ComplexMatrix>(nRows, nCols);
-  realWeights_ = std::make_shared<RealMatrix>(nRows, nCols);
+  auto complexWeights = std::make_shared<ComplexMatrix>(nRows, nCols);
+  auto realWeights = std::make_shared<RealMatrix>(nRows, nCols);
   auto complexTriplets = ComplexTriplets(nNonZeros);
   auto realTriplets = RealTriplets(nNonZeros);
 
@@ -161,15 +76,17 @@ void SphericalVector::do_setup(const FunctionSpace& source,
 
   const auto unitSphere = geometry::UnitSphere{};
 
-  for (auto i = Index{}; i < nRows; ++i) {
-    for (auto k = outerIndices[i]; k < outerIndices[i + 1]; ++k) {
-      const auto j = innerIndices[k];
-      const auto baseWeight = baseWeights[k];
+  atlas_omp_parallel_for(auto rowIndex = Index{0}; rowIndex < nRows;
+                         ++rowIndex) {
+    for (auto dataIndex = outerIndices[rowIndex];
+         dataIndex < outerIndices[rowIndex + 1]; ++dataIndex) {
+      const auto colIndex = innerIndices[dataIndex];
+      const auto baseWeight = baseWeights[dataIndex];
 
       const auto sourceLonLat =
-          PointLonLat(sourceLonLats(j, 0), sourceLonLats(j, 1));
+          PointLonLat(sourceLonLats(colIndex, 0), sourceLonLats(colIndex, 1));
       const auto targetLonLat =
-          PointLonLat(targetLonLats(i, 0), targetLonLats(i, 1));
+          PointLonLat(targetLonLats(rowIndex, 0), targetLonLats(rowIndex, 1));
 
       const auto alpha =
           unitSphere.greatCircleCourse(sourceLonLat, targetLonLat);
@@ -177,17 +94,21 @@ void SphericalVector::do_setup(const FunctionSpace& source,
       const auto deltaAlpha =
           (alpha.first - alpha.second) * util::Constants::degreesToRadians();
 
-      complexTriplets[k] = {i, j, std::polar(baseWeight, deltaAlpha)};
-      realTriplets[k] = {i, j, baseWeight};
+      complexTriplets[dataIndex] = {rowIndex, colIndex,
+                                    std::polar(baseWeight, deltaAlpha)};
+      realTriplets[dataIndex] = {rowIndex, colIndex, baseWeight};
     }
   }
 
-  complexWeights_->setFromTriplets(complexTriplets.begin(),
+  complexWeights->setFromTriplets(complexTriplets.begin(),
                                    complexTriplets.end());
-  realWeights_->setFromTriplets(realTriplets.begin(), realTriplets.end());
+  realWeights->setFromTriplets(realTriplets.begin(), realTriplets.end());
 
-  ATLAS_ASSERT(complexWeights_->nonZeros() == matrix().nonZeros());
-  ATLAS_ASSERT(realWeights_->nonZeros() == matrix().nonZeros());
+  ATLAS_ASSERT(complexWeights->nonZeros() == matrix().nonZeros());
+  ATLAS_ASSERT(realWeights->nonZeros() == matrix().nonZeros());
+
+  weightsMatMul_= std::make_shared<WeightsMatMul>(complexWeights, realWeights);
+
 }
 
 SphericalVector::SphericalVector(const Config& config) : Method(config) {
@@ -276,36 +197,16 @@ void SphericalVector::interpolate_vector_field(const Field& sourceField,
 template <typename Value, int Rank>
 void SphericalVector::interpolate_vector_field(const Field& sourceField,
                                                Field& targetField) const {
-  const auto MatMul =
-      detail::ComplexMatrixMultiply(*complexWeights_, *realWeights_);
   const auto sourceView = array::make_view<Value, Rank>(sourceField);
   auto targetView = array::make_view<Value, Rank>(targetField);
-  targetView.assign(0.);
-
-  const auto horizontalComponent = [](const auto& sourceVars, auto& targetVars,
-                                      const auto& complexWeight) {
-    const auto sourceVector = Complex(sourceVars(0), sourceVars(1));
-    const auto targetVector = complexWeight * sourceVector;
-    targetVars(0) += targetVector.real();
-    targetVars(1) += targetVector.imag();
-  };
 
   if (sourceField.variables() == 2) {
-    MatMul.ApplyTwoVector(sourceView, targetView);
+    weightsMatMul_->apply(sourceView, targetView, detail::twoVector);
     return;
   }
 
   if (sourceField.variables() == 3) {
-
-    const auto horizontalAndVerticalComponent = [&](
-        const auto& sourceVars, auto& targetVars, const auto& complexWeight,
-        const auto& realWeight) {
-      horizontalComponent(sourceVars, targetVars, complexWeight);
-      targetVars(2) += realWeight * sourceVars(2);
-    };
-
-    matrixMultiply(sourceView, targetView, horizontalAndVerticalComponent,
-                   *complexWeights_, *realWeights_);
+    weightsMatMul_->apply(sourceView, targetView, detail::threeVector);
     return;
   }
 

@@ -24,6 +24,12 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
+namespace detail {
+template <bool InitialiseTarget>
+class ComplexMatrixMultiply;
+} // namespace detail
+
+
 #if ATLAS_HAVE_EIGEN
 class SphericalVector : public Method {
  public:
@@ -34,6 +40,10 @@ class SphericalVector : public Method {
   using SparseMatrix = Eigen::SparseMatrix<Value, Eigen::RowMajor>;
   using ComplexMatrix = SparseMatrix<Complex>;
   using RealMatrix = SparseMatrix<Real>;
+  using ComplexMatPtr = std::shared_ptr<ComplexMatrix>;
+  using RealMatPtr = std::shared_ptr<RealMatrix>;
+
+  using WeightsMatMul = detail::ComplexMatrixMultiply<true>;
 
   /// @brief   Interpolation post-processor for vector field interpolation
   ///
@@ -85,8 +95,7 @@ class SphericalVector : public Method {
   FunctionSpace source_;
   FunctionSpace target_;
 
-  std::shared_ptr<ComplexMatrix> complexWeights_;
-  std::shared_ptr<RealMatrix> realWeights_;
+  std::shared_ptr<WeightsMatMul> weightsMatMul_{};
 
 };
 #else

@@ -205,20 +205,20 @@ CASE("cubed sphere vector interpolation (3d-field, 2-vector)") {
   testInterpolation<Rank3dField>((cubedSphereConf));
 }
 
-// CASE("cubed sphere vector interpolation (3d-field, 3-vector)") {
-//   const auto baseInterpScheme = util::Config("type", "cubedsphere-bilinear");
-//   const auto interpScheme =
-//       util::Config("type", "spherical-vector").set("scheme",
-//       baseInterpScheme);
-//   const auto cubedSphereConf = Config("source_fixture", "cubedsphere_mesh")
-//                                    .set("target_fixture", "gaussian_mesh")
-//                                    .set("field_spec_fixture", "3vector")
-//                                    .set("file_id", "spherical_vector_cs3")
-//                                    .set("scheme", interpScheme)
-//                                    .set("tol", 0.00096);
+ CASE("cubed sphere vector interpolation (3d-field, 3-vector)") {
+   const auto baseInterpScheme = util::Config("type", "cubedsphere-bilinear");
+   const auto interpScheme =
+       util::Config("type", "spherical-vector").set("scheme",
+       baseInterpScheme);
+   const auto cubedSphereConf = Config("source_fixture", "cubedsphere_mesh")
+                                    .set("target_fixture", "gaussian_mesh")
+                                    .set("field_spec_fixture", "3vector")
+                                    .set("file_id", "spherical_vector_cs3")
+                                    .set("scheme", interpScheme)
+                                    .set("tol", 0.00096);
 
-//   testInterpolation<Rank3dField>((cubedSphereConf));
-// }
+   testInterpolation<Rank3dField>((cubedSphereConf));
+ }
 
 CASE("finite element vector interpolation (2d-field, 2-vector)") {
   const auto baseInterpScheme = util::Config("type", "finite-element");
