@@ -12,37 +12,17 @@
 #include <complex>
 #include <memory>
 
-#if ATLAS_HAVE_EIGEN
-#include <Eigen/Sparse>
-#endif
-
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/interpolation/method/Method.h"
+#include "atlas/interpolation/method/sphericalvector/ComplexMatrixMultiply.h"
 
 
 namespace atlas {
 namespace interpolation {
 namespace method {
 
-namespace detail {
-template <bool InitialiseTarget>
-class ComplexMatrixMultiply;
-} // namespace detail
-
-
-#if ATLAS_HAVE_EIGEN
 class SphericalVector : public Method {
  public:
-  using Real = double;
-  using Complex = std::complex<Real>;
-
-  template <typename Value>
-  using SparseMatrix = Eigen::SparseMatrix<Value, Eigen::RowMajor>;
-  using ComplexMatrix = SparseMatrix<Complex>;
-  using RealMatrix = SparseMatrix<Real>;
-  using ComplexMatPtr = std::shared_ptr<ComplexMatrix>;
-  using RealMatPtr = std::shared_ptr<RealMatrix>;
-
   using WeightsMatMul = detail::ComplexMatrixMultiply<true>;
 
   /// @brief   Interpolation post-processor for vector field interpolation
@@ -95,32 +75,9 @@ class SphericalVector : public Method {
   FunctionSpace source_;
   FunctionSpace target_;
 
-  std::shared_ptr<WeightsMatMul> weightsMatMul_{};
+  WeightsMatMul weightsMatMul_{};
 
 };
-#else
-  class SphericalVector : public Method {
-   public:
-    SphericalVector(const Config& config) : Method(config) {
-      ATLAS_THROW_EXCEPTION("atlas has been compiled without Eigen");
-    }
-
-    ~SphericalVector() override {}
-
-    void print(std::ostream&) const override {}
-    const FunctionSpace& source() const override {ATLAS_NOTIMPLEMENTED;}
-    const FunctionSpace& target() const override {ATLAS_NOTIMPLEMENTED;}
-
-    void do_execute(const FieldSet& sourceFieldSet, FieldSet& targetFieldSet,
-                    Metadata& metadata) const override {}
-    void do_execute(const Field& sourceField, Field& targetField,
-                    Metadata& metadata) const override {}
-   private:
-    void do_setup(const FunctionSpace& source,
-                  const FunctionSpace& target) override {}
-    void do_setup(const Grid& source, const Grid& target, const Cache&) override {}
-  };
-#endif
 
 
 }  // namespace method

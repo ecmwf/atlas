@@ -13,8 +13,7 @@
 #include "atlas/interpolation/Cache.h"
 #include "atlas/interpolation/Interpolation.h"
 #include "atlas/interpolation/method/MethodFactory.h"
-#include "atlas/interpolation/method/sphericalvector/ComplexMatrixMultiply.h"
-#include "atlas/library/defines.h"
+#include "atlas/interpolation/method/sphericalvector/Types.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
@@ -30,12 +29,8 @@ namespace  {
 MethodBuilder<SphericalVector> __builder("spherical-vector");
 }
 
-#if ATLAS_HAVE_EIGEN
-
-using Complex = SphericalVector::Complex;
-using Real = SphericalVector::Real;
-using ComplexTriplets = std::vector<Eigen::Triplet<Complex>>;
-using RealTriplets = std::vector<Eigen::Triplet<Real>>;
+using ComplexTriplets = detail::ComplexMatrix::Triplets;
+using RealTriplets = detail::RealMatrix::Triplets;
 
 void SphericalVector::do_setup(const Grid& source, const Grid& target,
                                const Cache&) {
@@ -66,8 +61,6 @@ void SphericalVector::do_setup(const FunctionSpace& source,
 
   // Note: need to store copy of weights as Eigen3 sorts compressed rows by j
   // whereas eckit does not.
-  auto complexWeights = std::make_shared<ComplexMatrix>(nRows, nCols);
-  auto realWeights = std::make_shared<RealMatrix>(nRows, nCols);
   auto complexTriplets = ComplexTriplets(nNonZeros);
   auto realTriplets = RealTriplets(nNonZeros);
 
@@ -100,14 +93,13 @@ void SphericalVector::do_setup(const FunctionSpace& source,
     }
   }
 
-  complexWeights->setFromTriplets(complexTriplets.begin(),
-                                   complexTriplets.end());
-  realWeights->setFromTriplets(realTriplets.begin(), realTriplets.end());
+  const auto complexWeights =
+      std::make_shared<detail::ComplexMatrix>(nRows, nCols, complexTriplets);
 
-  ATLAS_ASSERT(complexWeights->nonZeros() == matrix().nonZeros());
-  ATLAS_ASSERT(realWeights->nonZeros() == matrix().nonZeros());
+  const auto realWeights =
+      std::make_shared<detail::RealMatrix>(nRows, nCols, realTriplets);
 
-  weightsMatMul_= std::make_shared<WeightsMatMul>(complexWeights, realWeights);
+  weightsMatMul_= WeightsMatMul(complexWeights, realWeights);
 
 }
 
@@ -201,19 +193,17 @@ void SphericalVector::interpolate_vector_field(const Field& sourceField,
   auto targetView = array::make_view<Value, Rank>(targetField);
 
   if (sourceField.variables() == 2) {
-    weightsMatMul_->apply(sourceView, targetView, detail::twoVector);
+    weightsMatMul_.apply(sourceView, targetView, detail::twoVector);
     return;
   }
 
   if (sourceField.variables() == 3) {
-    weightsMatMul_->apply(sourceView, targetView, detail::threeVector);
+    weightsMatMul_.apply(sourceView, targetView, detail::threeVector);
     return;
   }
 
   ATLAS_NOTIMPLEMENTED;
 }
-
-#endif
 
 }  // namespace method
 }  // namespace interpolation
