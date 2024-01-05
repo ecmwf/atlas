@@ -22,8 +22,9 @@ namespace interpolation {
 namespace method {
 
 class SphericalVector : public Method {
- public:
   using WeightsMatMul = detail::ComplexMatrixMultiply<true>;
+  using WeightsMatMulAdjoint = detail::ComplexMatrixMultiply<false>;
+ public:
 
   /// @brief   Interpolation post-processor for vector field interpolation
   ///
@@ -59,23 +60,33 @@ class SphericalVector : public Method {
                           Metadata& metadata) const override;
 
  private:
-  template <typename Value>
-  void interpolate_vector_field(const Field& source, Field& target) const;
+  template <typename MatMul>
+  static void interpolate_vector_field(const Field& sourceField,
+                                       Field& targetField,
+                                       const MatMul& matMul);
 
-  template <typename Value, int Rank>
-  void interpolate_vector_field(const Field& source, Field& target) const;
+  template <typename Value, typename MatMul>
+  static void interpolate_vector_field(const Field& sourceField,
+                                       Field& targetField,
+                                       const MatMul& matMul);
 
-  using Method::do_setup;
+  template <typename Value, int Rank, typename MatMul>
+  static void interpolate_vector_field(const Field& sourceField,
+                                       Field& targetField,
+                                       const MatMul& matMul);
+
   void do_setup(const FunctionSpace& source,
                 const FunctionSpace& target) override;
   void do_setup(const Grid& source, const Grid& target, const Cache&) override;
 
-  eckit::LocalConfiguration interpolationScheme_;
+  eckit::LocalConfiguration interpolationScheme_{};
+  bool adjoint_{};
 
-  FunctionSpace source_;
-  FunctionSpace target_;
+  FunctionSpace source_{};
+  FunctionSpace target_{};
 
   WeightsMatMul weightsMatMul_{};
+  WeightsMatMulAdjoint weightsMatMulAdjoint_{};
 
 };
 

@@ -10,6 +10,7 @@
 #include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
+#include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/interpolation/Cache.h"
 #include "atlas/interpolation/Interpolation.h"
 #include "atlas/interpolation/method/MethodFactory.h"
@@ -57,12 +58,13 @@ void SphericalVector::do_setup(const FunctionSpace& source,
   const auto* innerIndices = matrix().inner();
   const auto* baseWeights = matrix().data();
 
-  using Index = std::decay_t<decltype(*innerIndices)>;
+  using Index = detail::Index;
 
   // Note: need to store copy of weights as Eigen3 sorts compressed rows by j
   // whereas eckit does not.
   auto complexTriplets = ComplexTriplets(nNonZeros);
   auto realTriplets = RealTriplets(nNonZeros);
+
 
   const auto sourceLonLats = array::make_view<double, 2>(source_.lonlat());
   const auto targetLonLats = array::make_view<double, 2>(target_.lonlat());
@@ -101,11 +103,23 @@ void SphericalVector::do_setup(const FunctionSpace& source,
 
   weightsMatMul_= WeightsMatMul(complexWeights, realWeights);
 
+  if (adjoint_) {
+
+    const auto complexWeightsAdjoint =
+        std::make_shared<detail::ComplexMatrix>(complexWeights->adjoint());
+
+    const auto realWeightsAdjoint =
+        std::make_shared<detail::RealMatrix>(realWeights->adjoint());
+
+    weightsMatMulAdjoint_ =
+        WeightsMatMulAdjoint(complexWeightsAdjoint, realWeightsAdjoint);
+  }
 }
 
 SphericalVector::SphericalVector(const Config& config) : Method(config) {
   const auto& conf = dynamic_cast<const eckit::LocalConfiguration&>(config);
   interpolationScheme_ = conf.getSubConfiguration("scheme");
+  adjoint_ = conf.getBool("adjoint", false);
 }
 
 void SphericalVector::print(std::ostream&) const { ATLAS_NOTIMPLEMENTED; }
@@ -114,9 +128,7 @@ void SphericalVector::do_execute(const FieldSet& sourceFieldSet,
                                  FieldSet& targetFieldSet,
                                  Metadata& metadata) const {
   ATLAS_TRACE("atlas::interpolation::method::SphericalVector::do_execute()");
-
-  const auto nFields = sourceFieldSet.size();
-  ATLAS_ASSERT(nFields == targetFieldSet.size());
+  ATLAS_ASSERT(sourceFieldSet.size() == targetFieldSet.size());
 
   for (auto i = 0; i < sourceFieldSet.size(); ++i) {
     do_execute(sourceFieldSet[i], targetFieldSet[i], metadata);
@@ -126,7 +138,6 @@ void SphericalVector::do_execute(const FieldSet& sourceFieldSet,
 void SphericalVector::do_execute(const Field& sourceField, Field& targetField,
                                  Metadata&) const {
   ATLAS_TRACE("atlas::interpolation::method::SphericalVector::do_execute()");
-
   const auto fieldType = sourceField.metadata().getString("type", "");
   if (fieldType != "vector") {
 
@@ -136,69 +147,102 @@ void SphericalVector::do_execute(const Field& sourceField, Field& targetField,
     return;
   }
 
-  if (target_.size() == 0) {
-    return;
-  }
-
-  ATLAS_ASSERT_MSG(sourceField.variables() == 2 || sourceField.variables() == 3,
-                   "Vector field can only have 2 or 3 components.");
-
   Method::check_compatibility(sourceField, targetField, matrix());
 
   haloExchange(sourceField);
-
-  if (sourceField.datatype().kind() == array::DataType::KIND_REAL64) {
-    interpolate_vector_field<double>(sourceField, targetField);
-  } else if (sourceField.datatype().kind() == array::DataType::KIND_REAL32) {
-    interpolate_vector_field<float>(sourceField, targetField);
-  } else {
-    ATLAS_NOTIMPLEMENTED;
-  }
-
+  interpolate_vector_field(sourceField, targetField, weightsMatMul_);
   targetField.set_dirty();
 }
 
 void SphericalVector::do_execute_adjoint(FieldSet& sourceFieldSet,
                                          const FieldSet& targetFieldSet,
                                          Metadata& metadata) const {
-  ATLAS_NOTIMPLEMENTED;
+  ATLAS_TRACE(
+      "atlas::interpolation::method::SphericalVector::do_execute_adjoint()");
+  ATLAS_ASSERT(sourceFieldSet.size() == targetFieldSet.size());
+
+  for (auto i = 0; i < sourceFieldSet.size(); ++i) {
+    do_execute_adjoint(sourceFieldSet[i], targetFieldSet[i], metadata);
+  }
 }
 
 void SphericalVector::do_execute_adjoint(Field& sourceField,
                                          const Field& targetField,
                                          Metadata& metadata) const {
-  ATLAS_NOTIMPLEMENTED;
+  ATLAS_TRACE(
+      "atlas::interpolation::method::SphericalVector::do_execute_adjoint()");
+
+  const auto fieldType = sourceField.metadata().getString("type", "");
+  if (fieldType != "vector") {
+
+    auto metadata = Metadata();
+    Method::do_execute_adjoint(sourceField, targetField, metadata);
+
+    return;
+  }
+
+  Method::check_compatibility(sourceField, targetField, matrix());
+
+  ATLAS_ASSERT(adjoint_, "\"adjoint\" needs to be set to \"true\" in Config.");
+  interpolate_vector_field(targetField, sourceField, weightsMatMulAdjoint_);
+    adjointHaloExchange(sourceField);
 }
 
-template <typename Value>
+template <typename MatMul>
 void SphericalVector::interpolate_vector_field(const Field& sourceField,
-                                               Field& targetField) const {
+                                               Field& targetField,
+                                               const MatMul& matMul) {
+  if (targetField.size() == 0) {
+    return;
+  }
+
+  ATLAS_ASSERT_MSG(sourceField.variables() == 2 || sourceField.variables() == 3,
+                   "Vector field can only have 2 or 3 components.");
+
+  if (sourceField.datatype().kind() == array::DataType::KIND_REAL64) {
+    interpolate_vector_field<double>(sourceField, targetField, matMul);
+    return;
+  }
+
+  if (sourceField.datatype().kind() == array::DataType::KIND_REAL32) {
+    interpolate_vector_field<float>(sourceField, targetField, matMul);
+    return;
+  }
+
+  ATLAS_NOTIMPLEMENTED;
+};
+
+template <typename Value, typename MatMul>
+void SphericalVector::interpolate_vector_field(const Field& sourceField,
+                                               Field& targetField,
+                                               const MatMul& matMul) {
   if (sourceField.rank() == 2) {
-    interpolate_vector_field<Value, 2>(sourceField, targetField);
+    interpolate_vector_field<Value, 2>(sourceField, targetField, matMul);
     return;
   }
 
   if (sourceField.rank() == 3) {
-    interpolate_vector_field<Value, 3>(sourceField, targetField);
+    interpolate_vector_field<Value, 3>(sourceField, targetField, matMul);
     return;
   }
 
   ATLAS_NOTIMPLEMENTED;
 }
 
-template <typename Value, int Rank>
+template <typename Value, int Rank, typename MatMul>
 void SphericalVector::interpolate_vector_field(const Field& sourceField,
-                                               Field& targetField) const {
+                                               Field& targetField,
+                                               const MatMul& matMul) {
   const auto sourceView = array::make_view<Value, Rank>(sourceField);
   auto targetView = array::make_view<Value, Rank>(targetField);
 
   if (sourceField.variables() == 2) {
-    weightsMatMul_.apply(sourceView, targetView, detail::twoVector);
+    matMul.apply(sourceView, targetView, detail::twoVector);
     return;
   }
 
   if (sourceField.variables() == 3) {
-    weightsMatMul_.apply(sourceView, targetView, detail::threeVector);
+    matMul.apply(sourceView, targetView, detail::threeVector);
     return;
   }
 

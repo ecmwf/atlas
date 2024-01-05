@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <utility>
 #include <vector>
 
 #include "atlas/library/defines.h"
@@ -47,8 +48,13 @@ class SparseMatrix {
   const Index* outer() { return eigenMatrix_.outerIndexPtr(); }
   const Index* inner() { return eigenMatrix_.innerIndexPtr(); }
   const Value* data() { return eigenMatrix_.valuePtr(); }
+  SparseMatrix<Value> adjoint() {
+    return SparseMatrix(eigenMatrix_.adjoint().eval());
+  }
 
  private:
+  SparseMatrix(EigenMatrix&& eigenMatrixAdjoint)
+      : eigenMatrix_{std::move(eigenMatrixAdjoint)} {}
   EigenMatrix eigenMatrix_{};
 };
 #else
@@ -58,14 +64,14 @@ class SparseMatrix {
  public:
   class Triplet {
    public:
-    template<typename... Args>
+    template <typename... Args>
     Triplet(const Args&... args) {}
   };
   using Index = int;
   using Size = long int;
   using Triplets = std::vector<Triplet>;
 
-  template<typename... Args>
+  template <typename... Args>
   SparseMatrix(const Args&... args) {
     ATLAS_THROW_EXCEPTION("Atlas has been compiled without Eigen");
   }
@@ -75,7 +81,9 @@ class SparseMatrix {
   constexpr const Index* outer() { return nullptr; }
   constexpr const Index* inner() { return nullptr; }
   constexpr const Value* data() { return nullptr; }
-
+  SparseMatrix<Value> adjoint() {
+    return SparseMatrix<Value>(0, 0, Triplets{});
+  }
 };
 #endif
 

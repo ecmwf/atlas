@@ -134,7 +134,7 @@ class ComplexMatrixMultiply {
     return std::apply(slicer, slicerArgs);
   }
 
-  /// @brief Creates a sequence of Iteration Dims for a sliced column.
+  /// @brief Defines a sequence of iteration Dims for a sliced column.
   template <int Rank>
   using slicedColumnDims = std::make_integer_sequence<int, Rank - 2>;
 
