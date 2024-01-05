@@ -166,13 +166,13 @@ void testInterpolation(const Config& config) {
       FieldSpecFixtures::get(config.getString("field_spec_fixture"));
   if constexpr (Rank == 3) fieldSpec.set("levels", 2);
 
-  auto sourceField = array::make_view<double, Rank>(
-      sourceFieldSet.add(sourceFunctionSpace.createField<double>(fieldSpec)));
+  auto sourceField = sourceFieldSet.add(sourceFunctionSpace.createField<double>(fieldSpec));
+  auto targetField = targetFieldSet.add(targetFunctionSpace.createField<double>(fieldSpec));
 
-  auto targetField = array::make_view<double, Rank>(
-      targetFieldSet.add(targetFunctionSpace.createField<double>(fieldSpec)));
+  auto sourceView = array::make_view<double, Rank>(sourceField);
+  auto targetView = array::make_view<double, Rank>(targetField);
 
-  ArrayForEach<0>::apply(std::tie(sourceLonLat, sourceField),
+  ArrayForEach<0>::apply(std::tie(sourceLonLat, sourceView),
                          [](auto&& lonLat, auto&& sourceColumn) {
 
     const auto setElems = [&](auto&& sourceElem) {
@@ -203,7 +203,7 @@ void testInterpolation(const Config& config) {
       targetFunctionSpace.createField<double>(errorFieldSpec)));
 
   auto maxError = 0.;
-  ArrayForEach<0>::apply(std::tie(targetLonLat, targetField, errorField),
+  ArrayForEach<0>::apply(std::tie(targetLonLat, targetView, errorField),
                          [&](auto&& lonLat, auto&& targetColumn,
                              auto&& errorColumn) {
 
@@ -238,7 +238,7 @@ void testInterpolation(const Config& config) {
 
 
   // Adjoint test
-  auto targetAdjoint = targetFieldSet[0].clone();
+  auto targetAdjoint = targetField.clone();
   targetAdjoint.adjointHaloExchange();
 
   auto sourceAdjoint = sourceFunctionSpace.createField<double>(fieldSpec);
@@ -248,8 +248,9 @@ void testInterpolation(const Config& config) {
   interp.execute_adjoint(sourceAdjoint, targetAdjoint);
 
   constexpr auto tinyNum = 1e-13;
-  const auto dotProdRatio = fieldDotProd(targetFieldSet[0], targetFieldSet[0]) /
-                            fieldDotProd(sourceFieldSet[0], sourceAdjoint);
+  const auto targetDotTarget = fieldDotProd(targetField, targetField);
+  const auto sourceDotSourceAdjoint = fieldDotProd(sourceField, sourceAdjoint);
+  const auto dotProdRatio = targetDotTarget / sourceDotSourceAdjoint;
   EXPECT_APPROX_EQ(std::abs(1. - dotProdRatio), 0., tinyNum);
 }
 
