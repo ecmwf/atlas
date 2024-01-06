@@ -5,12 +5,11 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include <cmath>
+#include <utility>
 
 #include "atlas/array.h"
 #include "atlas/array/helpers/ArrayForEach.h"
 #include "atlas/field.h"
-#include "atlas/field/for_each.h"
 #include "atlas/functionspace.h"
 #include "atlas/grid.h"
 #include "atlas/interpolation.h"
@@ -137,12 +136,13 @@ struct InterpSchemeFixtures {
   }
 };
 
-
-double fieldDotProd(const Field& a, const Field& b) {
+template <int Rank>
+double dotProduct(const array::ArrayView<double, Rank>& a,
+                  const array::ArrayView<double, Rank>& b) {
   auto dotProd = 0.;
-  field::for_each_value(a, b, [&](double aElem, double bElem){
-    dotProd += aElem * bElem;
-  });
+  arrayForEachDim(
+      std::make_integer_sequence<int, Rank>{}, std::tie(a, b),
+      [&](auto&& aElem, auto&& bElem) { dotProd += aElem * bElem; });
   return dotProd;
 }
 
@@ -238,24 +238,26 @@ void testInterpolation(const Config& config) {
 
 
   // Adjoint test
-  auto targetAdjoint = targetField.clone();
+  auto targetAdjoint = targetFunctionSpace.createField<double>(fieldSpec);
+  targetAdjoint.array().copy(targetField);
   targetAdjoint.adjointHaloExchange();
 
   auto sourceAdjoint = sourceFunctionSpace.createField<double>(fieldSpec);
-  array::make_view<double, Rank>(sourceAdjoint).assign(0.);
+  auto sourceAdjointView = array::make_view<double, Rank>(sourceAdjoint);
+  sourceAdjointView.assign(0.);
   sourceAdjoint.set_dirty(false);
 
   interp.execute_adjoint(sourceAdjoint, targetAdjoint);
 
   constexpr auto tinyNum = 1e-13;
-  const auto targetDotTarget = fieldDotProd(targetField, targetField);
-  const auto sourceDotSourceAdjoint = fieldDotProd(sourceField, sourceAdjoint);
+  const auto targetDotTarget = dotProduct(targetView, targetView);
+  const auto sourceDotSourceAdjoint = dotProduct(sourceView, sourceAdjointView);
   const auto dotProdRatio = targetDotTarget / sourceDotSourceAdjoint;
-  EXPECT_APPROX_EQ(std::abs(1. - dotProdRatio), 0., tinyNum);
+  EXPECT_APPROX_EQ(dotProdRatio, 1., tinyNum);
 }
 
 CASE("cubed sphere vector interpolation (3d-field, 2-vector)") {
-  const auto cubedSphereConf =
+  const auto config =
       Config("source_fixture", "cubedsphere_mesh")
           .set("target_fixture", "gaussian_mesh")
           .set("field_spec_fixture", "2vector")
@@ -263,11 +265,11 @@ CASE("cubed sphere vector interpolation (3d-field, 2-vector)") {
           .set("file_id", "spherical_vector_cs2")
           .set("tol", 0.00018);
 
-  testInterpolation<Rank3dField>((cubedSphereConf));
+  testInterpolation<Rank3dField>((config));
 }
 
 CASE("cubed sphere vector interpolation (3d-field, 3-vector)") {
-  const auto cubedSphereConf =
+  const auto config =
       Config("source_fixture", "cubedsphere_mesh")
           .set("target_fixture", "gaussian_mesh")
           .set("field_spec_fixture", "3vector")
@@ -275,19 +277,19 @@ CASE("cubed sphere vector interpolation (3d-field, 3-vector)") {
           .set("file_id", "spherical_vector_cs3")
           .set("tol", 0.00096);
 
-  testInterpolation<Rank3dField>((cubedSphereConf));
+  testInterpolation<Rank3dField>((config));
 }
 
 CASE("finite element vector interpolation (2d-field, 2-vector)") {
-  const auto cubedSphereConf =
+  const auto config =
       Config("source_fixture", "gaussian_mesh")
           .set("target_fixture", "cubedsphere_mesh")
           .set("field_spec_fixture", "2vector")
-          .set("file_id", "spherical_vector_fe")
           .set("interp_fixture", "finite_element_spherical")
+          .set("file_id", "spherical_vector_fe")
           .set("tol", 0.00015);
 
-  testInterpolation<Rank2dField>((cubedSphereConf));
+  testInterpolation<Rank2dField>((config));
 }
 
 CASE("structured columns vector interpolation (2d-field, 2-vector)") {
@@ -295,15 +297,15 @@ CASE("structured columns vector interpolation (2d-field, 2-vector)") {
   // Not currently accurate as StructuredColumns halo lonlats do not correspond
   // to lonlats of owned points.
 
-  const auto cubedSphereConf =
+  const auto config =
       Config("source_fixture", "structured_columns")
           .set("target_fixture", "cubedsphere_mesh")
           .set("field_spec_fixture", "2vector")
-          .set("file_id", "spherical_vector_sc")
           .set("interp_fixture", "structured_linear_spherical")
+          .set("file_id", "spherical_vector_sc")
           .set("tol", 0.00075);
 
-  testInterpolation<Rank2dField>((cubedSphereConf));
+  testInterpolation<Rank2dField>((config));
 }
 
 }
