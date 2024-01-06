@@ -5,6 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
+#include <cmath>
 #include <utility>
 
 #include "atlas/array.h"
@@ -166,8 +167,10 @@ void testInterpolation(const Config& config) {
       FieldSpecFixtures::get(config.getString("field_spec_fixture"));
   if constexpr (Rank == 3) fieldSpec.set("levels", 2);
 
-  auto sourceField = sourceFieldSet.add(sourceFunctionSpace.createField<double>(fieldSpec));
-  auto targetField = targetFieldSet.add(targetFunctionSpace.createField<double>(fieldSpec));
+  auto sourceField =
+      sourceFieldSet.add(sourceFunctionSpace.createField<double>(fieldSpec));
+  auto targetField =
+      targetFieldSet.add(targetFunctionSpace.createField<double>(fieldSpec));
 
   auto sourceView = array::make_view<double, Rank>(sourceField);
   auto targetView = array::make_view<double, Rank>(targetField);
@@ -239,6 +242,7 @@ void testInterpolation(const Config& config) {
 
   // Adjoint test
   auto targetAdjoint = targetFunctionSpace.createField<double>(fieldSpec);
+  auto targetAdjointView = array::make_view<double, Rank>(targetAdjoint);
   targetAdjoint.array().copy(targetField);
   targetAdjoint.adjointHaloExchange();
 
@@ -248,6 +252,23 @@ void testInterpolation(const Config& config) {
   sourceAdjoint.set_dirty(false);
 
   interp.execute_adjoint(sourceAdjoint, targetAdjoint);
+
+  // Check field norms.
+  const auto targetNorm = dotProduct(targetView, targetView);
+  const auto sourceNorm = dotProduct(sourceView, sourceView);
+  const auto targetAdjointNorm =
+      dotProduct(targetAdjointView, targetAdjointView);
+  const auto sourceAdjointNorm =
+      dotProduct(sourceAdjointView, sourceAdjointView);
+
+  EXPECT(targetNorm > 0.);
+  EXPECT(sourceNorm > 0.);
+  EXPECT(targetAdjointNorm > 0.);
+  EXPECT(sourceAdjointNorm > 0.);
+  EXPECT(std::isfinite(targetNorm));
+  EXPECT(std::isfinite(sourceNorm));
+  EXPECT(std::isfinite(targetAdjointNorm));
+  EXPECT(std::isfinite(sourceAdjointNorm));
 
   constexpr auto tinyNum = 1e-13;
   const auto targetDotTarget = dotProduct(targetView, targetView);
