@@ -141,9 +141,10 @@ template <int Rank>
 double dotProduct(const array::ArrayView<double, Rank>& a,
                   const array::ArrayView<double, Rank>& b) {
   auto dotProd = 0.;
-  arrayForEachDim(
-      std::make_integer_sequence<int, Rank>{}, std::tie(a, b),
-      [&](auto&& aElem, auto&& bElem) { dotProd += aElem * bElem; });
+  arrayForEachDim(std::make_integer_sequence<int, Rank>{}, std::tie(a, b),
+                  [&](auto&& aElem, auto&& bElem) {
+    dotProd += static_cast<double>(aElem) * static_cast<double>(bElem);
+  });
   return dotProd;
 }
 
@@ -174,9 +175,6 @@ void testInterpolation(const Config& config) {
 
   auto sourceView = array::make_view<double, Rank>(sourceField);
   auto targetView = array::make_view<double, Rank>(targetField);
-
-  // MacOS test failing if I don't pre-assign field.
-  targetView.assign(0.);
 
   ArrayForEach<0>::apply(std::tie(sourceLonLat, sourceView),
                          [](auto&& lonLat, auto&& sourceColumn) {
