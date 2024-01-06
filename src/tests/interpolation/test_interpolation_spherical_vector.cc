@@ -175,6 +175,9 @@ void testInterpolation(const Config& config) {
   auto sourceView = array::make_view<double, Rank>(sourceField);
   auto targetView = array::make_view<double, Rank>(targetField);
 
+  // MacOS test failing if I don't pre-assign field.
+  targetView.assign(0.);
+
   ArrayForEach<0>::apply(std::tie(sourceLonLat, sourceView),
                          [](auto&& lonLat, auto&& sourceColumn) {
 
