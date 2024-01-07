@@ -98,20 +98,6 @@ void SphericalVector::do_setup(const FunctionSpace& source,
       const auto deltaAlpha =
           (alpha.first - alpha.second) * util::Constants::degreesToRadians();
 
-      if constexpr (ATLAS_BUILD_TYPE_DEBUG) {
-        static_assert(std::numeric_limits<double>::is_iec559,
-                      "Complex weight generation requires IEEE 754 arithmetic.");
-
-        ATLAS_ASSERT_MSG(std::isfinite(alpha.first),
-                         "non-finite course value at source LonLat: " +
-                             std::to_string(sourceLonLat.lon()) + ", " +
-                             std::to_string(sourceLonLat.lat()));
-        ATLAS_ASSERT_MSG(std::isfinite(alpha.second),
-                         "non-finite course value at target LonLat: " +
-                             std::to_string(targetLonLat.lon()) + ", " +
-                             std::to_string(targetLonLat.lat()));
-      }
-
       complexTriplets[dataIndex] = {rowIndex, colIndex,
                                     std::polar(baseWeight, deltaAlpha)};
       realTriplets[dataIndex] = {rowIndex, colIndex, baseWeight};

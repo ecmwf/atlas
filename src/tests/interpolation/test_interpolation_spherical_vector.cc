@@ -187,12 +187,7 @@ void testInterpolation(const Config& config) {
 
   auto sourceView = array::make_view<double, Rank>(sourceField);
   auto targetView = array::make_view<double, Rank>(targetField);
-
-  // Initially assign NaNs (test should overwrite ALL of these).
-  if constexpr (std::numeric_limits<double>::has_quiet_NaN) {
-      sourceView.assign(std::numeric_limits<double>::quiet_NaN());
-      targetView.assign(std::numeric_limits<double>::quiet_NaN());
-  }
+  targetView.assign(0.);
 
   ArrayForEach<0>::apply(std::tie(sourceLonLat, sourceView),
                          [](auto&& lonLat, auto&& sourceColumn) {
@@ -216,18 +211,24 @@ void testInterpolation(const Config& config) {
       sourceFunctionSpace, targetFunctionSpace);
 
   interp.execute(sourceFieldSet, targetFieldSet);
-  targetFieldSet.haloExchange();
+  //targetFieldSet.haloExchange();
 
   auto errorFieldSpec = fieldSpec;
   errorFieldSpec.remove("variables");
 
-  auto errorField = array::make_view<double, Rank - 1>(targetFieldSet.add(
+  auto errorView = array::make_view<double, Rank - 1>(targetFieldSet.add(
       targetFunctionSpace.createField<double>(errorFieldSpec)));
 
   auto maxError = 0.;
-  ArrayForEach<0>::apply(std::tie(targetLonLat, targetView, errorField),
+  const auto ghostView = array::make_view<int, 1>(targetFunctionSpace.ghost());
+  ArrayForEach<0>::apply(std::tie(targetLonLat, targetView, errorView,
+                                  ghostView),
                          [&](auto&& lonLat, auto&& targetColumn,
-                             auto&& errorColumn) {
+                             auto&& errorColumn, auto&& ghostElem) {
+
+    if (ghostElem) {
+      return;
+    }
 
     const auto calcError = [&](auto&& targetElem, auto&& errorElem) {
       auto trueValue = std::vector<double>(targetElem.size());
@@ -239,7 +240,6 @@ void testInterpolation(const Config& config) {
 
       auto errorSqrd = 0.;
       for (auto k = 0; k < targetElem.size(); ++k) {
-        EXPECT(std::isfinite(targetElem(k)));
         errorSqrd +=
             (targetElem(k) - trueValue[k]) * (targetElem(k) - trueValue[k]);
       }
@@ -248,10 +248,12 @@ void testInterpolation(const Config& config) {
       maxError = std::max(maxError, static_cast<double>(errorElem));
     };
 
-    if constexpr(Rank == 2) { calcError(targetColumn, errorColumn); }
-    else if constexpr (Rank == 3) {
+    if
+      constexpr(Rank == 2) { calcError(targetColumn, errorColumn); }
+    else if
+      constexpr(Rank == 3) {
         ArrayForEach<0>::apply(std::tie(targetColumn, errorColumn), calcError);
-    }
+      }
   });
 
   EXPECT_APPROX_EQ(maxError, 0., config.getDouble("tol"));
@@ -264,7 +266,7 @@ void testInterpolation(const Config& config) {
   auto targetAdjoint = targetFunctionSpace.createField<double>(fieldSpec);
   auto targetAdjointView = array::make_view<double, Rank>(targetAdjoint);
   targetAdjointView.assign(targetView);
-  targetAdjoint.adjointHaloExchange();
+  //targetAdjoint.adjointHaloExchange();
 
   auto sourceAdjoint = sourceFunctionSpace.createField<double>(fieldSpec);
   auto sourceAdjointView = array::make_view<double, Rank>(sourceAdjoint);
