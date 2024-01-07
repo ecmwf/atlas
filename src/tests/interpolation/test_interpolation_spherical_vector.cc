@@ -239,6 +239,7 @@ void testInterpolation(const Config& config) {
 
       auto errorSqrd = 0.;
       for (auto k = 0; k < targetElem.size(); ++k) {
+        EXPECT(std::isfinite(targetElem(k)));
         errorSqrd +=
             (targetElem(k) - trueValue[k]) * (targetElem(k) - trueValue[k]);
       }
@@ -262,7 +263,7 @@ void testInterpolation(const Config& config) {
   // Adjoint test
   auto targetAdjoint = targetFunctionSpace.createField<double>(fieldSpec);
   auto targetAdjointView = array::make_view<double, Rank>(targetAdjoint);
-  targetAdjoint.array().copy(targetField);
+  targetAdjointView.assign(targetView);
   targetAdjoint.adjointHaloExchange();
 
   auto sourceAdjoint = sourceFunctionSpace.createField<double>(fieldSpec);

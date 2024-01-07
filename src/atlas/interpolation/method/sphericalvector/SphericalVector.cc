@@ -5,6 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
+#include <limits>
+
 #include "atlas/interpolation/method/sphericalvector/SphericalVector.h"
 
 #include "atlas/array/ArrayView.h"
