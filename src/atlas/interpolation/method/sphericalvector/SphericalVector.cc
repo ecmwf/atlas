@@ -33,6 +33,17 @@ MethodBuilder<SphericalVector> __builder("spherical-vector");
 using ComplexTriplets = detail::ComplexMatrix::Triplets;
 using RealTriplets = detail::RealMatrix::Triplets;
 
+SphericalVector::SphericalVector(const Config& config) : Method(config) {
+
+  static_assert(
+      std::numeric_limits<double>::is_iec559,
+      "Complex weight generation requires IEEE 754 arithmetic support.");
+
+  const auto& conf = dynamic_cast<const eckit::LocalConfiguration&>(config);
+  interpolationScheme_ = conf.getSubConfiguration("scheme");
+  adjoint_ = conf.getBool("adjoint", false);
+}
+
 void SphericalVector::do_setup(const Grid& source, const Grid& target,
                                const Cache&) {
   ATLAS_NOTIMPLEMENTED;
@@ -114,12 +125,6 @@ void SphericalVector::do_setup(const FunctionSpace& source,
     weightsMatMulAdjoint_ =
         WeightsMatMulAdjoint(complexWeightsAdjoint, realWeightsAdjoint);
   }
-}
-
-SphericalVector::SphericalVector(const Config& config) : Method(config) {
-  const auto& conf = dynamic_cast<const eckit::LocalConfiguration&>(config);
-  interpolationScheme_ = conf.getSubConfiguration("scheme");
-  adjoint_ = conf.getBool("adjoint", false);
 }
 
 void SphericalVector::print(std::ostream&) const { ATLAS_NOTIMPLEMENTED; }
