@@ -15,6 +15,7 @@
 #include "atlas/interpolation/Interpolation.h"
 #include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/interpolation/method/sphericalvector/Types.h"
+#include "atlas/library/defines.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
@@ -34,11 +35,6 @@ using ComplexTriplets = detail::ComplexMatrix::Triplets;
 using RealTriplets = detail::RealMatrix::Triplets;
 
 SphericalVector::SphericalVector(const Config& config) : Method(config) {
-
-  static_assert(
-      std::numeric_limits<double>::is_iec559,
-      "Complex weight generation requires IEEE 754 arithmetic support.");
-
   const auto& conf = dynamic_cast<const eckit::LocalConfiguration&>(config);
   interpolationScheme_ = conf.getSubConfiguration("scheme");
   adjoint_ = conf.getBool("adjoint", false);
@@ -99,6 +95,20 @@ void SphericalVector::do_setup(const FunctionSpace& source,
 
       const auto deltaAlpha =
           (alpha.first - alpha.second) * util::Constants::degreesToRadians();
+
+      if constexpr (ATLAS_BUILD_TYPE_DEBUG) {
+        static_assert(std::numeric_limits<double>::is_iec559,
+                      "Complex weight generation requires IEEE 754 arithmetic.");
+
+        ATLAS_ASSERT_MSG(std::isfinite(alpha.first),
+                         "non-finite course value at source LonLat: " +
+                             std::to_string(sourceLonLat.lon()) + ", " +
+                             std::to_string(sourceLonLat.lat()));
+        ATLAS_ASSERT_MSG(std::isfinite(alpha.second),
+                         "non-finite course value at target LonLat: " +
+                             std::to_string(targetLonLat.lon()) + ", " +
+                             std::to_string(targetLonLat.lat()));
+      }
 
       complexTriplets[dataIndex] = {rowIndex, colIndex,
                                     std::polar(baseWeight, deltaAlpha)};
