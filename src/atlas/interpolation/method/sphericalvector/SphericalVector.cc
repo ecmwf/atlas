@@ -72,9 +72,18 @@ void SphericalVector::do_setup(const FunctionSpace& source,
   auto complexTriplets = ComplexTriplets(nNonZeros);
   auto realTriplets = RealTriplets(nNonZeros);
 
+  // Make sure halo lonlats are same as owned points.
+  auto sourceLonLats = source_.createField<double>(option::name("lonlat") |
+                                                   option::variables(2));
+  auto targetLonLats = target_.createField<double>(option::name("lonlat") |
+                                                   option::variables(2));
+  sourceLonLats.array().copy(source_.lonlat());
+  targetLonLats.array().copy(target_.lonlat());
+  sourceLonLats.haloExchange();
+  targetLonLats.haloExchange();
 
-  const auto sourceLonLats = array::make_view<double, 2>(source_.lonlat());
-  const auto targetLonLats = array::make_view<double, 2>(target_.lonlat());
+  const auto sourceLonLatsView = array::make_view<double, 2>(sourceLonLats);
+  const auto targetLonLatsView = array::make_view<double, 2>(targetLonLats);
 
   const auto unitSphere = geometry::UnitSphere{};
 
@@ -85,10 +94,10 @@ void SphericalVector::do_setup(const FunctionSpace& source,
       const auto colIndex = innerIndices[dataIndex];
       const auto baseWeight = baseWeights[dataIndex];
 
-      const auto sourceLonLat =
-          PointLonLat(sourceLonLats(colIndex, 0), sourceLonLats(colIndex, 1));
-      const auto targetLonLat =
-          PointLonLat(targetLonLats(rowIndex, 0), targetLonLats(rowIndex, 1));
+      const auto sourceLonLat = PointLonLat(sourceLonLatsView(colIndex, 0),
+                                            sourceLonLatsView(colIndex, 1));
+      const auto targetLonLat = PointLonLat(targetLonLatsView(rowIndex, 0),
+                                            targetLonLatsView(rowIndex, 1));
 
       const auto alpha =
           unitSphere.greatCircleCourse(sourceLonLat, targetLonLat);

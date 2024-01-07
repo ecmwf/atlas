@@ -320,16 +320,13 @@ CASE("finite element vector interpolation (2d-field, 2-vector)") {
 
 CASE("structured columns vector interpolation (2d-field, 2-vector)") {
 
-  // Not currently accurate as StructuredColumns halo lonlats do not correspond
-  // to lonlats of owned points.
-
   const auto config =
       Config("source_fixture", "structured_columns")
           .set("target_fixture", "cubedsphere_mesh")
           .set("field_spec_fixture", "2vector")
           .set("interp_fixture", "structured_linear_spherical")
           .set("file_id", "spherical_vector_sc")
-          .set("tol", 0.00075);
+          .set("tol", 0.00017);
 
   testInterpolation<Rank2dField>((config));
 }
