@@ -187,7 +187,6 @@ void testInterpolation(const Config& config) {
 
   auto sourceView = array::make_view<double, Rank>(sourceField);
   auto targetView = array::make_view<double, Rank>(targetField);
-  targetView.assign(0.);
 
   ArrayForEach<0>::apply(std::tie(sourceLonLat, sourceView),
                          [](auto&& lonLat, auto&& sourceColumn) {
@@ -211,24 +210,19 @@ void testInterpolation(const Config& config) {
       sourceFunctionSpace, targetFunctionSpace);
 
   interp.execute(sourceFieldSet, targetFieldSet);
-  //targetFieldSet.haloExchange();
+  targetFieldSet.haloExchange();
 
   auto errorFieldSpec = fieldSpec;
   errorFieldSpec.remove("variables");
 
   auto errorView = array::make_view<double, Rank - 1>(targetFieldSet.add(
       targetFunctionSpace.createField<double>(errorFieldSpec)));
+  errorView.assign(0.);
 
   auto maxError = 0.;
-  const auto ghostView = array::make_view<int, 1>(targetFunctionSpace.ghost());
-  ArrayForEach<0>::apply(std::tie(targetLonLat, targetView, errorView,
-                                  ghostView),
+  ArrayForEach<0>::apply(std::tie(targetLonLat, targetView, errorView),
                          [&](auto&& lonLat, auto&& targetColumn,
-                             auto&& errorColumn, auto&& ghostElem) {
-
-    if (ghostElem) {
-      return;
-    }
+                             auto&& errorColumn) {
 
     const auto calcError = [&](auto&& targetElem, auto&& errorElem) {
       auto trueValue = std::vector<double>(targetElem.size());
@@ -265,8 +259,8 @@ void testInterpolation(const Config& config) {
   // Adjoint test
   auto targetAdjoint = targetFunctionSpace.createField<double>(fieldSpec);
   auto targetAdjointView = array::make_view<double, Rank>(targetAdjoint);
-  targetAdjointView.assign(targetView);
-  //targetAdjoint.adjointHaloExchange();
+  targetAdjoint.array().copy(targetField);
+  targetAdjoint.adjointHaloExchange();
 
   auto sourceAdjoint = sourceFunctionSpace.createField<double>(fieldSpec);
   auto sourceAdjointView = array::make_view<double, Rank>(sourceAdjoint);

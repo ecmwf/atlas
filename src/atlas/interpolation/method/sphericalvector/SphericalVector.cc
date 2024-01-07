@@ -5,8 +5,6 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include <limits>
-
 #include "atlas/interpolation/method/sphericalvector/SphericalVector.h"
 
 #include "atlas/array/ArrayView.h"
@@ -99,7 +97,8 @@ void SphericalVector::do_setup(const FunctionSpace& source,
           (alpha.first - alpha.second) * util::Constants::degreesToRadians();
 
       complexTriplets[dataIndex] = {rowIndex, colIndex,
-                                    std::polar(baseWeight, deltaAlpha)};
+                                    {baseWeight * std::cos(deltaAlpha),
+                                     baseWeight * std::sin(deltaAlpha)}};
       realTriplets[dataIndex] = {rowIndex, colIndex, baseWeight};
     }
   }
