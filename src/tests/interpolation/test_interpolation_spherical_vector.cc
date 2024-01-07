@@ -142,9 +142,9 @@ template <int Rank>
 double dotProduct(const array::ArrayView<double, Rank>& a,
                   const array::ArrayView<double, Rank>& b) {
   auto dotProd = 0.;
-  arrayForEachDim(
-      std::make_integer_sequence<int, Rank>{}, std::tie(a, b),
-      [&](auto&& aElem, auto&& bElem) { dotProd += aElem * bElem; });
+  arrayForEachDim(std::make_integer_sequence<int, Rank>{}, std::tie(a, b),
+                  [&](const double& aElem,
+                      const double& bElem) { dotProd += aElem * bElem; });
   return dotProd;
 }
 
@@ -152,7 +152,7 @@ template <int Rank>
 int countNans(const array::ArrayView<double, Rank>& view) {
   auto nNans = 0;
   arrayForEachDim(std::make_integer_sequence<int, Rank>{}, std::tie(view),
-                  [&](auto&& viewElem) {
+                  [&](const double& viewElem) {
     if (!std::isfinite(viewElem)) {
       ++nNans;
     }
@@ -188,9 +188,11 @@ void testInterpolation(const Config& config) {
   auto sourceView = array::make_view<double, Rank>(sourceField);
   auto targetView = array::make_view<double, Rank>(targetField);
 
-  // Initially assign nans (test should overwrite ALL of these.);
-  sourceView.assign(std::numeric_limits<double>::quiet_NaN());
-  targetView.assign(std::numeric_limits<double>::quiet_NaN());
+  // Initially assign NaNs (test should overwrite ALL of these).
+  if constexpr (std::numeric_limits<double>::has_quiet_NaN) {
+      sourceView.assign(std::numeric_limits<double>::quiet_NaN());
+      targetView.assign(std::numeric_limits<double>::quiet_NaN());
+  }
 
   ArrayForEach<0>::apply(std::tie(sourceLonLat, sourceView),
                          [](auto&& lonLat, auto&& sourceColumn) {
