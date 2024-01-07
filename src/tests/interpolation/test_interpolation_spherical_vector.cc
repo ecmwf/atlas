@@ -6,6 +6,7 @@
  */
 
 #include <cmath>
+#include <limits>
 #include <utility>
 
 #include "atlas/array.h"
@@ -141,11 +142,22 @@ template <int Rank>
 double dotProduct(const array::ArrayView<double, Rank>& a,
                   const array::ArrayView<double, Rank>& b) {
   auto dotProd = 0.;
-  arrayForEachDim(std::make_integer_sequence<int, Rank>{}, std::tie(a, b),
-                  [&](auto&& aElem, auto&& bElem) {
-    dotProd += static_cast<double>(aElem) * static_cast<double>(bElem);
-  });
+  arrayForEachDim(
+      std::make_integer_sequence<int, Rank>{}, std::tie(a, b),
+      [&](auto&& aElem, auto&& bElem) { dotProd += aElem * bElem; });
   return dotProd;
+}
+
+template <int Rank>
+int countNans(const array::ArrayView<double, Rank>& view) {
+  auto nNans = 0;
+  arrayForEachDim(std::make_integer_sequence<int, Rank>{}, std::tie(view),
+                  [&](auto&& viewElem) {
+    if (!std::isfinite(viewElem)) {
+      ++nNans;
+    }
+  });
+  return nNans;
 }
 
 template <int Rank>
@@ -175,6 +187,10 @@ void testInterpolation(const Config& config) {
 
   auto sourceView = array::make_view<double, Rank>(sourceField);
   auto targetView = array::make_view<double, Rank>(targetField);
+
+  // Initially assign nans (test should overwrite ALL of these.);
+  sourceView.assign(std::numeric_limits<double>::quiet_NaN());
+  targetView.assign(std::numeric_limits<double>::quiet_NaN());
 
   ArrayForEach<0>::apply(std::tie(sourceLonLat, sourceView),
                          [](auto&& lonLat, auto&& sourceColumn) {
@@ -254,22 +270,11 @@ void testInterpolation(const Config& config) {
 
   interp.execute_adjoint(sourceAdjoint, targetAdjoint);
 
-  // Check field norms.
-  const auto targetNorm = dotProduct(targetView, targetView);
-  const auto sourceNorm = dotProduct(sourceView, sourceView);
-  const auto targetAdjointNorm =
-      dotProduct(targetAdjointView, targetAdjointView);
-  const auto sourceAdjointNorm =
-      dotProduct(sourceAdjointView, sourceAdjointView);
-
-  EXPECT(targetNorm > 0.);
-  EXPECT(sourceNorm > 0.);
-  EXPECT(targetAdjointNorm > 0.);
-  EXPECT(sourceAdjointNorm > 0.);
-  EXPECT(std::isfinite(targetNorm));
-  EXPECT(std::isfinite(sourceNorm));
-  EXPECT(std::isfinite(targetAdjointNorm));
-  EXPECT(std::isfinite(sourceAdjointNorm));
+  // Check fields for nans or +/-inf
+  EXPECT_EQ(countNans(targetView), 0);
+  EXPECT_EQ(countNans(sourceView), 0);
+  EXPECT_EQ(countNans(targetAdjointView), 0);
+  EXPECT_EQ(countNans(sourceAdjointView), 0);
 
   constexpr auto tinyNum = 1e-13;
   const auto targetDotTarget = dotProduct(targetView, targetView);
