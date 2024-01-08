@@ -9,9 +9,6 @@
 
 #pragma once
 
-#include <complex>
-#include <memory>
-
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/interpolation/method/Method.h"
 #include "atlas/interpolation/method/sphericalvector/ComplexMatrixMultiply.h"
