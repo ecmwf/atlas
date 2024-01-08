@@ -1,5 +1,5 @@
 /*
- * (C) Crown Copyright 2023 Met Office
+ * (C) Crown Copyright 2024 Met Office
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -217,6 +217,7 @@ void testInterpolation(const Config& config) {
 
   auto errorView = array::make_view<double, Rank - 1>(targetFieldSet.add(
       targetFunctionSpace.createField<double>(errorFieldSpec)));
+  errorView.assign(0.);
 
   auto maxError = 0.;
   ArrayForEach<0>::apply(std::tie(targetLonLat, targetView, errorView),
@@ -278,7 +279,7 @@ void testInterpolation(const Config& config) {
   const auto targetDotTarget = dotProduct(targetView, targetView);
   const auto sourceDotSourceAdjoint = dotProduct(sourceView, sourceAdjointView);
   const auto dotProdRatio = targetDotTarget / sourceDotSourceAdjoint;
-  EXPECT_APPROX_EQ(dotProdRatio - 1., 0., tinyNum);
+  EXPECT_APPROX_EQ(dotProdRatio, 1., tinyNum);
 }
 
 CASE("cubed sphere vector interpolation (3d-field, 2-vector)") {
