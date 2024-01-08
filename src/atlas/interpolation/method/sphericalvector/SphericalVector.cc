@@ -14,6 +14,7 @@
 #include "atlas/interpolation/Interpolation.h"
 #include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/interpolation/method/sphericalvector/Types.h"
+#include "atlas/option/Options.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
