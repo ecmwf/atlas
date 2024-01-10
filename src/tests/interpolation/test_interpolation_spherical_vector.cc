@@ -96,7 +96,9 @@ struct FunctionSpaceFixtures {
             {"structured_columns",
              functionspace::StructuredColumns(Grid("O48"), option::halo(1))},
             {"structured_columns_lowres",
-             functionspace::StructuredColumns(Grid("O24"), option::halo(1))}};
+             functionspace::StructuredColumns(Grid("O24"), option::halo(1))},
+            {"structured_columns_hires",
+             functionspace::StructuredColumns(Grid("O96"), option::halo(1))}};
     return functionSpaces.at(fixture);
   }
 };
@@ -342,6 +344,19 @@ CASE("structured columns vector interpolation (2d-field, 2-vector, low-res)") {
           .set("interp_fixture", "structured_linear_spherical")
           .set("file_id", "spherical_vector_sc_lr")
           .set("tol", 0.00056);
+
+  testInterpolation<Rank2dField>((config));
+}
+
+CASE("structured columns vector interpolation (2d-field, 2-vector, hi-res)") {
+
+  const auto config =
+      Config("source_fixture", "structured_columns_hires")
+          .set("target_fixture", "gaussian_mesh")
+          .set("field_spec_fixture", "2vector")
+          .set("interp_fixture", "structured_linear_spherical")
+          .set("file_id", "spherical_vector_sc_hr")
+          .set("tol", 0.000044);
 
   testInterpolation<Rank2dField>((config));
 }
