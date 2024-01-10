@@ -94,7 +94,9 @@ struct FunctionSpaceFixtures {
              generateNodeColums("CS-LFR-48", "cubedsphere_dual")},
             {"gaussian_mesh", generateNodeColums("O48", "structured")},
             {"structured_columns",
-             functionspace::StructuredColumns(Grid("O48"), option::halo(1))}};
+             functionspace::StructuredColumns(Grid("O48"), option::halo(1))},
+            {"structured_columns_lowres",
+             functionspace::StructuredColumns(Grid("O24"), option::halo(1))}};
     return functionSpaces.at(fixture);
   }
 };
@@ -213,7 +215,7 @@ void testInterpolation(const Config& config) {
   targetFieldSet.haloExchange();
 
   auto errorFieldSpec = fieldSpec;
-  errorFieldSpec.remove("variables");
+  errorFieldSpec.remove("variables").set("name", "error field");
 
   auto errorView = array::make_view<double, Rank - 1>(targetFieldSet.add(
       targetFunctionSpace.createField<double>(errorFieldSpec)));
@@ -327,6 +329,19 @@ CASE("structured columns vector interpolation (2d-field, 2-vector)") {
           .set("interp_fixture", "structured_linear_spherical")
           .set("file_id", "spherical_vector_sc")
           .set("tol", 0.00017);
+
+  testInterpolation<Rank2dField>((config));
+}
+
+CASE("structured columns vector interpolation (2d-field, 2-vector, low-res)") {
+
+  const auto config =
+      Config("source_fixture", "structured_columns_lowres")
+          .set("target_fixture", "gaussian_mesh")
+          .set("field_spec_fixture", "2vector")
+          .set("interp_fixture", "structured_linear_spherical")
+          .set("file_id", "spherical_vector_sc_lr")
+          .set("tol", 0.00056);
 
   testInterpolation<Rank2dField>((config));
 }

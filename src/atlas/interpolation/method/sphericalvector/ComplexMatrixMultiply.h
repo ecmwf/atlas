@@ -28,8 +28,8 @@ using RealMatPtr = std::shared_ptr<RealMatrix>;
 
 struct TwoVectorTag {};
 struct ThreeVectorTag {};
-constexpr TwoVectorTag twoVector{};
-constexpr ThreeVectorTag threeVector{};
+constexpr auto twoVector = TwoVectorTag{};
+constexpr auto threeVector = ThreeVectorTag{};
 
 template <typename VectorTag>
 using IsVectorTag = std::enable_if_t<std::is_same_v<VectorTag, TwoVectorTag> ||
@@ -87,8 +87,6 @@ class ComplexMatrixMultiply {
     const auto* complexWeightValues = complexWeights_->data();
     const auto* realWeightValues = realWeights_->data();
     const auto nRows = complexWeights_->rows();
-
-    using Index = std::decay_t<decltype(*innerIndices)>;
 
     atlas_omp_parallel_for(auto rowIndex = Index{0}; rowIndex < nRows;
                            ++rowIndex) {

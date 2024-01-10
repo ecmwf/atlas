@@ -5,8 +5,6 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "atlas/library/defines.h"
-
 #pragma once
 
 #include "atlas/functionspace/FunctionSpace.h"

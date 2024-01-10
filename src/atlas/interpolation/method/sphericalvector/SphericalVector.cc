@@ -30,8 +30,9 @@ namespace  {
 MethodBuilder<SphericalVector> __builder("spherical-vector");
 }
 
-using ComplexTriplets = detail::ComplexMatrix::Triplets;
-using RealTriplets = detail::RealMatrix::Triplets;
+using namespace detail;
+using ComplexTriplets = ComplexMatrix::Triplets;
+using RealTriplets = RealMatrix::Triplets;
 
 SphericalVector::SphericalVector(const Config& config) : Method(config) {
   const auto& conf = dynamic_cast<const eckit::LocalConfiguration&>(config);
@@ -63,8 +64,6 @@ void SphericalVector::do_setup(const FunctionSpace& source,
   const auto* outerIndices = matrix().outer();
   const auto* innerIndices = matrix().inner();
   const auto* baseWeights = matrix().data();
-
-  using Index = detail::Index;
 
   // Note: need to store copy of weights as Eigen3 sorts compressed rows by j
   // whereas eckit does not.
@@ -112,20 +111,20 @@ void SphericalVector::do_setup(const FunctionSpace& source,
   }
 
   const auto complexWeights =
-      std::make_shared<detail::ComplexMatrix>(nRows, nCols, complexTriplets);
+      std::make_shared<ComplexMatrix>(nRows, nCols, complexTriplets);
 
   const auto realWeights =
-      std::make_shared<detail::RealMatrix>(nRows, nCols, realTriplets);
+      std::make_shared<RealMatrix>(nRows, nCols, realTriplets);
 
   weightsMatMul_= WeightsMatMul(complexWeights, realWeights);
 
   if (adjoint_) {
 
     const auto complexWeightsAdjoint =
-        std::make_shared<detail::ComplexMatrix>(complexWeights->adjoint());
+        std::make_shared<ComplexMatrix>(complexWeights->adjoint());
 
     const auto realWeightsAdjoint =
-        std::make_shared<detail::RealMatrix>(realWeights->adjoint());
+        std::make_shared<RealMatrix>(realWeights->adjoint());
 
     weightsMatMulAdjoint_ =
         WeightsMatMulAdjoint(complexWeightsAdjoint, realWeightsAdjoint);
@@ -247,12 +246,12 @@ void SphericalVector::interpolate_vector_field(const Field& sourceField,
   auto targetView = array::make_view<Value, Rank>(targetField);
 
   if (sourceField.variables() == 2) {
-    matMul.apply(sourceView, targetView, detail::twoVector);
+    matMul.apply(sourceView, targetView, twoVector);
     return;
   }
 
   if (sourceField.variables() == 3) {
-    matMul.apply(sourceView, targetView, detail::threeVector);
+    matMul.apply(sourceView, targetView, threeVector);
     return;
   }
 
