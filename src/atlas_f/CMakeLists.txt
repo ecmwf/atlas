@@ -49,7 +49,7 @@ function(generate_fortran_bindings output filename)
     OUTPUT ${outfile}
     COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/c2f.py ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
             -o ${outfile} -m ${_PAR_MODULE}
-            -t '{"idx_t":"${F_IDX}","gidx_t":"${F_GIDX}"}'
+            -t '{"idx_t":"${F_IDX}","gidx_t":"${F_GIDX}","atlas::idx_t":"${F_IDX}","atlas::gidx_t":"${F_GIDX}"}'
     DEPENDS ${filename} )
   set_source_files_properties(${outfile} PROPERTIES GENERATED TRUE)
 endfunction()
@@ -137,6 +137,10 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/PointCl
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/redistribution/detail/RedistributionInterface.h
     MODULE    atlas_redistribution_c_binding
     OUTPUT    redistribution_c_binding.f90)
+
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grid/detail/grid/StencilComputerInterface.h
+    MODULE    atlas_grid_StencilComputer_c_binding
+    OUTPUT    grid_StencilComputer_c_binding.f90 )
 
 if( atlas_HAVE_ATLAS_NUMERICS )
     generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Nabla.h)
@@ -231,6 +235,7 @@ ecbuild_add_library( TARGET atlas_f
         grid/atlas_GridDistribution_module.F90
         grid/atlas_Vertical_module.F90
         grid/atlas_Partitioner_module.F90
+        grid/atlas_StencilComputer_module.F90
         mesh/atlas_MeshBuilder_module.F90
         mesh/atlas_MeshGenerator_module.F90
         mesh/atlas_Mesh_module.F90
