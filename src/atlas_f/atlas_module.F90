@@ -89,6 +89,11 @@ use atlas_Grid_module, only: &
     & atlas_RegionalGrid
 use atlas_Vertical_module, only :&
     & atlas_Vertical
+use atlas_StencilComputer_module, only: &
+    & atlas_StructuredGrid_ComputeNorth, &
+    & atlas_StructuredGrid_ComputeWest, &
+    & atlas_StructuredGrid_ComputeStencil, &
+    & atlas_StructuredGrid_Stencil
 use atlas_functionspace_EdgeColumns_module, only: &
     & atlas_functionspace_EdgeColumns
 use atlas_functionspace_CellColumns_module, only: &
