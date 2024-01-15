@@ -1,0 +1,14 @@
+# note: each step is executed in own process
+build-steps:
+  - git clone --depth 1 https://github.com/ecmwf/atlas-docs.git $RUNNER_TEMP/atlas-docs
+  - sudo apt install -y -q doxygen texlive-full
+  - | 
+    cd $RUNNER_TEMP/atlas-docs
+    make PUBLIC=1 WITH_ECKIT=1 WITH_DOXYGEN=1 ATLAS_SOURCE_DIR=$GITHUB_WORKSPACE clean html
+    echo "DOC_BUILD_PATH=$RUNNER_TEMP/atlas-docs/build/html" >> "$GITHUB_ENV"
+
+hosts:
+  ecmwf-sites:
+    space: docs
+    name: atlas
+
