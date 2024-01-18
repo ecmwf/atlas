@@ -380,7 +380,9 @@ void build_edges(Mesh& mesh, const eckit::Configuration& config) {
 
     for (int halo = 0; halo <= mesh_halo; ++halo) {
         edge_start = edge_end;
-        edge_end += (edge_halo_offsets[halo + 1] - edge_halo_offsets[halo]);
+        if (halo+1 < edge_halo_offsets.size()) {
+            edge_end += (edge_halo_offsets[halo + 1] - edge_halo_offsets[halo]);
+        }
 
         if (/*sort edges based on lowest node local index = */ sort_edges) {
             if (sorted_edge_nodes_data.empty()) {
@@ -551,6 +553,11 @@ void build_edges(Mesh& mesh, const eckit::Configuration& config) {
         std::stringstream ss;
         ss << "nb_edges_including_halo[" << i << "]";
         mesh.metadata().set(ss.str(), nb_edges_including_halo[i]);
+    }
+    for (int i = max_halo + 1; i <= mesh_halo; ++i) {
+        std::stringstream ss;
+        ss << "nb_edges_including_halo[" << i << "]";
+        mesh.metadata().set(ss.str(), nb_edges_including_halo.back());
     }
 
     mesh.metadata().set("built_edges_for_halo", mesh_halo);
