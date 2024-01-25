@@ -59,13 +59,16 @@ Config::Config(std::istream& stream, const std::string&): eckit::LocalConfigurat
 
 Config::Config(const eckit::PathName& path): eckit::LocalConfiguration(yaml_from_path(path)) {}
 
-Config Config::operator|(const Config& other) const {
+Config Config::operator|(const eckit::Configuration& other) const {
     Config config(*this);
     config.set(other);
     return config;
 }
 
-Config& Config::set(const eckit::LocalConfiguration& other) {
+Config& Config::set(const eckit::Configuration& other) {
+#if ATLAS_ECKIT_VERSION_AT_LEAST(1, 26, 0) || ATLAS_ECKIT_DEVELOP
+    eckit::LocalConfiguration::set(other);
+#else
     eckit::Value& root = const_cast<eckit::Value&>(get());
     auto& other_root   = other.get();
     std::vector<string> other_keys;
@@ -73,12 +76,17 @@ Config& Config::set(const eckit::LocalConfiguration& other) {
     for (auto& key : other_keys) {
         root[key] = other_root[key];
     }
+#endif
     return *this;
 }
 
 Config& Config::remove(const std::string& name) {
+#if ATLAS_ECKIT_VERSION_AT_LEAST(1, 26, 0) || ATLAS_ECKIT_DEVELOP
+    LocalConfiguration::remove(name);
+#else
     eckit::Value& root = const_cast<eckit::Value&>(get());
     root.remove(name);
+#endif
     return *this;
 }
 
@@ -94,20 +102,22 @@ Config& Config::set(const std::string& name, const std::vector<Config>& values) 
 bool Config::get(const std::string& name, std::vector<Config>& value) const {
     bool found = has(name);
     if (found) {
-        std::vector<eckit::LocalConfiguration> properties = getSubConfigurations(name);
+        auto properties = getSubConfigurations(name);
         value.resize(properties.size());
         for (size_t i = 0; i < value.size(); ++i) {
-            value[i] = Config(properties[i]);
+            value[i].set(properties[i]);
         }
     }
     return found;
 }
 
+#if ! (ATLAS_ECKIT_VERSION_AT_LEAST(1, 26, 0) || ATLAS_ECKIT_DEVELOP)
 std::vector<std::string> Config::keys() const {
     std::vector<std::string> result;
     eckit::fromValue(result, get().keys());
     return result;
 }
+#endif
 
 std::string Config::json(eckit::JSON::Formatting formatting) const {
     std::stringstream json;

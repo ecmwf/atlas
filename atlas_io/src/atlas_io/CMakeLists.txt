@@ -1,3 +1,14 @@
+
+
+if( HAVE_ECKIT_DEVELOP )
+  set( ATLAS_IO_ECKIT_DEVELOP 1 )
+else()
+  set( ATLAS_IO_ECKIT_DEVELOP 0 )
+endif()
+
+ecbuild_parse_version( ${eckit_VERSION} PREFIX ATLAS_IO_ECKIT )
+math( EXPR ATLAS_IO_ECKIT_VERSION_INT "( 10000 * ${ATLAS_IO_ECKIT_VERSION_MAJOR} ) + ( 100 * ${ATLAS_IO_ECKIT_VERSION_MINOR} ) + ${ATLAS_IO_ECKIT_VERSION_PATCH}" )
+
 configure_file( detail/defines.h.in   detail/defines.h   )
 install( FILES
   ${CMAKE_CURRENT_BINARY_DIR}/detail/defines.h

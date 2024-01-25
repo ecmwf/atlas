@@ -28,6 +28,10 @@ ecbuild_debug( "   eckit_FEATURES : [${eckit_FEATURES}]" )
 ################################################################################
 # Features that can be enabled / disabled with -DENABLE_<FEATURE>
 
+ecbuild_add_option( FEATURE ECKIT_DEVELOP
+                    DESCRIPTION "Used to enable new features or API depending on eckit develop branch, not yet in a tagged release"
+                    DEFAULT OFF )
+
 ################################################################################
 # sources
 
