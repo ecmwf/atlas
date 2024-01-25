@@ -218,12 +218,33 @@ CASE("test_array_foreach_integer_sequence") {
   const auto arr3 = ArrayT<double>(2, 3, 4, 5);
   const auto view3 = make_view<double, 4>(arr3);
 
+  const auto none = std::integer_sequence<int>{};
   const auto zero = std::integer_sequence<int, 0>{};
   const auto one = std::integer_sequence<int, 1>{};
   const auto zeroOneTwoThree = std::make_integer_sequence<int, 4>{};
 
 
   // Test slice shapes.
+
+  const auto loopFunctorDimNone = [](auto&& slice1, auto&& slice2,
+                                     auto&& slice3) {
+    EXPECT_EQ(slice1.rank(), 2);
+    EXPECT_EQ(slice1.shape(0), 2);
+    EXPECT_EQ(slice1.shape(1), 3);
+
+    EXPECT_EQ(slice2.rank(), 3);
+    EXPECT_EQ(slice2.shape(0), 2);
+    EXPECT_EQ(slice2.shape(1), 3);
+    EXPECT_EQ(slice2.shape(2), 4);
+
+    EXPECT_EQ(slice3.rank(), 4);
+    EXPECT_EQ(slice3.shape(0), 2);
+    EXPECT_EQ(slice3.shape(1), 3);
+    EXPECT_EQ(slice3.shape(2), 4);
+    EXPECT_EQ(slice3.shape(3), 5);
+  };
+  // No iterations. Apply functor directly to unsliced ArrayViews.
+  arrayForEachDim(none, std::tie(view1, view2, view3), loopFunctorDimNone);
 
   const auto loopFunctorDim0 = [](auto&& slice1, auto&& slice2, auto&& slice3) {
     EXPECT_EQ(slice1.rank(), 1);
