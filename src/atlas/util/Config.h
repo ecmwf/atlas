@@ -16,6 +16,8 @@
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/log/JSON.h"
 
+#include "atlas/library/config.h"
+
 namespace eckit {
 class PathName;
 class Hash;
@@ -61,14 +63,14 @@ public:
     Config operator()(const std::string& name, std::initializer_list<ValueT>&& value);
 
     // Overload operators to merge two Config objects.
-    Config operator|(const Config& other) const;
+    Config operator|(const eckit::Configuration& other) const;
 
     /// @brief Set a key-value parameter
     using eckit::LocalConfiguration::set;
 
     Config& set(const std::string& name, const std::vector<Config>&);
 
-    Config& set(const eckit::LocalConfiguration&);
+    Config& set(const eckit::Configuration&);
 
     template <typename T>
     Config& set(const std::string& name, std::initializer_list<T>&& value);
@@ -80,7 +82,9 @@ public:
     using eckit::LocalConfiguration::get;
     bool get(const std::string& name, std::vector<Config>& value) const;
 
+#if ! (ATLAS_ECKIT_VERSION_AT_LEAST(1, 26, 0) || ATLAS_ECKIT_DEVELOP)
     std::vector<std::string> keys() const;
+#endif
 
     std::string json(eckit::JSON::Formatting = eckit::JSON::Formatting::indent()) const;
 };
