@@ -169,7 +169,7 @@ function atlas_StructuredGrid_ComputeNorth__ctor(grid, halo) result(this)
   use atlas_grid_module, only : atlas_StructuredGrid
   implicit none
   type(atlas_StructuredGrid_ComputeNorth) :: this
-  type(atlas_StructuredGrid), intent(in) :: grid
+  class(atlas_StructuredGrid), intent(in) :: grid
   integer(c_int), intent(in) :: halo
   call this%reset_c_ptr( atlas__grid__ComputeNorth__new(grid%CPTR_PGIBUG_B, halo), &
     & fckit_c_deleter(atlas__grid__ComputeNorth__delete) )
@@ -183,7 +183,7 @@ function atlas_StructuredGrid_ComputeWest__ctor(grid, halo) result(this)
   use atlas_grid_module, only : atlas_StructuredGrid
   implicit none
   type(atlas_StructuredGrid_ComputeWest) :: this
-  type(atlas_StructuredGrid), intent(in) :: grid
+  class(atlas_StructuredGrid), intent(in) :: grid
   integer(c_int), intent(in) :: halo
   call this%reset_c_ptr( atlas__grid__ComputeWest__new(grid%CPTR_PGIBUG_B, halo), &
     & fckit_c_deleter(atlas__grid__ComputeWest__delete) )
@@ -195,7 +195,7 @@ subroutine atlas_StructuredGrid_ComputeStencil__setup(this, grid, stencil_width)
   use atlas_grid_module, only : atlas_StructuredGrid
   implicit none
   class(atlas_StructuredGrid_ComputeStencil) :: this
-  type(atlas_StructuredGrid), intent(in) :: grid
+  class(atlas_StructuredGrid), intent(in) :: grid
   integer(ATLAS_KIND_IDX), intent(in) :: stencil_width
   this%stencil_width = stencil_width
   this%halo = (stencil_width + 1) / 2
@@ -309,7 +309,7 @@ function atlas_StructuredGrid_ComputeStencil__ctor(grid, stencil_width) result(t
   use atlas_grid_module, only : atlas_StructuredGrid
   implicit none
   type(atlas_StructuredGrid_ComputeStencil) :: this
-  type(atlas_StructuredGrid), intent(in) :: grid
+  class(atlas_StructuredGrid), intent(in) :: grid
   integer(ATLAS_KIND_IDX), intent(in) :: stencil_width
   call this%setup(grid, stencil_width)
 end function

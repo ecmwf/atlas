@@ -15,7 +15,7 @@ subroutine run
 
 use, intrinsic :: iso_fortran_env, only : real64, real32
 use atlas_module, only :   &
-  & atlas_StructuredGrid  ,&
+  & atlas_ReducedGaussianGrid  ,&
   & atlas_functionspace_StructuredColumns ,&
   & atlas_Field, &
   & ATLAS_KIND_IDX, &
@@ -31,7 +31,7 @@ use fckit_mpi_module, only : fckit_mpi
 implicit none
 
 character(len=:), allocatable :: gridname
-type(atlas_StructuredGrid) :: grid
+type(atlas_ReducedGaussianGrid) :: grid
 type(atlas_functionspace_StructuredColumns) :: functionspace
 real(real64) :: zlon, zlat
 integer(ATLAS_KIND_IDX) :: jlon,jlat, jgp
@@ -48,7 +48,9 @@ endif
 gridname = "O320"
 
 ! Create grid and write some properties
-grid          = atlas_StructuredGrid(gridname)
+!grid          = atlas_StructuredGrid(gridname)
+grid          = atlas_ReducedGaussianGrid([20,24,28,32,36,40,44,48,52,56,60,64,&
+                                           64,60,56,52,48,44,40,36,32,28,24,20])
 
 if (fckit_mpi%rank() == log_rank) then
     write(0,*) "grid%name()  : ", grid%name()
