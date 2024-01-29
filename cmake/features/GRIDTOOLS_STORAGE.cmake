@@ -1,4 +1,4 @@
-if( atlas_HAVE_ATLAS_FIELD )
+if( atlas_HAVE_ATLAS_FIELD AND ENABLE_GRIDTOOLS_STORAGE)
 
 ### GridTools storage module
 

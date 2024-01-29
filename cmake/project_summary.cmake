@@ -34,11 +34,21 @@ if( atlas_HAVE_GRIDTOOLS_STORAGE )
 
     ecbuild_info( "GRIDTOOLS_STORAGE" )
     if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST )
-        ecbuild_info( "    BACKEND : [HOST]" )
+        ecbuild_info( "    GRIDTOOLS BACKEND : [HOST]" )
     endif()
     if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
-        ecbuild_info( "    BACKEND : [CUDA]" )
+        ecbuild_info( "    GRIDTOOLS BACKEND : [CUDA]" )
     endif()
+
+elseif( atlas_HAVE_NATIVE_GPU_STORAGE )
+
+    if( ATLAS_NATIVE_GPU_STORAGE_BACKEND_HOST )
+        ecbuild_info( "    NATIVE BACKEND : [HOST]" )
+    endif()
+    if( ATLAS_NATIVE_GPU_STORAGE_BACKEND_CUDA )
+        ecbuild_info( "    NATIVE BACKEND : [CUDA]" )
+    endif()
+
 
 endif()
 
