@@ -116,9 +116,8 @@ class ComplexMatrixMultiply {
   }
 
  private:
-  template <typename View, typename Index>
-
   /// @brief Makes the slice arrayView.slice(index, Range::all()...).
+  template <typename View, typename Index>
   static auto sliceColumn(View& arrayView, Index index) {
     constexpr auto Rank = std::decay_t<View>::rank();
     using RangeAll = decltype(array::Range::all());
