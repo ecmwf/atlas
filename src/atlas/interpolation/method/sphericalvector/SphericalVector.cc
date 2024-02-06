@@ -31,8 +31,6 @@ MethodBuilder<SphericalVector> __builder("spherical-vector");
 }
 
 using namespace detail;
-using ComplexTriplets = ComplexMatrix::Triplets;
-using RealTriplets = RealMatrix::Triplets;
 
 SphericalVector::SphericalVector(const Config& config) : Method(config) {
   const auto& conf = dynamic_cast<const eckit::LocalConfiguration&>(config);
@@ -103,10 +101,10 @@ void SphericalVector::do_setup(const FunctionSpace& source,
       const auto deltaAlpha =
           (alpha.first - alpha.second) * util::Constants::degreesToRadians();
 
-      complexTriplets[dataIndex] = {rowIndex, colIndex,
-                                    {baseWeight * std::cos(deltaAlpha),
-                                     baseWeight * std::sin(deltaAlpha)}};
-      realTriplets[dataIndex] = {rowIndex, colIndex, baseWeight};
+      complexTriplets[dataIndex] = ComplexTriplet{
+          rowIndex, colIndex, Complex{baseWeight * std::cos(deltaAlpha),
+                                      baseWeight * std::sin(deltaAlpha)}};
+      realTriplets[dataIndex] = RealTriplet{rowIndex, colIndex, baseWeight};
     }
   }
 

@@ -35,7 +35,8 @@ class SparseMatrix {
  public:
   using Index = typename EigenMatrix::StorageIndex;
   using Size = typename EigenMatrix::Index;
-  using Triplets = std::vector<Eigen::Triplet<Value>>;
+  using Triplet = Eigen::Triplet<Value>;
+  using Triplets = std::vector<Triplet>;
 
   SparseMatrix(Index nRows, Index nCols, const Triplets& triplets)
       : eigenMatrix_(nRows, nCols) {
