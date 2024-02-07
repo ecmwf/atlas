@@ -12,11 +12,6 @@
 
 #include "atlas/library/defines.h"
 #if ATLAS_HAVE_EIGEN
-
-#define EIGEN_NO_AUTOMATIC_RESIZING
-#define EIGEN_DONT_ALIGN
-#define EIGEN_DONT_VECTORIZE
-
 #include <Eigen/Sparse>
 #endif
 
