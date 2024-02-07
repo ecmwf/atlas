@@ -925,6 +925,7 @@ endif()
 include( atlas_host_device )
 atlas_host_device( source_list
   SOURCES
+    array/native/NativeArrayView.h
     array/gridtools/GridToolsArrayView.cc
     array/gridtools/GridToolsIndexView.cc
     mesh/Connectivity.cc
@@ -961,6 +962,7 @@ ecbuild_add_library( TARGET atlas
     $<${atlas_HAVE_EIGEN}:Eigen3::Eigen>
     $<${atlas_HAVE_OMP_CXX}:OpenMP::OpenMP_CXX>
     $<${atlas_HAVE_GRIDTOOLS_STORAGE}:GridTools::gridtools>
+    $<${atlas_HAVE_CUDA}:CUDA::cudart>
 
   PRIVATE_INCLUDES
     ${CGAL_INCLUDE_DIRS}
