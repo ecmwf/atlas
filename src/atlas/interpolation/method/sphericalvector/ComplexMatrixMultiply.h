@@ -32,8 +32,9 @@ constexpr auto twoVector = TwoVectorTag{};
 constexpr auto threeVector = ThreeVectorTag{};
 
 template <typename VectorTag>
-using IsVectorTag = std::enable_if_t<std::is_same_v<VectorTag, TwoVectorTag> ||
-                                     std::is_same_v<VectorTag, ThreeVectorTag>>;
+constexpr bool isVectorTag() {
+    return std::is_same_v<VectorTag, TwoVectorTag> ||
+           std::is_same_v<VectorTag, ThreeVectorTag>;}
 
 /// @brief   Helper class to perform complex matrix multiplications
 ///
@@ -54,18 +55,21 @@ class ComplexMatrixMultiply {
   ComplexMatrixMultiply(const ComplexMatPtr& complexWeights,
                         const RealMatPtr& realWeights)
       : complexWeights_{complexWeights}, realWeights_{realWeights} {
-
     if constexpr (ATLAS_BUILD_TYPE_DEBUG) {
-      ATLAS_ASSERT(complexWeights->rows() == realWeights->rows());
-      ATLAS_ASSERT(complexWeights->cols() == realWeights->cols());
-      ATLAS_ASSERT(complexWeights->nonZeros() == realWeights->nonZeros());
+      const auto& complexWeightsMat = *complexWeights_;
+      const auto& realWeightsMat = *realWeights_;
 
-      for (auto i = Size{0}; i < complexWeights->rows() + 1; ++i) {
-        ATLAS_ASSERT(complexWeights_->outer()[i] == realWeights_->outer()[i]);
-      }
-
-      for (auto i = Size{0}; i < complexWeights->nonZeros(); ++i) {
-        ATLAS_ASSERT(complexWeights_->inner()[i] == realWeights_->inner()[i]);
+      ATLAS_ASSERT(complexWeightsMat.rows() == realWeightsMat.rows());
+      ATLAS_ASSERT(complexWeightsMat.cols() == realWeightsMat.cols());
+      ATLAS_ASSERT(complexWeightsMat.nonZeros() == realWeightsMat.nonZeros());
+      for (auto rowIndex = Size{0}; rowIndex < complexWeightsMat.rows();
+           ++rowIndex) {
+        auto complexRowIt = complexWeightsMat.rowIterator(rowIndex);
+        auto realRowIt = realWeightsMat.rowIterator(rowIndex);
+        for (; complexRowIt && realRowIt; ++complexRowIt, ++realRowIt) {
+          ATLAS_ASSERT(realRowIt.row() == complexRowIt.row());
+          ATLAS_ASSERT(realRowIt.col() == complexRowIt.col());
+        }
       }
     }
   }
@@ -78,37 +82,39 @@ class ComplexMatrixMultiply {
   ///          sourceView. If VectorType == ThreeVectorTag, then realWeights
   ///          are additionally applied to the vertical elements of sourceView.
   template <typename Value, int Rank, typename VectorType,
-            typename = IsVectorTag<VectorType>>
+            typename = std::enable_if_t<isVectorTag<VectorType>()>>
   void apply(const array::ArrayView<const Value, Rank>& sourceView,
              array::ArrayView<Value, Rank>& targetView, VectorType) const {
 
-    const auto* outerIndices = complexWeights_->outer();
-    const auto* innerIndices = complexWeights_->inner();
-    const auto* complexWeightValues = complexWeights_->data();
-    const auto* realWeightValues = realWeights_->data();
-    const auto nRows = complexWeights_->rows();
+    const auto& complexWeightsMat = *complexWeights_;
+    const auto& realWeightsMat = *realWeights_;
 
-    atlas_omp_parallel_for(auto rowIndex = Index{0}; rowIndex < nRows;
-                           ++rowIndex) {
+    for (auto rowIndex = Size{0};
+                           rowIndex < complexWeightsMat.rows(); ++rowIndex) {
+
+      auto complexRowIt = complexWeightsMat.rowIterator(rowIndex);
+      auto realRowIt = realWeightsMat.rowIterator(rowIndex);
 
       auto targetSlice = sliceColumn(targetView, rowIndex);
       if constexpr (InitialiseTarget) { targetSlice.assign(0.); }
-      for (auto dataIndex = outerIndices[rowIndex];
-           dataIndex < outerIndices[rowIndex + 1]; ++dataIndex) {
 
-        const auto colIndex = innerIndices[dataIndex];
+      for (; complexRowIt && realRowIt; ++complexRowIt, ++realRowIt) {
+
+        const auto& colIndex = complexRowIt.col();
+        const auto& complexWeight = complexRowIt.value();
+        const auto& realWeight = realRowIt.value();
         const auto sourceSlice = sliceColumn(sourceView, colIndex);
 
         array::helpers::arrayForEachDim(
             slicedColumnDims<Rank>{}, std::tie(sourceSlice, targetSlice),
             [&](auto&& sourceElem, auto&& targetElem) {
-              const auto targetVector = complexWeightValues[dataIndex] *
-                                        Complex(sourceElem(0), sourceElem(1));
+              const auto targetVector =
+                  complexWeight * Complex(sourceElem(0), sourceElem(1));
               targetElem(0) += targetVector.real();
               targetElem(1) += targetVector.imag();
 
               if constexpr (std::is_same_v<VectorType, ThreeVectorTag>) {
-                  targetElem(2) += realWeightValues[dataIndex] * sourceElem(2);
+                  targetElem(2) += realWeight * sourceElem(2);
               }
             });
       }

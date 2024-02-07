@@ -37,6 +37,7 @@ class SparseMatrix {
   using Size = typename EigenMatrix::Index;
   using Triplet = Eigen::Triplet<Value>;
   using Triplets = std::vector<Triplet>;
+  using RowIterator = typename EigenMatrix::InnerIterator;
 
   SparseMatrix(Index nRows, Index nCols, const Triplets& triplets)
       : eigenMatrix_(nRows, nCols) {
@@ -46,9 +47,9 @@ class SparseMatrix {
   Size nonZeros() const { return eigenMatrix_.nonZeros(); }
   Size rows() const { return eigenMatrix_.rows(); }
   Size cols() const { return eigenMatrix_.cols(); }
-  const Index* outer() { return eigenMatrix_.outerIndexPtr(); }
-  const Index* inner() { return eigenMatrix_.innerIndexPtr(); }
-  const Value* data() { return eigenMatrix_.valuePtr(); }
+  RowIterator rowIterator(Size rowIndex) const {
+    return RowIterator(eigenMatrix_, rowIndex);
+  }
   SparseMatrix<Value> adjoint() {
     return SparseMatrix(eigenMatrix_.adjoint().eval());
   }
