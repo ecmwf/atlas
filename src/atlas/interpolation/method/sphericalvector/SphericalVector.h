@@ -11,7 +11,6 @@
 #include "atlas/interpolation/method/Method.h"
 #include "atlas/interpolation/method/sphericalvector/ComplexMatrixMultiply.h"
 
-
 namespace atlas {
 namespace interpolation {
 namespace method {
@@ -19,8 +18,8 @@ namespace method {
 class SphericalVector : public Method {
   using WeightsMatMul = detail::ComplexMatrixMultiply<true>;
   using WeightsMatMulAdjoint = detail::ComplexMatrixMultiply<false>;
- public:
 
+ public:
   /// @brief   Interpolation post-processor for vector field interpolation
   ///
   /// @details Takes a base interpolation config keyed to "scheme" and creates
@@ -82,9 +81,7 @@ class SphericalVector : public Method {
 
   WeightsMatMul weightsMatMul_{};
   WeightsMatMulAdjoint weightsMatMulAdjoint_{};
-
 };
-
 
 }  // namespace method
 }  // namespace interpolation

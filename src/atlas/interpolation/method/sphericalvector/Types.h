@@ -8,6 +8,7 @@
 #pragma once
 
 #include <complex>
+#include <memory>
 
 #include "atlas/interpolation/method/sphericalvector/SparseMatrix.h"
 
@@ -26,6 +27,9 @@ using ComplexTriplet = ComplexMatrix::Triplet;
 using ComplexTriplets = ComplexMatrix::Triplets;
 using RealTriplet = RealMatrix::Triplet;
 using RealTriplets = RealMatrix::Triplets;
+using ComplexMatPtr = std::unique_ptr<const ComplexMatrix>;
+using RealMatPtr = std::unique_ptr<const RealMatrix>;
+
 
 } // detail
 } // method

@@ -37,7 +37,7 @@ class SparseMatrix {
   using Size = typename EigenMatrix::Index;
   using Triplet = Eigen::Triplet<Value>;
   using Triplets = std::vector<Triplet>;
-  using RowIterator = typename EigenMatrix::InnerIterator;
+  using RowIter = typename EigenMatrix::InnerIterator;
 
   SparseMatrix(Index nRows, Index nCols, const Triplets& triplets)
       : eigenMatrix_(nRows, nCols) {
@@ -47,10 +47,10 @@ class SparseMatrix {
   Size nonZeros() const { return eigenMatrix_.nonZeros(); }
   Size rows() const { return eigenMatrix_.rows(); }
   Size cols() const { return eigenMatrix_.cols(); }
-  RowIterator rowIterator(Size rowIndex) const {
-    return RowIterator(eigenMatrix_, rowIndex);
+  RowIter rowIter(Size rowIndex) const {
+    return RowIter(eigenMatrix_, rowIndex);
   }
-  SparseMatrix<Value> adjoint() {
+  SparseMatrix<Value> adjoint() const {
     return SparseMatrix(eigenMatrix_.adjoint().eval());
   }
 
@@ -83,13 +83,13 @@ class SparseMatrix {
   constexpr const Index* outer() { return nullptr; }
   constexpr const Index* inner() { return nullptr; }
   constexpr const Value* data() { return nullptr; }
-  SparseMatrix<Value> adjoint() {
+  SparseMatrix<Value> adjoint() const {
     return SparseMatrix<Value>(0, 0, Triplets{});
   }
 };
 #endif
 
-} // namespace detail
-} // namespace method
-} // namespace interpolation
-} // namespace atlas
+}  // namespace detail
+}  // namespace method
+}  // namespace interpolation
+}  // namespace atlas

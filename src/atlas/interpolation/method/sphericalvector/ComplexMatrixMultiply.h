@@ -8,7 +8,6 @@
 #pragma once
 
 #include <array>
-#include <memory>
 #include <tuple>
 #include <type_traits>
 
@@ -23,9 +22,6 @@ namespace interpolation {
 namespace method {
 namespace detail {
 
-using ComplexMatPtr = std::shared_ptr<ComplexMatrix>;
-using RealMatPtr = std::shared_ptr<RealMatrix>;
-
 struct TwoVectorTag {};
 struct ThreeVectorTag {};
 constexpr auto twoVector = TwoVectorTag{};
@@ -33,8 +29,9 @@ constexpr auto threeVector = ThreeVectorTag{};
 
 template <typename VectorTag>
 constexpr bool isVectorTag() {
-    return std::is_same_v<VectorTag, TwoVectorTag> ||
-           std::is_same_v<VectorTag, ThreeVectorTag>;}
+  return std::is_same_v<VectorTag, TwoVectorTag> ||
+         std::is_same_v<VectorTag, ThreeVectorTag>;
+}
 
 /// @brief   Helper class to perform complex matrix multiplications
 ///
@@ -52,23 +49,21 @@ class ComplexMatrixMultiply {
   /// @details complexWeights is a SparseMatrix of weights. realWeights is a
   ///          SparseMatrix containing the magnitudes of the elements of
   ///          complexWeights.
-  ComplexMatrixMultiply(const ComplexMatPtr& complexWeights,
-                        const RealMatPtr& realWeights)
-      : complexWeights_{complexWeights}, realWeights_{realWeights} {
+  ComplexMatrixMultiply(ComplexMatPtr&& complexWeights,
+                        RealMatPtr&& realWeights)
+      : complexWeightsPtr_{std::move(complexWeights)},
+        realWeightsPtr_{std::move(realWeights)} {
     if constexpr (ATLAS_BUILD_TYPE_DEBUG) {
-      const auto& complexWeightsMat = *complexWeights_;
-      const auto& realWeightsMat = *realWeights_;
-
-      ATLAS_ASSERT(complexWeightsMat.rows() == realWeightsMat.rows());
-      ATLAS_ASSERT(complexWeightsMat.cols() == realWeightsMat.cols());
-      ATLAS_ASSERT(complexWeightsMat.nonZeros() == realWeightsMat.nonZeros());
-      for (auto rowIndex = Size{0}; rowIndex < complexWeightsMat.rows();
+      ATLAS_ASSERT(complexWeightsPtr_->rows() == realWeightsPtr_->rows());
+      ATLAS_ASSERT(complexWeightsPtr_->cols() == realWeightsPtr_->cols());
+      ATLAS_ASSERT(complexWeightsPtr_->nonZeros() ==
+                   realWeightsPtr_->nonZeros());
+      for (auto rowIndex = Size{0}; rowIndex < complexWeightsPtr_->rows();
            ++rowIndex) {
-        auto complexRowIt = complexWeightsMat.rowIterator(rowIndex);
-        auto realRowIt = realWeightsMat.rowIterator(rowIndex);
-        for (; complexRowIt && realRowIt; ++complexRowIt, ++realRowIt) {
-          ATLAS_ASSERT(realRowIt.row() == complexRowIt.row());
-          ATLAS_ASSERT(realRowIt.col() == complexRowIt.col());
+        for (auto [complexRowIter, realRowIter] = rowIters(rowIndex);
+             complexRowIter && realRowIter; ++complexRowIter, ++realRowIter) {
+          ATLAS_ASSERT(realRowIter.row() == complexRowIter.row());
+          ATLAS_ASSERT(realRowIter.col() == complexRowIter.col());
         }
       }
     }
@@ -85,24 +80,36 @@ class ComplexMatrixMultiply {
             typename = std::enable_if_t<isVectorTag<VectorType>()>>
   void apply(const array::ArrayView<const Value, Rank>& sourceView,
              array::ArrayView<Value, Rank>& targetView, VectorType) const {
+    if constexpr (std::is_same_v<VectorType, TwoVectorTag>) {
+      applyTwoVector(sourceView, targetView);
+    }
 
-    const auto& complexWeightsMat = *complexWeights_;
-    const auto& realWeightsMat = *realWeights_;
+    if constexpr (std::is_same_v<VectorType, ThreeVectorTag>) {
+      applyThreeVector(sourceView, targetView);
+    }
 
-    for (auto rowIndex = Size{0};
-                           rowIndex < complexWeightsMat.rows(); ++rowIndex) {
+    return;
+  }
 
-      auto complexRowIt = complexWeightsMat.rowIterator(rowIndex);
-      auto realRowIt = realWeightsMat.rowIterator(rowIndex);
-
+ private:
+  /// @brief Apply 2-vector MatMul.
+  template <typename Value, int Rank>
+  void applyTwoVector(const array::ArrayView<const Value, Rank>& sourceView,
+                      array::ArrayView<Value, Rank>& targetView) const {
+    // We could probably optimise contiguous arrays using
+    // reinterpret_cast<std::complex<double>*>(view.data()). According to the
+    // C++ standard, this is fine!
+    for (auto rowIndex = Size{0}; rowIndex < complexWeightsPtr_->rows();
+         ++rowIndex) {
       auto targetSlice = sliceColumn(targetView, rowIndex);
-      if constexpr (InitialiseTarget) { targetSlice.assign(0.); }
+      if constexpr (InitialiseTarget) {
+        targetSlice.assign(0.);
+      }
 
-      for (; complexRowIt && realRowIt; ++complexRowIt, ++realRowIt) {
-
-        const auto& colIndex = complexRowIt.col();
-        const auto& complexWeight = complexRowIt.value();
-        const auto& realWeight = realRowIt.value();
+      for (auto complexRowIter = complexWeightsPtr_->rowIter(rowIndex);
+           complexRowIter; ++complexRowIter) {
+        const auto& colIndex = complexRowIter.col();
+        const auto& complexWeight = complexRowIter.value();
         const auto sourceSlice = sliceColumn(sourceView, colIndex);
 
         array::helpers::arrayForEachDim(
@@ -112,16 +119,49 @@ class ComplexMatrixMultiply {
                   complexWeight * Complex(sourceElem(0), sourceElem(1));
               targetElem(0) += targetVector.real();
               targetElem(1) += targetVector.imag();
-
-              if constexpr (std::is_same_v<VectorType, ThreeVectorTag>) {
-                  targetElem(2) += realWeight * sourceElem(2);
-              }
             });
       }
     }
   }
 
- private:
+  /// @brief Apply 3-vector MatMul.
+  template <typename Value, int Rank>
+  void applyThreeVector(const array::ArrayView<const Value, Rank>& sourceView,
+                        array::ArrayView<Value, Rank>& targetView) const {
+    for (auto rowIndex = Size{0}; rowIndex < complexWeightsPtr_->rows();
+         ++rowIndex) {
+      auto targetSlice = sliceColumn(targetView, rowIndex);
+      if constexpr (InitialiseTarget) {
+        targetSlice.assign(0.);
+      }
+
+      for (auto [complexRowIter, realRowIter] = rowIters(rowIndex);
+           complexRowIter && realRowIter; ++complexRowIter, ++realRowIter) {
+        const auto& colIndex = complexRowIter.col();
+        const auto& complexWeight = complexRowIter.value();
+        const auto& realWeight = realRowIter.value();
+        const auto sourceSlice = sliceColumn(sourceView, colIndex);
+
+        array::helpers::arrayForEachDim(
+            slicedColumnDims<Rank>{}, std::tie(sourceSlice, targetSlice),
+            [&](auto&& sourceElem, auto&& targetElem) {
+              const auto targetVector =
+                  complexWeight * Complex(sourceElem(0), sourceElem(1));
+              targetElem(0) += targetVector.real();
+              targetElem(1) += targetVector.imag();
+              targetElem(2) += realWeight * sourceElem(2);
+            });
+      }
+    }
+  }
+
+  /// @brief Return a pair of real and complex row iterators
+  std::pair<ComplexMatrix::RowIter, RealMatrix::RowIter> rowIters(
+      Size rowIndex) const {
+    return std::make_pair(complexWeightsPtr_->rowIter(rowIndex),
+                          realWeightsPtr_->rowIter(rowIndex));
+  }
+
   /// @brief Makes the slice arrayView.slice(index, Range::all()...).
   template <typename View, typename Index>
   static auto sliceColumn(View& arrayView, Index index) {
@@ -141,8 +181,8 @@ class ComplexMatrixMultiply {
   template <int Rank>
   using slicedColumnDims = std::make_integer_sequence<int, Rank - 2>;
 
-  ComplexMatPtr complexWeights_{};
-  RealMatPtr realWeights_{};
+  ComplexMatPtr complexWeightsPtr_{};
+  RealMatPtr realWeightsPtr_{};
 };
 
 }  // namespace detail

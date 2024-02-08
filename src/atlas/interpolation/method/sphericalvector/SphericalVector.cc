@@ -26,7 +26,7 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
-namespace  {
+namespace {
 MethodBuilder<SphericalVector> __builder("spherical-vector");
 }
 
@@ -101,32 +101,28 @@ void SphericalVector::do_setup(const FunctionSpace& source,
       const auto deltaAlpha =
           (alpha.first - alpha.second) * util::Constants::degreesToRadians();
 
-      complexTriplets[dataIndex] = ComplexTriplet{
-          rowIndex, colIndex, Complex{baseWeight * std::cos(deltaAlpha),
-                                      baseWeight * std::sin(deltaAlpha)}};
+      complexTriplets[dataIndex] =
+          ComplexTriplet{rowIndex, colIndex,
+                         Complex{baseWeight * std::cos(deltaAlpha),
+                                 baseWeight * std::sin(deltaAlpha)}};
       realTriplets[dataIndex] = RealTriplet{rowIndex, colIndex, baseWeight};
     }
   }
 
-  const auto complexWeights =
-      std::make_shared<ComplexMatrix>(nRows, nCols, complexTriplets);
-
-  const auto realWeights =
-      std::make_shared<RealMatrix>(nRows, nCols, realTriplets);
-
-  weightsMatMul_= WeightsMatMul(complexWeights, realWeights);
+  auto complexWeights = std::make_unique<ComplexMatPtr::element_type>(
+      nRows, nCols, complexTriplets);
+  auto realWeights =
+      std::make_unique<RealMatPtr::element_type>(nRows, nCols, realTriplets);
 
   if (adjoint_) {
-
-    const auto complexWeightsAdjoint =
-        std::make_shared<ComplexMatrix>(complexWeights->adjoint());
-
-    const auto realWeightsAdjoint =
-        std::make_shared<RealMatrix>(realWeights->adjoint());
-
-    weightsMatMulAdjoint_ =
-        WeightsMatMulAdjoint(complexWeightsAdjoint, realWeightsAdjoint);
+    weightsMatMulAdjoint_ = WeightsMatMulAdjoint(
+        std::make_unique<ComplexMatPtr::element_type>(
+            complexWeights->adjoint()),
+        std::make_unique<RealMatPtr::element_type>(realWeights->adjoint()));
   }
+
+  weightsMatMul_ =
+      WeightsMatMul(std::move(complexWeights), std::move(realWeights));
 }
 
 void SphericalVector::print(std::ostream&) const { ATLAS_NOTIMPLEMENTED; }
@@ -147,7 +143,6 @@ void SphericalVector::do_execute(const Field& sourceField, Field& targetField,
   ATLAS_TRACE("atlas::interpolation::method::SphericalVector::do_execute()");
   const auto fieldType = sourceField.metadata().getString("type", "");
   if (fieldType != "vector") {
-
     auto metadata = Metadata();
     Method::do_execute(sourceField, targetField, metadata);
 
@@ -181,7 +176,6 @@ void SphericalVector::do_execute_adjoint(Field& sourceField,
 
   const auto fieldType = sourceField.metadata().getString("type", "");
   if (fieldType != "vector") {
-
     auto metadata = Metadata();
     Method::do_execute_adjoint(sourceField, targetField, metadata);
 
@@ -192,7 +186,7 @@ void SphericalVector::do_execute_adjoint(Field& sourceField,
 
   ATLAS_ASSERT(adjoint_, "\"adjoint\" needs to be set to \"true\" in Config.");
   interpolate_vector_field(targetField, sourceField, weightsMatMulAdjoint_);
-    adjointHaloExchange(sourceField);
+  adjointHaloExchange(sourceField);
 }
 
 template <typename MatMul>
