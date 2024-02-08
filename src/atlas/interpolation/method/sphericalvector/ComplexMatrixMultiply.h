@@ -61,7 +61,8 @@ class ComplexMatrixMultiply {
       for (auto rowIndex = Size{0}; rowIndex < complexWeightsPtr_->rows();
            ++rowIndex) {
         for (auto [complexRowIter, realRowIter] = rowIters(rowIndex);
-             complexRowIter && realRowIter; ++complexRowIter, ++realRowIter) {
+             complexRowIter; ++complexRowIter, ++realRowIter) {
+          ATLAS_ASSERT(realRowIter);
           ATLAS_ASSERT(realRowIter.row() == complexRowIter.row());
           ATLAS_ASSERT(realRowIter.col() == complexRowIter.col());
         }
@@ -99,8 +100,8 @@ class ComplexMatrixMultiply {
     // We could probably optimise contiguous arrays using
     // reinterpret_cast<std::complex<double>*>(view.data()). According to the
     // C++ standard, this is fine!
-    for (auto rowIndex = Size{0}; rowIndex < complexWeightsPtr_->rows();
-         ++rowIndex) {
+    atlas_omp_parallel_for(auto rowIndex = Size{0};
+                           rowIndex < complexWeightsPtr_->rows(); ++rowIndex) {
       auto targetSlice = sliceColumn(targetView, rowIndex);
       if constexpr (InitialiseTarget) {
         targetSlice.assign(0.);
@@ -128,15 +129,15 @@ class ComplexMatrixMultiply {
   template <typename Value, int Rank>
   void applyThreeVector(const array::ArrayView<const Value, Rank>& sourceView,
                         array::ArrayView<Value, Rank>& targetView) const {
-    for (auto rowIndex = Size{0}; rowIndex < complexWeightsPtr_->rows();
-         ++rowIndex) {
+    atlas_omp_parallel_for(auto rowIndex = Size{0};
+                           rowIndex < complexWeightsPtr_->rows(); ++rowIndex) {
       auto targetSlice = sliceColumn(targetView, rowIndex);
       if constexpr (InitialiseTarget) {
         targetSlice.assign(0.);
       }
 
       for (auto [complexRowIter, realRowIter] = rowIters(rowIndex);
-           complexRowIter && realRowIter; ++complexRowIter, ++realRowIter) {
+           complexRowIter; ++complexRowIter, ++realRowIter) {
         const auto& colIndex = complexRowIter.col();
         const auto& complexWeight = complexRowIter.value();
         const auto& realWeight = realRowIter.value();
