@@ -98,8 +98,8 @@ class ComplexMatrixMultiply {
   void applyTwoVector(const array::ArrayView<const Value, Rank>& sourceView,
                       array::ArrayView<Value, Rank>& targetView) const {
     // We could probably optimise contiguous arrays using
-    // reinterpret_cast<std::complex<double>*>(view.data()). According to the
-    // C++ standard, this is fine!
+    // reinterpret_cast<std::complex<double>*>(view.data()). This is fine
+    // according to the C++ standard!
     atlas_omp_parallel_for(auto rowIndex = Size{0};
                            rowIndex < complexWeightsPtr_->rows(); ++rowIndex) {
       auto targetSlice = sliceColumn(targetView, rowIndex);
@@ -109,8 +109,8 @@ class ComplexMatrixMultiply {
 
       for (auto complexRowIter = complexWeightsPtr_->rowIter(rowIndex);
            complexRowIter; ++complexRowIter) {
-        const auto& colIndex = complexRowIter.col();
-        const auto& complexWeight = complexRowIter.value();
+        const auto colIndex = complexRowIter.col();
+        const auto complexWeight = complexRowIter.value();
         const auto sourceSlice = sliceColumn(sourceView, colIndex);
 
         array::helpers::arrayForEachDim(
@@ -138,9 +138,9 @@ class ComplexMatrixMultiply {
 
       for (auto [complexRowIter, realRowIter] = rowIters(rowIndex);
            complexRowIter; ++complexRowIter, ++realRowIter) {
-        const auto& colIndex = complexRowIter.col();
-        const auto& complexWeight = complexRowIter.value();
-        const auto& realWeight = realRowIter.value();
+        const auto colIndex = complexRowIter.col();
+        const auto complexWeight = complexRowIter.value();
+        const auto realWeight = realRowIter.value();
         const auto sourceSlice = sliceColumn(sourceView, colIndex);
 
         array::helpers::arrayForEachDim(
@@ -156,7 +156,7 @@ class ComplexMatrixMultiply {
     }
   }
 
-  /// @brief Return a pair of real and complex row iterators
+  /// @brief Return a pair of complex and real row iterators
   std::pair<ComplexMatrix::RowIter, RealMatrix::RowIter> rowIters(
       Size rowIndex) const {
     return std::make_pair(complexWeightsPtr_->rowIter(rowIndex),

@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -64,27 +65,37 @@ class SparseMatrix {
 template <typename Value>
 class SparseMatrix {
  public:
+  using Index = int;
+  using Size = long int;
+
   class Triplet {
    public:
     template <typename... Args>
-    Triplet(const Args&... args) {}
+    constexpr Triplet(const Args&... args) {}
   };
-  using Index = int;
-  using Size = long int;
   using Triplets = std::vector<Triplet>;
+
+  class RowIter {
+   public:
+    template <typename... Args>
+    constexpr RowIter(const Args&... args) {}
+    constexpr Index row() const { return Index{}; }
+    constexpr Index col() const { return Index{}; }
+    constexpr Value value() const { return Value{}; }
+    constexpr operator bool() const { return false; }
+    constexpr RowIter& operator++() { return *this; }
+  };
 
   template <typename... Args>
   SparseMatrix(const Args&... args) {
-    ATLAS_THROW_EXCEPTION("Atlas has been compiled without Eigen");
+    throw_Exception("Atlas has been compiled without Eigen", Here());
   }
-  constexpr Size nonZeros() const { return 0; }
-  constexpr Size rows() const { return 0; }
-  constexpr Size cols() const { return 0; }
-  constexpr const Index* outer() { return nullptr; }
-  constexpr const Index* inner() { return nullptr; }
-  constexpr const Value* data() { return nullptr; }
-  SparseMatrix<Value> adjoint() const {
-    return SparseMatrix<Value>(0, 0, Triplets{});
+  constexpr Size nonZeros() const { return Size{}; }
+  constexpr Size rows() const { return Size{}; }
+  constexpr Size cols() const { return Size{}; }
+  constexpr RowIter rowIter(Size rowIndex) const { return RowIter{}; }
+  constexpr SparseMatrix<Value> adjoint() const {
+    return SparseMatrix<Value>{};
   }
 };
 #endif
