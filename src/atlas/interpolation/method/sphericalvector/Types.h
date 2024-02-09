@@ -22,7 +22,6 @@ using Complex = std::complex<Real>;
 using ComplexMatrix = SparseMatrix<Complex>;
 using RealMatrix = SparseMatrix<Real>;
 using Index = ComplexMatrix::Index;
-using Size = ComplexMatrix::Size;
 using ComplexTriplet = ComplexMatrix::Triplet;
 using ComplexTriplets = ComplexMatrix::Triplets;
 using RealTriplet = RealMatrix::Triplet;

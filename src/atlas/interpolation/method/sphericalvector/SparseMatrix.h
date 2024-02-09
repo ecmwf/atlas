@@ -17,6 +17,7 @@
 #endif
 
 #include "atlas/runtime/Exception.h"
+#include "eckit/log/CodeLocation.h"
 
 namespace atlas {
 namespace interpolation {
@@ -31,12 +32,10 @@ namespace detail {
 ///          class is Eigen library is not present.
 template <typename Value>
 class SparseMatrix {
-  using EigenMatrix = Eigen::SparseMatrix<Value, Eigen::RowMajor>;
-
  public:
-  using Index = typename EigenMatrix::StorageIndex;
-  using Size = typename EigenMatrix::Index;
-  using Triplet = Eigen::Triplet<Value>;
+  using Index = int;
+  using EigenMatrix = Eigen::SparseMatrix<Value, Eigen::RowMajor, Index>;
+  using Triplet = Eigen::Triplet<Value, Index>;
   using Triplets = std::vector<Triplet>;
   using RowIter = typename EigenMatrix::InnerIterator;
 
@@ -45,10 +44,10 @@ class SparseMatrix {
     eigenMatrix_.setFromTriplets(triplets.begin(), triplets.end());
   }
 
-  Size nonZeros() const { return eigenMatrix_.nonZeros(); }
-  Size rows() const { return eigenMatrix_.rows(); }
-  Size cols() const { return eigenMatrix_.cols(); }
-  RowIter rowIter(Size rowIndex) const {
+  Index nonZeros() const { return eigenMatrix_.nonZeros(); }
+  Index rows() const { return eigenMatrix_.rows(); }
+  Index cols() const { return eigenMatrix_.cols(); }
+  RowIter rowIter(Index rowIndex) const {
     return RowIter(eigenMatrix_, rowIndex);
   }
   SparseMatrix<Value> adjoint() const {
@@ -66,7 +65,6 @@ template <typename Value>
 class SparseMatrix {
  public:
   using Index = int;
-  using Size = long int;
 
   class Triplet {
    public:
@@ -90,10 +88,10 @@ class SparseMatrix {
   SparseMatrix(const Args&... args) {
     throw_Exception("Atlas has been compiled without Eigen", Here());
   }
-  constexpr Size nonZeros() const { return Size{}; }
-  constexpr Size rows() const { return Size{}; }
-  constexpr Size cols() const { return Size{}; }
-  constexpr RowIter rowIter(Size rowIndex) const { return RowIter{}; }
+  constexpr Index nonZeros() const { return Index{}; }
+  constexpr Index rows() const { return Index{}; }
+  constexpr Index cols() const { return Index{}; }
+  constexpr RowIter rowIter(Index rowIndex) const { return RowIter{}; }
   constexpr SparseMatrix<Value> adjoint() const {
     return SparseMatrix<Value>{};
   }

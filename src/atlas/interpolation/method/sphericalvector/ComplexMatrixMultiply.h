@@ -58,7 +58,7 @@ class ComplexMatrixMultiply {
       ATLAS_ASSERT(complexWeightsPtr_->cols() == realWeightsPtr_->cols());
       ATLAS_ASSERT(complexWeightsPtr_->nonZeros() ==
                    realWeightsPtr_->nonZeros());
-      for (auto rowIndex = Size{0}; rowIndex < complexWeightsPtr_->rows();
+      for (auto rowIndex = Index{0}; rowIndex < complexWeightsPtr_->rows();
            ++rowIndex) {
         for (auto [complexRowIter, realRowIter] = rowIters(rowIndex);
              complexRowIter; ++complexRowIter, ++realRowIter) {
@@ -100,7 +100,7 @@ class ComplexMatrixMultiply {
     // We could probably optimise contiguous arrays using
     // reinterpret_cast<std::complex<double>*>(view.data()). This is fine
     // according to the C++ standard!
-    atlas_omp_parallel_for(auto rowIndex = Size{0};
+    atlas_omp_parallel_for(auto rowIndex = Index{0};
                            rowIndex < complexWeightsPtr_->rows(); ++rowIndex) {
       auto targetSlice = sliceColumn(targetView, rowIndex);
       if constexpr (InitialiseTarget) {
@@ -129,7 +129,7 @@ class ComplexMatrixMultiply {
   template <typename Value, int Rank>
   void applyThreeVector(const array::ArrayView<const Value, Rank>& sourceView,
                         array::ArrayView<Value, Rank>& targetView) const {
-    atlas_omp_parallel_for(auto rowIndex = Size{0};
+    atlas_omp_parallel_for(auto rowIndex = Index{0};
                            rowIndex < complexWeightsPtr_->rows(); ++rowIndex) {
       auto targetSlice = sliceColumn(targetView, rowIndex);
       if constexpr (InitialiseTarget) {
@@ -158,7 +158,7 @@ class ComplexMatrixMultiply {
 
   /// @brief Return a pair of complex and real row iterators
   std::pair<ComplexMatrix::RowIter, RealMatrix::RowIter> rowIters(
-      Size rowIndex) const {
+      Index rowIndex) const {
     return std::make_pair(complexWeightsPtr_->rowIter(rowIndex),
                           realWeightsPtr_->rowIter(rowIndex));
   }

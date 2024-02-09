@@ -34,6 +34,8 @@ using namespace detail;
 
 SphericalVector::SphericalVector(const Config& config) : Method(config) {
   const auto& conf = dynamic_cast<const eckit::LocalConfiguration&>(config);
+  ATLAS_ASSERT_MSG(&conf,
+                   "config must be castable to an eckit::LocalConfiguration");
   interpolationScheme_ = conf.getSubConfiguration("scheme");
   adjoint_ = conf.getBool("adjoint", false);
 }
@@ -56,9 +58,9 @@ void SphericalVector::do_setup(const FunctionSpace& source,
   setMatrix(Interpolation(interpolationScheme_, source_, target_));
 
   // Get matrix data.
-  const auto nRows = matrix().rows();
-  const auto nCols = matrix().cols();
-  const auto nNonZeros = matrix().nonZeros();
+  const auto nRows = static_cast<Index>(matrix().rows());
+  const auto nCols = static_cast<Index>(matrix().cols());
+  const auto nNonZeros = static_cast<std::size_t>(matrix().nonZeros());
   const auto* outerIndices = matrix().outer();
   const auto* innerIndices = matrix().inner();
   const auto* baseWeights = matrix().data();
@@ -87,7 +89,7 @@ void SphericalVector::do_setup(const FunctionSpace& source,
                          ++rowIndex) {
     for (auto dataIndex = outerIndices[rowIndex];
          dataIndex < outerIndices[rowIndex + 1]; ++dataIndex) {
-      const auto colIndex = innerIndices[dataIndex];
+      const auto colIndex = static_cast<Index>(innerIndices[dataIndex]);
       const auto baseWeight = baseWeights[dataIndex];
 
       const auto sourceLonLat = PointLonLat(sourceLonLatsView(colIndex, 0),
