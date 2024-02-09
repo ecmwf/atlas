@@ -51,12 +51,13 @@ class SparseMatrix {
     return RowIter(eigenMatrix_, rowIndex);
   }
   SparseMatrix<Value> adjoint() const {
-    return SparseMatrix(eigenMatrix_.adjoint().eval());
+    const EigenMatrix adjoint = eigenMatrix_.adjoint();
+    return SparseMatrix(adjoint);
   }
 
  private:
-  SparseMatrix(EigenMatrix&& eigenMatrixAdjoint)
-      : eigenMatrix_{std::move(eigenMatrixAdjoint)} {}
+  SparseMatrix(const EigenMatrix& eigenMatrixAdjoint)
+      : eigenMatrix_{eigenMatrixAdjoint} {}
   EigenMatrix eigenMatrix_{};
 };
 #else
