@@ -56,7 +56,7 @@ class SparseMatrix {
   }
 
  private:
-  SparseMatrix(const EigenMatrix& eigenMatrixAdjoint)
+  explicit SparseMatrix(const EigenMatrix& eigenMatrixAdjoint)
       : eigenMatrix_{eigenMatrixAdjoint} {}
   EigenMatrix eigenMatrix_{};
 };
