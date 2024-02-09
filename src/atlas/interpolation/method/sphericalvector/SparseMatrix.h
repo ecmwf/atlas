@@ -50,13 +50,13 @@ class SparseMatrix {
     return RowIter(eigenMatrix_, rowIndex);
   }
   SparseMatrix<Value> adjoint() const {
-    const EigenMatrix adjoint = eigenMatrix_.adjoint();
-    return SparseMatrix(adjoint);
+    auto adjointMatrix = SparseMatrix{};
+    adjointMatrix.eigenMatrix_ = eigenMatrix_.adjoint();
+    return adjointMatrix;
   }
 
  private:
-  explicit SparseMatrix(const EigenMatrix& eigenMatrixAdjoint)
-      : eigenMatrix_{eigenMatrixAdjoint} {}
+  SparseMatrix() = default;
   EigenMatrix eigenMatrix_{};
 };
 #else
