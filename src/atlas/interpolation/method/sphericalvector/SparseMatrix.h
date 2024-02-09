@@ -27,9 +27,8 @@ namespace detail {
 #if ATLAS_HAVE_EIGEN
 /// @brief   Wrapper class for Eigen sparse matrix
 ///
-/// @details Adapts the Eigen sparse matrix interface to be more in line with
-///          eckit::linalg::SparseMatrix. Also allows preprocessor disabling of
-///          class is Eigen library is not present.
+/// @details Eigen sparse matrix wrapper. Allows preprocessor disabling of class
+///          if Eigen library is not present.
 template <typename Value>
 class SparseMatrix {
  public:
