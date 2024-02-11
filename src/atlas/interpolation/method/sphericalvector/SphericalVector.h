@@ -69,6 +69,7 @@ class SphericalVector : public Method {
                                        Field& targetField,
                                        const MatMul& matMul);
 
+  using Method::do_setup;
   void do_setup(const FunctionSpace& source,
                 const FunctionSpace& target) override;
   void do_setup(const Grid& source, const Grid& target, const Cache&) override;
