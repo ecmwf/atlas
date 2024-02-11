@@ -13,6 +13,7 @@
 #include "atlas/interpolation/Cache.h"
 #include "atlas/interpolation/Interpolation.h"
 #include "atlas/interpolation/method/MethodFactory.h"
+#include "atlas/interpolation/method/sphericalvector/ComplexMatrixMultiply.h"
 #include "atlas/interpolation/method/sphericalvector/Types.h"
 #include "atlas/option/Options.h"
 #include "atlas/parallel/omp/omp.h"
@@ -31,6 +32,9 @@ MethodBuilder<SphericalVector> __builder("spherical-vector");
 }
 
 using namespace detail;
+
+using WeightsMatMul = detail::ComplexMatrixMultiply<true>;
+using WeightsMatMulAdjoint = detail::ComplexMatrixMultiply<false>;
 
 SphericalVector::SphericalVector(const Config& config) : Method(config) {
   const auto& conf = dynamic_cast<const eckit::LocalConfiguration&>(config);
@@ -111,20 +115,13 @@ void SphericalVector::do_setup(const FunctionSpace& source,
     }
   }
 
-  auto complexWeights = std::make_unique<ComplexMatPtr::element_type>(
-      nRows, nCols, complexTriplets);
-  auto realWeights =
-      std::make_unique<RealMatPtr::element_type>(nRows, nCols, realTriplets);
+  complexWeights_ = ComplexMatrix(nRows, nCols, complexTriplets);
+  realWeights_ = RealMatrix(nRows, nCols, realTriplets);
 
   if (adjoint_) {
-    weightsMatMulAdjoint_ = WeightsMatMulAdjoint(
-        std::make_unique<ComplexMatPtr::element_type>(
-            complexWeights->adjoint()),
-        std::make_unique<RealMatPtr::element_type>(realWeights->adjoint()));
+    complexWeightsAdjoint_ = complexWeights_.adjoint();
+    realWeightsAdjoint_ = realWeights_.adjoint();
   }
-
-  weightsMatMul_ =
-      WeightsMatMul(std::move(complexWeights), std::move(realWeights));
 }
 
 void SphericalVector::print(std::ostream&) const { ATLAS_NOTIMPLEMENTED; }
@@ -154,7 +151,8 @@ void SphericalVector::do_execute(const Field& sourceField, Field& targetField,
   Method::check_compatibility(sourceField, targetField, matrix());
 
   haloExchange(sourceField);
-  interpolate_vector_field(sourceField, targetField, weightsMatMul_);
+  interpolate_vector_field(sourceField, targetField,
+                           WeightsMatMul(complexWeights_, realWeights_));
   targetField.set_dirty();
 }
 
@@ -187,7 +185,9 @@ void SphericalVector::do_execute_adjoint(Field& sourceField,
   Method::check_compatibility(sourceField, targetField, matrix());
 
   ATLAS_ASSERT(adjoint_, "\"adjoint\" needs to be set to \"true\" in Config.");
-  interpolate_vector_field(targetField, sourceField, weightsMatMulAdjoint_);
+  interpolate_vector_field(
+      targetField, sourceField,
+      WeightsMatMulAdjoint(complexWeightsAdjoint_, realWeightsAdjoint_));
   adjointHaloExchange(sourceField);
 }
 

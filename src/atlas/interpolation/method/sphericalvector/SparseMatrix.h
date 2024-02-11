@@ -38,6 +38,8 @@ class SparseMatrix {
   using Triplets = std::vector<Triplet>;
   using RowIter = typename EigenMatrix::InnerIterator;
 
+  SparseMatrix() = default;
+
   SparseMatrix(Index nRows, Index nCols, const Triplets& triplets)
       : eigenMatrix_(nRows, nCols) {
     eigenMatrix_.setFromTriplets(triplets.begin(), triplets.end());
@@ -56,7 +58,6 @@ class SparseMatrix {
   }
 
  private:
-  SparseMatrix() = default;
   EigenMatrix eigenMatrix_{};
 };
 #else
@@ -75,6 +76,7 @@ class SparseMatrix {
 
   class RowIter {
    public:
+    constexpr SparseMatrix() = default;
     template <typename... Args>
     constexpr RowIter(const Args&... args) {}
     constexpr Index row() const { return Index{}; }

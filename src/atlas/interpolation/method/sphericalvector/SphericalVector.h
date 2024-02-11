@@ -9,16 +9,13 @@
 
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/interpolation/method/Method.h"
-#include "atlas/interpolation/method/sphericalvector/ComplexMatrixMultiply.h"
+#include "atlas/interpolation/method/sphericalvector/Types.h"
 
 namespace atlas {
 namespace interpolation {
 namespace method {
 
 class SphericalVector : public Method {
-  using WeightsMatMul = detail::ComplexMatrixMultiply<true>;
-  using WeightsMatMulAdjoint = detail::ComplexMatrixMultiply<false>;
-
  public:
   /// @brief   Interpolation post-processor for vector field interpolation
   ///
@@ -80,8 +77,10 @@ class SphericalVector : public Method {
   FunctionSpace source_{};
   FunctionSpace target_{};
 
-  WeightsMatMul weightsMatMul_{};
-  WeightsMatMulAdjoint weightsMatMulAdjoint_{};
+  detail::ComplexMatrix complexWeights_{};
+  detail::RealMatrix realWeights_{};
+  detail::ComplexMatrix complexWeightsAdjoint_{};
+  detail::RealMatrix realWeightsAdjoint_{};
 };
 
 }  // namespace method

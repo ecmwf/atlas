@@ -49,10 +49,9 @@ class ComplexMatrixMultiply {
   /// @details complexWeights is a SparseMatrix of weights. realWeights is a
   ///          SparseMatrix containing the magnitudes of the elements of
   ///          complexWeights.
-  ComplexMatrixMultiply(ComplexMatPtr&& complexWeights,
-                        RealMatPtr&& realWeights)
-      : complexWeightsPtr_{std::move(complexWeights)},
-        realWeightsPtr_{std::move(realWeights)} {
+  ComplexMatrixMultiply(const ComplexMatrix& complexWeights,
+                        const RealMatrix& realWeights)
+      : complexWeightsPtr_{&complexWeights}, realWeightsPtr_{&realWeights} {
     if constexpr (ATLAS_BUILD_TYPE_DEBUG) {
       ATLAS_ASSERT(complexWeightsPtr_->rows() == realWeightsPtr_->rows());
       ATLAS_ASSERT(complexWeightsPtr_->cols() == realWeightsPtr_->cols());
@@ -182,8 +181,8 @@ class ComplexMatrixMultiply {
   template <int Rank>
   using slicedColumnDims = std::make_integer_sequence<int, Rank - 2>;
 
-  ComplexMatPtr complexWeightsPtr_{};
-  RealMatPtr realWeightsPtr_{};
+  const ComplexMatrix* complexWeightsPtr_{};
+  const RealMatrix* realWeightsPtr_{};
 };
 
 }  // namespace detail
