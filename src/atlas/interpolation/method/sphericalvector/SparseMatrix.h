@@ -84,7 +84,6 @@ class SparseMatrix {
 
   class RowIter {
    public:
-    constexpr SparseMatrix() = default;
     template <typename... Args>
     constexpr RowIter(const Args&... args) {}
     constexpr Index row() const { return Index{}; }
@@ -94,6 +93,7 @@ class SparseMatrix {
     constexpr RowIter& operator++() { return *this; }
   };
 
+  constexpr SparseMatrix() = default;
   template <typename... Args>
   SparseMatrix(const Args&... args) {
     throw_Exception("Atlas has been compiled without Eigen", Here());
