@@ -7,6 +7,13 @@
 
 #include "atlas/interpolation/method/sphericalvector/SphericalVector.h"
 
+// I don't yet fully trust NVHPC. Turning off OpenMP until we can figure out why
+// it's failing CI.
+#ifdef __NVCOMPILER
+#undef atlas_omp_parallel_for
+#define atlas_omp_parallel_for for
+#endif
+
 #include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
