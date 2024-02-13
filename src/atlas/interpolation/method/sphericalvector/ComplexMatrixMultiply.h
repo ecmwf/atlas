@@ -8,6 +8,9 @@
 #pragma once
 
 #include <array>
+#include <iomanip>
+#include <limits>
+#include <sstream>
 #include <tuple>
 #include <type_traits>
 
@@ -52,7 +55,7 @@ class ComplexMatrixMultiply {
   ComplexMatrixMultiply(const ComplexMatrix& complexWeights,
                         const RealMatrix& realWeights)
       : complexWeightsPtr_{&complexWeights}, realWeightsPtr_{&realWeights} {
-    if constexpr (ATLAS_BUILD_TYPE_DEBUG) {
+    if constexpr (checkMatrices) {
       ATLAS_ASSERT(complexWeightsPtr_->rows() == realWeightsPtr_->rows());
       ATLAS_ASSERT(complexWeightsPtr_->cols() == realWeightsPtr_->cols());
       ATLAS_ASSERT(complexWeightsPtr_->nonZeros() ==
@@ -64,6 +67,19 @@ class ComplexMatrixMultiply {
           ATLAS_ASSERT(realRowIter);
           ATLAS_ASSERT(realRowIter.row() == complexRowIter.row());
           ATLAS_ASSERT(realRowIter.col() == complexRowIter.col());
+          // tinyNum ~= 2.3e-13 for double.
+          constexpr auto tinyNum = 1024 * std::numeric_limits<Real>::epsilon();
+          const auto complexMagnitude = std::abs(complexRowIter.value());
+          const auto realValue = realRowIter.value();
+          const auto error = std::abs(complexMagnitude - realValue);
+
+          const auto printError = [&]() {
+            auto strStream = std::ostringstream{};
+            strStream << "Error complex components: ";
+            strStream << std::setprecision(19) << error;
+            return strStream.str();
+          };
+          ATLAS_ASSERT_MSG(error < tinyNum, printError());
         }
       }
     }
@@ -92,6 +108,13 @@ class ComplexMatrixMultiply {
   }
 
  private:
+#ifdef __NVCOMPILER
+#warning explicitly checking weight matrices for nvhpc build
+  static constexpr bool checkMatrices = true;
+#else
+  static constexpr bool checkMatrices = ATLAS_BUILD_TYPE_DEBUG;
+#endif
+
   /// @brief Apply 2-vector MatMul.
   template <typename Value, int Rank>
   void applyTwoVector(const array::ArrayView<const Value, Rank>& sourceView,

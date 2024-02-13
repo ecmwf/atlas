@@ -8,7 +8,6 @@
 #pragma once
 
 #include <complex>
-#include <memory>
 
 #include "atlas/interpolation/method/sphericalvector/SparseMatrix.h"
 
