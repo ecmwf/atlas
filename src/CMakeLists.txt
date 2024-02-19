@@ -84,10 +84,10 @@ else()
   set( atlas_HAVE_GRIDTOOLS_STORAGE 0 )
 endif()
 
-if( atlas_HAVE_NATIVE_GPU_STORAGE )
-    set( atlas_HAVE_NATIVE_GPU_STORAGE 1 )
+if( atlas_HAVE_NATIVE_STORAGE )
+    set( atlas_HAVE_NATIVE_STORAGE 1 )
 else()
-    set( atlas_HAVE_NATIVE_GPU_STORAGE 0 )
+    set( atlas_HAVE_NATIVE_STORAGE 0 )
 endif()
 
 set( atlas_BUILD_TYPE_RELEASE 0 )

@@ -491,6 +491,12 @@ void Library::Information::print(std::ostream& out) const {
     array_data_store = "GridTools-CUDA";
 #endif
 #endif
+#if ATLAS_HAVE_NATIVE_STORAGE
+    array_data_store = "Native-host";
+#if ATLAS_NATIVE_STORAGE_BACKEND_CUDA
+    array_data_store = "Native-CUDA";
+#endif
+#endif
     out << "  Features:" << '\n'
         << "    Fortran        : " << str(feature_fortran) << '\n'
         << "    MPI            : " << str(feature_MPI) << '\n'

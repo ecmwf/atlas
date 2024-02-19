@@ -64,6 +64,9 @@ ecbuild_add_option( FEATURE ECKIT_DEVELOP
                     DESCRIPTION "Used to enable new features or API depending on eckit develop branch, not yet in a tagged release"
                     DEFAULT OFF )
 
+if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+  set(CMAKE_CUDA_ARCHITECTURES 80)
+endif()
 
 include( features/BOUNDSCHECKING )
 include( features/FORTRAN )
@@ -73,7 +76,7 @@ include( features/FFTW )
 include( features/ECTRANS )
 include( features/TESSELATION )
 include( features/GRIDTOOLS_STORAGE )
-include( features/NATIVE_GPU_STORAGE )
+include( features/NATIVE_STORAGE )
 include( features/ACC )
 include( features/EIGEN )
 include( features/PROJ )

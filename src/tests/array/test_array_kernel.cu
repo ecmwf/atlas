@@ -23,13 +23,18 @@ template<typename Value, int RANK>
 __global__
 void kernel_ex(array::ArrayView<Value, RANK> dv)
 {
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     dv(3, 3, 3) += dv.data_view().template length<0>() * dv.data_view().template length<1>() * dv.data_view().template length<2>();
+#elif ATLAS_NATIVE_STORAGE_BACKEND_CUDA
+    dv(3, 3, 3) += dv.shape(0) * dv.shape(1) * dv.shape(2);
+#endif
 }
 
 template<typename Value, int RANK>
 __global__
 void loop_kernel_ex(array::ArrayView<Value, RANK> dv)
 {
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     for(int i=0; i < dv.data_view().template length<0>(); i++) {
       for(int j=0; j < dv.data_view().template length<1>(); j++) {
         for(int k=0; k < dv.data_view().template length<2>(); k++) {
@@ -37,6 +42,15 @@ void loop_kernel_ex(array::ArrayView<Value, RANK> dv)
         }
       }
     }
+#elif ATLAS_NATIVE_STORAGE_BACKEND_CUDA
+    for(int i=0; i < dv.shape(0); i++) {
+      for(int j=0; j < dv.shape(1); j++) {
+        for(int k=0; k < dv.shape(2); k++) {
+          dv(i,j,k) += i*10+j*100+k*1000;
+        }
+      }
+    }
+#endif
 }
 
 CASE( "test_array" )
