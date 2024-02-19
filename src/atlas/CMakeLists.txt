@@ -923,13 +923,21 @@ if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
 endif()
 
 include( atlas_host_device )
-atlas_host_device( source_list
-  SOURCES
-  #array/native/NativeArrayView.cc
-    array/gridtools/GridToolsArrayView.cc
-    array/gridtools/GridToolsIndexView.cc
-    mesh/Connectivity.cc
-)
+if( atlas_HAVE_GRIDTOOLS_STORAGE )
+  atlas_host_device( source_list
+    SOURCES
+      array/gridtools/GridToolsArrayView.cc
+      array/gridtools/GridToolsIndexView.cc
+      mesh/Connectivity.cc
+  )
+endif()
+if( atlas_HAVE_NATIVE_STORAGE )
+  atlas_host_device( source_list
+    SOURCES
+      array/native/NativeArrayView.cc
+      mesh/Connectivity.cc
+  )
+endif()
 
 ecbuild_add_library( TARGET atlas
 
