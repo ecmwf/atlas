@@ -44,11 +44,10 @@ using WeightsMatMul = detail::ComplexMatrixMultiply<true>;
 using WeightsMatMulAdjoint = detail::ComplexMatrixMultiply<false>;
 
 SphericalVector::SphericalVector(const Config& config) : Method(config) {
-  const auto& conf = dynamic_cast<const eckit::LocalConfiguration&>(config);
-  ATLAS_ASSERT_MSG(&conf,
-                   "config must be castable to an eckit::LocalConfiguration");
-  interpolationScheme_ = conf.getSubConfiguration("scheme");
-  adjoint_ = conf.getBool("adjoint", false);
+  const auto* conf = dynamic_cast<const eckit::LocalConfiguration*>(&config);
+  ATLAS_ASSERT(conf, "config must be derived from eckit::LocalConfiguration");
+  interpolationScheme_ = conf->getSubConfiguration("scheme");
+  adjoint_ = conf->getBool("adjoint", false);
 }
 
 void SphericalVector::do_setup(const Grid& source, const Grid& target,
