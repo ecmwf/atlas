@@ -20,8 +20,7 @@
 #include "atlas/interpolation/method/sphericalvector/Types.h"
 #include "atlas/parallel/omp/omp.h"
 
-// I don't yet fully trust NVHPC. Turning off OpenMP until we can figure out why
-// it's failing CI.
+// OpemMP support seems to be buggy for NVHPC
 #ifdef __NVCOMPILER
 #warning turning off OpenMP for nvhpc build
 #undef atlas_omp_parallel_for
@@ -63,7 +62,7 @@ class ComplexMatrixMultiply {
   ComplexMatrixMultiply(const ComplexMatrix& complexWeights,
                         const RealMatrix& realWeights)
       : complexWeightsPtr_{&complexWeights}, realWeightsPtr_{&realWeights} {
-    if constexpr (checkMatrices) {
+    if constexpr (ATLAS_BUILD_TYPE_DEBUG) {
       ATLAS_ASSERT(complexWeightsPtr_->rows() == realWeightsPtr_->rows());
       ATLAS_ASSERT(complexWeightsPtr_->cols() == realWeightsPtr_->cols());
       ATLAS_ASSERT(complexWeightsPtr_->nonZeros() ==
@@ -116,13 +115,6 @@ class ComplexMatrixMultiply {
   }
 
  private:
-#ifdef __NVCOMPILER
-#warning explicitly checking weight matrices for nvhpc build
-  static constexpr bool checkMatrices = true;
-#else
-  static constexpr bool checkMatrices = ATLAS_BUILD_TYPE_DEBUG;
-#endif
-
   /// @brief Apply 2-vector MatMul.
   template <typename Value, int Rank>
   void applyTwoVector(const array::ArrayView<const Value, Rank>& sourceView,

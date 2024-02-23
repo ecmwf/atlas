@@ -14,13 +14,6 @@
 #include "atlas/library/defines.h"
 #if ATLAS_HAVE_EIGEN
 
-#ifdef __NVCOMPILER
-#define EIGEN_MAX_ALIGN_BYTES 0
-#define EIGEN_UNALIGNED_VECTORIZE 0
-#define EIGEN_DONT_VECTORIZE
-#define EIGEN_DONT_PARALLELIZE
-#endif
-
 #include <Eigen/Sparse>
 #endif
 

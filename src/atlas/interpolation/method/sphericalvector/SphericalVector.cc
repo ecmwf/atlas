@@ -7,8 +7,7 @@
 
 #include "atlas/interpolation/method/sphericalvector/SphericalVector.h"
 
-// I don't yet fully trust NVHPC. Turning off OpenMP until we can figure out why
-// it's failing CI.
+// OpemMP support seems to be buggy for NVHPC
 #ifdef __NVCOMPILER
 #warning turning off OpenMP for nvhpc build
 #undef atlas_omp_parallel_for
