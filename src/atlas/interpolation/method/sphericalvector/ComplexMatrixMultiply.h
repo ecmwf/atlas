@@ -86,7 +86,7 @@ class ComplexMatrixMultiply {
             strStream << std::setprecision(19) << error;
             return strStream.str();
           };
-          ATLAS_ASSERT_MSG(error < tinyNum, printError());
+          ATLAS_ASSERT(error < tinyNum, printError());
         }
       }
     }
