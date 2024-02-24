@@ -157,8 +157,8 @@ class ComplexMatrixMultiply {
                    array::LocalView<Value, 2>& targetColumn,
                    Weights... weights) const {
     for (auto levelIdx = 0; levelIdx < sourceColumn.shape(0); ++levelIdx) {
-      const auto sourceElem = sourceColumn.slice(levelIdx, array::Range::all());
-      auto targetElem = targetColumn.slice(levelIdx, array::Range::all());
+      const auto sourceElem = sliceColumn(sourceColumn, levelIdx);
+      auto targetElem = sliceColumn(targetColumn, levelIdx);
       multiplyAdd(sourceElem, targetElem, weights...);
     }
   }
