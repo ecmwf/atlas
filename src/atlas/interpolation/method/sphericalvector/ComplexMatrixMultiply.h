@@ -15,6 +15,7 @@
 #include <type_traits>
 
 #include "atlas/array/ArrayView.h"
+#include "atlas/array/LocalView.h"
 #include "atlas/array/Range.h"
 #include "atlas/array/helpers/ArrayForEach.h"
 #include "atlas/interpolation/method/sphericalvector/Types.h"
@@ -130,15 +131,7 @@ class ComplexMatrixMultiply {
         const auto colIndex = complexRowIter.col();
         const auto complexWeight = complexRowIter.value();
         const auto sourceSlice = sliceColumn(sourceView, colIndex);
-
-        array::helpers::arrayForEachDim(
-            slicedColumnDims<Rank>{}, std::tie(sourceSlice, targetSlice),
-            [&](auto&& sourceElem, auto&& targetElem) {
-              const auto targetVector =
-                  complexWeight * Complex(sourceElem(0), sourceElem(1));
-              targetElem(0) += targetVector.real();
-              targetElem(1) += targetVector.imag();
-            });
+        multiplyAdd(sourceSlice, targetSlice, complexWeight);
       }
     }
   }
@@ -160,18 +153,43 @@ class ComplexMatrixMultiply {
         const auto complexWeight = complexRowIter.value();
         const auto realWeight = realRowIter.value();
         const auto sourceSlice = sliceColumn(sourceView, colIndex);
-
-        array::helpers::arrayForEachDim(
-            slicedColumnDims<Rank>{}, std::tie(sourceSlice, targetSlice),
-            [&](auto&& sourceElem, auto&& targetElem) {
-              const auto targetVector =
-                  complexWeight * Complex(sourceElem(0), sourceElem(1));
-              targetElem(0) += targetVector.real();
-              targetElem(1) += targetVector.imag();
-              targetElem(2) += realWeight * sourceElem(2);
-            });
+        multiplyAdd(sourceSlice, targetSlice, complexWeight, realWeight);
       }
     }
+  }
+
+  /// @brief Multiply source column by weight(s) and add to target column.
+  template <typename Value, typename... Weights>
+  void multiplyAdd(const array::LocalView<const Value, 2>& sourceColumn,
+                   array::LocalView<Value, 2>& targetColumn,
+                   Weights... weights) const {
+    for (auto levelIdx = 0; levelIdx < sourceColumn.shape(0); ++levelIdx) {
+      const auto sourceElem = sourceColumn.slice(levelIdx, array::Range::all());
+      auto targetElem = targetColumn.slice(levelIdx, array::Range::all());
+      multiplyAdd(sourceElem, targetElem, weights...);
+    }
+  }
+
+  /// @brief Multiply source element by complex weight and add to target
+  /// element.
+  template <typename Value>
+  void multiplyAdd(const array::LocalView<const Value, 1>& sourceElem,
+                   array::LocalView<Value, 1>& targetElem,
+                   Complex complexWeight) const {
+    const auto targetVector =
+        complexWeight * Complex(sourceElem(0), sourceElem(1));
+    targetElem(0) += targetVector.real();
+    targetElem(1) += targetVector.imag();
+  }
+
+  /// @brief Multiply source element by complex and real weights and add to
+  /// target element.
+  template <typename Value>
+  void multiplyAdd(const array::LocalView<const Value, 1>& sourceElem,
+                   array::LocalView<Value, 1>& targetElem,
+                   Complex complexWeight, Real realWeight) const {
+    multiplyAdd(sourceElem, targetElem, complexWeight);
+    targetElem(2) += realWeight * sourceElem(2);
   }
 
   /// @brief Return a pair of complex and real row iterators
@@ -195,10 +213,6 @@ class ComplexMatrixMultiply {
 
     return std::apply(slicer, slicerArgs);
   }
-
-  /// @brief Defines a sequence of iteration Dims for a sliced column.
-  template <int Rank>
-  using slicedColumnDims = std::make_integer_sequence<int, Rank - 2>;
 
   const ComplexMatrix* complexWeightsPtr_{};
   const RealMatrix* realWeightsPtr_{};
