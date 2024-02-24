@@ -21,13 +21,6 @@
 #include "atlas/interpolation/method/sphericalvector/Types.h"
 #include "atlas/parallel/omp/omp.h"
 
-// OpemMP support seems to be buggy for NVHPC
-#ifdef __NVCOMPILER
-#warning turning off OpenMP for nvhpc build
-#undef atlas_omp_parallel_for
-#define atlas_omp_parallel_for for
-#endif
-
 namespace atlas {
 namespace interpolation {
 namespace method {
