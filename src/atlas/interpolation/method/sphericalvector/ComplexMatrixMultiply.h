@@ -37,11 +37,10 @@ struct ThreeVectorTag {};
 constexpr auto twoVector = TwoVectorTag{};
 constexpr auto threeVector = ThreeVectorTag{};
 
-template <typename VectorTag>
-constexpr bool isVectorTag() {
-  return std::is_same_v<VectorTag, TwoVectorTag> ||
-         std::is_same_v<VectorTag, ThreeVectorTag>;
-}
+// Permits the equivalent of static_assert(false, msg). Will be addressed in
+// C++26.
+template <typename>
+constexpr bool always_false_v = false;
 
 /// @brief   Helper class to perform complex matrix multiplications
 ///
@@ -99,19 +98,16 @@ class ComplexMatrixMultiply {
   ///          complexWeights are applied to the horizontal elements of
   ///          sourceView. If VectorType == ThreeVectorTag, then realWeights
   ///          are additionally applied to the vertical elements of sourceView.
-  template <typename Value, int Rank, typename VectorType,
-            typename = std::enable_if_t<isVectorTag<VectorType>()>>
+  template <typename Value, int Rank, typename VectorType>
   void apply(const array::ArrayView<const Value, Rank>& sourceView,
              array::ArrayView<Value, Rank>& targetView, VectorType) const {
     if constexpr (std::is_same_v<VectorType, TwoVectorTag>) {
       applyTwoVector(sourceView, targetView);
-    }
-
-    if constexpr (std::is_same_v<VectorType, ThreeVectorTag>) {
+    } else if constexpr (std::is_same_v<VectorType, ThreeVectorTag>) {
       applyThreeVector(sourceView, targetView);
+    } else {
+      static_assert(always_false_v<VectorType>, "Unknown vector type");
     }
-
-    return;
   }
 
  private:
