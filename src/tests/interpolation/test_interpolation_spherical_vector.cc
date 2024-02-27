@@ -1,9 +1,13 @@
 /*
- * (C) Crown Copyright 2023 Met Office
+ * (C) Crown Copyright 2024 Met Office
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
+
+#include <cmath>
+#include <limits>
+#include <utility>
 
 #include "atlas/array.h"
 #include "atlas/array/helpers/ArrayForEach.h"
@@ -58,13 +62,17 @@ double vortexVertical(double lon, double lat) {
 
 void gmshOutput(const std::string& fileName, const FieldSet& fieldSet) {
 
-  const auto& functionSpace = fieldSet[0].functionspace();
-  const auto& mesh = functionspace::NodeColumns(functionSpace).mesh();
+  const auto functionSpace = fieldSet[0].functionspace();
+  const auto structuredColums = functionspace::StructuredColumns(functionSpace);
+  const auto nodeColumns = functionspace::NodeColumns(functionSpace);
+  const auto mesh =
+      structuredColums ? Mesh(structuredColums.grid()) : nodeColumns.mesh();
 
-  const auto gmshConfig = util::Config("coordinates", "xyz") |
-                          util::Config("ghost", true) |
-                          util::Config("info", true);
+  const auto gmshConfig = Config("coordinates", "xyz") | Config("ghost", true) |
+                          Config("info", true);
   const auto gmsh = output::Gmsh(fileName, gmshConfig);
+
+
   gmsh.write(mesh);
   gmsh.write(fieldSet, functionSpace);
 }
@@ -80,10 +88,17 @@ const auto generateNodeColums(const std::string& gridName,
 // Helper struct to key different Functionspaces to strings
 struct FunctionSpaceFixtures {
   static const FunctionSpace& get(const std::string& fixture) {
-    static std::map<std::string_view, FunctionSpace> functionSpaces = {
-        {"cubedsphere_mesh",
-         generateNodeColums("CS-LFR-48", "cubedsphere_dual")},
-        {"gaussian_mesh", generateNodeColums("O48", "structured")}};
+    static const auto functionSpaces =
+        std::map<std::string_view, FunctionSpace>{
+            {"cubedsphere_mesh",
+             generateNodeColums("CS-LFR-48", "cubedsphere_dual")},
+            {"gaussian_mesh", generateNodeColums("O48", "structured")},
+            {"structured_columns",
+             functionspace::StructuredColumns(Grid("O48"), option::halo(1))},
+            {"structured_columns_lowres",
+             functionspace::StructuredColumns(Grid("O24"), option::halo(1))},
+            {"structured_columns_hires",
+             functionspace::StructuredColumns(Grid("O96"), option::halo(1))}};
     return functionSpaces.at(fixture);
   }
 };
@@ -91,7 +106,7 @@ struct FunctionSpaceFixtures {
 // Helper struct to key different grid configs to strings
 struct FieldSpecFixtures {
   static const Config& get(const std::string& fixture) {
-    static std::map<std::string_view, Config> fieldSpecs = {
+    static const auto fieldSpecs = std::map<std::string_view, Config>{
         {"2vector", option::name("test field") | option::variables(2) |
                         option::type("vector")},
         {"3vector", option::name("test field") | option::variables(3) |
@@ -100,6 +115,54 @@ struct FieldSpecFixtures {
   }
 };
 
+// Helper stcut to key different interpolation schemes to strings
+struct InterpSchemeFixtures {
+  static const Config& get(const std::string& fixture) {
+
+    static const auto cubedsphereBilinear =
+        option::type("cubedsphere-bilinear");
+    static const auto finiteElement = option::type("finite-element");
+    static const auto structuredLinear =
+        option::type("structured-linear2D") | option::halo(1);
+
+    static const auto sphericalVector =
+        option::type("spherical-vector") | Config("adjoint", true);
+
+    static const auto interpSchemes = std::map<std::string_view, Config>{
+        {"cubedsphere_bilinear", cubedsphereBilinear},
+        {"finite_element", finiteElement},
+        {"structured_linear", structuredLinear},
+        {"cubedsphere_bilinear_spherical",
+         sphericalVector | Config("scheme", cubedsphereBilinear)},
+        {"finite_element_spherical",
+         sphericalVector | Config("scheme", finiteElement)},
+        {"structured_linear_spherical",
+         sphericalVector | Config("scheme", structuredLinear)}};
+    return interpSchemes.at(fixture);
+  }
+};
+
+template <int Rank>
+double dotProduct(const array::ArrayView<double, Rank>& a,
+                  const array::ArrayView<double, Rank>& b) {
+  auto dotProd = 0.;
+  arrayForEachDim(std::make_integer_sequence<int, Rank>{}, std::tie(a, b),
+                  [&](const double& aElem,
+                      const double& bElem) { dotProd += aElem * bElem; });
+  return dotProd;
+}
+
+template <int Rank>
+int countNans(const array::ArrayView<double, Rank>& view) {
+  auto nNans = 0;
+  arrayForEachDim(std::make_integer_sequence<int, Rank>{}, std::tie(view),
+                  [&](const double& viewElem) {
+    if (!std::isfinite(viewElem)) {
+      ++nNans;
+    }
+  });
+  return nNans;
+}
 
 template <int Rank>
 void testInterpolation(const Config& config) {
@@ -121,13 +184,15 @@ void testInterpolation(const Config& config) {
       FieldSpecFixtures::get(config.getString("field_spec_fixture"));
   if constexpr (Rank == 3) fieldSpec.set("levels", 2);
 
-  auto sourceField = array::make_view<double, Rank>(
-      sourceFieldSet.add(sourceFunctionSpace.createField<double>(fieldSpec)));
+  auto sourceField =
+      sourceFieldSet.add(sourceFunctionSpace.createField<double>(fieldSpec));
+  auto targetField =
+      targetFieldSet.add(targetFunctionSpace.createField<double>(fieldSpec));
 
-  auto targetField = array::make_view<double, Rank>(
-      targetFieldSet.add(targetFunctionSpace.createField<double>(fieldSpec)));
+  auto sourceView = array::make_view<double, Rank>(sourceField);
+  auto targetView = array::make_view<double, Rank>(targetField);
 
-  ArrayForEach<0>::apply(std::tie(sourceLonLat, sourceField),
+  ArrayForEach<0>::apply(std::tie(sourceLonLat, sourceView),
                          [](auto&& lonLat, auto&& sourceColumn) {
 
     const auto setElems = [&](auto&& sourceElem) {
@@ -144,20 +209,22 @@ void testInterpolation(const Config& config) {
   });
   sourceFieldSet.set_dirty(false);
 
-  const auto interp = Interpolation(config.getSubConfiguration("scheme"),
-                                    sourceFunctionSpace, targetFunctionSpace);
+  const auto interp = Interpolation(
+      InterpSchemeFixtures::get(config.getString("interp_fixture")),
+      sourceFunctionSpace, targetFunctionSpace);
 
   interp.execute(sourceFieldSet, targetFieldSet);
   targetFieldSet.haloExchange();
 
   auto errorFieldSpec = fieldSpec;
-  errorFieldSpec.remove("variables");
+  errorFieldSpec.remove("variables").set("name", "error field");
 
-  auto errorField = array::make_view<double, Rank - 1>(targetFieldSet.add(
+  auto errorView = array::make_view<double, Rank - 1>(targetFieldSet.add(
       targetFunctionSpace.createField<double>(errorFieldSpec)));
+  errorView.assign(0.);
 
   auto maxError = 0.;
-  ArrayForEach<0>::apply(std::tie(targetLonLat, targetField, errorField),
+  ArrayForEach<0>::apply(std::tie(targetLonLat, targetView, errorView),
                          [&](auto&& lonLat, auto&& targetColumn,
                              auto&& errorColumn) {
 
@@ -179,62 +246,121 @@ void testInterpolation(const Config& config) {
       maxError = std::max(maxError, static_cast<double>(errorElem));
     };
 
-    if constexpr(Rank == 2) { calcError(targetColumn, errorColumn); }
-    else if constexpr (Rank == 3) {
+    if
+      constexpr(Rank == 2) { calcError(targetColumn, errorColumn); }
+    else if
+      constexpr(Rank == 3) {
         ArrayForEach<0>::apply(std::tie(targetColumn, errorColumn), calcError);
-    }
+      }
   });
 
   EXPECT_APPROX_EQ(maxError, 0., config.getDouble("tol"));
 
   gmshOutput(config.getString("file_id") + "_source.msh", sourceFieldSet);
   gmshOutput(config.getString("file_id") + "_target.msh", targetFieldSet);
+
+
+  // Adjoint test
+  auto targetAdjoint = targetFunctionSpace.createField<double>(fieldSpec);
+  auto targetAdjointView = array::make_view<double, Rank>(targetAdjoint);
+  targetAdjoint.array().copy(targetField);
+  targetAdjoint.adjointHaloExchange();
+
+  auto sourceAdjoint = sourceFunctionSpace.createField<double>(fieldSpec);
+  auto sourceAdjointView = array::make_view<double, Rank>(sourceAdjoint);
+  sourceAdjointView.assign(0.);
+  sourceAdjoint.set_dirty(false);
+
+  interp.execute_adjoint(sourceAdjoint, targetAdjoint);
+
+  // Check fields for nans or +/-inf
+  EXPECT_EQ(countNans(targetView), 0);
+  EXPECT_EQ(countNans(sourceView), 0);
+  EXPECT_EQ(countNans(targetAdjointView), 0);
+  EXPECT_EQ(countNans(sourceAdjointView), 0);
+
+  constexpr auto tinyNum = 1e-13;
+  const auto targetDotTarget = dotProduct(targetView, targetView);
+  const auto sourceDotSourceAdjoint = dotProduct(sourceView, sourceAdjointView);
+  const auto dotProdRatio = targetDotTarget / sourceDotSourceAdjoint;
+  EXPECT_APPROX_EQ(dotProdRatio, 1., tinyNum);
 }
 
 CASE("cubed sphere vector interpolation (3d-field, 2-vector)") {
+  const auto config =
+      Config("source_fixture", "cubedsphere_mesh")
+          .set("target_fixture", "gaussian_mesh")
+          .set("field_spec_fixture", "2vector")
+          .set("interp_fixture", "cubedsphere_bilinear_spherical")
+          .set("file_id", "spherical_vector_cs2")
+          .set("tol", 0.00018);
 
-  const auto baseInterpScheme = util::Config("type", "cubedsphere-bilinear");
-  const auto interpScheme =
-      util::Config("type", "spherical-vector").set("scheme", baseInterpScheme);
-  const auto cubedSphereConf = Config("source_fixture", "cubedsphere_mesh")
-                                   .set("target_fixture", "gaussian_mesh")
-                                   .set("field_spec_fixture", "2vector")
-                                   .set("file_id", "spherical_vector_cs2")
-                                   .set("scheme", interpScheme)
-                                   .set("tol", 0.00018);
-
-  testInterpolation<Rank3dField>((cubedSphereConf));
+  testInterpolation<Rank3dField>((config));
 }
 
 CASE("cubed sphere vector interpolation (3d-field, 3-vector)") {
+  const auto config =
+      Config("source_fixture", "cubedsphere_mesh")
+          .set("target_fixture", "gaussian_mesh")
+          .set("field_spec_fixture", "3vector")
+          .set("interp_fixture", "cubedsphere_bilinear_spherical")
+          .set("file_id", "spherical_vector_cs3")
+          .set("tol", 0.00096);
 
-  const auto baseInterpScheme = util::Config("type", "cubedsphere-bilinear");
-  const auto interpScheme =
-      util::Config("type", "spherical-vector").set("scheme", baseInterpScheme);
-  const auto cubedSphereConf = Config("source_fixture", "cubedsphere_mesh")
-                                   .set("target_fixture", "gaussian_mesh")
-                                   .set("field_spec_fixture", "3vector")
-                                   .set("file_id", "spherical_vector_cs3")
-                                   .set("scheme", interpScheme)
-                                   .set("tol", 0.00096);
-
-  testInterpolation<Rank3dField>((cubedSphereConf));
+  testInterpolation<Rank3dField>((config));
 }
 
 CASE("finite element vector interpolation (2d-field, 2-vector)") {
+  const auto config =
+      Config("source_fixture", "gaussian_mesh")
+          .set("target_fixture", "cubedsphere_mesh")
+          .set("field_spec_fixture", "2vector")
+          .set("interp_fixture", "finite_element_spherical")
+          .set("file_id", "spherical_vector_fe")
+          .set("tol", 0.00015);
 
-  const auto baseInterpScheme = util::Config("type", "finite-element");
-  const auto interpScheme =
-      util::Config("type", "spherical-vector").set("scheme", baseInterpScheme);
-  const auto cubedSphereConf = Config("source_fixture", "gaussian_mesh")
-                                   .set("target_fixture", "cubedsphere_mesh")
-                                   .set("field_spec_fixture", "2vector")
-                                   .set("file_id", "spherical_vector_cs")
-                                   .set("scheme", interpScheme)
-                                   .set("tol", 0.00015);
-
-  testInterpolation<Rank2dField>((cubedSphereConf));
+  testInterpolation<Rank2dField>((config));
 }
+
+CASE("structured columns vector interpolation (2d-field, 2-vector)") {
+
+  const auto config =
+      Config("source_fixture", "structured_columns")
+          .set("target_fixture", "cubedsphere_mesh")
+          .set("field_spec_fixture", "2vector")
+          .set("interp_fixture", "structured_linear_spherical")
+          .set("file_id", "spherical_vector_sc")
+          .set("tol", 0.00017);
+
+  testInterpolation<Rank2dField>((config));
+}
+
+CASE("structured columns vector interpolation (2d-field, 2-vector, low-res)") {
+
+  const auto config =
+      Config("source_fixture", "structured_columns_lowres")
+          .set("target_fixture", "gaussian_mesh")
+          .set("field_spec_fixture", "2vector")
+          .set("interp_fixture", "structured_linear_spherical")
+          .set("file_id", "spherical_vector_sc_lr")
+          .set("tol", 0.00056);
+
+  testInterpolation<Rank2dField>((config));
+}
+
+CASE("structured columns vector interpolation (2d-field, 2-vector, hi-res)") {
+
+  const auto config =
+      Config("source_fixture", "structured_columns_hires")
+          .set("target_fixture", "gaussian_mesh")
+          .set("field_spec_fixture", "2vector")
+          .set("interp_fixture", "structured_linear_spherical")
+          .set("file_id", "spherical_vector_sc_hr")
+          .set("tol", 0.000044);
+
+  testInterpolation<Rank2dField>((config));
+}
+
 }
 }
 

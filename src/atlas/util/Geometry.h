@@ -51,7 +51,7 @@ public:
     virtual double distance(const Point3& p1, const Point3& p2) const = 0;
     virtual double radius() const                                     = 0;
     virtual double area() const                                       = 0;
-    virtual std::pair<double, double> greatCircleCourse(const Point2& p1, const Point2& p2) = 0;
+    virtual std::pair<double, double> greatCircleCourse(const Point2& p1, const Point2& p2) const = 0;
 
     Point3 xyz(const Point2& lonlat) const {
         Point3 xyz;
@@ -80,7 +80,7 @@ public:
     double distance(const Point3& p1, const Point3& p2) const override { return SphereT::distance(p1, p2); }
     double radius() const override { return SphereT::radius(); }
     double area() const override { return SphereT::area(); }
-    std::pair<double, double> greatCircleCourse(const Point2& p1, const Point2& p2) override {
+    std::pair<double, double> greatCircleCourse(const Point2& p1, const Point2& p2) const override {
         return atlas::geometry::detail::greatCircleCourse(p1, p2);
     }
 };
@@ -96,7 +96,7 @@ public:
     double distance(const Point3& p1, const Point3& p2) const override { return Sphere::distance(radius_, p1, p2); }
     double radius() const override { return radius_; }
     double area() const override { return Sphere::area(radius_); }
-    std::pair<double, double> greatCircleCourse(const Point2& p1, const Point2& p2) override {
+    std::pair<double, double> greatCircleCourse(const Point2& p1, const Point2& p2) const override {
         return atlas::geometry::detail::greatCircleCourse(p1, p2);
     }
 
@@ -129,7 +129,7 @@ public:
     double distance(const Point3& p1, const Point3& p2) const { return get()->distance(p1, p2); }
     double radius() const { return get()->radius(); }
     double area() const { return get()->area(); }
-    std::pair<double, double> greatCircleCourse(const Point2& p1, const Point2& p2) { return get()->greatCircleCourse(p1, p2); }
+    std::pair<double, double> greatCircleCourse(const Point2& p1, const Point2& p2) const { return get()->greatCircleCourse(p1, p2); }
 
 protected:
     template <typename GeometryT, typename... Args>
