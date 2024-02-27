@@ -371,7 +371,7 @@ void StructuredColumns::setup(const grid::Distribution& distribution, const ecki
                     idx_t jj_max  = j + halo;
                     if (regional) {
                         jj_min = std::max(jj_min, idx_t{0});
-                        jj_max = std::min(jj_max, grid_->nx(j) - idx_t{1});
+                        jj_max = std::min(jj_max, grid_->ny() - idx_t{1});
                     }
                     for (idx_t jj = jj_min; jj <= jj_max; ++jj) {
                         idx_t jjj    = compute_j(jj);
