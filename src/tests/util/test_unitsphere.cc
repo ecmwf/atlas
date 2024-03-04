@@ -5,9 +5,6 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include <complex>
-
-#include "atlas/util/Constants.h"
 #include "atlas/util/Geometry.h"
 #include "atlas/util/Point.h"
 #include "tests/AtlasTestEnvironment.h"
