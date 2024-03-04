@@ -205,6 +205,81 @@ CASE("Interpolation of rank 2 field with MissingValue") {
 }
 
 
+CASE("Interpolation with MissingValue on fieldset with heterogeneous type") {
+
+    auto init_field = [](Field& field){
+        field.metadata().set("missing_value", missingValue);
+        field.metadata().set("missing_value_epsilon", missingValueEps);
+        field.metadata().set("missing_value_type", "equals");
+
+        auto init_view = [](auto&& view) {
+            for (idx_t j = 0; j < view.shape(0); ++j) {
+                view(j) = 1;
+            }
+            view(4) = missingValue;
+        };
+        if (field.datatype().kind() == DataType::KIND_REAL32) {
+            init_view(array::make_view<float, 1>(field));
+        }
+        if (field.datatype().kind() == DataType::KIND_REAL64) {
+            init_view(array::make_view<double, 1>(field));
+        }
+        return false;
+    };
+
+    /*
+       Set input field full of 1's, with 9 nodes
+         1 ... 1 ... 1
+         :     :     :
+         1-----m ... 1  m: missing value
+         |i   i|     :  i: interpolation on two points, this quadrilateral only
+         1-----1 ... 1
+     */
+    RectangularDomain domain({0, 2}, {0, 2}, "degrees");
+    Grid gridA("L90", domain);
+
+    const idx_t nbNodes = 9;
+    ATLAS_ASSERT(gridA.size() == nbNodes);
+
+    Mesh meshA = MeshGenerator("structured").generate(gridA);
+
+    functionspace::NodeColumns fsA(meshA);
+    FieldSet fieldsA;
+    fieldsA.add(fsA.createField<double>(option::name("A_r64")));
+    fieldsA.add(fsA.createField<float>(option::name("A_r32")));
+
+    init_field(fieldsA["A_r64"]);
+    init_field(fieldsA["A_r32"]);
+
+
+    // Set output field (2 points)
+    functionspace::PointCloud fsB({PointLonLat{0.1, 0.1}, PointLonLat{0.9, 0.9}});
+    FieldSet fieldsB;
+    fieldsB.add(fsB.createField<double>(option::name("B_r64")));
+    fieldsB.add(fsB.createField<float>(option::name("B_r32")));
+
+    auto interpolate = [&](const std::string& missing_type) {
+        Config config;
+        config.set("type", "finite-element");
+        config.set("non_linear", missing_type);
+        Interpolation interpolation(config, fsA, fsB);
+        interpolation.execute(fieldsA, fieldsB);
+    };
+
+    SECTION( "missing-if-any-missing" ) {
+        interpolate("missing-if-any-missing");
+    }
+
+    SECTION( "missing-if-all-missing" ) {
+        interpolate("missing-if-all-missing");
+    }
+
+    SECTION( "missing-if-heaviest-missing" ) {
+        interpolate("missing-if-heaviest-missing");
+    }
+
+}
+
 }  // namespace test
 }  // namespace atlas
 

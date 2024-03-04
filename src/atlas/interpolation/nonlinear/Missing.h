@@ -16,6 +16,7 @@
 
 #include "atlas/field/MissingValue.h"
 #include "atlas/interpolation/nonlinear/NonLinear.h"
+#include "atlas/util/DataType.h"
 
 
 namespace atlas {
@@ -29,9 +30,19 @@ private:
 };
 
 
-template <typename T>
 struct MissingIfAllMissing : Missing {
     bool execute(NonLinear::Matrix& W, const Field& field) const {
+        switch(field.datatype().kind()) {
+            case (DataType::kind<double>()):        return executeT<double>(W,field);
+            case (DataType::kind<float>()):         return executeT<float>(W,field);
+            case (DataType::kind<int>()):           return executeT<int>(W,field);
+            case (DataType::kind<long>()):          return executeT<long>(W,field);
+            case (DataType::kind<unsigned long>()): return executeT<unsigned long>(W,field);
+            default: ATLAS_NOTIMPLEMENTED;
+        }
+    }
+    template<typename T>
+    bool executeT(NonLinear::Matrix& W, const Field& field) const {
         field::MissingValue mv(field);
         auto& missingValue = mv.ref();
 
@@ -104,9 +115,20 @@ struct MissingIfAllMissing : Missing {
 };
 
 
-template <typename T>
 struct MissingIfAnyMissing : Missing {
     bool execute(NonLinear::Matrix& W, const Field& field) const {
+        switch(field.datatype().kind()) {
+            case (DataType::kind<double>()):        return executeT<double>(W,field);
+            case (DataType::kind<float>()):         return executeT<float>(W,field);
+            case (DataType::kind<int>()):           return executeT<int>(W,field);
+            case (DataType::kind<long>()):          return executeT<long>(W,field);
+            case (DataType::kind<unsigned long>()): return executeT<unsigned long>(W,field);
+            default: ATLAS_NOTIMPLEMENTED;
+        }
+    }
+
+    template<typename T>
+    bool executeT(NonLinear::Matrix& W, const Field& field) const {
         field::MissingValue mv(field);
         auto& missingValue = mv.ref();
 
@@ -165,9 +187,20 @@ struct MissingIfAnyMissing : Missing {
 };
 
 
-template <typename T>
 struct MissingIfHeaviestMissing : Missing {
     bool execute(NonLinear::Matrix& W, const Field& field) const {
+        switch(field.datatype().kind()) {
+            case (DataType::kind<double>()):        return executeT<double>(W,field);
+            case (DataType::kind<float>()):         return executeT<float>(W,field);
+            case (DataType::kind<int>()):           return executeT<int>(W,field);
+            case (DataType::kind<long>()):          return executeT<long>(W,field);
+            case (DataType::kind<unsigned long>()): return executeT<unsigned long>(W,field);
+            default: ATLAS_NOTIMPLEMENTED;
+        }
+    }
+
+    template<typename T>
+    bool executeT(NonLinear::Matrix& W, const Field& field) const {
         field::MissingValue mv(field);
         auto& missingValue = mv.ref();
 
