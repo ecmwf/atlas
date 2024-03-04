@@ -202,12 +202,6 @@ void testInterpolation(const Config& config) {
         }
       });
 
-  if (functionspace::StructuredColumns(sourceFunctionSpace)) {
-    sourceFieldSet[0].metadata().set("type", "scalar");
-    sourceFieldSet[0].haloExchange();
-    sourceFieldSet[0].metadata().set("type", "vector");
-  }
-
   const auto interp = Interpolation(
       InterpSchemeFixtures::get(config.getString("interp_fixture")),
       sourceFunctionSpace, targetFunctionSpace);
