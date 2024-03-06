@@ -938,6 +938,7 @@ if( atlas_HAVE_NATIVE_STORAGE )
   atlas_host_device( source_list
     SOURCES
       array/native/NativeArrayView.cc
+      array/native/NativeDataStore.h
       mesh/Connectivity.cc
   )
 endif()
