@@ -78,13 +78,8 @@ void SphericalVector::do_setup(const FunctionSpace& source,
                                                    option::variables(2));
   auto targetLonLats = target_.createField<double>(option::name("lonlat") |
                                                    option::variables(2));
-  sourceLonLats.array().copy(source_.lonlat());
-  targetLonLats.array().copy(target_.lonlat());
-  sourceLonLats.haloExchange();
-  targetLonLats.haloExchange();
-
-  const auto sourceLonLatsView = array::make_view<double, 2>(sourceLonLats);
-  const auto targetLonLatsView = array::make_view<double, 2>(targetLonLats);
+  const auto sourceLonLatsView = array::make_view<double, 2>(source_.lonlat());
+  const auto targetLonLatsView = array::make_view<double, 2>(target_.lonlat());
 
   const auto unitSphere = geometry::UnitSphere{};
 
