@@ -98,22 +98,27 @@ public:
     DataStore(size_t size): size_(size) {
         alloc_aligned(data_store_, size_);
         initialise(data_store_, size_);
+        device_allocated_ = false;
         setDeviceNeedsUpdate(true);
     }
 
     ~DataStore() override {
         free_aligned(data_store_);
+        deallocateDevice();
     }
 
     void updateDevice() const override {
 #if ATLAS_NATIVE_STORAGE_BACKEND_CUDA
-        cudaMemcpy(data_store_dev_, data_store_, sizeof(data_store_), cudaMemcpyHostToDevice);
+        if (not device_allocated_) {
+            allocateDevice();
+        }
+        cudaMemcpy(data_store_dev_, data_store_, size_*sizeof(Value), cudaMemcpyHostToDevice);
 #endif
     }
 
     void updateHost() const override {
 #if ATLAS_NATIVE_STORAGE_BACKEND_CUDA
-        cudaMemcpy(data_store_, data_store_dev_, sizeof(data_store_dev_), cudaMemcpyDeviceToHost);
+        cudaMemcpy(data_store_, data_store_dev_, size_*sizeof(Value), cudaMemcpyDeviceToHost);
 #endif
     }
 
@@ -124,17 +129,19 @@ public:
         if (device_updated_) updateHost();
     }
 
-    bool deviceAllocated() const override { return false; }
+    bool deviceAllocated() const override { return device_allocated_; }
 
     void allocateDevice() const override {
 #if ATLAS_NATIVE_STORAGE_BACKEND_CUDA
         cudaMalloc((void**)&data_store_dev_, sizeof(Value)*size_);
+        device_allocated_ = true;
 #endif
     }
 
     void deallocateDevice() const override {
 #if ATLAS_NATIVE_STORAGE_BACKEND_CUDA
         cudaFree(data_store_dev_);
+        device_allocated_ = false;
 #endif
     }
 
@@ -187,10 +194,11 @@ private:
     size_t footprint() const { return sizeof(Value) * size_; }
 
     Value* data_store_;
-    Value* data_store_dev_;
     size_t size_;
+    Value* data_store_dev_;
     mutable bool host_updated_;
     mutable bool device_updated_;
+    mutable bool device_allocated_;
 };
 
 //------------------------------------------------------------------------------
