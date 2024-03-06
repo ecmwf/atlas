@@ -131,7 +131,7 @@ public:
 
     void setDeviceNeedsUpdate(bool v) const { return data_store_->setDeviceNeedsUpdate(v); }
 
-    bool deviceAllocated() { return data_store_->deviceAllocated(); }
+    bool deviceAllocated() const { return data_store_->deviceAllocated(); }
 
     void allocateDevice() { data_store_->allocateDevice(); }
 
