@@ -27,6 +27,8 @@ void kernel_ex(array::ArrayView<Value, RANK> dv)
     dv(3, 3, 3) += dv.data_view().template length<0>() * dv.data_view().template length<1>() * dv.data_view().template length<2>();
 #elif ATLAS_NATIVE_STORAGE_BACKEND_CUDA
     dv(3, 3, 3) += dv.shape(0) * dv.shape(1) * dv.shape(2);
+#else
+    ATLAS_ASSERT(false);
 #endif
 }
 
@@ -94,6 +96,8 @@ CASE( "test_array_loop" )
    }
 
    ds->updateDevice();
+
+   ds->syncHostDevice(); // should not do anything
 
    auto cv = make_device_view<double, 3>(*ds);
 
