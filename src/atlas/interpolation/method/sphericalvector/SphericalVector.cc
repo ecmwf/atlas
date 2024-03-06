@@ -72,15 +72,9 @@ void SphericalVector::do_setup(const FunctionSpace& source,
   // whereas eckit does not.
   auto complexTriplets = ComplexTriplets(nNonZeros);
   auto realTriplets = RealTriplets(nNonZeros);
-
-  // Make sure halo lonlats are same as owned points.
-  auto sourceLonLats = source_.createField<double>(option::name("lonlat") |
-                                                   option::variables(2));
-  auto targetLonLats = target_.createField<double>(option::name("lonlat") |
-                                                   option::variables(2));
+  
   const auto sourceLonLatsView = array::make_view<double, 2>(source_.lonlat());
   const auto targetLonLatsView = array::make_view<double, 2>(target_.lonlat());
-
   const auto unitSphere = geometry::UnitSphere{};
 
   atlas_omp_parallel_for(auto rowIndex = Index{0}; rowIndex < nRows;
