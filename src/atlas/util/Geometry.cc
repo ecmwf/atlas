@@ -15,8 +15,6 @@
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Constants.h"
-#include "eckit/geometry/Point2.h"
-#include "eckit/geometry/Point3.h"
 
 namespace atlas {
 
