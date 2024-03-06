@@ -157,6 +157,7 @@ public:
 
     /// @brief Multidimensional index operator: view(i,j,k,...)
     template <typename... Idx, int Rank_ = Rank, typename = std::enable_if_t<sizeof...(Idx) == Rank_>>
+    ATLAS_HOST_DEVICE
     value_type& operator()(Idx... idx) {
         check_bounds(idx...);
         return data_[index(idx...)];
@@ -164,6 +165,7 @@ public:
 
     /// @brief Multidimensional index operator: view(i,j,k,...)
     template <typename... Idx, int Rank_ = Rank, typename = std::enable_if_t<sizeof...(Idx) == Rank_>>
+    ATLAS_HOST_DEVICE
     const value_type& operator()(Idx... idx) const {
         return data_[index(idx...)];
     }
@@ -209,34 +211,41 @@ public:
     /// }
     /// @endcode
     template <unsigned int Dim>
+    ATLAS_HOST_DEVICE
     idx_t shape() const {
         return shape_[Dim];
     }
 
     /// @brief Return stride for values in dimension **Dim** (template argument)
     template <unsigned int Dim>
+    ATLAS_HOST_DEVICE
     idx_t stride() const {
         return strides_[Dim];
     }
 
     /// @brief Return total number of values (accumulated over all dimensions)
+    ATLAS_HOST_DEVICE
     size_t size() const { return size_; }
 
     /// @brief Return the number of dimensions
     static constexpr idx_t rank() { return Rank; }
 
+    ATLAS_HOST_DEVICE
     const idx_t* strides() const { return strides_.data(); }
 
+    ATLAS_HOST_DEVICE
     const idx_t* shape() const { return shape_.data(); }
 
     /// @brief Return number of values in dimension idx
     template <typename Int>
+    ATLAS_HOST_DEVICE
     idx_t shape(Int idx) const {
         return shape_[idx];
     }
 
     /// @brief Return stride for values in dimension idx
     template <typename Int>
+    ATLAS_HOST_DEVICE
     idx_t stride(Int idx) const {
         return strides_[idx];
     }
