@@ -45,18 +45,12 @@ CASE( "test_svector" )
     EXPECT( list_ints.size() == 2);
 
     bool *result;
-    cudaError_t err = cudaMallocManaged(&result, sizeof(bool));
-
-    if(err != cudaSuccess)
-        throw_AssertionFailed("failed to allocate GPU memory");
+    CHECK_CUDA_ERROR( cudaMallocManaged(&result, sizeof(bool)) );
 
     *result=true;
     kernel_exe<<<1,1>>>(list_ints.data(), list_ints.size(), 0, result);
-    cudaDeviceSynchronize();
-
-    err = cudaGetLastError();
-    if(err != cudaSuccess)
-        throw_AssertionFailed("failed to execute kernel");
+    CHECK_CUDA_ERROR( cudaPeekAtLastError() );
+    CHECK_CUDA_ERROR( cudaDeviceSynchronize() );
 
     EXPECT( *result );
     EXPECT( list_ints[0] == 4);
@@ -81,10 +75,7 @@ CASE( "test_svector_resize" )
     EXPECT( list_ints.size() == 5);
 
     bool *result;
-    cudaError_t err = cudaMallocManaged(&result, sizeof(bool));
-
-    if(err != cudaSuccess)
-        throw_AssertionFailed("failed to allocate GPU memory");
+    CHECK_CUDA_ERROR( cudaMallocManaged(&result, sizeof(bool)) );
 
     *result=true;
 
@@ -92,16 +83,12 @@ CASE( "test_svector_resize" )
     list_ints[4] = 4;
 
     kernel_exe<<<1,1>>>(list_ints.data(), list_ints.size(), 3, result);
-    cudaDeviceSynchronize();
-
-    err = cudaGetLastError();
-    if(err != cudaSuccess)
-        throw_AssertionFailed("failed to execute kernel");
+    CHECK_CUDA_ERROR( cudaPeekAtLastError() );
+    CHECK_CUDA_ERROR( cudaDeviceSynchronize() );
 
     EXPECT( *result );
     EXPECT( list_ints[3] == 4);
     EXPECT( list_ints[4] == 5);
-
 }
 
 }

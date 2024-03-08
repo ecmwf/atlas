@@ -36,6 +36,10 @@
 #include "atlas/util/Config.h"
 #include "atlas/util/Point.h"
 
+#if ATLAS_NATIVE_STORAGE_BACKEND_CUDA or ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+#include <cuda_runtime.h>
+#endif
+
 namespace atlas {
 namespace test {
 
@@ -450,8 +454,8 @@ int run(int argc, char* argv[]) {
  *   CHECK_CUDA_ERROR( cudaMalloc((void**)&a_d, size*sizeof(int)) );
  */
 
-#define CHECK_CUDA_ERROR(val) gpuAssert((val), #val, __FILE__, __LINE__)
-void gpuAssert(cudaError_t err, const char* const func, const char* const file,
+#define CHECK_CUDA_ERROR(val) CUDA_Assert((val), #val, __FILE__, __LINE__)
+void CUDA_Assert(cudaError_t err, const char* const func, const char* const file,
            const int line, bool abort = true)
 {
     if (err != cudaSuccess)
@@ -465,14 +469,14 @@ void gpuAssert(cudaError_t err, const char* const func, const char* const file,
     }
 }
 
-#define CHECK_LAST_CUDA_ERROR() checkLast(__FILE__, __LINE__)
-__device__ void CUDA_DynamicParallelism_Assert(const char* const file, const int line) {
+#define CHECK_CUDA_DP_ERROR() CUDA_DynamicParallelism_Assert(__FILE__, __LINE__)
+__device__ void CUDA_DynamicParallelism_Assert(cudaError_t err, const char* const func,
+        const char* const file, const int line, bool abort = true) {
     if (err != cudaSuccess) {
-        std::cerr << "CUDA Runtime Error at: " << file << ":" << line
-                  << std::endl;
-        std::cerr << cudaGetErrorString(err) << std::endl;
+        printf("CUDA Runtime Error at: %s: %d\n", file, line);
+        printf("%s\n", cudaGetErrorString(err));
         if (abort) {
-            exit(err);
+            assert(0);
         }
     }
 }

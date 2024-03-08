@@ -33,8 +33,8 @@ struct int_gpu {
     void updateHost(){ gpu_clone_.updateHost();}
 
     int val_;
-private:
 
+private:
     array::gridtools::GPUClonable<int_gpu> gpu_clone_;
 };
 
@@ -62,12 +62,10 @@ CASE( "test_resize" )
 
     VectorView<int_gpu*> list_ints_h2 = make_host_vector_view(list_ints);
 
-
     EXPECT( list_ints_h2[0]->val_ == 3 );
     EXPECT( list_ints_h2[1]->val_ == 4 );
     EXPECT( list_ints_h2.size()   == 6 );
 }
-
 
 
 CASE( "test_vector_kernel" )
@@ -85,19 +83,19 @@ CASE( "test_vector_kernel" )
     VectorView<int_gpu*> list_ints_d = make_device_vector_view(list_ints);
 
     VectorView<int_gpu*>* list_ints_dp;
-    cudaMalloc((void**)(&list_ints_dp), sizeof(VectorView<int_gpu*>));
+    CHECK_CUDA_ERROR( cudaMalloc((void**)(&list_ints_dp), sizeof(VectorView<int_gpu*>)) );
 
-    cudaMemcpy(list_ints_dp, &list_ints_d, sizeof(VectorView<int_gpu*>), cudaMemcpyHostToDevice);
+    CHECK_CUDA_ERROR( cudaMemcpy(list_ints_dp, &list_ints_d, sizeof(VectorView<int_gpu*>), 
+        cudaMemcpyHostToDevice) );
 
     kernel_ex<<<1,1>>>(list_ints_dp);
+    CHECK_CUDA_ERROR( cudaPeekAtLastError() );
+    CHECK_CUDA_ERROR( cudaDeviceSynchronize() );
 
-    if( cudaPeekAtLastError() != cudaSuccess) std::cout << "ERROR " << std::endl;
     list_ints.updateHost();
 
     EXPECT( list_ints_h[0]->val_ == 8 );
-
     EXPECT_THROWS_AS( list_ints.resize(6), eckit::AssertionFailed );
-
 }
 
 }
