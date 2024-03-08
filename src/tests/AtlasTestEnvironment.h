@@ -436,5 +436,50 @@ int run(int argc, char* argv[]) {
 
 //----------------------------------------------------------------------------------------------------------------------
 
+#if ATLAS_NATIVE_STORAGE_BACKEND_CUDA or ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+
+/*
+ * Check runtime errors using CUDA.
+ *
+ * For calls to CUDA kernels use like this:
+ *   kernel<<<1,1>>>(a);
+ *   CHECK_CUDA_ERROR( cudaPeekAtLastError() );
+ *   CHECK_CUDA_ERROR( cudaDeviceSynchronize() );
+ *
+ * For all other calls like this:
+ *   CHECK_CUDA_ERROR( cudaMalloc((void**)&a_d, size*sizeof(int)) );
+ */
+
+#define CHECK_CUDA_ERROR(val) gpuAssert((val), #val, __FILE__, __LINE__)
+void gpuAssert(cudaError_t err, const char* const func, const char* const file,
+           const int line, bool abort = true)
+{
+    if (err != cudaSuccess)
+    {
+        std::cerr << "CUDA Runtime Error at: " << file << ":" << line
+                  << std::endl;
+        std::cerr << cudaGetErrorString(err) << " " << func << std::endl;
+        if (abort) {
+            exit(err);
+        }
+    }
+}
+
+#define CHECK_LAST_CUDA_ERROR() checkLast(__FILE__, __LINE__)
+__device__ void CUDA_DynamicParallelism_Assert(const char* const file, const int line) {
+    if (err != cudaSuccess) {
+        std::cerr << "CUDA Runtime Error at: " << file << ":" << line
+                  << std::endl;
+        std::cerr << cudaGetErrorString(err) << std::endl;
+        if (abort) {
+            exit(err);
+        }
+    }
+}
+
+#endif
+
+//----------------------------------------------------------------------------------------------------------------------
+
 }  // namespace test
 }  // namespace atlas
