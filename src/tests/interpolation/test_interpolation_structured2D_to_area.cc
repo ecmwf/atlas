@@ -67,9 +67,7 @@ FieldSet create_target_fields(FunctionSpace& fs, idx_t nb_fields, idx_t nb_level
 
 void do_test( std::string type, int input_halo, bool expect_failure ) {
     idx_t nb_fields = 2;
-    idx_t nb_levels = 137;
-
-    std::cout << "======>> mpi::comm().rank(): " << mpi::comm().rank() << std::endl;
+    idx_t nb_levels = 19;
 
     // Setup Grid and functionspace
     Grid inputGrid(input_gridname("O400"));

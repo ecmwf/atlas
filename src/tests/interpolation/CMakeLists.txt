@@ -116,7 +116,7 @@ ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_to_points
 ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_to_area
   SOURCES  test_interpolation_structured2D_to_area.cc
   LIBS     atlas
-  MPI      2
+  MPI      4
   CONDITION eckit_HAVE_MPI
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
