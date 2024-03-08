@@ -70,7 +70,7 @@ void do_test( std::string type, int input_halo, bool expect_failure ) {
     idx_t nb_levels = 19;
 
     // Setup Grid and functionspace
-    Grid inputGrid(input_gridname("O400"));
+    Grid inputGrid(input_gridname("O40"));
     functionspace::StructuredColumns inputFS(inputGrid, option::levels(nb_levels) | option::halo(input_halo));
 
     // Setup source field_set
@@ -88,8 +88,11 @@ void do_test( std::string type, int input_halo, bool expect_failure ) {
     Mesh areaMesh = MeshGenerator("structured").generate( areaGrid, grid::MatchingPartitioner(inputFS) );
     atlas::FunctionSpace outputFS = atlas::functionspace::NodeColumns{areaMesh};
 
+    output::Gmsh gmsh{"area.msh"};
+    gmsh.write(areaMesh);
+
     // setup interpolation
-    Interpolation interpolation(option::type(type), inputFS, outputFS);
+    Interpolation interpolation(option::type(type)|Config("matrix_free",false), inputFS, outputFS);
 
     // setup target field_set
     FieldSet fields_target = create_target_fields(outputFS, nb_fields, nb_levels);
@@ -97,6 +100,7 @@ void do_test( std::string type, int input_halo, bool expect_failure ) {
     // execute interpolation
     interpolation.execute(fields_source, fields_target);
 
+    gmsh.write(fields_target);
 }
 
 CASE("test structured-linear2D, halo 3") {
