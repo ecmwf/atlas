@@ -360,6 +360,12 @@ Find min and max latitudes used by this part.
                 }
                 lat_north = *std::min_element(thread_reduce_lat_north.begin(), thread_reduce_lat_north.end());
                 lat_south = *std::max_element(thread_reduce_lat_south.begin(), thread_reduce_lat_south.end());
+                if (lat_north == std::numeric_limits<idx_t>::max()) {
+                    lat_north = -1;
+                }
+                if (lat_south == std::numeric_limits<idx_t>::min()) {
+                    lat_south = -1;
+                }
             }
         }
     }
