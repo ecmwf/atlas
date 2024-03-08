@@ -44,8 +44,6 @@ static bool feature_MKL() {
 }  // namespace
 #endif
 
-#include "atlas_io/Trace.h"
-
 #include "atlas/library/FloatingPointExceptions.h"
 #include "atlas/library/Plugin.h"
 #include "atlas/library/config.h"
@@ -158,8 +156,7 @@ Library::Library():
     trace_(getEnv("ATLAS_TRACE", false)),
     trace_memory_(getEnv("ATLAS_TRACE_MEMORY", false)),
     trace_barriers_(getEnv("ATLAS_TRACE_BARRIERS", false)),
-    trace_report_(getEnv("ATLAS_TRACE_REPORT", false)),
-    atlas_io_trace_hook_(::atlas::io::TraceHookRegistry::invalidId()) {
+    trace_report_(getEnv("ATLAS_TRACE_REPORT", false)) {
     std::string ATLAS_PLUGIN_PATH = getEnv("ATLAS_PLUGIN_PATH");
 #if ATLAS_ECKIT_VERSION_AT_LEAST(1, 24, 4)
     eckit::system::LibraryManager::addPluginSearchPath(ATLAS_PLUGIN_PATH);
@@ -319,16 +316,6 @@ void Library::initialise(const eckit::Parametrisation& config) {
         init_data_paths(data_paths_);
     }
 
-    atlas_io_trace_hook_ =
-        atlas::io::TraceHookRegistry::add([](const eckit::CodeLocation& loc, const std::string& title) {
-            struct Adaptor : public atlas::io::TraceHook {
-                Adaptor(const eckit::CodeLocation& loc, const std::string& title): trace{loc, title} {}
-                atlas::Trace trace;
-            };
-            return std::make_unique<Adaptor>(loc, title);
-        });
-
-
     // Summary
     if (getEnv("ATLAS_LOG_RANK", 0) == int(mpi::rank())) {
         out << "Executable        [" << Main::instance().name() << "]\n";
@@ -360,11 +347,6 @@ void Library::initialise() {
 }
 
 void Library::finalise() {
-    if( atlas_io_trace_hook_ != atlas::io::TraceHookRegistry::invalidId() ) {
-        atlas::io::TraceHookRegistry::disable(atlas_io_trace_hook_);
-        atlas_io_trace_hook_ = atlas::io::TraceHookRegistry::invalidId();
-    }
-
     if (ATLAS_HAVE_TRACE && trace_report_) {
         Log::info() << atlas::Trace::report() << std::endl;
     }

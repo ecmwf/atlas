@@ -32,9 +32,6 @@ endif()
 
 ecbuild_debug( "   eckit_FEATURES : [${eckit_FEATURES}]" )
 
-add_subdirectory(atlas_io)
-find_package(atlas_io)
-
 ################################################################################
 # Features that can be enabled / disabled with -DENABLE_<FEATURE>
 

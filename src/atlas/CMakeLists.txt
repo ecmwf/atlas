@@ -59,7 +59,6 @@ runtime/Exception.h
 library/detail/BlackMagic.h
 library/detail/Debug.h
 
-
 parallel/mpi/mpi.cc
 parallel/mpi/mpi.h
 parallel/omp/omp.cc
@@ -80,7 +79,6 @@ option/Options.h
 option/Options.cc
 option/TransOptions.h
 option/TransOptions.cc
-
 
 projection.h
 projection/Projection.cc
@@ -183,7 +181,6 @@ grid/detail/tiles/FV3Tiles.h
 grid/detail/tiles/LFRicTiles.cc
 grid/detail/tiles/LFRicTiles.h
 
-
 grid/detail/spacing/Spacing.cc
 grid/detail/spacing/Spacing.h
 grid/detail/spacing/SpacingFactory.cc
@@ -262,7 +259,6 @@ list( APPEND atlas_grid_partitioning_srcs
 grid/StructuredPartitionPolygon.h
 grid/StructuredPartitionPolygon.cc
 
-
 grid/Distribution.cc
 grid/Distribution.h
 grid/Partitioner.h
@@ -326,7 +322,6 @@ list( APPEND atlas_grid_srcs
   projection/detail/ProjProjection.h
 )
 endif()
-
 
 # Append CGAL_COMPLE_FLAGS only to this file ( see ATLAS-193 )
 if( CGAL_COMPILE_FLAGS )
@@ -698,7 +693,6 @@ linalg/dense/MatrixMultiply_EckitLinalg.h
 linalg/dense/MatrixMultiply_EckitLinalg.cc
 )
 
-
 list (APPEND atlas_redistribution_srcs
 redistribution/Redistribution.h
 redistribution/Redistribution.cc
@@ -850,14 +844,6 @@ util/function/VortexRollup.h
 util/function/VortexRollup.cc
 )
 
-
-list( APPEND atlas_io_adaptor_srcs
-  io/ArrayAdaptor.cc
-  io/ArrayAdaptor.h
-  io/VectorAdaptor.h
-)
-
-
 ### atlas c++ library
 
 if( NOT atlas_HAVE_ATLAS_GRID )
@@ -887,10 +873,10 @@ if( NOT atlas_HAVE_ATLAS_NUMERICS  )
 endif()
 
 #
-# atlas_src           _________ io_adaptor
-#   |               /  
+# atlas_src
+#   |
 #  array   -------------- linalg
-#  |                \________________________field
+#   |               \________________________field
 #  util                /
 #   |                /
 #  grid            / ( optional link )
@@ -915,7 +901,6 @@ list( APPEND source_list
   ${atlas_redistribution_srcs}
   ${atlas_numerics_srcs}
   ${atlas_output_srcs}
-  ${atlas_io_adaptor_srcs}
 )
 
 if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
@@ -960,7 +945,6 @@ ecbuild_add_library( TARGET atlas
     eckit_maths
     eckit_mpi
     eckit_option
-    atlas_io
     $<${atlas_HAVE_EIGEN}:Eigen3::Eigen>
     $<${atlas_HAVE_OMP_CXX}:OpenMP::OpenMP_CXX>
     $<${atlas_HAVE_GRIDTOOLS_STORAGE}:GridTools::gridtools>

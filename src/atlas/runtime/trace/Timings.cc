@@ -448,9 +448,6 @@ std::string TimingsRegistry::filter_filepath(const std::string& filepath) const 
     if (std::regex_search(filepath, matches, std::regex{"(.*)?/atlas/src/(.*)"})) {
         return "[atlas] " + basename;
     }
-    if (std::regex_search(filepath, matches, std::regex{"(.*)?/atlas-io/src/(.*)"})) {
-        return "[atlas-io] " + basename;
-    }
     return basename;
 }
 
