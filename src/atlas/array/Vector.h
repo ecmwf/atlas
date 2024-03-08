@@ -89,9 +89,7 @@ public:
     }
     void updateHost() {
         ATLAS_ASSERT(data_gpu_ != nullptr);
-
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA or ATLAS_NATIVE_STORAGE_BACKEND_CUDA
-
         for (idx_t i = 0; i < size(); ++i) {
             data_[i]->updateHost();
         }

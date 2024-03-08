@@ -26,10 +26,13 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-#if ATLAS_HAVE_GRIDTOOLS_STORAGE
 CASE("test_array") {
     Array* ds = Array::create<double>(4ul);
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     auto hv   = atlas::array::gridtools::make_gt_host_view<double, 1>(*ds);
+#else
+    auto hv   = atlas::array::make_host_view<double, 1>(*ds);
+#endif
     hv(3)     = 4.5;
 
     atlas::array::ArrayView<double, 1> atlas_hv = make_host_view<double, 1>(*ds);
@@ -39,7 +42,6 @@ CASE("test_array") {
 
     delete ds;
 }
-#endif
 
 CASE("test_array_zero_size") {
     Array* ds = Array::create<double>(0);
@@ -48,10 +50,13 @@ CASE("test_array_zero_size") {
     delete ds;
 }
 
-#if ATLAS_HAVE_GRIDTOOLS_STORAGE
 CASE("test_create") {
     Array* ds = Array::create(array::DataType::create<int>(), ArrayShape({4, 3}));
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     auto hv   = atlas::array::gridtools::make_gt_host_view<int, 2>(*ds);
+#else
+    auto hv   = atlas::array::make_host_view<int, 2>(*ds);
+#endif
     hv(3, 2)  = 4;
 
     atlas::array::ArrayView<int, 2> atlas_hv = make_host_view<int, 2>(*ds);
@@ -61,12 +66,14 @@ CASE("test_create") {
 
     delete ds;
 }
-#endif
 
-#if ATLAS_HAVE_GRIDTOOLS_STORAGE
 CASE("test_make_view") {
     Array* ds = Array::create<double>(4ul);
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     auto hv   = atlas::array::gridtools::make_gt_host_view<double, 1>(*ds);
+#else
+    auto hv   = atlas::array::make_host_view<double, 1>(*ds);
+#endif
     hv(3)     = 4.5;
 
     atlas::array::ArrayView<double, 1> atlas_hv = make_view<double, 1>(*ds);
@@ -76,7 +83,6 @@ CASE("test_make_view") {
 
     delete ds;
 }
-#endif
 
 CASE("test_localview") {
     Array* ds = Array::create<double>(8ul, 4ul, 2ul);
@@ -109,11 +115,14 @@ CASE("test_localview") {
     delete ds;
 }
 
-#if ATLAS_HAVE_GRIDTOOLS_STORAGE
 CASE("test_array_shape") {
     ArrayShape as{2, 3};
     Array* ds                                   = Array::create<double>(as);
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     auto gt_hv                                  = atlas::array::gridtools::make_gt_host_view<double, 2>(*ds);
+#else
+    auto gt_hv                                  = atlas::array::make_host_view<double, 2>(*ds);
+#endif
     atlas::array::ArrayView<double, 2> atlas_hv = make_host_view<double, 2>(*ds);
 
     gt_hv(1, 1) = 4.5;
@@ -123,12 +132,11 @@ CASE("test_array_shape") {
 
     EXPECT_EQ(ds->size(), 6);
     EXPECT_EQ(ds->rank(), 2);
-    EXPECT_EQ(ds->stride(0), gt_hv.storage_info().stride<0>());
-    EXPECT_EQ(ds->stride(1), gt_hv.storage_info().stride<1>());
+    EXPECT_EQ(ds->stride(0), gt_hv.stride(0));
+    EXPECT_EQ(ds->stride(1), gt_hv.stride(1));
     EXPECT(ds->contiguous());
     delete ds;
 }
-#endif
 
 CASE("test_spec") {
     Array* ds = Array::create<double>(4, 5, 6);
@@ -171,7 +179,6 @@ CASE("test_spec_layout") {
     delete ds;
 }
 
-#if ATLAS_HAVE_GRIDTOOLS_STORAGE
 CASE("test_spec_layout_rev") {
     Array* ds = Array::create<double>(make_shape(4, 5, 6), make_layout(2, 1, 0));
     EXPECT(ds->spec().rank() == 3);
@@ -194,7 +201,6 @@ CASE("test_spec_layout_rev") {
 
     EXPECT_THROWS_AS(Array::create<double>(make_shape(4, 5, 6, 2), make_layout(0, 1, 3, 2)), eckit::Exception);
 }
-#endif
 
 CASE("test_resize_throw") {
     Array* ds = Array::create<double>(32, 5, 33);
@@ -206,6 +212,7 @@ CASE("test_resize_throw") {
 
     delete ds;
 }
+
 
 CASE("test_copy_ctr") {
     Array* ds                          = Array::create<int>(3, 2);
@@ -221,7 +228,8 @@ CASE("test_copy_ctr") {
     delete ds;
 }
 
-#if ATLAS_HAVE_GRIDTOOLS_STORAGE
+
+#if ATLAS_HAVE_GRIDTOOLS
 CASE("test_copy_gt_ctr") {
     Array* ds                          = Array::create<int>(3, 2);
     atlas::array::ArrayView<int, 2> hv = make_host_view<int, 2>(*ds);
@@ -239,6 +247,7 @@ CASE("test_copy_gt_ctr") {
     delete ds;
 }
 #endif
+
 
 CASE("test_resize") {
     {
