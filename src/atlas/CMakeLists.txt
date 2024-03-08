@@ -731,6 +731,7 @@ array/ArrayViewUtil.h
 array/ArrayViewDefs.h
 array/DataType.h
 array/IndexView.h
+array/GPUClonable.h
 array/LocalView.cc
 array/LocalView.h
 array/Range.h
@@ -750,7 +751,6 @@ array/helpers/ArrayForEach.h
 )
 if( atlas_HAVE_GRIDTOOLS_STORAGE )
 list( APPEND atlas_array_srcs
-array/gridtools/GPUClonable.h
 array/gridtools/GridToolsArray.cc
 array/gridtools/GridToolsArrayHelpers.h
 array/gridtools/GridToolsArrayView.cc
