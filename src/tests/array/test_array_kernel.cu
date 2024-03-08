@@ -9,10 +9,11 @@
  */
 
 #include <cuda_runtime.h>
-#include "tests/AtlasTestEnvironment.h"
+
 #include "atlas/array.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/runtime/Log.h"
+#include "tests/AtlasTestEnvironment.h"
 
 using namespace atlas::array;
 
@@ -70,8 +71,8 @@ CASE( "test_array" )
    auto cv = make_device_view<double, 3>(*ds);
 
    kernel_ex<<<1,1>>>(cv);
-
-   cudaDeviceSynchronize();
+   CHECK_CUDA_ERROR( cudaPeekAtLastError() );
+   CHECK_CUDA_ERROR( cudaDeviceSynchronize() );
 
    ds->updateHost();
 
@@ -96,14 +97,13 @@ CASE( "test_array_loop" )
    }
 
    ds->updateDevice();
-
    ds->syncHostDevice(); // should not do anything
 
    auto cv = make_device_view<double, 3>(*ds);
 
    loop_kernel_ex<<<1,1>>>(cv);
-
-   cudaDeviceSynchronize();
+   //CHECK_CUDA_ERROR( cudaPeekAtLastError() );
+   CHECK_CUDA_ERROR( cudaDeviceSynchronize() );
 
    ds->updateHost();
 
