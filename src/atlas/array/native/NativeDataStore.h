@@ -99,6 +99,7 @@ public:
         alloc_aligned(data_store_, size_);
         initialise(data_store_, size_);
         device_allocated_ = false;
+        setHostNeedsUpdate(false);
         setDeviceNeedsUpdate(true);
     }
 

@@ -179,6 +179,7 @@ CASE("test_spec_layout") {
     delete ds;
 }
 
+#if ATLAS_HAVE_GRIDTOOLS_STORAGE
 CASE("test_spec_layout_rev") {
     Array* ds = Array::create<double>(make_shape(4, 5, 6), make_layout(2, 1, 0));
     EXPECT(ds->spec().rank() == 3);
@@ -201,6 +202,7 @@ CASE("test_spec_layout_rev") {
 
     EXPECT_THROWS_AS(Array::create<double>(make_shape(4, 5, 6, 2), make_layout(0, 1, 3, 2)), eckit::Exception);
 }
+#endif
 
 CASE("test_resize_throw") {
     Array* ds = Array::create<double>(32, 5, 33);
