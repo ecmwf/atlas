@@ -132,8 +132,8 @@ CASE("test_array_shape") {
 
     EXPECT_EQ(ds->size(), 6);
     EXPECT_EQ(ds->rank(), 2);
-    EXPECT_EQ(ds->stride(0), gt_hv.stride(0));
-    EXPECT_EQ(ds->stride(1), gt_hv.stride(1));
+    EXPECT_EQ(ds->stride(0), gt_hv.storage_info().stride<0>());
+    EXPECT_EQ(ds->stride(1), gt_hv.storage_info().stride<1>());
     EXPECT(ds->contiguous());
     delete ds;
 }
