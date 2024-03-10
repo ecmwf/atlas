@@ -115,14 +115,11 @@ CASE("test_localview") {
     delete ds;
 }
 
+#if ATLAS_HAVE_GRIDTOOLS_STORAGE
 CASE("test_array_shape") {
     ArrayShape as{2, 3};
     Array* ds                                   = Array::create<double>(as);
-#if ATLAS_HAVE_GRIDTOOLS_STORAGE
     auto gt_hv                                  = atlas::array::gridtools::make_gt_host_view<double, 2>(*ds);
-#else
-    auto gt_hv                                  = atlas::array::make_host_view<double, 2>(*ds);
-#endif
     atlas::array::ArrayView<double, 2> atlas_hv = make_host_view<double, 2>(*ds);
 
     gt_hv(1, 1) = 4.5;
@@ -137,6 +134,7 @@ CASE("test_array_shape") {
     EXPECT(ds->contiguous());
     delete ds;
 }
+#endif
 
 CASE("test_spec") {
     Array* ds = Array::create<double>(4, 5, 6);
