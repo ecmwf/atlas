@@ -60,6 +60,30 @@ std::vector<long> points_from_list(const std::string& list, long base) {
 
 //------------------------------------------------------------------------------
 
+GridPointsJSONWriter::GridPointsJSONWriter(Grid grid, grid::Partitioner partitioner, const eckit::Parametrisation& args) : grid_{grid} {
+    args.get("json.precision",precision_=-1);
+    args.get("verbose",verbose_=0);
+    if (not args.get("partition",partition_=-1)) {
+        args.get("partition",partition_);
+    }
+    args.get("json.pretty", pretty_=false);
+    args.get("field",field_="lonlat");
+    args.get("field_base",field_base_=0);
+    std::string points_list;
+    if (args.get("index",points_list)) {
+        args.get("index_base",points_base_ = 0);
+        points_ = points_from_list(points_list,points_base_);
+    }
+
+    nb_partitions_ = partitioner.nb_partitions();
+    ATLAS_DEBUG_VAR(nb_partitions_);
+    if( nb_partitions_ > 0 ) {
+        distribution_ = grid::Distribution{grid_, partitioner};
+    }
+}
+
+//------------------------------------------------------------------------------
+
 GridPointsJSONWriter::GridPointsJSONWriter(Grid grid, const eckit::Parametrisation& args) : grid_{grid} {
     args.get("json.precision",precision_=-1);
     args.get("verbose",verbose_=0);
@@ -85,7 +109,7 @@ GridPointsJSONWriter::GridPointsJSONWriter(Grid grid, const eckit::Parametrisati
             partitioner_config.set("type", partitioner);
         }
         partitioner_config.set("partitions", nb_partitions_);
-        distribution_ = grid::Distribution{grid_,partitioner_config};
+        distribution_ = grid::Distribution{grid_, partitioner_config};
     }
 }
 
