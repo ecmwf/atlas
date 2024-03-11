@@ -64,10 +64,6 @@ ecbuild_add_option( FEATURE ECKIT_DEVELOP
                     DESCRIPTION "Used to enable new features or API depending on eckit develop branch, not yet in a tagged release"
                     DEFAULT OFF )
 
-if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
-  set(CMAKE_CUDA_ARCHITECTURES 80)
-endif()
-
 set( ATLAS_STORAGE_BACKEND_CUDA 0 )
 
 include( features/BOUNDSCHECKING )
