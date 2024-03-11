@@ -170,7 +170,6 @@ PointCloud::PointCloud(const Grid& grid, const grid::Partitioner& _partitioner, 
 
     if (halo_radius == 0. || nb_partitions_ == 1) {
         idx_t size_halo = size_owned;
-        ATLAS_ASSERT(size_owned > 0);
         lonlat_       = Field("lonlat", array::make_datatype<double>(), array::make_shape(size_halo, 2));
         ghost_        = Field("ghost", array::make_datatype<int>(), array::make_shape(size_halo));
         global_index_ = Field("global_index", array::make_datatype<gidx_t>(), array::make_shape(size_halo));
