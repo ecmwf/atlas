@@ -55,6 +55,7 @@ if( atlas_HAVE_GRIDTOOLS_STORAGE )
     endif()
 
     set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 1 )
+    set( ATLAS_STORAGE_BACKEND_CUDA 1 )
 
   else()
 

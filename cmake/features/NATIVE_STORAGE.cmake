@@ -53,6 +53,7 @@ if( atlas_HAVE_CUDA )
     #target_link_libraries( atlas INTERFACE ${CUDA_CUDART_LIBRARY} )
 
     set( ATLAS_NATIVE_STORAGE_BACKEND_CUDA 1 )
+    set( ATLAS_STORAGE_BACKEND_CUDA 1 )
 
 else()
 

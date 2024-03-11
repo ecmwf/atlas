@@ -68,6 +68,8 @@ if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
   set(CMAKE_CUDA_ARCHITECTURES 80)
 endif()
 
+set( ATLAS_STORAGE_BACKEND_CUDA 0 )
+
 include( features/BOUNDSCHECKING )
 include( features/FORTRAN )
 include( features/MPI )
