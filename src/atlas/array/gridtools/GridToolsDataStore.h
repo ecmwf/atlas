@@ -13,6 +13,10 @@
 #include "atlas/array/ArrayDataStore.h"
 #include "atlas/array/gridtools/GridToolsTraits.h"
 
+#if ATLAS_HAVE_ACC
+#include "atlas_acc_support/atlas_acc_map_data.h"
+#endif
+
 //------------------------------------------------------------------------------
 
 namespace atlas {
@@ -21,6 +25,8 @@ namespace gridtools {
 
 template <typename gt_DataStore>
 struct GridToolsDataStore : ArrayDataStore {
+    using Value = typename gt_DataStore::data_t;
+
     explicit GridToolsDataStore(gt_DataStore const* ds): data_store_(ds) {}
 
     ~GridToolsDataStore() {
@@ -30,6 +36,7 @@ struct GridToolsDataStore : ArrayDataStore {
 
     void updateDevice() const override {
         assert(data_store_);
+        allocateDevice();
         data_store_->clone_to_device();
     }
 
@@ -39,9 +46,23 @@ struct GridToolsDataStore : ArrayDataStore {
 
     void syncHostDevice() const override { data_store_->sync(); }
 
-    void allocateDevice() const override {}
+    void allocateDevice() const override {
+        if (!acc_mapped_) {
+#if ATLAS_HAVE_ACC
+            atlas_acc_map_data(host_data(), device_data(), bytes());
+#endif
+            acc_mapped_ = true;
+        }
+    }
 
-    void deallocateDevice() const override {}
+    void deallocateDevice() const override {
+        if(acc_mapped_){
+#if ATLAS_HAVE_ACC
+            atlas_acc_unmap_data(host_data());
+#endif
+            acc_mapped_ = false;
+        }
+    }
 
     bool deviceAllocated() const override { return ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA; }
 
@@ -66,10 +87,18 @@ struct GridToolsDataStore : ArrayDataStore {
     void* voidDataStore() override { return static_cast<void*>(const_cast<gt_DataStore*>(data_store_)); }
 
     void* voidHostData() override {
-        return ::gridtools::make_host_view<::gridtools::access_mode::read_only>(*data_store_).data();
+        return host_data();
     }
 
     void* voidDeviceData() override {
+        return device_data();
+    }
+
+private:
+    void* host_data() const {
+        return ::gridtools::make_host_view<::gridtools::access_mode::read_only>(*data_store_).data();
+    }
+    void* device_data() const {
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
         return ::gridtools::make_device_view<::gridtools::access_mode::read_only>(*data_store_).data();
 #else
@@ -77,8 +106,14 @@ struct GridToolsDataStore : ArrayDataStore {
 #endif
     }
 
+    size_t bytes() const {
+        auto storage_info_ptr = data_store_->get_storage_info_ptr().get();
+        return storage_info_ptr->padded_total_length() * sizeof(Value);
+    }
+
 private:
     gt_DataStore const* data_store_;
+    mutable bool acc_mapped_{false};
 };
 
 }  // namespace gridtools
