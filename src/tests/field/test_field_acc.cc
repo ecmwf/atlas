@@ -47,7 +47,8 @@ CASE("test_acc") {
     std::cout << "c_ptr = " << *h << std::endl;
 }
 
-CASE("test_field_gpu") {
+
+CASE("test_field_acc") {
     auto field = Field("0", make_datatype<double>(), array::make_shape(10,4));
 
     auto view = array::make_view<double,2>(field);
@@ -55,11 +56,12 @@ CASE("test_field_gpu") {
     cpu_ptr[0] = 1.;
 
     field.updateDevice();
-    field.array().accMap();
 
     std::cerr << cpu_ptr << std::endl;
 #pragma acc kernels present(cpu_ptr)
-    cpu_ptr[0] = 2.;
+    {
+        cpu_ptr[0] = 2.;
+    }
 
     field.updateHost();
 
