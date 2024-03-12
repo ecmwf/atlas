@@ -32,7 +32,6 @@ void atlas__Field__data_specf(FieldImpl* This, Value*& data, int& rank, int*& sh
     if (This->datatype() != array::make_datatype<Value>()) {
         throw_Exception("Datatype mismatch for accessing field data");
     }
-    This->array().accMap();
     data     = This->data<Value>();
     shapef   = const_cast<int*>(This->shapef().data());
     stridesf = const_cast<int*>(This->stridesf().data());

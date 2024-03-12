@@ -27,6 +27,10 @@
 #include "atlas/runtime/Log.h"
 #include "eckit/log/Bytes.h"
 
+#if ATLAS_HAVE_ACC
+#include "atlas_acc_support/atlas_acc_map_data.h"
+#endif
+
 //------------------------------------------------------------------------------
 
 namespace atlas {
@@ -134,8 +138,14 @@ public:
 
     void allocateDevice() const override {
 #if ATLAS_NATIVE_STORAGE_BACKEND_CUDA
+        if (device_allocated_) {
+           return;
+        }
         cudaMalloc((void**)&data_store_dev_, sizeof(Value)*size_);
         device_allocated_ = true;
+#if ATLAS_HAVE_ACC
+        atlas_acc_map_data(data_store_, data_store_dev_, sizeof(Value)*size_);
+#endif
 #endif
     }
 
@@ -143,6 +153,9 @@ public:
 #if ATLAS_NATIVE_STORAGE_BACKEND_CUDA
         cudaFree(data_store_dev_);
         device_allocated_ = false;
+#if ATLAS_HAVE_ACC
+        atlas_acc_unmap_data(data_store_);
+#endif
 #endif
     }
 
