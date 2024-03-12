@@ -26,7 +26,10 @@
 #include "atlas/domain/Domain.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/functionspace/NodeColumns.h"
+#include "atlas/functionspace/PointCloud.h"
 #include "atlas/grid/Partitioner.h"
+
+#include "atlas/util/GridPointsJSONWriter.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -40,6 +43,15 @@ namespace test {
 std::string input_gridname(const std::string& default_grid) {
     return eckit::Resource<std::string>("--input-grid", default_grid);
 }
+
+int output_rank(const int& default_rank) {
+    return eckit::Resource<int>("--output-rank", default_rank);
+}
+
+std::string output_functionspace(const std::string& default_fs) {
+    return eckit::Resource<std::string>("--output-functionspace", default_fs);
+}
+
 
 FieldSet create_source_fields(functionspace::StructuredColumns& fs, idx_t nb_fields, idx_t nb_levels) {
     using Value = double;
@@ -66,12 +78,15 @@ FieldSet create_target_fields(FunctionSpace& fs, idx_t nb_fields, idx_t nb_level
 }
 
 void do_test( std::string type, int input_halo, bool expect_failure ) {
+    idx_t outrank = output_rank(-1);
     idx_t nb_fields = 2;
     idx_t nb_levels = 19;
 
     // Setup Grid and functionspace
     Grid inputGrid(input_gridname("O40"));
     functionspace::StructuredColumns inputFS(inputGrid, option::levels(nb_levels) | option::halo(input_halo));
+
+    inputFS.polygon(0).outputPythonScript("input.py");
 
     // Setup source field_set
     FieldSet fields_source = create_source_fields(inputFS, nb_fields, nb_levels);
@@ -85,11 +100,45 @@ void do_test( std::string type, int input_halo, bool expect_failure ) {
     RectangularLonLatDomain rd({boundingBoxWest, boundingBoxEast}, {boundingBoxSouth, boundingBoxNorth});
     Grid areaGrid(inputGrid, rd);
 
-    Mesh areaMesh = MeshGenerator("structured").generate( areaGrid, grid::MatchingPartitioner(inputFS) );
-    atlas::FunctionSpace outputFS = atlas::functionspace::NodeColumns{areaMesh};
+    util::GridPointsJSONWriter input_writer(inputGrid,
+        util::Config
+            ("partition",mpi::rank())
+            ("partitioner.partitions",mpi::size())
+            ("field","lonlat")
+    );
+    if( mpi::rank() == outrank ) {
+        Log::info() << "input grid coordinates of rank " << outrank << ": \n";
+        input_writer.write(Log::info());
+    }
 
-    output::Gmsh gmsh{"area.msh"};
-    gmsh.write(areaMesh);
+    util::GridPointsJSONWriter output_writer(areaGrid, grid::MatchingPartitioner(inputFS),
+        util::Config
+            ("partition",mpi::rank())
+            ("field","lonlat")
+    );
+    if( mpi::rank() == outrank ) {
+        Log::info() << "output grid coordinates of rank " << outrank << ": \n";
+        output_writer.write(Log::info());
+    }
+
+    FunctionSpace outputFS;
+    std::string output_functionspace_type = output_functionspace("NodeColumns");
+
+    if (output_functionspace_type=="NodeColumns") {
+        Mesh areaMesh = MeshGenerator("structured").generate( areaGrid, grid::MatchingPartitioner(inputFS) );
+        output::Gmsh gmsh{"area.msh"};
+        gmsh.write(areaMesh);
+        outputFS = atlas::functionspace::NodeColumns{areaMesh};
+    }
+    else if (output_functionspace_type=="StructuredColumns") {
+        outputFS = functionspace::StructuredColumns(areaGrid, grid::MatchingPartitioner(inputFS) );
+    }
+    else if (output_functionspace_type=="PointCloud") {
+        outputFS = atlas::functionspace::PointCloud{areaGrid, grid::MatchingPartitioner(inputFS)};
+    }
+    else {
+        ATLAS_NOTIMPLEMENTED;
+    }
 
     // setup interpolation
     Interpolation interpolation(option::type(type)|Config("matrix_free",false), inputFS, outputFS);
@@ -100,7 +149,10 @@ void do_test( std::string type, int input_halo, bool expect_failure ) {
     // execute interpolation
     interpolation.execute(fields_source, fields_target);
 
-    gmsh.write(fields_target);
+    if (atlas::functionspace::NodeColumns(outputFS)) {
+        output::Gmsh gmsh{"area.msh","a"};
+        gmsh.write(fields_target);
+    }
 }
 
 CASE("test structured-linear2D, halo 3") {
