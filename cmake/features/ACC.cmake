@@ -3,7 +3,7 @@
 if( atlas_HAVE_ATLAS_FIELD )
 
 set( ATLAS_ACC_CAPABLE FALSE )
-set( atlas_HAVE_CUDA 0 )
+
 if( HAVE_CUDA )
   if( CMAKE_Fortran_COMPILER_ID MATCHES "PGI|NVHPC" )
     set( atlas_HAVE_CUDA 1 )

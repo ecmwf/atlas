@@ -40,7 +40,7 @@ function( atlas_host_device srclist )
   set( multi_value_args SOURCES )
   cmake_parse_arguments( _PAR "${options}" "${single_value_args}" "${multi_value_args}" ${ARGN} )
 
-  if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA OR ATLAS_NATIVE_STORAGE_BACKEND_CUDA )
+  if( ATLAS_STORAGE_BACKEND_CUDA )
     set( use_cuda_srclist ${_PAR_SOURCES} )
 
     foreach( src ${use_cuda_srclist} )

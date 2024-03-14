@@ -1,4 +1,4 @@
-if( atlas_HAVE_ATLAS_FIELD AND ENABLE_NATIVE_STORAGE )
+if( atlas_HAVE_ATLAS_FIELD AND NOT HAVE_GRIDTOOLS_STORAGE )
 
 ### Native_Storage storage module
 
@@ -11,15 +11,15 @@ if( atlas_HAVE_ATLAS_FIELD AND ENABLE_NATIVE_STORAGE )
       set( THREADS_PREFER_PTHREAD_FLAG 1 )
     endif()
 
-ecbuild_add_option(
-  FEATURE NATIVE_STORAGE
-  DESCRIPTION "Arrays internally use Native storage layer"
-)
+    #ecbuild_add_option(
+    # FEATURE NATIVE_STORAGE
+    #DESCRIPTION "Arrays internally use Native storage layer"
+    #)
 
 ecbuild_add_option( FEATURE CUDA
                     DESCRIPTION "Enable CUDA support via Native CUDA backend"
                     )
-
+                ecbuild_warn_var(atlas_HAVE_CUDA)
 set( ATLAS_NATIVE_STORAGE_BACKEND_HOST 0 )
 set( ATLAS_NATIVE_STORAGE_BACKEND_CUDA 0 )
 set( atlas_HAVE_NATIVE_STORAGE 1 ) # always true
@@ -53,7 +53,6 @@ if( atlas_HAVE_CUDA )
     #target_link_libraries( atlas INTERFACE ${CUDA_CUDART_LIBRARY} )
 
     set( ATLAS_NATIVE_STORAGE_BACKEND_CUDA 1 )
-    set( ATLAS_STORAGE_BACKEND_CUDA 1 )
 
 else()
 
@@ -63,5 +62,5 @@ endif()
 
 else()
     set( ATLAS_NATIVE_STORAGE_BACKEND_CUDA 0 )
-    set( ATLAS_NATIVE_STORAGE_BACKEND_HOST 0 )
+    set( ATLAS_NATIVE_STORAGE_BACKEND_HOST 1 )
 endif()

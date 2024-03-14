@@ -918,20 +918,24 @@ list( APPEND source_list
   ${atlas_io_adaptor_srcs}
 )
 
-if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
+include( atlas_host_device )
+
+if( ATLAS_STORAGE_BACKEND_CUDA )
   list( APPEND source_list
     parallel/HaloExchangeCUDA.h
     parallel/HaloExchangeCUDA.cu
   )
+  atlas_host_device( source_list
+    SOURCES
+      mesh/Connectivity.cc
+  )
 endif()
 
-include( atlas_host_device )
 if( atlas_HAVE_GRIDTOOLS_STORAGE )
   atlas_host_device( source_list
     SOURCES
       array/gridtools/GridToolsArrayView.cc
       array/gridtools/GridToolsIndexView.cc
-      mesh/Connectivity.cc
   )
 endif()
 if( atlas_HAVE_NATIVE_STORAGE )
@@ -939,7 +943,6 @@ if( atlas_HAVE_NATIVE_STORAGE )
     SOURCES
       array/native/NativeArrayView.cc
       array/native/NativeDataStore.h
-      mesh/Connectivity.cc
   )
 endif()
 
@@ -974,7 +977,7 @@ ecbuild_add_library( TARGET atlas
     $<${atlas_HAVE_EIGEN}:Eigen3::Eigen>
     $<${atlas_HAVE_OMP_CXX}:OpenMP::OpenMP_CXX>
     $<${atlas_HAVE_GRIDTOOLS_STORAGE}:GridTools::gridtools>
-    $<$<AND:${atlas_HAVE_CUDA},${atlas_HAVE_NATIVE_STORAGE}>:CUDA::cudart>
+    $<${atlas_HAVE_NATIVE_STORAGE}:CUDA::cudart>
 
   PRIVATE_INCLUDES
     ${CGAL_INCLUDE_DIRS}

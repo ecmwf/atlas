@@ -64,8 +64,6 @@ ecbuild_add_option( FEATURE ECKIT_DEVELOP
                     DESCRIPTION "Used to enable new features or API depending on eckit develop branch, not yet in a tagged release"
                     DEFAULT OFF )
 
-set( ATLAS_STORAGE_BACKEND_CUDA 0 )
-
 include( features/BOUNDSCHECKING )
 include( features/FORTRAN )
 include( features/MPI )
@@ -84,6 +82,15 @@ include( features/INCLUDE_WHAT_YOU_USE )
 include( features/INIT_SNAN )
 include( features/DOCS )
 include( features/ATLAS_RUN )
+
+set( ATLAS_STORAGE_BACKEND_CUDA 0 )
+set( ATLAS_STORAGE_BACKEND_HOST 1 ) # default
+
+if( ATLAS_NATIVE_STORAGE_BACKEND_CUDA OR ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
+    set( ATLAS_STORAGE_BACKEND_CUDA 1 )
+    set( ATLAS_STORAGE_BACKEND_HOST 0 )
+    set( ATLAS_NATIVE_STORAGE_BACKEND_HOST 0 ) # was default until now
+endif()
 
 ################################################################################
 # sources

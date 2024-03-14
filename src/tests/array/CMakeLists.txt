@@ -35,7 +35,6 @@ ecbuild_add_test( TARGET atlas_test_array_vector
   SOURCES  test_array_vector.cc
   LIBS     atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
-  CONDITION atlas_HAVE_GRIDTOOLS_STORAGE
 )
 
 ecbuild_add_test( TARGET atlas_test_svector
@@ -67,6 +66,7 @@ atlas_add_cuda_test(
   LIBS atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
+
 atlas_add_cuda_test(
   TARGET atlas_test_vector_kernel
   SOURCES test_vector_kernel.cu

@@ -62,7 +62,7 @@ if( HAVE_FCTEST )
   )
 
   add_fctest( TARGET atlas_fctest_field_host
-    CONDITION       atlas_HAVE_GRIDTOOLS_STORAGE AND ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST
+    CONDITION       ATLAS_STORAGE_BACKEND_HOST
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_field_host.F90
     LIBS            atlas_f
