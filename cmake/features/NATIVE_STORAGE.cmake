@@ -18,6 +18,7 @@ if( atlas_HAVE_ATLAS_FIELD AND NOT HAVE_GRIDTOOLS_STORAGE )
 
 ecbuild_add_option( FEATURE CUDA
                     DESCRIPTION "Enable CUDA support via Native CUDA backend"
+                    DEFAULT OFF
                   )
 set( ATLAS_NATIVE_STORAGE_BACKEND_HOST 0 )
 set( ATLAS_NATIVE_STORAGE_BACKEND_CUDA 0 )
