@@ -440,7 +440,7 @@ int run(int argc, char* argv[]) {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-#if ATLAS_NATIVE_STORAGE_BACKEND_CUDA or ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+#if ATLAS_STORAGE_BACKEND_CUDA
 
 /*
  * Check runtime errors using CUDA.

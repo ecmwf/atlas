@@ -10,9 +10,9 @@
 
 #include <cuda_runtime.h>
 
+#include "atlas/array/SVector.h"
 #include "atlas/library/config.h"
 #include "tests/AtlasTestEnvironment.h"
-#include "atlas/array/SVector.h"
 
 using namespace atlas::array;
 

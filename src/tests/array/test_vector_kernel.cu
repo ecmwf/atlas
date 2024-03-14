@@ -10,13 +10,12 @@
 
 #include <cuda_runtime.h>
 
-#include "tests/AtlasTestEnvironment.h"
-
-#include "atlas/array/Vector.h"
-#include "atlas/array/GPUClonable.h"
 #include "atlas/array.h"
+#include "atlas/array/GPUClonable.h"
 #include "atlas/array/MakeView.h"
+#include "atlas/array/Vector.h"
 #include "atlas/runtime/Log.h"
+#include "tests/AtlasTestEnvironment.h"
 
 using namespace atlas::array;
 

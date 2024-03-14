@@ -394,7 +394,7 @@ CASE("test_insert") {
 // The original gt data store is deleted and replaced, but the former
 // atlas::array::ArrayView keeps a pointer to it
 // wihtout noticing it has been deleted
-#if ATLAS_HAVE_GRIDTOOLS_STORAGE
+#if ATLAS_HAVE_GRIDTOOLS_STORAGE // TODO
     // Following statement seems to contradict previous comment
     EXPECT(hv.valid() == false);
 #endif
