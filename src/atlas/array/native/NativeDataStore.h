@@ -104,7 +104,10 @@ public:
         initialise(data_store_, size_);
         device_allocated_ = false;
         setHostNeedsUpdate(false);
+        setDeviceNeedsUpdate(false);
+#if ATLAS_NATIVE_STORAGE_BACKEND_CUDA
         setDeviceNeedsUpdate(true);
+#endif
     }
 
     ~DataStore() override {
