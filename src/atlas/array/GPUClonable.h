@@ -10,7 +10,7 @@
 
 #pragma once
 
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA or ATLAS_NATIVE_STORAGE_BACKEND_CUDA
+#if ATLAS_STORAGE_BACKEND_CUDA
 
 #include "atlas/library/config.h"
 
@@ -24,8 +24,9 @@ struct GPUClonable {
     }
 
     ~GPUClonable() {
-        assert(gpu_object_ptr_);
-        cudaFree(gpu_object_ptr_);
+        if (gpu_object_ptr_) {
+            cudaFree(gpu_object_ptr_);
+        }
     }
 
     Base* gpu_object_ptr() { return static_cast<Base*>(gpu_object_ptr_); }
