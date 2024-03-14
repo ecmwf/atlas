@@ -977,7 +977,7 @@ ecbuild_add_library( TARGET atlas
     $<${atlas_HAVE_EIGEN}:Eigen3::Eigen>
     $<${atlas_HAVE_OMP_CXX}:OpenMP::OpenMP_CXX>
     $<${atlas_HAVE_GRIDTOOLS_STORAGE}:GridTools::gridtools>
-    $<${atlas_HAVE_NATIVE_STORAGE}:CUDA::cudart>
+    $<${ATLAS_NATIVE_STORAGE_BACKEND_CUDA}:CUDA::cudart>
 
   PRIVATE_INCLUDES
     ${CGAL_INCLUDE_DIRS}
