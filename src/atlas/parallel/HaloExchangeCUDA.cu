@@ -23,8 +23,13 @@ struct get_buffer_index{
     ATLAS_HOST_DEVICE
     static idx_t apply(const array::ArrayView<DATA_TYPE, RANK>& field,
                            const idx_t node_cnt, const idx_t var1_idx) {
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
         return field.data_view().template length<RANK-1>() * field.data_view().template length<RANK-2>() * node_cnt +
                 field.data_view().template length<RANK-1>() * var1_idx;
+#else
+        return field.shape(RANK-1) * field.shape(RANK-2) * node_cnt +
+                field.shape(RANK-1) * var1_idx;
+#endif
     }
 };
 
@@ -34,7 +39,11 @@ struct get_buffer_index<ParallelDim, 2>{
     ATLAS_HOST_DEVICE
     static idx_t apply(const array::ArrayView<DATA_TYPE, 2>& field,
                            const idx_t node_cnt, const idx_t var1_idx) {
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
         return field.data_view().template length<1>() * node_cnt + var1_idx;
+#else
+        return field.shape(1) * node_cnt + var1_idx;
+#endif
     }
 };
 
@@ -60,7 +69,11 @@ __global__ void pack_kernel(const int sendcnt,  const int* sendmap_ptr, const id
     const idx_t node_cnt = blockIdx.x*blockDim.x + threadIdx.x;
     const idx_t var1_idx = blockIdx.y*blockDim.y + threadIdx.y;
 
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     if(node_cnt >= sendcnt || var1_idx >= field.data_view().template length<1>() ) return;
+#else
+    if(node_cnt >= sendcnt || var1_idx >= field.shape(1) ) return;
+#endif
 
     idx_t buff_idx = get_buffer_index<ParallelDim, RANK>::apply(field, node_cnt, var1_idx);
     const idx_t node_idx = sendmap[node_cnt];
@@ -92,7 +105,11 @@ __global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const i
     const idx_t node_cnt = blockIdx.x*blockDim.x + threadIdx.x;
     const idx_t var1_idx = blockIdx.y*blockDim.y + threadIdx.y;
 
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
     if(node_cnt >= recvcnt || var1_idx >= field.data_view().template length<1>() ) return;
+#else
+    if(node_cnt >= recvcnt || var1_idx >= field.shape(1) ) return;
+#endif
 
     const idx_t node_idx = recvmap[node_cnt];
 
@@ -124,7 +141,12 @@ struct get_n_cuda_blocks
 {
   template<typename DATA_TYPE>
   static unsigned int apply(const array::ArrayView<DATA_TYPE, RANK>& hfield, const unsigned int block_size_y) {
-      return (hfield.data_view().template length<get_first_non_parallel_dim<ParallelDim, RANK, 0>::apply()>()+block_size_y-1)/block_size_y;
+      constexpr auto dim = get_first_non_parallel_dim<ParallelDim, RANK, 0>::apply();
+#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+      return (hfield.data_view().template length<dim>()+block_size_y-1)/block_size_y;
+#else
+      return (hfield.shape(dim)+block_size_y-1)/block_size_y;
+#endif
   }
 };
 
