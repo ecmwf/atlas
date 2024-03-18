@@ -326,6 +326,12 @@ public:
         return const_slicer_t(*this).apply(args...);
     }
 
+    template <typename... Ints>
+    ATLAS_HOST_DEVICE
+    constexpr idx_t index(Ints... idx) const {
+        return index_part<0>(idx...);
+    }
+
 private:
     // -- Private methods
 
@@ -339,12 +345,6 @@ private:
     ATLAS_HOST_DEVICE
     constexpr idx_t index_part(Int last_idx) const {
         return last_idx * strides_[Dim];
-    }
-
-    template <typename... Ints>
-    ATLAS_HOST_DEVICE
-    constexpr idx_t index(Ints... idx) const {
-        return index_part<0>(idx...);
     }
 
 #if ATLAS_ARRAYVIEW_BOUNDS_CHECKING

@@ -29,7 +29,7 @@ ecbuild_add_test( TARGET atlas_test_field_acc
   SOURCES  test_field_acc.cc
   LIBS     atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
-  CONDITION ATLAS_HAVE_ACC AND ATLAS_STORAGE_BACKEND_CUDA
+  CONDITION atlas_HAVE_ACC AND ATLAS_STORAGE_BACKEND_CUDA
 )
 if( TEST atlas_test_field_acc )
     target_compile_options( atlas_test_field_acc PRIVATE "${ACC_C_FLAGS}")
