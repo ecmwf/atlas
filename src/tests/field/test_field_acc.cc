@@ -53,21 +53,20 @@ CASE("test_field_acc") {
 
     auto view = array::make_view<double,2>(field);
     double* cpu_ptr = static_cast<double*>(view.data());
-    cpu_ptr[0] = 1.;
+    cpu_ptr[view.index(3,2)] = 1.;
 
     field.updateDevice();
 
-    std::cerr << cpu_ptr << std::endl;
 #pragma acc kernels present(cpu_ptr)
     {
-        cpu_ptr[0] = 2.;
+        cpu_ptr[view.index(3,2)] = 2.;
     }
 
     field.updateHost();
 
-    std::cout << "field_v = " << view(0,0) << std::endl;
-    EXPECT_EQ( cpu_ptr[0], 2. );
-    EXPECT_EQ( view(0,0), 2. );
+    std::cout << "field(3,2) = " << view(3,2) << std::endl;
+    EXPECT_EQ( cpu_ptr[view.index(3,2)], 2. );
+    EXPECT_EQ( view(3,2), 2. );
 }
 
 //-----------------------------------------------------------------------------
