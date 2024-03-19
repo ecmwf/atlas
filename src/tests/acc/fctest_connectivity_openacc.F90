@@ -14,7 +14,7 @@
 
 ! -----------------------------------------------------------------------------
 
-TESTSUITE(fctest_atlas_Connectivity)
+TESTSUITE(fctest_atlas_Connectivity_acc)
 
 ! -----------------------------------------------------------------------------
 TESTSUITE_INIT()
