@@ -34,6 +34,7 @@ ecbuild_add_test( TARGET atlas_test_field_acc
 if( TEST atlas_test_field_acc )
     target_compile_options( atlas_test_field_acc PRIVATE "${ACC_C_FLAGS}")
     target_link_options( atlas_test_field_acc PRIVATE "${ACC_C_FLAGS}")
+    set_tests_properties ( atlas_test_field_acc PROPERTIES LABELS "gpu;acc")
 endif()
 
 if( HAVE_FCTEST )
@@ -81,6 +82,7 @@ if( HAVE_FCTEST )
     target_compile_options( atlas_fctest_field_device PUBLIC ${ACC_Fortran_FLAGS} )
     target_link_libraries( atlas_fctest_field_device ${ACC_Fortran_FLAGS} )
     target_link_options( atlas_fctest_field_device PRIVATE "${ACC_Fortran_FLAGS}")
+    set_tests_properties ( atlas_fctest_field_device PROPERTIES LABELS "gpu;acc")
   endif()
 
 endif()

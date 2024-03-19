@@ -25,6 +25,7 @@ if( ATLAS_STORAGE_BACKEND_CUDA AND HAVE_TESTS AND HAVE_FCTEST AND atlas_HAVE_ACC
   else()
     target_link_libraries( atlas_test_unified_memory_with_openacc ${ACC_Fortran_FLAGS} )
   endif()
+  set_tests_properties( atlas_test_unified_memory_with_openacc PROPERTIES LABELS "gpu;acc")
 
 
   add_fctest( 
@@ -36,6 +37,7 @@ if( ATLAS_STORAGE_BACKEND_CUDA AND HAVE_TESTS AND HAVE_FCTEST AND atlas_HAVE_ACC
   )
   target_link_libraries( atlas_test_connectivity_openacc ${ACC_Fortran_FLAGS} )
   set_target_properties( atlas_test_connectivity_openacc PROPERTIES COMPILE_FLAGS "${ACC_Fortran_FLAGS_STR}" )
+  set_tests_properties ( atlas_test_connectivity_openacc PROPERTIES LABELS "gpu;acc")
 
 else()
 

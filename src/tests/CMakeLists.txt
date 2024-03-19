@@ -91,6 +91,9 @@ macro( atlas_add_cuda_test )
       set_property( TEST ${_PAR_TARGET} APPEND PROPERTY ENVIRONMENT "${_PAR_ENVIRONMENT}" )
 
     endif()
+
+    set_tests_properties(${_PAR_TARGET} PROPERTIES LABELS "gpu")
+
   endif()
 endmacro()
 
