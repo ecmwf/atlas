@@ -35,16 +35,14 @@ CASE("test_acc") {
     cudaMalloc(&dev, sizeof(int));
     int* c_ptr = new int();
     *c_ptr = 5;
+
     acc_map_data(c_ptr, dev, sizeof(int));
 #pragma acc kernels present(c_ptr)
     *c_ptr = 2.;
 
-#pragma acc kernels present(c_ptr)
-    *c_ptr = 3.;
-
     int* h = new int();
     cudaMemcpy(h, dev, sizeof(int), cudaMemcpyDeviceToHost);
-    std::cout << "c_ptr = " << *h << std::endl;
+    EXPECT_EQ( *h, 2 );
 }
 
 
@@ -53,20 +51,21 @@ CASE("test_field_acc") {
 
     auto view = array::make_view<double,2>(field);
     double* cpu_ptr = static_cast<double*>(view.data());
-    cpu_ptr[view.index(3,2)] = 1.;
+    view(3,2) = 1.;
+    cpu_ptr[view.index(3,2)] = 2.;
+
+    EXPECT_EQ( view(3,2), 2. );
 
     field.updateDevice();
 
 #pragma acc kernels present(cpu_ptr)
     {
-        cpu_ptr[view.index(3,2)] = 2.;
+        cpu_ptr[view.index(3,2)] = 3.;
     }
 
     field.updateHost();
 
-    std::cout << "field(3,2) = " << view(3,2) << std::endl;
-    EXPECT_EQ( cpu_ptr[view.index(3,2)], 2. );
-    EXPECT_EQ( view(3,2), 2. );
+    EXPECT_EQ( view(3,2), 3. );
 }
 
 //-----------------------------------------------------------------------------
