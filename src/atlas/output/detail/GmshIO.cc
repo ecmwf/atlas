@@ -143,6 +143,7 @@ void write_level(std::ostream& out, GlobalIndex gidx, const array::LocalView<Val
     }
     else if (nvars <= 3) {
         std::array<value_type, 3> data_vec;
+        data_vec.fill(static_cast<value_type>(0));
         for (idx_t n = 0; n < ndata; ++n) {
             if (include(n)) {
                 for (idx_t v = 0; v < nvars; ++v) {
@@ -158,6 +159,7 @@ void write_level(std::ostream& out, GlobalIndex gidx, const array::LocalView<Val
     }
     else if (nvars <= 9) {
         std::array<value_type, 9> data_vec;
+        data_vec.fill(static_cast<value_type>(0));
         if (nvars == 4) {
             for (int n = 0; n < ndata; ++n) {
                 if (include(n)) {
