@@ -32,7 +32,3 @@ if( CMAKE_CXX_COMPILER_ID MATCHES IntelLLVM )
   ecbuild_add_cxx_flags("-fno-finite-math-only")
 endif()
 
-if( APPLE AND CMAKE_Fortran_COMPILER_ID MATCHES GNU )
-  # Avoid warnings :  ld: warning: could not create compact unwind for ...
-  add_link_options(-Wl,-keep_dwarf_unwind -Wl,-no_compact_unwind)
-endif()
