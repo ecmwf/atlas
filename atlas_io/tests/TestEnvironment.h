@@ -27,7 +27,7 @@
 #include "eckit/types/Types.h"
 
 #include "atlas_io/atlas-io.h"
-#include "atlas_io/detail/BlackMagic.h"
+#include "atlas_io/Trace.h"
 
 namespace atlas {
 namespace test {

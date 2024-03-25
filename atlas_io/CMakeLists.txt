@@ -32,6 +32,16 @@ ecbuild_add_option( FEATURE ECKIT_DEVELOP
                     DESCRIPTION "Used to enable new features or API depending on eckit develop branch, not yet in a tagged release"
                     DEFAULT OFF )
 
+set( eckit_HAVE_ECKIT_CODEC 0 )
+if( TARGET eckit_codec )
+  set( eckit_HAVE_ECKIT_CODEC 1 )
+endif()
+
+ecbuild_add_option( FEATURE ECKIT_CODEC
+                    DEFAULT ON
+                    DESCRIPTION "Use eckit::codec with adaptor"
+                    CONDITION eckit_HAVE_ECKIT_CODEC )
+
 ################################################################################
 # sources
 
@@ -51,8 +61,12 @@ else()
   set( ATLAS_IO_LITTLE_ENDIAN 1 )
 endif()
 
-
-add_subdirectory( src )
+if( HAVE_ECKIT_CODEC )
+  ecbuild_info("atlas_io is configured to be an adaptor library which delegates calls to eckit_codec")
+  add_subdirectory(eckit_codec_adaptor)
+else()
+  add_subdirectory( src )
+endif()
 add_subdirectory( tests )
 
 ################################################################################
