@@ -1001,7 +1001,7 @@ void PointCloud::setupGatherScatter() {
                             array::make_view<idx_t, 1>(remote_index_).data(),
                             REMOTE_IDX_BASE,
                             array::make_view<gidx_t, 1>(global_index_).data(),
-                            array::make_view<idx_t, 1>(ghost_).data(),
+                            array::make_view<int, 1>(ghost_).data(),
                             ghost_.size());
         size_global_ = gather_scatter_->glb_dof();
     }
