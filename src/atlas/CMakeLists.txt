@@ -750,7 +750,6 @@ array/helpers/ArrayForEach.h
 )
 if( atlas_HAVE_GRIDTOOLS_STORAGE )
 list( APPEND atlas_array_srcs
-array/gridtools/GPUClonable.h
 array/gridtools/GridToolsArray.cc
 array/gridtools/GridToolsArrayHelpers.h
 array/gridtools/GridToolsArrayView.cc
@@ -803,6 +802,7 @@ util/PeriodicTransform.h
 util/Topology.h
 util/Allocate.h
 util/Allocate.cc
+util/GPUClonable.h
 
 util/Constants.h
 util/ConvexSphericalPolygon.cc

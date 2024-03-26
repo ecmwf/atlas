@@ -13,8 +13,8 @@
 #include "tests/AtlasTestEnvironment.h"
 
 #include "atlas/array/Vector.h"
-#include "atlas/array/gridtools/GPUClonable.h"
 #include "atlas/array.h"
+#include "atlas/util/GPUClonable.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/runtime/Log.h"
 
@@ -33,9 +33,9 @@ struct int_gpu {
     void updateHost(){ gpu_clone_.updateHost();}
 
     int val_;
-private:
 
-    array::gridtools::GPUClonable<int_gpu> gpu_clone_;
+private:
+    util::GPUClonable<int_gpu> gpu_clone_;
 };
 
 __global__
