@@ -310,11 +310,6 @@ bool ArrayT<Value>::accUnmap() const {
     return acc_map_;
 }
 
-template <typename Value>
-bool ArrayT<Value>::accUnmap() const {
-    return false;
-}
-
 //------------------------------------------------------------------------------
 
 template Array* Array::create<int>(idx_t);
