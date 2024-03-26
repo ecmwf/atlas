@@ -11,11 +11,12 @@
 
 #include "Allocate.h"
 
-#include "atlas/library/config.h"
-#include "atlas/runtime/Exception.h"
 #include "eckit/log/CodeLocation.h"
 
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+#include "atlas/library/config.h"
+#include "atlas/runtime/Exception.h"
+
+#if ATLAS_HAVE_CUDA
 #include <cuda_runtime.h>
 #endif
 
@@ -27,7 +28,7 @@ namespace detail {
 //------------------------------------------------------------------------------
 
 void allocate_cudamanaged(void** ptr, size_t size) {
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+#if ATLAS_HAVE_CUDA
     cudaError_t err = cudaMallocManaged(ptr, size);
     if (err != cudaSuccess)
         throw_AssertionFailed("failed to allocate GPU memory", Here());
@@ -37,7 +38,7 @@ void allocate_cudamanaged(void** ptr, size_t size) {
 }
 
 void deallocate_cudamanaged(void* ptr) {
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+#if ATLAS_HAVE_CUDA
     cudaError_t err = cudaDeviceSynchronize();
     if (err != cudaSuccess)
         throw_AssertionFailed("failed to synchronize memory", Here());
@@ -52,7 +53,7 @@ void deallocate_cudamanaged(void* ptr) {
 }
 
 void allocate_cuda(void** ptr, size_t size) {
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+#if ATLAS_HAVE_CUDA
     cudaError_t err = cudaMalloc(ptr, size);
     if (err != cudaSuccess)
         throw_AssertionFailed("failed to allocate GPU memory", Here());

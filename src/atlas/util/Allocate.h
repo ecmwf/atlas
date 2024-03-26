@@ -12,8 +12,6 @@
 
 #include <cstddef>
 
-#include "atlas/library/config.h"
-
 namespace atlas {
 namespace util {
 
