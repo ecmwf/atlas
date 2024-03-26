@@ -83,7 +83,7 @@ CASE( "test_block_connectivity" )
     BlockConnectivity conn;
 
     bool* result;
-    cudaMallocManaged(&result, sizeof(bool));
+    CHECK_CUDA_ERROR( cudaMallocManaged(&result, sizeof(bool)) );
 
     *result = true;
 
@@ -103,8 +103,8 @@ CASE( "test_block_connectivity" )
     EXPECT(conn(1,4) == 45);
 
     kernel_block<<<1,1>>>(conn, result);
-
-    cudaDeviceSynchronize();
+    CHECK_CUDA_ERROR( cudaPeekAtLastError() );
+    CHECK_CUDA_ERROR( cudaDeviceSynchronize() );
 
     EXPECT( *result == true );
 
@@ -127,12 +127,12 @@ CASE( "test_irregular_connectivity" )
     EXPECT(conn(0,0) == 1 IN_FORTRAN);
 
     bool* result;
-    cudaMallocManaged(&result, sizeof(bool));
+    CHECK_CUDA_ERROR( cudaMallocManaged(&result, sizeof(bool)) );
     *result = true;
 
     kernel_irr<<<1,1>>>(conn, result);
-
-    cudaDeviceSynchronize();
+    CHECK_CUDA_ERROR( cudaPeekAtLastError() );
+    CHECK_CUDA_ERROR( cudaDeviceSynchronize() );
 
     EXPECT( *result == true );
 
@@ -155,12 +155,12 @@ CASE( "test_multiblock_connectivity" )
 
     EXPECT(conn.block(0)(0,0) == 1 IN_FORTRAN);
     bool* result;
-    cudaMallocManaged(&result, sizeof(bool));
+    CHECK_CUDA_ERROR( cudaMallocManaged(&result, sizeof(bool)) );
     *result = true;
 
     kernel_multiblock<<<1,1>>>(conn, result);
-
-    cudaDeviceSynchronize();
+    CHECK_CUDA_ERROR( cudaPeekAtLastError() );
+    CHECK_CUDA_ERROR( cudaDeviceSynchronize() );
 
     EXPECT( *result == true );
 

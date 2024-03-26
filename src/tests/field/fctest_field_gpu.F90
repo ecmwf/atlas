@@ -74,6 +74,8 @@ field = atlas_Field(kind=atlas_real(4),shape=[5,3])
 call field%data(view)
 view(:,:) = 0
 view(1,1) = 1
+
+call field%allocate_device()
 call field%update_device()
 
 !$acc data present(view)

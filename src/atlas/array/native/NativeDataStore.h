@@ -16,12 +16,20 @@
 #include <limits>   // std::numeric_limits<T>::signaling_NaN
 #include <sstream>
 
+#if ATLAS_NATIVE_STORAGE_BACKEND_CUDA
+#include <cuda_runtime.h>
+#endif
+
 #include "atlas/array/ArrayDataStore.h"
 #include "atlas/library/Library.h"
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "eckit/log/Bytes.h"
+
+#if ATLAS_HAVE_ACC
+#include "atlas_acc_support/atlas_acc_map_data.h"
+#endif
 
 //------------------------------------------------------------------------------
 
@@ -94,37 +102,79 @@ public:
     DataStore(size_t size): size_(size) {
         alloc_aligned(data_store_, size_);
         initialise(data_store_, size_);
+        device_allocated_ = false;
+        setHostNeedsUpdate(false);
+        setDeviceNeedsUpdate(false);
+#if ATLAS_NATIVE_STORAGE_BACKEND_CUDA
+        setDeviceNeedsUpdate(true);
+#endif
     }
 
-    virtual ~DataStore() override { free_aligned(data_store_); }
+    ~DataStore() override {
+        free_aligned(data_store_);
+        deallocateDevice();
+    }
 
-    virtual void updateDevice() const override {}
+    void updateDevice() const override {
+#if ATLAS_NATIVE_STORAGE_BACKEND_CUDA
+        if (not device_allocated_) {
+            allocateDevice();
+        }
+        cudaMemcpy(data_store_dev_, data_store_, size_*sizeof(Value), cudaMemcpyHostToDevice);
+#endif
+    }
 
-    virtual void updateHost() const override {}
+    void updateHost() const override {
+#if ATLAS_NATIVE_STORAGE_BACKEND_CUDA
+        cudaMemcpy(data_store_, data_store_dev_, size_*sizeof(Value), cudaMemcpyDeviceToHost);
+#endif
+    }
 
-    virtual bool valid() const override { return true; }
+    bool valid() const override { return true; }
 
-    virtual void syncHostDevice() const override {}
+    void syncHostDevice() const override {
+        if (host_updated_) updateDevice();
+        if (device_updated_) updateHost();
+    }
 
-    virtual bool deviceAllocated() const override { return false; }
+    bool deviceAllocated() const override { return device_allocated_; }
 
-    virtual void allocateDevice() const override {}
+    void allocateDevice() const override {
+#if ATLAS_NATIVE_STORAGE_BACKEND_CUDA
+        if (device_allocated_) {
+           return;
+        }
+        cudaMalloc((void**)&data_store_dev_, sizeof(Value)*size_);
+        device_allocated_ = true;
+#if ATLAS_HAVE_ACC
+        atlas_acc_map_data(data_store_, data_store_dev_, sizeof(Value)*size_);
+#endif
+#endif
+    }
 
-    virtual void deallocateDevice() const override {}
+    void deallocateDevice() const override {
+#if ATLAS_NATIVE_STORAGE_BACKEND_CUDA
+        cudaFree(data_store_dev_);
+        device_allocated_ = false;
+#if ATLAS_HAVE_ACC
+        atlas_acc_unmap_data(data_store_);
+#endif
+#endif
+    }
 
-    virtual bool hostNeedsUpdate() const override { return false; }
+    bool hostNeedsUpdate() const override { return (not host_updated_); }
 
-    virtual bool deviceNeedsUpdate() const override { return false; }
+    bool deviceNeedsUpdate() const override { return (not device_updated_); }
 
-    virtual void setHostNeedsUpdate(bool) const override {}
+    void setHostNeedsUpdate(bool v) const override { host_updated_ = (not v); }
 
-    virtual void setDeviceNeedsUpdate(bool) const override {}
+    void setDeviceNeedsUpdate(bool v) const override { device_updated_ = (not v); }
 
-    virtual void* voidDataStore() override { return static_cast<void*>(data_store_); }
+    void* voidDataStore() override { return static_cast<void*>(data_store_); }
 
-    virtual void* voidHostData() override { return static_cast<void*>(data_store_); }
+    void* voidHostData() override { return static_cast<void*>(data_store_); }
 
-    virtual void* voidDeviceData() override { return static_cast<void*>(data_store_); }
+    void* voidDeviceData() override { return static_cast<void*>(data_store_dev_); }
 
 private:
     [[noreturn]] void throw_AllocationFailed(size_t bytes, const eckit::CodeLocation& loc) {
@@ -154,6 +204,7 @@ private:
             free(ptr);
             ptr = nullptr;
             MemoryHighWatermark::instance() -= footprint();
+            deallocateDevice();
         }
     }
 
@@ -161,6 +212,10 @@ private:
 
     Value* data_store_;
     size_t size_;
+    Value* data_store_dev_;
+    mutable bool host_updated_;
+    mutable bool device_updated_;
+    mutable bool device_allocated_;
 };
 
 //------------------------------------------------------------------------------

@@ -731,6 +731,7 @@ array/ArrayViewUtil.h
 array/ArrayViewDefs.h
 array/DataType.h
 array/IndexView.h
+array/GPUClonable.h
 array/LocalView.cc
 array/LocalView.h
 array/Range.h
@@ -750,7 +751,6 @@ array/helpers/ArrayForEach.h
 )
 if( atlas_HAVE_GRIDTOOLS_STORAGE )
 list( APPEND atlas_array_srcs
-array/gridtools/GPUClonable.h
 array/gridtools/GridToolsArray.cc
 array/gridtools/GridToolsArrayHelpers.h
 array/gridtools/GridToolsArrayView.cc
@@ -918,20 +918,33 @@ list( APPEND source_list
   ${atlas_io_adaptor_srcs}
 )
 
-if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
+include( atlas_host_device )
+
+if( ATLAS_STORAGE_BACKEND_CUDA )
   list( APPEND source_list
     parallel/HaloExchangeCUDA.h
     parallel/HaloExchangeCUDA.cu
   )
+  atlas_host_device( source_list
+    SOURCES
+      mesh/Connectivity.cc
+  )
 endif()
 
-include( atlas_host_device )
-atlas_host_device( source_list
-  SOURCES
-    array/gridtools/GridToolsArrayView.cc
-    array/gridtools/GridToolsIndexView.cc
-    mesh/Connectivity.cc
-)
+if( atlas_HAVE_GRIDTOOLS_STORAGE )
+  atlas_host_device( source_list
+    SOURCES
+      array/gridtools/GridToolsArrayView.cc
+      array/gridtools/GridToolsIndexView.cc
+  )
+endif()
+if( atlas_HAVE_NATIVE_STORAGE )
+  atlas_host_device( source_list
+    SOURCES
+      array/native/NativeArrayView.cc
+      array/native/NativeDataStore.h
+  )
+endif()
 
 ecbuild_add_library( TARGET atlas
 
@@ -964,6 +977,7 @@ ecbuild_add_library( TARGET atlas
     $<${atlas_HAVE_EIGEN}:Eigen3::Eigen>
     $<${atlas_HAVE_OMP_CXX}:OpenMP::OpenMP_CXX>
     $<${atlas_HAVE_GRIDTOOLS_STORAGE}:GridTools::gridtools>
+    $<${ATLAS_NATIVE_STORAGE_BACKEND_CUDA}:CUDA::cudart>
 
   PRIVATE_INCLUDES
     ${CGAL_INCLUDE_DIRS}

@@ -1,4 +1,4 @@
-if( atlas_HAVE_ATLAS_FIELD )
+if( atlas_HAVE_ATLAS_FIELD AND ENABLE_GRIDTOOLS_STORAGE)
 
 ### GridTools storage module
 
@@ -22,9 +22,11 @@ ecbuild_add_option(
   DESCRIPTION "Arrays internally use GridTools storage layer"
   CONDITION GridTools_FOUND )
 
-ecbuild_add_option( FEATURE CUDA
-                    DESCRIPTION "Enable CUDA support via GridTools CUDA backend"
-                    CONDITION GRIDTOOLS_HAS_BACKEND_CUDA )
+if( atlas_HAVE_GRIDTOOLS_STORAGE )
+  ecbuild_add_option( FEATURE CUDA
+                      DESCRIPTION "Enable CUDA support via GridTools CUDA backend"
+                      CONDITION GRIDTOOLS_HAS_BACKEND_CUDA )
+endif()
 
 set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 0 )
 set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 0 )
@@ -65,7 +67,7 @@ if( atlas_HAVE_GRIDTOOLS_STORAGE )
 endif()
 
 else()
-  set( HAVE_GRIDTOOLS_STORAGE 1 )
+  set( HAVE_GRIDTOOLS_STORAGE 0 )
   set( atlas_HAVE_GRIDTOOLS_STORAGE 0 )
   set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 0 )
   set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 0 )

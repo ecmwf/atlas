@@ -18,6 +18,10 @@
 #include "atlas/array/native/NativeDataStore.h"
 #include "atlas/runtime/Exception.h"
 
+#if ATLAS_HAVE_ACC
+#include "atlas_acc_support/atlas_acc_map_data.h"
+#endif
+
 using namespace atlas::array::helpers;
 
 namespace atlas {
@@ -285,7 +289,25 @@ size_t ArrayT<Value>::footprint() const {
 
 template <typename Value>
 bool ArrayT<Value>::accMap() const {
-    return false;
+    if (not acc_map_) {
+#if ATLAS_NATIVE_STORAGE_BACKEND_CUDA && ATLAS_HAVE_ACC
+        atlas_acc_map_data((void*)host_data<Value>(), (void*)device_data<Value>(),
+                           spec_.allocatedSize() * sizeof(Value));
+        acc_map_ = true;
+#endif
+    }
+    return acc_map_;
+}
+
+template <typename Value>
+bool ArrayT<Value>::accUnmap() const {
+    if (acc_map_) {
+#if ATLAS_NATIVE_STORAGE_BACKEND_CUDA && ATLAS_HAVE_ACC
+        atlas_acc_unmap_data((void*)host_data<Value>());
+        acc_map_ = false;
+#endif
+    }
+    return acc_map_;
 }
 
 template <typename Value>
