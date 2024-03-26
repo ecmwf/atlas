@@ -26,10 +26,13 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-#if ATLAS_HAVE_GRIDTOOLS_STORAGE
 CASE("test_array") {
     Array* ds = Array::create<double>(4ul);
+#if ATLAS_HAVE_GRIDTOOLS_STORAGE
     auto hv   = atlas::array::gridtools::make_gt_host_view<double, 1>(*ds);
+#else
+    auto hv   = atlas::array::make_host_view<double, 1>(*ds);
+#endif
     hv(3)     = 4.5;
 
     atlas::array::ArrayView<double, 1> atlas_hv = make_host_view<double, 1>(*ds);
@@ -39,7 +42,6 @@ CASE("test_array") {
 
     delete ds;
 }
-#endif
 
 CASE("test_array_zero_size") {
     Array* ds = Array::create<double>(0);
@@ -48,10 +50,13 @@ CASE("test_array_zero_size") {
     delete ds;
 }
 
-#if ATLAS_HAVE_GRIDTOOLS_STORAGE
 CASE("test_create") {
     Array* ds = Array::create(array::DataType::create<int>(), ArrayShape({4, 3}));
+#if ATLAS_HAVE_GRIDTOOLS_STORAGE
     auto hv   = atlas::array::gridtools::make_gt_host_view<int, 2>(*ds);
+#else
+    auto hv   = atlas::array::make_host_view<int, 2>(*ds);
+#endif
     hv(3, 2)  = 4;
 
     atlas::array::ArrayView<int, 2> atlas_hv = make_host_view<int, 2>(*ds);
@@ -61,12 +66,14 @@ CASE("test_create") {
 
     delete ds;
 }
-#endif
 
-#if ATLAS_HAVE_GRIDTOOLS_STORAGE
 CASE("test_make_view") {
     Array* ds = Array::create<double>(4ul);
+#if ATLAS_HAVE_GRIDTOOLS_STORAGE
     auto hv   = atlas::array::gridtools::make_gt_host_view<double, 1>(*ds);
+#else
+    auto hv   = atlas::array::make_host_view<double, 1>(*ds);
+#endif
     hv(3)     = 4.5;
 
     atlas::array::ArrayView<double, 1> atlas_hv = make_view<double, 1>(*ds);
@@ -76,7 +83,6 @@ CASE("test_make_view") {
 
     delete ds;
 }
-#endif
 
 CASE("test_localview") {
     Array* ds = Array::create<double>(8ul, 4ul, 2ul);
@@ -207,6 +213,7 @@ CASE("test_resize_throw") {
     delete ds;
 }
 
+
 CASE("test_copy_ctr") {
     Array* ds                          = Array::create<int>(3, 2);
     atlas::array::ArrayView<int, 2> hv = make_host_view<int, 2>(*ds);
@@ -221,7 +228,8 @@ CASE("test_copy_ctr") {
     delete ds;
 }
 
-#if ATLAS_HAVE_GRIDTOOLS_STORAGE
+
+#if ATLAS_HAVE_GRIDTOOLS
 CASE("test_copy_gt_ctr") {
     Array* ds                          = Array::create<int>(3, 2);
     atlas::array::ArrayView<int, 2> hv = make_host_view<int, 2>(*ds);
@@ -239,6 +247,7 @@ CASE("test_copy_gt_ctr") {
     delete ds;
 }
 #endif
+
 
 CASE("test_resize") {
     {
@@ -385,7 +394,7 @@ CASE("test_insert") {
 // The original gt data store is deleted and replaced, but the former
 // atlas::array::ArrayView keeps a pointer to it
 // wihtout noticing it has been deleted
-#if ATLAS_HAVE_GRIDTOOLS_STORAGE
+#if ATLAS_HAVE_GRIDTOOLS_STORAGE // TODO
     // Following statement seems to contradict previous comment
     EXPECT(hv.valid() == false);
 #endif

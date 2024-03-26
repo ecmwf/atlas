@@ -39,7 +39,7 @@ ArraySpec::ArraySpec(DataType datatype, const ArrayShape& shape): ArraySpec(shap
 
 ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayAlignment& alignment): datatype_(DataType::KIND_REAL64) {
     ArrayShape aligned_shape = shape;
-    aligned_shape.back()     = compute_aligned_size(aligned_shape.back(), alignment);
+    aligned_shape.back()     = compute_aligned_size(aligned_shape.back(), size_t(alignment));
 
     rank_           = static_cast<int>(shape.size());
     size_           = 1;

@@ -39,22 +39,40 @@ inline static void check_metadata(const Array& array) {
 
 template <typename Value, int Rank>
 ArrayView<Value, Rank> make_host_view(Array& array) {
-    return ArrayView<Value, Rank>((Value*)(array.storage()), array.shape(), array.strides());
+    return ArrayView<Value, Rank>(array.host_data<Value>(), array.shape(), array.strides());
 }
 
 template <typename Value, int Rank>
 ArrayView<const Value, Rank> make_host_view(const Array& array) {
-    return ArrayView<const Value, Rank>((const Value*)(array.storage()), array.shape(), array.strides());
+    return ArrayView<const Value, Rank>(array.host_data<const Value>(), array.shape(), array.strides());
 }
 
 template <typename Value, int Rank>
 ArrayView<Value, Rank> make_device_view(Array& array) {
+#if ATLAS_NATIVE_STORAGE_BACKEND_CUDA
+    if (not array.deviceAllocated()) {
+        std::ostringstream ss;
+        ss << "make_device_view: Array not allocated on device" << std::endl;
+        throw_Exception(ss.str(), Here());
+    }
+    return ArrayView<Value, Rank>((array.device_data<Value>()), array.shape(), array.strides());
+#else
     return make_host_view<Value, Rank>(array);
+#endif
 }
 
 template <typename Value, int Rank>
 ArrayView<const Value, Rank> make_device_view(const Array& array) {
+#if ATLAS_NATIVE_STORAGE_BACKEND_CUDA
+    if (not array.deviceAllocated()) {
+        std::ostringstream ss;
+        ss << "make_device_view: Array not allocated on device" << std::endl;
+        throw_Exception(ss.str(), Here());
+    }
+    return ArrayView<const Value, Rank>(array.device_data<const Value>(), array.shape(), array.strides());
+#else
     return make_host_view<Value, Rank>(array);
+#endif
 }
 
 template <typename Value, int Rank>
