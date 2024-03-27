@@ -33,7 +33,6 @@
 #include "atlas/array/DataType.h"
 #include "atlas/array/IndexView.h"
 #include "atlas/array/SVector.h"
-#include "atlas/array/Vector.h"
 #include "atlas/array_fwd.h"
 #include "atlas/library/config.h"
 #include "atlas/util/Object.h"
