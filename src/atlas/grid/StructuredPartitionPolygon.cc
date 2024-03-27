@@ -35,6 +35,11 @@ void compute(const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vect
     const auto grid = fs.grid();
     const auto dom  = RectangularDomain(grid.domain());
 
+    if ( fs.size() == 0 ) {
+        bb.clear();
+        return;
+    }
+
     if (_halo > 0 && _halo != fs.halo()) {
         throw_Exception("halo must zero or matching the one of the StructuredColumns", Here());
     }
@@ -324,13 +329,15 @@ StructuredPartitionPolygon::StructuredPartitionPolygon(const functionspace::Func
     fs_(fs), halo_(halo) {
     ATLAS_TRACE("StructuredPartitionPolygon");
     compute(fs, halo, points_, inner_bounding_box_);
-    auto min = Point2(std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
-    auto max = Point2(std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest());
-    for (size_t i = 0; i < inner_bounding_box_.size() - 1; ++i) {
-        min = Point2::componentsMin(min, inner_bounding_box_[i]);
-        max = Point2::componentsMax(max, inner_bounding_box_[i]);
+    if (inner_bounding_box_.size()) {
+        auto min = Point2(std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
+        auto max = Point2(std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest());
+        for (size_t i = 0; i < inner_bounding_box_.size() - 1; ++i) {
+            min = Point2::componentsMin(min, inner_bounding_box_[i]);
+            max = Point2::componentsMax(max, inner_bounding_box_[i]);
+        }
+        inscribed_domain_ = {{min[XX], max[XX]}, {min[YY], max[YY]}};
     }
-    inscribed_domain_ = {{min[XX], max[XX]}, {min[YY], max[YY]}};
 }
 
 size_t StructuredPartitionPolygon::footprint() const {

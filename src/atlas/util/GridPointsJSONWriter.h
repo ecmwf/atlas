@@ -22,7 +22,9 @@ namespace util {
 
 class GridPointsJSONWriter {
 public:
-    GridPointsJSONWriter(Grid grid, const eckit::Parametrisation& args);
+    GridPointsJSONWriter(Grid, const eckit::Parametrisation&);
+
+    GridPointsJSONWriter(Grid, grid::Partitioner, const eckit::Parametrisation&);
 
     void write(std::ostream& out, eckit::Channel& info) const;
 
