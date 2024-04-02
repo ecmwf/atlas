@@ -261,8 +261,8 @@ RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox(const Domain& domain) 
     // 2. locate latitude extrema by checking if poles are included (in the un-projected frame) and if not, find extrema
     // not at the corners by refining iteratively
 
-    bounds.includesNorthPole(bounds.includesNorthPole() || rect.contains(xy({0, 90})));
-    bounds.includesSouthPole(bounds.includesSouthPole() || rect.contains(xy({0, -90})));
+    bounds.includesNorthPole(bounds.includesNorthPole() || rect.contains(xy(PointLonLat{0, 90 - h_deg})));
+    bounds.includesSouthPole(bounds.includesSouthPole() || rect.contains(xy(PointLonLat{0, -90 + h_deg})));
 
     for (auto [A, B] : segments) {
         if (!bounds.includesNorthPole() || !bounds.includesSouthPole()) {
