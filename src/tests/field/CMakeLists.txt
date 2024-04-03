@@ -84,5 +84,20 @@ if( HAVE_FCTEST )
     set_tests_properties ( atlas_fctest_field_device PROPERTIES LABELS "gpu;acc")
   endif()
 
+  add_fctest( TARGET atlas_fctest_field_wrap_device
+    CONDITION       atlas_HAVE_ACC
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_field_wrap_gpu.F90 external_acc_routine.F90
+    LIBS            atlas_f
+    ENVIRONMENT     ${ATLAS_TEST_ENVIRONMENT} ATLAS_RUN_NGPUS=1
+  )
+
+  if( TARGET atlas_fctest_field_wrap_device )
+    target_compile_options( atlas_fctest_field_wrap_device PUBLIC ${ACC_Fortran_FLAGS} )
+    target_link_libraries( atlas_fctest_field_wrap_device ${ACC_Fortran_FLAGS} )
+    target_link_options( atlas_fctest_field_wrap_device PRIVATE "${ACC_Fortran_FLAGS}")
+    set_tests_properties ( atlas_fctest_field_wrap_device PROPERTIES LABELS "gpu;acc")
+  endif()
+
 endif()
 
