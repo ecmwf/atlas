@@ -23,16 +23,16 @@ template<typename Value, int RANK>
 __global__
 void kernel_ex(array::ArrayView<Value, RANK> dv)
 {
-    dv(3, 3, 3) += dv.data_view().template length<0>() * dv.data_view().template length<1>() * dv.data_view().template length<2>();
+    dv(3, 3, 3) += dv.shape(0) * dv.shape(1) * dv.shape(2);
 }
 
 template<typename Value, int RANK>
 __global__
 void loop_kernel_ex(array::ArrayView<Value, RANK> dv)
 {
-    for(int i=0; i < dv.data_view().template length<0>(); i++) {
-      for(int j=0; j < dv.data_view().template length<1>(); j++) {
-        for(int k=0; k < dv.data_view().template length<2>(); k++) {
+    for(int i=0; i < dv.shape(0); i++) {
+      for(int j=0; j < dv.shape(1); j++) {
+        for(int k=0; k < dv.shape(2); k++) {
           dv(i,j,k) += i*10+j*100+k*1000;
         }
       }
