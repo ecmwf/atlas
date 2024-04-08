@@ -108,24 +108,29 @@ public:
     IndexView(const Array&, bool device_view);
 
     template <typename... Coords, typename = typename std::enable_if<(sizeof...(Coords) == Rank), int>::type>
-    Index ATLAS_HOST_DEVICE operator()(Coords... c) {
+    ATLAS_HOST_DEVICE
+    Index operator()(Coords... c) {
         assert(sizeof...(Coords) == Rank);
         return INDEX_REF(&gt_data_view_(c...));
     }
 
     template <typename... Coords, typename = typename std::enable_if<(sizeof...(Coords) == Rank), int>::type>
-    ATLAS_HOST_DEVICE Value const operator()(Coords... c) const {
+    ATLAS_HOST_DEVICE
+    Value const operator()(Coords... c) const {
         return gt_data_view_(c...) FROM_FORTRAN;
     }
 
+    ATLAS_HOST_DEVICE
     idx_t size() const { return size_; }
 
     template <typename Int>
+    ATLAS_HOST_DEVICE
     idx_t shape(Int idx) const {
         return shape_[idx];
     }
 
     template <typename Int>
+    ATLAS_HOST_DEVICE
     idx_t stride(Int idx) const {
         return strides_[idx];
     }
