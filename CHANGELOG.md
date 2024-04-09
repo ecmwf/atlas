@@ -7,6 +7,19 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.37.0] - 2024-04-09
+### Added
+- Add SphericalVector interpolation method using parallel transport (#163)
+- Added arrayForEachDim method
+
+### Fixed
+- Bugfix for regional grids with ny > nx
+- Fix build for configuration setting ATLAS_BITS_LOCAL=64
+
+### Changed
+- Use new LocalConfiguration baseclass functions in util::Config and util::Metadata instead of eckit::Value backdoor
+- atlas_io is an adaptor library when eckit_codec is available (#181)
+
 ## [0.36.0] - 2023-12-11
 ### Added
 - Add TriangularMeshBuilder with Fortran API, so far for serial meshes only
@@ -514,6 +527,7 @@ Fix StructuredInterpolation2D with retry for failed stencils
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.37.0]: https://github.com/ecmwf/atlas/compare/0.36.0...0.37.0
 [0.36.0]: https://github.com/ecmwf/atlas/compare/0.35.1...0.36.0
 [0.35.1]: https://github.com/ecmwf/atlas/compare/0.35.0...0.35.1
 [0.35.0]: https://github.com/ecmwf/atlas/compare/0.34.0...0.35.0

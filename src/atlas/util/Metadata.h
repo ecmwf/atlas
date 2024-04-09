@@ -35,7 +35,7 @@ public:
         return *this;
     }
 
-    Metadata& set(const eckit::LocalConfiguration&);
+    Metadata& set(const eckit::Configuration&);
 
     using eckit::LocalConfiguration::get;
 

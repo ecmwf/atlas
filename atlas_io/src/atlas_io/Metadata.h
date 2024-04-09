@@ -57,7 +57,11 @@ public:
 
     // extended LocalConfiguration:
     using eckit::LocalConfiguration::set;
-    Metadata& set(const eckit::LocalConfiguration& other) {
+
+    Metadata& set(const eckit::Configuration& other) {
+#if ATLAS_IO_ECKIT_VERSION_AT_LEAST(1, 26, 0) || ATLAS_IO_ECKIT_DEVELOP
+        LocalConfiguration::set(other);
+#else
         eckit::Value& root = const_cast<eckit::Value&>(get());
         auto& other_root   = other.get();
         std::vector<std::string> other_keys;
@@ -65,6 +69,7 @@ public:
         for (auto& key : other_keys) {
             root[key] = other_root[key];
         }
+#endif
         return *this;
     }
 
@@ -79,17 +84,24 @@ public:
 
 
     Metadata& remove(const std::string& name) {
+#if ATLAS_IO_ECKIT_VERSION_AT_LEAST(1, 26, 0) || ATLAS_IO_ECKIT_DEVELOP
+        LocalConfiguration::remove(name);
+#else
         eckit::Value& root = const_cast<eckit::Value&>(get());
         root.remove(name);
+#endif
         return *this;
     }
 
 
     std::vector<std::string> keys() const {
-        // Preserves order of keys
+#if ATLAS_IO_ECKIT_VERSION_AT_LEAST(1, 26, 0) || ATLAS_IO_ECKIT_DEVELOP
+        return LocalConfiguration::keys();
+#else
         std::vector<std::string> result;
         eckit::fromValue(result, get().keys());
         return result;
+#endif
     }
 };
 

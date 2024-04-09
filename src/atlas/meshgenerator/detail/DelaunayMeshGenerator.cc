@@ -197,6 +197,9 @@ void DelaunayMeshGenerator::generate(const Grid& grid, const grid::Distribution&
                 element_nodes_uncertainty.insert(g_node_connectivity(jelem,2));
                 element_uncertainty.insert(jelem);
             }
+            else if (elem_ownership != GHOST && elem_ownership != CERTAIN) {
+                ATLAS_NOTIMPLEMENTED;
+            }
         }
         // Log::info() << "element_uncertainty" << std::endl;
         // for( auto& jelem: element_uncertainty ) {
@@ -290,6 +293,9 @@ void DelaunayMeshGenerator::generate(const Grid& grid, const grid::Distribution&
                 }
                 else if (e2 != UNCERTAIN) {
                     elem_part = e2;
+                }
+                if (elem_part == UNCERTAIN) {
+                    elem_part = elem_node_partition(jelem,0);
                 }
                 if (elem_part == part_) {
                     collect_element(jelem);

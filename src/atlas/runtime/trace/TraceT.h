@@ -93,8 +93,8 @@ private:  // member data
 
 template <typename TraceTraits>
 inline std::string TraceT<TraceTraits>::formatTitle(const std::string& _title) {
-    std::string title = _title;
-    +(Barriers::state() ? " [b]" : "") +
+    std::string title =
+        _title + (Barriers::state() ? " [b]" : "") +
         (atlas_omp_get_num_threads() > 1 ? " @thread[" + std::to_string(atlas_omp_get_thread_num()) + "]" : "");
     return title;
 }

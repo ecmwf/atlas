@@ -1,0 +1,15 @@
+name: docs
+
+on:
+  push:
+    tags:
+      - '**'
+
+  workflow_dispatch: ~
+
+jobs:
+  publish:
+    uses: ecmwf-actions/reusable-workflows/.github/workflows/cd-docs.yml@v2
+    secrets: inherit
+    with:
+      config: .github/docs-config.yml

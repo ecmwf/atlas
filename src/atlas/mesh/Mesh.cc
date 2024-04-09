@@ -9,11 +9,13 @@
  */
 
 #include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/Nodes.h"
+
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Partitioner.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/meshgenerator/MeshGenerator.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas {
 
@@ -23,13 +25,13 @@ Mesh::Mesh(): Handle(new Implementation()) {}
 
 Mesh::Mesh(const Grid& grid, const eckit::Configuration& config):
     Handle([&]() {
-        if(config.has("mpi_comm")) {
+        if (config.has("mpi_comm")) {
             mpi::push(config.getString("mpi_comm"));
         }
-        util::Config cfg = grid.meshgenerator()|util::Config(config);
-        auto meshgenerator = MeshGenerator{grid.meshgenerator()|config};
-        auto mesh          = meshgenerator.generate(grid, grid::Partitioner(grid.partitioner()|config));
-        if(config.has("mpi_comm")) {
+        auto cfg           = grid.meshgenerator() | util::Config(config);
+        auto meshgenerator = MeshGenerator{grid.meshgenerator() | config};
+        auto mesh          = meshgenerator.generate(grid, grid::Partitioner(grid.partitioner() | config));
+        if (config.has("mpi_comm")) {
             mpi::pop();
         }
         mesh.get()->attach();
@@ -40,13 +42,13 @@ Mesh::Mesh(const Grid& grid, const eckit::Configuration& config):
 
 Mesh::Mesh(const Grid& grid, const grid::Partitioner& partitioner, const eckit::Configuration& config):
     Handle([&]() {
-        std::string mpi_comm = partitioner.mpi_comm();
-        if(config.has("mpi_comm")) {
+        auto mpi_comm = partitioner.mpi_comm();
+        if (config.has("mpi_comm")) {
             mpi_comm = config.getString("mpi_comm");
             ATLAS_ASSERT(mpi_comm == partitioner.mpi_comm());
         }
         mpi::Scope mpi_scope(mpi_comm);
-        auto meshgenerator = MeshGenerator{grid.meshgenerator()|config};
+        auto meshgenerator = MeshGenerator{grid.meshgenerator() | config};
         auto mesh          = meshgenerator.generate(grid, partitioner);
         mesh.get()->attach();
         return mesh.get();
@@ -57,7 +59,9 @@ Mesh::Mesh(const Grid& grid, const grid::Partitioner& partitioner, const eckit::
 
 Mesh::Mesh(eckit::Stream& stream): Handle(new Implementation(stream)) {}
 
-Mesh::operator bool() const { return get()->nodes().size() > 0; }
+Mesh::operator bool() const {
+    return get()->nodes().size() > 0;
+}
 
 //----------------------------------------------------------------------------------------------------------------------
 

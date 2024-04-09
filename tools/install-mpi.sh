@@ -62,6 +62,8 @@ case "$os" in
             openmpi)
                 brew ls --versions openmpi || brew install openmpi
                 echo "localhost slots=72" >> $(brew --prefix)/etc/openmpi-default-hostfile
+                echo "localhost slots=72" >> $(brew --prefix)/etc/prte-default-hostfile
+
                 # workaround for open-mpi/omp#7516
                 echo "setting the mca gds to hash..."
                 echo "gds = hash" >> $(brew --prefix)/etc/pmix-mca-params.conf

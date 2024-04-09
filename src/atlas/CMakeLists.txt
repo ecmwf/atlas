@@ -524,7 +524,7 @@ functionspace/detail/PointCloudInterface.cc
 functionspace/detail/CubedSphereStructure.h
 functionspace/detail/CubedSphereStructure.cc
 
-# for cubedsphere matching mesh partitioner
+# for cubedsphere matching mesh partitioner
 interpolation/method/cubedsphere/CellFinder.cc
 interpolation/method/cubedsphere/CellFinder.h
 interpolation/Vector2D.cc
@@ -541,8 +541,8 @@ interpolation/element/Triag3D.cc
 interpolation/element/Triag3D.h
 interpolation/method/Intersect.cc
 interpolation/method/Intersect.h
-interpolation/method/Ray.cc # For testing Quad
-interpolation/method/Ray.h  # For testing Quad
+interpolation/method/Ray.cc # For testing Quad
+interpolation/method/Ray.h  # For testing Quad
 
 # for BuildConvexHull3D
 
@@ -634,6 +634,11 @@ interpolation/method/knn/KNearestNeighboursBase.cc
 interpolation/method/knn/KNearestNeighboursBase.h
 interpolation/method/knn/NearestNeighbour.cc
 interpolation/method/knn/NearestNeighbour.h
+interpolation/method/sphericalvector/ComplexMatrixMultiply.h
+interpolation/method/sphericalvector/SparseMatrix.h
+interpolation/method/sphericalvector/SphericalVector.cc
+interpolation/method/sphericalvector/SphericalVector.h
+interpolation/method/sphericalvector/Types.h
 interpolation/method/structured/Cubic2D.cc
 interpolation/method/structured/Cubic2D.h
 interpolation/method/structured/Cubic3D.cc
@@ -866,7 +871,7 @@ if( NOT atlas_HAVE_ATLAS_FUNCTIONSPACE )
   unset( atlas_parallel_srcs )
   unset( atlas_output_srcs )
   unset( atlas_redistribution_srcs )
-  unset( atlas_linalg_srcs ) # only depends on array
+  unset( atlas_linalg_srcs ) # only depends on array
 endif()
 
 if( NOT atlas_HAVE_ATLAS_INTERPOLATION  )
