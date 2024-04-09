@@ -10,6 +10,7 @@
 
 #include <cmath>
 #include <functional>
+#include <limits>
 #include <sstream>
 
 #include "eckit/config/Parametrisation.h"
@@ -96,10 +97,18 @@ void MercatorProjectionT<Rotation>::lonlat2xy(double crd[]) const {
     rotation_.unrotate(crd);
 
     // then project
-    crd[XX] = k_radius_ * (D2R(normalise_mercator_(crd[LON]) - lon0_));
-    crd[YY] = k_radius_ * 0.5 * std::log(t(crd[LAT]));
-    crd[XX] += false_easting_;
-    crd[YY] += false_northing_;
+    if (crd[LAT] >= 90. - 1e-3) {
+        crd[XX] = false_easting_;
+        crd[YY] = std::numeric_limits<double>::infinity();
+    }
+    else if (crd[LAT] <= -90. + 1e-3) {
+        crd[XX] = false_easting_;
+        crd[YY] = -std::numeric_limits<double>::infinity();
+    }
+    else {
+        crd[XX] = false_easting_ + k_radius_ * (D2R(normalise_mercator_(crd[LON]) - lon0_));
+        crd[YY] = false_northing_ + k_radius_ * 0.5 * std::log(t(crd[LAT]));
+    }
 }
 
 template <typename Rotation>

@@ -10,13 +10,11 @@
 
 #pragma once
 
-#include <initializer_list>
 #include <iostream>
 #include <memory>
 #include <string>
 
 #include "atlas/projection/Jacobian.h"
-#include "atlas/runtime/Exception.h"
 #include "atlas/util/Factory.h"
 #include "atlas/util/NormaliseLongitude.h"
 #include "atlas/util/Object.h"
@@ -36,9 +34,7 @@ class Config;
 }
 }  // namespace atlas
 
-namespace atlas {
-namespace projection {
-namespace detail {
+namespace atlas::projection::detail {
 
 class ProjectionImpl : public util::Object {
 public:
@@ -49,8 +45,7 @@ public:
     static const ProjectionImpl* create(const eckit::Parametrisation& p);
     static const ProjectionImpl* create(const std::string& type, const eckit::Parametrisation& p);
 
-    ProjectionImpl()          = default;
-    virtual ~ProjectionImpl() = default;  // destructor should be virtual
+    ProjectionImpl() = default;
 
     virtual std::string type() const = 0;
 
@@ -123,7 +118,7 @@ public:
     protected:
         const ProjectionImpl& projection_;
         const PointXY H_;
-        const double normH_;
+        const double invnH_;
         const double refLongitude_;
         PointLonLat xy2lonlat(const PointXY& p) const;
     };
@@ -190,10 +185,8 @@ public:
     static std::string classNamePrefix() { return ""; }  // deliberately empty
     static std::string typePrefix() { return ""; }       // deliberately empty
 
-    void rotate(double*) const { /* do nothing */
-    }
-    void unrotate(double*) const { /* do nothing */
-    }
+    void rotate(double*) const { /* do nothing */ }
+    void unrotate(double*) const { /* do nothing */ }
 
     bool rotated() const { return false; }
 
@@ -211,6 +204,4 @@ void atlas__Projection__xy2lonlat(const ProjectionImpl* This, const double x, co
 void atlas__Projection__lonlat2xy(const ProjectionImpl* This, const double lon, const double lat, double& x, double& y);
 }
 
-}  // namespace detail
-}  // namespace projection
-}  // namespace atlas
+}  // namespace atlas::projection::detail
