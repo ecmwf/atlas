@@ -14,7 +14,6 @@
 #include <sstream>
 
 #include "eckit/config/Parametrisation.h"
-#include "eckit/types/FloatCompare.h"
 #include "eckit/utils/Hash.h"
 
 #include "atlas/projection/detail/MercatorProjection.h"
@@ -98,22 +97,18 @@ void MercatorProjectionT<Rotation>::lonlat2xy(double crd[]) const {
     rotation_.unrotate(crd);
 
     // then project
-    if (eckit::types::is_approximately_equal<double>(crd[LAT], 90., 1e-3)) {
+    if (crd[LAT] >= 90. - 1e-3) {
         crd[XX] = false_easting_;
         crd[YY] = std::numeric_limits<double>::infinity();
-        return;
     }
-
-    if (eckit::types::is_approximately_equal<double>(crd[LAT], -90., 1e-3)) {
+    else if (crd[LAT] <= -90. + 1e-3) {
         crd[XX] = false_easting_;
         crd[YY] = -std::numeric_limits<double>::infinity();
-        return;
     }
-
-    crd[XX] = k_radius_ * (D2R(normalise_mercator_(crd[LON]) - lon0_));
-    crd[YY] = k_radius_ * 0.5 * std::log(t(crd[LAT]));
-    crd[XX] += false_easting_;
-    crd[YY] += false_northing_;
+    else {
+        crd[XX] = false_easting_ + k_radius_ * (D2R(normalise_mercator_(crd[LON]) - lon0_));
+        crd[YY] = false_northing_ + k_radius_ * 0.5 * std::log(t(crd[LAT]));
+    }
 }
 
 template <typename Rotation>
