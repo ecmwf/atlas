@@ -78,6 +78,18 @@ else()
   set( atlas_HAVE_INIT_SNAN 0 )
 endif()
 
+if( atlas_HAVE_CUDA )
+  set( atlas_HAVE_CUDA 1 )
+else()
+  set( atlas_HAVE_CUDA 0 )
+endif()
+
+if( atlas_HAVE_ACC )
+  set( atlas_HAVE_ACC 1 )
+else()
+  set( atlas_HAVE_ACC 0 )
+endif()
+
 if( atlas_HAVE_GRIDTOOLS_STORAGE )
   set( atlas_HAVE_GRIDTOOLS_STORAGE 1 )
 else()

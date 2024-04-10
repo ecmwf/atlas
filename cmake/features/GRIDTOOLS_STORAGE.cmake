@@ -1,4 +1,4 @@
-if( atlas_HAVE_ATLAS_FIELD )
+if( atlas_HAVE_ATLAS_FIELD AND (ENABLE_GRIDTOOLS_STORAGE OR atlas_ENABLE_GRIDTOOLS_STORAGE) )
 
 ### GridTools storage module
 
@@ -22,51 +22,28 @@ ecbuild_add_option(
   DESCRIPTION "Arrays internally use GridTools storage layer"
   CONDITION GridTools_FOUND )
 
-ecbuild_add_option( FEATURE CUDA
-                    DESCRIPTION "Enable CUDA support via GridTools CUDA backend"
-                    CONDITION GRIDTOOLS_HAS_BACKEND_CUDA )
-
 set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 0 )
 set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 0 )
 
 if( atlas_HAVE_GRIDTOOLS_STORAGE )
-
-  if( atlas_HAVE_CUDA )
-
-    ecbuild_info( "GridTools found with CUDA support" )
-
-    # Logic to check if we can use enable_language( CUDA )
-    #   - CMake already supports it (as GridTools requires version that supports it)
-    #   - ecbuild version 3.3 added support
-    #   - overriding mechanism possible with cached "atlas_CUDA_LANGUAGE_ENABLED" variable
-    if( DEFINED ecbuild_VERSION AND NOT ecbuild_VERSION VERSION_LESS 3.3 )
-      set( atlas_CUDA_LANGUAGE_ENABLED_DEFAULT ON )
+  if( GRIDTOOLS_HAS_BACKEND_CUDA )
+    if( atlas_HAVE_CUDA )
+      ecbuild_info( "GridTools found with CUDA support -> backend CUDA" )
+      set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 1 )
     else()
-      set( atlas_CUDA_LANGUAGE_ENABLED_DEFAULT OFF )
+      ecbuild_info( "GridTools found with CUDA support, but atlas does not have CUDA enabled -> backend HOST" )
+      set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 1 )
     endif()
-    set( atlas_CUDA_LANGUAGE_ENABLED ${atlas_CUDA_LANGUAGE_ENABLED_DEFAULT} CACHE BOOL "atlas enables CUDA language" )
-
-    if( atlas_CUDA_LANGUAGE_ENABLED )
-      enable_language( CUDA )
-      ecbuild_info( "CUDA language enabled" )
-    else()
-      ecbuild_info("CUDA enabled through find_package(CUDA) instead of enable_language(CUDA)")
-      find_package( CUDA )
-    endif()
-
-    set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 1 )
-
   else()
-
+    ecbuild_info( "GridTools found without CUDA support -> backend HOST" )
     set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 1 )
-
   endif()
-
 endif()
 
 else()
-  set( HAVE_GRIDTOOLS_STORAGE 1 )
+  set( HAVE_GRIDTOOLS_STORAGE 0 )
   set( atlas_HAVE_GRIDTOOLS_STORAGE 0 )
-  set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 0 )
   set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST 0 )
+  set( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA 0 )
 endif()
+
