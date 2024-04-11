@@ -54,7 +54,7 @@ CASE( "test_array" )
    constexpr unsigned int dy = 6;
    constexpr unsigned int dz = 7;
 
-   Array* ds = Array::create<double>(dx, dy, dz);
+   auto ds = std::unique_ptr<Array>(Array::create<double>(dx, dy, dz));
    auto hv = make_host_view<double, 3>(*ds);
    hv(3, 3, 3) = 4.5;
 
@@ -73,13 +73,10 @@ CASE( "test_array" )
    cudaDeviceSynchronize();
 
    ds->updateHost();
-   ds->reactivateHostWriteViews();
 
    REQUIRE_CUDA_SUCCESS("updateHost");
 
    EXPECT( hv(3, 3, 3) == 4.5 + dx*dy*dz );
-
-   delete ds;
 }
 
 CASE( "test_array_loop" )
@@ -88,7 +85,8 @@ CASE( "test_array_loop" )
    constexpr unsigned int dy = 6;
    constexpr unsigned int dz = 7;
 
-   Array* ds = Array::create<double>(dx, dy, dz);
+
+   auto ds = std::unique_ptr<Array>(Array::create<double>(dx, dy, dz));
    array::ArrayView<double,3> hv = make_host_view<double, 3>(*ds);
    for(int i=0; i < dx; i++) {
      for(int j=0; j < dy; j++) {
@@ -113,7 +111,6 @@ CASE( "test_array_loop" )
    cudaDeviceSynchronize();
 
    ds->updateHost();
-   ds->reactivateHostWriteViews();
 
    REQUIRE_CUDA_SUCCESS("updateHost");
 
@@ -124,8 +121,6 @@ CASE( "test_array_loop" )
        }
      }
    }
-
-   delete ds;
 }
 }
 }
