@@ -67,6 +67,8 @@ macro( atlas_add_cuda_test )
                       SOURCES     ${_PAR_SOURCES}
                       LIBS        ${_libs}
                       ENVIRONMENT ${_PAR_ENVIRONMENT} )
+    set_tests_properties(${_PAR_TARGET} PROPERTIES LABELS "gpu")
+
   endif()
 endmacro()
 
