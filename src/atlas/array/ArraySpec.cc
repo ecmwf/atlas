@@ -39,7 +39,7 @@ ArraySpec::ArraySpec(DataType datatype, const ArrayShape& shape): ArraySpec(shap
 
 ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayAlignment& alignment): datatype_(DataType::KIND_REAL64) {
     ArrayShape aligned_shape = shape;
-    aligned_shape.back()     = compute_aligned_size(aligned_shape.back(), alignment);
+    aligned_shape.back()     = compute_aligned_size(aligned_shape.back(), size_t(alignment));
 
     rank_           = static_cast<int>(shape.size());
     size_           = 1;
@@ -54,7 +54,7 @@ ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayAlignment& alignment): 
         size_ *= size_t(shape_[j]);
         allocated_size_ *= size_t(aligned_shape[j]);
     }
-    ATLAS_ASSERT(allocated_size_ == compute_aligned_size(size_t(shape_[0]) * size_t(strides_[0]), alignment));
+    ATLAS_ASSERT(allocated_size_ == compute_aligned_size(size_t(shape_[0]) * size_t(strides_[0]), size_t(alignment)));
     contiguous_     = (size_ == allocated_size_);
     default_layout_ = true;
     alignment_      = alignment;
@@ -85,9 +85,9 @@ ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayStrides& strides, const
         shape_[j]   = shape[j];
         strides_[j] = strides[j];
         layout_[j]  = j;
-        size_ *= shape_[j];
+        size_ *= size_t(shape_[j]);
     }
-    allocated_size_ = compute_aligned_size(shape_[0] * strides_[0], alignment);
+    allocated_size_ = compute_aligned_size(size_t(shape_[0]) * size_t(strides_[0]), size_t(alignment));
     contiguous_     = (size_ == allocated_size_);
     default_layout_ = true;
 
@@ -126,12 +126,12 @@ ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayStrides& strides, const
         shape_[j]   = shape[j];
         strides_[j] = strides[j];
         layout_[j]  = layout[j];
-        size_ *= shape_[j];
+        size_ *= size_t(shape_[j]);
         if (layout_[j] != idx_t(j)) {
             default_layout_ = false;
         }
     }
-    allocated_size_ = compute_aligned_size(shape_[layout_[0]] * strides_[layout_[0]], alignment);
+    allocated_size_ = compute_aligned_size(size_t(shape_[layout_[0]]) * size_t(strides_[layout_[0]]), size_t(alignment));
     contiguous_     = (size_ == allocated_size_);
 
 #ifdef ATLAS_HAVE_FORTRAN
