@@ -244,6 +244,21 @@ bool Field::hostNeedsUpdate() const {
 bool Field::deviceNeedsUpdate() const {
     return get()->deviceNeedsUpdate();
 }
+void Field::setHostNeedsUpdate(bool v) const {
+    return get()->setHostNeedsUpdate(v);
+}
+void Field::setDeviceNeedsUpdate(bool v) const {
+    return get()->setDeviceNeedsUpdate(v);
+}
+bool Field::deviceAllocated() const {
+    return get()->deviceAllocated();
+}
+void Field::allocateDevice() {
+    get()->allocateDevice();
+}
+void Field::deallocateDevice() {
+    get()->deallocateDevice();
+}
 void Field::reactivateDeviceWriteViews() const {
     get()->reactivateDeviceWriteViews();
 }
