@@ -30,19 +30,7 @@ if( CGAL_FOUND )
 
 endif()
 
-if( atlas_HAVE_GRIDTOOLS_STORAGE )
-
-    ecbuild_info( "GRIDTOOLS_STORAGE" )
-    if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST )
-        ecbuild_info( "    BACKEND : [HOST]" )
-    endif()
-    if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
-        ecbuild_info( "    BACKEND : [CUDA]" )
-    endif()
-
-endif()
-
-if( CUDA_FOUND )
+if( atlas_HAVE_CUDA )
 
     ecbuild_info( "CUDA (${CUDA_VERSION})" )
     ecbuild_info( "    CUDA_NVCC_COMPILER  : [${CUDA_NVCC_EXECUTABLE}]" )
@@ -59,3 +47,24 @@ if( atlas_HAVE_ACC )
     ecbuild_info( "    ACC_Fortran_FLAGS  : [${ACC_Fortran_FLAGS}]" )
 
 endif()
+
+
+if( atlas_HAVE_GRIDTOOLS_STORAGE )
+
+    if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST )
+        ecbuild_info( "Array storage backend: GridTools [HOST]" )
+    endif()
+    if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
+        ecbuild_info( "Array storage backend: GridTools [CUDA]" )
+    endif()
+
+else()
+
+    if( NOT atlas_HAVE_CUDA )
+        ecbuild_info( "Array storage backend: Native [HOST]" )
+    else()
+        ecbuild_info( "Array storage backend: Native [CUDA]" )
+    endif()
+
+endif()
+
