@@ -39,12 +39,12 @@ inline static void check_metadata(const Array& array) {
 
 template <typename Value, int Rank>
 ArrayView<Value, Rank> make_host_view(Array& array) {
-    return ArrayView<Value, Rank>((Value*)(array.storage()), array.shape(), array.strides());
+    return ArrayView<Value, Rank>(array.host_data<Value>(), array.shape(), array.strides());
 }
 
 template <typename Value, int Rank>
 ArrayView<const Value, Rank> make_host_view(const Array& array) {
-    return ArrayView<const Value, Rank>((const Value*)(array.storage()), array.shape(), array.strides());
+    return ArrayView<const Value, Rank>(array.host_data<const Value>(), array.shape(), array.strides());
 }
 
 template <typename Value, int Rank>
