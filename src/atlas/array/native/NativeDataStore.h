@@ -96,29 +96,39 @@ public:
         initialise(data_store_, size_);
     }
 
-    virtual ~DataStore() override { free_aligned(data_store_); }
+    ~DataStore() override { free_aligned(data_store_); }
 
-    virtual void updateDevice() const override {}
+    void updateDevice() const override {}
 
-    virtual void updateHost() const override {}
+    void updateHost() const override {}
 
-    virtual bool valid() const override { return true; }
+    bool valid() const override { return true; }
 
-    virtual void syncHostDevice() const override {}
+    void syncHostDevice() const override {}
 
-    virtual bool hostNeedsUpdate() const override { return false; }
+    bool deviceAllocated() const override { return false; }
 
-    virtual bool deviceNeedsUpdate() const override { return false; }
+    void allocateDevice() const override {}
 
-    virtual void reactivateDeviceWriteViews() const override {}
+    void deallocateDevice() const override {}
 
-    virtual void reactivateHostWriteViews() const override {}
+    bool hostNeedsUpdate() const override { return false; }
 
-    virtual void* voidDataStore() override { return static_cast<void*>(data_store_); }
+    bool deviceNeedsUpdate() const override { return false; }
 
-    virtual void* voidHostData() override { return static_cast<void*>(data_store_); }
+    void setHostNeedsUpdate(bool) const override {}
 
-    virtual void* voidDeviceData() override { return static_cast<void*>(data_store_); }
+    void setDeviceNeedsUpdate(bool) const override {}
+
+    void reactivateDeviceWriteViews() const override {}
+
+    void reactivateHostWriteViews() const override {}
+
+    void* voidDataStore() override { return static_cast<void*>(data_store_); }
+
+    void* voidHostData() override { return static_cast<void*>(data_store_); }
+
+    void* voidDeviceData() override { return static_cast<void*>(data_store_); }
 
 private:
     [[noreturn]] void throw_AllocationFailed(size_t bytes, const eckit::CodeLocation& loc) {
@@ -144,7 +154,7 @@ private:
     }
 
     void free_aligned(Value*& ptr) {
-        if (size_) {
+        if (ptr) {
             free(ptr);
             ptr = nullptr;
             MemoryHighWatermark::instance() -= footprint();
@@ -164,27 +174,37 @@ class WrappedDataStore : public ArrayDataStore {
 public:
     WrappedDataStore(Value* data_store): data_store_(data_store) {}
 
-    virtual void updateHost() const override {}
+    void updateHost() const override {}
 
-    virtual void updateDevice() const override {}
+    void updateDevice() const override {}
 
-    virtual bool valid() const override { return true; }
+    bool valid() const override { return true; }
 
-    virtual void syncHostDevice() const override {}
+    void syncHostDevice() const override {}
 
-    virtual bool hostNeedsUpdate() const override { return true; }
+    bool deviceAllocated() const override { return false; }
 
-    virtual bool deviceNeedsUpdate() const override { return false; }
+    void allocateDevice() const override {}
 
-    virtual void reactivateDeviceWriteViews() const override {}
+    void deallocateDevice() const override {}
 
-    virtual void reactivateHostWriteViews() const override {}
+    bool hostNeedsUpdate() const override { return true; }
 
-    virtual void* voidDataStore() override { return static_cast<void*>(data_store_); }
+    bool deviceNeedsUpdate() const override { return false; }
 
-    virtual void* voidHostData() override { return static_cast<void*>(data_store_); }
+    void setHostNeedsUpdate(bool) const override {}
 
-    virtual void* voidDeviceData() override { return static_cast<void*>(data_store_); }
+    void setDeviceNeedsUpdate(bool) const override {}
+
+    void reactivateDeviceWriteViews() const override {}
+
+    void reactivateHostWriteViews() const override {}
+
+    void* voidDataStore() override { return static_cast<void*>(data_store_); }
+
+    void* voidHostData() override { return static_cast<void*>(data_store_); }
+
+    void* voidDeviceData() override { return static_cast<void*>(data_store_); }
 
 private:
     Value* data_store_;
