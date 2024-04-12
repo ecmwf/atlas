@@ -13,6 +13,10 @@
 #include "atlas/array/ArrayDataStore.h"
 #include "atlas/array/gridtools/GridToolsTraits.h"
 
+#if ATLAS_HAVE_ACC
+#include "atlas_acc_support/atlas_acc_map_data.h"
+#endif
+
 //------------------------------------------------------------------------------
 
 namespace atlas {
@@ -42,11 +46,15 @@ struct GridToolsDataStore : ArrayDataStore {
 
     void syncHostDevice() const override { data_store_->sync(); }
 
-    void allocateDevice() const override {}
+    void allocateDevice() const override {
+        accMap();
+    }
 
-    void deallocateDevice() const override {}
+    void deallocateDevice() const override {
+        accUnmap();
+    }
 
-    bool deviceAllocated() const override { return ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA; }
+    bool deviceAllocated() const override { return ATLAS_HAVE_CUDA; }
 
     bool hostNeedsUpdate() const override { return data_store_->host_needs_update(); }
 
@@ -76,12 +84,35 @@ struct GridToolsDataStore : ArrayDataStore {
 
     void* voidDeviceData() override { return device_data(); }
 
+    void accMap() const override {
+#if ATLAS_HAVE_ACC
+        if (not acc_mapped_) {
+            ATLAS_ASSERT(deviceAllocated(),"Could not accMap as device data is not allocated");
+            atlas_acc_map_data(host_data(), device_data(), bytes());
+            acc_mapped_ = true;
+        }
+#endif
+    }
+
+    bool accMapped() const override {
+        return acc_mapped_;
+    }
+
+    void accUnmap() const override {
+#if ATLAS_HAVE_ACC
+        if (acc_mapped_) {
+            atlas_acc_unmap_data(host_data());
+            acc_mapped_ = false;
+        }
+#endif
+    }
+
 private:
     void* host_data() const {
         return ::gridtools::make_host_view<::gridtools::access_mode::read_only>(*data_store_).data();
     }
     void* device_data() const {
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+#if ATLAS_HAVE_CUDA
         return ::gridtools::make_device_view<::gridtools::access_mode::read_only>(*data_store_).data();
 #else
         return ::gridtools::make_host_view<::gridtools::access_mode::read_only>(*data_store_).data();
@@ -95,6 +126,7 @@ private:
 
 private:
     gt_DataStore const* data_store_;
+    mutable bool acc_mapped_{false};
 };
 
 }  // namespace gridtools

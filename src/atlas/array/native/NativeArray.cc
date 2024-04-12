@@ -280,8 +280,18 @@ size_t ArrayT<Value>::footprint() const {
 }
 
 template <typename Value>
-bool ArrayT<Value>::accMap() const {
-    return false;
+void ArrayT<Value>::accMap() const {
+    data_store_->accMap();
+}
+
+template <typename Value>
+void ArrayT<Value>::accUnmap() const {
+    data_store_->accUnmap();
+}
+
+template <typename Value>
+bool ArrayT<Value>::accMapped() const {
+    return data_store_->accMapped();
 }
 
 //------------------------------------------------------------------------------

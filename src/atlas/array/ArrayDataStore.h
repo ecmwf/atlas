@@ -62,6 +62,9 @@ public:
     virtual void* voidDataStore()                   = 0;
     virtual void* voidHostData()                    = 0;
     virtual void* voidDeviceData()                  = 0;
+    virtual void accMap() const                     = 0;
+    virtual void accUnmap() const                   = 0;
+    virtual bool accMapped() const                  = 0;
     template <typename Value>
     Value* hostData() {
         return static_cast<Value*>(voidHostData());

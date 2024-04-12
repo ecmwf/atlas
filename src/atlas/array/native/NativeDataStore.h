@@ -27,6 +27,10 @@
 #include "atlas/runtime/Log.h"
 #include "eckit/log/Bytes.h"
 
+#if ATLAS_HAVE_ACC
+#include "atlas_acc_support/atlas_acc_map_data.h"
+#endif
+
 //------------------------------------------------------------------------------
 
 namespace atlas {
@@ -168,6 +172,7 @@ public:
                 throw_AssertionFailed("Failed to allocate GPU memory: " + std::string(cudaGetErrorString(err)), Here());
             }
             device_allocated_ = true;
+            accMap();
         }
 #endif
     }
@@ -175,6 +180,7 @@ public:
     void deallocateDevice() const override {
 #if ATLAS_HAVE_CUDA
         if (device_allocated_) {
+            accUnmap();
             cudaError_t err = cudaFree(device_data_);
             if (err != cudaSuccess) {
                 throw_AssertionFailed("Failed to deallocate GPU memory: " + std::string(cudaGetErrorString(err)), Here());
@@ -202,6 +208,30 @@ public:
     void* voidHostData() override { return static_cast<void*>(host_data_); }
 
     void* voidDeviceData() override { return static_cast<void*>(device_data_); }
+
+    void accMap() const override {
+#if ATLAS_HAVE_ACC
+        if (not acc_mapped_) {
+            ATLAS_ASSERT(deviceAllocated(),"Could not accMap as device data is not allocated");
+            atlas_acc_map_data((void*)host_data_, (void*)device_data_, size_ * sizeof(Value));
+            acc_mapped_ = true;
+        }
+#endif
+    }
+
+    bool accMapped() const override {
+        return acc_mapped_;
+    }
+
+    void accUnmap() const override {
+#if ATLAS_HAVE_ACC
+        if (acc_mapped_) {
+            atlas_acc_unmap_data(host_data_);
+            acc_mapped_ = false;
+        }
+#endif
+    }
+
 
 private:
     [[noreturn]] void throw_AllocationFailed(size_t bytes, const eckit::CodeLocation& loc) {
@@ -251,6 +281,8 @@ private:
     mutable bool host_updated_{true};
     mutable bool device_updated_{true};
     mutable bool device_allocated_{false};
+    mutable bool acc_mapped_{false};
+
 };
 
 //------------------------------------------------------------------------------
@@ -291,6 +323,12 @@ public:
     void* voidHostData() override { return static_cast<void*>(data_store_); }
 
     void* voidDeviceData() override { return static_cast<void*>(data_store_); }
+
+    void accMap() const override {}
+
+    void accUnmap() const override {}
+
+    bool accMapped() const override { return false; }
 
 private:
     Value* data_store_;
