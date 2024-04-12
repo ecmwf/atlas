@@ -51,7 +51,6 @@ if( HAVE_FCTEST )
   )
 
   add_fctest( TARGET atlas_fctest_field_host
-    CONDITION       atlas_HAVE_GRIDTOOLS_STORAGE AND ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_field_host.F90
     LIBS            atlas_f
@@ -59,7 +58,7 @@ if( HAVE_FCTEST )
   )
 
   add_fctest( TARGET atlas_fctest_field_device
-    CONDITION       atlas_HAVE_GRIDTOOLS_STORAGE AND ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA AND atlas_HAVE_ACC
+    CONDITION       atlas_HAVE_ACC
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_field_gpu.F90 external_acc_routine.F90
     LIBS            atlas_f
