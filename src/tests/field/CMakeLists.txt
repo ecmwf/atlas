@@ -25,6 +25,18 @@ ecbuild_add_test( TARGET atlas_test_field_foreach
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_field_acc
+  SOURCES  test_field_acc.cc
+  LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION atlas_HAVE_ACC
+)
+if( TEST atlas_test_field_acc )
+    target_compile_options( atlas_test_field_acc PRIVATE "${ACC_C_FLAGS}")
+    target_link_options( atlas_test_field_acc PRIVATE "${ACC_C_FLAGS}")
+    set_tests_properties ( atlas_test_field_acc PROPERTIES LABELS "gpu;acc")
+endif()
+
 if( HAVE_FCTEST )
 
   add_fctest( TARGET atlas_fctest_field
