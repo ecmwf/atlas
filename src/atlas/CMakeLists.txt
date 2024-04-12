@@ -918,19 +918,31 @@ list( APPEND source_list
   ${atlas_io_adaptor_srcs}
 )
 
-if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
+
+if( atlas_HAVE_CUDA )
+  include( atlas_host_device )
   list( APPEND source_list
     parallel/HaloExchangeCUDA.h
     parallel/HaloExchangeCUDA.cu
   )
-
-  include( atlas_host_device )
   atlas_host_device( source_list
     SOURCES
-      array/gridtools/GridToolsArrayView.cc
-      array/gridtools/GridToolsIndexView.cc
       mesh/Connectivity.cc
   )
+
+  if( atlas_HAVE_GRIDTOOLS_STORAGE )
+    atlas_host_device( source_list
+      SOURCES
+        array/gridtools/GridToolsArrayView.cc
+        array/gridtools/GridToolsIndexView.cc
+    )
+  else()
+    atlas_host_device( source_list
+      SOURCES
+        array/native/NativeArrayView.cc
+        array/native/NativeDataStore.h
+    )
+  endif()
 endif()
 
 ecbuild_add_library( TARGET atlas

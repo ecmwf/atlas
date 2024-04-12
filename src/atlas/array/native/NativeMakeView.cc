@@ -49,12 +49,22 @@ ArrayView<const Value, Rank> make_host_view(const Array& array) {
 
 template <typename Value, int Rank>
 ArrayView<Value, Rank> make_device_view(Array& array) {
+#if ATLAS_HAVE_CUDA
+    ATLAS_ASSERT(array.deviceAllocated(),"make_device_view: Array not allocated on device");
+    return ArrayView<Value, Rank>((array.device_data<Value>()), array.shape(), array.strides());
+#else
     return make_host_view<Value, Rank>(array);
+#endif
 }
 
 template <typename Value, int Rank>
 ArrayView<const Value, Rank> make_device_view(const Array& array) {
-    return make_host_view<Value, Rank>(array);
+#if ATLAS_HAVE_CUDA
+    ATLAS_ASSERT(array.deviceAllocated(),"make_device_view: Array not allocated on device");
+    return ArrayView<const Value, Rank>(array.device_data<const Value>(), array.shape(), array.strides());
+#else
+    return make_host_view<const Value, Rank>(array);
+#endif
 }
 
 template <typename Value, int Rank>
@@ -76,7 +86,7 @@ IndexView<Value, Rank> make_indexview(Array& array) {
 template <typename Value, int Rank>
 IndexView<const Value, Rank> make_indexview(const Array& array) {
     check_metadata<Value, Rank>(array);
-    return make_host_indexview<Value, Rank>(array);
+    return make_host_indexview<const Value, Rank>(array);
 }
 
 template <typename Value, int Rank>
@@ -88,7 +98,7 @@ ArrayView<Value, Rank> make_view(Array& array) {
 template <typename Value, int Rank>
 ArrayView<const Value, Rank> make_view(const Array& array) {
     check_metadata<Value, Rank>(array);
-    return make_host_view<Value, Rank>(array);
+    return make_host_view<const Value, Rank>(array);
 }
 
 // --------------------------------------------------------------------------------------------

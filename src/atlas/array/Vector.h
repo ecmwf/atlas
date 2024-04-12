@@ -16,7 +16,7 @@
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
 
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+#if ATLAS_HAVE_CUDA
 #include <cuda_runtime.h>
 #endif
 
@@ -61,7 +61,7 @@ public:
 
     void updateDevice() {
         if (!data_gpu_) {
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+#if ATLAS_HAVE_CUDA
             ::cudaMalloc((void**)(&data_gpu_), sizeof(T*) * size_);
 
             T* buff = new T[size_];
@@ -79,7 +79,7 @@ public:
         }
         else {
             ATLAS_ASSERT(size_gpu_ == size_);
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+#if ATLAS_HAVE_CUDA
             for (idx_t i = 0; i < size(); ++i) {
                 data_[i]->updateDevice();
                 assert(data_gpu_[i] == data_[i]->gpu_object_ptr());
@@ -90,7 +90,7 @@ public:
     void updateHost() {
         ATLAS_ASSERT(data_gpu_ != nullptr);
 
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+#if ATLAS_HAVE_CUDA
 
         for (idx_t i = 0; i < size(); ++i) {
             data_[i]->updateHost();
