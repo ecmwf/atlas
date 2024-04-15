@@ -19,6 +19,15 @@ using namespace atlas::array;
 namespace atlas {
 namespace test {
 
+#define REQUIRE_CUDA_SUCCESS(msg) \
+do { \
+  cudaError_t err = cudaPeekAtLastError(); \
+  if (err != cudaSuccess ) { \
+    throw eckit::testing::TestException("REQUIRE_CUDA_SUCCESS ["+std::string(msg)+"] failed:\n"\
+          + std::string(cudaGetErrorString(err)) , Here()); \
+  } \
+} while(false)
+
 template<typename Value, int RANK>
 __global__
 void kernel_ex(array::ArrayView<Value, RANK> dv)
@@ -51,14 +60,22 @@ CASE( "test_array" )
 
    ds->updateDevice();
 
+   REQUIRE_CUDA_SUCCESS("updateDevice");
+
    auto cv = make_device_view<double, 3>(*ds);
 
+   REQUIRE_CUDA_SUCCESS("make_device_view");
+
    kernel_ex<<<1,1>>>(cv);
+
+   REQUIRE_CUDA_SUCCESS("kernel_ex");
 
    cudaDeviceSynchronize();
 
    ds->updateHost();
    ds->reactivateHostWriteViews();
+
+   REQUIRE_CUDA_SUCCESS("updateHost");
 
    EXPECT( hv(3, 3, 3) == 4.5 + dx*dy*dz );
 
@@ -83,14 +100,22 @@ CASE( "test_array_loop" )
 
    ds->updateDevice();
 
+   REQUIRE_CUDA_SUCCESS("updateDevice");
+
    auto cv = make_device_view<double, 3>(*ds);
 
+   REQUIRE_CUDA_SUCCESS("make_device_view");
+
    loop_kernel_ex<<<1,1>>>(cv);
+
+   REQUIRE_CUDA_SUCCESS("loop_kernel_ex");
 
    cudaDeviceSynchronize();
 
    ds->updateHost();
    ds->reactivateHostWriteViews();
+
+   REQUIRE_CUDA_SUCCESS("updateHost");
 
    for(int i=0; i < dx; i++) {
      for(int j=0; j < dy; j++) {
