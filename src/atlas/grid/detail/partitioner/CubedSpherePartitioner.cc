@@ -30,7 +30,7 @@ namespace partitioner {
 namespace {
 
 bool isNearInt(double value) {
-    const double diff = value - floor(value);
+    const double diff = value - std::floor(value);
     return (diff <= std::numeric_limits<double>::epsilon() || diff >= (1.0 - std::numeric_limits<double>::epsilon()));
 }
 
