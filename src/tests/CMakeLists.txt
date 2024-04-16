@@ -63,46 +63,14 @@ macro( atlas_add_cuda_test )
       ecbuild_debug("atlas_add_cuda_test: Test ${_PAR_TARGET} explicitly links with libraries ${_libs}")
     endif()
 
-    if( atlas_CUDA_LANGUAGE_ENABLED )
+    ecbuild_add_test( TARGET      ${_PAR_TARGET}
+                      SOURCES     ${_PAR_SOURCES}
+                      LIBS        ${_libs}
+                      ENVIRONMENT ${_PAR_ENVIRONMENT} )
+    set_tests_properties(${_PAR_TARGET} PROPERTIES LABELS "gpu")
 
-      ecbuild_add_test( TARGET      ${_PAR_TARGET}
-                        SOURCES     ${_PAR_SOURCES}
-                        LIBS        ${_libs}
-                        ENVIRONMENT ${_PAR_ENVIRONMENT} )
-
-    else()
-
-      cuda_add_executable (${_PAR_TARGET} ${_PAR_SOURCES})
-
-      if( _libs )
-        target_link_libraries(${_PAR_TARGET} ${_libs})
-      endif()
-
-      # whatever project settings are, we always build tests with the build_rpath, not the install_rpath
-      set_property( TARGET ${_PAR_TARGET} PROPERTY BUILD_WITH_INSTALL_RPATH FALSE )
-      set_property( TARGET ${_PAR_TARGET} PROPERTY SKIP_BUILD_RPATH         FALSE )
-
-      if( CMAKE_CROSSCOMPILING_EMULATOR )
-        add_test ( NAME ${_PAR_TARGET} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} ${_PAR_TARGET} )
-      else()
-        add_test ( NAME ${_PAR_TARGET} COMMAND ${_PAR_TARGET} )
-      endif()
-
-      set_property( TEST ${_PAR_TARGET} APPEND PROPERTY ENVIRONMENT "${_PAR_ENVIRONMENT}" )
-
-    endif()
   endif()
 endmacro()
-
-if( ECKIT_INCLUDE_DIRS ) # eckit not yet ported to CMake3
-  include_directories( ${ECKIT_INCLUDE_DIRS} )
-endif()
-
-if( NOT DEFINED transi_VERSION )
-  if( TRANSI_VERSION VERSION_LESS 0.6 )# transi not yet ported to CMake3
-    include_directories( ${TRANSI_INCLUDE_DIRS} )
-  endif()
-endif()
 
 if( HAVE_CUDA )
   set( ATLAS_TEST_ENVIRONMENT "ATLAS_RUN_NGPUS=1" )

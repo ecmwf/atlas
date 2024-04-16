@@ -133,7 +133,8 @@ public:
     }
 
     static constexpr idx_t rank() { return Rank; }
-    size_t size() const { return size_; }
+
+    ATLAS_HOST_DEVICE size_t size() const { return size_; }
     bool valid() const;
 
     bool contiguous() const { return (size_ == size_t(shape_[0]) * size_t(strides_[0]) ? true : false); }
@@ -154,11 +155,13 @@ public:
     const idx_t* shape() const { return shape_; }
 
     template <typename Int>
+    ATLAS_HOST_DEVICE
     idx_t shape(Int idx) const {
         return shape_[idx];
     }
 
     template <typename Int>
+    ATLAS_HOST_DEVICE
     idx_t stride(Int idx) const {
         return strides_[idx];
     }

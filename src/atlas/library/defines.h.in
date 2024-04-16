@@ -17,6 +17,7 @@
 #define ATLAS_HAVE_OMP                       @atlas_HAVE_OMP_CXX@
 #define ATLAS_OMP_TASK_SUPPORTED             @ATLAS_OMP_TASK_SUPPORTED@
 #define ATLAS_OMP_TASK_UNTIED_SUPPORTED      @ATLAS_OMP_TASK_UNTIED_SUPPORTED@
+#define ATLAS_HAVE_CUDA                      @atlas_HAVE_CUDA@
 #define ATLAS_HAVE_ACC                       @atlas_HAVE_ACC@
 #define ATLAS_HAVE_QHULL                     @atlas_HAVE_QHULL@
 #define ATLAS_HAVE_CGAL                      @atlas_HAVE_CGAL@

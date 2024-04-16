@@ -10,3 +10,5 @@ build/*
 install/*
 env.sh
 *.DS_Store
+.vscode
+

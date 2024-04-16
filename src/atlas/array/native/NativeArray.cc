@@ -53,11 +53,16 @@ Array* Array::create(const ArrayShape& shape, const ArrayLayout& layout) {
 }
 template <typename Value>
 Array* Array::wrap(Value* data, const ArrayShape& shape) {
-    return new ArrayT<Value>(new native::WrappedDataStore<Value>(data), shape);
+    size_t size = 1;
+    for (int i = 0; i < shape.size(); ++i) {
+        size *= shape[i];
+    }
+    return new ArrayT<Value>(new native::WrappedDataStore<Value>(data, size), shape);
 }
 template <typename Value>
 Array* Array::wrap(Value* data, const ArraySpec& spec) {
-    return new ArrayT<Value>(new native::WrappedDataStore<Value>(data), spec);
+    size_t size = spec.size();
+    return new ArrayT<Value>(new native::WrappedDataStore<Value>(data, size), spec);
 }
 
 Array::~Array() = default;
@@ -280,8 +285,18 @@ size_t ArrayT<Value>::footprint() const {
 }
 
 template <typename Value>
-bool ArrayT<Value>::accMap() const {
-    return false;
+void ArrayT<Value>::accMap() const {
+    data_store_->accMap();
+}
+
+template <typename Value>
+void ArrayT<Value>::accUnmap() const {
+    data_store_->accUnmap();
+}
+
+template <typename Value>
+bool ArrayT<Value>::accMapped() const {
+    return data_store_->accMapped();
 }
 
 //------------------------------------------------------------------------------

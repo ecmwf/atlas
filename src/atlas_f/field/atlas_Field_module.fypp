@@ -90,6 +90,11 @@ contains
 #:endfor
       & dummy
 
+  procedure, public :: device_allocated
+  procedure, public :: allocate_device
+  procedure, public :: deallocate_device
+  procedure, public :: set_host_needs_update
+  procedure, public :: set_device_needs_update
   procedure, public :: host_needs_update
   procedure, public :: device_needs_update
   procedure, public :: update_device
@@ -633,6 +638,38 @@ end subroutine
 
 !-------------------------------------------------------------------------------
 
+subroutine set_host_needs_update(this,value)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  logical, optional, intent(in) :: value
+  integer :: value_int
+  value_int = 1
+  if (present(value)) then
+    if (.not. value) then
+      value_int = 0
+    endif
+  endif
+  call atlas__field__set_host_needs_update(this%CPTR_PGIBUG_A,value_int)
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine set_device_needs_update(this,value)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(in) :: this
+  logical, optional, intent(in) :: value
+  integer :: value_int
+  value_int = 1
+  if (present(value)) then
+    if (.not. value) then
+      value_int = 0
+    endif
+  endif
+  call atlas__field__set_device_needs_update(this%CPTR_PGIBUG_A,value_int)
+end subroutine
+
+!-------------------------------------------------------------------------------
+
 function host_needs_update(this)
   use atlas_field_c_binding
   logical :: host_needs_update
@@ -680,6 +717,35 @@ subroutine sync_host_device(this)
   class(atlas_Field), intent(inout) :: this
   call atlas__Field__sync_host_device(this%CPTR_PGIBUG_A)
 end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine allocate_device(this)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(inout) :: this
+  call atlas__Field__allocate_device(this%CPTR_PGIBUG_A)
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine deallocate_device(this)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(inout) :: this
+  call atlas__Field__deallocate_device(this%CPTR_PGIBUG_A)
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+function device_allocated(this)
+  use atlas_field_c_binding
+  logical :: device_allocated
+  class(atlas_Field), intent(in) :: this
+  if( atlas__Field__device_allocated(this%CPTR_PGIBUG_A) == 1 ) then
+    device_allocated = .true.
+  else
+    device_allocated = .false.
+  endif
+end function
 
 !-------------------------------------------------------------------------------
 

@@ -26,10 +26,13 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-#if ATLAS_HAVE_GRIDTOOLS_STORAGE
 CASE("test_array") {
     Array* ds = Array::create<double>(4ul);
+#if ATLAS_HAVE_GRIDTOOLS_STORAGE
     auto hv   = atlas::array::gridtools::make_gt_host_view<double, 1>(*ds);
+#else
+    auto hv   = atlas::array::make_host_view<double, 1>(*ds);
+#endif
     hv(3)     = 4.5;
 
     atlas::array::ArrayView<double, 1> atlas_hv = make_host_view<double, 1>(*ds);
@@ -39,7 +42,6 @@ CASE("test_array") {
 
     delete ds;
 }
-#endif
 
 CASE("test_array_zero_size") {
     Array* ds = Array::create<double>(0);
@@ -48,10 +50,13 @@ CASE("test_array_zero_size") {
     delete ds;
 }
 
-#if ATLAS_HAVE_GRIDTOOLS_STORAGE
 CASE("test_create") {
     Array* ds = Array::create(array::DataType::create<int>(), ArrayShape({4, 3}));
+#if ATLAS_HAVE_GRIDTOOLS_STORAGE
     auto hv   = atlas::array::gridtools::make_gt_host_view<int, 2>(*ds);
+#else
+    auto hv   = atlas::array::make_host_view<int, 2>(*ds);
+#endif
     hv(3, 2)  = 4;
 
     atlas::array::ArrayView<int, 2> atlas_hv = make_host_view<int, 2>(*ds);
@@ -61,12 +66,14 @@ CASE("test_create") {
 
     delete ds;
 }
-#endif
 
-#if ATLAS_HAVE_GRIDTOOLS_STORAGE
 CASE("test_make_view") {
     Array* ds = Array::create<double>(4ul);
+#if ATLAS_HAVE_GRIDTOOLS_STORAGE
     auto hv   = atlas::array::gridtools::make_gt_host_view<double, 1>(*ds);
+#else
+    auto hv   = atlas::array::make_host_view<double, 1>(*ds);
+#endif
     hv(3)     = 4.5;
 
     atlas::array::ArrayView<double, 1> atlas_hv = make_view<double, 1>(*ds);
@@ -76,7 +83,6 @@ CASE("test_make_view") {
 
     delete ds;
 }
-#endif
 
 CASE("test_localview") {
     Array* ds = Array::create<double>(8ul, 4ul, 2ul);
@@ -549,13 +555,8 @@ CASE("test_wrap") {
 
 CASE("test_acc_map") {
     Array* ds = Array::create<double>(2, 3, 4);
-    if (ATLAS_HAVE_ACC) {
-        EXPECT(ds->accMap() == true);
-        EXPECT(ds->accMap() == true);
-    }
-    else {
-        EXPECT(ds->accMap() == false);
-    }
+    EXPECT_NO_THROW(ds->accMap());
+    EXPECT(ds->accMapped() == ATLAS_HAVE_ACC);
     delete ds;
 }
 

@@ -18,7 +18,6 @@
 #include "atlas/array.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/MakeView.h"
-#include "atlas/array/Vector.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/Connectivity.h"
 #include "atlas/runtime/Exception.h"
