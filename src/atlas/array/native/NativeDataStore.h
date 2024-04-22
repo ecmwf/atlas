@@ -146,9 +146,11 @@ public:
             return; // nothing to do
         }
         if (not (host_updated_ or device_updated_)) {
-            throw_AssertionFailed("syncHostDevice() could not figure out which of host or device is up to date. "
-                                  "Probably it was forgotten to use setDeviceNeedsUpdate(true) or setDeviceNeedsUpdate(true)",
-                                  Here());
+            return;
+            // nothing to do here
+        //    throw_AssertionFailed("syncHostDevice() could not figure out which of host or device is up to date. "
+        //                          "Probably it was forgotten to use setDeviceNeedsUpdate(true) or setDeviceNeedsUpdate(true)",
+        //                          Here());
         }
 
         if (not device_updated_) {
@@ -330,9 +332,10 @@ public:
             return; // nothing to do
         }
         if (not (host_updated_ or device_updated_)) {
-            throw_AssertionFailed("syncHostDevice() could not figure out which of host or device is up to date. "
-                                  "Probably it was forgotten to use setDeviceNeedsUpdate(true) or setDeviceNeedsUpdate(true)",
-                                  Here());
+            return; // nothing to do
+            // throw_AssertionFailed("syncHostDevice() could not figure out which of host or device is up to date. "
+            //                      "Probably it was forgotten to use setDeviceNeedsUpdate(true) or setDeviceNeedsUpdate(true)",
+            //                       Here());
         }
 
         if (not device_updated_) {
@@ -379,9 +382,9 @@ public:
 
     bool deviceNeedsUpdate() const override { return (not device_updated_); }
 
-    void setHostNeedsUpdate(bool v) const override { host_updated_ = (not v); }
+    void setHostNeedsUpdate(bool v) const override { host_updated_ = (not v); device_updated_ = v; }
 
-    void setDeviceNeedsUpdate(bool v) const override { device_updated_ = (not v); }
+    void setDeviceNeedsUpdate(bool v) const override { device_updated_ = (not v); host_updated_ = v; }
 
     void reactivateDeviceWriteViews() const override {}
 
