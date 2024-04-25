@@ -11,6 +11,7 @@
 #include "Logging.h"
 
 #include <iostream>
+#include <exception>
 
 #include "eckit/log/Channel.h"
 
@@ -87,7 +88,9 @@ void Logging::start(const std::string& title) {
 
 void Logging::stop(const std::string& title, double seconds) {
     if (enabled()) {
-        channel() << title << " ... done : " << seconds << "s" << std::endl;
+        if (!std::uncaught_exception()){
+            channel() << title << " ... done : " << seconds << "s" << std::endl;
+        }
     }
 }
 //-----------------------------------------------------------------------------------------------------------
