@@ -27,13 +27,11 @@ ecbuild_add_test( TARGET atlas_test_field_foreach
 
 ecbuild_add_test( TARGET atlas_test_field_acc
   SOURCES  test_field_acc.cc
-  LIBS     atlas
+  LIBS     atlas OpenACC::OpenACC_CXX
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   CONDITION atlas_HAVE_ACC
 )
 if( TEST atlas_test_field_acc )
-    target_compile_options( atlas_test_field_acc PRIVATE "${ACC_C_FLAGS}")
-    target_link_options( atlas_test_field_acc PRIVATE "${ACC_C_FLAGS}")
     set_tests_properties ( atlas_test_field_acc PROPERTIES LABELS "gpu;acc")
 endif()
 
@@ -70,18 +68,17 @@ if( HAVE_FCTEST )
   )
 
   add_fctest( TARGET atlas_fctest_field_device
-    CONDITION       atlas_HAVE_ACC
+    CONDITION       atlas_HAVE_ACC AND OpenACC_Fortran_FOUND
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_field_gpu.F90 external_acc_routine.F90
-    LIBS            atlas_f
+    LIBS            atlas_f OpenACC::OpenACC_Fortran
     ENVIRONMENT     ${ATLAS_TEST_ENVIRONMENT} ATLAS_RUN_NGPUS=1
   )
 
-  if( TARGET atlas_fctest_field_device )
-    target_compile_options( atlas_fctest_field_device PUBLIC ${ACC_Fortran_FLAGS} )
-    target_link_libraries( atlas_fctest_field_device ${ACC_Fortran_FLAGS} )
-    target_link_options( atlas_fctest_field_device PRIVATE "${ACC_Fortran_FLAGS}")
+  if( TEST atlas_fctest_field_device )
     set_tests_properties ( atlas_fctest_field_device PROPERTIES LABELS "gpu;acc")
+  endif()
+  if( TARGET atlas_fctest_field_device )
     if( HAVE_GRIDTOOLS_STORAGE )
       target_compile_definitions(atlas_fctest_field_device PUBLIC ATLAS_HAVE_GRIDTOOLS_STORAGE=1)
     else()
@@ -90,17 +87,14 @@ if( HAVE_FCTEST )
   endif()
 
   add_fctest( TARGET atlas_fctest_field_wrap_device
-    CONDITION       atlas_HAVE_ACC
+    CONDITION       atlas_HAVE_ACC AND OpenACC_Fortran_FOUND
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_field_wrap_gpu.F90 external_acc_routine.F90
-    LIBS            atlas_f
+    LIBS            atlas_f OpenACC::OpenACC_Fortran
     ENVIRONMENT     ${ATLAS_TEST_ENVIRONMENT} ATLAS_RUN_NGPUS=1
   )
 
-  if( TARGET atlas_fctest_field_wrap_device )
-    target_compile_options( atlas_fctest_field_wrap_device PUBLIC ${ACC_Fortran_FLAGS} )
-    target_link_libraries( atlas_fctest_field_wrap_device ${ACC_Fortran_FLAGS} )
-    target_link_options( atlas_fctest_field_wrap_device PRIVATE "${ACC_Fortran_FLAGS}")
+  if( TEST atlas_fctest_field_wrap_device )
     set_tests_properties ( atlas_fctest_field_wrap_device PROPERTIES LABELS "gpu;acc")
   endif()
 
