@@ -82,6 +82,11 @@ if( HAVE_FCTEST )
     target_link_libraries( atlas_fctest_field_device ${ACC_Fortran_FLAGS} )
     target_link_options( atlas_fctest_field_device PRIVATE "${ACC_Fortran_FLAGS}")
     set_tests_properties ( atlas_fctest_field_device PROPERTIES LABELS "gpu;acc")
+    if( HAVE_GRIDTOOLS_STORAGE )
+      target_compile_definitions(atlas_fctest_field_device PUBLIC ATLAS_HAVE_GRIDTOOLS_STORAGE=1)
+    else()
+      target_compile_definitions(atlas_fctest_field_device PUBLIC ATLAS_HAVE_GRIDTOOLS_STORAGE=0)
+    endif()
   endif()
 
   add_fctest( TARGET atlas_fctest_field_wrap_device

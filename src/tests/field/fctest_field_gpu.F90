@@ -126,7 +126,9 @@ fview(:,:) = 1.
 fview(2,1) = 2.
 
 call fset%set_host_needs_update(.false.)
-FCTEST_CHECK_EQUAL(field%device_allocated(), .false.)
+if (ATLAS_HAVE_GRIDTOOLS_STORAGE == 0) then
+  FCTEST_CHECK_EQUAL(field%device_allocated(), .false.)
+endif
 call fset%allocate_device()
 FCTEST_CHECK_EQUAL(field%device_allocated(), .true.)
 call fset%update_device()
@@ -141,8 +143,9 @@ FCTEST_CHECK_EQUAL( fview(2,1), 2. )
 call fset%update_host()
 FCTEST_CHECK_EQUAL( fview(2,1), 5. )
 call fset%deallocate_device()
-FCTEST_CHECK_EQUAL(field%device_allocated(), .false.)
-
+if (ATLAS_HAVE_GRIDTOOLS_STORAGE == 0) then
+  FCTEST_CHECK_EQUAL(field%device_allocated(), .false.)
+endif
 print *, "... by name"
 field = fset%field("f3")
 call field%data(fview)
