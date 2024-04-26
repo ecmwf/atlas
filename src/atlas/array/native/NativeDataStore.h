@@ -20,12 +20,14 @@
 #include <cuda_runtime.h>
 #endif
 
+#include "eckit/log/Bytes.h"
+
 #include "atlas/array/ArrayDataStore.h"
 #include "atlas/library/Library.h"
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
-#include "eckit/log/Bytes.h"
+#include "atlas/util/RegisterPointerInfo.h"
 
 #if ATLAS_HAVE_ACC
 #include "atlas_acc_support/atlas_acc_map_data.h"
@@ -117,11 +119,18 @@ public:
     void updateDevice() const override {
 #if ATLAS_HAVE_CUDA
         if (not device_allocated_) {
+            if (atlas::Library::instance().traceMemory()) {
+                Log::trace() << "updateDevice(" << name() << ") : device not allocated" << std::endl;
+            }
             allocateDevice();
         }
+        if (atlas::Library::instance().traceMemory()) {
+            Log::trace() << "updateDevice(" << name() << ") : cudaMemcpyHostToDevice( device_ptr:" << device_data_ << " , host_ptr:"<< host_data_ << " , " << eckit::Bytes(size_*sizeof(Value)) << " ) " << std::endl;
+        }
+
         cudaError_t err = cudaMemcpy(device_data_, host_data_, size_*sizeof(Value), cudaMemcpyHostToDevice);
         if (err != cudaSuccess) {
-            throw_AssertionFailed("Failed to updateDevice: "+std::string(cudaGetErrorString(err)), Here());
+            throw_AssertionFailed("Failed to updateDevice("+std::string(name())+") : "+std::string(cudaGetErrorString(err)), Here());
         }
         device_updated_ = true;
 #endif
@@ -130,9 +139,12 @@ public:
     void updateHost() const override {
 #if ATLAS_HAVE_CUDA
         if (device_allocated_) {
+            if (atlas::Library::instance().traceMemory()) {
+                Log::trace() << "updateHost(" << name() << ") : cudaMemcpyDeviceToHost( host_ptr:" << host_data_ << " , device_ptr:"<< device_data_ << " , " << eckit::Bytes(size_*sizeof(Value)) << " ) " << std::endl;
+            }
             cudaError_t err = cudaMemcpy(host_data_, device_data_, size_*sizeof(Value), cudaMemcpyDeviceToHost);
             if (err != cudaSuccess) {
-                throw_AssertionFailed("Failed to updateHost: "+std::string(cudaGetErrorString(err)), Here());
+                throw_AssertionFailed("Failed to updateHost("+std::string(name())+") : "+std::string(cudaGetErrorString(err)), Here());
             }
             host_updated_ = true;
         }
@@ -169,9 +181,13 @@ public:
            return;
         }
         if (size_) {
-            cudaError_t err = cudaMalloc((void**)&device_data_, sizeof(Value)*size_);
+            size_t bytes = sizeof(Value)*size_;
+            cudaError_t err = cudaMalloc((void**)&device_data_, bytes);
             if (err != cudaSuccess) {
-                throw_AssertionFailed("Failed to allocate GPU memory: " + std::string(cudaGetErrorString(err)), Here());
+                throw_AssertionFailed("allocateDevice("+std::string(name())+") Failed to allocate GPU memory: " + std::string(cudaGetErrorString(err)), Here());
+            }
+            if (atlas::Library::instance().traceMemory()) {
+                Log::trace() << "allocateDevice(" << name() << ") : cudaMalloc( device_ptr:" << device_data_ << " , " << eckit::Bytes(bytes) << " )" << std::endl;
             }
             device_allocated_ = true;
             accMap();
@@ -182,11 +198,15 @@ public:
     void deallocateDevice() const override {
 #if ATLAS_HAVE_CUDA
         if (device_allocated_) {
-            accUnmap();
+            size_t bytes = sizeof(Value)*size_;
+            if (atlas::Library::instance().traceMemory()) {
+                Log::trace() << "deallocateDevice(" << name() << ") : cudaFree( device_ptr:" << device_data_ << " , " << eckit::Bytes(bytes) << " )" << std::endl;
+            }
             cudaError_t err = cudaFree(device_data_);
             if (err != cudaSuccess) {
-                throw_AssertionFailed("Failed to deallocate GPU memory: " + std::string(cudaGetErrorString(err)), Here());
+                throw_AssertionFailed("Failed to deallocateDevice("+std::string(name())+") : " + std::string(cudaGetErrorString(err)), Here());
             }
+            accUnmap();
             device_data_ = nullptr;
             device_allocated_ = false;
         }
@@ -214,7 +234,10 @@ public:
     void accMap() const override {
 #if ATLAS_HAVE_ACC
         if (not acc_mapped_) {
-            ATLAS_ASSERT(deviceAllocated(),"Could not accMap as device data is not allocated");
+            ATLAS_ASSERT(deviceAllocated(),"Could not accMap("+std::string(name())+") as device data is not allocated");
+            if (atlas::Library::instance().traceMemory()) {
+                Log::trace() << "accMap("+std::string(name())+") : atlas_acc_map_data( host_ptr:" << host_data_ << " , device_ptr:" << device_data_ << " , " << eckit::Bytes(size_ * sizeof(Value)) << " )" << std::endl;
+            }
             atlas_acc_map_data((void*)host_data_, (void*)device_data_, size_ * sizeof(Value));
             acc_mapped_ = true;
         }
@@ -228,6 +251,9 @@ public:
     void accUnmap() const override {
 #if ATLAS_HAVE_ACC
         if (acc_mapped_) {
+            if (atlas::Library::instance().traceMemory()) {
+                Log::trace() << "accUnmap(" << name() << ") : atlas_acc_unmap_data( host_ptr:" << host_data_ << " )" << std::endl;
+            }
             atlas_acc_unmap_data(host_data_);
             acc_mapped_ = false;
         }
@@ -275,6 +301,11 @@ private:
     }
 
     size_t footprint() const { return sizeof(Value) * size_; }
+
+
+    std::string_view name() const {
+        return util::registered_pointer_name(this);
+    }
 
     size_t size_;
     Value* host_data_;

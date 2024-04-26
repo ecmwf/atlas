@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include <string>
+#include <string_view>
 
 #include "atlas/array/ArrayIdx.h"
 #include "atlas/array/ArrayLayout.h"
@@ -81,7 +81,7 @@ static constexpr char array_dim() {
     return Dim == 0 ? 'i' : (Dim == 1 ? 'j' : (Dim == 2 ? 'k' : (Dim == 3 ? 'l' : (Dim == 4 ? 'm' : ('*')))));
 }
 
-void throw_OutOfRange(const std::string& class_name, char idx_str, int idx, int max);
+void throw_OutOfRange(std::string_view class_name, char idx_str, int idx, int max);
 #endif
 
 //------------------------------------------------------------------------------------------------------
