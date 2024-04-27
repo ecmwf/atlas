@@ -32,21 +32,26 @@ std::ostream& operator<<(std::ostream& os, const Field& f) {
 
 Field::Field(const eckit::Parametrisation& config): Handle(Implementation::create(config)) {}
 
-Field::Field(const std::string& name, array::DataType datatype, const array::ArrayShape& shape):
-    Handle(Implementation::create(name, datatype, shape)) {}
+Field::Field(const std::string& name, array::DataType datatype, const array::ArrayShape& shape,
+        const eckit::Parametrisation& param):
+    Handle(Implementation::create(name, datatype, shape, param)) {}
 
-Field::Field(const std::string& name, array::DataType datatype, array::ArraySpec&& spec):
-    Handle(Implementation::create(name, datatype, std::move(spec))) {}
+Field::Field(const std::string& name, array::DataType datatype, array::ArraySpec&& spec,
+        const eckit::Parametrisation& param):
+    Handle(Implementation::create(name, datatype, std::move(spec), param)) {}
 
-Field::Field(const std::string& name, array::Array* array): Handle(Implementation::create(name, array)) {}
+Field::Field(const std::string& name, array::Array* array, const eckit::Parametrisation& param):
+    Handle(Implementation::create(name, array, param)) {}
 
 template <typename DATATYPE>
-Field::Field(const std::string& name, DATATYPE* data, const array::ArraySpec& spec):
-    Handle(Implementation::wrap(name, data, spec)) {}
+Field::Field(const std::string& name, DATATYPE* data, const array::ArraySpec& spec,
+        const eckit::Parametrisation& param):
+    Handle(Implementation::wrap(name, data, spec, param)) {}
 
 template <typename DATATYPE>
-Field::Field(const std::string& name, DATATYPE* data, const array::ArrayShape& shape):
-    Handle(Implementation::wrap(name, data, shape)) {}
+Field::Field(const std::string& name, DATATYPE* data, const array::ArrayShape& shape,
+        const eckit::Parametrisation& param):
+    Handle(Implementation::wrap(name, data, shape, param)) {}
 
 /// @brief Implicit conversion to Array
 Field::operator const array::Array&() const {
@@ -268,14 +273,22 @@ void Field::reactivateHostWriteViews() const {
 
 // ------------------------------------------------------------------
 
-template Field::Field(const std::string&, float*, const array::ArraySpec&);
-template Field::Field(const std::string&, float*, const array::ArrayShape&);
-template Field::Field(const std::string&, double*, const array::ArraySpec&);
-template Field::Field(const std::string&, double*, const array::ArrayShape&);
-template Field::Field(const std::string&, long*, const array::ArraySpec&);
-template Field::Field(const std::string&, long*, const array::ArrayShape&);
-template Field::Field(const std::string&, int*, const array::ArraySpec&);
-template Field::Field(const std::string&, int*, const array::ArrayShape&);
+template Field::Field(const std::string&, float*, const array::ArraySpec&,
+        const eckit::Parametrisation& param);
+template Field::Field(const std::string&, float*, const array::ArrayShape&,
+        const eckit::Parametrisation& param);
+template Field::Field(const std::string&, double*, const array::ArraySpec&,
+        const eckit::Parametrisation& param);
+template Field::Field(const std::string&, double*, const array::ArrayShape&,
+        const eckit::Parametrisation& param);
+template Field::Field(const std::string&, long*, const array::ArraySpec&,
+        const eckit::Parametrisation& param);
+template Field::Field(const std::string&, long*, const array::ArrayShape&,
+        const eckit::Parametrisation& param);
+template Field::Field(const std::string&, int*, const array::ArraySpec&,
+        const eckit::Parametrisation& param);
+template Field::Field(const std::string&, int*, const array::ArrayShape&,
+        const eckit::Parametrisation& param);
 
 // ------------------------------------------------------------------
 

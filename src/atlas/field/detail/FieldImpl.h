@@ -47,37 +47,45 @@ public:  // Static methods
     static FieldImpl* create(const eckit::Parametrisation&);
 
     /// @brief Create field with given name, Datatype and ArrayShape
-    static FieldImpl* create(const std::string& name, array::DataType, const array::ArrayShape& = array::ArrayShape());
+    static FieldImpl* create(const std::string& name, array::DataType, const array::ArrayShape& = 
+            array::ArrayShape(), const eckit::Parametrisation& param = util::Config());
 
     /// @brief Create field with given name, Datatype and ArrayShape
-    static FieldImpl* create(const std::string& name, array::DataType, array::ArraySpec&&);
+    static FieldImpl* create(const std::string& name, array::DataType, array::ArraySpec&&,
+            const eckit::Parametrisation& param = util::Config());
 
     /// @brief Create field with given name, Datatype of template and ArrayShape
     template <typename DATATYPE>
-    static FieldImpl* create(const std::string& name, const array::ArrayShape& = array::ArrayShape());
+    static FieldImpl* create(const std::string& name, const array::ArrayShape& = array::ArrayShape(),
+            const eckit::Parametrisation& param = util::Config());
 
     /// @brief Create field with given name, and take ownership of given Array
-    static FieldImpl* create(const std::string& name, array::Array*);
+    static FieldImpl* create(const std::string& name, array::Array*,
+            const eckit::Parametrisation& param = util::Config());
 
     /// @brief Create field by wrapping existing data, Datatype of template and
     /// ArraySpec
     template <typename DATATYPE>
-    static FieldImpl* wrap(const std::string& name, DATATYPE* data, const array::ArraySpec&);
+    static FieldImpl* wrap(const std::string& name, DATATYPE* data, const array::ArraySpec&, 
+            const eckit::Parametrisation& param = util::Config());
 
     /// @brief Create field by wrapping existing data, Datatype of template and
     /// ArrayShape
     template <typename DATATYPE>
-    static FieldImpl* wrap(const std::string& name, DATATYPE* data, const array::ArrayShape&);
+    static FieldImpl* wrap(const std::string& name, DATATYPE* data, const array::ArrayShape&,
+            const eckit::Parametrisation& param = util::Config());
 
 private:  // Private constructors to force use of static create functions
     /// Allocate new Array internally
-    FieldImpl(const std::string& name, array::DataType, const array::ArrayShape&);
+    FieldImpl(const std::string& name, array::DataType, const array::ArrayShape&,
+            const eckit::Parametrisation& param = util::Config());
 
     /// Allocate new Array internally
-    FieldImpl(const std::string& name, array::DataType, array::ArraySpec&&);
+    FieldImpl(const std::string& name, array::DataType, array::ArraySpec&&,
+            const eckit::Parametrisation& param = util::Config());
 
     /// Transfer ownership of Array
-    FieldImpl(const std::string& name, array::Array*);
+    FieldImpl(const std::string& name, array::Array*, const eckit::Parametrisation& param = util::Config());
 
 public:  // Destructor
     virtual ~FieldImpl();
@@ -262,20 +270,23 @@ public:
 //----------------------------------------------------------------------------------------------------------------------
 
 template <typename DATATYPE>
-FieldImpl* FieldImpl::create(const std::string& name, const array::ArrayShape& shape) {
-    return create(name, array::DataType::create<DATATYPE>(), shape);
+FieldImpl* FieldImpl::create(const std::string& name, const array::ArrayShape& shape,
+        const eckit::Parametrisation& param) {
+    return create(name, array::DataType::create<DATATYPE>(), shape, param);
 }
 
 template <typename DATATYPE>
-FieldImpl* FieldImpl::wrap(const std::string& name, DATATYPE* data, const array::ArraySpec& spec) {
-    FieldImpl* wrapped = create(name, array::Array::wrap(data, spec));
+FieldImpl* FieldImpl::wrap(const std::string& name, DATATYPE* data, const array::ArraySpec& spec,
+        const eckit::Parametrisation& param) {
+    FieldImpl* wrapped = create(name, array::Array::wrap(data, spec), param);
     wrapped->set_dirty(false);
     return wrapped;
 }
 
 template <typename DATATYPE>
-FieldImpl* FieldImpl::wrap(const std::string& name, DATATYPE* data, const array::ArrayShape& shape) {
-    FieldImpl* wrapped = create(name, array::Array::wrap(data, shape));
+FieldImpl* FieldImpl::wrap(const std::string& name, DATATYPE* data, const array::ArrayShape& shape,
+        const eckit::Parametrisation& param) {
+    FieldImpl* wrapped = create(name, array::Array::wrap(data, shape, param));
     wrapped->set_dirty(false);
     return wrapped;
 }

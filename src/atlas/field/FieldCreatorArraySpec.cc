@@ -65,8 +65,20 @@ FieldImpl* FieldCreatorArraySpec::createField(const eckit::Parametrisation& para
     for (size_t i = 0; i < s.size(); ++i) {
         Log::trace() << s[i] << (i < s.size() - 1 ? "," : "");
     }
-    Log::trace() << "]" << std::endl;
-    auto field = FieldImpl::create(name, datatype, array::ArraySpec(std::move(s), array::ArrayAlignment(alignment)));
+    Log::trace() << "]";
+
+#if ATLAS_HAVE_ACC
+    bool pinned_mem = 0;
+    bool mapped_mem = 0;
+    params.get("cuda_pinned", pinned_mem);
+    params.get("cuda_pinned_mapped", mapped_mem);
+    if (pinned_mem) {
+        Log::trace() << " cuda_(mapped, pinned) ->(" << pinned_mem << ", " << mapped_mem << ")";
+    }
+#endif
+    Log::trace() << std::endl;
+
+    auto field = FieldImpl::create(name, datatype, array::ArraySpec(std::move(s), array::ArrayAlignment(alignment)), params);
     field->callbackOnDestruction([field]() { Log::trace() << "Destroy field " << field->name() << std::endl; });
     return field;
 }

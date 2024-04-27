@@ -73,6 +73,9 @@ public:
     Value* deviceData() {
         return static_cast<Value*>(voidDeviceData());
     }
+private:
+    bool device_memory_pinned_ = false;
+    bool device_memory_mapped_ = false;
 };
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
