@@ -207,11 +207,17 @@ public:
                 if (err != cudaSuccess) {
                     throw_AssertionFailed("Failed to get device pointer: "+std::string(cudaGetErrorString(err)), Here());
                 }
+                if (atlas::Library::instance().traceMemory()) {
+                    Log::trace() << "allocateDevice(" << name() << ") : cudaHostRegister( host_ptr:" << host_data_ << " , " << eckit::Bytes(bytes) << ", cudaHostRegisterMapped )" << std::endl;
+                }
             }
             if (host_memory_mapped_) {
                 cudaError_t err = cudaHostGetDevicePointer((void**)&device_data_, host_data_, 0);
                 if (err != cudaSuccess) {
                     throw_AssertionFailed("Failed to get device pointer: "+std::string(cudaGetErrorString(err)), Here());
+                }
+                if (atlas::Library::instance().traceMemory()) {
+                    Log::trace() << "allocateDevice(" << name() << ") : cudaHostGetDevicePointer( device_ptr:" << device_data_ << " , host_ptr: " << host_data_ << " )" << std::endl;
                 }
             }
             else {
