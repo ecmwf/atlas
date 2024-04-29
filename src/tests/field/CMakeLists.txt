@@ -35,7 +35,6 @@ if( TEST atlas_test_field_acc )
     set_tests_properties ( atlas_test_field_acc PROPERTIES LABELS "gpu;acc")
 endif()
 
-if (FALSE) # test_field_pinning.cc was not committed
 ecbuild_add_test( TARGET atlas_test_field_pinning
   SOURCES  test_field_pinning.cc
   LIBS     atlas OpenACC::OpenACC_CXX
@@ -44,7 +43,6 @@ ecbuild_add_test( TARGET atlas_test_field_pinning
 )
 if( TEST atlas_test_field_pinning )
     set_tests_properties ( atlas_test_field_pinning PROPERTIES LABELS "gpu;acc")
-endif()
 endif()
 
 if( HAVE_FCTEST )

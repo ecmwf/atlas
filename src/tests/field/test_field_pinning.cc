@@ -12,7 +12,7 @@
 #error This file needs to be compiled with OpenACC support
 #endif
 
-#include <cuda_runtime.h>
+//#include <cuda_runtime.h>
 #include <openacc.h>
 
 #include "atlas/field/Field.h"
@@ -34,7 +34,7 @@ namespace test {
 CASE("test_field_pinned_mem") {
     atlas::util::Config config;
     config.set("host_memory_pinned", true);
-    config.set("host_memory_mapped", false);
+    config.set("host_memory_mapped", true);
     auto field = Field("0", make_datatype<double>(), array::make_shape(10,4), config);
 
     auto view = array::make_view<double,2>(field);
@@ -47,13 +47,15 @@ CASE("test_field_pinned_mem") {
     cpu_ptr[view.index(3,2)] = 2.;
     EXPECT_EQ(view(3,2), 2.);
 
-    field.updateDevice();
+//    field.updateDevice();
 #pragma acc kernels present(cpu_ptr)
     {
         cpu_ptr[view.index(3,2)] = 3.;
     }
+#pragma acc update host(cpu_ptr)
+   //cudaDeviceSynchronize();
 
-    field.updateHost();
+//    field.updateHost();
     EXPECT_EQ(view(3,2), 3.);
 #endif
 }
