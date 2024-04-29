@@ -34,6 +34,8 @@ ecbuild_add_test( TARGET atlas_test_field_acc
 if( TEST atlas_test_field_acc )
     set_tests_properties ( atlas_test_field_acc PROPERTIES LABELS "gpu;acc")
 endif()
+
+if (FALSE) # test_field_pinning.cc was not committed
 ecbuild_add_test( TARGET atlas_test_field_pinning
   SOURCES  test_field_pinning.cc
   LIBS     atlas OpenACC::OpenACC_CXX
@@ -41,9 +43,8 @@ ecbuild_add_test( TARGET atlas_test_field_pinning
   CONDITION atlas_HAVE_ACC
 )
 if( TEST atlas_test_field_pinning )
-    target_compile_options( atlas_test_field_pinning PRIVATE "${ACC_C_FLAGS}")
-    target_link_options( atlas_test_field_pinning PRIVATE "${ACC_C_FLAGS}")
     set_tests_properties ( atlas_test_field_pinning PROPERTIES LABELS "gpu;acc")
+endif()
 endif()
 
 if( HAVE_FCTEST )
