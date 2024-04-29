@@ -566,7 +566,7 @@ StructuredColumns::~StructuredColumns() {
 // Create Field
 // ----------------------------------------------------------------------------
 Field StructuredColumns::createField(const eckit::Configuration& options) const {
-    Field field(config_name(options), config_datatype(options), config_spec(options));
+    Field field(config_name(options), config_datatype(options), config_spec(options), options);
     set_field_metadata(options, field);
     return field;
 }
