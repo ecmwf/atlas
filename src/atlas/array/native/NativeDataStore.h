@@ -40,15 +40,6 @@ namespace atlas {
 namespace array {
 namespace native {
 
-static bool get_pinned() {
-    static bool pinned_ = eckit::Resource<bool>("$ATLAS_HOST_MEMORY_PINNED",false);
-    return pinned_;
-}
-static bool get_mapped() {
-    static bool mapped_ = eckit::Resource<bool>("$ATLAS_HOST_MEMORY_MAPPED",false);
-    return mapped_;
-}
-
 struct MemoryHighWatermark {
     std::atomic<size_t> bytes_{0};
     std::atomic<size_t> high_{0};
@@ -111,21 +102,18 @@ void initialise(Value[], size_t) {}
 template <typename Value>
 class DataStore : public ArrayDataStore {
 public:
-    DataStore(size_t size, const eckit::Parametrisation& param): size_(size) {
-        host_memory_pinned_ = get_pinned();
-        host_memory_mapped_ = get_mapped(); 
-        allocateHost();
-        initialise(host_data_, size_);
+    DataStore(size_t size, const eckit::Parametrisation& param): size_(size), ArrayDataStore(param) {
 #if ATLAS_HAVE_CUDA
         device_updated_ = false;
-        //param.get("host_memory_pinned", host_memory_pinned_);
-        //param.get("host_memory_mapped", host_memory_mapped_);
         if (! host_memory_pinned_ && host_memory_mapped_) {
             throw_AssertionFailed("Host memory can not be mapped when it is not pinned.", Here());
         }
+        std::cout << " p, m : " << host_memory_pinned_ << ", " << host_memory_mapped_ << std::endl;
 #else
         device_data_ = host_data_;
 #endif
+        allocateHost();
+        initialise(host_data_, size_);
     }
 
     ~DataStore() {
@@ -386,8 +374,6 @@ private:
         return util::registered_pointer_name(this);
     }
 
-    bool host_memory_pinned_ = false;
-    bool host_memory_mapped_ = false;
     size_t size_;
     Value* host_data_;
     mutable Value* device_data_{nullptr};
@@ -404,13 +390,9 @@ template <typename Value>
 class WrappedDataStore : public ArrayDataStore {
 public:
     WrappedDataStore(Value* host_data, size_t size, const eckit::Parametrisation& param): 
-        host_data_(host_data), size_(size) {
+        ArrayDataStore(param), host_data_(host_data), size_(size) {
 #if ATLAS_HAVE_CUDA
         device_updated_ = false;
-        param.get("host_memory_pinned", host_memory_pinned_);
-        param.get("host_memory_mapped", host_memory_mapped_);
-        host_memory_pinned_ = true;
-        host_memory_mapped_ = false;
 #else
         device_data_ = host_data_;
 #endif
@@ -541,8 +523,6 @@ private:
     size_t size_;
     Value* host_data_;
     mutable Value* device_data_;
-    bool host_memory_pinned_ = false;
-    bool host_memory_mapped_ = false;
 
     mutable bool host_updated_{true};
     mutable bool device_updated_{true};
