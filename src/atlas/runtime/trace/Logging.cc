@@ -88,7 +88,7 @@ void Logging::start(const std::string& title) {
 
 void Logging::stop(const std::string& title, double seconds) {
     if (enabled()) {
-        if (!std::uncaught_exception()){
+        if (!std::uncaught_exceptions()){
             channel() << title << " ... done : " << seconds << "s" << std::endl;
         }
     }
