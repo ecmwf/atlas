@@ -102,13 +102,17 @@ void initialise(Value[], size_t) {}
 template <typename Value>
 class DataStore : public ArrayDataStore {
 public:
-    DataStore(size_t size, const eckit::Parametrisation& param): size_(size), ArrayDataStore(param) {
+    DataStore(size_t size, const eckit::Parametrisation& param): size_(size) {
 #if ATLAS_HAVE_CUDA
         device_updated_ = false;
+        param.get("host_memory_pinned", host_memory_pinned_);
+        param.get("host_memory_mapped", host_memory_mapped_);
         if (! host_memory_pinned_ && host_memory_mapped_) {
             throw_AssertionFailed("Host memory can not be mapped when it is not pinned.", Here());
         }
-        std::cout << " p, m : " << host_memory_pinned_ << ", " << host_memory_mapped_ << std::endl;
+        if (! host_memory_pinned_ && host_memory_mapped_) {
+            throw_AssertionFailed("Host memory can not be mapped when it is not pinned.", Here());
+        }
 #else
         device_data_ = host_data_;
 #endif
@@ -197,15 +201,6 @@ public:
         }
         if (size_) {
             size_t bytes = sizeof(Value)*size_;
-            if (host_memory_pinned_) {
-                //cudaError_t err = cudaHostRegister(host_data_, bytes, cudaHostRegisterMapped);
-                //if (err != cudaSuccess) {
-                //    throw_AssertionFailed("Failed to get device pointer: "+std::string(cudaGetErrorString(err)), Here());
-                //}
-                //if (atlas::Library::instance().traceMemory()) {
-                //    Log::trace() << "allocateDevice(" << name() << ") : cudaHostRegister( host_ptr:" << host_data_ << " , " << eckit::Bytes(bytes) << ", cudaHostRegisterMapped )" << std::endl;
-                //}
-            }
             if (host_memory_mapped_) {
                 cudaError_t err = cudaHostGetDevicePointer((void**)&device_data_, host_data_, 0);
                 if (err != cudaSuccess) {
@@ -245,12 +240,6 @@ public:
                 if (err != cudaSuccess) {
                     throw_AssertionFailed("Failed to deallocateDevice("+std::string(name())+") : " + std::string(cudaGetErrorString(err)), Here());
                 }
-            }
-            if (host_memory_pinned_) {
-                //cudaError_t err = cudaHostUnregister(host_data_);
-                //if (err != cudaSuccess) {
-                //    throw_AssertionFailed("Failed to make memory pageable again: " + std::string(cudaGetErrorString(err)), Here());
-                //}
             }
             device_data_ = nullptr;
             device_allocated_ = false;
@@ -305,11 +294,10 @@ public:
 #endif
     }
 
-
 private:
     [[noreturn]] void throw_AllocationFailed(size_t bytes, const eckit::CodeLocation& loc) {
         std::ostringstream ss;
-        ss << "AllocationFailed: Could not allocate " << eckit::Bytes(bytes);
+        ss << "allocateHost(" << name() << ") : AllocationFailed: Could not allocate " << eckit::Bytes(bytes);
         throw_Exception(ss.str(), loc);
     }
 
@@ -317,7 +305,6 @@ private:
         if (n > 0) {
             const size_t alignment = 64 * sizeof(Value);
             size_t bytes           = sizeof(Value) * n;
-            MemoryHighWatermark::instance() += bytes;
 
             int err = posix_memalign((void**)&ptr, alignment, bytes);
             if (err) {
@@ -333,46 +320,57 @@ private:
         if (ptr) {
             free(ptr);
             ptr = nullptr;
-            MemoryHighWatermark::instance() -= footprint();
         }
     }
 
     void allocateHost() {
-        if( host_memory_pinned_) {
-          //cudaError_t err = cudaHostAlloc((void**) &host_data_, footprint(), cudaHostAllocMapped, const eckit::Parametrisation););
-          //if (err != cudaSuccess) {
-          //    throw_AssertionFailed("Failed to cudaHostAlloc : " + std::string(cudaGetErrorString(err)), Here());
-          //}
-         //}
-          alloc_aligned(host_data_, size_);
-          cudaError_t err = cudaHostRegister(host_data_, footprint(), cudaHostRegisterMapped);
-          if (err != cudaSuccess) {
-              throw_AssertionFailed("Failed to get cudaHostRegister: "+std::string(cudaGetErrorString(err)), Here());
-          }
-          if (atlas::Library::instance().traceMemory()) {
-                Log::trace() << "allocateHost("+std::string(name())+") : cudaHostRegister( host_ptr:" << host_data_ << " , " << eckit::Bytes(size_ * sizeof(Value)) << " )" << std::endl;
-            }
-        }
-        else {
-          alloc_aligned(host_data_, size_);
-        }
+        MemoryHighWatermark::instance() += footprint();
+        alloc_aligned(host_data_, size_);
+        pinHost();
     }
 
     void deallocateHost() {
-        if (host_memory_pinned_) {
-         //     cudaFreeHost(host_data_);
-         cudaHostUnregister(host_data_);
-        }
+        unpinHost();
         free_aligned(host_data_);
-        
+        MemoryHighWatermark::instance() -= footprint();
+    }
+
+    void pinHost() {
+#if ATLAS_HAVE_CUDA
+        if(host_memory_pinned_) {
+            cudaError_t err = cudaHostRegister(host_data_, footprint(), cudaHostRegisterMapped);
+            if (err != cudaSuccess) {
+                throw_AssertionFailed("Failed to get cudaHostRegister: "+std::string(cudaGetErrorString(err)), Here());
+            }
+            if (atlas::Library::instance().traceMemory()) {
+                Log::trace() << "pinHost("+std::string(name())+") : cudaHostRegister( host_ptr:" << host_data_ << " , " << eckit::Bytes(size_ * sizeof(Value)) << " )" << std::endl;
+            }
+        }
+ #endif
+    }
+
+    void unpinHost() {
+#if ATLAS_HAVE_CUDA
+        if (host_memory_pinned_) {
+            if (atlas::Library::instance().traceMemory()) {
+                Log::trace() << "unpinHost("+std::string(name())+") : cudaHostUnRegister( host_ptr:" << host_data_ << " , " << eckit::Bytes(size_ * sizeof(Value)) << " )" << std::endl;
+            }
+            cudaError_t err = cudaHostUnregister(host_data_);
+            if (err != cudaSuccess) {
+                throw_AssertionFailed("unpinHost("+std::string(name())+": Failed to cudaHostUnregister: "+std::string(cudaGetErrorString(err)), Here());
+            }
+        }
+#endif
     }
 
     size_t footprint() const { return sizeof(Value) * size_; }
 
-
     std::string_view name() const {
         return util::registered_pointer_name(this);
     }
+
+    bool host_memory_pinned_{false};
+    bool host_memory_mapped_{false};
 
     size_t size_;
     Value* host_data_;
@@ -390,7 +388,7 @@ template <typename Value>
 class WrappedDataStore : public ArrayDataStore {
 public:
     WrappedDataStore(Value* host_data, size_t size, const eckit::Parametrisation& param): 
-        ArrayDataStore(param), host_data_(host_data), size_(size) {
+        host_data_(host_data), size_(size) {
 #if ATLAS_HAVE_CUDA
         device_updated_ = false;
 #else
@@ -414,11 +412,9 @@ public:
     void updateHost() const override {
 #if ATLAS_HAVE_CUDA
         if (device_allocated_) {
-            if (not host_memory_pinned_) {
-                cudaError_t err = cudaMemcpy(host_data_, device_data_, size_*sizeof(Value), cudaMemcpyDeviceToHost);
-                if (err != cudaSuccess) {
-                    throw_AssertionFailed("Failed to updateHost: "+std::string(cudaGetErrorString(err)), Here());
-                }
+            cudaError_t err = cudaMemcpy(host_data_, device_data_, size_*sizeof(Value), cudaMemcpyDeviceToHost);
+            if (err != cudaSuccess) {
+                throw_AssertionFailed("Failed to updateHost: "+std::string(cudaGetErrorString(err)), Here());
             }
             host_updated_ = true;
         }

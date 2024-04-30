@@ -19,8 +19,6 @@
 #include "atlas/array/ArrayShape.h"
 #include "atlas/array/ArraySpec.h"
 #include "atlas/array/ArrayStrides.h"
-#include "atlas/runtime/Exception.h"
-
 
 //------------------------------------------------------------------------------------------------------
 
@@ -49,13 +47,6 @@ struct add_const<T const> {
 
 class ArrayDataStore {
 public:
-    ArrayDataStore(const eckit::Parametrisation& param) {
-        param.get("host_memory_pinned", host_memory_pinned_);
-        param.get("host_memory_mapped", host_memory_mapped_);
-        if (! host_memory_pinned_ && host_memory_mapped_) {
-            throw_AssertionFailed("Host memory can not be mapped when it is not pinned.", Here());
-        }
-    }
     virtual ~ArrayDataStore() {}
     virtual void updateDevice() const               = 0;
     virtual void updateHost() const                 = 0;
@@ -84,9 +75,6 @@ public:
     Value* deviceData() {
         return static_cast<Value*>(voidDeviceData());
     }
-protected:
-    bool host_memory_pinned_ = false;
-    bool host_memory_mapped_ = false;
 };
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
