@@ -299,7 +299,7 @@ public:
     // Return the size of the cubed sphere grid, where N is the number of grid boxes along the edge of a tile
     inline int N() const { return grid_->N(); }
 
-    // Return the areas of the faces/cells
+    // Return the areas of the cells
     inline Field gridCellArea(const FunctionSpace& fspace) const { return grid_->gridCellArea(fspace); };
 
     /// @brief return tiles object.
