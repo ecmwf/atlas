@@ -22,7 +22,11 @@
 #!   Usage:
 #!      if( condition ) @{ ATLAS_ABORT( "error message" ) }@
 #!
+#ifdef NAGFOR
+  call fckit_exception%abort( ${string}$, "", ${_LINE_}$ )
+#else
   call fckit_exception%abort( ${string}$, "${_FILE_}$", ${_LINE_}$ )
+#endif
 #:enddef
 
 
@@ -34,8 +38,12 @@
 #!      @{ ATLAS_ASSERT( cond ) }@
 #!
 if (.not. (${cond}$)) then
+#ifdef NAGFOR
+  call fckit_exception%abort( '${cond.replace("'", "''")}$', "", ${_LINE_}$ )
+#else
   call fckit_exception%abort( '${cond.replace("'", "''")}$', "${_FILE_}$", ${_LINE_}$ )
-end if
+#endif
+endif
 #:enddef
 
 #:def ATLAS_TRACE( title, labels = None )
@@ -53,9 +61,9 @@ end if
 #!      call trace%final()
 #!
   #:if labels is not None
-    atlas_Trace( "${_FILE_}$", ${_LINE_}$, ${title}$, ${labels}$ )
+    atlas_Trace( "", ${_LINE_}$, ${title}$, ${labels}$ )
   #:else
-    atlas_Trace( "${_FILE_}$", ${_LINE_}$, ${title}$ )
+    atlas_Trace( "", ${_LINE_}$, ${title}$ )
   #:endif
 #:enddef
 
@@ -74,9 +82,9 @@ end if
 #!      call trace%final()
 #!
   #:if labels is not None
-    ${trace}$ = atlas_Trace( "${_FILE_}$", ${_LINE_}$, ${title}$, ${labels}$ )
+    ${trace}$ = atlas_Trace( "", ${_LINE_}$, ${title}$, ${labels}$ )
   #:else
-    ${trace}$ = atlas_Trace( "${_FILE_}$", ${_LINE_}$, ${title}$ )
+    ${trace}$ = atlas_Trace( "", ${_LINE_}$, ${title}$ )
   #:endif
 #:enddef
 
