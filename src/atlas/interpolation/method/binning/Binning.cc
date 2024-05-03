@@ -1,0 +1,183 @@
+/*
+ * (C) Crown Copyright 2024 Met Office
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ */
+
+
+#include "atlas/functionspace/NodeColumns.h"
+#include "atlas/functionspace/StructuredColumns.h"
+#include "atlas/grid.h"
+#include "atlas/interpolation/Interpolation.h"
+#include "atlas/interpolation/method/binning/Binning.h"
+#include "atlas/interpolation/method/MethodFactory.h"
+#include "atlas/runtime/Trace.h"
+
+#include "eckit/config/LocalConfiguration.h"
+#include "eckit/linalg/SparseMatrix.h"
+#include "eckit/linalg/Triplet.h"
+#include "eckit/mpi/Comm.h"
+
+
+namespace atlas {
+namespace interpolation {
+namespace method {
+
+
+namespace {
+
+MethodBuilder<Binning> __builder("binning");
+
+}
+
+
+Binning::Binning(const Config& config) : Method(config) {
+  const auto* ptr_config = dynamic_cast<const eckit::LocalConfiguration*>(&config);
+  interpAncillaryScheme_ = ptr_config->getSubConfiguration("ancillary_scheme");
+  halo_exchange_ = ptr_config->getBool("halo_exchange", true);
+}
+
+
+void Binning::do_setup(const Grid& source,
+                       const Grid& target,
+                       const Cache&) {
+  ATLAS_NOTIMPLEMENTED;
+}
+
+
+void Binning::do_setup(const FunctionSpace& source,
+                       const FunctionSpace& target) {
+  ATLAS_TRACE("atlas::interpolation::method::Binning::do_setup()");
+
+  using Index = eckit::linalg::Index;
+  using Triplet = eckit::linalg::Triplet;
+  using SMatrix = eckit::linalg::SparseMatrix;
+
+  source_ = source;
+  target_ = target;
+
+  if (target_.size() == 0) {
+    return;
+  }
+
+  // enabling or disabling halo exchange
+  this->allow_halo_exchange_ = halo_exchange_;
+
+  // note that the 'source' grid for the low-to-high regridding (interpolation)
+  // is the 'target' grid for high-to-low regridding (binning) and
+  // the 'target' grid for the low-to-high regridding (interpolation) is the
+  // 'source' grid for the for high-to-low regridding (binning)
+  const auto& fs_source_interp = target_;
+  const auto& fs_target_interp = source_;
+
+  const auto interp = Interpolation(
+    interpAncillaryScheme_, fs_source_interp, fs_target_interp);
+  auto smx_interp_cache = atlas::interpolation::MatrixCache(interp);
+
+  auto smx_interp = smx_interp_cache.matrix();
+
+  auto smx_interp_tr = smx_interp.transpose();
+
+  const auto rows_tamx = smx_interp_tr.rows();
+  const auto cols_tamx = smx_interp_tr.cols();
+
+  const double* ptr_tamx_data = smx_interp_tr.data();
+  const Index* ptr_tamx_idxs_col = smx_interp_tr.inner();
+  const Index* ptr_tamx_o = smx_interp_tr.outer();
+
+  // diagonal of 'area weights matrix', W
+  auto ds_aweights = getAreaWeights(source_);
+
+  auto smx_binning_els = std::vector<Triplet>{};
+  size_t idx_row_next = 0;
+
+  for (size_t idx_row = 0; idx_row < rows_tamx; ++idx_row) {
+    idx_row_next = (idx_row+1);
+    // start of the indexes associated with the row 'i'
+    size_t lbound = ptr_tamx_o[idx_row];
+    // start of the indexes associated with the row 'i+1'
+    size_t ubound = ptr_tamx_o[idx_row_next];
+
+    double sum_row = 0;
+    for (size_t i = lbound; i < ubound; ++i) {
+      sum_row += (ptr_tamx_data[i] * ds_aweights.at(ptr_tamx_idxs_col[i]));
+    }
+
+    // normalization factor
+    double nfactor = 1/sum_row;
+
+    for (size_t i = lbound; i < ubound; ++i) {
+      // evaluating the non-zero elements of the binning matrix
+      smx_binning_els.emplace_back(
+        idx_row, ptr_tamx_idxs_col[i],
+        (nfactor * (ptr_tamx_data[i] * ds_aweights.at(ptr_tamx_idxs_col[i]))));
+    }
+  }
+
+  // 'binning matrix' (sparse matrix), B = N A^T W
+  SMatrix smx_binning{rows_tamx, cols_tamx, smx_binning_els};
+  setMatrix(smx_binning);
+}
+
+
+void Binning::print(std::ostream&) const {
+  ATLAS_NOTIMPLEMENTED;
+}
+
+
+std::vector<double> Binning::getAreaWeights(const FunctionSpace& fspace) const {
+  // diagonal of 'area weights matrix', W
+  std::vector<double> ds_aweights;
+
+  if (fspace.type().compare(functionspace::detail::NodeColumns::static_type()) == 0) {
+    const auto csfs = atlas::functionspace::NodeColumns(fspace);
+ 
+    const auto csgrid = atlas::CubedSphereGrid(csfs.mesh().grid());
+    // areas of the cells (geographic coord. system)
+    const auto gcell_areas = csgrid.gridCellArea(fspace);
+
+    auto gcell_areas_view = array::make_view<double, 2>(gcell_areas);
+    auto is_ghost = atlas::array::make_view<int, 1>(csfs.ghost());
+
+    double total_area {0.};
+    for (idx_t i = 0; i < csfs.size(); i++) {
+      if (!is_ghost[i]) {
+        total_area += gcell_areas_view(i, 0);
+      }
+    }
+    eckit::mpi::comm().allReduceInPlace(total_area, eckit::mpi::Operation::SUM);
+
+    double aweight_temp {0.};
+    for (idx_t i = 0; i < csfs.size(); i++) {
+      if (!is_ghost[i]) {
+        aweight_temp = gcell_areas_view(i, 0)/total_area;
+        ds_aweights.emplace_back(aweight_temp);
+      }
+    }
+
+  } else if (fspace.type().compare(functionspace::detail::StructuredColumns::static_type()) == 0) {
+
+    const auto scfs = atlas::functionspace::StructuredColumns(fspace);
+
+    const auto scgrid = scfs.grid();
+    // area weight (appoximated)
+    //   area weight = area_cell/area_total
+    //               = area_cell/(no_cells*area_cell) = 1/no_cells
+    const double aweight = 1/static_cast<double>(scgrid.size());
+    ds_aweights.assign(fspace.size(), aweight);
+  
+  } else {
+
+    // area weights (default)
+    ds_aweights.assign(fspace.size(), 1.);
+
+  }
+
+  return ds_aweights;
+}
+
+
+}  // namespace method
+}  // namespace interpolation
+}  // namespace atlas
