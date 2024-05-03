@@ -7,6 +7,8 @@
 
 #include "CubedSphere.h"
 
+#include <math.h>
+
 #include <algorithm>
 #include <iomanip>
 #include <limits>
@@ -16,7 +18,9 @@
 #include "eckit/utils/Hash.h"
 #include "eckit/utils/Translator.h"
 
+#include "atlas/array.h"
 #include "atlas/domain/Domain.h"
+#include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid/CubedSphereGrid.h"
 #include "atlas/grid/Tiles.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
@@ -302,6 +306,41 @@ void CubedSphere::xyt2xy(const double xyt[], double xy[]) const {
     xy[XX]             = normalisedX * 90. + tiles_offsets_ab2xy_[LON][t];
     xy[YY]             = normalisedY * 90. + tiles_offsets_ab2xy_[LAT][t];
 }
+
+// Provide the areas of the cells
+Field CubedSphere::gridCellArea(const FunctionSpace& fspace) const {
+
+  constexpr auto degrees2rads = M_PI / 180.;
+  const auto ncfs = functionspace::NodeColumns(fspace);
+
+  const auto csgrid = CubedSphereGrid(ncfs.mesh().grid());
+
+  auto lonlat = array::make_view<double, 2>(fspace.lonlat());
+
+  // (grid_res * grid_res) = no. of cells on a tile
+  auto grid_res = csgrid.N();
+
+  const auto& proj = csgrid.cubedSphereProjection();
+
+  // area of a grid cell (cubed-sphere coord. system)
+  double gcell_area_cs = M_PI/(2*grid_res) * M_PI/(2*grid_res);
+
+  auto gcell_area_field = ncfs.createField<double>(
+    atlas::option::name("grid_cell_areas") | atlas::option::levels(1));
+
+  auto gcell_area_fview = array::make_view<double, 2>(gcell_area_field);
+
+  for (size_t i = 0; i < gcell_area_fview.size(); i++) {
+    PointLonLat loc = PointLonLat(lonlat(i, atlas::LON), lonlat(i, atlas::LAT));
+    double cos_lat = std::cos(degrees2rads * loc.lat());
+    double grid_jac_det = 1/proj.jacobian(loc).determinant();
+    // area of a grid cell (geographic coord. system)
+    gcell_area_fview(i, 0) = grid_jac_det * gcell_area_cs * cos_lat;
+  }
+
+  return gcell_area_field;
+}
+
 
 // ------------------------------------------
 
