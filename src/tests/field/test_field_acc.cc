@@ -63,19 +63,27 @@ CASE("test_field_acc") {
 // TODO: gridtools storage does not implement view.index(...) at the moment
 
     cpu_ptr[view.index(3,2)] = 2.;
-
     EXPECT_EQ( view(3,2), 2. );
 
     field.updateDevice();
-
 #pragma acc kernels present(cpu_ptr)
     {
         cpu_ptr[view.index(3,2)] = 3.;
     }
-
     field.updateHost();
-
     EXPECT_EQ( view(3,2), 3. );
+
+
+    //auto dview = array::make_device_view<double,2>(field);
+    auto dview = field.array().device_data<double>();
+#pragma acc kernels deviceptr(dview)
+    {
+        //dview(3,2) = 4.;
+        dview[view.index(3,2)] = 4.;
+    }
+    field.updateHost();
+    EXPECT_EQ( view(3,2), 4. );
+
 #endif
 }
 
