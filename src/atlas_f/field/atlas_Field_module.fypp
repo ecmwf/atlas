@@ -343,7 +343,7 @@ end function
 !-------------------------------------------------------------------------------
 
 #:for dtype, ftype, ctype in integer_types
-function atlas_Field__create_name_kind_shape_${dtype}$(name,kind,shape,alignment) result(field)
+function atlas_Field__create_name_kind_shape_${dtype}$(name,kind,shape,alignment,options) result(field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_int, c_long
   type(atlas_Field) :: field
@@ -351,10 +351,12 @@ function atlas_Field__create_name_kind_shape_${dtype}$(name,kind,shape,alignment
   integer(c_int), intent(in) :: kind
   ${ftype}$, intent(in) :: shape(:)
   integer(c_int), intent(in), optional :: alignment
+  type(atlas_Config), intent(in), optional :: options
 
   type(atlas_Config) :: params
 
   params = atlas_Config()
+  if( present(options) ) call params%set(options)
   call params%set("creator","ArraySpec")
   call params%set("shape",shape)
   call params%set("fortran",.True.)
@@ -369,17 +371,19 @@ end function
 
 !-------------------------------------------------------------------------------
 
-function atlas_Field__create_kind_shape_${dtype}$(kind,shape,alignment) result(field)
+function atlas_Field__create_kind_shape_${dtype}$(kind,shape,alignment,options) result(field)
   use atlas_field_c_binding
   use, intrinsic :: iso_c_binding, only : c_int, c_long
   type(atlas_Field) :: field
   integer(c_int), intent(in) :: kind
   ${ftype}$, intent(in) :: shape(:)
   integer(c_int), intent(in), optional :: alignment
+  type(atlas_Config), intent(in), optional :: options
 
   type(atlas_Config) :: params
 
   params = atlas_Config()
+  if( present(options) ) call params%set(options)
   call params%set("creator","ArraySpec")
   call params%set("shape",shape)
   call params%set("fortran",.True.)

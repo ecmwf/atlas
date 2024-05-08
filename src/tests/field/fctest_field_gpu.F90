@@ -8,6 +8,7 @@
 ! This File contains Unit Tests for testing the
 ! C++ / Fortran Interfaces to the State Datastructure
 ! @author Willem Deconinck
+! @author Slavko Brdar
 
 #include "fckit/fctest.h"
 
@@ -16,24 +17,70 @@
 ! -----------------------------------------------------------------------------
 
 module fcta_Field_gpu_fxt
-use atlas_module
-use, intrinsic :: iso_c_binding
-implicit none
+  use atlas_module
+  use, intrinsic :: iso_c_binding
+  implicit none
+
+  !!! WARNING !!! Without this interface, there is a runtime error !!!
+  interface
+    subroutine external_acc_routine(view)
+      real(4), intent(inout) :: view(:,:)
+    end subroutine external_acc_routine
+  end interface
 
 contains
 
-subroutine module_acc_routine(view)
+  subroutine module_acc_routine(view)
+    implicit none
+    real(4), intent(inout) :: view(:,:)
 
-  implicit none
-  real(4), intent(inout) :: view(:,:)
+    !$acc kernels present(view)
+    view(1,1) = 4.
+    !$acc end kernels
 
-  !$acc data present(view)
-  !$acc kernels
-  view(1,1) = 4.
-  !$acc end kernels
-  !$acc end data
+  end subroutine module_acc_routine
 
-end subroutine module_acc_routine
+! -----------------------------------------------------------------------------
+
+  subroutine check_field(field, memory_mapped)
+    use fctest, only: fce
+    !use openacc
+    implicit none
+
+    type(atlas_Field), intent(inout) :: field
+    real(4), pointer :: view(:,:)
+    logical, intent(in) :: memory_mapped
+
+    if (field%name() == '') call field%rename("field_no-pinning")
+
+    call field%data(view)
+    view(:,:) = 0
+    view(1,1) = 1
+    call field%allocate_device()
+    call field%update_device()
+
+    !$acc kernels present(view)
+    view(1,1) = 2.
+    !$acc end kernels
+
+    if (.not. memory_mapped) FCTEST_CHECK_EQUAL( view(1,1), 1. )
+    call field%update_host()
+    FCTEST_CHECK_EQUAL( view(1,1), 2. )
+
+    view(1,1) = 3.
+    call field%update_device()
+
+    print *, "Check module_acc_routine on ", field%name()
+    call module_acc_routine(view)
+
+    print *, "Check external_acc_routine on ", field%name()
+    call external_acc_routine(view)
+
+    if (.not. memory_mapped) FCTEST_CHECK_EQUAL( view(1,1), 3. )
+    call field%update_host()
+    FCTEST_CHECK_EQUAL( view(1,1), 4. )
+    call field%deallocate_device()
+  end subroutine
 
 end module
 
@@ -57,52 +104,32 @@ END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------
 
-TEST( test_host_data )
+TEST( test_host_data_with_memory_pinned_mapped )
 implicit none
 type(atlas_Field) :: field
 real(4), pointer :: view(:,:)
+type(atlas_Config) :: options
 
-!!! WARNING !!! Without this interface, there is a runtime error !!!
-interface
-  subroutine external_acc_routine(view)
-    real(4), intent(inout) :: view(:,:)
-  end subroutine external_acc_routine
-end interface
-
-field = atlas_Field(kind=atlas_real(4),shape=[5,3])
-
-call field%data(view)
-view(:,:) = 0
-view(1,1) = 1
-call field%update_device()
-
-!$acc data present(view)
-!$acc kernels
-view(1,1) = 2.
-!$acc end kernels
-!$acc end data
-
-FCTEST_CHECK_EQUAL( view(1,1), 1. )
-call field%update_host()
-FCTEST_CHECK_EQUAL( view(1,1), 2. )
-
-view(1,1) = 3.
-
-call field%update_device()
-
-write(0,*) "Calling module_acc_routine ..."
-call module_acc_routine(view)
-write(0,*) "Calling module_acc_routine ... done"
-
-write(0,*) "Calling external_acc_routine ..."
-call external_acc_routine(view)
-write(0,*) "Calling external_acc_routine ... done"
-
-FCTEST_CHECK_EQUAL( view(1,1), 3. )
-call field%update_host()
-FCTEST_CHECK_EQUAL( view(1,1), 4. )
-
+! host memory pinning with mapped device memory
+options = atlas_Config()
+call options%set("host_memory_pinned", .true.)
+call options%set("host_memory_mapped", .true.)
+field = atlas_Field(name="field_pinned-mapped", kind=atlas_real(4), shape=[5,3], options=options)
+call check_field(field, memory_mapped = .true.)
 call field%final()
+
+! host memory pinning, no field name
+call options%set("host_memory_pinned", .true.)
+call options%set("host_memory_mapped", .false.)
+field = atlas_Field(kind=atlas_real(4), shape=[5,3], options=options)
+call check_field(field, memory_mapped = .false.)
+call field%final()
+
+! memory no pinning
+field = atlas_Field(kind=atlas_real(4), shape=[5,3])
+call check_field(field, memory_mapped = .false.)
+call field%final()
+
 END_TEST
 
 ! -----------------------------------------------------------------------------
@@ -133,11 +160,9 @@ call fset%allocate_device()
 FCTEST_CHECK_EQUAL(field%device_allocated(), .true.)
 call fset%update_device()
 
-!$acc data present(fview)
-!$acc kernels
+!$acc kernels present(fview)
 fview(2,1) = 5.
 !$acc end kernels
-!$acc end data
 
 FCTEST_CHECK_EQUAL( fview(2,1), 2. )
 call fset%update_host()
@@ -155,11 +180,9 @@ fview(2,1) = 4.
 call fset%allocate_device()
 call fset%update_device()
 
-!$acc data present(fview)
-!$acc kernels
+!$acc kernels present(fview)
 fview(2,1) = 7.
 !$acc end kernels
-!$acc end data
 
 FCTEST_CHECK_EQUAL( fview(2,1), 4. )
 call fset%update_host()
@@ -192,11 +215,9 @@ call fset%set_host_needs_update((/2, 3/), .false.)
 call fset%allocate_device((/ 2, 3 /)) ! device allocate only for field 2 and 3
 call fset%sync_host_device((/ 2, 3 /)) ! device-memcpy for field 2 and 3
 
-!$acc data present(fview)
-!$acc kernels
+!$acc kernels present(fview)
 fview(2,1) = 5.
 !$acc end kernels
-!$acc end data
 
 call fset%set_host_needs_update((/ 2 /))
 
@@ -214,11 +235,9 @@ fview(2,1) = 4.
 call fset%allocate_device((/ "f2", "f3" /))
 call fset%sync_host_device((/ "f2", "f3" /))
 
-!$acc data present(fview)
-!$acc kernels
+!$acc kernels present(fview)
 fview(2,1) = 7.
 !$acc end kernels
-!$acc end data
 
 call fset%set_host_needs_update((/ "f3" /))
 
@@ -254,11 +273,9 @@ call fset%allocate_device((/ 2, 3 /)) ! device allocate only for field 2 and 3
 call fset%set_device_needs_update((/ 2 /))
 call fset%sync_host_device((/ 2 /)) ! device-memcpy for field 2 and 3
 
-!$acc data present(fview)
-!$acc kernels
+!$acc kernels present(fview)
 fview(2,1) = 5.
 !$acc end kernels
-!$acc end data
 
 call fset%set_host_needs_update((/ 2 /))
 
@@ -279,11 +296,9 @@ call fset%allocate_device((/ "f2", "f3" /)) ! device allocate only for field 2 a
 call fset%set_device_needs_update((/ "f2" /)) ! set fields for sync_host_device
 call fset%sync_host_device((/ "f2" /)) ! device-memcpy for field 'f2'
 
-!$acc data present(fview)
-!$acc kernels
+!$acc kernels present(fview)
 fview(2,1) = 7.
 !$acc end kernels
-!$acc end data
 
 call fset%set_host_needs_update((/ "f2" /))
 
