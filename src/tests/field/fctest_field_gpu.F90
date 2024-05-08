@@ -24,8 +24,11 @@ module fcta_Field_gpu_fxt
   !!! WARNING !!! Without this interface, there is a runtime error !!!
   interface
     subroutine external_acc_routine(view)
-      real(4), intent(inout) :: view(:,:)
+      real(4), pointer, intent(inout) :: view(:,:)
     end subroutine external_acc_routine
+    subroutine external_acc_routine_devptr(dview)
+      real(4), pointer, intent(inout) :: dview(:,:)
+    end subroutine external_acc_routine_devptr
   end interface
 
 contains
@@ -44,11 +47,11 @@ contains
 
   subroutine check_field(field, memory_mapped)
     use fctest, only: fce
-    !use openacc
     implicit none
 
     type(atlas_Field), intent(inout) :: field
     real(4), pointer :: view(:,:)
+    real(4), pointer :: dview(:,:)
     logical, intent(in) :: memory_mapped
 
     if (field%name() == '') call field%rename("field_no-pinning")
@@ -60,25 +63,43 @@ contains
     call field%update_device()
 
     !$acc kernels present(view)
-    view(1,1) = 2.
+        view(1,1) = 2.
     !$acc end kernels
 
     if (.not. memory_mapped) FCTEST_CHECK_EQUAL( view(1,1), 1. )
     call field%update_host()
     FCTEST_CHECK_EQUAL( view(1,1), 2. )
 
-    view(1,1) = 3.
-    call field%update_device()
+    call field%device_data(dview)
+    !$acc kernels deviceptr(dview)
+        view(1,1) = 3.
+    !$acc end kernels
+
+    if (.not. memory_mapped) FCTEST_CHECK_EQUAL( view(1,1), 2. )
+    call field%update_host()
+    FCTEST_CHECK_EQUAL( view(1,1), 3. )
 
     print *, "Check module_acc_routine on ", field%name()
     call module_acc_routine(view)
 
-    print *, "Check external_acc_routine on ", field%name()
-    call external_acc_routine(view)
-
     if (.not. memory_mapped) FCTEST_CHECK_EQUAL( view(1,1), 3. )
     call field%update_host()
     FCTEST_CHECK_EQUAL( view(1,1), 4. )
+
+    print *, "Check external_acc_routine on ", field%name()
+    call external_acc_routine(view)
+
+    if (.not. memory_mapped) FCTEST_CHECK_EQUAL( view(1,1), 4. )
+    call field%update_host()
+    FCTEST_CHECK_EQUAL( view(1,1), 5. )
+
+    print *, "Check external_acc_routine_devptr on ", field%name()
+    call external_acc_routine_devptr(dview)
+
+    if (.not. memory_mapped) FCTEST_CHECK_EQUAL( view(1,1), 5. )
+    call field%update_host()
+    FCTEST_CHECK_EQUAL( view(1,1), 6. )
+
     call field%deallocate_device()
   end subroutine
 
