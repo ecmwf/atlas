@@ -132,6 +132,7 @@ ecbuild_add_test( TARGET atlas_test_interpolation_binning
   SOURCES  test_interpolation_binning.cc
   LIBS     atlas
   MPI      6
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 6
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
