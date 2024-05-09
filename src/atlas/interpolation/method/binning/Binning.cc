@@ -35,6 +35,7 @@ MethodBuilder<Binning> __builder("binning");
 Binning::Binning(const Config& config) : Method(config) {
   const auto* ptr_config = dynamic_cast<const eckit::LocalConfiguration*>(&config);
   interpAncillaryScheme_ = ptr_config->getSubConfiguration("ancillary_scheme");
+  grid_type_ = ptr_config->getString("grid_type", "ATLAS");
   halo_exchange_ = ptr_config->getBool("halo_exchange", true);
 }
 
@@ -133,7 +134,8 @@ std::vector<double> Binning::getAreaWeights(const FunctionSpace& fspace) const {
   // diagonal of 'area weights matrix', W
   std::vector<double> ds_aweights;
 
-  if (fspace.type().compare(functionspace::detail::NodeColumns::static_type()) == 0) {
+  if (grid_type_ == "CS-LFR") {
+
     const auto csfs = atlas::functionspace::NodeColumns(fspace);
  
     const auto csgrid = atlas::CubedSphereGrid(csfs.mesh().grid());
@@ -158,17 +160,6 @@ std::vector<double> Binning::getAreaWeights(const FunctionSpace& fspace) const {
         ds_aweights.emplace_back(aweight_temp);
       }
     }
-
-  } else if (fspace.type().compare(functionspace::detail::StructuredColumns::static_type()) == 0) {
-
-    const auto scfs = atlas::functionspace::StructuredColumns(fspace);
-
-    const auto scgrid = scfs.grid();
-    // area weight (appoximated)
-    //   area weight = area_cell/area_total
-    //               = area_cell/(no_cells*area_cell) = 1/no_cells
-    const double aweight = 1/static_cast<double>(scgrid.size());
-    ds_aweights.assign(fspace.size(), aweight);
   
   } else {
 

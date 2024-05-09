@@ -7,6 +7,9 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/interpolation/Cache.h"
 #include "atlas/interpolation/method/Method.h"
@@ -34,6 +37,16 @@ class Binning : public Method {
   ///                   interpolation matrix: A
   ///            normalization factor matrix: N
   ///
+  ///          Setup, configuration variables:
+  ///                      [type]: method used to evaluate the 'B' matrix;
+  ///                       value: 'binning'
+  ///          [ancillary_scheme]: method used to evaluate the 'A' matrix;
+  ///                       value: 'cubedsphere-bilinear', 'structured-bilinear', ...
+  ///                 [grid_type]: type of grid
+  ///                       value: 'CS-LFR', 'O', ...
+  ///             [halo_exchange]: flag to control the halo exchange procedure
+  ///                       value: 'true', 'false'
+  ///
   Binning(const Config& config);
   ~Binning() override {}
 
@@ -54,6 +67,7 @@ class Binning : public Method {
   FunctionSpace source_{};
   FunctionSpace target_{};
 
+  std::string grid_type_{"ATLAS"};
   bool halo_exchange_{true};
 };
 

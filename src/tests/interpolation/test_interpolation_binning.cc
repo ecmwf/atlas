@@ -101,7 +101,8 @@ CASE("rigridding from high to low resolution; grid type: CS-LFR") {
 
 
   const auto scheme = util::Config("type", "binning") |
-    util::Config("ancillary_scheme", option::type("cubedsphere-bilinear"));
+                      util::Config("ancillary_scheme", option::type("cubedsphere-bilinear")) |
+                      util::Config("grid_type", "CS-LFR");
 
   Interpolation regrid_high2low(scheme, csfs_s, csfs_t);
 
