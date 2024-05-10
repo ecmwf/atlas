@@ -38,13 +38,13 @@ class Binning : public Method {
   ///            normalization factor matrix: N
   ///
   ///          Setup, configuration variables:
-  ///                      [type]: method used to evaluate the 'B' matrix;
+  ///                      <type>: method used to evaluate the 'B' matrix;
   ///                       value: 'binning'
-  ///          [ancillary_scheme]: method used to evaluate the 'A' matrix;
+  ///          <ancillary_scheme>: method used to evaluate the 'A' matrix;
   ///                       value: 'cubedsphere-bilinear', 'structured-bilinear', ...
-  ///                 [grid_type]: type of grid
+  ///                 <grid_type>: type of grid
   ///                       value: 'CS-LFR', 'O', ...
-  ///             [halo_exchange]: flag to control the halo exchange procedure
+  ///             <halo_exchange>: flag to control the halo exchange procedure
   ///                       value: 'true', 'false'
   ///
   Binning(const Config& config);
