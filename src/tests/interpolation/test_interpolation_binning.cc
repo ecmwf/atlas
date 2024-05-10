@@ -240,6 +240,8 @@ CASE("dot-product test for the rigridding from high to low resolution; grid type
   regrid_high2low.execute(fs_s, fs_t);
 
 
+  fs_t["field_01_t"].haloExchange();
+
   // target field (adjoint)
   auto field_01_ad_t = csfs_t.createField<double>(option::name("field_01_ad_t") |
                                                   option::levels(nb_levels));
@@ -273,7 +275,7 @@ CASE("dot-product test for the rigridding from high to low resolution; grid type
               << "x . (A^t A x) = " << s_dot_ad_s << "; "
               << "scaled difference = " << scaled_diff << "\n" << std::endl;
 
-  EXPECT(scaled_diff < 1e-5);
+  EXPECT(scaled_diff < 1e-12);
 }
 
 
