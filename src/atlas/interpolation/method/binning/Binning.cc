@@ -37,6 +37,7 @@ Binning::Binning(const Config& config) : Method(config) {
   interpAncillaryScheme_ = ptr_config->getSubConfiguration("ancillary_scheme");
   grid_type_ = ptr_config->getString("grid_type", "ATLAS");
   halo_exchange_ = ptr_config->getBool("halo_exchange", true);
+  adjoint_ = ptr_config->getBool("adjoint", false);
 }
 
 
@@ -62,8 +63,10 @@ void Binning::do_setup(const FunctionSpace& source,
     return;
   }
 
-  // enabling or disabling halo exchange
+  // enabling or disabling the halo exchange
   this->allow_halo_exchange_ = halo_exchange_;
+  // enabling or disabling the adjoint operation
+  this->adjoint_ = adjoint_;
 
   // note that the 'source' grid for the low-to-high regridding (interpolation)
   // is the 'target' grid for high-to-low regridding (binning) and

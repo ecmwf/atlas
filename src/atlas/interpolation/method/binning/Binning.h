@@ -46,6 +46,8 @@ class Binning : public Method {
   ///                       value: 'CS-LFR', 'O', ...
   ///             <halo_exchange>: flag to control the halo exchange procedure
   ///                       value: 'true', 'false'
+  ///                   <adjoint>: flag to control the adjoint operation
+  ///                       value: 'true', 'false'
   ///
   Binning(const Config& config);
   ~Binning() override {}
@@ -69,6 +71,7 @@ class Binning : public Method {
 
   std::string grid_type_{"ATLAS"};
   bool halo_exchange_{true};
+  bool adjoint_{false};
 };
 
 
