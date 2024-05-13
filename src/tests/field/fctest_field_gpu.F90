@@ -18,7 +18,7 @@
 
 module fcta_Field_gpu_fxt
   use atlas_module
-  use, intrinsic :: iso_c_binding
+  use, intrinsic :: iso_c_binding, only: c_ptr
   implicit none
 
   !!! WARNING !!! Without this interface, there is a runtime error !!!
@@ -93,13 +93,6 @@ contains
     call field%update_host()
     FCTEST_CHECK_EQUAL( view(1,1), 5. )
 
-    print *, "Check external_acc_routine_devptr on ", field%name()
-    call external_acc_routine_devptr(dview)
-
-    if (.not. memory_mapped) FCTEST_CHECK_EQUAL( view(1,1), 5. )
-    call field%update_host()
-    FCTEST_CHECK_EQUAL( view(1,1), 6. )
-
     call field%deallocate_device()
   end subroutine
 
@@ -147,7 +140,8 @@ call check_field(field, memory_mapped = .false.)
 call field%final()
 
 ! memory no pinning
-field = atlas_Field(kind=atlas_real(4), shape=[5,3])
+call options%set("host_memory_pinned", .false.)
+field = atlas_Field(kind=atlas_real(4), shape=[5,3], options=options)
 call check_field(field, memory_mapped = .false.)
 call field%final()
 

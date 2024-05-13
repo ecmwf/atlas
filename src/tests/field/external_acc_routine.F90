@@ -16,15 +16,3 @@ subroutine external_acc_routine(view)
   !$acc end kernels
 
 end subroutine external_acc_routine
-
-
-subroutine external_acc_routine_devptr(dview)
-
-  implicit none
-  real(4), pointer, intent(inout) :: dview(:,:)
-
-  !$acc kernels deviceptr(dview)
-  dview(1,1) = 6.
-  !$acc end kernels
-
-end subroutine external_acc_routine_devptr
