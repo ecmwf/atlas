@@ -74,17 +74,71 @@ CASE("test_field_acc") {
     EXPECT_EQ( view(3,2), 3. );
 
 
-    //auto dview = array::make_device_view<double,2>(field);
-    auto dview = field.array().device_data<double>();
-#pragma acc kernels deviceptr(dview)
+    auto dview = array::make_device_view<double,2>(field);
+    double* dptr = dview.data();
+#pragma acc kernels deviceptr(dptr)
     {
         //dview(3,2) = 4.;
-        dview[view.index(3,2)] = 4.;
+        dptr[dview.index(3,2)] = 4.;
     }
     field.updateHost();
     EXPECT_EQ( view(3,2), 4. );
 
 #endif
+}
+
+CASE("test_wrapping_discontiguous_data") {
+  auto multifield = Field("name",make_datatype<double>(), array::make_shape(4,3,2,8));
+  auto multiview = array::make_view<double,4>(multifield);
+  multiview.assign(0.);
+
+  auto slice2 = multiview.slice(array::Range::all(),2,array::Range::all(),array::Range::all());
+  double* ptr = slice2.data();
+  array::ArrayShape shape2(slice2.shape(),slice2.rank());
+  array::ArrayStrides strides2({slice2.stride(0),slice2.stride(1),slice2.stride(2)});
+  auto field = Field("name", ptr, array::ArraySpec(shape2, strides2));
+
+  auto hview = array::make_host_view<double,3>(field);
+  for (idx_t jblk=0; jblk<hview.shape(0); ++jblk) {
+      for (idx_t jlev=0; jlev<hview.shape(1); ++jlev) {
+          for (idx_t jrof=0; jrof<hview.shape(2); ++jrof) {
+              hview(jblk,jlev,jrof) = 1000.*jblk + 100.*jlev + jrof;
+          }
+      }
+  }
+
+  field.updateDevice();
+
+  auto dview = array::make_device_view<double,3>(field);
+  double* dptr = dview.data();
+#pragma acc kernels deviceptr(dptr)
+  for (idx_t jblk=0; jblk < dview.shape(0); ++jblk) {
+      for (idx_t jlev=0; jlev < dview.shape(1); ++jlev) {
+          for (idx_t jrof=0; jrof < dview.shape(2); ++jrof) {
+              dptr[dview.index(jblk,jlev,jrof)] *= -1.;
+          }
+      }
+  }
+
+  // check host data before
+  for (idx_t jblk=0; jblk < hview.shape(0); ++jblk) {
+      for (idx_t jlev=0; jlev < hview.shape(1); ++jlev) {
+          for (idx_t jrof=0; jrof < hview.shape(2); ++jrof) {
+              EXPECT_EQ( hview(jblk,jlev,jrof), 1000.*jblk + 100.*jlev + jrof );
+          }
+      }
+  }
+
+  field.updateHost();
+
+  // check host data after
+  for (idx_t jblk=0; jblk < hview.shape(0); ++jblk) {
+      for (idx_t jlev=0; jlev < hview.shape(1); ++jlev) {
+          for (idx_t jrof=0; jrof < hview.shape(2); ++jrof) {
+              EXPECT_EQ( hview(jblk,jlev,jrof), -1000.*jblk - 100.*jlev - jrof );
+          }
+      }
+  }
 }
 
 //-----------------------------------------------------------------------------
