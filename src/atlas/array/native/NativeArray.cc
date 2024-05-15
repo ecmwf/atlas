@@ -67,7 +67,7 @@ Array* Array::wrap(Value* data, const ArrayShape& shape, const eckit::Parametris
 template <typename Value>
 Array* Array::wrap(Value* data, const ArraySpec& spec, const eckit::Parametrisation& param) {
     size_t size = spec.size();
-    return new ArrayT<Value>(new native::WrappedDataStore<Value>(data, size, param), spec, param);
+    return new ArrayT<Value>(new native::WrappedDataStore<Value>(data, spec, param), spec, param);
 }
 
 Array::~Array() = default;

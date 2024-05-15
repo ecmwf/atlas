@@ -387,8 +387,52 @@ private:
 template <typename Value>
 class WrappedDataStore : public ArrayDataStore {
 public:
+    WrappedDataStore(Value* host_data, const ArraySpec& spec, const eckit::Parametrisation& param): 
+        host_data_(host_data), contiguous_(true), size_(spec.size()) {
+        init_device();
+        contiguous_ = spec.contiguous();
+        if (! contiguous_) {
+            std::cout << "strides: " << spec.strides()[0] << ", " << spec.strides()[1] << ", "<< spec.strides()[2] << std::endl;
+            std::cout << "shape: " << spec.shape()[0] << ", " << spec.shape()[1] << ", "<< spec.shape()[2] << std::endl;
+            std::cout << "size: " << spec.size() << std::endl;
+
+            int break_idx = spec.break_idx();
+            size_t shp_mult_rhs = spec.shape()[spec.rank() - 1];
+            for (int i = spec.rank() - 1; i > 0; i--) {
+                std::cout << "i, shp_mult_rhs, : " << i << ", " << shp_mult_rhs << std::endl;
+                if (shp_mult_rhs != spec.strides()[i - 1]) {
+                    break_idx = i - 1;
+                    break;
+                }
+                shp_mult_rhs *= spec.shape()[i - 1];
+            }
+            size_t shp_mult_lhs = spec.shape()[0]; 
+            for (int i = 1; i < break_idx; i++) {
+                shp_mult_lhs *= spec.shape()[i];
+            }
+            memcpy_h2d_pitch_ = shp_mult_rhs;
+            memcpy_d2h_pitch_ = spec.strides()[break_idx];
+            memcpy_width_ = shp_mult_rhs;
+            memcpy_height_ = shp_mult_lhs;
+            memcpy_host_pos0_ = spec.strides()[break_idx];
+
+            std::cout << "spec_rank: " << spec.rank()<< std::endl;
+            std::cout << "shp_mult_rhs: " << shp_mult_rhs << std::endl;
+            std::cout << "shp_mult_lhs: " << shp_mult_lhs << std::endl;
+            std::cout << "break idx: " << break_idx << std::endl;
+            std::cout << "memcpy_h2d_pitch_ " << memcpy_h2d_pitch_ << std::endl;
+            std::cout << "memcpy_d2h_pitch_ " << memcpy_d2h_pitch_ << std::endl;
+            std::cout << "memcpy_height_ " << memcpy_height_ << std::endl;
+            std::cout << "memcpy_width_ " << memcpy_width_ << std::endl;
+        }
+    }
+
     WrappedDataStore(Value* host_data, size_t size, const eckit::Parametrisation& param): 
-        host_data_(host_data), size_(size) {
+        host_data_(host_data), contiguous_(true), size_(size) {
+        init_device();
+    }
+
+    void init_device() {
 #if ATLAS_HAVE_CUDA
         device_updated_ = false;
 #else
@@ -401,23 +445,45 @@ public:
         if (not device_allocated_) {
             allocateDevice();
         }
-        cudaError_t err = cudaMemcpy(device_data_, host_data_, size_*sizeof(Value), cudaMemcpyHostToDevice);
+        cudaError_t err;
+        if (! contiguous_) {
+            std::cout << "DISCONT-memcpy" << std::endl;
+            err = cudaMemcpy2D(device_data_, memcpy_h2d_pitch_*sizeof(Value),
+                 host_data_ + memcpy_width_, memcpy_d2h_pitch_*sizeof(Value),
+                 memcpy_width_*sizeof(Value), memcpy_height_, cudaMemcpyHostToDevice);
+        }
+        else {
+            std::cout << "CONT-memcpy" << std::endl;
+            err = cudaMemcpy(device_data_, host_data_, size_*sizeof(Value), cudaMemcpyHostToDevice);
+        }
         if (err != cudaSuccess) {
             throw_AssertionFailed("Failed to updateDevice: "+std::string(cudaGetErrorString(err)), Here());
         }
         device_updated_ = true;
+        //cudaDeviceSynchronize();
 #endif
     }
 
     void updateHost() const override {
 #if ATLAS_HAVE_CUDA
         if (device_allocated_) {
-            cudaError_t err = cudaMemcpy(host_data_, device_data_, size_*sizeof(Value), cudaMemcpyDeviceToHost);
+            cudaError_t err;
+            if (! contiguous_) {
+                std::cout << "DISCONT-memcpy" << std::endl;
+                err = cudaMemcpy2D(host_data_ + memcpy_width_, memcpy_d2h_pitch_*sizeof(Value),
+                     device_data_,  memcpy_h2d_pitch_*sizeof(Value),
+                     memcpy_width_*sizeof(Value), memcpy_height_, cudaMemcpyDeviceToHost);
+            }
+            else {
+                std::cout << "CONT-memcpy" << std::endl;
+                err = cudaMemcpy(host_data_, device_data_, size_*sizeof(Value), cudaMemcpyDeviceToHost);
+            }
             if (err != cudaSuccess) {
                 throw_AssertionFailed("Failed to updateHost: "+std::string(cudaGetErrorString(err)), Here());
             }
             host_updated_ = true;
         }
+        //cudaDeviceSynchronize();
 #endif
     }
 
@@ -448,7 +514,7 @@ public:
 #if ATLAS_HAVE_CUDA
         if (device_allocated_) {
            return;
-        }
+}
         if (size_) {
             cudaError_t err = cudaMalloc((void**)&device_data_, sizeof(Value)*size_);
             if (err != cudaSuccess) {
@@ -519,6 +585,12 @@ private:
     size_t size_;
     Value* host_data_;
     mutable Value* device_data_;
+    bool contiguous_;
+
+    size_t memcpy_h2d_pitch_;
+    size_t memcpy_d2h_pitch_;
+    size_t memcpy_height_;
+    size_t memcpy_width_;
 
     mutable bool host_updated_{true};
     mutable bool device_updated_{true};
