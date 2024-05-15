@@ -226,7 +226,7 @@ subroutine access_device_data_${dtype}$_r${rank}$(this, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__Field__data_${ctype}$_specf(this%CPTR_PGIBUG_A, field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__Field__device_data_${ctype}$_specf(this%CPTR_PGIBUG_A, field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr,rank,shape_cptr,strides_cptr, field)
 end subroutine
 
