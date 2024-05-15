@@ -144,6 +144,7 @@ ArraySpec::ArraySpec(DataType datatype, const ArrayShape& shape, const ArrayStri
     ArraySpec(shape, strides, layout, alignment) {
     datatype_ = datatype;
 }
+
 const std::vector<int>& ArraySpec::shapef() const {
     return shapef_;
 }
@@ -152,12 +153,19 @@ const std::vector<int>& ArraySpec::stridesf() const {
     return stridesf_;
 }
 
+const std::vector<int>& ArraySpec::device_stridesf() const {
+    return device_stridesf_;
+}
+
 void ArraySpec::allocate_fortran_specs() {
     shapef_.resize(rank_);
     stridesf_.resize(rank_);
+    device_stridesf_.resize(rank_);
+    device_stridesf_[rank_ - 1] = stridesf_[rank_ - 1];
     for (idx_t j = 0; j < rank_; ++j) {
         shapef_[j] = shape_[rank_ - 1 - layout_[j]];
         stridesf_[j] = strides_[rank_ -1 - layout_[j]];
+        device_stridesf_[rank_ - j - 1] = device_stridesf_[rank_ - j] * shapef_[rank_ - j - 1];
     }
 }
 
