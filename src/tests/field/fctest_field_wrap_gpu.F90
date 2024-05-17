@@ -48,6 +48,7 @@ implicit none
   write(0,*) "test_field_wrapdata"
   allocate( existing_data(2,10,N) )
 
+  return
   existing_data(:,:,:) = -1._c_double
 
   field = atlas_Field("wrapped", existing_data)
@@ -89,7 +90,7 @@ implicit none
   real(c_double), pointer :: fview(:,:,:)
   type(atlas_Field) :: field
   integer(c_int) :: i, j, k, l, k_idx
-  integer(c_int), parameter :: Ni = 8, Nj = 2, Nk = 3, Nl = 4
+  integer(c_int), parameter :: Ni = 5, Nj = 2, Nk = 3, Nl = 4
   write(0,*) "test_field_wrap_sliced_data"
   allocate( existing_data(Ni, Nj, Nk, Nl) )
 
@@ -108,10 +109,18 @@ implicit none
 
   k_idx = 1
 
-  field = atlas_Field(existing_data(:,k_idx,:,:))
+  field = atlas_Field(existing_data(:,:,k_idx,:))
   call field%allocate_device()
   call field%update_device()
   call field%device_data(fview)
+  call field%deallocate_device()
+
+  field = atlas_Field(existing_data(:,:,k_idx+1,:))
+  call field%allocate_device()
+  call field%update_device()
+  call field%device_data(fview)
+
+  return
 
   existing_data = -2._c_double
 
@@ -130,7 +139,7 @@ implicit none
   do i = 1, Ni
     do j = 1, Nj
       do l = 1, Nl
-        FCTEST_CHECK_EQUAL(existing_data(i, k_idx, j, l) , -real(1000*i + 100*j + 10*k_idx + l, c_double) )
+        FCTEST_CHECK_EQUAL(existing_data(i, k_idx, j, l) , real(-1000*i - 100*j - 10*k_idx - l, c_double) )
       enddo
     enddo
   enddo

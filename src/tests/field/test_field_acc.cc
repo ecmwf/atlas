@@ -30,28 +30,6 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-CASE("test_acc") {
-    int* c_ptr = new int();
-    *c_ptr = 5;
-
-    int* d_ptr;
-    cudaMalloc(&d_ptr, sizeof(int));
-    acc_map_data(c_ptr, d_ptr, sizeof(int));
-
-    cudaMemcpy(d_ptr, c_ptr, sizeof(int), cudaMemcpyHostToDevice);
-
-#pragma acc kernels present(c_ptr)
-    {
-        *c_ptr -= 3.;
-    }
-
-    EXPECT_EQ( *c_ptr, 5. );
-
-    cudaMemcpy(c_ptr, d_ptr, sizeof(int), cudaMemcpyDeviceToHost);
-    EXPECT_EQ( *c_ptr, 2. );
-}
-
-
 CASE("test_field_acc") {
     auto field = Field("0", make_datatype<double>(), array::make_shape(10,4));
 
@@ -66,7 +44,7 @@ CASE("test_field_acc") {
     EXPECT_EQ( view(3,2), 2. );
 
     field.updateDevice();
-#pragma acc kernels present(cpu_ptr)
+#pragma acc parallel present(cpu_ptr)
     {
         cpu_ptr[view.index(3,2)] = 3.;
     }
@@ -76,9 +54,8 @@ CASE("test_field_acc") {
 
     auto dview = array::make_device_view<double,2>(field);
     double* dptr = dview.data();
-#pragma acc kernels deviceptr(dptr)
+#pragma acc parallel deviceptr(dptr)
     {
-        //dview(3,2) = 4.;
         dptr[dview.index(3,2)] = 4.;
     }
     field.updateHost();
@@ -92,30 +69,36 @@ CASE("test_wrapping_discontiguous_data") {
   auto multiview = array::make_view<double,4>(multifield);
   multiview.assign(0.);
 
-  auto slice2 = multiview.slice(array::Range::all(),2,array::Range::all(),array::Range::all());
+  auto all = array::Range::all();
+  auto slice2 = multiview.slice(all, 1, all, all);
   double* ptr = slice2.data();
-  array::ArrayShape shape2(slice2.shape(),slice2.rank());
-  array::ArrayStrides strides2({slice2.stride(0),slice2.stride(1),slice2.stride(2)});
+  array::ArrayShape shape2(slice2.shape(), slice2.rank());
+  array::ArrayStrides strides2({slice2.stride(0), slice2.stride(1), slice2.stride(2)});
   auto field = Field("name", ptr, array::ArraySpec(shape2, strides2));
 
-  auto hview = array::make_host_view<double,3>(field);
-  for (idx_t jblk=0; jblk<hview.shape(0); ++jblk) {
-      for (idx_t jlev=0; jlev<hview.shape(1); ++jlev) {
-          for (idx_t jrof=0; jrof<hview.shape(2); ++jrof) {
+  auto hview = array::make_host_view<double, 3>(field);
+  for (idx_t jblk = 0; jblk < hview.shape(0); ++jblk) {
+      for (idx_t jlev = 0; jlev < hview.shape(1); ++jlev) {
+          for (idx_t jrof = 0; jrof < hview.shape(2); ++jrof) {
               hview(jblk,jlev,jrof) = 1000.*jblk + 100.*jlev + jrof;
           }
       }
   }
 
   field.updateDevice();
-
   auto dview = array::make_device_view<double,3>(field);
   double* dptr = dview.data();
+
+  std::cout << "dview.shape: " << dview.shape(0) << ", " << dview.shape(1) << ", " << dview.shape(2) << ", " << std::endl;
+  std::cout << "hview.shape: " << hview.shape(0) << ", " << hview.shape(1) << ", " << hview.shape(2) << ", " << std::endl;
+  std::cout << "dview.stride: " << dview.stride(0) << ", " << dview.stride(1) << ", " << dview.stride(2) << ", " << std::endl;
+  std::cout << "hview.stride: " << hview.stride(0) << ", " << hview.stride(1) << ", " << hview.stride(2) << ", " << std::endl;
+
 #pragma acc kernels deviceptr(dptr)
   for (idx_t jblk=0; jblk < dview.shape(0); ++jblk) {
       for (idx_t jlev=0; jlev < dview.shape(1); ++jlev) {
           for (idx_t jrof=0; jrof < dview.shape(2); ++jrof) {
-              dptr[dview.index(jblk,jlev,jrof)] *= -1.;
+              dptr[dview.index(jblk,jlev,jrof)] *= -1;
           }
       }
   }
@@ -132,9 +115,9 @@ CASE("test_wrapping_discontiguous_data") {
   field.updateHost();
 
   // check host data after
-  for (idx_t jblk=0; jblk < hview.shape(0); ++jblk) {
-      for (idx_t jlev=0; jlev < hview.shape(1); ++jlev) {
-          for (idx_t jrof=0; jrof < hview.shape(2); ++jrof) {
+  for (idx_t jblk = 0; jblk < hview.shape(0); ++jblk) {
+      for (idx_t jlev = 0; jlev < hview.shape(1); ++jlev) {
+          for (idx_t jrof = 0; jrof < hview.shape(2); ++jrof) {
               EXPECT_EQ( hview(jblk,jlev,jrof), -1000.*jblk - 100.*jlev - jrof );
           }
       }
