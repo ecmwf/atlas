@@ -48,7 +48,6 @@ implicit none
   write(0,*) "test_field_wrapdata"
   allocate( existing_data(2,10,N) )
 
-  return
   existing_data(:,:,:) = -1._c_double
 
   field = atlas_Field("wrapped", existing_data)
@@ -153,7 +152,6 @@ implicit none
   integer(c_int) :: i,j,k
   write(0,*) "test_field_wrap_logical"
   allocate( existing_data(Ni,Nj,Nk) )
-  return
 
   do i=1,Ni
     do j=1,Nj

@@ -64,23 +64,17 @@ CASE("test_field_acc") {
 #endif
 }
 
-CASE("test_wrapping_discontiguous_data") {
-  auto multifield = Field("name",make_datatype<double>(), array::make_shape(4,3,2,8));
-  auto multiview = array::make_view<double,4>(multifield);
-  multiview.assign(0.);
-
-  auto all = array::Range::all();
-  auto slice2 = multiview.slice(all, 1, all, all);
-  double* ptr = slice2.data();
-  array::ArrayShape shape2(slice2.shape(), slice2.rank());
-  array::ArrayStrides strides2({slice2.stride(0), slice2.stride(1), slice2.stride(2)});
-  auto field = Field("name", ptr, array::ArraySpec(shape2, strides2));
+void test_wrapping_a_slice(array::LocalView<double, 3> slice) {
+  double* ptr = slice.data();
+  array::ArrayShape shape(slice.shape(), slice.rank());
+  array::ArrayStrides strides({slice.stride(0), slice.stride(1), slice.stride(2)});
+  auto field = Field("name", ptr, array::ArraySpec(shape, strides));
 
   auto hview = array::make_host_view<double, 3>(field);
-  for (idx_t jblk = 0; jblk < hview.shape(0); ++jblk) {
-      for (idx_t jlev = 0; jlev < hview.shape(1); ++jlev) {
-          for (idx_t jrof = 0; jrof < hview.shape(2); ++jrof) {
-              hview(jblk,jlev,jrof) = 1000.*jblk + 100.*jlev + jrof;
+  for (idx_t i = 0; i < hview.shape(0); ++i) {
+      for (idx_t j = 0; j < hview.shape(1); ++j) {
+          for (idx_t k = 0; k < hview.shape(2); ++k) {
+              hview(i,j,k) = 1000.*i + 100.*j + k;
           }
       }
   }
@@ -89,38 +83,58 @@ CASE("test_wrapping_discontiguous_data") {
   auto dview = array::make_device_view<double,3>(field);
   double* dptr = dview.data();
 
-  std::cout << "dview.shape: " << dview.shape(0) << ", " << dview.shape(1) << ", " << dview.shape(2) << ", " << std::endl;
-  std::cout << "hview.shape: " << hview.shape(0) << ", " << hview.shape(1) << ", " << hview.shape(2) << ", " << std::endl;
-  std::cout << "dview.stride: " << dview.stride(0) << ", " << dview.stride(1) << ", " << dview.stride(2) << ", " << std::endl;
-  std::cout << "hview.stride: " << hview.stride(0) << ", " << hview.stride(1) << ", " << hview.stride(2) << ", " << std::endl;
-
 #pragma acc kernels deviceptr(dptr)
-  for (idx_t jblk=0; jblk < dview.shape(0); ++jblk) {
-      for (idx_t jlev=0; jlev < dview.shape(1); ++jlev) {
-          for (idx_t jrof=0; jrof < dview.shape(2); ++jrof) {
-              dptr[dview.index(jblk,jlev,jrof)] *= -1;
+  for (idx_t i=0; i < dview.shape(0); ++i) {
+      for (idx_t j=0; j < dview.shape(1); ++j) {
+          for (idx_t k=0; k < dview.shape(2); ++k) {
+              dptr[dview.index(i,j,k)] *= -1;
           }
       }
   }
 
   // check host data before
-  for (idx_t jblk=0; jblk < hview.shape(0); ++jblk) {
-      for (idx_t jlev=0; jlev < hview.shape(1); ++jlev) {
-          for (idx_t jrof=0; jrof < hview.shape(2); ++jrof) {
-              EXPECT_EQ( hview(jblk,jlev,jrof), 1000.*jblk + 100.*jlev + jrof );
+  for (idx_t i=0; i < hview.shape(0); ++i) {
+      for (idx_t j=0; j < hview.shape(1); ++j) {
+          for (idx_t k=0; k < hview.shape(2); ++k) {
+              EXPECT_EQ( hview(i,j,k), 1000.*i + 100.*j + k );
           }
       }
   }
 
   field.updateHost();
+  field.deallocateDevice();
 
   // check host data after
-  for (idx_t jblk = 0; jblk < hview.shape(0); ++jblk) {
-      for (idx_t jlev = 0; jlev < hview.shape(1); ++jlev) {
-          for (idx_t jrof = 0; jrof < hview.shape(2); ++jrof) {
-              EXPECT_EQ( hview(jblk,jlev,jrof), -1000.*jblk - 100.*jlev - jrof );
+  for (idx_t i = 0; i < hview.shape(0); ++i) {
+      for (idx_t j = 0; j < hview.shape(1); ++j) {
+          for (idx_t k = 0; k < hview.shape(2); ++k) {
+              EXPECT_EQ( hview(i,j,k), -1000.*i - 100.*j - k );
           }
       }
+  }
+}
+
+CASE("test_wrapping_discontiguous_data") {
+  auto multifield = Field("name",make_datatype<double>(), array::make_shape(4,3,2,8));
+  auto multiview = array::make_view<double,4>(multifield);
+  multiview.assign(0.);
+
+  auto all = array::Range::all();
+  {
+    auto slice = multiview.slice(2, all, all, all);
+    test_wrapping_a_slice(slice);
+  }
+  {
+    auto slice = multiview.slice(all, 0, all, all);
+    test_wrapping_a_slice(slice);
+  }
+  {
+    auto slice = multiview.slice(all, all, 1, all);
+    test_wrapping_a_slice(slice);
+  }
+  {
+    auto slice = multiview.slice(all, all, all, 6);
+    test_wrapping_a_slice(slice);
   }
 }
 
