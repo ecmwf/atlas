@@ -266,10 +266,9 @@ public:
     void* voidDeviceData() override { return static_cast<void*>(device_data_); }
 
     void accMap() const override {
-#if ATLAS_HAVE_ACC
+#if ATLAS_HAVE_ACC and ATLAS_HAVE_CUDA
         if (not acc_mapped_) {
-            ATLAS_ASSERT(deviceAllocated(),"Could not accMap("+std::string(name())+") as device data is not allocated");
-            if (atlas::Library::instance().traceMemory()) {
+            ATLAS_ASSERT(deviceAllocated(),"Could not accMap("+std::string(name())+") as device data is not allocated"); if (atlas::Library::instance().traceMemory()) {
                 Log::trace() << "accMap("+std::string(name())+") : atlas_acc_map_data( host_ptr:" << host_data_ << " , device_ptr:" << device_data_ << " , " << eckit::Bytes(size_ * sizeof(Value)) << " )" << std::endl;
             }
             atlas_acc_map_data((void*)host_data_, (void*)device_data_, size_ * sizeof(Value));
@@ -283,7 +282,7 @@ public:
     }
 
     void accUnmap() const override {
-#if ATLAS_HAVE_ACC
+#if ATLAS_HAVE_ACC and ATLAS_HAVE_CUDA
         if (acc_mapped_) {
             if (atlas::Library::instance().traceMemory()) {
                 Log::trace() << "accUnmap(" << name() << ") : atlas_acc_unmap_data( host_ptr:" << host_data_ << " )" << std::endl;
@@ -396,7 +395,7 @@ public:
             std::cout << "shape: " << spec.shape()[0] << ", " << spec.shape()[1] << ", "<< spec.shape()[2] << std::endl;
             std::cout << "size: " << spec.size() << std::endl;
 
-            int break_idx = spec.break_idx();
+            int break_idx = 0;
             size_t shp_mult_rhs = spec.shape()[spec.rank() - 1];
             for (int i = spec.rank() - 1; i > 0; i--) {
                 std::cout << "i, shp_mult_rhs, : " << i << ", " << shp_mult_rhs << std::endl;
@@ -414,7 +413,6 @@ public:
             memcpy_d2h_pitch_ = spec.strides()[break_idx];
             memcpy_width_ = shp_mult_rhs;
             memcpy_height_ = shp_mult_lhs;
-            memcpy_host_pos0_ = spec.strides()[break_idx];
 
             std::cout << "spec_rank: " << spec.rank()<< std::endl;
             std::cout << "shp_mult_rhs: " << shp_mult_rhs << std::endl;
@@ -447,9 +445,9 @@ public:
         }
         cudaError_t err;
         if (! contiguous_) {
-            std::cout << "DISCONT-memcpy" << std::endl;
+            std::cout << "DISCONT-memcpy-h2d" << std::endl;
             err = cudaMemcpy2D(device_data_, memcpy_h2d_pitch_*sizeof(Value),
-                 host_data_ + memcpy_width_, memcpy_d2h_pitch_*sizeof(Value),
+                 host_data_, memcpy_d2h_pitch_*sizeof(Value),
                  memcpy_width_*sizeof(Value), memcpy_height_, cudaMemcpyHostToDevice);
         }
         else {
@@ -469,8 +467,8 @@ public:
         if (device_allocated_) {
             cudaError_t err;
             if (! contiguous_) {
-                std::cout << "DISCONT-memcpy" << std::endl;
-                err = cudaMemcpy2D(host_data_ + memcpy_width_, memcpy_d2h_pitch_*sizeof(Value),
+                std::cout << "DISCONT-memcpy-d2h" << std::endl;
+                err = cudaMemcpy2D(host_data_, memcpy_d2h_pitch_*sizeof(Value),
                      device_data_,  memcpy_h2d_pitch_*sizeof(Value),
                      memcpy_width_*sizeof(Value), memcpy_height_, cudaMemcpyDeviceToHost);
             }
@@ -559,7 +557,7 @@ public:
     void* voidDeviceData() override { return static_cast<void*>(device_data_); }
 
     void accMap() const override {
-#if ATLAS_HAVE_ACC
+#if ATLAS_HAVE_ACC and ATLAS_HAVE_CUDA
         if (not acc_mapped_) {
             ATLAS_ASSERT(deviceAllocated(),"Could not accMap as device data is not allocated");
             atlas_acc_map_data((void*)host_data_, (void*)device_data_, size_ * sizeof(Value));
@@ -573,7 +571,7 @@ public:
     }
 
     void accUnmap() const override {
-#if ATLAS_HAVE_ACC
+#if ATLAS_HAVE_ACC and ATLAS_HAVE_CUDA
         if (acc_mapped_) {
             atlas_acc_unmap_data(host_data_);
             acc_mapped_ = false;

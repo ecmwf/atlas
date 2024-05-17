@@ -102,6 +102,8 @@ public:
 
     const ArrayStrides& strides() const { return spec_.strides(); }
 
+    const ArrayStrides& device_strides() const { return spec_.device_strides(); }
+
     const ArrayShape& shape() const { return spec_.shape(); }
 
     const std::vector<int>& shapef() const { return spec_.shapef(); }

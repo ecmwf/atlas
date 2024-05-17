@@ -134,17 +134,23 @@ public:
 
     template <typename ValueTp, typename = std::enable_if_t<std::is_convertible_v<ValueTp*,value_type*>>>
     ArrayView(const ArrayView<ValueTp, Rank>& other): data_(other.data()), size_(other.size()) {
+        int mult = 1;
         for (int j = 0; j < Rank; ++j) {
             shape_[j]   = other.shape_[j];
             strides_[j] = other.strides_[j];
+            device_strides_[j] = mult;
+            mult *= shape_[j];
         }
     }
 
     template <typename ValueTp, typename = std::enable_if_t<std::is_convertible_v<ValueTp*,value_type*>>>
     ArrayView(ArrayView<ValueTp, Rank>&& other):data_(other.data()), size_(other.size()) {
+        int mult = 1;
         for (int j = 0; j < Rank; ++j) {
             shape_[j]   = other.shape_[j];
             strides_[j] = other.strides_[j];
+            device_strides_[j] = mult;
+            mult *= shape_[j];
         }
     }
 
@@ -152,10 +158,13 @@ public:
     // This constructor should not be used directly, but only through a array::make_view() function.
     ArrayView(value_type* data, const ArrayShape& shape, const ArrayStrides& strides): data_(data) {
         size_ = 1;
+        int mult = 1;
         for (int j = 0; j < Rank; ++j) {
             shape_[j]   = shape[j];
             strides_[j] = strides[j];
             size_ *= size_t(shape_[j]);
+            device_strides_[j] = mult;
+            mult *= shape_[j];
         }
     }
 #endif
@@ -185,12 +194,10 @@ public:
     /// Note that this function is only present when Rank == 1
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     template <typename Idx, int Rank_ = Rank, typename = std::enable_if_t<Rank_ == 1>>
-    ATLAS_HOST_DEVICE
     const value_type& operator[](Idx idx) const {
 #else
     // Doxygen API is cleaner!
     template <typename Int>
-    ATLAS_HOST_DEVICE
     value_type operator[](Int idx) const {
 #endif
         check_bounds(idx);
@@ -202,12 +209,10 @@ public:
     /// Note that this function is only present when Rank == 1
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     template <typename Idx, int Rank_ = Rank, typename = std::enable_if_t<Rank_ == 1>>
-    ATLAS_HOST_DEVICE
     value_type& operator[](Idx idx) {
 #else
     // Doxygen API is cleaner!
     template <typename Idx>
-    ATLAS_HOST_DEVICE
     value_type operator[](Idx idx) {
 #endif
         check_bounds(idx);
@@ -232,9 +237,13 @@ public:
 
     /// @brief Return stride for values in dimension **Dim** (template argument)
     template <unsigned int Dim>
-    ATLAS_HOST_DEVICE
     idx_t stride() const {
         return strides_[Dim];
+    }
+    template <unsigned int Dim>
+    ATLAS_HOST_DEVICE
+    idx_t device_stride() const {
+        return device_strides_[Dim];
     }
 
     /// @brief Return total number of values (accumulated over all dimensions)
@@ -245,8 +254,10 @@ public:
     ATLAS_HOST_DEVICE
     static constexpr idx_t rank() { return Rank; }
 
-    ATLAS_HOST_DEVICE
     const idx_t* strides() const { return strides_; }
+
+    ATLAS_HOST_DEVICE
+    const idx_t* device_strides() const { return device_strides_; }
 
     ATLAS_HOST_DEVICE
     const idx_t* shape() const { return shape_; }
@@ -260,9 +271,15 @@ public:
 
     /// @brief Return stride for values in dimension idx
     template <typename Int>
-    ATLAS_HOST_DEVICE
     idx_t stride(Int idx) const {
         return strides_[idx];
+    }
+
+    /// @brief Return device stride for values in dimension idx
+    template <typename Int>
+    ATLAS_HOST_DEVICE
+    idx_t device_stride(Int idx) const {
+        return device_strides_[idx];
     }
 
     /// @brief Access to internal data. @m_class{m-label m-danger} **dangerous**
@@ -394,6 +411,7 @@ private:
     size_t size_;
     idx_t shape_[Rank];
     idx_t strides_[Rank];
+    idx_t device_strides_[Rank];
 };
 
 //------------------------------------------------------------------------------------------------------
