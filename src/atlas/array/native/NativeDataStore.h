@@ -406,13 +406,21 @@ public:
                 shp_mult_rhs *= spec.shape()[i - 1];
             }
             size_t shp_mult_lhs = spec.shape()[0]; 
-            for (int i = 1; i < break_idx; i++) {
+            for (int i = 1; i <= break_idx; i++) {
                 shp_mult_lhs *= spec.shape()[i];
             }
-            memcpy_h2d_pitch_ = shp_mult_rhs;
-            memcpy_d2h_pitch_ = spec.strides()[break_idx];
-            memcpy_width_ = shp_mult_rhs;
-            memcpy_height_ = shp_mult_lhs;
+            if (spec.strides()[spec.rank() - 1] > 1) {
+                memcpy_h2d_pitch_ = 1;
+                memcpy_d2h_pitch_ = spec.strides()[spec.rank() - 1];
+                memcpy_width_ = 1;
+                memcpy_height_ = spec.shape()[0] * spec.device_strides()[0];
+            }
+            else {
+                memcpy_h2d_pitch_ = shp_mult_rhs;
+                memcpy_d2h_pitch_ = spec.strides()[break_idx];
+                memcpy_width_ = shp_mult_rhs;
+                memcpy_height_ = shp_mult_lhs;
+            }
 
             std::cout << "spec_rank: " << spec.rank()<< std::endl;
             std::cout << "shp_mult_rhs: " << shp_mult_rhs << std::endl;
