@@ -71,7 +71,7 @@ MultiFieldImpl* atlas__MultiField__create(eckit::Configuration* config) {
     }
     auto multiarray_shape = array::make_shape(nblk, nfld, nlev, nproma);
 
-MultiFieldImpl* multifield = new MultiFieldImpl{array::ArraySpec{datatype, multiarray_shape}};
+    MultiFieldImpl* multifield = new MultiFieldImpl{array::ArraySpec{datatype, multiarray_shape}, *config};
     auto& multiarray = multifield->array();
 
     size_t multiarray_field_idx = 0;

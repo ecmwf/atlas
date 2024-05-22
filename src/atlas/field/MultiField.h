@@ -47,9 +47,9 @@ public:  // methods
 
     MultiFieldImpl() { }
 
-    MultiFieldImpl(const array::ArraySpec& spec) {
+    MultiFieldImpl(const array::ArraySpec& spec, const eckit::Parametrisation& config = util::NoConfig()) {
         array::ArraySpec s(spec);
-        array_.reset(array::Array::create(std::move(s)));
+        array_.reset(array::Array::create(std::move(s), config));
     }
 
     virtual ~MultiFieldImpl() {}
