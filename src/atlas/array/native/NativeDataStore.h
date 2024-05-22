@@ -548,7 +548,7 @@ public:
 
     void accMap() const override {
 #if ATLAS_HAVE_ACC and ATLAS_HAVE_CUDA
-        if (not acc_mapped_) {
+        if (not acc_mapped_ and contiguous_) {
             ATLAS_ASSERT(deviceAllocated(),"Could not accMap as device data is not allocated");
             atlas_acc_map_data((void*)host_data_, (void*)device_data_, size_ * sizeof(Value));
             acc_mapped_ = true;
@@ -562,7 +562,7 @@ public:
 
     void accUnmap() const override {
 #if ATLAS_HAVE_ACC and ATLAS_HAVE_CUDA
-        if (acc_mapped_) {
+        if (acc_mapped_ and contiguous_) {
             atlas_acc_unmap_data(host_data_);
             acc_mapped_ = false;
         }
