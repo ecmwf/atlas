@@ -121,33 +121,39 @@ template <typename Value>
 ArrayT<Value>::ArrayT(ArrayDataStore* ds, const ArraySpec& spec, const eckit::Parametrisation& param) {
     data_store_ = std::unique_ptr<ArrayDataStore>(ds);
     spec_       = spec;
+    param.get("host_memory_mapped",mapped_);
 }
 
 template <typename Value>
 ArrayT<Value>::ArrayT(idx_t dim0, const eckit::Parametrisation& param) {
     spec_       = ArraySpec(make_shape(dim0));
     data_store_ = std::make_unique<native::DataStore<Value>>(spec_.size(), param);
+    param.get("host_memory_mapped",mapped_);
 }
 template <typename Value>
 ArrayT<Value>::ArrayT(idx_t dim0, idx_t dim1, const eckit::Parametrisation& param) {
     spec_       = ArraySpec(make_shape(dim0, dim1));
     data_store_ = std::make_unique<native::DataStore<Value>>(spec_.size(), param);
+    param.get("host_memory_mapped",mapped_);
 }
 template <typename Value>
 ArrayT<Value>::ArrayT(idx_t dim0, idx_t dim1, idx_t dim2, const eckit::Parametrisation& param) {
     spec_       = ArraySpec(make_shape(dim0, dim1, dim2));
     data_store_ = std::make_unique<native::DataStore<Value>>(spec_.size(), param);
+    param.get("host_memory_mapped",mapped_);
 }
 template <typename Value>
 ArrayT<Value>::ArrayT(idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3, const eckit::Parametrisation& param) {
     spec_       = ArraySpec(make_shape(dim0, dim1, dim2, dim3));
     data_store_ = std::make_unique<native::DataStore<Value>>(spec_.size(), param);
+    param.get("host_memory_mapped",mapped_);
 }
 template <typename Value>
 ArrayT<Value>::ArrayT(idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3, idx_t dim4,
         const eckit::Parametrisation& param) {
     spec_       = ArraySpec(make_shape(dim0, dim1, dim2, dim3, dim4));
     data_store_ = std::make_unique<native::DataStore<Value>>(spec_.size(), param);
+    param.get("host_memory_mapped",mapped_);
 }
 
 template <typename Value>
@@ -159,6 +165,7 @@ ArrayT<Value>::ArrayT(const ArrayShape& shape, const eckit::Parametrisation& par
     }
     data_store_ = std::make_unique<native::DataStore<Value>>(size, param);
     spec_       = ArraySpec(shape);
+    param.get("host_memory_mapped",mapped_);
 }
 
 template <typename Value>
@@ -166,6 +173,7 @@ ArrayT<Value>::ArrayT(const ArrayShape& shape, const ArrayAlignment& alignment,
         const eckit::Parametrisation& param) {
     spec_       = ArraySpec(shape, alignment);
     data_store_ = std::make_unique<native::DataStore<Value>>(spec_.allocatedSize(), param);
+    param.get("host_memory_mapped",mapped_);
 }
 
 template <typename Value>
@@ -176,11 +184,13 @@ ArrayT<Value>::ArrayT(const ArrayShape& shape, const ArrayLayout& layout,
     for (size_t j = 0; j < layout.size(); ++j) {
         ATLAS_ASSERT(spec_.layout()[j] == layout[j]);
     }
+    param.get("host_memory_mapped",mapped_);
 }
 
 template <typename Value>
 ArrayT<Value>::ArrayT(ArraySpec&& spec, const eckit::Parametrisation& param): Array(std::move(spec)) {
     data_store_ = std::make_unique<native::DataStore<Value>>(spec_.allocatedSize(), param);
+    param.get("host_memory_mapped",mapped_);
 }
 
 template <typename Value>

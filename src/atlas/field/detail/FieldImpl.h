@@ -282,7 +282,7 @@ FieldImpl* FieldImpl::create(const std::string& name, const array::ArrayShape& s
 template <typename DATATYPE>
 FieldImpl* FieldImpl::wrap(const std::string& name, DATATYPE* data, const array::ArraySpec& spec,
         const eckit::Parametrisation& param) {
-    FieldImpl* wrapped = create(name, array::Array::wrap(data, spec), param);
+    FieldImpl* wrapped = create(name, array::Array::wrap(data, spec, param), param);
     wrapped->set_dirty(false);
     return wrapped;
 }
@@ -290,7 +290,7 @@ FieldImpl* FieldImpl::wrap(const std::string& name, DATATYPE* data, const array:
 template <typename DATATYPE>
 FieldImpl* FieldImpl::wrap(const std::string& name, DATATYPE* data, const array::ArrayShape& shape,
         const eckit::Parametrisation& param) {
-    FieldImpl* wrapped = create(name, array::Array::wrap(data, shape, param));
+    FieldImpl* wrapped = create(name, array::Array::wrap(data, shape, param), param);
     wrapped->set_dirty(false);
     return wrapped;
 }

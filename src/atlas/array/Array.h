@@ -102,7 +102,14 @@ public:
 
     const ArrayStrides& strides() const { return spec_.strides(); }
 
-    const ArrayStrides& device_strides() const { return spec_.device_strides(); }
+    const ArrayStrides& device_strides() const { 
+        if( mapped_ ) {
+            return spec_.strides();
+        }
+        else {
+            return spec_.device_strides();
+        }
+    }
 
     const ArrayShape& shape() const { return spec_.shape(); }
 
@@ -110,7 +117,14 @@ public:
 
     const std::vector<int>& stridesf() const { return spec_.stridesf(); }
 
-    const std::vector<int>& device_stridesf() const { return spec_.device_stridesf(); }
+    const std::vector<int>& device_stridesf() const {
+        if( mapped_ ) {
+            return spec_.stridesf();
+        }
+        else {
+            return spec_.device_stridesf();
+        }
+    }
 
     bool contiguous() const { return spec_.contiguous(); }
 
@@ -211,6 +225,7 @@ protected:
     Array(ArraySpec&& spec): spec_(std::move(spec)) {}
     ArraySpec spec_;
     std::unique_ptr<ArrayDataStore> data_store_;
+    bool mapped_{false};
 
     void replace(Array& array) {
         data_store_.swap(array.data_store_);

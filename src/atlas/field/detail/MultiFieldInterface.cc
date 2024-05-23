@@ -23,7 +23,6 @@ namespace field {
 extern "C" {
 MultiFieldImpl* atlas__MultiField__create(eckit::Configuration* config) {
     ATLAS_ASSERT(config != nullptr);
-
     // Register in factory
     // TODO: move __multiFieldCreatorIFS out of test_multifield_ifs.cc
     //MultiFieldCreatorBuilder<MultiFieldCreatorIFS> __MultiFieldCreatorIFS("MultiFieldCreatorIFS");
@@ -91,11 +90,11 @@ MultiFieldImpl* atlas__MultiField__create(eckit::Configuration* config) {
             const auto range   = array::Range(multiarray_field_idx, multiarray_field_idx + field_vars);
             if (datatype.kind() == array::DataType::KIND_REAL64) {
                 auto slice = array::make_view<double, 4>(multiarray).slice(all, range, all, all);
-                field      = Field(name, slice.data(), field_array_spec);
+                field      = Field(name, slice.data(), field_array_spec, *config);
             }
             else if (datatype.kind() == array::DataType::KIND_REAL32) {
                 auto slice = array::make_view<float, 4>(multiarray).slice(all, range, all, all);
-                field      = Field(name, slice.data(), field_array_spec);
+                field      = Field(name, slice.data(), field_array_spec, *config);
             }
             else {
                 ATLAS_NOTIMPLEMENTED;
@@ -110,11 +109,11 @@ MultiFieldImpl* atlas__MultiField__create(eckit::Configuration* config) {
             constexpr auto all = array::Range::all();
             if (datatype.kind() == array::DataType::KIND_REAL64) {
                 auto slice = array::make_view<double, 4>(multiarray).slice(all, multiarray_field_idx, all, all);
-                field      = Field(name, slice.data(), field_array_spec);
+                field      = Field(name, slice.data(), field_array_spec, *config);
             }
             else if (datatype.kind() == array::DataType::KIND_REAL32) {
                 auto slice = array::make_view<float, 4>(multiarray).slice(all, multiarray_field_idx, all, all);
-                field      = Field(name, slice.data(), field_array_spec);
+                field      = Field(name, slice.data(), field_array_spec, *config);
             }
             else {
                 ATLAS_NOTIMPLEMENTED;
