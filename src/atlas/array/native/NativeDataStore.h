@@ -389,8 +389,9 @@ public:
     WrappedDataStore(Value* host_data, const ArraySpec& spec, const eckit::Parametrisation& param): 
         host_data_(host_data), contiguous_(true), size_(spec.size()) {
         init_device();
+        param.get("host_memory_mapped", host_memory_mapped_);
         contiguous_ = spec.contiguous();
-        if (! contiguous_) {
+        if (! host_memory_mapped_ && ! contiguous_) {
             int break_idx = 0;
             size_t shp_mult_rhs = spec.shape()[spec.rank() - 1];
             for (int i = spec.rank() - 1; i > 0; i--) {
@@ -437,41 +438,46 @@ public:
         if (not device_allocated_) {
             allocateDevice();
         }
-        cudaError_t err;
-        if (! contiguous_) {
-            err = cudaMemcpy2D(device_data_, memcpy_h2d_pitch_ * sizeof(Value),
-                 host_data_, memcpy_d2h_pitch_ * sizeof(Value),
-                 memcpy_width_ * sizeof(Value), memcpy_height_, cudaMemcpyHostToDevice);
-        }
-        else {
-            err = cudaMemcpy(device_data_, host_data_, size_ * sizeof(Value), cudaMemcpyHostToDevice);
+        cudaError_t err = cudaSuccess;
+        if (!host_memory_mapped_) {
+            if (! contiguous_) {
+                err = cudaMemcpy2D(device_data_, memcpy_h2d_pitch_ * sizeof(Value),
+                     host_data_, memcpy_d2h_pitch_ * sizeof(Value),
+                     memcpy_width_ * sizeof(Value), memcpy_height_, cudaMemcpyHostToDevice);
+            }
+            else {
+                err = cudaMemcpy(device_data_, host_data_, size_ * sizeof(Value), cudaMemcpyHostToDevice);
+            }
         }
         if (err != cudaSuccess) {
             throw_AssertionFailed("Failed to updateDevice: " + std::string(cudaGetErrorString(err)), Here());
         }
         device_updated_ = true;
-        //cudaDeviceSynchronize();
 #endif
     }
 
     void updateHost() const override {
 #if ATLAS_HAVE_CUDA
         if (device_allocated_) {
-            cudaError_t err;
-            if (! contiguous_) {
-                err = cudaMemcpy2D(host_data_, memcpy_d2h_pitch_ * sizeof(Value),
-                     device_data_,  memcpy_h2d_pitch_ * sizeof(Value),
-                     memcpy_width_ * sizeof(Value), memcpy_height_, cudaMemcpyDeviceToHost);
+            cudaError_t err = cudaSuccess;
+            if (host_memory_mapped_) {
+                err = cudaDeviceSynchronize();
             }
             else {
-                err = cudaMemcpy(host_data_, device_data_, size_ * sizeof(Value), cudaMemcpyDeviceToHost);
+                if (! contiguous_) {
+                    err = cudaMemcpy2D(host_data_, memcpy_d2h_pitch_ * sizeof(Value),
+                         device_data_,  memcpy_h2d_pitch_ * sizeof(Value),
+                         memcpy_width_ * sizeof(Value), memcpy_height_, cudaMemcpyDeviceToHost);
+                }
+                else {
+                    err = cudaMemcpy(host_data_, device_data_, size_ * sizeof(Value), cudaMemcpyDeviceToHost);
+                }
             }
             if (err != cudaSuccess) {
                 throw_AssertionFailed("Failed to updateHost: " + std::string(cudaGetErrorString(err)), Here());
             }
             host_updated_ = true;
         }
-        //cudaDeviceSynchronize();
 #endif
     }
 
@@ -503,7 +509,13 @@ public:
         if (device_allocated_) {
            return;
 }
-        if (size_) {
+        if (host_memory_mapped_) {
+            cudaError_t err = cudaHostGetDevicePointer((void**)&device_data_, host_data_, 0);
+            if (err != cudaSuccess) {
+                throw_AssertionFailed("allocateDevice("+std::string(name())+") : Failed to get device pointer: "+std::string(cudaGetErrorString(err)), Here());
+            }
+        }
+        else if (size_) {
             cudaError_t err = cudaMalloc((void**)&device_data_, sizeof(Value)*size_);
             if (err != cudaSuccess) {
                 throw_AssertionFailed("Failed to allocate GPU memory: " + std::string(cudaGetErrorString(err)), Here());
@@ -518,7 +530,10 @@ public:
 #if ATLAS_HAVE_CUDA
         if (device_allocated_) {
             accUnmap();
-            cudaError_t err = cudaFree(device_data_);
+            cudaError_t err = cudaSuccess;
+            if (! host_memory_mapped_) {
+                err = cudaFree(device_data_);
+            }
             if (err != cudaSuccess) {
                 throw_AssertionFailed("Failed to deallocate GPU memory: " + std::string(cudaGetErrorString(err)), Here());
             }
@@ -570,10 +585,18 @@ public:
     }
 
 private:
+    std::string_view name() const {
+        return util::registered_pointer_name(this);
+    }
+
+private:
     size_t size_;
     Value* host_data_;
     mutable Value* device_data_;
     bool contiguous_;
+
+    //bool host_memory_pinned_{false};
+    bool host_memory_mapped_{false};
 
     size_t memcpy_h2d_pitch_;
     size_t memcpy_d2h_pitch_;
