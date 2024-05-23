@@ -18,6 +18,9 @@ find_package( ecbuild 3.4 REQUIRED HINTS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CUR
 
 project( atlas LANGUAGES CXX )
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 set( ATLAS_BITS_GLOBAL 64 CACHE STRING "bits used to define a global index (atlas::gidx_t)" )
 set( ATLAS_BITS_LOCAL  32 CACHE STRING "bits used to define a local index (atlas::idx_t)" )
 
