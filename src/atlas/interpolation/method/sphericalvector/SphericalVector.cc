@@ -72,7 +72,7 @@ void SphericalVector::do_setup(const FunctionSpace& source,
   // whereas eckit does not.
   auto complexTriplets = ComplexTriplets(nNonZeros);
   auto realTriplets = RealTriplets(nNonZeros);
-  
+
   const auto sourceLonLatsView = array::make_view<double, 2>(source_.lonlat());
   const auto targetLonLatsView = array::make_view<double, 2>(target_.lonlat());
   const auto unitSphere = geometry::UnitSphere{};
@@ -128,6 +128,11 @@ void SphericalVector::do_execute(const FieldSet& sourceFieldSet,
 void SphericalVector::do_execute(const Field& sourceField, Field& targetField,
                                  Metadata&) const {
   ATLAS_TRACE("atlas::interpolation::method::SphericalVector::do_execute()");
+
+  if (targetField.size() == 0) {
+      return;
+  }
+
   const auto fieldType = sourceField.metadata().getString("type", "");
   if (fieldType != "vector") {
     auto metadata = Metadata();
@@ -162,6 +167,10 @@ void SphericalVector::do_execute_adjoint(Field& sourceField,
   ATLAS_TRACE(
       "atlas::interpolation::method::SphericalVector::do_execute_adjoint()");
 
+  if (targetField.size() == 0) {
+      return;
+  }
+
   const auto fieldType = sourceField.metadata().getString("type", "");
   if (fieldType != "vector") {
     auto metadata = Metadata();
@@ -183,9 +192,6 @@ template <typename MatMul>
 void SphericalVector::interpolate_vector_field(const Field& sourceField,
                                                Field& targetField,
                                                const MatMul& matMul) {
-  if (targetField.size() == 0) {
-    return;
-  }
 
   ATLAS_ASSERT_MSG(sourceField.variables() == 2 || sourceField.variables() == 3,
                    "Vector field can only have 2 or 3 components.");
