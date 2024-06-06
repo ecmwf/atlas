@@ -301,7 +301,7 @@ void Method::setup(const FunctionSpace& source, const FunctionSpace& target) {
     ATLAS_TRACE("atlas::interpolation::method::Method::setup(FunctionSpace, FunctionSpace)");
     this->do_setup(source, target);
 
-    if (adjoint_) {
+    if (adjoint_ && target.size() > 0) {
         Matrix tmp(*matrix_);
 
         // if interpolation is matrix free then matrix->nonZeros() will be zero.
@@ -346,14 +346,14 @@ Method::Metadata Method::execute(const Field& source, Field& target) const {
 }
 
 Method::Metadata Method::execute_adjoint(FieldSet& source, const FieldSet& target) const {
-    ATLAS_TRACE("atlas::interpolation::method::Method::execute(FieldSet, FieldSet)");
+    ATLAS_TRACE("atlas::interpolation::method::Method::execute_adjoint(FieldSet, FieldSet)");
     Metadata metadata;
     this->do_execute_adjoint(source, target, metadata);
     return metadata;
 }
 
 Method::Metadata Method::execute_adjoint(Field& source, const Field& target) const {
-    ATLAS_TRACE("atlas::interpolation::method::Method::execute(Field, Field)");
+    ATLAS_TRACE("atlas::interpolation::method::Method::execute_adjoint(Field, Field)");
     Metadata metadata;
     this->do_execute_adjoint(source, target, metadata);
     return metadata;
@@ -438,8 +438,8 @@ void Method::do_execute_adjoint(Field& src, const Field& tgt, Metadata&) const {
         throw_NotImplemented("Adjoint Interpolation does not work for fields that have missing data. ", Here());
     }
 
-    if (matrix_transpose_.empty()) {
-        throw_AssertionFailed("Need to set 'adjoint coefficients' to true in config for adjoint interpolation to work");
+    if (!adjoint_) {
+        throw_AssertionFailed("Need to set 'adjoint' to true in config for adjoint interpolation to work");
     }
 
     if (src.datatype().kind() == array::DataType::KIND_REAL64) {
