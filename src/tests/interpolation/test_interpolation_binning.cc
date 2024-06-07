@@ -233,7 +233,6 @@ CASE("dot-product test for the rigridding from high to low resolution; grid type
 
   const auto scheme = util::Config("type", "binning") |
                       util::Config("ancillary_scheme", option::type("cubedsphere-bilinear")) |
-                      util::Config("grid_type", "CS-LFR") |
                       util::Config("adjoint", true);
 
   Interpolation regrid_high2low(scheme, csfs_s, csfs_t);
