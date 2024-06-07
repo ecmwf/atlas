@@ -132,6 +132,7 @@ CASE("rigridding from high to low resolution; grid type: CS-LFR") {
   // performing the regridding from high to low resolution
   regrid_high2low.execute(fs_s, fs_t);
 
+  fs_t["field_01_t"].haloExchange();
 
   //--
 
@@ -186,6 +187,7 @@ CASE("rigridding from high to low resolution; grid type: O") {
   // performing the regridding from high to low resolution
   regrid_high2low.execute(fs_s, fs_t);
 
+  fs_t["field_01_t"].haloExchange();
 
   //--
 
