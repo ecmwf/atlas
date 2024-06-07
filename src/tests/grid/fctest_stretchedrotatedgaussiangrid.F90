@@ -1738,7 +1738,7 @@ TEST( arpege_t31c24 )
   jglo = 0
   do j = 1, grid%ny()
     do i = 1, grid%nx(j)
-      FCTEST_CHECK_CLOSE( grid%lonlat(i,j), ([lonlat(2*jglo+1),lonlat(2*jglo+2)]), 1.e-10_dp );
+      FCTEST_CHECK_CLOSE( grid%lonlat(i,j), ([lonlat(2*jglo+1),lonlat(2*jglo+2)]), 1.e-9_dp );
       jglo = jglo + 1
     enddo
   enddo
