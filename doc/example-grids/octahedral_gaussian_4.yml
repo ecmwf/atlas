@@ -6,7 +6,7 @@ projection : { type: "rotated_schmidt", stretching_factor: 4.0,  north_pole: [3.
 
 check : 
   size : 1600
-  lonlat(first) : [3,45.9397]
-  lonlat(last)  : [-165.776,-62.6128]
-  uid : 20308244515b7c78e22709ebaa842246
+  lonlat(first) : [3,48.0603]
+  lonlat(last)  : [177.0166,-30.8]
+  uid : 1297f9ab088b831da3139eb5f44e20a9
   bounding_box(n,w,s,e) : [90,0,-90,360]
