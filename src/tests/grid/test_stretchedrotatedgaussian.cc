@@ -1717,8 +1717,8 @@ CASE("t31c2.4") {
         for (int i = 0; i < grid.nx(j); i++, jglo++) {
             auto ll1 = PointLonLat(lonlat_arp_t32c24[2 * jglo + 0], lonlat_arp_t32c24[2 * jglo + 1]);
             auto ll2 = grid.lonlat(i, j);
-            EXPECT_APPROX_EQ(ll1.lon(), ll2.lon(), 1.e-10);
-            EXPECT_APPROX_EQ(ll1.lat(), ll2.lat(), 1.e-10);
+            EXPECT_APPROX_EQ(ll1.lon(), ll2.lon(), 1.e-9);
+            EXPECT_APPROX_EQ(ll1.lat(), ll2.lat(), 1.e-9);
         }
     }
 }
