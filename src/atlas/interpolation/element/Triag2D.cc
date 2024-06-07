@@ -42,7 +42,7 @@ method::Intersect Triag2D::intersects(const PointXY& r, double edgeEpsilon, doub
     Vector2D pvec{rvec - v00};
 
     // solve u e1 + v e2 = pvec for u and v
-    float invDet = 1. / (e1.x() * e2.y() - e2.x() * e1.y());
+    double invDet = 1. / (e1.x() * e2.y() - e2.x() * e1.y());
     isect.u      = (pvec.x() * e2.y() - e2.x() * pvec.y()) * invDet;
     isect.v      = (e1.x() * pvec.y() - pvec.x() * e1.y()) * invDet;
 
