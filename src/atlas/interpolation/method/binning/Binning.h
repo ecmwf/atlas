@@ -42,8 +42,6 @@ class Binning : public Method {
   ///                       value: 'binning'
   ///          <ancillary_scheme>: method used to evaluate the 'A' matrix;
   ///                       value: 'cubedsphere-bilinear', 'structured-bilinear', ...
-  ///                 <grid_type>: type of grid
-  ///                       value: 'CS-LFR', 'O', ...
   ///             <halo_exchange>: flag to control the halo exchange procedure
   ///                       value: 'true', 'false'
   ///                   <adjoint>: flag to control the adjoint operation
@@ -69,7 +67,6 @@ class Binning : public Method {
   FunctionSpace source_{};
   FunctionSpace target_{};
 
-  std::string grid_type_{"ATLAS"};
   bool halo_exchange_{true};
   bool adjoint_{false};
 };

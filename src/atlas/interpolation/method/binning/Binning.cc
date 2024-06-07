@@ -35,7 +35,6 @@ MethodBuilder<Binning> __builder("binning");
 Binning::Binning(const Config& config) : Method(config) {
   const auto* ptr_config = dynamic_cast<const eckit::LocalConfiguration*>(&config);
   interpAncillaryScheme_ = ptr_config->getSubConfiguration("ancillary_scheme");
-  grid_type_ = ptr_config->getString("grid_type", "ATLAS");
   halo_exchange_ = ptr_config->getBool("halo_exchange", true);
   adjoint_ = ptr_config->getBool("adjoint", false);
 }
@@ -137,7 +136,14 @@ std::vector<double> Binning::getAreaWeights(const FunctionSpace& fspace) const {
   // diagonal of 'area weights matrix', W
   std::vector<double> ds_aweights;
 
-  if (grid_type_ == "CS-LFR") {
+  bool is_cubed_sphere {false};
+  if (auto csfs = functionspace::NodeColumns(fspace)) {
+    if (CubedSphereGrid(csfs.mesh().grid())) {
+      is_cubed_sphere = true;
+    }
+  }
+
+  if (is_cubed_sphere) { 
 
     const auto csfs = atlas::functionspace::NodeColumns(fspace);
  
