@@ -36,6 +36,7 @@ Binning::Binning(const Config& config) : Method(config) {
   const auto* ptr_config = dynamic_cast<const eckit::LocalConfiguration*>(&config);
   interpAncillaryScheme_ = ptr_config->getSubConfiguration("ancillary_scheme");
   halo_exchange_ = ptr_config->getBool("halo_exchange", true);
+  adjoint_ = ptr_config->getBool("adjoint", false);
 }
 
 
@@ -61,8 +62,10 @@ void Binning::do_setup(const FunctionSpace& source,
     return;
   }
 
-  // enabling or disabling halo exchange
+  // enabling or disabling the halo exchange
   this->allow_halo_exchange_ = halo_exchange_;
+  // enabling or disabling the adjoint operation
+  this->adjoint_ = adjoint_;
 
   // note that the 'source' grid for the low-to-high regridding (interpolation)
   // is the 'target' grid for high-to-low regridding (binning) and
@@ -99,29 +102,16 @@ void Binning::do_setup(const FunctionSpace& source,
     // start of the indexes associated with the row 'i+1'
     size_t ubound = ptr_tamx_o[idx_row_next];
 
+    if (lbound == ubound)
+      continue;
+
     double sum_row = 0;
     for (size_t i = lbound; i < ubound; ++i) {
       sum_row += (ptr_tamx_data[i] * ds_aweights.at(ptr_tamx_idxs_col[i]));
     }
 
-
-
-    // ...XX...
-    if (sum_row == 0) {
-
-      Log::info() << "\nDEBUG - BPX1" << std::endl;
-
-    }
-
-    // ...XX...
-    double nfactor {1.};
-    if (sum_row != 0) {
-
-      // normalization factor
-      nfactor = 1/sum_row;
-
-    }
-
+    // normalization factor
+    double nfactor = 1/sum_row;
 
     for (size_t i = lbound; i < ubound; ++i) {
       // evaluating the non-zero elements of the binning matrix
@@ -146,12 +136,15 @@ std::vector<double> Binning::getAreaWeights(const FunctionSpace& fspace) const {
   // diagonal of 'area weights matrix', W
   std::vector<double> ds_aweights;
 
+  bool is_cubed_sphere {false};
+  if (auto csfs = functionspace::NodeColumns(fspace)) {
+    if (CubedSphereGrid(csfs.mesh().grid())) {
+      is_cubed_sphere = true;
+    }
+  }
 
+  if (is_cubed_sphere) { 
 
-  // ...XX...
-  // note that this should be used only in the case of 'CubedSphereGrid' ...
-
-  if (fspace.type().compare(functionspace::detail::NodeColumns::static_type()) == 0) {
     const auto csfs = functionspace::NodeColumns(fspace);
  
     const auto csgrid = CubedSphereGrid(csfs.mesh().grid());
@@ -176,17 +169,6 @@ std::vector<double> Binning::getAreaWeights(const FunctionSpace& fspace) const {
         ds_aweights.emplace_back(aweight_temp);
       }
     }
-
-  } else if (fspace.type().compare(functionspace::detail::StructuredColumns::static_type()) == 0) {
-
-    const auto scfs = functionspace::StructuredColumns(fspace);
-
-    const auto scgrid = scfs.grid();
-    // area weight (appoximated)
-    //   area weight = area_cell/area_total
-    //               = area_cell/(no_cells*area_cell) = 1/no_cells
-    const double aweight = 1/static_cast<double>(scgrid.size());
-    ds_aweights.assign(fspace.size(), aweight);
   
   } else {
 
