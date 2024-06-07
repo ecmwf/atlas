@@ -71,14 +71,14 @@ void makeGmshOutput(const std::string& file_name,
 
 
 /// function to carry out a dot product
-double dotProd(const atlas::Field& field01, const atlas::Field& field02) {
+double dotProd(const Field& field01, const Field& field02) {
   double dprod{};
 
   const auto field01_view = array::make_view<double, 2>(field01);
   const auto field02_view = array::make_view<double, 2>(field02);
 
-  for (atlas::idx_t l=0; l < field01_view.shape(1); ++l) {
-    for (atlas::idx_t i=0; i < field01_view.shape(0); ++i) {
+  for (idx_t l=0; l < field01_view.shape(1); ++l) {
+    for (idx_t i=0; i < field01_view.shape(0); ++i) {
       dprod += field01_view(i, l) * field02_view(i, l);
     }
   }
@@ -113,7 +113,7 @@ CASE("rigridding from high to low resolution; grid type: CS-LFR") {
 
   auto field_01_s = getVortexField(csfs_s, "field_01_s", nb_levels);
 
-  atlas::FieldSet fs_s;
+  FieldSet fs_s;
   fs_s.add(field_01_s);
 
   auto field_01_t = csfs_t.createField<double>(option::name("field_01_t") |
@@ -124,14 +124,14 @@ CASE("rigridding from high to low resolution; grid type: CS-LFR") {
 
 
   const auto scheme = util::Config("type", "binning") |
-                      util::Config("ancillary_scheme", option::type("cubedsphere-bilinear"));
+                      util::Config("ancillary_scheme", option::type("cubedsphere-bilinear")) |
+                      util::Config("grid_type", "CS-LFR");
 
   Interpolation regrid_high2low(scheme, csfs_s, csfs_t);
 
   // performing the regridding from high to low resolution
   regrid_high2low.execute(fs_s, fs_t);
 
-  fs_t["field_01_t"].haloExchange();
 
   //--
 
@@ -167,7 +167,7 @@ CASE("rigridding from high to low resolution; grid type: O") {
 
   auto field_01_s = getVortexField(ncfs_s, "field_01_s", nb_levels);
 
-  atlas::FieldSet fs_s;
+  FieldSet fs_s;
   fs_s.add(field_01_s);
 
   auto field_01_t = ncfs_t.createField<double>(option::name("field_01_t") |
@@ -178,14 +178,14 @@ CASE("rigridding from high to low resolution; grid type: O") {
 
 
   const auto scheme = util::Config("type", "binning") |
-                      util::Config("ancillary_scheme", option::type("structured-bilinear"));
+                      util::Config("ancillary_scheme", option::type("structured-bilinear")) |
+                      util::Config("grid_type", "O");
 
   Interpolation regrid_high2low(scheme, ncfs_s, ncfs_t);
 
   // performing the regridding from high to low resolution
   regrid_high2low.execute(fs_s, fs_t);
 
-  fs_t["field_01_t"].haloExchange();
 
   //--
 
@@ -219,18 +219,19 @@ CASE("dot-product test for the rigridding from high to low resolution; grid type
   // source field
   auto field_01_s = getVortexField(csfs_s, "field_01_s", nb_levels);
 
-  atlas::FieldSet fs_s;
+  FieldSet fs_s;
   fs_s.add(field_01_s);
 
   // target field
   auto field_01_t = csfs_t.createField<double>(option::name("field_01_t") |
                                                option::levels(nb_levels));
 
-  atlas::FieldSet fs_t;
+  FieldSet fs_t;
   fs_t.add(field_01_t);
 
   const auto scheme = util::Config("type", "binning") |
                       util::Config("ancillary_scheme", option::type("cubedsphere-bilinear")) |
+                      util::Config("grid_type", "CS-LFR") |
                       util::Config("adjoint", true);
 
   Interpolation regrid_high2low(scheme, csfs_s, csfs_t);
@@ -244,19 +245,19 @@ CASE("dot-product test for the rigridding from high to low resolution; grid type
   // target field (adjoint)
   auto field_01_ad_t = csfs_t.createField<double>(option::name("field_01_ad_t") |
                                                   option::levels(nb_levels));
-  atlas::array::make_view<double, 2>(field_01_ad_t).assign(
-    atlas::array::make_view<double, 2>(field_01_t));
+  array::make_view<double, 2>(field_01_ad_t).assign(
+    array::make_view<double, 2>(field_01_t));
   field_01_ad_t.adjointHaloExchange();
 
-  atlas::FieldSet fs_ad_t;
+  FieldSet fs_ad_t;
   fs_ad_t.add(field_01_ad_t);
 
   // source field (adjoint)
   auto field_01_ad_s = csfs_s.createField<double>(option::name("field_01_ad_s") |
                                                   option::levels(nb_levels));
-  atlas::array::make_view<double, 2>(field_01_ad_s).assign(0.);
+  array::make_view<double, 2>(field_01_ad_s).assign(0.);
 
-  atlas::FieldSet fs_ad_s;
+  FieldSet fs_ad_s;
   fs_ad_s.add(field_01_ad_s);
 
   // performing adjoint operation

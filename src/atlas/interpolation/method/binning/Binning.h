@@ -14,8 +14,7 @@
 #include "atlas/interpolation/Cache.h"
 #include "atlas/interpolation/method/Method.h"
 #include "atlas/grid/Grid.h"
-
-#include "eckit/config/Configuration.h"
+#include "atlas/util/Config.h"
 
 
 namespace atlas {
@@ -62,7 +61,7 @@ class Binning : public Method {
 
   std::vector<double> getAreaWeights(const FunctionSpace& source) const;
 
-  eckit::LocalConfiguration interpAncillaryScheme_{};
+  util::Config interpAncillaryScheme_;
 
   FunctionSpace source_{};
   FunctionSpace target_{};
