@@ -33,10 +33,11 @@ MethodBuilder<Binning> __builder("binning");
 
 
 Binning::Binning(const Config& config) : Method(config) {
-  const auto* ptr_config = dynamic_cast<const eckit::LocalConfiguration*>(&config);
-  interpAncillaryScheme_ = ptr_config->getSubConfiguration("ancillary_scheme");
-  halo_exchange_ = ptr_config->getBool("halo_exchange", true);
-  adjoint_ = ptr_config->getBool("adjoint", false);
+  const auto* conf = dynamic_cast<const eckit::LocalConfiguration*>(&config);
+  ATLAS_ASSERT(conf, "config must be derived from eckit::LocalConfiguration");
+  interpAncillaryScheme_ = conf->getSubConfiguration("scheme");
+  adjoint_ = conf->getBool("adjoint", false);
+  halo_exchange_ = conf->getBool("halo_exchange", true);
 }
 
 

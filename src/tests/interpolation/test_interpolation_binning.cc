@@ -124,7 +124,7 @@ CASE("rigridding from high to low resolution; grid type: CS-LFR") {
 
 
   const auto scheme = util::Config("type", "binning") |
-                      util::Config("ancillary_scheme", option::type("cubedsphere-bilinear"));
+                      util::Config("scheme", option::type("cubedsphere-bilinear"));
 
   Interpolation regrid_high2low(scheme, csfs_s, csfs_t);
 
@@ -179,7 +179,7 @@ CASE("rigridding from high to low resolution; grid type: O") {
 
 
   const auto scheme = util::Config("type", "binning") |
-                      util::Config("ancillary_scheme", option::type("structured-bilinear"));
+                      util::Config("scheme", option::type("structured-bilinear"));
 
   Interpolation regrid_high2low(scheme, ncfs_s, ncfs_t);
 
@@ -232,7 +232,7 @@ CASE("dot-product test for the rigridding from high to low resolution; grid type
   fs_t.add(field_01_t);
 
   const auto scheme = util::Config("type", "binning") |
-                      util::Config("ancillary_scheme", option::type("cubedsphere-bilinear")) |
+                      util::Config("scheme", option::type("cubedsphere-bilinear")) |
                       util::Config("adjoint", true);
 
   Interpolation regrid_high2low(scheme, csfs_s, csfs_t);
