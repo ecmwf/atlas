@@ -160,10 +160,10 @@ private:
     interpolation::MatrixCache matrix_cache_;
     NonLinear nonLinear_;
     std::string linalg_backend_;
-    bool adjoint_{false};
     Matrix matrix_transpose_;
 
 protected:
+    bool adjoint_{false};
     bool allow_halo_exchange_{true};
     std::vector<idx_t> missing_;
 };

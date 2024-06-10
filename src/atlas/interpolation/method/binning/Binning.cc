@@ -36,8 +36,10 @@ Binning::Binning(const Config& config) : Method(config) {
   const auto* conf = dynamic_cast<const eckit::LocalConfiguration*>(&config);
   ATLAS_ASSERT(conf, "config must be derived from eckit::LocalConfiguration");
   interpAncillaryScheme_ = conf->getSubConfiguration("scheme");
+  // enabling or disabling the adjoint operation
   adjoint_ = conf->getBool("adjoint", false);
-  halo_exchange_ = conf->getBool("halo_exchange", true);
+  // enabling or disabling the halo exchange
+  allow_halo_exchange_ = conf->getBool("halo_exchange", true);
 }
 
 
@@ -62,11 +64,6 @@ void Binning::do_setup(const FunctionSpace& source,
   if (target_.size() == 0) {
     return;
   }
-
-  // enabling or disabling the halo exchange
-  this->allow_halo_exchange_ = halo_exchange_;
-  // enabling or disabling the adjoint operation
-  this->adjoint_ = adjoint_;
 
   // note that the 'source' grid for the low-to-high regridding (interpolation)
   // is the 'target' grid for high-to-low regridding (binning) and
