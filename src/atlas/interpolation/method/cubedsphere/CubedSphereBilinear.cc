@@ -33,9 +33,6 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
     ATLAS_ASSERT(ncSource);
     ATLAS_ASSERT(target_);
 
-    // Add tile index metadata to target.
-    target_->metadata().set("tile index", std::vector<idx_t>{});
-
     // Enable or disable halo exchange.
     this->allow_halo_exchange_ = halo_exchange_;
 
