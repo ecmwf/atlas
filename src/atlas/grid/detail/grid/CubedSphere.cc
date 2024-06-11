@@ -320,7 +320,7 @@ Field CubedSphere::gridCellArea(const FunctionSpace& fspace) const {
   // (grid_res * grid_res) = no. of cells on a tile
   auto grid_res = csgrid.N();
 
-  const auto& proj = csgrid.cubedSphereProjection();
+  const auto& proj = csgrid.projection();
 
   // area of a grid cell (cubed-sphere coord. system)
   double gcell_area_cs = M_PI/(2*grid_res) * M_PI/(2*grid_res);
