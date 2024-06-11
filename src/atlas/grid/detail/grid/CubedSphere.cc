@@ -326,16 +326,16 @@ Field CubedSphere::gridCellArea(const FunctionSpace& fspace) const {
   double gcell_area_cs = M_PI/(2*grid_res) * M_PI/(2*grid_res);
 
   auto gcell_area_field = ncfs.createField<double>(
-    atlas::option::name("grid_cell_areas") | atlas::option::levels(1));
+    atlas::option::name("grid_cell_areas") | atlas::option::levels(0));
 
-  auto gcell_area_fview = array::make_view<double, 2>(gcell_area_field);
+  auto gcell_area_fview = array::make_view<double, 1>(gcell_area_field);
 
   for (size_t i = 0; i < gcell_area_fview.size(); i++) {
     PointLonLat loc = PointLonLat(lonlat(i, atlas::LON), lonlat(i, atlas::LAT));
     double cos_lat = std::cos(degrees2rads * loc.lat());
     double grid_jac_det = 1/proj.jacobian(loc).determinant();
     // area of a grid cell (geographic coord. system)
-    gcell_area_fview(i, 0) = grid_jac_det * gcell_area_cs * cos_lat;
+    gcell_area_fview(i) = grid_jac_det * gcell_area_cs * cos_lat;
   }
 
   return gcell_area_field;

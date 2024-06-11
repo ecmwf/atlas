@@ -149,13 +149,13 @@ std::vector<double> Binning::getAreaWeights(const FunctionSpace& fspace) const {
     // areas of the cells (geographic coord. system)
     const auto gcell_areas = csgrid.gridCellArea(fspace);
 
-    auto gcell_areas_view = array::make_view<double, 2>(gcell_areas);
+    auto gcell_areas_view = array::make_view<double, 1>(gcell_areas);
     auto is_ghost = array::make_view<int, 1>(csfs.ghost());
 
     double total_area {0.};
     for (idx_t i = 0; i < csfs.size(); i++) {
       if (!is_ghost[i]) {
-        total_area += gcell_areas_view(i, 0);
+        total_area += gcell_areas_view(i);
       }
     }
     eckit::mpi::comm().allReduceInPlace(total_area, eckit::mpi::Operation::SUM);
@@ -163,7 +163,7 @@ std::vector<double> Binning::getAreaWeights(const FunctionSpace& fspace) const {
     double aweight_temp {0.};
     for (idx_t i = 0; i < csfs.size(); i++) {
       if (!is_ghost[i]) {
-        aweight_temp = gcell_areas_view(i, 0)/total_area;
+        aweight_temp = gcell_areas_view(i)/total_area;
         ds_aweights.emplace_back(aweight_temp);
       }
     }
