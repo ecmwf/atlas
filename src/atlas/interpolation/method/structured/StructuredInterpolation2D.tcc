@@ -423,8 +423,10 @@ void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source ) {
         // fill sparse matrix
         if( failed_points.empty() && out_npts_) {
             idx_t inp_npts = source.size();
-            Matrix A( out_npts_, inp_npts, triplets );
-            setMatrix(A);
+            if (out_npts_ > 0) {
+                Matrix A( out_npts_, inp_npts, triplets );
+                setMatrix(A);
+            }
         }
     }
 }
