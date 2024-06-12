@@ -59,6 +59,20 @@ CASE("test_rename") {
 
 }
 
+CASE("test_duplicate_name_throws") {
+    FieldSet fieldset;
+    auto field_0 = fieldset.add(Field("0", make_datatype<double>(), array::make_shape(10,4)));
+    auto field_1 = fieldset.add(Field(field_0.name(), make_datatype<double>(), array::make_shape(10,5)));
+    auto field_2 = fieldset.add(Field("2", make_datatype<double>(), array::make_shape(10,6)));
+
+    Field f;
+    f = fieldset[field_2.name()]; // OK
+    EXPECT_THROWS(f = fieldset[field_0.name()]); // ambigous because field_1 and field_2 have same name, should throw
+    field_1.rename("1"); // fix ambiguity
+    EXPECT_NO_THROW(f = fieldset[field_0.name()]); // no longer ambigous
+}
+
+
 //-----------------------------------------------------------------------------
 
 }  // namespace test
