@@ -12,6 +12,8 @@
 #include "atlas/interpolation/Interpolation.h"
 #include "atlas/interpolation/method/binning/Binning.h"
 #include "atlas/interpolation/method/MethodFactory.h"
+#include "atlas/mesh.h"
+#include "atlas/mesh/actions/GetCubedSphereNodalArea.h"
 #include "atlas/runtime/Trace.h"
 
 #include "eckit/config/LocalConfiguration.h"
@@ -143,13 +145,13 @@ std::vector<double> Binning::getAreaWeights(const FunctionSpace& fspace) const {
 
   if (is_cubed_sphere) { 
 
-    const auto csfs = functionspace::NodeColumns(fspace);
- 
-    const auto csgrid = CubedSphereGrid(csfs.mesh().grid());
-    // areas of the cells (geographic coord. system)
-    const auto gcell_areas = csgrid.gridCellArea(fspace);
+    const auto csfs = functionspace::NodeColumns(fspace); 
+    auto csmesh = csfs.mesh();
 
+    // areas of the cells (geographic coord. system)
+    auto gcell_areas = mesh::actions::GetCubedSphereNodalArea()(csmesh);
     auto gcell_areas_view = array::make_view<double, 1>(gcell_areas);
+
     auto is_ghost = array::make_view<int, 1>(csfs.ghost());
 
     double total_area {0.};

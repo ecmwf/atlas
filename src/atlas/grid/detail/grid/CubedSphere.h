@@ -16,8 +16,6 @@
 
 #include "eckit/types/Types.h"
 
-#include "atlas/field.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/grid/Spacing.h"
 #include "atlas/grid/Tiles.h"
 #include "atlas/grid/detail/grid/Grid.h"
@@ -245,9 +243,6 @@ public:
 
     // Return N_, where (N_ * N_) is the number of cells on a tile
     inline idx_t N() const { return N_; }
-
-    // Return the areas of the faces/cells
-    Field gridCellArea(const FunctionSpace&) const;
 
     // Access to the tile class
     inline atlas::grid::CubedSphereTiles tiles() const { return tiles_; }

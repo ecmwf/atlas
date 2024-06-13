@@ -9,8 +9,6 @@
 
 #include <string>
 
-#include "atlas/field.h"
-#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Tiles.h"
 #include "atlas/grid/detail/grid/CubedSphere.h"
@@ -298,9 +296,6 @@ public:
 
     // Return the size of the cubed sphere grid, where N is the number of grid boxes along the edge of a tile
     inline int N() const { return grid_->N(); }
-
-    // Return the areas of the cells
-    inline Field gridCellArea(const FunctionSpace& fspace) const { return grid_->gridCellArea(fspace); };
 
     /// @brief return tiles object.
     inline CubedSphereTiles tiles() const { return grid_->tiles(); }
