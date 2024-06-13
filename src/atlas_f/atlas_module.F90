@@ -141,6 +141,7 @@ use atlas_mesh_actions_module, only: &
     & atlas_build_halo, &
     & atlas_build_edges, &
     & atlas_build_pole_edges, &
+    & atlas_build_node_to_cell_connectivity, &
     & atlas_build_node_to_edge_connectivity, &
     & atlas_build_median_dual_mesh, &
     & atlas_write_load_balance_report, &
