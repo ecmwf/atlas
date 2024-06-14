@@ -803,6 +803,8 @@ util/Topology.h
 util/Allocate.h
 util/Allocate.cc
 util/GPUClonable.h
+util/RegisterPointerInfo.cc
+util/RegisterPointerInfo.h
 
 util/Constants.h
 util/ConvexSphericalPolygon.cc

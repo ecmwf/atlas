@@ -138,11 +138,11 @@ nproma = 12
 nvar = 2
 FCTEST_CHECK_EQUAL( halo_size, 0 )
 grid = atlas_StructuredGrid("O16")
-config = atlas_Config()
 fs = atlas_functionspace_BlockStructuredColumns(grid,nproma=nproma,levels=levels,halo=halo_size)
 
 ! type c_int
-field  = fs%create_field(kind=atlas_integer(c_int),variables=2)
+config = atlas_Config()
+field  = fs%create_field(kind=atlas_integer(c_int),variables=2,options=config)
 global = fs%create_field(field,global=.True.)
 scal   = fs%create_field(kind=atlas_integer(c_int))
 call fs%gather(field,global)
