@@ -11,6 +11,7 @@
 #include "MethodFactory.h"
 
 // for static linking
+#include "binning/Binning.h"
 #include "cubedsphere/CubedSphereBilinear.h"
 #include "knn/GridBoxAverage.h"
 #include "knn/GridBoxMaximum.h"
@@ -49,6 +50,7 @@ void force_link() {
             MethodBuilder<method::GridBoxMaximum>();
             MethodBuilder<method::CubedSphereBilinear>();
             MethodBuilder<method::SphericalVector>();
+            MethodBuilder<method::Binning>();
         }
     } link;
 }
