@@ -7,6 +7,24 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.38.0] - 2024-06-20
+
+### Added
+- Make non_linear interpolation independent of a chosen value type by @wdeconinck in https://github.com/ecmwf/atlas/pull/176
+- Procedure to carry out a regridding from high to low resolution (binning) by @mo-lormi in https://github.com/ecmwf/atlas/pull/191
+- Add Fortran interface for node-to-edge connectivity building by @benjaminmenetrier in https://github.com/ecmwf/atlas/pull/209
+- CUDA/OpenACC capable fields with Native storage backend  @sbrdar and @wdeconinck in https://github.com/ecmwf/atlas/pull/182
+
+### Changed
+- Make non_linear interpolation independent of a chosen value type by @wdeconinck in https://github.com/ecmwf/atlas/pull/176
+
+### Fixed
+- Remove float in Triag2D intersection algorithm by @fmahebert in https://github.com/ecmwf/atlas/pull/203
+- Allow zero-sized interpolation target functionspace by @odlomax in https://github.com/ecmwf/atlas/pull/206
+- Made sure cubed-sphere interpolation method always sets metadata. by @odlomax in https://github.com/ecmwf/atlas/pull/208
+- Avoid silent errors accessing Fieldset fields by ambiguous names by @wdeconinck in https://github.com/ecmwf/atlas/pull/210
+- Fixes opposite pole coordinates by @benjaminmenetrier in https://github.com/ecmwf/atlas/pull/202
+
 ## [0.37.0] - 2024-04-09
 ### Added
 - Add SphericalVector interpolation method using parallel transport (#163)
@@ -527,6 +545,7 @@ Fix StructuredInterpolation2D with retry for failed stencils
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.38.0]: https://github.com/ecmwf/atlas/compare/0.37.0...0.38.0
 [0.37.0]: https://github.com/ecmwf/atlas/compare/0.36.0...0.37.0
 [0.36.0]: https://github.com/ecmwf/atlas/compare/0.35.1...0.36.0
 [0.35.1]: https://github.com/ecmwf/atlas/compare/0.35.0...0.35.1
