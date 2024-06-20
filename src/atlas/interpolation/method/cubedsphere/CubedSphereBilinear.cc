@@ -33,6 +33,10 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
     ATLAS_ASSERT(ncSource);
     ATLAS_ASSERT(target_);
 
+    // Enable or disable halo exchange.
+    this->allow_halo_exchange_ = halo_exchange_;
+
+
     // return early if no output points on this partition reserve is called on
     // the triplets but also during the sparseMatrix constructor. This won't
     // work for empty matrices
@@ -45,9 +49,6 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
     // Numeric tolerance should scale with N.
     const auto N         = CubedSphereGrid(ncSource.mesh().grid()).N();
     const auto tolerance = 2. * std::numeric_limits<double>::epsilon() * N;
-
-    // Enable or disable halo exchange.
-    this->allow_halo_exchange_ = halo_exchange_;
 
     // Loop over target at calculate interpolation weights.
     auto weights          = std::vector<Triplet>{};

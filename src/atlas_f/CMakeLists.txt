@@ -96,6 +96,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/BuildPeriodicBo
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/BuildHalo.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/BuildEdges.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/BuildDualMesh.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/BuildNode2CellConnectivity.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/actions/WriteLoadBalanceReport.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/meshgenerator/detail/MeshGeneratorInterface.h
     MODULE atlas_meshgenerator_c_binding

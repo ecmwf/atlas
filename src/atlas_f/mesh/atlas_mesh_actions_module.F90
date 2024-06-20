@@ -19,6 +19,7 @@ public :: atlas_build_periodic_boundaries
 public :: atlas_build_halo
 public :: atlas_build_edges
 public :: atlas_build_pole_edges
+public :: atlas_build_node_to_cell_connectivity
 public :: atlas_build_node_to_edge_connectivity
 public :: atlas_build_median_dual_mesh
 public :: atlas_write_load_balance_report
@@ -83,6 +84,13 @@ subroutine atlas_build_pole_edges(mesh)
   type(atlas_Mesh), intent(inout) :: mesh
   call atlas__build_pole_edges(mesh%CPTR_PGIBUG_A)
 end subroutine atlas_build_pole_edges
+
+subroutine atlas_build_node_to_cell_connectivity(mesh)
+  use atlas_BuildNode2CellConnectivity_c_binding
+  use atlas_Mesh_module, only: atlas_Mesh
+  type(atlas_Mesh), intent(inout) :: mesh
+  call atlas__build_node_to_cell_connectivity(mesh%CPTR_PGIBUG_A)
+end subroutine atlas_build_node_to_cell_connectivity
 
 subroutine atlas_build_node_to_edge_connectivity(mesh)
   use atlas_BuildEdges_c_binding

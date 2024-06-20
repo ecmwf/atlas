@@ -19,20 +19,29 @@ using namespace atlas::array;
 namespace atlas {
 namespace test {
 
+#define REQUIRE_CUDA_SUCCESS(msg) \
+do { \
+  cudaError_t err = cudaPeekAtLastError(); \
+  if (err != cudaSuccess ) { \
+    throw eckit::testing::TestException("REQUIRE_CUDA_SUCCESS ["+std::string(msg)+"] failed:\n"\
+          + std::string(cudaGetErrorString(err)) , Here()); \
+  } \
+} while(false)
+
 template<typename Value, int RANK>
 __global__
 void kernel_ex(array::ArrayView<Value, RANK> dv)
 {
-    dv(3, 3, 3) += dv.data_view().template length<0>() * dv.data_view().template length<1>() * dv.data_view().template length<2>();
+    dv(3, 3, 3) += dv.shape(0) * dv.shape(1) * dv.shape(2);
 }
 
 template<typename Value, int RANK>
 __global__
 void loop_kernel_ex(array::ArrayView<Value, RANK> dv)
 {
-    for(int i=0; i < dv.data_view().template length<0>(); i++) {
-      for(int j=0; j < dv.data_view().template length<1>(); j++) {
-        for(int k=0; k < dv.data_view().template length<2>(); k++) {
+    for(int i=0; i < dv.shape(0); i++) {
+      for(int j=0; j < dv.shape(1); j++) {
+        for(int k=0; k < dv.shape(2); k++) {
           dv(i,j,k) += i*10+j*100+k*1000;
         }
       }
@@ -45,24 +54,29 @@ CASE( "test_array" )
    constexpr unsigned int dy = 6;
    constexpr unsigned int dz = 7;
 
-   Array* ds = Array::create<double>(dx, dy, dz);
+   auto ds = std::unique_ptr<Array>(Array::create<double>(dx, dy, dz));
    auto hv = make_host_view<double, 3>(*ds);
    hv(3, 3, 3) = 4.5;
 
    ds->updateDevice();
 
+   REQUIRE_CUDA_SUCCESS("updateDevice");
+
    auto cv = make_device_view<double, 3>(*ds);
 
+   REQUIRE_CUDA_SUCCESS("make_device_view");
+
    kernel_ex<<<1,1>>>(cv);
+
+   REQUIRE_CUDA_SUCCESS("kernel_ex");
 
    cudaDeviceSynchronize();
 
    ds->updateHost();
-   ds->reactivateHostWriteViews();
+
+   REQUIRE_CUDA_SUCCESS("updateHost");
 
    EXPECT( hv(3, 3, 3) == 4.5 + dx*dy*dz );
-
-   delete ds;
 }
 
 CASE( "test_array_loop" )
@@ -71,7 +85,8 @@ CASE( "test_array_loop" )
    constexpr unsigned int dy = 6;
    constexpr unsigned int dz = 7;
 
-   Array* ds = Array::create<double>(dx, dy, dz);
+
+   auto ds = std::unique_ptr<Array>(Array::create<double>(dx, dy, dz));
    array::ArrayView<double,3> hv = make_host_view<double, 3>(*ds);
    for(int i=0; i < dx; i++) {
      for(int j=0; j < dy; j++) {
@@ -83,14 +98,21 @@ CASE( "test_array_loop" )
 
    ds->updateDevice();
 
+   REQUIRE_CUDA_SUCCESS("updateDevice");
+
    auto cv = make_device_view<double, 3>(*ds);
 
+   REQUIRE_CUDA_SUCCESS("make_device_view");
+
    loop_kernel_ex<<<1,1>>>(cv);
+
+   REQUIRE_CUDA_SUCCESS("loop_kernel_ex");
 
    cudaDeviceSynchronize();
 
    ds->updateHost();
-   ds->reactivateHostWriteViews();
+
+   REQUIRE_CUDA_SUCCESS("updateHost");
 
    for(int i=0; i < dx; i++) {
      for(int j=0; j < dy; j++) {
@@ -99,8 +121,6 @@ CASE( "test_array_loop" )
        }
      }
    }
-
-   delete ds;
 }
 }
 }

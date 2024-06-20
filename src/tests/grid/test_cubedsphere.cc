@@ -373,6 +373,7 @@ CASE("cubedsphere_partitioner_test") {
 
     if (mpi::size() == 1) {
         // factory based constructor
+        SECTION("factory based constructor")
         {
             std::vector<int> globalProcStartPE{0, 0, 0, 1, 1, 1};
             std::vector<int> globalProcEndPE{0, 0, 0, 1, 1, 1};
@@ -393,6 +394,7 @@ CASE("cubedsphere_partitioner_test") {
         }
 
         // 2 partitions via configuration and distribution object
+        SECTION("2 partitions via configuration and distribution object")
         {
             std::vector<int> globalProcStartPE{0, 0, 0, 1, 1, 1};
             std::vector<int> globalProcEndPE{0, 0, 0, 1, 1, 1};
@@ -413,6 +415,7 @@ CASE("cubedsphere_partitioner_test") {
         }
 
         // 3 partitions  via vector constructor and distribution object
+        SECTION("3 partitions")
         {
             std::vector<int> globalProcStartPE{0, 0, 1, 1, 2, 2};
             std::vector<int> globalProcEndPE{0, 0, 1, 1, 2, 2};
@@ -429,6 +432,7 @@ CASE("cubedsphere_partitioner_test") {
         }
 
         // 4 partitions
+        SECTION("4 partitions")
         {
             CubedSpherePartitioner partitioner(4);
             CubedSpherePartitioner::CubedSphere cb = partitioner.cubedsphere(grid);
@@ -466,6 +470,7 @@ CASE("cubedsphere_partitioner_test") {
         }
 
         // 12 partitions
+        SECTION("12 partitions")
         {
             CubedSpherePartitioner partitioner(12);
             CubedSpherePartitioner::CubedSphere cb = partitioner.cubedsphere(grid);
@@ -488,6 +493,7 @@ CASE("cubedsphere_partitioner_test") {
         }
 
         // 24 partitions
+        SECTION("24 partitions")
         {
             CubedSpherePartitioner partitioner(24);
             CubedSpherePartitioner::CubedSphere cb = partitioner.cubedsphere(grid);
@@ -518,6 +524,7 @@ CASE("cubedsphere_partitioner_test") {
         }
 
         // 24 partitions, creating distribution object
+        SECTION("24 partitions, creating distribution object")
         {
             grid::Distribution d_cs = grid::Partitioner(new CubedSpherePartitioner(24)).partition(grid);
             gidx_t l(0);

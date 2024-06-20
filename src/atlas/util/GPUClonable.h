@@ -12,34 +12,38 @@
 
 #include "atlas/library/config.h"
 
+#if ATLAS_HAVE_CUDA
+#include <cuda_runtime.h>
+#endif
+
 namespace atlas {
-namespace array {
-namespace gridtools {
+namespace util {
 
 template <typename Base>
 struct GPUClonable {
     GPUClonable(Base* base_ptr): base_ptr_(base_ptr), gpu_object_ptr_(nullptr) {
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+#if ATLAS_HAVE_CUDA
         cudaMalloc(&gpu_object_ptr_, sizeof(Base));
 #endif
     }
 
     ~GPUClonable() {
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-        assert(gpu_object_ptr_);
-        cudaFree(gpu_object_ptr_);
+        if (gpu_object_ptr_) {
+#if ATLAS_HAVE_CUDA
+            cudaFree(gpu_object_ptr_);
 #endif
+        }
     }
 
     Base* gpu_object_ptr() { return static_cast<Base*>(gpu_object_ptr_); }
 
     void updateDevice() {
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+#if ATLAS_HAVE_CUDA
         cudaMemcpy(gpu_object_ptr_, base_ptr_, sizeof(Base), cudaMemcpyHostToDevice);
 #endif
     }
     void updateHost() {
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
+#if ATLAS_HAVE_CUDA
         cudaMemcpy(base_ptr_, gpu_object_ptr_, sizeof(Base), cudaMemcpyDeviceToHost);
 #endif
     }
@@ -48,6 +52,5 @@ struct GPUClonable {
     void* gpu_object_ptr_;
 };
 
-}  // namespace gridtools
-}  // namespace array
+}  // namespace util
 }  // namespace atlas

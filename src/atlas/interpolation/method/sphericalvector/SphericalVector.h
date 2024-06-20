@@ -72,7 +72,6 @@ class SphericalVector : public Method {
   void do_setup(const Grid& source, const Grid& target, const Cache&) override;
 
   eckit::LocalConfiguration interpolationScheme_{};
-  bool adjoint_{};
 
   FunctionSpace source_{};
   FunctionSpace target_{};

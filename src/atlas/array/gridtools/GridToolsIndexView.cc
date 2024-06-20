@@ -31,7 +31,7 @@ struct host_device_array { // Copied from GridToolsArrayView.cc
             data_[i++] = v;
         }
     }
-    ATLAS_HOST_DEVICE ~host_device_array() = default;
+    ATLAS_HOST_DEVICE ~host_device_array() {}
 
     ATLAS_HOST_DEVICE const T* data() const { return data_; }
 

@@ -6,8 +6,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-
-if( atlas_HAVE_GRIDTOOLS_STORAGE AND GRIDTOOLS_HAS_BACKEND_CUDA AND HAVE_TESTS AND HAVE_FCTEST AND atlas_HAVE_ACC )
+if( HAVE_CUDA AND HAVE_TESTS AND HAVE_FCTEST AND HAVE_ACC )
 
   string (REPLACE ";" " " ACC_Fortran_FLAGS_STR "${ACC_Fortran_FLAGS}")
 
@@ -21,8 +20,9 @@ if( atlas_HAVE_GRIDTOOLS_STORAGE AND GRIDTOOLS_HAS_BACKEND_CUDA AND HAVE_TESTS A
     LINKER_LANGUAGE Fortran
     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_RUN_NGPUS=1
   )
-  target_link_libraries( atlas_test_unified_memory_with_openacc ${ACC_Fortran_FLAGS} GridTools::gridtools )
+  target_link_libraries( atlas_test_unified_memory_with_openacc ${ACC_Fortran_FLAGS} CUDA::cudart )
 
+  set_tests_properties( atlas_test_unified_memory_with_openacc PROPERTIES LABELS "gpu;acc")
 
   add_fctest( 
     TARGET atlas_test_connectivity_openacc
@@ -33,5 +33,6 @@ if( atlas_HAVE_GRIDTOOLS_STORAGE AND GRIDTOOLS_HAS_BACKEND_CUDA AND HAVE_TESTS A
   )
   target_link_libraries( atlas_test_connectivity_openacc ${ACC_Fortran_FLAGS} )
   set_target_properties( atlas_test_connectivity_openacc PROPERTIES COMPILE_FLAGS "${ACC_Fortran_FLAGS_STR}" )
+  set_tests_properties ( atlas_test_connectivity_openacc PROPERTIES LABELS "gpu;acc")
 
 endif()

@@ -190,6 +190,11 @@ public:
     void syncHostDevice() const;
     bool hostNeedsUpdate() const;
     bool deviceNeedsUpdate() const;
+    void setHostNeedsUpdate(bool) const;
+    void setDeviceNeedsUpdate(bool) const;
+    bool deviceAllocated() const;
+    void allocateDevice();
+    void deallocateDevice();
     void reactivateDeviceWriteViews() const;
     void reactivateHostWriteViews() const;
 };

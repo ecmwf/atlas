@@ -109,23 +109,35 @@ public:
 
     virtual void dump(std::ostream& os) const = 0;
 
-    virtual bool accMap() const = 0;
+    virtual void accMap() const = 0;
+    virtual void accUnmap() const = 0;
+    virtual bool accMapped() const = 0;
 
     virtual void* storage() { return data_store_->voidDataStore(); }
 
     virtual const void* storage() const { return data_store_->voidDataStore(); }
 
+    bool valid() const { return data_store_->valid(); }
+
     void updateDevice() const { data_store_->updateDevice(); }
 
     void updateHost() const { data_store_->updateHost(); }
-
-    bool valid() const { return data_store_->valid(); }
 
     void syncHostDevice() const { data_store_->syncHostDevice(); }
 
     bool hostNeedsUpdate() const { return data_store_->hostNeedsUpdate(); }
 
     bool deviceNeedsUpdate() const { return data_store_->deviceNeedsUpdate(); }
+
+    void setHostNeedsUpdate(bool v) const { return data_store_->setHostNeedsUpdate(v); }
+
+    void setDeviceNeedsUpdate(bool v) const { return data_store_->setDeviceNeedsUpdate(v); }
+
+    bool deviceAllocated() const { return data_store_->deviceAllocated(); }
+
+    void allocateDevice() { data_store_->allocateDevice(); }
+
+    void deallocateDevice() { data_store_->deallocateDevice(); }
 
     void reactivateDeviceWriteViews() const { data_store_->reactivateDeviceWriteViews(); }
 
@@ -226,12 +238,13 @@ public:
 
     virtual size_t footprint() const;
 
-    virtual bool accMap() const;
+    virtual void accMap() const;
+    virtual void accUnmap() const;
+    virtual bool accMapped() const;
 
 private:
     template <typename T>
     friend class ArrayT_impl;
-    mutable bool acc_map_{false};
 };
 
 extern template class ArrayT<float>;

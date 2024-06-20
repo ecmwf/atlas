@@ -67,6 +67,7 @@ ecbuild_add_option( FEATURE ECKIT_DEVELOP
 
 include( features/BOUNDSCHECKING )
 include( features/FORTRAN )
+include( features/CUDA )
 include( features/MPI )
 include( features/OMP )
 include( features/FFTW )
