@@ -419,14 +419,21 @@ Method::Triplets UnstructuredBilinearLonLat::projectPointToElements(size_t ip, c
             }
             // shift cells on the east-west periodic boundary from the east to the west
             // so that the quad surrounds a point with output longitude in [0,360)
-            if (lons[0] > lons[1] || lons[3] > lons[2]) {
-                lons[0] -= 360;
-                lons[3] -= 360;
+            double minlon = std::numeric_limits<double>::max();
+            for ( int i = 0; i < 4; i++ ) {
+                minlon = std::min( minlon, lons[i] );
+            }
+            for ( int i = 0; i < 4; i++ ) {
+                if ( (lons[i] - minlon) > 180 ) {
+                    lons[i] -= 360;
+                }
             }
 
             element::Quad2D quad(
                 PointLonLat{lons[0], (*ilonlat_)(idx[0], LAT)}, PointLonLat{lons[1], (*ilonlat_)(idx[1], LAT)},
                 PointLonLat{lons[2], (*ilonlat_)(idx[2], LAT)}, PointLonLat{lons[3], (*ilonlat_)(idx[3], LAT)});
+
+            ATLAS_ASSERT( quad.validate() );
 
             if (itc == elems.begin()) {
                 inv_dist_weight_quad(quad, o_loc, inv_dist_w);
