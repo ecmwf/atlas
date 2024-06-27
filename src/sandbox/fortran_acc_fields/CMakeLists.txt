@@ -6,14 +6,12 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-if( atlas_HAVE_ACC ) 
+if( atlas_HAVE_ACC AND OpenACC_Fortran_FOUND )
     ecbuild_add_executable(
         TARGET  atlas-acc-fields
         SOURCES atlas-acc-fields.F90
-        LIBS    atlas_f
+        LIBS    atlas_f OpenACC::OpenACC_Fortran
         LINKER_LANGUAGE Fortran
         NOINSTALL
     )
-    target_compile_options( atlas-acc-fields PUBLIC ${ACC_Fortran_FLAGS} )
-    target_link_libraries( atlas-acc-fields ${ACC_Fortran_FLAGS} )
 endif()

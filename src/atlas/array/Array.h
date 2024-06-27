@@ -13,13 +13,20 @@
 #include <memory>
 #include <vector>
 
+#include "eckit/config/Parametrisation.h"
+
 #include "atlas/library/config.h"
+#include "atlas/util/Config.h"
 
 #include "atlas/util/Object.h"
 
 #include "atlas/array/ArrayDataStore.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array_fwd.h"
+
+namespace eckit {
+class Parametrisation;
+}
 
 namespace atlas {
 namespace array {
@@ -40,38 +47,48 @@ public:
     Array() = default;
     virtual ~Array();
 
-    static Array* create(array::DataType, const ArrayShape&);
+    static Array* create(array::DataType, const ArrayShape&, const eckit::Parametrisation& param 
+            = util::Config());
 
-    static Array* create(array::DataType, const ArrayShape&, const ArrayLayout&);
+    static Array* create(array::DataType, const ArrayShape&, const ArrayLayout&,
+            const eckit::Parametrisation& param = util::Config());
 
-    static Array* create(array::DataType, ArraySpec&&);
+    static Array* create(array::DataType, ArraySpec&&,
+            const eckit::Parametrisation& param = util::Config());
 
-    static Array* create(ArraySpec&&);
+    static Array* create(ArraySpec&&,
+            const eckit::Parametrisation& param = util::Config());
 
     virtual size_t footprint() const = 0;
 
     template <typename Value>
-    static Array* create(idx_t size0);
+    static Array* create(idx_t size0, const eckit::Parametrisation& param = util::Config());
     template <typename Value>
-    static Array* create(idx_t size0, idx_t size1);
+    static Array* create(idx_t size0, idx_t size1, const eckit::Parametrisation& param = util::Config());
     template <typename Value>
-    static Array* create(idx_t size0, idx_t size1, idx_t size2);
+    static Array* create(idx_t size0, idx_t size1, idx_t size2,
+            const eckit::Parametrisation& param = util::Config());
     template <typename Value>
-    static Array* create(idx_t size0, idx_t size1, idx_t size2, idx_t size3);
+    static Array* create(idx_t size0, idx_t size1, idx_t size2, idx_t size3,
+            const eckit::Parametrisation& param = util::Config());
     template <typename Value>
-    static Array* create(idx_t size0, idx_t size1, idx_t size2, idx_t size3, idx_t size4);
+    static Array* create(idx_t size0, idx_t size1, idx_t size2, idx_t size3, idx_t size4,
+            const eckit::Parametrisation& param = util::Config());
 
     template <typename Value>
-    static Array* create(const ArrayShape& shape);
+    static Array* create(const ArrayShape& shape, const eckit::Parametrisation& param = util::Config());
 
     template <typename Value>
-    static Array* create(const ArrayShape& shape, const ArrayLayout& layout);
+    static Array* create(const ArrayShape& shape, const ArrayLayout& layout,
+            const eckit::Parametrisation& param = util::Config());
 
     template <typename Value>
-    static Array* wrap(Value* data, const ArrayShape& shape);
+    static Array* wrap(Value* data, const ArrayShape& shape, const eckit::Parametrisation& param 
+            = util::Config());
 
     template <typename Value>
-    static Array* wrap(Value* data, const ArraySpec& spec);
+    static Array* wrap(Value* data, const ArraySpec& spec, const eckit::Parametrisation& param 
+            = util::Config());
 
     idx_t bytes() const { return datatype().size() * spec().allocatedSize(); }
 
@@ -85,11 +102,29 @@ public:
 
     const ArrayStrides& strides() const { return spec_.strides(); }
 
+    const ArrayStrides& device_strides() const { 
+        if( mapped_ ) {
+            return spec_.strides();
+        }
+        else {
+            return spec_.device_strides();
+        }
+    }
+
     const ArrayShape& shape() const { return spec_.shape(); }
 
     const std::vector<int>& shapef() const { return spec_.shapef(); }
 
     const std::vector<int>& stridesf() const { return spec_.stridesf(); }
+
+    const std::vector<int>& device_stridesf() const {
+        if( mapped_ ) {
+            return spec_.stridesf();
+        }
+        else {
+            return spec_.device_stridesf();
+        }
+    }
 
     bool contiguous() const { return spec_.contiguous(); }
 
@@ -190,6 +225,7 @@ protected:
     Array(ArraySpec&& spec): spec_(std::move(spec)) {}
     ArraySpec spec_;
     std::unique_ptr<ArrayDataStore> data_store_;
+    bool mapped_{false};
 
     void replace(Array& array) {
         data_store_.swap(array.data_store_);
@@ -202,19 +238,21 @@ protected:
 template <typename Value>
 class ArrayT : public Array {
 public:
-    ArrayT(idx_t size0);
-    ArrayT(idx_t size0, idx_t size1);
-    ArrayT(idx_t size0, idx_t size1, idx_t size2);
-    ArrayT(idx_t size0, idx_t size1, idx_t size2, idx_t size3);
-    ArrayT(idx_t size0, idx_t size1, idx_t size2, idx_t size3, idx_t size4);
+    ArrayT(idx_t size0, const eckit::Parametrisation& param = util::Config());
+    ArrayT(idx_t size0, idx_t size1, const eckit::Parametrisation& param = util::Config());
+    ArrayT(idx_t size0, idx_t size1, idx_t size2, const eckit::Parametrisation& param = util::Config());
+    ArrayT(idx_t size0, idx_t size1, idx_t size2, idx_t size3,
+            const eckit::Parametrisation& param = util::Config());
+    ArrayT(idx_t size0, idx_t size1, idx_t size2, idx_t size3, idx_t size4,
+            const eckit::Parametrisation& param = util::Config());
 
-    ArrayT(ArraySpec&&);
+    ArrayT(ArraySpec&&, const eckit::Parametrisation& param = util::Config());
 
-    ArrayT(const ArrayShape&);
+    ArrayT(const ArrayShape&, const eckit::Parametrisation& param = util::Config());
 
-    ArrayT(const ArrayShape&, const ArrayAlignment&);
+    ArrayT(const ArrayShape&, const ArrayAlignment&, const eckit::Parametrisation& param = util::Config());
 
-    ArrayT(const ArrayShape&, const ArrayLayout&);
+    ArrayT(const ArrayShape&, const ArrayLayout&, const eckit::Parametrisation& param = util::Config());
 
     virtual void insert(idx_t idx1, idx_t size1);
 
@@ -234,7 +272,7 @@ public:
 
     // This constructor is used through the Array::create() or the Array::wrap()
     // methods
-    ArrayT(ArrayDataStore*, const ArraySpec&);
+    ArrayT(ArrayDataStore*, const ArraySpec&, const eckit::Parametrisation& param = util::Config());
 
     virtual size_t footprint() const;
 

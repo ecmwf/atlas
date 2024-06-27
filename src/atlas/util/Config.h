@@ -128,6 +128,7 @@ Config* atlas__Config__new_from_json( const char* json );
 Config* atlas__Config__new_from_file( const char* path );
 void atlas__Config__delete( Config* This );
 int atlas__Config__has( Config* This, const char* name );
+void atlas__Config__copy( Config* This, const Config* value );
 void atlas__Config__set_config( Config* This, const char* name, const Config* value );
 void atlas__Config__set_config_list( Config* This, const char* name, const Config* value[], int size );
 void atlas__Config__set_int( Config* This, const char* name, int value );

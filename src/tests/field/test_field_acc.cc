@@ -30,28 +30,6 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-CASE("test_acc") {
-    int* c_ptr = new int();
-    *c_ptr = 5;
-
-    int* d_ptr;
-    cudaMalloc(&d_ptr, sizeof(int));
-    acc_map_data(c_ptr, d_ptr, sizeof(int));
-
-    cudaMemcpy(d_ptr, c_ptr, sizeof(int), cudaMemcpyHostToDevice);
-
-#pragma acc kernels present(c_ptr)
-    {
-        *c_ptr -= 3.;
-    }
-
-    EXPECT_EQ( *c_ptr, 5. );
-
-    cudaMemcpy(c_ptr, d_ptr, sizeof(int), cudaMemcpyDeviceToHost);
-    EXPECT_EQ( *c_ptr, 2. );
-}
-
-
 CASE("test_field_acc") {
     auto field = Field("0", make_datatype<double>(), array::make_shape(10,4));
 
@@ -63,20 +41,101 @@ CASE("test_field_acc") {
 // TODO: gridtools storage does not implement view.index(...) at the moment
 
     cpu_ptr[view.index(3,2)] = 2.;
-
     EXPECT_EQ( view(3,2), 2. );
 
     field.updateDevice();
-
-#pragma acc kernels present(cpu_ptr)
+#pragma acc parallel present(cpu_ptr)
     {
         cpu_ptr[view.index(3,2)] = 3.;
     }
-
     field.updateHost();
-
     EXPECT_EQ( view(3,2), 3. );
+
+
+    auto dview = array::make_device_view<double,2>(field);
+    double* dptr = dview.data();
+#pragma acc parallel deviceptr(dptr)
+    {
+        dptr[dview.index(3,2)] = 4.;
+    }
+    field.updateHost();
+    EXPECT_EQ( view(3,2), 4. );
+
 #endif
+}
+
+void test_wrapping_a_slice(array::LocalView<double, 3> slice) {
+  double* ptr = slice.data();
+  array::ArrayShape shape(slice.shape(), slice.rank());
+  array::ArrayStrides strides({slice.stride(0), slice.stride(1), slice.stride(2)});
+  auto field = Field("name", ptr, array::ArraySpec(shape, strides));
+
+  auto hview = array::make_host_view<double, 3>(field);
+  for (idx_t i = 0; i < hview.shape(0); ++i) {
+      for (idx_t j = 0; j < hview.shape(1); ++j) {
+          for (idx_t k = 0; k < hview.shape(2); ++k) {
+              hview(i,j,k) = 1000.*i + 100.*j + k;
+          }
+      }
+  }
+
+  field.updateDevice();
+  auto dview = array::make_device_view<double,3>(field);
+  double* dptr = dview.data();
+
+#pragma acc kernels deviceptr(dptr)
+  for (idx_t i=0; i < dview.shape(0); ++i) {
+      for (idx_t j=0; j < dview.shape(1); ++j) {
+          for (idx_t k=0; k < dview.shape(2); ++k) {
+              dptr[dview.index(i,j,k)] *= -1;
+          }
+      }
+  }
+
+  // check host data before
+  for (idx_t i=0; i < hview.shape(0); ++i) {
+      for (idx_t j=0; j < hview.shape(1); ++j) {
+          for (idx_t k=0; k < hview.shape(2); ++k) {
+              EXPECT_EQ( hview(i,j,k), 1000.*i + 100.*j + k );
+          }
+      }
+  }
+
+  field.updateHost();
+  field.deallocateDevice();
+
+  // check host data after
+  for (idx_t i = 0; i < hview.shape(0); ++i) {
+      for (idx_t j = 0; j < hview.shape(1); ++j) {
+          for (idx_t k = 0; k < hview.shape(2); ++k) {
+              EXPECT_EQ( hview(i,j,k), -1000.*i - 100.*j - k );
+          }
+      }
+  }
+}
+
+CASE("test_wrapping_discontiguous_data") {
+  auto multifield = Field("name",make_datatype<double>(), array::make_shape(4,3,2,8));
+  auto multiview = array::make_view<double,4>(multifield);
+  multiview.assign(0.);
+
+  auto all = array::Range::all();
+  {
+    auto slice = multiview.slice(2, all, all, all);
+    test_wrapping_a_slice(slice);
+  }
+  {
+    auto slice = multiview.slice(all, 0, all, all);
+    test_wrapping_a_slice(slice);
+  }
+  {
+    auto slice = multiview.slice(all, all, 1, all);
+    test_wrapping_a_slice(slice);
+  }
+  {
+    auto slice = multiview.slice(all, all, all, 6);
+    test_wrapping_a_slice(slice);
+  }
 }
 
 //-----------------------------------------------------------------------------
