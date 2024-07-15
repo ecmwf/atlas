@@ -87,7 +87,7 @@ function atlas_TriangularMeshBuilder__build(this, &
   real(c_double), contiguous, intent(in) :: x(:), y(:), lon(:), lat(:)
   integer, intent(in) :: nb_triags
   integer(ATLAS_KIND_GIDX), intent(in) :: triag_global_index(nb_triags)
-  integer(ATLAS_KIND_GIDX), intent(in) :: triag_nodes(3,nb_triags)
+  integer(ATLAS_KIND_GIDX), intent(in), target :: triag_nodes(3,nb_triags)
 
   integer(ATLAS_KIND_GIDX), pointer :: triag_nodes_1d(:)
   triag_nodes_1d => array_view1d( triag_nodes, int(0,ATLAS_KIND_GIDX) )
