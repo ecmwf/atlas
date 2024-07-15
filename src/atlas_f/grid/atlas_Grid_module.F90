@@ -554,7 +554,7 @@ function atlas_UnstructuredGrid__ctor_points( xy ) result(this)
   use fckit_array_module, only : array_strides, array_view1d
   use atlas_grid_unstructured_c_binding
   type(atlas_UnstructuredGrid) :: this
-  real(c_double), intent(in) :: xy(:,:)
+  real(c_double), intent(in), target :: xy(:,:)
   integer(c_int) :: shapef(2)
   integer(c_int) :: stridesf(2)
   real(c_double), pointer :: xy1d(:)
