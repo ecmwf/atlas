@@ -150,6 +150,11 @@ void atlas__Config__delete(Config* This) {
     delete This;
 }
 
+void atlas__Config__copy( Config* This, const Config* value ) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_Config");
+    This->set(*value);
+}
+
 void atlas__Config__set_config(Config* This, const char* name, const Config* value) {
     ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_Config");
     This->set(std::string(name), *value);

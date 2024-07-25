@@ -470,12 +470,16 @@ field/FieldSet.cc
 field/FieldSet.h
 field/MissingValue.cc
 field/MissingValue.h
+field/MultiField.cc
+field/MultiField.h
 field/State.cc
 field/State.h
 field/detail/FieldImpl.cc
 field/detail/FieldImpl.h
 field/detail/FieldInterface.cc
 field/detail/FieldInterface.h
+field/detail/MultiFieldInterface.cc
+field/detail/MultiFieldInterface.h
 field/detail/MissingValue.cc
 field/detail/MissingValue.h
 )
@@ -807,6 +811,8 @@ util/Topology.h
 util/Allocate.h
 util/Allocate.cc
 util/GPUClonable.h
+util/RegisterPointerInfo.cc
+util/RegisterPointerInfo.h
 
 util/Constants.h
 util/ConvexSphericalPolygon.cc
@@ -994,4 +1000,4 @@ ecbuild_add_library( TARGET atlas
 
 )
 
-target_compile_features( atlas PUBLIC cxx_std_17 )
+#target_compile_features( atlas PUBLIC cxx_std_17 )

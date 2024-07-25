@@ -89,6 +89,7 @@ contains
   procedure :: levels
   procedure :: block_begin
   procedure :: block_size
+  procedure :: nproma
   procedure :: nblks
 
   procedure :: xy
@@ -552,6 +553,13 @@ function block_size(this,j) result(i)
   integer(ATLAS_KIND_IDX), intent(in) :: j
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
   i = atlas__fs__BStructuredColumns__block_size(this%CPTR_PGIBUG_A,j-1)
+end function
+
+function nproma(this) result(i)
+  use atlas_functionspace_BlockStructuredColumns_c_binding
+  integer(ATLAS_KIND_IDX) :: i
+  class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
+  i = atlas__fs__BStructuredColumns__nproma(this%CPTR_PGIBUG_A)
 end function
 
 function nblks(this) result(i)

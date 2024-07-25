@@ -30,13 +30,16 @@ private:
     size_t size_;
     idx_t rank_;
     size_t allocated_size_;
+    size_t allocated_device_size_;
     DataType datatype_;
     ArrayShape shape_;
     ArrayStrides strides_;
+    ArrayStrides device_strides_;
     ArrayLayout layout_;
     ArrayAlignment alignment_;
     std::vector<int> shapef_;
     std::vector<int> stridesf_;
+    std::vector<int> device_stridesf_;
     bool contiguous_;
     bool default_layout_;
 
@@ -61,9 +64,11 @@ public:
     const ArrayShape& shape() const { return shape_; }
     const ArrayAlignment& alignment() const { return alignment_; }
     const ArrayStrides& strides() const { return strides_; }
+    const ArrayStrides& device_strides() const { return device_strides_; }
     const ArrayLayout& layout() const { return layout_; }
     const std::vector<int>& shapef() const;
     const std::vector<int>& stridesf() const;
+    const std::vector<int>& device_stridesf() const;
     bool contiguous() const { return contiguous_; }
     bool hasDefaultLayout() const { return default_layout_; }
 

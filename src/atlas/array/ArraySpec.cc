@@ -44,15 +44,19 @@ ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayAlignment& alignment): 
     rank_           = static_cast<int>(shape.size());
     size_           = 1;
     allocated_size_ = 1;
+    allocated_device_size_ = 1;
     shape_.resize(rank_);
     strides_.resize(rank_);
+    device_strides_.resize(rank_);
     layout_.resize(rank_);
     for (int j = rank_ - 1; j >= 0; --j) {
         shape_[j]   = shape[j];
         strides_[j] = allocated_size_;
+        device_strides_[j] = allocated_device_size_;
         layout_[j]  = j;
         size_ *= size_t(shape_[j]);
         allocated_size_ *= size_t(aligned_shape[j]);
+        allocated_device_size_ *= size_t(shape[j]);
     }
     ATLAS_ASSERT(allocated_size_ == compute_aligned_size(size_t(shape_[0]) * size_t(strides_[0]), size_t(alignment)));
     contiguous_     = (size_ == allocated_size_);
@@ -80,10 +84,12 @@ ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayStrides& strides, const
     size_ = 1;
     shape_.resize(rank_);
     strides_.resize(rank_);
+    device_strides_.resize(rank_);
     layout_.resize(rank_);
     for (int j = rank_ - 1; j >= 0; --j) {
         shape_[j]   = shape[j];
         strides_[j] = strides[j];
+        device_strides_[j] = size_;
         layout_[j]  = j;
         size_ *= size_t(shape_[j]);
     }
@@ -120,11 +126,13 @@ ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayStrides& strides, const
     size_ = 1;
     shape_.resize(rank_);
     strides_.resize(rank_);
+    device_strides_.resize(rank_);
     layout_.resize(rank_);
     default_layout_ = true;
     for (int j = rank_ - 1; j >= 0; --j) {
         shape_[j]   = shape[j];
         strides_[j] = strides[j];
+        device_strides_[j] = size_;
         layout_[j]  = layout[j];
         size_ *= size_t(shape_[j]);
         if (layout_[j] != idx_t(j)) {
@@ -144,6 +152,7 @@ ArraySpec::ArraySpec(DataType datatype, const ArrayShape& shape, const ArrayStri
     ArraySpec(shape, strides, layout, alignment) {
     datatype_ = datatype;
 }
+
 const std::vector<int>& ArraySpec::shapef() const {
     return shapef_;
 }
@@ -152,12 +161,19 @@ const std::vector<int>& ArraySpec::stridesf() const {
     return stridesf_;
 }
 
+const std::vector<int>& ArraySpec::device_stridesf() const {
+    return device_stridesf_;
+}
+
 void ArraySpec::allocate_fortran_specs() {
     shapef_.resize(rank_);
     stridesf_.resize(rank_);
+    device_stridesf_.resize(rank_);
+    device_stridesf_[rank_ - 1] = stridesf_[rank_ - 1];
     for (idx_t j = 0; j < rank_; ++j) {
         shapef_[j] = shape_[rank_ - 1 - layout_[j]];
         stridesf_[j] = strides_[rank_ -1 - layout_[j]];
+        device_stridesf_[rank_ - j - 1] = device_stridesf_[rank_ - j] * shapef_[rank_ - j - 1];
     }
 }
 
