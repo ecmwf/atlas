@@ -13,8 +13,6 @@
 #include "atlas/option.h"
 #include "atlas/util/Config.h"
 
-#include "eckit/utils/MD5.h"
-
 #include "tests/AtlasTestEnvironment.h"
 
 using atlas::functionspace::StructuredColumns;
@@ -37,16 +35,29 @@ CASE("test_interpolation_structured2D_regional") {
     gridConfig.set("lonlat(centre)", lonlat);
     gridConfig.set("projection", projectionConfig);
 
-    gridConfig.set("nx", 21);
-    gridConfig.set("ny", 31);
-    gridConfig.set("dx", 8.0e3);
-    gridConfig.set("dy", 9.0e3);
+    const size_t sourceNx = 21;
+    const size_t sourceNy = 31;
+    const double sourceDx = 8.0e3;
+    const double sourceDy = 9.0e3;
+
+    const size_t xFactor = 4;
+    const size_t yFactor = 3;
+
+    const size_t targetNx = (sourceNx-1)*xFactor+1;
+    const size_t targetNy = (sourceNy-1)*yFactor+1;
+    const double targetDx = static_cast<double>(sourceNx-1)/static_cast<double>(targetNx-1)*sourceDx;
+    const double targetDy = static_cast<double>(sourceNy-1)/static_cast<double>(targetNy-1)*sourceDy;
+
+    gridConfig.set("nx", sourceNx);
+    gridConfig.set("ny", sourceNy);
+    gridConfig.set("dx", sourceDx);
+    gridConfig.set("dy", sourceDy);
     Grid sourceGrid(gridConfig);
 
-    gridConfig.set("nx", 81);
-    gridConfig.set("ny", 91);
-    gridConfig.set("dx", 2.0e3);
-    gridConfig.set("dy", 3.0e3);
+    gridConfig.set("nx", targetNx);
+    gridConfig.set("ny", targetNy);
+    gridConfig.set("dx", targetDx);
+    gridConfig.set("dy", targetDy);
     Grid targetGrid(gridConfig);
 
     StructuredColumns sourceFs(sourceGrid, option::halo(1));
@@ -57,24 +68,31 @@ CASE("test_interpolation_structured2D_regional") {
     auto sourceField = sourceFs.createField<double>(Config("name", "source"));
     auto targetField = targetFs.createField<double>(Config("name", "target"));
 
-    const auto indexIView = array::make_view<int, 1>(sourceFs.index_i());
-    const auto indexJView = array::make_view<int, 1>(sourceFs.index_j());
+    const auto sourceIView = array::make_view<int, 1>(sourceFs.index_i());
+    const auto sourceJView = array::make_view<int, 1>(sourceFs.index_j());
     auto sourceView = array::make_view<double, 1>(sourceField);
+    const auto sourceGhostView = atlas::array::make_view<int, 1>(sourceFs.ghost());
+    sourceView.assign(0.0);
     for (idx_t i = 0; i < sourceFs.size(); ++i) {
-      sourceView(i) = indexIView(i)*31.0+indexJView(i);
+      if (sourceGhostView(i) == 0) {
+        sourceView(i) = static_cast<double>((sourceIView(i)-1)*(sourceJView(i)-1))
+                       /static_cast<double>((sourceNx-1)*(sourceNy-1));
+      }
     }
 
     interpolation.execute(sourceField, targetField);
 
-    eckit::MD5 hash;
+    const auto targetIView = array::make_view<int, 1>(targetFs.index_i());
+    const auto targetJView = array::make_view<int, 1>(targetFs.index_j());
     const auto targetView = array::make_view<double, 1>(targetField);
+    const auto targetGhostView = atlas::array::make_view<int, 1>(targetFs.ghost());
+    const double tolerance = 1.e-12;
     for (idx_t i = 0; i < targetFs.size(); ++i) {
-      hash.add(targetView(i));
-    }
-    if (eckit::mpi::comm().rank() == 0) {
-      ASSERT(hash.digest() == "f7ca2ef899f96e390a13db614d9fa231");
-    } else if (eckit::mpi::comm().rank() == 1) {
-      ASSERT(hash.digest() == "77e819709fe711d93311d8359de9724b");
+      if (targetGhostView(i) == 0) {
+        const double targetTest = static_cast<double>((targetIView(i)-1)*(targetJView(i)-1))
+                                 /static_cast<double>((targetNx-1)*(targetNy-1));
+        EXPECT_APPROX_EQ(targetView(i), targetTest, tolerance);
+      }
     }
 }
 
