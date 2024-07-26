@@ -533,6 +533,7 @@ interpolation/Vector2D.cc
 interpolation/Vector2D.h
 interpolation/Vector3D.cc
 interpolation/Vector3D.h
+interpolation/element/InterpElement.h
 interpolation/element/Quad2D.h
 interpolation/element/Quad2D.cc
 interpolation/element/Quad3D.cc
@@ -655,6 +656,8 @@ interpolation/method/structured/QuasiCubic2D.cc
 interpolation/method/structured/QuasiCubic2D.h
 interpolation/method/structured/QuasiCubic3D.cc
 interpolation/method/structured/QuasiCubic3D.h
+interpolation/method/structured/RegionalLinear2D.cc
+interpolation/method/structured/RegionalLinear2D.h
 interpolation/method/structured/StructuredInterpolation2D.h
 interpolation/method/structured/StructuredInterpolation2D.tcc
 interpolation/method/structured/StructuredInterpolation3D.h
