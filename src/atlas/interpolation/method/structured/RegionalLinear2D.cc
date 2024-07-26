@@ -501,7 +501,7 @@ void RegionalLinear2D::do_execute_adjoint(Field& sourceField,
 
   // Interpolation adjoint
   const auto targetGhostView = array::make_view<int, 1>(targetField.functionspace().ghost());
-  std::vector<double> targetRecvVec(targetRecvSize_, 0.0);
+  std::vector<double> targetRecvVec(targetRecvSize_*nz, 0.0);
   if (ndim == 1) {
     const auto targetView = array::make_view<double, 1>(targetTmpField);
     for (size_t targetJnode = 0; targetJnode < targetSize_; ++targetJnode) {
@@ -513,7 +513,6 @@ void RegionalLinear2D::do_execute_adjoint(Field& sourceField,
     }
   } else if (ndim == 2) {
     const auto targetView = array::make_view<double, 2>(targetTmpField);
-    std::vector<double> targetRecvVec(targetRecvSize_*nz, 0.0);
     for (size_t targetJnode = 0; targetJnode < targetSize_; ++targetJnode) {
       if (targetGhostView(targetJnode) == 0) {
         for (const auto & horOperation : horInterp_[targetJnode].operations()) {
@@ -538,7 +537,7 @@ void RegionalLinear2D::do_execute_adjoint(Field& sourceField,
       size_t sourceJnode = sourceSendMapping_[js];
       sourceView(sourceJnode) += sourceSendVec[js];
     }
-  } else if (ndim == 1) {
+  } else if (ndim == 2) {
     auto sourceView = array::make_view<double, 2>(sourceField);
     sourceView.assign(0.0);
     for (size_t js = 0; js < sourceSendSize_; ++js) {
