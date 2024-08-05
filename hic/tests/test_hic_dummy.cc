@@ -1,5 +1,6 @@
 #include <iostream>
 #include <functional>
+#include <vector>
 
 #include "hic/hic.h"
 
