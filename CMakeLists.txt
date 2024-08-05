@@ -84,12 +84,14 @@ include( features/INIT_SNAN )
 include( features/DOCS )
 include( features/ATLAS_RUN )
 
+add_subdirectory( hic )
+find_package(hic)
+
 ################################################################################
 # sources
 
 include( atlas_compile_flags )
 
-add_subdirectory( hic )
 add_subdirectory( src )
 add_subdirectory( doc )
 
