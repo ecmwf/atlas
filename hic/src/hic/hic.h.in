@@ -1,0 +1,28 @@
+#pragma once
+
+#if defined(HIC_BACKEND_DUMMY) && HIC_BACKEND_DUMMY==1
+#define HIC_BACKEND_CUDA 0
+#define HIC_BACKEND_HIP  0
+#else
+#cmakedefine01 HIC_BACKEND_CUDA
+#cmakedefine01 HIC_BACKEND_HIP
+#cmakedefine01 HIC_BACKEND_DUMMY
+#endif
+
+#include "hic/hic_runtime.h"
+
+#include <stdexcept>
+#include <sstream>
+
+#define HIC_CALL(val) hic_assert((val), #val, __FILE__, __LINE__)
+inline void hic_assert(hicError_t err, const char* const func, const char* const file, const int line) {
+    if (err != hicSuccess) {
+        std::ostringstream msg;
+        msg << "HIC Runtime Error [code="<<err<<"] at: " << file << " + " << line << " : " << func << "\n";
+        msg << "  Reason: " << hicGetErrorString(err);
+        throw std::runtime_error(msg.str());
+    }
+}
+
+#define HIC_CHECK_KERNEL_LAUNCH() HIC_CALL(hicPeekAtLastError())
+#define HIC_CHECK_LAST_ERROR()    HIC_CALL(hicGetLastError())
