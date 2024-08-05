@@ -6,7 +6,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-function( create_cuda_wrapper variable )
+function( create_hic_wrapper variable )
   set( options "" )
   set( single_value_args SOURCE )
   set( multi_value_args "" )
@@ -17,18 +17,24 @@ function( create_cuda_wrapper variable )
   get_filename_component(name      ${_PAR_SOURCE} NAME)
   get_filename_component(abspath   ${_PAR_SOURCE} ABSOLUTE)
 
-  if( directory )
-    set(cuda_wrapper ${CMAKE_CURRENT_BINARY_DIR}/${directory}/${base}.cu)
-  else()
-    set(cuda_wrapper ${CMAKE_CURRENT_BINARY_DIR}/${base}.cu)
+  if( HAVE_CUDA )
+    set( extension "cu" )
+  elseif( HAVE_HIP )
+    set( extension "hip" )
   endif()
-  set(${variable} ${cuda_wrapper} PARENT_SCOPE)
+
+  if( directory )
+    set(hic_wrapper ${CMAKE_CURRENT_BINARY_DIR}/${directory}/${base}.${extension})
+  else()
+    set(hic_wrapper ${CMAKE_CURRENT_BINARY_DIR}/${base}.${extension})
+  endif()
+  set(${variable} ${hic_wrapper} PARENT_SCOPE)
   set(content
 "
 #include \"atlas/${directory}/${name}\"
 ")
-  if( ${abspath} IS_NEWER_THAN ${cuda_wrapper} )
-    file(WRITE ${cuda_wrapper} "${content}")
+  if( ${abspath} IS_NEWER_THAN ${hic_wrapper} )
+    file(WRITE ${hic_wrapper} "${content}")
   endif()
 endfunction()
 
@@ -40,12 +46,12 @@ function( atlas_host_device srclist )
   set( multi_value_args SOURCES )
   cmake_parse_arguments( _PAR "${options}" "${single_value_args}" "${multi_value_args}" ${ARGN} )
 
-  if( ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA )
-    set( use_cuda_srclist ${_PAR_SOURCES} )
+  if( HAVE_CUDA OR HAVE_HIP )
+    set( use_hic_srclist ${_PAR_SOURCES} )
 
-    foreach( src ${use_cuda_srclist} )
-      create_cuda_wrapper( cuda_wrapper SOURCE ${src} )
-      list( APPEND ${srclist} ${cuda_wrapper} )
+    foreach( src ${use_hic_srclist} )
+      create_hic_wrapper( hic_wrapper SOURCE ${src} )
+      list( APPEND ${srclist} ${hic_wrapper} )
       ecbuild_list_exclude_pattern( LIST ${srclist} REGEX ${src} )
     endforeach()
 

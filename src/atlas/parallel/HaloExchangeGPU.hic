@@ -9,10 +9,12 @@
  */
 
 
-#include "atlas/parallel/HaloExchangeCUDA.h"
+#include "atlas/parallel/HaloExchangeGPU.h"
 #include "atlas/parallel/HaloExchangeImpl.h"
 #include "atlas/array/SVector.h"
 #include "atlas/runtime/Exception.h"
+
+#include "hic/hic.h"
 
 namespace atlas {
 namespace parallel {
@@ -120,7 +122,7 @@ struct get_first_non_parallel_dim<ParallelDim, RANK, RANK>
 };
 
 template<int ParallelDim, int RANK>
-struct get_n_cuda_blocks
+struct get_n_hic_blocks
 {
   template<typename DATA_TYPE>
   static unsigned int apply(const array::ArrayView<DATA_TYPE, RANK>& hfield, const unsigned int block_size_y) {
@@ -130,7 +132,7 @@ struct get_n_cuda_blocks
 };
 
 template<>
-struct get_n_cuda_blocks<0, 1> {
+struct get_n_hic_blocks<0, 1> {
     template<typename DATA_TYPE>
     static unsigned int apply(const array::ArrayView<DATA_TYPE, 1>& hfield, const unsigned int block_size_y) {
         return 1;
@@ -138,70 +140,70 @@ struct get_n_cuda_blocks<0, 1> {
 };
 
 template<int ParallelDim, typename DATA_TYPE, int RANK>
-void halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::pack( const int sendcnt, array::SVector<int> const & sendmap,
+void halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::pack( const int sendcnt, array::SVector<int> const & sendmap,
                    const array::ArrayView<DATA_TYPE, RANK>& hfield, const array::ArrayView<DATA_TYPE, RANK>& dfield,
                    DATA_TYPE* send_buffer, int send_buffer_size )
 {
   const unsigned int block_size_x = 32;
   const unsigned int block_size_y = (RANK==1) ? 1 : 4;
 
-  unsigned int nblocks_y = get_n_cuda_blocks<ParallelDim, RANK>::apply(hfield, block_size_y);
+  unsigned int nblocks_y = get_n_hic_blocks<ParallelDim, RANK>::apply(hfield, block_size_y);
 
   dim3 threads(block_size_x, block_size_y);
   dim3 blocks((sendcnt+block_size_x-1)/block_size_x, nblocks_y);
-  cudaDeviceSynchronize();
-  cudaError_t err = cudaGetLastError();
-  if (err != cudaSuccess) {
-    std::string msg = std::string("Error synchronizing device")+ cudaGetErrorString(err);
+  hicDeviceSynchronize();
+  hicError_t err = hicGetLastError();
+  if (err != hicSuccess) {
+    std::string msg = std::string("Error synchronizing device")+ hicGetErrorString(err);
     throw_Exception(msg);
   }
 
   pack_kernel<ParallelDim, DATA_TYPE, RANK><<<blocks,threads>>>(sendcnt, sendmap.data(), sendmap.size(), dfield, send_buffer, send_buffer_size);
-  err = cudaGetLastError();
-  if (err != cudaSuccess)
+  err = hicGetLastError();
+  if (err != hicSuccess)
     throw_Exception("Error launching GPU packing kernel");
 
-  cudaDeviceSynchronize();
-  err = cudaGetLastError();
-  if (err != cudaSuccess) {
-    std::string msg = std::string("Error synchronizing device")+ cudaGetErrorString(err);
+  hicDeviceSynchronize();
+  err = hicGetLastError();
+  if (err != hicSuccess) {
+    std::string msg = std::string("Error synchronizing device")+ hicGetErrorString(err);
     throw_Exception(msg);
   }
 
 }
 
 template<int ParallelDim, typename DATA_TYPE, int RANK>
-void halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::unpack(const int recvcnt, array::SVector<int> const & recvmap,
+void halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::unpack(const int recvcnt, array::SVector<int> const & recvmap,
                    const DATA_TYPE* recv_buffer , int recv_buffer_size,
                    array::ArrayView<DATA_TYPE, RANK> &hfield, array::ArrayView<DATA_TYPE, RANK> &dfield)
 {
   const unsigned int block_size_x = 32;
   const unsigned int block_size_y = (RANK==1) ? 1 : 4;
 
-  unsigned int nblocks_y = get_n_cuda_blocks<ParallelDim, RANK>::apply(hfield, block_size_y);
+  unsigned int nblocks_y = get_n_hic_blocks<ParallelDim, RANK>::apply(hfield, block_size_y);
 
   dim3 threads(block_size_x, block_size_y);
   dim3 blocks((recvcnt+block_size_x-1)/block_size_x, nblocks_y);
 
-  cudaDeviceSynchronize();
-  cudaError_t err = cudaGetLastError();
-  if (err != cudaSuccess) {
-    std::string msg = std::string("Error synchronizing device")+ cudaGetErrorString(err);
+  hicDeviceSynchronize();
+  hicError_t err = hicGetLastError();
+  if (err != hicSuccess) {
+    std::string msg = std::string("Error synchronizing device")+ hicGetErrorString(err);
     throw_Exception(msg);
   }
 
   unpack_kernel<ParallelDim, DATA_TYPE, RANK><<<blocks,threads>>>(recvcnt, recvmap.data(), recvmap.size(), recv_buffer, recv_buffer_size, dfield);
 
-  err = cudaGetLastError();
-  if (err != cudaSuccess) {
-    std::string msg = std::string("Error launching GPU packing kernel")+ cudaGetErrorString(err);
+  err = hicGetLastError();
+  if (err != hicSuccess) {
+    std::string msg = std::string("Error launching GPU packing kernel")+ hicGetErrorString(err);
     throw_Exception(msg);
   }
 
-  cudaDeviceSynchronize();
-  err = cudaGetLastError();
-  if (err != cudaSuccess) {
-    std::string msg = std::string("Error synchronizing device")+ cudaGetErrorString(err);
+  hicDeviceSynchronize();
+  err = hicGetLastError();
+  if (err != hicSuccess) {
+    std::string msg = std::string("Error synchronizing device")+ hicGetErrorString(err);
     throw_Exception(msg);
   }
 }
@@ -220,11 +222,11 @@ void halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::unpack(const int recvcnt, a
 
 
 #define EXPLICIT_TEMPLATE_INSTANTIATION( ParallelDim, RANK )         \
-  template class halo_packer_cuda<ParallelDim, int,           RANK>; \
-  template class halo_packer_cuda<ParallelDim, long,          RANK>; \
-  template class halo_packer_cuda<ParallelDim, long unsigned, RANK>; \
-  template class halo_packer_cuda<ParallelDim, float,         RANK>; \
-  template class halo_packer_cuda<ParallelDim, double,        RANK>;
+  template class halo_packer_hic<ParallelDim, int,           RANK>; \
+  template class halo_packer_hic<ParallelDim, long,          RANK>; \
+  template class halo_packer_hic<ParallelDim, long unsigned, RANK>; \
+  template class halo_packer_hic<ParallelDim, float,         RANK>; \
+  template class halo_packer_hic<ParallelDim, double,        RANK>;
 
 #define EXPLICIT_TEMPLATE_INSTANTIATION_RANK(RANK) \
   ATLAS_REPEAT_MACRO(RANK, EXPLICIT_TEMPLATE_INSTANTIATION, RANK)

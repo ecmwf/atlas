@@ -34,7 +34,7 @@
 #include "atlas/util/Object.h"
 
 #if ATLAS_HAVE_CUDA
-#include "atlas/parallel/HaloExchangeCUDA.h"
+#include "atlas/parallel/HaloExchangeGPU.h"
 #endif
 
 namespace atlas {
@@ -396,7 +396,7 @@ void HaloExchange::pack_send_buffer(ATLAS_MAYBE_UNUSED const array::ArrayView<DA
     ATLAS_TRACE();
 #if ATLAS_HAVE_CUDA
     if (on_device) {
-        halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::pack(sendcnt_, sendmap_, hfield, dfield, send_buffer,
+        halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::pack(sendcnt_, sendmap_, hfield, dfield, send_buffer,
                                                              send_size);
     }
     else
@@ -412,7 +412,7 @@ void HaloExchange::unpack_recv_buffer(const DATA_TYPE* recv_buffer, int recv_siz
     ATLAS_TRACE();
 #if ATLAS_HAVE_CUDA
     if (on_device) {
-        halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::unpack(recvcnt_, recvmap_, recv_buffer, recv_size, hfield,
+        halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::unpack(recvcnt_, recvmap_, recv_buffer, recv_size, hfield,
                                                                dfield);
     }
     else
@@ -427,7 +427,7 @@ void HaloExchange::pack_recv_adjoint_buffer(ATLAS_MAYBE_UNUSED const array::Arra
     ATLAS_TRACE();
 #if ATLAS_HAVE_CUDA
     if (on_device) {
-        halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::pack(recvcnt_, recvmap_, hfield, dfield, recv_buffer,
+        halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::pack(recvcnt_, recvmap_, hfield, dfield, recv_buffer,
                                                              recv_size);
     }
     else
@@ -443,7 +443,7 @@ void HaloExchange::unpack_send_adjoint_buffer(const DATA_TYPE* send_buffer, int 
     ATLAS_TRACE();
 #if ATLAS_HAVE_CUDA
     if (on_device) {
-        halo_packer_cuda<ParallelDim, DATA_TYPE, RANK>::unpack(sendcnt_, sendmap_, send_buffer, send_size, hfield,
+        halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::unpack(sendcnt_, sendmap_, send_buffer, send_size, hfield,
                                                                dfield);
     }
     else

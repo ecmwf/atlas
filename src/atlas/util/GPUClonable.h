@@ -13,7 +13,7 @@
 #include "atlas/library/config.h"
 
 #if ATLAS_HAVE_CUDA
-#include <cuda_runtime.h>
+#include "hic/hic.h"
 #endif
 
 namespace atlas {
@@ -23,14 +23,14 @@ template <typename Base>
 struct GPUClonable {
     GPUClonable(Base* base_ptr): base_ptr_(base_ptr), gpu_object_ptr_(nullptr) {
 #if ATLAS_HAVE_CUDA
-        cudaMalloc(&gpu_object_ptr_, sizeof(Base));
+        hicMalloc(&gpu_object_ptr_, sizeof(Base));
 #endif
     }
 
     ~GPUClonable() {
         if (gpu_object_ptr_) {
 #if ATLAS_HAVE_CUDA
-            cudaFree(gpu_object_ptr_);
+            hicFree(gpu_object_ptr_);
 #endif
         }
     }
@@ -39,12 +39,12 @@ struct GPUClonable {
 
     void updateDevice() {
 #if ATLAS_HAVE_CUDA
-        cudaMemcpy(gpu_object_ptr_, base_ptr_, sizeof(Base), cudaMemcpyHostToDevice);
+        hicMemcpy(gpu_object_ptr_, base_ptr_, sizeof(Base), hicMemcpyHostToDevice);
 #endif
     }
     void updateHost() {
 #if ATLAS_HAVE_CUDA
-        cudaMemcpy(base_ptr_, gpu_object_ptr_, sizeof(Base), cudaMemcpyDeviceToHost);
+        hicMemcpy(base_ptr_, gpu_object_ptr_, sizeof(Base), hicMemcpyDeviceToHost);
 #endif
     }
 

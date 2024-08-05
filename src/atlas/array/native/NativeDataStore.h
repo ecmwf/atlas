@@ -16,16 +16,16 @@
 #include <limits>   // std::numeric_limits<T>::signaling_NaN
 #include <sstream>
 
-#if ATLAS_HAVE_CUDA
-#include <cuda_runtime.h>
-#endif
-
 #include "atlas/array/ArrayDataStore.h"
 #include "atlas/library/Library.h"
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "eckit/log/Bytes.h"
+
+#if ATLAS_HAVE_CUDA
+#include "hic/hic.h"
+#endif
 
 #if ATLAS_HAVE_ACC
 #include "atlas_acc_support/atlas_acc_map_data.h"
@@ -119,9 +119,9 @@ public:
         if (not device_allocated_) {
             allocateDevice();
         }
-        cudaError_t err = cudaMemcpy(device_data_, host_data_, size_*sizeof(Value), cudaMemcpyHostToDevice);
-        if (err != cudaSuccess) {
-            throw_AssertionFailed("Failed to updateDevice: "+std::string(cudaGetErrorString(err)), Here());
+        hicError_t err = hicMemcpy(device_data_, host_data_, size_*sizeof(Value), hicMemcpyHostToDevice);
+        if (err != hicSuccess) {
+            throw_AssertionFailed("Failed to updateDevice: "+std::string(hicGetErrorString(err)), Here());
         }
         device_updated_ = true;
 #endif
@@ -130,9 +130,9 @@ public:
     void updateHost() const override {
 #if ATLAS_HAVE_CUDA
         if (device_allocated_) {
-            cudaError_t err = cudaMemcpy(host_data_, device_data_, size_*sizeof(Value), cudaMemcpyDeviceToHost);
-            if (err != cudaSuccess) {
-                throw_AssertionFailed("Failed to updateHost: "+std::string(cudaGetErrorString(err)), Here());
+            hicError_t err = hicMemcpy(host_data_, device_data_, size_*sizeof(Value), hicMemcpyDeviceToHost);
+            if (err != hicSuccess) {
+                throw_AssertionFailed("Failed to updateHost: "+std::string(hicGetErrorString(err)), Here());
             }
             host_updated_ = true;
         }
@@ -167,9 +167,9 @@ public:
            return;
         }
         if (size_) {
-            cudaError_t err = cudaMalloc((void**)&device_data_, sizeof(Value)*size_);
-            if (err != cudaSuccess) {
-                throw_AssertionFailed("Failed to allocate GPU memory: " + std::string(cudaGetErrorString(err)), Here());
+            hicError_t err = hicMalloc((void**)&device_data_, sizeof(Value)*size_);
+            if (err != hicSuccess) {
+                throw_AssertionFailed("Failed to allocate GPU memory: " + std::string(hicGetErrorString(err)), Here());
             }
             device_allocated_ = true;
             accMap();
@@ -181,9 +181,9 @@ public:
 #if ATLAS_HAVE_CUDA
         if (device_allocated_) {
             accUnmap();
-            cudaError_t err = cudaFree(device_data_);
-            if (err != cudaSuccess) {
-                throw_AssertionFailed("Failed to deallocate GPU memory: " + std::string(cudaGetErrorString(err)), Here());
+            hicError_t err = hicFree(device_data_);
+            if (err != hicSuccess) {
+                throw_AssertionFailed("Failed to deallocate GPU memory: " + std::string(hicGetErrorString(err)), Here());
             }
             device_data_ = nullptr;
             device_allocated_ = false;
@@ -303,9 +303,9 @@ public:
         if (not device_allocated_) {
             allocateDevice();
         }
-        cudaError_t err = cudaMemcpy(device_data_, host_data_, size_*sizeof(Value), cudaMemcpyHostToDevice);
-        if (err != cudaSuccess) {
-            throw_AssertionFailed("Failed to updateDevice: "+std::string(cudaGetErrorString(err)), Here());
+        hicError_t err = hicMemcpy(device_data_, host_data_, size_*sizeof(Value), hicMemcpyHostToDevice);
+        if (err != hicSuccess) {
+            throw_AssertionFailed("Failed to updateDevice: "+std::string(hicGetErrorString(err)), Here());
         }
         device_updated_ = true;
 #endif
@@ -314,9 +314,9 @@ public:
     void updateHost() const override {
 #if ATLAS_HAVE_CUDA
         if (device_allocated_) {
-            cudaError_t err = cudaMemcpy(host_data_, device_data_, size_*sizeof(Value), cudaMemcpyDeviceToHost);
-            if (err != cudaSuccess) {
-                throw_AssertionFailed("Failed to updateHost: "+std::string(cudaGetErrorString(err)), Here());
+            hicError_t err = hicMemcpy(host_data_, device_data_, size_*sizeof(Value), hicMemcpyDeviceToHost);
+            if (err != hicSuccess) {
+                throw_AssertionFailed("Failed to updateHost: "+std::string(hicGetErrorString(err)), Here());
             }
             host_updated_ = true;
         }
@@ -351,9 +351,9 @@ public:
            return;
         }
         if (size_) {
-            cudaError_t err = cudaMalloc((void**)&device_data_, sizeof(Value)*size_);
-            if (err != cudaSuccess) {
-                throw_AssertionFailed("Failed to allocate GPU memory: " + std::string(cudaGetErrorString(err)), Here());
+            hicError_t err = hicMalloc((void**)&device_data_, sizeof(Value)*size_);
+            if (err != hicSuccess) {
+                throw_AssertionFailed("Failed to allocate GPU memory: " + std::string(hicGetErrorString(err)), Here());
             }
             device_allocated_ = true;
             accMap();
@@ -365,9 +365,9 @@ public:
 #if ATLAS_HAVE_CUDA
         if (device_allocated_) {
             accUnmap();
-            cudaError_t err = cudaFree(device_data_);
-            if (err != cudaSuccess) {
-                throw_AssertionFailed("Failed to deallocate GPU memory: " + std::string(cudaGetErrorString(err)), Here());
+            hicError_t err = hicFree(device_data_);
+            if (err != hicSuccess) {
+                throw_AssertionFailed("Failed to deallocate GPU memory: " + std::string(hicGetErrorString(err)), Here());
             }
             device_data_ = nullptr;
             device_allocated_ = false;

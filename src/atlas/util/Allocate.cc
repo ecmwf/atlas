@@ -17,7 +17,7 @@
 #include "atlas/runtime/Exception.h"
 
 #if ATLAS_HAVE_CUDA
-#include <cuda_runtime.h>
+#include "hic/hic.h"
 #endif
 
 namespace atlas {
@@ -29,8 +29,8 @@ namespace detail {
 
 void allocate_cudamanaged(void** ptr, size_t size) {
 #if ATLAS_HAVE_CUDA
-    cudaError_t err = cudaMallocManaged(ptr, size);
-    if (err != cudaSuccess)
+    hicError_t err = hicMallocManaged(ptr, size);
+    if (err != hicSuccess)
         throw_AssertionFailed("failed to allocate GPU memory", Here());
 #else
     *ptr = malloc(size);
@@ -39,13 +39,13 @@ void allocate_cudamanaged(void** ptr, size_t size) {
 
 void deallocate_cudamanaged(void* ptr) {
 #if ATLAS_HAVE_CUDA
-    cudaError_t err = cudaDeviceSynchronize();
-    if (err != cudaSuccess)
+    hicError_t err = hicDeviceSynchronize();
+    if (err != hicSuccess)
         throw_AssertionFailed("failed to synchronize memory", Here());
 
-    err = cudaFree(ptr);
+    err = hicFree(ptr);
     // The following throws an invalid device memory
-    if (err != cudaSuccess)
+    if (err != hicSuccess)
         throw_AssertionFailed("failed to free GPU memory", Here());
 #else
     free(ptr);
@@ -54,8 +54,8 @@ void deallocate_cudamanaged(void* ptr) {
 
 void allocate_cuda(void** ptr, size_t size) {
 #if ATLAS_HAVE_CUDA
-    cudaError_t err = cudaMalloc(ptr, size);
-    if (err != cudaSuccess)
+    hicError_t err = hicMalloc(ptr, size);
+    if (err != hicSuccess)
         throw_AssertionFailed("failed to allocate GPU memory", Here());
 #else
     *ptr = malloc(size);

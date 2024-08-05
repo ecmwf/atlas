@@ -17,7 +17,7 @@
 #include "atlas/runtime/Exception.h"
 
 #if ATLAS_HAVE_CUDA
-#include <cuda_runtime.h>
+#include "hic/hic.h"
 #endif
 
 namespace atlas {
@@ -62,7 +62,7 @@ public:
     void updateDevice() {
         if (!data_gpu_) {
 #if ATLAS_HAVE_CUDA
-            ::cudaMalloc((void**)(&data_gpu_), sizeof(T*) * size_);
+            ::hicMalloc((void**)(&data_gpu_), sizeof(T*) * size_);
 
             T* buff = new T[size_];
 
@@ -70,7 +70,7 @@ public:
                 data_[i]->updateDevice();
                 buff[i] = data_[i]->gpu_object_ptr();
             }
-            ::cudaMemcpy(data_gpu_, buff, sizeof(T*) * size_, cudaMemcpyHostToDevice);
+            ::hicMemcpy(data_gpu_, buff, sizeof(T*) * size_, hicMemcpyHostToDevice);
             delete buff;
 #else
             data_gpu_ = data_;
