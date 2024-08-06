@@ -11,19 +11,12 @@ ecbuild_add_test( TARGET hic_test_dummy
   LIBS      hic
   DEFINITIONS HIC_BACKEND_DUMMY=1
 )
-if( HAVE_HIP )
-	enable_language(HIP)
-      set_source_files_properties( test_hic_dummy.cc  PROPERTIES LANGUAGE HIP )
-endif()
 
 if( HAVE_HIP OR HAVE_CUDA )
-ecbuild_add_test( TARGET hic_test_hic
-  SOURCES   test_hic.cc
-  LIBS      hic
-)
-if( HAVE_HIP )
-      set_source_files_properties( test_hic.cc PROPERTIES LANGUAGE HIP )
-endif()
+  ecbuild_add_test( TARGET hic_test_hic
+    SOURCES   test_hic.cc
+    LIBS      hic
+  )
 endif()
 
 add_subdirectory(test_find_hic)

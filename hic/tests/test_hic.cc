@@ -1,10 +1,13 @@
 #include <iostream>
 #include <functional>
 #include <vector>
+#include <utility>
 
 #include "hic/hic.h"
 
-int test_hic() {
+// -----------------------------------------------------------------------------
+
+int test_hicMalloc() {
     std::cout << "--- " << __FUNCTION__ << std::endl;
     void* p;
     HIC_CALL( hicMalloc(&p, 8) );
@@ -13,12 +16,42 @@ int test_hic() {
     return 0; // success 
 }
 
-std::vector<std::function<int()>> tests = { test_hic };
+// -----------------------------------------------------------------------------
+
+int test_hicMallocManaged() {
+    std::cout << "--- " << __FUNCTION__ << std::endl;
+    void* p;
+    HIC_CALL( hicMallocManaged(&p, 8) );
+    HIC_CALL( hicFree(p) );
+    std::cout << "--- " << __FUNCTION__ << " SUCCEEDED " << std::endl; 
+    return 0; // success 
+}
+
+// -----------------------------------------------------------------------------
+
+std::vector<std::function<int()>> tests = {
+    test_hicMalloc,
+    test_hicMallocManaged,
+};
 
 int main(int argc, char* argv[]) {
+    int num_devices = 0;
+    hicGetDeviceCount(&num_devices);
+    if( num_devices == 0 ) {
+        std::ignore = hicGetLastError();
+        std::cout << "TEST IGNORED, hicGetDeviceCount -> 0" << std::endl; 
+        return 0;
+    }
+    std::cout << "hicGetDeviceCount -> " << num_devices << std::endl; 
     int error = 0;
     for( auto& test: tests) {
-        error += test();
+        try {
+            error += test();
+        }
+        catch( std::exception& e ) {
+            error += 1;
+            std::cout << e.what() << std::endl;
+        }
     }
     return error;
 }

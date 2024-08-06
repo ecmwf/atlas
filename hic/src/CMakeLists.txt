@@ -36,5 +36,5 @@ ecbuild_add_library( TARGET hic
 if( HAVE_CUDA )
   target_link_libraries( hic INTERFACE CUDA::cudart )
 elseif( HAVE_HIP )
-  target_link_libraries( hic INTERFACE hip::device )
+  target_link_libraries( hic INTERFACE hip::host )
 endif()
