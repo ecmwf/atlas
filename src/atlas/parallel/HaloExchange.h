@@ -33,7 +33,7 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Object.h"
 
-#if ATLAS_HAVE_CUDA
+#if ATLAS_HAVE_GPU
 #include "atlas/parallel/HaloExchangeGPU.h"
 #endif
 
@@ -380,7 +380,7 @@ void HaloExchange::zero_halos(ATLAS_MAYBE_UNUSED const array::ArrayView<DATA_TYP
                               array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* recv_buffer, int recv_size,
                               ATLAS_MAYBE_UNUSED const bool on_device) const {
     ATLAS_TRACE();
-#if ATLAS_HAVE_CUDA
+#if ATLAS_HAVE_GPU
     if (on_device) {
         ATLAS_NOTIMPLEMENTED;
     }
@@ -394,7 +394,7 @@ void HaloExchange::pack_send_buffer(ATLAS_MAYBE_UNUSED const array::ArrayView<DA
                                     const array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* send_buffer,
                                     int send_size, ATLAS_MAYBE_UNUSED const bool on_device) const {
     ATLAS_TRACE();
-#if ATLAS_HAVE_CUDA
+#if ATLAS_HAVE_GPU
     if (on_device) {
         halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::pack(sendcnt_, sendmap_, hfield, dfield, send_buffer,
                                                              send_size);
@@ -410,7 +410,7 @@ void HaloExchange::unpack_recv_buffer(const DATA_TYPE* recv_buffer, int recv_siz
                                       array::ArrayView<DATA_TYPE, RANK>& dfield,
                                       ATLAS_MAYBE_UNUSED const bool on_device) const {
     ATLAS_TRACE();
-#if ATLAS_HAVE_CUDA
+#if ATLAS_HAVE_GPU
     if (on_device) {
         halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::unpack(recvcnt_, recvmap_, recv_buffer, recv_size, hfield,
                                                                dfield);
@@ -425,7 +425,7 @@ void HaloExchange::pack_recv_adjoint_buffer(ATLAS_MAYBE_UNUSED const array::Arra
                                             const array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* recv_buffer,
                                             int recv_size, ATLAS_MAYBE_UNUSED const bool on_device) const {
     ATLAS_TRACE();
-#if ATLAS_HAVE_CUDA
+#if ATLAS_HAVE_GPU
     if (on_device) {
         halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::pack(recvcnt_, recvmap_, hfield, dfield, recv_buffer,
                                                              recv_size);
@@ -441,7 +441,7 @@ void HaloExchange::unpack_send_adjoint_buffer(const DATA_TYPE* send_buffer, int 
                                               array::ArrayView<DATA_TYPE, RANK>& dfield,
                                               ATLAS_MAYBE_UNUSED const bool on_device) const {
     ATLAS_TRACE();
-#if ATLAS_HAVE_CUDA
+#if ATLAS_HAVE_GPU
     if (on_device) {
         halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::unpack(sendcnt_, sendmap_, send_buffer, send_size, hfield,
                                                                dfield);

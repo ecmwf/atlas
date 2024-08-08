@@ -16,9 +16,7 @@
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
 
-#if ATLAS_HAVE_CUDA
 #include "hic/hic.h"
-#endif
 
 namespace atlas {
 namespace util {
@@ -27,43 +25,34 @@ namespace util {
 namespace detail {
 //------------------------------------------------------------------------------
 
-void allocate_cudamanaged(void** ptr, size_t size) {
-#if ATLAS_HAVE_CUDA
-    hicError_t err = hicMallocManaged(ptr, size);
-    if (err != hicSuccess)
-        throw_AssertionFailed("failed to allocate GPU memory", Here());
-#else
-    *ptr = malloc(size);
-#endif
+void allocate_managed(void** ptr, size_t size) {
+    if constexpr (not ATLAS_HAVE_GPU) {
+        return allocate_host(ptr, size);
+    }
+    HIC_CALL(hicMallocManaged(ptr, size));
 }
 
-void deallocate_cudamanaged(void* ptr) {
-#if ATLAS_HAVE_CUDA
-    hicError_t err = hicDeviceSynchronize();
-    if (err != hicSuccess)
-        throw_AssertionFailed("failed to synchronize memory", Here());
-
-    err = hicFree(ptr);
-    // The following throws an invalid device memory
-    if (err != hicSuccess)
-        throw_AssertionFailed("failed to free GPU memory", Here());
-#else
-    free(ptr);
-#endif
+void deallocate_managed(void* ptr) {
+    if constexpr (not ATLAS_HAVE_GPU) {
+        return deallocate_host(ptr);
+    }
+    HIC_CALL(hicDeviceSynchronize());
+    HIC_CALL(hicFree(ptr));
 }
 
-void allocate_cuda(void** ptr, size_t size) {
-#if ATLAS_HAVE_CUDA
-    hicError_t err = hicMalloc(ptr, size);
-    if (err != hicSuccess)
-        throw_AssertionFailed("failed to allocate GPU memory", Here());
-#else
-    *ptr = malloc(size);
-#endif
+void allocate_device(void** ptr, size_t size) {
+    if constexpr (not ATLAS_HAVE_GPU) {
+        return allocate_host(ptr, size);
+    }
+    HIC_CALL(hicMalloc(ptr, size));
 }
 
-void deallocate_cuda(void* ptr) {
-    deallocate_cudamanaged(ptr);
+void deallocate_device(void* ptr) {
+    if constexpr (not ATLAS_HAVE_GPU) {
+        return deallocate_host(ptr);
+    }
+    HIC_CALL(hicDeviceSynchronize());
+    HIC_CALL(hicFree(ptr));
 }
 
 void allocate_host(void** ptr, size_t size) {

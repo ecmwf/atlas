@@ -12,9 +12,7 @@
 
 #include "atlas/library/config.h"
 
-#if ATLAS_HAVE_CUDA
 #include "hic/hic.h"
-#endif
 
 namespace atlas {
 namespace util {
@@ -22,30 +20,28 @@ namespace util {
 template <typename Base>
 struct GPUClonable {
     GPUClonable(Base* base_ptr): base_ptr_(base_ptr), gpu_object_ptr_(nullptr) {
-#if ATLAS_HAVE_CUDA
-        hicMalloc(&gpu_object_ptr_, sizeof(Base));
-#endif
+        if constexpr (ATLAS_HAVE_GPU) {
+            HIC_CALL(hicMalloc(&gpu_object_ptr_, sizeof(Base)));
+        }
     }
 
     ~GPUClonable() {
-        if (gpu_object_ptr_) {
-#if ATLAS_HAVE_CUDA
-            hicFree(gpu_object_ptr_);
-#endif
+        if (gpu_object_ptr_ != nullptr) {
+            HIC_CALL(hicFree(gpu_object_ptr_));
         }
     }
 
     Base* gpu_object_ptr() { return static_cast<Base*>(gpu_object_ptr_); }
 
     void updateDevice() {
-#if ATLAS_HAVE_CUDA
-        hicMemcpy(gpu_object_ptr_, base_ptr_, sizeof(Base), hicMemcpyHostToDevice);
-#endif
+        if constexpr (ATLAS_HAVE_GPU) {
+            HIC_CALL(hicMemcpy(gpu_object_ptr_, base_ptr_, sizeof(Base), hicMemcpyHostToDevice));
+        }
     }
     void updateHost() {
-#if ATLAS_HAVE_CUDA
-        hicMemcpy(base_ptr_, gpu_object_ptr_, sizeof(Base), hicMemcpyDeviceToHost);
-#endif
+        if constexpr (ATLAS_HAVE_GPU) {
+            HIC_CALL(hicMemcpy(base_ptr_, gpu_object_ptr_, sizeof(Base), hicMemcpyDeviceToHost));
+        }
     }
 
     Base* base_ptr_;
