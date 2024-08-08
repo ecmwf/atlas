@@ -824,6 +824,8 @@ util/PolygonXY.cc
 util/PolygonXY.h
 util/Metadata.cc
 util/Metadata.h
+util/PackVectorFields.cc
+util/PackVectorFields.h
 util/Point.cc
 util/Point.h
 util/Polygon.cc
