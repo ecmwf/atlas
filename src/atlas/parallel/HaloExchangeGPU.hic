@@ -19,6 +19,16 @@
 namespace atlas {
 namespace parallel {
 
+bool is_device_accessible(const void* ptr) {
+    hicPointerAttributes attr;
+    hicError_t code = hicPointerGetAttributes(&attr, ptr);
+    if( code != hicSuccess ) {
+      static_cast<void>(hicGetLastError());
+      return false;
+    }
+    return ptr == attr.devicePointer;
+}
+
 template<int ParallelDim, int RANK>
 struct get_buffer_index{
     template<typename DATA_TYPE>
@@ -147,10 +157,11 @@ void halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::pack( const int sendcnt, arr
   const unsigned int block_size_x = 32;
   const unsigned int block_size_y = (RANK==1) ? 1 : 4;
 
-  unsigned int nblocks_y = get_n_hic_blocks<ParallelDim, RANK>::apply(hfield, block_size_y);
+  const unsigned int nblocks_x = (sendcnt+block_size_x-1)/block_size_x;
+  const unsigned int nblocks_y = get_n_hic_blocks<ParallelDim, RANK>::apply(hfield, block_size_y);
 
   dim3 threads(block_size_x, block_size_y);
-  dim3 blocks((sendcnt+block_size_x-1)/block_size_x, nblocks_y);
+  dim3 blocks(nblocks_x, nblocks_y);
   hicDeviceSynchronize();
   hicError_t err = hicGetLastError();
   if (err != hicSuccess) {

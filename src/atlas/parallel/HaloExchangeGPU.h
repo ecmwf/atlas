@@ -28,5 +28,8 @@ struct halo_packer_hic {
                        array::ArrayView<DATA_TYPE, RANK>& dfield);
 };
 
+bool is_device_accessible(const void* data);
+
+
 }  // namespace parallel
 }  // namespace atlas

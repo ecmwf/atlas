@@ -174,6 +174,14 @@ void HaloExchange::execute(array::Array& field, bool on_device) const {
     DATA_TYPE* inner_buffer = allocate_buffer<DATA_TYPE>(inner_size, on_device);
     DATA_TYPE* halo_buffer  = allocate_buffer<DATA_TYPE>(halo_size, on_device);
 
+#if ATLAS_HAVE_GPU
+    if (on_device) {
+        ATLAS_ASSERT( is_device_accessible(inner_buffer) );
+        ATLAS_ASSERT( is_device_accessible(halo_buffer) );
+        ATLAS_ASSERT( is_device_accessible(field_dv.data()) );
+    }
+#endif
+
     counts_displs_setup<DATA_TYPE>(var_size, inner_counts_init, halo_counts_init, inner_counts, halo_counts,
                                    inner_displs, halo_displs);
 
@@ -294,7 +302,7 @@ void HaloExchange::ireceive(int tag, std::vector<int>& recv_displs, std::vector<
         for (size_t jproc = 0; jproc < static_cast<size_t>(nproc); ++jproc) {
             if (recv_counts[jproc] > 0) {
                 recv_req[jproc] =
-                    comm().iReceive(&recv_buffer[recv_displs[jproc]], recv_counts[jproc], jproc, tag);
+                    comm().iReceive(recv_buffer+recv_displs[jproc], recv_counts[jproc], jproc, tag);
             }
         }
     }
@@ -309,7 +317,7 @@ void HaloExchange::isend_and_wait_for_receive(int tag, std::vector<int>& recv_co
     ATLAS_TRACE_MPI(ISEND) {
         for (size_t jproc = 0; jproc < static_cast<size_t>(nproc); ++jproc) {
             if (send_counts[jproc] > 0) {
-                send_req[jproc] = comm().iSend(&send_buffer[send_displs[jproc]], send_counts[jproc], jproc, tag);
+                send_req[jproc] = comm().iSend(send_buffer+send_displs[jproc], send_counts[jproc], jproc, tag);
             }
         }
     }
