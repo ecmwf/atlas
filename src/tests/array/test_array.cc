@@ -555,6 +555,7 @@ CASE("test_wrap") {
 
 CASE("test_acc_map") {
     Array* ds = Array::create<double>(2, 3, 4);
+    EXPECT_NO_THROW(ds->allocateDevice());
     EXPECT_NO_THROW(ds->accMap());
     EXPECT(ds->accMapped() == ATLAS_HAVE_ACC);
     delete ds;
