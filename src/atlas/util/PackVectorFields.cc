@@ -2,6 +2,7 @@
 
 #include <string>
 #include <type_traits>
+#include <vector>
 
 #include "atlas/array.h"
 #include "atlas/array/helpers/ArrayForEach.h"
@@ -9,6 +10,7 @@
 #include "atlas/option.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/util/Config.h"
 #include "eckit/config/LocalConfiguration.h"
 
 namespace atlas {
@@ -25,7 +27,7 @@ using array::DataType;
 using array::helpers::arrayForEachDim;
 
 template <typename T>
-T getT(const LocalConfiguration& config, const std::string& key) {
+T getT(const Config& config, const std::string& key) {
   auto value = T{};
   const auto success = config.get(key, value);
   ATLAS_ASSERT_MSG(success,
@@ -33,46 +35,65 @@ T getT(const LocalConfiguration& config, const std::string& key) {
   return value;
 }
 
-bool checkShapeCompatibility(const Field& field) {
-  // Check for "standard" Atlas field shape.
-  auto dim = 0;
-  const auto rank = field.rank();
-  const auto shape = field.shape();
-  if (field.functionspace().size() != shape[dim++]) {
-    return false;
+void addOrReplaceField(FieldSet& fieldSet, const Field& field) {
+  const auto fieldName = field.name();
+  if (fieldSet.has(fieldName)) {
+    fieldSet[fieldName] = field;
+  } else {
+    fieldSet.add(field);
   }
-  if (const auto levels = field.levels(); levels &&
-      (dim >= rank || levels != shape[dim++])) {
-    return false;
-  }
-  if (const auto variables = field.variables(); variables &&
-      (dim >= rank || variables != shape[dim++])) {
-    return false;
-  }
-  if (dim != rank) {
-    return false;
-  }
-  return true;
 }
 
-Field getOrCreateField(FieldSet& fieldSet, const FunctionSpace& functionSpace,
-                       const Config& config) {
+Field& getOrCreateField(FieldSet& fieldSet, const FunctionSpace& functionSpace,
+                        const Config& config) {
   const auto fieldName = config.getString("name");
   if (fieldSet.has(fieldName)) {
     const auto field = fieldSet[fieldName];
-    ATLAS_ASSERT(field.levels() == getT<idx_t>(config, "levels"));
-    ATLAS_ASSERT(field.variables() == getT<idx_t>(config, "variables"));
-    ATLAS_ASSERT(field.datatype() ==
-                 getT<DataType::kind_t>(config, "datatype"));
-    ATLAS_ASSERT(checkShapeCompatibility(field));
-    return field;
+  } else {
+    fieldSet.add(functionSpace.createField(config));
   }
-  return fieldSet.add(functionSpace.createField(config));
+  return fieldSet[fieldName];
+}
+
+void checkFieldCompatibility(const Field& componentField,
+                             const Field& vectorField) {
+  ATLAS_ASSERT(componentField.functionspace().size() ==
+               vectorField.functionspace().size());
+  ATLAS_ASSERT(componentField.levels() == vectorField.levels());
+  ATLAS_ASSERT(componentField.variables() == 0);
+  ATLAS_ASSERT(vectorField.variables() > 0);
+
+  const auto checkStandardShape = [](const Field& field) {
+    // Check for "standard" Atlas field shape.
+    auto dim = 0;
+    const auto rank = field.rank();
+    const auto shape = field.shape();
+    if (field.functionspace().size() != shape[dim++]) {
+      return false;
+    }
+    if (const auto levels = field.levels();
+        levels && (dim >= rank || levels != shape[dim++])) {
+      return false;
+    }
+    if (const auto variables = field.variables();
+        variables && (dim >= rank || variables != shape[dim++])) {
+      return false;
+    }
+    if (dim != rank) {
+      return false;
+    }
+    return true;
+  };
+
+  ATLAS_ASSERT(checkStandardShape(componentField));
+  ATLAS_ASSERT(checkStandardShape(vectorField));
 }
 
 template <typename ComponentField, typename VectorField, typename Functor>
 void copyFields(ComponentField& componentField, VectorField& vectorField,
                 const Functor& copier) {
+  checkFieldCompatibility(componentField, vectorField);
+
   const auto copyData = [&](auto value, auto rank) {
     // Resolve value-type and rank from arguments.
     using Value = decltype(value);
@@ -80,8 +101,7 @@ void copyFields(ComponentField& componentField, VectorField& vectorField,
 
     // Iterate over fields.
     auto vectorView = array::make_view<Value, Rank>(vectorField);
-    const auto componentView =
-        array::make_view<Value, Rank - 1>(componentField);
+    auto componentView = array::make_view<Value, Rank - 1>(componentField);
     constexpr auto Dims = IntegerSequence<Rank - 1>{};
     arrayForEachDim(Dims, execution::par, std::tie(componentView, vectorView),
                     copier);
@@ -129,43 +149,49 @@ PackVectorFields::PackVectorFields(const LocalConfiguration& config) {
     const auto componentNameList = vectorField.getStringVector("components");
 
     // Vector information for each component field.
-    idx_t componentIndex = 0;
-    const idx_t vectorSize = componentNameList.size();
+    auto componentIndex = idx_t{0};
+    const auto vectorSize = componentNameList.size();
     for (const auto& componentName : componentNameList) {
-      componentToVectorMap_.insert(
-          {componentName, {vectorName, componentIndex++, vectorSize}});
+      const auto vectorFieldConfig =
+          Config("component index", componentIndex++) |
+          option::name(vectorName) | option::variables(vectorSize);
+      componentToVectorMap_.set(componentName, vectorFieldConfig);
     }
 
     // Component information for each vector field.
-    vectorToComponentMap_.insert({vectorName, {componentNameList}});
+    auto componentFieldConfigs = std::vector<Config>{};
+    for (const auto& componentName : componentNameList) {
+      componentFieldConfigs.push_back(option::name(componentName));
+    }
+    vectorToComponentMap_.set(vectorName, componentFieldConfigs);
   }
 }
 
-FieldSet PackVectorFields::pack(const FieldSet& fields) const {
-  auto packedFields = FieldSet{};
+FieldSet PackVectorFields::pack(const FieldSet& fields,
+                                FieldSet packedFields) const {
   for (const auto& field : fields) {
-    const auto mapItr = componentToVectorMap_.find(field.name());
-    if (mapItr == componentToVectorMap_.end()) {
-      // Not in the list of vector fields.
-      packedFields.add(field);
+    if (!componentToVectorMap_.has(field.name())) {
+      // Not a vector component field.
+      addOrReplaceField(packedFields, field);
       continue;
     }
-    const auto& componentField = field;
-    ATLAS_ASSERT_MSG(!componentField.variables(),
-                     "Component field must be scalar.");
 
-    // Set vector field config.
-    const auto vectorInfo = mapItr->second;
-    const auto vectorFieldConf = option::name(vectorInfo.vectorName) |
-                                 option::levels(componentField.levels()) |
-                                 option::variables(vectorInfo.vectorSize) |
-                                 option::datatype(componentField.datatype());
-    auto vectorField = getOrCreateField(
-        packedFields, componentField.functionspace(), vectorFieldConf);
+    // Field is vector field component.
+    const auto& componentField = field;
+
+    // Get or create vector field.
+    const auto vectorFieldConfig =
+        getT<Config>(componentToVectorMap_, componentField.name()) |
+        option::levels(componentField.levels()) |
+        option::datatype(componentField.datatype());
+    auto& vectorField = getOrCreateField(
+        packedFields, componentField.functionspace(), vectorFieldConfig);
 
     // Copy field data.
+    const auto componentIndex =
+        getT<idx_t>(vectorFieldConfig, "component index");
     const auto copier = [&](auto&& componentElem, auto&& vectorElem) {
-      vectorElem(vectorInfo.componentIndex) = componentElem;
+      vectorElem(componentIndex) = componentElem;
     };
     copyFields(componentField, vectorField, copier);
 
@@ -177,7 +203,45 @@ FieldSet PackVectorFields::pack(const FieldSet& fields) const {
   return packedFields;
 }
 
-FieldSet PackVectorFields::unpack(const FieldSet& fields) const {}
+FieldSet PackVectorFields::unpack(const FieldSet& fields,
+                                  FieldSet unpackedFields) const {
+  for (const auto& field : fields) {
+    if (!vectorToComponentMap_.has(field.name())) {
+      // Not a vector field.
+      addOrReplaceField(unpackedFields, field);
+      continue;
+    }
+
+    // Field is vector.
+    const auto& vectorField = field;
+
+    const auto componentFieldConfigs =
+        getT<std::vector<Config>>(vectorToComponentMap_, vectorField.name());
+
+    for (auto componentIndex = size_t{0};
+         componentIndex < componentFieldConfigs.size();
+         ++componentIndex) {
+      // Get or create field.
+      const auto componentFieldConfig =
+          componentFieldConfigs[componentIndex] |
+          option::levels(vectorField.levels()) |
+          option::datatype(vectorField.datatype());
+      auto& componentField = getOrCreateField(
+          unpackedFields, vectorField.functionspace(), componentFieldConfig);
+
+      // Copy field data.
+      const auto copier = [&](auto&& componentElem, auto&& vectorElem) {
+        componentElem = vectorElem(componentIndex);
+      };
+      copyFields(componentField, vectorField, copier);
+
+      // Copy metadata.
+      componentField.metadata() = vectorField.metadata().get<Config>(
+          componentField.name() + " metadata");
+    }
+  }
+  return unpackedFields;
+}
 
 }  // namespace util
 }  // namespace atlas
