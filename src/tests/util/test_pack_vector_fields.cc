@@ -22,7 +22,7 @@ FieldSet setFields(const FunctionSpace& functionSpace,
   for (const auto& fieldConfig : fieldConfigs) {
     auto field = fields.add(functionSpace.createField(fieldConfig));
     for (auto arrayIdx = size_t{0}; arrayIdx < field.size(); arrayIdx++) {
-      field->data<int>()[arrayIdx] = value++;
+      field->data<float>()[arrayIdx] = value++;
     }
     field.metadata().set("comment", "This field is made with love.");
   }
@@ -36,13 +36,13 @@ FieldSet createOrderedTestFields() {
   // Note: vector components 0 and 1 are contiguous in field set.
   auto fieldConfigs = std::vector<util::Config>{};
   fieldConfigs.push_back(option::name("scalar") | option::levels(1) |
-                         option::datatype(DataType::kind<int>()));
+                         option::datatype(DataType::kind<float>()));
   fieldConfigs.push_back(option::name("vector component 0") |
                          option::levels(1) |
-                         option::datatype(DataType::kind<int>()));
+                         option::datatype(DataType::kind<float>()));
   fieldConfigs.push_back(option::name("vector component 1") |
                          option::levels(1) |
-                         option::datatype(DataType::kind<int>()));
+                         option::datatype(DataType::kind<float>()));
 
   return setFields(functionSpace, fieldConfigs);
 }
@@ -88,7 +88,7 @@ void checkTestFields(const FieldSet& fields) {
   auto value = 0;
   for (const auto& field : fields) {
     for (auto arrayIdx = size_t{0}; arrayIdx < field.size(); arrayIdx++) {
-      EXPECT(field->data<int>()[arrayIdx] == value++);
+      EXPECT(field->data<float>()[arrayIdx] == value++);
     }
     EXPECT(field.metadata().get<std::string>("comment") ==
            "This field is made with love.");
