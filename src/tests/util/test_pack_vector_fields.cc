@@ -105,8 +105,8 @@ util::Config createFieldPackerConfig() {
   // - name: <name of vector field 1>
   //   components:
   //   - <name of component 1 of vector field 1>
-  //     <name of component 2 of vector field 1>
-  //     <name of component ...>
+  //   - <name of component 2 of vector field 1>
+  //   - <name of component ...>
   // - name: ...
   //   components: ...
 
