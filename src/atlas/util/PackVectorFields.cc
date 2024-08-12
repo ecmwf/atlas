@@ -17,7 +17,6 @@
 #include "atlas/functionspace.h"
 #include "atlas/option.h"
 #include "atlas/runtime/Exception.h"
-#include "atlas/runtime/Log.h"
 #include "atlas/util/Config.h"
 #include "eckit/config/LocalConfiguration.h"
 
