@@ -43,9 +43,7 @@ void addOrReplaceField(FieldSet& fieldSet, const Field& field) {
 Field& getOrCreateField(FieldSet& fieldSet, const FunctionSpace& functionSpace,
                         const Config& config) {
   const auto fieldName = config.getString("name");
-  if (fieldSet.has(fieldName)) {
-    const auto field = fieldSet[fieldName];
-  } else {
+  if (!fieldSet.has(fieldName)) {
     fieldSet.add(functionSpace.createField(config));
   }
   return fieldSet[fieldName];
@@ -165,7 +163,7 @@ FieldSet pack(const FieldSet& fields, FieldSet packedFields) {
     const auto vectorFieldConfig =
         option::name(vectorFieldName) |
         option::levels(componentField.levels()) |
-        option::variables(vectorSizeMap[vectorFieldName]) |
+        option::vector(vectorSizeMap[vectorFieldName]) |
         option::datatype(componentField.datatype());
     auto& vectorField = getOrCreateField(
         packedFields, componentField.functionspace(), vectorFieldConfig);
