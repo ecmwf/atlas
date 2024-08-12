@@ -204,7 +204,6 @@ FieldSet unpack(const FieldSet& fields, FieldSet unpackedFields) {
 
     auto vectorIndex = 0;
     for (const auto& componentFieldMetadata : componentFieldMetadataVector) {
-      std::cout << componentFieldMetadata << std::endl;
 
       // Get or create field.
       auto componentFieldName = std::string{};
