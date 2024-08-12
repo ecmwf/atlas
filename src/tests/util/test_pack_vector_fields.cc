@@ -25,6 +25,10 @@ FieldSet setFields(const FunctionSpace& functionSpace,
       field->data<float>()[arrayIdx] = value++;
     }
     field.metadata().set("comment", "This field is made with love.");
+    auto vectorFieldName = std::string{};
+    if (fieldConfig.get("vector field name", vectorFieldName)) {
+      field.metadata().set("vector field name", vectorFieldName);
+    }
   }
   return fields;
 }
@@ -39,10 +43,12 @@ FieldSet createOrderedTestFields() {
                          option::datatype(DataType::kind<float>()));
   fieldConfigs.push_back(option::name("vector component 0") |
                          option::levels(1) |
-                         option::datatype(DataType::kind<float>()));
+                         option::datatype(DataType::kind<float>()) |
+                         util::Config{"vector field name", "vector"});
   fieldConfigs.push_back(option::name("vector component 1") |
                          option::levels(1) |
-                         option::datatype(DataType::kind<float>()));
+                         option::datatype(DataType::kind<float>()) |
+                         util::Config{"vector field name", "vector"});
 
   return setFields(functionSpace, fieldConfigs);
 }
@@ -56,11 +62,13 @@ FieldSet createUnorderedTestFields() {
   // Note: vector components 0 and 1 are not contiguous in field set.
   auto fieldConfigs = std::vector<util::Config>{};
   fieldConfigs.push_back(option::name("vector component 0") |
-                         option::datatype(DataType::kind<float>()));
+                         option::datatype(DataType::kind<float>()) |
+                         util::Config{"vector field name", "vector"});
   fieldConfigs.push_back(option::name("scalar") |
                          option::datatype(DataType::kind<float>()));
   fieldConfigs.push_back(option::name("vector component 1") |
-                         option::datatype(DataType::kind<float>()));
+                         option::datatype(DataType::kind<float>()) |
+                         util::Config{"vector field name", "vector"});
 
   return setFields(functionSpace, fieldConfigs);
 }
@@ -75,11 +83,13 @@ FieldSet createInconsistentTestFields() {
   auto fieldConfigs = std::vector<util::Config>{};
   fieldConfigs.push_back(option::name("vector component 0") |
                          option::levels(10) |
-                         option::datatype(DataType::kind<float>()));
+                         option::datatype(DataType::kind<float>()) |
+                         util::Config{"vector field name", "vector"});
   fieldConfigs.push_back(option::name("scalar") |
                          option::datatype(DataType::kind<float>()));
   fieldConfigs.push_back(option::name("vector component 1") |
-                         option::datatype(DataType::kind<float>()));
+                         option::datatype(DataType::kind<float>()) |
+                         util::Config{"vector field name", "vector"});
 
   return setFields(functionSpace, fieldConfigs);
 }
@@ -95,46 +105,18 @@ void checkTestFields(const FieldSet& fields) {
   }
 }
 
-util::Config createFieldPackerConfig() {
-  using ConfVec = std::vector<util::Config>;
-  using StrVec = std::vector<std::string>;
-
-  // yaml equivalent is:
-  //
-  // vector fields:
-  // - name: <name of vector field 1>
-  //   components:
-  //   - <name of component 1 of vector field 1>
-  //   - <name of component 2 of vector field 1>
-  //   - <name of component ...>
-  // - name: ...
-  //   components: ...
-
-  const auto components = StrVec{"vector component 0", "vector component 1"};
-  const auto vectorConfig =
-      util::Config{"name", "vector"} | util::Config("components", components);
-  const auto fieldPackerConfig =
-      util::Config{"vector fields", ConfVec{vectorConfig}};
-
-  return fieldPackerConfig;
-}
-
 CASE("Basic pack and unpack") {
-  using util::PackVectorFields;
-  const auto vectorFieldsConf = createFieldPackerConfig();
-
-  const auto fieldPacker = PackVectorFields{vectorFieldsConf};
 
   const auto fields = createOrderedTestFields();
 
-  const auto packedFields = fieldPacker.pack(fields);
+  const auto packedFields = util::pack_vector_fields::pack(fields);
 
   EXPECT(!packedFields.has("vector component 0"));
   EXPECT(!packedFields.has("vector component 1"));
   EXPECT(packedFields.has("vector"));
   EXPECT(packedFields.has("scalar"));
 
-  const auto unpackedFields = fieldPacker.unpack(packedFields);
+  const auto unpackedFields = util::pack_vector_fields::unpack(packedFields);
 
   EXPECT(unpackedFields.has("vector component 0"));
   EXPECT(unpackedFields.has("vector component 1"));
@@ -145,14 +127,10 @@ CASE("Basic pack and unpack") {
 }
 
 CASE("unpack into existing field set") {
-  using util::PackVectorFields;
-  const auto vectorFieldsConf = createFieldPackerConfig();
-
-  const auto fieldPacker = PackVectorFields{vectorFieldsConf};
 
   auto fields = createUnorderedTestFields();
 
-  const auto packedFields = fieldPacker.pack(fields);
+  const auto packedFields = util::pack_vector_fields::pack(fields);
 
   EXPECT(!packedFields.has("vector component 0"));
   EXPECT(!packedFields.has("vector component 1"));
@@ -162,7 +140,7 @@ CASE("unpack into existing field set") {
   // Need to unpack into existing field to guarantee field order is preserved.
   array::make_view<float, 1>(fields["vector component 0"]).assign(0.);
   array::make_view<float, 1>(fields["vector component 1"]).assign(0.);
-  fieldPacker.unpack(packedFields, fields);
+  util::pack_vector_fields::unpack(packedFields, fields);
 
   EXPECT(fields.has("vector component 0"));
   EXPECT(fields.has("vector component 1"));
@@ -173,27 +151,10 @@ CASE("unpack into existing field set") {
 }
 
 CASE("check that bad inputs throw") {
-  using util::PackVectorFields;
-
-  // Config must have a "vector fields" entry.
-  EXPECT_THROWS(PackVectorFields{util::Config{}});
-  const auto noPacking = PackVectorFields{
-      util::Config{"vector fields", std::vector<util::Config>{}}};
-
-  // These will do nothing.
-  const auto fields = createInconsistentTestFields();
-  const auto packedFields = noPacking.pack(fields);
-  const auto unpackedFields = noPacking.unpack(packedFields);
-
-  checkTestFields(fields);
-  checkTestFields(packedFields);
-  checkTestFields(unpackedFields);
 
   // Try to apply packer to inconsistent field set.
-  const auto vectorFieldsConf = createFieldPackerConfig();
-  const auto fieldPacker = PackVectorFields{vectorFieldsConf};
-  EXPECT_THROWS(fieldPacker.pack(fields));
-
+  const auto fields = createInconsistentTestFields();
+  EXPECT_THROWS(util::pack_vector_fields::pack(fields));
 }
 
 }  // namespace test

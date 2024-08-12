@@ -1,5 +1,6 @@
 #include "atlas/util/PackVectorFields.h"
 
+#include <map>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -18,22 +19,10 @@ namespace util {
 
 namespace {
 
-template <int I>
-using Integer = std::integral_constant<int, I>;
-template <int N>
-using IntegerSequence = std::make_integer_sequence<int, N>;
+using eckit::LocalConfiguration;
 
 using array::DataType;
 using array::helpers::arrayForEachDim;
-
-template <typename T>
-T getT(const Config& config, const std::string& key) {
-  auto value = T{};
-  const auto success = config.get(key, value);
-  ATLAS_ASSERT_MSG(success,
-                   "\"" + key + "\" entry missing from configuration.");
-  return value;
-}
 
 void addOrReplaceField(FieldSet& fieldSet, const Field& field) {
   const auto fieldName = field.name();
@@ -102,7 +91,7 @@ void copyFields(ComponentField& componentField, VectorField& vectorField,
     // Iterate over fields.
     auto vectorView = array::make_view<Value, Rank>(vectorField);
     auto componentView = array::make_view<Value, Rank - 1>(componentField);
-    constexpr auto Dims = IntegerSequence<Rank - 1>{};
+    constexpr auto Dims = std::make_integer_sequence<int, Rank - 1>{};
     arrayForEachDim(Dims, execution::par, std::tie(componentView, vectorView),
                     copier);
   };
@@ -110,9 +99,9 @@ void copyFields(ComponentField& componentField, VectorField& vectorField,
   const auto selectRank = [&](auto value) {
     switch (vectorField.rank()) {
       case 2:
-        return copyData(value, Integer<2>{});
+        return copyData(value, std::integral_constant<int, 2>{});
       case 3:
-        return copyData(value, Integer<3>{});
+        return copyData(value, std::integral_constant<int, 3>{});
       default:
         ATLAS_THROW_EXCEPTION("Unsupported vector field rank: " +
                               std::to_string(vectorField.rank()));
@@ -140,37 +129,23 @@ void copyFields(ComponentField& componentField, VectorField& vectorField,
 
 }  // namespace
 
-PackVectorFields::PackVectorFields(const LocalConfiguration& config) {
-  const auto vectorFieldList =
-      getT<LocalConfigurations>(config, "vector fields");
+namespace pack_vector_fields {
 
-  for (const auto& vectorField : vectorFieldList) {
-    const auto vectorName = vectorField.getString("name");
-    const auto componentNameList = vectorField.getStringVector("components");
-
-    // Vector information for each component field.
-    auto componentIndex = idx_t{0};
-    const auto vectorSize = componentNameList.size();
-    for (const auto& componentName : componentNameList) {
-      const auto vectorFieldConfig =
-          Config("component index", componentIndex++) |
-          option::name(vectorName) | option::variables(vectorSize);
-      componentToVectorMap_.set(componentName, vectorFieldConfig);
-    }
-
-    // Component information for each vector field.
-    auto componentFieldConfigs = std::vector<Config>{};
-    for (const auto& componentName : componentNameList) {
-      componentFieldConfigs.push_back(option::name(componentName));
-    }
-    vectorToComponentMap_.set(vectorName, componentFieldConfigs);
-  }
-}
-
-FieldSet PackVectorFields::pack(const FieldSet& fields,
-                                FieldSet packedFields) const {
+FieldSet pack(const FieldSet& fields, FieldSet packedFields) {
+  // Get the number of variables for each vector field.
+  auto vectorSizeMap = std::map<std::string, idx_t>{};
   for (const auto& field : fields) {
-    if (!componentToVectorMap_.has(field.name())) {
+    auto vectorFieldName = std::string{};
+    if (field.metadata().get("vector field name", vectorFieldName)) {
+      ++vectorSizeMap[vectorFieldName];
+    }
+  }
+  auto vectorIndexMap = std::map<std::string, idx_t>{};
+
+  // Pack vector fields.
+  for (const auto& field : fields) {
+    auto vectorFieldName = std::string{};
+    if (!field.metadata().get("vector field name", vectorFieldName)) {
       // Not a vector component field.
       addOrReplaceField(packedFields, field);
       continue;
@@ -181,32 +156,37 @@ FieldSet PackVectorFields::pack(const FieldSet& fields,
 
     // Get or create vector field.
     const auto vectorFieldConfig =
-        getT<Config>(componentToVectorMap_, componentField.name()) |
+        option::name(vectorFieldName) |
         option::levels(componentField.levels()) |
+        option::variables(vectorSizeMap[vectorFieldName]) |
         option::datatype(componentField.datatype());
     auto& vectorField = getOrCreateField(
         packedFields, componentField.functionspace(), vectorFieldConfig);
 
     // Copy field data.
-    const auto componentIndex =
-        getT<idx_t>(vectorFieldConfig, "component index");
+    const auto vectorIndex = vectorIndexMap[vectorFieldName]++;
     const auto copier = [&](auto&& componentElem, auto&& vectorElem) {
-      vectorElem(componentIndex) = componentElem;
+      vectorElem(vectorIndex) = componentElem;
     };
     copyFields(componentField, vectorField, copier);
 
     // Copy metadata.
-    const auto componentMetadata = componentField.metadata();
-    vectorField.metadata().set(componentField.name() + " metadata",
-                               componentMetadata);
+    const auto componentFieldMetadata = componentField.metadata();
+    auto componentFieldMetadataVector = std::vector<LocalConfiguration>{};
+    vectorField.metadata().get("component field metadata",
+                               componentFieldMetadataVector);
+    componentFieldMetadataVector.push_back(componentFieldMetadata);
+    vectorField.metadata().set("component field metadata",
+                               componentFieldMetadataVector);
   }
   return packedFields;
 }
 
-FieldSet PackVectorFields::unpack(const FieldSet& fields,
-                                  FieldSet unpackedFields) const {
+FieldSet unpack(const FieldSet& fields, FieldSet unpackedFields) {
   for (const auto& field : fields) {
-    if (!vectorToComponentMap_.has(field.name())) {
+    auto componentFieldMetadataVector = std::vector<LocalConfiguration>{};
+    if (!field.metadata().get("component field metadata",
+                              componentFieldMetadataVector)) {
       // Not a vector field.
       addOrReplaceField(unpackedFields, field);
       continue;
@@ -215,15 +195,15 @@ FieldSet PackVectorFields::unpack(const FieldSet& fields,
     // Field is vector.
     const auto& vectorField = field;
 
-    const auto componentFieldConfigs =
-        getT<std::vector<Config>>(vectorToComponentMap_, vectorField.name());
+    auto vectorIndex = 0;
+    for (const auto& componentFieldMetadata : componentFieldMetadataVector) {
+      std::cout << componentFieldMetadata << std::endl;
 
-    for (auto componentIndex = size_t{0};
-         componentIndex < componentFieldConfigs.size();
-         ++componentIndex) {
       // Get or create field.
+      auto componentFieldName = std::string{};
+      componentFieldMetadata.get("name", componentFieldName);
       const auto componentFieldConfig =
-          componentFieldConfigs[componentIndex] |
+          option::name(componentFieldName) |
           option::levels(vectorField.levels()) |
           option::datatype(vectorField.datatype());
       auto& componentField = getOrCreateField(
@@ -231,17 +211,19 @@ FieldSet PackVectorFields::unpack(const FieldSet& fields,
 
       // Copy field data.
       const auto copier = [&](auto&& componentElem, auto&& vectorElem) {
-        componentElem = vectorElem(componentIndex);
+        componentElem = vectorElem(vectorIndex);
       };
       copyFields(componentField, vectorField, copier);
 
       // Copy metadata.
-      componentField.metadata() = vectorField.metadata().get<Config>(
-          componentField.name() + " metadata");
+      componentField.metadata() = componentFieldMetadata;
+
+      ++vectorIndex;
     }
   }
   return unpackedFields;
 }
 
+}  // namespace pack_vector_fields
 }  // namespace util
 }  // namespace atlas
