@@ -86,11 +86,11 @@ void checkFieldCompatibility(const Field& componentField,
 }
 
 template <typename ComponentField, typename VectorField, typename Functor>
-void copyFields(ComponentField& componentField, VectorField& vectorField,
+void copyFieldData(ComponentField& componentField, VectorField& vectorField,
                 const Functor& copier) {
   checkFieldCompatibility(componentField, vectorField);
 
-  const auto copyData = [&](auto value, auto rank) {
+  const auto copyArrayData = [&](auto value, auto rank) {
     // Resolve value-type and rank from arguments.
     using Value = decltype(value);
     constexpr auto Rank = decltype(rank)::value;
@@ -106,9 +106,9 @@ void copyFields(ComponentField& componentField, VectorField& vectorField,
   const auto selectRank = [&](auto value) {
     switch (vectorField.rank()) {
       case 2:
-        return copyData(value, std::integral_constant<int, 2>{});
+        return copyArrayData(value, std::integral_constant<int, 2>{});
       case 3:
-        return copyData(value, std::integral_constant<int, 3>{});
+        return copyArrayData(value, std::integral_constant<int, 3>{});
       default:
         ATLAS_THROW_EXCEPTION("Unsupported vector field rank: " +
                               std::to_string(vectorField.rank()));
@@ -175,7 +175,7 @@ FieldSet pack(const FieldSet& fields, FieldSet packedFields) {
     const auto copier = [&](auto&& componentElem, auto&& vectorElem) {
       vectorElem(vectorIndex) = componentElem;
     };
-    copyFields(componentField, vectorField, copier);
+    copyFieldData(componentField, vectorField, copier);
 
     // Copy metadata.
     const auto componentFieldMetadata = componentField.metadata();
@@ -219,7 +219,7 @@ FieldSet unpack(const FieldSet& fields, FieldSet unpackedFields) {
       const auto copier = [&](auto&& componentElem, auto&& vectorElem) {
         componentElem = vectorElem(vectorIndex);
       };
-      copyFields(componentField, vectorField, copier);
+      copyFieldData(componentField, vectorField, copier);
 
       // Copy metadata.
       componentField.metadata() = componentFieldMetadata;
