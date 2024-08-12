@@ -22,7 +22,7 @@ namespace pack_vector_fields {
 ///
 /// @details Iterates through @param fields and creates vector fields from any
 ///          component field with the "vector name" string metadata. These, as
-///          well as any present scalar fields are added to the return-value
+///          well as any present scalar fields, are added to the return-value
 ///          field set.
 ///          Note, a mutable @param packedFields field set can be supplied if
 ///          one needs to guarantee the order of the packed fields

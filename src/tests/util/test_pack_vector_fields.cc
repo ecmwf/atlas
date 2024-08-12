@@ -80,7 +80,7 @@ FieldSet createUnorderedTestFields() {
   return setFields(functionSpace, fieldConfigs);
 }
 
-FieldSet createInconsistentTestFields() {
+FieldSet createInconsistentRankFields() {
   auto fields = FieldSet{};
 
   const auto grid = Grid("O16");
@@ -91,6 +91,69 @@ FieldSet createInconsistentTestFields() {
   fieldConfigs.push_back(option::name("vector component 0") |
                          option::levels(10) |
                          option::datatype(DataType::kind<float>()) |
+                         util::Config{"vector field name", "vector"});
+  fieldConfigs.push_back(option::name("scalar") |
+                         option::datatype(DataType::kind<float>()));
+  fieldConfigs.push_back(option::name("vector component 1") |
+                         option::datatype(DataType::kind<float>()) |
+                         util::Config{"vector field name", "vector"});
+
+  return setFields(functionSpace, fieldConfigs);
+}
+
+FieldSet createInconsistentDatatypeFields() {
+  auto fields = FieldSet{};
+
+  const auto grid = Grid("O16");
+  const auto functionSpace = functionspace::StructuredColumns(grid);
+
+  // Note: vector components 0 and 1 have different datatypes.
+  auto fieldConfigs = std::vector<util::Config>{};
+  fieldConfigs.push_back(option::name("vector component 0") |
+                         option::datatype(DataType::kind<int>()) |
+                         util::Config{"vector field name", "vector"});
+  fieldConfigs.push_back(option::name("scalar") |
+                         option::datatype(DataType::kind<float>()));
+  fieldConfigs.push_back(option::name("vector component 1") |
+                         option::datatype(DataType::kind<float>()) |
+                         util::Config{"vector field name", "vector"});
+
+  return setFields(functionSpace, fieldConfigs);
+}
+
+FieldSet createInconsistentLevelsFields() {
+  auto fields = FieldSet{};
+
+  const auto grid = Grid("O16");
+  const auto functionSpace = functionspace::StructuredColumns(grid);
+
+  // Note: vector components 0 and 1 have different number of levels.
+  auto fieldConfigs = std::vector<util::Config>{};
+  fieldConfigs.push_back(option::name("vector component 0") |
+                         option::levels(10) |
+                         option::datatype(DataType::kind<float>()) |
+                         util::Config{"vector field name", "vector"});
+  fieldConfigs.push_back(option::name("scalar") |
+                         option::datatype(DataType::kind<float>()));
+  fieldConfigs.push_back(option::name("vector component 1") |
+                         option::levels(20) |
+                         option::datatype(DataType::kind<float>()) |
+                         util::Config{"vector field name", "vector"});
+
+  return setFields(functionSpace, fieldConfigs);
+}
+
+FieldSet createInconsistentVariablesFields() {
+  auto fields = FieldSet{};
+
+  const auto grid = Grid("O16");
+  const auto functionSpace = functionspace::StructuredColumns(grid);
+
+  // Note: vector components 0 and 1 have different number of variables.
+  auto fieldConfigs = std::vector<util::Config>{};
+  fieldConfigs.push_back(option::name("vector component 0") |
+                         option::datatype(DataType::kind<float>()) |
+                         option::variables(2) |
                          util::Config{"vector field name", "vector"});
   fieldConfigs.push_back(option::name("scalar") |
                          option::datatype(DataType::kind<float>()));
@@ -113,7 +176,6 @@ void checkTestFields(const FieldSet& fields) {
 }
 
 CASE("Basic pack and unpack") {
-
   const auto fields = createOrderedTestFields();
 
   const auto packedFields = util::pack_vector_fields::pack(fields);
@@ -134,7 +196,6 @@ CASE("Basic pack and unpack") {
 }
 
 CASE("unpack into existing field set") {
-
   auto fields = createUnorderedTestFields();
 
   const auto packedFields = util::pack_vector_fields::pack(fields);
@@ -158,10 +219,14 @@ CASE("unpack into existing field set") {
 }
 
 CASE("check that bad inputs throw") {
-
-  // Try to apply packer to inconsistent field set.
-  const auto fields = createInconsistentTestFields();
-  EXPECT_THROWS(util::pack_vector_fields::pack(fields));
+  // Try to apply pack to inconsistent field sets.
+  EXPECT_THROWS(util::pack_vector_fields::pack(createInconsistentRankFields()));
+  EXPECT_THROWS(
+      util::pack_vector_fields::pack(createInconsistentDatatypeFields()));
+  EXPECT_THROWS(
+      util::pack_vector_fields::pack(createInconsistentLevelsFields()));
+  EXPECT_THROWS(
+      util::pack_vector_fields::pack(createInconsistentVariablesFields()));
 }
 
 }  // namespace test
