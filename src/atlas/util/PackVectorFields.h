@@ -16,8 +16,6 @@ class LocalConfiguration;
 namespace atlas {
 namespace util {
 
-namespace pack_vector_fields {
-
 /// @brief   Packs vector field components into vector fields
 ///
 /// @details Iterates through @param fields and creates vector fields from any
@@ -26,7 +24,8 @@ namespace pack_vector_fields {
 ///          field set.
 ///          Note, a mutable @param packedFields field set can be supplied if
 ///          one needs to guarantee the order of the packed fields
-FieldSet pack(const FieldSet& fields, FieldSet packedFields = FieldSet{});
+FieldSet pack_vector_fields(const FieldSet& fields,
+                            FieldSet packedFields = FieldSet{});
 
 /// @brief   Unpacks vector field into vector field components.
 ///
@@ -34,8 +33,8 @@ FieldSet pack(const FieldSet& fields, FieldSet packedFields = FieldSet{});
 ///          as @param fields. A mutable @param unpackedFields field set can be
 ///          supplied if one needs to guarantee the order of the unpacked
 ///          fields.
-FieldSet unpack(const FieldSet& fields, FieldSet unpackedFields = FieldSet{});
-};  // namespace pack_vector_fields
+FieldSet unpack_vector_fields(const FieldSet& fields,
+                              FieldSet unpackedFields = FieldSet{});
 
 }  // namespace util
 }  // namespace atlas

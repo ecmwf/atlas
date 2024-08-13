@@ -133,9 +133,7 @@ void copyFieldData(ComponentField& componentField, VectorField& vectorField,
 
 }  // namespace
 
-namespace pack_vector_fields {
-
-FieldSet pack(const FieldSet& fields, FieldSet packedFields) {
+FieldSet pack_vector_fields(const FieldSet& fields, FieldSet packedFields) {
   // Get the number of variables for each vector field.
   auto vectorSizeMap = std::map<std::string, idx_t>{};
   for (const auto& field : fields) {
@@ -186,7 +184,7 @@ FieldSet pack(const FieldSet& fields, FieldSet packedFields) {
   return packedFields;
 }
 
-FieldSet unpack(const FieldSet& fields, FieldSet unpackedFields) {
+FieldSet unpack_vector_fields(const FieldSet& fields, FieldSet unpackedFields) {
   for (const auto& field : fields) {
     auto componentFieldMetadataVector = std::vector<LocalConfiguration>{};
     if (!field.metadata().get("component field metadata",
@@ -227,6 +225,5 @@ FieldSet unpack(const FieldSet& fields, FieldSet unpackedFields) {
   return unpackedFields;
 }
 
-}  // namespace pack_vector_fields
 }  // namespace util
 }  // namespace atlas

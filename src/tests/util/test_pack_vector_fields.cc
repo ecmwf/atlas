@@ -178,14 +178,14 @@ void checkTestFields(const FieldSet& fields) {
 CASE("Basic pack and unpack") {
   const auto fields = createOrderedTestFields();
 
-  const auto packedFields = util::pack_vector_fields::pack(fields);
+  const auto packedFields = util::pack_vector_fields(fields);
 
   EXPECT(!packedFields.has("vector component 0"));
   EXPECT(!packedFields.has("vector component 1"));
   EXPECT(packedFields.has("vector"));
   EXPECT(packedFields.has("scalar"));
 
-  const auto unpackedFields = util::pack_vector_fields::unpack(packedFields);
+  const auto unpackedFields = util::unpack_vector_fields(packedFields);
 
   EXPECT(unpackedFields.has("vector component 0"));
   EXPECT(unpackedFields.has("vector component 1"));
@@ -198,7 +198,7 @@ CASE("Basic pack and unpack") {
 CASE("unpack into existing field set") {
   auto fields = createUnorderedTestFields();
 
-  const auto packedFields = util::pack_vector_fields::pack(fields);
+  const auto packedFields = util::pack_vector_fields(fields);
 
   EXPECT(!packedFields.has("vector component 0"));
   EXPECT(!packedFields.has("vector component 1"));
@@ -208,7 +208,7 @@ CASE("unpack into existing field set") {
   // Need to unpack into existing field to guarantee field order is preserved.
   array::make_view<float, 1>(fields["vector component 0"]).assign(0.);
   array::make_view<float, 1>(fields["vector component 1"]).assign(0.);
-  util::pack_vector_fields::unpack(packedFields, fields);
+  util::unpack_vector_fields(packedFields, fields);
 
   EXPECT(fields.has("vector component 0"));
   EXPECT(fields.has("vector component 1"));
@@ -220,13 +220,13 @@ CASE("unpack into existing field set") {
 
 CASE("check that bad inputs throw") {
   // Try to apply pack to inconsistent field sets.
-  EXPECT_THROWS(util::pack_vector_fields::pack(createInconsistentRankFields()));
+  EXPECT_THROWS(util::pack_vector_fields(createInconsistentRankFields()));
   EXPECT_THROWS(
-      util::pack_vector_fields::pack(createInconsistentDatatypeFields()));
+      util::pack_vector_fields(createInconsistentDatatypeFields()));
   EXPECT_THROWS(
-      util::pack_vector_fields::pack(createInconsistentLevelsFields()));
+      util::pack_vector_fields(createInconsistentLevelsFields()));
   EXPECT_THROWS(
-      util::pack_vector_fields::pack(createInconsistentVariablesFields()));
+      util::pack_vector_fields(createInconsistentVariablesFields()));
 }
 
 }  // namespace test
