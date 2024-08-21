@@ -7,9 +7,8 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
-from __future__ import print_function
 from argparse import ArgumentParser
 import re
 import time
@@ -50,7 +49,7 @@ ftype2use = {
     'logical(c_bool)':'c_bool'
 }
 
-function_signature = re.compile('''^
+function_signature = re.compile(r'''^
 (                                            #1 Type
   (const\s+)?                                #2 Leading const
   ([^\*\&\s\[]+)                             #3
@@ -72,7 +71,7 @@ class ParsingFailed(Exception):
 
 class Argument:
 
-    arg_signature = re.compile('''^
+    arg_signature = re.compile(r'''^
     (                                            #1 Type
       (const\s+)?                                #2 Leading const
       ([^\*\&\s\[]+)                             #3
@@ -179,9 +178,6 @@ class ReturnType:
                     self.use.add(ftype2use[self.ftype])
                 except KeyError:
                     raise ParsingFailed("Could not parse return type for statement "+line)
-
-    def __nonzero__(self): # python 2
-        return self.type != "void"
 
     def __bool__(self): # python 3
         return self.type != "void"
@@ -304,9 +300,9 @@ code = Code()
 
 with open(input,'r') as file:
     content = file.read()
-    externC = re.compile('^extern\s+"C"(\s*{)?')
+    externC = re.compile(r'^extern\s+"C"(\s*{)?')
     
-    regex_externC = [re.compile('^extern\s+"C"(\s*{)?'),re.compile('^{')]
+    regex_externC = [re.compile(r'^extern\s+"C"(\s*{)?'),re.compile('^{')]
     in_externC = [False,False]
 
     for line in content.splitlines():
