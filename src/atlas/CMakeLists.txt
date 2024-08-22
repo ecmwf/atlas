@@ -806,6 +806,7 @@ util/PeriodicTransform.h
 util/Topology.h
 util/Allocate.h
 util/Allocate.cc
+util/ArrayViewVariant.h
 util/GPUClonable.h
 
 util/Constants.h
