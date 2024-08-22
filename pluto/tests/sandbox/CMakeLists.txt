@@ -1,0 +1,12 @@
+function( add_sandbox target )
+  set( options PRIVATE PUBLIC INTERFACE  )
+  set( single_value_args "")
+  set( multi_value_args "" )
+  cmake_parse_arguments(PARSE_ARGV 1 _PAR "${options}" "${single_value_args}" "${multi_value_args}")
+  add_executable(${target})
+  target_host_device_sources( ${target} PRIVATE ${_PAR_UNPARSED_ARGUMENTS})
+  target_link_libraries( ${target} PRIVATE pluto )
+  target_include_directories( ${target} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} )
+endfunction()
+
+add_sandbox(pluto-sandbox sandbox.cc kernel.cc)
