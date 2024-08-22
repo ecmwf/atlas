@@ -1,0 +1,132 @@
+/*
+ * (C) Copyright 2024- ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
+ */
+#pragma once
+
+#include <cstddef>
+#include <cstdlib>
+#include <new>
+
+#include <iostream>
+
+namespace std::pmr {
+
+class memory_resource{
+public:
+    virtual ~memory_resource() = default;
+    void* allocate(std::size_t bytes, std::size_t alignment = alignof(std::max_align_t)) {
+        return do_allocate(bytes, alignment);
+    }
+    void deallocate(void* ptr, std::size_t bytes, std::size_t alignment = alignof(std::max_align_t)) {
+        do_deallocate(ptr, bytes, alignment);
+    }
+    bool is_equal(const memory_resource& other) const{
+        return do_is_equal(other);
+    }
+    virtual void* do_allocate(std::size_t bytes, std::size_t alignment) = 0;
+    virtual void do_deallocate(void* ptr, std::size_t bytes, std::size_t alignment) = 0;
+    virtual bool do_is_equal(const memory_resource& other) const = 0;
+};
+
+class new_delete_resource_t : public memory_resource {
+public:
+    new_delete_resource_t() {}
+    static new_delete_resource_t* instance() {
+        static new_delete_resource_t instance;
+        return &instance;
+    }
+protected:
+    virtual void* do_allocate(std::size_t bytes, std::size_t alignment) {
+        return ::malloc(bytes);
+    }
+    virtual void do_deallocate(void* ptr, std::size_t bytes, std::size_t alignment) {
+        ::free(ptr);
+    }
+    virtual bool do_is_equal(const memory_resource& other) const noexcept {return true;}
+};
+
+class null_memory_resource_t : public memory_resource {
+public:
+    null_memory_resource_t() {}
+    static null_memory_resource_t* instance() {
+        static null_memory_resource_t instance;
+        return &instance;
+    }
+protected:
+    virtual void* do_allocate(std::size_t bytes, std::size_t alignment) {
+        throw std::bad_alloc();
+    }
+    virtual void do_deallocate(void* ptr, std::size_t bytes, std::size_t alignment) {}
+    virtual bool do_is_equal(const memory_resource& other) const noexcept {return true;}
+};
+
+
+struct pool_options {
+    std::size_t max_blocks_per_chunk = 0;
+    std::size_t largest_required_pool_block = 0;
+};
+
+class DefaultResource {
+public:
+    static memory_resource* get() {
+        return instance().mr_;
+    }
+    static DefaultResource& instance() {
+        static DefaultResource instance;
+        return instance;
+    }
+    static void set(memory_resource* mr) {
+        instance().mr_ = mr;
+    }
+private:
+    DefaultResource () {
+        mr_ = new_delete_resource_t::instance();
+    }
+    memory_resource* mr_;
+};
+
+inline memory_resource* get_default_resource() {
+    return DefaultResource::get();
+}
+inline void set_default_resource(memory_resource* mr) {
+    return DefaultResource::set(mr);
+}
+inline memory_resource* null_memory_resource() {
+    return null_memory_resource_t::instance();
+}
+inline memory_resource* new_delete_resource() {
+    return new_delete_resource_t::instance();
+}
+
+template <typename T>
+class polymorphic_allocator {
+public:
+    using value_type = T;
+    polymorphic_allocator() : mr_(get_default_resource()) {}
+    polymorphic_allocator(memory_resource* mr) : mr_(mr) {}
+    value_type* allocate(std::size_t size) {
+        return (value_type*)mr_->allocate(size * sizeof(T));
+    }
+    void deallocate(value_type* p, std::size_t size) {
+        mr_->deallocate(p, size * sizeof(T));
+    }
+    template< class U, class... Args >
+    void construct( U* p, Args&&... args ) {
+        ::new(p) U(args...);
+    }
+    template<class U>
+    void destroy(U* p) {
+        p->~U();
+    }
+private:
+    memory_resource* mr_;
+};
+
+
+}
