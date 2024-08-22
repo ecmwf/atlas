@@ -76,8 +76,9 @@ if (DEFINED ATLAS_ENABLE_HIP AND NOT DEFINED HIC_ENABLE_HIP )
 endif()
 
 add_subdirectory( hic )
-find_package(hic)
+find_package(hic REQUIRED)
 
+add_subdirectory( pluto )
 
 include( features/BOUNDSCHECKING )
 include( features/FORTRAN )
