@@ -183,7 +183,7 @@ public:
     /// No resizing can be performed as data is not owned.
     IrregularConnectivityImpl(idx_t values[], idx_t rows, idx_t displs[], idx_t counts[]);
 
-#ifdef __CUDACC__
+#if ATLAS_HIC_COMPILER
     /// @brief Copy ctr (only to be used when calling a cuda kernel)
     // This ctr has to be defined in the header, since __CUDACC__ will identify
     // whether
@@ -529,7 +529,7 @@ public:
     /// No resizing can be performed as data is not owned.
     BlockConnectivityImpl(idx_t rows, idx_t cols, idx_t values[]);
 
-#ifdef __CUDACC__
+#if ATLAS_HIC_COMPILER
     /// @brief Copy ctr (only to be used when calling a cuda kernel)
     // This ctr has to be defined in the header, since __CUDACC__ will identify
     // whether it is compiled it for a GPU kernel

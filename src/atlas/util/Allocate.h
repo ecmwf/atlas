@@ -18,11 +18,11 @@ namespace util {
 //------------------------------------------------------------------------------
 
 namespace detail {
-void allocate_cudamanaged(void** ptr, size_t size);
-void deallocate_cudamanaged(void* ptr);
+void allocate_managed(void** ptr, size_t size);
+void deallocate_managed(void* ptr);
 
-void allocate_cuda(void** ptr, size_t size);
-void deallocate_cuda(void* ptr);
+void allocate_device(void** ptr, size_t size);
+void deallocate_device(void* ptr);
 
 void allocate_host(void** ptr, size_t size);
 void deallocate_host(void* ptr);
@@ -32,14 +32,14 @@ void deallocate_host(void* ptr);
 template <typename T>
 void allocate_managedmem(T*& data, size_t N) {
     if (N != 0) {
-        detail::allocate_cudamanaged(reinterpret_cast<void**>(&data), N * sizeof(T));
+        detail::allocate_managed(reinterpret_cast<void**>(&data), N * sizeof(T));
     }
 }
 
 template <typename T>
 void delete_managedmem(T*& data) {
     if (data) {
-        detail::deallocate_cudamanaged(data);
+        detail::deallocate_managed(data);
         data = nullptr;
     }
 }
@@ -47,14 +47,14 @@ void delete_managedmem(T*& data) {
 template <typename T>
 void allocate_devicemem(T*& data, size_t N) {
     if (N != 0) {
-        detail::allocate_cuda(reinterpret_cast<void**>(&data), N * sizeof(T));
+        detail::allocate_device(reinterpret_cast<void**>(&data), N * sizeof(T));
     }
 }
 
 template <typename T>
 void delete_devicemem(T*& data) {
     if (data) {
-        detail::deallocate_cuda(data);
+        detail::deallocate_device(data);
         data = nullptr;
     }
 }
