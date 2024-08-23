@@ -14,4 +14,4 @@
 
 #include "hic/hic_config.h"
 
-#define PLUTO_DEBUGGING 0
+#define PLUTO_DEBUGGING 1
