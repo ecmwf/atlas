@@ -16,9 +16,7 @@
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
 
-#if ATLAS_HAVE_CUDA
-#include <cuda_runtime.h>
-#endif
+#include "hic/hic.h"
 
 namespace atlas {
 namespace array {
@@ -59,10 +57,9 @@ public:
         size_ = N;
     }
 
-    void updateDevice() {
-        if (!data_gpu_) {
-#if ATLAS_HAVE_CUDA
-            ::cudaMalloc((void**)(&data_gpu_), sizeof(T*) * size_);
+    void allocateDevice() {
+        if constexpr (ATLAS_HAVE_GPU) {
+            HIC_CALL(hicMalloc((void**)(&data_gpu_), sizeof(T*) * size_));
 
             T* buff = new T[size_];
 
@@ -70,32 +67,36 @@ public:
                 data_[i]->updateDevice();
                 buff[i] = data_[i]->gpu_object_ptr();
             }
-            ::cudaMemcpy(data_gpu_, buff, sizeof(T*) * size_, cudaMemcpyHostToDevice);
-            delete buff;
-#else
+            HIC_CALL(hicMemcpy(data_gpu_, buff, sizeof(T*) * size_, hicMemcpyHostToDevice));
+            delete[] buff;
+        }
+        else {
             data_gpu_ = data_;
-#endif
-            size_gpu_ = size_;
+        }
+        size_gpu_ = size_;
+    }
+
+    void updateDevice() {
+        if (!data_gpu_) {
+            allocateDevice();
         }
         else {
             ATLAS_ASSERT(size_gpu_ == size_);
-#if ATLAS_HAVE_CUDA
-            for (idx_t i = 0; i < size(); ++i) {
-                data_[i]->updateDevice();
-                assert(data_gpu_[i] == data_[i]->gpu_object_ptr());
+            if constexpr (ATLAS_HAVE_GPU) {
+                for (idx_t i = 0; i < size(); ++i) {
+                    data_[i]->updateDevice();
+                    assert(data_gpu_[i] == data_[i]->gpu_object_ptr());
+                }
             }
-#endif
         }
     }
     void updateHost() {
         ATLAS_ASSERT(data_gpu_ != nullptr);
-
-#if ATLAS_HAVE_CUDA
-
-        for (idx_t i = 0; i < size(); ++i) {
-            data_[i]->updateHost();
+        if constexpr (ATLAS_HAVE_GPU) {
+            for (idx_t i = 0; i < size(); ++i) {
+                data_[i]->updateHost();
+            }
         }
-#endif
     }
 
     T* gpu_object_ptr() { return data_gpu_; }

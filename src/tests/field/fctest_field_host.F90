@@ -50,7 +50,7 @@ field = atlas_Field(kind=atlas_real(8),shape=[10,5])
 call field%data(view)
 
 FCTEST_CHECK( .not. field%host_needs_update() )
-#if ! ATLAS_HAVE_CUDA
+#if ! ATLAS_HAVE_GPU
 FCTEST_CHECK( .not. field%device_needs_update() )
 #endif
 

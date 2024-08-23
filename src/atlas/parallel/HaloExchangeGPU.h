@@ -18,7 +18,7 @@ namespace atlas {
 namespace parallel {
 
 template <int ParallelDim, typename DATA_TYPE, int RANK>
-struct halo_packer_cuda {
+struct halo_packer_hic {
     static void pack(const int sendcnt, array::SVector<int> const& sendmap,
                      const array::ArrayView<DATA_TYPE, RANK>& hfield, const array::ArrayView<DATA_TYPE, RANK>& dfield,
                      DATA_TYPE* send_buffer, int send_buffer_size);
@@ -27,6 +27,9 @@ struct halo_packer_cuda {
                        int recv_buffer_size, array::ArrayView<DATA_TYPE, RANK>& hfield,
                        array::ArrayView<DATA_TYPE, RANK>& dfield);
 };
+
+bool is_device_accessible(const void* data);
+
 
 }  // namespace parallel
 }  // namespace atlas

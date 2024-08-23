@@ -735,7 +735,7 @@ CASE("test_haloexchange") {
     SECTION("test_rank1_cinterface") { test_rank1_cinterface(f); }
 }
 
-#if ATLAS_HAVE_CUDA
+#if ATLAS_HAVE_GPU
 CASE("test_haloexchange on device") {
     bool on_device = true;
     Fixture f(on_device);

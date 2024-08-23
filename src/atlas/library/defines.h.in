@@ -45,16 +45,6 @@
 #define ATLAS_ECKIT_DEVELOP                  @ATLAS_ECKIT_DEVELOP@
 #define ATLAS_HAVE_FUNCTIONSPACE             @atlas_HAVE_ATLAS_FUNCTIONSPACE@
 
-#ifdef __CUDACC__
-#define ATLAS_HOST_DEVICE __host__ __device__
-#define ATLAS_DEVICE __device__
-#define ATLAS_HOST __host__
-#else
-#define ATLAS_HOST_DEVICE
-#define ATLAS_DEVICE
-#define ATLAS_HOST
-#endif
-
 #define ATLAS_BITS_LOCAL @ATLAS_BITS_LOCAL@
 
 #if defined( __GNUC__ ) || defined( __clang__ )
