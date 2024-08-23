@@ -8,9 +8,38 @@
  * does it submit to any jurisdiction.
  */
 
-#include "hic/hic.h"
+#include "pluto/pluto.h"
+
 #include "atlas/mesh/Connectivity.h"
 #include "tests/AtlasTestEnvironment.h"
+
+
+namespace pluto {
+
+template <typename T>
+class scalar {
+public:
+    scalar(const pluto::allocator<T>& alloc) : alloc_(alloc) {
+        data_ = alloc_.allocate(1);
+    }
+
+    ~scalar() {
+        alloc_.deallocate(data_, 1);
+    }
+
+    const T* data() const { return data_; }
+    T* data() { return data_; }
+
+    const T& value() const { return *data_; }
+    T& value() { return *data_; }
+
+private:
+    T* data_;
+    pluto::allocator<T> alloc_;
+};
+
+}
+
 
 using namespace atlas::mesh;
 
@@ -22,7 +51,6 @@ namespace test {
 #else
 #define IN_FORTRAN
 #endif
-
 
 __global__
 void kernel_block(BlockConnectivityImpl conn, bool* result)
@@ -82,10 +110,8 @@ CASE( "test_block_connectivity" )
 {
     BlockConnectivity conn;
 
-    bool* result;
-    hicMallocManaged(&result, sizeof(bool));
-
-    *result = true;
+    pluto::scalar<bool> result(pluto::managed_resource());
+    result.value() = true;
 
     idx_t vals2[12] = {2,3,9,34,356,86,3,24,84,45,2,2};
 
@@ -102,11 +128,11 @@ CASE( "test_block_connectivity" )
     EXPECT(conn(1,3) == 84);
     EXPECT(conn(1,4) == 45);
 
-    kernel_block<<<1,1>>>(conn, result);
+    kernel_block<<<1,1>>>(conn, result.data());
 
-    hicDeviceSynchronize();
+    pluto::wait();
 
-    EXPECT( *result == true );
+    EXPECT( result.value() == true );
 
     // copy back, although not strickly needed since the gpu copy does not modify values,
     // but for the sake of testing it
@@ -126,25 +152,22 @@ CASE( "test_irregular_connectivity" )
 
     EXPECT(conn(0,0) == 1 IN_FORTRAN);
 
-    bool* result;
-    hicMallocManaged(&result, sizeof(bool));
-    *result = true;
+    pluto::scalar<bool> result(pluto::managed_resource());
+    result.value() = true;
 
-    kernel_irr<<<1,1>>>(conn, result);
+    kernel_irr<<<1,1>>>(conn, result.data());
 
-    hicDeviceSynchronize();
+    pluto::wait();
 
-    EXPECT( *result == true );
+    EXPECT( result.value() == true );
 
     // copy back, although not strickly needed since the gpu copy does not modify values,
     // but for the sake of testing it
     EXPECT(conn(0,1) == 3 IN_FORTRAN);
-
 }
 
 CASE( "test_multiblock_connectivity" )
 {
-
     MultiBlockConnectivity conn("mesh");
     EXPECT(conn.rows() == 0);
     EXPECT(conn.maxcols() == 0);
@@ -154,20 +177,19 @@ CASE( "test_multiblock_connectivity" )
     conn.add(2, 3, vals, from_fortran);
 
     EXPECT(conn.block(0)(0,0) == 1 IN_FORTRAN);
-    bool* result;
-    hicMallocManaged(&result, sizeof(bool));
-    *result = true;
 
-    kernel_multiblock<<<1,1>>>(conn, result);
+    pluto::scalar<bool> result(pluto::managed_resource());
+    result.value() = true;
 
-    hicDeviceSynchronize();
+    kernel_multiblock<<<1,1>>>(conn, result.data());
 
-    EXPECT( *result == true );
+    pluto::wait();
+
+    EXPECT( result.value() == true );
 
     // copy back, although not strickly needed since the gpu copy does not modify values,
     // but for the sake of testing it
     EXPECT(conn.block(0)(0,0) == 1 IN_FORTRAN);
-
 }
 
 
