@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include <cuda_runtime.h>
+#include "hic/hic.h"
 
 #include "atlas/library/config.h"
 #include "tests/AtlasTestEnvironment.h"
@@ -45,17 +45,17 @@ CASE( "test_svector" )
     EXPECT( list_ints.size() == 2);
 
     bool *result;
-    cudaError_t err = cudaMallocManaged(&result, sizeof(bool));
+    hicError_t err = hicMallocManaged(&result, sizeof(bool));
 
-    if(err != cudaSuccess)
+    if(err != hicSuccess)
         throw_AssertionFailed("failed to allocate GPU memory");
 
     *result=true;
     kernel_exe<<<1,1>>>(list_ints.data(), list_ints.size(), 0, result);
-    cudaDeviceSynchronize();
+    hicDeviceSynchronize();
 
-    err = cudaGetLastError();
-    if(err != cudaSuccess)
+    err = hicGetLastError();
+    if(err != hicSuccess)
         throw_AssertionFailed("failed to execute kernel");
 
     EXPECT( *result );
@@ -81,9 +81,9 @@ CASE( "test_svector_resize" )
     EXPECT( list_ints.size() == 5);
 
     bool *result;
-    cudaError_t err = cudaMallocManaged(&result, sizeof(bool));
+    hicError_t err = hicMallocManaged(&result, sizeof(bool));
 
-    if(err != cudaSuccess)
+    if(err != hicSuccess)
         throw_AssertionFailed("failed to allocate GPU memory");
 
     *result=true;
@@ -92,10 +92,10 @@ CASE( "test_svector_resize" )
     list_ints[4] = 4;
 
     kernel_exe<<<1,1>>>(list_ints.data(), list_ints.size(), 3, result);
-    cudaDeviceSynchronize();
+    hicDeviceSynchronize();
 
-    err = cudaGetLastError();
-    if(err != cudaSuccess)
+    err = hicGetLastError();
+    if(err != hicSuccess)
         throw_AssertionFailed("failed to execute kernel");
 
     EXPECT( *result );

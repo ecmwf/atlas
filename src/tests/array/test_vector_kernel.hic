@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include <cuda_runtime.h>
+#include "hic/hic.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -85,13 +85,13 @@ CASE( "test_vector_kernel" )
     VectorView<int_gpu*> list_ints_d = make_device_vector_view(list_ints);
 
     VectorView<int_gpu*>* list_ints_dp;
-    cudaMalloc((void**)(&list_ints_dp), sizeof(VectorView<int_gpu*>));
+    hicMalloc((void**)(&list_ints_dp), sizeof(VectorView<int_gpu*>));
 
-    cudaMemcpy(list_ints_dp, &list_ints_d, sizeof(VectorView<int_gpu*>), cudaMemcpyHostToDevice);
+    hicMemcpy(list_ints_dp, &list_ints_d, sizeof(VectorView<int_gpu*>), hicMemcpyHostToDevice);
 
     kernel_ex<<<1,1>>>(list_ints_dp);
 
-    if( cudaPeekAtLastError() != cudaSuccess) std::cout << "ERROR " << std::endl;
+    if( hicPeekAtLastError() != hicSuccess) std::cout << "ERROR " << std::endl;
     list_ints.updateHost();
 
     EXPECT( list_ints_h[0]->val_ == 8 );

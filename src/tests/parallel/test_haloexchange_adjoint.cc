@@ -183,11 +183,15 @@ void test_rank0_arrview(Fixture& f) {
         }
     }
 
-    arr.syncHostDevice();
+    if (f.on_device_) {
+        arr.syncHostDevice();
+    }
 
     f.halo_exchange_std->execute_adjoint<POD, 1>(arr, f.on_device_);
 
-    arr.syncHostDevice();
+    if (f.on_device_) {
+        arr.syncHostDevice();
+    }
 
     switch (mpi::comm().rank()) {
         case 0: {
@@ -240,11 +244,15 @@ void test_rank0_arrview_adj_test(Fixture& f) {
         arrv(j)      = arrv_init(j);
     }
 
-    arr.syncHostDevice();
+    if (f.on_device_) {
+        arr.syncHostDevice();
+    }
 
     f.halo_exchange_std->execute<POD, 1>(arr, f.on_device_);
 
-    arr.syncHostDevice();
+    if (f.on_device_) {
+        arr.syncHostDevice();
+    }
 
     // sum1
     POD sum1(0);
@@ -252,11 +260,15 @@ void test_rank0_arrview_adj_test(Fixture& f) {
         sum1 += arrv(j) * arrv(j);
     }
 
-    arr.syncHostDevice();
+    if (f.on_device_) {
+        arr.syncHostDevice();
+    }
 
     f.halo_exchange_std->execute_adjoint<POD, 1>(arr, f.on_device_);
 
-    arr.syncHostDevice();
+    if (f.on_device_) {
+        arr.syncHostDevice();
+    }
 
     // sum2
     POD sum2(0);
@@ -299,11 +311,15 @@ void test_rank1(Fixture& f) {
         }
     }
 
-    arr.syncHostDevice();
+    if (f.on_device_) {
+        arr.syncHostDevice();
+    }
 
     f.halo_exchange_std->execute_adjoint<POD, 2>(arr, f.on_device_);
 
-    arr.syncHostDevice();
+    if (f.on_device_) {
+        arr.syncHostDevice();
+    }
 
     switch (mpi::comm().rank()) {
         case 0: {
@@ -336,11 +352,15 @@ void test_rank1_adj_test(Fixture& f) {
         arrv(j, 1ul)      = arrv_init(j, 1ul);
     }
 
-    arr.syncHostDevice();
+    if (f.on_device_) {
+        arr.syncHostDevice();
+    }
 
     f.halo_exchange_std->execute<POD, 2>(arr, f.on_device_);
 
-    arr.syncHostDevice();
+    if (f.on_device_) {
+        arr.syncHostDevice();
+    }
 
     // sum1
     POD sum1(0);
@@ -350,11 +370,15 @@ void test_rank1_adj_test(Fixture& f) {
         }
     }
 
-    arr.syncHostDevice();
+    if (f.on_device_) {
+        arr.syncHostDevice();
+    }
 
     f.halo_exchange_std->execute_adjoint<POD, 2>(arr, f.on_device_);
 
-    arr.syncHostDevice();
+    if (f.on_device_) {
+        arr.syncHostDevice();
+    }
 
     // sum2
     POD sum2(0);
@@ -398,8 +422,6 @@ void test_rank1_strided_v1(Fixture& f) {
             break;
         }
     }
-
-    arr_t.syncHostDevice();
 
     // create a wrap array where we fake the strides in a way that the second
     // dimension
@@ -460,9 +482,6 @@ void test_rank1_strided_v1_adj_test(Fixture& f) {
         arrv_t(j, 1ul)      = arrv_init_t(j, 1ul);
     }
 
-    arr_init_t.syncHostDevice();
-    arr_t.syncHostDevice();
-
     // create a wrap array where we fake the strides in a way that the second
     // dimension
     // (number of components) contains only one component but the associated
@@ -483,11 +502,15 @@ void test_rank1_strided_v1_adj_test(Fixture& f) {
 #endif
         ));
 
-    arr->syncHostDevice();
+    if (f.on_device_) {
+        arr->syncHostDevice();
+    }
 
     f.halo_exchange_std->execute<POD, 2>(*arr, f.on_device_);
 
-    arr->syncHostDevice();
+    if (f.on_device_) {
+        arr->syncHostDevice();
+    }
 
     // sum1
     POD sum1(0);
@@ -497,11 +520,15 @@ void test_rank1_strided_v1_adj_test(Fixture& f) {
         }
     }
 
-    arr->syncHostDevice();
+    if (f.on_device_) {
+        arr->syncHostDevice();
+    }
 
     f.halo_exchange_std->execute_adjoint<POD, 2>(*arr, f.on_device_);
 
-    arr->syncHostDevice();
+    if (f.on_device_) {
+        arr->syncHostDevice();
+    }
 
     // sum2
     POD sum2(0);
@@ -546,8 +573,6 @@ void test_rank1_strided_v2(Fixture& f) {
         }
     }
 
-    arr_t.syncHostDevice();
-
     // create a wrap array where we fake the strides in a way that the second
     // dimension
     // (number of components) contains only one component but the associated
@@ -564,6 +589,10 @@ void test_rank1_strided_v2(Fixture& f) {
                      array::make_strides(2, 1)
 #endif
         }));
+
+    if (f.on_device_) {
+        arr->syncHostDevice();
+    }
 
     f.halo_exchange_std->execute_adjoint<POD, 2>(*arr, false);
 
@@ -599,9 +628,6 @@ void test_rank1_strided_v2_adj_test(Fixture& f) {
         arrv_t(j, 1ul)      = arrv_init_t(j, 1ul);
     }
 
-    arr_init_t.syncHostDevice();
-    arr_t.syncHostDevice();
-
     // create a wrap array where we fake the strides in a way that the second
     // dimension
     // (number of components) contains only one component but the associated
@@ -619,11 +645,15 @@ void test_rank1_strided_v2_adj_test(Fixture& f) {
 #endif
         }));
 
-    arr->syncHostDevice();
+    if (f.on_device_) {
+        arr->syncHostDevice();
+    }
 
     f.halo_exchange_std->execute<POD, 2>(*arr, f.on_device_);
 
-    arr->syncHostDevice();
+    if (f.on_device_) {
+        arr->syncHostDevice();
+    }
 
     // sum1
     POD sum1(0);
@@ -633,11 +663,15 @@ void test_rank1_strided_v2_adj_test(Fixture& f) {
         }
     }
 
-    arr->syncHostDevice();
+    if (f.on_device_) {
+        arr->syncHostDevice();
+    }
 
     f.halo_exchange_std->execute_adjoint<POD, 2>(*arr, f.on_device_);
 
-    arr->syncHostDevice();
+    if (f.on_device_) {
+        arr->syncHostDevice();
+    }
 
     // sum2
     POD sum2(0);
@@ -692,11 +726,15 @@ void test_rank2(Fixture& f) {
         }
     }
 
-    arr.syncHostDevice();
+    if (f.on_device_) {
+        arr.syncHostDevice();
+    }
 
     f.halo_exchange_std->execute_adjoint<POD, 3>(arr, f.on_device_);
 
-    arr.syncHostDevice();
+    if (f.on_device_) {
+        arr.syncHostDevice();
+    }
 
     switch (mpi::comm().rank()) {
         case 0: {
@@ -738,7 +776,9 @@ void test_rank2_adj_test(Fixture& f) {
         }
     }
 
-    arr.syncHostDevice();
+    if (f.on_device_) {
+        arr.syncHostDevice();
+    }
 
     f.halo_exchange_std->execute<POD, 3>(arr, f.on_device_);
 
@@ -752,11 +792,15 @@ void test_rank2_adj_test(Fixture& f) {
         }
     }
 
-    arr.syncHostDevice();
+    if (f.on_device_) {
+        arr.syncHostDevice();
+    }
 
     f.halo_exchange_std->execute_adjoint<POD, 3>(arr, f.on_device_);
 
-    arr.syncHostDevice();
+    if (f.on_device_) {
+        arr.syncHostDevice();
+    }
 
     // sum2
     POD sum2(0);
@@ -810,8 +854,6 @@ void test_rank2_l1(Fixture& f) {
         }
     }
 
-    arr_t.syncHostDevice();
-
     std::unique_ptr<array::Array> arr(array::Array::wrap<POD>(
         arrv_t.data(), array::ArraySpec {
             array::make_shape(f.N, 1, 2),
@@ -822,11 +864,8 @@ void test_rank2_l1(Fixture& f) {
 #endif
         }));
 
-    arr_t.syncHostDevice();
-
     f.halo_exchange_std->execute_adjoint<POD, 3>(*arr, false);
 
-    arr_t.syncHostDevice();
 
     switch (mpi::comm().rank()) {
         case 0: {
@@ -877,7 +916,6 @@ void test_rank2_l1_adj_test(Fixture& f) {
             arrv_t(p, i, static_cast<std::size_t>(1)) = arrv_init_t(p, i, static_cast<std::size_t>(1));
         }
     }
-    arr_t.syncHostDevice();
 
     std::unique_ptr<array::Array> arr(array::Array::wrap<POD>(
         arrv_t.data(), array::ArraySpec {
@@ -889,11 +927,7 @@ void test_rank2_l1_adj_test(Fixture& f) {
 #endif
         }));
 
-    arr_t.syncHostDevice();
-
     f.halo_exchange_std->execute<POD, 3>(*arr, false);
-
-    arr_t.syncHostDevice();
 
     // sum1
     POD sum1(0);
@@ -905,11 +939,7 @@ void test_rank2_l1_adj_test(Fixture& f) {
         }
     }
 
-    arr->syncHostDevice();
-
     f.halo_exchange_std->execute_adjoint<POD, 3>(*arr, false);
-
-    arr->syncHostDevice();
 
     // sum2
     POD sum2(0);
@@ -1153,7 +1183,8 @@ void test_rank2_v2(Fixture& f) {
 }
 
 void test_rank0_wrap(Fixture& f) {
-    std::unique_ptr<array::Array> arr(array::Array::wrap<POD>(f.gidx.data(), array::make_shape(f.N)));
+    std::vector<POD> existing = f.gidx;
+    std::unique_ptr<array::Array> arr(array::Array::wrap<POD>(existing.data(), array::make_shape(f.N)));
     array::ArrayView<POD, 1> arrv = array::make_view<POD, 1>(*arr);
     switch (mpi::comm().rank()) {
         case 0: {
@@ -1179,11 +1210,15 @@ void test_rank0_wrap(Fixture& f) {
         }
     }
 
-    arr->syncHostDevice();
+    if (f.on_device_) {
+        arr->syncHostDevice();
+    }
 
     f.halo_exchange_std->execute_adjoint<POD, 1>(*arr, f.on_device_);
 
-    arr->syncHostDevice();
+    if (f.on_device_) {
+        arr->syncHostDevice();
+    }
 
     switch (mpi::comm().rank()) {
         case 0: {
@@ -1202,6 +1237,7 @@ void test_rank0_wrap(Fixture& f) {
             break;
         }
     }
+    arr->deallocateDevice();
 }
 
 void test_rank0_wrap_adj_test(Fixture& f) {
@@ -1226,7 +1262,9 @@ void test_rank0_wrap_adj_test(Fixture& f) {
         arrv_init(j) = arrv(j);
     }
 
-    arr->syncHostDevice();
+    if (f.on_device_) {
+        arr->syncHostDevice();
+    }
 
     f.halo_exchange_std->execute<POD, 1>(*arr, f.on_device_);
 
@@ -1236,11 +1274,15 @@ void test_rank0_wrap_adj_test(Fixture& f) {
         sum1 += arrv(j) * arrv(j);
     }
 
-    arr->syncHostDevice();
+    if (f.on_device_) {
+        arr->syncHostDevice();
+    }
 
     f.halo_exchange_std->execute_adjoint<POD, 1>(*arr, f.on_device_);
 
-    arr->syncHostDevice();
+    if (f.on_device_) {
+        arr->syncHostDevice();
+    }
 
     // sum2
     POD sum2(0);
@@ -1485,7 +1527,9 @@ void test_rank1_cinterface(Fixture& f) {
         }
     }
 
-    arr.syncHostDevice();
+    if (f.on_device_) {
+        arr.syncHostDevice();
+    }
 
     int shapes[2]  = {(int)arrv.shape(0), (int)arrv.shape(1)};
     int strides[2] = {(int)arrv.stride(0), (int)arrv.stride(1)};
