@@ -12,7 +12,7 @@
 
 #include "atlas/library/config.h"
 
-#include "hic/hic.h"
+#include "pluto/pluto.h"
 
 namespace atlas {
 namespace util {
@@ -21,13 +21,13 @@ template <typename Base>
 struct GPUClonable {
     GPUClonable(Base* base_ptr): base_ptr_(base_ptr), gpu_object_ptr_(nullptr) {
         if constexpr (ATLAS_HAVE_GPU) {
-            HIC_CALL(hicMalloc(&gpu_object_ptr_, sizeof(Base)));
+            gpu_object_ptr_ = pluto::device_resource()->allocate(sizeof(Base));
         }
     }
 
     ~GPUClonable() {
         if (gpu_object_ptr_ != nullptr) {
-            HIC_CALL(hicFree(gpu_object_ptr_));
+            pluto::device_resource()->deallocate(gpu_object_ptr_, sizeof(Base));
         }
     }
 
@@ -35,12 +35,12 @@ struct GPUClonable {
 
     void updateDevice() {
         if constexpr (ATLAS_HAVE_GPU) {
-            HIC_CALL(hicMemcpy(gpu_object_ptr_, base_ptr_, sizeof(Base), hicMemcpyHostToDevice));
+            pluto::memcpy_host_to_device(gpu_object_ptr_, base_ptr_, sizeof(Base));
         }
     }
     void updateHost() {
         if constexpr (ATLAS_HAVE_GPU) {
-            HIC_CALL(hicMemcpy(base_ptr_, gpu_object_ptr_, sizeof(Base), hicMemcpyDeviceToHost));
+            pluto::memcpy_device_to_host(base_ptr_, gpu_object_ptr_, sizeof(Base));
         }
     }
 
