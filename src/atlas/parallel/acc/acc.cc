@@ -13,20 +13,8 @@
 #include "atlas/library/defines.h"
 
 #if ATLAS_HAVE_ACC
-#include "hic/hic.h"
+#include "pluto/pluto.h"
 #include "atlas_acc_support/atlas_acc.h"
-static int hic_devices() {
-    static int devices_ = [](){
-        int n = 0;
-        auto err = hicGetDeviceCount(&n);
-        if (err != hicSuccess) {
-            n = 0;
-            static_cast<void>(hicGetLastError());
-        }
-        return n;
-    }();
-    return devices_;
-}
 #endif
 
 namespace atlas::acc {
@@ -34,15 +22,15 @@ namespace atlas::acc {
 int devices() {
 #if ATLAS_HAVE_ACC
     static int num_devices = [](){
-        if (hic_devices() == 0) {
+        if (pluto::devices() == 0) {
             return 0;
         }
         auto devicetype = atlas_acc_get_device_type();
         int _num_devices = atlas_acc_get_num_devices();
         if (_num_devices == 1 && devicetype == atlas_acc_device_host) {
           --_num_devices;
-	}
-	return _num_devices;
+	    }
+	    return _num_devices;
     }();
     return num_devices;
 #else

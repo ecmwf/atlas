@@ -13,10 +13,11 @@
 #include <cassert>
 #include <cstddef>
 
+#include "pluto/pluto.h"
+
 #include "atlas/library/config.h"
 #include "atlas/runtime/Exception.h"
 
-#include "hic/hic.h"
 
 namespace atlas {
 namespace array {
@@ -59,7 +60,7 @@ public:
 
     void allocateDevice() {
         if constexpr (ATLAS_HAVE_GPU) {
-            HIC_CALL(hicMalloc((void**)(&data_gpu_), sizeof(T*) * size_));
+            data_gpu_ = static_cast<T*>(pluto::device_resource()->allocate(sizeof(T*) * size_));
 
             T* buff = new T[size_];
 
@@ -67,7 +68,8 @@ public:
                 data_[i]->updateDevice();
                 buff[i] = data_[i]->gpu_object_ptr();
             }
-            HIC_CALL(hicMemcpy(data_gpu_, buff, sizeof(T*) * size_, hicMemcpyHostToDevice));
+
+            pluto::memcpy_host_to_device(data_gpu_, buff, sizeof(T*) * size_);
             delete[] buff;
         }
         else {
