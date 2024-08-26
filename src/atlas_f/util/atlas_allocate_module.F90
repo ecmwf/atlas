@@ -231,7 +231,7 @@ subroutine atlas_deallocate_managedmem_real64_r1( A )
   use, intrinsic :: iso_c_binding
   use atlas_allocate_c_binding
   real(c_double), pointer :: a(:)
-  call atlas__deallocate_managedmem( c_loc_real64(A(1)) )
+  call atlas__deallocate_managedmem_double( c_loc_real64(A(1)), size(A,KIND=c_size_t) )
   nullify( a )
 end subroutine
 
@@ -239,7 +239,7 @@ subroutine atlas_deallocate_managedmem_real32_r1( A )
   use, intrinsic :: iso_c_binding
   use atlas_allocate_c_binding
   real(c_float), pointer :: a(:)
-  call atlas__deallocate_managedmem( c_loc_real32(A(1)) )
+  call atlas__deallocate_managedmem_float( c_loc_real32(A(1)), size(A,KIND=c_size_t) )
   nullify( a )
 end subroutine
 
@@ -247,7 +247,7 @@ subroutine atlas_deallocate_managedmem_int32_r1( A )
   use, intrinsic :: iso_c_binding
   use atlas_allocate_c_binding
   integer(c_int), pointer :: a(:)
-  call atlas__deallocate_managedmem( c_loc_int32(A(1)) )
+  call atlas__deallocate_managedmem_int( c_loc_int32(A(1)), size(A,KIND=c_size_t) )
   nullify( a )
 end subroutine
 
@@ -255,7 +255,7 @@ subroutine atlas_deallocate_managedmem_int64_r1( A )
   use, intrinsic :: iso_c_binding
   use atlas_allocate_c_binding
   integer(c_long), pointer :: a(:)
-  call atlas__deallocate_managedmem( c_loc_int64(A(1)) )
+  call atlas__deallocate_managedmem_long( c_loc_int64(A(1)), size(A,KIND=c_size_t) )
   nullify( a )
 end subroutine
 
@@ -263,7 +263,7 @@ subroutine atlas_deallocate_managedmem_real64_r2( A )
   use, intrinsic :: iso_c_binding
   use atlas_allocate_c_binding
   real(c_double), pointer :: a(:,:)
-  call atlas__deallocate_managedmem( c_loc_real64(A(1,1)) )
+  call atlas__deallocate_managedmem_double( c_loc_real64(A(1,1)), size(A,KIND=c_size_t) )
   nullify( a )
 end subroutine
 
@@ -271,7 +271,7 @@ subroutine atlas_deallocate_managedmem_real32_r2( A )
   use, intrinsic :: iso_c_binding
   use atlas_allocate_c_binding
   real(c_float), pointer :: a(:,:)
-  call atlas__deallocate_managedmem( c_loc_real32(A(1,1)) )
+  call atlas__deallocate_managedmem_float( c_loc_real32(A(1,1)), size(A,KIND=c_size_t) )
   nullify( a )
 end subroutine
 
@@ -279,7 +279,7 @@ subroutine atlas_deallocate_managedmem_int32_r2( A )
   use, intrinsic :: iso_c_binding
   use atlas_allocate_c_binding
   integer(c_int), pointer :: a(:,:)
-  call atlas__deallocate_managedmem( c_loc_int32(A(1,1)) )
+  call atlas__deallocate_managedmem_int( c_loc_int32(A(1,1)), size(A,KIND=c_size_t) )
   nullify( a )
 end subroutine
 
@@ -287,7 +287,7 @@ subroutine atlas_deallocate_managedmem_int64_r2( A )
   use, intrinsic :: iso_c_binding
   use atlas_allocate_c_binding
   integer(c_long), pointer :: a(:,:)
-  call atlas__deallocate_managedmem( c_loc_int64(A(1,1)) )
+  call atlas__deallocate_managedmem_long( c_loc_int64(A(1,1)), size(A,KIND=c_size_t) )
   nullify( a )
 end subroutine
 

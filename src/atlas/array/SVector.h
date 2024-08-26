@@ -161,7 +161,7 @@ private:
             for (idx_t c = 0; c < size; ++c) {
                 ptr[c].~T();
             }
-            util::delete_managedmem(ptr);
+            util::delete_managedmem(ptr, size);
         }
     }
 
