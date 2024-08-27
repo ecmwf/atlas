@@ -25,41 +25,41 @@ namespace util {
 namespace detail {
 //------------------------------------------------------------------------------
 
-void allocate_managed(void** ptr, size_t size) {
+void allocate_managed(void** ptr, size_t bytes) {
     if constexpr (not ATLAS_HAVE_GPU) {
-        return allocate_host(ptr, size);
+        return allocate_host(ptr, bytes);
     }
-    HIC_CALL(hicMallocManaged(ptr, size));
+    HIC_CALL(hicMallocManaged(ptr, bytes));
 }
 
-void deallocate_managed(void* ptr) {
+void deallocate_managed(void* ptr, size_t bytes) {
     if constexpr (not ATLAS_HAVE_GPU) {
-        return deallocate_host(ptr);
-    }
-    HIC_CALL(hicDeviceSynchronize());
-    HIC_CALL(hicFree(ptr));
-}
-
-void allocate_device(void** ptr, size_t size) {
-    if constexpr (not ATLAS_HAVE_GPU) {
-        return allocate_host(ptr, size);
-    }
-    HIC_CALL(hicMalloc(ptr, size));
-}
-
-void deallocate_device(void* ptr) {
-    if constexpr (not ATLAS_HAVE_GPU) {
-        return deallocate_host(ptr);
+        return deallocate_host(ptr, bytes);
     }
     HIC_CALL(hicDeviceSynchronize());
     HIC_CALL(hicFree(ptr));
 }
 
-void allocate_host(void** ptr, size_t size) {
-    *ptr = malloc(size);
+void allocate_device(void** ptr, size_t bytes) {
+    if constexpr (not ATLAS_HAVE_GPU) {
+        return allocate_host(ptr, bytes);
+    }
+    HIC_CALL(hicMalloc(ptr, bytes));
 }
 
-void deallocate_host(void* ptr) {
+void deallocate_device(void* ptr, size_t bytes) {
+    if constexpr (not ATLAS_HAVE_GPU) {
+        return deallocate_host(ptr, bytes);
+    }
+    HIC_CALL(hicDeviceSynchronize());
+    HIC_CALL(hicFree(ptr));
+}
+
+void allocate_host(void** ptr, size_t bytes) {
+    *ptr = malloc(bytes);
+}
+
+void deallocate_host(void* ptr, size_t /*bytes*/) {
     free(ptr);
 }
 
@@ -80,8 +80,17 @@ void atlas__allocate_managedmem_int(int*& a, size_t N) {
 void atlas__allocate_managedmem_long(long*& a, size_t N) {
     allocate_managedmem(a, N);
 }
-void atlas__deallocate_managedmem(void*& a) {
-    delete_managedmem(a);
+void atlas__deallocate_managedmem_double(double*& a, size_t N) {
+    delete_managedmem(a, N);
+}
+void atlas__deallocate_managedmem_float(float*& a, size_t N) {
+    delete_managedmem(a, N);
+}
+void atlas__deallocate_managedmem_int(int*& a, size_t N) {
+    delete_managedmem(a, N);
+}
+void atlas__deallocate_managedmem_long(long*& a, size_t N) {
+    delete_managedmem(a, N);
 }
 }
 

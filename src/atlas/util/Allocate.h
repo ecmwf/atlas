@@ -18,14 +18,14 @@ namespace util {
 //------------------------------------------------------------------------------
 
 namespace detail {
-void allocate_managed(void** ptr, size_t size);
-void deallocate_managed(void* ptr);
+void allocate_managed(void** ptr, size_t bytes);
+void deallocate_managed(void* ptr, size_t bytes);
 
-void allocate_device(void** ptr, size_t size);
-void deallocate_device(void* ptr);
+void allocate_device(void** ptr, size_t bytes);
+void deallocate_device(void* ptr, size_t bytes);
 
-void allocate_host(void** ptr, size_t size);
-void deallocate_host(void* ptr);
+void allocate_host(void** ptr, size_t bytes);
+void deallocate_host(void* ptr, size_t bytes);
 
 }  // namespace detail
 
@@ -37,9 +37,9 @@ void allocate_managedmem(T*& data, size_t N) {
 }
 
 template <typename T>
-void delete_managedmem(T*& data) {
+void delete_managedmem(T*& data, size_t N) {
     if (data) {
-        detail::deallocate_managed(data);
+        detail::deallocate_managed(data, N * sizeof(T));
         data = nullptr;
     }
 }
@@ -52,9 +52,9 @@ void allocate_devicemem(T*& data, size_t N) {
 }
 
 template <typename T>
-void delete_devicemem(T*& data) {
+void delete_devicemem(T*& data, size_t N) {
     if (data) {
-        detail::deallocate_device(data);
+        detail::deallocate_device(data, N * sizeof(T));
         data = nullptr;
     }
 }
@@ -67,9 +67,9 @@ void allocate_hostmem(T*& data, size_t N) {
 }
 
 template <typename T>
-void delete_hostmem(T*& data) {
+void delete_hostmem(T*& data, size_t N) {
     if (data) {
-        detail::deallocate_host(data);
+        detail::deallocate_host(data, N * sizeof(T));
         data = nullptr;
     }
 }
@@ -82,7 +82,10 @@ void atlas__allocate_managedmem_double(double*& a, size_t N);
 void atlas__allocate_managedmem_float(float*& a, size_t N);
 void atlas__allocate_managedmem_int(int*& a, size_t N);
 void atlas__allocate_managedmem_long(long*& a, size_t N);
-void atlas__deallocate_managedmem(void*& a);
+void atlas__deallocate_managedmem_double(double*& a, size_t N);
+void atlas__deallocate_managedmem_float(float*& a, size_t N);
+void atlas__deallocate_managedmem_int(int*& a, size_t N);
+void atlas__deallocate_managedmem_long(long*& a, size_t N);
 }
 
 //------------------------------------------------------------------------------
