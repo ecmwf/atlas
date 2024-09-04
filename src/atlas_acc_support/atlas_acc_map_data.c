@@ -18,11 +18,19 @@
 
 #include <openacc.h>
 
-void atlas_acc_map_data(void* cpu_ptr, void* gpu_ptr, unsigned long size) {
-  acc_map_data(cpu_ptr, gpu_ptr, size);
+void atlas_acc_map_data(void* cpu_ptr, void* gpu_ptr, unsigned long bytes) {
+  acc_map_data(cpu_ptr, gpu_ptr, bytes);
 }
 
 
 void atlas_acc_unmap_data(void* cpu_ptr) {
   acc_unmap_data(cpu_ptr);
+}
+
+int atlas_acc_is_present(void* cpu_ptr, unsigned long bytes) {
+  return acc_is_present(cpu_ptr, bytes);
+}
+
+void* atlas_acc_deviceptr(void* cpu_ptr) {
+  return acc_deviceptr(cpu_ptr);
 }
