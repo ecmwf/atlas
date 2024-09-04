@@ -589,7 +589,7 @@ void StructuredColumns::setup(const grid::Distribution& distribution, const ecki
         atlas_omp_parallel_for(idx_t n = 0; n < gridpoints.size(); ++n) {
             const GridPoint& gp = gridpoints[n];
             if (regional) {
-              std::vector<double> lonlatVec(2);
+              std::array<double,2> lonlatVec;
               grid_->lonlat(gp.i, gp.j, lonlatVec.data());
               xy(gp.r, XX) = lonlatVec[0];
               xy(gp.r, YY) = lonlatVec[1];

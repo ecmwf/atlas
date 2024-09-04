@@ -224,10 +224,11 @@ void RegionalLinear2D::do_setup(const FunctionSpace& source,
       {return targetRecvPointsListOrdered[i1] < targetRecvPointsListOrdered[i2];});
 
     // Compute horizontal interpolation
+    stencil_.resize(targetSize_);
+    weights_.resize(targetSize_);
+    stencilSize_.resize(targetSize_);
     for (size_t targetJnode = 0; targetJnode < targetSize_; ++targetJnode) {
       // Interpolation element default values
-      std::vector<std::pair<size_t, double>> operations;
-
       if (targetGhostView(targetJnode) == 0) {
         // Destination grid indices
         const double targetX = targetPoints[targetJnode][0];
@@ -297,7 +298,7 @@ void RegionalLinear2D::do_setup(const FunctionSpace& source,
             } else {
               indexJ = sourceNy-1;
             }
-            std::cout << "WARNING: point outside of the domain" << std::endl;
+            Log::info() << "WARNING: point outside of the domain" << std::endl;
           }
 
           // Colocated point (actually nearest neighbor)
@@ -314,7 +315,8 @@ void RegionalLinear2D::do_setup(const FunctionSpace& source,
         std::vector<bool> toFind = {true, !colocatedX, !colocatedY, !colocatedX && !colocatedY};
         std::vector<size_t> valueToFind = {indexI*sourceNy+indexJ, (indexI+1)*sourceNy+indexJ,
           indexI*sourceNy+(indexJ+1), (indexI+1)*sourceNy+(indexJ+1)};
-        std::vector<int> foundIndex(4, -1);
+        std::array<int,4> foundIndex;
+        foundIndex.fill(-1);
 
         // Binary search for each point
         for (size_t jj = 0; jj < 4; ++jj) {
@@ -343,24 +345,39 @@ void RegionalLinear2D::do_setup(const FunctionSpace& source,
         // Create interpolation operations
         if (colocatedX && colocatedY) {
           // Colocated point
-          operations.push_back(std::make_pair(foundIndex[0], 1.0));
+          stencil_[targetJnode][0] = foundIndex[0];
+          weights_[targetJnode][0] = 1.0;
+          stencilSize_[targetJnode] = 1;
         } else if (colocatedY) {
           // Linear interpolation along x
-          operations.push_back(std::make_pair(foundIndex[0], 1.0-alphaX));
-          operations.push_back(std::make_pair(foundIndex[1], alphaX));
+          stencil_[targetJnode][0] = foundIndex[0];
+          weights_[targetJnode][0] = 1.0-alphaX;
+          stencil_[targetJnode][1] = foundIndex[1];
+          weights_[targetJnode][1] = alphaX;
+          stencilSize_[targetJnode] = 2;
         } else if (colocatedX) {
           // Linear interpolation along y
-          operations.push_back(std::make_pair(foundIndex[0], 1.0-alphaY));
-          operations.push_back(std::make_pair(foundIndex[2], alphaY));
+          stencil_[targetJnode][0] = foundIndex[0];
+          weights_[targetJnode][0] = 1.0-alphaY;
+          stencil_[targetJnode][1] = foundIndex[2];
+          weights_[targetJnode][1] = alphaY;
+          stencilSize_[targetJnode] = 2;
         } else {
           // Bilinear interpolation
-          operations.push_back(std::make_pair(foundIndex[0], (1.0-alphaX)*(1.0-alphaY)));
-          operations.push_back(std::make_pair(foundIndex[1], alphaX*(1.0-alphaY)));
-          operations.push_back(std::make_pair(foundIndex[2], (1.0-alphaX)*alphaY));
-          operations.push_back(std::make_pair(foundIndex[3], alphaX*alphaY));
+          stencil_[targetJnode][0] = foundIndex[0];
+          weights_[targetJnode][0] = (1.0-alphaX)*(1.0-alphaY);
+          stencil_[targetJnode][1] = foundIndex[1];
+          weights_[targetJnode][1] = alphaX*(1.0-alphaY);
+          stencil_[targetJnode][2] = foundIndex[2];
+          weights_[targetJnode][2] = (1.0-alphaX)*alphaY;
+          stencil_[targetJnode][3] = foundIndex[3];
+          weights_[targetJnode][3] = alphaX*alphaY;
+          stencilSize_[targetJnode] = 4;
         }
+       } else {
+        // Ghost point
+        stencilSize_[targetJnode] = 0;
       }
-      horInterp_.push_back(atlas::interpolation::element::InterpElement(operations));
     }
   }
 }
@@ -428,26 +445,23 @@ void RegionalLinear2D::do_execute(const Field& sourceField, Field& targetField,
                   targetRecvVec.data(), targetRecvCounts3D.data(), targetRecvDispls3D.data());
 
   // Interpolation
-  const auto targetGhostView = array::make_view<int, 1>(targetField.functionspace().ghost());
   if (ndim == 1) {
     auto targetView = array::make_view<double, 1>(targetField);
     targetView.assign(0.0);
     for (size_t targetJnode = 0; targetJnode < targetSize_; ++targetJnode) {
-      if (targetGhostView(targetJnode) == 0) {
-        for (const auto & horOperation : horInterp_[targetJnode].operations()) {
-          targetView(targetJnode) += horOperation.second*targetRecvVec[horOperation.first];
-        }
+      for (size_t jj = 0; jj < stencilSize_[targetJnode]; ++jj) {
+        targetView(targetJnode) += weights_[targetJnode][jj]
+                                   *targetRecvVec[stencil_[targetJnode][jj]];
       }
     }
   } else if (ndim == 2) {
     auto targetView = array::make_view<double, 2>(targetField);
     targetView.assign(0.0);
     for (size_t targetJnode = 0; targetJnode < targetSize_; ++targetJnode) {
-      if (targetGhostView(targetJnode) == 0) {
-        for (const auto & horOperation : horInterp_[targetJnode].operations()) {
-          for (size_t k = 0; k < nz; ++k) {
-            targetView(targetJnode, k) += horOperation.second*targetRecvVec[horOperation.first*nz+k];
-          }
+      for (size_t jj = 0; jj < stencilSize_[targetJnode]; ++jj) {
+        for (size_t k = 0; k < nz; ++k) {
+          targetView(targetJnode, k) += weights_[targetJnode][jj]
+                                        *targetRecvVec[stencil_[targetJnode][jj]*nz+k];
         }
       }
     }
@@ -500,25 +514,22 @@ void RegionalLinear2D::do_execute_adjoint(Field& sourceField,
   Field targetTmpField = targetField.clone();
 
   // Interpolation adjoint
-  const auto targetGhostView = array::make_view<int, 1>(targetField.functionspace().ghost());
   std::vector<double> targetRecvVec(targetRecvSize_*nz, 0.0);
   if (ndim == 1) {
     const auto targetView = array::make_view<double, 1>(targetTmpField);
     for (size_t targetJnode = 0; targetJnode < targetSize_; ++targetJnode) {
-      if (targetGhostView(targetJnode) == 0) {
-        for (const auto & horOperation : horInterp_[targetJnode].operations()) {
-          targetRecvVec[horOperation.first] += horOperation.second*targetView(targetJnode);
-        }
+      for (size_t jj = 0; jj < stencilSize_[targetJnode]; ++jj) {
+        targetRecvVec[stencil_[targetJnode][jj]] += weights_[targetJnode][jj]
+                                                    *targetView(targetJnode);
       }
     }
   } else if (ndim == 2) {
     const auto targetView = array::make_view<double, 2>(targetTmpField);
     for (size_t targetJnode = 0; targetJnode < targetSize_; ++targetJnode) {
-      if (targetGhostView(targetJnode) == 0) {
-        for (const auto & horOperation : horInterp_[targetJnode].operations()) {
-          for (size_t k = 0; k < nz; ++k) {
-            targetRecvVec[horOperation.first*nz+k] += horOperation.second*targetView(targetJnode, k);
-          }
+      for (size_t jj = 0; jj < stencilSize_[targetJnode]; ++jj) {
+        for (size_t k = 0; k < nz; ++k) {
+          targetRecvVec[stencil_[targetJnode][jj]*nz+k] += weights_[targetJnode][jj]
+                                                           *targetView(targetJnode, k);
         }
       }
     }

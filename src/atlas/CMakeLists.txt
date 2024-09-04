@@ -533,7 +533,6 @@ interpolation/Vector2D.cc
 interpolation/Vector2D.h
 interpolation/Vector3D.cc
 interpolation/Vector3D.h
-interpolation/element/InterpElement.h
 interpolation/element/Quad2D.h
 interpolation/element/Quad2D.cc
 interpolation/element/Quad3D.cc

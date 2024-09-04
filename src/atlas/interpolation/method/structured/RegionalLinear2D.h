@@ -14,7 +14,6 @@
 #include "atlas/field.h"
 #include "atlas/functionspace.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/interpolation/element/InterpElement.h"
 
 #include "eckit/config/Configuration.h"
 #include "eckit/mpi/Comm.h"
@@ -67,7 +66,9 @@ class RegionalLinear2D : public Method {
   std::vector<int> targetRecvCounts_;
   std::vector<int> targetRecvDispls_;
   std::vector<size_t> sourceSendMapping_;
-  std::vector<atlas::interpolation::element::InterpElement> horInterp_;
+  std::vector<std::array<size_t,4>> stencil_;
+  std::vector<std::array<double,4>> weights_;
+  std::vector<size_t> stencilSize_;
 };
 
 
