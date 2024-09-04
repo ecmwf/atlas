@@ -55,18 +55,25 @@ FieldImpl* FieldCreatorIFS::createField(const eckit::Parametrisation& params) co
         datatype = array::DataType(kind);
     }
 
-    nblk = std::ceil(static_cast<double>(ngptot) / static_cast<double>(nproma));
+    nblk = std::ceil(static_cast<double>(ngptot + nproma - 1) / static_cast<double>(nproma));
 
     array::ArrayShape s;
     bool fortran(false);
     params.get("fortran", fortran);
-    if (fortran) {
-        s = array::make_shape(nproma, nlev, nvar, nblk);
+    printf(" FieldCreatorIFS nlev, nvar: %zu, %zu", nlev, nvar);
+
+    if (nlev > 0 && nvar > 0) {
+        s = ( fortran ? array::make_shape(nproma, nlev, nvar, nblk) : array::make_shape(nblk, nvar, nlev, nproma) );
+    }
+    else if (nlev > 0) {
+        s = ( fortran ? array::make_shape(nproma, nlev, nblk) : array::make_shape(nblk, nlev, nproma) );
+    }
+    else if (nvar > 0) {
+        s = ( fortran ? array::make_shape(nproma, nvar, nblk) : array::make_shape(nblk, nvar, nproma) );
     }
     else {
-        s = array::make_shape(nblk, nvar, nlev, nproma);
+        s = ( fortran ? array::make_shape(nproma, nblk) : array::make_shape(nblk, nproma) );
     }
-
     std::string name;
     params.get("name", name);
     Log::debug() << "Creating IFS " << datatype.str() << " field: " << name << "[nblk=" << nblk << "][nvar=" << nvar

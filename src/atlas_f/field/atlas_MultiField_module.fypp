@@ -77,6 +77,8 @@ END TYPE
 interface atlas_MultiField
   module procedure atlas_MultiField__cptr
   module procedure atlas_MultiField__create
+  module procedure atlas_MultiField__create_names
+
 !#:for dtype in integer_dtypes
 !  module procedure atlas_MultiField__create_name_kind_shape_${dtype}$
 !  module procedure atlas_MultiField__create_kind_shape_${dtype}$
@@ -114,6 +116,67 @@ function atlas_MultiField__create(params) result(field)
   type(atlas_MultiField) :: field
   class(atlas_Config), intent(in) :: params
   field = atlas_MultiField__cptr( atlas__MultiField__create(params%CPTR_PGIBUG_B) )
+  call field%return()
+end function
+
+!-------------------------------------------------------------------------------
+
+function atlas_MultiField__create_names(kind, shape, field_names, opt_config) result(field)
+  use atlas_multifield_c_binding
+  type(atlas_MultiField) :: field
+  character(*), intent(in) :: kind
+  integer, intent(in) :: shape(:)
+  character(*), intent(in) :: field_names(:)
+  type(atlas_Config), intent(in), optional :: opt_config
+  type(atlas_Config) :: config
+  type(atlas_Config), allocatable :: field_configs(:)
+  integer :: rank, i, ivar, nvar, nblk, nproma, field_idx, nlev
+
+  if (size(field_names) == 0 .or. size(shape) < 3) then
+    print *, "atlas_MultiField__create_names: must have at least one field name, and the size of shape", &
+        & " is minimum 3, e.g. [nproma,-1,nblk]"
+    stop -1
+  end if
+
+  if (present(opt_config)) then
+    config = opt_config
+  else
+    config = atlas_Config()
+  end if
+
+  rank = size(shape)
+  do i = 1, rank
+    if (shape(i) == -1) then
+      field_idx = i
+      exit
+    end if
+  end do
+
+  nlev = 0
+  if (field_idx > 2) then
+    nlev = shape(field_idx - 1)
+  end if
+
+  nblk = shape(rank)
+  nproma = shape(1)
+  nvar = size(field_names)
+  call config%set("type", "MultiFieldCreatorIFS");
+  call config%set("datatype", kind);
+  call config%set("nproma", nproma);
+  call config%set("nblk", nblk);
+  call config%set("nlev", nlev);
+  call config%set("ngptot", nblk * nproma);
+
+print *, "field_idx: ", field_idx
+print *, "     rank, nlev, nblk, nvar, nproma: ", rank, nlev, nblk, nvar, nproma
+
+  allocate(field_configs(nvar))
+  do ivar = 1, nvar
+      field_configs(ivar) = atlas_Config()
+      call field_configs(ivar)%set("name", trim(field_names(ivar)))
+  end do
+  call config%set("fields", field_configs)
+  field = atlas_MultiField__cptr( atlas__MultiField__create(config%CPTR_PGIBUG_B) )
   call field%return()
 end function
 

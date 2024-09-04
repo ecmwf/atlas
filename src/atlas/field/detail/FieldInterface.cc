@@ -36,6 +36,9 @@ void atlas__Field__data_specf(FieldImpl* This, Value*& data, int& rank, int*& sh
     shapef   = const_cast<int*>(This->shapef().data());
     stridesf = const_cast<int*>(This->stridesf().data());
     rank     = This->shapef().size();
+    printf("atlas__Field__data_specf :: rank: %i\n", rank);
+    printf("atlas__Field__data_specf :: shape: %i, %i, %i\n", shapef[0], shapef[1], shapef[2]);
+    if (rank > 3) printf(", %i", shapef[3]);
 }
 
 template <typename Value>
@@ -195,10 +198,12 @@ void atlas__Field__data_long_specf(FieldImpl* This, long*& data, int& rank, int*
 
 void atlas__Field__data_float_specf(FieldImpl* This, float*& data, int& rank, int*& shapef, int*& stridesf) {
     atlas__Field__data_specf(This, data, rank, shapef, stridesf);
+    std::cout << "atlas__Field__data_float_specf :: rank = " << rank << std::endl;
 }
 
 void atlas__Field__data_double_specf(FieldImpl* This, double*& data, int& rank, int*& shapef, int*& stridesf) {
     atlas__Field__data_specf(This, data, rank, shapef, stridesf);
+    std::cout << "atlas__Field__data_double_specf :: rank = " << rank << std::endl;
 }
 
 void atlas__Field__device_data_int_specf(FieldImpl* This, int*& data, int& rank, int*& shapef, int*& stridesf) {
