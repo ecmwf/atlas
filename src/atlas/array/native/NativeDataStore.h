@@ -24,7 +24,7 @@
 #include "atlas/parallel/acc/acc.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
-#include "eckit/log/Bytes.h"
+#include "atlas/runtime/Memory.h"
 
 #define ATLAS_ACC_DEBUG 0
 
@@ -33,47 +33,6 @@
 namespace atlas {
 namespace array {
 namespace native {
-
-struct MemoryHighWatermark {
-    std::atomic<size_t> bytes_{0};
-    std::atomic<size_t> high_{0};
-    void print(std::ostream& out) const { out << eckit::Bytes(double(bytes_)); }
-    friend std::ostream& operator<<(std::ostream& out, const MemoryHighWatermark& v) {
-        v.print(out);
-        return out;
-    }
-    MemoryHighWatermark& operator+=(const size_t& bytes) {
-        bytes_ += bytes;
-        update_maximum();
-        if (atlas::Library::instance().traceMemory()) {
-            Log::trace() << "Memory: " << eckit::Bytes(double(bytes_)) << "\t( +" << eckit::Bytes(double(bytes))
-                         << " \t| high watermark " << eckit::Bytes(double(high_)) << "\t)" << std::endl;
-        }
-        return *this;
-    }
-    MemoryHighWatermark& operator-=(const size_t& bytes) {
-        bytes_ -= bytes;
-        if (atlas::Library::instance().traceMemory()) {
-            Log::trace() << "Memory: " << eckit::Bytes(double(bytes_)) << "\t( -" << eckit::Bytes(double(bytes))
-                         << " \t| high watermark " << eckit::Bytes(double(high_)) << "\t)" << std::endl;
-        }
-        return *this;
-    }
-
-private:
-    MemoryHighWatermark() = default;
-    void update_maximum() noexcept {
-        size_t prev_value = high_;
-        while (prev_value < bytes_ && !high_.compare_exchange_weak(prev_value, bytes_)) {
-        }
-    }
-
-public:
-    static MemoryHighWatermark& instance() {
-        static MemoryHighWatermark _instance;
-        return _instance;
-    }
-};
 
 template <typename Value>
 static constexpr Value invalid_value() {
@@ -93,13 +52,6 @@ template <typename Value>
 void initialise(Value[], size_t) {}
 #endif
 
-static auto host_memory_resource() {
-    return new pluto::TraceMemoryResource("host_memory", pluto::host::get_default_resource());
-}
-
-static auto device_memory_resource() {
-    return new pluto::TraceMemoryResource("device_memory", pluto::device::get_default_resource());
-}
 
 template <typename Value>
 class DataStore : public ArrayDataStore {
@@ -235,15 +187,9 @@ public:
 
 
 private:
-    [[noreturn]] void throw_AllocationFailed(size_t bytes, const eckit::CodeLocation& loc) {
-        std::ostringstream ss;
-        ss << "AllocationFailed: Could not allocate " << eckit::Bytes(bytes);
-        throw_Exception(ss.str(), loc);
-    }
 
     void allocateHost() {
         if (size_ > 0) {
-            MemoryHighWatermark::instance() += footprint();
             host_data_ = host_allocator_.allocate(size_);
         }
         else {
@@ -255,7 +201,6 @@ private:
         if (host_data_) {
             host_allocator_.deallocate(host_data_, size_);
             host_data_ = nullptr;
-            MemoryHighWatermark::instance() -= footprint();
         }
     }
 
