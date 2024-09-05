@@ -13,6 +13,9 @@
 #include <sstream>
 #include <string>
 
+#include "eckit/log/Bytes.h"
+#include <iomanip>
+
 #include "eckit/config/LibEcKit.h"
 #include "eckit/config/Resource.h"
 #include "eckit/eckit.h"
@@ -23,10 +26,12 @@
 #include "eckit/log/OStreamTarget.h"
 #include "eckit/log/PrefixTarget.h"
 #include "eckit/runtime/Main.h"
+#include "atlas/runtime/Memory.h"
 #include "eckit/system/SystemInfo.h"
 #include "eckit/types/Types.h"
 #include "eckit/utils/Translator.h"
 #include "eckit/system/LibraryManager.h"
+
 
 #if ATLAS_ECKIT_HAVE_ECKIT_585
 #include "eckit/linalg/LinearAlgebraDense.h"
@@ -372,7 +377,33 @@ void Library::finalise() {
     }
 
     if (ATLAS_HAVE_TRACE && trace_report_) {
+        auto to_bytes_string = [](size_t b) {
+            std::stringstream s;
+            s << eckit::Bytes(b);
+            return s.str();
+        };
         Log::info() << atlas::Trace::report() << std::endl;
+        Log::info() << std::setw(20) << "Memory report"
+                    << std::setw(30) << "Host"
+                    << std::setw(20) << "Device"
+                    << std::endl;
+        Log::info() << std::setw(20) << "Allocations:"
+                    << std::setw(30) << Memory::host().allocations()
+                    << std::setw(20) << Memory::device().allocations()
+                    << std::endl;
+        Log::info() << std::setw(20) << "High Watermark:"
+                    << std::setw(30) << to_bytes_string(Memory::host().highWatermark())
+                    << std::setw(20) << to_bytes_string(Memory::device().highWatermark())
+                    << std::endl;
+        Log::info() << std::setw(20) << "Largest Allocation:"
+                    << std::setw(30) << to_bytes_string(Memory::host().largestAllocation())
+                    << std::setw(20) << to_bytes_string(Memory::device().largestAllocation())
+                    << std::endl;
+        Log::info() << std::setw(20) << "Leaked:"
+                    << std::setw(30) << to_bytes_string(Memory::host().allocated())
+                    << std::setw(20) << to_bytes_string(Memory::device().allocated())
+                    << std::endl;
+
     }
 
     if (getEnv("ATLAS_FINALISES_MPI", false)) {
