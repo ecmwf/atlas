@@ -8,7 +8,7 @@
 #include "atlas/runtime/Exception.h"
 
 namespace atlas {
-namespace util {
+namespace array {
 
 namespace detail {
 
@@ -140,7 +140,7 @@ template <typename ValuesList = DefaultValues,
           typename RanksList = DefaultRanks,
           typename = std::enable_if_t<detail::IsTypeList<ValuesList>::value>,
           typename = std::enable_if_t<detail::IsIntList<RanksList>::value>>
-auto make_array_view_variant(array::Array& array) {
+auto make_view_variant(array::Array& array) {
   using ArrayViewList = detail::GetArrayViews<ValuesList, RanksList>;
   using Variant = detail::TypeListToVariant<ArrayViewList>;
   return detail::setVariant<Variant>(array, ArrayViewList{});
@@ -156,7 +156,7 @@ template <typename ValuesList = DefaultValues,
           typename RanksList = DefaultRanks,
           typename = std::enable_if_t<detail::IsTypeList<ValuesList>::value>,
           typename = std::enable_if_t<detail::IsIntList<RanksList>::value>>
-auto make_array_view_variant(const array::Array& array) {
+auto make_view_variant(const array::Array& array) {
   using ConstValuesList = detail::ConstTypeList<ValuesList>;
   using ArrayViewList = detail::GetArrayViews<ConstValuesList, RanksList>;
   using Variant = detail::TypeListToVariant<ArrayViewList>;

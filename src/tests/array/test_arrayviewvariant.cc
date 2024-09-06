@@ -9,15 +9,14 @@
 #include <type_traits>
 #include <variant>
 
+#include "atlas/array/ArrayViewVariant.h"
 #include "atlas/array.h"
-#include "atlas/util/ArrayViewVariant.h"
 #include "tests/AtlasTestEnvironment.h"
 
 namespace atlas {
 namespace test {
 
 using namespace array;
-using namespace util;
 
 CASE("test visit") {
   auto arr1 = array::ArrayT<float>(2);
@@ -27,9 +26,9 @@ CASE("test visit") {
   using ValueList = Values<float, double, int>;
   using RankList = Ranks<1, 2, 3>;
 
-  const auto var1 = make_array_view_variant<ValueList, RankList>(arr1);
-  const auto var2 = make_array_view_variant<ValueList, RankList>(arr2);
-  const auto var3 = make_array_view_variant<ValueList, RankList>(arr3);
+  const auto var1 = make_view_variant<ValueList, RankList>(arr1);
+  const auto var2 = make_view_variant<ValueList, RankList>(arr2);
+  const auto var3 = make_view_variant<ValueList, RankList>(arr3);
 
   std::visit(
       [](auto&& view) {
@@ -62,7 +61,7 @@ CASE("test array view data") {
 
   const auto& arrRef = arr;
   const auto var =
-      make_array_view_variant<Values<int, double>, Ranks<1, 2>>(arrRef);
+      make_view_variant<Values<int, double>, Ranks<1, 2>>(arrRef);
 
   std::visit(
       [](auto&& view) {
@@ -82,8 +81,8 @@ CASE("test instantiation") {
   const auto constArr = array::ArrayT<double>(1);
 
   SECTION("default variants") {
-    auto var = make_array_view_variant(arr);
-    auto constVar = make_array_view_variant(constArr);
+    auto var = make_view_variant(arr);
+    auto constVar = make_view_variant(constArr);
 
     using VarType = std::variant<ArrayView<float, 1>, ArrayView<float, 2>,
                                  ArrayView<float, 3>, ArrayView<double, 1>,
@@ -102,8 +101,8 @@ CASE("test instantiation") {
     using ValueList = Values<int, double>;
     using RankList = Ranks<1>;
 
-    auto var = make_array_view_variant<ValueList, RankList>(arr);
-    auto constVar = make_array_view_variant<ValueList, RankList>(constArr);
+    auto var = make_view_variant<ValueList, RankList>(arr);
+    auto constVar = make_view_variant<ValueList, RankList>(constArr);
 
     using VarType = std::variant<ArrayView<int, 1>, ArrayView<double, 1>>;
 
@@ -119,8 +118,8 @@ CASE("test instantiation") {
     using ValueList = Values<int, float>;
     using RankList = Ranks<1>;
 
-    EXPECT_THROWS((make_array_view_variant<ValueList, RankList>(arr)));
-    EXPECT_THROWS((make_array_view_variant<ValueList, RankList>(constArr)));
+    EXPECT_THROWS((make_view_variant<ValueList, RankList>(arr)));
+    EXPECT_THROWS((make_view_variant<ValueList, RankList>(constArr)));
   }
 }
 

@@ -741,6 +741,7 @@ array/Range.h
 array/Vector.h
 array/Vector.cc
 array/SVector.h
+array/ArrayViewVariant.h
 array/helpers/ArrayInitializer.h
 array/helpers/ArrayAssigner.h
 array/helpers/ArrayWriter.h
@@ -806,7 +807,6 @@ util/PeriodicTransform.h
 util/Topology.h
 util/Allocate.h
 util/Allocate.cc
-util/ArrayViewVariant.h
 util/GPUClonable.h
 
 util/Constants.h
