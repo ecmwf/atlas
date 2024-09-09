@@ -42,18 +42,16 @@ END_TESTSUITE_FINALIZE
 TEST( test_multifield )
     implicit none
 
-    type(atlas_MultiField)  :: mfield(2)  ! mfield(1): created through config
-                                          ! mfield(2): created directly in atlas_MultiField constructor
-    type(atlas_FieldSet)    :: fieldset_1, fieldset_2
+    type(atlas_MultiField)  :: mfield(2)
+    type(atlas_FieldSet)    :: fieldset(2)
     type(atlas_Field)       :: field
     type(atlas_config)      :: config
     integer, pointer :: fdata_int_2d(:,:)
-    real(c_float),  pointer :: fdata_real32_2d(:,:)
-    real(c_double), pointer :: fdata_real64_2d(:,:)
-    real(c_double), pointer :: fdata_real64(:,:,:)
+    real(c_float), pointer  :: fdata_f2d(:,:), fdata_f3d(:,:,:)
+    real(c_double), pointer :: fdata_d3d(:,:,:)
 
     integer, parameter :: nproma  = 16;
-    integer, parameter :: nlev    = 0;
+    integer, parameter :: nlev    = 1;
     integer, parameter :: ngptot  = 2000;
     integer, parameter :: nblk    = (ngptot + nproma - 1) / nproma
     type(atlas_Config), allocatable :: field_configs(:)
@@ -62,48 +60,54 @@ TEST( test_multifield )
         "temperature ", "pressure    ", "density     ", "clv         ", "wind_u      " &
     /)
 
-    integer :: ivar
-    return
-
     config = atlas_Config()
     call config%set("type", "MultiFieldCreatorIFS");
     call config%set("ngptot", ngptot);
     call config%set("nproma", nproma);
-    call config%set("nlev", nlev);
-    call config%set("datatype", "real64");
     allocate(field_configs(size(var_names)))
-    do ivar = 1, size(var_names)
-        field_configs(ivar) = atlas_Config()
-        call field_configs(ivar)%set("name", trim(var_names(ivar)))
+    do i = 1, size(var_names)
+        field_configs(i) = atlas_Config()
+        call field_configs(i)%set("name", trim(var_names(i)))
     end do
-    !call field_configs(4)%set("nvar", 4) ! clv has four subvariables
+    call field_configs(4)%set("nvar", 4) ! clv has four subvariables
     call config%set("fields", field_configs)
+
+    call config%set("nlev", 0); ! surface fields
+    call config%set("datatype", "real32");
     mfield(1) = atlas_MultiField(config)
 
-    !mfield(2) = atlas_MultiField('real64', [nproma, nlev, -1, nblk], var_names)
+    call config%set("nlev", 4); ! fields are 3d
+    call config%set("datatype", "real64");
+    mfield(2) = atlas_MultiField(config)
 
-    do i = 1, 1
-      FCTEST_CHECK_EQUAL(mfield(i)%size(), 5)
+    fieldset(1) = mfield(1)%fieldset()
+    FCTEST_CHECK_EQUAL(mfield(1)%size(), 5)
+    FCTEST_CHECK_EQUAL(fieldset(1)%size(), 5)
 
-      fieldset_1 = mfield(i)%fieldset()
-      FCTEST_CHECK_EQUAL(fieldset_1%size(), 5)
+    fieldset(2) = atlas_FieldSet()
+    call fieldset(2)%add(mfield(1)%fieldset())
+    field = fieldset(2)%field("density")
+    call field%data(fdata_f2d)
+    fdata_f2d(1,1) = 2.
+    call field%rename("dens")
 
-      fieldset_2 = atlas_FieldSet()
-      call fieldset_2%add(mfield(i)%fieldset())
-      field = fieldset_2%field("density")
-      call field%data(fdata_real64)
-      fdata_real64(1,1,1) = 2.
-      call field%rename("dens")
+    ! check data access directly though multifield
+    call mfield(1)%data("dens", fdata_f2d)
+    fdata_f2d(1,1) = 3.
 
-      ! check data access directly though multifield
-      call mfield(i)%data("dens", fdata_real64)
-      fdata_real64(1,1,1) = 3.
+    ! check access to the renamed variable
+    field = fieldset(1)%field("dens")
+    call field%data(fdata_f2d)
+    FCTEST_CHECK_EQUAL(fdata_f2d(1,1), 3._c_float)
 
-      field = fieldset_1%field("dens")
-      call field%data(fdata_real64)
-      FCTEST_CHECK_EQUAL(fdata_real64(1,1,1), 3._c_double)
-    end do
-
+    ! check dimesionality
+    call mfield(2)%data("density", fdata_d3d)
+    fdata_d3d(1,1,1) = 4.
+    fieldset(2) = atlas_FieldSet()
+    call fieldset(2)%add(mfield(2)%fieldset())
+    field = fieldset(2)%field("density")
+    call field%data(fdata_d3d)
+    FCTEST_CHECK_EQUAL(fdata_d3d(1,1,1), 4._c_double)
 END_TEST
 
 
@@ -125,15 +129,12 @@ TEST( test_multifield_direct_constructor )
     character(len=12), parameter, dimension(5) :: var_names = (/ &
         "temperature ", "pressure    ", "density     ", "clv         ", "wind_u      " &
     /)
-    integer :: ivar
 
-    config = atlas_Config()
+    ! surface fields
+    mfield(1) = atlas_MultiField('real32', [nproma, -1, nblk], var_names)
 
-    ! surface vars
-    mfield(1) = atlas_MultiField('real32', [nproma, -1, nblk], var_names, config)
-
-    ! 3d vars
-    mfield(2) = atlas_MultiField('real64', [nproma, nlev, -1, nblk], var_names, config)
+    ! 3d fields
+    mfield(2) = atlas_MultiField('real64', [nproma, nlev, -1, nblk], var_names)
 
     FCTEST_CHECK_EQUAL(mfield(1)%size(), 5)
 

@@ -49,10 +49,17 @@ namespace field {
  */
 class MultiFieldCreatorIFS : public MultiFieldCreator {
 public:
-    MultiFieldCreatorIFS() {}
-    MultiFieldCreatorIFS(const eckit::Configuration& config) {}
-    ~MultiFieldCreatorIFS() override = default;
+    MultiFieldCreatorIFS();
+    MultiFieldCreatorIFS(const eckit::Configuration& config);
+    ~MultiFieldCreatorIFS() override;
     MultiFieldImpl* create(const eckit::Configuration& config = util::Config()) const override;
+    MultiFieldImpl* create(const std::string& datatype_str, const std::vector<int>& shape,
+        const std::vector<std::string>& var_names) const override;
+
+private:
+    template<typename T>
+    MultiFieldImpl* create(const std::vector<int> shape, const std::vector<std::string> var_names) const;
+
 };
 
 // ------------------------------------------------------------------

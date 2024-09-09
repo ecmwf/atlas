@@ -8,10 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
-/// @author Willem Deconinck, Slavko Brdar
+/// @author Willem Deconinck
+/// @author Slavko Brdar
 /// @date June 2024
-
-#include "atlas/field/MultiFieldCreatorIFS.h"
 
 #include <cmath>
 #include <sstream>
@@ -20,13 +19,71 @@
 
 #include "atlas/array/ArrayDataStore.h"
 #include "atlas/array/DataType.h"
-#include "atlas/field/detail/FieldImpl.h"
+#include "atlas/field/MultiFieldCreatorIFS.h"
+#include "atlas/field/detail/MultiFieldImpl.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace field {
+
+MultiFieldCreatorIFS::MultiFieldCreatorIFS() {}
+
+MultiFieldCreatorIFS::MultiFieldCreatorIFS(const eckit::Configuration& config) {}
+
+MultiFieldCreatorIFS::~MultiFieldCreatorIFS() = default;
+
+MultiFieldImpl* MultiFieldCreatorIFS::create(const std::string& datatype_str, const std::vector<int>& shape,
+        const std::vector<std::string>& var_names) const {
+    const auto datatype = array::DataType(datatype_str);
+
+    if (datatype.kind() == array::DataType::KIND_REAL64) {
+        return create<double>(shape, var_names);
+    }
+    else if (datatype.kind() == array::DataType::KIND_REAL32) {
+        return create<float>(shape, var_names);
+    }
+}
+
+template<typename T>
+MultiFieldImpl* MultiFieldCreatorIFS::create(const std::vector<int> shape, const std::vector<std::string> var_names) const {
+    const int dim = shape.size();
+    const int nvar = var_names.size();
+    ATLAS_ASSERT(nvar > 0);
+
+    ATLAS_ASSERT(nvar > 0 && dim > 2, "MultiField must have at least one field name.");
+
+    int varidx = -1;
+    for (int i = 0; i < dim; i++) {
+        if (shape[i] == -1) {
+            varidx = i;
+            break;
+        }
+    }
+    int nlev = 0;
+    if (varidx > 0) {
+        nlev = shape[2];
+    }
+
+    const int nblk = shape[0];
+    const int nproma = shape[dim - 1];
+
+    util::Config config;
+    config.set("type", "MultiFieldCreatorIFS");
+    config.set("datatype", array::make_datatype<T>().str());
+    config.set("nproma", nproma);
+    config.set("nblk", nblk);
+    config.set("nlev", nlev);
+    config.set("ngptot", nblk * nproma);
+
+    std::vector<util::Config> fconfigs(nvar);
+    for (int i = 0; i < nvar; i++) {
+        fconfigs[i].set("name", var_names[i]);
+    }
+    config.set("fields", fconfigs);
+    return create(config);
+}
 
 MultiFieldImpl* MultiFieldCreatorIFS::create(const eckit::Configuration& config) const {
     long nproma;

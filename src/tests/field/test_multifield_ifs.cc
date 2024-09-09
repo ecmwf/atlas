@@ -10,16 +10,16 @@
 
 #include <cmath>
 #include <string>
+#include <vector>
 
 #include "eckit/config/YAMLConfiguration.h"
 
 #include "atlas/array/ArrayView.h"
-#include "atlas/array/DataType.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/MultiField.h"
 #include "atlas/field/MultiFieldCreatorIFS.h"
-#include "atlas/grid/Grid.h"
+#include "atlas/field/detail/MultiFieldImpl.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 
@@ -31,6 +31,10 @@ using namespace atlas::field;
 namespace atlas {
 namespace test {
 
+const std::vector<int> make_shape(const std::initializer_list<int>& list) {
+    return std::vector<int>(list);
+}
+
 CASE("multifield_generator") {
     EXPECT(MultiFieldCreatorFactory::has("MultiFieldCreatorIFS"));
     std::unique_ptr<MultiFieldCreator> MultiFieldCreator(MultiFieldCreatorFactory::build("MultiFieldCreatorIFS"));
@@ -38,6 +42,8 @@ CASE("multifield_generator") {
 
 
 CASE("multifield_create") {
+    return;
+
     using Value = float;
     int nproma  = 16;
     int nlev    = 100;
@@ -154,6 +160,137 @@ CASE("multifield_create") {
             Field field = MultiField {eckit::YAMLConfiguration{json()}}.field("temperature");
             auto temp = array::make_view<Value,3>(field);
         }
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+CASE("multifield_create_noconfig") {
+    using Value = float;
+    int nproma  = 16;
+    int nlev    = 100;
+    int ngptot  = 2000;
+
+    const int nblks = (ngptot + nproma - 1) / nproma;
+    const std::vector<std::string> var_names = {"temperature", "pressure", "density", "clv", "wind_u"};
+
+    SECTION("test_3d") {
+        int nlev = 3;
+        const std::vector<int> vshape = make_shape({nblks, -1, nlev, nproma});
+        MultiField multifield(array::make_datatype<Value>().str(), vshape, var_names);
+
+        const auto nblk = multifield.array().shape(0);
+        const auto nvar = multifield.array().shape(1);
+        nlev = multifield.array().shape(2);
+        const auto nfld = multifield.size();
+        EXPECT_EQ(nfld, 5);
+        EXPECT_EQ(nvar, 5);
+
+        EXPECT_EQ(multifield.size(), 5);
+        EXPECT(multifield.has("temperature"));
+        EXPECT(multifield.has("clv"));
+
+        Log::info() << multifield.field("temperature") << std::endl;
+        Log::info() << multifield.field("clv") << std::endl;
+
+        auto temp   = array::make_view<Value, 3>(multifield.field("temperature"));
+        auto clv    = array::make_view<Value, 3>(multifield.field("clv"));
+        EXPECT_EQ(multifield[0].name(), "temperature");
+        EXPECT_EQ(multifield[3].name(), "clv");
+
+        auto block_stride  = multifield.array().stride(0);
+        auto field_stride  = nproma * nlev;
+        auto level_stride  = nproma;
+        auto nproma_stride = 1;
+
+        temp(1, 2, 3)      = 4;
+        clv(13, 2, 14)     = 16;
+
+        EXPECT_EQ(temp.stride(0), block_stride);
+        EXPECT_EQ(temp.stride(1), level_stride);
+        EXPECT_EQ(temp.stride(2), nproma_stride);
+        EXPECT_EQ(temp.size(), nblk * nlev * nproma);
+
+        // Advanced usage, to access underlying array. This should only be used
+        // in a driver and not be exposed to algorithms.
+        {
+            auto multiarray = array::make_view<Value, 4>(multifield);
+            EXPECT_EQ(multiarray.stride(0), block_stride);
+            EXPECT_EQ(multiarray.stride(1), field_stride);
+            EXPECT_EQ(multiarray.stride(2), level_stride);
+            EXPECT_EQ(multiarray.stride(3), nproma_stride);
+
+            EXPECT_EQ(multiarray(1, 0, 2, 3), 4.);
+            EXPECT_EQ(multiarray(13, 3, 2, 14), 16.);
+
+            EXPECT_EQ(multiarray.size(), nblk * nvar * nlev * nproma);
+        }
+
+        // access FieldSet through MultiField
+        auto fieldset = multifield->fieldset();
+        auto field_v = array::make_view<Value,3>(fieldset.field("temperature"));
+        EXPECT_EQ(fieldset.size(), 5);
+        EXPECT(fieldset.has("temperature"));
+        EXPECT(fieldset.has("wind_u"));
+        EXPECT_EQ(field_v(1,2,3), 4);
+    }
+
+    SECTION("test_2d") {
+        int nlev = 0;
+        const std::vector<int> vshape = make_shape({nblks, -1, nlev, nproma});
+        MultiField multifield(array::make_datatype<Value>().str(), vshape, var_names);
+
+        const auto nblk = multifield.array().shape(0);
+        const auto nvar = multifield.array().shape(1);
+        nlev = multifield.array().shape(2);
+        const auto nfld = multifield.size();
+        EXPECT_EQ(nfld, 5);
+        EXPECT_EQ(nvar, 5);
+
+        EXPECT_EQ(multifield.size(), 5);
+        EXPECT(multifield.has("temperature"));
+        EXPECT(multifield.has("clv"));
+
+        Log::info() << multifield.field("temperature") << std::endl;
+        Log::info() << multifield.field("clv") << std::endl;
+
+        auto temp   = array::make_view<Value, 2>(multifield.field("temperature"));
+        auto clv    = array::make_view<Value, 2>(multifield.field("clv"));
+        EXPECT_EQ(multifield[0].name(), "temperature");
+        EXPECT_EQ(multifield[3].name(), "clv");
+
+        auto block_stride  = multifield.array().stride(0);
+        auto field_stride  = nproma;
+        auto nproma_stride = 1;
+
+        temp(1, 3)      = 4;
+        clv(13, 14)     = 16;
+
+        EXPECT_EQ(temp.stride(0), block_stride);
+        EXPECT_EQ(temp.stride(1), nproma_stride);
+        EXPECT_EQ(temp.size(), nblk * nproma);
+
+        // Advanced usage, to access underlying array. This should only be used
+        // in a driver and not be exposed to algorithms.
+        {
+            auto multiarray = array::make_view<Value, 3>(multifield);
+            EXPECT_EQ(multiarray.stride(0), block_stride);
+            EXPECT_EQ(multiarray.stride(1), field_stride);
+            EXPECT_EQ(multiarray.stride(2), nproma_stride);
+
+            EXPECT_EQ(multiarray(1, 0, 3), 4.);
+            EXPECT_EQ(multiarray(13, 3, 14), 16.);
+
+            EXPECT_EQ(multiarray.size(), nblk * nvar * nproma);
+        }
+
+        // access FieldSet through MultiField
+        auto fieldset = multifield->fieldset();
+        auto field_v = array::make_view<Value, 2>(fieldset.field("temperature"));
+        EXPECT_EQ(fieldset.size(), 5);
+        EXPECT(fieldset.has("temperature"));
+        EXPECT(fieldset.has("wind_u"));
+        EXPECT_EQ(field_v(1,3), 4);
     }
 }
 

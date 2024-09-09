@@ -30,7 +30,7 @@ class MultiFieldImpl : public util::Object {
 public:  // methods
     //-- Constructors
 
-    MultiFieldImpl() { }
+    MultiFieldImpl() {}
 
     MultiFieldImpl(const array::ArraySpec& spec, const eckit::Configuration& config = util::NoConfig()) {
         array::ArraySpec s(spec);

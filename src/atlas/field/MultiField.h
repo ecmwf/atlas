@@ -19,7 +19,6 @@
 #include "atlas/array/Array.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
-#include "atlas/field/detail/MultiFieldImpl.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Factory.h"
 #include "atlas/util/Metadata.h"
@@ -28,6 +27,12 @@
 
 namespace eckit {
 class Parametrisation;
+}
+
+namespace atlas {
+namespace field {
+class MultiFieldImpl;
+}
 }
 
 namespace atlas {
@@ -48,39 +53,45 @@ public:  // methods
     using Handle::Handle;
 
     MultiField(const eckit::Configuration&);
+    MultiField(const std::string& datatype_str, const std::vector<int>& shape, 
+        const std::vector<std::string>& var_names);
 
     //-- Accessors
 
-    const Field& field(const std::string& name) const { return get()->field(name); }
-    Field& field(const std::string& name) { return get()->field(name); }
-    bool has(const std::string& name) const { return get()->has(name); }
-    std::vector<std::string> field_names() const { return get()->field_names(); }
+    const Field& field(const std::string& name) const;
+    Field& field(const std::string& name);
+    bool has(const std::string& name) const;
+    std::vector<std::string> field_names() const;
 
-    const Field& field(const idx_t idx) const { return get()->field(idx); }
-    Field& field(const idx_t idx) { return get()->field(idx); }
-    idx_t size() const { return get()->size(); }
+    const Field& field(const idx_t idx) const;
+    Field& field(const idx_t idx);
+    idx_t size() const;
 
-    const Field& operator[](const idx_t idx) const { return get()->field(idx); }
-    Field& operator[](const idx_t idx) { return get()->field(idx); }
+    const Field& operator[](const idx_t idx) const;
+    Field& operator[](const idx_t idx);
 
-    const Field& operator[](const std::string& name) const { return get()->field(name); }
-    Field& operator[](const std::string& name) { return get()->field(name); }
+    const Field& operator[](const std::string& name) const;
+    Field& operator[](const std::string& name);
 
-    const util::Metadata& metadata() const { return get()->metadata(); }
-    util::Metadata& metadata() { return get()->metadata(); }
+    const util::Metadata& metadata() const;
+    util::Metadata& metadata();
 
     // -- Modifiers
 
     /// @brief Implicit conversion to Array
-    operator const array::Array&() const { return get()->array(); }
-    operator array::Array&() { return get()->array(); }
+    operator const array::Array&() const;
+    operator array::Array&();
 
-    operator const FieldSet&() const { return get()->fieldset_; }
-    operator FieldSet&() { return get()->fieldset_; }
+    operator const FieldSet&() const;
+    operator FieldSet&();
 
     /// @brief Access contained Array
-    const array::Array& array() const { return get()->array(); }
-    array::Array& array() { return get()->array(); }
+    const array::Array& array() const;
+    array::Array& array();
+
+private:
+    template<typename datatype>
+    void create(const std::vector<int> shape, const std::vector<std::string> var_names);
 };
 
 /**

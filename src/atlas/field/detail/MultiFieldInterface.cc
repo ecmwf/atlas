@@ -14,6 +14,7 @@
 
 #include "atlas/library/config.h"
 #include "atlas/field/MultiField.h"
+#include "atlas/field/detail/MultiFieldImpl.h"
 #include "atlas/field/detail/MultiFieldInterface.h"
 #include "atlas/runtime/Exception.h"
 

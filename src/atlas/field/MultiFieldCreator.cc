@@ -20,7 +20,6 @@
 #include "eckit/thread/Mutex.h"
 
 #include "atlas/field/MultiField.h"
-#include "atlas/field/FieldCreatorArraySpec.h"
 #include "atlas/field/MultiFieldCreatorIFS.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/runtime/Exception.h"
@@ -62,6 +61,14 @@ MultiField::MultiField(const eckit::Configuration& config) {
     }
     std::unique_ptr<MultiFieldCreator> creator(MultiFieldCreatorFactory::build(type, config));
     reset(creator->create(config));
+}
+
+MultiField::MultiField(const std::string& datatype_str, const std::vector<int>& shape,
+        const std::vector<std::string>& var_names) {
+    std::string type = "MultiFieldCreatorIFS";
+    //reset(MultiFieldCreatorArray::create(datatype, shape, var_names));
+    std::unique_ptr<MultiFieldCreator> creator(MultiFieldCreatorFactory::build(type));
+    reset(creator->create(datatype_str, shape, var_names));
 }
 
 }  // namespace field
