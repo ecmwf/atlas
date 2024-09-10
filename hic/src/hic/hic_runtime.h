@@ -142,6 +142,14 @@ HIC_VALUE(MemcpyDeviceToHost)
 HIC_VALUE(MemcpyHostToDevice)
 HIC_VALUE(Success)
 
+#if HIC_BACKEND_CUDA
+    constexpr hicError_t hicErrorDeinitialized = cudaErrorCudartUnloading;
+#elif HIC_BACKEND_HIP
+    constexpr hicError_t hicErrorDeinitialized = hipErrorDeinitialized;
+#else
+    constexpr hicError_t hicErrorDeinitialized = 4;
+#endif
+
 //------------------------------------------------
 HIC_NAMESPACE_END
 //------------------------------------------------
