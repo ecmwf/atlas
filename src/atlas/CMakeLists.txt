@@ -742,6 +742,7 @@ array/Vector.h
 array/Vector.cc
 array/SVector.h
 array/ArrayViewVariant.h
+array/ArrayViewVariant.cc
 array/helpers/ArrayInitializer.h
 array/helpers/ArrayAssigner.h
 array/helpers/ArrayWriter.h
