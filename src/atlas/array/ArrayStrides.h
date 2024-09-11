@@ -28,6 +28,7 @@ public:
     ArrayStrides() {}
     ArrayStrides(std::initializer_list<idx_t> list): Base(list) {}
     ArrayStrides(Base&& base): Base(std::forward<Base>(base)) {}
+    ArrayStrides(const std::vector<idx_t>& list): Base(list.begin(), list.end()) {}
 };
 
 namespace detail {

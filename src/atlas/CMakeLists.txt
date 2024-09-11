@@ -474,6 +474,8 @@ field/MultiFieldCreator.cc
 field/MultiFieldCreator.h
 field/MultiFieldCreatorIFS.cc
 field/MultiFieldCreatorIFS.h
+field/MultiFieldCreatorArray.cc
+field/MultiFieldCreatorArray.h
 field/State.cc
 field/State.h
 field/detail/FieldImpl.cc

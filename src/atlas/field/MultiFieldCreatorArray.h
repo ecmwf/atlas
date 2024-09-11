@@ -8,8 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
-/// @author Willem Deconinck
-/// @date June 2015
+/// @author Slavko Brdar
+/// @date September 2024
 
 #pragma once
 
@@ -30,28 +30,23 @@ namespace field {
 // ------------------------------------------------------------------
 
 /*!
- * \brief MultiField creator using IFS parametrisation
+ * \brief MultiField creator using datatype, shape, variable names as arguments
  * \details
- * Ideally this class should belong to IFS.
- * The only reference to IFS in Atlas::MultiField should be here.
+ *     shape argument contains -1 at the position which gets filled with variable names
  * Example use:
  * \code{.cpp}
  *     MultiFieldImpl* multifield = MultiField::create(
- *         Config
- *           ("creator","MultiFieldIFS")  // MultiFieldIFS FieldCreator
- *           ("ngptot",ngptot)  // Total number of grid points
- *           ("nproma",nproma)  // Grouping of grid points for vectorlength
- *           ("nlev",nlev)      // Number of levels
- *           ("nvar",nvar)      // Number of variables
- *           ("kind",8)         // Real kind in bytes
+ *         datatype,
+ *         shape,
+ *         var_names
  *         );
  * \endcode
  */
-class MultiFieldCreatorIFS : public MultiFieldCreator {
+class MultiFieldCreatorArray : public MultiFieldCreator {
 public:
-    MultiFieldCreatorIFS();
-    MultiFieldCreatorIFS(const eckit::Configuration& config);
-    ~MultiFieldCreatorIFS() override;
+    MultiFieldCreatorArray();
+    MultiFieldCreatorArray(const eckit::Configuration& config);
+    ~MultiFieldCreatorArray() override;
     MultiFieldImpl* create(const eckit::Configuration& config = util::Config()) const override;
     MultiFieldImpl* create(const array::DataType datatype, const std::vector<int>& shape,
         const std::vector<std::string>& var_names) const override;

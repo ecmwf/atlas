@@ -8,14 +8,16 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "atlas/field/MultiField.h"
 
 #include <iomanip>
 #include <map>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <mutex>
 
-#include "atlas/field/MultiField.h"
+#include "atlas/field/MultiFieldCreator.h"
 #include "atlas/field/detail/MultiFieldImpl.h"
 #include "atlas/runtime/Exception.h"
 
@@ -23,6 +25,21 @@ namespace atlas {
 namespace field {
 
 //-----------------------------------------------------------------------------
+
+MultiField::MultiField(const eckit::Configuration& config) {
+    std::string type;
+    if (!config.get("type", type)) {
+        ATLAS_THROW_EXCEPTION("Could not find \"type\" in configuration");
+    }
+    std::unique_ptr<MultiFieldCreator> creator(MultiFieldCreatorFactory::build(type, config));
+    reset(creator->create(config));
+}
+
+MultiField::MultiField(const array::DataType datatype, const std::vector<int>& shape,
+        const std::vector<std::string>& var_names) {
+    std::unique_ptr<MultiFieldCreator> creator(MultiFieldCreatorFactory::build("MultiFieldCreatorArray"));
+    reset(creator->create(datatype, shape, var_names));
+}
 
 const Field& MultiField::field(const std::string& name) const { return get()->field(name); }
 Field& MultiField::field(const std::string& name) { return get()->field(name); }

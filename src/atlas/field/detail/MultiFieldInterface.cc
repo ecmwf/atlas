@@ -24,10 +24,6 @@ namespace field {
 extern "C" {
 MultiFieldImpl* atlas__MultiField__create(eckit::Configuration* config) {
     ATLAS_ASSERT(config != nullptr);
-    // Register in factory
-    // TODO: move __multiFieldCreatorIFS out of test_multifield_ifs.cc
-    //MultiFieldCreatorBuilder<MultiFieldCreatorIFS> __MultiFieldCreatorIFS("MultiFieldCreatorIFS");
-
     auto multifield = new MultiField(*config);
     ATLAS_ASSERT(multifield);
     return multifield->get();

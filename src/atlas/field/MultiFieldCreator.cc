@@ -14,13 +14,12 @@
 
 #include <map>
 #include <sstream>
-#include <string>
 
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 
-#include "atlas/field/MultiField.h"
 #include "atlas/field/MultiFieldCreatorIFS.h"
+#include "atlas/field/MultiFieldCreatorArray.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
@@ -36,6 +35,7 @@ void force_link() {
   static struct Link {
     Link() {
       MultiFieldCreatorBuilder<MultiFieldCreatorIFS>();
+      MultiFieldCreatorBuilder<MultiFieldCreatorArray>();
     }
   } link;
 }
@@ -52,23 +52,6 @@ MultiFieldCreator* MultiFieldCreatorFactory::build(const std::string& builder, c
     force_link();
     auto factory = get(builder);
     return factory->make(config);
-}
-
-MultiField::MultiField(const eckit::Configuration& config) {
-    std::string type;
-    if (!config.get("type", type)) {
-        ATLAS_THROW_EXCEPTION("Could not find \"type\" in configuration");
-    }
-    std::unique_ptr<MultiFieldCreator> creator(MultiFieldCreatorFactory::build(type, config));
-    reset(creator->create(config));
-}
-
-MultiField::MultiField(const std::string& datatype_str, const std::vector<int>& shape,
-        const std::vector<std::string>& var_names) {
-    std::string type = "MultiFieldCreatorIFS";
-    //reset(MultiFieldCreatorArray::create(datatype, shape, var_names));
-    std::unique_ptr<MultiFieldCreator> creator(MultiFieldCreatorFactory::build(type));
-    reset(creator->create(datatype_str, shape, var_names));
 }
 
 }  // namespace field

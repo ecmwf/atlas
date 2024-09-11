@@ -49,7 +49,7 @@ public:
     virtual ~MultiFieldCreator();
 
     virtual MultiFieldImpl* create(const eckit::Configuration& config = util::Config()) const = 0;
-    virtual MultiFieldImpl* create(const std::string& datatype_str, const std::vector<int>& shape,
+    virtual MultiFieldImpl* create(const array::DataType datatype, const std::vector<int>& shape,
         const std::vector<std::string>& var_names) const = 0;
 };
 

@@ -18,7 +18,8 @@
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/MultiField.h"
-#include "atlas/field/MultiFieldCreatorIFS.h"
+//#include "atlas/field/MultiFieldCreatorIFS.h"
+#include "atlas/field/MultiFieldCreatorArray.h"
 #include "atlas/field/detail/MultiFieldImpl.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
@@ -41,9 +42,7 @@ CASE("multifield_generator") {
 }
 
 
-CASE("multifield_create") {
-    return;
-
+CASE("multifield_ifs_create") {
     using Value = float;
     int nproma  = 16;
     int nlev    = 100;
@@ -165,7 +164,7 @@ CASE("multifield_create") {
 
 //-----------------------------------------------------------------------------
 
-CASE("multifield_create_noconfig") {
+CASE("multifield_array_create") {
     using Value = float;
     int nproma  = 16;
     int nlev    = 100;
@@ -177,7 +176,7 @@ CASE("multifield_create_noconfig") {
     SECTION("test_3d") {
         int nlev = 3;
         const std::vector<int> vshape = make_shape({nblks, -1, nlev, nproma});
-        MultiField multifield(array::make_datatype<Value>().str(), vshape, var_names);
+        MultiField multifield(array::make_datatype<Value>(), vshape, var_names);
 
         const auto nblk = multifield.array().shape(0);
         const auto nvar = multifield.array().shape(1);
@@ -236,9 +235,8 @@ CASE("multifield_create_noconfig") {
     }
 
     SECTION("test_2d") {
-        int nlev = 0;
-        const std::vector<int> vshape = make_shape({nblks, -1, nlev, nproma});
-        MultiField multifield(array::make_datatype<Value>().str(), vshape, var_names);
+        const std::vector<int> vshape = make_shape({nblks, -1, nproma});
+        MultiField multifield(array::make_datatype<Value>(), vshape, var_names);
 
         const auto nblk = multifield.array().shape(0);
         const auto nvar = multifield.array().shape(1);

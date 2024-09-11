@@ -34,18 +34,13 @@ MultiFieldCreatorIFS::MultiFieldCreatorIFS(const eckit::Configuration& config) {
 
 MultiFieldCreatorIFS::~MultiFieldCreatorIFS() = default;
 
-MultiFieldImpl* MultiFieldCreatorIFS::create(const std::string& datatype_str, const std::vector<int>& shape,
+MultiFieldImpl* MultiFieldCreatorIFS::create(const array::DataType datatype, const std::vector<int>& shape,
         const std::vector<std::string>& var_names) const {
-    const auto datatype = array::DataType(datatype_str);
-
-    if (datatype.kind() == array::DataType::KIND_REAL64) {
-        return create<double>(shape, var_names);
-    }
-    else if (datatype.kind() == array::DataType::KIND_REAL32) {
-        return create<float>(shape, var_names);
-    }
+    ATLAS_NOTIMPLEMENTED;
+    return nullptr;
 }
 
+/*
 template<typename T>
 MultiFieldImpl* MultiFieldCreatorIFS::create(const std::vector<int> shape, const std::vector<std::string> var_names) const {
     const int dim = shape.size();
@@ -84,6 +79,7 @@ MultiFieldImpl* MultiFieldCreatorIFS::create(const std::vector<int> shape, const
     config.set("fields", fconfigs);
     return create(config);
 }
+*/
 
 MultiFieldImpl* MultiFieldCreatorIFS::create(const eckit::Configuration& config) const {
     long nproma;
@@ -129,8 +125,6 @@ MultiFieldImpl* MultiFieldCreatorIFS::create(const eckit::Configuration& config)
         ( (nlev > 0) ? array::make_shape(nblk, nlev, nproma) : ( (nfld > 0) ? array::make_shape(nblk, nfld, nproma) : 
                                                                  array::make_shape(nblk, nproma) ) ) );
 
-    std::cout << "nfld: " << nfld << std::endl;
-
     MultiFieldImpl* multifield = new MultiFieldImpl{array::ArraySpec{datatype, multiarray_shape}, config};
     auto& multiarray = multifield->array();
 
@@ -140,10 +134,7 @@ MultiFieldImpl* MultiFieldCreatorIFS::create(const eckit::Configuration& config)
         fields[i].get("name", name);
         Field field;
         size_t field_vars = 1;
-            std::cout << i << ". nvar: " << name << std::endl;
-
         if (fields[i].get("nvar", field_vars)) {
-            std::cout << i << ". nvar: " << field_vars << std::endl;
             array::ArrayShape field_shape =
                 ( (nlev > 0 and field_vars > 0) ?
                   array::make_shape(multiarray.shape(0), field_vars, multiarray.shape(2), multiarray.shape(3)) :
@@ -203,13 +194,6 @@ MultiFieldImpl* MultiFieldCreatorIFS::create(const eckit::Configuration& config)
             field.set_variables(field_vars);
         }
         else {
-            std::cout << "multiarray.shape: " << multiarray.shape(0) << ", " << multiarray.shape(1) << ", " << multiarray.shape(2);
-            if (multiarray.shape().size() > 3) std::cout << ", " << multiarray.shape(3);
-            std::cout << std::endl;
-            std::cout << "multiarray.stride: " << multiarray.stride(0) << ", " << multiarray.stride(1) << ", " << multiarray.stride(2);
-            if (multiarray.strides().size() > 3) std::cout << ", " << multiarray.stride(3);
-            std::cout << std::endl;
-            std::cout << "multiarray.index: " << multiarray_field_idx << std::endl;
             array::ArraySpec field_array_spec;
             if (nlev > 0) {
                 auto field_shape   = array::make_shape(multiarray.shape(0), multiarray.shape(2), multiarray.shape(3));
