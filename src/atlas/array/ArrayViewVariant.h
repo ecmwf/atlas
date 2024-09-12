@@ -20,18 +20,18 @@ namespace detail {
 using namespace array;
 
 // Container struct for a list of types.
-template <typename... Types>
-struct TypeList {};
+template <typename... Ts>
+struct Types {};
 
 // Container struct for a list of integers.
-template <idx_t... Ints>
-struct IntList {};
+template <idx_t... Is>
+struct Ints {};
 
 // Supported ArrayView value types.
-constexpr auto ValueList = TypeList<float, double, int, long, unsigned long>{};
+constexpr auto Values = Types<float, double, int, long, unsigned long>{};
 
 // Supported ArrayView ranks.
-constexpr auto RankList = IntList<1, 2, 3, 4, 5, 6, 7, 8, 9>{};
+constexpr auto Ranks = Ints<1, 2, 3, 4, 5, 6, 7, 8, 9>{};
 
 // Helper struct to build an ArrayView variant from a list of value types and
 // and a list of ranks.
@@ -40,27 +40,23 @@ struct VariantBuilder {
   using type = std::variant<Views...>;
 
   // Make a VariantBuilder struct with a fully populated Views... argument.
-  template <typename Value, typename... Values, idx_t... Ranks>
-  static constexpr auto make(TypeList<Value, Values...>, IntList<Ranks...>) {
-    return VariantBuilder<
-        Views..., ArrayView<const Value, Ranks>...,
-        ArrayView<Value, Ranks>...>::make(TypeList<Values...>{},
-                                          IntList<Ranks...>{});
-  }
-
-  // End recursion.
-  template <idx_t... Ranks>
-  static constexpr VariantBuilder<Views...> make(TypeList<>,
-                                                 IntList<Ranks...>) {
-    return VariantBuilder<Views...>{};
+  template <typename T, typename... Ts, idx_t... Is>
+  static constexpr auto make(Types<T, Ts...>, Ints<Is...>) {
+    using NewBuilder = VariantBuilder<Views..., ArrayView<T, Is>...,
+                                      ArrayView<const T, Is>...>;
+    if constexpr (sizeof...(Ts) > 0) {
+      return NewBuilder::make(Types<Ts...>{}, Ints<Is...>{});
+    } else {
+      return NewBuilder{};
+    }
   }
 };
+constexpr auto variantHelper = VariantBuilder<>::make(Values, Ranks);
 
 }  // namespace detail
 
 /// @brief Variant containing all supported ArrayView alternatives.
-using ArrayViewVariant = decltype(detail::VariantBuilder<>::make(
-    detail::ValueList, detail::RankList))::type;
+using ArrayViewVariant = decltype(detail::variantHelper)::type;
 
 /// @brief Use overloaded pattern as visitor.
 using eckit::Overloaded;
