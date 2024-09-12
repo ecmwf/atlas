@@ -465,48 +465,6 @@ CASE("structured columns O96 vector interpolation (2d-field, 2-vector, hi-res)")
   testInterpolation<Rank2dField>((config));
 }
 
-
-/*
-CASE("gauss linear vector interpolation (2d-field, 2-vector)") {
-  const auto config =
-      Config("source_fixture", "structured_columns_classic")
-          .set("target_fixture", "cubedsphere_mesh")
-          .set("field_spec_fixture", "2vector")
-          .set("interp_fixture", "structured_linear")
-          .set("file_id", "linear_vector_rank2_sc1")
-          .set("tol", 0.00087);
-
-  testInterpolation<Rank2dField>((config));
-}
-
-CASE("gauss linear vector interpolation (3d-field, 2-vector)") {
-  const auto config =
-      Config("source_fixture", "structured_columns_classic")
-          .set("target_fixture", "cubedsphere_mesh")
-          .set("field_spec_fixture", "2vector")
-          .set("interp_fixture", "structured_linear")
-          .set("file_id", "linear_vector_rank3_sc1")
-          .set("tol", 0.00087);
-
-  testInterpolation<Rank3dField>((config));
-}
-*/
-
-
-/*
-CASE("gauss cubic vector interpolation (3d-field, 2-vector)") {
-  const auto config =
-      Config("source_fixture", "structured_columns_halo2")
-          .set("target_fixture", "cubedsphere_mesh")
-          .set("field_spec_fixture", "2vector")
-          .set("interp_fixture", "structured_cubic")
-          .set("file_id", "cubic_vector_sc2")
-          .set("tol", 0.000575);
-
-  testInterpolation<Rank3dField>((config));
-}
-*/
-
 }  // namespace test
 }  // namespace atlas
 
