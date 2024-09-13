@@ -274,8 +274,8 @@ void TimingsRegistry::report(std::ostream& out, const eckit::Configuration& conf
         }
     }
 
-    size_t max_title_length(0);
-    size_t max_location_length(0);
+    size_t max_title_length(2);
+    size_t max_location_length(9);
     size_t max_nest(0);
     long max_count(0);
     double max_seconds(0);

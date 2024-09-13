@@ -14,8 +14,10 @@
 extern "C" {
 #endif
 
-void atlas_acc_map_data(void* cpu_ptr, void* gpu_ptr, unsigned long size);
+void atlas_acc_map_data(void* cpu_ptr, void* gpu_ptr, unsigned long bytes);
 void atlas_acc_unmap_data(void* cpu_ptr);
+int atlas_acc_is_present(void* cpu_ptr, unsigned long bytes);
+void* atlas_acc_deviceptr(void* cpu_ptr);
 
 #ifdef __cplusplus
 }
