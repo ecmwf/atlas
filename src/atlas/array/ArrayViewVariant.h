@@ -66,7 +66,7 @@ ArrayViewVariant make_view_variant(const Array& array);
 /// @brief Create a host ArrayView and assign to an ArrayViewVariant.
 ArrayViewVariant make_host_view_variant(Array& array);
 
-/// @brief Create a host const ArrayView and assign to an ArrayViewVariant.
+/// @brief Create a const host ArrayView and assign to an ArrayViewVariant.
 ArrayViewVariant make_host_view_variant(const Array& array);
 
 /// @brief Create a device ArrayView and assign to an ArrayViewVariant.

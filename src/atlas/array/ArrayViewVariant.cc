@@ -19,7 +19,7 @@ using namespace detail;
 namespace {
 
 // Match array.rank() and array.datatype() to variant types. Return result of
-// makeView on a successfull pattern match.
+// makeView on a successful pattern match.
 template <size_t TypeIndex = 0, typename ArrayType, typename MakeView>
 ArrayViewVariant executeMakeView(ArrayType& array, const MakeView& makeView) {
   using View = std::variant_alternative_t<TypeIndex, ArrayViewVariant>;
