@@ -23,11 +23,14 @@ namespace {
 template <size_t TypeIndex = 0, typename ArrayType, typename MakeView>
 ArrayViewVariant executeMakeView(ArrayType& array, const MakeView& makeView) {
   using View = std::variant_alternative_t<TypeIndex, ArrayViewVariant>;
-  using Value = typename View::value_type;
-  constexpr auto Rank = View::rank();
+  constexpr auto Const = std::is_const_v<typename View::value_type>;
 
-  if (array.datatype() == DataType::kind<Value>() && array.rank() == Rank) {
-    return makeView(array, Value{}, std::integral_constant<idx_t, Rank>{});
+  if constexpr (std::is_const_v<ArrayType> == Const) {
+    using Value = typename View::non_const_value_type;
+    constexpr auto Rank = View::rank();
+    if (array.datatype() == DataType::kind<Value>() && array.rank() == Rank) {
+      return makeView(array, Value{}, std::integral_constant<int, Rank>{});
+    }
   }
 
   if constexpr (TypeIndex < std::variant_size_v<ArrayViewVariant> - 1) {
@@ -82,7 +85,7 @@ ArrayViewVariant make_host_view_variant(const Array& array) {
   return makeHostViewVariantImpl(array);
 }
 
-ArrayViewVariant make_devive_view_variant(Array& array) {
+ArrayViewVariant make_device_view_variant(Array& array) {
   return makeDeviceViewVariantImpl(array);
 }
 

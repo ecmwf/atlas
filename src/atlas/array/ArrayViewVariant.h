@@ -10,7 +10,6 @@
 #include <variant>
 
 #include "atlas/array.h"
-#include "eckit/utils/Overloaded.h"
 
 namespace atlas {
 namespace array {
@@ -24,60 +23,57 @@ template <typename... Ts>
 struct Types {};
 
 // Container struct for a list of integers.
-template <idx_t... Is>
+template <int... Is>
 struct Ints {};
 
-// Supported ArrayView value types.
-constexpr auto Values = Types<float, double, int, long, unsigned long>{};
+template <typename...>
+struct VariantHelper;
 
-// Supported ArrayView ranks.
-constexpr auto Ranks = Ints<1, 2, 3, 4, 5, 6, 7, 8, 9>{};
-
-// Helper struct to build an ArrayView variant from a list of value types and
-// and a list of ranks.
-template <typename... Views>
-struct VariantBuilder {
-  using type = std::variant<Views...>;
-
-  // Make a VariantBuilder struct with a fully populated Views... argument.
-  template <typename T, typename... Ts, idx_t... Is>
-  static constexpr auto make(Types<T, Ts...>, Ints<Is...>) {
-    using NewBuilder = VariantBuilder<Views..., ArrayView<T, Is>...,
-                                      ArrayView<const T, Is>...>;
-    if constexpr (sizeof...(Ts) > 0) {
-      return NewBuilder::make(Types<Ts...>{}, Ints<Is...>{});
-    } else {
-      return NewBuilder{};
-    }
-  }
+// Recursively construct ArrayView std::variant from types Ts and Ranks Is.
+template <typename... ArrayViews, typename T, typename... Ts, int... Is>
+struct VariantHelper<Types<ArrayViews...>, Types<T, Ts...>, Ints<Is...>> {
+  using type = typename VariantHelper<
+      Types<ArrayViews..., ArrayView<const T, Is>..., ArrayView<T, Is>...>,
+      Types<Ts...>, Ints<Is...>>::type;
 };
-constexpr auto variantHelper = VariantBuilder<>::make(Values, Ranks);
+
+// End recursion.
+template <typename... ArrayViews, int... Is>
+struct VariantHelper<Types<ArrayViews...>, Types<>, Ints<Is...>> {
+  using type = std::variant<ArrayViews...>;
+};
+
+template <typename Values, typename Ranks>
+using Variant = typename VariantHelper<Types<>, Values, Ranks>::type;
 
 }  // namespace detail
 
-/// @brief Variant containing all supported ArrayView alternatives.
-using ArrayViewVariant = decltype(detail::variantHelper)::type;
+/// @brief Supported ArrayView value types.
+using Values = detail::Types<float, double, int, long, unsigned long>;
 
-/// @brief Use overloaded pattern as visitor.
-using eckit::Overloaded;
+/// @brief Supported ArrayView ranks.
+using Ranks = detail::Ints<1, 2, 3, 4, 5, 6, 7, 8, 9>;
+
+/// @brief Variant containing all supported ArrayView alternatives.
+using ArrayViewVariant = detail::Variant<Values, Ranks>;
 
 /// @brief Create an ArrayView and assign to an ArrayViewVariant.
-ArrayViewVariant make_view_variant(array::Array& array);
+ArrayViewVariant make_view_variant(Array& array);
 
 /// @brief Create a const ArrayView and assign to an ArrayViewVariant.
-ArrayViewVariant make_view_variant(const array::Array& array);
+ArrayViewVariant make_view_variant(const Array& array);
 
 /// @brief Create a host ArrayView and assign to an ArrayViewVariant.
-ArrayViewVariant make_host_view_variant(array::Array& array);
+ArrayViewVariant make_host_view_variant(Array& array);
 
 /// @brief Create a host const ArrayView and assign to an ArrayViewVariant.
-ArrayViewVariant make_host_view_variant(const array::Array& array);
+ArrayViewVariant make_host_view_variant(const Array& array);
 
 /// @brief Create a device ArrayView and assign to an ArrayViewVariant.
-ArrayViewVariant make_devive_view_variant(array::Array& array);
+ArrayViewVariant make_device_view_variant(Array& array);
 
 /// @brief Create a const device ArrayView and assign to an ArrayViewVariant.
-ArrayViewVariant make_device_view_variant(const array::Array& array);
+ArrayViewVariant make_device_view_variant(const Array& array);
 
 }  // namespace array
 }  // namespace atlas
