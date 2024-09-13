@@ -83,7 +83,9 @@ CASE("test variant assignment") {
 }
 
 template <typename View>
-constexpr auto Rank = std::decay_t<View>::rank();
+constexpr auto Rank() {
+  return std::remove_reference_t<View>::rank();
+}
 
 CASE("test std::visit") {
   auto array1 = ArrayT<int>(10);
@@ -93,7 +95,7 @@ CASE("test std::visit") {
   make_view<int, 2>(array2).assign({0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
 
   const auto testRank1 = [](auto&& view) {
-    using View = std::decay_t<decltype(view)>;
+    using View = std::remove_reference_t<decltype(view)>;
     EXPECT_EQ(View::rank(), 1);
     using Value = typename View::value_type;
     EXPECT((std::is_same_v<Value, int>));
@@ -104,7 +106,7 @@ CASE("test std::visit") {
   };
 
   const auto testRank2 = [](auto&& view) {
-    using View = std::decay_t<decltype(view)>;
+    using View = std::remove_reference_t<decltype(view)>;
     EXPECT_EQ(View::rank(), 2);
     using Value = typename View::value_type;
     EXPECT((std::is_same_v<Value, int>));
@@ -125,11 +127,11 @@ CASE("test std::visit") {
     auto rank2Tested = false;
 
     const auto visitor = [&](auto&& view) {
-      if constexpr (Rank<decltype(view)> == 1) {
+      if constexpr (Rank<decltype(view)>() == 1) {
         testRank1(view);
         rank1Tested = true;
       }
-      if constexpr (Rank<decltype(view)> == 2) {
+      if constexpr (Rank<decltype(view)>() == 2) {
         testRank2(view);
         rank2Tested = true;
       }
@@ -147,15 +149,15 @@ CASE("test std::visit") {
     auto rank1Tested = false;
     auto rank2Tested = false;
     const auto visitor = eckit::Overloaded{
-        [&](auto&& view) -> std::enable_if_t<Rank<decltype(view)> == 1> {
+        [&](auto&& view) -> std::enable_if_t<Rank<decltype(view)>() == 1> {
           testRank1(view);
           rank1Tested = true;
         },
-        [&](auto&& view) -> std::enable_if_t<Rank<decltype(view)> == 2> {
+        [&](auto&& view) -> std::enable_if_t<Rank<decltype(view)>() == 2> {
           testRank2(view);
           rank2Tested = true;
         },
-        [](auto&& view) -> std::enable_if_t<Rank<decltype(view)> >= 3> {
+        [](auto&& view) -> std::enable_if_t<(Rank<decltype(view)>() > 2)> {
           // do nothing.
         }};
 

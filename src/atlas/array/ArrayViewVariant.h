@@ -29,7 +29,7 @@ struct Ints {};
 template <typename...>
 struct VariantHelper;
 
-// Recursively construct ArrayView std::variant from types Ts and Ranks Is.
+// Recursively construct ArrayView std::variant from types Ts and ranks Is.
 template <typename... ArrayViews, typename T, typename... Ts, int... Is>
 struct VariantHelper<Types<ArrayViews...>, Types<T, Ts...>, Ints<Is...>> {
   using type = typename VariantHelper<
