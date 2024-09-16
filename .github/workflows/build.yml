@@ -121,8 +121,8 @@ jobs:
 
           - name: macos
             # Xcode compiler requires empty environment variables, so we pass null (~) here
-            os: macos-13
-            compiler: clang-14
+            os: macos-14
+            compiler: clang-15
             compiler_cc: ~
             compiler_cxx: ~
             compiler_fc: gfortran-13

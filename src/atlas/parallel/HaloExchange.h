@@ -90,7 +90,7 @@ private:  // methods
     DATA_TYPE* allocate_buffer(const int buffer_size, const bool on_device) const;
 
     template <typename DATA_TYPE>
-    void deallocate_buffer(DATA_TYPE* buffer, const bool on_device) const;
+    void deallocate_buffer(DATA_TYPE* buffer, const int buffer_size, const bool on_device) const;
 
     template <int ParallelDim, typename DATA_TYPE, int RANK>
     void pack_send_buffer(const array::ArrayView<DATA_TYPE, RANK>& hfield,
@@ -198,8 +198,8 @@ void HaloExchange::execute(array::Array& field, bool on_device) const {
 
     wait_for_send(inner_counts_init, inner_req);
 
-    deallocate_buffer<DATA_TYPE>(inner_buffer, on_device);
-    deallocate_buffer<DATA_TYPE>(halo_buffer, on_device);
+    deallocate_buffer<DATA_TYPE>(inner_buffer, inner_size, on_device);
+    deallocate_buffer<DATA_TYPE>(halo_buffer, halo_size, on_device);
 }
 
 template <typename DATA_TYPE, int RANK, typename ParallelDim>
@@ -249,8 +249,8 @@ void HaloExchange::execute_adjoint(array::Array& field, bool on_device) const {
 
     zero_halos<parallelDim>(field_hv, field_dv, halo_buffer, halo_size, on_device);
 
-    deallocate_buffer<DATA_TYPE>(halo_buffer, on_device);
-    deallocate_buffer<DATA_TYPE>(inner_buffer, on_device);
+    deallocate_buffer<DATA_TYPE>(halo_buffer, halo_size, on_device);
+    deallocate_buffer<DATA_TYPE>(inner_buffer, inner_size, on_device);
 }
 
 template <typename DATA_TYPE>
@@ -269,12 +269,12 @@ DATA_TYPE* HaloExchange::allocate_buffer(const int buffer_size, const bool on_de
 
 
 template <typename DATA_TYPE>
-void HaloExchange::deallocate_buffer(DATA_TYPE* buffer, const bool on_device) const {
+void HaloExchange::deallocate_buffer(DATA_TYPE* buffer, const int buffer_size, const bool on_device) const {
     if (on_device) {
-        util::delete_devicemem(buffer);
+        util::delete_devicemem(buffer, buffer_size);
     }
     else {
-        util::delete_hostmem(buffer);
+        util::delete_hostmem(buffer, buffer_size);
     }
 }
 
