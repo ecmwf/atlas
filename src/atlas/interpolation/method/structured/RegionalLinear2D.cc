@@ -85,12 +85,14 @@ void RegionalLinear2D::do_setup(const FunctionSpace& source,
   // Define local tree on destination grid
   std::vector<Point3> targetPoints;
   std::vector<size_t> targetIndices;
+  targetPoints.reserve(targetSize_);
+  targetIndices.reserve(targetSize_);
   const auto targetLonLatView = array::make_view<double, 2>(target_.lonlat());
   for (size_t targetJnode = 0; targetJnode < targetSize_; ++targetJnode) {
     PointLonLat p({targetLonLatView(targetJnode, 0), targetLonLatView(targetJnode, 1)});
     sourceProj.lonlat2xy(p);
-    targetPoints.push_back(Point3(p[0], p[1], 0.0));
-    targetIndices.push_back(targetJnode);
+    targetPoints.emplace_back(p[0], p[1], 0.0);
+    targetIndices.emplace_back(targetJnode);
   }
   util::IndexKDTree targetTree;
   if (targetSize_ > 0) {
@@ -165,7 +167,9 @@ void RegionalLinear2D::do_setup(const FunctionSpace& source,
 
     // Buffer size
     sourceSendSize_ = 0;
-    for (const auto & n : sourceSendCounts_) sourceSendSize_ += n;
+    for (const auto & n : sourceSendCounts_) {
+      sourceSendSize_ += n;
+    }
 
     // SendDispls
     sourceSendDispls_.push_back(0);

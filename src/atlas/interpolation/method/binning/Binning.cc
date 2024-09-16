@@ -102,8 +102,9 @@ void Binning::do_setup(const FunctionSpace& source,
     // start of the indexes associated with the row 'i+1'
     size_t ubound = ptr_tamx_o[idx_row_next];
 
-    if (lbound == ubound)
+    if (lbound == ubound) {
       continue;
+    }
 
     double sum_row = 0;
     for (size_t i = lbound; i < ubound; ++i) {
