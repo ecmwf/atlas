@@ -588,13 +588,20 @@ void StructuredColumns::setup(const grid::Distribution& distribution, const ecki
 
         atlas_omp_parallel_for(idx_t n = 0; n < gridpoints.size(); ++n) {
             const GridPoint& gp = gridpoints[n];
-            if (gp.j >= 0 && gp.j < grid_->ny()) {
-                xy(gp.r, XX) = grid_->x(gp.i, gp.j);
-                xy(gp.r, YY) = grid_->y(gp.j);
-            }
-            else {
-                xy(gp.r, XX) = compute_x(gp.i, gp.j);
-                xy(gp.r, YY) = compute_y(gp.j);
+            if (regional) {
+              std::array<double,2> lonlatVec;
+              grid_->lonlat(gp.i, gp.j, lonlatVec.data());
+              xy(gp.r, XX) = lonlatVec[0];
+              xy(gp.r, YY) = lonlatVec[1];
+            } else {
+              if (gp.j >= 0 && gp.j < grid_->ny()) {
+                  xy(gp.r, XX) = grid_->x(gp.i, gp.j);
+                  xy(gp.r, YY) = grid_->y(gp.j);
+              }
+              else {
+                  xy(gp.r, XX) = compute_x(gp.i, gp.j);
+                  xy(gp.r, YY) = compute_y(gp.j);
+              }
             }
 
             bool in_domain(false);

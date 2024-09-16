@@ -655,6 +655,8 @@ interpolation/method/structured/QuasiCubic2D.cc
 interpolation/method/structured/QuasiCubic2D.h
 interpolation/method/structured/QuasiCubic3D.cc
 interpolation/method/structured/QuasiCubic3D.h
+interpolation/method/structured/RegionalLinear2D.cc
+interpolation/method/structured/RegionalLinear2D.h
 interpolation/method/structured/StructuredInterpolation2D.h
 interpolation/method/structured/StructuredInterpolation2D.tcc
 interpolation/method/structured/StructuredInterpolation3D.h
