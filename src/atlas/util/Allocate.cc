@@ -25,8 +25,24 @@ namespace util {
 namespace detail {
 //------------------------------------------------------------------------------
 
+static int devices() {
+    static int devices_ = [](){
+        int n = 0;
+        auto err = hicGetDeviceCount(&n);
+        if (err != hicSuccess) {
+            n = 0;
+            hicGetLastError();
+        }
+        return n;
+    }();
+    return devices_;
+}
+
 void allocate_managed(void** ptr, size_t bytes) {
     if constexpr (not ATLAS_HAVE_GPU) {
+        return allocate_host(ptr, bytes);
+    }
+    if (devices() == 0) {
         return allocate_host(ptr, bytes);
     }
     HIC_CALL(hicMallocManaged(ptr, bytes));
@@ -34,6 +50,9 @@ void allocate_managed(void** ptr, size_t bytes) {
 
 void deallocate_managed(void* ptr, size_t bytes) {
     if constexpr (not ATLAS_HAVE_GPU) {
+        return deallocate_host(ptr, bytes);
+    }
+    if (devices() == 0) {
         return deallocate_host(ptr, bytes);
     }
     HIC_CALL(hicDeviceSynchronize());
@@ -44,11 +63,17 @@ void allocate_device(void** ptr, size_t bytes) {
     if constexpr (not ATLAS_HAVE_GPU) {
         return allocate_host(ptr, bytes);
     }
+    if (devices() == 0) {
+        return allocate_host(ptr, bytes);
+    }
     HIC_CALL(hicMalloc(ptr, bytes));
 }
 
 void deallocate_device(void* ptr, size_t bytes) {
     if constexpr (not ATLAS_HAVE_GPU) {
+        return deallocate_host(ptr, bytes);
+    }
+    if (devices() == 0) {
         return deallocate_host(ptr, bytes);
     }
     HIC_CALL(hicDeviceSynchronize());
