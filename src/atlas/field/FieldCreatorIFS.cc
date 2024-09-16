@@ -55,7 +55,7 @@ FieldImpl* FieldCreatorIFS::createField(const eckit::Parametrisation& params) co
         datatype = array::DataType(kind);
     }
 
-    nblk = std::ceil(static_cast<double>(ngptot + nproma - 1) / static_cast<double>(nproma));
+    nblk = std::ceil(static_cast<double>(ngptot) / static_cast<double>(nproma));
 
     array::ArrayShape s;
     bool fortran(false);
