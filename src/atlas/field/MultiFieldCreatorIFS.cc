@@ -84,7 +84,7 @@ MultiFieldImpl* MultiFieldCreatorIFS::create(const eckit::Configuration& config)
         ( (nlev > 0) ? array::make_shape(nblk, nlev, nproma) : ( (nfld > 0) ? array::make_shape(nblk, nfld, nproma) : 
                                                                  array::make_shape(nblk, nproma) ) ) );
 
-    MultiFieldImpl* multifield = new MultiFieldImpl{array::ArraySpec{datatype, multiarray_shape}, config};
+    MultiFieldImpl* multifield = new MultiFieldImpl{array::ArraySpec{datatype, multiarray_shape}};
     auto& multiarray = multifield->array();
 
     size_t multiarray_field_idx = 0;
@@ -114,37 +114,37 @@ MultiFieldImpl* MultiFieldCreatorIFS::create(const eckit::Configuration& config)
             if (datatype.kind() == array::DataType::KIND_REAL64) {
                 if (nlev > 0 and field_vars > 0) {
                     auto slice = array::make_view<double, 4>(multiarray).slice(all, range, all, all);
-                    field      = Field(name, slice.data(), field_array_spec, config);
+                    field      = Field(name, slice.data(), field_array_spec);
                 }
                 else if (nlev > 0) {
                     auto slice = array::make_view<double, 3>(multiarray).slice(all, all, all);
-                    field      = Field(name, slice.data(), field_array_spec, config);
+                    field      = Field(name, slice.data(), field_array_spec);
                 }
                 else if (field_vars > 0) {
                     auto slice = array::make_view<double, 3>(multiarray).slice(all, range, all);
-                    field      = Field(name, slice.data(), field_array_spec, config);
+                    field      = Field(name, slice.data(), field_array_spec);
                 }
                 else {
                     auto slice = array::make_view<double, 2>(multiarray).slice(all, all);
-                    field      = Field(name, slice.data(), field_array_spec, config);
+                    field      = Field(name, slice.data(), field_array_spec);
                 }
             }
             else if (datatype.kind() == array::DataType::KIND_REAL32) {
                 if (nlev > 0 and field_vars > 0) {
                     auto slice = array::make_view<float, 4>(multiarray).slice(all, range, all, all);
-                    field      = Field(name, slice.data(), field_array_spec, config);
+                    field      = Field(name, slice.data(), field_array_spec);
                 }
                 else if (nlev > 0) {
                     auto slice = array::make_view<float, 3>(multiarray).slice(all, all, all);
-                    field      = Field(name, slice.data(), field_array_spec, config);
+                    field      = Field(name, slice.data(), field_array_spec);
                 }
                 else if (field_vars > 0) {
                     auto slice = array::make_view<float, 3>(multiarray).slice(all, range, all);
-                    field      = Field(name, slice.data(), field_array_spec, config);
+                    field      = Field(name, slice.data(), field_array_spec);
                 }
                 else {
                     auto slice = array::make_view<float, 2>(multiarray).slice(all, all);
-                    field      = Field(name, slice.data(), field_array_spec, config);
+                    field      = Field(name, slice.data(), field_array_spec);
                 }
             }
             else {
@@ -169,37 +169,37 @@ MultiFieldImpl* MultiFieldCreatorIFS::create(const eckit::Configuration& config)
             if (datatype.kind() == array::DataType::KIND_REAL64) {
                 if (nlev > 0 and field_vars > 0) {
                     auto slice = array::make_view<double, 4>(multiarray).slice(all, multiarray_field_idx, all, all);
-                    field      = Field(name, slice.data(), field_array_spec, config);
+                    field      = Field(name, slice.data(), field_array_spec);
                 }
                 else if (nlev > 0) {
                     auto slice = array::make_view<double, 3>(multiarray).slice(all, all, all);
-                    field      = Field(name, slice.data(), field_array_spec, config);
+                    field      = Field(name, slice.data(), field_array_spec);
                 }
                 else if (field_vars > 0) {
                     auto slice = array::make_view<double, 3>(multiarray).slice(all, multiarray_field_idx, all);
-                    field      = Field(name, slice.data(), field_array_spec, config);
+                    field      = Field(name, slice.data(), field_array_spec);
                 }
                 else {
                     auto slice = array::make_view<double, 2>(multiarray).slice(all, all);
-                    field      = Field(name, slice.data(), field_array_spec, config);
+                    field      = Field(name, slice.data(), field_array_spec);
                 }
             }
             else if (datatype.kind() == array::DataType::KIND_REAL32) {
                 if (nlev > 0 and field_vars > 0) {
                     auto slice = array::make_view<float, 4>(multiarray).slice(all, multiarray_field_idx, all, all);
-                    field      = Field(name, slice.data(), field_array_spec, config);
+                    field      = Field(name, slice.data(), field_array_spec);
                 }
                 else if (nlev > 0) {
                     auto slice = array::make_view<float, 3>(multiarray).slice(all, all, all);
-                    field      = Field(name, slice.data(), field_array_spec, config);
+                    field      = Field(name, slice.data(), field_array_spec);
                 }
                 else if (field_vars > 0) {
                     auto slice = array::make_view<float, 3>(multiarray).slice(all, multiarray_field_idx, all);
-                    field      = Field(name, slice.data(), field_array_spec, config);
+                    field      = Field(name, slice.data(), field_array_spec);
                 }
                 else {
                     auto slice = array::make_view<float, 2>(multiarray).slice(all, all);
-                    field      = Field(name, slice.data(), field_array_spec, config);
+                    field      = Field(name, slice.data(), field_array_spec);
                 }
             }
             else {

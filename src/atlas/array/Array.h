@@ -47,48 +47,38 @@ public:
     Array() = default;
     virtual ~Array();
 
-    static Array* create(array::DataType, const ArrayShape&, const eckit::Parametrisation& param 
-            = util::Config());
+    static Array* create(array::DataType, const ArrayShape&);
 
-    static Array* create(array::DataType, const ArrayShape&, const ArrayLayout&,
-            const eckit::Parametrisation& param = util::Config());
+    static Array* create(array::DataType, const ArrayShape&, const ArrayLayout&);
 
-    static Array* create(array::DataType, ArraySpec&&,
-            const eckit::Parametrisation& param = util::Config());
+    static Array* create(array::DataType, ArraySpec&&);
 
-    static Array* create(ArraySpec&&,
-            const eckit::Parametrisation& param = util::Config());
+    static Array* create(ArraySpec&&);
 
     virtual size_t footprint() const = 0;
 
     template <typename Value>
-    static Array* create(idx_t size0, const eckit::Parametrisation& param = util::Config());
+    static Array* create(idx_t size0);
     template <typename Value>
-    static Array* create(idx_t size0, idx_t size1, const eckit::Parametrisation& param = util::Config());
+    static Array* create(idx_t size0, idx_t size1);
     template <typename Value>
-    static Array* create(idx_t size0, idx_t size1, idx_t size2,
-            const eckit::Parametrisation& param = util::Config());
+    static Array* create(idx_t size0, idx_t size1, idx_t size2);
     template <typename Value>
-    static Array* create(idx_t size0, idx_t size1, idx_t size2, idx_t size3,
-            const eckit::Parametrisation& param = util::Config());
+    static Array* create(idx_t size0, idx_t size1, idx_t size2, idx_t size3);
     template <typename Value>
-    static Array* create(idx_t size0, idx_t size1, idx_t size2, idx_t size3, idx_t size4,
-            const eckit::Parametrisation& param = util::Config());
+    static Array* create(idx_t size0, idx_t size1, idx_t size2, idx_t size3, idx_t size4);
 
     template <typename Value>
-    static Array* create(const ArrayShape& shape, const eckit::Parametrisation& param = util::Config());
+    static Array* create(const ArrayShape& shape);
 
     template <typename Value>
-    static Array* create(const ArrayShape& shape, const ArrayLayout& layout,
-            const eckit::Parametrisation& param = util::Config());
+    static Array* create(const ArrayShape& shape, const ArrayLayout& layout);
 
     template <typename Value>
-    static Array* wrap(Value* data, const ArrayShape& shape, const eckit::Parametrisation& param 
-            = util::Config());
+    static Array* wrap(Value* data, const ArrayShape& shape);
 
     template <typename Value>
-    static Array* wrap(Value* data, const ArraySpec& spec, const eckit::Parametrisation& param 
-            = util::Config());
+    static Array* wrap(Value* data, const ArraySpec& spec);
 
     idx_t bytes() const { return datatype().size() * spec().allocatedSize(); }
 
@@ -238,21 +228,19 @@ protected:
 template <typename Value>
 class ArrayT : public Array {
 public:
-    ArrayT(idx_t size0, const eckit::Parametrisation& param = util::Config());
-    ArrayT(idx_t size0, idx_t size1, const eckit::Parametrisation& param = util::Config());
-    ArrayT(idx_t size0, idx_t size1, idx_t size2, const eckit::Parametrisation& param = util::Config());
-    ArrayT(idx_t size0, idx_t size1, idx_t size2, idx_t size3,
-            const eckit::Parametrisation& param = util::Config());
-    ArrayT(idx_t size0, idx_t size1, idx_t size2, idx_t size3, idx_t size4,
-            const eckit::Parametrisation& param = util::Config());
+    ArrayT(idx_t size0);
+    ArrayT(idx_t size0, idx_t size1);
+    ArrayT(idx_t size0, idx_t size1, idx_t size2);
+    ArrayT(idx_t size0, idx_t size1, idx_t size2, idx_t size3);
+    ArrayT(idx_t size0, idx_t size1, idx_t size2, idx_t size3, idx_t size4);
 
-    ArrayT(ArraySpec&&, const eckit::Parametrisation& param = util::Config());
+    ArrayT(ArraySpec&&);
 
-    ArrayT(const ArrayShape&, const eckit::Parametrisation& param = util::Config());
+    ArrayT(const ArrayShape&);
 
-    ArrayT(const ArrayShape&, const ArrayAlignment&, const eckit::Parametrisation& param = util::Config());
+    ArrayT(const ArrayShape&, const ArrayAlignment&);
 
-    ArrayT(const ArrayShape&, const ArrayLayout&, const eckit::Parametrisation& param = util::Config());
+    ArrayT(const ArrayShape&, const ArrayLayout&);
 
     virtual void insert(idx_t idx1, idx_t size1);
 
@@ -272,7 +260,7 @@ public:
 
     // This constructor is used through the Array::create() or the Array::wrap()
     // methods
-    ArrayT(ArrayDataStore*, const ArraySpec&, const eckit::Parametrisation& param = util::Config());
+    ArrayT(ArrayDataStore*, const ArraySpec&);
 
     virtual size_t footprint() const;
 

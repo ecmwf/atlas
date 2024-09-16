@@ -10,7 +10,7 @@
 
 #include <iostream>
 
-#include "eckit/config/Parametrisation.h"
+//#include "eckit/config/Parametrisation.h"
 
 #include "atlas/array.h"
 #include "atlas/array/ArrayDataStore.h"
@@ -27,63 +27,61 @@ namespace atlas {
 namespace array {
 
 template <typename Value>
-Array* Array::create(idx_t dim0, const eckit::Parametrisation& param) {
-    return new ArrayT<Value>(dim0, param);
+Array* Array::create(idx_t dim0) {
+    return new ArrayT<Value>(dim0);
 }
 template <typename Value>
-Array* Array::create(idx_t dim0, idx_t dim1, const eckit::Parametrisation& param) {
-    return new ArrayT<Value>(dim0, dim1, param);
+Array* Array::create(idx_t dim0, idx_t dim1) {
+    return new ArrayT<Value>(dim0, dim1);
 }
 template <typename Value>
-Array* Array::create(idx_t dim0, idx_t dim1, idx_t dim2, const eckit::Parametrisation& param) {
-    return new ArrayT<Value>(dim0, dim1, dim2, param);
+Array* Array::create(idx_t dim0, idx_t dim1, idx_t dim2) {
+    return new ArrayT<Value>(dim0, dim1, dim2);
 }
 template <typename Value>
-Array* Array::create(idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3, const eckit::Parametrisation& param) {
-    return new ArrayT<Value>(dim0, dim1, dim2, dim3, param);
+Array* Array::create(idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3) {
+    return new ArrayT<Value>(dim0, dim1, dim2, dim3);
 }
 template <typename Value>
-Array* Array::create(idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3, idx_t dim4,
-        const eckit::Parametrisation& param) {
-    return new ArrayT<Value>(dim0, dim1, dim2, dim3, dim4, param);
+Array* Array::create(idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3, idx_t dim4) {
+    return new ArrayT<Value>(dim0, dim1, dim2, dim3, dim4);
 }
 template <typename Value>
-Array* Array::create(const ArrayShape& shape, const eckit::Parametrisation& param) {
-    return new ArrayT<Value>(shape, param);
+Array* Array::create(const ArrayShape& shape) {
+    return new ArrayT<Value>(shape);
 }
 template <typename Value>
-Array* Array::create(const ArrayShape& shape, const ArrayLayout& layout,
-        const eckit::Parametrisation& param) {
-    return new ArrayT<Value>(shape, layout, param);
+Array* Array::create(const ArrayShape& shape, const ArrayLayout& layout) {
+    return new ArrayT<Value>(shape, layout);
 }
 template <typename Value>
-Array* Array::wrap(Value* data, const ArrayShape& shape, const eckit::Parametrisation& param) {
+Array* Array::wrap(Value* data, const ArrayShape& shape) {
     size_t size = 1;
     for (int i = 0; i < shape.size(); ++i) {
         size *= shape[i];
     }
-    return new ArrayT<Value>(new native::WrappedDataStore<Value>(data, size, param), shape, param);
+    return new ArrayT<Value>(new native::WrappedDataStore<Value>(data, size), shape);
 }
 template <typename Value>
-Array* Array::wrap(Value* data, const ArraySpec& spec, const eckit::Parametrisation& param) {
+Array* Array::wrap(Value* data, const ArraySpec& spec) {
     size_t size = spec.size();
-    return new ArrayT<Value>(new native::WrappedDataStore<Value>(data, spec, param), spec, param);
+    return new ArrayT<Value>(new native::WrappedDataStore<Value>(data, size), spec);
 }
 
 Array::~Array() = default;
 
-Array* Array::create(DataType datatype, const ArrayShape& shape, const eckit::Parametrisation& param) {
+Array* Array::create(DataType datatype, const ArrayShape& shape) {
     switch (datatype.kind()) {
         case DataType::KIND_REAL64:
-            return new ArrayT<double>(shape, param);
+            return new ArrayT<double>(shape);
         case DataType::KIND_REAL32:
-            return new ArrayT<float>(shape, param);
+            return new ArrayT<float>(shape);
         case DataType::KIND_INT32:
-            return new ArrayT<int>(shape, param);
+            return new ArrayT<int>(shape);
         case DataType::KIND_INT64:
-            return new ArrayT<long>(shape, param);
+            return new ArrayT<long>(shape);
         case DataType::KIND_UINT64:
-            return new ArrayT<unsigned long>(shape, param);
+            return new ArrayT<unsigned long>(shape);
         default: {
             std::stringstream err;
             err << "data kind " << datatype.kind() << " not recognised.";
@@ -92,18 +90,18 @@ Array* Array::create(DataType datatype, const ArrayShape& shape, const eckit::Pa
     }
 }
 
-Array* Array::create(DataType datatype, ArraySpec&& spec, const eckit::Parametrisation& param) {
+Array* Array::create(DataType datatype, ArraySpec&& spec) {
     switch (datatype.kind()) {
         case DataType::KIND_REAL64:
-            return new ArrayT<double>(std::move(spec), param);
+            return new ArrayT<double>(std::move(spec));
         case DataType::KIND_REAL32:
-            return new ArrayT<float>(std::move(spec), param);
+            return new ArrayT<float>(std::move(spec));
         case DataType::KIND_INT32:
-            return new ArrayT<int>(std::move(spec), param);
+            return new ArrayT<int>(std::move(spec));
         case DataType::KIND_INT64:
-            return new ArrayT<long>(std::move(spec), param);
+            return new ArrayT<long>(std::move(spec));
         case DataType::KIND_UINT64:
-            return new ArrayT<unsigned long>(std::move(spec), param);
+            return new ArrayT<unsigned long>(std::move(spec));
         default: {
             std::stringstream err;
             err << "data kind " << datatype.kind() << " not recognised.";
@@ -112,85 +110,72 @@ Array* Array::create(DataType datatype, ArraySpec&& spec, const eckit::Parametri
     }
 }
 
-Array* Array::create(ArraySpec&& spec, const eckit::Parametrisation& param) {
-    return create(spec.datatype(), std::move(spec), param);
+Array* Array::create(ArraySpec&& spec) {
+    return create(spec.datatype(), std::move(spec));
 }
 
 
 template <typename Value>
-ArrayT<Value>::ArrayT(ArrayDataStore* ds, const ArraySpec& spec, const eckit::Parametrisation& param) {
+ArrayT<Value>::ArrayT(ArrayDataStore* ds, const ArraySpec& spec) {
     data_store_ = std::unique_ptr<ArrayDataStore>(ds);
     spec_       = spec;
-    param.get("host_memory_mapped",mapped_);
 }
 
 template <typename Value>
-ArrayT<Value>::ArrayT(idx_t dim0, const eckit::Parametrisation& param) {
+ArrayT<Value>::ArrayT(idx_t dim0) {
     spec_       = ArraySpec(make_shape(dim0));
-    data_store_ = std::make_unique<native::DataStore<Value>>(spec_.size(), param);
-    param.get("host_memory_mapped",mapped_);
+    data_store_ = std::make_unique<native::DataStore<Value>>(spec_.size());
 }
 template <typename Value>
-ArrayT<Value>::ArrayT(idx_t dim0, idx_t dim1, const eckit::Parametrisation& param) {
+ArrayT<Value>::ArrayT(idx_t dim0, idx_t dim1) {
     spec_       = ArraySpec(make_shape(dim0, dim1));
-    data_store_ = std::make_unique<native::DataStore<Value>>(spec_.size(), param);
-    param.get("host_memory_mapped",mapped_);
+    data_store_ = std::make_unique<native::DataStore<Value>>(spec_.size());
 }
 template <typename Value>
-ArrayT<Value>::ArrayT(idx_t dim0, idx_t dim1, idx_t dim2, const eckit::Parametrisation& param) {
+ArrayT<Value>::ArrayT(idx_t dim0, idx_t dim1, idx_t dim2) {
     spec_       = ArraySpec(make_shape(dim0, dim1, dim2));
-    data_store_ = std::make_unique<native::DataStore<Value>>(spec_.size(), param);
-    param.get("host_memory_mapped",mapped_);
+    data_store_ = std::make_unique<native::DataStore<Value>>(spec_.size());
 }
 template <typename Value>
-ArrayT<Value>::ArrayT(idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3, const eckit::Parametrisation& param) {
+ArrayT<Value>::ArrayT(idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3) {
     spec_       = ArraySpec(make_shape(dim0, dim1, dim2, dim3));
-    data_store_ = std::make_unique<native::DataStore<Value>>(spec_.size(), param);
-    param.get("host_memory_mapped",mapped_);
+    data_store_ = std::make_unique<native::DataStore<Value>>(spec_.size());
 }
 template <typename Value>
-ArrayT<Value>::ArrayT(idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3, idx_t dim4,
-        const eckit::Parametrisation& param) {
+ArrayT<Value>::ArrayT(idx_t dim0, idx_t dim1, idx_t dim2, idx_t dim3, idx_t dim4) {
     spec_       = ArraySpec(make_shape(dim0, dim1, dim2, dim3, dim4));
-    data_store_ = std::make_unique<native::DataStore<Value>>(spec_.size(), param);
-    param.get("host_memory_mapped",mapped_);
+    data_store_ = std::make_unique<native::DataStore<Value>>(spec_.size());
 }
 
 template <typename Value>
-ArrayT<Value>::ArrayT(const ArrayShape& shape, const eckit::Parametrisation& param) {
+ArrayT<Value>::ArrayT(const ArrayShape& shape) {
     ATLAS_ASSERT(shape.size() > 0);
     size_t size = 1;
     for (size_t j = 0; j < shape.size(); ++j) {
         size *= size_t(shape[j]);
     }
-    data_store_ = std::make_unique<native::DataStore<Value>>(size, param);
+    data_store_ = std::make_unique<native::DataStore<Value>>(size);
     spec_       = ArraySpec(shape);
-    param.get("host_memory_mapped",mapped_);
 }
 
 template <typename Value>
-ArrayT<Value>::ArrayT(const ArrayShape& shape, const ArrayAlignment& alignment,
-        const eckit::Parametrisation& param) {
+ArrayT<Value>::ArrayT(const ArrayShape& shape, const ArrayAlignment& alignment) {
     spec_       = ArraySpec(shape, alignment);
-    data_store_ = std::make_unique<native::DataStore<Value>>(spec_.allocatedSize(), param);
-    param.get("host_memory_mapped",mapped_);
+    data_store_ = std::make_unique<native::DataStore<Value>>(spec_.allocatedSize());
 }
 
 template <typename Value>
-ArrayT<Value>::ArrayT(const ArrayShape& shape, const ArrayLayout& layout, 
-        const eckit::Parametrisation& param) {
+ArrayT<Value>::ArrayT(const ArrayShape& shape, const ArrayLayout& layout) {
     spec_       = ArraySpec(shape);
-    data_store_ = std::make_unique<native::DataStore<Value>>(spec_.size(), param);
+    data_store_ = std::make_unique<native::DataStore<Value>>(spec_.size());
     for (size_t j = 0; j < layout.size(); ++j) {
         ATLAS_ASSERT(spec_.layout()[j] == layout[j]);
     }
-    param.get("host_memory_mapped",mapped_);
 }
 
 template <typename Value>
-ArrayT<Value>::ArrayT(ArraySpec&& spec, const eckit::Parametrisation& param): Array(std::move(spec)) {
-    data_store_ = std::make_unique<native::DataStore<Value>>(spec_.allocatedSize(), param);
-    param.get("host_memory_mapped",mapped_);
+ArrayT<Value>::ArrayT(ArraySpec&& spec): Array(std::move(spec)) {
+    data_store_ = std::make_unique<native::DataStore<Value>>(spec_.allocatedSize());
 }
 
 template <typename Value>
@@ -319,59 +304,59 @@ bool ArrayT<Value>::accMapped() const {
 
 //------------------------------------------------------------------------------
 
-template Array* Array::create<int>(idx_t, const eckit::Parametrisation&);
-template Array* Array::create<long>(idx_t, const eckit::Parametrisation&);
-template Array* Array::create<float>(idx_t, const eckit::Parametrisation&);
-template Array* Array::create<double>(idx_t, const eckit::Parametrisation&);
-template Array* Array::create<long unsigned>(idx_t, const eckit::Parametrisation&);
+template Array* Array::create<int>(idx_t);
+template Array* Array::create<long>(idx_t);
+template Array* Array::create<float>(idx_t);
+template Array* Array::create<double>(idx_t);
+template Array* Array::create<long unsigned>(idx_t);
 
-template Array* Array::create<int>(idx_t, idx_t, const eckit::Parametrisation&);
-template Array* Array::create<long>(idx_t, idx_t, const eckit::Parametrisation&);
-template Array* Array::create<float>(idx_t, idx_t, const eckit::Parametrisation&);
-template Array* Array::create<double>(idx_t, idx_t, const eckit::Parametrisation&);
-template Array* Array::create<long unsigned>(idx_t, idx_t, const eckit::Parametrisation&);
+template Array* Array::create<int>(idx_t, idx_t);
+template Array* Array::create<long>(idx_t, idx_t);
+template Array* Array::create<float>(idx_t, idx_t);
+template Array* Array::create<double>(idx_t, idx_t);
+template Array* Array::create<long unsigned>(idx_t, idx_t);
 
-template Array* Array::create<int>(idx_t, idx_t, idx_t, const eckit::Parametrisation&);
-template Array* Array::create<long>(idx_t, idx_t, idx_t, const eckit::Parametrisation&);
-template Array* Array::create<float>(idx_t, idx_t, idx_t, const eckit::Parametrisation&);
-template Array* Array::create<double>(idx_t, idx_t, idx_t, const eckit::Parametrisation&);
-template Array* Array::create<long unsigned>(idx_t, idx_t, idx_t, const eckit::Parametrisation&);
+template Array* Array::create<int>(idx_t, idx_t, idx_t);
+template Array* Array::create<long>(idx_t, idx_t, idx_t);
+template Array* Array::create<float>(idx_t, idx_t, idx_t);
+template Array* Array::create<double>(idx_t, idx_t, idx_t);
+template Array* Array::create<long unsigned>(idx_t, idx_t, idx_t);
 
-template Array* Array::create<int>(idx_t, idx_t, idx_t, idx_t, const eckit::Parametrisation&);
-template Array* Array::create<long>(idx_t, idx_t, idx_t, idx_t, const eckit::Parametrisation&);
-template Array* Array::create<float>(idx_t, idx_t, idx_t, idx_t, const eckit::Parametrisation&);
-template Array* Array::create<double>(idx_t, idx_t, idx_t, idx_t, const eckit::Parametrisation&);
-template Array* Array::create<long unsigned>(idx_t, idx_t, idx_t, idx_t, const eckit::Parametrisation&);
+template Array* Array::create<int>(idx_t, idx_t, idx_t, idx_t);
+template Array* Array::create<long>(idx_t, idx_t, idx_t, idx_t);
+template Array* Array::create<float>(idx_t, idx_t, idx_t, idx_t);
+template Array* Array::create<double>(idx_t, idx_t, idx_t, idx_t);
+template Array* Array::create<long unsigned>(idx_t, idx_t, idx_t, idx_t);
 
-template Array* Array::create<int>(idx_t, idx_t, idx_t, idx_t, idx_t, const eckit::Parametrisation&);
-template Array* Array::create<long>(idx_t, idx_t, idx_t, idx_t, idx_t, const eckit::Parametrisation&);
-template Array* Array::create<float>(idx_t, idx_t, idx_t, idx_t, idx_t, const eckit::Parametrisation&);
-template Array* Array::create<double>(idx_t, idx_t, idx_t, idx_t, idx_t, const eckit::Parametrisation&);
-template Array* Array::create<long unsigned>(idx_t, idx_t, idx_t, idx_t, idx_t, const eckit::Parametrisation&);
+template Array* Array::create<int>(idx_t, idx_t, idx_t, idx_t, idx_t);
+template Array* Array::create<long>(idx_t, idx_t, idx_t, idx_t, idx_t);
+template Array* Array::create<float>(idx_t, idx_t, idx_t, idx_t, idx_t);
+template Array* Array::create<double>(idx_t, idx_t, idx_t, idx_t, idx_t);
+template Array* Array::create<long unsigned>(idx_t, idx_t, idx_t, idx_t, idx_t);
 
-template Array* Array::create<int>(const ArrayShape&, const eckit::Parametrisation&);
-template Array* Array::create<long>(const ArrayShape&, const eckit::Parametrisation&);
-template Array* Array::create<float>(const ArrayShape&, const eckit::Parametrisation&);
-template Array* Array::create<double>(const ArrayShape&, const eckit::Parametrisation&);
-template Array* Array::create<long unsigned>(const ArrayShape&, const eckit::Parametrisation&);
+template Array* Array::create<int>(const ArrayShape&);
+template Array* Array::create<long>(const ArrayShape&);
+template Array* Array::create<float>(const ArrayShape&);
+template Array* Array::create<double>(const ArrayShape&);
+template Array* Array::create<long unsigned>(const ArrayShape&);
 
-template Array* Array::create<int>(const ArrayShape&, const ArrayLayout&, const eckit::Parametrisation&);
-template Array* Array::create<long>(const ArrayShape&, const ArrayLayout&, const eckit::Parametrisation&);
-template Array* Array::create<float>(const ArrayShape&, const ArrayLayout&, const eckit::Parametrisation&);
-template Array* Array::create<double>(const ArrayShape&, const ArrayLayout&, const eckit::Parametrisation&);
-template Array* Array::create<long unsigned>(const ArrayShape&, const ArrayLayout&, const eckit::Parametrisation&);
+template Array* Array::create<int>(const ArrayShape&, const ArrayLayout&);
+template Array* Array::create<long>(const ArrayShape&, const ArrayLayout&);
+template Array* Array::create<float>(const ArrayShape&, const ArrayLayout&);
+template Array* Array::create<double>(const ArrayShape&, const ArrayLayout&);
+template Array* Array::create<long unsigned>(const ArrayShape&, const ArrayLayout&);
 
-template Array* Array::wrap<int>(int*, const ArrayShape&, const eckit::Parametrisation&);
-template Array* Array::wrap<long>(long*, const ArrayShape&, const eckit::Parametrisation&);
-template Array* Array::wrap<float>(float*, const ArrayShape&, const eckit::Parametrisation&);
-template Array* Array::wrap<double>(double*, const ArrayShape&, const eckit::Parametrisation&);
-template Array* Array::wrap<long unsigned>(long unsigned*, const ArrayShape&, const eckit::Parametrisation&);
+template Array* Array::wrap<int>(int*, const ArrayShape&);
+template Array* Array::wrap<long>(long*, const ArrayShape&);
+template Array* Array::wrap<float>(float*, const ArrayShape&);
+template Array* Array::wrap<double>(double*, const ArrayShape&);
+template Array* Array::wrap<long unsigned>(long unsigned*, const ArrayShape&);
 
-template Array* Array::wrap<int>(int*, const ArraySpec&, const eckit::Parametrisation&);
-template Array* Array::wrap<long>(long*, const ArraySpec&, const eckit::Parametrisation&);
-template Array* Array::wrap<float>(float*, const ArraySpec&, const eckit::Parametrisation&);
-template Array* Array::wrap<double>(double*, const ArraySpec&, const eckit::Parametrisation&);
-template Array* Array::wrap<long unsigned>(long unsigned*, const ArraySpec&, const eckit::Parametrisation&);
+template Array* Array::wrap<int>(int*, const ArraySpec&);
+template Array* Array::wrap<long>(long*, const ArraySpec&);
+template Array* Array::wrap<float>(float*, const ArraySpec&);
+template Array* Array::wrap<double>(double*, const ArraySpec&);
+template Array* Array::wrap<long unsigned>(long unsigned*, const ArraySpec&);
 
 template class ArrayT<int>;
 template class ArrayT<long>;

@@ -69,28 +69,23 @@ public:
     Field(const eckit::Parametrisation&);
 
     /// @brief Create field with given name, Datatype and ArrayShape
-    Field(const std::string& name, array::DataType, const array::ArrayShape& = array::ArrayShape(),
-            const eckit::Parametrisation& = util::Config());
+    Field(const std::string& name, array::DataType, const array::ArrayShape& = array::ArrayShape());
 
     /// @brief Create field with given name, Datatype and ArraySpec
-    Field(const std::string& name, array::DataType, array::ArraySpec&&,
-            const eckit::Parametrisation& = util::Config());
+    Field(const std::string& name, array::DataType, array::ArraySpec&&);
 
     /// @brief Create field with given name, and take ownership of given Array
-    Field(const std::string& name, array::Array*,
-            const eckit::Parametrisation& = util::Config());
+    Field(const std::string& name, array::Array*);
 
     /// @brief Create field by wrapping existing data, Datatype of template and
     /// ArraySpec
     template <typename DATATYPE>
-    Field(const std::string& name, DATATYPE* data, const array::ArraySpec&,
-            const eckit::Parametrisation& =util::Config());
+    Field(const std::string& name, DATATYPE* data, const array::ArraySpec&);
 
     /// @brief Create field by wrapping existing data, Datatype of template and
     /// ArrayShape
     template <typename DATATYPE>
-    Field(const std::string& name, DATATYPE* data, const array::ArrayShape&,
-            const eckit::Parametrisation& = util::Config());
+    Field(const std::string& name, DATATYPE* data, const array::ArrayShape&);
 
     /// @brief Deep copy
     Field clone(const eckit::Parametrisation& = util::Config()) const;
@@ -204,22 +199,14 @@ public:
     void reactivateHostWriteViews() const;
 };
 
-extern template Field::Field(const std::string&, float*, const array::ArraySpec&,
-        const eckit::Parametrisation&);
-extern template Field::Field(const std::string&, float*, const array::ArrayShape&,
-        const eckit::Parametrisation&);
-extern template Field::Field(const std::string&, double*, const array::ArraySpec&,
-        const eckit::Parametrisation&);
-extern template Field::Field(const std::string&, double*, const array::ArrayShape&,
-        const eckit::Parametrisation&);
-extern template Field::Field(const std::string&, long*, const array::ArraySpec&,
-        const eckit::Parametrisation&);
-extern template Field::Field(const std::string&, long*, const array::ArrayShape&,
-        const eckit::Parametrisation&);
-extern template Field::Field(const std::string&, int*, const array::ArraySpec&,
-        const eckit::Parametrisation&);
-extern template Field::Field(const std::string&, int*, const array::ArrayShape&,
-        const eckit::Parametrisation&);
+extern template Field::Field(const std::string&, float*, const array::ArraySpec&);
+extern template Field::Field(const std::string&, float*, const array::ArrayShape&);
+extern template Field::Field(const std::string&, double*, const array::ArraySpec&);
+extern template Field::Field(const std::string&, double*, const array::ArrayShape&);
+extern template Field::Field(const std::string&, long*, const array::ArraySpec&);
+extern template Field::Field(const std::string&, long*, const array::ArrayShape&);
+extern template Field::Field(const std::string&, int*, const array::ArraySpec&);
+extern template Field::Field(const std::string&, int*, const array::ArrayShape&);
 
 //------------------------------------------------------------------------------------------------------
 

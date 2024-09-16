@@ -260,7 +260,7 @@ BlockStructuredColumns::BlockStructuredColumns(const Grid& grid, const Vertical&
 // Create Field
 // ----------------------------------------------------------------------------
 Field BlockStructuredColumns::createField(const eckit::Configuration& options) const {
-    Field field(structuredcolumns_->config_name(options), structuredcolumns_->config_datatype(options), config_spec(options), options);
+    Field field(structuredcolumns_->config_name(options), structuredcolumns_->config_datatype(options), config_spec(options));
     structuredcolumns_->set_field_metadata(options, field);
     field.set_functionspace(this);
 
