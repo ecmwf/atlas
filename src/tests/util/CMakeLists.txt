@@ -94,4 +94,3 @@ ecbuild_add_test( TARGET atlas_test_unitsphere
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
-

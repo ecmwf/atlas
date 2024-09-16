@@ -8,6 +8,7 @@
 #include "atlas/array/ArrayViewVariant.h"
 
 #include <string>
+#include <type_traits>
 
 #include "atlas/runtime/Exception.h"
 

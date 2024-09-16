@@ -128,13 +128,15 @@ CASE("test std::visit") {
 
     const auto visitor = [&](auto&& view) {
       if constexpr (Rank<decltype(view)>() == 1) {
-        testRank1(view);
         rank1Tested = true;
+        return testRank1(view);
       }
       if constexpr (Rank<decltype(view)>() == 2) {
-        testRank2(view);
         rank2Tested = true;
+        return testRank2(view);
       }
+      // Test should not reach here.
+      EXPECT(false);
     };
 
     std::visit(visitor, var1);
@@ -158,7 +160,8 @@ CASE("test std::visit") {
           rank2Tested = true;
         },
         [](auto&& view) -> std::enable_if_t<(Rank<decltype(view)>() > 2)> {
-          // do nothing.
+          // Test should not reach here.
+          EXPECT(false);
         }};
 
     std::visit(visitor, var1);
