@@ -22,11 +22,11 @@ namespace field {
 //------------------------------------------------------------------------------------------------------
 
 void FieldSetImpl::FieldObserver::onFieldRename(FieldImpl& field) {
-    std::string name = field.name();
-    for (auto& kv: fieldset_.index_) {
-        const auto old_name = kv.first;
-        const auto idx      = kv.second;
-        if (&field == fieldset_.fields_[idx].get()) {
+
+    for (idx_t idx=0; idx<fieldset_.size(); ++idx) {
+        if (fieldset_[idx].get() == &field) {
+            std::string old_name = fieldset_.field_names_[idx];
+            std::string name = field.name();
             if (name.empty()) {
                 std::stringstream ss;
                 ss << fieldset_.name_ << "[" << idx << "]";
@@ -34,10 +34,28 @@ void FieldSetImpl::FieldObserver::onFieldRename(FieldImpl& field) {
             }
             fieldset_.index_.erase(old_name);
             fieldset_.index_[name] = idx;
+            fieldset_.field_names_[idx] = name;
+
+            auto duplicate_exists = [&](const std::string& _name) {
+                return fieldset_.duplicates_.find(_name) != fieldset_.duplicates_.end();
+            };
+
+            if (duplicate_exists(old_name)) {
+                --fieldset_.duplicates_[old_name];
+                if (fieldset_.duplicates_[old_name] == 1) {
+                    std::size_t restored_index = std::find(fieldset_.field_names_.begin(), fieldset_.field_names_.end(), old_name) - fieldset_.field_names_.begin();
+                    fieldset_.index_[old_name] = restored_index;
+                }
+            }
+            if (duplicate_exists(name)) {
+                ++fieldset_.duplicates_[name];
+            }
+            else {
+                fieldset_.duplicates_[name] = 1;
+            }
             return;
         }
     }
-    throw_AssertionFailed("Should not be here",Here());
 }
 
 
@@ -52,19 +70,34 @@ void FieldSetImpl::clear() {
     }
     index_.clear();
     fields_.clear();
+    field_names_.clear();
+    duplicates_.clear();
 }
 
 Field FieldSetImpl::add(const Field& field) {
+
+    auto update_duplicates = [&](const std::string& name) {
+        if (duplicates_.find(name) != duplicates_.end()) {
+            ++duplicates_[name];
+        }
+        else {
+            duplicates_[name] = 1;
+        }
+    };
+
+    std::string name;
     if (field.name().size()) {
-        index_[field.name()] = size();
+        name = field.name();
     }
     else {
-        std::stringstream name;
-        name << name_ << "[" << size() << "]";
-        index_[name.str()] = size();
+        std::stringstream name_ss;
+        name_ss << name_ << "[" << size() << "]";
+        name = name_ss.str();
     }
+    index_[name] = size();
     fields_.push_back(field);
-
+    field_names_.push_back(name);
+    update_duplicates(name);
     field.get()->attachObserver(field_observer_);
     return field;
 }
@@ -82,9 +115,16 @@ bool FieldSetImpl::has(const std::string& name) const {
 
 Field& FieldSetImpl::field(const std::string& name) const {
     if (!has(name)) {
-        const std::string msg("FieldSet" + (name_.length() ? " \"" + name_ + "\"" : "") + ": cannot find field \"" +
-                              name + "\"");
-        throw_Exception(msg, Here());
+        std::stringstream msg;
+        msg << "FieldSet" << (name_.length() ? " \"" + name_ + "\"" : "") << ": cannot find field \"" << name << "\"";
+        throw_Exception(msg.str(), Here());
+    }
+    if (duplicates_.at(name) > 1) {
+        std::stringstream msg;
+        msg << "FieldSet" << (name_.length() ? " \"" + name_ + "\"" : "") << ": cannot get field with ambiguous name \n" << name << "\". "
+            << duplicates_.at(name) << " fields are registered with same name. Access field by index or iterator instead.";
+        throw_Exception(msg.str(), Here());
+
     }
     return const_cast<Field&>(fields_[index_.at(name)]);
 }
@@ -107,14 +147,8 @@ void FieldSetImpl::set_dirty(bool value) const {
     }
 }
 
-std::vector<std::string> FieldSetImpl::field_names() const {
-    std::vector<std::string> ret;
-
-    for (const_iterator field = cbegin(); field != cend(); ++field) {
-        ret.push_back(field->name());
-    }
-
-    return ret;
+const std::vector<std::string>& FieldSetImpl::field_names() const {
+    return field_names_;
 }
 
 //-----------------------------------------------------------------------------

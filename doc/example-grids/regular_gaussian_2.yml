@@ -10,7 +10,7 @@ projection :
 
 check : 
   size : 128
-  lonlat(first) : [3,38.8589]
-  lonlat(last)  : [-135.011,-72.4668]
-  uid : d179fd0b56811242a1a0a8e83dade6a1
+  lonlat(first) : [3,55.1411]
+  lonlat(last)  : [170.8438,-16.8513]
+  uid : 2efc83bfae617ec2fe1a7cebe523cf41
   bounding_box(n,w,s,e) : [90,0,-90,360]

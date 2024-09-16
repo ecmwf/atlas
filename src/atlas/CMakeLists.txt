@@ -376,8 +376,6 @@ mesh/detail/AccumulateFacets.cc
 util/Unique.h
 util/Unique.cc
 
-mesh/actions/ExtendNodesGlobal.h
-mesh/actions/ExtendNodesGlobal.cc
 mesh/actions/BuildDualMesh.h
 mesh/actions/BuildCellCentres.cc
 mesh/actions/BuildCellCentres.h
@@ -401,6 +399,10 @@ mesh/actions/BuildStatistics.cc
 mesh/actions/BuildStatistics.h
 mesh/actions/BuildXYZField.cc
 mesh/actions/BuildXYZField.h
+mesh/actions/ExtendNodesGlobal.h
+mesh/actions/ExtendNodesGlobal.cc
+mesh/actions/GetCubedSphereNodalArea.cc
+mesh/actions/GetCubedSphereNodalArea.h
 mesh/actions/WriteLoadBalanceReport.cc
 mesh/actions/BuildTorusXYZField.h
 mesh/actions/BuildTorusXYZField.cc
@@ -630,6 +632,8 @@ interpolation/method/PointIndex3.cc
 interpolation/method/PointIndex3.h
 interpolation/method/PointIndex2.cc
 interpolation/method/PointIndex2.h
+interpolation/method/binning/Binning.cc
+interpolation/method/binning/Binning.h
 interpolation/method/cubedsphere/CubedSphereBilinear.cc
 interpolation/method/cubedsphere/CubedSphereBilinear.h
 interpolation/method/knn/GridBox.cc

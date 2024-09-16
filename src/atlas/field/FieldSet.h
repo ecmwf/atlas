@@ -114,7 +114,7 @@ public:  // methods
         return fields_[i];
     }
 
-    std::vector<std::string> field_names() const;
+    const std::vector<std::string>& field_names() const;
 
     Field add(const Field&);
     void add_fieldset(const FieldSet& fieldset);
@@ -142,6 +142,8 @@ protected:                                // data
     std::string name_;                    ///< internal name
     util::Metadata metadata_;             ///< metadata associated with the FieldSet
     std::map<std::string, idx_t> index_;  ///< name-to-index map, to refer fields by name
+    std::vector<std::string>     field_names_;  ///< field names
+    std::map<std::string, idx_t> duplicates_;  ///< name-to-duplicates map, to refer fields by name
 
     friend class FieldObserver;
     FieldObserver field_observer_;
@@ -236,7 +238,7 @@ public:  // methods
         return get()->field(i);
     }
 
-    std::vector<std::string> field_names() const { return get()->field_names(); }
+    const std::vector<std::string>& field_names() const { return get()->field_names(); }
 
     Field add(const Field& field) { return get()->add(field); }
     void add_fieldset(const FieldSet& fieldset) { return get()->add_fieldset(fieldset); }
