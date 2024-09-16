@@ -40,47 +40,6 @@ MultiFieldImpl* MultiFieldCreatorIFS::create(const array::DataType datatype, con
     return nullptr;
 }
 
-/*
-template<typename T>
-MultiFieldImpl* MultiFieldCreatorIFS::create(const std::vector<int> shape, const std::vector<std::string> var_names) const {
-    const int dim = shape.size();
-    const int nvar = var_names.size();
-    ATLAS_ASSERT(nvar > 0);
-
-    ATLAS_ASSERT(nvar > 0 && dim > 2, "MultiField must have at least one field name.");
-
-    int varidx = -1;
-    for (int i = 0; i < dim; i++) {
-        if (shape[i] == -1) {
-            varidx = i;
-            break;
-        }
-    }
-    int nlev = 0;
-    if (varidx > 0) {
-        nlev = shape[2];
-    }
-
-    const int nblk = shape[0];
-    const int nproma = shape[dim - 1];
-
-    util::Config config;
-    config.set("type", "MultiFieldCreatorIFS");
-    config.set("datatype", array::make_datatype<T>().str());
-    config.set("nproma", nproma);
-    config.set("nblk", nblk);
-    config.set("nlev", nlev);
-    config.set("ngptot", nblk * nproma);
-
-    std::vector<util::Config> fconfigs(nvar);
-    for (int i = 0; i < nvar; i++) {
-        fconfigs[i].set("name", var_names[i]);
-    }
-    config.set("fields", fconfigs);
-    return create(config);
-}
-*/
-
 MultiFieldImpl* MultiFieldCreatorIFS::create(const eckit::Configuration& config) const {
     long nproma;
     config.get("nproma", nproma);
