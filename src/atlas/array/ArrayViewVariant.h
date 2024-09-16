@@ -26,25 +26,25 @@ struct Types {};
 template <int... Is>
 struct Ints {};
 
-template <typename...>
+template <typename Values, typename Ranks, typename... ArrayViews>
 struct VariantHelper;
 
 // Recursively construct ArrayView std::variant from types Ts and ranks Is.
-template <typename... ArrayViews, typename T, typename... Ts, int... Is>
-struct VariantHelper<Types<ArrayViews...>, Types<T, Ts...>, Ints<Is...>> {
-  using type = typename VariantHelper<
-      Types<ArrayViews..., ArrayView<const T, Is>..., ArrayView<T, Is>...>,
-      Types<Ts...>, Ints<Is...>>::type;
+template <typename T, typename... Ts, int... Is, typename... ArrayViews>
+struct VariantHelper<Types<T, Ts...>, Ints<Is...>, ArrayViews...> {
+  using type = typename VariantHelper<Types<Ts...>, Ints<Is...>, ArrayViews...,
+                                      ArrayView<const T, Is>...,
+                                      ArrayView<T, Is>...>::type;
 };
 
 // End recursion.
-template <typename... ArrayViews, int... Is>
-struct VariantHelper<Types<ArrayViews...>, Types<>, Ints<Is...>> {
+template <int... Is, typename... ArrayViews>
+struct VariantHelper<Types<>, Ints<Is...>, ArrayViews...> {
   using type = std::variant<ArrayViews...>;
 };
 
 template <typename Values, typename Ranks>
-using Variant = typename VariantHelper<Types<>, Values, Ranks>::type;
+using Variant = typename VariantHelper<Values, Ranks>::type;
 
 }  // namespace detail
 
