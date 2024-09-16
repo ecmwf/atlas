@@ -32,7 +32,6 @@ if( atlas_HAVE_ACC )
     ecbuild_add_library( TARGET atlas_acc_support SOURCES atlas_acc_map_data.c )
     target_compile_options( atlas_acc_support PRIVATE ${ACC_C_FLAGS} )
     target_link_libraries( atlas_acc_support PRIVATE ${ACC_C_FLAGS} )
-
   endif()
 
 endif()

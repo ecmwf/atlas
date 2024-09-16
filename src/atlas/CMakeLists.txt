@@ -60,6 +60,8 @@ library/detail/BlackMagic.h
 library/detail/Debug.h
 
 
+parallel/acc/acc.cc
+parallel/acc/acc.h
 parallel/mpi/mpi.cc
 parallel/mpi/mpi.h
 parallel/omp/omp.cc
