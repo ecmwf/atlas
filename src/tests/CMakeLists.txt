@@ -76,10 +76,6 @@ macro( atlas_add_hic_test )
   endif()
 endmacro()
 
-if( HAVE_CUDA )
-  set( ATLAS_TEST_ENVIRONMENT "ATLAS_RUN_NGPUS=1" )
-endif()
-
 add_subdirectory( util )
 add_subdirectory( runtime )
 
