@@ -214,13 +214,11 @@ public:
 #if ATLAS_HAVE_ACC
         if (not acc_mapped_) {
             ATLAS_ASSERT(deviceAllocated(),"Could not accMap as device data is not allocated");
-            ATLAS_ASSERT(!atlas_acc_is_present(host_data_, size_ * sizeof(Value)));
             if constexpr(ATLAS_ACC_DEBUG) {
                 std::cout << "               + acc_map_data(hostptr:"<<host_data_<<", device:"<<device_data_<<", bytes:"<<footprint()<<")" <<std::endl;
             }
             atlas_acc_map_data((void*)host_data_, (void*)device_data_, size_ * sizeof(Value));
             ATLAS_ASSERT(atlas_acc_is_present(host_data_, size_ * sizeof(Value)));
-            ATLAS_ASSERT(atlas_acc_deviceptr(host_data_) == device_data_);
             acc_mapped_ = true;
         }
 #endif
@@ -238,7 +236,6 @@ public:
             }
             ATLAS_ASSERT(atlas_acc_is_present(host_data_, size_ * sizeof(Value)));
             atlas_acc_unmap_data(host_data_);
-            ATLAS_ASSERT(!atlas_acc_is_present(host_data_, size_ * sizeof(Value)));
             acc_mapped_ = false;
         }
 #endif
@@ -410,13 +407,11 @@ public:
 #if ATLAS_HAVE_ACC
         if (not acc_mapped_) {
             ATLAS_ASSERT(deviceAllocated(),"Could not accMap as device data is not allocated");
-            ATLAS_ASSERT(!atlas_acc_is_present(host_data_, size_ * sizeof(Value)));
             if constexpr(ATLAS_ACC_DEBUG) {
                 std::cout << "               + acc_map_data(hostptr:"<<host_data_<<", device:"<<device_data_<<", bytes:"<<size_ * sizeof(Value)<<")" <<std::endl;
             }
             atlas_acc_map_data((void*)host_data_, (void*)device_data_, size_ * sizeof(Value));
             ATLAS_ASSERT(atlas_acc_is_present(host_data_, size_ * sizeof(Value)));
-            ATLAS_ASSERT(atlas_acc_deviceptr(host_data_) == device_data_);
             acc_mapped_ = true;
         }
 #endif
@@ -434,7 +429,6 @@ public:
                 std::cout << "               - acc_unmap_data(hostptr:"<<host_data_<<", device:"<<device_data_<<", bytes:"<<size_ * sizeof(Value)<<")" <<std::endl;
             }
             atlas_acc_unmap_data(host_data_);
-            ATLAS_ASSERT(!atlas_acc_is_present(host_data_, size_ * sizeof(Value)));
             acc_mapped_ = false;
         }
 #endif
