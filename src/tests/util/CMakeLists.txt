@@ -94,3 +94,12 @@ ecbuild_add_test( TARGET atlas_test_unitsphere
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_pack_vector_fields
+  SOURCES test_pack_vector_fields.cc
+  LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+
+
+

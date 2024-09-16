@@ -16,6 +16,7 @@ if( HAVE_CUDA AND HAVE_TESTS AND HAVE_FCTEST AND HAVE_ACC AND OpenACC_Fortran_FO
     LINKER_LANGUAGE Fortran
     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_RUN_NGPUS=1
   )
+  target_link_libraries( atlas_test_unified_memory_with_openacc ${ACC_Fortran_FLAGS} hic )
   set_tests_properties( atlas_test_unified_memory_with_openacc PROPERTIES LABELS "gpu;acc")
 
   add_fctest( 

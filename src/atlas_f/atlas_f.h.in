@@ -18,6 +18,8 @@
 
 #define ATLAS_HAVE_OMP    @atlas_HAVE_OMP_Fortran@
 #define ATLAS_HAVE_ACC    @atlas_HAVE_ACC@
+#define ATLAS_HAVE_CUDA   @atlas_HAVE_CUDA@
+#define ATLAS_HAVE_GPU    ATLAS_HAVE_CUDA
 #define ATLAS_BITS_GLOBAL @ATLAS_BITS_GLOBAL@
 #define ATLAS_BITS_LOCAL  @ATLAS_BITS_LOCAL@
 

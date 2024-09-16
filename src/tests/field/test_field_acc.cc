@@ -12,7 +12,7 @@
 #error This file needs to be compiled with OpenACC support
 #endif
 
-#include <cuda_runtime.h>
+#include "hic/hic.h"
 #include <openacc.h>
 
 #include "atlas/field/Field.h"
@@ -29,6 +29,27 @@ namespace atlas {
 namespace test {
 
 //-----------------------------------------------------------------------------
+
+CASE("test_acc") {
+    int* c_ptr = new int();
+    *c_ptr = 5;
+
+    int* d_ptr;
+    hicMalloc(&d_ptr, sizeof(int));
+    acc_map_data(c_ptr, d_ptr, sizeof(int));
+
+    hicMemcpy(d_ptr, c_ptr, sizeof(int), hicMemcpyHostToDevice);
+
+#pragma acc kernels present(c_ptr)
+    {
+        *c_ptr -= 3.;
+    }
+
+    EXPECT_EQ( *c_ptr, 5. );
+
+    hicMemcpy(c_ptr, d_ptr, sizeof(int), hicMemcpyDeviceToHost);
+    EXPECT_EQ( *c_ptr, 2. );
+}
 
 CASE("test_field_acc") {
     auto field = Field("0", make_datatype<double>(), array::make_shape(10,4));

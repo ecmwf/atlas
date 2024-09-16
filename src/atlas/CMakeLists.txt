@@ -667,6 +667,8 @@ interpolation/method/structured/QuasiCubic2D.cc
 interpolation/method/structured/QuasiCubic2D.h
 interpolation/method/structured/QuasiCubic3D.cc
 interpolation/method/structured/QuasiCubic3D.h
+interpolation/method/structured/RegionalLinear2D.cc
+interpolation/method/structured/RegionalLinear2D.h
 interpolation/method/structured/StructuredInterpolation2D.h
 interpolation/method/structured/StructuredInterpolation2D.tcc
 interpolation/method/structured/StructuredInterpolation3D.h
@@ -838,6 +840,8 @@ util/PolygonXY.cc
 util/PolygonXY.h
 util/Metadata.cc
 util/Metadata.h
+util/PackVectorFields.cc
+util/PackVectorFields.h
 util/Point.cc
 util/Point.h
 util/Polygon.cc
@@ -940,11 +944,12 @@ list( APPEND source_list
 if( atlas_HAVE_CUDA )
   include( atlas_host_device )
   list( APPEND source_list
-    parallel/HaloExchangeCUDA.h
-    parallel/HaloExchangeCUDA.cu
+    parallel/HaloExchangeGPU.h
+    parallel/HaloExchangeGPU.hic
   )
   atlas_host_device( source_list
     SOURCES
+      parallel/HaloExchangeGPU.hic
       mesh/Connectivity.cc
   )
 
@@ -958,7 +963,7 @@ if( atlas_HAVE_CUDA )
     atlas_host_device( source_list
       SOURCES
         array/native/NativeArrayView.cc
-        array/native/NativeDataStore.h
+        array/native/NativeIndexView.cc
     )
   endif()
 endif()
@@ -991,10 +996,10 @@ ecbuild_add_library( TARGET atlas
     eckit_mpi
     eckit_option
     atlas_io
+    hic
     $<${atlas_HAVE_EIGEN}:Eigen3::Eigen>
     $<${atlas_HAVE_OMP_CXX}:OpenMP::OpenMP_CXX>
     $<${atlas_HAVE_GRIDTOOLS_STORAGE}:GridTools::gridtools>
-    $<${atlas_HAVE_CUDA}:CUDA::cudart>
 
   PRIVATE_INCLUDES
     ${CGAL_INCLUDE_DIRS}

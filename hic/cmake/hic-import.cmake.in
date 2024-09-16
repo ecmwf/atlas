@@ -1,0 +1,13 @@
+
+include( CMakeFindDependencyMacro )
+
+set( hic_HAVE_CUDA @hic_HAVE_CUDA@ )
+set( hic_HAVE_HIP  @hic_HAVE_HIP@ )
+
+if( hic_HAVE_CUDA )
+  find_dependency( CUDAToolkit )
+endif()
+if( hic_HAVE_HIP )
+  find_dependency( hip CONFIG )
+endif()
+

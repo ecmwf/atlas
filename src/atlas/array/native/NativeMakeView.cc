@@ -49,7 +49,7 @@ ArrayView<const Value, Rank> make_host_view(const Array& array) {
 
 template <typename Value, int Rank>
 ArrayView<Value, Rank> make_device_view(Array& array) {
-#if ATLAS_HAVE_CUDA
+#if ATLAS_HAVE_GPU
     ATLAS_ASSERT(array.deviceAllocated(),"make_device_view: Array not allocated on device");
     return ArrayView<Value, Rank>(array.device_data<Value>(), array.shape(), array.device_strides());
 #else
@@ -59,7 +59,7 @@ ArrayView<Value, Rank> make_device_view(Array& array) {
 
 template <typename Value, int Rank>
 ArrayView<const Value, Rank> make_device_view(const Array& array) {
-#if ATLAS_HAVE_CUDA
+#if ATLAS_HAVE_GPU
     ATLAS_ASSERT(array.deviceAllocated(),"make_device_view: Array not allocated on device");
     return ArrayView<const Value, Rank>(array.device_data<const Value>(), array.shape(), array.device_strides());
 #else

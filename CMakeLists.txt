@@ -87,6 +87,9 @@ include( features/INIT_SNAN )
 include( features/DOCS )
 include( features/ATLAS_RUN )
 
+add_subdirectory( hic )
+find_package(hic)
+
 ################################################################################
 # sources
 
