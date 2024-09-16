@@ -138,7 +138,7 @@ FieldSet pack_vector_fields(const FieldSet& fields, FieldSet packedFields) {
   auto vectorSizeMap = std::map<std::string, idx_t>{};
   for (const auto& field : fields) {
     auto vectorFieldName = std::string{};
-    if (field.metadata().get("vector field name", vectorFieldName)) {
+    if (field.metadata().get("vector_field_name", vectorFieldName)) {
       ++vectorSizeMap[vectorFieldName];
     }
   }
@@ -147,7 +147,7 @@ FieldSet pack_vector_fields(const FieldSet& fields, FieldSet packedFields) {
   // Pack vector fields.
   for (const auto& field : fields) {
     auto vectorFieldName = std::string{};
-    if (!field.metadata().get("vector field name", vectorFieldName)) {
+    if (!field.metadata().get("vector_field_name", vectorFieldName)) {
       // Not a vector component field.
       addOrReplaceField(packedFields, field);
       continue;
@@ -175,10 +175,10 @@ FieldSet pack_vector_fields(const FieldSet& fields, FieldSet packedFields) {
     // Copy metadata.
     const auto componentFieldMetadata = componentField.metadata();
     auto componentFieldMetadataVector = std::vector<LocalConfiguration>{};
-    vectorField.metadata().get("component field metadata",
+    vectorField.metadata().get("component_field_metadata",
                                componentFieldMetadataVector);
     componentFieldMetadataVector.push_back(componentFieldMetadata);
-    vectorField.metadata().set("component field metadata",
+    vectorField.metadata().set("component_field_metadata",
                                componentFieldMetadataVector);
   }
   return packedFields;
@@ -187,7 +187,7 @@ FieldSet pack_vector_fields(const FieldSet& fields, FieldSet packedFields) {
 FieldSet unpack_vector_fields(const FieldSet& fields, FieldSet unpackedFields) {
   for (const auto& field : fields) {
     auto componentFieldMetadataVector = std::vector<LocalConfiguration>{};
-    if (!field.metadata().get("component field metadata",
+    if (!field.metadata().get("component_field_metadata",
                               componentFieldMetadataVector)) {
       // Not a vector field.
       addOrReplaceField(unpackedFields, field);

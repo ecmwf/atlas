@@ -33,8 +33,8 @@ FieldSet setFields(const FunctionSpace& functionSpace,
     }
     field.metadata().set("comment", "This field is made with love.");
     auto vectorFieldName = std::string{};
-    if (fieldConfig.get("vector field name", vectorFieldName)) {
-      field.metadata().set("vector field name", vectorFieldName);
+    if (fieldConfig.get("vector_field_name", vectorFieldName)) {
+      field.metadata().set("vector_field_name", vectorFieldName);
     }
   }
   return fields;
@@ -48,14 +48,14 @@ FieldSet createOrderedTestFields() {
   auto fieldConfigs = std::vector<util::Config>{};
   fieldConfigs.push_back(option::name("scalar") | option::levels(1) |
                          option::datatype(DataType::kind<float>()));
-  fieldConfigs.push_back(option::name("vector component 0") |
+  fieldConfigs.push_back(option::name("vector_component_0") |
                          option::levels(1) |
                          option::datatype(DataType::kind<float>()) |
-                         util::Config{"vector field name", "vector"});
-  fieldConfigs.push_back(option::name("vector component 1") |
+                         util::Config{"vector_field_name", "vector"});
+  fieldConfigs.push_back(option::name("vector_component_1") |
                          option::levels(1) |
                          option::datatype(DataType::kind<float>()) |
-                         util::Config{"vector field name", "vector"});
+                         util::Config{"vector_field_name", "vector"});
 
   return setFields(functionSpace, fieldConfigs);
 }
@@ -68,14 +68,14 @@ FieldSet createUnorderedTestFields() {
 
   // Note: vector components 0 and 1 are not contiguous in field set.
   auto fieldConfigs = std::vector<util::Config>{};
-  fieldConfigs.push_back(option::name("vector component 0") |
+  fieldConfigs.push_back(option::name("vector_component_0") |
                          option::datatype(DataType::kind<float>()) |
-                         util::Config{"vector field name", "vector"});
+                         util::Config{"vector_field_name", "vector"});
   fieldConfigs.push_back(option::name("scalar") |
                          option::datatype(DataType::kind<float>()));
-  fieldConfigs.push_back(option::name("vector component 1") |
+  fieldConfigs.push_back(option::name("vector_component_1") |
                          option::datatype(DataType::kind<float>()) |
-                         util::Config{"vector field name", "vector"});
+                         util::Config{"vector_field_name", "vector"});
 
   return setFields(functionSpace, fieldConfigs);
 }
@@ -88,15 +88,15 @@ FieldSet createInconsistentRankFields() {
 
   // Note: vector components 0 and 1 have different ranks.
   auto fieldConfigs = std::vector<util::Config>{};
-  fieldConfigs.push_back(option::name("vector component 0") |
+  fieldConfigs.push_back(option::name("vector_component_0") |
                          option::levels(10) |
                          option::datatype(DataType::kind<float>()) |
-                         util::Config{"vector field name", "vector"});
+                         util::Config{"vector_field_name", "vector"});
   fieldConfigs.push_back(option::name("scalar") |
                          option::datatype(DataType::kind<float>()));
-  fieldConfigs.push_back(option::name("vector component 1") |
+  fieldConfigs.push_back(option::name("vector_component_1") |
                          option::datatype(DataType::kind<float>()) |
-                         util::Config{"vector field name", "vector"});
+                         util::Config{"vector_field_name", "vector"});
 
   return setFields(functionSpace, fieldConfigs);
 }
@@ -109,14 +109,14 @@ FieldSet createInconsistentDatatypeFields() {
 
   // Note: vector components 0 and 1 have different datatypes.
   auto fieldConfigs = std::vector<util::Config>{};
-  fieldConfigs.push_back(option::name("vector component 0") |
+  fieldConfigs.push_back(option::name("vector_component_0") |
                          option::datatype(DataType::kind<int>()) |
-                         util::Config{"vector field name", "vector"});
+                         util::Config{"vector_field_name", "vector"});
   fieldConfigs.push_back(option::name("scalar") |
                          option::datatype(DataType::kind<float>()));
-  fieldConfigs.push_back(option::name("vector component 1") |
+  fieldConfigs.push_back(option::name("vector_component_1") |
                          option::datatype(DataType::kind<float>()) |
-                         util::Config{"vector field name", "vector"});
+                         util::Config{"vector_field_name", "vector"});
 
   return setFields(functionSpace, fieldConfigs);
 }
@@ -129,16 +129,16 @@ FieldSet createInconsistentLevelsFields() {
 
   // Note: vector components 0 and 1 have different number of levels.
   auto fieldConfigs = std::vector<util::Config>{};
-  fieldConfigs.push_back(option::name("vector component 0") |
+  fieldConfigs.push_back(option::name("vector_component_0") |
                          option::levels(10) |
                          option::datatype(DataType::kind<float>()) |
-                         util::Config{"vector field name", "vector"});
+                         util::Config{"vector_field_name", "vector"});
   fieldConfigs.push_back(option::name("scalar") |
                          option::datatype(DataType::kind<float>()));
-  fieldConfigs.push_back(option::name("vector component 1") |
+  fieldConfigs.push_back(option::name("vector_component_1") |
                          option::levels(20) |
                          option::datatype(DataType::kind<float>()) |
-                         util::Config{"vector field name", "vector"});
+                         util::Config{"vector_field_name", "vector"});
 
   return setFields(functionSpace, fieldConfigs);
 }
@@ -151,15 +151,15 @@ FieldSet createInconsistentVariablesFields() {
 
   // Note: vector components 0 and 1 have different number of variables.
   auto fieldConfigs = std::vector<util::Config>{};
-  fieldConfigs.push_back(option::name("vector component 0") |
+  fieldConfigs.push_back(option::name("vector_component_0") |
                          option::datatype(DataType::kind<float>()) |
                          option::variables(2) |
-                         util::Config{"vector field name", "vector"});
+                         util::Config{"vector_field_name", "vector"});
   fieldConfigs.push_back(option::name("scalar") |
                          option::datatype(DataType::kind<float>()));
-  fieldConfigs.push_back(option::name("vector component 1") |
+  fieldConfigs.push_back(option::name("vector_component_1") |
                          option::datatype(DataType::kind<float>()) |
-                         util::Config{"vector field name", "vector"});
+                         util::Config{"vector_field_name", "vector"});
 
   return setFields(functionSpace, fieldConfigs);
 }
@@ -180,15 +180,15 @@ CASE("Basic pack and unpack") {
 
   const auto packedFields = util::pack_vector_fields(fields);
 
-  EXPECT(!packedFields.has("vector component 0"));
-  EXPECT(!packedFields.has("vector component 1"));
+  EXPECT(!packedFields.has("vector_component_0"));
+  EXPECT(!packedFields.has("vector_component_1"));
   EXPECT(packedFields.has("vector"));
   EXPECT(packedFields.has("scalar"));
 
   const auto unpackedFields = util::unpack_vector_fields(packedFields);
 
-  EXPECT(unpackedFields.has("vector component 0"));
-  EXPECT(unpackedFields.has("vector component 1"));
+  EXPECT(unpackedFields.has("vector_component_0"));
+  EXPECT(unpackedFields.has("vector_component_1"));
   EXPECT(!unpackedFields.has("vector"));
   EXPECT(unpackedFields.has("scalar"));
 
@@ -200,18 +200,18 @@ CASE("unpack into existing field set") {
 
   const auto packedFields = util::pack_vector_fields(fields);
 
-  EXPECT(!packedFields.has("vector component 0"));
-  EXPECT(!packedFields.has("vector component 1"));
+  EXPECT(!packedFields.has("vector_component_0"));
+  EXPECT(!packedFields.has("vector_component_1"));
   EXPECT(packedFields.has("vector"));
   EXPECT(packedFields.has("scalar"));
 
   // Need to unpack into existing field to guarantee field order is preserved.
-  array::make_view<float, 1>(fields["vector component 0"]).assign(0.);
-  array::make_view<float, 1>(fields["vector component 1"]).assign(0.);
+  array::make_view<float, 1>(fields["vector_component_0"]).assign(0.);
+  array::make_view<float, 1>(fields["vector_component_1"]).assign(0.);
   util::unpack_vector_fields(packedFields, fields);
 
-  EXPECT(fields.has("vector component 0"));
-  EXPECT(fields.has("vector component 1"));
+  EXPECT(fields.has("vector_component_0"));
+  EXPECT(fields.has("vector_component_1"));
   EXPECT(!fields.has("vector"));
   EXPECT(fields.has("scalar"));
 
