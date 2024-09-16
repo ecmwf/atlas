@@ -655,6 +655,8 @@ interpolation/method/structured/QuasiCubic2D.cc
 interpolation/method/structured/QuasiCubic2D.h
 interpolation/method/structured/QuasiCubic3D.cc
 interpolation/method/structured/QuasiCubic3D.h
+interpolation/method/structured/RegionalLinear2D.cc
+interpolation/method/structured/RegionalLinear2D.h
 interpolation/method/structured/StructuredInterpolation2D.h
 interpolation/method/structured/StructuredInterpolation2D.tcc
 interpolation/method/structured/StructuredInterpolation3D.h
@@ -826,6 +828,8 @@ util/PolygonXY.cc
 util/PolygonXY.h
 util/Metadata.cc
 util/Metadata.h
+util/PackVectorFields.cc
+util/PackVectorFields.h
 util/Point.cc
 util/Point.h
 util/Polygon.cc
