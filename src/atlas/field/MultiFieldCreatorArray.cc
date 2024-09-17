@@ -96,19 +96,18 @@ MultiFieldImpl* MultiFieldCreatorArray::create(const array::DataType datatype, c
     array::ArrayShape multiarray_shape = shape;
     multiarray_shape[varidx] = nvar;
 
-
     MultiFieldImpl* multifield = new MultiFieldImpl{array::ArraySpec{datatype, multiarray_shape}};
     auto& multiarray = multifield->array();
       
     array::ArrayShape field_shape;
-    field_shape.resize(multiarray_shape.size() - 1);
+    field_shape.resize(dim - 1);
     array::ArrayStrides field_strides;
-    field_strides.resize(multiarray_shape.size() - 1);
-    for (int ivar = 0, i = 0; ivar < nvar; ivar++) {
-        if (ivar != varidx) {
-            field_shape[i]   = multiarray.shape()[ivar];
-            field_strides[i] = multiarray.strides()[ivar];
-            ++i;
+    field_strides.resize(dim - 1);
+    for (int i = 0, j = 0; i < dim; i++) {
+        if (i != varidx) {
+            field_shape[j]   = multiarray.shape()[i];
+            field_strides[j] = multiarray.strides()[i];
+            ++j;
         } 
     }
     array::ArraySpec field_array_spec(field_shape, field_strides);
