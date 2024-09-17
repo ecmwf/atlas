@@ -56,7 +56,7 @@ CASE("multifield_ifs_create") {
         p.set("nproma", nproma);
         p.set("nlev", nlev);
         p.set("datatype", array::make_datatype<Value>().str());
-        p.set("fields", {
+        p.set("fields", std::vector<util::Config>{
                             util::Config("name", "temperature"),
                             util::Config("name", "pressure"),
                             util::Config("name", "density"),
@@ -179,7 +179,7 @@ CASE("multifield_array_create") {
         p.set("type", "MultiFieldCreatorArray");
         p.set("shape", {nblks, -1, nlev, nproma});
         p.set("datatype", array::make_datatype<Value>().str());
-        p.set("fields", {
+        p.set("fields", std::vector<util::Config>{
                             util::Config("name", "temperature"),     //
                             util::Config("name", "pressure"),        //
                             util::Config("name", "density"),         //
