@@ -13,6 +13,8 @@
 #include <memory>
 #include <sstream>
 
+#include "hic/hic.h"
+
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
@@ -732,7 +734,28 @@ CASE("test_haloexchange") {
 }
 
 #if ATLAS_HAVE_GPU
+
+//-----------------------------------------------------------------------------
+
+static int devices() {
+    static int devices_ = [](){
+        int n = 0;
+        auto err = hicGetDeviceCount(&n);
+        if (err != hicSuccess) {
+            n = 0;
+            hicGetLastError();
+        }
+        return n;
+    }();
+    return devices_;
+}
+
 CASE("test_haloexchange on device") {
+    if (devices() == 0) {
+        Log::warning() << "\"test_haloexchange on device skipped\": No devices available" << std::endl;
+        return;
+    }
+
     bool on_device = true;
     Fixture f(on_device);
 
