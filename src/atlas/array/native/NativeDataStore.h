@@ -21,6 +21,7 @@
 #include "atlas/array/ArrayDataStore.h"
 #include "atlas/library/Library.h"
 #include "atlas/library/config.h"
+#include "atlas/parallel/acc/acc.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/RegisterPointerInfo.h"
@@ -28,10 +29,7 @@
 #include "hic/hic.h"
 
 
-#if ATLAS_HAVE_ACC
-#include "atlas_acc_support/atlas_acc_map_data.h"
 #define ATLAS_ACC_DEBUG 0
-#endif
 
 //------------------------------------------------------------------------------
 
@@ -99,6 +97,18 @@ template <typename Value>
 void initialise(Value[], size_t) {}
 #endif
 
+static int devices() {
+    static int devices_ = [](){
+        int n = 0;
+        auto err = hicGetDeviceCount(&n);
+        if (err != hicSuccess) {
+            n = 0;
+            static_cast<void>(hicGetLastError());
+        }
+        return n;
+    }();
+    return devices_;
+}
 
 template <typename Value>
 class DataStore : public ArrayDataStore {
@@ -106,7 +116,7 @@ public:
     DataStore(size_t size): size_(size) {
         allocateHost();
         initialise(host_data_, size_);
-        if constexpr (ATLAS_HAVE_GPU) {
+        if (ATLAS_HAVE_GPU && devices()) {
             device_updated_ = false;
         }
         else {
@@ -120,7 +130,7 @@ public:
     }
 
     void updateDevice() const override {
-        if constexpr (ATLAS_HAVE_GPU) {
+        if (ATLAS_HAVE_GPU && devices()) {
             if (not device_allocated_) {
                 allocateDevice();
             }
@@ -169,7 +179,7 @@ public:
     bool deviceAllocated() const override { return device_allocated_; }
 
     void allocateDevice() const override {
-        if constexpr (ATLAS_HAVE_GPU) {
+        if (ATLAS_HAVE_GPU && devices()) {
             if (device_allocated_) {
                 return;
             }
@@ -217,19 +227,17 @@ public:
     void* voidDeviceData() override { return static_cast<void*>(device_data_); }
 
     void accMap() const override {
-#if ATLAS_HAVE_ACC and ATLAS_HAVE_CUDA
-        if (not acc_mapped_) {
+        if (not acc_mapped_ && acc::devices()) {
             ATLAS_ASSERT(deviceAllocated(),"Could not accMap as device data is not allocated");
-            ATLAS_ASSERT(!atlas_acc_is_present(host_data_, size_ * sizeof(Value)));
+            ATLAS_ASSERT(!atlas::acc::is_present(host_data_, size_ * sizeof(Value)));
             if constexpr(ATLAS_ACC_DEBUG) {
                 std::cout << "               + acc_map_data(hostptr:"<<host_data_<<", device:"<<device_data_<<", bytes:"<<footprint()<<")" <<std::endl;
             }
-            atlas_acc_map_data((void*)host_data_, (void*)device_data_, size_ * sizeof(Value));
-            ATLAS_ASSERT(atlas_acc_is_present(host_data_, size_ * sizeof(Value)));
-            ATLAS_ASSERT(atlas_acc_deviceptr(host_data_) == device_data_);
+            atlas::acc::map((void*)host_data_, (void*)device_data_, size_ * sizeof(Value));
+            ATLAS_ASSERT(atlas::acc::is_present(host_data_, size_ * sizeof(Value)));
+            ATLAS_ASSERT(atlas::acc::deviceptr(host_data_) == device_data_);
             acc_mapped_ = true;
         }
-#endif
     }
 
     bool accMapped() const override {
@@ -237,17 +245,15 @@ public:
     }
 
     void accUnmap() const override {
-#if ATLAS_HAVE_ACC and ATLAS_HAVE_CUDA
         if (acc_mapped_) {
             if constexpr(ATLAS_ACC_DEBUG) {
                 std::cout << "               - acc_unmap_data(hostptr:"<<host_data_<<", device:"<<device_data_<<", bytes:"<<footprint()<<")" <<std::endl;
             }
-            ATLAS_ASSERT(atlas_acc_is_present(host_data_, size_ * sizeof(Value)));
-            atlas_acc_unmap_data(host_data_);
-            ATLAS_ASSERT(!atlas_acc_is_present(host_data_, size_ * sizeof(Value)));
+            ATLAS_ASSERT(atlas::acc::is_present(host_data_, size_ * sizeof(Value)));
+            atlas::acc::unmap(host_data_);
+            ATLAS_ASSERT(!atlas::acc::is_present(host_data_, size_ * sizeof(Value)));
             acc_mapped_ = false;
         }
-#endif
     }
 
 private:
@@ -344,7 +350,7 @@ template <typename Value>
 class WrappedDataStore : public ArrayDataStore {
 public:
     WrappedDataStore(Value* host_data, size_t size): host_data_(host_data), size_(size) {
-        if constexpr (ATLAS_HAVE_GPU) {
+        if (ATLAS_HAVE_GPU && devices()) {
             device_updated_ = false;
         }
         else {
@@ -353,7 +359,7 @@ public:
     }
 
     void updateDevice() const override {
-        if constexpr (ATLAS_HAVE_GPU) {
+        if (ATLAS_HAVE_GPU && devices()) {
             if (not device_allocated_) {
                 allocateDevice();
             }
@@ -401,7 +407,7 @@ public:
     bool deviceAllocated() const override { return device_allocated_; }
 
     void allocateDevice() const override {
-        if constexpr (ATLAS_HAVE_GPU) {
+        if (ATLAS_HAVE_GPU && devices()) {
             if (device_allocated_) {
                 return;
             }
@@ -449,19 +455,17 @@ public:
     void* voidDeviceData() override { return static_cast<void*>(device_data_); }
 
     void accMap() const override {
-#if ATLAS_HAVE_ACC and ATLAS_HAVE_CUDA
-        if (not acc_mapped_ and contiguous_) {
+        if (not acc_mapped_ && acc::devices()) {
             ATLAS_ASSERT(deviceAllocated(),"Could not accMap as device data is not allocated");
-            ATLAS_ASSERT(!atlas_acc_is_present(host_data_, size_ * sizeof(Value)));
+            ATLAS_ASSERT(!atlas::acc::is_present(host_data_, size_ * sizeof(Value)));
             if constexpr(ATLAS_ACC_DEBUG) {
                 std::cout << "               + acc_map_data(hostptr:"<<host_data_<<", device:"<<device_data_<<", bytes:"<<size_ * sizeof(Value)<<")" <<std::endl;
             }
-            atlas_acc_map_data((void*)host_data_, (void*)device_data_, size_ * sizeof(Value));
-            ATLAS_ASSERT(atlas_acc_is_present(host_data_, size_ * sizeof(Value)));
-            ATLAS_ASSERT(atlas_acc_deviceptr(host_data_) == device_data_);
+            atlas::acc::map((void*)host_data_, (void*)device_data_, size_ * sizeof(Value));
+            ATLAS_ASSERT(atlas::acc::is_present(host_data_, size_ * sizeof(Value)));
+            ATLAS_ASSERT(atlas::acc::deviceptr(host_data_) == device_data_);
             acc_mapped_ = true;
         }
-#endif
     }
 
     bool accMapped() const override {
@@ -471,12 +475,11 @@ public:
     void accUnmap() const override {
 #if ATLAS_HAVE_ACC
         if (acc_mapped_) {
-            ATLAS_ASSERT(atlas_acc_is_present(host_data_, size_ * sizeof(Value)));
+            ATLAS_ASSERT(atlas::acc::is_present(host_data_, size_ * sizeof(Value)));
             if constexpr(ATLAS_ACC_DEBUG) {
                 std::cout << "               - acc_unmap_data(hostptr:"<<host_data_<<", device:"<<device_data_<<", bytes:"<<size_ * sizeof(Value)<<")" <<std::endl;
             }
-            atlas_acc_unmap_data(host_data_);
-            ATLAS_ASSERT(!atlas_acc_is_present(host_data_, size_ * sizeof(Value)));
+            atlas::acc::unmap(host_data_);
             acc_mapped_ = false;
         }
 #endif

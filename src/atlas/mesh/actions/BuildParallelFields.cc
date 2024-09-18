@@ -984,7 +984,7 @@ Field& build_edges_global_idx(Mesh& mesh) {
     std::vector<Node> edge_sort;
     edge_sort.reserve(glb_nb_edges);
     for (idx_t jedge = 0; jedge < glb_edge_id.shape(0); ++jedge) {
-        edge_sort.emplace_back(Node(glb_edge_id(jedge), jedge));
+        edge_sort.emplace_back(glb_edge_id(jedge), jedge);
     }
     std::sort(edge_sort.begin(), edge_sort.end());
 

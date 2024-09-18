@@ -485,8 +485,8 @@ void Library::Information::print(std::ostream& out) const {
     feature_MPI = true;
 #endif
     std::string array_data_store = "Native-host";
-#if ATLAS_HAVE_CUDA
-    array_data_store = "Native-CUDA";
+#if ATLAS_HAVE_GPU
+    array_data_store = "Native-GPU";
 #endif
 #if ATLAS_HAVE_GRIDTOOLS_STORAGE
     array_data_store = "Gridtools-host";

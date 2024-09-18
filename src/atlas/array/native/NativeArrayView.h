@@ -369,7 +369,9 @@ private:
     ATLAS_HOST_DEVICE
     void check_bounds(Ints... idx) const {
         static_assert(sizeof...(idx) == Rank, "Expected number of indices is different from rank of array");
+#if ATLAS_HOST_COMPILE
         return check_bounds_part<0>(idx...);
+#endif
     }
 #else
     template <typename... Ints>
@@ -383,11 +385,13 @@ private:
     ATLAS_HOST_DEVICE
     void check_bounds_force(Ints... idx) const {
         static_assert(sizeof...(idx) == Rank, "Expected number of indices is different from rank of array");
+#if ATLAS_HOST_COMPILE
         return check_bounds_part<0>(idx...);
+#endif
     }
 
     template <int Dim, typename Int, typename... Ints>
-    ATLAS_HOST_DEVICE
+    ATLAS_HOST
     void check_bounds_part(Int idx, Ints... next_idx) const {
         if (idx_t(idx) >= shape_[Dim]) {
             throw_OutOfRange("ArrayView", array_dim<Dim>(), idx, shape_[Dim]);
@@ -396,7 +400,7 @@ private:
     }
 
     template <int Dim, typename Int>
-    ATLAS_HOST_DEVICE
+    ATLAS_HOST
     void check_bounds_part(Int last_idx) const {
         if (idx_t(last_idx) >= shape_[Dim]) {
             throw_OutOfRange("ArrayView", array_dim<Dim>(), last_idx, shape_[Dim]);

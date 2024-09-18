@@ -19,6 +19,8 @@
 #include "atlas/array/gridtools/GridToolsMakeView.h"
 #endif
 
+#include "hic/hic.h"
+
 using namespace atlas::array;
 
 namespace atlas {
@@ -553,12 +555,29 @@ CASE("test_wrap") {
     EXPECT(view(2) == 19);
 }
 
+static int devices() {
+    static int devices_ = [](){
+        int n = 0;
+        auto err = hicGetDeviceCount(&n);
+        if (err != hicSuccess) {
+            n = 0;
+            static_cast<void>(hicGetLastError());
+        }
+        return n;
+    }();
+    return devices_;
+}
+
 CASE("test_acc_map") {
     Array* ds = Array::create<double>(2, 3, 4);
     EXPECT_NO_THROW(ds->allocateDevice());
-    EXPECT_NO_THROW(ds->accMap());
-    EXPECT(ds->accMapped() == ATLAS_HAVE_ACC);
-    ds->deallocateDevice();
+    if( ds->deviceAllocated() ) {
+        EXPECT_NO_THROW(ds->accMap());
+        EXPECT_EQ(ds->accMapped(), std::min(devices(),1));
+    }
+    else {
+        Log::warning() << "WARNING: Array could not be allocated on device, so acc_map could not be tested" << std::endl;
+    }
     delete ds;
 }
 

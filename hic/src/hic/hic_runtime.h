@@ -23,8 +23,19 @@
   #include <cuda_runtime.h>
 #elif HIC_BACKEND_HIP
   #define HIC_BACKEND hip
+  #if defined(DEPRECATED)
+  #define DEFINED_OUTERSCOPE DEPRECATED
+  #undef DEPRECATED
+  #endif
   #include <hip/hip_runtime.h>
+  #if defined(DEPRECATED)
+  #undef DEPRECATED
+  #endif
+  #if defined(DEFINED_OUTERSCOPE)
+  #define DEPRECATED DEFINED_OUTERSCOPE
+  #endif
 
+#if HIP_VERSION_MAJOR < 6
   enum hicMemoryType {
       hicMemoryTypeUnregistered = 0 ,
       hicMemoryTypeHost         = 1 ,
@@ -68,6 +79,7 @@
     attributes->hostPointer   = attr_.hostPointer;
     return err;
   };
+#endif
 
 #elif HIC_BACKEND_DUMMY
   #define HIC_BACKEND dummy
@@ -118,6 +130,8 @@ HIC_FUNCTION(MemPrefetchAsync)
 HIC_FUNCTION(PeekAtLastError)
 #if !HIC_BACKEND_HIP
 HIC_FUNCTION(PointerGetAttributes)
+#elif HIP_VERSION_MAJOR >= 6
+HIC_FUNCTION(PointerGetAttributes)
 #endif
 HIC_FUNCTION(StreamCreate)
 HIC_FUNCTION(StreamDestroy)
@@ -128,6 +142,8 @@ HIC_TYPE(Event_t)
 HIC_TYPE(Stream_t)
 #if !HIC_BACKEND_HIP
 HIC_TYPE(PointerAttributes)
+#elif HIP_VERSION_MAJOR >= 6
+using HIC_SYMBOL(PointerAttributes) = HIC_BACKEND_SYMBOL(PointerAttribute_t);
 #endif
 
 HIC_VALUE(CpuDeviceId)
@@ -141,6 +157,14 @@ HIC_VALUE(MemoryTypeManaged)
 HIC_VALUE(MemcpyDeviceToHost)
 HIC_VALUE(MemcpyHostToDevice)
 HIC_VALUE(Success)
+
+#if HIC_BACKEND_CUDA
+    constexpr hicError_t hicErrorDeinitialized = cudaErrorCudartUnloading;
+#elif HIC_BACKEND_HIP
+    constexpr hicError_t hicErrorDeinitialized = hipErrorDeinitialized;
+#else
+    constexpr hicError_t hicErrorDeinitialized = 4;
+#endif
 
 //------------------------------------------------
 HIC_NAMESPACE_END

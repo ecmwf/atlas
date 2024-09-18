@@ -14,10 +14,24 @@
 extern "C" {
 #endif
 
+typedef enum {
+    atlas_acc_device_host = 0,
+    atlas_acc_device_not_host = 1
+} atlas_acc_device_t;
+
 void atlas_acc_map_data(void* cpu_ptr, void* gpu_ptr, unsigned long bytes);
 void atlas_acc_unmap_data(void* cpu_ptr);
 int atlas_acc_is_present(void* cpu_ptr, unsigned long bytes);
 void* atlas_acc_deviceptr(void* cpu_ptr);
+atlas_acc_device_t atlas_acc_get_device_type();
+
+int atlas_acc_devices();
+
+const char* atlas_acc_version_str();
+
+const char* atlas_acc_info_str();
+
+int atlas_acc_get_num_devices();
 
 #ifdef __cplusplus
 }
