@@ -36,8 +36,6 @@ void atlas__Field__data_specf(FieldImpl* This, Value*& data, int& rank, int*& sh
     shapef   = const_cast<int*>(This->shapef().data());
     stridesf = const_cast<int*>(This->stridesf().data());
     rank     = This->shapef().size();
-    printf("atlas__Field__data_specf :: rank: %i\n", rank);
-    printf("atlas__Field__data_specf :: shape: %i, %i, %i\n", shapef[0], shapef[1], shapef[2]);
     if (rank > 3) printf(", %i", shapef[3]);
 }
 
