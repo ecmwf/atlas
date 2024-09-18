@@ -929,7 +929,7 @@ list( APPEND source_list
 )
 
 
-if( atlas_HAVE_CUDA )
+if( atlas_HAVE_GPU )
   include( atlas_host_device )
   list( APPEND source_list
     parallel/HaloExchangeGPU.h

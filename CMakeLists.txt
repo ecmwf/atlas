@@ -64,6 +64,9 @@ ecbuild_add_option( FEATURE ECKIT_DEVELOP
                     DESCRIPTION "Used to enable new features or API depending on eckit develop branch, not yet in a tagged release"
                     DEFAULT OFF )
 
+add_subdirectory( hic )
+find_package(hic)
+
 
 include( features/BOUNDSCHECKING )
 include( features/FORTRAN )
@@ -83,9 +86,6 @@ include( features/INCLUDE_WHAT_YOU_USE )
 include( features/INIT_SNAN )
 include( features/DOCS )
 include( features/ATLAS_RUN )
-
-add_subdirectory( hic )
-find_package(hic)
 
 ################################################################################
 # sources

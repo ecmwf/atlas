@@ -46,7 +46,7 @@ function( atlas_host_device srclist )
   set( multi_value_args SOURCES )
   cmake_parse_arguments( _PAR "${options}" "${single_value_args}" "${multi_value_args}" ${ARGN} )
 
-  if( HAVE_CUDA OR HAVE_HIP )
+  if( HAVE_GPU )
     set( use_hic_srclist ${_PAR_SOURCES} )
 
     foreach( src ${use_hic_srclist} )
