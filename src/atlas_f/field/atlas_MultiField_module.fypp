@@ -121,16 +121,17 @@ end function
 
 !-------------------------------------------------------------------------------
 
-function atlas_MultiField__create_names(kind, shape, field_names, opt_config) result(field)
+function atlas_MultiField__create_names(kind, shape, field_names) result(field)
+  use, intrinsic :: iso_c_binding, only : c_char, c_int32_t, c_size_t
   use atlas_multifield_c_binding
   type(atlas_MultiField) :: field
   character(*), intent(in) :: kind
   integer, intent(in) :: shape(:)
   character(*), intent(in) :: field_names(:)
-  type(atlas_Config), intent(in), optional :: opt_config
-  type(atlas_Config) :: config
-  type(atlas_Config), allocatable :: field_configs(:)
-  integer :: rank, i, ivar, nvar, nblk, nproma, field_idx, nlev
+  character(kind=c_char,len=:), allocatable :: flat_field_names
+  integer(c_size_t) :: length
+  integer(c_int32_t) :: ii
+  integer(c_int32_t), allocatable :: field_name_sizes(:)
 
   if (size(field_names) == 0 .or. size(shape) < 3) then
     print *, "atlas_MultiField__create_names: must have at least one field name, and the size of shape", &
@@ -138,45 +139,21 @@ function atlas_MultiField__create_names(kind, shape, field_names, opt_config) re
     stop -1
   end if
 
-  if (present(opt_config)) then
-    config = opt_config
-  else
-    config = atlas_Config()
+  length = len(field_names(1))
+  allocate(field_name_sizes(size(field_names)))
+  field_name_sizes = len(field_names(:))
+
+  if (any(field_name_sizes /= length)) then
+    print *, "atlas_MultiField__create_names: field_names have to have same length in characters"
+    stop -1
   end if
 
-  rank = size(shape)
-  do i = 1, rank
-    if (shape(i) == -1) then
-      field_idx = i
-      exit
-    end if
-  end do
+  allocate(character(len=length*size(field_names) ) :: flat_field_names)
+  do ii = 1, size(field_names)
+    flat_field_names((ii-1)*length+1:ii*length) = field_names(ii)
+  enddo
 
-  nlev = 0
-  if (field_idx > 2) then
-    nlev = shape(field_idx - 1)
-  end if
-
-  nblk = shape(rank)
-  nproma = shape(1)
-  nvar = size(field_names)
-  call config%set("type", "MultiFieldCreatorIFS");
-  call config%set("datatype", kind);
-  call config%set("nproma", nproma);
-  call config%set("nblk", nblk);
-  call config%set("nlev", nlev);
-  call config%set("ngptot", nblk * nproma);
-
-print *, "field_idx: ", field_idx
-print *, "     rank, nlev, nblk, nvar, nproma: ", rank, nlev, nblk, nvar, nproma
-
-  allocate(field_configs(nvar))
-  do ivar = 1, nvar
-      field_configs(ivar) = atlas_Config()
-      call field_configs(ivar)%set("name", trim(field_names(ivar)))
-  end do
-  call config%set("fields", field_configs)
-  field = atlas_MultiField__cptr( atlas__MultiField__create(config%CPTR_PGIBUG_B) )
+  field = atlas_MultiField__cptr( atlas__MultiField__create_shape(kind, size(shape), shape, flat_field_names, length, size(field_names,kind=c_size_t)) )
   call field%return()
 end function
 

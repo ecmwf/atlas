@@ -10,6 +10,7 @@
 
 #include <cmath>
 #include <cstring>
+
 #include <sstream>
 
 #include "atlas/library/config.h"
@@ -29,6 +30,36 @@ MultiFieldImpl* atlas__MultiField__create(eckit::Configuration* config) {
     return multifield->get();
 }
 
+MultiFieldImpl* atlas__MultiField__create_shape(const char* datatype_str, int rank, int shapef[], const char* var_names,
+        size_t length, size_t size) {
+    array::ArrayShape shape;
+    shape.resize(rank);
+    array::ArrayStrides strides;
+    for (idx_t j = 0, jf = rank - 1; j < rank; ++j) {
+        shape[j]   = shapef[jf--];
+    }
+    array::DataType datatype(datatype_str);
+
+    std::vector<std::string> var_names_str;
+    for (size_t jj = 0; jj < size; ++jj) {
+        char str[length + 1];
+        ATLAS_ASSERT(snprintf(str, sizeof(str), "%s", var_names + jj * length ) >= 0);
+        std::string sstr(str);
+        sstr.erase(std::find_if(sstr.rbegin(), sstr.rend(), [](unsigned char ch) {
+           return !std::isspace(ch);
+        }).base(), sstr.end());
+        var_names_str.push_back(sstr);
+    }
+
+    for (size_t jj = 0; jj < size; ++jj) {
+        printf("var: %s", var_names_str[jj].c_str());
+    }
+
+    auto multifield = new MultiField(datatype, shape, var_names_str);
+    ATLAS_ASSERT(multifield);
+    return multifield->get();
+}
+
 void atlas__MultiField__delete(MultiFieldImpl* This) {
     delete This;
 }
@@ -40,6 +71,7 @@ int atlas__MultiField__size(MultiFieldImpl* This) {
 FieldSetImpl* atlas__MultiField__fieldset(MultiFieldImpl* This) {
     return This->fieldset().get();
 }
+
 }
 
 // ------------------------------------------------------------------
