@@ -48,7 +48,8 @@ public:  // Static methods
     static FieldImpl* create(const eckit::Parametrisation&);
 
     /// @brief Create field with given name, Datatype and ArrayShape
-    static FieldImpl* create(const std::string& name, array::DataType, const array::ArrayShape& = array::ArrayShape());
+    static FieldImpl* create(const std::string& name, array::DataType, const array::ArrayShape& = 
+            array::ArrayShape());
 
     /// @brief Create field with given name, Datatype and ArrayShape
     static FieldImpl* create(const std::string& name, array::DataType, array::ArraySpec&&);
@@ -120,6 +121,9 @@ public:  // Destructor
 
     /// @brief Strides of this field in Fortran style (reverse order of C style)
     const std::vector<int>& stridesf() const { return array_->stridesf(); }
+
+    /// @brief Strides of this field on the device in Fortran style (reverse order of C style)
+    const std::vector<int>& device_stridesf() const { return array_->device_stridesf(); }
 
     /// @brief Shape of this field (reverse order of Fortran style)
     const array::ArrayShape& shape() const { return array_->shape(); }
@@ -257,7 +261,8 @@ public:
         }
     }
 
-    virtual void onFieldRename(FieldImpl&) = 0;
+    virtual void onFieldRename(FieldImpl&) {}
+    virtual void onFieldDestruction(FieldImpl&) {}
 };
 
 //----------------------------------------------------------------------------------------------------------------------

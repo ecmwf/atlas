@@ -105,7 +105,7 @@ end function
 
 
 
-function create_field_args(this,kind,name,levels,variables,type,alignment,global,owner) result(field)
+function create_field_args(this,kind,name,levels,variables,type,alignment,global,owner,options) result(field)
   use atlas_functionspace_c_binding
   use, intrinsic :: iso_c_binding, only : c_int
   type(atlas_Field) :: field
@@ -118,28 +118,32 @@ function create_field_args(this,kind,name,levels,variables,type,alignment,global
   integer(c_int),   intent(in), optional :: alignment
   logical,          intent(in), optional :: global
   integer(c_int),   intent(in), optional :: owner
+  type(atlas_Config), intent(inout), optional :: options
 
-  type(atlas_Config) :: options
-  options = atlas_Config()
+  type(atlas_Config) :: options_
+  options_ = atlas_Config()
 
-  call options%set("datatype",kind)
-  if( present(name)   )    call options%set("name",name)
-  if( present(owner)  )    call options%set("owner",owner)
-  if( present(global) )    call options%set("global",global)
-  if( present(levels) )    call options%set("levels",levels)
-  if( present(variables) ) call options%set("variables",variables)
-  if( present(type) )      call options%set("type",type)
-  if( present(alignment) ) call options%set("alignment",alignment)
+  if (present(options)) then
+    call options_%set(options)
+  endif
+  call options_%set("datatype",kind)
+  if( present(name)   )    call options_%set("name",name)
+  if( present(owner)  )    call options_%set("owner",owner)
+  if( present(global) )    call options_%set("global",global)
+  if( present(levels) )    call options_%set("levels",levels)
+  if( present(variables) ) call options_%set("variables",variables)
+  if( present(type) )      call options_%set("type",type)
+  if( present(alignment) ) call options_%set("alignment",alignment)
 
-  field = atlas_Field( atlas__FunctionSpace__create_field( this%CPTR_PGIBUG_A, options%CPTR_PGIBUG_B ) )
+  field = atlas_Field( atlas__FunctionSpace__create_field( this%CPTR_PGIBUG_A, options_%CPTR_PGIBUG_B ) )
 
   call field%return()
-  call options%final()
+  call options_%final()
 end function
 
 !------------------------------------------------------------------------------
 
-function create_field_template(this,template,name,global,owner) result(field)
+function create_field_template(this,template,name,global,owner,options) result(field)
   use atlas_functionspace_c_binding
   use, intrinsic :: iso_c_binding, only : c_int
   type(atlas_Field) :: field
@@ -149,18 +153,22 @@ function create_field_template(this,template,name,global,owner) result(field)
   character(len=*), intent(in), optional :: name
   logical,          intent(in), optional :: global
   integer(c_int),   intent(in), optional :: owner
+  type(atlas_Config), intent(inout), optional :: options
 
-  type(atlas_Config) :: options
-  options = atlas_Config()
+  type(atlas_Config) :: options_
+  options_ = atlas_Config()
+  if (present(options)) then
+    call options_%set(options)
+  endif
 
-  if( present(name)   )    call options%set("name",name)
-  if( present(owner)  )    call options%set("owner",owner)
-  if( present(global) )    call options%set("global",global)
+  if( present(name)   )    call options_%set("name",name)
+  if( present(owner)  )    call options_%set("owner",owner)
+  if( present(global) )    call options_%set("global",global)
 
   field = atlas_Field( atlas__FunctionSpace__create_field_template( &
-    & this%CPTR_PGIBUG_A, template%CPTR_PGIBUG_A,options%CPTR_PGIBUG_B) )
+    & this%CPTR_PGIBUG_A, template%CPTR_PGIBUG_A,options_%CPTR_PGIBUG_B) )
 
-  call options%final()
+  call options_%final()
 
   call field%return()
 end function

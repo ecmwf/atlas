@@ -66,6 +66,7 @@ FieldImpl* FieldCreatorArraySpec::createField(const eckit::Parametrisation& para
         Log::trace() << s[i] << (i < s.size() - 1 ? "," : "");
     }
     Log::trace() << "]" << std::endl;
+
     auto field = FieldImpl::create(name, datatype, array::ArraySpec(std::move(s), array::ArrayAlignment(alignment)));
     field->callbackOnDestruction([field]() { Log::trace() << "Destroy field " << field->name() << std::endl; });
     return field;

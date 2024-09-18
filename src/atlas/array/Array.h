@@ -13,13 +13,20 @@
 #include <memory>
 #include <vector>
 
+#include "eckit/config/Parametrisation.h"
+
 #include "atlas/library/config.h"
+#include "atlas/util/Config.h"
 
 #include "atlas/util/Object.h"
 
 #include "atlas/array/ArrayDataStore.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array_fwd.h"
+
+namespace eckit {
+class Parametrisation;
+}
 
 namespace atlas {
 namespace array {
@@ -85,11 +92,29 @@ public:
 
     const ArrayStrides& strides() const { return spec_.strides(); }
 
+    const ArrayStrides& device_strides() const { 
+        if( mapped_ ) {
+            return spec_.strides();
+        }
+        else {
+            return spec_.device_strides();
+        }
+    }
+
     const ArrayShape& shape() const { return spec_.shape(); }
 
     const std::vector<int>& shapef() const { return spec_.shapef(); }
 
     const std::vector<int>& stridesf() const { return spec_.stridesf(); }
+
+    const std::vector<int>& device_stridesf() const {
+        if( mapped_ ) {
+            return spec_.stridesf();
+        }
+        else {
+            return spec_.device_stridesf();
+        }
+    }
 
     bool contiguous() const { return spec_.contiguous(); }
 
@@ -190,6 +215,7 @@ protected:
     Array(ArraySpec&& spec): spec_(std::move(spec)) {}
     ArraySpec spec_;
     std::unique_ptr<ArrayDataStore> data_store_;
+    bool mapped_{false};
 
     void replace(Array& array) {
         data_store_.swap(array.data_store_);

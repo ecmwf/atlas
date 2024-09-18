@@ -35,10 +35,11 @@ Field::Field(const eckit::Parametrisation& config): Handle(Implementation::creat
 Field::Field(const std::string& name, array::DataType datatype, const array::ArrayShape& shape):
     Handle(Implementation::create(name, datatype, shape)) {}
 
-Field::Field(const std::string& name, array::DataType datatype, array::ArraySpec&& spec):
+Field::Field(const std::string& name, array::DataType datatype, array::ArraySpec&& spec): 
     Handle(Implementation::create(name, datatype, std::move(spec))) {}
 
-Field::Field(const std::string& name, array::Array* array): Handle(Implementation::create(name, array)) {}
+Field::Field(const std::string& name, array::Array* array):
+    Handle(Implementation::create(name, array)) {}
 
 template <typename DATATYPE>
 Field::Field(const std::string& name, DATATYPE* data, const array::ArraySpec& spec):

@@ -16,13 +16,15 @@
 #include <limits>   // std::numeric_limits<T>::signaling_NaN
 #include <sstream>
 
+#include "eckit/log/Bytes.h"
+
 #include "atlas/array/ArrayDataStore.h"
 #include "atlas/library/Library.h"
 #include "atlas/library/config.h"
 #include "atlas/parallel/acc/acc.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
-#include "eckit/log/Bytes.h"
+#include "atlas/util/RegisterPointerInfo.h"
 
 #include "hic/hic.h"
 
@@ -75,6 +77,7 @@ public:
         return _instance;
     }
 };
+
 
 template <typename Value>
 static constexpr Value invalid_value() {
@@ -158,9 +161,11 @@ public:
             return; // nothing to do
         }
         if (not (host_updated_ or device_updated_)) {
-            throw_AssertionFailed("syncHostDevice() could not figure out which of host or device is up to date. "
-                                  "Probably it was forgotten to use setDeviceNeedsUpdate(true) or setDeviceNeedsUpdate(true)",
-                                  Here());
+            return;
+            // nothing to do here
+        //    throw_AssertionFailed("syncHostDevice() could not figure out which of host or device is up to date. "
+        //                          "Probably it was forgotten to use setDeviceNeedsUpdate(true) or setDeviceNeedsUpdate(true)",
+        //                          Here());
         }
 
         if (not device_updated_) {
@@ -251,11 +256,10 @@ public:
         }
     }
 
-
 private:
     [[noreturn]] void throw_AllocationFailed(size_t bytes, const eckit::CodeLocation& loc) {
         std::ostringstream ss;
-        ss << "AllocationFailed: Could not allocate " << eckit::Bytes(bytes);
+        ss << "allocateHost(" << name() << ") : AllocationFailed: Could not allocate " << eckit::Bytes(bytes);
         throw_Exception(ss.str(), loc);
     }
 
@@ -263,11 +267,10 @@ private:
         if (n > 0) {
             const size_t alignment = 64 * sizeof(Value);
             size_t bytes           = sizeof(Value) * n;
-            MemoryHighWatermark::instance() += bytes;
 
             int err = posix_memalign((void**)&ptr, alignment, bytes);
             if (err) {
-                throw_AllocationFailed(bytes, Here());
+              throw_AllocationFailed(bytes, Here());
             }
         }
         else {
@@ -279,24 +282,61 @@ private:
         if (ptr) {
             free(ptr);
             ptr = nullptr;
-            MemoryHighWatermark::instance() -= footprint();
         }
     }
 
     void allocateHost() {
+        MemoryHighWatermark::instance() += footprint();
         alloc_aligned(host_data_, size_);
+        pinHost();
     }
 
     void deallocateHost() {
+        unpinHost();
         free_aligned(host_data_);
+        MemoryHighWatermark::instance() -= footprint();
+    }
+
+    void pinHost() {
+#if ATLAS_HAVE_CUDA
+        if(host_memory_pinned_) {
+            cudaError_t err = cudaHostRegister(host_data_, footprint(), cudaHostRegisterMapped);
+            if (err != cudaSuccess) {
+                throw_AssertionFailed("Failed to get cudaHostRegister: "+std::string(cudaGetErrorString(err)), Here());
+            }
+            if (atlas::Library::instance().traceMemory()) {
+                Log::trace() << "pinHost("+std::string(name())+") : cudaHostRegister( host_ptr:" << host_data_ << " , " << eckit::Bytes(size_ * sizeof(Value)) << " )" << std::endl;
+            }
+        }
+ #endif
+    }
+
+    void unpinHost() {
+#if ATLAS_HAVE_CUDA
+        if (host_memory_pinned_) {
+            if (atlas::Library::instance().traceMemory()) {
+                Log::trace() << "unpinHost("+std::string(name())+") : cudaHostUnRegister( host_ptr:" << host_data_ << " , " << eckit::Bytes(size_ * sizeof(Value)) << " )" << std::endl;
+            }
+            cudaError_t err = cudaHostUnregister(host_data_);
+            if (err != cudaSuccess) {
+                throw_AssertionFailed("unpinHost("+std::string(name())+": Failed to cudaHostUnregister: "+std::string(cudaGetErrorString(err)), Here());
+            }
+        }
+#endif
     }
 
     size_t footprint() const { return sizeof(Value) * size_; }
 
+    std::string_view name() const {
+        return util::registered_pointer_name(this);
+    }
+
+    bool host_memory_pinned_{false};
+    bool host_memory_mapped_{false};
+
     size_t size_;
     Value* host_data_;
     mutable Value* device_data_{nullptr};
-
     mutable bool host_updated_{true};
     mutable bool device_updated_{true};
     mutable bool device_allocated_{false};
@@ -350,9 +390,10 @@ public:
             return; // nothing to do
         }
         if (not (host_updated_ or device_updated_)) {
-            throw_AssertionFailed("syncHostDevice() could not figure out which of host or device is up to date. "
-                                  "Probably it was forgotten to use setDeviceNeedsUpdate(true) or setDeviceNeedsUpdate(true)",
-                                  Here());
+            return; // nothing to do
+            // throw_AssertionFailed("syncHostDevice() could not figure out which of host or device is up to date. "
+            //                      "Probably it was forgotten to use setDeviceNeedsUpdate(true) or setDeviceNeedsUpdate(true)",
+            //                       Here());
         }
 
         if (not device_updated_) {
@@ -399,9 +440,9 @@ public:
 
     bool deviceNeedsUpdate() const override { return (not device_updated_); }
 
-    void setHostNeedsUpdate(bool v) const override { host_updated_ = (not v); }
+    void setHostNeedsUpdate(bool v) const override { host_updated_ = (not v); device_updated_ = v; }
 
-    void setDeviceNeedsUpdate(bool v) const override { device_updated_ = (not v); }
+    void setDeviceNeedsUpdate(bool v) const override { device_updated_ = (not v); host_updated_ = v; }
 
     void reactivateDeviceWriteViews() const override {}
 
@@ -445,9 +486,23 @@ public:
     }
 
 private:
+    std::string_view name() const {
+        return util::registered_pointer_name(this);
+    }
+
+private:
     size_t size_;
     Value* host_data_;
     mutable Value* device_data_;
+    bool contiguous_;
+
+    //bool host_memory_pinned_{false};
+    bool host_memory_mapped_{false};
+
+    size_t memcpy_h2d_pitch_;
+    size_t memcpy_d2h_pitch_;
+    size_t memcpy_height_;
+    size_t memcpy_width_;
 
     mutable bool host_updated_{true};
     mutable bool device_updated_{true};

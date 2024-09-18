@@ -31,7 +31,15 @@ if( atlas_HAVE_ACC )
     set( ACC_Fortran_FLAGS ${OpenACC_Fortran_FLAGS} )
     set( ACC_C_FLAGS       ${OpenACC_C_FLAGS} )
   endif()
-endif()
+
+  if (ATLAS_FIND_OPENACC)
+    enable_language(C)  # So that find_package(OpenACC) looks C components
+    find_package(OpenACC)
+  endif()
+
+  ecbuild_add_option( FEATURE ACC
+                      DESCRIPTION  "OpenACC capable data structures"
+                      CONDITION HAVE_CUDA AND OpenACC_C_FOUND )
 
 else()
   set( HAVE_ACC 0 )

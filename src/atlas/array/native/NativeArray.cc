@@ -10,12 +10,15 @@
 
 #include <iostream>
 
+//#include "eckit/config/Parametrisation.h"
+
 #include "atlas/array.h"
 #include "atlas/array/ArrayDataStore.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/array/helpers/ArrayInitializer.h"
 #include "atlas/array/helpers/ArrayWriter.h"
 #include "atlas/array/native/NativeDataStore.h"
+#include "atlas/util/Config.h"
 #include "atlas/runtime/Exception.h"
 
 using namespace atlas::array::helpers;

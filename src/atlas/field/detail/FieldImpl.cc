@@ -12,12 +12,14 @@
 #include <sstream>
 
 #include "atlas/library/config.h"
+#include "atlas/library/Library.h"
 
 #include "atlas/array/MakeView.h"
 #include "atlas/field/FieldCreator.h"
 #include "atlas/field/detail/FieldImpl.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/util/RegisterPointerInfo.h"
 
 #if ATLAS_HAVE_FUNCTIONSPACE
 #include "atlas/functionspace/FunctionSpace.h"
@@ -32,7 +34,7 @@ namespace field {
 FieldImpl* FieldImpl::create(const eckit::Parametrisation& params) {
     std::string creator_factory;
     if (params.get("creator", creator_factory)) {
-        std::unique_ptr<field::FieldCreator> creator(field::FieldCreatorFactory::build(creator_factory, params));
+        std::unique_ptr<field::FieldCreator> creator(field::FieldCreatorFactory::build(creator_factory));
         return creator->createField(params);
     }
     else {
@@ -94,12 +96,19 @@ FieldImpl::FieldImpl(const std::string& name, array::Array* array)
 }
 
 FieldImpl::~FieldImpl() {
+    for (FieldObserver* observer : field_observers_) {
+        observer->onFieldDestruction(*this);
+    }
     array_->detach();
     if (array_->owners() == 0) {
         for (auto& f : callback_on_destruction_) {
             f();
         }
+        const void* ds = &array_->data_store();
         delete array_;
+        if( atlas::Library::instance().traceMemory()) {
+            util::unregister_pointer_name(ds);
+        }
     }
 #if ATLAS_HAVE_FUNCTIONSPACE
     delete functionspace_;
@@ -151,6 +160,9 @@ void FieldImpl::rename(const std::string& name) {
     metadata().set("name", name);
     for (FieldObserver* observer : field_observers_) {
         observer->onFieldRename(*this);
+    }
+    if( atlas::Library::instance().traceMemory()) {
+        util::register_pointer_name(&array().data_store(), name);
     }
 }
 

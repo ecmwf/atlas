@@ -102,6 +102,7 @@ idx_t atlas__fs__BStructuredColumns__i_end_halo(const detail::BlockStructuredCol
 idx_t atlas__fs__BStructuredColumns__levels(const detail::BlockStructuredColumns* This);
 idx_t atlas__fs__BStructuredColumns__block_begin(const detail::BlockStructuredColumns* This, idx_t jblk);
 idx_t atlas__fs__BStructuredColumns__block_size(const detail::BlockStructuredColumns* This, idx_t jblk);
+idx_t atlas__fs__BStructuredColumns__nproma(const detail::BlockStructuredColumns* This);
 idx_t atlas__fs__BStructuredColumns__nblks(const detail::BlockStructuredColumns* This);
 
 field::FieldImpl* atlas__fs__BStructuredColumns__xy(const detail::BlockStructuredColumns* This);

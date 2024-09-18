@@ -49,6 +49,7 @@ type(atlas_functionspace_NodeColumns) :: fs
 type(atlas_Field) :: field, template
 type(atlas_mesh_Nodes) :: nodes
 integer :: halo_size, nb_nodes
+type(atlas_Config) :: config
 halo_size = 1
 
 grid = atlas_StructuredGrid("N24")
@@ -66,7 +67,9 @@ FCTEST_CHECK_EQUAL( field%name() , "" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call field%final()
 
-field = fs%create_field(name="field",kind=atlas_real(c_float))
+config = atlas_Config()
+field = fs%create_field(name="field",kind=atlas_real(c_float),options=config)
+call config%final()
 FCTEST_CHECK_EQUAL( field%rank() , 1 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
