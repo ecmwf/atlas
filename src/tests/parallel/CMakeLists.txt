@@ -32,7 +32,7 @@ ecbuild_add_test( TARGET atlas_test_haloexchange
 
 ecbuild_add_test( TARGET atlas_test_haloexchange_on_device
   MPI        3
-  CONDITION  eckit_HAVE_MPI AND atlas_HAVE_CUDA
+  CONDITION  eckit_HAVE_MPI AND atlas_HAVE_GPU
   SOURCES    test_haloexchange.cc
   LIBS       atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_RUN_NGPUS=1
