@@ -198,12 +198,10 @@ void atlas__Field__data_long_specf(FieldImpl* This, long*& data, int& rank, int*
 
 void atlas__Field__data_float_specf(FieldImpl* This, float*& data, int& rank, int*& shapef, int*& stridesf) {
     atlas__Field__data_specf(This, data, rank, shapef, stridesf);
-    std::cout << "atlas__Field__data_float_specf :: rank = " << rank << std::endl;
 }
 
 void atlas__Field__data_double_specf(FieldImpl* This, double*& data, int& rank, int*& shapef, int*& stridesf) {
     atlas__Field__data_specf(This, data, rank, shapef, stridesf);
-    std::cout << "atlas__Field__data_double_specf :: rank = " << rank << std::endl;
 }
 
 void atlas__Field__device_data_int_specf(FieldImpl* This, int*& data, int& rank, int*& shapef, int*& stridesf) {
