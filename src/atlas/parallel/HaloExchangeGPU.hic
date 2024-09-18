@@ -162,7 +162,7 @@ void halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::pack( const int sendcnt, arr
 
   dim3 threads(block_size_x, block_size_y);
   dim3 blocks(nblocks_x, nblocks_y);
-  hicDeviceSynchronize();
+  HIC_CALL(hicDeviceSynchronize());
   hicError_t err = hicGetLastError();
   if (err != hicSuccess) {
     std::string msg = std::string("Error synchronizing device")+ hicGetErrorString(err);
@@ -174,7 +174,7 @@ void halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::pack( const int sendcnt, arr
   if (err != hicSuccess)
     throw_Exception("Error launching GPU packing kernel");
 
-  hicDeviceSynchronize();
+  HIC_CALL(hicDeviceSynchronize());
   err = hicGetLastError();
   if (err != hicSuccess) {
     std::string msg = std::string("Error synchronizing device")+ hicGetErrorString(err);
@@ -196,7 +196,7 @@ void halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::unpack(const int recvcnt, ar
   dim3 threads(block_size_x, block_size_y);
   dim3 blocks((recvcnt+block_size_x-1)/block_size_x, nblocks_y);
 
-  hicDeviceSynchronize();
+  HIC_CALL(hicDeviceSynchronize());
   hicError_t err = hicGetLastError();
   if (err != hicSuccess) {
     std::string msg = std::string("Error synchronizing device")+ hicGetErrorString(err);
@@ -211,7 +211,7 @@ void halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::unpack(const int recvcnt, ar
     throw_Exception(msg);
   }
 
-  hicDeviceSynchronize();
+  HIC_CALL(hicDeviceSynchronize());
   err = hicGetLastError();
   if (err != hicSuccess) {
     std::string msg = std::string("Error synchronizing device")+ hicGetErrorString(err);

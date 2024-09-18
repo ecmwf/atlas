@@ -561,7 +561,7 @@ static int devices() {
         auto err = hicGetDeviceCount(&n);
         if (err != hicSuccess) {
             n = 0;
-            hicGetLastError();
+            static_cast<void>(hicGetLastError());
         }
         return n;
     }();
