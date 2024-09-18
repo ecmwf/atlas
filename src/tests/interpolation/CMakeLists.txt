@@ -75,6 +75,14 @@ ecbuild_add_executable( TARGET atlas_test_interpolation_structured2D
   NOINSTALL
 )
 
+ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_regional
+  SOURCES  test_interpolation_structured2D_regional.cc
+  LIBS     atlas
+  MPI      2
+  CONDITION eckit_HAVE_MPI
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_interpolation_non_linear
   SOURCES  test_interpolation_non_linear.cc
   LIBS     atlas

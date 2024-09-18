@@ -8,10 +8,10 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include <cuda_runtime.h>
+#include "hic/hic.h"
 
 extern "C" {
 void allocate_unified_impl(double** a, int N) {
-    cudaMallocManaged(a, N * sizeof(double));
+    hicMallocManaged(a, N * sizeof(double));
 }
 }

@@ -64,6 +64,9 @@ ecbuild_add_option( FEATURE ECKIT_DEVELOP
                     DESCRIPTION "Used to enable new features or API depending on eckit develop branch, not yet in a tagged release"
                     DEFAULT OFF )
 
+add_subdirectory( hic )
+find_package(hic)
+
 
 include( features/BOUNDSCHECKING )
 include( features/FORTRAN )

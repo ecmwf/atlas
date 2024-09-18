@@ -93,7 +93,7 @@ void build_element_to_edge_connectivity(Mesh& mesh) {
         UniqueLonLat compute_uid(mesh);
 
         for (idx_t jedge = 0; jedge < nb_edges; ++jedge) {
-            edge_sort.emplace_back(Sort(compute_uid(edge_node_connectivity.row(jedge)), jedge));
+            edge_sort.emplace_back(compute_uid(edge_node_connectivity.row(jedge)), jedge);
         }
 
         std::sort(edge_sort.data(), edge_sort.data() + nb_edges);

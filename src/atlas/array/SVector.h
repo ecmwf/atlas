@@ -16,7 +16,7 @@
 
 #include "atlas/library/config.h"
 #include "atlas/util/Allocate.h"
-#ifndef __CUDA_ARCH__
+#if ATLAS_HOST_COMPILE
 #include "atlas/runtime/Exception.h"
 #endif
 
@@ -34,7 +34,7 @@ public:
     ATLAS_HOST_DEVICE
     SVector(const T* data, const idx_t size): data_(data), size_(size), externally_allocated_(true) {}
 
-#ifdef __CUDACC__
+#if ATLAS_HIC_COMPILER
     // Note that this does not copy!!! It is mainly intended to be passed to a CUDA kernel which requires value semantics for this class
     ATLAS_HOST_DEVICE
     SVector(SVector const& other): data_(other.data_), size_(other.size_), externally_allocated_(true) {}
@@ -70,7 +70,7 @@ public:
     ATLAS_HOST_DEVICE
     void clear() {
         if (data_ && !externally_allocated_) {
-#ifndef __CUDA_ARCH__
+#if ATLAS_HOST_COMPILE
             deallocate(data_, size_);
 #endif
         }
@@ -103,23 +103,23 @@ public:
 
     ATLAS_HOST_DEVICE
     T& operator()(const idx_t idx) {
-        assert(data_ && idx < size_);
+        //assert(data_ && idx < size_);
         return data_[idx];
     }
     ATLAS_HOST_DEVICE
     T const& operator()(const idx_t idx) const {
-        assert(data_ && idx < size_);
+        //assert(data_ && idx < size_);
         return data_[idx];
     }
 
     ATLAS_HOST_DEVICE
     T& operator[](const idx_t idx) {
-        assert(data_ && idx < size_);
+        //assert(data_ && idx < size_);
         return data_[idx];
     }
     ATLAS_HOST_DEVICE
     T const& operator[](const idx_t idx) const {
-        assert(data_ && idx < size_);
+        //assert(data_ && idx < size_);
         return data_[idx];
     }
 
@@ -140,7 +140,7 @@ public:
     }
 
     void resize(idx_t N) {
-#ifndef __CUDA_ARCH__
+#if ATLAS_HOST_COMPILE
         ATLAS_ASSERT(not externally_allocated_, "Cannot resize externally allocated (or wrapped) data");
 #endif
         resize_impl(N);
@@ -161,7 +161,7 @@ private:
             for (idx_t c = 0; c < size; ++c) {
                 ptr[c].~T();
             }
-            util::delete_managedmem(ptr);
+            util::delete_managedmem(ptr, size);
         }
     }
 

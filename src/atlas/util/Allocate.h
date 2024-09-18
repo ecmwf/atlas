@@ -18,28 +18,28 @@ namespace util {
 //------------------------------------------------------------------------------
 
 namespace detail {
-void allocate_cudamanaged(void** ptr, size_t size);
-void deallocate_cudamanaged(void* ptr);
+void allocate_managed(void** ptr, size_t bytes);
+void deallocate_managed(void* ptr, size_t bytes);
 
-void allocate_cuda(void** ptr, size_t size);
-void deallocate_cuda(void* ptr);
+void allocate_device(void** ptr, size_t bytes);
+void deallocate_device(void* ptr, size_t bytes);
 
-void allocate_host(void** ptr, size_t size);
-void deallocate_host(void* ptr);
+void allocate_host(void** ptr, size_t bytes);
+void deallocate_host(void* ptr, size_t bytes);
 
 }  // namespace detail
 
 template <typename T>
 void allocate_managedmem(T*& data, size_t N) {
     if (N != 0) {
-        detail::allocate_cudamanaged(reinterpret_cast<void**>(&data), N * sizeof(T));
+        detail::allocate_managed(reinterpret_cast<void**>(&data), N * sizeof(T));
     }
 }
 
 template <typename T>
-void delete_managedmem(T*& data) {
+void delete_managedmem(T*& data, size_t N) {
     if (data) {
-        detail::deallocate_cudamanaged(data);
+        detail::deallocate_managed(data, N * sizeof(T));
         data = nullptr;
     }
 }
@@ -47,14 +47,14 @@ void delete_managedmem(T*& data) {
 template <typename T>
 void allocate_devicemem(T*& data, size_t N) {
     if (N != 0) {
-        detail::allocate_cuda(reinterpret_cast<void**>(&data), N * sizeof(T));
+        detail::allocate_device(reinterpret_cast<void**>(&data), N * sizeof(T));
     }
 }
 
 template <typename T>
-void delete_devicemem(T*& data) {
+void delete_devicemem(T*& data, size_t N) {
     if (data) {
-        detail::deallocate_cuda(data);
+        detail::deallocate_device(data, N * sizeof(T));
         data = nullptr;
     }
 }
@@ -67,9 +67,9 @@ void allocate_hostmem(T*& data, size_t N) {
 }
 
 template <typename T>
-void delete_hostmem(T*& data) {
+void delete_hostmem(T*& data, size_t N) {
     if (data) {
-        detail::deallocate_host(data);
+        detail::deallocate_host(data, N * sizeof(T));
         data = nullptr;
     }
 }
@@ -82,7 +82,10 @@ void atlas__allocate_managedmem_double(double*& a, size_t N);
 void atlas__allocate_managedmem_float(float*& a, size_t N);
 void atlas__allocate_managedmem_int(int*& a, size_t N);
 void atlas__allocate_managedmem_long(long*& a, size_t N);
-void atlas__deallocate_managedmem(void*& a);
+void atlas__deallocate_managedmem_double(double*& a, size_t N);
+void atlas__deallocate_managedmem_float(float*& a, size_t N);
+void atlas__deallocate_managedmem_int(int*& a, size_t N);
+void atlas__deallocate_managedmem_long(long*& a, size_t N);
 }
 
 //------------------------------------------------------------------------------

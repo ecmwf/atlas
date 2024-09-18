@@ -38,29 +38,33 @@ endif()
 
 ######################################################
 
-# Macro atlas_add_cuda_test
-# Envisioned to become part of ecbuild_add_test with a CUDA option
-# in a future ecbuild release
-macro( atlas_add_cuda_test )
+# Macro atlas_add_hic_test
+macro( atlas_add_hic_test )
   set( options           "" )
   set( single_value_args TARGET )
   set( multi_value_args  SOURCES LIBS ENVIRONMENT )
   cmake_parse_arguments( _PAR "${options}" "${single_value_args}" "${multi_value_args}"  ${_FIRST_ARG} ${ARGN} )
 
   if(_PAR_UNPARSED_ARGUMENTS)
-    ecbuild_critical("Unknown keywords given to atlas_add_cuda_test(): \"${_PAR_UNPARSED_ARGUMENTS}\"")
+    ecbuild_critical("Unknown keywords given to atlas_add_hic_test(): \"${_PAR_UNPARSED_ARGUMENTS}\"")
   endif()
 
   if( HAVE_CUDA AND HAVE_TESTS )
 
-    ecbuild_debug("atlas_add_cuda_test: Adding test ${_PAR_TARGET}")
+    ecbuild_debug("atlas_add_hic_test: Adding test ${_PAR_TARGET}")
 
     list( APPEND _PAR_ENVIRONMENT "ATLAS_RUN_NGPUS=1" )
     list( REMOVE_DUPLICATES _PAR_ENVIRONMENT )
 
     list( APPEND _libs ${_PAR_LIBS} )
     if( _libs )
-      ecbuild_debug("atlas_add_cuda_test: Test ${_PAR_TARGET} explicitly links with libraries ${_libs}")
+      ecbuild_debug("atlas_add_hic_test: Test ${_PAR_TARGET} explicitly links with libraries ${_libs}")
+    endif()
+
+    if( HAVE_CUDA )
+      set_source_files_properties(${_PAR_SOURCES} PROPERTIES LANGUAGE CUDA)
+    elseif( HAVE_HIP )
+      set_source_files_properties(${_PAR_SOURCES} PROPERTIES LANGUAGE HIP)
     endif()
 
     ecbuild_add_test( TARGET      ${_PAR_TARGET}
@@ -71,10 +75,6 @@ macro( atlas_add_cuda_test )
 
   endif()
 endmacro()
-
-if( HAVE_CUDA )
-  set( ATLAS_TEST_ENVIRONMENT "ATLAS_RUN_NGPUS=1" )
-endif()
 
 add_subdirectory( util )
 add_subdirectory( runtime )

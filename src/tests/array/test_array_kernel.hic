@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include <cuda_runtime.h>
+#include "hic/hic.h"
 #include "tests/AtlasTestEnvironment.h"
 #include "atlas/array.h"
 #include "atlas/array/MakeView.h"
@@ -21,10 +21,10 @@ namespace test {
 
 #define REQUIRE_CUDA_SUCCESS(msg) \
 do { \
-  cudaError_t err = cudaPeekAtLastError(); \
-  if (err != cudaSuccess ) { \
+  hicError_t err = hicPeekAtLastError(); \
+  if (err != hicSuccess ) { \
     throw eckit::testing::TestException("REQUIRE_CUDA_SUCCESS ["+std::string(msg)+"] failed:\n"\
-          + std::string(cudaGetErrorString(err)) , Here()); \
+          + std::string(hicGetErrorString(err)) , Here()); \
   } \
 } while(false)
 
@@ -70,7 +70,7 @@ CASE( "test_array" )
 
    REQUIRE_CUDA_SUCCESS("kernel_ex");
 
-   cudaDeviceSynchronize();
+   hicDeviceSynchronize();
 
    ds->updateHost();
 
@@ -108,7 +108,7 @@ CASE( "test_array_loop" )
 
    REQUIRE_CUDA_SUCCESS("loop_kernel_ex");
 
-   cudaDeviceSynchronize();
+   hicDeviceSynchronize();
 
    ds->updateHost();
 

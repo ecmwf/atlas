@@ -55,10 +55,13 @@ then
 elif command_exists srun ; then
   LAUNCH="srun ${ATLAS_RUN_MPI_ARGS}"
   if [ -n "${ATLAS_RUN_NGPUS}" ]; then
-    LAUNCH="${LAUNCH} --gres=gpu:${ATLAS_RUN_NGPUS}"
+    LAUNCH="${LAUNCH} --gpus-per-task=${ATLAS_RUN_NGPUS}"
   fi
   if [ -z "${ATLAS_RUN_NPROCS}" ]; then
     LAUNCH="${LAUNCH} -n 1"
+    if [ -n "${SLURM_GPUS}" ]; then
+      LAUNCH="${LAUNCH} --gpus-per-task=1"
+    fi
   else
     LAUNCH="${LAUNCH} -n ${ATLAS_RUN_NPROCS}"
   fi

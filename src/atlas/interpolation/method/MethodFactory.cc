@@ -24,6 +24,7 @@
 #include "structured/Linear3D.h"
 #include "structured/QuasiCubic2D.h"
 #include "structured/QuasiCubic3D.h"
+#include "structured/RegionalLinear2D.h"
 #include "unstructured/FiniteElement.h"
 #include "unstructured/UnstructuredBilinearLonLat.h"
 
@@ -46,6 +47,7 @@ void force_link() {
             MethodBuilder<method::Cubic3D>();
             MethodBuilder<method::QuasiCubic2D>();
             MethodBuilder<method::QuasiCubic3D>();
+            MethodBuilder<method::RegionalLinear2D>();
             MethodBuilder<method::GridBoxAverage>();
             MethodBuilder<method::GridBoxMaximum>();
             MethodBuilder<method::CubedSphereBilinear>();

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "atlas/library/config.h"
 #include "atlas/array/ArrayDataStore.h"
 #include "atlas/array/gridtools/GridToolsTraits.h"
 
@@ -54,7 +55,7 @@ struct GridToolsDataStore : ArrayDataStore {
         accUnmap();
     }
 
-    bool deviceAllocated() const override { return ATLAS_HAVE_CUDA; }
+    bool deviceAllocated() const override { return ATLAS_HAVE_GPU; }
 
     bool hostNeedsUpdate() const override { return data_store_->host_needs_update(); }
 
@@ -112,7 +113,7 @@ private:
         return ::gridtools::make_host_view<::gridtools::access_mode::read_only>(*data_store_).data();
     }
     void* device_data() const {
-#if ATLAS_HAVE_CUDA
+#if ATLAS_HAVE_GPU
         return ::gridtools::make_device_view<::gridtools::access_mode::read_only>(*data_store_).data();
 #else
         return ::gridtools::make_host_view<::gridtools::access_mode::read_only>(*data_store_).data();
