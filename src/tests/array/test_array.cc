@@ -20,6 +20,7 @@
 #endif
 
 #include "hic/hic.h"
+#include "atlas/parallel/acc/acc.h"
 
 using namespace atlas::array;
 
@@ -555,7 +556,7 @@ CASE("test_wrap") {
     EXPECT(view(2) == 19);
 }
 
-static int devices() {
+static int hic_devices() {
     static int devices_ = [](){
         int n = 0;
         auto err = hicGetDeviceCount(&n);
@@ -573,7 +574,7 @@ CASE("test_acc_map") {
     EXPECT_NO_THROW(ds->allocateDevice());
     if( ds->deviceAllocated() ) {
         EXPECT_NO_THROW(ds->accMap());
-        EXPECT_EQ(ds->accMapped(), std::min(devices(),1));
+        EXPECT_EQ(ds->accMapped(), std::min(std::min(acc::devices(),hic_devices()),1));
     }
     else {
         Log::warning() << "WARNING: Array could not be allocated on device, so acc_map could not be tested" << std::endl;
