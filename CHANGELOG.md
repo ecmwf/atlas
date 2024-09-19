@@ -7,6 +7,19 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.39.0] - 2024-09-18
+
+### Added
+- Add HIC abstraction layer for HIP and CUDA by @wdeconinck in https://github.com/ecmwf/atlas/pull/219
+- Support for HIP via HIC
+- Add regional interpolation by @benjaminmenetrier in https://github.com/ecmwf/atlas/pull/215
+- Pack vector components into higher-rank vector fields. by @odlomax in https://github.com/ecmwf/atlas/pull/218
+
+### Fixed
+- Fix missing header in FieldImpl.h by @tehrengruber in https://github.com/ecmwf/atlas/pull/214
+- Bug fixes to vector interpolation with StructuredColumns and spherical vector interpolation by @MarekWlasak in https://github.com/ecmwf/atlas/pull/222
+
+
 ## [0.38.1] - 2024-07-15
 
 ### Fixed
@@ -551,6 +564,7 @@ Fix StructuredInterpolation2D with retry for failed stencils
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.39.0]: https://github.com/ecmwf/atlas/compare/0.38.1...0.39.0
 [0.38.1]: https://github.com/ecmwf/atlas/compare/0.38.0...0.38.1
 [0.38.0]: https://github.com/ecmwf/atlas/compare/0.37.0...0.38.0
 [0.37.0]: https://github.com/ecmwf/atlas/compare/0.36.0...0.37.0

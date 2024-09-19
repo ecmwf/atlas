@@ -103,23 +103,23 @@ public:
 
     ATLAS_HOST_DEVICE
     T& operator()(const idx_t idx) {
-        assert(data_ && idx < size_);
+        //assert(data_ && idx < size_);
         return data_[idx];
     }
     ATLAS_HOST_DEVICE
     T const& operator()(const idx_t idx) const {
-        assert(data_ && idx < size_);
+        //assert(data_ && idx < size_);
         return data_[idx];
     }
 
     ATLAS_HOST_DEVICE
     T& operator[](const idx_t idx) {
-        assert(data_ && idx < size_);
+        //assert(data_ && idx < size_);
         return data_[idx];
     }
     ATLAS_HOST_DEVICE
     T const& operator[](const idx_t idx) const {
-        assert(data_ && idx < size_);
+        //assert(data_ && idx < size_);
         return data_[idx];
     }
 

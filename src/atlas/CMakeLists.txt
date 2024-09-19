@@ -60,6 +60,8 @@ library/detail/BlackMagic.h
 library/detail/Debug.h
 
 
+parallel/acc/acc.cc
+parallel/acc/acc.h
 parallel/mpi/mpi.cc
 parallel/mpi/mpi.h
 parallel/omp/omp.cc
@@ -929,7 +931,7 @@ list( APPEND source_list
 )
 
 
-if( atlas_HAVE_CUDA )
+if( atlas_HAVE_GPU )
   include( atlas_host_device )
   list( APPEND source_list
     parallel/HaloExchangeGPU.h
@@ -1000,5 +1002,13 @@ ecbuild_add_library( TARGET atlas
     $<INSTALL_INTERFACE:include>
 
 )
+
+if( HAVE_ACC )
+  target_link_options( atlas INTERFACE
+      $<$<LINK_LANG_AND_ID:C,NVHPC>:SHELL:-acc=gpu>
+      $<$<LINK_LANG_AND_ID:CXX,NVHPC>:SHELL:-acc=gpu>
+      $<$<LINK_LANG_AND_ID:Fortran,NVHPC>:SHELL:-acc=gpu>
+      $<$<LINK_LANG_AND_ID:CUDA,NVIDIA>:SHELL:-acc=gpu> )
+endif()
 
 target_compile_features( atlas PUBLIC cxx_std_17 )

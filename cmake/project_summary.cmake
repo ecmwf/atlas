@@ -60,10 +60,10 @@ if( atlas_HAVE_GRIDTOOLS_STORAGE )
 
 else()
 
-    if( NOT atlas_HAVE_CUDA )
+    if( NOT atlas_HAVE_GPU )
         ecbuild_info( "Array storage backend: Native [HOST]" )
     else()
-        ecbuild_info( "Array storage backend: Native [CUDA]" )
+        ecbuild_info( "Array storage backend: Native [GPU]" )
     endif()
 
 endif()

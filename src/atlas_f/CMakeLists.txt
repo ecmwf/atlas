@@ -277,6 +277,14 @@ ecbuild_add_library( TARGET atlas_f
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )
 
+if( HAVE_ACC )
+  target_link_options( atlas_f INTERFACE
+      $<$<LINK_LANG_AND_ID:C,NVHPC>:SHELL:-acc=gpu>
+      $<$<LINK_LANG_AND_ID:CXX,NVHPC>:SHELL:-acc=gpu>
+      $<$<LINK_LANG_AND_ID:Fortran,NVHPC>:SHELL:-acc=gpu>
+      $<$<LINK_LANG_AND_ID:CUDA,NVIDIA>:SHELL:-acc=gpu> )
+endif()
+
 fckit_target_preprocess_fypp( atlas_f
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/atlas_f.h.in

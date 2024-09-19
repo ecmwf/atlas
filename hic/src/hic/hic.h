@@ -22,7 +22,10 @@
 #endif
 
 inline void hic_assert(hicError_t err, const char* const func, const char* const file, const int line) {
-    if (err != hicSuccess) {
+    // Ignore errors when HIP/CUDA runtime is unloaded or deinitialized.
+    // This happens when calling HIP/CUDA after main has ended, e.g. in teardown of static variables calling `hicFree`
+    //   --> ignore hicErrorDeinitialized (a.k.a. cudaErrorCudartUnloading / hipErrorDeinitialized)
+    if (err != hicSuccess && err != hicErrorDeinitialized) {
         std::ostringstream msg;
         msg << "HIC Runtime Error [code="<<err<<"] at: " << file << " + " << line << " : " << func << "\n";
         msg << "  Reason: " << hicGetErrorString(err);
