@@ -278,11 +278,13 @@ ecbuild_add_library( TARGET atlas_f
 )
 
 if( HAVE_ACC )
-  target_link_options( atlas_f INTERFACE
-      $<$<LINK_LANG_AND_ID:C,NVHPC>:SHELL:-acc=gpu>
-      $<$<LINK_LANG_AND_ID:CXX,NVHPC>:SHELL:-acc=gpu>
-      $<$<LINK_LANG_AND_ID:Fortran,NVHPC>:SHELL:-acc=gpu>
-      $<$<LINK_LANG_AND_ID:CUDA,NVIDIA>:SHELL:-acc=gpu> )
+  if( CMAKE_Fortran_COMPILER_ID MATCHES NVHPC )
+    target_link_options( atlas_f INTERFACE
+        $<$<LINK_LANG_AND_ID:C,NVHPC>:SHELL:-acc=gpu>
+        $<$<LINK_LANG_AND_ID:CXX,NVHPC>:SHELL:-acc=gpu>
+        $<$<LINK_LANG_AND_ID:Fortran,NVHPC>:SHELL:-acc=gpu>
+        $<$<LINK_LANG_AND_ID:CUDA,NVIDIA>:SHELL:-acc=gpu> )
+   endif()
 endif()
 
 fckit_target_preprocess_fypp( atlas_f
