@@ -180,6 +180,15 @@ FieldSet pack_vector_fields(const FieldSet& fields, FieldSet packedFields) {
     componentFieldMetadataVector.push_back(componentFieldMetadata);
     vectorField.metadata().set("component_field_metadata",
                                componentFieldMetadataVector);
+
+    // If any component is dirty, the whole field is dirty.
+    if (vectorIndex == 0) {
+      vectorField.set_dirty(componentField.dirty());
+    } else {
+      vectorField.set_dirty(vectorField.dirty() || componentField.dirty());
+    }
+
+
   }
   return packedFields;
 }
@@ -218,6 +227,7 @@ FieldSet unpack_vector_fields(const FieldSet& fields, FieldSet unpackedFields) {
 
       // Copy metadata.
       componentField.metadata() = componentFieldMetadata;
+      componentField.set_dirty(vectorField.dirty());
 
       ++vectorIndex;
     }

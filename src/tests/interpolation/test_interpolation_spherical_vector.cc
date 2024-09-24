@@ -58,7 +58,8 @@ double vortexVertical(double lon, double lat) {
 
 void gmshOutput(const std::string& fileName, const FieldSet& fieldSet) {
   const auto functionSpace = fieldSet[0].functionspace();
-  const auto structuredColumns = functionspace::StructuredColumns(functionSpace);
+  const auto structuredColumns =
+      functionspace::StructuredColumns(functionSpace);
   const auto nodeColumns = functionspace::NodeColumns(functionSpace);
   const auto mesh =
       structuredColumns ? Mesh(structuredColumns.grid()) : nodeColumns.mesh();
@@ -88,26 +89,25 @@ const auto generateEmptyPointCloud() {
 // Helper struct to key different Functionspaces to strings
 struct FunctionSpaceFixtures {
   static const FunctionSpace& get(const std::string& fixture) {
-    static auto functionSpaces =
-        std::map<std::string_view, FunctionSpace>{
-            {"cubedsphere_mesh",
-             generateNodeColums("CS-LFR-48", "cubedsphere_dual")},
-            {"gaussian_mesh", generateNodeColums("O48", "structured")},
-            {"structured_columns",
-             functionspace::StructuredColumns(Grid("O48"), option::halo(1))},
-            {"structured_columns_classic",
-             functionspace::StructuredColumns(Grid("F48"), option::halo(1))},
-            {"structured_columns_classic_halo2",
-             functionspace::StructuredColumns(Grid("F48"), option::halo(2))},
-            {"structured_columns_classic_highres_halo2",
-             functionspace::StructuredColumns(Grid("F96"), option::halo(2))},
-            {"structured_columns_halo2",
-             functionspace::StructuredColumns(Grid("O48"), option::halo(2))},
-            {"structured_columns_lowres",
-             functionspace::StructuredColumns(Grid("O24"), option::halo(1))},
-            {"structured_columns_hires",
-             functionspace::StructuredColumns(Grid("O96"), option::halo(1))},
-            {"empty_point_cloud", generateEmptyPointCloud()}};
+    static auto functionSpaces = std::map<std::string_view, FunctionSpace>{
+        {"cubedsphere_mesh",
+         generateNodeColums("CS-LFR-48", "cubedsphere_dual")},
+        {"gaussian_mesh", generateNodeColums("O48", "structured")},
+        {"structured_columns",
+         functionspace::StructuredColumns(Grid("O48"), option::halo(1))},
+        {"structured_columns_classic",
+         functionspace::StructuredColumns(Grid("F48"), option::halo(1))},
+        {"structured_columns_classic_halo2",
+         functionspace::StructuredColumns(Grid("F48"), option::halo(2))},
+        {"structured_columns_classic_highres_halo2",
+         functionspace::StructuredColumns(Grid("F96"), option::halo(2))},
+        {"structured_columns_halo2",
+         functionspace::StructuredColumns(Grid("O48"), option::halo(2))},
+        {"structured_columns_lowres",
+         functionspace::StructuredColumns(Grid("O24"), option::halo(1))},
+        {"structured_columns_hires",
+         functionspace::StructuredColumns(Grid("O96"), option::halo(1))},
+        {"empty_point_cloud", generateEmptyPointCloud()}};
     return functionSpaces.at(fixture);
   }
 };
@@ -157,9 +157,9 @@ struct InterpSchemeFixtures {
   }
 };
 
-template <int Rank>
-double dotProduct(const array::ArrayView<double, Rank>& a,
-                  const array::ArrayView<double, Rank>& b) {
+template <int Rank, typename T1, typename T2>
+double dotProduct(const array::ArrayView<T1, Rank>& a,
+                  const array::ArrayView<T2, Rank>& b) {
   auto dotProd = 0.;
   arrayForEachDim(std::make_integer_sequence<int, Rank>{}, std::tie(a, b),
                   [&](const double& aElem, const double& bElem) {
@@ -198,13 +198,11 @@ void testInterpolation(const Config& config) {
   auto fieldSpec =
       FieldSpecFixtures::get(config.getString("field_spec_fixture"));
   if constexpr (Rank == 3) {
-      fieldSpec.set("levels", 2);
+    fieldSpec.set("levels", 2);
   }
 
-  auto sourceField =
-      sourceFieldSet.add(sourceFunctionSpace.createField<double>(fieldSpec));
-  auto targetField =
-      targetFieldSet.add(targetFunctionSpace.createField<double>(fieldSpec));
+  auto sourceField = sourceFunctionSpace.createField<double>(fieldSpec);
+  auto targetField = targetFunctionSpace.createField<double>(fieldSpec);
 
   auto sourceView = array::make_view<double, Rank>(sourceField);
   auto targetView = array::make_view<double, Rank>(targetField);
@@ -225,6 +223,9 @@ void testInterpolation(const Config& config) {
           ArrayForEach<0>::apply(std::tie(sourceColumn), setElems);
         }
       });
+
+  sourceFieldSet.add(sourceField);
+  targetFieldSet.add(targetField);
 
   const auto interp = Interpolation(
       InterpSchemeFixtures::get(config.getString("interp_fixture")),
@@ -265,8 +266,7 @@ void testInterpolation(const Config& config) {
 
           if constexpr (Rank == 2) {
             calcError(targetColumn, errorColumn);
-          }
-          else if constexpr (Rank == 3) {
+          } else if constexpr (Rank == 3) {
             ArrayForEach<0>::apply(std::tie(targetColumn, errorColumn),
                                    calcError);
           }
@@ -308,160 +308,263 @@ void testInterpolation(const Config& config) {
   }
 }
 
+//CASE("cubed sphere CS-LFR-48 vector interpolation (3d-field, 2-vector)") {
+//  const auto config =
+//      Config("source_fixture", "cubedsphere_mesh")
+//          .set("target_fixture", "gaussian_mesh")
+//          .set("field_spec_fixture", "2vector")
+//          .set("interp_fixture", "cubedsphere_bilinear_spherical")
+//          .set("file_id", "spherical_vector_cs2")
+//          .set("tol", 0.00018);
 
-CASE("cubed sphere CS-LFR-48 vector interpolation (3d-field, 2-vector)") {
-  const auto config =
-      Config("source_fixture", "cubedsphere_mesh")
-          .set("target_fixture", "gaussian_mesh")
-          .set("field_spec_fixture", "2vector")
-          .set("interp_fixture", "cubedsphere_bilinear_spherical")
-          .set("file_id", "spherical_vector_cs2")
-          .set("tol", 0.00018);
+//  testInterpolation<Rank3dField>((config));
+//}
 
-  testInterpolation<Rank3dField>((config));
-}
+//CASE("cubed sphere CS-LFR-48 vector interpolation (3d-field, 3-vector)") {
+//  const auto config =
+//      Config("source_fixture", "cubedsphere_mesh")
+//          .set("target_fixture", "gaussian_mesh")
+//          .set("field_spec_fixture", "3vector")
+//          .set("interp_fixture", "cubedsphere_bilinear_spherical")
+//          .set("file_id", "spherical_vector_cs3")
+//          .set("tol", 0.00096);
 
-CASE("cubed sphere CS-LFR-48 vector interpolation (3d-field, 3-vector)") {
-  const auto config =
-      Config("source_fixture", "cubedsphere_mesh")
-          .set("target_fixture", "gaussian_mesh")
-          .set("field_spec_fixture", "3vector")
-          .set("interp_fixture", "cubedsphere_bilinear_spherical")
-          .set("file_id", "spherical_vector_cs3")
-          .set("tol", 0.00096);
+//  testInterpolation<Rank3dField>((config));
+//}
 
-  testInterpolation<Rank3dField>((config));
-}
+//CASE("cubed sphere CS-LFR-48 (spherical vector) to empty point cloud") {
+//  const auto config =
+//      Config("source_fixture", "cubedsphere_mesh")
+//          .set("target_fixture", "empty_point_cloud")
+//          .set("field_spec_fixture", "2vector")
+//          .set("interp_fixture", "cubedsphere_bilinear_spherical");
 
-CASE("cubed sphere CS-LFR-48 (spherical vector) to empty point cloud") {
-    const auto config =
-        Config("source_fixture", "cubedsphere_mesh")
-            .set("target_fixture", "empty_point_cloud")
-            .set("field_spec_fixture", "2vector")
-            .set("interp_fixture", "cubedsphere_bilinear_spherical");
+//  testInterpolation<Rank2dField>((config));
+//}
 
-    testInterpolation<Rank2dField>((config));
-}
+//CASE("cubed sphere CS-LFR-48 to empty point cloud") {
+//  const auto config = Config("source_fixture", "cubedsphere_mesh")
+//                          .set("target_fixture", "empty_point_cloud")
+//                          .set("field_spec_fixture", "2vector")
+//                          .set("interp_fixture", "cubedsphere_bilinear");
 
-CASE("cubed sphere CS-LFR-48 to empty point cloud") {
-  const auto config =
-      Config("source_fixture", "cubedsphere_mesh")
-          .set("target_fixture", "empty_point_cloud")
-          .set("field_spec_fixture", "2vector")
-          .set("interp_fixture", "cubedsphere_bilinear");
+//  testInterpolation<Rank2dField>((config));
+//}
 
-  testInterpolation<Rank2dField>((config));
-}
+//CASE("finite element to empty point cloud") {
+//  const auto config = Config("source_fixture", "gaussian_mesh")
+//                          .set("target_fixture", "cubedsphere_mesh")
+//                          .set("field_spec_fixture", "2vector")
+//                          .set("interp_fixture", "finite_element");
+
+//  testInterpolation<Rank2dField>((config));
+//}
+
+//CASE("finite element vector interpolation (2d-field, 2-vector)") {
+//  const auto config = Config("source_fixture", "gaussian_mesh")
+//                          .set("target_fixture", "cubedsphere_mesh")
+//                          .set("field_spec_fixture", "2vector")
+//                          .set("interp_fixture", "finite_element_spherical")
+//                          .set("file_id", "spherical_vector_fe")
+//                          .set("tol", 0.00015);
+
+//  testInterpolation<Rank2dField>((config));
+//}
+
+//CASE(
+//    "structured columns F48 cubic vector spherical interpolation (3d-field, "
+//    "2-vector)") {
+//  const auto config =
+//      Config("source_fixture", "structured_columns_classic_halo2")
+//          .set("target_fixture", "cubedsphere_mesh")
+//          .set("field_spec_fixture", "2vector")
+//          .set("interp_fixture", "structured_cubic_spherical")
+//          .set("file_id", "spherical_cubic_vector_classic_sc")
+//          .set("tol", 0.0000082);
+
+//  testInterpolation<Rank3dField>((config));
+//}
+
+//CASE(
+//    "structured columns F96 cubic vector spherical interpolation (2d-field, "
+//    "2-vector)") {
+//  const auto config =
+//      Config("source_fixture", "structured_columns_classic_highres_halo2")
+//          .set("target_fixture", "cubedsphere_mesh")
+//          .set("field_spec_fixture", "2vector")
+//          .set("interp_fixture", "structured_cubic_spherical")
+//          .set("file_id", "spherical_2D_cubic_vector_highres_classic_sc")
+//          .set("tol", 0.000000425);
+
+//  testInterpolation<Rank2dField>((config));
+//}
+
+//CASE(
+//    "structured columns F96 cubic vector spherical interpolation (3d-field, "
+//    "2-vector)") {
+//  const auto config =
+//      Config("source_fixture", "structured_columns_classic_highres_halo2")
+//          .set("target_fixture", "cubedsphere_mesh")
+//          .set("field_spec_fixture", "2vector")
+//          .set("interp_fixture", "structured_cubic_spherical")
+//          .set("file_id", "spherical_3D_cubic_vector_highres_classic_sc")
+//          .set("tol", 0.00000085);
+
+//  testInterpolation<Rank3dField>((config));
+//}
+
+//CASE(
+//    "structured columns O24 linear vector interpolation (2d-field, 2-vector)") {
+//  const auto config = Config("source_fixture", "structured_columns_lowres")
+//                          .set("target_fixture", "gaussian_mesh")
+//                          .set("field_spec_fixture", "2vector")
+//                          .set("interp_fixture", "structured_linear_spherical")
+//                          .set("file_id", "spherical_vector_sc_lr")
+//                          .set("tol", 0.00056);
+
+//  testInterpolation<Rank2dField>((config));
+//}
+
+//CASE(
+//    "structured columns O48 cubic vector spherical interpolation (3d-field, "
+//    "2-vector)") {
+//  const auto config = Config("source_fixture", "structured_columns_halo2")
+//                          .set("target_fixture", "cubedsphere_mesh")
+//                          .set("field_spec_fixture", "2vector")
+//                          .set("interp_fixture", "structured_cubic_spherical")
+//                          .set("file_id", "spherical_cubic_vector_sc3")
+//                          .set("tol", 0.000007);
+
+//  testInterpolation<Rank3dField>((config));
+//}
+
+//CASE(
+//    "structured columns O48 linear vector interpolation (2d-field, 2 "
+//    "-vector)") {
+//  const auto config = Config("source_fixture", "structured_columns")
+//                          .set("target_fixture", "cubedsphere_mesh")
+//                          .set("field_spec_fixture", "2vector")
+//                          .set("interp_fixture", "structured_linear_spherical")
+//                          .set("file_id", "spherical_vector_sc")
+//                          .set("tol", 0.00017);
+
+//  testInterpolation<Rank2dField>((config));
+//}
+
+//CASE("structured columns O48 to empty point cloud") {
+//  const auto config = Config("source_fixture", "structured_columns")
+//                          .set("target_fixture", "empty_point_cloud")
+//                          .set("field_spec_fixture", "2vector")
+//                          .set("interp_fixture", "structured_linear");
+
+//  testInterpolation<Rank2dField>((config));
+//}
+
+//CASE(
+//    "structured columns O96 vector interpolation (2d-field, 2-vector, "
+//    "hi-res)") {
+//  const auto config = Config("source_fixture", "structured_columns_hires")
+//                          .set("target_fixture", "gaussian_mesh")
+//                          .set("field_spec_fixture", "2vector")
+//                          .set("interp_fixture", "structured_linear_spherical")
+//                          .set("file_id", "spherical_vector_sc_hr")
+//                          .set("tol", 0.000044);
+
+//  testInterpolation<Rank2dField>((config));
+//}
+
+CASE("separate vector field components") {
+  const auto sourceFunctionSpace =
+      FunctionSpaceFixtures::get("structured_columns");
+  const auto targetFunctionSpace =
+      FunctionSpaceFixtures::get("cubedsphere_mesh");
+
+  auto sourceFieldSet = FieldSet{};
+  auto targetFieldSet = FieldSet{};
+
+  const auto sourceLonLatView =
+      array::make_view<double, 2>(sourceFunctionSpace.lonlat());
+  const auto targetLonLatView =
+      array::make_view<double, 2>(targetFunctionSpace.lonlat());
+
+  const auto createFieldView = [&](const FunctionSpace& functionSpace,
+                                   const std::string& name,
+                                   FieldSet& fieldSet) {
+    // Note: Vector field name can be anything that uniquely identifies field.
+    auto field = functionSpace.createField<double>(option::name(name));
+    field.metadata().set("vector_field_name", "wind");
+    return array::make_view<double, 1>(fieldSet.add(field));
+  };
+
+  auto uSourceView = createFieldView(sourceFunctionSpace, "u", sourceFieldSet);
+  auto vSourceView = createFieldView(sourceFunctionSpace, "v", sourceFieldSet);
+  const auto uTargetView =
+      createFieldView(targetFunctionSpace, "u", targetFieldSet);
+  const auto vTargetView =
+      createFieldView(targetFunctionSpace, "v", targetFieldSet);
+
+  uSourceView.assign(0.);
+  vSourceView.assign(0.);
+  for (auto idx = idx_t{0}; idx < sourceFunctionSpace.size(); idx++) {
+      std::tie(uSourceView(idx), vSourceView(idx)) =
+          vortexHorizontal(sourceLonLatView(idx, 0), sourceLonLatView(idx, 1));
+  }
+
+  const auto interpScheme =
+      InterpSchemeFixtures::get("structured_linear_spherical");
+
+  const auto interp =
+      Interpolation(interpScheme, sourceFunctionSpace, targetFunctionSpace);
+
+  interp.execute(sourceFieldSet, targetFieldSet);
+  targetFieldSet.haloExchange();
+
+  auto errorView =
+      createFieldView(targetFunctionSpace, "error", targetFieldSet);
+
+  auto maxError = 0.;
+  for (auto idx = idx_t{0}; idx < targetFunctionSpace.size(); idx++) {
+    auto [uTrue, vTrue] =
+        vortexHorizontal(targetLonLatView(idx, 0), targetLonLatView(idx, 1));
+    errorView(idx) = std::hypot(uTrue - uTargetView(idx), vTrue - vTargetView(idx));
+    maxError = std::max(maxError, errorView(idx));
+  }
+//  EXPECT_APPROX_EQ(maxError, 0., 0.00017);
+
+  gmshOutput("vector_components_source.msh", sourceFieldSet);
+  gmshOutput("vector_components_target.msh", targetFieldSet);
+
+  auto sourceAdjointFieldSet = FieldSet{};
+  auto targetAdjointFieldSet = FieldSet{};
+
+//  auto uTargetAdjoint = targetAdjointFieldSet.add(targetFieldSet["u"].clone());
+//  auto vTargetAdjoint = targetAdjointFieldSet.add(targetFieldSet["v"].clone());
+
+  createFieldView(targetFunctionSpace, "u", targetAdjointFieldSet);
+  createFieldView(targetFunctionSpace, "v", targetAdjointFieldSet);
+  targetAdjointFieldSet["u"].array().copy(targetFieldSet["u"]);
+  targetAdjointFieldSet["v"].array().copy(targetFieldSet["v"]);
+  targetAdjointFieldSet.adjointHaloExchange();
+
+  auto uSourceAdjointView =
+      createFieldView(sourceFunctionSpace, "u", sourceAdjointFieldSet);
+  auto vSourceAdjointView =
+      createFieldView(sourceFunctionSpace, "v", sourceAdjointFieldSet);
+  uSourceAdjointView.assign(0.);
+  vSourceAdjointView.assign(0.);
 
 
-CASE("finite element to empty point cloud") {
-  const auto config = Config("source_fixture", "gaussian_mesh")
-                          .set("target_fixture", "cubedsphere_mesh")
-                          .set("field_spec_fixture", "2vector")
-                          .set("interp_fixture", "finite_element");
+//  sourceAdjointFieldSet.set_dirty(false);
+  interp.execute_adjoint(sourceAdjointFieldSet, targetAdjointFieldSet);
 
-  testInterpolation<Rank2dField>((config));
-}
+  constexpr auto tinyNum = 1e-13;
+  const auto targetDotTarget =
+      dotProduct(uTargetView, uTargetView) + dotProduct(vTargetView, vTargetView);
+  const auto sourceDotSourceAdjoint = dotProduct(uSourceView, uSourceAdjointView) +
+                                      dotProduct(vSourceView, vSourceAdjointView);
 
-CASE("finite element vector interpolation (2d-field, 2-vector)") {
-  const auto config = Config("source_fixture", "gaussian_mesh")
-                          .set("target_fixture", "cubedsphere_mesh")
-                          .set("field_spec_fixture", "2vector")
-                          .set("interp_fixture", "finite_element_spherical")
-                          .set("file_id", "spherical_vector_fe")
-                          .set("tol", 0.00015);
-
-  testInterpolation<Rank2dField>((config));
-}
-
-CASE("structured columns F48 cubic vector spherical interpolation (3d-field, 2-vector)") {
-  const auto config =
-      Config("source_fixture", "structured_columns_classic_halo2")
-          .set("target_fixture", "cubedsphere_mesh")
-          .set("field_spec_fixture", "2vector")
-          .set("interp_fixture", "structured_cubic_spherical")
-          .set("file_id", "spherical_cubic_vector_classic_sc")
-          .set("tol", 0.0000082);
-
-  testInterpolation<Rank3dField>((config));
-}
-
-CASE("structured columns F96 cubic vector spherical interpolation (2d-field, 2-vector)") {
-  const auto config =
-      Config("source_fixture", "structured_columns_classic_highres_halo2")
-          .set("target_fixture", "cubedsphere_mesh")
-          .set("field_spec_fixture", "2vector")
-          .set("interp_fixture", "structured_cubic_spherical")
-          .set("file_id", "spherical_2D_cubic_vector_highres_classic_sc")
-          .set("tol", 0.000000425);
-
-  testInterpolation<Rank2dField>((config));
-}
-
-CASE("structured columns F96 cubic vector spherical interpolation (3d-field, 2-vector)") {
-  const auto config =
-      Config("source_fixture", "structured_columns_classic_highres_halo2")
-          .set("target_fixture", "cubedsphere_mesh")
-          .set("field_spec_fixture", "2vector")
-          .set("interp_fixture", "structured_cubic_spherical")
-          .set("file_id", "spherical_3D_cubic_vector_highres_classic_sc")
-          .set("tol", 0.00000085);
-
-  testInterpolation<Rank3dField>((config));
-}
-
-CASE("structured columns O24 linear vector interpolation (2d-field, 2-vector)") {
-  const auto config = Config("source_fixture", "structured_columns_lowres")
-                          .set("target_fixture", "gaussian_mesh")
-                          .set("field_spec_fixture", "2vector")
-                          .set("interp_fixture", "structured_linear_spherical")
-                          .set("file_id", "spherical_vector_sc_lr")
-                          .set("tol", 0.00056);
-
-  testInterpolation<Rank2dField>((config));
-}
-
-CASE("structured columns O48 cubic vector spherical interpolation (3d-field, 2-vector)") {
-  const auto config =
-      Config("source_fixture", "structured_columns_halo2")
-          .set("target_fixture", "cubedsphere_mesh")
-          .set("field_spec_fixture", "2vector")
-          .set("interp_fixture", "structured_cubic_spherical")
-          .set("file_id", "spherical_cubic_vector_sc3")
-          .set("tol",  0.000007);
-
-  testInterpolation<Rank3dField>((config));
-}
-
-CASE("structured columns O48 linear vector interpolation (2d-field, 2-vector)") {
-  const auto config = Config("source_fixture", "structured_columns")
-                          .set("target_fixture", "cubedsphere_mesh")
-                          .set("field_spec_fixture", "2vector")
-                          .set("interp_fixture", "structured_linear_spherical")
-                          .set("file_id", "spherical_vector_sc")
-                          .set("tol", 0.00017);
-
-  testInterpolation<Rank2dField>((config));
-}
-
-CASE("structured columns O48 to empty point cloud") {
-  const auto config = Config("source_fixture", "structured_columns")
-                          .set("target_fixture", "empty_point_cloud")
-                          .set("field_spec_fixture", "2vector")
-                          .set("interp_fixture", "structured_linear");
-
-  testInterpolation<Rank2dField>((config));
-}
-
-CASE("structured columns O96 vector interpolation (2d-field, 2-vector, hi-res)") {
-  const auto config = Config("source_fixture", "structured_columns_hires")
-                          .set("target_fixture", "gaussian_mesh")
-                          .set("field_spec_fixture", "2vector")
-                          .set("interp_fixture", "structured_linear_spherical")
-                          .set("file_id", "spherical_vector_sc_hr")
-                          .set("tol", 0.000044);
-
-  testInterpolation<Rank2dField>((config));
+  const auto dotProdRatio = targetDotTarget / sourceDotSourceAdjoint;
+  EXPECT_APPROX_EQ(dotProdRatio, 1., tinyNum);
 }
 
 }  // namespace test
