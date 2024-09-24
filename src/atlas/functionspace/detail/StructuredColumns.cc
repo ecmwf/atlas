@@ -830,19 +830,19 @@ void dispatch_adjointHaloExchange(Field& field, const parallel::HaloExchange& ha
                                   const StructuredColumns& fs) {
     FixupHaloForVectors<RANK> fixup_halos(fs);
     if (field.datatype() == array::DataType::kind<int>()) {
-        halo_exchange.template execute_adjoint<int, RANK>(field.array(), false);
         fixup_halos.template apply<int>(field);
+        halo_exchange.template execute_adjoint<int, RANK>(field.array(), false);
     }
     else if (field.datatype() == array::DataType::kind<long>()) {
-        halo_exchange.template execute_adjoint<long, RANK>(field.array(), false);
         fixup_halos.template apply<long>(field);
+        halo_exchange.template execute_adjoint<long, RANK>(field.array(), false);
     }
     else if (field.datatype() == array::DataType::kind<float>()) {
-        halo_exchange.template execute_adjoint<float, RANK>(field.array(), false);
         fixup_halos.template apply<float>(field);
+        halo_exchange.template execute_adjoint<float, RANK>(field.array(), false);
     }
     else if (field.datatype() == array::DataType::kind<double>()) {
-      fixup_halos.template apply<double>(field);
+        fixup_halos.template apply<double>(field);
         halo_exchange.template execute_adjoint<double, RANK>(field.array(), false);
     }
     else {
