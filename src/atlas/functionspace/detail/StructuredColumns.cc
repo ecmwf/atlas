@@ -842,8 +842,8 @@ void dispatch_adjointHaloExchange(Field& field, const parallel::HaloExchange& ha
         fixup_halos.template apply<float>(field);
     }
     else if (field.datatype() == array::DataType::kind<double>()) {
+      fixup_halos.template apply<double>(field);
         halo_exchange.template execute_adjoint<double, RANK>(field.array(), false);
-        fixup_halos.template apply<double>(field);
     }
     else {
         throw_Exception("datatype not supported", Here());
