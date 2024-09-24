@@ -15,6 +15,10 @@ if( atlas_HAVE_ATLAS_FIELD AND HAVE_GPU )
   ecbuild_add_option( FEATURE ACC
                       DESCRIPTION  "OpenACC capable data structures"
                       CONDITION OpenACC_Fortran_FOUND )
+  if( HAVE_ACC )
+    set( ACC_LINK_OPTIONS ${OpenACC_Fortran_FLAGS} )
+  endif()
+
 else()
 
   set( HAVE_ACC 0 )
