@@ -82,11 +82,6 @@ CASE("test variant assignment") {
   visitVariants(deviceView1, deviceView2, deviceView3, deviceView4);
 }
 
-template <typename View>
-constexpr auto Rank() {
-  return std::remove_reference_t<View>::rank();
-}
-
 CASE("test std::visit") {
   auto array1 = ArrayT<int>(10);
   make_view<int, 1>(array1).assign({0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
@@ -127,11 +122,11 @@ CASE("test std::visit") {
     auto rank2Tested = false;
 
     const auto visitor = [&](auto&& view) {
-      if constexpr (Rank<decltype(view)>() == 1) {
+      if constexpr (RankIs<decltype(view), 1>()) {
         rank1Tested = true;
         return testRank1(view);
       }
-      if constexpr (Rank<decltype(view)>() == 2) {
+      if constexpr (RankIs<decltype(view), 2>()) {
         rank2Tested = true;
         return testRank2(view);
       }
@@ -151,15 +146,15 @@ CASE("test std::visit") {
     auto rank1Tested = false;
     auto rank2Tested = false;
     const auto visitor = eckit::Overloaded{
-        [&](auto&& view) -> std::enable_if_t<Rank<decltype(view)>() == 1> {
+        [&](auto&& view) -> std::enable_if_t<RankIs<decltype(view), 1>()> {
           testRank1(view);
           rank1Tested = true;
         },
-        [&](auto&& view) -> std::enable_if_t<Rank<decltype(view)>() == 2> {
+        [&](auto&& view) -> std::enable_if_t<RankIs<decltype(view), 2>()> {
           testRank2(view);
           rank2Tested = true;
         },
-        [](auto&& view) -> std::enable_if_t<(Rank<decltype(view)>() > 2)> {
+        [](auto&& view) -> std::enable_if_t<!RankIs<decltype(view), 1, 2>()> {
           // Test should not reach here.
           EXPECT(false);
         }};
