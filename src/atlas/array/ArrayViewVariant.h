@@ -85,5 +85,12 @@ constexpr bool RankIs() {
   return ((std::decay_t<View>::rank() == Ranks) || ...);
 }
 
+/// @brief Return true if View::non_const_value_type is any of Values...
+template <typename View, typename... Values>
+constexpr bool ValueIs() {
+  using Value = typename std::decay_t<View>::non_const_value_type;
+  return ((std::is_same_v<Value, Values>) || ...);
+}
+
 }  // namespace array
 }  // namespace atlas
