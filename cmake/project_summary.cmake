@@ -42,9 +42,7 @@ endif()
 if( atlas_HAVE_ACC )
 
     ecbuild_info( "ACC" )
-    ecbuild_info( "    ACC_C_COMPILER     : [${ACC_C_COMPILER}]" )
-    ecbuild_info( "    ACC_C_FLAGS        : [${ACC_C_FLAGS}]" )
-    ecbuild_info( "    ACC_Fortran_FLAGS  : [${ACC_Fortran_FLAGS}]" )
+    ecbuild_info( "    OpenACC_Fortran_FLAGS  : [${OpenACC_Fortran_FLAGS}]" )
 
 endif()
 
