@@ -16,20 +16,6 @@ namespace array {
 
 //------------------------------------------------------------------------------
 
-extern "C" {
-void allocate_managedmem_double(double** a, int N) {
-    allocate_managedmem(*a, N);
-}
-void allocate_managedmem_float(double** a, int N) {
-    allocate_managedmem(*a, N);
-}
-void allocate_managedmem_int(int** a, int N) {
-    allocate_managedmem(*a, N);
-}
-void allocate_managedmem_long(long** a, int N) {
-    allocate_managedmem(*a, N);
-}
-}
 
 //------------------------------------------------------------------------------
 
