@@ -15,7 +15,7 @@
 #include "atlas/array/gridtools/GridToolsTraits.h"
 
 #if ATLAS_HAVE_ACC
-#include "atlas_acc_support/atlas_acc_map_data.h"
+#include "atlas_acc_support/atlas_acc.h"
 #endif
 
 //------------------------------------------------------------------------------

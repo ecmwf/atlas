@@ -35,10 +35,10 @@ CASE("test_acc") {
     *c_ptr = 5;
 
     int* d_ptr;
-    hicMalloc(&d_ptr, sizeof(int));
+    HIC_CALL(hicMalloc(&d_ptr, sizeof(int)));
     acc_map_data(c_ptr, d_ptr, sizeof(int));
 
-    hicMemcpy(d_ptr, c_ptr, sizeof(int), hicMemcpyHostToDevice);
+    HIC_CALL(hicMemcpy(d_ptr, c_ptr, sizeof(int), hicMemcpyHostToDevice));
 
 #pragma acc kernels present(c_ptr)
     {
@@ -47,7 +47,7 @@ CASE("test_acc") {
 
     EXPECT_EQ( *c_ptr, 5. );
 
-    hicMemcpy(c_ptr, d_ptr, sizeof(int), hicMemcpyDeviceToHost);
+    HIC_CALL(hicMemcpy(c_ptr, d_ptr, sizeof(int), hicMemcpyDeviceToHost));
     EXPECT_EQ( *c_ptr, 2. );
 }
 
