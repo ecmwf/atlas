@@ -23,6 +23,7 @@
 #include "atlas/array/ArraySpec.h"
 #include "atlas/array/ArrayStrides.h"
 #include "atlas/array/ArrayView.h"
+#include "atlas/array/ArrayViewVariant.h"
 #include "atlas/array/DataType.h"
 #include "atlas/array/LocalView.h"
 #include "atlas/array/MakeView.h"
