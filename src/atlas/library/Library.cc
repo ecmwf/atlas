@@ -397,27 +397,50 @@ void Library::finalise() {
             return s.str();
         };
         Log::info() << atlas::Trace::report() << std::endl;
-        Log::info() << std::setw(20) << "Memory report"
+        Log::info() << std::setw(40) << std::left << "    Memory report"
                     << std::setw(30) << "Host"
                     << std::setw(20) << "Device"
                     << std::endl;
-        Log::info() << std::setw(20) << "Allocations:"
+        Log::info() << std::setw(40) << std::left << "    Allocations:"
                     << std::setw(30) << Memory::host().allocations()
                     << std::setw(20) << Memory::device().allocations()
                     << std::endl;
-        Log::info() << std::setw(20) << "High Watermark:"
+        Log::info() << std::setw(40) << std::left << "    High Watermark:"
                     << std::setw(30) << to_bytes_string(Memory::host().highWatermark())
                     << std::setw(20) << to_bytes_string(Memory::device().highWatermark())
                     << std::endl;
-        Log::info() << std::setw(20) << "Largest Allocation:"
+        Log::info() << std::setw(40) << std::left << "    Largest Allocation:"
                     << std::setw(30) << to_bytes_string(Memory::host().largestAllocation())
                     << std::setw(20) << to_bytes_string(Memory::device().largestAllocation())
                     << std::endl;
-        Log::info() << std::setw(20) << "Leaked:"
+        Log::info() << std::setw(40) << std::left << "    Leaked:"
                     << std::setw(30) << to_bytes_string(Memory::host().allocated())
                     << std::setw(20) << to_bytes_string(Memory::device().allocated())
                     << std::endl;
 
+        auto capacity_bytes_str = [to_bytes_string](pluto::memory_pool_resource* mr) {
+            return to_bytes_string(mr->capacity());
+        };
+        Log::info() << "\n" << std::setw(40) << std::left << "    Memory pools"
+                    << std::setw(30) << "Size"
+                    << std::setw(20) << "Capacity"
+                    << std::endl;
+        Log::info() << std::setw(40) << std::left << "    pluto::pool_resource: "
+                    << std::setw(30) << to_bytes_string(pluto::pool_resource()->size())
+                    << std::setw(30) << to_bytes_string(pluto::pool_resource()->capacity())
+                    << std::endl;
+        Log::info() << std::setw(40) << std::left << "    pluto::pinned_pool_resource: "
+                    << std::setw(30) << to_bytes_string(pluto::pinned_pool_resource()->size())
+                    << std::setw(30) << to_bytes_string(pluto::pinned_pool_resource()->capacity())
+                    << std::endl;
+        Log::info() << std::setw(40) << std::left << "    pluto::managed_pool_resource: "
+                    << std::setw(30) << to_bytes_string(pluto::managed_pool_resource()->size())
+                    << std::setw(30) << to_bytes_string(pluto::managed_pool_resource()->capacity())
+                    << std::endl;
+        Log::info() << std::setw(40) << std::left << "    pluto::device_pool_resource: "
+                    << std::setw(30) << to_bytes_string(pluto::device_pool_resource()->size())
+                    << std::setw(30) << to_bytes_string(pluto::device_pool_resource()->capacity())
+                    << std::endl;
     }
 
     if (getEnv("ATLAS_FINALISES_MPI", false)) {
