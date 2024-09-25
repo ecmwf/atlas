@@ -12,6 +12,6 @@
 
 extern "C" {
 void allocate_unified_impl(double** a, int N) {
-    hicMallocManaged(a, N * sizeof(double));
+    HIC_CALL(hicMallocManaged(a, N * sizeof(double)));
 }
 }
