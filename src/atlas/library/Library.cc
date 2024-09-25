@@ -44,6 +44,8 @@ static bool feature_MKL() {
 }  // namespace
 #endif
 
+#include "hic/hic.h"
+
 #include "atlas_io/Trace.h"
 
 #include "atlas/library/FloatingPointExceptions.h"
@@ -53,6 +55,7 @@ static bool feature_MKL() {
 #include "atlas/library/version.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/omp/omp.h"
+#include "atlas/parallel/acc/acc.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
@@ -124,6 +127,24 @@ static void init_data_paths(std::vector<std::string>& data_paths) {
     add_tokens(data_paths, eckit::LibResource<std::string, Library>("atlas-data-path;$ATLAS_DATA_PATH", ""), ":");
     add_tokens(data_paths, "~atlas/share", ":");
 }
+
+static std::size_t devices() {
+    if constexpr (ATLAS_HAVE_GPU) {
+        static std::size_t _devices = []() -> std::size_t {
+            int num_devices = 0;
+            auto err        = hicGetDeviceCount(&num_devices);
+            if (err) {
+                num_devices = 0;
+            }
+            return static_cast<std::size_t>(num_devices);
+        }();
+        return _devices;
+    }
+    else {
+        return 0;
+    }
+}
+
 
 }  // namespace
 
@@ -341,6 +362,9 @@ void Library::initialise(const eckit::Parametrisation& config) {
         out << "    rank          [" << mpi::rank() << "] \n";
         out << "  OMP\n";
         out << "    max_threads   [" << atlas_omp_get_max_threads() << "] \n";
+        out << "  GPU\n";
+        out << "    devices       [" << devices() << "] \n";
+        out << "    OpenACC       [" << acc::devices() << "] \n";
         out << " \n";
         out << "  log.info        [" << str(info_) << "] \n";
         out << "  log.trace       [" << str(trace()) << "] \n";
@@ -473,6 +497,8 @@ void Library::Information::print(std::ostream& out) const {
 
     bool feature_fortran(ATLAS_HAVE_FORTRAN);
     bool feature_OpenMP(ATLAS_HAVE_OMP);
+    bool feature_OpenACC(ATLAS_HAVE_ACC);
+    bool feature_GPU(ATLAS_HAVE_GPU);
     bool feature_ecTrans(ATLAS_HAVE_ECTRANS);
     bool feature_FFTW(ATLAS_HAVE_FFTW);
     bool feature_Eigen(ATLAS_HAVE_EIGEN);
@@ -498,6 +524,8 @@ void Library::Information::print(std::ostream& out) const {
         << "    Fortran        : " << str(feature_fortran) << '\n'
         << "    MPI            : " << str(feature_MPI) << '\n'
         << "    OpenMP         : " << str(feature_OpenMP) << '\n'
+        << "    OpenACC        : " << str(feature_OpenACC) << '\n'
+        << "    GPU            : " << str(feature_GPU) << '\n'
         << "    BoundsChecking : " << str(feature_BoundsChecking) << '\n'
         << "    Init_sNaN      : " << str(feature_Init_sNaN) << '\n'
         << "    ecTrans        : " << str(feature_ecTrans) << '\n'
