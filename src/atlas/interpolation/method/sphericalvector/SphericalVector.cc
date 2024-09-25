@@ -21,6 +21,7 @@
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/Geometry.h"
+#include "atlas/util/PackVectorFields.h"
 #include "eckit/config/LocalConfiguration.h"
 
 namespace atlas {
@@ -95,10 +96,9 @@ void SphericalVector::do_setup(const FunctionSpace& source,
       const auto deltaAlpha =
           (alpha.first - alpha.second) * util::Constants::degreesToRadians();
 
-      complexTriplets[dataIndex] =
-          ComplexTriplet{rowIndex, colIndex,
-                         Complex{baseWeight * std::cos(deltaAlpha),
-                                 baseWeight * std::sin(deltaAlpha)}};
+      complexTriplets[dataIndex] = ComplexTriplet{
+          rowIndex, colIndex,
+          baseWeight * Complex{std::cos(deltaAlpha), std::sin(deltaAlpha)}};
       realTriplets[dataIndex] = RealTriplet{rowIndex, colIndex, baseWeight};
     }
   }
@@ -120,9 +120,14 @@ void SphericalVector::do_execute(const FieldSet& sourceFieldSet,
   ATLAS_TRACE("atlas::interpolation::method::SphericalVector::do_execute()");
   ATLAS_ASSERT(sourceFieldSet.size() == targetFieldSet.size());
 
-  for (auto i = 0; i < sourceFieldSet.size(); ++i) {
-    do_execute(sourceFieldSet[i], targetFieldSet[i], metadata);
+  const auto packedSourceFieldSet = util::pack_vector_fields(sourceFieldSet);
+  auto packedTargetFieldSet = util::pack_vector_fields(targetFieldSet);
+
+  for (auto i = 0; i < packedSourceFieldSet.size(); ++i) {
+    do_execute(packedSourceFieldSet[i], packedTargetFieldSet[i], metadata);
   }
+
+  util::unpack_vector_fields(packedTargetFieldSet, targetFieldSet);
 }
 
 void SphericalVector::do_execute(const Field& sourceField, Field& targetField,
@@ -130,7 +135,7 @@ void SphericalVector::do_execute(const Field& sourceField, Field& targetField,
   ATLAS_TRACE("atlas::interpolation::method::SphericalVector::do_execute()");
 
   if (targetField.size() == 0) {
-      return;
+    return;
   }
 
   const auto fieldType = sourceField.metadata().getString("type", "");
@@ -156,9 +161,15 @@ void SphericalVector::do_execute_adjoint(FieldSet& sourceFieldSet,
       "atlas::interpolation::method::SphericalVector::do_execute_adjoint()");
   ATLAS_ASSERT(sourceFieldSet.size() == targetFieldSet.size());
 
-  for (auto i = 0; i < sourceFieldSet.size(); ++i) {
-    do_execute_adjoint(sourceFieldSet[i], targetFieldSet[i], metadata);
+  auto packedSourceFieldSet = util::pack_vector_fields(sourceFieldSet);
+  const auto packedTargetFieldSet = util::pack_vector_fields(targetFieldSet);
+
+  for (auto i = 0; i < packedSourceFieldSet.size(); ++i) {
+    do_execute_adjoint(packedSourceFieldSet[i], packedTargetFieldSet[i],
+                       metadata);
   }
+
+  util::unpack_vector_fields(packedSourceFieldSet, sourceFieldSet);
 }
 
 void SphericalVector::do_execute_adjoint(Field& sourceField,
@@ -168,7 +179,7 @@ void SphericalVector::do_execute_adjoint(Field& sourceField,
       "atlas::interpolation::method::SphericalVector::do_execute_adjoint()");
 
   if (targetField.size() == 0) {
-      return;
+    return;
   }
 
   const auto fieldType = sourceField.metadata().getString("type", "");
@@ -192,7 +203,6 @@ template <typename MatMul>
 void SphericalVector::interpolate_vector_field(const Field& sourceField,
                                                Field& targetField,
                                                const MatMul& matMul) {
-
   ATLAS_ASSERT_MSG(sourceField.variables() == 2 || sourceField.variables() == 3,
                    "Vector field can only have 2 or 3 components.");
 
