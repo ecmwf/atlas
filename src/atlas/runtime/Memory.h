@@ -78,6 +78,12 @@ private:
 pluto::memory_resource* host_memory_resource(pluto::memory_resource* upstream = nullptr);
 pluto::memory_resource* device_memory_resource(pluto::memory_resource* upstream = nullptr);
 
+bool get_device_memory_mapped();
+void set_device_memory_mapped(bool);
+
 // --------------------------------------------------------------------------------------------------------
+
+void scope_push();
+void scope_pop();
 
 }  // namespace atlas
