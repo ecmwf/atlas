@@ -65,5 +65,19 @@ void* deviceptr(void* host_data) {
 #endif
 }
 
+CompilerId compiler_id() {
+#if ATLAS_HAVE_ACC
+    static CompilerId id = []() {
+        switch (atlas_acc_compiler_id()) {
+            case atlas_acc_compiler_id_cray: return CompilerId::cray;
+            default: return CompilerId::unknown;
+        }
+    }();
+    return id;
+#endif
+    return CompilerId::unknown;
+}
+
+
 }
 
