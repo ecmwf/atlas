@@ -27,6 +27,14 @@ void* atlas_acc_deviceptr(void* cpu_ptr);
 atlas_acc_device_t atlas_acc_get_device_type();
 int atlas_acc_get_num_devices();
 
+typedef enum {
+    atlas_acc_compiler_id_unknown = 0,
+    atlas_acc_compiler_id_nvidia  = 1,
+    atlas_acc_compiler_id_cray    = 2
+} atlas_acc_compiler_id_t;
+
+atlas_acc_compiler_id_t atlas_acc_compiler_id();
+
 #ifdef __cplusplus
 }
 #endif
