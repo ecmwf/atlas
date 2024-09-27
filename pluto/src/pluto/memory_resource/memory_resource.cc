@@ -31,7 +31,7 @@ RegisterPlutoResources() {
     register_resource("pluto::device_resource", device_resource());
     register_resource("pluto::managed_resource", managed_resource());
     register_resource("pluto::pinned_resource", pinned_resource());
-    register_resource("pluto::pool_resource", device_resource());
+    register_resource("pluto::pool_resource", pool_resource());
     register_resource("pluto::pinned_pool_resource", pinned_pool_resource());
     register_resource("pluto::device_pool_resource", device_pool_resource());
     register_resource("pluto::managed_pool_resource", managed_pool_resource());
