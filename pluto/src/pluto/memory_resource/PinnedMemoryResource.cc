@@ -60,14 +60,14 @@ void PinnedMemoryResource::unpin(void* ptr, std::size_t bytes) {
         upstream_->deallocate(ptr, bytes, alignment);
     }
  
-    bool PinnedMemoryResource::do_is_equal(const std::pmr::memory_resource& other) const noexcept {
+    bool PinnedMemoryResource::do_is_equal(const memory_resource& other) const noexcept {
         return upstream_->is_equal(other);
     }
 
 
 // --------------------------------------------------------------------------------------------------------
 
-std::pmr::memory_resource* pinned_resource() {
+memory_resource* pinned_resource() {
     static PinnedMemoryResource resource;
     return &resource;
 }

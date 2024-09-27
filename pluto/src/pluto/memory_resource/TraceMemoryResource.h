@@ -9,37 +9,37 @@
  */
 #pragma once
 
-#include <memory_resource>
 #include <string_view>
 #include <memory>
 
+#include "pluto/memory_resource/memory_resource.h"
 #include "pluto/util/Trace.h"
 
 namespace pluto {
 
 // --------------------------------------------------------------------------------------------------------
 
-class TraceMemoryResource : public std::pmr::memory_resource {
+class TraceMemoryResource : public memory_resource {
 public:
 
-    TraceMemoryResource( std::string_view name, std::pmr::memory_resource* mr ) :
+    TraceMemoryResource( std::string_view name, memory_resource* mr ) :
         name_(name),
         mr_(mr) {
     }
 
     TraceMemoryResource( std::string_view name) :
         name_(name),
-        mr_(std::pmr::get_default_resource()) {
+        mr_(get_default_resource()) {
     }
 
     // Take ownership of wrapped memory resource
-    TraceMemoryResource( std::string_view name, std::unique_ptr<std::pmr::memory_resource>&& mr ) :
+    TraceMemoryResource( std::string_view name, std::unique_ptr<memory_resource>&& mr ) :
         name_(name),
         owned_mr_(std::move(mr)),
         mr_(owned_mr_.get()) {
     }
 
-    std::pmr::memory_resource* upstream_resource() {
+    memory_resource* upstream_resource() {
         return mr_;
     }
 
@@ -48,14 +48,14 @@ protected:
  
     void do_deallocate(void* p, std::size_t bytes, std::size_t alignment) override;
  
-    bool do_is_equal(const std::pmr::memory_resource& other) const noexcept override {
+    bool do_is_equal(const memory_resource& other) const noexcept override {
         return mr_->is_equal(other);
     }
 
 private:
     std::string name_;
-    std::unique_ptr<std::pmr::memory_resource> owned_mr_;
-    std::pmr::memory_resource* mr_;
+    std::unique_ptr<memory_resource> owned_mr_;
+    memory_resource* mr_;
     static int nest;
 };
 
