@@ -74,8 +74,9 @@ CompilerId compiler_id() {
         }
     }();
     return id;
-#endif
+#else
     return CompilerId::unknown;
+#endif
 }
 
 
