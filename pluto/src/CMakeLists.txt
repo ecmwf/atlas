@@ -40,6 +40,7 @@ ecbuild_add_library( TARGET pluto
     pluto/host/unique_ptr.h
     pluto/host/vector.h
 
+    pluto/memory_resource/compat/memory_resource
     pluto/memory_resource/yakl/YAKL_Gator.h
     pluto/memory_resource/yakl/YAKL_LinearAllocator.h
     pluto/memory_resource/DeviceMemoryResource.cc
@@ -93,6 +94,3 @@ target_include_directories( pluto PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURC
 target_link_libraries( pluto PUBLIC hic )
 target_compile_options( pluto PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:--extended-lambda>)
 
-if( NOT PLUTO_HAVE_PMR )
-  target_include_directories(pluto SYSTEM BEFORE PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/pluto/memory_resource/compat>)
-endif()

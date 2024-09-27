@@ -44,11 +44,11 @@ void* ManagedMemoryResource::do_allocate(std::size_t bytes, alignment_t) {
             HIC_CALL( hicMallocManaged(&ptr, bytes) );
         }
         else {
-            ptr = std::pmr::new_delete_resource()->allocate(bytes, alignment);
+            ptr = new_delete_resource()->allocate(bytes, alignment);
         }
     }
     else {
-        ptr = std::pmr::new_delete_resource()->allocate(bytes, alignment);
+        ptr = new_delete_resource()->allocate(bytes, alignment);
     }
     if constexpr (LOG) {
         std::cout << "               + hicMallocManaged(ptr:"<<ptr<<", bytes:"<< bytes <<")" << std::endl;
@@ -65,11 +65,11 @@ void ManagedMemoryResource::do_deallocate(void* ptr, std::size_t bytes, alignmen
             HIC_CALL( hicFree(ptr) );
         }
         else {
-            std::pmr::new_delete_resource()->deallocate(ptr, bytes, alignment);
+            new_delete_resource()->deallocate(ptr, bytes, alignment);
         }
     }
     else {
-        std::pmr::new_delete_resource()->deallocate(ptr, bytes, alignment);
+        new_delete_resource()->deallocate(ptr, bytes, alignment);
     }
 }
 
