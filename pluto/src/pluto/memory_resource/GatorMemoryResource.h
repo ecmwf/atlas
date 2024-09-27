@@ -36,7 +36,6 @@ namespace pluto::yakl {
 
 // ------------------------------------------------------------------------------------
 
-#include <memory_resource>
 #include <functional>
 #include <cstddef>
 #include <memory>
@@ -58,7 +57,7 @@ class GatorMemoryResource : public memory_resource {
 public:
 
 	GatorMemoryResource() : 
-		GatorMemoryResource(std::pmr::get_default_resource()) {}
+		GatorMemoryResource(get_default_resource()) {}
 
 	GatorMemoryResource(memory_resource* upstream) :
 		upstream_(upstream) {
@@ -72,7 +71,7 @@ public:
 	}
 
 	GatorMemoryResource(const GatorOptions& options) : 
-		GatorMemoryResource(options, std::pmr::get_default_resource()) {}
+		GatorMemoryResource(options, get_default_resource()) {}
 
 	GatorMemoryResource(const GatorOptions& options, memory_resource* upstream) :
 		upstream_(upstream) {
