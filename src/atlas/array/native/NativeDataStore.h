@@ -165,7 +165,7 @@ public:
     void* voidDeviceData() override { return static_cast<void*>(device_data_); }
 
     void accMap() const override {
-        if (not acc_mapped_ && acc::devices() && not is_managed_data_) {
+        if ((not acc_mapped_ && acc::devices()) && (not is_managed_data_ || acc::compiler_id() == acc::CompilerId::cray)) {
             ATLAS_ASSERT(deviceAllocated(),"Could not accMap as device data is not allocated");
             ATLAS_ASSERT(!atlas::acc::is_present(host_data_, size_ * sizeof(Value)));
             if constexpr(ATLAS_ACC_DEBUG) {
