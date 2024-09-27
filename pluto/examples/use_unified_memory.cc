@@ -80,7 +80,7 @@ void print_info(const void* ptr, bool debug = false) {
 
     if (debug) {
 
-#if HIC_BACKEND_HIP
+#if HIC_BACKEND_HIP && HIP_VERSION_MAJOR < 6
     {
       // Debugging HIP backend pointer attributes because it did not map one-to-one with CUDA
       hipPointerAttribute_t attr_;
