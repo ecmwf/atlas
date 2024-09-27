@@ -127,4 +127,13 @@ const char* atlas_acc_info_str() {
 int atlas_acc_get_num_devices() {
   return acc_get_num_devices(acc_get_device_type());
 }
+
+atlas_acc_compiler_id_t atlas_acc_compiler_id() {
+#if defined(__NVCOMPILER)
+  return atlas_acc_compiler_id_nvidia;
+#else
+  return atlas_acc_compiler_id_unknown;
+#endif
+}
+
 }
