@@ -13,6 +13,7 @@
 #include <iostream>
 #include <memory>
 #include <iomanip>
+#include <stack>
 
 #include "pluto/pluto.h"
 
@@ -22,6 +23,33 @@
 #include "eckit/log/Bytes.h"
 
 namespace atlas {
+
+struct MemoryScope {
+    MemoryScope() = default;
+    MemoryScope(const MemoryScope& previous) {
+        device_memory_mapped_ = previous.device_memory_mapped_;
+    }
+    bool device_memory_mapped_ = false;
+};
+
+std::stack<MemoryScope>& scope() {
+    static std::stack<MemoryScope> scope_ {{MemoryScope()}};
+    return scope_;
+}
+
+void set_device_memory_mapped(bool value) {
+    scope().top().device_memory_mapped_ = value;
+}
+bool get_device_memory_mapped() {
+    return scope().top().device_memory_mapped_;
+}
+
+void scope_push() {
+    scope().emplace(scope().top());
+}
+void scope_pop() {
+    scope().pop();
+}
 
 Memory::Memory(std::string_view name) :
     name_(name) {

@@ -159,17 +159,6 @@ void finalize() {
 static Library libatlas;
 
 
-
-void setup_memory_resources() {
-    bool enable = false;
-    if (char* env = ::getenv("ATLAS_MEMORY_HOST")) {
-        pluto::host::set_default_resource(env);
-    }
-    if (char* env = ::getenv("ATLAS_MEMORY_DEVICE")) {
-        pluto::device::set_default_resource(env);
-    }
-}
-
 Library::Library():
     eckit::system::Library(std::string("atlas")),
     debug_(eckit::system::Library::debug()),
@@ -335,8 +324,6 @@ void Library::initialise(const eckit::Parametrisation& config) {
     library::enable_floating_point_exceptions();
     library::enable_atlas_signal_handler();
 
-    setup_memory_resources();
-
     if (data_paths_.empty()) {
         init_data_paths(data_paths_);
     }
@@ -350,6 +337,7 @@ void Library::initialise(const eckit::Parametrisation& config) {
             return std::make_unique<Adaptor>(loc, title);
         });
 
+    set_device_memory_mapped(getEnv("ATLAS_DEVICE_MEMORY_MAPPED", false));
 
     // Summary
     if (getEnv("ATLAS_LOG_RANK", 0) == int(mpi::rank())) {
