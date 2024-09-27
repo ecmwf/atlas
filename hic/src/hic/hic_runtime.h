@@ -150,7 +150,7 @@ HIC_FUNCTION(StreamSynchronize)
 
 HIC_VALUE(CpuDeviceId)
 HIC_VALUE(HostRegisterMapped)
-#if !HIC_BACKEND_HIP
+#if !HIC_BACKEND_HIP || (HIC_BACKEND_HIP && HIP_VERSION_MAJOR >= 6)
 HIC_VALUE(MemoryTypeDevice)
 HIC_VALUE(MemoryTypeHost)
 HIC_VALUE(MemoryTypeUnregistered)
