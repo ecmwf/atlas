@@ -9,7 +9,6 @@
  */
 #pragma once
 
-#include <memory_resource>
 #include <string_view>
 
 #include "pluto/memory_resource/memory_resource.h"
@@ -18,10 +17,10 @@ namespace pluto {
 
 // --------------------------------------------------------------------------------------------------------
 
-class PinnedMemoryResource : public std::pmr::memory_resource {
+class PinnedMemoryResource : public memory_resource {
 public:
-    PinnedMemoryResource() : PinnedMemoryResource(std::pmr::get_default_resource()) {}
-    PinnedMemoryResource(std::pmr::memory_resource* upstream) : upstream_(upstream) {}
+    PinnedMemoryResource() : PinnedMemoryResource(get_default_resource()) {}
+    PinnedMemoryResource(memory_resource* upstream) : upstream_(upstream) {}
     PinnedMemoryResource(std::string_view name) : PinnedMemoryResource(get_registered_resource(name)) {}
 
     void pin(void* ptr, std::size_t bytes);
@@ -31,13 +30,13 @@ public:
 
     void do_deallocate(void* ptr, std::size_t bytes, std::size_t alignment) override;
  
-    bool do_is_equal(const std::pmr::memory_resource& other) const noexcept override;
+    bool do_is_equal(const memory_resource& other) const noexcept override;
 
 private:
-    std::pmr::memory_resource* upstream_;
+    memory_resource* upstream_;
 };
 
-std::pmr::memory_resource* pinned_resource();
+memory_resource* pinned_resource();
 memory_pool_resource* pinned_pool_resource();
 
 // --------------------------------------------------------------------------------------------------------
