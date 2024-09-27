@@ -49,7 +49,7 @@ struct dummyPointerAttributes {
 DUMMY_FUNCTION(DeviceSynchronize)
 DUMMY_FUNCTION(Free)
 DUMMY_FUNCTION(FreeAsync)
-DUMMY_FUNCTION(GetDeviceCount);
+DUMMY_FUNCTION(GetDeviceCount)
 DUMMY_FUNCTION(GetErrorString)
 DUMMY_FUNCTION(GetLastError)
 DUMMY_FUNCTION(HostGetDevicePointer)

@@ -16,17 +16,11 @@
   #include <cuda_runtime.h>
 #elif HIC_BACKEND_HIP
   #define HIC_BACKEND hip
-  #if defined(DEPRECATED)
-  #define DEFINED_OUTERSCOPE DEPRECATED
+
+  #pragma push_macro("DEPRECATED")
   #undef DEPRECATED
-  #endif
   #include <hip/hip_runtime.h>
-  #if defined(DEPRECATED)
-  #undef DEPRECATED
-  #endif
-  #if defined(DEFINED_OUTERSCOPE)
-  #define DEPRECATED DEFINED_OUTERSCOPE
-  #endif
+  #pragma pop_macro("DEPRECATED")
 
 #if HIP_VERSION_MAJOR < 6
   enum hicMemoryType {
@@ -143,7 +137,7 @@ HIC_FUNCTION(StreamSynchronize)
 
 HIC_VALUE(CpuDeviceId)
 HIC_VALUE(HostRegisterMapped)
-#if !HIC_BACKEND_HIP
+#if !HIC_BACKEND_HIP || (HIC_BACKEND_HIP && HIP_VERSION_MAJOR >= 6)
 HIC_VALUE(MemoryTypeDevice)
 HIC_VALUE(MemoryTypeHost)
 HIC_VALUE(MemoryTypeUnregistered)
