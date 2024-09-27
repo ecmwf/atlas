@@ -103,7 +103,7 @@ view(1,1) = 2.
 !$acc end kernels
 !$acc end data
 
-FCTEST_CHECK_EQUAL( view(1,1), 1. )
+! FCTEST_CHECK_EQUAL( view(1,1), 1. ) ! update_host may not be needed when field uses managed memory!
 call field%update_host()
 FCTEST_CHECK_EQUAL( view(1,1), 2. )
 
@@ -119,7 +119,7 @@ write(0,*) "Calling external_acc_routine ..."
 call external_acc_routine(view)
 write(0,*) "Calling external_acc_routine ... done"
 
-FCTEST_CHECK_EQUAL( view(1,1), 3. )
+! FCTEST_CHECK_EQUAL( view(1,1), 3. ) ! update_host may not be needed when field uses managed memory!
 call field%update_host()
 FCTEST_CHECK_EQUAL( view(1,1), 4. )
 
