@@ -9,7 +9,6 @@
  */
 #pragma once
 
-#include <memory_resource>
 #include <string_view>
 #include <cassert>
 
@@ -20,20 +19,20 @@ namespace pluto::host {
 // --------------------------------------------------------------------------------------------------------
 
 inline void set_default_resource(memory_resource& mr) {
-    std::pmr::set_default_resource(&mr);
+    pluto::set_default_resource(&mr);
 }
 
 inline void set_default_resource(memory_resource* mr) {
-    std::pmr::set_default_resource(mr);
+    pluto::set_default_resource(mr);
 }
 
 inline void set_default_resource(std::string_view name) {
-    std::pmr::set_default_resource(get_registered_resource(name));
+    pluto::set_default_resource(get_registered_resource(name));
 }
 
 inline memory_resource* get_default_resource() {
     pluto::init();
-    return std::pmr::get_default_resource();
+    return pluto::get_default_resource();
 }
 
 class [[nodiscard]] DefaultResource {

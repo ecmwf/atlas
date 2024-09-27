@@ -9,14 +9,13 @@
  */
 #pragma once
 
-#include <memory_resource>
 #include <functional>
 
 namespace pluto {
 
 // --------------------------------------------------------------------------------------------------------
 
-class MemoryResourceAdaptor : public std::pmr::memory_resource {
+class MemoryResourceAdaptor : public memory_resource {
 public:
     template<typename Allocate, typename Deallocate>
     MemoryResourceAdaptor(Allocate allocate, Deallocate deallocate) : 
@@ -31,7 +30,7 @@ protected:
         return callback_deallocate_(ptr, bytes, alignment);
     }
  
-    bool do_is_equal(const std::pmr::memory_resource& other) const noexcept override {
+    bool do_is_equal(const memory_resource& other) const noexcept override {
         if (this == &other) { return true; }
         return false;
     }

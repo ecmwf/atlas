@@ -42,7 +42,7 @@ void* DeviceMemoryResource::do_allocate(std::size_t bytes, alignment_t) {
             HIC_CALL( hicMallocAsync(&ptr, bytes, stream.value<hicStream_t>() ) );
         }
         else {
-            ptr = std::pmr::new_delete_resource()->allocate(bytes, alignment);
+            ptr = new_delete_resource()->allocate(bytes, alignment);
         }
         if constexpr (LOG) {
             std::cout << "               + hicMallocAsync(ptr:"<<ptr<<", bytes:"<< bytes <<", stream:" << stream.value() <<");" << std::endl;
@@ -53,7 +53,7 @@ void* DeviceMemoryResource::do_allocate(std::size_t bytes, alignment_t) {
             HIC_CALL( hicMalloc(&ptr, bytes) );
         }
         else {
-            ptr = std::pmr::new_delete_resource()->allocate(bytes, alignment);
+            ptr = new_delete_resource()->allocate(bytes, alignment);
         }
         if constexpr (LOG) {
             std::cout << "               + hicMalloc(ptr:"<<ptr<<", bytes:"<< bytes <<");" << std::endl;
@@ -69,7 +69,7 @@ void DeviceMemoryResource::do_deallocate(void* ptr, std::size_t bytes, alignment
             HIC_CALL( hicFreeAsync(ptr, stream.value<hicStream_t>()) );
         }
         else {
-            std::pmr::new_delete_resource()->deallocate(ptr, bytes, alignment);
+            new_delete_resource()->deallocate(ptr, bytes, alignment);
         }
         if constexpr (LOG) {
             std::cout << "               - hicFreeAsync(ptr:"<<ptr<<", bytes:"<< bytes << ", stream:"<<stream.value()<<");" << std::endl;
@@ -80,7 +80,7 @@ void DeviceMemoryResource::do_deallocate(void* ptr, std::size_t bytes, alignment
             HIC_CALL( hicFree(ptr) );
         }
         else {
-            std::pmr::new_delete_resource()->deallocate(ptr, bytes, alignment);
+            new_delete_resource()->deallocate(ptr, bytes, alignment);
         }
         if constexpr (LOG) {
             std::cout << "               - hicFree(ptr:"<<ptr<<", bytes:"<< bytes << ");" << std::endl;

@@ -39,10 +39,10 @@ static std::size_t to_bytes(const std::string& str) {
     return std::stoull(str);
 }
 
-static std::pmr::pool_options default_pool_options_;
+static pool_options default_pool_options_;
 static bool default_pool_options_setup_ = false;
 
-std::pmr::pool_options get_default_pool_options() {
+pool_options get_default_pool_options() {
     if (not default_pool_options_setup_) {
         if (const char* env = std::getenv("PLUTO_LARGEST_REQUIRED_POOL_BLOCK"); env != nullptr) {
             default_pool_options_.largest_required_pool_block = to_bytes(env);
@@ -55,13 +55,13 @@ std::pmr::pool_options get_default_pool_options() {
     return default_pool_options_;
 }
 
-void set_default_pool_options(std::pmr::pool_options options) {
+void set_default_pool_options(pool_options options) {
     default_pool_options_ = options;
     default_pool_options_setup_ = true;
 }
 
 
-std::pmr::memory_resource* MemoryPoolResource::resource(std::size_t bytes) {
+memory_resource* MemoryPoolResource::resource(std::size_t bytes) {
     constexpr std::size_t MB = 1024*1024;
     constexpr std::size_t GB = 1024*MB;
     if (options_.largest_required_pool_block > 0 && bytes > options_.largest_required_pool_block) {
