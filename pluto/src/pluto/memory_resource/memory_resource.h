@@ -27,14 +27,26 @@
 
 namespace pluto {
 
+void init();
+
 using memory_resource = STD_PMR::memory_resource;
 using pool_options = STD_PMR::pool_options;
-template<typename T>
-using allocator = STD_PMR::polymorphic_allocator<T>;
+// template<typename T>
+// using allocator = STD_PMR::polymorphic_allocator<T>;
+
 inline memory_resource* null_memory_resource() { return STD_PMR::null_memory_resource(); }
 inline memory_resource* new_delete_resource()  { return STD_PMR::new_delete_resource();  }
-inline memory_resource* get_default_resource() { return STD_PMR::get_default_resource(); }
+inline memory_resource* get_default_resource() { 
+    init();
+    return STD_PMR::get_default_resource(); }
 inline void set_default_resource(memory_resource* mr) { STD_PMR::set_default_resource(mr); }
+
+template<typename T>
+class allocator : public STD_PMR::polymorphic_allocator<T> {
+public:
+    using STD_PMR::polymorphic_allocator<T>::polymorphic_allocator;
+    allocator() : STD_PMR::polymorphic_allocator<T>(get_default_resource()) {}
+};
 
 class memory_pool_resource : public memory_resource {
 public:
@@ -47,7 +59,6 @@ public:
 
 memory_pool_resource* pool_resource();
 
-void init();
 
 // --------------------------------------------------------------------------------------------------------
 
@@ -87,5 +98,16 @@ private:
 };
 
 // --------------------------------------------------------------------------------------------------------
+
+struct scope {
+    scope() {
+        push();
+    }
+    ~scope() {
+        pop();
+    }
+    static void push();
+    static void pop();
+};
 
 }
