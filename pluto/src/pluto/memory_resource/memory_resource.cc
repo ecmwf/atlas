@@ -16,6 +16,7 @@
 // --------------------------------------------------------------------------------------------------------
 
 #include <cstdlib>
+#include <stack>
 #include "DeviceMemoryResource.h"
 #include "ManagedMemoryResource.h"
 #include "PinnedMemoryResource.h"
@@ -41,7 +42,9 @@ RegisterPlutoResources() {
 
 void init() {
     static bool initialized = []() {
-        std::cout << "init" << std::endl;
+#if PLUTO_DEBUGGING
+        std::cout << "pluto::init()" << std::endl;
+#endif
         if (char* env = std::getenv("PLUTO_HOST_MEMORY_RESOURCE")) {
             pluto::host::set_default_resource(env);
         }
@@ -93,5 +96,31 @@ memory_pool_resource* pool_resource() {
 }
 
 // --------------------------------------------------------------------------------------------------------
+
+
+struct PlutoScope {
+    PlutoScope() {
+        host_default_memory_resource_   = host::get_default_resource();
+        device_default_memory_resource_ = device::get_default_resource();
+    }
+    ~PlutoScope() {
+        host::set_default_resource(host_default_memory_resource_);
+        device::set_default_resource(device_default_memory_resource_);
+    }
+    memory_resource* host_default_memory_resource_;
+    memory_resource* device_default_memory_resource_;
+};
+
+static std::stack<PlutoScope>& scope_stack() {
+    static std::stack<PlutoScope> scope_stack_ {{PlutoScope()}};
+    return scope_stack_;
+}
+
+void scope::push() {
+    scope_stack().emplace();
+}
+void scope::pop() {
+    scope_stack().pop();
+}
 
 }
