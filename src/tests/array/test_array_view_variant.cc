@@ -43,8 +43,6 @@ CASE("test variant assignment") {
   auto deviceView3 = make_device_view_variant(array3);
   auto deviceView4 = make_device_view_variant(arrayRef);
 
-  auto view = make_view<float, 1>(array1);
-
   const auto visitVariants = [](auto& var1, auto& var2, auto var3, auto var4) {
     std::visit(
         [](auto&& view) {
