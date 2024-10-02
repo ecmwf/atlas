@@ -33,10 +33,10 @@ CASE("test variant assignment") {
   auto view3 = make_view_variant(array3);
   auto view4 = make_view_variant(arrayRef);
 
-  auto hostView1 = make_host_view_variant(array1);
-  auto hostView2 = make_host_view_variant(array2);
-  auto hostView3 = make_host_view_variant(array3);
-  auto hostView4 = make_host_view_variant(arrayRef);
+  const auto hostView1 = make_host_view_variant(array1);
+  const auto hostView2 = make_host_view_variant(array2);
+  const auto hostView3 = make_host_view_variant(array3);
+  const auto hostView4 = make_host_view_variant(arrayRef);
 
   auto deviceView1 = make_device_view_variant(array1);
   auto deviceView2 = make_device_view_variant(array2);
@@ -46,33 +46,37 @@ CASE("test variant assignment") {
   const auto visitVariants = [](auto& var1, auto& var2, auto var3, auto var4) {
     std::visit(
         [](auto&& view) {
-          using View = std::remove_reference_t<decltype(view)>;
-          EXPECT_EQ(View::rank(), 1);
-          EXPECT((std::is_same_v<typename View::value_type, float>));
+          using View = decltype(view);
+          EXPECT((is_rank<View, 1>()));
+          EXPECT((is_value_type<View, float>()));
+          EXPECT((is_non_const_value_type<View, float>()));
         },
         var1);
 
     std::visit(
         [](auto&& view) {
-          using View = std::remove_reference_t<decltype(view)>;
-          EXPECT_EQ(View::rank(), 2);
-          EXPECT((std::is_same_v<typename View::value_type, double>));
+          using View = decltype(view);
+          EXPECT((is_rank<View, 2>()));
+          EXPECT((is_value_type<View, double>()));
+          EXPECT((is_non_const_value_type<View, double>()));
         },
         var2);
 
     std::visit(
         [](auto&& view) {
-          using View = std::remove_reference_t<decltype(view)>;
-          EXPECT_EQ(View::rank(), 3);
-          EXPECT((std::is_same_v<typename View::value_type, int>));
+          using View = decltype(view);
+          EXPECT((is_rank<View, 3>()));
+          EXPECT((is_value_type<View, int>()));
+          EXPECT((is_non_const_value_type<View, int>()));
         },
         var3);
 
     std::visit(
         [](auto&& view) {
-          using View = std::remove_reference_t<decltype(view)>;
-          EXPECT_EQ(View::rank(), 1);
-          EXPECT((std::is_same_v<typename View::value_type, const float>));
+          using View = decltype(view);
+          EXPECT((is_rank<View, 1>()));
+          EXPECT((is_value_type<View, const float>()));
+          EXPECT((is_non_const_value_type<View, float>()));
         },
         var4);
   };
@@ -90,11 +94,13 @@ CASE("test std::visit") {
   make_view<int, 2>(array2).assign({0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
 
   const auto testRank1 = [](auto&& view) {
-    using View = std::remove_reference_t<decltype(view)>;
-    EXPECT_EQ(View::rank(), 1);
-    using Value = typename View::value_type;
-    EXPECT((std::is_same_v<Value, int>));
 
+
+    using View = std::remove_reference_t<decltype(view)>;
+    using Value = typename View::value_type;
+
+    EXPECT((is_rank<View, 1>()));
+    EXPECT((is_value_type<View, int>()));
     for (auto i = size_t{0}; i < view.size(); ++i) {
       EXPECT_EQ(view(i), static_cast<Value>(i));
     }
@@ -102,9 +108,10 @@ CASE("test std::visit") {
 
   const auto testRank2 = [](auto&& view) {
     using View = std::remove_reference_t<decltype(view)>;
-    EXPECT_EQ(View::rank(), 2);
     using Value = typename View::value_type;
-    EXPECT((std::is_same_v<Value, int>));
+
+    EXPECT((is_rank<View, 2>()));
+    EXPECT((is_value_type<View, int>()));
 
     auto testValue = int{0};
     for (auto i = idx_t{0}; i < view.shape(0); ++i) {
@@ -122,11 +129,11 @@ CASE("test std::visit") {
     auto rank2Tested = false;
 
     const auto visitor = [&](auto&& view) {
-      if constexpr (RankIs<decltype(view), 1>()) {
+      if constexpr (is_rank<decltype(view), 1>()) {
         rank1Tested = true;
         return testRank1(view);
       }
-      if constexpr (RankIs<decltype(view), 2>()) {
+      if constexpr (is_rank<decltype(view), 2>()) {
         rank2Tested = true;
         return testRank2(view);
       }
@@ -146,15 +153,15 @@ CASE("test std::visit") {
     auto rank1Tested = false;
     auto rank2Tested = false;
     const auto visitor = eckit::Overloaded{
-        [&](auto&& view) -> std::enable_if_t<RankIs<decltype(view), 1>()> {
+        [&](auto&& view) -> std::enable_if_t<is_rank<decltype(view), 1>()> {
           testRank1(view);
           rank1Tested = true;
         },
-        [&](auto&& view) -> std::enable_if_t<RankIs<decltype(view), 2>()> {
+        [&](auto&& view) -> std::enable_if_t<is_rank<decltype(view), 2>()> {
           testRank2(view);
           rank2Tested = true;
         },
-        [](auto&& view) -> std::enable_if_t<!RankIs<decltype(view), 1, 2>()> {
+        [](auto&& view) -> std::enable_if_t<!is_rank<decltype(view), 1, 2>()> {
           // Test should not reach here.
           EXPECT(false);
         }};

@@ -50,16 +50,16 @@ using Variant = typename VariantHelper<Values, Ranks>::type;
 }  // namespace detail
 
 /// @brief Supported ArrayView value types.
-using Values = detail::Types<float, double, int, long, unsigned long>;
+using ValueTypes = detail::Types<float, double, int, long, unsigned long>;
 
 /// @brief Supported ArrayView ranks.
 using Ranks = detail::Ints<1, 2, 3, 4, 5, 6, 7, 8, 9>;
 
 /// @brief Variant containing all supported non-const ArrayView alternatives.
-using ArrayViewVariant = detail::Variant<Values, Ranks>;
+using ArrayViewVariant = detail::Variant<ValueTypes, Ranks>;
 
 /// @brief Variant containing all supported const ArrayView alternatives.
-using ConstArrayViewVariant = detail::Variant<Values::add_const, Ranks>;
+using ConstArrayViewVariant = detail::Variant<ValueTypes::add_const, Ranks>;
 
 /// @brief Create an ArrayView and assign to an ArrayViewVariant.
 ArrayViewVariant make_view_variant(Array& array);
@@ -79,17 +79,24 @@ ArrayViewVariant make_device_view_variant(Array& array);
 /// @brief Create a const device ArrayView and assign to an ArrayViewVariant.
 ConstArrayViewVariant make_device_view_variant(const Array& array);
 
-/// @brief Return true if ArrayView<typename, int>::rank() is any of Ranks...
+/// @brief Return true if View::rank() is any of Ranks...
 template <typename View, int... Ranks>
-constexpr bool RankIs() {
+constexpr bool is_rank() {
   return ((std::decay_t<View>::rank() == Ranks) || ...);
 }
 
-/// @brief Return true if View::non_const_value_type is any of Values...
-template <typename View, typename... Values>
-constexpr bool ValueIs() {
-  using Value = typename std::decay_t<View>::non_const_value_type;
-  return ((std::is_same_v<Value, Values>) || ...);
+/// @brief Return true if View::value_type is any of ValuesTypes...
+template <typename View, typename... ValueTypes>
+constexpr bool is_value_type() {
+  using ValueType = typename std::decay_t<View>::value_type;
+  return ((std::is_same_v<ValueType, ValueTypes>) || ...);
+}
+
+/// @brief Return true if View::non_const_value_type is any of ValuesTypes...
+template <typename View, typename... ValueTypes>
+constexpr bool is_non_const_value_type() {
+  using ValueType = typename std::decay_t<View>::non_const_value_type;
+  return ((std::is_same_v<ValueType, ValueTypes>) || ...);
 }
 
 }  // namespace array
