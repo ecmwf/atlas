@@ -69,7 +69,8 @@ CompilerId compiler_id() {
 #if ATLAS_HAVE_ACC
     static CompilerId id = []() {
         switch (atlas_acc_compiler_id()) {
-            case atlas_acc_compiler_id_cray: return CompilerId::cray;
+            case atlas_acc_compiler_id_cray:   return CompilerId::cray;
+            case atlas_acc_compiler_id_nvidia: return CompilerId::nvidia;
             default: return CompilerId::unknown;
         }
     }();
