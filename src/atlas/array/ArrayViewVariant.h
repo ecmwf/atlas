@@ -80,21 +80,20 @@ ArrayViewVariant make_device_view_variant(Array& array);
 ConstArrayViewVariant make_device_view_variant(const Array& array);
 
 /// @brief Return true if View::rank() is any of Ranks...
-template <typename View, int... Ranks>
-constexpr bool is_rank() {
+template <int... Ranks, typename View>
+constexpr bool is_rank(const View&) {
   return ((std::decay_t<View>::rank() == Ranks) || ...);
 }
-
 /// @brief Return true if View::value_type is any of ValuesTypes...
-template <typename View, typename... ValueTypes>
-constexpr bool is_value_type() {
+template <typename... ValueTypes, typename View>
+constexpr bool is_value_type(const View&) {
   using ValueType = typename std::decay_t<View>::value_type;
   return ((std::is_same_v<ValueType, ValueTypes>) || ...);
 }
 
 /// @brief Return true if View::non_const_value_type is any of ValuesTypes...
-template <typename View, typename... ValueTypes>
-constexpr bool is_non_const_value_type() {
+template <typename... ValueTypes, typename View>
+constexpr bool is_non_const_value_type(const View&) {
   using ValueType = typename std::decay_t<View>::non_const_value_type;
   return ((std::is_same_v<ValueType, ValueTypes>) || ...);
 }
