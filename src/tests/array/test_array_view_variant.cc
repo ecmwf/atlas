@@ -45,7 +45,7 @@ CASE("test variant assignment") {
 
   const auto visitVariants = [](auto& var1, auto& var2, auto var3, auto var4) {
     std::visit(
-        [](auto&& view) {
+        [](auto view) {
           EXPECT((is_rank<1>(view)));
           EXPECT((is_value_type<float>(view)));
           EXPECT((is_non_const_value_type<float>(view)));
@@ -53,7 +53,7 @@ CASE("test variant assignment") {
         var1);
 
     std::visit(
-        [](auto&& view) {
+        [](auto view) {
           EXPECT((is_rank<2>(view)));
           EXPECT((is_value_type<double>(view)));
           EXPECT((is_non_const_value_type<double>(view)));
@@ -61,7 +61,7 @@ CASE("test variant assignment") {
         var2);
 
     std::visit(
-        [](auto&& view) {
+        [](auto view) {
           EXPECT((is_rank<3>(view)));
           EXPECT((is_value_type<int>(view)));
           EXPECT((is_non_const_value_type<int>(view)));
@@ -69,7 +69,7 @@ CASE("test variant assignment") {
         var3);
 
     std::visit(
-        [](auto&& view) {
+        [](auto view) {
           EXPECT((is_rank<1>(view)));
           EXPECT((is_value_type<const float>(view)));
           EXPECT((is_non_const_value_type<float>(view)));
@@ -94,7 +94,7 @@ CASE("test std::visit") {
   auto rank1Tested = false;
   auto rank2Tested = false;
 
-  const auto visitor = [&](auto&& view) {
+  const auto visitor = [&](auto view) {
     if constexpr (is_rank<1>(view)) {
       EXPECT((is_value_type<int>(view)));
       auto testValue = int{0};
