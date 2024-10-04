@@ -54,6 +54,7 @@ TYPE, extends(fckit_owned_object) :: atlas_Grid
 
 !------------------------------------------------------------------------------
 contains
+  procedure :: name => atlas_Grid__name
   procedure :: size => atlas_Grid__size
   procedure :: spec => atlas_Grid__spec
   procedure :: uid
@@ -750,6 +751,19 @@ end function
 
 ! -----------------------------------------------------------------------------
 ! Structured members
+
+function atlas_Grid__name(this) result(name)
+  use atlas_grid_Grid_c_binding
+  use fckit_c_interop_module, only : c_ptr_to_string, c_ptr_free
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  class(atlas_Grid), intent(in) :: this
+  character(len=:), allocatable :: name
+  type(c_ptr) :: name_c_str
+  integer :: size
+  call atlas__grid__Grid__name(this%CPTR_PGIBUG_A, name_c_str, size )
+  name = c_ptr_to_string(name_c_str)
+  call c_ptr_free(name_c_str)
+end function
 
 function atlas_Grid__size(this) result(npts)
   use, intrinsic :: iso_c_binding, only: c_int

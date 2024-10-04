@@ -175,6 +175,8 @@ grid/detail/grid/RegionalVariableResolution.h
 grid/detail/grid/RegionalVariableResolution.cc
 grid/detail/grid/Healpix.h
 grid/detail/grid/Healpix.cc
+grid/detail/grid/StencilComputerInterface.h
+grid/detail/grid/StencilComputerInterface.cc
 
 grid/detail/tiles/Tiles.cc
 grid/detail/tiles/Tiles.h
