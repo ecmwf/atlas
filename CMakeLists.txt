@@ -64,6 +64,13 @@ ecbuild_add_option( FEATURE ECKIT_DEVELOP
                     DESCRIPTION "Used to enable new features or API depending on eckit develop branch, not yet in a tagged release"
                     DEFAULT OFF )
 
+if (DEFINED ATLAS_ENABLE_CUDA AND NOT DEFINED HIC_ENABLE_CUDA )
+  set( HIC_ENABLE_CUDA ${ATLAS_ENABLE_CUDA} )
+endif()
+if (DEFINED ATLAS_ENABLE_HIP AND NOT DEFINED HIC_ENABLE_HIP )
+  set( HIC_ENABLE_HIP ${ATLAS_ENABLE_HIP} )
+endif()
+
 add_subdirectory( hic )
 find_package(hic)
 
