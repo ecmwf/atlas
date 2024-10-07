@@ -14,7 +14,7 @@
 #include <string>
 #include <string_view>
 
-#include "pluto/memory_resource/memory_resource.h"
+#include "pluto/pluto.h"
 
 //------------------------------------------------------------------------------
 
@@ -75,15 +75,45 @@ private:
 
 // --------------------------------------------------------------------------------------------------------
 
-pluto::memory_resource* host_memory_resource(pluto::memory_resource* upstream = nullptr);
-pluto::memory_resource* device_memory_resource(pluto::memory_resource* upstream = nullptr);
+namespace memory {
 
-bool get_device_memory_mapped();
-void set_device_memory_mapped(bool);
+namespace host {
+inline void set_default_resource(pluto::memory_resource* mr) {
+    pluto::host::set_default_resource(mr);
+}
 
-// --------------------------------------------------------------------------------------------------------
+inline void set_default_resource(std::string_view name) {
+    pluto::host::set_default_resource(name);
+}
 
-void scope_push();
-void scope_pop();
+std::unique_ptr<pluto::memory_resource> traced_resource(pluto::memory_resource* upstream = nullptr);
+}
+
+namespace device {
+inline void set_default_resource(pluto::memory_resource* mr) {
+    pluto::device::set_default_resource(mr);
+}
+
+inline void set_default_resource(std::string_view name) {
+    pluto::device::set_default_resource(name);
+}
+
+std::unique_ptr<pluto::memory_resource> traced_resource(pluto::memory_resource* upstream = nullptr);
+}
+
+bool get_unified();
+void set_unified(bool);
+
+struct scope {
+    scope() {
+        push();
+    }
+    ~scope() {
+        pop();
+    }
+    static void push();
+    static void pop();
+};
+}
 
 }  // namespace atlas
