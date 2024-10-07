@@ -28,7 +28,8 @@ struct Types {
 template <int... Is>
 struct Ints {};
 
-template <typename ValueTypes, typename Ranks, typename... ArrayViews>
+template <typename VariantValueTypes, typename VariantRanks,
+          typename... ArrayViews>
 struct VariantHelper;
 
 // Recursively construct ArrayView std::variant from types Ts and ranks Is.
@@ -44,21 +45,23 @@ struct VariantHelper<Types<>, Ints<Is...>, ArrayViews...> {
   using type = std::variant<ArrayViews...>;
 };
 
-template <typename Values, typename Ranks>
-using Variant = typename VariantHelper<Values, Ranks>::type;
+template <typename Values, typename VariantRanks>
+using Variant = typename VariantHelper<Values, VariantRanks>::type;
 
-using ValueTypes = detail::Types<float, double, int, long, unsigned long>;
+using VariantValueTypes =
+    detail::Types<float, double, int, long, unsigned long>;
 
-using Ranks = detail::Ints<1, 2, 3, 4, 5, 6, 7, 8, 9>;
+using VariantRanks = detail::Ints<1, 2, 3, 4, 5, 6, 7, 8, 9>;
 
 }  // namespace detail
 
 /// @brief Variant containing all supported non-const ArrayView alternatives.
-using ArrayViewVariant = detail::Variant<detail::ValueTypes, detail::Ranks>;
+using ArrayViewVariant =
+    detail::Variant<detail::VariantValueTypes, detail::VariantRanks>;
 
 /// @brief Variant containing all supported const ArrayView alternatives.
 using ConstArrayViewVariant =
-    detail::Variant<detail::ValueTypes::add_const, detail::Ranks>;
+    detail::Variant<detail::VariantValueTypes::add_const, detail::VariantRanks>;
 
 /// @brief Create an ArrayView and assign to an ArrayViewVariant.
 ArrayViewVariant make_view_variant(Array& array);
