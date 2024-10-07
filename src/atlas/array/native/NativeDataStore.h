@@ -56,16 +56,15 @@ template <typename Value>
 class DataStore : public ArrayDataStore {
 public:
     DataStore(size_t size): size_(size),
-        host_memory_resource_(host_memory_resource()),
-        device_memory_resource_(device_memory_resource()),
+        host_memory_resource_(memory::host::traced_resource()),
+        device_memory_resource_(memory::device::traced_resource()),
         host_allocator_{host_memory_resource_.get()},
         device_allocator_{device_memory_resource_.get()} {
         allocateHost();
         initialise(host_data_, size_);
         if (ATLAS_HAVE_GPU && pluto::devices()) {
             device_updated_ = false;
-            is_managed_data_ = pluto::is_managed(host_data_);
-            is_device_mapped_ = pluto::is_pinned(host_data_) && get_device_memory_mapped();
+            is_unified_data_ = pluto::is_managed(host_data_) || (pluto::is_pinned(host_data_) && memory::get_unified());
         }
         else {
             device_data_ = host_data_;
@@ -122,7 +121,7 @@ public:
                 return;
             }
             if (size_) {
-                if(is_device_mapped_ || is_managed_data_) {
+                if(is_unified_data_) {
                     device_data_ = pluto::get_registered_device_pointer(host_data_);
                 }
                 else {
@@ -138,7 +137,7 @@ public:
     void deallocateDevice() const override {
         if (device_allocated_) {
             accUnmap();
-            if (not is_device_mapped_ && not is_managed_data_) {
+            if (not is_unified_data_) {
                 device_allocator_.deallocate(device_data_,size_);
             }
             device_data_ = nullptr;
@@ -165,7 +164,13 @@ public:
     void* voidDeviceData() override { return static_cast<void*>(device_data_); }
 
     void accMap() const override {
-        if ((not acc_mapped_ && acc::devices()) && (not is_managed_data_ || acc::compiler_id() == acc::CompilerId::cray)) {
+        if ((not acc_mapped_ && acc::devices())) {
+            if (is_unified_data_) {
+                // nvidia compiler should not accMap for managed memory
+                if (pluto::is_managed(host_data_) && acc::compiler_id() == acc::CompilerId::nvidia) {
+                  return;
+                }
+            }
             ATLAS_ASSERT(deviceAllocated(),"Could not accMap as device data is not allocated");
             ATLAS_ASSERT(!atlas::acc::is_present(host_data_, size_ * sizeof(Value)));
             if constexpr(ATLAS_ACC_DEBUG) {
@@ -223,8 +228,7 @@ private:
     mutable bool device_updated_{true};
     mutable bool device_allocated_{false};
     mutable bool acc_mapped_{false};
-    bool is_device_mapped_{false};
-    bool is_managed_data_{false};
+    bool is_unified_data_{false};
 
     std::unique_ptr<pluto::memory_resource> host_memory_resource_;
     std::unique_ptr<pluto::memory_resource> device_memory_resource_;
@@ -238,7 +242,7 @@ template <typename Value>
 class WrappedDataStore : public ArrayDataStore {
 public:
     WrappedDataStore(Value* host_data, size_t size): host_data_(host_data), size_(size),
-        device_memory_resource_(device_memory_resource()),
+        device_memory_resource_(memory::device::traced_resource()),
         device_allocator_{device_memory_resource_.get()} {
         if (ATLAS_HAVE_GPU && pluto::devices()) {
             device_updated_ = false;
