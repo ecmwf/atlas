@@ -175,6 +175,9 @@ idx_t atlas__fs__BStructuredColumns__block_begin(const detail::BlockStructuredCo
 idx_t atlas__fs__BStructuredColumns__block_size(const detail::BlockStructuredColumns* This, idx_t jblk) {
     return This->block_size(jblk);
 }
+idx_t atlas__fs__BStructuredColumns__nproma(const detail::BlockStructuredColumns* This) {
+    return This->nproma();
+}
 idx_t atlas__fs__BStructuredColumns__nblks(const detail::BlockStructuredColumns* This) {
     return This->nblks();
 }

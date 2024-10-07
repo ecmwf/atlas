@@ -117,6 +117,7 @@ public:  // methods
     const std::vector<std::string>& field_names() const;
 
     Field add(const Field&);
+    void add(const FieldSet&);
 
     bool has(const std::string& name) const;
 
@@ -153,6 +154,7 @@ extern "C" {
 FieldSetImpl* atlas__FieldSet__new(char* name);
 void atlas__FieldSet__delete(FieldSetImpl* This);
 void atlas__FieldSet__add_field(FieldSetImpl* This, FieldImpl* field);
+void atlas__FieldSet__add_fieldset(FieldSetImpl* This, FieldSetImpl* fieldset);
 int atlas__FieldSet__has_field(const FieldSetImpl* This, char* name);
 const char* atlas__FieldSet__name(FieldSetImpl* This);
 idx_t atlas__FieldSet__size(const FieldSetImpl* This);
@@ -239,6 +241,7 @@ public:  // methods
     const std::vector<std::string>& field_names() const { return get()->field_names(); }
 
     Field add(const Field& field) { return get()->add(field); }
+    void add(const FieldSet& fieldset) { return get()->add(fieldset); }
 
     bool has(const std::string& name) const { return get()->has(name); }
 
