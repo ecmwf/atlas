@@ -44,8 +44,8 @@ struct VariantHelper<Types<>, Ints<Is...>, ArrayViews...> {
   using type = std::variant<ArrayViews...>;
 };
 
-template <typename Values, typename VariantRanks>
-using Variant = typename VariantHelper<Values, VariantRanks>::type;
+template <typename ValueTypes, typename Ranks>
+using Variant = typename VariantHelper<ValueTypes, Ranks>::type;
 
 using VariantValueTypes =
     detail::Types<float, double, int, long, unsigned long>;
