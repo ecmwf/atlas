@@ -337,7 +337,7 @@ void Library::initialise(const eckit::Parametrisation& config) {
             return std::make_unique<Adaptor>(loc, title);
         });
 
-    set_device_memory_mapped(getEnv("ATLAS_DEVICE_MEMORY_MAPPED", false));
+    memory::set_unified(getEnv("ATLAS_MEMORY_UNIFIED", false));
 
     // Summary
     if (getEnv("ATLAS_LOG_RANK", 0) == int(mpi::rank())) {

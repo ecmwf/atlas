@@ -25,30 +25,35 @@
 namespace atlas {
 
 struct MemoryScope {
-    MemoryScope() = default;
+    MemoryScope() {
+        pluto::scope::push();
+    }
+    ~MemoryScope() {
+        pluto::scope::pop();
+    }
     MemoryScope(const MemoryScope& previous) {
         device_memory_mapped_ = previous.device_memory_mapped_;
     }
     bool device_memory_mapped_ = false;
 };
 
-std::stack<MemoryScope>& scope() {
-    static std::stack<MemoryScope> scope_ {{MemoryScope()}};
-    return scope_;
+static std::stack<MemoryScope>& scope_stack() {
+    static std::stack<MemoryScope> scope_stack_ {{MemoryScope()}};
+    return scope_stack_;
 }
 
-void set_device_memory_mapped(bool value) {
-    scope().top().device_memory_mapped_ = value;
+void memory::set_unified(bool value) {
+    scope_stack().top().device_memory_mapped_ = value;
 }
-bool get_device_memory_mapped() {
-    return scope().top().device_memory_mapped_;
+bool memory::get_unified() {
+    return scope_stack().top().device_memory_mapped_;
 }
 
-void scope_push() {
-    scope().emplace(scope().top());
+void memory::scope::push() {
+    scope_stack().emplace(scope_stack().top());
 }
-void scope_pop() {
-    scope().pop();
+void memory::scope::pop() {
+    scope_stack().pop();
 }
 
 Memory::Memory(std::string_view name) :
@@ -171,19 +176,19 @@ bool TraceDeviceMemoryResource::do_is_equal(const pluto::memory_resource& other)
 
 // --------------------------------------------------------------------------------------------------------
 
-pluto::memory_resource* host_memory_resource(pluto::memory_resource* upstream) {
+std::unique_ptr<pluto::memory_resource> memory::host::traced_resource(pluto::memory_resource* upstream) {
     if (not upstream) {
         upstream = pluto::host::get_default_resource();
     } 
-    return new pluto::TraceMemoryResource("host_memory", 
+    return std::make_unique<pluto::TraceMemoryResource>("host_memory", 
         std::make_unique<TraceHostMemoryResource>("host_memory", upstream));
 }
 
-pluto::memory_resource* device_memory_resource(pluto::memory_resource* upstream) {
+std::unique_ptr<pluto::memory_resource> memory::device::traced_resource(pluto::memory_resource* upstream) {
     if (not upstream) {
         upstream = pluto::device::get_default_resource();
     } 
-    return new pluto::TraceMemoryResource("device_memory", 
+    return std::make_unique<pluto::TraceMemoryResource>("device_memory", 
         std::make_unique<TraceDeviceMemoryResource>("device_memory", upstream));
 }
 
