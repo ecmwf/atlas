@@ -175,6 +175,8 @@ grid/detail/grid/RegionalVariableResolution.h
 grid/detail/grid/RegionalVariableResolution.cc
 grid/detail/grid/Healpix.h
 grid/detail/grid/Healpix.cc
+grid/detail/grid/StencilComputerInterface.h
+grid/detail/grid/StencilComputerInterface.cc
 
 grid/detail/tiles/Tiles.cc
 grid/detail/tiles/Tiles.h
@@ -472,12 +474,24 @@ field/FieldSet.cc
 field/FieldSet.h
 field/MissingValue.cc
 field/MissingValue.h
+field/MultiField.cc
+field/MultiField.h
+field/MultiFieldCreator.cc
+field/MultiFieldCreator.h
+field/MultiFieldCreatorIFS.cc
+field/MultiFieldCreatorIFS.h
+field/MultiFieldCreatorArray.cc
+field/MultiFieldCreatorArray.h
 field/State.cc
 field/State.h
 field/detail/FieldImpl.cc
 field/detail/FieldImpl.h
 field/detail/FieldInterface.cc
 field/detail/FieldInterface.h
+field/detail/MultiFieldImpl.cc
+field/detail/MultiFieldImpl.h
+field/detail/MultiFieldInterface.cc
+field/detail/MultiFieldInterface.h
 field/detail/MissingValue.cc
 field/detail/MissingValue.h
 )
