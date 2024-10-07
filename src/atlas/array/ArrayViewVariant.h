@@ -47,19 +47,18 @@ struct VariantHelper<Types<>, Ints<Is...>, ArrayViews...> {
 template <typename Values, typename Ranks>
 using Variant = typename VariantHelper<Values, Ranks>::type;
 
-}  // namespace detail
-
-/// @brief Supported ArrayView value types.
 using ValueTypes = detail::Types<float, double, int, long, unsigned long>;
 
-/// @brief Supported ArrayView ranks.
 using Ranks = detail::Ints<1, 2, 3, 4, 5, 6, 7, 8, 9>;
 
+}  // namespace detail
+
 /// @brief Variant containing all supported non-const ArrayView alternatives.
-using ArrayViewVariant = detail::Variant<ValueTypes, Ranks>;
+using ArrayViewVariant = detail::Variant<detail::ValueTypes, detail::Ranks>;
 
 /// @brief Variant containing all supported const ArrayView alternatives.
-using ConstArrayViewVariant = detail::Variant<ValueTypes::add_const, Ranks>;
+using ConstArrayViewVariant =
+    detail::Variant<detail::ValueTypes::add_const, detail::Ranks>;
 
 /// @brief Create an ArrayView and assign to an ArrayViewVariant.
 ArrayViewVariant make_view_variant(Array& array);
