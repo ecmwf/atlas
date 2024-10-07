@@ -28,8 +28,7 @@ struct Types {
 template <int... Is>
 struct Ints {};
 
-template <typename VariantValueTypes, typename VariantRanks,
-          typename... ArrayViews>
+template <typename ValueTypes, typename Ranks, typename... ArrayViews>
 struct VariantHelper;
 
 // Recursively construct ArrayView std::variant from types Ts and ranks Is.
