@@ -81,3 +81,8 @@ atlas_add_hic_test(
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_array_view_variant
+  SOURCES test_array_view_variant.cc
+  LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
