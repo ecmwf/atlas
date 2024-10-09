@@ -12,7 +12,7 @@
 #error This file needs to be compiled with OpenACC support
 #endif
 
-#include <cuda_runtime.h>
+#include "hic/hic.h"
 #include <openacc.h>
 
 #include "atlas/field/Field.h"
@@ -35,10 +35,10 @@ CASE("test_acc") {
     *c_ptr = 5;
 
     int* d_ptr;
-    cudaMalloc(&d_ptr, sizeof(int));
+    HIC_CALL(hicMalloc(&d_ptr, sizeof(int)));
     acc_map_data(c_ptr, d_ptr, sizeof(int));
 
-    cudaMemcpy(d_ptr, c_ptr, sizeof(int), cudaMemcpyHostToDevice);
+    HIC_CALL(hicMemcpy(d_ptr, c_ptr, sizeof(int), hicMemcpyHostToDevice));
 
 #pragma acc kernels present(c_ptr)
     {
@@ -47,7 +47,7 @@ CASE("test_acc") {
 
     EXPECT_EQ( *c_ptr, 5. );
 
-    cudaMemcpy(c_ptr, d_ptr, sizeof(int), cudaMemcpyDeviceToHost);
+    HIC_CALL(hicMemcpy(c_ptr, d_ptr, sizeof(int), hicMemcpyDeviceToHost));
     EXPECT_EQ( *c_ptr, 2. );
 }
 

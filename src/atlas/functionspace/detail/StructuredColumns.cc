@@ -540,7 +540,7 @@ const util::PartitionPolygon& StructuredColumns::polygon(idx_t halo) const {
     }
     if (not polygons_[halo]) {
         if (halo > this->halo()) {
-            throw_Exception("StructuredColumsn does not contain a halo of size " + std::to_string(halo) + ".", Here());
+            throw_Exception("StructuredColumns does not contain a halo of size " + std::to_string(halo) + ".", Here());
         }
         polygons_[halo].reset(new grid::StructuredPartitionPolygon(*this, halo));
     }
@@ -726,7 +726,7 @@ struct FixupHaloForVectors {
     template <typename DATATYPE>
     void apply(Field& field) {
         std::string type = field.metadata().getString("type", "scalar");
-        if (type == "vector ") {
+        if (type == "vector") {
             ATLAS_NOTIMPLEMENTED;
         }
     }
@@ -770,12 +770,16 @@ struct FixupHaloForVectors<3> {
     template <typename DATATYPE>
     void apply(Field& field) {
         std::string type = field.metadata().getString("type", "scalar");
+
+        // if levels not setup in functionspace use levels from field
+        idx_t k_end = (fs.k_begin() ==  0) && (fs.k_end() == 0) ? field.levels() : fs.k_end();
+
         if (type == "vector") {
             auto array = array::make_view<DATATYPE, RANK>(field);
             for (idx_t j = fs.j_begin_halo(); j < 0; ++j) {
                 for (idx_t i = fs.i_begin_halo(j); i < fs.i_end_halo(j); ++i) {
                     idx_t n = fs.index(i, j);
-                    for (idx_t k = fs.k_begin(); k < fs.k_end(); ++k) {
+                    for (idx_t k = fs.k_begin(); k < k_end; ++k) {
                         array(n, k, XX) = -array(n, k, XX);
                         array(n, k, YY) = -array(n, k, YY);
                     }
@@ -784,7 +788,7 @@ struct FixupHaloForVectors<3> {
             for (idx_t j = fs.grid().ny(); j < fs.j_end_halo(); ++j) {
                 for (idx_t i = fs.i_begin_halo(j); i < fs.i_end_halo(j); ++i) {
                     idx_t n = fs.index(i, j);
-                    for (idx_t k = fs.k_begin(); k < fs.k_end(); ++k) {
+                    for (idx_t k = fs.k_begin(); k < k_end; ++k) {
                         array(n, k, XX) = -array(n, k, XX);
                         array(n, k, YY) = -array(n, k, YY);
                     }

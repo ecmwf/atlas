@@ -163,13 +163,21 @@ Grid::Spec* atlas__grid__Grid__spec(Grid* This) {
 }
 
 void atlas__grid__Grid__uid(const Grid* This, char*& uid, int& size) {
-    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_Projection");
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_Grid");
     eckit::MD5 md5;
     This->hash(md5);
     std::string s = This->uid();
     size          = static_cast<int>(s.size());
     uid           = new char[size + 1];
     std::strncpy(uid, s.c_str(), size + 1);
+}
+
+void atlas__grid__Grid__name(const Grid* This, char*& name, int& size) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_Grid");
+    std::string s = This->name();
+    size          = static_cast<int>(s.size());
+    name          = new char[size + 1];
+    std::strncpy(name, s.c_str(), size + 1);
 }
 
 Grid::Domain::Implementation* atlas__grid__Grid__lonlat_bounding_box(const Grid* This) {

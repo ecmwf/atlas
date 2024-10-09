@@ -47,9 +47,10 @@ class Spectral : public functionspace::FunctionSpaceImpl {
      n = total wavenumber
   
   const auto zonal_wavenumbers = Spectral::zonal_wavenumbers();
+  const int truncation = Spectral::truncation();
   idx_t jc=0;
   for( int jm=0; jm<zonal_wavenumbers.size(); ++jm ) {
-    int m = zonal_wavenumbers(m);
+    int m = zonal_wavenumbers(jm);
     for( int n=m; m<=truncation; ++n ) {
       data( jc++, jfld ) = func_real_part(m,n);
       data( jc++, jfld ) = func_imag_part(m,n);

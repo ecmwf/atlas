@@ -175,9 +175,9 @@ endforeach()
 
 
 
-atlas_add_cuda_test(
+atlas_add_hic_test(
   TARGET atlas_test_connectivity_kernel
-  SOURCES test_connectivity_kernel.cu
+  SOURCES test_connectivity_kernel.hic
   LIBS atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )

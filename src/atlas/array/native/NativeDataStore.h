@@ -16,20 +16,18 @@
 #include <limits>   // std::numeric_limits<T>::signaling_NaN
 #include <sstream>
 
-#if ATLAS_HAVE_CUDA
-#include <cuda_runtime.h>
-#endif
-
 #include "atlas/array/ArrayDataStore.h"
 #include "atlas/library/Library.h"
 #include "atlas/library/config.h"
+#include "atlas/parallel/acc/acc.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "eckit/log/Bytes.h"
 
-#if ATLAS_HAVE_ACC
-#include "atlas_acc_support/atlas_acc_map_data.h"
-#endif
+#include "hic/hic.h"
+
+
+#define ATLAS_ACC_DEBUG 0
 
 //------------------------------------------------------------------------------
 
@@ -96,17 +94,31 @@ template <typename Value>
 void initialise(Value[], size_t) {}
 #endif
 
+static int devices() {
+    static int devices_ = [](){
+        int n = 0;
+        auto err = hicGetDeviceCount(&n);
+        if (err != hicSuccess) {
+            n = 0;
+            static_cast<void>(hicGetLastError());
+        }
+        return n;
+    }();
+    return devices_;
+}
+
 template <typename Value>
 class DataStore : public ArrayDataStore {
 public:
     DataStore(size_t size): size_(size) {
         allocateHost();
         initialise(host_data_, size_);
-#if ATLAS_HAVE_CUDA
-        device_updated_ = false;
-#else
-        device_data_ = host_data_;
-#endif
+        if (ATLAS_HAVE_GPU && devices()) {
+            device_updated_ = false;
+        }
+        else {
+            device_data_ = host_data_;
+        }
     }
 
     ~DataStore() {
@@ -115,28 +127,28 @@ public:
     }
 
     void updateDevice() const override {
-#if ATLAS_HAVE_CUDA
-        if (not device_allocated_) {
-            allocateDevice();
+        if (ATLAS_HAVE_GPU && devices()) {
+            if (not device_allocated_) {
+                allocateDevice();
+            }
+            hicError_t err = hicMemcpy(device_data_, host_data_, size_*sizeof(Value), hicMemcpyHostToDevice);
+            if (err != hicSuccess) {
+                throw_AssertionFailed("Failed to updateDevice: "+std::string(hicGetErrorString(err)), Here());
+            }
+            device_updated_ = true;
         }
-        cudaError_t err = cudaMemcpy(device_data_, host_data_, size_*sizeof(Value), cudaMemcpyHostToDevice);
-        if (err != cudaSuccess) {
-            throw_AssertionFailed("Failed to updateDevice: "+std::string(cudaGetErrorString(err)), Here());
-        }
-        device_updated_ = true;
-#endif
     }
 
     void updateHost() const override {
-#if ATLAS_HAVE_CUDA
-        if (device_allocated_) {
-            cudaError_t err = cudaMemcpy(host_data_, device_data_, size_*sizeof(Value), cudaMemcpyDeviceToHost);
-            if (err != cudaSuccess) {
-                throw_AssertionFailed("Failed to updateHost: "+std::string(cudaGetErrorString(err)), Here());
+        if constexpr (ATLAS_HAVE_GPU) {
+            if (device_allocated_) {
+                hicError_t err = hicMemcpy(host_data_, device_data_, size_*sizeof(Value), hicMemcpyDeviceToHost);
+                if (err != hicSuccess) {
+                    throw_AssertionFailed("Failed to updateHost: "+std::string(hicGetErrorString(err)), Here());
+                }
+                host_updated_ = true;
             }
-            host_updated_ = true;
         }
-#endif
     }
 
     bool valid() const override { return true; }
@@ -162,33 +174,33 @@ public:
     bool deviceAllocated() const override { return device_allocated_; }
 
     void allocateDevice() const override {
-#if ATLAS_HAVE_CUDA
-        if (device_allocated_) {
-           return;
-        }
-        if (size_) {
-            cudaError_t err = cudaMalloc((void**)&device_data_, sizeof(Value)*size_);
-            if (err != cudaSuccess) {
-                throw_AssertionFailed("Failed to allocate GPU memory: " + std::string(cudaGetErrorString(err)), Here());
+        if (ATLAS_HAVE_GPU && devices()) {
+            if (device_allocated_) {
+                return;
             }
-            device_allocated_ = true;
-            accMap();
+            if (size_) {
+                hicError_t err = hicMalloc((void**)&device_data_, sizeof(Value)*size_);
+                if (err != hicSuccess) {
+                    throw_AssertionFailed("Failed to allocate GPU memory: " + std::string(hicGetErrorString(err)), Here());
+                }
+                device_allocated_ = true;
+                accMap();
+            }
         }
-#endif
     }
 
     void deallocateDevice() const override {
-#if ATLAS_HAVE_CUDA
-        if (device_allocated_) {
-            accUnmap();
-            cudaError_t err = cudaFree(device_data_);
-            if (err != cudaSuccess) {
-                throw_AssertionFailed("Failed to deallocate GPU memory: " + std::string(cudaGetErrorString(err)), Here());
+        if constexpr (ATLAS_HAVE_GPU) {
+            if (device_allocated_) {
+                accUnmap();
+                hicError_t err = hicFree(device_data_);
+                if (err != hicSuccess) {
+                    throw_AssertionFailed("Failed to deallocate GPU memory: " + std::string(hicGetErrorString(err)), Here());
+                }
+                device_data_ = nullptr;
+                device_allocated_ = false;
             }
-            device_data_ = nullptr;
-            device_allocated_ = false;
         }
-#endif
     }
 
     bool hostNeedsUpdate() const override { return (not host_updated_); }
@@ -210,13 +222,17 @@ public:
     void* voidDeviceData() override { return static_cast<void*>(device_data_); }
 
     void accMap() const override {
-#if ATLAS_HAVE_ACC
-        if (not acc_mapped_) {
+        if (not acc_mapped_ && acc::devices()) {
             ATLAS_ASSERT(deviceAllocated(),"Could not accMap as device data is not allocated");
-            atlas_acc_map_data((void*)host_data_, (void*)device_data_, size_ * sizeof(Value));
+            ATLAS_ASSERT(!atlas::acc::is_present(host_data_, size_ * sizeof(Value)));
+            if constexpr(ATLAS_ACC_DEBUG) {
+                std::cout << "               + acc_map_data(hostptr:"<<host_data_<<", device:"<<device_data_<<", bytes:"<<footprint()<<")" <<std::endl;
+            }
+            atlas::acc::map((void*)host_data_, (void*)device_data_, size_ * sizeof(Value));
+            ATLAS_ASSERT(atlas::acc::is_present(host_data_, size_ * sizeof(Value)));
+            ATLAS_ASSERT(atlas::acc::deviceptr(host_data_) == device_data_);
             acc_mapped_ = true;
         }
-#endif
     }
 
     bool accMapped() const override {
@@ -224,12 +240,15 @@ public:
     }
 
     void accUnmap() const override {
-#if ATLAS_HAVE_ACC
         if (acc_mapped_) {
-            atlas_acc_unmap_data(host_data_);
+            if constexpr(ATLAS_ACC_DEBUG) {
+                std::cout << "               - acc_unmap_data(hostptr:"<<host_data_<<", device:"<<device_data_<<", bytes:"<<footprint()<<")" <<std::endl;
+            }
+            ATLAS_ASSERT(atlas::acc::is_present(host_data_, size_ * sizeof(Value)));
+            atlas::acc::unmap(host_data_);
+            ATLAS_ASSERT(!atlas::acc::is_present(host_data_, size_ * sizeof(Value)));
             acc_mapped_ = false;
         }
-#endif
     }
 
 
@@ -291,36 +310,37 @@ template <typename Value>
 class WrappedDataStore : public ArrayDataStore {
 public:
     WrappedDataStore(Value* host_data, size_t size): host_data_(host_data), size_(size) {
-#if ATLAS_HAVE_CUDA
-        device_updated_ = false;
-#else
-        device_data_ = host_data_;
-#endif
+        if (ATLAS_HAVE_GPU && devices()) {
+            device_updated_ = false;
+        }
+        else {
+            device_data_ = host_data_;
+        }
     }
 
     void updateDevice() const override {
-#if ATLAS_HAVE_CUDA
-        if (not device_allocated_) {
-            allocateDevice();
+        if (ATLAS_HAVE_GPU && devices()) {
+            if (not device_allocated_) {
+                allocateDevice();
+            }
+            hicError_t err = hicMemcpy(device_data_, host_data_, size_*sizeof(Value), hicMemcpyHostToDevice);
+            if (err != hicSuccess) {
+                throw_AssertionFailed("Failed to updateDevice: "+std::string(hicGetErrorString(err)), Here());
+            }
+            device_updated_ = true;
         }
-        cudaError_t err = cudaMemcpy(device_data_, host_data_, size_*sizeof(Value), cudaMemcpyHostToDevice);
-        if (err != cudaSuccess) {
-            throw_AssertionFailed("Failed to updateDevice: "+std::string(cudaGetErrorString(err)), Here());
-        }
-        device_updated_ = true;
-#endif
     }
 
     void updateHost() const override {
-#if ATLAS_HAVE_CUDA
-        if (device_allocated_) {
-            cudaError_t err = cudaMemcpy(host_data_, device_data_, size_*sizeof(Value), cudaMemcpyDeviceToHost);
-            if (err != cudaSuccess) {
-                throw_AssertionFailed("Failed to updateHost: "+std::string(cudaGetErrorString(err)), Here());
+        if constexpr (ATLAS_HAVE_GPU) {
+            if (device_allocated_) {
+                hicError_t err = hicMemcpy(host_data_, device_data_, size_*sizeof(Value), hicMemcpyDeviceToHost);
+                if (err != hicSuccess) {
+                    throw_AssertionFailed("Failed to updateHost: "+std::string(hicGetErrorString(err)), Here());
+                }
+                host_updated_ = true;
             }
-            host_updated_ = true;
         }
-#endif
     }
 
     bool valid() const override { return true; }
@@ -346,33 +366,33 @@ public:
     bool deviceAllocated() const override { return device_allocated_; }
 
     void allocateDevice() const override {
-#if ATLAS_HAVE_CUDA
-        if (device_allocated_) {
-           return;
-        }
-        if (size_) {
-            cudaError_t err = cudaMalloc((void**)&device_data_, sizeof(Value)*size_);
-            if (err != cudaSuccess) {
-                throw_AssertionFailed("Failed to allocate GPU memory: " + std::string(cudaGetErrorString(err)), Here());
+        if (ATLAS_HAVE_GPU && devices()) {
+            if (device_allocated_) {
+                return;
             }
-            device_allocated_ = true;
-            accMap();
+            if (size_) {
+                hicError_t err = hicMalloc((void**)&device_data_, sizeof(Value)*size_);
+                if (err != hicSuccess) {
+                    throw_AssertionFailed("Failed to allocate GPU memory: " + std::string(hicGetErrorString(err)), Here());
+                }
+                device_allocated_ = true;
+                accMap();
+            }
         }
-#endif
     }
 
     void deallocateDevice() const override {
-#if ATLAS_HAVE_CUDA
-        if (device_allocated_) {
-            accUnmap();
-            cudaError_t err = cudaFree(device_data_);
-            if (err != cudaSuccess) {
-                throw_AssertionFailed("Failed to deallocate GPU memory: " + std::string(cudaGetErrorString(err)), Here());
+        if constexpr (ATLAS_HAVE_GPU) {
+            if (device_allocated_) {
+                accUnmap();
+                hicError_t err = hicFree(device_data_);
+                if (err != hicSuccess) {
+                    throw_AssertionFailed("Failed to deallocate GPU memory: " + std::string(hicGetErrorString(err)), Here());
+                }
+                device_data_ = nullptr;
+                device_allocated_ = false;
             }
-            device_data_ = nullptr;
-            device_allocated_ = false;
         }
-#endif
     }
 
     bool hostNeedsUpdate() const override { return (not host_updated_); }
@@ -394,13 +414,17 @@ public:
     void* voidDeviceData() override { return static_cast<void*>(device_data_); }
 
     void accMap() const override {
-#if ATLAS_HAVE_ACC
-        if (not acc_mapped_) {
+        if (not acc_mapped_ && acc::devices()) {
             ATLAS_ASSERT(deviceAllocated(),"Could not accMap as device data is not allocated");
-            atlas_acc_map_data((void*)host_data_, (void*)device_data_, size_ * sizeof(Value));
+            ATLAS_ASSERT(!atlas::acc::is_present(host_data_, size_ * sizeof(Value)));
+            if constexpr(ATLAS_ACC_DEBUG) {
+                std::cout << "               + acc_map_data(hostptr:"<<host_data_<<", device:"<<device_data_<<", bytes:"<<size_ * sizeof(Value)<<")" <<std::endl;
+            }
+            atlas::acc::map((void*)host_data_, (void*)device_data_, size_ * sizeof(Value));
+            ATLAS_ASSERT(atlas::acc::is_present(host_data_, size_ * sizeof(Value)));
+            ATLAS_ASSERT(atlas::acc::deviceptr(host_data_) == device_data_);
             acc_mapped_ = true;
         }
-#endif
     }
 
     bool accMapped() const override {
@@ -410,7 +434,11 @@ public:
     void accUnmap() const override {
 #if ATLAS_HAVE_ACC
         if (acc_mapped_) {
-            atlas_acc_unmap_data(host_data_);
+            ATLAS_ASSERT(atlas::acc::is_present(host_data_, size_ * sizeof(Value)));
+            if constexpr(ATLAS_ACC_DEBUG) {
+                std::cout << "               - acc_unmap_data(hostptr:"<<host_data_<<", device:"<<device_data_<<", bytes:"<<size_ * sizeof(Value)<<")" <<std::endl;
+            }
+            atlas::acc::unmap(host_data_);
             acc_mapped_ = false;
         }
 #endif

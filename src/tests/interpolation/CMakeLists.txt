@@ -75,6 +75,14 @@ ecbuild_add_executable( TARGET atlas_test_interpolation_structured2D
   NOINSTALL
 )
 
+ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_regional
+  SOURCES  test_interpolation_structured2D_regional.cc
+  LIBS     atlas
+  MPI      2
+  CONDITION eckit_HAVE_MPI
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_interpolation_non_linear
   SOURCES  test_interpolation_non_linear.cc
   LIBS     atlas
@@ -104,7 +112,6 @@ ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_to_unstructured
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
-
 ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_to_points
   SOURCES  test_interpolation_structured2D_to_points.cc
   LIBS     atlas
@@ -112,7 +119,6 @@ ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_to_points
   CONDITION eckit_HAVE_MPI
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
-
 
 ecbuild_add_test( TARGET atlas_test_interpolation_cubedsphere
   SOURCES  test_interpolation_cubedsphere.cc
@@ -123,11 +129,19 @@ ecbuild_add_test( TARGET atlas_test_interpolation_cubedsphere
 )
 
 ecbuild_add_test( TARGET atlas_test_interpolation_spherical_vector
-  OMP      4
   SOURCES  test_interpolation_spherical_vector.cc
   LIBS     atlas
-  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  OMP      4
   CONDITION atlas_HAVE_EIGEN
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+ecbuild_add_test( TARGET atlas_test_interpolation_binning
+  SOURCES  test_interpolation_binning.cc
+  LIBS     atlas
+  MPI      6
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 6
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
 endif()

@@ -13,6 +13,8 @@
 #include <memory>
 #include <sstream>
 
+#include "hic/hic.h"
+
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
@@ -105,7 +107,7 @@ struct validate {
 };
 
 struct Fixture {
-    Fixture(bool on_device): on_device_(on_device) {
+    Fixture(bool _on_device = false): on_device(_on_device) {
         int nnodes_c[] = {5, 6, 7};
         nb_nodes       = vec(nnodes_c);
         N              = nb_nodes[mpi::comm().rank()];
@@ -147,7 +149,7 @@ struct Fixture {
     std::vector<POD> gidx;
 
     int N;
-    bool on_device_;
+    bool on_device;
 };
 
 //-----------------------------------------------------------------------------
@@ -159,11 +161,15 @@ void test_rank0_arrview(Fixture& f) {
         arrv(j) = (size_t(f.part[j]) != mpi::comm().rank() ? 0 : f.gidx[j]);
     }
 
-    arr.syncHostDevice();
+    if (f.on_device) {
+        arr.updateDevice();
+    }
 
-    f.halo_exchange.execute<POD, 1>(arr, f.on_device_);
+    f.halo_exchange.execute<POD, 1>(arr, f.on_device);
 
-    arr.syncHostDevice();
+    if( f.on_device ) {
+        arr.updateHost();
+    }
 
     switch (mpi::comm().rank()) {
         case 0: {
@@ -192,11 +198,15 @@ void test_rank1(Fixture& f) {
         arrv(j, 1) = (size_t(f.part[j]) != mpi::comm().rank() ? 0 : f.gidx[j] * 100);
     }
 
-    arr.syncHostDevice();
+    if (f.on_device) {
+        arr.updateDevice();
+    }
 
-    f.halo_exchange.execute<POD, 2>(arr, f.on_device_);
+    f.halo_exchange.execute<POD, 2>(arr, f.on_device);
 
-    arr.syncHostDevice();
+    if (f.on_device) {
+        arr.updateHost();
+    }
 
     switch (mpi::comm().rank()) {
         case 0: {
@@ -226,8 +236,6 @@ void test_rank1_strided_v1(Fixture& f) {
         arrv_t(j, 1) = (size_t(f.part[j]) != mpi::comm().rank() ? 0 : f.gidx[j] * 100);
     }
 
-    arr_t.syncHostDevice();
-
     // create a wrap array where we fake the strides in a way that the second
     // dimension
     // (number of components) contains only one component but the associated
@@ -240,19 +248,21 @@ void test_rank1_strided_v1(Fixture& f) {
         array::ArraySpec {
             array::make_shape(f.N, 1),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-                array::make_strides(32, 1)
-        }
+            array::make_strides(32, 1)
 #else
-                array::make_strides(2, 1)
-        }
+            array::make_strides(2, 1)
 #endif
-        ));
+        }));
 
-    arr->syncHostDevice();
+    if (f.on_device) {
+        arr->updateDevice();
+    }
 
-    f.halo_exchange.execute<POD, 2>(*arr, f.on_device_);
+    f.halo_exchange.execute<POD, 2>(*arr, f.on_device);
 
-    arr->syncHostDevice();
+    if (f.on_device) {
+        arr->updateHost();
+    }
 
     switch (mpi::comm().rank()) {
         case 0: {
@@ -282,8 +292,6 @@ void test_rank1_strided_v2(Fixture& f) {
         arrv_t(j, 1) = (size_t(f.part[j]) != mpi::comm().rank() ? 0 : f.gidx[j] * 100);
     }
 
-    arr_t.syncHostDevice();
-
     // create a wrap array where we fake the strides in a way that the second
     // dimension
     // (number of components) contains only one component but the associated
@@ -295,9 +303,9 @@ void test_rank1_strided_v2(Fixture& f) {
         &(arrv_t(0, 1)), array::ArraySpec {
             array::make_shape(f.N, 1),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-                array::make_strides(32, 1)
+            array::make_strides(32, 1)
 #else
-                     array::make_strides(2, 1)
+            array::make_strides(2, 1)
 #endif
         }));
 
@@ -333,11 +341,15 @@ void test_rank2(Fixture& f) {
         }
     }
 
-    arr.syncHostDevice();
+    if (f.on_device) {
+        arr.updateDevice();
+    }
 
-    f.halo_exchange.execute<POD, 3>(arr, f.on_device_);
+    f.halo_exchange.execute<POD, 3>(arr, f.on_device);
 
-    arr.syncHostDevice();
+    if (f.on_device) {
+        arr.updateHost();
+    }
 
     switch (mpi::comm().rank()) {
         case 0: {
@@ -373,23 +385,26 @@ void test_rank2_l1(Fixture& f) {
                 (size_t(f.part[p]) != mpi::comm().rank() ? 0 : f.gidx[p] * std::pow(10, i));
         }
     }
-    arr_t.syncHostDevice();
 
     std::unique_ptr<array::Array> arr(array::Array::wrap<POD>(
         arrv_t.data(), array::ArraySpec {
             array::make_shape(f.N, 1, 2),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-                array::make_strides(96, 32, 1)
+            array::make_strides(96, 32, 1)
 #else
-         array::make_strides(6, 2, 1)
+            array::make_strides(6, 2, 1)
 #endif
         }));
 
-    arr_t.syncHostDevice();
+    if (f.on_device) {
+        arr->updateDevice();
+    }
 
-    f.halo_exchange.execute<POD, 3>(*arr, false);
+    f.halo_exchange.execute<POD, 3>(*arr, f.on_device);
 
-    arr_t.syncHostDevice();
+    if (f.on_device) {
+        arr->updateHost();
+    }
 
     switch (mpi::comm().rank()) {
         case 0: {
@@ -426,7 +441,6 @@ void test_rank2_l1(Fixture& f) {
 }
 
 void test_rank2_l2_v2(Fixture& f) {
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST
     // Test rank 2 halo-exchange
     array::ArrayT<POD> arr_t(f.N, 3, 2);
     array::ArrayView<POD, 3> arrv_t = array::make_host_view<POD, 3>(arr_t);
@@ -443,13 +457,22 @@ void test_rank2_l2_v2(Fixture& f) {
         &arrv_t(0, 1, 1), array::ArraySpec {
             array::make_shape(f.N, 1, 1),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-                array::make_strides(192, 32, 1)
+            array::make_strides(192, 32, 1)
 #else
-                     array::make_strides(6, 2, 1)
+            array::make_strides(6, 2, 1)
 #endif
         }));
 
-    f.halo_exchange.execute<POD, 3>(*arr, f.on_device_);
+
+    if (f.on_device) {
+        arr->updateDevice();
+    }
+
+    f.halo_exchange.execute<POD, 3>(*arr, f.on_device);
+
+    if (f.on_device) {
+        arr->updateHost();
+    }
 
     switch (mpi::comm().rank()) {
         case 0: {
@@ -483,11 +506,9 @@ void test_rank2_l2_v2(Fixture& f) {
             break;
         }
     }
-#endif
 }
 
 void test_rank2_v2(Fixture& f) {
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST
     array::ArrayT<POD> arr_t(f.N, 3, 2);
     array::ArrayView<POD, 3> arrv_t = array::make_view<POD, 3>(arr_t);
     for (int p = 0; p < f.N; ++p) {
@@ -503,13 +524,21 @@ void test_rank2_v2(Fixture& f) {
         &arrv_t(0, 0, 1), array::ArraySpec {
             array::make_shape(f.N, 3, 1),
 #if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-                array::make_strides(192, 32, 2)
+            array::make_strides(192, 32, 2)
 #else
-                     array::make_strides(6, 2, 2)
+            array::make_strides(6, 2, 2)
 #endif
         }));
 
-    f.halo_exchange.execute<POD, 3>(*arr, f.on_device_);
+    if (f.on_device) {
+        arr->updateDevice();
+    }
+
+    f.halo_exchange.execute<POD, 3>(*arr, f.on_device);
+
+    if (f.on_device) {
+        arr->updateHost();
+    }
 
     switch (mpi::comm().rank()) {
         case 0: {
@@ -543,18 +572,21 @@ void test_rank2_v2(Fixture& f) {
             break;
         }
     }
-#endif
 }
 
 void test_rank0_wrap(Fixture& f) {
     std::unique_ptr<array::Array> arr(array::Array::wrap<POD>(f.gidx.data(), array::make_shape(f.N)));
     array::ArrayView<POD, 1> arrv = array::make_view<POD, 1>(*arr);
 
-    arr->syncHostDevice();
+    if (f.on_device) {
+        arr->updateDevice();
+    }
 
-    f.halo_exchange.execute<POD, 1>(*arr, f.on_device_);
+    f.halo_exchange.execute<POD, 1>(*arr, f.on_device);
 
-    arr->syncHostDevice();
+    if (f.on_device) {
+        arr->updateHost();
+    }
 
     switch (mpi::comm().rank()) {
         case 0: {
@@ -642,15 +674,12 @@ void test_rank2_paralleldim2(Fixture& f) {
 }
 
 void test_rank1_cinterface(Fixture& f) {
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_HOST
     array::ArrayT<POD> arr(f.N, 2);
     array::ArrayView<POD, 2> arrv = array::make_host_view<POD, 2>(arr);
     for (int j = 0; j < f.N; ++j) {
         arrv(j, 0) = (size_t(f.part[j]) != mpi::comm().rank() ? 0 : f.gidx[j] * 10);
         arrv(j, 1) = (size_t(f.part[j]) != mpi::comm().rank() ? 0 : f.gidx[j] * 100);
     }
-
-    arr.syncHostDevice();
 
     int shapes[2]  = {(int)arrv.shape(0), (int)arrv.shape(1)};
     int strides[2] = {(int)arrv.stride(0), (int)arrv.stride(1)};
@@ -674,11 +703,10 @@ void test_rank1_cinterface(Fixture& f) {
             break;
         }
     }
-#endif
 }
 
 CASE("test_haloexchange") {
-    Fixture f(false);
+    Fixture f;
 
     SECTION("test_rank0_arrview") { test_rank0_arrview(f); }
 
@@ -701,20 +729,46 @@ CASE("test_haloexchange") {
     SECTION("test_rank1_paralleldim_1") { test_rank1_paralleldim1(f); }
 
     SECTION("test_rank2_paralleldim_2") { test_rank2_paralleldim2(f); }
-    SECTION("test_rank1_cinterface") { test_rank1_cinterface(f); }
 
-#if ATLAS_GRIDTOOLS_STORAGE_BACKEND_CUDA
-    f.on_device_ = true;
+    SECTION("test_rank1_cinterface") { test_rank1_cinterface(f); }
+}
+
+#if ATLAS_HAVE_GPU
+
+//-----------------------------------------------------------------------------
+
+static int devices() {
+    static int devices_ = [](){
+        int n = 0;
+        auto err = hicGetDeviceCount(&n);
+        if (err != hicSuccess) {
+            n = 0;
+            static_cast<void>(hicGetLastError());
+        }
+        return n;
+    }();
+    return devices_;
+}
+
+CASE("test_haloexchange on device") {
+    if (devices() == 0) {
+        Log::warning() << "\"test_haloexchange on device skipped\": No devices available" << std::endl;
+        return;
+    }
+
+    bool on_device = true;
+    Fixture f(on_device);
 
     SECTION("test_rank0_arrview") { test_rank0_arrview(f); }
 
     SECTION("test_rank1") { test_rank1(f); }
 
     SECTION("test_rank2") { test_rank2(f); }
-    SECTION("test_rank0_wrap") { test_rank0_wrap(f); }
 
-#endif
+    SECTION("test_rank0_wrap") { test_rank0_wrap(f); }
 }
+#endif
+
 
 //-----------------------------------------------------------------------------
 

@@ -16,6 +16,7 @@
 
 #include "atlas/atlas_ecbuild_config.h"
 #include "atlas/library/defines.h"
+#include "hic/hic_config.h"
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 #define DOXYGEN_HIDE(X) X
@@ -23,6 +24,21 @@
 
 #define ATLAS_HAVE_TRACE 1
 #define ATLAS_HAVE_TRACE_BARRIERS 1
+
+#define ATLAS_HIC_COMPILER   HIC_COMPILER
+#define ATLAS_HOST_COMPILE   HIC_HOST_COMPILE
+#define ATLAS_DEVICE_COMPILE HIC_DEVICE_COMPILE
+#define ATLAS_HOST_DEVICE    HIC_HOST_DEVICE
+#define ATLAS_DEVICE         HIC_DEVICE
+#define ATLAS_HOST           HIC_HOST
+#define ATLAS_GLOBAL         HIC_GLOBAL
+
+#if HIC_BACKEND_CUDA || HIC_BACKEND_HIP
+#define ATLAS_HAVE_GPU 1
+#else
+#define ATLAS_HAVE_GPU 0
+#endif
+
 
 namespace atlas {
 

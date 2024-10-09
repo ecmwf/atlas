@@ -8,31 +8,15 @@
 
 if( atlas_HAVE_ACC )
 
-  if( NOT (CMAKE_C_COMPILER_ID MATCHES ${CMAKE_Fortran_COMPILER_ID}) )
-    add_custom_command(
-        OUTPUT  ${CMAKE_BINARY_DIR}/lib/libatlas_acc_support.so ${CMAKE_CURRENT_BINARY_DIR}/atlas_acc_map_data.c.o
-        COMMAND ${ACC_C_COMPILER} ${ACC_C_FLAGS} ${ACC_C_INCLUDE} -fPIC -o ${CMAKE_CURRENT_BINARY_DIR}/atlas_acc_map_data.c.o
-                -c ${CMAKE_CURRENT_SOURCE_DIR}/atlas_acc_map_data.c
-        COMMAND mkdir -p ${CMAKE_BINARY_DIR}/lib
-        COMMAND ${ACC_C_COMPILER} ${ACC_C_FLAGS} -shared -o ${CMAKE_BINARY_DIR}/lib/libatlas_acc_support.so
-                ${CMAKE_CURRENT_BINARY_DIR}/atlas_acc_map_data.c.o
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/atlas_acc_map_data.c
-        COMMENT "Building atlas_acc_support with ${ACC_C_COMPILER}"
-    )
-    add_custom_target( build-atlas_acc_support ALL DEPENDS ${CMAKE_BINARY_DIR}/lib/libatlas_acc_support.so )
-    add_library( atlas_acc_support SHARED IMPORTED GLOBAL )
-    set_property( TARGET atlas_acc_support PROPERTY IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/lib/libatlas_acc_support.so )
-    set_property( TARGET atlas_acc_support PROPERTY IMPORTED_NO_SONAME TRUE )
-    set_property( TARGET atlas_acc_support PROPERTY IMPORTED_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR} )
-    add_dependencies( atlas_acc_support build-atlas_acc_support )
-    install( FILES ${CMAKE_BINARY_DIR}/lib/libatlas_acc_support.so DESTINATION ${INSTALL_LIB_DIR}/ )
-
+  if( CMAKE_CXX_COMPILER_ID MATCHES NVHPC )
+    if( NOT TARGET OpenACC::OpenACC_CXX )
+       ecbuild_error("ERROR: OpenACC::OpenACC_CXX TARGET not found")
+    endif()
+    ecbuild_add_library( TARGET atlas_acc_support SOURCES atlas_acc.cc )
+    target_link_libraries( atlas_acc_support PRIVATE OpenACC::OpenACC_CXX )
   else()
-
-    ecbuild_add_library( TARGET atlas_acc_support SOURCES atlas_acc_map_data.c )
-    target_compile_options( atlas_acc_support PRIVATE ${ACC_C_FLAGS} )
-    target_link_libraries( atlas_acc_support PRIVATE ${ACC_C_FLAGS} )
-
+    ecbuild_add_library( TARGET atlas_acc_support SOURCES atlas_acc.F90 )
+    target_link_libraries( atlas_acc_support PRIVATE OpenACC::OpenACC_Fortran )
   endif()
 
 endif()

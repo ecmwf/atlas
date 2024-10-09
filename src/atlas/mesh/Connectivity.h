@@ -183,7 +183,7 @@ public:
     /// No resizing can be performed as data is not owned.
     IrregularConnectivityImpl(idx_t values[], idx_t rows, idx_t displs[], idx_t counts[]);
 
-#ifdef __CUDACC__
+#if ATLAS_HIC_COMPILER
     /// @brief Copy ctr (only to be used when calling a cuda kernel)
     // This ctr has to be defined in the header, since __CUDACC__ will identify
     // whether
@@ -529,7 +529,7 @@ public:
     /// No resizing can be performed as data is not owned.
     BlockConnectivityImpl(idx_t rows, idx_t cols, idx_t values[]);
 
-#ifdef __CUDACC__
+#if ATLAS_HIC_COMPILER
     /// @brief Copy ctr (only to be used when calling a cuda kernel)
     // This ctr has to be defined in the header, since __CUDACC__ will identify
     // whether it is compiled it for a GPU kernel
@@ -645,6 +645,7 @@ using Connectivity           = IrregularConnectivity;
 
 // -----------------------------------------------------------------------------------------------------
 
+ATLAS_HOST_DEVICE
 inline idx_t IrregularConnectivityImpl::operator()(idx_t row_idx, idx_t col_idx) const {
     assert(counts_[row_idx] > (col_idx));
     return values_[displs_[row_idx] + col_idx] FROM_FORTRAN;
@@ -662,36 +663,43 @@ inline void IrregularConnectivityImpl::set(idx_t row_idx, idx_t col_idx, const i
     values_[displs_[row_idx] + col_idx] = value TO_FORTRAN;
 }
 
+ATLAS_HOST_DEVICE
 inline IrregularConnectivityImpl::Row IrregularConnectivityImpl::row(idx_t row_idx) const {
     return IrregularConnectivityImpl::Row(const_cast<idx_t*>(values_.data()) + displs_(row_idx), counts_(row_idx));
 }
 
 // -----------------------------------------------------------------------------------------------------
 
+ATLAS_HOST_DEVICE
 inline idx_t MultiBlockConnectivityImpl::operator()(idx_t row_idx, idx_t col_idx) const {
     return IrregularConnectivityImpl::operator()(row_idx, col_idx);
 }
 
+ATLAS_HOST_DEVICE
 inline idx_t MultiBlockConnectivityImpl::operator()(idx_t block_idx, idx_t block_row_idx, idx_t block_col_idx) const {
     return block(block_idx)(block_row_idx, block_col_idx);
 }
 
 // -----------------------------------------------------------------------------------------------------
 
+ATLAS_HOST_DEVICE
 inline idx_t BlockConnectivityImpl::operator()(idx_t row_idx, idx_t col_idx) const {
     return values_[index(row_idx, col_idx)] FROM_FORTRAN;
 }
 
+ATLAS_HOST_DEVICE
 inline void BlockConnectivityImpl::set(idx_t row_idx, const idx_t column_values[]) {
     for (idx_t n = 0; n < cols_; ++n) {
         values_[index(row_idx, n)] = column_values[n] TO_FORTRAN;
     }
 }
 
+ATLAS_HOST_DEVICE
 inline void BlockConnectivityImpl::set(idx_t row_idx, idx_t col_idx, const idx_t value) {
     values_[index(row_idx, col_idx)] = value TO_FORTRAN;
 }
 
+ATLAS_HOST_DEVICE
 inline idx_t BlockConnectivityImpl::index(idx_t i, idx_t j) const {
     return i * cols_ + j;
 }

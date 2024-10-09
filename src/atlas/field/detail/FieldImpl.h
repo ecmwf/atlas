@@ -16,6 +16,7 @@
 #include <functional>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #include "atlas/util/Object.h"
 
@@ -256,7 +257,8 @@ public:
         }
     }
 
-    virtual void onFieldRename(FieldImpl&) = 0;
+    virtual void onFieldRename(FieldImpl&) {}
+    virtual void onFieldDestruction(FieldImpl&) {}
 };
 
 //----------------------------------------------------------------------------------------------------------------------

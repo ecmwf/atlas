@@ -61,23 +61,28 @@ if( CMAKE_BUILD_TYPE MATCHES "DEBUG" )
   set ( CMAKE_NVCC_FLAGS "-G" )
 endif()
 
-atlas_add_cuda_test(
+atlas_add_hic_test(
   TARGET atlas_test_array_kernel
-  SOURCES test_array_kernel.cu
+  SOURCES test_array_kernel.hic
   LIBS atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
-atlas_add_cuda_test(
+atlas_add_hic_test(
   TARGET atlas_test_vector_kernel
-  SOURCES test_vector_kernel.cu
+  SOURCES test_vector_kernel.hic
   LIBS atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
-atlas_add_cuda_test(
+atlas_add_hic_test(
   TARGET atlas_test_svector_kernel
-  SOURCES test_svector_kernel.cu
+  SOURCES test_svector_kernel.hic
   LIBS atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_array_view_variant
+  SOURCES test_array_view_variant.cc
+  LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)

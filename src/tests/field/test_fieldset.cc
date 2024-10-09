@@ -56,8 +56,52 @@ CASE("test_rename") {
     EXPECT(!fieldset.has("field_1"));
     EXPECT_EQ(fieldset.field(1).name(),std::string(""));
     EXPECT(fieldset.has("[1]"));
-
 }
+
+CASE("test_fieldset_concatenation") {
+    FieldSet fieldset_1;
+    FieldSet fieldset_2;
+    auto field_1 = fieldset_1.add(Field("0", make_datatype<double>(), array::make_shape(10,4)));
+    auto field_1_v = array::make_view<double,2>(field_1);
+    field_1_v(1,1) = 2.;
+
+    fieldset_2.add(fieldset_1);
+    auto field_2 = fieldset_2.field("0");
+    field_2.rename("");
+    auto field_2_v = array::make_view<double,2>(field_2);
+    field_2_v(1,1) = 1.;
+
+    EXPECT(!fieldset_2.has(""));
+    EXPECT_EQ(fieldset_2.field(0).name(), "");
+    EXPECT_EQ(field_1_v(1,1), 1.);
+}
+
+CASE("test_duplicate_name_throws") {
+    FieldSet fieldset;
+    auto field_0 = fieldset.add(Field("0", make_datatype<double>(), array::make_shape(10,4)));
+    auto field_1 = fieldset.add(Field("0", make_datatype<double>(), array::make_shape(10,5))); // same name as field_0, uh-oh !
+    auto field_2 = fieldset.add(Field("2", make_datatype<double>(), array::make_shape(10,6)));
+
+    Field f;
+    EXPECT_NO_THROW(f = fieldset["2"]); // OK
+    EXPECT_EQ(f.shape(1), 6);
+
+    EXPECT_THROWS(f = fieldset["0"]);   // ambiguous because field_0 and field_1 have same name, should throw
+    field_1.rename("1");                // fix ambiguity between field_0 and field_1
+    EXPECT_NO_THROW(f = fieldset["0"]); // no longer ambiguous
+    EXPECT_EQ(f.shape(1), 4);           // to be sure that we got the right field
+    EXPECT_NO_THROW(f = fieldset["1"]); // no longer ambiguous
+    EXPECT_EQ(f.shape(1), 5);           // to be sure that we got the right field
+
+    field_2.rename("0");                // Introduce new ambiguity between field_0 and field_2
+    EXPECT_THROWS(f = fieldset["0"]);   // ambiguous because field_0 and field_2 have same name, should throw
+    field_2.rename("2");                // fix ambiguity
+    EXPECT_NO_THROW(f = fieldset["0"]); // no longer ambiguous
+    EXPECT_EQ(f.shape(1), 4);           // to be sure we got the right field
+    EXPECT_NO_THROW(f = fieldset["2"]); // no longer ambiguous
+    EXPECT_EQ(f.shape(1), 6);           // to be sure we got the right field
+}
+
 
 //-----------------------------------------------------------------------------
 

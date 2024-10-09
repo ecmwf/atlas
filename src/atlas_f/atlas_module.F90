@@ -89,6 +89,11 @@ use atlas_Grid_module, only: &
     & atlas_RegionalGrid
 use atlas_Vertical_module, only :&
     & atlas_Vertical
+use atlas_StencilComputer_module, only: &
+    & atlas_StructuredGrid_ComputeNorth, &
+    & atlas_StructuredGrid_ComputeWest, &
+    & atlas_StructuredGrid_ComputeStencil, &
+    & atlas_StructuredGrid_Stencil
 use atlas_functionspace_EdgeColumns_module, only: &
     & atlas_functionspace_EdgeColumns
 use atlas_functionspace_CellColumns_module, only: &
@@ -141,6 +146,7 @@ use atlas_mesh_actions_module, only: &
     & atlas_build_halo, &
     & atlas_build_edges, &
     & atlas_build_pole_edges, &
+    & atlas_build_node_to_cell_connectivity, &
     & atlas_build_node_to_edge_connectivity, &
     & atlas_build_median_dual_mesh, &
     & atlas_write_load_balance_report, &

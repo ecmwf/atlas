@@ -17,7 +17,7 @@
 #define ATLAS_HAVE_OMP                       @atlas_HAVE_OMP_CXX@
 #define ATLAS_OMP_TASK_SUPPORTED             @ATLAS_OMP_TASK_SUPPORTED@
 #define ATLAS_OMP_TASK_UNTIED_SUPPORTED      @ATLAS_OMP_TASK_UNTIED_SUPPORTED@
-#define ATLAS_HAVE_CUDA                      @atlas_HAVE_CUDA@
+#define ATLAS_HAVE_GPU                       @atlas_HAVE_GPU@
 #define ATLAS_HAVE_ACC                       @atlas_HAVE_ACC@
 #define ATLAS_HAVE_QHULL                     @atlas_HAVE_QHULL@
 #define ATLAS_HAVE_CGAL                      @atlas_HAVE_CGAL@
@@ -44,16 +44,6 @@
 #define ATLAS_ECKIT_VERSION_INT              @ATLAS_ECKIT_VERSION_INT@
 #define ATLAS_ECKIT_DEVELOP                  @ATLAS_ECKIT_DEVELOP@
 #define ATLAS_HAVE_FUNCTIONSPACE             @atlas_HAVE_ATLAS_FUNCTIONSPACE@
-
-#ifdef __CUDACC__
-#define ATLAS_HOST_DEVICE __host__ __device__
-#define ATLAS_DEVICE __device__
-#define ATLAS_HOST __host__
-#else
-#define ATLAS_HOST_DEVICE
-#define ATLAS_DEVICE
-#define ATLAS_HOST
-#endif
 
 #define ATLAS_BITS_LOCAL @ATLAS_BITS_LOCAL@
 

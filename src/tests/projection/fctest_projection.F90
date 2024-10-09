@@ -81,7 +81,7 @@ call config%set("rotation_angle", 180.0_dp)
 call config%set("north_pole", [2.0_dp,46.7_dp] )
 projection = atlas_Projection(config)
 FCTEST_CHECK_EQUAL( projection%type(), "rotated_schmidt" )
-FCTEST_CHECK_EQUAL( projection%hash(), "148d7ceb58250c0f48dc6b590941a341" )
+FCTEST_CHECK_EQUAL( projection%hash(), "3a39e0635b7d0a45f684696ca89825e6" )
 call config%final()
 call projection%final()
 END_TEST
@@ -91,7 +91,7 @@ type(atlas_Projection) :: projection
 projection = atlas_RotatedSchmidtProjection( stretching_factor=2.0_dp, &
         north_pole=[2.0_dp,46.7_dp], rotation_angle=180.0_dp)
 FCTEST_CHECK_EQUAL( projection%type(), "rotated_schmidt" )
-FCTEST_CHECK_EQUAL( projection%hash(), "148d7ceb58250c0f48dc6b590941a341" )
+FCTEST_CHECK_EQUAL( projection%hash(), "3a39e0635b7d0a45f684696ca89825e6" )
 call projection%final()
 END_TEST
 
@@ -130,7 +130,7 @@ call config%set("north_pole", [2.0_dp,46.7_dp] )
 call config%set("rotation_angle", 180.0_dp)
 projection = atlas_Projection(config)
 FCTEST_CHECK_EQUAL( projection%type(), "rotated_lonlat" )
-FCTEST_CHECK_EQUAL( projection%hash(), "2b6db0e1ccbe7c514dd726f408f92adb" )
+FCTEST_CHECK_EQUAL( projection%hash(), "79586cfbc8145cdef1a25d075a9ae07e" )
 call config%final()
 call projection%final()
 END_TEST
@@ -139,7 +139,7 @@ TEST( test_rotated_lonlat_specific_constructor )
 type(atlas_Projection) :: projection
 projection = atlas_RotatedLonLatProjection([2.0_dp,46.7_dp],180._dp)
 FCTEST_CHECK_EQUAL( projection%type(), "rotated_lonlat" )
-FCTEST_CHECK_EQUAL( projection%hash(), "2b6db0e1ccbe7c514dd726f408f92adb" )
+FCTEST_CHECK_EQUAL( projection%hash(), "79586cfbc8145cdef1a25d075a9ae07e" )
 call projection%final()
 END_TEST
 

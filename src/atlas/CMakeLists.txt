@@ -60,6 +60,8 @@ library/detail/BlackMagic.h
 library/detail/Debug.h
 
 
+parallel/acc/acc.cc
+parallel/acc/acc.h
 parallel/mpi/mpi.cc
 parallel/mpi/mpi.h
 parallel/omp/omp.cc
@@ -173,6 +175,8 @@ grid/detail/grid/RegionalVariableResolution.h
 grid/detail/grid/RegionalVariableResolution.cc
 grid/detail/grid/Healpix.h
 grid/detail/grid/Healpix.cc
+grid/detail/grid/StencilComputerInterface.h
+grid/detail/grid/StencilComputerInterface.cc
 
 grid/detail/tiles/Tiles.cc
 grid/detail/tiles/Tiles.h
@@ -376,8 +380,6 @@ mesh/detail/AccumulateFacets.cc
 util/Unique.h
 util/Unique.cc
 
-mesh/actions/ExtendNodesGlobal.h
-mesh/actions/ExtendNodesGlobal.cc
 mesh/actions/BuildDualMesh.h
 mesh/actions/BuildCellCentres.cc
 mesh/actions/BuildCellCentres.h
@@ -401,6 +403,10 @@ mesh/actions/BuildStatistics.cc
 mesh/actions/BuildStatistics.h
 mesh/actions/BuildXYZField.cc
 mesh/actions/BuildXYZField.h
+mesh/actions/ExtendNodesGlobal.h
+mesh/actions/ExtendNodesGlobal.cc
+mesh/actions/GetCubedSphereNodalArea.cc
+mesh/actions/GetCubedSphereNodalArea.h
 mesh/actions/WriteLoadBalanceReport.cc
 mesh/actions/BuildTorusXYZField.h
 mesh/actions/BuildTorusXYZField.cc
@@ -468,12 +474,24 @@ field/FieldSet.cc
 field/FieldSet.h
 field/MissingValue.cc
 field/MissingValue.h
+field/MultiField.cc
+field/MultiField.h
+field/MultiFieldCreator.cc
+field/MultiFieldCreator.h
+field/MultiFieldCreatorIFS.cc
+field/MultiFieldCreatorIFS.h
+field/MultiFieldCreatorArray.cc
+field/MultiFieldCreatorArray.h
 field/State.cc
 field/State.h
 field/detail/FieldImpl.cc
 field/detail/FieldImpl.h
 field/detail/FieldInterface.cc
 field/detail/FieldInterface.h
+field/detail/MultiFieldImpl.cc
+field/detail/MultiFieldImpl.h
+field/detail/MultiFieldInterface.cc
+field/detail/MultiFieldInterface.h
 field/detail/MissingValue.cc
 field/detail/MissingValue.h
 )
@@ -618,6 +636,8 @@ interpolation/method/PointIndex3.cc
 interpolation/method/PointIndex3.h
 interpolation/method/PointIndex2.cc
 interpolation/method/PointIndex2.h
+interpolation/method/binning/Binning.cc
+interpolation/method/binning/Binning.h
 interpolation/method/cubedsphere/CubedSphereBilinear.cc
 interpolation/method/cubedsphere/CubedSphereBilinear.h
 interpolation/method/knn/GridBox.cc
@@ -651,6 +671,8 @@ interpolation/method/structured/QuasiCubic2D.cc
 interpolation/method/structured/QuasiCubic2D.h
 interpolation/method/structured/QuasiCubic3D.cc
 interpolation/method/structured/QuasiCubic3D.h
+interpolation/method/structured/RegionalLinear2D.cc
+interpolation/method/structured/RegionalLinear2D.h
 interpolation/method/structured/StructuredInterpolation2D.h
 interpolation/method/structured/StructuredInterpolation2D.tcc
 interpolation/method/structured/StructuredInterpolation3D.h
@@ -737,6 +759,8 @@ array/Range.h
 array/Vector.h
 array/Vector.cc
 array/SVector.h
+array/ArrayViewVariant.h
+array/ArrayViewVariant.cc
 array/helpers/ArrayInitializer.h
 array/helpers/ArrayAssigner.h
 array/helpers/ArrayWriter.h
@@ -820,6 +844,8 @@ util/PolygonXY.cc
 util/PolygonXY.h
 util/Metadata.cc
 util/Metadata.h
+util/PackVectorFields.cc
+util/PackVectorFields.h
 util/Point.cc
 util/Point.h
 util/Polygon.cc
@@ -919,14 +945,15 @@ list( APPEND source_list
 )
 
 
-if( atlas_HAVE_CUDA )
+if( atlas_HAVE_GPU )
   include( atlas_host_device )
   list( APPEND source_list
-    parallel/HaloExchangeCUDA.h
-    parallel/HaloExchangeCUDA.cu
+    parallel/HaloExchangeGPU.h
+    parallel/HaloExchangeGPU.hic
   )
   atlas_host_device( source_list
     SOURCES
+      parallel/HaloExchangeGPU.hic
       mesh/Connectivity.cc
   )
 
@@ -940,7 +967,7 @@ if( atlas_HAVE_CUDA )
     atlas_host_device( source_list
       SOURCES
         array/native/NativeArrayView.cc
-        array/native/NativeDataStore.h
+        array/native/NativeIndexView.cc
     )
   endif()
 endif()
@@ -973,10 +1000,10 @@ ecbuild_add_library( TARGET atlas
     eckit_mpi
     eckit_option
     atlas_io
+    hic
     $<${atlas_HAVE_EIGEN}:Eigen3::Eigen>
     $<${atlas_HAVE_OMP_CXX}:OpenMP::OpenMP_CXX>
     $<${atlas_HAVE_GRIDTOOLS_STORAGE}:GridTools::gridtools>
-    $<${atlas_HAVE_CUDA}:CUDA::cudart>
 
   PRIVATE_INCLUDES
     ${CGAL_INCLUDE_DIRS}
@@ -989,5 +1016,13 @@ ecbuild_add_library( TARGET atlas
     $<INSTALL_INTERFACE:include>
 
 )
+
+if( HAVE_ACC AND CMAKE_Fortran_COMPILER_ID MATCHES NVHPC )
+  target_link_options( atlas INTERFACE
+      $<$<LINK_LANG_AND_ID:C,NVHPC>:SHELL:${ACC_LINK_OPTIONS}>
+      $<$<LINK_LANG_AND_ID:CXX,NVHPC>:SHELL:${ACC_LINK_OPTIONS}>
+      $<$<LINK_LANG_AND_ID:Fortran,NVHPC>:SHELL:${ACC_LINK_OPTIONS}>
+      $<$<LINK_LANG_AND_ID:CUDA,NVIDIA>:SHELL:${ACC_LINK_OPTIONS}> )
+endif()
 
 target_compile_features( atlas PUBLIC cxx_std_17 )

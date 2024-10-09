@@ -70,7 +70,7 @@ class ComplexMatrixMultiply {
           // tinyNum ~= 2.3e-13 for double.
           constexpr auto tinyNum = 1024 * std::numeric_limits<Real>::epsilon();
           const auto complexMagnitude = std::abs(complexRowIter.value());
-          const auto realValue = realRowIter.value();
+          const auto realValue = std::abs(realRowIter.value());
           const auto error = std::abs(complexMagnitude - realValue);
 
           const auto printError = [&]() {

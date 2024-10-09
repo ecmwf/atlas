@@ -11,8 +11,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if( CMAKE_CXX_COMPILER_ID MATCHES Cray )
 
-
-  ecbuild_add_cxx_flags("-hnomessage=3140" NAME atlas_cxx_disable_warnings ) # colon separated numbers
+  if( NOT CMAKE_CXX_COMPILER_ID MATCHES CrayClang )
+    ecbuild_add_cxx_flags("-hnomessage=3140" NAME atlas_cxx_disable_warnings ) # colon separated numbers
+  endif()
   ecbuild_add_fortran_flags("-hnomessage=3140" NAME atlas_fortran_disable_warnings ) # colon separated numbers
 
 # CC-3140 crayc++: WARNING File = atlas/functionspace/NodeColumns.cc, Line = 1, Column = 1
