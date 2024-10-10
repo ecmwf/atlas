@@ -9,3 +9,6 @@
 add_subdirectory(test_find_pluto)
 add_subdirectory(benchmark)
 add_subdirectory(sandbox)
+
+ecbuild_add_test( TARGET pluto_test_pluto_f SOURCES test_pluto_f.F90 LIBS pluto_f )
+
