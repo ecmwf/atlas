@@ -8,6 +8,7 @@
 ! This File contains Unit Tests for testing the
 ! C++ / Fortran Interfaces to the Mesh Datastructure
 ! @author Willem Deconinck
+! @author Slavko Brdar
 
 #include "fckit/fctest.h"
 
@@ -80,54 +81,6 @@ implicit none
   ! Existing data is not deleted after field%final()
   FCTEST_CHECK_EQUAL( existing_data(1,1,j), real(j, c_double) )
   FCTEST_CHECK_EQUAL( existing_data(2,1,j), -3._c_double )
-END_TEST
-
-! -----------------------------------------------------------------------------
-
-TEST( test_field_wrapdataslice )
-implicit none
-
-  real(c_double), allocatable :: existing_data(:,:,:,:)
-  real(c_double), pointer :: fview(:,:,:)
-  type(atlas_Field) :: field
-  integer(c_int) :: i,j,k,l
-  write(0,*) "test_field_wrapdataslice [skipped]" ! NOT DONE YET !!!
-  return ! SKIP THIS TEST !!!
-  allocate( existing_data(4,3,2,5) )
-
-  existing_data = -1.
-
-  field = atlas_Field(existing_data(:,:,1,:))
-  call field%data(fview)
-
-  !call field%allocate_device()
-  !call field%update_device()
-
-  !!$acc data present(fview)
-  !!$acc parallel loop
-  do i=1,4
-    do j=1,3
-      do k=1,2
-        do l=1,5
-          fview(i,j,l) = 1000*i+100*j+10*1+l
-        enddo
-      enddo
-    enddo
-  enddo
-  !!$acc end data
-
-  call field%deallocate_device()
-
-  k=1
-  do i=1,4
-    do j=1,3
-      do l=1,5
-        FCTEST_CHECK_EQUAL(fview(i,j,l) , real(1000*i+100*j+10*k+l,c_double) )
-      enddo
-    enddo
-  enddo
-
-  call field%final()
 END_TEST
 
 ! -----------------------------------------------------------------------------

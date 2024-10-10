@@ -37,6 +37,7 @@ private:
     ArrayAlignment alignment_;
     std::vector<int> shapef_;
     std::vector<int> stridesf_;
+    std::vector<int> device_stridesf_;
     bool contiguous_;
     bool default_layout_;
 
@@ -64,6 +65,7 @@ public:
     const ArrayLayout& layout() const { return layout_; }
     const std::vector<int>& shapef() const;
     const std::vector<int>& stridesf() const;
+    const std::vector<int>& device_stridesf() const;
     bool contiguous() const { return contiguous_; }
     bool hasDefaultLayout() const { return default_layout_; }
 

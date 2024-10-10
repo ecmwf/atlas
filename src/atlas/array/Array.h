@@ -91,6 +91,8 @@ public:
 
     const std::vector<int>& stridesf() const { return spec_.stridesf(); }
 
+    const ArrayStrides& device_stridesf() const { return spec_.strides(); }
+
     bool contiguous() const { return spec_.contiguous(); }
 
     bool hasDefaultLayout() const { return spec_.hasDefaultLayout(); }
