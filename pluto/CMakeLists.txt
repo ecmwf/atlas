@@ -63,6 +63,11 @@ if(HAVE_WARNING_AS_ERROR)
   ecbuild_add_cxx_flags("-Werror" NO_FAIL NAME pluto_cxx_warning_as_error QUIET)
 endif()
 
+ecbuild_add_option( FEATURE FORTRAN DESCRIPTION "Fortran API for pluto" )
+if( HAVE_FORTRAN )
+    ecbuild_enable_fortran( REQUIRED MODULE_DIRECTORY ${PROJECT_BINARY_DIR}/module )
+endif()
+
 include("cmake/pluto_hic_macros.cmake")
 
 add_subdirectory(src)

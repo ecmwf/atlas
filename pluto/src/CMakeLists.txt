@@ -103,3 +103,11 @@ ecbuild_add_library( TARGET pluto
 target_compile_features( pluto INTERFACE cxx_std_17 )
 target_compile_options( pluto PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:--extended-lambda>)
 
+
+ecbuild_add_library( TARGET pluto_f
+  SOURCES
+    pluto_f/pluto_module.F90
+    pluto_f/pluto_module.cc
+  PRIVATE_LIBS pluto
+  PUBLIC_INCLUDES $<BUILD_INTERFACE:${CMAKE_Fortran_MODULE_DIRECTORY}>
+)
