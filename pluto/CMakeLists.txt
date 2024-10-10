@@ -57,6 +57,11 @@ endif()
 
 include("cmake/target_host_device_sources.cmake")
 
+ecbuild_add_option( FEATURE FORTRAN DESCRIPTION "Fortran API for pluto" )
+if( HAVE_FORTRAN )
+    ecbuild_enable_fortran( REQUIRED MODULE_DIRECTORY ${PROJECT_BINARY_DIR}/module )
+endif()
+
 add_subdirectory(src)
 add_subdirectory(examples)
 add_subdirectory(tests)
