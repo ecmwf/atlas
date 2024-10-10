@@ -23,15 +23,23 @@ module fcta_Field_gpu_fxt
 
 contains
 
-  subroutine module_acc_routine(view)
+  subroutine kernel_host_ptr(view)
     implicit none
-    real(4), intent(inout) :: view(:,:)
+    real(4), pointer, intent(inout) :: view(:,:)
 
     !$acc kernels present(view)
-    view(1,1) = 4.
+    view(2,1) = 4.
     !$acc end kernels
+  end subroutine kernel_host_ptr
 
-  end subroutine module_acc_routine
+  subroutine kernel_device_ptr(dview)
+    implicit none
+    real(4) :: dview(:,:)
+
+    !$acc kernels deviceptr(dview)
+    dview(2,1) = 5.
+    !$acc end kernels
+  end subroutine kernel_device_ptr
 
 ! -----------------------------------------------------------------------------
 
@@ -62,6 +70,7 @@ implicit none
 type(atlas_FieldSet) :: fset
 type(atlas_Field) :: field
 real(4), pointer :: fview(:,:)
+real(4), pointer :: fview_dev(:,:)
 
 print *, "test_fieldset_cummulative_gpu_calls_all_fields"
 fset = atlas_FieldSet()
@@ -81,13 +90,26 @@ FCTEST_CHECK_EQUAL(field%device_allocated(), .true.)
 call fset%update_device()
 
 !$acc kernels present(fview)
-fview(2,1) = 5.
+fview(2,1) = 3.
 !$acc end kernels
 
 FCTEST_CHECK_EQUAL( fview(2,1), 2. )
 call fset%update_host()
+FCTEST_CHECK_EQUAL( fview(2,1), 3. )
+
+call kernel_host_ptr(fview)
+FCTEST_CHECK_EQUAL( fview(2,1), 3. )
+call fset%update_host()
+FCTEST_CHECK_EQUAL( fview(2,1), 4. )
+
+call field%device_data(fview_dev)
+call kernel_device_ptr(fview_dev)
+FCTEST_CHECK_EQUAL( fview(2,1), 4. )
+call fset%update_host()
 FCTEST_CHECK_EQUAL( fview(2,1), 5. )
+
 call fset%deallocate_device()
+
 print *, "... by name"
 field = fset%field("f3")
 call field%data(fview)
