@@ -8,6 +8,7 @@
 ! This File contains Unit Tests for testing the
 ! C++ / Fortran Interfaces to the Mesh Datastructure
 ! @author Willem Deconinck
+! @author Slavko Brdar
 
 #include "fckit/fctest.h"
 
@@ -91,8 +92,10 @@ implicit none
   real(c_double), pointer :: fview(:,:,:)
   type(atlas_Field) :: field
   integer(c_int) :: i,j,k,l
+
   write(0,*) "test_field_wrapdataslice [skipped]" ! NOT DONE YET !!!
   return ! SKIP THIS TEST !!!
+
   allocate( existing_data(4,3,2,5) )
 
   existing_data = -1.
@@ -100,11 +103,11 @@ implicit none
   field = atlas_Field(existing_data(:,:,1,:))
   call field%data(fview)
 
-  !call field%allocate_device()
-  !call field%update_device()
+  call field%allocate_device()
+  call field%update_device()
 
-  !!$acc data present(fview)
-  !!$acc parallel loop
+  !$acc data present(fview)
+  !$acc parallel loop
   do i=1,4
     do j=1,3
       do k=1,2
@@ -114,7 +117,7 @@ implicit none
       enddo
     enddo
   enddo
-  !!$acc end data
+  !$acc end data
 
   call field%deallocate_device()
 
