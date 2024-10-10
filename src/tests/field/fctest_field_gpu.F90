@@ -21,16 +21,6 @@ module fcta_Field_gpu_fxt
   use, intrinsic :: iso_c_binding, only: c_ptr
   implicit none
 
-  !!! WARNING !!! Without this interface, there is a runtime error !!!
-  interface
-    subroutine external_acc_routine(view)
-      real(4), pointer, intent(inout) :: view(:,:)
-    end subroutine external_acc_routine
-    subroutine external_acc_routine_devptr(dview)
-      real(4), pointer, intent(inout) :: dview(:,:)
-    end subroutine external_acc_routine_devptr
-  end interface
-
 contains
 
   subroutine module_acc_routine(view)
@@ -44,57 +34,6 @@ contains
   end subroutine module_acc_routine
 
 ! -----------------------------------------------------------------------------
-
-  subroutine check_field(field, memory_mapped)
-    use fctest, only: fce
-    implicit none
-
-    type(atlas_Field), intent(inout) :: field
-    real(4), pointer :: view(:,:)
-    real(4), pointer :: dview(:,:)
-    logical, intent(in) :: memory_mapped
-
-    if (field%name() == '') call field%rename("field_no-pinning")
-
-    call field%data(view)
-    view(:,:) = 0
-    view(1,1) = 1
-    call field%allocate_device()
-    call field%update_device()
-
-    !$acc kernels present(view)
-        view(1,1) = 2.
-    !$acc end kernels
-
-    if (.not. memory_mapped) FCTEST_CHECK_EQUAL( view(1,1), 1. )
-    call field%update_host()
-    FCTEST_CHECK_EQUAL( view(1,1), 2. )
-
-    call field%device_data(dview)
-    !$acc kernels deviceptr(dview)
-        view(1,1) = 3.
-    !$acc end kernels
-
-    if (.not. memory_mapped) FCTEST_CHECK_EQUAL( view(1,1), 2. )
-    call field%update_host()
-    FCTEST_CHECK_EQUAL( view(1,1), 3. )
-
-    print *, "Check module_acc_routine on ", field%name()
-    call module_acc_routine(view)
-
-    if (.not. memory_mapped) FCTEST_CHECK_EQUAL( view(1,1), 3. )
-    call field%update_host()
-    FCTEST_CHECK_EQUAL( view(1,1), 4. )
-
-    print *, "Check external_acc_routine on ", field%name()
-    call external_acc_routine(view)
-
-    if (.not. memory_mapped) FCTEST_CHECK_EQUAL( view(1,1), 4. )
-    call field%update_host()
-    FCTEST_CHECK_EQUAL( view(1,1), 5. )
-
-    call field%deallocate_device()
-  end subroutine
 
 end module
 
@@ -115,39 +54,6 @@ END_TESTSUITE_INIT
 TESTSUITE_FINALIZE
   call atlas_finalise()
 END_TESTSUITE_FINALIZE
-
-! -----------------------------------------------------------------------------
-
-TEST( test_host_data_with_memory_pinned_mapped )
-implicit none
-type(atlas_Field) :: field
-real(4), pointer :: view(:,:)
-type(atlas_Config) :: options
-
-return !!! TODO: temporary disabled
-
-! host memory pinning with mapped device memory
-options = atlas_Config()
-call options%set("host_memory_pinned", .true.)
-call options%set("host_memory_mapped", .true.)
-field = atlas_Field(name="field_pinned-mapped", kind=atlas_real(4), shape=[5,3])
-call check_field(field, memory_mapped = .true.)
-call field%final()
-
-! host memory pinning, no field name
-call options%set("host_memory_pinned", .true.)
-call options%set("host_memory_mapped", .false.)
-field = atlas_Field(kind=atlas_real(4), shape=[5,3])
-call check_field(field, memory_mapped = .false.)
-call field%final()
-
-! memory no pinning
-call options%set("host_memory_pinned", .false.)
-field = atlas_Field(kind=atlas_real(4), shape=[5,3])
-call check_field(field, memory_mapped = .false.)
-call field%final()
-
-END_TEST
 
 ! -----------------------------------------------------------------------------
 
