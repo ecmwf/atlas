@@ -78,25 +78,25 @@ private:
 namespace memory {
 
 namespace host {
-inline void set_default_resource(pluto::memory_resource* mr) {
-    pluto::host::set_default_resource(mr);
-}
+// inline void set_default_resource(pluto::memory_resource* mr) {
+//     pluto::host::set_default_resource(mr);
+// }
 
-inline void set_default_resource(std::string_view name) {
-    pluto::host::set_default_resource(name);
-}
+// inline void set_default_resource(std::string_view name) {
+//     pluto::host::set_default_resource(name);
+// }
 
 std::unique_ptr<pluto::memory_resource> traced_resource(pluto::memory_resource* upstream = nullptr);
 }
 
 namespace device {
-inline void set_default_resource(pluto::memory_resource* mr) {
-    pluto::device::set_default_resource(mr);
-}
+// inline void set_default_resource(pluto::memory_resource* mr) {
+//     pluto::device::set_default_resource(mr);
+// }
 
-inline void set_default_resource(std::string_view name) {
-    pluto::device::set_default_resource(name);
-}
+// inline void set_default_resource(std::string_view name) {
+//     pluto::device::set_default_resource(name);
+// }
 
 std::unique_ptr<pluto::memory_resource> traced_resource(pluto::memory_resource* upstream = nullptr);
 }
@@ -114,6 +114,28 @@ struct scope {
     static void push();
     static void pop();
 };
+
+class context {
+public:
+    context();
+    pluto::memory_resource* host_memory_resource() { return host_memory_resource_; }
+    pluto::memory_resource* device_memory_resource() { return device_memory_resource_; }
+    bool unified() { return unified_; }
+    void reset();
+private:
+    bool unified_;
+    pluto::memory_resource* host_memory_resource_;
+    pluto::memory_resource* device_memory_resource_;
+};
+
+void register_context(std::string_view name);
+void unregister_context(std::string_view name);
+bool context_exists(std::string_view name);
+void set_context(std::string_view name);
+void set_context(context* ctx);
+context* get_context(std::string_view name);
+
+
 }
 
 }  // namespace atlas
