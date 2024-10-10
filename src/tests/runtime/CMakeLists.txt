@@ -21,6 +21,13 @@ foreach( test test_library test_library_noargs test_library_init_nofinal test_li
   )
 endforeach()
 
+ecbuild_add_test( TARGET atlas_test_memory
+  SOURCES     test_memory.cc
+  LIBS        atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_TRACE_REPORT=1
+)
+
+
 if( HAVE_FCTEST )
 
 add_fctest( TARGET atlas_fctest_trace
