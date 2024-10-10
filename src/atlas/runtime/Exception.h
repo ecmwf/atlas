@@ -11,6 +11,7 @@
 #pragma once
 
 #include <string>
+#include <sstream>
 
 #include "eckit/log/CodeLocation.h"
 
