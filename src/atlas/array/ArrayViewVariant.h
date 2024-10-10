@@ -7,16 +7,15 @@
 
 #pragma once
 
+#include <type_traits>
 #include <variant>
 
-#include "atlas/array.h"
+#include "atlas/array/ArrayView.h"
 
 namespace atlas {
 namespace array {
 
 namespace detail {
-
-using namespace array;
 
 // Container struct for a list of types.
 template <typename... Ts>
@@ -53,6 +52,8 @@ using VariantValueTypes =
 using VariantRanks = detail::Ints<1, 2, 3, 4, 5, 6, 7, 8, 9>;
 
 }  // namespace detail
+
+class Array;
 
 /// @brief Variant containing all supported non-const ArrayView alternatives.
 using ArrayViewVariant =

@@ -10,6 +10,8 @@
 #include <string>
 #include <type_traits>
 
+#include "atlas/array/Array.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/runtime/Exception.h"
 
 namespace atlas {
@@ -49,10 +51,9 @@ VariantType<ArrayType> executeMakeView(ArrayType& array,
   if constexpr (TypeIndex < std::variant_size_v<VariantType<ArrayType>> - 1) {
     return executeMakeView<TypeIndex + 1>(array, makeView);
   } else {
-    throw_Exception("ArrayView<" + array.datatype().str() + ", " +
-                        std::to_string(array.rank()) +
-                        "> is not an alternative in ArrayViewVariant.",
-                    Here());
+    ATLAS_THROW_EXCEPTION("Array with rank = " + std::to_string(array.rank()) +
+                          " and datatype = " + array.datatype().str() +
+                          " is not supported.");
   }
 }
 
