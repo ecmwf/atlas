@@ -20,21 +20,23 @@
 #include "atlas/library/Library.h"
 #include "atlas/library/config.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/runtime/Exception.h"
 #include "eckit/log/Bytes.h"
 
 namespace atlas {
 
+static bool unified_ = false;
+
 struct MemoryScope {
     MemoryScope() {
         pluto::scope::push();
+        previous_unified_ = unified_;
     }
     ~MemoryScope() {
+        unified_ = previous_unified_;
         pluto::scope::pop();
     }
-    MemoryScope(const MemoryScope& previous) {
-        device_memory_mapped_ = previous.device_memory_mapped_;
-    }
-    bool device_memory_mapped_ = false;
+    bool previous_unified_;
 };
 
 static std::stack<MemoryScope>& scope_stack() {
@@ -43,17 +45,67 @@ static std::stack<MemoryScope>& scope_stack() {
 }
 
 void memory::set_unified(bool value) {
-    scope_stack().top().device_memory_mapped_ = value;
+    unified_ = value;
 }
 bool memory::get_unified() {
-    return scope_stack().top().device_memory_mapped_;
+    return unified_;
 }
 
 void memory::scope::push() {
-    scope_stack().emplace(scope_stack().top());
+    scope_stack().emplace();
 }
 void memory::scope::pop() {
     scope_stack().pop();
+}
+
+
+namespace memory {
+context::context() {
+    reset();
+}
+
+void context::reset() {
+    unified_                = get_unified();
+    host_memory_resource_   = pluto::host::get_default_resource();
+    device_memory_resource_ = pluto::device::get_default_resource();
+};
+
+static std::map<std::string, std::unique_ptr<memory::context>> context_registry_;
+
+bool context_exists(std::string_view name) {
+    if (context_registry_.find(std::string(name)) != context_registry_.end()) {
+        return true;
+    }
+    return false;
+}
+
+void register_context(std::string_view name) {
+    std::string _name{name};
+    ATLAS_ASSERT( !context_exists(name) );
+    context_registry_.emplace(_name, new context());
+}
+
+void unregister_context(std::string_view name) {
+    ATLAS_ASSERT( context_exists(name) );
+    context_registry_.erase(std::string(name));
+}
+
+context* get_context(std::string_view name) {
+    ATLAS_ASSERT( context_exists(name) );
+    auto& ctx = context_registry_.at(std::string(name));
+    return ctx.get();
+}
+
+void set_context(context* ctx) {
+    pluto::host::set_default_resource(ctx->host_memory_resource());
+    pluto::device::set_default_resource(ctx->device_memory_resource());
+    set_unified(ctx->unified());
+}
+
+void set_context(std::string_view name) {
+    set_context(get_context(name));
+}
+
 }
 
 Memory::Memory(std::string_view name) :
