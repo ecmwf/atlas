@@ -189,7 +189,7 @@ END_TEST
 
 ! -----------------------------------------------------------------------------
 
-TEST( test_fieldset_cummulative_gpu_calls_not_all_field_with_sync_host_device)
+TEST( test_fieldset_cummulative_gpu_calls_with_sync_host_device)
 implicit none
 type(atlas_FieldSet) :: fset
 type(atlas_Field) :: field
