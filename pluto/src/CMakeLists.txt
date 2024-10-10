@@ -94,3 +94,9 @@ target_include_directories( pluto PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURC
 target_link_libraries( pluto PUBLIC hic )
 target_compile_options( pluto PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:--extended-lambda>)
 
+
+ecbuild_add_library( TARGET pluto_f 
+		     SOURCES  pluto_f/pluto_module.F90
+		              pluto_f/pluto_module.cc
+		     PRIVATE_LIBS pluto
+	           ) 
