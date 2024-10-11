@@ -290,7 +290,6 @@ void testInterpolation(const Config& config) {
   auto sourceAdjointView = array::make_view<double, Rank>(sourceAdjoint);
   sourceAdjointView.assign(0.);
 
-  sourceAdjoint.set_dirty(false);
   interp.execute_adjoint(sourceAdjoint, targetAdjoint);
 
   // Check fields for nans or +/-inf
