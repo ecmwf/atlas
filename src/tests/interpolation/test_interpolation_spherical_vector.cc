@@ -464,6 +464,97 @@ CASE("structured columns O96 vector interpolation (2d-field, 2-vector, hi-res)")
   testInterpolation<Rank2dField>((config));
 }
 
+CASE("separate vector field components") {
+  const auto sourceFunctionSpace =
+      FunctionSpaceFixtures::get("structured_columns");
+  const auto targetFunctionSpace =
+      FunctionSpaceFixtures::get("cubedsphere_mesh");
+
+  auto sourceFieldSet = FieldSet{};
+  auto targetFieldSet = FieldSet{};
+
+  const auto sourceLonLatView =
+      array::make_view<double, 2>(sourceFunctionSpace.lonlat());
+  const auto targetLonLatView =
+      array::make_view<double, 2>(targetFunctionSpace.lonlat());
+
+  const auto createFieldView = [&](const FunctionSpace& functionSpace,
+                                   const std::string& name,
+                                   FieldSet& fieldSet) {
+    // Note: Vector field name can be anything that uniquely identifies field.
+    auto field = functionSpace.createField<double>(option::name(name));
+    field.metadata().set("vector_field_name", "wind");
+    return array::make_view<double, 1>(fieldSet.add(field));
+  };
+
+  auto uSourceView = createFieldView(sourceFunctionSpace, "u", sourceFieldSet);
+  auto vSourceView = createFieldView(sourceFunctionSpace, "v", sourceFieldSet);
+  const auto uTargetView =
+      createFieldView(targetFunctionSpace, "u", targetFieldSet);
+  const auto vTargetView =
+      createFieldView(targetFunctionSpace, "v", targetFieldSet);
+
+  uSourceView.assign(0.);
+  vSourceView.assign(0.);
+  for (auto idx = idx_t{0}; idx < sourceFunctionSpace.size(); idx++) {
+    std::tie(uSourceView(idx), vSourceView(idx)) =
+        vortexHorizontal(sourceLonLatView(idx, 0), sourceLonLatView(idx, 1));
+  }
+
+  const auto interpScheme =
+      InterpSchemeFixtures::get("structured_linear_spherical");
+
+  const auto interp =
+      Interpolation(interpScheme, sourceFunctionSpace, targetFunctionSpace);
+
+  interp.execute(sourceFieldSet, targetFieldSet);
+  targetFieldSet.haloExchange();
+
+  auto errorView =
+      createFieldView(targetFunctionSpace, "error", targetFieldSet);
+
+  auto maxError = 0.;
+  for (auto idx = idx_t{0}; idx < targetFunctionSpace.size(); idx++) {
+    auto [uTrue, vTrue] =
+        vortexHorizontal(targetLonLatView(idx, 0), targetLonLatView(idx, 1));
+    errorView(idx) =
+        std::hypot(uTrue - uTargetView(idx), vTrue - vTargetView(idx));
+    maxError = std::max(maxError, errorView(idx));
+  }
+  EXPECT_APPROX_EQ(maxError, 0., 0.00017);
+
+  gmshOutput("vector_components_source.msh", sourceFieldSet);
+  gmshOutput("vector_components_target.msh", targetFieldSet);
+
+  auto sourceAdjointFieldSet = FieldSet{};
+  auto targetAdjointFieldSet = FieldSet{};
+
+  targetAdjointFieldSet.add(targetFieldSet["u"].clone());
+  targetAdjointFieldSet.add(targetFieldSet["v"].clone());
+
+  targetAdjointFieldSet.adjointHaloExchange();
+
+  auto uSourceAdjointView =
+      createFieldView(sourceFunctionSpace, "u", sourceAdjointFieldSet);
+  auto vSourceAdjointView =
+      createFieldView(sourceFunctionSpace, "v", sourceAdjointFieldSet);
+  uSourceAdjointView.assign(0.);
+  vSourceAdjointView.assign(0.);
+
+  //  sourceAdjointFieldSet.set_dirty(false);
+  interp.execute_adjoint(sourceAdjointFieldSet, targetAdjointFieldSet);
+
+  constexpr auto tinyNum = 1e-13;
+  const auto targetDotTarget = dotProduct(uTargetView, uTargetView) +
+                               dotProduct(vTargetView, vTargetView);
+  const auto sourceDotSourceAdjoint =
+      dotProduct(uSourceView, uSourceAdjointView) +
+      dotProduct(vSourceView, vSourceAdjointView);
+
+  const auto dotProdRatio = targetDotTarget / sourceDotSourceAdjoint;
+  EXPECT_APPROX_EQ(dotProdRatio, 1., tinyNum);
+}
+
 }  // namespace test
 }  // namespace atlas
 
