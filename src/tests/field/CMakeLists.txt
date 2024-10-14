@@ -92,6 +92,19 @@ if( HAVE_FCTEST )
     set_tests_properties ( atlas_fctest_field_device PROPERTIES LABELS "gpu;acc")
   endif()
 
+  add_fctest( TARGET atlas_fctest_fieldset_device
+    CONDITION       atlas_HAVE_ACC
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_fieldset_gpu.F90
+    LIBS            atlas_f OpenACC::OpenACC_Fortran
+    ENVIRONMENT     ${ATLAS_TEST_ENVIRONMENT} ATLAS_RUN_NGPUS=1
+  )
+
+  if( TARGET atlas_fctest_fieldset_device )
+    set_tests_properties ( atlas_fctest_fieldset_device PROPERTIES LABELS "gpu;acc")
+  endif()
+
+
   add_fctest( TARGET atlas_fctest_field_wrap_device
     CONDITION       atlas_HAVE_ACC
     LINKER_LANGUAGE Fortran
