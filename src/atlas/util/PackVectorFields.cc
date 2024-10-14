@@ -26,8 +26,6 @@ namespace util {
 namespace {
 
 using eckit::LocalConfiguration;
-
-using array::DataType;
 using array::helpers::arrayForEachDim;
 
 void addOrReplaceField(FieldSet& fieldSet, const Field& field) {
@@ -84,51 +82,29 @@ void checkFieldCompatibility(const Field& componentField,
 
 template <typename ComponentField, typename VectorField, typename Functor>
 void copyFieldData(ComponentField& componentField, VectorField& vectorField,
-                const Functor& copier) {
+                   const Functor& copier) {
   checkFieldCompatibility(componentField, vectorField);
 
-  const auto copyArrayData = [&](auto value, auto rank) {
-    // Resolve value-type and rank from arguments.
-    using Value = decltype(value);
-    constexpr auto Rank = decltype(rank)::value;
+  auto componentViewVariant = array::make_view_variant(componentField);
 
-    // Iterate over fields.
-    auto vectorView = array::make_view<Value, Rank>(vectorField);
-    auto componentView = array::make_view<Value, Rank - 1>(componentField);
-    constexpr auto Dims = std::make_integer_sequence<int, Rank - 1>{};
-    arrayForEachDim(Dims, execution::par, std::tie(componentView, vectorView),
-                    copier);
-  };
+  const auto componentVisitor = [&](auto componentView) {
+    if constexpr (array::is_rank<1, 2>(componentView)) {
+      using ComponentView = std::decay_t<decltype(componentView)>;
+      constexpr auto ComponentRank = ComponentView::rank();
+      using Value = typename ComponentView::non_const_value_type;
 
-  const auto selectRank = [&](auto value) {
-    switch (vectorField.rank()) {
-      case 2:
-        return copyArrayData(value, std::integral_constant<int, 2>{});
-      case 3:
-        return copyArrayData(value, std::integral_constant<int, 3>{});
-      default:
-        ATLAS_THROW_EXCEPTION("Unsupported vector field rank: " +
-                              std::to_string(vectorField.rank()));
+      auto vectorView = array::make_view<Value, ComponentRank + 1>(vectorField);
+      constexpr auto Dims = std::make_integer_sequence<int, ComponentRank>{};
+      arrayForEachDim(Dims, execution::par, std::tie(componentView, vectorView),
+                      copier);
+
+    } else {
+      ATLAS_THROW_EXCEPTION("Unsupported component field rank: " +
+                            std::to_string(componentView.rank()));
     }
   };
 
-  const auto selectType = [&]() {
-    switch (vectorField.datatype().kind()) {
-      case DataType::kind<double>():
-        return selectRank(double{});
-      case DataType::kind<float>():
-        return selectRank(float{});
-      case DataType::kind<long>():
-        return selectRank(long{});
-      case DataType::kind<int>():
-        return selectRank(int{});
-      default:
-        ATLAS_THROW_EXCEPTION("Unknown datatype: " +
-                              std::to_string(vectorField.datatype().kind()));
-    }
-  };
-
-  selectType();
+  std::visit(componentVisitor, componentViewVariant);
 }
 
 }  // namespace
@@ -187,8 +163,6 @@ FieldSet pack_vector_fields(const FieldSet& fields, FieldSet packedFields) {
     } else {
       vectorField.set_dirty(vectorField.dirty() || componentField.dirty());
     }
-
-
   }
   return packedFields;
 }
@@ -208,7 +182,6 @@ FieldSet unpack_vector_fields(const FieldSet& fields, FieldSet unpackedFields) {
 
     auto vectorIndex = 0;
     for (const auto& componentFieldMetadata : componentFieldMetadataVector) {
-
       // Get or create field.
       auto componentFieldName = std::string{};
       componentFieldMetadata.get("name", componentFieldName);
