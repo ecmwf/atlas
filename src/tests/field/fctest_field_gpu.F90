@@ -36,6 +36,26 @@ subroutine module_acc_routine(view)
 
 end subroutine module_acc_routine
 
+subroutine kernel_host_ptr(view)
+  implicit none
+  real(4), intent(inout) :: view(:,:)
+  !$acc data present(view)
+  !$acc kernels present(view)
+  view(2,1) = 4.
+  !$acc end kernels
+  !$acc end data
+end subroutine kernel_host_ptr
+
+subroutine kernel_device_ptr(dview)
+  implicit none
+  real(4), intent(inout) :: dview(:,:)
+  !$acc data deviceptr(dview)
+  !$acc kernels
+  dview(2,1) = 5.
+  !$acc end kernels
+  !$acc end data
+end subroutine kernel_device_ptr
+
 end module
 
 ! -----------------------------------------------------------------------------
@@ -107,6 +127,30 @@ call field%final()
 END_TEST
 
 ! -----------------------------------------------------------------------------
+
+TEST( test_device_data )
+implicit none
+type(atlas_Field) :: field
+real(4), pointer :: view(:,:)
+real(4), pointer :: dview(:,:)
+
+field = atlas_Field(kind=atlas_real(4),shape=[5,3])
+
+call field%data(view)
+view(:,:) = 0
+
+call field%allocate_device()
+call field%update_device()
+call field%device_data(dview)
+call kernel_device_ptr(dview)
+call field%update_host()
+FCTEST_CHECK_EQUAL( view(2,1), 5. )
+
+call field%final()
+END_TEST
+
+! -----------------------------------------------------------------------------
+
 
 END_TESTSUITE
 
