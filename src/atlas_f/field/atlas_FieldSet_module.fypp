@@ -65,6 +65,8 @@ contains
   procedure, private :: access_data_${dtype}$_r${rank}$_by_idx
   procedure, private :: access_data_${dtype}$_r${rank}$_slice_by_name
   procedure, private :: access_data_${dtype}$_r${rank}$_slice_by_idx
+  procedure, private :: access_device_data_${dtype}$_r${rank}$_by_name
+  procedure, private :: access_device_data_${dtype}$_r${rank}$_by_idx
 #:endfor
 #:endfor
 
@@ -75,6 +77,15 @@ contains
       & access_data_${dtype}$_r${rank}$_by_idx, &
       & access_data_${dtype}$_r${rank}$_slice_by_name, &
       & access_data_${dtype}$_r${rank}$_slice_by_idx, &
+#:endfor
+#:endfor
+      & dummy
+
+  generic, public :: device_data => &
+#:for rank in ranks
+#:for dtype in dtypes
+      & access_device_data_${dtype}$_r${rank}$_by_name, &
+      & access_device_data_${dtype}$_r${rank}$_by_idx, &
 #:endfor
 #:endfor
       & dummy
@@ -199,10 +210,52 @@ subroutine access_data_${dtype}$_r${rank}$_slice_by_idx(this, idx, slice, iblk)
   slice => field(iblk)
 #:endif 
 end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine access_device_data_${dtype}$_r${rank}$_by_name(this, name, field)
+  use fckit_c_interop_module, only: c_str
+  use atlas_field_c_binding
+  use atlas_Field_module, only: atlas_Field
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
+  class(atlas_FieldSet), intent(in) :: this
+  character(len=*), intent(in) :: name
+  ${ftype}$, pointer, intent(inout) :: field(${dim[rank]}$)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  type(atlas_Field) :: field_sel
+  field_sel = this%field(name)
+  call atlas__Field__device_data_${ctype}$_specf(field_sel%CPTR_PGIBUG_A, field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr, rank, shape_cptr, strides_cptr, field)
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine access_device_data_${dtype}$_r${rank}$_by_idx(this, idx, field)
+  use fckit_c_interop_module, only: c_str
+  use atlas_field_c_binding
+  use atlas_Field_module, only: atlas_Field
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
+  class(atlas_FieldSet), intent(in) :: this
+  integer, intent(in) :: idx
+  ${ftype}$, pointer, intent(inout) :: field(${dim[rank]}$)
+  type(c_ptr) :: field_cptr
+  type(c_ptr) :: shape_cptr
+  type(c_ptr) :: strides_cptr
+  integer(c_int) :: rank
+  type(atlas_Field) :: field_loc
+  field_loc = this%field(idx)
+  call atlas__Field__device_data_${ctype}$_specf(field_loc%CPTR_PGIBUG_A, field_cptr, rank, shape_cptr, strides_cptr)
+  call array_c_to_f(field_cptr, rank, shape_cptr, strides_cptr, field)
+end subroutine
+
 !-------------------------------------------------------------------------------
 
 #:endfor
 #:endfor
+
 subroutine dummy(this)
   use atlas_fieldset_c_binding
   class(atlas_FieldSet), intent(in) :: this
