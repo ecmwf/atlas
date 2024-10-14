@@ -23,17 +23,17 @@
   #include <cuda_runtime.h>
 #elif HIC_BACKEND_HIP
   #define HIC_BACKEND hip
-  #if defined(DEPRECATED)
-  #define DEFINED_OUTERSCOPE DEPRECATED
-  #undef DEPRECATED
-  #endif
+//#if defined(DEPRECATED)
+//  #define DEFINED_OUTERSCOPE DEPRECATED
+//  #undef DEPRECATED
+//  #endif
   #include <hip/hip_runtime.h>
-  #if defined(DEPRECATED)
-  #undef DEPRECATED
-  #endif
-  #if defined(DEFINED_OUTERSCOPE)
-  #define DEPRECATED DEFINED_OUTERSCOPE
-  #endif
+//  #if defined(DEPRECATED)
+//  #undef DEPRECATED
+//  #endif
+//  #if defined(DEFINED_OUTERSCOPE)
+//  #define DEPRECATED DEFINED_OUTERSCOPE
+//  #endif
 
 #if HIP_VERSION_MAJOR < 6
   enum hicMemoryType {

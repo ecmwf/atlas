@@ -7,7 +7,7 @@
 # does it submit to any jurisdiction.
 
 
-pluto_host_device( pluto_host_device_src SOURCE pluto/device/MemoryResource.cc)
+#pluto_host_device( pluto_host_device_src SOURCE pluto/device/MemoryResource.cc)
 
 set(PLUTO_HAVE_CUDA ${HAVE_CUDA} )
 set(PLUTO_HAVE_HIP  ${HAVE_HIP} )
@@ -26,8 +26,8 @@ install( FILES
 
 ecbuild_add_library( TARGET pluto
   SOURCES
-    ${pluto_host_device_src}
-
+  #!${pluto_host_device_src}
+    pluto/device/MemoryResource.cc
     pluto/device/allocator.h
     pluto/device/make_copy.h
     pluto/device/MemoryResource.h
