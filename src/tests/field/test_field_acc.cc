@@ -72,10 +72,19 @@ CASE("test_field_acc") {
     {
         cpu_ptr[view.index(3,2)] = 3.;
     }
-
     field.updateHost();
-
     EXPECT_EQ( view(3,2), 3. );
+
+
+    auto dview = array::make_device_view<double,2>(field);
+    double* dptr = dview.data();
+#pragma acc parallel deviceptr(dptr)
+    {
+        dptr[dview.index(3,2)] = 4.;
+    }
+    field.updateHost();
+    EXPECT_EQ( view(3,2), 4. );
+
 #endif
 }
 
