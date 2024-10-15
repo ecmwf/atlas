@@ -19,7 +19,7 @@ namespace pluto {
 
 class PinnedMemoryResource : public memory_resource {
 public:
-    PinnedMemoryResource() : PinnedMemoryResource(get_default_resource()) {}
+    PinnedMemoryResource() : PinnedMemoryResource(new_delete_resource()) {}
     PinnedMemoryResource(memory_resource* upstream) : upstream_(upstream) {}
     PinnedMemoryResource(std::string_view name) : PinnedMemoryResource(get_registered_resource(name)) {}
 
