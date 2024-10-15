@@ -1,13 +1,14 @@
 #include <string_view>
+#include <cstddef>
 
 #include "pluto/pluto.h"
 
 extern "C" {
 void c_pluto_host_set_default_resource(const char* name, int name_size) {
-    pluto::host::set_default_resource( std::string_view{name,name_size} );
+    pluto::host::set_default_resource( std::string_view{name,static_cast<std::size_t>(name_size)} );
 }
 void c_pluto_device_set_default_resource(const char* name, int name_size) {
-    pluto::device::set_default_resource( std::string_view{name,name_size} );
+    pluto::device::set_default_resource( std::string_view{name,static_cast<std::size_t>(name_size)} );
 }
 void c_pluto_scope_push() {
     pluto::scope::push();
