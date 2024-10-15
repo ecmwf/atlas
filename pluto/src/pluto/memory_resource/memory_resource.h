@@ -37,7 +37,7 @@ using pool_options = STD_PMR::pool_options;
 inline memory_resource* null_memory_resource() { return STD_PMR::null_memory_resource(); }
 inline memory_resource* new_delete_resource()  { return STD_PMR::new_delete_resource();  }
 inline memory_resource* get_default_resource() { 
-    //init();
+    init();
     return STD_PMR::get_default_resource(); }
 inline void set_default_resource(memory_resource* mr) { STD_PMR::set_default_resource(mr); }
 
