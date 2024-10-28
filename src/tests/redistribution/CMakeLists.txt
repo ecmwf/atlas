@@ -14,7 +14,7 @@ if( HAVE_FORTRAN )
     LINKER_LANGUAGE  Fortran
     SOURCES          fctest_redistribution.F90
     LIBS             atlas_f
-    ENVIRONMENT      ${ATLAS_TEST_ENVIRONMENT}
+    ENVIRONMENT      ${ATLAS_TEST_ENVIRONMENT} ATLAS_FINALISES_MPI=1
   )
 endif()
 

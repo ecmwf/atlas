@@ -516,6 +516,8 @@ CASE("test_trans_using_functionspace_StructuredColumns") {
     EXPECT_THROWS_AS(trans.dirtrans(gpfields, spfields), eckit::Exception);
 }
 
+#if 0
+// NOT SUPPORTED IN ECTRANS WITH GPU
 CASE("test_trans_MIR_lonlat") {
     Log::info() << "test_trans_MIR_lonlat" << std::endl;
 
@@ -532,7 +534,10 @@ CASE("test_trans_MIR_lonlat") {
         EXPECT_NO_THROW(trans.dirtrans(1, gpf.data(), spf.data(), option::global()));
     }
 }
+#endif
 
+#if 0
+// NOT SUPPORTED IN ECTRANS WITH GPU
 CASE("test_trans_VorDivToUV") {
     int nfld = 1;                          // TODO: test for nfld>1
     std::vector<int> truncation_array{1};  // truncation_array{159,160,1279};
@@ -592,6 +597,7 @@ CASE("test_trans_VorDivToUV") {
         }
     }
 }
+#endif
 
 #ifdef TRANS_HAVE_IO
 CASE("ATLAS-256: Legendre coefficient expected unique identifiers") {
