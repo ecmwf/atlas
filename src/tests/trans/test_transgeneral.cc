@@ -1578,7 +1578,8 @@ CASE("test_trans_levels") {
 }
 #endif
 
-
+#if 0
+// ECTRANS GPU VERSION DOES NOT YET SUPPORT THIS
 #if ATLAS_HAVE_TRANS
 #if ATLAS_HAVE_ECTRANS || defined(TRANS_HAVE_INVTRANS_ADJ)
 CASE("test_2level_adjoint_test_with_powerspectrum_convolution") {
@@ -1809,6 +1810,7 @@ CASE("test_2level_adjoint_test_with_vortdiv") {
                 << " " << adj_value << " " << adj_value2 << std::endl;
     EXPECT(std::abs(adj_value - adj_value2) / adj_value < 1e-12);
 }
+#endif
 #endif
 #endif
 
