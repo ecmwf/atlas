@@ -16,7 +16,7 @@ if( HAVE_FCTEST )
       LIBS            atlas_f
       CONDITION       eckit_HAVE_MPI AND ( transi_HAVE_MPI OR ectrans_HAVE_MPI ) AND MPI_SLOTS GREATER_EQUAL 4
       MPI             4
-      ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+      ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_FINALISES_MPI=1
     )
   endif()
 
@@ -25,7 +25,7 @@ if( HAVE_FCTEST )
       LINKER_LANGUAGE Fortran
       SOURCES         fctest_trans_invtrans_grad.F90
       LIBS            atlas_f
-      ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+      ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_FINALISES_MPI=1
     )
   endif()
 
