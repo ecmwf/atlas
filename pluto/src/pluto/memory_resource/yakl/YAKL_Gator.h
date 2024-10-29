@@ -237,6 +237,17 @@ namespace yakl {
     };
 
 
+    bool thisIsMyPointer(void *ptr) {
+      std::lock_guard lock(mtx1);
+      // Go through each pool.
+      for (auto it = pools.rbegin() ; it != pools.rend() ; it++) {
+        if (it->thisIsMyPointer(ptr)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     /** @brief Free the passed pointer, and return the pointer to allocated space.
       * @details Attempting to free a pointer not found in the list of pools will result in a thrown exception */
     void free(void *ptr , char const * label = "" ) {

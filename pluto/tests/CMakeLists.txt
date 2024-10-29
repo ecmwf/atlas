@@ -12,3 +12,4 @@ add_subdirectory(sandbox)
 
 ecbuild_add_test( TARGET pluto_test_pluto_f SOURCES test_pluto_f.F90 LIBS pluto_f )
 
+ecbuild_add_test( TARGET pluto_test_memory_pool SOURCES pluto_test_memory_pool.cc LIBS pluto )
