@@ -1,6 +1,6 @@
 
 ecbuild_add_executable( TARGET pluto-benchmark 
-    SOURCES run_benchmark.cc
+    SOURCES run_benchmark.cc benchmark.cc
     LIBS    pluto
     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR} )
-target_host_device_sources( pluto-benchmark PRIVATE benchmark.cc)
+pluto_declare_hic_source_files(benchmark.cc)
