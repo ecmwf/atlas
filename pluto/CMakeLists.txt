@@ -41,6 +41,8 @@ endif()
 set( HAVE_CUDA ${hic_HAVE_CUDA} )
 set( HAVE_HIP  ${hic_HAVE_HIP}  )
 
+include("cmake/pluto_hic_macros.cmake")
+
 if( HAVE_CUDA )
   ecbuild_info("pluto has GPU support via CUDA")
   set( CMAKE_CUDA_RESOLVE_DEVICE_SYMBOLS ON )
@@ -54,8 +56,6 @@ elseif( HAVE_HIP )
 else()
   ecbuild_info("pluto has no GPU support")
 endif()
-
-include("cmake/target_host_device_sources.cmake")
 
 ecbuild_add_option( FEATURE FORTRAN DESCRIPTION "Fortran API for pluto" )
 if( HAVE_FORTRAN )
