@@ -72,6 +72,22 @@ contains
     procedure :: pluto_allocator_allocate_real64_r2
     procedure :: pluto_allocator_allocate_real64_r3
     procedure :: pluto_allocator_allocate_real64_r4
+    procedure :: pluto_allocator_allocate_mold_int32_r1
+    procedure :: pluto_allocator_allocate_mold_int32_r2
+    procedure :: pluto_allocator_allocate_mold_int32_r3
+    procedure :: pluto_allocator_allocate_mold_int32_r4
+    procedure :: pluto_allocator_allocate_mold_int64_r1
+    procedure :: pluto_allocator_allocate_mold_int64_r2
+    procedure :: pluto_allocator_allocate_mold_int64_r3
+    procedure :: pluto_allocator_allocate_mold_int64_r4
+    procedure :: pluto_allocator_allocate_mold_real32_r1
+    procedure :: pluto_allocator_allocate_mold_real32_r2
+    procedure :: pluto_allocator_allocate_mold_real32_r3
+    procedure :: pluto_allocator_allocate_mold_real32_r4
+    procedure :: pluto_allocator_allocate_mold_real64_r1
+    procedure :: pluto_allocator_allocate_mold_real64_r2
+    procedure :: pluto_allocator_allocate_mold_real64_r3
+    procedure :: pluto_allocator_allocate_mold_real64_r4
 
     generic :: allocate => &
         & pluto_allocator_allocate_int32_r1, &
@@ -89,7 +105,23 @@ contains
         & pluto_allocator_allocate_real64_r1, &
         & pluto_allocator_allocate_real64_r2, &
         & pluto_allocator_allocate_real64_r3, &
-        & pluto_allocator_allocate_real64_r4
+        & pluto_allocator_allocate_real64_r4, &
+        & pluto_allocator_allocate_mold_int32_r1, &
+        & pluto_allocator_allocate_mold_int32_r2, &
+        & pluto_allocator_allocate_mold_int32_r3, &
+        & pluto_allocator_allocate_mold_int32_r4, &
+        & pluto_allocator_allocate_mold_int64_r1, &
+        & pluto_allocator_allocate_mold_int64_r2, &
+        & pluto_allocator_allocate_mold_int64_r3, &
+        & pluto_allocator_allocate_mold_int64_r4, &
+        & pluto_allocator_allocate_mold_real32_r1, &
+        & pluto_allocator_allocate_mold_real32_r2, &
+        & pluto_allocator_allocate_mold_real32_r3, &
+        & pluto_allocator_allocate_mold_real32_r4, &
+        & pluto_allocator_allocate_mold_real64_r1, &
+        & pluto_allocator_allocate_mold_real64_r2, &
+        & pluto_allocator_allocate_mold_real64_r3, &
+        & pluto_allocator_allocate_mold_real64_r4
 
 
     procedure :: pluto_allocator_deallocate_int32_r1
@@ -459,6 +491,119 @@ subroutine pluto_allocator_allocate_real64_r4(this, array, shape)
     else
         array => null()
     endif
+end subroutine
+
+
+subroutine pluto_allocator_allocate_mold_int32_r1(this, array, mold)
+    class(pluto_allocator) :: this
+    integer(c_int32_t), pointer, intent(out) :: array(:)
+    integer(c_int32_t), intent(in) :: mold(:)
+    call pluto_allocator_allocate_int32_r1(this, array, shape(mold))
+end subroutine
+
+subroutine pluto_allocator_allocate_mold_int32_r2(this, array, mold)
+    class(pluto_allocator) :: this
+    integer(c_int32_t), pointer, intent(out) :: array(:,:)
+    integer(c_int32_t), intent(in) :: mold(:,:)
+    call pluto_allocator_allocate_int32_r2(this, array, shape(mold))
+end subroutine
+
+subroutine pluto_allocator_allocate_mold_int32_r3(this, array, mold)
+    class(pluto_allocator) :: this
+    integer(c_int32_t), pointer, intent(out) :: array(:,:,:)
+    integer(c_int32_t), intent(in) :: mold(:,:,:)
+    call pluto_allocator_allocate_int32_r3(this, array, shape(mold))
+end subroutine
+
+subroutine pluto_allocator_allocate_mold_int32_r4(this, array, mold)
+    class(pluto_allocator) :: this
+    integer(c_int32_t), pointer, intent(out) :: array(:,:,:,:)
+    integer(c_int32_t), intent(in) :: mold(:,:,:,:)
+    call pluto_allocator_allocate_int32_r4(this, array, shape(mold))
+end subroutine
+
+subroutine pluto_allocator_allocate_mold_int64_r1(this, array, mold)
+    class(pluto_allocator) :: this
+    integer(c_int64_t), pointer, intent(out) :: array(:)
+    integer(c_int64_t), intent(in) :: mold(:)
+    call pluto_allocator_allocate_int64_r1(this, array, shape(mold))
+end subroutine
+
+subroutine pluto_allocator_allocate_mold_int64_r2(this, array, mold)
+    class(pluto_allocator) :: this
+    integer(c_int64_t), pointer, intent(out) :: array(:,:)
+    integer(c_int64_t), intent(in) :: mold(:,:)
+    call pluto_allocator_allocate_int64_r2(this, array, shape(mold))
+end subroutine
+
+subroutine pluto_allocator_allocate_mold_int64_r3(this, array, mold)
+    class(pluto_allocator) :: this
+    integer(c_int64_t), pointer, intent(out) :: array(:,:,:)
+    integer(c_int64_t), intent(in) :: mold(:,:,:)
+    call pluto_allocator_allocate_int64_r3(this, array, shape(mold))
+end subroutine
+
+subroutine pluto_allocator_allocate_mold_int64_r4(this, array, mold)
+    class(pluto_allocator) :: this
+    integer(c_int64_t), pointer, intent(out) :: array(:,:,:,:)
+    integer(c_int64_t), intent(in) :: mold(:,:,:,:)
+    call pluto_allocator_allocate_int64_r4(this, array, shape(mold))
+end subroutine
+
+subroutine pluto_allocator_allocate_mold_real32_r1(this, array, mold)
+    class(pluto_allocator) :: this
+    real(c_float), pointer, intent(out) :: array(:)
+    real(c_float), intent(in) :: mold(:)
+    call pluto_allocator_allocate_real32_r1(this, array, shape(mold))
+end subroutine
+
+subroutine pluto_allocator_allocate_mold_real32_r2(this, array, mold)
+    class(pluto_allocator) :: this
+    real(c_float), pointer, intent(out) :: array(:,:)
+    real(c_float), intent(in) :: mold(:,:)
+    call pluto_allocator_allocate_real32_r2(this, array, shape(mold))
+end subroutine
+
+subroutine pluto_allocator_allocate_mold_real32_r3(this, array, mold)
+    class(pluto_allocator) :: this
+    real(c_float), pointer, intent(out) :: array(:,:,:)
+    real(c_float), intent(in) :: mold(:,:,:)
+    call pluto_allocator_allocate_real32_r3(this, array, shape(mold))
+end subroutine
+
+subroutine pluto_allocator_allocate_mold_real32_r4(this, array, mold)
+    class(pluto_allocator) :: this
+    real(c_float), pointer, intent(out) :: array(:,:,:,:)
+    real(c_float), intent(in) :: mold(:,:,:,:)
+    call pluto_allocator_allocate_real32_r4(this, array, shape(mold))
+end subroutine
+
+subroutine pluto_allocator_allocate_mold_real64_r1(this, array, mold)
+    class(pluto_allocator) :: this
+    real(c_double), pointer, intent(out) :: array(:)
+    real(c_double), intent(in) :: mold(:)
+    call pluto_allocator_allocate_real64_r1(this, array, shape(mold))
+end subroutine
+
+subroutine pluto_allocator_allocate_mold_real64_r2(this, array, mold)
+    class(pluto_allocator) :: this
+    real(c_double), pointer, intent(out) :: array(:,:)
+    real(c_double), intent(in) :: mold(:,:)
+    call pluto_allocator_allocate_real64_r2(this, array, shape(mold))
+end subroutine
+
+subroutine pluto_allocator_allocate_mold_real64_r3(this, array, mold)
+    class(pluto_allocator) :: this
+    real(c_double), pointer, intent(out) :: array(:,:,:)
+    real(c_double), intent(in) :: mold(:,:,:)
+    call pluto_allocator_allocate_real64_r3(this, array, shape(mold))
+end subroutine
+
+subroutine pluto_allocator_allocate_mold_real64_r4(this, array, mold)
+    class(pluto_allocator) :: this
+    real(c_double), pointer, intent(out) :: array(:,:,:,:)
+    real(c_double), intent(in) :: mold(:,:,:,:)
+    call pluto_allocator_allocate_real64_r4(this, array, shape(mold))
 end subroutine
 
 subroutine pluto_allocator_deallocate_int32_r1(this, array)

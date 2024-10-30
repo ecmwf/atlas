@@ -13,6 +13,9 @@ type(c_ptr) :: mem
 real(wp), pointer :: array1d(:), array2d(:,:), array3d(:,:,:), array4d(:,:,:,:)
 real(wp) :: real_value
 
+integer(4), pointer :: iarray1d(:), jarray1d(:)
+
+
 call pluto%host%set_default_resource("pluto::managed_resource")
 call pluto%host%get_default_resource(host_memory_resource)
 call host_memory_resource%allocate(mem, 10*c_sizeof(real_value))
@@ -34,5 +37,10 @@ call host_allocator%deallocate(array3d)
 
 call host_allocator%allocate(array4d, [5,2,3,6])
 call host_allocator%deallocate(array4d)
+
+call host_allocator%allocate(iarray1d, shape=[20])
+call host_allocator%allocate(jarray1d, mold=iarray1d)
+call host_allocator%deallocate(iarray1d)
+call host_allocator%deallocate(jarray1d)
 
 end program
