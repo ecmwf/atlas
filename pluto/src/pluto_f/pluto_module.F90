@@ -55,39 +55,24 @@ end type
 type pluto_allocator
     type(pluto_memory_resource) :: memory_resource
 contains
+
     procedure :: pluto_allocator_allocate_int32_r1
     procedure :: pluto_allocator_allocate_int32_r2
     procedure :: pluto_allocator_allocate_int32_r3
     procedure :: pluto_allocator_allocate_int32_r4
-    procedure :: pluto_allocator_deallocate_int32_r1
-    procedure :: pluto_allocator_deallocate_int32_r2
-    procedure :: pluto_allocator_deallocate_int32_r3
-    procedure :: pluto_allocator_deallocate_int32_r4
     procedure :: pluto_allocator_allocate_int64_r1
     procedure :: pluto_allocator_allocate_int64_r2
     procedure :: pluto_allocator_allocate_int64_r3
     procedure :: pluto_allocator_allocate_int64_r4
-    procedure :: pluto_allocator_deallocate_int64_r1
-    procedure :: pluto_allocator_deallocate_int64_r2
-    procedure :: pluto_allocator_deallocate_int64_r3
-    procedure :: pluto_allocator_deallocate_int64_r4
-
     procedure :: pluto_allocator_allocate_real32_r1
     procedure :: pluto_allocator_allocate_real32_r2
     procedure :: pluto_allocator_allocate_real32_r3
     procedure :: pluto_allocator_allocate_real32_r4
-    procedure :: pluto_allocator_deallocate_real32_r1
-    procedure :: pluto_allocator_deallocate_real32_r2
-    procedure :: pluto_allocator_deallocate_real32_r3
-    procedure :: pluto_allocator_deallocate_real32_r4
     procedure :: pluto_allocator_allocate_real64_r1
     procedure :: pluto_allocator_allocate_real64_r2
     procedure :: pluto_allocator_allocate_real64_r3
     procedure :: pluto_allocator_allocate_real64_r4
-    procedure :: pluto_allocator_deallocate_real64_r1
-    procedure :: pluto_allocator_deallocate_real64_r2
-    procedure :: pluto_allocator_deallocate_real64_r3
-    procedure :: pluto_allocator_deallocate_real64_r4
+
     generic :: allocate => &
         & pluto_allocator_allocate_int32_r1, &
         & pluto_allocator_allocate_int32_r2, &
@@ -105,6 +90,25 @@ contains
         & pluto_allocator_allocate_real64_r2, &
         & pluto_allocator_allocate_real64_r3, &
         & pluto_allocator_allocate_real64_r4
+
+
+    procedure :: pluto_allocator_deallocate_int32_r1
+    procedure :: pluto_allocator_deallocate_int32_r2
+    procedure :: pluto_allocator_deallocate_int32_r3
+    procedure :: pluto_allocator_deallocate_int32_r4
+    procedure :: pluto_allocator_deallocate_int64_r1
+    procedure :: pluto_allocator_deallocate_int64_r2
+    procedure :: pluto_allocator_deallocate_int64_r3
+    procedure :: pluto_allocator_deallocate_int64_r4
+    procedure :: pluto_allocator_deallocate_real32_r1
+    procedure :: pluto_allocator_deallocate_real32_r2
+    procedure :: pluto_allocator_deallocate_real32_r3
+    procedure :: pluto_allocator_deallocate_real32_r4
+    procedure :: pluto_allocator_deallocate_real64_r1
+    procedure :: pluto_allocator_deallocate_real64_r2
+    procedure :: pluto_allocator_deallocate_real64_r3
+    procedure :: pluto_allocator_deallocate_real64_r4
+
     generic :: deallocate => &
         & pluto_allocator_deallocate_int32_r1, &
         & pluto_allocator_deallocate_int32_r2, &
@@ -133,8 +137,9 @@ end type
 
 type pluto_device_t
 contains
-    procedure, nopass :: set_default_resource => pluto_device_set_default_resource
-    procedure, nopass :: get_default_resource => pluto_device_get_default_resource
+    procedure, nopass :: set_default_resource  => pluto_device_set_default_resource
+    procedure, nopass :: get_default_resource  => pluto_device_get_default_resource
+    procedure, nopass :: get_default_allocator => pluto_device_get_default_allocator
 end type
 
 type pluto_scope_t
@@ -211,6 +216,10 @@ subroutine pluto_host_get_default_allocator(allocator)
     call pluto_host_get_default_resource(allocator%memory_resource)
 end subroutine
 
+subroutine pluto_device_get_default_allocator(allocator)
+    type(pluto_allocator) :: allocator
+    call pluto_device_get_default_resource(allocator%memory_resource)
+end subroutine
 
 subroutine pluto_allocator_allocate_int32_r1(this, array, shape)
     class(pluto_allocator) :: this
@@ -272,59 +281,6 @@ subroutine pluto_allocator_allocate_int32_r4(this, array, shape)
     endif
 end subroutine
 
-subroutine pluto_allocator_deallocate_int32_r1(this, array)
-    class(pluto_allocator) :: this
-    integer(c_int32_t), pointer, intent(inout) :: array(:)
-    type(c_ptr) :: mem
-    integer(c_size_t) :: bytes
-    bytes = size(array) * 4
-    if (bytes > 0) then
-        mem = c_loc(array(1))
-        call this%memory_resource%deallocate(mem, bytes)
-    endif
-    array => null()
-end subroutine
-
-subroutine pluto_allocator_deallocate_int32_r2(this, array)
-    class(pluto_allocator) :: this
-    integer(c_int32_t), pointer, intent(inout) :: array(:,:)
-    type(c_ptr) :: mem
-    integer(c_size_t) :: bytes
-    bytes = size(array) * 4
-    if (bytes > 0) then
-        mem = c_loc(array(1,1))
-        call this%memory_resource%deallocate(mem, bytes)
-    endif
-    array => null()
-end subroutine
-
-subroutine pluto_allocator_deallocate_int32_r3(this, array)
-    class(pluto_allocator) :: this
-    integer(c_int32_t), pointer, intent(inout) :: array(:,:,:)
-    type(c_ptr) :: mem
-    integer(c_size_t) :: bytes
-    bytes = size(array) * 4
-    if (bytes > 0) then
-        mem = c_loc(array(1,1,1))
-        call this%memory_resource%deallocate(mem, bytes)
-    endif
-    array => null()
-end subroutine
-
-subroutine pluto_allocator_deallocate_int32_r4(this, array)
-    class(pluto_allocator) :: this
-    integer(c_int32_t), pointer, intent(inout) :: array(:,:,:,:)
-    type(c_ptr) :: mem
-    integer(c_size_t) :: bytes
-    bytes = size(array) * 4
-    if (bytes > 0) then
-        mem = c_loc(array(1,1,1,1))
-        call this%memory_resource%deallocate(mem, bytes)
-    endif
-    array => null()
-end subroutine
-
-!=-------
 subroutine pluto_allocator_allocate_int64_r1(this, array, shape)
     class(pluto_allocator) :: this
     integer(c_int64_t), pointer, intent(out) :: array(:)
@@ -385,60 +341,6 @@ subroutine pluto_allocator_allocate_int64_r4(this, array, shape)
     endif
 end subroutine
 
-subroutine pluto_allocator_deallocate_int64_r1(this, array)
-    class(pluto_allocator) :: this
-    integer(c_int64_t), pointer, intent(inout) :: array(:)
-    type(c_ptr) :: mem
-    integer(c_size_t) :: bytes
-    bytes = size(array) * 8
-    if (bytes > 0) then
-        mem = c_loc(array(1))
-        call this%memory_resource%deallocate(mem, bytes)
-    endif
-    array => null()
-end subroutine
-
-subroutine pluto_allocator_deallocate_int64_r2(this, array)
-    class(pluto_allocator) :: this
-    integer(c_int64_t), pointer, intent(inout) :: array(:,:)
-    type(c_ptr) :: mem
-    integer(c_size_t) :: bytes
-    bytes = size(array) * 8
-    if (bytes > 0) then
-        mem = c_loc(array(1,1))
-        call this%memory_resource%deallocate(mem, bytes)
-    endif
-    array => null()
-end subroutine
-
-subroutine pluto_allocator_deallocate_int64_r3(this, array)
-    class(pluto_allocator) :: this
-    integer(c_int64_t), pointer, intent(inout) :: array(:,:,:)
-    type(c_ptr) :: mem
-    integer(c_size_t) :: bytes
-    bytes = size(array) * 8
-    if (bytes > 0) then
-        mem = c_loc(array(1,1,1))
-        call this%memory_resource%deallocate(mem, bytes)
-    endif
-    array => null()
-end subroutine
-
-subroutine pluto_allocator_deallocate_int64_r4(this, array)
-    class(pluto_allocator) :: this
-    integer(c_int64_t), pointer, intent(inout) :: array(:,:,:,:)
-    type(c_ptr) :: mem
-    integer(c_size_t) :: bytes
-    bytes = size(array) * 8
-    if (bytes > 0) then
-        mem = c_loc(array(1,1,1,1))
-        call this%memory_resource%deallocate(mem, bytes)
-    endif
-    array => null()
-end subroutine
-
-
-!------======
 subroutine pluto_allocator_allocate_real32_r1(this, array, shape)
     class(pluto_allocator) :: this
     real(c_float), pointer, intent(out) :: array(:)
@@ -499,59 +401,6 @@ subroutine pluto_allocator_allocate_real32_r4(this, array, shape)
     endif
 end subroutine
 
-subroutine pluto_allocator_deallocate_real32_r1(this, array)
-    class(pluto_allocator) :: this
-    real(c_float), pointer, intent(inout) :: array(:)
-    type(c_ptr) :: mem
-    integer(c_size_t) :: bytes
-    bytes = size(array) * 4
-    if (bytes > 0) then
-        mem = c_loc(array(1))
-        call this%memory_resource%deallocate(mem, bytes)
-    endif
-    array => null()
-end subroutine
-
-subroutine pluto_allocator_deallocate_real32_r2(this, array)
-    class(pluto_allocator) :: this
-    real(c_float), pointer, intent(inout) :: array(:,:)
-    type(c_ptr) :: mem
-    integer(c_size_t) :: bytes
-    bytes = size(array) * 4
-    if (bytes > 0) then
-        mem = c_loc(array(1,1))
-        call this%memory_resource%deallocate(mem, bytes)
-    endif
-    array => null()
-end subroutine
-
-subroutine pluto_allocator_deallocate_real32_r3(this, array)
-    class(pluto_allocator) :: this
-    real(c_float), pointer, intent(inout) :: array(:,:,:)
-    type(c_ptr) :: mem
-    integer(c_size_t) :: bytes
-    bytes = size(array) * 4
-    if (bytes > 0) then
-        mem = c_loc(array(1,1,1))
-        call this%memory_resource%deallocate(mem, bytes)
-    endif
-    array => null()
-end subroutine
-
-subroutine pluto_allocator_deallocate_real32_r4(this, array)
-    class(pluto_allocator) :: this
-    real(c_float), pointer, intent(inout) :: array(:,:,:,:)
-    type(c_ptr) :: mem
-    integer(c_size_t) :: bytes
-    bytes = size(array) * 4
-    if (bytes > 0) then
-        mem = c_loc(array(1,1,1,1))
-        call this%memory_resource%deallocate(mem, bytes)
-    endif
-    array => null()
-end subroutine
-
-!=-------
 subroutine pluto_allocator_allocate_real64_r1(this, array, shape)
     class(pluto_allocator) :: this
     real(c_double), pointer, intent(out) :: array(:)
@@ -610,6 +459,163 @@ subroutine pluto_allocator_allocate_real64_r4(this, array, shape)
     else
         array => null()
     endif
+end subroutine
+
+subroutine pluto_allocator_deallocate_int32_r1(this, array)
+    class(pluto_allocator) :: this
+    integer(c_int32_t), pointer, intent(inout) :: array(:)
+    type(c_ptr) :: mem
+    integer(c_size_t) :: bytes
+    bytes = size(array) * 4
+    if (bytes > 0) then
+        mem = c_loc(array(1))
+        call this%memory_resource%deallocate(mem, bytes)
+    endif
+    array => null()
+end subroutine
+
+subroutine pluto_allocator_deallocate_int32_r2(this, array)
+    class(pluto_allocator) :: this
+    integer(c_int32_t), pointer, intent(inout) :: array(:,:)
+    type(c_ptr) :: mem
+    integer(c_size_t) :: bytes
+    bytes = size(array) * 4
+    if (bytes > 0) then
+        mem = c_loc(array(1,1))
+        call this%memory_resource%deallocate(mem, bytes)
+    endif
+    array => null()
+end subroutine
+
+subroutine pluto_allocator_deallocate_int32_r3(this, array)
+    class(pluto_allocator) :: this
+    integer(c_int32_t), pointer, intent(inout) :: array(:,:,:)
+    type(c_ptr) :: mem
+    integer(c_size_t) :: bytes
+    bytes = size(array) * 4
+    if (bytes > 0) then
+        mem = c_loc(array(1,1,1))
+        call this%memory_resource%deallocate(mem, bytes)
+    endif
+    array => null()
+end subroutine
+
+subroutine pluto_allocator_deallocate_int32_r4(this, array)
+    class(pluto_allocator) :: this
+    integer(c_int32_t), pointer, intent(inout) :: array(:,:,:,:)
+    type(c_ptr) :: mem
+    integer(c_size_t) :: bytes
+    bytes = size(array) * 4
+    if (bytes > 0) then
+        mem = c_loc(array(1,1,1,1))
+        call this%memory_resource%deallocate(mem, bytes)
+    endif
+    array => null()
+end subroutine
+
+
+subroutine pluto_allocator_deallocate_int64_r1(this, array)
+    class(pluto_allocator) :: this
+    integer(c_int64_t), pointer, intent(inout) :: array(:)
+    type(c_ptr) :: mem
+    integer(c_size_t) :: bytes
+    bytes = size(array) * 8
+    if (bytes > 0) then
+        mem = c_loc(array(1))
+        call this%memory_resource%deallocate(mem, bytes)
+    endif
+    array => null()
+end subroutine
+
+subroutine pluto_allocator_deallocate_int64_r2(this, array)
+    class(pluto_allocator) :: this
+    integer(c_int64_t), pointer, intent(inout) :: array(:,:)
+    type(c_ptr) :: mem
+    integer(c_size_t) :: bytes
+    bytes = size(array) * 8
+    if (bytes > 0) then
+        mem = c_loc(array(1,1))
+        call this%memory_resource%deallocate(mem, bytes)
+    endif
+    array => null()
+end subroutine
+
+subroutine pluto_allocator_deallocate_int64_r3(this, array)
+    class(pluto_allocator) :: this
+    integer(c_int64_t), pointer, intent(inout) :: array(:,:,:)
+    type(c_ptr) :: mem
+    integer(c_size_t) :: bytes
+    bytes = size(array) * 8
+    if (bytes > 0) then
+        mem = c_loc(array(1,1,1))
+        call this%memory_resource%deallocate(mem, bytes)
+    endif
+    array => null()
+end subroutine
+
+subroutine pluto_allocator_deallocate_int64_r4(this, array)
+    class(pluto_allocator) :: this
+    integer(c_int64_t), pointer, intent(inout) :: array(:,:,:,:)
+    type(c_ptr) :: mem
+    integer(c_size_t) :: bytes
+    bytes = size(array) * 8
+    if (bytes > 0) then
+        mem = c_loc(array(1,1,1,1))
+        call this%memory_resource%deallocate(mem, bytes)
+    endif
+    array => null()
+end subroutine
+
+subroutine pluto_allocator_deallocate_real32_r1(this, array)
+    class(pluto_allocator) :: this
+    real(c_float), pointer, intent(inout) :: array(:)
+    type(c_ptr) :: mem
+    integer(c_size_t) :: bytes
+    bytes = size(array) * 4
+    if (bytes > 0) then
+        mem = c_loc(array(1))
+        call this%memory_resource%deallocate(mem, bytes)
+    endif
+    array => null()
+end subroutine
+
+subroutine pluto_allocator_deallocate_real32_r2(this, array)
+    class(pluto_allocator) :: this
+    real(c_float), pointer, intent(inout) :: array(:,:)
+    type(c_ptr) :: mem
+    integer(c_size_t) :: bytes
+    bytes = size(array) * 4
+    if (bytes > 0) then
+        mem = c_loc(array(1,1))
+        call this%memory_resource%deallocate(mem, bytes)
+    endif
+    array => null()
+end subroutine
+
+subroutine pluto_allocator_deallocate_real32_r3(this, array)
+    class(pluto_allocator) :: this
+    real(c_float), pointer, intent(inout) :: array(:,:,:)
+    type(c_ptr) :: mem
+    integer(c_size_t) :: bytes
+    bytes = size(array) * 4
+    if (bytes > 0) then
+        mem = c_loc(array(1,1,1))
+        call this%memory_resource%deallocate(mem, bytes)
+    endif
+    array => null()
+end subroutine
+
+subroutine pluto_allocator_deallocate_real32_r4(this, array)
+    class(pluto_allocator) :: this
+    real(c_float), pointer, intent(inout) :: array(:,:,:,:)
+    type(c_ptr) :: mem
+    integer(c_size_t) :: bytes
+    bytes = size(array) * 4
+    if (bytes > 0) then
+        mem = c_loc(array(1,1,1,1))
+        call this%memory_resource%deallocate(mem, bytes)
+    endif
+    array => null()
 end subroutine
 
 subroutine pluto_allocator_deallocate_real64_r1(this, array)
