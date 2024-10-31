@@ -39,7 +39,7 @@ call host_allocator%allocate(array4d, [5,2,3,6])
 call host_allocator%deallocate(array4d)
 
 call host_allocator%allocate(iarray1d, shape=[20])
-call host_allocator%allocate(jarray1d, mold=iarray1d)
+call host_allocator%allocate(jarray1d, shape=shape(iarray1d))
 call host_allocator%deallocate(iarray1d)
 call host_allocator%deallocate(jarray1d)
 
