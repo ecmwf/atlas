@@ -55,6 +55,7 @@ public:
     virtual void release() = 0;
 	virtual memory_resource* upstream_resource() const = 0;
     virtual pool_options options() const = 0;
+    virtual void reserve(std::size_t) = 0;
 };
 
 memory_pool_resource* pool_resource();

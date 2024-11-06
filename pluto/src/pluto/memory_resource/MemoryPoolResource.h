@@ -53,6 +53,8 @@ public:
 
 	std::size_t capacity() const override;
 
+	void reserve(std::size_t bytes) override;
+
 	memory_resource* upstream_resource() const override {
 		return upstream_;
 	}
