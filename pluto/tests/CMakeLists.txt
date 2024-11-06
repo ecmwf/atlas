@@ -10,6 +10,11 @@ add_subdirectory(test_find_pluto)
 add_subdirectory(benchmark)
 add_subdirectory(sandbox)
 
-ecbuild_add_test( TARGET pluto_test_pluto_f SOURCES test_pluto_f.F90 LIBS pluto_f )
+if( HAVE_FORTRAN )
+  ecbuild_add_test( TARGET pluto_test_fortran_resource  SOURCES fortran/test_fortran_memory_resource.F90       LIBS pluto_f )
+  ecbuild_add_test( TARGET pluto_test_fortran_allocator SOURCES fortran/test_fortran_allocator.F90             LIBS pluto_f )
+  ecbuild_add_test( TARGET pluto_test_fortran_pool      SOURCES fortran/test_fortran_memory_pool_resource.F90  LIBS pluto_f )
+  ecbuild_add_test( TARGET pluto_test_fortran_scope     SOURCES fortran/test_fortran_scope.F90                 LIBS pluto_f )
+endif()
 
 ecbuild_add_test( TARGET pluto_test_memory_pool SOURCES pluto_test_memory_pool.cc LIBS pluto )

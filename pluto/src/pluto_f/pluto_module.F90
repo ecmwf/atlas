@@ -7,15 +7,23 @@ private
 public :: pluto, pluto_memory_resource, pluto_allocator
 
 interface
-    subroutine c_pluto_host_set_default_resource(name, name_size) bind(c)
+    subroutine c_pluto_host_set_default_resource_name(name, name_size) bind(c)
         use iso_c_binding, only: c_ptr, c_int
         type(c_ptr), value, intent(in) :: name
         integer(c_int), value, intent(in) :: name_size
     end subroutine
-    subroutine c_pluto_device_set_default_resource(name, name_size) bind(c)
+    subroutine c_pluto_host_set_default_resource_ptr(memory_resource) bind(c)
+        use iso_c_binding, only: c_ptr
+        type(c_ptr), value, intent(in) :: memory_resource
+    end subroutine
+    subroutine c_pluto_device_set_default_resource_name(name, name_size) bind(c)
         use iso_c_binding, only: c_ptr, c_int
         type(c_ptr), value, intent(in) :: name
         integer(c_int), value, intent(in) :: name_size
+    end subroutine
+    subroutine c_pluto_device_set_default_resource_ptr(memory_resource) bind(c)
+        use iso_c_binding, only: c_ptr
+        type(c_ptr), value, intent(in) :: memory_resource
     end subroutine
     function c_pluto_host_get_default_resource() result(memory_resource) bind(c)
         use iso_c_binding, only: c_ptr
@@ -24,6 +32,12 @@ interface
     function c_pluto_device_get_default_resource() result(memory_resource) bind(c)
         use iso_c_binding, only: c_ptr
         type(c_ptr) :: memory_resource
+    end function
+    function c_pluto_get_registered_resource(name, name_size) result(memory_resource) bind(c)
+        use iso_c_binding, only: c_ptr, c_int
+        type(c_ptr) :: memory_resource
+        type(c_ptr), value, intent(in) :: name
+        integer(c_int), value, intent(in) :: name_size
     end function
     function c_pluto_memory_resource_allocate(memory_resource, bytes, alignment) result(memory) bind(c)
         use iso_c_binding, only: c_ptr, c_size_t
@@ -39,17 +53,40 @@ interface
         integer(c_size_t), value :: bytes
         integer(c_size_t), value :: alignment
     end subroutine
+    function c_pluto_memory_pool_resource_size(memory_resource) result(size) bind(c)
+        use iso_c_binding, only: c_ptr, c_size_t
+        integer(c_size_t) :: size
+        type(c_ptr), value :: memory_resource
+    end function
+    function c_pluto_memory_pool_resource_capacity(memory_resource) result(capacity) bind(c)
+        use iso_c_binding, only: c_ptr, c_size_t
+        integer(c_size_t) :: capacity
+        type(c_ptr), value :: memory_resource
+    end function
+    subroutine c_pluto_memory_pool_resource_reserve(memory_resource, bytes) bind(c)
+        use iso_c_binding, only: c_ptr, c_size_t
+        type(c_ptr), value :: memory_resource
+        integer(c_size_t), value :: bytes
+    end subroutine
+    subroutine c_pluto_memory_pool_resource_release(memory_resource) bind(c)
+        use iso_c_binding, only: c_ptr
+        type(c_ptr), value :: memory_resource
+    end subroutine
     subroutine c_pluto_scope_push() bind(c)
     end subroutine
     subroutine c_pluto_scope_pop() bind(c)
     end subroutine
 end interface
 
-type pluto_memory_resource
+type :: pluto_memory_resource
     type(c_ptr) :: c_memory_resource
 contains
-    procedure :: allocate => pluto_memory_resource_allocate
+    procedure :: allocate   => pluto_memory_resource_allocate
     procedure :: deallocate => pluto_memory_resource_deallocate
+    procedure :: reserve    => pluto_memory_pool_resource_reserve
+    procedure :: release    => pluto_memory_pool_resource_release
+    procedure :: capacity   => pluto_memory_pool_resource_capacity
+    procedure :: size       => pluto_memory_pool_resource_size
 end type
 
 type pluto_allocator
@@ -128,17 +165,22 @@ contains
 end type
 
 type pluto_host_t
+   integer :: dummy
 contains
-    procedure, nopass :: set_default_resource  => pluto_host_set_default_resource
     procedure, nopass :: get_default_resource  => pluto_host_get_default_resource
-    procedure, nopass :: get_default_allocator => pluto_host_get_default_allocator
+    procedure, nopass :: make_allocator        => pluto_host_make_allocator
+    procedure, private :: set_default_resource_name  => pluto_host_set_default_resource_name
+    procedure, private :: set_default_resource_type  => pluto_host_set_default_resource_type
+    generic, public :: set_default_resource => set_default_resource_type, set_default_resource_name
 end type
 
 type pluto_device_t
 contains
-    procedure, nopass :: set_default_resource  => pluto_device_set_default_resource
     procedure, nopass :: get_default_resource  => pluto_device_get_default_resource
-    procedure, nopass :: get_default_allocator => pluto_device_get_default_allocator
+    procedure, nopass :: make_allocator        => pluto_device_make_allocator
+    procedure, private :: set_default_resource_name  => pluto_device_set_default_resource_name
+    procedure, private :: set_default_resource_type  => pluto_device_set_default_resource_type
+    generic :: set_default_resource => set_default_resource_name, set_default_resource_type
 end type
 
 type pluto_scope_t
@@ -151,20 +193,49 @@ type pluto_t
     type(pluto_host_t)   :: host
     type(pluto_device_t) :: device
     type(pluto_scope_t)  :: scope
+contains
+    procedure, nopass :: get_registered_resource => pluto_get_registered_resource
+    procedure, nopass :: new_delete_resource => pluto_new_delete_resource
+    procedure, nopass :: pinned_resource => pluto_pinned_resource
+    procedure, nopass :: device_resource => pluto_device_resource
+    procedure, nopass :: managed_resource => pluto_managed_resource
+    procedure, nopass :: pool_resource => pluto_pool_resource
+    procedure, nopass :: pinned_pool_resource => pluto_pinned_pool_resource
+    procedure, nopass :: device_pool_resource => pluto_device_pool_resource
+    procedure, nopass :: managed_pool_resource => pluto_managed_pool_resource
+    procedure, private :: make_allocator_type => pluto_make_allocator_type
+    procedure, private :: make_allocator_name => pluto_make_allocator_name
+    generic :: make_allocator => make_allocator_type, make_allocator_name
+    procedure, nopass :: reserve => pluto_memory_pool_resource_reserve
+    procedure, nopass :: release => pluto_memory_pool_resource_release
 end type
 
 type(pluto_t) :: pluto
 
 contains
 
-subroutine pluto_host_set_default_resource(name)
+subroutine pluto_host_set_default_resource_name(this, name)
+    class(pluto_host_t) :: this
     character(len=*), target, intent(in) :: name
-    call c_pluto_host_set_default_resource(c_loc(name), len(name,kind=c_int))
+    call c_pluto_host_set_default_resource_name(c_loc(name), len(name,kind=c_int))
 end subroutine
 
-subroutine pluto_device_set_default_resource(name)
+subroutine pluto_host_set_default_resource_type(this, memory_resource)
+    class(pluto_host_t) :: this
+    type(pluto_memory_resource), intent(in) :: memory_resource
+    call c_pluto_host_set_default_resource_ptr(memory_resource%c_memory_resource)
+end subroutine
+
+subroutine pluto_device_set_default_resource_name(this, name)
+    class(pluto_device_t) :: this
     character(len=*), target, intent(in) :: name
-    call c_pluto_device_set_default_resource(c_loc(name), len(name,kind=c_int))
+    call c_pluto_device_set_default_resource_name(c_loc(name), len(name,kind=c_int))
+end subroutine
+
+subroutine pluto_device_set_default_resource_type(this, memory_resource)
+    class(pluto_device_t) :: this
+    type(pluto_memory_resource), intent(in) :: memory_resource
+    call c_pluto_device_set_default_resource_ptr(memory_resource%c_memory_resource)
 end subroutine
 
 subroutine pluto_scope_push()
@@ -175,15 +246,22 @@ subroutine pluto_scope_pop()
     call c_pluto_scope_pop()
 end subroutine
 
-subroutine pluto_host_get_default_resource(memory_resource)
-    type(pluto_memory_resource), intent(out) :: memory_resource
-    memory_resource%c_memory_resource = c_pluto_host_get_default_resource()
-end subroutine
+function pluto_get_registered_resource(name) result(memory_resource)
+    type(pluto_memory_resource) :: memory_resource
+    character(len=*), target, intent(in) :: name
+    memory_resource%c_memory_resource = &
+        & c_pluto_get_registered_resource(c_loc(name), len(name,kind=c_int))
+end function
 
-subroutine pluto_device_get_default_resource(memory_resource)
-    type(pluto_memory_resource), intent(out) :: memory_resource
+function pluto_host_get_default_resource() result(memory_resource)
+    type(pluto_memory_resource) :: memory_resource
+    memory_resource%c_memory_resource = c_pluto_host_get_default_resource()
+end function
+
+function pluto_device_get_default_resource() result(memory_resource)
+    type(pluto_memory_resource) :: memory_resource
     memory_resource%c_memory_resource = c_pluto_device_get_default_resource()
-end subroutine
+end function
 
 subroutine pluto_memory_resource_allocate(this, memory, bytes, alignment)
     class(pluto_memory_resource) :: this
@@ -210,15 +288,54 @@ subroutine pluto_memory_resource_deallocate(this, memory, bytes, alignment)
     memory = c_null_ptr
 end subroutine
 
-subroutine pluto_host_get_default_allocator(allocator)
-    type(pluto_allocator) :: allocator
-    call pluto_host_get_default_resource(allocator%memory_resource)
+subroutine pluto_memory_pool_resource_release(this)
+    class(pluto_memory_resource), intent(in) :: this
+    call c_pluto_memory_pool_resource_release(this%c_memory_resource)
 end subroutine
 
-subroutine pluto_device_get_default_allocator(allocator)
-    type(pluto_allocator) :: allocator
-    call pluto_device_get_default_resource(allocator%memory_resource)
+subroutine pluto_memory_pool_resource_reserve(this, bytes)
+    class(pluto_memory_resource) :: this
+    integer(c_size_t), intent(in) :: bytes
+    call c_pluto_memory_pool_resource_reserve(this%c_memory_resource, bytes)
 end subroutine
+
+function pluto_memory_pool_resource_size(this)
+    integer(c_size_t) :: pluto_memory_pool_resource_size
+    class(pluto_memory_resource), intent(in) :: this
+    pluto_memory_pool_resource_size = c_pluto_memory_pool_resource_size(this%c_memory_resource)
+end function
+
+function pluto_memory_pool_resource_capacity(this)
+    integer(c_size_t) :: pluto_memory_pool_resource_capacity
+    class(pluto_memory_resource), intent(in) :: this
+    pluto_memory_pool_resource_capacity = c_pluto_memory_pool_resource_capacity(this%c_memory_resource)
+end function
+
+function pluto_host_make_allocator() result(allocator)
+    type(pluto_allocator) :: allocator
+    allocator%memory_resource = pluto_host_get_default_resource()
+end function
+
+function pluto_device_make_allocator() result(allocator)
+    type(pluto_allocator) :: allocator
+    allocator%memory_resource = pluto_device_get_default_resource()
+end function
+
+function pluto_make_allocator_type(this, memory_resource) result(allocator)
+    class(pluto_t) :: this
+    type(pluto_allocator) :: allocator
+    type(pluto_memory_resource) :: memory_resource
+    allocator%memory_resource%c_memory_resource = memory_resource%c_memory_resource
+end function
+
+function pluto_make_allocator_name(this, memory_resource) result(allocator)
+    class(pluto_t) :: this
+    type(pluto_allocator) :: allocator
+    character(len=*), target, intent(in) :: memory_resource
+    allocator%memory_resource%c_memory_resource = &
+        & c_pluto_get_registered_resource(c_loc(memory_resource), len(memory_resource,kind=c_int))
+end function
+
 
 subroutine pluto_allocator_allocate_int32_r1(this, array, shape)
     class(pluto_allocator) :: this
@@ -668,5 +785,45 @@ subroutine pluto_allocator_deallocate_real64_r4(this, array)
     endif
     array => null()
 end subroutine
+
+function pluto_new_delete_resource() result(memory_resource)
+    type(pluto_memory_resource) :: memory_resource
+    memory_resource = pluto_get_registered_resource("pluto::new_delete_resource")
+end function
+
+function pluto_pinned_resource() result(memory_resource)
+    type(pluto_memory_resource) :: memory_resource
+    memory_resource = pluto_get_registered_resource("pluto::pinned_resource")
+end function
+
+function pluto_device_resource() result(memory_resource)
+    type(pluto_memory_resource) :: memory_resource
+    memory_resource = pluto_get_registered_resource("pluto::device_resource")
+end function
+
+function pluto_managed_resource() result(memory_resource)
+    type(pluto_memory_resource) :: memory_resource
+    memory_resource = pluto_get_registered_resource("pluto::managed_resource")
+end function
+
+function pluto_pool_resource() result(memory_resource)
+    type(pluto_memory_resource) :: memory_resource
+    memory_resource = pluto_get_registered_resource("pluto::pool_resource")
+end function
+
+function pluto_pinned_pool_resource() result(memory_resource)
+    type(pluto_memory_resource) :: memory_resource
+    memory_resource = pluto_get_registered_resource("pluto::pinned_pool_resource")
+end function
+
+function pluto_device_pool_resource() result(memory_resource)
+    type(pluto_memory_resource) :: memory_resource
+    memory_resource = pluto_get_registered_resource("pluto::device_pool_resource")
+end function
+
+function pluto_managed_pool_resource() result(memory_resource)
+    type(pluto_memory_resource) :: memory_resource
+    memory_resource = pluto_get_registered_resource("pluto::managed_pool_resource")
+end function
 
 end module

@@ -4,11 +4,17 @@
 #include "pluto/pluto.h"
 
 extern "C" {
-void c_pluto_host_set_default_resource(const char* name, int name_size) {
+void c_pluto_host_set_default_resource_name(const char* name, int name_size) {
     pluto::host::set_default_resource( std::string_view{name,static_cast<std::size_t>(name_size)} );
 }
-void c_pluto_device_set_default_resource(const char* name, int name_size) {
+void c_pluto_device_set_default_resource_name(const char* name, int name_size) {
     pluto::device::set_default_resource( std::string_view{name,static_cast<std::size_t>(name_size)} );
+}
+void c_pluto_host_set_default_resource_ptr(pluto::memory_resource* memory_resource) {
+    pluto::host::set_default_resource(memory_resource);
+}
+void c_pluto_device_set_default_resource_ptr(pluto::memory_resource* memory_resource) {
+    pluto::device::set_default_resource(memory_resource);
 }
 void c_pluto_scope_push() {
     pluto::scope::push();
@@ -37,6 +43,50 @@ void c_pluto_memory_resource_deallocate(pluto::memory_resource* memory_resource,
     else {
         memory_resource->deallocate(memory, bytes);
     }
+}
+std::size_t c_pluto_memory_pool_resource_size(const pluto::memory_resource* memory_resource) {
+    if (auto* pool = dynamic_cast<const pluto::memory_pool_resource*>(memory_resource)) {
+        return pool->size();    
+    }
+    return 0;
+}
+std::size_t c_pluto_memory_pool_resource_capacity(const pluto::memory_resource* memory_resource) {
+    if (auto* pool = dynamic_cast<const pluto::memory_pool_resource*>(memory_resource)) {
+        return pool->capacity();    
+    }
+    return 0;
+}
+void c_pluto_memory_pool_resource_release(pluto::memory_resource* memory_resource) {
+    if (auto* pool = dynamic_cast<pluto::memory_pool_resource*>(memory_resource)) {
+        return pool->release();    
+    }
+}
+void c_pluto_memory_pool_resource_reserve(pluto::memory_resource* memory_resource, std::size_t bytes) {
+    if (auto* pool = dynamic_cast<pluto::memory_pool_resource*>(memory_resource)) {
+        return pool->reserve(bytes);    
+    }
+}
+
+pluto::memory_resource* c_pluto_get_registered_resource(const char* name, int name_size) {
+    return pluto::get_registered_resource(std::string_view{name,static_cast<std::size_t>(name_size)});
+}
+pluto::memory_resource* c_pluto_new_delete_resource() {
+    return pluto::new_delete_resource();
+}
+pluto::memory_resource* c_pluto_device_resource() {
+    return pluto::device_resource();
+}
+pluto::memory_pool_resource* c_pluto_pool_resource() {
+    return pluto::pool_resource();
+}
+pluto::memory_pool_resource* c_pluto_pinned_pool_resource() {
+    return pluto::pinned_pool_resource();
+}
+pluto::memory_pool_resource* c_pluto_managed_pool_resource() {
+    return pluto::managed_pool_resource();
+}
+pluto::memory_pool_resource* c_pluto_device_pool_resource() {
+    return pluto::managed_pool_resource();
 }
 
 }
