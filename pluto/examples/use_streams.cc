@@ -108,8 +108,12 @@ int main(int argc, char* argv[]) {
     std::cerr << "device alloc" << std::endl;
     device_array<value_type> array_d1(size);
 
+    std::cerr << "async loop start" << std::endl;
     auto start = std::chrono::steady_clock::now();
     for(std::size_t jstream=0; jstream<streams.size(); ++jstream) {
+      pluto::scope stream_scope;
+      pluto::set_default_stream(streams[jstream]);
+
       const auto& stream = streams[jstream];
       const auto& stream_offset = jstream * size/streams.size();
       const auto& stream_size   = (jstream < streams.size()-1 ? size/streams.size() : size - stream_offset);
@@ -117,12 +121,16 @@ int main(int argc, char* argv[]) {
       auto* h2 = array_h2.data()+stream_offset;
       auto* d1 = array_d1.data()+stream_offset;
 
+      device_array<value_type> stream_tmp(stream_size);
+      auto* dtmp = stream_tmp.data();
+
       h1[stream_size-1] = 1.;
       h2[stream_size-1] = -1.;
       pluto::copy_host_to_device(d1, h1, stream_size, stream);
       plus_one_on_device(d1, stream_size, stream);
       pluto::copy_device_to_host(h2, d1, stream_size, stream);
     }
+    std::cerr << "async loop end" << std::endl;
     pluto::wait();
     auto end = std::chrono::steady_clock::now();
     std::cout << "execution without allocations took " << std::chrono::duration<double>(end-start).count() << " s" << std::endl;
