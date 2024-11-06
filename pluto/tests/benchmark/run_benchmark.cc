@@ -6,14 +6,30 @@
 #include <memory>
 #include <new>
 #include <cstdlib>
+#include <map>
 
 #include "pluto/pluto.h"
 #include "benchmark.h"
 
-// using namespace pluto;
-// using namespace pluto;
+static std::size_t to_bytes(const std::string& str) {
+    auto unit_to_bytes = [](char unit) {
+       static const std::map<char, std::size_t> map{
+            {'G',1024*1024*1024},
+            {'M',1024*1024},
+            {'K',1024},
+            {'B',1}
+        };
+        return map.at(static_cast<char>(std::toupper(unit)));
+    };
+    for (char unit: {'G','g','M','m','K','k','B','b'}) {
+        if (auto pos = str.find(unit); pos != std::string::npos) {
+            return unit_to_bytes(unit) * std::stoull(str.substr(0,pos));
+        }
+    }
+    return std::stoull(str);
+}
 
-void setup_resources() {
+void setup_resources(std::size_t bytes) {
   using namespace pluto;
   auto null_resource   = register_resource("null",
     std::make_unique<TraceMemoryResource>("null", null_memory_resource())
@@ -35,6 +51,7 @@ void setup_resources() {
       )
     )
   );
+  pinned_pool_resource->deallocate(pinned_pool_resource->allocate(4*bytes), 4*bytes);
 
   auto managed_resource = register_resource("managed",
     std::make_unique<TraceMemoryResource>("managed", pluto::managed_resource())
@@ -48,7 +65,7 @@ void setup_resources() {
         std::make_unique<MemoryPoolResource>(device_resource)
       )
   );
-
+  device_pool_resource->deallocate(device_pool_resource->allocate(4*bytes), 4*bytes);
 }
 bool TRACE() {
     char* val;                                                                        
@@ -67,19 +84,20 @@ int main(int argc, char* argv[]) {
 
   TraceOptions::instance().enabled = TRACE();
 
-  int n = 1000000;
+  std::size_t bytes = 1024*1024; // 1 Mb
+  if( argc > 1 ) {
+    bytes = to_bytes(argv[1]);
+  }
+  int n = static_cast<int>(bytes/sizeof(value_type));
   int num_repeats = 25;
   int num_warmups = 5;
-  if( argc > 1 ) {
-    n = std::atoi(argv[1]);
-  }
   if( argc > 2 ) {
     num_repeats = std::atoi(argv[2]);
   }
   if( argc > 3 ) {
     num_warmups = std::atoi(argv[3]);
   }
-  setup_resources();
+  setup_resources(bytes);
 
 {
     value_type const v_input_1{1.0};
