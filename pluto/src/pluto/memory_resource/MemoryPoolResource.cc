@@ -115,6 +115,10 @@ void MemoryPoolResource::do_deallocate(void* ptr, std::size_t bytes, std::size_t
     }
 }
 
+void MemoryPoolResource::reserve(std::size_t bytes) {
+    deallocate(allocate(bytes), bytes);
+}
+
 bool MemoryPoolResource::do_is_equal(const memory_resource& other) const noexcept {
     if (this == &other) { return true; }
     return false;
