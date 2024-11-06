@@ -2,7 +2,7 @@
 program pluto_test_fortran_memory_resource
 
 use pluto_module, only : pluto, pluto_memory_resource
-use, intrinsic :: iso_c_binding, only: c_ptr, c_sizeof, c_float
+use, intrinsic :: iso_c_binding, only: c_ptr, c_sizeof, c_float, c_f_pointer
 
 implicit none
 
