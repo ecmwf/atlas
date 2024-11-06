@@ -19,7 +19,7 @@ project( pluto VERSION ${atlas_VERSION} LANGUAGES CXX )
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(PLUTO_HAVE_PMR 0)
+set(PLUTO_HAVE_PMR 1)
 ### Normally we should be auto-detecting std::pmr (c++17) for polymorphic memory resource
 #   However, CUDA or HIP compiler seems to not find the right headers,
 #   so for now we don't rely on it

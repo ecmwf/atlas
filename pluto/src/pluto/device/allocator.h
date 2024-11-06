@@ -14,6 +14,7 @@
 
 #include "pluto/memory_resource/memory_resource.h"
 #include "pluto/offload/wait.h"
+#include "pluto/offload/Stream.h"
 
 namespace pluto::device {
 
@@ -36,28 +37,38 @@ template<typename T>
 class allocator {
 public:
     using value_type = T;
+
+    allocator(memory_resource* mr, const Stream& stream) :
+        memory_resource_(mr),
+        stream_(stream) {}
+
     allocator() :
-        memory_resource_(get_default_resource()) {}
+        allocator(get_default_resource(), get_default_stream()) {}
     
     allocator(const allocator& other) :
-        memory_resource_(other.memory_resource_) {}
+        allocator(other.memory_resource_, other.stream_) {}
 
     allocator(memory_resource* mr) :
-        memory_resource_(mr) {}
+        allocator(mr, get_default_stream()) {}
+
+    allocator(const Stream& stream) :
+        allocator(get_default_resource(), stream) {}
 
     value_type* allocate(std::size_t size) {
+        DefaultStream scope{stream_};
         return static_cast<value_type*>(memory_resource_->allocate(size * sizeof(value_type), 256));
     }
 
     void deallocate(value_type* ptr, std::size_t size) {
+        DefaultStream scope{stream_};
         memory_resource_->deallocate(ptr, size * sizeof(value_type), 256);
     }
 
     template <class U, class... Args>
     void construct(U* p, Args&&... args) {
 #if HIC_COMPILER
-        new_on_device<<<1, 1>>>(p, std::forward<Args>(args)...);
-        pluto::wait();
+        new_on_device<<<1, 1, 0, stream_.value<hicStream_t>()>>>(p, std::forward<Args>(args)...);
+        pluto::wait(stream_);
 #else
         new_on_device(p, args...);
 #endif
@@ -66,14 +77,15 @@ public:
     template <class U>
     void destroy(U* p) {
 #if HIC_COMPILER
-        delete_on_device<<<1, 1>>>(p);
-        pluto::wait();
+        delete_on_device<<<1, 1, 0, stream_.value<hicStream_t>()>>>(p);
+        pluto::wait(stream_);
 #else
         delete_on_device(p);
 #endif
     }
 private:
     memory_resource* memory_resource_{nullptr};
+    const Stream& stream_;
 };
 
 // --------------------------------------------------------------------------------------------------------
