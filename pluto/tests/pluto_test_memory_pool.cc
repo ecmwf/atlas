@@ -43,9 +43,10 @@ int main(int argc, char* argv[]) {
 
     pluto::TraceOptions::instance().enabled = true;
 
-    pluto::allocator<std::byte> allocator(pluto::pool_resource());
-    // using vector = pluto::host::vector<std::byte>;
+    // Uncomment to immediately reserve large chunk of memory
+    //   pluto::pool_resource()->reserve(2*gb);
 
+    pluto::allocator<std::byte> allocator(pluto::pool_resource());
     vector array1(200*mb,allocator);
     vector array2(200*mb,allocator);
     vector array3(1.2*gb,allocator);
