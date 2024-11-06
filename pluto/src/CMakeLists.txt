@@ -80,6 +80,8 @@ ecbuild_add_library( TARGET pluto
     pluto/util/Registry.h
     pluto/util/Runtime.cc
     pluto/util/Runtime.h
+    pluto/util/Scope.cc
+    pluto/util/Scope.h
     pluto/util/Trace.h
 
     pluto/pluto.h

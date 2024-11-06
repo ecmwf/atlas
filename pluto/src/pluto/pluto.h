@@ -40,3 +40,4 @@
 #include "pluto/util/Alignment.h"
 #include "pluto/util/PointerInfo.h"
 #include "pluto/util/Runtime.h"
+#include "pluto/util/Scope.h"
