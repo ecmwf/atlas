@@ -37,7 +37,7 @@ memory_pool_resource* device_pool_resource() {
 void* DeviceMemoryResource::do_allocate(std::size_t bytes, alignment_t) {
     void* ptr;
     const auto& stream = get_default_stream();
-    if (false) {//stream.value()) {
+    if (stream.value()) {
         if constexpr (PLUTO_HAVE_HIC) {
             HIC_CALL( hicMallocAsync(&ptr, bytes, stream.value<hicStream_t>() ) );
         }
@@ -64,7 +64,7 @@ void* DeviceMemoryResource::do_allocate(std::size_t bytes, alignment_t) {
 
 void DeviceMemoryResource::do_deallocate(void* ptr, std::size_t bytes, alignment_t) {
     const auto& stream = get_default_stream();
-    if (false) {//if (stream.value()) {
+    if (stream.value()) {
         if constexpr (PLUTO_HAVE_HIC) {
             HIC_CALL( hicFreeAsync(ptr, stream.value<hicStream_t>()) );
         }
