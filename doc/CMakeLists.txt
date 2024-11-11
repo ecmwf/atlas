@@ -6,11 +6,11 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+if(atlas_HAVE_DOCS)
+
 if(atlas_HAVE_FORTRAN)
   add_subdirectory(example-fortran)
 endif()
-
-if(atlas_HAVE_DOCS)
 
 add_subdirectory(user-guide)
 
