@@ -131,6 +131,8 @@ domain/detail/DomainFactory.cc
 grid.h
 grid/CubedSphereGrid.cc
 grid/CubedSphereGrid.h
+grid/CubedSphere2.cc
+grid/CubedSphere2.h
 grid/Grid.cc
 grid/Grid.h
 grid/SpecRegistry.cc
