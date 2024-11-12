@@ -6,7 +6,7 @@ namespace atlas {
 
 class CubedSphereGrid2 : public atlas::Grid {
  public:
-  CubedSphereGrid2();
+  CubedSphereGrid2(idx_t resolution);
 };
 
 }  // namespace atlas

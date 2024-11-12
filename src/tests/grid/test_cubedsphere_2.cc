@@ -1,4 +1,4 @@
-#include "atlas/grid/CubedSphere2.h"
+#include "atlas/grid/CubedSphereGrid2.h"
 #include "tests/AtlasTestEnvironment.h"
 
 namespace atlas {
@@ -6,7 +6,7 @@ namespace test {
 namespace {
 
 CASE("cubed sphere grid instantiation") {
-  const auto grid = CubedSphereGrid2{};
+  const auto grid = CubedSphereGrid2(1);
 
 }
 }  // namespace
