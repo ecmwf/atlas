@@ -36,6 +36,8 @@ install( FILES hic/hic_dummy/hic_dummy_runtime.h          DESTINATION include/hi
 
 if( HAVE_CUDA )
   target_link_libraries( hic INTERFACE CUDA::cudart )
+  target_link_libraries( hic INTERFACE CUDA::cusparse )
 elseif( HAVE_HIP )
   target_link_libraries( hic INTERFACE hip::host )
+  target_link_libraries( hic INTERFACE roc::hipsparse )
 endif()
