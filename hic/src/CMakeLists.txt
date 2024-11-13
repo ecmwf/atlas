@@ -31,8 +31,11 @@ install( FILES ${PROJECT_BINARY_DIR}/src/hic/hic_config.h DESTINATION include/hi
 install( FILES hic/hic.h                                  DESTINATION include/hic )
 install( FILES hic/hic_runtime.h                          DESTINATION include/hic )
 install( FILES hic/hic_namespace_macro.h                  DESTINATION include/hic )
+install( FILES hic/hic_library_types.h                    DESTINATION include/hic )
+install( FILES hic/hicsparse.h                            DESTINATION include/hic )
 install( FILES hic/hic_dummy/dummyShouldNotBeCalled.h     DESTINATION include/hic/hic_dummy )
 install( FILES hic/hic_dummy/hic_dummy_runtime.h          DESTINATION include/hic/hic_dummy )
+install( FILES hic/hic_dummy/hicsparse_dummy.h            DESTINATION include/hic/hic_dummy )
 
 if( HAVE_CUDA )
   target_link_libraries( hic INTERFACE CUDA::cudart )

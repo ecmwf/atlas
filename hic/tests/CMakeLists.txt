@@ -17,6 +17,11 @@ if( HAVE_HIP OR HAVE_CUDA )
     SOURCES   test_hic.cc
     LIBS      hic
   )
+
+  ecbuild_add_test( TARGET hic_test_hicsparse
+    SOURCES   test_hicsparse.cc
+    LIBS      hic
+  )
 endif()
 
 add_subdirectory(test_find_hic)
