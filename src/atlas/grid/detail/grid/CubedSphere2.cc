@@ -10,7 +10,7 @@ CubedSphere2::CubedSphere2(idx_t resolution)
 
 }
 
-} // namespace detail
-} // namespace grid
-}
-}
+}  // namespace grid
+}  // namespace detail
+}  // namespace grid
+}  // namespace atlas
