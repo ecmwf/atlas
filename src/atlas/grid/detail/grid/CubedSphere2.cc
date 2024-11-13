@@ -125,6 +125,54 @@ PointXYZ CubedSphere2::tangent_to_xyz_coord(const PointXY& tan_coord, idx_t tile
     return PointXYZ::normalize(xyz);
 }
 
+std::string CubedSphere2::name() const {
+    return name_;
+}
+
+std::string CubedSphere::type() {
+    return name_;
+}
+
+// Provide a unique identification hash for the grid and the projection.
+void CubedSphere2::hash(eckit::Hash& h) const {
+    h.add("CubedSphere2");
+    h.add(int(N_));
+
+    // also add projection information
+    projection().hash(h);
+
+    // also add domain information, even though already encoded in grid.
+    domain().hash(h);
+}
+
+// Return the bounding box for the grid, global
+RectangularLonLatDomain CubedSphere2::lonlatBoundingBox() const {
+    return projection_ ? projection_.lonlatBoundingBox(computeDomain()) : domain();
+}
+
+idx_t CubedSphere2::size() const {
+    // Example from CubedSphere.h
+    // return accumulate(npts_.begin(), npts_.end(), 0);
+
+    // For now, return expected size
+    return N_ * N_ * nTiles_;
+}
+
+// Return the specification for the grid.
+Grid::Spec CubedSphere2::spec() const {
+    // Copied from CubedSphere.cc
+    Grid::Spec grid_spec;
+
+    if (name() == "cubedsphere2") {
+        grid_spec.set("type", type());
+    }
+    else {
+        grid_spec.set("name", name());
+    }
+    grid_spec.set("projection", projection().spec());
+    return grid_spec;
+}
+
 }  // namespace grid
 }  // namespace detail
 }  // namespace grid
