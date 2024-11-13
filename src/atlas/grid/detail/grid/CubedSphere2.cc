@@ -173,6 +173,11 @@ Grid::Spec CubedSphere2::spec() const {
     return grid_spec;
 }
 
+// Print the name of the Grid
+void CubedSphere2::print(std::ostream& os) const {
+    os << "CubedSphere2(Name:" << name() << ")";
+}
+
 }  // namespace grid
 }  // namespace detail
 }  // namespace grid
