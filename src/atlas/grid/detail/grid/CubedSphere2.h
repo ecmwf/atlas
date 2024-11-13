@@ -35,7 +35,7 @@ public:
     }
 
 protected:
-    void print(std::ostream&) const override { ATLAS_NOTIMPLEMENTED; }
+    void print(std::ostream&) const override;
 
 protected:
     // (N_ * N_) = number of cells on a tile
