@@ -8,8 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include <stdexcept>
-#include <string>
+#include "hic/hic_dummy/dummyShouldNotBeCalled.h"
 
 #define DUMMY_SHOULD_NOT_BE_CALLED(SYMBOL) dummyShouldNotBeCalled( #SYMBOL )
 #define DUMMY_FUNCTION(SYMBOL) \
@@ -22,10 +21,6 @@
     constexpr int dummy##SYMBOL = 0;
 
 namespace {
-
-[[noreturn]] void dummyShouldNotBeCalled(const char* symbol) {
-    throw std::runtime_error(std::string(symbol)+" is using the dummy backend and should not be called");
-}
 
 using dummyError_t  = int;
 using dummyEvent_t  = void*;

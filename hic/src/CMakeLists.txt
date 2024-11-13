@@ -30,6 +30,8 @@ ecbuild_add_library( TARGET hic
 install( FILES ${PROJECT_BINARY_DIR}/src/hic/hic_config.h DESTINATION include/hic )
 install( FILES hic/hic.h                                  DESTINATION include/hic )
 install( FILES hic/hic_runtime.h                          DESTINATION include/hic )
+install( FILES hic/hic_namespace_macro.h                  DESTINATION include/hic )
+install( FILES hic/hic_dummy/dummyShouldNotBeCalled.h     DESTINATION include/hic/hic_dummy )
 install( FILES hic/hic_dummy/hic_dummy_runtime.h          DESTINATION include/hic/hic_dummy )
 
 if( HAVE_CUDA )
