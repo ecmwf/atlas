@@ -11,11 +11,11 @@ CubedSphere2::CubedSphere2(idx_t resolution)
 }
 
 std::string CubedSphere2::name() const {
-    return name_;
+    return "CS-LFR-" + std::to_string(N_) + "-2";
 }
 
-std::string CubedSphere::type() {
-    return name_;
+std::string CubedSphere2::type() const {
+    return type_;
 }
 
 // Provide a unique identification hash for the grid and the projection.
@@ -48,11 +48,11 @@ Grid::Spec CubedSphere2::spec() const {
     // Copied from CubedSphere.cc
     Grid::Spec grid_spec;
 
-    if (name() == "cubedsphere2") {
-        grid_spec.set("type", type());
+    if (type() == "cubedsphere2") {
+        grid_spec.set("name", name());
     }
     else {
-        grid_spec.set("name", name());
+        grid_spec.set("type", type());
     }
     grid_spec.set("projection", projection().spec());
     return grid_spec;

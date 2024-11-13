@@ -22,7 +22,7 @@ public:
     RectangularLonLatDomain lonlatBoundingBox() const override;
 
     idx_t size() const override;
-    Spec spec() const override { ATLAS_NOTIMPLEMENTED; } // Requires iterators
+    Spec spec() const override;
     std::unique_ptr<IteratorXY> xy_begin() const override {
         ATLAS_NOTIMPLEMENTED;
     }
@@ -45,7 +45,7 @@ protected:
     static const idx_t nTiles_ = 6;
 
 private:
-    std::string name_ = {"cubedsphere2"};
+    std::string type_ = {"cubedsphere2"};
 };
 
 }  // namespace grid
