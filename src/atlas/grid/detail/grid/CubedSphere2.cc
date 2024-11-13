@@ -135,7 +135,7 @@ std::string CubedSphere2::type() const {
 
 // Provide a unique identification hash for the grid and the projection.
 void CubedSphere2::hash(eckit::Hash& h) const {
-    h.add("CubedSphere2");
+    h.add(name()); // use name() or type()?
     h.add(int(N_));
 
     // also add projection information
@@ -147,7 +147,7 @@ void CubedSphere2::hash(eckit::Hash& h) const {
 
 // Return the bounding box for the grid, global
 RectangularLonLatDomain CubedSphere2::lonlatBoundingBox() const {
-    return projection_ ? projection_.lonlatBoundingBox(computeDomain()) : domain();
+    return GlobalDomain();
 }
 
 idx_t CubedSphere2::size() const {
