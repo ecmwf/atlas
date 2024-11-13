@@ -15,16 +15,14 @@ public:
 
     CubedSphere2(idx_t resolution);
 
-    std::string name() const override { ATLAS_NOTIMPLEMENTED; }
-    std::string type() const override { ATLAS_NOTIMPLEMENTED; }
+    std::string name() const override;
+    std::string type() const override;
 
-    void hash(eckit::Hash&) const override { ATLAS_NOTIMPLEMENTED; }
-    RectangularLonLatDomain lonlatBoundingBox() const override {
-        ATLAS_NOTIMPLEMENTED;
-    }
+    void hash(eckit::Hash&) const override;
+    RectangularLonLatDomain lonlatBoundingBox() const override;
 
-    idx_t size() const override { ATLAS_NOTIMPLEMENTED; }
-    Spec spec() const override { ATLAS_NOTIMPLEMENTED; }
+    idx_t size() const override;
+    Spec spec() const override { ATLAS_NOTIMPLEMENTED; } // Requires iterators
     std::unique_ptr<IteratorXY> xy_begin() const override {
         ATLAS_NOTIMPLEMENTED;
     }
@@ -38,6 +36,16 @@ public:
 
 protected:
     void print(std::ostream&) const override { ATLAS_NOTIMPLEMENTED; }
+
+protected:
+    // (N_ * N_) = number of cells on a tile
+    idx_t N_;
+
+    // Number of tiles
+    static const idx_t nTiles_ = 6;
+
+private:
+    std::string name_ = {"cubedsphere2"};
 };
 
 }  // namespace grid
