@@ -9,14 +9,7 @@
  */
 #pragma once
 
-#if !defined(HIC_NAMESPACE)
-  #define HIC_NAMESPACE
-  #define HIC_NAMESPACE_BEGIN
-  #define HIC_NAMESPACE_END
-#else
-  #define HIC_NAMESPACE_BEGIN namespace HIC_NAMESPACE {
-  #define HIC_NAMESPACE_END }
-#endif
+#include "hic/hic_namespace_macro.h"
 
 #if HIC_BACKEND_CUDA
   #define HIC_BACKEND cuda
