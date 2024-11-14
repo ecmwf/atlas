@@ -61,7 +61,7 @@ void GridBoxMaximum::do_execute(const Field& source, Field& target, Metadata&) c
 
     if (!matrixFree_) {
         const Matrix& m = matrix();
-        Matrix::const_iterator k(m);
+        Matrix::const_iterator k(m.host_matrix());
 
         for (decltype(m.rows()) i = 0, j = 0; i < m.rows(); ++i) {
             double max = std::numeric_limits<double>::lowest();

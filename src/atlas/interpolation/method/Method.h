@@ -16,10 +16,10 @@
 
 #include "atlas/interpolation/Cache.h"
 #include "atlas/interpolation/NonLinear.h"
+#include "atlas/linalg/SparseMatrix.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/util/Object.h"
 #include "eckit/config/Configuration.h"
-#include "eckit/linalg/SparseMatrix.h"
 
 namespace atlas {
 class Field;
@@ -87,7 +87,7 @@ protected:
 
     using Triplet  = eckit::linalg::Triplet;
     using Triplets = std::vector<Triplet>;
-    using Matrix   = eckit::linalg::SparseMatrix;
+    using Matrix   = atlas::linalg::SparseMatrix;
 
     static void normalise(Triplets& triplets);
 

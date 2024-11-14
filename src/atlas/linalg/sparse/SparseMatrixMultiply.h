@@ -11,9 +11,9 @@
 #pragma once
 
 #include "eckit/config/Configuration.h"
-#include "eckit/linalg/SparseMatrix.h"
 
 #include "atlas/linalg/Indexing.h"
+#include "atlas/linalg/SparseMatrix.h"
 #include "atlas/linalg/View.h"
 #include "atlas/linalg/sparse/Backend.h"
 #include "atlas/runtime/Exception.h"
@@ -22,7 +22,7 @@
 namespace atlas {
 namespace linalg {
 
-using SparseMatrix  = eckit::linalg::SparseMatrix;
+using SparseMatrix  = atlas::linalg::SparseMatrix;
 using Configuration = eckit::Configuration;
 
 template <typename Matrix, typename SourceView, typename TargetView>

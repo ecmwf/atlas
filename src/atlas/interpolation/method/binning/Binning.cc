@@ -12,12 +12,12 @@
 #include "atlas/interpolation/Interpolation.h"
 #include "atlas/interpolation/method/binning/Binning.h"
 #include "atlas/interpolation/method/MethodFactory.h"
+#include "atlas/linalg/SparseMatrix.h"
 #include "atlas/mesh.h"
 #include "atlas/mesh/actions/GetCubedSphereNodalArea.h"
 #include "atlas/runtime/Trace.h"
 
 #include "eckit/config/LocalConfiguration.h"
-#include "eckit/linalg/SparseMatrix.h"
 #include "eckit/linalg/Triplet.h"
 #include "eckit/mpi/Comm.h"
 
@@ -58,7 +58,7 @@ void Binning::do_setup(const FunctionSpace& source,
 
   using Index = eckit::linalg::Index;
   using Triplet = eckit::linalg::Triplet;
-  using SMatrix = eckit::linalg::SparseMatrix;
+  using SMatrix = atlas::linalg::SparseMatrix;
 
   source_ = source;
   target_ = target;

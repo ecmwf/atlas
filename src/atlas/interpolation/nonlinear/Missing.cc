@@ -81,7 +81,7 @@ bool MissingIfAllMissing::executeT(NonLinear::Matrix& W, const Field& field) con
     bool zeros = false;
 
     Size i = 0;
-    Matrix::iterator it(W);
+    Matrix::iterator it = W.begin();
     for (Size r = 0; r < W.rows(); ++r) {
         const Matrix::iterator end = W.end(r);
 
@@ -161,7 +161,7 @@ bool MissingIfAnyMissing::executeT(NonLinear::Matrix& W, const Field& field) con
     bool zeros = false;
 
     Size i = 0;
-    Matrix::iterator it(W);
+    Matrix::iterator it = W.begin();
     for (Size r = 0; r < W.rows(); ++r) {
         const Matrix::iterator end = W.end(r);
 
@@ -228,7 +228,7 @@ bool MissingIfHeaviestMissing::executeT(NonLinear::Matrix& W, const Field& field
     bool zeros = false;
 
     Size i = 0;
-    Matrix::iterator it(W);
+    Matrix::iterator it = W.begin();
     for (Size r = 0; r < W.rows(); ++r) {
         const Matrix::iterator end = W.end(r);
 

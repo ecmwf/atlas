@@ -70,7 +70,7 @@ void SparseMatrixMultiply<backend::eckit_linalg, Indexing::layout_right, 1, cons
     ATLAS_ASSERT(tgt.contiguous());
     eckit::linalg::Vector v_src(src.data(), src.size());
     eckit::linalg::Vector v_tgt(tgt.data(), tgt.size());
-    eckit_linalg_backend(config).spmv(W, v_src, v_tgt);
+    eckit_linalg_backend(config).spmv(W.host_matrix(), v_src, v_tgt);
 }
 
 void SparseMatrixMultiply<backend::eckit_linalg, Indexing::layout_right, 2, const double, double>::apply(
@@ -81,7 +81,7 @@ void SparseMatrixMultiply<backend::eckit_linalg, Indexing::layout_right, 2, cons
     ATLAS_ASSERT(tgt.shape(1) >= W.rows());
     eckit::linalg::Matrix m_src(src.data(), src.shape(1), src.shape(0));
     eckit::linalg::Matrix m_tgt(tgt.data(), tgt.shape(1), tgt.shape(0));
-    eckit_linalg_backend(config).spmm(W, m_src, m_tgt);
+    eckit_linalg_backend(config).spmm(W.host_matrix(), m_src, m_tgt);
 }
 
 void SparseMatrixMultiply<backend::eckit_linalg, Indexing::layout_left, 1, const double, double>::apply(

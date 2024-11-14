@@ -16,10 +16,10 @@
 #include <type_traits>
 
 #include "eckit/config/Parametrisation.h"
-#include "eckit/linalg/SparseMatrix.h"
 
 #include "atlas/array.h"
 #include "atlas/field/Field.h"
+#include "atlas/linalg/SparseMatrix.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Factory.h"
 #include "atlas/util/ObjectHandle.h"
@@ -37,9 +37,9 @@ namespace nonlinear {
 class NonLinear : public util::Object {
 public:
     using Config = eckit::Parametrisation;
-    using Matrix = eckit::linalg::SparseMatrix;
-    using Scalar = eckit::linalg::Scalar;
-    using Size   = eckit::linalg::Size;
+    using Matrix = atlas::linalg::SparseMatrix;
+    using Scalar = atlas::linalg::SparseMatrix::Scalar;
+    using Size   = atlas::linalg::SparseMatrix::Size;
 
     /**
      * @brief ctor

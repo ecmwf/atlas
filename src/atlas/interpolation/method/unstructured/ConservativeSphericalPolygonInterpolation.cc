@@ -1248,7 +1248,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
     }
 }
 
-eckit::linalg::SparseMatrix ConservativeSphericalPolygonInterpolation::compute_1st_order_matrix() {
+atlas::linalg::SparseMatrix ConservativeSphericalPolygonInterpolation::compute_1st_order_matrix() {
     ATLAS_TRACE("ConservativeMethod::setup: build cons-1 interpolant matrix");
     ATLAS_ASSERT(not matrix_free_);
     Triplets triplets;
@@ -1358,7 +1358,7 @@ eckit::linalg::SparseMatrix ConservativeSphericalPolygonInterpolation::compute_1
     return Matrix(n_tpoints_, n_spoints_, triplets);
 }
 
-eckit::linalg::SparseMatrix ConservativeSphericalPolygonInterpolation::compute_2nd_order_matrix() {
+atlas::linalg::SparseMatrix ConservativeSphericalPolygonInterpolation::compute_2nd_order_matrix() {
     ATLAS_TRACE("ConservativeMethod::setup: build cons-2 interpolant matrix");
     ATLAS_ASSERT(not matrix_free_);
     const auto& src_points_ = data_->src_points_;
