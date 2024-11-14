@@ -30,6 +30,7 @@ namespace test {
 // strings to be used in the tests
 static std::string eckit_linalg = sparse::backend::eckit_linalg::type();
 static std::string openmp       = sparse::backend::openmp::type();
+static std::string hicsparse    = sparse::backend::hicsparse::type();
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -193,6 +194,7 @@ CASE("test backend functionalities") {
     sparse::current_backend(eckit_linalg);
     EXPECT_EQ(sparse::current_backend().type(), "eckit_linalg");
     EXPECT_EQ(sparse::current_backend().getString("backend", "undefined"), "undefined");
+
     sparse::current_backend().set("backend", "default");
     EXPECT_EQ(sparse::current_backend().getString("backend"), "default");
 
@@ -200,15 +202,21 @@ CASE("test backend functionalities") {
     EXPECT_EQ(sparse::current_backend().getString("backend", "undefined"), "undefined");
     EXPECT_EQ(sparse::default_backend(eckit_linalg).getString("backend"), "default");
 
+    sparse::current_backend(hicsparse);
+    EXPECT_EQ(sparse::current_backend().type(), "hicsparse");
+    EXPECT_EQ(sparse::current_backend().getString("backend", "undefined"), "undefined");
+
     sparse::default_backend(eckit_linalg).set("backend", "generic");
     EXPECT_EQ(sparse::default_backend(eckit_linalg).getString("backend"), "generic");
 
     const sparse::Backend backend_default      = sparse::Backend();
     const sparse::Backend backend_openmp       = sparse::backend::openmp();
     const sparse::Backend backend_eckit_linalg = sparse::backend::eckit_linalg();
-    EXPECT_EQ(backend_default.type(), openmp);
+    const sparse::Backend backend_hicsparse    = sparse::backend::hicsparse();
+    EXPECT_EQ(backend_default.type(), hicsparse);
     EXPECT_EQ(backend_openmp.type(), openmp);
     EXPECT_EQ(backend_eckit_linalg.type(), eckit_linalg);
+    EXPECT_EQ(backend_hicsparse.type(), hicsparse);
 
     EXPECT_EQ(std::string(backend_openmp), openmp);
     EXPECT_EQ(std::string(backend_eckit_linalg), eckit_linalg);

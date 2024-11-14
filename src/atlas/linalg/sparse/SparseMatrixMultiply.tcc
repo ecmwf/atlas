@@ -87,6 +87,9 @@ void sparse_matrix_multiply( const Matrix& matrix, const SourceView& src, Target
 #endif
         sparse::dispatch_sparse_matrix_multiply<sparse::backend::eckit_linalg>( matrix, src, tgt, indexing, util::Config("backend",type)  );
     }
+    else if ( type == sparse::backend::hicsparse::type() ) {
+        sparse::dispatch_sparse_matrix_multiply<sparse::backend::hicsparse>( matrix, src, tgt, indexing, config  );
+    }
     else {
         throw_NotImplemented( "sparse_matrix_multiply cannot be performed with unsupported backend [" + type + "]",
                               Here() );
