@@ -13,4 +13,9 @@ CubedSphereGrid2::CubedSphereGrid2(idx_t resolution):
 CubedSphereGrid2::CubedSphereGrid2(const Grid& grid):
     Grid(grid), grid_(cubedsphere_grid2(get())) {}
 
+// Temporarily here for testing lonlat()
+void CubedSphereGrid2::printCubedSphere2() const {
+    get()->name();
+}
+
 }  // namespace atlas

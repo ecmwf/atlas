@@ -139,6 +139,9 @@ public:
     void lonlat(idx_t n, Point2& point) const;
     Point2 lonlat(idx_t n) const;
 
+    void lonlat(idx_t n, PointLonLat& point) const;
+    PointLonLat lonlat(idx_t n) const;
+
 protected:
     void print(std::ostream&) const override;
 

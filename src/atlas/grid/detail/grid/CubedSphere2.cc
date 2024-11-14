@@ -125,59 +125,6 @@ PointXYZ CubedSphere2::tangent_to_xyz_coord(const PointXY& tan_coord, idx_t tile
     return PointXYZ::normalize(xyz);
 }
 
-std::string CubedSphere2::name() const {
-    return "CS-LFR-" + std::to_string(N_) + "-2";
-}
-
-std::string CubedSphere2::type() const {
-    return type_;
-}
-
-// Provide a unique identification hash for the grid and the projection.
-void CubedSphere2::hash(eckit::Hash& h) const {
-    h.add(name()); // use name() or type()?
-    h.add(int(N_));
-
-    // also add projection information
-    projection().hash(h);
-
-    // also add domain information, even though already encoded in grid.
-    domain().hash(h);
-}
-
-// Return the bounding box for the grid, global
-RectangularLonLatDomain CubedSphere2::lonlatBoundingBox() const {
-    return GlobalDomain();
-}
-
-idx_t CubedSphere2::size() const {
-    // Example from CubedSphere.h
-    // return accumulate(npts_.begin(), npts_.end(), 0);
-
-    // For now, return expected size
-    return N_ * N_ * nTiles_;
-}
-
-// Return the specification for the grid.
-Grid::Spec CubedSphere2::spec() const {
-    // Copied from CubedSphere.cc
-    Grid::Spec grid_spec;
-
-    if (type() == "cubedsphere2") {
-        grid_spec.set("name", name());
-    }
-    else {
-        grid_spec.set("type", type());
-    }
-    grid_spec.set("projection", projection().spec());
-    return grid_spec;
-}
-
-// Print the name of the Grid
-void CubedSphere2::print(std::ostream& os) const {
-    os << "CubedSphere2(Name:" << name() << ")";
-}
-
 }  // namespace grid
 }  // namespace detail
 }  // namespace grid
