@@ -703,6 +703,8 @@ linalg/Indexing.h
 linalg/Introspection.h
 linalg/View.h
 linalg/sparse.h
+linalg/SparseMatrix.h
+linalg/SparseMatrix.cc
 linalg/sparse/Backend.h
 linalg/sparse/Backend.cc
 linalg/sparse/SparseMatrixMultiply.h
