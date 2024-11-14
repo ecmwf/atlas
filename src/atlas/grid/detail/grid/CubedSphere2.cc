@@ -46,11 +46,8 @@ RectangularLonLatDomain CubedSphere2::lonlatBoundingBox() const {
     return GlobalDomain();
 }
 
+// Return the total number of points
 idx_t CubedSphere2::size() const {
-    // Example from CubedSphere.h
-    // return accumulate(npts_.begin(), npts_.end(), 0);
-
-    // For now, return expected size
     return N_ * N_ * nTiles_;
 }
 
