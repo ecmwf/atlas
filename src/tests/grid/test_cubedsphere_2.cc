@@ -6,7 +6,8 @@ namespace test {
 namespace {
 
 CASE("cubed sphere grid instantiation") {
-  const auto grid = CubedSphereGrid2(1);
+    const auto grid = CubedSphereGrid2(12);
+    grid.printCubedSphere2();
 
 }
 }  // namespace
