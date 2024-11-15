@@ -81,8 +81,11 @@ atlas_add_hic_test(
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+if(eckit_VERSION VERSION_GREATER_EQUAL 1.27.0)
+# The test uses a header file from eckit "Overloaded.h" which only is available in v 1.27.0
 ecbuild_add_test( TARGET atlas_test_array_view_variant
   SOURCES test_array_view_variant.cc
   LIBS atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
+endif()
