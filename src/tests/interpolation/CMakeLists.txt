@@ -104,6 +104,13 @@ ecbuild_add_test( TARGET atlas_test_interpolation_biquasicubic
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_interpolation_bicubic_gpu
+  SOURCES test_interpolation_structured2D_gpu.cc
+  LIBS     atlas
+  CONDITION atlas_HAVE_CUDA OR atlas_HAVE_HIP
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_to_unstructured
   SOURCES  test_interpolation_structured2D_to_unstructured.cc
   LIBS     atlas
