@@ -472,14 +472,23 @@ void StructuredInterpolation2D<Kernel>::do_execute( const FieldSet& src_fields, 
     if ( datatype.kind() == array::DataType::KIND_REAL64 && rank == 1 ) {
         execute_impl<double, 1>( *kernel_, src_fields, tgt_fields );
     }
-    if ( datatype.kind() == array::DataType::KIND_REAL32 && rank == 1 ) {
+    else if ( datatype.kind() == array::DataType::KIND_REAL32 && rank == 1 ) {
         execute_impl<float, 1>( *kernel_, src_fields, tgt_fields );
     }
-    if ( datatype.kind() == array::DataType::KIND_REAL64 && rank == 2 ) {
+    else if ( datatype.kind() == array::DataType::KIND_REAL64 && rank == 2 ) {
         execute_impl<double, 2>( *kernel_, src_fields, tgt_fields );
     }
-    if ( datatype.kind() == array::DataType::KIND_REAL32 && rank == 2 ) {
+    else if ( datatype.kind() == array::DataType::KIND_REAL32 && rank == 2 ) {
         execute_impl<float, 2>( *kernel_, src_fields, tgt_fields );
+    }
+    else if ( datatype.kind() == array::DataType::KIND_REAL64 && rank == 3 ) {
+        execute_impl<double, 3>( *kernel_, src_fields, tgt_fields );
+    }
+    else if ( datatype.kind() == array::DataType::KIND_REAL32 && rank == 3 ) {
+        execute_impl<float, 3>( *kernel_, src_fields, tgt_fields );
+    }
+    else {
+        ATLAS_NOTIMPLEMENTED;
     }
 
     tgt_fields.set_dirty();
