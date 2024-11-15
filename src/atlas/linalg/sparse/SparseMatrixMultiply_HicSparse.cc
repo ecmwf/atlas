@@ -265,27 +265,51 @@ void hsSpMM(const SparseMatrix& W, const View<SourceValue, 2>& src, TargetValue 
     HIC_CALL(hicDeviceSynchronize());
 }
 
-void SparseMatrixMultiply<backend::hicsparse, Indexing::layout_left, 1, double const, double>::apply(
+void SparseMatrixMultiply<backend::hicsparse, Indexing::layout_left, 1, double const, double>::multiply(
     const SparseMatrix& W, const View<double const, 1>& src, View<double, 1>& tgt, const Configuration&) {
     double beta = 0;
     hsSpMV(W, src, beta, tgt);
 }
 
-void SparseMatrixMultiply<backend::hicsparse, Indexing::layout_left, 2, double const, double>::apply(
+void SparseMatrixMultiply<backend::hicsparse, Indexing::layout_left, 1, double const, double>::multiply_add(
+    const SparseMatrix& W, const View<double const, 1>& src, View<double, 1>& tgt, const Configuration&) {
+    double beta = 1;
+    hsSpMV(W, src, beta, tgt);
+}
+
+void SparseMatrixMultiply<backend::hicsparse, Indexing::layout_left, 2, double const, double>::multiply(
     const SparseMatrix& W, const View<double const, 2>& src, View<double, 2>& tgt, const Configuration&) {
     double beta = 0;
     hsSpMM<Indexing::layout_left>(W, src, beta, tgt);
 }
 
-void SparseMatrixMultiply<backend::hicsparse, Indexing::layout_right, 1, double const, double>::apply(
+void SparseMatrixMultiply<backend::hicsparse, Indexing::layout_left, 2, double const, double>::multiply_add(
+    const SparseMatrix& W, const View<double const, 2>& src, View<double, 2>& tgt, const Configuration&) {
+    double beta = 1;
+    hsSpMM<Indexing::layout_left>(W, src, beta, tgt);
+}
+
+void SparseMatrixMultiply<backend::hicsparse, Indexing::layout_right, 1, double const, double>::multiply(
     const SparseMatrix& W, const View<double const, 1>& src, View<double, 1>& tgt, const Configuration&) {
     double beta = 0;
     hsSpMV(W, src, beta, tgt);
 }
 
-void SparseMatrixMultiply<backend::hicsparse, Indexing::layout_right, 2, double const, double>::apply(
+void SparseMatrixMultiply<backend::hicsparse, Indexing::layout_right, 1, double const, double>::multiply_add(
+    const SparseMatrix& W, const View<double const, 1>& src, View<double, 1>& tgt, const Configuration&) {
+    double beta = 1;
+    hsSpMV(W, src, beta, tgt);
+}
+
+void SparseMatrixMultiply<backend::hicsparse, Indexing::layout_right, 2, double const, double>::multiply(
     const SparseMatrix& W, const View<double const, 2>& src, View<double, 2>& tgt, const Configuration&) {
     double beta = 0;
+    hsSpMM<Indexing::layout_right>(W, src, beta, tgt);
+}
+
+void SparseMatrixMultiply<backend::hicsparse, Indexing::layout_right, 2, double const, double>::multiply_add(
+    const SparseMatrix& W, const View<double const, 2>& src, View<double, 2>& tgt, const Configuration&) {
+    double beta = 1;
     hsSpMM<Indexing::layout_right>(W, src, beta, tgt);
 }
 

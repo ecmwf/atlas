@@ -379,6 +379,25 @@ CASE("sparse_matrix vector multiply (spmv)") {
                 EXPECT_THROWS_AS(sparse_matrix_multiply(A, x2.view(), y.view()), eckit::AssertionFailed);
             }
         }
+
+        SECTION("View of atlas::Array [backend=" + backend + "]") {
+            ArrayVector<double> x(Vector{1., 2., 3.});
+            ArrayVector<double> y(Vector{4., 5., 6.});
+            sparse_matrix_multiply_add(A, x.view(), y.view());
+            expect_equal(y.view(), Vector{-3., 9., 12.});
+            // sparse_matrix_multiply of sparse matrix and vector of non-matching sizes should fail
+            {
+                ArrayVector<double> x2(2);
+                EXPECT_THROWS_AS(sparse_matrix_multiply_add(A, x2.view(), y.view()), eckit::AssertionFailed);
+            }
+        }
+
+        SECTION("sparse_matrix_multiply_add [backend=" + backend + "]") {
+            ArrayVector<double> x(Vector{1., 2., 3.});
+            ArrayVector<double> y(Vector{1., 2., 3.});
+            sparse_matrix_multiply_add(A, x.view(), y.view());
+            expect_equal(y.view(), Vector{-6., 6., 9.});
+        }
     }
 }
 
@@ -418,6 +437,14 @@ CASE("sparse_matrix matrix multiply (spmm)") {
             ArrayMatrix<double, Indexing::layout_right> c(3, 2);
             sparse_matrix_multiply(A, ma.view(), c.view(), Indexing::layout_right);
             expect_equal(c.view(), c_exp);
+        }
+
+        SECTION("sparse_matrix_multiply_add [backend=" + sparse::current_backend().type() + "]") {
+            ArrayMatrix<double, Indexing::layout_right> x(m);
+            ArrayMatrix<double, Indexing::layout_right> y(m);
+            Matrix y_exp{{-12., -12.}, {9., 12.}, {15., 18.}};
+            sparse_matrix_multiply_add(A, x.view(), y.view(), Indexing::layout_right);
+            expect_equal(y.view(), y_exp);
         }
     }
 
