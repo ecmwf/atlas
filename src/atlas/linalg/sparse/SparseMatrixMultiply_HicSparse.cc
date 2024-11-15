@@ -19,6 +19,20 @@
 
 namespace {
 
+class HicSparseHandleRAIIWrapper {
+public:
+    HicSparseHandleRAIIWrapper() { hicsparseCreate(&handle_); };
+    ~HicSparseHandleRAIIWrapper() { hicsparseDestroy(handle_); }
+    hicsparseHandle_t value() { return handle_; }
+private:
+    hicsparseHandle_t handle_;
+};
+
+hicsparseHandle_t getDefaultHicSparseHandle() {
+    static auto handle = HicSparseHandleRAIIWrapper();
+    return handle.value();
+}
+
 template<typename T>
 constexpr hicsparseIndexType_t getHicsparseIndexType() {
     using base_type = std::remove_const_t<T>;
@@ -86,10 +100,7 @@ void hsSpMV(const SparseMatrix& W, const View<SourceValue, 1>& src, TargetValue 
         W.updateDevice();
     }
 
-    // Create sparse library handle
-    // todo: use singleton class for storing hicSparse library handle.
-    hicsparseHandle_t handle;
-    HICSPARSE_CALL(hicsparseCreate(&handle));
+    auto handle = getDefaultHicSparseHandle();
 
     // Create a sparse matrix descriptor
     hicsparseConstSpMatDescr_t matA;
@@ -159,7 +170,6 @@ void hsSpMV(const SparseMatrix& W, const View<SourceValue, 1>& src, TargetValue 
     HICSPARSE_CALL(hicsparseDestroyDnVec(vecX));
     HICSPARSE_CALL(hicsparseDestroyDnVec(vecY));
     HICSPARSE_CALL(hicsparseDestroySpMat(matA));
-    HICSPARSE_CALL(hicsparseDestroy(handle));
 
     HIC_CALL(hicDeviceSynchronize());
 }
@@ -181,10 +191,7 @@ void hsSpMM(const SparseMatrix& W, const View<SourceValue, 2>& src, TargetValue 
         W.updateDevice();
     }
 
-    // Create sparse library handle
-    // todo: use singleton class for storing hicSparse library handle.
-    hicsparseHandle_t handle;
-    HICSPARSE_CALL(hicsparseCreate(&handle));
+    auto handle = getDefaultHicSparseHandle();
 
     // Create a sparse matrix descriptor
     hicsparseConstSpMatDescr_t matA;
@@ -260,7 +267,6 @@ void hsSpMM(const SparseMatrix& W, const View<SourceValue, 2>& src, TargetValue 
     HICSPARSE_CALL(hicsparseDestroyDnMat(matC));
     HICSPARSE_CALL(hicsparseDestroyDnMat(matB));
     HICSPARSE_CALL(hicsparseDestroySpMat(matA));
-    HICSPARSE_CALL(hicsparseDestroy(handle));
 
     HIC_CALL(hicDeviceSynchronize());
 }
