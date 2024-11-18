@@ -44,8 +44,8 @@ void set_default_resource(std::string_view name) {
 
 // ---------------------------------------------------------------------------------------------------------
 
-DefaultResource::DefaultResource(std::string_view name) :
-    DefaultResource(get_registered_resource(name)) {}
+scoped_default_resource::scoped_default_resource(std::string_view name) :
+    scoped_default_resource(get_registered_resource(name)) {}
 
 // ---------------------------------------------------------------------------------------------------------
 

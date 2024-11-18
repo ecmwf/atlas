@@ -56,6 +56,7 @@ void recursive_scope_object(int recursion) {
 }
 
 
+
 int main(int argc, char* argv[]) {
     std::cout << "BEGIN" << std::endl;
 
