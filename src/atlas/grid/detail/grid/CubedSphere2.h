@@ -36,8 +36,11 @@ public:
         ATLAS_NOTIMPLEMENTED;
     }
 
-    void lonlat(idx_t n, PointLonLat& point) const;
-    PointLonLat lonlat(idx_t n) const;
+    void lonlat(idx_t n, Point2& point) const;
+    Point2 lonlat(idx_t n) const;
+
+    void xy(idx_t n, Point2& point) const {lonlat(n, point);}
+    Point2 xy(idx_t n) const {return lonlat(n);}
 
 protected:
     void print(std::ostream&) const override;

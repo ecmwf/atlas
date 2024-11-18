@@ -67,7 +67,7 @@ Grid::Spec CubedSphere2::spec() const {
 }
 
 // Get the lonlat for a given index
-void CubedSphere2::lonlat(idx_t n, PointLonLat& point) const {
+void CubedSphere2::lonlat(idx_t n, Point2& point) const {
     // 1. Get point on base face (xy plane)
     int ij = get_tij(n);
     double base_point[3];
@@ -95,8 +95,8 @@ void CubedSphere2::lonlat(idx_t n, PointLonLat& point) const {
         )) * rad_to_deg_;
 }
 
-PointLonLat CubedSphere2::lonlat(idx_t n) const {
-    PointLonLat point;
+Point2 CubedSphere2::lonlat(idx_t n) const {
+    Point2 point;
     lonlat(n, point);
     return point;
 }
