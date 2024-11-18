@@ -94,6 +94,9 @@ FieldImpl::FieldImpl(const std::string& name, array::Array* array)
 }
 
 FieldImpl::~FieldImpl() {
+    for (FieldObserver* observer : field_observers_) {
+        observer->onFieldDestruction(*this);
+    }
     array_->detach();
     if (array_->owners() == 0) {
         for (auto& f : callback_on_destruction_) {

@@ -19,7 +19,9 @@
 #include <openacc.h>
 #include <string.h>
 
-#include "atlas_acc_map_data.h"
+#include "atlas_acc.h"
+
+extern "C" {
 
 void atlas_acc_map_data(void* cpu_ptr, void* gpu_ptr, unsigned long bytes) {
   acc_map_data(cpu_ptr, gpu_ptr, bytes);
@@ -124,4 +126,5 @@ const char* atlas_acc_info_str() {
 
 int atlas_acc_get_num_devices() {
   return acc_get_num_devices(acc_get_device_type());
+}
 }

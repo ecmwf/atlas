@@ -139,8 +139,8 @@ END_TEST
 TEST( test_fieldset )
 implicit none
 
-  type(atlas_FieldSet) :: fieldset
-  type(atlas_Field) :: field
+  type(atlas_FieldSet) :: fieldset, fieldset_2
+  type(atlas_Field) :: field, field_2
 
   write(*,*) "test_fieldset starting"
 
@@ -163,6 +163,15 @@ implicit none
   FCTEST_CHECK_EQUAL( field%name(), "field_1" )
   field = fieldset%field(3)
   FCTEST_CHECK_EQUAL( field%name(), "field_2" )
+
+  fieldset_2 = atlas_FieldSet()
+  call fieldset_2%add(fieldset)
+  field_2 = fieldset_2%field("field_0")
+  call field_2%rename("field_00")
+  FCTEST_CHECK(fieldset%has("field_00"))
+  field = fieldset%field("field_00")
+  FCTEST_CHECK_EQUAL(field%name(), "field_00")
+
   call fieldset%final()
   write(0,*) "test_fieldset end"
 

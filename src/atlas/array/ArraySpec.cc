@@ -47,12 +47,18 @@ ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayAlignment& alignment): 
     shape_.resize(rank_);
     strides_.resize(rank_);
     layout_.resize(rank_);
+    device_strides_.resize(rank_);
+    device_strides_[rank_ - 1] = 1;
     for (int j = rank_ - 1; j >= 0; --j) {
         shape_[j]   = shape[j];
         strides_[j] = allocated_size_;
         layout_[j]  = j;
         size_ *= size_t(shape_[j]);
         allocated_size_ *= size_t(aligned_shape[j]);
+        if( j < rank_ - 1) {
+            // Assume contiguous device data!
+            device_strides_[j] = strides_[j+1] * shape[j+1];
+        }
     }
     ATLAS_ASSERT(allocated_size_ == compute_aligned_size(size_t(shape_[0]) * size_t(strides_[0]), size_t(alignment)));
     contiguous_     = (size_ == allocated_size_);
@@ -81,11 +87,17 @@ ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayStrides& strides, const
     shape_.resize(rank_);
     strides_.resize(rank_);
     layout_.resize(rank_);
+    device_strides_.resize(rank_);
+    device_strides_[rank_ - 1] = strides[rank_ - 1];
     for (int j = rank_ - 1; j >= 0; --j) {
         shape_[j]   = shape[j];
         strides_[j] = strides[j];
         layout_[j]  = j;
         size_ *= size_t(shape_[j]);
+        if( j < rank_ - 1) {
+            // Assume contiguous device data!
+            device_strides_[j] = device_strides_[j+1] * shape[j+1];
+        }
     }
     allocated_size_ = compute_aligned_size(size_t(shape_[0]) * size_t(strides_[0]), size_t(alignment));
     contiguous_     = (size_ == allocated_size_);
@@ -121,6 +133,8 @@ ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayStrides& strides, const
     shape_.resize(rank_);
     strides_.resize(rank_);
     layout_.resize(rank_);
+    device_strides_.resize(rank_);
+    device_strides_[rank_ - 1] = strides[rank_ - 1];
     default_layout_ = true;
     for (int j = rank_ - 1; j >= 0; --j) {
         shape_[j]   = shape[j];
@@ -129,6 +143,10 @@ ArraySpec::ArraySpec(const ArrayShape& shape, const ArrayStrides& strides, const
         size_ *= size_t(shape_[j]);
         if (layout_[j] != idx_t(j)) {
             default_layout_ = false;
+        }
+        if( j < rank_ - 1) {
+            // Assume contiguous device data!
+            device_strides_[j] = device_strides_[j+1] * shape[j+1];
         }
     }
     allocated_size_ = compute_aligned_size(size_t(shape_[layout_[0]]) * size_t(strides_[layout_[0]]), size_t(alignment));
@@ -152,12 +170,18 @@ const std::vector<int>& ArraySpec::stridesf() const {
     return stridesf_;
 }
 
+const std::vector<int>& ArraySpec::device_stridesf() const {
+    return device_stridesf_;
+}
+
 void ArraySpec::allocate_fortran_specs() {
     shapef_.resize(rank_);
     stridesf_.resize(rank_);
+    device_stridesf_.resize(rank_);
     for (idx_t j = 0; j < rank_; ++j) {
         shapef_[j] = shape_[rank_ - 1 - layout_[j]];
-        stridesf_[j] = strides_[rank_ -1 - layout_[j]];
+        stridesf_[j] = strides_[rank_ - 1 - layout_[j]];
+        device_stridesf_[j] = device_strides_[rank_ - 1 - j];
     }
 }
 

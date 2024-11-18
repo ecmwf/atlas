@@ -75,9 +75,9 @@ if( atlas_HAVE_ECTRANS AND atlas_REQUIRES_PRIVATE_DEPENDENCIES )
     endif()
 endif()
 
-## CGAL
+## Qhull
 if( atlas_HAVE_TESSELATION AND atlas_REQUIRES_PRIVATE_DEPENDENCIES )
-    find_dependency( CGAL HINTS @CGAL_DIR@ )
+    find_dependency( Qhull HINTS @Qhull_DIR@ )
 endif()
 
 ## Fortran

@@ -7,6 +7,27 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.40.0] - 2024-11-18
+
+### Added
+- Add MultiField to pack field allocations by @sbrdar in https://github.com/ecmwf/atlas/pull/229
+- Add function to create `std::variant` for multiple array views. by @odlomax in https://github.com/ecmwf/atlas/pull/220
+- Add Fortran access to device data through Field and FieldSet by @sbrdar in https://github.com/ecmwf/atlas/pull/232
+- Add Fortran API for structured stencil computations by @wdeconinck in https://github.com/ecmwf/atlas/pull/228
+
+### Changed
+- Support OpenACC with Cray compiler + use OpenACC_Fortran_FLAGS by @wdeconinck in https://github.com/ecmwf/atlas/pull/225
+- Refactor `SphericalVector` interpolation method to use `array::ArrayViewVariant`. by @odlomax in https://github.com/ecmwf/atlas/pull/227
+- Integrate `pack_vector_fields` into `SphericalVector` Interpolation method. by @odlomax in https://github.com/ecmwf/atlas/pull/224
+- Refactor `util::pack_vector_fields` to use `array::ArrayViewVariant` by @odlomax in https://github.com/ecmwf/atlas/pull/226
+
+### Fixed
+- Fix application of limiter for StructuredInterpolation2D by @wdeconinck in https://github.com/ecmwf/atlas/pull/236
+- Fix use of ATLAS_ENABLE_CUDA ON/OFF
+- Bugfix for Qhull by @benjaminmenetrier in https://github.com/ecmwf/atlas/pull/230
+- Fixed ordering of `fixup_halos` and `halo_exhange.execute_adjoint` in `StructuredColumns.cc` by @odlomax in https://github.com/ecmwf/atlas/pull/223
+
+
 ## [0.39.0] - 2024-09-18
 
 ### Added
@@ -564,6 +585,7 @@ Fix StructuredInterpolation2D with retry for failed stencils
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.40.0]: https://github.com/ecmwf/atlas/compare/0.39.0...0.40.0
 [0.39.0]: https://github.com/ecmwf/atlas/compare/0.38.1...0.39.0
 [0.38.1]: https://github.com/ecmwf/atlas/compare/0.38.0...0.38.1
 [0.38.0]: https://github.com/ecmwf/atlas/compare/0.37.0...0.38.0

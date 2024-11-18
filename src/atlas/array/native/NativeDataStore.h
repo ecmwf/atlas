@@ -121,7 +121,7 @@ public:
         }
     }
 
-    ~DataStore() {
+    virtual ~DataStore() {
         deallocateDevice();
         deallocateHost();
     }
@@ -316,6 +316,10 @@ public:
         else {
             device_data_ = host_data_;
         }
+    }
+
+    virtual ~WrappedDataStore() {
+        deallocateDevice();
     }
 
     void updateDevice() const override {

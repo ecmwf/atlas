@@ -20,9 +20,13 @@ if( atlas_HAVE_ATLAS_FUNCTIONSPACE AND (ENABLE_ECTRANS OR NOT DEFINED ENABLE_ECT
     if( TARGET transi_dp )
         set( transi_FOUND TRUE )
         if( NOT TARGET transi )
-            get_target_property( transi_dp_IMPORTED transi_dp IMPORTED )
-            if( transi_dp_IMPORTED )
-                set_target_properties( transi_dp PROPERTIES IMPORTED_GLOBAL TRUE) # required for aliasing imports
+            if( CMAKE_VERSION VERSION_LESS 3.18 )
+                # Before CMake 3.18 it is not possible to alias a non-global imported target
+                # Make the import global. Warning, this may break further find_package
+                get_target_property( transi_dp_IMPORTED transi_dp IMPORTED )
+                if( transi_dp_IMPORTED )
+                    set_target_properties( transi_dp PROPERTIES IMPORTED_GLOBAL TRUE)
+                endif()
             endif()
             add_library( transi ALIAS transi_dp )
         endif()

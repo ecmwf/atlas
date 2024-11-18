@@ -75,8 +75,9 @@ protected:
     FunctionSpace source_;
     FunctionSpace target_;
 
-    bool matrix_free_;
     bool verbose_;
+    bool limiter_;
+    bool matrix_free_;
     double convert_units_;
     idx_t out_npts_;
 

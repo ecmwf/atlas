@@ -175,6 +175,8 @@ grid/detail/grid/RegionalVariableResolution.h
 grid/detail/grid/RegionalVariableResolution.cc
 grid/detail/grid/Healpix.h
 grid/detail/grid/Healpix.cc
+grid/detail/grid/StencilComputerInterface.h
+grid/detail/grid/StencilComputerInterface.cc
 
 grid/detail/tiles/Tiles.cc
 grid/detail/tiles/Tiles.h
@@ -472,12 +474,24 @@ field/FieldSet.cc
 field/FieldSet.h
 field/MissingValue.cc
 field/MissingValue.h
+field/MultiField.cc
+field/MultiField.h
+field/MultiFieldCreator.cc
+field/MultiFieldCreator.h
+field/MultiFieldCreatorIFS.cc
+field/MultiFieldCreatorIFS.h
+field/MultiFieldCreatorArray.cc
+field/MultiFieldCreatorArray.h
 field/State.cc
 field/State.h
 field/detail/FieldImpl.cc
 field/detail/FieldImpl.h
 field/detail/FieldInterface.cc
 field/detail/FieldInterface.h
+field/detail/MultiFieldImpl.cc
+field/detail/MultiFieldImpl.h
+field/detail/MultiFieldInterface.cc
+field/detail/MultiFieldInterface.h
 field/detail/MissingValue.cc
 field/detail/MissingValue.h
 )
@@ -745,6 +759,8 @@ array/Range.h
 array/Vector.h
 array/Vector.cc
 array/SVector.h
+array/ArrayViewVariant.h
+array/ArrayViewVariant.cc
 array/helpers/ArrayInitializer.h
 array/helpers/ArrayAssigner.h
 array/helpers/ArrayWriter.h
@@ -1001,12 +1017,12 @@ ecbuild_add_library( TARGET atlas
 
 )
 
-if( HAVE_ACC )
+if( HAVE_ACC AND CMAKE_Fortran_COMPILER_ID MATCHES NVHPC )
   target_link_options( atlas INTERFACE
-      $<$<LINK_LANG_AND_ID:C,NVHPC>:SHELL:-acc=gpu>
-      $<$<LINK_LANG_AND_ID:CXX,NVHPC>:SHELL:-acc=gpu>
-      $<$<LINK_LANG_AND_ID:Fortran,NVHPC>:SHELL:-acc=gpu>
-      $<$<LINK_LANG_AND_ID:CUDA,NVIDIA>:SHELL:-acc=gpu> )
+      $<$<LINK_LANG_AND_ID:C,NVHPC>:SHELL:${ACC_LINK_OPTIONS}>
+      $<$<LINK_LANG_AND_ID:CXX,NVHPC>:SHELL:${ACC_LINK_OPTIONS}>
+      $<$<LINK_LANG_AND_ID:Fortran,NVHPC>:SHELL:${ACC_LINK_OPTIONS}>
+      $<$<LINK_LANG_AND_ID:CUDA,NVIDIA>:SHELL:${ACC_LINK_OPTIONS}> )
 endif()
 
 target_compile_features( atlas PUBLIC cxx_std_17 )

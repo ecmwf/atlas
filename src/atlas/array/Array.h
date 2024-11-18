@@ -85,11 +85,15 @@ public:
 
     const ArrayStrides& strides() const { return spec_.strides(); }
 
+    const ArrayStrides& device_strides() const { return spec_.device_strides(); }
+
     const ArrayShape& shape() const { return spec_.shape(); }
 
     const std::vector<int>& shapef() const { return spec_.shapef(); }
 
     const std::vector<int>& stridesf() const { return spec_.stridesf(); }
+
+    const std::vector<int>& device_stridesf() const { return spec_.device_stridesf(); }
 
     bool contiguous() const { return spec_.contiguous(); }
 

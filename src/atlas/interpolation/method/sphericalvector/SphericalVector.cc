@@ -5,6 +5,9 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
+#include <cmath>
+#include <variant>
+
 #include "atlas/interpolation/method/sphericalvector/SphericalVector.h"
 
 #include "atlas/array/ArrayView.h"
@@ -21,6 +24,7 @@
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/Constants.h"
 #include "atlas/util/Geometry.h"
+#include "atlas/util/PackVectorFields.h"
 #include "eckit/config/LocalConfiguration.h"
 
 namespace atlas {
@@ -95,10 +99,9 @@ void SphericalVector::do_setup(const FunctionSpace& source,
       const auto deltaAlpha =
           (alpha.first - alpha.second) * util::Constants::degreesToRadians();
 
-      complexTriplets[dataIndex] =
-          ComplexTriplet{rowIndex, colIndex,
-                         Complex{baseWeight * std::cos(deltaAlpha),
-                                 baseWeight * std::sin(deltaAlpha)}};
+      complexTriplets[dataIndex] = ComplexTriplet{
+          rowIndex, colIndex,
+          baseWeight * Complex{std::cos(deltaAlpha), std::sin(deltaAlpha)}};
       realTriplets[dataIndex] = RealTriplet{rowIndex, colIndex, baseWeight};
     }
   }
@@ -120,9 +123,14 @@ void SphericalVector::do_execute(const FieldSet& sourceFieldSet,
   ATLAS_TRACE("atlas::interpolation::method::SphericalVector::do_execute()");
   ATLAS_ASSERT(sourceFieldSet.size() == targetFieldSet.size());
 
-  for (auto i = 0; i < sourceFieldSet.size(); ++i) {
-    do_execute(sourceFieldSet[i], targetFieldSet[i], metadata);
+  const auto packedSourceFieldSet = util::pack_vector_fields(sourceFieldSet);
+  auto packedTargetFieldSet = util::pack_vector_fields(targetFieldSet);
+
+  for (auto i = 0; i < packedSourceFieldSet.size(); ++i) {
+    do_execute(packedSourceFieldSet[i], packedTargetFieldSet[i], metadata);
   }
+
+  util::unpack_vector_fields(packedTargetFieldSet, targetFieldSet);
 }
 
 void SphericalVector::do_execute(const Field& sourceField, Field& targetField,
@@ -130,7 +138,7 @@ void SphericalVector::do_execute(const Field& sourceField, Field& targetField,
   ATLAS_TRACE("atlas::interpolation::method::SphericalVector::do_execute()");
 
   if (targetField.size() == 0) {
-      return;
+    return;
   }
 
   const auto fieldType = sourceField.metadata().getString("type", "");
@@ -156,9 +164,15 @@ void SphericalVector::do_execute_adjoint(FieldSet& sourceFieldSet,
       "atlas::interpolation::method::SphericalVector::do_execute_adjoint()");
   ATLAS_ASSERT(sourceFieldSet.size() == targetFieldSet.size());
 
-  for (auto i = 0; i < sourceFieldSet.size(); ++i) {
-    do_execute_adjoint(sourceFieldSet[i], targetFieldSet[i], metadata);
+  auto packedSourceFieldSet = util::pack_vector_fields(sourceFieldSet);
+  const auto packedTargetFieldSet = util::pack_vector_fields(targetFieldSet);
+
+  for (auto i = 0; i < packedSourceFieldSet.size(); ++i) {
+    do_execute_adjoint(packedSourceFieldSet[i], packedTargetFieldSet[i],
+                       metadata);
   }
+
+  util::unpack_vector_fields(packedSourceFieldSet, sourceFieldSet);
 }
 
 void SphericalVector::do_execute_adjoint(Field& sourceField,
@@ -168,7 +182,7 @@ void SphericalVector::do_execute_adjoint(Field& sourceField,
       "atlas::interpolation::method::SphericalVector::do_execute_adjoint()");
 
   if (targetField.size() == 0) {
-      return;
+    return;
   }
 
   const auto fieldType = sourceField.metadata().getString("type", "");
@@ -192,59 +206,39 @@ template <typename MatMul>
 void SphericalVector::interpolate_vector_field(const Field& sourceField,
                                                Field& targetField,
                                                const MatMul& matMul) {
+  const auto sourceViewVariant = array::make_view_variant(sourceField);
 
-  ATLAS_ASSERT_MSG(sourceField.variables() == 2 || sourceField.variables() == 3,
-                   "Vector field can only have 2 or 3 components.");
+  const auto sourceViewVisitor = [&](auto sourceView) {
+    if constexpr (array::is_rank<2, 3>(sourceView) &&
+                  array::is_non_const_value_type<float, double>(sourceView)) {
+      using SourceView = std::decay_t<decltype(sourceView)>;
+      using Value = typename SourceView::non_const_value_type;
+      constexpr auto Rank = SourceView::rank();
+      auto targetView = array::make_view<Value, Rank>(targetField);
 
-  if (sourceField.datatype().kind() == array::DataType::KIND_REAL64) {
-    interpolate_vector_field<double>(sourceField, targetField, matMul);
-    return;
-  }
+      switch (sourceField.variables()) {
+        case 2:
+          return matMul.apply(sourceView, targetView, twoVector);
+        case 3:
+          return matMul.apply(sourceView, targetView, threeVector);
+        default:
+          ATLAS_THROW_EXCEPTION("Error: no support for " +
+                                std::to_string(sourceField.variables()) +
+                                " variable vector fields.\n" +
+                                " Number of variables must be 2 or 3.");
+      }
 
-  if (sourceField.datatype().kind() == array::DataType::KIND_REAL32) {
-    interpolate_vector_field<float>(sourceField, targetField, matMul);
-    return;
-  }
+    } else {
+      ATLAS_THROW_EXCEPTION(
+          "Error: no support for rank = " + std::to_string(sourceField.rank()) +
+          " and value type = " + sourceField.datatype().str() + ".\n" +
+          "Vector field must have rank 2 or 3 with value type "
+          "float or double");
+    }
+  };
 
-  ATLAS_NOTIMPLEMENTED;
+  std::visit(sourceViewVisitor, sourceViewVariant);
 };
-
-template <typename Value, typename MatMul>
-void SphericalVector::interpolate_vector_field(const Field& sourceField,
-                                               Field& targetField,
-                                               const MatMul& matMul) {
-  if (sourceField.rank() == 2) {
-    interpolate_vector_field<Value, 2>(sourceField, targetField, matMul);
-    return;
-  }
-
-  if (sourceField.rank() == 3) {
-    interpolate_vector_field<Value, 3>(sourceField, targetField, matMul);
-    return;
-  }
-
-  ATLAS_NOTIMPLEMENTED;
-}
-
-template <typename Value, int Rank, typename MatMul>
-void SphericalVector::interpolate_vector_field(const Field& sourceField,
-                                               Field& targetField,
-                                               const MatMul& matMul) {
-  const auto sourceView = array::make_view<Value, Rank>(sourceField);
-  auto targetView = array::make_view<Value, Rank>(targetField);
-
-  if (sourceField.variables() == 2) {
-    matMul.apply(sourceView, targetView, twoVector);
-    return;
-  }
-
-  if (sourceField.variables() == 3) {
-    matMul.apply(sourceView, targetView, threeVector);
-    return;
-  }
-
-  ATLAS_NOTIMPLEMENTED;
-}
 
 }  // namespace method
 }  // namespace interpolation

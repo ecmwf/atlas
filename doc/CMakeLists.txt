@@ -8,6 +8,10 @@
 
 if(atlas_HAVE_DOCS)
 
+if(atlas_HAVE_FORTRAN)
+  add_subdirectory(example-fortran)
+endif()
+
 add_subdirectory(user-guide)
 
 list( APPEND DOC_CODE_TARGETS

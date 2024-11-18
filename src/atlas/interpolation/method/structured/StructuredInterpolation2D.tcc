@@ -234,10 +234,15 @@ double StructuredInterpolation2D<Kernel>::convert_units_multiplier( const Field&
 template <typename Kernel>
 StructuredInterpolation2D<Kernel>::StructuredInterpolation2D( const Method::Config& config ) :
     Method( config ),
-    matrix_free_{false} ,
-    verbose_{false} {
-    config.get( "matrix_free", matrix_free_ );
+    verbose_{false},
+    limiter_{false},
+    matrix_free_{false} {
     config.get( "verbose", verbose_ );
+    config.get( "limiter", limiter_ );
+    config.get( "matrix_free", matrix_free_ );
+    if (limiter_ && not matrix_free_) {
+        ATLAS_THROW_EXCEPTION("Cannot apply configuration 'limiter=true' and 'matrix_free=false' together");
+    }
 }
 
 
@@ -328,7 +333,7 @@ template <typename Kernel>
 void StructuredInterpolation2D<Kernel>::setup( const FunctionSpace& source ) {
     using namespace structured2d;
 
-    kernel_.reset( new Kernel( source ) );
+    kernel_.reset( new Kernel( source, util::Config( "limiter", limiter_ ) ) );
 
     if ( functionspace::StructuredColumns( source ).halo() < 1 ) {
         throw_Exception( "The source functionspace must have (halo >= 1) for pole treatment" );
@@ -467,14 +472,23 @@ void StructuredInterpolation2D<Kernel>::do_execute( const FieldSet& src_fields, 
     if ( datatype.kind() == array::DataType::KIND_REAL64 && rank == 1 ) {
         execute_impl<double, 1>( *kernel_, src_fields, tgt_fields );
     }
-    if ( datatype.kind() == array::DataType::KIND_REAL32 && rank == 1 ) {
+    else if ( datatype.kind() == array::DataType::KIND_REAL32 && rank == 1 ) {
         execute_impl<float, 1>( *kernel_, src_fields, tgt_fields );
     }
-    if ( datatype.kind() == array::DataType::KIND_REAL64 && rank == 2 ) {
+    else if ( datatype.kind() == array::DataType::KIND_REAL64 && rank == 2 ) {
         execute_impl<double, 2>( *kernel_, src_fields, tgt_fields );
     }
-    if ( datatype.kind() == array::DataType::KIND_REAL32 && rank == 2 ) {
+    else if ( datatype.kind() == array::DataType::KIND_REAL32 && rank == 2 ) {
         execute_impl<float, 2>( *kernel_, src_fields, tgt_fields );
+    }
+    else if ( datatype.kind() == array::DataType::KIND_REAL64 && rank == 3 ) {
+        execute_impl<double, 3>( *kernel_, src_fields, tgt_fields );
+    }
+    else if ( datatype.kind() == array::DataType::KIND_REAL32 && rank == 3 ) {
+        execute_impl<float, 3>( *kernel_, src_fields, tgt_fields );
+    }
+    else {
+        ATLAS_NOTIMPLEMENTED;
     }
 
     tgt_fields.set_dirty();

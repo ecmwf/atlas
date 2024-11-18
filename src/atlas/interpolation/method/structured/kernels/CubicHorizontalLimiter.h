@@ -108,6 +108,39 @@ public:
             }
         }
     }
+
+    template <typename Value, int Rank>
+    static typename std::enable_if<(Rank == 3), void>::type limit(const std::array<std::array<idx_t, 4>, 4>& index,
+                                                                  const array::ArrayView<const Value, Rank>& input,
+                                                                  array::ArrayView<Value, Rank>& output, idx_t r) {
+        // Limit output to max/min of values in stencil marked by '*'
+        //         x        x        x         x
+        //              x     *-----*     x
+        //                   /   P  |
+        //          x       *------ *        x
+        //        x        x        x         x
+        for (idx_t k = 0; k < output.shape(1); ++k) {
+            for (idx_t l = 0; l < output.shape(2); ++l) {
+                Value maxval = std::numeric_limits<Value>::lowest();
+                Value minval = std::numeric_limits<Value>::max();
+                for (idx_t j = 1; j < 3; ++j) {
+                    for (idx_t i = 1; i < 3; ++i) {
+                        idx_t n   = index[j][i];
+                        Value val = input(n, k, l);
+                        maxval    = std::max(maxval, val);
+                        minval    = std::min(minval, val);
+                    }
+                }
+                if (output(r, k, l) < minval) {
+                    output(r, k, l) = minval;
+                }
+                else if (output(r, k, l) > maxval) {
+                    output(r, k, l) = maxval;
+                }
+            }
+        }
+    }
+
 };
 
 }  // namespace method
