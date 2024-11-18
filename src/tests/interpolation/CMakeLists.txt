@@ -75,6 +75,12 @@ ecbuild_add_executable( TARGET atlas_test_interpolation_structured2D
   NOINSTALL
 )
 
+ecbuild_add_executable( TARGET atlas_test_interpolation_structured_limiter
+  SOURCES  test_interpolation_structured2D_limiter.cc
+  LIBS     atlas
+  NOINSTALL
+)
+
 ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_regional
   SOURCES  test_interpolation_structured2D_regional.cc
   LIBS     atlas
