@@ -55,14 +55,25 @@ public:
         allocator(get_default_resource(), stream) {}
 
     value_type* allocate(std::size_t size) {
-        DefaultStream scope{stream_};
+        scoped_default_stream default_stream{stream_};
         return static_cast<value_type*>(memory_resource_->allocate(size * sizeof(value_type), 256));
     }
 
     void deallocate(value_type* ptr, std::size_t size) {
-        DefaultStream scope{stream_};
+        scoped_default_stream default_stream{stream_};
         memory_resource_->deallocate(ptr, size * sizeof(value_type), 256);
     }
+
+    value_type* allocate_async(std::size_t size, const Stream& stream) {
+        scoped_default_stream default_stream{stream};
+        return static_cast<value_type*>(memory_resource_->allocate(size * sizeof(value_type), default_alignment()));
+    }
+
+    void deallocate_async(value_type* ptr, std::size_t size, const Stream& stream) {
+        scoped_default_stream default_stream{stream};
+        memory_resource_->deallocate(ptr, size * sizeof(value_type), default_alignment());
+    }
+
 
     template <class U, class... Args>
     void construct(U* p, Args&&... args) {

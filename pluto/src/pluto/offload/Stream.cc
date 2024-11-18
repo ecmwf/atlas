@@ -80,6 +80,10 @@ static Stream stream0_{nullptr};
 
 static const Stream* default_stream_ = &stream0_;
 
+const Stream& default_stream() {
+    return stream0_;
+}
+
 const Stream& get_default_stream() {
     return *default_stream_;
 }

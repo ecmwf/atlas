@@ -35,15 +35,15 @@ inline memory_resource* get_default_resource() {
     return pluto::get_default_resource();
 }
 
-class [[nodiscard]] DefaultResource {
+class [[nodiscard]] scoped_default_resource {
 public:
-    DefaultResource(std::string_view name) : DefaultResource(get_registered_resource(name)) {}
+    scoped_default_resource(std::string_view name) : scoped_default_resource(get_registered_resource(name)) {}
 
-    DefaultResource(memory_resource* mr) :
+    scoped_default_resource(memory_resource* mr) :
         saved_(pluto::host::get_default_resource()) {
         pluto::host::set_default_resource(mr);
     }
-    ~DefaultResource() {
+    ~scoped_default_resource() {
         pluto::host::set_default_resource(saved_);
     }
 private:

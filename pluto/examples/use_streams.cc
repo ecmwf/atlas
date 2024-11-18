@@ -19,22 +19,90 @@
 // Helper array types to allocate and deallocate uninitialized memory using allocator.
 // This could be in a separate file
 
-template <typename T, typename Allocator>
-class array{
+// SFINAE test
+template <typename T>
+class has_allocate_async
+{
+    typedef char one;
+    struct two { char x[2]; };
+
+    template <typename C> static one test( decltype(&C::allocate_async) ) ;
+    template <typename C> static two test(...);    
+
+public:
+    enum { value = sizeof(test<T>(0)) == sizeof(char) };
+};
+
+template <typename T>
+class has_deallocate_async
+{
+    typedef char one;
+    struct two { char x[2]; };
+
+    template <typename C> static one test( decltype(&C::deallocate_async) ) ;
+    template <typename C> static two test(...);    
+
+public:
+    enum { value = sizeof(test<T>(0)) == sizeof(char) };
+};
+
+template <typename T>
+static constexpr bool has_async() {
+    return has_allocate_async<T>::value && has_deallocate_async<T>::value;
+}
+
+template <typename T, typename Allocator = pluto::allocator<T>>
+class array {
 public:
   using value_type = T;
+  using allocator_type = Allocator;
+
   array(std::size_t size) :
     size_{size} {
     data_ = alloc_.allocate(size_);
   }
+
+  array(std::size_t size, const pluto::Stream& stream) :
+    size_{size},
+    stream_(&stream) {
+    data_ = alloc_.allocate_async(size_, *stream_);
+  }
+
   template <typename Alloc>
   array(std::size_t size, const Alloc& alloc) :
     alloc_{alloc},
     size_{size} {
-    data_ = alloc_.allocate(size_);
+    data_ = alloc_.allocate(size_);  
   }
+
+  template <typename Alloc>
+  array(std::size_t size, const pluto::Stream& stream, const Alloc& alloc) :
+    alloc_{alloc},
+    size_{size},
+    stream_(&stream) {
+    if constexpr( has_async<allocator_type>() ){
+      data_ = alloc_.allocate_async(size_, *stream_);
+    }
+    else {
+      data_ = alloc_.allocate(size_);
+    }
+  }
+
   ~array() {
-    alloc_.deallocate(data_, size_);
+    if constexpr( has_async<allocator_type>() ){
+      if (stream_) {
+        alloc_.deallocate_async(data_, size_, *stream_);
+      }
+      else {
+        alloc_.deallocate(data_, size_);
+      }
+    }
+    else {
+      alloc_.deallocate(data_, size_);
+    }
+  }
+  void set_stream(const pluto::Stream& stream) {
+    stream_ = &stream;
   }
   value_type&       operator[](std::size_t i) { return data_[i]; }
   const value_type& operator[](std::size_t i) const { return data_[i]; }
@@ -42,13 +110,11 @@ public:
   const value_type* data() const { return data_; }
   std::size_t size() const { return size_; }
 private:
-  Allocator alloc_;
+  allocator_type alloc_;
   std::size_t size_;
-  value_type* data_;
+  value_type* data_ {nullptr};
+  pluto::Stream const* stream_{nullptr};
 };
-
-template <typename T> using device_array = array<T,pluto::device::allocator<T>>;
-template <typename T> using host_array   = array<T,pluto::host::allocator<T>>;
 
 // ---------------------------------------------------------------------------------------------------
 // Kernel to add +1 to device array. This could be in a separate CUDA/HIP source file
@@ -97,38 +163,36 @@ int main(int argc, char* argv[]) {
     // A stream pool
     std::vector<pluto::Stream> streams(nb_streams);
 
-    // Set host memory default to be pinned for faster memory transfer to device
-    pluto::PinnedMemoryResource pinned_resource;
-    pluto::host::set_default_resource(&pinned_resource);
-
     std::cerr << "host alloc" << std::endl;
-    host_array<value_type> array_h1(size);
-    host_array<value_type> array_h2(size);
+    array<value_type> array_h1(size, pluto::pinned_resource());
+    array<value_type> array_h2(size, pluto::pinned_resource());
 
     std::cerr << "device alloc" << std::endl;
-    device_array<value_type> array_d1(size);
+    auto& device_resource = *pluto::device_resource();
+    array<value_type> array_d1(size, &device_resource);
 
     std::cerr << "async loop start" << std::endl;
     auto start = std::chrono::steady_clock::now();
     for(std::size_t jstream=0; jstream<streams.size(); ++jstream) {
-      pluto::scope stream_scope;
-      pluto::set_default_stream(streams[jstream]);
-
       const auto& stream = streams[jstream];
-      const auto& stream_offset = jstream * size/streams.size();
-      const auto& stream_size   = (jstream < streams.size()-1 ? size/streams.size() : size - stream_offset);
-      auto* h1 = array_h1.data()+stream_offset;
-      auto* h2 = array_h2.data()+stream_offset;
-      auto* d1 = array_d1.data()+stream_offset;
+      {
+        const auto& stream_offset = jstream * size/streams.size();
+        const auto& stream_size   = (jstream < streams.size()-1 ? size/streams.size() : size - stream_offset);
+        array<value_type> stream_tmp(stream_size, stream, &device_resource);
 
-      device_array<value_type> stream_tmp(stream_size);
-      auto* dtmp = stream_tmp.data();
+        auto* h1 = array_h1.data()+stream_offset;
+        auto* h2 = array_h2.data()+stream_offset;
+        auto* d1 = array_d1.data()+stream_offset;
 
-      h1[stream_size-1] = 1.;
-      h2[stream_size-1] = -1.;
-      pluto::copy_host_to_device(d1, h1, stream_size, stream);
-      plus_one_on_device(d1, stream_size, stream);
-      pluto::copy_device_to_host(h2, d1, stream_size, stream);
+        auto* dtmp = stream_tmp.data();
+
+        h1[stream_size-1] = 1.;
+        h2[stream_size-1] = -1.;
+        pluto::copy_host_to_device(d1, h1, stream_size, stream);
+        plus_one_on_device(d1, stream_size, stream);
+        pluto::copy_device_to_host(h2, d1, stream_size, stream);
+      }
+      //stream.wait();
     }
     std::cerr << "async loop end" << std::endl;
     pluto::wait();

@@ -16,6 +16,7 @@
 #include <string_view>
 
 #include "pluto/pluto_config.h"
+#include "pluto/util/Alignment.h"
 
 #if PLUTO_HAVE_PMR
 #include <memory_resource>
@@ -25,10 +26,26 @@
 #define STD_PMR pluto::compat
 #endif
 
+
 namespace pluto {
+
+class Stream;
+// const Stream& get_default_stream();
 
 void init();
 
+// class memory_resource : public STD_PMR::memory_resource {
+// public:
+//     using STD_PMR::memory_resource::memory_resource;
+//     void* allocate_async(std::size_t bytes, std::size_t alignment = alignof(std::max_align_t), const Stream& stream = get_default_stream() ) {
+//         return do_allocate_async(bytes, alignment, stream);
+//     }
+//     virtual void* do_allocate_async(std::size_t bytes, std::size_t alignment, const Stream&) { return nullptr; }
+//     void deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment = alignof(std::max_align_t), const Stream& stream = get_default_stream() ) {
+//         do_deallocate_async(ptr, bytes, alignment, stream);
+//     }
+//     virtual void do_deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment, const Stream&) {}
+// };
 using memory_resource = STD_PMR::memory_resource;
 using pool_options = STD_PMR::pool_options;
 // template<typename T>
@@ -41,14 +58,66 @@ inline memory_resource* get_default_resource() {
     return STD_PMR::get_default_resource(); }
 inline void set_default_resource(memory_resource* mr) { STD_PMR::set_default_resource(mr); }
 
-template<typename T>
-class allocator : public STD_PMR::polymorphic_allocator<T> {
+class async_memory_resource : public memory_resource {
 public:
-    using STD_PMR::polymorphic_allocator<T>::polymorphic_allocator;
-    allocator() : STD_PMR::polymorphic_allocator<T>(get_default_resource()) {}
+    using memory_resource::memory_resource;
+    virtual void* do_allocate_async(std::size_t bytes, std::size_t alignment, const Stream& stream) = 0;
+    virtual void do_deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment, const Stream& stream) = 0;
+
+    void* allocate_async(std::size_t bytes, std::size_t alignment, const Stream& stream) {
+        return do_allocate_async(bytes, alignment, stream);
+    }
+    void deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment, const Stream& stream) {
+        do_deallocate_async(ptr, bytes, alignment, stream);
+    }
 };
 
-class memory_pool_resource : public memory_resource {
+template<typename T>
+class allocator : public STD_PMR::polymorphic_allocator<T> {
+    using base_t = STD_PMR::polymorphic_allocator<T>;
+public:
+    using value_type = typename base_t::value_type;
+    using base_t::polymorphic_allocator;
+
+    allocator() : 
+        allocator(get_default_resource()) {}
+
+    allocator(memory_resource* mr) : 
+        base_t(mr),
+        async_mr_(dynamic_cast<async_memory_resource*>(base_t::resource())) {}
+
+    allocator(const base_t& other) :
+        base_t(other),
+        async_mr_(dynamic_cast<async_memory_resource*>(base_t::resource())) {}
+
+    template <class U>
+    allocator(const STD_PMR::polymorphic_allocator<U>& other) noexcept :
+        base_t(other),
+        async_mr_(dynamic_cast<async_memory_resource*>(base_t::resource())) {}
+
+    value_type* allocate_async(std::size_t size, const Stream& stream) {
+        if (async_mr_) {
+            return (value_type*)async_mr_->allocate_async(size, pluto::default_alignment(), stream);
+        }
+        else {
+            return base_t::allocate(size);
+        }
+    }
+
+    void deallocate_async(value_type* ptr, std::size_t size, const Stream& stream) {
+        if (async_mr_) {
+            async_mr_->deallocate_async(ptr, size, pluto::default_alignment(), stream);
+        }
+        else {
+            base_t::deallocate(ptr, size);
+        }
+    }
+
+private:
+    async_memory_resource* async_mr_{nullptr};
+};
+
+class memory_pool_resource : public async_memory_resource {
 public:
 	virtual std::size_t size() const = 0;
 	virtual std::size_t capacity() const = 0;

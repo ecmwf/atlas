@@ -44,6 +44,7 @@ namespace pluto::yakl {
 
 #include "pluto/memory_resource/memory_resource.h"
 #include "pluto/util/Alignment.h"
+#include "pluto/offload/Stream.h"
 
 namespace pluto {
 

@@ -72,30 +72,30 @@ struct pool_options {
     std::size_t largest_required_pool_block = 0;
 };
 
-class DefaultResource {
+class scoped_default_resource {
 public:
     static memory_resource* get() {
         return instance().mr_;
     }
-    static DefaultResource& instance() {
-        static DefaultResource instance;
+    static scoped_default_resource& instance() {
+        static scoped_default_resource instance;
         return instance;
     }
     static void set(memory_resource* mr) {
         instance().mr_ = mr;
     }
 private:
-    DefaultResource () {
+    scoped_default_resource () {
         mr_ = new_delete_resource_t::instance();
     }
     memory_resource* mr_;
 };
 
 inline memory_resource* get_default_resource() {
-    return DefaultResource::get();
+    return scoped_default_resource::get();
 }
 inline void set_default_resource(memory_resource* mr) {
-    return DefaultResource::set(mr);
+    return scoped_default_resource::set(mr);
 }
 inline memory_resource* null_memory_resource() {
     return null_memory_resource_t::instance();
@@ -109,7 +109,13 @@ class polymorphic_allocator {
 public:
     using value_type = T;
     polymorphic_allocator() : mr_(get_default_resource()) {}
-    polymorphic_allocator(memory_resource* mr) : mr_(mr) {}
+    polymorphic_allocator(memory_resource* mr ) : mr_(mr) {}
+    polymorphic_allocator(const polymorphic_allocator& other) = default;
+    template <class U>
+    polymorphic_allocator(const polymorphic_allocator<U>& other) noexcept :
+        mr_(other.mr_) {
+    }
+
     value_type* allocate(std::size_t size) {
         return (value_type*)mr_->allocate(size * sizeof(T));
     }
