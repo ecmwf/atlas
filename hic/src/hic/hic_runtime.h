@@ -110,6 +110,16 @@
 HIC_NAMESPACE_BEGIN
 //------------------------------------------------
 
+HIC_TYPE(HostFn_t)
+HIC_TYPE(Error_t)
+HIC_TYPE(Event_t)
+HIC_TYPE(Stream_t)
+#if !HIC_BACKEND_HIP
+HIC_TYPE(PointerAttributes)
+#elif HIP_VERSION_MAJOR >= 6
+using HIC_SYMBOL(PointerAttributes) = HIC_BACKEND_SYMBOL(PointerAttribute_t);
+#endif
+
 HIC_FUNCTION(DeviceSynchronize)
 HIC_FUNCTION(Free)
 HIC_FUNCTION(FreeAsync)
@@ -117,6 +127,7 @@ HIC_FUNCTION(GetDeviceCount)
 HIC_FUNCTION(GetErrorString)
 HIC_FUNCTION(GetLastError)
 HIC_FUNCTION(HostGetDevicePointer)
+HIC_FUNCTION(LaunchHostFunc)
 HIC_FUNCTION(HostRegister)
 HIC_FUNCTION(HostUnregister)
 HIC_FUNCTION(Malloc)
@@ -136,15 +147,6 @@ HIC_FUNCTION(PointerGetAttributes)
 HIC_FUNCTION(StreamCreate)
 HIC_FUNCTION(StreamDestroy)
 HIC_FUNCTION(StreamSynchronize)
-
-HIC_TYPE(Error_t)
-HIC_TYPE(Event_t)
-HIC_TYPE(Stream_t)
-#if !HIC_BACKEND_HIP
-HIC_TYPE(PointerAttributes)
-#elif HIP_VERSION_MAJOR >= 6
-using HIC_SYMBOL(PointerAttributes) = HIC_BACKEND_SYMBOL(PointerAttribute_t);
-#endif
 
 HIC_VALUE(CpuDeviceId)
 HIC_VALUE(HostRegisterMapped)

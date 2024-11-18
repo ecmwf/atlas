@@ -29,6 +29,7 @@ namespace {
 
 using dummyError_t  = int;
 using dummyEvent_t  = void*;
+using dummyHostFn_t = void*;
 using dummyStream_t = void*;
 
 const char* dummyGetErrorString(dummyError_t) {
