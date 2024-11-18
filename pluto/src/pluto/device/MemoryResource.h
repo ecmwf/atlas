@@ -23,17 +23,17 @@ void set_default_resource(std::string_view name);
 
 // --------------------------------------------------------------------------------------------------------
 
-class DefaultResource {
+class scoped_default_resource {
 public:
 
-    DefaultResource(std::string_view name);
+    scoped_default_resource(std::string_view name);
 
-    DefaultResource(memory_resource* mr) :
+    scoped_default_resource(memory_resource* mr) :
         saved_(get_default_resource()) {
         device::set_default_resource(mr);
     }
 
-    ~DefaultResource() {
+    ~scoped_default_resource() {
         device::set_default_resource(saved_);
     }
 private:

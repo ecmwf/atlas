@@ -58,6 +58,8 @@ ecbuild_add_library( TARGET pluto
     pluto/memory_resource/PinnedMemoryResource.h
     pluto/memory_resource/TraceMemoryResource.cc
     pluto/memory_resource/TraceMemoryResource.h
+    pluto/memory_resource/StreamMemoryResourceAdaptor.cc
+    pluto/memory_resource/StreamMemoryResourceAdaptor.h
 
     pluto/offload/copy.h
     pluto/offload/Event.cc

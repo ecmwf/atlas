@@ -132,7 +132,8 @@ public:
 
     Array(std::size_t size, const pluto::Stream& stream) : 
       resource_(pluto::device::get_default_resource()),
-      stream_(stream) {
+      stream_(stream),
+      alloc_(resource_) {
       allocate(size);
     }
 
@@ -156,8 +157,9 @@ public:
     void allocate(std::size_t size) {
       size_ = size;
       if (size_ > 0) {
-          DefaultStream default_stream(stream_);
-          ptr_ = (value_type*)resource_->allocate(size_*sizeof(value_type),alignment_);
+          alloc_.allocate_async(size, stream_);
+          // scoped_default_stream default_stream{stream_};
+          // ptr_ = (value_type*)resource_->allocate(size_*sizeof(value_type),alignment_);
           if (! is_aligned( ptr_, alignment_ )) {
             std::cout << "assert(is_aligned(ptr_, alignment_)) failed" << std::endl;
           }
@@ -166,12 +168,14 @@ public:
 
     void deallocate() {
       if (size_) {
-          DefaultStream default_stream(stream_);
-          resource_->deallocate(ptr_, size_*sizeof(value_type),alignment_);
+          alloc_.deallocate_async(ptr_, size_, stream_);
+          // scoped_default_stream default_stream{stream_};
+          // resource_->deallocate(ptr_, size_*sizeof(value_type),alignment_);
         }
     }
 
 private:
+    pluto::allocator<value_type> alloc_;
     memory_resource* resource_;
     const pluto::Stream& stream_;
     value_type* ptr_{nullptr};
@@ -304,7 +308,7 @@ int main(int argc, char* argv[]) {
   //   )
   // );
 
-  // auto scoped_default = host::DefaultResource("stack");
+  // auto scoped_default = host::scoped_default_resource("stack");
 
   auto pinned_pool = Register("pinned_pool",
     std::make_unique<TraceMemoryResource>("pinned_pool",
@@ -329,7 +333,7 @@ int main(int argc, char* argv[]) {
     std::size_t size = 32;
     std::cout << "\n\n ITERATION " << j+1 << std::endl;
     {
-      host::DefaultResource default_resource("pool");
+      host::scoped_default_resource default_resource("pool");
       std::cout << "v1 alloc" << std::endl;
       vector<int> v1;
       v1.assign(size,1);
@@ -413,7 +417,7 @@ int main(int argc, char* argv[]) {
 
   pluto::device::set_default_resource("device");
   {
-    // pluto::device::DefaultResource default_resource("device_pool");
+    // pluto::device::scoped_default_resource default_resource("device_pool");
     // pluto::device::set_default_resource("device_pool");
     // kernel launch
     std::cout << "device arr" << std::endl;
@@ -462,8 +466,8 @@ int main(int argc, char* argv[]) {
 {
   std::cout << "\n\n TEST 1\n\n" << std::endl;
 
-  host::DefaultResource default_host_resource("heap");
-  device::DefaultResource default_device_resource("device");
+  host::scoped_default_resource default_host_resource("heap");
+  device::scoped_default_resource default_device_resource("device");
 
   host::allocator<double>   host_allocator;
   device::allocator<double> device_allocator;
@@ -501,7 +505,7 @@ int main(int argc, char* argv[]) {
 
 if (0) {
   std::cout << "\n\n TEST 2: managed\n\n" << std::endl;
-  host::DefaultResource default_resource("managed");
+  host::scoped_default_resource default_resource("managed");
   host::allocator<double>   host_allocator;
   // device::allocator<double> device_allocator;
 
@@ -532,7 +536,7 @@ if (0) {
 if (0)
 {
   std::cout << "\n\n TEST 3: pinned+mapped\n\n" << std::endl;
-  host::DefaultResource default_resource("pinned_pool");
+  host::scoped_default_resource default_resource("pinned_pool");
 
   host::allocator<double>   host_allocator;
   std::size_t size = 1024;
@@ -572,8 +576,8 @@ if (0)
 if(0)
 {
   std::cout << "\n\n TEST 4: pinned nonmapped\n\n" << std::endl;
-  host::DefaultResource default_host_resource("pinned_pool");
-  device::DefaultResource default_device_resource("device");
+  host::scoped_default_resource default_host_resource("pinned_pool");
+  device::scoped_default_resource default_device_resource("device");
   host::allocator<double> host_allocator;
   device::allocator<double> device_allocator;
 
@@ -616,8 +620,8 @@ for( int i=0; i<2; ++i)
 {
   std::cout << "\n\n TEST 5 device memory pool ITERATION " << i+1 << "\n\n" << std::endl;
 
-  host::DefaultResource default_host_resource("heap");
-  device::DefaultResource default_device_resource("device_pool");
+  host::scoped_default_resource default_host_resource("heap");
+  device::scoped_default_resource default_device_resource("device_pool");
 
   host::allocator<double>   host_allocator;
   device::allocator<double> device_allocator;
@@ -656,7 +660,7 @@ for( int i=0; i<2; ++i)
 // Custom type
 {
   std::cout << "\n\n TEST 6 custom type\n\n" << std::endl;
-  device::DefaultResource default_device_resource("device_pool");
+  device::scoped_default_resource default_device_resource("device_pool");
   
   bool verbosity = TraceOptions::instance().enabled;
 

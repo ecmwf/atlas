@@ -22,8 +22,10 @@ void prefetch_managed_device(const void* managed_ptr, std::size_t bytes) {
     }
 }
 
-void prefetch_managed_device(const void* managed_ptr, std::size_t bytes, const Stream&) {
-    prefetch_managed_device(managed_ptr, bytes);
+void prefetch_managed_device(const void* managed_ptr, std::size_t bytes, const Stream& stream) {
+    if constexpr(PLUTO_HAVE_HIC) {
+        HIC_CALL( hicMemPrefetchAsync(managed_ptr, bytes, 0 /*device id*/, stream.value<hicStream_t>() ) );
+    }
 }
 
 void prefetch_managed_host(const void* managed_ptr, std::size_t bytes) {
@@ -32,8 +34,10 @@ void prefetch_managed_host(const void* managed_ptr, std::size_t bytes) {
     }
 }
 
-void prefetch_managed_host(const void* managed_ptr, std::size_t bytes, const Stream&) {
-    prefetch_managed_host(managed_ptr, bytes);
+void prefetch_managed_host(const void* managed_ptr, std::size_t bytes, const Stream& stream) {
+    if constexpr(PLUTO_HAVE_HIC) {
+        HIC_CALL( hicMemPrefetchAsync(managed_ptr, bytes, hicCpuDeviceId, stream.value<hicStream_t>()) );
+    }
 }
 
 }

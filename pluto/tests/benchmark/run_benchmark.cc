@@ -274,8 +274,8 @@ int main(int argc, char* argv[]) {
 {
     std::cout << "\n BENCHMARK unpinned (reference)\n" << std::endl;
 
-    host::DefaultResource   default_host_resource("heap");
-    device::DefaultResource default_device_resource("device");
+    host::scoped_default_resource   default_host_resource("heap");
+    device::scoped_default_resource default_device_resource("device");
     allocate_host();
     allocate_device();
     initialize_host();
@@ -314,8 +314,8 @@ int main(int argc, char* argv[]) {
 {
     std::cout << "\n BENCHMARK pinned\n" << std::endl;
 
-    host::DefaultResource   default_host_resource("pinned");
-    device::DefaultResource default_device_resource("device");
+    host::scoped_default_resource   default_host_resource("pinned");
+    device::scoped_default_resource default_device_resource("device");
     allocate_host();
     allocate_device();
     initialize_host();
@@ -352,8 +352,8 @@ int main(int argc, char* argv[]) {
 
 {
     std::cout << "\n BENCHMARK pinned_pool + device_pool \n" << std::endl;
-    host::DefaultResource   default_host_resource("pinned_pool");
-    device::DefaultResource default_device_resource("device_pool");
+    host::scoped_default_resource   default_host_resource("pinned_pool");
+    device::scoped_default_resource default_device_resource("device_pool");
     allocate_host();
     allocate_device();
     initialize_host();
@@ -392,7 +392,7 @@ int main(int argc, char* argv[]) {
 {
     std::cout << "\n BENCHMARK managed\n" << std::endl;
 
-    host::DefaultResource   default_host_resource("managed");
+    host::scoped_default_resource   default_host_resource("managed");
     allocate_host();
     initialize_host();
 
@@ -422,7 +422,7 @@ int main(int argc, char* argv[]) {
 {
     std::cout << "\n BENCHMARK managed with prefetch\n" << std::endl;
 
-    host::DefaultResource   default_host_resource("managed");
+    host::scoped_default_resource   default_host_resource("managed");
     allocate_host();
     initialize_host();
 
@@ -463,7 +463,7 @@ int main(int argc, char* argv[]) {
 {
     std::cout << "\n BENCHMARK zero-copy\n" << std::endl;
 
-    host::DefaultResource   default_host_resource("pinned");
+    host::scoped_default_resource   default_host_resource("pinned");
     allocate_host();
     use_registered_device_pointers();
     initialize_host();

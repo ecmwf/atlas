@@ -36,21 +36,23 @@ private:
 };
 
 
+const Stream& default_stream();
+
 const Stream& get_default_stream();
 
 void set_default_stream(const Stream&);
 
 void wait(const Stream&);
 
-class DefaultStream {
+class [[nodiscard]] scoped_default_stream {
 public:
 
-    DefaultStream(const Stream& s) :
+    scoped_default_stream(const Stream& s) :
         saved_(get_default_stream()) {
         set_default_stream(s);
     }
 
-    ~DefaultStream() {
+    ~scoped_default_stream() {
         set_default_stream(saved_);
     }
 private:

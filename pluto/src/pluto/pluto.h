@@ -18,6 +18,7 @@
 #include "pluto/memory_resource/PinnedMemoryResource.h"
 #include "pluto/memory_resource/ManagedMemoryResource.h"
 #include "pluto/memory_resource/DeviceMemoryResource.h"
+#include "pluto/memory_resource/StreamMemoryResourceAdaptor.h"
 
 #include "pluto/host/allocator.h"
 #include "pluto/host/MemoryResource.h"

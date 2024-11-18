@@ -18,6 +18,9 @@
 #include <cctype>
 #include <string>
 #include <map>
+#include <queue>
+
+#include "hic/hic.h"
 
 namespace pluto {
 
@@ -90,6 +93,18 @@ void* MemoryPoolResource::do_allocate(std::size_t bytes, std::size_t alignment) 
     return resource(bytes)->allocate(bytes, alignment);
 }
 
+void* MemoryPoolResource::do_allocate_async(std::size_t bytes, std::size_t alignment, const Stream& stream) {
+    std::lock_guard lock(mtx_);
+    auto* mr       = resource(bytes);
+    auto* async_mr = dynamic_cast<async_memory_resource*>(mr);
+    if (async_mr) {
+        return async_mr->allocate_async(bytes, alignment, stream);
+    }
+    else {
+        return mr->allocate(bytes, alignment);
+    }
+}
+
 void MemoryPoolResource::do_deallocate(void* ptr, std::size_t bytes, std::size_t alignment) {
     std::lock_guard lock(mtx_);
     if (pools_.size() == 1) {
@@ -114,6 +129,35 @@ void MemoryPoolResource::do_deallocate(void* ptr, std::size_t bytes, std::size_t
         }
     }
 }
+
+
+struct AsyncAllocData {
+    MemoryPoolResource* resource;
+    void* ptr;
+    std::size_t bytes;
+    std::size_t alignment;
+};
+
+std::map<void*,std::queue<AsyncAllocData>> stream_callback_queue_;
+
+void callback_deallocate_async(void* stream) {
+    auto& stream_queue = stream_callback_queue_[stream];
+    const AsyncAllocData& ctx = stream_queue.front();
+    ctx.resource->do_deallocate(ctx.ptr, ctx.bytes, ctx.alignment);
+    stream_queue.pop();
+}
+
+void MemoryPoolResource::do_deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment, const Stream& stream) {
+    // stream.wait();
+        // Wait for stream to finish for safety.
+        // We should not deallocate data when it may still be in use in the stream!
+        // TODO: implement using
+        //    __host__ ​cudaError_t cudaLaunchHostFunc ( cudaStream_t stream, cudaHostFn_t fn, void* userData )
+    auto& stream_queue = stream_callback_queue_[stream.value()];
+    stream_queue.emplace(AsyncAllocData{this,ptr,bytes,alignment});
+    HIC_CALL(hicLaunchHostFunc(stream.value<hicStream_t>(),callback_deallocate_async,stream.value()));
+}
+
 
 void MemoryPoolResource::reserve(std::size_t bytes) {
     deallocate(allocate(bytes), bytes);
