@@ -186,6 +186,32 @@ public:
         }
     }
 
+    template <typename stencil_t, typename weights_t, typename Value, int Rank>
+    typename std::enable_if<(Rank == 3), void>::type interpolate(const stencil_t& stencil, const weights_t& weights,
+                                                                 const array::ArrayView<const Value, Rank>& input,
+                                                                 array::ArrayView<Value, Rank>& output, idx_t r) const {
+        const auto& weights_j = weights.weights_j;
+        const idx_t Nk        = output.shape(1);
+        const idx_t Nl        = output.shape(2);
+        for (idx_t k = 0; k < Nk; ++k) {
+            for (idx_t l = 0; l < Nl; ++l) {
+                output(r, k, l) = 0.;
+            }
+        }
+        for (idx_t j = 0; j < stencil_width(); ++j) {
+            const auto& weights_i = weights.weights_i[j];
+            for (idx_t i = 0; i < stencil_width(); ++i) {
+                idx_t n = src_.index(stencil.i(i, j), stencil.j(j));
+                Value w = static_cast<Value>(weights_i[i] * weights_j[j]);
+                for (idx_t k = 0; k < Nk; ++k) {
+                    for (idx_t l = 0; l < Nl; ++l) {
+                        output(r, k, l) += w * input(n, k, l);
+                    }
+                }
+            }
+        }
+    }
+
     template <typename array_t>
     typename array_t::value_type operator()(double x, double y, const array_t& input) const {
         Stencil stencil;
