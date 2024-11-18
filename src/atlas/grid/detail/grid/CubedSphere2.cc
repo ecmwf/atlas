@@ -12,16 +12,6 @@ namespace grid {
 CubedSphere2::CubedSphere2(idx_t resolution) : N_(resolution) {}
 
 std::string CubedSphere2::name() const {
-    // - - - - - - TEST - - - - - -
-    // Temporarily here to test lonlat()
-    PointLonLat point;
-    for (int i = 0; i < size(); ++i) {
-        lonlat(i, point);
-        std::cout << "[" << point[0] << ", " << point[1] << "], ";
-    }
-    std::cout << std::endl;
-    // - - - - - END TEST - - - - -
-
     return "CS-LFR-" + std::to_string(N_) + "-2";
 }
 
