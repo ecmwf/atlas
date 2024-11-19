@@ -104,3 +104,5 @@ ecbuild_add_library( TARGET pluto_f
 		              pluto_f/pluto_module.cc
 		     PRIVATE_LIBS pluto
 	           ) 
+target_include_directories( pluto_f PUBLIC $<BUILD_INTERFACE:${CMAKE_Fortran_MODULE_DIRECTORY}> )
+
