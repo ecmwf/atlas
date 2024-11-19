@@ -34,46 +34,33 @@ namespace pluto::device {
     }
 
 template<typename T>
-class allocator {
+class allocator : public pluto::allocator<T> {
 public:
     using value_type = T;
 
     allocator(memory_resource* mr, const Stream& stream) :
-        memory_resource_(mr),
+        pluto::allocator<T>::allocator(mr),
         stream_(stream) {}
 
     allocator() :
-        allocator(get_default_resource(), get_default_stream()) {}
+        allocator(get_default_resource(), get_current_stream()) {}
     
     allocator(const allocator& other) :
-        allocator(other.memory_resource_, other.stream_) {}
+        allocator(other.resource(), other.stream_) {}
 
     allocator(memory_resource* mr) :
-        allocator(mr, get_default_stream()) {}
+        allocator(mr, get_current_stream()) {}
 
     allocator(const Stream& stream) :
         allocator(get_default_resource(), stream) {}
 
     value_type* allocate(std::size_t size) {
-        scoped_default_stream default_stream{stream_};
-        return static_cast<value_type*>(memory_resource_->allocate(size * sizeof(value_type), 256));
+        return pluto::allocator<T>::allocate_async(size, stream_);
     }
 
     void deallocate(value_type* ptr, std::size_t size) {
-        scoped_default_stream default_stream{stream_};
-        memory_resource_->deallocate(ptr, size * sizeof(value_type), 256);
+        pluto::allocator<T>::deallocate_async(ptr, size, stream_);
     }
-
-    value_type* allocate_async(std::size_t size, const Stream& stream) {
-        scoped_default_stream default_stream{stream};
-        return static_cast<value_type*>(memory_resource_->allocate(size * sizeof(value_type), default_alignment()));
-    }
-
-    void deallocate_async(value_type* ptr, std::size_t size, const Stream& stream) {
-        scoped_default_stream default_stream{stream};
-        memory_resource_->deallocate(ptr, size * sizeof(value_type), default_alignment());
-    }
-
 
     template <class U, class... Args>
     void construct(U* p, Args&&... args) {
@@ -95,7 +82,6 @@ public:
 #endif
     }
 private:
-    memory_resource* memory_resource_{nullptr};
     const Stream& stream_;
 };
 

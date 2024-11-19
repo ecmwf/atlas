@@ -84,11 +84,11 @@ const Stream& default_stream() {
     return stream0_;
 }
 
-const Stream& get_default_stream() {
+const Stream& get_current_stream() {
     return *default_stream_;
 }
 
-void set_default_stream(const Stream& s) {
+void set_current_stream(const Stream& s) {
     default_stream_ = &s;
 }
 

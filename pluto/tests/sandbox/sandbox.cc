@@ -122,10 +122,10 @@ public:
     using value_type = T;
 
     Array() :
-      Array(0, pluto::get_default_stream()) {}
+      Array(0, pluto::get_current_stream()) {}
 
     Array(std::size_t size) : 
-      Array(size, pluto::get_default_stream()) {}
+      Array(size, pluto::get_current_stream()) {}
 
     Array(const pluto::Stream& stream) :
       Array(0, stream) {}
@@ -158,7 +158,7 @@ public:
       size_ = size;
       if (size_ > 0) {
           alloc_.allocate_async(size, stream_);
-          // scoped_default_stream default_stream{stream_};
+          pluto::current_stream stream{stream_};
           // ptr_ = (value_type*)resource_->allocate(size_*sizeof(value_type),alignment_);
           if (! is_aligned( ptr_, alignment_ )) {
             std::cout << "assert(is_aligned(ptr_, alignment_)) failed" << std::endl;
@@ -169,7 +169,7 @@ public:
     void deallocate() {
       if (size_) {
           alloc_.deallocate_async(ptr_, size_, stream_);
-          // scoped_default_stream default_stream{stream_};
+          pluto::current_stream stream{stream_};
           // resource_->deallocate(ptr_, size_*sizeof(value_type),alignment_);
         }
     }
@@ -398,7 +398,7 @@ int main(int argc, char* argv[]) {
 #endif
 
   // pluto::Stream stream;
-  // pluto::set_default_stream(stream);
+  // pluto::set_current_stream(stream);
 
   auto managed_resource = Register("managed", std::make_unique<TraceMemoryResource>("managed", pluto::managed_resource()));
   auto device_resource = Register("device", std::make_unique<TraceMemoryResource>("device", pluto::device_resource()));
@@ -488,7 +488,7 @@ int main(int argc, char* argv[]) {
   std::cout << "is_managed(d_ptr) : " << is_managed(d_ptr) << std::endl;
 
   std::fill(h_ptr, h_ptr+size, 1.);
-  // auto& stream = get_default_stream();
+  // auto& stream = get_current_stream();
   Stream stream1, stream2, stream3;
   memcpy_host_to_device(d_ptr, h_ptr, bytes, stream1);
 
