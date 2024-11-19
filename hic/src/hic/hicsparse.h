@@ -9,6 +9,10 @@
  */
 #pragma once
 
+#include <stdexcept>
+#include <sstream>
+
+#include "hic/hic_config.h"
 #include "hic/hic_namespace_macro.h"
 #include "hic/hic_library_types.h"
 
@@ -107,9 +111,6 @@ HIC_VALUE(SPARSE_OPERATION_CONJUGATE_TRANSPOSE)
 #endif
 
 inline void hicsparse_assert(hicsparseStatus_t status, const char* const func, const char* const file, const int line) {
-    // Ignore errors when HIP/CUDA runtime is unloaded or deinitialized.
-    // This happens when calling HIP/CUDA after main has ended, e.g. in teardown of static variables calling `hicFree`
-    //   --> ignore hicErrorDeinitialized (a.k.a. cudaErrorCudartUnloading / hipErrorDeinitialized)
     if (status != HICSPARSE_STATUS_SUCCESS) {
         std::ostringstream msg;
         msg << "HIC Runtime Error [code="<<status<<"] at: " << file << " + " << line << " : " << func << "\n";

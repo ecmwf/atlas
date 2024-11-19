@@ -9,6 +9,7 @@
  */
 #include <iostream>
 #include <functional>
+#include <tuple>
 #include <vector>
 #include <utility>
 #include <cassert>

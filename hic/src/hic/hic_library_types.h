@@ -9,6 +9,7 @@
  */
 #pragma once
 
+#include "hic/hic_config.h"
 #include "hic/hic_namespace_macro.h"
 
 #if HIC_BACKEND_CUDA
