@@ -258,6 +258,56 @@ CASE("sparse_matrix vector multiply (spmv)") {
                 EXPECT_THROWS_AS(sparse_matrix_multiply(A, x2.view(), y.view()), eckit::AssertionFailed);
             }
         }
+
+        SECTION("View of atlas::Array [backend=" + backend + "]") {
+            ArrayVector<double> x(Vector{1., 2., 3.});
+            ArrayVector<double> y(3);
+            auto spmm = SparseMatrixMultiply{backend};
+            spmm(A, x.view(), y.view());
+            expect_equal(y.view(), Vector{-7., 4., 6.});
+        }
+
+        SECTION("View of atlas::Array [backend=" + backend + "]") {
+            ArrayVector<double> x(Vector{1., 2., 3.});
+            ArrayVector<double> y(3);
+            auto spmm = SparseMatrixMultiply{backend};
+            spmm.multiply(A, x.view(), y.view());
+            expect_equal(y.view(), Vector{-7., 4., 6.});
+        }
+    }
+}
+
+CASE("sparse_matrix vector multiply-add (spmv)") {
+    // "square" matrix
+    // A =  2  . -3
+    //      .  2  .
+    //      .  .  2
+    // x = 1 2 3
+    // y = 1 2 3
+    SparseMatrix A{3, 3, {{0, 0, 2.}, {0, 2, -3.}, {1, 1, 2.}, {2, 2, 2.}}};
+
+    for (std::string backend : {openmp, eckit_linalg}) {
+        sparse::current_backend(backend);
+
+        SECTION("View of atlas::Array [backend=" + backend + "]") {
+            ArrayVector<double> x(Vector{1., 2., 3.});
+            ArrayVector<double> y(Vector{4., 5., 6.});
+            sparse_matrix_multiply_add(A, x.view(), y.view());
+            expect_equal(y.view(), Vector{-3., 9., 12.});
+            // sparse_matrix_multiply_add of sparse matrix and vector of non-matching sizes should fail
+            {
+                ArrayVector<double> x2(2);
+                EXPECT_THROWS_AS(sparse_matrix_multiply_add(A, x2.view(), y.view()), eckit::AssertionFailed);
+            }
+        }
+
+        SECTION("sparse_matrix_multiply_add [backend=" + backend + "]") {
+            ArrayVector<double> x(Vector{1., 2., 3.});
+            ArrayVector<double> y(Vector{1., 2., 3.});
+            auto spmm = SparseMatrixMultiply{sparse::backend::openmp()};
+            spmm.multiply_add(A, x.view(), y.view());
+            expect_equal(y.view(), Vector{-6., 6., 9.});
+        }
     }
 }
 
@@ -326,7 +376,53 @@ CASE("sparse_matrix matrix multiply (spmm)") {
         spmm(A, ma.view(), c.view());
         expect_equal(c.view(), ArrayMatrix<float>(c_exp).view());
     }
+
+    SECTION("SparseMatrixMultiply::multiply [backend=openmp]") {
+        sparse::current_backend(eckit_linalg);  // expected to be ignored
+        auto spmm = SparseMatrixMultiply{openmp};
+        ArrayMatrix<float> ma(m);
+        ArrayMatrix<float> c(3, 2);
+        spmm.multiply(A, ma.view(), c.view());
+        expect_equal(c.view(), ArrayMatrix<float>(c_exp).view());
+    }
 }
+
+CASE("sparse_matrix matrix multiply-add (spmm)") {
+    // "square"
+    // A =  2  . -3
+    //      .  2  .
+    //      .  .  2
+    SparseMatrix A{3, 3, {{0, 0, 2.}, {0, 2, -3.}, {1, 1, 2.}, {2, 2, 2.}}};
+    Matrix m{{1., 2.}, {3., 4.}, {5., 6.}};
+    Matrix y_exp{{-12., -12.}, {9., 12.}, {15., 18.}};
+
+    for (std::string backend : {openmp, eckit_linalg}) {
+        sparse::current_backend(backend);
+
+        SECTION("View of atlas::Array PointsRight [backend=" + sparse::current_backend().type() + "]") {
+            ArrayMatrix<double, Indexing::layout_right> x(m);
+            ArrayMatrix<double, Indexing::layout_right> y(m);
+            sparse_matrix_multiply_add(A, x.view(), y.view(), Indexing::layout_right);
+            expect_equal(y.view(), y_exp);
+        }
+    }
+
+    SECTION("sparse_matrix_multiply_add [backend=openmp]") {
+        ArrayMatrix<double> x(m);
+        ArrayMatrix<double> y(m);
+        sparse_matrix_multiply_add(A, x.view(), y.view(), sparse::backend::openmp());
+        expect_equal(y.view(), ArrayMatrix<double>(y_exp).view());
+    }
+
+    SECTION("SparseMatrixMultiply::multiply_add [backend=openmp]") {
+        auto spmm = SparseMatrixMultiply{sparse::backend::openmp()};
+        ArrayMatrix<double> x(m);
+        ArrayMatrix<double> y(m);
+        spmm.multiply_add(A, x.view(), y.view());
+        expect_equal(y.view(), ArrayMatrix<double>(y_exp).view());
+    }
+}
+
 
 //----------------------------------------------------------------------------------------------------------------------
 

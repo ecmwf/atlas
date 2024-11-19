@@ -38,6 +38,19 @@ template <typename Matrix, typename SourceView, typename TargetView>
 void sparse_matrix_multiply(const Matrix& matrix, const SourceView& src, TargetView& tgt, Indexing,
                             const Configuration& config);
 
+template <typename Matrix, typename SourceView, typename TargetView>
+void sparse_matrix_multiply_add(const Matrix& matrix, const SourceView& src, TargetView& tgt);
+
+template <typename Matrix, typename SourceView, typename TargetView>
+void sparse_matrix_multiply_add(const Matrix& matrix, const SourceView& src, TargetView& tgt, const Configuration& config);
+
+template <typename Matrix, typename SourceView, typename TargetView>
+void sparse_matrix_multiply_add(const Matrix& matrix, const SourceView& src, TargetView& tgt, Indexing);
+
+template <typename Matrix, typename SourceView, typename TargetView>
+void sparse_matrix_multiply_add(const Matrix& matrix, const SourceView& src, TargetView& tgt, Indexing,
+                                const Configuration& config);
+
 class SparseMatrixMultiply {
 public:
     SparseMatrixMultiply() = default;
@@ -46,12 +59,32 @@ public:
 
     template <typename Matrix, typename SourceView, typename TargetView>
     void operator()(const Matrix& matrix, const SourceView& src, TargetView& tgt) const {
-        sparse_matrix_multiply(matrix, src, tgt, backend());
+        multiply(matrix, src, tgt);
     }
 
     template <typename Matrix, typename SourceView, typename TargetView>
     void operator()(const Matrix& matrix, const SourceView& src, TargetView& tgt, Indexing indexing) const {
+        multiply(matrix, src, tgt, indexing);
+    }
+
+    template <typename Matrix, typename SourceView, typename TargetView>
+    void multiply(const Matrix& matrix, const SourceView& src, TargetView& tgt) const {
+        sparse_matrix_multiply(matrix, src, tgt, backend());
+    }
+
+    template <typename Matrix, typename SourceView, typename TargetView>
+    void multiply(const Matrix& matrix, const SourceView& src, TargetView& tgt, Indexing indexing) const {
         sparse_matrix_multiply(matrix, src, tgt, indexing, backend());
+    }
+
+    template <typename Matrix, typename SourceView, typename TargetView>
+    void multiply_add(const Matrix& matrix, const SourceView& src, TargetView& tgt) const {
+        sparse_matrix_multiply_add(matrix, src, tgt, backend());
+    }
+
+    template <typename Matrix, typename SourceView, typename TargetView>
+    void multiply_add(const Matrix& matrix, const SourceView& src, TargetView& tgt, Indexing indexing) const {
+        sparse_matrix_multiply_add(matrix, src, tgt, indexing, backend());
     }
 
     const sparse::Backend& backend() const { return backend_; }
@@ -65,8 +98,12 @@ namespace sparse {
 // Template class which needs (full or partial) specialization for concrete template parameters
 template <typename Backend, Indexing, int Rank, typename SourceValue, typename TargetValue>
 struct SparseMatrixMultiply {
-    static void apply(const SparseMatrix&, const View<SourceValue, Rank>&, View<TargetValue, Rank>&,
-                      const Configuration&) {
+    static void multiply(const SparseMatrix&, const View<SourceValue, Rank>&, View<TargetValue, Rank>&,
+                         const Configuration&) {
+        throw_NotImplemented("SparseMatrixMultiply needs a template specialization with the implementation", Here());
+    }
+    static void multiply_add(const SparseMatrix&, const View<SourceValue, Rank>&, View<TargetValue, Rank>&,
+                             const Configuration&) {
         throw_NotImplemented("SparseMatrixMultiply needs a template specialization with the implementation", Here());
     }
 };
