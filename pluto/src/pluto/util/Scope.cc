@@ -24,14 +24,14 @@ namespace pluto {
 
 struct PlutoScope {
     PlutoScope() :
-        stream_(get_default_stream()) {
+        stream_(get_current_stream()) {
         host_default_memory_resource_   = host::get_default_resource();
         device_default_memory_resource_ = device::get_default_resource();
     }
     ~PlutoScope() {
         host::set_default_resource(host_default_memory_resource_);
         device::set_default_resource(device_default_memory_resource_);
-        set_default_stream(stream_);
+        set_current_stream(stream_);
     }
     const Stream& stream_;
     memory_resource* host_default_memory_resource_;

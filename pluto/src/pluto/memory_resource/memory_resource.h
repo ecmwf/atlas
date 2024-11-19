@@ -30,18 +30,17 @@
 namespace pluto {
 
 class Stream;
-// const Stream& get_default_stream();
 
 void init();
 
 // class memory_resource : public STD_PMR::memory_resource {
 // public:
 //     using STD_PMR::memory_resource::memory_resource;
-//     void* allocate_async(std::size_t bytes, std::size_t alignment = alignof(std::max_align_t), const Stream& stream = get_default_stream() ) {
+//     void* allocate_async(std::size_t bytes, std::size_t alignment = alignof(std::max_align_t), const Stream& stream = get_current_stream() ) {
 //         return do_allocate_async(bytes, alignment, stream);
 //     }
 //     virtual void* do_allocate_async(std::size_t bytes, std::size_t alignment, const Stream&) { return nullptr; }
-//     void deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment = alignof(std::max_align_t), const Stream& stream = get_default_stream() ) {
+//     void deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment = alignof(std::max_align_t), const Stream& stream = get_current_stream() ) {
 //         do_deallocate_async(ptr, bytes, alignment, stream);
 //     }
 //     virtual void do_deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment, const Stream&) {}
