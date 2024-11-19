@@ -20,7 +20,7 @@ if( HAVE_HIP OR HAVE_CUDA )
 
   ecbuild_add_test( TARGET hic_test_hicsparse
     SOURCES   test_hicsparse.cc
-    LIBS      hic
+    LIBS      hicsparse
   )
 endif()
 
