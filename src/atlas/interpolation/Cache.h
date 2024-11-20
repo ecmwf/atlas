@@ -17,8 +17,8 @@
 #include "eckit/filesystem/PathName.h"
 #include "eckit/io/Buffer.h"
 
-#include "eckit/linalg/SparseMatrix.h"
 
+#include "atlas/linalg/SparseMatrix.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/KDTree.h"
 
@@ -82,7 +82,7 @@ private:
 
 class MatrixCacheEntry : public InterpolationCacheEntry {
 public:
-    using Matrix = eckit::linalg::SparseMatrix;
+    using Matrix = atlas::linalg::SparseMatrix;
     ~MatrixCacheEntry() override;
     MatrixCacheEntry(const Matrix* matrix, const std::string& uid = ""): matrix_{matrix}, uid_(uid) {
         ATLAS_ASSERT(matrix_ != nullptr);

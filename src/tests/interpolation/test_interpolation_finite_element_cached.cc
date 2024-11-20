@@ -106,7 +106,7 @@ CASE("extract cache, copy it, and move it for use") {
 
     set_field(field_source, grid_source, func);
 
-    eckit::linalg::SparseMatrix matrix = get_or_create_cache(grid_source, grid_target).matrix();
+    atlas::linalg::SparseMatrix matrix = get_or_create_cache(grid_source, grid_target).matrix();
 
     EXPECT(not matrix.empty());
 
@@ -133,7 +133,7 @@ CASE("extract cache, copy it, and pass non-owning pointer") {
 
     set_field(field_source, grid_source, func);
 
-    eckit::linalg::SparseMatrix matrix = get_or_create_cache(grid_source, grid_target).matrix();
+    atlas::linalg::SparseMatrix matrix = get_or_create_cache(grid_source, grid_target).matrix();
 
     EXPECT(not matrix.empty());
 
