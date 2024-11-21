@@ -130,6 +130,9 @@ public:
     void destroy(U* p) {
         p->~U();
     }
+    memory_resource* resource() const {
+        return mr_;
+    }
 private:
     memory_resource* mr_;
 };
