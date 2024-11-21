@@ -35,6 +35,7 @@ if( HAVE_CUDA )
   find_package(CUDAToolkit REQUIRED)
 elseif( HAVE_HIP )
   find_package(hip CONFIG REQUIRED)
+  find_package(hipsparse CONFIG REQUIRED)
 endif()
 
 add_subdirectory( src )

@@ -30,6 +30,7 @@ namespace test {
 // strings to be used in the tests
 static std::string eckit_linalg = sparse::backend::eckit_linalg::type();
 static std::string openmp       = sparse::backend::openmp::type();
+static std::string hicsparse    = sparse::backend::hicsparse::type();
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -104,6 +105,23 @@ private:
     array::ArrayView<Value, 1> view_;
 };
 
+bool operator==(const SparseMatrix& A, const SparseMatrix& B) {
+    if (A.rows() != B.rows() || A.cols() != B.cols() || A.nonZeros() != B.nonZeros()) {
+        return false;
+    }
+    const auto A_data_view = eckit::testing::make_view(A.data(), A.nonZeros());
+    const auto A_outer_view = eckit::testing::make_view(A.outer(), A.rows()+1);
+    const auto A_inner_view = eckit::testing::make_view(A.inner(), A.nonZeros());
+    const auto B_data_view = eckit::testing::make_view(B.data(), B.nonZeros());
+    const auto B_outer_view = eckit::testing::make_view(B.outer(), B.rows()+1);
+    const auto B_inner_view = eckit::testing::make_view(B.inner(), B.nonZeros());
+    if (A_data_view != B_data_view ||
+        A_outer_view != B_outer_view ||
+        A_inner_view != B_inner_view) {
+        return false;
+    }
+    return true;
+}
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -176,6 +194,7 @@ CASE("test backend functionalities") {
     sparse::current_backend(eckit_linalg);
     EXPECT_EQ(sparse::current_backend().type(), "eckit_linalg");
     EXPECT_EQ(sparse::current_backend().getString("backend", "undefined"), "undefined");
+
     sparse::current_backend().set("backend", "default");
     EXPECT_EQ(sparse::current_backend().getString("backend"), "default");
 
@@ -183,18 +202,120 @@ CASE("test backend functionalities") {
     EXPECT_EQ(sparse::current_backend().getString("backend", "undefined"), "undefined");
     EXPECT_EQ(sparse::default_backend(eckit_linalg).getString("backend"), "default");
 
+    sparse::current_backend(hicsparse);
+    EXPECT_EQ(sparse::current_backend().type(), "hicsparse");
+    EXPECT_EQ(sparse::current_backend().getString("backend", "undefined"), "undefined");
+
     sparse::default_backend(eckit_linalg).set("backend", "generic");
     EXPECT_EQ(sparse::default_backend(eckit_linalg).getString("backend"), "generic");
 
     const sparse::Backend backend_default      = sparse::Backend();
     const sparse::Backend backend_openmp       = sparse::backend::openmp();
     const sparse::Backend backend_eckit_linalg = sparse::backend::eckit_linalg();
-    EXPECT_EQ(backend_default.type(), openmp);
+    const sparse::Backend backend_hicsparse    = sparse::backend::hicsparse();
+    EXPECT_EQ(backend_default.type(), hicsparse);
     EXPECT_EQ(backend_openmp.type(), openmp);
     EXPECT_EQ(backend_eckit_linalg.type(), eckit_linalg);
+    EXPECT_EQ(backend_hicsparse.type(), hicsparse);
 
     EXPECT_EQ(std::string(backend_openmp), openmp);
     EXPECT_EQ(std::string(backend_eckit_linalg), eckit_linalg);
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+CASE("SparseMatrix default constructor") {
+    SparseMatrix A;
+    EXPECT_EQ(A.rows(), 0);
+    EXPECT_EQ(A.cols(), 0);
+    EXPECT_EQ(A.nonZeros(), 0);
+}
+
+CASE("SparseMatrix copy constructor") {
+    SparseMatrix A{3, 3, {{0, 0, 2.}, {0, 2, -3.}, {1, 1, 2.}, {2, 2, 2.}}};
+    SparseMatrix B{A};
+    EXPECT(A == B);
+}
+
+CASE("SparseMatrix assignment constructor") {
+    SparseMatrix A{3, 3, {{0, 0, 2.}, {0, 2, -3.}, {1, 1, 2.}, {2, 2, 2.}}};
+    auto B = A;
+    EXPECT(A == B);
+}
+
+CASE("SparseMatrix assignment") {
+    SparseMatrix A{3, 3, {{0, 0, 2.}, {0, 2, -3.}, {1, 1, 2.}, {2, 2, 2.}}};
+    SparseMatrix B;
+    B = A;
+    EXPECT(A == B);
+}
+
+CASE("SparseMatrix triplet constructor") {
+    SparseMatrix A{3, 3, {{0, 0, 2.}, {0, 2, -3.}, {1, 1, 2.}, {2, 2, 2.}}};
+    const auto A_data_view = eckit::testing::make_view(A.data(), A.nonZeros());
+    const auto A_outer_view = eckit::testing::make_view(A.outer(), A.rows()+1);
+    const auto A_inner_view = eckit::testing::make_view(A.inner(), A.nonZeros());
+    
+    EXPECT_EQ(A.rows(), 3);
+    EXPECT_EQ(A.cols(), 3);
+    EXPECT_EQ(A.nonZeros(), 4);
+    
+    const std::vector<SparseMatrix::Scalar> test_data{2., -3., 2., 2.};
+    const std::vector<SparseMatrix::Index> test_outer{0, 2, 3, 4};
+    const std::vector<SparseMatrix::Index> test_inner{0, 2, 1, 2};
+    const auto test_data_view = eckit::testing::make_view(test_data.data(), test_data.size());
+    const auto test_outer_view = eckit::testing::make_view(test_outer.data(), test_outer.size());
+    const auto test_inner_view = eckit::testing::make_view(test_inner.data(), test_inner.size());
+    
+    EXPECT(A_data_view == test_data_view);
+    EXPECT(A_outer_view == test_outer_view);
+    EXPECT(A_inner_view == test_inner_view);
+}
+
+CASE("SparseMatrix triplet constructor 2") {
+    SparseMatrix A{3, 3, {{0, 0, 2.}, {0, 2, 0.}, {1, 1, 2.}, {2, 2, 2.}}};
+    const auto A_data_view = eckit::testing::make_view(A.data(), A.nonZeros());
+    const auto A_outer_view = eckit::testing::make_view(A.outer(), A.rows()+1);
+    const auto A_inner_view = eckit::testing::make_view(A.inner(), A.nonZeros());
+    
+    EXPECT_EQ(A.rows(), 3);
+    EXPECT_EQ(A.cols(), 3);
+    EXPECT_EQ(A.nonZeros(), 3);
+    
+    const std::vector<SparseMatrix::Scalar> test_data{2., 2., 2.};
+    const std::vector<SparseMatrix::Index> test_outer{0, 1, 2, 3};
+    const std::vector<SparseMatrix::Index> test_inner{0, 1, 2};
+    const auto test_data_view = eckit::testing::make_view(test_data.data(), test_data.size());
+    const auto test_outer_view = eckit::testing::make_view(test_outer.data(), test_outer.size());
+    const auto test_inner_view = eckit::testing::make_view(test_inner.data(), test_inner.size());
+    
+    EXPECT(A_data_view == test_data_view);
+    EXPECT(A_outer_view == test_outer_view);
+    EXPECT(A_inner_view == test_inner_view);
+}
+
+CASE("SparseMatrix swap") {
+    SparseMatrix A_test{3, 3, {{0, 0, 2.}, {0, 2, 0.}, {1, 1, 2.}, {2, 2, 2.}}};
+    SparseMatrix A{A_test};
+    SparseMatrix B_test{1, 1, {{0, 0, 7.}}};
+    SparseMatrix B{B_test};
+    A.swap(B);
+    EXPECT(A == B_test);
+    EXPECT(B == A_test);
+}
+
+CASE("SparseMatrix transpose") {
+    SparseMatrix A{3, 3, {{0, 0, 2.}, {0, 2, -3.}, {1, 1, 2.}, {2, 2, 2.}}};
+    SparseMatrix AT{3, 3, {{0, 0, 2.}, {1, 1, 2.}, {2, 0, -3.}, {2, 2, 2.}}};
+    A.transpose();
+    EXPECT(A == AT);
+}
+
+CASE("SparseMatrix prune") {
+    SparseMatrix A{3, 3, {{0, 0, 2.}, {0, 2, 0}, {1, 1, 2.}, {2, 2, 2.}}};
+    SparseMatrix A_pruned{3, 3, {{0, 0, 2.}, {1, 1, 2.}, {2, 2, 2.}}};
+    A.prune();
+    EXPECT(A == A_pruned);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -258,6 +379,25 @@ CASE("sparse_matrix vector multiply (spmv)") {
                 EXPECT_THROWS_AS(sparse_matrix_multiply(A, x2.view(), y.view()), eckit::AssertionFailed);
             }
         }
+
+        SECTION("View of atlas::Array [backend=" + backend + "]") {
+            ArrayVector<double> x(Vector{1., 2., 3.});
+            ArrayVector<double> y(Vector{4., 5., 6.});
+            sparse_matrix_multiply_add(A, x.view(), y.view());
+            expect_equal(y.view(), Vector{-3., 9., 12.});
+            // sparse_matrix_multiply of sparse matrix and vector of non-matching sizes should fail
+            {
+                ArrayVector<double> x2(2);
+                EXPECT_THROWS_AS(sparse_matrix_multiply_add(A, x2.view(), y.view()), eckit::AssertionFailed);
+            }
+        }
+
+        SECTION("sparse_matrix_multiply_add [backend=" + backend + "]") {
+            ArrayVector<double> x(Vector{1., 2., 3.});
+            ArrayVector<double> y(Vector{1., 2., 3.});
+            sparse_matrix_multiply_add(A, x.view(), y.view());
+            expect_equal(y.view(), Vector{-6., 6., 9.});
+        }
     }
 }
 
@@ -297,6 +437,14 @@ CASE("sparse_matrix matrix multiply (spmm)") {
             ArrayMatrix<double, Indexing::layout_right> c(3, 2);
             sparse_matrix_multiply(A, ma.view(), c.view(), Indexing::layout_right);
             expect_equal(c.view(), c_exp);
+        }
+
+        SECTION("sparse_matrix_multiply_add [backend=" + sparse::current_backend().type() + "]") {
+            ArrayMatrix<double, Indexing::layout_right> x(m);
+            ArrayMatrix<double, Indexing::layout_right> y(m);
+            Matrix y_exp{{-12., -12.}, {9., 12.}, {15., 18.}};
+            sparse_matrix_multiply_add(A, x.view(), y.view(), Indexing::layout_right);
+            expect_equal(y.view(), y_exp);
         }
     }
 

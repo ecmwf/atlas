@@ -14,6 +14,14 @@ ecbuild_add_test( TARGET atlas_test_linalg_sparse
     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
 
+ecbuild_add_test( TARGET atlas_test_linalg_sparse_gpu
+  SOURCES test_linalg_sparse_gpu.cc
+  LIBS    atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION atlas_HAVE_CUDA OR atlas_HAVE_HIP
+)
+
+
 ecbuild_add_test( TARGET atlas_test_linalg_dense
     SOURCES test_linalg_dense.cc
     LIBS    atlas

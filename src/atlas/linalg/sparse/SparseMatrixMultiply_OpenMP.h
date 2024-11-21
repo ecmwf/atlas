@@ -19,37 +19,49 @@ namespace sparse {
 
 template <typename SourceValue, typename TargetValue>
 struct SparseMatrixMultiply<backend::openmp, Indexing::layout_left, 1, SourceValue, TargetValue> {
-    static void apply(const SparseMatrix& W, const View<SourceValue, 1>& src, View<TargetValue, 1>& tgt,
+    static void multiply(const SparseMatrix& W, const View<SourceValue, 1>& src, View<TargetValue, 1>& tgt,
+                      const Configuration&);
+    static void multiply_add(const SparseMatrix& W, const View<SourceValue, 1>& src, View<TargetValue, 1>& tgt,
                       const Configuration&);
 };
 
 template <typename SourceValue, typename TargetValue>
 struct SparseMatrixMultiply<backend::openmp, Indexing::layout_left, 2, SourceValue, TargetValue> {
-    static void apply(const SparseMatrix& W, const View<SourceValue, 2>& src, View<TargetValue, 2>& tgt,
+    static void multiply(const SparseMatrix& W, const View<SourceValue, 2>& src, View<TargetValue, 2>& tgt,
+                      const Configuration&);
+    static void multiply_add(const SparseMatrix& W, const View<SourceValue, 2>& src, View<TargetValue, 2>& tgt,
                       const Configuration&);
 };
 
 template <typename SourceValue, typename TargetValue>
 struct SparseMatrixMultiply<backend::openmp, Indexing::layout_left, 3, SourceValue, TargetValue> {
-    static void apply(const SparseMatrix& W, const View<SourceValue, 3>& src, View<TargetValue, 3>& tgt,
+    static void multiply(const SparseMatrix& W, const View<SourceValue, 3>& src, View<TargetValue, 3>& tgt,
+                      const Configuration&);
+    static void multiply_add(const SparseMatrix& W, const View<SourceValue, 3>& src, View<TargetValue, 3>& tgt,
                       const Configuration&);
 };
 
 template <typename SourceValue, typename TargetValue>
 struct SparseMatrixMultiply<backend::openmp, Indexing::layout_right, 1, SourceValue, TargetValue> {
-    static void apply(const SparseMatrix& W, const View<SourceValue, 1>& src, View<TargetValue, 1>& tgt,
+    static void multiply(const SparseMatrix& W, const View<SourceValue, 1>& src, View<TargetValue, 1>& tgt,
+                      const Configuration&);
+    static void multiply_add(const SparseMatrix& W, const View<SourceValue, 1>& src, View<TargetValue, 1>& tgt,
                       const Configuration&);
 };
 
 template <typename SourceValue, typename TargetValue>
 struct SparseMatrixMultiply<backend::openmp, Indexing::layout_right, 2, SourceValue, TargetValue> {
-    static void apply(const SparseMatrix& W, const View<SourceValue, 2>& src, View<TargetValue, 2>& tgt,
+    static void multiply(const SparseMatrix& W, const View<SourceValue, 2>& src, View<TargetValue, 2>& tgt,
+                      const Configuration&);
+    static void multiply_add(const SparseMatrix& W, const View<SourceValue, 2>& src, View<TargetValue, 2>& tgt,
                       const Configuration&);
 };
 
 template <typename SourceValue, typename TargetValue>
 struct SparseMatrixMultiply<backend::openmp, Indexing::layout_right, 3, SourceValue, TargetValue> {
-    static void apply(const SparseMatrix& W, const View<SourceValue, 3>& src, View<TargetValue, 3>& tgt,
+    static void multiply(const SparseMatrix& W, const View<SourceValue, 3>& src, View<TargetValue, 3>& tgt,
+                      const Configuration&);
+    static void multiply_add(const SparseMatrix& W, const View<SourceValue, 3>& src, View<TargetValue, 3>& tgt,
                       const Configuration&);
 };
 

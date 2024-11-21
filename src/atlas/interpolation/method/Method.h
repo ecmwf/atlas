@@ -16,10 +16,10 @@
 
 #include "atlas/interpolation/Cache.h"
 #include "atlas/interpolation/NonLinear.h"
+#include "atlas/linalg/SparseMatrix.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/util/Object.h"
 #include "eckit/config/Configuration.h"
-#include "eckit/linalg/SparseMatrix.h"
 
 namespace atlas {
 class Field;
@@ -87,15 +87,15 @@ protected:
 
     using Triplet  = eckit::linalg::Triplet;
     using Triplets = std::vector<Triplet>;
-    using Matrix   = eckit::linalg::SparseMatrix;
+    using Matrix   = atlas::linalg::SparseMatrix;
 
     static void normalise(Triplets& triplets);
 
-    void haloExchange(const FieldSet&) const;
-    void haloExchange(const Field&) const;
+    void haloExchange(const FieldSet&, bool on_device = false) const;
+    void haloExchange(const Field&, bool on_device = false) const;
 
-    void adjointHaloExchange(const FieldSet&) const;
-    void adjointHaloExchange(const Field&) const;
+    void adjointHaloExchange(const FieldSet&, bool on_device = false) const;
+    void adjointHaloExchange(const Field&, bool on_device = false) const;
 
     // NOTE : Matrix-free or non-linear interpolation operators do not have matrices, so do not expose here
     friend class atlas::test::Access;
