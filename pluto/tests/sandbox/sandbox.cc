@@ -175,9 +175,9 @@ public:
     }
 
 private:
-    pluto::allocator<value_type> alloc_;
     memory_resource* resource_;
     const pluto::Stream& stream_;
+    pluto::allocator<value_type> alloc_;
     value_type* ptr_{nullptr};
     std::size_t size_{0};
     static constexpr std::size_t alignment_ = pluto::default_alignment();
