@@ -99,6 +99,13 @@ bool Backend::available() const {
     if (t == backend::openmp::type()) {
         return true;
     }
+    if (t == backend::hicsparse::type()) {
+#if ATLAS_HAVE_GPU
+        return true;
+#else
+        return false;
+#endif
+    }
     if (t == backend::eckit_linalg::type()) {
         if (has("backend")) {
 #if ATLAS_ECKIT_HAVE_ECKIT_585
