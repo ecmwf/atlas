@@ -21,7 +21,7 @@ std::string CubedSphere2::type() const {
 
 // Provide a unique identification hash for the grid and the projection.
 void CubedSphere2::hash(eckit::Hash& h) const {
-    h.add(name()); // use name() or type()?
+    h.add(name());
     h.add(int(N_));
 
     // also add projection information
@@ -43,7 +43,6 @@ idx_t CubedSphere2::size() const {
 
 // Return the specification for the grid.
 Grid::Spec CubedSphere2::spec() const {
-    // Copied from CubedSphere.cc
     Grid::Spec grid_spec;
 
     if (type() == "cubedsphere2") {
