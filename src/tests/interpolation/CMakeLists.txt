@@ -127,6 +127,14 @@ ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_to_points
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_to_points_gpu
+  SOURCES  test_interpolation_structured2D_to_points_gpu.cc
+  LIBS     atlas
+  MPI      4
+  CONDITION eckit_HAVE_MPI AND atlas_HAVE_GPU
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_interpolation_cubedsphere
   SOURCES  test_interpolation_cubedsphere.cc
   LIBS     atlas

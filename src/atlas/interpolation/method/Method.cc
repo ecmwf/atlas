@@ -441,12 +441,29 @@ void Method::do_execute(const FieldSet& fieldsSource, FieldSet& fieldsTarget, Me
 void Method::do_execute(const Field& src, Field& tgt, Metadata&) const {
     ATLAS_TRACE("atlas::interpolation::method::Method::do_execute()");
 
-    // todo: dispatch to gpu-aware mpi if available
-    if (src.hostNeedsUpdate()) {
-        src.updateHost();
+     if (src.hostNeedsUpdate() && src.deviceNeedsUpdate()) {
+            throw_AssertionFailed("Inconsistent memory state flags - we will not be able to "
+                                  "determine which memory space to perform the halo exchange on",
+                                  Here());
     }
-    haloExchange(src);
-    src.setDeviceNeedsUpdate(true);
+
+    sparse::Backend backend{linalg_backend_};
+    const auto memorySpace = getSparseBackendMemorySpace(backend);
+
+    bool on_device = false;
+    if (!src.hostNeedsUpdate() && !src.deviceNeedsUpdate()) {
+        on_device = memorySpace == MemorySpace::Device;
+    } else {
+        on_device = !src.deviceNeedsUpdate() ? true : false;
+    }
+
+    haloExchange(src, on_device);
+    
+    if (on_device) {
+        src.setHostNeedsUpdate(true);
+    } else {
+        src.setDeviceNeedsUpdate(true);
+    }
     
     if( matrix_ ) { // (matrix == nullptr) when a partition is empty
         if (src.datatype().kind() == array::DataType::KIND_REAL64) {
@@ -501,6 +518,15 @@ void Method::do_execute_adjoint(FieldSet& fieldsSource, const FieldSet& fieldsTa
 void Method::do_execute_adjoint(Field& src, const Field& tgt, Metadata&) const {
     ATLAS_TRACE("atlas::interpolation::method::Method::do_execute_adjoint()");
 
+    if (src.hostNeedsUpdate() && src.deviceNeedsUpdate()) {
+            throw_AssertionFailed("Inconsistent memory state flags - we will not be able to "
+                                  "determine which memory space to perform the adjoint halo exchange on",
+                                  Here());
+    }
+
+    sparse::Backend backend{linalg_backend_};
+    const auto memorySpace = getSparseBackendMemorySpace(backend);
+
     if (nonLinear_(src)) {
         throw_NotImplemented("Adjoint interpolation only works for interpolation schemes that are linear", Here());
     }
@@ -525,12 +551,20 @@ void Method::do_execute_adjoint(Field& src, const Field& tgt, Metadata&) const {
 
     src.set_dirty();
 
-    // todo: dispatch to gpu-aware mpi if available
-    if (src.hostNeedsUpdate()) {
-        src.updateHost();
+    bool on_device = false;
+    if (!src.hostNeedsUpdate() && !src.deviceNeedsUpdate()) {
+        on_device = memorySpace == MemorySpace::Device;
+    } else {
+        on_device = !src.deviceNeedsUpdate() ? true : false;
     }
-    adjointHaloExchange(src);
-    src.setDeviceNeedsUpdate(true);
+
+    adjointHaloExchange(src, on_device);
+    
+    if (on_device) {
+        src.setHostNeedsUpdate(true);
+    } else {
+        src.setDeviceNeedsUpdate(true);
+    }
 }
 
 
@@ -549,25 +583,25 @@ void Method::normalise(Triplets& triplets) {
     }
 }
 
-void Method::haloExchange(const FieldSet& fields) const {
+void Method::haloExchange(const FieldSet& fields, bool on_device) const {
     for (auto& field : fields) {
-        haloExchange(field);
+        haloExchange(field, on_device);
     }
 }
-void Method::haloExchange(const Field& field) const {
+void Method::haloExchange(const Field& field, bool on_device) const {
     if (field.dirty() && allow_halo_exchange_) {
-        source().haloExchange(field);
+        source().haloExchange(field, on_device);
     }
 }
 
-void Method::adjointHaloExchange(const FieldSet& fields) const {
+void Method::adjointHaloExchange(const FieldSet& fields, bool on_device) const {
     for (auto& field : fields) {
-        adjointHaloExchange(field);
+        adjointHaloExchange(field, on_device);
     }
 }
-void Method::adjointHaloExchange(const Field& field) const {
+void Method::adjointHaloExchange(const Field& field, bool on_device) const {
     if (field.dirty() && allow_halo_exchange_) {
-        source().adjointHaloExchange(field);
+        source().adjointHaloExchange(field, on_device);
     }
 }
 

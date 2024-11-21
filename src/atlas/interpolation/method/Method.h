@@ -91,11 +91,11 @@ protected:
 
     static void normalise(Triplets& triplets);
 
-    void haloExchange(const FieldSet&) const;
-    void haloExchange(const Field&) const;
+    void haloExchange(const FieldSet&, bool on_device = false) const;
+    void haloExchange(const Field&, bool on_device = false) const;
 
-    void adjointHaloExchange(const FieldSet&) const;
-    void adjointHaloExchange(const Field&) const;
+    void adjointHaloExchange(const FieldSet&, bool on_device = false) const;
+    void adjointHaloExchange(const Field&, bool on_device = false) const;
 
     // NOTE : Matrix-free or non-linear interpolation operators do not have matrices, so do not expose here
     friend class atlas::test::Access;
