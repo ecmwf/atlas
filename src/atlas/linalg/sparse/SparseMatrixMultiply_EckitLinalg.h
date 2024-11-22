@@ -28,20 +28,26 @@ namespace sparse {
 
 template <>
 struct SparseMatrixMultiply<backend::eckit_linalg, Indexing::layout_right, 1, const double, double> {
-    static void apply(const SparseMatrix&, const View<const double, 1>& src, View<double, 1>& tgt,
+    static void multiply(const SparseMatrix&, const View<const double, 1>& src, View<double, 1>& tgt,
+                      const Configuration&);
+    static void multiply_add(const SparseMatrix&, const View<const double, 1>& src, View<double, 1>& tgt,
                       const Configuration&);
 };
 
 template <>
 struct SparseMatrixMultiply<backend::eckit_linalg, Indexing::layout_right, 2, const double, double> {
-    static void apply(const SparseMatrix&, const View<const double, 2>& src, View<double, 2>& tgt,
+    static void multiply(const SparseMatrix&, const View<const double, 2>& src, View<double, 2>& tgt,
+                      const Configuration&);
+    static void multiply_add(const SparseMatrix&, const View<const double, 2>& src, View<double, 2>& tgt,
                       const Configuration&);
 };
 
 
 template <>
 struct SparseMatrixMultiply<backend::eckit_linalg, Indexing::layout_left, 1, const double, double> {
-    static void apply(const SparseMatrix&, const View<const double, 1>& src, View<double, 1>& tgt,
+    static void multiply(const SparseMatrix&, const View<const double, 1>& src, View<double, 1>& tgt,
+                      const Configuration&);
+    static void multiply_add(const SparseMatrix&, const View<const double, 1>& src, View<double, 1>& tgt,
                       const Configuration&);
 };
 
