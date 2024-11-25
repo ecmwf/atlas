@@ -22,7 +22,7 @@ ecbuild_add_test( TARGET atlas_test_linalg_sparse_matrix
 
 ecbuild_add_test( TARGET atlas_test_linalg_sparse_matrix_gpu
   SOURCES test_linalg_sparse_matrix_gpu.cc
-  LIBS    atlas
+  LIBS    atlas hicsparse
   CONDITION atlas_HAVE_CUDA OR atlas_HAVE_HIP
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )

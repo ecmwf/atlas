@@ -283,6 +283,7 @@ int test_hicsparseSpMM() {
     }
 
     // Clean up
+    HIC_CALL(hicFree(buffer));
     HIC_CALL(hicFree(dC));
     HIC_CALL(hicFree(dB));
     HIC_CALL(hicFree(dcolumn_indices));
