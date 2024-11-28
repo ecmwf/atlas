@@ -2,6 +2,7 @@
 
 #include <cmath>
 
+#include "eckit/geometry/Sphere.h"
 #include "eckit/utils/Hash.h"
 
 namespace atlas {
@@ -67,11 +68,9 @@ void CubedSphere2::xy(idx_t n, Point2& point) const {
     Matrix xyz(3, 1);
     xyz = lfric_rotations_[t].transpose() * base_point;
 
-    // // 3. Project the point onto a (cubed)sphere
-    point[0] = std::atan2(xyz(1), xyz(0)) * rad_to_deg_;
-    point[1] = std::asin(xyz(2) / (
-        std::sqrt(xyz(0)*xyz(0) + xyz(1)*xyz(1) + xyz(2)*xyz(2)) // Magnitude
-        )) * rad_to_deg_;
+    // 3. Project the point onto a (cubed)sphere
+    Point3 p_xyz = {xyz(0), xyz(1), xyz(2)};
+    eckit::geometry::Sphere::convertCartesianToSpherical(xyz.norm(), p_xyz, point);
 }
 
 Point2 CubedSphere2::xy(idx_t n) const {
