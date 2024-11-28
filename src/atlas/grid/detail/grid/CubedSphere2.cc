@@ -81,7 +81,7 @@ void CubedSphere2::lonlat(idx_t n, Point2& point) const {
 // Get the lonlat for a given index
 Point2 CubedSphere2::lonlat(idx_t n) const {
     Point2 point;
-    xy(n, point);
+    lonlat(n, point);
     return point;
 }
 
