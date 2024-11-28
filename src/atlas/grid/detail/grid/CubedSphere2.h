@@ -112,6 +112,7 @@ public:
 
     std::string name() const override;
     std::string type() const override;
+    idx_t N() const {return N_;}
 
     void hash(eckit::Hash&) const override;
     RectangularLonLatDomain lonlatBoundingBox() const override;
