@@ -157,6 +157,10 @@ protected:
     static constexpr idx_t nTiles_ = 6;
 
 private:
+    using CSIndices = std::array<idx_t, 3>;
+
+    CSIndices get_cs_indices(gidx_t n) const;
+
     std::string type_ = {"cubedsphere2"};
     static constexpr int lfric_rotations_[6][9] = {
         {  0,  0,  1,  1,  0,  0,  0, -1,  0},

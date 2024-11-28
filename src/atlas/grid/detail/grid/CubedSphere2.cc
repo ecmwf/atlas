@@ -55,25 +55,25 @@ Grid::Spec CubedSphere2::spec() const {
 
 // Get the lonlat for a given index
 void CubedSphere2::xy(idx_t n, Point2& point) const {
+    auto [t, i, j] = get_cs_indices(n);
+
     // 1. Get point on base face (xy plane)
-    int ij = get_tij(n);
     double base_point[3];
-    base_point[0] = std::tan(index_to_curvilinear(get_ti(ij)));
-    base_point[1] = std::tan(index_to_curvilinear(get_tj(ij)));
+    base_point[0] = std::tan(index_to_curvilinear(i));
+    base_point[1] = std::tan(index_to_curvilinear(j));
     base_point[2] = 1;
 
     // 2. Apply rotation (move point from xy plane to 3D cube)
-    int tile = get_tile(n);
     double xyz[3];
-    xyz[0] =  lfric_rotations_[tile][0] * base_point[0]
-            + lfric_rotations_[tile][1] * base_point[1]
-            + lfric_rotations_[tile][2] * base_point[2];
-    xyz[1] =  lfric_rotations_[tile][3] * base_point[0]
-            + lfric_rotations_[tile][4] * base_point[1]
-            + lfric_rotations_[tile][5] * base_point[2];
-    xyz[2] =  lfric_rotations_[tile][6] * base_point[0]
-            + lfric_rotations_[tile][7] * base_point[1]
-            + lfric_rotations_[tile][8] * base_point[2];
+    xyz[0] =  lfric_rotations_[t][0] * base_point[0]
+            + lfric_rotations_[t][1] * base_point[1]
+            + lfric_rotations_[t][2] * base_point[2];
+    xyz[1] =  lfric_rotations_[t][3] * base_point[0]
+            + lfric_rotations_[t][4] * base_point[1]
+            + lfric_rotations_[t][5] * base_point[2];
+    xyz[2] =  lfric_rotations_[t][6] * base_point[0]
+            + lfric_rotations_[t][7] * base_point[1]
+            + lfric_rotations_[t][8] * base_point[2];
 
     // 3. Project the point onto a (cubed)sphere
     point[0] = std::atan2(xyz[1], xyz[0]) * rad_to_deg_;
@@ -97,25 +97,15 @@ void CubedSphere2::print(std::ostream& os) const {
 
 // Private methods
 
-// Get tile of point given global index
-int CubedSphere2::get_tile(idx_t n) const {
-    if (n >= N_ * N_ * 6) return -1;
-    return n / (N_ * N_);
-}
-
-// Get index of point on tile given global index
-int CubedSphere2::get_tij(idx_t n) const {
-    return n % (N_ * N_);
-}
-
-// Get column (lon) of point on tile given global index
-int CubedSphere2::get_ti(idx_t n) const {
-    return get_tij(n) % N_;
-}
-
-// Get row (lat) of point on tile given global index
-int CubedSphere2::get_tj(idx_t n) const {
-    return get_tij(n) / N_;
+// Get t, i, and j for a given index
+CubedSphere2::CSIndices CubedSphere2::get_cs_indices(gidx_t n) const {
+    ATLAS_ASSERT(n <= size());
+    const idx_t tile_size = N() * N();
+    const idx_t t = n / tile_size;
+    const idx_t ij = n % tile_size;
+    const idx_t j = ij / N();
+    const idx_t i = ij % N();
+    return {t, i, j};
 }
 
 // Get point between [-pi/4..pi/4] given index and number of points along edge
