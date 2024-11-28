@@ -144,10 +144,10 @@ protected:
     void print(std::ostream&) const override;
 
 private:
-    int get_tile(idx_t n) const ;
-    int get_tij(idx_t n) const ;
-    int get_ti(idx_t n) const ;
-    int get_tj(idx_t n) const ;
+    using CSIndices = std::array<idx_t, 3>;
+
+    CSIndices get_cs_indices(gidx_t n) const;
+
     double index_to_curvilinear(idx_t n) const ;
 
 protected:
@@ -158,10 +158,6 @@ protected:
     static constexpr idx_t nTiles_ = 6;
 
 private:
-    using CSIndices = std::array<idx_t, 3>;
-
-    CSIndices get_cs_indices(gidx_t n) const;
-
     std::string type_ = {"cubedsphere2"};
 
     using Matrix = eckit::maths::Matrix<double>;
