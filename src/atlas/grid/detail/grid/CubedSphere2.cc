@@ -79,6 +79,17 @@ Point2 CubedSphere2::xy(idx_t n) const {
     return point;
 }
 
+void CubedSphere2::lonlat(idx_t n, Point2& point) const {
+    xy(n, point);
+    projection_.xy2lonlat(point);
+}
+
+Point2 CubedSphere2::lonlat(idx_t n) const {
+    Point2 point;
+    lonlat(n, point);
+    return point;
+}
+
 // Protected methods
 
 // Print the name of the Grid

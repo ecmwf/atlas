@@ -137,8 +137,8 @@ public:
     void xy(idx_t n, Point2& point) const;
     Point2 xy(idx_t n) const;
 
-    void lonlat(idx_t n, Point2& point) const {xy(n, point);}
-    Point2 lonlat(idx_t n) const {return xy(n);}
+    void lonlat(idx_t n, Point2& point) const;
+    Point2 lonlat(idx_t n) const;
 
 protected:
     void print(std::ostream&) const override;
