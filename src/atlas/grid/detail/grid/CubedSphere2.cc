@@ -58,27 +58,19 @@ void CubedSphere2::xy(idx_t n, Point2& point) const {
     auto [t, i, j] = get_cs_indices(n);
 
     // 1. Get point on base face (xy plane)
-    double base_point[3];
-    base_point[0] = std::tan(index_to_curvilinear(i));
-    base_point[1] = std::tan(index_to_curvilinear(j));
-    base_point[2] = 1;
+    Matrix base_point(3, 1);
+    base_point(0) = std::tan(index_to_curvilinear(i));
+    base_point(1) = std::tan(index_to_curvilinear(j));
+    base_point(2) = 1;
 
     // 2. Apply rotation (move point from xy plane to 3D cube)
-    double xyz[3];
-    xyz[0] =  lfric_rotations_[t][0] * base_point[0]
-            + lfric_rotations_[t][1] * base_point[1]
-            + lfric_rotations_[t][2] * base_point[2];
-    xyz[1] =  lfric_rotations_[t][3] * base_point[0]
-            + lfric_rotations_[t][4] * base_point[1]
-            + lfric_rotations_[t][5] * base_point[2];
-    xyz[2] =  lfric_rotations_[t][6] * base_point[0]
-            + lfric_rotations_[t][7] * base_point[1]
-            + lfric_rotations_[t][8] * base_point[2];
+    Matrix xyz(3, 1);
+    xyz = lfric_rotations_[t].transpose() * base_point;
 
-    // 3. Project the point onto a (cubed)sphere
-    point[0] = std::atan2(xyz[1], xyz[0]) * rad_to_deg_;
-    point[1] = std::asin(xyz[2] / (
-        std::sqrt(xyz[0]*xyz[0] + xyz[1]*xyz[1] + xyz[2]*xyz[2]) // Magnitude
+    // // 3. Project the point onto a (cubed)sphere
+    point[0] = std::atan2(xyz(1), xyz(0)) * rad_to_deg_;
+    point[1] = std::asin(xyz(2) / (
+        std::sqrt(xyz(0)*xyz(0) + xyz(1)*xyz(1) + xyz(2)*xyz(2)) // Magnitude
         )) * rad_to_deg_;
 }
 

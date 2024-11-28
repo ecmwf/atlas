@@ -4,6 +4,7 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Point.h"
+#include "eckit/maths/Matrix.h"
 
 namespace atlas {
 namespace grid {
@@ -162,14 +163,18 @@ private:
     CSIndices get_cs_indices(gidx_t n) const;
 
     std::string type_ = {"cubedsphere2"};
-    static constexpr int lfric_rotations_[6][9] = {
-        {  0,  0,  1,  1,  0,  0,  0, -1,  0},
-        { -1,  0,  0,  0,  0,  1,  0, -1,  0},
-        {  0,  0, -1, -1,  0,  0,  0, -1,  0},
-        {  1,  0,  0,  0,  0, -1,  0, -1,  0},
-        { -1,  0,  0,  0,  1,  0,  0,  0,  1},
-        { -1,  0,  0,  0, -1,  0,  0,  0, -1}
+
+    using Matrix = eckit::maths::Matrix<double>;
+
+    std::array<Matrix, 6> lfric_rotations_ = {
+        Matrix({{0, 1, 0}, {0, 0, -1}, {1, 0, 0}}),
+        Matrix({{-1, 0, 0}, {0, 0, -1}, {0, 1, 0}}),
+        Matrix({{0, -1, 0}, {0, 0, -1}, {-1, 0, 0}}),
+        Matrix({{1, 0, 0}, {0, 0, -1}, {0, -1, 0}}),
+        Matrix({{-1, 0, 0}, {0, 1, 0}, {0, 0, 1}}),
+        Matrix({{-1, 0, 0}, {0, -1, 0}, {0, 0, -1}})
     };
+
     static constexpr double rad_to_deg_ = 180 / M_PI;
 };
 
