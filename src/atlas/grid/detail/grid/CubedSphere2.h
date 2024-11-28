@@ -154,7 +154,7 @@ protected:
     idx_t N_;
 
     // Number of tiles
-    static const idx_t nTiles_ = 6;
+    static constexpr idx_t nTiles_ = 6;
 
 private:
     std::string type_ = {"cubedsphere2"};
