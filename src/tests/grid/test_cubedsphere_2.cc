@@ -24,6 +24,15 @@ bool compare_2D_points(std::vector<point2_derived> a, std::vector<Point2> b, dou
     return equal;
 }
 
+CASE("cubed_sphere_instantiation") {
+    const int n = 2;
+    const Grid grid = CubedSphereGrid2(n);
+
+    EXPECT(grid.name() == "CS-LFR-" + std::to_string(n) + "-2");
+    EXPECT(grid.type() == "cubedsphere2");
+    EXPECT(grid.size() == n * n * 6);
+}
+
 CASE("cubed_sphere_grid_kgo") {
     // Lonlat and XY are both currently lonlat positions
     std::vector<Point2> kgo_lonlat { // N = 2
