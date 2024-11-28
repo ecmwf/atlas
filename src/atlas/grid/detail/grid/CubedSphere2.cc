@@ -45,13 +45,11 @@ idx_t CubedSphere2::size() const {
 Grid::Spec CubedSphere2::spec() const {
     Grid::Spec grid_spec;
 
-    if (type() == "cubedsphere2") {
-        grid_spec.set("name", name());
-    }
-    else {
-        grid_spec.set("type", type());
-    }
+    grid_spec.set("name", name());
+    grid_spec.set("type", type());
     grid_spec.set("projection", projection().spec());
+    grid_spec.set("domain", domain());
+
     return grid_spec;
 }
 
