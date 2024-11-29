@@ -10,6 +10,8 @@ namespace grid {
 namespace detail {
 namespace grid {
 
+// Public methods
+
 CubedSphere2::CubedSphere2(idx_t resolution) : N_(resolution) {}
 
 std::string CubedSphere2::name() const {
@@ -54,7 +56,7 @@ Grid::Spec CubedSphere2::spec() const {
     return grid_spec;
 }
 
-// Get the lonlat for a given index
+// Get the xy for a given index
 void CubedSphere2::xy(idx_t n, Point2& point) const {
     auto [t, i, j] = get_cs_indices(n);
 
@@ -66,17 +68,20 @@ void CubedSphere2::xy(idx_t n, Point2& point) const {
     eckit::geometry::Sphere::convertCartesianToSpherical(xyz_m.norm(), xyz, point);
 }
 
+// Get the xy for a given index
 Point2 CubedSphere2::xy(idx_t n) const {
     Point2 point;
     xy(n, point);
     return point;
 }
 
+// Get the lonlat for a given index
 void CubedSphere2::lonlat(idx_t n, Point2& point) const {
     xy(n, point);
     projection_.xy2lonlat(point);
 }
 
+// Get the lonlat for a given index
 Point2 CubedSphere2::lonlat(idx_t n) const {
     Point2 point;
     lonlat(n, point);
@@ -103,6 +108,7 @@ CubedSphere2::CSIndices CubedSphere2::get_cs_indices(gidx_t n) const {
     return {t, i, j};
 }
 
+// Get the curvilinear coordinate for a given ij index
 CubedSphere2::PointAlphaBeta CubedSphere2::ij_to_curvilinear_coord(idx_t i, idx_t j) const {
     const auto get_coord = [&](idx_t idx) {
         return M_PI / 2 * (-0.5 + (0.5 + idx) / N());
@@ -110,10 +116,12 @@ CubedSphere2::PointAlphaBeta CubedSphere2::ij_to_curvilinear_coord(idx_t i, idx_
     return {get_coord(i), get_coord(j)};
 }
 
+// Get the point on the tangent plane for a given curvilinear coordinate
 PointXY CubedSphere2::curvilinear_to_tangent_coord(CubedSphere2::PointAlphaBeta& curvi_coord) const {
     return {std::tan(curvi_coord[0]), std::tan(curvi_coord[1])};
 }
 
+// Transform a point on the tangent plane to a point on a cube
 PointXYZ CubedSphere2::tangent_to_xyz_coord(PointXY& tan_coord, idx_t tile) const {
     Matrix tan_point { {tan_coord[0]}, {tan_coord[1]}, {1} };
     
