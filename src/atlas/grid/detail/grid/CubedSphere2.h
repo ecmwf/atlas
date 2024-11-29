@@ -145,6 +145,7 @@ protected:
 
 private:
     using CSIndices = std::array<idx_t, 3>;
+    using PointAlphaBeta = Point2;
 
     CSIndices get_cs_indices(gidx_t n) const;
     PointXY ij_to_tangent_coord(idx_t i, idx_t j) const;
