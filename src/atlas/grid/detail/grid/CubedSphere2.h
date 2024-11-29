@@ -174,7 +174,6 @@ private:
         Matrix({{-1, 0, 0}, {0, -1, 0}, {0, 0, -1}})
     };
 
-    static constexpr double rad_to_deg_ = 180 / M_PI;
 };
 
 }  // namespace grid
