@@ -145,10 +145,13 @@ protected:
 
 private:
     using CSIndices = std::array<idx_t, 3>;
+    using PointAlphaBeta = Point2;
 
     CSIndices get_cs_indices(gidx_t n) const;
 
-    double index_to_curvilinear(idx_t n) const ;
+    PointAlphaBeta ij_to_curvilinear_coord(idx_t i, idx_t j) const;
+    PointXY curvilinear_to_tangent_coord(PointAlphaBeta& curvi_coord) const;
+    PointXYZ tangent_to_xyz_coord(PointXY& tan_coord, idx_t tile) const;
 
 protected:
     // (N_ * N_) = number of cells on a tile

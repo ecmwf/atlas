@@ -58,19 +58,12 @@ Grid::Spec CubedSphere2::spec() const {
 void CubedSphere2::xy(idx_t n, Point2& point) const {
     auto [t, i, j] = get_cs_indices(n);
 
-    // 1. Get point on base face (xy plane)
-    Matrix base_point(3, 1);
-    base_point(0) = std::tan(index_to_curvilinear(i));
-    base_point(1) = std::tan(index_to_curvilinear(j));
-    base_point(2) = 1;
+    PointAlphaBeta ab = ij_to_curvilinear_coord(i, j);
+    PointXY tangent_xy = curvilinear_to_tangent_coord(ab);
+    PointXYZ xyz = tangent_to_xyz_coord(tangent_xy, t);
+    Matrix xyz_m { {xyz[0], xyz[1], xyz[2]} };
 
-    // 2. Apply rotation (move point from xy plane to 3D cube)
-    Matrix xyz(3, 1);
-    xyz = lfric_rotations_[t].transpose() * base_point;
-
-    // 3. Project the point onto a (cubed)sphere
-    Point3 p_xyz = {xyz(0), xyz(1), xyz(2)};
-    eckit::geometry::Sphere::convertCartesianToSpherical(xyz.norm(), p_xyz, point);
+    eckit::geometry::Sphere::convertCartesianToSpherical(xyz_m.norm(), xyz, point);
 }
 
 Point2 CubedSphere2::xy(idx_t n) const {
@@ -110,10 +103,24 @@ CubedSphere2::CSIndices CubedSphere2::get_cs_indices(gidx_t n) const {
     return {t, i, j};
 }
 
-// Get point between [-pi/4..pi/4] given index and number of points along edge
-// Applies offset to get from prime to dual mesh
-double CubedSphere2::index_to_curvilinear(idx_t index) const {
-    return M_PI / 2 * (-0.5 + (0.5 + index) / N_);
+CubedSphere2::PointAlphaBeta CubedSphere2::ij_to_curvilinear_coord(idx_t i, idx_t j) const {
+    const auto get_coord = [&](idx_t idx) {
+        return M_PI / 2 * (-0.5 + (0.5 + idx) / N());
+    };
+    return {get_coord(i), get_coord(j)};
+}
+
+PointXY CubedSphere2::curvilinear_to_tangent_coord(CubedSphere2::PointAlphaBeta& curvi_coord) const {
+    return {std::tan(curvi_coord[0]), std::tan(curvi_coord[1])};
+}
+
+PointXYZ CubedSphere2::tangent_to_xyz_coord(PointXY& tan_coord, idx_t tile) const {
+    Matrix tan_point { {tan_coord[0]}, {tan_coord[1]}, {1} };
+    
+    Matrix xyz(3, 1);
+    xyz = lfric_rotations_[tile].transpose() * tan_point;
+
+    return {xyz(0), xyz(1), xyz(2)};
 }
 
 }  // namespace grid
