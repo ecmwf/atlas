@@ -74,6 +74,15 @@ CASE("cubed_sphere_grid_kgo") {
     EXPECT(compare_2D_points<PointXY>(points_xy, kgo_lonlat));
 }
 
+CASE("cubed_sphere_grid_builder") {
+    const int n = 2;
+    const std::string name = "CS-LFR-" + std::to_string(n) + "-2";
+    const Grid grid = Grid(name);
+    EXPECT(grid.name() == name);
+    EXPECT(grid.type() == "cubedsphere2");
+    EXPECT(grid.size() == n * n * 6);
+}
+
 }  // namespace
 }  // namespace test
 }  // namespace atlas

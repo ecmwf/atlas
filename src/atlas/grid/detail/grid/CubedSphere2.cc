@@ -1,14 +1,22 @@
 #include "atlas/grid/detail/grid/CubedSphere2.h"
 
 #include <cmath>
+#include <iomanip>
 
+#include "atlas/grid/CubedSphereGrid2.h"
+#include "atlas/grid/detail/grid/GridBuilder.h"
+#include "atlas/grid/detail/grid/GridFactory.h"
+#include "atlas/runtime/Exception.h"
 #include "eckit/geometry/Sphere.h"
 #include "eckit/utils/Hash.h"
+#include "eckit/utils/Translator.h"
 
 namespace atlas {
 namespace grid {
 namespace detail {
 namespace grid {
+
+static eckit::Translator<std::string, int> to_int;
 
 // Public methods
 
@@ -127,6 +135,87 @@ PointXYZ CubedSphere2::tangent_to_xyz_coord(const PointXY& tan_coord, idx_t tile
     xyz[2] = transform[2][0] * tan_coord[0] + transform[2][1] * tan_coord[1] + transform[2][2];
 
     return PointXYZ::normalize(xyz);
+}
+
+namespace {
+GridFactoryBuilder<CubedSphere2> __register_CubedSphere2(CubedSphere2::static_type());
+}
+
+static class cubedsphere2_lfric : public GridBuilder {
+public:
+    cubedsphere2_lfric():
+        GridBuilder("cubedsphere2_lfric", {"^[Cc][Ss][_-][Ll][Ff][Rr][-_]([1-9][0-9]*)[_-][2]$"},
+                    {"CS-LFR-<N>-2"}) {}
+
+    void print(std::ostream& os) const override {
+        os << std::left << std::setw(20) << "CS-LFR-<n>-2"
+           << "Cubed sphere for LFRic";
+    }
+
+    // Factory constructor
+    const atlas::Grid::Implementation* create(const std::string& name, const Grid::Config& config) const override {
+        int id;
+        std::vector<std::string> matches;
+        if (match(name, matches, id)) {
+            util::Config gridconf(config);
+            int N = to_int(matches[0]);
+            gridconf.set("type", type());
+            gridconf.set("N", N);
+            return create(gridconf);
+        }
+        return nullptr;
+    }
+
+    // Factory constructor
+    const atlas::Grid::Implementation* create(const Grid::Config& config) const override {
+        int N = 0;
+        if (not config.get("N", N)) {
+            throw_AssertionFailed("Could not find \"N\" in configuration of cubed sphere grid 2", Here());
+        }
+
+        return new CubedSphereGrid2::grid_t(N);
+
+        // TODO: requires CubedSphereGrid2 constructor with projection
+
+        // std::string name = "CS-LFR-" + std::to_string(N) + "-2";
+        // util::Config projconf;
+        // projconf.set("type", "cubedsphere2");
+        // projconf.set("tile.type", "cubedsphere2_lfric");
+
+        // // Shift projection by a longitude
+        // if (config.has("ShiftLon")) {
+        //     double shiftLon = 0.0;
+        //     config.get("ShiftLon", shiftLon);
+        //     projconf.set("ShiftLon", shiftLon);
+        // }
+
+        // // Apply a Schmidt transform
+        // if (config.has("DoSchmidt")) {
+        //     bool doSchmidt = false;
+        //     config.get("DoSchmidt", doSchmidt);
+        //     if (doSchmidt) {
+        //         double stretchFac;
+        //         double targetLon;
+        //         double targetLat;
+        //         config.get("StretchFac", stretchFac);
+        //         config.get("TargetLon", targetLon);
+        //         config.get("TargetLat", targetLat);
+        //         projconf.set("DoSchmidt", doSchmidt);
+        //         projconf.set("StretchFac", stretchFac);
+        //         projconf.set("TargetLon", targetLon);
+        //         projconf.set("TargetLat", targetLat);
+        //     }
+        // }
+
+        // return new CubedSphereGrid2::grid_t(name, N, Projection(projconf));
+    }
+
+    void force_link() {}
+
+} cubedsphere2_lfric_;
+
+void force_link_CubedSphere2() {
+    cubedsphere2_lfric_.force_link();
 }
 
 }  // namespace grid
