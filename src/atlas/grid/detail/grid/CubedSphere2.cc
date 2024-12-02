@@ -19,7 +19,11 @@ std::string CubedSphere2::name() const {
 }
 
 std::string CubedSphere2::type() const {
-    return type_;
+    return static_type();
+}
+
+std::string CubedSphere2::static_type() {
+    return "cubedsphere2";
 }
 
 // Provide a unique identification hash for the grid and the projection.

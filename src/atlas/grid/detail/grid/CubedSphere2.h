@@ -113,6 +113,7 @@ public:
 
     std::string name() const override;
     std::string type() const override;
+    static std::string static_type();
     idx_t N() const {return N_;}
 
     void hash(eckit::Hash&) const override;
