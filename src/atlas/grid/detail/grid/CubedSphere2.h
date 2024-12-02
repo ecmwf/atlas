@@ -17,7 +17,7 @@ private:
     // Get the lonlat and return as PointLonLat object
     struct ComputePointXY {
         ComputePointXY(const CubedSphere2& grid): grid_(grid) {}
-        void operator()(idx_t n, PointXY& point) { grid_.lonlat(n, point); }
+        void operator()(idx_t n, PointXY& point) { grid_.xy(n, point); }
         const CubedSphere2& grid_;
     };
 
