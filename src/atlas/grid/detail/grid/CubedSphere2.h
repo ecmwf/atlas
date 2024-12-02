@@ -160,8 +160,6 @@ protected:
     static constexpr idx_t nTiles_ = 6;
 
 private:
-    std::string type_ = {"cubedsphere2"};
-
     using Matrix = std::array<std::array<double, 3>, 3>;
 
     /*
