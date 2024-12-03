@@ -120,6 +120,7 @@ int test_hicsparseSpMV() {
     HIC_CALL( hicMalloc(&buffer, bufferSize) );
     
     // Perform SpMV
+    // y = alpha * A * x + beta * y
     HICSPARSE_CALL( hicsparseSpMV(
         handle,
         HICSPARSE_OPERATION_NON_TRANSPOSE,
@@ -283,6 +284,7 @@ int test_hicsparseSpMM() {
     }
 
     // Clean up
+    HIC_CALL(hicFree(buffer));
     HIC_CALL(hicFree(dC));
     HIC_CALL(hicFree(dB));
     HIC_CALL(hicFree(dcolumn_indices));

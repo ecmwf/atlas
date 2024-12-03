@@ -29,12 +29,15 @@ HIC_NAMESPACE_BEGIN
 #if HIC_BACKEND_CUDA
   constexpr decltype(CUDA_R_32F) HIC_R_32F = CUDA_R_32F;
   constexpr decltype(CUDA_R_64F) HIC_R_64F = CUDA_R_64F;
+  using hicDataType = cudaDataType;
 #elif HIC_BACKEND_HIP
   constexpr decltype(HIP_R_32F) HIC_R_32F = HIP_R_32F;
   constexpr decltype(HIP_R_64F) HIC_R_64F = HIP_R_64F;
+  using hicDataType = hipDataType;
 #elif HIC_BACKEND_DUMMY
   constexpr int HIC_R_32F = 0;
   constexpr int HIC_R_64F = 0;
+  using hicDataType = int;
 #else
   #error Unsupported hic backend. Please define HIC_BACKEND_CUDA or HIC_BACKEND_HIP or HIC_BACKEND_DUMMY
 #endif
