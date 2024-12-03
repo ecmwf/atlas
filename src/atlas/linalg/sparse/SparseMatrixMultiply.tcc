@@ -12,10 +12,13 @@
 
 #include "SparseMatrixMultiply.h"
 
+#include "eckit/linalg/SparseMatrix.h"
+
 #include "atlas/linalg/Indexing.h"
 #include "atlas/linalg/Introspection.h"
 #include "atlas/linalg/View.h"
 #include "atlas/linalg/sparse/Backend.h"
+#include "atlas/linalg/sparse/SparseMatrixView.h"
 #include "atlas/runtime/Exception.h"
 
 #if ATLAS_ECKIT_HAVE_ECKIT_585
@@ -30,28 +33,67 @@ namespace linalg {
 
 namespace sparse {
 namespace {
+
+inline SparseMatrixView<eckit::linalg::Scalar,eckit::linalg::Index> make_view_from_eckit_sparse_matrix(const eckit::linalg::SparseMatrix& m) {
+    return SparseMatrixView<eckit::linalg::Scalar,eckit::linalg::Index>{
+        m.rows(),
+        m.cols(),
+        m.nonZeros(),
+        m.data(),
+        m.inner(),
+        m.outer()
+    };
+}
+
 template <typename Backend, Indexing indexing>
 struct SparseMatrixMultiplyHelper {
-    template <typename SourceView, typename TargetView>
-    static void multiply( const SparseMatrix& W, const SourceView& src, TargetView& tgt,
+    template <typename Matrix, typename SourceView, typename TargetView>
+    static void multiply( const Matrix& W, const SourceView& src, TargetView& tgt,
                           const eckit::Configuration& config ) {
+        using MatrixValue = typename std::remove_const<typename Matrix::value_type>::type;
         using SourceValue = const typename std::remove_const<typename SourceView::value_type>::type;
         using TargetValue = typename std::remove_const<typename TargetView::value_type>::type;
         constexpr int src_rank = introspection::rank<SourceView>();
         constexpr int tgt_rank = introspection::rank<TargetView>();
         static_assert( src_rank == tgt_rank, "src and tgt need same rank" );
-        SparseMatrixMultiply<Backend, indexing, src_rank, SourceValue, TargetValue>::multiply( W, src, tgt, config );
+        SparseMatrixMultiply<Backend, indexing, src_rank, MatrixValue, SourceValue, TargetValue>::multiply( W, src, tgt, config );
+    }
+
+    template <typename Matrix, typename SourceView, typename TargetView>
+    static void multiply_add( const Matrix& W, const SourceView& src, TargetView& tgt,
+                       const eckit::Configuration& config ) {
+        using MatrixValue = typename std::remove_const<typename Matrix::value_type>::type;
+        using SourceValue = const typename std::remove_const<typename SourceView::value_type>::type;
+        using TargetValue = typename std::remove_const<typename TargetView::value_type>::type;
+        constexpr int src_rank = introspection::rank<SourceView>();
+        constexpr int tgt_rank = introspection::rank<TargetView>();
+        static_assert( src_rank == tgt_rank, "src and tgt need same rank" );
+        SparseMatrixMultiply<Backend, indexing, src_rank, MatrixValue, SourceValue, TargetValue>::multiply_add( W, src, tgt, config );
+    }
+    template <typename SourceView, typename TargetView>
+    static void multiply( const eckit::linalg::SparseMatrix& W, const SourceView& src, TargetView& tgt,
+                          const eckit::Configuration& config ) {
+        using MatrixValue = double;
+        using MatrixIndex = int;
+        using SourceValue = const typename std::remove_const<typename SourceView::value_type>::type;
+        using TargetValue = typename std::remove_const<typename TargetView::value_type>::type;
+        constexpr int src_rank = introspection::rank<SourceView>();
+        constexpr int tgt_rank = introspection::rank<TargetView>();
+        static_assert( src_rank == tgt_rank, "src and tgt need same rank" );
+        SparseMatrixMultiply<Backend, indexing, src_rank, MatrixValue, SourceValue, TargetValue>::multiply( make_view_from_eckit_sparse_matrix(W), src, tgt, config );
     }
 
     template <typename SourceView, typename TargetView>
-    static void multiply_add( const SparseMatrix& W, const SourceView& src, TargetView& tgt,
-                       const eckit::Configuration& config ) {
+    static void multiply_add( const eckit::linalg::SparseMatrix& W, const SourceView& src, TargetView& tgt,
+                              const eckit::Configuration& config ) {
+        using MatrixValue = double;
+        using MatrixIndex = int;
         using SourceValue = const typename std::remove_const<typename SourceView::value_type>::type;
         using TargetValue = typename std::remove_const<typename TargetView::value_type>::type;
         constexpr int src_rank = introspection::rank<SourceView>();
         constexpr int tgt_rank = introspection::rank<TargetView>();
         static_assert( src_rank == tgt_rank, "src and tgt need same rank" );
-        SparseMatrixMultiply<Backend, indexing, src_rank, SourceValue, TargetValue>::multiply_add( W, src, tgt, config );
+        SparseMatrixMultiply<Backend, indexing, src_rank, MatrixValue, SourceValue, TargetValue>::multiply_add( make_view_from_eckit_sparse_matrix(W), src, tgt, config );
     }
 };
 

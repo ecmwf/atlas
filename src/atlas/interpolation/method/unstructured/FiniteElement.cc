@@ -25,6 +25,7 @@
 #include "atlas/interpolation/element/Triag3D.h"
 #include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/interpolation/method/Ray.h"
+#include "atlas/linalg/sparse/MakeEckitSparseMatrix.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildCellCentres.h"
@@ -152,7 +153,8 @@ void FiniteElement::print(std::ostream& out) const {
     auto stencil_size_loc    = array::make_view<idx_t, 1>(field_stencil_size_loc);
     stencil_size_loc.assign(0);
 
-    for (auto it = matrix().begin(); it != matrix().end(); ++it) {
+    const auto m = atlas::linalg::make_non_owning_eckit_sparse_matrix(matrix());
+    for (auto it = m.begin(); it != m.end(); ++it) {
         idx_t p                   = idx_t(it.row());
         idx_t& i                  = stencil_size_loc(p);
         stencil_points_loc(p, i)  = gidx_src(it.col());
@@ -331,8 +333,7 @@ void FiniteElement::setup(const FunctionSpace& source) {
     }
 
     // fill sparse matrix and return
-    Matrix A(out_npts, inp_npts, weights_triplets);
-    setMatrix(A);
+    setMatrix(out_npts, inp_npts, weights_triplets);
 }
 
 struct ElementEdge {

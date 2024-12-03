@@ -177,8 +177,7 @@ void GridBoxMethod::do_setup(const Grid& source, const Grid& target, const Cache
 
     {
         ATLAS_TRACE("GridBoxMethod::setup: build interpolant matrix");
-        Matrix A(targetBoxes_.size(), sourceBoxes_.size(), allTriplets);
-        setMatrix(A);
+        setMatrix(targetBoxes_.size(), sourceBoxes_.size(), allTriplets);
     }
 }
 

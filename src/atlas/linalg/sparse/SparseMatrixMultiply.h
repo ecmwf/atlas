@@ -11,18 +11,17 @@
 #pragma once
 
 #include "eckit/config/Configuration.h"
-#include "eckit/linalg/SparseMatrix.h"
 
 #include "atlas/linalg/Indexing.h"
 #include "atlas/linalg/View.h"
 #include "atlas/linalg/sparse/Backend.h"
+#include "atlas/linalg/sparse/SparseMatrixView.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 
 namespace atlas {
 namespace linalg {
 
-using SparseMatrix  = eckit::linalg::SparseMatrix;
 using Configuration = eckit::Configuration;
 
 template <typename Matrix, typename SourceView, typename TargetView>
@@ -96,13 +95,13 @@ private:
 namespace sparse {
 
 // Template class which needs (full or partial) specialization for concrete template parameters
-template <typename Backend, Indexing, int Rank, typename SourceValue, typename TargetValue>
+template <typename Backend, Indexing, int Rank,  typename MatrixValue, typename SourceValue, typename TargetValue>
 struct SparseMatrixMultiply {
-    static void multiply(const SparseMatrix&, const View<SourceValue, Rank>&, View<TargetValue, Rank>&,
+    static void multiply(const SparseMatrixView<MatrixValue>&, const View<SourceValue, Rank>&, View<TargetValue, Rank>&,
                          const Configuration&) {
         throw_NotImplemented("SparseMatrixMultiply needs a template specialization with the implementation", Here());
     }
-    static void multiply_add(const SparseMatrix&, const View<SourceValue, Rank>&, View<TargetValue, Rank>&,
+    static void multiply_add(const SparseMatrixView<MatrixValue>&, const View<SourceValue, Rank>&, View<TargetValue, Rank>&,
                              const Configuration&) {
         throw_NotImplemented("SparseMatrixMultiply needs a template specialization with the implementation", Here());
     }

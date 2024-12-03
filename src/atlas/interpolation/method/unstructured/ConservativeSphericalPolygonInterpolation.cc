@@ -870,13 +870,11 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
         stopwatch.start();
         switch (order_) {
             case 1: {
-                auto M = compute_1st_order_matrix();
-                setMatrix(M, "1");
+                setMatrix(n_tpoints_, n_spoints_, compute_1st_order_triplets(), "1");
                 break;
             }
             case 2: {
-                auto M = compute_2nd_order_matrix();
-                setMatrix(M, "2");
+                setMatrix(n_tpoints_, n_spoints_, compute_2nd_order_triplets(), "2");
                 break;
             }
             default: {
@@ -1248,7 +1246,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
     }
 }
 
-eckit::linalg::SparseMatrix ConservativeSphericalPolygonInterpolation::compute_1st_order_matrix() {
+ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygonInterpolation::compute_1st_order_triplets() {
     ATLAS_TRACE("ConservativeMethod::setup: build cons-1 interpolant matrix");
     ATLAS_ASSERT(not matrix_free_);
     Triplets triplets;
@@ -1355,10 +1353,10 @@ eckit::linalg::SparseMatrix ConservativeSphericalPolygonInterpolation::compute_1
 //             }
 //         }
 //     }
-    return Matrix(n_tpoints_, n_spoints_, triplets);
+    return triplets;
 }
 
-eckit::linalg::SparseMatrix ConservativeSphericalPolygonInterpolation::compute_2nd_order_matrix() {
+ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygonInterpolation::compute_2nd_order_triplets() {
     ATLAS_TRACE("ConservativeMethod::setup: build cons-2 interpolant matrix");
     ATLAS_ASSERT(not matrix_free_);
     const auto& src_points_ = data_->src_points_;
@@ -1562,7 +1560,7 @@ eckit::linalg::SparseMatrix ConservativeSphericalPolygonInterpolation::compute_2
         }
     }
     sort_and_accumulate_triplets(triplets);  // Very expensive!!! (90% of this routine). We need to avoid it
-    return Matrix(n_tpoints_, n_spoints_, triplets);
+    return triplets;
 }
 
 void ConservativeSphericalPolygonInterpolation::do_execute(const FieldSet& src_fields, FieldSet& tgt_fields,

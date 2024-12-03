@@ -102,8 +102,7 @@ void NearestNeighbour::do_setup(const FunctionSpace& source, const FunctionSpace
     }
 
     // fill sparse matrix and return
-    Matrix A(out_npts, inp_npts, weights_triplets);
-    setMatrix(A);
+    setMatrix( out_npts, inp_npts, weights_triplets );
 }
 
 }  // namespace method
