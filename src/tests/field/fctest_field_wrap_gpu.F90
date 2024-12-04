@@ -97,14 +97,11 @@ implicit none
 
   existing_data = -1.
 
-  field = atlas_Field(existing_data(:,:,1,:))
-  call field%data(fview)
-
-  do i = 1, Nl
-    do j = 1, Nk
-      do k = 1, Nj
-        do l = 1, Ni
-          fview(i,j,l,k) = real(1000 * i+100 * j + 10*1 + l, c_double)
+  do l = 1, Nl
+    do k = 1, Nk
+      do j = 1, Nj
+        do i = 1, Ni
+          existing_data(i,j,k,l) = real(1000 * i+100 * j + 10*k + l, c_double)
         enddo
       enddo
     enddo
@@ -115,8 +112,6 @@ implicit none
   call field%allocate_device()
   call field%update_device()
   call field%device_data(fview)
-
-  existing_data = -2._c_double
 
   !$acc parallel loop deviceptr(fview)
   do l = 1, Nl
@@ -130,9 +125,9 @@ implicit none
   call field%update_host()
   call field%deallocate_device()
 
-  do i = 1, Ni
+  do l = 1, Nl
     do j = 1, Nj
-      do l = 1, Nl
+      do i = 1, Ni
         FCTEST_CHECK_EQUAL(existing_data(i, j, k_idx, l) , real(-1000*i - 100*j - 10*k_idx - l, c_double) )
       enddo
     enddo
