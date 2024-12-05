@@ -72,6 +72,8 @@ namespace array {
     template class ArrayView<const int, Rank>;                                                          \
     template class ArrayView<long, Rank>;                                                               \
     template class ArrayView<const long, Rank>;                                                         \
+    template class ArrayView<unsigned int, Rank>;                                                       \
+    template class ArrayView<const unsigned int, Rank>;                                                 \
     template class ArrayView<long unsigned, Rank>;                                                      \
     template class ArrayView<const long unsigned, Rank>;                                                \
     template class ArrayView<float, Rank>;                                                              \

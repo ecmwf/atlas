@@ -112,6 +112,8 @@ struct array_initializer {
                 return array_initializer_impl<int, Rank, 0>::apply(orig, array_resized);
             case DataType::KIND_INT64:
                 return array_initializer_impl<long, Rank, 0>::apply(orig, array_resized);
+            case DataType::KIND_UINT32:
+                return array_initializer_impl<unsigned int, Rank, 0>::apply(orig, array_resized);
             case DataType::KIND_UINT64:
                 return array_initializer_impl<unsigned long, Rank, 0>::apply(orig, array_resized);
             default: {
@@ -188,6 +190,9 @@ struct array_initializer_partitioned_impl {
                 return array_initializer_partitioned_val_impl<int, Rank, 0, PartDim>::apply(orig, dest, pos, offset);
             case DataType::KIND_INT64:
                 return array_initializer_partitioned_val_impl<long, Rank, 0, PartDim>::apply(orig, dest, pos, offset);
+            case DataType::KIND_UINT32:
+                return array_initializer_partitioned_val_impl<unsigned int, Rank, 0, PartDim>::apply(orig, dest, pos,
+                                                                                                      offset);
             case DataType::KIND_UINT64:
                 return array_initializer_partitioned_val_impl<unsigned long, Rank, 0, PartDim>::apply(orig, dest, pos,
                                                                                                       offset);
