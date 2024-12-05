@@ -38,7 +38,7 @@ void do_matrix_multiply(const atlas::linalg::SparseMatrixView<MatrixValue,IndexT
 }
 
 #if ATLAS_HAVE_EIGEN
-template <typename Value, typename Index = eckit::linalg::Index>
+template <typename Value, typename Index = std::make_signed_t<eckit::linalg::Index>>
 Eigen::SparseMatrix<Value, Eigen::RowMajor, Index> create_eigen_sparsematrix() {
     Eigen::SparseMatrix<Value, Eigen::RowMajor, Index> matrix(3,3);
     std::vector<Eigen::Triplet<Value>> triplets;
@@ -71,11 +71,11 @@ void check_array(const array::Array& array, const std::vector<Value>& expected) 
 }
 
 
-template<typename Value>
+template<typename Value, typename Index>
 void check_matrix(const SparseMatrixStorage& m) {
-    std::vector<Value>                 expected_value{2., -3., 2., 2.};
-    std::vector<eckit::linalg::Index>  expected_outer{0, 2, 3, 4};
-    std::vector<eckit::linalg::Index>  expected_inner{0, 2, 1, 2};
+    std::vector<Value>  expected_value{2., -3., 2., 2.};
+    std::vector<Index>  expected_outer{0, 2, 3, 4};
+    std::vector<Index>  expected_inner{0, 2, 1, 2};
 
     EXPECT_EQ(m.rows(), 3);
     EXPECT_EQ(m.cols(), 3);
@@ -85,11 +85,11 @@ void check_matrix(const SparseMatrixStorage& m) {
     check_array(m.outer(),expected_outer);
     check_array(m.inner(),expected_inner);
 
-    auto host_matrix_view   = linalg::make_host_view<Value>(m);
+    auto host_matrix_view   = linalg::make_host_view<Value,Index>(m);
 
-    std::vector<eckit::linalg::Index>  host_outer(host_matrix_view.outer_size());
-    std::vector<eckit::linalg::Index>  host_inner(host_matrix_view.inner_size());
-    std::vector<Value>                 host_value(host_matrix_view.value_size());
+    std::vector<Index>  host_outer(host_matrix_view.outer_size());
+    std::vector<Index>  host_inner(host_matrix_view.inner_size());
+    std::vector<Value>  host_value(host_matrix_view.value_size());
 
     array::ArrayT<Value> x(m.cols());
     array::ArrayT<Value> y(m.rows());
@@ -103,11 +103,29 @@ void check_matrix(const SparseMatrixStorage& m) {
 }
 
 void check_matrix(const SparseMatrixStorage& m) {
-    if (m.value().datatype() == atlas::make_datatype<double>()) {
-        check_matrix<double>(m);
+    if (m.value().datatype() == atlas::make_datatype<double>() && m.outer().datatype() == atlas::make_datatype<int>()) {
+        check_matrix<double, int>(m);
     }
-    else if (m.value().datatype() == atlas::make_datatype<float>()) {
-        check_matrix<float>(m);
+    else if (m.value().datatype() == atlas::make_datatype<double>() && m.outer().datatype() == atlas::make_datatype<unsigned int>()) {
+        check_matrix<double, unsigned int>(m);
+    }
+    else if (m.value().datatype() == atlas::make_datatype<double>() && m.outer().datatype() == atlas::make_datatype<long>()) {
+        check_matrix<double, long>(m);
+    }
+    else if (m.value().datatype() == atlas::make_datatype<double>() && m.outer().datatype() == atlas::make_datatype<unsigned long>()) {
+        check_matrix<double, unsigned long>(m);
+    }
+    else if (m.value().datatype() == atlas::make_datatype<float>() && m.outer().datatype() == atlas::make_datatype<int>()) {
+        check_matrix<float, int>(m);
+    }
+    else if (m.value().datatype() == atlas::make_datatype<float>() && m.outer().datatype() == atlas::make_datatype<unsigned int>()) {
+        check_matrix<float, unsigned int>(m);
+    }
+    else if (m.value().datatype() == atlas::make_datatype<float>() && m.outer().datatype() == atlas::make_datatype<long>()) {
+        check_matrix<float, long>(m);
+    }
+    else if (m.value().datatype() == atlas::make_datatype<float>() && m.outer().datatype() == atlas::make_datatype<unsigned long>()) {
+        check_matrix<float, unsigned long>(m);
     }
     else {
         ATLAS_NOTIMPLEMENTED;

@@ -140,7 +140,7 @@ CASE("extract cache, copy it, and pass non-owning pointer") {
 
     const auto& matrix_storage = get_or_create_cache(grid_source, grid_target).matrix();
     atlas::linalg::SparseMatrixStorage matrix_storage_copy(matrix_storage);
-    auto matrix = atlas::linalg::make_host_view<double,int>(matrix_storage_copy);
+    auto matrix = atlas::linalg::make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(matrix_storage_copy);
 
     EXPECT(not matrix.empty());
 

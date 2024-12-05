@@ -48,10 +48,10 @@ void do_hicsparse_matrix_multiply(const atlas::linalg::SparseMatrixView<MatrixVa
         ATLAS_NOTIMPLEMENTED;
     };
     auto get_hic_index_type = [](const auto& dummy) -> hicsparseIndexType_t {
-        if (std::is_same_v<std::decay_t<decltype(dummy)>,int> ) {
+        if (std::is_same_v<std::make_signed_t<std::decay_t<decltype(dummy)>>,int> ) {
             return HICSPARSE_INDEX_32I;
         }
-        else if (std::is_same_v<std::decay_t<decltype(dummy)>,long> ) {
+        else if (std::is_same_v<std::make_signed_t<std::decay_t<decltype(dummy)>>,long> ) {
             return HICSPARSE_INDEX_64I;
         }
         ATLAS_NOTIMPLEMENTED;
@@ -129,7 +129,7 @@ void do_hicsparse_matrix_multiply(const atlas::linalg::SparseMatrixView<MatrixVa
 }
 
 #if ATLAS_HAVE_EIGEN
-template <typename Value, typename Index = eckit::linalg::Index>
+template <typename Value, typename Index = std::make_signed_t<eckit::linalg::Index>>
 Eigen::SparseMatrix<Value, Eigen::RowMajor, Index> create_eigen_sparsematrix() {
     Eigen::SparseMatrix<Value, Eigen::RowMajor, Index> matrix(3,3);
     std::vector<Eigen::Triplet<Value>> triplets;
@@ -162,11 +162,11 @@ void check_array(const array::Array& array, const std::vector<Value>& expected) 
 }
 
 
-template<typename Value>
+template<typename Value, typename Index>
 void check_matrix(const SparseMatrixStorage& m) {
-    std::vector<Value>                 expected_value{2., -3., 2., 2.};
-    std::vector<eckit::linalg::Index>  expected_outer{0, 2, 3, 4};
-    std::vector<eckit::linalg::Index>  expected_inner{0, 2, 1, 2};
+    std::vector<Value>  expected_value{2., -3., 2., 2.};
+    std::vector<Index>  expected_outer{0, 2, 3, 4};
+    std::vector<Index>  expected_inner{0, 2, 1, 2};
 
     EXPECT_EQ(m.rows(), 3);
     EXPECT_EQ(m.cols(), 3);
@@ -177,16 +177,16 @@ void check_matrix(const SparseMatrixStorage& m) {
     check_array(m.inner(),expected_inner);
 
     m.updateDevice();
-    auto host_matrix_view   = make_host_view<Value>(m);
-    auto device_matrix_view = make_device_view<Value>(m);
+    auto host_matrix_view   = make_host_view<Value,Index>(m);
+    auto device_matrix_view = make_device_view<Value,Index>(m);
 
-    std::vector<eckit::linalg::Index>  host_outer(host_matrix_view.outer_size());
-    std::vector<eckit::linalg::Index>  host_inner(host_matrix_view.inner_size());
-    std::vector<Value>                 host_value(host_matrix_view.value_size());
+    std::vector<Index>  host_outer(host_matrix_view.outer_size());
+    std::vector<Index>  host_inner(host_matrix_view.inner_size());
+    std::vector<Value>  host_value(host_matrix_view.value_size());
 
-    hicMemcpy(host_outer.data(), device_matrix_view.outer(), device_matrix_view.outer_size() * sizeof(eckit::linalg::Index),  hicMemcpyDeviceToHost);
-    hicMemcpy(host_inner.data(), device_matrix_view.inner(), device_matrix_view.inner_size() * sizeof(eckit::linalg::Index),  hicMemcpyDeviceToHost);
-    hicMemcpy(host_value.data(), device_matrix_view.value(), device_matrix_view.value_size() * sizeof(Value),                 hicMemcpyDeviceToHost);
+    hicMemcpy(host_outer.data(), device_matrix_view.outer(), device_matrix_view.outer_size() * sizeof(Index),  hicMemcpyDeviceToHost);
+    hicMemcpy(host_inner.data(), device_matrix_view.inner(), device_matrix_view.inner_size() * sizeof(Index),  hicMemcpyDeviceToHost);
+    hicMemcpy(host_value.data(), device_matrix_view.value(), device_matrix_view.value_size() * sizeof(Value),  hicMemcpyDeviceToHost);
 
     EXPECT(host_outer == expected_outer);
     EXPECT(host_inner == expected_inner);
@@ -209,11 +209,29 @@ void check_matrix(const SparseMatrixStorage& m) {
 }
 
 void check_matrix(const SparseMatrixStorage& m) {
-    if (m.value().datatype() == atlas::make_datatype<double>()) {
-        check_matrix<double>(m);
+    if (m.value().datatype() == atlas::make_datatype<double>() && m.outer().datatype() == atlas::make_datatype<int>()) {
+        check_matrix<double, int>(m);
     }
-    else if (m.value().datatype() == atlas::make_datatype<float>()) {
-        check_matrix<float>(m);
+    else if (m.value().datatype() == atlas::make_datatype<double>() && m.outer().datatype() == atlas::make_datatype<unsigned int>()) {
+        check_matrix<double, unsigned int>(m);
+    }
+    else if (m.value().datatype() == atlas::make_datatype<double>() && m.outer().datatype() == atlas::make_datatype<long>()) {
+        check_matrix<double, long>(m);
+    }
+    else if (m.value().datatype() == atlas::make_datatype<double>() && m.outer().datatype() == atlas::make_datatype<unsigned long>()) {
+        check_matrix<double, unsigned long>(m);
+    }
+    else if (m.value().datatype() == atlas::make_datatype<float>() && m.outer().datatype() == atlas::make_datatype<int>()) {
+        check_matrix<float, int>(m);
+    }
+    else if (m.value().datatype() == atlas::make_datatype<float>() && m.outer().datatype() == atlas::make_datatype<unsigned int>()) {
+        check_matrix<float, unsigned int>(m);
+    }
+    else if (m.value().datatype() == atlas::make_datatype<float>() && m.outer().datatype() == atlas::make_datatype<long>()) {
+        check_matrix<float, long>(m);
+    }
+    else if (m.value().datatype() == atlas::make_datatype<float>() && m.outer().datatype() == atlas::make_datatype<unsigned long>()) {
+        check_matrix<float, unsigned long>(m);
     }
     else {
         ATLAS_NOTIMPLEMENTED;

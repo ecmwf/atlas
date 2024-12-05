@@ -40,7 +40,7 @@ public:
 
     std::string hash() {
         eckit::MD5 hash;
-        const auto m      = atlas::linalg::make_host_view<double,int>(matrix());
+        const auto m      = atlas::linalg::make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(matrix());
         const auto outer  = m.outer();
         const auto index  = m.inner();
         const auto weight = m.value();
