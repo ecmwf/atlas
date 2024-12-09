@@ -92,15 +92,14 @@ implicit none
   type(atlas_Field) :: field
   integer(c_int) :: i, j, k, l, k_idx
   integer(c_int), parameter :: Ni = 8, Nj = 2, Nk = 3, Nl = 4
+  real(c_double) :: a
   write(0,*) "test_field_wrapdataslice"
   allocate( existing_data(Ni, Nj, Nk, Nl) )
 
-  existing_data = -1.
-
-  do l = 1, Nl
-    do k = 1, Nk
-      do j = 1, Nj
-        do i = 1, Ni
+  do i = 1, Ni
+    do j = 1, Nj
+      do k = 1, Nk
+        do l = 1, Nl
           existing_data(i,j,k,l) = real(1000 * i+100 * j + 10*k + l, c_double)
         enddo
       enddo
@@ -113,22 +112,28 @@ implicit none
   call field%update_device()
   call field%device_data(fview)
 
-  !$acc parallel loop deviceptr(fview)
-  do l = 1, Nl
+  !$acc data deviceptr(fview)
+  !$acc parallel loop
+  do i = 1, Ni
     do j = 1, Nj
-      do i = 1, Ni
+      do l = 1, Nl
         fview(i,j,l) = -fview(i,j,l)
       enddo
     enddo
   enddo
+  !$acc end data
 
   call field%update_host()
   call field%deallocate_device()
 
-  do l = 1, Nl
+  do i = 1, Ni
     do j = 1, Nj
-      do i = 1, Ni
-        FCTEST_CHECK_EQUAL(existing_data(i, j, k_idx, l) , real(-1000*i - 100*j - 10*k_idx - l, c_double) )
+      do k = 1, Nk
+        do l = 1, Nl
+          a = 1._c_double;
+          if (k == k_idx) a = -1._c_double;
+          FCTEST_CHECK_EQUAL(existing_data(i, j, k, l) , a * real(1000*i + 100*j + 10*k + l, c_double) )
+        enddo
       enddo
     enddo
   enddo
