@@ -159,8 +159,8 @@ private:
     void do_setup_impl(const Grid& src_grid, const Grid& tgt_grid);
 
     void intersect_polygons(const CSPolygonArray& src_csp, const CSPolygonArray& tgt_scp);
-    Matrix compute_1st_order_matrix();
-    Matrix compute_2nd_order_matrix();
+    Triplets compute_1st_order_triplets();
+    Triplets compute_2nd_order_triplets();
     void dump_intersection(const std::string, const ConvexSphericalPolygon& plg_1, const CSPolygonArray& plg_2_array,
                            const std::vector<idx_t>& plg_2_idx_array) const;
     template <class TargetCellsIDs>

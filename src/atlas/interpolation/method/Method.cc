@@ -105,12 +105,12 @@ void Method::interpolate_field_rank1(const Field& src, Field& tgt, const Matrix&
     auto tgt_v   = array::make_view<Value, 1>(tgt);
 
     if (nonLinear_(src)) {
-        Matrix W_nl(W);  // copy (a big penalty -- copy-on-write would definitely be better)
+        eckit::linalg::SparseMatrix W_nl = atlas::linalg::make_eckit_sparse_matrix(W);
         nonLinear_->execute(W_nl, src);
         sparse_matrix_multiply(W_nl, src_v, tgt_v, backend);
     }
     else {
-        sparse_matrix_multiply(W, src_v, tgt_v, backend);
+        sparse_matrix_multiply(make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(W), src_v, tgt_v, backend);
     }
 }
 
@@ -150,7 +150,7 @@ void Method::interpolate_field_rank2(const Field& src, Field& tgt, const Matrix&
         }
     }
     else {
-        sparse_matrix_multiply(W, src_v, tgt_v, sparse::backend::openmp());
+        sparse_matrix_multiply(make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(W), src_v, tgt_v, sparse::backend::openmp());
     }
 }
 
@@ -163,7 +163,7 @@ void Method::interpolate_field_rank3(const Field& src, Field& tgt, const Matrix&
     if (not W.empty() && nonLinear_(src)) {
         ATLAS_ASSERT(false, "nonLinear interpolation not supported for rank-3 fields.");
     }
-    sparse_matrix_multiply(W, src_v, tgt_v, sparse::backend::openmp());
+    sparse_matrix_multiply(make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(W), src_v, tgt_v, sparse::backend::openmp());
 }
 
 template <typename Value>
@@ -173,7 +173,7 @@ void Method::adjoint_interpolate_field_rank1(Field& src, const Field& tgt, const
     auto src_v = array::make_view<Value, 1>(src);
     auto tgt_v = array::make_view<Value, 1>(tgt);
 
-    sparse_matrix_multiply_add(W, tgt_v, src_v, backend);
+    sparse_matrix_multiply_add(make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(W), tgt_v, src_v, backend);
 }
 
 template <typename Value>
@@ -182,7 +182,7 @@ void Method::adjoint_interpolate_field_rank2(Field& src, const Field& tgt, const
     auto src_v = array::make_view<Value, 2>(src);
     auto tgt_v = array::make_view<Value, 2>(tgt);
 
-    sparse_matrix_multiply_add(W, tgt_v, src_v, sparse::backend::openmp());
+    sparse_matrix_multiply_add(make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(W), tgt_v, src_v, sparse::backend::openmp());
 }
 
 template <typename Value>
@@ -191,7 +191,7 @@ void Method::adjoint_interpolate_field_rank3(Field& src, const Field& tgt, const
     auto src_v = array::make_view<Value, 3>(src);
     auto tgt_v = array::make_view<Value, 3>(tgt);
 
-    sparse_matrix_multiply_add(W, tgt_v, src_v, sparse::backend::openmp());
+    sparse_matrix_multiply_add(make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(W), tgt_v, src_v, sparse::backend::openmp());
 }
 
 void Method::check_compatibility(const Field& src, const Field& tgt, const Matrix& W) const {
@@ -266,12 +266,11 @@ void Method::setup(const FunctionSpace& source, const FunctionSpace& target) {
     ATLAS_TRACE("atlas::interpolation::method::Method::setup(FunctionSpace, FunctionSpace)");
     this->do_setup(source, target);
 
-    if (adjoint_ && target.size() > 0) {
-        Matrix tmp(*matrix_);
-
-        // if interpolation is matrix free then matrix->nonZeros() will be zero.
-        if (tmp.nonZeros() > 0) {
-            matrix_transpose_ = tmp.transpose();
+    if (adjoint_ && target.size() > 0 && matrixAllocated()) {
+        if (not matrix_->empty()) {
+            eckit::linalg::SparseMatrix matrix_copy = make_eckit_sparse_matrix(*matrix_); // Makes a copy!
+            matrix_copy.transpose(); // transpose the copy in place
+            matrix_transpose_ = linalg::make_sparse_matrix_storage(std::move(matrix_copy)); // Move the copy into storage
         }
     }
 }

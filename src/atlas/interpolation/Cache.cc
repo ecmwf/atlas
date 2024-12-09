@@ -54,7 +54,7 @@ MatrixCacheEntry::~MatrixCacheEntry() = default;
 class MatrixCacheEntryOwned : public MatrixCacheEntry {
 public:
     MatrixCacheEntryOwned(Matrix&& matrix): MatrixCacheEntry(&matrix_) {
-        const_cast<Matrix&>(matrix_).swap(reinterpret_cast<Matrix&>(matrix));
+        const_cast<Matrix&>(matrix_) = std::move(matrix);
     }
 
 private:
