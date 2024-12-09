@@ -37,6 +37,54 @@ END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------
 
+subroutine kernel_1(view, N)
+  real(c_double) :: view(:,:,:)
+  integer, intent(in) :: N
+  !$acc data present(view)
+  !$acc parallel loop
+  do j=1,N
+    view(1,1,j) = real(j, c_double)
+    view(2,1,j) = -3_c_double
+  enddo
+  !$acc end data
+end subroutine kernel_1
+
+
+subroutine kernel_2(view, Ni, Nj, Nl)
+  ! The OpenACC standard states that a deviceptr (here 'view')
+  ! shall not have the POINTER attribute, hence this subroutine
+  ! is required rather than have the code inlined at call site.
+  real(c_double) :: view(:,:,:)
+  integer, intent(in) :: Ni, Nj, Nl
+  !$acc data deviceptr(view)
+  !$acc parallel loop
+  do i = 1, Ni
+    do j = 1, Nj
+      do l = 1, Nl
+        view(i,j,l) = -view(i,j,l)
+      enddo
+    enddo
+  enddo
+  !$acc end data
+end subroutine kernel_2
+
+
+subroutine kernel_3(view, Ni, Nj, Nk)
+  logical :: view(:,:,:)
+  integer, intent(in) :: Ni, Nj, Nk
+  !$acc data present(view)
+  !$acc parallel loop
+  do i=1,Ni
+    do j=1,Nj
+      do k=1,Nk
+        view(i,j,k) = (mod(k,3) == 0 )
+      enddo
+    enddo
+  enddo
+  !$acc end data
+end subroutine kernel_3
+
+
 TEST( test_field_wrapdata )
 implicit none
 
@@ -60,13 +108,7 @@ implicit none
   call field%allocate_device()
   call field%update_device()
 
-  !$acc data present(fview)
-  !$acc parallel loop
-  do j=1,N
-    fview(1,1,j) = real(j, c_double)
-    fview(2,1,j) = -3_c_double
-  enddo
-  !$acc end data
+  call kernel_1(fview, N)
 
   j = N/2
   FCTEST_CHECK_EQUAL( existing_data(1,1,j), -2._c_double )
@@ -112,16 +154,7 @@ implicit none
   call field%update_device()
   call field%device_data(fview)
 
-  !$acc data deviceptr(fview)
-  !$acc parallel loop
-  do i = 1, Ni
-    do j = 1, Nj
-      do l = 1, Nl
-        fview(i,j,l) = -fview(i,j,l)
-      enddo
-    enddo
-  enddo
-  !$acc end data
+  call kernel_2(fview, Ni, Nj, Nl)
 
   call field%update_host()
   call field%deallocate_device()
@@ -171,16 +204,7 @@ implicit none
   call field%allocate_device()
   call field%update_device()
 
-  !$acc data present(fview)
-  !$acc parallel loop
-  do i=1,Ni
-    do j=1,Nj
-      do k=1,Nk
-        fview(i,j,k) = (mod(k,3) == 0 )
-      enddo
-    enddo
-  enddo
-  !$acc end data
+  call kernel_3(fview, Ni, Nj, Nk)
 
   FCTEST_CHECK_EQUAL( fview(1,1,1), .false. )
   FCTEST_CHECK_EQUAL( fview(1,1,2), .true. )
