@@ -35,7 +35,6 @@ void host_copy_eckit (const InputT* input_data, array::Array& output) {
 inline SparseMatrixStorage make_sparse_matrix_storage(eckit::linalg::SparseMatrix&& m) {
     using Index = eckit::linalg::Index;
     using Value = eckit::linalg::Scalar;
-    std::cout << "make_sparse_matrix_storage move" << std::endl;
 
     std::size_t rows = m.rows();
     std::size_t cols = m.cols();
@@ -58,8 +57,6 @@ inline SparseMatrixStorage make_sparse_matrix_storage(eckit::linalg::SparseMatri
 
 template< typename value_type, typename index_type = eckit::linalg::Index>
 SparseMatrixStorage make_sparse_matrix_storage(eckit::linalg::SparseMatrix&& m) {
-    std::cout << "make_sparse_matrix_storage move or convert" << std::endl;
-
     if (std::is_same_v<eckit::linalg::Scalar, value_type> && std::is_same_v<eckit::linalg::Index, index_type>) {
         return make_sparse_matrix_storage(std::move(m));
     }
@@ -87,7 +84,6 @@ inline SparseMatrixStorage make_sparse_matrix_storage(const eckit::linalg::Spars
     using Index = eckit::linalg::Index;
     using Value = eckit::linalg::Scalar;
 
-    std::cout << "make_sparse_matrix_storage copy" << std::endl;
     std::size_t rows = m.rows();
     std::size_t cols = m.cols();
     std::size_t nnz  = m.nonZeros();
@@ -109,7 +105,6 @@ inline SparseMatrixStorage make_sparse_matrix_storage(const eckit::linalg::Spars
 
 template< typename value_type, typename index_type = eckit::linalg::Index>
 SparseMatrixStorage make_sparse_matrix_storage(const eckit::linalg::SparseMatrix& m) {
-    std::cout << "make_sparse_matrix_storage copy and convert" << std::endl;
 
     std::size_t rows = m.rows();
     std::size_t cols = m.cols();
