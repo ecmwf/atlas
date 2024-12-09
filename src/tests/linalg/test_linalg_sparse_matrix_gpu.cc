@@ -42,9 +42,6 @@ void do_hicsparse_matrix_multiply(const atlas::linalg::SparseMatrixView<MatrixVa
         else if (std::is_same_v<std::decay_t<decltype(dummy)>,float> ) {
             return HIC_R_32F;
         }
-        else if (std::is_same_v<std::decay_t<decltype(dummy)>,int> ) {
-            return HIC_R_32F;
-        }
         ATLAS_NOTIMPLEMENTED;
     };
     auto get_hic_index_type = [](const auto& dummy) -> hicsparseIndexType_t {

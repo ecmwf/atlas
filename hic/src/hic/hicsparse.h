@@ -26,10 +26,66 @@
     #define cusparseConstDnMatDescr_t cusparseDnMatDescr_t
     #define cusparseConstSpVecDescr_t cusparseSpVecDescr_t
     #define cusparseConstSpMatDescr_t cusparseSpMatDescr_t
-    #define cusparseCreateConstDnVec  cusparseCreateDnVec
-    #define cusparseCreateConstDnMat  cusparseCreateDnMat
-    #define cusparseCreateConstSpVec  cusparseCreateSpVec
-    #define cusparseCreateConstCsr    cusparseCreateCsr
+
+    cusparseStatus_t
+    cusparseCreateConstCsr(cusparseConstSpMatDescr_t* spMatDescr,
+                           int64_t                    rows,
+                           int64_t                    cols,
+                           int64_t                    nnz,
+                           const void*                csrRowOffsets,
+                           const void*                csrColInd,
+                           const void*                csrValues,
+                           cusparseIndexType_t        csrRowOffsetsType,
+                           cusparseIndexType_t        csrColIndType,
+                           cusparseIndexBase_t        idxBase,
+                           cudaDataType               valueType) {
+      return cusparseCreateCsr(spMatDescr,
+                               rows,
+                               cols,
+                               nnz,
+                               const_cast<void*>(csrRowOffsets),
+                               const_cast<void*>(csrColInd),
+                               const_cast<void*>(csrValues),
+                               csrRowOffsetsType,
+                               csrColIndType,
+                               idxBase,
+                               valueType);
+    }
+    cusparseStatus_t
+    cusparseCreateConstDnVec(cusparseConstDnVecDescr_t* dnVecDescr,
+                             int64_t                    size,
+                             const void*                values,
+                             cudaDataType               valueType) {
+      return cusparseCreateDnVec(dnVecDescr, size, const_cast<void*>(values), valueType);
+    }
+    cusparseStatus_t
+    cusparseCreateConstDnMat(cusparseConstDnMatDescr_t* dnMatDescr,
+                             int64_t                    rows,
+                             int64_t                    cols,
+                             int64_t                    ld,
+                             const void*                values,
+                             cudaDataType               valueType,
+                             cusparseOrder_t            order) {
+      return cusparseCreateDnMat(dnMatDescr, rows, cols, ld, const_cast<void*>(values), valueType, order);
+    }
+    cusparseStatus_t
+    cusparseCreateConstSpVec(cusparseConstSpVecDescr_t* spVecDescr,
+                             int64_t                    size,
+                             int64_t                    nnz,
+                             const void*                indices,
+                             const void*                values,
+                             cusparseIndexType_t        idxType,
+                             cusparseIndexBase_t        idxBase,
+                             cudaDataType               valueType) {
+      return cusparseCreateSpVec(spVecDescr,
+                                 size,
+                                 nnz,
+                                 const_cast<void*>(indices),
+                                 const_cast<void*>(values),
+                                 idxType,
+                                 idxBase,
+                                 valueType);
+    }
   #endif
 #elif HIC_BACKEND_HIP
   #define HICSPARSE_BACKEND_PREFIX hip
