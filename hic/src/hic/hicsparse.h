@@ -20,6 +20,17 @@
   #define HICSPARSE_BACKEND_PREFIX cu
   #define HICSPARSE_BACKEND_PREFIX_CAPS CU
   #include <cusparse.h>
+  #if CUSPARSE_VERSION < 12 * 1000 + 0 * 100 + 0
+    // the "Const" versions only appeared with CUDA 12
+    #define cusparseConstDnVecDescr_t cusparseDnVecDescr_t
+    #define cusparseConstDnMatDescr_t cusparseDnMatDescr_t
+    #define cusparseConstSpVecDescr_t cusparseSpVecDescr_t
+    #define cusparseConstSpMatDescr_t cusparseSpMatDescr_t
+    #define cusparseCreateConstDnVec  cusparseCreateDnVec
+    #define cusparseCreateConstDnMat  cusparseCreateDnMat
+    #define cusparseCreateConstSpVec  cusparseCreateSpVec
+    #define cusparseCreateConstCsr    cusparseCreateCsr
+  #endif
 #elif HIC_BACKEND_HIP
   #define HICSPARSE_BACKEND_PREFIX hip
   #define HICSPARSE_BACKEND_PREFIX_CAPS HIP
@@ -82,6 +93,7 @@ HIC_FUNCTION(sparseDestroyDnMat)
 HIC_FUNCTION(sparseCreateConstSpVec)
 HIC_FUNCTION(sparseCreateSpVec)
 HIC_FUNCTION(sparseDestroySpVec)
+HIC_FUNCTION(sparseCreateCsr)
 HIC_FUNCTION(sparseCreateConstCsr)
 HIC_FUNCTION(sparseDestroySpMat)
 HIC_FUNCTION(sparseSpMV_bufferSize)
