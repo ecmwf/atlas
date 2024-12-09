@@ -241,7 +241,7 @@ private:
 template <typename Value>
 class WrappedDataStore : public ArrayDataStore {
 public:
-    WrappedDataStore(Value* host_data, const ArraySpec& spec, size_t size): host_data_(host_data), size_(size),
+    WrappedDataStore(Value* host_data, const ArraySpec& spec): host_data_(host_data), size_(spec.size()),
         device_memory_resource_(memory::device::traced_resource()),
         device_allocator_{device_memory_resource_.get()}
     {
@@ -427,7 +427,7 @@ private:
 
     mutable Value* device_data_;
 
-    bool contiguous_;
+    bool contiguous_{true};
     size_t memcpy_h2d_pitch_;
     size_t memcpy_d2h_pitch_;
     size_t memcpy_height_;
