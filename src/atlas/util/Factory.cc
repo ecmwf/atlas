@@ -112,5 +112,14 @@ FactoryBase::~FactoryBase() {
 
 //----------------------------------------------------------------------------------------------------------------------
 
+std::shared_ptr<FactoryRegistry> FactoryRegistry::instance(const std::string& factory) {
+    static std::map<std::string,std::shared_ptr<FactoryRegistry>> registries;
+    if (registries.find(factory) == registries.end()) {
+        auto [it_pair, inserted] = registries.emplace(factory, new FactoryRegistry(factory));
+        return it_pair->second;
+    }
+    return registries.at(factory);
+}
+
 }  // namespace util
 }  // namespace atlas
