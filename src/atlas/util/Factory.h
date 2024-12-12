@@ -27,7 +27,12 @@ class FactoryBase;
 
 class FactoryRegistry {
 private:
-    FactoryRegistry(const std::string& factory);
+    struct Private{ explicit Private() = default; };
+public:
+    // Constructor, essentially private because nobody can create an explicit Private object.
+    // Construction must happen via instance() function below
+    FactoryRegistry(const std::string& factory, Private);
+
     virtual ~FactoryRegistry();
 
 private:
