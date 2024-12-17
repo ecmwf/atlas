@@ -4,7 +4,11 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Point.h"
+#if eckit_HAVE_EIGEN
+#include "eckit/maths/Eigen.h"
+#else
 #include "eckit/maths/Matrix.h"
+#endif
 
 namespace atlas {
 namespace grid {
@@ -163,7 +167,13 @@ protected:
 private:
     std::string type_ = {"cubedsphere2"};
 
+#if eckit_HAVE_EIGEN
+    using Matrix = Eigen::Matrix3d;
+    using Vector = Eigen::Vector3d;
+#else
     using Matrix = eckit::maths::Matrix<double>;
+    using Vector = eckit::maths::ColVector<double>;
+#endif
 
     std::array<Matrix, 6> lfric_rotations_ = {
         Matrix({{0, 1, 0}, {0, 0, -1}, {1, 0, 0}}),
