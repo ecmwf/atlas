@@ -181,9 +181,9 @@ void check_matrix(const SparseMatrixStorage& m) {
     std::vector<Index>  host_inner(host_matrix_view.inner_size());
     std::vector<Value>  host_value(host_matrix_view.value_size());
 
-    hicMemcpy(host_outer.data(), device_matrix_view.outer(), device_matrix_view.outer_size() * sizeof(Index),  hicMemcpyDeviceToHost);
-    hicMemcpy(host_inner.data(), device_matrix_view.inner(), device_matrix_view.inner_size() * sizeof(Index),  hicMemcpyDeviceToHost);
-    hicMemcpy(host_value.data(), device_matrix_view.value(), device_matrix_view.value_size() * sizeof(Value),  hicMemcpyDeviceToHost);
+    HIC_CALL(hicMemcpy(host_outer.data(), device_matrix_view.outer(), device_matrix_view.outer_size() * sizeof(Index),  hicMemcpyDeviceToHost));
+    HIC_CALL(hicMemcpy(host_inner.data(), device_matrix_view.inner(), device_matrix_view.inner_size() * sizeof(Index),  hicMemcpyDeviceToHost));
+    HIC_CALL(hicMemcpy(host_value.data(), device_matrix_view.value(), device_matrix_view.value_size() * sizeof(Value),  hicMemcpyDeviceToHost));
 
     EXPECT(host_outer == expected_outer);
     EXPECT(host_inner == expected_inner);
