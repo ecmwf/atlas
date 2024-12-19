@@ -6,6 +6,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+list( APPEND ATLAS_TEST_ENVIRONMENT ATLAS_TEST_IGNORE_ECTRANS_NOT_IMPLEMENTED=1 )
 if( HAVE_FCTEST )
 
   if( atlas_HAVE_ECTRANS )
