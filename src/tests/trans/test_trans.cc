@@ -9,6 +9,7 @@
  */
 
 #include <algorithm>
+#include <cstdlib>
 
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
@@ -47,6 +48,44 @@
 #include "transi/trans.h"
 #endif
 #endif
+
+bool ignore_ectrans_not_implemented(std::exception& e) {
+    static bool ATLAS_TEST_IGNORE_ECTRANS_NOT_IMPLEMENTED = []() -> bool {
+        const char* env = ::getenv("ATLAS_TEST_IGNORE_ECTRANS_NOT_IMPLEMENTED");
+        if (env) {
+            return std::atoi(env);
+        }
+        return false;
+    }();
+    if (ATLAS_TEST_IGNORE_ECTRANS_NOT_IMPLEMENTED == false) {
+        return false;
+    }
+    std::string errstr(e.what());
+    for(auto& c : errstr){ c = std::tolower(c); }
+    std::vector<std::string> search{"trans", "not", "implemented"};
+    return std::all_of(search.begin() ,search.end(),[&](const std::string& s)->bool {
+        return errstr.find(s) != std::string::npos;
+    });
+}
+
+#define ECTRANS_MAYBE_NOT_IMPLEMENTED(expr) \
+    do {                                                                                            \
+        try {                                                                                       \
+            expr;                                                                                   \
+        }                                                                                           \
+        catch (std::exception & e) {                                                                \
+            if( ignore_ectrans_not_implemented(e) ) {                                               \
+                atlas::Log::error() << "ERROR IGNORED: Not implemented with ectrans code path\n"    \
+                                    << "Skipping remainder of test"                                 \
+                                    << std::endl;                                                   \
+                return;                                                                             \
+            }                                                                                       \
+            throw eckit::testing::TestException("Unexpected exception caught: "+std::string(e.what()), Here());    \
+        }                                                                                           \
+        catch (...) {                                                                               \
+            throw eckit::testing::TestException("Unexpected and unknown exception caught", Here()); \
+        }                                                                                           \
+    } while (false)
 
 using namespace eckit;
 using atlas::grid::detail::partitioner::EqualRegionsPartitioner;
@@ -166,7 +205,6 @@ CASE("test_trans_options") {
     Log::info() << "trans_opts = " << opts << std::endl;
 }
 
-#ifdef TRANS_HAVE_IO
 CASE("test_write_read_cache") {
     Log::info() << "test_write_read_cache" << std::endl;
     using namespace trans;
@@ -193,7 +231,6 @@ CASE("test_write_read_cache") {
         Trans trans_cache_O24(legendre_cache_O24, Grid("O24"), 23, option::flt(false));
     }
 }
-#endif
 
 CASE("test_distspec") {
     trans::TransIFS trans(Grid("F80"), 159);
@@ -516,13 +553,11 @@ CASE("test_trans_using_functionspace_StructuredColumns") {
     EXPECT_THROWS_AS(trans.dirtrans(gpfields, spfields), eckit::Exception);
 }
 
-#if 0
-// NOT SUPPORTED IN ECTRANS WITH GPU
 CASE("test_trans_MIR_lonlat") {
     Log::info() << "test_trans_MIR_lonlat" << std::endl;
-
     Grid grid("L48");
-    trans::Trans trans(grid, 47);
+    trans::Trans trans;
+    ECTRANS_MAYBE_NOT_IMPLEMENTED((trans = trans::Trans(grid, 47)));
 
     // global fields
     std::vector<double> spf(trans.spectralCoefficients(), 0.);
@@ -534,10 +569,7 @@ CASE("test_trans_MIR_lonlat") {
         EXPECT_NO_THROW(trans.dirtrans(1, gpf.data(), spf.data(), option::global()));
     }
 }
-#endif
 
-#if 0
-// NOT SUPPORTED IN ECTRANS WITH GPU
 CASE("test_trans_VorDivToUV") {
     int nfld = 1;                          // TODO: test for nfld>1
     std::vector<int> truncation_array{1};  // truncation_array{159,160,1279};
@@ -566,7 +598,9 @@ CASE("test_trans_VorDivToUV") {
             std::vector<double> field_U(nfld * nspec2);
             std::vector<double> field_V(nfld * nspec2);
 
-            vordiv_to_UV.execute(nspec2, nfld, field_vor.data(), field_div.data(), field_U.data(), field_V.data());
+            ECTRANS_MAYBE_NOT_IMPLEMENTED(
+                vordiv_to_UV.execute(nspec2, nfld, field_vor.data(), field_div.data(), field_U.data(), field_V.data());
+            );
 
             // TODO: do some meaningful checks
             Log::info() << "Trans library" << std::endl;
@@ -585,8 +619,9 @@ CASE("test_trans_VorDivToUV") {
             std::vector<double> field_U(nfld * nspec2);
             std::vector<double> field_V(nfld * nspec2);
 
-            vordiv_to_UV.execute(nspec2, nfld, field_vor.data(), field_div.data(), field_U.data(), field_V.data());
-
+            EXPECT_NO_THROW(
+              vordiv_to_UV.execute(nspec2, nfld, field_vor.data(), field_div.data(), field_U.data(), field_V.data());
+            );
             // TODO: do some meaningful checks
             Log::info() << "Local transform" << std::endl;
             Log::info() << "U: " << std::endl;
@@ -597,9 +632,7 @@ CASE("test_trans_VorDivToUV") {
         }
     }
 }
-#endif
 
-#ifdef TRANS_HAVE_IO
 CASE("ATLAS-256: Legendre coefficient expected unique identifiers") {
     if (mpi::comm().size() == 1) {
         util::Config options;
@@ -685,13 +718,13 @@ CASE("ATLAS-256: Legendre coefficient expected unique identifiers") {
         for (auto& domain : domains) {
             for (int T : spectral_T) {
                 for (auto name : grids) {
-                    Log::info() << "Case name:" << name << ", T:" << T << ", domain:" << domain << ", UID:'" << *uid
-                                << "'" << std::endl;
+                    //Log::info() << "Case name:" << name << ", T:" << T << ", domain:" << domain << ", UID:'" << *uid
+                    //            << "'" << std::endl;
 
                     Grid grid(name, domain);
                     auto test = trans::LegendreCacheCreator(grid, T, options).uid();
-                    ATLAS_DEBUG_VAR(test);
-                    EXPECT(test == *uid);
+                    //ATLAS_DEBUG_VAR(test);
+                    EXPECT_EQ(test, *uid);
 
                     uid++;
                 }
@@ -699,7 +732,6 @@ CASE("ATLAS-256: Legendre coefficient expected unique identifiers") {
         }
     }
 }
-#endif
 
 //-----------------------------------------------------------------------------
 
