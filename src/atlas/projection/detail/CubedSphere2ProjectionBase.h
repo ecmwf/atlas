@@ -11,7 +11,7 @@ namespace detail {
 
 class CubedSphere2ProjectionBase final : public ProjectionImpl {
 public:
-    CubedSphereProjectionBase(const eckit::Parametrisation&);
+    CubedSphere2ProjectionBase(const eckit::Parametrisation&);
 
     static std::string static_type() { return "cubedsphere2"; }
     std::string type() const override { return static_type(); }
