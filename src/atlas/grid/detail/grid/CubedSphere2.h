@@ -1,6 +1,7 @@
 #pragma once
 
 #include "atlas/grid/detail/grid/Grid.h"
+#include "atlas/projection/detail/CubedSphere2ProjectionBase.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Point.h"
@@ -10,6 +11,8 @@ namespace atlas {
 namespace grid {
 namespace detail {
 namespace grid {
+
+using atlas::projection::detail::CubedSphere2ProjectionBase;
 
 class CubedSphere2 : public Grid {
 private:
@@ -110,6 +113,7 @@ public:
     using Spec = atlas::util::Config;
 
     CubedSphere2(idx_t resolution);
+    CubedSphere2(idx_t resolution, Projection projection);
 
     std::string name() const override;
     std::string type() const override;
@@ -183,6 +187,7 @@ private:
         {{ {-1, 0, 0}, {0, -1, 0}, {0, 0, -1} }}
     }};
 
+    CubedSphere2ProjectionBase* cs2_projection_;  // store pointer to dynamic_cast for convenience
 };
 
 }  // namespace grid

@@ -12,6 +12,7 @@ public:
 public:
     CubedSphereGrid2(idx_t resolution);
     CubedSphereGrid2(const Grid& grid);
+    CubedSphereGrid2(idx_t resolution, Projection projection);
 
     bool valid() const { return grid_; };
     operator bool() const { return valid(); }

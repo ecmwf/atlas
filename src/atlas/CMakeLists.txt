@@ -94,6 +94,8 @@ projection/detail/CubedSphereEquiDistProjection.cc
 projection/detail/CubedSphereEquiDistProjection.h
 projection/detail/CubedSphereProjectionBase.cc
 projection/detail/CubedSphereProjectionBase.h
+projection/detail/CubedSphere2ProjectionBase.cc
+projection/detail/CubedSphere2ProjectionBase.h
 projection/detail/LambertAzimuthalEqualAreaProjection.cc
 projection/detail/LambertAzimuthalEqualAreaProjection.h
 projection/detail/LambertConformalConicProjection.cc

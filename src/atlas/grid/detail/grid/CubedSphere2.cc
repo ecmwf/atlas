@@ -6,6 +6,7 @@
 #include "atlas/grid/CubedSphereGrid2.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
 #include "atlas/grid/detail/grid/GridFactory.h"
+#include "atlas/projection/detail/CubedSphere2ProjectionBase.h"
 #include "atlas/runtime/Exception.h"
 #include "eckit/geometry/Sphere.h"
 #include "eckit/utils/Hash.h"
@@ -21,6 +22,25 @@ static eckit::Translator<std::string, int> to_int;
 // Public methods
 
 CubedSphere2::CubedSphere2(idx_t resolution) : N_(resolution) {}
+
+CubedSphere2::CubedSphere2(idx_t resolution, Projection projection) :
+    Grid(), N_(resolution) {
+
+    // Copy members
+    util::Config defaultProjConfig;
+    defaultProjConfig.set("type", "cubedsphere_equiangular");
+    projection_ = projection ? projection : Projection(defaultProjConfig);
+
+    // Domain
+    domain_ = GlobalDomain();
+
+    // using atlas::projection::detail::CubedSphere2ProjectionBase;
+    cs2_projection_ = dynamic_cast<CubedSphere2ProjectionBase*>(projection_.get());
+    if (not cs2_projection_) {
+        ATLAS_THROW_EXCEPTION("Provided projection " << projection_.type()
+                                                     << " is incompatible with the CubedSphere2 grid type");
+    }
+}
 
 std::string CubedSphere2::name() const {
     return "CS-LFR-" + std::to_string(N_) + "-2";
@@ -173,14 +193,10 @@ public:
             throw_AssertionFailed("Could not find \"N\" in configuration of cubed sphere grid 2", Here());
         }
 
-        return new CubedSphereGrid2::grid_t(N);
-
-        // TODO: requires CubedSphereGrid2 constructor with projection
-
-        // std::string name = "CS-LFR-" + std::to_string(N) + "-2";
-        // util::Config projconf;
-        // projconf.set("type", "cubedsphere2");
-        // projconf.set("tile.type", "cubedsphere2_lfric");
+        std::string name = "CS-LFR-" + std::to_string(N) + "-2";
+        util::Config projconf;
+        projconf.set("type", "cubedsphere2");
+        projconf.set("tile.type", "cubedsphere2_lfric");
 
         // // Shift projection by a longitude
         // if (config.has("ShiftLon")) {
@@ -207,7 +223,7 @@ public:
         //     }
         // }
 
-        // return new CubedSphereGrid2::grid_t(name, N, Projection(projconf));
+        return new CubedSphereGrid2::grid_t(N, Projection(projconf));
     }
 
     void force_link() {}
