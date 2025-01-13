@@ -28,7 +28,7 @@ CubedSphere2::CubedSphere2(idx_t resolution, Projection projection) :
 
     // Copy members
     util::Config defaultProjConfig;
-    defaultProjConfig.set("type", "cubedsphere_equiangular");
+    defaultProjConfig.set("type", "cubedsphere2");
     projection_ = projection ? projection : Projection(defaultProjConfig);
 
     // Domain
