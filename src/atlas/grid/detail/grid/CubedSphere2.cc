@@ -198,31 +198,6 @@ public:
         projconf.set("type", "cubedsphere2");
         projconf.set("tile.type", "cubedsphere2_lfric");
 
-        // // Shift projection by a longitude
-        // if (config.has("ShiftLon")) {
-        //     double shiftLon = 0.0;
-        //     config.get("ShiftLon", shiftLon);
-        //     projconf.set("ShiftLon", shiftLon);
-        // }
-
-        // // Apply a Schmidt transform
-        // if (config.has("DoSchmidt")) {
-        //     bool doSchmidt = false;
-        //     config.get("DoSchmidt", doSchmidt);
-        //     if (doSchmidt) {
-        //         double stretchFac;
-        //         double targetLon;
-        //         double targetLat;
-        //         config.get("StretchFac", stretchFac);
-        //         config.get("TargetLon", targetLon);
-        //         config.get("TargetLat", targetLat);
-        //         projconf.set("DoSchmidt", doSchmidt);
-        //         projconf.set("StretchFac", stretchFac);
-        //         projconf.set("TargetLon", targetLon);
-        //         projconf.set("TargetLat", targetLat);
-        //     }
-        // }
-
         return new CubedSphereGrid2::grid_t(N, Projection(projconf));
     }
 
