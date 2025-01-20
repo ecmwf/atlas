@@ -63,11 +63,7 @@ void CubedSphere2::xy(idx_t n, Point2& point) const {
     PointAlphaBeta ab = ij_to_curvilinear_coord(i, j);
     PointXY tangent_xy = curvilinear_to_tangent_coord(ab);
     PointXYZ xyz = tangent_to_xyz_coord(tangent_xy, t);
-
-    Vector xyz_v(3);
-    xyz_v << xyz[0], xyz[1], xyz[2];
-
-    eckit::geometry::Sphere::convertCartesianToSpherical(xyz_v.norm(), xyz, point);
+    eckit::geometry::Sphere::convertCartesianToSpherical(1., xyz, point);
 }
 
 // Get the xy for a given index
@@ -131,6 +127,7 @@ PointXYZ CubedSphere2::tangent_to_xyz_coord(PointXY& tan_coord, idx_t tile) cons
     tan_point << tan_coord[0], tan_coord[1], 1;
 
     xyz = lfric_rotations_[tile].transpose() * tan_point;
+    xyz.normalize();
 
     return {xyz(0), xyz(1), xyz(2)};
 }
