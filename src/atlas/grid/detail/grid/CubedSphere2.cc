@@ -120,7 +120,7 @@ PointXY CubedSphere2::curvilinear_to_tangent_coord(CubedSphere2::PointAlphaBeta&
 }
 
 // Transform a point on the tangent plane to a point on a cube
-PointXYZ CubedSphere2::tangent_to_xyz_coord(PointXY& tan_coord, idx_t tile) const {
+PointXYZ CubedSphere2::tangent_to_xyz_coord(const PointXY& tan_coord, idx_t tile) const {
     Vector tan_point(3);
     Vector xyz(3);
 

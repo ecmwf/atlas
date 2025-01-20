@@ -155,7 +155,7 @@ private:
 
     PointAlphaBeta ij_to_curvilinear_coord(idx_t i, idx_t j) const;
     PointXY curvilinear_to_tangent_coord(PointAlphaBeta& curvi_coord) const;
-    PointXYZ tangent_to_xyz_coord(PointXY& tan_coord, idx_t tile) const;
+    PointXYZ tangent_to_xyz_coord(const PointXY& tan_coord, idx_t tile) const;
 
 protected:
     // (N_ * N_) = number of cells on a tile
