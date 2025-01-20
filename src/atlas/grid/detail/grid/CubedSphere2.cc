@@ -113,7 +113,7 @@ CubedSphere2::CSIndices CubedSphere2::get_cs_indices(gidx_t n) const {
 // Get the curvilinear coordinate for a given ij index
 CubedSphere2::PointAlphaBeta CubedSphere2::ij_to_curvilinear_coord(idx_t i, idx_t j) const {
     const auto get_coord = [&](idx_t idx) {
-        return M_PI / 2 * (-0.5 + (0.5 + idx) / N());
+        return M_PI_2 * (-0.5 + (0.5 + static_cast<double>(idx)) / static_cast<double>(N()));
     };
     return {get_coord(i), get_coord(j)};
 }
