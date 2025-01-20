@@ -11,12 +11,13 @@ using Point2 = eckit::geometry::Point2;
 template <typename point2_derived>
 bool compare_2D_points(std::vector<point2_derived> a, std::vector<Point2> b, double tolerance = 1e-4) { 
     // Uses a tolerance as the values are stored more precisely than they are printed
+    ATLAS_ASSERT(a.size() == b.size());
     bool equal = true;
     for (int i = 0; i < b.size(); ++i) {
         for (int j = 0; j < 2; ++j) {
-            if (a.at(i)[j] != b.at(i)[j] and fabs(b.at(i)[j] - a.at(i)[j]) > tolerance) {
-                std::cout << "[" << i << ", " << j << "]\n\t" << a.at(i)[j] << " != " << b.at(i)[j]
-                          << "\n\tdiff = " << b.at(i)[j] - a.at(i)[j] << std::endl;
+            if (std::abs(b[i][j] - a[i][j]) > tolerance) {
+                std::cout << "[" << i << ", " << j << "]\n\t" << a[i][j] << " != " << b[i][j]
+                          << "\n\tdiff = " << b[i][j] - a[i][j] << std::endl;
                 equal = false;
             }
         }
