@@ -60,8 +60,7 @@ Grid::Spec CubedSphere2::spec() const {
 void CubedSphere2::xy(idx_t n, Point2& point) const {
     auto [t, i, j] = get_cs_indices(n);
 
-    PointAlphaBeta ab = ij_to_curvilinear_coord(i, j);
-    PointXY tangent_xy = curvilinear_to_tangent_coord(ab);
+    PointXY tangent_xy = ij_to_tangent_coord(i, j);
     PointXYZ xyz = tangent_to_xyz_coord(tangent_xy, t);
     eckit::geometry::Sphere::convertCartesianToSpherical(1., xyz, point);
 }
@@ -106,17 +105,12 @@ CubedSphere2::CSIndices CubedSphere2::get_cs_indices(gidx_t n) const {
     return {t, i, j};
 }
 
-// Get the curvilinear coordinate for a given ij index
-CubedSphere2::PointAlphaBeta CubedSphere2::ij_to_curvilinear_coord(idx_t i, idx_t j) const {
-    const auto get_coord = [&](idx_t idx) {
+// Get the point on the tangent plane for a given ij index
+PointXY CubedSphere2::ij_to_tangent_coord(idx_t i, idx_t j) const {
+    const auto get_curvilinear_coord = [&](idx_t idx) {
         return M_PI_2 * (-0.5 + (0.5 + static_cast<double>(idx)) / static_cast<double>(N()));
     };
-    return {get_coord(i), get_coord(j)};
-}
-
-// Get the point on the tangent plane for a given curvilinear coordinate
-PointXY CubedSphere2::curvilinear_to_tangent_coord(CubedSphere2::PointAlphaBeta& curvi_coord) const {
-    return {std::tan(curvi_coord[0]), std::tan(curvi_coord[1])};
+    return {std::tan(get_curvilinear_coord(i)), std::tan(get_curvilinear_coord(j))};
 }
 
 // Transform a point on the tangent plane to a point on a cube
