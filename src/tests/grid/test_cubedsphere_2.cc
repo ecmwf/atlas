@@ -34,6 +34,16 @@ CASE("cubed_sphere_instantiation") {
     EXPECT(grid.size() == n * n * 6);
 }
 
+CASE("constructor_with_grid") {
+    auto grid_og = Grid("O32");
+    // auto grid_cs = Grid("CS-LFR-4-2"); // The grid factory is implemented in the next PR
+    auto grid_cs = CubedSphereGrid2(4);
+    EXPECT( CubedSphereGrid2( grid_og ).valid() == false );
+    EXPECT( bool(CubedSphereGrid2( grid_og )) == false );
+    EXPECT( CubedSphereGrid2( grid_cs ).valid() == true );
+    EXPECT( bool(CubedSphereGrid2( grid_cs )) == true );
+}
+
 CASE("cubed_sphere_grid_kgo") {
     // Lonlat and XY are both currently lonlat positions
     std::vector<Point2> kgo_lonlat { // N = 2
