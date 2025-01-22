@@ -712,6 +712,8 @@ linalg/sparse/SparseMatrixMultiply.h
 linalg/sparse/SparseMatrixMultiply.tcc
 linalg/sparse/SparseMatrixMultiply_EckitLinalg.h
 linalg/sparse/SparseMatrixMultiply_EckitLinalg.cc
+linalg/sparse/SparseMatrixMultiply_HicSparse.h
+linalg/sparse/SparseMatrixMultiply_HicSparse.cc
 linalg/sparse/SparseMatrixMultiply_OpenMP.h
 linalg/sparse/SparseMatrixMultiply_OpenMP.cc
 linalg/sparse/SparseMatrixStorage.cc
@@ -1007,6 +1009,7 @@ ecbuild_add_library( TARGET atlas
     eckit_option
     atlas_io
     hic
+    hicsparse
     $<${atlas_HAVE_EIGEN}:Eigen3::Eigen>
     $<${atlas_HAVE_OMP_CXX}:OpenMP::OpenMP_CXX>
     $<${atlas_HAVE_GRIDTOOLS_STORAGE}:GridTools::gridtools>

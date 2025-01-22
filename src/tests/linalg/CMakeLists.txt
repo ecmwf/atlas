@@ -8,6 +8,16 @@
 
 if( atlas_HAVE_ATLAS_FUNCTIONSPACE )
 
+ecbuild_add_test( TARGET atlas_test_linalg_sparse_gpu
+    SOURCES test_linalg_sparse_gpu.cc
+    LIBS    atlas
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+    CONDITION HAVE_CUDA OR HAVE_HIP
+)
+if( TARGET atlas_test_linalg_sparse_gpu )
+  set_tests_properties( atlas_test_linalg_sparse_gpu PROPERTIES LABELS "gpu")
+endif()
+
 ecbuild_add_test( TARGET atlas_test_linalg_sparse
     SOURCES test_linalg_sparse.cc
     LIBS    atlas
