@@ -2,6 +2,7 @@
 
 #include <cmath>
 
+#include "eckit/geometry/Sphere.h"
 #include "eckit/utils/Hash.h"
 
 namespace atlas {
