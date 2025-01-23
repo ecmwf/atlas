@@ -2,7 +2,6 @@
 
 #include <cmath>
 
-#include "eckit/geometry/Sphere.h"
 #include "eckit/utils/Hash.h"
 
 namespace atlas {
@@ -115,15 +114,14 @@ PointXY CubedSphere2::ij_to_tangent_coord(idx_t i, idx_t j) const {
 
 // Transform a point on the tangent plane to a point on a cube
 PointXYZ CubedSphere2::tangent_to_xyz_coord(const PointXY& tan_coord, idx_t tile) const {
-    Vector tan_point(3);
-    Vector xyz(3);
+    PointXYZ xyz;
+    const Matrix& transform = lfric_rotations_transposed_[tile];
 
-    tan_point << tan_coord[0], tan_coord[1], 1;
+    xyz[0] = transform[0][0] * tan_coord[0] + transform[0][1] * tan_coord[1] + transform[0][2];
+    xyz[1] = transform[1][0] * tan_coord[0] + transform[1][1] * tan_coord[1] + transform[1][2];
+    xyz[2] = transform[2][0] * tan_coord[0] + transform[2][1] * tan_coord[1] + transform[2][2];
 
-    xyz = lfric_rotations_transposed_[tile] * tan_point;
-    xyz.normalize();
-
-    return {xyz(0), xyz(1), xyz(2)};
+    return PointXYZ::normalize(xyz);
 }
 
 }  // namespace grid
