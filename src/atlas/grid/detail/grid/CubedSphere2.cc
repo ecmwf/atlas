@@ -120,7 +120,7 @@ PointXYZ CubedSphere2::tangent_to_xyz_coord(const PointXY& tan_coord, idx_t tile
 
     tan_point << tan_coord[0], tan_coord[1], 1;
 
-    xyz = lfric_rotations_[tile].transpose() * tan_point;
+    xyz = lfric_rotations_transposed_[tile] * tan_point;
     xyz.normalize();
 
     return {xyz(0), xyz(1), xyz(2)};
