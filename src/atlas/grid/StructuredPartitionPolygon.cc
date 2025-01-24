@@ -282,7 +282,7 @@ void compute(const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vect
                     xmin = std::max(xmin, 0.5 * (compute_x(itop - 1, jtop) + compute_x(itop, jtop)));
                 }
                 else {
-                    ymax = 0.5 * (p[YY] + compute_y(jtop));
+                    ymax = 0.5 * (p[YY] + compute_y(jtop+1));
                 }
             }
 
