@@ -43,7 +43,7 @@ public:
     }
 
     void deallocate(eckit::linalg::SparseMatrix::Layout p, eckit::linalg::SparseMatrix::Shape) override {
-        std::cout << "do nothing" << std::endl;
+        /* do nothing */
     }
 
     bool inSharedMemory() const override { return false; }
