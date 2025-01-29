@@ -18,7 +18,7 @@
 #include <exception>
 #include <algorithm>
 
-#include "Trace.h"
+#include "pluto/trace.h"
 
 namespace pluto {
 
@@ -55,8 +55,8 @@ public:
         if (owned_.erase(key)) {
             ordered_keys_.erase(std::find(ordered_keys_.begin(), ordered_keys_.end(), key));
         }
-        if (TraceOptions::instance().enabled) {
-            *TraceOptions::instance().out << "unregistered " << name << std::endl;
+        if (trace_enabled()) {
+            trace() << "unregistered " << name << std::endl;
         }
     }
 
@@ -88,8 +88,8 @@ private:
         // No need to unregister as this is in program teardown
         for (auto it = ordered_keys_.rbegin(); it != ordered_keys_.rend(); ++it) {
             auto& key = *it;
-            if (TraceOptions::instance().enabled) {
-                *TraceOptions::instance().out << "~Registry() : Deleting owned " << key << std::endl;
+            if (trace_enabled()) {
+                trace() << "~Registry() : Deleting owned " << key << std::endl;
             }
             owned_.erase(key);
         }
@@ -103,8 +103,8 @@ private:
         if (not inserted) {
             throw std::runtime_error("Could not register "+std::string(name));
         }
-        if (TraceOptions::instance().enabled) {
-            *TraceOptions::instance().out << "registered " << name << std::endl;
+        if (trace_enabled()) {
+            trace() << "registered " << name << std::endl;
         }
         return mr;
     }

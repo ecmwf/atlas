@@ -83,6 +83,7 @@ int main(int argc, char* argv[]) {
   using value_type = double;
 
   TraceOptions::instance().enabled = TRACE();
+    pluto::set_trace(TRACE());
 
   std::size_t bytes = 1024*1024; // 1 Mb
   if( argc > 1 ) {
@@ -432,13 +433,13 @@ int main(int argc, char* argv[]) {
       float h2d{0};
       float d2h{0};
       htime += touch_host(h_input_1);
-      h2d   += run_timed([&]{prefetch_managed_device(h_input_1, n*sizeof(value_type));});
+      h2d   += run_timed([&]{prefetch_host_to_device(h_input_1, n*sizeof(value_type));});
       htime += touch_host(h_input_2);
-      h2d   += run_timed([&]{prefetch_managed_device(h_input_2, n*sizeof(value_type));});
+      h2d   += run_timed([&]{prefetch_host_to_device(h_input_2, n*sizeof(value_type));});
       h2d   += run_timed([&]{pluto::wait();});
       dtime += launch_benchmark(h_output, h_input_1, h_input_2, n);
       d2h   += run_timed([&]{
-        prefetch_managed_host(h_output, n*sizeof(value_type));
+        prefetch_device_to_host(h_output, n*sizeof(value_type));
         pluto::wait();
       });
       htime += touch_host(h_output);

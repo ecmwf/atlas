@@ -12,8 +12,8 @@
 #include <string_view>
 #include <memory>
 
-#include "pluto/memory_resource/memory_resource.h"
-#include "pluto/util/Trace.h"
+#include "pluto/memory_resource.h"
+#include "pluto/trace.h"
 
 namespace pluto {
 
@@ -48,9 +48,9 @@ protected:
  
     void do_deallocate(void* p, std::size_t bytes, std::size_t alignment) override;
  
-    void* do_allocate_async(std::size_t bytes, std::size_t alignment, const Stream& stream) override;
+    void* do_allocate_async(std::size_t bytes, std::size_t alignment, const stream&) override;
  
-    void do_deallocate_async(void* p, std::size_t bytes, std::size_t alignment, const Stream& stream) override;
+    void do_deallocate_async(void* p, std::size_t bytes, std::size_t alignment, const stream&) override;
 
     bool do_is_equal(const memory_resource& other) const noexcept override {
         return mr_->is_equal(other);

@@ -10,9 +10,9 @@
 
 #include "MemoryPoolResource.h"
 
-#include "GatorMemoryResource.h"
+#include "detail/GatorMemoryResource.h"
 #include "TraceMemoryResource.h"
-#include "pluto/util/Trace.h"
+#include "pluto/trace.h"
 
 #include <cstdlib>
 #include <cctype>
@@ -93,12 +93,12 @@ void* MemoryPoolResource::do_allocate(std::size_t bytes, std::size_t alignment) 
     return resource(bytes)->allocate(bytes, alignment);
 }
 
-void* MemoryPoolResource::do_allocate_async(std::size_t bytes, std::size_t alignment, const Stream& stream) {
+void* MemoryPoolResource::do_allocate_async(std::size_t bytes, std::size_t alignment, const stream& s) {
     std::lock_guard lock(mtx_);
     auto* mr       = resource(bytes);
     auto* async_mr = dynamic_cast<async_memory_resource*>(mr);
     if (async_mr) {
-        return async_mr->allocate_async(bytes, alignment, stream);
+        return async_mr->allocate_async(bytes, alignment, s);
     }
     else {
         return mr->allocate(bytes, alignment);
@@ -147,15 +147,15 @@ void callback_deallocate_async(void* stream) {
     stream_queue.pop();
 }
 
-void MemoryPoolResource::do_deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment, const Stream& stream) {
+void MemoryPoolResource::do_deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment, const stream& s) {
     // stream.wait();
         // Wait for stream to finish for safety.
         // We should not deallocate data when it may still be in use in the stream!
         // TODO: implement using
         //    __host__ ​cudaError_t cudaLaunchHostFunc ( cudaStream_t stream, cudaHostFn_t fn, void* userData )
-    auto& stream_queue = stream_callback_queue_[stream.value()];
+    auto& stream_queue = stream_callback_queue_[s.value()];
     stream_queue.emplace(AsyncAllocData{this,ptr,bytes,alignment});
-    HIC_CALL(hicLaunchHostFunc(stream.value<hicStream_t>(),callback_deallocate_async,stream.value()));
+    HIC_CALL(hicLaunchHostFunc(s.value<hicStream_t>(),callback_deallocate_async,s.value()));
 }
 
 
@@ -197,7 +197,7 @@ memory_resource* MemoryPoolResource::resource(std::size_t bytes) {
         GatorOptions options;
         options.initial_size = blocks_per_chunk*pool_block_size_;
         options.grow_size    = blocks_per_chunk*pool_block_size_;
-        if (TraceOptions::instance().enabled) {
+        if (trace_enabled()) {
             pools_[pool_index] =
                 std::make_unique<TraceMemoryResource>("gator["+bytes_to_string(pool_block_size_)+"]",
                 std::make_unique<GatorMemoryResource>(options, upstream_) );
@@ -236,6 +236,21 @@ std::size_t MemoryPoolResource::capacity() const {
         }
     }
     return _capacity;
+}
+
+void MemoryPoolResource::release() {
+    std::lock_guard lock(mtx_);
+#if PLUTO_DEBUGGING
+    for (int i=0; i<pool_block_sizes_.size(); ++i) {
+        if (pools_[i]) {
+            auto& gator = to_gator_resource(pools_[i].get())->gator();
+            // Cleanup empty gator when a larger gator exists
+            std::cout << " - Releasing memory_pool["<<i<<"] with block_size " << bytes_to_string(pool_block_sizes_[i]) << " and capacity " << bytes_to_string(gator.get_pool_capacity()) << std::endl;
+            pools_[i].reset();
+        }
+    }
+#endif
+    pools_.clear();
 }
 
 

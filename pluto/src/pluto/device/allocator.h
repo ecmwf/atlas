@@ -12,9 +12,9 @@
 
 #include "hic/hic.h"
 
-#include "pluto/memory_resource/memory_resource.h"
-#include "pluto/offload/wait.h"
-#include "pluto/offload/Stream.h"
+#include "pluto/memory_resource.h"
+#include "pluto/wait.h"
+#include "pluto/stream.h"
 
 namespace pluto::device {
 
@@ -38,9 +38,9 @@ class allocator : public pluto::allocator<T> {
 public:
     using value_type = T;
 
-    allocator(memory_resource* mr, const Stream& stream) :
+    allocator(memory_resource* mr, const stream& s) :
         pluto::allocator<T>::allocator(mr),
-        stream_(stream) {}
+        stream_(s) {}
 
     allocator() :
         allocator(get_default_resource(), get_current_stream()) {}
@@ -51,8 +51,8 @@ public:
     allocator(memory_resource* mr) :
         allocator(mr, get_current_stream()) {}
 
-    allocator(const Stream& stream) :
-        allocator(get_default_resource(), stream) {}
+    allocator(const stream& s) :
+        allocator(get_default_resource(), s) {}
 
     value_type* allocate(std::size_t size) {
         return pluto::allocator<T>::allocate_async(size, stream_);
@@ -82,7 +82,7 @@ public:
 #endif
     }
 private:
-    const Stream& stream_;
+    const stream& stream_;
 };
 
 // --------------------------------------------------------------------------------------------------------

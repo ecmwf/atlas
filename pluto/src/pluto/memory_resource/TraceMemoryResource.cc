@@ -14,7 +14,7 @@
 #include <sstream>
 #include <iomanip>
 
-#include "pluto/offload/Stream.h"
+#include "pluto/stream.h"
 
 namespace pluto {
 
@@ -46,8 +46,8 @@ int TraceMemoryResource::nest = 0;
 
 void* TraceMemoryResource::do_allocate(std::size_t bytes, std::size_t alignment) {
     nest++;
-    if (TraceOptions::instance().enabled) {
-        *TraceOptions::instance().out << std::string(4*nest,' ') << "[" << name_ << " (alloc)] { bytes:" << bytes_to_string(bytes) << ", alignment:" << alignment << " }" << std::endl;
+    if (trace_enabled()) {
+        trace() << std::string(4*nest,' ') << "[" << name_ << " (alloc)] { bytes:" << bytes_to_string(bytes) << ", alignment:" << alignment << " }" << std::endl;
     }
     auto ptr = mr_->allocate(bytes, alignment);
     nest--;
@@ -56,28 +56,28 @@ void* TraceMemoryResource::do_allocate(std::size_t bytes, std::size_t alignment)
 
 void TraceMemoryResource::do_deallocate(void* p, std::size_t bytes, std::size_t alignment) {
     nest++;
-    if (TraceOptions::instance().enabled) {
+    if (trace_enabled()) {
         if (bytes == std::numeric_limits<std::size_t>::max()) {
-            *TraceOptions::instance().out << std::string(4*nest,' ') << "[" << name_ << " (dealloc)] { pointer:" << p << " }" << std::endl;
+            trace() << std::string(4*nest,' ') << "[" << name_ << " (dealloc)] { pointer:" << p << " }" << std::endl;
         }
         else {
-            *TraceOptions::instance().out << std::string(4*nest,' ') << "[" << name_ << " (dealloc)] { pointer:" << p << ", bytes:" << bytes_to_string(bytes) << ", alignment:" << alignment << " }" << std::endl;
+            trace() << std::string(4*nest,' ') << "[" << name_ << " (dealloc)] { pointer:" << p << ", bytes:" << bytes_to_string(bytes) << ", alignment:" << alignment << " }" << std::endl;
         }
     }
     mr_->deallocate(p, bytes, alignment);
     nest--;
 }
 
-void* TraceMemoryResource::do_allocate_async(std::size_t bytes, std::size_t alignment, const Stream& stream) {
+void* TraceMemoryResource::do_allocate_async(std::size_t bytes, std::size_t alignment, const stream& s) {
     nest++;
     auto* async_mr = dynamic_cast<async_memory_resource*>(mr_);
 
-    if (TraceOptions::instance().enabled) {
-        *TraceOptions::instance().out << std::string(4*nest,' ') << "[" << name_ << " (alloc_async)] { bytes:" << bytes_to_string(bytes) << ", alignment:" << alignment << ", stream:" << stream.value() << " }" << std::endl;
+    if (trace_enabled()) {
+        trace() << std::string(4*nest,' ') << "[" << name_ << " (alloc_async)] { bytes:" << bytes_to_string(bytes) << ", alignment:" << alignment << ", stream:" << s.value() << " }" << std::endl;
     }
     void* ptr;
     if (async_mr) {
-        ptr = async_mr->allocate_async(bytes, alignment, stream);
+        ptr = async_mr->allocate_async(bytes, alignment, s);
     }
     else {
         ptr = mr_->allocate(bytes, alignment);
@@ -86,19 +86,19 @@ void* TraceMemoryResource::do_allocate_async(std::size_t bytes, std::size_t alig
     return  ptr;
 }
 
-void TraceMemoryResource::do_deallocate_async(void* p, std::size_t bytes, std::size_t alignment, const Stream& stream) {
+void TraceMemoryResource::do_deallocate_async(void* p, std::size_t bytes, std::size_t alignment, const stream& s) {
     nest++;
     auto* async_mr = dynamic_cast<async_memory_resource*>(mr_);
-    if (TraceOptions::instance().enabled) {
+    if (trace_enabled()) {
         if (bytes == std::numeric_limits<std::size_t>::max()) {
-            *TraceOptions::instance().out << std::string(4*nest,' ') << "[" << name_ << " (dealloc_async)] { pointer:" << p << ", stream:" << stream.value() << " }" << std::endl;
+            trace() << std::string(4*nest,' ') << "[" << name_ << " (dealloc_async)] { pointer:" << p << ", stream:" << s.value() << " }" << std::endl;
         }
         else {
-            *TraceOptions::instance().out << std::string(4*nest,' ') << "[" << name_ << " (dealloc_async)] { pointer:" << p << ", bytes:" << bytes_to_string(bytes) << ", alignment:" << alignment << ", stream:" << stream.value() << " }" << std::endl;
+            trace() << std::string(4*nest,' ') << "[" << name_ << " (dealloc_async)] { pointer:" << p << ", bytes:" << bytes_to_string(bytes) << ", alignment:" << alignment << ", stream:" << s.value() << " }" << std::endl;
         }
     }
     if (async_mr) {
-        async_mr->deallocate_async(p, bytes, alignment, stream);
+        async_mr->deallocate_async(p, bytes, alignment, s);
     }
     else {
         mr_->deallocate(p, bytes, alignment);

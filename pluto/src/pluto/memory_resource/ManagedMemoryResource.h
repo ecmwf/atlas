@@ -9,8 +9,8 @@
  */
 #pragma once
 
-#include "pluto/util/Alignment.h"
-#include "pluto/memory_resource/memory_resource.h"
+#include "pluto/alignment.h"
+#include "pluto/memory_resource.h"
 
 namespace pluto {
 

@@ -8,7 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "Scope.h"
+#include "scope.h"
 
 // --------------------------------------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@
 
 #include "pluto/host/MemoryResource.h"
 #include "pluto/device/MemoryResource.h"
-#include "pluto/offload/Stream.h"
+#include "pluto/stream.h"
 
 namespace pluto {
 
@@ -33,7 +33,7 @@ struct PlutoScope {
         device::set_default_resource(device_default_memory_resource_);
         set_current_stream(stream_);
     }
-    const Stream& stream_;
+    const stream& stream_;
     memory_resource* host_default_memory_resource_;
     memory_resource* device_default_memory_resource_;
 };

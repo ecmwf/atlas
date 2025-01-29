@@ -7,17 +7,27 @@
  * granted to it by virtue of its status as an intergovernmental organisation
  * nor does it submit to any jurisdiction.
  */
-#pragma once
+
+#include "wait.h"
+
+#include <iostream>
+
+#include "hic/hic.h"
+
+#include "pluto/pluto_config.h"
+#include "pluto/runtime.h"
+
+#define LOG PLUTO_DEBUGGING
 
 namespace pluto {
 
-// TODO! Currently not implemented
-struct Event {
-    int value{0};
-
-    void wait() {}
-};
-
-void wait(const Event&);
+void wait() {
+    if constexpr (LOG) {
+        std::cout << "               = hicDeviceSynchronize()" << std::endl;
+    }
+    if (devices()) {
+        HIC_CALL( hicDeviceSynchronize() );
+    }
+}
 
 }

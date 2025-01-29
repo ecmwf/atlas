@@ -9,11 +9,11 @@
  */
 #pragma once
 
-#include "pluto/memory_resource/memory_resource.h"
-#include "pluto/util/Alignment.h"
+#include "pluto/memory_resource.h"
+#include "pluto/alignment.h"
 
 namespace pluto {
-class Stream;
+class stream;
 
 // --------------------------------------------------------------------------------------------------------
 
@@ -32,8 +32,8 @@ public:
     void do_deallocate(void* ptr, std::size_t bytes, std::size_t alignment) override;
     bool do_is_equal(const memory_resource& other) const noexcept override;
 
-    void* do_allocate_async(std::size_t bytes, alignment_t, const Stream& stream) override;
-    void do_deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment, const Stream& stream) override;
+    void* do_allocate_async(std::size_t bytes, alignment_t, const stream&) override;
+    void do_deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment, const stream&) override;
 
 };
 

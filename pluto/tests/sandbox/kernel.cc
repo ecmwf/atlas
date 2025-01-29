@@ -11,7 +11,7 @@
 
 #include "kernel.h"
 
-#include "pluto/memory_resource/memory_resource.h"
+#include "pluto/memory_resource.h"
 #include "hic/hic.h"
 
 
@@ -292,7 +292,7 @@ void set_on_device(double* x, std::size_t size, double value) {
     // device_mr.clear();
 }
 
-void set_on_device(const pluto::Stream& stream, double* x, std::size_t size, double value) {
+void set_on_device(const pluto::stream& stream, double* x, std::size_t size, double value) {
     std::cout << "set_on_device async" << std::endl;
     launch_kernel(stream, size, [=] HIC_DEVICE(auto i) {
         x[i] = value;

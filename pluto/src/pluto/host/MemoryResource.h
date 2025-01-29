@@ -12,7 +12,7 @@
 #include <string_view>
 #include <cassert>
 
-#include "pluto/memory_resource/memory_resource.h"
+#include "pluto/memory_resource.h"
 
 namespace pluto::host {
 

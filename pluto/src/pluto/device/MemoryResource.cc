@@ -11,7 +11,7 @@
 #include "MemoryResource.h"
 
 #include "pluto/pluto_config.h"
-#include "pluto/memory_resource/memory_resource.h"
+#include "pluto/memory_resource.h"
 #include "pluto/memory_resource/DeviceMemoryResource.h"
 
 #define LOG PLUTO_DEBUGGING

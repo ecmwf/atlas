@@ -9,14 +9,14 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "PointerInfo.h"
+#include "pointer_info.h"
 
 #include <tuple> // std::ignore
 
 #include "hic/hic.h"
 
 #include "pluto/pluto_config.h"
-#include "pluto/util/Runtime.h"
+#include "pluto/runtime.h"
 
 
 #define LOG PLUTO_DEBUGGING

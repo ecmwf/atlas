@@ -13,7 +13,7 @@
 #include <vector>
 #include <mutex>
 
-#include "pluto/memory_resource/memory_resource.h"
+#include "pluto/memory_resource.h"
 
 namespace pluto {
 
@@ -44,10 +44,11 @@ public:
 		MemoryPoolResource(get_default_pool_options(), get_default_resource()) {
 	}
 
-	void release() override {
-		std::lock_guard lock(mtx_);
-		pools_.clear();
+	virtual ~MemoryPoolResource() {
+		release();
 	}
+
+	void release() override;
 
 	std::size_t size() const override;
 
@@ -66,8 +67,8 @@ public:
 protected:
     void* do_allocate(std::size_t bytes, std::size_t alignment) override;
     void do_deallocate(void* ptr, std::size_t bytes, std::size_t alignment) override;
-    void* do_allocate_async(std::size_t bytes, std::size_t alignment, const Stream& stream) override;
-    void do_deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment, const Stream& stream) override;
+    void* do_allocate_async(std::size_t bytes, std::size_t alignment, const stream&) override;
+    void do_deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment, const stream&) override;
     bool do_is_equal(const memory_resource& other) const noexcept override;
     friend void callback_deallocate_async(void* stream);
 
