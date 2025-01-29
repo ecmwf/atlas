@@ -9,21 +9,20 @@
  */
 #pragma once
 
-#include <memory>
 #include <functional>
+#include <memory>
 
 
 namespace pluto {
 
 class stream {
     using stream_t = void*;
+
 public:
     explicit stream(stream_t);
     stream();
 
-    [[nodiscard]] stream_t value() const {
-        return *stream_;
-    }
+    [[nodiscard]] stream_t value() const { return *stream_; }
 
     template <typename deviceStream_t>
     [[nodiscard]] deviceStream_t value() const {
@@ -31,6 +30,7 @@ public:
     }
 
     void wait() const;
+
 private:
     std::unique_ptr<stream_t, std::function<void(stream_t*)>> stream_;
 };
@@ -46,17 +46,12 @@ void wait(const stream&);
 
 class [[nodiscard]] current_stream {
 public:
+    current_stream(const stream& s): saved_(get_current_stream()) { set_current_stream(s); }
 
-    current_stream(const stream& s) :
-        saved_(get_current_stream()) {
-        set_current_stream(s);
-    }
+    ~current_stream() { set_current_stream(saved_); }
 
-    ~current_stream() {
-        set_current_stream(saved_);
-    }
 private:
-   const stream& saved_;
+    const stream& saved_;
 };
 
-}
+}  // namespace pluto

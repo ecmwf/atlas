@@ -25,21 +25,16 @@ void set_default_resource(std::string_view name);
 
 class scoped_default_resource {
 public:
-
     scoped_default_resource(std::string_view name);
 
-    scoped_default_resource(memory_resource* mr) :
-        saved_(get_default_resource()) {
-        device::set_default_resource(mr);
-    }
+    scoped_default_resource(memory_resource* mr): saved_(get_default_resource()) { device::set_default_resource(mr); }
 
-    ~scoped_default_resource() {
-        device::set_default_resource(saved_);
-    }
+    ~scoped_default_resource() { device::set_default_resource(saved_); }
+
 private:
     memory_resource* saved_;
 };
 
 // --------------------------------------------------------------------------------------------------------
 
-}
+}  // namespace pluto::device

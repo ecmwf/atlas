@@ -19,9 +19,9 @@ namespace pluto {
 
 class PinnedMemoryResource : public memory_resource {
 public:
-    PinnedMemoryResource() : PinnedMemoryResource(new_delete_resource()) {}
-    PinnedMemoryResource(memory_resource* upstream) : upstream_(upstream) {}
-    PinnedMemoryResource(std::string_view name) : PinnedMemoryResource(get_registered_resource(name)) {}
+    PinnedMemoryResource(): PinnedMemoryResource(new_delete_resource()) {}
+    PinnedMemoryResource(memory_resource* upstream): upstream_(upstream) {}
+    PinnedMemoryResource(std::string_view name): PinnedMemoryResource(get_registered_resource(name)) {}
 
     void pin(void* ptr, std::size_t bytes);
     void unpin(void* ptr, std::size_t bytes);
@@ -29,7 +29,7 @@ public:
     void* do_allocate(std::size_t bytes, std::size_t alignment) override;
 
     void do_deallocate(void* ptr, std::size_t bytes, std::size_t alignment) override;
- 
+
     bool do_is_equal(const memory_resource& other) const noexcept override;
 
 private:
@@ -41,4 +41,4 @@ memory_pool_resource* pinned_pool_resource();
 
 // --------------------------------------------------------------------------------------------------------
 
-}
+}  // namespace pluto

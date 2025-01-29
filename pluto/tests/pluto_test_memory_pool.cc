@@ -9,38 +9,36 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include <iostream>
 #include <cstddef>
+#include <iostream>
 #include <string>
 #include <string_view>
 
 #include "pluto/pluto.h"
 
 [[maybe_unused]] constexpr std::size_t kb = 1024;
-[[maybe_unused]] constexpr std::size_t mb = 1024*kb;
-[[maybe_unused]] constexpr std::size_t gb = 1024*mb;
+[[maybe_unused]] constexpr std::size_t mb = 1024 * kb;
+[[maybe_unused]] constexpr std::size_t gb = 1024 * mb;
 
 class vector {
 public:
-vector(std::string_view name, std::size_t n, const pluto::allocator<std::byte>& alloc) :
-    name_(name),
-    size_{n},
-    alloc_{alloc} {
-    if (size_) {
-        std::cout << "  allocate " << name_ << " : " << size_ << " bytes" << std::endl;
-        data_ = alloc_.allocate(size_);
+    vector(std::string_view name, std::size_t n, const pluto::allocator<std::byte>& alloc):
+        name_(name), size_{n}, alloc_{alloc} {
+        if (size_) {
+            std::cout << "  allocate " << name_ << " : " << size_ << " bytes" << std::endl;
+            data_ = alloc_.allocate(size_);
+        }
     }
-}
-~vector() {
-    if(size_) {
-        std::cout << "  deallocate " << name_ << " : " << size_ << " bytes" << std::endl;
-        alloc_.deallocate(data_,size_);
+    ~vector() {
+        if (size_) {
+            std::cout << "  deallocate " << name_ << " : " << size_ << " bytes" << std::endl;
+            alloc_.deallocate(data_, size_);
+        }
     }
-}
-std::byte* data_ = nullptr;
-std::size_t size_ = 0;
-pluto::allocator<std::byte> alloc_;
-std::string name_;
+    std::byte* data_  = nullptr;
+    std::size_t size_ = 0;
+    pluto::allocator<std::byte> alloc_;
+    std::string name_;
 };
 
 
@@ -54,10 +52,10 @@ int main(int argc, char* argv[]) {
 
     pluto::allocator<std::byte> allocator(pluto::pool_resource());
 
-    for( int iter=0; iter<2; ++iter) {
-        vector array1("array1", 200*mb, allocator);
-        vector array2("array2", 200*mb, allocator);
-        vector array3("array3", 1.2*gb, allocator);
+    for (int iter = 0; iter < 2; ++iter) {
+        vector array1("array1", 200 * mb, allocator);
+        vector array2("array2", 200 * mb, allocator);
+        vector array3("array3", 1.2 * gb, allocator);
     }
 
 

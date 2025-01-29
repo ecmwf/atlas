@@ -21,4 +21,4 @@ void prefetch_host_to_device(const void* managed_ptr, std::size_t bytes, const s
 void prefetch_device_to_host(const void* managed_ptr, std::size_t bytes);
 void prefetch_device_to_host(const void* managed_ptr, std::size_t bytes, const stream&);
 
-}
+}  // namespace pluto

@@ -24,5 +24,4 @@ T* get_registered_device_pointer(const T* host_ptr) {
     return static_cast<T*>(get_registered_device_pointer(static_cast<const void*>(host_ptr)));
 }
 
-}
-
+}  // namespace pluto

@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 
 namespace pluto {
 
@@ -43,9 +43,8 @@ constexpr std::size_t default_alignment() {
  *
  * @return the aligned value
  */
-[[nodiscard]] constexpr std::size_t align_up(std::size_t value, std::size_t alignment) noexcept
-{
-  return (value + (alignment - 1)) & ~(alignment - 1);
+[[nodiscard]] constexpr std::size_t align_up(std::size_t value, std::size_t alignment) noexcept {
+    return (value + (alignment - 1)) & ~(alignment - 1);
 }
 
 /**
@@ -57,7 +56,7 @@ constexpr std::size_t default_alignment() {
  * @return the aligned value
  */
 [[nodiscard]] constexpr std::size_t align_down(std::size_t value, std::size_t alignment) noexcept {
-  return value & ~(alignment - 1);
+    return value & ~(alignment - 1);
 }
 
 /**
@@ -69,7 +68,7 @@ constexpr std::size_t default_alignment() {
  * @return true if aligned
  */
 [[nodiscard]] constexpr bool is_aligned(std::size_t value, std::size_t alignment) noexcept {
-  return value == align_down(value, alignment);
+    return value == align_down(value, alignment);
 }
 
 /**
@@ -81,9 +80,9 @@ constexpr std::size_t default_alignment() {
  * @return true if the pointer is aligned
  */
 [[nodiscard]] inline bool is_aligned(void* ptr, std::size_t alignment) noexcept {
-  return is_aligned(reinterpret_cast<std::uintptr_t>(ptr), alignment);
+    return is_aligned(reinterpret_cast<std::uintptr_t>(ptr), alignment);
 }
 
 // --------------------------------------------------------------------------------------------------------
 
-}
+}  // namespace pluto

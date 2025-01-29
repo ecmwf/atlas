@@ -10,8 +10,8 @@
 
 #include "stream.h"
 
-#include "pluto/pluto_config.h"
 #include "hic/hic.h"
+#include "pluto/pluto_config.h"
 #include "pluto/trace.h"
 
 #define LOG PLUTO_DEBUGGING
@@ -19,57 +19,43 @@
 namespace pluto {
 
 #if PLUTO_HAVE_HIC
-stream::stream(stream_t s)
-    : stream_ {
-        &s,
-        [](stream_t*) {
-            // wrapping, no delete
-        }
-    } {
-}
+stream::stream(stream_t s):
+    stream_{&s, [](stream_t*) {
+                // wrapping, no delete
+            }} {}
 
-stream::stream()
-    :stream_{
-        []() {
-            hicStream_t* s = new hicStream_t;
-            HIC_CALL(hicStreamCreate(s));
-            return reinterpret_cast<stream_t*>(s);
-        }(),
-        [](stream_t* s) {
-            HIC_CALL(hicStreamDestroy(*reinterpret_cast<hicStream_t*>(s)));
-            delete s;
-        }
-    } {
-}
+stream::stream():
+    stream_{[]() {
+                hicStream_t* s = new hicStream_t;
+                HIC_CALL(hicStreamCreate(s));
+                return reinterpret_cast<stream_t*>(s);
+            }(),
+            [](stream_t* s) {
+                HIC_CALL(hicStreamDestroy(*reinterpret_cast<hicStream_t*>(s)));
+                delete s;
+            }} {}
 
 void stream::wait() const {
-    if constexpr(LOG) {
-        std::cout << "               = hicStreamSynchronize(stream:"<<value()<<")" << std::endl;
+    if constexpr (LOG) {
+        std::cout << "               = hicStreamSynchronize(stream:" << value() << ")" << std::endl;
     }
     HIC_CALL(hicStreamSynchronize(value<hicStream_t>()));
 }
 
 #else
-stream::stream(stream_t stream)
-    : stream_ {
-        &stream,
-        [](stream_t* stream) {
-            // wrapping, no delete
-        }
-    } {
-}
+stream::stream(stream_t stream):
+    stream_{&stream, [](stream_t* stream) {
+                // wrapping, no delete
+            }} {}
 
-stream::stream()
-    :stream_{
-        []() {
-            static int s = 0;
-            return reinterpret_cast<stream_t*>(&s);
-        }(),
-        [](stream_t*) {
-            // No deletion of wrapped static variable
-        }
-    } {
-}
+stream::stream():
+    stream_{[]() {
+                static int s = 0;
+                return reinterpret_cast<stream_t*>(&s);
+            }(),
+            [](stream_t*) {
+                // No deletion of wrapped static variable
+            }} {}
 
 void stream::wait() const {
     // Nothing
@@ -96,4 +82,4 @@ void wait(const stream& s) {
     s.wait();
 }
 
-}
+}  // namespace pluto

@@ -21,30 +21,30 @@ namespace pluto::device {
 template <class Alloc>
 class Deleter {
 private:
-    Alloc alloc_; 
+    Alloc alloc_;
+
 public:
     using value_type = typename Alloc::value_type;
- 
+
     Deleter() = default;
-    Deleter(const Alloc& alloc) : alloc_(alloc) {}
+    Deleter(const Alloc& alloc): alloc_(alloc) {}
     void operator()(value_type* p) {
         alloc_.destroy(p);
         alloc_.deallocate(p, 1);
     }
 };
 
-template<typename T>
-using unique_ptr = std::unique_ptr<T,Deleter<allocator<T>>>;
+template <typename T>
+using unique_ptr = std::unique_ptr<T, Deleter<allocator<T>>>;
 
 template <class T, class... Args>
 unique_ptr<T> make_unique(Args&&... args) {
     allocator<T> alloc;
     T* p = alloc.allocate(1);
-    alloc.construct(p,std::forward<Args>(args)...);
+    alloc.construct(p, std::forward<Args>(args)...);
     return unique_ptr<T>(p, Deleter(alloc));
 }
 
 // --------------------------------------------------------------------------------------------------------
 
-}
-
+}  // namespace pluto::device

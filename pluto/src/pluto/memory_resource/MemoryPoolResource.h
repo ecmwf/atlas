@@ -10,8 +10,8 @@
 #pragma once
 
 #include <memory>
-#include <vector>
 #include <mutex>
+#include <vector>
 
 #include "pluto/memory_resource.h"
 
@@ -22,47 +22,29 @@ void set_default_pool_options(pool_options);
 
 class MemoryPoolResource : public memory_pool_resource {
 public:
-	MemoryPoolResource(const pool_options& options, memory_resource* upstream) :
-		options_(options),
-		upstream_(upstream) {
-	}
-	MemoryPoolResource(const pool_options& options, std::unique_ptr<memory_resource>&& upstream) :
-		options_(options),
-		owned_upstream_(std::move(upstream)),
-		upstream_(owned_upstream_.get()) {
-	}
-	MemoryPoolResource(memory_resource* upstream) :
-		MemoryPoolResource(get_default_pool_options(),upstream) {
-	}
-	MemoryPoolResource(std::unique_ptr<memory_resource>&& upstream) :
-		MemoryPoolResource(get_default_pool_options(), std::move(upstream)) {
-	}
-	MemoryPoolResource(const pool_options& options) :
-		MemoryPoolResource(options, get_default_resource()) {
-	}
-	MemoryPoolResource() :
-		MemoryPoolResource(get_default_pool_options(), get_default_resource()) {
-	}
+    MemoryPoolResource(const pool_options& options, memory_resource* upstream):
+        options_(options), upstream_(upstream) {}
+    MemoryPoolResource(const pool_options& options, std::unique_ptr<memory_resource>&& upstream):
+        options_(options), owned_upstream_(std::move(upstream)), upstream_(owned_upstream_.get()) {}
+    MemoryPoolResource(memory_resource* upstream): MemoryPoolResource(get_default_pool_options(), upstream) {}
+    MemoryPoolResource(std::unique_ptr<memory_resource>&& upstream):
+        MemoryPoolResource(get_default_pool_options(), std::move(upstream)) {}
+    MemoryPoolResource(const pool_options& options): MemoryPoolResource(options, get_default_resource()) {}
+    MemoryPoolResource(): MemoryPoolResource(get_default_pool_options(), get_default_resource()) {}
 
-	virtual ~MemoryPoolResource() {
-		release();
-	}
+    virtual ~MemoryPoolResource() { release(); }
 
-	void release() override;
+    void release() override;
 
-	std::size_t size() const override;
+    std::size_t size() const override;
 
-	std::size_t capacity() const override;
+    std::size_t capacity() const override;
 
-	void reserve(std::size_t bytes) override;
+    void reserve(std::size_t bytes) override;
 
-	memory_resource* upstream_resource() const override {
-		return upstream_;
-	}
+    memory_resource* upstream_resource() const override { return upstream_; }
 
-	pool_options options() const override {
-		return options_;
-	}
+    pool_options options() const override { return options_; }
 
 protected:
     void* do_allocate(std::size_t bytes, std::size_t alignment) override;
@@ -72,18 +54,18 @@ protected:
     bool do_is_equal(const memory_resource& other) const noexcept override;
     friend void callback_deallocate_async(void* stream);
 
-	// A suitable pool or upstream resource to allocate given bytes
-	memory_resource* resource(std::size_t bytes);
+    // A suitable pool or upstream resource to allocate given bytes
+    memory_resource* resource(std::size_t bytes);
 
 private:
-	pool_options options_;
-	std::unique_ptr<memory_resource> owned_upstream_;
-	memory_resource* upstream_;
-	std::vector<std::unique_ptr<memory_resource>> pools_;
-	std::vector<std::size_t> pool_block_sizes_;
-	memory_resource* pool_;
-	std::size_t pool_block_size_;
-	mutable std::mutex mtx_;
+    pool_options options_;
+    std::unique_ptr<memory_resource> owned_upstream_;
+    memory_resource* upstream_;
+    std::vector<std::unique_ptr<memory_resource>> pools_;
+    std::vector<std::size_t> pool_block_sizes_;
+    memory_resource* pool_;
+    std::size_t pool_block_size_;
+    mutable std::mutex mtx_;
 };
 
-}
+}  // namespace pluto

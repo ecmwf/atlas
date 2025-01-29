@@ -18,13 +18,12 @@ namespace pluto {
 
 class ManagedMemoryResource : public memory_resource {
 public:
-    using alignment_t = std::size_t;
+    using alignment_t                      = std::size_t;
     static constexpr alignment_t alignment = default_alignment();
 
     ManagedMemoryResource() = default;
 
 protected:
-
     void* do_allocate(std::size_t bytes, alignment_t) override;
     void do_deallocate(void* ptr, std::size_t bytes, alignment_t) override;
     bool do_is_equal(const memory_resource& other) const noexcept override;
@@ -35,4 +34,4 @@ memory_pool_resource* managed_pool_resource();
 
 // --------------------------------------------------------------------------------------------------------
 
-}
+}  // namespace pluto

@@ -13,54 +13,44 @@
 #include "hic/hic.h"
 
 #include "pluto/memory_resource.h"
-#include "pluto/wait.h"
 #include "pluto/stream.h"
+#include "pluto/wait.h"
 
 namespace pluto::device {
 
 // --------------------------------------------------------------------------------------------------------
 
 
-    template <class U, class... Args>
-    HIC_GLOBAL void new_on_device(U* p, Args... args) {
-        // printf("new_on_device %f\n",args...);
-        new (p) U(args...);
-    }
+template <class U, class... Args>
+HIC_GLOBAL void new_on_device(U* p, Args... args) {
+    // printf("new_on_device %f\n",args...);
+    new (p) U(args...);
+}
 
 
-    template <class U>
-    HIC_GLOBAL void delete_on_device(U* p) {
-        p->~U();
-    }
+template <class U>
+HIC_GLOBAL void delete_on_device(U* p) {
+    p->~U();
+}
 
-template<typename T>
+template <typename T>
 class allocator : public pluto::allocator<T> {
 public:
     using value_type = T;
 
-    allocator(memory_resource* mr, const stream& s) :
-        pluto::allocator<T>::allocator(mr),
-        stream_(s) {}
+    allocator(memory_resource* mr, const stream& s): pluto::allocator<T>::allocator(mr), stream_(s) {}
 
-    allocator() :
-        allocator(get_default_resource(), get_current_stream()) {}
-    
-    allocator(const allocator& other) :
-        allocator(other.resource(), other.stream_) {}
+    allocator(): allocator(get_default_resource(), get_current_stream()) {}
 
-    allocator(memory_resource* mr) :
-        allocator(mr, get_current_stream()) {}
+    allocator(const allocator& other): allocator(other.resource(), other.stream_) {}
 
-    allocator(const stream& s) :
-        allocator(get_default_resource(), s) {}
+    allocator(memory_resource* mr): allocator(mr, get_current_stream()) {}
 
-    value_type* allocate(std::size_t size) {
-        return pluto::allocator<T>::allocate_async(size, stream_);
-    }
+    allocator(const stream& s): allocator(get_default_resource(), s) {}
 
-    void deallocate(value_type* ptr, std::size_t size) {
-        pluto::allocator<T>::deallocate_async(ptr, size, stream_);
-    }
+    value_type* allocate(std::size_t size) { return pluto::allocator<T>::allocate_async(size, stream_); }
+
+    void deallocate(value_type* ptr, std::size_t size) { pluto::allocator<T>::deallocate_async(ptr, size, stream_); }
 
     template <class U, class... Args>
     void construct(U* p, Args&&... args) {
@@ -81,11 +71,11 @@ public:
         delete_on_device(p);
 #endif
     }
+
 private:
     const stream& stream_;
 };
 
 // --------------------------------------------------------------------------------------------------------
 
-}
-
+}  // namespace pluto::device

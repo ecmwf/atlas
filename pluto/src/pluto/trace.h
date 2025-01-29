@@ -9,8 +9,8 @@
  */
 #pragma once
 
-#include <iostream>
 #include <cstdlib>
+#include <iostream>
 
 namespace pluto {
 struct TraceOptions {
@@ -20,11 +20,12 @@ struct TraceOptions {
     }
     bool enabled{false};
     std::ostream* out{&std::cout};
+
 private:
     TraceOptions() {
-        char* val;                                                                        
-        val = std::getenv( "PLUTO_TRACE" );
-        if (val != NULL) {                                                                 
+        char* val;
+        val = std::getenv("PLUTO_TRACE");
+        if (val != NULL) {
             enabled = std::atoi(val);
         }
     }
@@ -42,4 +43,4 @@ inline void set_trace(bool value) {
     TraceOptions::instance().enabled = value;
 }
 
-}
+}  // namespace pluto

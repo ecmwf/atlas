@@ -17,20 +17,20 @@
 
 namespace pluto::device {
 
-template <class T> 
+template <class T>
 auto make_copy(const T* host) {
     allocator<T> alloc;
     T* p = alloc.allocate(1);
     copy_host_to_device(p, host);
     return unique_ptr<T>(p, alloc);
 }
-template <class T, class D> 
-auto make_copy(const std::unique_ptr<T,D>& host) {
+template <class T, class D>
+auto make_copy(const std::unique_ptr<T, D>& host) {
     return make_copy(host.get());
 }
-template <class T> 
+template <class T>
 auto make_copy(const T& host) {
     return make_copy(&host);
 }
 
-}
+}  // namespace pluto::device

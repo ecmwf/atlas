@@ -20,4 +20,4 @@ struct event {
 
 void wait(const event&);
 
-}
+}  // namespace pluto
