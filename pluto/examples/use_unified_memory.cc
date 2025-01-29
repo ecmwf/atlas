@@ -8,36 +8,37 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include <iostream>
 #include <algorithm>
-#include <vector>
 #include <chrono>
+#include <iostream>
 #include <string_view>
+#include <vector>
 
-#include "pluto/pluto.h"
 #include "hic/hic.h"
+#include "pluto/pluto.h"
 
 // ---------------------------------------------------------------------------------------------------
 // Kernel to add +1 to device array. This could be in a separate CUDA/HIP source file
 
-template<typename T>
+template <typename T>
 void plus_one_on_host(T* d, int n) {
-  std::cout << "               ~ plus_one_on_host" << std::endl;
-  for(int i=0; i<n; ++i) { d[i] += 1.; }
-}
-
-#if PLUTO_HAVE_HIC
-template<typename T>
-HIC_GLOBAL
-void kernel_plus_one_on_device(T* d, int n) {
-    const int idx{int(blockDim.x) * int(blockIdx.x) + int(threadIdx.x)};
-    const int stride{int(blockDim.x) * int(gridDim.x)};
-    for (int i{idx}; i < n; i += stride) {
-      d[i] += 1.;
+    std::cout << "               ~ plus_one_on_host" << std::endl;
+    for (int i = 0; i < n; ++i) {
+        d[i] += 1.;
     }
 }
 
-template<typename T>
+#if PLUTO_HAVE_HIC
+template <typename T>
+HIC_GLOBAL void kernel_plus_one_on_device(T* d, int n) {
+    const int idx{int(blockDim.x) * int(blockIdx.x) + int(threadIdx.x)};
+    const int stride{int(blockDim.x) * int(gridDim.x)};
+    for (int i{idx}; i < n; i += stride) {
+        d[i] += 1.;
+    }
+}
+
+template <typename T>
 void plus_one_on_device(T* d, int n) {
     std::cout << "               ~ plus_one_on_device" << std::endl;
     const int threads_per_block{1024};
@@ -47,29 +48,28 @@ void plus_one_on_device(T* d, int n) {
     // HIC_CHECK_KERNEL_LAUNCH();
 }
 #else
-template<typename T>
+template <typename T>
 void plus_one_on_device(T* d, int n) {
-  plus_one_on_host(d, n);
+    plus_one_on_host(d, n);
 }
 #endif
 
 // ---------------------------------------------------------------------------------------------------
 
-template<typename T>
+template <typename T>
 void print_array(std::string_view symbol, T* d, int n) {
     std::cout << '\n' << symbol << "[0..size] = ";
-    for (std::size_t i=0; i<5; ++i) {
-      std::cout << d[i] << " ";
+    for (std::size_t i = 0; i < 5; ++i) {
+        std::cout << d[i] << " ";
     }
     std::cout << "... ";
-    for (std::size_t i=n-2; i<n; ++i) {
-      std::cout << d[i] << " ";
+    for (std::size_t i = n - 2; i < n; ++i) {
+        std::cout << d[i] << " ";
     }
     std::cout << '\n' << std::endl;
 }
 
 void print_info(const void* ptr, bool debug = false) {
-
     std::cout << "Pointer introspection [" << ptr << "]" << std::endl;
     std::cout << "  pluto::is_managed:           " << pluto::is_managed(ptr) << std::endl;
     std::cout << "  pluto::is_host:              " << pluto::is_host(ptr) << std::endl;
@@ -79,63 +79,62 @@ void print_info(const void* ptr, bool debug = false) {
     std::cout << "  pluto::is_host_accessible:   " << pluto::is_host_accessible(ptr) << std::endl;
 
     if (debug) {
-
 #if HIC_BACKEND_HIP && HIP_VERSION_MAJOR < 6
-    {
-      // Debugging HIP backend pointer attributes because it did not map one-to-one with CUDA
-      hipPointerAttribute_t attr_;
-      auto err = hipPointerGetAttributes(&attr_, ptr);
-      if( err != hipSuccess ) {
-        std::cout << "Warning: could not access hipPointerGetAttributes" << std::endl;
-        return;
-      }
+        {
+            // Debugging HIP backend pointer attributes because it did not map one-to-one with CUDA
+            hipPointerAttribute_t attr_;
+            auto err = hipPointerGetAttributes(&attr_, ptr);
+            if (err != hipSuccess) {
+                std::cout << "Warning: could not access hipPointerGetAttributes" << std::endl;
+                return;
+            }
 
-      std::cout << "\nhipPointerAttribute_t: " << std::endl;
-      std::cout << "  memoryType:    " << attr_.memoryType << std::endl;
-      std::cout << "  device:        " << attr_.device << std::endl;
-      std::cout << "  devicePointer: " << attr_.devicePointer << std::endl;
-      std::cout << "  hostPointer:   " << attr_.hostPointer << std::endl;
-      std::cout << "  isManaged:     " << attr_.isManaged << std::endl;
+            std::cout << "\nhipPointerAttribute_t: " << std::endl;
+            std::cout << "  memoryType:    " << attr_.memoryType << std::endl;
+            std::cout << "  device:        " << attr_.device << std::endl;
+            std::cout << "  devicePointer: " << attr_.devicePointer << std::endl;
+            std::cout << "  hostPointer:   " << attr_.hostPointer << std::endl;
+            std::cout << "  isManaged:     " << attr_.isManaged << std::endl;
 
-      std::cout<< "Legend(hipMemoryType):" << std::endl;
-      std::cout << "   hipMemoryTypeHost:    " << hipMemoryTypeHost << std::endl;
-      std::cout << "   hipMemoryTypeDevice:  " << hipMemoryTypeDevice << std::endl;
-      std::cout << "   hipMemoryTypeUnified: " << hipMemoryTypeUnified << std::endl;
-    }
+            std::cout << "Legend(hipMemoryType):" << std::endl;
+            std::cout << "   hipMemoryTypeHost:    " << hipMemoryTypeHost << std::endl;
+            std::cout << "   hipMemoryTypeDevice:  " << hipMemoryTypeDevice << std::endl;
+            std::cout << "   hipMemoryTypeUnified: " << hipMemoryTypeUnified << std::endl;
+        }
 #endif
 
 #if PLUTO_HAVE_HIC
-    {
-      // Debugging HIC
-      hicPointerAttributes attr_;
-      auto err = hicPointerGetAttributes(&attr_, ptr);
-      if( err != hicSuccess ) {
-        std::cout << "Warning: could not access hicPointerGetAttributes" << std::endl;
-        return;
-      }
+        {
+            // Debugging HIC
+            hicPointerAttributes attr_;
+            auto err = hicPointerGetAttributes(&attr_, ptr);
+            if (err != hicSuccess) {
+                std::cout << "Warning: could not access hicPointerGetAttributes" << std::endl;
+                return;
+            }
 
-      std::cout << "\nhicPointerAttributes: " << std::endl;
-      std::cout << "  type:          " << attr_.type << std::endl;
-      std::cout << "  device:        " << attr_.device << std::endl;
-      std::cout << "  devicePointer: " << attr_.devicePointer << std::endl;
-      std::cout << "  hostPointer:   " << attr_.hostPointer << std::endl;
+            std::cout << "\nhicPointerAttributes: " << std::endl;
+            std::cout << "  type:          " << attr_.type << std::endl;
+            std::cout << "  device:        " << attr_.device << std::endl;
+            std::cout << "  devicePointer: " << attr_.devicePointer << std::endl;
+            std::cout << "  hostPointer:   " << attr_.hostPointer << std::endl;
 
-      std::cout<< "Legend(hicMemoryType):" << std::endl;
-      std::cout << "   hicMemoryTypeUnregistered:  " << hicMemoryTypeUnregistered << std::endl;
-      std::cout << "   hicMemoryTypeHost:          " << hicMemoryTypeHost << std::endl;
-      std::cout << "   hicMemoryTypeDevice:        " << hicMemoryTypeDevice << std::endl;
-      std::cout << "   hicMemoryTypeManaged:       " << hicMemoryTypeManaged << std::endl;
-    }
+            std::cout << "Legend(hicMemoryType):" << std::endl;
+            std::cout << "   hicMemoryTypeUnregistered:  " << hicMemoryTypeUnregistered << std::endl;
+            std::cout << "   hicMemoryTypeHost:          " << hicMemoryTypeHost << std::endl;
+            std::cout << "   hicMemoryTypeDevice:        " << hicMemoryTypeDevice << std::endl;
+            std::cout << "   hicMemoryTypeManaged:       " << hicMemoryTypeManaged << std::endl;
+        }
 #endif
-
     }
 }
 
 // ---------------------------------------------------------------------------------------------------
 
-enum class Memory {
-  Managed,
-  Pinned
+enum class Memory
+{
+    Managed,
+    Pinned
 };
 
 int main(int argc, char* argv[]) {
@@ -150,11 +149,9 @@ int main(int argc, char* argv[]) {
 
     std::cout << "pluto::devices: " << pluto::devices() << std::endl;
 
-    pluto::host::allocator<value_type> allocator{
-      strategy == Memory::Managed ? pluto::managed_resource() :
-      strategy == Memory::Pinned  ? pluto::pinned_resource() :
-      nullptr
-    };
+    pluto::host::allocator<value_type> allocator{strategy == Memory::Managed  ? pluto::managed_resource()
+                                                 : strategy == Memory::Pinned ? pluto::pinned_resource()
+                                                                              : nullptr};
 
     value_type* h_array = allocator.allocate(size);
     value_type* d_array = pluto::get_registered_device_pointer(h_array);
@@ -164,18 +161,18 @@ int main(int argc, char* argv[]) {
 
     // Fill array with zero
     if (pluto::is_host_accessible(h_array)) {
-      std::fill(h_array,h_array+size,0.);
+        std::fill(h_array, h_array + size, 0.);
     }
 
     print_array("array", h_array, size);
 
     // Add +1 to each element of array
     if (pluto::is_device_accessible(d_array)) {
-      plus_one_on_device(d_array, size);
-      pluto::wait();
+        plus_one_on_device(d_array, size);
+        pluto::wait();
     }
     else {
-      plus_one_on_host(d_array,size);
+        plus_one_on_host(d_array, size);
     }
 
     print_array("array", h_array, size);

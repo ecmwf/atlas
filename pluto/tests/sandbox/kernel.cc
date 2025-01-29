@@ -11,9 +11,8 @@
 
 #include "kernel.h"
 
-#include "pluto/memory_resource.h"
 #include "hic/hic.h"
-
+#include "pluto/memory_resource.h"
 
 
 // template<typename Base, typename Derived, typename... Args>
@@ -33,40 +32,36 @@ public:
     HIC_HOST_DEVICE
     DevicePtr() {
         // device_ptr = nullptr;
-// #ifndef __CUDA_ARCH__
-//         std::cout << "DevicePtr() " <<  this << std::endl;
-// #endif
+        // #ifndef __CUDA_ARCH__
+        //         std::cout << "DevicePtr() " <<  this << std::endl;
+        // #endif
     }
 
-//     HICs_HOST_DEVICE
-//     DevicePtr(const DevicePtr& other) {
-// // #ifndef __CUDA_ARCH__
-// //         std::cout << "DevicePtr(other) " <<  this << std::endl;
-// // #endif
-// //         device_ptr = other.device_ptr;
-//     }
+    //     HICs_HOST_DEVICE
+    //     DevicePtr(const DevicePtr& other) {
+    // // #ifndef __CUDA_ARCH__
+    // //         std::cout << "DevicePtr(other) " <<  this << std::endl;
+    // // #endif
+    // //         device_ptr = other.device_ptr;
+    //     }
 
-	template< typename T1, typename = std::enable_if_t<std::is_convertible_v<T1*, T*>> >
-	HIC_HOST_DEVICE DevicePtr(const DevicePtr<T1> &dp)
-		: device_ptr((T1*)dp)
-	{}
+    template <typename T1, typename = std::enable_if_t<std::is_convertible_v<T1*, T*>>>
+    HIC_HOST_DEVICE DevicePtr(const DevicePtr<T1>& dp): device_ptr((T1*)dp) {}
 
-	template< typename T1, typename = std::enable_if_t<std::is_convertible_v<T1*, T*>> >
-	HIC_HOST DevicePtr(const DeviceObject<T1> &dp)
-		: device_ptr((T1*)dp)
-	{}
+    template <typename T1, typename = std::enable_if_t<std::is_convertible_v<T1*, T*>>>
+    HIC_HOST DevicePtr(const DeviceObject<T1>& dp): device_ptr((T1*)dp) {}
 
-//      HIC_HOST_DEVICE
-//      ~DevicePtr() {
-// // #ifndef __CUDA_ARCH__
-// // #warning host
-// //         std::cout << "~DevicePtr() " <<  this << std::endl;
-// //         //clear();
-// //         //cudaFree(device_ptr);
-// // #else
-// // #warning device
-// // #endif
-//     }
+    //      HIC_HOST_DEVICE
+    //      ~DevicePtr() {
+    // // #ifndef __CUDA_ARCH__
+    // // #warning host
+    // //         std::cout << "~DevicePtr() " <<  this << std::endl;
+    // //         //clear();
+    // //         //cudaFree(device_ptr);
+    // // #else
+    // // #warning device
+    // // #endif
+    //     }
 
 
     // template<typename Derived, typename... Args>
@@ -94,94 +89,95 @@ public:
     T* get() const { return device_ptr; }
 
     HIC_HOST_DEVICE
-    T* operator ->() const { return device_ptr; }
+    T* operator->() const { return device_ptr; }
 
     HIC_HOST_DEVICE
-    T& operator *() const { return *device_ptr; }
+    T& operator*() const { return *device_ptr; }
 
-	HIC_HOST_DEVICE operator T*() const { return  device_ptr; }
+    HIC_HOST_DEVICE operator T*() const { return device_ptr; }
 
 
     // HIC_HOST_DEVICE
     // T** double_ptr() const { return device_ptr; }
 
 
-    HIC_HOST static DevicePtr FromRawDevicePtr(T *p) {
-        return DevicePtr{ p };
-    }
+    HIC_HOST static DevicePtr FromRawDevicePtr(T* p) { return DevicePtr{p}; }
+
 private:
-    HIC_HOST_DEVICE __inline__ explicit DevicePtr(T *p) : device_ptr(p) {}
+    HIC_HOST_DEVICE __inline__ explicit DevicePtr(T* p): device_ptr(p) {}
     T* device_ptr = nullptr;
 };
 
 
-template<typename T>
+template <typename T>
 class DeviceMemory {
-    T *_p = nullptr;
+    T* _p = nullptr;
     std::size_t _bytes;
-    DeviceMemory(std::size_t bytes) : _bytes(bytes) { cudaMalloc(&_p, _bytes); }
+    DeviceMemory(std::size_t bytes): _bytes(bytes) { cudaMalloc(&_p, _bytes); }
+
 public:
-    static DeviceMemory AllocateElements(std::size_t n) {return {n*sizeof(T)}; }
-    static DeviceMemory AllocateBytes(std::size_t bytes) {return {bytes}; }
-    ~DeviceMemory() { if (_p) {cudaFree(_p);} }
+    static DeviceMemory AllocateElements(std::size_t n) { return {n * sizeof(T)}; }
+    static DeviceMemory AllocateBytes(std::size_t bytes) { return {bytes}; }
+    ~DeviceMemory() {
+        if (_p) {
+            cudaFree(_p);
+        }
+    }
 
     HIC_HOST
-    operator DevicePtr<T>() const {
-        return DevicePtr<T>::FromRawDevicePtr(_p);
-    }
-    operator bool() const {
-        return (_p != nullptr);
-    }
+    operator DevicePtr<T>() const { return DevicePtr<T>::FromRawDevicePtr(_p); }
+    operator bool() const { return (_p != nullptr); }
 };
 
-template<typename T, typename... Args> 
+template <typename T, typename... Args>
 HIC_HOST_DEVICE void allocate_object(DevicePtr<T> p, Args... args) {
     new (p.get()) T(args...);
 }
 
-template<typename T, typename... Args> 
+template <typename T, typename... Args>
 HIC_HOST_DEVICE void new_on_device(T* p, Args... args) {
     new (p) T(args...);
 }
 
-template<typename T>
+template <typename T>
 HIC_HOST_DEVICE void delete_object(DevicePtr<T> p) {
     p->~T();
 }
 
-template<typename T>
+template <typename T>
 HIC_HOST_DEVICE void delete_on_device(T* p) {
     p->~T();
 }
 
 
-template<typename T>
+template <typename T>
 class DeviceObject {
 public:
-    T* ptr_ {nullptr};
+    T* ptr_{nullptr};
+
 public:
-    template<typename... Args>
-    DeviceObject(Args... args) { 
+    template <typename... Args>
+    DeviceObject(Args... args) {
         std::cout << "allocate object on device" << std::endl;
 #if HIC_COMPILER
-        HIC_CALL( hicMalloc(&ptr_, sizeof(T)) );
+        HIC_CALL(hicMalloc(&ptr_, sizeof(T)));
         new_on_device<T><<<1, 1>>>(ptr_, args...);
-        HIC_CALL( hicDeviceSynchronize() );
+        HIC_CALL(hicDeviceSynchronize());
 #else
-        ptr_ = (T*)malloc(sizeof(T)); new_on_device<T>(ptr_, args...);
+        ptr_ = (T*)malloc(sizeof(T));
+        new_on_device<T>(ptr_, args...);
 #endif
-
     }
 
-     DeviceObject& operator=( const DeviceObject& ) = delete; // non copyable
+    DeviceObject& operator=(const DeviceObject&) = delete;  // non copyable
 
     ~DeviceObject() {
         if (ptr_) {
             std::cout << "deallocate object on device" << std::endl;
 #if HIC_COMPILER
             delete_on_device<T><<<1, 1>>>(ptr_);
-            HIC_CALL( hicDeviceSynchronize() );
-            HIC_CALL( hicFree(ptr_) );
+            HIC_CALL(hicDeviceSynchronize());
+            HIC_CALL(hicFree(ptr_));
 #else
             delete_on_device<T>(ptr_);
             free(ptr_);
@@ -190,15 +186,10 @@ public:
     }
 
     HIC_HOST
-    operator DevicePtr<T>() const { 
-        return DevicePtr<T>::FromRawDevicePtr(ptr_);
-    }
+    operator DevicePtr<T>() const { return DevicePtr<T>::FromRawDevicePtr(ptr_); }
 
     HIC_HOST
-    operator T*() const { 
-        return ptr_;
-    }
-
+    operator T*() const { return ptr_; }
 };
 
 HIC_DEVICE pluto::memory_resource* gpu_default_;
@@ -222,7 +213,7 @@ __global__ void launch_set_default(pluto::memory_resource* ptr) {
 
 void set_default_on_device(pluto::memory_resource* ptr) {
 #if HIC_COMPILER
-    launch_set_default<<<1,1>>>(ptr);
+    launch_set_default<<<1, 1>>>(ptr);
     HIC_CHECK_KERNEL_LAUNCH();
 #else
     gpu_default_ = ptr;
@@ -230,9 +221,6 @@ void set_default_on_device(pluto::memory_resource* ptr) {
 }
 
 void set_on_device(double* x, std::size_t size, double value) {
-
-
-
     // auto& resource = pluto::device::new_delete_resource();
     // pluto::device::allocator_on_device<double> allocator(resource);
 
@@ -285,18 +273,14 @@ void set_on_device(double* x, std::size_t size, double value) {
 
     // std::cout << "resource initialized " << std::endl;
 
-    launch_kernel(size, [=] HIC_DEVICE(auto i) {
-        x[i] = value;
-    });
+    launch_kernel(size, [=] HIC_DEVICE(auto i) { x[i] = value; });
 
     // device_mr.clear();
 }
 
 void set_on_device(const pluto::stream& stream, double* x, std::size_t size, double value) {
     std::cout << "set_on_device async" << std::endl;
-    launch_kernel(stream, size, [=] HIC_DEVICE(auto i) {
-        x[i] = value;
-    });
+    launch_kernel(stream, size, [=] HIC_DEVICE(auto i) { x[i] = value; });
 
     // device_mr.clear();
 }

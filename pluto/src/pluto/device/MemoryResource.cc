@@ -10,9 +10,9 @@
 
 #include "MemoryResource.h"
 
-#include "pluto/pluto_config.h"
 #include "pluto/memory_resource.h"
 #include "pluto/memory_resource/DeviceMemoryResource.h"
+#include "pluto/pluto_config.h"
 
 #define LOG PLUTO_DEBUGGING
 
@@ -44,10 +44,10 @@ void set_default_resource(std::string_view name) {
 
 // ---------------------------------------------------------------------------------------------------------
 
-scoped_default_resource::scoped_default_resource(std::string_view name) :
+scoped_default_resource::scoped_default_resource(std::string_view name):
     scoped_default_resource(get_registered_resource(name)) {}
 
 // ---------------------------------------------------------------------------------------------------------
 
 
-}
+}  // namespace pluto::device

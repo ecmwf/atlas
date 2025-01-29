@@ -1,20 +1,17 @@
 #pragma once
 
-#include <iostream>
 #include <chrono>
 #include <functional>
+#include <iostream>
 
-#include "pluto/pluto_config.h"
 #include "hic/hic.h"
+#include "pluto/pluto_config.h"
 
-float run_timed(std::function<void()> function,
-                int num_repeats = 1,
-                int num_warmups = 0);
+float run_timed(std::function<void()> function, int num_repeats = 1, int num_warmups = 0);
 
 #if HIC_COMPILER
 template <typename F>
-__global__ void run_kernel_on_device(uint32_t n, F f)
-{
+__global__ void run_kernel_on_device(uint32_t n, F f) {
     const uint32_t idx{blockDim.x * blockIdx.x + threadIdx.x};
     const uint32_t stride{blockDim.x * gridDim.x};
     for (uint32_t i{idx}; i < n; i += stride) {
@@ -23,40 +20,34 @@ __global__ void run_kernel_on_device(uint32_t n, F f)
 }
 
 template <typename F>
-void launch_benchmark_kernel(uint32_t n, F f)
-{
-    HIC_CALL( hicDeviceSynchronize() );
+void launch_benchmark_kernel(uint32_t n, F f) {
+    HIC_CALL(hicDeviceSynchronize());
     const uint32_t threads_per_block{1024};
     const uint32_t blocks_per_grid{32};
     run_kernel_on_device<<<blocks_per_grid, threads_per_block>>>(n, f);
-    HIC_CALL( hicDeviceSynchronize() );
+    HIC_CALL(hicDeviceSynchronize());
 }
 #else
 template <typename F>
 void launch_benchmark_kernel(uint32_t n, F f) {
- for (uint32_t i{0}; i<n; ++i) {
-    f(i);
- }
+    for (uint32_t i{0}; i < n; ++i) {
+        f(i);
+    }
 }
 #endif
 
 
 template <typename T>
-inline void initialize_host_memory(T* h_buffer, uint32_t n, T value)
-{
-    for (int i{0}; i < n; ++i)
-    {
+inline void initialize_host_memory(T* h_buffer, uint32_t n, T value) {
+    for (int i{0}; i < n; ++i) {
         h_buffer[i] = value;
     }
 }
 
 template <typename T>
-inline bool verify_host_memory(T* h_buffer, uint32_t n, T value)
-{
-    for (int i{0}; i < n; ++i)
-    {
-        if (h_buffer[i] != value)
-        {
+inline bool verify_host_memory(T* h_buffer, uint32_t n, T value) {
+    for (int i{0}; i < n; ++i) {
+        if (h_buffer[i] != value) {
             return false;
         }
     }

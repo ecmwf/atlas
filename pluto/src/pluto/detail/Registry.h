@@ -9,14 +9,14 @@
  */
 #pragma once
 
+#include <algorithm>
+#include <exception>
 #include <iostream>
+#include <list>
 #include <map>
+#include <mutex>
 #include <string>
 #include <string_view>
-#include <mutex>
-#include <list>
-#include <exception>
-#include <algorithm>
 
 #include "pluto/trace.h"
 
@@ -36,7 +36,7 @@ public:
         std::lock_guard lock(mutex_);
         auto& ref = do_register(name, *mr);
 
-        owned_.emplace(name,std::move(mr));
+        owned_.emplace(name, std::move(mr));
         ordered_keys_.push_back(std::string(name));
         return ref;
     }
@@ -50,7 +50,7 @@ public:
         std::lock_guard lock(mutex_);
         std::string key(name);
         if (registered_.erase(key) == 0) {
-            throw std::runtime_error("Could not unregister "+key);
+            throw std::runtime_error("Could not unregister " + key);
         }
         if (owned_.erase(key)) {
             ordered_keys_.erase(std::find(ordered_keys_.begin(), ordered_keys_.end(), key));
@@ -79,9 +79,7 @@ public:
 private:
     Registry() = default;
 
-    ~Registry() {
-        do_clear();
-    }
+    ~Registry() { do_clear(); }
 
     void do_clear() {
         // Erase owned entries in reverse order of insertion
@@ -101,7 +99,7 @@ private:
     value_type& do_register(std::string_view name, value_type& mr) {
         bool inserted = registered_.try_emplace(std::string(name), &mr).second;
         if (not inserted) {
-            throw std::runtime_error("Could not register "+std::string(name));
+            throw std::runtime_error("Could not register " + std::string(name));
         }
         if (trace_enabled()) {
             trace() << "registered " << name << std::endl;
@@ -120,7 +118,7 @@ private:
         if (registered_.find(name) != registered_.end()) {
             return *registered_.at(std::string(name));
         }
-        throw std::runtime_error("Could not get registered "+std::string(name));
+        throw std::runtime_error("Could not get registered " + std::string(name));
     }
 
 private:
@@ -130,4 +128,4 @@ private:
     std::map<std::string, value_type*, std::less<>> registered_;
 };
 
-}
+}  // namespace pluto

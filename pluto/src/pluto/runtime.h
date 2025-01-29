@@ -18,48 +18,49 @@
 #endif
 
 namespace pluto {
-  enum class device_type {
+enum class device_type
+{
     host,
     device
-  };
+};
 
 #if HIC_COMPILER
 #if defined(__clang__)
-  __host__ constexpr device_type get_device_type() noexcept {
+__host__ constexpr device_type get_device_type() noexcept {
     return device_type::host;
-  }
+}
 
-  __device__ constexpr device_type get_device_type() noexcept {
+__device__ constexpr device_type get_device_type() noexcept {
     return device_type::device;
-  }
+}
 #else
-  __host__ __device__ constexpr device_type get_device_type() noexcept {
+__host__ __device__ constexpr device_type get_device_type() noexcept {
     NV_IF_TARGET(NV_IS_HOST, (return device_type::host;), (return device_type::device;));
-  }
+}
 #endif
 
-  __host__ __device__ constexpr bool is_on_device() noexcept {
+__host__ __device__ constexpr bool is_on_device() noexcept {
     return get_device_type() == device_type::device;
-  }
-  __host__ __device__ constexpr bool is_on_host() noexcept {
+}
+__host__ __device__ constexpr bool is_on_host() noexcept {
     return get_device_type() == device_type::host;
-  }
+}
 
 #else
 
-  constexpr device_type get_device_type() noexcept {
+constexpr device_type get_device_type() noexcept {
     return device_type::host;
-  }
+}
 
-  constexpr bool is_on_device() noexcept {
+constexpr bool is_on_device() noexcept {
     return false;
-  }
-  constexpr bool is_on_host() noexcept {
+}
+constexpr bool is_on_host() noexcept {
     return true;
-  }
+}
 
 #endif
 
 std::size_t devices();
 
-}
+}  // namespace pluto

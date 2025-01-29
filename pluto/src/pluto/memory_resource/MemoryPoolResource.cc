@@ -10,15 +10,15 @@
 
 #include "MemoryPoolResource.h"
 
-#include "detail/GatorMemoryResource.h"
 #include "TraceMemoryResource.h"
+#include "detail/GatorMemoryResource.h"
 #include "pluto/trace.h"
 
-#include <cstdlib>
 #include <cctype>
-#include <string>
+#include <cstdlib>
 #include <map>
 #include <queue>
+#include <string>
 
 #include "hic/hic.h"
 
@@ -26,17 +26,13 @@ namespace pluto {
 
 static std::size_t to_bytes(const std::string& str) {
     auto unit_to_bytes = [](char unit) {
-       static const std::map<char, std::size_t> map{
-            {'G',1024*1024*1024},
-            {'M',1024*1024},
-            {'K',1024},
-            {'B',1}
-        };
+        static const std::map<char, std::size_t> map{
+            {'G', 1024 * 1024 * 1024}, {'M', 1024 * 1024}, {'K', 1024}, {'B', 1}};
         return map.at(static_cast<char>(std::toupper(unit)));
     };
-    for (char unit: {'G','g','M','m','K','k','B','b'}) {
+    for (char unit : {'G', 'g', 'M', 'm', 'K', 'k', 'B', 'b'}) {
         if (auto pos = str.find(unit); pos != std::string::npos) {
-            return unit_to_bytes(unit) * std::stoull(str.substr(0,pos));
+            return unit_to_bytes(unit) * std::stoull(str.substr(0, pos));
         }
     }
     return std::stoull(str);
@@ -44,13 +40,13 @@ static std::size_t to_bytes(const std::string& str) {
 
 static std::string bytes_to_string(std::size_t bytes) {
     std::string str;
-    constexpr std::size_t MB = 1024*1024;
-    constexpr std::size_t GB = 1024*MB;
-    if( bytes >= GB ) {
-        str = std::to_string(bytes/GB) + "GB";
+    constexpr std::size_t MB = 1024 * 1024;
+    constexpr std::size_t GB = 1024 * MB;
+    if (bytes >= GB) {
+        str = std::to_string(bytes / GB) + "GB";
     }
     else {
-        str = std::to_string(bytes/MB) + "MB";
+        str = std::to_string(bytes / MB) + "MB";
     }
     return str;
 }
@@ -73,7 +69,7 @@ pool_options get_default_pool_options() {
 }
 
 void set_default_pool_options(pool_options options) {
-    default_pool_options_ = options;
+    default_pool_options_       = options;
     default_pool_options_setup_ = true;
 }
 
@@ -111,7 +107,7 @@ void MemoryPoolResource::do_deallocate(void* ptr, std::size_t bytes, std::size_t
         pools_[0]->deallocate(ptr, bytes, alignment);
     }
     else {
-        for (int i=0; i<pool_block_sizes_.size(); ++i) {
+        for (int i = 0; i < pool_block_sizes_.size(); ++i) {
             if (pools_[i]) {
                 auto& gator = to_gator_resource(pools_[i].get())->gator();
                 if (gator.thisIsMyPointer(ptr)) {
@@ -121,7 +117,9 @@ void MemoryPoolResource::do_deallocate(void* ptr, std::size_t bytes, std::size_t
                 // Cleanup empty gator when a larger gator exists
                 if (gator.get_bytes_currently_allocated() == 0 && pool_block_size_ > pool_block_sizes_[i]) {
 #if PLUTO_DEBUGGING
-                std::cout << " - Releasing memory_pool["<<i<<"] with block_size " << bytes_to_string(pool_block_sizes_[i]) << " and capacity " << bytes_to_string(gator.get_pool_capacity()) << std::endl;
+                    std::cout << " - Releasing memory_pool[" << i << "] with block_size "
+                              << bytes_to_string(pool_block_sizes_[i]) << " and capacity "
+                              << bytes_to_string(gator.get_pool_capacity()) << std::endl;
 #endif
                     pools_[i].reset();
                 }
@@ -138,10 +136,10 @@ struct AsyncAllocData {
     std::size_t alignment;
 };
 
-std::map<void*,std::queue<AsyncAllocData>> stream_callback_queue_;
+std::map<void*, std::queue<AsyncAllocData>> stream_callback_queue_;
 
 void callback_deallocate_async(void* stream) {
-    auto& stream_queue = stream_callback_queue_[stream];
+    auto& stream_queue        = stream_callback_queue_[stream];
     const AsyncAllocData& ctx = stream_queue.front();
     ctx.resource->do_deallocate(ctx.ptr, ctx.bytes, ctx.alignment);
     stream_queue.pop();
@@ -149,13 +147,13 @@ void callback_deallocate_async(void* stream) {
 
 void MemoryPoolResource::do_deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment, const stream& s) {
     // stream.wait();
-        // Wait for stream to finish for safety.
-        // We should not deallocate data when it may still be in use in the stream!
-        // TODO: implement using
-        //    __host__ ​cudaError_t cudaLaunchHostFunc ( cudaStream_t stream, cudaHostFn_t fn, void* userData )
+    // Wait for stream to finish for safety.
+    // We should not deallocate data when it may still be in use in the stream!
+    // TODO: implement using
+    //    __host__ ​cudaError_t cudaLaunchHostFunc ( cudaStream_t stream, cudaHostFn_t fn, void* userData )
     auto& stream_queue = stream_callback_queue_[s.value()];
-    stream_queue.emplace(AsyncAllocData{this,ptr,bytes,alignment});
-    HIC_CALL(hicLaunchHostFunc(s.value<hicStream_t>(),callback_deallocate_async,s.value()));
+    stream_queue.emplace(AsyncAllocData{this, ptr, bytes, alignment});
+    HIC_CALL(hicLaunchHostFunc(s.value<hicStream_t>(), callback_deallocate_async, s.value()));
 }
 
 
@@ -164,13 +162,15 @@ void MemoryPoolResource::reserve(std::size_t bytes) {
 }
 
 bool MemoryPoolResource::do_is_equal(const memory_resource& other) const noexcept {
-    if (this == &other) { return true; }
+    if (this == &other) {
+        return true;
+    }
     return false;
 }
 
 memory_resource* MemoryPoolResource::resource(std::size_t bytes) {
-    constexpr std::size_t MB = 1024*1024;
-    constexpr std::size_t GB = 1024*MB;
+    constexpr std::size_t MB = 1024 * 1024;
+    constexpr std::size_t GB = 1024 * MB;
     if (options_.largest_required_pool_block > 0 && bytes > options_.largest_required_pool_block) {
         return upstream_;
     }
@@ -179,28 +179,28 @@ memory_resource* MemoryPoolResource::resource(std::size_t bytes) {
             pool_block_sizes_ = {options_.largest_required_pool_block};
         }
         else {
-            pool_block_sizes_ = {256*MB, 1*GB, 4*GB, 16*GB, 64*GB, 256*GB, 1024*GB};
+            pool_block_sizes_ = {256 * MB, 1 * GB, 4 * GB, 16 * GB, 64 * GB, 256 * GB, 1024 * GB};
         }
         pools_.resize(pool_block_sizes_.size());
         pool_block_size_ = 0;
     }
 
-    auto upper_or_equal = std::upper_bound(pool_block_sizes_.begin(), pool_block_sizes_.end(), bytes-1);
+    auto upper_or_equal = std::upper_bound(pool_block_sizes_.begin(), pool_block_sizes_.end(), bytes - 1);
     if (upper_or_equal == pool_block_sizes_.end()) {
         return upstream_;
     }
 
     if (*upper_or_equal > pool_block_size_) {
-        pool_block_size_ = *upper_or_equal;
-        std::size_t pool_index = upper_or_equal - pool_block_sizes_.begin();
+        pool_block_size_             = *upper_or_equal;
+        std::size_t pool_index       = upper_or_equal - pool_block_sizes_.begin();
         std::size_t blocks_per_chunk = std::max(options_.max_blocks_per_chunk, static_cast<std::size_t>(1));
         GatorOptions options;
-        options.initial_size = blocks_per_chunk*pool_block_size_;
-        options.grow_size    = blocks_per_chunk*pool_block_size_;
+        options.initial_size = blocks_per_chunk * pool_block_size_;
+        options.grow_size    = blocks_per_chunk * pool_block_size_;
         if (trace_enabled()) {
             pools_[pool_index] =
-                std::make_unique<TraceMemoryResource>("gator["+bytes_to_string(pool_block_size_)+"]",
-                std::make_unique<GatorMemoryResource>(options, upstream_) );
+                std::make_unique<TraceMemoryResource>("gator[" + bytes_to_string(pool_block_size_) + "]",
+                                                      std::make_unique<GatorMemoryResource>(options, upstream_));
         }
         else {
             pools_[pool_index] = std::make_unique<GatorMemoryResource>(options, upstream_);
@@ -213,7 +213,7 @@ memory_resource* MemoryPoolResource::resource(std::size_t bytes) {
 std::size_t MemoryPoolResource::size() const {
     std::lock_guard lock(mtx_);
     std::size_t _size{0};
-    for (const auto& pool: pools_) {
+    for (const auto& pool : pools_) {
         if (pool) {
             GatorMemoryResource* gator = to_gator_resource(pool.get());
             if (gator) {
@@ -227,7 +227,7 @@ std::size_t MemoryPoolResource::size() const {
 std::size_t MemoryPoolResource::capacity() const {
     std::lock_guard lock(mtx_);
     std::size_t _capacity{0};
-    for (const auto& pool: pools_) {
+    for (const auto& pool : pools_) {
         if (pool) {
             GatorMemoryResource* gator = to_gator_resource(pool.get());
             if (gator) {
@@ -241,11 +241,13 @@ std::size_t MemoryPoolResource::capacity() const {
 void MemoryPoolResource::release() {
     std::lock_guard lock(mtx_);
 #if PLUTO_DEBUGGING
-    for (int i=0; i<pool_block_sizes_.size(); ++i) {
+    for (int i = 0; i < pool_block_sizes_.size(); ++i) {
         if (pools_[i]) {
             auto& gator = to_gator_resource(pools_[i].get())->gator();
             // Cleanup empty gator when a larger gator exists
-            std::cout << " - Releasing memory_pool["<<i<<"] with block_size " << bytes_to_string(pool_block_sizes_[i]) << " and capacity " << bytes_to_string(gator.get_pool_capacity()) << std::endl;
+            std::cout << " - Releasing memory_pool[" << i << "] with block_size "
+                      << bytes_to_string(pool_block_sizes_[i]) << " and capacity "
+                      << bytes_to_string(gator.get_pool_capacity()) << std::endl;
             pools_[i].reset();
         }
     }
@@ -254,4 +256,4 @@ void MemoryPoolResource::release() {
 }
 
 
-}
+}  // namespace pluto

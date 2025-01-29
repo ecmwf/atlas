@@ -12,10 +12,10 @@
 
 #include <iostream>
 
-#include "pluto/pluto_config.h"
-#include "pluto/stream.h"
-#include "pluto/runtime.h"
 #include "hic/hic.h"
+#include "pluto/pluto_config.h"
+#include "pluto/runtime.h"
+#include "pluto/stream.h"
 
 #include "MemoryPoolResource.h"
 
@@ -27,11 +27,12 @@ namespace pluto {
 
 void PinnedMemoryResource::pin(void* ptr, std::size_t bytes) {
     if (LOG) {
-        std::cout << "         + PIN: hicHostRegister(ptr:"<<ptr<<", bytes:"<< bytes <<");" << std::endl;//, hicHostRegisterMapped);" << std::endl;
+        std::cout << "         + PIN: hicHostRegister(ptr:" << ptr << ", bytes:" << bytes << ");"
+                  << std::endl;  //, hicHostRegisterMapped);" << std::endl;
     }
-    if constexpr(PLUTO_HAVE_HIC) {
+    if constexpr (PLUTO_HAVE_HIC) {
         if (devices()) {
-            HIC_CALL( hicHostRegister(ptr, bytes, hicHostRegisterMapped) );
+            HIC_CALL(hicHostRegister(ptr, bytes, hicHostRegisterMapped));
         }
     }
 }
@@ -40,29 +41,29 @@ void PinnedMemoryResource::pin(void* ptr, std::size_t bytes) {
 
 void PinnedMemoryResource::unpin(void* ptr, std::size_t bytes) {
     if (LOG) {
-        std::cout << "         - UNPIN: hicHostUnRegister(ptr:"<<ptr<<", bytes:"<< bytes <<");" << std::endl;
+        std::cout << "         - UNPIN: hicHostUnRegister(ptr:" << ptr << ", bytes:" << bytes << ");" << std::endl;
     }
-    if constexpr(PLUTO_HAVE_HIC) {
+    if constexpr (PLUTO_HAVE_HIC) {
         if (devices()) {
-            HIC_CALL( hicHostUnregister(ptr) );
+            HIC_CALL(hicHostUnregister(ptr));
         }
     }
 }
 
-    void* PinnedMemoryResource::do_allocate(std::size_t bytes, std::size_t alignment) {
-        void* ptr = upstream_->allocate(bytes, alignment);
-        pin(ptr, bytes);
-        return ptr;
-    }
+void* PinnedMemoryResource::do_allocate(std::size_t bytes, std::size_t alignment) {
+    void* ptr = upstream_->allocate(bytes, alignment);
+    pin(ptr, bytes);
+    return ptr;
+}
 
-    void PinnedMemoryResource::do_deallocate(void* ptr, std::size_t bytes, std::size_t alignment) {
-        unpin(ptr, bytes);
-        upstream_->deallocate(ptr, bytes, alignment);
-    }
- 
-    bool PinnedMemoryResource::do_is_equal(const memory_resource& other) const noexcept {
-        return upstream_->is_equal(other);
-    }
+void PinnedMemoryResource::do_deallocate(void* ptr, std::size_t bytes, std::size_t alignment) {
+    unpin(ptr, bytes);
+    upstream_->deallocate(ptr, bytes, alignment);
+}
+
+bool PinnedMemoryResource::do_is_equal(const memory_resource& other) const noexcept {
+    return upstream_->is_equal(other);
+}
 
 
 // --------------------------------------------------------------------------------------------------------
@@ -77,4 +78,4 @@ memory_pool_resource* pinned_pool_resource() {
     return &resource;
 }
 
-}
+}  // namespace pluto

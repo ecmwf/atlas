@@ -9,8 +9,8 @@
  */
 #pragma once
 
-#include <string_view>
 #include <cassert>
+#include <string_view>
 
 #include "pluto/memory_resource.h"
 
@@ -37,20 +37,17 @@ inline memory_resource* get_default_resource() {
 
 class [[nodiscard]] scoped_default_resource {
 public:
-    scoped_default_resource(std::string_view name) : scoped_default_resource(get_registered_resource(name)) {}
+    scoped_default_resource(std::string_view name): scoped_default_resource(get_registered_resource(name)) {}
 
-    scoped_default_resource(memory_resource* mr) :
-        saved_(pluto::host::get_default_resource()) {
+    scoped_default_resource(memory_resource* mr): saved_(pluto::host::get_default_resource()) {
         pluto::host::set_default_resource(mr);
     }
-    ~scoped_default_resource() {
-        pluto::host::set_default_resource(saved_);
-    }
+    ~scoped_default_resource() { pluto::host::set_default_resource(saved_); }
+
 private:
     memory_resource* saved_;
 };
 
 // --------------------------------------------------------------------------------------------------------
 
-}
-
+}  // namespace pluto::host

@@ -14,8 +14,8 @@
 
 #include <stack>
 
-#include "pluto/host/MemoryResource.h"
 #include "pluto/device/MemoryResource.h"
+#include "pluto/host/MemoryResource.h"
 #include "pluto/stream.h"
 
 namespace pluto {
@@ -23,8 +23,7 @@ namespace pluto {
 // --------------------------------------------------------------------------------------------------------
 
 struct PlutoScope {
-    PlutoScope() :
-        stream_(get_current_stream()) {
+    PlutoScope(): stream_(get_current_stream()) {
         host_default_memory_resource_   = host::get_default_resource();
         device_default_memory_resource_ = device::get_default_resource();
     }
@@ -39,7 +38,7 @@ struct PlutoScope {
 };
 
 static std::stack<PlutoScope>& scope_stack() {
-    static std::stack<PlutoScope> scope_stack_ {{PlutoScope()}};
+    static std::stack<PlutoScope> scope_stack_{{PlutoScope()}};
     return scope_stack_;
 }
 
@@ -50,4 +49,4 @@ void scope::pop() {
     scope_stack().pop();
 }
 
-}
+}  // namespace pluto

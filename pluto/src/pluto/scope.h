@@ -13,14 +13,10 @@
 namespace pluto {
 
 struct scope {
-    scope() {
-        push();
-    }
-    ~scope() {
-        pop();
-    }
+    scope() { push(); }
+    ~scope() { pop(); }
     static void push();
     static void pop();
 };
 
-}
+}  // namespace pluto

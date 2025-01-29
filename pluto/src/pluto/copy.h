@@ -22,12 +22,12 @@ namespace pluto {
 
 template <class T>
 void copy_host_to_device(T* device, const T* host, std::size_t size) {
-    memcpy_host_to_device(device, host, sizeof(T)*size);
+    memcpy_host_to_device(device, host, sizeof(T) * size);
 }
 
 template <class T>
 void copy_host_to_device(T* device, const T* host, std::size_t size, const stream& s) {
-    memcpy_host_to_device(device, host, sizeof(T)*size, s);
+    memcpy_host_to_device(device, host, sizeof(T) * size, s);
 }
 
 template <class T>
@@ -51,65 +51,64 @@ void copy_host_to_device(T& device, const T& host, const stream& s) {
 }
 
 template <class T, class D1, class D2>
-void copy_host_to_device(std::unique_ptr<T,D1>& device, const std::unique_ptr<T,D2>& host) {
+void copy_host_to_device(std::unique_ptr<T, D1>& device, const std::unique_ptr<T, D2>& host) {
     copy_host_to_device(device.get(), host.get());
 }
 
 template <class T, class D1, class D2>
-void copy_host_to_device(std::unique_ptr<T,D1>& device, const std::unique_ptr<T,D2>& host, const stream& s) {
+void copy_host_to_device(std::unique_ptr<T, D1>& device, const std::unique_ptr<T, D2>& host, const stream& s) {
     copy_host_to_device(device.get(), host.get(), s);
 }
 
 template <class T, class D>
-void copy_host_to_device(std::unique_ptr<T,D>& device, const T* host) {
+void copy_host_to_device(std::unique_ptr<T, D>& device, const T* host) {
     copy_host_to_device(device.get(), host);
 }
 
 template <class T, class D>
-void copy_host_to_device(std::unique_ptr<T,D>& device, const T* host, const stream& s) {
+void copy_host_to_device(std::unique_ptr<T, D>& device, const T* host, const stream& s) {
     copy_host_to_device(device.get(), host, s);
 }
 
 template <class T, class D>
-void copy_host_to_device(std::unique_ptr<T,D>& device, const T& host) {
+void copy_host_to_device(std::unique_ptr<T, D>& device, const T& host) {
     copy_host_to_device(device.get(), &host);
 }
 
 template <class T, class D>
-void copy_host_to_device(std::unique_ptr<T,D>& device, const T& host, const stream& s) {
+void copy_host_to_device(std::unique_ptr<T, D>& device, const T& host, const stream& s) {
     copy_host_to_device(device.get(), &host, s);
 }
 
 template <class T, class D>
-void copy_host_to_device(T* device, const std::unique_ptr<T,D>& host) {
+void copy_host_to_device(T* device, const std::unique_ptr<T, D>& host) {
     copy_host_to_device(device, host.get());
 }
 
 template <class T, class D>
-void copy_host_to_device(T* device, const std::unique_ptr<T,D>& host, const stream& s) {
+void copy_host_to_device(T* device, const std::unique_ptr<T, D>& host, const stream& s) {
     copy_host_to_device(device, host.get(), s);
 }
 
 template <class T, class D>
-void copy_host_to_device(T& device, const std::unique_ptr<T,D>& host) {
+void copy_host_to_device(T& device, const std::unique_ptr<T, D>& host) {
     copy_host_to_device(&device, host.get());
 }
 
 template <class T, class D>
-void copy_host_to_device(T& device, const std::unique_ptr<T,D>& host, const stream& s) {
+void copy_host_to_device(T& device, const std::unique_ptr<T, D>& host, const stream& s) {
     copy_host_to_device(&device, host.get(), s);
 }
 
 
-
 template <class T>
 void copy_device_to_host(T* host, const T* device, std::size_t size) {
-    memcpy_device_to_host(host, device, sizeof(T)*size);
+    memcpy_device_to_host(host, device, sizeof(T) * size);
 }
 
 template <class T>
 void copy_device_to_host(T* host, const T* device, std::size_t size, const stream& s) {
-    memcpy_device_to_host(host, device, sizeof(T)*size, s);
+    memcpy_device_to_host(host, device, sizeof(T) * size, s);
 }
 
 template <class T>
@@ -133,53 +132,53 @@ void copy_device_to_host(T& host, const T& device, const stream& s) {
 }
 
 template <class T, class D1, class D2>
-void copy_device_to_host(std::unique_ptr<T,D1>& host, const std::unique_ptr<T,D2>& device) {
+void copy_device_to_host(std::unique_ptr<T, D1>& host, const std::unique_ptr<T, D2>& device) {
     copy_device_to_host(host.get(), device.get());
 }
 
 template <class T, class D1, class D2>
-void copy_device_to_host(std::unique_ptr<T,D1>& host, const std::unique_ptr<T,D2>& device, const stream& s) {
+void copy_device_to_host(std::unique_ptr<T, D1>& host, const std::unique_ptr<T, D2>& device, const stream& s) {
     copy_device_to_host(host.get(), device.get(), s);
 }
 
 template <class T, class D>
-void copy_device_to_host(std::unique_ptr<T,D>& host, const T* device) {
+void copy_device_to_host(std::unique_ptr<T, D>& host, const T* device) {
     copy_device_to_host(host.get(), device);
 }
 
 template <class T, class D>
-void copy_device_to_host(std::unique_ptr<T,D>& host, const T* device, const stream& s) {
+void copy_device_to_host(std::unique_ptr<T, D>& host, const T* device, const stream& s) {
     copy_device_to_host(host.get(), device, s);
 }
 
 template <class T, class D>
-void copy_device_to_host(std::unique_ptr<T,D>& host, const T& device) {
+void copy_device_to_host(std::unique_ptr<T, D>& host, const T& device) {
     copy_device_to_host(host.get(), &device);
 }
 
 template <class T, class D>
-void copy_device_to_host(std::unique_ptr<T,D>& host, const T& device, const stream& s) {
+void copy_device_to_host(std::unique_ptr<T, D>& host, const T& device, const stream& s) {
     copy_device_to_host(host.get(), &device, s);
 }
 
 template <class T, class D>
-void copy_device_to_host(T* host, const std::unique_ptr<T,D>& device) {
+void copy_device_to_host(T* host, const std::unique_ptr<T, D>& device) {
     copy_device_to_host(host, device.get());
 }
 
 template <class T, class D>
-void copy_device_to_host(T* host, const std::unique_ptr<T,D>& device, const stream& s) {
+void copy_device_to_host(T* host, const std::unique_ptr<T, D>& device, const stream& s) {
     copy_device_to_host(host, device.get(), s);
 }
 
 template <class T, class D>
-void copy_device_to_host(T& host, const std::unique_ptr<T,D>& device) {
+void copy_device_to_host(T& host, const std::unique_ptr<T, D>& device) {
     copy_device_to_host(&host, device.get());
 }
 
 template <class T, class D>
-void copy_device_to_host(T& host, const std::unique_ptr<T,D>& device, const stream& s) {
+void copy_device_to_host(T& host, const std::unique_ptr<T, D>& device, const stream& s) {
     copy_device_to_host(&host, device.get(), s);
 }
 
-}
+}  // namespace pluto

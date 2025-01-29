@@ -12,8 +12,8 @@
 
 #include <iostream>
 
-#include "pluto/pluto_config.h"
 #include "hic/hic.h"
+#include "pluto/pluto_config.h"
 
 #define LOG PLUTO_DEBUGGING
 
@@ -21,8 +21,8 @@ namespace pluto {
 
 void wait(const event& event) {
     if constexpr (LOG) {
-        std::cout << "               = hicEventSynchronize(event:"<<event.value<<")" << std::endl;
+        std::cout << "               = hicEventSynchronize(event:" << event.value << ")" << std::endl;
     }
 }
 
-}
+}  // namespace pluto

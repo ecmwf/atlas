@@ -15,8 +15,7 @@
 
 namespace pluto::host {
 
-template<typename T>
-using vector = std::vector<T,allocator<T>>;
+template <typename T>
+using vector = std::vector<T, allocator<T>>;
 
 }
-

@@ -26,8 +26,8 @@ void wait() {
         std::cout << "               = hicDeviceSynchronize()" << std::endl;
     }
     if (devices()) {
-        HIC_CALL( hicDeviceSynchronize() );
+        HIC_CALL(hicDeviceSynchronize());
     }
 }
 
-}
+}  // namespace pluto

@@ -10,16 +10,16 @@
 
 #include "runtime.h"
 
-#include "pluto/pluto_config.h"
 #include "hic/hic.h"
+#include "pluto/pluto_config.h"
 
 namespace pluto {
 
 std::size_t devices() {
-    if constexpr(PLUTO_HAVE_HIC) {
+    if constexpr (PLUTO_HAVE_HIC) {
         static std::size_t _devices = []() -> std::size_t {
             int num_devices = 0;
-            auto err = hicGetDeviceCount(&num_devices);
+            auto err        = hicGetDeviceCount(&num_devices);
             if (err) {
                 num_devices = 0;
             }
@@ -32,4 +32,4 @@ std::size_t devices() {
     }
 }
 
-}
+}  // namespace pluto

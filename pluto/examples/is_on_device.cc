@@ -9,29 +9,34 @@
  */
 
 #include <stdio.h>
-#include "pluto/pluto.h"
 #include "hic/hic.h"
+#include "pluto/pluto.h"
 
 HIC_HOST_DEVICE
 void print() {
-  printf("is_on_device = %d\n", int(pluto::is_on_device()));
+    printf("is_on_device = %d\n", int(pluto::is_on_device()));
 }
 
-void print_on_host()   { print(); }
+void print_on_host() {
+    print();
+}
 
 HIC_GLOBAL
-void print_on_device() { print(); }
+void print_on_device() {
+    print();
+}
 
 int main(int argc, char* argv[]) {
-  print_on_host();
-  if( pluto::devices() == 0) {
-    std::cout << "No devices present" << std::endl;
-    return 0;
-  }
-  #if HIC_COMPILER
-    print_on_device<<<1,1>>>();
-  #else
-    std::cout << "Cannot launch kernel 'print_on_device' as compiler does not support it (HIC_COMPILER=0)." << std::endl;
-  #endif
-  pluto::wait();
+    print_on_host();
+    if (pluto::devices() == 0) {
+        std::cout << "No devices present" << std::endl;
+        return 0;
+    }
+#if HIC_COMPILER
+    print_on_device<<<1, 1>>>();
+#else
+    std::cout << "Cannot launch kernel 'print_on_device' as compiler does not support it (HIC_COMPILER=0)."
+              << std::endl;
+#endif
+    pluto::wait();
 }

@@ -9,8 +9,8 @@
  */
 #pragma once
 
-#include <string_view>
 #include <memory>
+#include <string_view>
 
 #include "pluto/memory_resource.h"
 
@@ -22,28 +22,20 @@ namespace pluto {
 // It will always be using (de)allocate_async with the get_current_stream.
 class AsyncMemoryResourceAdaptor : public memory_resource {
 public:
+    AsyncMemoryResourceAdaptor(memory_resource* mr): mr_(mr), async_mr_(dynamic_cast<async_memory_resource*>(mr)) {}
 
-    AsyncMemoryResourceAdaptor( memory_resource* mr ) :
-        mr_(mr),
-        async_mr_(dynamic_cast<async_memory_resource*>(mr)) {
-    }
-
-    memory_resource* upstream_resource() {
-        return mr_;
-    }
+    memory_resource* upstream_resource() { return mr_; }
 
 protected:
     void* do_allocate(std::size_t bytes, std::size_t alignment) override;
- 
+
     void do_deallocate(void* p, std::size_t bytes, std::size_t alignment) override;
- 
-    bool do_is_equal(const memory_resource& other) const noexcept override {
-        return mr_->is_equal(other);
-    }
+
+    bool do_is_equal(const memory_resource& other) const noexcept override { return mr_->is_equal(other); }
 
 private:
     memory_resource* mr_;
     async_memory_resource* async_mr_{nullptr};
 };
 
-}
+}  // namespace pluto

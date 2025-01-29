@@ -32,4 +32,4 @@ void AsyncMemoryResourceAdaptor::do_deallocate(void* p, std::size_t bytes, std::
     }
 }
 
-}
+}  // namespace pluto
