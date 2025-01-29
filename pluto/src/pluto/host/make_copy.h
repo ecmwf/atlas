@@ -11,7 +11,7 @@
 
 #include <memory>
 
-#include "pluto/offload/copy.h"
+#include "pluto/copy.h"
 #include "pluto/host/allocator.h"
 #include "pluto/host/unique_ptr.h"
 

@@ -17,7 +17,7 @@
 
 void set_on_device(double* x, std::size_t size, double value);
 
-void set_on_device(const pluto::Stream& stream, double* x, std::size_t size, double value);
+void set_on_device(const pluto::stream& stream, double* x, std::size_t size, double value);
 
 #if HIC_COMPILER
 
@@ -60,7 +60,7 @@ void launch_kernel( F f) {
 }
 
 template <typename F>
-void launch_kernel(const pluto::Stream& stream, std::size_t size, F f) {
+void launch_kernel(const pluto::stream& stream, std::size_t size, F f) {
     printf("launch on device async \n");
     constexpr std::size_t maxThreadsPerBlock = 256;
     int threadsPerBlock = std::min(size,maxThreadsPerBlock);
@@ -72,7 +72,7 @@ void launch_kernel(const pluto::Stream& stream, std::size_t size, F f) {
 }
 
 template <typename F>
-void launch_kernel(const pluto::Stream& stream, F f) {
+void launch_kernel(const pluto::stream& stream, F f) {
     printf("launch on device async \n");
     applyKernel<<<1,1,0,stream.value<hicStream_t>()>>>(f);
     HIC_CHECK_KERNEL_LAUNCH();
@@ -145,7 +145,7 @@ void launch_kernel(F f) {
 }
 
 template <typename F>
-void launch_kernel(const pluto::Stream& stream, std::size_t size, F f) {
+void launch_kernel(const pluto::stream& stream, std::size_t size, F f) {
     printf("launch on host \n");
     for (size_t idx=0; idx<size; ++idx) {
         f(idx);
@@ -153,7 +153,7 @@ void launch_kernel(const pluto::Stream& stream, std::size_t size, F f) {
 }
 
 template <typename F>
-void launch_kernel(const pluto::Stream& stream, F f) {
+void launch_kernel(const pluto::stream& stream, F f) {
     printf("launch on host \n");
     f();
 }

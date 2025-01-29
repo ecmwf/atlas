@@ -18,7 +18,7 @@
 #include "hic/hic.h"
 
 #include "pluto/pluto_config.h"
-#include "pluto/offload/wait.h"
+#include "pluto/wait.h"
 
 #define LOG PLUTO_DEBUGGING
 
@@ -50,18 +50,18 @@ void memcpy_host_to_device(void* device_ptr, const void* host_ptr, std::size_t b
     }
 }
 
-void memcpy_host_to_device(void* device_ptr, const void* host_ptr, std::size_t bytes, const Stream& stream) {
+void memcpy_host_to_device(void* device_ptr, const void* host_ptr, std::size_t bytes, const stream& s) {
     if (device_ptr == host_ptr) {
         if (LOG) {        
-            std::cout << "               > hicMemcpyHostToDeviceAsync(device_ptr, host_ptr, bytes:"<<bytes<<", stream:"<<stream.value()<<") --> SKIP because same pointers" << std::endl;
+            std::cout << "               > hicMemcpyHostToDeviceAsync(device_ptr, host_ptr, bytes:"<<bytes<<", stream:"<<s.value()<<") --> SKIP because same pointers" << std::endl;
         }
         return;
     }
     if (LOG) {        
-        std::cout << "               > hicMemcpyHostToDeviceAsync(device_ptr, host_ptr, bytes:"<<bytes<<", stream:"<<stream.value()<<")" << std::endl;
+        std::cout << "               > hicMemcpyHostToDeviceAsync(device_ptr, host_ptr, bytes:"<<bytes<<", stream:"<<s.value()<<")" << std::endl;
     }
     if constexpr(PLUTO_HAVE_HIC) {
-        HIC_CALL( hicMemcpyAsync(device_ptr, host_ptr, bytes, hicMemcpyHostToDevice, stream.value<hicStream_t>()) );
+        HIC_CALL( hicMemcpyAsync(device_ptr, host_ptr, bytes, hicMemcpyHostToDevice, s.value<hicStream_t>()) );
     }
     else {
         std::memcpy(device_ptr, host_ptr, bytes);
@@ -87,18 +87,18 @@ void memcpy_device_to_host(void* host_ptr, const void* device_ptr, std::size_t b
     }
 }
 
-void memcpy_device_to_host(void* host_ptr, const void* device_ptr, std::size_t bytes, const Stream& stream) {
+void memcpy_device_to_host(void* host_ptr, const void* device_ptr, std::size_t bytes, const stream& s) {
     if (device_ptr == host_ptr) {
         if (LOG) {
-            std::cout << "               < hicMemcpyDeviceToHostAsync(host_ptr, device_ptr, bytes:"<<bytes<<", stream:"<<stream.value<hicStream_t>()<<") --> SKIP because same pointers" << std::endl;
+            std::cout << "               < hicMemcpyDeviceToHostAsync(host_ptr, device_ptr, bytes:"<<bytes<<", stream:"<<s.value<hicStream_t>()<<") --> SKIP because same pointers" << std::endl;
         }
         return;
     }
     if (LOG) {
-        std::cout << "               < hicMemcpyDeviceToHostAsync(host_ptr, device_ptr, bytes:"<<bytes<<", stream:"<<stream.value<hicStream_t>()<<")" << std::endl;
+        std::cout << "               < hicMemcpyDeviceToHostAsync(host_ptr, device_ptr, bytes:"<<bytes<<", stream:"<<s.value<hicStream_t>()<<")" << std::endl;
     }
     if constexpr(PLUTO_HAVE_HIC) {
-        HIC_CALL( hicMemcpyAsync(host_ptr, device_ptr, bytes, hicMemcpyDeviceToHost, stream.value<hicStream_t>()) );
+        HIC_CALL( hicMemcpyAsync(host_ptr, device_ptr, bytes, hicMemcpyDeviceToHost, s.value<hicStream_t>()) );
     }
     else {
         std::memcpy(host_ptr, device_ptr, bytes);
@@ -135,7 +135,7 @@ void memcpy_host_to_device_2D(void* device_ptr,
                             std::size_t host_pitch_bytes /*stride in bytes to next contiguous chunk on host*/,
                             std::size_t width_bytes /*bytes of contiguous chunk*/,
                             std::size_t height_count /*count of contiguous chunks*/,
-                            const Stream& ) {
+                            const stream& s) {
     if (device_ptr == host_ptr) {
         if (LOG) {
             std::cout << "               > hicMemcpyHostToDevice2DAsync(host_ptr, device_ptr) --> SKIP because same pointers" << std::endl;
@@ -146,7 +146,7 @@ void memcpy_host_to_device_2D(void* device_ptr,
         std::cout << "               > hicMemcpyHostToDevice2DAsync(host_ptr, device_ptr)" << std::endl;
     }
     if constexpr(PLUTO_HAVE_HIC) {
-        HIC_CALL( hicMemcpy2D(device_ptr, device_pitch_bytes, host_ptr, host_pitch_bytes, width_bytes, height_count, hicMemcpyHostToDevice) );
+        HIC_CALL( hicMemcpy2DAsync(device_ptr, device_pitch_bytes, host_ptr, host_pitch_bytes, width_bytes, height_count, hicMemcpyHostToDevice, s.value<hicStream_t>()) );
     }
     else {
         THROW_NOT_IMPLEMENTED("memcpy_host_to_device_2D for CPU backend");
@@ -183,7 +183,7 @@ void memcpy_device_to_host_2D(void* host_ptr,
                             std::size_t device_pitch_bytes /*stride in bytes to next contiguous chunk on device*/,
                             std::size_t width_bytes /*bytes of contiguous chunk*/,
                             std::size_t height_count /*count of contiguous chunks*/,
-                            const Stream& stream) {
+                            const stream& s) {
     if (device_ptr == host_ptr) {
         if (LOG) {
             std::cout << "               < hicMemcpyDeviceToHost2DAsync(host_ptr, device_ptr) --> SKIP because same pointers" << std::endl;
@@ -194,7 +194,7 @@ void memcpy_device_to_host_2D(void* host_ptr,
         std::cout << "               < hicMemcpyDeviceToHost2DAsync(host_ptr, device_ptr)" << std::endl;
     }
     if constexpr(PLUTO_HAVE_HIC) {
-        HIC_CALL( hicMemcpy2DAsync(host_ptr, host_pitch_bytes, device_ptr, device_pitch_bytes, width_bytes, height_count, hicMemcpyDeviceToHost, stream.value<hicStream_t>()) );
+        HIC_CALL( hicMemcpy2DAsync(host_ptr, host_pitch_bytes, device_ptr, device_pitch_bytes, width_bytes, height_count, hicMemcpyDeviceToHost, s.value<hicStream_t>()) );
     }
     else {
         THROW_NOT_IMPLEMENTED("memcpy_device_to_host_2D for CPU backend");

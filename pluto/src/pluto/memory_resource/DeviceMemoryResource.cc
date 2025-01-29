@@ -16,7 +16,7 @@
 #include "hic/hic.h"
 
 #include "pluto/pluto_config.h"
-#include "pluto/offload/Stream.h"
+#include "pluto/stream.h"
 
 #include "MemoryPoolResource.h"
 
@@ -61,29 +61,29 @@ void DeviceMemoryResource::do_deallocate(void* ptr, std::size_t bytes, alignment
 }
 
 
-void* DeviceMemoryResource::do_allocate_async(std::size_t bytes, alignment_t, const Stream& stream) {
+void* DeviceMemoryResource::do_allocate_async(std::size_t bytes, alignment_t, const stream& s) {
     void* ptr;
     if constexpr (PLUTO_HAVE_HIC) {
-        HIC_CALL( hicMallocAsync(&ptr, bytes, stream.value<hicStream_t>() ) );
+        HIC_CALL( hicMallocAsync(&ptr, bytes, s.value<hicStream_t>() ) );
     }
     else {
         ptr = new_delete_resource()->allocate(bytes, alignment);
     }
     if constexpr (LOG) {
-        std::cout << "               + hicMallocAsync(ptr:"<<ptr<<", bytes:"<< bytes <<", stream:" << stream.value() <<");" << std::endl;
+        std::cout << "               + hicMallocAsync(ptr:"<<ptr<<", bytes:"<< bytes <<", stream:" << s.value() <<");" << std::endl;
     }
     return ptr;
 }
 
-void DeviceMemoryResource::do_deallocate_async(void* ptr, std::size_t bytes, alignment_t, const Stream& stream) {
+void DeviceMemoryResource::do_deallocate_async(void* ptr, std::size_t bytes, alignment_t, const stream& s) {
     if constexpr (PLUTO_HAVE_HIC) {
-        HIC_CALL( hicFreeAsync(ptr, stream.value<hicStream_t>()) );
+        HIC_CALL( hicFreeAsync(ptr, s.value<hicStream_t>()) );
     }
     else {
         new_delete_resource()->deallocate(ptr, bytes, alignment);
     }
     if constexpr (LOG) {
-        std::cout << "               - hicFreeAsync(ptr:"<<ptr<<", bytes:"<< bytes << ", stream:"<<stream.value()<<");" << std::endl;
+        std::cout << "               - hicFreeAsync(ptr:"<<ptr<<", bytes:"<< bytes << ", stream:"<<s.value()<<");" << std::endl;
     }
 }
 

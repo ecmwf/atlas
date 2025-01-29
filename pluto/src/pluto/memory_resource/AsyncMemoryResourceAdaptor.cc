@@ -8,13 +8,13 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "StreamMemoryResourceAdaptor.h"
+#include "AsyncMemoryResourceAdaptor.h"
 
-#include "pluto/offload/Stream.h"
+#include "pluto/stream.h"
 
 namespace pluto {
 
-void* StreamMemoryResourceAdaptor::do_allocate(std::size_t bytes, std::size_t alignment) {
+void* AsyncMemoryResourceAdaptor::do_allocate(std::size_t bytes, std::size_t alignment) {
     if (async_mr_) {
         return async_mr_->allocate_async(bytes, alignment, get_current_stream());
     }
@@ -23,7 +23,7 @@ void* StreamMemoryResourceAdaptor::do_allocate(std::size_t bytes, std::size_t al
     }
 }
 
-void StreamMemoryResourceAdaptor::do_deallocate(void* p, std::size_t bytes, std::size_t alignment) {
+void AsyncMemoryResourceAdaptor::do_deallocate(void* p, std::size_t bytes, std::size_t alignment) {
     if (async_mr_) {
         async_mr_->deallocate_async(p, bytes, alignment, get_current_stream());
     }

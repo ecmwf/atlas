@@ -8,41 +8,41 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "Stream.h"
+#include "stream.h"
 
 #include "pluto/pluto_config.h"
 #include "hic/hic.h"
-#include "pluto/util/Trace.h"
+#include "pluto/trace.h"
 
 #define LOG PLUTO_DEBUGGING
 
 namespace pluto {
 
 #if PLUTO_HAVE_HIC
-Stream::Stream(stream_t stream)
+stream::stream(stream_t s)
     : stream_ {
-        &stream,
-        [](stream_t* stream) {
+        &s,
+        [](stream_t*) {
             // wrapping, no delete
         }
     } {
 }
 
-Stream::Stream()
+stream::stream()
     :stream_{
         []() {
-            hicStream_t* stream = new hicStream_t;
-            HIC_CALL(hicStreamCreate(stream));
-            return reinterpret_cast<stream_t*>(stream);
+            hicStream_t* s = new hicStream_t;
+            HIC_CALL(hicStreamCreate(s));
+            return reinterpret_cast<stream_t*>(s);
         }(),
-        [](stream_t* stream) {
-            HIC_CALL(hicStreamDestroy(*reinterpret_cast<hicStream_t*>(stream)));
-            delete stream;
+        [](stream_t* s) {
+            HIC_CALL(hicStreamDestroy(*reinterpret_cast<hicStream_t*>(s)));
+            delete s;
         }
     } {
 }
 
-void Stream::wait() const {
+void stream::wait() const {
     if constexpr(LOG) {
         std::cout << "               = hicStreamSynchronize(stream:"<<value()<<")" << std::endl;
     }
@@ -50,7 +50,7 @@ void Stream::wait() const {
 }
 
 #else
-Stream::Stream(stream_t stream)
+stream::stream(stream_t stream)
     : stream_ {
         &stream,
         [](stream_t* stream) {
@@ -59,41 +59,41 @@ Stream::Stream(stream_t stream)
     } {
 }
 
-Stream::Stream()
+stream::stream()
     :stream_{
         []() {
-            static int stream = 0;
-            return reinterpret_cast<stream_t*>(&stream);
+            static int s = 0;
+            return reinterpret_cast<stream_t*>(&s);
         }(),
-        [](stream_t* stream) {
+        [](stream_t*) {
             // No deletion of wrapped static variable
         }
     } {
 }
 
-void Stream::wait() const {
+void stream::wait() const {
     // Nothing
 }
 #endif
 
-static Stream stream0_{nullptr};
+static stream stream0_{nullptr};
 
-static const Stream* default_stream_ = &stream0_;
+static const stream* default_stream_ = &stream0_;
 
-const Stream& default_stream() {
+const stream& default_stream() {
     return stream0_;
 }
 
-const Stream& get_current_stream() {
+const stream& get_current_stream() {
     return *default_stream_;
 }
 
-void set_current_stream(const Stream& s) {
+void set_current_stream(const stream& s) {
     default_stream_ = &s;
 }
 
-void wait(const Stream& stream) {
-    stream.wait();
+void wait(const stream& s) {
+    s.wait();
 }
 
 }

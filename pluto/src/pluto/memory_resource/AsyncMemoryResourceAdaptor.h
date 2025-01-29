@@ -12,20 +12,18 @@
 #include <string_view>
 #include <memory>
 
-#include "pluto/memory_resource/memory_resource.h"
+#include "pluto/memory_resource.h"
 
 namespace pluto {
-
-class Stream;
 
 // --------------------------------------------------------------------------------------------------------
 
 /// Adapts an async_memory_resource to be used by e.g. std::pmr::polymorphic_allocator
-// It will always be using (de)allocate_async with the current default stream.
-class StreamMemoryResourceAdaptor : public memory_resource {
+// It will always be using (de)allocate_async with the get_current_stream.
+class AsyncMemoryResourceAdaptor : public memory_resource {
 public:
 
-    StreamMemoryResourceAdaptor( memory_resource* mr ) :
+    AsyncMemoryResourceAdaptor( memory_resource* mr ) :
         mr_(mr),
         async_mr_(dynamic_cast<async_memory_resource*>(mr)) {
     }

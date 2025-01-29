@@ -21,7 +21,7 @@
 int main(int argc, char* argv[]) {
     std::cout << "BEGIN" << std::endl;
 
-    pluto::TraceOptions::instance().enabled = true;
+    pluto::set_trace(true);
     bool pinning = true;
 
     std::unique_ptr<pluto::MemoryPoolResource> memory_pool;

@@ -15,11 +15,11 @@
 
 namespace pluto {
 
-class Stream {
+class stream {
     using stream_t = void*;
 public:
-    explicit Stream(stream_t stream);
-    Stream();
+    explicit stream(stream_t);
+    stream();
 
     [[nodiscard]] stream_t value() const {
         return *stream_;
@@ -36,18 +36,18 @@ private:
 };
 
 
-const Stream& default_stream();
+const stream& default_stream();
 
-const Stream& get_current_stream();
+const stream& get_current_stream();
 
-void set_current_stream(const Stream&);
+void set_current_stream(const stream&);
 
-void wait(const Stream&);
+void wait(const stream&);
 
 class [[nodiscard]] current_stream {
 public:
 
-    current_stream(const Stream& s) :
+    current_stream(const stream& s) :
         saved_(get_current_stream()) {
         set_current_stream(s);
     }
@@ -56,7 +56,7 @@ public:
         set_current_stream(saved_);
     }
 private:
-   const Stream& saved_;
+   const stream& saved_;
 };
 
 }

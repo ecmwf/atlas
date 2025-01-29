@@ -13,8 +13,8 @@
 #include <iostream>
 
 #include "pluto/pluto_config.h"
-#include "pluto/offload/Stream.h"
-#include "pluto/util/Runtime.h"
+#include "pluto/stream.h"
+#include "pluto/runtime.h"
 #include "hic/hic.h"
 
 #include "MemoryPoolResource.h"

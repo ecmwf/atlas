@@ -127,12 +127,12 @@ public:
     Array(std::size_t size) : 
       Array(size, pluto::get_current_stream()) {}
 
-    Array(const pluto::Stream& stream) :
-      Array(0, stream) {}
+    Array(const pluto::stream& s) :
+      Array(0, s) {}
 
-    Array(std::size_t size, const pluto::Stream& stream) : 
+    Array(std::size_t size, const pluto::stream& s) : 
       resource_(pluto::device::get_default_resource()),
-      stream_(stream),
+      stream_(s),
       alloc_(resource_) {
       allocate(size);
     }
@@ -176,7 +176,7 @@ public:
 
 private:
     memory_resource* resource_;
-    const pluto::Stream& stream_;
+    const pluto::stream& stream_;
     pluto::allocator<value_type> alloc_;
     value_type* ptr_{nullptr};
     std::size_t size_{0};
@@ -217,7 +217,7 @@ int main(int argc, char* argv[]) {
   //   std::make_unique<TraceMemoryResource>(std::cout, "heap",std::pmr::new_delete_resource())
   // );
   if (argc > 1) {
-    TraceOptions::instance().enabled = std::atoi(argv[1]);
+    pluto::set_trace(std::atoi(argv[1]));
   }
 #if 0
   std::size_t alignment = 64;
@@ -397,7 +397,7 @@ int main(int argc, char* argv[]) {
   std::cout << "\n\n\n END ITERATIONS\n\n\n" << std::endl;
 #endif
 
-  // pluto::Stream stream;
+  // pluto::stream stream;
   // pluto::set_current_stream(stream);
 
   auto managed_resource = Register("managed", std::make_unique<TraceMemoryResource>("managed", pluto::managed_resource()));
@@ -489,7 +489,7 @@ int main(int argc, char* argv[]) {
 
   std::fill(h_ptr, h_ptr+size, 1.);
   // auto& stream = get_current_stream();
-  Stream stream1, stream2, stream3;
+  pluto::stream stream1, stream2, stream3;
   memcpy_host_to_device(d_ptr, h_ptr, bytes, stream1);
 
   set_on_device(stream2, d_ptr, size, 2.);
@@ -662,7 +662,7 @@ for( int i=0; i<2; ++i)
   std::cout << "\n\n TEST 6 custom type\n\n" << std::endl;
   device::scoped_default_resource default_device_resource("device_pool");
   
-  bool verbosity = TraceOptions::instance().enabled;
+  bool verbosity = trace_enabled();
 
   {
     std::cout << "Using device::allocator<CustomType>" << std::endl;

@@ -62,7 +62,7 @@ public:
     data_ = alloc_.allocate(size_);
   }
 
-  array(std::size_t size, const pluto::Stream& stream) :
+  array(std::size_t size, const pluto::stream& stream) :
     size_{size},
     stream_(&stream) {
     data_ = alloc_.allocate_async(size_, *stream_);
@@ -76,7 +76,7 @@ public:
   }
 
   template <typename Alloc>
-  array(std::size_t size, const pluto::Stream& stream, const Alloc& alloc) :
+  array(std::size_t size, const pluto::stream& stream, const Alloc& alloc) :
     alloc_{alloc},
     size_{size},
     stream_(&stream) {
@@ -101,7 +101,7 @@ public:
       alloc_.deallocate(data_, size_);
     }
   }
-  void set_stream(const pluto::Stream& stream) {
+  void set_stream(const pluto::stream& stream) {
     stream_ = &stream;
   }
   value_type&       operator[](std::size_t i) { return data_[i]; }
@@ -113,7 +113,7 @@ private:
   allocator_type alloc_;
   std::size_t size_;
   value_type* data_ {nullptr};
-  pluto::Stream const* stream_{nullptr};
+  pluto::stream const* stream_{nullptr};
 };
 
 // ---------------------------------------------------------------------------------------------------
@@ -131,14 +131,14 @@ void kernel_plus_one_on_device(T* d, int n) {
 }
 
 template<typename T>
-void plus_one_on_device(T* d, int n, const pluto::Stream& stream) {
+void plus_one_on_device(T* d, int n, const pluto::stream& stream) {
     const int threads_per_block{1024};
     const int blocks_per_grid{32};
     kernel_plus_one_on_device<<<blocks_per_grid, threads_per_block, 0, stream.value<hicStream_t>()>>>(d, n);
 }
 #else
 template<typename T>
-void plus_one_on_device(T* d, int n, const pluto::Stream& stream) {
+void plus_one_on_device(T* d, int n, const pluto::stream& stream) {
   for(int i=0; i<n; ++i) { d[i] += 1.; }
 }
 #endif
@@ -161,7 +161,7 @@ int main(int argc, char* argv[]) {
     std::cerr << "streams = " << nb_streams << std::endl;
 
     // A stream pool
-    std::vector<pluto::Stream> streams(nb_streams);
+    std::vector<pluto::stream> streams(nb_streams);
 
     std::cerr << "host alloc" << std::endl;
     array<value_type> array_h1(size, pluto::pinned_resource());

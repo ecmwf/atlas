@@ -8,27 +8,20 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "Runtime.h"
+#include "event.h"
+
+#include <iostream>
 
 #include "pluto/pluto_config.h"
 #include "hic/hic.h"
 
+#define LOG PLUTO_DEBUGGING
+
 namespace pluto {
 
-std::size_t devices() {
-    if constexpr(PLUTO_HAVE_HIC) {
-        static std::size_t _devices = []() -> std::size_t {
-            int num_devices = 0;
-            auto err = hicGetDeviceCount(&num_devices);
-            if (err) {
-                num_devices = 0;
-            }
-            return static_cast<std::size_t>(num_devices);
-        }();
-        return _devices;
-    }
-    else {
-        return 0;
+void wait(const event& event) {
+    if constexpr (LOG) {
+        std::cout << "               = hicEventSynchronize(event:"<<event.value<<")" << std::endl;
     }
 }
 

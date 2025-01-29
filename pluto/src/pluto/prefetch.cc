@@ -14,29 +14,31 @@
 #include "hic/hic.h"
 #include "pluto/pluto_config.h"
 
+#include "pluto/stream.h"
+
 namespace pluto {
 
-void prefetch_managed_device(const void* managed_ptr, std::size_t bytes) {
+void prefetch_host_to_device(const void* managed_ptr, std::size_t bytes) {
     if constexpr(PLUTO_HAVE_HIC) {
         HIC_CALL( hicMemPrefetchAsync(managed_ptr, bytes, 0 /*device id*/) );
     }
 }
 
-void prefetch_managed_device(const void* managed_ptr, std::size_t bytes, const Stream& stream) {
+void prefetch_host_to_device(const void* managed_ptr, std::size_t bytes, const stream& s) {
     if constexpr(PLUTO_HAVE_HIC) {
-        HIC_CALL( hicMemPrefetchAsync(managed_ptr, bytes, 0 /*device id*/, stream.value<hicStream_t>() ) );
+        HIC_CALL( hicMemPrefetchAsync(managed_ptr, bytes, 0 /*device id*/, s.value<hicStream_t>() ) );
     }
 }
 
-void prefetch_managed_host(const void* managed_ptr, std::size_t bytes) {
+void prefetch_device_to_host(const void* managed_ptr, std::size_t bytes) {
     if constexpr(PLUTO_HAVE_HIC) {
         HIC_CALL( hicMemPrefetchAsync(managed_ptr, bytes, hicCpuDeviceId) );
     }
 }
 
-void prefetch_managed_host(const void* managed_ptr, std::size_t bytes, const Stream& stream) {
+void prefetch_device_to_host(const void* managed_ptr, std::size_t bytes, const stream& s) {
     if constexpr(PLUTO_HAVE_HIC) {
-        HIC_CALL( hicMemPrefetchAsync(managed_ptr, bytes, hicCpuDeviceId, stream.value<hicStream_t>()) );
+        HIC_CALL( hicMemPrefetchAsync(managed_ptr, bytes, hicCpuDeviceId, s.value<hicStream_t>()) );
     }
 }
 

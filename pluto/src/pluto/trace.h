@@ -29,4 +29,17 @@ private:
         }
     }
 };
+
+inline std::ostream& trace() {
+    return *TraceOptions::instance().out;
+}
+
+inline bool trace_enabled() {
+    return TraceOptions::instance().enabled;
+}
+
+inline void set_trace(bool value) {
+    TraceOptions::instance().enabled = value;
+}
+
 }

@@ -32,7 +32,7 @@ namespace pluto::yakl {
 
 #define __YAKL_NAMESPACE_WRAPPER_BEGIN__ namespace pluto {
 #define __YAKL_NAMESPACE_WRAPPER_END__ }
-#include "pluto/memory_resource/yakl/YAKL_Gator.h"
+#include "pluto/memory_resource/detail/yakl/YAKL_Gator.h"
 
 // ------------------------------------------------------------------------------------
 
@@ -42,9 +42,9 @@ namespace pluto::yakl {
 #include <cmath>
 #include <limits>
 
-#include "pluto/memory_resource/memory_resource.h"
-#include "pluto/util/Alignment.h"
-#include "pluto/offload/Stream.h"
+#include "pluto/memory_resource.h"
+#include "pluto/alignment.h"
+#include "pluto/stream.h"
 
 namespace pluto {
 

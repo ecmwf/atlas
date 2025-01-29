@@ -8,9 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "memory_resource.h"
+#include "pluto/memory_resource.h"
 
-#include "pluto/util/Registry.h"
+#include "pluto/detail/Registry.h"
 #include "pluto/memory_resource/MemoryPoolResource.h"
 
 // --------------------------------------------------------------------------------------------------------

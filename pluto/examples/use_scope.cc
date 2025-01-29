@@ -60,7 +60,7 @@ void recursive_scope_object(int recursion) {
 int main(int argc, char* argv[]) {
     std::cout << "BEGIN" << std::endl;
 
-    pluto::TraceOptions::instance().enabled = true;
+    pluto::set_trace(true);
 
     // Just wrap default resource for tracing allocations
     pluto::TraceMemoryResource default_memory_resource{"default", pluto::get_default_resource()};

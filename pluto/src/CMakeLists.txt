@@ -18,15 +18,18 @@ if( HAVE_CUDA OR HAVE_HIP )
 endif()
 
 configure_file(pluto/pluto_config.h.in pluto/pluto_config.h @ONLY )
-install( FILES
-  ${CMAKE_CURRENT_BINARY_DIR}/pluto/pluto_config.h
+install(
+  FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/pluto/pluto_config.h
   DESTINATION
-  ${INSTALL_INCLUDE_DIR}/pluto
+    ${INSTALL_INCLUDE_DIR}/pluto
 )
 
 ecbuild_add_library( TARGET pluto
   SOURCES
-  #!${pluto_host_device_src}
+    pluto/pluto.h
+    ${CMAKE_CURRENT_BINARY_DIR}/pluto/pluto_config.h
+
     pluto/device/MemoryResource.cc
     pluto/device/allocator.h
     pluto/device/make_copy.h
@@ -40,17 +43,15 @@ ecbuild_add_library( TARGET pluto
     pluto/host/unique_ptr.h
     pluto/host/vector.h
 
+    pluto/memory_resource.h
     pluto/memory_resource/compat/memory_resource
-    pluto/memory_resource/yakl/YAKL_Gator.h
-    pluto/memory_resource/yakl/YAKL_LinearAllocator.h
+    pluto/memory_resource/AsyncMemoryResourceAdaptor.cc
+    pluto/memory_resource/AsyncMemoryResourceAdaptor.h
     pluto/memory_resource/DeviceMemoryResource.cc
     pluto/memory_resource/DeviceMemoryResource.h
-    pluto/memory_resource/GatorMemoryResource.cc
-    pluto/memory_resource/GatorMemoryResource.h
     pluto/memory_resource/ManagedMemoryResource.cc
     pluto/memory_resource/ManagedMemoryResource.h
     pluto/memory_resource/memory_resource.cc
-    pluto/memory_resource/memory_resource.h
     pluto/memory_resource/MemoryPoolResource.cc
     pluto/memory_resource/MemoryPoolResource.h
     pluto/memory_resource/MemoryResourceAdaptor.h
@@ -58,44 +59,42 @@ ecbuild_add_library( TARGET pluto
     pluto/memory_resource/PinnedMemoryResource.h
     pluto/memory_resource/TraceMemoryResource.cc
     pluto/memory_resource/TraceMemoryResource.h
-    pluto/memory_resource/StreamMemoryResourceAdaptor.cc
-    pluto/memory_resource/StreamMemoryResourceAdaptor.h
+    pluto/memory_resource/detail/GatorMemoryResource.cc
+    pluto/memory_resource/detail/GatorMemoryResource.h
+    pluto/memory_resource/detail/yakl/YAKL_Gator.h
+    pluto/memory_resource/detail/yakl/YAKL_LinearAllocator.h
 
-    pluto/offload/copy.h
-    pluto/offload/Event.cc
-    pluto/offload/Event.h
-    pluto/offload/memcpy.cc
-    pluto/offload/memcpy.h
-    pluto/offload/prefetch.cc
-    pluto/offload/prefetch.h
-    pluto/offload/Stream.cc
-    pluto/offload/Stream.h
-    pluto/offload/wait.cc
-    pluto/offload/wait.h
+    pluto/alignment.h
+    pluto/copy.h
+    pluto/event.cc
+    pluto/event.h
+    pluto/memcpy.cc
+    pluto/memcpy.h
+    pluto/pointer_info.cc
+    pluto/pointer_info.h
+    pluto/prefetch.cc
+    pluto/prefetch.h
+    pluto/runtime.cc
+    pluto/runtime.h
+    pluto/scope.cc
+    pluto/scope.h
+    pluto/stream.cc
+    pluto/stream.h
+    pluto/trace.h
+    pluto/wait.cc
+    pluto/wait.h
     
-    pluto/util/PointerInfo.cc
-    pluto/util/PointerInfo.h
-    
-    pluto/util/Alignment.h
-    pluto/util/PointerInfo.cc
-    pluto/util/PointerInfo.h
-    pluto/util/Registry.h
-    pluto/util/Runtime.cc
-    pluto/util/Runtime.h
-    pluto/util/Scope.cc
-    pluto/util/Scope.h
-    pluto/util/Trace.h
+    pluto/detail/Registry.h
 
-    pluto/pluto.h
-    ${CMAKE_CURRENT_BINARY_DIR}/pluto/pluto_config.h
-
-    INSTALL_HEADERS ALL
-    HEADER_DESTINATION include
+  INSTALL_HEADERS ALL
+  HEADER_DESTINATION include
+  PUBLIC_LIBS hic
+  PUBLIC_INCLUDES 
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )
 
 target_compile_features( pluto INTERFACE cxx_std_17 )
-target_include_directories( pluto PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> )
-target_link_libraries( pluto PUBLIC hic )
 target_compile_options( pluto PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:--extended-lambda>)
 
 
@@ -104,5 +103,5 @@ ecbuild_add_library( TARGET pluto_f
     pluto_f/pluto_module.F90
     pluto_f/pluto_module.cc
   PRIVATE_LIBS pluto
+  PUBLIC_INCLUDES $<BUILD_INTERFACE:${CMAKE_Fortran_MODULE_DIRECTORY}>
 )
-target_include_directories( pluto_f PUBLIC $<BUILD_INTERFACE:${CMAKE_Fortran_MODULE_DIRECTORY}> )
