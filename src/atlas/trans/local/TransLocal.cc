@@ -800,7 +800,7 @@ TransLocal::~TransLocal() {
 
 const functionspace::Spectral& TransLocal::spectral() const {
     if (not spectral_) {
-        spectral_ = functionspace::Spectral(Trans(this));
+        spectral_ = functionspace::Spectral( truncation() );
     }
     return spectral_;
 }
@@ -869,6 +869,10 @@ void TransLocal::invtrans_vordiv2wind(const Field& spvor, const Field& spdiv, Fi
     const auto vorticity_spectra  = array::make_view<double, 1>(spvor);
     const auto divergence_spectra = array::make_view<double, 1>(spdiv);
     auto gp_fields                = array::make_view<double, 2>(gpwind);
+
+    size_t spectral_data_size = 2 * legendre_size(truncation_) * nb_vordiv_fields;
+    ATLAS_ASSERT(vorticity_spectra.size() == spectral_data_size);
+    ATLAS_ASSERT(divergence_spectra.size() == spectral_data_size);
 
     if (gp_fields.shape(1) == grid().size() && gp_fields.shape(0) == 2) {
         invtrans(nb_vordiv_fields, vorticity_spectra.data(), divergence_spectra.data(), gp_fields.data(), config);
@@ -1530,14 +1534,18 @@ void TransLocal::invtrans(const int nb_vordiv_fields, const double vorticity_spe
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void extend_truncation(const int old_truncation, const int nb_fields, const double old_spectra[],
-                       double new_spectra[]) {
+void extend_truncation(const int old_truncation, const int nb_fields, const double old_spectra[], double new_spectra[]) {
+
+    int new_truncation = old_truncation + 1;
+    int old_size = 2 * legendre_size(old_truncation) * nb_fields;
+    int new_size = 2 * legendre_size(new_truncation) * nb_fields;
+
     int k = 0, k_old = 0;
-    for (int m = 0; m <= old_truncation + 1; m++) {             // zonal wavenumber
-        for (int n = m; n <= old_truncation + 1; n++) {         // total wavenumber
+    for (int m = 0; m <= new_truncation; m++) {             // zonal wavenumber
+        for (int n = m; n <= new_truncation; n++) {         // total wavenumber
             for (int imag = 0; imag < 2; imag++) {              // imaginary/real part
                 for (int jfld = 0; jfld < nb_fields; jfld++) {  // field
-                    if (m == old_truncation + 1 || n == old_truncation + 1) {
+                    if (m == new_truncation || n == new_truncation) {
                         new_spectra[k++] = 0.;
                     }
                     else {
@@ -1547,6 +1555,8 @@ void extend_truncation(const int old_truncation, const int nb_fields, const doub
             }
         }
     }
+    ATLAS_ASSERT(k==new_size);
+    ATLAS_ASSERT(k_old==old_size);
 }
 
 // --------------------------------------------------------------------------------------------------------------------

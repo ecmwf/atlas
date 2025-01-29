@@ -65,6 +65,7 @@ TEST( test_trans )
   FCTEST_CHECK_EQUAL( trans%truncation(), truncation )
 
   spectral = trans%spectral()
+  FCTEST_CHECK_EQUAL( spectral%truncation(), truncation )
 
   sp_scal_field = spectral%create_field(name="spectral_scalar",kind=atlas_real(8))
   sp_vor_field  = spectral%create_field(name="spectral_vorticity",kind=atlas_real(8))
