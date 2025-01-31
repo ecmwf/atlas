@@ -632,6 +632,8 @@ interpolation/Interpolation.cc
 interpolation/Interpolation.h
 interpolation/NonLinear.cc
 interpolation/NonLinear.h
+interpolation/AssembleGlobalMatrix.h
+interpolation/AssembleGlobalMatrix.cc
 interpolation/method/Method.cc
 interpolation/method/Method.h
 interpolation/method/MethodFactory.cc
