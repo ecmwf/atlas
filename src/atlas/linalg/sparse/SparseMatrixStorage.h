@@ -186,9 +186,9 @@ private:
 
 template<typename Value, typename Index>
 SparseMatrixStorage::SparseMatrixStorage(const SparseMatrixView<Value,Index>& host_view) {
-    nnz_   = host_view.nnz_;
-    rows_  = host_view.rows_;
-    cols_  = host_view.cols_;
+    nnz_   = host_view.nnz();
+    rows_  = host_view.rows();
+    cols_  = host_view.cols();
     outer_.reset(atlas::array::Array::create<Index>(host_view.outer_size()));
     inner_.reset(atlas::array::Array::create<Index>(host_view.inner_size()));
     value_.reset(atlas::array::Array::create<Value>(host_view.value_size()));
