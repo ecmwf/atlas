@@ -125,6 +125,43 @@ void SparseMatrixStorage::deallocateDevice() const {
     value_->deallocateDevice();
 }
 
+namespace detail {
+    template<typename OutputT, typename InputT>
+    void host_copy(const InputT* input_data, array::Array& output) {
+        auto size = output.size();
+        OutputT* output_data = output.host_data<OutputT>();
+        std::copy( input_data, input_data + size, output_data );
+    }
+
+    template<typename InputT, typename OutputT>
+    void host_copy(const array::Array& input, array::Array& output) {
+        host_copy<OutputT>( input.host_data<InputT>(), output );
+    }
+
+    template<typename OutputT>
+    void host_copy(const array::Array& input, array::Array& output) {
+        switch(input.datatype().kind()) {
+            case DataType::kind<int>():           return host_copy<int,OutputT>( input, output );
+            case DataType::kind<long>():          return host_copy<long,OutputT>( input, output );
+            case DataType::kind<float>():         return host_copy<float,OutputT>( input, output );
+            case DataType::kind<double>():        return host_copy<double,OutputT>( input, output );
+            case DataType::kind<unsigned int>():  return host_copy<unsigned int,OutputT>( input, output );
+            case DataType::kind<unsigned long>(): return host_copy<unsigned long,OutputT>( input, output );
+            default:  ATLAS_NOTIMPLEMENTED;
+        }
+    }
+    void host_copy(const array::Array& input, array::Array& output) {
+        switch(output.datatype().kind()) {
+            case DataType::kind<int>():           return host_copy<int>( input, output );
+            case DataType::kind<long>():          return host_copy<long>( input, output );
+            case DataType::kind<float>():         return host_copy<float>( input, output );
+            case DataType::kind<double>():        return host_copy<double>( input, output );
+            case DataType::kind<unsigned int>():  return host_copy<unsigned int>( input, output );
+            case DataType::kind<unsigned long>(): return host_copy<unsigned long>( input, output );
+            default:  ATLAS_NOTIMPLEMENTED;
+        }
+    }
+}
 
 
 
