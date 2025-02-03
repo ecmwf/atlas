@@ -632,6 +632,8 @@ interpolation/Interpolation.cc
 interpolation/Interpolation.h
 interpolation/NonLinear.cc
 interpolation/NonLinear.h
+interpolation/AssembleGlobalMatrix.h
+interpolation/AssembleGlobalMatrix.cc
 interpolation/method/Method.cc
 interpolation/method/Method.h
 interpolation/method/MethodFactory.cc
@@ -722,6 +724,7 @@ linalg/sparse/SparseMatrixMultiply_OpenMP.h
 linalg/sparse/SparseMatrixMultiply_OpenMP.cc
 linalg/sparse/SparseMatrixStorage.cc
 linalg/sparse/SparseMatrixStorage.h
+linalg/sparse/SparseMatrixToTriplets.h
 linalg/sparse/SparseMatrixView.h
 linalg/dense.h
 linalg/dense/Backend.h
