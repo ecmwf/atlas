@@ -192,9 +192,9 @@ void legpol_quadrature(const size_t kn, const double pfn[], double& pl, double& 
     constexpr size_t itemax = 20;
     constexpr double ztol = std::numeric_limits<double>::epsilon() * 1000.;
 
-    double zx  = pl;
+    double zx = pl;
     double zxn;
-    double zw;
+    double zw = 0;
     bool tol_reached = false;
 
     for (size_t jter = 1; jter <= itemax + 1; ++jter) {

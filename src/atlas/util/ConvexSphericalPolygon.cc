@@ -40,10 +40,6 @@ double distance2(const PointXYZ& p1, const PointXYZ& p2) {
     return dx * dx + dy * dy + dz * dz;
 }
 
-double norm2(const PointXYZ& p) {
-    return p[0] * p[0] + p[1] * p[1] + p[2] * p[2];
-}
-
 bool approx_eq(const double& v1, const double& v2) {
     return std::abs(v1 - v2) <= EPS;
 }
@@ -498,7 +494,6 @@ PointXYZ ConvexSphericalPolygon::GreatCircleSegment::intersect(const GreatCircle
     if (gcircles_distinct) {
         sp /= sp_norm;
         auto sp_2 = sp * -1.;
-        double d = distance2(p.first(), p.second());
         double d1 = std::max(distance2(sp, p.first()), distance2(sp, p.second()));
         double d2 = std::max(distance2(sp_2, p.first()), distance2(sp_2, p.second()));
         if (d1 < d2) {

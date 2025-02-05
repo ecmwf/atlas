@@ -169,7 +169,10 @@ private:
     std::vector<idx_t> sort_cell_edges(Mesh& mesh, idx_t cell_id) const;
     std::vector<idx_t> sort_node_edges(Mesh& mesh, idx_t cell_id) const;
     std::vector<idx_t> get_cell_neighbours(Mesh&, idx_t jcell) const;
-    std::vector<idx_t> get_node_neighbours(Mesh&, idx_t jcell) const;
+
+    struct Workspace;
+
+    std::vector<idx_t> get_node_neighbours(Mesh&, idx_t jcell, Workspace&) const;
     CSPolygonArray get_polygons_celldata(FunctionSpace) const;
     CSPolygonArray get_polygons_nodedata(FunctionSpace, std::vector<idx_t>& csp2node,
                                          std::vector<std::vector<idx_t>>& node2csp,

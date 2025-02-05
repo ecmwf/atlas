@@ -30,7 +30,7 @@ size_t compute_aligned_size(size_t size, size_t alignment) {
 }  // namespace
 
 ArraySpec::ArraySpec():
-    size_(), rank_(), datatype_(DataType::KIND_REAL64), allocated_size_(), contiguous_(true), default_layout_(true) {}
+    size_(), rank_(), allocated_size_(), datatype_(DataType::KIND_REAL64), contiguous_(true), default_layout_(true) {}
 
 ArraySpec::ArraySpec(const ArrayShape& shape): ArraySpec(shape, ArrayAlignment()) {}
 ArraySpec::ArraySpec(DataType datatype, const ArrayShape& shape): ArraySpec(shape) {

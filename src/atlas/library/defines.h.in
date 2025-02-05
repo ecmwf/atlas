@@ -55,5 +55,30 @@
 #define ATLAS_ALWAYS_INLINE inline
 #endif
 
+#define ATLAS_UNREACHABLE() __builtin_unreachable()
+
+#if defined(__NVCOMPILER)
+#    if !defined(ATLAS_START_WARNINGS_SUPPRESSION)
+#        define ATLAS_START_WARNINGS_SUPPRESSION _Pragma( "diag push" )
+#        define ATLAS_STOP_WARNINGS_SUPPRESSION  _Pragma( "diag pop" )
+#    endif
+#    if !defined(ATLAS_SUPPRESS_INTEGER_SIGN_CHANGE_WARNINGS)
+#        define ATLAS_SUPPRESS_INTEGER_SIGN_CHANGE_WARNINGS _Pragma( "diag_suppress 68" )
+#    endif
+#    if !defined(ATLAS_SUPPRESS_UNREACHABLE_WARNINGS)
+#        define ATLAS_SUPPRESS_UNREACHABLE_WARNINGS _Pragma( "diag_suppress 111" )
+#    endif
+#else
+#    if !defined(ATLAS_START_WARNINGS_SUPPRESSION)
+#        define ATLAS_START_WARNINGS_SUPPRESSION
+#        define ATLAS_STOP_WARNINGS_SUPPRESSION
+#    endif
+#    if !defined(ATLAS_SUPPRESS_INTEGER_SIGN_CHANGE_WARNINGS)
+#        define ATLAS_SUPPRESS_INTEGER_SIGN_CHANGE_WARNINGS
+#    endif
+#    if !defined(ATLAS_SUPPRESS_UNREACHABLE_WARNINGS)
+#        define ATLAS_SUPPRESS_UNREACHABLE_WARNINGS
+#    endif
+#endif
 
 #endif

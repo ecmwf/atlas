@@ -19,7 +19,6 @@ namespace partitioner {
 void MatchingMeshPartitionerCubedSphere::partition(const Grid& grid, int partitioning[]) const {
     const auto& comm   = mpi::comm(prePartitionedMesh_.mpi_comm());
     const int mpi_rank = int(comm.rank());
-    const int mpi_size = int(comm.size());
 
     // Make cell finder from owned mesh cells.
     const auto finder = interpolation::method::cubedsphere::CellFinder(prePartitionedMesh_);

@@ -72,7 +72,7 @@ public:
     }
 
     idx_t size() const { return static_cast<idx_t>(gp_.size()); }
-    idx_t capacity() const { return static_cast<idx_t>(gp_.capacity()); }
+    // idx_t capacity() const { return static_cast<idx_t>(gp_.capacity()); }
 
     const GridPoint& operator[](idx_t i) const { return gp_[i]; }
 

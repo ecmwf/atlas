@@ -47,7 +47,7 @@ CASE("test_halo_exchange_01") {
 
 
   // number of points (own + ghost)
-  int no_points;
+  int no_points{0};
   if (atlas::mpi::rank() == 0) {
     no_points = 8;
   } else if (atlas::mpi::rank() == 1) {

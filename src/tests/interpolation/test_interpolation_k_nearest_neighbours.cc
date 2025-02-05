@@ -43,7 +43,7 @@ public:
         const auto m      = atlas::linalg::make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(matrix());
         const auto outer  = m.outer();
         const auto index  = m.inner();
-        const auto weight = m.value();
+        //const auto weight = m.value();
 
         idx_t rows = static_cast<idx_t>(m.rows());
         hash.add(rows);

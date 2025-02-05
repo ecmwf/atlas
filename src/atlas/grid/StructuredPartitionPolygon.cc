@@ -43,7 +43,6 @@ void compute(const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vect
     bool south_pole_included = 90. + grid.y(grid.ny() - 1) == 0;
 
     auto compute_j = [&](const idx_t j) {
-        idx_t jj;
         if (j < 0) {
             return -j - 1 + north_pole_included;
         }

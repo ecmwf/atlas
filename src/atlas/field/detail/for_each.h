@@ -89,6 +89,7 @@ auto make_view_tuple(std::tuple<Field...>&& fields) {
     } else {
         return std::make_tuple();
     }
+    ATLAS_UNREACHABLE();
 }
 
 template <typename Value, int Rank, typename Config,  typename Mask, typename... Field, typename Function>
@@ -166,12 +167,14 @@ void for_each_column_masked_view(const Config& config, const Mask& mask, const s
                             case 2: array::helpers::ArrayForEach<0,2>::apply(config,std::move(views),mask,function); return;
                             default: break;
                         }
+                        break;
                     }
                     case 1: {
                         switch (h_dim[1]) {
                             case 2: array::helpers::ArrayForEach<1,2>::apply(config,std::move(views),mask,function); return;
                             default: break;
                         }
+                        break;
                     }
                 }
                 ATLAS_THROW_EXCEPTION("Not implemented for horizontal_dimension = " << h_dim);
@@ -204,6 +207,7 @@ void for_each_column_masked_view(const Config& config, const Mask& mask, const s
                             case 3: array::helpers::ArrayForEach<0,3>::apply(config,std::move(views),mask,function); return;
                             default: break;
                         }
+                        break;
                     }
                     case 1: {
                         switch (h_dim[1]) {
@@ -211,12 +215,14 @@ void for_each_column_masked_view(const Config& config, const Mask& mask, const s
                             case 3: array::helpers::ArrayForEach<1,3>::apply(config,std::move(views),mask,function); return;
                             default: break;
                         }
+                        break;
                     }
                     case 2: {
                         switch (h_dim[1]) {
                             case 3: array::helpers::ArrayForEach<2,3>::apply(config,std::move(views),mask,function); return;
                             default: break;
                         }
+                        break;
                     }
                     default: break;
                 }

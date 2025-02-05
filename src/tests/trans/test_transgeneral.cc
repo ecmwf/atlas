@@ -649,9 +649,6 @@ CASE("test_trans_hires") {
     // test transgeneral by comparing its result with the trans library
     // this test is based on the test_nomesh case in test_trans.cc
 
-    std::ostream& out = Log::info();
-    double tolerance  = 1.e-13;
-
     //#if ATLAS_HAVE_TRANS
     //    //std::string transTypes[4] = {"localopt", "localopt2", "Local", "ectrans"};
     //    //std::string transTypes[2] = {"localopt2", "Local"};
