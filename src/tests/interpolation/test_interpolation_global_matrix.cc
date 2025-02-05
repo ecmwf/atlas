@@ -159,20 +159,24 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
         // nothing yet
     };
 
-    auto test_matrix_assemble_distribute = [&](const Grid& input_grid, const Grid& output_grid) {
-        int mpi_root = 0;
+    auto do_assemble_distribute_matrix = [&](const std::string scheme_str, const Grid& input_grid, const Grid& output_grid, const int mpi_root) {
         FunctionSpace* fs_in;
         FunctionSpace* fs_out;
         SparseMatrixStorage* gmatrix;
-        std::tie(fs_in, fs_out, gmatrix) = assemble_global_matrix("linear", input_grid, output_grid, mpi_root);
+        std::tie(fs_in, fs_out, gmatrix) = assemble_global_matrix(scheme_str, input_grid, output_grid, mpi_root);
         distribute_global_matrix(*fs_in, *fs_out, *gmatrix);
+    };
 
-        int mpi_root = 0; mpi::size() - 1;
-        assemble_global_matrix("linear", input_grid, output_grid, mpi_root);
-        assemble_global_matrix("cubic", input_grid, output_grid, mpi_root);
-        assemble_global_matrix("quasicubic", input_grid, output_grid, mpi_root);
-        assemble_global_matrix("conservative", input_grid, output_grid, mpi_root);
-        assemble_global_matrix("finite-element", input_grid, output_grid, mpi_root);
+    auto test_matrix_assemble_distribute = [&](const Grid& input_grid, const Grid& output_grid) {
+        int mpi_root = 0;
+        do_assemble_distribute_matrix("linear", input_grid, output_grid, mpi_root);
+
+        mpi_root = mpi::size() - 1;
+        do_assemble_distribute_matrix("linear", input_grid, output_grid, mpi_root);
+        do_assemble_distribute_matrix("cubic", input_grid, output_grid, mpi_root);
+        do_assemble_distribute_matrix("quasicubic", input_grid, output_grid, mpi_root);
+        do_assemble_distribute_matrix("conservative", input_grid, output_grid, mpi_root);
+        do_assemble_distribute_matrix("finite-element", input_grid, output_grid, mpi_root);
     };
 
     test_matrix_assemble_distribute(Grid("O16"), Grid("F32"));
