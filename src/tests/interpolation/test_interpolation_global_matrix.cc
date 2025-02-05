@@ -67,27 +67,42 @@ Config config_scheme(std::string scheme_str) {
 }
 
 
+Config create_fspaces(const std::string& scheme_str, const Grid& input_grid, const Grid& output_grid,
+        FunctionSpace& fs_in, FunctionSpace& fs_out) {
+    Config scheme = config_scheme(scheme_str);
+    auto scheme_type = scheme.getString("type");
+    if (scheme_type == "finite-element") {
+        auto inmesh = Mesh(input_grid);
+        auto outmesh = Mesh(output_grid, grid::MatchingPartitioner(inmesh));
+        fs_in = NodeColumns(inmesh, scheme);
+        fs_out = NodeColumns(outmesh);
+    }
+    else if (scheme_type != "conservative-spherical-polygon") {
+        fs_in = StructuredColumns(input_grid, scheme);
+        fs_out = StructuredColumns(output_grid, grid::MatchingPartitioner(fs_in), scheme);
+    }
+    return scheme;
+}
+
+
 CASE("test_interpolation_structured using grid API") {
 
-auto do_global_matrix = [&](const std::string scheme_str, const Grid& input_grid, const Grid& output_grid, const int mpi_root) {
+using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
+
+    auto  assemble_global_matrix = [&](const std::string scheme_str, const Grid& input_grid, const Grid& output_grid, const int mpi_root) {
         Interpolation interpolator;
-        Config scheme = config_scheme(scheme_str);
-        Log::info() << "    checking " << scheme_str << std::endl;
-        auto scheme_type = scheme.getString("type");
-        if (scheme_type == "finite-element") {
-            auto inmesh = Mesh(input_grid);
-            auto outmesh = Mesh(output_grid, grid::MatchingPartitioner(inmesh));
-            auto fs_in = NodeColumns(inmesh, scheme);
-            auto fs_out = NodeColumns(outmesh);
-            interpolator = Interpolation{ scheme, fs_in, fs_out };
-        }
-        else if (scheme_type == "conservative-spherical-polygon") {
-            interpolator = Interpolation{ scheme, input_grid, output_grid };
-        }
-        else { 
-            auto fs_in = StructuredColumns(input_grid, scheme);
-            auto fs_out = StructuredColumns(output_grid, grid::MatchingPartitioner(fs_in), scheme);
-            interpolator = Interpolation{ scheme, fs_in, fs_out };
+        FunctionSpace fs_in;
+        FunctionSpace fs_out;
+        ATLAS_TRACE_SCOPE("Create interpolation") {
+            FunctionSpace fs_in;
+            FunctionSpace fs_out;
+            auto scheme = create_fspaces(scheme_str, input_grid, output_grid, fs_in, fs_out);
+            if (scheme_str == "conservative") {
+                interpolator = Interpolation{ scheme, input_grid, output_grid };
+            }
+            else {
+                interpolator = Interpolation{ scheme, fs_in, fs_out };
+            }
         }
 
         auto tgt_field = interpolator.target().createField<double>();
@@ -101,7 +116,7 @@ auto do_global_matrix = [&](const std::string scheme_str, const Grid& input_grid
             interpolator.execute(field_in, tgt_field);
         }
 
-        atlas::linalg::SparseMatrixStorage matrix;
+        SparseMatrixStorage matrix;
         ATLAS_TRACE_SCOPE("assemble global matrix") {
             matrix = interpolation::assemble_global_matrix(interpolator, mpi_root);
         }
@@ -136,20 +151,31 @@ auto do_global_matrix = [&](const std::string scheme_str, const Grid& input_grid
 
         // avoid deadlocks whilst waiting for proc mpi_root
         mpi::comm().barrier();
+
+        return std::make_tuple(&fs_in, &fs_out, &matrix);
     };
 
-    auto test_mpi_tasks = [&](const Grid& input_grid, const Grid& output_grid) {
-        int mpi_root = mpi::size() - 1;
-        do_global_matrix("linear", input_grid, output_grid, 0);
-        do_global_matrix("linear", input_grid, output_grid, mpi_root);
-        do_global_matrix("cubic", input_grid, output_grid, mpi_root);
-        do_global_matrix("quasicubic", input_grid, output_grid, mpi_root);
-        do_global_matrix("conservative", input_grid, output_grid, mpi_root);
-        do_global_matrix("finite-element", input_grid, output_grid, mpi_root);
+    auto distribute_global_matrix = [&](const FunctionSpace& fs_in, const FunctionSpace& fs_out, const SparseMatrixStorage& gmatrix) {
+        // nothing yet
     };
 
+    auto test_matrix_assemble_distribute = [&](const Grid& input_grid, const Grid& output_grid) {
+        int mpi_root = 0;
+        FunctionSpace* fs_in;
+        FunctionSpace* fs_out;
+        SparseMatrixStorage* gmatrix;
+        std::tie(fs_in, fs_out, gmatrix) = assemble_global_matrix("linear", input_grid, output_grid, mpi_root);
+        distribute_global_matrix(*fs_in, *fs_out, *gmatrix);
 
-    test_mpi_tasks(Grid("O16"), Grid("F32"));
+        int mpi_root = 0; mpi::size() - 1;
+        assemble_global_matrix("linear", input_grid, output_grid, mpi_root);
+        assemble_global_matrix("cubic", input_grid, output_grid, mpi_root);
+        assemble_global_matrix("quasicubic", input_grid, output_grid, mpi_root);
+        assemble_global_matrix("conservative", input_grid, output_grid, mpi_root);
+        assemble_global_matrix("finite-element", input_grid, output_grid, mpi_root);
+    };
+
+    test_matrix_assemble_distribute(Grid("O16"), Grid("F32"));
 }
 
 }  // namespace
