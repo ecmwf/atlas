@@ -38,14 +38,6 @@ namespace grid {
 
 static eckit::Translator<std::string, int> to_int;
 
-static Domain domain(const Grid::Config& grid) {
-    Grid::Config config;
-    if (grid.get("domain", config)) {
-        return Domain(config);
-    }
-    return Domain();
-}
-
 std::string CubedSphere::static_type() {
     return "cubedsphere";
 }

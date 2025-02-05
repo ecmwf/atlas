@@ -17,7 +17,7 @@ namespace atlas {
 namespace linalg {
 namespace sparse {
 
-class Backend;
+struct Backend;
 
 void current_backend(const std::string& backend);
 sparse::Backend& current_backend();

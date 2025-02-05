@@ -978,7 +978,6 @@ public:
             received_new_elems[jpart].reserve(buf.elem_glb_idx[jpart].size());
         }
 
-        idx_t nb_new_elems(0);
         for (idx_t jpart = 0; jpart < mpi_size; ++jpart) {
             const idx_t nb_elems_from_part = static_cast<idx_t>(buf.elem_glb_idx[jpart].size());
             for (idx_t e = 0; e < nb_elems_from_part; ++e) {
@@ -986,7 +985,6 @@ public:
                     received_new_elems[jpart].emplace_back(e);
                 }
             }
-            nb_new_elems += received_new_elems[jpart].size();
         }
 
         std::vector<std::vector<std::vector<int>>> elements_of_type(mesh.cells().nb_types(),

@@ -1363,10 +1363,11 @@ void TransLocal::invtrans_unstructured(const int truncation, const int nb_fields
 
     // loop over all points:
     int ip = 0;
+    LegendrePolynomialsWorkspace w{truncation};
     for (const PointLonLat p : grid_.lonlat()) {
         const double lon = p.lon() * util::Constants::degreesToRadians();
         const double lat = p.lat() * util::Constants::degreesToRadians();
-        compute_legendre_polynomials_lat(truncation, lat, legendre, zfn);
+        compute_legendre_polynomials_lat(truncation, lat, legendre, zfn, w);
         // Legendre transform:
         {
             //ATLAS_TRACE( "opt Legendre dgemm" );

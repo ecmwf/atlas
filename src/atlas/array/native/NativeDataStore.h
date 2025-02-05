@@ -309,7 +309,7 @@ private:
 template <typename Value>
 class WrappedDataStore : public ArrayDataStore {
 public:
-    WrappedDataStore(Value* host_data, size_t size): host_data_(host_data), size_(size) {
+    WrappedDataStore(Value* host_data, size_t size): size_(size), host_data_(host_data) {
         if (ATLAS_HAVE_GPU && devices()) {
             device_updated_ = false;
         }

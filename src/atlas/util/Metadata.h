@@ -25,7 +25,7 @@ public:
     Metadata(): eckit::LocalConfiguration() {}
 
     Metadata(const eckit::LocalConfiguration& p): eckit::LocalConfiguration(p) {}
-    Metadata(const Metadata& p): eckit::LocalConfiguration(p) {}
+    //Metadata(const Metadata& p): eckit::LocalConfiguration(p) {}
 
     using eckit::LocalConfiguration::set;
 

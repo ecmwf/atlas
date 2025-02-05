@@ -170,7 +170,6 @@ void GridPointsJSONWriter::write(std::ostream& out, std::ostream* info) const {
             }
         }
         else {
-            size_t size = grid_.size();
             size_t end = 0;
             size_t begin;
             auto write_progress = [&]() {

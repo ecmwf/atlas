@@ -28,7 +28,6 @@ public:
     void operator()(Mesh&) const;
 private:
     bool remove_duplicate_points_;
-    bool reshuffle_;
 };
 
 }  // namespace actions

@@ -153,7 +153,7 @@ gidx_t HealpixMeshGenerator::idx_xy_to_x(const int xidx, const int yidx, const i
     ATLAS_ASSERT(xidx >= 0);
 
     const gidx_t nb_nodes_orig = 12 * ns * ns;
-    auto ghostIdx              = [ns, this](int latid) { return this->nb_nodes_ + latid; };
+    auto ghostIdx              = [this](int latid) { return this->nb_nodes_ + latid; };
     gidx_t ret;
 
     if (yidx == 0) {
@@ -197,7 +197,7 @@ gidx_t HealpixMeshGenerator::up_idx(const int xidx, const int yidx, const int ns
     ATLAS_ASSERT(yidx <= 4 * ns && yidx >= 0);
 
     const gidx_t nb_nodes_orig = 12 * ns * ns;
-    auto ghostIdx              = [ns, this](int latid) { return this->nb_nodes_ + latid; };
+    auto ghostIdx              = [this](int latid) { return this->nb_nodes_ + latid; };
 
     int ret;
 
@@ -280,7 +280,7 @@ gidx_t HealpixMeshGenerator::down_idx(const int xidx, const int yidx, const int 
     ATLAS_ASSERT(yidx <= 4 * ns);
 
     const gidx_t nb_nodes_orig = 12 * ns * ns;
-    auto ghostIdx              = [ns, this](int latid) { return this->nb_nodes_ + latid; };
+    auto ghostIdx              = [this](int latid) { return this->nb_nodes_ + latid; };
 
     int ret;
 
@@ -376,7 +376,7 @@ gidx_t HealpixMeshGenerator::right_idx(const int xidx, const int yidx, const int
     ATLAS_ASSERT(yidx <= 4 * ns);
 
     const gidx_t nb_nodes_orig = 12 * ns * ns;
-    auto ghostIdx              = [ns, this](int latid) { return this->nb_nodes_ + latid; };
+    auto ghostIdx              = [this](int latid) { return this->nb_nodes_ + latid; };
     int ret                    = -1;
 
     if (yidx == 0) {
@@ -462,7 +462,7 @@ gidx_t HealpixMeshGenerator::right_idx(const int xidx, const int yidx, const int
 // return global_id - 1 of the pentagon node "to the right of" (xidx,yidx) node
 // pentagon points are only needed for yidx == 1 and yidx == 4 * ns - 1
 gidx_t HealpixMeshGenerator::pentagon_right_idx(const int xidx, const int yidx, const int ns) const {
-    auto ghostIdx = [ns, this](int latid) { return this->nb_nodes_ + latid; };
+    auto ghostIdx = [this](int latid) { return this->nb_nodes_ + latid; };
     if (yidx == 1) {
         return (xidx != 3 ? nb_pole_nodes_ + xidx + 1 : ghostIdx(1));
     }

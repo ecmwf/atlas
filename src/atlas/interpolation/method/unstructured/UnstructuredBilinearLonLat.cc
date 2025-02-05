@@ -235,16 +235,12 @@ void UnstructuredBilinearLonLat::setup(const FunctionSpace& source) {
 
     array::ArrayView<int, 1> out_ghosts = array::make_view<int, 1>(target_ghost_);
 
-    idx_t Nelements = meshSource.cells().size();
-
     // weights -- one per vertex of element, triangles (3) or quads (4)
 
     Triplets weights_triplets;               // structure to fill-in sparse matrix
     weights_triplets.reserve(out_npts * 4);  // preallocate space as if all elements where quads
 
     // search nearest k cell centres
-
-    const idx_t maxNbElemsToTry = std::max<idx_t>(8, idx_t(Nelements * max_fraction_elems_to_try_));
 
     std::vector<idx_t> failures;
 

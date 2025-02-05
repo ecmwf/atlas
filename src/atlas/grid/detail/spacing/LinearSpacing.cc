@@ -57,7 +57,7 @@ LinearSpacing::Params::Params(const eckit::Parametrisation& params) {
 }
 
 LinearSpacing::Params::Params(double _start, double _end, long _N, bool _endpoint):
-    N(_N), start(_start), end(_end), endpoint(_endpoint) {
+    start(_start), end(_end), N(_N), endpoint(_endpoint) {
     length = end - start;
     if (endpoint && N > 1) {
         step = length / double(N - 1);

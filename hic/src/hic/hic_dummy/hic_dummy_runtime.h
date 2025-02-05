@@ -27,15 +27,15 @@ using dummyEvent_t  = void*;
 using dummyHostFn_t = void*;
 using dummyStream_t = void*;
 
-const char* dummyGetErrorString(dummyError_t) {
+inline const char* dummyGetErrorString(dummyError_t) {
     DUMMY_SHOULD_NOT_BE_CALLED( hicGetErrorString );
 }
 
-dummyError_t dummyGetLastError( void ) {
+inline dummyError_t dummyGetLastError( void ) {
     DUMMY_SHOULD_NOT_BE_CALLED( hicGetLastError );
 }
 
-dummyError_t dummyPeekAtLastError( void ) {
+inline dummyError_t dummyPeekAtLastError( void ) {
     DUMMY_SHOULD_NOT_BE_CALLED( hicPeekAtLastError );
 }
 

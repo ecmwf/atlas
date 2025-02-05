@@ -112,8 +112,6 @@ Structured::~Structured() = default;
 
 Structured::XSpace::XSpace(): impl_(nullptr) {}
 
-Structured::XSpace::XSpace(const XSpace& xspace) = default;
-
 template <typename NVector>
 Structured::XSpace::XSpace(const std::array<double, 2>& interval, const NVector& N, bool endpoint):
     impl_(new Implementation(interval, N, endpoint)) {}
@@ -296,8 +294,8 @@ Structured::XSpace::Implementation::Implementation(const Spacing& spacing, idx_t
 
 Structured::XSpace::Implementation::Implementation(const std::vector<Spacing>& spacings):
     ny_(spacings.size()),
-    nxmax_(0),
     nxmin_(std::numeric_limits<idx_t>::max()),
+    nxmax_(0),
     nx_(ny_),
     xmin_(ny_),
     xmax_(ny_),

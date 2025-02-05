@@ -51,6 +51,9 @@ public:
     Cache(const Cache& other);
     Cache(const Cache& other, const std::string& filter);
     Cache(const Interpolation&);
+    Cache& operator=(const Cache& other);
+    Cache& operator=(Cache&& other);
+
     operator bool() const { return not cache_.empty(); }
     virtual ~Cache();
     size_t footprint() const {
@@ -112,6 +115,7 @@ public:
     MatrixCache(std::shared_ptr<const Matrix> m, const std::string& uid = "");
     MatrixCache(const Matrix* m);
     MatrixCache(const Interpolation&);
+
     operator bool() const;
     const Matrix& matrix() const;
     const std::string& uid() const;

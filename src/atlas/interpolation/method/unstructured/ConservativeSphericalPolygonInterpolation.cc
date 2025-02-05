@@ -302,20 +302,25 @@ std::vector<idx_t> ConservativeSphericalPolygonInterpolation::get_cell_neighbour
     return nbr_cells;
 }
 
+struct ConservativeSphericalPolygonInterpolation::Workspace {
+    std::vector<idx_t> nbr_nodes_od;
+    std::vector< std::array<idx_t,2> > cnodes;
+};
+
 // get cyclically sorted node neighbours without using edge connectivity
-std::vector<idx_t> ConservativeSphericalPolygonInterpolation::get_node_neighbours(Mesh& mesh, idx_t node_id) const {
+std::vector<idx_t> ConservativeSphericalPolygonInterpolation::get_node_neighbours(Mesh& mesh, idx_t node_id, Workspace& w) const {
     const auto& cell2node = mesh.cells().node_connectivity();
     if (mesh.nodes().cell_connectivity().rows() == 0) {
         mesh::actions::build_node_to_cell_connectivity(mesh);
     }
     const auto& node2cell = mesh.nodes().cell_connectivity();
     std::vector<idx_t> nbr_nodes;
-    std::vector<idx_t> nbr_nodes_od;
     const int ncells = node2cell.cols(node_id);
     ATLAS_ASSERT(ncells > 0, "There is a node which does not connect to any cell");
-    idx_t cnodes[ncells][2];
     nbr_nodes.reserve(ncells + 1);
-    nbr_nodes_od.reserve(ncells + 1);
+    w.cnodes.resize(ncells);
+    w.nbr_nodes_od.clear();
+    w.nbr_nodes_od.reserve(ncells + 1);
     for (idx_t icell = 0; icell < ncells; ++icell) {
         const idx_t cell = node2cell(node_id, icell);
         const int nnodes = cell2node.cols(cell);
@@ -325,25 +330,25 @@ std::vector<idx_t> ConservativeSphericalPolygonInterpolation::get_node_neighbour
                 break;
             }
         }
-        cnodes[icell][0] = cell2node(cell, prev_index(cnode, nnodes));
-        cnodes[icell][1] = cell2node(cell, next_index(cnode, nnodes));
+        w.cnodes[icell][0] = cell2node(cell, prev_index(cnode, nnodes));
+        w.cnodes[icell][1] = cell2node(cell, next_index(cnode, nnodes));
     }
     if (ncells == 1) {
-        nbr_nodes.emplace_back(cnodes[0][0]);
-        nbr_nodes.emplace_back(cnodes[0][1]);
+        nbr_nodes.emplace_back(w.cnodes[0][0]);
+        nbr_nodes.emplace_back(w.cnodes[0][1]);
         return nbr_nodes;
     }
     // cycle one direction
-    idx_t find = cnodes[0][1];
-    idx_t prev = cnodes[0][0];
+    idx_t find = w.cnodes[0][1];
+    idx_t prev = w.cnodes[0][0];
     nbr_nodes.emplace_back(prev);
     nbr_nodes.emplace_back(find);
     for (idx_t icycle = 0; nbr_nodes[0] != find;) {
         idx_t jcell = 0;
         for (; jcell < ncells; ++jcell) {
             idx_t ocell = (icycle + jcell + 1) % ncells;
-            idx_t cand0 = cnodes[ocell][0];
-            idx_t cand1 = cnodes[ocell][1];
+            idx_t cand0 = w.cnodes[ocell][0];
+            idx_t cand1 = w.cnodes[ocell][1];
             if (find == cand0 && prev != cand1) {
                 if (cand1 == nbr_nodes[0]) {
                     return nbr_nodes;
@@ -377,39 +382,39 @@ std::vector<idx_t> ConservativeSphericalPolygonInterpolation::get_node_neighbour
         return nbr_nodes;
     }
     // cycle the oposite direction
-    find = cnodes[0][0];
-    prev = cnodes[0][1];
-    nbr_nodes_od.emplace_back(prev);
-    nbr_nodes_od.emplace_back(find);
-    for (idx_t icycle = 0; nbr_nodes_od[0] != find;) {
+    find = w.cnodes[0][0];
+    prev = w.cnodes[0][1];
+    w.nbr_nodes_od.emplace_back(prev);
+    w.nbr_nodes_od.emplace_back(find);
+    for (idx_t icycle = 0; w.nbr_nodes_od[0] != find;) {
         idx_t jcell = 0;
         for (; jcell < ncells; ++jcell) {
             idx_t ocell = (icycle + jcell + 1) % ncells;
-            if (find == cnodes[ocell][0] && prev != cnodes[ocell][1]) {
-                nbr_nodes_od.emplace_back(cnodes[ocell][1]);
+            if (find == w.cnodes[ocell][0] && prev != w.cnodes[ocell][1]) {
+                w.nbr_nodes_od.emplace_back(w.cnodes[ocell][1]);
                 prev = find;
-                find = cnodes[ocell][1];
+                find = w.cnodes[ocell][1];
                 break;
             }
-            if (find == cnodes[ocell][1] && prev != cnodes[ocell][0]) {
-                nbr_nodes_od.emplace_back(cnodes[ocell][0]);
+            if (find == w.cnodes[ocell][1] && prev != w.cnodes[ocell][0]) {
+                w.nbr_nodes_od.emplace_back(w.cnodes[ocell][0]);
                 prev = find;
-                find = cnodes[ocell][0];
+                find = w.cnodes[ocell][0];
                 break;
             }
         }
         if (jcell == ncells) {
-            if (find != nbr_nodes_od[nbr_nodes_od.size() - 1]) {
-                nbr_nodes_od.emplace_back(find);
+            if (find != w.nbr_nodes_od[w.nbr_nodes_od.size() - 1]) {
+                w.nbr_nodes_od.emplace_back(find);
             }
             break;
         }
         icycle++;
     }
     // put together
-    int ow_size = nbr_nodes_od.size();
+    int ow_size = w.nbr_nodes_od.size();
     for (int i = 0; i < ow_size - 2; i++) {
-        nbr_nodes.emplace_back(nbr_nodes_od[ow_size - 1 - i]);
+        nbr_nodes.emplace_back(w.nbr_nodes_od[ow_size - 1 - i]);
     }
     return nbr_nodes;
 }
@@ -465,8 +470,6 @@ ConservativeSphericalPolygonInterpolation::get_polygons_nodedata(FunctionSpace f
     const auto nodes_ll   = array::make_view<double, 2>(mesh.nodes().lonlat());
     const auto& cell2node = mesh.cells().node_connectivity();
     const auto cell_halo  = array::make_view<int, 1>(mesh.cells().halo());
-    const auto cell_flags = array::make_view<int, 1>(mesh.cells().flags());
-    const auto cell_part  = array::make_view<int, 1>(mesh.cells().partition());
     auto xyz2ll           = [](const atlas::PointXYZ& p_xyz) {
         PointLonLat p_ll;
         eckit::geometry::Sphere::convertCartesianToSpherical(1., p_xyz, p_ll);
@@ -478,13 +481,16 @@ ConservativeSphericalPolygonInterpolation::get_polygons_nodedata(FunctionSpace f
         return p_xyz;
     };
     const auto node_halo  = array::make_view<int, 1>(mesh.nodes().halo());
-    const auto node_ghost  = array::make_view<int, 1>(mesh.nodes().ghost());
     const auto node_flags = array::make_view<int, 1>(mesh.nodes().flags());
     const auto node_part  = array::make_view<int, 1>(mesh.nodes().partition());
 
     idx_t cspol_id = 0;         // subpolygon enumeration
     errors         = {0., 0.};  // over/undershoots in creation of subpolygons
     const int fs_halo = functionspace::NodeColumns(fs).halo().size();
+
+    std::vector<PointXYZ> pts_xyz;
+    std::vector<PointLonLat> pts_ll;
+    std::vector<int> pts_idx;
 
     for (idx_t cell = 0; cell < mesh.cells().size(); ++cell) {
         if( cell_halo(cell) > fs_halo ) {
@@ -494,9 +500,9 @@ ConservativeSphericalPolygonInterpolation::get_polygons_nodedata(FunctionSpace f
         const idx_t n_nodes = cell2node.cols(cell);
         ATLAS_ASSERT(n_nodes > 2);
         PointXYZ cell_mid(0., 0., 0.);  // cell centre
-        std::vector<PointXYZ> pts_xyz;
-        std::vector<PointLonLat> pts_ll;
-        std::vector<int> pts_idx;
+        pts_xyz.clear();
+        pts_ll.clear();
+        pts_idx.clear();
         pts_xyz.reserve(n_nodes);
         pts_ll.reserve(n_nodes);
         pts_idx.reserve(n_nodes);
@@ -520,10 +526,9 @@ ConservativeSphericalPolygonInterpolation::get_polygons_nodedata(FunctionSpace f
         PointLonLat cell_ll       = xyz2ll(cell_mid);
         double loc_csp_area_shoot = ConvexSphericalPolygon(pts_ll).area();
         // get ConvexSphericalPolygon for each valid edge
-        int halo_type;
+        int halo_type{0};
         for (int inode = 0; inode < pts_idx.size(); inode++) {
             int inode_n        = next_index(inode, pts_idx.size());
-            idx_t node         = cell2node(cell, inode);
             idx_t node_n       = cell2node(cell, inode_n);
             PointXYZ iedge_mid = pts_xyz[inode] + pts_xyz[inode_n];
             iedge_mid          = PointXYZ::div(iedge_mid, PointXYZ::norm(iedge_mid));
@@ -536,7 +541,7 @@ ConservativeSphericalPolygonInterpolation::get_polygons_nodedata(FunctionSpace f
             PointXYZ jedge_mid;
             jedge_mid = pts_xyz[inode_nn] + pts_xyz[inode_n];
             jedge_mid = PointXYZ::div(jedge_mid, PointXYZ::norm(jedge_mid));
-            std::vector<PointLonLat> subpol_pts_ll(4);
+            std::array<PointLonLat,4> subpol_pts_ll;
             subpol_pts_ll[0] = cell_ll;
             subpol_pts_ll[1] = xyz2ll(iedge_mid);
             subpol_pts_ll[2] = pts_ll[inode_n];
@@ -1269,7 +1274,6 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
     }
     triplets.reserve(triplets_size);
     // assemble triplets to define the sparse matrix
-    const auto& src_areas_v = data_->src_areas_;
     const auto& tgt_areas_v = data_->tgt_areas_;
     if (src_cell_data_ && tgt_cell_data_) {
         for (idx_t scell = 0; scell < n_spoints_; ++scell) {
@@ -1372,6 +1376,8 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
             triplets_size += (2 * nb_cells.size() + 1) * src_iparam_[scell].cell_idx.size();
         }
         triplets.reserve(triplets_size);
+        std::vector<PointXYZ> Rsj;
+        std::vector<PointXYZ> Aik;
         for (idx_t scell = 0; scell < n_spoints_; ++scell) {
             const auto& iparam  = src_iparam_[scell];
             if (iparam.cell_idx.size() == 0 && not src_halo(scell)) {
@@ -1391,7 +1397,6 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
             const PointXYZ& Cs = src_points_[scell];
             // compute gradient from cells
             double dual_area_inv = 0.;
-            std::vector<PointXYZ> Rsj;
             const auto nb_cells = get_cell_neighbours(src_mesh_, scell);
             Rsj.resize(nb_cells.size());
             for (idx_t j = 0; j < nb_cells.size(); ++j) {
@@ -1415,7 +1420,6 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                 Rs = Rs + Rsj[j];
             }
             // assemble the matrix
-            std::vector<PointXYZ> Aik;
             Aik.resize(iparam.cell_idx.size());
             for (idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell) {
                 const PointXYZ& Csk   = iparam.centroids[icell];
@@ -1458,17 +1462,19 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
     }
     else {  // if ( not src_cell_data_ )
         auto& src_node2csp_ = data_->src_node2csp_;
-        const auto src_halo = array::make_view<int, 1>(src_mesh_.nodes().halo());
+        Workspace w;
         for (idx_t snode = 0; snode < n_spoints_; ++snode) {
-            const auto nb_nodes = get_node_neighbours(src_mesh_, snode);
+            const auto nb_nodes = get_node_neighbours(src_mesh_, snode, w);
             for (idx_t isubcell = 0; isubcell < src_node2csp_[snode].size(); ++isubcell) {
                 idx_t subcell = src_node2csp_[snode][isubcell];
                 triplets_size += (2 * nb_nodes.size() + 1) * src_iparam_[subcell].cell_idx.size();
             }
         }
         triplets.reserve(triplets_size);
+        std::vector<PointXYZ> Rsj;
+        std::vector<PointXYZ> Aik;
         for (idx_t snode = 0; snode < n_spoints_; ++snode) {
-            const auto nb_nodes = get_node_neighbours(src_mesh_, snode);
+            const auto nb_nodes = get_node_neighbours(src_mesh_, snode, w);
             // get the barycentre of the dual cell
             /* // better conservation
             PointXYZ Cs = {0., 0., 0.};
@@ -1486,7 +1492,6 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
             const PointXYZ& Cs = src_points_[snode];
             // compute gradient from nodes
             double dual_area_inv = 0.;
-            std::vector<PointXYZ> Rsj;
             Rsj.resize(nb_nodes.size());
             const auto& Ns = src_points_[snode];
             for (idx_t j = 0; j < nb_nodes.size(); ++j) {
@@ -1516,7 +1521,6 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                 if (iparam.cell_idx.size() == 0) {
                     continue;
                 }
-                std::vector<PointXYZ> Aik;
                 Aik.resize(iparam.cell_idx.size());
                 for (idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell) {
                     const PointXYZ& Csk   = iparam.centroids[icell];
@@ -1699,8 +1703,6 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
         const auto tgt_vals = array::make_view<double, 1>(tgt_field);
 
         double err_remap_cons     = 0.;
-        const auto& tgt_csp2node_ = data_->tgt_csp2node_;
-        const auto& src_iparam_   = data_->src_iparam_;
         if (src_cell_data_) {
             for (idx_t spt = 0; spt < src_vals.size(); ++spt) {
                 if (src_cell_halo(spt)) {
@@ -1710,7 +1712,6 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
             }
         }
         else {
-            auto& src_node2csp_ = data_->src_node2csp_;
             for (idx_t spt = 0; spt < src_vals.size(); ++spt) {
                 if (src_node_halo(spt) or src_node_ghost(spt)) {
                     continue;
@@ -1718,7 +1719,6 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                 err_remap_cons += src_vals(spt) * src_areas_v[spt];
             }
         }
-        auto& tgt_points_ = data_->tgt_points_;
         if (tgt_cell_data_) {
             for (idx_t tpt = 0; tpt < tgt_vals.size(); ++tpt) {
                 if (tgt_cell_halo(tpt)) {
@@ -1867,7 +1867,6 @@ Field ConservativeSphericalPolygonInterpolation::Statistics::diff(const Interpol
 
     auto cachable_data_       = ConservativeSphericalPolygonInterpolation::Cache(interpolation).get();
     const auto& src_areas_v   = cachable_data_->src_areas_;
-    const auto& tgt_areas_v   = cachable_data_->tgt_areas_;
     const auto& tgt_csp2node_ = cachable_data_->tgt_csp2node_;
     const auto& src_node2csp_ = cachable_data_->src_node2csp_;
     const auto& src_iparam_   = cachable_data_->src_iparam_;
@@ -1880,9 +1879,6 @@ Field ConservativeSphericalPolygonInterpolation::Statistics::diff(const Interpol
     const auto src_node_halo  = array::make_view<int, 1>(src_mesh_.nodes().halo());
     const auto tgt_cell_halo  = array::make_view<int, 1>(tgt_mesh_.cells().halo());
     const auto tgt_node_ghost = array::make_view<int, 1>(tgt_mesh_.nodes().ghost());
-    const auto tgt_node_halo  = array::make_view<int, 1>(tgt_mesh_.nodes().halo());
-    double err_remap_l2       = 0.;
-    double err_remap_linf     = 0.;
     if (src_cell_data_) {
         for (idx_t spt = 0; spt < src_vals.size(); ++spt) {
             if (src_cell_halo(spt)) {

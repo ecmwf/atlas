@@ -161,6 +161,8 @@ private:
 
     using Matrix = std::array<std::array<double, 3>, 3>;
 
+    /*
+    // currently unused
     std::array<Matrix, 6> lfric_rotations_ = {{
         {{ {0, 1, 0}, {0, 0, -1}, {1, 0, 0} }},
         {{ {-1, 0, 0}, {0, 0, -1}, {0, 1, 0} }},
@@ -169,6 +171,7 @@ private:
         {{ {-1, 0, 0}, {0, 1, 0}, {0, 0, 1} }},
         {{ {-1, 0, 0}, {0, -1, 0}, {0, 0, -1} }}
     }};
+    */
 
     std::array<Matrix, 6> lfric_rotations_transposed_ = {{
         {{ {0, 0, 1}, {1, 0, 0}, {0, -1, 0} }},

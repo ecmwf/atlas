@@ -74,7 +74,7 @@ struct SparseMatrixMultiplyHelper {
     static void multiply( const eckit::linalg::SparseMatrix& W, const SourceView& src, TargetView& tgt,
                           const eckit::Configuration& config ) {
         using MatrixValue = double;
-        using MatrixIndex = int;
+        // using MatrixIndex = int;
         using SourceValue = const typename std::remove_const<typename SourceView::value_type>::type;
         using TargetValue = typename std::remove_const<typename TargetView::value_type>::type;
         constexpr int src_rank = introspection::rank<SourceView>();
@@ -87,7 +87,7 @@ struct SparseMatrixMultiplyHelper {
     static void multiply_add( const eckit::linalg::SparseMatrix& W, const SourceView& src, TargetView& tgt,
                               const eckit::Configuration& config ) {
         using MatrixValue = double;
-        using MatrixIndex = int;
+        // using MatrixIndex = int;
         using SourceValue = const typename std::remove_const<typename SourceView::value_type>::type;
         using TargetValue = typename std::remove_const<typename TargetView::value_type>::type;
         constexpr int src_rank = introspection::rank<SourceView>();

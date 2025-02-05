@@ -40,8 +40,8 @@ atlas::linalg::SparseMatrixStorage assemble_global_matrix(const Interpolation& i
 
         // Compute local_cols, local_rows, local_vals
         {
-            auto interpolation_cache = interpolation.createCache();
-            const auto& local_matrix_storage = interpolation::MatrixCache(interpolation_cache).matrix();
+            interpolation::MatrixCache interpolation_cache = interpolation.createCache();
+            auto local_matrix_storage = interpolation_cache.matrix();
             auto local_matrix = atlas::linalg::make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(local_matrix_storage);
 
             const auto src_remote_index = array::make_indexview<idx_t, 1>(src_fs.remote_index());

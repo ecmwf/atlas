@@ -175,10 +175,6 @@ CASE("test_BlockStructuredColumns") {
                 }
             }
         }
-
-        auto xy    = array::make_view<double, 2>(fs.xy());
-        auto r     = array::make_view<idx_t, 1>(fs.remote_index());
-        auto p     = array::make_view<int, 1>(fs.partition());
     }
 
     SECTION("test_BlockStructuredColumns scatter/gather") {

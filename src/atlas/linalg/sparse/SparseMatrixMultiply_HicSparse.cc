@@ -92,15 +92,15 @@ template <typename Value>
 void hsSpMV(const SparseMatrixView<Value>& W, const View<const Value, 1>& src, Value beta, View<Value, 1>& tgt) {
     // Assume that W, src, and tgt are all device views
 
-    using Index = typename SparseMatrixView<Value>::index_type;
+    using Index [[maybe_unused]] = typename SparseMatrixView<Value>::index_type;
 
     ATLAS_ASSERT(src.shape(0) >= W.cols());
     ATLAS_ASSERT(tgt.shape(0) >= W.rows());
 
-    auto handle = getDefaultHicSparseHandle();
+    [[maybe_unused]] auto handle = getDefaultHicSparseHandle();
 
     // Create a sparse matrix descriptor
-    hicsparseConstSpMatDescr_t matA;
+    [[maybe_unused]] hicsparseConstSpMatDescr_t matA;
     HICSPARSE_CALL(hicsparseCreateConstCsr(
         &matA,
         W.rows(), W.cols(), W.nnz(),
@@ -113,24 +113,24 @@ void hsSpMV(const SparseMatrixView<Value>& W, const View<const Value, 1>& src, V
         getHicsparseValueType<Value>()));
 
     // Create dense matrix descriptors
-    hicsparseConstDnVecDescr_t vecX;
+    [[maybe_unused]] hicsparseConstDnVecDescr_t vecX;
     HICSPARSE_CALL(hicsparseCreateConstDnVec(
         &vecX,
         static_cast<int64_t>(W.cols()), 
         src.data(),
         getHicsparseValueType<Value>()));
 
-    hicsparseDnVecDescr_t vecY;
+    [[maybe_unused]] hicsparseDnVecDescr_t vecY;
     HICSPARSE_CALL(hicsparseCreateDnVec(
         &vecY,
         W.rows(),
         tgt.data(),
         getHicsparseValueType<Value>()));
 
-    const Value alpha = 1;
+    [[maybe_unused]] const Value alpha = 1;
 
     // Determine buffer size
-    size_t bufferSize = 0;
+    [[maybe_unused]] size_t bufferSize = 0;
     HICSPARSE_CALL(hicsparseSpMV_bufferSize(
         handle,
         HICSPARSE_OPERATION_NON_TRANSPOSE,
@@ -144,7 +144,7 @@ void hsSpMV(const SparseMatrixView<Value>& W, const View<const Value, 1>& src, V
         &bufferSize));
 
     // Allocate buffer
-    char* buffer;
+    [[maybe_unused]] char* buffer;
     HIC_CALL(hicMalloc(&buffer, bufferSize));
     
     // Perform SpMV
@@ -173,7 +173,7 @@ template <Indexing IndexLayout, typename Value>
 void hsSpMM(const SparseMatrixView<Value>& W, const View<const Value, 2>& src, Value beta, View<Value, 2>& tgt) {
     // Assume that W, src, and tgt are all device views
 
-    using Index = typename SparseMatrixView<Value>::index_type;
+    using Index [[maybe_unused]] = typename SparseMatrixView<Value>::index_type;
 
     constexpr int row_idx = (IndexLayout == Indexing::layout_left) ? 0 : 1;
     constexpr int col_idx = (IndexLayout == Indexing::layout_left) ? 1 : 0;
@@ -182,10 +182,10 @@ void hsSpMM(const SparseMatrixView<Value>& W, const View<const Value, 2>& src, V
     ATLAS_ASSERT(tgt.shape(row_idx) >= W.rows());
     ATLAS_ASSERT(src.shape(col_idx) == tgt.shape(col_idx));
 
-    auto handle = getDefaultHicSparseHandle();
+   [[maybe_unused]] auto handle = getDefaultHicSparseHandle();
 
     // Create a sparse matrix descriptor
-    hicsparseConstSpMatDescr_t matA;
+   [[maybe_unused]] hicsparseConstSpMatDescr_t matA;
     HICSPARSE_CALL(hicsparseCreateConstCsr(
         &matA,
         W.rows(), W.cols(), W.nnz(),
@@ -198,7 +198,7 @@ void hsSpMM(const SparseMatrixView<Value>& W, const View<const Value, 2>& src, V
         getHicsparseValueType<Value>()));
 
     // Create dense matrix descriptors
-    hicsparseConstDnMatDescr_t matB;
+    [[maybe_unused]] hicsparseConstDnMatDescr_t matB;
     HICSPARSE_CALL(hicsparseCreateConstDnMat(
         &matB,
         W.cols(), src.shape(col_idx),
@@ -207,7 +207,7 @@ void hsSpMM(const SparseMatrixView<Value>& W, const View<const Value, 2>& src, V
         getHicsparseValueType<Value>(),
         getHicsparseOrder<IndexLayout>(src)));
 
-    hicsparseDnMatDescr_t matC;
+    [[maybe_unused]] hicsparseDnMatDescr_t matC;
     HICSPARSE_CALL(hicsparseCreateDnMat(
         &matC,
         W.rows(), tgt.shape(col_idx),
@@ -216,10 +216,10 @@ void hsSpMM(const SparseMatrixView<Value>& W, const View<const Value, 2>& src, V
         getHicsparseValueType<Value>(),
         getHicsparseOrder<IndexLayout>(tgt)));
 
-    const Value alpha = 1;
+    [[maybe_unused]] const Value alpha = 1;
 
     // Determine buffer size
-    size_t bufferSize = 0;
+    [[maybe_unused]] size_t bufferSize = 0;
     HICSPARSE_CALL(hicsparseSpMM_bufferSize(
         handle,
         HICSPARSE_OPERATION_NON_TRANSPOSE,
@@ -234,7 +234,7 @@ void hsSpMM(const SparseMatrixView<Value>& W, const View<const Value, 2>& src, V
         &bufferSize));
 
     // Allocate buffer
-    char* buffer;
+    [[maybe_unused]] char* buffer;
     HIC_CALL(hicMalloc(&buffer, bufferSize));
 
     // Perform SpMM

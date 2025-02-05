@@ -394,7 +394,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NoFunc
 
 void print_field_lev(char field_lev[], size_t size, int jlev) {
     ATLAS_ASSERT(size > 5);
-    auto str_len = std::snprintf(field_lev, size, "[%03d]", jlev);
+    std::snprintf(field_lev, size, "[%03d]", jlev);
 }
 
 /* unused

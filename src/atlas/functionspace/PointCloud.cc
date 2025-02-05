@@ -203,9 +203,7 @@ PointCloud::PointCloud(const Grid& grid, const grid::Partitioner& _partitioner, 
         {
             ATLAS_TRACE("Build list of points to keep");
             std::vector<PointLonLat> owned_lonlat;
-            std::vector<idx_t> owned_grid_idx;
             owned_lonlat.reserve(size_owned);
-            owned_grid_idx.reserve(size_owned);
 
             auto kdtree = util::IndexKDTree(config);
             {
@@ -215,7 +213,6 @@ PointCloud::PointCloud(const Grid& grid, const grid::Partitioner& _partitioner, 
                 for (auto p : grid.lonlat()) {
                     if( distribution.partition(j) == part_ ) {
                         owned_lonlat.emplace_back(p);
-                        owned_grid_idx.emplace_back(j);
                     }
                     kdtree.insert(p,j);
                     ++j;
@@ -227,7 +224,6 @@ PointCloud::PointCloud(const Grid& grid, const grid::Partitioner& _partitioner, 
             {
                 ATLAS_TRACE("search kdtree");
                 for (idx_t j=0; j<size_owned; ++j) {
-                    idx_t idx = owned_grid_idx[j];
                     const auto& p = owned_lonlat[j];
                     auto points = kdtree.closestPointsWithinRadius(p,halo_radius).payloads();
                     for( idx_t jj: points ) {
@@ -616,7 +612,6 @@ void PointCloud::create_remote_index() const {
     remote_index_ = Field("remote_idx", array::make_datatype<idx_t>(), array::make_shape(size_halo));
     auto remote_idx     = array::make_indexview<idx_t, 1>(remote_index_);
     auto ghost          = array::make_view<int, 1>(ghost_);
-    auto part           = array::make_view<int, 1>(partition_);
 
     atlas_omp_parallel_for(idx_t n = 0; n < size_halo; ++n) {
         if(not ghost(n)) {

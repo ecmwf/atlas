@@ -334,7 +334,6 @@ CASE("test_thin_elements_area") {
     double coverage_south       = 0.;   // south octant coverage by intersections with "csp"s
     double coverage_norm        = 0.;   // area sum of intersections in the north octant normalised to sum up to the area of the north octant
     double coverage_csp         = 0.;   // area sum of all "csp"s
-    double accumulated_tarea    = 0.;
     std::vector<double> i_north_area(n * m);
 
     ATLAS_TRACE_SCOPE("intersect polygons")
@@ -359,6 +358,7 @@ CASE("test_thin_elements_area") {
             i_north_area[ipoly] =   a_north_csp_i;
         }
     }
+    ATLAS_DEBUG_VAR(coverage_csp);
 
     // normalise weights of the intersection polygons to sum up to the area of the north octant
     double norm_fac = north_octant.area() / coverage_north;

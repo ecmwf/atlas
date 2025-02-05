@@ -72,7 +72,7 @@ void gmshOutput(const std::string& fileName, const FieldSet& fieldSet) {
 }
 
 // Helper function to generate a NodeColumns functionspace
-const auto generateNodeColums(const std::string& gridName,
+auto generateNodeColums(const std::string& gridName,
                               const std::string& meshName) {
   const auto grid = Grid(gridName);
   const auto mesh = MeshGenerator(meshName).generate(grid);
@@ -80,7 +80,7 @@ const auto generateNodeColums(const std::string& gridName,
 }
 
 // Helper function to create part-empty PointCloud
-const auto generateEmptyPointCloud() {
+auto generateEmptyPointCloud() {
   const auto functionSpace = functionspace::PointCloud(std::vector<PointXY>{});
   return functionSpace;
 }
@@ -182,9 +182,9 @@ int countNans(const array::ArrayView<double, Rank>& view) {
 
 template <int Rank>
 void testInterpolation(const Config& config) {
-  const auto& sourceFunctionSpace =
+  const auto sourceFunctionSpace =
       FunctionSpaceFixtures::get(config.getString("source_fixture"));
-  const auto& targetFunctionSpace =
+  const auto targetFunctionSpace =
       FunctionSpaceFixtures::get(config.getString("target_fixture"));
 
   auto sourceFieldSet = FieldSet{};

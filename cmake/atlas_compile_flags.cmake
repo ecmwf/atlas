@@ -9,6 +9,26 @@
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+ecbuild_add_option( FEATURE WARNINGS
+                    DEFAULT ON
+                    DESCRIPTION "Add warnings to compiler" )
+
+# activate warnings, ecbuild macros check the compiler recognises the options
+if(HAVE_WARNINGS)
+
+  ecbuild_add_cxx_flags("-Wall" NO_FAIL)
+  ecbuild_add_cxx_flags("-Wextra" NO_FAIL)
+
+  ecbuild_add_cxx_flags("-Wno-unused-parameter" NO_FAIL)
+  ecbuild_add_cxx_flags("-Wno-sign-compare" NO_FAIL)
+
+endif()
+
+if( CMAKE_CXX_COMPILER_ID STREQUAL Intel )
+  ecbuild_add_cxx_flags("-diag-disable=11074")   # Inline limits
+  ecbuild_add_cxx_flags("-diag-disable=11076")   # Inline limits
+endif()
+
 if( CMAKE_CXX_COMPILER_ID MATCHES Cray )
 
   if( NOT CMAKE_CXX_COMPILER_ID MATCHES CrayClang )

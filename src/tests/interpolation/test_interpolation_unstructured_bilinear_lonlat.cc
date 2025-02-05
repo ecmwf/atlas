@@ -115,7 +115,7 @@ CASE("test_interpolation_N64_to_O32_bilinear_remapping") {
     Field field_source = fs_src.createField<double>(option::name("source"));
     Field field_target = fs_tgt.createField<double>(option::name("target"));
 
-    const double deg2rad = M_PI / 180., c_lat = 0. * M_PI, c_lon = 1. * M_PI, c_rad = 2. * M_PI / 9.;
+    const double deg2rad = M_PI / 180.;
     auto func = [](double lon, double lat, double t) { return std::cos(lat) * std::sin(lon); };
 
     array::ArrayView<double, 2> lonlat = array::make_view<double, 2>(fs_src.nodes().lonlat());
