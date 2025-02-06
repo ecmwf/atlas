@@ -1664,7 +1664,7 @@ CASE("test_2level_adjoint_test_with_powerspectrum_convolution") {
         for (int jm = 0; jm < nb_zonal_wavenumbers; ++jm) {
             const std::size_t m1 = zonal_wavenumbers(jm);
             for (std::size_t n1 = m1; n1 <= static_cast<std::size_t>(2 * N - 1); ++n1) {
-                for (int imag1 : {0, 1}) {
+                for ([[maybe_unused]] int imag1 : {0, 1}) {
                     for (int jl : {0, 1}) {
                         // scale by the square root of the power spectrum
                         // note here that we need the modal power spectrum
@@ -1778,7 +1778,7 @@ CASE("test_2level_adjoint_test_with_vortdiv") {
     for (int jm = 0; jm < nb_zonal_wavenumbers; ++jm) {
         const std::size_t m1 = zonal_wavenumbers(jm);
         for (std::size_t n1 = m1; n1 <= static_cast<std::size_t>(2 * N - 1); ++n1) {
-            for (int imag1 : {0, 1}) {
+            for ([[maybe_unused]] int imag1 : {0, 1}) {
                 for (int jl : {0, 1}) {
                     // adjoint at the heart
                     double temp = spfdivView(i, jl) * spfdivView(i, jl) +

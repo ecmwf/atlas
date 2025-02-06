@@ -47,8 +47,8 @@ struct CubedSphereInterpolationFixture {
 void gmshOutput(const std::string& fileName, const FieldSet& fieldSet) {
 
 
-    const auto& functionSpace = fieldSet[0].functionspace();
-    const auto& mesh = functionspace::NodeColumns(functionSpace).mesh();
+    const auto functionSpace = fieldSet[0].functionspace();
+    const auto mesh = functionspace::NodeColumns(functionSpace).mesh();
 
     const auto gmshConfig =
         util::Config("coordinates", "xyz") | util::Config("ghost", true) | util::Config("info", true);
@@ -177,7 +177,8 @@ CASE("cubedsphere_wind_interpolation") {
     const auto fixture = CubedSphereInterpolationFixture{};
 
     // Get projection.
-    const auto& proj = CubedSphereGrid(fixture.sourceGrid_).cubedSphereProjection();
+    const auto grid = CubedSphereGrid(fixture.sourceGrid_);
+    const auto& proj = grid.cubedSphereProjection();
 
     // Set wind transform Jacobian.
     const auto windTransform = [&](const PointLonLat& lonlat, idx_t t) {
