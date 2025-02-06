@@ -5,7 +5,6 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/Point.h"
-#include "eckit/maths/Matrix.h"
 
 namespace atlas {
 namespace grid {
