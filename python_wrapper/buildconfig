@@ -1,0 +1,16 @@
+# (C) Copyright 2025- ECMWF.
+#
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+# In applying this licence, ECMWF does not waive the privileges and immunities
+# granted to it by virtue of its status as an intergovernmental organisation
+# nor does it submit to any jurisdiction.
+
+# to be source'd by wheelmaker's compile.sh *and* wheel-linux.sh
+# NOTE replace the whole thing with pyproject.toml? Less powerful, and quaint to use for sourcing ecbuild invocation
+# TODO we duplicate information -- pyproject.toml's `name` and `packages` are derivable from $NAME and must stay consistent
+
+NAME="atlas"
+CMAKE_PARAMS="-Deckit_ROOT=/tmp/atlas/prereqs/eckitlib -DENABLE_TESSELATION=1"
+PYPROJECT_DIR="python_wrapper"
+DEPENDENCIES='["eckitlib"]'
