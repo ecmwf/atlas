@@ -14,6 +14,6 @@ CubedSphereGrid2::CubedSphereGrid2(const Grid& grid):
     Grid(grid), grid_(cubedsphere_grid2(get())) {}
 
 CubedSphereGrid2::CubedSphereGrid2(idx_t resolution, Projection projection):
-    Grid(new grid::detail::grid::CubedSphere2(resolution, projection)) {}
+    Grid(new grid::detail::grid::CubedSphere2(resolution, projection)), grid_(cubedsphere_grid2(get())) {}
 
 }  // namespace atlas
