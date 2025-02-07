@@ -1,0 +1,222 @@
+name: build-hpc
+
+# Controls when the action will run
+on:
+
+  # Trigger the workflow on all pushes to main and develop, except on tag creation
+  push:
+    branches:
+    - main
+    - develop
+    - ci
+    tags-ignore:
+    - '**'
+
+  # Trigger the workflow on all pull requests
+  pull_request: ~
+
+  # Allow workflow to be dispatched on demand
+  workflow_dispatch: ~
+
+  # Trigger after public PR approved for CI
+  pull_request_target:
+    types: [labeled]
+
+env:
+  ATLAS_TOOLS: ${{ github.workspace }}/tools
+  CTEST_PARALLEL_LEVEL: 1
+  CACHE_SUFFIX: v1        # Increase to force new cache to be created
+
+jobs:
+  ci-hpc:
+    name: ci-hpc
+    if: ${{ !github.event.pull_request.head.repo.fork && github.event.action != 'labeled' || github.event.label.name == 'approved-for-ci' }}
+
+    strategy:
+      fail-fast: false    # false: try to complete all jobs
+
+      matrix:
+        name:
+          - ac-gpu nvhpc
+
+        include:
+          - name: ac-gpu nvhpc
+            site: ac-batch
+            troika_user_secret: HPC_CI_GPU_SSH_USER
+            sbatch_options: |
+              #SBATCH --time=00:20:00
+              #SBATCH --nodes=1
+              #SBATCH --ntasks=4
+              #SBATCH --cpus-per-task=32
+              #SBATCH --gpus-per-task=1
+              #SBATCH --mem=200G
+              #SBATCH --qos=dg
+            modules:
+              - cmake
+              - ninja
+              - prgenv/nvidia
+              - hpcx-openmpi/2.14.0-cuda
+              - fftw
+              - qhull
+              - eigen
+            cmake_options: -DMPI_SLOTS=4 -DENABLE_WARNING_AS_ERROR=ON
+
+    runs-on: [self-hosted, linux, hpc]
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: ecmwf-actions/reusable-workflows/ci-hpc-generic@v2
+        with:
+          site: ${{ matrix.site }}
+          troika_user: ${{ secrets[matrix.troika_user_secret] }}
+          sbatch_options: ${{ matrix.sbatch_options }}
+          output_dir: ${{ matrix.output_dir || '' }}
+          workdir: ${{ matrix.workdir || '' }}
+          template_data: |
+            cmake_options:
+              - -DENABLE_MPI=ON
+              - -DENABLE_ACC=ON
+              - -DENABLE_CUDA=ON
+              - -DSKIP_TEST_atlas_test_field_foreach=TRUE
+              - ${{ matrix.cmake_options || '' }}
+            ctest_options: ${{ matrix.ctest_options || '' }}
+            dependencies:
+              ecmwf/ecbuild:
+                version: develop
+              ecmwf/eckit:
+                version: develop
+                cmake_options:
+                  - -DENABLE_MPI=ON
+                  - -DENABLE_CUDA=OFF
+                  - -DENABLE_TESTS=OFF
+                  - -DENABLE_ECKIT_SQL=OFF
+                  - -DENABLE_ECKIT_CMD=OFF
+                  - -DENABLE_AIO=OFF
+                  - -DENABLE_WARNINGS=OFF
+                  - ${{ matrix.cmake_options || '' }}
+              ecmwf/fckit:
+                version: develop
+                cmake_options:
+                  - -DENABLE_TESTS=OFF
+                  - ${{ matrix.cmake_options || '' }}
+              ecmwf-ifs/fiat:
+                version: develop
+                cmake_options:
+                  - -DENABLE_MPI=ON
+                  - -DENABLE_TESTS=OFF
+                  - ${{ matrix.cmake_options || '' }}
+              ecmwf-ifs/ectrans:
+                version: develop
+                cmake_options:
+                  - -DENABLE_MPI=ON
+                  - -DENABLE_ACC=ON
+                  - -DENABLE_GPU=ON
+                  - -DENABLE_TESTS=OFF
+                  - ${{ matrix.cmake_options || '' }}
+
+          template: |
+            set +x
+            module_load() {
+              echo "+ module load $1"
+              module load $1
+            }
+            {% for module in "${{ join(matrix.modules, ',') }}".split(',') %}
+              module_load {{module}}
+            {% endfor %}
+            echo "+ module list"
+            module list
+            BASEDIR=$PWD
+            export CMAKE_TEST_LAUNCHER="srun;-n;1"
+            export CMAKE_PREFIX_PATH=$BASEDIR/install:$CMAKE_PREFIX_PATH
+            {% for repo_name, options in dependencies.items() %}
+                name=$(basename {{repo_name}})
+                echo "::group::Get dependency $name"
+                echo "+ mkdir -p $name"
+                mkdir -p $name
+                echo "+ pushd $name"
+                pushd $name
+                echo "+ git init"
+                git init
+                echo "+ git remote add origin ${{ github.server_url }}/{{repo_name}}"
+                git remote add origin ${{ github.server_url }}/{{repo_name}}
+                echo "+ git fetch origin {{options['version']}}"
+                git fetch origin {{options['version']}}
+                echo "+ git reset --hard FETCH_HEAD"
+                git reset --hard FETCH_HEAD
+                echo "+ cmake -G Ninja -S . -B build {{ options['cmake_options']|join(' ') }}"
+                cmake -G Ninja -S . -B build {{ options['cmake_options']|join(' ') }}
+                start=`date +%s`
+                echo "+ cmake --build build"
+                cmake --build build
+                end=`date +%s`
+                runtime=$((end-start))
+                echo "Build $name took $runtime seconds"
+                echo "+ cmake --install build --prefix \$BASEDIR/install/$name"
+                cmake --install build --prefix $BASEDIR/install/$name
+                echo "+ export PATH=\$BASEDIR/install/$name/bin:\$PATH"
+                export PATH=$BASEDIR/install/$name/bin:$PATH
+                echo "+ popd"
+                popd
+                echo "::endgroup::"
+            {% endfor %}
+            REPO=${{ github.event.pull_request.head.repo.full_name || github.repository }}
+            SHA=${{ github.event.pull_request.head.sha || github.sha }}
+            name=$(basename $REPO)
+            echo "::group::Checkout $name"
+            echo "+ mkdir -p $name"
+            mkdir -p $name
+            echo "+ pushd $name"
+            pushd $name
+            echo "+ git init"
+            git init
+            echo "+ git remote add origin ${{ github.server_url }}/$REPO"
+            git remote add origin ${{ github.server_url }}/$REPO
+            echo "+ git fetch origin $SHA"
+            git fetch origin $SHA
+            echo "+git reset --hard FETCH_HEAD"
+            git reset --hard FETCH_HEAD
+            echo "+ popd"
+            popd
+            echo "::endgroup::"
+
+            echo "::group::Build $name"
+            echo "+ cmake -G Ninja -S $name -B build {{ cmake_options|join(' ') }}"
+            cmake -G Ninja -S $name -B build {{ cmake_options|join(' ') }}
+            start=`date +%s`
+            echo "+ cmake --build build"
+            cmake --build build
+            end=`date +%s`
+            runtime=$((end-start))
+            echo "Build $name took $runtime seconds"
+            echo "::endgroup::"
+
+            echo "::group::Test $name"
+            export ATLAS_FINALISES_MPI=1
+            echo "+ ctest --test-dir build --output-on-failure {{ ctest_options }}"
+            ctest --test-dir build --output-on-failure {{ ctest_options }}
+            echo "::endgroup::"
+
+            echo "::group::Install $name"
+            echo "+ cmake --install build --prefix $BASEDIR/install/$name"
+            cmake --install build --prefix $BASEDIR/install/$name
+            echo "+ export PATH=\$BASEDIR/install/$name/bin:\$PATH"
+            export PATH=$BASEDIR/install/$name/bin:$PATH
+            echo "::endgroup::"
+
+            echo "::group::Verify $name installation"
+            echo "+ atlas --info"
+            atlas --info
+            echo "::endgroup::"
+
+            echo "::group::Cleanup"
+            set -x
+            rm -r $name
+            rm -r build
+            rm -r $BASEDIR/install
+            {% for repo_name in dependencies.keys() %}
+              name=$(basename {{repo_name}})
+              rm -r $name
+            {% endfor %}
+
+            echo "::endgroup::"
+            set +x
