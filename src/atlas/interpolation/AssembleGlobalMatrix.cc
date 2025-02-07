@@ -16,10 +16,11 @@
 #include "atlas/array.h"
 #include "atlas/linalg/sparse/SparseMatrixToTriplets.h"
 #include "atlas/functionspace/StructuredColumns.h"
+#include "atlas/interpolation/Cache.h"
 
 namespace atlas::interpolation {
 
-atlas::linalg::SparseMatrixStorage assemble_global_matrix(const Interpolation& interpolation, int mpi_root) {
+linalg::SparseMatrixStorage assemble_global_matrix(const Interpolation& interpolation, int mpi_root) {
 
     auto src_fs = interpolation.source();
     auto tgt_fs = interpolation.target();
@@ -50,10 +51,10 @@ atlas::linalg::SparseMatrixStorage assemble_global_matrix(const Interpolation& i
                 return src_remote_index(idx) + one_if_structuredcolumns;
             };
 
-            const auto src_global_index = array::make_view<gidx_t,1>(src_fs.global_index());
-            const auto tgt_global_index = array::make_view<gidx_t,1>(tgt_fs.global_index());
-            const auto src_part         = array::make_view<int,1>(src_fs.partition());
-            const auto tgt_ghost        = array::make_view<int,1>(tgt_fs.ghost());
+            const auto src_global_index = array::make_view<gidx_t, 1>(src_fs.global_index());
+            const auto tgt_global_index = array::make_view<gidx_t, 1>(tgt_fs.global_index());
+            const auto src_part         = array::make_view<int, 1>(src_fs.partition());
+            const auto tgt_ghost        = array::make_view<int, 1>(tgt_fs.ghost());
 
             eckit::mpi::Buffer<gidx_t> recv_global_idx_buf(mpi_size);
             {
@@ -149,7 +150,7 @@ atlas::linalg::SparseMatrixStorage assemble_global_matrix(const Interpolation& i
     gidx_t tgt_max_gidx = compute_max_global_index(tgt_fs);
     gidx_t src_max_gidx = compute_max_global_index(src_fs);
 
-    atlas::linalg::SparseMatrixStorage global_matrix;
+    linalg::SparseMatrixStorage global_matrix;
     if (mpi_rank == mpi_root) {
         size_t nrows = tgt_max_gidx;
         size_t ncols = src_max_gidx;
@@ -160,6 +161,99 @@ atlas::linalg::SparseMatrixStorage assemble_global_matrix(const Interpolation& i
     return global_matrix;
 }
 
+
+linalg::SparseMatrixStorage distribute_global_matrix(const FunctionSpace& src_fs, const FunctionSpace& tgt_fs, const linalg::SparseMatrixStorage& gmatrix, int mpi_root) {
+    const auto src_global_index = array::make_view<gidx_t, 1>(src_fs.global_index());
+    const auto tgt_global_index = array::make_view<gidx_t, 1>(tgt_fs.global_index());
+    const auto src_part         = array::make_view<int, 1>(src_fs.partition());
+    const auto tgt_part         = array::make_view<int, 1>(tgt_fs.partition());
+
+    Field field_tgt_part_glb = tgt_fs.createField(tgt_fs.partition(), option::global(mpi_root) );
+    ATLAS_DEBUG_VAR(field_tgt_part_glb.size());
+    ATLAS_DEBUG_VAR(tgt_fs.partition().size());
+    tgt_fs.gather(tgt_fs.partition(), field_tgt_part_glb);
+    const auto tgt_part_glb = array::make_view<int,1>(field_tgt_part_glb);
+    
+    auto& mpi_comm = mpi::comm();
+    auto mpi_size  = mpi_comm.size();
+    auto mpi_rank  = mpi_comm.rank();
+
+    std::cout << mpi_rank << " src nb_part " << src_fs.nb_parts() << ", size " << src_fs.partition().size() << std::endl;
+    std::cout << mpi_rank << " tgt nb_part " << tgt_fs.nb_parts() << ", size " << tgt_fs.partition().size() << std::endl;
+
+    const auto src_remote_index = array::make_indexview<idx_t, 1>(src_fs.remote_index());
+    idx_t one_if_structuredcolumns = (src_fs.type() == "StructuredColumns" ? 1 : 0);
+    auto src_ridx = [&](auto idx) -> idx_t {
+        return src_remote_index(idx) + one_if_structuredcolumns;
+    };
+
+    using Scalar = eckit::linalg::Scalar;
+    using Index = eckit::linalg::Index;
+    std::vector<Index> rows, cols;
+    std::vector<Scalar> vals;
+
+    // compute how many nnz-entries each task gets
+    size_t nnz_loc = 0;
+    int mpi_tag = 0;
+    if (mpi_rank == mpi_root) {
+        auto global_matrix = linalg::make_host_view<Scalar, Index>(gmatrix);
+        
+        const auto outer  = global_matrix.outer();
+        const auto inner  = global_matrix.inner();
+        const auto value  = global_matrix.value();
+
+        std::vector<std::size_t> nnz_per_task(mpi_size);
+        for(std::size_t r = 0; r < global_matrix.rows(); ++r) {
+            //std::cout << "r, tgt_part: " << r << ", part " << tgt_part_glb(r) << ", cols " << outer[r+1] - outer[r] << std::endl;
+            nnz_per_task[tgt_part_glb(r)] += outer[r+1] - outer[r];
+        }
+        
+        for (int jproc = 0; jproc < mpi::comm().size(); ++jproc) {
+            if (jproc != mpi_root) {
+                mpi::comm().send(nnz_per_task.data() + jproc, 1, jproc, mpi_tag);
+            }
+        }
+        
+        nnz_loc = nnz_per_task[mpi_root];
+    }
+    else {
+        mpi_comm.receive(&nnz_loc, 1, mpi_root, mpi_tag);
+    }
+
+    linalg::SparseMatrixStorage matrix;
+
+    mpi_comm.barrier();
+
+    return matrix;
+/*
+    size_t idx = 0;
+    for(std::size_t r = 0; r < global_matrix.rows(); ++r) {
+        for (auto c = outer[r]; c < outer[r + 1]; ++c) {
+            auto col = inner[c];
+            rows[idx] = r;
+            columns[idx] = col;
+            values[idx] = vals[c];
+            ++idx;
+        }
+    }
+
+    for( row in global_matrix)
+    
+    //linalg::SparseMatrixStorage local_matrix(src_fs.size(), tgt_fs.size());
+    // row_gl, col_gl -> (row, spart), (col, tpart)
+    //
+    for (int i = 0; i < tgt_fs.size(); ++i) {
+    }
+
+    Config config;
+    config.setString("type", "finite-element");
+
+    interpolation::MatrixCache cache(std::move(local_matrix));
+    // now don't use local_matrix anymore.
+
+    auto interp = Interpolation(config, src_fs, tgt_fs, cache);
+*/
+}
 
 
 } //end namespace

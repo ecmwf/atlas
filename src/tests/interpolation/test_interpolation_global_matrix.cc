@@ -94,8 +94,6 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
         FunctionSpace fs_in;
         FunctionSpace fs_out;
         ATLAS_TRACE_SCOPE("Create interpolation") {
-            FunctionSpace fs_in;
-            FunctionSpace fs_out;
             auto scheme = create_fspaces(scheme_str, input_grid, output_grid, fs_in, fs_out);
             if (scheme_str == "conservative") {
                 interpolator = Interpolation{ scheme, input_grid, output_grid };
@@ -152,24 +150,29 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
         // avoid deadlocks whilst waiting for proc mpi_root
         mpi::comm().barrier();
 
-        return std::make_tuple(&fs_in, &fs_out, &matrix);
+        return std::make_tuple(fs_in, fs_out, std::move(matrix));
     };
 
-    auto distribute_global_matrix = [&](const FunctionSpace& fs_in, const FunctionSpace& fs_out, const SparseMatrixStorage& gmatrix) {
-        // nothing yet
+    auto distribute_global_matrix = [&](const FunctionSpace& fs_in, const FunctionSpace& fs_out, const SparseMatrixStorage& gmatrix, int mpi_root) {
+        return interpolation::distribute_global_matrix(fs_in, fs_out, gmatrix, mpi_root);
     };
 
     auto do_assemble_distribute_matrix = [&](const std::string scheme_str, const Grid& input_grid, const Grid& output_grid, const int mpi_root) {
-        FunctionSpace* fs_in;
-        FunctionSpace* fs_out;
-        SparseMatrixStorage* gmatrix;
+        FunctionSpace fs_in;
+        FunctionSpace fs_out;
+        SparseMatrixStorage gmatrix;
         std::tie(fs_in, fs_out, gmatrix) = assemble_global_matrix(scheme_str, input_grid, output_grid, mpi_root);
-        distribute_global_matrix(*fs_in, *fs_out, *gmatrix);
+        SparseMatrixStorage matrix = distribute_global_matrix(fs_in, fs_out, gmatrix, mpi_root);
+        
+        // createinterpolator
+
     };
 
     auto test_matrix_assemble_distribute = [&](const Grid& input_grid, const Grid& output_grid) {
         int mpi_root = 0;
         do_assemble_distribute_matrix("linear", input_grid, output_grid, mpi_root);
+
+    return;
 
         mpi_root = mpi::size() - 1;
         do_assemble_distribute_matrix("linear", input_grid, output_grid, mpi_root);
@@ -179,7 +182,7 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
         do_assemble_distribute_matrix("finite-element", input_grid, output_grid, mpi_root);
     };
 
-    test_matrix_assemble_distribute(Grid("O16"), Grid("F32"));
+    test_matrix_assemble_distribute(Grid("O32"), Grid("O64"));
 }
 
 }  // namespace
