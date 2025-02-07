@@ -241,7 +241,9 @@ private:
 template <typename Value>
 class WrappedDataStore : public ArrayDataStore {
 public:
-    WrappedDataStore(Value* host_data, const ArraySpec& spec): host_data_(host_data), size_(spec.size()),
+    WrappedDataStore(Value* host_data, const ArraySpec& spec):
+        size_(spec.size()),
+        host_data_(host_data),
         device_memory_resource_(memory::device::traced_resource()),
         device_allocator_{device_memory_resource_.get()}
     {
