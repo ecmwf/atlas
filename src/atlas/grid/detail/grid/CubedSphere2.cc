@@ -34,7 +34,6 @@ CubedSphere2::CubedSphere2(idx_t resolution, Projection projection) :
     // Domain
     domain_ = GlobalDomain();
 
-    // using atlas::projection::detail::CubedSphere2ProjectionBase;
     cs2_projection_ = dynamic_cast<CubedSphere2ProjectionBase*>(projection_.get());
     if (not cs2_projection_) {
         ATLAS_THROW_EXCEPTION("Provided projection " << projection_.type()
