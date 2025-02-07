@@ -122,7 +122,7 @@ SparseMatrixStorage make_sparse_matrix_storage_from_rows_columns_values(std::siz
     std::size_t nnz = vals.size();
     ATLAS_ASSERT(rows.size() == nnz);
     ATLAS_ASSERT(cols.size() == nnz);
-    return make_sparse_matrix_storage_from_rows_columns_values<SparseMatrixValue,SparseMatrixIndex>(nr, nc, nnz, rows.data(), cols.data(), vals.data(), index_base, is_sorted);
+    return make_sparse_matrix_storage_from_rows_columns_values<SparseMatrixValue, SparseMatrixIndex>(nr, nc, nnz, rows.data(), cols.data(), vals.data(), index_base, is_sorted);
 }
 
 
