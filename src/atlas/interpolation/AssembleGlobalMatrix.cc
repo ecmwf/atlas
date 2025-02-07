@@ -161,6 +161,72 @@ linalg::SparseMatrixStorage assemble_global_matrix(const Interpolation& interpol
     return global_matrix;
 }
 
+template <typename ViewValue, typename ViewIndex, typename Value, typename Index> 
+void distribute_global_matrix(const linalg::SparseMatrixView<ViewValue,ViewIndex>& global_matrix,
+    const array::Array& partition, std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root) {
+
+    const auto tgt_part_glb = array::make_view<int,1>(partition);
+    
+    auto& mpi_comm = mpi::comm();
+    auto mpi_size  = mpi_comm.size();
+    auto mpi_rank  = mpi_comm.rank();
+
+    // compute how many nnz-entries each task gets
+    size_t nnz_loc = 0;
+    int mpi_tag = 0;
+    std::vector<std::size_t> nnz_per_task(mpi_size);
+    const auto outer  = global_matrix.outer();
+    const auto inner  = global_matrix.inner();
+    const auto value  = global_matrix.value();
+    if (mpi_rank == mpi_root) {        
+
+        for(std::size_t r = 0; r < global_matrix.rows(); ++r) {
+            nnz_per_task[tgt_part_glb(r)] += outer[r+1] - outer[r];
+        }
+        for (int jproc = 0; jproc < mpi::comm().size(); ++jproc) {
+            if (jproc != mpi_root) {
+                mpi::comm().send(nnz_per_task.data() + jproc, 1, jproc, mpi_tag);
+            }
+        }
+        nnz_loc = nnz_per_task[mpi_root];
+    }
+    else {
+        mpi_comm.receive(&nnz_loc, 1, mpi_root, mpi_tag);
+    }
+
+    rows.resize(nnz_loc);
+    cols.resize(nnz_loc);
+    vals.resize(nnz_loc);
+
+    size_t idx = 0;
+    if (mpi_rank == mpi_root) {
+        std::vector<std::vector<Index>> send_rows(mpi_size);
+        std::vector<std::vector<Index>> send_cols(mpi_size);
+        std::vector<std::vector<Value>> send_vals(mpi_size);
+        for(std::size_t jproc=0; jproc < mpi_size; ++jproc) {
+            send_rows[jproc].reserve(nnz_per_task[jproc]);
+            send_cols[jproc].reserve(nnz_per_task[jproc]);
+            send_vals[jproc].reserve(nnz_per_task[jproc]);
+        }
+        for(std::size_t r = 0; r < global_matrix.rows(); ++r) {
+            int jproc = tgt_part_glb(r);
+            for (auto c = outer[r]; c < outer[r + 1]; ++c) {
+                auto col = inner[c];
+                send_rows[jproc].emplace_back(r);
+                send_cols[jproc].emplace_back(col);
+                send_vals[jproc].emplace_back(vals[c]);
+            }
+        }
+        for(std::size_t jproc = 0; jproc < mpi_size; ++jproc) {
+            if (jproc != mpi_root) {
+                mpi_comm.send(send_rows[jproc].data(), send_rows[jproc].size(), jproc, mpi_tag);
+            }
+        }
+    }
+    else {
+        mpi_comm.receive(rows.data(), nnz_loc, mpi_root, mpi_tag);
+    }
+}
 
 linalg::SparseMatrixStorage distribute_global_matrix(const FunctionSpace& src_fs, const FunctionSpace& tgt_fs, const linalg::SparseMatrixStorage& gmatrix, int mpi_root) {
     const auto src_global_index = array::make_view<gidx_t, 1>(src_fs.global_index());
@@ -168,91 +234,30 @@ linalg::SparseMatrixStorage distribute_global_matrix(const FunctionSpace& src_fs
     const auto src_part         = array::make_view<int, 1>(src_fs.partition());
     const auto tgt_part         = array::make_view<int, 1>(tgt_fs.partition());
 
-    Field field_tgt_part_glb = tgt_fs.createField(tgt_fs.partition(), option::global(mpi_root) );
+    Field field_tgt_part_glb = tgt_fs.createField(tgt_fs.partition(), option::global(mpi_root));
     ATLAS_DEBUG_VAR(field_tgt_part_glb.size());
     ATLAS_DEBUG_VAR(tgt_fs.partition().size());
     tgt_fs.gather(tgt_fs.partition(), field_tgt_part_glb);
-    const auto tgt_part_glb = array::make_view<int,1>(field_tgt_part_glb);
-    
-    auto& mpi_comm = mpi::comm();
-    auto mpi_size  = mpi_comm.size();
-    auto mpi_rank  = mpi_comm.rank();
 
-    std::cout << mpi_rank << " src nb_part " << src_fs.nb_parts() << ", size " << src_fs.partition().size() << std::endl;
-    std::cout << mpi_rank << " tgt nb_part " << tgt_fs.nb_parts() << ", size " << tgt_fs.partition().size() << std::endl;
-
-    const auto src_remote_index = array::make_indexview<idx_t, 1>(src_fs.remote_index());
-    idx_t one_if_structuredcolumns = (src_fs.type() == "StructuredColumns" ? 1 : 0);
-    auto src_ridx = [&](auto idx) -> idx_t {
-        return src_remote_index(idx) + one_if_structuredcolumns;
-    };
-
-    using Scalar = eckit::linalg::Scalar;
     using Index = eckit::linalg::Index;
+    using Value = eckit::linalg::Scalar;
     std::vector<Index> rows, cols;
-    std::vector<Scalar> vals;
+    std::vector<Value> vals;
+    distribute_global_matrix(atlas::linalg::make_host_view<Value, Index>(gmatrix), field_tgt_part_glb, rows, cols, vals, mpi_root);
 
-    // compute how many nnz-entries each task gets
-    size_t nnz_loc = 0;
-    int mpi_tag = 0;
-    if (mpi_rank == mpi_root) {
-        auto global_matrix = linalg::make_host_view<Scalar, Index>(gmatrix);
-        
-        const auto outer  = global_matrix.outer();
-        const auto inner  = global_matrix.inner();
-        const auto value  = global_matrix.value();
-
-        std::vector<std::size_t> nnz_per_task(mpi_size);
-        for(std::size_t r = 0; r < global_matrix.rows(); ++r) {
-            //std::cout << "r, tgt_part: " << r << ", part " << tgt_part_glb(r) << ", cols " << outer[r+1] - outer[r] << std::endl;
-            nnz_per_task[tgt_part_glb(r)] += outer[r+1] - outer[r];
-        }
-        
-        for (int jproc = 0; jproc < mpi::comm().size(); ++jproc) {
-            if (jproc != mpi_root) {
-                mpi::comm().send(nnz_per_task.data() + jproc, 1, jproc, mpi_tag);
-            }
-        }
-        
-        nnz_loc = nnz_per_task[mpi_root];
+    // map global index to local index
+    std::map<gidx_t, idx_t> to_local;
+    for (idx_t i = 0; i < tgt_global_index.size(); ++i) {
+        to_local[tgt_global_index(i)] = i;
     }
-    else {
-        mpi_comm.receive(&nnz_loc, 1, mpi_root, mpi_tag);
+    for (int r = 0; r < rows.size(); ++r) {
+        rows[r] = to_local[rows[r]];
+        cols[r] = to_local[cols[r]];
     }
-
     linalg::SparseMatrixStorage matrix;
-
-    mpi_comm.barrier();
+    matrix = linalg::make_sparse_matrix_storage_from_rows_columns_values(tgt_fs.size(), src_fs.size(), rows, cols, vals, 0);
 
     return matrix;
-/*
-    size_t idx = 0;
-    for(std::size_t r = 0; r < global_matrix.rows(); ++r) {
-        for (auto c = outer[r]; c < outer[r + 1]; ++c) {
-            auto col = inner[c];
-            rows[idx] = r;
-            columns[idx] = col;
-            values[idx] = vals[c];
-            ++idx;
-        }
-    }
-
-    for( row in global_matrix)
-    
-    //linalg::SparseMatrixStorage local_matrix(src_fs.size(), tgt_fs.size());
-    // row_gl, col_gl -> (row, spart), (col, tpart)
-    //
-    for (int i = 0; i < tgt_fs.size(); ++i) {
-    }
-
-    Config config;
-    config.setString("type", "finite-element");
-
-    interpolation::MatrixCache cache(std::move(local_matrix));
-    // now don't use local_matrix anymore.
-
-    auto interp = Interpolation(config, src_fs, tgt_fs, cache);
-*/
 }
 
 

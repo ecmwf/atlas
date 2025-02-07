@@ -153,32 +153,29 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
         return std::make_tuple(fs_in, fs_out, std::move(matrix));
     };
 
-    auto distribute_global_matrix = [&](const FunctionSpace& fs_in, const FunctionSpace& fs_out, const SparseMatrixStorage& gmatrix, int mpi_root) {
-        return interpolation::distribute_global_matrix(fs_in, fs_out, gmatrix, mpi_root);
-    };
-
     auto do_assemble_distribute_matrix = [&](const std::string scheme_str, const Grid& input_grid, const Grid& output_grid, const int mpi_root) {
         FunctionSpace fs_in;
         FunctionSpace fs_out;
         SparseMatrixStorage gmatrix;
         std::tie(fs_in, fs_out, gmatrix) = assemble_global_matrix(scheme_str, input_grid, output_grid, mpi_root);
-        SparseMatrixStorage matrix = distribute_global_matrix(fs_in, fs_out, gmatrix, mpi_root);
+        SparseMatrixStorage matrix = interpolation::distribute_global_matrix(fs_in, fs_out, gmatrix, mpi_root);
         
         // createinterpolator
-
+        Config config;
+        config.set("type", "finite-element");
+        interpolation::MatrixCache cache(std::move(matrix));
+        //auto interp = Interpolation(config, input_grid, output_grid, cache);
     };
 
     auto test_matrix_assemble_distribute = [&](const Grid& input_grid, const Grid& output_grid) {
         int mpi_root = 0;
         do_assemble_distribute_matrix("linear", input_grid, output_grid, mpi_root);
 
-    return;
-
         mpi_root = mpi::size() - 1;
         do_assemble_distribute_matrix("linear", input_grid, output_grid, mpi_root);
         do_assemble_distribute_matrix("cubic", input_grid, output_grid, mpi_root);
         do_assemble_distribute_matrix("quasicubic", input_grid, output_grid, mpi_root);
-        do_assemble_distribute_matrix("conservative", input_grid, output_grid, mpi_root);
+        //do_assemble_distribute_matrix("conservative", input_grid, output_grid, mpi_root);
         do_assemble_distribute_matrix("finite-element", input_grid, output_grid, mpi_root);
     };
 
