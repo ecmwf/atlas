@@ -25,8 +25,13 @@ if(HAVE_WARNINGS)
 endif()
 
 if( CMAKE_CXX_COMPILER_ID STREQUAL Intel )
-  ecbuild_add_cxx_flags("-diag-disable=11074")   # Inline limits
-  ecbuild_add_cxx_flags("-diag-disable=11076")   # Inline limits
+  ecbuild_add_cxx_flags("-diag-disable=11074" NO_FAIL)   # Inline limits
+  ecbuild_add_cxx_flags("-diag-disable=11076" NO_FAIL)   # Inline limits
+  ecbuild_add_cxx_flags("-diag-disable=10441" NO_FAIL)   # Deprecated classic compiler
+endif()
+
+if( CMAKE_Fortran_COMPILER_ID STREQUAL Intel)
+  ecbuild_add_fortran_flags("-diag-disable=5462" NO_FAIL)   # Global name too long, shortened
 endif()
 
 if( CMAKE_CXX_COMPILER_ID MATCHES Cray )
@@ -44,7 +49,7 @@ endif()
 
 if( CMAKE_CXX_COMPILER_ID MATCHES NVHPC )
   ecbuild_add_cxx_flags("--diag_suppress declared_but_not_referenced --display_error_number" NAME atlas_cxx_disable_warnings )
-  # For all the variables with side effects (constructor/dectructor functionality)
+  # For all the variables with side effects (constructor/destructor functionality)
 endif()
 
 if( CMAKE_CXX_COMPILER_ID MATCHES IntelLLVM )

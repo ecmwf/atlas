@@ -450,10 +450,9 @@ function atlas_Field__wrap_name_${dtype}$_r${rank}$(name,data) result(field)
   call field%return()
 end function
 function atlas_Field__wrap_${dtype}$_r${rank}$(data) result(field)
-  use, intrinsic :: iso_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double, c_loc, c_int32_t
   use :: fckit_c_interop_module
   use atlas_field_c_binding
-  use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double
   use fckit_array_module, only : array_strides, array_view1d
   type(atlas_Field) :: field
   ${ftype}$, intent(in), target :: data(${dim[rank]}$)
