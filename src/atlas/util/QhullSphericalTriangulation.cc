@@ -16,6 +16,12 @@
 #pragma GCC diagnostic ignored "-Wtemplate-id-cdtor"
 #endif
 
+#if defined(__INTEL_COMPILER)
+#pragma warning push
+#pragma warning disable 68    // integer conversion resulted in a change of sign
+#endif
+
+
 #include <libqhullcpp/Qhull.h>
 #include <libqhullcpp/QhullFacet.h>
 #include <libqhullcpp/QhullFacetList.h>
@@ -24,6 +30,9 @@
 
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
+#endif
+#if defined(__INTEL_COMPILER)
+#pragma warning pop
 #endif
 
 #endif
