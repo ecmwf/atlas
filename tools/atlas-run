@@ -23,6 +23,11 @@ while test $# -gt 0; do
     shift # past argument
     shift # past value
     ;;
+    -c)
+    ATLAS_RUN_NTHREADS="$2"
+    shift # past argument
+    shift # past value
+    ;;
     *)    # unknown option
     break
     ;;
@@ -38,40 +43,25 @@ if [ -n "${ATLAS_RUN_NTHREADS}" ]; then
   export OMP_NUM_THREADS=${ATLAS_RUN_NTHREADS}
 fi
 
-if command_exists aprun            && \
-  [[ ${EC_queue:-unset} != "nf" ]] && \
-  [[ ${EC_queue:-unset} != "ns" ]]
-then
-  LAUNCH="aprun ${ATLAS_RUN_MPI_ARGS}"
-  if [ -z "${ATLAS_RUN_NPROCS}" ]; then
-     LAUNCH="${LAUNCH} -n 1"
-  else
-    LAUNCH="${LAUNCH} -n ${ATLAS_RUN_NPROCS}"
-  fi
-  if [ -n "${OMP_NUM_THREADS}" ]; then
-    LAUNCH="${LAUNCH} -d ${OMP_NUM_THREADS}"
-  fi
-
-elif command_exists srun ; then
+if command_exists srun ; then
   LAUNCH="srun ${ATLAS_RUN_MPI_ARGS}"
-  if [ -n "${ATLAS_RUN_NGPUS}" ]; then
-    LAUNCH="${LAUNCH} --gpus-per-task=${ATLAS_RUN_NGPUS}"
-  fi
   if [ -z "${ATLAS_RUN_NPROCS}" ]; then
     LAUNCH="${LAUNCH} -n 1"
     if [ -n "${SLURM_GPUS}" ]; then
-      LAUNCH="${LAUNCH} --gpus-per-task=1"
+      ATLAS_RUN_NGPUS=1
     fi
   else
     LAUNCH="${LAUNCH} -n ${ATLAS_RUN_NPROCS}"
   fi
+  if [ -n "${OMP_NUM_THREADS}" ]; then
+    LAUNCH="${LAUNCH} -c ${OMP_NUM_THREADS}"
+  fi
+  if [ -n "${ATLAS_RUN_NGPUS}" ]; then
+    LAUNCH="${LAUNCH} --gpus-per-task=${ATLAS_RUN_NGPUS}"
+  fi
   SLURM_EXPORT_ENV=ALL # Required to propagate environment variables to srun'd program
 
 else
-  if [[ ${ARCH:-unset} == "cray" ]]; then
-    echo + module load cray-snplauncher
-    module load cray-snplauncher
-  fi
   if [ -z "${ATLAS_RUN_NPROCS}" ]; then
     unset LAUNCH
   elif command_exists mpirun ; then
@@ -79,7 +69,7 @@ else
   elif command_exists mpiexec; then
     LAUNCH="mpiexec ${ATLAS_RUN_MPI_ARGS} -n ${ATLAS_RUN_NPROCS}"
   else
-    echo "No MPI driver found (mpirun,mpiexec,aprun,srun)"
+    echo "No MPI driver found (mpirun,mpiexec,srun)"
     exit 1
   fi
 fi

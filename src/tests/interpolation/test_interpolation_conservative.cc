@@ -64,7 +64,6 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
     auto src_field     = src_fs.createField<double>();
     auto tgt_field     = tgt_fs.createField<double>();
     auto src_vals      = array::make_view<double, 1>(src_field);
-    auto tgt_vals      = array::make_view<double, 1>(tgt_field);
 
     {
         ATLAS_TRACE("initial condition");
@@ -159,8 +158,6 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
 }
 
 void check(const Statistics remap_stat_1, Statistics remap_stat_2, std::array<double, 6> tol) {
-    //auto improvement = [](double& e, double& r) { return 100. * (r - e) / r; };
-    auto improvement = [](double& e, double& r) { return r - e; };
     double err;
     // check polygon intersections
     err = remap_stat_1.errors[Statistics::Errors::SRCTGT_INTERSECTPLG_DIFF];

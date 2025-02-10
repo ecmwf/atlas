@@ -131,6 +131,8 @@ domain/detail/DomainFactory.cc
 grid.h
 grid/CubedSphereGrid.cc
 grid/CubedSphereGrid.h
+grid/CubedSphereGrid2.cc
+grid/CubedSphereGrid2.h
 grid/Grid.cc
 grid/Grid.h
 grid/SpecRegistry.cc
@@ -155,6 +157,8 @@ grid/Tiles.cc
 
 grid/detail/grid/CubedSphere.cc
 grid/detail/grid/CubedSphere.h
+grid/detail/grid/CubedSphere2.cc
+grid/detail/grid/CubedSphere2.h
 grid/detail/grid/GridBuilder.h
 grid/detail/grid/GridBuilder.cc
 grid/detail/grid/GridFactory.h
@@ -628,6 +632,8 @@ interpolation/Interpolation.cc
 interpolation/Interpolation.h
 interpolation/NonLinear.cc
 interpolation/NonLinear.h
+interpolation/AssembleGlobalMatrix.h
+interpolation/AssembleGlobalMatrix.cc
 interpolation/method/Method.cc
 interpolation/method/Method.h
 interpolation/method/MethodFactory.cc
@@ -705,12 +711,21 @@ linalg/View.h
 linalg/sparse.h
 linalg/sparse/Backend.h
 linalg/sparse/Backend.cc
+linalg/sparse/MakeEckitSparseMatrix.h
+linalg/sparse/MakeSparseMatrixStorageEckit.h
+linalg/sparse/MakeSparseMatrixStorageEigen.h
 linalg/sparse/SparseMatrixMultiply.h
 linalg/sparse/SparseMatrixMultiply.tcc
 linalg/sparse/SparseMatrixMultiply_EckitLinalg.h
 linalg/sparse/SparseMatrixMultiply_EckitLinalg.cc
+linalg/sparse/SparseMatrixMultiply_HicSparse.h
+linalg/sparse/SparseMatrixMultiply_HicSparse.cc
 linalg/sparse/SparseMatrixMultiply_OpenMP.h
 linalg/sparse/SparseMatrixMultiply_OpenMP.cc
+linalg/sparse/SparseMatrixStorage.cc
+linalg/sparse/SparseMatrixStorage.h
+linalg/sparse/SparseMatrixToTriplets.h
+linalg/sparse/SparseMatrixView.h
 linalg/dense.h
 linalg/dense/Backend.h
 linalg/dense/Backend.cc
@@ -1001,6 +1016,7 @@ ecbuild_add_library( TARGET atlas
     eckit_option
     atlas_io
     hic
+    hicsparse
     $<${atlas_HAVE_EIGEN}:Eigen3::Eigen>
     $<${atlas_HAVE_OMP_CXX}:OpenMP::OpenMP_CXX>
     $<${atlas_HAVE_GRIDTOOLS_STORAGE}:GridTools::gridtools>
@@ -1021,8 +1037,10 @@ if( HAVE_ACC AND CMAKE_Fortran_COMPILER_ID MATCHES NVHPC )
   target_link_options( atlas INTERFACE
       $<$<LINK_LANG_AND_ID:C,NVHPC>:SHELL:${ACC_LINK_OPTIONS}>
       $<$<LINK_LANG_AND_ID:CXX,NVHPC>:SHELL:${ACC_LINK_OPTIONS}>
-      $<$<LINK_LANG_AND_ID:Fortran,NVHPC>:SHELL:${ACC_LINK_OPTIONS}>
-      $<$<LINK_LANG_AND_ID:CUDA,NVIDIA>:SHELL:${ACC_LINK_OPTIONS}> )
+      $<$<LINK_LANG_AND_ID:Fortran,NVHPC>:SHELL:${ACC_LINK_OPTIONS}> )
+      #   $<$<LINK_LANG_AND_ID:CUDA,NVIDIA>:SHELL:${ACC_LINK_OPTIONS}>
+      #      This only works when CUDA HOST COMPILER is NVIDIA, by default it is g++ so we cannot rely on this.
+      #      CUDA executables should set LINKER_LANGUAGE to C or CXX instead, which will have ACC_LINK_OPTIONS
 endif()
 
 target_compile_features( atlas PUBLIC cxx_std_17 )

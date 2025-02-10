@@ -117,7 +117,7 @@ SphericalHarmonic::SphericalHarmonic(int n, int m, bool caching) {
         Y_ = [Knm, Pnm](double lon, double colat) { return Knm * Pnm(std::cos(colat)); };
     }
     else if (m > 0) {
-        Y_ = [n, m, Knm, Pnm](double lon, double colat) {
+        Y_ = [m, Knm, Pnm](double lon, double colat) {
             return M_SQRT2 * Knm * std::cos(m * lon) * Pnm(std::cos(colat));
         };
     }

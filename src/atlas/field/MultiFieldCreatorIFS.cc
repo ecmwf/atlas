@@ -28,7 +28,7 @@
 namespace atlas {
 namespace field {
 
-MultiFieldCreatorIFS::MultiFieldCreatorIFS() {}
+MultiFieldCreatorIFS::MultiFieldCreatorIFS() = default;
 
 MultiFieldCreatorIFS::MultiFieldCreatorIFS(const eckit::Configuration& config) {}
 

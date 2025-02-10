@@ -77,7 +77,6 @@ void MatchingMeshPartitionerBruteForce::partition(const Grid& grid, int partitio
 
     const auto& comm   = mpi::comm(prePartitionedMesh_.mpi_comm());
     const int mpi_rank = int(comm.rank());
-    const int mpi_size = int(comm.size());
 
     // Point coordinates
     // - use a bounding box to quickly discard points,

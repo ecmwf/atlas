@@ -7,6 +7,23 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.41.0] - 2025-02-10
+
+### Added
+
+- Add hicsparse as wrapper to cusparse and hipsparse (#237)
+- Add SparseMatrix multiply_add functionality (#240)
+- Replace eckit::SparseMatrix with SparseMatrixStorage and SparseMatrixView to support host/device memory spaces (#247)
+- Add hicSparse backend to sparse matrix multiply (#246)
+- New simplified cubed sphere grid (#245)
+- Add functionality to gather global (serial) sparse matrix from an interpolation (#255)
+
+### Fixed
+
+- Fix warnings (#256)
+- bugfix: DIV_BY_ZERO in MatchingFunctionSpacePartitionerLonLatPolygon for small grids with OMP (#244)
+- bugfix: Apply normalisation also to SphereT as was already done for unit-sphere (#242)
+
 ## [0.40.0] - 2024-11-18
 
 ### Added
@@ -585,6 +602,7 @@ Fix StructuredInterpolation2D with retry for failed stencils
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.41.0]: https://github.com/ecmwf/atlas/compare/0.40.0...0.41.0
 [0.40.0]: https://github.com/ecmwf/atlas/compare/0.39.0...0.40.0
 [0.39.0]: https://github.com/ecmwf/atlas/compare/0.38.1...0.39.0
 [0.38.1]: https://github.com/ecmwf/atlas/compare/0.38.0...0.38.1

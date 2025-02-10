@@ -125,7 +125,7 @@ CASE("Write records to same file using record.write(path,io::Mode)") {
         record.set("v2", io::ref(data.v2), no_compression);
         record.set("v3", io::ref(data.v3));
 
-        globals::records.emplace_back(io::Record::URI{path, offsets.back()});
+        globals::records.emplace_back(path, offsets.back());
         lengths.emplace_back(record.write(path, mode));
         offsets.emplace_back(offsets.back() + lengths.back());
     };

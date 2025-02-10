@@ -16,10 +16,12 @@
 
 #include "atlas/interpolation/Cache.h"
 #include "atlas/interpolation/NonLinear.h"
+#include "atlas/linalg/sparse/SparseMatrixStorage.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/util/Object.h"
 #include "eckit/config/Configuration.h"
 #include "eckit/linalg/SparseMatrix.h"
+#include "atlas/linalg/sparse/MakeSparseMatrixStorageEckit.h"
 
 namespace atlas {
 class Field;
@@ -87,7 +89,7 @@ protected:
 
     using Triplet  = eckit::linalg::Triplet;
     using Triplets = std::vector<Triplet>;
-    using Matrix   = eckit::linalg::SparseMatrix;
+    using Matrix   = atlas::linalg::SparseMatrixStorage;
 
     static void normalise(Triplets& triplets);
 
@@ -102,13 +104,15 @@ protected:
     friend class interpolation::MatrixCache;
 
 protected:
-    void setMatrix(Matrix& m, const std::string& uid = "") {
+
+    void setMatrix(Matrix&& m, const std::string& uid = "") {
         if (not matrix_shared_) {
             matrix_shared_ = std::make_shared<Matrix>();
         }
-        matrix_shared_->swap(m);
+        *matrix_shared_ = std::move(m);
         matrix_cache_ = interpolation::MatrixCache(matrix_shared_, uid);
         matrix_       = &matrix_cache_.matrix();
+
     }
 
     void setMatrix(interpolation::MatrixCache matrix_cache) {
@@ -116,6 +120,14 @@ protected:
         matrix_cache_ = matrix_cache;
         matrix_       = &matrix_cache_.matrix();
         matrix_shared_.reset();
+    }
+
+    void setMatrix(eckit::linalg::SparseMatrix&& m, const std::string& uid = "") {
+        setMatrix( linalg::make_sparse_matrix_storage(std::move(m)), uid );
+    }
+
+    void setMatrix(std::size_t rows, std::size_t cols, const Triplets& triplets, const std::string& uid = "") {
+        setMatrix( eckit::linalg::SparseMatrix{rows, cols, triplets}, uid);
     }
 
     bool matrixAllocated() const { return matrix_shared_.use_count(); }

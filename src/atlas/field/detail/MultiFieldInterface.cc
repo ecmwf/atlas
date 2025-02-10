@@ -40,9 +40,9 @@ MultiFieldImpl* atlas__MultiField__create_shape(int kind, int rank, int shapef[]
 
     std::vector<std::string> var_names_str;
     for (size_t jj = 0; jj < size; ++jj) {
-        char str[length + 1];
-        ATLAS_ASSERT(snprintf(str, sizeof(str), "%s", var_names + jj * length ) >= 0);
-        std::string sstr(str);
+        std::unique_ptr<char[]> str(new char[length + 1]);
+        ATLAS_ASSERT(snprintf(str.get(), length, "%s", var_names + jj * length ) >= 0);
+        std::string sstr(str.get());
         sstr.erase(std::find_if(sstr.rbegin(), sstr.rend(), [](unsigned char ch) {
            return !std::isspace(ch);
         }).base(), sstr.end());

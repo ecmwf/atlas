@@ -52,7 +52,7 @@ int regex_match_impl(const std::string& string, const std::string& regex, std::v
     if (use_substr) {
         matchcount = regex_count_parens(regex);
     }
-    regmatch_t result[matchcount + 1];
+    std::vector<regmatch_t> result(matchcount + 1);
     int compiled_ok =
         !regcomp(&re, regex.c_str(), REG_EXTENDED + (use_case ? 0 : REG_ICASE) + (use_substr ? 0 : REG_NOSUB));
 
@@ -62,7 +62,7 @@ int regex_match_impl(const std::string& string, const std::string& regex, std::v
 
     ATLAS_ASSERT(compiled_ok);
 
-    int found = !regexec(&re, string.c_str(), matchcount + 1, result, 0);
+    int found = !regexec(&re, string.c_str(), matchcount + 1, result.data(), 0);
     if (found && use_substr) {
         substr.resize(matchcount);
         // match zero is the whole string; ignore it.

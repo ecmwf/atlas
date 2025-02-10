@@ -9,6 +9,31 @@
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+ecbuild_add_option( FEATURE WARNINGS
+                    DEFAULT ON
+                    DESCRIPTION "Add warnings to compiler" )
+
+# activate warnings, ecbuild macros check the compiler recognises the options
+if(HAVE_WARNINGS)
+
+  ecbuild_add_cxx_flags("-Wall" NO_FAIL)
+  ecbuild_add_cxx_flags("-Wextra" NO_FAIL)
+
+  ecbuild_add_cxx_flags("-Wno-unused-parameter" NO_FAIL)
+  ecbuild_add_cxx_flags("-Wno-sign-compare" NO_FAIL)
+
+endif()
+
+if( CMAKE_CXX_COMPILER_ID STREQUAL Intel )
+  ecbuild_add_cxx_flags("-diag-disable=11074" NO_FAIL)   # Inline limits
+  ecbuild_add_cxx_flags("-diag-disable=11076" NO_FAIL)   # Inline limits
+  ecbuild_add_cxx_flags("-diag-disable=10441" NO_FAIL)   # Deprecated classic compiler
+endif()
+
+if( CMAKE_Fortran_COMPILER_ID STREQUAL Intel)
+  ecbuild_add_fortran_flags("-diag-disable=5462" NO_FAIL)   # Global name too long, shortened
+endif()
+
 if( CMAKE_CXX_COMPILER_ID MATCHES Cray )
 
   if( NOT CMAKE_CXX_COMPILER_ID MATCHES CrayClang )
@@ -24,7 +49,7 @@ endif()
 
 if( CMAKE_CXX_COMPILER_ID MATCHES NVHPC )
   ecbuild_add_cxx_flags("--diag_suppress declared_but_not_referenced --display_error_number" NAME atlas_cxx_disable_warnings )
-  # For all the variables with side effects (constructor/dectructor functionality)
+  # For all the variables with side effects (constructor/destructor functionality)
 endif()
 
 if( CMAKE_CXX_COMPILER_ID MATCHES IntelLLVM )

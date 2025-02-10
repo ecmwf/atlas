@@ -119,7 +119,7 @@ function atlas_MatchingFunctionSpacePartitioner__ctor( functionspace, config ) r
   use atlas_config_module, only : atlas_Config
   use atlas_partitioner_c_binding
   type(atlas_Partitioner) :: this
-  type(atlas_FunctionSpace)  , intent(in) :: functionspace
+  class(atlas_FunctionSpace)  , intent(in) :: functionspace
   type(atlas_Config), intent(in), optional :: config
   type(atlas_Config) :: opt_config
   if( present(config) ) then

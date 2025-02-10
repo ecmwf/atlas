@@ -77,6 +77,8 @@ Array* Array::create(DataType datatype, const ArrayShape& shape) {
             return new ArrayT<int>(shape);
         case DataType::KIND_INT64:
             return new ArrayT<long>(shape);
+        case DataType::KIND_UINT32:
+            return new ArrayT<unsigned int>(shape);
         case DataType::KIND_UINT64:
             return new ArrayT<unsigned long>(shape);
         default: {
@@ -97,6 +99,8 @@ Array* Array::create(DataType datatype, ArraySpec&& spec) {
             return new ArrayT<int>(std::move(spec));
         case DataType::KIND_INT64:
             return new ArrayT<long>(std::move(spec));
+        case DataType::KIND_UINT32:
+            return new ArrayT<unsigned int>(std::move(spec));
         case DataType::KIND_UINT64:
             return new ArrayT<unsigned long>(std::move(spec));
         default: {
@@ -306,59 +310,66 @@ template Array* Array::create<long>(idx_t);
 template Array* Array::create<float>(idx_t);
 template Array* Array::create<double>(idx_t);
 template Array* Array::create<long unsigned>(idx_t);
+template Array* Array::create<unsigned int>(idx_t);
 
 template Array* Array::create<int>(idx_t, idx_t);
 template Array* Array::create<long>(idx_t, idx_t);
 template Array* Array::create<float>(idx_t, idx_t);
 template Array* Array::create<double>(idx_t, idx_t);
 template Array* Array::create<long unsigned>(idx_t, idx_t);
+template Array* Array::create<unsigned int>(idx_t, idx_t);
 
 template Array* Array::create<int>(idx_t, idx_t, idx_t);
 template Array* Array::create<long>(idx_t, idx_t, idx_t);
 template Array* Array::create<float>(idx_t, idx_t, idx_t);
 template Array* Array::create<double>(idx_t, idx_t, idx_t);
-template Array* Array::create<long unsigned>(idx_t, idx_t, idx_t);
+template Array* Array::create<unsigned int>(idx_t, idx_t, idx_t);
 
 template Array* Array::create<int>(idx_t, idx_t, idx_t, idx_t);
 template Array* Array::create<long>(idx_t, idx_t, idx_t, idx_t);
 template Array* Array::create<float>(idx_t, idx_t, idx_t, idx_t);
 template Array* Array::create<double>(idx_t, idx_t, idx_t, idx_t);
-template Array* Array::create<long unsigned>(idx_t, idx_t, idx_t, idx_t);
+template Array* Array::create<unsigned int>(idx_t, idx_t, idx_t, idx_t);
 
 template Array* Array::create<int>(idx_t, idx_t, idx_t, idx_t, idx_t);
 template Array* Array::create<long>(idx_t, idx_t, idx_t, idx_t, idx_t);
 template Array* Array::create<float>(idx_t, idx_t, idx_t, idx_t, idx_t);
 template Array* Array::create<double>(idx_t, idx_t, idx_t, idx_t, idx_t);
-template Array* Array::create<long unsigned>(idx_t, idx_t, idx_t, idx_t, idx_t);
+template Array* Array::create<unsigned int>(idx_t, idx_t, idx_t, idx_t, idx_t);
 
 template Array* Array::create<int>(const ArrayShape&);
 template Array* Array::create<long>(const ArrayShape&);
 template Array* Array::create<float>(const ArrayShape&);
 template Array* Array::create<double>(const ArrayShape&);
 template Array* Array::create<long unsigned>(const ArrayShape&);
+template Array* Array::create<unsigned int>(const ArrayShape&);
 
 template Array* Array::create<int>(const ArrayShape&, const ArrayLayout&);
 template Array* Array::create<long>(const ArrayShape&, const ArrayLayout&);
 template Array* Array::create<float>(const ArrayShape&, const ArrayLayout&);
 template Array* Array::create<double>(const ArrayShape&, const ArrayLayout&);
 template Array* Array::create<long unsigned>(const ArrayShape&, const ArrayLayout&);
+template Array* Array::create<unsigned int>(const ArrayShape&, const ArrayLayout&);
 
 template Array* Array::wrap<int>(int*, const ArrayShape&);
 template Array* Array::wrap<long>(long*, const ArrayShape&);
 template Array* Array::wrap<float>(float*, const ArrayShape&);
 template Array* Array::wrap<double>(double*, const ArrayShape&);
 template Array* Array::wrap<long unsigned>(long unsigned*, const ArrayShape&);
+template Array* Array::wrap<unsigned int>(unsigned int*, const ArrayShape&);
 
 template Array* Array::wrap<int>(int*, const ArraySpec&);
 template Array* Array::wrap<long>(long*, const ArraySpec&);
 template Array* Array::wrap<float>(float*, const ArraySpec&);
 template Array* Array::wrap<double>(double*, const ArraySpec&);
 template Array* Array::wrap<long unsigned>(long unsigned*, const ArraySpec&);
+template Array* Array::wrap<unsigned int>(unsigned int*, const ArraySpec&);
 
 template class ArrayT<int>;
 template class ArrayT<long>;
 template class ArrayT<float>;
 template class ArrayT<double>;
+template class ArrayT<unsigned int>;
 template class ArrayT<unsigned long>;
 
 }  // namespace array

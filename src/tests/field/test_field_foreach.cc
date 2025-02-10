@@ -130,7 +130,7 @@ CASE( "test field::for_each_column" ) {
     v++;
   });
 
-  auto print_column_1d =  [&](const array::View<double,1>& column) {
+  [[maybe_unused]] auto print_column_1d =  [&](const array::View<double,1>& column) {
       Log::info() << "";
       for( idx_t jlev=0; jlev<column.shape(0); ++jlev) {
         if (jlev != 0 ) {
@@ -141,7 +141,7 @@ CASE( "test field::for_each_column" ) {
       Log::info() << "," << std::endl;
   };
 
-  auto print_column_2d = [&](array::View<double,2>& column) {
+  [[maybe_unused]] auto print_column_2d = [&](array::View<double,2>& column) {
     Log::info() << "";
     for( idx_t jlev=0; jlev<column.shape(0); ++jlev) {
       if (jlev != 0 ) {

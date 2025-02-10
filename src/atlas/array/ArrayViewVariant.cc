@@ -55,6 +55,7 @@ VariantType<ArrayType> executeMakeView(ArrayType& array,
                           " and datatype = " + array.datatype().str() +
                           " is not supported.");
   }
+  ATLAS_UNREACHABLE();
 }
 
 template <typename ArrayType>

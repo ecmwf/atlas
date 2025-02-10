@@ -26,8 +26,13 @@ namespace util {
 class FactoryBase;
 
 class FactoryRegistry {
-protected:
-    FactoryRegistry(const std::string& factory);
+private:
+    struct Private{ explicit Private() = default; };
+public:
+    // Constructor, essentially private because nobody can create an explicit Private object.
+    // Construction must happen via instance() function below
+    FactoryRegistry(const std::string& factory, Private);
+
     virtual ~FactoryRegistry();
 
 private:
@@ -43,19 +48,8 @@ public:
     void add(const std::string& builder, FactoryBase*);
     void remove(const std::string& builder);
     FactoryBase* get(const std::string& builder) const;
-};
 
-template <typename T>
-struct FactoryRegistryT : public FactoryRegistry {
-public:
-    static std::shared_ptr<FactoryRegistryT<T>> instance() {
-        static std::shared_ptr<FactoryRegistryT<T>> env(new FactoryRegistryT<T>(T::className()));
-        return env;
-    }
-    virtual ~FactoryRegistryT() {}
-
-protected:
-    FactoryRegistryT(const std::string& factory): FactoryRegistry(factory) {}
+    static std::shared_ptr<FactoryRegistry> instance(const std::string& factory);
 };
 
 class FactoryBase {
@@ -85,13 +79,13 @@ public:
 
     Factory(const std::string& builder = ""): FactoryBase(registry(), builder) {
         if (not builder.empty()) {
-            attach_registry(FactoryRegistryT<T>::instance());
+            attach_registry(FactoryRegistry::instance(T::className()));
         }
     }
 
 protected:
     virtual ~Factory(){};
-    static FactoryRegistry& registry() { return *FactoryRegistryT<T>::instance().get(); }
+    static FactoryRegistry& registry() { return *FactoryRegistry::instance(T::className()).get(); }
 };
 
 //----------------------------------------------------------------------------------------------------------------------

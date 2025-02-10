@@ -8,11 +8,12 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "atlas/util/Factory.h"
+
 #include <iostream>
 
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
-#include "atlas/util/Factory.h"
 
 // #define DEBUG_FACTORY_REGISTRATION
 
@@ -62,7 +63,7 @@ void FactoryRegistry::remove(const std::string& builder) {
     factories_.erase(builder);
 }
 
-FactoryRegistry::FactoryRegistry(const std::string& factory): factory_(factory) {
+FactoryRegistry::FactoryRegistry(const std::string& factory, FactoryRegistry::Private): factory_(factory) {
 #ifdef DEBUG_FACTORY_REGISTRATION
     std::cout << "Created " << factory << std::endl;
 #endif
@@ -111,6 +112,15 @@ FactoryBase::~FactoryBase() {
 }
 
 //----------------------------------------------------------------------------------------------------------------------
+
+std::shared_ptr<FactoryRegistry> FactoryRegistry::instance(const std::string& factory) {
+    static std::map<std::string,std::shared_ptr<FactoryRegistry>> registries;
+    if (registries.find(factory) == registries.end()) {
+        auto [it_pair, inserted] = registries.emplace(factory, new FactoryRegistry(factory,Private()));
+        return it_pair->second;
+    }
+    return registries.at(factory);
+}
 
 }  // namespace util
 }  // namespace atlas

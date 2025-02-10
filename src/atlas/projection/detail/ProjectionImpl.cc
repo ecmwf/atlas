@@ -251,7 +251,7 @@ RectangularLonLatDomain ProjectionImpl::lonlatBoundingBox(const Domain& domain) 
                                                     {{rect.xmin(), rect.ymin()}, {rect.xmin(), rect.ymax()}}};
 
     BoundLonLat bounds;
-    for (const auto [p, dummy] : segments) {
+    for (const auto& [p, dummy] : segments) {
         auto q = lonlat(p);
         longitude_in_range(centre_lon, q.lon());
         bounds.extend(q, PointLonLat{h_deg, h_deg});

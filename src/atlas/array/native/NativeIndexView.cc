@@ -25,14 +25,16 @@ namespace array {
 //------------------------------------------------------------------------------------------------------
 
 template <typename Value, int Rank>
-IndexView<Value, Rank>::IndexView(Value* data, const idx_t shape[1]): data_(data) {
+IndexView<Value, Rank>::IndexView(Value* data, const idx_t shape[Rank]): data_(data) {
+    static_assert(Rank == 1);
     strides_[0] = 1;
     shape_[0]   = shape[0];
 }
 
 template <typename Value, int Rank>
-IndexView<Value, Rank>::IndexView(Value* data, const idx_t shape[1], const idx_t strides[1]):
+IndexView<Value, Rank>::IndexView(Value* data, const idx_t shape[Rank], const idx_t strides[Rank]):
     data_(const_cast<Value*>(data)) {
+    static_assert(Rank == 1);
     strides_[0] = strides[0];
     shape_[0]   = shape[0];
 }
@@ -67,7 +69,7 @@ ENABLE_IF_NON_CONST void IndexView<Value, Rank>::assign(const std::initializer_l
     EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(long, RANK)
 
 EXPLICIT_TEMPLATE_INSTANTIATION(1)
-EXPLICIT_TEMPLATE_INSTANTIATION(2)
+// EXPLICIT_TEMPLATE_INSTANTIATION(2)
 
 #undef EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK
 #undef EXPLICIT_TEMPLATE_INSTANTIATION

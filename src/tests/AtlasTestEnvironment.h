@@ -217,6 +217,12 @@ bool approx_eq(const Point2& v1, const Point2& v2) {
 bool approx_eq(const Point2& v1, const Point2& v2, const double& t) {
     return approx_eq(v1[0], v2[0], t) && approx_eq(v1[1], v2[1], t);
 }
+bool approx_eq(const Point3& v1, const Point3& v2) {
+    return approx_eq(v1[0], v2[0]) && approx_eq(v1[1], v2[1]) && approx_eq(v1[2], v2[2]);
+}
+bool approx_eq(const Point3& v1, const Point3& v2, const double& t) {
+    return approx_eq(v1[0], v2[0], t) && approx_eq(v1[1], v2[1], t) && approx_eq(v1[2], v2[2], t);
+}
 
 template <typename T1, typename T2>
 std::string expect_message(const std::string& condition, const T1& lhs, const T2& rhs, const eckit::CodeLocation& loc) {

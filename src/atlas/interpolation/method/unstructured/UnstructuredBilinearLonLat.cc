@@ -22,6 +22,7 @@
 #include "atlas/interpolation/element/Triag2D.h"
 #include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/interpolation/method/Ray.h"
+#include "atlas/linalg/sparse/MakeEckitSparseMatrix.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildCellCentres.h"
@@ -148,7 +149,8 @@ void UnstructuredBilinearLonLat::print(std::ostream& out) const {
     auto stencil_size_loc    = array::make_view<idx_t, 1>(field_stencil_size_loc);
     stencil_size_loc.assign(0);
 
-    for (auto it = matrix().begin(); it != matrix().end(); ++it) {
+    const auto m = atlas::linalg::make_non_owning_eckit_sparse_matrix(matrix());
+    for (auto it = m.begin(); it != m.end(); ++it) {
         idx_t p                   = idx_t(it.row());
         idx_t& i                  = stencil_size_loc(p);
         stencil_points_loc(p, i)  = gidx_src(it.col());
@@ -233,16 +235,12 @@ void UnstructuredBilinearLonLat::setup(const FunctionSpace& source) {
 
     array::ArrayView<int, 1> out_ghosts = array::make_view<int, 1>(target_ghost_);
 
-    idx_t Nelements = meshSource.cells().size();
-
     // weights -- one per vertex of element, triangles (3) or quads (4)
 
     Triplets weights_triplets;               // structure to fill-in sparse matrix
     weights_triplets.reserve(out_npts * 4);  // preallocate space as if all elements where quads
 
     // search nearest k cell centres
-
-    const idx_t maxNbElemsToTry = std::max<idx_t>(8, idx_t(Nelements * max_fraction_elems_to_try_));
 
     std::vector<idx_t> failures;
 
@@ -300,8 +298,7 @@ void UnstructuredBilinearLonLat::setup(const FunctionSpace& source) {
     }
 
     // fill sparse matrix and return
-    Matrix A(out_npts, inp_npts, weights_triplets);
-    setMatrix(A);
+    setMatrix(out_npts, inp_npts, weights_triplets);
 }
 
 Method::Triplets UnstructuredBilinearLonLat::projectPointToElements(size_t ip, const ElemIndex3::NodeList& elems,

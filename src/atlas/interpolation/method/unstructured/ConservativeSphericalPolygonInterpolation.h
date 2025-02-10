@@ -159,8 +159,8 @@ private:
     void do_setup_impl(const Grid& src_grid, const Grid& tgt_grid);
 
     void intersect_polygons(const CSPolygonArray& src_csp, const CSPolygonArray& tgt_scp);
-    Matrix compute_1st_order_matrix();
-    Matrix compute_2nd_order_matrix();
+    Triplets compute_1st_order_triplets();
+    Triplets compute_2nd_order_triplets();
     void dump_intersection(const std::string, const ConvexSphericalPolygon& plg_1, const CSPolygonArray& plg_2_array,
                            const std::vector<idx_t>& plg_2_idx_array) const;
     template <class TargetCellsIDs>
@@ -169,7 +169,10 @@ private:
     std::vector<idx_t> sort_cell_edges(Mesh& mesh, idx_t cell_id) const;
     std::vector<idx_t> sort_node_edges(Mesh& mesh, idx_t cell_id) const;
     std::vector<idx_t> get_cell_neighbours(Mesh&, idx_t jcell) const;
-    std::vector<idx_t> get_node_neighbours(Mesh&, idx_t jcell) const;
+
+    struct Workspace;
+
+    std::vector<idx_t> get_node_neighbours(Mesh&, idx_t jcell, Workspace&) const;
     CSPolygonArray get_polygons_celldata(FunctionSpace) const;
     CSPolygonArray get_polygons_nodedata(FunctionSpace, std::vector<idx_t>& csp2node,
                                          std::vector<std::vector<idx_t>>& node2csp,

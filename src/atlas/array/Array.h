@@ -246,6 +246,28 @@ public:
     virtual void accUnmap() const;
     virtual bool accMapped() const;
 
+    using Array::host_data;
+    using Array::device_data;
+    using Array::data;
+
+    Value const* host_data() const {
+        return data_store_->hostData<Value>();
+    }
+    Value* host_data() {
+        return data_store_->hostData<Value>();
+    }
+    Value const* device_data() const {
+        return data_store_->deviceData<Value>();
+    }
+    Value* device_data() {
+        return data_store_->deviceData<Value>();
+    }
+    Value const* data() const {
+        return data_store_->hostData<Value>();
+    }
+    Value* data() {
+        return data_store_->hostData<Value>();
+    }
 private:
     template <typename T>
     friend class ArrayT_impl;

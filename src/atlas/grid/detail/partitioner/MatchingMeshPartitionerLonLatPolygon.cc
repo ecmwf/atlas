@@ -49,7 +49,6 @@ MatchingMeshPartitionerLonLatPolygon::MatchingMeshPartitionerLonLatPolygon(const
 void MatchingMeshPartitionerLonLatPolygon::partition(const Grid& grid, int partitioning[]) const {
     const auto& comm   = mpi::comm(prePartitionedMesh_.mpi_comm());
     const int mpi_rank = int(comm.rank());
-    const int mpi_size = int(comm.size());
 
     ATLAS_TRACE("MatchingMeshPartitionerLonLatPolygon::partition");
 

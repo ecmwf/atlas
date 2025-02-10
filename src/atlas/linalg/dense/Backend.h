@@ -17,7 +17,7 @@ namespace atlas {
 namespace linalg {
 namespace dense {
 
-class Backend;
+struct Backend;
 
 void current_backend(const std::string& backend);
 dense::Backend& current_backend();

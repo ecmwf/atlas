@@ -5,6 +5,10 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
+#include "eckit/config/LocalConfiguration.h"
+#include "eckit/linalg/Triplet.h"
+#include "eckit/linalg/SparseMatrix.h"
+#include "eckit/mpi/Comm.h"
 
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/StructuredColumns.h"
@@ -12,14 +16,12 @@
 #include "atlas/interpolation/Interpolation.h"
 #include "atlas/interpolation/method/binning/Binning.h"
 #include "atlas/interpolation/method/MethodFactory.h"
+#include "atlas/linalg/sparse/SparseMatrixStorage.h"
+#include "atlas/linalg/sparse/MakeEckitSparseMatrix.h"
 #include "atlas/mesh.h"
 #include "atlas/mesh/actions/GetCubedSphereNodalArea.h"
 #include "atlas/runtime/Trace.h"
 
-#include "eckit/config/LocalConfiguration.h"
-#include "eckit/linalg/SparseMatrix.h"
-#include "eckit/linalg/Triplet.h"
-#include "eckit/mpi/Comm.h"
 
 
 namespace atlas {
@@ -56,7 +58,8 @@ void Binning::do_setup(const FunctionSpace& source,
                        const FunctionSpace& target) {
   ATLAS_TRACE("atlas::interpolation::method::Binning::do_setup()");
 
-  using Index = eckit::linalg::Index;
+  using Scalar  = eckit::linalg::Scalar;
+  using Index   = eckit::linalg::Index;
   using Triplet = eckit::linalg::Triplet;
   using SMatrix = eckit::linalg::SparseMatrix;
 
@@ -80,14 +83,16 @@ void Binning::do_setup(const FunctionSpace& source,
 
   auto smx_interp = smx_interp_cache.matrix();
 
-  auto smx_interp_tr = smx_interp.transpose();
+  auto eckit_smx_interp = make_non_owning_eckit_sparse_matrix(smx_interp);
+  SMatrix smx_interp_tr(eckit_smx_interp); // copy
+  smx_interp_tr.transpose(); // transpose the copy in-place
 
   const auto rows_tamx = smx_interp_tr.rows();
   const auto cols_tamx = smx_interp_tr.cols();
 
-  const double* ptr_tamx_data = smx_interp_tr.data();
-  const Index* ptr_tamx_idxs_col = smx_interp_tr.inner();
-  const Index* ptr_tamx_o = smx_interp_tr.outer();
+  const Scalar* ptr_tamx_data = smx_interp_tr.data();
+  const Index*  ptr_tamx_idxs_col = smx_interp_tr.inner();
+  const Index*  ptr_tamx_o = smx_interp_tr.outer();
 
   // diagonal of 'area weights matrix', W
   auto ds_aweights = getAreaWeights(source_);
@@ -123,8 +128,7 @@ void Binning::do_setup(const FunctionSpace& source,
   }
 
   // 'binning matrix' (sparse matrix), B = N A^T W
-  SMatrix smx_binning{rows_tamx, cols_tamx, smx_binning_els};
-  setMatrix(smx_binning);
+  setMatrix(rows_tamx, cols_tamx, smx_binning_els);
 }
 
 
