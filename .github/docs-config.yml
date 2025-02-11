@@ -1,7 +1,13 @@
 # note: each step is executed in own process
 build-steps:
   - git clone --depth 1 https://github.com/ecmwf/atlas-docs.git $RUNNER_TEMP/atlas-docs
-  - sudo apt install -y -q doxygen texlive-full
+  - |
+    wget https://github.com/doxygen/doxygen/archive/refs/tags/Release_1_13_2.tar.gz
+    tar xzf Release_1_13_2.tar.gz
+    cmake -S doxygen-Release_1_13_2 -B doxygen
+    cmake --build doxygen -j16
+    sudo cmake --install doxygen
+  - sudo apt install -y -q ghostscript texlive-full
   - | 
     cd $RUNNER_TEMP/atlas-docs
     make PUBLIC=1 WITH_ECKIT=1 WITH_DOXYGEN=1 ATLAS_SOURCE_DIR=$GITHUB_WORKSPACE clean html
