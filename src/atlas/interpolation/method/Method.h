@@ -57,6 +57,7 @@ public:
     void setup(const FunctionSpace& source, const Field& target);
     void setup(const FunctionSpace& source, const FieldSet& target);
     void setup(const Grid& source, const Grid& target, const Cache&);
+    void setup(const FunctionSpace& source, const FunctionSpace& target, const Cache&);
 
     Metadata execute(const FieldSet& source, FieldSet& target) const;
     Metadata execute(const Field& source, Field& target) const;
@@ -136,6 +137,7 @@ protected:
 
     virtual void do_setup(const FunctionSpace& source, const FunctionSpace& target) = 0;
     virtual void do_setup(const Grid& source, const Grid& target, const Cache&)     = 0;
+    virtual void do_setup(const FunctionSpace& source, const FunctionSpace& target, const Cache&) = 0;
     virtual void do_setup(const FunctionSpace& source, const Field& target);
     virtual void do_setup(const FunctionSpace& source, const FieldSet& target);
 

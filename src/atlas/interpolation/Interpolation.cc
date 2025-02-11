@@ -121,6 +121,16 @@ Interpolation::Interpolation(const Interpolation::Config& config, const Grid& so
         return impl;
     }()) {}
 
+Interpolation::Interpolation(const Interpolation::Config& config, const FunctionSpace& fs_in, const FunctionSpace& fs_out,
+                             const Interpolation::Cache& cache):
+    Handle([&]() -> Implementation* {
+        std::string type;
+        ATLAS_ASSERT(config.get("type", type));
+        Implementation* impl = interpolation::MethodFactory::build(type, config);
+        impl->setup(fs_in, fs_out, cache);
+        return impl;
+    }()) {}
+
 extern "C" {
 Interpolation::Implementation* atlas__Interpolation__new(const eckit::Parametrisation* config,
                                                          const functionspace::FunctionSpaceImpl* source,

@@ -38,6 +38,11 @@ MethodBuilder<NearestNeighbour> __builder("nearest-neighbour");
 
 }  // namespace
 
+void NearestNeighbour::do_setup(const FunctionSpace& source, const FunctionSpace& target, const Cache& cache) {
+    setMatrix(cache);
+    do_setup(source, target);
+}
+
 void NearestNeighbour::do_setup(const Grid& source, const Grid& target, const Cache&) {
     if (mpi::size() > 1) {
         ATLAS_NOTIMPLEMENTED;

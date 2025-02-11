@@ -39,6 +39,7 @@ namespace atlas::test {
 
 Config config_scheme(std::string scheme_str) {
     Config scheme;
+    scheme.set("matrix_free", false);
     if (scheme_str == "linear") {
         scheme.set("type", "structured-linear2D");
         // The stencil does not require any halo, but we set it to 1 for pole treatment!
@@ -54,6 +55,7 @@ Config config_scheme(std::string scheme_str) {
     }
     if (scheme_str == "conservative") {
         scheme.set("type", "conservative-spherical-polygon");
+        scheme.set("halo", 2);
         scheme.set("src_cell_data", false);
         scheme.set("tgt_cell_data", false);
     }
@@ -77,7 +79,33 @@ Config create_fspaces(const std::string& scheme_str, const Grid& input_grid, con
         fs_in = NodeColumns(inmesh, scheme);
         fs_out = NodeColumns(outmesh);
     }
-    else if (scheme_type != "conservative-spherical-polygon") {
+    else if (scheme_type == "conservative-spherical-polygon") {
+        bool src_cell_data = scheme.getBool("src_cell_data");
+        bool tgt_cell_data = scheme.getBool("tgt_cell_data");
+        auto tgt_mesh_config = output_grid.meshgenerator() | option::halo(0);
+        auto tgt_mesh = MeshGenerator(tgt_mesh_config).generate(output_grid);
+        if (tgt_cell_data) {
+            fs_out = functionspace::CellColumns(tgt_mesh, option::halo(0));
+        }
+        else {
+            fs_out = functionspace::NodeColumns(tgt_mesh, option::halo(1));
+        }
+        auto src_mesh_config = input_grid.meshgenerator() | option::halo(2);
+        Mesh src_mesh;
+        if (mpi::size() > 1) {
+            src_mesh = MeshGenerator(src_mesh_config).generate(input_grid, grid::MatchingPartitioner(tgt_mesh));
+        }
+        else {
+            src_mesh = MeshGenerator(src_mesh_config).generate(input_grid);
+        }
+        if (src_cell_data) {
+            fs_in = functionspace::CellColumns(src_mesh, option::halo(2));
+        }
+        else {
+            fs_in = functionspace::NodeColumns(src_mesh, option::halo(2));
+        }
+    }
+    else {
         fs_in = StructuredColumns(input_grid, scheme);
         fs_out = StructuredColumns(output_grid, grid::MatchingPartitioner(fs_in), scheme);
     }
@@ -93,10 +121,12 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
         Interpolation interpolator;
         FunctionSpace fs_in;
         FunctionSpace fs_out;
-        ATLAS_TRACE_SCOPE("Create interpolation") {
+        ATLAS_TRACE_SCOPE("Create interpolation in assembling") {
             auto scheme = create_fspaces(scheme_str, input_grid, output_grid, fs_in, fs_out);
             if (scheme_str == "conservative") {
                 interpolator = Interpolation{ scheme, input_grid, output_grid };
+                fs_in = interpolator.source();
+                fs_out = interpolator.target();
             }
             else {
                 interpolator = Interpolation{ scheme, fs_in, fs_out };
@@ -118,6 +148,7 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
         ATLAS_TRACE_SCOPE("assemble global matrix") {
             matrix = interpolation::assemble_global_matrix(interpolator, mpi_root);
         }
+        std::cout << mpi::comm().rank() << " task | global_matrix.size " << matrix.nnz() << std::endl;
 
         // verification via the gathered field
         //
@@ -158,13 +189,45 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
         FunctionSpace fs_out;
         SparseMatrixStorage gmatrix;
         std::tie(fs_in, fs_out, gmatrix) = assemble_global_matrix(scheme_str, input_grid, output_grid, mpi_root);
+        std::cout << fs_in.type() << std::endl;
+             std::cout << fs_out.type() << std::endl;
         SparseMatrixStorage matrix = interpolation::distribute_global_matrix(fs_in, fs_out, gmatrix, mpi_root);
         
-        // createinterpolator
+        // create the interpolator
         Config config;
         config.set("type", "finite-element");
         interpolation::MatrixCache cache(std::move(matrix));
-        //auto interp = Interpolation(config, input_grid, output_grid, cache);
+
+        mpi::comm().barrier();
+
+        Interpolation interpolator;
+        ATLAS_TRACE_SCOPE("Create interpolation in distribute") {
+            auto scheme = create_fspaces(scheme_str, input_grid, output_grid, fs_in, fs_out);
+            interpolator = Interpolation{ scheme, fs_in, fs_out, cache };
+        }
+        // gather the global field from the distributed one
+        //auto tgt_field_global = interpolator.target().createField<double>(option::global(mpi_root));
+        //tgt_field.haloExchange();
+        //interpolator.target().gather(tgt_field, tgt_field_global);
+        ATLAS_TRACE_SCOPE("check_parallel_interpolation_from_global_matrix") {
+            std::string tgt_name = "par-" + scheme_str;
+            std::cout << interpolator.target().type() << std::endl;
+            auto tgt_field = interpolator.target().createField<double>();
+            auto field_in = interpolator.source().createField<double>();
+            auto lonlat_in = array::make_view<double,2>(interpolator.source().lonlat());
+            auto view_in = array::make_view<double,1>(field_in);
+            for(idx_t j = 0; j < field_in.size(); ++j) {
+                view_in(j) = util::function::vortex_rollup(lonlat_in(j,0), lonlat_in(j,1), 1.);
+            }
+            interpolator.execute(field_in, tgt_field);
+            output::Gmsh gmsh(tgt_name + ".msh", Config("coordinates", "lonlat") | Config("ghost", "true"));
+            if( functionspace::NodeColumns(tgt_field.functionspace())) {
+                Log::info() << "storing distributed remapped field '" << tgt_name << "'." << std::endl;
+                gmsh.write(functionspace::NodeColumns(tgt_field.functionspace()).mesh());
+                tgt_field.haloExchange();
+                gmsh.write(tgt_field);
+            }
+        }
     };
 
     auto test_matrix_assemble_distribute = [&](const Grid& input_grid, const Grid& output_grid) {

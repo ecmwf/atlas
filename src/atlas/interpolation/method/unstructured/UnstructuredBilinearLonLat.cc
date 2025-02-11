@@ -80,6 +80,19 @@ void UnstructuredBilinearLonLat::do_setup(const Grid& source, const Grid& target
     do_setup(make_nodecolumns(source), functionspace::PointCloud{target});
 }
 
+void UnstructuredBilinearLonLat::do_setup(const FunctionSpace& source, const FunctionSpace& target, const Cache& cache) {
+    allow_halo_exchange_ = false;
+    //  no halo_exchange because we don't have any halo with delaunay or 3d structured meshgenerator
+
+    if (interpolation::MatrixCache(cache)) {
+        setMatrix(cache);
+        ATLAS_ASSERT(matrix().rows() == target.size());
+        ATLAS_ASSERT(matrix().cols() == source.size());
+        return;
+    }
+    ATLAS_NOTIMPLEMENTED;
+}
+
 void UnstructuredBilinearLonLat::do_setup(const FunctionSpace& source, const FunctionSpace& target) {
     ATLAS_TRACE("atlas::interpolation::method::BilinearRemapping::do_setup()");
 

@@ -138,6 +138,7 @@ public:
     using Method::do_setup;
     void do_setup(const FunctionSpace& src_fs, const FunctionSpace& tgt_fs) override;
     void do_setup(const Grid& src_grid, const Grid& tgt_grid, const interpolation::Cache&) override;
+    void do_setup(const FunctionSpace& source, const FunctionSpace& target, const interpolation::Cache&) override;
     void do_execute(const Field& src_field, Field& tgt_field, Metadata&) const override;
     void do_execute(const FieldSet& src_fields, FieldSet& tgt_fields, Metadata&) const override;
 

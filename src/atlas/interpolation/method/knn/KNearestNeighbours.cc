@@ -62,6 +62,11 @@ void KNearestNeighbours::do_setup(const Grid& source, const Grid& target, const 
     do_setup(functionspace(source), functionspace(target));
 }
 
+void KNearestNeighbours::do_setup(const FunctionSpace& source, const FunctionSpace& target, const Cache& cache) {
+    setMatrix(cache);
+    do_setup(source, target);
+}
+
 void KNearestNeighbours::do_setup(const FunctionSpace& source, const FunctionSpace& target) {
     source_                        = source;
     target_                        = target;

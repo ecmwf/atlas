@@ -265,6 +265,12 @@ void StructuredInterpolation2D<Kernel>::do_setup( const Grid& source, const Grid
 
 
 template <typename Kernel>
+void StructuredInterpolation2D<Kernel>::do_setup( const FunctionSpace& source, const FunctionSpace& target, const Cache& ) {
+    ATLAS_TRACE( "StructuredInterpolation2D<" + Kernel::className() + ">::do_setup(FunctionSpace source, FunctionSpace target)" );
+    do_setup( source, target );
+}
+
+template <typename Kernel>
 void StructuredInterpolation2D<Kernel>::do_setup( const FunctionSpace& source, const FunctionSpace& target ) {
     ATLAS_TRACE( "StructuredInterpolation2D<" + Kernel::className() + ">::do_setup(FS source, FS target)" );
 
