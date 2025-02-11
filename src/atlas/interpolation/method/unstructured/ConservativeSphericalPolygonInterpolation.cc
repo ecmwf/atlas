@@ -659,6 +659,56 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const Grid& src_grid, c
     do_setup_impl(src_grid, tgt_grid);
 }
 
+void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& source, const FunctionSpace& target,
+                                                         const interpolation::Cache& cache) {
+    ATLAS_TRACE("ConservativeSphericalPolygonInterpolation::do_setup(FunctionSpace, FunctionSpace, Cache)");
+
+    src_fs_ = source;
+    tgt_fs_ = target;
+
+    if (not matrix_free_) {
+        auto matrix_cache = interpolation::MatrixCache(cache);
+        if (matrix_cache) {
+            if (matrix_cache.uid() == std::to_string(order_) || matrix_cache.uid().empty()) {
+                Log::debug() << "Matrix found in cache -> no setup required at all" << std::endl;
+                src_fs_ = source;
+                tgt_fs_ = target;
+                setMatrix(matrix_cache);
+                return;
+            }
+        }
+    }
+
+    if (Cache(cache)) {
+        Log::debug() << "Interpolation data found in cache -> no polygon intersections required" << std::endl;
+        cache_ = Cache(cache);
+        data_  = cache_.get();
+        sharable_data_.reset();
+
+        if (not data_->tgt_fs_) {
+            tgt_fs_                 = target;
+            sharable_data_->tgt_fs_ = target;
+        }
+        if (not data_->src_fs_) {
+            src_fs_                 = source;
+            sharable_data_->src_fs_ = source;
+        }
+
+        src_cell_data_ = functionspace::CellColumns(src_fs_);
+        tgt_cell_data_ = functionspace::CellColumns(tgt_fs_);
+
+        src_mesh_ = extract_mesh(src_fs_);
+        tgt_mesh_ = extract_mesh(tgt_fs_);
+
+        if (order_ == 1 && matrix_free_) {
+            // We don't need to continue with setups required for first order matrix-free
+            // such as mesh generation and functionspace creation.
+            return;
+        }
+    }
+    do_setup(source, target);
+}
+
 void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& src_fs, const FunctionSpace& tgt_fs) {
     ATLAS_TRACE("ConservativeMethod::do_setup( FunctionSpace, FunctionSpace )");
     ATLAS_ASSERT(src_fs);
