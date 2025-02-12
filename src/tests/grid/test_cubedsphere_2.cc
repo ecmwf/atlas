@@ -85,6 +85,14 @@ CASE("cubed_sphere_grid_builder") {
 CASE("cubed_sphere_rotated_lonlat") {
     const auto grid_rotated = CubedSphereGrid2(2, Projection(util::Config("type", "rotated_lonlat")("north_pole", std::vector<double>{4., 54.})));
 
+    // Expect XY points to still match
+    std::vector<PointXY> points_xy;
+        for (const auto &xy : grid_rotated.xy()) {
+            points_xy.push_back(xy);
+    }
+    EXPECT(compare_2D_points<PointXY>(points_xy, kgo_lonlat) == true);
+
+    // Expect lonlats to be different
     std::vector<PointLonLat> points_lonlat;
     for (const auto &lonlat : grid_rotated.lonlat()) {
         points_lonlat.push_back(lonlat);
