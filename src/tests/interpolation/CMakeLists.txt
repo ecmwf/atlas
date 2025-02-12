@@ -85,7 +85,7 @@ ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_regional
   SOURCES  test_interpolation_structured2D_regional.cc
   LIBS     atlas
   MPI      2
-  CONDITION eckit_HAVE_MPI
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 2
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
@@ -114,7 +114,7 @@ ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_to_unstructured
   SOURCES  test_interpolation_structured2D_to_unstructured.cc
   LIBS     atlas
   MPI      2
-  CONDITION eckit_HAVE_MPI
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 2
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
@@ -122,7 +122,7 @@ ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_to_points
   SOURCES  test_interpolation_structured2D_to_points.cc
   LIBS     atlas
   MPI      4
-  CONDITION eckit_HAVE_MPI
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 4
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
