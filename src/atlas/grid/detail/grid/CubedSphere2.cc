@@ -6,7 +6,6 @@
 #include "atlas/grid/CubedSphereGrid2.h"
 #include "atlas/grid/detail/grid/GridBuilder.h"
 #include "atlas/grid/detail/grid/GridFactory.h"
-#include "atlas/projection/detail/CubedSphere2ProjectionBase.h"
 #include "atlas/runtime/Exception.h"
 #include "eckit/geometry/Sphere.h"
 #include "eckit/utils/Hash.h"
@@ -28,17 +27,11 @@ CubedSphere2::CubedSphere2(idx_t resolution, Projection projection) :
 
     // Copy members
     util::Config defaultProjConfig;
-    defaultProjConfig.set("type", "cubedsphere2");
+    defaultProjConfig.set("type", "lonlat");
     projection_ = projection ? projection : Projection(defaultProjConfig);
 
     // Domain
     domain_ = GlobalDomain();
-
-    cs2_projection_ = dynamic_cast<CubedSphere2ProjectionBase*>(projection_.get());
-    if (not cs2_projection_) {
-        ATLAS_THROW_EXCEPTION("Provided projection " << projection_.type()
-                                                     << " is incompatible with the CubedSphere2 grid type");
-    }
 }
 
 std::string CubedSphere2::name() const {
@@ -194,8 +187,7 @@ public:
 
         std::string name = "CS-LFR-" + std::to_string(N) + "-2";
         util::Config projconf;
-        projconf.set("type", "cubedsphere2");
-        projconf.set("tile.type", "cubedsphere2_lfric");
+        projconf.set("type", "lonlat");
 
         return new CubedSphereGrid2::grid_t(N, Projection(projconf));
     }
