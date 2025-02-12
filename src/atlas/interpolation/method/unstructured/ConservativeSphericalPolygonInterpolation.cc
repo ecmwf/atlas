@@ -663,18 +663,12 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& so
                                                          const interpolation::Cache& cache) {
     ATLAS_TRACE("ConservativeSphericalPolygonInterpolation::do_setup(FunctionSpace, FunctionSpace, Cache)");
 
-    src_fs_ = source;
-    tgt_fs_ = target;
-
     if (not matrix_free_) {
         auto matrix_cache = interpolation::MatrixCache(cache);
         if (matrix_cache) {
             if (matrix_cache.uid() == std::to_string(order_) || matrix_cache.uid().empty()) {
                 Log::debug() << "Matrix found in cache -> no setup required at all" << std::endl;
-                src_fs_ = source;
-                tgt_fs_ = target;
                 setMatrix(matrix_cache);
-                return;
             }
         }
     }
