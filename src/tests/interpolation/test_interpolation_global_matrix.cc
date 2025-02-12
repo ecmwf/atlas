@@ -148,7 +148,6 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
         ATLAS_TRACE_SCOPE("assemble global matrix") {
             matrix = interpolation::assemble_global_matrix(interpolator, mpi_root);
         }
-        std::cout << mpi::comm().rank() << " task | global_matrix.size " << matrix.nnz() << std::endl;
 
         // verification via the gathered field
         //
@@ -185,33 +184,37 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
     };
 
     auto do_assemble_distribute_matrix = [&](const std::string scheme_str, const Grid& input_grid, const Grid& output_grid, const int mpi_root) {
+        Log::info() << "\tassemble / distribute from " << scheme_str << ", " << input_grid.name() << " - " << output_grid.name() << std::endl;
         FunctionSpace fs_in;
         FunctionSpace fs_out;
         SparseMatrixStorage gmatrix;
         std::tie(fs_in, fs_out, gmatrix) = assemble_global_matrix(scheme_str, input_grid, output_grid, mpi_root);
-        std::cout << fs_in.type() << std::endl;
-             std::cout << fs_out.type() << std::endl;
-        SparseMatrixStorage matrix = interpolation::distribute_global_matrix(fs_in, fs_out, gmatrix, mpi_root);
         
-        // create the interpolator
-        Config config;
-        config.set("type", "finite-element");
-        interpolation::MatrixCache cache(std::move(matrix));
-
-        mpi::comm().barrier();
-
         Interpolation interpolator;
-        ATLAS_TRACE_SCOPE("Create interpolation in distribute") {
-            auto scheme = create_fspaces(scheme_str, input_grid, output_grid, fs_in, fs_out);
+        ATLAS_TRACE_SCOPE("Create distributed interpolation from the assembled global matrix") {
+            SparseMatrixStorage matrix = interpolation::distribute_global_matrix(fs_in, fs_out, gmatrix, mpi_root);
+            interpolation::MatrixCache cache(std::move(matrix));
+            Config scheme = config_scheme(scheme_str);
             interpolator = Interpolation{ scheme, fs_in, fs_out, cache };
         }
-        // gather the global field from the distributed one
-        //auto tgt_field_global = interpolator.target().createField<double>(option::global(mpi_root));
-        //tgt_field.haloExchange();
-        //interpolator.target().gather(tgt_field, tgt_field_global);
-        ATLAS_TRACE_SCOPE("check_parallel_interpolation_from_global_matrix") {
-            std::string tgt_name = "par-" + scheme_str;
-            std::cout << interpolator.target().type() << std::endl;
+
+        std::vector<double> tgt_data(output_grid.size());
+        auto tgt = eckit::linalg::Vector(tgt_data.data(), tgt_data.size());
+        ATLAS_TRACE_SCOPE("Compute the global field from the global matrix") {
+            std::vector<double> src_data(input_grid.size());
+            auto src = eckit::linalg::Vector(src_data.data(), src_data.size());
+            idx_t n{0};
+            for (auto p : input_grid.lonlat()) {
+                src_data[n++] = util::function::vortex_rollup(p.lon(), p.lat(), 1.);
+            }
+            if (mpi::comm().rank() == mpi_root) {
+                auto eckit_matrix = atlas::linalg::make_non_owning_eckit_sparse_matrix(gmatrix);
+                eckit::linalg::LinearAlgebraSparse::backend().spmv(eckit_matrix, src, tgt);
+            }
+        }
+
+        auto tgt_field_global = interpolator.target().createField<double>(option::global(mpi_root));
+        ATLAS_TRACE_SCOPE("Compute the global field from the distributed interpolation") {
             auto tgt_field = interpolator.target().createField<double>();
             auto field_in = interpolator.source().createField<double>();
             auto lonlat_in = array::make_view<double,2>(interpolator.source().lonlat());
@@ -220,12 +223,17 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
                 view_in(j) = util::function::vortex_rollup(lonlat_in(j,0), lonlat_in(j,1), 1.);
             }
             interpolator.execute(field_in, tgt_field);
-            output::Gmsh gmsh(tgt_name + ".msh", Config("coordinates", "lonlat") | Config("ghost", "true"));
-            if( functionspace::NodeColumns(tgt_field.functionspace())) {
-                Log::info() << "storing distributed remapped field '" << tgt_name << "'." << std::endl;
-                gmsh.write(functionspace::NodeColumns(tgt_field.functionspace()).mesh());
-                tgt_field.haloExchange();
-                gmsh.write(tgt_field);
+
+            tgt_field.haloExchange();
+            interpolator.target().gather(tgt_field, tgt_field_global);
+        }
+
+        ATLAS_TRACE_SCOPE("Compare the two global fields") {
+            if (mpi::comm().rank() == mpi_root) {
+                auto tfield_global_v = array::make_view<double,1>(tgt_field_global);
+                for (gidx_t i = 0; i < tgt_data.size(); ++i) {
+                    EXPECT_APPROX_EQ(tgt_data[i], tfield_global_v(i), 1.e-14);
+                }
             }
         }
     };
@@ -238,11 +246,11 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
         do_assemble_distribute_matrix("linear", input_grid, output_grid, mpi_root);
         do_assemble_distribute_matrix("cubic", input_grid, output_grid, mpi_root);
         do_assemble_distribute_matrix("quasicubic", input_grid, output_grid, mpi_root);
-        //do_assemble_distribute_matrix("conservative", input_grid, output_grid, mpi_root);
-        do_assemble_distribute_matrix("finite-element", input_grid, output_grid, mpi_root);
+        do_assemble_distribute_matrix("conservative", input_grid, output_grid, mpi_root);
+        //do_assemble_distribute_matrix("finite-element", input_grid, output_grid, mpi_root);
     };
 
-    test_matrix_assemble_distribute(Grid("O32"), Grid("O64"));
+    test_matrix_assemble_distribute(Grid("O16"), Grid("F16"));
 }
 
 }  // namespace

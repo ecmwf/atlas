@@ -235,8 +235,6 @@ linalg::SparseMatrixStorage distribute_global_matrix(const FunctionSpace& src_fs
     const auto tgt_part         = array::make_view<int, 1>(tgt_fs.partition());
 
     Field field_tgt_part_glb = tgt_fs.createField(tgt_fs.partition(), option::global(mpi_root));
-    ATLAS_DEBUG_VAR(field_tgt_part_glb.size());
-    ATLAS_DEBUG_VAR(tgt_fs.partition().size());
     tgt_fs.gather(tgt_fs.partition(), field_tgt_part_glb);
 
     using Index = eckit::linalg::Index;
