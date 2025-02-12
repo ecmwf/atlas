@@ -113,7 +113,7 @@ Config create_fspaces(const std::string& scheme_str, const Grid& input_grid, con
 }
 
 
-CASE("test_interpolation_structured using grid API") {
+CASE("test_interpolation_global_matrix_vs_distributed_interpolation") {
 
 using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
 
@@ -183,46 +183,54 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
         return std::make_tuple(fs_in, fs_out, std::move(matrix));
     };
 
+
     auto do_assemble_distribute_matrix = [&](const std::string scheme_str, const Grid& input_grid, const Grid& output_grid, const int mpi_root) {
         Log::info() << "\tassemble / distribute from " << scheme_str << ", " << input_grid.name() << " - " << output_grid.name() << std::endl;
         FunctionSpace fs_in;
         FunctionSpace fs_out;
         SparseMatrixStorage gmatrix;
         std::tie(fs_in, fs_out, gmatrix) = assemble_global_matrix(scheme_str, input_grid, output_grid, mpi_root);
-        
+
         Interpolation interpolator;
         ATLAS_TRACE_SCOPE("Create distributed interpolation from the assembled global matrix") {
             SparseMatrixStorage matrix = interpolation::distribute_global_matrix(fs_in, fs_out, gmatrix, mpi_root);
+
             interpolation::MatrixCache cache(std::move(matrix));
             Config scheme = config_scheme(scheme_str);
             interpolator = Interpolation{ scheme, fs_in, fs_out, cache };
         }
 
         std::vector<double> tgt_data(output_grid.size());
-        auto tgt = eckit::linalg::Vector(tgt_data.data(), tgt_data.size());
         ATLAS_TRACE_SCOPE("Compute the global field from the global matrix") {
-            std::vector<double> src_data(input_grid.size());
-            auto src = eckit::linalg::Vector(src_data.data(), src_data.size());
-            idx_t n{0};
-            for (auto p : input_grid.lonlat()) {
-                src_data[n++] = util::function::vortex_rollup(p.lon(), p.lat(), 1.);
-            }
             if (mpi::comm().rank() == mpi_root) {
+                std::vector<double> src_data(input_grid.size());
+                auto src = eckit::linalg::Vector(src_data.data(), src_data.size());
+                idx_t n{0};
+                for (auto p : input_grid.lonlat()) {
+                    src_data[n++] = util::function::vortex_rollup(p.lon(), p.lat(), 1.);
+                }
+                auto tgt = eckit::linalg::Vector(tgt_data.data(), tgt_data.size());
                 auto eckit_matrix = atlas::linalg::make_non_owning_eckit_sparse_matrix(gmatrix);
                 eckit::linalg::LinearAlgebraSparse::backend().spmv(eckit_matrix, src, tgt);
             }
         }
 
         auto tgt_field_global = interpolator.target().createField<double>(option::global(mpi_root));
+
         ATLAS_TRACE_SCOPE("Compute the global field from the distributed interpolation") {
             auto tgt_field = interpolator.target().createField<double>();
             auto field_in = interpolator.source().createField<double>();
-            auto lonlat_in = array::make_view<double,2>(interpolator.source().lonlat());
-            auto view_in = array::make_view<double,1>(field_in);
+            auto lonlat_in = array::make_view<double, 2>(interpolator.source().lonlat());
+            auto field_in_v = array::make_view<double, 1>(field_in);
             for(idx_t j = 0; j < field_in.size(); ++j) {
-                view_in(j) = util::function::vortex_rollup(lonlat_in(j,0), lonlat_in(j,1), 1.);
+                field_in_v(j) = util::function::vortex_rollup(lonlat_in(j,0), lonlat_in(j,1), 1.);
             }
             interpolator.execute(field_in, tgt_field);
+
+            auto tfield_v = array::make_view<double, 1>(tgt_field);
+            for (gidx_t i = 0; i < tfield_v.size(); ++i) {
+                EXPECT_APPROX_EQ(tgt_data[i], tfield_v(i), 1.e-14);
+            }
 
             tgt_field.haloExchange();
             interpolator.target().gather(tgt_field, tgt_field_global);
@@ -230,27 +238,43 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
 
         ATLAS_TRACE_SCOPE("Compare the two global fields") {
             if (mpi::comm().rank() == mpi_root) {
-                auto tfield_global_v = array::make_view<double,1>(tgt_field_global);
+                auto tfield_global_v = array::make_view<double, 1>(tgt_field_global);
                 for (gidx_t i = 0; i < tgt_data.size(); ++i) {
                     EXPECT_APPROX_EQ(tgt_data[i], tfield_global_v(i), 1.e-14);
                 }
+
+                Field fdiff = interpolator.target().createField<double>(option::global(mpi_root));
+                auto fdiff_v = array::make_view<double,1>(fdiff);
+                for (gidx_t p = 0; p < fdiff_v.size(); ++p) {
+                    fdiff_v(p) = tfield_global_v(p) - tgt_data[p];
+                }
+                mpi::Scope scope("self");
+                output::Gmsh gmsh("mesh.msh");
+                auto mesh = Mesh(output_grid);
+                auto fs = functionspace::NodeColumns(mesh);
+                gmsh.write(mesh);
+                gmsh.write(fdiff, fs);
             }
         }
     };
 
+
     auto test_matrix_assemble_distribute = [&](const Grid& input_grid, const Grid& output_grid) {
         int mpi_root = 0;
-        do_assemble_distribute_matrix("linear", input_grid, output_grid, mpi_root);
+        // do_assemble_distribute_matrix("linear", input_grid, output_grid, mpi_root);
 
-        mpi_root = mpi::size() - 1;
-        do_assemble_distribute_matrix("linear", input_grid, output_grid, mpi_root);
-        do_assemble_distribute_matrix("cubic", input_grid, output_grid, mpi_root);
-        do_assemble_distribute_matrix("quasicubic", input_grid, output_grid, mpi_root);
+        // mpi_root = mpi::size() - 1;
+        // do_assemble_distribute_matrix("linear", input_grid, output_grid, mpi_root);
+        // do_assemble_distribute_matrix("cubic", input_grid, output_grid, mpi_root);
+        // do_assemble_distribute_matrix("quasicubic", input_grid, output_grid, mpi_root);
+
         do_assemble_distribute_matrix("conservative", input_grid, output_grid, mpi_root);
-        //do_assemble_distribute_matrix("finite-element", input_grid, output_grid, mpi_root);
+
+        mpi_root = mpi::comm().size() - 1;
+        do_assemble_distribute_matrix("finite-element", input_grid, output_grid, mpi_root);
     };
 
-    test_matrix_assemble_distribute(Grid("O16"), Grid("F16"));
+    test_matrix_assemble_distribute(Grid("O128"), Grid("F128"));
 }
 
 }  // namespace
