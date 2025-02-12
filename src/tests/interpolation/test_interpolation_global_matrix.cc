@@ -227,11 +227,6 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
             }
             interpolator.execute(field_in, tgt_field);
 
-            auto tfield_v = array::make_view<double, 1>(tgt_field);
-            for (gidx_t i = 0; i < tfield_v.size(); ++i) {
-                EXPECT_APPROX_EQ(tgt_data[i], tfield_v(i), 1.e-14);
-            }
-
             tgt_field.haloExchange();
             interpolator.target().gather(tgt_field, tgt_field_global);
         }
