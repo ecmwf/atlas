@@ -669,7 +669,13 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& so
             if (matrix_cache.uid() == std::to_string(order_) || matrix_cache.uid().empty()) {
                 Log::debug() << "Matrix found in cache -> no setup required at all" << std::endl;
                 setMatrix(matrix_cache);
+                src_fs_ = source;
+                tgt_fs_ = target;
+                return;
             }
+        }
+        else {
+            Log::warning() << "Could not find matrix in cache" << std::endl;
         }
     }
 
@@ -677,17 +683,9 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& so
         Log::debug() << "Interpolation data found in cache -> no polygon intersections required" << std::endl;
         cache_ = Cache(cache);
         data_  = cache_.get();
-        sharable_data_.reset();
-
-        if (not data_->tgt_fs_) {
-            tgt_fs_                 = target;
-            sharable_data_->tgt_fs_ = target;
-        }
-        if (not data_->src_fs_) {
-            src_fs_                 = source;
-            sharable_data_->src_fs_ = source;
-        }
-
+        sharable_data_.reset(new Data());
+        tgt_fs_                 = target;
+        src_fs_                 = source;
         src_cell_data_ = functionspace::CellColumns(src_fs_);
         tgt_cell_data_ = functionspace::CellColumns(tgt_fs_);
 

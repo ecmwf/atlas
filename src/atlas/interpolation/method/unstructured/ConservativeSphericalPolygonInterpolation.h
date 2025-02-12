@@ -144,8 +144,8 @@ public:
 
     void print(std::ostream& out) const override;
 
-    const FunctionSpace& source() const override { return data_->src_fs_; }
-    const FunctionSpace& target() const override { return data_->tgt_fs_; }
+    const FunctionSpace& source() const override { return src_fs_; }
+    const FunctionSpace& target() const override { return tgt_fs_; }
 
     inline const PointXYZ& src_points(size_t id) const { return data_->src_points_[id]; }
     inline const PointXYZ& tgt_points(size_t id) const { return data_->tgt_points_[id]; }
