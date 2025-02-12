@@ -35,9 +35,10 @@ bool compare_2D_points(std::vector<point2_derived> a, std::vector<Point2> b, boo
 
 CASE("cubed_sphere_instantiation") {
     const int n = 2;
-    const Grid grid = CubedSphereGrid2(n);
-
-    EXPECT(grid.name() == "CS-LFR-" + std::to_string(n) + "-2");
+    const std::string name = "CS-LFR-" + std::to_string(n) + "-2";
+    
+    const Grid grid = Grid(name);
+    EXPECT(grid.name() == name);
     EXPECT(grid.type() == "cubedsphere2");
     EXPECT(grid.size() == n * n * 6);
 }
@@ -71,15 +72,6 @@ CASE("cubed_sphere_grid_kgo") {
     }
     EXPECT(points_xy.size() == static_cast<size_t>(grid.size()));
     EXPECT(compare_2D_points<PointXY>(points_xy, kgo_lonlat));
-}
-
-CASE("cubed_sphere_grid_builder") {
-    const int n = 2;
-    const std::string name = "CS-LFR-" + std::to_string(n) + "-2";
-    const Grid grid = Grid(name);
-    EXPECT(grid.name() == name);
-    EXPECT(grid.type() == "cubedsphere2");
-    EXPECT(grid.size() == n * n * 6);
 }
 
 CASE("cubed_sphere_rotated_lonlat") {
