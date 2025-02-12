@@ -17,6 +17,7 @@ ecbuild_add_test( TARGET atlas_test_array_foreach
   SOURCES  test_array_foreach.cc
   LIBS     atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION NOT SKIP_TEST_atlas_test_array_foreach
 )
 
 ecbuild_add_test( TARGET atlas_test_array
