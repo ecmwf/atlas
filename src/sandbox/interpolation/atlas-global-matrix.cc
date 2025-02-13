@@ -73,7 +73,7 @@ class AtlasGlobalMatrix : public AtlasTool {
     Config interpolation_config(std::string scheme_str);
     Config create_fspaces(const std::string& scheme_str, const Grid& input_grid, const Grid& output_grid,
         FunctionSpace& fs_in, FunctionSpace& fs_out);
-    std::string get_matrix_name(std::string sgrid, std::string tgrid, std::string interp = "");
+    std::string get_matrix_name(std::string& sgrid, std::string& tgrid, std::string& interp);
     Matrix read_matrix(std::string matrix_name, std::string matrix_format);
     void write_matrix(const Matrix& mat, std::string matrix_name, std::string matrix_format);
 
@@ -103,15 +103,15 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
     std::string tgrid_name = "O32";
     args.get("tgrid", tgrid_name);
 
-    auto sgrid = Grid{sgrid_name};
-    auto tgrid = Grid{tgrid_name};
-    Log::info() << "source grid: " << sgrid_name << ", target grid: " << tgrid_name;
-
     std::string interpolation_method = "finite-element";
     args.get("interpolation", interpolation_method);
+    Log::info() << "source grid: " << sgrid_name << ", target grid: " << tgrid_name << ", interpolation: " << interpolation_method << std::endl;
 
     std::string matrix_format = "eckit";
     args.get("format", matrix_format);
+
+    auto sgrid = Grid{sgrid_name};
+    auto tgrid = Grid{tgrid_name};
 
     if (args.has("read")) {
         Matrix gmatrix;
@@ -121,7 +121,6 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
             matrix_name = get_matrix_name(sgrid_name, tgrid_name, interpolation_method) + '.' + matrix_format;
         }
         if (mpi::comm().rank() == 0) {
-            Log::info() << "\nreading matrix '" << matrix_name << "' from the disc.\n";
             gmatrix = read_matrix(matrix_name, matrix_format);
             auto eckit_gmatrix = atlas::linalg::make_non_owning_eckit_sparse_matrix(gmatrix);
             eckit_gmatrix.print(Log::info());
@@ -185,10 +184,6 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
         }
     }
     else {
-        std::string interpolation_method = "finite-element";
-        args.get("interpolation", interpolation_method);
-        Log::info() << ", interpolation: " << interpolation_method << std::endl;
-
         FunctionSpace src_fs;
         FunctionSpace tgt_fs;
         Interpolation interpolator;
@@ -239,7 +234,7 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
                 std::string matrix_name;
                 args.get("matrix", matrix_name);
                 if (matrix_name == "") {
-                    matrix_name = get_matrix_name(sgrid_name, tgrid_name, scheme.getString("name"));
+                    matrix_name = get_matrix_name(sgrid_name, tgrid_name, interpolation_method);
                 }
                 write_matrix(matrix, matrix_name, matrix_format);
             }
@@ -262,11 +257,11 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
             timers.global_matrix_exe.stop();
             Log::info() << "Global matrix-multiply timer  \t: " << 1000.*timers.global_matrix_exe.elapsed()  << " [ms]" << std::endl;
             Log::info() << "Global matrix non-zero entries\t: " << matrix.nnz() << std::endl;
-            Log::info() << "Global matrix memory          \t: " << eckit_matrix.footprint() << std::endl;
+            Log::info() << "Global matrix footprint       \t: " << eckit_matrix.footprint() << " B" << std::endl;
 
             ATLAS_TRACE_SCOPE("output from proc 0") {
                 mpi::Scope mpi_scope("self"); 
-                std::string tgt_name = "tfield_cache_" + get_matrix_name(sgrid_name, tgrid_name);
+                std::string tgt_name = "tfield_cache_" + get_matrix_name(sgrid_name, tgrid_name, interpolation_method);
                 auto tgt_field = Field(tgt_name, tgt_data.data(), array::make_shape(tgt_data.size())); // wrap
                 output::Gmsh gmsh(tgt_name + ".msh", Config("coordinates", "lonlat") | Config("ghost", "true"));
                 gmsh.write(MeshGenerator("structured", util::Config("three_dimensional",true)).generate(tgrid));
@@ -312,7 +307,7 @@ Config AtlasGlobalMatrix::interpolation_config(std::string scheme_str) {
 }
 
 
-std::string AtlasGlobalMatrix::get_matrix_name(std::string sgrid, std::string tgrid, std::string interpolation_name) {
+std::string AtlasGlobalMatrix::get_matrix_name(std::string& sgrid, std::string& tgrid, std::string& interpolation_name) {
     return "remap_" + sgrid + "_" + tgrid + "_" + interpolation_name;
 }
 
