@@ -83,16 +83,20 @@ void FiniteElement::do_setup(const Grid& source, const Grid& target, const Cache
     do_setup(make_nodecolumns(source), functionspace::PointCloud{target});
 }
 
-void FiniteElement::do_setup(const FunctionSpace& source, const FunctionSpace& target, const Cache& cache) {
-    source_ = source;
-    target_ = target;
+void FiniteElement::do_setup(const FunctionSpace& source, const FunctionSpace& target, const Cache& cache) { 
     if (interpolation::MatrixCache(cache)) {
         setMatrix(cache);
+        source_ = source;
+        target_ = target;
         ATLAS_ASSERT(matrix().rows() == target.size());
         ATLAS_ASSERT(matrix().cols() == source.size());
         return;
     }
-    do_setup(source, target);
+    if (functionspace::NodeColumns(source) && functionspace::PointCloud(target)) {
+        do_setup(source, target);
+        return;
+    }
+    ATLAS_NOTIMPLEMENTED;
 }
 
 void FiniteElement::do_setup(const FunctionSpace& source, const FunctionSpace& target) {

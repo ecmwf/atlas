@@ -184,16 +184,16 @@ void GridBoxMethod::do_setup(const Grid& source, const Grid& target, const Cache
 void GridBoxMethod::do_setup(const FunctionSpace& source, const FunctionSpace& target, const Cache& cache) {
     ATLAS_TRACE("GridBoxMethod::setup()");
 
-    source_ = source;
-    target_ = target;
     if (not matrixFree_ && interpolation::MatrixCache(cache)) {
         setMatrix(cache);
+        source_ = source;
+        target_ = target;
         ATLAS_ASSERT(matrix().rows() == target.size());
         ATLAS_ASSERT(matrix().cols() == source.size());
         return;
     }
 
-    // setup only with cache
+    Log::warning() << "Can not create GridBoxMethod from (FunctionSpace, FunctionSpace, Cache). Use (Grid, Grid, Cache)";
     ATLAS_NOTIMPLEMENTED;
 }
 

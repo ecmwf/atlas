@@ -71,12 +71,21 @@ void StructuredInterpolation3D<Kernel>::do_setup( const Grid& source, const Grid
 }
 
 template <typename Kernel>
-void StructuredInterpolation3D<Kernel>::do_setup( const FunctionSpace& source, const FunctionSpace& target, const Cache& ) {
-    if ( mpi::size() > 1 ) {
-        ATLAS_NOTIMPLEMENTED;
+void StructuredInterpolation3D<Kernel>::do_setup( const FunctionSpace& source, const FunctionSpace& target, const Cache& cache) {
+    ATLAS_TRACE( "StructuredInterpolation3D<" + Kernel::className() + ">::do_setup(FunctionSpace source, FunctionSpace target, const Cache)" );
+    if (interpolation::MatrixCache(cache)) {
+        setMatrix(cache);
+        source_ = source;
+        target_ = target;
+        ATLAS_ASSERT(matrix().rows() == target.size());
+        ATLAS_ASSERT(matrix().cols() == source.size());
+        return;
     }
-
-    do_setup( source, target );
+    if (functionspace::StructuredColumns(source) && functionspace::PointCloud(target)) {
+        do_setup( source, target );
+        return;
+    }
+    ATLAS_NOTIMPLEMENTED;
 }
 
 template <typename Kernel>
