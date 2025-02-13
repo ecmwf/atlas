@@ -106,19 +106,21 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
     auto tgrid = Grid{tgrid_name};
     Log::info() << "source grid: " << sgrid_name << ", target grid: " << tgrid_name;
 
+    std::string interpolation_method = "finite-element";
+    args.get("interpolation", interpolation_method);
+
     std::string matrix_format = "eckit";
     args.get("format", matrix_format);
 
     if (args.has("read")) {
         Matrix gmatrix;
+        std::string matrix_name;
+        args.get("matrix", matrix_name);
+        if (matrix_name == "") {
+            matrix_name = get_matrix_name(sgrid_name, tgrid_name, interpolation_method) + '.' + matrix_format;
+        }
         if (mpi::comm().rank() == 0) {
-            std::string matrix_name;
-            args.get("matrix", matrix_name);
-            if (matrix_name == "") {
-                matrix_name = get_matrix_name(sgrid_name, tgrid_name);
-            }
             Log::info() << "\nreading matrix '" << matrix_name << "' from the disc.\n";
-
             gmatrix = read_matrix(matrix_name, matrix_format);
             auto eckit_gmatrix = atlas::linalg::make_non_owning_eckit_sparse_matrix(gmatrix);
             eckit_gmatrix.print(Log::info());
@@ -127,8 +129,6 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
 
         mpi::comm().barrier();
 
-        std::string interpolation_method = "finite-element";
-        args.get("interpolation", interpolation_method);
         FunctionSpace src_fs;
         FunctionSpace tgt_fs;
         auto scheme = create_fspaces(interpolation_method, sgrid, tgrid, src_fs, tgt_fs);
@@ -152,7 +152,7 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
         interpolator.execute(src_field, tgt_field);
 
         ATLAS_TRACE_SCOPE("output from the read-in matrix") {
-            std::string tgt_name = "tfield_" + get_matrix_name(sgrid_name, tgrid_name);
+            std::string tgt_name = "tfield_" + matrix_name;
             output::Gmsh gmsh(tgt_name + ".msh", Config("coordinates", "lonlat") | Config("ghost", "true"));
             if( functionspace::NodeColumns(tgt_field.functionspace())) {
                 Log::info() << "storing distributed remapped field '" << tgt_name << "'." << std::endl;
@@ -290,11 +290,8 @@ Config AtlasGlobalMatrix::interpolation_config(std::string scheme_str) {
 }
 
 
-std::string AtlasGlobalMatrix::get_matrix_name(std::string sgrid, std::string tgrid, std::string interp) {
-    std::stringstream ss;
-    ss << mpi::comm().size() << "-" << atlas_omp_get_num_threads();
-    std::string grids = "remap_" + ss.str() + "_" + sgrid + "_" + tgrid;
-    return (interp != "") ? grids + "_" + interp : grids;
+std::string AtlasGlobalMatrix::get_matrix_name(std::string sgrid, std::string tgrid, std::string interpolation_name) {
+    return "remap_" + sgrid + "_" + tgrid + "_" + interpolation_name;
 }
 
 
