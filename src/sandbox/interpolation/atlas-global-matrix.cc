@@ -89,9 +89,11 @@ public:
 
     struct Timers {
         using StopWatch = atlas::runtime::trace::StopWatch;
-        StopWatch fspace_setup;
+        StopWatch functionspace_setup;
         StopWatch interpolation_setup;
-        StopWatch global_matrix;
+        StopWatch interpolation_exe;
+        StopWatch global_matrix_setup;
+        StopWatch global_matrix_exe;
     } timers;
 };
 
@@ -131,11 +133,27 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
 
         FunctionSpace src_fs;
         FunctionSpace tgt_fs;
+        timers.functionspace_setup.start();
         auto scheme = create_fspaces(interpolation_method, sgrid, tgrid, src_fs, tgt_fs);
+        timers.functionspace_setup.stop();
+        timers.global_matrix_setup.start();
         auto matrix = interpolation::distribute_global_matrix(src_fs, tgt_fs, gmatrix);
+        timers.global_matrix_setup.stop();
 
+        timers.interpolation_setup.start();
         interpolation::MatrixCache cache(std::move(matrix));
         auto interpolator = Interpolation(scheme, src_fs, tgt_fs, cache);
+        timers.interpolation_setup.stop();
+
+        double timer_functionspace_setup = timers.functionspace_setup.elapsed() / mpi::comm().size();
+        double timer_interpolation_setup = timers.interpolation_setup.elapsed() / mpi::comm().size();
+        double timer_global_matrix_setup = timers.global_matrix_setup.elapsed() / mpi::comm().size();
+        mpi::comm().allReduceInPlace(&timer_functionspace_setup, 1, eckit::mpi::sum());
+        mpi::comm().allReduceInPlace(&timer_interpolation_setup, 1, eckit::mpi::sum());
+        mpi::comm().allReduceInPlace(&timer_global_matrix_setup, 1, eckit::mpi::sum());
+        Log::info() << "Grid + FunctionSpace timer      : " << timer_functionspace_setup * 1000. << " [ms]"  << std::endl;
+        Log::info() << "Interpolation setup timer       : " << timer_interpolation_setup * 1000. << " [ms]"  << std::endl;
+        Log::info() << "Global matrix setup timer       : " << timer_global_matrix_setup * 1000. << " [ms]"  << std::endl;
 
         // Allocate and initialise own memory here to show possibilities
         // Note: reading a field from disc is an extra feature
@@ -149,7 +167,13 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
             }
         }
 
+        timers.interpolation_exe.start();
         interpolator.execute(src_field, tgt_field);
+        timers.interpolation_exe.stop();
+
+        double timer_interpolation_exe = timers.interpolation_exe.elapsed() / mpi::comm().size();
+        mpi::comm().allReduceInPlace(&timer_interpolation_exe, 1, eckit::mpi::sum());
+        Log::info() << "Interpolation execute timer     : " << timer_interpolation_exe * 1000. << " [ms]"  << std::endl;
 
         ATLAS_TRACE_SCOPE("output from the read-in matrix") {
             std::string tgt_name = "tfield_" + matrix_name;
@@ -170,9 +194,9 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
         FunctionSpace src_fs;
         FunctionSpace tgt_fs;
         Interpolation interpolator;
-        timers.fspace_setup.start();
+        timers.functionspace_setup.start();
         Config scheme = create_fspaces(interpolation_method, sgrid, tgrid, src_fs, tgt_fs);
-        timers.fspace_setup.stop();
+        timers.functionspace_setup.stop();
 
         timers.interpolation_setup.start();
         if (interpolation_method == "nearest-neighbour" || interpolation_method == "k-nearest-neighbours" || interpolation_method == "grid-box-average") {
@@ -183,12 +207,12 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
         }
         timers.interpolation_setup.stop();
 
-        double timer_fspace_setup = timers.fspace_setup.elapsed() / mpi::comm().size();
-        double timer_interp_setup = timers.interpolation_setup.elapsed() / mpi::comm().size();
-        mpi::comm().allReduceInPlace(&timer_fspace_setup, 1, eckit::mpi::sum());
-        mpi::comm().allReduceInPlace(&timer_interp_setup, 1, eckit::mpi::sum());
-        Log::info() << "Grid + FunctionSpace timer      : " << timer_fspace_setup * 1000. << " [ms]"  << std::endl;
-        Log::info() << "Interpolation setup timer       : " << timer_interp_setup * 1000. << " [ms]"  << std::endl;
+        double timer_functionspace_setup = timers.functionspace_setup.elapsed() / mpi::comm().size();
+        double timer_interpolation_setup = timers.interpolation_setup.elapsed() / mpi::comm().size();
+        mpi::comm().allReduceInPlace(&timer_functionspace_setup, 1, eckit::mpi::sum());
+        mpi::comm().allReduceInPlace(&timer_interpolation_setup, 1, eckit::mpi::sum());
+        Log::info() << "Grid + FunctionSpace timer      : " << timer_functionspace_setup * 1000. << " [ms]"  << std::endl;
+        Log::info() << "Interpolation setup timer       : " << timer_interpolation_setup * 1000. << " [ms]"  << std::endl;
 
         ATLAS_TRACE_SCOPE("par_output") {
             std::string tgt_name = "par-" + scheme.getString("name");
@@ -235,10 +259,10 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
             auto src = eckit::linalg::Vector(src_data.data(), src_data.size());
             auto tgt = eckit::linalg::Vector(tgt_data.data(), tgt_data.size());
             auto eckit_matrix = atlas::linalg::make_non_owning_eckit_sparse_matrix(matrix);
-            timers.global_matrix.start();
+            timers.global_matrix_exe.start();
             eckit::linalg::LinearAlgebraSparse::backend().spmv(eckit_matrix, src, tgt);
-            timers.global_matrix.stop();
-            Log::info() << "Global matrix-multiply timer    : " << 1000.*timers.global_matrix.elapsed()  << " [ms]" << std::endl;
+            timers.global_matrix_exe.stop();
+            Log::info() << "Global matrix-multiply timer    : " << 1000.*timers.global_matrix_exe.elapsed()  << " [ms]" << std::endl;
             Log::info() << "Global matrix non-zero entries  : " << matrix.nnz() << std::endl;
             Log::info() << "Global matrix memory            : " << eckit_matrix.footprint() << std::endl;
 
