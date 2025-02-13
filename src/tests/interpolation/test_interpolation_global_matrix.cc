@@ -38,7 +38,7 @@ namespace atlas::test {
 
 //-----------------------------------------------------------------------------
 
-Config config_scheme(std::string scheme_str) {
+Config interpolation_config(std::string scheme_str) {
     Config scheme;
     scheme.set("matrix_free", false);
     scheme.set("type", scheme_str);
@@ -63,7 +63,7 @@ Config config_scheme(std::string scheme_str) {
 
 Config create_fspaces(const std::string& scheme_str, const Grid& input_grid, const Grid& output_grid,
         FunctionSpace& fs_in, FunctionSpace& fs_out) {
-    Config scheme = config_scheme(scheme_str);
+    Config scheme = interpolation_config(scheme_str);
     auto scheme_type = scheme.getString("type");
     if (scheme_type == "finite-element") {
         auto inmesh = Mesh(input_grid);
@@ -193,7 +193,7 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
             SparseMatrixStorage matrix = interpolation::distribute_global_matrix(fs_in, fs_out, gmatrix, mpi_root);
 
             interpolation::MatrixCache cache(std::move(matrix));
-            Config scheme = config_scheme(scheme_str);
+            Config scheme = interpolation_config(scheme_str);
             interpolator = Interpolation{ scheme, fs_in, fs_out, cache };
         }
 
@@ -256,16 +256,12 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
         do_assemble_distribute_matrix("structured-linear2D", input_grid, output_grid, mpi_root);
 
         mpi_root = mpi::size() - 1;
-        do_assemble_distribute_matrix("structured-linear2D", input_grid, output_grid, mpi_root);
-        do_assemble_distribute_matrix("structured-cubic2D", input_grid, output_grid, mpi_root);
-        do_assemble_distribute_matrix("structured-quasicubic2D", input_grid, output_grid, mpi_root);
-
-        do_assemble_distribute_matrix("nearest-neighbour", input_grid, output_grid, mpi_root);
-        do_assemble_distribute_matrix("k-nearest-neighbours", input_grid, output_grid, mpi_root);
-
-        do_assemble_distribute_matrix("conservative-spherical-polygon", input_grid, output_grid, mpi_root);
-        do_assemble_distribute_matrix("finite-element", input_grid, output_grid, mpi_root);
-        do_assemble_distribute_matrix("unstructured-bilinear-lonlat", input_grid, output_grid, mpi_root);
+        std::vector<std::string> interpolators;
+        interpolators.insert(interpolators.end(), {"structured-linear2D", "structured-cubic2D", "structured-quasicubic2D"});
+        interpolators.insert(interpolators.end(), {"nearest-neighbour", "k-nearest-neighbours", "conservative-spherical-polygon", "finite-element", "unstructured-bilinear-lonlat"});
+        for (auto scheme_str : interpolators) {
+            do_assemble_distribute_matrix(scheme_str, input_grid, output_grid, mpi_root);
+        }
     };
 
     test_matrix_assemble_distribute(Grid("O48"), Grid("F48"));
