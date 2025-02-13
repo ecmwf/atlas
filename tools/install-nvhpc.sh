@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Install NVHPC
 # https://github.com/nemequ/pgi-travis
@@ -12,7 +12,11 @@
 # See <https://creativecommons.org/publicdomain/zero/1.0/> for
 # details.
 
-version=21.9
+set -e
+set -u
+set -o pipefail
+
+version=25.1
 
 TEMPORARY_FILES="${TMPDIR:-/tmp}"
 export NVHPC_INSTALL_DIR=$(pwd)/nvhpc-install
@@ -49,10 +53,10 @@ case "$(uname -m)" in
 esac
 
 if [ -d "${NVHPC_INSTALL_DIR}" ]; then
-    if [[ $(find "${NVHPC_INSTALL_DIR}" -name "nvc" | wc -l) == 1 ]]; then
+    #if [[ $(find "${NVHPC_INSTALL_DIR}" -name "nvc" | wc -l) == 1 ]]; then
       echo "NVHPC already installed at ${NVHPC_INSTALL_DIR}"
       exit
-    fi
+    #fi
 fi
 
 # Example download URL for version 21.9
@@ -105,3 +109,4 @@ EOF
 
 cat ${NVHPC_INSTALL_DIR}/env.sh
 
+date '+%Y.%m.%d-%H:%M:%S' > install.timestamp
