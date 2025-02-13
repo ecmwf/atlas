@@ -45,12 +45,19 @@ namespace atlas {
 
 
 // USAGE:
+//
+// 1) To compute and store the global interpolation matrix to the disc:
+//
 // atlas-global-matrix --sgrid <sgrid> --tgrid <tgrid> --interpolation <intrp> --format <fmt>
 //
-// For available interpolations see AtlasGlobalMatrix::interpoaltion_config.
-// Formats can be 'eckit' (binary) or 'scrip' (netcdf).
+// 2) To read in a stored global interpolation matrix from the disc:
 //
-// Using the grid API we can hide interpolation method specific requirements
+// atlas-global-matrix --sgrid <sgrid> --tgrid <tgrid> --interpolation <intrp> --format <fmt> --read --matrix <matrix>
+//
+// For available interpolations see AtlasGlobalMatrix::interpolation_config.
+// Formats <fmt> can be 'eckit' (binary) or 'scrip' (netcdf).
+//
+// Using the grid API 'create_fspaces' we can hide interpolation method specific requirements
 // such as which functionspace needs to be set-up.
 
 
@@ -120,9 +127,11 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
 
         mpi::comm().barrier();
 
+        std::string interpolation_method = "finite-element";
+        args.get("interpolation", interpolation_method);
         FunctionSpace src_fs;
         FunctionSpace tgt_fs;
-        auto scheme = create_fspaces("finite-element", sgrid, tgrid, src_fs, tgt_fs);
+        auto scheme = create_fspaces(interpolation_method, sgrid, tgrid, src_fs, tgt_fs);
         auto matrix = interpolation::distribute_global_matrix(src_fs, tgt_fs, gmatrix);
 
         interpolation::MatrixCache cache(std::move(matrix));
@@ -136,7 +145,7 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
         ATLAS_TRACE_SCOPE("initialize source") {
             auto src_field_v = array::make_view<double, 1>(src_field);
             for (idx_t i = 0; i < src_fs.size(); ++i) {
-                src_field_v[i] = util::function::vortex_rollup(src_lonlat(i, 1), src_lonlat(i, 1), 1.);
+                src_field_v[i] = util::function::vortex_rollup(src_lonlat(i, 0), src_lonlat(i, 1), 1.);
             }
         }
 
