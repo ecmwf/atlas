@@ -104,7 +104,9 @@ TYPE atlas_StructuredGrid_Stencil
 contains
   procedure, pass :: write => atlas_StructuredGrid_Stencil__write
   generic, public :: write(FORMATTED) => write
-  procedure, public :: i => atlas_StructuredGrid_Stencil__i
+  procedure, private :: i_int32 => atlas_StructuredGrid_Stencil__i_int32
+  procedure, private :: i_int64 => atlas_StructuredGrid_Stencil__i_int64
+  generic, public :: i => i_int32, i_int64
   procedure, public :: j => atlas_StructuredGrid_Stencil__j
 END TYPE atlas_StructuredGrid_Stencil
 
@@ -115,7 +117,10 @@ TYPE :: atlas_StructuredGrid_ComputeStencil
   type(atlas_StructuredGrid_ComputeNorth) :: compute_north
   type(atlas_StructuredGrid_ComputeWest)  :: compute_west
 contains
-  procedure :: setup => atlas_StructuredGrid_ComputeStencil__setup
+  procedure :: setup_int32 => atlas_StructuredGrid_ComputeStencil__setup_int32
+  procedure :: setup_int64 => atlas_StructuredGrid_ComputeStencil__setup_int64
+  generic, public :: setup => setup_int32, setup_int64
+
   procedure :: execute => atlas_StructuredGrid_ComputeStencil__execute_real64
 
   procedure :: assignment_operator => atlas_StructuredGrid_ComputeStencil__assignment
@@ -190,13 +195,13 @@ function atlas_StructuredGrid_ComputeWest__ctor(grid, halo) result(this)
   call this%return()
 end function
 
-subroutine atlas_StructuredGrid_ComputeStencil__setup(this, grid, stencil_width)
-  use, intrinsic :: iso_c_binding, only : c_double
+subroutine atlas_StructuredGrid_ComputeStencil__setup_int32(this, grid, stencil_width)
+  use, intrinsic :: iso_c_binding, only : c_double, c_int
   use atlas_grid_module, only : atlas_StructuredGrid
   implicit none
   class(atlas_StructuredGrid_ComputeStencil) :: this
   class(atlas_StructuredGrid), intent(in) :: grid
-  integer(ATLAS_KIND_IDX), intent(in) :: stencil_width
+  integer(c_int), intent(in) :: stencil_width
   this%stencil_width = stencil_width
   this%halo = (stencil_width + 1) / 2
   this%stencil_offset = stencil_width - floor(real(stencil_width,c_double) / 2._c_double + 1._c_double, ATLAS_KIND_IDX)
@@ -204,6 +209,19 @@ subroutine atlas_StructuredGrid_ComputeStencil__setup(this, grid, stencil_width)
   this%compute_west  = atlas_StructuredGrid_ComputeWest(grid, this%halo)
 end subroutine
 
+subroutine atlas_StructuredGrid_ComputeStencil__setup_int64(this, grid, stencil_width)
+  use, intrinsic :: iso_c_binding, only : c_double, c_long
+  use atlas_grid_module, only : atlas_StructuredGrid
+  implicit none
+  class(atlas_StructuredGrid_ComputeStencil) :: this
+  class(atlas_StructuredGrid), intent(in) :: grid
+  integer(c_long), intent(in) :: stencil_width
+  this%stencil_width = stencil_width
+  this%halo = (stencil_width + 1) / 2
+  this%stencil_offset = stencil_width - floor(real(stencil_width,c_double) / 2._c_double + 1._c_double, ATLAS_KIND_IDX)
+  this%compute_north = atlas_StructuredGrid_ComputeNorth(grid, this%halo)
+  this%compute_west  = atlas_StructuredGrid_ComputeWest(grid, this%halo)
+end subroutine
 
 
 ! ----------------------------------------------------------------------------------------
@@ -295,10 +313,20 @@ function atlas_StructuredGrid_Stencil__j(this, j_index) result(j)
   j = this%j_begin + (j_index-1)
 end function
 
-function atlas_StructuredGrid_Stencil__i(this, i_index, j_index) result(i)
+function atlas_StructuredGrid_Stencil__i_int32(this, i_index, j_index) result(i)
+  use, intrinsic :: iso_c_binding, only : c_int
   integer(ATLAS_KIND_IDX) :: i
   class(atlas_StructuredGrid_Stencil), intent(in) :: this
-  integer(ATLAS_KIND_IDX) :: i_index
+  integer(c_int) :: i_index
+  integer(ATLAS_KIND_IDX) :: j_index
+  i = this%i_begin(j_index) + (i_index-1)
+end function
+
+function atlas_StructuredGrid_Stencil__i_int64(this, i_index, j_index) result(i)
+  use, intrinsic :: iso_c_binding, only : c_long
+  integer(ATLAS_KIND_IDX) :: i
+  class(atlas_StructuredGrid_Stencil), intent(in) :: this
+  integer(c_long) :: i_index
   integer(ATLAS_KIND_IDX) :: j_index
   i = this%i_begin(j_index) + (i_index-1)
 end function

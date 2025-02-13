@@ -34,7 +34,7 @@ MultiFieldCreatorIFS::MultiFieldCreatorIFS(const eckit::Configuration& config) {
 
 MultiFieldCreatorIFS::~MultiFieldCreatorIFS() = default;
 
-MultiFieldImpl* MultiFieldCreatorIFS::create(const array::DataType datatype, const std::vector<int>& shape,
+MultiFieldImpl* MultiFieldCreatorIFS::create(const array::DataType datatype, const array::ArrayShape& shape,
         const std::vector<std::string>& var_names) const {
     ATLAS_NOTIMPLEMENTED;
     return nullptr;

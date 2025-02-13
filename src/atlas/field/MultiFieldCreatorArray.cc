@@ -80,7 +80,7 @@ MultiFieldImpl* MultiFieldCreatorArray::create(const eckit::Configuration& confi
     return create(datatype, shape, var_names);
 }
 
-MultiFieldImpl* MultiFieldCreatorArray::create(const array::DataType datatype, const std::vector<int>& shape, const std::vector<std::string>& var_names) const {
+MultiFieldImpl* MultiFieldCreatorArray::create(const array::DataType datatype, const array::ArrayShape& shape, const std::vector<std::string>& var_names) const {
     const int dim = shape.size();
     const int nvar = var_names.size();
     ATLAS_ASSERT(nvar > 0 && dim > 2, "MultiField must have at least one field name.");
