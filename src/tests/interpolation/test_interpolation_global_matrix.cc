@@ -268,7 +268,7 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
         do_assemble_distribute_matrix("unstructured-bilinear-lonlat", input_grid, output_grid, mpi_root);
     };
 
-    test_matrix_assemble_distribute(Grid("O128"), Grid("F128"));
+    test_matrix_assemble_distribute(Grid("O48"), Grid("F48"));
 }
 
 }  // namespace
