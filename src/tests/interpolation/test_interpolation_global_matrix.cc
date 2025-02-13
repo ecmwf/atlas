@@ -20,7 +20,6 @@
 #include "atlas/interpolation/AssembleGlobalMatrix.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator.h"
-#include "atlas/output/Gmsh.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/function/VortexRollup.h"
 #include "atlas/linalg/sparse.h"
@@ -240,12 +239,6 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
                 for (gidx_t p = 0; p < fdiff_v.size(); ++p) {
                     fdiff_v(p) = tfield_global_v(p) - tgt_data[p];
                 }
-                mpi::Scope scope("self");
-                output::Gmsh gmsh("mesh.msh");
-                auto mesh = Mesh(output_grid);
-                auto fs = functionspace::NodeColumns(mesh);
-                gmsh.write(mesh);
-                gmsh.write(fdiff, fs);
             }
         }
     };
