@@ -13,6 +13,7 @@
 #include "atlas/array.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
+#include "atlas/functionspace/CellColumns.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/PointCloud.h"
 #include "atlas/functionspace/StructuredColumns.h"
@@ -57,12 +58,14 @@ class AtlasGlobalMatrix : public AtlasTool {
     int execute(const AtlasTool::Args& args) override;
     std::string briefDescription() override { return "Assemble global matrix from an Interpolation in distributed parallel run"; }
     std::string usage() override {
-        return name() + " [OPTION]... [--help]";
+        return name() + " [OPTION] ... [--help]";
     }
 
     int numberOfPositionalArguments() override { return -1; }
     int minimumPositionalArguments() override { return 0; }
     Config interpolation_config(std::string scheme_str);
+    Config create_fspaces(const std::string& scheme_str, const Grid& input_grid, const Grid& output_grid,
+        FunctionSpace& fs_in, FunctionSpace& fs_out);
     std::string get_matrix_name(std::string sgrid, std::string tgrid, std::string interp = "");
     Matrix read_matrix(std::string matrix_name, std::string matrix_format);
     void write_matrix(const Matrix& mat, std::string matrix_name, std::string matrix_format);
@@ -71,10 +74,10 @@ public:
     AtlasGlobalMatrix(int argc, char* argv[]): AtlasTool(argc, argv) {
         add_option(new SimpleOption<std::string>("sgrid", "source grid"));
         add_option(new SimpleOption<std::string>("tgrid", "target grid"));
-        add_option(new SimpleOption<std::string>("interpolation", "interpolation method (default finite-element): linear, cubic, qcubic, cons, cons2, nneighbour, knneighbour, grid-box"));
-        add_option(new SimpleOption<bool>("read", "read interpolation matrix (default <sgrid>_<tgrid>.matrix)"));
-        add_option(new SimpleOption<std::string>("matrix", "name of interpolation matrix: (default <sgrid>_<tgrid>.matrix)"));
-        add_option(new SimpleOption<std::string>("format", "format of the matrix output (eckit, scrip) (default eckit)"));
+        add_option(new SimpleOption<std::string>("interpolation", "interpolation methods: linear, cubic, qcubic, cons, cons2, nneighbour, knneighbour, grid-box"));
+        add_option(new SimpleOption<bool>("read", "read interpolation matrix"));
+        add_option(new SimpleOption<std::string>("matrix", "name of the interpolation matrix"));
+        add_option(new SimpleOption<std::string>("format", "format of the matrix output: eckit, SCRIP"));
     }
 
     struct Timers {
@@ -100,45 +103,54 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
     args.get("format", matrix_format);
 
     if (args.has("read")) {
-        if (mpi::comm().size() > 1) {
-            Log::info() << "\n\n Reading of global matrix has to be done with only one task. Please rerun in serial !\n";
-            return failed();
-        }
-        std::string matrix_name;
-        args.get("matrix", matrix_name);
-        if (matrix_name == "") {
-            matrix_name = get_matrix_name(sgrid_name, tgrid_name);
-        }
-        Log::info() << "\nreading matrix '" << matrix_name << "' from the disc.\n";
+        Matrix gmatrix;
+        if (mpi::comm().rank() == 0) {
+            std::string matrix_name;
+            args.get("matrix", matrix_name);
+            if (matrix_name == "") {
+                matrix_name = get_matrix_name(sgrid_name, tgrid_name);
+            }
+            Log::info() << "\nreading matrix '" << matrix_name << "' from the disc.\n";
 
-        Matrix matrix = read_matrix(matrix_name, matrix_format);
-        auto eckit_matrix = atlas::linalg::make_non_owning_eckit_sparse_matrix(matrix);
-        eckit_matrix.print(Log::info());
-        Log::info() << std::endl;
+            gmatrix = read_matrix(matrix_name, matrix_format);
+            auto eckit_gmatrix = atlas::linalg::make_non_owning_eckit_sparse_matrix(gmatrix);
+            eckit_gmatrix.print(Log::info());
+            Log::info() << std::endl;
+        }
+
+        mpi::comm().barrier();
+
+        FunctionSpace src_fs;
+        FunctionSpace tgt_fs;
+        auto scheme = create_fspaces("finite-element", sgrid, tgrid, src_fs, tgt_fs);
+        auto matrix = interpolation::distribute_global_matrix(src_fs, tgt_fs, gmatrix);
+
+        interpolation::MatrixCache cache(std::move(matrix));
+        auto interpolator = Interpolation(scheme, src_fs, tgt_fs, cache);
 
         // Allocate and initialise own memory here to show possibilities
         // Note: reading a field from disc is an extra feature
-        std::vector<double> src_data(sgrid.size());
-        std::vector<double> tgt_data(tgrid.size());
-        auto src = eckit::linalg::Vector(src_data.data(), src_data.size());
-        auto tgt = eckit::linalg::Vector(tgt_data.data(), tgt_data.size());
-
+        auto src_field = interpolator.source().createField<double>();
+        auto tgt_field = interpolator.target().createField<double>();
+        auto src_lonlat = array::make_view<double, 2>(interpolator.source().lonlat());
         ATLAS_TRACE_SCOPE("initialize source") {
-            idx_t n{0};
-            for (auto p : sgrid.lonlat()) {
-                src_data[n++] = util::function::vortex_rollup(p.lon(), p.lat(), 1.);
+            auto src_field_v = array::make_view<double, 1>(src_field);
+            for (idx_t i = 0; i < src_fs.size(); ++i) {
+                src_field_v[i] = util::function::vortex_rollup(src_lonlat(i, 1), src_lonlat(i, 1), 1.);
             }
         }
-        eckit::linalg::LinearAlgebraSparse::backend().spmv(eckit_matrix, src, tgt);
 
-        ATLAS_TRACE_SCOPE("output from read matrix") {
-            mpi::Scope mpi_scope("self"); 
+        interpolator.execute(src_field, tgt_field);
+
+        ATLAS_TRACE_SCOPE("output from the read-in matrix") {
             std::string tgt_name = "tfield_" + get_matrix_name(sgrid_name, tgrid_name);
-            auto tgt_field = Field(tgt_name, tgt_data.data(), array::make_shape(tgt_data.size())); // wrap
             output::Gmsh gmsh(tgt_name + ".msh", Config("coordinates", "lonlat") | Config("ghost", "true"));
-            gmsh.write(MeshGenerator("structured", util::Config("three_dimensional",true)).generate(tgrid));
-            Log::info() << "storing remapped field '" << tgt_name << "' to the disc." << std::endl;
-            gmsh.write(tgt_field, StructuredColumns(tgrid));
+            if( functionspace::NodeColumns(tgt_field.functionspace())) {
+                Log::info() << "storing distributed remapped field '" << tgt_name << "'." << std::endl;
+                gmsh.write(functionspace::NodeColumns(tgt_field.functionspace()).mesh());
+                tgt_field.haloExchange();
+                gmsh.write(tgt_field);
+            }
         }
     }
     else {
@@ -146,48 +158,22 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
         args.get("interpolation", interpolation_method);
         Log::info() << ", interpolation: " << interpolation_method << std::endl;
 
+        FunctionSpace src_fs;
+        FunctionSpace tgt_fs;
         Interpolation interpolator;
-        Config scheme = interpolation_config(interpolation_method);
-        auto scheme_type = scheme.getString("type");
-        if (scheme_type == "finite-element") {
-            timers.fspace_setup.start();
-            auto inmesh = Mesh(sgrid);
-            auto fs_in = NodeColumns(inmesh, scheme);
-            auto fs_out = PointCloud(tgrid, grid::MatchingPartitioner(inmesh));
-            timers.fspace_setup.stop();
+        timers.fspace_setup.start();
+        Config scheme = create_fspaces(interpolation_method, sgrid, tgrid, src_fs, tgt_fs);
+        timers.fspace_setup.stop();
 
-            timers.interpolation_setup.start();
-            interpolator = Interpolation{ scheme, fs_in, fs_out };
-            timers.interpolation_setup.stop();
-        }
-        else if (scheme_type == "conservative-spherical-polygon" || scheme_type == "grid-box-average") {
-            timers.fspace_setup.start();
-            timers.fspace_setup.stop();
-
-            timers.interpolation_setup.start();
+        timers.interpolation_setup.start();
+        if (interpolation_method == "nearest-neighbour" || interpolation_method == "k-nearest-neighbours" || interpolation_method == "grid-box-average") {
             interpolator = Interpolation{ scheme, sgrid, tgrid };
-            timers.interpolation_setup.stop();
         }
-        else if (scheme_type == "nearest-neighbour" || scheme_type == "k-nearest-neighbours") {
-            timers.fspace_setup.start();
-            auto fs_in = PointCloud(sgrid);
-            auto fs_out = functionspace::PointCloud(tgrid, grid::MatchingPartitioner(fs_in));
-            timers.fspace_setup.stop();
+        else {
+            interpolator = Interpolation{ scheme, src_fs, tgt_fs };
+        }
+        timers.interpolation_setup.stop();
 
-            timers.interpolation_setup.start();
-            interpolator = Interpolation{ scheme, sgrid, tgrid };
-            timers.interpolation_setup.stop();
-        }
-        else { 
-            timers.fspace_setup.start();
-            auto fs_in = StructuredColumns(sgrid, scheme);
-            auto fs_out = functionspace::PointCloud(tgrid, grid::MatchingPartitioner(fs_in));
-            timers.fspace_setup.stop();
-
-            timers.interpolation_setup.start();
-            interpolator = Interpolation{ scheme, fs_in, fs_out };
-            timers.interpolation_setup.stop();
-        }
         double timer_fspace_setup = timers.fspace_setup.elapsed() / mpi::comm().size();
         double timer_interp_setup = timers.interpolation_setup.elapsed() / mpi::comm().size();
         mpi::comm().allReduceInPlace(&timer_fspace_setup, 1, eckit::mpi::sum());
@@ -268,49 +254,28 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
 
 Config AtlasGlobalMatrix::interpolation_config(std::string scheme_str) {
     Config scheme;
-    if (scheme_str == "linear") {
-        scheme.set("type", "structured-linear2D");
-        // The stencil does not require any halo, but we set it to 1 for pole treatment!
-        scheme.set("halo", 1);
-    }
-    if (scheme_str == "cubic") {
-        scheme.set("type", "structured-cubic2D");
+    scheme.set("type", scheme_str);
+    scheme.set("halo", 1);
+    if (scheme_str.find("cubic") != std::string::npos) {
         scheme.set("halo", 2);
     }
-    if (scheme_str == "qcubic") {
-        scheme.set("type", "structured-quasicubic2D");
+    if (scheme_str == "k-nearest-neighbours") {
+        scheme.set("k-nearest-neighbours", 4);
         scheme.set("halo", 2);
     }
-    if (scheme_str == "cons") {
+    if (scheme_str == "conservative-spherical-polygon") {
         scheme.set("type", "conservative-spherical-polygon");
         scheme.set("order", 1);
         scheme.set("src_cell_data", false);
         scheme.set("tgt_cell_data", false);
     }
-    if (scheme_str == "cons2") {
+    if (scheme_str == "conservative-spherical-polygon-2") {
         scheme.set("type", "conservative-spherical-polygon");
         scheme.set("order", 2);
+        scheme.set("halo", 2);
         scheme.set("src_cell_data", false);
         scheme.set("tgt_cell_data", false);
     }
-    if (scheme_str == "finite-element") {
-        scheme.set("type", "finite-element");
-        scheme.set("halo", 1);
-    }
-    if (scheme_str == "nn") {
-        scheme.set("type", "nearest-neighbour");
-        scheme.set("halo", 1);
-    }
-    if (scheme_str == "knn") {
-        scheme.set("type", "k-nearest-neighbours");
-        scheme.set("k-nearest-neighbours", 4);
-        scheme.set("halo", 1);
-    }
-    if (scheme_str == "grid-box") {
-        scheme.set("type", "grid-box-average");
-        scheme.set("halo", 1);
-    }
-
     scheme.set("name", scheme_str);
     return scheme;
 }
@@ -321,6 +286,53 @@ std::string AtlasGlobalMatrix::get_matrix_name(std::string sgrid, std::string tg
     ss << mpi::comm().size() << "-" << atlas_omp_get_num_threads();
     std::string grids = "remap_" + ss.str() + "_" + sgrid + "_" + tgrid;
     return (interp != "") ? grids + "_" + interp : grids;
+}
+
+
+Config AtlasGlobalMatrix::create_fspaces(const std::string& scheme_str, const Grid& input_grid, const Grid& output_grid,
+        FunctionSpace& fs_in, FunctionSpace& fs_out) {
+    Config scheme = interpolation_config(scheme_str);
+    auto scheme_type = scheme.getString("type");
+    if (scheme_type == "finite-element" || scheme_type == "unstructured-bilinear-lonlat") {
+        auto inmesh = Mesh(input_grid);
+        fs_in = NodeColumns(inmesh, scheme);
+        fs_out = PointCloud(output_grid, grid::MatchingPartitioner(inmesh));
+    }
+    else if (scheme_type == "conservative-spherical-polygon" || scheme_type == "grid-box-average") {
+        bool src_cell_data = scheme.getBool("src_cell_data");
+        bool tgt_cell_data = scheme.getBool("tgt_cell_data");
+        auto tgt_mesh_config = output_grid.meshgenerator() | option::halo(0);
+        auto tgt_mesh = MeshGenerator(tgt_mesh_config).generate(output_grid);
+        if (tgt_cell_data) {
+            fs_out = functionspace::CellColumns(tgt_mesh, option::halo(0));
+        }
+        else {
+            fs_out = functionspace::NodeColumns(tgt_mesh, option::halo(1));
+        }
+        auto src_mesh_config = input_grid.meshgenerator() | option::halo(2);
+        Mesh src_mesh;
+        if (mpi::size() > 1) {
+            src_mesh = MeshGenerator(src_mesh_config).generate(input_grid, grid::MatchingPartitioner(tgt_mesh));
+        }
+        else {
+            src_mesh = MeshGenerator(src_mesh_config).generate(input_grid);
+        }
+        if (src_cell_data) {
+            fs_in = functionspace::CellColumns(src_mesh, option::halo(2));
+        }
+        else {
+            fs_in = functionspace::NodeColumns(src_mesh, option::halo(2));
+        }
+    }
+    else if (scheme_type == "nearest-neighbour" || scheme_type == "k-nearest-neighbours") {
+        fs_in = PointCloud(input_grid);
+        fs_out = functionspace::PointCloud(output_grid, grid::MatchingPartitioner(fs_in));
+    }
+    else {
+        fs_in = StructuredColumns(input_grid, scheme);
+        fs_out = functionspace::PointCloud(output_grid, grid::MatchingPartitioner(fs_in), scheme);
+    }
+    return scheme;
 }
 
 
