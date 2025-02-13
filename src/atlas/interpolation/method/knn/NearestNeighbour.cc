@@ -39,8 +39,17 @@ MethodBuilder<NearestNeighbour> __builder("nearest-neighbour");
 }  // namespace
 
 void NearestNeighbour::do_setup(const FunctionSpace& source, const FunctionSpace& target, const Cache& cache) {
-    setMatrix(cache);
-    do_setup(source, target);
+    if (interpolation::MatrixCache(cache)) {
+        setMatrix(cache);
+        source_ = source;
+        target_ = target;
+        return;
+    }
+    if (functionspace::NodeColumns(source) && functionspace::NodeColumns(target)) {
+        do_setup(source, target);
+        return;
+    }
+    ATLAS_NOTIMPLEMENTED;
 }
 
 void NearestNeighbour::do_setup(const Grid& source, const Grid& target, const Cache&) {

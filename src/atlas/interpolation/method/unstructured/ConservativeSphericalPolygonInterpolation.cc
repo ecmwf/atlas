@@ -698,6 +698,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& so
             return;
         }
     }
+
     do_setup(source, target);
 }
 

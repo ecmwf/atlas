@@ -29,6 +29,7 @@
 
 #include "tests/AtlasTestEnvironment.h"
 
+using atlas::functionspace::PointCloud;
 using atlas::functionspace::NodeColumns;
 using atlas::functionspace::StructuredColumns;
 using atlas::util::Config;
@@ -40,31 +41,22 @@ namespace atlas::test {
 Config config_scheme(std::string scheme_str) {
     Config scheme;
     scheme.set("matrix_free", false);
-    if (scheme_str == "linear") {
-        scheme.set("type", "structured-linear2D");
-        // The stencil does not require any halo, but we set it to 1 for pole treatment!
-        scheme.set("halo", 1);
-    }
-    if (scheme_str == "cubic") {
-        scheme.set("type", "structured-cubic2D");
+    scheme.set("type", scheme_str);
+    scheme.set("halo", 1);
+
+    if (scheme_str.find("cubic") != std::string::npos) {
         scheme.set("halo", 2);
     }
-    if (scheme_str == "quasicubic") {
-        scheme.set("type", "structured-quasicubic2D");
+    if (scheme_str == "k-nearest-neighbours") {
+        scheme.set("k-nearest-neighbours", 4);
         scheme.set("halo", 2);
     }
-    if (scheme_str == "conservative") {
-        scheme.set("type", "conservative-spherical-polygon");
+    if (scheme_str == "conservative-spherical-polygon") {
         scheme.set("halo", 2);
+        scheme.set("order", 2);
         scheme.set("src_cell_data", false);
         scheme.set("tgt_cell_data", false);
     }
-    if (scheme_str == "finite-element") {
-        scheme.set("type", "finite-element");
-        scheme.set("halo", 1);
-    }
-
-    scheme.set("name", scheme_str);
     return scheme;
 }
 
@@ -78,6 +70,11 @@ Config create_fspaces(const std::string& scheme_str, const Grid& input_grid, con
         auto outmesh = Mesh(output_grid, grid::MatchingPartitioner(inmesh));
         fs_in = NodeColumns(inmesh, scheme);
         fs_out = NodeColumns(outmesh);
+    }
+    else if (scheme_type == "unstructured-bilinear-lonlat") {
+        auto inmesh = Mesh(input_grid);
+        fs_in = NodeColumns(input_grid, scheme);
+        fs_out = PointCloud(output_grid, grid::MatchingPartitioner(inmesh));
     }
     else if (scheme_type == "conservative-spherical-polygon") {
         bool src_cell_data = scheme.getBool("src_cell_data");
@@ -185,7 +182,7 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
 
 
     auto do_assemble_distribute_matrix = [&](const std::string scheme_str, const Grid& input_grid, const Grid& output_grid, const int mpi_root) {
-        Log::info() << "\tassemble / distribute from " << scheme_str << ", " << input_grid.name() << " - " << output_grid.name() << std::endl;
+        Log::info() << "[TEST] assemble / distribute from " << scheme_str << ", " << input_grid.name() << " - " << output_grid.name() << std::endl;
         FunctionSpace fs_in;
         FunctionSpace fs_out;
         SparseMatrixStorage gmatrix;
@@ -201,7 +198,7 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
         }
 
         std::vector<double> tgt_data(output_grid.size());
-        ATLAS_TRACE_SCOPE("Compute the global field from the global matrix") {
+        ATLAS_TRACE_SCOPE("TEST Compute the global field from the global matrix") {
             if (mpi::comm().rank() == mpi_root) {
                 std::vector<double> src_data(input_grid.size());
                 auto src = eckit::linalg::Vector(src_data.data(), src_data.size());
@@ -217,7 +214,7 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
 
         auto tgt_field_global = interpolator.target().createField<double>(option::global(mpi_root));
 
-        ATLAS_TRACE_SCOPE("Compute the global field from the distributed interpolation") {
+        ATLAS_TRACE_SCOPE("TEST Compute the global field from the distributed interpolation") {
             auto tgt_field = interpolator.target().createField<double>();
             auto field_in = interpolator.source().createField<double>();
             auto lonlat_in = array::make_view<double, 2>(interpolator.source().lonlat());
@@ -231,7 +228,7 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
             interpolator.target().gather(tgt_field, tgt_field_global);
         }
 
-        ATLAS_TRACE_SCOPE("Compare the two global fields") {
+        ATLAS_TRACE_SCOPE("TEST Compare the two global fields") {
             if (mpi::comm().rank() == mpi_root) {
                 auto tfield_global_v = array::make_view<double, 1>(tgt_field_global);
                 for (gidx_t i = 0; i < tgt_data.size(); ++i) {
@@ -256,17 +253,19 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
 
     auto test_matrix_assemble_distribute = [&](const Grid& input_grid, const Grid& output_grid) {
         int mpi_root = 0;
-        // do_assemble_distribute_matrix("linear", input_grid, output_grid, mpi_root);
+        do_assemble_distribute_matrix("structured-linear2D", input_grid, output_grid, mpi_root);
 
-        // mpi_root = mpi::size() - 1;
-        // do_assemble_distribute_matrix("linear", input_grid, output_grid, mpi_root);
-        // do_assemble_distribute_matrix("cubic", input_grid, output_grid, mpi_root);
-        // do_assemble_distribute_matrix("quasicubic", input_grid, output_grid, mpi_root);
+        mpi_root = mpi::size() - 1;
+        do_assemble_distribute_matrix("structured-linear2D", input_grid, output_grid, mpi_root);
+        do_assemble_distribute_matrix("structured-cubic2D", input_grid, output_grid, mpi_root);
+        do_assemble_distribute_matrix("structured-quasicubic2D", input_grid, output_grid, mpi_root);
 
-        do_assemble_distribute_matrix("conservative", input_grid, output_grid, mpi_root);
+        do_assemble_distribute_matrix("nearest-neighbour", input_grid, output_grid, mpi_root);
+        do_assemble_distribute_matrix("k-nearest-neighbours", input_grid, output_grid, mpi_root);
 
-        mpi_root = mpi::comm().size() - 1;
+        do_assemble_distribute_matrix("conservative-spherical-polygon", input_grid, output_grid, mpi_root);
         do_assemble_distribute_matrix("finite-element", input_grid, output_grid, mpi_root);
+        do_assemble_distribute_matrix("unstructured-bilinear-lonlat", input_grid, output_grid, mpi_root);
     };
 
     test_matrix_assemble_distribute(Grid("O128"), Grid("F128"));
