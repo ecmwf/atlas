@@ -81,7 +81,7 @@ public:
     AtlasGlobalMatrix(int argc, char* argv[]): AtlasTool(argc, argv) {
         add_option(new SimpleOption<std::string>("sgrid", "source grid"));
         add_option(new SimpleOption<std::string>("tgrid", "target grid"));
-        add_option(new SimpleOption<std::string>("interpolation", "interpolation methods: linear, cubic, qcubic, cons, cons2, nneighbour, knneighbour, grid-box"));
+        add_option(new SimpleOption<std::string>("interpolation", "interpolation methods"));
         add_option(new SimpleOption<bool>("read", "read interpolation matrix"));
         add_option(new SimpleOption<std::string>("matrix", "name of the interpolation matrix"));
         add_option(new SimpleOption<std::string>("format", "format of the matrix output: eckit, SCRIP"));
@@ -98,7 +98,6 @@ public:
 };
 
 int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
-    std::string option;
     std::string sgrid_name = "O8";
     args.get("sgrid", sgrid_name);
     std::string tgrid_name = "O32";
@@ -116,7 +115,7 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
 
     if (args.has("read")) {
         Matrix gmatrix;
-        std::string matrix_name;
+        std::string matrix_name("");
         args.get("matrix", matrix_name);
         if (matrix_name == "") {
             matrix_name = get_matrix_name(sgrid_name, tgrid_name, interpolation_method) + '.' + matrix_format;
@@ -128,7 +127,6 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
             eckit_gmatrix.print(Log::info());
             Log::info() << std::endl;
         }
-
         mpi::comm().barrier();
 
         FunctionSpace src_fs;
@@ -151,9 +149,9 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
         mpi::comm().allReduceInPlace(&timer_functionspace_setup, 1, eckit::mpi::sum());
         mpi::comm().allReduceInPlace(&timer_interpolation_setup, 1, eckit::mpi::sum());
         mpi::comm().allReduceInPlace(&timer_global_matrix_setup, 1, eckit::mpi::sum());
-        Log::info() << "Grid + FunctionSpace timer      : " << timer_functionspace_setup * 1000. << " [ms]"  << std::endl;
-        Log::info() << "Interpolation setup timer       : " << timer_interpolation_setup * 1000. << " [ms]"  << std::endl;
-        Log::info() << "Global matrix setup timer       : " << timer_global_matrix_setup * 1000. << " [ms]"  << std::endl;
+        Log::info() << "Grid + FunctionSpace timer\t: " << timer_functionspace_setup * 1000. << " [ms]"  << std::endl;
+        Log::info() << "Interpolation setup timer\t: " << timer_interpolation_setup * 1000. << " [ms]"  << std::endl;
+        Log::info() << "Global matrix setup timer\t: " << timer_global_matrix_setup * 1000. << " [ms]"  << std::endl;
 
         // Allocate and initialise own memory here to show possibilities
         // Note: reading a field from disc is an extra feature
@@ -211,8 +209,8 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
         double timer_interpolation_setup = timers.interpolation_setup.elapsed() / mpi::comm().size();
         mpi::comm().allReduceInPlace(&timer_functionspace_setup, 1, eckit::mpi::sum());
         mpi::comm().allReduceInPlace(&timer_interpolation_setup, 1, eckit::mpi::sum());
-        Log::info() << "Grid + FunctionSpace timer      : " << timer_functionspace_setup * 1000. << " [ms]"  << std::endl;
-        Log::info() << "Interpolation setup timer       : " << timer_interpolation_setup * 1000. << " [ms]"  << std::endl;
+        Log::info() << "Grid + FunctionSpace timer\t: " << timer_functionspace_setup * 1000. << " [ms]"  << std::endl;
+        Log::info() << "Interpolation setup timer\t: " << timer_interpolation_setup * 1000. << " [ms]"  << std::endl;
 
         ATLAS_TRACE_SCOPE("par_output") {
             std::string tgt_name = "par-" + scheme.getString("name");
@@ -262,9 +260,9 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
             timers.global_matrix_exe.start();
             eckit::linalg::LinearAlgebraSparse::backend().spmv(eckit_matrix, src, tgt);
             timers.global_matrix_exe.stop();
-            Log::info() << "Global matrix-multiply timer    : " << 1000.*timers.global_matrix_exe.elapsed()  << " [ms]" << std::endl;
-            Log::info() << "Global matrix non-zero entries  : " << matrix.nnz() << std::endl;
-            Log::info() << "Global matrix memory            : " << eckit_matrix.footprint() << std::endl;
+            Log::info() << "Global matrix-multiply timer  \t: " << 1000.*timers.global_matrix_exe.elapsed()  << " [ms]" << std::endl;
+            Log::info() << "Global matrix non-zero entries\t: " << matrix.nnz() << std::endl;
+            Log::info() << "Global matrix memory          \t: " << eckit_matrix.footprint() << std::endl;
 
             ATLAS_TRACE_SCOPE("output from proc 0") {
                 mpi::Scope mpi_scope("self"); 
