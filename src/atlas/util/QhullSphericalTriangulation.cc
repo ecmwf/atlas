@@ -9,18 +9,11 @@
 
 #if ATLAS_HAVE_QHULL
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpragmas"
-#pragma GCC diagnostic ignored "-Wunknown-warning-option"
-#pragma GCC diagnostic ignored "-Wtemplate-id-cdtor"
-#endif
-
-#if defined(__INTEL_COMPILER)
-#pragma warning push
-#pragma warning disable 68    // integer conversion resulted in a change of sign
-#endif
-
+// Suppress a few warnings present in third-party libqhullcpp
+ATLAS_SUPPRESS_WARNINGS_PUSH
+ATLAS_SUPPRESS_WARNINGS_INTEGER_SIGN_CHANGE
+ATLAS_SUPPRESS_WARNINGS_CODE_IS_UNREACHABLE
+ATLAS_SUPPRESS_WARNINGS_TEMPLATE_ID_CDTOR
 
 #include <libqhullcpp/Qhull.h>
 #include <libqhullcpp/QhullFacet.h>
@@ -28,12 +21,7 @@
 #include <libqhullcpp/QhullVertexSet.h>
 #include <libqhullcpp/QhullPoints.h>
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
-#if defined(__INTEL_COMPILER)
-#pragma warning pop
-#endif
+ATLAS_SUPPRESS_WARNINGS_POP
 
 #endif
 
