@@ -114,6 +114,7 @@ jobs:
             compiler_fc: nvfortran
             caching: true
             coverage: false
+            cmake_options: -DSKIP_TEST_atlas_test_omp_sort=TRUE
 
           - name: macos
             # Xcode compiler requires empty environment variables, so we pass null (~) here
