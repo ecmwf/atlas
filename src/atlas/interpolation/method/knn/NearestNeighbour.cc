@@ -43,13 +43,8 @@ void NearestNeighbour::do_setup(const FunctionSpace& source, const FunctionSpace
         setMatrix(cache);
         source_ = source;
         target_ = target;
-        return;
+        buildPointSearchTree(source);
     }
-    if (functionspace::NodeColumns(source) && functionspace::NodeColumns(target)) {
-        do_setup(source, target);
-        return;
-    }
-    ATLAS_NOTIMPLEMENTED;
 }
 
 void NearestNeighbour::do_setup(const Grid& source, const Grid& target, const Cache&) {
