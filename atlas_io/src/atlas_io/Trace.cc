@@ -31,7 +31,7 @@ Trace::Trace(const eckit::CodeLocation& loc, const std::string& title) {
     }
 }
 
-Trace::Trace(const eckit::CodeLocation& loc, const std::string& title, const Labels& labels) {
+Trace::Trace(const eckit::CodeLocation& loc, const std::string& title, const Labels&) {
     for (size_t id = 0; id < TraceHookRegistry::size(); ++id) {
         if (TraceHookRegistry::enabled(id)) {
             hooks_.emplace_back(TraceHookRegistry::hook(id)(loc, title));
