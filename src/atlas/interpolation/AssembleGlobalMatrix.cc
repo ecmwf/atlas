@@ -11,6 +11,8 @@
 
 #include "AssembleGlobalMatrix.h"
 
+#include <unordered_map>
+
 #include "eckit/linalg/types.h"
 
 #include "atlas/array.h"
@@ -164,6 +166,7 @@ linalg::SparseMatrixStorage assemble_global_matrix(const Interpolation& interpol
 template <typename ViewValue, typename ViewIndex, typename Value, typename Index> 
 void distribute_global_matrix(const linalg::SparseMatrixView<ViewValue,ViewIndex>& global_matrix,
     const array::Array& partition, std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root) {
+    ATLAS_TRACE("distribute_global_matrix_lowlevel");
 
     const auto tgt_part_glb = array::make_view<int,1>(partition);
     
@@ -238,12 +241,15 @@ void distribute_global_matrix(const linalg::SparseMatrixView<ViewValue,ViewIndex
 }
 
 linalg::SparseMatrixStorage distribute_global_matrix(const FunctionSpace& src_fs, const FunctionSpace& tgt_fs, const linalg::SparseMatrixStorage& gmatrix, int mpi_root) {
+    ATLAS_TRACE("distribute_global_matrix");
     const auto src_part = array::make_view<int, 1>(src_fs.partition());
     const auto tgt_part = array::make_view<int, 1>(tgt_fs.partition());
     const auto tgt_ridx = array::make_indexview<int, 1>(tgt_fs.remote_index());
 
     Field field_tgt_part_glb = tgt_fs.createField(tgt_fs.partition(), option::global(mpi_root));
-    tgt_fs.gather(tgt_fs.partition(), field_tgt_part_glb);
+    ATLAS_TRACE_SCOPE("gather partition") {
+        tgt_fs.gather(tgt_fs.partition(), field_tgt_part_glb);
+    }
 
     using Index = eckit::linalg::Index;
     using Value = eckit::linalg::Scalar;
@@ -252,38 +258,40 @@ linalg::SparseMatrixStorage distribute_global_matrix(const FunctionSpace& src_fs
     distribute_global_matrix(atlas::linalg::make_host_view<Value, Index>(gmatrix), field_tgt_part_glb, rows, cols, vals, mpi_root);
 
     // map global index to local index
-    std::map<gidx_t, idx_t> to_local_rows;
-    std::map<gidx_t, idx_t> to_local_cols;
+    std::unordered_map<gidx_t, idx_t> to_local_rows;
+    std::unordered_map<gidx_t, idx_t> to_local_cols;
 
-    auto tgt_gidx_exchanged = tgt_fs.createField(tgt_fs.global_index());
-    tgt_gidx_exchanged.array().copy(tgt_fs.global_index());
-    tgt_fs.haloExchange(tgt_gidx_exchanged);
-    const auto tgt_global_index = array::make_view<gidx_t, 1>(tgt_gidx_exchanged);
-    const auto tgt_ghost = array::make_view<int,1>(tgt_fs.ghost());
+    ATLAS_TRACE_SCOPE("convert to local indexing") {
+        auto tgt_gidx_exchanged = tgt_fs.createField(tgt_fs.global_index());
+        tgt_gidx_exchanged.array().copy(tgt_fs.global_index());
+        tgt_fs.haloExchange(tgt_gidx_exchanged);
+        const auto tgt_global_index = array::make_view<gidx_t, 1>(tgt_gidx_exchanged);
+        const auto tgt_ghost = array::make_view<int,1>(tgt_fs.ghost());
 
-    auto src_gidx_exchanged = src_fs.createField(src_fs.global_index());
-    src_gidx_exchanged.array().copy(src_fs.global_index());
-    src_fs.haloExchange(src_gidx_exchanged);
-    const auto src_global_index = array::make_view<gidx_t, 1>(src_gidx_exchanged);
-    const auto src_ghost = array::make_view<int,1>(src_fs.ghost());
+        auto src_gidx_exchanged = src_fs.createField(src_fs.global_index());
+        src_gidx_exchanged.array().copy(src_fs.global_index());
+        src_fs.haloExchange(src_gidx_exchanged);
+        const auto src_global_index = array::make_view<gidx_t, 1>(src_gidx_exchanged);
+        const auto src_ghost = array::make_view<int,1>(src_fs.ghost());
 
-    for (idx_t r = 0; r < tgt_global_index.size(); ++r) {
-        auto gr = tgt_global_index(r);
-        if (to_local_rows.find(gr) != to_local_rows.end() && tgt_ghost(r)) {
-            continue;
+        for (idx_t r = 0; r < tgt_global_index.size(); ++r) {
+            auto gr = tgt_global_index(r);
+            if (tgt_ghost(r) && to_local_rows.find(gr) != to_local_rows.end()) {
+                continue;
+            }
+            to_local_rows[gr] = r;
         }
-        to_local_rows[gr] = r;
-    }
-    for (idx_t c = 0; c < src_global_index.size(); ++c) {
-        auto gc = src_global_index(c);
-        if (to_local_cols.find(gc) != to_local_cols.end() && src_ghost(c)) {
-            continue;
+        for (idx_t c = 0; c < src_global_index.size(); ++c) {
+            auto gc = src_global_index(c);
+            if (src_ghost(c) && to_local_cols.find(gc) != to_local_cols.end()) {
+                continue;
+            }
+            to_local_cols[gc] = c;
         }
-        to_local_cols[gc] = c;
-    }
-    for (int r = 0; r < rows.size(); ++r) {
-        rows[r] = to_local_rows[rows[r] + 1];
-        cols[r] = to_local_cols[cols[r] + 1];
+        for (int r = 0; r < rows.size(); ++r) {
+            rows[r] = to_local_rows[rows[r] + 1];
+            cols[r] = to_local_cols[cols[r] + 1];
+        }
     }
 
     linalg::SparseMatrixStorage matrix;
