@@ -131,6 +131,9 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
         FunctionSpace src_fs;
         FunctionSpace tgt_fs;
         timers.functionspace_setup.start();
+        if (interpolation_method.find("nearest-neighbour") != std::string::npos) {
+            interpolation_method = "finite-element";
+        }
         auto scheme = create_fspaces(interpolation_method, sgrid, tgrid, src_fs, tgt_fs);
         timers.functionspace_setup.stop();
         timers.global_matrix_setup.start();
@@ -192,7 +195,7 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
         timers.functionspace_setup.stop();
 
         timers.interpolation_setup.start();
-        if (interpolation_method == "nearest-neighbour" || interpolation_method == "k-nearest-neighbours" || interpolation_method == "grid-box-average") {
+        if (interpolation_method == "grid-box-average") {
             interpolator = Interpolation{ scheme, sgrid, tgrid };
         }
         else {
@@ -321,7 +324,7 @@ Config AtlasGlobalMatrix::create_fspaces(const std::string& scheme_str, const Gr
         fs_in = NodeColumns(inmesh, scheme);
         fs_out = PointCloud(output_grid, grid::MatchingPartitioner(inmesh));
     }
-    else if (scheme_type == "conservative-spherical-polygon" || scheme_type == "grid-box-average") {
+    else if (scheme_type == "conservative-spherical-polygon") {
         bool src_cell_data = scheme.getBool("src_cell_data");
         bool tgt_cell_data = scheme.getBool("tgt_cell_data");
         auto tgt_mesh_config = output_grid.meshgenerator() | option::halo(0);
@@ -347,9 +350,10 @@ Config AtlasGlobalMatrix::create_fspaces(const std::string& scheme_str, const Gr
             fs_in = functionspace::NodeColumns(src_mesh, option::halo(2));
         }
     }
-    else if (scheme_type == "nearest-neighbour" || scheme_type == "k-nearest-neighbours") {
+    else if (scheme_type == "nearest-neighbour" || scheme_type == "k-nearest-neighbours" || scheme_type == "grid-box-average") {
         fs_in = PointCloud(input_grid);
-        fs_out = functionspace::PointCloud(output_grid, grid::MatchingPartitioner(fs_in));
+        auto inmesh = Mesh(input_grid);
+        fs_out = functionspace::PointCloud(output_grid, grid::MatchingPartitioner(inmesh));
     }
     else {
         fs_in = StructuredColumns(input_grid, scheme);
