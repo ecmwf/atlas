@@ -201,7 +201,6 @@ void distribute_global_matrix(const linalg::SparseMatrixView<ViewValue,ViewIndex
     cols.resize(nnz_loc);
     vals.resize(nnz_loc);
 
-    size_t idx = 0;
     if (mpi_rank == mpi_root) {
         std::vector<std::vector<Index>> send_rows(mpi_size);
         std::vector<std::vector<Index>> send_cols(mpi_size);
@@ -242,10 +241,6 @@ void distribute_global_matrix(const linalg::SparseMatrixView<ViewValue,ViewIndex
 
 linalg::SparseMatrixStorage distribute_global_matrix(const FunctionSpace& src_fs, const FunctionSpace& tgt_fs, const linalg::SparseMatrixStorage& gmatrix, int mpi_root) {
     ATLAS_TRACE("distribute_global_matrix");
-    const auto src_part = array::make_view<int, 1>(src_fs.partition());
-    const auto tgt_part = array::make_view<int, 1>(tgt_fs.partition());
-    const auto tgt_ridx = array::make_indexview<int, 1>(tgt_fs.remote_index());
-
     Field field_tgt_part_glb = tgt_fs.createField(tgt_fs.partition(), option::global(mpi_root));
     ATLAS_TRACE_SCOPE("gather partition") {
         tgt_fs.gather(tgt_fs.partition(), field_tgt_part_glb);
