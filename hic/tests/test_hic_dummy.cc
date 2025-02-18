@@ -34,7 +34,7 @@ int test_throw() {
 
 std::vector<std::function<int()>> tests = { test_throw };
 
-int main(int argc, char* argv[]) {
+int main(int /*argc*/, char** /*argv*/) {
     int error = 0;
     for( auto& test: tests) {
         error += test();

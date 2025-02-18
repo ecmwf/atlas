@@ -9,6 +9,14 @@
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+ecbuild_add_option( FEATURE WARNING_AS_ERROR
+                    DEFAULT OFF
+                    DESCRIPTION "Treat compile warning as error" )
+
+if(HAVE_WARNING_AS_ERROR)
+  ecbuild_add_cxx_flags("-Werror" NO_FAIL NAME atlas_cxx_warning_as_error)
+endif()
+
 ecbuild_add_option( FEATURE WARNINGS
                     DEFAULT ON
                     DESCRIPTION "Add warnings to compiler" )
@@ -30,7 +38,7 @@ if( CMAKE_CXX_COMPILER_ID STREQUAL Intel )
   ecbuild_add_cxx_flags("-diag-disable=10441" NO_FAIL)   # Deprecated classic compiler
 endif()
 
-if( CMAKE_Fortran_COMPILER_ID STREQUAL Intel)
+if( CMAKE_Fortran_COMPILER_ID MATCHES Intel) # Both for Intel and Intel-LLVM
   ecbuild_add_fortran_flags("-diag-disable=5462" NO_FAIL)   # Global name too long, shortened
 endif()
 

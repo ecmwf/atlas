@@ -89,7 +89,7 @@ ecbuild_add_test(
 
 ecbuild_add_test( TARGET atlas_test_mesh_node2cell
   MPI        4
-  CONDITION  eckit_HAVE_MPI
+  CONDITION  eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 4
   SOURCES    test_mesh_node2cell.cc
   LIBS       atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
@@ -97,7 +97,7 @@ ecbuild_add_test( TARGET atlas_test_mesh_node2cell
 
 ecbuild_add_test( TARGET atlas_test_meshgen_splitcomm
   MPI         4
-  CONDITION   eckit_HAVE_MPI
+  CONDITION   eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 4
   SOURCES     test_meshgen_splitcomm.cc
   LIBS        atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}

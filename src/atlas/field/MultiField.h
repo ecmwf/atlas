@@ -53,7 +53,7 @@ public:  // methods
     using Handle::Handle;
 
     MultiField(const eckit::Configuration&);
-    MultiField(const array::DataType datatype, const std::vector<int>& shape, 
+    MultiField(const array::DataType datatype, const array::ArrayShape& shape,
         const std::vector<std::string>& var_names);
 
     //-- Accessors
