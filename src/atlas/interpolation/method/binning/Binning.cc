@@ -53,6 +53,12 @@ void Binning::do_setup(const Grid& source,
   ATLAS_NOTIMPLEMENTED;
 }
 
+void Binning::do_setup(const FunctionSpace& source,
+                       const FunctionSpace& target,
+                       const Cache&) {
+  ATLAS_NOTIMPLEMENTED;
+}
+
 
 void Binning::do_setup(const FunctionSpace& source,
                        const FunctionSpace& target) {

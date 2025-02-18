@@ -16,6 +16,7 @@
 #include "atlas/linalg/sparse/SparseMatrixStorage.h"
 #include "atlas/linalg/sparse/SparseMatrixView.h"
 #include "atlas/util/DataType.h"
+#include "atlas/runtime/Trace.h"
 
 namespace atlas::linalg {
 
@@ -119,10 +120,11 @@ SparseMatrixStorage make_sparse_matrix_storage_from_rows_columns_values(std::siz
 
 template<typename SparseMatrixValue = eckit::linalg::Scalar, typename SparseMatrixIndex = eckit::linalg::Index, typename Value, typename Index, typename IndexBase>
 SparseMatrixStorage make_sparse_matrix_storage_from_rows_columns_values(std::size_t nr, std::size_t nc, const std::vector<Index>& rows, const std::vector<Index>& cols, const std::vector<Value>& vals, const IndexBase index_base = 0, bool is_sorted = true) {
+    ATLAS_TRACE("make_sparse_matrix_storage_from_rows_columns_values partition");
     std::size_t nnz = vals.size();
     ATLAS_ASSERT(rows.size() == nnz);
     ATLAS_ASSERT(cols.size() == nnz);
-    return make_sparse_matrix_storage_from_rows_columns_values<SparseMatrixValue,SparseMatrixIndex>(nr, nc, nnz, rows.data(), cols.data(), vals.data(), index_base, is_sorted);
+    return make_sparse_matrix_storage_from_rows_columns_values<SparseMatrixValue, SparseMatrixIndex>(nr, nc, nnz, rows.data(), cols.data(), vals.data(), index_base, is_sorted);
 }
 
 
