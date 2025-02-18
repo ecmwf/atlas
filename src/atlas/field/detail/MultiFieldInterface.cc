@@ -33,7 +33,6 @@ MultiFieldImpl* atlas__MultiField__create_shape(int kind, int rank, int shapef[]
         size_t length, size_t size) {
     array::ArrayShape shape;
     shape.resize(rank);
-    array::ArrayStrides strides;
     for (idx_t j = 0, jf = rank - 1; j < rank; ++j) {
         shape[j]   = shapef[jf--];
     }

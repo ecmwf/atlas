@@ -54,6 +54,7 @@ ecbuild_add_test( TARGET atlas_test_omp_sort
   SOURCES    test_omp_sort.cc
   LIBS       atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION  NOT SKIP_TEST_atlas_test_omp_sort
 )
 
 ecbuild_add_test( TARGET atlas_test_omp_copy

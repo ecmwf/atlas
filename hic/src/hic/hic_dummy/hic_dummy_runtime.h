@@ -13,7 +13,7 @@
 #define DUMMY_SHOULD_NOT_BE_CALLED(SYMBOL) dummyShouldNotBeCalled( #SYMBOL )
 #define DUMMY_FUNCTION(SYMBOL) \
     template <typename... Args> inline \
-    dummyError_t dummy##SYMBOL(Args&&... args) { \
+    dummyError_t dummy##SYMBOL(Args&&...) { \
         DUMMY_SHOULD_NOT_BE_CALLED( hic##SYMBOL ); \
         return dummyError_t{0}; \
     }

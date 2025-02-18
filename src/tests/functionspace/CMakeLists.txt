@@ -15,7 +15,7 @@ if( HAVE_FCTEST )
 
   add_fctest( TARGET atlas_fctest_functionspace
     MPI             4
-    CONDITION       eckit_HAVE_MPI AND (transi_HAVE_MPI OR ectrans_HAVE_MPI)
+    CONDITION       eckit_HAVE_MPI AND (transi_HAVE_MPI OR ectrans_HAVE_MPI) AND MPI_SLOTS GREATER_EQUAL 4
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_functionspace.F90
     LIBS            atlas_f
@@ -24,7 +24,7 @@ if( HAVE_FCTEST )
 
   add_fctest( TARGET atlas_fctest_blockstructuredcolumns
     MPI             4
-    CONDITION       eckit_HAVE_MPI
+    CONDITION       eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 4
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_blockstructuredcolumns.F90
     LIBS            atlas_f
@@ -41,7 +41,7 @@ ecbuild_add_test( TARGET atlas_test_functionspace
 
 ecbuild_add_test( TARGET atlas_test_functionspace_splitcomm
   MPI         4
-  CONDITION   eckit_HAVE_MPI
+  CONDITION   eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 4
   SOURCES     test_functionspace_splitcomm.cc
   LIBS        atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
@@ -148,7 +148,7 @@ ecbuild_add_test( TARGET atlas_test_stencil_parallel_mpi4
   COMMAND atlas_test_stencil_parallel
   MPI 4
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
-  CONDITION eckit_HAVE_MPI
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 4
 )
 
 ecbuild_add_test( TARGET atlas_test_stencil_parallel_mpi16
@@ -160,7 +160,7 @@ ecbuild_add_test( TARGET atlas_test_stencil_parallel_mpi16
 
 set( _WITH_MPI )
 if( eckit_HAVE_MPI )
-    set( _WITH_MPI MPI 4 )
+    set( _WITH_MPI MPI 4 CONDITION MPI_SLOTS GREATER_EQUAL 4)
 endif()
 
 ecbuild_add_executable( TARGET atlas_test_polygons

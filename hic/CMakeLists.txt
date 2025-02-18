@@ -38,6 +38,27 @@ elseif( HAVE_HIP )
   find_package(hipsparse CONFIG REQUIRED)
 endif()
 
+ecbuild_add_option( FEATURE WARNING_AS_ERROR
+                    DEFAULT OFF
+                    DESCRIPTION "Treat compile warning as error" )
+
+if(HAVE_WARNING_AS_ERROR)
+  ecbuild_add_cxx_flags("-Werror" NO_FAIL NAME hic_cxx_warning_as_error)
+endif()
+
+ecbuild_add_option( FEATURE WARNINGS
+                    DEFAULT ON
+                    DESCRIPTION "Add warnings to compiler" )
+
+if(HAVE_WARNINGS)
+  ecbuild_add_cxx_flags("-Wall" NO_FAIL)
+  ecbuild_add_cxx_flags("-Wextra" NO_FAIL)
+endif()
+
+if( CMAKE_CXX_COMPILER_ID STREQUAL Intel )
+  ecbuild_add_cxx_flags("-diag-disable=10441" NO_FAIL)   # Deprecated classic compiler
+endif()
+
 add_subdirectory( src )
 add_subdirectory( tests )
 

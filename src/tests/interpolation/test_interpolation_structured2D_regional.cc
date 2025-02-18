@@ -106,8 +106,8 @@ CASE("test_interpolation_structured2D_regional_1d") {
     auto targetField = targetFs.createField<double>(Config("name", "target"));
 
     // Accuracy test
-    const auto sourceIView = array::make_view<int, 1>(sourceFs.index_i());
-    const auto sourceJView = array::make_view<int, 1>(sourceFs.index_j());
+    const auto sourceIView = array::make_view<idx_t, 1>(sourceFs.index_i());
+    const auto sourceJView = array::make_view<idx_t, 1>(sourceFs.index_j());
     auto sourceView = array::make_view<double, 1>(sourceField);
     const auto sourceGhostView = atlas::array::make_view<int, 1>(sourceFs.ghost());
     sourceView.assign(0.0);
@@ -120,8 +120,8 @@ CASE("test_interpolation_structured2D_regional_1d") {
 
     interpolation.execute(sourceField, targetField);
 
-    const auto targetIView = array::make_view<int, 1>(targetFs.index_i());
-    const auto targetJView = array::make_view<int, 1>(targetFs.index_j());
+    const auto targetIView = array::make_view<idx_t, 1>(targetFs.index_i());
+    const auto targetJView = array::make_view<idx_t, 1>(targetFs.index_j());
     const auto targetView = array::make_view<double, 1>(targetField);
     const auto targetGhostView = atlas::array::make_view<int, 1>(targetFs.ghost());
     const double tolerance = 1.e-12;
@@ -163,8 +163,8 @@ CASE("test_interpolation_structured2D_regional_2d") {
     auto targetField = targetFs.createField<double>(Config("name", "target"));
 
     // Accuracy test
-    const auto sourceIView = array::make_view<int, 1>(sourceFs.index_i());
-    const auto sourceJView = array::make_view<int, 1>(sourceFs.index_j());
+    const auto sourceIView = array::make_view<idx_t, 1>(sourceFs.index_i());
+    const auto sourceJView = array::make_view<idx_t, 1>(sourceFs.index_j());
     auto sourceView = array::make_view<double, 2>(sourceField);
     const auto sourceGhostView = atlas::array::make_view<int, 1>(sourceFs.ghost());
     sourceView.assign(0.0);
@@ -179,8 +179,8 @@ CASE("test_interpolation_structured2D_regional_2d") {
 
     interpolation.execute(sourceField, targetField);
 
-    const auto targetIView = array::make_view<int, 1>(targetFs.index_i());
-    const auto targetJView = array::make_view<int, 1>(targetFs.index_j());
+    const auto targetIView = array::make_view<idx_t, 1>(targetFs.index_i());
+    const auto targetJView = array::make_view<idx_t, 1>(targetFs.index_j());
     const auto targetView = array::make_view<double, 2>(targetField);
     const auto targetGhostView = atlas::array::make_view<int, 1>(targetFs.ghost());
     const double tolerance = 1.e-12;

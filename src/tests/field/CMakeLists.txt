@@ -23,6 +23,7 @@ ecbuild_add_test( TARGET atlas_test_field_foreach
   LIBS     atlas
   OMP      4
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION NOT SKIP_TEST_atlas_test_field_foreach
 )
 
 ecbuild_add_test( TARGET atlas_test_field_acc

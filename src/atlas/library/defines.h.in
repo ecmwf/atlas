@@ -58,27 +58,37 @@
 #define ATLAS_UNREACHABLE() __builtin_unreachable()
 
 #if defined(__NVCOMPILER)
-#    if !defined(ATLAS_START_WARNINGS_SUPPRESSION)
-#        define ATLAS_START_WARNINGS_SUPPRESSION _Pragma( "diag push" )
-#        define ATLAS_STOP_WARNINGS_SUPPRESSION  _Pragma( "diag pop" )
-#    endif
-#    if !defined(ATLAS_SUPPRESS_INTEGER_SIGN_CHANGE_WARNINGS)
-#        define ATLAS_SUPPRESS_INTEGER_SIGN_CHANGE_WARNINGS _Pragma( "diag_suppress 68" )
-#    endif
-#    if !defined(ATLAS_SUPPRESS_UNREACHABLE_WARNINGS)
-#        define ATLAS_SUPPRESS_UNREACHABLE_WARNINGS _Pragma( "diag_suppress 111" )
-#    endif
-#else
-#    if !defined(ATLAS_START_WARNINGS_SUPPRESSION)
-#        define ATLAS_START_WARNINGS_SUPPRESSION
-#        define ATLAS_STOP_WARNINGS_SUPPRESSION
-#    endif
-#    if !defined(ATLAS_SUPPRESS_INTEGER_SIGN_CHANGE_WARNINGS)
-#        define ATLAS_SUPPRESS_INTEGER_SIGN_CHANGE_WARNINGS
-#    endif
-#    if !defined(ATLAS_SUPPRESS_UNREACHABLE_WARNINGS)
-#        define ATLAS_SUPPRESS_UNREACHABLE_WARNINGS
-#    endif
+#    define ATLAS_SUPPRESS_WARNINGS_PUSH                 _Pragma( "diag push" )
+#    define ATLAS_SUPPRESS_WARNINGS_POP                  _Pragma( "diag pop" )
+#    define ATLAS_SUPPRESS_WARNINGS_INTEGER_SIGN_CHANGE  _Pragma( "diag_suppress integer_sign_change" )
+#    define ATLAS_SUPPRESS_WARNINGS_CODE_IS_UNREACHABLE  _Pragma( "diag_suppress code_is_unreachable" )
+#elif defined(__INTEL_COMPILER)
+#    define ATLAS_SUPPRESS_WARNINGS_PUSH                 _Pragma( "warning push" )
+#    define ATLAS_SUPPRESS_WARNINGS_POP                  _Pragma( "warning pop" )
+#    define ATLAS_SUPPRESS_WARNINGS_INTEGER_SIGN_CHANGE  _Pragma( "warning disable 68" )
+#elif defined(__GNUC__)
+#    define ATLAS_SUPPRESS_WARNINGS_PUSH                 _Pragma( "GCC diagnostic push" ) \
+                                                         _Pragma( "GCC diagnostic ignored \"-Wpragmas\"" ) \
+                                                         _Pragma( "GCC diagnostic ignored \"-Wunknown-warning-option\"" )
+#    define ATLAS_SUPPRESS_WARNINGS_POP                  _Pragma( "GCC diagnostic pop" )
+#    define ATLAS_SUPPRESS_WARNINGS_TEMPLATE_ID_CDTOR    _Pragma( "GCC diagnostic ignored \"-Wtemplate-id-cdtor\"" )
+#endif
+
+
+#if !defined(ATLAS_SUPPRESS_WARNINGS_PUSH)
+#    define ATLAS_SUPPRESS_WARNINGS_PUSH
+#endif
+#if !defined(ATLAS_SUPPRESS_WARNINGS_POP)
+#    define ATLAS_SUPPRESS_WARNINGS_POP
+#endif
+#if !defined(ATLAS_SUPPRESS_WARNINGS_INTEGER_SIGN_CHANGE)
+#    define ATLAS_SUPPRESS_WARNINGS_INTEGER_SIGN_CHANGE
+#endif
+#if !defined(ATLAS_SUPPRESS_WARNINGS_CODE_IS_UNREACHABLE)
+#    define ATLAS_SUPPRESS_WARNINGS_CODE_IS_UNREACHABLE
+#endif
+#if !defined(ATLAS_SUPPRESS_WARNINGS_TEMPLATE_ID_CDTOR)
+#    define ATLAS_SUPPRESS_WARNINGS_TEMPLATE_ID_CDTOR
 #endif
 
 #endif

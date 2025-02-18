@@ -33,17 +33,18 @@ jobs:
         name:
           - linux gnu-10
           - linux gnu-12
-          - linux gnu-7
-          - linux clang-12
-#          - linux nvhpc-22.11
+          - linux gnu-14
+          - linux clang-13
+          - linux clang-18
           - linux intel
           - linux intel-classic
+          - linux nvhpc-25.1
           - macos
 
         include:
 
           - name: linux gnu-10
-            os: ubuntu-20.04
+            os: ubuntu-22.04
             compiler: gnu-10
             compiler_cc: gcc-10
             compiler_cxx: g++-10
@@ -52,57 +53,43 @@ jobs:
             coverage: true
 
           - name: linux gnu-12
-            os: ubuntu-22.04
+            os: ubuntu-24.04
             compiler: gnu-12
             compiler_cc: gcc-12
             compiler_cxx: g++-12
             compiler_fc: gfortran-12
-            cmake_options: -DENABLE_OMP_CXX=OFF
             caching: true
             coverage: false
 
-          - name: linux gnu-7
-            os: ubuntu-20.04
-            compiler: gnu-7
-            compiler_cc: gcc-7
-            compiler_cxx: g++-7
-            compiler_fc: gfortran-7
+          - name: linux gnu-14
+            os: ubuntu-24.04
+            compiler: gnu-14
+            compiler_cc: gcc-14
+            compiler_cxx: g++-14
+            compiler_fc: gfortran-14
             caching: true
             coverage: false
 
-          - name: linux clang-12
-            os: ubuntu-20.04
-            compiler: clang-12
-            compiler_cc: clang-12
-            compiler_cxx: clang++-12
+          - name: linux clang-13
+            os: ubuntu-22.04
+            compiler: clang-13
+            compiler_cc: clang-13
+            compiler_cxx: clang++-13
             compiler_fc: gfortran-10
             caching: true
             coverage: false
 
-          - name: linux clang-12
-            build_type: Release
-            os: ubuntu-20.04
-            compiler: clang-12
-            compiler_cc: clang-12
-            compiler_cxx: clang++-12
-            compiler_fc: gfortran-10
-            ctest_options: "-LE mpi" # For now until Checkerboard fixed
+          - name: linux clang-18
+            os: ubuntu-24.04
+            compiler: clang-18
+            compiler_cc: clang-18
+            compiler_cxx: clang++-18
+            compiler_fc: gfortran-14
             caching: true
             coverage: false
-
-#          - name: linux nvhpc-22.11
-#            os: ubuntu-20.04
-#            compiler: nvhpc-22.11
-#            compiler_cc: nvc
-#            compiler_cxx: nvc++
-#            compiler_fc: nvfortran
-#            cmake_options: -DCMAKE_CXX_FLAGS=--diag_suppress177
-#            ctest_options: "-LE mpi" # For now until Checkerboard fixed
-#            caching: false
-#            coverage: false
 
           - name : linux intel
-            os: ubuntu-20.04
+            os: ubuntu-24.04
             compiler: intel
             compiler_cc: icx
             compiler_cxx: icpx
@@ -111,13 +98,23 @@ jobs:
             coverage: false
 
           - name : linux intel-classic
-            os: ubuntu-20.04
+            os: ubuntu-22.04
             compiler: intel-classic
             compiler_cc: icc
             compiler_cxx: icpc
             compiler_fc: ifort
             caching: true
             coverage: false
+
+          - name: linux nvhpc-25.1
+            os: ubuntu-24.04
+            compiler: nvhpc-25.1
+            compiler_cc: nvc
+            compiler_cxx: nvc++
+            compiler_fc: nvfortran
+            caching: true
+            coverage: false
+            cmake_options: -DSKIP_TEST_atlas_test_omp_sort=TRUE
 
           - name: macos
             # Xcode compiler requires empty environment variables, so we pass null (~) here
@@ -157,28 +154,46 @@ jobs:
           brew install libomp
         else
           sudo apt-get update
-          if [[ "${{ matrix.compiler }}" =~ gnu-7 ]]; then
-            sudo apt-get install gcc-7 g++-7 gfortran-7
+          if [[ "${{ matrix.compiler }}" =~ gnu ]]; then
+            sudo apt-get install -y libomp5 libomp-dev
           fi
           sudo apt-get install ninja-build
         fi
 
         printenv
 
-    - name: Cache Dependencies
-      # There seems to be a problem with cached NVHPC dependencies, leading to SIGILL perhaps due to slightly different architectures
+    - name: Free Disk Space (Ubuntu)
+      # Free up disk space for nvhpc
+      uses: jlumbroso/free-disk-space@main
+      if: contains( matrix.compiler, 'nvhpc' )
+      continue-on-error: true
+      with:
+        # this might remove tools that are actually needed,
+        # if set to "true" but frees about 6 GB
+        tool-cache: false
+
+        # all of these default to true, but feel free to set to
+        # "false" if necessary for your workflow
+        android: true
+        dotnet: true
+        haskell: true
+        large-packages: false # takes too long
+        docker-images: false # takes too long
+        swap-storage: true
+
+    - name: Retrieve cached dependencies
       if: matrix.caching
-      id: deps-cache
-      uses: pat-s/always-upload-cache@v2.1.5
+      id: deps-restore-cache
+      uses: actions/cache/restore@v4
       with:
         path: ${{ env.DEPS_DIR }}
-        key: deps-${{ matrix.os }}-${{ matrix.compiler }}-v1
+        key: deps-${{ matrix.os }}-${{ matrix.compiler }}-${{ env.CACHE_SUFFIX }}
 
     - name: Install NVHPC compiler
       if: contains( matrix.compiler, 'nvhpc' )
       shell: bash -eux {0}
       run: |
-        ${ATLAS_TOOLS}/install-nvhpc.sh --prefix ${DEPS_DIR}/nvhpc --version 22.11
+        ${ATLAS_TOOLS}/install-nvhpc.sh --prefix ${DEPS_DIR}/nvhpc --version 25.1
         source ${DEPS_DIR}/nvhpc/env.sh
         echo "${NVHPC_DIR}/compilers/bin"                   >> $GITHUB_PATH
         [ -z ${MPI_HOME+x} ] || echo "MPI_HOME=${MPI_HOME}" >> $GITHUB_ENV
@@ -195,6 +210,9 @@ jobs:
       shell: bash -eux {0}
       run: |
         FCFLAGS=-fPIC CFLAGS=-fPIC FFLAGS=-fPIC ${ATLAS_TOOLS}/install-mpi.sh --mpi openmpi --prefix  ${DEPS_DIR}/openmpi
+        if [[ "${{ matrix.os }}" =~ macos ]]; then
+           echo "CACHE_SUFFIX=${CACHE_SUFFIX}-mpi_$(mpirun --version | head -1 | awk '{print $4}')" >> $GITHUB_ENV
+        fi
         [ -f ${DEPS_DIR}/openmpi/env.sh ] && source ${DEPS_DIR}/openmpi/env.sh
         [ -z ${MPI_HOME+x} ] || echo "MPI_HOME=${MPI_HOME}" >> $GITHUB_ENV
 
@@ -205,6 +223,7 @@ jobs:
         echo "FFTW_ROOT=${DEPS_DIR}/fftw" >> $GITHUB_ENV
 
     - name: Install Qhull
+      if: "!contains( matrix.compiler, 'intel-classic' )"
       shell: bash -eux {0}
       run: |
         ${ATLAS_TOOLS}/install-qhull.sh --version 8.1-alpha3 --prefix ${DEPS_DIR}/qhull
@@ -221,6 +240,15 @@ jobs:
       run: |
         brew install eigen
 
+    - name: Save cached dependencies
+      # There seems to be a problem with cached NVHPC dependencies, leading to SIGILL perhaps due to slightly different architectures
+      if: matrix.caching && matrix.build_type == 'Debug'
+      id: deps-save-cache
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ env.DEPS_DIR }}
+        key: ${{ steps.deps-restore-cache.outputs.cache-primary-key }}
+
     - name: Set Build & Test Environment
       run: |
 
@@ -229,20 +257,6 @@ jobs:
 
         # Add mpirun to path for testing
         [ -z ${MPI_HOME+x} ] || echo "${MPI_HOME}/bin" >> $GITHUB_PATH
-
-        if [[ "${{matrix.compiler}}" == intel-classic ]]; then
-          echo "CFLAGS=-diag-disable=10441"   >> $GITHUB_ENV
-          echo "CXXFLAGS=-diag-disable=10441" >> $GITHUB_ENV
-          echo "FCFLAGS=-diag-disable=10441"  >> $GITHUB_ENV
-          echo "FFLAGS=-diag-disable=10441"   >> $GITHUB_ENV
-        fi
-
-        if [[ "${{matrix.compiler}}" == intel ]]; then
-          echo "CFLAGS=-Rno-debug-disables-optimization"   >> $GITHUB_ENV
-          echo "CXXFLAGS=-Rno-debug-disables-optimization" >> $GITHUB_ENV
-        fi
-
-
 
     - name: Build & Test
       id: build-test
@@ -258,9 +272,9 @@ jobs:
           ecmwf/fckit
         dependency_branch: develop
         dependency_cmake_options: |
-          ecmwf/eckit: "-G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DENABLE_TESTS=OFF -DENABLE_ECKIT_CMD=OFF -DENABLE_ECKIT_SQL=OFF"
+          ecmwf/eckit: "-G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DENABLE_TESTS=OFF -DENABLE_ECKIT_CMD=OFF -DENABLE_ECKIT_SQL=OFF -DENABLE_WARNINGS=OFF"
           ecmwf/fckit: "-G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DENABLE_TESTS=OFF"
-        cmake_options: "-G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DATLAS_BITS_LOCAL=32 ${{ matrix.cmake_options }}"
+        cmake_options: "-G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DATLAS_BITS_LOCAL=64 -DENABLE_WARNING_AS_ERROR=ON ${{ matrix.cmake_options }}"
         ctest_options: "${{ matrix.ctest_options }}"
 
     - name: Verify tools

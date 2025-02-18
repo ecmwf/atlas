@@ -134,7 +134,7 @@ atlas::linalg::SparseMatrixStorage assemble_global_matrix(const Interpolation& i
 
     auto compute_max_global_index = [&mpi_comm,mpi_root](const FunctionSpace& fs) {
         auto global_index = array::make_view<gidx_t, 1>(fs.global_index());
-        auto ghost        = array::make_view<idx_t, 1>(fs.ghost());
+        auto ghost        = array::make_view<int, 1>(fs.ghost());
         gidx_t max_gidx{0};
         for( size_t i = 0; i < global_index.size(); ++i) {
             if (not ghost(i)) {

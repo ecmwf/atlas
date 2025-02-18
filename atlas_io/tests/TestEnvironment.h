@@ -88,10 +88,7 @@ Test& current_test() {
 //----------------------------------------------------------------------------------------------------------------------
 
 #ifdef MAYBE_UNUSED
-#elif defined(__GNUC__)
-#define MAYBE_UNUSED __attribute__((unused))
-#else
-#define MAYBE_UNUSED
+#define MAYBE_UNUSED [[maybe_unused]]
 #endif
 
 #ifdef EXPECT_EQ
@@ -212,7 +209,7 @@ std::string expect_message(const std::string& condition, const T1& lhs, const T2
 
 
 namespace {
-int digits(int number) {
+[[maybe_unused]] int digits(int number) {
     int d = 0;
     while (number) {
         number /= 10;
@@ -221,14 +218,14 @@ int digits(int number) {
     return d;
 }
 
-static std::string debug_prefix(const std::string& libname) {
+[[maybe_unused]] std::string debug_prefix(const std::string& libname) {
     std::string s = libname;
     std::transform(s.begin(), s.end(), s.begin(), ::toupper);
     s += "_DEBUG";
     return s;
 }
 
-void debug_addTarget(eckit::LogTarget* target) {
+[[maybe_unused]] void debug_addTarget(eckit::LogTarget* target) {
     for (std::string libname : eckit::system::Library::list()) {
         const eckit::system::Library& lib = eckit::system::Library::lookup(libname);
         if (lib.debug()) {
@@ -239,7 +236,7 @@ void debug_addTarget(eckit::LogTarget* target) {
         eckit::Log::debug().addTarget(target);
 }
 
-void debug_setTarget(eckit::LogTarget* target) {
+[[maybe_unused]] void debug_setTarget(eckit::LogTarget* target) {
     for (std::string libname : eckit::system::Library::list()) {
         const eckit::system::Library& lib = eckit::system::Library::lookup(libname);
         if (lib.debug()) {
@@ -250,7 +247,7 @@ void debug_setTarget(eckit::LogTarget* target) {
         eckit::Log::debug().setTarget(target);
 }
 
-void debug_reset() {
+[[maybe_unused]] void debug_reset() {
     for (std::string libname : eckit::system::Library::list()) {
         const eckit::system::Library& lib = eckit::system::Library::lookup(libname);
         if (lib.debug()) {
@@ -261,21 +258,21 @@ void debug_reset() {
         eckit::Log::debug().reset();
 }
 
-bool getEnv(const std::string& env, bool default_value) {
+[[maybe_unused]] bool getEnv(const std::string& env, bool default_value) {
     if (::getenv(env.c_str())) {
         return eckit::Translator<std::string, bool>()(::getenv(env.c_str()));
     }
     return default_value;
 }
 
-int getEnv(const std::string& env, int default_value) {
+[[maybe_unused]] int getEnv(const std::string& env, int default_value) {
     if (::getenv(env.c_str())) {
         return eckit::Translator<std::string, int>()(::getenv(env.c_str()));
     }
     return default_value;
 }
 
-void setEnv(const std::string& env, bool value) {
+[[maybe_unused]] void setEnv(const std::string& env, bool value) {
     constexpr int DO_NOT_REPLACE_IF_EXISTS = 0;
     ::setenv(env.c_str(), eckit::Translator<bool, std::string>()(value).c_str(), DO_NOT_REPLACE_IF_EXISTS);
 }

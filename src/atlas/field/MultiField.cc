@@ -35,7 +35,7 @@ MultiField::MultiField(const eckit::Configuration& config) {
     reset(creator->create(config));
 }
 
-MultiField::MultiField(const array::DataType datatype, const std::vector<int>& shape,
+MultiField::MultiField(const array::DataType datatype, const array::ArrayShape& shape,
         const std::vector<std::string>& var_names) {
     std::unique_ptr<MultiFieldCreator> creator(MultiFieldCreatorFactory::build("MultiFieldCreatorArray"));
     reset(creator->create(datatype, shape, var_names));

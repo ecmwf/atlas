@@ -62,8 +62,8 @@ void RegionalLinear2D::do_setup(const FunctionSpace& source,
   // Source grid indices
   const Field sourceFieldIndexI = sourceFs.index_i();
   const Field sourceFieldIndexJ = sourceFs.index_j();
-  const auto sourceIndexIView = array::make_view<int, 1>(sourceFieldIndexI);
-  const auto sourceIndexJView = array::make_view<int, 1>(sourceFieldIndexJ);
+  const auto sourceIndexIView = array::make_view<idx_t, 1>(sourceFieldIndexI);
+  const auto sourceIndexJView = array::make_view<idx_t, 1>(sourceFieldIndexJ);
   sourceSize_ = sourceFs.size();
 
   // Destination grid size

@@ -7,6 +7,14 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.41.1] - 2025-02-18
+
+### Fixed
+
+- Add CI with gpu
+- Add -Werror in CI to avoid new warnings in the future
+- Fix compilation with ATLAS_BITS_LOCAL=64 and add it to CI to avoid errors in the future
+
 ## [0.41.0] - 2025-02-10
 
 ### Added
@@ -602,6 +610,7 @@ Fix StructuredInterpolation2D with retry for failed stencils
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.41.1]: https://github.com/ecmwf/atlas/compare/0.41.0...0.41.1
 [0.41.0]: https://github.com/ecmwf/atlas/compare/0.40.0...0.41.0
 [0.40.0]: https://github.com/ecmwf/atlas/compare/0.39.0...0.40.0
 [0.39.0]: https://github.com/ecmwf/atlas/compare/0.38.1...0.39.0
