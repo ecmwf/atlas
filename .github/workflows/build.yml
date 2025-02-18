@@ -209,11 +209,10 @@ jobs:
     - name: Install MPI
       shell: bash -eux {0}
       run: |
-        if [[ "${{ matrix.os }}" =~ macos ]]; then
-            MPI_VERSION="--version 5.0.7"
-            echo "CACHE_SUFFIX=${CACHE_SUFFIX}-mpi_v5.0.7" >> $GITHUB_ENV
-        fi
         FCFLAGS=-fPIC CFLAGS=-fPIC FFLAGS=-fPIC ${ATLAS_TOOLS}/install-mpi.sh --mpi openmpi ${MPI_VERSION} --prefix  ${DEPS_DIR}/openmpi
+        if [[ "${{ matrix.os }}" =~ macos ]]; then
+           CACHE_SUFFIX=${CACHE_SUFFIX}-mpi_$(mpirun --version | head -1 | awk '{print $4}') >> $GITHUB_ENV
+        fi
         [ -f ${DEPS_DIR}/openmpi/env.sh ] && source ${DEPS_DIR}/openmpi/env.sh
         [ -z ${MPI_HOME+x} ] || echo "MPI_HOME=${MPI_HOME}" >> $GITHUB_ENV
 
