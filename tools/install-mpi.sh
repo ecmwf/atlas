@@ -60,9 +60,8 @@ case "$os" in
                 brew ls --versions mpich || brew install mpich
                 ;;
             openmpi)
-                brew list --versions
-                brew info openmpi
-                brew ls --versions openmpi || brew install openmpi@5.0.7
+                brew info open-mpi
+                brew ls --versions open-mpi || brew install open-mpi@${OMPIVER}
                 echo "localhost slots=72" >> $(brew --prefix)/etc/openmpi-default-hostfile
                 echo "localhost slots=72" >> $(brew --prefix)/etc/prte-default-hostfile
 
