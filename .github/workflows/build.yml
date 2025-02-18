@@ -209,7 +209,7 @@ jobs:
     - name: Install MPI
       shell: bash -eux {0}
       run: |
-        FCFLAGS=-fPIC CFLAGS=-fPIC FFLAGS=-fPIC ${ATLAS_TOOLS}/install-mpi.sh --mpi openmpi ${MPI_VERSION} --prefix  ${DEPS_DIR}/openmpi
+        FCFLAGS=-fPIC CFLAGS=-fPIC FFLAGS=-fPIC ${ATLAS_TOOLS}/install-mpi.sh --mpi openmpi --prefix  ${DEPS_DIR}/openmpi
         if [[ "${{ matrix.os }}" =~ macos ]]; then
            CACHE_SUFFIX=${CACHE_SUFFIX}-mpi_$(mpirun --version | head -1 | awk '{print $4}') >> $GITHUB_ENV
         fi
