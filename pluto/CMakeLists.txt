@@ -57,6 +57,21 @@ else()
   ecbuild_info("pluto has no GPU support")
 endif()
 
+ecbuild_add_option( FEATURE WARNINGS  DESCRIPTION "Add warnings to compiler"   DEFAULT ON  )
+
+if( HAVE_CUDA )
+  find_package(CUDAToolkit REQUIRED)
+elseif( HAVE_HIP )
+  find_package(hip       CONFIG REQUIRED)
+  find_package(hipsparse CONFIG REQUIRED)
+endif()
+
+# activate warnings, ecbuild macros check the compiler recognises the options
+if(HAVE_WARNINGS)
+  ecbuild_add_cxx_flags("-Wall" NO_FAIL)
+  ecbuild_add_cxx_flags("-Wextra" NO_FAIL)
+endif()
+
 ecbuild_add_option( FEATURE FORTRAN DESCRIPTION "Fortran API for pluto" )
 if( HAVE_FORTRAN )
     ecbuild_enable_fortran( REQUIRED MODULE_DIRECTORY ${PROJECT_BINARY_DIR}/module )
