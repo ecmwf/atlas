@@ -18,25 +18,25 @@
 
 namespace pluto {
 
-void prefetch_host_to_device(const void* managed_ptr, std::size_t bytes) {
+void prefetch_host_to_device([[maybe_unused]] const void* managed_ptr, [[maybe_unused]] std::size_t bytes) {
     if constexpr (PLUTO_HAVE_HIC) {
         HIC_CALL(hicMemPrefetchAsync(managed_ptr, bytes, 0 /*device id*/));
     }
 }
 
-void prefetch_host_to_device(const void* managed_ptr, std::size_t bytes, const stream& s) {
+void prefetch_host_to_device([[maybe_unused]] const void* managed_ptr, [[maybe_unused]] std::size_t bytes, [[maybe_unused]] const stream& s) {
     if constexpr (PLUTO_HAVE_HIC) {
         HIC_CALL(hicMemPrefetchAsync(managed_ptr, bytes, 0 /*device id*/, s.value<hicStream_t>()));
     }
 }
 
-void prefetch_device_to_host(const void* managed_ptr, std::size_t bytes) {
+void prefetch_device_to_host([[maybe_unused]] const void* managed_ptr, [[maybe_unused]] std::size_t bytes) {
     if constexpr (PLUTO_HAVE_HIC) {
         HIC_CALL(hicMemPrefetchAsync(managed_ptr, bytes, hicCpuDeviceId));
     }
 }
 
-void prefetch_device_to_host(const void* managed_ptr, std::size_t bytes, const stream& s) {
+void prefetch_device_to_host([[maybe_unused]] const void* managed_ptr, [[maybe_unused]] std::size_t bytes, [[maybe_unused]] const stream& s) {
     if constexpr (PLUTO_HAVE_HIC) {
         HIC_CALL(hicMemPrefetchAsync(managed_ptr, bytes, hicCpuDeviceId, s.value<hicStream_t>()));
     }

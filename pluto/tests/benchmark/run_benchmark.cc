@@ -27,26 +27,26 @@ static std::size_t to_bytes(const std::string& str) {
 
 void setup_resources(std::size_t bytes) {
     using namespace pluto;
-    auto null_resource =
+    [[maybe_unused]] auto null_resource =
         register_resource("null", std::make_unique<TraceMemoryResource>("null", null_memory_resource()));
-    auto heap_resource =
+    [[maybe_unused]] auto heap_resource =
         register_resource("heap", std::make_unique<TraceMemoryResource>("heap", new_delete_resource()));
-    auto pinned_resource = register_resource(
+    [[maybe_unused]] auto pinned_resource = register_resource(
         "pinned",
         std::make_unique<TraceMemoryResource>("pinned", std::make_unique<PinnedMemoryResource>(new_delete_resource())));
-    auto pinned_pool_resource = register_resource(
+    [[maybe_unused]] auto pinned_pool_resource = register_resource(
         "pinned_pool",
         std::make_unique<TraceMemoryResource>(
             "pinned_pool", std::make_unique<MemoryPoolResource>(std::make_unique<TraceMemoryResource>(
                                "pinned", std::make_unique<PinnedMemoryResource>(new_delete_resource())))));
     pinned_pool_resource->deallocate(pinned_pool_resource->allocate(4 * bytes), 4 * bytes);
 
-    auto managed_resource =
+    [[maybe_unused]] auto managed_resource =
         register_resource("managed", std::make_unique<TraceMemoryResource>("managed", pluto::managed_resource()));
-    auto device_resource =
+    [[maybe_unused]] auto device_resource =
         register_resource("device", std::make_unique<TraceMemoryResource>("device", pluto::device_resource()));
 
-    auto device_pool_resource = register_resource(
+    [[maybe_unused]] auto device_pool_resource = register_resource(
         "device_pool",
         std::make_unique<TraceMemoryResource>("device_pool", std::make_unique<MemoryPoolResource>(device_resource)));
     device_pool_resource->deallocate(device_pool_resource->allocate(4 * bytes), 4 * bytes);

@@ -40,7 +40,7 @@ struct RegisterPlutoResources {
 }  // namespace
 
 void init() {
-    static bool initialized = []() {
+    [[maybe_unused]] static bool initialized = []() {
 #if PLUTO_DEBUGGING
         std::cout << "pluto::init()" << std::endl;
 #endif

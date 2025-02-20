@@ -68,9 +68,19 @@ endif()
 
 # activate warnings, ecbuild macros check the compiler recognises the options
 if(HAVE_WARNINGS)
-  ecbuild_add_cxx_flags("-Wall" NO_FAIL)
-  ecbuild_add_cxx_flags("-Wextra" NO_FAIL)
+  ecbuild_add_cxx_flags("-Wall"      NO_FAIL NAME pluto_cxx_Wall QUIET)
+  ecbuild_add_cxx_flags("-Wextra"    NO_FAIL NAME pluto_cxx_Wextra QUIET)
+  ecbuild_add_cxx_flags("-Wpedantic" NO_FAIL NAME pluto_cxx_Wpedantic QUIET)
 endif()
+
+ecbuild_add_option( FEATURE WARNING_AS_ERROR
+                    DEFAULT OFF
+                    DESCRIPTION "Treat compile warning as error" )
+
+if(HAVE_WARNING_AS_ERROR)
+  ecbuild_add_cxx_flags("-Werror" NO_FAIL NAME pluto_cxx_warning_as_error QUIET)
+endif()
+
 
 ecbuild_add_option( FEATURE FORTRAN DESCRIPTION "Fortran API for pluto" )
 if( HAVE_FORTRAN )

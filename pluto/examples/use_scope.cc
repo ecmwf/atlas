@@ -56,7 +56,7 @@ void recursive_scope_object(int recursion) {
 }
 
 
-int main(int argc, char* argv[]) {
+int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     std::cout << "BEGIN" << std::endl;
 
     pluto::set_trace(true);

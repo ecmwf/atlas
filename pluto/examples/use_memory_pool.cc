@@ -18,7 +18,7 @@
 [[maybe_unused]] constexpr std::size_t mb = 1024 * kb;
 [[maybe_unused]] constexpr std::size_t gb = 1024 * mb;
 
-int main(int argc, char* argv[]) {
+int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     std::cout << "BEGIN" << std::endl;
 
     pluto::set_trace(true);

@@ -39,14 +39,14 @@ void launch_benchmark_kernel(uint32_t n, F f) {
 
 template <typename T>
 inline void initialize_host_memory(T* h_buffer, uint32_t n, T value) {
-    for (int i{0}; i < n; ++i) {
+    for (uint32_t i{0}; i < n; ++i) {
         h_buffer[i] = value;
     }
 }
 
 template <typename T>
 inline bool verify_host_memory(T* h_buffer, uint32_t n, T value) {
-    for (int i{0}; i < n; ++i) {
+    for (uint32_t i{0}; i < n; ++i) {
         if (h_buffer[i] != value) {
             return false;
         }

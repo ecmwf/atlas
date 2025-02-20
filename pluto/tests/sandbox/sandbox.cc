@@ -190,7 +190,7 @@ void print_vec(std::span<T> vec) {
 }
 #endif
 
-auto bytes_offset = [](void* buffer, void* ptr) {
+[[maybe_unused]] auto bytes_offset = [](void* buffer, void* ptr) {
     return std::distance(reinterpret_cast<std::byte*>(buffer), reinterpret_cast<std::byte*>(ptr));
 };
 
@@ -309,8 +309,8 @@ int main(int argc, char* argv[]) {
         "malloc_free",
         std::make_unique<TraceMemoryResource>(
             "malloc_free", std::make_unique<MemoryResourceAdaptor>(
-                               [](std::size_t bytes, std::size_t alignment) { return malloc(bytes); },
-                               [](void* ptr, std::size_t bytes, std::size_t alignment) { return free(ptr); })));
+                               [](std::size_t bytes, std::size_t /*alignment*/) { return malloc(bytes); },
+                               [](void* ptr, std::size_t /*bytes*/, std::size_t /*alignment*/) { return free(ptr); })));
 
 #if 1
     for (size_t j = 0; j < 2; ++j) {

@@ -112,11 +112,11 @@ void memcpy_device_to_host(void* host_ptr, const void* device_ptr, std::size_t b
 }
 
 void memcpy_host_to_device_2D(void* device_ptr,
-                              std::size_t device_pitch_bytes /*stride in bytes to next contiguous chunk on device*/,
+                              [[maybe_unused]] std::size_t device_pitch_bytes /*stride in bytes to next contiguous chunk on device*/,
                               const void* host_ptr,
-                              std::size_t host_pitch_bytes /*stride in bytes to next contiguous chunk on host*/,
-                              std::size_t width_bytes /*bytes of contiguous chunk*/,
-                              std::size_t height_count /*count of contiguous chunks*/) {
+                              [[maybe_unused]] std::size_t host_pitch_bytes /*stride in bytes to next contiguous chunk on host*/,
+                              [[maybe_unused]] std::size_t width_bytes /*bytes of contiguous chunk*/,
+                              [[maybe_unused]] std::size_t height_count /*count of contiguous chunks*/) {
     if (device_ptr == host_ptr) {
         if (LOG) {
             std::cout << "               > hicMemcpyHostToDevice2D(host_ptr, device_ptr) --> SKIP because same pointers"
@@ -138,11 +138,12 @@ void memcpy_host_to_device_2D(void* device_ptr,
 }
 
 void memcpy_host_to_device_2D(void* device_ptr,
-                              std::size_t device_pitch_bytes /*stride in bytes to next contiguous chunk on device*/,
+                              [[maybe_unused]] std::size_t device_pitch_bytes /*stride in bytes to next contiguous chunk on device*/,
                               const void* host_ptr,
-                              std::size_t host_pitch_bytes /*stride in bytes to next contiguous chunk on host*/,
-                              std::size_t width_bytes /*bytes of contiguous chunk*/,
-                              std::size_t height_count /*count of contiguous chunks*/, const stream& s) {
+                              [[maybe_unused]] std::size_t host_pitch_bytes /*stride in bytes to next contiguous chunk on host*/,
+                              [[maybe_unused]] std::size_t width_bytes /*bytes of contiguous chunk*/,
+                              [[maybe_unused]] std::size_t height_count /*count of contiguous chunks*/,
+                              [[maybe_unused]] const stream& s) {
     if (device_ptr == host_ptr) {
         if (LOG) {
             std::cout
@@ -164,11 +165,11 @@ void memcpy_host_to_device_2D(void* device_ptr,
 }
 
 void memcpy_device_to_host_2D(void* host_ptr,
-                              std::size_t host_pitch_bytes /*stride in bytes to next contiguous chunk on host*/,
+                              [[maybe_unused]] std::size_t host_pitch_bytes /*stride in bytes to next contiguous chunk on host*/,
                               const void* device_ptr,
-                              std::size_t device_pitch_bytes /*stride in bytes to next contiguous chunk on device*/,
-                              std::size_t width_bytes /*bytes of contiguous chunk*/,
-                              std::size_t height_count /*count of contiguous chunks*/) {
+                              [[maybe_unused]] std::size_t device_pitch_bytes /*stride in bytes to next contiguous chunk on device*/,
+                              [[maybe_unused]] std::size_t width_bytes /*bytes of contiguous chunk*/,
+                              [[maybe_unused]] std::size_t height_count /*count of contiguous chunks*/) {
     if (device_ptr == host_ptr) {
         if (LOG) {
             std::cout << "               < hicMemcpyDeviceToHost2D(host_ptr, device_ptr) --> SKIP because same pointers"
@@ -190,11 +191,12 @@ void memcpy_device_to_host_2D(void* host_ptr,
     }
 }
 void memcpy_device_to_host_2D(void* host_ptr,
-                              std::size_t host_pitch_bytes /*stride in bytes to next contiguous chunk on host*/,
+                              [[maybe_unused]] std::size_t host_pitch_bytes /*stride in bytes to next contiguous chunk on host*/,
                               const void* device_ptr,
-                              std::size_t device_pitch_bytes /*stride in bytes to next contiguous chunk on device*/,
-                              std::size_t width_bytes /*bytes of contiguous chunk*/,
-                              std::size_t height_count /*count of contiguous chunks*/, const stream& s) {
+                              [[maybe_unused]] std::size_t device_pitch_bytes /*stride in bytes to next contiguous chunk on device*/,
+                              [[maybe_unused]] std::size_t width_bytes /*bytes of contiguous chunk*/,
+                              [[maybe_unused]] std::size_t height_count /*count of contiguous chunks*/,
+                              [[maybe_unused]] const stream& s) {
     if (device_ptr == host_ptr) {
         if (LOG) {
             std::cout

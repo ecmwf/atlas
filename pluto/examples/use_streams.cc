@@ -139,7 +139,7 @@ void plus_one_on_device(T* d, int n, const pluto::stream& stream) {
 }
 #else
 template <typename T>
-void plus_one_on_device(T* d, int n, const pluto::stream& stream) {
+void plus_one_on_device(T* d, int n, const pluto::stream&) {
     for (int i = 0; i < n; ++i) {
         d[i] += 1.;
     }
@@ -192,7 +192,7 @@ int main(int argc, char* argv[]) {
             auto* h2 = array_h2.data() + stream_offset;
             auto* d1 = array_d1.data() + stream_offset;
 
-            auto* dtmp = stream_tmp.data();
+            [[maybe_unused]] auto* dtmp = stream_tmp.data();
 
             h1[stream_size - 1] = 1.;
             h2[stream_size - 1] = -1.;

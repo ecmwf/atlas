@@ -44,7 +44,7 @@ void stream::wait() const {
 
 #else
 stream::stream(stream_t stream):
-    stream_{&stream, [](stream_t* stream) {
+    stream_{&stream, [](stream_t*) {
                 // wrapping, no delete
             }} {}
 

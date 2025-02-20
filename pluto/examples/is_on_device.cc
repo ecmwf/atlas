@@ -26,7 +26,7 @@ void print_on_device() {
     print();
 }
 
-int main(int argc, char* argv[]) {
+int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     print_on_host();
     if (pluto::devices() == 0) {
         std::cout << "No devices present" << std::endl;

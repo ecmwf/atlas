@@ -34,7 +34,55 @@ inline constexpr bool yakl_mainproc() {
 
 #define __YAKL_NAMESPACE_WRAPPER_BEGIN__ namespace pluto {
 #define __YAKL_NAMESPACE_WRAPPER_END__ }
+
+#if defined(__NVCOMPILER)
+#    define PLUTO_SUPPRESS_WARNINGS_PUSH                 _Pragma( "diag push" )
+#    define PLUTO_SUPPRESS_WARNINGS_POP                  _Pragma( "diag pop" )
+#    define PLUTO_SUPPRESS_WARNINGS_INTEGER_SIGN_CHANGE  _Pragma( "diag_suppress integer_sign_change" )
+#    define PLUTO_SUPPRESS_WARNINGS_CODE_IS_UNREACHABLE  _Pragma( "diag_suppress code_is_unreachable" )
+#elif defined(__INTEL_COMPILER)
+#    define PLUTO_SUPPRESS_WARNINGS_PUSH                 _Pragma( "warning push" )
+#    define PLUTO_SUPPRESS_WARNINGS_POP                  _Pragma( "warning pop" )
+#    define PLUTO_SUPPRESS_WARNINGS_INTEGER_SIGN_CHANGE  _Pragma( "warning disable 68" )
+#elif defined(__GNUC__)
+#    define PLUTO_SUPPRESS_WARNINGS_PUSH                 _Pragma( "GCC diagnostic push" ) \
+                                                         _Pragma( "GCC diagnostic ignored \"-Wpragmas\"" ) \
+                                                         _Pragma( "GCC diagnostic ignored \"-Wunknown-warning-option\"" )
+#    define PLUTO_SUPPRESS_WARNINGS_POP                  _Pragma( "GCC diagnostic pop" )
+#    define PLUTO_SUPPRESS_WARNINGS_TEMPLATE_ID_CDTOR    _Pragma( "GCC diagnostic ignored \"-Wtemplate-id-cdtor\"" )
+#    define PLUTO_SUPPRESS_WARNINGS_UNUSED_PARAMETER     _Pragma( "GCC diagnostic ignored \"-Wunused-parameter\"" )
+#    define PLUTO_SUPPRESS_WARNINGS_SIGN_COMPARE         _Pragma( "GCC diagnostic ignored \"-Wsign-compare\"" )
+#endif
+
+
+#if !defined(PLUTO_SUPPRESS_WARNINGS_PUSH)
+#    define PLUTO_SUPPRESS_WARNINGS_PUSH
+#endif
+#if !defined(PLUTO_SUPPRESS_WARNINGS_POP)
+#    define PLUTO_SUPPRESS_WARNINGS_POP
+#endif
+#if !defined(PLUTO_SUPPRESS_WARNINGS_INTEGER_SIGN_CHANGE)
+#    define PLUTO_SUPPRESS_WARNINGS_INTEGER_SIGN_CHANGE
+#endif
+#if !defined(PLUTO_SUPPRESS_WARNINGS_CODE_IS_UNREACHABLE)
+#    define PLUTO_SUPPRESS_WARNINGS_CODE_IS_UNREACHABLE
+#endif
+#if !defined(PLUTO_SUPPRESS_WARNINGS_TEMPLATE_ID_CDTOR)
+#    define PLUTO_SUPPRESS_WARNINGS_TEMPLATE_ID_CDTOR
+#endif
+#if !defined(PLUTO_SUPPRESS_WARNINGS_UNUSED_PARAMETER)
+#    define PLUTO_SUPPRESS_WARNINGS_UNUSED_PARAMETER
+#endif
+#if !defined(PLUTO_SUPPRESS_WARNINGS_SIGN_COMPARE)
+#    define PLUTO_SUPPRESS_WARNINGS_SIGN_COMPARE
+#endif
+
+
+PLUTO_SUPPRESS_WARNINGS_PUSH
+PLUTO_SUPPRESS_WARNINGS_UNUSED_PARAMETER
+PLUTO_SUPPRESS_WARNINGS_SIGN_COMPARE
 #include "pluto/memory_resource/detail/yakl/YAKL_Gator.h"
+PLUTO_SUPPRESS_WARNINGS_POP
 
 // ------------------------------------------------------------------------------------
 
@@ -95,7 +143,7 @@ protected:
     void init(const GatorOptions& options) {
         gator_allocate_   = [this](std::size_t bytes) { return upstream_->allocate(bytes, alignment_); };
         gator_deallocate_ = [this](void* ptr) { return upstream_->deallocate(ptr, bytes_, alignment_); };
-        gator_zero_       = [](void* ptr, std::size_t bytes) {};
+        gator_zero_       = [](void* /*ptr*/, std::size_t /*bytes*/) {};
 
         // Allocation alignment is guaranteed when alignment_ is Gator's blockSize
         constexpr std::size_t Gb = 1024 * 1024 * 1024;
@@ -115,7 +163,7 @@ protected:
         return gator().allocate(bytes);
     }
 
-    void do_deallocate(void* ptr, std::size_t bytes, std::size_t alignment) override {
+    void do_deallocate(void* ptr, std::size_t bytes, std::size_t /*alignment*/) override {
         bytes_ = bytes;
         gator().free(ptr);
     }

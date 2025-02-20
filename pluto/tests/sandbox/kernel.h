@@ -145,7 +145,7 @@ void launch_kernel(F f) {
 }
 
 template <typename F>
-void launch_kernel(const pluto::stream& stream, std::size_t size, F f) {
+void launch_kernel(const pluto::stream&, std::size_t size, F f) {
     printf("launch on host \n");
     for (size_t idx = 0; idx < size; ++idx) {
         f(idx);
@@ -153,7 +153,7 @@ void launch_kernel(const pluto::stream& stream, std::size_t size, F f) {
 }
 
 template <typename F>
-void launch_kernel(const pluto::stream& stream, F f) {
+void launch_kernel(const pluto::stream&, F f) {
     printf("launch on host \n");
     f();
 }

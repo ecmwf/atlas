@@ -107,7 +107,7 @@ void MemoryPoolResource::do_deallocate(void* ptr, std::size_t bytes, std::size_t
         pools_[0]->deallocate(ptr, bytes, alignment);
     }
     else {
-        for (int i = 0; i < pool_block_sizes_.size(); ++i) {
+        for (std::size_t i = 0; i < pool_block_sizes_.size(); ++i) {
             if (pools_[i]) {
                 auto& gator = to_gator_resource(pools_[i].get())->gator();
                 if (gator.thisIsMyPointer(ptr)) {
@@ -241,7 +241,7 @@ std::size_t MemoryPoolResource::capacity() const {
 void MemoryPoolResource::release() {
     std::lock_guard lock(mtx_);
 #if PLUTO_DEBUGGING
-    for (int i = 0; i < pool_block_sizes_.size(); ++i) {
+    for (std::size_t i = 0; i < pool_block_sizes_.size(); ++i) {
         if (pools_[i]) {
             auto& gator = to_gator_resource(pools_[i].get())->gator();
             // Cleanup empty gator when a larger gator exists

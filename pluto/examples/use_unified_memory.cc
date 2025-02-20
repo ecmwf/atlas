@@ -63,7 +63,7 @@ void print_array(std::string_view symbol, T* d, int n) {
         std::cout << d[i] << " ";
     }
     std::cout << "... ";
-    for (std::size_t i = n - 2; i < n; ++i) {
+    for (int i = n - 2; i < n; ++i) {
         std::cout << d[i] << " ";
     }
     std::cout << '\n' << std::endl;
@@ -137,7 +137,7 @@ enum class Memory
     Pinned
 };
 
-int main(int argc, char* argv[]) {
+int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     // Choose data type
     using value_type = float;
 

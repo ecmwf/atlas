@@ -42,13 +42,13 @@ public:
         return &instance;
     }
 protected:
-    virtual void* do_allocate(std::size_t bytes, std::size_t alignment) {
+    virtual void* do_allocate(std::size_t bytes, std::size_t /*alignment*/) {
         return ::malloc(bytes);
     }
-    virtual void do_deallocate(void* ptr, std::size_t bytes, std::size_t alignment) {
+    virtual void do_deallocate(void* ptr, std::size_t /*bytes*/, std::size_t /*alignment*/) {
         ::free(ptr);
     }
-    virtual bool do_is_equal(const memory_resource& other) const noexcept {return true;}
+    virtual bool do_is_equal(const memory_resource& /*other*/) const noexcept {return true;}
 };
 
 class null_memory_resource_t : public memory_resource {
@@ -59,11 +59,11 @@ public:
         return &instance;
     }
 protected:
-    virtual void* do_allocate(std::size_t bytes, std::size_t alignment) {
+    virtual void* do_allocate(std::size_t /*bytes*/, std::size_t /*alignment*/) {
         throw std::bad_alloc();
     }
-    virtual void do_deallocate(void* ptr, std::size_t bytes, std::size_t alignment) {}
-    virtual bool do_is_equal(const memory_resource& other) const noexcept {return true;}
+    virtual void do_deallocate(void* /*ptr*/, std::size_t /*bytes*/, std::size_t /*alignment*/) {}
+    virtual bool do_is_equal(const memory_resource& /*other*/) const noexcept {return true;}
 };
 
 
