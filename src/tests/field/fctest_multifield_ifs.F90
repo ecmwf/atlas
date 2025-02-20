@@ -115,10 +115,10 @@ TEST( test_multifield_array_direct_constructor )
     implicit none
 
     type(atlas_MultiField)  :: mfield(2)
-    type(atlas_FieldSet)    :: fieldset(2), fset
+    type(atlas_FieldSet)    :: fieldset(3)
     type(atlas_Field)       :: field
     type(atlas_config)      :: config
-    real(c_float), pointer  :: fdata_f2d(:,:), fdata_f3d(:,:,:)
+    real(c_float), pointer  :: fdata_f2d(:,:)
     real(c_double), pointer :: fdata_d3d(:,:,:)
 
     integer, parameter :: nproma  = 16;
@@ -126,29 +126,36 @@ TEST( test_multifield_array_direct_constructor )
     integer, parameter :: ngptot  = 2000;
     integer, parameter :: nblk    = (ngptot + nproma - 1) / nproma
     integer :: i
-    character(len=64), parameter, dimension(5) :: var_names = [ character(64) :: &
-        "temperature ", "pressure", "density", "clv", "wind_u" ]
+    character(len=64), parameter, dimension(3) :: var_names_sp = [ character(64) :: &
+        "temperature ", "pressure", "density" ]
+    character(len=64), parameter, dimension(2) :: var_names_dp = [ character(64) :: &
+        "clv", "wind_u" ]
 
-return
+    mfield(1) = atlas_MultiField(atlas_real(c_float), [nproma, -1, nblk], var_names_sp)
+    mfield(2) = atlas_MultiField(atlas_real(c_double), [nproma, nlev, -1, nblk], var_names_dp)
 
-    ! surface fields
-    mfield(1) = atlas_MultiField(atlas_real(c_float), [nproma, -1, nblk], var_names)
-
-    ! 3d fields
-    mfield(2) = atlas_MultiField(atlas_real(c_double), [nproma, nlev, -1, nblk], var_names)
-
-    FCTEST_CHECK_EQUAL(mfield(1)%size(), 5)
+    FCTEST_CHECK_EQUAL(mfield(1)%size(), 3)
+    FCTEST_CHECK_EQUAL(mfield(2)%size(), 2)
 
     fieldset(1) = mfield(1)%fieldset()
-    call fieldset(1)%data("density", fdata_f2d)
-    fdata_f2d(1,1) = 3.
-    fieldset(2) = mfield(2)%fieldset()
-    call fieldset(2)%data("density", fdata_d3d)
-    fdata_d3d(1,1,1) = 4.
+    FCTEST_CHECK_EQUAL(fieldset(1)%size(), 3)
 
-    fset = atlas_FieldSet()
-    call fset%add(mfield(1)%fieldset())
-    call fset%add(mfield(2)%fieldset())
+    call fieldset(1)%data("density", fdata_f2d)
+    fdata_f2d(1,1) = 3._c_float
+
+    fieldset(2) = atlas_FieldSet()
+    call fieldset(2)%add(mfield(2)%fieldset())
+    call fieldset(2)%data("wind_u", fdata_d3d)
+    fdata_d3d(1,1,1) = 4._c_double
+
+    fieldset(3) = atlas_FieldSet()
+    call fieldset(3)%add(mfield(1)%fieldset())
+    call fieldset(3)%add(mfield(2)%fieldset())
+
+    call fieldset(3)%data("density", fdata_f2d)
+    call fieldset(3)%data("wind_u", fdata_d3d)
+    FCTEST_CHECK_EQUAL(fdata_f2d(1,1), 3._c_float)
+    FCTEST_CHECK_EQUAL(fdata_d3d(1,1,1), 4._c_double)
 
 END_TEST
 
