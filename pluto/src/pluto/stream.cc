@@ -18,8 +18,10 @@
 
 namespace pluto {
 
+static void* stream0_underlying_ = nullptr;
+
 #if PLUTO_HAVE_HIC
-stream::stream(stream_t s):
+stream::stream(stream_t& s):
     stream_{&s, [](stream_t*) {
                 // wrapping, no delete
             }} {}
@@ -43,26 +45,19 @@ void stream::wait() const {
 }
 
 #else
-stream::stream(stream_t stream):
+stream::stream(stream_t& stream):
     stream_{&stream, [](stream_t*) {
                 // wrapping, no delete
             }} {}
 
-stream::stream():
-    stream_{[]() {
-                static int s = 0;
-                return reinterpret_cast<stream_t*>(&s);
-            }(),
-            [](stream_t*) {
-                // No deletion of wrapped static variable
-            }} {}
+stream::stream(): stream(stream0_underlying_) {}
 
 void stream::wait() const {
     // Nothing
 }
 #endif
 
-static stream stream0_{nullptr};
+static stream stream0_{stream0_underlying_};
 
 static const stream* default_stream_ = &stream0_;
 

@@ -19,7 +19,7 @@ class stream {
     using stream_t = void*;
 
 public:
-    explicit stream(stream_t);
+    explicit stream(stream_t&);
     stream();
 
     [[nodiscard]] stream_t value() const { return *stream_; }
