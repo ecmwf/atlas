@@ -32,11 +32,11 @@ Stream::Stream()
     :stream_{
         []() {
             hicStream_t* stream = new hicStream_t;
-            hicStreamCreate(stream);
+            HIC_CALL(hicStreamCreate(stream));
             return reinterpret_cast<stream_t*>(stream);
         }(),
         [](stream_t* stream) {
-            hicStreamDestroy(*reinterpret_cast<hicStream_t*>(stream));
+            HIC_CALL(hicStreamDestroy(*reinterpret_cast<hicStream_t*>(stream)));
             delete stream;
         }
     } {
@@ -46,7 +46,7 @@ void Stream::wait() const {
     if constexpr(LOG) {
         std::cout << "               = hicStreamSynchronize(stream:"<<value()<<")" << std::endl;
     }
-    hicStreamSynchronize(value<hicStream_t>());
+    HIC_CALL(hicStreamSynchronize(value<hicStream_t>()));
 }
 
 #else
