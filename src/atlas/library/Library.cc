@@ -406,9 +406,6 @@ void Library::finalise() {
                     << std::setw(20) << to_bytes_string(Memory::device().allocated())
                     << std::endl;
 
-        auto capacity_bytes_str = [to_bytes_string](pluto::memory_pool_resource* mr) {
-            return to_bytes_string(mr->capacity());
-        };
         Log::info() << "\n" << std::setw(40) << std::left << "    Memory pools"
                     << std::setw(30) << "Size"
                     << std::setw(20) << "Capacity"
