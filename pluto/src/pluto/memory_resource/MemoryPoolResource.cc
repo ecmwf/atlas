@@ -14,6 +14,7 @@
 #include "detail/GatorMemoryResource.h"
 #include "pluto/trace.h"
 
+#include <algorithm>
 #include <cctype>
 #include <cstdlib>
 #include <map>
