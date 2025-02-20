@@ -242,8 +242,8 @@ template <typename Value>
 class WrappedDataStore : public ArrayDataStore {
 public:
     WrappedDataStore(Value* host_data, const ArraySpec& spec):
-        size_(spec.size()),
         host_data_(host_data),
+        size_(spec.size()),
         device_memory_resource_(memory::device::traced_resource()),
         device_allocator_{device_memory_resource_.get()}
     {
@@ -425,8 +425,8 @@ public:
     }
 
 private:
-    size_t size_;
     Value* host_data_;
+    size_t size_;
 
     std::unique_ptr<pluto::memory_resource> device_memory_resource_;
     mutable pluto::allocator<Value> device_allocator_;
