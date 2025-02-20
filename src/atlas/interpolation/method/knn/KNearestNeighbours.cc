@@ -67,7 +67,9 @@ void KNearestNeighbours::do_setup(const FunctionSpace& source, const FunctionSpa
         setMatrix(cache);
         source_ = source;
         target_ = target;
-        buildPointSearchTree(source);
+    }
+    else {
+        do_setup(source, target);
     }
 }
 

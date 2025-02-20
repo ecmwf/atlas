@@ -91,11 +91,7 @@ void UnstructuredBilinearLonLat::do_setup(const FunctionSpace& source, const Fun
         ATLAS_ASSERT(matrix().cols() == source.size());
         return;
     }
-    if (functionspace::NodeColumns(source) && functionspace::PointCloud(target)) {
-        do_setup(source, target);
-        return;
-    }
-    ATLAS_NOTIMPLEMENTED;
+    do_setup(source, target);
 }
 
 void UnstructuredBilinearLonLat::do_setup(const FunctionSpace& source, const FunctionSpace& target) {

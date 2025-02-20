@@ -43,7 +43,9 @@ void NearestNeighbour::do_setup(const FunctionSpace& source, const FunctionSpace
         setMatrix(cache);
         source_ = source;
         target_ = target;
-        buildPointSearchTree(source);
+    }
+    else {
+        do_setup(source, target);
     }
 }
 

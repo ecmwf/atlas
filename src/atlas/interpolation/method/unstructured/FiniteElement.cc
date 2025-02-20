@@ -92,11 +92,7 @@ void FiniteElement::do_setup(const FunctionSpace& source, const FunctionSpace& t
         ATLAS_ASSERT(matrix().cols() == source.size());
         return;
     }
-    if (functionspace::NodeColumns(source) && functionspace::PointCloud(target)) {
-        do_setup(source, target);
-        return;
-    }
-    ATLAS_NOTIMPLEMENTED;
+    do_setup(source, target);
 }
 
 void FiniteElement::do_setup(const FunctionSpace& source, const FunctionSpace& target) {

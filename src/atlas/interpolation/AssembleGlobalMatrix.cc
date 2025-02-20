@@ -18,7 +18,6 @@
 #include "atlas/array.h"
 #include "atlas/linalg/sparse/SparseMatrixToTriplets.h"
 #include "atlas/functionspace/StructuredColumns.h"
-#include "atlas/interpolation/Cache.h"
 
 namespace atlas::interpolation {
 
