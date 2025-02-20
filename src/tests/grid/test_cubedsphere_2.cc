@@ -24,8 +24,10 @@ bool compare_2D_points(std::vector<point2_derived> a, std::vector<Point2> b, boo
     for (int i = 0; i < b.size(); ++i) {
         for (int j = 0; j < 2; ++j) {
             if (std::abs(b[i][j] - a[i][j]) > tolerance) {
-                if (print_diff) std::cout << "[" << i << ", " << j << "]\n\t" << a[i][j] << " != " << b[i][j]
-                    << "\n\tdiff = " << b[i][j] - a[i][j] << std::endl;
+                if (print_diff) {
+                   std::cout << "[" << i << ", " << j << "]\n\t" << a[i][j] << " != " << b[i][j]
+                             << "\n\tdiff = " << b[i][j] - a[i][j] << std::endl;
+                }
                 equal = false;
             }
         }
