@@ -98,20 +98,22 @@ CASE("test_fieldset_acc") {
     fieldset.add(mfield);
     fieldset.add(Field("mask", make_datatype<int>(), array::make_shape(10)));
 
-    for (auto f : fieldset) {
-        f.allocateDevice();
-    }
+    fieldset.allocateDevice({"temperature"});
 
-    auto field = fieldset.field(1);
+    auto field = fieldset.field(0);
     auto view = array::make_view<double, 2>(field);
     view(3,2) = 1.;
 
-    field.updateDevice();
-    auto dview = array::make_device_view<double, 2>(field);
+    // test on-demand allocating every field
+    fieldset.allocateDevice();
+
+    // update only temperature on the device
+    fieldset.updateDevice({0});
 
 #if ! ATLAS_HAVE_GRIDTOOLS_STORAGE
 // TODO: gridtools storage does not implement view.index(...) at the moment
 
+    auto dview = array::make_device_view<double, 2>(field);
     double* dptr = dview.data();
 #pragma acc parallel deviceptr(dptr)
     {
@@ -119,7 +121,6 @@ CASE("test_fieldset_acc") {
         dptr[dview.index(3,2)] = 1. + t;
     }
     field.updateHost();
-
     EXPECT_EQ( view(3,2), 2. );
 
 #endif
