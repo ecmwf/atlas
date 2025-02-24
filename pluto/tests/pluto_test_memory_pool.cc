@@ -25,14 +25,12 @@ public:
     vector(std::string_view name, std::size_t n, const pluto::allocator<std::byte>& alloc):
         name_(name), size_{n}, alloc_{alloc} {
         if (size_) {
-            std::cout << "  allocate " << name_ << " : " << size_ << " bytes" << std::endl;
-            data_ = alloc_.allocate(size_);
+            data_ = alloc_.allocate(name_, size_);
         }
     }
     ~vector() {
         if (size_) {
-            std::cout << "  deallocate " << name_ << " : " << size_ << " bytes" << std::endl;
-            alloc_.deallocate(data_, size_);
+            alloc_.deallocate(name_, data_, size_);
         }
     }
     std::byte* data_  = nullptr;
@@ -50,7 +48,10 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     // Uncomment to immediately reserve large chunk of memory
     //   pluto::pool_resource()->reserve(2*gb);
 
-    pluto::allocator<std::byte> allocator(pluto::pool_resource());
+    auto memory_pool = pluto::TraceMemoryResource(pluto::pool_resource());
+    pluto::set_default_resource(&memory_pool);
+
+    pluto::allocator<std::byte> allocator;
 
     for (int iter = 0; iter < 2; ++iter) {
         vector array1("array1", 200 * mb, allocator);
