@@ -26,6 +26,15 @@
 namespace atlas {
 
 static bool unified_ = false;
+static std::string label_;
+
+std::string_view memory::label::get() {
+    return label_;
+}
+
+void memory::label::set(std::string_view s) {
+    label_ = std::string{s};
+}
 
 struct MemoryScope {
     MemoryScope() {
@@ -112,25 +121,23 @@ Memory::Memory(std::string_view name) :
     name_(name) {
 }
 
-Memory& Memory::operator+=(size_t bytes) {
+void Memory::increase(size_t bytes, std::string_view label) {
     ++allocations_;
     bytes_ += bytes;
     update_maximum();
     update_largest(bytes);
     if (atlas::Library::instance().traceMemory()) {
         Log::trace() << "Memory ("<<std::setw(6) << name_<<"): " << eckit::Bytes(double(bytes_)) << "\t( +" << eckit::Bytes(double(bytes))
-                        << " \t| high watermark " << eckit::Bytes(double(high_)) << "\t)" << std::endl;
+                        << " \t| high watermark " << eckit::Bytes(double(high_)) << "\t| label \"" << (label.empty() ? "unknown" : label ) << "\")" << std::endl;
     }
-    return *this;
 }
 
-Memory& Memory::operator-=(size_t bytes) {
+void Memory::decrease(size_t bytes, std::string_view label) {
     bytes_ -= bytes;
     if (atlas::Library::instance().traceMemory()) {
         Log::trace() << "Memory ("<< std::setw(6) << name_<<"): " << eckit::Bytes(double(bytes_)) << "\t( -" << eckit::Bytes(double(bytes))
-                        << " \t| high watermark " << eckit::Bytes(double(high_)) << "\t)" << std::endl;
+                        << " \t| high watermark " << eckit::Bytes(double(high_)) << "\t| label \"" << (label.empty() ? "unknown" : label ) << "\")" << std::endl;
     }
-    return *this;
 }
 
 void Memory::update_maximum() noexcept {
@@ -158,7 +165,7 @@ protected:
 
     void do_deallocate(void* p, std::size_t bytes, std::size_t alignment) override;
  
-    bool do_is_equal(const pluto::memory_resource& other) const noexcept override;
+    bool do_is_equal(const memory_resource& other) const noexcept override;
 
 private:
     std::string name_;
@@ -177,7 +184,7 @@ protected:
 
     void do_deallocate(void* p, std::size_t bytes, std::size_t alignment) override;
  
-    bool do_is_equal(const pluto::memory_resource& other) const noexcept override;
+    bool do_is_equal(const memory_resource& other) const noexcept override;
 
 private:
     std::string name_;
@@ -192,16 +199,18 @@ TraceHostMemoryResource::TraceHostMemoryResource(std::string_view name, pluto::m
 }
 
 void* TraceHostMemoryResource::do_allocate(std::size_t bytes, std::size_t alignment) {
-    Memory::host() += bytes;
+    auto label = pluto::get_label();
+    Memory::host().increase(bytes, label);
     return mr_->allocate(bytes, alignment);
 }
 
 void TraceHostMemoryResource::do_deallocate(void* p, std::size_t bytes, std::size_t alignment) {
-    Memory::host() -= bytes;
+    auto label = pluto::get_label();
+    Memory::host().decrease(bytes, label);
     mr_->deallocate(p, bytes, alignment);
 }
 
-bool TraceHostMemoryResource::do_is_equal(const pluto::memory_resource& other) const noexcept {
+bool TraceHostMemoryResource::do_is_equal(const memory_resource& other) const noexcept {
     return mr_->is_equal(other);
 }
 
@@ -213,16 +222,18 @@ TraceDeviceMemoryResource::TraceDeviceMemoryResource(std::string_view name, plut
 }
 
 void* TraceDeviceMemoryResource::do_allocate(std::size_t bytes, std::size_t alignment) {
-    Memory::device() += bytes;
+    auto label = pluto::get_label();
+    Memory::device().increase(bytes, label);
     return mr_->allocate(bytes, alignment);
 }
 
 void TraceDeviceMemoryResource::do_deallocate(void* p, std::size_t bytes, std::size_t alignment) {
-    Memory::device() -= bytes;
+    auto label = pluto::get_label();
+    Memory::device().decrease(bytes, label);
     mr_->deallocate(p, bytes, alignment);
 }
 
-bool TraceDeviceMemoryResource::do_is_equal(const pluto::memory_resource& other) const noexcept {
+bool TraceDeviceMemoryResource::do_is_equal(const memory_resource& other) const noexcept {
     return mr_->is_equal(other);
 }
 
@@ -231,17 +242,19 @@ bool TraceDeviceMemoryResource::do_is_equal(const pluto::memory_resource& other)
 std::unique_ptr<pluto::memory_resource> memory::host::traced_resource(pluto::memory_resource* upstream) {
     if (not upstream) {
         upstream = pluto::host::get_default_resource();
-    } 
-    return std::make_unique<pluto::TraceMemoryResource>("host_memory", 
-        std::make_unique<TraceHostMemoryResource>("host_memory", upstream));
+    }
+    std::string name{pluto::get_registered_name(upstream)};
+    return std::make_unique<pluto::TraceMemoryResource>("host   | " + name,
+        std::make_unique<TraceHostMemoryResource>("host_memory   | " + name, upstream));
 }
 
 std::unique_ptr<pluto::memory_resource> memory::device::traced_resource(pluto::memory_resource* upstream) {
     if (not upstream) {
         upstream = pluto::device::get_default_resource();
-    } 
-    return std::make_unique<pluto::TraceMemoryResource>("device_memory", 
-        std::make_unique<TraceDeviceMemoryResource>("device_memory", upstream));
+    }
+    std::string name{pluto::get_registered_name(upstream)};
+    return std::make_unique<pluto::TraceMemoryResource>("device | " + name,
+        std::make_unique<TraceDeviceMemoryResource>("device_memory | " + name, upstream));
 }
 
 // --------------------------------------------------------------------------------------------------------

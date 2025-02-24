@@ -19,6 +19,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <map>
 
 namespace pluto::yakl {
 template <typename T1, typename T2>
@@ -126,7 +127,6 @@ public:
 
     ~GatorMemoryResource() {
         if (gator_) {
-            bytes_ = std::numeric_limits<std::size_t>::max();
             gator_->finalize();
         }
     }
@@ -141,8 +141,15 @@ public:
 
 protected:
     void init(const GatorOptions& options) {
-        gator_allocate_   = [this](std::size_t bytes) { return upstream_->allocate(bytes, alignment_); };
-        gator_deallocate_ = [this](void* ptr) { return upstream_->deallocate(ptr, bytes_, alignment_); };
+        gator_allocate_   = [this](std::size_t bytes) {
+            scoped_label label("pool_chunk");
+            void* ptr = upstream_->allocate(bytes, alignment_);
+            pool_chunk_bytes_[ptr] = bytes;
+            return ptr;
+        };
+        gator_deallocate_ = [this](void* ptr) {
+            scoped_label label("pool_chunk");
+            return upstream_->deallocate(ptr, pool_chunk_bytes_[ptr], alignment_); };
         gator_zero_       = [](void* /*ptr*/, std::size_t /*bytes*/) {};
 
         // Allocation alignment is guaranteed when alignment_ is Gator's blockSize
@@ -163,12 +170,11 @@ protected:
         return gator().allocate(bytes);
     }
 
-    void do_deallocate(void* ptr, std::size_t bytes, std::size_t /*alignment*/) override {
-        bytes_ = bytes;
+    void do_deallocate(void* ptr, std::size_t /*bytes*/, std::size_t /*alignment*/) override {
         gator().free(ptr);
     }
 
-    bool do_is_equal(const memory_resource& other) const noexcept override {
+    bool do_is_equal(const memory_resource_base& other) const noexcept override {
         if (this == &other) {
             return true;
         }
@@ -178,8 +184,8 @@ protected:
 private:
     std::unique_ptr<memory_resource> owned_upstream_;
     memory_resource* upstream_;
-    std::size_t bytes_;      // needs to be bound to allocate/deallocate
     std::size_t alignment_;  // needs to be bound to allocate/deallocate
+    std::map<void*,std::size_t> pool_chunk_bytes_; // needs to be bound to allocate/deallocate
     std::size_t initial_size_;
     std::size_t grow_size_;
     std::size_t block_size_;

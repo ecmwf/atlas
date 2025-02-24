@@ -18,6 +18,7 @@
 #include "atlas/field/detail/FieldImpl.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/runtime/Memory.h"
 
 #if ATLAS_HAVE_FUNCTIONSPACE
 #include "atlas/functionspace/FunctionSpace.h"
@@ -61,6 +62,7 @@ FieldImpl::FieldImpl(const std::string& name, array::DataType datatype, const ar
     :functionspace_(new FunctionSpace())
 #endif
 {
+    memory::label label(name);
     array_ = array::Array::create(datatype, shape);
     array_->attach();
     rename(name);
@@ -73,6 +75,7 @@ FieldImpl::FieldImpl(const std::string& name, array::DataType datatype, array::A
     :functionspace_(new FunctionSpace())
 #endif
 {
+    memory::label label(name);
     array_ = array::Array::create(datatype, std::move(spec));
     array_->attach();
     rename(name);

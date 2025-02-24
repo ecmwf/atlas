@@ -75,6 +75,17 @@ public:
         return do_clear();
     }
 
+    std::string_view name(void* mr) const {
+        std::lock_guard guard(mutex_);
+        std::string_view name;
+        for (auto& [key, val] : registered_) {
+            if (val == mr) {
+                name = key;
+                break;
+            }
+        }
+        return name;
+    }
 
 private:
     Registry() = default;

@@ -21,13 +21,37 @@ namespace pluto {
 
 class TraceMemoryResource : public async_memory_resource {
 public:
-    TraceMemoryResource(std::string_view name, memory_resource* mr): name_(name), mr_(mr) {}
+    TraceMemoryResource(std::string_view name, memory_resource* mr):
+        mr_(mr),
+        name_(name) {
+    }
 
-    TraceMemoryResource(std::string_view name): name_(name), mr_(get_default_resource()) {}
+    TraceMemoryResource(memory_resource* mr):
+        TraceMemoryResource(pluto::get_registered_name(mr), mr) {
+    }
+
+    TraceMemoryResource(std::string_view name):
+        TraceMemoryResource(name, get_default_resource()) {
+
+    }
+
+    TraceMemoryResource():
+        TraceMemoryResource(get_default_resource()) {
+    }
 
     // Take ownership of wrapped memory resource
     TraceMemoryResource(std::string_view name, std::unique_ptr<memory_resource>&& mr):
-        name_(name), owned_mr_(std::move(mr)), mr_(owned_mr_.get()) {}
+        owned_mr_(std::move(mr)),
+        mr_(owned_mr_.get()),
+        name_(name) {
+    }
+
+    // Take ownership of wrapped memory resource
+    TraceMemoryResource(std::unique_ptr<memory_resource>&& mr):
+        owned_mr_(std::move(mr)),
+        mr_(owned_mr_.get()),
+        name_(get_registered_name(mr_)) {
+    }
 
     memory_resource* upstream_resource() { return mr_; }
 
@@ -40,12 +64,12 @@ protected:
 
     void do_deallocate_async(void* p, std::size_t bytes, std::size_t alignment, const stream&) override;
 
-    bool do_is_equal(const memory_resource& other) const noexcept override { return mr_->is_equal(other); }
+    bool do_is_equal(const memory_resource_base& other) const noexcept override { return mr_->is_equal(other); }
 
 private:
-    std::string name_;
     std::unique_ptr<memory_resource> owned_mr_;
     memory_resource* mr_;
+    std::string name_;
     static int nest;
 };
 

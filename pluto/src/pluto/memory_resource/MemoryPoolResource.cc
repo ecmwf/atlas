@@ -74,6 +74,17 @@ void set_default_pool_options(pool_options options) {
     default_pool_options_setup_ = true;
 }
 
+
+// static GatorMemoryResource* to_gator_resource(memory_resource* pool) {
+//     memory_resource* upstream = pool;
+//     GatorMemoryResource* gator;
+//     do {
+//         gator = dynamic_cast<GatorMemoryResource*>(upstream);
+//         upstream = dynamic_cast<memory_resource*>(pool->properties.upstream_resource);
+//     } while(not gator);
+//     return gator;
+// }
+
 static GatorMemoryResource* to_gator_resource(memory_resource* pool) {
     GatorMemoryResource* gator;
     if (TraceMemoryResource* traced = dynamic_cast<TraceMemoryResource*>(pool)) {
@@ -82,8 +93,8 @@ static GatorMemoryResource* to_gator_resource(memory_resource* pool) {
     else {
         gator = dynamic_cast<GatorMemoryResource*>(pool);
     }
-    return gator;
-}
+     return gator;
+ }
 
 void* MemoryPoolResource::do_allocate(std::size_t bytes, std::size_t alignment) {
     std::lock_guard lock(mtx_);
@@ -132,6 +143,7 @@ void MemoryPoolResource::do_deallocate(void* ptr, std::size_t bytes, std::size_t
 
 struct AsyncAllocData {
     MemoryPoolResource* resource;
+    std::string label;
     void* ptr;
     std::size_t bytes;
     std::size_t alignment;
@@ -142,7 +154,14 @@ std::map<void*, std::queue<AsyncAllocData>> stream_callback_queue_;
 void callback_deallocate_async(void* stream) {
     auto& stream_queue        = stream_callback_queue_[stream];
     const AsyncAllocData& ctx = stream_queue.front();
-    ctx.resource->do_deallocate(ctx.ptr, ctx.bytes, ctx.alignment);
+    if (ctx.label.size()) {
+        scoped_label label(ctx.label);
+        ctx.resource->deallocate(ctx.ptr, ctx.bytes, ctx.alignment);
+    }
+    else {
+        ctx.resource->deallocate(ctx.ptr, ctx.bytes, ctx.alignment);
+    }
+
     stream_queue.pop();
 }
 
@@ -153,7 +172,7 @@ void MemoryPoolResource::do_deallocate_async(void* ptr, std::size_t bytes, std::
     // TODO: implement using
     //    __host__ ​cudaError_t cudaLaunchHostFunc ( cudaStream_t stream, cudaHostFn_t fn, void* userData )
     auto& stream_queue = stream_callback_queue_[s.value()];
-    stream_queue.emplace(AsyncAllocData{this, ptr, bytes, alignment});
+    stream_queue.emplace(AsyncAllocData{this, std::string{get_label()}, ptr, bytes, alignment});
     HIC_CALL(hicLaunchHostFunc(s.value<hicStream_t>(), callback_deallocate_async, s.value()));
 }
 
@@ -162,7 +181,7 @@ void MemoryPoolResource::reserve(std::size_t bytes) {
     deallocate(allocate(bytes), bytes);
 }
 
-bool MemoryPoolResource::do_is_equal(const memory_resource& other) const noexcept {
+bool MemoryPoolResource::do_is_equal(const memory_resource_base& other) const noexcept {
     if (this == &other) {
         return true;
     }
@@ -201,7 +220,8 @@ memory_resource* MemoryPoolResource::resource(std::size_t bytes) {
         if (trace_enabled()) {
             pools_[pool_index] =
                 std::make_unique<TraceMemoryResource>("gator[" + bytes_to_string(pool_block_size_) + "]",
-                                                      std::make_unique<GatorMemoryResource>(options, upstream_));
+                                                      std::make_unique<GatorMemoryResource>(options,
+                                                      std::make_unique<TraceMemoryResource>(upstream_)));
         }
         else {
             pools_[pool_index] = std::make_unique<GatorMemoryResource>(options, upstream_);

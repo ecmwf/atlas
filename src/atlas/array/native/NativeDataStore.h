@@ -60,6 +60,7 @@ public:
         device_memory_resource_(memory::device::traced_resource()),
         host_allocator_{host_memory_resource_.get()},
         device_allocator_{device_memory_resource_.get()} {
+        label_ = memory::label::get();
         allocateHost();
         initialise(host_data_, size_);
         if (ATLAS_HAVE_GPU && pluto::devices()) {
@@ -125,7 +126,7 @@ public:
                     device_data_ = pluto::get_registered_device_pointer(host_data_);
                 }
                 else {
-                    device_data_ = device_allocator_.allocate(size_);
+                    device_data_ = device_allocator_.allocate(label_, size_);
                 }
                 ATLAS_ASSERT(pluto::is_device_accessible(device_data_));
                 device_allocated_ = true;
@@ -138,7 +139,7 @@ public:
         if (device_allocated_) {
             accUnmap();
             if (not is_unified_data_) {
-                device_allocator_.deallocate(device_data_,size_);
+                device_allocator_.deallocate(label_, device_data_,size_);
             }
             device_data_ = nullptr;
             device_allocated_ = false;
@@ -204,7 +205,7 @@ private:
 
     void allocateHost() {
         if (size_ > 0) {
-            host_data_ = host_allocator_.allocate(size_);
+            host_data_ = host_allocator_.allocate(label_, size_);
         }
         else {
             host_data_ = nullptr;
@@ -213,7 +214,7 @@ private:
 
     void deallocateHost() {
         if (host_data_) {
-            host_allocator_.deallocate(host_data_, size_);
+            host_allocator_.deallocate(label_, host_data_, size_);
             host_data_ = nullptr;
         }
     }
@@ -234,6 +235,8 @@ private:
     std::unique_ptr<pluto::memory_resource> device_memory_resource_;
     pluto::allocator<Value> host_allocator_;
     mutable pluto::allocator<Value> device_allocator_;
+
+    std::string label_;
 };
 
 //------------------------------------------------------------------------------

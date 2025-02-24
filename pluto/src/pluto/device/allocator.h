@@ -38,7 +38,7 @@ class allocator : public pluto::allocator<T> {
 public:
     using value_type = T;
 
-    allocator(memory_resource* mr, const stream& s): pluto::allocator<T>::allocator(mr), stream_(s) {}
+    allocator(STD_PMR::memory_resource* mr, const stream& s): pluto::allocator<T>::allocator(mr), stream_(s) {}
 
     allocator(): allocator(get_default_resource(), get_current_stream()) {}
 

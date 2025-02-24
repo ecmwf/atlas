@@ -29,7 +29,7 @@ public:
     }
 
     static Memory& host() {
-        static Memory _instance("host");
+        static Memory _instance(" host ");
         return _instance;
     }
 
@@ -38,9 +38,12 @@ public:
         return _instance;
     }
 
-    Memory& operator+=(size_t bytes);
+    void increase(size_t bytes, std::string_view label);
+    void decrease(size_t bytes, std::string_view label);
 
-    Memory& operator-=(size_t bytes);
+    // Memory& operator+=(size_t bytes);
+
+    // Memory& operator-=(size_t bytes);
 
     size_t allocated() const {
         return bytes_;
@@ -134,6 +137,21 @@ bool context_exists(std::string_view name);
 void set_context(std::string_view name);
 void set_context(context* ctx);
 context* get_context(std::string_view name);
+
+class label {
+public:
+    label(std::string_view s) {
+        previous_ = get();
+        set(s);
+    }
+    ~label() {
+        set(previous_);
+    }
+    static std::string_view get();
+    static void set(std::string_view);
+private:
+    std::string previous_;
+};
 
 
 }

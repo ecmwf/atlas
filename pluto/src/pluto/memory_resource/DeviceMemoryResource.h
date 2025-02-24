@@ -22,14 +22,15 @@ public:
     using alignment_t                      = std::size_t;
     static constexpr alignment_t alignment = default_alignment();
 
-    DeviceMemoryResource() {};
+    DeviceMemoryResource() = default;
 
-    ~DeviceMemoryResource() {};
+    ~DeviceMemoryResource() = default;
 
-public:
+private:
     void* do_allocate(std::size_t bytes, alignment_t) override;
     void do_deallocate(void* ptr, std::size_t bytes, std::size_t alignment) override;
-    bool do_is_equal(const memory_resource& other) const noexcept override;
+
+    bool do_is_equal(const memory_resource_base& other) const noexcept override;
 
     void* do_allocate_async(std::size_t bytes, alignment_t, const stream&) override;
     void do_deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment, const stream&) override;
