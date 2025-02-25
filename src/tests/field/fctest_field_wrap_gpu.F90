@@ -130,10 +130,10 @@ TEST( test_field_wrapdataslice )
 implicit none
 
   real(c_double), allocatable :: existing_data(:,:,:,:)
-  real(c_double), pointer :: fview(:,:,:)
+  real(c_double), pointer :: dview(:,:,:), hview(:,:,:)
   type(atlas_Field) :: field
-  integer(c_int) :: i, j, k, l, k_idx
-  integer(c_int), parameter :: Ni = 8, Nj = 2, Nk = 3, Nl = 4
+  integer(c_int) :: i, j, k, l
+  integer(c_int), parameter :: Ni = 8, Nj = 2, Nk = 3, Nl = 4, k_idx = 2
   real(c_double) :: a
   write(0,*) "test_field_wrapdataslice"
   allocate( existing_data(Ni, Nj, Nk, Nl) )
@@ -148,13 +148,20 @@ implicit none
     enddo
   enddo
 
-  k_idx = 1
   field = atlas_Field(existing_data(:,:,k_idx,:))
+  FCTEST_CHECK_EQUAL(field%shape() , ([Ni, Nj, Nl]))
+  FCTEST_CHECK_EQUAL(field%strides() , ([1, Ni, Ni*Nj*Nk]))
+
   call field%allocate_device()
   call field%update_device()
-  call field%device_data(fview)
 
-  call kernel_2(fview, Ni, Nj, Nl)
+  call field%data(hview)
+  call field%device_data(dview)
+
+  FCTEST_CHECK_EQUAL(shape(hview), ([Ni, Nj, Nl]))
+  FCTEST_CHECK_EQUAL(shape(dview), ([Ni, Nj, Nl]))
+
+  call kernel_2(dview, Ni, Nj, Nl)
 
   call field%update_host()
   call field%deallocate_device()
@@ -162,10 +169,10 @@ implicit none
   do i = 1, Ni
     do j = 1, Nj
       do k = 1, Nk
+        a = 1._c_double;
+        if (k == k_idx) a = -1._c_double;
         do l = 1, Nl
-          a = 1._c_double;
-          if (k == k_idx) a = -1._c_double;
-          FCTEST_CHECK_EQUAL(existing_data(i, j, k, l) , a * real(1000*i + 100*j + 10*k + l, c_double) )
+          FCTEST_CHECK_EQUAL(existing_data(i, j, k, l), a * real(1000*i + 100*j + 10*k + l, c_double))
         enddo
       enddo
     enddo
