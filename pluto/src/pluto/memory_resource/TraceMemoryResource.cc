@@ -54,7 +54,7 @@ void* TraceMemoryResource::do_allocate(std::size_t bytes, std::size_t alignment)
         }
         trace() << "bytes:" << bytes_to_string(bytes)
                 << ", alignment:" << alignment
-                << " }" << std::endl;
+                << " }\n";
     }
     auto ptr = upstream_resource()->allocate(bytes, alignment);
     nest--;
@@ -74,7 +74,7 @@ void TraceMemoryResource::do_deallocate(void* p, std::size_t bytes, std::size_t 
             trace() << ", bytes:" << bytes_to_string(bytes)
                     << ", alignment:" << alignment;
         }
-        trace() << " }" << std::endl;
+        trace() << " }\n";
     }
     upstream_resource()->deallocate(p, bytes, alignment);
     nest--;
@@ -93,7 +93,7 @@ void* TraceMemoryResource::do_allocate_async(std::size_t bytes, std::size_t alig
         trace() << "bytes:" << bytes_to_string(bytes)
                 << ", alignment:" << alignment
                 << ", stream:" << s.value() 
-                << " }" << std::endl;
+                << " }\n";
     }
     void* ptr;
     if (async_mr) {
@@ -111,15 +111,17 @@ void TraceMemoryResource::do_deallocate_async(void* p, std::size_t bytes, std::s
     auto* async_mr = dynamic_cast<async_memory_resource*>(upstream_resource());
     if (trace_enabled()) {
         auto label = get_label();
-        if (bytes == std::numeric_limits<std::size_t>::max()) {
-            trace() << std::string(4 * nest, ' ') << "[" << name_ << " (dealloc_async)] { pointer:" << p
-                    << ", stream:" << s.value() << " }" << std::endl;
+        trace() << std::string(4 * nest, ' ') << "[" << name_ << " (dealloc_async)] { ";
+        if (not label.empty()) {
+            trace() << "label:" << label << ", ";
         }
-        else {
-            trace() << std::string(4 * nest, ' ') << "[" << name_ << " (dealloc_async)] { pointer:" << p
-                    << ", bytes:" << bytes_to_string(bytes) << ", alignment:" << alignment << ", stream:" << s.value()
-                    << " }" << std::endl;
+        trace() << "pointer:" << p;
+        if (bytes != std::numeric_limits<std::size_t>::max()) {
+            trace() << ", bytes:" << bytes_to_string(bytes)
+                    << ", alignment:" << alignment;
         }
+        trace() << ", stream:" << s.value()
+                << " }\n";
     }
     if (async_mr) {
         async_mr->deallocate_async(p, bytes, alignment, s);
