@@ -101,7 +101,7 @@ void* MemoryPoolResource::do_allocate(std::size_t bytes, std::size_t alignment) 
     return resource(bytes)->allocate(bytes, alignment);
 }
 
-void* MemoryPoolResource::do_allocate_async(std::size_t bytes, std::size_t alignment, const stream& s) {
+void* MemoryPoolResource::do_allocate_async(std::size_t bytes, std::size_t alignment, stream_view s) {
     std::lock_guard lock(mtx_);
     auto* mr       = resource(bytes);
     auto* async_mr = dynamic_cast<async_memory_resource*>(mr);
@@ -165,7 +165,7 @@ void callback_deallocate_async(void* stream) {
     stream_queue.pop();
 }
 
-void MemoryPoolResource::do_deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment, const stream& s) {
+void MemoryPoolResource::do_deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment, stream_view s) {
     // stream.wait();
     // Wait for stream to finish for safety.
     // We should not deallocate data when it may still be in use in the stream!

@@ -12,6 +12,7 @@
 
 #include "hic/hic.h"
 #include "pluto/pluto_config.h"
+#include "pluto/runtime.h"
 #include "pluto/trace.h"
 
 #define LOG PLUTO_DEBUGGING
@@ -28,13 +29,18 @@ stream::stream(stream_t& s):
 
 stream::stream():
     stream_{[]() {
-                hicStream_t* s = new hicStream_t;
-                HIC_CALL(hicStreamCreate(s));
-                return reinterpret_cast<stream_t*>(s);
+                if (devices()) {
+                    hicStream_t* s = new hicStream_t;
+                    HIC_CALL(hicStreamCreate(s));
+                    return reinterpret_cast<stream_t*>(s);
+                }
+                return &stream0_underlying_;
             }(),
             [](stream_t* s) {
-                HIC_CALL(hicStreamDestroy(*reinterpret_cast<hicStream_t*>(s)));
-                delete s;
+                if (s != &stream0_underlying_) {
+                    HIC_CALL(hicStreamDestroy(*reinterpret_cast<hicStream_t*>(s)));
+                    delete s;
+                }
             }} {}
 
 void stream::wait() const {
@@ -43,6 +49,14 @@ void stream::wait() const {
     }
     HIC_CALL(hicStreamSynchronize(value<hicStream_t>()));
 }
+
+void stream_view::wait() const {
+    if constexpr (LOG) {
+        std::cout << "               = hicStreamSynchronize(stream:" << value() << ")" << std::endl;
+    }
+    HIC_CALL(hicStreamSynchronize(value<hicStream_t>()));
+}
+
 
 #else
 stream::stream(stream_t& stream):
@@ -55,26 +69,33 @@ stream::stream(): stream(stream0_underlying_) {}
 void stream::wait() const {
     // Nothing
 }
+
+void stream_view::wait() const {
+    // Nothing
+}
+
 #endif
 
 static stream stream0_{stream0_underlying_};
 
-static const stream* default_stream_ = &stream0_;
-
-const stream& default_stream() {
-    return stream0_;
+stream_view default_stream() {
+    return stream_view{stream0_};
 }
 
-const stream& get_current_stream() {
-    return *default_stream_;
+static thread_local stream_view current_stream_ = default_stream();
+
+
+stream_view get_stream() {
+    return current_stream_;
 }
 
-void set_current_stream(const stream& s) {
-    default_stream_ = &s;
+void set_stream(stream_view s) {
+    current_stream_ = s;
 }
 
-void wait(const stream& s) {
+void wait(stream_view s) {
     s.wait();
 }
+
 
 }  // namespace pluto

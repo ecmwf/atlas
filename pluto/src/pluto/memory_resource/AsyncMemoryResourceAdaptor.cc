@@ -16,7 +16,7 @@ namespace pluto {
 
 void* AsyncMemoryResourceAdaptor::do_allocate(std::size_t bytes, std::size_t alignment) {
     if (async_mr_) {
-        return async_mr_->allocate_async(bytes, alignment, get_current_stream());
+        return async_mr_->allocate_async(bytes, alignment, get_stream());
     }
     else {
         return mr_->allocate(bytes, alignment);
@@ -25,7 +25,7 @@ void* AsyncMemoryResourceAdaptor::do_allocate(std::size_t bytes, std::size_t ali
 
 void AsyncMemoryResourceAdaptor::do_deallocate(void* p, std::size_t bytes, std::size_t alignment) {
     if (async_mr_) {
-        async_mr_->deallocate_async(p, bytes, alignment, get_current_stream());
+        async_mr_->deallocate_async(p, bytes, alignment, get_stream());
     }
     else {
         mr_->deallocate(p, bytes, alignment);

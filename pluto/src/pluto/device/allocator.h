@@ -38,15 +38,15 @@ class allocator : public pluto::allocator<T> {
 public:
     using value_type = T;
 
-    allocator(STD_PMR::memory_resource* mr, const stream& s): pluto::allocator<T>::allocator(mr), stream_(s) {}
+    allocator(STD_PMR::memory_resource* mr, stream_view s): pluto::allocator<T>::allocator(mr), stream_(s) {}
 
-    allocator(): allocator(get_default_resource(), get_current_stream()) {}
+    allocator(): allocator(get_default_resource(), get_stream()) {}
 
     allocator(const allocator& other): allocator(other.resource(), other.stream_) {}
 
-    allocator(memory_resource* mr): allocator(mr, get_current_stream()) {}
+    allocator(memory_resource* mr): allocator(mr, get_stream()) {}
 
-    allocator(const stream& s): allocator(get_default_resource(), s) {}
+    allocator(stream_view s): allocator(get_default_resource(), s) {}
 
     value_type* allocate(std::size_t size) { return pluto::allocator<T>::allocate_async(size, stream_); }
 
@@ -73,7 +73,7 @@ public:
     }
 
 private:
-    const stream& stream_;
+    stream_view stream_;
 };
 
 // --------------------------------------------------------------------------------------------------------

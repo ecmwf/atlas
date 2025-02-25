@@ -11,14 +11,14 @@
 
 #include <cstddef>
 
+#include "pluto/stream.h"
+
 namespace pluto {
 
-class stream;
-
 void prefetch_host_to_device(const void* managed_ptr, std::size_t bytes);
-void prefetch_host_to_device(const void* managed_ptr, std::size_t bytes, const stream&);
+void prefetch_host_to_device(const void* managed_ptr, std::size_t bytes, stream_view);
 
 void prefetch_device_to_host(const void* managed_ptr, std::size_t bytes);
-void prefetch_device_to_host(const void* managed_ptr, std::size_t bytes, const stream&);
+void prefetch_device_to_host(const void* managed_ptr, std::size_t bytes, stream_view);
 
 }  // namespace pluto

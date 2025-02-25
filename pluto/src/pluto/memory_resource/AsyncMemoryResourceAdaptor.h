@@ -19,7 +19,7 @@ namespace pluto {
 // --------------------------------------------------------------------------------------------------------
 
 /// Adapts an async_memory_resource to be used by e.g. std::pmr::polymorphic_allocator
-// It will always be using (de)allocate_async with the get_current_stream.
+// It will always be using (de)allocate_async with the get_stream.
 class AsyncMemoryResourceAdaptor : public memory_resource {
 public:
     AsyncMemoryResourceAdaptor(memory_resource* mr): mr_(mr), async_mr_(dynamic_cast<async_memory_resource*>(mr)) {}
@@ -31,7 +31,7 @@ protected:
 
     void do_deallocate(void* p, std::size_t bytes, std::size_t alignment) override;
 
-    bool do_is_equal(const memory_resource_base& other) const noexcept override { return mr_->is_equal(other); }
+    bool do_is_equal(const memory_resource& other) const noexcept override { return mr_->is_equal(other); }
 
 private:
     memory_resource* mr_;

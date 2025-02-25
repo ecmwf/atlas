@@ -80,7 +80,7 @@ void TraceMemoryResource::do_deallocate(void* p, std::size_t bytes, std::size_t 
     nest--;
 }
 
-void* TraceMemoryResource::do_allocate_async(std::size_t bytes, std::size_t alignment, const stream& s) {
+void* TraceMemoryResource::do_allocate_async(std::size_t bytes, std::size_t alignment, stream_view s) {
     nest++;
     auto* async_mr = dynamic_cast<async_memory_resource*>(upstream_resource());
 
@@ -106,7 +106,7 @@ void* TraceMemoryResource::do_allocate_async(std::size_t bytes, std::size_t alig
     return ptr;
 }
 
-void TraceMemoryResource::do_deallocate_async(void* p, std::size_t bytes, std::size_t alignment, const stream& s) {
+void TraceMemoryResource::do_deallocate_async(void* p, std::size_t bytes, std::size_t alignment, stream_view s) {
     nest++;
     auto* async_mr = dynamic_cast<async_memory_resource*>(upstream_resource());
     if (trace_enabled()) {

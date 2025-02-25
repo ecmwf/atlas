@@ -31,27 +31,59 @@ public:
 
     void wait() const;
 
+    const stream_t* data() const {
+        return stream_.get();
+    }
+
 private:
     std::unique_ptr<stream_t, std::function<void(stream_t*)>> stream_;
 };
 
+class stream_view {
+    using stream_t = void*;
 
-const stream& default_stream();
-
-const stream& get_current_stream();
-
-void set_current_stream(const stream&);
-
-void wait(const stream&);
-
-class [[nodiscard]] current_stream {
 public:
-    current_stream(const stream& s): saved_(get_current_stream()) { set_current_stream(s); }
+    stream_view(const stream& s) : stream_(s.data()) {}
+    stream_view() {}
 
-    ~current_stream() { set_current_stream(saved_); }
+    bool empty() const { return stream_ != nullptr; }
+
+    [[nodiscard]] const stream_t* data() const { return stream_; }
+
+    [[nodiscard]] stream_t value() const { return *stream_; }
+
+    template <typename deviceStream_t>
+    [[nodiscard]] const deviceStream_t& value() const {
+        return reinterpret_cast<const deviceStream_t&>(*stream_);
+    }
+
+    void wait() const;
 
 private:
-    const stream& saved_;
+    const stream_t* stream_{nullptr};
 };
+
+
+
+
+stream_view default_stream();
+
+stream_view get_stream();
+
+void set_stream(stream_view);
+
+void wait(stream_view);
+
+class [[nodiscard]] scoped_stream {
+public:
+    scoped_stream(stream_view s): saved_(get_stream()) { set_stream(s); }
+
+    ~scoped_stream() { set_stream(saved_); }
+
+private:
+    stream_view saved_;
+};
+
+
 
 }  // namespace pluto

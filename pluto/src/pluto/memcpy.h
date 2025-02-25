@@ -16,10 +16,10 @@
 namespace pluto {
 
 void memcpy_host_to_device(void* device_ptr, const void* host_ptr, std::size_t bytes);
-void memcpy_host_to_device(void* device_ptr, const void* host_ptr, std::size_t bytes, const stream&);
+void memcpy_host_to_device(void* device_ptr, const void* host_ptr, std::size_t bytes, stream_view);
 
 void memcpy_device_to_host(void* host_ptr, const void* device_ptr, std::size_t bytes);
-void memcpy_device_to_host(void* host_ptr, const void* device_ptr, std::size_t bytes, const stream&);
+void memcpy_device_to_host(void* host_ptr, const void* device_ptr, std::size_t bytes, stream_view);
 
 void memcpy_host_to_device_2D(void* device_ptr,
                               std::size_t device_pitch_bytes /*stride in bytes to next contiguous chunk on device*/,
@@ -32,7 +32,7 @@ void memcpy_host_to_device_2D(void* device_ptr,
                               const void* host_ptr,
                               std::size_t host_pitch_bytes /*stride in bytes to next contiguous chunk on host*/,
                               std::size_t width_bytes /*bytes of contiguous chunk*/,
-                              std::size_t height_count /*count of contiguous chunks*/, const stream&);
+                              std::size_t height_count /*count of contiguous chunks*/, stream_view);
 
 void memcpy_device_to_host_2D(void* host_ptr,
                               std::size_t host_pitch_bytes /*stride in bytes to next contiguous chunk on host*/,
@@ -45,6 +45,6 @@ void memcpy_device_to_host_2D(void* host_ptr,
                               const void* device_ptr,
                               std::size_t device_pitch_bytes /*stride in bytes to next contiguous chunk on device*/,
                               std::size_t width_bytes /*bytes of contiguous chunk*/,
-                              std::size_t height_count /*count of contiguous chunks*/, const stream&);
+                              std::size_t height_count /*count of contiguous chunks*/, stream_view);
 
 }  // namespace pluto

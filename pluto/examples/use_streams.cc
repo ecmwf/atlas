@@ -71,8 +71,13 @@ public:
 
     array(std::size_t size): size_{size} { data_ = alloc_.allocate(size_); }
 
-    array(std::size_t size, const pluto::stream& stream): size_{size}, stream_(&stream) {
-        data_ = alloc_.allocate_async(size_, *stream_);
+    array(std::size_t size, pluto::stream_view stream): size_{size}, stream_(stream) {
+        if constexpr (has_async<allocator_type>()) {
+            data_ = alloc_.allocate_async(size_, stream_);
+        }
+        else {
+            data_ = alloc_.allocate(size_);
+        }
     }
 
     template <typename Alloc>
@@ -81,10 +86,10 @@ public:
     }
 
     template <typename Alloc>
-    array(std::size_t size, const pluto::stream& stream, const Alloc& alloc):
-        alloc_{alloc}, size_{size}, stream_(&stream) {
+    array(std::size_t size, pluto::stream_view stream, const Alloc& alloc):
+        alloc_{alloc}, size_{size}, stream_(stream) {
         if constexpr (has_async<allocator_type>()) {
-            data_ = alloc_.allocate_async(size_, *stream_);
+            data_ = alloc_.allocate_async(size_, stream_);
         }
         else {
             data_ = alloc_.allocate(size_);
@@ -93,8 +98,8 @@ public:
 
     ~array() {
         if constexpr (has_async<allocator_type>()) {
-            if (stream_) {
-                alloc_.deallocate_async(data_, size_, *stream_);
+            if (not stream_.empty()) {
+                alloc_.deallocate_async(data_, size_, stream_);
             }
             else {
                 alloc_.deallocate(data_, size_);
@@ -104,7 +109,7 @@ public:
             alloc_.deallocate(data_, size_);
         }
     }
-    void set_stream(const pluto::stream& stream) { stream_ = &stream; }
+    void set_stream(pluto::stream_view stream) { stream_ = stream; }
     value_type& operator[](std::size_t i) { return data_[i]; }
     const value_type& operator[](std::size_t i) const { return data_[i]; }
     value_type* data() { return data_; };
@@ -115,7 +120,7 @@ private:
     allocator_type alloc_;
     std::size_t size_;
     value_type* data_{nullptr};
-    pluto::stream const* stream_{nullptr};
+    pluto::stream_view stream_;
 };
 
 // ---------------------------------------------------------------------------------------------------
@@ -132,14 +137,21 @@ HIC_GLOBAL void kernel_plus_one_on_device(T* d, int n) {
 }
 
 template <typename T>
-void plus_one_on_device(T* d, int n, const pluto::stream& stream) {
-    const int threads_per_block{1024};
-    const int blocks_per_grid{32};
-    kernel_plus_one_on_device<<<blocks_per_grid, threads_per_block, 0, stream.value<hicStream_t>()>>>(d, n);
+void plus_one_on_device(T* d, int n, pluto::stream_view stream) {
+    if (pluto::devices()) {
+        const int threads_per_block{1024};
+        const int blocks_per_grid{32};
+        kernel_plus_one_on_device<<<blocks_per_grid, threads_per_block, 0, stream.value<hicStream_t>()>>>(d, n);
+    }
+    else {
+        for (int i = 0; i < n; ++i) {
+            d[i] += 1.;
+        }
+    }
 }
 #else
 template <typename T>
-void plus_one_on_device(T* d, int n, const pluto::stream&) {
+void plus_one_on_device(T* d, int n, pluto::stream_view) {
     for (int i = 0; i < n; ++i) {
         d[i] += 1.;
     }

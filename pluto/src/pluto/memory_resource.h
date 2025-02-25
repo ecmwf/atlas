@@ -29,10 +29,9 @@
 #define STD_PMR pluto::compat
 #endif
 
+#include "pluto/stream.h"
 
 namespace pluto {
-
-class stream;
 
 std::string_view get_label();
 void set_label(std::string_view);
@@ -78,21 +77,21 @@ class async_memory_resource : public memory_resource {
 public:
     using memory_resource::memory_resource;
 
-    void* allocate_async(std::size_t bytes, std::size_t alignment, const stream& s) {
+    void* allocate_async(std::size_t bytes, std::size_t alignment, stream_view s) {
         return do_allocate_async(bytes, alignment, s);
     }
-    void deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment, const stream& s) {
+    void deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment, stream_view s) {
         do_deallocate_async(ptr, bytes, alignment, s);
     }
 
-    void* allocate_async(std::string_view label, std::size_t bytes, std::size_t alignment, const stream& s) {
+    void* allocate_async(std::string_view label, std::size_t bytes, std::size_t alignment, stream_view s) {
         if (label.empty()) {
             return allocate_async(bytes, alignment, s);
         }
         scoped_label scope(label);
         return allocate_async(bytes, alignment, s);
     }
-    void deallocate_async(std::string_view label, void* ptr, std::size_t bytes, std::size_t alignment, const stream& s) {
+    void deallocate_async(std::string_view label, void* ptr, std::size_t bytes, std::size_t alignment, stream_view s) {
         if (label.empty()) {
             deallocate_async(label, ptr, bytes, alignment, s);
             return;
@@ -102,8 +101,8 @@ public:
     }
 
 private:
-    virtual void* do_allocate_async(std::size_t bytes, std::size_t alignment, const stream&)             = 0;
-    virtual void do_deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment, const stream&) = 0;
+    virtual void* do_allocate_async(std::size_t bytes, std::size_t alignment, stream_view)             = 0;
+    virtual void do_deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment, stream_view) = 0;
 
 };
 
@@ -149,7 +148,7 @@ public:
         }
     }
 
-    value_type* allocate_async(std::size_t size, const stream& s) {
+    value_type* allocate_async(std::size_t size, stream_view s) {
         if (async_mr_) {
             return (value_type*)async_mr_->allocate_async(size * sizeof(value_type), pluto::default_alignment(), s);
         }
@@ -158,7 +157,7 @@ public:
         }
     }
 
-    void deallocate_async(value_type* ptr, std::size_t size, const stream& s) {
+    void deallocate_async(value_type* ptr, std::size_t size, stream_view s) {
         if (async_mr_) {
             async_mr_->deallocate_async(ptr, size * sizeof(value_type), pluto::default_alignment(), s);
         }
@@ -167,7 +166,7 @@ public:
         }
     }
 
-    value_type* allocate_async(std::string_view label, std::size_t size, const stream& s) {
+    value_type* allocate_async(std::string_view label, std::size_t size, stream_view s) {
         if (async_mr_) {
             return (value_type*)async_mr_->allocate_async(label, size * sizeof(value_type), pluto::default_alignment(), s);
         }
@@ -176,7 +175,7 @@ public:
         }
     }
 
-    void deallocate_async(std::string_view label, value_type* ptr, std::size_t size, const stream& s) {
+    void deallocate_async(std::string_view label, value_type* ptr, std::size_t size, stream_view s) {
         if (async_mr_) {
             async_mr_->deallocate_async(label, ptr, size * sizeof(value_type), pluto::default_alignment(), s);
         }
