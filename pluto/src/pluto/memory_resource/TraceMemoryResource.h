@@ -64,7 +64,7 @@ protected:
 
     void do_deallocate_async(void* p, std::size_t bytes, std::size_t alignment, stream_view) override;
 
-    bool do_is_equal(const memory_resource_base& other) const noexcept override { return mr_->is_equal(other); }
+    bool do_is_equal(const memory_resource& other) const noexcept override { return mr_->is_equal(other); }
 
 private:
     std::unique_ptr<memory_resource> owned_mr_;

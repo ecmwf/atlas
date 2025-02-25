@@ -174,7 +174,7 @@ protected:
         gator().free(ptr);
     }
 
-    bool do_is_equal(const memory_resource_base& other) const noexcept override {
+    bool do_is_equal(const memory_resource& other) const noexcept override {
         if (this == &other) {
             return true;
         }

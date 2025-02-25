@@ -94,7 +94,7 @@ namespace pluto {
 //         mr_->deallocate(p, bytes, alignment);
 //     }
 
-//     bool do_is_equal(const memory_resource_base& other) const noexcept override {
+//     bool do_is_equal(const memory_resource& other) const noexcept override {
 //         return mr_->is_equal(other);
 //     }
 

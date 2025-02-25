@@ -30,7 +30,7 @@ public:
 
     void do_deallocate(void* ptr, std::size_t bytes, std::size_t alignment) override;
 
-    bool do_is_equal(const memory_resource_base& other) const noexcept override;
+    bool do_is_equal(const memory_resource& other) const noexcept override;
 
 private:
     memory_resource* upstream_;

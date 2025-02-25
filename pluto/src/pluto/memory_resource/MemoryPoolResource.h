@@ -51,7 +51,7 @@ protected:
     void do_deallocate(void* ptr, std::size_t bytes, std::size_t alignment) override;
     void* do_allocate_async(std::size_t bytes, std::size_t alignment, stream_view) override;
     void do_deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment, stream_view) override;
-    bool do_is_equal(const memory_resource_base& other) const noexcept override;
+    bool do_is_equal(const memory_resource& other) const noexcept override;
     friend void callback_deallocate_async(void* stream);
 
     // A suitable pool or upstream resource to allocate given bytes

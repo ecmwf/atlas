@@ -62,7 +62,7 @@ void PinnedMemoryResource::do_deallocate(void* ptr, std::size_t bytes, std::size
     upstream_->deallocate(ptr, bytes, alignment);
 }
 
-bool PinnedMemoryResource::do_is_equal(const memory_resource_base& other) const noexcept {
+bool PinnedMemoryResource::do_is_equal(const memory_resource& other) const noexcept {
     return upstream_->is_equal(other);
 }
 

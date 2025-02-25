@@ -73,7 +73,7 @@ void ManagedMemoryResource::do_deallocate(void* ptr, std::size_t bytes, alignmen
     }
 }
 
-bool ManagedMemoryResource::do_is_equal(const memory_resource_base& other) const noexcept {
+bool ManagedMemoryResource::do_is_equal(const memory_resource& other) const noexcept {
     if (this == &other) {
         return true;
     }

@@ -26,7 +26,7 @@ public:
 protected:
     void* do_allocate(std::size_t bytes, alignment_t) override;
     void do_deallocate(void* ptr, std::size_t bytes, alignment_t) override;
-    bool do_is_equal(const memory_resource_base& other) const noexcept override;
+    bool do_is_equal(const memory_resource& other) const noexcept override;
 };
 
 memory_resource* managed_resource();

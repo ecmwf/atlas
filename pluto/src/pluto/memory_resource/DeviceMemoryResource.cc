@@ -25,7 +25,7 @@
 
 namespace pluto {
 
-memory_resource* device_resource() {
+async_memory_resource* device_resource() {
     static DeviceMemoryResource resource;
     return &resource;
 }
@@ -100,7 +100,7 @@ void DeviceMemoryResource::do_deallocate_async(void* ptr, std::size_t bytes, ali
     }
 }
 
-bool DeviceMemoryResource::do_is_equal(const memory_resource_base& other) const noexcept {
+bool DeviceMemoryResource::do_is_equal(const memory_resource& other) const noexcept {
     if (this == &other) {
         return true;
     }

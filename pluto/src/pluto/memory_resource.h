@@ -48,7 +48,6 @@ public:
 
 void init();
 
-using memory_resource_base = STD_PMR::memory_resource;
 using memory_resource = STD_PMR::memory_resource;
 using pool_options    = STD_PMR::pool_options;
 // template<typename T>
@@ -84,22 +83,6 @@ public:
         do_deallocate_async(ptr, bytes, alignment, s);
     }
 
-    void* allocate_async(std::string_view label, std::size_t bytes, std::size_t alignment, stream_view s) {
-        if (label.empty()) {
-            return allocate_async(bytes, alignment, s);
-        }
-        scoped_label scope(label);
-        return allocate_async(bytes, alignment, s);
-    }
-    void deallocate_async(std::string_view label, void* ptr, std::size_t bytes, std::size_t alignment, stream_view s) {
-        if (label.empty()) {
-            deallocate_async(label, ptr, bytes, alignment, s);
-            return;
-        }
-        scoped_label scope(label);
-        deallocate_async(label, ptr, bytes, alignment, s);
-    }
-
 private:
     virtual void* do_allocate_async(std::size_t bytes, std::size_t alignment, stream_view)             = 0;
     virtual void do_deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment, stream_view) = 0;
@@ -118,8 +101,7 @@ public:
 
     allocator(STD_PMR::memory_resource* mr): 
         base_t(mr),
-        async_mr_(dynamic_cast<async_memory_resource*>(base_t::resource())),
-        mr_(dynamic_cast<memory_resource*>(base_t::resource())) {}
+        async_mr_(dynamic_cast<async_memory_resource*>(base_t::resource())) {}
 
     allocator(const base_t& other):
         base_t(other), async_mr_(dynamic_cast<async_memory_resource*>(base_t::resource())) {}
@@ -153,6 +135,7 @@ public:
             return (value_type*)async_mr_->allocate_async(size * sizeof(value_type), pluto::default_alignment(), s);
         }
         else {
+            scoped_stream scoped(s);
             return base_t::allocate(size);
         }
     }
@@ -162,32 +145,30 @@ public:
             async_mr_->deallocate_async(ptr, size * sizeof(value_type), pluto::default_alignment(), s);
         }
         else {
+            scoped_stream scoped(s);
             base_t::deallocate(ptr, size);
         }
     }
 
     value_type* allocate_async(std::string_view label, std::size_t size, stream_view s) {
-        if (async_mr_) {
-            return (value_type*)async_mr_->allocate_async(label, size * sizeof(value_type), pluto::default_alignment(), s);
+        if (label.empty()) {
+            return allocate_async(size, s);
         }
-        else {
-            return base_t::allocate(size);
-        }
+        scoped_label scoped(label);
+        return allocate_async(size, s);
     }
 
     void deallocate_async(std::string_view label, value_type* ptr, std::size_t size, stream_view s) {
-        if (async_mr_) {
-            async_mr_->deallocate_async(label, ptr, size * sizeof(value_type), pluto::default_alignment(), s);
+        if (label.empty()) {
+            deallocate_async(ptr, size, s);
         }
-        else {
-            base_t::deallocate(ptr, size);
-        }
+        scoped_label scoped(label);
+        deallocate_async(ptr, size, s);
     }
 
 
 private:
     async_memory_resource* async_mr_{nullptr};
-    memory_resource* mr_{nullptr};
 };
 
 class memory_pool_resource : public async_memory_resource {
