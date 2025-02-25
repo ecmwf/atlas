@@ -18,8 +18,8 @@
 #include "pluto/alignment.h"
 #include "pluto/pluto_config.h"
 
-// #pragma push_macro("STD_PMR")
-// #undef STD_PMR
+#pragma push_macro("STD_PMR")
+#undef STD_PMR
 
 #if PLUTO_HAVE_PMR
 #include <memory_resource>
@@ -50,27 +50,24 @@ void init();
 
 using memory_resource = STD_PMR::memory_resource;
 using pool_options    = STD_PMR::pool_options;
-// template<typename T>
-// using allocator = STD_PMR::polymorphic_allocator<T>;
 
-// class memory_resource : public STD_PMR::memory_resource {
-// public:
-//     using memory_resource_base = STD_PMR::memory_resource;
-//     using memory_resource_base::memory_resource_base;
+inline memory_resource* null_memory_resource() {
+    return STD_PMR::null_memory_resource();
+}
 
-//     struct properties_t {
-//         std::string name;
-//         bool is_host_accessible   = false;
-//         bool is_device_accessible = false;
-//         memory_resource* upstream_resource = nullptr;
-//     };
-//     // properties_t properties;
-// };
+inline memory_resource* new_delete_resource() {
+    return STD_PMR::new_delete_resource();
+}
 
-memory_resource* null_memory_resource();
-memory_resource* new_delete_resource();
-memory_resource* get_default_resource();
-void set_default_resource(STD_PMR::memory_resource* mr);
+inline memory_resource* get_default_resource() {
+    init();
+    return STD_PMR::get_default_resource();
+}
+
+inline void set_default_resource(memory_resource* mr) {
+    init();
+    STD_PMR::set_default_resource(mr);
+}
 
 class async_memory_resource : public memory_resource {
 public:
@@ -99,7 +96,7 @@ public:
 
     allocator(): allocator(get_default_resource()) {}
 
-    allocator(STD_PMR::memory_resource* mr): 
+    allocator(memory_resource* mr):
         base_t(mr),
         async_mr_(dynamic_cast<async_memory_resource*>(base_t::resource())) {}
 
@@ -221,4 +218,4 @@ private:
 
 }  // namespace pluto
 
-// #pragma pop_macro("STD_PMR")
+#pragma pop_macro("STD_PMR")
