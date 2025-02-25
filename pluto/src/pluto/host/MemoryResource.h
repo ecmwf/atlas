@@ -31,7 +31,6 @@ inline void set_default_resource(std::string_view name) {
 }
 
 inline memory_resource* get_default_resource() {
-    pluto::init();
     return pluto::get_default_resource();
 }
 

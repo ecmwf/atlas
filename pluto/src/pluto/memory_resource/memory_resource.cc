@@ -23,29 +23,40 @@
 #include "pluto/host/MemoryResource.h"
 
 namespace pluto {
-void init() {
-    static std::once_flag flag;
-    std::call_once(flag, [](){
-#if PLUTO_DEBUGGING
-        std::cout << "pluto::init()" << std::endl;
-#endif
+namespace {
+struct RegisterPlutoResources {
+private:
+    RegisterPlutoResources() {
         register_resource("pluto::null_memory_resource", null_memory_resource());
         register_resource("pluto::new_delete_resource", new_delete_resource());
+        register_resource("pluto::pinned_resource", pinned_resource());
         register_resource("pluto::device_resource", device_resource());
         register_resource("pluto::managed_resource", managed_resource());
-        register_resource("pluto::pinned_resource", pinned_resource());
-        register_resource("pluto::pool_resource", pool_resource());
         register_resource("pluto::pinned_pool_resource", pinned_pool_resource());
         register_resource("pluto::device_pool_resource", device_pool_resource());
         register_resource("pluto::managed_pool_resource", managed_pool_resource());
+    }
+public:
+    static void once() {
+        static RegisterPlutoResources instance;
+    }
+};
+}  // namespace
 
+void init() {
+    [[maybe_unused]] static bool initialized = []() {
+#if PLUTO_DEBUGGING
+        std::cout << "pluto::init()" << std::endl;
+#endif
         if (char* env = std::getenv("PLUTO_HOST_MEMORY_RESOURCE")) {
             pluto::host::set_default_resource(env);
         }
         if (char* env = std::getenv("PLUTO_DEVICE_MEMORY_RESOURCE")) {
             pluto::device::set_default_resource(env);
         }
-    });
+
+        return true;
+    }();
 }
 
 
@@ -90,17 +101,17 @@ void unregister_resource(std::string_view name) {
 }
 
 memory_resource* get_registered_resource(std::string_view name) {
-    init();
+    RegisterPlutoResources::once();
     return &MemoryResourceRegistry::instance().get(name);
 }
 
 std::string_view get_registered_name(void* mr) {
-    init();
+    RegisterPlutoResources::once();
     return MemoryResourceRegistry::instance().name(mr);
 }
 
 bool has_registered_resource(std::string_view name) {
-    init();
+    RegisterPlutoResources::once();
     return MemoryResourceRegistry::instance().has(name);
 }
 
