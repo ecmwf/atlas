@@ -38,18 +38,18 @@ if( NOT hic_FOUND )
   find_package(hic REQUIRED)
 endif()
 
+ecbuild_info("pluto found hic: ${hic_DIR}")
+
 set( HAVE_CUDA ${hic_HAVE_CUDA} )
 set( HAVE_HIP  ${hic_HAVE_HIP}  )
 
-include("cmake/pluto_hic_macros.cmake")
-
 if( HAVE_CUDA )
-  ecbuild_info("pluto has GPU support via CUDA")
+  ecbuild_info("pluto has GPU support via hic with CUDA")
   set( CMAKE_CUDA_RESOLVE_DEVICE_SYMBOLS ON )
   set( CMAKE_CUDA_SEPARABLE_COMPILATION  ON )
   enable_language(CUDA)
 elseif( HAVE_HIP )
-  ecbuild_info("pluto has GPU support via HIP")
+  ecbuild_info("pluto has GPU support via hic with HIP")
   set(CMAKE_HIP_STANDARD 17)
   set(CMAKE_HIP_STANDARD_REQUIRED ON)
   enable_language(HIP)
@@ -57,7 +57,7 @@ else()
   ecbuild_info("pluto has no GPU support")
 endif()
 
-ecbuild_add_option( FEATURE WARNINGS  DESCRIPTION "Add warnings to compiler"   DEFAULT ON  )
+include("cmake/pluto_hic_macros.cmake")
 
 if( HAVE_CUDA )
   find_package(CUDAToolkit REQUIRED)
@@ -66,7 +66,7 @@ elseif( HAVE_HIP )
   find_package(hipsparse CONFIG REQUIRED)
 endif()
 
-# activate warnings, ecbuild macros check the compiler recognises the options
+ecbuild_add_option( FEATURE WARNINGS  DESCRIPTION "Add warnings to compiler"   DEFAULT ON  )
 if(HAVE_WARNINGS)
   ecbuild_add_cxx_flags("-Wall"      NO_FAIL NAME pluto_cxx_Wall QUIET)
   ecbuild_add_cxx_flags("-Wextra"    NO_FAIL NAME pluto_cxx_Wextra QUIET)
@@ -76,7 +76,6 @@ endif()
 ecbuild_add_option( FEATURE WARNING_AS_ERROR
                     DEFAULT OFF
                     DESCRIPTION "Treat compile warning as error" )
-
 if(HAVE_WARNING_AS_ERROR)
   ecbuild_add_cxx_flags("-Werror" NO_FAIL NAME pluto_cxx_warning_as_error QUIET)
 endif()

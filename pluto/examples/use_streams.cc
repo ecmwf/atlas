@@ -162,6 +162,10 @@ void plus_one_on_device(T* d, int n, pluto::stream_view) {
 // ---------------------------------------------------------------------------------------------------
 
 int main(int argc, char* argv[]) {
+
+    std::cerr << "devices = " << pluto::devices() << std::endl;
+
+
     // Choose data type
     using value_type = float;
 
