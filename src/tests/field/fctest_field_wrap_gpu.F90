@@ -90,39 +90,50 @@ implicit none
   real(c_double), allocatable :: existing_data(:,:,:,:)
   real(c_double), pointer :: fview(:,:,:)
   type(atlas_Field) :: field
-  integer(c_int) :: i,j,k,l
-  write(0,*) "test_field_wrapdataslice [skipped]" ! NOT DONE YET !!!
-  return ! SKIP THIS TEST !!!
-  allocate( existing_data(4,3,2,5) )
+  integer(c_int) :: i, j, k, l, k_idx
+  integer(c_int), parameter :: Ni = 8, Nj = 2, Nk = 3, Nl = 4
+  real(c_double) :: a
+  write(0,*) "test_field_wrapdataslice"
+  allocate( existing_data(Ni, Nj, Nk, Nl) )
 
-  existing_data = -1.
-
-  field = atlas_Field(existing_data(:,:,1,:))
-  call field%data(fview)
-
-  !call field%allocate_device()
-  !call field%update_device()
-
-  !!$acc data present(fview)
-  !!$acc parallel loop
-  do i=1,4
-    do j=1,3
-      do k=1,2
-        do l=1,5
-          fview(i,j,l) = 1000*i+100*j+10*1+l
+  do i = 1, Ni
+    do j = 1, Nj
+      do k = 1, Nk
+        do l = 1, Nl
+          existing_data(i,j,k,l) = real(1000 * i+100 * j + 10*k + l, c_double)
         enddo
       enddo
     enddo
   enddo
-  !!$acc end data
 
+  k_idx = 1
+  field = atlas_Field(existing_data(:,:,k_idx,:))
+  call field%allocate_device()
+  call field%update_device()
+  call field%device_data(fview)
+
+  !$acc data deviceptr(fview)
+  !$acc parallel loop
+  do i = 1, Ni
+    do j = 1, Nj
+      do l = 1, Nl
+        fview(i,j,l) = -fview(i,j,l)
+      enddo
+    enddo
+  enddo
+  !$acc end data
+
+  call field%update_host()
   call field%deallocate_device()
 
-  k=1
-  do i=1,4
-    do j=1,3
-      do l=1,5
-        FCTEST_CHECK_EQUAL(fview(i,j,l) , real(1000*i+100*j+10*k+l,c_double) )
+  do i = 1, Ni
+    do j = 1, Nj
+      do k = 1, Nk
+        do l = 1, Nl
+          a = 1._c_double;
+          if (k == k_idx) a = -1._c_double;
+          FCTEST_CHECK_EQUAL(existing_data(i, j, k, l) , a * real(1000*i + 100*j + 10*k + l, c_double) )
+        enddo
       enddo
     enddo
   enddo
