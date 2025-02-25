@@ -241,9 +241,49 @@ private:
 template <typename Value>
 class WrappedDataStore : public ArrayDataStore {
 public:
+    WrappedDataStore(Value* host_data, const ArraySpec& spec): host_data_(host_data), size_(spec.size()),
+        device_memory_resource_(memory::device::traced_resource()),
+        device_allocator_{device_memory_resource_.get()}
+    {
+        init_device();
+        contiguous_ = spec.contiguous();
+        if (! contiguous_) {
+            int break_idx = 0;
+            size_t shp_mult_rhs = spec.shape()[spec.rank() - 1];
+            for (int i = spec.rank() - 1; i > 0; i--) {
+                if (shp_mult_rhs != spec.strides()[i - 1]) {
+                    break_idx = i - 1;
+                    break;
+                }
+                shp_mult_rhs *= spec.shape()[i - 1];
+            }
+            size_t shp_mult_lhs = spec.shape()[0];
+            for (int i = 1; i <= break_idx; i++) {
+                shp_mult_lhs *= spec.shape()[i];
+            }
+            if (spec.strides()[spec.rank() - 1] > 1) {
+                memcpy_h2d_pitch_ = 1;
+                memcpy_d2h_pitch_ = spec.strides()[spec.rank() - 1];
+                memcpy_width_ = 1;
+                memcpy_height_ = spec.shape()[0] * spec.device_strides()[0];
+            }
+            else {
+                memcpy_h2d_pitch_ = shp_mult_rhs;
+                memcpy_d2h_pitch_ = spec.strides()[break_idx];
+                memcpy_width_ = shp_mult_rhs;
+                memcpy_height_ = shp_mult_lhs;
+            }
+        }
+    }
+
     WrappedDataStore(Value* host_data, size_t size): host_data_(host_data), size_(size),
         device_memory_resource_(memory::device::traced_resource()),
-        device_allocator_{device_memory_resource_.get()} {
+        device_allocator_{device_memory_resource_.get()}
+    {
+        init_device();
+    }
+
+    void init_device() {
         if (ATLAS_HAVE_GPU && pluto::devices()) {
             device_updated_ = false;
         }
@@ -261,14 +301,28 @@ public:
             if (not device_allocated_) {
                 allocateDevice();
             }
-            pluto::copy_host_to_device(device_data_, host_data_, size_);
+            if (contiguous_) {
+                pluto::copy_host_to_device(device_data_, host_data_, size_);
+            } 
+            else {
+                pluto::memcpy_host_to_device_2D(device_data_, memcpy_h2d_pitch_ * sizeof(Value),
+                    host_data_, memcpy_d2h_pitch_ * sizeof(Value),
+                    memcpy_width_ * sizeof(Value), memcpy_height_);
+            }
             device_updated_ = true;
         }
     }
 
     void updateHost() const override {
         if (device_allocated_) {
-            pluto::copy_device_to_host(host_data_, device_data_, size_);
+            if (contiguous_) {
+                pluto::copy_device_to_host(host_data_, device_data_, size_);
+            }
+            else {
+                pluto::memcpy_device_to_host_2D(host_data_, memcpy_d2h_pitch_ * sizeof(Value),
+                    device_data_,  memcpy_h2d_pitch_ * sizeof(Value),
+                    memcpy_width_ * sizeof(Value), memcpy_height_);
+            }
             host_updated_ = true;
         }
     }
@@ -303,14 +357,18 @@ public:
             if (size_) {
                 device_data_ = device_allocator_.allocate(size_);
                 device_allocated_ = true;
-                accMap();
+                if (contiguous_) {
+                    accMap();
+                }
             }
         }
     }
 
     void deallocateDevice() const override {
         if (device_allocated_) {
-            accUnmap();
+            if (contiguous_) {
+                accUnmap();
+            }
             device_allocator_.deallocate(device_data_, size_);
             device_data_ = nullptr;
             device_allocated_ = false;
@@ -372,6 +430,12 @@ private:
     mutable pluto::allocator<Value> device_allocator_;
 
     mutable Value* device_data_;
+
+    bool contiguous_{true};
+    size_t memcpy_h2d_pitch_;
+    size_t memcpy_d2h_pitch_;
+    size_t memcpy_height_;
+    size_t memcpy_width_;
 
     mutable bool host_updated_{true};
     mutable bool device_updated_{true};
