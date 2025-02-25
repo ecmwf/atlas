@@ -17,6 +17,7 @@
 
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
+#include "atlas/field/MultiField.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -88,6 +89,41 @@ CASE("test_field_acc") {
 #endif
 }
 
+
+CASE("test_fieldset_acc") {
+    const std::vector<int> vshape = std::vector<int>({4, -1, 3});
+    const std::vector<std::string> var_names = {"temperature", "pressure", "density"};
+    field::MultiField mfield(array::make_datatype<double>(), vshape, var_names);
+    FieldSet fieldset;
+    fieldset.add(mfield);
+    fieldset.add(Field("mask", make_datatype<int>(), array::make_shape(10)));
+
+    for (auto f : fieldset) {
+        f.allocateDevice();
+    }
+
+    auto field = fieldset.field(1);
+    auto view = array::make_view<double, 2>(field);
+    view(3,2) = 1.;
+
+    field.updateDevice();
+    auto dview = array::make_device_view<double, 2>(field);
+
+#if ! ATLAS_HAVE_GRIDTOOLS_STORAGE
+// TODO: gridtools storage does not implement view.index(...) at the moment
+
+    double* dptr = dview.data();
+#pragma acc parallel deviceptr(dptr)
+    {
+        double t = dptr[dview.index(3,2)];
+        dptr[dview.index(3,2)] = 1. + t;
+    }
+    field.updateHost();
+
+    EXPECT_EQ( view(3,2), 2. );
+
+#endif
+}
 //-----------------------------------------------------------------------------
 
 }  // namespace test
