@@ -12,8 +12,8 @@
 #include "hic/hic_config.h"
 #include "hic/hic_runtime.h"
 
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 
 #if HIC_BACKEND_DUMMY
 #define HIC_CALL(val)
@@ -27,12 +27,11 @@ inline void hic_assert(hicError_t err, const char* const func, const char* const
     //   --> ignore hicErrorDeinitialized (a.k.a. cudaErrorCudartUnloading / hipErrorDeinitialized)
     if (err != hicSuccess && err != hicErrorDeinitialized) {
         std::ostringstream msg;
-        msg << "HIC Runtime Error [code="<<err<<"] at: " << file << " + " << line << " : " << func << "\n";
+        msg << "HIC Runtime Error [code=" << err << "] at: " << file << " + " << line << " : " << func << "\n";
         msg << "  Reason: " << hicGetErrorString(err);
         throw std::runtime_error(msg.str());
     }
 }
 
 #define HIC_CHECK_KERNEL_LAUNCH() HIC_CALL(hicPeekAtLastError())
-#define HIC_CHECK_LAST_ERROR()    HIC_CALL(hicGetLastError())
-
+#define HIC_CHECK_LAST_ERROR() HIC_CALL(hicGetLastError())
