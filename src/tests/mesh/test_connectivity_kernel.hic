@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "hic/hic.h"
+#include "pluto/pluto.h"
 
 #include "atlas/mesh/Connectivity.h"
 #include "tests/AtlasTestEnvironment.h"
@@ -16,12 +16,13 @@
 template <typename T>
 class managed {
 public:
-    managed() {
-        hicMallocManaged(&data_, sizeof(T));
+    managed() :
+        alloc_(pluto::managed_resource()) {
+        data_ = alloc_.allocate(1);
     }
 
     ~managed() {
-        hicFree(data_);
+        alloc_.deallocate(data_, 1);
     }
 
     const T* data() const { return data_; }
@@ -32,6 +33,7 @@ public:
 
 private:
     T* data_;
+    pluto::allocator<T> alloc_;
 };
 
 using namespace atlas::mesh;
@@ -122,7 +124,7 @@ CASE( "test_block_connectivity" )
 
     kernel_block<<<1,1>>>(conn, result.data());
 
-    hicDeviceSynchronize();
+    pluto::wait();
 
     EXPECT( result.value() == true );
 
@@ -148,7 +150,7 @@ CASE( "test_irregular_connectivity" )
 
     kernel_irr<<<1,1>>>(conn, result.data());
 
-    hicDeviceSynchronize();
+    pluto::wait();
 
     EXPECT( result.value() == true );
 
@@ -173,7 +175,7 @@ CASE( "test_multiblock_connectivity" )
 
     kernel_multiblock<<<1,1>>>(conn, result.data());
 
-    hicDeviceSynchronize();
+    pluto::wait();
 
     EXPECT( result.value() == true );
 

@@ -13,7 +13,7 @@
 #include <memory>
 #include <sstream>
 
-#include "hic/hic.h"
+#include "pluto/pluto.h"
 
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
@@ -709,49 +709,23 @@ CASE("test_haloexchange") {
     Fixture f;
 
     SECTION("test_rank0_arrview") { test_rank0_arrview(f); }
-
     SECTION("test_rank1") { test_rank1(f); }
-
     SECTION("test_rank1_strided_v1") { test_rank1_strided_v1(f); }
-
     SECTION("test_rank1_strided_v2") { test_rank1_strided_v2(f); }
-
     SECTION("test_rank2") { test_rank2(f); }
-
     SECTION("test_rank2_l1") { test_rank2_l1(f); }
-
     SECTION("test_rank2_l2_v2") { test_rank2_l2_v2(f); }
-
     SECTION("test_rank2_v2") { test_rank2_v2(f); }
-
     SECTION("test_rank0_wrap") { test_rank0_wrap(f); }
-
     SECTION("test_rank1_paralleldim_1") { test_rank1_paralleldim1(f); }
-
     SECTION("test_rank2_paralleldim_2") { test_rank2_paralleldim2(f); }
-
     SECTION("test_rank1_cinterface") { test_rank1_cinterface(f); }
 }
 
-#if ATLAS_HAVE_GPU
-
 //-----------------------------------------------------------------------------
-
-static int devices() {
-    static int devices_ = [](){
-        int n = 0;
-        auto err = hicGetDeviceCount(&n);
-        if (err != hicSuccess) {
-            n = 0;
-            static_cast<void>(hicGetLastError());
-        }
-        return n;
-    }();
-    return devices_;
-}
-
+#if ATLAS_HAVE_GPU
 CASE("test_haloexchange on device") {
-    if (devices() == 0) {
+    if (pluto::devices() == 0) {
         Log::warning() << "\"test_haloexchange on device skipped\": No devices available" << std::endl;
         return;
     }
@@ -760,16 +734,11 @@ CASE("test_haloexchange on device") {
     Fixture f(on_device);
 
     SECTION("test_rank0_arrview") { test_rank0_arrview(f); }
-
     SECTION("test_rank1") { test_rank1(f); }
-
     SECTION("test_rank2") { test_rank2(f); }
-
     SECTION("test_rank0_wrap") { test_rank0_wrap(f); }
 }
 #endif
-
-
 //-----------------------------------------------------------------------------
 
 }  // namespace test

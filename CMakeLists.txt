@@ -79,6 +79,7 @@ add_subdirectory( hic )
 find_package(hic REQUIRED)
 
 add_subdirectory( pluto )
+find_package(pluto REQUIRED)
 
 include( features/BOUNDSCHECKING )
 include( features/FORTRAN )
