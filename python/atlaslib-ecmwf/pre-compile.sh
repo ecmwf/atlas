@@ -2,8 +2,8 @@
 
 # the procedure for adding a new ext dependency to be bundled in here:
 # - add git checkout, compile, etc
-# - ensure the version ends up in python_wrapper/src/versions.txt
-# - ensure the licence ends up in python_wrapper/src/copying/, and fname is referenced in copying/list.json
+# - ensure the version ends up in python/atlaslib-ecmwf/src/versions.txt
+# - ensure the licence ends up in python/atlaslib-ecmwf/src/copying/, and fname is referenced in copying/list.json
 # - ensure the .so ends up in target/lib64/ with the expected libname
 # - validate that the resulting wheel contains all the above
 # additionally, make sure this script is aligned with /buildscripts/compile.sh and /buildscripts/wheel-linux.sh,
@@ -11,7 +11,7 @@
 
 set -euo pipefail
 
-mkdir -p python_wrapper/src/copying
+mkdir -p python/atlaslib-ecmwf/src/copying
 
 bash ./tools/install-qhull.sh --prefix /tmp/qhull/target
 # copy the libs, instead of having auditwheel done it later. This is a bit risky because cmake will later write in this
@@ -26,8 +26,8 @@ else
     done
 fi
 
-wget https://raw.githubusercontent.com/qhull/qhull/master/COPYING.txt -O python_wrapper/src/copying/libqhull.txt
-echo '{"libqhull_r": {"path": "copying/libqhull.txt", "home": "https://github.com/qhull/qhull"}}' > python_wrapper/src/copying/list.json
+wget https://raw.githubusercontent.com/qhull/qhull/master/COPYING.txt -O python/atlaslib-ecmwf/src/copying/libqhull.txt
+echo '{"libqhull_r": {"path": "copying/libqhull.txt", "home": "https://github.com/qhull/qhull"}}' > python/atlaslib-ecmwf/src/copying/list.json
 
 
 
