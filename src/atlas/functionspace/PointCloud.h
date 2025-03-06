@@ -50,6 +50,7 @@ public:
     PointCloud(const Field& lonlat, const Field& ghost, const eckit::Configuration& = util::NoConfig());
     PointCloud(const FieldSet&, const eckit::Configuration& = util::NoConfig());  // assuming lonlat ghost ridx and partition present
     PointCloud(const Grid&, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const Grid&, const grid::Distribution&, const eckit::Configuration& = util::NoConfig());
     PointCloud(const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig());
     ~PointCloud() override {}
     std::string type() const override { return "PointCloud"; }
@@ -208,6 +209,7 @@ public:
     PointCloud(const std::vector<PointXYZ>&, const eckit::Configuration& = util::NoConfig());
     PointCloud(const std::initializer_list<std::initializer_list<double>>&, const eckit::Configuration& = util::NoConfig());
     PointCloud(const Grid&, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const Grid&, const grid::Distribution&, const eckit::Configuration& = util::NoConfig());
     PointCloud(const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig());
 
     operator bool() const { return valid(); }
