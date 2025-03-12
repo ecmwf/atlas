@@ -21,5 +21,7 @@ on:
 jobs:
   python-wrapper-wheel:
     name: Python Wrapper Wheel
-    uses: ecmwf-actions/reusable-workflows/.github/workflows/python-wrapper-wheel.yml@main
+    uses: ecmwf/reusable-workflows/.github/workflows/python-wrapper-wheel.yml@main
+    with: 
+      wheel_directory: python/atlaslib-ecmwf
     secrets: inherit
