@@ -25,6 +25,7 @@ class Configuration;
 namespace atlas {
 class FieldSet;
 class Field;
+class Grid;
 class Projection;
 namespace util {
 class Metadata;
@@ -106,6 +107,8 @@ public:
     virtual atlas::Field remote_index() const;
 
     virtual atlas::Field partition() const;
+
+    virtual atlas::Grid get_grid_copy() const;
 
     virtual atlas::Field global_index() const;
 

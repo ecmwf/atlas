@@ -13,6 +13,7 @@
 #include "atlas/array.h"
 #include "atlas/field.h"
 #include "atlas/functionspace/PointCloud.h"
+#include "atlas/grid/UnstructuredGrid.h"
 #include "atlas/option.h"
 #include "atlas/parallel/mpi/mpi.h"
 
@@ -157,6 +158,24 @@ CASE("test_createField") {
     EXPECT_EQ(f3.shape(0), 4);
     EXPECT_EQ(f3.shape(1), 3);
     EXPECT_EQ(f3.shape(2), 5);
+}
+
+//-----------------------------------------------------------------------------
+
+CASE("test_get_grid_copy") {
+    UnstructuredGrid grid(ref_xy());
+
+    FunctionSpace p1;
+    p1 = functionspace::PointCloud(grid);  // stores copy of Grid
+
+    FunctionSpace p2;
+    p2 = functionspace::PointCloud(ref_xy());  // no Grid
+
+    Grid gridP1 = p1.get_grid_copy();  // returns copy
+    Grid gridP2 = p2.get_grid_copy();  // creates via iterator
+
+    EXPECT(gridP1 == grid);
+    EXPECT(gridP1 == gridP2);
 }
 
 //-----------------------------------------------------------------------------

@@ -93,6 +93,8 @@ public:
 
     Field partition() const override;
 
+    Grid get_grid_copy() const override;
+
     std::string mpi_comm() const override { return mesh_.mpi_comm(); }
 
 private:  // methods

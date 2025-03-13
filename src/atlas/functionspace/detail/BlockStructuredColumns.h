@@ -105,6 +105,7 @@ public:
     Field xy() const { return structuredcolumns_->xy(); }
     Field z() const { return structuredcolumns_->z(); }
     Field partition() const override { return structuredcolumns_->partition(); }
+    Grid get_grid_copy() const override { return structuredcolumns_->get_grid_copy(); }
     Field global_index() const override { return structuredcolumns_->global_index(); }
     Field remote_index() const override { return structuredcolumns_->remote_index(); }
     Field index_i() const { return structuredcolumns_->index_i(); }

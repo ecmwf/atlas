@@ -11,6 +11,7 @@
 
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/field/Field.h"
+#include "atlas/grid.h"
 #include "atlas/functionspace/detail/FunctionSpaceImpl.h"
 
 namespace atlas {
@@ -84,6 +85,10 @@ Field FunctionSpace::remote_index() const {
 
 Field FunctionSpace::partition() const {
     return get()->partition();
+}
+
+Grid FunctionSpace::get_grid_copy() const {
+    return get()->get_grid_copy();
 }
 
 void FunctionSpace::haloExchange(const FieldSet& fields, bool on_device) const {

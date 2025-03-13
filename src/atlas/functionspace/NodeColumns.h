@@ -272,6 +272,8 @@ public:
 
     Field partition() const override { return nodes_.partition(); }
 
+    Grid get_grid_copy() const override { return mesh_.grid(); }
+
     const util::PartitionPolygon& polygon(idx_t halo = 0) const override { return mesh_.polygon(halo); }
 
     const util::PartitionPolygons& polygons() const override { return mesh_.polygons(); }

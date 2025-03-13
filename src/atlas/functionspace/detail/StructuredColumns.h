@@ -143,6 +143,7 @@ public:
     Field xy() const { return field_xy_; }
     Field z() const { return field_z_; }
     Field partition() const override { return field_partition_; }
+    Grid get_grid_copy() const override { return *grid_; }
     Field global_index() const override { return field_global_index_; }
     Field remote_index() const override {
         if (not field_remote_index_) {

@@ -22,6 +22,7 @@ class Configuration;
 namespace atlas {
 class Field;
 class FieldSet;
+class Grid;
 class Projection;
 namespace functionspace {
 class FunctionSpaceImpl;
@@ -94,6 +95,8 @@ public:
     Field remote_index() const;
 
     Field partition() const;
+
+    Grid get_grid_copy() const;
 
     const parallel::GatherScatter& gather() const;
     const parallel::GatherScatter& scatter() const;

@@ -20,6 +20,7 @@
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Iterator.h"
+#include "atlas/grid/UnstructuredGrid.h"
 #include "atlas/option/Options.h"
 #include "atlas/parallel/HaloExchange.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -156,6 +157,7 @@ PointCloud::PointCloud(const Grid& grid, const grid::Distribution& distribution,
     auto& comm = mpi::comm(mpi_comm_);
     double halo_radius;
     config.get("halo_radius", halo_radius = 0.);
+    grid_ = grid;
 
     part_ = comm.rank();
 
@@ -276,6 +278,40 @@ Field PointCloud::ghost() const {
         array::make_view<int, 1>(ghost_).assign(0);
     }
     return ghost_;
+}
+
+Grid PointCloud::get_grid_copy() const {
+    if (grid_) return grid_;
+
+    if (nb_partitions_ == 1) {
+        std::vector<PointXY> points;
+        points.reserve(size_global_);
+        for (const auto& point : iterate().xy()) {
+            points.push_back(point);
+        }
+        return UnstructuredGrid(points);
+    } else {
+        std::vector<double> points_x(size_global_, 0.0);
+        std::vector<double> points_y(size_global_, 0.0);
+        const auto gidx = array::make_view<gidx_t, 1>(global_index_);
+        const auto ghost = array::make_view<int, 1>(ghost_);
+        int i = 0;
+        for (const auto& point : iterate().xy()) {
+            if (ghost(i) != 0) continue;
+            points_x[gidx(i) - 1] = point.x();
+            points_y[gidx(i) - 1] = point.y();
+            i++;
+        }
+        const auto& comm = mpi::comm(mpi_comm_);
+        comm.allReduceInPlace(points_x.begin(), points_x.end(), eckit::mpi::sum());
+        comm.allReduceInPlace(points_y.begin(), points_y.end(), eckit::mpi::sum());
+        std::vector<PointXY> points;
+        points.reserve(size_global_);
+        for (int i = 0; i < points_x.size(); i++) {
+            points.emplace_back(PointXY{points_x[i], points_y[i]});
+        }
+        return UnstructuredGrid(points);
+    }
 }
 
 array::ArrayShape PointCloud::config_shape(const eckit::Configuration& config) const {
