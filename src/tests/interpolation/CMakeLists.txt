@@ -150,12 +150,18 @@ ecbuild_add_test( TARGET atlas_test_interpolation_binning
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
-ecbuild_add_test( TARGET atlas_test_interpolation_global_matrix
+ecbuild_add_test( TARGET atlas_test_par_interpolation_global_matrix
   SOURCES  test_interpolation_global_matrix.cc
   LIBS     atlas
   CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 6
   MPI      6
   OMP      1
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+ecbuild_add_test( TARGET atlas_test_interpolation_global_matrix
+  SOURCES  test_interpolation_global_matrix.cc
+  LIBS     atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
