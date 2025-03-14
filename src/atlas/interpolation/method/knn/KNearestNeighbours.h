@@ -39,6 +39,7 @@ private:
     using KNearestNeighboursBase::do_setup;
     virtual void do_setup(const FunctionSpace& source, const FunctionSpace& target) override;
     virtual void do_setup(const Grid& source, const Grid& target, const Cache&) override;
+    virtual void do_setup(const FunctionSpace& source, const FunctionSpace& target, const Cache&) override;
 
     FunctionSpace source_;
     FunctionSpace target_;
