@@ -46,11 +46,7 @@ linalg::SparseMatrixStorage assemble_global_matrix(const Interpolation& interpol
             auto local_matrix_storage = interpolation_cache.matrix();
             auto local_matrix = atlas::linalg::make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(local_matrix_storage);
 
-            const auto src_remote_index = array::make_indexview<idx_t, 1>(src_fs.remote_index());
-            idx_t one_if_structuredcolumns = (src_fs.type() == "StructuredColumns" ? 1 : 0);
-            auto src_ridx = [&](auto idx) -> idx_t {
-                return src_remote_index(idx) + one_if_structuredcolumns;
-            };
+            const auto src_ridx = array::make_indexview<idx_t, 1>(src_fs.remote_index());
 
             const auto src_global_index = array::make_view<gidx_t, 1>(src_fs.global_index());
             const auto tgt_global_index = array::make_view<gidx_t, 1>(tgt_fs.global_index());

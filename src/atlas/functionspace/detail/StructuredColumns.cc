@@ -41,7 +41,11 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/detail/Cache.h"
 
+#if ATLAS_HAVE_FORTRAN
+#define REMOTE_IDX_BASE 1
+#else
 #define REMOTE_IDX_BASE 0
+#endif
 
 namespace atlas {
 namespace functionspace {
