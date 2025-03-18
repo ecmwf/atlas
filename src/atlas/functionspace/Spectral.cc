@@ -184,6 +184,14 @@ std::string Spectral::distribution() const {
     return parallelisation_->distribution();
 }
 
+idx_t Spectral::part() const {
+  return mpi::rank();
+}
+
+idx_t Spectral::nb_parts() const {
+   return mpi::size();
+}
+
 size_t Spectral::footprint() const {
     size_t size = sizeof(*this);
     // TODO
