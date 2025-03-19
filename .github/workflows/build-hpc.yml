@@ -65,7 +65,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: ecmwf-actions/reusable-workflows/ci-hpc-generic@v2
+      - uses: ecmwf/reusable-workflows/ci-hpc-generic@v2
         with:
           site: ${{ matrix.site }}
           troika_user: ${{ secrets[matrix.troika_user_secret] }}
