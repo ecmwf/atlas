@@ -192,6 +192,7 @@ jobs:
 
             echo "::group::Test $name"
             export ATLAS_FINALISES_MPI=1
+            export ECKIT_MPI_WORKAROUND_SEGV_AT_EXIT=1
             echo "+ ctest --test-dir build --output-on-failure {{ ctest_options }}"
             ctest --test-dir build --output-on-failure {{ ctest_options }}
             echo "::endgroup::"

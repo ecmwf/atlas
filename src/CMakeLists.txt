@@ -119,6 +119,13 @@ add_subdirectory( atlas_acc_support )
 add_subdirectory( atlas )
 
 if( atlas_HAVE_FORTRAN )
+  if( atlas_HAVE_FCKIT_DEVELOP )
+    set( ATLAS_FCKIT_DEVELOP 1 )
+  else()
+    set( ATLAS_FCKIT_DEVELOP 0 )
+  endif()
+  ecbuild_parse_version( ${fckit_VERSION} PREFIX ATLAS_FCKIT )
+  math( EXPR ATLAS_FCKIT_VERSION_INT "( 10000 * ${ATLAS_FCKIT_VERSION_MAJOR} ) + ( 100 * ${ATLAS_FCKIT_VERSION_MINOR} ) + ${ATLAS_FCKIT_VERSION_PATCH}" )
  add_subdirectory( atlas_f )
 endif()
 
