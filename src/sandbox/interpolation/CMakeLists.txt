@@ -37,14 +37,20 @@ ecbuild_add_option( FEATURE NETCDF
                     REQUIRED_PACKAGES "NetCDF COMPONENTS C CXX" )
 
 ecbuild_add_executable(
-    TARGET  atlas-global-matrix
-    SOURCES atlas-global-matrix.cc
+    TARGET  atlas-global-unmatched-matrix
+    SOURCES atlas-global-unmatched-matrix.cc
+    LIBS    atlas
+)
+
+ecbuild_add_executable(
+    TARGET  atlas-interpolations
+    SOURCES atlas-interpolations.cc
             ScripIO.h
             ScripIO.cc
     LIBS    atlas
 )
 
-target_compile_definitions( atlas-global-matrix PRIVATE ATLAS_HAVE_NETCDF=${HAVE_NETCDF} )
+target_compile_definitions( atlas-interpolations PRIVATE ATLAS_HAVE_NETCDF=${HAVE_NETCDF} )
 if( HAVE_NETCDF )
-    target_link_libraries( atlas-global-matrix NetCDF::NetCDF_CXX )
+    target_link_libraries( atlas-interpolations NetCDF::NetCDF_CXX )
 endif()
