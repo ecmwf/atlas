@@ -274,7 +274,7 @@ jobs:
         dependency_cmake_options: |
           ecmwf/eckit: "-G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DENABLE_TESTS=OFF -DENABLE_ECKIT_CMD=OFF -DENABLE_ECKIT_SQL=OFF -DENABLE_WARNINGS=OFF"
           ecmwf/fckit: "-G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DENABLE_TESTS=OFF"
-        cmake_options: "-G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DATLAS_BITS_LOCAL=64 -DENABLE_WARNING_AS_ERROR=ON ${{ matrix.cmake_options }}"
+        cmake_options: "-G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DATLAS_BITS_LOCAL=64 -DENABLE_WARNING_AS_ERROR=ON -DENABLE_PMR=ON ${{ matrix.cmake_options }}"
         ctest_options: "${{ matrix.ctest_options }}"
 
     - name: Verify tools
