@@ -181,4 +181,28 @@ void copy_device_to_host(T& host, const std::unique_ptr<T, D>& device, stream_vi
     copy_device_to_host(&host, device.get(), s);
 }
 
+template <class T>
+void copy_host_to_device_2D(
+    T* device, std::size_t device_pitch,
+    const T* host, std::size_t host_pitch,
+    std::size_t width, std::size_t height) {
+
+    memcpy_host_to_device_2D(
+        device, device_pitch * sizeof(T),
+        host, host_pitch * sizeof(T),
+        width * sizeof(T), height);
+}
+
+template <class T>
+void copy_device_to_host_2D(
+    T* host, std::size_t host_pitch,
+    const T* device, std::size_t device_pitch,
+    std::size_t width, std::size_t height) {
+
+    memcpy_device_to_host_2D(
+        host, host_pitch * sizeof(T),
+        device, device_pitch * sizeof(T),
+        width * sizeof(T), height);
+}
+
 }  // namespace pluto
