@@ -44,7 +44,7 @@ static bool feature_MKL() {
 }  // namespace
 #endif
 
-#include "hic/hic.h"
+#include "pluto/pluto.h"
 
 #include "atlas_io/Trace.h"
 
@@ -127,24 +127,6 @@ static void init_data_paths(std::vector<std::string>& data_paths) {
     add_tokens(data_paths, eckit::LibResource<std::string, Library>("atlas-data-path;$ATLAS_DATA_PATH", ""), ":");
     add_tokens(data_paths, "~atlas/share", ":");
 }
-
-static std::size_t devices() {
-    if constexpr (ATLAS_HAVE_GPU) {
-        static std::size_t _devices = []() -> std::size_t {
-            int num_devices = 0;
-            auto err        = hicGetDeviceCount(&num_devices);
-            if (err) {
-                num_devices = 0;
-            }
-            return static_cast<std::size_t>(num_devices);
-        }();
-        return _devices;
-    }
-    else {
-        return 0;
-    }
-}
-
 
 }  // namespace
 
@@ -363,7 +345,7 @@ void Library::initialise(const eckit::Parametrisation& config) {
         out << "  OMP\n";
         out << "    max_threads   [" << atlas_omp_get_max_threads() << "] \n";
         out << "  GPU\n";
-        out << "    devices       [" << devices() << "] \n";
+        out << "    devices       [" << pluto::devices() << "] \n";
         out << "    OpenACC       [" << acc::devices() << "] \n";
         out << " \n";
         out << "  log.info        [" << str(info_) << "] \n";
