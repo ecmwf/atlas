@@ -9,7 +9,14 @@
  */
 #pragma once
 
+#include <cstddef>
 #include <iostream>
+#include <string>
+#include <string_view>
+
+namespace pluto {
+    class memory_tracker;
+}
 
 namespace pluto::trace {
 
@@ -45,8 +52,11 @@ extern OutputStream out;
 inline bool enabled() {
     return options().enabled;
 }
-inline void enable(bool value = true) {
-    options().enabled = value;
+inline bool enable(bool value = true) {
+    auto& opts = options();
+    bool previously_enabled = opts.enabled;
+    opts.enabled = value;
+    return previously_enabled;
 }
 inline void set(std::ostream& out) {
     options().out = &out;
@@ -57,5 +67,12 @@ inline void set_options(const Options& opts) {
 }
 
 std::string format_bytes(std::size_t bytes);
+
+namespace log {
+void allocate(std::string_view label, void* ptr, std::size_t bytes, std::size_t alignment, std::string_view resource_name, memory_tracker* memory_tracker);
+void deallocate(std::string_view label, void* ptr, std::size_t bytes, std::size_t alignment, std::string_view resource_name, memory_tracker* memory_tracker);
+void allocate_async(std::string_view label, void* ptr, std::size_t bytes, std::size_t alignment, void* stream, std::string_view resource_name, memory_tracker* memory_tracker);
+void deallocate_async(std::string_view label, void* ptr, std::size_t bytes, std::size_t alignment, void* stream, std::string_view resource_name, memory_tracker* memory_tracker);
+}
 
 }  // namespace pluto::trace
