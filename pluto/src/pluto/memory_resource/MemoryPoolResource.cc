@@ -115,7 +115,15 @@ void* MemoryPoolResource::do_allocate_async(std::size_t bytes, std::size_t align
 
 void MemoryPoolResource::do_deallocate(void* ptr, std::size_t bytes, std::size_t alignment) {
     std::lock_guard lock(mtx_);
-    if (pools_.size() == 1) {
+    bool use_upstream = false;
+    if (options_.largest_required_pool_block > 0 && bytes > options_.largest_required_pool_block) {
+        use_upstream = true;
+    }
+
+    if (use_upstream) {
+        upstream_->deallocate(ptr, bytes, alignment);
+    }
+    else if (pools_.size() == 1) {
         pools_[0]->deallocate(ptr, bytes, alignment);
     }
     else {
