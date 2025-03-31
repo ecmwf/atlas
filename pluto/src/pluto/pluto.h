@@ -11,6 +11,7 @@
 
 #include "pluto/pluto_config.h"
 
+#include "pluto/memory.h"
 #include "pluto/memory_resource.h"
 #include "pluto/memory_resource/AsyncMemoryResourceAdaptor.h"
 #include "pluto/memory_resource/DeviceMemoryResource.h"
