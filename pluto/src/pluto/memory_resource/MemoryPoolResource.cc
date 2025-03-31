@@ -12,6 +12,7 @@
 
 #include "TraceMemoryResource.h"
 #include "detail/GatorMemoryResource.h"
+#include "pluto/memory.h"
 #include "pluto/trace.h"
 
 #include <algorithm>
@@ -87,41 +88,90 @@ void set_default_pool_options(pool_options options) {
 
 static GatorMemoryResource* to_gator_resource(memory_resource* pool) {
     GatorMemoryResource* gator;
+#if PLUTO_DEBUGGING
     if (TraceMemoryResource* traced = dynamic_cast<TraceMemoryResource*>(pool)) {
         gator = dynamic_cast<GatorMemoryResource*>(traced->upstream_resource());
     }
     else {
         gator = dynamic_cast<GatorMemoryResource*>(pool);
     }
+#else
+    gator = dynamic_cast<GatorMemoryResource*>(pool);
+#endif
     return gator;
 }
 
 void* MemoryPoolResource::do_allocate(std::size_t bytes, std::size_t alignment) {
     std::lock_guard lock(mtx_);
-    return resource(bytes)->allocate(bytes, alignment);
+    auto* mr = resource(bytes);
+    void* ptr = mr->allocate(bytes, alignment);
+
+    bool used_upstream = (*mr == *upstream_);
+    if (used_upstream) {
+        if (trace::enabled() && name_.size()) {
+            trace::out << "PLUTO_TRACE    --> used instead of " << name_ << " as bytes > largest_required_pool_block (" << trace::format_bytes(options_.largest_required_pool_block) << ")\n";
+        }
+    }
+    else {
+        if (memory_tracker_) {
+            memory_tracker_->allocate(bytes);
+        }
+        if (name_.size() && trace::enabled()) {
+            trace::log::allocate(get_label(), ptr, bytes, alignment, name_, memory_tracker_);
+        }
+    }
+    return ptr;
 }
 
 void* MemoryPoolResource::do_allocate_async(std::size_t bytes, std::size_t alignment, stream_view s) {
     std::lock_guard lock(mtx_);
     auto* mr       = resource(bytes);
     auto* async_mr = dynamic_cast<async_memory_resource*>(mr);
+    void* ptr;
     if (async_mr) {
-        return async_mr->allocate_async(bytes, alignment, s);
+        ptr = async_mr->allocate_async(bytes, alignment, s);
     }
     else {
-        return mr->allocate(bytes, alignment);
+        ptr = mr->allocate(bytes, alignment);
     }
+    bool used_upstream = (*mr == *upstream_);
+    if (not used_upstream) {
+        if (memory_tracker_) {
+            memory_tracker_->allocate(bytes);
+        }
+        if (name_.size() && trace::enabled()) {
+            trace::log::allocate_async(get_label(), ptr, bytes, alignment, s.value(), name_, memory_tracker_);
+        }
+    }
+    return ptr;
 }
 
 void MemoryPoolResource::do_deallocate(void* ptr, std::size_t bytes, std::size_t alignment) {
+    do_deallocate_(ptr, bytes, alignment);
+}
+
+void MemoryPoolResource::do_deallocate_(void* ptr, std::size_t bytes, std::size_t alignment, bool in_callback) {
     std::lock_guard lock(mtx_);
+
     bool use_upstream = false;
     if (options_.largest_required_pool_block > 0 && bytes > options_.largest_required_pool_block) {
         use_upstream = true;
     }
 
+    if (not in_callback && not use_upstream) {
+        if (memory_tracker_) {
+            memory_tracker_->deallocate(bytes);
+        }
+        if (trace::enabled() && name_.size()) {
+            trace::log::deallocate(get_label(), ptr, bytes, alignment, name_, memory_tracker_);
+        }
+    }
+
     if (use_upstream) {
         upstream_->deallocate(ptr, bytes, alignment);
+        if (trace::enabled() && name_.size()) {
+            trace::out << "PLUTO_TRACE    --> used instead of " << name_ << " as bytes > largest_required_pool_block (" << trace::format_bytes(options_.largest_required_pool_block) << ")\n";
+        }
     }
     else if (pools_.size() == 1) {
         pools_[0]->deallocate(ptr, bytes, alignment);
@@ -151,7 +201,6 @@ void MemoryPoolResource::do_deallocate(void* ptr, std::size_t bytes, std::size_t
 
 struct AsyncAllocData {
     MemoryPoolResource* resource;
-    std::string label;
     void* ptr;
     std::size_t bytes;
     std::size_t alignment;
@@ -162,14 +211,8 @@ std::map<void*, std::queue<AsyncAllocData>> stream_callback_queue_;
 void callback_deallocate_async(void* stream) {
     auto& stream_queue        = stream_callback_queue_[stream];
     const AsyncAllocData& ctx = stream_queue.front();
-    if (ctx.label.size()) {
-        scoped_label label(ctx.label);
-        ctx.resource->deallocate(ctx.ptr, ctx.bytes, ctx.alignment);
-    }
-    else {
-        ctx.resource->deallocate(ctx.ptr, ctx.bytes, ctx.alignment);
-    }
-
+    constexpr bool in_callback = true;
+    ctx.resource->do_deallocate_(ctx.ptr, ctx.bytes, ctx.alignment, in_callback);
     stream_queue.pop();
 }
 
@@ -180,20 +223,39 @@ void MemoryPoolResource::do_deallocate_async(void* ptr, std::size_t bytes, std::
     // TODO: implement using
     //    __host__ ​cudaError_t cudaLaunchHostFunc ( cudaStream_t stream, cudaHostFn_t fn, void* userData )
     auto& stream_queue = stream_callback_queue_[s.value()];
-    stream_queue.emplace(AsyncAllocData{this, std::string{get_label()}, ptr, bytes, alignment});
+    stream_queue.emplace(AsyncAllocData{this, ptr, bytes, alignment});
     HIC_CALL(hicLaunchHostFunc(s.value<hicStream_t>(), callback_deallocate_async, s.value()));
+
+    if (memory_tracker_) {
+        memory_tracker_->deallocate(bytes);
+    }
+    if (name_.size() && trace::enabled()) {
+        trace::log::deallocate_async(get_label(),ptr, bytes, alignment, s.value(), name_, memory_tracker_);
+    }
 }
 
 
 void MemoryPoolResource::reserve(std::size_t bytes) {
+    // This reserve uses the pool api to allocate a large chunk of bytes
+    // This could fail when the largest_required_pool_block is set to a lower value than bytes
+
+    // Disable memory tracking and tracing for the pool itself, it should not count as a pool allocation.
+    // Note that the upstream memory resource may still be tracking!
+    bool memory_tracker_previously_enabled = memory_tracker_ ? memory_tracker_->enable(false) : false ;
+    std::string stored_name{name_};
+    name_.clear(); // a trick to disable logging this as an allocation of a variable
+
     deallocate(allocate(bytes), bytes);
+
+    // Restore memory tracking and tracing
+    name_ = stored_name; // restore name so that logging of variables will be available again
+    if (memory_tracker_previously_enabled) {
+        memory_tracker_->enable(true);
+    }
 }
 
 bool MemoryPoolResource::do_is_equal(const memory_resource& other) const noexcept {
-    if (this == &other) {
-        return true;
-    }
-    return false;
+    return (this == &other);
 }
 
 memory_resource* MemoryPoolResource::resource(std::size_t bytes) {
@@ -225,7 +287,7 @@ memory_resource* MemoryPoolResource::resource(std::size_t bytes) {
         GatorOptions options;
         options.initial_size = blocks_per_chunk * pool_block_size_;
         options.grow_size    = blocks_per_chunk * pool_block_size_;
-        if (trace::enabled()) {
+        if (trace::enabled() && PLUTO_DEBUGGING) {
             pools_[pool_index] = std::make_unique<TraceMemoryResource>(
                 "gator[" + bytes_to_string(pool_block_size_) + "]",
                 std::make_unique<GatorMemoryResource>(options, std::make_unique<TraceMemoryResource>(upstream_)));
@@ -280,6 +342,9 @@ void MemoryPoolResource::release() {
         }
     }
 #endif
+    if (name_.size() && trace::enabled()) {
+        trace::out << name_ << "::release()" << std::endl;
+    }
     pools_.clear();
 }
 
