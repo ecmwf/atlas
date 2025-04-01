@@ -21,7 +21,7 @@ class Cubic3D : public StructuredInterpolation3D<Cubic3DKernel> {
 public:
     Cubic3D(const Config&);
 
-    virtual std::string name() const override { return "Cubic3D"; };
+    virtual std::string name() const override { return "structured-tricubic"; };
 };
 
 }  // namespace method

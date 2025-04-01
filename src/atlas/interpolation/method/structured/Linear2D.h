@@ -21,7 +21,7 @@ class Linear2D : public StructuredInterpolation2D<LinearHorizontalKernel> {
 public:
     Linear2D(const Config&);
 
-    virtual std::string name() const override { return "Linear2D"; };
+    virtual std::string name() const override { return "structured-bilinear"; };
 };
 
 }  // namespace method

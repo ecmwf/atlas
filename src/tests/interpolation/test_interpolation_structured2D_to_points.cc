@@ -110,35 +110,35 @@ void do_test( std::string type, int input_halo, bool matrix_free, bool expect_fa
 }
 
 CASE("test structured-bilinear, halo 2, with matrix") {
-    EXPECT_NO_THROW( do_test("structured-linear2D",2,false,false) );
+    EXPECT_NO_THROW( do_test("structured-bilinear",2,false,false) );
 }
 
 CASE("test structured-bilinear, halo 2, without matrix") {
-    EXPECT_NO_THROW( do_test("structured-linear2D",2,true,false) );
+    EXPECT_NO_THROW( do_test("structured-bilinear",2,true,false) );
 }
 
 CASE("test structured-bilinear, halo 2, with matrix, expected failure") {
-    EXPECT_THROWS_AS( do_test("structured-linear2D",2,false,true), eckit::Exception );
+    EXPECT_THROWS_AS( do_test("structured-bilinear",2,false,true), eckit::Exception );
 }
 
 CASE("test structured-bilinear, halo 2, without matrix, expected failure") {
-    EXPECT_THROWS_AS( do_test("structured-linear2D",2,false,true), eckit::Exception );
+    EXPECT_THROWS_AS( do_test("structured-bilinear",2,false,true), eckit::Exception );
 }
 
 CASE("test structured-bilinear, halo 1, with matrix, expected failure") {
-    EXPECT_THROWS_AS( do_test("structured-linear2D",1,false,false), eckit::Exception );
+    EXPECT_THROWS_AS( do_test("structured-bilinear",1,false,false), eckit::Exception );
 }
 
 CASE("test structured-bilinear, halo 1, without matrix, expected failure") {
-    EXPECT_THROWS_AS( do_test("structured-linear2D",1,true,false), eckit::Exception );
+    EXPECT_THROWS_AS( do_test("structured-bilinear",1,true,false), eckit::Exception );
 }
 
 CASE("test structured-bicubic, halo 3, with matrix") {
-    EXPECT_NO_THROW( do_test("structured-cubic2D",3,false,false) );
+    EXPECT_NO_THROW( do_test("structured-bicubic",3,false,false) );
 }
 
 CASE("test structured-bicubic, halo 2, with matrix") {
-    EXPECT_THROWS_AS( do_test("structured-cubic2D",2,false,false), eckit::Exception );
+    EXPECT_THROWS_AS( do_test("structured-bicubic",2,false,false), eckit::Exception );
 }
 
 

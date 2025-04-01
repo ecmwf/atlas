@@ -18,7 +18,7 @@ namespace method {
 
 namespace {
 
-MethodBuilder<Linear3D> __builder1("structured-linear3D");
+MethodBuilder<Linear3D> __builder1("structured-trilinear");
 
 }  // namespace
 

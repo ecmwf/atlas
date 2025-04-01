@@ -21,7 +21,7 @@ class Linear3D : public StructuredInterpolation3D<Linear3DKernel> {
 public:
     Linear3D(const Config&);
 
-    virtual std::string name() const override { return "Linear3D"; };
+    virtual std::string name() const override { return "strucutred-trilinear"; };
 };
 
 }  // namespace method

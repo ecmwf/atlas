@@ -279,7 +279,7 @@ void do_test(bool limiter, int rank) {
     // read_tracer(field_ifs);
 
     atlas::util::Config config;
-    config.set("type", "structured-quasicubic2D");
+    config.set("type", "structured-quasibicubic");
     config.set("limiter", limiter);
     config.set("matrix_free", true);
     atlas::Interpolation interpolator(config, ifs_fs, dg_fs);
@@ -315,32 +315,32 @@ void do_test(bool limiter, int rank) {
     }
 }
 
-CASE("structured-quasicubic2D without limiter, rank 1") {
+CASE("structured-quasibicubic without limiter, rank 1") {
     bool limiter = false;
     int rank = 1;
     do_test(limiter, rank);
 }
-CASE("structured-quasicubic2D with limiter, rank 1") {
+CASE("structured-quasibicubic with limiter, rank 1") {
     bool limiter = true;
     int rank = 1;
     do_test(limiter, rank);
 }
-CASE("structured-quasicubic2D without limiter, rank 2") {
+CASE("structured-quasibicubic without limiter, rank 2") {
     bool limiter = false;
     int rank = 2;
     do_test(limiter, rank);
 }
-CASE("structured-quasicubic2D with limiter, rank 2") {
+CASE("structured-quasibicubic with limiter, rank 2") {
     bool limiter = true;
     int rank = 2;
     do_test(limiter, rank);
 }
-CASE("structured-quasicubic2D without limiter, rank 3") {
+CASE("structured-quasibicubic without limiter, rank 3") {
     bool limiter = false;
     int rank = 3;
     do_test(limiter, rank);
 }
-CASE("structured-quasicubic2D with limiter, rank 3") {
+CASE("structured-quasibicubic with limiter, rank 3") {
     bool limiter = true;
     int rank = 3;
     do_test(limiter, rank);
