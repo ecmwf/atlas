@@ -15,7 +15,6 @@
 
 #include "pluto/alignment.h"
 #include "pluto/pluto_config.h"
-#include "pluto/stream.h"
 #include "pluto/trace.h"
 #include "pluto/memory.h"
 
@@ -25,7 +24,7 @@
 
 namespace pluto {
 
-class HostMemoryResource : public async_memory_resource {
+class HostMemoryResource : public memory_resource {
 public:
     HostMemoryResource() = default;
 
@@ -36,9 +35,6 @@ private:
     void do_deallocate(void* ptr, std::size_t bytes, std::size_t alignment) override;
 
     bool do_is_equal(const memory_resource& other) const noexcept override;
-
-    void* do_allocate_async(std::size_t bytes, std::size_t alignment, stream_view) override;
-    void do_deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment, stream_view) override;
 };
 
 namespace {
@@ -58,7 +54,7 @@ struct constant_init {
 
 constant_init<HostMemoryResource>  host_res{};
 
-async_memory_resource* host_resource() {
+memory_resource* host_resource() {
     // Never destroyed due to constant_init!
     return &host_res.obj;
 }
@@ -91,15 +87,6 @@ void HostMemoryResource::do_deallocate(void* ptr, std::size_t bytes, std::size_t
     }
 
     new_delete_resource()->deallocate(ptr, bytes, alignment);
-}
-
-
-void* HostMemoryResource::do_allocate_async(std::size_t bytes, std::size_t alignment, stream_view) {
-    return do_allocate(bytes, alignment);
-}
-
-void HostMemoryResource::do_deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment, stream_view) {
-    do_deallocate(ptr, bytes, alignment);
 }
 
 bool HostMemoryResource::do_is_equal(const memory_resource& other) const noexcept {
