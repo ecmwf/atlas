@@ -61,6 +61,12 @@ public:
 
     Metadata execute_adjoint(Field& source, const Field& target) const;
 
+    std::string name() const {
+        return get()->name();
+    }
+    std::string type() const {
+        return get()->type();
+    }
     void print(std::ostream& out) const;
 
     const FunctionSpace& source() const;

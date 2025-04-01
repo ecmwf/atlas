@@ -20,6 +20,8 @@ namespace method {
 class Linear3D : public StructuredInterpolation3D<Linear3DKernel> {
 public:
     Linear3D(const Config&);
+
+    virtual std::string name() const override { return "Linear3D"; };
 };
 
 }  // namespace method

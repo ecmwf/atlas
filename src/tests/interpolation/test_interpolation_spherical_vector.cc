@@ -134,7 +134,7 @@ struct InterpSchemeFixtures {
     static const auto structuredLinear = option::type("structured-linear2D") |
                                          option::halo(1) |
                                          Config("adjoint", true);
-    static const auto structuredCubic = option::type("structured-bicubic") |
+    static const auto structuredCubic = option::type("structured-cubic2D") |
                                         option::halo(2) |
                                         Config("adjoint", true);
     static const auto sphericalVector =

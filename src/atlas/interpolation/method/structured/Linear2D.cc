@@ -19,9 +19,6 @@ namespace method {
 namespace {
 
 MethodBuilder<Linear2D> __builder1("structured-linear2D");
-MethodBuilder<Linear2D> __builder2("linear2D");
-MethodBuilder<Linear2D> __builder3("structured-bilinear");
-MethodBuilder<Linear2D> __builder4("bilinear");
 
 }  // namespace
 

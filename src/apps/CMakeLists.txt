@@ -34,3 +34,28 @@ ecbuild_add_executable(
   SOURCES     atlas-gaussian-latitudes.cc
   LIBS        atlas
   CONDITION   atlas_HAVE_ATLAS_GRID )
+
+ecbuild_add_executable(
+  TARGET  atlas-interpolations
+  SOURCES atlas-interpolations.cc
+          ../atlas/output/ScripIO.h
+          ../atlas/output/ScripIO.cc
+  LIBS    atlas
+)
+
+# Overcome Cray linking problem where the C++ library is not linked with the C library
+list( APPEND NetCDF_CXX_EXTRA_LIBRARIES NetCDF::NetCDF_C )
+
+ecbuild_add_option( FEATURE NETCDF
+                    DESCRIPTION "Compile support the SCRIP format"
+                    REQUIRED_PACKAGES "NetCDF COMPONENTS C CXX" )
+                    
+target_compile_definitions( atlas-interpolations PRIVATE ATLAS_HAVE_NETCDF=${HAVE_NETCDF} )
+if( HAVE_NETCDF )
+  target_link_libraries( atlas-interpolations NetCDF::NetCDF_CXX )
+endif()
+
+add_custom_command( TARGET atlas-interpolations POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy
+  ${CMAKE_CURRENT_SOURCE_DIR}/db_atlas_interpolations
+  ${CMAKE_BINARY_DIR} )

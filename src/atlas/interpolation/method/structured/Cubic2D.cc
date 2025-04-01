@@ -19,9 +19,6 @@ namespace method {
 namespace {
 
 MethodBuilder<Cubic2D> __builder1("structured-cubic2D");
-MethodBuilder<Cubic2D> __builder2("cubic2D");
-MethodBuilder<Cubic2D> __builder3("structured-bicubic");
-MethodBuilder<Cubic2D> __builder4("bicubic");
 
 }  // namespace
 

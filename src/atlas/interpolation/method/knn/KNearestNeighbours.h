@@ -30,6 +30,7 @@ public:
    * @param target functionspace containing target points
    */
 
+    virtual std::string name() const override { return "KNearestNeighbours"; }
     virtual void print(std::ostream&) const override {}
 
     virtual const FunctionSpace& source() const override { return source_; }

@@ -26,6 +26,9 @@ public:
     KNearestNeighboursBase(const Config& config): Method(config) {}
     virtual ~KNearestNeighboursBase() override {}
 
+    virtual std::string name() const override = 0;
+    virtual std::string type() const override { return "knn"; }
+
 protected:
     void buildPointSearchTree(Mesh& meshSource) { buildPointSearchTree(meshSource, mesh::Halo(meshSource)); }
     void buildPointSearchTree(Mesh& meshSource, const mesh::Halo&);

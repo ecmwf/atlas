@@ -20,6 +20,8 @@ namespace method {
 class QuasiCubic3D : public StructuredInterpolation3D<QuasiCubic3DKernel> {
 public:
     QuasiCubic3D(const Config&);
+
+    virtual std::string name() const override { return "QuasiCubic3D"; };
 };
 
 }  // namespace method

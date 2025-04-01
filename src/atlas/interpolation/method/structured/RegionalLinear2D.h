@@ -32,6 +32,8 @@ class RegionalLinear2D : public Method {
   RegionalLinear2D(const Config& config) : Method(config), comm_(eckit::mpi::comm()) {}
   ~RegionalLinear2D() override {}
 
+  virtual std::string name() const override { return "RegionalLinear2D"; };
+  virtual std::string type() const override { return "structured"; };
   void print(std::ostream&) const override;
   const FunctionSpace& source() const override { return source_; }
   const FunctionSpace& target() const override { return target_; }

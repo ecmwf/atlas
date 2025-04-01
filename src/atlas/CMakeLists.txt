@@ -453,6 +453,8 @@ output/Output.h
 output/Output.cc
 output/Gmsh.h
 output/Gmsh.cc
+output/ScripIO.h
+output/ScripIO.cc
 output/detail/GmshIO.cc
 output/detail/GmshIO.h
 output/detail/GmshImpl.cc

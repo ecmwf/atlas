@@ -37,6 +37,8 @@ public:
 
     ~StructuredInterpolation2D() override {}
 
+    virtual std::string name() const override = 0;
+    virtual std::string type() const override { return "structured"; }
     void print(std::ostream&) const override;
 
     const Kernel& kernel() const { return *kernel_; }
