@@ -185,5 +185,16 @@ void ArraySpec::allocate_fortran_specs() {
     }
 }
 
+
+static thread_local std::string label_;
+
+std::string_view label::get() {
+    return label_;
+}
+
+void label::set(std::string_view s) {
+    label_.assign(s.data(),s.size());
+}
+
 }  // namespace array
 }  // namespace atlas
