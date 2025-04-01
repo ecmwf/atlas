@@ -38,8 +38,14 @@ void set_label(std::string_view);
 void unset_label();
 class scoped_label {
 public:
-    scoped_label(std::string_view s) { set_label(s); }
-    ~scoped_label() { unset_label(); }
+    scoped_label(std::string_view s) :
+        previous_(get_label()) {
+        set_label(s); }
+    ~scoped_label() {
+        set_label(previous_);
+    }
+private:
+    std::string previous_;
 };
 
 using memory_resource = STD_PMR::memory_resource;
