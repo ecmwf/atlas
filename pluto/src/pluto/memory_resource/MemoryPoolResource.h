@@ -15,6 +15,8 @@
 
 #include "pluto/memory_resource.h"
 
+#include "pluto/trace.h"
+
 namespace pluto {
 
 pool_options get_default_pool_options();
@@ -32,6 +34,11 @@ public:
     MemoryPoolResource(const pool_options& options): MemoryPoolResource(options, get_default_resource()) {}
     MemoryPoolResource(): MemoryPoolResource(get_default_pool_options(), get_default_resource()) {}
 
+    MemoryPoolResource(memory_resource* upstream, const std::string& name, memory_tracker* memory_tracker): MemoryPoolResource(get_default_pool_options(), upstream) {
+        name_ = name;
+        memory_tracker_ = memory_tracker;
+    }
+
     virtual ~MemoryPoolResource() { release(); }
 
     void release() override;
@@ -45,6 +52,8 @@ public:
     memory_resource* upstream_resource() const override { return upstream_; }
 
     pool_options options() const override { return options_; }
+
+    void do_deallocate_(void* ptr, std::size_t bytes, std::size_t alignment, bool in_callback = false);
 
 protected:
     void* do_allocate(std::size_t bytes, std::size_t alignment) override;
@@ -61,6 +70,8 @@ private:
     pool_options options_;
     std::unique_ptr<memory_resource> owned_upstream_;
     memory_resource* upstream_;
+    std::string name_;
+    memory_tracker* memory_tracker_{nullptr};
     std::vector<std::unique_ptr<memory_resource>> pools_;
     std::vector<std::size_t> pool_block_sizes_;
     memory_resource* pool_;

@@ -37,7 +37,7 @@ protected:
         // void* ptr = ::operator new(bytes, std::align_val_t(alignment));
         // return ptr;
     }
-    virtual void do_deallocate(void* ptr, std::size_t bytes, std::size_t alignment) override {
+    virtual void do_deallocate(void* ptr, std::size_t /*bytes*/, std::size_t /*alignment*/) override {
 
         // This implementation is backward compatible, not relying on C++17 headers,
         // which is the point of this compat in the first place

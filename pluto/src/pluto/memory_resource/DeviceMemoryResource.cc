@@ -15,9 +15,11 @@
 
 #include "hic/hic.h"
 
+#include "pluto/alignment.h"
 #include "pluto/pluto_config.h"
 #include "pluto/runtime.h"
 #include "pluto/stream.h"
+#include "pluto/memory.h"
 #include "pluto/trace.h"
 
 #include "MemoryPoolResource.h"
@@ -25,6 +27,25 @@
 #define LOG PLUTO_DEBUGGING
 
 namespace pluto {
+
+class DeviceMemoryResource : public async_memory_resource {
+public:
+    using alignment_t                      = std::size_t;
+    static constexpr alignment_t alignment = default_alignment();
+
+    DeviceMemoryResource() = default;
+
+    ~DeviceMemoryResource() = default;
+
+private:
+    void* do_allocate(std::size_t bytes, alignment_t) override;
+    void do_deallocate(void* ptr, std::size_t bytes, std::size_t alignment) override;
+
+    bool do_is_equal(const memory_resource& other) const noexcept override;
+
+    void* do_allocate_async(std::size_t bytes, alignment_t, stream_view) override;
+    void do_deallocate_async(void* ptr, std::size_t bytes, std::size_t alignment, stream_view) override;
+};
 
 namespace {
 template<typename T>
@@ -34,8 +55,8 @@ struct constant_init {
     };
     constexpr constant_init() : obj() { }
 
-    template<typename U>
-    explicit constexpr constant_init(U arg) : obj(arg) { }
+    template<typename ...Args>
+    explicit constexpr constant_init(Args... args) : obj(args...) { }
 
     ~constant_init() { /* do nothing, union member is not destroyed */ }
 };
@@ -44,12 +65,14 @@ struct constant_init {
 constant_init<DeviceMemoryResource>  device_res{};
 
 async_memory_resource* device_resource() {
+    // Never destroyed due to constant_init!
     return &device_res.obj;
 }
 
 memory_pool_resource* device_pool_resource() {
-    static MemoryPoolResource resource(device_resource());
-    return &resource;
+    // Never destroyed due to constant_init!
+    static constant_init<MemoryPoolResource> device_pool_res{device_resource(), "pluto::device_pool_resource", &pluto::memory::device_pool};
+    return &device_pool_res.obj;
 }
 
 void* DeviceMemoryResource::do_allocate(std::size_t bytes, alignment_t) {
@@ -69,14 +92,9 @@ void* DeviceMemoryResource::do_allocate(std::size_t bytes, alignment_t) {
         std::cout << "               + hicMalloc(ptr:" << ptr << ", bytes:" << bytes << ");" << std::endl;
     }
 
+    memory::device.allocate(bytes);
     if (trace::enabled()) {
-        std::string_view label = pluto::get_label();
-        if (label.empty()) {
-            trace::out << "PLUTO_TRACE " << "pluto::device_resource::allocate(bytes="<<trace::format_bytes(bytes)<<", alignment="<<alignment<<") -> ptr=" << ptr << '\n';
-        }
-        else {
-            trace::out << "PLUTO_TRACE " << "pluto::device_resource::allocate(label="<<label<<", bytes="<<trace::format_bytes(bytes)<<", alignment="<<alignment<<") -> ptr=" << ptr << '\n';
-        }
+        trace::log::allocate(get_label(), ptr, bytes, alignment, "pluto::device_resource", &memory::device);
     }
 
     return ptr;
@@ -84,14 +102,9 @@ void* DeviceMemoryResource::do_allocate(std::size_t bytes, alignment_t) {
 
 void DeviceMemoryResource::do_deallocate(void* ptr, std::size_t bytes, alignment_t) {
 
+    memory::device.deallocate(bytes);
     if (trace::enabled()) {
-        std::string_view label = pluto::get_label();
-        if (label.empty()) {
-            trace::out << "PLUTO_TRACE " << "pluto::device_resource::deallocate(ptr="<<ptr<<", bytes="<<trace::format_bytes(bytes)<<", alignment="<<alignment<<")" << std::endl;
-        }
-        else {
-            trace::out << "PLUTO_TRACE " << "pluto::device_resource::deallocate(label="<<label<<", ptr="<<ptr<<", bytes="<<trace::format_bytes(bytes)<<", alignment="<<alignment<<")" << std::endl;
-        }
+        trace::log::deallocate(get_label(), ptr, bytes, alignment, "pluto::device_resource", &memory::device);
     }
 
     if constexpr (PLUTO_HAVE_HIC) {
@@ -124,28 +137,18 @@ void* DeviceMemoryResource::do_allocate_async(std::size_t bytes, alignment_t, st
                   << ");" << std::endl;
     }
 
+    memory::device.allocate(bytes);
     if (trace::enabled()) {
-        std::string_view label = pluto::get_label();
-        if (label.empty()) {
-            trace::out << "PLUTO_TRACE " << "pluto::device_resource::allocate_async(bytes="<<trace::format_bytes(bytes)<<", alignment="<<alignment<<", stream="<< s.value()<<") -> ptr=" << ptr << '\n';
-        }
-        else {
-            trace::out << "PLUTO_TRACE " << "pluto::device_resource::allocate_async(label="<<label<<", bytes="<<trace::format_bytes(bytes)<<", alignment="<<alignment<<", stream="<< s.value()<<") -> ptr=" << ptr << '\n';
-        }
+        trace::log::allocate_async(get_label(), ptr, bytes, alignment, s.value(), "pluto::device_resource", &memory::device);
     }
 
     return ptr;
 }
 
 void DeviceMemoryResource::do_deallocate_async(void* ptr, std::size_t bytes, alignment_t, stream_view s) {
+    memory::device.deallocate(bytes);
     if (trace::enabled()) {
-        std::string_view label = pluto::get_label();
-        if (label.empty()) {
-            trace::out << "PLUTO_TRACE " << "pluto::device_resource::deallocate_async(ptr="<<ptr<<", bytes="<<trace::format_bytes(bytes)<<", alignment="<<alignment<<", stream="<<s.value()<<")" << std::endl;
-        }
-        else {
-            trace::out << "PLUTO_TRACE " << "pluto::device_resource::deallocate_async(label="<<label<<", ptr="<<ptr<<", bytes="<<trace::format_bytes(bytes)<<", alignment="<<alignment<<", stream="<<s.value()<<")" << std::endl;
-        }
+        trace::log::deallocate_async(get_label(), ptr, bytes, alignment, s.value(), "pluto::device_resource", &memory::device);
     }
 
     if constexpr (PLUTO_HAVE_HIC) {
@@ -161,10 +164,7 @@ void DeviceMemoryResource::do_deallocate_async(void* ptr, std::size_t bytes, ali
 }
 
 bool DeviceMemoryResource::do_is_equal(const memory_resource& other) const noexcept {
-    if (this == &other) {
-        return true;
-    }
-    return false;
+    return (this == &other);
 }
 
 // ---------------------------------------------------------------------------------------------------------

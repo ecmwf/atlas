@@ -179,4 +179,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
 
     allocator.deallocate(h_array, size);
     // No need to deallocate d_array !
+
+    std::cout << pluto::memory::report() << std::endl;
 }

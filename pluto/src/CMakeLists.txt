@@ -45,6 +45,8 @@ ecbuild_add_library( TARGET pluto
     pluto/host/MemoryResource.cc
     pluto/host/MemoryResource.h
 
+    pluto/memory.cc
+    pluto/memory.h
     pluto/memory_resource.h
     pluto/memory_resource/AsyncMemoryResourceAdaptor.cc
     pluto/memory_resource/AsyncMemoryResourceAdaptor.h

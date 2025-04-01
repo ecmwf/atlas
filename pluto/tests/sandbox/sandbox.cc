@@ -212,7 +212,7 @@ int main(int argc, char* argv[]) {
   // std::pmr::memory_resource* mr = std::pmr::new_delete_resource();
   auto new_delete_resource = std::make_unique<TraceMemoryResource>("new_delete_resource", std::pmr::new_delete_resource());
 
-  auto pinned_resource =  std::make_unique<TraceMemoryResource>("pinned_resource", std::make_unique<PinnedMemoryResource>());
+  auto pinned_resource =  std::make_unique<TraceMemoryResource>("pinned_resource", pluto::pinned_resource());
 
   auto mr = std::make_unique<TraceMemoryResource>("pool", std::make_unique<host::AlignedMemoryPoolResource>(pinned_new_delete.get()));
 
@@ -283,7 +283,7 @@ int main(int argc, char* argv[]) {
 
     auto pinned_resource = Register(
         "pinned",
-        std::make_unique<TraceMemoryResource>("pinned", std::make_unique<PinnedMemoryResource>()));
+        std::make_unique<TraceMemoryResource>("pinned", pluto::pinned_resource()));
 
     host::set_default_resource(null_memory_resource());
 
@@ -303,7 +303,7 @@ int main(int argc, char* argv[]) {
     auto pinned_pool =
         Register("pinned_pool",
                  std::make_unique<TraceMemoryResource>(
-                     "pinned_pool", std::make_unique<MemoryPoolResource>(std::make_unique<PinnedMemoryResource>())));
+                     "pinned_pool", pluto::pinned_pool_resource()));
 
     register_resource(
         "malloc_free",

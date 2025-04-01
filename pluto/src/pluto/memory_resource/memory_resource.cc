@@ -19,6 +19,7 @@
 #include "DeviceMemoryResource.h"
 #include "ManagedMemoryResource.h"
 #include "PinnedMemoryResource.h"
+#include "HostMemoryResource.h"
 #include "pluto/device/MemoryResource.h"
 #include "pluto/host/MemoryResource.h"
 

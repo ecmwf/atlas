@@ -11,6 +11,7 @@
 
 #include "pluto/pluto_config.h"
 
+#include "pluto/memory.h"
 #include "pluto/memory_resource.h"
 #include "pluto/memory_resource/AsyncMemoryResourceAdaptor.h"
 #include "pluto/memory_resource/DeviceMemoryResource.h"
@@ -37,3 +38,15 @@
 #include "pluto/pointer_info.h"
 #include "pluto/runtime.h"
 #include "pluto/scope.h"
+
+namespace pluto {
+inline void release() {
+    if (trace::enabled()) {
+        trace::out << "pluto::release()" << std::endl;
+    }
+    pluto::host_pool_resource()->release();
+    pluto::pinned_pool_resource()->release();
+    pluto::device_pool_resource()->release();
+    pluto::managed_pool_resource()->release();
+}
+}

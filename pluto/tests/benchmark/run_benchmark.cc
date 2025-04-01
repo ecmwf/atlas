@@ -33,12 +33,11 @@ void setup_resources(std::size_t bytes) {
         register_resource("heap", std::make_unique<TraceMemoryResource>("heap", new_delete_resource()));
     [[maybe_unused]] auto pinned_resource = register_resource(
         "pinned",
-        std::make_unique<TraceMemoryResource>("pinned", std::make_unique<PinnedMemoryResource>()));
+        std::make_unique<TraceMemoryResource>("pinned", pluto::pinned_resource()));
     [[maybe_unused]] auto pinned_pool_resource = register_resource(
         "pinned_pool",
         std::make_unique<TraceMemoryResource>(
-            "pinned_pool", std::make_unique<MemoryPoolResource>(std::make_unique<TraceMemoryResource>(
-                               "pinned", std::make_unique<PinnedMemoryResource>()))));
+            "pinned_pool", pluto::pinned_pool_resource()));
     pinned_pool_resource->deallocate(pinned_pool_resource->allocate(4 * bytes), 4 * bytes);
 
     [[maybe_unused]] auto managed_resource =
