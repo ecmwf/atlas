@@ -40,6 +40,8 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
+MethodBuilder<ConservativeSphericalPolygonInterpolation> __builder("conservative-spherical-polygon");
+
 using runtime::trace::StopWatch;
 using util::ConvexSphericalPolygon;
 
@@ -65,9 +67,6 @@ template<typename ConvexSphericalPolygonContainer>
 std::string to_json(const ConvexSphericalPolygonContainer& polygons, int precision = 0) {
     return to_json(polygons.begin(),polygons.end(),precision);
 }
-
-
-MethodBuilder<ConservativeSphericalPolygonInterpolation> __builder("conservative-spherical-polygon");
 
 template <typename It>
 std::string polygons_to_json(const It& begin, const It& end, int precision = 0) {
