@@ -18,7 +18,10 @@ namespace method {
 
 namespace {
 
-MethodBuilder<QuasiCubic2D> __builder1("structured-quasibicubic");
+MethodBuilder<QuasiCubic2D> __builder1("structured-quasicubic2D");
+MethodBuilder<QuasiCubic2D> __builder2("structured-biquasicubic", /*deprecated*/ true);
+MethodBuilder<QuasiCubic2D> __builder3("quasicubic2D", /*deprecated*/ true);
+MethodBuilder<QuasiCubic2D> __builder4("biquasicubic", /*deprecated*/ true);
 
 }  // namespace
 

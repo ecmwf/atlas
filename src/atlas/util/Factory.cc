@@ -81,7 +81,9 @@ std::vector<std::string> FactoryRegistry::keys() const {
     std::vector<std::string> _keys;
     _keys.reserve(factories_.size());
     for (const auto& key_value : factories_) {
-        _keys.emplace_back(key_value.first);
+        if (not key_value.second->deprecated_) {
+            _keys.emplace_back(key_value.first);
+        }
     }
     return _keys;
 }
@@ -89,17 +91,20 @@ std::vector<std::string> FactoryRegistry::keys() const {
 void FactoryRegistry::list(std::ostream& out) const {
     lock_guard lock(mutex_);
     const char* sep = "";
-    for (const auto& map_pair : factories_) {
-        out << sep << map_pair.first;
-        sep = ", ";
+    for (const auto& key_value : factories_) {
+        if (key_value.second->deprecated_) {
+            out << sep << key_value.first;
+            sep = ", ";
+        }
     }
 }
 
 
 //----------------------------------------------------------------------------------------------------------------------
 
-FactoryBase::FactoryBase(FactoryRegistry& registry, const std::string& builder):
+FactoryBase::FactoryBase(FactoryRegistry& registry, const std::string& builder, bool deprecated):
     registry_(registry), builder_(builder) {
+    deprecated_ = deprecated;
     if (not builder_.empty()) {
         registry_.add(builder, this);
     }

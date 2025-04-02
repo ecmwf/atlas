@@ -57,9 +57,10 @@ private:
     FactoryRegistry& registry_;
     std::string builder_;
     std::shared_ptr<FactoryRegistry> attached_registry_;
+    bool deprecated_{false};
 
 protected:
-    FactoryBase(FactoryRegistry&, const std::string& builder);
+    FactoryBase(FactoryRegistry&, const std::string& builder, bool deprecated = false);
     virtual ~FactoryBase();
     void attach_registry(const std::shared_ptr<FactoryRegistry>& registry) { attached_registry_ = registry; }
     friend class FactoryRegistry;
@@ -77,7 +78,7 @@ public:
     static bool has(const std::string& builder) { return registry().has(builder); }
     static T* get(const std::string& builder) { return dynamic_cast<T*>(registry().get(builder)); }
 
-    Factory(const std::string& builder = ""): FactoryBase(registry(), builder) {
+    Factory(const std::string& builder = "", bool deprecated = false): FactoryBase(registry(), builder, deprecated) {
         if (not builder.empty()) {
             attach_registry(FactoryRegistry::instance(T::className()));
         }

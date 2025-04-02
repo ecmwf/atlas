@@ -47,7 +47,7 @@ static Config scheme() {
         scheme.set("halo", 2);
     }
     if (scheme_str == "quasicubic") {
-        scheme.set("type", "structured-quasibicubic");
+        scheme.set("type", "structured-biquasicubic");
         scheme.set("halo", 2);
     }
     scheme.set("name", scheme_str);
