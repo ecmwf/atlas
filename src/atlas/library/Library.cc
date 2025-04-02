@@ -23,10 +23,14 @@
 #include "eckit/log/OStreamTarget.h"
 #include "eckit/log/PrefixTarget.h"
 #include "eckit/runtime/Main.h"
+
+#include "pluto/pluto.h"
+
 #include "eckit/system/SystemInfo.h"
 #include "eckit/types/Types.h"
 #include "eckit/utils/Translator.h"
 #include "eckit/system/LibraryManager.h"
+
 
 #if ATLAS_ECKIT_HAVE_ECKIT_585
 #include "eckit/linalg/LinearAlgebraDense.h"
@@ -358,6 +362,8 @@ void Library::initialise(const eckit::Parametrisation& config) {
         out << atlas::Library::instance().information();
         out << std::flush;
     }
+
+    pluto::trace::set(eckit::Log::info());
 }
 
 
@@ -373,6 +379,7 @@ void Library::finalise() {
 
     if (ATLAS_HAVE_TRACE && trace_report_) {
         Log::info() << atlas::Trace::report() << std::endl;
+        Log::info() << pluto::memory::report() << std::endl;
     }
 
     if (getEnv("ATLAS_FINALISES_MPI", false)) {
@@ -384,6 +391,12 @@ void Library::finalise() {
     // destroyed before eckit::Log::info gets destroyed.
     // Just in case someone still tries to log, we reset to empty channels.
     trace_channel_.reset(new eckit::Channel());
+
+    if (pluto::trace::enabled()) {
+        Log::debug() << "Disabling pluto::trace during atlas::Library::finalise()" << std::endl;
+        pluto::trace::out << "PLUTO_TRACE pluto::trace::enable(false)" << std::endl;
+    }
+    pluto::trace::enable(false);
 
     Log::debug() << "Atlas finalised" << std::endl;
 

@@ -104,10 +104,15 @@ static GatorMemoryResource* to_gator_resource(memory_resource* pool) {
 void* MemoryPoolResource::do_allocate(std::size_t bytes, std::size_t alignment) {
     std::lock_guard lock(mtx_);
     auto* mr = resource(bytes);
+    bool use_upstream = (*mr == *upstream_);
+
+    if (not use_upstream) {
+        alignment = std::max(alignment, default_alignment());
+    }
+    
     void* ptr = mr->allocate(bytes, alignment);
 
-    bool used_upstream = (*mr == *upstream_);
-    if (used_upstream) {
+    if (use_upstream) {
         if (trace::enabled() && name_.size()) {
             trace::out << "PLUTO_TRACE    --> used instead of " << name_ << " as bytes > largest_required_pool_block (" << trace::format_bytes(options_.largest_required_pool_block) << ")\n";
         }
@@ -156,6 +161,10 @@ void MemoryPoolResource::do_deallocate_(void* ptr, std::size_t bytes, std::size_
     bool use_upstream = false;
     if (options_.largest_required_pool_block > 0 && bytes > options_.largest_required_pool_block) {
         use_upstream = true;
+    }
+
+    if (not use_upstream) {
+        alignment = std::max(alignment, default_alignment());
     }
 
     if (not in_callback && not use_upstream) {

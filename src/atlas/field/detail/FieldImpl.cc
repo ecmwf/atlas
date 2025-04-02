@@ -61,6 +61,7 @@ FieldImpl::FieldImpl(const std::string& name, array::DataType datatype, const ar
     :functionspace_(new FunctionSpace())
 #endif
 {
+    array::label label(name);
     array_ = array::Array::create(datatype, shape);
     array_->attach();
     rename(name);
@@ -73,6 +74,7 @@ FieldImpl::FieldImpl(const std::string& name, array::DataType datatype, array::A
     :functionspace_(new FunctionSpace())
 #endif
 {
+    array::label label(name);
     array_ = array::Array::create(datatype, std::move(spec));
     array_->attach();
     rename(name);
