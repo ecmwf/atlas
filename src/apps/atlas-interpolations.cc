@@ -436,14 +436,16 @@ std::string AtlasInterpolations::get_matrix_name(std::string& sgrid, std::string
 
 Config AtlasInterpolations::create_fspaces(const std::string& scheme_str, const Grid& input_grid, const Grid& output_grid,
         FunctionSpace& fs_in, FunctionSpace& fs_out) {
-    Config scheme = interpolation_config(scheme_str);
+    const Config scheme = interpolation_config(scheme_str);
     auto scheme_type = scheme.getString("type");
     if (scheme_type == "finite-element" || scheme_type == "unstructured-bilinear-lonlat") {
         auto inmesh = Mesh(input_grid);
-        if (input_grid.name() == "ORCA") {
-            scheme.set("halo", 1);
+        if (input_grid.type() == "ORCA") {
+            fs_in = functionspace::NodeColumns(inmesh);
         }
-        fs_in = functionspace::NodeColumns(inmesh, scheme);
+        else {
+            fs_in = functionspace::NodeColumns(inmesh, option::halo(1));
+        }
         auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::MatchingPartitioner(inmesh);
         fs_out = functionspace::PointCloud(output_grid, partitioner);
     }
