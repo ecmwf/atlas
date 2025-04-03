@@ -288,7 +288,7 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
         if (not args.has("force") && not available_combination(sgrid, tgrid, interpolation_method)) {
             Log::info() << "This interpolator is not available for these grids." << std::endl;
             Log::info() << "Run\n\t./bin/atlas-interpolations --sgrid " << sgrid.name() << " --tgrid " << tgrid.name()
-                << tgrid_name << "\n to see the list of available interpolators for these grid." << std::endl;
+                << "--list\n to see the list of available interpolators for these grid." << std::endl;
             return failed();
         };
 

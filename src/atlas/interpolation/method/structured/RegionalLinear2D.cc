@@ -20,9 +20,8 @@ namespace method {
 
 namespace {
 
-MethodBuilder<RegionalLinear2D> __builder1("regional-linear2D");
-MethodBuilder<RegionalLinear2D> __builder2("regional-linear-2d", /*deprecated*/ true);
-MethodBuilder<RegionalLinear2D> __builder3("regional-bilinear", /*deprecated*/ true);
+MethodBuilder<RegionalLinear2D> __builder3("regional-bilinear");
+MethodBuilder<RegionalLinear2D> __builder2("regional-linear-2d", util::FactoryDeprecated("Please use regional-bilinear"));
 
 }
 

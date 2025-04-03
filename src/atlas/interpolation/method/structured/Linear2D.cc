@@ -18,10 +18,12 @@ namespace method {
 
 namespace {
 
-MethodBuilder<Linear2D> __builder2("structured-linear2D");
-MethodBuilder<Linear2D> __builder1("structured-bilinear", /*deprecated*/ true);
-MethodBuilder<Linear2D> __builder3("linear2D", /*deprecated*/ true);
-MethodBuilder<Linear2D> __builder4("bilinear", /*deprecated*/ true);
+using util::FactoryDeprecated;
+
+MethodBuilder<Linear2D> __builder2("structured-bilinear");
+MethodBuilder<Linear2D> __builder1("structured-linear2D", FactoryDeprecated("Please use structured-bilinear"));
+MethodBuilder<Linear2D> __builder3("linear2D", FactoryDeprecated("Please use structured-bilinear"));
+MethodBuilder<Linear2D> __builder4("bilinear", FactoryDeprecated("Please use structured-bilinear"));
 
 }  // namespace
 

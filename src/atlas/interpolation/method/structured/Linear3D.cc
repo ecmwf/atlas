@@ -18,10 +18,12 @@ namespace method {
 
 namespace {
 
-MethodBuilder<Linear3D> __builder2("structured-linear3D");
-MethodBuilder<Linear3D> __builder1("structured-trilinear", /*deprecated*/ true);
-MethodBuilder<Linear3D> __builder3("linear3D", /*deprecated*/ true);
-MethodBuilder<Linear3D> __builder4("trilinear", /*deprecated*/ true);
+using util::FactoryDeprecated;
+
+MethodBuilder<Linear3D> __builder2("structured-trilinear");
+MethodBuilder<Linear3D> __builder1("structured-linear3D", FactoryDeprecated("Please use structured-trilinear"));
+MethodBuilder<Linear3D> __builder3("linear3D", FactoryDeprecated("Please use structured-trilinear"));
+MethodBuilder<Linear3D> __builder4("trilinear", FactoryDeprecated("Please use structured-trilinear"));
 
 }  // namespace
 

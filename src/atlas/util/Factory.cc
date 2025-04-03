@@ -11,6 +11,7 @@
 #include "atlas/util/Factory.h"
 
 #include <iostream>
+#include <cstdlib>
 
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
@@ -21,6 +22,15 @@ using lock_guard = std::lock_guard<std::mutex>;
 
 namespace atlas {
 namespace util {
+
+static bool ATLAS_DEPRECATION_WARNINGS() {
+    char* val;
+    val = std::getenv("ATLAS_DEPRECATION_WARNINGS");
+    if (val != nullptr) {
+        return std::atoi(val);
+    }
+    return true;
+}
 
 bool FactoryRegistry::has(const std::string& builder) const {
     lock_guard lock(mutex_);
@@ -40,7 +50,13 @@ FactoryBase* FactoryRegistry::get(const std::string& builder) const {
         throw_Exception(std::string("No ") + factory_ + std::string(" called ") + builder);
     }
     else {
-        return iterator->second;
+        auto* factory = iterator->second;
+        if (ATLAS_DEPRECATION_WARNINGS() && factory->deprecated()) {
+            const std::string& message = factory->deprecated().message();
+            Log::warning() << "[WARNING] The builder " << builder << " should no longer be used. " << message << '\n';
+            Log::warning() << "[WARNING] This warning can be disabled with `export ATLAS_DEPRECATION_WARNINGS=0`" << std::endl;
+        }
+        return factory;
     }
 }
 
@@ -102,9 +118,8 @@ void FactoryRegistry::list(std::ostream& out) const {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-FactoryBase::FactoryBase(FactoryRegistry& registry, const std::string& builder, bool deprecated):
-    registry_(registry), builder_(builder) {
-    deprecated_ = deprecated;
+FactoryBase::FactoryBase(FactoryRegistry& registry, const std::string& builder, const FactoryDeprecated& deprecated):
+    registry_(registry), builder_(builder), deprecated_(deprecated) {
     if (not builder_.empty()) {
         registry_.add(builder, this);
     }
