@@ -179,11 +179,13 @@ void Method::interpolate_field_rank1(const Field& src, Field& tgt, const Matrix&
         eckit::linalg::SparseMatrix W_copy = atlas::linalg::make_eckit_sparse_matrix(W);
         nonLinear_->execute(W_copy, src);
         auto W_nl = make_sparse_matrix_storage(std::move(W_copy));
-        auto W_nl_v = on_device ? make_device_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W_nl) : make_host_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W_nl);
+        auto W_nl_v = on_device ? make_device_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W_nl) : 
+                                  make_host_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W_nl);
         sparse_matrix_multiply(W_nl_v, src_v, tgt_v, backend);
     }
     else {
-        auto W_v = on_device ? make_device_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W) : make_host_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W);
+        auto W_v = on_device ? make_device_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W) : 
+                               make_host_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W);
         sparse_matrix_multiply(W_v, src_v, tgt_v, backend);
     }
 
@@ -195,7 +197,7 @@ template <typename Value>
 void Method::interpolate_field_rank2(const Field& src, Field& tgt, const Matrix& W) const {
     auto backend = std::is_same<Value, float>::value ? sparse::backend::openmp() : sparse::Backend{linalg_backend_};
     
-    // To match previous logic of only using OpenMP (probably because eckit_linalg backend doesn't support "layout_left" indexing)
+    // Switch to OpenMP as eckit_linalg does not support this layout
     if (backend.type() == "eckit_linalg") {
         backend = sparse::backend::openmp();
     }
@@ -238,7 +240,8 @@ void Method::interpolate_field_rank2(const Field& src, Field& tgt, const Matrix&
     else {
         const auto on_device = executesOnDevice(backend);
         
-        auto W_v = on_device ? make_device_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W) : make_host_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W);
+        auto W_v = on_device ? make_device_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W) : 
+                               make_host_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W);
         auto src_dv = on_device ? make_device_view_updated<Value, 2>(src) : make_host_view_updated<Value, 2>(src);
         auto tgt_dv = on_device ? make_device_view_updated<Value, 2>(tgt) : make_host_view_updated<Value, 2>(tgt);
         
@@ -270,7 +273,8 @@ void Method::adjoint_interpolate_field_rank1(Field& src, const Field& tgt, const
 
     auto src_v = on_device ? make_device_view_updated<Value, 1>(src) : make_host_view_updated<Value, 1>(src);
     auto tgt_v = on_device ? make_device_view_updated<Value, 1>(tgt) : make_host_view_updated<Value, 1>(tgt);
-    auto W_v = on_device ? make_device_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W) : make_host_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W);
+    auto W_v = on_device ? make_device_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W) : 
+                           make_host_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W);
 
     sparse_matrix_multiply_add(W_v, tgt_v, src_v, backend);
 
@@ -281,7 +285,7 @@ template <typename Value>
 void Method::adjoint_interpolate_field_rank2(Field& src, const Field& tgt, const Matrix& W) const {
     auto backend = std::is_same<Value, float>::value ? sparse::backend::openmp() : sparse::Backend{linalg_backend_};
     
-    // To match previous logic of only using OpenMP (probably because eckit_linalg backend doesn't support "layout_left" indexing)
+    // Switch to OpenMP as eckit_linalg does not support this layout
     if (backend.type() == "eckit_linalg") {
         backend = sparse::backend::openmp();
     }
@@ -290,7 +294,8 @@ void Method::adjoint_interpolate_field_rank2(Field& src, const Field& tgt, const
 
     auto src_v = on_device ? make_device_view_updated<Value, 2>(src) : make_host_view_updated<Value, 2>(src);
     auto tgt_v = on_device ? make_device_view_updated<Value, 2>(tgt) : make_host_view_updated<Value, 2>(tgt);
-    auto W_v = on_device ? make_device_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W) : make_host_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W);
+    auto W_v = on_device ? make_device_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W) : 
+                           make_host_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W);
 
     sparse_matrix_multiply_add(W_v, tgt_v, src_v, backend);
 
