@@ -107,51 +107,60 @@ bool executesOnDevice(const sparse::Backend& backend) {
     }
 }
 
+template<typename Container>
+void syncHost(const Container& c) {
+    if (c.hostNeedsUpdate()) {
+        if (c.deviceNeedsUpdate()) {
+            throw_AssertionFailed("Could not sync host", Here());
+        }
+        c.updateHost();
+    }
+}
+
+
+template<typename Container>
+void syncDevice(const Container& c) {
+    if (c.deviceNeedsUpdate()) {
+        if (c.hostNeedsUpdate()) {
+            throw_AssertionFailed("Could not sync device", Here());
+        }
+        c.updateDevice();
+    }
+}
+
 template<typename Value, int Rank>
 atlas::array::ArrayView<Value, Rank> make_device_view_updated(atlas::Field& f) {
-    if (f.deviceNeedsUpdate()) {
-        f.updateDevice();
-    }
+    syncDevice(f);
     return atlas::array::make_device_view<Value, Rank>(f);
 }
 
 template<typename Value, int Rank>
 atlas::array::ArrayView<const Value, Rank> make_device_view_updated(const atlas::Field& f) {
-    if (f.deviceNeedsUpdate()) {
-        f.updateDevice();
-    }
+    syncDevice(f);
     return atlas::array::make_device_view<const Value, Rank>(f);
 }
 
 template<typename Value, int Rank>
 atlas::array::ArrayView<Value, Rank> make_host_view_updated(atlas::Field& f) {
-    if (f.hostNeedsUpdate()) {
-        f.updateHost();
-    }
+    syncHost(f);
     return atlas::array::make_host_view<Value, Rank>(f);
 }
 
 template<typename Value, int Rank>
 atlas::array::ArrayView<const Value, Rank> make_host_view_updated(const atlas::Field& f) {
-    if (f.hostNeedsUpdate()) {
-        f.updateHost();
-    }
+    syncHost(f);
     return atlas::array::make_host_view<const Value, Rank>(f);
 }
 
 template<typename Value, typename Index>
 atlas::linalg::SparseMatrixView<Value,Index> make_device_view_updated(const atlas::linalg::SparseMatrixStorage& m) {
-    if (m.deviceNeedsUpdate()) {
-        m.updateDevice();
-    }
+    syncDevice(m);
     return make_device_view<Value, Index>(m);
 }
 
 template<typename Value, typename Index>
 atlas::linalg::SparseMatrixView<Value,Index> make_host_view_updated(const atlas::linalg::SparseMatrixStorage& m) {
-    if (m.hostNeedsUpdate()) {
-        m.updateHost();
-    }
+    syncHost(m);
     return make_host_view<Value, Index>(m);
 }
 
