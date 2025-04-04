@@ -26,9 +26,11 @@
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/Collect.h"
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/function/VortexRollup.h"
+#include "atlas/util/Locate.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -64,6 +66,13 @@ public:
     ParInter(const Matrix& gmat, const FunctionSpace src_fs, const FunctionSpace tgt_fs) : 
         gmat_(gmat), src_fs_(src_fs), tgt_fs_(tgt_fs) {
             extract(rows_, cols_, gcols_, vals_);
+            setup_collect(src_fs_, gcols_);
+
+            std::size_t nr = tgt_fs.size();
+            std::size_t nc = collect_size_;
+            eckit::linalg::Index index_base = 0;
+            bool is_sorted = false;
+            lmat_ = linalg::make_sparse_matrix_storage_from_rows_columns_values(nr, nc, rows_, cols_, vals_, index_base, is_sorted);
     }
 
     void print() const {
@@ -81,7 +90,44 @@ public:
         }
     }
 
-private:      
+    void execute(const Field& src, Field& tgt) {
+        ATLAS_TRACE();
+        auto collect_shape = src.shape();
+        collect_shape[0] = collect_size_;
+        std::unique_ptr<array::Array> collect_src(array::Array::create(src.datatype(),collect_shape));
+
+        collect_.execute<double,1>(const_cast<Field&>(src), *collect_src);
+
+        {
+            auto collect_src_view = array::make_view<double,1>(*collect_src);
+            auto tgt_view = array::make_view<double,1>(tgt);
+            auto matrix = linalg::make_host_view<eckit::linalg::Scalar, eckit::linalg::Index>(lmat_);
+            ATLAS_TRACE_SCOPE("sparse_matrix_multiply") {
+                // linalg::sparse::current_backend("eckit_linalg");
+                linalg::sparse_matrix_multiply(matrix, collect_src_view, tgt_view);
+            }
+        }
+    }
+
+
+private:
+
+    template <typename Vector>
+    void setup_collect(FunctionSpace fs, const Vector& global_index) {
+             collect_size_ = global_index.size();
+
+            std::vector<gidx_t> collect_gidx(collect_size_);
+            std::vector<int>    collect_partition(collect_size_);
+            std::vector<idx_t>  collect_ridx(collect_size_);
+
+            for (size_t i=0; i<global_index.size(); ++i) {
+                collect_gidx[i] = global_index[i] + 1;
+            }
+            idx_t ridx_base = 0;
+            util::locate(fs, collect_gidx, collect_partition, collect_ridx, ridx_base);
+            collect_.setup(collect_size_, collect_partition.data(), collect_ridx.data(), ridx_base);
+    }
+
     template <typename Value, typename Index> 
     void extract(std::vector<Index>& local_rows,  std::vector<Index>& local_cols,  std::vector<Index>& local_gcols,
         std::vector<Value>& local_vals, int mpi_root = 0) {
@@ -151,10 +197,13 @@ private:
     const Matrix& gmat_;
     const FunctionSpace src_fs_;
     const FunctionSpace tgt_fs_;
+    parallel::Collect collect_;
     std::vector<eckit::linalg::Index> rows_;
     std::vector<eckit::linalg::Index> cols_;
     std::vector<eckit::linalg::Index> gcols_;
     std::vector<eckit::linalg::Scalar> vals_;
+    Matrix lmat_;
+    std::size_t collect_size_;
 
 };
 
@@ -230,10 +279,22 @@ int AtlasGlobalUnmatchedMatrix::execute(const AtlasTool::Args& args) {
     std::vector<eckit::linalg::Index> gcols;
     std::vector<eckit::linalg::Scalar> vals;
 
-    ParInter parOp(gmatrix, src_fs, tgt_fs);
+    ParInter interpolator(gmatrix, src_fs, tgt_fs);
 
-    parOp.print();
+    interpolator.print();
 
+    auto src_field = src_fs.createField<double>();
+    auto tgt_field = tgt_fs.createField<double>();
+
+    auto src_lonlat = array::make_view<double, 2>(src_fs.lonlat());
+    ATLAS_TRACE_SCOPE("initialize source") {
+        auto src_field_v = array::make_view<double, 1>(src_field);
+        for (idx_t i = 0; i < src_fs.size(); ++i) {
+            src_field_v[i] = util::function::vortex_rollup(src_lonlat(i, 0), src_lonlat(i, 1), 1.);
+        }
+    }
+
+    interpolator.execute(src_field, tgt_field);
     // FunctionSpace src_fs;
     // FunctionSpace tgt_fs;
     // if (interpolation_method.find("nearest-neighbour") != std::string::npos) {
@@ -259,16 +320,16 @@ int AtlasGlobalUnmatchedMatrix::execute(const AtlasTool::Args& args) {
 
     // interpolator.execute(src_field, tgt_field);
 
-    // ATLAS_TRACE_SCOPE("output from the read-in matrix") {
-    //     std::string tgt_name = "tfield_" + matrix_name;
-    //     output::Gmsh gmsh(tgt_name + ".msh", Config("coordinates", "lonlat") | Config("ghost", "true"));
-    //     if( functionspace::NodeColumns(tgt_field.functionspace())) {
-    //         Log::info() << "storing distributed remapped field '" << tgt_name << "'." << std::endl;
-    //         gmsh.write(functionspace::NodeColumns(tgt_field.functionspace()).mesh());
-    //         tgt_field.haloExchange();
-    //         gmsh.write(tgt_field);
-    //     }
-    // }
+    ATLAS_TRACE_SCOPE("output from the read-in matrix") {
+        std::string tgt_name = "tfield_" + matrix_name;
+        output::Gmsh gmsh(tgt_name + ".msh", Config("coordinates", "lonlat") | Config("ghost", "true"));
+        if( functionspace::NodeColumns(tgt_field.functionspace())) {
+            Log::info() << "storing distributed remapped field '" << tgt_name << "'." << std::endl;
+            gmsh.write(functionspace::NodeColumns(tgt_field.functionspace()).mesh());
+            tgt_field.haloExchange();
+            gmsh.write(tgt_field);
+        }
+    }
 
     return success();
 }
@@ -317,8 +378,12 @@ Config AtlasGlobalUnmatchedMatrix::create_fspaces(const std::string& scheme_str,
         else {
             fs_in = functionspace::NodeColumns(inmesh, option::halo(1));
         }
-        auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::MatchingPartitioner(inmesh);
-        fs_out = functionspace::PointCloud(output_grid, partitioner);
+
+        //auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::MatchingPartitioner(inmesh);
+        auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::Partitioner("regular_bands");
+
+        //fs_out = functionspace::PointCloud(output_grid, partitioner);
+        fs_out = functionspace::NodeColumns(Mesh(output_grid, partitioner));
     }
     else if (scheme_type == "conservative-spherical-polygon") {
         bool src_cell_data = scheme.getBool("src_cell_data");
