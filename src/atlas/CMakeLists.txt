@@ -815,6 +815,7 @@ array/native/NativeMakeView.cc
 endif()
 
 list( APPEND atlas_parallel_srcs
+  parallel/Collect.h
   parallel/Checksum.cc
   parallel/Checksum.h
   parallel/GatherScatter.cc
@@ -844,6 +845,7 @@ util/Topology.h
 util/Allocate.h
 util/Allocate.cc
 util/GPUClonable.h
+util/Locate.h
 
 util/Constants.h
 util/ConvexSphericalPolygon.cc
