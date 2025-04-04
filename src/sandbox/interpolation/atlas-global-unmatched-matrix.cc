@@ -71,7 +71,10 @@ public:
             if (mpi::comm().rank() == task) {
                 std::cout << "TASK " << task << std::endl;
                 for (int i = 0; i < rows_.size(); ++i) {
-                    std::cout << "\t" << rows_[i] << ", " << cols_[i] << ", " << gcols_[i] << ", " << vals_[i] << std::endl;
+                    std::cout << "\t" << rows_[i] << ", " << cols_[i] << ", " << vals_[i];
+                    if (i < gcols_.size()) {
+                        std::cout << ", " << gcols_[i];
+                    }
                 }
             }
             mpi::comm().barrier();
@@ -105,7 +108,7 @@ private:
             const auto fs_ghost = array::make_view<int,1>(tgt_fs_.ghost());
 
             for (idx_t r = 0; r < fs_global_index.size(); ++r) {
-                auto gr = fs_global_index(r);
+                auto gr = fs_global_index(r) - 1;
                 if (fs_ghost(r) && to_local_rows.find(gr) != to_local_rows.end()) {
                     continue;
                 }
@@ -114,7 +117,8 @@ private:
             }
         }
 
-        auto find_idx = [](const std::vector<Index>& v, const Index& search) {
+        auto find_loc_col_idx = [&local_gcols](const Index& search) {
+            auto& v = local_gcols;
             for (int i = 0; i < v.size(); ++i) {
                 if (search == v[i]) {
                     return i;
@@ -126,22 +130,20 @@ private:
         idx_t loc_col_idx = 0;
         for(size_t idx = 0; idx < rows.size(); ++idx) {
             auto loc_row = to_local_rows[rows[idx]];
-            auto col = cols[idx];
+            auto glb_col = cols[idx];
             auto val = vals[idx];
             local_rows.emplace_back(loc_row);
-            auto search_idx = find_idx(local_gcols, col);
-            if (search_idx == -1) {
-                local_cols.emplace_back(loc_col_idx);
-                local_gcols.emplace_back(col);
-                local_vals.emplace_back(val);
+            local_vals.emplace_back(val);
+            auto found_loc_col_idx = find_loc_col_idx(glb_col);
+            if (found_loc_col_idx == -1) { // NOT found
+                local_gcols.emplace_back(glb_col);
+                local_cols.emplace_back(loc_col_idx++);
                 // Log::info() << "put loc_row, cols, gcols, vals : " << loc_row << ", " << loc_col_idx << ", " << col << ", " << val << std::endl;
             }
             else {
-                local_cols.emplace_back(cols[search_idx]);
-                local_vals.emplace_back(val);
+                local_cols.emplace_back(found_loc_col_idx);
                 // Log::info() << "put loc_row, cols, gcol, vals : " << loc_row << ", " << loc_col_idx << ", " << cols[search_idx] << val << std::endl;
             }
-            ++loc_col_idx;
         }
     }
 
