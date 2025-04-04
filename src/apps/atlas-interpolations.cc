@@ -142,6 +142,7 @@ public:
 
 
 int AtlasInterpolations::execute(const AtlasTool::Args& args) {
+    ATLAS_TRACE("main");
     if (args.has("force")) {
         Log::info() << "+==================================================================\n";
         Log::info() << "WARNING Running an untested combination of interpolators and grids.\n";
@@ -447,7 +448,8 @@ Config AtlasInterpolations::create_fspaces(const std::string& scheme_str, const 
             fs_in = functionspace::NodeColumns(inmesh, option::halo(1));
         }
         auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::MatchingPartitioner(inmesh);
-        fs_out = functionspace::PointCloud(output_grid, partitioner);
+        // fs_out = functionspace::PointCloud(output_grid, partitioner);
+        fs_out = functionspace::NodeColumns(Mesh(output_grid, partitioner));
     }
     else if (scheme_type == "conservative-spherical-polygon") {
         bool src_cell_data = scheme.getBool("src_cell_data");

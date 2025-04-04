@@ -161,34 +161,38 @@ private:
                 // Log::info() << " to_local_rows: " << gr << " to " << r << std::endl;
                 to_local_rows[gr] = r;
             }
-        }
 
-        auto find_loc_col_idx = [&local_gcols](const Index& search) {
-            auto& v = local_gcols;
-            for (int i = 0; i < v.size(); ++i) {
-                if (search == v[i]) {
-                    return i;
+            std::unordered_map<gidx_t,idx_t> map_gcol_to_loc_col_idx;
+            auto find_loc_col_idx = [&map_gcol_to_loc_col_idx](const gidx_t gcol) {
+                auto it = map_gcol_to_loc_col_idx.find(gcol);
+                if (it == map_gcol_to_loc_col_idx.end()) {
+                    return -1;
                 }
-            }
-            return -1;
-        };
+                return it->second;
+            };
 
-        idx_t loc_col_idx = 0;
-        for(size_t idx = 0; idx < rows.size(); ++idx) {
-            auto loc_row = to_local_rows[rows[idx]];
-            auto glb_col = cols[idx];
-            auto val = vals[idx];
-            local_rows.emplace_back(loc_row);
-            local_vals.emplace_back(val);
-            auto found_loc_col_idx = find_loc_col_idx(glb_col);
-            if (found_loc_col_idx == -1) { // NOT found
-                local_gcols.emplace_back(glb_col);
-                local_cols.emplace_back(loc_col_idx++);
-                // Log::info() << "put loc_row, cols, gcols, vals : " << loc_row << ", " << loc_col_idx << ", " << col << ", " << val << std::endl;
-            }
-            else {
-                local_cols.emplace_back(found_loc_col_idx);
-                // Log::info() << "put loc_row, cols, gcol, vals : " << loc_row << ", " << loc_col_idx << ", " << cols[search_idx] << val << std::endl;
+            idx_t loc_col_idx = 0;
+            auto new_loc_col_idx = [&](const gidx_t gcol) {
+                idx_t lcol = loc_col_idx;
+                map_gcol_to_loc_col_idx[gcol] = lcol;
+                ++loc_col_idx;
+                return lcol;
+            };
+
+            for(size_t idx = 0; idx < rows.size(); ++idx) {
+                auto loc_row = to_local_rows[rows[idx]];
+                auto glb_col = cols[idx];
+                auto val = vals[idx];
+                local_rows.emplace_back(loc_row);
+                local_vals.emplace_back(val);
+                auto found_loc_col_idx = find_loc_col_idx(glb_col);
+                if (found_loc_col_idx >= 0) {
+                    local_cols.emplace_back(found_loc_col_idx);
+                }
+                else {
+                    local_cols.emplace_back(new_loc_col_idx(glb_col));
+                    local_gcols.emplace_back(glb_col);
+                }
             }
         }
     }
@@ -234,6 +238,7 @@ public:
 };
 
 int AtlasGlobalUnmatchedMatrix::execute(const AtlasTool::Args& args) {
+    ATLAS_TRACE("main");
     std::string sgrid_name = "O2";
     args.get("sgrid", sgrid_name);
     std::string tgrid_name = "O2";
@@ -257,9 +262,9 @@ int AtlasGlobalUnmatchedMatrix::execute(const AtlasTool::Args& args) {
     }
     if (mpi::comm().rank() == 0) {
         gmatrix = read_matrix(matrix_name, matrix_format);
-        auto eckit_gmatrix = atlas::linalg::make_non_owning_eckit_sparse_matrix(gmatrix);
-        eckit_gmatrix.print(Log::info());
-        Log::info() << std::endl;
+        //auto eckit_gmatrix = atlas::linalg::make_non_owning_eckit_sparse_matrix(gmatrix);
+        //eckit_gmatrix.print(Log::info());
+        //Log::info() << std::endl;
     }
     mpi::comm().barrier();
 
@@ -281,7 +286,7 @@ int AtlasGlobalUnmatchedMatrix::execute(const AtlasTool::Args& args) {
 
     ParInter interpolator(gmatrix, src_fs, tgt_fs);
 
-    interpolator.print();
+    //interpolator.print();
 
     auto src_field = src_fs.createField<double>();
     auto tgt_field = tgt_fs.createField<double>();
@@ -376,7 +381,8 @@ Config AtlasGlobalUnmatchedMatrix::create_fspaces(const std::string& scheme_str,
             fs_in = functionspace::NodeColumns(inmesh);
         }
         else {
-            fs_in = functionspace::NodeColumns(inmesh, option::halo(1));
+            // fs_in = functionspace::NodeColumns(inmesh, option::halo(1));
+            fs_in = functionspace::NodeColumns(inmesh);
         }
 
         //auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::MatchingPartitioner(inmesh);

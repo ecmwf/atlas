@@ -18,6 +18,7 @@
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/HaloExchange.h"
 
+#include "atlas/runtime/Log.h"
 namespace atlas::parallel {
 
 class Collect {
@@ -66,19 +67,34 @@ void setup(const std::string& mpi_comm,
     recvdispls_.resize(nproc);
     recvdispls_.assign(nproc, 0);
 
-    atlas_omp_parallel_for(std::size_t jrecv = 0; jrecv < recvcnt_; ++jrecv) {
-        int p = recv_part[jrecv];
-        atlas_omp_critical {
-            ++recvcounts_[p];
+    Log::trace() << __LINE__ << std::endl;
+
+    int numthreads = atlas_omp_get_max_threads();
+    std::vector<std::vector<int>> thread_recvcounts(numthreads, recvcounts_);
+    atlas_omp_parallel {
+        int jthread = atlas_omp_get_thread_num();
+        atlas_omp_for(std::size_t jrecv = 0; jrecv < recvcnt_; ++jrecv) {
+            int p = recv_part[jrecv];
+            ++thread_recvcounts[jthread][p];
         }
     }
+    for (int jthread=0; jthread < numthreads; ++jthread) {
+        for (int p=0; p < nproc; ++p) {
+            recvcounts_[p] += thread_recvcounts[jthread][p];
+        }
+    }
+    Log::trace() << __LINE__ << std::endl;
 
     /*
     Find the amount of nodes this rank has to send to each other ranks
     */
     ATLAS_TRACE_MPI(ALLTOALL) { comm().allToAll(recvcounts_, sendcounts_); }
 
+    Log::trace() << __LINE__ << std::endl;
+
     sendcnt_ = std::accumulate(sendcounts_.begin(), sendcounts_.end(), 0);
+
+    Log::trace() << __LINE__ << std::endl;
 
     recvdispls_[0] = 0;
     senddispls_[0] = 0;
@@ -87,6 +103,8 @@ void setup(const std::string& mpi_comm,
         recvdispls_[jproc] = recvcounts_[jproc - 1] + recvdispls_[jproc - 1];
         senddispls_[jproc] = sendcounts_[jproc - 1] + senddispls_[jproc - 1];
     }
+
+    Log::trace() << __LINE__ << std::endl;
 
     /*
     Fill vector "send_requests" with remote index of nodes needed, but are on
@@ -102,6 +120,8 @@ void setup(const std::string& mpi_comm,
     // No idea why PGI compiler (20.7) in Release build ( -fast -O3 ) decides to vectorize following loop
 #pragma loop novector
 #endif
+    Log::trace() << __LINE__ << std::endl;
+
     for (int jrecv = 0; jrecv < recvcnt_; ++jrecv) {
         const int p            = recv_part[jrecv];
         const int req_idx      = recvdispls_[p] + cnt[p];
@@ -110,6 +130,8 @@ void setup(const std::string& mpi_comm,
         cnt[p]++;
     }
 
+    Log::trace() << __LINE__ << std::endl;
+
     /*
     Fill vector "recv_requests" with what is needed by other procs
     */
@@ -117,6 +139,7 @@ void setup(const std::string& mpi_comm,
         comm().allToAllv(send_requests.data(), recvcounts_.data(), recvdispls_.data(), recv_requests.data(),
                               sendcounts_.data(), senddispls_.data());
     }
+    Log::trace() << __LINE__ << std::endl;
 
 
     /*
@@ -127,6 +150,7 @@ void setup(const std::string& mpi_comm,
     for (int jj = 0; jj < sendcnt_; ++jj) {
         sendmap_[jj] = recv_requests[jj];
     }
+    Log::trace() << __LINE__ << std::endl;
 
     is_setup_        = true;
 }
