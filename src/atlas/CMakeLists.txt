@@ -851,6 +851,7 @@ util/Topology.h
 util/Allocate.h
 util/Allocate.cc
 util/GPUClonable.h
+util/Locate.h
 
 util/Constants.h
 util/ConvexSphericalPolygon.cc
