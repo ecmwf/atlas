@@ -207,3 +207,10 @@ ecbuild_add_test( TARGET  atlas_test_structuredcolumns_haloexchange
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_functionspace_locate
+  MPI         3
+  CONDITION   eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 3
+  SOURCES     test_functionspace_locate.cc
+  LIBS        atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
