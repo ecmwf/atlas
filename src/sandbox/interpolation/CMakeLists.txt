@@ -28,3 +28,10 @@ ecbuild_add_executable(
     LIBS    atlas
     NOINSTALL
 )
+
+ecbuild_add_executable(
+    TARGET  atlas-global-unmatched-matrix
+    SOURCES atlas-global-unmatched-matrix.cc
+    LIBS    atlas
+    NOINSTALL
+)
