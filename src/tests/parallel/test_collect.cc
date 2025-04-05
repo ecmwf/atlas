@@ -71,7 +71,7 @@ struct Fixture {
                 ridx            = vec(ridx_c);
                 gidx_t gidx_c[] = {9, 1, 2, 3, 4, 20};
                 gidx            = vec(gidx_c);
-                idx_t recv_part_c[] = {2, 1, 1};
+                int recv_part_c[] = {2, 1, 1};
                 recv_part       = vec(recv_part_c);
                 idx_t recv_ridx_c[] = {2, 2, 3};
                 recv_ridx       = vec(recv_ridx_c);
@@ -84,7 +84,7 @@ struct Fixture {
                 ridx            = vec(ridx_c);
                 gidx_t gidx_c[] = {3, 4, 5, 6, 7, 8};
                 gidx            = vec(gidx_c);
-                idx_t recv_part_c[] = {2, 0, 2, 1};
+                int recv_part_c[] = {2, 0, 2, 1};
                 recv_part       = vec(recv_part_c);
                 idx_t recv_ridx_c[] = {4, 3, 3, 1};
                 recv_ridx       = vec(recv_ridx_c);
@@ -97,7 +97,7 @@ struct Fixture {
                 ridx            = vec(ridx_c);
                 gidx_t gidx_c[] = {5, 6, 7, 8, 9, 1, 2};
                 gidx            = vec(gidx_c);
-                idx_t recv_part_c[] = {0, 0};
+                int recv_part_c[] = {0, 0};
                 recv_part       = vec(recv_part_c);
                 idx_t recv_ridx_c[] = {1, 2};
                 recv_ridx       = vec(recv_ridx_c);
