@@ -17,8 +17,7 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/PointCloud.h"
 #include "atlas/functionspace/StructuredColumns.h"
-#include "atlas/grid/Grid.h"
-#include "atlas/grid/Iterator.h"
+#include "atlas/grid.h"
 #include "atlas/interpolation.h"
 #include "atlas/interpolation/AssembleGlobalMatrix.h"
 #include "atlas/interpolation/method/MethodFactory.h"
@@ -83,7 +82,7 @@ class AtlasInterpolations : public AtlasTool {
     int minimumPositionalArguments() override { return 0; }
     Config interpolation_config(std::string scheme_str);
     Config create_fspaces(const std::string& scheme_str, const Grid& input_grid, const Grid& output_grid,
-        FunctionSpace& fs_in, FunctionSpace& fs_out);
+        FunctionSpace& fs_in, FunctionSpace& fs_out, grid::Distribution& dist_in, grid::Distribution& dist_out);
     Matrix read_matrix(std::string matrix_name, std::string matrix_format);
     void write_matrix(const Matrix& mat, std::string matrix_name, std::string matrix_format);
     std::string get_matrix_name(std::string& sgrid, std::string& tgrid, std::string& interp, std::string format = std::string());
@@ -201,39 +200,49 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
     args.get("format", matrix_format);
 
     if (args.has("read")) {
+        ATLAS_TRACE("Setup");
         Matrix gmatrix;
         std::string matrix_name("");
         args.get("matrix", matrix_name);
         if (matrix_name == "") {
             matrix_name = get_matrix_name(sgrid_name, tgrid_name, interpolation_method);
         }
-        if (mpi::comm().rank() == 0) {
-            timers.global_matrix_read.start();
-            gmatrix = read_matrix(matrix_name, matrix_format);
-            timers.global_matrix_read.stop();
-            Log::info() << "Global matrix read timer\t: " << timers.global_matrix_read.elapsed() * 1000. << " [ms]"  << std::endl;
-            auto eckit_gmatrix = atlas::linalg::make_non_owning_eckit_sparse_matrix(gmatrix);
-            eckit_gmatrix.print(Log::info());
-            Log::info() << std::endl;
-        }
-        mpi::comm().barrier();
 
         FunctionSpace src_fs;
         FunctionSpace tgt_fs;
-        timers.functionspace_setup.start();
-        if (interpolation_method.find("nearest-neighbour") != std::string::npos) {
-            interpolation_method = "finite-element";
+        grid::Distribution src_dist, tgt_dist;
+        Interpolation interpolator;
+        util::Config scheme;
+        ATLAS_TRACE_SCOPE("Setup source and target") {
+            timers.functionspace_setup.start();
+            if (interpolation_method.find("nearest-neighbour") != std::string::npos) {
+                interpolation_method = "finite-element";
+            }
+            scheme = create_fspaces(interpolation_method, sgrid, tgrid, src_fs, tgt_fs, src_dist, tgt_dist);
+            timers.functionspace_setup.stop();
         }
-        auto scheme = create_fspaces(interpolation_method, sgrid, tgrid, src_fs, tgt_fs);
-        timers.functionspace_setup.stop();
-        timers.global_matrix_setup.start();
-        auto matrix = interpolation::distribute_global_matrix(src_fs, tgt_fs, gmatrix);
-        timers.global_matrix_setup.stop();
+        ATLAS_TRACE_SCOPE("Setup interpolator") {
+            ATLAS_TRACE_SCOPE("Read matrix on rank 0")
+            if (mpi::comm().rank() == 0) {
+                timers.global_matrix_read.start();
+                gmatrix = read_matrix(matrix_name, matrix_format);
+                timers.global_matrix_read.stop();
+                Log::info() << "Global matrix read timer\t: " << timers.global_matrix_read.elapsed() * 1000. << " [ms]"  << std::endl;
+                auto eckit_gmatrix = atlas::linalg::make_non_owning_eckit_sparse_matrix(gmatrix);
+                eckit_gmatrix.print(Log::info());
+                Log::info() << std::endl;
+            }
+            mpi::comm().barrier();
 
-        timers.interpolation_setup.start();
-        interpolation::MatrixCache cache(std::move(matrix));
-        auto interpolator = Interpolation(scheme, src_fs, tgt_fs, cache);
-        timers.interpolation_setup.stop();
+            timers.global_matrix_setup.start();
+            auto matrix = interpolation::distribute_global_matrix(tgt_dist, src_fs, tgt_fs, gmatrix);
+            timers.global_matrix_setup.stop();
+
+            timers.interpolation_setup.start();
+            interpolation::MatrixCache cache(std::move(matrix));
+            interpolator = Interpolation(scheme, src_fs, tgt_fs, cache);
+            timers.interpolation_setup.stop();
+        }
 
         double timer_functionspace_setup = timers.functionspace_setup.elapsed() / mpi::comm().size();
         double timer_interpolation_setup = timers.interpolation_setup.elapsed() / mpi::comm().size();
@@ -244,8 +253,9 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
         Log::info() << "Grid + FunctionSpace timer\t: " << timer_functionspace_setup * 1000. << " [ms]"  << std::endl;
         Log::info() << "Interpolation setup timer\t: " << timer_interpolation_setup * 1000. << " [ms]"  << std::endl;
         Log::info() << "Global matrix setup timer\t: " << timer_global_matrix_setup * 1000. << " [ms]"  << std::endl;
-
+    
         if (args.has("test")) {
+            ATLAS_TRACE("test");
             // Allocate and initialise own memory here to show possibilities
             // Note: reading a field from disc is an extra feature
             auto src_field = interpolator.source().createField<double>();
@@ -285,6 +295,9 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
         FunctionSpace src_fs;
         FunctionSpace tgt_fs;
         Interpolation interpolator;
+        Config scheme;
+        ATLAS_TRACE_SCOPE("Setup") {
+        ATLAS_TRACE_SCOPE("Setup source and target") {
         timers.functionspace_setup.start();
         if (not args.has("force") && not available_combination(sgrid, tgrid, interpolation_method)) {
             Log::info() << "This interpolator is not available for these grids." << std::endl;
@@ -293,9 +306,12 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
             return failed();
         };
 
-        Config scheme = create_fspaces(interpolation_method, sgrid, tgrid, src_fs, tgt_fs);
+        grid::Distribution dist_in, dist_out;
+        scheme = create_fspaces(interpolation_method, sgrid, tgrid, src_fs, tgt_fs, dist_in, dist_out);
         timers.functionspace_setup.stop();
+        }
 
+        ATLAS_TRACE_SCOPE("Setup interpolator") {
         timers.interpolation_setup.start();
         if (interpolation_method == "grid-box-average") {
             interpolator = Interpolation{ scheme, sgrid, tgrid };
@@ -304,6 +320,8 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
             interpolator = Interpolation{ scheme, src_fs, tgt_fs };
         }
         timers.interpolation_setup.stop();
+        }
+        }
 
         double timer_functionspace_setup = timers.functionspace_setup.elapsed() / mpi::comm().size();
         double timer_interpolation_setup = timers.interpolation_setup.elapsed() / mpi::comm().size();
@@ -313,7 +331,7 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
         Log::info() << "Interpolation setup timer\t: " << timer_interpolation_setup * 1000. << " [ms]"  << std::endl;
 
         if (args.has("partest")) {
-            ATLAS_TRACE_SCOPE("par_output") {
+            ATLAS_TRACE_SCOPE("partest") {
                 auto tgt_field = interpolator.target().createField<double>();
                 auto field_in = interpolator.source().createField<double>();
                 auto lonlat_in = array::make_view<double,2>(interpolator.source().lonlat());
@@ -321,7 +339,13 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
                 for(idx_t j = 0; j < field_in.size(); ++j) {
                     view_in(j) = util::function::vortex_rollup(lonlat_in(j,0), lonlat_in(j,1), 1.);
                 }
-                interpolator.execute(field_in, tgt_field);
+                field_in.set_dirty();
+                field_in.haloExchange();
+                ATLAS_TRACE_SCOPE("Interpolation") {
+                    field_in.set_dirty();
+                    field_in.haloExchange();
+                    interpolator.execute(field_in, tgt_field);
+                }
                 std::string tgt_name = "par-tfield_" + get_matrix_name(sgrid_name, tgrid_name, interpolation_method);
                 output::Gmsh gmsh(tgt_name + ".msh", Config("coordinates", "lonlat") | Config("ghost", "true"));
                 if( functionspace::NodeColumns(tgt_field.functionspace())) {
@@ -350,6 +374,7 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
             }
 
             if (args.has("test")) {
+                ATLAS_TRACE("test");
                 // Allocate and initialise own memory here to show possibilities
                 std::vector<double> src_data(sgrid.size());
                 std::vector<double> tgt_data(tgrid.size());
@@ -436,53 +461,81 @@ std::string AtlasInterpolations::get_matrix_name(std::string& sgrid, std::string
 
 
 Config AtlasInterpolations::create_fspaces(const std::string& scheme_str, const Grid& input_grid, const Grid& output_grid,
-        FunctionSpace& fs_in, FunctionSpace& fs_out) {
+        FunctionSpace& fs_in, FunctionSpace& fs_out, grid::Distribution& dist_in, grid::Distribution& dist_out) {
     const Config scheme = interpolation_config(scheme_str);
     auto scheme_type = scheme.getString("type");
     if (scheme_type == "finite-element" || scheme_type == "unstructured-bilinear-lonlat") {
-        auto inmesh = Mesh(input_grid);
-        if (input_grid.type() == "ORCA") {
-            fs_in = functionspace::NodeColumns(inmesh);
+        Mesh inmesh;
+        ATLAS_TRACE_SCOPE("source functionspace") {
+            dist_in = grid::Distribution(input_grid, grid::Partitioner{input_grid.partitioner()});
+            inmesh = Mesh(input_grid, dist_in);
+            if (input_grid.type() == "ORCA") {
+                fs_in = functionspace::NodeColumns(inmesh);
+            }
+            else {
+                fs_in = functionspace::NodeColumns(inmesh);
+                // fs_in = functionspace::NodeColumns(inmesh, option::halo(1));
+            }
         }
-        else {
-            fs_in = functionspace::NodeColumns(inmesh, option::halo(1));
+        ATLAS_TRACE_SCOPE("target functionspace") {
+            auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::MatchingPartitioner(inmesh);
+            dist_out = grid::Distribution(output_grid, partitioner);
+            fs_out = functionspace::PointCloud(output_grid, dist_out);
+            // fs_out = functionspace::NodeColumns(Mesh(output_grid, partitioner));
         }
-        auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::MatchingPartitioner(inmesh);
-        // fs_out = functionspace::PointCloud(output_grid, partitioner);
-        fs_out = functionspace::NodeColumns(Mesh(output_grid, partitioner));
     }
     else if (scheme_type == "conservative-spherical-polygon") {
         bool src_cell_data = scheme.getBool("src_cell_data");
         bool tgt_cell_data = scheme.getBool("tgt_cell_data");
         auto tgt_mesh_config = output_grid.meshgenerator() | option::halo(0);
-        auto tgt_mesh = MeshGenerator(tgt_mesh_config).generate(output_grid);
-        if (tgt_cell_data) {
-            fs_out = functionspace::CellColumns(tgt_mesh, option::halo(0));
+        Mesh tgt_mesh;
+        ATLAS_TRACE_SCOPE("target functionspace") {
+            dist_out = grid::Distribution(output_grid, grid::Partitioner{output_grid.partitioner()});
+            tgt_mesh = MeshGenerator(tgt_mesh_config).generate(output_grid, dist_out);
+            if (tgt_cell_data) {
+                fs_out = functionspace::CellColumns(tgt_mesh, option::halo(0));
+            }
+            else {
+                fs_out = functionspace::NodeColumns(tgt_mesh, option::halo(0));
+            }
         }
-        else {
-            fs_out = functionspace::NodeColumns(tgt_mesh, option::halo(0));
-        }
-        auto src_mesh_config = input_grid.meshgenerator() | option::halo(2);
-        Mesh src_mesh;
-        auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::MatchingPartitioner(tgt_mesh);
-        src_mesh = MeshGenerator(src_mesh_config).generate(input_grid, partitioner);
-        if (src_cell_data) {
-            fs_in = functionspace::CellColumns(src_mesh, option::halo(2));
-        }
-        else {
-            fs_in = functionspace::NodeColumns(src_mesh, option::halo(2));
+        ATLAS_TRACE_SCOPE("source functionspace") {
+            auto src_mesh_config = input_grid.meshgenerator() | option::halo(2);
+            Mesh src_mesh;
+            auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::MatchingPartitioner(tgt_mesh);
+            dist_in = grid::Distribution(input_grid, partitioner);
+            src_mesh = MeshGenerator(src_mesh_config).generate(input_grid, dist_in);
+            if (src_cell_data) {
+                fs_in = functionspace::CellColumns(src_mesh, option::halo(2));
+            }
+            else {
+                fs_in = functionspace::NodeColumns(src_mesh, option::halo(2));
+            }
         }
     }
     else if (scheme_type == "nearest-neighbour" || scheme_type == "k-nearest-neighbours" || scheme_type == "grid-box-average") {
-        fs_in = PointCloud(input_grid);
-        auto inmesh = Mesh(input_grid);
-        auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::MatchingPartitioner(inmesh);
-        fs_out = functionspace::PointCloud(output_grid, partitioner);
+        Mesh inmesh;
+        ATLAS_TRACE_SCOPE("source functionspace") {
+            dist_in = grid::Distribution(input_grid, grid::Partitioner{input_grid.partitioner()});
+            fs_in = PointCloud(input_grid, dist_in);
+            inmesh = Mesh(input_grid);
+        }
+        ATLAS_TRACE_SCOPE("target functionspace") {
+            auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::MatchingPartitioner(inmesh);
+            dist_out = grid::Distribution(output_grid, partitioner);
+            fs_out = functionspace::PointCloud(output_grid, dist_out);
+        }
     }
     else {
-        fs_in = functionspace::StructuredColumns(input_grid, scheme);
-        auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::MatchingPartitioner(fs_in);
-        fs_out = functionspace::PointCloud(output_grid, partitioner, scheme);
+        ATLAS_TRACE_SCOPE("source functionspace") {
+            dist_in = grid::Distribution(input_grid, grid::Partitioner{input_grid.partitioner()});
+            fs_in = functionspace::StructuredColumns(input_grid, dist_in, scheme);
+        }
+        ATLAS_TRACE_SCOPE("target functionspace") {
+            auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::MatchingPartitioner(fs_in);
+            dist_out = grid::Distribution(output_grid, partitioner);
+            fs_out = functionspace::PointCloud(output_grid, dist_out, scheme);
+        }
     }
     return scheme;
 }
