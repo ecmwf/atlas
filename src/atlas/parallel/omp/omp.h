@@ -31,8 +31,8 @@ int atlas_omp_get_nested(void);
 #define atlas_omp_pragma(x)
 #endif
 
-#define atlas_omp_parallel_for atlas_omp_pragma(omp parallel for schedule(static) ) for
-#define atlas_omp_for atlas_omp_pragma(omp for schedule(static)) for
+#define atlas_omp_parallel_for atlas_omp_pragma(omp parallel for) for
+#define atlas_omp_for atlas_omp_pragma(omp for) for
 #define atlas_omp_parallel atlas_omp_pragma(omp parallel)
 #define atlas_omp_critical atlas_omp_pragma(omp critical)
 
