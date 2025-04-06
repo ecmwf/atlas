@@ -169,6 +169,8 @@ private:
 
     void create_remote_index() const;
 
+    idx_t size_global() const;
+
 private:
     Field lonlat_;
     Field vertical_;
@@ -177,7 +179,7 @@ private:
     Field global_index_;
     Field partition_;
     idx_t size_owned_;
-    idx_t size_global_{0};
+    mutable idx_t size_global_{-1};
     idx_t max_glb_idx_{0};
 
     idx_t levels_{0};
@@ -188,6 +190,7 @@ private:
     mutable std::unique_ptr<parallel::HaloExchange> halo_exchange_;
     mutable std::unique_ptr<parallel::GatherScatter> gather_scatter_;
 
+    void setupParallel();
     void setupHaloExchange();
     void setupGatherScatter();
 

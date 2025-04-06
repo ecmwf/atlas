@@ -109,8 +109,7 @@ PointCloud::PointCloud(const Field& lonlat, const eckit::Configuration& config):
 
 PointCloud::PointCloud(const Field& lonlat, const Field& ghost, const eckit::Configuration& config): lonlat_(lonlat), ghost_(ghost) {
     mpi_comm_ = get_mpi_comm(config);
-    setupHaloExchange();
-    setupGatherScatter();
+    setupParallel();
 }
 
 PointCloud::PointCloud(const FieldSet& flds, const eckit::Configuration& config): lonlat_(flds["lonlat"]) {
@@ -128,8 +127,7 @@ PointCloud::PointCloud(const FieldSet& flds, const eckit::Configuration& config)
         global_index_ = flds["global_index"];
     }
     if( ghost_ && remote_index_ && partition_ ) {
-        setupHaloExchange();
-        setupGatherScatter();
+        setupParallel();
     }
 }
 
@@ -163,6 +161,8 @@ PointCloud::PointCloud(const Grid& grid, const grid::Distribution& distribution,
     auto size_owned = distribution.nb_pts()[part_];
     size_owned_ = size_owned;
 
+    size_global_ = grid.size();
+
     if (halo_radius == 0. || nb_partitions_ == 1) {
         idx_t size_halo = size_owned;
         ATLAS_ASSERT(size_owned > 0);
@@ -178,10 +178,13 @@ PointCloud::PointCloud(const Grid& grid, const grid::Distribution& distribution,
         array::make_view<int,1>(ghost_).assign(0);
         array::make_view<int,1>(partition_).assign(part_);
 
+        ATLAS_ASSERT(grid.size() == distribution.size());
+
         idx_t j{0};
         gidx_t g{0};
         for (auto p : grid.lonlat()) {
             if( distribution.partition(g) == part_ ) {
+                ATLAS_ASSERT(j < size_halo);
                 gidx(j) = g+1;
                 ridx(j) = j;
                 lonlat(j, 0) = p.lon();
@@ -260,13 +263,16 @@ PointCloud::PointCloud(const Grid& grid, const grid::Distribution& distribution,
         }
 
     }
-
-    setupHaloExchange();
-    setupGatherScatter();
+    setupParallel();
 }
 
 PointCloud::PointCloud(const Grid& grid, const grid::Partitioner& _partitioner, const eckit::Configuration& config):
-PointCloud(grid, ((_partitioner) ? _partitioner : grid::Partitioner("equal_regions", util::Config("mpi_comm",get_mpi_comm(config)))).partition(grid), config) {
+PointCloud(
+    grid,
+    grid::Distribution{grid, (_partitioner) ? _partitioner :
+        grid::Partitioner{grid.partitioner() | util::Config("mpi_comm",get_mpi_comm(config))}
+    },
+    config) {
     ATLAS_TRACE("PointCloud(grid,partitioner,config)");
 }
 
@@ -286,7 +292,7 @@ array::ArrayShape PointCloud::config_shape(const eckit::Configuration& config) c
             idx_t owner(0);
             config.get("owner", owner);
             idx_t rank = mpi::comm(mpi_comm()).rank();
-            _size = (rank == owner ? size_global_ : 0);
+            _size = (rank == owner ? size_global() : 0);
         }
     }
 
@@ -334,6 +340,10 @@ std::string PointCloud::config_name(const eckit::Configuration& config) const {
 }
 
 const parallel::HaloExchange& PointCloud::halo_exchange() const {
+    if (halo_exchange_) {
+        return *halo_exchange_;
+    }
+    const_cast<PointCloud&>(*this).setupHaloExchange();
     return *halo_exchange_;
 }
 
@@ -381,11 +391,17 @@ void PointCloud::gather(const Field& local, Field& global) const {
     gather(local_fields, global_fields);
 }
 const parallel::GatherScatter& PointCloud::gather() const {
-    ATLAS_ASSERT(gather_scatter_);
+    if (gather_scatter_) {
+        return *gather_scatter_;
+    }
+    const_cast<PointCloud&>(*this).setupGatherScatter();
     return *gather_scatter_;
 }
 const parallel::GatherScatter& PointCloud::scatter() const {
-    ATLAS_ASSERT(gather_scatter_);
+    if (gather_scatter_) {
+        return *gather_scatter_;
+    }
+    const_cast<PointCloud&>(*this).setupGatherScatter();
     return *gather_scatter_;
 }
 
@@ -844,7 +860,7 @@ void PointCloud::create_remote_index() const {
     }
 }
 
-void PointCloud::setupHaloExchange() {
+void PointCloud::setupParallel() {
     ATLAS_TRACE();
     if (ghost_ and partition_ and global_index_ and not remote_index_) {
         create_remote_index();
@@ -978,16 +994,22 @@ void PointCloud::setupHaloExchange() {
     ATLAS_ASSERT(remote_index_);
     ATLAS_ASSERT(ghost_.size() == remote_index_.size());
     ATLAS_ASSERT(ghost_.size() == partition_.size());
- 
-    halo_exchange_.reset(new parallel::HaloExchange());
-    halo_exchange_->setup(mpi_comm_,
-                          array::make_view<int, 1>(partition_).data(),
-                          array::make_view<idx_t, 1>(remote_index_).data(),
-                          REMOTE_IDX_BASE,
-                          ghost_.size());
+}
+
+void PointCloud::setupHaloExchange() {
+    ATLAS_TRACE();
+    if (ghost_ and partition_ and remote_index_) {
+        halo_exchange_.reset(new parallel::HaloExchange());
+        halo_exchange_->setup(mpi_comm_,
+                            array::make_view<int, 1>(partition_).data(),
+                            array::make_view<idx_t, 1>(remote_index_).data(),
+                            REMOTE_IDX_BASE,
+                            ghost_.size());
+    }
 }
 
 void PointCloud::setupGatherScatter() {
+    ATLAS_TRACE();
     if (ghost_ and partition_ and remote_index_ and global_index_) {
         gather_scatter_.reset(new parallel::GatherScatter());
         gather_scatter_->setup(mpi_comm_,
@@ -997,8 +1019,19 @@ void PointCloud::setupGatherScatter() {
                             array::make_view<gidx_t, 1>(global_index_).data(),
                             array::make_view<int, 1>(ghost_).data(),
                             ghost_.size());
-        size_global_ = gather_scatter_->glb_dof();
     }
+}
+
+idx_t PointCloud::size_global() const {
+    if (size_global_ == -1) {
+        if( !gather_scatter_ ) {
+            const_cast<PointCloud&>(*this).setupGatherScatter();
+        }
+        if (gather_scatter_) {
+            size_global_ = gather_scatter_->glb_dof();
+        }
+    }
+    return size_global_;
 }
 
 
