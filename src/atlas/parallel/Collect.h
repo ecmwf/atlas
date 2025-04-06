@@ -67,34 +67,25 @@ void setup(const std::string& mpi_comm,
     recvdispls_.resize(nproc);
     recvdispls_.assign(nproc, 0);
 
-    Log::trace() << __LINE__ << std::endl;
-
-    int numthreads = atlas_omp_get_max_threads();
-    std::vector<std::vector<int>> thread_recvcounts(numthreads, recvcounts_);
     atlas_omp_parallel {
-        int jthread = atlas_omp_get_thread_num();
+        std::vector<int> recvcounts(nproc, 0);
         atlas_omp_for(std::size_t jrecv = 0; jrecv < recvcnt_; ++jrecv) {
             int p = recv_part[jrecv];
-            ++thread_recvcounts[jthread][p];
+            ++recvcounts[p];
+        }
+        atlas_omp_critical {
+            for (int p=0; p < nproc; ++p) {
+                recvcounts_[p] += recvcounts[p];
+            }
         }
     }
-    for (int jthread=0; jthread < numthreads; ++jthread) {
-        for (int p=0; p < nproc; ++p) {
-            recvcounts_[p] += thread_recvcounts[jthread][p];
-        }
-    }
-    Log::trace() << __LINE__ << std::endl;
 
     /*
     Find the amount of nodes this rank has to send to each other ranks
     */
     ATLAS_TRACE_MPI(ALLTOALL) { comm().allToAll(recvcounts_, sendcounts_); }
 
-    Log::trace() << __LINE__ << std::endl;
-
     sendcnt_ = std::accumulate(sendcounts_.begin(), sendcounts_.end(), 0);
-
-    Log::trace() << __LINE__ << std::endl;
 
     recvdispls_[0] = 0;
     senddispls_[0] = 0;
@@ -103,8 +94,6 @@ void setup(const std::string& mpi_comm,
         recvdispls_[jproc] = recvcounts_[jproc - 1] + recvdispls_[jproc - 1];
         senddispls_[jproc] = sendcounts_[jproc - 1] + senddispls_[jproc - 1];
     }
-
-    Log::trace() << __LINE__ << std::endl;
 
     /*
     Fill vector "send_requests" with remote index of nodes needed, but are on
@@ -136,6 +125,11 @@ void setup(const std::string& mpi_comm,
     Fill vector "recv_requests" with what is needed by other procs
     */
     ATLAS_TRACE_MPI(ALLTOALL) {
+        ATLAS_ASSERT(send_requests.size() == recvcnt_);
+        ATLAS_ASSERT(std::accumulate(recvcounts_.begin(),recvcounts_.end(),0) == recvcnt_);
+        ATLAS_ASSERT(recv_requests.size() == sendcnt_);
+        ATLAS_ASSERT(std::accumulate(sendcounts_.begin(),sendcounts_.end(),0) == sendcnt_);
+
         comm().allToAllv(send_requests.data(), recvcounts_.data(), recvdispls_.data(), recv_requests.data(),
                               sendcounts_.data(), senddispls_.data());
     }
