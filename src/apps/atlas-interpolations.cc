@@ -481,12 +481,17 @@ void AtlasInterpolations::create_fspaces(Config& config, const Grid& input_grid,
     if (interpolation_str == "finite-element" || interpolation_str == "unstructured-bilinear-lonlat") {
         Mesh inmesh;
         ATLAS_TRACE_SCOPE("source functionspace") {
-            dist_in = grid::Distribution(input_grid, grid::Partitioner{input_grid.partitioner()});
-            inmesh = Mesh(input_grid, dist_in);
             if (input_grid.type() == "ORCA") {
+                if (mpi::size() > 1 ) {
+                    ATLAS_NOTIMPLEMENTED; // Cannot use orca in parallel as a source!
+                }
+                dist_in = grid::Distribution(input_grid, grid::Partitioner{"serial"});
+                inmesh = Mesh(input_grid, dist_in);
                 fs_in = functionspace::NodeColumns(inmesh);
             }
             else {
+                dist_in = grid::Distribution(input_grid, input_grid.partitioner());
+                inmesh = Mesh(input_grid, dist_in);
                 fs_in = functionspace::NodeColumns(inmesh);
                 // fs_in = functionspace::NodeColumns(inmesh, option::halo(1));
             }
@@ -494,8 +499,13 @@ void AtlasInterpolations::create_fspaces(Config& config, const Grid& input_grid,
         ATLAS_TRACE_SCOPE("target functionspace") {
             auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::MatchingPartitioner(inmesh);
             dist_out = grid::Distribution(output_grid, partitioner);
-            fs_out = functionspace::PointCloud(output_grid, dist_out);
-            // fs_out = functionspace::NodeColumns(Mesh(output_grid, partitioner));
+            if( output_grid.type() == "ORCA") {
+                // fs_out = functionspace::NodeColumns(Mesh(output_grid, dist_out));
+                fs_out = functionspace::PointCloud(output_grid, dist_out);
+            }
+            else {
+                fs_out = functionspace::PointCloud(output_grid, dist_out);
+            }
         }
     }
     else if (interpolation_str == "conservative-spherical-polygon") {
@@ -507,8 +517,17 @@ void AtlasInterpolations::create_fspaces(Config& config, const Grid& input_grid,
         Mesh tgt_mesh;
         ATLAS_TRACE_SCOPE("target functionspace") {
             bool orca = (output_grid.type() == "ORCA");
-            dist_out = grid::Distribution(output_grid, grid::Partitioner{output_grid.partitioner()});
-            tgt_mesh = MeshGenerator(tgt_mesh_config).generate(output_grid, dist_out);
+            if (orca) {
+                if (mpi::size() > 1 ) {
+                    ATLAS_NOTIMPLEMENTED; // the source must match target but cannot be for orca grids
+                }
+                dist_out = grid::Distribution(output_grid, grid::Partitioner{"serial"});
+                tgt_mesh = MeshGenerator(tgt_mesh_config).generate(output_grid);
+            }
+            else {
+                dist_out = grid::Distribution(output_grid, grid::Partitioner{output_grid.partitioner()});
+                tgt_mesh = MeshGenerator(tgt_mesh_config).generate(output_grid, dist_out);
+            }
             if (tgt_cell_data) {
                 fs_out = functionspace::CellColumns(tgt_mesh, option::halo(0));
             }
