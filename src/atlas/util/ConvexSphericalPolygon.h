@@ -76,6 +76,8 @@ public:
 
     ConvexSphericalPolygon(const PointXYZ points[], size_t size);
 
+    void invalidate_this_polygon();
+
     operator bool() const { return valid_; }
 
     size_t size() const { return size_; }

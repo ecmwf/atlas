@@ -122,7 +122,9 @@ ConvexSphericalPolygon::ConvexSphericalPolygon(const PointLonLat points[], size_
     size_  = isp;
     valid_ = size_ > 2;
     if (valid_) {
-        ATLAS_ASSERT(validate());
+        if (validate()) {
+            invalidate_this_polygon();
+        }
     }
 }
 
@@ -147,7 +149,9 @@ ConvexSphericalPolygon::ConvexSphericalPolygon(const PointXYZ points[], size_t s
     size_  = isp;
     valid_ = size_ > 2;
     if (valid_) {
-        ATLAS_ASSERT(validate());
+        if (validate()) {
+            invalidate_this_polygon();
+        }
     }
 }
 
@@ -183,6 +187,12 @@ bool ConvexSphericalPolygon::validate() {
         }
     }
     return valid_;
+}
+
+void ConvexSphericalPolygon::invalidate_this_polygon() {
+    size_  = 0;
+    valid_ = false;
+    area_  = 0.;
 }
 
 bool ConvexSphericalPolygon::equals(const ConvexSphericalPolygon& plg, const double deg_prec) const {
@@ -266,11 +276,6 @@ void ConvexSphericalPolygon::clip(const GreatCircleSegment& great_circle, std::o
     ATLAS_ASSERT(not approx_eq(great_circle.first(), great_circle.second()));
     std::vector<PointXYZ> clipped_sph_coords;
     clipped_sph_coords.reserve(ConvexSphericalPolygon::MAX_SIZE);
-    auto invalidate_this_polygon = [&]() {
-        size_  = 0;
-        valid_ = false;
-        area_  = 0.;
-    };
 #if DEBUG_OUTPUT
     int add_point_num = 0;
 #endif
