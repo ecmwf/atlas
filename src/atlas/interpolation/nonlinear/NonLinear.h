@@ -66,6 +66,8 @@ public:
      */
     virtual bool execute(Matrix& W, const Field& f) const = 0;
 
+    virtual bool execute(Matrix& W, const Field& f, const array::Array& a) const = 0;
+
 protected:
     template <typename Value, int Rank>
     static array::ArrayView<typename std::add_const<Value>::type, Rank> make_view_field_values(const Field& field) {
@@ -73,6 +75,13 @@ protected:
         ATLAS_ASSERT_MSG(
             field.datatype().kind() == array::DataType::kind<Value>(),
             "Field(name:" + field.name() + ",DataType:" + field.datatype().str() + ") is not of required DataType");
+        return array::make_view<typename std::add_const<Value>::type, Rank>(field);
+    }
+    template <typename Value, int Rank>
+    static array::ArrayView<typename std::add_const<Value>::type, Rank> make_view_array_values(const array::Array& field) {
+        ATLAS_ASSERT_MSG(
+            field.datatype().kind() == array::DataType::kind<Value>(),
+            "Array(DataType:" + field.datatype().str() + ") is not of required DataType");
         return array::make_view<typename std::add_const<Value>::type, Rank>(field);
     }
 };

@@ -32,6 +32,11 @@ struct MissingIfAllMissing : Missing {
     template<typename T>
     bool executeT(NonLinear::Matrix& W, const Field& field) const;
 
+    bool execute(NonLinear::Matrix& W, const Field& field, const array::Array& array) const override { ATLAS_NOTIMPLEMENTED; }
+
+    template<typename T>
+    bool executeT(NonLinear::Matrix& W, const Field& field, const array::Array& array) const { ATLAS_NOTIMPLEMENTED; }
+
     static std::string static_type() { return "missing-if-all-missing"; }
 };
 
@@ -42,6 +47,13 @@ struct MissingIfAnyMissing : Missing {
     template<typename T>
     bool executeT(NonLinear::Matrix& W, const Field& field) const;
 
+
+    bool execute(NonLinear::Matrix& W, const Field& field, const array::Array& array) const override;
+
+    template<typename T>
+    bool executeT(NonLinear::Matrix& W, const Field& field, const array::Array& array) const;
+
+
     static std::string static_type() { return "missing-if-any-missing"; }
 };
 
@@ -51,6 +63,11 @@ struct MissingIfHeaviestMissing : Missing {
 
     template<typename T>
     bool executeT(NonLinear::Matrix& W, const Field& field) const;
+
+    bool execute(NonLinear::Matrix& W, const Field& field, const array::Array& array) const override { ATLAS_NOTIMPLEMENTED; }
+
+    template<typename T>
+    bool executeT(NonLinear::Matrix& W, const Field& field, const array::Array& array) const { ATLAS_NOTIMPLEMENTED; }
 
     static std::string static_type() { return "missing-if-heaviest-missing"; }
 };

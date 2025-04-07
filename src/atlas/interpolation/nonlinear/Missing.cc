@@ -147,6 +147,17 @@ bool MissingIfAnyMissing::execute(NonLinear::Matrix& W, const Field& field) cons
     }
 }
 
+bool MissingIfAnyMissing::execute(NonLinear::Matrix& W, const Field& field, const array::Array& array) const {
+    switch(field.datatype().kind()) {
+        case (DataType::kind<double>()):        return executeT<double>(W,field,array);
+        case (DataType::kind<float>()):         return executeT<float>(W,field,array);
+        case (DataType::kind<int>()):           return executeT<int>(W,field,array);
+        case (DataType::kind<long>()):          return executeT<long>(W,field,array);
+        case (DataType::kind<unsigned long>()): return executeT<unsigned long>(W,field,array);
+        default: ATLAS_NOTIMPLEMENTED;
+    }
+}
+
 template<typename T>
 bool MissingIfAnyMissing::executeT(NonLinear::Matrix& W, const Field& field) const {
     field::MissingValue mv(field);
@@ -154,6 +165,65 @@ bool MissingIfAnyMissing::executeT(NonLinear::Matrix& W, const Field& field) con
 
     // NOTE only for scalars (for now)
     auto values = make_view_field_values<T, 1>(field);
+    ATLAS_ASSERT(idx_t(W.cols()) == values.size());
+
+    auto data  = const_cast<Scalar*>(W.data());
+    bool modif = false;
+    bool zeros = false;
+
+    Size i = 0;
+    Matrix::iterator it(W);
+    for (Size r = 0; r < W.rows(); ++r) {
+        const Matrix::iterator end = W.end(r);
+
+        // count missing values, accumulate weights (disregarding missing values)
+        size_t i_missing = i;
+        size_t N_missing = 0;
+        size_t N_entries = 0;
+
+        Matrix::iterator kt(it);
+        Size k = i;
+        for (; it != end; ++it, ++i, ++N_entries) {
+            const bool miss = missingValue(values[it.col()]);
+
+            if (miss) {
+                ++N_missing;
+                i_missing = i;
+            }
+        }
+
+        // if any values in row are missing, force missing value
+        if (N_missing > 0) {
+            for (Size j = k; j < k + N_entries; ++j) {
+                if (j == i_missing) {
+                    data[j] = 1.;
+                }
+                else {
+                    data[j] = 0.;
+                    zeros   = true;
+                }
+            }
+            modif = true;
+        }
+    }
+
+    if (zeros && missingValue.isnan()) {
+        W.prune(0.);
+    }
+
+    return modif;
+}
+
+
+
+template<typename T>
+bool MissingIfAnyMissing::executeT(NonLinear::Matrix& W, const Field& field, const array::Array& array) const {
+    field::MissingValue mv(field);
+
+    auto& missingValue = mv.ref();
+
+    // NOTE only for scalars (for now)
+    auto values = make_view_array_values<T, 1>(array);
     ATLAS_ASSERT(idx_t(W.cols()) == values.size());
 
     auto data  = const_cast<Scalar*>(W.data());

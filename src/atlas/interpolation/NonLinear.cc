@@ -51,6 +51,10 @@ bool NonLinear::execute(NonLinear::Matrix& W, const Field& f) const {
     return get()->execute(W, f);
 }
 
+bool NonLinear::execute(NonLinear::Matrix& W, const Field& f, const array::Array& a) const {
+    ATLAS_ASSERT_MSG(operator bool(), "NonLinear: ObjectHandle not setup");
+    return get()->execute(W, f, a);
+}
 
 }  // namespace interpolation
 }  // namespace atlas
