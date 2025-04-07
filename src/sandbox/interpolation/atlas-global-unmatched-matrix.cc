@@ -408,7 +408,7 @@ int AtlasGlobalUnmatchedMatrix::execute(const AtlasTool::Args& args) {
         tgt_field.set_dirty(true);
         tgt_field.haloExchange();
         std::string tgt_name = "tfield_" + matrix_name;
-        output::Gmsh gmsh(tgt_name + ".msh", Config("coordinates", "xyz") | Config("ghost", "true"));
+        output::Gmsh gmsh(tgt_name + ".msh", Config("coordinates", "lonlat") | Config("ghost", "true"));
         if( functionspace::NodeColumns(tgt_field.functionspace())) {
             Log::info() << "storing distributed remapped field '" << tgt_name << "'." << std::endl;
             gmsh.write(functionspace::NodeColumns(tgt_field.functionspace()).mesh());
