@@ -129,13 +129,16 @@ public:
         add_option(new SimpleOption<bool>("list", "list available interpolations"));
         add_option(new SimpleOption<bool>("force", "do not check if the interpolator is available"));
         add_option(new SimpleOption<std::string>("sgrid", "source grid"));
+        add_option(new SimpleOption<std::string>("sdata", "data location on the source grid"));
         add_option(new SimpleOption<std::string>("tgrid", "target grid"));
+        add_option(new SimpleOption<std::string>("tdata", "data location on the target grid"));
         add_option(new SimpleOption<std::string>("interpolation", "interpolation methods"));
         add_option(new SimpleOption<bool>("read", "use a provided remapping matrix"));
         add_option(new SimpleOption<std::string>("matrix", "name of the remapping matrix"));
         add_option(new SimpleOption<std::string>("format", "format of the remapping matrix: eckit, SCRIP"));
         add_option(new SimpleOption<bool>("test", "write the interpolated result from a test source field"));
         add_option(new SimpleOption<bool>("partest", "write the interpolated result from a test source field with the parallel interpolator"));
+        add_option(new SimpleOption<bool>("3d", "write the interpolated result for visualisation on the sphere"));
     }
 };
 
@@ -278,7 +281,8 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
 
             ATLAS_TRACE_SCOPE("output from the read-in matrix") {
                 std::string tgt_name = "tfield_" + matrix_name;
-                output::Gmsh gmsh(tgt_name + ".msh", Config("coordinates", "lonlat") | Config("ghost", "true"));
+                std::string coords = (args.has("3d") ? "3d" : "lonlat");
+                output::Gmsh gmsh(tgt_name + ".msh", Config("coordinates", coords) | Config("ghost", "true"));
                 if( functionspace::NodeColumns(tgt_field.functionspace())) {
                     Log::info() << "storing distributed remapped field '" << tgt_name << ".msh'." << std::endl;
                     gmsh.write(functionspace::NodeColumns(tgt_field.functionspace()).mesh());
@@ -499,17 +503,19 @@ Config AtlasInterpolations::create_fspaces(const std::string& scheme_str, const 
                 fs_out = functionspace::NodeColumns(tgt_mesh, option::halo(0));
             }
         }
+        int halo_size = (input_grid.type() == "ORCA" ? 0 : 2);
         ATLAS_TRACE_SCOPE("source functionspace") {
-            auto src_mesh_config = input_grid.meshgenerator() | option::halo(2);
+            Config src_mesh_config;
+            src_mesh_config = input_grid.meshgenerator() | option::halo(halo_size);
             Mesh src_mesh;
             auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::MatchingPartitioner(tgt_mesh);
             dist_in = grid::Distribution(input_grid, partitioner);
             src_mesh = MeshGenerator(src_mesh_config).generate(input_grid, dist_in);
             if (src_cell_data) {
-                fs_in = functionspace::CellColumns(src_mesh, option::halo(2));
+                fs_in = functionspace::CellColumns(src_mesh, option::halo(halo_size));
             }
             else {
-                fs_in = functionspace::NodeColumns(src_mesh, option::halo(2));
+                fs_in = functionspace::NodeColumns(src_mesh, option::halo(halo_size));
             }
         }
     }

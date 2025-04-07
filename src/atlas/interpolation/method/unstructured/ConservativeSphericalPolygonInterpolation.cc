@@ -257,6 +257,12 @@ int ConservativeSphericalPolygonInterpolation::prev_index(int current_index, int
     return (current_index >= offset) ? current_index - offset : current_index - offset + size;
 }
 
+bool ConservativeSphericalPolygonInterpolation::valid_point(idx_t node_idx, 
+    const array::ArrayView<idx_t, 1>& node_flags) const {
+    auto valid = (not util::Bitflags::view(node_flags(node_idx)).check(util::Topology::INVALID));
+    return valid && (not util::Bitflags::view(node_flags(node_idx)).check(util::Topology::INVALID)); 
+}
+
 // get counter-clockwise sorted neighbours of a cell
 std::vector<idx_t> ConservativeSphericalPolygonInterpolation::get_cell_neighbours(Mesh& mesh, idx_t cell) const {
     const auto& cell2node = mesh.cells().node_connectivity();
@@ -309,6 +315,7 @@ struct ConservativeSphericalPolygonInterpolation::Workspace {
 // get cyclically sorted node neighbours without using edge connectivity
 std::vector<idx_t> ConservativeSphericalPolygonInterpolation::get_node_neighbours(Mesh& mesh, idx_t node_id, Workspace& w) const {
     const auto& cell2node = mesh.cells().node_connectivity();
+    const auto node_flags = array::make_view<int, 1>(mesh.nodes().flags());
     if (mesh.nodes().cell_connectivity().rows() == 0) {
         mesh::actions::build_node_to_cell_connectivity(mesh);
     }
@@ -413,7 +420,9 @@ std::vector<idx_t> ConservativeSphericalPolygonInterpolation::get_node_neighbour
     // put together
     int ow_size = w.nbr_nodes_od.size();
     for (int i = 0; i < ow_size - 2; i++) {
-        nbr_nodes.emplace_back(w.nbr_nodes_od[ow_size - 1 - i]);
+        if (valid_point(w.nbr_nodes_od[ow_size - 1 - i], node_flags)) {
+            nbr_nodes.emplace_back(w.nbr_nodes_od[ow_size - 1 - i]);
+        }
     }
     return nbr_nodes;
 }
@@ -515,11 +524,17 @@ ConservativeSphericalPolygonInterpolation::get_polygons_nodedata(FunctionSpace f
             if (PointXYZ::norm(p0 - p1) < 1e-14) {
                 continue;  // skip this edge = a pole point
             }
+            if (! valid_point(node0, node_flags)) {
+                continue;
+            }
             pts_xyz.emplace_back(p0);
             pts_ll.emplace_back(p0_ll);
             pts_idx.emplace_back(inode);
             cell_mid = cell_mid + p0;
             cell_mid = cell_mid + p1;
+        }
+        if (pts_xyz.size() < 3) {
+            continue; // skip this cell
         }
         cell_mid                  = PointXYZ::div(cell_mid, PointXYZ::norm(cell_mid));
         PointLonLat cell_ll       = xyz2ll(cell_mid);

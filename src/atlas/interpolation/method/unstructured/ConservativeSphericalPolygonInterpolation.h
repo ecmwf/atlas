@@ -183,7 +183,7 @@ private:
 
     int next_index(int current_index, int size, int offset = 1) const;
     int prev_index(int current_index, int size, int offset = 1) const;
-
+    bool valid_point(idx_t node_idx, const array::ArrayView<idx_t, 1>& node_flags) const;
 
     void setup_stat() const;
 

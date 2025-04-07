@@ -122,7 +122,7 @@ ConvexSphericalPolygon::ConvexSphericalPolygon(const PointLonLat points[], size_
     size_  = isp;
     valid_ = size_ > 2;
     if (valid_) {
-        if (validate()) {
+        if (! validate()) {
             invalidate_this_polygon();
         }
     }
@@ -149,7 +149,7 @@ ConvexSphericalPolygon::ConvexSphericalPolygon(const PointXYZ points[], size_t s
     size_  = isp;
     valid_ = size_ > 2;
     if (valid_) {
-        if (validate()) {
+        if (! validate()) {
             invalidate_this_polygon();
         }
     }
@@ -187,12 +187,6 @@ bool ConvexSphericalPolygon::validate() {
         }
     }
     return valid_;
-}
-
-void ConvexSphericalPolygon::invalidate_this_polygon() {
-    size_  = 0;
-    valid_ = false;
-    area_  = 0.;
 }
 
 bool ConvexSphericalPolygon::equals(const ConvexSphericalPolygon& plg, const double deg_prec) const {
