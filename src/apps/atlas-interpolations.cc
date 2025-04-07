@@ -156,6 +156,14 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
     args.get("tgrid", tgrid_name);
     auto sgrid = Grid{sgrid_name};
     auto tgrid = Grid{tgrid_name};
+    std::string sdata_name = "node data";
+    if (args.has("scell")) {
+        sdata_name = "cell data";
+    }
+    std::string tdata_name = "node data";
+    if (args.has("tcell")) {
+        tdata_name = "cell data";
+    }
 
     if ((args.has("sgrid") || args.has("tgrid")) && args.has("list")) {
         std::vector<std::string> serial_interpolations;
@@ -197,8 +205,8 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
     }
     std::string interpolation_method = "finite-element";
     args.get("interpolation", interpolation_method);
-    Log::info() << "\tsource grid\t:\t" << sgrid_name << "\n\ttarget grid\t:\t" << tgrid_name
-        << "\n\tinterpolation\t:\t" << interpolation_method << std::endl;
+    Log::info() << "\tsource grid\t:\t" << sgrid_name << " (" << sdata_name <<")\n\ttarget grid\t:\t" << tgrid_name
+        << " (" << tdata_name <<")\n\tinterpolation\t:\t" << interpolation_method << std::endl;
     Config config;
     config.set("src_cell_data", args.has("scell"));
     config.set("tgt_cell_data", args.has("tcell"));
@@ -289,6 +297,12 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
                 if( functionspace::NodeColumns(tgt_field.functionspace())) {
                     Log::info() << "storing distributed remapped field '" << tgt_name << ".msh'." << std::endl;
                     gmsh.write(functionspace::NodeColumns(tgt_field.functionspace()).mesh());
+                    tgt_field.haloExchange();
+                    gmsh.write(tgt_field);
+                }
+                else if( functionspace::CellColumns(tgt_field.functionspace())) {
+                    Log::info() << "storing distributed remapped field '" << tgt_name << ".msh'." << std::endl;
+                    gmsh.write(functionspace::CellColumns(tgt_field.functionspace()).mesh());
                     tgt_field.haloExchange();
                     gmsh.write(tgt_field);
                 }

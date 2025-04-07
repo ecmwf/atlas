@@ -139,8 +139,13 @@ public:
                     if (not tgt.metadata().has("missing_value")) {
                         tgt.metadata().set("missing_value", 9999.);
                     }
-                    tgt.metadata().set("missing_value_type", "equals");
+                    tgt.metadata().set("missing_value_type", "approximately-equals");
+                    tgt.metadata().set("missing_value_epsilon", 1.);
                 }
+                tgt.metadata().set("missing_value", 9999.);
+                tgt.metadata().set("missing_value_type", "approximately-equals");
+                tgt.metadata().set("missing_value_epsilon", 1.);
+ 
             }
             
             ATLAS_TRACE_SCOPE("mask") {
@@ -203,7 +208,15 @@ private:
             fs_gidx_exchanged.array().copy(tgt_fs_.global_index());
             tgt_fs_.haloExchange(fs_gidx_exchanged);
             const auto fs_global_index = array::make_view<gidx_t, 1>(fs_gidx_exchanged);
-            const auto fs_ghost = array::make_view<int,1>(tgt_fs_.ghost());
+            Field fs_ghost_field;
+            if (functionspace::CellColumns(tgt_fs_)) {
+                auto fs = functionspace::CellColumns(tgt_fs_);
+                fs_ghost_field = fs.mesh().cells().halo();
+            }
+            else {
+                fs_ghost_field = tgt_fs_.ghost();
+            }
+            const auto fs_ghost = array::make_view<int,1>(fs_ghost_field);
 
             for (idx_t r = 0; r < fs_global_index.size(); ++r) {
                 auto gr = fs_global_index(r) - 1;
@@ -385,7 +398,9 @@ int AtlasGlobalUnmatchedMatrix::execute(const AtlasTool::Args& args) {
             };
             double missing_value = 9999.;
             src_field.metadata().set("missing_value", missing_value);
+            // src_field.metadata().set("missing_value_type", "approximately-equals");
             src_field.metadata().set("missing_value_type", "equals");
+            src_field.metadata().set("missing_value_epsilon", 1.);
             for (idx_t i = 0; i < src_fs.size(); ++i) {
                 src_field_v[i] = util::function::MDPI_gulfstream(src_lonlat(i, 0), src_lonlat(i, 1))
                                + util::function::MDPI_vortex(src_lonlat(i, 0), src_lonlat(i, 1));
@@ -410,9 +425,13 @@ int AtlasGlobalUnmatchedMatrix::execute(const AtlasTool::Args& args) {
         tgt_field.haloExchange();
         std::string tgt_name = "tfield_" + matrix_name;
         output::Gmsh gmsh(tgt_name + ".msh", Config("coordinates", "lonlat") | Config("ghost", "true"));
+        Log::info() << "storing distributed remapped field '" << tgt_name << ".msh'." << std::endl;
         if( functionspace::NodeColumns(tgt_field.functionspace())) {
-            Log::info() << "storing distributed remapped field '" << tgt_name << "'." << std::endl;
             gmsh.write(functionspace::NodeColumns(tgt_field.functionspace()).mesh());
+            gmsh.write(tgt_field);
+        }
+        else if( functionspace::CellColumns(tgt_field.functionspace())) {
+            gmsh.write(functionspace::CellColumns(tgt_field.functionspace()).mesh());
             gmsh.write(tgt_field);
         }
         else {
@@ -478,7 +497,13 @@ Config AtlasGlobalUnmatchedMatrix::create_fspaces(const std::string& scheme_str,
         // auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::Partitioner("regular_bands");
         auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::Partitioner("equal_regions");
         dist_out = grid::Distribution(output_grid, partitioner);
-        fs_out = functionspace::PointCloud(output_grid, dist_out);
+
+        if( output_grid.type() == "healpix") {
+            fs_out = functionspace::CellColumns(Mesh(output_grid, partitioner));
+        }
+        else {
+            fs_out = functionspace::PointCloud(output_grid, dist_out);
+        }
         // fs_out = functionspace::NodeColumns(Mesh(output_grid, dist_out));
     }
     //}

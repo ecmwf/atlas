@@ -18,7 +18,10 @@
 #include "atlas/array.h"
 #include "atlas/linalg/sparse/SparseMatrixToTriplets.h"
 #include "atlas/functionspace/StructuredColumns.h"
+#include "atlas/functionspace/NodeColumns.h"
+#include "atlas/functionspace/CellColumns.h"
 #include "atlas/grid/Distribution.h"
+
 
 namespace atlas::interpolation {
 
@@ -34,6 +37,25 @@ linalg::SparseMatrixStorage assemble_global_matrix(const Interpolation& interpol
     std::vector<gidx_t> global_cols;
     std::vector<gidx_t> global_rows;
     std::vector<double> global_vals;
+
+    Field tgt_ghost_field;
+    if (functionspace::CellColumns(tgt_fs)) {
+        auto fs = functionspace::CellColumns(tgt_fs);
+        tgt_ghost_field = fs.mesh().cells().halo();
+    }
+    else {
+        tgt_ghost_field = tgt_fs.ghost();
+    }
+    Field src_ghost_field;
+    if (functionspace::CellColumns(src_fs)) {
+        auto fs = functionspace::CellColumns(src_fs);
+        src_ghost_field = fs.mesh().cells().halo();
+    }
+    else {
+        src_ghost_field = src_fs.ghost();
+    }
+    auto tgt_ghost = array::make_view<idx_t, 1>(tgt_ghost_field);
+    auto src_ghost = array::make_view<idx_t, 1>(src_ghost_field);
 
     // Compute global_cols, global_rows, global_vals
     {
@@ -52,7 +74,6 @@ linalg::SparseMatrixStorage assemble_global_matrix(const Interpolation& interpol
             const auto src_global_index = array::make_view<gidx_t, 1>(src_fs.global_index());
             const auto tgt_global_index = array::make_view<gidx_t, 1>(tgt_fs.global_index());
             const auto src_part         = array::make_view<int, 1>(src_fs.partition());
-            const auto tgt_ghost        = array::make_view<int, 1>(tgt_fs.ghost());
 
             eckit::mpi::Buffer<gidx_t> recv_global_idx_buf(mpi_size);
             {
@@ -131,9 +152,8 @@ linalg::SparseMatrixStorage assemble_global_matrix(const Interpolation& interpol
     }
 
 
-    auto compute_max_global_index = [&mpi_comm,mpi_root](const FunctionSpace& fs) {
+    auto compute_max_global_index = [&mpi_comm,mpi_root](const FunctionSpace& fs, const array::ArrayView<idx_t, 1>& ghost) {
         auto global_index = array::make_view<gidx_t, 1>(fs.global_index());
-        auto ghost        = array::make_view<int, 1>(fs.ghost());
         gidx_t max_gidx{0};
         for( size_t i = 0; i < global_index.size(); ++i) {
             if (not ghost(i)) {
@@ -145,8 +165,8 @@ linalg::SparseMatrixStorage assemble_global_matrix(const Interpolation& interpol
     };
 
     // compute max column and row indices
-    gidx_t tgt_max_gidx = compute_max_global_index(tgt_fs);
-    gidx_t src_max_gidx = compute_max_global_index(src_fs);
+    gidx_t tgt_max_gidx = compute_max_global_index(tgt_fs, tgt_ghost);
+    gidx_t src_max_gidx = compute_max_global_index(src_fs, src_ghost);
 
     linalg::SparseMatrixStorage global_matrix;
     if (mpi_rank == mpi_root) {
@@ -270,14 +290,30 @@ linalg::SparseMatrixStorage distribute_global_matrix(partition_t tgt_partition, 
         auto tgt_gidx_exchanged = tgt_fs.createField(tgt_fs.global_index());
         tgt_gidx_exchanged.array().copy(tgt_fs.global_index());
         tgt_fs.haloExchange(tgt_gidx_exchanged);
+        Field tgt_ghost_field;
+        if (functionspace::CellColumns(tgt_fs)) {
+            auto fs = functionspace::CellColumns(tgt_fs);
+            tgt_ghost_field = fs.mesh().cells().halo();
+        }
+        else {
+            tgt_ghost_field = tgt_fs.ghost();
+        }
+        Field src_ghost_field;
+        if (functionspace::CellColumns(src_fs)) {
+            auto fs = functionspace::CellColumns(src_fs);
+            src_ghost_field = fs.mesh().cells().halo();
+        }
+        else {
+            src_ghost_field = src_fs.ghost();
+        }
+        auto src_ghost = array::make_view<int,1>(src_ghost_field);
+        auto tgt_ghost = array::make_view<int,1>(tgt_ghost_field);
         const auto tgt_global_index = array::make_view<gidx_t, 1>(tgt_gidx_exchanged);
-        const auto tgt_ghost = array::make_view<int,1>(tgt_fs.ghost());
 
         auto src_gidx_exchanged = src_fs.createField(src_fs.global_index());
         src_gidx_exchanged.array().copy(src_fs.global_index());
         src_fs.haloExchange(src_gidx_exchanged);
         const auto src_global_index = array::make_view<gidx_t, 1>(src_gidx_exchanged);
-        const auto src_ghost = array::make_view<int,1>(src_fs.ghost());
 
         for (idx_t r = 0; r < tgt_global_index.size(); ++r) {
             auto gr = tgt_global_index(r);
