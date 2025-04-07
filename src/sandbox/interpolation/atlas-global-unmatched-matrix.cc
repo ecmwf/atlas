@@ -35,6 +35,8 @@
 #include "atlas/util/Locate.h"
 #include "atlas/field/MissingValue.h"
 
+#include "atlas/io/atlas-io.h"
+
 #include "tests/AtlasTestEnvironment.h"
 
 using atlas::functionspace::PointCloud;
@@ -177,6 +179,11 @@ private:
             }
             idx_t ridx_base = 0;
 
+            ATLAS_ASSERT(fs);
+            ATLAS_ASSERT(src_distribution_);
+            ATLAS_DEBUG_VAR(collect_size_);
+            ATLAS_DEBUG_VAR(src_distribution_.size());
+            ATLAS_DEBUG_VAR(fs.size());
             util::locate(fs, src_distribution_, collect_gidx, collect_partition, collect_ridx, ridx_base);
             collect_.setup(collect_size_, collect_partition.data(), collect_ridx.data(), ridx_base);
     }
@@ -315,6 +322,7 @@ public:
         add_option(new SimpleOption<std::string>("interpolation", "interpolation methods"));
         add_option(new SimpleOption<std::string>("matrix", "name of the interpolation matrix"));
         add_option(new SimpleOption<std::string>("format", "format of the matrix output: eckit, SCRIP"));
+        add_option(new SimpleOption<std::string>("source", "atlas-io source file"));
     }
 };
 
@@ -322,6 +330,23 @@ int AtlasGlobalUnmatchedMatrix::execute(const AtlasTool::Args& args) {
     ATLAS_TRACE("main");
     std::string sgrid_name = "O2";
     args.get("sgrid", sgrid_name);
+
+    std::vector<double> src_values;
+    bool read_source = false;
+    if (args.has("source")) {
+        read_source = true;
+        std::string atlas_io_file;
+        args.get("source", atlas_io_file);
+        atlas::io::RecordReader atlas_io_reader(atlas_io_file);
+        std::string grid;
+        atlas_io_reader.read("grid.name",sgrid_name);
+        if( atlas::mpi::rank() == 0 ) {
+            atlas_io_reader.read("fields[0].array",src_values);
+        }
+        atlas_io_reader.wait();
+    }
+
+
     std::string tgrid_name = "O2";
     args.get("tgrid", tgrid_name);
 
@@ -382,40 +407,57 @@ int AtlasGlobalUnmatchedMatrix::execute(const AtlasTool::Args& args) {
 
     auto src_lonlat = array::make_view<double, 2>(src_fs.lonlat());
     ATLAS_TRACE_SCOPE("initialize source") {
-        auto src_field_v = array::make_view<double, 1>(src_field);
-        ATLAS_DEBUG_VAR(src_grid.type());
-        if (src_grid.type() == "ORCA") {
-            std::vector<int> is_water(src_grid.size(), 1);
-            if (eckit::PathName("orca_mask").exists()) {
-                std::ifstream orca_mask("orca_mask");
-                for (int i=0; i<is_water.size(); ++i) {
-                    orca_mask >> is_water[i];
+
+        double missing_value = 9999.;
+
+        if (read_source) {
+            auto field_glb = src_fs.createField(src_field, option::global(0));
+            if (mpi::rank() == 0) {
+                auto field_glb_view = array::make_view<double,1>(field_glb);
+                for (idx_t i=0; i<field_glb_view.size(); ++i) {
+                    if( std::abs(src_values[i]-missing_value) < 1.e-4 ) {
+                        field_glb_view[i] = missing_value;
+                    }
+                    else {
+                        field_glb_view[i] = std::abs(src_values[i]);
+                    }
                 }
             }
-            auto glb_idx = array::make_view<gidx_t,1>(src_fs.global_index());
-            auto mask = [&](idx_t j) -> bool {
-                return not is_water[glb_idx(j)-1];
-            };
-            double missing_value = 9999.;
-            src_field.metadata().set("missing_value", missing_value);
-            // src_field.metadata().set("missing_value_type", "approximately-equals");
-            src_field.metadata().set("missing_value_type", "equals");
-            src_field.metadata().set("missing_value_epsilon", 1.);
-            for (idx_t i = 0; i < src_fs.size(); ++i) {
-                src_field_v[i] = util::function::MDPI_gulfstream(src_lonlat(i, 0), src_lonlat(i, 1))
-                               + util::function::MDPI_vortex(src_lonlat(i, 0), src_lonlat(i, 1));
-                if (mask(i)) {
-                   src_field_v[i] = missing_value;
-                }
-            }
+            src_fs.scatter(field_glb,src_field);
         }
         else {
-            for (idx_t i = 0; i < src_fs.size(); ++i) {
-                src_field_v[i] = util::function::vortex_rollup(src_lonlat(i, 0), src_lonlat(i, 1), 1.);
-                // src_field_v[i] = util::function::MDPI_gulfstream(src_lonlat(i, 0), src_lonlat(i, 1));
-                // src_field_v[i] = util::function::MDPI_vortex(src_lonlat(i, 0), src_lonlat(i, 1));
+            auto src_field_v = array::make_view<double, 1>(src_field);
+            ATLAS_DEBUG_VAR(src_grid.type());
+            if (src_grid.type() == "ORCA") {
+                std::vector<int> is_water(src_grid.size(), 1);
+                if (eckit::PathName("orca_mask").exists()) {
+                    std::ifstream orca_mask("orca_mask");
+                    for (int i=0; i<is_water.size(); ++i) {
+                        orca_mask >> is_water[i];
+                    }
+                }
+                auto glb_idx = array::make_view<gidx_t,1>(src_fs.global_index());
+                auto mask = [&](idx_t j) -> bool {
+                    return not is_water[glb_idx(j)-1];
+                };
+                for (idx_t i = 0; i < src_fs.size(); ++i) {
+                    src_field_v[i] = util::function::MDPI_gulfstream(src_lonlat(i, 0), src_lonlat(i, 1))
+                                + util::function::MDPI_vortex(src_lonlat(i, 0), src_lonlat(i, 1));
+                    if (mask(i)) {
+                    src_field_v[i] = missing_value;
+                    }
+                }
+            }
+            else {
+                for (idx_t i = 0; i < src_fs.size(); ++i) {
+                    src_field_v[i] = util::function::vortex_rollup(src_lonlat(i, 0), src_lonlat(i, 1), 1.);
+                    // src_field_v[i] = util::function::MDPI_gulfstream(src_lonlat(i, 0), src_lonlat(i, 1));
+                    // src_field_v[i] = util::function::MDPI_vortex(src_lonlat(i, 0), src_lonlat(i, 1));
+                }
             }
         }
+        src_field.metadata().set("missing_value", missing_value);
+        src_field.metadata().set("missing_value_type", "equals");
     }
 
     interpolator->execute(src_field, tgt_field);
@@ -494,17 +536,19 @@ Config AtlasGlobalUnmatchedMatrix::create_fspaces(const std::string& scheme_str,
     }
     ATLAS_TRACE_SCOPE("target functionspace") {
         //auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::MatchingPartitioner(inmesh);
-        // auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::Partitioner("regular_bands");
-        auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::Partitioner("equal_regions");
+        auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::Partitioner("regular_bands");
+        // auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::Partitioner("equal_regions");
         dist_out = grid::Distribution(output_grid, partitioner);
-
         if( output_grid.type() == "healpix") {
             fs_out = functionspace::CellColumns(Mesh(output_grid, partitioner));
+        }
+        else if( output_grid.type() == "ORCA") {
+            // fs_out = functionspace::NodeColumns(Mesh(output_grid, dist_out));
+            fs_out = functionspace::PointCloud(output_grid, dist_out);
         }
         else {
             fs_out = functionspace::PointCloud(output_grid, dist_out);
         }
-        // fs_out = functionspace::NodeColumns(Mesh(output_grid, dist_out));
     }
     //}
 #if 0
