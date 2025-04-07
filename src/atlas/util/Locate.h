@@ -34,7 +34,8 @@ inline void locate(const FunctionSpace& fs, const grid::Distribution& distributi
         std::vector<std::size_t> send_counts(mpi_size,0);
         for (std::size_t j=0; j<size; ++j) {
             gidx_t gidx = global_index[j];
-            //assert_in_bounds(gidx-1, partition_global);
+            ATLAS_ASSERT(gidx-1 < distribution.size());
+            // assert_in_bounds(gidx-1, partition_global);
             int p = distribution.partition(gidx-1);
             partition[j] = p;
             ++send_counts[p];
