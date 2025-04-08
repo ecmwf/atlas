@@ -181,6 +181,9 @@ bool ConvexSphericalPolygon::validate() {
             int nni               = next(ni);
             const PointXYZ& P     = sph_coords_[i];
             const PointXYZ& nextP = sph_coords_[ni];
+            if( std::abs(PointXYZ::dot(P, P) - 1.) >= 10 * EPS ) {
+                return false;
+            }
             ATLAS_ASSERT(std::abs(PointXYZ::dot(P, P) - 1.) < 10 * EPS);
             ATLAS_ASSERT(not approx_eq(P, PointXYZ::mul(nextP, -1.)));
             valid_ = valid_ && GreatCircleSegment{P, nextP}.inLeftHemisphere(sph_coords_[nni], -0.5*EPS);
