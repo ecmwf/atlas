@@ -536,17 +536,21 @@ Config AtlasGlobalUnmatchedMatrix::create_fspaces(const std::string& scheme_str,
     }
     ATLAS_TRACE_SCOPE("target functionspace") {
         //auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::MatchingPartitioner(inmesh);
-        auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::Partitioner("regular_bands");
-        // auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::Partitioner("equal_regions");
-        dist_out = grid::Distribution(output_grid, partitioner);
         if( output_grid.type() == "healpix") {
+            auto partitioner = grid::Partitioner{output_grid.partitioner()};
+            dist_out = grid::Distribution(output_grid, partitioner);
             fs_out = functionspace::CellColumns(Mesh(output_grid, partitioner));
         }
         else if( output_grid.type() == "ORCA") {
-            // fs_out = functionspace::NodeColumns(Mesh(output_grid, dist_out));
+            auto partitioner = grid::Partitioner{output_grid.partitioner()};
+            // auto partitioner = mpi::size() == 1 ? grid::Partitioner("serial") : grid::Partitioner("regular_bands");
+            dist_out = grid::Distribution(output_grid, partitioner);
+        // fs_out = functionspace::NodeColumns(Mesh(output_grid, dist_out));
             fs_out = functionspace::PointCloud(output_grid, dist_out);
         }
         else {
+            auto partitioner = grid::Partitioner{output_grid.partitioner()};
+            dist_out = grid::Distribution(output_grid, partitioner);
             fs_out = functionspace::PointCloud(output_grid, dist_out);
         }
     }
