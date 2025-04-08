@@ -68,7 +68,7 @@ HealpixMeshGenerator::HealpixMeshGenerator(const eckit::Parametrisation& p) {
         options.set("3d", three_dimensional);
     }
 
-    std::string pole_elements{"quads"};
+    std::string pole_elements{"pentagons"};
     if (p.get("pole_elements", pole_elements)) {
         if (pole_elements != "pentagons" and pole_elements != "quads") {
             Log::warning() << "Atlas::HealpixMeshGenerator accepts \"pentagons\" or \"quads\" for \"pole_elements\"."
