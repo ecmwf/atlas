@@ -97,10 +97,12 @@ void HaloExchange::setup(const std::string& mpi_comm, const int part[], const id
     atlas::vector<idx_t> ghost_points(parsize_);
     idx_t nghost = 0;
 
-    atlas_omp_parallel_for(int jj = halo_begin; jj < parsize_; ++jj) {
+    // atlas_omp_parallel_for(int jj = halo_begin; jj < parsize_; ++jj) {
+    for(int jj = halo_begin; jj < parsize_; ++jj) {
         if (is_ghost(jj)) {
             int p = part[jj];
-            atlas_omp_critical {
+            // atlas_omp_critical {
+            {
                 ++recvcounts_[p];
                 ghost_points[nghost] = jj;
                 nghost++;
