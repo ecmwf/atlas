@@ -16,6 +16,7 @@
 
 #include "atlas/array/MakeView.h"
 #include "atlas/functionspace/CellColumns.h"
+#include "atlas/grid/UnstructuredGrid.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/IsGhostNode.h"
@@ -283,6 +284,8 @@ CellColumns::CellColumns(const Mesh& mesh, const eckit::Configuration& config):
         nb_cells_ = mesh.cells().size();
     }
     ATLAS_ASSERT(nb_cells_);
+
+    if (mesh_.grid()) grid_ = mesh_.grid();
 }
 
 CellColumns::~CellColumns() = default;
@@ -570,6 +573,44 @@ const parallel::Checksum& CellColumns::checksum() const {
     return *checksum_;
 }
 
+Grid CellColumns::base_grid() const {
+    if (grid_) return grid_;
+
+    const auto& comm = mpi::comm(mpi_comm());
+    std::vector<PointXY> points;
+    if (comm.size() == 1) {
+        const auto xy = atlas::array::make_view<double, 2>(mesh_.nodes().xy());
+        for (auto i = 0; i < xy.shape(0); i++) {
+            points.push_back({xy(i, 0), xy(i, 1)});
+        }
+    } else {
+        std::vector<int> gidx;
+        std::vector<double> x, y;
+        const auto gidxView = array::make_view<gidx_t, 1>(global_index());
+        const auto ghostView = array::make_view<int, 1>(ghost());
+        const auto xy = atlas::array::make_view<double, 2>(mesh_.nodes().xy());
+        for (auto i = 0; i < xy.shape(0); i++) {
+            if (ghostView(i) == 0) {
+                gidx.push_back(gidxView(i));
+                x.push_back(xy(i, 0));
+                y.push_back(xy(i, 1));
+            }
+        }
+        eckit::mpi::Buffer<int> gidxBuffer(comm.size());
+        eckit::mpi::Buffer<double> xBuffer(comm.size());
+        eckit::mpi::Buffer<double> yBuffer(comm.size());
+        comm.allGatherv(gidx.begin(), gidx.end(), gidxBuffer);
+        comm.allGatherv(x.begin(), x.end(), xBuffer);
+        comm.allGatherv(y.begin(), y.end(), yBuffer);
+        points.reserve(gidxBuffer.buffer.size());
+        for (auto i : gidxBuffer.buffer) {
+            points[i - 1] = atlas::PointXY{xBuffer.buffer[i - 1], yBuffer.buffer[i - 1]};
+        }
+    }
+    grid_ = UnstructuredGrid(points);
+    return grid_;
+}
+
 Field CellColumns::lonlat() const {
     if (!mesh_.cells().has_field("lonlat")) {
         mesh::actions::Build2DCellCentres("lonlat")(const_cast<Mesh&>(mesh_));
@@ -591,10 +632,6 @@ Field CellColumns::ghost() const {
 
 Field CellColumns::partition() const {
     return mesh_.cells().partition();
-}
-
-Grid CellColumns::get_grid_copy() const {
-    return mesh_.grid();
 }
 
 //------------------------------------------------------------------------------

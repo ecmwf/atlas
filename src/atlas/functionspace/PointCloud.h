@@ -58,13 +58,13 @@ public:
     operator bool() const override { return true; }
     size_t footprint() const override { return sizeof(*this); }
     std::string distribution() const override;
+    Grid base_grid() const override;
     Field lonlat() const override { return lonlat_; }
     const Field& vertical() const { return vertical_; }
     Field ghost() const override;
     Field remote_index() const override { return remote_index_; }
     Field global_index() const override { return global_index_; }
     Field partition() const override { return partition_; }
-    Grid get_grid_copy() const override;
     idx_t size() const override { return lonlat_.shape(0); }
     idx_t part() const override { return part_; }
     idx_t nb_parts() const override { return nb_partitions_; }
@@ -172,7 +172,7 @@ private:
     void create_remote_index() const;
 
 private:
-    Grid grid_;
+    mutable Grid grid_;
     Field lonlat_;
     Field vertical_;
     mutable Field ghost_;

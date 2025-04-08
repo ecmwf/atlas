@@ -55,6 +55,10 @@ Field NoFunctionSpace::createField(const Field&, const eckit::Configuration&) co
     ATLAS_NOTIMPLEMENTED;
 }
 
+Grid FunctionSpaceImpl::base_grid() const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
 Field FunctionSpaceImpl::lonlat() const {
     ATLAS_NOTIMPLEMENTED;
 }
@@ -68,10 +72,6 @@ Field FunctionSpaceImpl::remote_index() const {
 }
 
 Field FunctionSpaceImpl::partition() const {
-    ATLAS_NOTIMPLEMENTED;
-}
-
-Grid FunctionSpaceImpl::get_grid_copy() const {
     ATLAS_NOTIMPLEMENTED;
 }
 

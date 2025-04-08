@@ -85,6 +85,8 @@ public:
 
     idx_t size() const override { return nb_edges_; }
 
+    Grid base_grid() const override;
+
     Field lonlat() const override;
 
     Field global_index() const override;
@@ -92,8 +94,6 @@ public:
     Field remote_index() const override;
 
     Field partition() const override;
-
-    Grid get_grid_copy() const override;
 
     std::string mpi_comm() const override { return mesh_.mpi_comm(); }
 
@@ -107,6 +107,7 @@ private:  // methods
     size_t footprint() const override;
 
 private:                           // data
+    mutable Grid grid_;
     Mesh mesh_;                    // non-const because functionspace may modify mesh
     mesh::HybridElements& edges_;  // non-const because functionspace may modify mesh
     idx_t nb_levels_;

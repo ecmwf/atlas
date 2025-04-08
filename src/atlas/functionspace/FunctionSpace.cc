@@ -31,6 +31,10 @@ size_t FunctionSpace::footprint() const {
     return get()->footprint();
 }
 
+Grid FunctionSpace::base_grid() const {
+    return get()->base_grid();
+}
+
 Field FunctionSpace::createField(const eckit::Configuration& config) const {
     return get()->createField(config);
 }
@@ -85,10 +89,6 @@ Field FunctionSpace::remote_index() const {
 
 Field FunctionSpace::partition() const {
     return get()->partition();
-}
-
-Grid FunctionSpace::get_grid_copy() const {
-    return get()->get_grid_copy();
 }
 
 void FunctionSpace::haloExchange(const FieldSet& fields, bool on_device) const {

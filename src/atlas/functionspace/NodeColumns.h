@@ -262,6 +262,8 @@ public:
 
     idx_t nb_parts() const override { return mesh_.nb_parts(); }
 
+    Grid base_grid() const override;
+
     Field lonlat() const override { return nodes_.lonlat(); }
 
     Field ghost() const override { return nodes_.ghost(); }
@@ -271,8 +273,6 @@ public:
     Field remote_index() const override { return nodes_.remote_index(); }
 
     Field partition() const override { return nodes_.partition(); }
-
-    Grid get_grid_copy() const override { return mesh_.grid(); }
 
     const util::PartitionPolygon& polygon(idx_t halo = 0) const override { return mesh_.polygon(halo); }
 
@@ -295,6 +295,7 @@ private:  // methods
     virtual size_t footprint() const override { return 0; }
 
 private:                  // data
+    mutable Grid grid_;
     Mesh mesh_;           // non-const because functionspace may modify mesh
     mesh::Nodes& nodes_;  // non-const because functionspace may modify mesh
     mesh::Halo halo_;

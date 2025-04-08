@@ -100,6 +100,8 @@ public:
 
     virtual const util::PartitionPolygon& polygon(idx_t halo = 0) const;
 
+    virtual atlas::Grid base_grid() const;
+
     virtual atlas::Field lonlat() const;
 
     virtual atlas::Field ghost() const;
@@ -107,8 +109,6 @@ public:
     virtual atlas::Field remote_index() const;
 
     virtual atlas::Field partition() const;
-
-    virtual atlas::Grid get_grid_copy() const;
 
     virtual atlas::Field global_index() const;
 

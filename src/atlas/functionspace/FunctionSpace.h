@@ -86,6 +86,8 @@ public:
 
     idx_t size() const;
 
+    Grid base_grid() const;
+
     Field lonlat() const;
 
     Field ghost() const;
@@ -95,8 +97,6 @@ public:
     Field remote_index() const;
 
     Field partition() const;
-
-    Grid get_grid_copy() const;
 
     const parallel::GatherScatter& gather() const;
     const parallel::GatherScatter& scatter() const;
