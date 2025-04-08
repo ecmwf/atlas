@@ -7,12 +7,12 @@
  * granted to it by virtue of its status as an intergovernmental organisation
  * nor does it submit to any jurisdiction.
  */
-#include <iostream>
-#include <functional>
-#include <tuple>
-#include <vector>
-#include <utility>
 #include <cassert>
+#include <functional>
+#include <iostream>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 #include "hic/hic.h"
 #include "hic/hicsparse.h"
@@ -22,10 +22,10 @@
 int test_hicsparseCreate() {
     std::cout << "--- " << __FUNCTION__ << std::endl;
     hicsparseHandle_t handle;
-    HICSPARSE_CALL( hicsparseCreate(&handle) );
-    HICSPARSE_CALL( hicsparseDestroy(handle) );
-    std::cout << "--- " << __FUNCTION__ << " SUCCEEDED " << std::endl; 
-    return 0; // success 
+    HICSPARSE_CALL(hicsparseCreate(&handle));
+    HICSPARSE_CALL(hicsparseDestroy(handle));
+    std::cout << "--- " << __FUNCTION__ << " SUCCEEDED " << std::endl;
+    return 0;  // success
 }
 
 // -----------------------------------------------------------------------------
@@ -34,23 +34,23 @@ int test_hicsparseSpMV() {
     std::cout << "--- " << __FUNCTION__ << std::endl;
 
     // Create a sparse matrix
-    const int rows = 3;
-    const int cols = 3;
-    const int nnz = 3;
-    double values[nnz] = {1.0, 2.0, 3.0};
-    int row_offsets[rows+1] = {0, 1, 2, 3};
-    int column_indices[nnz] = {0, 1, 2};
+    const int rows            = 3;
+    const int cols            = 3;
+    const int nnz             = 3;
+    double values[nnz]        = {1.0, 2.0, 3.0};
+    int row_offsets[rows + 1] = {0, 1, 2, 3};
+    int column_indices[nnz]   = {0, 1, 2};
 
     // Put the sparse matrix onto the device
     double* dvalues;
     int* drow_offsets;
     int* dcolumn_indices;
-    HIC_CALL( hicMalloc((void**)&dvalues, nnz * sizeof(double)) );
-    HIC_CALL( hicMalloc((void**)&drow_offsets, (rows+1) * sizeof(int)) );
-    HIC_CALL( hicMalloc((void**)&dcolumn_indices, nnz * sizeof(int)) );
-    HIC_CALL( hicMemcpy(dvalues, values, nnz * sizeof(double), hicMemcpyHostToDevice) );
-    HIC_CALL( hicMemcpy(drow_offsets, row_offsets, (rows+1) * sizeof(int), hicMemcpyHostToDevice) );
-    HIC_CALL( hicMemcpy(dcolumn_indices, column_indices, nnz * sizeof(int), hicMemcpyHostToDevice) );
+    HIC_CALL(hicMalloc((void**)&dvalues, nnz * sizeof(double)));
+    HIC_CALL(hicMalloc((void**)&drow_offsets, (rows + 1) * sizeof(int)));
+    HIC_CALL(hicMalloc((void**)&dcolumn_indices, nnz * sizeof(int)));
+    HIC_CALL(hicMemcpy(dvalues, values, nnz * sizeof(double), hicMemcpyHostToDevice));
+    HIC_CALL(hicMemcpy(drow_offsets, row_offsets, (rows + 1) * sizeof(int), hicMemcpyHostToDevice));
+    HIC_CALL(hicMemcpy(dcolumn_indices, column_indices, nnz * sizeof(int), hicMemcpyHostToDevice));
 
     // Create a dense vector
     const int N = 3;
@@ -60,14 +60,14 @@ int test_hicsparseSpMV() {
     // Put the dense vector onto the device
     double* dx;
     double* dy;
-    HIC_CALL( hicMalloc((void**)&dx, N * sizeof(double)) );
-    HIC_CALL( hicMalloc((void**)&dy, N * sizeof(double)) );
-    HIC_CALL( hicMemcpy(dx, x, N * sizeof(double), hicMemcpyHostToDevice) );
-    HIC_CALL( hicMemcpy(dy, y, N * sizeof(double), hicMemcpyHostToDevice) );
+    HIC_CALL(hicMalloc((void**)&dx, N * sizeof(double)));
+    HIC_CALL(hicMalloc((void**)&dy, N * sizeof(double)));
+    HIC_CALL(hicMemcpy(dx, x, N * sizeof(double), hicMemcpyHostToDevice));
+    HIC_CALL(hicMemcpy(dy, y, N * sizeof(double), hicMemcpyHostToDevice));
 
     // Create sparse library handle
     hicsparseHandle_t handle;
-    HICSPARSE_CALL( hicsparseCreate(&handle) );
+    HICSPARSE_CALL(hicsparseCreate(&handle));
 
     // Create a sparse matrix descriptor
     hicsparseConstSpMatDescr_t matA;
@@ -99,8 +99,8 @@ int test_hicsparseSpMV() {
 
     // Set parameters
     const double alpha = 1.0;
-    const double beta = 0.0;
-    
+    const double beta  = 0.0;
+
     // Determine buffer size
     size_t bufferSize = 0;
     HICSPARSE_CALL( hicsparseSpMV_bufferSize(
@@ -117,8 +117,8 @@ int test_hicsparseSpMV() {
 
     // Allocate buffer
     char* buffer;
-    HIC_CALL( hicMalloc(&buffer, bufferSize) );
-    
+    HIC_CALL(hicMalloc(&buffer, bufferSize));
+
     // Perform SpMV
     // y = alpha * A * x + beta * y
     HICSPARSE_CALL( hicsparseSpMV(
@@ -134,29 +134,30 @@ int test_hicsparseSpMV() {
         buffer) );
     
     // Copy result back to host
-    HIC_CALL( hicMemcpy(y, dy, N * sizeof(double), hicMemcpyDeviceToHost) );
+    HIC_CALL(hicMemcpy(y, dy, N * sizeof(double), hicMemcpyDeviceToHost));
 
     // Check result
     const double expected_y[N] = {1.0, 4.0, 9.0};
-    for( int i = 0; i < N; ++i ) {
-        if( y[i] != expected_y[i] ) {
-            throw std::runtime_error("Error: y[" + std::to_string(i) + "] = " + std::to_string(y[i]) + " != " + std::to_string(expected_y[i]));
+    for (int i = 0; i < N; ++i) {
+        if (y[i] != expected_y[i]) {
+            throw std::runtime_error("Error: y[" + std::to_string(i) + "] = " + std::to_string(y[i]) +
+                                     " != " + std::to_string(expected_y[i]));
         }
     }
 
     // Clean up
-    HIC_CALL( hicFree(dy) );
-    HIC_CALL( hicFree(dx) );
-    HIC_CALL( hicFree(dcolumn_indices) );
-    HIC_CALL( hicFree(drow_offsets) );
-    HIC_CALL( hicFree(dvalues) );
-    HICSPARSE_CALL( hicsparseDestroyDnVec(vecY) );
-    HICSPARSE_CALL( hicsparseDestroyDnVec(vecX) );
-    HICSPARSE_CALL( hicsparseDestroySpMat(matA) );
-    HICSPARSE_CALL( hicsparseDestroy(handle) );
+    HIC_CALL(hicFree(dy));
+    HIC_CALL(hicFree(dx));
+    HIC_CALL(hicFree(dcolumn_indices));
+    HIC_CALL(hicFree(drow_offsets));
+    HIC_CALL(hicFree(dvalues));
+    HICSPARSE_CALL(hicsparseDestroyDnVec(vecY));
+    HICSPARSE_CALL(hicsparseDestroyDnVec(vecX));
+    HICSPARSE_CALL(hicsparseDestroySpMat(matA));
+    HICSPARSE_CALL(hicsparseDestroy(handle));
 
-    std::cout << "--- " << __FUNCTION__ << " SUCCEEDED " << std::endl; 
-    return 0; // success 
+    std::cout << "--- " << __FUNCTION__ << " SUCCEEDED " << std::endl;
+    return 0;  // success
 }
 
 // -----------------------------------------------------------------------------
@@ -165,12 +166,12 @@ int test_hicsparseSpMM() {
     std::cout << "--- " << __FUNCTION__ << std::endl;
 
     // Create a sparse matrix
-    const int rows = 3;
-    const int cols = 3;
-    const int nnz = 3;
-    double values[nnz] = {1.0, 2.0, 3.0};
+    const int rows            = 3;
+    const int cols            = 3;
+    const int nnz             = 3;
+    double values[nnz]        = {1.0, 2.0, 3.0};
     int row_offsets[rows + 1] = {0, 1, 2, 3};
-    int column_indices[nnz] = {0, 1, 2};
+    int column_indices[nnz]   = {0, 1, 2};
 
     // Put the sparse matrix onto the device
     double* dvalues;
@@ -184,10 +185,10 @@ int test_hicsparseSpMM() {
     HIC_CALL(hicMemcpy(dcolumn_indices, column_indices, nnz * sizeof(int), hicMemcpyHostToDevice));
 
     // Create dense matrices
-    const int B_rows = 3;
-    const int B_cols = 3;
+    const int B_rows          = 3;
+    const int B_cols          = 3;
     double B[B_rows * B_cols] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
-    double C[rows * B_cols] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    double C[rows * B_cols]   = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
     // Put the dense matrices onto the device
     double* dB;
@@ -237,7 +238,7 @@ int test_hicsparseSpMM() {
 
     // Set parameters
     const double alpha = 1.0;
-    const double beta = 0.0;
+    const double beta  = 0.0;
 
     // Determine buffer size
     size_t bufferSize = 0;
@@ -279,7 +280,8 @@ int test_hicsparseSpMM() {
     const double expected_C[rows * B_cols] = {1.0, 2.0, 3.0, 8.0, 10.0, 12.0, 21.0, 24.0, 27.0};
     for (int i = 0; i < rows * B_cols; ++i) {
         if (C[i] != expected_C[i]) {
-            throw std::runtime_error("Error: C[" + std::to_string(i) + "] = " + std::to_string(C[i]) + " != " + std::to_string(expected_C[i]));
+            throw std::runtime_error("Error: C[" + std::to_string(i) + "] = " + std::to_string(C[i]) +
+                                     " != " + std::to_string(expected_C[i]));
         }
     }
 
@@ -296,7 +298,7 @@ int test_hicsparseSpMM() {
     HICSPARSE_CALL(hicsparseDestroy(handle));
 
     std::cout << "--- " << __FUNCTION__ << " SUCCEEDED " << std::endl;
-    return 0; // success
+    return 0;  // success
 }
 
 // -----------------------------------------------------------------------------
@@ -310,18 +312,18 @@ std::vector<std::function<int()>> tests = {
 int main(int argc, char* argv[]) {
     int num_devices = 0;
     hicGetDeviceCount(&num_devices);
-    if( num_devices == 0 ) {
+    if (num_devices == 0) {
         std::ignore = hicGetLastError();
-        std::cout << "TEST IGNORED, hicGetDeviceCount -> 0" << std::endl; 
+        std::cout << "TEST IGNORED, hicGetDeviceCount -> 0" << std::endl;
         return 0;
     }
-    std::cout << "hicGetDeviceCount -> " << num_devices << std::endl; 
+    std::cout << "hicGetDeviceCount -> " << num_devices << std::endl;
     int error = 0;
-    for( auto& test: tests) {
+    for (auto& test : tests) {
         try {
             error += test();
         }
-        catch( std::exception& e ) {
+        catch (std::exception& e) {
             error += 1;
             std::cout << e.what() << std::endl;
         }

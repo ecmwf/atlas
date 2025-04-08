@@ -11,21 +11,17 @@
 #pragma once
 
 #include <algorithm>  // std::fill
-#include <atomic>
-#include <cstdlib>  // posix_memalign
 #include <limits>   // std::numeric_limits<T>::signaling_NaN
-#include <sstream>
+#include <string>
+#include <iostream>
+
+#include "pluto/pluto.h"
 
 #include "atlas/array/ArrayDataStore.h"
-#include "atlas/library/Library.h"
+#include "atlas/array/ArraySpec.h"
 #include "atlas/library/config.h"
 #include "atlas/parallel/acc/acc.h"
 #include "atlas/runtime/Exception.h"
-#include "atlas/runtime/Log.h"
-#include "eckit/log/Bytes.h"
-
-#include "hic/hic.h"
-
 
 #define ATLAS_ACC_DEBUG 0
 
@@ -34,47 +30,6 @@
 namespace atlas {
 namespace array {
 namespace native {
-
-struct MemoryHighWatermark {
-    std::atomic<size_t> bytes_{0};
-    std::atomic<size_t> high_{0};
-    void print(std::ostream& out) const { out << eckit::Bytes(double(bytes_)); }
-    friend std::ostream& operator<<(std::ostream& out, const MemoryHighWatermark& v) {
-        v.print(out);
-        return out;
-    }
-    MemoryHighWatermark& operator+=(const size_t& bytes) {
-        bytes_ += bytes;
-        update_maximum();
-        if (atlas::Library::instance().traceMemory()) {
-            Log::trace() << "Memory: " << eckit::Bytes(double(bytes_)) << "\t( +" << eckit::Bytes(double(bytes))
-                         << " \t| high watermark " << eckit::Bytes(double(high_)) << "\t)" << std::endl;
-        }
-        return *this;
-    }
-    MemoryHighWatermark& operator-=(const size_t& bytes) {
-        bytes_ -= bytes;
-        if (atlas::Library::instance().traceMemory()) {
-            Log::trace() << "Memory: " << eckit::Bytes(double(bytes_)) << "\t( -" << eckit::Bytes(double(bytes))
-                         << " \t| high watermark " << eckit::Bytes(double(high_)) << "\t)" << std::endl;
-        }
-        return *this;
-    }
-
-private:
-    MemoryHighWatermark() = default;
-    void update_maximum() noexcept {
-        size_t prev_value = high_;
-        while (prev_value < bytes_ && !high_.compare_exchange_weak(prev_value, bytes_)) {
-        }
-    }
-
-public:
-    static MemoryHighWatermark& instance() {
-        static MemoryHighWatermark _instance;
-        return _instance;
-    }
-};
 
 template <typename Value>
 static constexpr Value invalid_value() {
@@ -94,26 +49,64 @@ template <typename Value>
 void initialise(Value[], size_t) {}
 #endif
 
-static int devices() {
-    static int devices_ = [](){
-        int n = 0;
-        auto err = hicGetDeviceCount(&n);
-        if (err != hicSuccess) {
-            n = 0;
-            static_cast<void>(hicGetLastError());
-        }
-        return n;
-    }();
-    return devices_;
+static bool test_device_is_shared() {
+    // This is currently a bit hacky, to be improved!
+    auto& device_resource = *pluto::device::get_default_resource();
+
+    if (device_resource == *pluto::pinned_resource()) {
+        return true;
+    }
+    if (device_resource == *pluto::managed_resource()) {
+        return true;
+    }
+    if (device_resource == *pluto::pinned_pool_resource()) {
+        return true;
+    }
+    if (device_resource == *pluto::managed_pool_resource()) {
+        return true;
+    }
+
+    // If above shortcuts failed, we can do an introspection on a dummy allocation
+    if (ATLAS_HAVE_GPU && pluto::devices()) {
+        void* device_ptr = device_resource.allocate(8);
+        bool is_shared = pluto::is_managed(device_ptr) || (pluto::is_pinned(device_ptr));
+        device_resource.deallocate(device_ptr,8);
+        return is_shared;
+    }
+    return false;
 }
+
+static pluto::memory_resource* host_resource(bool shared) {
+    if (shared) {
+        return pluto::device::get_default_resource();
+    }
+    else {
+        return pluto::host::get_default_resource();
+    }
+}
+
+static pluto::memory_resource* device_resource(bool shared) {
+    if (shared) {
+        return pluto::null_memory_resource();
+    }
+    else {
+        return pluto::device::get_default_resource();
+    }
+}
+
 
 template <typename Value>
 class DataStore : public ArrayDataStore {
 public:
-    DataStore(size_t size): size_(size) {
+    DataStore(size_t size): size_(size),
+        is_shared_data_{test_device_is_shared()},
+        host_allocator_{host_resource(is_shared_data_)},
+        device_allocator_{device_resource(is_shared_data_)} {
+
+        label_ = array::label::get();
         allocateHost();
         initialise(host_data_, size_);
-        if (ATLAS_HAVE_GPU && devices()) {
+        if (ATLAS_HAVE_GPU && pluto::devices()) {
             device_updated_ = false;
         }
         else {
@@ -127,14 +120,11 @@ public:
     }
 
     void updateDevice() const override {
-        if (ATLAS_HAVE_GPU && devices()) {
+        if (ATLAS_HAVE_GPU && pluto::devices()) {
             if (not device_allocated_) {
                 allocateDevice();
             }
-            hicError_t err = hicMemcpy(device_data_, host_data_, size_*sizeof(Value), hicMemcpyHostToDevice);
-            if (err != hicSuccess) {
-                throw_AssertionFailed("Failed to updateDevice: "+std::string(hicGetErrorString(err)), Here());
-            }
+            pluto::copy_host_to_device(device_data_, host_data_, size_);
             device_updated_ = true;
         }
     }
@@ -142,10 +132,7 @@ public:
     void updateHost() const override {
         if constexpr (ATLAS_HAVE_GPU) {
             if (device_allocated_) {
-                hicError_t err = hicMemcpy(host_data_, device_data_, size_*sizeof(Value), hicMemcpyDeviceToHost);
-                if (err != hicSuccess) {
-                    throw_AssertionFailed("Failed to updateHost: "+std::string(hicGetErrorString(err)), Here());
-                }
+                pluto::copy_device_to_host(host_data_, device_data_, size_);
                 host_updated_ = true;
             }
         }
@@ -174,15 +161,18 @@ public:
     bool deviceAllocated() const override { return device_allocated_; }
 
     void allocateDevice() const override {
-        if (ATLAS_HAVE_GPU && devices()) {
+        if (ATLAS_HAVE_GPU && pluto::devices()) {
             if (device_allocated_) {
                 return;
             }
             if (size_) {
-                hicError_t err = hicMalloc((void**)&device_data_, sizeof(Value)*size_);
-                if (err != hicSuccess) {
-                    throw_AssertionFailed("Failed to allocate GPU memory: " + std::string(hicGetErrorString(err)), Here());
+                if(is_shared_data_) {
+                    device_data_ = pluto::get_registered_device_pointer(host_data_);
                 }
+                else {
+                    device_data_ = device_allocator_.allocate(label_, size_);
+                }
+                ATLAS_ASSERT(pluto::is_device_accessible(device_data_));
                 device_allocated_ = true;
                 accMap();
             }
@@ -190,16 +180,13 @@ public:
     }
 
     void deallocateDevice() const override {
-        if constexpr (ATLAS_HAVE_GPU) {
-            if (device_allocated_) {
-                accUnmap();
-                hicError_t err = hicFree(device_data_);
-                if (err != hicSuccess) {
-                    throw_AssertionFailed("Failed to deallocate GPU memory: " + std::string(hicGetErrorString(err)), Here());
-                }
-                device_data_ = nullptr;
-                device_allocated_ = false;
+        if (device_allocated_) {
+            accUnmap();
+            if (not is_shared_data_) {
+                device_allocator_.deallocate(label_, device_data_,size_);
             }
+            device_data_ = nullptr;
+            device_allocated_ = false;
         }
     }
 
@@ -222,7 +209,13 @@ public:
     void* voidDeviceData() override { return static_cast<void*>(device_data_); }
 
     void accMap() const override {
-        if (not acc_mapped_ && acc::devices()) {
+        if ((not acc_mapped_ && acc::devices())) {
+            if (is_shared_data_) {
+                // nvidia compiler should not accMap for managed memory
+                if (pluto::is_managed(host_data_) && acc::compiler_id() == acc::CompilerId::nvidia) {
+                  return;
+                }
+            }
             ATLAS_ASSERT(deviceAllocated(),"Could not accMap as device data is not allocated");
             ATLAS_ASSERT(!atlas::acc::is_present(host_data_, size_ * sizeof(Value)));
             if constexpr(ATLAS_ACC_DEBUG) {
@@ -253,42 +246,21 @@ public:
 
 
 private:
-    [[noreturn]] void throw_AllocationFailed(size_t bytes, const eckit::CodeLocation& loc) {
-        std::ostringstream ss;
-        ss << "AllocationFailed: Could not allocate " << eckit::Bytes(bytes);
-        throw_Exception(ss.str(), loc);
-    }
-
-    void alloc_aligned(Value*& ptr, size_t n) {
-        if (n > 0) {
-            const size_t alignment = 64 * sizeof(Value);
-            size_t bytes           = sizeof(Value) * n;
-            MemoryHighWatermark::instance() += bytes;
-
-            int err = posix_memalign((void**)&ptr, alignment, bytes);
-            if (err) {
-                throw_AllocationFailed(bytes, Here());
-            }
-        }
-        else {
-            ptr = nullptr;
-        }
-    }
-
-    void free_aligned(Value*& ptr) {
-        if (ptr) {
-            free(ptr);
-            ptr = nullptr;
-            MemoryHighWatermark::instance() -= footprint();
-        }
-    }
 
     void allocateHost() {
-        alloc_aligned(host_data_, size_);
+        if (size_ > 0) {
+            host_data_ = host_allocator_.allocate(label_, size_);
+        }
+        else {
+            host_data_ = nullptr;
+        }
     }
 
     void deallocateHost() {
-        free_aligned(host_data_);
+        if (host_data_) {
+            host_allocator_.deallocate(label_, host_data_, size_);
+            host_data_ = nullptr;
+        }
     }
 
     size_t footprint() const { return sizeof(Value) * size_; }
@@ -301,7 +273,12 @@ private:
     mutable bool device_updated_{true};
     mutable bool device_allocated_{false};
     mutable bool acc_mapped_{false};
+    bool is_shared_data_{false};
 
+    pluto::allocator<Value> host_allocator_;
+    mutable pluto::allocator<Value> device_allocator_;
+
+    std::string label_;
 };
 
 //------------------------------------------------------------------------------
@@ -309,12 +286,55 @@ private:
 template <typename Value>
 class WrappedDataStore : public ArrayDataStore {
 public:
-    WrappedDataStore(Value* host_data, size_t size): size_(size), host_data_(host_data) {
-        if (ATLAS_HAVE_GPU && devices()) {
+
+    void init_device() {
+        if (ATLAS_HAVE_GPU && pluto::devices()) {
             device_updated_ = false;
         }
         else {
             device_data_ = host_data_;
+        }
+    }
+
+    WrappedDataStore(Value* host_data, size_t size): host_data_(host_data), size_(size),
+        device_allocator_{pluto::device::get_default_resource()} {
+        label_ = array::label::get();
+        init_device();
+    }
+
+    WrappedDataStore(Value* host_data, const ArraySpec& spec):
+        host_data_(host_data),
+        size_(spec.size()),
+        device_allocator_{pluto::device::get_default_resource()} {
+        label_ = array::label::get();
+        init_device();
+        contiguous_ = spec.contiguous();
+        if (! contiguous_) {
+            int break_idx = 0;
+            size_t shp_mult_rhs = spec.shape()[spec.rank() - 1];
+            for (int i = spec.rank() - 1; i > 0; i--) {
+                if (shp_mult_rhs != spec.strides()[i - 1]) {
+                    break_idx = i - 1;
+                    break;
+                }
+                shp_mult_rhs *= spec.shape()[i - 1];
+            }
+            size_t shp_mult_lhs = spec.shape()[0];
+            for (int i = 1; i <= break_idx; i++) {
+                shp_mult_lhs *= spec.shape()[i];
+            }
+            if (spec.strides()[spec.rank() - 1] > 1) {
+                memcpy_h2d_pitch_ = 1;
+                memcpy_d2h_pitch_ = spec.strides()[spec.rank() - 1];
+                memcpy_width_ = 1;
+                memcpy_height_ = spec.shape()[0] * spec.device_strides()[0];
+            }
+            else {
+                memcpy_h2d_pitch_ = shp_mult_rhs;
+                memcpy_d2h_pitch_ = spec.strides()[break_idx];
+                memcpy_width_ = shp_mult_rhs;
+                memcpy_height_ = shp_mult_lhs;
+            }
         }
     }
 
@@ -323,13 +343,18 @@ public:
     }
 
     void updateDevice() const override {
-        if (ATLAS_HAVE_GPU && devices()) {
+        if (ATLAS_HAVE_GPU && pluto::devices()) {
             if (not device_allocated_) {
                 allocateDevice();
             }
-            hicError_t err = hicMemcpy(device_data_, host_data_, size_*sizeof(Value), hicMemcpyHostToDevice);
-            if (err != hicSuccess) {
-                throw_AssertionFailed("Failed to updateDevice: "+std::string(hicGetErrorString(err)), Here());
+            if (contiguous_) {
+                pluto::copy_host_to_device(device_data_, host_data_, size_);
+            }
+            else {
+                pluto::copy_host_to_device_2D(
+                    device_data_, memcpy_h2d_pitch_,
+                    host_data_, memcpy_d2h_pitch_,
+                    memcpy_width_, memcpy_height_);
             }
             device_updated_ = true;
         }
@@ -338,14 +363,20 @@ public:
     void updateHost() const override {
         if constexpr (ATLAS_HAVE_GPU) {
             if (device_allocated_) {
-                hicError_t err = hicMemcpy(host_data_, device_data_, size_*sizeof(Value), hicMemcpyDeviceToHost);
-                if (err != hicSuccess) {
-                    throw_AssertionFailed("Failed to updateHost: "+std::string(hicGetErrorString(err)), Here());
+                if (contiguous_) {
+                    pluto::copy_device_to_host(host_data_, device_data_, size_);
+                }
+                else {
+                    pluto::copy_device_to_host_2D(
+                        host_data_, memcpy_d2h_pitch_ ,
+                        device_data_, memcpy_h2d_pitch_,
+                        memcpy_width_, memcpy_height_);
                 }
                 host_updated_ = true;
             }
         }
     }
+
 
     bool valid() const override { return true; }
 
@@ -370,32 +401,28 @@ public:
     bool deviceAllocated() const override { return device_allocated_; }
 
     void allocateDevice() const override {
-        if (ATLAS_HAVE_GPU && devices()) {
+        if (ATLAS_HAVE_GPU && pluto::devices()) {
             if (device_allocated_) {
                 return;
             }
             if (size_) {
-                hicError_t err = hicMalloc((void**)&device_data_, sizeof(Value)*size_);
-                if (err != hicSuccess) {
-                    throw_AssertionFailed("Failed to allocate GPU memory: " + std::string(hicGetErrorString(err)), Here());
-                }
+                device_data_ = device_allocator_.allocate(label_, size_);
                 device_allocated_ = true;
-                accMap();
+                if (contiguous_) {
+                    accMap();
+                }
             }
         }
     }
 
     void deallocateDevice() const override {
-        if constexpr (ATLAS_HAVE_GPU) {
-            if (device_allocated_) {
+        if (device_allocated_) {
+            if (contiguous_) {
                 accUnmap();
-                hicError_t err = hicFree(device_data_);
-                if (err != hicSuccess) {
-                    throw_AssertionFailed("Failed to deallocate GPU memory: " + std::string(hicGetErrorString(err)), Here());
-                }
-                device_data_ = nullptr;
-                device_allocated_ = false;
             }
+            device_allocator_.deallocate(label_, device_data_, size_);
+            device_data_ = nullptr;
+            device_allocated_ = false;
         }
     }
 
@@ -436,7 +463,6 @@ public:
     }
 
     void accUnmap() const override {
-#if ATLAS_HAVE_ACC
         if (acc_mapped_) {
             ATLAS_ASSERT(atlas::acc::is_present(host_data_, size_ * sizeof(Value)));
             if constexpr(ATLAS_ACC_DEBUG) {
@@ -445,18 +471,27 @@ public:
             atlas::acc::unmap(host_data_);
             acc_mapped_ = false;
         }
-#endif
     }
 
 private:
-    size_t size_;
     Value* host_data_;
+    size_t size_;
     mutable Value* device_data_;
+
+    bool contiguous_{true};
+    size_t memcpy_h2d_pitch_;
+    size_t memcpy_d2h_pitch_;
+    size_t memcpy_height_;
+    size_t memcpy_width_;
 
     mutable bool host_updated_{true};
     mutable bool device_updated_{true};
     mutable bool device_allocated_{false};
     mutable bool acc_mapped_{false};
+
+    mutable pluto::allocator<Value> device_allocator_;
+
+    std::string label_;
 };
 
 }  // namespace native

@@ -59,13 +59,14 @@ jobs:
               - fftw
               - qhull
               - eigen
-            cmake_options: -DMPI_SLOTS=4 -DENABLE_WARNING_AS_ERROR=ON
+            cmake_options: -DMPI_SLOTS=4 -DENABLE_WARNING_AS_ERROR=ON -DENABLE_PMR=OFF
+            # ENABLE_PMR=OFF because the default host-compiler (gcc 8.5) is not std::pmr capable
 
     runs-on: [self-hosted, linux, hpc]
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: ecmwf-actions/reusable-workflows/ci-hpc-generic@v2
+      - uses: ecmwf/reusable-workflows/ci-hpc-generic@v2
         with:
           site: ${{ matrix.site }}
           troika_user: ${{ secrets[matrix.troika_user_secret] }}
@@ -192,6 +193,7 @@ jobs:
 
             echo "::group::Test $name"
             export ATLAS_FINALISES_MPI=1
+            export ECKIT_MPI_WORKAROUND_SEGV_AT_EXIT=1
             echo "+ ctest --test-dir build --output-on-failure {{ ctest_options }}"
             ctest --test-dir build --output-on-failure {{ ctest_options }}
             echo "::endgroup::"

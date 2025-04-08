@@ -62,11 +62,21 @@ void KNearestNeighbours::do_setup(const Grid& source, const Grid& target, const 
     do_setup(functionspace(source), functionspace(target));
 }
 
+void KNearestNeighbours::do_setup(const FunctionSpace& source, const FunctionSpace& target, const Cache& cache) {
+    if (interpolation::MatrixCache(cache)) {
+        setMatrix(cache);
+        source_ = source;
+        target_ = target;
+    }
+    else {
+        do_setup(source, target);
+    }
+}
+
 void KNearestNeighbours::do_setup(const FunctionSpace& source, const FunctionSpace& target) {
     source_                        = source;
     target_                        = target;
 
-    // build point-search tree
     buildPointSearchTree(source);
 
     array::ArrayView<double, 2> lonlat = array::make_view<double, 2>(target.lonlat());
