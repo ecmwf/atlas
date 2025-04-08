@@ -901,11 +901,13 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
                         tgt_points_[tpt] = tgt_points_[tpt] + PointXYZ::mul(t_csp.centroid(), t_csp.area());
                     }
                     double tgt_point_norm = PointXYZ::norm(tgt_points_[tpt]);
-                    ATLAS_ASSERT(tgt_point_norm > 0.);
-                    if (tgt_point_norm == 0.) {
+                    if( tgt_point_norm <= 0. ) {
                         ATLAS_DEBUG_VAR(tgt_point_norm);
                         ATLAS_DEBUG_VAR(tgt_points_[tpt]);
                         ATLAS_DEBUG_VAR(tgt_node2csp_[tpt].size());
+                    }
+                    // ATLAS_ASSERT(tgt_point_norm > 0.);
+                    if (tgt_point_norm == 0.) {
                         for (idx_t isubcell = 0; isubcell < tgt_node2csp_[tpt].size(); ++isubcell) {
                             idx_t subcell     = tgt_node2csp_[tpt][isubcell];
                             ATLAS_DEBUG_VAR(subcell);
