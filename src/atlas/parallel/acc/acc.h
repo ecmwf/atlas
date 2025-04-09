@@ -13,11 +13,18 @@
 
 namespace atlas::acc {
 
+enum class CompilerId {
+    unknown,
+    nvidia,
+    cray,
+};
+
 int devices();
 void map(void* host_data, void* device_data, std::size_t bytes);
 void unmap(void* host_data);
 bool is_present(void* host_data, std::size_t bytes);
 void* deviceptr(void* host_data);
+CompilerId compiler_id();
 
 }
 

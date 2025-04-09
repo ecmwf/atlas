@@ -40,6 +40,7 @@ protected:
      */
     virtual void do_setup(const FunctionSpace& source, const FunctionSpace& target) override;
     virtual void do_setup(const Grid& source, const Grid& target, const Cache&) override;
+    virtual void do_setup(const FunctionSpace& source, const FunctionSpace& target, const Cache&) override;
 
     virtual const FunctionSpace& source() const override { return source_; }
     virtual const FunctionSpace& target() const override { return target_; }

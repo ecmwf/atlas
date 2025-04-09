@@ -109,9 +109,11 @@ public:
     using Spec = atlas::util::Config;
 
     CubedSphere2(idx_t resolution);
+    CubedSphere2(idx_t resolution, Projection projection);
 
     std::string name() const override;
     std::string type() const override;
+    static std::string static_type();
     idx_t N() const {return N_;}
 
     void hash(eckit::Hash&) const override;
@@ -157,8 +159,6 @@ protected:
     static constexpr idx_t nTiles_ = 6;
 
 private:
-    std::string type_ = {"cubedsphere2"};
-
     using Matrix = std::array<std::array<double, 3>, 3>;
 
     /*
@@ -181,7 +181,6 @@ private:
         {{ {-1, 0, 0}, {0, 1, 0}, {0, 0, 1} }},
         {{ {-1, 0, 0}, {0, -1, 0}, {0, 0, -1} }}
     }};
-
 };
 
 }  // namespace grid

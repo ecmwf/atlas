@@ -16,62 +16,57 @@
   #include <cuda_runtime.h>
 #elif HIC_BACKEND_HIP
   #define HIC_BACKEND hip
-  #if defined(DEPRECATED)
-  #define DEFINED_OUTERSCOPE DEPRECATED
+
+  #pragma push_macro("DEPRECATED")
   #undef DEPRECATED
-  #endif
   #include <hip/hip_runtime.h>
-  #if defined(DEPRECATED)
-  #undef DEPRECATED
-  #endif
-  #if defined(DEFINED_OUTERSCOPE)
-  #define DEPRECATED DEFINED_OUTERSCOPE
-  #endif
+  #pragma pop_macro("DEPRECATED")
 
 #if HIP_VERSION_MAJOR < 6
-  enum hicMemoryType {
-      hicMemoryTypeUnregistered = 0 ,
-      hicMemoryTypeHost         = 1 ,
-      hicMemoryTypeDevice       = 2 ,
-      hicMemoryTypeManaged      = 3
-  };
-  struct hicPointerAttributes {
+enum hicMemoryType
+{
+    hicMemoryTypeUnregistered = 0,
+    hicMemoryTypeHost         = 1,
+    hicMemoryTypeDevice       = 2,
+    hicMemoryTypeManaged      = 3
+};
+struct hicPointerAttributes {
     hicMemoryType type;
     int device;
     void* devicePointer;
     void* hostPointer;
-  };
+};
 
-  [[nodiscard]] inline hipError_t hicPointerGetAttributes(hicPointerAttributes* attributes, const void* ptr) {
+[[nodiscard]] inline hipError_t hicPointerGetAttributes(hicPointerAttributes* attributes, const void* ptr) {
     hipPointerAttribute_t attr_;
     auto err = hipPointerGetAttributes(&attr_, ptr);
-    if( err != hipSuccess ) {
-      attributes->device        = 0;
-      attributes->devicePointer = nullptr;
-      attributes->hostPointer   = nullptr;
-      return err;
+    if (err != hipSuccess) {
+        attributes->device        = 0;
+        attributes->devicePointer = nullptr;
+        attributes->hostPointer   = nullptr;
+        return err;
     }
     const auto& type = attr_.memoryType;
-    if(attr_.isManaged) {
-      attributes->type = hicMemoryTypeManaged;
+    if (attr_.isManaged) {
+        attributes->type = hicMemoryTypeManaged;
     }
-    else if(type == hipMemoryTypeHost) {
-      attributes->type = hicMemoryTypeHost;
+    else if (type == hipMemoryTypeHost) {
+        attributes->type = hicMemoryTypeHost;
     }
-    else if(type == hipMemoryTypeDevice) {
-      attributes->type = hicMemoryTypeDevice;
+    else if (type == hipMemoryTypeDevice) {
+        attributes->type = hicMemoryTypeDevice;
     }
-    else if(type == hipMemoryTypeUnified) {
-      attributes->type = hicMemoryTypeManaged;
+    else if (type == hipMemoryTypeUnified) {
+        attributes->type = hicMemoryTypeManaged;
     }
     else {
-      attributes->type = hicMemoryTypeUnregistered;
+        attributes->type = hicMemoryTypeUnregistered;
     }
     attributes->device        = attr_.device;
     attributes->devicePointer = attr_.devicePointer;
     attributes->hostPointer   = attr_.hostPointer;
     return err;
-  };
+};
 #endif
 
 #elif HIC_BACKEND_DUMMY
@@ -82,22 +77,21 @@
 #endif
 
 #define HIC_PREFIX hic
-#define HIC_CONCAT_(A, B) A ## B
+#define HIC_CONCAT_(A, B) A##B
 #define HIC_CONCAT(A, B) HIC_CONCAT_(A, B)
 #define HIC_SYMBOL(API) HIC_CONCAT(HIC_PREFIX, API)
 #define HIC_BACKEND_SYMBOL(API) HIC_CONCAT(HIC_BACKEND, API)
 
-#define HIC_TYPE(TYPE) \
-    using HIC_SYMBOL(TYPE) = HIC_BACKEND_SYMBOL(TYPE);
+#define HIC_TYPE(TYPE) using HIC_SYMBOL(TYPE) = HIC_BACKEND_SYMBOL(TYPE);
 
-#define HIC_FUNCTION(FUNCTION) \
-    template <typename... Args> inline \
-    auto HIC_SYMBOL(FUNCTION)(Args&&... args) -> decltype(HIC_BACKEND_SYMBOL(FUNCTION)(std::forward<Args>(args)...)) { \
-      return HIC_BACKEND_SYMBOL(FUNCTION)(std::forward<Args>(args)...); \
+#define HIC_FUNCTION(FUNCTION)                                                   \
+    template <typename... Args>                                                  \
+    inline auto HIC_SYMBOL(FUNCTION)(Args && ... args)                           \
+        -> decltype(HIC_BACKEND_SYMBOL(FUNCTION)(std::forward<Args>(args)...)) { \
+        return HIC_BACKEND_SYMBOL(FUNCTION)(std::forward<Args>(args)...);        \
     }
 
-#define HIC_VALUE(VALUE) \
-    constexpr decltype(HIC_BACKEND_SYMBOL(VALUE)) HIC_SYMBOL(VALUE) = HIC_BACKEND_SYMBOL(VALUE);
+#define HIC_VALUE(VALUE) constexpr decltype(HIC_BACKEND_SYMBOL(VALUE)) HIC_SYMBOL(VALUE) = HIC_BACKEND_SYMBOL(VALUE);
 
 //------------------------------------------------
 HIC_NAMESPACE_BEGIN
@@ -143,7 +137,7 @@ HIC_FUNCTION(StreamSynchronize)
 
 HIC_VALUE(CpuDeviceId)
 HIC_VALUE(HostRegisterMapped)
-#if !HIC_BACKEND_HIP
+#if !HIC_BACKEND_HIP || (HIC_BACKEND_HIP && HIP_VERSION_MAJOR >= 6)
 HIC_VALUE(MemoryTypeDevice)
 HIC_VALUE(MemoryTypeHost)
 HIC_VALUE(MemoryTypeUnregistered)

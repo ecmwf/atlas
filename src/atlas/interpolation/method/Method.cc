@@ -295,6 +295,11 @@ void Method::setup(const Grid& source, const Grid& target, const Cache& cache) {
     this->do_setup(source, target, cache);
 }
 
+void Method::setup(const FunctionSpace& source, const FunctionSpace& target, const Cache& cache) {
+    ATLAS_TRACE("atlas::interpolation::method::Method::setup(FunctionSpace, FunctionSpace, Cache)");
+    this->do_setup(source, target, cache);
+}
+
 Method::Metadata Method::execute(const FieldSet& source, FieldSet& target) const {
     ATLAS_TRACE("atlas::interpolation::method::Method::execute(FieldSet, FieldSet)");
     Metadata metadata;

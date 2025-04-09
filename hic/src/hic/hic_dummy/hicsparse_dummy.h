@@ -10,32 +10,31 @@
 
 #include "hic/hic_dummy/dummyShouldNotBeCalled.h"
 
-#define DUMMY_SHOULD_NOT_BE_CALLED(SYMBOL) dummyShouldNotBeCalled( #SYMBOL )
-#define DUMMY_FUNCTION(SYMBOL) \
-    template <typename... Args> inline \
-    dummysparseStatus_t dummy##SYMBOL(Args&&... args) { \
-        DUMMY_SHOULD_NOT_BE_CALLED( hic##SYMBOL ); \
-        return dummysparseStatus_t{0}; \
+#define DUMMY_SHOULD_NOT_BE_CALLED(SYMBOL) dummyShouldNotBeCalled(#SYMBOL)
+#define DUMMY_FUNCTION(SYMBOL)                                 \
+    template <typename... Args>                                \
+    inline dummysparseStatus_t dummy##SYMBOL(Args&&... args) { \
+        DUMMY_SHOULD_NOT_BE_CALLED(hic##SYMBOL);               \
+        return dummysparseStatus_t{0};                         \
     }
-#define DUMMY_VALUE(SYMBOL) \
-    constexpr int dummy##SYMBOL = 0;
+#define DUMMY_VALUE(SYMBOL) constexpr int dummy##SYMBOL = 0;
 
 namespace {
 
-using dummysparseHandle_t = int;
-using dummysparseStatus_t = int;
-using dummysparseIndexType_t = int;
-using dummysparseOrder_t = int;
+using dummysparseHandle_t          = int;
+using dummysparseStatus_t          = int;
+using dummysparseIndexType_t       = int;
+using dummysparseOrder_t           = int;
 using dummysparseConstDnVecDescr_t = void*;
-using dummysparseDnVecDescr_t = void*;
+using dummysparseDnVecDescr_t      = void*;
 using dummysparseConstDnMatDescr_t = void*;
-using dummysparseDnMatDescr_t = void*;
+using dummysparseDnMatDescr_t      = void*;
 using dummysparseConstSpVecDescr_t = void*;
-using dummysparseSpVecDescr_t = void*;
+using dummysparseSpVecDescr_t      = void*;
 using dummysparseConstSpMatDescr_t = void*;
-using dummysparseSpMatDescr_t = void*;
-using dummysparseSpMVAlg_t = int;
-using dummysparseSpMMAlg_t = int;
+using dummysparseSpMatDescr_t      = void*;
+using dummysparseSpMVAlg_t         = int;
+using dummysparseSpMMAlg_t         = int;
 
 DUMMY_FUNCTION(sparseGetErrorString)
 DUMMY_FUNCTION(sparseCreate)
@@ -71,7 +70,7 @@ DUMMY_VALUE(SPARSE_OPERATION_NON_TRANSPOSE)
 DUMMY_VALUE(SPARSE_OPERATION_TRANSPOSE)
 DUMMY_VALUE(SPARSE_OPERATION_CONJUGATE_TRANSPOSE)
 
-}
+}  // namespace
 
 #undef DUMMY_FUNCTION
 #undef DUMMY_VALUE

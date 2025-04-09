@@ -19,7 +19,9 @@ using namespace atlas::array;
 namespace atlas {
 namespace test {
 
-#define REQUIRE_CUDA_SUCCESS(msg) \
+// --------------------------------------------------------------------------------------------------------
+
+#define REQUIRE_HIC_SUCCESS(msg) \
 do { \
   hicError_t err = hicPeekAtLastError(); \
   if (err != hicSuccess ) { \
@@ -27,6 +29,20 @@ do { \
           + std::string(hicGetErrorString(err)) , Here()); \
   } \
 } while(false)
+
+static int get_device_count() {
+  static int _devices = [](){
+      int num_devices = 0;
+      auto err = hicGetDeviceCount(&num_devices);
+      if (err) {
+          num_devices = 0;
+      }
+      return num_devices;
+  }();
+  return _devices;
+}
+
+// --------------------------------------------------------------------------------------------------------
 
 template<typename Value, int RANK>
 __global__
@@ -48,8 +64,12 @@ void loop_kernel_ex(array::ArrayView<Value, RANK> dv)
     }
 }
 
+// --------------------------------------------------------------------------------------------------------
+
 CASE( "test_array" )
 {
+  REQUIRE(get_device_count() > 0);
+
    constexpr unsigned int dx = 5;
    constexpr unsigned int dy = 6;
    constexpr unsigned int dz = 7;
@@ -60,27 +80,31 @@ CASE( "test_array" )
 
    ds->updateDevice();
 
-   REQUIRE_CUDA_SUCCESS("updateDevice");
+   REQUIRE_HIC_SUCCESS("updateDevice");
 
    auto cv = make_device_view<double, 3>(*ds);
 
-   REQUIRE_CUDA_SUCCESS("make_device_view");
+   REQUIRE_HIC_SUCCESS("make_device_view");
 
    kernel_ex<<<1,1>>>(cv);
 
-   REQUIRE_CUDA_SUCCESS("kernel_ex");
+   REQUIRE_HIC_SUCCESS("kernel_ex");
 
    hicDeviceSynchronize();
 
    ds->updateHost();
 
-   REQUIRE_CUDA_SUCCESS("updateHost");
+   REQUIRE_HIC_SUCCESS("updateHost");
 
    EXPECT( hv(3, 3, 3) == 4.5 + dx*dy*dz );
 }
 
+// --------------------------------------------------------------------------------------------------------
+
 CASE( "test_array_loop" )
 {
+   REQUIRE(get_device_count() > 0);
+
    constexpr unsigned int dx = 5;
    constexpr unsigned int dy = 6;
    constexpr unsigned int dz = 7;
@@ -95,24 +119,25 @@ CASE( "test_array_loop" )
        }
      }
    }
+   ds->allocateDevice();
 
    ds->updateDevice();
 
-   REQUIRE_CUDA_SUCCESS("updateDevice");
+   REQUIRE_HIC_SUCCESS("updateDevice");
 
    auto cv = make_device_view<double, 3>(*ds);
 
-   REQUIRE_CUDA_SUCCESS("make_device_view");
+   REQUIRE_HIC_SUCCESS("make_device_view");
 
    loop_kernel_ex<<<1,1>>>(cv);
 
-   REQUIRE_CUDA_SUCCESS("loop_kernel_ex");
+   REQUIRE_HIC_SUCCESS("loop_kernel_ex");
 
    hicDeviceSynchronize();
 
    ds->updateHost();
 
-   REQUIRE_CUDA_SUCCESS("updateHost");
+   REQUIRE_HIC_SUCCESS("updateHost");
 
    for(int i=0; i < dx; i++) {
      for(int j=0; j < dy; j++) {
@@ -122,8 +147,13 @@ CASE( "test_array_loop" )
      }
    }
 }
+
+// --------------------------------------------------------------------------------------------------------
+
 }
 }
+
+// --------------------------------------------------------------------------------------------------------
 
 int main(int argc, char **argv) {
     return atlas::test::run( argc, argv );

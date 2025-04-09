@@ -18,6 +18,12 @@ ecbuild_add_test( TARGET atlas_test_field_missingvalue
     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_field_memory_resource
+    SOURCES     test_field_memory_resource.cc
+    LIBS        atlas
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_field_foreach
   SOURCES  test_field_foreach.cc
   LIBS     atlas
@@ -26,11 +32,15 @@ ecbuild_add_test( TARGET atlas_test_field_foreach
   CONDITION NOT SKIP_TEST_atlas_test_field_foreach
 )
 
+set( HAVE_ACC_CXX FALSE )
+if( TARGET OpenACC::OpenACC_CXX AND atlas_HAVE_ACC )
+  set( HAVE_ACC_CXX TRUE )
+endif()
 ecbuild_add_test( TARGET atlas_test_field_acc
   SOURCES  test_field_acc.cc
   LIBS     atlas OpenACC::OpenACC_CXX
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
-  CONDITION atlas_HAVE_ACC AND OpenACC_CXX_Found
+  CONDITION HAVE_ACC_CXX
 )
 if( TEST atlas_test_field_acc )
     set_tests_properties ( atlas_test_field_acc PROPERTIES LABELS "gpu;acc")

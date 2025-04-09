@@ -243,6 +243,9 @@ SparseMatrixStorage make_sparse_matrix_storage(SparseMatrixStorage&& other) {
 
 template<typename Value, typename Index = eckit::linalg::Index>
 inline SparseMatrixView<Value,Index> make_host_view(const SparseMatrixStorage& m) {
+    if(m.rows() == 0 && m.cols() == 0) {
+        return SparseMatrixView<Value,Index>();
+    }
     if( m.value().datatype().kind() != DataType::kind<Value>() || m.outer().datatype().kind() != DataType::kind<Index>() ) {
         ATLAS_THROW_EXCEPTION("Cannot make_host_view<" + DataType::str<Value>() + "," << DataType::str<Index>() +
             ">(const SparseMatrixStorage&) from SparseMatrixStorage containing values of type <" + m.value().datatype().str() + "> and indices of type <" + m.outer().datatype().str() +">" );
@@ -261,6 +264,9 @@ inline SparseMatrixView<Value,Index> make_host_view(const SparseMatrixStorage& m
 
 template<typename Value, typename Index = eckit::linalg::Index>
 inline SparseMatrixView<Value,Index> make_device_view(const SparseMatrixStorage& m) {
+    if(m.rows() == 0 && m.cols() == 0) {
+        return SparseMatrixView<Value,Index>();
+    }
     if( m.value().datatype().kind() != DataType::kind<Value>() || m.outer().datatype().kind() != DataType::kind<Index>() ) {
         ATLAS_THROW_EXCEPTION("Cannot make_device_view<" + DataType::str<Value>() + "," << DataType::str<Index>() +
             ">(const SparseMatrixStorage&) from SparseMatrixStorage containing values of type <" + m.value().datatype().str() + "> and indices of type <" + m.outer().datatype().str() +">" );

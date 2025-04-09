@@ -70,6 +70,10 @@ public:
 
     std::string distribution() const override;
 
+    idx_t part() const override;
+
+    idx_t nb_parts() const override;
+
     using FunctionSpaceImpl::createField;
     Field createField(const eckit::Configuration&) const override;
     Field createField(const Field&, const eckit::Configuration&) const override;
