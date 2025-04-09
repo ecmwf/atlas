@@ -129,7 +129,7 @@ void dump_polygons_to_json( const ConvexSphericalPolygon& t_csp,
     std::fstream file_plg(folder + name + ".candidates", std::ios::out);
     file_plg << polygons_to_json(csp_arr, 16);
     file_plg.close();
-    file_info << "Target polygon + intersecting source polygon + " << intersections.size() << " intersections in file:" << std::endl;
+    file_info << "Target polygon + " << csp_arr_intersecting.size() << " intersecting source polygon + " << intersections.size() << " intersections in file:" << std::endl;
     file_info << "\t" << folder + name + ".intersections\n" << std::endl;
     file_plg.open(folder + name + ".intersections", std::ios::out);
     file_plg << polygons_to_json(csp_arr_intersecting, 16);
@@ -1217,10 +1217,12 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
 
             double tgt_cover_area = 0.;
             const auto& tiparam   = tgt_iparam[tcell];
-#if 0
+
+#if PRINT_BAD_POLYGONS
             // dump polygons in json format
-            if( tcell == 27609 ) {
-                dump_polygons_to_json(t_csp, src_csp, tiparam.cell_idx, 1.e-16);
+            idx_t tcell_printout = 120;
+            if (tcell == tcell_printout) {
+                dump_polygons_to_json(t_csp, 1.e-14, src_csp, tiparam.cell_idx, "polygon_dump", "tcell" + std::to_string(tcell_printout));
             }
 #endif
             for (idx_t icell = 0; icell < tiparam.cell_idx.size(); ++icell) {
