@@ -146,9 +146,7 @@ public:
 int AtlasInterpolations::execute(const AtlasTool::Args& args) {
     ATLAS_TRACE("main");
     if (args.has("force")) {
-        Log::info() << "+==================================================================\n";
-        Log::info() << "WARNING Running an untested combination of interpolators and grids.\n";
-        Log::info() << "+==================================================================\n";
+        Log::info() << "\nWARNING Running an untested combination of interpolators and grids.\n\n";
     }
     std::string sgrid_name = "O8";
     args.get("sgrid", sgrid_name);
@@ -177,7 +175,9 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
             if (l.size()) {
                 for (auto i : l) {
                     Log::info() << "\t" << i << std::endl;
-                    // TODO: add conservative 2nd order
+                    if (i == "conservative-spherical-polygon") {
+                        Log::info() << "\t" << "conservative-spherical-polygon-2" << '\n';
+                    }
                 }
             }
             else {
@@ -201,6 +201,7 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
         for (const auto& b : interpolation_types) {
             Log::info() << "\t" << b << '\n';
         }
+        Log::info() << "\t" << "conservative-spherical-polygon-2" << '\n';
         return success();
     }
     std::string interpolation_method = "finite-element";
