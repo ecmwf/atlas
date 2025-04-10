@@ -1080,8 +1080,11 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
         if (not already_in) {
             const auto& s_csp       = std::get<0>(src_csp[scell]);
             const double s_csp_area = s_csp.area();
+            if (s_csp_area == 0.) {
+                Log::warning() << "Skipping source polygon " << scell << " with area = 0" << std::endl;
+                continue;
+            }
             double src_cover_area   = 0.;
-
             stopwatch_kdtree_search.start();
             auto tgt_cells = kdt_search.closestPointsWithinRadius(s_csp.centroid(), s_csp.radius() + max_tgtcell_rad);
             stopwatch_kdtree_search.stop();
