@@ -36,12 +36,6 @@
 
 #define PRINT_BAD_POLYGONS 0
 
-// Turn off openmp
-#undef atlas_omp_parallel_for
-#undef atlas_omp_critical
-#define atlas_omp_parall_for for
-#define atlas_omp_critical
-
 namespace atlas {
 namespace interpolation {
 namespace method {
@@ -1022,9 +1016,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
     std::set<PointXYZ, decltype(compare_pointxyz)> src_cent(compare_pointxyz);
     auto src_already_in = [&](const PointXYZ& halo_cent) {
         if (src_cent.find(halo_cent) == src_cent.end()) {
-            atlas_omp_critical{
-              src_cent.insert(halo_cent);
-            }
+            src_cent.insert(halo_cent);
             return false;
         }
         return true;
@@ -1068,7 +1060,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
     Log::debug() << "Find intersections for " << src_csp.size() << " source polygons" << std::endl;
     eckit::ProgressTimer progress("Intersecting polygons ", src_csp.size() / atlas_omp_get_max_threads(), " (cell/thread)", double(10),
                                   src_csp.size() / atlas_omp_get_max_threads() > 50 ? Log::info() : blackhole);
-    atlas_omp_parallel_for (idx_t scell = 0; scell < src_csp.size(); ++scell) {
+    for (idx_t scell = 0; scell < src_csp.size(); ++scell) {
         if ( atlas_omp_get_thread_num() == 0 ) {
             ++progress;
             stopwatch_src_already_in.start();
@@ -1106,10 +1098,8 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                         dump_intersection("Zero area intersections with inside_vertices", s_csp, tgt_csp, tgt_cells);
                     }
                     // TODO: assuming intersector search works fine, this should be move under "if (csp_i_area > 0)"
-                    atlas_omp_critical {
-                        tgt_iparam[tcell].cell_idx.emplace_back(scell);
-                        tgt_iparam[tcell].tgt_weights.emplace_back(csp_i_area);
-                    }
+                    tgt_iparam[tcell].cell_idx.emplace_back(scell);
+                    tgt_iparam[tcell].tgt_weights.emplace_back(csp_i_area);
                 }
                 if (csp_i_area > 0) {
                     src_iparam_[scell].cell_idx.emplace_back(tcell);
@@ -1140,17 +1130,13 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                 if (validate_ and mpi::size() == 1) {
                     dump_intersection("Source cell not exactly covered", s_csp, tgt_csp, tgt_cells);
                     if (statistics_intersection_) {
-                        atlas_omp_critical{
-                            area_coverage[TOTAL_SRC] += src_cover_err;
-                            area_coverage[MAX_SRC] = std::max(area_coverage[MAX_SRC], src_cover_err);
-                        }
+                        area_coverage[TOTAL_SRC] += src_cover_err;
+                        area_coverage[MAX_SRC] = std::max(area_coverage[MAX_SRC], src_cover_err);
                     }
                 }
             }
             if (src_iparam_[scell].cell_idx.size() == 0 and statistics_intersection_) {
-                atlas_omp_critical{
-                    num_pol[SRC_NONINTERSECT]++;
-                }
+                num_pol[SRC_NONINTERSECT]++;
             }
             if (normalise_intersections_ && src_cover_err_percent < 1.) {
                 double wfactor = s_csp.area() / (src_cover_area > 0. ? src_cover_area : 1.);
@@ -1160,9 +1146,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                 }
             }
             if (statistics_intersection_) {
-                atlas_omp_critical{
-                    num_pol[SRC_TGT_INTERSECT] += src_iparam_[scell].weights.size();
-                }
+                num_pol[SRC_TGT_INTERSECT] += src_iparam_[scell].weights.size();
             }
         } // already in
     }
