@@ -36,6 +36,12 @@
 
 #define PRINT_BAD_POLYGONS 0
 
+// Turn off openmp
+#undef atlas_omp_parallel_for
+#undef atlas_omp_critical
+#define atlas_omp_parall_for for
+#define atlas_omp_critical
+
 namespace atlas {
 namespace interpolation {
 namespace method {
@@ -1081,7 +1087,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                 const auto& t_csp = std::get<0>(tgt_csp[tcell]);
                 if( atlas_omp_get_thread_num() == 0 ) {
                     stopwatch_polygon_intersections.start();
-               }
+                }
                 ConvexSphericalPolygon csp_i = s_csp.intersect(t_csp, nullptr, pointsSameEPS);
                 double csp_i_area            = csp_i.area();
                 if( atlas_omp_get_thread_num() == 0 ) {
