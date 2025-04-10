@@ -971,18 +971,20 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
     StopWatch stopwatch;
     stopwatch.start();
     util::KDTree<idx_t> kdt_search;
-    kdt_search.reserve(tgt_csp.size());
     double max_tgtcell_rad = 0.;
     const int tgt_halo_intersection_depth = (tgt_cell_data_ ? 0 : 1); // if target NodeColumns, one target halo required for subcells around target nodes
-    for (idx_t jcell = 0; jcell < tgt_csp.size(); ++jcell) {
-        auto tgt_halo_type = std::get<1>(tgt_csp[jcell]);
-        if (tgt_halo_type <= tgt_halo_intersection_depth) { // and tgt_halo_type != -1) {
-            const auto& t_csp = std::get<0>(tgt_csp[jcell]);
-            kdt_search.insert(t_csp.centroid(), jcell);
-            max_tgtcell_rad = std::max(max_tgtcell_rad, t_csp.radius());
+    ATLAS_TRACE_SCOPE("build kd-tree for target polygons") {
+        kdt_search.reserve(tgt_csp.size());
+        for (idx_t jcell = 0; jcell < tgt_csp.size(); ++jcell) {
+            auto tgt_halo_type = std::get<1>(tgt_csp[jcell]);
+            if (tgt_halo_type <= tgt_halo_intersection_depth) { // and tgt_halo_type != -1) {
+                const auto& t_csp = std::get<0>(tgt_csp[jcell]);
+                kdt_search.insert(t_csp.centroid(), jcell);
+                max_tgtcell_rad = std::max(max_tgtcell_rad, t_csp.radius());
+            }
         }
+        kdt_search.build();
     }
-    kdt_search.build();
     stopwatch.stop();
     timings.target_kdtree_assembly = stopwatch.elapsed();
 
@@ -1063,6 +1065,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
     constexpr double pointsSameEPS = 5.e6 * std::numeric_limits<double>::epsilon();
 
     eckit::Channel blackhole;
+    Log::debug() << "Find intersections for " << src_csp.size() << " source polygons" << std::endl;
     eckit::ProgressTimer progress("Intersecting polygons ", src_csp.size() / atlas_omp_get_max_threads(), " (cell/thread)", double(10),
                                   src_csp.size() / atlas_omp_get_max_threads() > 50 ? Log::info() : blackhole);
     atlas_omp_parallel_for (idx_t scell = 0; scell < src_csp.size(); ++scell) {
