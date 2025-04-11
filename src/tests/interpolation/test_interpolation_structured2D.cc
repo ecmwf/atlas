@@ -38,16 +38,16 @@ static Config scheme() {
     Config scheme;
     std::string scheme_str = eckit::Resource<std::string>("--scheme", "linear");
     if (scheme_str == "linear") {
-        scheme.set("type", "structured-linear2D");
+        scheme.set("type", "structured-bilinear");
         scheme.set("halo", 1);
         // The stencil does not require any halo, but we set it to 1 for pole treatment!
     }
     if (scheme_str == "cubic") {
-        scheme.set("type", "structured-cubic2D");
+        scheme.set("type", "structured-bicubic");
         scheme.set("halo", 2);
     }
     if (scheme_str == "quasicubic") {
-        scheme.set("type", "structured-quasicubic2D");
+        scheme.set("type", "structured-biquasicubic");
         scheme.set("halo", 2);
     }
     scheme.set("name", scheme_str);

@@ -22,6 +22,7 @@ public:
     NearestNeighbour(const Config& config): KNearestNeighboursBase(config) {}
     virtual ~NearestNeighbour() override {}
 
+    virtual std::string name() const override { return "NearestNeighbour"; }
     virtual void print(std::ostream&) const override {}
 
 protected:

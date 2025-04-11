@@ -142,6 +142,8 @@ public:
     void do_execute(const Field& src_field, Field& tgt_field, Metadata&) const override;
     void do_execute(const FieldSet& src_fields, FieldSet& tgt_fields, Metadata&) const override;
 
+    virtual std::string name() const override { return "ConservativeSphericalPolygonInterpolation"; }
+    virtual std::string type() const override { return "unstructured"; }
     void print(std::ostream& out) const override;
 
     const FunctionSpace& source() const override { return src_fs_; }

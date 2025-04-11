@@ -35,6 +35,8 @@ public:
 
     virtual ~FiniteElement() override {}
 
+    virtual std::string name() const override { return "FiniteElement"; }
+    virtual std::string type() const override { return "unstructured"; }
     virtual void print(std::ostream&) const override;
 
 protected:

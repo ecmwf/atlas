@@ -34,6 +34,8 @@ public:
     }
     virtual ~CubedSphereBilinear() override {}
 
+    virtual std::string name() const override { return "CubedSPhereBilinear"; }
+    virtual std::string type() const override { return "cubedsphere"; }
     virtual void print(std::ostream&) const override;
     virtual const FunctionSpace& source() const override { return source_; }
     virtual const FunctionSpace& target() const override { return target_; }
