@@ -11,6 +11,7 @@
 
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/field/Field.h"
+#include "atlas/grid.h"
 #include "atlas/functionspace/detail/FunctionSpaceImpl.h"
 
 namespace atlas {
@@ -28,6 +29,10 @@ FunctionSpace::operator bool() const {
 
 size_t FunctionSpace::footprint() const {
     return get()->footprint();
+}
+
+Grid FunctionSpace::base_grid() const {
+    return get()->base_grid();
 }
 
 Field FunctionSpace::createField(const eckit::Configuration& config) const {
