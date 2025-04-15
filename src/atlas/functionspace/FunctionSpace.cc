@@ -31,8 +31,8 @@ size_t FunctionSpace::footprint() const {
     return get()->footprint();
 }
 
-Grid FunctionSpace::base_grid() const {
-    return get()->base_grid();
+const Grid& FunctionSpace::grid() const {
+    return get()->grid();
 }
 
 Field FunctionSpace::createField(const eckit::Configuration& config) const {

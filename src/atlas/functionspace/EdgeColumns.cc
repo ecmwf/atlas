@@ -563,7 +563,7 @@ const parallel::Checksum& EdgeColumns::checksum() const {
     return *checksum_;
 }
 
-Grid EdgeColumns::base_grid() const {
+const Grid& EdgeColumns::grid() const {
     if (grid_) return grid_;
 
     const auto& comm = mpi::comm(mpi_comm());

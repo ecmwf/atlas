@@ -100,7 +100,7 @@ public:
 
     virtual const util::PartitionPolygon& polygon(idx_t halo = 0) const;
 
-    virtual atlas::Grid base_grid() const;
+    virtual const atlas::Grid& grid() const;
 
     virtual atlas::Field lonlat() const;
 

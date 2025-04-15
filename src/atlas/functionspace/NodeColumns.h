@@ -262,7 +262,7 @@ public:
 
     idx_t nb_parts() const override { return mesh_.nb_parts(); }
 
-    Grid base_grid() const override;
+    const Grid& grid() const override;
 
     Field lonlat() const override { return nodes_.lonlat(); }
 

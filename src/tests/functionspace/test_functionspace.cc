@@ -644,7 +644,7 @@ CASE("test_SpectralFunctionSpace_norm") {
         }
     }
 }
-CASE("test_functionspace_base_grid") {
+CASE("test_functionspace_grid") {
     // Create list of points and construct Grid from them
     std::vector<PointXY> points = {
         {0.0, 5.0}, {0.0, 0.0}, {10.0, 0.0}, {15.0, 0.0}, {5.0, 5.0}, {15.0, 5.0}
@@ -690,26 +690,26 @@ CASE("test_functionspace_base_grid") {
     functionspace::PointCloud pointcloud_from_points(points);
 
     // All Grids should match original
-    EXPECT(cells_from_grid.base_grid() == grid);
-    EXPECT(edges_from_grid.base_grid() == grid);
-    EXPECT(nodes_from_grid.base_grid() == grid);
-    EXPECT(pointcloud_from_grid.base_grid() == grid);
-    EXPECT(cells_from_meshbuilder.base_grid() == grid);
-    EXPECT(edges_from_meshbuilder.base_grid() == grid);
-    EXPECT(nodes_from_meshbuilder.base_grid() == grid);
-    EXPECT(pointcloud_from_points.base_grid() == grid);
+    EXPECT(cells_from_grid.grid() == grid);
+    EXPECT(edges_from_grid.grid() == grid);
+    EXPECT(nodes_from_grid.grid() == grid);
+    EXPECT(pointcloud_from_grid.grid() == grid);
+    EXPECT(cells_from_meshbuilder.grid() == grid);
+    EXPECT(edges_from_meshbuilder.grid() == grid);
+    EXPECT(nodes_from_meshbuilder.grid() == grid);
+    EXPECT(pointcloud_from_points.grid() == grid);
 
     // Repeat with a StructuredGrid to check StructuredColumns and BlockStructuredColumns
     Grid structured_grid("O8");
     Mesh structured_mesh = StructuredMeshGenerator().generate(structured_grid);
     functionspace::StructuredColumns sc(structured_grid);
     functionspace::BlockStructuredColumns bsc(structured_grid);
-    EXPECT(sc.base_grid() == structured_grid);
-    EXPECT(bsc.base_grid() == structured_grid);
+    EXPECT(sc.grid() == structured_grid);
+    EXPECT(bsc.grid() == structured_grid);
 
     // Check that Spectral throws exception
     functionspace::Spectral spectral(159);
-    EXPECT_THROWS(spectral.base_grid());
+    EXPECT_THROWS(spectral.grid());
 }
 
 #endif

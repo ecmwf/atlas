@@ -89,7 +89,7 @@ public:
 
     idx_t size() const override { return nb_cells_; }
 
-    Grid base_grid() const override;
+    const Grid& grid() const override;
 
     Field lonlat() const override;
 

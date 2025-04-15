@@ -573,7 +573,7 @@ const parallel::Checksum& CellColumns::checksum() const {
     return *checksum_;
 }
 
-Grid CellColumns::base_grid() const {
+const Grid& CellColumns::grid() const {
     if (grid_) return grid_;
 
     const auto& comm = mpi::comm(mpi_comm());

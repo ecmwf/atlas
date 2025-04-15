@@ -280,7 +280,7 @@ Field PointCloud::ghost() const {
     return ghost_;
 }
 
-Grid PointCloud::base_grid() const {
+const Grid& PointCloud::grid() const {
     if (grid_) return grid_;
 
     std::vector<PointXY> points;

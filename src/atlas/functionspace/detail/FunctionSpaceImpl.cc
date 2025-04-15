@@ -55,7 +55,7 @@ Field NoFunctionSpace::createField(const Field&, const eckit::Configuration&) co
     ATLAS_NOTIMPLEMENTED;
 }
 
-Grid FunctionSpaceImpl::base_grid() const {
+const Grid& FunctionSpaceImpl::grid() const {
     ATLAS_NOTIMPLEMENTED;
 }
 
