@@ -262,6 +262,8 @@ public:
 
     idx_t nb_parts() const override { return mesh_.nb_parts(); }
 
+    const Grid& grid() const override;
+
     Field lonlat() const override { return nodes_.lonlat(); }
 
     Field ghost() const override { return nodes_.ghost(); }
@@ -293,6 +295,7 @@ private:  // methods
     virtual size_t footprint() const override { return 0; }
 
 private:                  // data
+    mutable Grid grid_;
     Mesh mesh_;           // non-const because functionspace may modify mesh
     mesh::Nodes& nodes_;  // non-const because functionspace may modify mesh
     mesh::Halo halo_;

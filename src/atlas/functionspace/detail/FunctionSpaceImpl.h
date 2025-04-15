@@ -25,6 +25,7 @@ class Configuration;
 namespace atlas {
 class FieldSet;
 class Field;
+class Grid;
 class Projection;
 namespace util {
 class Metadata;
@@ -98,6 +99,8 @@ public:
     virtual idx_t nb_parts() const;
 
     virtual const util::PartitionPolygon& polygon(idx_t halo = 0) const;
+
+    virtual const atlas::Grid& grid() const;
 
     virtual atlas::Field lonlat() const;
 

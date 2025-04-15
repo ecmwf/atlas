@@ -115,7 +115,7 @@ public:
 
     const Vertical& vertical() const { return vertical_; }
 
-    const StructuredGrid& grid() const;
+    const StructuredGrid& grid() const override;
 
     const Projection& projection() const override { return grid().projection(); }
 

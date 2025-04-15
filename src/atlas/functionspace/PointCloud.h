@@ -19,6 +19,7 @@
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/detail/FunctionSpaceImpl.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/parallel/HaloExchange.h"
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/runtime/Exception.h"
@@ -57,6 +58,7 @@ public:
     operator bool() const override { return true; }
     size_t footprint() const override { return sizeof(*this); }
     std::string distribution() const override;
+    const Grid& grid() const override;
     Field lonlat() const override { return lonlat_; }
     const Field& vertical() const { return vertical_; }
     Field ghost() const override;
@@ -170,6 +172,7 @@ private:
     void create_remote_index() const;
 
 private:
+    mutable Grid grid_;
     Field lonlat_;
     Field vertical_;
     mutable Field ghost_;
