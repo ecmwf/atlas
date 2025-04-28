@@ -86,7 +86,7 @@ public:
 
     idx_t size() const;
 
-    const Grid& grid() const override;
+    const Grid& grid() const;
 
     Field lonlat() const;
 

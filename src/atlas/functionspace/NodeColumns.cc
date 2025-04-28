@@ -644,7 +644,7 @@ const parallel::Checksum& NodeColumns::checksum() const {
 //  return checksum(fieldset);
 //}
 
-const Grid & NodeColumns::grid() const {
+const Grid& NodeColumns::grid() const {
     if (grid_) return grid_;
 
     const auto& comm = mpi::comm(mpi_comm());
