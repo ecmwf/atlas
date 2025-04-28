@@ -10,6 +10,7 @@
 
 #include "FunctionSpaceImpl.h"
 #include "atlas/field/Field.h"
+#include "atlas/grid.h"
 #include "atlas/option/Options.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Metadata.h"
@@ -51,6 +52,10 @@ Field NoFunctionSpace::createField(const eckit::Configuration&) const {
 }
 
 Field NoFunctionSpace::createField(const Field&, const eckit::Configuration&) const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
+const Grid& FunctionSpaceImpl::grid() const {
     ATLAS_NOTIMPLEMENTED;
 }
 

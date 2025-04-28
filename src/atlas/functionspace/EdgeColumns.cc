@@ -17,6 +17,7 @@
 #include "atlas/array/MakeView.h"
 #include "atlas/field/detail/FieldImpl.h"
 #include "atlas/functionspace/EdgeColumns.h"
+#include "atlas/grid/UnstructuredGrid.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/IsGhostNode.h"
@@ -281,6 +282,8 @@ EdgeColumns::EdgeColumns(const Mesh& mesh, const eckit::Configuration& config):
         nb_edges_ = get_nb_edges_from_metadata();
     }
     ATLAS_ASSERT(nb_edges_);
+
+    if (mesh_.grid()) grid_ = mesh_.grid();
 }
 
 EdgeColumns::~EdgeColumns() = default;
@@ -558,6 +561,44 @@ const parallel::Checksum& EdgeColumns::checksum() const {
     }
     checksum_ = EdgeColumnsChecksumCache::instance().get_or_create(mesh_);
     return *checksum_;
+}
+
+const Grid& EdgeColumns::grid() const {
+    if (grid_) return grid_;
+
+    const auto& comm = mpi::comm(mpi_comm());
+    std::vector<PointXY> points;
+    if (comm.size() == 1) {
+        const auto xy = atlas::array::make_view<double, 2>(mesh_.nodes().xy());
+        for (auto i = 0; i < xy.shape(0); i++) {
+            points.push_back({xy(i, 0), xy(i, 1)});
+        }
+    } else {
+        std::vector<int> gidx;
+        std::vector<double> x, y;
+        const auto gidxView = array::make_view<gidx_t, 1>(global_index());
+        const auto ghostView = array::make_view<int, 1>(ghost());
+        const auto xy = atlas::array::make_view<double, 2>(mesh_.nodes().xy());
+        for (auto i = 0; i < xy.shape(0); i++) {
+            if (ghostView(i) == 0) {
+                gidx.push_back(gidxView(i));
+                x.push_back(xy(i, 0));
+                y.push_back(xy(i, 1));
+            }
+        }
+        eckit::mpi::Buffer<int> gidxBuffer(comm.size());
+        eckit::mpi::Buffer<double> xBuffer(comm.size());
+        eckit::mpi::Buffer<double> yBuffer(comm.size());
+        comm.allGatherv(gidx.begin(), gidx.end(), gidxBuffer);
+        comm.allGatherv(x.begin(), x.end(), xBuffer);
+        comm.allGatherv(y.begin(), y.end(), yBuffer);
+        points.reserve(gidxBuffer.buffer.size());
+        for (auto i : gidxBuffer.buffer) {
+            points[i - 1] = atlas::PointXY{xBuffer.buffer[i - 1], yBuffer.buffer[i - 1]};
+        }
+    }
+    grid_ = UnstructuredGrid(points);
+    return grid_;
 }
 
 Field EdgeColumns::lonlat() const {

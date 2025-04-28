@@ -22,6 +22,7 @@ class Configuration;
 namespace atlas {
 class Field;
 class FieldSet;
+class Grid;
 class Projection;
 namespace functionspace {
 class FunctionSpaceImpl;
@@ -84,6 +85,8 @@ public:
     idx_t nb_parts() const;
 
     idx_t size() const;
+
+    const Grid& grid() const;
 
     Field lonlat() const;
 

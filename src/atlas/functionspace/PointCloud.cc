@@ -20,6 +20,7 @@
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Iterator.h"
+#include "atlas/grid/UnstructuredGrid.h"
 #include "atlas/option/Options.h"
 #include "atlas/parallel/HaloExchange.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -156,6 +157,7 @@ PointCloud::PointCloud(const Grid& grid, const grid::Distribution& distribution,
     auto& comm = mpi::comm(mpi_comm_);
     double halo_radius;
     config.get("halo_radius", halo_radius = 0.);
+    grid_ = grid;
 
     part_ = comm.rank();
 
@@ -277,6 +279,48 @@ Field PointCloud::ghost() const {
     }
     return ghost_;
 }
+
+const Grid& PointCloud::grid() const {
+    if (grid_) return grid_;
+
+    std::vector<PointXY> points;
+    points.reserve(size_global_);
+    if (nb_partitions_ == 1) {
+        for (const auto& point : iterate().xy()) {
+            points.push_back(point);
+        }
+    } else {
+        std::vector<int> gidx;
+        gidx.reserve(size_global_);
+        std::vector<double> x, y;
+        x.reserve(size_global_);
+        y.reserve(size_global_);
+        const auto gidxView = array::make_view<gidx_t, 1>(global_index_);
+        const auto ghostView = array::make_view<int, 1>(ghost_);
+        int i = 0;
+        for (const auto& point : iterate().xy()) {
+            if (ghostView(i) == 0) {
+                gidx.push_back(gidxView(i));
+                x.push_back(point.x());
+                y.push_back(point.y());
+            }
+            i++;
+        }
+        const auto& comm = mpi::comm(mpi_comm_);
+        eckit::mpi::Buffer<int> gidxBuffer(comm.size());
+        eckit::mpi::Buffer<double> xBuffer(comm.size());
+        eckit::mpi::Buffer<double> yBuffer(comm.size());
+        comm.allGatherv(gidx.begin(), gidx.end(), gidxBuffer);
+        comm.allGatherv(x.begin(), x.end(), xBuffer);
+        comm.allGatherv(y.begin(), y.end(), yBuffer);
+        for (auto i : gidxBuffer.buffer) {
+            points[i - 1] = atlas::PointXY{xBuffer.buffer[i - 1], yBuffer.buffer[i - 1]};
+        }
+    }
+    grid_ = UnstructuredGrid(points);
+    return grid_;
+}
+
 
 array::ArrayShape PointCloud::config_shape(const eckit::Configuration& config) const {
     idx_t _size  = size();
