@@ -8,9 +8,10 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include <cmath>
-#include <cstring>
-#include <sstream>
+#include <algorithm>
+#include <vector>
+#include <string>
+#include <string_view>
 
 #include "atlas/library/config.h"
 #include "atlas/field/MultiField.h"
@@ -34,18 +35,16 @@ MultiFieldImpl* atlas__MultiField__create_shape(int kind, int rank, int shapef[]
     array::ArrayShape shape;
     shape.resize(rank);
     for (idx_t j = 0, jf = rank - 1; j < rank; ++j) {
-        shape[j]   = shapef[jf--];
+        shape[j] = shapef[jf--];
     }
 
     std::vector<std::string> var_names_str;
     for (size_t jj = 0; jj < size; ++jj) {
-        std::unique_ptr<char[]> str(new char[length + 1]);
-        ATLAS_ASSERT(snprintf(str.get(), length, "%s", var_names + jj * length ) >= 0);
-        std::string sstr(str.get());
-        sstr.erase(std::find_if(sstr.rbegin(), sstr.rend(), [](unsigned char ch) {
+        std::string str(std::string_view(var_names + jj * length, length));
+        str.erase(std::find_if(str.rbegin(), str.rend(), [](unsigned char ch) {
            return !std::isspace(ch);
-        }).base(), sstr.end());
-        var_names_str.push_back(sstr);
+        }).base(), str.end());
+        var_names_str.push_back(str);
     }
 
     auto multifield = new MultiField(array::DataType{kind}, shape, var_names_str);
