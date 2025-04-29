@@ -353,7 +353,7 @@ CASE("test_nomesh") {
 
     array::ArrayView<double, 1> spg = array::make_view<double, 1>(spfg);
 
-    spectral.parallel_for(option::global(), [&](int real, int imag, int n, int m) {
+    spectral.parallel_for(option::global(), [&](idx_t real, idx_t imag, int n, int m) {
         spg(real) = +m * spectral.truncation() + n;
         spg(imag) = (n == 0 ? 0 : -m * spectral.truncation() + n);
     });
@@ -374,8 +374,8 @@ CASE("test_nomesh") {
     array::ArrayView<double, 1> sp = array::make_view<double, 1>(spf);
 
     spectral.parallel_for([&](idx_t real, idx_t imag, int n, int m) {
-        EXPECT(int(sp(real)) == +m * spectral.truncation() + n);
-        EXPECT(int(sp(imag)) == (n == 0 ? 0 : -m * spectral.truncation() + n));
+        EXPECT_EQ(int(sp(real)), +m * spectral.truncation() + n);
+        EXPECT_EQ(int(sp(imag)), (n == 0 ? 0 : -m * spectral.truncation() + n));
 
         sp(real) = (n == 0 ? 4. : 0.);
         sp(imag) = 0.;
