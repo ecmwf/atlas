@@ -187,6 +187,7 @@ public:
             }
             device_data_ = nullptr;
             device_allocated_ = false;
+            device_updated_ = false;
         }
     }
 
@@ -423,6 +424,7 @@ public:
             device_allocator_.deallocate(label_, device_data_, size_);
             device_data_ = nullptr;
             device_allocated_ = false;
+            device_updated_ = false;
         }
     }
 
