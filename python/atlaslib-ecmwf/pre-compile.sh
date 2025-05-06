@@ -15,7 +15,7 @@ mkdir -p python/atlaslib-ecmwf/src/copying
 
 # NOTE we dont use that since we dont want to work with the brew installation as it is unreliable
 # bash ./tools/install-qhull.sh --prefix /tmp/qhull/target
-mkdir -p /tmp/qhull/build && cd /tmp/qhull/build
+rm -rf /tmp/qhull && mkdir -p /tmp/qhull/build && cd /tmp/qhull/build
 git clone https://github.com/qhull/qhull /tmp/qhull/src
 cmake /tmp/qhull/src -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/tmp/qhull/target
 make -j8 && make install
