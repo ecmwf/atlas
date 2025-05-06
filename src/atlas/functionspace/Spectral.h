@@ -123,7 +123,7 @@ public:
             idx_t index = 0;
             if (global) {
                 if (owner == mpi::rank()) {
-                    atlas_omp_parallel_for(int m = 0; m <= truncation; ++m) {
+                    for(int m = 0; m <= truncation; ++m) {
                         for (int n = m; n <= truncation; ++n) {
                             f(index, index + 1, n, m);
                             index += 2;
@@ -133,7 +133,7 @@ public:
             }
             else {
                 const int nb_zonal_wavenumbers{static_cast<int>(zonal_wavenumbers.size())};
-                atlas_omp_parallel_for(int jm = 0; jm < nb_zonal_wavenumbers; ++jm) {
+                for(int jm = 0; jm < nb_zonal_wavenumbers; ++jm) {
                     const int m = zonal_wavenumbers(jm);
                     for (int n = m; n <= truncation; ++n) {
                         f(index, index + 1, n, m);
@@ -149,7 +149,7 @@ public:
             idx_t index = 0;
             if (global) {
                 if (owner == mpi::rank()) {
-                    atlas_omp_parallel_for(int m = 0; m <= truncation; ++m) {
+                    for(int m = 0; m <= truncation; ++m) {
                         for (int n = m; n <= truncation; ++n) {
                             f(index, index + 1, n);
                             index += 2;
@@ -159,7 +159,7 @@ public:
             }
             else {
                 const int nb_zonal_wavenumbers{static_cast<int>(zonal_wavenumbers.size())};
-                atlas_omp_parallel_for(int jm = 0; jm < nb_zonal_wavenumbers; ++jm) {
+                for(int jm = 0; jm < nb_zonal_wavenumbers; ++jm) {
                     const int m = zonal_wavenumbers(jm);
                     for (int n = m; n <= truncation; ++n) {
                         f(index, index + 1, n);
