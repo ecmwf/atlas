@@ -1728,7 +1728,11 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
     stopwatch.stop();
     {
         ATLAS_TRACE("halo exchange target");
+        if (tgt_field.hostNeedsUpdate()) {
+            tgt_field.updateHost();
+        }
         tgt_field.haloExchange();
+        tgt_field.setDeviceNeedsUpdate(true);
     }
 
     auto remap_stat = remap_stat_;
