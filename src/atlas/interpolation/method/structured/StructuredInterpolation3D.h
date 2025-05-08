@@ -36,6 +36,8 @@ public:
 
     virtual ~StructuredInterpolation3D() override {}
 
+    virtual std::string name() const override = 0;
+    virtual std::string type() const override { return "structured"; }
     virtual void print(std::ostream&) const override;
 
 protected:

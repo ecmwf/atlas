@@ -131,7 +131,7 @@ struct InterpSchemeFixtures {
         option::type("cubedsphere-bilinear") | Config("adjoint", true);
     static const auto finiteElement =
         option::type("finite-element") | Config("adjoint", true);
-    static const auto structuredLinear = option::type("structured-linear2D") |
+    static const auto structuredLinear = option::type("structured-bilinear") |
                                          option::halo(1) |
                                          Config("adjoint", true);
     static const auto structuredCubic = option::type("structured-bicubic") |

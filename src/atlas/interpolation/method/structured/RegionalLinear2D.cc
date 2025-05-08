@@ -19,7 +19,10 @@ namespace interpolation {
 namespace method {
 
 namespace {
-MethodBuilder<RegionalLinear2D> __builder("regional-linear-2d");
+
+MethodBuilder<RegionalLinear2D> __builder3("regional-bilinear");
+MethodBuilder<RegionalLinear2D> __builder2("regional-linear-2d", util::FactoryDeprecated("Please use regional-bilinear"));
+
 }
 
 void RegionalLinear2D::print(std::ostream&) const { ATLAS_NOTIMPLEMENTED; }
