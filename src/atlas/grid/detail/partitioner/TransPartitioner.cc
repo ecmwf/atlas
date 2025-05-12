@@ -25,30 +25,12 @@ namespace detail {
 namespace partitioner {
 
 TransPartitioner::TransPartitioner(): Partitioner() {
-    EqualRegionsPartitioner eqreg(nb_partitions());
-    nbands_ = eqreg.nb_bands();
-    nregions_.resize(nbands_);
-    for (size_t b = 0; b < nbands_; ++b) {
-        nregions_[b] = eqreg.nb_regions(b);
-    }
 }
 
 TransPartitioner::TransPartitioner(const eckit::Parametrisation& config): Partitioner(config) {
-    EqualRegionsPartitioner eqreg(config);
-    nbands_ = eqreg.nb_bands();
-    nregions_.resize(nbands_);
-    for (size_t b = 0; b < nbands_; ++b) {
-        nregions_[b] = eqreg.nb_regions(b);
-    }
 }
 
 TransPartitioner::TransPartitioner(const idx_t N, const eckit::Parametrisation& config): Partitioner(N,config) {
-    EqualRegionsPartitioner eqreg(nb_partitions());
-    nbands_ = eqreg.nb_bands();
-    nregions_.resize(nbands_);
-    for (size_t b = 0; b < nbands_; ++b) {
-        nregions_[b] = eqreg.nb_regions(b);
-    }
 }
 
 TransPartitioner::~TransPartitioner() = default;
@@ -110,14 +92,6 @@ void TransPartitioner::partition(const Grid& grid, int part[]) const {
             ++iproc;
         }
     }
-}
-
-int TransPartitioner::nb_bands() const {
-    return nbands_;
-}
-
-int TransPartitioner::nb_regions(int b) const {
-    return nregions_[b];
 }
 
 }  // namespace partitioner
