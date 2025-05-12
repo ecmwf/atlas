@@ -86,3 +86,10 @@ ecbuild_add_test( TARGET atlas_test_trans_localcache
   CONDITION atlas_HAVE_ATLAS_TRANS
 )
 
+ecbuild_add_test( TARGET atlas_test_trans_lam
+  SOURCES   test_trans_lam.cc
+  LIBS      atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_TRACE_REPORT=1
+  CONDITION atlas_HAVE_ATLAS_TRANS
+)
+
