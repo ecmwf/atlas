@@ -31,6 +31,10 @@
 #include "atlas/trans/detail/TransFactory.h"
 #include "atlas/trans/ifs/TransIFS.h"
 
+#include "atlas/grid/detail/partitioner/CheckerboardPartitioner.h"
+#include "atlas/grid/Distribution.h"
+#include "atlas/grid/Partitioner.h"
+
 using Topology = atlas::mesh::Nodes::Topology;
 using atlas::Field;
 using atlas::FunctionSpace;
@@ -899,8 +903,6 @@ void TransIFS::assertCompatibleDistributions(const FunctionSpace& gp, const Func
 
 TransIFS::TransIFS(const Cache& cache, const Grid& grid, const long truncation, const eckit::Configuration& config):
     grid_(grid), cache_(cache.legendre().data()), cachesize_(cache.legendre().size()) {
-    ATLAS_ASSERT(grid.domain().global());
-    ATLAS_ASSERT(not grid.projection());
     ctor(grid, truncation, config);
 }
 
@@ -1054,6 +1056,21 @@ array::LocalView<int, 1> atlas::trans::TransIFS::nvalue() const {
     return array::LocalView<int, 1>(trans_->nvalue, array::make_shape(trans_->nspec2));
 }
 
+const int* atlas::trans::TransIFS::mvalue(int& size) const {
+    size = trans_->nspec2;
+    if( trans_->mvalue == nullptr ) {
+        ::trans_inquire(trans_.get(), "mvalue");
+    }
+    return trans_->mvalue;
+}
+
+array::LocalView<int,1> atlas::trans::TransIFS::mvalue() const {
+    if( trans_->mvalue == nullptr ) {
+        ::trans_inquire(trans_.get(), "mvalue");
+    }
+    return array::LocalView<int,1> (trans_->mvalue, array::make_shape(trans_->nspec2));
+}
+
 array::LocalView<int, 1> atlas::trans::TransIFS::nasm0() const {
     if (trans_->nasm0 == nullptr) {
         ::trans_inquire(trans_.get(), "nasm0");
@@ -1127,6 +1144,10 @@ TransIFS::TransIFS(const Cache& cache, const Grid& grid, const Domain& domain, c
     ATLAS_ASSERT(domain.global());
 }
 
+TransIFS::TransIFS(const Grid& grid, const long truncation_x, const long truncation_y, const eckit::Configuration& config) :
+    TransIFS(Cache(), grid, truncation_y, util::Config(config)("truncation_x",truncation_x)("truncation_y",truncation_y)) {
+}
+
 TransIFS::~TransIFS() = default;
 
 int atlas::trans::TransIFS::truncation() const {
@@ -1153,6 +1174,12 @@ void TransIFS::ctor(const Grid& grid, long truncation, const eckit::Configuratio
         ::trans_delete(p);
         delete p;
     });
+    if( auto rg = RegularGrid(grid); rg && not rg.domain().global() ){
+        ctor_lam(grid, truncation, config);
+        return;
+    }
+    ATLAS_ASSERT(grid.domain().global());
+    ATLAS_ASSERT(not grid.projection());
 
     if (auto gg = GaussianGrid(grid)) {
         ctor_rgg(gg.ny(), gg.nx().data(), truncation, config);
@@ -1233,6 +1260,57 @@ void TransIFS::ctor_lonlat(const long nlon, const long nlat, long truncation, co
     TRANS_CHECK(::trans_setup(trans_.get()));
 }
 
+// --------------------------------------------------------------------------------------------
+
+void TransIFS::ctor_lam(const RegularGrid& grid, long truncation, const eckit::Configuration& config) {
+    ATLAS_ASSERT( grid.nx() > 0 );
+    ATLAS_ASSERT( grid.ny() > 0 );
+
+    TransParameters p(*this, config);
+
+    util::Config partitioner_config;
+    partitioner_config.set("type","checkerboard");
+    partitioner_config.set("split_y", p.split_y());
+    partitioner_config.set("split_x", true);
+    auto partitioner = grid::Partitioner(partitioner_config);
+    auto* checkerboard = dynamic_cast<grid::detail::partitioner::CheckerboardPartitioner*>(partitioner.get());
+    int partitions_x = 1;
+    int partitions_y = 1;
+    if (checkerboard) {
+        auto [px, py] = checkerboard->checkerboardDimensions(grid);
+        partitions_x = px;
+        partitions_y = py;
+        TRANS_CHECK(::trans_set_nprgpew(partitions_x));
+    }
+    TRANS_CHECK(::trans_use_mpi(mpi::size() > 1));
+
+    TRANS_CHECK(::trans_new(trans_.get()));
+    TRANS_CHECK(::trans_set_resol_lam(trans_.get(), grid.nx(), grid.ny()));
+    trans_->lsplit = p.split_y();
+
+    long truncation_x = -1;
+    long truncation_y = -1;
+
+    if (truncation >= 0) {
+        if (config.has("truncation_x") && config.has("truncation_y")) {
+            truncation_x = config.getInt("truncation_x");
+            truncation_y = config.getInt("truncation_y");
+        }
+        else {
+            truncation_y = truncation;
+            truncation_x = grid.nx() * truncation / grid.ny();
+        }
+        TRANS_CHECK(::trans_set_trunc_lam(trans_.get(), truncation_x, truncation_y));
+
+        trans_->fft = p.fft();
+    }
+
+    TRANS_CHECK(::trans_setup(trans_.get()));
+
+    ATLAS_ASSERT(partitions_x == trans_->n_regions_EW);
+    ATLAS_ASSERT(partitions_y == trans_->n_regions_NS);
+    ATLAS_ASSERT(grid.size()  == trans_->ngptotg);
+}
 
 // --------------------------------------------------------------------------------------------
 
@@ -1426,9 +1504,12 @@ void TransIFS::__dirtrans_wind2vordiv(const functionspace::StructuredColumns& gp
     std::vector<double> rgp(2 * nfld * ngptot());
     std::vector<double> rspvor(nspec2() * nfld);
     std::vector<double> rspdiv(nspec2() * nfld);
-    auto rgpview    = LocalView<double, 2>(rgp.data(), make_shape(2 * nfld, ngptot()));
+    auto rgpview    = LocalView<double, 2>(rgp.data(),    make_shape(2 * nfld, ngptot()));
     auto rspvorview = LocalView<double, 2>(rspvor.data(), make_shape(nspec2(), nfld));
     auto rspdivview = LocalView<double, 2>(rspdiv.data(), make_shape(nspec2(), nfld));
+
+    std::vector<double> rmeanu;
+    std::vector<double> rmeanv;
 
     // Pack gridpoints
     {
@@ -1444,7 +1525,12 @@ void TransIFS::__dirtrans_wind2vordiv(const functionspace::StructuredColumns& gp
         transform.rgp                 = rgp.data();
         transform.rspvor              = rspvor.data();
         transform.rspdiv              = rspdiv.data();
-
+        if( trans_->llam ) {
+            rmeanu.resize(nfld);
+            rmeanv.resize(nfld);
+            transform.rmeanu              = rmeanu.data();
+            transform.rmeanv              = rmeanv.data();
+        }
         ATLAS_ASSERT(transform.rspvor);
         ATLAS_ASSERT(transform.rspdiv);
         TRANS_CHECK(::trans_dirtrans(&transform));
@@ -1455,6 +1541,13 @@ void TransIFS::__dirtrans_wind2vordiv(const functionspace::StructuredColumns& gp
     unpack_vor(spvor);
     UnpackSpectral unpack_div(rspdivview);
     unpack_div(spdiv);
+
+    ATLAS_DEBUG_VAR(rmeanu);
+    ATLAS_DEBUG_VAR(rmeanv);
+    if( trans_->llam ) {
+        spvor.metadata().set("rmeanu",rmeanu);
+        spvor.metadata().set("rmeanv",rmeanv);
+    }
 }
 
 // -----------------------------------------------------------------------------------------------
@@ -2275,11 +2368,20 @@ void TransIFS::__invtrans_vordiv2wind(const Spectral& sp, const Field& spvor, co
 
     // Do transform
     {
+        std::vector<double> rmeanu;
+        std::vector<double> rmeanv;
+
         struct ::InvTrans_t transform = ::new_invtrans(trans_.get());
         transform.nvordiv             = nfld;
         transform.rgp                 = rgp.data();
         transform.rspvor              = rspvor.data();
         transform.rspdiv              = rspdiv.data();
+        if (trans_->llam) {
+            rmeanu = spvor.metadata().getDoubleVector("rmeanu");
+            rmeanv = spvor.metadata().getDoubleVector("rmeanv");
+            transform.rmeanu = rmeanu.data();
+            transform.rmeanv = rmeanv.data();
+        }
 
         ATLAS_ASSERT(transform.rspvor);
         ATLAS_ASSERT(transform.rspdiv);
