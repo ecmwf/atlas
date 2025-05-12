@@ -85,6 +85,7 @@ public:
     TransIFS(const Cache&, const Grid&, const long truncation, const eckit::Configuration& = util::NoConfig());
     TransIFS(const Cache&, const Grid&, const Domain&, const long truncation,
              const eckit::Configuration& = util::NoConfig());
+    TransIFS(const Grid&, const long truncation_x, const long truncation_y, const eckit::Configuration& = util::NoConfig());
 
     virtual ~TransIFS() override;
     operator ::Trans_t*() const { return trans(); }
@@ -348,9 +349,11 @@ protected:
 private:
     void ctor(const Grid&, long nsmax, const eckit::Configuration&);
 
-    void ctor_rgg(const long nlat, const idx_t pl[], long nsmax, const eckit::Configuration&);
+    void ctor_rgg(const long nlat, const idx_t pl[], long truncation, const eckit::Configuration&);
 
-    void ctor_lonlat(const long nlon, const long nlat, long nsmax, const eckit::Configuration&);
+    void ctor_lonlat(const long nlon, const long nlat, long truncation, const eckit::Configuration&);
+
+    void ctor_lam(const RegularGrid&, long truncation_y, const eckit::Configuration&);
 
 private:
     friend class grid::detail::partitioner::TransPartitioner;
@@ -414,6 +417,10 @@ private:
     const int* nvalue(int& size) const;
 
     array::LocalView<int, 1> nvalue() const;
+
+    const int* mvalue(int& size) const;
+
+    array::LocalView<int,1> mvalue() const;
 
 public:
     /*!
