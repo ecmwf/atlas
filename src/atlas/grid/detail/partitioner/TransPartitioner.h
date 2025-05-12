@@ -44,6 +44,8 @@ public:
 
     virtual std::string type() const { return "ectrans"; }
 
+private:
+    bool split_y_{true};
 };
 
 }  // namespace partitioner

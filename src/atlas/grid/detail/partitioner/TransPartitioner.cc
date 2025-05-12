@@ -14,6 +14,7 @@
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
 #include "atlas/grid/detail/partitioner/TransPartitioner.h"
+#include "atlas/option/TransOptions.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
@@ -43,7 +44,7 @@ void TransPartitioner::partition(const Grid& grid, int part[]) const {
         throw_Exception("Grid is not a grid::Structured type. Cannot partition using IFS trans", Here());
     }
 
-    trans::TransIFS t(grid);
+    trans::TransIFS t(grid, option::split_y(split_y_));
     if (nb_partitions() != idx_t(t.nproc())) {
         std::stringstream msg;
         msg << "Requested to partition grid with TransPartitioner in " << nb_partitions()
