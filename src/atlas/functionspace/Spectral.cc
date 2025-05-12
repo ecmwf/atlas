@@ -64,6 +64,19 @@ public:
         TRANS_CHECK(::trans_setup(trans_.get()));
     }
 
+    Parallelisation(int truncation_x, int truncation_y) {
+        trans_ = std::shared_ptr<::Trans_t>(new ::Trans_t, [](::Trans_t* p) {
+            TRANS_CHECK(::trans_delete(p));
+            delete p;
+        });
+        TRANS_CHECK(::trans_use_mpi(mpi::size() > 1));
+        TRANS_CHECK(::trans_new(trans_.get()));
+        TRANS_CHECK(::trans_set_trunc_lam(trans_.get(), truncation_x, truncation_y));
+        TRANS_CHECK(::trans_set_resol_lam(trans_.get(),truncation_x*2+1,truncation_y*2+1));
+        TRANS_CHECK(::trans_setup(trans_.get()));
+    }
+
+
     int nb_spectral_coefficients_global() const { return trans_->nspec2g; }
     int nb_spectral_coefficients() const { return trans_->nspec2; }
 
@@ -177,6 +190,14 @@ Spectral::Spectral(const int truncation, const eckit::Configuration& config):
     nb_levels_(0), truncation_(truncation), parallelisation_(new Parallelisation(truncation_)) {
     config.get("levels", nb_levels_);
 }
+
+Spectral::Spectral(const int truncation_x, const int truncation_y, const eckit::Configuration& config):
+    nb_levels_(0), truncation_x_(truncation_x), truncation_y_(truncation_y),
+    parallelisation_(new Parallelisation(truncation_x,truncation_y)) {
+    config.get("levels", nb_levels_);
+    ATLAS_DEBUG();
+}
+
 
 Spectral::~Spectral() = default;
 
@@ -453,6 +474,11 @@ Spectral::Spectral(const eckit::Configuration& config):
 Spectral::Spectral(const int truncation, const eckit::Configuration& config):
     FunctionSpace(new detail::Spectral(truncation, config)),
     functionspace_(dynamic_cast<const detail::Spectral*>(get())) {}
+
+Spectral::Spectral(const int truncation_x, const int truncation_y, const eckit::Configuration& config):
+    FunctionSpace(new detail::Spectral(truncation_x, truncation_y, config)),
+    functionspace_(dynamic_cast<const detail::Spectral*>(get())) {}
+
 
 idx_t Spectral::nb_spectral_coefficients() const {
     return functionspace_->nb_spectral_coefficients();

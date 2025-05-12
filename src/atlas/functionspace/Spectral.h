@@ -64,6 +64,8 @@ public:
 
     Spectral(const int truncation, const eckit::Configuration& = util::NoConfig());
 
+    Spectral(const int truncation_x, const int truncation_y, const eckit::Configuration& = util::NoConfig());
+
     ~Spectral() override;
 
     std::string type() const override { return "Spectral"; }
@@ -205,7 +207,9 @@ private:  // Fortran access
 
 private:  // data
     idx_t nb_levels_;
-    int truncation_;
+    int truncation_{-1};
+    int truncation_x_{-1};
+    int truncation_y_{-1};
 
     class Parallelisation;
     std::unique_ptr<Parallelisation> parallelisation_;
@@ -221,6 +225,7 @@ public:
     Spectral(const FunctionSpace&);
     Spectral(const eckit::Configuration&);
     Spectral(const int truncation, const eckit::Configuration& = util::NoConfig());
+    Spectral(const int truncation_x, const int truncation_y, const eckit::Configuration& = util::NoConfig());
 
     operator bool() const { return valid(); }
     bool valid() const { return functionspace_; }
