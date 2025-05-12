@@ -45,8 +45,8 @@ fft::fft(const std::string& fft) {
     set("fft", fft);
 }
 
-split_latitudes::split_latitudes(bool split_latitudes) {
-    set("split_latitudes", split_latitudes);
+split_y::split_y(bool split_y) {
+    set("split_y", split_y);
 }
 
 write_legendre::write_legendre(const eckit::PathName& filepath) {

@@ -165,7 +165,7 @@ CASE("test_trans_distribution_matches_atlas") {
 }
 
 CASE("test_trans_options") {
-    util::Config opts(option::fft("FFTW") | option::split_latitudes(false) | option::read_legendre("readfile"));
+    util::Config opts(option::fft("FFTW") | option::split_y(false) | option::read_legendre("readfile"));
     Log::info() << "trans_opts = " << opts << std::endl;
 }
 
