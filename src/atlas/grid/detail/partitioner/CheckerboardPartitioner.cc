@@ -39,13 +39,33 @@ CheckerboardPartitioner::CheckerboardPartitioner(int N, const eckit::Parametrisa
     Partitioner(N, config) {
     config.get("bands", nbands_);
     config.get("regular", regular_);
+    if (regular_) {
+        split_x_ = false;
+        split_y_ = false;
+    }
+    config.get("split_x", split_x_);
+    config.get("split_y", split_y_);
 }
 
 CheckerboardPartitioner::CheckerboardPartitioner(const eckit::Parametrisation& config) :
     Partitioner(config) {
     config.get("bands", nbands_);
     config.get("regular", regular_);
+    if (regular_) {
+        split_x_ = false;
+        split_y_ = false;
+    }
+    config.get("split_x", split_x_);
+    config.get("split_y", split_y_);
 }
+
+
+std::array<int,2> CheckerboardPartitioner::checkerboardDimensions(const Grid& grid) {
+    int nbands = checkerboard(grid).nbands;
+    int nparts = nb_partitions(); 
+    return {nparts/nbands, nbands};
+}
+
 
 // CheckerboardPartitioner::CheckerboardPartitioner(int N, int nbands): Partitioner(N), nbands_{nbands} {}
 
@@ -146,8 +166,9 @@ Number of procs per band
         ++npartsb[iband];
     }
 
-    bool split_lons = not regular_;
-    bool split_lats = not regular_;
+    bool split_lons = split_x_;
+    bool split_lats = split_y_;
+
     /*
 Number of gridpoints per band
 */
