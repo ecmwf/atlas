@@ -736,6 +736,10 @@ linalg/dense/MatrixMultiply_EckitLinalg.cc
 )
 
 
+list( APPEND atlas_mct_srcs
+mct/mct.h
+)
+
 list (APPEND atlas_redistribution_srcs
 redistribution/Redistribution.h
 redistribution/Redistribution.cc
@@ -947,6 +951,7 @@ list( APPEND source_list
   ${atlas_array_srcs}
   ${atlas_field_srcs}
   ${atlas_linalg_srcs}
+  ${atlas_mct_srcs}
   ${atlas_grid_partitioning_srcs}
   ${atlas_mesh_srcs}
   ${atlas_parallel_srcs}
