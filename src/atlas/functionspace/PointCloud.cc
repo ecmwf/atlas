@@ -281,7 +281,9 @@ Field PointCloud::ghost() const {
 }
 
 const Grid& PointCloud::grid() const {
-    if (grid_) return grid_;
+    if (grid_) {
+        return grid_;
+    }
 
     std::vector<PointXY> points;
     points.reserve(size_global_);
@@ -289,7 +291,8 @@ const Grid& PointCloud::grid() const {
         for (const auto& point : iterate().xy()) {
             points.push_back(point);
         }
-    } else {
+    }
+    else {
         std::vector<int> gidx;
         gidx.reserve(size_global_);
         std::vector<double> x, y;
