@@ -453,8 +453,6 @@ output/Output.h
 output/Output.cc
 output/Gmsh.h
 output/Gmsh.cc
-output/ScripIO.h
-output/ScripIO.cc
 output/detail/GmshIO.cc
 output/detail/GmshIO.h
 output/detail/GmshImpl.cc
@@ -737,6 +735,9 @@ linalg/dense/MatrixMultiply_EckitLinalg.h
 linalg/dense/MatrixMultiply_EckitLinalg.cc
 )
 
+list( APPEND atlas_mct_srcs
+mct/mct.h
+)
 
 list (APPEND atlas_redistribution_srcs
 redistribution/Redistribution.h
@@ -815,9 +816,9 @@ array/native/NativeMakeView.cc
 endif()
 
 list( APPEND atlas_parallel_srcs
-  parallel/Collect.h
   parallel/Checksum.cc
   parallel/Checksum.h
+  parallel/Collect.h
   parallel/GatherScatter.cc
   parallel/GatherScatter.h
   parallel/HaloExchange.cc
@@ -845,7 +846,6 @@ util/Topology.h
 util/Allocate.h
 util/Allocate.cc
 util/GPUClonable.h
-util/Locate.h
 
 util/Constants.h
 util/ConvexSphericalPolygon.cc
@@ -859,6 +859,7 @@ util/GridPointsJSONWriter.cc
 util/GridPointsJSONWriter.h
 util/KDTree.cc
 util/KDTree.h
+util/Locate.h
 util/PolygonXY.cc
 util/PolygonXY.h
 util/Metadata.cc
@@ -951,6 +952,7 @@ list( APPEND source_list
   ${atlas_array_srcs}
   ${atlas_field_srcs}
   ${atlas_linalg_srcs}
+  ${atlas_mct_srcs}
   ${atlas_grid_partitioning_srcs}
   ${atlas_mesh_srcs}
   ${atlas_parallel_srcs}
