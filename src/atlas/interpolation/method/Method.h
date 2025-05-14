@@ -74,6 +74,8 @@ public:
     Metadata execute_adjoint(FieldSet& source, const FieldSet& target) const;
     Metadata execute_adjoint(Field& source, const Field& target) const;
 
+    virtual std::string name() const = 0;
+    virtual std::string type() const = 0;
     virtual void print(std::ostream&) const = 0;
 
     virtual const FunctionSpace& source() const = 0;

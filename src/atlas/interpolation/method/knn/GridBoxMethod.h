@@ -30,6 +30,8 @@ public:
     virtual ~GridBoxMethod() override;
 
 protected:
+    virtual std::string name() const override { return "GridBoxMethod"; }
+    virtual std::string type() const override { return "knn"; }
     virtual void print(std::ostream&) const override;
 
     using KNearestNeighboursBase::do_setup;

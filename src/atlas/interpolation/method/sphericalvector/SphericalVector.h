@@ -35,6 +35,8 @@ class SphericalVector : public Method {
   SphericalVector(const Config& config);
   ~SphericalVector() override {}
 
+  virtual std::string name() const override { return "SphericalVector"; }
+  virtual std::string type() const override { return "unstructured"; }
   void print(std::ostream&) const override;
   const FunctionSpace& source() const override { return source_; }
   const FunctionSpace& target() const override { return target_; }
