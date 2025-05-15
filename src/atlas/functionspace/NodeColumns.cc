@@ -225,7 +225,9 @@ NodeColumns::NodeColumns(Mesh mesh, const eckit::Configuration& config):
         }
     }
 
-    if (mesh_.grid()) grid_ = mesh_.grid();
+    if (mesh_.grid()) {
+        grid_ = mesh_.grid();
+    }
 }
 
 NodeColumns::~NodeColumns() = default;
@@ -645,7 +647,9 @@ const parallel::Checksum& NodeColumns::checksum() const {
 //}
 
 const Grid& NodeColumns::grid() const {
-    if (grid_) return grid_;
+    if (grid_) {
+        return grid_;
+    }
 
     const auto& comm = mpi::comm(mpi_comm());
     std::vector<PointXY> points;

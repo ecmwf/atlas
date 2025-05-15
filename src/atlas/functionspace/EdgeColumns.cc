@@ -283,7 +283,9 @@ EdgeColumns::EdgeColumns(const Mesh& mesh, const eckit::Configuration& config):
     }
     ATLAS_ASSERT(nb_edges_);
 
-    if (mesh_.grid()) grid_ = mesh_.grid();
+    if (mesh_.grid()) {
+        grid_ = mesh_.grid();
+    }
 }
 
 EdgeColumns::~EdgeColumns() = default;
@@ -564,7 +566,9 @@ const parallel::Checksum& EdgeColumns::checksum() const {
 }
 
 const Grid& EdgeColumns::grid() const {
-    if (grid_) return grid_;
+    if (grid_) {
+        return grid_;
+    }
 
     const auto& comm = mpi::comm(mpi_comm());
     std::vector<PointXY> points;

@@ -285,7 +285,9 @@ CellColumns::CellColumns(const Mesh& mesh, const eckit::Configuration& config):
     }
     ATLAS_ASSERT(nb_cells_);
 
-    if (mesh_.grid()) grid_ = mesh_.grid();
+    if (mesh_.grid()) {
+        grid_ = mesh_.grid();
+    }
 }
 
 CellColumns::~CellColumns() = default;
@@ -574,7 +576,9 @@ const parallel::Checksum& CellColumns::checksum() const {
 }
 
 const Grid& CellColumns::grid() const {
-    if (grid_) return grid_;
+    if (grid_) {
+        return grid_;
+    }
 
     const auto& comm = mpi::comm(mpi_comm());
     std::vector<PointXY> points;
