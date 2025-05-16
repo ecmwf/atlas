@@ -26,20 +26,22 @@ namespace atlas::mct {
 
     class ModelCoupler {
     public:
-        void register_model(int model_id, Grid grid) {
-            models_.emplace_back(model_id);
-            grids_.emplace_back(grid);
-        }
+        ModelCoupler() {}
+
+        void register_model(int model_id, Grid grid);
+
+        void print_models() const;
+
+        std::vector<int> models() const { return models_; }
+
         static std::string comm_name(int model_id) { return std::to_string(model_id); }
 
-        Grid get_grid(int model_id) {
-            auto it = std::find(models_.begin(), models_.end(), model_id);
-            return grids_[std::distance(models_.begin(), it)];
-        }
+        Grid get_grid(int model_id) { return model2grid_[model_id]; }
 
     private:
         std::vector<int> models_;
-        std::vector<Grid> grids_;
+        std::unordered_map<int, std::string> model2grid_;
+        std::unordered_map<int, std::vector<int>> model2ranks_;
     };
 
     static ModelCoupler coupler_;
@@ -53,20 +55,37 @@ namespace atlas::mct {
     }
 
 
-    void set_default_comm_to_local(int model_id) {
+    void set_default_comm_to_local(int model_id)
+    {
         eckit::mpi::comm().split(model_id, ModelCoupler::comm_name(model_id));
         eckit::mpi::setCommDefault(ModelCoupler::comm_name(model_id));
     }
 
-    void setup_coupler(int model_id, Grid grid) {
-        coupler_.register_model(model_id, grid);
-        set_default_comm_to_local(model_id);
-        auto matrix = read_interpolation_matrix("mat");
 
-        // Hack: we assume m1 sends field 'f1' to m2
-        functionspace::StructuredColumns fspace_m1(grid);
-        functionspace::StructuredColumns fspace_m2(grid);
-        interpolation::distribute_global_matrix(fspace_m1, fspace_m2, matrix);
+    void setup_oneway_remap(int model_1, int model_2) {
+        bool is_model_1 = (mpi::comm().name() == ModelCoupler::comm_name(model_1));
+        bool is_model_2 = (mpi::comm().name() == ModelCoupler::comm_name(model_2));
+
+        // everything is set up on model_2 for remapping
+        // global matrix is read in on model_2
+        // field 1 is send to model_2
+        if (is_model_2) {
+            auto matrix = read_interpolation_matrix("mat");
+            functionspace::StructuredColumns fspace_m1(coupler_.get_grid(model_1));
+            functionspace::StructuredColumns fspace_m2(coupler_.get_grid(model_2));
+            auto lmatrix = interpolation::distribute_global_matrix(fspace_m1, fspace_m2, matrix);
+        }
+    }
+
+
+    void setup_coupler(int model_id, Grid grid) {
+        set_default_comm_to_local(model_id);
+        coupler_.register_model(model_id, grid);
+
+        if (mpi::comm("world").rank() == 5) coupler_.print_models();
+
+        // HACK: we assume only m1 sends field 'f1' to m2
+        setup_oneway_remap(10, 21);
     }
 
 

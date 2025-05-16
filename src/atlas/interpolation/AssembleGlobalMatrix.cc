@@ -181,10 +181,10 @@ linalg::SparseMatrixStorage assemble_global_matrix(const Interpolation& interpol
 
 template <typename partition_t, typename ViewValue, typename ViewIndex, typename Value, typename Index> 
 void distribute_global_matrix_as_triplets(partition_t tgt_partition, const linalg::SparseMatrixView<ViewValue,ViewIndex>& global_matrix,
-    std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root) {
+    std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root, std::string tgt_comm_name = "world") {
     ATLAS_TRACE("distribute_global_matrix_as_triplets");
     
-    auto& mpi_comm = mpi::comm();
+    auto& mpi_comm = mpi::comm(tgt_comm_name);
     auto mpi_size  = mpi_comm.size();
     auto mpi_rank  = mpi_comm.rank();
 
@@ -200,9 +200,9 @@ void distribute_global_matrix_as_triplets(partition_t tgt_partition, const linal
         for(std::size_t r = 0; r < global_matrix.rows(); ++r) {
             nnz_per_task[tgt_partition[r]] += outer[r+1] - outer[r];
         }
-        for (int jproc = 0; jproc < mpi::comm().size(); ++jproc) {
+        for (int jproc = 0; jproc < mpi_comm.size(); ++jproc) {
             if (jproc != mpi_root) {
-                mpi::comm().send(nnz_per_task.data() + jproc, 1, jproc, mpi_tag);
+                mpi_comm.send(nnz_per_task.data() + jproc, 1, jproc, mpi_tag);
             }
         }
         nnz_loc = nnz_per_task[mpi_root];
@@ -257,20 +257,21 @@ template <typename ViewValue, typename ViewIndex, typename Value, typename Index
 void distribute_global_matrix_as_triplets(
     const array::Array& tgt_partition, 
     const linalg::SparseMatrixView<ViewValue,ViewIndex>& global_matrix,
-    std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root) {
-    distribute_global_matrix_as_triplets(array::make_view<int,1>(tgt_partition).data(), global_matrix, rows, cols, vals, mpi_root);
+    std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root, std::string tgt_mpi_comm = "world") {
+    distribute_global_matrix_as_triplets(
+        array::make_view<int,1>(tgt_partition).data(), global_matrix, rows, cols, vals, mpi_root, tgt_mpi_comm);
 }
 
 template <typename ViewValue, typename ViewIndex, typename Value, typename Index> 
 void distribute_global_matrix_as_triplets(
     const grid::Distribution& tgt_distribution, const linalg::SparseMatrixView<ViewValue,ViewIndex>& global_matrix,
-    std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root) {
+    std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root, std::string tgt_mpi_comm = "world") {
     struct partition_t {
         partition_t(const grid::Distribution& d) : d_(d) {}
         int operator[](idx_t i) const { return d_.partition(i); }
         const grid::Distribution& d_;
     } tgt_partition(tgt_distribution);
-    distribute_global_matrix_as_triplets(tgt_partition, global_matrix, rows, cols, vals, mpi_root);
+    distribute_global_matrix_as_triplets(tgt_partition, global_matrix, rows, cols, vals, mpi_root, tgt_mpi_comm);
 }
 
 template<typename partition_t>
@@ -280,7 +281,7 @@ linalg::SparseMatrixStorage distribute_global_matrix(partition_t tgt_partition, 
     using Value = eckit::linalg::Scalar;
     std::vector<Index> rows, cols;
     std::vector<Value> vals;
-    distribute_global_matrix_as_triplets(tgt_partition, atlas::linalg::make_host_view<Value, Index>(gmatrix), rows, cols, vals, mpi_root);
+    distribute_global_matrix_as_triplets(tgt_partition, atlas::linalg::make_host_view<Value, Index>(gmatrix), rows, cols, vals, mpi_root, tgt_fs.mpi_comm());
 
     // map global index to local index
     std::unordered_map<gidx_t, idx_t> to_local_rows;

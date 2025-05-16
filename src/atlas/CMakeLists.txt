@@ -737,6 +737,7 @@ linalg/dense/MatrixMultiply_EckitLinalg.cc
 
 list( APPEND atlas_mct_srcs
 mct/mct.h
+mct/mct.cc
 )
 
 list (APPEND atlas_redistribution_srcs
