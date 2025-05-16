@@ -29,14 +29,13 @@ namespace atlas::mct {
         ModelCoupler() {}
 
         void register_model(int model_id, Grid grid);
-
         void print_models() const;
 
-        std::vector<int> models() const { return models_; }
+        const std::vector<int>& models() const { return models_; }
+        const std::string comm_name(int model_id) const { return std::to_string(model_id); }
 
-        static std::string comm_name(int model_id) { return std::to_string(model_id); }
-
-        Grid get_grid(int model_id) { return model2grid_[model_id]; }
+        const std::string& grid_name(int model_id) const { return model2grid_.at(model_id); }
+        const std::vector<int>& global_ranks(int model_id) const { return model2ranks_.at(model_id); }
 
     private:
         std::vector<int> models_;
@@ -44,37 +43,36 @@ namespace atlas::mct {
         std::unordered_map<int, std::vector<int>> model2ranks_;
     };
 
+
     static ModelCoupler coupler_;
-
-
-    Matrix read_interpolation_matrix(std::string matrix_name) {
-        eckit::linalg::SparseMatrix eckit_matrix;
-        Log::info() << "reading matrix '" << matrix_name << "'." <<std::endl;
-        eckit_matrix.load(matrix_name + ".eckit");
-        return atlas::linalg::make_sparse_matrix_storage(std::move(eckit_matrix));
-    }
-
-
-    void set_default_comm_to_local(int model_id)
-    {
-        eckit::mpi::comm().split(model_id, ModelCoupler::comm_name(model_id));
-        eckit::mpi::setCommDefault(ModelCoupler::comm_name(model_id));
-    }
+    void finalise_coupler();
+    void set_default_comm_to_local(int model_id);
+    Matrix read_interpolation_matrix(std::string matrix_name);
 
 
     void setup_oneway_remap(int model_1, int model_2) {
-        bool is_model_1 = (mpi::comm().name() == ModelCoupler::comm_name(model_1));
-        bool is_model_2 = (mpi::comm().name() == ModelCoupler::comm_name(model_2));
+        bool is_model_1 = (mpi::comm().name() == coupler_.comm_name(model_1));
+        bool is_model_2 = (mpi::comm().name() == coupler_.comm_name(model_2));
 
         // everything is set up on model_2 for remapping
         // global matrix is read in on model_2
         // field 1 is send to model_2
+
         if (is_model_2) {
-            auto matrix = read_interpolation_matrix("mat");
-            functionspace::StructuredColumns fspace_m1(coupler_.get_grid(model_1));
-            functionspace::StructuredColumns fspace_m2(coupler_.get_grid(model_2));
-            auto lmatrix = interpolation::distribute_global_matrix(fspace_m1, fspace_m2, matrix);
+            Matrix gmatrix;
+            if (mpi::comm().rank() == 0) {
+                gmatrix = read_interpolation_matrix("mat");
+            }
+            atlas::Grid grid1(coupler_.grid_name(model_1));
+            atlas::Grid grid2(coupler_.grid_name(model_2));
+            functionspace::StructuredColumns fspace_m1(grid1);
+            functionspace::StructuredColumns fspace_m2(grid2);
+
+            auto lmatrix = interpolation::distribute_global_matrix(fspace_m1, fspace_m2, gmatrix);
         }
+
+        // prepare the communication pattern for sending field data from model_1 to model_2
+
     }
 
 
@@ -89,13 +87,10 @@ namespace atlas::mct {
     }
 
 
-    void finalise_coupler() {
-        // nothing yet
-    }
-
     void put_field(Field f) {
         // nothing yet
     }
+
 
     void get_field(Field f) {
         // nothing yet
