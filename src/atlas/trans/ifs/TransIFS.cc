@@ -62,7 +62,7 @@ public:
 
     bool vorticity_divergence_fields() const { return config_.getBool("vorticity_divergence_fields", false); }
 
-    bool split_latitudes() const { return config_.getBool("split_latitudes", true); }
+    bool split_y() const { return config_.getBool("split_y", true); }
 
     int fft() const {
         static const std::map<std::string, int> string_to_FFT = {{"FFT992", TRANS_FFT992}, {"FFTW", TRANS_FFTW}};
@@ -1197,7 +1197,7 @@ void TransIFS::ctor_rgg(const long nlat, const idx_t pl[], long truncation, cons
     }
 
     trans_->fft    = p.fft();
-    trans_->lsplit = p.split_latitudes();
+    trans_->lsplit = p.split_y();
     trans_->flt    = p.flt();
     ATLAS_TRACE_SCOPE("trans_setup") { TRANS_CHECK(::trans_setup(trans_.get())); }
 }
@@ -1227,7 +1227,7 @@ void TransIFS::ctor_lonlat(const long nlon, const long nlat, long truncation, co
     }
 
     trans_->fft    = p.fft();
-    trans_->lsplit = p.split_latitudes();
+    trans_->lsplit = p.split_y();
     trans_->flt    = p.flt();
 
     TRANS_CHECK(::trans_setup(trans_.get()));

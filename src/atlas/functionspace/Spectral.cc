@@ -237,6 +237,13 @@ Field Spectral::createField(const eckit::Configuration& options) const {
         array_shape.push_back(levels);
     }
 
+    idx_t variables = 0;
+    if (options.get("variables",variables)) {
+        if (variables) {
+            array_shape.push_back(variables);
+        }
+    }
+
     Field field = Field(config_name(options), config_datatype(options), array_shape);
 
     set_field_metadata(options, field);
