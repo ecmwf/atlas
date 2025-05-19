@@ -16,6 +16,7 @@
 #include "eckit/linalg/types.h"
 
 #include "atlas/array.h"
+#include "atlas/interpolation/AssembleGlobalMatrix.h"
 #include "atlas/linalg/sparse/SparseMatrixToTriplets.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/functionspace/NodeColumns.h"
@@ -181,7 +182,7 @@ linalg::SparseMatrixStorage assemble_global_matrix(const Interpolation& interpol
 
 template <typename partition_t, typename ViewValue, typename ViewIndex, typename Value, typename Index> 
 void distribute_global_matrix_as_triplets(partition_t tgt_partition, const linalg::SparseMatrixView<ViewValue,ViewIndex>& global_matrix,
-    std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root, std::string tgt_comm_name = "world") {
+    std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root, std::string tgt_comm_name) {
     ATLAS_TRACE("distribute_global_matrix_as_triplets");
     
     auto& mpi_comm = mpi::comm(tgt_comm_name);
@@ -257,7 +258,7 @@ template <typename ViewValue, typename ViewIndex, typename Value, typename Index
 void distribute_global_matrix_as_triplets(
     const array::Array& tgt_partition, 
     const linalg::SparseMatrixView<ViewValue,ViewIndex>& global_matrix,
-    std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root, std::string tgt_mpi_comm = "world") {
+    std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root, std::string tgt_mpi_comm) {
     distribute_global_matrix_as_triplets(
         array::make_view<int,1>(tgt_partition).data(), global_matrix, rows, cols, vals, mpi_root, tgt_mpi_comm);
 }
@@ -265,7 +266,7 @@ void distribute_global_matrix_as_triplets(
 template <typename ViewValue, typename ViewIndex, typename Value, typename Index> 
 void distribute_global_matrix_as_triplets(
     const grid::Distribution& tgt_distribution, const linalg::SparseMatrixView<ViewValue,ViewIndex>& global_matrix,
-    std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root, std::string tgt_mpi_comm = "world") {
+    std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root, std::string tgt_mpi_comm) {
     struct partition_t {
         partition_t(const grid::Distribution& d) : d_(d) {}
         int operator[](idx_t i) const { return d_.partition(i); }

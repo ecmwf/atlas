@@ -17,10 +17,30 @@ namespace atlas::grid { class Distribution; }
 
 namespace atlas::interpolation {
 
-    atlas::linalg::SparseMatrixStorage assemble_global_matrix(const Interpolation& interpolation, int mpi_root = 0);
+    linalg::SparseMatrixStorage assemble_global_matrix(const Interpolation& interpolation, int mpi_root = 0);
 
-    atlas::linalg::SparseMatrixStorage distribute_global_matrix(const FunctionSpace& src_fs, const FunctionSpace& tgt_fs, const linalg::SparseMatrixStorage&, int mpi_root = 0);
+    template <typename partition_t, typename ViewValue, typename ViewIndex, typename Value, typename Index>
+    void distribute_global_matrix_as_triplets(partition_t tgt_partition, const linalg::SparseMatrixView<ViewValue,ViewIndex>& global_matrix,
+    std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root, std::string tgt_comm_name = "world");
 
-    atlas::linalg::SparseMatrixStorage distribute_global_matrix(const grid::Distribution& tgt_distribution, const FunctionSpace& src_fs, const FunctionSpace& tgt_fs, const linalg::SparseMatrixStorage&, int mpi_root = 0);
+    template <typename ViewValue, typename ViewIndex, typename Value, typename Index>
+    void distribute_global_matrix_as_triplets( const array::Array& tgt_partition,
+        const linalg::SparseMatrixView<ViewValue,ViewIndex>& global_matrix,
+        std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root, std::string tgt_mpi_comm = "world");
+
+    template <typename ViewValue, typename ViewIndex, typename Value, typename Index>
+    void distribute_global_matrix_as_triplets(
+        const grid::Distribution& tgt_distribution, const linalg::SparseMatrixView<ViewValue,ViewIndex>& global_matrix,
+        std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root, std::string tgt_mpi_comm = "world");
+
+    template<typename partition_t>
+    linalg::SparseMatrixStorage distribute_global_matrix(partition_t tgt_partition, const FunctionSpace& src_fs,
+        const FunctionSpace& tgt_fs, const linalg::SparseMatrixStorage& gmatrix, int mpi_root);
+
+    linalg::SparseMatrixStorage distribute_global_matrix(const FunctionSpace& src_fs, const FunctionSpace& tgt_fs, const linalg::SparseMatrixStorage& gmatrix, int mpi_root = 0);
+
+    linalg::SparseMatrixStorage distribute_global_matrix(const FunctionSpace& src_fs, const FunctionSpace& tgt_fs, const linalg::SparseMatrixStorage&, int mpi_root);
+
+    linalg::SparseMatrixStorage distribute_global_matrix(const grid::Distribution& tgt_distribution, const FunctionSpace& src_fs, const FunctionSpace& tgt_fs, const linalg::SparseMatrixStorage&, int mpi_root = 0);
 
 } // namespace atlas::interpolation
