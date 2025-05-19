@@ -738,6 +738,8 @@ linalg/dense/MatrixMultiply_EckitLinalg.cc
 list( APPEND atlas_mct_srcs
 mct/mct.h
 mct/mct.cc
+mct/ParInter.h
+mct/ParInter.cc
 )
 
 list (APPEND atlas_redistribution_srcs
@@ -819,6 +821,7 @@ endif()
 list( APPEND atlas_parallel_srcs
   parallel/Checksum.cc
   parallel/Checksum.h
+  parallel/Collect.cc
   parallel/Collect.h
   parallel/GatherScatter.cc
   parallel/GatherScatter.h

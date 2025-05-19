@@ -8,9 +8,11 @@
  * nor does it submit to any jurisdiction.
  */
 
+/*
 #include "atlas/array.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
+#include "atlas/field/MissingValue.h"
 #include "atlas/functionspace/CellColumns.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/PointCloud.h"
@@ -23,6 +25,9 @@
 #include "atlas/interpolation/NonLinear.h"
 #include "atlas/linalg/sparse.h"
 #include "atlas/linalg/sparse/MakeEckitSparseMatrix.h"
+*/
+#include "atlas/mct/ParInter.h"
+/*
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
@@ -33,8 +38,7 @@
 #include "atlas/util/function/VortexRollup.h"
 #include "atlas/util/function/MDPI_functions.h"
 #include "atlas/util/Locate.h"
-#include "atlas/field/MissingValue.h"
-
+*/
 #include "atlas/io/atlas-io.h"
 
 #include "tests/AtlasTestEnvironment.h"
@@ -43,9 +47,9 @@ using atlas::functionspace::PointCloud;
 using atlas::functionspace::NodeColumns;
 using atlas::functionspace::StructuredColumns;
 using atlas::util::Config;
+using Matrix = atlas::linalg::SparseMatrixStorage;
 
 namespace atlas {
-
 
 // USAGE:
 //
@@ -62,243 +66,6 @@ namespace atlas {
 //
 // Using the grid API 'create_fspaces' we can hide interpolation method specific requirements
 // such as which functionspace needs to be set-up.
-
-using namespace atlas;
-using Matrix = atlas::linalg::SparseMatrixStorage;
-
-class ParInter {
-public:
-    ParInter(const Matrix& gmat, const FunctionSpace src_fs, const FunctionSpace tgt_fs, const grid::Distribution& src_distribution, const grid::Distribution& tgt_distribution) : 
-        gmat_(gmat), src_fs_(src_fs), tgt_fs_(tgt_fs), src_distribution_(src_distribution), tgt_distribution_(tgt_distribution) {
-            ATLAS_TRACE("Parinter::setup");
-            extract(rows_, cols_, gcols_, vals_);
-            setup_collect(src_fs_, gcols_);
-
-            std::size_t nr = tgt_fs.size();
-            std::size_t nc = collect_size_;
-            eckit::linalg::Index index_base = 0;
-            bool is_sorted = false;
-            lmat_ = linalg::make_sparse_matrix_storage_from_rows_columns_values(nr, nc, rows_, cols_, vals_, index_base, is_sorted);
-            find_missing_rows();
-
-            nonlinear_ = interpolation::NonLinear("missing-if-any-missing", util::Config());
-
-    }
-
-    void print() const {
-        for (int task = 0; task < mpi::comm().size(); ++task) {
-            if (mpi::comm().rank() == task) {
-                std::cout << "TASK " << task << std::endl;
-                for (int i = 0; i < rows_.size(); ++i) {
-                    std::cout << "\t" << rows_[i] << ", " << cols_[i] << ", " << vals_[i];
-                    if (i < gcols_.size()) {
-                        std::cout << ", " << gcols_[i];
-                    }
-                }
-            }
-            mpi::comm().barrier();
-        }
-    }
-
-    void execute(const Field& src, Field& tgt) {
-        ATLAS_TRACE("Parinter::execute");
-        auto collect_shape = src.shape();
-        collect_shape[0] = collect_size_;
-        std::unique_ptr<array::Array> collect_src(array::Array::create(src.datatype(),collect_shape));
-
-        collect_.execute<double,1>(const_cast<Field&>(src), *collect_src);
-
-        {
-            auto collect_src_view = array::make_view<double,1>(*collect_src);
-            auto tgt_view = array::make_view<double,1>(tgt);
-            auto matrix = linalg::make_host_view<eckit::linalg::Scalar, eckit::linalg::Index>(lmat_);
-
-            ATLAS_ASSERT(tgt_view.shape(0) == matrix.rows());
-
-            ATLAS_TRACE_SCOPE("sparse_matrix_multiply") {
-                // linalg::sparse::current_backend("eckit_linalg");
-                if (nonlinear_(src)) {
-                    eckit::linalg::SparseMatrix matrix_nl = atlas::linalg::make_eckit_sparse_matrix(matrix);
-                    ATLAS_ASSERT(matrix_nl.cols() == collect_src->size());
-                    ATLAS_ASSERT(matrix_nl.cols() == collect_src->size());
-                    nonlinear_->execute(matrix_nl, src, *collect_src);
-                    linalg::sparse_matrix_multiply(matrix_nl, collect_src_view, tgt_view);
-                }
-                else {
-                    linalg::sparse_matrix_multiply(matrix, collect_src_view, tgt_view);
-                }
-            }
-
-            if (not tgt.metadata().has("missing_value")) {
-                field::MissingValue mv_src(src);
-                if (mv_src) {
-                    ATLAS_DEBUG();
-                    mv_src.metadata(tgt);
-                    ATLAS_ASSERT(field::MissingValue(tgt));
-                }
-                else if (not missing_rows_.empty()) {
-                    ATLAS_DEBUG();
-                    if (not tgt.metadata().has("missing_value")) {
-                        tgt.metadata().set("missing_value", 9999.);
-                    }
-                    tgt.metadata().set("missing_value_type", "approximately-equals");
-                    tgt.metadata().set("missing_value_epsilon", 1.);
-                }
-                tgt.metadata().set("missing_value", 9999.);
-                tgt.metadata().set("missing_value_type", "approximately-equals");
-                tgt.metadata().set("missing_value_epsilon", 1.);
- 
-            }
-            
-            ATLAS_TRACE_SCOPE("mask") {
-                ATLAS_DEBUG();
-                if (tgt.metadata().has("missing_value")) {
-                    double missing_value = tgt.metadata().get<double>("missing_value");
-                    for (idx_t r : missing_rows_) {
-                        tgt_view(r) = missing_value; 
-                    }
-                }
-            }
-        }
-    }
-
-
-private:
-
-    template <typename Vector>
-    void setup_collect(FunctionSpace fs, const Vector& global_index) {
-            ATLAS_TRACE();
-            collect_size_ = global_index.size();
-
-            std::vector<gidx_t> collect_gidx(collect_size_);
-            std::vector<int>    collect_partition(collect_size_);
-            std::vector<idx_t>  collect_ridx(collect_size_);
-
-            for (size_t i=0; i<global_index.size(); ++i) {
-                collect_gidx[i] = global_index[i] + 1;
-            }
-            idx_t ridx_base = 0;
-
-            ATLAS_ASSERT(fs);
-            ATLAS_ASSERT(src_distribution_);
-            ATLAS_DEBUG_VAR(collect_size_);
-            ATLAS_DEBUG_VAR(src_distribution_.size());
-            ATLAS_DEBUG_VAR(fs.size());
-            util::locate(fs, src_distribution_, collect_gidx, collect_partition, collect_ridx, ridx_base);
-            collect_.setup(collect_size_, collect_partition.data(), collect_ridx.data(), ridx_base);
-    }
-
-    template <typename Value, typename Index> 
-    void extract(std::vector<Index>& local_rows,  std::vector<Index>& local_cols,  std::vector<Index>& local_gcols,
-        std::vector<Value>& local_vals, int mpi_root = 0) {
-        ATLAS_TRACE();
-        // std::cout << mpi::comm().rank() << " ParInter extract" << std::endl;
-
-        // Field field_fs_part_glb = tgt_fs_.createField(tgt_fs_.partition(), option::global(mpi_root));
-        // ATLAS_TRACE_SCOPE("gather partition") {
-        //     tgt_fs_.gather(tgt_fs_.partition(), field_fs_part_glb);
-        // }
-        std::vector<Index> rows, cols;
-        std::vector<Value> vals;
-        interpolation::distribute_global_matrix_as_triplets(
-            // array::make_view<int,1>(field_fs_part_glb).data(), 
-            tgt_distribution_,
-            atlas::linalg::make_host_view<Value, Index>(gmat_), rows, cols, vals, mpi_root);
-
-        // Log::info() << " rows: " << rows << std::endl;
-        // Log::info() << " cols: " << cols << std::endl;
-        // Log::info() << " vals: " << vals << std::endl;
-
-        std::unordered_map<gidx_t, idx_t> to_local_rows;
-        ATLAS_TRACE_SCOPE("convert to local row indexing") {
-            auto fs_gidx_exchanged = tgt_fs_.createField(tgt_fs_.global_index());
-            fs_gidx_exchanged.array().copy(tgt_fs_.global_index());
-            tgt_fs_.haloExchange(fs_gidx_exchanged);
-            const auto fs_global_index = array::make_view<gidx_t, 1>(fs_gidx_exchanged);
-            Field fs_ghost_field;
-            if (functionspace::CellColumns(tgt_fs_)) {
-                auto fs = functionspace::CellColumns(tgt_fs_);
-                fs_ghost_field = fs.mesh().cells().halo();
-            }
-            else {
-                fs_ghost_field = tgt_fs_.ghost();
-            }
-            const auto fs_ghost = array::make_view<int,1>(fs_ghost_field);
-
-            for (idx_t r = 0; r < fs_global_index.size(); ++r) {
-                auto gr = fs_global_index(r) - 1;
-                if (fs_ghost(r) && to_local_rows.find(gr) != to_local_rows.end()) {
-                    continue;
-                }
-                // Log::info() << " to_local_rows: " << gr << " to " << r << std::endl;
-                to_local_rows[gr] = r;
-            }
-
-            std::unordered_map<gidx_t,idx_t> map_gcol_to_loc_col_idx;
-            auto find_loc_col_idx = [&map_gcol_to_loc_col_idx](const gidx_t gcol) {
-                auto it = map_gcol_to_loc_col_idx.find(gcol);
-                if (it == map_gcol_to_loc_col_idx.end()) {
-                    return -1;
-                }
-                return it->second;
-            };
-
-            idx_t loc_col_idx = 0;
-            auto new_loc_col_idx = [&](const gidx_t gcol) {
-                idx_t lcol = loc_col_idx;
-                map_gcol_to_loc_col_idx[gcol] = lcol;
-                ++loc_col_idx;
-                return lcol;
-            };
-
-            for(size_t idx = 0; idx < rows.size(); ++idx) {
-                auto loc_row = to_local_rows[rows[idx]];
-                auto glb_col = cols[idx];
-                auto val = vals[idx];
-                local_rows.emplace_back(loc_row);
-                local_vals.emplace_back(val);
-                auto found_loc_col_idx = find_loc_col_idx(glb_col);
-                if (found_loc_col_idx >= 0) {
-                    local_cols.emplace_back(found_loc_col_idx);
-                }
-                else {
-                    local_cols.emplace_back(new_loc_col_idx(glb_col));
-                    local_gcols.emplace_back(glb_col);
-                }
-            }
-        }
-    }
-
-    void find_missing_rows() {
-        auto matrix = linalg::make_host_view<eckit::linalg::Scalar, eckit::linalg::Index>(lmat_);
-        for(std::size_t r = 0; r < matrix.rows(); ++r) {
-            int cols = matrix.outer()[r + 1] - matrix.outer()[r];
-            if (cols == 0) {
-                missing_rows_.emplace_back(r);
-            }
-        }
-    }
-
-private:
-    const Matrix& gmat_;
-    const FunctionSpace src_fs_;
-    const FunctionSpace tgt_fs_;
-    const grid::Distribution src_distribution_;
-    const grid::Distribution tgt_distribution_;
-    parallel::Collect collect_;
-    std::vector<eckit::linalg::Index> rows_;
-    std::vector<eckit::linalg::Index> cols_;
-    std::vector<eckit::linalg::Index> gcols_;
-    std::vector<eckit::linalg::Scalar> vals_;
-    Matrix lmat_;
-    std::size_t collect_size_;
-
-    interpolation::NonLinear nonlinear_;
-    
-    std::vector<idx_t> missing_rows_;
-
-};
-
 
 class AtlasGlobalUnmatchedMatrix : public AtlasTool {
     int execute(const AtlasTool::Args& args) override;

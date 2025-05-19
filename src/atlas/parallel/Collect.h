@@ -8,6 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
+#pragma once
+
 #include <algorithm>
 #include <cmath>
 #include <numeric>
@@ -17,140 +19,83 @@
 #include "atlas/array/Array.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/parallel/HaloExchange.h"
-
 #include "atlas/runtime/Log.h"
+
+
 namespace atlas::parallel {
 
 class Collect {
-private:
-bool is_setup_;
-
-int sendcnt_;
-int recvcnt_;
-std::vector<int> sendcounts_;
-std::vector<int> senddispls_;
-std::vector<int> recvcounts_;
-std::vector<int> recvdispls_;
-array::SVector<int> sendmap_;
-array::SVector<int> recvmap_;
-
-int mpi_size_;
-int mpi_rank_;
-const mpi::Comm* comm_;
 
 public:
+    const mpi::Comm& comm() const {
+        return *comm_;
+    }
 
-const mpi::Comm& comm() const {
-    return *comm_;
-}
+    void setup(const idx_t recv_size, const int recv_part[], const idx_t recv_remote_idx[], const int recv_idx_base) {
+        setup(mpi::comm().name(), recv_size, recv_part, recv_remote_idx, recv_idx_base );
+    }
 
-void setup(const idx_t recv_size, const int recv_part[], const idx_t recv_remote_idx[], const int recv_idx_base) {
-    setup(mpi::comm().name(), recv_size, recv_part, recv_remote_idx, recv_idx_base );
-}
+    void setup(const std::string& mpi_comm,
+        const idx_t recv_size, const int recv_part[], const idx_t recv_remote_idx[], const int recv_idx_base);
 
-void setup(const std::string& mpi_comm,
-    const idx_t recv_size, const int recv_part[], const idx_t recv_remote_idx[], const int recv_idx_base) {
     
-    ATLAS_TRACE("Collect::setup()");
-    comm_ = &mpi::comm(mpi_comm);
-    mpi_size_ = comm().size();
-    mpi_rank_ = comm().rank();
-    int nproc = mpi_size_;
+    template <typename DATA_TYPE, int RANK, typename ParallelDim = array::FirstDim>
+    void execute(array::Array& send, array::Array& recv, bool on_device = false) const;
 
-    recvcnt_ = recv_size;
-    sendcounts_.resize(nproc);
-    sendcounts_.assign(nproc, 0);
-    recvcounts_.resize(nproc);
-    recvcounts_.assign(nproc, 0);
-    senddispls_.resize(nproc);
-    senddispls_.assign(nproc, 0);
-    recvdispls_.resize(nproc);
-    recvdispls_.assign(nproc, 0);
+    template <typename DATA_TYPE>
+    DATA_TYPE* allocate_buffer(const int buffer_size, const bool on_device) const;
 
-    atlas_omp_parallel {
-        std::vector<int> recvcounts(nproc, 0);
-        atlas_omp_for(std::size_t jrecv = 0; jrecv < recvcnt_; ++jrecv) {
-            int p = recv_part[jrecv];
-            ++recvcounts[p];
-        }
-        atlas_omp_critical {
-            for (int p=0; p < nproc; ++p) {
-                recvcounts_[p] += recvcounts[p];
-            }
-        }
-    }
+    template <typename DATA_TYPE>
+    void deallocate_buffer(DATA_TYPE* buffer, const int buffer_size, const bool on_device) const;
 
-    /*
-    Find the amount of nodes this rank has to send to each other ranks
-    */
-    ATLAS_TRACE_MPI(ALLTOALL) { comm().allToAll(recvcounts_, sendcounts_); }
+    void counts_displs_setup(const idx_t var_size, std::vector<int>& send_counts_init,
+                            std::vector<int>& recv_counts_init, std::vector<int>& send_counts,
+                            std::vector<int>& recv_counts, std::vector<int>& send_displs,
+                            std::vector<int>& recv_displs) const;
 
-    sendcnt_ = std::accumulate(sendcounts_.begin(), sendcounts_.end(), 0);
+    template <typename DATA_TYPE>
+    void ireceive(int tag, std::vector<int>& recv_displs, std::vector<int>& recv_counts,
+                std::vector<eckit::mpi::Request>& recv_req, DATA_TYPE* recv_buffer) const;
 
-    recvdispls_[0] = 0;
-    senddispls_[0] = 0;
-    for (int jproc = 1; jproc < nproc; ++jproc)  // start at 1
-    {
-        recvdispls_[jproc] = recvcounts_[jproc - 1] + recvdispls_[jproc - 1];
-        senddispls_[jproc] = sendcounts_[jproc - 1] + senddispls_[jproc - 1];
-    }
+    template <int ParallelDim, typename DATA_TYPE, int RANK>
+    void pack_send_buffer(ATLAS_MAYBE_UNUSED const array::ArrayView<DATA_TYPE, RANK>& hfield,
+                                        const array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* send_buffer,
+                                        int send_size, ATLAS_MAYBE_UNUSED const bool on_device) const;
 
-    /*
-    Fill vector "send_requests" with remote index of nodes needed, but are on
-    other procs
-    We can also fill in the vector "recvmap_" which holds local indices of
-    requested nodes
-    */
-    std::vector<int> send_requests(recvcnt_);
-    std::vector<int> recv_requests(sendcnt_);
-    std::vector<int> cnt(nproc, 0);
-    recvmap_.resize(recvcnt_);
-#ifdef __PGI
-    // No idea why PGI compiler (20.7) in Release build ( -fast -O3 ) decides to vectorize following loop
-#pragma loop novector
-#endif
-    Log::trace() << __LINE__ << std::endl;
+    template <int ParallelDim, typename DATA_TYPE, int RANK>
+    void unpack_recv_buffer(const DATA_TYPE* recv_buffer, int recv_size,
+                                        ATLAS_MAYBE_UNUSED array::ArrayView<DATA_TYPE, RANK>& hfield,
+                                        array::ArrayView<DATA_TYPE, RANK>& dfield,
+                                        ATLAS_MAYBE_UNUSED const bool on_device) const;
 
-    for (int jrecv = 0; jrecv < recvcnt_; ++jrecv) {
-        const int p            = recv_part[jrecv];
-        const int req_idx      = recvdispls_[p] + cnt[p];
-        send_requests[req_idx] = recv_remote_idx[jrecv] - recv_idx_base;
-        recvmap_[req_idx]      = jrecv;
-        cnt[p]++;
-    }
+    template <typename DATA_TYPE>
+    void isend_and_wait_for_receive(int tag, std::vector<int>& recv_counts_init,
+                                    std::vector<eckit::mpi::Request>& recv_req, std::vector<int>& send_displs,
+                                    std::vector<int>& send_counts, std::vector<eckit::mpi::Request>& send_req,
+                                    DATA_TYPE* send_buffer) const;
 
-    Log::trace() << __LINE__ << std::endl;
+    void wait_for_send(std::vector<int>& send_counts_init, std::vector<eckit::mpi::Request>& send_req) const;
 
-    /*
-    Fill vector "recv_requests" with what is needed by other procs
-    */
-    ATLAS_TRACE_MPI(ALLTOALL) {
-        ATLAS_ASSERT(send_requests.size() == recvcnt_);
-        ATLAS_ASSERT(std::accumulate(recvcounts_.begin(),recvcounts_.end(),0) == recvcnt_);
-        ATLAS_ASSERT(recv_requests.size() == sendcnt_);
-        ATLAS_ASSERT(std::accumulate(sendcounts_.begin(),sendcounts_.end(),0) == sendcnt_);
+private:
+    bool is_setup_;
 
-        comm().allToAllv(send_requests.data(), recvcounts_.data(), recvdispls_.data(), recv_requests.data(),
-                              sendcounts_.data(), senddispls_.data());
-    }
-    Log::trace() << __LINE__ << std::endl;
+    int sendcnt_;
+    int recvcnt_;
+    std::vector<int> sendcounts_;
+    std::vector<int> senddispls_;
+    std::vector<int> recvcounts_;
+    std::vector<int> recvdispls_;
+    array::SVector<int> sendmap_;
+    array::SVector<int> recvmap_;
+
+    int mpi_size_;
+    int mpi_rank_;
+    const mpi::Comm* comm_;
+}; // class Connect
 
 
-    /*
-    What needs to be sent to other procs is asked by remote_idx, which is local
-    here
-    */
-    sendmap_.resize(sendcnt_);
-    for (int jj = 0; jj < sendcnt_; ++jj) {
-        sendmap_[jj] = recv_requests[jj];
-    }
-    Log::trace() << __LINE__ << std::endl;
-
-    is_setup_        = true;
-}
-
-template <typename DATA_TYPE, int RANK, typename ParallelDim = array::FirstDim>
-void execute(array::Array& send, array::Array& recv, bool on_device = false) const {
+template <typename DATA_TYPE, int RANK, typename ParallelDim>
+void Collect::execute(array::Array& send, array::Array& recv, bool on_device) const {
     ATLAS_TRACE("Collect", {"collect"});
     if (!is_setup_) {
         throw_Exception("Collect was not setup", Here());
@@ -200,11 +145,11 @@ void execute(array::Array& send, array::Array& recv, bool on_device = false) con
 
     deallocate_buffer<DATA_TYPE>(send_buffer, send_size, on_device);
     deallocate_buffer<DATA_TYPE>(recv_buffer, recv_size, on_device);
-
 }
 
+
 template <typename DATA_TYPE>
-DATA_TYPE* allocate_buffer(const int buffer_size, const bool on_device) const {
+DATA_TYPE* Collect::allocate_buffer(const int buffer_size, const bool on_device) const {
     DATA_TYPE* buffer{nullptr};
 
     if (on_device) {
@@ -217,8 +162,9 @@ DATA_TYPE* allocate_buffer(const int buffer_size, const bool on_device) const {
     return buffer;
 }
 
+
 template <typename DATA_TYPE>
-void deallocate_buffer(DATA_TYPE* buffer, const int buffer_size, const bool on_device) const {
+void Collect::deallocate_buffer(DATA_TYPE* buffer, const int buffer_size, const bool on_device) const {
     if (on_device) {
         util::delete_devicemem(buffer, buffer_size);
     }
@@ -227,21 +173,9 @@ void deallocate_buffer(DATA_TYPE* buffer, const int buffer_size, const bool on_d
     }
 }
 
-void counts_displs_setup(const idx_t var_size, std::vector<int>& send_counts_init,
-                         std::vector<int>& recv_counts_init, std::vector<int>& send_counts,
-                         std::vector<int>& recv_counts, std::vector<int>& send_displs,
-                         std::vector<int>& recv_displs) const {
-    for (size_t jproc = 0; jproc < static_cast<size_t>(mpi_size_); ++jproc) {
-        send_counts_init[jproc] = sendcounts_[jproc];
-        recv_counts_init[jproc] = recvcounts_[jproc];
-        send_counts[jproc]      = sendcounts_[jproc] * var_size;
-        recv_counts[jproc]      = recvcounts_[jproc] * var_size;
-        send_displs[jproc]      = senddispls_[jproc] * var_size;
-        recv_displs[jproc]      = recvdispls_[jproc] * var_size;
-    }
-}
+
 template <typename DATA_TYPE>
-void ireceive(int tag, std::vector<int>& recv_displs, std::vector<int>& recv_counts,
+void Collect::ireceive(int tag, std::vector<int>& recv_displs, std::vector<int>& recv_counts,
               std::vector<eckit::mpi::Request>& recv_req, DATA_TYPE* recv_buffer) const {
     ATLAS_TRACE_MPI(IRECEIVE) {
         /// Let MPI know what we like to receive
@@ -254,8 +188,9 @@ void ireceive(int tag, std::vector<int>& recv_displs, std::vector<int>& recv_cou
     }
 }
 
+
 template <int ParallelDim, typename DATA_TYPE, int RANK>
-void pack_send_buffer(ATLAS_MAYBE_UNUSED const array::ArrayView<DATA_TYPE, RANK>& hfield,
+void Collect::pack_send_buffer(ATLAS_MAYBE_UNUSED const array::ArrayView<DATA_TYPE, RANK>& hfield,
                                     const array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* send_buffer,
                                     int send_size, ATLAS_MAYBE_UNUSED const bool on_device) const {
     ATLAS_TRACE();
@@ -269,8 +204,9 @@ void pack_send_buffer(ATLAS_MAYBE_UNUSED const array::ArrayView<DATA_TYPE, RANK>
         halo_packer<ParallelDim, RANK>::pack(sendcnt_, sendmap_, dfield, send_buffer, send_size);
 }
 
+
 template <int ParallelDim, typename DATA_TYPE, int RANK>
-void unpack_recv_buffer(const DATA_TYPE* recv_buffer, int recv_size,
+void Collect::unpack_recv_buffer(const DATA_TYPE* recv_buffer, int recv_size,
                                       ATLAS_MAYBE_UNUSED array::ArrayView<DATA_TYPE, RANK>& hfield,
                                       array::ArrayView<DATA_TYPE, RANK>& dfield,
                                       ATLAS_MAYBE_UNUSED const bool on_device) const {
@@ -285,8 +221,9 @@ void unpack_recv_buffer(const DATA_TYPE* recv_buffer, int recv_size,
         halo_packer<ParallelDim, RANK>::unpack(recvcnt_, recvmap_, recv_buffer, recv_size, dfield);
 }
 
+
 template <typename DATA_TYPE>
-void isend_and_wait_for_receive(int tag, std::vector<int>& recv_counts_init,
+void Collect::isend_and_wait_for_receive(int tag, std::vector<int>& recv_counts_init,
                                 std::vector<eckit::mpi::Request>& recv_req, std::vector<int>& send_displs,
                                 std::vector<int>& send_counts, std::vector<eckit::mpi::Request>& send_req,
                                 DATA_TYPE* send_buffer) const {
@@ -308,17 +245,5 @@ void isend_and_wait_for_receive(int tag, std::vector<int>& recv_counts_init,
         }
     }
 }
-
-void wait_for_send(std::vector<int>& send_counts_init, std::vector<eckit::mpi::Request>& send_req) const {
-    ATLAS_TRACE_MPI(WAIT, "mpi-wait send") {
-        for (size_t jproc = 0; jproc < static_cast<size_t>(mpi_size_); ++jproc) {
-            if (send_counts_init[jproc] > 0) {
-                comm().wait(send_req[jproc]);
-            }
-        }
-    }
-}
-
-};
 
 } // namespace atlas::parallel
