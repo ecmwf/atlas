@@ -8,16 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
-// #include <iterator>
-#include <vector>
-
-#include "atlas/grid.h"
-#include "atlas/field/Field.h"
-#include "atlas/functionspace/StructuredColumns.h"
-#include "atlas/interpolation/AssembleGlobalMatrix.h"
-#include "atlas/linalg/sparse/MakeEckitSparseMatrix.h"
 #include "atlas/mct/mct.h"
-#include "atlas/parallel/mpi/mpi.h"
 
 using Matrix      = atlas::linalg::SparseMatrixStorage;
 
@@ -67,8 +58,8 @@ namespace atlas::mct {
 
     void set_default_comm_to_local(int model_id)
     {
-        eckit::mpi::comm().split(model_id, ModelCoupler::comm_name(model_id));
-        eckit::mpi::setCommDefault(ModelCoupler::comm_name(model_id));
+        eckit::mpi::comm().split(model_id, coupler_.comm_name(model_id));
+        eckit::mpi::setCommDefault(coupler_.comm_name(model_id));
     }
 
 
@@ -80,21 +71,23 @@ namespace atlas::mct {
     }
 
 
-    void print_models() const {
-        if (mpi::comm().rank() == 0) {
-            for (int i = 0; i < models_.size(); i++) {
-                auto m = models_[i];
-                std::cout << "Model " << m << ", grid " << model2grid_.at(m)
-                    << ", global ranks are : " << model2ranks_.at(m) << std::endl;
+    void ModelCoupler::print_models() const {
+        std::vector<int> lead_ranks(models_.size());
+        for (int i = 0; i < models_.size(); i++) {
+            lead_ranks[i] = model2ranks_.at(models_[i])[0];
+        }
+        for (int i = 0; i < models_.size(); i++) {
+            mpi::comm("world").barrier();
+            if (mpi::comm("world").rank() == lead_ranks[i]) {
+                std::cout << "Model " << models_[i] << ", grid " << model2grid_.at(models_[i])
+                    << ", global ranks are : " << model2ranks_.at(models_[i]) << std::endl;
             }
         }
     }
 
 
     void finalise_coupler() {
-        models_.clear();
-        model2grid_.clear();
-        model2ranks_.clear();
+        coupler_.finalise();
     }
 
 } // namespace atlas::mct
