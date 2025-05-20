@@ -42,15 +42,8 @@ public:
     /// of the spectral coefficients (LDGRIDONLY=TRUE)
     virtual void partition(const Grid&, int part[]) const;
 
-    int nb_bands() const;
-
-    int nb_regions(int b) const;
-
     virtual std::string type() const { return "ectrans"; }
 
-private:
-    size_t nbands_;
-    std::vector<size_t> nregions_;
 };
 
 }  // namespace partitioner
