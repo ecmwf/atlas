@@ -129,6 +129,17 @@ void Collect::counts_displs_setup(const idx_t var_size, std::vector<int>& send_c
     }
 }
 
+void Collect::send_counts_displs_setup(const idx_t var_size, std::vector<int>& send_counts_init,
+                            std::vector<int>& send_counts,
+                            std::vector<int>& send_displs) const {
+    for (size_t jproc = 0; jproc < static_cast<size_t>(mpi_size_); ++jproc) {
+        send_counts_init[jproc] = sendcounts_[jproc];
+        send_counts[jproc]      = sendcounts_[jproc] * var_size;
+        send_displs[jproc]      = senddispls_[jproc] * var_size;
+    }
+}
+
+
 
 void Collect::wait_for_send(std::vector<int>& send_counts_init, std::vector<eckit::mpi::Request>& send_req) const {
     ATLAS_TRACE_MPI(WAIT, "mpi-wait send") {
