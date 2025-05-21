@@ -186,7 +186,7 @@ linalg::SparseMatrixStorage distribute_global_matrix(partition_t tgt_partition, 
     using Value = eckit::linalg::Scalar;
     std::vector<Index> rows, cols;
     std::vector<Value> vals;
-    distribute_global_matrix_as_triplets(tgt_partition, atlas::linalg::make_host_view<Value, Index>(gmatrix), rows, cols, vals, mpi_root, tgt_fs.mpi_comm());
+    distribute_global_matrix_as_triplets(tgt_partition, atlas::linalg::make_host_view<Value, Index>(gmatrix), rows, cols, vals, mpi_root);
 
     // map global index to local index
     std::unordered_map<gidx_t, idx_t> to_local_rows;

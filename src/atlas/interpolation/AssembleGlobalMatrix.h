@@ -24,17 +24,17 @@ namespace atlas::interpolation {
 
     template <typename partition_t, typename ViewValue, typename ViewIndex, typename Value, typename Index>
     void distribute_global_matrix_as_triplets(partition_t tgt_partition, const linalg::SparseMatrixView<ViewValue,ViewIndex>& global_matrix,
-    std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root, std::string tgt_comm_name = "world");
+    std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root = 0);
 
     template <typename ViewValue, typename ViewIndex, typename Value, typename Index>
     void distribute_global_matrix_as_triplets( const array::Array& tgt_partition,
         const linalg::SparseMatrixView<ViewValue,ViewIndex>& global_matrix,
-        std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root, std::string tgt_mpi_comm = "world");
+        std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root = 0);
 
     template <typename ViewValue, typename ViewIndex, typename Value, typename Index>
     void distribute_global_matrix_as_triplets(
         const grid::Distribution& tgt_distribution, const linalg::SparseMatrixView<ViewValue,ViewIndex>& global_matrix,
-        std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root, std::string tgt_mpi_comm = "world");
+        std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root = 0);
 
     template<typename partition_t>
     linalg::SparseMatrixStorage distribute_global_matrix(partition_t tgt_partition, const FunctionSpace& src_fs,
@@ -46,14 +46,14 @@ namespace atlas::interpolation {
 
     linalg::SparseMatrixStorage distribute_global_matrix(const grid::Distribution& tgt_distribution, const FunctionSpace& src_fs, const FunctionSpace& tgt_fs, const linalg::SparseMatrixStorage&, int mpi_root = 0);
 
-    // declarations
+    // definitions
 
     template <typename partition_t, typename ViewValue, typename ViewIndex, typename Value, typename Index>
     void distribute_global_matrix_as_triplets(partition_t tgt_partition, const linalg::SparseMatrixView<ViewValue,ViewIndex>& global_matrix,
-        std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root, std::string tgt_comm_name) {
+        std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root) {
         ATLAS_TRACE("distribute_global_matrix_as_triplets");
 
-        auto& mpi_comm = mpi::comm(tgt_comm_name);
+        auto& mpi_comm = mpi::comm();
         auto mpi_size  = mpi_comm.size();
         auto mpi_rank  = mpi_comm.rank();
 
@@ -127,22 +127,22 @@ namespace atlas::interpolation {
     void distribute_global_matrix_as_triplets(
         const array::Array& tgt_partition,
         const linalg::SparseMatrixView<ViewValue,ViewIndex>& global_matrix,
-        std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root, std::string tgt_mpi_comm) {
+        std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root) {
         distribute_global_matrix_as_triplets(
-            array::make_view<int,1>(tgt_partition).data(), global_matrix, rows, cols, vals, mpi_root, tgt_mpi_comm);
+            array::make_view<int,1>(tgt_partition).data(), global_matrix, rows, cols, vals, mpi_root);
     }
 
 
     template <typename ViewValue, typename ViewIndex, typename Value, typename Index>
     void distribute_global_matrix_as_triplets(
         const grid::Distribution& tgt_distribution, const linalg::SparseMatrixView<ViewValue,ViewIndex>& global_matrix,
-        std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root, std::string tgt_mpi_comm) {
+        std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root) {
         struct partition_t {
             partition_t(const grid::Distribution& d) : d_(d) {}
             int operator[](idx_t i) const { return d_.partition(i); }
             const grid::Distribution& d_;
         } tgt_partition(tgt_distribution);
-        distribute_global_matrix_as_triplets(tgt_partition, global_matrix, rows, cols, vals, mpi_root, tgt_mpi_comm);
+        distribute_global_matrix_as_triplets(tgt_partition, global_matrix, rows, cols, vals, mpi_root);
     }
 
 } // namespace atlas::interpolation
