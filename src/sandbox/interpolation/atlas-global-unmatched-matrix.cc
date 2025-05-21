@@ -8,37 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
-/*
-#include "atlas/array.h"
-#include "atlas/field/Field.h"
-#include "atlas/field/FieldSet.h"
-#include "atlas/field/MissingValue.h"
-#include "atlas/functionspace/CellColumns.h"
-#include "atlas/functionspace/NodeColumns.h"
-#include "atlas/functionspace/PointCloud.h"
-#include "atlas/functionspace/StructuredColumns.h"
-#include "atlas/grid/Grid.h"
-#include "atlas/grid/Iterator.h"
-#include "atlas/interpolation.h"
-#include "atlas/interpolation/AssembleGlobalMatrix.h"
-#include "atlas/interpolation/AssembleGlobalMatrix.cc"
-#include "atlas/interpolation/NonLinear.h"
-#include "atlas/linalg/sparse.h"
-#include "atlas/linalg/sparse/MakeEckitSparseMatrix.h"
-*/
+
 #include "atlas/mct/ParInter.h"
-/*
-#include "atlas/mesh/Mesh.h"
-#include "atlas/meshgenerator.h"
-#include "atlas/output/Gmsh.h"
-#include "atlas/parallel/mpi/mpi.h"
-#include "atlas/parallel/Collect.h"
-#include "atlas/runtime/AtlasTool.h"
-#include "atlas/util/CoordinateEnums.h"
-#include "atlas/util/function/VortexRollup.h"
-#include "atlas/util/function/MDPI_functions.h"
-#include "atlas/util/Locate.h"
-*/
 #include "atlas/io/atlas-io.h"
 
 #include "tests/AtlasTestEnvironment.h"
