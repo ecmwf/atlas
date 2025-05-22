@@ -10,22 +10,10 @@
 
 #pragma once
 
-#include <iterator>
-#include <vector>
-#include <map>
-
 #include "atlas/grid.h"
 #include "atlas/field/Field.h"
-#include "atlas/functionspace/StructuredColumns.h"
-#include "atlas/interpolation/AssembleGlobalMatrix.h"
-#include "atlas/linalg/sparse/MakeEckitSparseMatrix.h"
-#include "atlas/mct/ParInter.h"
-#include "atlas/mct/coupler.h"
-#include "atlas/parallel/mpi/mpi.h"
 
-using Matrix      = atlas::linalg::SparseMatrixStorage;
-using Index = eckit::linalg::Index;
-using Value = eckit::linalg::Scalar;
+#include "atlas/mct/coupler.h"
 
 namespace atlas::mct {
 

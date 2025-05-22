@@ -8,7 +8,16 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <iterator>
+#include <vector>
+#include <map>
+
+#include "atlas/functionspace/StructuredColumns.h"
+#include "atlas/interpolation/AssembleGlobalMatrix.h"
+#include "atlas/linalg/sparse/MakeEckitSparseMatrix.h"
 #include "atlas/mct/mct.h"
+#include "atlas/mct/ParInter.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 using Matrix      = atlas::linalg::SparseMatrixStorage;
 
@@ -76,20 +85,7 @@ namespace atlas::mct {
             util::locate_remote_index(mpi::comm("world"), 0, nullptr, nullptr,
                                       collect_size_, collect_gidx.data(), collect_partition.data(), collect_ridx.data(), ridx_base);
             collect->setup("world", collect_size_, collect_partition.data(), collect_ridx.data(), ridx_base);
-
-            if (mpi::comm().rank() == 0) {
-                std::cout << " [m2, 0] collsize: " << collect_size_ << std::endl;
-                std::cout << " [m2, 0] coll_gidx: " << collect_gidx << std::endl;
-                std::cout << " [m2, 0] collect_part " << collect_partition << std::endl;
-                std::cout << " [m2, 0] collect_ridx " << collect_ridx << std::endl;
-            }
             mpi::comm().barrier();
-            if (mpi::comm().rank() == 1) {
-                std::cout << " [m2, 1] collsize: " << collect_size_ << std::endl;
-                std::cout << " [m2, 1] coll_gidx: " << collect_gidx << std::endl;
-                std::cout << " [m2, 1] collect_part " << collect_partition << std::endl;
-                std::cout << " [m2, 1] collect_ridx " << collect_ridx << std::endl;
-            }
         }
 
         if (is_model_1) {
