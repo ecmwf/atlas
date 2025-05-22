@@ -735,13 +735,13 @@ linalg/dense/MatrixMultiply_EckitLinalg.h
 linalg/dense/MatrixMultiply_EckitLinalg.cc
 )
 
-list( APPEND atlas_mct_srcs
-mct/coupler.h
-mct/coupler.cc
-mct/mct.h
-mct/mct.cc
-mct/ParInter.h
-mct/ParInter.cc
+list( APPEND atlas_coupler_srcs
+coupler/ModelCoupler.h
+coupler/ModelCoupler.cc
+coupler/coupler.h
+coupler/coupler.cc
+coupler/ParInter.h
+coupler/ParInter.cc
 )
 
 list (APPEND atlas_redistribution_srcs
@@ -958,7 +958,7 @@ list( APPEND source_list
   ${atlas_array_srcs}
   ${atlas_field_srcs}
   ${atlas_linalg_srcs}
-  ${atlas_mct_srcs}
+  ${atlas_coupler_srcs}
   ${atlas_grid_partitioning_srcs}
   ${atlas_mesh_srcs}
   ${atlas_parallel_srcs}

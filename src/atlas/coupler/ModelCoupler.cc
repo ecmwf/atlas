@@ -8,9 +8,9 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/mct/coupler.h"
+#include "atlas/coupler/ModelCoupler.h"
 
-namespace atlas::mct {
+namespace atlas::coupler {
 
     void ModelCoupler::register_model(int model_id, Grid grid) {
         std::vector<int> models;
@@ -81,6 +81,7 @@ namespace atlas::mct {
         models_.clear();
         model2grid_.clear();
         model2ranks_.clear();
+        remap_.clear();
     }
 
-} // namespace atlas::mct
+} // namespace atlas::coupler

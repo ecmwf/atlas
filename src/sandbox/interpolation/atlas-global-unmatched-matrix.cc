@@ -9,7 +9,7 @@
  */
 
 
-#include "atlas/mct/ParInter.h"
+#include "atlas/coupler/ParInter.h"
 #include "atlas/io/atlas-io.h"
 
 #include "tests/AtlasTestEnvironment.h"

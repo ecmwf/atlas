@@ -8,7 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "atlas/mct/ParInter.h"
+#include "atlas/coupler/ParInter.h"
 
 
 namespace atlas {

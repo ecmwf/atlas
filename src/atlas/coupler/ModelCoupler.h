@@ -14,19 +14,19 @@
 #include <vector>
 #include <map>
 
+#include "atlas/coupler/ParInter.h"
 #include "atlas/grid.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/interpolation/AssembleGlobalMatrix.h"
 #include "atlas/linalg/sparse/MakeEckitSparseMatrix.h"
-#include "atlas/mct/ParInter.h"
 #include "atlas/parallel/mpi/mpi.h"
 
 using Matrix      = atlas::linalg::SparseMatrixStorage;
 using Index = eckit::linalg::Index;
 using Value = eckit::linalg::Scalar;
 
-namespace atlas::mct {
+namespace atlas::coupler {
 
     class ModelCoupler {
     public:
@@ -52,6 +52,12 @@ namespace atlas::mct {
             return collect_map_.at(key);
         }
 
+        Matrix& remap(int model_1, int model_2) {
+            std::string key = std::to_string(model_1) + "_" + std::to_string(model_2);
+            remap_.emplace(key, Matrix());
+            return remap_.at(key);
+        }
+
         // eckit::mpi::Request* recv_request(int model_1, int model_2, const Field f, int tstep) {
         //     std::string key = std::to_string(model_1) + "_" + std::to_string(model_2) 
         //         + "_f" + f.name() + "_t" + std::to_string(tstep);
@@ -74,9 +80,10 @@ namespace atlas::mct {
         std::unordered_map<int, std::string> model2grid_;
         std::unordered_map<int, std::vector<int>> model2ranks_;
         std::unordered_map<std::string, parallel::Collect*> collect_map_;
+        std::unordered_map<std::string, Matrix> remap_;
         // std::unordered_map<int, std::vector<int, ParInter*>> m2m_fields_;
     };
 
     static ModelCoupler coupler_;
 
-} // namespace atlas::mct
+} // namespace atlas::coupler
