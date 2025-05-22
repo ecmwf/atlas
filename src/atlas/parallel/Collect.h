@@ -45,6 +45,9 @@ public:
     template <typename DATA_TYPE, int RANK, typename ParallelDim = array::FirstDim>
     void send(array::Array& send, bool on_device = false) const;
 
+    template <typename DATA_TYPE, int RANK, typename ParallelDim = array::FirstDim>
+    void recv(array::Array& send, bool on_device = false) const;
+
     template <typename DATA_TYPE>
     DATA_TYPE* allocate_buffer(const int buffer_size, const bool on_device) const;
 
@@ -59,6 +62,15 @@ public:
     void send_counts_displs_setup(const idx_t var_size, std::vector<int>& send_counts_init,
                             std::vector<int>& send_counts,
                             std::vector<int>& send_displs) const;
+
+    void recv_counts_displs_setup(const idx_t var_size, std::vector<int>& recv_counts_init,
+                            std::vector<int>& recv_counts,
+                            std::vector<int>& recv_displs) const;
+
+    template <typename DATA_TYPE>
+    void isend(int tag, std::vector<int>& send_displs,
+                            std::vector<int>& send_counts, std::vector<eckit::mpi::Request>& send_req,
+                            DATA_TYPE* send_buffer) const;
 
     template <typename DATA_TYPE>
     void ireceive(int tag, std::vector<int>& recv_displs, std::vector<int>& recv_counts,
@@ -81,12 +93,7 @@ public:
                                     std::vector<int>& send_counts, std::vector<eckit::mpi::Request>& send_req,
                                     DATA_TYPE* send_buffer) const;
 
-    template <typename DATA_TYPE>
-    void isend(int tag, std::vector<int>& send_displs,
-                                    std::vector<int>& send_counts, std::vector<eckit::mpi::Request>& send_req,
-                                    DATA_TYPE* send_buffer) const;
-
-    void wait_for_send(std::vector<int>& send_counts_init, std::vector<eckit::mpi::Request>& send_req) const;
+    void wait_for_mpi(std::vector<int>& counts_init, std::vector<eckit::mpi::Request>& req) const;
 
 private:
     bool is_setup_;
@@ -153,7 +160,7 @@ void Collect::execute(array::Array& send, array::Array& recv, bool on_device) co
     /// Unpack
     unpack_recv_buffer<parallelDim>(recv_buffer, recv_size, recv_hv, recv_dv, on_device);
 
-    wait_for_send(send_counts_init, send_req);
+    wait_for_mpi(send_counts_init, send_req);
 
     deallocate_buffer<DATA_TYPE>(send_buffer, send_size, on_device);
     deallocate_buffer<DATA_TYPE>(recv_buffer, recv_size, on_device);
@@ -184,21 +191,52 @@ void Collect::send(array::Array& send, bool on_device) const {
     int send_size          = sendcnt_ * var_size;
     DATA_TYPE* send_buffer = allocate_buffer<DATA_TYPE>(send_size, on_device);
 
-    send_counts_displs_setup(var_size, send_counts_init, send_counts,
-                        send_displs);
+    send_counts_displs_setup(var_size, send_counts_init, send_counts, send_displs);
 
-    /// Pack
     pack_send_buffer<parallelDim>(send_hv, send_dv, send_buffer, send_size, on_device);
 
-    isend<DATA_TYPE>(tag, send_displs, send_counts, send_req,
-                                          send_buffer);
+    isend<DATA_TYPE>(tag, send_displs, send_counts, send_req, send_buffer);
 
-    wait_for_send(send_counts_init, send_req);
+    wait_for_mpi(send_counts_init, send_req);
 
     deallocate_buffer<DATA_TYPE>(send_buffer, send_size, on_device);
 }
 
 
+template <typename DATA_TYPE, int RANK, typename ParallelDim>
+void Collect::recv(array::Array& recv, bool on_device) const {
+    ATLAS_TRACE("Collect", {"collect"});
+    if (!is_setup_) {
+        throw_Exception("Collect was not setup", Here());
+    }
+
+    auto recv_hv = array::make_host_view<DATA_TYPE, RANK>(recv);
+    auto recv_dv =
+        on_device ? array::make_device_view<DATA_TYPE, RANK>(recv) : array::make_host_view<DATA_TYPE, RANK>(recv);
+
+    constexpr int parallelDim = array::get_parallel_dim<ParallelDim>(recv_hv);
+    idx_t var_size            = array::get_var_size<parallelDim>(recv_hv);
+
+    int tag(1);
+    std::size_t nproc_loc(static_cast<std::size_t>(mpi_size_));
+    std::vector<int> recv_counts(nproc_loc);
+    std::vector<int> recv_counts_init(nproc_loc);
+    std::vector<int> recv_displs(nproc_loc);
+    std::vector<eckit::mpi::Request> recv_req(nproc_loc);
+
+    int recv_size          = recvcnt_ * var_size;
+    DATA_TYPE* recv_buffer = allocate_buffer<DATA_TYPE>(recv_size, on_device);
+
+    recv_counts_displs_setup(var_size, recv_counts_init, recv_counts, recv_displs);
+
+    ireceive<DATA_TYPE>(tag, recv_displs, recv_counts, recv_req, recv_buffer);
+
+    unpack_recv_buffer<parallelDim>(recv_buffer, recv_size, recv_hv, recv_dv, on_device);
+
+    wait_for_mpi(recv_counts_init, recv_req);
+
+    deallocate_buffer<DATA_TYPE>(recv_buffer, recv_size, on_device);
+}
 
 
 template <typename DATA_TYPE>
@@ -223,6 +261,21 @@ void Collect::deallocate_buffer(DATA_TYPE* buffer, const int buffer_size, const 
     }
     else {
         util::delete_hostmem(buffer, buffer_size);
+    }
+}
+
+
+template <typename DATA_TYPE>
+void Collect::isend(int tag, std::vector<int>& send_displs,
+                    std::vector<int>& send_counts, std::vector<eckit::mpi::Request>& send_req,
+                    DATA_TYPE* send_buffer) const {
+    /// Send
+    ATLAS_TRACE_MPI(ISEND) {
+        for (size_t jproc = 0; jproc < static_cast<size_t>(mpi_size_); ++jproc) {
+            if (send_counts[jproc] > 0) {
+                send_req[jproc] = comm().iSend(send_buffer+send_displs[jproc], send_counts[jproc], jproc, tag);
+            }
+        }
     }
 }
 
@@ -294,20 +347,6 @@ void Collect::isend_and_wait_for_receive(int tag, std::vector<int>& recv_counts_
         for (size_t jproc = 0; jproc < static_cast<size_t>(mpi_size_); ++jproc) {
             if (recv_counts_init[jproc] > 0) {
                 comm().wait(recv_req[jproc]);
-            }
-        }
-    }
-}
-
-template <typename DATA_TYPE>
-void Collect::isend(int tag, std::vector<int>& send_displs,
-                    std::vector<int>& send_counts, std::vector<eckit::mpi::Request>& send_req,
-                    DATA_TYPE* send_buffer) const {
-    /// Send
-    ATLAS_TRACE_MPI(ISEND) {
-        for (size_t jproc = 0; jproc < static_cast<size_t>(mpi_size_); ++jproc) {
-            if (send_counts[jproc] > 0) {
-                send_req[jproc] = comm().iSend(send_buffer+send_displs[jproc], send_counts[jproc], jproc, tag);
             }
         }
     }

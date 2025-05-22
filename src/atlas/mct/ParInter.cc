@@ -18,7 +18,7 @@ ParInter::ParInter(const Matrix& gmat, const FunctionSpace src_fs, const Functio
     const grid::Distribution& src_distribution, const grid::Distribution& tgt_distribution) : 
     gmat_(gmat), src_fs_(src_fs), tgt_fs_(tgt_fs), src_distribution_(src_distribution), tgt_distribution_(tgt_distribution) {
         ATLAS_TRACE("Parinter::setup");
-        extract(rows_, cols_, gcols_, vals_);
+        extract(tgt_fs, tgt_distribution, gmat_, rows_, cols_, gcols_, vals_);
         setup_collect(src_fs_, gcols_);
 
         std::size_t nr = tgt_fs.size();

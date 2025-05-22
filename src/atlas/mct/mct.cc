@@ -53,6 +53,14 @@ namespace atlas::mct {
                     std::back_inserter(model2ranks_[models[i]]));
             }
         }
+
+        // find my model id
+        for (int i = 0; i < models_.size(); ++i) {
+            if (mpi::comm().name() == comm_name(models_[i])) {
+                this_model_id_ = models_[i];
+                break;
+            }
+        }
     }
 
 
@@ -83,6 +91,13 @@ namespace atlas::mct {
                     << ", global ranks are : " << model2ranks_.at(models_[i]) << std::endl;
             }
         }
+    }
+
+
+    void ModelCoupler::finalise() {
+        models_.clear();
+        model2grid_.clear();
+        model2ranks_.clear();
     }
 
 

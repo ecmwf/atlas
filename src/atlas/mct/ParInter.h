@@ -56,13 +56,12 @@ public:
 
     void execute(const Field& src, Field& tgt);
 
-private:
     template <typename Vector>
     void setup_collect(FunctionSpace fs, const Vector& global_index);
 
     template <typename Value, typename Index> 
-    void extract(std::vector<Index>& local_rows,  std::vector<Index>& local_cols,
-        std::vector<Index>& local_gcols, std::vector<Value>& local_vals, int mpi_root = 0);
+    static void extract(const FunctionSpace tgt_fspace, const grid::Distribution tgt_dist, const Matrix& gmat, std::vector<Index>& local_rows,
+        std::vector<Index>& local_cols, std::vector<Index>& local_gcols, std::vector<Value>& local_vals, int mpi_root = 0);
 
     void find_missing_rows();
 
@@ -112,9 +111,10 @@ void ParInter::setup_collect(FunctionSpace fs, const Vector& global_index) {
 
 
 template <typename Value, typename Index> 
-void ParInter::extract(std::vector<Index>& local_rows,  std::vector<Index>& local_cols,  std::vector<Index>& local_gcols,
+void ParInter::extract(const FunctionSpace tgt_fspace, const grid::Distribution tgt_dist, const Matrix& gmat,
+    std::vector<Index>& local_rows, std::vector<Index>& local_cols, std::vector<Index>& local_gcols,
     std::vector<Value>& local_vals, int mpi_root) {
-    ATLAS_TRACE();
+    ATLAS_TRACE("ParInter::extract");
     // std::cout << mpi::comm().rank() << " ParInter extract" << std::endl;
 
     // Field field_fs_part_glb = tgt_fs_.createField(tgt_fs_.partition(), option::global(mpi_root));
@@ -125,26 +125,22 @@ void ParInter::extract(std::vector<Index>& local_rows,  std::vector<Index>& loca
     std::vector<Value> vals;
     interpolation::distribute_global_matrix_as_triplets(
         // array::make_view<int,1>(field_fs_part_glb).data(), 
-        tgt_distribution_,
-        atlas::linalg::make_host_view<Value, Index>(gmat_), rows, cols, vals, mpi_root);
-
-    // Log::info() << " rows: " << rows << std::endl;
-    // Log::info() << " cols: " << cols << std::endl;
-    // Log::info() << " vals: " << vals << std::endl;
+        tgt_dist,
+        atlas::linalg::make_host_view<Value, Index>(gmat), rows, cols, vals, mpi_root);
 
     std::unordered_map<gidx_t, idx_t> to_local_rows;
     ATLAS_TRACE_SCOPE("convert to local row indexing") {
-        auto fs_gidx_exchanged = tgt_fs_.createField(tgt_fs_.global_index());
-        fs_gidx_exchanged.array().copy(tgt_fs_.global_index());
-        tgt_fs_.haloExchange(fs_gidx_exchanged);
+        auto fs_gidx_exchanged = tgt_fspace.createField(tgt_fspace.global_index());
+        fs_gidx_exchanged.array().copy(tgt_fspace.global_index());
+        tgt_fspace.haloExchange(fs_gidx_exchanged);
         const auto fs_global_index = array::make_view<gidx_t, 1>(fs_gidx_exchanged);
         Field fs_ghost_field;
-        if (functionspace::CellColumns(tgt_fs_)) {
-            auto fs = functionspace::CellColumns(tgt_fs_);
+        if (functionspace::CellColumns(tgt_fspace)) {
+            auto fs = functionspace::CellColumns(tgt_fspace);
             fs_ghost_field = fs.mesh().cells().halo();
         }
         else {
-            fs_ghost_field = tgt_fs_.ghost();
+            fs_ghost_field = tgt_fspace.ghost();
         }
         const auto fs_ghost = array::make_view<int,1>(fs_ghost_field);
 
