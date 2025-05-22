@@ -115,7 +115,6 @@ void ParInter::extract(const FunctionSpace tgt_fspace, const grid::Distribution 
     std::vector<Index>& local_rows, std::vector<Index>& local_cols, std::vector<Index>& local_gcols,
     std::vector<Value>& local_vals, int mpi_root) {
     ATLAS_TRACE("ParInter::extract");
-    // std::cout << mpi::comm().rank() << " ParInter extract" << std::endl;
 
     // Field field_fs_part_glb = tgt_fs_.createField(tgt_fs_.partition(), option::global(mpi_root));
     // ATLAS_TRACE_SCOPE("gather partition") {
@@ -149,7 +148,6 @@ void ParInter::extract(const FunctionSpace tgt_fspace, const grid::Distribution 
             if (fs_ghost(r) && to_local_rows.find(gr) != to_local_rows.end()) {
                 continue;
             }
-            // Log::info() << " to_local_rows: " << gr << " to " << r << std::endl;
             to_local_rows[gr] = r;
         }
 

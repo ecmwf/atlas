@@ -53,7 +53,7 @@ void ParInter::execute(const Field& src, Field& tgt) {
     ATLAS_TRACE("Parinter::execute");
     auto collect_shape = src.shape();
     collect_shape[0] = collect_size_;
-    std::unique_ptr<array::Array> collect_src(array::Array::create(src.datatype(),collect_shape));
+    std::unique_ptr<array::Array> collect_src(array::Array::create(src.datatype(), collect_shape));
 
     collect_.execute<double, 1>(const_cast<Field&>(src), *collect_src);
 
