@@ -95,6 +95,7 @@ public:
 
     void wait_for_mpi(std::vector<int>& counts_init, std::vector<eckit::mpi::Request>& req) const;
 
+    int recv_size() const { return recvcnt_; }
 private:
     bool is_setup_;
 
