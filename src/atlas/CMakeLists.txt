@@ -736,6 +736,8 @@ linalg/dense/MatrixMultiply_EckitLinalg.cc
 )
 
 list( APPEND atlas_mct_srcs
+mct/coupler.h
+mct/coupler.cc
 mct/mct.h
 mct/mct.cc
 mct/ParInter.h

@@ -14,56 +14,6 @@ using Matrix      = atlas::linalg::SparseMatrixStorage;
 
 namespace atlas::mct {
 
-    void ModelCoupler::register_model(int model_id, Grid grid) {
-        std::vector<int> models;
-        auto& gcomm = mpi::comm("world");
-        auto gcommsize = gcomm.size();
-
-        // exchange models
-        models.resize(gcommsize);
-        models[gcomm.rank()] = model_id;
-        gcomm.allGather(model_id, models.begin(), models.end());
-
-        // exchange other procs' global ranks
-        std::vector<int> commsizes(gcommsize);
-        int my_size = mpi::comm().size();
-        gcomm.allGather(my_size, commsizes.begin(), commsizes.end());
-
-        std::vector<int> my_global_ranks(my_size);
-        int my_global_rank = gcomm.rank();
-        mpi::comm().allGather(my_global_rank, my_global_ranks.begin(), my_global_ranks.end());
-
-        eckit::mpi::Buffer<int> buf_ranks(gcommsize);
-        gcomm.allGatherv(my_global_ranks.begin(), my_global_ranks.end(), buf_ranks);
-
-        // exchange grid names
-        std::vector<char> gn(grid.name().size());
-        for (int i = 0; i < grid.name().size(); i++) {
-            gn[i] = grid.name()[i];
-        }
-        eckit::mpi::Buffer<char> buf(gcommsize);
-        gcomm.allGatherv(gn.begin(), gn.end(), buf);
-
-        for (int i = 0; i < gcommsize; i++) {
-            if (std::find(models_.begin(), models_.end(), models[i]) == models_.end()) {
-                models_.emplace_back(models[i]);
-                model2grid_[models[i]] = std::string(&(buf.buffer[buf.displs[i]]), buf.counts[i]);
-                model2ranks_[models[i]].reserve(buf_ranks.counts[i]);
-                std::copy_n(&(buf_ranks.buffer[buf_ranks.displs[i]]), buf_ranks.counts[i], 
-                    std::back_inserter(model2ranks_[models[i]]));
-            }
-        }
-
-        // find my model id
-        for (int i = 0; i < models_.size(); ++i) {
-            if (mpi::comm().name() == comm_name(models_[i])) {
-                this_model_id_ = models_[i];
-                break;
-            }
-        }
-    }
-
-
     void set_default_comm_to_local(int model_id)
     {
         eckit::mpi::comm().split(model_id, coupler_.comm_name(model_id));
@@ -71,38 +21,124 @@ namespace atlas::mct {
     }
 
 
-    Matrix read_interpolation_matrix(std::string matrix_name) {
-        eckit::linalg::SparseMatrix eckit_matrix;
-        Log::info() << "reading matrix '" << matrix_name << "'." <<std::endl;
-        eckit_matrix.load(matrix_name + ".eckit");
-        return atlas::linalg::make_sparse_matrix_storage(std::move(eckit_matrix));
-    }
-
-
-    void ModelCoupler::print_models() const {
-        std::vector<int> lead_ranks(models_.size());
-        for (int i = 0; i < models_.size(); i++) {
-            lead_ranks[i] = model2ranks_.at(models_[i])[0];
+    void setup_oneway_remap(int model_1, int model_2) {
+        bool is_model_1 = (mpi::comm().name() == coupler_.comm_name(model_1));
+        bool is_model_2 = (mpi::comm().name() == coupler_.comm_name(model_2));
+        if (! is_model_1 && ! is_model_2) {
+            return;
         }
-        for (int i = 0; i < models_.size(); i++) {
-            mpi::comm("world").barrier();
-            if (mpi::comm("world").rank() == lead_ranks[i]) {
-                std::cout << "Model " << models_[i] << ", grid " << model2grid_.at(models_[i])
-                    << ", global ranks are : " << model2ranks_.at(models_[i]) << std::endl;
+
+        // everything, except the remote index, is set up on model_2 for remapping
+        // global matrix is read in on model_2
+
+        atlas::Grid grid1;
+        atlas::Grid grid2; // later, no need to recreate grid2, as we are on the tasks which own grid2
+
+        Matrix gmatrix;
+        Matrix lmatrix;
+        auto collect = coupler_.collect_map(model_1, model_2);
+
+        if (is_model_2) {
+            if (mpi::comm().rank() == 0) {
+                eckit::linalg::SparseMatrix eckit_matrix;
+                eckit_matrix.load("mat.eckit");
+                gmatrix = atlas::linalg::make_sparse_matrix_storage(std::move(eckit_matrix));
+            }
+            grid2 = atlas::Grid(coupler_.grid_name(model_2));
+            grid::Distribution dist_m2(grid2, grid2.partitioner());
+            functionspace::StructuredColumns fspace_m2(grid2);
+
+            std::vector<Index> l_rows;
+            std::vector<Index> l_cols;
+            std::vector<Index> l_gcols;
+            std::vector<Value> l_vals;
+            ParInter::extract(fspace_m2, dist_m2, gmatrix, l_rows, l_cols, l_gcols, l_vals);
+
+            grid1 = atlas::Grid(coupler_.grid_name(model_1));
+            grid::Distribution dist_m1(grid1, grid1.partitioner() | util::Config("nb_partitions", coupler_.global_ranks(model_1).size()));
+
+            std::size_t collect_size_ = l_gcols.size();
+            std::vector<gidx_t> collect_gidx(collect_size_);
+            std::vector<idx_t>  collect_ridx(collect_size_);
+            std::vector<int> collect_partition;
+            idx_t ridx_base = 0;
+
+            for (size_t i=0; i < collect_gidx.size(); ++i) {
+                collect_gidx[i] = l_gcols[i] + 1;
+            }
+
+            collect_partition.resize(collect_size_);
+            util::locate_partition(dist_m1, collect_gidx.size(), collect_gidx.data(), collect_partition.data());
+            for (int i = 0; i < collect_partition.size(); ++i) {
+                auto part = collect_partition[i]; // local rank
+                collect_partition[i] = coupler_.global_ranks(model_1)[part]; // "world"-rank
+            }
+            util::locate_remote_index(mpi::comm("world"), 0, nullptr, nullptr,
+                                      collect_size_, collect_gidx.data(), collect_partition.data(), collect_ridx.data(), ridx_base);
+            collect->setup("world", collect_size_, collect_partition.data(), collect_ridx.data(), ridx_base);
+
+            if (mpi::comm().rank() == 0) {
+                std::cout << " [m2, 0] collsize: " << collect_size_ << std::endl;
+                std::cout << " [m2, 0] coll_gidx: " << collect_gidx << std::endl;
+                std::cout << " [m2, 0] collect_part " << collect_partition << std::endl;
+                std::cout << " [m2, 0] collect_ridx " << collect_ridx << std::endl;
+            }
+            mpi::comm().barrier();
+            if (mpi::comm().rank() == 1) {
+                std::cout << " [m2, 1] collsize: " << collect_size_ << std::endl;
+                std::cout << " [m2, 1] coll_gidx: " << collect_gidx << std::endl;
+                std::cout << " [m2, 1] collect_part " << collect_partition << std::endl;
+                std::cout << " [m2, 1] collect_ridx " << collect_ridx << std::endl;
             }
         }
+
+        if (is_model_1) {
+            grid1 = atlas::Grid(coupler_.grid_name(model_1));
+            functionspace::StructuredColumns fspace_m1(grid1);
+            auto glb_idx_v = array::make_view<gidx_t, 1>(fspace_m1.global_index());
+            auto ghost_v   = array::make_view<int, 1>(fspace_m1.ghost());
+            util::locate_remote_index(mpi::comm("world"), glb_idx_v.size(), glb_idx_v.data(), ghost_v.data(),
+                                      0, nullptr, nullptr, nullptr, 0);
+            collect->setup("world", 0, nullptr, nullptr, 0);
+        }
     }
 
 
-    void ModelCoupler::finalise() {
-        models_.clear();
-        model2grid_.clear();
-        model2ranks_.clear();
+    void setup_coupler(int model_id, Grid grid) {
+        set_default_comm_to_local(model_id);
+        coupler_.register_model(model_id, grid);
+        coupler_.print_models();
+
+        // HACK: we assume only m1 sends field 'f1' to m2
+        setup_oneway_remap(10, 21);
     }
 
 
     void finalise_coupler() {
         coupler_.finalise();
+    }
+
+
+    void put_field(Field f, int model_2, int tstep) {
+        auto& collect = *(coupler_.collect_map(coupler_.this_model(), model_2));
+        collect.send<double, 1>(f);
+    }
+
+
+    void get_field(Field f, int model_1, int tstep) {
+        auto& collect = *(coupler_.collect_map(model_1, coupler_.this_model()));
+        std::size_t size = collect.recv_size();
+        std::unique_ptr<array::Array> collect_src{ array::Array::create(f.datatype(), array::make_shape(size)) };
+        collect.recv<double, 1>(*collect_src);
+        if (mpi::comm().rank() == 0) {
+            std::cout << "src = "; collect_src->dump(std::cout); std::cout << std::endl;
+        }
+        // mpi::comm().barrier();
+        //  if (mpi::comm().rank() == 1) {
+        //     std::cout << "src = "; collect_src->dump(std::cout); std::cout << std::endl;
+        // }
+        // interpolate to f
+        // collect.execute<double, 1>(const_cast<Field&>(src), collect_src);
     }
 
 } // namespace atlas::mct
