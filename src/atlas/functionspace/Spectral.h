@@ -253,6 +253,9 @@ public:
         functionspace_->parallel_for(config, f);
     }
 
+    // temporary for testing
+    int compute_nspec2g(int truncation_x, int truncation_y) const;
+
 private:
     const detail::Spectral* functionspace_;
 };

@@ -111,6 +111,11 @@ CASE("Test ectrans transform") {
     functionspace::Spectral fs_sp(truncation_x(),truncation_y());
     functionspace::StructuredColumns fs_gp(grid, grid::Partitioner("ectrans", util::Config("split_y",split_y)));
 
+    int computed_nspec2g = fs_sp.compute_nspec2g(truncation_x(),truncation_y());
+    ATLAS_DEBUG_VAR(computed_nspec2g);
+    int nspec2g = fs_sp.nb_spectral_coefficients_global();
+    ATLAS_DEBUG_VAR(nspec2g);
+
     {
     int nvordiv = 1;
     int nscalar = 2;
@@ -161,7 +166,7 @@ CASE("Test ectrans transform") {
     fs_gp.gather(gpwind, gpwindg);
 
     if (mpi::rank() == mpi_root) {
-        auto rgpg = array::make_view<double,2>(gpg);
+        // auto rgpg = array::make_view<double,2>(gpg);
         // rgpg.dump(std::cout);
     
         auto rgpwindg = array::make_view<double,2>(gpwindg);

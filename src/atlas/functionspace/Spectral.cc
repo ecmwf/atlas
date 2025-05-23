@@ -48,6 +48,61 @@ namespace atlas {
 namespace functionspace {
 namespace detail {
 
+
+/// @brief General routine for computing elliptic truncation
+/// @param truncation_x 
+/// @param truncation_y 
+/// @param KNTMP 
+/// @param KMTMP 
+//  Extracted from ectrans:
+//  See https://github.com/ecmwf-ifs/ectrans/blob/develop/src/etrans/cpu/internal/ellips.F90
+void ellips(const int truncation_x, const int truncation_y, int KNTMP[], int KMTMP[]) {
+    // Computation of zonal and meridional limit wavenumbers within the ellipse
+
+    int KSMAX  = truncation_y;
+    int KMSMAX = truncation_x;
+    // KNTMP(0:KMSMAX) -> size = KMSMAX+1
+    // KMTMP(0:KSMAX)  -> size = KSMAX+1
+    auto sqr = [](auto x) {return x*x;};
+    constexpr double ZEPS = 1.e-10;
+    constexpr double ZERO = 0.;
+    double ZMSMAX = double(KMSMAX);
+    double ZSMAX  = double(KSMAX);
+
+    // 1. Computing meridional limit wavenumbers along zonal wavenumbers
+    KNTMP[0] = KSMAX;
+    for (int JM=1; JM<KMSMAX; ++JM) {
+        double ZKN = ZSMAX/ZMSMAX *
+            std::sqrt(std::max(ZERO, double(sqr(KMSMAX)-sqr(JM))));
+        KNTMP[JM] = int(ZKN + ZEPS);
+    }
+    KNTMP[KMSMAX] = 0;
+
+    // 2. Computing zonal limit wavenumbers along meridional wavenumbers
+    KMTMP[0] = KMSMAX;
+    for (int JN=1; JN<KSMAX; ++JN) {
+        double ZKM = ZMSMAX/ZSMAX *
+            std::sqrt(std::max(ZERO, double(sqr(KSMAX)-sqr(JN))));
+        KMTMP[JN] = int(ZKM + ZEPS);
+    }
+    KMTMP[KSMAX] = 0;
+}
+
+int compute_nb_spectral_coefficients(int truncation_x, int truncation_y) {
+    // Extracted from ectrans:
+    // See https://github.com/ecmwf-ifs/ectrans/blob/develop/src/etrans/cpu/internal/esetup_dims_mod.F90
+    int NSMAX  = truncation_y;
+    int NMSMAX = truncation_x;
+    std::vector<int> ISMAX(NSMAX+1);
+    std::vector<int> ISNAX(NMSMAX+1);
+    ellips(truncation_x, truncation_y, ISNAX.data(), ISMAX.data());
+    int NSPEC_G = 0;
+    for (int JM=0; JM<=NMSMAX; ++JM) {
+        NSPEC_G += 2 * (ISNAX[JM] + 1);
+    }
+    return NSPEC_G * 2;
+}
+
 #if ATLAS_HAVE_TRANS
 class Spectral::Parallelisation {
 public:
@@ -108,6 +163,8 @@ public:
     std::shared_ptr<::Trans_t> trans_;
 };
 #else
+
+
 class Spectral::Parallelisation {
 public:
     Parallelisation(int truncation): truncation_(truncation) {
@@ -126,9 +183,35 @@ public:
         }
         ATLAS_ASSERT(jc == nb_spectral_coefficients());
     }
-    int nb_spectral_coefficients_global() const { return (truncation_ + 1) * (truncation_ + 2); }
+    Parallelisation(int truncation_x, int truncation_y): truncation_x_(truncation_x), truncation_y_(truncation_y) {
+        // Assume serial!!!
+        nmyms_.resize(truncation_ + 1);
+        nasm0_.resize(truncation_ + 1);
+        nvalue_.resize(nb_spectral_coefficients());
+        idx_t jc{0};
+        for (idx_t m = 0; m <= truncation_; ++m) {
+            nmyms_[m] = m;
+            nasm0_[m] = jc + 1;  // Fortran index
+            for (idx_t n = m; n <= truncation_; ++n) {
+                nvalue_[jc++] = n;
+                nvalue_[jc++] = n;
+            }
+        }
+        ATLAS_ASSERT(jc == nb_spectral_coefficients());
+    }
+
+    int nb_spectral_coefficients_global() const {
+        if (truncation_ >= 0) {
+            return (truncation_ + 1) * (truncation_ + 2); }
+        }
+        else {
+            return compute_nb_spectral_coefficients(truncation_x_, truncation_y_);
+        }
+    }
     int nb_spectral_coefficients() const { return nb_spectral_coefficients_global(); }
-    int truncation_;
+    int truncation_{-1};
+    int truncation_x_{-1};
+    int truncation_y_{-1};
     std::string distribution() const { return "serial"; }
 
     int nump() const { return truncation_ + 1; }
@@ -515,6 +598,12 @@ void Spectral::norm(const Field& field, std::vector<double>& norm_per_level, int
 array::LocalView<const int, 1> Spectral::zonal_wavenumbers() const {
     return functionspace_->zonal_wavenumbers();
 }
+
+    // temporary for testing
+int Spectral::compute_nspec2g(int truncation_x, int truncation_y) const {
+    return detail::compute_nb_spectral_coefficients(truncation_x, truncation_y);
+}
+
 
 // ----------------------------------------------------------------------
 
