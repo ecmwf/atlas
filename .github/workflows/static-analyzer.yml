@@ -81,6 +81,7 @@ jobs:
           ecbundle_set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
           ecbundle_set(ENABLE_ECKIT_CMD OFF)
           ecbundle_set(ENABLE_ECKIT_SQL OFF)
+          ecbundle_set(ENABLE_OMP OFF)
           message("")
 
           ####################################################################
