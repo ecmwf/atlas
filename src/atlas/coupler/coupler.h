@@ -13,20 +13,17 @@
 #include "atlas/grid.h"
 #include "atlas/field/Field.h"
 
-#include "atlas/coupler/ModelCoupler.h"
 
 namespace atlas::coupler {
 
-    void set_default_comm_to_local(int model_id);
-
-    void setup_oneway_remap(int model_1, int model_2);
 
     void setup(int model_id, Grid grid);
 
     void finalise();
 
-    void put_field(Field f, int model_2, int tstep = 0);
+    void put(Field f, int model_2, int tstep = 0);
 
-    void get_field(Field f, int model_1, int tstep = 0);
+    void get(Field f, int model_1, int tstep = 0);
+
 
 } // namespace atlas::coupler
