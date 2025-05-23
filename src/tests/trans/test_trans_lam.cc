@@ -142,6 +142,7 @@ CASE("Test ectrans transform") {
         }
     }
     fs_gp.scatter(gpg, gp);
+    fs_gp.scatter(gpwindg, gpwind);
 
     if (mpi::rank() == mpi_root) {
         auto rgpg = array::make_view<double,2>(gpg);
@@ -152,22 +153,22 @@ CASE("Test ectrans transform") {
     auto spvor = fs_sp.createField<double>(option::name("sp_vorticity") |option::variables(nvordiv));
     auto spdiv = fs_sp.createField<double>(option::name("sp_divergence")|option::variables(nvordiv));
 
+    trans.dirtrans(gp, sp);
     trans.dirtrans_wind2vordiv(gpwind, spvor, spdiv);
-    // trans.dirtrans(gp, sp);
 
 
     ATLAS_DEBUG_VAR(spvor.metadata().getDoubleVector("rmeanu"));
     ATLAS_DEBUG_VAR(spvor.metadata().getDoubleVector("rmeanv"));
 
+    trans.invtrans(sp, gp);
     trans.invtrans_vordiv2wind(spvor, spdiv, gpwind);
-    // trans.invtrans(sp, gp);
 
     fs_gp.gather(gp, gpg);
     fs_gp.gather(gpwind, gpwindg);
 
     if (mpi::rank() == mpi_root) {
-        // auto rgpg = array::make_view<double,2>(gpg);
-        // rgpg.dump(std::cout);
+        auto rgpg = array::make_view<double,2>(gpg);
+        rgpg.dump(std::cout);
     
         auto rgpwindg = array::make_view<double,2>(gpwindg);
         rgpwindg.dump(std::cout);
