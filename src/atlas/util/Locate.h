@@ -20,15 +20,9 @@
 
 namespace atlas::util {
 
-inline void locate_partition(
-    // global information
-    const grid::Distribution& distribution,
 
-    // requested indices to locate
-    std::size_t size, const gidx_t global_index[],
-
-    // output of locate
-    int partition[]) {
+inline void locate_partition( const grid::Distribution& distribution, std::size_t size,
+    const gidx_t global_index[], int partition[]) {
 
     // Given global_index, find the corresponding partition and remote_index
     // This could be costly as it involves memory and communication
@@ -43,8 +37,8 @@ inline void locate_partition(
     }
 }
 
+
 inline void locate_remote_index(
-    // communicator
     const mpi::Comm& comm,
 
     // local information
@@ -59,7 +53,7 @@ inline void locate_remote_index(
     // Given global_index, find the corresponding partition and remote_index
     // This could be costly as it involves memory and communication
 
-    ATLAS_TRACE("atlas::functionspace::locate");
+    ATLAS_TRACE("atlas::functionspace::locate_remote_index");
     int mpi_size = comm.size();
 
     std::vector<std::vector<gidx_t>> recv_gidx(mpi_size);
@@ -107,20 +101,12 @@ inline void locate_remote_index(
     }
 }
 
-inline void locate(
-    // communicator
-    const mpi::Comm& comm,
-
-    // local information
-    std::size_t my_size, const gidx_t my_glb_idx[], int my_ghost[],
-
-    // global information
-    const grid::Distribution& distribution,
-
-    // requested indices to locate
-    std::size_t size, const gidx_t global_index[],
-
-    // output of locate
+// local information: my_size, my_glb_idx, my_ghost
+// global information: distribution
+// requested indices to locate: size, global_index
+// output of locate: partition, remote_index, remote_index_base
+inline void locate( const mpi::Comm& comm, std::size_t my_size, const gidx_t my_glb_idx[], int my_ghost[],
+    const grid::Distribution& distribution, std::size_t size, const gidx_t global_index[],
     int partition[], idx_t remote_index[], idx_t remote_index_base) {
 
     // Given global_index, find the corresponding partition and remote_index
@@ -178,11 +164,9 @@ inline void locate(
     }
 }
 
+
 inline void locate(const FunctionSpace& fs, const grid::Distribution& distribution, std::size_t size,
     const gidx_t global_index[], int partition[], idx_t remote_index[], idx_t remote_index_base) {
-    // Given global_index, find the corresponding partition and remote_index
-    // This could be costly as it involves memory and communication
-
     ATLAS_TRACE("atlas::functionspace::locate");
     auto& comm = atlas::mpi::comm(fs.mpi_comm());
     auto glb_idx = array::make_view<gidx_t,1>(fs.global_index());
@@ -193,9 +177,6 @@ inline void locate(const FunctionSpace& fs, const grid::Distribution& distributi
 
 
 inline void locate(const FunctionSpace& fs, std::size_t size, const gidx_t global_index[], int partition[], idx_t remote_index[], idx_t remote_index_base) {
-    // Given global_index, find the corresponding partition and remote_index
-    // This could be costly as it involves memory and communication
-
     ATLAS_TRACE("atlas::functionspace::locate");
     auto& comm = atlas::mpi::comm(fs.mpi_comm());
     int mpi_rank = comm.rank();
@@ -221,6 +202,7 @@ inline void locate(const FunctionSpace& fs, std::size_t size, const gidx_t globa
     locate(fs, distribution, size, global_index, partition, remote_index, remote_index_base);
 }
 
+
 inline void locate(const FunctionSpace& fs, const std::vector<gidx_t>& global_index, std::vector<int>& partition, std::vector<idx_t>& remote_index, idx_t remote_index_base) {
     auto size = global_index.size();
     partition.resize(size);
@@ -236,4 +218,4 @@ inline void locate(const FunctionSpace& fs, const grid::Distribution& distributi
     locate(fs, distribution, size, global_index.data(), partition.data(), remote_index.data(), remote_index_base);
 }
 
-}
+} // namespace atlas::util

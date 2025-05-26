@@ -16,7 +16,6 @@
 
 namespace atlas::coupler {
 
-
     void setup(int model_id, Grid grid);
 
     void finalise();
@@ -24,6 +23,5 @@ namespace atlas::coupler {
     void put(Field f, int model_2, int tstep = 0);
 
     void get(Field f, int model_1, int tstep = 0);
-
 
 } // namespace atlas::coupler
