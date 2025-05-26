@@ -24,11 +24,8 @@ namespace atlas::util {
 inline void locate_partition( const grid::Distribution& distribution, std::size_t size,
     const gidx_t global_index[], int partition[]) {
 
-    // Given global_index, find the corresponding partition and remote_index
-    // This could be costly as it involves memory and communication
-
     ATLAS_TRACE("atlas::functionspace::locate_partition");
-    for (std::size_t j=0; j<size; ++j) {
+    for (std::size_t j = 0; j < size; ++j) {
         gidx_t gidx = global_index[j];
         ATLAS_ASSERT(gidx-1 < distribution.size());
         // assert_in_bounds(gidx-1, partition_global);
