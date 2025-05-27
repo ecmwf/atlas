@@ -232,9 +232,9 @@ void Collect::recv(array::Array& recv, bool on_device) const {
 
     ireceive<DATA_TYPE>(tag, recv_displs, recv_counts, recv_req, recv_buffer);
 
-    unpack_recv_buffer<parallelDim>(recv_buffer, recv_size, recv_hv, recv_dv, on_device);
-
     wait_for_mpi(recv_counts_init, recv_req);
+
+    unpack_recv_buffer<parallelDim>(recv_buffer, recv_size, recv_hv, recv_dv, on_device);
 
     deallocate_buffer<DATA_TYPE>(recv_buffer, recv_size, on_device);
 }
