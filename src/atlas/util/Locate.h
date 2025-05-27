@@ -21,7 +21,7 @@
 namespace atlas::util {
 
 
-inline void locate_partition( const grid::Distribution& distribution, std::size_t size,
+inline void locate_partition(const grid::Distribution& distribution, std::size_t size,
     const gidx_t global_index[], int partition[]) {
 
     ATLAS_TRACE("atlas::functionspace::locate_partition");
@@ -35,20 +35,13 @@ inline void locate_partition( const grid::Distribution& distribution, std::size_
 }
 
 
+// Given global_index, find the corresponding partition and remote_index
+// This could be costly as it involves memory and communication
 inline void locate_remote_index(
     const mpi::Comm& comm,
-
-    // local information
-    std::size_t my_size, const gidx_t my_glb_idx[], int my_ghost[],
-
-    // requested indices to locate
+    std::size_t my_size, const gidx_t my_glb_idx[], const int my_ghost[],
     std::size_t size, const gidx_t global_index[], const int partition[],
-
-    // output of locate
     idx_t remote_index[], idx_t remote_index_base) {
-
-    // Given global_index, find the corresponding partition and remote_index
-    // This could be costly as it involves memory and communication
 
     ATLAS_TRACE("atlas::functionspace::locate_remote_index");
     int mpi_size = comm.size();
@@ -98,6 +91,9 @@ inline void locate_remote_index(
     }
 }
 
+
+// Given global_index, find the corresponding partition and remote_index
+// This could be costly as it involves memory and communication
 // local information: my_size, my_glb_idx, my_ghost
 // global information: distribution
 // requested indices to locate: size, global_index
@@ -105,9 +101,6 @@ inline void locate_remote_index(
 inline void locate( const mpi::Comm& comm, std::size_t my_size, const gidx_t my_glb_idx[], int my_ghost[],
     const grid::Distribution& distribution, std::size_t size, const gidx_t global_index[],
     int partition[], idx_t remote_index[], idx_t remote_index_base) {
-
-    // Given global_index, find the corresponding partition and remote_index
-    // This could be costly as it involves memory and communication
 
     ATLAS_TRACE("atlas::functionspace::locate");
     int mpi_size = comm.size();
