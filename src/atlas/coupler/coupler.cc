@@ -31,7 +31,7 @@ void create_joint_comm(int model_1, int model_2) {
             (std::find(m2_ranks.begin(), m2_ranks.end(), rank) != m2_ranks.end());
     };
     auto my_rank = eckit::mpi::comm("world").rank();
-    auto joint_comm_name = coupler_.collect_key(model_1, model_2);
+    auto joint_comm_name = coupler_.comm_key(model_1, model_2);
     eckit::mpi::comm("world").split(in_m1_m2_ranks(my_rank), joint_comm_name);
 }
 
@@ -47,7 +47,7 @@ void setup_oneway_remap(int model_1, int model_2) {
         return;
     }
 
-    auto& comm12 = mpi::comm(coupler_.collect_key(model_1, model_2));
+    auto& comm12 = mpi::comm(coupler_.comm_key(model_1, model_2));
 
     // exchange models
     std::vector<int> models;
@@ -164,7 +164,7 @@ namespace atlas::coupler {
         // create joint communicators by collect_key(model_1, model_2)
         mpi::comm("world").barrier();
         for (int i = 0; i < coupler_.models().size(); ++i) {
-            for (int j = 0; j < coupler_.models().size(); ++j) {
+            for (int j = i; j < coupler_.models().size(); ++j) {
                 create_joint_comm(coupler_.models()[i], coupler_.models()[j]);
             }
         }

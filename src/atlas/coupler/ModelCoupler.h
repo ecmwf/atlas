@@ -74,6 +74,11 @@ namespace atlas::coupler {
             return std::to_string(model_1) + "_" + std::to_string(model_2);
         }
 
+        std::string comm_key(int model_1, int model_2) const {
+            return (model_1 < model_2 ? std::to_string(model_1) + "_" + std::to_string(model_2) :
+                    std::to_string(model_2) + "_" + std::to_string(model_1));
+        }
+
         // struct {
         //     // std::vector<eckit::mpi::Request> recv_req;
         //     size_t src_size;
