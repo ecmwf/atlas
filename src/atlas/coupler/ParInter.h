@@ -155,7 +155,7 @@ void ParInter::extract(const FunctionSpace tgt_fspace, const grid::Distribution 
         auto find_loc_col_idx = [&map_gcol_to_loc_col_idx](const gidx_t gcol) {
             auto it = map_gcol_to_loc_col_idx.find(gcol);
             if (it == map_gcol_to_loc_col_idx.end()) {
-                return -1;
+                return idx_t(-1);
             }
             return it->second;
         };
