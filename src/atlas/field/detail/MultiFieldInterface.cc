@@ -25,9 +25,15 @@ namespace field {
 extern "C" {
 MultiFieldImpl* atlas__MultiField__create(eckit::Configuration* config) {
     ATLAS_ASSERT(config != nullptr);
-    auto multifield = new MultiField(*config);
+    MultiFieldImpl* multifield;
+    {
+        MultiField f(*config);
+        multifield = f.get();
+        multifield->attach();
+    }
+    multifield->detach();
     ATLAS_ASSERT(multifield);
-    return multifield->get();
+    return multifield;
 }
 
 MultiFieldImpl* atlas__MultiField__create_shape(int kind, int rank, int shapef[], const char* var_names,
@@ -47,9 +53,15 @@ MultiFieldImpl* atlas__MultiField__create_shape(int kind, int rank, int shapef[]
         var_names_str.push_back(str);
     }
 
-    auto multifield = new MultiField(array::DataType{kind}, shape, var_names_str);
+    MultiFieldImpl* multifield;
+    {
+        MultiField f(array::DataType{kind}, shape, var_names_str);
+        multifield = f.get();
+        multifield->attach();
+    }
+    multifield->detach();
     ATLAS_ASSERT(multifield);
-    return multifield->get();
+    return multifield;
 }
 
 void atlas__MultiField__delete(MultiFieldImpl* This) {

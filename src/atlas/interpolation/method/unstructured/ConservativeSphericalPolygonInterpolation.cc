@@ -974,8 +974,9 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
     // needed for intersect_polygons only, merely for detecting duplicate points
     // Treshold at which points are considered same
     double compare_pointxyz_eps = 1.e8 * std::numeric_limits<double>::epsilon();
-    if (::getenv("ATLAS_COMPAREPOINTXYZ_EPS_FACTOR")) {
-        compare_pointxyz_eps = std::atof(::getenv("ATLAS_COMPAREPOINTXYZ_EPS_FACTOR")) * std::numeric_limits<double>::epsilon();
+    const char* ATLAS_COMPAREPOINTXYZ_EPS_FACTOR = ::getenv("ATLAS_COMPAREPOINTXYZ_EPS_FACTOR");
+    if (ATLAS_COMPAREPOINTXYZ_EPS_FACTOR != nullptr) {
+        compare_pointxyz_eps = std::atof(ATLAS_COMPAREPOINTXYZ_EPS_FACTOR) * std::numeric_limits<double>::epsilon();
     }
 
     auto compare_pointxyz = [eps=compare_pointxyz_eps] (const PointXYZ& f, const PointXYZ& s) -> bool {

@@ -337,7 +337,7 @@ std::size_t MemoryPoolResource::capacity() const {
     return _capacity;
 }
 
-void MemoryPoolResource::release() {
+void MemoryPoolResource::do_release() {
     std::lock_guard lock(mtx_);
 #if PLUTO_DEBUGGING
     for (std::size_t i = 0; i < pool_block_sizes_.size(); ++i) {
@@ -355,6 +355,10 @@ void MemoryPoolResource::release() {
         trace::out << name_ << "::release()" << std::endl;
     }
     pools_.clear();
+}
+
+void MemoryPoolResource::release() {
+  do_release();
 }
 
 
