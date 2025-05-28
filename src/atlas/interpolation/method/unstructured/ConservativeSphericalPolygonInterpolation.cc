@@ -315,7 +315,7 @@ struct ConservativeSphericalPolygonInterpolation::Workspace {
 // get cyclically sorted node neighbours without using edge connectivity
 std::vector<idx_t> ConservativeSphericalPolygonInterpolation::get_node_neighbours(Mesh& mesh, idx_t node_id, Workspace& w) const {
     const auto& cell2node = mesh.cells().node_connectivity();
-    const auto node_flags = array::make_view<int, 1>(mesh.nodes().flags());
+    const auto node_flags = array::make_view<idx_t, 1>(mesh.nodes().flags());
     if (mesh.nodes().cell_connectivity().rows() == 0) {
         mesh::actions::build_node_to_cell_connectivity(mesh);
     }
