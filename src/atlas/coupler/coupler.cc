@@ -21,11 +21,9 @@
 #include "atlas/parallel/mpi/mpi.h"
 
 
-// create the model1 & model2 joint communicator
 void create_joint_comm(int model_1, int model_2) {
     using namespace atlas::coupler;
 
-    // eckit::mpi::comm("world").barrier();
     auto m1_ranks = coupler_.global_ranks(model_1);
     auto m2_ranks = coupler_.global_ranks(model_2);
     auto in_m1_m2_ranks = [&m1_ranks, &m2_ranks](int rank) {
@@ -35,11 +33,9 @@ void create_joint_comm(int model_1, int model_2) {
     auto my_rank = eckit::mpi::comm("world").rank();
     auto joint_comm_name = coupler_.collect_key(model_1, model_2);
     eckit::mpi::comm("world").split(in_m1_m2_ranks(my_rank), joint_comm_name);
-    // eckit::mpi::comm("world").barrier();
 }
 
 
-// comm12 is the joint communicator for model_1 and model_2 ranks
 void setup_oneway_remap(int model_1, int model_2) {
     using namespace atlas;
     using namespace atlas::coupler;
@@ -85,7 +81,6 @@ void setup_oneway_remap(int model_1, int model_2) {
     }
 
     // everything, except the remote index, is set up on model_2 for remapping
-    // global matrix is read in on model_2
     atlas::Grid grid1;
     atlas::Grid grid2; // later, no need to recreate grid2, as we are on the tasks which own grid2
     Matrix gmatrix;
@@ -113,7 +108,7 @@ void setup_oneway_remap(int model_1, int model_2) {
             std::size_t nr = fspace_m2.size();
             std::size_t nc = l_gcols.size();
             eckit::linalg::Index index_base = 0;
-            bool is_sorted = true; // !!! comming from Atlas itself, the tripplets are sorted
+            bool is_sorted = true;
             lmatrix = linalg::make_sparse_matrix_storage_from_rows_columns_values(nr, nc, l_rows, l_cols, l_vals, index_base, is_sorted);
         }
 
@@ -139,19 +134,18 @@ void setup_oneway_remap(int model_1, int model_2) {
             collect_partition[i] = model_comm12_ranks.at(model_1)[p]; // comm12-rank
         }
 
-        util::locate_remote_index(comm12, 0, nullptr, nullptr,
-                                    collect_size, collect_gidx.data(), collect_partition.data(), collect_ridx.data(), ridx_base);
+        util::locate_remote_index(comm12, 0, nullptr, nullptr, collect_size, collect_gidx.data(),
+            collect_partition.data(), collect_ridx.data(), ridx_base);
 
         collect->setup(comm12.name(), collect_size, collect_partition.data(), collect_ridx.data(), ridx_base);
     }
-
     if (is_model_1) {
         grid1 = atlas::Grid(coupler_.grid_name(model_1));
         functionspace::StructuredColumns fspace_m1(grid1);
         auto glb_idx_v = array::make_view<gidx_t, 1>(fspace_m1.global_index());
         auto ghost_v   = array::make_view<int, 1>(fspace_m1.ghost());
         util::locate_remote_index(comm12, glb_idx_v.size(), glb_idx_v.data(), ghost_v.data(),
-                                    0, nullptr, nullptr, nullptr, 0);
+            0, nullptr, nullptr, nullptr, 0);
         collect->setup(comm12.name(), 0, nullptr, nullptr, 0);
     }
     comm12.barrier();
@@ -170,7 +164,7 @@ namespace atlas::coupler {
         // create joint communicators by collect_key(model_1, model_2)
         mpi::comm("world").barrier();
         for (int i = 0; i < coupler_.models().size(); ++i) {
-            for (int j = i; j < coupler_.models().size(); ++j) {
+            for (int j = 0; j < coupler_.models().size(); ++j) {
                 create_joint_comm(coupler_.models()[i], coupler_.models()[j]);
             }
         }
@@ -180,15 +174,7 @@ namespace atlas::coupler {
     void prepare_send(int model_2) {
         auto model_1 = coupler_.this_model();
         if (! coupler_.collect_map_present(model_1, model_2)) {
-            if (mpi::comm().rank() == 0) {
-                std::cout << model_1 << " is preparing send " << model_1 << " to " << model_2 << std::endl;
-            }
             setup_oneway_remap(model_1, model_2);
-        }
-        else {
-            if (mpi::comm().rank() == 0) {
-                std::cout << model_1 << " already prepared send " << model_1 << " to " << model_2 << std::endl;
-            }
         }
     }
 
@@ -196,15 +182,7 @@ namespace atlas::coupler {
     void prepare_recv(int model_1) {
         auto model_2 = coupler_.this_model();
         if (! coupler_.collect_map_present(model_1, model_2)) {
-            if (mpi::comm().rank() == 0) {
-                std::cout << model_2 << " is preparing recv " << model_2 << " from " << model_1 << std::endl;
-            }
             setup_oneway_remap(model_1, model_2);
-        }
-        else {
-            if (mpi::comm().rank() == 0) {
-                std::cout << model_2 << " already prepared recv " << model_2 << " from " << model_1 << std::endl;
-            }
         }
     }
 
