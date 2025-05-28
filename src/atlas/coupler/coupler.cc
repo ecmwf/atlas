@@ -95,7 +95,7 @@ void setup_oneway_remap(int model_1, int model_2) {
     if (is_model_2) {
         if (atlas::mpi::comm().rank() == 0) {
             eckit::linalg::SparseMatrix eckit_matrix;
-            eckit_matrix.load("mat.eckit");
+            eckit_matrix.load("remap_" + coupler_.grid_name(model_1) + "_" + coupler_.grid_name(model_2) + ".eckit");
             gmatrix = atlas::linalg::make_sparse_matrix_storage(std::move(eckit_matrix));
         }
         grid2 = atlas::Grid(coupler_.grid_name(model_2));
