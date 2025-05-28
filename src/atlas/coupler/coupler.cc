@@ -21,31 +21,37 @@
 #include "atlas/parallel/mpi/mpi.h"
 
 
+// create the model1 & model2 joint communicator
+void create_joint_comm(int model_1, int model_2) {
+    using namespace atlas::coupler;
+
+    // eckit::mpi::comm("world").barrier();
+    auto m1_ranks = coupler_.global_ranks(model_1);
+    auto m2_ranks = coupler_.global_ranks(model_2);
+    auto in_m1_m2_ranks = [&m1_ranks, &m2_ranks](int rank) {
+        return (std::find(m1_ranks.begin(), m1_ranks.end(), rank) != m1_ranks.end()) ||
+            (std::find(m2_ranks.begin(), m2_ranks.end(), rank) != m2_ranks.end());
+    };
+    auto my_rank = eckit::mpi::comm("world").rank();
+    auto joint_comm_name = coupler_.collect_key(model_1, model_2);
+    eckit::mpi::comm("world").split(in_m1_m2_ranks(my_rank), joint_comm_name);
+    // eckit::mpi::comm("world").barrier();
+}
+
+
+// comm12 is the joint communicator for model_1 and model_2 ranks
 void setup_oneway_remap(int model_1, int model_2) {
     using namespace atlas;
     using namespace atlas::coupler;
     using Matrix      = atlas::linalg::SparseMatrixStorage;
-
-    // create the model1 & model2 joint communicator
-    mpi::comm("world").barrier();
-    auto m1_ranks = coupler_.global_ranks(10);
-    auto m2_ranks = coupler_.global_ranks(21);
-    auto in_m1_m2_ranks = [&m1_ranks, &m2_ranks](int rank) {
-        bool in_m1 = (std::find(m1_ranks.begin(), m1_ranks.end(), rank) != m1_ranks.end());
-        if (in_m1) {
-            return true;
-        }
-        bool in_m2 = (std::find(m2_ranks.begin(), m2_ranks.end(), rank) != m2_ranks.end());
-        return in_m2;
-    };
-    auto& comm12 = eckit::mpi::comm("world").split(in_m1_m2_ranks(mpi::comm("world").rank()), "comm12");
-    mpi::comm("world").barrier();
 
     bool is_model_1 = (mpi::comm().name() == coupler_.comm_name(model_1));
     bool is_model_2 = (mpi::comm().name() == coupler_.comm_name(model_2));
     if (! is_model_1 && ! is_model_2) {
         return;
     }
+
+    auto& comm12 = mpi::comm(coupler_.collect_key(model_1, model_2));
 
     // exchange models
     std::vector<int> models;
@@ -114,7 +120,7 @@ void setup_oneway_remap(int model_1, int model_2) {
         grid1 = atlas::Grid(coupler_.grid_name(model_1));
         grid::Distribution dist_m1(grid1, grid1.partitioner()
             | util::Config("nb_partitions", coupler_.global_ranks(model_1).size())
-            | util::Config("mpi_comm", "21"));
+            | util::Config("mpi_comm", "self"));
 
         std::size_t collect_size = l_gcols.size();
         std::vector<gidx_t> collect_gidx(collect_size);
@@ -161,8 +167,45 @@ namespace atlas::coupler {
         coupler_.register_model(model_id, grid);
         coupler_.print_models();
 
-        // HACK: we assume only m1 sends field 'f1' to m2
-        setup_oneway_remap(10, 21);
+        // create joint communicators by collect_key(model_1, model_2)
+        mpi::comm("world").barrier();
+        for (int i = 0; i < coupler_.models().size(); ++i) {
+            for (int j = i; j < coupler_.models().size(); ++j) {
+                create_joint_comm(coupler_.models()[i], coupler_.models()[j]);
+            }
+        }
+    }
+
+
+    void prepare_send(int model_2) {
+        auto model_1 = coupler_.this_model();
+        if (! coupler_.collect_map_present(model_1, model_2)) {
+            if (mpi::comm().rank() == 0) {
+                std::cout << model_1 << " is preparing send " << model_1 << " to " << model_2 << std::endl;
+            }
+            setup_oneway_remap(model_1, model_2);
+        }
+        else {
+            if (mpi::comm().rank() == 0) {
+                std::cout << model_1 << " already prepared send " << model_1 << " to " << model_2 << std::endl;
+            }
+        }
+    }
+
+
+    void prepare_recv(int model_1) {
+        auto model_2 = coupler_.this_model();
+        if (! coupler_.collect_map_present(model_1, model_2)) {
+            if (mpi::comm().rank() == 0) {
+                std::cout << model_2 << " is preparing recv " << model_2 << " from " << model_1 << std::endl;
+            }
+            setup_oneway_remap(model_1, model_2);
+        }
+        else {
+            if (mpi::comm().rank() == 0) {
+                std::cout << model_2 << " already prepared recv " << model_2 << " from " << model_1 << std::endl;
+            }
+        }
     }
 
 

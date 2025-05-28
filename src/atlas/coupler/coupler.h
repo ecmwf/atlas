@@ -18,6 +18,10 @@ namespace atlas::coupler {
 
     void setup(int model_id, Grid grid);
 
+    void prepare_send(int model_2);
+
+    void prepare_recv(int model_1);
+
     void finalise();
 
     void put(Field f, int model_2, int tstep = 0);

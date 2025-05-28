@@ -46,14 +46,19 @@ namespace atlas::coupler {
 
         void finalise();
 
+        bool collect_map_present(int model_1, int model_2) {
+            std::string key = collect_key(model_1, model_2);
+            return (collect_map_.find(key) != collect_map_.end());
+        }
+
         parallel::Collect* collect_map(int model_1, int model_2) {
-            std::string key = std::to_string(model_1) + "_" + std::to_string(model_2);
+            std::string key = collect_key(model_1, model_2);
             collect_map_.emplace(key, new parallel::Collect());
             return collect_map_.at(key);
         }
 
         Matrix& remap(int model_1, int model_2) {
-            std::string key = std::to_string(model_1) + "_" + std::to_string(model_2);
+            std::string key = collect_key(model_1, model_2);
             remap_.emplace(key, Matrix());
             return remap_.at(key);
         }
@@ -65,13 +70,16 @@ namespace atlas::coupler {
         //     return collect_map_requests_.at(key);
         // }
     
-    private:
-        struct {
-            // std::vector<eckit::mpi::Request> recv_req;
-            size_t src_size;
-            size_t src_field_shape;
-            parallel::Collect* collect;
-        } field_exchange;
+        std::string collect_key(int model_1, int model_2) const {
+            return std::to_string(model_1) + "_" + std::to_string(model_2);
+        }
+
+        // struct {
+        //     // std::vector<eckit::mpi::Request> recv_req;
+        //     size_t src_size;
+        //     size_t src_field_shape;
+        //     parallel::Collect* collect;
+        // } field_exchange;
 
     private:
         int this_model_id_;
