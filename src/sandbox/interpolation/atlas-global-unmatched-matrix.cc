@@ -81,7 +81,7 @@ public:
             lmat_ = linalg::make_sparse_matrix_storage_from_rows_columns_values(nr, nc, rows_, cols_, vals_, index_base, is_sorted);
             find_missing_rows();
 
-            nonlinear_ = interpolation::NonLinear("missing-if-any-missing", util::Config());
+            nonlinear_ = interpolation::NonLinear("missing-if-all-missing", util::Config());
 
     }
 
@@ -118,8 +118,8 @@ public:
             ATLAS_TRACE_SCOPE("sparse_matrix_multiply") {
                 // linalg::sparse::current_backend("eckit_linalg");
                 if (nonlinear_(src)) {
+                    ATLAS_DEBUG();
                     eckit::linalg::SparseMatrix matrix_nl = atlas::linalg::make_eckit_sparse_matrix(matrix);
-                    ATLAS_ASSERT(matrix_nl.cols() == collect_src->size());
                     ATLAS_ASSERT(matrix_nl.cols() == collect_src->size());
                     nonlinear_->execute(matrix_nl, src, *collect_src);
                     linalg::sparse_matrix_multiply(matrix_nl, collect_src_view, tgt_view);
@@ -155,7 +155,7 @@ public:
                 if (tgt.metadata().has("missing_value")) {
                     double missing_value = tgt.metadata().get<double>("missing_value");
                     for (idx_t r : missing_rows_) {
-                        tgt_view(r) = missing_value; 
+                        tgt_view(r) = missing_value;
                     }
                 }
             }
@@ -420,6 +420,7 @@ int AtlasGlobalUnmatchedMatrix::execute(const AtlasTool::Args& args) {
                     }
                     else {
                         field_glb_view[i] = std::abs(src_values[i]);
+                        // field_glb_view[i] = 0;
                     }
                 }
             }

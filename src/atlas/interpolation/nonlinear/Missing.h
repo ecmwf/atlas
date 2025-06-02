@@ -32,10 +32,10 @@ struct MissingIfAllMissing : Missing {
     template<typename T>
     bool executeT(NonLinear::Matrix& W, const Field& field) const;
 
-    bool execute(NonLinear::Matrix& W, const Field& field, const array::Array& array) const override { ATLAS_NOTIMPLEMENTED; }
+    bool execute(NonLinear::Matrix& W, const Field& field, const array::Array& array) const override;
 
     template<typename T>
-    bool executeT(NonLinear::Matrix& W, const Field& field, const array::Array& array) const { ATLAS_NOTIMPLEMENTED; }
+    bool executeT(NonLinear::Matrix& W, const Field& field, const array::Array& array) const;
 
     static std::string static_type() { return "missing-if-all-missing"; }
 };
