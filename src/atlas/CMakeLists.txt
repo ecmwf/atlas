@@ -300,6 +300,8 @@ grid/detail/partitioner/EqualAreaPartitioner.cc
 grid/detail/partitioner/EqualAreaPartitioner.h
 grid/detail/partitioner/EqualRegionsPartitioner.cc
 grid/detail/partitioner/EqualRegionsPartitioner.h
+grid/detail/partitioner/GlobalIndexPartitioner.cc
+grid/detail/partitioner/GlobalIndexPartitioner.h
 grid/detail/partitioner/MatchingMeshPartitioner.h
 grid/detail/partitioner/MatchingMeshPartitioner.cc
 grid/detail/partitioner/MatchingMeshPartitionerBruteForce.cc
