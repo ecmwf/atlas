@@ -74,7 +74,7 @@ echo "+ mkdir build-release"
 mkdir build-release
 echo "+ cd build-release"
 cd build-release
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX}
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX} -DCMAKE_POLICY_VERSION_MINIMUM=3.5
 echo "+ make -j8"
 make -j8
 echo "+ make install"

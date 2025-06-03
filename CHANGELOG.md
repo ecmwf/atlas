@@ -7,6 +7,27 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+
+## [0.42.0] - 2025-04-09
+
+### Added
+- Cubed sphere 2 grid builder by @mo-jonasganderton in https://github.com/ecmwf/atlas/pull/253
+- Grid/Distribution constructor for PointCloud by @tom-j-h in https://github.com/ecmwf/atlas/pull/262
+- Add distribution of serial interpolation matrix by @sbrdar in https://github.com/ecmwf/atlas/pull/258
+- Add offloading of discontiguous arrays in https://github.com/ecmwf/atlas/pull/267
+- Add device offload operators on FieldSet in https://github.com/ecmwf/atlas/pull/268
+- Introducing Pluto by @wdeconinck in https://github.com/ecmwf/atlas/pull/269
+- Python wheel: initial setup by @tmi in https://github.com/ecmwf/atlas/pull/257
+
+### Fixed
+- Fix inconsistent index-base used in StructuredColumns::remote_index by @sbrdar in https://github.com/ecmwf/atlas/pull/265
+- Fix OpenMP related bug in DistributionArray
+
+### Changed
+- Use pluto where possible instead of hic calls by @wdeconinck in https://github.com/ecmwf/atlas/pull/270
+- Use pluto default memory resources in atlas::array by @wdeconinck in https://github.com/ecmwf/atlas/pull/273
+
+
 ## [0.41.1] - 2025-02-18
 
 ### Fixed
@@ -610,6 +631,7 @@ Fix StructuredInterpolation2D with retry for failed stencils
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.42.0]: https://github.com/ecmwf/atlas/compare/0.41.0...0.42.0
 [0.41.1]: https://github.com/ecmwf/atlas/compare/0.41.0...0.41.1
 [0.41.0]: https://github.com/ecmwf/atlas/compare/0.40.0...0.41.0
 [0.40.0]: https://github.com/ecmwf/atlas/compare/0.39.0...0.40.0

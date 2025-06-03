@@ -1019,6 +1019,7 @@ ecbuild_add_library( TARGET atlas
     atlas_io
     hic
     hicsparse
+    pluto
     $<${atlas_HAVE_EIGEN}:Eigen3::Eigen>
     $<${atlas_HAVE_OMP_CXX}:OpenMP::OpenMP_CXX>
     $<${atlas_HAVE_GRIDTOOLS_STORAGE}:GridTools::gridtools>

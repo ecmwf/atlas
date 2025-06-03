@@ -53,6 +53,11 @@ void SphericalVector::do_setup(const Grid& source, const Grid& target,
   ATLAS_NOTIMPLEMENTED;
 }
 
+void SphericalVector::do_setup(const FunctionSpace& source, const FunctionSpace& target,
+                               const Cache&) {
+  ATLAS_NOTIMPLEMENTED;
+}
+
 void SphericalVector::do_setup(const FunctionSpace& source,
                                const FunctionSpace& target) {
   ATLAS_TRACE("interpolation::method::SphericalVector::do_setup");

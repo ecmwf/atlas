@@ -151,6 +151,94 @@ const std::vector<std::string>& FieldSetImpl::field_names() const {
     return field_names_;
 }
 
+void FieldSetImpl::updateHost() const {
+    for (auto field: *this) {
+        field.updateHost();
+    }
+}
+
+void FieldSetImpl::updateHost(std::initializer_list<std::string> fnames) const {
+    ATLAS_ASSERT(fnames.size() > 0);
+    for (int i = 0; i < fnames.size(); ++i) {
+        auto field = this->field(fnames.begin()[i]);
+        field.updateHost();
+    }
+}
+
+void FieldSetImpl::updateHost(std::initializer_list<int> findices) const {
+    ATLAS_ASSERT(findices.size() > 0);
+    for (int i = 0; i < findices.size(); ++i) {
+        auto field = this->field(findices.begin()[i]);
+        field.updateHost();
+    }
+}
+
+void FieldSetImpl::updateDevice() const {
+    for (auto field: *this) {
+        field.updateDevice();
+    }
+}
+
+void FieldSetImpl::updateDevice(std::initializer_list<std::string> fnames) const {
+    ATLAS_ASSERT(fnames.size() > 0);
+    for (int i = 0; i < fnames.size(); ++i) {
+        auto field = this->field(fnames.begin()[i]);
+        field.updateDevice();
+    }
+}
+
+void FieldSetImpl::updateDevice(std::initializer_list<int> findices) const {
+    ATLAS_ASSERT(findices.size() > 0);
+    for (int i = 0; i < findices.size(); ++i) {
+        auto field = this->field(findices.begin()[i]);
+        field.updateDevice();
+    }
+}
+
+void FieldSetImpl::allocateDevice() const {
+    for (auto field: *this) {
+        field.allocateDevice();
+    }
+}
+
+void FieldSetImpl::allocateDevice(std::initializer_list<std::string> fnames) const {
+    ATLAS_ASSERT(fnames.size() > 0);
+    for (int i = 0; i < fnames.size(); ++i) {
+        auto field = this->field(fnames.begin()[i]);
+        field.allocateDevice();
+    }
+}
+
+void FieldSetImpl::allocateDevice(std::initializer_list<int> findices) const {
+    ATLAS_ASSERT(findices.size() > 0);
+    for (int i = 0; i < findices.size(); ++i) {
+        auto field = this->field(findices.begin()[i]);
+        field.allocateDevice();
+    }
+}
+
+void FieldSetImpl::deallocateDevice() const {
+    for (auto field: *this) {
+        field.deallocateDevice();
+    }
+}
+
+void FieldSetImpl::deallocateDevice(std::initializer_list<std::string> fnames) const {
+    ATLAS_ASSERT(fnames.size() > 0);
+    for (int i = 0; i < fnames.size(); ++i) {
+        auto field = this->field(fnames.begin()[i]);
+        field.deallocateDevice();
+    }
+}
+
+void FieldSetImpl::deallocateDevice(std::initializer_list<int> findices) const {
+    ATLAS_ASSERT(findices.size() > 0);
+    for (int i = 0; i < findices.size(); ++i) {
+        auto field = this->field(findices.begin()[i]);
+        field.deallocateDevice();
+    }
+}
+
 //-----------------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 extern "C" {

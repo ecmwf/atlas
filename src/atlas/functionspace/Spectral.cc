@@ -184,6 +184,14 @@ std::string Spectral::distribution() const {
     return parallelisation_->distribution();
 }
 
+idx_t Spectral::part() const {
+  return mpi::rank();
+}
+
+idx_t Spectral::nb_parts() const {
+   return mpi::size();
+}
+
 size_t Spectral::footprint() const {
     size_t size = sizeof(*this);
     // TODO
@@ -227,6 +235,13 @@ Field Spectral::createField(const eckit::Configuration& options) const {
     idx_t levels = config_levels(options);
     if (levels) {
         array_shape.push_back(levels);
+    }
+
+    idx_t variables = 0;
+    if (options.get("variables",variables)) {
+        if (variables) {
+            array_shape.push_back(variables);
+        }
     }
 
     Field field = Field(config_name(options), config_datatype(options), array_shape);

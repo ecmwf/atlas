@@ -13,7 +13,14 @@ set -euo pipefail
 
 mkdir -p python/atlaslib-ecmwf/src/copying
 
-bash ./tools/install-qhull.sh --prefix /tmp/qhull/target
+# NOTE we dont use that since we dont want to work with the brew installation as it is unreliable
+# bash ./tools/install-qhull.sh --prefix /tmp/qhull/target
+rm -rf /tmp/qhull && mkdir -p /tmp/qhull/build && cd /tmp/qhull/build
+git clone https://github.com/qhull/qhull /tmp/qhull/src
+cmake /tmp/qhull/src -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/tmp/qhull/target
+make -j8 && make install
+cd -
+
 # copy the libs, instead of having auditwheel done it later. This is a bit risky because cmake will later write in this
 # very directory... but it works
 if [ "$(uname)" != "Darwin" ] ; then
@@ -21,13 +28,8 @@ if [ "$(uname)" != "Darwin" ] ; then
     cp /tmp/qhull/target/lib/libqhull_r.* /tmp/atlas/target/atlas/lib64/
 else
     mkdir -p /tmp/atlas/target/atlas/lib
-    for e in $(brew list qhull | grep '/lib/' | grep dylib) ; do
-        cp $e /tmp/atlas/target/atlas/lib
-    done
+    cp /tmp/qhull/target/lib/libqhull_r.* /tmp/atlas/target/atlas/lib/
 fi
 
 wget https://raw.githubusercontent.com/qhull/qhull/master/COPYING.txt -O python/atlaslib-ecmwf/src/copying/libqhull.txt
 echo '{"libqhull_r": {"path": "copying/libqhull.txt", "home": "https://github.com/qhull/qhull"}}' > python/atlaslib-ecmwf/src/copying/list.json
-
-
-

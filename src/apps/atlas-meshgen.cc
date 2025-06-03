@@ -335,7 +335,6 @@ int Meshgen2Gmsh::execute(const Args& args) {
         args.get("torus", torus);
         if (torus) {
             if (auto g = StructuredGrid(grid)) {
-                dim_3d = true;
                 Log::debug() << "Building xyz representation for nodes on torus" << std::endl;
                 mesh::actions::BuildTorusXYZField("xyz")(mesh, g.domain(), 5., 2., g.nxmax(), g.ny());
             }
