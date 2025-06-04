@@ -26,6 +26,7 @@ class Grid;
 class Projection;
 namespace functionspace {
 class FunctionSpaceImpl;
+class HaloDescription;
 }
 namespace parallel {
 class GatherScatter;
@@ -97,6 +98,8 @@ public:
     Field remote_index() const;
 
     Field partition() const;
+
+    const functionspace::HaloDescription& halo_description() const;
 
     const parallel::GatherScatter& gather() const;
     const parallel::GatherScatter& scatter() const;

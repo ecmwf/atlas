@@ -139,6 +139,11 @@ const Projection& FunctionSpace::projection() const {
     return get()->projection();
 }
 
+const functionspace::HaloDescription& FunctionSpace::halo_description() const {
+    return get()->halo_description();
+}
+
+
 template <typename DATATYPE>
 Field FunctionSpace::createField() const {
     return get()->createField<DATATYPE>();

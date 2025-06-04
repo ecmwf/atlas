@@ -476,6 +476,8 @@ field/FieldCreatorIFS.cc
 field/FieldCreatorIFS.h
 field/FieldSet.cc
 field/FieldSet.h
+field/Halo.cc
+field/Halo.h
 field/MissingValue.cc
 field/MissingValue.h
 field/MultiField.cc
@@ -510,6 +512,7 @@ functionspace/EdgeColumns.h
 functionspace/EdgeColumns.cc
 functionspace/FunctionSpace.h
 functionspace/FunctionSpace.cc
+functionspace/HaloDescription.h
 functionspace/NodeColumns.h
 functionspace/NodeColumns.cc
 functionspace/StructuredColumns.h
