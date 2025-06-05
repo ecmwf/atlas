@@ -56,6 +56,13 @@ public:
 
 // ----------------------------------------------------------------------------
 
+class vector_component : public util::Config {
+public:
+    vector_component(const std::string& vector_field_name, size_t index);
+};
+
+// ----------------------------------------------------------------------------
+
 class name : public util::Config {
 public:
     name(const std::string&);
