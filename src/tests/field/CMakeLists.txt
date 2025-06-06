@@ -32,6 +32,18 @@ ecbuild_add_test( TARGET atlas_test_field_foreach
   CONDITION NOT SKIP_TEST_atlas_test_field_foreach
 )
 
+set( _WITH_MPI )
+if( eckit_HAVE_MPI )
+    set( _WITH_MPI MPI 4 CONDITION MPI_SLOTS GREATER_EQUAL 4)
+endif()
+
+ecbuild_add_test( TARGET atlas_test_field_halo
+  SOURCES test_field_halo.cc
+  LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  ${_WITH_MPI}
+)
+
 set( HAVE_ACC_CXX FALSE )
 if( TARGET OpenACC::OpenACC_CXX AND atlas_HAVE_ACC )
   set( HAVE_ACC_CXX TRUE )

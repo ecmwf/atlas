@@ -13,10 +13,11 @@
 #include <string>
 #include <type_traits>
 #include <vector>
+#include <memory>
 
-#include "atlas/util/Object.h"
-
+#include "atlas/functionspace/HaloDescription.h"
 #include "atlas/library/config.h"
+#include "atlas/util/Object.h"
 
 namespace eckit {
 class Configuration;
@@ -118,8 +119,11 @@ public:
 
     virtual std::string mpi_comm() const;
 
+    virtual const HaloDescription& halo_description() const;
+
 private:
     util::Metadata* metadata_;
+    mutable std::unique_ptr<HaloDescription> halo_description_;
 };
 
 template <typename FunctionSpaceT>

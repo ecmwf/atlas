@@ -17,6 +17,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <memory>
 
 #include "atlas/util/Object.h"
 
@@ -24,6 +25,7 @@
 #include "atlas/array/ArrayDataStore.h"
 #include "atlas/array/DataType.h"
 #include "atlas/util/Metadata.h"
+#include "atlas/field/Halo.h"
 
 namespace eckit {
 class Parametrisation;
@@ -217,6 +219,7 @@ public:  // Destructor
 
     void haloExchange(bool on_device = false) const;
     void adjointHaloExchange(bool on_device = false) const;
+    Halo& halo() const;
 
     void attachObserver(FieldObserver&) const;
     void detachObserver(FieldObserver&) const;
@@ -232,6 +235,7 @@ private:  // members
     FunctionSpace* functionspace_;
     mutable std::vector<FieldObserver*> field_observers_;
     std::vector<std::function<void()>> callback_on_destruction_;
+    mutable std::unique_ptr<Halo> halo_;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

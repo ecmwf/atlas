@@ -15,6 +15,7 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/array/MakeView.h"
 
 namespace atlas {
 namespace functionspace {
@@ -137,6 +138,12 @@ std::string FunctionSpaceImpl::mpi_comm() const {
     return mpi::comm().name();
 }
 
+const HaloDescription& FunctionSpaceImpl::halo_description() const {
+    if (not halo_description_) {
+        halo_description_.reset(new HaloDescription(array::make_view<int,1>(ghost())));
+    }
+    return *halo_description_;
+}
 
 template Field FunctionSpaceImpl::createField<double>() const;
 template Field FunctionSpaceImpl::createField<float>() const;

@@ -124,6 +124,8 @@ private:  // methods
         return *comm_;
     }
 
+    int devices() const;
+
 private:  // data
     std::string name_;
     bool is_setup_;
@@ -154,6 +156,8 @@ void HaloExchange::execute(array::Array& field, bool on_device) const {
     if (!is_setup_) {
         throw_Exception("HaloExchange was not setup", Here());
     }
+
+    on_device = on_device && devices() > 0;
 
     auto field_hv = array::make_host_view<DATA_TYPE, RANK>(field);
     auto field_dv =
@@ -209,6 +213,8 @@ void HaloExchange::execute_adjoint(array::Array& field, bool on_device) const {
     }
 
     ATLAS_TRACE("HaloExchange", {"halo-exchange-adjoint"});
+
+    on_device = on_device && devices() > 0;
 
     auto field_hv = array::make_host_view<DATA_TYPE, RANK>(field);
     auto field_dv =
