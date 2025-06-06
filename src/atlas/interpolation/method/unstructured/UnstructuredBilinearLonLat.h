@@ -26,7 +26,6 @@ namespace method {
 class UnstructuredBilinearLonLat : public Method {
 public:
     UnstructuredBilinearLonLat(const Config& config): Method(config) {
-        config.get("max_fraction_elems_to_try", max_fraction_elems_to_try_);
     }
 
     virtual ~UnstructuredBilinearLonLat() override {}
@@ -53,7 +52,7 @@ protected:
    * point to the nearest element(s), returning the (normalized) interpolation
    * weights
    */
-    Triplets projectPointToElements(size_t ip, const ElemIndex3::NodeList& elems, std::ostream& failures_log) const;
+    Triplets projectPointToElements(size_t ip, const ElemIndex3::NodeList& elems) const;
 
     virtual const FunctionSpace& source() const override { return source_; }
     virtual const FunctionSpace& target() const override { return target_; }
@@ -80,7 +79,6 @@ protected:
     FunctionSpace target_;
 
     bool treat_failure_as_missing_value_{true};
-    double max_fraction_elems_to_try_{0.2};
 };
 
 }  // namespace method
