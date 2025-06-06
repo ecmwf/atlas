@@ -28,8 +28,9 @@
 
 namespace {
 int getEnv(const std::string& env, int default_value) {
-    if (::getenv(env.c_str())) {
-        return eckit::Translator<std::string, int>()(::getenv(env.c_str()));
+    const char* cenv = ::getenv(env.c_str());
+    if (cenv != nullptr) {
+        return eckit::Translator<std::string, int>()(cenv);
     }
     return default_value;
 }
@@ -267,9 +268,9 @@ void enable_floating_point_exceptions() {
     //   std::vector<std::string> floating_point_exceptions = eckit::Resource<std::vector<std::string>>( "atlasFPE;$ATLAS_FPE", {"false"} );
     // Instead, manually access environment
     std::vector<std::string> floating_point_exceptions{"false"};
-    if (::getenv("ATLAS_FPE")) {
-        std::string env(::getenv("ATLAS_FPE"));
-        std::vector<std::string> tmp = eckit::Translator<std::string, std::vector<std::string>>()(env);
+    const char* ATLAS_FPE = ::getenv("ATLAS_FPE");
+    if (ATLAS_FPE != nullptr) {
+        std::vector<std::string> tmp = eckit::Translator<std::string, std::vector<std::string>>()(ATLAS_FPE);
         floating_point_exceptions    = tmp;
         // Above trick with "tmp" is what avoids the Cray 8.6 compiler bug
     }
@@ -354,9 +355,9 @@ bool disable_floating_point_exception(const std::string& floating_point_exceptio
 
 void enable_atlas_signal_handler() {
     bool enable = false;
-    if (::getenv("ATLAS_SIGNAL_HANDLER")) {
-        std::string env(::getenv("ATLAS_SIGNAL_HANDLER"));
-        bool tmp = eckit::Translator<std::string, bool>()(env);
+    const char* ATLAS_SIGNAL_HANDLER = ::getenv("ATLAS_SIGNAL_HANDLER");
+    if (ATLAS_SIGNAL_HANDLER != nullptr) {
+        bool tmp = eckit::Translator<std::string, bool>()(ATLAS_SIGNAL_HANDLER);
         enable   = tmp;
         // Above trick with "tmp" is what avoids the Cray 8.6 compiler bug
     }

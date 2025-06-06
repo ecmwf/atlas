@@ -11,6 +11,7 @@
 #include "DistributionArray.h"
 
 #include <algorithm>
+#include <numeric>
 #include <ostream>
 #include <vector>
 
@@ -49,24 +50,20 @@ DistributionArray::DistributionArray(const Grid& grid, const Partitioner& partit
     nb_partitions_ = partitioner.nb_partitions();
 
     size_t size     = part_.size();
-    int num_threads = atlas_omp_get_max_threads();
-
-    std::vector<std::vector<int> > nb_pts_per_thread(num_threads, std::vector<int>(nb_partitions_));
-    atlas_omp_parallel {
-        int thread   = atlas_omp_get_thread_num();
-        auto& nb_pts = nb_pts_per_thread[thread];
-        atlas_omp_for(size_t j = 0; j < size; ++j) {
-            int p = part_[j];
-            ++nb_pts[p];
-        }
-    }
-
     nb_pts_.resize(nb_partitions_, 0);
-    for (int thread = 0; thread < num_threads; ++thread) {
-        for (int p = 0; p < nb_partitions_; ++p) {
-            nb_pts_[p] += nb_pts_per_thread[thread][p];
+    atlas_omp_parallel {
+        std::vector<int> nb_pts(nb_partitions_, 0); // thread-local
+        atlas_omp_for(size_t j = 0; j < size; ++j) {
+            ++nb_pts[part_[j]];
+        }
+        atlas_omp_critical {
+            for (int p = 0; p < nb_partitions_; ++p) {
+                nb_pts_[p] += nb_pts[p];
+            }
         }
     }
+
+    ATLAS_ASSERT( std::accumulate(nb_pts_.begin(),nb_pts_.end(),idx_t{0}) == part_.size() );
 
     max_pts_ = *std::max_element(nb_pts_.begin(), nb_pts_.end());
     min_pts_ = *std::min_element(nb_pts_.begin(), nb_pts_.end());

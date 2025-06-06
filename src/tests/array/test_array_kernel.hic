@@ -119,6 +119,7 @@ CASE( "test_array_loop" )
        }
      }
    }
+   ds->allocateDevice();
 
    ds->updateDevice();
 

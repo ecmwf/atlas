@@ -18,12 +18,30 @@ ecbuild_add_test( TARGET atlas_test_field_missingvalue
     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_field_memory_resource
+    SOURCES     test_field_memory_resource.cc
+    LIBS        atlas
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_field_foreach
   SOURCES  test_field_foreach.cc
   LIBS     atlas
   OMP      4
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   CONDITION NOT SKIP_TEST_atlas_test_field_foreach
+)
+
+set( _WITH_MPI )
+if( eckit_HAVE_MPI )
+    set( _WITH_MPI MPI 4 CONDITION MPI_SLOTS GREATER_EQUAL 4)
+endif()
+
+ecbuild_add_test( TARGET atlas_test_field_halo
+  SOURCES test_field_halo.cc
+  LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  ${_WITH_MPI}
 )
 
 set( HAVE_ACC_CXX FALSE )

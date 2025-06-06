@@ -104,6 +104,8 @@ use atlas_functionspace_PointCloud_module, only: &
     & atlas_functionspace_PointCloud
 use atlas_functionspace_StructuredColumns_module, only: &
     & atlas_functionspace_StructuredColumns
+use atlas_functionspace_BlockStructuredColumns_module, only: &
+    & atlas_functionspace_BlockStructuredColumns
 use atlas_functionspace_Spectral_module, only: &
     & atlas_functionspace_Spectral
 use atlas_Projection_module, only : &

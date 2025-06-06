@@ -37,6 +37,54 @@ END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------
 
+subroutine kernel_1(view, N)
+  real(c_double) :: view(:,:,:)
+  integer, intent(in) :: N
+  !$acc data present(view)
+  !$acc parallel loop
+  do j=1,N
+    view(1,1,j) = real(j, c_double)
+    view(2,1,j) = -3_c_double
+  enddo
+  !$acc end data
+end subroutine kernel_1
+
+
+subroutine kernel_2(view, Ni, Nj, Nl)
+  ! The OpenACC standard states that a deviceptr (here 'view')
+  ! shall not have the POINTER attribute, hence this subroutine
+  ! is required rather than have the code inlined at call site.
+  real(c_double) :: view(:,:,:)
+  integer, intent(in) :: Ni, Nj, Nl
+  !$acc data deviceptr(view)
+  !$acc parallel loop
+  do i = 1, Ni
+    do j = 1, Nj
+      do l = 1, Nl
+        view(i,j,l) = -view(i,j,l)
+      enddo
+    enddo
+  enddo
+  !$acc end data
+end subroutine kernel_2
+
+
+subroutine kernel_3(view, Ni, Nj, Nk)
+  logical :: view(:,:,:)
+  integer, intent(in) :: Ni, Nj, Nk
+  !$acc data present(view)
+  !$acc parallel loop
+  do i=1,Ni
+    do j=1,Nj
+      do k=1,Nk
+        view(i,j,k) = (mod(k,3) == 0 )
+      enddo
+    enddo
+  enddo
+  !$acc end data
+end subroutine kernel_3
+
+
 TEST( test_field_wrapdata )
 implicit none
 
@@ -60,13 +108,7 @@ implicit none
   call field%allocate_device()
   call field%update_device()
 
-  !$acc data present(fview)
-  !$acc parallel loop
-  do j=1,N
-    fview(1,1,j) = real(j, c_double)
-    fview(2,1,j) = -3_c_double
-  enddo
-  !$acc end data
+  call kernel_1(fview, N)
 
   j = N/2
   FCTEST_CHECK_EQUAL( existing_data(1,1,j), -2._c_double )
@@ -88,41 +130,50 @@ TEST( test_field_wrapdataslice )
 implicit none
 
   real(c_double), allocatable :: existing_data(:,:,:,:)
-  real(c_double), pointer :: fview(:,:,:)
+  real(c_double), pointer :: dview(:,:,:), hview(:,:,:)
   type(atlas_Field) :: field
-  integer(c_int) :: i,j,k,l
-  write(0,*) "test_field_wrapdataslice [skipped]" ! NOT DONE YET !!!
-  return ! SKIP THIS TEST !!!
-  allocate( existing_data(4,3,2,5) )
+  integer(c_int) :: i, j, k, l
+  integer(c_int), parameter :: Ni = 8, Nj = 2, Nk = 3, Nl = 4, k_idx = 2
+  real(c_double) :: a
+  write(0,*) "test_field_wrapdataslice"
+  allocate( existing_data(Ni, Nj, Nk, Nl) )
 
-  existing_data = -1.
-
-  field = atlas_Field(existing_data(:,:,1,:))
-  call field%data(fview)
-
-  !call field%allocate_device()
-  !call field%update_device()
-
-  !!$acc data present(fview)
-  !!$acc parallel loop
-  do i=1,4
-    do j=1,3
-      do k=1,2
-        do l=1,5
-          fview(i,j,l) = 1000*i+100*j+10*1+l
+  do i = 1, Ni
+    do j = 1, Nj
+      do k = 1, Nk
+        do l = 1, Nl
+          existing_data(i,j,k,l) = real(1000 * i+100 * j + 10*k + l, c_double)
         enddo
       enddo
     enddo
   enddo
-  !!$acc end data
 
+  field = atlas_Field(existing_data(:,:,k_idx,:))
+  FCTEST_CHECK_EQUAL(field%shape() , ([Ni, Nj, Nl]))
+  FCTEST_CHECK_EQUAL(field%strides() , ([1, Ni, Ni*Nj*Nk]))
+
+  call field%allocate_device()
+  call field%update_device()
+
+  call field%data(hview)
+  call field%device_data(dview)
+
+  FCTEST_CHECK_EQUAL(shape(hview), ([Ni, Nj, Nl]))
+  FCTEST_CHECK_EQUAL(shape(dview), ([Ni, Nj, Nl]))
+
+  call kernel_2(dview, Ni, Nj, Nl)
+
+  call field%update_host()
   call field%deallocate_device()
 
-  k=1
-  do i=1,4
-    do j=1,3
-      do l=1,5
-        FCTEST_CHECK_EQUAL(fview(i,j,l) , real(1000*i+100*j+10*k+l,c_double) )
+  do i = 1, Ni
+    do j = 1, Nj
+      do k = 1, Nk
+        a = 1._c_double;
+        if (k == k_idx) a = -1._c_double;
+        do l = 1, Nl
+          FCTEST_CHECK_EQUAL(existing_data(i, j, k, l), a * real(1000*i + 100*j + 10*k + l, c_double))
+        enddo
       enddo
     enddo
   enddo
@@ -160,16 +211,7 @@ implicit none
   call field%allocate_device()
   call field%update_device()
 
-  !$acc data present(fview)
-  !$acc parallel loop
-  do i=1,Ni
-    do j=1,Nj
-      do k=1,Nk
-        fview(i,j,k) = (mod(k,3) == 0 )
-      enddo
-    enddo
-  enddo
-  !$acc end data
+  call kernel_3(fview, Ni, Nj, Nk)
 
   FCTEST_CHECK_EQUAL( fview(1,1,1), .false. )
   FCTEST_CHECK_EQUAL( fview(1,1,2), .true. )

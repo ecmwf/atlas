@@ -10,10 +10,12 @@
 
 #include "FunctionSpaceImpl.h"
 #include "atlas/field/Field.h"
+#include "atlas/grid.h"
 #include "atlas/option/Options.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/array/MakeView.h"
 
 namespace atlas {
 namespace functionspace {
@@ -51,6 +53,10 @@ Field NoFunctionSpace::createField(const eckit::Configuration&) const {
 }
 
 Field NoFunctionSpace::createField(const Field&, const eckit::Configuration&) const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
+const Grid& FunctionSpaceImpl::grid() const {
     ATLAS_NOTIMPLEMENTED;
 }
 
@@ -132,6 +138,12 @@ std::string FunctionSpaceImpl::mpi_comm() const {
     return mpi::comm().name();
 }
 
+const HaloDescription& FunctionSpaceImpl::halo_description() const {
+    if (not halo_description_) {
+        halo_description_.reset(new HaloDescription(array::make_view<int,1>(ghost())));
+    }
+    return *halo_description_;
+}
 
 template Field FunctionSpaceImpl::createField<double>() const;
 template Field FunctionSpaceImpl::createField<float>() const;

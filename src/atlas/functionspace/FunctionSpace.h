@@ -22,9 +22,11 @@ class Configuration;
 namespace atlas {
 class Field;
 class FieldSet;
+class Grid;
 class Projection;
 namespace functionspace {
 class FunctionSpaceImpl;
+class HaloDescription;
 }
 namespace parallel {
 class GatherScatter;
@@ -85,6 +87,8 @@ public:
 
     idx_t size() const;
 
+    const Grid& grid() const;
+
     Field lonlat() const;
 
     Field ghost() const;
@@ -94,6 +98,8 @@ public:
     Field remote_index() const;
 
     Field partition() const;
+
+    const functionspace::HaloDescription& halo_description() const;
 
     const parallel::GatherScatter& gather() const;
     const parallel::GatherScatter& scatter() const;

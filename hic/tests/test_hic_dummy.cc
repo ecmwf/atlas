@@ -7,10 +7,10 @@
  * granted to it by virtue of its status as an intergovernmental organisation
  * nor does it submit to any jurisdiction.
  */
-#include <iostream>
 #include <functional>
-#include <vector>
+#include <iostream>
 #include <utility>
+#include <vector>
 
 #include "hic/hic.h"
 
@@ -21,22 +21,23 @@ int test_throw() {
     try {
         std::ignore = hicMalloc(&p, 8);
         std::ignore = hicFree(p);
-    } catch(std::runtime_error& e) {
+    }
+    catch (std::runtime_error& e) {
         std::string expected_message = "hicMalloc is using the dummy backend and should not be called";
         if (e.what() == expected_message) {
-            std::cout << "--- " << __FUNCTION__ << " SUCCEEDED " << std::endl; 
-            return 0; // success
+            std::cout << "--- " << __FUNCTION__ << " SUCCEEDED " << std::endl;
+            return 0;  // success
         }
     }
-    std::cout << "--- " << __FUNCTION__ << " SUCCEEDED " << std::endl; 
-    return 1; // fail
+    std::cout << "--- " << __FUNCTION__ << " SUCCEEDED " << std::endl;
+    return 1;  // fail
 }
 
-std::vector<std::function<int()>> tests = { test_throw };
+std::vector<std::function<int()>> tests = {test_throw};
 
 int main(int /*argc*/, char** /*argv*/) {
     int error = 0;
-    for( auto& test: tests) {
+    for (auto& test : tests) {
         error += test();
     }
     return error;

@@ -476,6 +476,8 @@ field/FieldCreatorIFS.cc
 field/FieldCreatorIFS.h
 field/FieldSet.cc
 field/FieldSet.h
+field/Halo.cc
+field/Halo.h
 field/MissingValue.cc
 field/MissingValue.h
 field/MultiField.cc
@@ -510,6 +512,7 @@ functionspace/EdgeColumns.h
 functionspace/EdgeColumns.cc
 functionspace/FunctionSpace.h
 functionspace/FunctionSpace.cc
+functionspace/HaloDescription.h
 functionspace/NodeColumns.h
 functionspace/NodeColumns.cc
 functionspace/StructuredColumns.h
@@ -1017,6 +1020,7 @@ ecbuild_add_library( TARGET atlas
     atlas_io
     hic
     hicsparse
+    pluto
     $<${atlas_HAVE_EIGEN}:Eigen3::Eigen>
     $<${atlas_HAVE_OMP_CXX}:OpenMP::OpenMP_CXX>
     $<${atlas_HAVE_GRIDTOOLS_STORAGE}:GridTools::gridtools>

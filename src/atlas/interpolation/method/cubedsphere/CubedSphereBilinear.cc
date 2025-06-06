@@ -27,6 +27,10 @@ void CubedSphereBilinear::do_setup(const Grid& source, const Grid& target, const
     ATLAS_NOTIMPLEMENTED;
 }
 
+void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSpace& target, const Cache&) {
+    ATLAS_NOTIMPLEMENTED;
+}
+
 void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSpace& target) {
     source_ = source;
     target_ = target;

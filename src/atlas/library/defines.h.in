@@ -62,6 +62,10 @@
 #    define ATLAS_SUPPRESS_WARNINGS_POP                  _Pragma( "diag pop" )
 #    define ATLAS_SUPPRESS_WARNINGS_INTEGER_SIGN_CHANGE  _Pragma( "diag_suppress integer_sign_change" )
 #    define ATLAS_SUPPRESS_WARNINGS_CODE_IS_UNREACHABLE  _Pragma( "diag_suppress code_is_unreachable" )
+#elif defined(__INTEL_LLVM_COMPILER)
+#    define ATLAS_SUPPRESS_WARNINGS_PUSH                      _Pragma( "clang diagnostic push")
+#    define ATLAS_SUPPRESS_WARNINGS_POP                       _Pragma( "clang diagnostic pop" )
+#    define ATLAS_SUPPRESS_WARNINGS_UNUSED_BUT_SET_VARIABLE   _Pragma( "clang diagnostic ignored \"-Wunused-but-set-variable\"")
 #elif defined(__INTEL_COMPILER)
 #    define ATLAS_SUPPRESS_WARNINGS_PUSH                 _Pragma( "warning push" )
 #    define ATLAS_SUPPRESS_WARNINGS_POP                  _Pragma( "warning pop" )
@@ -89,6 +93,9 @@
 #endif
 #if !defined(ATLAS_SUPPRESS_WARNINGS_TEMPLATE_ID_CDTOR)
 #    define ATLAS_SUPPRESS_WARNINGS_TEMPLATE_ID_CDTOR
+#endif
+#if !defined(ATLAS_SUPPRESS_WARNINGS_UNUSED_BUT_SET_VARIABLE)
+#    define ATLAS_SUPPRESS_WARNINGS_UNUSED_BUT_SET_VARIABLE
 #endif
 
 #endif
