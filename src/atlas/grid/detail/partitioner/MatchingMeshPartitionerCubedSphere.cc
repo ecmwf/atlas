@@ -10,6 +10,7 @@
 #include "atlas/grid/Iterator.h"
 #include "atlas/interpolation/method/cubedsphere/CellFinder.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/omp/omp.h"
 
 namespace atlas {
 namespace grid {
@@ -31,7 +32,7 @@ void MatchingMeshPartitionerCubedSphere::partition(const Grid& grid, int partiti
 
     // Loop over grid and set partioning[].
     auto lonlatIt = grid.lonlat().begin();
-    for (gidx_t i = 0; i < grid.size(); ++i) {
+    atlas_omp_parallel_for(gidx_t i = 0; i < grid.size(); ++i) {
         // This is probably more expensive than it needs to be, as it performs
         // a dry run of the cubedsphere interpolation method.
         const auto& lonlat = *lonlatIt;

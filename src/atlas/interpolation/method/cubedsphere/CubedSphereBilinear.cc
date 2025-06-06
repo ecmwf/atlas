@@ -6,11 +6,14 @@
  */
 
 #include "atlas/interpolation/method/cubedsphere/CubedSphereBilinear.h"
+#include <variant>
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid/CubedSphereGrid.h"
 #include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/interpolation/method/cubedsphere/CellFinder.h"
+#include "atlas/parallel/omp/omp.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "eckit/utils/Overloaded.h"
 
 namespace atlas {
 namespace interpolation {
@@ -33,9 +36,6 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
     ATLAS_ASSERT(ncSource);
     ATLAS_ASSERT(target_);
 
-    // Enable or disable halo exchange.
-    this->allow_halo_exchange_ = halo_exchange_;
-
 
     // return early if no output points on this partition reserve is called on
     // the triplets but also during the sparseMatrix constructor. This won't
@@ -51,15 +51,15 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
     const auto tolerance = 2. * std::numeric_limits<double>::epsilon() * N;
 
     // Loop over target at calculate interpolation weights.
-    auto weights          = std::vector<Triplet>{};
+    using TriWeights = std::array<Triplet, 3>;
+    using QuadWeights = std::array<Triplet, 4>;
+    using WeightsElement = std::variant<std::monostate, TriWeights, QuadWeights>;
+
+    auto weights          = std::vector<WeightsElement>(target->size());
     const auto ghostView  = array::make_view<int, 1>(target_.ghost());
     const auto lonlatView = array::make_view<double, 2>(target_.lonlat());
-    const auto tijView    = array::make_view<idx_t, 2>(ncSource.mesh().cells().field("tij"));
 
-    // Make vector of tile indices for each target point (needed for vector field interpolation).
-    std::vector<idx_t> tileIndex{};
-
-    for (idx_t i = 0; i < target_.size(); ++i) {
+    atlas_omp_parallel_for(idx_t i = 0; i < target_.size(); ++i) {
         if (!ghostView(i)) {
             const auto cell =
                 finder.getCell(PointLonLat(lonlatView(i, LON), lonlatView(i, LAT)), listSize_, tolerance, tolerance);
@@ -71,24 +71,21 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
                     std::to_string(i) + ".");
             }
 
-            tileIndex.push_back(tijView(cell.idx, 0));
             const auto& isect = cell.isect;
             const auto& j     = cell.nodes;
 
             switch (cell.nodes.size()) {
                 case (3): {
                     // Cell is a triangle.
-                    weights.emplace_back(i, j[0], 1. - isect.u - isect.v);
-                    weights.emplace_back(i, j[1], isect.u);
-                    weights.emplace_back(i, j[2], isect.v);
+                    weights[i] = TriWeights{Triplet{i, j[0], 1. - isect.u - isect.v}, Triplet{i, j[1], isect.u},
+                                            Triplet{i, j[2], isect.v}};
                     break;
                 }
                 case (4): {
                     // Cell is quad.
-                    weights.emplace_back(i, j[0], (1. - isect.u) * (1. - isect.v));
-                    weights.emplace_back(i, j[1], isect.u * (1. - isect.v));
-                    weights.emplace_back(i, j[2], isect.u * isect.v);
-                    weights.emplace_back(i, j[3], (1. - isect.u) * isect.v);
+                    weights[i] = QuadWeights{
+                        Triplet(i, j[0], (1. - isect.u) * (1. - isect.v)), Triplet(i, j[1], isect.u * (1. - isect.v)),
+                        Triplet(i, j[2], isect.u * isect.v), Triplet(i, j[3], (1. - isect.u) * isect.v)};
                     break;
                 }
                 default: {
@@ -98,11 +95,22 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
         }
     }
 
-    // fill sparse matrix and return.
-    setMatrix(target_.size(), source_.size(), weights);
+    auto flattenedWeights = std::vector<Triplet>{};
+    flattenedWeights.reserve(4 * target_.size());  // Reserve enough space for the maximum number of triplets.
+    auto weightVisitor =
+        eckit::Overloaded{[&](const auto& polyWeights) {
+                              flattenedWeights.insert(flattenedWeights.end(), polyWeights.begin(), polyWeights.end());
+                          },
+                          [](const std::monostate&) {
+                              // Do nothing for empty weights.
+                          }};
 
-    // Add tile index metadata to target.
-    target_->metadata().set("tile index", tileIndex);
+    for (const auto& weight : weights) {
+        std::visit(weightVisitor, weight);
+    }
+
+    // fill sparse matrix and return.
+    setMatrix(target_.size(), source_.size(), flattenedWeights);
 }
 
 void CubedSphereBilinear::print(std::ostream&) const {

@@ -30,7 +30,6 @@ public:
     CubedSphereBilinear(const Config& config): Method(config) {
         config.get("halo", halo_);
         config.get("list_size", listSize_);
-        config.get("halo_exchange", halo_exchange_);
     }
     virtual ~CubedSphereBilinear() override {}
 
@@ -48,7 +47,6 @@ private:
 
     int halo_{0};
     int listSize_{8};
-    bool halo_exchange_{true};
 };
 
 }  // namespace method
