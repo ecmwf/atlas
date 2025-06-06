@@ -513,7 +513,7 @@ void PointCloud::set_field_metadata(const eckit::Configuration& config, Field& f
         field.metadata().set("type", config.getString("type"));
     }
 
-        if (config.has("vector_component")) {
+    if (config.has("vector_component")) {
         field.metadata().set("vector_component", config.getSubConfiguration("vector_component"));
     }
 }
