@@ -81,8 +81,8 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
             switch (cell.nodes.size()) {
                 case (3): {
                     // Cell is a triangle.
-                    weights[i] = TriWeights{Triplet{i, j[0], 1. - isect.u - isect.v}, Triplet{i, j[1], isect.u},
-                                            Triplet{i, j[2], isect.v}};
+                    weights[i] = TriWeights{Triplet(i, j[0], 1. - isect.u - isect.v), Triplet(i, j[1], isect.u),
+                                            Triplet(i, j[2], isect.v)};
                     break;
                 }
                 case (4): {
