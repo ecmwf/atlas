@@ -478,21 +478,19 @@ CASE("separate vector field components") {
   const auto targetLonLatView =
       array::make_view<double, 2>(targetFunctionSpace.lonlat());
 
-  const auto createFieldView = [&](const FunctionSpace& functionSpace,
-                                   const std::string& name,
+  const auto createFieldView = [&](const FunctionSpace& functionSpace, const std::string& name, idx_t index,
                                    FieldSet& fieldSet) {
-    // Note: Vector field name can be anything that uniquely identifies field.
-    auto field = functionSpace.createField<double>(option::name(name));
-    field.metadata().set("vector_field_name", "wind");
-    return array::make_view<double, 1>(fieldSet.add(field));
+      // Note: Vector field name can be anything that uniquely identifies field.
+      auto field = functionSpace.createField<double>(option::name(name) | option::vector_component("vector", index++));
+      return array::make_view<double, 1>(fieldSet.add(field));
   };
 
-  auto uSourceView = createFieldView(sourceFunctionSpace, "u", sourceFieldSet);
-  auto vSourceView = createFieldView(sourceFunctionSpace, "v", sourceFieldSet);
+  auto uSourceView = createFieldView(sourceFunctionSpace, "u", 0, sourceFieldSet);
+  auto vSourceView = createFieldView(sourceFunctionSpace, "v", 1, sourceFieldSet);
   const auto uTargetView =
-      createFieldView(targetFunctionSpace, "u", targetFieldSet);
+      createFieldView(targetFunctionSpace, "u", 0, targetFieldSet);
   const auto vTargetView =
-      createFieldView(targetFunctionSpace, "v", targetFieldSet);
+      createFieldView(targetFunctionSpace, "v", 1, targetFieldSet);
 
   uSourceView.assign(0.);
   vSourceView.assign(0.);
@@ -511,7 +509,7 @@ CASE("separate vector field components") {
   targetFieldSet.haloExchange();
 
   auto errorView =
-      createFieldView(targetFunctionSpace, "error", targetFieldSet);
+      createFieldView(targetFunctionSpace, "error", 2, targetFieldSet);
 
   auto maxError = 0.;
   for (auto idx = idx_t{0}; idx < targetFunctionSpace.size(); idx++) {
@@ -535,9 +533,9 @@ CASE("separate vector field components") {
   targetAdjointFieldSet.adjointHaloExchange();
 
   auto uSourceAdjointView =
-      createFieldView(sourceFunctionSpace, "u", sourceAdjointFieldSet);
+      createFieldView(sourceFunctionSpace, "u", 0, sourceAdjointFieldSet);
   auto vSourceAdjointView =
-      createFieldView(sourceFunctionSpace, "v", sourceAdjointFieldSet);
+      createFieldView(sourceFunctionSpace, "v", 1, sourceAdjointFieldSet);
   uSourceAdjointView.assign(0.);
   vSourceAdjointView.assign(0.);
 
