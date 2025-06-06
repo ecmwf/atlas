@@ -61,8 +61,7 @@ Array* Array::wrap(Value* data, const ArrayShape& shape) {
 }
 template <typename Value>
 Array* Array::wrap(Value* data, const ArraySpec& spec) {
-    size_t size = spec.size();
-    return new ArrayT<Value>(new native::WrappedDataStore<Value>(data, size), spec);
+    return new ArrayT<Value>(new native::WrappedDataStore<Value>(data, spec), spec);
 }
 
 Array::~Array() = default;

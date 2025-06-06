@@ -20,6 +20,7 @@
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Iterator.h"
+#include "atlas/grid/UnstructuredGrid.h"
 #include "atlas/option/Options.h"
 #include "atlas/parallel/HaloExchange.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -150,21 +151,17 @@ PointCloud::PointCloud(const Grid& grid, const eckit::Configuration& config) :
     PointCloud(grid, make_partitioner(grid,config), config) {
 }
 
-PointCloud::PointCloud(const Grid& grid, const grid::Partitioner& _partitioner, const eckit::Configuration& config) {
-    ATLAS_TRACE("PointCloud(grid,partitioner,config)");
+PointCloud::PointCloud(const Grid& grid, const grid::Distribution& distribution, const eckit::Configuration& config) {
+    ATLAS_TRACE("PointCloud(grid,distribution,config)");
     mpi_comm_ = get_mpi_comm(config);
     auto& comm = mpi::comm(mpi_comm_);
     double halo_radius;
     config.get("halo_radius", halo_radius = 0.);
+    grid_ = grid;
 
-    grid::Partitioner partitioner(_partitioner);
-    if ( not partitioner ) {
-        partitioner = grid::Partitioner("equal_regions", util::Config("mpi_comm",mpi_comm_));
-    }
     part_ = comm.rank();
 
-    nb_partitions_ = partitioner.nb_partitions();
-    auto distribution = partitioner.partition(grid);
+    nb_partitions_ = distribution.nb_partitions();
     auto size_owned = distribution.nb_pts()[part_];
     size_owned_ = size_owned;
 
@@ -270,6 +267,10 @@ PointCloud::PointCloud(const Grid& grid, const grid::Partitioner& _partitioner, 
     setupGatherScatter();
 }
 
+PointCloud::PointCloud(const Grid& grid, const grid::Partitioner& _partitioner, const eckit::Configuration& config):
+PointCloud(grid, ((_partitioner) ? _partitioner : grid::Partitioner("equal_regions", util::Config("mpi_comm",get_mpi_comm(config)))).partition(grid), config) {
+    ATLAS_TRACE("PointCloud(grid,partitioner,config)");
+}
 
 Field PointCloud::ghost() const {
     if (not ghost_) {
@@ -278,6 +279,51 @@ Field PointCloud::ghost() const {
     }
     return ghost_;
 }
+
+const Grid& PointCloud::grid() const {
+    if (grid_) {
+        return grid_;
+    }
+
+    std::vector<PointXY> points;
+    points.reserve(size_global_);
+    if (nb_partitions_ == 1) {
+        for (const auto& point : iterate().xy()) {
+            points.push_back(point);
+        }
+    }
+    else {
+        std::vector<int> gidx;
+        gidx.reserve(size_global_);
+        std::vector<double> x, y;
+        x.reserve(size_global_);
+        y.reserve(size_global_);
+        const auto gidxView = array::make_view<gidx_t, 1>(global_index_);
+        const auto ghostView = array::make_view<int, 1>(ghost_);
+        int i = 0;
+        for (const auto& point : iterate().xy()) {
+            if (ghostView(i) == 0) {
+                gidx.push_back(gidxView(i));
+                x.push_back(point.x());
+                y.push_back(point.y());
+            }
+            i++;
+        }
+        const auto& comm = mpi::comm(mpi_comm_);
+        eckit::mpi::Buffer<int> gidxBuffer(comm.size());
+        eckit::mpi::Buffer<double> xBuffer(comm.size());
+        eckit::mpi::Buffer<double> yBuffer(comm.size());
+        comm.allGatherv(gidx.begin(), gidx.end(), gidxBuffer);
+        comm.allGatherv(x.begin(), x.end(), xBuffer);
+        comm.allGatherv(y.begin(), y.end(), yBuffer);
+        for (auto i : gidxBuffer.buffer) {
+            points[i - 1] = atlas::PointXY{xBuffer.buffer[i - 1], yBuffer.buffer[i - 1]};
+        }
+    }
+    grid_ = UnstructuredGrid(points);
+    return grid_;
+}
+
 
 array::ArrayShape PointCloud::config_shape(const eckit::Configuration& config) const {
     idx_t _size  = size();
@@ -1066,6 +1112,9 @@ PointCloud::PointCloud(const std::initializer_list<std::initializer_list<double>
 
 PointCloud::PointCloud(const Grid& grid, const eckit::Configuration& config):
     FunctionSpace(new detail::PointCloud(grid, config)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
+
+PointCloud::PointCloud(const Grid& grid, const grid::Distribution& distribution, const eckit::Configuration& config):
+    FunctionSpace(new detail::PointCloud(grid, distribution, config)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}
 
 PointCloud::PointCloud(const Grid& grid, const grid::Partitioner& partitioner, const eckit::Configuration& config):
     FunctionSpace(new detail::PointCloud(grid, partitioner,config)), functionspace_(dynamic_cast<const detail::PointCloud*>(get())) {}

@@ -29,6 +29,11 @@ void RegionalLinear2D::do_setup(const Grid& source, const Grid& target,
   ATLAS_NOTIMPLEMENTED;
 }
 
+void RegionalLinear2D::do_setup(const FunctionSpace& source, const FunctionSpace& target,
+                                const Cache&) {
+  ATLAS_NOTIMPLEMENTED;
+}
+
 void RegionalLinear2D::do_setup(const FunctionSpace& source,
                                 const FunctionSpace& target) {
   ATLAS_TRACE("interpolation::method::RegionalLinear2D::do_setup");

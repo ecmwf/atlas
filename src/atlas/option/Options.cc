@@ -86,6 +86,10 @@ alignment::alignment(int value) {
     set("alignment", value);
 }
 
+on_device::on_device() {
+  set("execution_space", "device");
+}
+
 // ----------------------------------------------------------------------------
 
 }  // namespace option

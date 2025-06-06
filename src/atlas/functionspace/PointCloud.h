@@ -19,6 +19,7 @@
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/detail/FunctionSpaceImpl.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/parallel/HaloExchange.h"
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/runtime/Exception.h"
@@ -50,12 +51,14 @@ public:
     PointCloud(const Field& lonlat, const Field& ghost, const eckit::Configuration& = util::NoConfig());
     PointCloud(const FieldSet&, const eckit::Configuration& = util::NoConfig());  // assuming lonlat ghost ridx and partition present
     PointCloud(const Grid&, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const Grid&, const grid::Distribution&, const eckit::Configuration& = util::NoConfig());
     PointCloud(const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig());
     ~PointCloud() override {}
     std::string type() const override { return "PointCloud"; }
     operator bool() const override { return true; }
     size_t footprint() const override { return sizeof(*this); }
     std::string distribution() const override;
+    const Grid& grid() const override;
     Field lonlat() const override { return lonlat_; }
     const Field& vertical() const { return vertical_; }
     Field ghost() const override;
@@ -169,6 +172,7 @@ private:
     void create_remote_index() const;
 
 private:
+    mutable Grid grid_;
     Field lonlat_;
     Field vertical_;
     mutable Field ghost_;
@@ -208,6 +212,7 @@ public:
     PointCloud(const std::vector<PointXYZ>&, const eckit::Configuration& = util::NoConfig());
     PointCloud(const std::initializer_list<std::initializer_list<double>>&, const eckit::Configuration& = util::NoConfig());
     PointCloud(const Grid&, const eckit::Configuration& = util::NoConfig());
+    PointCloud(const Grid&, const grid::Distribution&, const eckit::Configuration& = util::NoConfig());
     PointCloud(const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig());
 
     operator bool() const { return valid(); }

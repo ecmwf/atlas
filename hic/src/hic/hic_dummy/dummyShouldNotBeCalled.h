@@ -15,7 +15,7 @@
 namespace {
 
 [[noreturn]] void dummyShouldNotBeCalled(const char* symbol) {
-    throw std::runtime_error(std::string(symbol)+" is using the dummy backend and should not be called");
+    throw std::runtime_error(std::string(symbol) + " is using the dummy backend and should not be called");
 }
 
-}
+}  // namespace

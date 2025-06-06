@@ -617,12 +617,18 @@ void Structured::crop(const Domain& dom) {
 }
 
 void Structured::computeTruePeriodicity() {
+    ATLAS_ASSERT(domain_);
+
     if (projection_.strictlyRegional()) {
         periodic_x_ = false;
         return;
     }
-    if (not ZonalBandDomain(domain_)) {
-        periodic_x_ = false;
+    if( domain_.global() ) {
+        periodic_x_ = true;
+        return;
+    }
+    if (ZonalBandDomain(domain_)) {
+        periodic_x_ = true;
         return;
     }
 

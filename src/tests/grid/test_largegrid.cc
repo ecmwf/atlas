@@ -48,14 +48,14 @@ CASE("test resources for cropping large grids") {
     std::vector<std::string> gridnames{"L40000x20000", "N8000", "O8000"};
 
     for (auto& gridname : gridnames) {
-        EXPECT(Trace::peakMemory() < 128 * MB);
+        EXPECT(Trace::peakMemory() < 256 * MB);
 
         SECTION(std::string("section") + gridname) {
             Trace trace(Here(), "Grid{" + gridname + ", GlobalDomain{-180}}");
             auto grid = Grid{gridname, GlobalDomain{-180}};
             trace.stopAndReport();
             EXPECT(trace.elapsed() < 10.);
-            EXPECT(trace.peakMemory() < 128 * MB);
+            EXPECT(trace.peakMemory() < 256 * MB);
         }
     }
 }

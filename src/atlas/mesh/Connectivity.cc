@@ -453,7 +453,6 @@ MultiBlockConnectivityImpl::MultiBlockConnectivityImpl(eckit::Stream& s): Irregu
 //------------------------------------------------------------------------------------------------------
 
 MultiBlockConnectivityImpl::~MultiBlockConnectivityImpl() {
-    clear();
 }
 
 //------------------------------------------------------------------------------------------------------
