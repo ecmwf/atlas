@@ -31,7 +31,7 @@ void MatchingMeshPartitionerCubedSphere::partition(const Grid& grid, int partiti
     const size_t listSize  = 8;
 
     // Loop over grid and set partioning[].
-    auto lonlatIt = grid.lonlat().begin();
+    const auto lonlatIt = grid.lonlat().begin();
     atlas_omp_parallel_for(gidx_t i = 0; i < grid.size(); ++i) {
         const auto& lonLat = *(lonlatIt + i);
         // This is probably more expensive than it needs to be, as it performs
