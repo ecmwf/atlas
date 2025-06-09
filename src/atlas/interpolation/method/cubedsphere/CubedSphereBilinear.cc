@@ -54,12 +54,8 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
     const auto N         = CubedSphereGrid(ncSource.mesh().grid()).N();
     const auto tolerance = 2. * std::numeric_limits<double>::epsilon() * N;
 
-    // Loop over target at calculate interpolation weights.
-    using TriWeights = std::array<Triplet, 3>;
-    using QuadWeights = std::array<Triplet, 4>;
-    using WeightsElement = std::variant<std::monostate, TriWeights, QuadWeights>;
-
-    auto weights          = std::vector<WeightsElement>(target->size());
+    // Weights vector is oversized. Empty triplets are ignored by Matrix constructor.
+    auto weights          = Triplets(4 * target_.size());
     const auto ghostView  = array::make_view<int, 1>(target_.ghost());
     const auto lonlatView = array::make_view<double, 2>(target_.lonlat());
 
@@ -81,15 +77,17 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
             switch (cell.nodes.size()) {
                 case (3): {
                     // Cell is a triangle.
-                    weights[i] = TriWeights{Triplet(i, j[0], 1. - isect.u - isect.v), Triplet(i, j[1], isect.u),
-                                            Triplet(i, j[2], isect.v)};
+                    weights[4 * i]     = Triplet(i, j[0], 1. - isect.u - isect.v);
+                    weights[4 * i + 1] = Triplet(i, j[1], isect.u);
+                    weights[4 * i + 2] = Triplet(i, j[2], isect.v);
                     break;
                 }
                 case (4): {
                     // Cell is quad.
-                    weights[i] = QuadWeights{
-                        Triplet(i, j[0], (1. - isect.u) * (1. - isect.v)), Triplet(i, j[1], isect.u * (1. - isect.v)),
-                        Triplet(i, j[2], isect.u * isect.v), Triplet(i, j[3], (1. - isect.u) * isect.v)};
+                    weights[4 * i]     = Triplet(i, j[0], (1. - isect.u) * (1. - isect.v));
+                    weights[4 * i + 1] = Triplet(i, j[1], isect.u * (1. - isect.v));
+                    weights[4 * i + 2] = Triplet(i, j[2], isect.u * isect.v);
+                    weights[4 * i + 3] = Triplet(i, j[3], (1. - isect.u) * isect.v);
                     break;
                 }
                 default: {
@@ -99,22 +97,8 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
         }
     }
 
-    auto flattenedWeights = std::vector<Triplet>{};
-    flattenedWeights.reserve(4 * target_.size());  // Reserve enough space for the maximum number of triplets.
-    auto weightVisitor =
-        eckit::Overloaded{[&](const auto& polyWeights) {
-                              flattenedWeights.insert(flattenedWeights.end(), polyWeights.begin(), polyWeights.end());
-                          },
-                          [](const std::monostate&) {
-                              // Do nothing for empty weights.
-                          }};
-
-    for (const auto& weight : weights) {
-        std::visit(weightVisitor, weight);
-    }
-
     // fill sparse matrix and return.
-    setMatrix(target_.size(), source_.size(), flattenedWeights);
+    setMatrix(target_.size(), source_.size(), weights);
 }
 
 void CubedSphereBilinear::print(std::ostream&) const {
