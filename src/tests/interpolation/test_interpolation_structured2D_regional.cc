@@ -100,7 +100,7 @@ CASE("test_interpolation_structured2D_regional_1d") {
     StructuredColumns sourceFs(sourceGrid, option::halo(1));
     StructuredColumns targetFs(targetGrid, option::halo(1));
 
-    Interpolation interpolation(Config("type", "regional-linear-2d"), sourceFs, targetFs);
+    Interpolation interpolation(Config("type", "regional-linear"), sourceFs, targetFs);
 
     auto sourceField = sourceFs.createField<double>(Config("name", "source"));
     auto targetField = targetFs.createField<double>(Config("name", "target"));
@@ -157,7 +157,7 @@ CASE("test_interpolation_structured2D_regional_2d") {
     StructuredColumns sourceFs(sourceGrid, option::halo(1) | option::levels(nlevs));
     StructuredColumns targetFs(targetGrid, option::halo(1) | option::levels(nlevs));
 
-    Interpolation interpolation(Config("type", "regional-linear-2d"), sourceFs, targetFs);
+    Interpolation interpolation(Config("type", "regional-linear"), sourceFs, targetFs);
 
     auto sourceField = sourceFs.createField<double>(Config("name", "source"));
     auto targetField = targetFs.createField<double>(Config("name", "target"));
