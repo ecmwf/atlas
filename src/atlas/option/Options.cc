@@ -60,6 +60,11 @@ vector::vector(size_t _components) {
     set("type", "vector");
 }
 
+vector_component::vector_component(const std::string& vector_field_name, size_t index) {
+    const auto conf = util::Config("vector_field_name", vector_field_name) | util::Config("index", index);
+    set("vector_component", conf);
+}
+
 radius::radius(double _radius) {
     set("radius", _radius);
 }

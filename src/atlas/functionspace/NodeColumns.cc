@@ -292,6 +292,10 @@ void NodeColumns::set_field_metadata(const eckit::Configuration& config, Field& 
     if (config.has("type")) {
       field.metadata().set("type", config.getString("type"));
     }
+
+    if (config.has("vector_component")) {
+        field.metadata().set("vector_component", config.getSubConfiguration("vector_component"));
+    }
 }
 
 array::DataType NodeColumns::config_datatype(const eckit::Configuration& config) const {
