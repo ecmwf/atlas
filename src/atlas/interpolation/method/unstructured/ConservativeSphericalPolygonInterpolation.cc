@@ -1409,7 +1409,6 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
     ATLAS_ASSERT(not matrix_free_);
     const auto& src_points_ = data_->src_points_;
     const auto& src_iparam_ = data_->src_iparam_;
-
     Triplets triplets;
     size_t triplets_size    = 0;
     const auto& tgt_areas_v = data_->tgt_areas_;
@@ -1439,7 +1438,10 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
             }
             */
             const PointXYZ& Cs = src_points_[scell];
-            // compute gradient from cells
+            // compute gradient from cell
+#if defined(__APPLE__)
+volatile // On Apple, prevent FE_DIVBYZERO possibly triggered when inverting dual_area_inv a few lines below
+#endif
             double dual_area_inv = 0.;
             const auto nb_cells = get_cell_neighbours(src_mesh_, scell);
             Rsj.resize(nb_cells.size());
@@ -1458,7 +1460,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                     dual_area_inv += ConvexSphericalPolygon({Cs, Cnsj, Csj}).area();
                 }
             }
-            dual_area_inv = (dual_area_inv > 0.) ? 1. / dual_area_inv : 0.;
+            dual_area_inv = (dual_area_inv > 0.) ? 1. / dual_area_inv : 0.; // dual_area_inv, even if protected, may still leads to FE_DIVBYZERO with Apple without volatile trick
             PointXYZ Rs   = {0., 0., 0.};
             for (idx_t j = 0; j < nb_cells.size(); ++j) {
                 Rs = Rs + Rsj[j];

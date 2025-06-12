@@ -13,6 +13,7 @@
 #include <cfenv>
 #include <cstring>
 #include <iomanip>
+#include <bitset>
 
 #include "eckit/config/LibEcKit.h"
 #include "eckit/config/Resource.h"
@@ -36,21 +37,68 @@ int getEnv(const std::string& env, int default_value) {
 }
 }  // namespace
 
-static int atlas_feenableexcept(int excepts) {
 #if ATLAS_HAVE_FEENABLEEXCEPT
+static int atlas_feenableexcept(unsigned int excepts) {
     return ::feenableexcept(excepts);
-#else
-    return 0;
-#endif
 }
-
-static int atlas_fedisableexcept(int excepts) {
-#if ATLAS_HAVE_FEDISABLEEXCEPT
+static int atlas_fedisableexcept(unsigned int excepts) {
     return ::fedisableexcept(excepts);
-#else
-    return 0;
-#endif
 }
+#elif defined(__APPLE__)
+static int atlas_feenableexcept(unsigned int excepts) {
+    static fenv_t fenv;
+    unsigned int new_excepts = excepts & FE_ALL_EXCEPT;
+    unsigned int old_excepts;   // previous masks
+
+    if (::fegetenv(&fenv)) {
+        return -1;
+    }
+
+#if defined(__arm64__)
+    old_excepts = fenv.__fpsr & FE_ALL_EXCEPT;
+
+    fenv.__fpsr |= new_excepts;
+    fenv.__fpcr |= (new_excepts << 8);
+#else
+    old_excepts = fenv.__control & FE_ALL_EXCEPT;
+
+    fenv.__control &= ~new_excepts;
+    fenv.__mxcsr   &= ~(new_excepts << 7);
+#endif
+
+    return ::fesetenv(&fenv) ? -1 : old_excepts;
+}
+static int atlas_fedisableexcept(unsigned int excepts) {
+    static fenv_t fenv;
+    unsigned int new_excepts = excepts & FE_ALL_EXCEPT;
+    unsigned int old_excepts;   // all previous masks
+
+    if (::fegetenv(&fenv)) {
+        return -1;
+    }
+
+#if defined(__arm64__)
+    old_excepts = fenv.__fpsr & FE_ALL_EXCEPT;
+
+    fenv.__fpsr &= ~new_excepts;
+    fenv.__fpcr &= ~(new_excepts << 8);
+#else
+    old_excepts = fenv.__control & FE_ALL_EXCEPT;
+
+    fenv.__control |= new_excepts;
+    fenv.__mxcsr   |= (new_excepts << 7);
+#endif
+
+    return ::fesetenv(&fenv) ? -1 : old_excepts;
+}
+#else
+static int atlas_feenableexcept(unsigned int excepts) {
+    return 0;
+}
+static int atlas_fedisableexcept(unsigned int excepts) {
+    return 0;
+}
+#endif
 
 namespace atlas {
 namespace library {
@@ -127,7 +175,7 @@ private:
 
 // ------------------------------------------------------------------------------------
 
-[[noreturn]] void atlas_signal_handler(int signum, siginfo_t* si, void* /*unused*/) {
+[[noreturn]] void atlas_signal_handler(int signum, siginfo_t* si, [[maybe_unused]] void* ucontext) {
     Signal signal = Signals::instance().signal(signum);
 
     std::string signal_code;
@@ -150,6 +198,51 @@ private:
                 break;
         }
     }
+#if defined(__APPLE__) && defined(__arm64__)
+    if (signum == SIGILL) {
+        // On Apple Silicon a SIGFPE may be posing as a SIGILL
+        // See:
+        //    https://developer.apple.com/forums/thread/689159?answerId=733736022
+        //    https://developer.arm.com/documentation/ddi0595/2020-12/AArch64-Registers/ESR-EL1--Exception-Syndrome-Register--EL1-?lang=en#fieldset_0-24_0_16-1_1
+        auto esr = reinterpret_cast<ucontext_t*>(ucontext)->uc_mcontext->__es.__esr;
+        auto is_floating_point_exception = [&esr]() {
+            constexpr unsigned long fpe_mask = 2952790016; // bits: 10110000000000000000000000000000
+            constexpr std::bitset<32> fpe_mask_bits(fpe_mask);
+            return((fpe_mask_bits & std::bitset<32>(esr)) == fpe_mask_bits);
+        };
+        auto test_esr = [&esr](auto pos) -> bool {
+            return std::bitset<32>(esr).test(pos);
+        };
+        if (is_floating_point_exception()) {
+            // SIGILL is posing as a SIGFPE
+            signal = Signals::instance().signal(SIGFPE);
+            constexpr size_t IOF = 0; // invalid operation
+            constexpr size_t DZF = 1; // divide-by-zero
+            constexpr size_t OFF = 2; // overflow
+            constexpr size_t UFF = 3; // undeflow
+            constexpr size_t IXF = 4; // inexact
+            constexpr size_t IDF = 7; // denormal
+            if (test_esr(IOF)) {
+                signal_code = " [FE_INVALID]";
+            }
+            else if(test_esr(DZF)) {
+                signal_code = " [FE_DIVBYZERO]";
+            }
+            else if(test_esr(OFF)) {
+                signal_code = " [FE_OVERFLOW]";
+            }
+            else if(test_esr(UFF)) {
+                signal_code = " [FE_UNDERFLOW]";
+            }
+            else if(test_esr(IXF)) {
+                signal_code = " [FE_INEXACT]";
+            }
+            else if(test_esr(IDF)) {
+                signal_code = " [FE_DENORMAL]";
+            }
+        }
+    }
+#endif
 
     std::ostream& out = Log::error();
     out << "\n"
