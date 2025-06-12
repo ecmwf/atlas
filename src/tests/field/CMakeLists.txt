@@ -54,6 +54,11 @@ ecbuild_add_test( TARGET atlas_test_field_acc
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   CONDITION HAVE_ACC_CXX
 )
+ecbuild_add_test( TARGET atlas_test_field_acc_cpu
+  SOURCES  test_field_acc.cc
+  LIBS atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
 if( TEST atlas_test_field_acc )
     set_tests_properties ( atlas_test_field_acc PROPERTIES LABELS "gpu;acc")
 endif()
@@ -69,7 +74,7 @@ if( HAVE_FCTEST )
   add_fctest( TARGET atlas_fctest_multifield_ifs
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_multifield_ifs.F90
-    LIBS            atlas_f
+    LIBS            atlas_f pluto_f
     ENVIRONMENT     ${ATLAS_TEST_ENVIRONMENT}
   )
 
