@@ -182,7 +182,6 @@ private:
     int next_index(int current_index, int size, int offset = 1) const;
     int prev_index(int current_index, int size, int offset = 1) const;
 
-
     void setup_stat() const;
 
 private:
