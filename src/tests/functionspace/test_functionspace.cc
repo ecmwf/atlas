@@ -41,7 +41,6 @@ namespace atlas {
 namespace test {
 
 //-----------------------------------------------------------------------------
-
 CASE("test_functionspace_NodeColumns_no_halo") {
     Grid grid("O8");
     Mesh mesh = StructuredMeshGenerator().generate(grid);
@@ -690,14 +689,14 @@ CASE("test_functionspace_grid") {
     functionspace::PointCloud pointcloud_from_points(points);
 
     // All Grids should match original
-    EXPECT(cells_from_grid.grid() == grid);
-    EXPECT(edges_from_grid.grid() == grid);
-    EXPECT(nodes_from_grid.grid() == grid);
-    EXPECT(pointcloud_from_grid.grid() == grid);
-    EXPECT(cells_from_meshbuilder.grid() == grid);
-    EXPECT(edges_from_meshbuilder.grid() == grid);
-    EXPECT(nodes_from_meshbuilder.grid() == grid);
-    EXPECT(pointcloud_from_points.grid() == grid);
+    EXPECT(cells_from_grid.grid().uid() == grid.uid());
+    EXPECT(edges_from_grid.grid().uid() == grid.uid());
+    EXPECT(nodes_from_grid.grid().uid() == grid.uid());
+    EXPECT(pointcloud_from_grid.grid().uid() == grid.uid());
+    EXPECT(cells_from_meshbuilder.grid().uid() == grid.uid());
+    EXPECT(edges_from_meshbuilder.grid().uid() == grid.uid());
+    EXPECT(nodes_from_meshbuilder.grid().uid() == grid.uid());
+    EXPECT(pointcloud_from_points.grid().uid() == grid.uid());
 
     // Repeat with a StructuredGrid to check StructuredColumns and BlockStructuredColumns
     Grid structured_grid("O8");
