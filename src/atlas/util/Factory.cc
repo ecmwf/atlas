@@ -28,7 +28,7 @@ static bool ATLAS_DEPRECATION_WARNINGS() {
     if (val != nullptr) {
         return std::atoi(val);
     }
-    return true;
+    return false;
 }
 
 static bool ATLAS_DEPRECATION_ERRORS() {
