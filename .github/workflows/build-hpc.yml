@@ -93,6 +93,7 @@ jobs:
                   - -DENABLE_ECKIT_SQL=OFF
                   - -DENABLE_ECKIT_CMD=OFF
                   - -DENABLE_AIO=OFF
+                  - -DENABLE_ECKIT_GEO=OFF
                   - -DENABLE_WARNINGS=OFF
                   - ${{ matrix.cmake_options || '' }}
               ecmwf/fckit:
