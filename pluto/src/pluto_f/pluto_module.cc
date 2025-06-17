@@ -109,4 +109,8 @@ pluto::memory_pool_resource* c_pluto_device_pool_resource() {
 pluto::memory_pool_resource* c_pluto_managed_pool_resource() {
     return pluto::managed_pool_resource();
 }
+int c_pluto_devices() {
+    return pluto::devices();
+}
+
 }
