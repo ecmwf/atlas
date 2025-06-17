@@ -70,6 +70,12 @@ CASE("test_acc") {
         HIC_CALL(hicMemcpy(c_ptr, d_ptr, sizeof(int), hicMemcpyDeviceToHost));
     }
     EXPECT_EQ( *c_ptr, 2. );
+
+    if (using_acc()) {
+        HIC_CALL(hicFree(d_ptr));
+    }
+    delete c_ptr;
+
 }
 
 
