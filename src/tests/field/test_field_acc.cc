@@ -54,7 +54,7 @@ CASE("Information") {
 CASE("test_acc") {
     int* c_ptr = new int();
     *c_ptr = 5;
-    [[maybe_unused]] int* d_ptr;
+    [[maybe_unused]] int* d_ptr{nullptr};
 
     if (using_acc()) {
         HIC_CALL(hicMalloc(&d_ptr, sizeof(int)));
