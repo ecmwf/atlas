@@ -20,7 +20,6 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/redistribution/Redistribution.h"
-#include "atlas/util/Constants.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/function/VortexRollup.h"
 
@@ -52,29 +51,6 @@ void gmshOutput(const std::string& fileName, const FieldSet& fieldSet) {
     const auto gmsh = output::Gmsh(fileName, gmshConfig);
     gmsh.write(mesh);
     gmsh.write(fieldSet, functionSpace);
-}
-
-
-// Return (u, v) field with vortex_rollup as the streamfunction.
-// This has no physical significance, but it makes a nice swirly field.
-std::pair<double, double> vortexHorizontal(double lon, double lat) {
-
-    // set hLon and hLat step size.
-    const double hLon = 0.0001;
-    const double hLat = 0.0001;
-
-    // Get finite differences.
-
-    // Set u.
-    const double u = (util::function::vortex_rollup(lon, lat + 0.5 * hLat, 1.) -
-                      util::function::vortex_rollup(lon, lat - 0.5 * hLat, 1.)) /
-                     hLat;
-
-    const double v = -(util::function::vortex_rollup(lon + 0.5 * hLon, lat, 1.) -
-                       util::function::vortex_rollup(lon - 0.5 * hLon, lat, 1.)) /
-                     (hLon * std::cos(lat * util::Constants::degreesToRadians()));
-
-    return std::make_pair(u, v);
 }
 
 
