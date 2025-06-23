@@ -95,6 +95,44 @@ double dotProd(const Field& a, const Field& b) {
     return prod;
 }
 
+CASE("cubedsphere_to_cubedsphere_interpolation") {
+
+    // Check that interpolation scheme correctly maps a cubedsphere on to itself.
+
+    const auto fixture = CubedSphereInterpolationFixture{};
+    auto sourceField = fixture.sourceFunctionSpace_.createField<double>(option::name("test_field"));
+    {
+        const auto lonlat = array::make_view<double, 2>(fixture.sourceFunctionSpace_.lonlat());
+        auto view         = array::make_view<double, 1>(sourceField);
+        for (idx_t i = 0; i < fixture.sourceFunctionSpace_.size(); ++i) {
+            view(i) = util::function::vortex_rollup(lonlat(i, LON), lonlat(i, LAT), 1.);
+        }
+    }
+    const auto targetMesh = MeshGenerator("cubedsphere_dual").generate(fixture.sourceGrid_, fixture.targetPartitioner_);
+    const auto targetFunctionSpace = functionspace::CubedSphereNodeColumns(targetMesh);
+
+    const auto scheme = util::Config("type", "cubedsphere-bilinear");
+    const auto interp = Interpolation(scheme, fixture.sourceFunctionSpace_, targetFunctionSpace);
+
+    auto targetField = targetFunctionSpace.createField<double>(option::name("test_field"));
+    interp.execute(sourceField, targetField);
+    targetField.haloExchange();
+
+    // iterate over target field and check that error is zero.
+    {
+        const auto lonlat = array::make_view<double, 2>(targetFunctionSpace.lonlat());
+        auto targetView   = array::make_view<double, 1>(targetField);
+        for (idx_t i = 0; i < targetFunctionSpace.size(); ++i) {
+            const auto val = util::function::vortex_rollup(lonlat(i, LON), lonlat(i, LAT), 1.);
+            EXPECT_APPROX_EQ(targetView(i), val, 1e-14);
+        }
+    }
+
+    // output source and target fields.
+    gmshOutput("cubedsphere_to_cubedsphere_source.msh", FieldSet{sourceField});
+    gmshOutput("cubedsphere_to_cubedsphere_target.msh", FieldSet{targetField});
+}
+
 CASE("cubedsphere_scalar_interpolation") {
 
     const auto fixture = CubedSphereInterpolationFixture{};
