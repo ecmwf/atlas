@@ -69,7 +69,7 @@ double dotProd(const Field& a, const Field& b) {
     return prod;
 }
 
-CASE("temporary const lvalue referene test") {
+CASE("temporary const lvalue reference test") {
 
     const auto grid = CubedSphereInterpolationFixture{}.sourceGrid_;
 
