@@ -8,18 +8,20 @@
  * nor does it submit to any jurisdiction.
  */
 
-#ifndef _OPENACC
-#error This file needs to be compiled with OpenACC support
-#endif
-
 #include "hic/hic.h"
+
+#ifdef _OPENACC
 #include <openacc.h>
+#endif
 
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/field/MultiField.h"
+#include "atlas/parallel/acc/acc.h"
+#include "atlas/runtime/Log.h"
 
 #include "tests/AtlasTestEnvironment.h"
+
 
 using namespace std;
 using namespace eckit;
@@ -29,27 +31,51 @@ using namespace eckit;
 namespace atlas {
 namespace test {
 
+constexpr bool using_acc() {
+#ifdef _OPENACC
+    return atlas::acc::devices() > 0;
+#else
+    return false;
+#endif
+}
+
 //-----------------------------------------------------------------------------
+
+CASE("Information") {
+#ifdef _OPENACC
+    Log::info() << "Compiled with OpenACC : 1" << std::endl;
+#else
+    Log::info() << "Compiled with OpenACC : 0" << std::endl;
+#endif
+    Log::info() << "OpenACC devices       : " << acc::devices() << std::endl;
+    Log::info() << "Using OpenACC         : " << using_acc() << std::endl;
+}
 
 CASE("test_acc") {
     int* c_ptr = new int();
     *c_ptr = 5;
+    [[maybe_unused]] int* d_ptr{nullptr};
 
-    int* d_ptr;
-    HIC_CALL(hicMalloc(&d_ptr, sizeof(int)));
-    acc_map_data(c_ptr, d_ptr, sizeof(int));
-
-    HIC_CALL(hicMemcpy(d_ptr, c_ptr, sizeof(int), hicMemcpyHostToDevice));
-
-#pragma acc kernels present(c_ptr)
-    {
+    if (using_acc()) {
+        HIC_CALL(hicMalloc(&d_ptr, sizeof(int)));
+        acc::map(c_ptr, d_ptr, sizeof(int));
+        HIC_CALL(hicMemcpy(d_ptr, c_ptr, sizeof(int), hicMemcpyHostToDevice));
+    }
+    atlas_acc_pragma( acc kernels present(c_ptr) ) {
         *c_ptr -= 3.;
     }
 
-    EXPECT_EQ( *c_ptr, 5. );
-
-    HIC_CALL(hicMemcpy(c_ptr, d_ptr, sizeof(int), hicMemcpyDeviceToHost));
+    if (using_acc()) {
+        EXPECT_EQ( *c_ptr, 5. );
+        HIC_CALL(hicMemcpy(c_ptr, d_ptr, sizeof(int), hicMemcpyDeviceToHost));
+    }
     EXPECT_EQ( *c_ptr, 2. );
+
+    if (using_acc()) {
+        HIC_CALL(hicFree(d_ptr));
+    }
+    delete c_ptr;
+
 }
 
 
@@ -67,23 +93,27 @@ CASE("test_field_acc") {
 
     EXPECT_EQ( view(3,2), 2. );
 
-    field.updateDevice();
-
-#pragma acc kernels present(cpu_ptr)
-    {
+    if (using_acc()) {
+        field.updateDevice();
+    }
+    atlas_acc_pragma( acc kernels present(cpu_ptr) ) {
         cpu_ptr[view.index(3,2)] = 3.;
     }
-    field.updateHost();
+    if (using_acc()) {
+        field.updateHost();
+    }
+
     EXPECT_EQ( view(3,2), 3. );
 
-
     auto dview = array::make_device_view<double,2>(field);
-    double* dptr = dview.data();
-#pragma acc parallel deviceptr(dptr)
-    {
+    double* dptr = using_acc() ? dview.data() : cpu_ptr;
+
+    atlas_acc_pragma( acc parallel deviceptr(dptr) ) {
         dptr[dview.index(3,2)] = 4.;
     }
-    field.updateHost();
+    if (using_acc()) {
+        field.updateHost();
+    }
     EXPECT_EQ( view(3,2), 4. );
 
 #endif
@@ -116,10 +146,10 @@ CASE("test_fieldset_acc") {
             }
         }
 #else
-        auto dview = array::make_device_view<double, 2>(field);
+        auto dview = using_acc() ? array::make_device_view<double, 2>(field)
+                                 : array::make_host_view<double, 2>(field);
         double* dptr = dview.data();
-#pragma acc parallel deviceptr(dptr)
-        {
+        atlas_acc_pragma (acc parallel deviceptr(dptr)) {
             for (int i=0; i<Ni; ++i) {
                 for (int j=0; j<Nj; ++j) {
                     dptr[dview.index(i,j)] += 10 + 1;
@@ -161,7 +191,9 @@ CASE("test_fieldset_acc") {
         for( auto field : fieldset ) {
             edit_field_on_device(field);
         }
-        fieldset.updateHost();
+        if (using_acc()) {
+            fieldset.updateHost();
+        }
         fieldset.deallocateDevice();
 
         seed = 0.;
@@ -179,7 +211,9 @@ CASE("test_fieldset_acc") {
         fieldset.allocateDevice({"temperature"});
         fieldset.updateDevice({"temperature"});
         edit_field_on_device(field);
-        fieldset.updateHost({"temperature"});
+        if (using_acc()) {
+            fieldset.updateHost({"temperature"});
+        }
         fieldset.deallocateDevice({"temperature"});
         verify_field_on_host(field, seed);
     }
@@ -192,7 +226,9 @@ CASE("test_fieldset_acc") {
         fieldset.allocateDevice({0});
         fieldset.updateDevice({0});
         edit_field_on_device(field);
-        fieldset.updateHost({0});
+        if (using_acc()) {
+            fieldset.updateHost({0});
+        }
         fieldset.deallocateDevice({0});
         verify_field_on_host(field, seed);
     }

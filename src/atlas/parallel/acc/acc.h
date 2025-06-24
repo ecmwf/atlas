@@ -28,3 +28,10 @@ CompilerId compiler_id();
 
 }
 
+#if _OPENACC
+#define ATLAS_ACC_STR(x) #x
+#define ATLAS_ACC_STRINGIFY(x) ATLAS_ACC_STR(x)
+#define atlas_acc_pragma(x) _Pragma(ATLAS_ACC_STRINGIFY(x))
+#else
+#define atlas_acc_pragma(x)
+#endif

@@ -17,6 +17,7 @@
 module fcta_MultiField_fixture
 use atlas_module
 use atlas_multifield_module
+use pluto_module, only : pluto
 use, intrinsic :: iso_c_binding
 implicit none
 end module
@@ -111,6 +112,60 @@ TEST( test_multifield )
 END_TEST
 
 
+TEST( test_device_strides_on_cpu )
+    implicit none
+
+    type(atlas_MultiField)  :: mfield
+    type(atlas_FieldSet)    :: fieldset
+    type(atlas_Field)       :: field
+    real(c_double), pointer :: fdata_d3d(:,:,:), fdata_d3d_ddata(:,:,:)
+
+    integer, parameter :: nproma  = 6;
+    integer, parameter :: nlev    = 5;
+    integer, parameter :: ngptot  = 18;
+    integer, parameter :: nblk    = (ngptot + nproma - 1) / nproma
+    integer :: i, j, k
+
+    character(len=64), parameter, dimension(2) :: var_names_dp = [ character(64) :: &
+        "clv", "wind_u" ]
+
+    mfield = atlas_MultiField(atlas_real(c_double), [nproma, nlev, -1, nblk], var_names_dp)
+
+    FCTEST_CHECK_EQUAL(mfield%size(), 2)
+
+    fieldset = mfield%fieldset()
+    field = fieldset%field("clv")
+    call field%data(fdata_d3d)
+    do i = 1, field%shape(1)
+      do j = 1, field%shape(2)
+        do k = 1, field%shape(3)
+          fdata_d3d(i,j,k) = real(1000*i + 100*j + 10*1 + k, c_double)
+        end do
+      end do
+    end do
+    call field%update_device()
+    if (pluto%devices() == 0) then
+      call field%device_data(fdata_d3d_ddata) ! We expect this to be host-resident, so we can read it
+      do i = 1, field%shape(1)
+        do j = 1, field%shape(2)
+          do k = 1, field%shape(3)
+            FCTEST_CHECK_EQUAL(fdata_d3d_ddata(i,j,k), fdata_d3d(i,j,k))
+            fdata_d3d_ddata(i,j,k) = fdata_d3d_ddata(i,j,k) + 1_c_double
+          end do
+        end do
+      end do
+      call field%update_host()
+      do i = 1, field%shape(1)
+        do j = 1, field%shape(2)
+          do k = 1, field%shape(3)
+            FCTEST_CHECK_EQUAL(fdata_d3d(i,j,k), real(1000*i + 100*j + 10*1 + k + 1, c_double))
+          end do
+        end do
+      end do
+    endif
+END_TEST
+
+
 TEST( test_multifield_array_direct_constructor )
     implicit none
 
@@ -121,11 +176,11 @@ TEST( test_multifield_array_direct_constructor )
     real(c_float), pointer  :: fdata_f2d(:,:)
     real(c_double), pointer :: fdata_d3d(:,:,:)
 
-    integer, parameter :: nproma  = 16;
-    integer, parameter :: nlev    = 100;
-    integer, parameter :: ngptot  = 2000;
+    integer, parameter :: nproma  = 6;
+    integer, parameter :: nlev    = 5;
+    integer, parameter :: ngptot  = 18;
     integer, parameter :: nblk    = (ngptot + nproma - 1) / nproma
-    integer :: i
+    integer :: i, j, k
     character(len=64), parameter, dimension(3) :: var_names_sp = [ character(64) :: &
         "temperature ", "pressure", "density" ]
     character(len=64), parameter, dimension(2) :: var_names_dp = [ character(64) :: &

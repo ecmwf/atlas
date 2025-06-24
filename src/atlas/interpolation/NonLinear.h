@@ -54,7 +54,7 @@ struct NonLinear : DOXYGEN_HIDE(public util::ObjectHandle<nonlinear::NonLinear>)
     using Handle::operator bool;  // (ensure this exists)
 
     /**
-     * @bried if NonLinear applies to field
+     * @brief if NonLinear applies to field
      * @param [in] f field
      * @return if NonLinear applies to field
      */
@@ -67,6 +67,15 @@ struct NonLinear : DOXYGEN_HIDE(public util::ObjectHandle<nonlinear::NonLinear>)
      * @return if W was modified
      */
     bool execute(Matrix& W, const Field& f) const;
+
+    /**
+     * @brief Apply non-linear corrections to interpolation matrix
+     * @param [inout] W interpolation matrix
+     * @param [in] a array containing possibly missing values
+     * @param [in] c configuration containing missing value diagnostic information
+     * @return if W was modified
+     */
+    bool execute(Matrix& W, const array::Array& a, const Config& c) const;
 };
 
 

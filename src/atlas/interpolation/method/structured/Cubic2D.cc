@@ -18,10 +18,13 @@ namespace method {
 
 namespace {
 
-MethodBuilder<Cubic2D> __builder1("structured-cubic2D");
-MethodBuilder<Cubic2D> __builder2("cubic2D");
-MethodBuilder<Cubic2D> __builder3("structured-bicubic");
-MethodBuilder<Cubic2D> __builder4("bicubic");
+using util::FactoryDeprecated;
+
+MethodBuilder<Cubic2D> __builder0("structured-cubic");
+MethodBuilder<Cubic2D> __builder1("structured-bicubic", FactoryDeprecated("Please use structured-cubic"));
+MethodBuilder<Cubic2D> __builder2("structured-cubic2D", FactoryDeprecated("Please use structured-cubic"));
+MethodBuilder<Cubic2D> __builder3("cubic2D", FactoryDeprecated("Please use structured-cubic"));
+MethodBuilder<Cubic2D> __builder4("bicubic", FactoryDeprecated("Please use structured-cubic"));
 
 }  // namespace
 

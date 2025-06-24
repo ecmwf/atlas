@@ -76,6 +76,12 @@ public:
 
     ConvexSphericalPolygon(const PointXYZ points[], size_t size);
 
+    void invalidate_this_polygon() {
+        size_ = 0;
+        valid_ = false;
+        area_ = 0.;
+    }
+
     operator bool() const { return valid_; }
 
     size_t size() const { return size_; }
@@ -148,10 +154,8 @@ private:
 
     void clip(const GreatCircleSegment&, std::ostream* f = nullptr, double pointsSameEPS = std::numeric_limits<double>::epsilon());
 
-    /*
-   * @return true:polygon is convex
-   */
-    bool validate();
+    // Set valid_ to true when polygon is convex
+    void validate();
 
 private:
     std::array<PointXYZ, MAX_SIZE> sph_coords_;

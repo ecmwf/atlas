@@ -57,7 +57,7 @@ protected:
    * point to the nearest element(s), returning the (normalized) interpolation
    * weights
    */
-    Triplets projectPointToElements(size_t ip, const ElemIndex3::NodeList& elems, std::ostream& failures_log) const;
+    Triplets projectPointToElements(size_t ip, const ElemIndex3::NodeList& elems) const;
 
     virtual const FunctionSpace& source() const override { return source_; }
     virtual const FunctionSpace& target() const override { return target_; }

@@ -179,7 +179,7 @@ CASE("rigridding from high to low resolution; grid type: O") {
 
 
   const auto scheme = util::Config("type", "binning") |
-                      util::Config("scheme", option::type("structured-bilinear"));
+                      util::Config("scheme", option::type("structured-linear"));
 
   Interpolation regrid_high2low(scheme, ncfs_s, ncfs_t);
 

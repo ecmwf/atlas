@@ -349,7 +349,7 @@ CASE("cubedsphere_dual_mesh_test") {
             targetFunctionSpace.createField<double>(util::Config("name", "targetField") | util::Config("levels", 5));
 
         // Perform interpolation.
-        auto scheme = util::Config("type", "structured-linear2D") | util::Config("halo", 1);
+        auto scheme = util::Config("type", "structured-linear") | util::Config("halo", 1);
         auto interp = Interpolation(scheme, sourceFunctionSpace, targetFunctionSpace);
         interp.execute(sourceField, targetField);
         targetField.haloExchange();

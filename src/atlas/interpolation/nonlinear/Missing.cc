@@ -16,6 +16,7 @@
 
 #include "atlas/field/MissingValue.h"
 #include "atlas/util/DataType.h"
+#include "atlas/util/Metadata.h"
 
 
 namespace atlas {
@@ -28,12 +29,12 @@ static NonLinearFactoryBuilder<MissingIfAnyMissing>       __nl2(MissingIfAnyMiss
 static NonLinearFactoryBuilder<MissingIfHeaviestMissing>  __nl3(MissingIfHeaviestMissing::static_type());
 
 // Deprecated factory entries with "-real32" and "-real64" suffix for backwards compatibility.
-static NonLinearFactoryBuilder<MissingIfAllMissing>       __nl1_real32(MissingIfAllMissing::static_type()+"-real32");
-static NonLinearFactoryBuilder<MissingIfAnyMissing>       __nl2_real32(MissingIfAnyMissing::static_type()+"-real32");
-static NonLinearFactoryBuilder<MissingIfHeaviestMissing>  __nl3_real32(MissingIfHeaviestMissing::static_type()+"-real32");
-static NonLinearFactoryBuilder<MissingIfAllMissing>       __nl1_real64(MissingIfAllMissing::static_type()+"-real64");
-static NonLinearFactoryBuilder<MissingIfAnyMissing>       __nl2_real64(MissingIfAnyMissing::static_type()+"-real64");
-static NonLinearFactoryBuilder<MissingIfHeaviestMissing>  __nl3_real64(MissingIfHeaviestMissing::static_type()+"-real64");
+// static NonLinearFactoryBuilder<MissingIfAllMissing>       __nl1_real32(MissingIfAllMissing::static_type()+"-real32");
+// static NonLinearFactoryBuilder<MissingIfAnyMissing>       __nl2_real32(MissingIfAnyMissing::static_type()+"-real32");
+// static NonLinearFactoryBuilder<MissingIfHeaviestMissing>  __nl3_real32(MissingIfHeaviestMissing::static_type()+"-real32");
+// static NonLinearFactoryBuilder<MissingIfAllMissing>       __nl1_real64(MissingIfAllMissing::static_type()+"-real64");
+// static NonLinearFactoryBuilder<MissingIfAnyMissing>       __nl2_real64(MissingIfAnyMissing::static_type()+"-real64");
+// static NonLinearFactoryBuilder<MissingIfHeaviestMissing>  __nl3_real64(MissingIfHeaviestMissing::static_type()+"-real64");
 
 namespace {
 struct force_link {
@@ -47,6 +48,15 @@ struct force_link {
         load_builder<MissingIfHeaviestMissing>();
     }
 };
+
+std::string missing_value_type(const DataType& datatype, const field::MissingValue::Config& c) {
+    std::string result;
+    if (c.get("missing_value_type", result)) {
+        result += "-" + datatype.str();
+    }
+    return result;
+}
+
 }  // namespace
 void force_link_missing() {
     static force_link static_linking;
@@ -57,23 +67,30 @@ bool Missing::applicable(const Field& f) const {
 }
 
 bool MissingIfAllMissing::execute(NonLinear::Matrix& W, const Field& field) const {
-    switch(field.datatype().kind()) {
-        case (DataType::kind<double>()):        return executeT<double>(W,field);
-        case (DataType::kind<float>()):         return executeT<float>(W,field);
-        case (DataType::kind<int>()):           return executeT<int>(W,field);
-        case (DataType::kind<long>()):          return executeT<long>(W,field);
-        case (DataType::kind<unsigned long>()): return executeT<unsigned long>(W,field);
+    return execute(W, field.array(), field.metadata());
+}
+
+bool MissingIfAllMissing::execute(NonLinear::Matrix& W, const array::Array& array, const Config& config) const {
+    switch(array.datatype().kind()) {
+        case (DataType::kind<double>()):        return executeT<double>(W, array, config);
+        case (DataType::kind<float>()):         return executeT<float>(W, array, config);
+        case (DataType::kind<int>()):           return executeT<int>(W, array, config);
+        case (DataType::kind<long>()):          return executeT<long>(W, array, config);
+        case (DataType::kind<unsigned long>()): return executeT<unsigned long>(W, array, config);
         default: ATLAS_NOTIMPLEMENTED;
     }
 }
+
 template<typename T>
-bool MissingIfAllMissing::executeT(NonLinear::Matrix& W, const Field& field) const {
-    field::MissingValue mv(field);
+bool MissingIfAllMissing::executeT(NonLinear::Matrix& W, const array::Array& array, const Config& config) const {
+    field::MissingValue mv(missing_value_type(array.datatype(), config), config);
+
     auto& missingValue = mv.ref();
 
-    ATLAS_ASSERT(field.rank() == 1);
+    ATLAS_ASSERT(array.rank() == 1);
 
-    auto values = make_view_field_values<T, 1>(field);
+    // NOTE only for scalars (for now)
+    auto values = make_view_array_values<T, 1>(array);
     ATLAS_ASSERT(idx_t(W.cols()) == values.shape(0));
 
     auto data  = const_cast<Scalar*>(W.data());
@@ -137,23 +154,29 @@ bool MissingIfAllMissing::executeT(NonLinear::Matrix& W, const Field& field) con
 }
 
 bool MissingIfAnyMissing::execute(NonLinear::Matrix& W, const Field& field) const {
-    switch(field.datatype().kind()) {
-        case (DataType::kind<double>()):        return executeT<double>(W,field);
-        case (DataType::kind<float>()):         return executeT<float>(W,field);
-        case (DataType::kind<int>()):           return executeT<int>(W,field);
-        case (DataType::kind<long>()):          return executeT<long>(W,field);
-        case (DataType::kind<unsigned long>()): return executeT<unsigned long>(W,field);
+    return execute(W, field.array(), field.metadata());
+}
+
+bool MissingIfAnyMissing::execute(NonLinear::Matrix& W, const array::Array& array, const Config& config) const {
+    switch(array.datatype().kind()) {
+        case (DataType::kind<double>()):        return executeT<double>(W, array, config);
+        case (DataType::kind<float>()):         return executeT<float>(W, array, config);
+        case (DataType::kind<int>()):           return executeT<int>(W, array, config);
+        case (DataType::kind<long>()):          return executeT<long>(W, array, config);
+        case (DataType::kind<unsigned long>()): return executeT<unsigned long>(W, array, config);
         default: ATLAS_NOTIMPLEMENTED;
     }
 }
 
+
 template<typename T>
-bool MissingIfAnyMissing::executeT(NonLinear::Matrix& W, const Field& field) const {
-    field::MissingValue mv(field);
+bool MissingIfAnyMissing::executeT(NonLinear::Matrix& W, const array::Array& array, const Config& config) const {
+    field::MissingValue mv(missing_value_type(array.datatype(), config), config);
+
     auto& missingValue = mv.ref();
 
     // NOTE only for scalars (for now)
-    auto values = make_view_field_values<T, 1>(field);
+    auto values = make_view_array_values<T, 1>(array);
     ATLAS_ASSERT(idx_t(W.cols()) == values.size());
 
     auto data  = const_cast<Scalar*>(W.data());
@@ -204,23 +227,27 @@ bool MissingIfAnyMissing::executeT(NonLinear::Matrix& W, const Field& field) con
 }
 
 bool MissingIfHeaviestMissing::execute(NonLinear::Matrix& W, const Field& field) const {
-    switch(field.datatype().kind()) {
-        case (DataType::kind<double>()):        return executeT<double>(W,field);
-        case (DataType::kind<float>()):         return executeT<float>(W,field);
-        case (DataType::kind<int>()):           return executeT<int>(W,field);
-        case (DataType::kind<long>()):          return executeT<long>(W,field);
-        case (DataType::kind<unsigned long>()): return executeT<unsigned long>(W,field);
+    return execute(W, field.array(), field.metadata());
+}
+
+bool MissingIfHeaviestMissing::execute(NonLinear::Matrix& W, const array::Array& array, const Config& config) const {
+    switch(array.datatype().kind()) {
+        case (DataType::kind<double>()):        return executeT<double>(W, array, config);
+        case (DataType::kind<float>()):         return executeT<float>(W, array, config);
+        case (DataType::kind<int>()):           return executeT<int>(W, array, config);
+        case (DataType::kind<long>()):          return executeT<long>(W, array, config);
+        case (DataType::kind<unsigned long>()): return executeT<unsigned long>(W, array, config);
         default: ATLAS_NOTIMPLEMENTED;
     }
 }
 
 template<typename T>
-bool MissingIfHeaviestMissing::executeT(NonLinear::Matrix& W, const Field& field) const {
-    field::MissingValue mv(field);
+bool MissingIfHeaviestMissing::executeT(NonLinear::Matrix& W, const array::Array& array, const Config& config) const {
+    field::MissingValue mv(missing_value_type(array.datatype(), config), config);
     auto& missingValue = mv.ref();
 
     // NOTE only for scalars (for now)
-    auto values = make_view_field_values<T, 1>(field);
+    auto values = make_view_array_values<T, 1>(array);
     ATLAS_ASSERT(idx_t(W.cols()) == values.size());
 
     auto data  = const_cast<Scalar*>(W.data());

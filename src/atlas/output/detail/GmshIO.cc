@@ -432,6 +432,8 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::Struct
         ndata = field_glb.shape(0);
     }
 
+    auto missing = field::MissingValue(field);
+
     std::vector<int> lev = get_levels(nlev, gmsh_options);
     for (size_t ilev = 0; ilev < lev.size(); ++ilev) {
         int jlev          = lev[ilev];
@@ -441,6 +443,29 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::Struct
             print_field_lev(field_lev, sizeof(field_lev), jlev);
         }
 
+        auto data =
+            gather ? make_level_view<DATATYPE>(field_glb, ndata, jlev) : make_level_view<DATATYPE>(field, ndata, jlev);
+
+        auto include_idx = [&](idx_t n) {
+            for (idx_t v = 0; v < nvars; ++v) {
+                if (missing(data(n, v))) {
+                    return false;
+                }
+            }
+            return true;
+        };
+        idx_t ndata_nonmissing = [&] {
+            if (missing) {
+                idx_t c = 0;
+                for (idx_t n = 0; n < ndata; ++n) {
+                    c += include_idx(n);
+                }
+                return c;
+            }
+            return ndata;
+        }();
+
+
         out << "$NodeData\n";
         out << "1\n";
         out << "\"" << field.name() << field_lev << "\"\n";
@@ -449,11 +474,14 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::Struct
         out << "4\n";
         out << field_step(field) << "\n";
         out << field_vars(nvars) << "\n";
-        out << ndata << "\n";
+        out << ndata_nonmissing << "\n";
         out << mpi::rank() << "\n";
-        auto data =
-            gather ? make_level_view<DATATYPE>(field_glb, ndata, jlev) : make_level_view<DATATYPE>(field, ndata, jlev);
-        write_level(out, gidx, data);
+        if (missing) {
+            write_level(out, gidx, data, include_idx);
+        }
+        else {
+            write_level(out, gidx, data);
+        }
         out << "$EndNodeData\n";
     }
 }
@@ -484,9 +512,35 @@ void write_field_elems(const Metadata& gmsh_options, const functionspace::CellCo
         ndata = std::min<idx_t>(function_space.nb_cells_global(), field_glb.shape(0));
     }
 
+    auto missing = field::MissingValue(field);
+
     std::vector<int> lev = get_levels(nlev, gmsh_options);
     for (size_t ilev = 0; ilev < lev.size(); ++ilev) {
         int jlev = lev[ilev];
+
+        auto data = gather ? make_level_view<DATATYPE>(field_glb, ndata, jlev)
+                            : make_level_view<DATATYPE>(field, ndata, jlev);
+
+        auto include_idx = [&](idx_t n) {
+            for (idx_t v = 0; v < nvars; ++v) {
+                if (missing(data(n, v))) {
+                    return false;
+                }
+            }
+            return true;
+        };
+        idx_t ndata_nonmissing = [&] {
+            if (missing) {
+                idx_t c = 0;
+                for (idx_t n = 0; n < ndata; ++n) {
+                    c += include_idx(n);
+                }
+                return c;
+            }
+            return ndata;
+        }();
+
+
         if ((gather && mpi::rank() == 0) || !gather) {
             out << "$ElementData\n";
             out << "1\n";
@@ -496,11 +550,14 @@ void write_field_elems(const Metadata& gmsh_options, const functionspace::CellCo
             out << "4\n";
             out << field_step(field) << "\n";
             out << field_vars(nvars) << "\n";
-            out << ndata << "\n";
+            out << ndata_nonmissing << "\n";
             out << mpi::rank() << "\n";
-            auto data = gather ? make_level_view<DATATYPE>(field_glb, ndata, jlev)
-                               : make_level_view<DATATYPE>(field, ndata, jlev);
-            write_level(out, gidx, data);
+            if (missing) {
+                write_level(out, gidx, data, include_idx);
+            }
+            else {
+                write_level(out, gidx, data);
+            }
             out << "$EndElementData\n";
         }
     }
