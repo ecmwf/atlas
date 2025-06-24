@@ -61,6 +61,9 @@ Trans::Trans(const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Conf
 Trans::Trans(const Grid& grid, int truncation, const eckit::Configuration& config):
     Handle(TransFactory::build(grid, truncation, config)) {}
 
+Trans::Trans(const Grid& grid, int truncation_x, int truncation_y, const eckit::Configuration& config):
+    Handle(TransFactory::build(grid, truncation_x, truncation_y, config)) {}
+
 Trans::Trans(const Grid& grid, const Domain& domain, int truncation, const eckit::Configuration& config):
     Handle(TransFactory::build(grid, domain, truncation, config)) {}
 

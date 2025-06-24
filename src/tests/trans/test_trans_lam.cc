@@ -104,9 +104,13 @@ CASE("Test ectrans partitioner for LAM") {
 
 #if 1
 CASE("Test ectrans transform") {
+    if (not trans::Trans::hasBackend("ectrans")) {
+        Log::warning() << "Not testing as ectrans backend is not available" << std::endl;
+        return;
+    }
     auto grid = create_grid();
     bool split_y = false;
-    trans::TransIFS trans(grid, truncation_x(), truncation_y(), option::split_y(split_y));
+    trans::Trans trans(grid, truncation_x(), truncation_y(), option::split_y(split_y));
 
     functionspace::Spectral fs_sp(truncation_x(),truncation_y());
     functionspace::StructuredColumns fs_gp(grid, grid::Partitioner("ectrans", util::Config("split_y",split_y)));
@@ -172,10 +176,9 @@ CASE("Test ectrans transform") {
     
         auto rgpwindg = array::make_view<double,2>(gpwindg);
         rgpwindg.dump(std::cout);
-
+    }
     }
 
-    }
 #if 0
 {
   // Allocate gridpoint data

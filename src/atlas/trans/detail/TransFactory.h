@@ -49,7 +49,12 @@ public:
                                   const eckit::Configuration& = util::Config());
     static const TransImpl* build(const Grid&, int truncation, const eckit::Configuration& = util::Config());
 
+    static const TransImpl* build(const Grid&, int truncation_x, int truncation_y, const eckit::Configuration& = util::Config());
+
     static const TransImpl* build(const Grid&, const Domain&, int truncation,
+                                  const eckit::Configuration& = util::Config());
+
+    static const TransImpl* build(const Grid&, const Domain&, int truncation_x, int truncation_y,
                                   const eckit::Configuration& = util::Config());
 
     static const TransImpl* build(const Cache&, const FunctionSpace& gp, const FunctionSpace& sp,
@@ -58,7 +63,13 @@ public:
     static const TransImpl* build(const Cache&, const Grid&, int truncation,
                                   const eckit::Configuration& = util::Config());
 
+    static const TransImpl* build(const Cache&, const Grid&, int truncation_x, int truncation_y,
+                                  const eckit::Configuration& = util::Config());
+
     static const TransImpl* build(const Cache&, const Grid&, const Domain&, int truncation,
+                                  const eckit::Configuration& = util::Config());
+
+    static const TransImpl* build(const Cache&, const Grid&, const Domain&, int truncation_x, int truncation_y,
                                   const eckit::Configuration& = util::Config());
 
     static void list(std::ostream& out);
@@ -91,6 +102,10 @@ private:
                                   const eckit::Configuration&) {
         return nullptr;
     }
+    virtual const TransImpl* make(const Cache&, const Grid& /*gp*/, const Domain&, int /*truncation_x*/, int /*truncation_y*/,
+                                  const eckit::Configuration&) {
+        return nullptr;
+    }
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -102,6 +117,9 @@ class TransBuilderFunctionSpace : public TransFactory {
         return new T(cache, gp, sp, config);
     }
     virtual const TransImpl* make(const Cache&, const Grid&, const Domain&, int, const eckit::Configuration&) override {
+        throw_Exception("This function should not be called", Here());
+    }
+    virtual const TransImpl* make(const Cache&, const Grid&, const Domain&, int, int, const eckit::Configuration&) override {
         throw_Exception("This function should not be called", Here());
     }
 
@@ -116,6 +134,10 @@ class TransBuilderGrid : public TransFactory {
     virtual const TransImpl* make(const Cache& cache, const Grid& grid, const Domain& domain, int truncation,
                                   const eckit::Configuration& config) override {
         return new T(cache, grid, domain, truncation, config);
+    }
+    virtual const TransImpl* make(const Cache& cache, const Grid& grid, const Domain& domain, int truncation_x, int truncation_y,
+                                  const eckit::Configuration& config) override {
+        return new T(cache, grid, domain, truncation_x, truncation_y, config);
     }
     virtual const TransImpl* make(const Cache&, const FunctionSpace&, const FunctionSpace&,
                                   const eckit::Configuration&) override {

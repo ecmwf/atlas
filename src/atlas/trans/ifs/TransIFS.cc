@@ -1148,6 +1148,12 @@ TransIFS::TransIFS(const Grid& grid, const long truncation_x, const long truncat
     TransIFS(Cache(), grid, truncation_y, util::Config(config)("truncation_x",truncation_x)("truncation_y",truncation_y)) {
 }
 
+TransIFS::TransIFS(const Cache& cache, const Grid& grid, const Domain& domain, const long truncation_x, const long truncation_y,
+                   const eckit::Configuration& config):
+    TransIFS(grid, truncation_x, truncation_y, config) {
+}
+
+
 TransIFS::~TransIFS() = default;
 
 int atlas::trans::TransIFS::truncation() const {

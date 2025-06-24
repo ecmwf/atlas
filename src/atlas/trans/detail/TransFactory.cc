@@ -215,14 +215,29 @@ const TransImpl* TransFactory::build(const Grid& grid, int truncation, const eck
     return build(Cache(), grid, truncation, config);
 }
 
+const TransImpl* TransFactory::build(const Grid& grid, int truncation_x, int truncation_y, const eckit::Configuration& config) {
+    return build(Cache(), grid, truncation_x, truncation_y, config);
+}
+
 const TransImpl* TransFactory::build(const Grid& grid, const Domain& domain, int truncation,
                                      const eckit::Configuration& config) {
     return build(Cache(), grid, domain, truncation, config);
 }
 
+const TransImpl* TransFactory::build(const Grid& grid, const Domain& domain, int truncation_x, int truncation_y,
+                                     const eckit::Configuration& config) {
+    return build(Cache(), grid, domain, truncation_x, truncation_y, config);
+}
+
 const TransImpl* TransFactory::build(const Cache& cache, const Grid& grid, int truncation,
                                      const eckit::Configuration& config) {
     return build(cache, grid, grid.domain(), truncation, config);
+}
+
+
+const TransImpl* TransFactory::build(const Cache& cache, const Grid& grid, int truncation_x, int truncation_y,
+                                     const eckit::Configuration& config) {
+    return build(cache, grid, grid.domain(), truncation_x, truncation_y, config);
 }
 
 const TransImpl* TransFactory::build(const Cache& cache, const Grid& grid, const Domain& domain, int truncation,
@@ -249,6 +264,32 @@ const TransImpl* TransFactory::build(const Cache& cache, const Grid& grid, const
     std::string builder = backend;
     auto factory        = get(builder);
     return factory->make(cache, grid, domain, truncation, options);
+}
+
+const TransImpl* TransFactory::build(const Cache& cache, const Grid& grid, const Domain& domain, int truncation_x, int truncation_y,
+                                     const eckit::Configuration& config) {
+    force_link();
+
+    if (cache.trans()) {
+        Log::debug() << "Creating Trans from cache, ignoring any other arguments" << std::endl;
+        return cache.trans();
+    }
+    util::Config options = TransBackend::instance().config();
+    options.set(eckit::LocalConfiguration(config));
+
+    std::string backend = options.getString("type");
+
+    Log::debug() << "Looking for TransFactory [" << backend << "]" << std::endl;
+    if (!TransBackend::instance().has(backend)) {
+        Log::error() << "No TransFactory for [" << backend << "]" << std::endl;
+        Log::error() << "TransFactories are :" << std::endl;
+        TransBackend::instance().list(Log::error());
+        Log::error() << std::endl;
+        throw_Exception(std::string("No TransFactory called ") + backend);
+    }
+    std::string builder = backend;
+    auto factory        = get(builder);
+    return factory->make(cache, grid, domain, truncation_x, truncation_y, options);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

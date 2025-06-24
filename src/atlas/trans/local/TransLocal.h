@@ -78,8 +78,10 @@ public:
     TransLocal(const Grid&, const long truncation, const eckit::Configuration& = util::NoConfig());
     TransLocal(const Grid&, const Domain&, const long truncation, const eckit::Configuration& = util::NoConfig());
     TransLocal(const Cache&, const Grid&, const long truncation, const eckit::Configuration& = util::NoConfig());
+    TransLocal(const Cache&, const Grid&, const long truncation_x, const long truncation_y, const eckit::Configuration& = util::NoConfig());
     TransLocal(const Cache&, const Grid&, const Domain&, const long truncation,
                const eckit::Configuration& = util::NoConfig());
+    TransLocal(const Cache&, const Grid&, const Domain&, const long truncation_x, const long truncation_y, const eckit::Configuration& = util::NoConfig());
 
     virtual ~TransLocal() override;
 

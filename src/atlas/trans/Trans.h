@@ -53,6 +53,7 @@ public:
 
     Trans(const FunctionSpace& gp, const FunctionSpace& sp, const eckit::Configuration& = util::NoConfig());
     Trans(const Grid&, int truncation, const eckit::Configuration& = util::NoConfig());
+    Trans(const Grid&, int truncation_x, int truncation_y, const eckit::Configuration& = util::NoConfig());
     Trans(const Grid&, const Domain&, int truncation, const eckit::Configuration& = util::NoConfig());
 
     Trans(const Cache&, const FunctionSpace& gp, const FunctionSpace& sp,

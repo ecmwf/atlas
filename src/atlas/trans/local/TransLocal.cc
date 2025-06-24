@@ -768,6 +768,14 @@ TransLocal::TransLocal(const Grid& grid, const Domain& domain, const long trunca
 TransLocal::TransLocal(const Cache& cache, const Grid& grid, const long truncation, const eckit::Configuration& config):
     TransLocal(cache, grid, grid.domain(), truncation, config) {}
 
+TransLocal::TransLocal(const Cache& cache, const Grid& grid, const long truncation_x, const long truncation_y, const eckit::Configuration& config) {
+    ATLAS_NOTIMPLEMENTED;
+}
+
+TransLocal::TransLocal(const Cache& cache, const Grid& grid, const Domain& domain, const long truncation_x, const long truncation_y, const eckit::Configuration& config) {
+    ATLAS_NOTIMPLEMENTED;
+}
+
 // --------------------------------------------------------------------------------------------------------------------
 
 TransLocal::~TransLocal() {
