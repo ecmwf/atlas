@@ -50,8 +50,13 @@ endif()
 
 if( atlas_HAVE_ECTRANS )
   set( atlas_HAVE_ECTRANS 1 )
+  set( atlas_HAVE_ECTRANS_LAM 0 )
+  if ( ectrans_HAVE_ETRANS )
+    set( atlas_HAVE_ECTRANS_LAM 1 )
+  endif()
 else()
   set( atlas_HAVE_ECTRANS 0 )
+  set( atlas_HAVE_ECTRANS_LAM 0 )
 endif()
 
 if( atlas_HAVE_PACKAGE_ECTRANS )
