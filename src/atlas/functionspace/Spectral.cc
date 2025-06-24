@@ -201,7 +201,7 @@ public:
 
     int nb_spectral_coefficients_global() const {
         if (truncation_ >= 0) {
-            return (truncation_ + 1) * (truncation_ + 2); }
+            return (truncation_ + 1) * (truncation_ + 2);
         }
         else {
             return compute_nb_spectral_coefficients(truncation_x_, truncation_y_);
@@ -277,7 +277,6 @@ Spectral::Spectral(const int truncation_x, const int truncation_y, const eckit::
     nb_levels_(0), truncation_x_(truncation_x), truncation_y_(truncation_y),
     parallelisation_(new Parallelisation(truncation_x,truncation_y)) {
     config.get("levels", nb_levels_);
-    ATLAS_DEBUG();
 }
 
 
