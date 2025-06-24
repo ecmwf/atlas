@@ -1285,7 +1285,8 @@ void TransIFS::ctor_lam(const RegularGrid& grid, long truncation, const eckit::C
     TRANS_CHECK(::trans_use_mpi(mpi::size() > 1));
 
     TRANS_CHECK(::trans_new(trans_.get()));
-    TRANS_CHECK(::trans_set_resol_lam(trans_.get(), grid.nx(), grid.ny()));
+    const double dy = std::abs(grid.y(1)-grid.y(0));
+    TRANS_CHECK(::trans_set_resol_lam(trans_.get(), grid.nx(), grid.ny(), grid.dx(), dy));
     trans_->lsplit = p.split_y();
 
     long truncation_x = -1;

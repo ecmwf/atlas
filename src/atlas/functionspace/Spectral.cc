@@ -127,7 +127,6 @@ public:
         TRANS_CHECK(::trans_use_mpi(mpi::size() > 1));
         TRANS_CHECK(::trans_new(trans_.get()));
         TRANS_CHECK(::trans_set_trunc_lam(trans_.get(), truncation_x, truncation_y));
-        TRANS_CHECK(::trans_set_resol_lam(trans_.get(),truncation_x*2+1,truncation_y*2+1));
         TRANS_CHECK(::trans_setup(trans_.get()));
     }
 
