@@ -13,7 +13,6 @@
 #include "atlas/functionspace/PointCloud.h"
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/Iterator.h"
 #include "atlas/grid/Partitioner.h"
 #include "atlas/interpolation/Interpolation.h"
 #include "atlas/mesh/Mesh.h"
@@ -67,28 +66,6 @@ double dotProd(const Field& a, const Field& b) {
     }
     mpi::comm().allReduceInPlace(prod, eckit::mpi::Operation::SUM);
     return prod;
-}
-
-CASE("temporary const lvalue reference test") {
-
-    const auto grid = CubedSphereInterpolationFixture{}.sourceGrid_;
-
-    auto iterator = grid.lonlat().begin();
-    const auto begin = iterator;
-    for (idx_t i = 0; i < grid.size(); ++i) {
-
-        // This does not dangle, because C++ makes no sense!
-        const auto& lonLat = *(begin + i);
-        const auto refLonLat = *iterator;
-        ++iterator;
-
-        EXPECT_APPROX_EQ(lonLat.lon(), refLonLat.lon(), 1e-14);
-        EXPECT_APPROX_EQ(lonLat.lat(), refLonLat.lat(), 1e-14);
-
-        // Only now, *(begin + i), do you have my permission to die.
-    }
-
-
 }
 
 CASE("cubedsphere_to_cubedsphere_interpolation") {

@@ -6,14 +6,12 @@
  */
 
 #include "atlas/interpolation/method/cubedsphere/CubedSphereBilinear.h"
-#include <variant>
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid/CubedSphereGrid.h"
 #include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/interpolation/method/cubedsphere/CellFinder.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "eckit/utils/Overloaded.h"
 
 namespace atlas {
 namespace interpolation {
