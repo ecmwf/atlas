@@ -108,12 +108,13 @@ jobs:
                   - -DENABLE_TESTS=OFF
                   - ${{ matrix.cmake_options || '' }}
               ecmwf-ifs/ectrans:
-                version: develop
+                version: feature/transi_with_etrans
                 cmake_options:
                   - -DENABLE_MPI=ON
                   - -DENABLE_ACC=ON
                   - -DENABLE_GPU=ON
                   - -DENABLE_TESTS=OFF
+                  - -DENABLE_ETRANS=ON
                   - ${{ matrix.cmake_options || '' }}
 
           template: |
