@@ -20,11 +20,10 @@ namespace {
 
 using util::FactoryDeprecated;
 
-MethodBuilder<Linear3D> __builder0("structured-3d-linear");
-MethodBuilder<Linear3D> __builder1("structured-trilinear", FactoryDeprecated("Please use structured-3d-linear"));
-MethodBuilder<Linear3D> __builder2("structured-linear3D", FactoryDeprecated("Please use structured-3d-linear"));
-MethodBuilder<Linear3D> __builder3("linear3D", FactoryDeprecated("Please use structured-3d-linear"));
-MethodBuilder<Linear3D> __builder4("trilinear", FactoryDeprecated("Please use structured-3d-linear"));
+MethodBuilder<Linear3D> __builder1("structured-trilinear");
+MethodBuilder<Linear3D> __builder2("structured-linear3D", FactoryDeprecated("Please use structured-trilinear"));
+MethodBuilder<Linear3D> __builder3("linear3D", FactoryDeprecated("Please use structured-trilinear"));
+MethodBuilder<Linear3D> __builder4("trilinear", FactoryDeprecated("Please use structured-trilinear"));
 
 }  // namespace
 

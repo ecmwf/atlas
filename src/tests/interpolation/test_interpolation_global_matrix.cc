@@ -246,11 +246,11 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
 
     auto test_matrix_assemble_distribute = [&](const Grid& input_grid, const Grid& output_grid) {
         int mpi_root = 0;
-        do_assemble_distribute_matrix("structured-linear", input_grid, output_grid, mpi_root);
+        do_assemble_distribute_matrix("structured-bilinear", input_grid, output_grid, mpi_root);
 
         mpi_root = mpi::size() - 1;
         std::vector<std::string> interpolators;
-        interpolators.insert(interpolators.end(), {"structured-linear", "structured-cubic", "structured-quasicubic"});
+        interpolators.insert(interpolators.end(), {"structured-bilinear", "structured-bicubic", "structured-biquasicubic"});
         interpolators.insert(interpolators.end(), {"nearest-neighbour", "k-nearest-neighbours", "conservative-spherical-polygon", "finite-element", "unstructured-bilinear-lonlat"});
         for (auto scheme_str : interpolators) {
             do_assemble_distribute_matrix(scheme_str, input_grid, output_grid, mpi_root);

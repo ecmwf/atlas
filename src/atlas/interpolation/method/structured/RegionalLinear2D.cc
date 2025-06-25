@@ -22,8 +22,8 @@ namespace {
 
 using util::FactoryDeprecated;
 
-MethodBuilder<RegionalLinear2D> __builder0("regional-linear");
-MethodBuilder<RegionalLinear2D> __builder1("regional-linear-2d", FactoryDeprecated("Please use regional-linear"));
+MethodBuilder<RegionalLinear2D> __builder0("regional-bilinear");
+MethodBuilder<RegionalLinear2D> __builder1("regional-linear-2d", FactoryDeprecated("Please use regional-bilinear"));
 
 }
 

@@ -20,11 +20,10 @@ namespace {
 
 using util::FactoryDeprecated;
 
-MethodBuilder<QuasiCubic3D> __builder0("structured-3d-quasicubic");
-MethodBuilder<QuasiCubic3D> __builder1("structured-triquasicubic", FactoryDeprecated("Please use structured-3d-quasicubic"));
-MethodBuilder<QuasiCubic3D> __builder2("structured-quasicubic3D", FactoryDeprecated("Please use structured-3d-quasicubic"));
-MethodBuilder<QuasiCubic3D> __builder3("quasicubic3D", FactoryDeprecated("Please use structured-3d-quasicubic"));
-MethodBuilder<QuasiCubic3D> __builder4("triquasicubic", FactoryDeprecated("Please use structured-3d-quasicubic"));
+MethodBuilder<QuasiCubic3D> __builder1("structured-triquasicubic");
+MethodBuilder<QuasiCubic3D> __builder2("structured-quasicubic3D", FactoryDeprecated("Please use structured-triquasicubic"));
+MethodBuilder<QuasiCubic3D> __builder3("quasicubic3D", FactoryDeprecated("Please use structured-triquasicubic"));
+MethodBuilder<QuasiCubic3D> __builder4("triquasicubic", FactoryDeprecated("Please use structured-triquasicubic"));
 
 }  // namespace
 
