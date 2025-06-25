@@ -46,7 +46,12 @@ void atlas__Field__device_data_specf(FieldImpl* This, Value*& data, int& rank, i
     }
     data     = This->array().device_data<Value>();
     shapef   = const_cast<int*>(This->shapef().data());
-    stridesf = const_cast<int*>(This->device_stridesf().data());
+    if (data == This->array().host_data<Value>()) {
+        stridesf = const_cast<int*>(This->stridesf().data());
+    }
+    else {
+        stridesf = const_cast<int*>(This->device_stridesf().data());
+    }
     rank     = This->shapef().size();
 }
 

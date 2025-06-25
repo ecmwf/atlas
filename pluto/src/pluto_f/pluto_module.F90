@@ -7,6 +7,10 @@ private
 public :: pluto, pluto_memory_resource, pluto_allocator
 
 interface
+    function c_pluto_devices() result(devices) bind(c)
+        use iso_c_binding, only: c_int
+        integer(c_int) :: devices
+    end function
     subroutine c_pluto_host_set_default_resource_name(name, name_size) bind(c)
         use iso_c_binding, only: c_ptr, c_int
         type(c_ptr), value, intent(in) :: name
@@ -249,6 +253,7 @@ type pluto_t
     type(pluto_scope_t)  :: scope
     type(pluto_trace_t)  :: trace
 contains
+    procedure, nopass :: devices => pluto_devices
     procedure, nopass :: get_registered_resource => pluto_get_registered_resource
     procedure, nopass :: new_delete_resource => pluto_new_delete_resource
     procedure, nopass :: null_memory_resource => pluto_null_memory_resource
@@ -326,6 +331,11 @@ function pluto_trace_enabled()
     else
         pluto_trace_enabled = .false.
     endif
+end function
+
+function pluto_devices()
+    integer(c_int) :: pluto_devices
+    pluto_devices = c_pluto_devices()
 end function
 
 function pluto_get_registered_resource(name) result(memory_resource)

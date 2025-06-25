@@ -120,9 +120,9 @@ ConvexSphericalPolygon::ConvexSphericalPolygon(const PointLonLat points[], size_
         ++isp;
     }
     size_  = isp;
-    valid_ = size_ > 2;
-    if (valid_) {
-        ATLAS_ASSERT(validate());
+    validate();
+    if (not valid_) {
+        invalidate_this_polygon();
     }
 }
 
@@ -145,9 +145,9 @@ ConvexSphericalPolygon::ConvexSphericalPolygon(const PointXYZ points[], size_t s
         ++isp;
     }
     size_  = isp;
-    valid_ = size_ > 2;
-    if (valid_) {
-        ATLAS_ASSERT(validate());
+    validate();
+    if (not valid_) {
+        invalidate_this_polygon();
     }
 }
 
@@ -170,19 +170,25 @@ void ConvexSphericalPolygon::compute_centroid() const {
     computed_centroid_ = true;
 }
 
-bool ConvexSphericalPolygon::validate() {
+void ConvexSphericalPolygon::validate() {
+    valid_ = size_ > 2;
     if (valid_) {
         for (int i = 0; i < size(); i++) {
             int ni                = next(i);
             int nni               = next(ni);
             const PointXYZ& P     = sph_coords_[i];
             const PointXYZ& nextP = sph_coords_[ni];
-            ATLAS_ASSERT(std::abs(PointXYZ::dot(P, P) - 1.) < 10 * EPS);
+            if( std::abs(PointXYZ::dot(P, P) - 1.) >= 10 * EPS ) {
+                valid_ = false;
+                break;
+            }
             ATLAS_ASSERT(not approx_eq(P, PointXYZ::mul(nextP, -1.)));
-            valid_ = valid_ && GreatCircleSegment{P, nextP}.inLeftHemisphere(sph_coords_[nni], -0.5*EPS);
+            if( not GreatCircleSegment{P, nextP}.inLeftHemisphere(sph_coords_[nni], -0.5*EPS)) {
+                valid_ = false;
+                break;
+            }
         }
     }
-    return valid_;
 }
 
 bool ConvexSphericalPolygon::equals(const ConvexSphericalPolygon& plg, const double deg_prec) const {
@@ -266,11 +272,6 @@ void ConvexSphericalPolygon::clip(const GreatCircleSegment& great_circle, std::o
     ATLAS_ASSERT(not approx_eq(great_circle.first(), great_circle.second()));
     std::vector<PointXYZ> clipped_sph_coords;
     clipped_sph_coords.reserve(ConvexSphericalPolygon::MAX_SIZE);
-    auto invalidate_this_polygon = [&]() {
-        size_  = 0;
-        valid_ = false;
-        area_  = 0.;
-    };
 #if DEBUG_OUTPUT
     int add_point_num = 0;
 #endif

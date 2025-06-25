@@ -11,6 +11,7 @@
 #include "atlas/util/Factory.h"
 
 #include <iostream>
+#include <cstdlib>
 
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
@@ -21,6 +22,22 @@ using lock_guard = std::lock_guard<std::mutex>;
 
 namespace atlas {
 namespace util {
+
+static bool ATLAS_DEPRECATION_WARNINGS() {
+    const char* val = std::getenv("ATLAS_DEPRECATION_WARNINGS");
+    if (val != nullptr) {
+        return std::atoi(val);
+    }
+    return false;
+}
+
+static bool ATLAS_DEPRECATION_ERRORS() {
+    const char* val = std::getenv("ATLAS_DEPRECATION_ERRORS");
+    if (val != nullptr) {
+        return std::atoi(val);
+    }
+    return false;
+}
 
 bool FactoryRegistry::has(const std::string& builder) const {
     lock_guard lock(mutex_);
@@ -40,7 +57,19 @@ FactoryBase* FactoryRegistry::get(const std::string& builder) const {
         throw_Exception(std::string("No ") + factory_ + std::string(" called ") + builder);
     }
     else {
-        return iterator->second;
+        auto* factory = iterator->second;
+        if (factory->deprecated()) {
+            if (ATLAS_DEPRECATION_WARNINGS()) {
+                const std::string& message = factory->deprecated().message();
+                Log::warning() << "[ATLAS_DEPRECATION_WARNING] The builder " << builder << " should no longer be used. " << message << '\n';
+                Log::warning() << "[ATLAS_DEPRECATION_WARNING] This warning can be disabled with `export ATLAS_DEPRECATION_WARNINGS=0`" << std::endl;
+            }
+            if (ATLAS_DEPRECATION_ERRORS()) {
+                const std::string& message = factory->deprecated().message();
+                ATLAS_THROW_EXCEPTION("[ATLAS_DEPRECATION_ERROR] The builder " << builder << " should no longer be used. " << message);
+            }
+        }
+        return factory;
     }
 }
 
@@ -81,7 +110,9 @@ std::vector<std::string> FactoryRegistry::keys() const {
     std::vector<std::string> _keys;
     _keys.reserve(factories_.size());
     for (const auto& key_value : factories_) {
-        _keys.emplace_back(key_value.first);
+        if (not key_value.second->deprecated_) {
+            _keys.emplace_back(key_value.first);
+        }
     }
     return _keys;
 }
@@ -89,17 +120,19 @@ std::vector<std::string> FactoryRegistry::keys() const {
 void FactoryRegistry::list(std::ostream& out) const {
     lock_guard lock(mutex_);
     const char* sep = "";
-    for (const auto& map_pair : factories_) {
-        out << sep << map_pair.first;
-        sep = ", ";
+    for (const auto& key_value : factories_) {
+        if (key_value.second->deprecated_) {
+            out << sep << key_value.first;
+            sep = ", ";
+        }
     }
 }
 
 
 //----------------------------------------------------------------------------------------------------------------------
 
-FactoryBase::FactoryBase(FactoryRegistry& registry, const std::string& builder):
-    registry_(registry), builder_(builder) {
+FactoryBase::FactoryBase(FactoryRegistry& registry, const std::string& builder, const FactoryDeprecated& deprecated):
+    registry_(registry), builder_(builder), deprecated_(deprecated) {
     if (not builder_.empty()) {
         registry_.add(builder, this);
     }

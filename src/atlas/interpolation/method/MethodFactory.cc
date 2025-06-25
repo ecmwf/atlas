@@ -26,6 +26,7 @@
 #include "structured/QuasiCubic3D.h"
 #include "structured/RegionalLinear2D.h"
 #include "unstructured/FiniteElement.h"
+#include "unstructured/ConservativeSphericalPolygonInterpolation.h"
 #include "unstructured/UnstructuredBilinearLonLat.h"
 
 
@@ -53,6 +54,7 @@ void force_link() {
             MethodBuilder<method::CubedSphereBilinear>();
             MethodBuilder<method::SphericalVector>();
             MethodBuilder<method::Binning>();
+            MethodBuilder<method::ConservativeSphericalPolygonInterpolation>();
         }
     } link;
 }

@@ -18,10 +18,12 @@ namespace method {
 
 namespace {
 
-MethodBuilder<QuasiCubic3D> __builder1("structured-quasicubic3D");
-MethodBuilder<QuasiCubic3D> __builder2("quasicubic3D");
-MethodBuilder<QuasiCubic3D> __builder3("structured-triquasicubic");
-MethodBuilder<QuasiCubic3D> __builder4("triquasicubic");
+using util::FactoryDeprecated;
+
+MethodBuilder<QuasiCubic3D> __builder1("structured-triquasicubic");
+MethodBuilder<QuasiCubic3D> __builder2("structured-quasicubic3D", FactoryDeprecated("Please use structured-triquasicubic"));
+MethodBuilder<QuasiCubic3D> __builder3("quasicubic3D", FactoryDeprecated("Please use structured-triquasicubic"));
+MethodBuilder<QuasiCubic3D> __builder4("triquasicubic", FactoryDeprecated("Please use structured-triquasicubic"));
 
 }  // namespace
 

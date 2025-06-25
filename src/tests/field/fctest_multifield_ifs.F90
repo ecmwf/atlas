@@ -17,6 +17,7 @@
 module fcta_MultiField_fixture
 use atlas_module
 use atlas_multifield_module
+use pluto_module, only : pluto
 use, intrinsic :: iso_c_binding
 implicit none
 end module
@@ -42,8 +43,8 @@ END_TESTSUITE_FINALIZE
 TEST( test_multifield )
     implicit none
 
-    type(atlas_MultiField)  :: mfield(2)
-    type(atlas_FieldSet)    :: fieldset(2)
+    type(atlas_MultiField)  :: mfield_1, mfield_2
+    type(atlas_FieldSet)    :: fieldset_1, fieldset_2
     type(atlas_Field)       :: field
     type(atlas_config)      :: config
     integer, pointer :: fdata_int_2d(:,:)
@@ -73,87 +74,141 @@ TEST( test_multifield )
 
     call config%set("nlev", 0); ! surface fields
     call config%set("datatype", "real32");
-    mfield(1) = atlas_MultiField(config)
+    mfield_1 = atlas_MultiField(config)
 
     call config%set("nlev", 4); ! fields are 3d
     call config%set("datatype", "real64");
-    mfield(2) = atlas_MultiField(config)
+    mfield_2 = atlas_MultiField(config)
 
-    fieldset(1) = mfield(1)%fieldset()
-    FCTEST_CHECK_EQUAL(mfield(1)%size(), 5)
-    FCTEST_CHECK_EQUAL(fieldset(1)%size(), 5)
+    fieldset_1 = mfield_1%fieldset()
+    FCTEST_CHECK_EQUAL(mfield_1%size(), 5)
+    FCTEST_CHECK_EQUAL(fieldset_1%size(), 5)
 
-    fieldset(2) = atlas_FieldSet()
-    call fieldset(2)%add(mfield(1)%fieldset())
-    field = fieldset(2)%field("density")
+    fieldset_2 = atlas_FieldSet()
+    call fieldset_2%add(mfield_1%fieldset())
+    field = fieldset_2%field("density")
     call field%data(fdata_f2d)
     fdata_f2d(1,1) = 2.
     call field%rename("dens")
 
     ! check data access directly though multifield
-    call fieldset(1)%data("dens", fdata_f2d)
+    call fieldset_1%data("dens", fdata_f2d)
     fdata_f2d(1,1) = 3.
 
     ! check access to the renamed variable
-    field = fieldset(1)%field("dens")
+    field = fieldset_1%field("dens")
     call field%data(fdata_f2d)
     FCTEST_CHECK_EQUAL(fdata_f2d(1,1), 3._c_float)
 
     ! check dimesionality
-    fieldset(2) = mfield(2)%fieldset()
-    call fieldset(2)%data("density", fdata_d3d)
+    fieldset_2 = mfield_2%fieldset()
+    call fieldset_2%data("density", fdata_d3d)
     fdata_d3d(1,1,1) = 4.
-    fieldset(2) = atlas_FieldSet()
-    call fieldset(2)%add(mfield(2)%fieldset())
-    field = fieldset(2)%field("density")
+    fieldset_2 = atlas_FieldSet()
+    call fieldset_2%add(mfield_2%fieldset())
+    field = fieldset_2%field("density")
     call field%data(fdata_d3d)
     FCTEST_CHECK_EQUAL(fdata_d3d(1,1,1), 4._c_double)
+END_TEST
+
+
+TEST( test_device_strides_on_cpu )
+    implicit none
+
+    type(atlas_MultiField)  :: mfield
+    type(atlas_FieldSet)    :: fieldset
+    type(atlas_Field)       :: field
+    real(c_double), pointer :: fdata_d3d(:,:,:), fdata_d3d_ddata(:,:,:)
+
+    integer, parameter :: nproma  = 6;
+    integer, parameter :: nlev    = 5;
+    integer, parameter :: ngptot  = 18;
+    integer, parameter :: nblk    = (ngptot + nproma - 1) / nproma
+    integer :: i, j, k
+
+    character(len=64), parameter, dimension(2) :: var_names_dp = [ character(64) :: &
+        "clv", "wind_u" ]
+
+    mfield = atlas_MultiField(atlas_real(c_double), [nproma, nlev, -1, nblk], var_names_dp)
+
+    FCTEST_CHECK_EQUAL(mfield%size(), 2)
+
+    fieldset = mfield%fieldset()
+    field = fieldset%field("clv")
+    call field%data(fdata_d3d)
+    do i = 1, field%shape(1)
+      do j = 1, field%shape(2)
+        do k = 1, field%shape(3)
+          fdata_d3d(i,j,k) = real(1000*i + 100*j + 10*1 + k, c_double)
+        end do
+      end do
+    end do
+    call field%update_device()
+    if (pluto%devices() == 0) then
+      call field%device_data(fdata_d3d_ddata) ! We expect this to be host-resident, so we can read it
+      do i = 1, field%shape(1)
+        do j = 1, field%shape(2)
+          do k = 1, field%shape(3)
+            FCTEST_CHECK_EQUAL(fdata_d3d_ddata(i,j,k), fdata_d3d(i,j,k))
+            fdata_d3d_ddata(i,j,k) = fdata_d3d_ddata(i,j,k) + 1_c_double
+          end do
+        end do
+      end do
+      call field%update_host()
+      do i = 1, field%shape(1)
+        do j = 1, field%shape(2)
+          do k = 1, field%shape(3)
+            FCTEST_CHECK_EQUAL(fdata_d3d(i,j,k), real(1000*i + 100*j + 10*1 + k + 1, c_double))
+          end do
+        end do
+      end do
+    endif
 END_TEST
 
 
 TEST( test_multifield_array_direct_constructor )
     implicit none
 
-    type(atlas_MultiField)  :: mfield(2)
-    type(atlas_FieldSet)    :: fieldset(3)
+    type(atlas_MultiField)  :: mfield_1, mfield_2
+    type(atlas_FieldSet)    :: fieldset_1, fieldset_2, fieldset_3
     type(atlas_Field)       :: field
     type(atlas_config)      :: config
     real(c_float), pointer  :: fdata_f2d(:,:)
     real(c_double), pointer :: fdata_d3d(:,:,:)
 
-    integer, parameter :: nproma  = 16;
-    integer, parameter :: nlev    = 100;
-    integer, parameter :: ngptot  = 2000;
+    integer, parameter :: nproma  = 6;
+    integer, parameter :: nlev    = 5;
+    integer, parameter :: ngptot  = 18;
     integer, parameter :: nblk    = (ngptot + nproma - 1) / nproma
-    integer :: i
+    integer :: i, j, k
     character(len=64), parameter, dimension(3) :: var_names_sp = [ character(64) :: &
         "temperature ", "pressure", "density" ]
     character(len=64), parameter, dimension(2) :: var_names_dp = [ character(64) :: &
         "clv", "wind_u" ]
 
-    mfield(1) = atlas_MultiField(atlas_real(c_float), [nproma, -1, nblk], var_names_sp)
-    mfield(2) = atlas_MultiField(atlas_real(c_double), [nproma, nlev, -1, nblk], var_names_dp)
+    mfield_1 = atlas_MultiField(atlas_real(c_float), [nproma, -1, nblk], var_names_sp)
+    mfield_2 = atlas_MultiField(atlas_real(c_double), [nproma, nlev, -1, nblk], var_names_dp)
 
-    FCTEST_CHECK_EQUAL(mfield(1)%size(), 3)
-    FCTEST_CHECK_EQUAL(mfield(2)%size(), 2)
+    FCTEST_CHECK_EQUAL(mfield_1%size(), 3)
+    FCTEST_CHECK_EQUAL(mfield_2%size(), 2)
 
-    fieldset(1) = mfield(1)%fieldset()
-    FCTEST_CHECK_EQUAL(fieldset(1)%size(), 3)
+    fieldset_1 = mfield_1%fieldset()
+    FCTEST_CHECK_EQUAL(fieldset_1%size(), 3)
 
-    call fieldset(1)%data("density", fdata_f2d)
+    call fieldset_1%data("density", fdata_f2d)
     fdata_f2d(1,1) = 3._c_float
 
-    fieldset(2) = atlas_FieldSet()
-    call fieldset(2)%add(mfield(2)%fieldset())
-    call fieldset(2)%data("wind_u", fdata_d3d)
+    fieldset_2 = atlas_FieldSet()
+    call fieldset_2%add(mfield_2%fieldset())
+    call fieldset_2%data("wind_u", fdata_d3d)
     fdata_d3d(1,1,1) = 4._c_double
 
-    fieldset(3) = atlas_FieldSet()
-    call fieldset(3)%add(mfield(1)%fieldset())
-    call fieldset(3)%add(mfield(2)%fieldset())
+    fieldset_3 = atlas_FieldSet()
+    call fieldset_3%add(mfield_1%fieldset())
+    call fieldset_3%add(mfield_2%fieldset())
 
-    call fieldset(3)%data("density", fdata_f2d)
-    call fieldset(3)%data("wind_u", fdata_d3d)
+    call fieldset_3%data("density", fdata_f2d)
+    call fieldset_3%data("wind_u", fdata_d3d)
     FCTEST_CHECK_EQUAL(fdata_f2d(1,1), 3._c_float)
     FCTEST_CHECK_EQUAL(fdata_d3d(1,1,1), 4._c_double)
 
@@ -163,8 +218,8 @@ END_TEST
 TEST( test_multifield_array_config_constuctor )
     implicit none
 
-    type(atlas_MultiField)  :: mfield(2)
-    type(atlas_FieldSet)    :: fieldset(2)
+    type(atlas_MultiField)  :: mfield_1, mfield_2
+    type(atlas_FieldSet)    :: fieldset_1, fieldset_2
     type(atlas_Field)       :: field
     type(atlas_config)      :: config
     integer, pointer :: fdata_int_2d(:,:)
@@ -192,40 +247,40 @@ TEST( test_multifield_array_config_constuctor )
     ! surface fields
     call config%set("shape", [nproma, -1, nblk]);
     call config%set("datatype", "real32");
-    mfield(1) = atlas_MultiField(config)
+    mfield_1 = atlas_MultiField(config)
 
     ! fields are 3d
     call config%set("shape", [nproma, nlev, -1, nblk]);
     call config%set("datatype", "real64");
-    mfield(2) = atlas_MultiField(config)
+    mfield_2 = atlas_MultiField(config)
 
-    fieldset(1) = mfield(1)%fieldset()
-    FCTEST_CHECK_EQUAL(mfield(1)%size(), 9)
-    FCTEST_CHECK_EQUAL(fieldset(1)%size(), 9)
+    fieldset_1 = mfield_1%fieldset()
+    FCTEST_CHECK_EQUAL(mfield_1%size(), 9)
+    FCTEST_CHECK_EQUAL(fieldset_1%size(), 9)
 
-    fieldset(2) = atlas_FieldSet()
-    call fieldset(2)%add(mfield(1)%fieldset())
-    field = fieldset(2)%field("density")
+    fieldset_2 = atlas_FieldSet()
+    call fieldset_2%add(mfield_1%fieldset())
+    field = fieldset_2%field("density")
     call field%data(fdata_f2d)
     fdata_f2d(1,1) = 2.
     call field%rename("dens")
 
     ! check data access directly though multifield
-    call fieldset(1)%data("dens", fdata_f2d)
+    call fieldset_1%data("dens", fdata_f2d)
     fdata_f2d(1,1) = 3.
 
     ! check access to the renamed variable
-    field = fieldset(1)%field("dens")
+    field = fieldset_1%field("dens")
     call field%data(fdata_f2d)
     FCTEST_CHECK_EQUAL(fdata_f2d(1,1), 3._c_float)
 
     ! check dimesionality
-    fieldset(2) = mfield(2)%fieldset()
-    call fieldset(2)%data("density", fdata_d3d)
+    fieldset_2 = mfield_2%fieldset()
+    call fieldset_2%data("density", fdata_d3d)
     fdata_d3d(1,1,1) = 4.
-    fieldset(2) = atlas_FieldSet()
-    call fieldset(2)%add(mfield(2)%fieldset())
-    field = fieldset(2)%field("density")
+    fieldset_2 = atlas_FieldSet()
+    call fieldset_2%add(mfield_2%fieldset())
+    field = fieldset_2%field("density")
     call field%data(fdata_d3d)
     FCTEST_CHECK_EQUAL(fdata_d3d(1,1,1), 4._c_double)
 END_TEST

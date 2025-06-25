@@ -25,187 +25,167 @@ namespace util {
 
 namespace {
 
-using eckit::LocalConfiguration;
 using array::helpers::arrayForEachDim;
+using eckit::LocalConfiguration;
 
 void addOrReplaceField(FieldSet& fieldSet, const Field& field) {
-  const auto fieldName = field.name();
-  if (fieldSet.has(fieldName)) {
-    fieldSet[fieldName] = field;
-  } else {
-    fieldSet.add(field);
-  }
+    const auto fieldName = field.name();
+    if (fieldSet.has(fieldName)) {
+        fieldSet[fieldName] = field;
+    }
+    else {
+        fieldSet.add(field);
+    }
 }
 
-Field& getOrCreateField(FieldSet& fieldSet, const FunctionSpace& functionSpace,
-                        const Config& config) {
-  const auto fieldName = config.getString("name");
-  if (!fieldSet.has(fieldName)) {
-    fieldSet.add(functionSpace.createField(config));
-  }
-  return fieldSet[fieldName];
+Field& getOrCreateField(FieldSet& fieldSet, const FunctionSpace& functionSpace, const Config& config) {
+    const auto fieldName = config.getString("name");
+    if (!fieldSet.has(fieldName)) {
+        auto field = functionSpace.createField(config);
+        field->set_dirty(false);  // We will inherit the dirty state from the component fields.
+        fieldSet.add(field);
+    }
+    return fieldSet[fieldName];
 }
 
-void checkFieldCompatibility(const Field& componentField,
-                             const Field& vectorField) {
-  ATLAS_ASSERT(componentField.functionspace().size() ==
-               vectorField.functionspace().size());
-  ATLAS_ASSERT(componentField.levels() == vectorField.levels());
-  ATLAS_ASSERT(componentField.variables() == 0);
-  ATLAS_ASSERT(vectorField.variables() > 0);
+void checkFieldCompatibility(const Field& componentField, const Field& vectorField) {
+    ATLAS_ASSERT(componentField.functionspace().size() == vectorField.functionspace().size());
+    ATLAS_ASSERT(componentField.levels() == vectorField.levels());
+    ATLAS_ASSERT(componentField.variables() == 0);
+    ATLAS_ASSERT(vectorField.variables() > 0);
 
-  const auto checkStandardShape = [](const Field& field) {
-    // Check for "standard" Atlas field shape.
-    auto dim = 0;
-    const auto rank = field.rank();
-    const auto shape = field.shape();
-    if (field.functionspace().size() != shape[dim++]) {
-      return false;
-    }
-    if (const auto levels = field.levels();
-        levels && (dim >= rank || levels != shape[dim++])) {
-      return false;
-    }
-    if (const auto variables = field.variables();
-        variables && (dim >= rank || variables != shape[dim++])) {
-      return false;
-    }
-    if (dim != rank) {
-      return false;
-    }
-    return true;
-  };
+    const auto checkStandardShape = [](const Field& field) {
+        // Check for "standard" Atlas field shape.
+        auto dim         = 0;
+        const auto rank  = field.rank();
+        const auto shape = field.shape();
+        if (field.functionspace().size() != shape[dim++]) {
+            return false;
+        }
+        if (const auto levels = field.levels(); levels && (dim >= rank || levels != shape[dim++])) {
+            return false;
+        }
+        if (const auto variables = field.variables(); variables && (dim >= rank || variables != shape[dim++])) {
+            return false;
+        }
+        if (dim != rank) {
+            return false;
+        }
+        return true;
+    };
 
-  ATLAS_ASSERT(checkStandardShape(componentField));
-  ATLAS_ASSERT(checkStandardShape(vectorField));
+    ATLAS_ASSERT(checkStandardShape(componentField));
+    ATLAS_ASSERT(checkStandardShape(vectorField));
 }
 
 template <typename ComponentField, typename VectorField, typename Functor>
-void copyFieldData(ComponentField& componentField, VectorField& vectorField,
-                   const Functor& copier) {
-  checkFieldCompatibility(componentField, vectorField);
+void copyFieldData(ComponentField& componentField, VectorField& vectorField, const Functor& copier) {
+    checkFieldCompatibility(componentField, vectorField);
 
-  auto componentViewVariant = array::make_view_variant(componentField);
+    auto componentViewVariant = array::make_view_variant(componentField);
 
-  const auto componentVisitor = [&](auto componentView) {
-    if constexpr (array::is_rank<1, 2>(componentView)) {
-      using ComponentView = std::decay_t<decltype(componentView)>;
-      constexpr auto ComponentRank = ComponentView::rank();
-      using Value = typename ComponentView::non_const_value_type;
+    const auto componentVisitor = [&](auto componentView) {
+        if constexpr (array::is_rank<1, 2>(componentView)) {
+            using ComponentView          = std::decay_t<decltype(componentView)>;
+            constexpr auto ComponentRank = ComponentView::rank();
+            using Value                  = typename ComponentView::non_const_value_type;
 
-      auto vectorView = array::make_view<Value, ComponentRank + 1>(vectorField);
-      constexpr auto Dims = std::make_integer_sequence<int, ComponentRank>{};
-      arrayForEachDim(Dims, execution::par, std::tie(componentView, vectorView),
-                      copier);
+            auto vectorView     = array::make_view<Value, ComponentRank + 1>(vectorField);
+            constexpr auto Dims = std::make_integer_sequence<int, ComponentRank>{};
+            arrayForEachDim(Dims, execution::par, std::tie(componentView, vectorView), copier);
+        }
+        else {
+            ATLAS_THROW_EXCEPTION("Unsupported component field rank: " + std::to_string(componentView.rank()));
+        }
+    };
 
-    } else {
-      ATLAS_THROW_EXCEPTION("Unsupported component field rank: " +
-                            std::to_string(componentView.rank()));
-    }
-  };
-
-  std::visit(componentVisitor, componentViewVariant);
+    std::visit(componentVisitor, componentViewVariant);
 }
 
 }  // namespace
 
 FieldSet pack_vector_fields(const FieldSet& fields, FieldSet packedFields) {
-  // Get the number of variables for each vector field.
-  auto vectorSizeMap = std::map<std::string, idx_t>{};
-  for (const auto& field : fields) {
-    auto vectorFieldName = std::string{};
-    if (field.metadata().get("vector_field_name", vectorFieldName)) {
-      ++vectorSizeMap[vectorFieldName];
-    }
-  }
-  auto vectorIndexMap = std::map<std::string, idx_t>{};
-
-  // Pack vector fields.
-  for (const auto& field : fields) {
-    auto vectorFieldName = std::string{};
-    if (!field.metadata().get("vector_field_name", vectorFieldName)) {
-      // Not a vector component field.
-      addOrReplaceField(packedFields, field);
-      continue;
+    // Get the number of variables for each vector field.
+    auto vectorSizeMap = std::map<std::string, idx_t>{};
+    for (const auto& field : fields) {
+        auto vectorFieldName = std::string{};
+        if (field.metadata().get("vector_component.vector_field_name", vectorFieldName)) {
+            ++vectorSizeMap[vectorFieldName];
+        }
     }
 
-    // Field is vector field component.
-    const auto& componentField = field;
+    // Pack vector fields.
+    for (const auto& field : fields) {
+        auto vectorFieldName = std::string{};
+        if (!field.metadata().get("vector_component.vector_field_name", vectorFieldName)) {
+            // Not a vector component field.
+            addOrReplaceField(packedFields, field);
+            continue;
+        }
 
-    // Get or create vector field.
-    const auto vectorFieldConfig =
-        option::name(vectorFieldName) |
-        option::levels(componentField.levels()) |
-        option::vector(vectorSizeMap[vectorFieldName]) |
-        option::datatype(componentField.datatype());
-    auto& vectorField = getOrCreateField(
-        packedFields, componentField.functionspace(), vectorFieldConfig);
+        // Field is vector field component.
+        auto vectorSize  = vectorSizeMap[vectorFieldName];
+        auto vectorIndex = size_t{};
+        field.metadata().get("vector_component.index", vectorIndex);
+        const auto& componentField = field;
 
-    // Copy field data.
-    const auto vectorIndex = vectorIndexMap[vectorFieldName]++;
-    const auto copier = [&](auto&& componentElem, auto&& vectorElem) {
-      vectorElem(vectorIndex) = componentElem;
-    };
-    copyFieldData(componentField, vectorField, copier);
+        // Get or create vector field.
+        const auto vectorFieldConfig = option::name(vectorFieldName) | option::levels(componentField.levels()) |
+                                       option::vector(vectorSize) | option::datatype(componentField.datatype());
+        auto& vectorField = getOrCreateField(packedFields, componentField.functionspace(), vectorFieldConfig);
 
-    // Copy metadata.
-    const auto componentFieldMetadata = componentField.metadata();
-    auto componentFieldMetadataVector = std::vector<LocalConfiguration>{};
-    vectorField.metadata().get("component_field_metadata",
-                               componentFieldMetadataVector);
-    componentFieldMetadataVector.push_back(componentFieldMetadata);
-    vectorField.metadata().set("component_field_metadata",
-                               componentFieldMetadataVector);
+        // Copy field data.
+        const auto copier = [&](auto&& componentElem, auto&& vectorElem) { vectorElem(vectorIndex) = componentElem; };
+        copyFieldData(componentField, vectorField, copier);
 
-    // If any component is dirty, the whole field is dirty.
-    if (vectorIndex == 0) {
-      vectorField.set_dirty(componentField.dirty());
-    } else {
-      vectorField.set_dirty(vectorField.dirty() || componentField.dirty());
+        // Copy metadata.
+        const auto componentFieldMetadata = componentField.metadata();
+        auto componentFieldMetadataVector = std::vector<LocalConfiguration>(vectorSize);
+        vectorField.metadata().get("component_field_metadata", componentFieldMetadataVector);
+        componentFieldMetadataVector[vectorIndex] = componentFieldMetadata;
+        vectorField.metadata().set("component_field_metadata", componentFieldMetadataVector);
+
+        // If any component is dirty, the whole field is dirty.
+        vectorField.set_dirty(vectorField.dirty() || componentField.dirty());
     }
-  }
-  return packedFields;
+    return packedFields;
 }
 
 FieldSet unpack_vector_fields(const FieldSet& fields, FieldSet unpackedFields) {
-  for (const auto& field : fields) {
-    auto componentFieldMetadataVector = std::vector<LocalConfiguration>{};
-    if (!field.metadata().get("component_field_metadata",
-                              componentFieldMetadataVector)) {
-      // Not a vector field.
-      addOrReplaceField(unpackedFields, field);
-      continue;
+    for (const auto& field : fields) {
+        auto componentFieldMetadataVector = std::vector<LocalConfiguration>{};
+        if (!field.metadata().get("component_field_metadata", componentFieldMetadataVector)) {
+            // Not a vector field.
+            addOrReplaceField(unpackedFields, field);
+            continue;
+        }
+
+        // Field is vector.
+        const auto& vectorField = field;
+
+        auto vectorIndex = 0;
+        for (const auto& componentFieldMetadata : componentFieldMetadataVector) {
+            // Get or create field.
+            auto componentFieldName = std::string{};
+            componentFieldMetadata.get("name", componentFieldName);
+            const auto componentFieldConfig = option::name(componentFieldName) | option::levels(vectorField.levels()) |
+                                              option::datatype(vectorField.datatype());
+            auto& componentField = getOrCreateField(unpackedFields, vectorField.functionspace(), componentFieldConfig);
+
+            // Copy field data.
+            const auto copier = [&](auto&& componentElem, auto&& vectorElem) {
+                componentElem = vectorElem(vectorIndex);
+            };
+            copyFieldData(componentField, vectorField, copier);
+
+            // Copy metadata.
+            componentField.metadata() = componentFieldMetadata;
+            componentField.set_dirty(vectorField.dirty());
+
+            ++vectorIndex;
+        }
     }
-
-    // Field is vector.
-    const auto& vectorField = field;
-
-    auto vectorIndex = 0;
-    for (const auto& componentFieldMetadata : componentFieldMetadataVector) {
-      // Get or create field.
-      auto componentFieldName = std::string{};
-      componentFieldMetadata.get("name", componentFieldName);
-      const auto componentFieldConfig =
-          option::name(componentFieldName) |
-          option::levels(vectorField.levels()) |
-          option::datatype(vectorField.datatype());
-      auto& componentField = getOrCreateField(
-          unpackedFields, vectorField.functionspace(), componentFieldConfig);
-
-      // Copy field data.
-      const auto copier = [&](auto&& componentElem, auto&& vectorElem) {
-        componentElem = vectorElem(vectorIndex);
-      };
-      copyFieldData(componentField, vectorField, copier);
-
-      // Copy metadata.
-      componentField.metadata() = componentFieldMetadata;
-      componentField.set_dirty(vectorField.dirty());
-
-      ++vectorIndex;
-    }
-  }
-  return unpackedFields;
+    return unpackedFields;
 }
 
 }  // namespace util

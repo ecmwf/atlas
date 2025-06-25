@@ -123,15 +123,22 @@ size_t FieldImpl::footprint() const {
 }
 
 bool FieldImpl::dirty() const {
-    return metadata().getBool("dirty", true);
+    return not metadata().getBool("halo_updated", false);
 }
 
 void FieldImpl::set_dirty(bool value) const {
-    const_cast<FieldImpl&>(*this).metadata().set("dirty", value);
+    const_cast<FieldImpl&>(*this).metadata().set("halo_updated", !value);
 }
 
 void FieldImpl::dump(std::ostream& os) const {
     print(os, true);
+}
+
+Halo& FieldImpl::halo() const {
+    if (not halo_) {
+        halo_.reset(new Halo(*const_cast<FieldImpl*>(this)));
+    }
+    return *halo_;
 }
 
 namespace {
