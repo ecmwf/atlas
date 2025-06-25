@@ -75,6 +75,8 @@ namespace trans {
 
 //-----------------------------------------------------------------------------
 
+[[noreturn]] void throw_ectrans_compiled_without_lam_support();
+
 class TransIFS : public trans::TransImpl {
 private:
     typedef struct ::Trans_t Trans_t;

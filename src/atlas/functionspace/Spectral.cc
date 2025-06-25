@@ -120,6 +120,7 @@ public:
     }
 
     Parallelisation(int truncation_x, int truncation_y) {
+#if ATLAS_HAVE_ECTRANS_LAM
         trans_ = std::shared_ptr<::Trans_t>(new ::Trans_t, [](::Trans_t* p) {
             TRANS_CHECK(::trans_delete(p));
             delete p;
@@ -128,6 +129,9 @@ public:
         TRANS_CHECK(::trans_new(trans_.get()));
         TRANS_CHECK(::trans_set_trunc_lam(trans_.get(), truncation_x, truncation_y));
         TRANS_CHECK(::trans_setup(trans_.get()));
+#else
+        trans::throw_ectrans_compiled_without_lam_support();
+#endif
     }
 
 

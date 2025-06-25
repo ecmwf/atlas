@@ -55,6 +55,10 @@ static TransBuilderGrid<TransIFS> builder_ifs("ifs", "ifs");  // deprecated
 static TransBuilderGrid<TransIFS> builder_ectrans("ectrans", "ectrans");
 }  // namespace
 
+[[noreturn]] void throw_ectrans_compiled_without_lam_support() {
+    throw_Exception("ectrans (transi) was compiled without LAM support");
+}
+
 class TransParameters {
 public:
     TransParameters(const TransIFS& trans, const eckit::Configuration& config): trans_(trans), config_(config) {}
@@ -1057,18 +1061,26 @@ array::LocalView<int, 1> atlas::trans::TransIFS::nvalue() const {
 }
 
 const int* atlas::trans::TransIFS::mvalue(int& size) const {
+#if ATLAS_HAVE_ECTRANS_LAM
     size = trans_->nspec2;
     if( trans_->mvalue == nullptr ) {
         ::trans_inquire(trans_.get(), "mvalue");
     }
     return trans_->mvalue;
+#else
+    throw_ectrans_compiled_without_lam_support();
+#endif
 }
 
 array::LocalView<int,1> atlas::trans::TransIFS::mvalue() const {
+#if ATLAS_HAVE_ECTRANS_LAM
     if( trans_->mvalue == nullptr ) {
         ::trans_inquire(trans_.get(), "mvalue");
     }
     return array::LocalView<int,1> (trans_->mvalue, array::make_shape(trans_->nspec2));
+#else
+    throw_ectrans_compiled_without_lam_support();
+#endif
 }
 
 array::LocalView<int, 1> atlas::trans::TransIFS::nasm0() const {
@@ -1269,6 +1281,7 @@ void TransIFS::ctor_lonlat(const long nlon, const long nlat, long truncation, co
 // --------------------------------------------------------------------------------------------
 
 void TransIFS::ctor_lam(const RegularGrid& grid, long truncation, const eckit::Configuration& config) {
+#if ATLAS_HAVE_ECTRANS_LAM
     ATLAS_ASSERT( grid.nx() > 0 );
     ATLAS_ASSERT( grid.ny() > 0 );
 
@@ -1317,6 +1330,9 @@ void TransIFS::ctor_lam(const RegularGrid& grid, long truncation, const eckit::C
     ATLAS_ASSERT(partitions_x == trans_->n_regions_EW);
     ATLAS_ASSERT(partitions_y == trans_->n_regions_NS);
     ATLAS_ASSERT(grid.size()  == trans_->ngptotg);
+#else
+    throw_ectrans_compiled_without_lam_support();
+#endif
 }
 
 // --------------------------------------------------------------------------------------------
@@ -1532,12 +1548,14 @@ void TransIFS::__dirtrans_wind2vordiv(const functionspace::StructuredColumns& gp
         transform.rgp                 = rgp.data();
         transform.rspvor              = rspvor.data();
         transform.rspdiv              = rspdiv.data();
+#if ATLAS_HAVE_ECTRANS_LAM
         if( trans_->llam ) {
             rmeanu.resize(nfld);
             rmeanv.resize(nfld);
             transform.rmeanu              = rmeanu.data();
             transform.rmeanv              = rmeanv.data();
         }
+#endif
         ATLAS_ASSERT(transform.rspvor);
         ATLAS_ASSERT(transform.rspdiv);
         TRANS_CHECK(::trans_dirtrans(&transform));
@@ -1551,10 +1569,12 @@ void TransIFS::__dirtrans_wind2vordiv(const functionspace::StructuredColumns& gp
 
     ATLAS_DEBUG_VAR(rmeanu);
     ATLAS_DEBUG_VAR(rmeanv);
+#if ATLAS_HAVE_ECTRANS_LAM
     if( trans_->llam ) {
         spvor.metadata().set("rmeanu",rmeanu);
         spvor.metadata().set("rmeanv",rmeanv);
     }
+#endif
 }
 
 // -----------------------------------------------------------------------------------------------
@@ -2383,13 +2403,14 @@ void TransIFS::__invtrans_vordiv2wind(const Spectral& sp, const Field& spvor, co
         transform.rgp                 = rgp.data();
         transform.rspvor              = rspvor.data();
         transform.rspdiv              = rspdiv.data();
+#if ATLAS_HAVE_ECTRANS_LAM
         if (trans_->llam) {
             rmeanu = spvor.metadata().getDoubleVector("rmeanu");
             rmeanv = spvor.metadata().getDoubleVector("rmeanv");
             transform.rmeanu = rmeanu.data();
             transform.rmeanv = rmeanv.data();
         }
-
+#endif
         ATLAS_ASSERT(transform.rspvor);
         ATLAS_ASSERT(transform.rspdiv);
         TRANS_CHECK(::trans_invtrans(&transform));
