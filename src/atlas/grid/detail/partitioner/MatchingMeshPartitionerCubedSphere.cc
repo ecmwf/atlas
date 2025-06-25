@@ -6,10 +6,17 @@
  */
 
 #include "atlas/grid/detail/partitioner/MatchingMeshPartitionerCubedSphere.h"
+
+#include <algorithm>
+#include <iterator>
+#include <vector>
+
 #include "atlas/grid/CubedSphereGrid.h"
 #include "atlas/grid/Iterator.h"
 #include "atlas/interpolation/method/cubedsphere/CellFinder.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/omp/omp.h"
+#include "atlas/util/Point.h"
 
 namespace atlas {
 namespace grid {
@@ -29,14 +36,24 @@ void MatchingMeshPartitionerCubedSphere::partition(const Grid& grid, int partiti
     const auto edgeEpsilon = epsilon;
     const size_t listSize  = 8;
 
-    // Loop over grid and set partioning[].
-    auto lonlatIt = grid.lonlat().begin();
-    for (gidx_t i = 0; i < grid.size(); ++i) {
-        // This is probably more expensive than it needs to be, as it performs
-        // a dry run of the cubedsphere interpolation method.
-        const auto& lonlat = *lonlatIt;
-        partitioning[i]    = finder.getCell(lonlat, listSize, edgeEpsilon, epsilon).isect ? mpi_rank : -1;
-        ++lonlatIt;
+
+    const auto setPartitioning = [&](const auto& lonLatIt) {
+        atlas_omp_parallel_for(gidx_t i = 0; i < grid.size(); ++i) {
+            const auto lonLat = *(lonLatIt + i);
+            // This is probably more expensive than it needs to be, as it performs
+            // a dry run of the cubedsphere interpolation method.
+            partitioning[i] = finder.getCell(lonLat, listSize, edgeEpsilon, epsilon).isect ? mpi_rank : -1;
+        }
+    };
+
+    // CubedSphereIterator::operator+=() is not implemented properly.
+    if (CubedSphereGrid(grid)) {
+        auto lonLats = std::vector<PointLonLat>{};
+        lonLats.reserve(grid.size());
+        std::copy(grid.lonlat().begin(), grid.lonlat().end(), std::back_inserter(lonLats));
+        setPartitioning(lonLats.begin());
+    } else {
+        setPartitioning(grid.lonlat().begin());
     }
 
     // AllReduce to get full partitioning array.
