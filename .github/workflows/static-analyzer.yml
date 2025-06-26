@@ -1,0 +1,156 @@
+name: static-analyzer
+on:
+  # REENABLE BEFORE MERGING
+  # pull_request_target:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+jobs:
+  build:
+    if: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' || github.event_name == 'push'}}
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-id: ${{ steps.upload-sareport.outputs.artifact-id }}
+    steps:
+      - name: Checkout atlas
+        uses: actions/checkout@v4
+        with:
+          path: atlas
+      - name: Checkout ecbuild
+        uses: actions/checkout@v4
+        with:
+          repository: ecmwf/ecbuild
+          path: ecbuild
+          ref: 'develop'
+      - name: Checkout eckit
+        uses: actions/checkout@v4
+        with:
+          repository: ecmwf/eckit
+          path: eckit
+          ref: 'develop'
+      - name: Checkout fckit
+        uses: actions/checkout@v4
+        with:
+          repository: ecmwf/fckit
+          path: fckit
+          ref: 'develop'
+      - name: Install dependencies
+        run: |
+          python -m pip install CodeChecker
+
+      - name: Generate CMakeLists.txt
+        shell: bash                               # default on ubuntu-latest
+        run: |
+          # Write the file atomically; fail if anything goes wrong
+          cat > CMakeLists.txt <<'CML'
+          cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
+
+          ####################################################################
+
+          macro(ecbundle_add_project package_name)
+              #
+              #   add_subdirectory depending on BUILD_${package_name}
+              #
+              set(BUILD_${package_name} ON CACHE BOOL "")
+
+              if(BUILD_${package_name})
+                  set(dir ${ARGV1})
+                  if(NOT dir)
+                      set(dir ${package_name})
+                  endif()
+                  add_subdirectory(${dir})
+              endif()
+          endmacro()
+
+          macro(ecbundle_set key value)
+              set(${key} ${value} CACHE STRING "")
+              if("${${key}}" STREQUAL "${value}")
+                  message("  - ${key} = ${value}")
+              else()
+                  message("  - ${key} = ${${key}} [default=${value}]")
+              endif()
+          endmacro()
+
+          ####################################################################
+
+          message("  - source     : ${CMAKE_CURRENT_SOURCE_DIR}")
+          message("  - build      : ${CMAKE_CURRENT_BINARY_DIR}")
+          message("  - install    : ${CMAKE_INSTALL_PREFIX}")
+          message("  - build type : ${CMAKE_BUILD_TYPE}")
+          message("Bundle variables set for this build:")
+
+          ecbundle_set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+          ecbundle_set(ENABLE_ECKIT_CMD OFF)
+          ecbundle_set(ENABLE_ECKIT_SQL OFF)
+          ecbundle_set(ENABLE_ECKIT_GEO OFF)
+          ecbundle_set(ENABLE_OMP OFF)
+          ecbundle_set(ECKIT_ENABLE_TESTS OFF)
+          ecbundle_set(FCKIT_ENABLE_TESTS OFF)
+
+          message("")
+
+          ####################################################################
+
+          find_package(ecbuild 3.8 REQUIRED HINTS ${CMAKE_CURRENT_SOURCE_DIR}/ecbuild)
+          project(bundle VERSION 0.0.0)
+
+          ## Initialize
+          include(${CMAKE_CURRENT_BINARY_DIR}/init.cmake OPTIONAL)
+
+          ## Projects
+          ecbundle_add_project(ecbuild)
+          ecbundle_add_project(eckit)
+          ecbundle_add_project(fckit)
+          ecbundle_add_project(atlas)
+
+          ## Finalize
+          include(${CMAKE_CURRENT_BINARY_DIR}/final.cmake OPTIONAL)
+
+          ecbuild_install_project(NAME ${PROJECT_NAME})
+          ecbuild_print_summary()
+          CML
+
+
+      - name: Build sources
+        run: |
+          mkdir build
+          cd build
+          cmake -GNinja .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          ninja
+
+      - name: Analyze sources
+        run: |
+          jq '[ .[] | select(.file | test(".*/atlas/src/.*") ) ]' build/compile_commands.json > atlas_compile_commands.json
+          jq '[ .[] | select(.file | test(".*/pluto/src/.*") ) ]' build/compile_commands.json > pluto_compile_commands.json
+          jq -n --slurpfile atlas atlas_compile_commands.json --slurpfile pluto pluto_compile_commands.json '$atlas[] + $pluto[]' \
+            > build/filtered_compile_commands.json
+          CodeChecker analyze build/filtered_compile_commands.json -o cc_out --analyzers clangsa -j 4 \
+            -i atlas/.github/static-analyzer-skip.txt
+          CodeChecker parse -e html cc_out -o ./reports_html --trim-path-prefix ${PWD} || true
+      - name: Archive static-analyzer report
+        id: upload-sareport
+        uses: actions/upload-artifact@v4
+        with:
+          name: sareport
+          path: reports_html
+  preview-publish:
+    if: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' }}
+    needs: build
+    uses: ecmwf/reusable-workflows/.github/workflows/pr-preview-publish.yml@main
+    with:
+      artifact-id: ${{ needs.build.outputs.artifact-id }}
+      space: docs
+      name: atlas
+      path: static-analyzer
+      link-text: 💣💥☠️ Static Analyzer Report ☠️💥💣
+      link-tag: STATIC-ANALYSIS
+    secrets:
+      sites-token: ${{ secrets.ECMWF_SITES_TOKEN }}
+  preview-unpublish:
+    if: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' }}
+    uses: ecmwf/reusable-workflows/.github/workflows/pr-preview-unpublish.yml@main
+    with:
+      space: docs
+      name: atlas
+      path: static-analyzer
+    secrets:
+      sites-token: ${{ secrets.ECMWF_SITES_TOKEN }}
