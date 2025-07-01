@@ -1,7 +1,5 @@
 name: static-analyzer
 on:
-  # REENABLE BEFORE MERGING
-  # pull_request_target:
   pull_request:
     types: [opened, synchronize, reopened, closed]
 jobs:
