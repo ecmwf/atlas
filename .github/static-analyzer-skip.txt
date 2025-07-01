@@ -1,0 +1,3 @@
+# This file can be used to suppress warnings
+# For syntax, see https://codechecker.readthedocs.io/en/latest/analyzer/user_guide/#skip-file
+#
