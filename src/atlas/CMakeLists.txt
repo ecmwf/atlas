@@ -818,6 +818,8 @@ endif()
 list( APPEND atlas_parallel_srcs
   parallel/Checksum.cc
   parallel/Checksum.h
+  parallel/Collect.cc
+  parallel/Collect.h
   parallel/GatherScatter.cc
   parallel/GatherScatter.h
   parallel/HaloExchange.cc
