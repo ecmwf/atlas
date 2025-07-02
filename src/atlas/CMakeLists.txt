@@ -822,9 +822,12 @@ list( APPEND atlas_parallel_srcs
   parallel/GatherScatter.h
   parallel/HaloExchange.cc
   parallel/HaloExchange.h
-  parallel/HaloAdjointExchangeImpl.h
-  parallel/HaloExchangeImpl.h
   parallel/mpi/Buffer.h
+  parallel/detail/Packer.h
+  parallel/detail/Packer.cc
+  parallel/detail/pack_index.h
+  parallel/detail/adjoint_unpack_index.h
+  parallel/detail/zero_index.h
 )
 
 list( APPEND atlas_util_srcs
@@ -966,12 +969,11 @@ list( APPEND source_list
 if( atlas_HAVE_GPU )
   include( atlas_host_device )
   list( APPEND source_list
-    parallel/HaloExchangeGPU.h
-    parallel/HaloExchangeGPU.hic
+    parallel/detail/DevicePacker.hic
   )
   atlas_host_device( source_list
     SOURCES
-      parallel/HaloExchangeGPU.hic
+      parallel/detail/DevicePacker.hic
       mesh/Connectivity.cc
   )
 
