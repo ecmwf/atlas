@@ -13,4 +13,9 @@ else
     QHULL_NAME=$(otool -l /tmp/atlas/target/atlas/lib/libatlas.dylib | grep qhull | sed 's/.*name \(.*\) (offset.*)/\1/')
     QHULL_BASE=$(basename $QHULL_NAME)
     install_name_tool -change $QHULL_NAME '@rpath/'$QHULL_BASE /tmp/atlas/target/atlas/lib/libatlas.dylib
+
+    FFTW_NAME=$(otool -l /tmp/atlas/target/atlas/lib/libatlas.dylib | grep fftw | sed 's/.*name \(.*\) (offset.*)/\1/')
+    FFTW_BASE=$(basename $FFTW_NAME)
+    install_name_tool -change $FFTW_NAME '@rpath/'$FFTW_BASE /tmp/atlas/target/atlas/lib/libatlas.dylib
+
 fi
