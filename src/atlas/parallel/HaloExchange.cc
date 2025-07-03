@@ -185,6 +185,10 @@ int HaloExchange::devices() const {
     return pluto::devices();
 }
 
+bool HaloExchange::is_device_accessible(const void* ptr) const {
+    return pluto::is_device_accessible(ptr);
+}
+
 namespace {
 
 template <typename Value>

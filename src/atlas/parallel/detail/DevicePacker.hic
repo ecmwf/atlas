@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2017 ECMWF.
+ * (C) Copyright 2025- ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -8,16 +8,14 @@
  * does it submit to any jurisdiction.
  */
 
-
-#include "atlas/parallel/HaloExchangeGPU.h"
-#include "atlas/parallel/HaloExchangeImpl.h"
+#include "Packer.h"
+#include "pack_index.h"
 #include "atlas/array/SVector.h"
 #include "atlas/runtime/Exception.h"
 
 #include "hic/hic.h"
 
-namespace atlas {
-namespace parallel {
+namespace atlas::parallel::detail {
 
 bool is_device_accessible(const void* ptr) {
     hicPointerAttributes attr;
@@ -77,7 +75,7 @@ __global__ void pack_kernel(const int sendcnt,  const int* sendmap_ptr, const id
     idx_t buff_idx = get_buffer_index<ParallelDim, RANK>::apply(field, node_cnt, var1_idx);
     const idx_t node_idx = sendmap[node_cnt];
 
-    halo_packer_impl<0, (RANK>=3) ? (RANK-2) : 0, 2>::apply(buff_idx, node_idx, field, send_buffer, node_idx,var1_idx);
+    pack_index<0, (RANK>=3) ? (RANK-2) : 0, 2>::apply(buff_idx, node_idx, field, send_buffer, node_idx,var1_idx);
 }
 
 template<int ParallelDim, typename DATA_TYPE, int RANK>
@@ -110,7 +108,7 @@ __global__ void unpack_kernel(const int recvcnt, const int* recvmap_ptr, const i
 
     idx_t buff_idx = get_buffer_index<ParallelDim, RANK>::apply(field, node_cnt, var1_idx);
 
-    halo_unpacker_impl<0, (RANK>=3) ? (RANK-2) : 0, 2>::apply(buff_idx, node_idx, recv_buffer, field,node_idx,var1_idx);
+    unpack_index<0, (RANK>=3) ? (RANK-2) : 0, 2>::apply(buff_idx, node_idx, recv_buffer, field,node_idx,var1_idx);
 }
 
 template<int ParallelDim, int RANK, int DimCnt>
@@ -150,15 +148,15 @@ struct get_n_hic_blocks<0, 1> {
 };
 
 template<int ParallelDim, typename DATA_TYPE, int RANK>
-void halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::pack( const int sendcnt, array::SVector<int> const & sendmap,
-                   const array::ArrayView<DATA_TYPE, RANK>& hfield, const array::ArrayView<DATA_TYPE, RANK>& dfield,
+void DevicePacker<ParallelDim, DATA_TYPE, RANK>::pack( const int sendcnt, array::SVector<int> const & sendmap,
+                   const array::ArrayView<DATA_TYPE, RANK>& array,
                    DATA_TYPE* send_buffer, int send_buffer_size )
 {
   const unsigned int block_size_x = 32;
   const unsigned int block_size_y = (RANK==1) ? 1 : 4;
 
   const unsigned int nblocks_x = (sendcnt+block_size_x-1)/block_size_x;
-  const unsigned int nblocks_y = get_n_hic_blocks<ParallelDim, RANK>::apply(hfield, block_size_y);
+  const unsigned int nblocks_y = get_n_hic_blocks<ParallelDim, RANK>::apply(array, block_size_y);
 
   dim3 threads(block_size_x, block_size_y);
   dim3 blocks(nblocks_x, nblocks_y);
@@ -169,7 +167,7 @@ void halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::pack( const int sendcnt, arr
     throw_Exception(msg);
   }
 
-  pack_kernel<ParallelDim, DATA_TYPE, RANK><<<blocks,threads>>>(sendcnt, sendmap.data(), sendmap.size(), dfield, send_buffer, send_buffer_size);
+  pack_kernel<ParallelDim, DATA_TYPE, RANK><<<blocks,threads>>>(sendcnt, sendmap.data(), sendmap.size(), array, send_buffer, send_buffer_size);
   err = hicGetLastError();
   if (err != hicSuccess)
     throw_Exception("Error launching GPU packing kernel");
@@ -184,14 +182,14 @@ void halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::pack( const int sendcnt, arr
 }
 
 template<int ParallelDim, typename DATA_TYPE, int RANK>
-void halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::unpack(const int recvcnt, array::SVector<int> const & recvmap,
+void DevicePacker<ParallelDim, DATA_TYPE, RANK>::unpack(const int recvcnt, array::SVector<int> const & recvmap,
                    const DATA_TYPE* recv_buffer , int recv_buffer_size,
-                   array::ArrayView<DATA_TYPE, RANK> &hfield, array::ArrayView<DATA_TYPE, RANK> &dfield)
+                   array::ArrayView<DATA_TYPE, RANK>& array)
 {
   const unsigned int block_size_x = 32;
   const unsigned int block_size_y = (RANK==1) ? 1 : 4;
 
-  unsigned int nblocks_y = get_n_hic_blocks<ParallelDim, RANK>::apply(hfield, block_size_y);
+  unsigned int nblocks_y = get_n_hic_blocks<ParallelDim, RANK>::apply(array, block_size_y);
 
   dim3 threads(block_size_x, block_size_y);
   dim3 blocks((recvcnt+block_size_x-1)/block_size_x, nblocks_y);
@@ -203,7 +201,7 @@ void halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::unpack(const int recvcnt, ar
     throw_Exception(msg);
   }
 
-  unpack_kernel<ParallelDim, DATA_TYPE, RANK><<<blocks,threads>>>(recvcnt, recvmap.data(), recvmap.size(), recv_buffer, recv_buffer_size, dfield);
+  unpack_kernel<ParallelDim, DATA_TYPE, RANK><<<blocks,threads>>>(recvcnt, recvmap.data(), recvmap.size(), recv_buffer, recv_buffer_size, array);
 
   err = hicGetLastError();
   if (err != hicSuccess) {
@@ -233,11 +231,11 @@ void halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::unpack(const int recvcnt, ar
 
 
 #define EXPLICIT_TEMPLATE_INSTANTIATION( ParallelDim, RANK )         \
-  template class halo_packer_hic<ParallelDim, int,           RANK>; \
-  template class halo_packer_hic<ParallelDim, long,          RANK>; \
-  template class halo_packer_hic<ParallelDim, long unsigned, RANK>; \
-  template class halo_packer_hic<ParallelDim, float,         RANK>; \
-  template class halo_packer_hic<ParallelDim, double,        RANK>;
+  template struct DevicePacker<ParallelDim, int,           RANK>; \
+  template struct DevicePacker<ParallelDim, long,          RANK>; \
+  template struct DevicePacker<ParallelDim, long unsigned, RANK>; \
+  template struct DevicePacker<ParallelDim, float,         RANK>; \
+  template struct DevicePacker<ParallelDim, double,        RANK>;
 
 #define EXPLICIT_TEMPLATE_INSTANTIATION_RANK(RANK) \
   ATLAS_REPEAT_MACRO(RANK, EXPLICIT_TEMPLATE_INSTANTIATION, RANK)
@@ -248,5 +246,4 @@ EXPLICIT_TEMPLATE_INSTANTIATION_RANK(3)
 EXPLICIT_TEMPLATE_INSTANTIATION_RANK(4)
 EXPLICIT_TEMPLATE_INSTANTIATION_RANK(5)
 
-} //namespace array
-} //namespace atlas
+} //namespace atlas::parallel::detail

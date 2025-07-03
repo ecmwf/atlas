@@ -49,6 +49,14 @@ ecbuild_add_test( TARGET atlas_test_gather
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_collect
+  MPI        3
+  CONDITION  eckit_HAVE_MPI
+  SOURCES    test_collect.cc
+  LIBS       atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_omp_sort
   OMP        8
   SOURCES    test_omp_sort.cc
