@@ -7,6 +7,13 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.43.1] - 2025-07-09
+
+### Fixed
+- Pluto installation of pluto_module.mod file
+- Avoid temporary array creation in Fortran pluto_allocator%allocate() function
+
+
 ## [0.43.0] - 2025-06-25
 
 ### Added
@@ -652,7 +659,8 @@ Fix StructuredInterpolation2D with retry for failed stencils
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
-[0.42.0]: https://github.com/ecmwf/atlas/compare/0.42.0...0.43.0
+[0.43.1]: https://github.com/ecmwf/atlas/compare/0.43.0...0.43.1
+[0.43.0]: https://github.com/ecmwf/atlas/compare/0.42.0...0.43.0
 [0.42.0]: https://github.com/ecmwf/atlas/compare/0.41.0...0.42.0
 [0.41.1]: https://github.com/ecmwf/atlas/compare/0.41.0...0.41.1
 [0.41.0]: https://github.com/ecmwf/atlas/compare/0.40.0...0.41.0
