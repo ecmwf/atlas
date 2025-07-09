@@ -432,7 +432,7 @@ end function
 subroutine pluto_allocator_allocate_int32_r1(this, array, shape)
     class(pluto_allocator) :: this
     integer(c_int32_t), pointer, intent(inout) :: array(:)
-    integer(c_int), intent(in) :: shape(1)
+    integer(c_int), intent(in) :: shape(:)
     type(c_ptr) :: mem
     integer(c_size_t) :: bytes
     bytes = product(shape) * 4
@@ -447,7 +447,7 @@ end subroutine
 subroutine pluto_allocator_allocate_int32_r2(this, array, shape)
     class(pluto_allocator) :: this
     integer(c_int32_t), pointer, intent(inout) :: array(:,:)
-    integer(c_int), intent(in) :: shape(2)
+    integer(c_int), intent(in) :: shape(:)
     type(c_ptr) :: mem
     integer(c_size_t) :: bytes
     bytes = product(shape) * 4
@@ -462,7 +462,7 @@ end subroutine
 subroutine pluto_allocator_allocate_int32_r3(this, array, shape)
     class(pluto_allocator) :: this
     integer(c_int32_t), pointer, intent(inout) :: array(:,:,:)
-    integer(c_int), intent(in) :: shape(3)
+    integer(c_int), intent(in) :: shape(:)
     type(c_ptr) :: mem
     integer(c_size_t) :: bytes
     bytes = product(shape) * 4
@@ -477,7 +477,7 @@ end subroutine
 subroutine pluto_allocator_allocate_int32_r4(this, array, shape)
     class(pluto_allocator) :: this
     integer(c_int32_t), pointer, intent(inout) :: array(:,:,:,:)
-    integer(c_int), intent(in) :: shape(4)
+    integer(c_int), intent(in) :: shape(:)
     type(c_ptr) :: mem
     integer(c_size_t) :: bytes
     bytes = product(shape) * 4
@@ -492,7 +492,7 @@ end subroutine
 subroutine pluto_allocator_allocate_int64_r1(this, array, shape)
     class(pluto_allocator) :: this
     integer(c_int64_t), pointer, intent(inout) :: array(:)
-    integer(c_int), intent(in) :: shape(1)
+    integer(c_int), intent(in) :: shape(:)
     type(c_ptr) :: mem
     integer(c_size_t) :: bytes
     bytes = product(shape) * 8
@@ -507,7 +507,7 @@ end subroutine
 subroutine pluto_allocator_allocate_int64_r2(this, array, shape)
     class(pluto_allocator) :: this
     integer(c_int64_t), pointer, intent(inout) :: array(:,:)
-    integer(c_int), intent(in) :: shape(2)
+    integer(c_int), intent(in) :: shape(:)
     type(c_ptr) :: mem
     integer(c_size_t) :: bytes
     bytes = product(shape) * 8
@@ -522,7 +522,7 @@ end subroutine
 subroutine pluto_allocator_allocate_int64_r3(this, array, shape)
     class(pluto_allocator) :: this
     integer(c_int64_t), pointer, intent(inout) :: array(:,:,:)
-    integer(c_int), intent(in) :: shape(3)
+    integer(c_int), intent(in) :: shape(:)
     type(c_ptr) :: mem
     integer(c_size_t) :: bytes
     bytes = product(shape) * 8
@@ -537,7 +537,7 @@ end subroutine
 subroutine pluto_allocator_allocate_int64_r4(this, array, shape)
     class(pluto_allocator) :: this
     integer(c_int64_t), pointer, intent(inout) :: array(:,:,:,:)
-    integer(c_int), intent(in) :: shape(4)
+    integer(c_int), intent(in) :: shape(:)
     type(c_ptr) :: mem
     integer(c_size_t) :: bytes
     bytes = product(shape) * 8
@@ -552,7 +552,7 @@ end subroutine
 subroutine pluto_allocator_allocate_real32_r1(this, array, shape)
     class(pluto_allocator) :: this
     real(c_float), pointer, intent(inout) :: array(:)
-    integer(c_int), intent(in) :: shape(1)
+    integer(c_int), intent(in) :: shape(:)
     type(c_ptr) :: mem
     integer(c_size_t) :: bytes
     bytes = product(shape) * 4
@@ -567,7 +567,7 @@ end subroutine
 subroutine pluto_allocator_allocate_real32_r2(this, array, shape)
     class(pluto_allocator) :: this
     real(c_float), pointer, intent(inout) :: array(:,:)
-    integer(c_int), intent(in) :: shape(2)
+    integer(c_int), intent(in) :: shape(:)
     type(c_ptr) :: mem
     integer(c_size_t) :: bytes
     bytes = product(shape) * 4
@@ -582,7 +582,7 @@ end subroutine
 subroutine pluto_allocator_allocate_real32_r3(this, array, shape)
     class(pluto_allocator) :: this
     real(c_float), pointer, intent(inout) :: array(:,:,:)
-    integer(c_int), intent(in) :: shape(3)
+    integer(c_int), intent(in) :: shape(:)
     type(c_ptr) :: mem
     integer(c_size_t) :: bytes
     bytes = product(shape) * 4
@@ -597,7 +597,7 @@ end subroutine
 subroutine pluto_allocator_allocate_real32_r4(this, array, shape)
     class(pluto_allocator) :: this
     real(c_float), pointer, intent(inout) :: array(:,:,:,:)
-    integer(c_int), intent(in) :: shape(4)
+    integer(c_int), intent(in) :: shape(:)
     type(c_ptr) :: mem
     integer(c_size_t) :: bytes
     bytes = product(shape) * 4
@@ -612,7 +612,7 @@ end subroutine
 subroutine pluto_allocator_allocate_real64_r1(this, array, shape)
     class(pluto_allocator) :: this
     real(c_double), pointer, intent(inout) :: array(:)
-    integer(c_int), intent(in) :: shape(1)
+    integer(c_int), intent(in) :: shape(:)
     type(c_ptr) :: mem
     integer(c_size_t) :: bytes
     bytes = product(shape) * 8
@@ -627,7 +627,7 @@ end subroutine
 subroutine pluto_allocator_allocate_real64_r2(this, array, shape)
     class(pluto_allocator) :: this
     real(c_double), pointer, intent(inout) :: array(:,:)
-    integer(c_int), intent(in) :: shape(2)
+    integer(c_int), intent(in) :: shape(:)
     type(c_ptr) :: mem
     integer(c_size_t) :: bytes
     bytes = product(shape) * 8
@@ -642,7 +642,7 @@ end subroutine
 subroutine pluto_allocator_allocate_real64_r3(this, array, shape)
     class(pluto_allocator) :: this
     real(c_double), pointer, intent(inout) :: array(:,:,:)
-    integer(c_int), intent(in) :: shape(3)
+    integer(c_int), intent(in) :: shape(:)
     type(c_ptr) :: mem
     integer(c_size_t) :: bytes
     bytes = product(shape) * 8
@@ -657,7 +657,7 @@ end subroutine
 subroutine pluto_allocator_allocate_real64_r4(this, array, shape)
     class(pluto_allocator) :: this
     real(c_double), pointer, intent(inout) :: array(:,:,:,:)
-    integer(c_int), intent(in) :: shape(4)
+    integer(c_int), intent(in) :: shape(:)
     type(c_ptr) :: mem
     integer(c_size_t) :: bytes
     bytes = product(shape) * 8
