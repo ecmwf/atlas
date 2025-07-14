@@ -88,14 +88,14 @@ public:
 
     double area() const {
         if (not computed_area_) {
-            compute_centroid();
+            compute_centroid_and_area();
         }
         return area_;
     }
 
     const PointXYZ& centroid() const {
         if (not computed_centroid_) {
-            compute_centroid();
+            compute_centroid_and_area();
         }
         return centroid_;
     }
@@ -146,7 +146,7 @@ private:
         size_t size_{0};
     };
 
-    void compute_centroid() const;
+    void compute_centroid_and_area() const;
 
     double compute_radius() const;
 
