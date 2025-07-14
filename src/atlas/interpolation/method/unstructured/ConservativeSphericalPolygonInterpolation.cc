@@ -137,7 +137,6 @@ void dump_polygons_to_json( const ConvexSphericalPolygon& t_csp,
 }
 
 constexpr double unit_sphere_area() {
-    // 4*pi*r^2  with r=1
     return 4. * M_PI;
 }
 
@@ -145,6 +144,7 @@ template <typename T>
 size_t memory_of(const std::vector<T>& vector) {
     return sizeof(T) * vector.capacity();
 }
+
 template <typename T>
 size_t memory_of(const std::vector<std::vector<T>>& vector_of_vector) {
     size_t mem = 0;

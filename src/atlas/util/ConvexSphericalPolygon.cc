@@ -151,7 +151,7 @@ ConvexSphericalPolygon::ConvexSphericalPolygon(const PointXYZ points[], size_t s
     }
 }
 
-void ConvexSphericalPolygon::compute_centroid() const {
+void ConvexSphericalPolygon::compute_centroid_and_area() const {
     const auto triangles = triangulate();
 
     area_          = triangles.area();
@@ -469,7 +469,7 @@ double ConvexSphericalPolygon::compute_radius() const {
     double radius{0.};
     if (valid_) {
         if (not computed_centroid_) {
-            compute_centroid();
+            compute_centroid_and_area();
         }
         for (size_t i = 0; i < size_; ++i) {
             radius = std::max(radius, PointXYZ::distance(sph_coords_[i], centroid_));
