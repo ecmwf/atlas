@@ -73,6 +73,7 @@ parallel/omp/sort.h
 util/Config.cc
 util/Config.h
 
+mdspan.h
 )
 
 list( APPEND atlas_grid_srcs
@@ -880,7 +881,6 @@ util/SphericalPolygon.cc
 util/SphericalPolygon.h
 util/UnitSphere.h
 util/vector.h
-util/mdspan.h
 util/VectorOfAbstract.h
 util/QhullSphericalTriangulation.h
 util/QhullSphericalTriangulation.cc

@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-#include "atlas/util/mdspan.h"
+#include "atlas/mdspan.h"
 
 #include "atlas/library/config.h"
 #include "atlas/util/Config.h"
