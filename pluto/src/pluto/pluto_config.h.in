@@ -11,6 +11,7 @@
 
 #cmakedefine01 PLUTO_HAVE_HIC
 #cmakedefine01 PLUTO_HAVE_PMR
+#cmakedefine01 PLUTO_HAVE_MDSPAN
 
 #include "hic/hic_config.h"
 

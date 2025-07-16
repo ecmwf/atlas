@@ -881,7 +881,6 @@ util/SphericalPolygon.h
 util/UnitSphere.h
 util/vector.h
 util/mdspan.h
-util/detail/mdspan/mdspan.hpp
 util/VectorOfAbstract.h
 util/QhullSphericalTriangulation.h
 util/QhullSphericalTriangulation.cc

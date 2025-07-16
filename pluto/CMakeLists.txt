@@ -22,6 +22,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 ecbuild_add_option( FEATURE PMR DESCRIPTION "Compatibility with std::pmr in C++" DEFAULT OFF )
 set(PLUTO_HAVE_PMR ${HAVE_PMR})
 
+ecbuild_add_option( FEATURE MDSPAN DESCRIPTION "Compatibility with std::mdspan in C++" DEFAULT OFF )
+set(PLUTO_HAVE_MDSPAN ${HAVE_MDSPAN})
+
 find_package(hic QUIET)
 if( NOT hic_FOUND )
   add_subdirectory(../hic ${CMAKE_CURRENT_BINARY_DIR}/hic )
