@@ -154,7 +154,7 @@ public:  // methods
     /// First dimension is number of points, second dimension is coordinate. First X (lon), then Y (lat)
     template <typename Extents, typename LayoutPolicy, typename AccessorPolicy>
     Unstructured(atlas::mdspan<const double, Extents, LayoutPolicy, AccessorPolicy> xy):
-        Unstructured(xy.extent(0), &xy(0,0), &xy(0,1), xy.stride(1), xy.stride(1)) {}
+        Unstructured(xy.extent(0), &xy[std::array{0,0}], &xy[std::array{0,1}], xy.stride(1), xy.stride(1)) {}
 
     /// Constructor from initializer list
     Unstructured(std::initializer_list<PointXY>);

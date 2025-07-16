@@ -8,6 +8,7 @@
 #include "atlas/mesh/MeshBuilder.h"
 
 #include <algorithm>
+#include <numeric>
 
 #include "atlas/array/MakeView.h"
 #include "atlas/grid/Grid.h"
