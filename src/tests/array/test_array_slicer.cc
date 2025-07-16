@@ -338,6 +338,47 @@ CASE("test_arrayview_slice_type") {
         static_assert(std::is_same<decltype(slice2), LocalView<const double, 3>>::value, "failed");
         static_assert(std::is_same<decltype(slice3), Reference<double const>>::value, "failed");
     }
+
+
+    {
+        const auto const_read_write_view = make_view<double, 3>(arr);
+
+        auto slice1 = const_read_write_view.slice(Range{0, 2}, 2, Range{2, 5}).as_mdspan();
+#define INDEX(...) std::array{__VA_ARGS__}
+        EXPECT(slice1[INDEX(0, 0)] == 133);
+        EXPECT(slice1[INDEX(0, 1)] == 134);
+        EXPECT(slice1[INDEX(0, 2)] == 135);
+        EXPECT(slice1[INDEX(1, 0)] == 233);
+        EXPECT(slice1[INDEX(1, 1)] == 234);
+        EXPECT(slice1[INDEX(1, 2)] == 235);
+
+        auto slice2 = const_read_write_view.slice(Range::all(), Range::to(2), Range::from(3)).as_mdspan();
+
+        EXPECT(slice2[INDEX(0, 0, 0)] == 114);
+        EXPECT(slice2[INDEX(0, 0, 1)] == 115);
+        EXPECT(slice2[INDEX(0, 1, 0)] == 124);
+        EXPECT(slice2[INDEX(0, 1, 1)] == 125);
+        EXPECT(slice2[INDEX(1, 0, 0)] == 214);
+        EXPECT(slice2[INDEX(1, 0, 1)] == 215);
+        EXPECT(slice2[INDEX(1, 1, 0)] == 224);
+        EXPECT(slice2[INDEX(1, 1, 1)] == 225);
+
+        auto slice2_view = LocalView<const double,3>(slice2);
+
+        EXPECT(slice2_view(0, 0, 0) == 114);
+        EXPECT(slice2_view(0, 0, 1) == 115);
+        EXPECT(slice2_view(0, 1, 0) == 124);
+        EXPECT(slice2_view(0, 1, 1) == 125);
+        EXPECT(slice2_view(1, 0, 0) == 214);
+        EXPECT(slice2_view(1, 0, 1) == 215);
+        EXPECT(slice2_view(1, 1, 0) == 224);
+        EXPECT(slice2_view(1, 1, 1) == 225);
+
+        static_assert(std::is_same<decltype(slice1), mdspan<const double, dims<2>, layout_stride>>::value, "failed");
+        static_assert(std::is_same<decltype(slice2), mdspan<const double, dims<3>, layout_stride>>::value, "failed");
+    }
+
+
 }
 
 //-----------------------------------------------------------------------------
