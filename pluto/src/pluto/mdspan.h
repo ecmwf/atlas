@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2024- ECMWF.
+ * (C) Copyright 2025- ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -12,9 +12,6 @@
 
 #include "pluto/pluto_config.h"
 
-#pragma push_macro("STD_MDSPAN_NAMESPACE")
-#undef STD_MDSPAN_NAMESPACE
-
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunknown-warning-option"
@@ -23,16 +20,43 @@
 
 #if PLUTO_HAVE_MDSPAN
 #include <mdspan>
+
+#pragma push_macro("STD_MDSPAN_NAMESPACE")
+#undef STD_MDSPAN_NAMESPACE
 #define STD_MDSPAN_NAMESPACE std
+namespace pluto {
+using ::STD_MDSPAN_NAMESPACE::dynamic_extent;
+using ::STD_MDSPAN_NAMESPACE::layout_left;
+using ::STD_MDSPAN_NAMESPACE::layout_right;
+using ::STD_MDSPAN_NAMESPACE::layout_stride;
+using ::STD_MDSPAN_NAMESPACE::default_accessor;
+using ::STD_MDSPAN_NAMESPACE::extents;
+using ::STD_MDSPAN_NAMESPACE::dextents;
+
+#if PLUTO_MDSPAN_USE_PAREN_OPERATOR
+#include "pluto/detail/mdspan_paren_operator.h"
 #else
+using ::STD_MDSPAN_NAMESPACE::mdspan;
+#endif
+} // namespace pluto
+#pragma pop_macro("STD_MDSPAN_NAMESPACE")
+#define PLUTO_MDSPAN_USE_BRACKET_OPERATOR 1
+
+#else
+
 #pragma push_macro("MDSPAN_IMPL_STANDARD_NAMESPACE")
 #undef MDSPAN_IMPL_STANDARD_NAMESPACE
-#define MDSPAN_IMPL_STANDARD_NAMESPACE pluto::detail::mdspan
-#define MDSPAN_USE_PAREN_OPERATOR 0
-    // In std::mdspan the call operator doesn't exist, so we don't include it here.
+#define MDSPAN_IMPL_STANDARD_NAMESPACE pluto
 #include "pluto/detail/mdspan/mdspan.hpp"
-#define STD_MDSPAN_NAMESPACE MDSPAN_IMPL_STANDARD_NAMESPACE
+#pragma pop_macro("MDSPAN_IMPL_STANDARD_NAMESPACE")
+#define PLUTO_MDSPAN_USE_BRACKET_OPERATOR MDSPAN_USE_BRACKET_OPERATOR
 #endif
+
+namespace pluto {
+    // A C++26 addition:
+    template< std::size_t Rank, class IndexType = std::size_t >
+    using dims = dextents<IndexType, Rank>;
+}
 
 #ifdef __clang__
 #pragma clang diagnostic pop
@@ -42,26 +66,4 @@
 #pragma warning pop
 #endif
 
-
 // ------------------------------------------------------------------------------------------------
-
-namespace pluto {
-using ::STD_MDSPAN_NAMESPACE::dynamic_extent;
-using ::STD_MDSPAN_NAMESPACE::layout_left;
-using ::STD_MDSPAN_NAMESPACE::layout_right;
-using ::STD_MDSPAN_NAMESPACE::layout_stride;
-using ::STD_MDSPAN_NAMESPACE::default_accessor;
-using ::STD_MDSPAN_NAMESPACE::extents;
-using ::STD_MDSPAN_NAMESPACE::dextents;
-using ::STD_MDSPAN_NAMESPACE::mdspan;
-// A C++26 addition:
-template< std::size_t Rank, class IndexType = std::size_t >
-using dims = dextents<IndexType, Rank>;
-} // namespace pluto
-
-// ------------------------------------------------------------------------------------------------
-
-#if !PLUTO_HAVE_MDSPAN
-#pragma pop_macro("MDSPAN_IMPL_STANDARD_NAMESPACE")
-#endif
-#pragma pop_macro("STD_MDSPAN_NAMESPACE")

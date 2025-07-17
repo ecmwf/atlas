@@ -4,13 +4,13 @@
 #include <iostream>
 #include <string_view>
 
-#if defined(__cpp_multidimensional_subscript)
+#if PLUTO_MDSPAN_USE_BRACKET_OPERATOR
 #define MDINDEX(...) __VA_ARGS__
 #else
 #define MDINDEX(...) std::array{__VA_ARGS__}
 #endif
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(__llvm__) && !defined(__INTEL_COMPILER) && !defined(__NVCOMPILER)
 #if __GNUC__ <= 8
 #define CTAD_NOT_SUPPORTED 1
 #endif
@@ -29,6 +29,8 @@ void print_features() {
     std::cout << "__cpp_lib_mdspan                      = not defined" << std::endl;
 #endif
     std::cout << "PLUTO_HAVE_MDSPAN                     = " << PLUTO_HAVE_MDSPAN << std::endl;
+    std::cout << "PLUTO_MDSPAN_USE_PAREN_OPERATOR       = " << PLUTO_MDSPAN_USE_PAREN_OPERATOR << std::endl;
+    std::cout << "PLUTO_MDSPAN_USE_BRACKET_OPERATOR     = " << PLUTO_MDSPAN_USE_BRACKET_OPERATOR << std::endl;
 }
 
 template<typename MDSPAN>
@@ -75,6 +77,25 @@ void expect_equal(MDSPAN span, EXPECTED expected) {
             }
         }
     }
+#if PLUTO_MDSPAN_USE_PAREN_OPERATOR
+    if constexpr(span.rank() == 1) {
+        for (typename MDSPAN::index_type i=0; i<span.extent(0); ++i) {
+            if(span(i) != expected[i]) {
+                throw std::runtime_error("value mismatch");
+            }
+        }
+    }
+    if constexpr(span.rank() == 2) {
+        int n=0;
+        for (typename MDSPAN::index_type i=0; i<span.extent(0); ++i) {
+            for (typename MDSPAN::index_type j=0; j<span.extent(1); ++j, ++n) {
+                if(span(i,j) != expected[n]) {
+                    throw std::runtime_error("mismatch");
+                }
+            }
+        }
+    }
+#endif
 }
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
@@ -106,7 +127,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
         PRINT(view_2x3_col3);
         expect_equal(view_2x3, std::array{1,2,3,4,5,6});
         expect_equal(view_2x3_layout_right, std::array{1,2,3,4,5,6});
-        expect_equal(view_2x3_layout_left, std::array{1,3,5,2,4,6});
+        expect_equal(view_2x3_layout_left,  std::array{1,3,5,2,4,6});
         expect_equal(view_2x3_row1, std::array{1,2,3});
         expect_equal(view_2x3_row2, std::array{4,5,6});
         expect_equal(view_2x3_col1, std::array{1,4});
@@ -137,7 +158,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
         PRINT(view_2x3_col3);
         expect_equal(view_2x3, std::array{1,2,3,4,5,6});
         expect_equal(view_2x3_layout_right, std::array{1,2,3,4,5,6});
-        expect_equal(view_2x3_layout_left, std::array{1,3,5,2,4,6});
+        expect_equal(view_2x3_layout_left,  std::array{1,3,5,2,4,6});
         expect_equal(view_2x3_row1, std::array{1,2,3});
         expect_equal(view_2x3_row2, std::array{4,5,6});
         expect_equal(view_2x3_col1, std::array{1,4});
@@ -161,11 +182,11 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
         pluto::mdspan<double,shape_2x3_col,pluto::layout_stride> view_2x3_col1{container.data()+0,{shape_2x3_col{},std::array{3}}};
 
         // This should work, as default layout_right matches the stride=1
-        pluto::mdspan<double,pluto::dims<1>> view_row = view_2x3_row1;
+        pluto::mdspan<double,pluto::dims<1>> view_row{view_2x3_row1};
         PRINT(view_row);
 
         // This fails, as default layout_right doesn't match the stride=3
-        //     pluto::mdspan<double,pluto::extents<size_t,2>> view_col = view_2x3_col1;
+        //     pluto::mdspan<double,pluto::extents<size_t,2>> view_col{view_2x3_col1};
     }
 
 }
