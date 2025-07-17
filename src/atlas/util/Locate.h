@@ -16,159 +16,51 @@
 #include "atlas/grid.h"
 #include "atlas/functionspace.h"
 #include "atlas/parallel/mpi/mpi.h"
-#include "atlas/util/mdspan.h"
+#include "atlas/mdspan.h"
 
-namespace atlas::util {
+namespace atlas {
 
-template <typename Value, Value Base>
-class IndexReference {
-public:
-    IndexReference(Value& idx): idx_(idx) {}
-
-    void set(const Value& value) { idx_ = value + base_; }
-    Value get() const { return idx_-base_; }
-    void operator =(const Value& value) { set(value); }
-
-    IndexReference& operator=(const IndexReference& other) {
-        set(other.get());
-        return *this;
-    }
-    IndexReference& operator--() {
-        --(idx_);
-        return *this;
-    }
-    IndexReference& operator++() {
-        ++(idx_);
-        return *this;
-    }
-
-    IndexReference& operator+=(Value v) {
-        idx_ += v;
-        return *this;
-    }
-
-    IndexReference& operator-=(Value v) {
-        idx_ -= v;
-        return *this;
-    }
-
-    // implicit conversion
-    operator Value() const { return get(); }
-
-private:
-    Value& idx_;
-    static constexpr Value base_ = Base;
-};
-
-template<class ElementType, size_t Base, typename Enable = void>
-struct IndexAccessor;
-
-template<class ElementType, size_t Base>
-struct IndexAccessor<ElementType, Base, std::enable_if_t<!std::is_const_v<ElementType>>> {
-    using element_type     = ElementType;
-    using reference        = IndexReference<ElementType,Base>;
-    using data_handle_type = ElementType*;
-    using offset_policy    = IndexAccessor;
-
-    constexpr IndexAccessor() = default;
-
-    constexpr reference access(data_handle_type p, size_t i) const noexcept {
-        return p[i];
-    }
-
-    constexpr data_handle_type offset(data_handle_type p, size_t i) const noexcept {
-        return p + i;
-    }
-
-    constexpr size_t base() const noexcept { return base_; }
-
-  private:
-    static constexpr size_t base_{Base};                              // exposition only
-};
-
-template<class ElementType, size_t B>
-struct IndexAccessor<ElementType, B, std::enable_if_t<std::is_const_v<ElementType>>>  {
-    using element_type     = ElementType;
-    using reference        = ElementType;
-    using data_handle_type = ElementType*;
-    using offset_policy    = IndexAccessor;
-
-    constexpr IndexAccessor() = default;
-
-    constexpr reference access(data_handle_type p, size_t i) const noexcept {
-        return p[i] - base_;
-    }
-
-    constexpr data_handle_type offset(data_handle_type p, size_t i) const noexcept {
-        return p + i;
-    }
-
-    constexpr size_t base() const noexcept { return base_; }
-
-  private:
-    static constexpr size_t base_{B};                              // exposition only
-};
-
-// Custom accessor policy that adds a base to the 0-based value
-template<typename ElementType, typename Enable>
-struct IndexAccessor<ElementType, 0, Enable> {
-    using element_type     = ElementType;
-    using reference        = ElementType&;
-    using data_handle_type = ElementType*;
-    using offset_policy    = IndexAccessor;
-
-    constexpr IndexAccessor() = default;
-
-    constexpr reference access(data_handle_type p, size_t i) const {
-        return offset(p,i);
-    }
-
-    constexpr data_handle_type offset(data_handle_type p, size_t i) const noexcept {
-        return p + i;
-    }
-
-    constexpr size_t base() const noexcept { return base_; }
-
-  private:
-    static constexpr size_t base_{0};                              // exposition only
-};
-
-template<class T, std::size_t Extents = dynamic_extent, class Accessor = default_accessor<T>>
-using span = mdspan<T, extents<size_t,Extents>, layout_right, Accessor>;
-
-template <size_t Base>
-struct index_base {
-    static constexpr size_t value = Base;
-};
-
-template<class T, class Base, std::size_t Extents = dynamic_extent>
-using span_index = mdspan<T, extents<size_t,Extents>, layout_right, IndexAccessor<T,Base::value>>;
-
+namespace detail {
 struct DistributionConstView {
-    size_t size() const { return size_; }
-    int operator[](gidx_t i) const {
-        return (*func_)(i);
-    }
-    DistributionConstView(std::function<int(gidx_t)>* func, std::size_t size) : func_(func), size_(size) {}
+size_t size() const { return size_; }
+int operator[](gidx_t i) const {
+    return (*func_)(i);
+}
+DistributionConstView(std::function<int(gidx_t)>* func, std::size_t size) : func_(func), size_(size) {}
 private:
-    std::function<int(gidx_t)>* func_{nullptr};
-    std::size_t size_{0};
+std::function<int(gidx_t)>* func_{nullptr};
+std::size_t size_{0};
 };
+
+#if ATLAS_HAVE_FORTRAN
+constexpr size_t remote_index_base = 1;
+#else
+constexpr size_t remote_index_base = 0;
+#endif
+constexpr size_t global_index_base = 1;
+
+template<class T, std::size_t Extents = dynamic_extent, class Layout = layout_right, class Accessor = default_accessor<T>>
+using mdspan_1d = mdspan<T, extents<size_t,Extents>, Layout, Accessor>;
+
+template<class T, std::size_t index_base , std::size_t Extents = dynamic_extent>
+using mdspan_1d_index = mdspan_1d<T, Extents, layout_right, index_accessor<T,index_base>>;
+}
 
 namespace view {
-using global_index = span_index<gidx_t,index_base<1>>;
-using remote_index = span_index<idx_t,index_base<1>>;
-using partition    = span<int>;
+using global_index = detail::mdspan_1d_index<gidx_t, detail::global_index_base>;
+using remote_index = detail::mdspan_1d_index<idx_t,  detail::remote_index_base>;
+using partition    = detail::mdspan_1d<int>;
 }
 namespace const_view {
-using global_index = span_index<const gidx_t,index_base<1>>;
-using remote_index = span_index<const idx_t,index_base<1>>;
-using partition    = span<const int>;
-using ghost        = span<const int>;
-using distribution = DistributionConstView;
+using distribution = detail::DistributionConstView;
+using global_index = detail::mdspan_1d_index<const gidx_t, detail::global_index_base>;
+using remote_index = detail::mdspan_1d_index<const idx_t,  detail::remote_index_base>;
+using partition    = detail::mdspan_1d<const int>;
+using ghost        = detail::mdspan_1d<const int>;
+}
 }
 
-
+namespace atlas::util {
 // Given distribution and global_index, find the corresponding partition for each global index
 // The global-index is typically 1-based
 void locate_partition(
@@ -224,6 +116,5 @@ void locate(
     const_view::global_index,
     // output
     view::partition, view::remote_index);
-
 
 } // namespace atlas::util

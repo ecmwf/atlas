@@ -200,6 +200,90 @@ CASE("test_all_to_all rank 2") {
 
 }  // namespace atlas::test
 
+#include "atlas/parallel/mpi/mpi.h"
+#include "atlas/grid.h"
+#include "atlas/functionspace.h"
+#include "atlas/util/Locate.h"
+
+namespace atlas::test {
+
+CASE("real test") {
+    int mpi_rank = mpi::comm().rank();
+    int mpi_size = mpi::comm().size();
+
+    std::vector<gidx_t> receive_gidx;
+    if (mpi_rank == 0) {
+        receive_gidx = {4, 9, 20, 32, 109, 205, 27, 11, 893};
+    }
+    if (mpi_rank == 1) {
+        receive_gidx = {7, 52, 305, 1004, 5008};
+    }
+    if (mpi_rank == 2) {
+        receive_gidx = {989, 2781, 306, 3819, 29};
+    }
+
+    atlas::Grid grid("O32");
+    functionspace::StructuredColumns fs(grid);
+
+    std::vector<idx_t> receive_ridx(receive_gidx.size());
+    std::vector<int> receive_part(receive_gidx.size());
+
+    const_view::global_index gidx_view1{receive_gidx.data(),receive_gidx.size()};
+    const_view::global_index gidx_view2 = gidx_view1;
+    mdspan<const gidx_t,dims<1>> gidx_view3 = gidx_view2;
+    if (mpi_rank == 0) {
+        EXPECT_EQ(gidx_view1[1], 8);
+        EXPECT_EQ(gidx_view2[1], 8);
+        EXPECT_EQ(gidx_view3[1], 9);
+    }
+
+    view::global_index gidx_view4{receive_gidx.data(),receive_gidx.size()};
+    const_view::global_index gidx_view5 = gidx_view4;
+
+    auto glb_idx_view = array::make_view<gidx_t, 1>(fs.global_index());
+    const auto glb_idx_view_const = array::make_view<gidx_t, 1>(fs.global_index());
+
+    auto span_const = glb_idx_view_const.as_mdspan();
+
+    // atlas::util::const_view::global_index gidx_view9 = atlas::util::make_span(std::vector{1,2,3});
+
+    // atlas::util::const_view::global_index gidx_view4{receive_gidx};
+
+    // ATLAS_DEBUG_VAR( std::extent_v<int[3]> );
+    // ATLAS_DEBUG_VAR( std::extent{receive_gidx} );
+
+    atlas::util::locate(fs,
+        mdspan{receive_gidx.data(), receive_gidx.size()},
+        mdspan{receive_part.data(), receive_part.size()},
+        mdspan{receive_ridx.data(), receive_ridx.size()});
+
+    parallel::Collect collect;
+    collect.setup(receive_part.size(), receive_part.data(),receive_ridx.data(),1);
+
+    array::ArrayT<gidx_t> receive(receive_gidx.size());
+
+    collect.execute<gidx_t,1>(fs.global_index(), receive);
+
+    for( int rank=0; rank < mpi_size; ++rank ) {
+        mpi::comm().barrier();
+        if (rank == mpi_rank) {
+            std::cerr << "[" << mpi_rank << "] receive = ";
+            receive.dump(std::cerr);
+            std::cerr << std::endl;
+        }
+    }
+
+    {
+        auto receive_view = array::make_view<gidx_t,1>(receive);
+        for (int i=0; i<receive_gidx.size(); ++i) {
+            EXPECT_EQ( receive_view[i], receive_gidx[i]);
+        }
+    }
+
+}
+
+}  // namespace atlas::test
+
 
 int main(int argc, char** argv) {
     return atlas::test::run(argc, argv);

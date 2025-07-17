@@ -32,11 +32,14 @@
 
 //----------------------------------------------------------------------------------------------------------------------
 
+namespace atlas {
 namespace {
 
 using mdspan_xy = atlas::mdspan<const double, atlas::extents<size_t, atlas::dynamic_extent, 2>>;
 mdspan_xy make_mdspan(const atlas::Field& xy) {
     return mdspan_xy{xy.array().host_data<const double>(), xy.shape(0), 2 };
+}
+
 }
 
 namespace test_arrays {
