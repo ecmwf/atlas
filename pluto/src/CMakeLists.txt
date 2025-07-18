@@ -94,6 +94,7 @@ ecbuild_add_library( TARGET pluto
 
     ${pmr_compat_src}
     pluto/mdspan.h
+    pluto/detail/mdspan_paren_operator.h
     pluto/detail/mdspan/mdspan.hpp
 
   INSTALL_HEADERS ALL

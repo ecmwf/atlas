@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-#include "atlas/util/mdspan.h"
+#include "atlas/mdspan.h"
 
 #include "atlas/library/config.h"
 #include "atlas/util/Config.h"
@@ -180,8 +180,8 @@ public:
     PolygonCoordinates(const Polygon&, const double x[], const double y[], size_t xstride, size_t ystride, bool removeAlignedPoints);
 
     template <typename Extents, typename LayoutPolicy, typename AccessorPolicy>
-    PolygonCoordinates(const Polygon& poly, atlas::mdspan<const double, Extents, LayoutPolicy, AccessorPolicy> coordinates, bool removeAlignedPoints): 
-        PolygonCoordinates(poly, &coordinates(0,0), &coordinates(0,1), coordinates.stride(1), coordinates.stride(1), removeAlignedPoints ) {}
+    PolygonCoordinates(const Polygon& poly, atlas::mdspan<const double, Extents, LayoutPolicy, AccessorPolicy> coordinates, bool removeAlignedPoints):
+        PolygonCoordinates(poly, &coordinates[std::array{0,0}], &coordinates[std::array{0,1}], coordinates.stride(1), coordinates.stride(1), removeAlignedPoints ) {}
 
     template <typename PointContainer>
     PolygonCoordinates(const PointContainer& points);
