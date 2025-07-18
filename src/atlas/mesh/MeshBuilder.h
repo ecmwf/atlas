@@ -7,11 +7,12 @@
 
 #pragma once
 
-#include "atlas/mesh/Mesh.h"
+#include "eckit/config/Configuration.h"
+
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
-
-#include "eckit/config/Configuration.h"
+#include "atlas/mdspan.h"
+#include "atlas/mesh/Mesh.h"
 
 #include <array>
 #include <vector>
@@ -62,13 +63,28 @@ public:
      *   _not_ given, then the grid is constructed from the lons/lats passed to the MeshBuilder.
      * - Select which MPI communicator to use.
      */
-    Mesh operator()(size_t nb_nodes, const double lons[], const double lats[], const int ghosts[],
-                    const gidx_t global_indices[], const idx_t remote_indices[], const idx_t remote_index_base,
-                    const int partitions[], size_t nb_tris, const gidx_t tri_boundary_nodes[],
-                    const gidx_t tri_global_indices[], size_t nb_quads, const gidx_t quad_boundary_nodes[],
-                    const gidx_t quad_global_indices[],
+
+    // operator (1) deprecated, use operator (2)
+    [[deprecated("Use operator (2) with extra global_index_base argument")]]
+    Mesh operator()(size_t nb_nodes, const double lon[], const double lat[], const int ghost[],
+                    const gidx_t global_index[], const idx_t remote_index[], const idx_t remote_index_base,
+                    const int partition[],
+                    size_t nb_triags, const gidx_t triag_nodes_global[], const gidx_t triag_global_index[],
+                    size_t nb_quads,  const gidx_t quad_nodes_global[],  const gidx_t quad_global_index[],
                     const eckit::Configuration& config = util::NoConfig()) const;
 
+    // operator (2) = slightly reordered arguments of (1) and extra global_index_base argument
+    Mesh operator()(size_t nb_nodes, const gidx_t global_index[],
+                    const double lon[], const double lat[],
+                    const int ghost[], const int partition[], const idx_t remote_index[], const idx_t remote_index_base,
+                    size_t nb_triags, const gidx_t triag_nodes_global[], const gidx_t triag_global_index[],
+                    size_t nb_quads,  const gidx_t quad_nodes_global[],  const gidx_t quad_global_index[],
+                    gidx_t global_index_base,
+                    const eckit::Configuration& config = util::NoConfig()) const;
+
+    // operator (3) deprecated, use (4)
+    // Delegate to next operator with global index base = 1
+    [[deprecated("Use operator (4) with extra global_index_base argument")]]
     Mesh operator()(size_t nb_nodes, const gidx_t global_index[],
                     const double x[], const double y[], size_t xstride, size_t ystride,
                     const double lon[], const double lat[], size_t lonstride, size_t latstride,
@@ -77,19 +93,46 @@ public:
                     size_t nb_quads,  const gidx_t quad_global_index[],  const gidx_t quad_nodes_global[],
                     const eckit::Configuration& config = util::NoConfig()) const;
 
+    // operator (4) = operator (3) with extra global_index_base argument
+    Mesh operator()(size_t nb_nodes, const gidx_t global_index[],
+                    const double x[], const double y[], size_t xstride, size_t ystride,
+                    const double lon[], const double lat[], size_t lonstride, size_t latstride,
+                    const int ghost[], const int partition[], const idx_t remote_index[], const idx_t remote_index_base,
+                    size_t nb_triags, const gidx_t triag_global_index[], const gidx_t triag_nodes_global[],
+                    size_t nb_quads,  const gidx_t quad_global_index[],  const gidx_t quad_nodes_global[],
+                    gidx_t global_index_base,
+                    const eckit::Configuration& config = util::NoConfig()) const;
+
+    template<typename T>
+    using span = mdspan<T,dims<1>,layout_right>;
+
+    template<typename T>
+    using strided_span = mdspan<T,dims<1>,layout_stride>;
+
+    // operator (5)
+    Mesh operator()(span<const gidx_t> global_index,
+                    strided_span<const double> x,   strided_span<const double> y,
+                    strided_span<const double> lon, strided_span<const double> lat,
+                    span<const int> ghost, span<const int> partition,
+                    span<const idx_t> remote_index, const idx_t remote_index_base,
+                    span<const gidx_t> triag_global_index, mdspan<const gidx_t, extents<size_t,dynamic_extent,3>> triag_nodes_global,
+                    span<const gidx_t> quad_global_index,  mdspan<const gidx_t, extents<size_t,dynamic_extent,4>> quad_nodes_global,
+                    const gidx_t global_index_base,
+                    const eckit::Configuration& config = util::NoConfig()) const;
 
     /**
      * \brief C++-interface to construct a Mesh from external connectivity data
      *
      * Provides a wrapper to the C-interface using STL containers.
      */
+    [[deprecated("Use mdspan based operator with extra global_index_base argument")]]
     Mesh operator()(const std::vector<double>& lons, const std::vector<double>& lats, const std::vector<int>& ghosts,
-                    const std::vector<gidx_t>& global_indices, const std::vector<idx_t>& remote_indices,
+                    const std::vector<gidx_t>& global_index, const std::vector<idx_t>& remote_index,
                     const idx_t remote_index_base, const std::vector<int>& partitions,
-                    const std::vector<std::array<gidx_t, 3>>& tri_boundary_nodes,
-                    const std::vector<gidx_t>& tri_global_indices,
-                    const std::vector<std::array<gidx_t, 4>>& quad_boundary_nodes,
-                    const std::vector<gidx_t>& quad_global_indices,
+                    const std::vector<std::array<gidx_t, 3>>& triag_nodes_global,
+                    const std::vector<gidx_t>& triag_global_index,
+                    const std::vector<std::array<gidx_t, 4>>& quad_nodes_global,
+                    const std::vector<gidx_t>& quad_global_index,
                     const eckit::Configuration& config = util::NoConfig()) const;
 };
 
@@ -116,8 +159,18 @@ public:
      * are ordered node-varies-fastest, element-varies-slowest order. The cell global index is,
      * here also, a uniform labeling over the of the cells across all MPI tasks.
      */
-    Mesh operator()(size_t nb_nodes,  const gidx_t node_global_index[], const double x[], const double y[], const double lon[], const double lat[],
-                    size_t nb_triags, const gidx_t triangle_global_index[], const gidx_t triangle_nodes_global_index[]) const;
+    [[deprecated("Use operator with extra global_index_base argument and strides")]]
+    Mesh operator()(size_t nb_nodes,    const gidx_t node_global_index[],
+                    const double x[],   const double y[],
+                    const double lon[], const double lat[],
+                    size_t nb_triags,   const gidx_t triangle_global_index[], const gidx_t triangle_nodes_global_index[]) const;
+
+    Mesh operator()(size_t nb_nodes,    const gidx_t node_global_index[],
+                    const double x[],   const double y[],   size_t xstride,   size_t ystride,
+                    const double lon[], const double lat[], size_t lonstride, size_t latstride,
+                    size_t nb_triags,   const gidx_t triangle_global_index[], const gidx_t triangle_nodes_global_index[],
+                    gidx_t global_index_base) const;
+
 private:
     MeshBuilder meshbuilder_;
 };

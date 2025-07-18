@@ -23,8 +23,11 @@ TriangularMeshBuilder* atlas__TriangularMeshBuilder__new();
 void atlas__TriangularMeshBuilder__delete(TriangularMeshBuilder* This);
 
 Mesh::Implementation* atlas__TriangularMeshBuilder__operator(TriangularMeshBuilder* This,
-  size_t nb_nodes, const gidx_t node_global_index[], const double x[], const double y[], const double lon[], const double lat[],
-  size_t nb_triags, const gidx_t triangle_global_index[], const gidx_t triangle_nodes_global_index[]);
+  size_t nb_nodes, const gidx_t node_global_index[],
+  const double x[], const double y[], size_t xstride, size_t ystride,
+  const double lon[], const double lat[], size_t lonstride, size_t latstride,
+  size_t nb_triags, const gidx_t triangle_global_index[], const gidx_t triangle_nodes_global_index[],
+  gidx_t global_index_base);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
