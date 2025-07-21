@@ -92,14 +92,17 @@ struct index_accessor {
         ||( std::is_const_v<ElementType> && std::is_same_v<ElementType, std::add_const_t<typename OtherAccessor::element_type>>)>>
     constexpr index_accessor(const OtherAccessor&) {}
 
-    constexpr reference access(data_handle_type p, size_t i) const noexcept {
-        if constexpr(Base == 0 || !std::is_const_v<ElementType>) {
-            return p[i];
-        }
-        else {
-            // Here reference is equal to element_type
-            return p[i] - base_;
-        }
+    template<size_t B=Base, typename = std::enable_if_t<B == 0>>
+    constexpr ElementType& access(data_handle_type p, size_t i) const noexcept {
+        return p[i];
+    }
+    template<size_t B=Base, typename = std::enable_if_t<B != 0 && !std::is_const_v<ElementType>>>
+    constexpr index_reference<ElementType,Base> access(data_handle_type p, size_t i) const noexcept {
+        return p[i];
+    }
+    template<size_t B=Base, typename = std::enable_if_t<B != 0 && std::is_const_v<ElementType>>>
+    constexpr ElementType access(data_handle_type p, size_t i) const noexcept {
+        return p[i] - base_;
     }
 
     constexpr data_handle_type offset(data_handle_type p, size_t i) const noexcept {
