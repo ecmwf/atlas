@@ -208,6 +208,9 @@ CASE("test_all_to_all rank 2") {
 namespace atlas::test {
 
 CASE("real test") {
+    const idx_t  remote_index_base = ATLAS_HAVE_FORTRAN;
+    const gidx_t global_index_base = 1; // convention
+
     int mpi_rank = mpi::comm().rank();
     int mpi_size = mpi::comm().size();
 
@@ -228,37 +231,13 @@ CASE("real test") {
     std::vector<idx_t> receive_ridx(receive_gidx.size());
     std::vector<int> receive_part(receive_gidx.size());
 
-    const_view::global_index gidx_view1{receive_gidx.data(),receive_gidx.size()};
-    const_view::global_index gidx_view2 = gidx_view1;
-    mdspan<const gidx_t,dims<1>> gidx_view3 = gidx_view2;
-    if (mpi_rank == 0) {
-        EXPECT_EQ(gidx_view1[1], 8);
-        EXPECT_EQ(gidx_view2[1], 8);
-        EXPECT_EQ(gidx_view3[1], 9);
-    }
-
-    view::global_index gidx_view4{receive_gidx.data(),receive_gidx.size()};
-    const_view::global_index gidx_view5 = gidx_view4;
-
-    auto glb_idx_view = array::make_view<gidx_t, 1>(fs.global_index());
-    const auto glb_idx_view_const = array::make_view<gidx_t, 1>(fs.global_index());
-
-    auto span_const = glb_idx_view_const.as_mdspan();
-
-    // atlas::util::const_view::global_index gidx_view9 = atlas::util::make_span(std::vector{1,2,3});
-
-    // atlas::util::const_view::global_index gidx_view4{receive_gidx};
-
-    // ATLAS_DEBUG_VAR( std::extent_v<int[3]> );
-    // ATLAS_DEBUG_VAR( std::extent{receive_gidx} );
-
-    atlas::util::locate(fs,
-        mdspan{receive_gidx.data(), receive_gidx.size()},
-        mdspan{receive_part.data(), receive_part.size()},
-        mdspan{receive_ridx.data(), receive_ridx.size()});
+    functionspace::Locator locator(fs);
+    locator.locate(
+        receive_gidx, global_index_base,
+        receive_part, receive_ridx, remote_index_base);
 
     parallel::Collect collect;
-    collect.setup(receive_part.size(), receive_part.data(),receive_ridx.data(),1);
+    collect.setup(receive_part.size(), receive_part.data(),receive_ridx.data(),remote_index_base);
 
     array::ArrayT<gidx_t> receive(receive_gidx.size());
 
