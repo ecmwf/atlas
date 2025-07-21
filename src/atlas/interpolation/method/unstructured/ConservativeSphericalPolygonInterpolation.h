@@ -26,7 +26,6 @@ public:
         std::vector<idx_t> cell_idx;      // target cells used for intersection
         std::vector<PointXYZ> centroids;  // intersection cell centroids
         std::vector<double> weights;  // intersection cell areas
-        std::vector<double> tgt_weights;  // (intersection cell areas) / (target cell area) // TODO: tgt_weights vector should be removed for the sake of highres
     };
 
 private:
@@ -57,15 +56,15 @@ private:
         struct Timings {
             double source_polygons_assembly{0};
             double target_polygons_assembly{0};
-            double target_kdtree_assembly{0};
-            double target_kdtree_search{0};
+            double source_kdtree_assembly{0};
+            double source_kdtree_search{0};
             double source_polygons_filter{0};
             double polygon_intersections{0};
             double matrix_assembly{0};
             double interpolation{0};
         } timings;
 
-        std::vector<InterpolationParameters> src_iparam_;  // TODO: remove after setup?
+        std::vector<InterpolationParameters> tgt_iparam_;  // TODO: remove after setup?
 
         // Reconstructible if need be
         FunctionSpace src_fs_;
@@ -94,7 +93,7 @@ public:
             SRC_PLG = 0,  // index, number of source polygons
             TGT_PLG,      // index, number of target polygons
             INT_PLG,      // index, number of intersection polygons
-            UNCVR_SRC,    // index, number of uncovered source polygons
+            UNCVR_TGT,    // index, number of uncovered target polygons
             COUNTS_ENUM_SIZE
         };
         enum Errors
