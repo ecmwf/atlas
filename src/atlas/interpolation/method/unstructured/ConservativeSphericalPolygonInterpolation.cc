@@ -1158,73 +1158,21 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
     }
 
     if (validate_) {
-        ATLAS_TRACE_SCOPE("compute errors in polygon intersections") {
+        ATLAS_TRACE_SCOPE("compute errors in coverting target cells with intersections") {
             double geo_err_l1   = 0.;
             double geo_err_linf = -1.;
+            double tgt_cover_err = 0.;
             for (idx_t tcell = 0; tcell < tgt_csp.size(); ++tcell) {
+                auto& t_csp = std::get<0>(tgt_csp[tcell]);
+                auto& tiparam = tgt_iparam_[tcell];
                 if (std::get<1>(tgt_csp[tcell]) != 0 ) {
                     // skip periodic & halo cells
                     continue;
                 }
-                double diff_cell = std::get<0>(tgt_csp[tcell]).area();
-                for (idx_t icell = 0; icell < tgt_iparam_[tcell].weights.size(); ++icell) {
-                    diff_cell -= tgt_iparam_[tcell].weights[icell];
+                for (idx_t icell = 0; icell < tiparam.weights.size(); ++icell) {
+                    tgt_cover_err -= tiparam.weights[icell];
                 }
-                geo_err_l1 += std::abs(diff_cell);
-                geo_err_linf = std::max(geo_err_linf, std::abs(diff_cell));
-            }
-            ATLAS_TRACE_MPI(ALLREDUCE) {
-                mpi::comm().allReduceInPlace(geo_err_l1, eckit::mpi::sum());
-                mpi::comm().allReduceInPlace(geo_err_linf, eckit::mpi::max());
-            }
-            if (mpi::size() == 1) {
-                remap_stat_.errors[Statistics::Errors::TGT_INTERSECTPLG_L1]   = geo_err_l1 / unit_sphere_area();
-                remap_stat_.errors[Statistics::Errors::TGT_INTERSECTPLG_LINF] = geo_err_linf;
-            }
-            else {
-                remap_stat_.errors[Statistics::Errors::TGT_INTERSECTPLG_L1]    = -1111.;
-                remap_stat_.errors[Statistics::Errors::TGT_INTERSECTPLG_LINF]  = -1111.;
-            }
-
-            std::fstream polygon_intersection_info("polygon_intersection", std::ios::out); 
-
-            geo_err_l1   = 0.;
-            geo_err_linf = -1.;
-            for (idx_t scell = 0; scell < src_csp.size(); ++scell) {
-                if (std::get<1>(src_csp[scell]) != 0) {
-                    // skip periodic & halo cells
-                    continue;
-                }
-                const auto& s_csp     = std::get<0>(src_csp[scell]);
-
-                double src_cover_area = 0.;
-                const auto& siparam   = src_iparam[scell];
-#if PRINT_BAD_POLYGONS
-                // dump polygons in json format
-                idx_t scell_printout = 120;
-                if (scell == scell_printout) {
-                    dump_polygons_to_json(t_csp, 1.e-14, src_csp, siparam.cell_idx, "polygon_dump", "scell" + std::to_string(scell_printout));
-                }
-#endif
-                /*
-                // TODO: normalise to source cell
-                double normm = s_csp.area() / (src_cover_area > 0. ? src_cover_area : s_csp.area());
-                for (idx_t icell = 0; icell < siparam.cell_idx.size(); ++icell) {
-                    idx_t scell = siparam.cell_idx[icell];
-                    auto siparam = src_iparam_[scell];
-                    size_t src_intersectors = siparam.cell_idx.size();
-                    for (idx_t ticell = 0; ticell < src_intersectors; ticell++ ) {
-                        if (siparam.cell_idx[icell] == ticell) {;
-                            siparam.weights[icell] *= normm;
-                            siparam.tgt_weights[icell] *= normm;
-                        }
-                    }
-                }
-                */
-                double diff_cell = tgt_cover_area - t_csp.area();
-                geo_err_l1 += std::abs(diff_cell);
-                geo_err_linf = std::max(geo_err_linf, std::abs(diff_cell));
-                const double tgt_cover_err = 100. * diff_cell / t_csp.area();
+                tgt_cover_err = 100. * (t_csp.area() - tgt_cover_err) / t_csp.area();
                 if (worst_tgt_overcover.second < tgt_cover_err) {
                     worst_tgt_overcover.second = tgt_cover_err;;
                     worst_tgt_overcover.first = tcell;
@@ -1234,6 +1182,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                     worst_tgt_undercover.first = tcell;
                 }
                 if (std::abs(tgt_cover_err) > 0.5) {
+                    std::fstream polygon_intersection_info("polygon_intersection", std::ios::out);
                     PointLonLat centre_ll;
                     eckit::geometry::Sphere::convertCartesianToSpherical(1., t_csp.centroid(), centre_ll);
                     polygon_intersection_info << "WARNING tgt cell " << tcell << " over-covering: \e[1m" << tgt_cover_err << "\e[0m %, cell-centre: "
@@ -1242,6 +1191,9 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                     dump_intersection("Target cell not exaclty covered", t_csp, src_csp, tiparam.cell_idx);
                     //dump_polygons_to_json(t_csp, src_csp, tiparam.cell_idx, "bad_polygon", 1.e-16);
                 }
+                auto diff_cell = std::get<0>(tgt_csp[tcell]).area() - tgt_cover_err;
+                geo_err_l1 += std::abs(diff_cell);
+                geo_err_linf = std::max(geo_err_linf, std::abs(diff_cell));
             }
             ATLAS_TRACE_MPI(ALLREDUCE) {
                 mpi::comm().allReduceInPlace(geo_err_l1, eckit::mpi::sum());
@@ -1249,6 +1201,55 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
             }
             remap_stat_.errors[Statistics::Errors::TGT_INTERSECTPLG_L1]   = geo_err_l1 / unit_sphere_area();
             remap_stat_.errors[Statistics::Errors::TGT_INTERSECTPLG_LINF] = geo_err_linf;
+        }
+
+        ATLAS_TRACE_SCOPE("compute errors in coverting target cells with intersections") {
+            double geo_err_l1   = 0.;
+            double geo_err_linf = -1.;
+            for (idx_t scell = 0; scell < src_csp.size(); ++scell) {
+                if (std::get<1>(src_csp[scell]) != 0) {
+                    // skip periodic & halo cells
+                    continue;
+                }
+                const auto& s_csp     = std::get<0>(src_csp[scell]);
+                auto diff_cell = s_csp.area();
+                const auto& siparam   = src_iparam[scell];
+                for (idx_t icell = 0; icell < siparam.weights.size(); ++icell) {
+                    diff_cell -= siparam.weights[icell];
+                }
+                geo_err_l1 += std::abs(diff_cell);
+                geo_err_linf = std::max(geo_err_linf, std::abs(diff_cell));
+            }
+            ATLAS_TRACE_MPI(ALLREDUCE) {
+                mpi::comm().allReduceInPlace(geo_err_l1, eckit::mpi::sum());
+                mpi::comm().allReduceInPlace(geo_err_linf, eckit::mpi::max());
+            }
+            remap_stat_.errors[Statistics::Errors::SRC_INTERSECTPLG_L1]   = geo_err_l1 / unit_sphere_area();
+            remap_stat_.errors[Statistics::Errors::SRC_INTERSECTPLG_LINF] = geo_err_linf;
+#if PRINT_BAD_POLYGONS
+            // TODO: need environment variable to print out intersection of source cell with target polygons     
+
+            // dump polygons in json format
+            idx_t scell_printout = 120;
+            if (scell == scell_printout) {
+                dump_polygons_to_json(t_csp, 1.e-14, src_csp, siparam.cell_idx, "polygon_dump", "scell" + std::to_string(scell_printout));
+            }
+#endif
+            /*
+            // TODO: normalise to source cell
+            double normm = s_csp.area() / (src_cover_area > 0. ? src_cover_area : s_csp.area());
+            for (idx_t icell = 0; icell < siparam.cell_idx.size(); ++icell) {
+                idx_t scell = siparam.cell_idx[icell];
+                auto siparam = src_iparam_[scell];
+                size_t src_intersectors = siparam.cell_idx.size();
+                for (idx_t ticell = 0; ticell < src_intersectors; ticell++ ) {
+                    if (siparam.cell_idx[icell] == ticell) {;
+                        siparam.weights[icell] *= normm;
+                        siparam.tgt_weights[icell] *= normm;
+                    }
+                }
+            }
+            */
         }
     }
     else {
