@@ -1055,7 +1055,9 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
         Log::debug() << "Find intersections for " << src_csp.size() << " source polygons" << std::endl;
         eckit::ProgressTimer progress("Intersecting polygons ", src_csp.size(), " cell", double(10),
                                     src_csp.size() > 50 ? Log::info() : blackhole);
+
         for (idx_t tcell = 0; tcell < tgt_csp.size(); ++tcell, ++progress) {
+            std::cout << "tcell: " << tcell << std::endl;
             stopwatch_src_already_in.start();
             bool already_in = tgt_already_in((std::get<0>(tgt_csp[tcell]).centroid()));
             stopwatch_src_already_in.stop();
@@ -1063,7 +1065,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                 const auto& t_csp       = std::get<0>(tgt_csp[tcell]);
                 const double t_csp_area = t_csp.area();
                 if (t_csp_area == 0.) {
-                    Log::warning() << "Skipping source polygon " << tcell << " with area = 0" << std::endl;
+                    Log::warning() << "Skipping target polygon " << tcell << " with area = 0" << std::endl;
                     continue;
                 }
                 double tgt_cover_area   = 0.;
@@ -1087,11 +1089,11 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                         tgt_iparam_[tcell].cell_idx.emplace_back(scell);
                     }
                     if (csp_i_area > 0) {
-                        src_iparam[scell].cell_idx.emplace_back(tcell);
-                        src_iparam[scell].weights.emplace_back(csp_i_area);
+                        tgt_iparam_[tcell].cell_idx.emplace_back(scell);
+                        tgt_iparam_[tcell].weights.emplace_back(csp_i_area);
                         double target_weight = csp_i_area / t_csp.area();
                         if (order_ == 2 or not matrix_free_ or not matrixAllocated()) {
-                            src_iparam[scell].centroids.emplace_back(csp_i.centroid());
+                            tgt_iparam_[tcell].centroids.emplace_back(csp_i.centroid());
                         }
                         tgt_cover_area += csp_i_area;
 
@@ -1159,14 +1161,14 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
         ATLAS_TRACE_SCOPE("compute errors in polygon intersections") {
             double geo_err_l1   = 0.;
             double geo_err_linf = -1.;
-            for (idx_t scell = 0; scell < src_csp.size(); ++scell) {
-                if (std::get<1>(src_csp[scell]) != 0 ) {
+            for (idx_t tcell = 0; tcell < tgt_csp.size(); ++tcell) {
+                if (std::get<1>(tgt_csp[tcell]) != 0 ) {
                     // skip periodic & halo cells
                     continue;
                 }
-                double diff_cell = std::get<0>(src_csp[scell]).area();
-                for (idx_t icell = 0; icell < tgt_iparam_[scell].weights.size(); ++icell) {
-                    diff_cell -= src_iparam[scell].weights[icell];
+                double diff_cell = std::get<0>(tgt_csp[tcell]).area();
+                for (idx_t icell = 0; icell < tgt_iparam_[tcell].weights.size(); ++icell) {
+                    diff_cell -= tgt_iparam_[tcell].weights[icell];
                 }
                 geo_err_l1 += std::abs(diff_cell);
                 geo_err_linf = std::max(geo_err_linf, std::abs(diff_cell));
@@ -1176,43 +1178,43 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                 mpi::comm().allReduceInPlace(geo_err_linf, eckit::mpi::max());
             }
             if (mpi::size() == 1) {
-                remap_stat_.errors[Statistics::Errors::SRC_INTERSECTPLG_L1]   = geo_err_l1 / unit_sphere_area();
-                remap_stat_.errors[Statistics::Errors::SRC_INTERSECTPLG_LINF] = geo_err_linf;
+                remap_stat_.errors[Statistics::Errors::TGT_INTERSECTPLG_L1]   = geo_err_l1 / unit_sphere_area();
+                remap_stat_.errors[Statistics::Errors::TGT_INTERSECTPLG_LINF] = geo_err_linf;
             }
             else {
-                remap_stat_.errors[Statistics::Errors::SRC_INTERSECTPLG_L1]    = -1111.;
-                remap_stat_.errors[Statistics::Errors::SRC_INTERSECTPLG_LINF]  = -1111.;
+                remap_stat_.errors[Statistics::Errors::TGT_INTERSECTPLG_L1]    = -1111.;
+                remap_stat_.errors[Statistics::Errors::TGT_INTERSECTPLG_LINF]  = -1111.;
             }
 
             std::fstream polygon_intersection_info("polygon_intersection", std::ios::out); 
 
             geo_err_l1   = 0.;
             geo_err_linf = -1.;
-            for (idx_t tcell = 0; tcell < tgt_csp.size(); ++tcell) {
-                if (std::get<1>(tgt_csp[tcell]) != 0) {
+            for (idx_t scell = 0; scell < src_csp.size(); ++scell) {
+                if (std::get<1>(src_csp[scell]) != 0) {
                     // skip periodic & halo cells
                     continue;
                 }
-                const auto& t_csp     = std::get<0>(tgt_csp[tcell]);
+                const auto& s_csp     = std::get<0>(src_csp[scell]);
 
-                double tgt_cover_area = 0.;
-                const auto& tiparam   = tgt_iparam_[tcell];
+                double src_cover_area = 0.;
+                const auto& siparam   = src_iparam[scell];
 #if PRINT_BAD_POLYGONS
                 // dump polygons in json format
-                idx_t tcell_printout = 120;
-                if (tcell == tcell_printout) {
-                    dump_polygons_to_json(t_csp, 1.e-14, src_csp, tiparam.cell_idx, "polygon_dump", "tcell" + std::to_string(tcell_printout));
+                idx_t scell_printout = 120;
+                if (scell == scell_printout) {
+                    dump_polygons_to_json(t_csp, 1.e-14, src_csp, siparam.cell_idx, "polygon_dump", "scell" + std::to_string(scell_printout));
                 }
 #endif
                 /*
-                // TODO: normalise to target cell
-                double normm = t_csp.area() / (tgt_cover_area > 0. ? tgt_cover_area : t_csp.area());
-                for (idx_t icell = 0; icell < tiparam.cell_idx.size(); ++icell) {
-                    idx_t scell = tiparam.cell_idx[icell];
+                // TODO: normalise to source cell
+                double normm = s_csp.area() / (src_cover_area > 0. ? src_cover_area : s_csp.area());
+                for (idx_t icell = 0; icell < siparam.cell_idx.size(); ++icell) {
+                    idx_t scell = siparam.cell_idx[icell];
                     auto siparam = src_iparam_[scell];
-                    size_t tgt_intersectors = siparam.cell_idx.size();
-                    for (idx_t sicell = 0; sicell < tgt_intersectors; sicell++ ) {
-                        if (siparam.cell_idx[icell] == tcell) {;
+                    size_t src_intersectors = siparam.cell_idx.size();
+                    for (idx_t ticell = 0; ticell < src_intersectors; ticell++ ) {
+                        if (siparam.cell_idx[icell] == ticell) {;
                             siparam.weights[icell] *= normm;
                             siparam.tgt_weights[icell] *= normm;
                         }
