@@ -177,6 +177,7 @@ Mesh extract_mesh(FunctionSpace fs) {
     }
 }
 
+/*
 void sort_and_accumulate_triplets(std::vector<eckit::linalg::Triplet>& triplets) {
     ATLAS_TRACE();
     std::map<std::pair<int, int>, double> triplet_map;
@@ -200,7 +201,7 @@ void sort_and_accumulate_triplets(std::vector<eckit::linalg::Triplet>& triplets)
         triplets.emplace_back(row, col, val);
     }
 }
-
+*/
 int inside_vertices(const ConvexSphericalPolygon& plg1, const ConvexSphericalPolygon& plg2, int& pout) {
     int points_in = 0;
     pout          = 0;
@@ -975,14 +976,15 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
     stopwatch.stop();
     timings.source_kdtree_assembly = stopwatch.elapsed();
 
-    StopWatch stopwatch_src_already_in;
+    // StopWatch stopwatch_src_already_in;
     StopWatch stopwatch_kdtree_search;
     StopWatch stopwatch_polygon_intersections;
 
+    /*
     stopwatch_src_already_in.start();
 
-    // needed for intersect_polygons only, merely for detecting duplicate points
-    // Treshold at which points are considered same
+    needed for intersect_polygons only, merely for detecting duplicate points
+    Treshold at which points are considered same
     double compare_pointxyz_eps = 1.e8 * std::numeric_limits<double>::epsilon();
     const char* ATLAS_COMPAREPOINTXYZ_EPS_FACTOR = ::getenv("ATLAS_COMPAREPOINTXYZ_EPS_FACTOR");
     if (ATLAS_COMPAREPOINTXYZ_EPS_FACTOR != nullptr) {
@@ -1015,6 +1017,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
         return true;
     };
     stopwatch_src_already_in.stop();
+    */
 
     enum MeshSizeId
     {
@@ -1045,7 +1048,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
     worst_tgt_overcover.first = -1;
     worst_tgt_overcover.second = -1.;
     worst_tgt_undercover.first = -1;
-    worst_tgt_undercover.second = M_PI;
+    worst_tgt_undercover.second = M_PI; // M_PI is the maximum area of a polygon on a sphere
 
     // NOTE: polygon vertex points at distance < pointsSameEPS will be replaced with one point 
     constexpr double pointsSameEPS = 5.e6 * std::numeric_limits<double>::epsilon();
@@ -1057,11 +1060,11 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                                     src_csp.size() > 50 ? Log::info() : blackhole);
 
         for (idx_t tcell = 0; tcell < tgt_csp.size(); ++tcell, ++progress) {
-            std::cout << "tcell: " << tcell << std::endl;
-            stopwatch_src_already_in.start();
-            bool already_in = tgt_already_in((std::get<0>(tgt_csp[tcell]).centroid()));
-            stopwatch_src_already_in.stop();
-            if (not already_in) {
+            // stopwatch_src_already_in.start();
+            // bool already_in = tgt_already_in((std::get<0>(tgt_csp[tcell]).centroid()));
+            // stopwatch_src_already_in.stop();
+            // if (not already_in) {
+            if (std::get<1>(tgt_csp[tcell]) == 0) {
                 const auto& t_csp       = std::get<0>(tgt_csp[tcell]);
                 const double t_csp_area = t_csp.area();
                 if (t_csp_area == 0.) {
@@ -1138,7 +1141,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
     }
     timings.polygon_intersections  = stopwatch_polygon_intersections.elapsed();
     timings.source_kdtree_search   = stopwatch_kdtree_search.elapsed();
-    timings.source_polygons_filter = stopwatch_src_already_in.elapsed();
+    timings.source_polygons_filter = 0.; //stopwatch_src_already_in.elapsed();
     num_pol[SRC]                   = src_csp.size();
     num_pol[TGT]                   = tgt_csp.size();
     ATLAS_TRACE_MPI(ALLREDUCE) {
@@ -1161,18 +1164,18 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
         ATLAS_TRACE_SCOPE("compute errors in coverting target cells with intersections") {
             double geo_err_l1   = 0.;
             double geo_err_linf = -1.;
-            double tgt_cover_err = 0.;
             for (idx_t tcell = 0; tcell < tgt_csp.size(); ++tcell) {
-                auto& t_csp = std::get<0>(tgt_csp[tcell]);
-                auto& tiparam = tgt_iparam_[tcell];
                 if (std::get<1>(tgt_csp[tcell]) != 0 ) {
                     // skip periodic & halo cells
                     continue;
                 }
+                auto& t_csp = std::get<0>(tgt_csp[tcell]);
+                auto& tiparam = tgt_iparam_[tcell];
+                double tgt_cover_err = 0.;
                 for (idx_t icell = 0; icell < tiparam.weights.size(); ++icell) {
-                    tgt_cover_err -= tiparam.weights[icell];
+                    tgt_cover_err += tiparam.weights[icell];
                 }
-                tgt_cover_err = 100. * (t_csp.area() - tgt_cover_err) / t_csp.area();
+                tgt_cover_err = 100. * (tgt_cover_err - t_csp.area()) / t_csp.area();
                 if (worst_tgt_overcover.second < tgt_cover_err) {
                     worst_tgt_overcover.second = tgt_cover_err;;
                     worst_tgt_overcover.first = tcell;
@@ -1191,9 +1194,8 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                     dump_intersection("Target cell not exaclty covered", t_csp, src_csp, tiparam.cell_idx);
                     //dump_polygons_to_json(t_csp, src_csp, tiparam.cell_idx, "bad_polygon", 1.e-16);
                 }
-                auto diff_cell = std::get<0>(tgt_csp[tcell]).area() - tgt_cover_err;
-                geo_err_l1 += std::abs(diff_cell);
-                geo_err_linf = std::max(geo_err_linf, std::abs(diff_cell));
+                geo_err_l1 += std::abs(0.01 * tgt_cover_err);
+                geo_err_linf = std::max(geo_err_linf, std::abs(0.01 * tgt_cover_err));
             }
             ATLAS_TRACE_MPI(ALLREDUCE) {
                 mpi::comm().allReduceInPlace(geo_err_l1, eckit::mpi::sum());
