@@ -50,8 +50,7 @@ class AtlasParallelInterpolation : public AtlasTool {
     std::string briefDescription() override { return "Demonstration of parallel conservative interpolation"; }
     std::string usage() override {
         return name() +
-               " [--source.grid=gridname] "
-               "[--target.grid=gridname] [OPTION]... [--help]";
+               "[OPTIONS]... [--help]";
     }
 
     int numberOfPositionalArguments() override { return -1; }
@@ -179,7 +178,9 @@ std::function<double(const PointLonLat&)> get_init(const eckit::LocalConfigurati
 int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {\
     eckit::LocalConfiguration config(args);
     if (config.getBool("statistics.all", false)) {
-        Log::info() << "\nWARNING statistics.all is enabled, hence enabling statistics on intersection, accuracy, conservation\n" << std::endl;
+        if (not config.getBool("validate", false)) {
+            Log::info() << "\nWARNING statistics.all is enabled. Set '--validate' to get all numbers correct in the statistics." << std::endl;
+        }
         config.set("statistics.accuracy", true);
         config.set("statistics.conservation", true);
         config.set("statistics.intersection", true);
@@ -267,19 +268,17 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {\
         using Statistics = interpolation::method::ConservativeSphericalPolygonInterpolation::Statistics;
         Statistics stats(metadata);
         if (config.getBool("accuracy", false)) {
-            Log::info() << "Computing accuracy statistics" << std::endl;
             metadata.set( stats.accuracy(interpolation, tgt_field, get_init(config) ) );
         } else {
-            Log::info() << "Skipping accuracy statistics" << std::endl;
+            Log::info() << "\nINFO Skipping accuracy statistics" << std::endl;
         }
         if (config.getBool("conservation", false)) {
             // compute difference field
-            Log::info() << "Computing conservation statistics" << std::endl;
             src_conservation_field = stats.diff(interpolation, src_field, tgt_field);
             src_conservation_field.set_dirty(true);
             src_conservation_field.haloExchange();
         } else {
-            Log::info() << "Skipping conservation statistics" << std::endl;
+            Log::info() << "\nINFO Skipping conservation statistics" << std::endl;
         }
     }
 
