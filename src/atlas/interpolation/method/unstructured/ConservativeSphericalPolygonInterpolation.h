@@ -56,6 +56,7 @@ private:
         struct Timings {
             double source_polygons_assembly{0};
             double target_polygons_assembly{0};
+            double src_already_in{0};
             double source_kdtree_assembly{0};
             double source_kdtree_search{0};
             double source_polygons_filter{0};
