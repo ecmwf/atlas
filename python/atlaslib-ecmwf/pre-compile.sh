@@ -25,7 +25,7 @@ cd -
 # very directory... but it works
 if [ "$(uname)" != "Darwin" ] ; then
     mkdir -p /tmp/atlas/target/atlas/lib64
-    cp /tmp/qhull/target/lib/libqhull_r.* /tmp/atlas/target/atlas/lib64/
+    cp /tmp/qhull/target/lib*/libqhull_r.* /tmp/atlas/target/atlas/lib64/
 else
     mkdir -p /tmp/atlas/target/atlas/lib
     cp /tmp/qhull/target/lib/libqhull_r.* /tmp/atlas/target/atlas/lib/
