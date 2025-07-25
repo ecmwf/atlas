@@ -998,7 +998,6 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
     stopwatch.start();
     util::KDTree<idx_t> kdt_search;
     double max_srccell_rad = 0.;
-    const int src_halo_intersection_depth = (src_cell_data_ ? 0 : 1); // if source NodeColumns, one source halo required for subcells around source nodes
     ATLAS_TRACE_SCOPE("build kd-tree for source polygons") {
         kdt_search.reserve(src_csp.size());
         for (idx_t scell = 0; scell < src_csp.size(); ++scell) {
@@ -1637,16 +1636,12 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
             }
             const auto src_vals = array::make_view<double, 1>(src_field);
             auto tgt_vals       = array::make_view<double, 1>(tgt_field);
-            for (idx_t tcell = 0; tcell < tgt_vals.size(); ++tcell) {
-                tgt_vals(tcell) = 0.;
-            }
-            for (idx_t tcell = 0; tcell < tgt_vals.size(); ++tcell) {
-                const auto& iparam = tgt_iparam_[tcell];
+            for (idx_t tpt = 0; tpt < tgt_vals.size(); ++tpt) {
+                tgt_vals(tpt) = 0.;
+                const auto& iparam = tgt_iparam_[tpt];
                 for (idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell) {
                     tgt_vals(tcell) += iparam.weights[icell] * src_vals(iparam.cell_idx[icell]);
                 }
-            }
-            for (idx_t tcell = 0; tcell < tgt_vals.size(); ++tcell) {
                 tgt_vals[tcell] /= tgt_areas_v[tcell];
             }
         }
