@@ -1046,10 +1046,11 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
     worst_tgt_overcover.first = -1;
     worst_tgt_overcover.second = -1.;
     worst_tgt_undercover.first = -1;
-    worst_tgt_undercover.second = M_PI; // M_PI is the maximum area of a polygon on a sphere
+    worst_tgt_undercover.second = M_PI; // M_PI is the maximum area of a polygon on the unit sphere
 
     // NOTE: polygon vertex points at distance < pointsSameEPS will be replaced with one point 
     constexpr double pointsSameEPS = 5.e6 * std::numeric_limits<double>::epsilon();
+    const int tgt_halo_intersection_depth = (tgt_cell_data_ ? 0 : 1); // if target NodeColumns, one source halo required for subcells around source nodes
 
     eckit::Channel blackhole;
     ATLAS_TRACE_SCOPE("intersecting polygons") {
@@ -1058,7 +1059,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                                     src_csp.size() > 50 ? Log::info() : blackhole);
 
         for (idx_t tcell = 0; tcell < tgt_csp.size(); ++tcell, ++progress) {
-            if (std::get<1>(tgt_csp[tcell]) == 0) {
+            if (std::get<1>(tgt_csp[tcell]) <= tgt_halo_intersection_depth) {
                 const auto& t_csp       = std::get<0>(tgt_csp[tcell]);
                 if (t_csp.area() == 0.) {
                     Log::warning() << "Skipping target polygon " << tcell << " with area = 0" << std::endl;
