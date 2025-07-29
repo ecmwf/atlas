@@ -1628,21 +1628,85 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
     if (order_ == 1) {
         if (matrix_free_) {
             ATLAS_TRACE("matrix_free_order_1");
-            const auto& tgt_iparam_ = data_->tgt_iparam_;
-            const auto& tgt_areas_v = data_->tgt_areas_;
-
-            if (not src_cell_data_ or not tgt_cell_data_) {
-                ATLAS_NOTIMPLEMENTED;
-            }
             const auto src_vals = array::make_view<double, 1>(src_field);
             auto tgt_vals       = array::make_view<double, 1>(tgt_field);
-            for (idx_t tpt = 0; tpt < tgt_vals.size(); ++tpt) {
-                tgt_vals(tpt) = 0.;
-                const auto& iparam = tgt_iparam_[tpt];
-                for (idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell) {
-                    tgt_vals(tcell) += iparam.weights[icell] * src_vals(iparam.cell_idx[icell]);
+            const auto& tgt_iparam = data_->tgt_iparam_;
+            const auto& tgt_areas = data_->tgt_areas_;
+
+            if (tgt_cell_data_ && src_cell_data_) {
+                for (idx_t tcell = 0; tcell < n_tpoints_; ++tcell) {
+                    tgt_vals(tcell) = 0.;
+                    const auto& iparam = tgt_iparam[tcell];
+                    for (idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell) {
+                        idx_t scell = iparam.cell_idx[icell];
+                        tgt_vals(tcell) += iparam.weights[icell] * src_vals(scell);
+                    }
+                    if (tgt_areas[tcell] > 0.) {
+                        tgt_vals(tcell) /= tgt_areas[tcell];
+                        continue;
+                    }
+                    tgt_vals(tcell) = 0.;
                 }
-                tgt_vals[tcell] /= tgt_areas_v[tcell];
+            }
+            else if (not tgt_cell_data_ && src_cell_data_) {
+                auto& tgt_node2csp = data_->tgt_node2csp_;
+                for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
+                    tgt_vals(tnode) = 0.;
+                    for (idx_t tnode_subcell = 0; tnode_subcell < tgt_node2csp[tnode].size(); ++tnode_subcell) {
+                        const idx_t tsubcell = tgt_node2csp[tnode][tnode_subcell];
+                        const auto& iparam  = tgt_iparam[tsubcell];
+                        for (idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell) {
+                            idx_t scell = iparam.cell_idx[icell];
+                            ATLAS_ASSERT(scell < n_spoints_);
+                            tgt_vals(tnode) += iparam.weights[icell] * src_vals(scell);
+                        }
+                    }
+                    if (tgt_areas[tnode] > 0.) {
+                        tgt_vals(tnode) /= tgt_areas[tnode];
+                        continue;
+                    }
+                    tgt_vals(tnode) = 0.;
+                }
+            }
+            else if (tgt_cell_data_ && not src_cell_data_) {
+                const auto& src_csp2node = data_->src_csp2node_;
+                for (idx_t tcell = 0; tcell < n_tpoints_; ++tcell) {
+                    tgt_vals(tcell) = 0.;
+                    const auto& iparam  = tgt_iparam[tcell];
+                    for (idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell) {
+                        idx_t ssubcell     = iparam.cell_idx[icell];
+                        idx_t snode        = src_csp2node[ssubcell];
+                        ATLAS_ASSERT(snode < n_spoints_);
+                        tgt_vals(tcell) += iparam.weights[icell] * src_vals(snode);
+                    }
+                    if (tgt_areas[tcell] > 0.) {
+                        tgt_vals(tcell) /= tgt_areas[tcell];
+                        continue;
+                    }
+                    tgt_vals(tcell) = 0.;
+                }
+            }
+            else if (not tgt_cell_data_ && not src_cell_data_) {
+                const auto& tgt_node2csp = data_->tgt_node2csp_;
+                const auto& src_csp2node = data_->src_csp2node_;
+                for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
+                    tgt_vals(tnode) = 0.;
+                    for (idx_t tnode_subcell = 0; tnode_subcell < tgt_node2csp[tnode].size(); ++tnode_subcell) {
+                        const idx_t tsubcell = tgt_node2csp[tnode][tnode_subcell];
+                        const auto& iparam  = tgt_iparam[tsubcell];
+                        for (idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell) {
+                            idx_t ssubcell     = iparam.cell_idx[icell];
+                            idx_t snode        = src_csp2node[ssubcell];
+                            ATLAS_ASSERT(snode < n_spoints_);
+                            tgt_vals(tnode) += iparam.weights[icell] * src_vals(snode);
+                        }
+                    }
+                    if (tgt_areas[tnode] > 0.) {
+                        tgt_vals(tnode) /= tgt_areas[tnode];
+                        continue;
+                    }
+                    tgt_vals(tnode) = 0.;
+                }
             }
         }
         else {
