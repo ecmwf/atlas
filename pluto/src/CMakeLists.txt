@@ -93,6 +93,9 @@ ecbuild_add_library( TARGET pluto
     pluto/detail/Registry.h
 
     ${pmr_compat_src}
+    pluto/mdspan.h
+    pluto/detail/mdspan_paren_operator.h
+    pluto/detail/mdspan/mdspan.hpp
 
   INSTALL_HEADERS ALL
   HEADER_DESTINATION include
@@ -106,12 +109,19 @@ target_compile_features( pluto INTERFACE cxx_std_17 )
 target_compile_options( pluto PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:--extended-lambda>)
 
 if (HAVE_FORTRAN)
+  set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/module/pluto)
   ecbuild_add_library( TARGET pluto_f
     SOURCES
       pluto_f/pluto_module.F90
       pluto_f/pluto_module.cc
     PRIVATE_LIBS pluto
     PUBLIC_INCLUDES $<BUILD_INTERFACE:${CMAKE_Fortran_MODULE_DIRECTORY}>
+                    $<INSTALL_INTERFACE:module/pluto>
   )
+  if( ECBUILD_INSTALL_FORTRAN_MODULES )
+    install( DIRECTORY ${CMAKE_BINARY_DIR}/module/pluto/
+             DESTINATION module/pluto
+             COMPONENT modules )
+  endif()
 endif()
 

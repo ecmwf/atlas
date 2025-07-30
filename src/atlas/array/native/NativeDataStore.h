@@ -96,7 +96,7 @@ static pluto::memory_resource* device_resource(bool shared) {
 
 
 template <typename Value>
-class DataStore : public ArrayDataStore {
+class DataStore final : public ArrayDataStore {
 public:
     DataStore(size_t size): size_(size),
         is_shared_data_{test_device_is_shared()},
@@ -187,6 +187,7 @@ public:
             }
             device_data_ = nullptr;
             device_allocated_ = false;
+            device_updated_ = false;
         }
     }
 
@@ -284,7 +285,7 @@ private:
 //------------------------------------------------------------------------------
 
 template <typename Value>
-class WrappedDataStore : public ArrayDataStore {
+class WrappedDataStore final : public ArrayDataStore {
 public:
 
     void init_device() {
@@ -423,6 +424,7 @@ public:
             device_allocator_.deallocate(label_, device_data_, size_);
             device_data_ = nullptr;
             device_allocated_ = false;
+            device_updated_ = false;
         }
     }
 

@@ -73,9 +73,9 @@ public:
 
 // ----------------------------------------------------------------------------
 
-class split_latitudes : public util::Config {
+class split_y : public util::Config {
 public:
-    split_latitudes(bool);
+    split_y(bool);
 };
 
 // ----------------------------------------------------------------------------

@@ -7,6 +7,34 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.43.1] - 2025-07-09
+
+### Fixed
+- Pluto installation of pluto_module.mod file
+- Avoid temporary array creation in Fortran pluto_allocator%allocate() function
+
+
+## [0.43.0] - 2025-06-25
+
+### Added
+- Python wheel by @tmi in https://github.com/ecmwf/atlas/pull/274, https://github.com/ecmwf/atlas/pull/280
+- Add Grid getter to FunctionSpace by @tom-j-h in https://github.com/ecmwf/atlas/pull/264
+- Fortran: Export atlas_functionspace_BlockStructuredColumns by @wdeconinck in https://github.com/ecmwf/atlas/pull/276
+- Feature/spectral updates by @wdeconinck in https://github.com/ecmwf/atlas/pull/285
+- Add Field::halo() to manage and describe field halo's by @wdeconinck in https://github.com/ecmwf/atlas/pull/291
+- Add a vector_component option utility by @odlomax in https://github.com/ecmwf/atlas/pull/294
+- Implement floating-point-exception trapping for macos by @wdeconinck in https://github.com/ecmwf/atlas/pull/295
+
+### Fixed
+- Bugfix/device strides on cpu by @sbrdar in https://github.com/ecmwf/atlas/pull/297
+- Support nvidia 24.5 by @wdeconinck in https://github.com/ecmwf/atlas/pull/278
+- Set device_updated=false when calling Array::deallocateDevice() (fixes #243) by @wdeconinck in https://github.com/ecmwf/atlas/pull/277
+- Fix StructuredGrid periodicity for certain domains (fixes #282) by @wdeconinck in https://github.com/ecmwf/atlas/pull/283
+
+### Changed
+- Make FiniteElement Interpolation weight computation multithreaded using OpenMP by @wdeconinck in https://github.com/ecmwf/atlas/pull/292
+- Added OpenMP to the cubed-sphere interpolator and the matching cubed sphere partitioner. by @odlomax in https://github.com/ecmwf/atlas/pull/293
+- Deprecate aliases for structured interpolation methods by @wdeconinck in https://github.com/ecmwf/atlas/pull/296
 
 ## [0.42.0] - 2025-04-09
 
@@ -631,6 +659,8 @@ Fix StructuredInterpolation2D with retry for failed stencils
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.43.1]: https://github.com/ecmwf/atlas/compare/0.43.0...0.43.1
+[0.43.0]: https://github.com/ecmwf/atlas/compare/0.42.0...0.43.0
 [0.42.0]: https://github.com/ecmwf/atlas/compare/0.41.0...0.42.0
 [0.41.1]: https://github.com/ecmwf/atlas/compare/0.41.0...0.41.1
 [0.41.0]: https://github.com/ecmwf/atlas/compare/0.40.0...0.41.0

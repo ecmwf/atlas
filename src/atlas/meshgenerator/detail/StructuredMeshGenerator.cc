@@ -646,7 +646,6 @@ We need to connect to next region
                     elem(1)  = ipS1;
                     elem(2)  = ipS2;
                     elem(3)  = ipN2;
-                    add_quad = false;
                     std::array<int, 4> np{pN1, pN2, pS1, pS2};
                     std::array<int, 4> pcnts;
                     for (int j = 0; j < 4; ++j) {

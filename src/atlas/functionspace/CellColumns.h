@@ -89,6 +89,8 @@ public:
 
     idx_t size() const override { return nb_cells_; }
 
+    const Grid& grid() const override;
+
     Field lonlat() const override;
 
     Field remote_index() const override;
@@ -111,6 +113,7 @@ private:  // methods
     size_t footprint() const override;
 
 private:                           // data
+    mutable Grid grid_;
     Mesh mesh_;                    // non-const because functionspace may modify mesh
     mesh::HybridElements& cells_;  // non-const because functionspace may modify mesh
     idx_t nb_levels_;

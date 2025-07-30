@@ -104,6 +104,10 @@ util::Metadata& Field::metadata() {
     return get()->metadata();
 }
 
+field::Halo& Field::halo() const {
+    return get()->halo();
+}
+
 /// @brief Resize field to given shape
 void Field::resize(const array::ArrayShape& shape) {
     get()->resize(shape);

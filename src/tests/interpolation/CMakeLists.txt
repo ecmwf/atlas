@@ -144,7 +144,8 @@ ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_to_points_gpu
 ecbuild_add_test( TARGET atlas_test_interpolation_cubedsphere
   SOURCES  test_interpolation_cubedsphere.cc
   LIBS     atlas
-  MPI      6
+  MPI      3
+  OMP      3
   CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 6
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )

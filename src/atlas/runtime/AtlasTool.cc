@@ -81,22 +81,25 @@ void debug_reset() {
 }
 
 bool getEnv(const std::string& env, bool default_value) {
-    if (::getenv(env.c_str())) {
-        return eckit::Translator<std::string, bool>()(::getenv(env.c_str()));
+    const char* cenv = ::getenv(env.c_str());
+    if (cenv != nullptr) {
+        return eckit::Translator<std::string, bool>()(cenv);
     }
     return default_value;
 }
 
 int getEnv(const std::string& env, int default_value) {
-    if (::getenv(env.c_str())) {
-        return eckit::Translator<std::string, int>()(::getenv(env.c_str()));
+    const char* cenv = ::getenv(env.c_str());
+    if (cenv != nullptr) {
+        return eckit::Translator<std::string, int>()(cenv);
     }
     return default_value;
 }
 
 std::string getEnv(const std::string& env, const std::string& default_value) {
-    if (::getenv(env.c_str())) {
-        return ::getenv(env.c_str());
+    const char* cenv = ::getenv(env.c_str());
+    if (cenv != nullptr) {
+        return cenv;
     }
     return default_value;
 }
@@ -379,4 +382,5 @@ void atlas::AtlasTool::setupLogging() {
             debug_reset();
         }
     }
+    // codechecker_false_positive [NewDeleteLeaks] Potential leak of memory pointed to by 'logfile'
 }

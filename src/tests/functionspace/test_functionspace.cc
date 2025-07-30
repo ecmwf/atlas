@@ -14,11 +14,18 @@
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
+#include "atlas/functionspace/BlockStructuredColumns.h"
+#include "atlas/functionspace/CellColumns.h"
+#include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/functionspace/NodeColumns.h"
+#include "atlas/functionspace/PointCloud.h"
 #include "atlas/functionspace/Spectral.h"
+#include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/StructuredGrid.h"
+#include "atlas/grid/UnstructuredGrid.h"
 #include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/MeshBuilder.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -34,7 +41,6 @@ namespace atlas {
 namespace test {
 
 //-----------------------------------------------------------------------------
-
 CASE("test_functionspace_NodeColumns_no_halo") {
     Grid grid("O8");
     Mesh mesh = StructuredMeshGenerator().generate(grid);
@@ -636,6 +642,88 @@ CASE("test_SpectralFunctionSpace_norm") {
                 double(jlev)));  // before is_approximately_equal tolerance was 1.e-10
         }
     }
+}
+
+template <typename T>
+mdspan<T,dims<1>> make_mdspan(std::vector<T>& v) {
+    return mdspan<T,dims<1>>{v.data(), v.size()};
+}
+template <typename T, size_t N>
+mdspan<T,extents<size_t,dynamic_extent,N>> make_mdspan(std::vector<std::array<T,N>>& v) {
+    return mdspan<T,extents<size_t,dynamic_extent,N>>{reinterpret_cast<T*>(v.data()), v.size()};
+}
+
+CASE("test_functionspace_grid") {
+    // Create list of points and construct Grid from them
+    std::vector<PointXY> points = {
+        {0.0, 5.0}, {0.0, 0.0}, {10.0, 0.0}, {15.0, 0.0}, {5.0, 5.0}, {15.0, 5.0}
+    };
+    UnstructuredGrid grid(points);
+
+    // Create Mesh from Grid
+    Mesh mesh_from_grid(grid);
+
+    // Create Mesh from list of points using MeshBuilder
+    std::vector<double> lons;
+    std::vector<double> lats;
+    for (const auto& point : points) {
+        lons.push_back(point.x());
+        lats.push_back(point.y());
+    }
+    constexpr gidx_t global_index_base = 1;
+    std::vector<int> ghosts(6, 0);
+    std::vector<gidx_t> global_indices(6);
+    std::iota(global_indices.begin(), global_indices.end(), 1);
+    const idx_t remote_index_base = 0;
+    std::vector<idx_t> remote_indices(6);
+    std::iota(remote_indices.begin(), remote_indices.end(), remote_index_base);
+    std::vector<int> partitions(6, 0);
+    std::vector<std::array<gidx_t, 3>> tri_boundary_nodes = {{{3, 6, 5}}, {{3, 4, 6}}};
+    std::vector<gidx_t> tri_global_indices                = {1, 2};
+    std::vector<std::array<gidx_t, 4>> quad_boundary_nodes = {{{1, 2, 3, 5}}};
+    std::vector<gidx_t> quad_global_indices                = {3};
+    const mesh::MeshBuilder mesh_builder{};
+    const Mesh mesh_from_meshbuilder = mesh_builder(
+            make_mdspan(global_indices),
+            make_mdspan(lons), make_mdspan(lats),
+            make_mdspan(lons), make_mdspan(lats),
+            make_mdspan(ghosts), make_mdspan(partitions), make_mdspan(remote_indices), remote_index_base,
+            make_mdspan(tri_global_indices), make_mdspan(tri_boundary_nodes),
+            make_mdspan(quad_global_indices), make_mdspan(quad_boundary_nodes),
+            global_index_base);
+    // Create Cell/Edge/NodeColumns and PointCloud FunctionSpaces that will save the Grid on construction
+    functionspace::CellColumns cells_from_grid(mesh_from_grid);
+    functionspace::EdgeColumns edges_from_grid(mesh_from_grid);
+    functionspace::NodeColumns nodes_from_grid(mesh_from_grid);
+    functionspace::PointCloud pointcloud_from_grid(grid);
+
+    // Create Cell/Edge/NodeColumns and PointCloud FunctionSpaces that will generate the Grid when requested
+    functionspace::CellColumns cells_from_meshbuilder(mesh_from_meshbuilder);
+    functionspace::EdgeColumns edges_from_meshbuilder(mesh_from_meshbuilder);
+    functionspace::NodeColumns nodes_from_meshbuilder(mesh_from_meshbuilder);
+    functionspace::PointCloud pointcloud_from_points(points);
+
+    // All Grids should match original
+    EXPECT(cells_from_grid.grid().uid() == grid.uid());
+    EXPECT(edges_from_grid.grid().uid() == grid.uid());
+    EXPECT(nodes_from_grid.grid().uid() == grid.uid());
+    EXPECT(pointcloud_from_grid.grid().uid() == grid.uid());
+    EXPECT(cells_from_meshbuilder.grid().uid() == grid.uid());
+    EXPECT(edges_from_meshbuilder.grid().uid() == grid.uid());
+    EXPECT(nodes_from_meshbuilder.grid().uid() == grid.uid());
+    EXPECT(pointcloud_from_points.grid().uid() == grid.uid());
+
+    // Repeat with a StructuredGrid to check StructuredColumns and BlockStructuredColumns
+    Grid structured_grid("O8");
+    Mesh structured_mesh = StructuredMeshGenerator().generate(structured_grid);
+    functionspace::StructuredColumns sc(structured_grid);
+    functionspace::BlockStructuredColumns bsc(structured_grid);
+    EXPECT(sc.grid() == structured_grid);
+    EXPECT(bsc.grid() == structured_grid);
+
+    // Check that Spectral throws exception
+    functionspace::Spectral spectral(159);
+    EXPECT_THROWS(spectral.grid());
 }
 
 #endif

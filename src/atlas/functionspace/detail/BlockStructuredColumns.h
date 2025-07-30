@@ -98,7 +98,7 @@ public:
     idx_t nblks() const { return nblks_; }
 
     const Vertical& vertical() const { return structuredcolumns_->vertical(); }
-    const StructuredGrid& grid() const { return structuredcolumns_->grid(); }
+    const StructuredGrid& grid() const override { return structuredcolumns_->grid(); }
 
     idx_t levels() const { return structuredcolumns_->levels(); }
     Field lonlat() const override { return structuredcolumns_->lonlat(); }

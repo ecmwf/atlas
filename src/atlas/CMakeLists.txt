@@ -73,6 +73,7 @@ parallel/omp/sort.h
 util/Config.cc
 util/Config.h
 
+mdspan.h
 )
 
 list( APPEND atlas_grid_srcs
@@ -476,6 +477,8 @@ field/FieldCreatorIFS.cc
 field/FieldCreatorIFS.h
 field/FieldSet.cc
 field/FieldSet.h
+field/Halo.cc
+field/Halo.h
 field/MissingValue.cc
 field/MissingValue.h
 field/MultiField.cc
@@ -510,6 +513,7 @@ functionspace/EdgeColumns.h
 functionspace/EdgeColumns.cc
 functionspace/FunctionSpace.h
 functionspace/FunctionSpace.cc
+functionspace/HaloDescription.h
 functionspace/NodeColumns.h
 functionspace/NodeColumns.cc
 functionspace/StructuredColumns.h
@@ -815,13 +819,18 @@ endif()
 list( APPEND atlas_parallel_srcs
   parallel/Checksum.cc
   parallel/Checksum.h
+  parallel/Collect.cc
+  parallel/Collect.h
   parallel/GatherScatter.cc
   parallel/GatherScatter.h
   parallel/HaloExchange.cc
   parallel/HaloExchange.h
-  parallel/HaloAdjointExchangeImpl.h
-  parallel/HaloExchangeImpl.h
   parallel/mpi/Buffer.h
+  parallel/detail/Packer.h
+  parallel/detail/Packer.cc
+  parallel/detail/pack_index.h
+  parallel/detail/adjoint_unpack_index.h
+  parallel/detail/zero_index.h
 )
 
 list( APPEND atlas_util_srcs
@@ -872,8 +881,6 @@ util/SphericalPolygon.cc
 util/SphericalPolygon.h
 util/UnitSphere.h
 util/vector.h
-util/mdspan.h
-util/detail/mdspan/mdspan.hpp
 util/VectorOfAbstract.h
 util/QhullSphericalTriangulation.h
 util/QhullSphericalTriangulation.cc
@@ -963,12 +970,11 @@ list( APPEND source_list
 if( atlas_HAVE_GPU )
   include( atlas_host_device )
   list( APPEND source_list
-    parallel/HaloExchangeGPU.h
-    parallel/HaloExchangeGPU.hic
+    parallel/detail/DevicePacker.hic
   )
   atlas_host_device( source_list
     SOURCES
-      parallel/HaloExchangeGPU.hic
+      parallel/detail/DevicePacker.hic
       mesh/Connectivity.cc
   )
 

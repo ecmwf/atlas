@@ -10,6 +10,7 @@
 #include "atlas/grid/CubedSphereGrid.h"
 #include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/interpolation/method/cubedsphere/CellFinder.h"
+#include "atlas/parallel/omp/omp.h"
 #include "atlas/util/CoordinateEnums.h"
 
 namespace atlas {
@@ -37,9 +38,6 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
     ATLAS_ASSERT(ncSource);
     ATLAS_ASSERT(target_);
 
-    // Enable or disable halo exchange.
-    this->allow_halo_exchange_ = halo_exchange_;
-
 
     // return early if no output points on this partition reserve is called on
     // the triplets but also during the sparseMatrix constructor. This won't
@@ -54,16 +52,12 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
     const auto N         = CubedSphereGrid(ncSource.mesh().grid()).N();
     const auto tolerance = 2. * std::numeric_limits<double>::epsilon() * N;
 
-    // Loop over target at calculate interpolation weights.
-    auto weights          = std::vector<Triplet>{};
+    // Weights vector is oversized. Empty triplets are ignored by Matrix constructor.
+    auto weights          = Triplets(4 * target_.size());
     const auto ghostView  = array::make_view<int, 1>(target_.ghost());
     const auto lonlatView = array::make_view<double, 2>(target_.lonlat());
-    const auto tijView    = array::make_view<idx_t, 2>(ncSource.mesh().cells().field("tij"));
 
-    // Make vector of tile indices for each target point (needed for vector field interpolation).
-    std::vector<idx_t> tileIndex{};
-
-    for (idx_t i = 0; i < target_.size(); ++i) {
+    atlas_omp_parallel_for(idx_t i = 0; i < target_.size(); ++i) {
         if (!ghostView(i)) {
             const auto cell =
                 finder.getCell(PointLonLat(lonlatView(i, LON), lonlatView(i, LAT)), listSize_, tolerance, tolerance);
@@ -75,24 +69,23 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
                     std::to_string(i) + ".");
             }
 
-            tileIndex.push_back(tijView(cell.idx, 0));
             const auto& isect = cell.isect;
             const auto& j     = cell.nodes;
 
             switch (cell.nodes.size()) {
                 case (3): {
                     // Cell is a triangle.
-                    weights.emplace_back(i, j[0], 1. - isect.u - isect.v);
-                    weights.emplace_back(i, j[1], isect.u);
-                    weights.emplace_back(i, j[2], isect.v);
+                    weights[4 * i]     = Triplet(i, j[0], 1. - isect.u - isect.v);
+                    weights[4 * i + 1] = Triplet(i, j[1], isect.u);
+                    weights[4 * i + 2] = Triplet(i, j[2], isect.v);
                     break;
                 }
                 case (4): {
                     // Cell is quad.
-                    weights.emplace_back(i, j[0], (1. - isect.u) * (1. - isect.v));
-                    weights.emplace_back(i, j[1], isect.u * (1. - isect.v));
-                    weights.emplace_back(i, j[2], isect.u * isect.v);
-                    weights.emplace_back(i, j[3], (1. - isect.u) * isect.v);
+                    weights[4 * i]     = Triplet(i, j[0], (1. - isect.u) * (1. - isect.v));
+                    weights[4 * i + 1] = Triplet(i, j[1], isect.u * (1. - isect.v));
+                    weights[4 * i + 2] = Triplet(i, j[2], isect.u * isect.v);
+                    weights[4 * i + 3] = Triplet(i, j[3], (1. - isect.u) * isect.v);
                     break;
                 }
                 default: {
@@ -104,9 +97,6 @@ void CubedSphereBilinear::do_setup(const FunctionSpace& source, const FunctionSp
 
     // fill sparse matrix and return.
     setMatrix(target_.size(), source_.size(), weights);
-
-    // Add tile index metadata to target.
-    target_->metadata().set("tile index", tileIndex);
 }
 
 void CubedSphereBilinear::print(std::ostream&) const {

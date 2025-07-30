@@ -304,6 +304,10 @@ void StructuredColumns::set_field_metadata(const eckit::Configuration& config, F
     if (config.has("type")) {
         field.metadata().set("type", config.getString("type"));
     }
+
+    if (config.has("vector_component")) {
+        field.metadata().set("vector_component", config.getSubConfiguration("vector_component"));
+    }
 }
 
 array::DataType StructuredColumns::config_datatype(const eckit::Configuration& config) const {

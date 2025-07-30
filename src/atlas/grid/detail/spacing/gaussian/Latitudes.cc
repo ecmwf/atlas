@@ -104,7 +104,7 @@ void legpol_newton_iteration(size_t kn, const double pfn[], double px, double& p
     //          PXN      :  new abscissa (Newton iteration)                (out)
     //          PXMOD    :  PXN-PX                                         (out)
 
-    double zdlx, zdlk, zdlldn, zdlxn;
+    double zdlx, zdlk, zdlldn;
     double zdlmod = 0;
     size_t ik;
     size_t kodd = kn % 2;  // mod(kn,2)
@@ -114,7 +114,6 @@ void legpol_newton_iteration(size_t kn, const double pfn[], double px, double& p
     if (kodd == 0) {
         zdlk = 0.5 * pfn[0];
     }
-    zdlxn  = 0.;
     zdlldn = 0.;
     ik     = 1;
 
@@ -131,8 +130,7 @@ void legpol_newton_iteration(size_t kn, const double pfn[], double px, double& p
     if( zdlldn != 0 ) {
         zdlmod = -zdlk / zdlldn;
     }
-    zdlxn  = zdlx + zdlmod;
-    pxn    = zdlxn;
+    pxn    = zdlx + zdlmod;
     pxmod  = zdlmod;
 }
 

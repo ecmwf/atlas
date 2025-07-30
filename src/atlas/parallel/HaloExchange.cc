@@ -17,6 +17,8 @@
 #include <sstream>
 #include <stdexcept>
 
+#include "pluto/pluto.h"
+
 #include "atlas/array/Array.h"
 #include "atlas/parallel/HaloExchange.h"
 #include "atlas/parallel/mpi/Statistics.h"
@@ -177,6 +179,14 @@ void HaloExchange::wait_for_send(std::vector<int>& send_counts_init, std::vector
             }
         }
     }
+}
+
+int HaloExchange::devices() const {
+    return pluto::devices();
+}
+
+bool HaloExchange::is_device_accessible(const void* ptr) const {
+    return pluto::is_device_accessible(ptr);
 }
 
 namespace {

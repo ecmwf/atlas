@@ -24,6 +24,7 @@
 #include "atlas/library/config.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/ObjectHandle.h"
+#include "atlas/field/Halo.h"
 
 namespace eckit {
 class Parametrisation;
@@ -180,6 +181,8 @@ public:
     bool dirty() const;
 
     void set_dirty(bool = true) const;
+
+    field::Halo& halo() const;
 
     void haloExchange(bool on_device = false) const;
     void adjointHaloExchange(bool on_device = false) const;
