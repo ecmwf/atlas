@@ -615,7 +615,7 @@ TransLocal::TransLocal(const Cache& cache, const Grid& grid, const Domain& domai
 
         // precomputations for Fourier transformations:
         if (useFFT_) {
-#if ATLAS_HAVE_FFTW && !TRANSLOCAL_DGEMM2
+#if ATLAS_HAVE_FFTW
             {
                 ATLAS_TRACE("Fourier precomputations (FFTW)");
                 int num_complex = (nlonsMaxGlobal_ / 2) + 1;
@@ -689,7 +689,6 @@ TransLocal::TransLocal(const Cache& cache, const Grid& grid, const Domain& domai
                 << std::endl;
 
             alloc_aligned(fourier_, 2 * (truncation_ + 1) * nlonsMax, "Fourier coeffs");
-#if !TRANSLOCAL_DGEMM2
             {
                 ATLAS_TRACE("Fourier precomputations (NoFFT)");
                 int idx = 0;
@@ -706,22 +705,6 @@ TransLocal::TransLocal(const Cache& cache, const Grid& grid, const Domain& domai
                     }
                 }
             }
-#else
-            {
-                ATLAS_TRACE("precomp Fourier");
-                int idx = 0;
-                for (int jlon = 0; jlon < nlonsMax; jlon++) {
-                    double factor = 1.;
-                    for (int jm = 0; jm < truncation_ + 1; jm++) {
-                        if (jm > 0) {
-                            factor = 2.;
-                        }
-                        fourier_[idx++] = +std::cos(jm * lons[jlon]) * factor;  // real part
-                        fourier_[idx++] = -std::sin(jm * lons[jlon]) * factor;  // imaginary part
-                    }
-                }
-            }
-#endif
         }
     }
     else {
@@ -777,7 +760,7 @@ TransLocal::~TransLocal() {
             free_aligned(legendre_asym_, "asymmetric");
         }
         if (useFFT_) {
-#if ATLAS_HAVE_FFTW && !TRANSLOCAL_DGEMM2
+#if ATLAS_HAVE_FFTW
             for (idx_t j = 0, size = static_cast<idx_t>(fftw_->plans.size()); j < size; j++) {
                 fftw_destroy_plan(fftw_->plans[j]);
             }
@@ -1094,7 +1077,7 @@ void TransLocal::invtrans_fourier_regular(const int nlats, const int nlons, cons
                                           double gp_fields[], const eckit::Configuration&) const {
     // Fourier transformation:
     if (useFFT_) {
-#if ATLAS_HAVE_FFTW && !TRANSLOCAL_DGEMM2
+#if ATLAS_HAVE_FFTW
         {
             int num_complex = (nlonsMaxGlobal_ / 2) + 1;
             {
@@ -1132,7 +1115,6 @@ void TransLocal::invtrans_fourier_regular(const int nlats, const int nlons, cons
     }
     else {
         linalg::dense::Backend linalg_backend{linalg_backend_};
-#if !TRANSLOCAL_DGEMM2
         // dgemm-method 1
         {
             ATLAS_TRACE("Inverse Fourier Transform (NoFFT,matrix_multiply=" + detect_linalg_backend(linalg_backend_) +
@@ -1143,36 +1125,6 @@ void TransLocal::invtrans_fourier_regular(const int nlats, const int nlons, cons
 
             linalg::matrix_multiply(A, B, C, linalg_backend);
         }
-#else
-        // dgemm-method 2
-        // should be faster for small domains or large truncation
-        // but have not found any significant speedup so far
-        double* gp;
-        alloc_aligned(gp, nb_fields * grid_.size());
-        {
-            ATLAS_TRACE("Fourier dgemm method 2");
-            linalg::Matrix A(scl_fourier, nb_fields * nlats, (truncation_ + 1) * 2);
-            linalg::Matrix B(fourier_, (truncation_ + 1) * 2, nlons);
-            linalg::Matrix C(gp, nb_fields * nlats, nlons);
-            linalg::matrix_multiply(A, B, C, linalg_backend);
-        }
-
-        // Transposition in grid point space:
-        {
-            ATLAS_TRACE("transposition in gp-space");
-            int idx = 0;
-            for (int jlon = 0; jlon < nlons; jlon++) {
-                for (int jlat = 0; jlat < nlats; jlat++) {
-                    for (int jfld = 0; jfld < nb_fields; jfld++) {
-                        int pos_tp = jlon + nlons * (jlat + nlats * (jfld));
-                        //int pos  = jfld + nb_fields * ( jlat + nlats * ( jlon ) );
-                        gp_fields[pos_tp] = gp[idx++];  // = gp[pos]
-                    }
-                }
-            }
-        }
-        free_aligned(gp);
-#endif
     }
 }
 
@@ -1182,7 +1134,7 @@ void TransLocal::invtrans_fourier_reduced(const int nlats, const StructuredGrid&
                                           double scl_fourier[], double gp_fields[], const eckit::Configuration&) const {
     // Fourier transformation:
     if (useFFT_) {
-#if ATLAS_HAVE_FFTW && !TRANSLOCAL_DGEMM2
+#if ATLAS_HAVE_FFTW
         {
             {
                 ATLAS_TRACE("Inverse Fourier Transform (FFTW, ReducedGrid)");

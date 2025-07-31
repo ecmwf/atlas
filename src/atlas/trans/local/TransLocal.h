@@ -19,8 +19,6 @@
 #include "atlas/linalg/dense/Backend.h"
 #include "atlas/trans/detail/TransImpl.h"
 
-#define TRANSLOCAL_DGEMM2 0
-
 //-----------------------------------------------------------------------------
 // Forward declarations
 
@@ -172,13 +170,9 @@ public:
                           double divergence_spectra[], const eckit::Configuration& = util::NoConfig()) const override;
 
 private:
-    int posMethod(const int jfld, const int imag, const int jlat, const int jm, const int nb_fields,
+    inline constexpr int posMethod(const int jfld, const int imag, const int jlat, const int jm, const int nb_fields,
                   const int nlats) const {
-#if !TRANSLOCAL_DGEMM2
         return imag + 2 * (jm + (truncation_ + 1) * (jlat + nlats * jfld));
-#else
-        return jfld + nb_fields * (jlat + nlats * (imag + 2 * (jm)));
-#endif
     }
 
     void invtrans_legendre(const int truncation, const int nlats, const int nb_fields, const int nb_vordiv_fields,
