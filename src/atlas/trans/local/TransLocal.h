@@ -28,13 +28,17 @@ class FieldSet;
 class StructuredGrid;
 }  // namespace atlas
 
+namespace atlas::linalg {
+    class FFT;
+}
+
 //-----------------------------------------------------------------------------
 
 namespace atlas {
 namespace trans {
 
 namespace detail {
-struct FFTW_Data;
+struct FFT_Data;
 }
 
 class LegendreCacheCreatorLocal;
@@ -238,9 +242,11 @@ private:
     const void* fft_cache_{nullptr};
     size_t fft_cachesize_{0};
 
-    std::unique_ptr<detail::FFTW_Data> fftw_;
+    std::unique_ptr<detail::FFT_Data> fft_data_;
+    std::unique_ptr<linalg::FFT> fft_;
 
     std::string linalg_backend_;
+    std::string fft_backend_;
     int warning_ = 0;
 };
 

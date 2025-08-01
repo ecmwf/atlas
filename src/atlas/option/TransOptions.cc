@@ -37,7 +37,7 @@ flt::flt(bool flt) {
 
 fft::fft(FFT fft) {
     static const std::map<FFT, std::string> FFT_to_string = {
-        {FFT::OFF, "OFF"}, {FFT::FFT992, "FFT992"}, {FFT::FFTW, "FFTW"}};
+        {FFT::OFF, "OFF"}, {FFT::FFT992, "FFT992"}, {FFT::FFTW, "FFTW"}, {FFT::pocketfft, "pocketfft"}};
     set("fft", FFT_to_string.at(fft));
 }
 
