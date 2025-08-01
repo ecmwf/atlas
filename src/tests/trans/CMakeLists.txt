@@ -63,21 +63,19 @@ ecbuild_add_test( TARGET atlas_test_trans_invtrans_grad
 #       and this tests needs access to the transi include directories.
 # ToDo: Fix this inside the test code so that we don't directly need to include transi headers.
 if( atlas_HAVE_ECTRANS )
-ecbuild_add_test( TARGET atlas_test_transgeneral
-  SOURCES   test_transgeneral.cc
-  LIBS      atlas transi
-  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_TRACE_REPORT=1
-  CONDITION atlas_HAVE_FFTW
-)
-else()
-ecbuild_add_test( TARGET atlas_test_transgeneral
-  SOURCES   test_transgeneral.cc
-  LIBS      atlas
-  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_TRACE_REPORT=1
-  CONDITION atlas_HAVE_FFTW
-)
+  set( atlas_test_transgeneral_extra_libs transi )
 endif()
-
+ecbuild_add_test( TARGET atlas_test_transgeneral_fftw
+  SOURCES   test_transgeneral.cc
+  LIBS      atlas ${atlas_test_transgeneral_extra_libs}
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_TRACE_REPORT=1
+  CONDITION atlas_HAVE_FFTW
+)
+ecbuild_add_test( TARGET atlas_test_transgeneral_pocketfft
+  SOURCES   test_transgeneral.cc
+  LIBS      atlas ${atlas_test_transgeneral_extra_libs}
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_TRACE_REPORT=1 ATLAS_LINALG_FFT_BACKEND=pocketfft
+)
 
 ecbuild_add_test( TARGET atlas_test_trans_localcache
   SOURCES   test_trans_localcache.cc

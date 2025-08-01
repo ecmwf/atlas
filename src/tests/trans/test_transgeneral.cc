@@ -777,21 +777,28 @@ CASE("test_trans_domain") {
     //StructuredGrid g2( LinearSpacing( {0., 180.}, 3 ), LinearSpacing( {89., 90.}, 2 ) );
     // when using LinearSpacing: set fourierTrc2 to false
 
+    std::string legcache = "legcache";
+    if (not atlas::Library::instance().linalgFFTBackend().empty()) {
+        // We append fft backend because this test may be run side by side
+        // with another test with differently configured FFT backend,
+        // causing a race condition.
+        legcache += "-"+atlas::Library::instance().linalgFFTBackend();
+    }
     int trc = 63;
     //Log::info() << "rgp1:" << std::endl;
-    if (eckit::PathName("legcache.bin").exists()) {
-        eckit::PathName("legcache.bin").unlink();
+    if (eckit::PathName(legcache+".bin").exists()) {
+        eckit::PathName(legcache+".bin").unlink();
     }
     Trace t1(Here(), "translocal1 construction");
     trans::Trans transLocal1(global_grid, g1.domain(), trc,
-                             option::type("local") | option::write_legendre("legcache.bin"));
+                             option::type("local") | option::write_legendre(legcache+".bin"));
     t1.stop();
     //Log::info() << "rgp2:" << std::endl;
     trans::Cache cache;
-    ATLAS_TRACE_SCOPE("Read cache") cache = trans::LegendreCache("legcache.bin");
+    ATLAS_TRACE_SCOPE("Read cache") cache = trans::LegendreCache(legcache+".bin");
     Trace t2(Here(), "translocal2 construction");
     trans::Trans transLocal2(cache, global_grid, g2.domain(), trc,
-                             option::type("local") | option::write_legendre("legcache2.bin"));
+                             option::type("local") | option::write_legendre(legcache+"2.bin"));
     //trans::Trans transLocal2( cache, g2, trc, option::type( "local" ) );
     //trans::Trans transLocal2( cache, g2, trc,
     //                          option::type( "local" ) | option::no_fft() );
