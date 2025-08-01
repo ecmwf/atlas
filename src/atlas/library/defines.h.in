@@ -70,6 +70,7 @@
 #    define ATLAS_SUPPRESS_WARNINGS_PUSH                 _Pragma( "warning push" )
 #    define ATLAS_SUPPRESS_WARNINGS_POP                  _Pragma( "warning pop" )
 #    define ATLAS_SUPPRESS_WARNINGS_INTEGER_SIGN_CHANGE  _Pragma( "warning disable 68" )
+#    define ATLAS_SUPPRESS_WARNINGS_BOTH_INLINE_NOINLINE _Pragma( "warning disable 2196" )
 #elif defined(__GNUC__)
 #    define ATLAS_SUPPRESS_WARNINGS_PUSH                 _Pragma( "GCC diagnostic push" ) \
                                                          _Pragma( "GCC diagnostic ignored \"-Wpragmas\"" ) \
@@ -97,5 +98,9 @@
 #if !defined(ATLAS_SUPPRESS_WARNINGS_UNUSED_BUT_SET_VARIABLE)
 #    define ATLAS_SUPPRESS_WARNINGS_UNUSED_BUT_SET_VARIABLE
 #endif
+#if !defined(ATLAS_SUPPRESS_WARNINGS_BOTH_INLINE_NOINLINE)
+#    define ATLAS_SUPPRESS_WARNINGS_BOTH_INLINE_NOINLINE
+#endif
 
 #endif
+
