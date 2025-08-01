@@ -737,6 +737,9 @@ linalg/dense/MatrixMultiply.h
 linalg/dense/MatrixMultiply.tcc
 linalg/dense/MatrixMultiply_EckitLinalg.h
 linalg/dense/MatrixMultiply_EckitLinalg.cc
+linalg/fft.h
+linalg/fft/FFT.cc
+linalg/fft/FFT.h
 )
 
 
@@ -1031,6 +1034,7 @@ ecbuild_add_library( TARGET atlas
   PRIVATE_INCLUDES
     ${CGAL_INCLUDE_DIRS}
     ${FFTW_INCLUDES}
+    ${POCKETFFT_INCLUDE_DIRS}
     ${PROJ_INCLUDE_DIRS}
 
   PUBLIC_INCLUDES
