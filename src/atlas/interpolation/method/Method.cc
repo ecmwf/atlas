@@ -169,7 +169,12 @@ atlas::linalg::SparseMatrixView<Value,Index> make_host_view_updated(const atlas:
 
 template <typename Value>
 void Method::interpolate_field_rank1(const Field& src, Field& tgt, const Matrix& W) const {
-    auto backend = std::is_same<Value, float>::value ? sparse::backend::openmp() : sparse::Backend{linalg_backend_};
+    auto backend = sparse::Backend{linalg_backend_};
+    
+    if (backend.type() == "hicsparse" && !std::is_same<eckit::linalg::Scalar, Value>::value) {
+        ATLAS_NOTIMPLEMENTED; // hicsparse does not support mixed double-float
+    }
+    
     const auto on_device = executesOnDevice(backend);
 
     auto src_v = on_device ? make_device_view_updated<Value, 1>(src) : make_host_view_updated<Value, 1>(src);
@@ -195,8 +200,12 @@ void Method::interpolate_field_rank1(const Field& src, Field& tgt, const Matrix&
 
 template <typename Value>
 void Method::interpolate_field_rank2(const Field& src, Field& tgt, const Matrix& W) const {
-    auto backend = std::is_same<Value, float>::value ? sparse::backend::openmp() : sparse::Backend{linalg_backend_};
+    auto backend = sparse::Backend{linalg_backend_};
     
+    if (backend.type() == "hicsparse" && !std::is_same<eckit::linalg::Scalar, Value>::value) {
+        ATLAS_NOTIMPLEMENTED; // hicsparse does not support mixed double-float
+    }
+
     // Switch to OpenMP as eckit_linalg does not support this layout
     if (backend.type() == "eckit_linalg") {
         backend = sparse::backend::openmp();
@@ -255,6 +264,11 @@ void Method::interpolate_field_rank2(const Field& src, Field& tgt, const Matrix&
 template <typename Value>
 void Method::interpolate_field_rank3(const Field& src, Field& tgt, const Matrix& W) const {
     sparse::Backend backend{linalg_backend_};
+
+    if (backend.type() == "hicsparse") {
+        ATLAS_NOTIMPLEMENTED; // hicsparse does not support rank-3 fields
+    }
+
     auto W_v = make_host_view<eckit::linalg::Scalar, eckit::linalg::Index>(W);
     auto src_v = make_host_view_updated<Value, 3>(src);
     auto tgt_v = make_host_view_updated<Value, 3>(tgt);
@@ -268,7 +282,12 @@ void Method::interpolate_field_rank3(const Field& src, Field& tgt, const Matrix&
 
 template <typename Value>
 void Method::adjoint_interpolate_field_rank1(Field& src, const Field& tgt, const Matrix& W) const {
-    auto backend = std::is_same<Value, float>::value ? sparse::backend::openmp() : sparse::Backend{linalg_backend_};
+    auto backend = sparse::Backend{linalg_backend_};
+    
+    if (backend.type() == "hicsparse" && !std::is_same<eckit::linalg::Scalar, Value>::value) {
+        ATLAS_NOTIMPLEMENTED; // hicsparse does not support mixed double-float
+    }
+
     const auto on_device = executesOnDevice(backend);
 
     auto src_v = on_device ? make_device_view_updated<Value, 1>(src) : make_host_view_updated<Value, 1>(src);
@@ -283,8 +302,12 @@ void Method::adjoint_interpolate_field_rank1(Field& src, const Field& tgt, const
 
 template <typename Value>
 void Method::adjoint_interpolate_field_rank2(Field& src, const Field& tgt, const Matrix& W) const {
-    auto backend = std::is_same<Value, float>::value ? sparse::backend::openmp() : sparse::Backend{linalg_backend_};
+    auto backend = sparse::Backend{linalg_backend_};
     
+    if (backend.type() == "hicsparse" && !std::is_same<eckit::linalg::Scalar, Value>::value) {
+        ATLAS_NOTIMPLEMENTED; // hicsparse does not support mixed double-float
+    }
+
     // Switch to OpenMP as eckit_linalg does not support this layout
     if (backend.type() == "eckit_linalg") {
         backend = sparse::backend::openmp();
@@ -305,6 +328,10 @@ void Method::adjoint_interpolate_field_rank2(Field& src, const Field& tgt, const
 template <typename Value>
 void Method::adjoint_interpolate_field_rank3(Field& src, const Field& tgt, const Matrix& W) const {
     sparse::Backend backend{linalg_backend_};
+
+    if (backend.type() == "hicsparse") {
+        ATLAS_NOTIMPLEMENTED; // hicsparse backend does not support rank-3 fields
+    }
 
     auto src_v = make_host_view_updated<Value, 3>(src);
     auto tgt_v = make_host_view_updated<Value, 3>(tgt);
@@ -479,12 +506,9 @@ void Method::do_execute(const Field& src, Field& tgt, Metadata&) const {
 
     sparse::Backend backend{linalg_backend_};
 
-    const bool on_device = [&]() {
-        const bool memory_is_synced = !src.hostNeedsUpdate() && !src.deviceNeedsUpdate();
-        // if both memory spaces are up to date, pick the one associated with the backend
-        // otherwise, pick the one that doesn't need updating.
-        return memory_is_synced ? executesOnDevice(backend) : src.hostNeedsUpdate();
-    }();
+    const bool on_device = executesOnDevice(backend);
+    
+    on_device ? src.updateDevice() : src.updateHost();
 
     haloExchange(src, on_device);
     
@@ -574,13 +598,7 @@ void Method::do_execute_adjoint(Field& src, const Field& tgt, Metadata&) const {
     }
 
     src.set_dirty();
-
-    const bool on_device = [&]() {
-        const bool memory_is_synced = !src.hostNeedsUpdate() && !src.deviceNeedsUpdate();
-        // if both memory spaces are up to date, pick the one associated with the backend
-        // otherwise, pick the one that doesn't need updating.
-        return memory_is_synced ? executesOnDevice(backend) : src.hostNeedsUpdate();
-    }();
+    const bool on_device = executesOnDevice(backend);
 
     adjointHaloExchange(src, on_device);
     
