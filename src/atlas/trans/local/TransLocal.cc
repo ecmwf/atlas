@@ -705,12 +705,12 @@ TransLocal::TransLocal(const Cache& cache, const Grid& grid, const Domain& domai
             //                    write.close();
             //                }
 #else
-            std::string file_path = TransParameters(config).write_fft();
-            if (file_path.size()) {
-                std::ofstream write(file_path);
-                write << "No cache available, as FFTW is not enabled" << std::endl;
-                write.close();
-            }
+            // std::string file_path = TransParameters(config).write_fft();
+            // if (file_path.size()) {
+            //     std::ofstream write(file_path);
+            //     write << "No cache available, as FFTW is not enabled" << std::endl;
+            //     write.close();
+            // }
 #endif
         }
         else { // not using FFT
