@@ -212,7 +212,11 @@ int Tool::execute(const Args& args) {
 
         trans::Cache cache;
 
+        util::Config write_fft;
+
         if (args.getBool("caching", false)) {
+            auto fftw_wisdom_file =
+                            eckit::PathName(atlas::Library::instance().cachePath() + "/"+type+"_fftw_wisdom");
             trans::LegendreCacheCreator cache_creator(grid, truncation, option::type(type));
             if (cache_creator.supported()) {
                 auto cachefile =
@@ -225,8 +229,17 @@ int Tool::execute(const Args& args) {
                 }
                 Log::debug() << "Reading cache " << cachefile << " size: " << eckit::Bytes(cachefile.size())
                              << std::endl;
-                ATLAS_TRACE("Reading Cache");
-                cache = trans::LegendreCache(cachefile);
+                if (fftw_wisdom_file.exists()) {
+                    ATLAS_TRACE("Reading Legendre + FFT Cache");
+                    cache = trans::LegendreFFTCache(cachefile, fftw_wisdom_file);
+                }
+                else {
+                    ATLAS_TRACE("Reading Legendre Cache");
+                    cache = trans::LegendreCache(cachefile);
+                }
+            }
+            if (not fftw_wisdom_file.exists() && type == "local") {
+                write_fft.set("write_fft", fftw_wisdom_file);
             }
         }
 
@@ -234,7 +247,7 @@ int Tool::execute(const Args& args) {
             ATLAS_TRACE("fft="+fft);
 
             auto cstart = std::chrono::system_clock::now();
-            trans::Trans trans(cache, grid, domain, truncation, option::type(type) | option::fft(fft));
+            trans::Trans trans(cache, grid, domain, truncation, option::type(type) | option::fft(fft) | write_fft);
             auto cend   = std::chrono::system_clock::now();
             std::chrono::duration<double> celapsed_seconds = cend - cstart;
             Log::info() << "type=" << std::setw(8) << std::left << type;
