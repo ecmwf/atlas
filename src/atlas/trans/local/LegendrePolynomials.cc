@@ -226,7 +226,7 @@ void compute_legendre_polynomials_all(const int truncation,  // truncation (in)
     LegendrePolynomialsWorkspace w{truncation};
 
     // Loop over latitudes:
-    for (size_t jlat = 0; jlat < nlats; ++jlat) {
+    atlas_omp_parallel_for (size_t jlat = 0; jlat < nlats; ++jlat) {
         // compute legendre polynomials for current latitude:
         compute_legendre_polynomials_lat(truncation, lats[jlat], legpol.data(), zfn.data(), w);
 

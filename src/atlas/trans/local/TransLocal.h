@@ -13,6 +13,9 @@
 #include <memory>
 #include <vector>
 
+
+#include "pluto/memory_resource.h"
+
 #include "atlas/array.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/grid/Grid.h"
@@ -206,6 +209,12 @@ private:
     friend class LegendreCacheCreatorLocal;
 
 private:
+
+    pluto::memory_resource* memory_resource() const;
+    void alloc_aligned(double*& ptr, size_t n, const char* msg, pluto::memory_resource* = nullptr) const;
+    void free_aligned(double*& ptr, size_t n, const char* msg, pluto::memory_resource* = nullptr) const;
+
+private:
     mutable functionspace::Spectral spectral_;
     Grid grid_;
     Grid gridGlobal_;
@@ -234,6 +243,10 @@ private:
     double* fouriertp_;
     std::vector<size_t> legendre_sym_begin_;
     std::vector<size_t> legendre_asym_begin_;
+    size_t fourier_size_{0};
+    size_t legendre_size_{0};
+    size_t legendre_sym_size_{0};
+    size_t legendre_asym_size_{0};
 
     Cache cache_;
     Cache export_legendre_;
@@ -248,6 +261,8 @@ private:
     std::string linalg_backend_;
     std::string fft_backend_;
     int warning_ = 0;
+
+    pluto::memory_resource* upstream_memory_resource_;
 };
 
 //-----------------------------------------------------------------------------
