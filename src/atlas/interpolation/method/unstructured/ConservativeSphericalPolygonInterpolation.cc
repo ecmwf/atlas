@@ -262,7 +262,6 @@ int ConservativeSphericalPolygonInterpolation::prev_index(int current_index, int
 
 // get counter-clockwise sorted neighbours of a cell
 std::vector<idx_t> ConservativeSphericalPolygonInterpolation::get_cell_neighbours(Mesh& mesh, idx_t cell) const {
-    ATLAS_TRACE("ConservativeSphericalPolygonInterpolation: get_cell_neighbours");
     const auto& cell2node = mesh.cells().node_connectivity();
     const auto& nodes_ll  = array::make_view<double, 2>(mesh.nodes().lonlat());
     const idx_t n_nodes   = cell2node.cols(cell);
@@ -1091,6 +1090,8 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                         tgt_cover_area += csp_i_area;
 
                         if (validate_) {
+                            src_iparam[scell].cell_idx.emplace_back(tcell);
+                            src_iparam[scell].weights.emplace_back(csp_i_area);
                             if (csp_i_area > 1.1 * t_csp.area()) {
                                 dump_intersection("Intersection larger than target", t_csp, src_csp, src_cells);
                             }
@@ -1202,6 +1203,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                 remap_stat_.errors[Statistics::Errors::SRC_INTERSECTPLG_LINF] = -1;
             }
             else {
+                ATLAS_TRACE("computing covering source cells errors");
                 double geo_err_l1   = 0.;
                 double geo_err_linf = -1.;
                 for (idx_t scell = 0; scell < src_csp.size(); ++scell) {
