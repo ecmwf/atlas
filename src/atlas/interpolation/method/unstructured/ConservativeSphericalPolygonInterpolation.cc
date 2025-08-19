@@ -1169,7 +1169,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                     worst_tgt_overcover.first = tcell;
                 }
                 if (worst_tgt_undercover.second > tgt_cover_err) {
-                    worst_tgt_undercover.second = tgt_cover_err;;
+                    worst_tgt_undercover.second = tgt_cover_err;
                     worst_tgt_undercover.first = tcell;
                 }
                 if (std::abs(tgt_cover_err) > 0.5) {
@@ -1182,8 +1182,8 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                     dump_intersection("Target cell not exaclty covered", t_csp, src_csp, tiparam.cell_idx);
                     //dump_polygons_to_json(t_csp, src_csp, tiparam.cell_idx, "bad_polygon", 1.e-16);
                 }
-                geo_err_l1 += std::abs(0.01 * tgt_cover_err);
-                geo_err_linf = std::max(geo_err_linf, std::abs(0.01 * tgt_cover_err));
+                geo_err_l1 += std::abs(0.01 * tgt_cover_err * t_csp.area());
+                geo_err_linf = std::max(geo_err_linf, std::abs(0.01 * tgt_cover_err * t_csp.area()));
             }
             ATLAS_TRACE_MPI(ALLREDUCE) {
                 mpi::comm().allReduceInPlace(geo_err_l1, eckit::mpi::sum());
