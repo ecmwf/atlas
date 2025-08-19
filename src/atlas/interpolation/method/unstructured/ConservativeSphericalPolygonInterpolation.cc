@@ -1413,6 +1413,9 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
         const auto tgt_halo = array::make_view<int, 1>(tgt_mesh_.cells().halo());
         for (idx_t tcell = 0; tcell < n_tpoints_; ++tcell) {
             const auto& iparam = tgt_iparam_[tcell];
+            if (iparam.cell_idx.size() == 0 || tgt_halo(tcell)) {
+                continue;
+            }
             if (src_cell_data_) {
                 for (idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell) {
                     const idx_t scell = iparam.cell_idx[icell];
@@ -1457,12 +1460,9 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                 Aik.resize(iparam.cell_idx.size());
                 const PointXYZ& Csk     = iparam.centroids[icell];
                 const idx_t scell       = iparam.cell_idx[icell];
-                const PointXYZ& Cs      = src_points_[scell]; // !!! this is NOT barycentre of the subcell in case of NodeColumns 
+                const idx_t spt         = src_cell_data_ ? scell : data_->src_csp2node_[scell];
+                const PointXYZ& Cs      = src_points_[spt]; // !!! this is NOT barycentre of the subcell in case of NodeColumns
                 Aik[icell]              = Csk - Cs - PointXYZ::mul(Cs, PointXYZ::dot(Cs, Csk - Cs));
-#if defined(__APPLE__)
-                volatile
-#endif
-                double dual_area_inv = 0.;
                 std::vector<idx_t> src_neighbours;
                 if (src_cell_data_) {
                     src_neighbours = get_cell_neighbours(src_mesh_, scell);
@@ -1474,6 +1474,10 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                 }
                 Rsj.resize(src_neighbours.size());
                 PointXYZ Rs   = {0., 0., 0.};
+#if defined(__APPLE__)
+                volatile
+#endif
+                double dual_area_inv = 0.;
                 for (idx_t j = 0; j < src_neighbours.size(); ++j) {
                     idx_t sj         = src_neighbours[j];
                     idx_t nsj        = src_neighbours[ next_index(j, src_neighbours.size()) ];
@@ -1517,14 +1521,20 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
         }
     }
     else {  // if ( not tgt_cell_data_ )
-        // ATLAS_NOTIMPLEMENTED;
+        const auto tgt_ghost = array::make_view<int, 1>(tgt_mesh_.nodes().ghost());
         auto& tgt_node2csp_ = data_->tgt_node2csp_;
         Workspace w;
         triplets_size = 0;
         for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
+            if (tgt_ghost(tnode)) {
+                continue;
+            }
             for (idx_t isubcell = 0; isubcell < tgt_node2csp_[tnode].size(); ++isubcell) {
                 const idx_t tsubcell = tgt_node2csp_[tnode][isubcell];
                 const auto& iparam = tgt_iparam_[tsubcell];
+                if (iparam.cell_idx.size() == 0) {
+                    continue;
+                }
                 if (src_cell_data_) {
                     for (idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell) {
                         const idx_t scell = iparam.cell_idx[icell];
@@ -1548,9 +1558,15 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
         std::vector<PointXYZ> Rsj;
         std::vector<PointXYZ> Aik;
         for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
+            if (tgt_ghost(tnode)) {
+                continue;
+            }
             for (idx_t isubcell = 0; isubcell < tgt_node2csp_[tnode].size(); ++isubcell) {
                 const idx_t tsubcell = tgt_node2csp_[tnode][isubcell];
                 const auto& iparam = tgt_iparam_[tsubcell];
+                if (iparam.cell_idx.size() == 0) {
+                    continue;
+                }
 #if defined(__APPLE__)
                 volatile
 #endif
@@ -1573,7 +1589,8 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                     Aik.resize(iparam.cell_idx.size());
                     const PointXYZ& Csk     = iparam.centroids[icell];
                     const idx_t scell       = iparam.cell_idx[icell];
-                    const PointXYZ& Cs      = src_points_[scell]; // !!! this is NOT barycentre of the subcell in case of NodeColumns 
+                    const idx_t spt         = src_cell_data_ ? scell : data_->src_csp2node_[scell];
+                    const PointXYZ& Cs      = src_points_[spt]; // !!! this is NOT barycentre of the subcell in case of NodeColumns
                     Aik[icell]              = Csk - Cs - PointXYZ::mul(Cs, PointXYZ::dot(Cs, Csk - Cs));
 #if defined(__APPLE__)
                     volatile
