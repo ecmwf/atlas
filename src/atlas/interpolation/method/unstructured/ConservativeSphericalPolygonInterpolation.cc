@@ -1140,7 +1140,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
     const std::string polygon_intersection_folder = "polygon_intersection/";
     if (validate_ && mpi::rank() == 0) {
         if (mkdir(polygon_intersection_folder.c_str(), 0777) != 0) {
-            Log::info() << "WARNING Polygon intersection relevant information in is the folder \e[1mpolygon_intersection\e[0m." << std::endl;
+            Log::info() << "WARNING Polygon intersection relevant information is in the folder \e[1mpolygon_intersection\e[0m." << std::endl;
         }
         else {
             Log::info() << "WARNING Could not create the folder \e[1mpolygon_intersection\e[0m." << std::endl;
@@ -1374,7 +1374,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
     if (validate_) {
         ATLAS_TRACE("ConservativeMethod::setup: Validate the cons-1 matrix");
         std::vector<double> weight_sum(n_tpoints_);
-        for( auto& triplet : triplets ) {
+        for (auto& triplet : triplets) {
             weight_sum[triplet.row()] += triplet.value();
         }
         if (order_ == 1) {
@@ -1386,7 +1386,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                 }
             }
         }
-        for( size_t row=0; row < n_tpoints_; ++row ) {
+        for (size_t row = 0; row < n_tpoints_; ++row) {
             if (std::abs(weight_sum[row] - 1.) > 1e-11) {
                 Log::info() << "target weight in row " << row << " differs from 1 by " << std::abs(weight_sum[row] - 1.) << std::endl;
             }
