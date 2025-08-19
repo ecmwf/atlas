@@ -177,31 +177,7 @@ Mesh extract_mesh(FunctionSpace fs) {
     }
 }
 
-/*
-void sort_and_accumulate_triplets(std::vector<eckit::linalg::Triplet>& triplets) {
-    ATLAS_TRACE();
-    std::map<std::pair<int, int>, double> triplet_map;
-    ATLAS_TRACE_SCOPE("accumulate in map")
-    for (auto& triplet : triplets) {
-        auto loc   = std::make_pair<int, int>(triplet.row(), triplet.col());
-        auto entry = triplet_map.find(loc);
-        if (entry == triplet_map.end()) {
-            triplet_map[loc] = triplet.value();
-        }
-        else {
-            entry->second += triplet.value();
-        }
-    }
-    triplets.clear();
-    ATLAS_TRACE_SCOPE("recontruct sorted vector from map")
-    for (auto& triplet : triplet_map) {
-        auto& row = triplet.first.first;
-        auto& col = triplet.first.second;
-        auto& val = triplet.second;
-        triplets.emplace_back(row, col, val);
-    }
-}
-*/
+
 int inside_vertices(const ConvexSphericalPolygon& plg1, const ConvexSphericalPolygon& plg2, int& pout) {
     int points_in = 0;
     pout          = 0;
@@ -1371,8 +1347,6 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
             }
         }
     }
-    // sort_and_accumulate_triplets(triplets);  // Very expensive!!! (90% of this routine). We need to avoid it
-
     if (validate_) {
         ATLAS_TRACE("ConservativeMethod::setup: Validate the cons-1 matrix");
         std::vector<double> weight_sum(n_tpoints_);
@@ -1650,7 +1624,6 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
             }
         }
     }
-    // sort_and_accumulate_triplets(triplets);  // Very expensive!!! (90% of this routine). We need to avoid it
     return triplets;
 }
 
