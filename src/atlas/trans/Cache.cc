@@ -9,7 +9,8 @@
  */
 
 #include "atlas/trans/Cache.h"
-#include <cstdlib>
+
+#include "pluto/pluto.h"
 
 #include "eckit/io/DataHandle.h"
 
@@ -21,13 +22,21 @@
 namespace atlas {
 namespace trans {
 
-TransCacheFileEntry::TransCacheFileEntry(const eckit::PathName& path): buffer_(path.size()) {
+TransCacheFileEntry::TransCacheFileEntry(const eckit::PathName& path) {
     ATLAS_TRACE();
     Log::debug() << "Loading cache from file " << path << std::endl;
     std::unique_ptr<eckit::DataHandle> dh(path.fileHandle());
+
+    size_ = path.size();
+    data_ = pluto::host_resource()->allocate(size_, 256);
+
     dh->openForRead();
-    dh->read(buffer_.data(), buffer_.size());
+    dh->read(data_, size_);
     dh->close();
+}
+
+TransCacheFileEntry::~TransCacheFileEntry() {
+    pluto::host_resource()->deallocate(data_, size_, 256);
 }
 
 TransCacheMemoryEntry::TransCacheMemoryEntry(const void* data, size_t size): data_(data), size_(size) {
@@ -72,13 +81,13 @@ TransCache::TransCache(const Trans& trans): Cache(trans.get()) {}
 
 TransCacheOwnedMemoryEntry::TransCacheOwnedMemoryEntry(size_t size): size_(size) {
     if (size_) {
-        data_ = std::malloc(size_);
+        data_ = pluto::host_resource()->allocate(size_, 256);
     }
 }
 
 TransCacheOwnedMemoryEntry::~TransCacheOwnedMemoryEntry() {
     if (size_) {
-        std::free(data_);
+        pluto::host_resource()->deallocate(data_, size_, 256);
     }
 }
 

@@ -234,7 +234,6 @@ private:
     double* legendre_asym_;
     double* fourier_;
     double* fouriertp_;
-    std::vector<size_t> legendre_begin_;
     std::vector<size_t> legendre_sym_begin_;
     std::vector<size_t> legendre_asym_begin_;
 

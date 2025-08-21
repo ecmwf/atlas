@@ -564,8 +564,8 @@ TransLocal::TransLocal(const Cache& cache, const Grid& grid, const Domain& domai
             legendre_sym_begin_[0]  = 0;
             legendre_asym_begin_[0] = 0;
             for (idx_t jm = 0; jm <= truncation_ + 1; jm++) {
-                size_sym += add_padding(num_n(truncation_ + 1, jm, /*symmetric*/ true) * nlatsLeg);
-                size_asym += add_padding(num_n(truncation_ + 1, jm, /*symmetric*/ false) * nlatsLeg);
+                size_sym  += add_padding(num_n(truncation_ + 1, jm, /*symmetric*/     true ) * nlatsLeg);
+                size_asym += add_padding(num_n(truncation_ + 1, jm, /*antisymmetric*/ false) * nlatsLeg);
                 legendre_sym_begin_[jm + 1]  = size_sym;
                 legendre_asym_begin_[jm + 1] = size_asym;
             }
