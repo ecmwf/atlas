@@ -1028,17 +1028,13 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
 
     eckit::Channel blackhole;
     ATLAS_TRACE_SCOPE("intersecting polygons") {
-        Log::debug() << "Find intersections for " << src_csp.size() << " source polygons" << std::endl;
-        eckit::ProgressTimer progress("Intersecting polygons ", src_csp.size(), " cell", double(10),
-                                    src_csp.size() > 50 ? Log::info() : blackhole);
+        Log::debug() << "Find intersections for " << tgt_csp.size() << " target polygons" << std::endl;
+        eckit::ProgressTimer progress("Intersecting polygons ", tgt_csp.size(), " cell", double(10),
+                                    tgt_csp.size() > 50 ? Log::info() : blackhole);
 
         for (idx_t tcell = 0; tcell < tgt_csp.size(); ++tcell, ++progress) {
             if (std::get<1>(tgt_csp[tcell]) <= tgt_halo_intersection_depth) {
                 const auto& t_csp       = std::get<0>(tgt_csp[tcell]);
-                if (t_csp.area() == 0.) {
-                    Log::warning() << "Skipping target polygon " << tcell << " with area = 0" << std::endl;
-                    continue;
-                }
                 double tgt_cover_area   = 0.;
                 stopwatch_kdtree_search.start();
                 auto src_cells = kdt_search.closestPointsWithinRadius(t_csp.centroid(), t_csp.radius() + max_srccell_rad);
@@ -1046,6 +1042,9 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                 for (idx_t iscell = 0; iscell < src_cells.size(); ++iscell) {
                     auto scell        = src_cells[iscell].payload();
                     const auto& s_csp = std::get<0>(src_csp[scell]);
+                    if (s_csp.area() == 0.) {
+                        continue;
+                    }
                     stopwatch_polygon_intersections.start();
                     ConvexSphericalPolygon csp_i = s_csp.intersect(t_csp, nullptr, pointsSameEPS);
                     stopwatch_polygon_intersections.stop();
