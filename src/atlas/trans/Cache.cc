@@ -49,9 +49,16 @@ LegendreFFTCache::LegendreFFTCache(const void* legendre_address, size_t legendre
     Cache(std::make_shared<TransCacheMemoryEntry>(legendre_address, legendre_size),
           std::make_shared<TransCacheMemoryEntry>(fft_address, fft_size)) {}
 
+static std::shared_ptr<TransCacheEntry> read_legendre_cache(const eckit::PathName& legendre_path) {
+    ATLAS_TRACE();
+    return std::make_shared<TransCacheFileEntry>(legendre_path);
+}
+static std::shared_ptr<TransCacheEntry> read_fft_cache(const eckit::PathName& fft_path) {
+    ATLAS_TRACE();
+    return std::make_shared<TransCacheFileEntry>(fft_path);
+}
 LegendreFFTCache::LegendreFFTCache(const eckit::PathName& legendre_path, const eckit::PathName& fft_path):
-    Cache(std::shared_ptr<TransCacheEntry>(new TransCacheFileEntry(legendre_path)),
-          std::shared_ptr<TransCacheEntry>(new TransCacheFileEntry(fft_path))) {}
+    Cache(read_legendre_cache(legendre_path), read_fft_cache(fft_path)) {}
 
 LegendreCache::LegendreCache(const eckit::PathName& path):
     Cache(std::shared_ptr<TransCacheEntry>(new TransCacheFileEntry(path))) {}
