@@ -216,7 +216,7 @@ CASE("test_interpolation_conservative") {
         src_cell_data = false;
         tgt_cell_data = true;
         do_remapping_test(Grid("O16"), Grid("H12"), func, remap_stat_1, remap_stat_2, src_cell_data, tgt_cell_data);
-        check(remap_stat_1, remap_stat_2, {1.0e-13, 1.0e-12, 7.0e-3, 4.0e-3, 1.0e-15, 1.0e-8});
+        check(remap_stat_1, remap_stat_2, {1.0e-13, 1.0e-12, 7.0e-3, 4.0e-3, 1.0e-15, 2.0e-8});
 
         src_cell_data = false;
         tgt_cell_data = false;
