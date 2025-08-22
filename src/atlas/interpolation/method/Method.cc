@@ -174,6 +174,11 @@ void Method::interpolate_field_rank1(const Field& src, Field& tgt, const Matrix&
     if (backend.type() == "hicsparse" && !std::is_same<eckit::linalg::Scalar, Value>::value) {
         ATLAS_NOTIMPLEMENTED; // hicsparse does not support mixed double-float
     }
+
+    if (backend.type() == "eckit_linalg" && std::is_same<Value, float>::value) {
+        // Switch to OpenMP as eckit_linalg does not support float
+        backend = sparse::backend::openmp();
+    }
     
     const auto on_device = executesOnDevice(backend);
 
@@ -206,8 +211,8 @@ void Method::interpolate_field_rank2(const Field& src, Field& tgt, const Matrix&
         ATLAS_NOTIMPLEMENTED; // hicsparse does not support mixed double-float
     }
 
-    // Switch to OpenMP as eckit_linalg does not support this layout
     if (backend.type() == "eckit_linalg") {
+        // Switch to OpenMP as eckit_linalg does not support this layout
         backend = sparse::backend::openmp();
     }
 
@@ -288,6 +293,11 @@ void Method::adjoint_interpolate_field_rank1(Field& src, const Field& tgt, const
         ATLAS_NOTIMPLEMENTED; // hicsparse does not support mixed double-float
     }
 
+    if (backend.type() == "eckit_linalg" && std::is_same<Value, float>::value) {
+        // Switch to OpenMP as eckit_linalg does not support float
+        backend = sparse::backend::openmp();
+    }
+
     const auto on_device = executesOnDevice(backend);
 
     auto src_v = on_device ? make_device_view_updated<Value, 1>(src) : make_host_view_updated<Value, 1>(src);
@@ -308,8 +318,8 @@ void Method::adjoint_interpolate_field_rank2(Field& src, const Field& tgt, const
         ATLAS_NOTIMPLEMENTED; // hicsparse does not support mixed double-float
     }
 
-    // Switch to OpenMP as eckit_linalg does not support this layout
     if (backend.type() == "eckit_linalg") {
+        // Switch to OpenMP as eckit_linalg does not support this layout
         backend = sparse::backend::openmp();
     }
 
@@ -330,7 +340,7 @@ void Method::adjoint_interpolate_field_rank3(Field& src, const Field& tgt, const
     sparse::Backend backend{linalg_backend_};
 
     if (backend.type() == "hicsparse") {
-        ATLAS_NOTIMPLEMENTED; // hicsparse backend does not support rank-3 fields
+        ATLAS_NOTIMPLEMENTED; // hicsparse does not support rank-3 fields
     }
 
     auto src_v = make_host_view_updated<Value, 3>(src);
