@@ -40,6 +40,10 @@ double distance2(const PointXYZ& p1, const PointXYZ& p2) {
     return dx * dx + dy * dy + dz * dz;
 }
 
+bool approx_eq(const double& v1, const double& v2) {
+    return std::abs(v1 - v2) <= EPS;
+}
+
 bool approx_eq(const PointXYZ& v1, const PointXYZ& v2) {
     //return approx_eq( v1[0], v2[0], t ) && approx_eq( v1[1], v2[1], t ) && approx_eq( v1[2], v2[2], t );
     return distance2(v1, v2) <= EPS2;
@@ -380,12 +384,28 @@ ConvexSphericalPolygon ConvexSphericalPolygon::intersect(const ConvexSphericalPo
 
     ConvexSphericalPolygon intersection;
     const ConvexSphericalPolygon* intersector;
-
-    intersector = this;
-    intersection = plg;
-#if DEBUG_OUTPUT
     std::string intor_id = "P1";
     std::string inted_id = "P2";
+
+    bool this_intersector = (area() > plg.area());
+    if (approx_eq(area(), plg.area())) {
+        PointXYZ dc = centroid() - plg.centroid();
+        if (dc[0] > 0. or (dc[0] == 0. and (dc[1] > 0. or (dc[1] == 0. and dc[2] > 0.)))) {
+            this_intersector = true;
+        }
+    }
+    if (this_intersector) {
+        intersector = this;
+        intersection = plg;
+    }
+    else {
+        intor_id = "P2";
+        inted_id = "P1";
+        intersector = &plg;
+        intersection = *this;
+    }
+
+#if DEBUG_OUTPUT
     if (out) {
         *out << inted_id << " : ";
         print(*out);
