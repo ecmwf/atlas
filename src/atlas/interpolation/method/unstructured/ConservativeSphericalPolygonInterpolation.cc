@@ -1026,6 +1026,10 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
     constexpr double pointsSameEPS = 5.e6 * std::numeric_limits<double>::epsilon();
     const int tgt_halo_intersection_depth = (tgt_cell_data_ ? 0 : 1); // if target NodeColumns, one source halo required for subcells around source nodes
 
+    std::vector<idx_t> intersection_src_cell_idx;
+    std::vector<double> intersection_weights;
+    std::vector<PointXYZ> intersection_src_centroids;
+
     eckit::Channel blackhole;
     ATLAS_TRACE_SCOPE("intersecting polygons") {
         Log::debug() << "Find intersections for " << tgt_csp.size() << " target polygons" << std::endl;
@@ -1034,6 +1038,9 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
 
         for (idx_t tcell = 0; tcell < tgt_csp.size(); ++tcell, ++progress) {
             if (std::get<1>(tgt_csp[tcell]) <= tgt_halo_intersection_depth) {
+                intersection_src_cell_idx.resize(0);
+                intersection_weights.resize(0);
+                intersection_src_centroids.resize(0);
                 const auto& t_csp       = std::get<0>(tgt_csp[tcell]);
                 double tgt_cover_area   = 0.;
                 stopwatch_kdtree_search.start();
@@ -1057,10 +1064,10 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                         }
                     }
                     if (csp_i_area > 0) {
-                        tgt_iparam_[tcell].cell_idx.emplace_back(scell);
-                        tgt_iparam_[tcell].weights.emplace_back(csp_i_area);
+                        intersection_src_cell_idx.emplace_back(scell);
+                        intersection_weights.emplace_back(csp_i_area);
                         if (order_ == 2 or not matrix_free_ or not matrixAllocated()) {
-                            tgt_iparam_[tcell].centroids.emplace_back(csp_i.centroid());
+                            intersection_src_centroids.emplace_back(csp_i.centroid());
                         }
                         tgt_cover_area += csp_i_area;
 
@@ -1087,17 +1094,22 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                         }
                     }
                 }
-                if (tgt_iparam_[tcell].cell_idx.size() == 0 and statistics_intersection_) {
+                if (intersection_src_cell_idx.size() == 0 and statistics_intersection_) {
                     num_pol[TGT_NONINTERSECT]++;
                 }
                 if (normalise_intersections_ && tgt_cover_err_percent < 1.) {
                     double wfactor = t_csp.area() / (tgt_cover_area > 0. ? tgt_cover_area : 1.);
-                    for (idx_t i = 0; i < tgt_iparam_[tcell].weights.size(); i++) {
-                        tgt_iparam_[tcell].weights[i] *= wfactor;
+                    for (idx_t i = 0; i < intersection_weights.size(); i++) {
+                        intersection_weights[i] *= wfactor;
                     }
                 }
                 if (statistics_intersection_) {
                     num_pol[SRC_TGT_INTERSECT] += tgt_iparam_[tcell].weights.size();
+                }
+                tgt_iparam_[tcell].cell_idx = intersection_src_cell_idx;
+                tgt_iparam_[tcell].weights = intersection_weights;
+                if (order_ == 2 or not matrix_free_ or not matrixAllocated()) {
+                    tgt_iparam_[tcell].centroids = intersection_src_centroids;
                 }
             }
         }
