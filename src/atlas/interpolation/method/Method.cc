@@ -274,13 +274,18 @@ void Method::interpolate_field_rank3(const Field& src, Field& tgt, const Matrix&
         ATLAS_NOTIMPLEMENTED; // hicsparse does not support rank-3 fields
     }
 
+    if (backend.type() == "eckit_linalg") {
+        // Switch to OpenMP as eckit_linalg does not support rank-3 fields
+        backend = sparse::backend::openmp();
+    }
+
     auto W_v = make_host_view<eckit::linalg::Scalar, eckit::linalg::Index>(W);
     auto src_v = make_host_view_updated<Value, 3>(src);
     auto tgt_v = make_host_view_updated<Value, 3>(tgt);
     if (not W.empty() && nonLinear_(src)) {
         ATLAS_ASSERT(false, "nonLinear interpolation not supported for rank-3 fields.");
     }
-    sparse_matrix_multiply(W_v, src_v, tgt_v, sparse::backend::openmp());
+    sparse_matrix_multiply(W_v, src_v, tgt_v, backend);
 
     tgt.setDeviceNeedsUpdate(true);
 }
@@ -343,11 +348,16 @@ void Method::adjoint_interpolate_field_rank3(Field& src, const Field& tgt, const
         ATLAS_NOTIMPLEMENTED; // hicsparse does not support rank-3 fields
     }
 
+    if (backend.type() == "eckit_linalg") {
+        // Switch to OpenMP as eckit_linalg does not support rank-3 fields
+        backend = sparse::backend::openmp();
+    }
+
     auto src_v = make_host_view_updated<Value, 3>(src);
     auto tgt_v = make_host_view_updated<Value, 3>(tgt);
     auto W_v = make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(W);
 
-    sparse_matrix_multiply_add(W_v, tgt_v, src_v, sparse::backend::openmp());
+    sparse_matrix_multiply_add(W_v, tgt_v, src_v, backend);
 
     src.setDeviceNeedsUpdate(true);
 }
