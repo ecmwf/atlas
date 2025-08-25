@@ -14,7 +14,6 @@
 #include <cstdlib>
 #include <fstream>
 
-#include "atlas/linalg/dense.h"
 #include "eckit/config/YAMLConfiguration.h"
 #include "eckit/eckit.h"
 #include "eckit/io/DataHandle.h"
@@ -27,6 +26,9 @@
 #include "atlas/field.h"
 #include "atlas/grid/Iterator.h"
 #include "atlas/grid/StructuredGrid.h"
+#include "atlas/library.h"
+#include "atlas/linalg/dense.h"
+#include "atlas/linalg/fft.h"
 #include "atlas/option.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
@@ -85,14 +87,20 @@ public:
 
     int warning() const { return config_.getInt("warning", 1); }
 
-    int fft() const {
-        static const std::map<std::string, int> string_to_FFT = {{"OFF", static_cast<int>(option::FFT::OFF)},
-                                                                 {"FFTW", static_cast<int>(option::FFT::FFTW)}};
-#ifdef ATLAS_HAVE_FFTW
-        return string_to_FFT.at(config_.getString("fft", "FFTW"));
-#else
-        return string_to_FFT.at("OFF");
-#endif
+    std::string fft() const {
+        static const std::set<std::string> supported = {"OFF","FFTW","pocketfft"};
+        std::string defaultLinalgFFTBackend = atlas::Library::instance().linalgFFTBackend();
+        if (defaultLinalgFFTBackend.empty()) {
+            defaultLinalgFFTBackend = "FFTW";
+        }
+        std::string value = config_.getString("fft", defaultLinalgFFTBackend);
+        if (supported.find(value) == supported.end()) {
+            ATLAS_THROW_EXCEPTION("FFT backend \"" << value << "\" is not one of the supported : OFF, FFTW, pocketfft");
+        }
+        if (not ATLAS_HAVE_FFTW && value == "FFTW") {
+            value = "pocketfft";
+        }
+        return value;
     }
 
     std::string matrix_multiply() const { return config_.getString("matrix_multiply", ""); }
@@ -187,14 +195,13 @@ size_t num_n(const int truncation, const int m, const bool symmetric) {
 
 
 void alloc_aligned(double*& ptr, size_t n) {
-    const size_t alignment = 64 * sizeof(double);
+    const size_t alignment = 256;
     size_t bytes           = sizeof(double) * n;
     int err                = posix_memalign((void**)&ptr, alignment, bytes);
     if (err) {
         throw_AllocationFailed(bytes, Here());
     }
 }
-
 void free_aligned(double*& ptr) {
     free(ptr);
     ptr = nullptr;
@@ -211,6 +218,20 @@ void free_aligned(double*& ptr, const char* msg) {
     Log::debug() << "TransLocal: deallocating '" << msg << "'" << std::endl;
     free_aligned(ptr);
 }
+
+void alloc_aligned(std::complex<double>*& ptr, size_t n) {
+    const size_t alignment = 256;
+    size_t bytes           = sizeof(std::complex<double>) * n;
+    int err                = posix_memalign((void**)&ptr, alignment, bytes);
+    if (err) {
+        throw_AllocationFailed(bytes, Here());
+    }
+}
+void free_aligned(std::complex<double>*& ptr) {
+    free(ptr);
+    ptr = nullptr;
+}
+
 
 size_t add_padding(size_t n) {
     return size_t(std::ceil(n / 8.)) * 8;
@@ -279,13 +300,12 @@ int fourier_truncation(const int truncation,   // truncation
 }
 
 namespace detail {
-struct FFTW_Data {
-#if ATLAS_HAVE_FFTW
-    fftw_complex* in;
-    double* out;
-    std::vector<fftw_plan> plans;
-#endif
+
+struct FFT_Data {
+    std::complex<double>* in{nullptr};
+    double* out{nullptr};
 };
+
 }  // namespace detail
 
 
@@ -309,8 +329,9 @@ TransLocal::TransLocal(const Cache& cache, const Grid& grid, const Domain& domai
     legendre_cachesize_(cache.legendre().size()),
     fft_cache_(cache.fft().data()),
     fft_cachesize_(cache.fft().size()),
-    fftw_(new detail::FFTW_Data),
+    fft_data_(new detail::FFT_Data),
     linalg_backend_(TransParameters{config}.matrix_multiply()),
+    fft_backend_(TransParameters{config}.fft()),
     warning_(TransParameters{config}.warning()) {
     ATLAS_TRACE("TransLocal constructor");
 
@@ -324,7 +345,19 @@ TransLocal::TransLocal(const Cache& cache, const Grid& grid, const Domain& domai
     idx_t nlats       = 0;
     idx_t nlonsMax    = 0;
     idx_t neqtr       = 0;
-    useFFT_           = TransParameters(config).fft();
+    useFFT_           = (fft_backend_ != "OFF");
+    if (useFFT_) {
+        if (fft_backend_ == "FFTW") {
+            fft_.reset(new linalg::FFTW());
+        }
+        else if(fft_backend_ == "pocketfft") {
+            fft_.reset(new linalg::pocketfft());
+        }
+        else {
+            ATLAS_THROW_EXCEPTION("Unrecognised FFT configuration");
+        }
+    }
+
     unstruct_precomp_ = (config.has("precompute") ? precompute_ : false);
     no_symmetry_      = false;
     nlatsNH_          = 0;
@@ -365,6 +398,7 @@ TransLocal::TransLocal(const Cache& cache, const Grid& grid, const Domain& domai
                 no_nest         = true;
                 no_symmetry_    = true;
                 useFFT_         = false;
+                fft_backend_    = "OFF";
                 nlatsNH_        = nlats;
                 nlatsSH_        = 0;
                 nlatsLegDomain_ = nlatsNH_;
@@ -468,6 +502,7 @@ TransLocal::TransLocal(const Cache& cache, const Grid& grid, const Domain& domai
             double lonmin = wrapAngle(g.x(0, 0));
             if (nlonsMax < fft_threshold * nlonsMaxGlobal_) {
                 useFFT_ = false;
+                fft_backend_ = "OFF";
             }
             else {
                 // need to use FFT with cropped grid
@@ -542,7 +577,7 @@ TransLocal::TransLocal(const Cache& cache, const Grid& grid, const Domain& domai
                 Log::debug() << " - global domain with modified west: " << GlobalDomain(domain).west() << '\n';
             }
         }
-        Log::debug() << " - fft: " << std::boolalpha << useFFT_ << '\n';
+        Log::debug() << " - fft: " << fft_backend_ << '\n';
         Log::debug() << " - linalg_backend: ";
         if (using_eckit_default_backend(linalg_backend_)) {
             Log::debug() << "eckit_linalg default (currently \"" << detect_linalg_backend(linalg_backend_)
@@ -564,8 +599,8 @@ TransLocal::TransLocal(const Cache& cache, const Grid& grid, const Domain& domai
             legendre_sym_begin_[0]  = 0;
             legendre_asym_begin_[0] = 0;
             for (idx_t jm = 0; jm <= truncation_ + 1; jm++) {
-                size_sym += add_padding(num_n(truncation_ + 1, jm, /*symmetric*/ true) * nlatsLeg);
-                size_asym += add_padding(num_n(truncation_ + 1, jm, /*symmetric*/ false) * nlatsLeg);
+                size_sym  += add_padding(num_n(truncation_ + 1, jm, /*symmetric*/     true ) * nlatsLeg);
+                size_asym += add_padding(num_n(truncation_ + 1, jm, /*antisymmetric*/ false) * nlatsLeg);
                 legendre_sym_begin_[jm + 1]  = size_sym;
                 legendre_asym_begin_[jm + 1] = size_asym;
             }
@@ -615,17 +650,17 @@ TransLocal::TransLocal(const Cache& cache, const Grid& grid, const Domain& domai
 
         // precomputations for Fourier transformations:
         if (useFFT_) {
-#if ATLAS_HAVE_FFTW && !TRANSLOCAL_DGEMM2
-            {
-                ATLAS_TRACE("Fourier precomputations (FFTW)");
-                int num_complex = (nlonsMaxGlobal_ / 2) + 1;
-                fftw_->in       = fftw_alloc_complex(nlats * num_complex);
-                fftw_->out      = fftw_alloc_real(nlats * nlonsMaxGlobal_);
+            ATLAS_TRACE("Fourier precomputations ("+fft_->type()+")");
+            int num_complex = (nlonsMaxGlobal_ / 2) + 1;
+            int howmany = RegularGrid(gridGlobal_) ? nlats : 1;
+            alloc_aligned(fft_data_->in,  howmany * num_complex);
+            alloc_aligned(fft_data_->out, howmany * nlonsMaxGlobal_);
 
-                if (fft_cache_) {
-                    Log::debug() << "Import FFTW wisdom from cache" << std::endl;
-                    fftw_import_wisdom_from_string(static_cast<const char*>(fft_cache_));
-                }
+#if ATLAS_HAVE_FFTW
+            if (fft_cache_) {
+                Log::debug() << "Import FFTW wisdom from cache" << std::endl;
+                fftw_import_wisdom_from_string(static_cast<const char*>(fft_cache_));
+            }
                 //                std::string wisdomString( "" );
                 //                std::ifstream read( "wisdom.bin" );
                 //                if ( read.is_open() ) {
@@ -638,58 +673,52 @@ TransLocal::TransLocal(const Cache& cache, const Grid& grid, const Domain& domai
                 //                }
                 //                read.close();
                 //                if ( wisdomString.length() > 0 ) { fftw_import_wisdom_from_string( &wisdomString[0u] ); }
-                if (RegularGrid(gridGlobal_)) {
-                    fftw_->plans.resize(1);
-                    fftw_->plans[0] =
-                        fftw_plan_many_dft_c2r(1, &nlonsMaxGlobal_, nlats, fftw_->in, nullptr, 1, num_complex,
-                                               fftw_->out, nullptr, 1, nlonsMaxGlobal_, FFTW_ESTIMATE);
-                }
-                else {
-                    fftw_->plans.resize(nlatsLegDomain_);
-                    for (int j = 0; j < nlatsLegDomain_; j++) {
-                        int nlonsGlobalj = gs_global.nx(jlatMinLeg_ + j);
-                        //ASSERT( nlonsGlobalj > 0 && nlonsGlobalj <= nlonsMaxGlobal_ );
-                        fftw_->plans[j] = fftw_plan_dft_c2r_1d(nlonsGlobalj, fftw_->in, fftw_->out, FFTW_ESTIMATE);
-                    }
-                }
-                std::string file_path = TransParameters(config).write_fft();
-                if (file_path.size()) {
-                    Log::debug() << "Write FFTW wisdom to file " << file_path << std::endl;
-                    //bool success = fftw_export_wisdom_to_filename( "wisdom.bin" );
-                    //ASSERT( success );
-                    //std::ofstream write( file_path );
-                    //write << FFTW_Wisdom();
+#endif
 
-                    FILE* file_fftw = fopen(file_path.c_str(), "wb");
-                    fftw_export_wisdom_to_file(file_fftw);
-                    fclose(file_fftw);
-                }
-                //                std::string newWisdom( fftw_export_wisdom_to_string() );
-                //                if ( 1.1 * wisdomString.length() < newWisdom.length() ) {
-                //                    std::ofstream write( "wisdom.bin" );
-                //                    write << newWisdom;
-                //                    write.close();
-                //                }
+            if (RegularGrid(gridGlobal_)) {
+                fft_->plan_inverse_c2r_many(nlats, nlonsMaxGlobal_, fft_data_->in, fft_data_->out);
             }
-            // other FFT implementations should be added with #elif statements
-#else
-            useFFT_               = false;  // no FFT implemented => default to dgemm
+            else {
+                for (int j = 0; j < nlatsLegDomain_; j++) {
+                    int nlonsGlobalj = gs_global.nx(jlatMinLeg_ + j);
+                    fft_->plan_inverse_c2r(nlonsGlobalj, fft_data_->in, fft_data_->out);
+                }
+            }
+
+#if ATLAS_HAVE_FFTW
             std::string file_path = TransParameters(config).write_fft();
             if (file_path.size()) {
-                std::ofstream write(file_path);
-                write << "No cache available, as FFTW is not enabled" << std::endl;
-                write.close();
-            }
+                Log::debug() << "Write FFTW wisdom to file " << file_path << std::endl;
+                //bool success = fftw_export_wisdom_to_filename( "wisdom.bin" );
+                //ASSERT( success );
+                //std::ofstream write( file_path );
+                //write << FFTW_Wisdom();
 
+                FILE* file_fftw = fopen(file_path.c_str(), "wb");
+                fftw_export_wisdom_to_file(file_fftw);
+                fclose(file_fftw);
+            }
+            //                std::string newWisdom( fftw_export_wisdom_to_string() );
+            //                if ( 1.1 * wisdomString.length() < newWisdom.length() ) {
+            //                    std::ofstream write( "wisdom.bin" );
+            //                    write << newWisdom;
+            //                    write.close();
+            //                }
+#else
+            // std::string file_path = TransParameters(config).write_fft();
+            // if (file_path.size()) {
+            //     std::ofstream write(file_path);
+            //     write << "No cache available, as FFTW is not enabled" << std::endl;
+            //     write.close();
+            // }
 #endif
         }
-        if (!useFFT_) {
+        else { // not using FFT
             Log::warning()
                 << "WARNING: Spectral transform results may contain aliasing errors. This will be addressed soon."
                 << std::endl;
 
             alloc_aligned(fourier_, 2 * (truncation_ + 1) * nlonsMax, "Fourier coeffs");
-#if !TRANSLOCAL_DGEMM2
             {
                 ATLAS_TRACE("Fourier precomputations (NoFFT)");
                 int idx = 0;
@@ -706,22 +735,6 @@ TransLocal::TransLocal(const Cache& cache, const Grid& grid, const Domain& domai
                     }
                 }
             }
-#else
-            {
-                ATLAS_TRACE("precomp Fourier");
-                int idx = 0;
-                for (int jlon = 0; jlon < nlonsMax; jlon++) {
-                    double factor = 1.;
-                    for (int jm = 0; jm < truncation_ + 1; jm++) {
-                        if (jm > 0) {
-                            factor = 2.;
-                        }
-                        fourier_[idx++] = +std::cos(jm * lons[jlon]) * factor;  // real part
-                        fourier_[idx++] = -std::sin(jm * lons[jlon]) * factor;  // imaginary part
-                    }
-                }
-            }
-#endif
         }
     }
     else {
@@ -777,13 +790,8 @@ TransLocal::~TransLocal() {
             free_aligned(legendre_asym_, "asymmetric");
         }
         if (useFFT_) {
-#if ATLAS_HAVE_FFTW && !TRANSLOCAL_DGEMM2
-            for (idx_t j = 0, size = static_cast<idx_t>(fftw_->plans.size()); j < size; j++) {
-                fftw_destroy_plan(fftw_->plans[j]);
-            }
-            fftw_free(fftw_->in);
-            fftw_free(fftw_->out);
-#endif
+            free_aligned(fft_data_->in);
+            free_aligned(fft_data_->out);
         }
         else {
             free_aligned(fourier_, "Fourier coeffs.");
@@ -1094,45 +1102,41 @@ void TransLocal::invtrans_fourier_regular(const int nlats, const int nlons, cons
                                           double gp_fields[], const eckit::Configuration&) const {
     // Fourier transformation:
     if (useFFT_) {
-#if ATLAS_HAVE_FFTW && !TRANSLOCAL_DGEMM2
+        int num_complex = (nlonsMaxGlobal_ / 2) + 1;
         {
-            int num_complex = (nlonsMaxGlobal_ / 2) + 1;
-            {
-                ATLAS_TRACE("Inverse Fourier Transform (FFTW, RegularGrid)");
-                for (int jfld = 0; jfld < nb_fields; jfld++) {
-                    int idx = 0;
-                    for (int jlat = 0; jlat < nlats; jlat++) {
-                        fftw_->in[idx++][0] = scl_fourier[posMethod(jfld, 0, jlat, 0, nb_fields, nlats)];
-                        for (int jm = 1; jm < num_complex; jm++, idx++) {
-                            for (int imag = 0; imag < 2; imag++) {
-                                if (jm <= truncation_) {
-                                    fftw_->in[idx][imag] =
-                                        scl_fourier[posMethod(jfld, imag, jlat, jm, nb_fields, nlats)];
-                                }
-                                else {
-                                    fftw_->in[idx][imag] = 0.;
-                                }
+            ATLAS_TRACE("Inverse Fourier Transform ("+fft_->type()+", RegularGrid)");
+            for (int jfld = 0; jfld < nb_fields; jfld++) {
+                int idx = 0;
+                for (int jlat = 0; jlat < nlats; jlat++) {
+                    fft_data_->in[idx++] = std::complex<double>{scl_fourier[posMethod(jfld, 0, jlat, 0, nb_fields, nlats)], 0.};
+                    for (int jm = 1; jm < num_complex; jm++, idx++) {
+                        auto& complex_in = reinterpret_cast<std::array<double,2>&>(fft_data_->in[idx]);
+                        for (int imag = 0; imag < 2; imag++) {
+                            if (jm <= truncation_) {
+                                complex_in[imag] =
+                                    scl_fourier[posMethod(jfld, imag, jlat, jm, nb_fields, nlats)];
+                            }
+                            else {
+                                complex_in[imag] = 0.;
                             }
                         }
                     }
-                    fftw_execute_dft_c2r(fftw_->plans[0], fftw_->in, fftw_->out);
-                    for (int jlat = 0; jlat < nlats; jlat++) {
-                        for (int jlon = 0; jlon < nlons; jlon++) {
-                            int j = jlon + jlonMin_[0];
-                            if (j >= nlonsMaxGlobal_) {
-                                j -= nlonsMaxGlobal_;
-                            }
-                            gp_fields[jlon + nlons * (jlat + nlats * jfld)] = fftw_->out[j + nlonsMaxGlobal_ * jlat];
+                }
+                fft_->inverse_c2r_many(nlats, nlonsMaxGlobal_, fft_data_->in, fft_data_->out);
+                for (int jlat = 0; jlat < nlats; jlat++) {
+                    for (int jlon = 0; jlon < nlons; jlon++) {
+                        int j = jlon + jlonMin_[0];
+                        if (j >= nlonsMaxGlobal_) {
+                            j -= nlonsMaxGlobal_;
                         }
+                        gp_fields[jlon + nlons * (jlat + nlats * jfld)] = fft_data_->out[j + nlonsMaxGlobal_ * jlat];
                     }
                 }
             }
         }
-#endif
     }
     else {
         linalg::dense::Backend linalg_backend{linalg_backend_};
-#if !TRANSLOCAL_DGEMM2
         // dgemm-method 1
         {
             ATLAS_TRACE("Inverse Fourier Transform (NoFFT,matrix_multiply=" + detect_linalg_backend(linalg_backend_) +
@@ -1143,36 +1147,6 @@ void TransLocal::invtrans_fourier_regular(const int nlats, const int nlons, cons
 
             linalg::matrix_multiply(A, B, C, linalg_backend);
         }
-#else
-        // dgemm-method 2
-        // should be faster for small domains or large truncation
-        // but have not found any significant speedup so far
-        double* gp;
-        alloc_aligned(gp, nb_fields * grid_.size());
-        {
-            ATLAS_TRACE("Fourier dgemm method 2");
-            linalg::Matrix A(scl_fourier, nb_fields * nlats, (truncation_ + 1) * 2);
-            linalg::Matrix B(fourier_, (truncation_ + 1) * 2, nlons);
-            linalg::Matrix C(gp, nb_fields * nlats, nlons);
-            linalg::matrix_multiply(A, B, C, linalg_backend);
-        }
-
-        // Transposition in grid point space:
-        {
-            ATLAS_TRACE("transposition in gp-space");
-            int idx = 0;
-            for (int jlon = 0; jlon < nlons; jlon++) {
-                for (int jlat = 0; jlat < nlats; jlat++) {
-                    for (int jfld = 0; jfld < nb_fields; jfld++) {
-                        int pos_tp = jlon + nlons * (jlat + nlats * (jfld));
-                        //int pos  = jfld + nb_fields * ( jlat + nlats * ( jlon ) );
-                        gp_fields[pos_tp] = gp[idx++];  // = gp[pos]
-                    }
-                }
-            }
-        }
-        free_aligned(gp);
-#endif
     }
 }
 
@@ -1182,57 +1156,41 @@ void TransLocal::invtrans_fourier_reduced(const int nlats, const StructuredGrid&
                                           double scl_fourier[], double gp_fields[], const eckit::Configuration&) const {
     // Fourier transformation:
     if (useFFT_) {
-#if ATLAS_HAVE_FFTW && !TRANSLOCAL_DGEMM2
-        {
-            {
-                ATLAS_TRACE("Inverse Fourier Transform (FFTW, ReducedGrid)");
-                int jgp = 0;
-                for (int jfld = 0; jfld < nb_fields; jfld++) {
-                    for (int jlat = 0; jlat < nlats; jlat++) {
-                        int idx = 0;
-                        //Log::info() << jlat << "in:" << std::endl;
-                        int num_complex     = (nlonsGlobal_[jlat] / 2) + 1;
-                        fftw_->in[idx++][0] = scl_fourier[posMethod(jfld, 0, jlat, 0, nb_fields, nlats)];
-                        //Log::info() << fftw_->in[0][0] << " ";
-                        for (int jm = 1; jm < num_complex; jm++, idx++) {
-                            for (int imag = 0; imag < 2; imag++) {
-                                if (jm <= truncation_) {
-                                    fftw_->in[idx][imag] =
-                                        scl_fourier[posMethod(jfld, imag, jlat, jm, nb_fields, nlats)];
-                                }
-                                else {
-                                    fftw_->in[idx][imag] = 0.;
-                                }
-                                //Log::info() << fftw_->in[idx][imag] << " ";
-                            }
+        ATLAS_TRACE("Inverse Fourier Transform ("+fft_->type()+", ReducedGrid)");
+        int jgp = 0;
+        for (int jfld = 0; jfld < nb_fields; jfld++) {
+            for (int jlat = 0; jlat < nlats; jlat++) {
+                int idx = 0;
+                int num_complex     = (nlonsGlobal_[jlat] / 2) + 1;
+                fft_data_->in[idx++] = std::complex<double>{scl_fourier[posMethod(jfld, 0, jlat, 0, nb_fields, nlats)], 0.};
+
+                for (int jm = 1; jm < num_complex; jm++, idx++) {
+                    auto& complex_in = reinterpret_cast<std::array<double,2>&>(fft_data_->in[idx]);
+                    for (int imag = 0; imag < 2; imag++) {
+                        if (jm <= truncation_) {
+                            complex_in[imag] =
+                                scl_fourier[posMethod(jfld, imag, jlat, jm, nb_fields, nlats)];
                         }
-                        //Log::info() << std::endl;
-                        //Log::info() << jlat << "out:" << std::endl;
-                        int jplan = nlatsLegDomain_ - nlatsNH_ + jlat;
-                        if (jplan >= nlatsLegDomain_) {
-                            jplan = nlats - 1 + nlatsLegDomain_ - nlatsSH_ - jlat;
-                        };
-                        //ASSERT( jplan < nlatsLeg_ && jplan >= 0 );
-                        fftw_execute_dft_c2r(fftw_->plans[jplan], fftw_->in, fftw_->out);
-                        for (int jlon = 0; jlon < g.nx(jlat); jlon++) {
-                            int j = jlon + jlonMin_[jlat];
-                            if (j >= nlonsGlobal_[jlat]) {
-                                j -= nlonsGlobal_[jlat];
-                            }
-                            //Log::info() << fftw_->out[j] << " ";
-                            ATLAS_ASSERT(j < nlonsMaxGlobal_);
-                            gp_fields[jgp++] = fftw_->out[j];
+                        else {
+                            complex_in[imag] = 0.;
                         }
-                        //Log::info() << std::endl;
                     }
+                }
+                fft_->inverse_c2r(nlonsGlobal_[jlat], fft_data_->in, fft_data_->out);
+                for (int jlon = 0; jlon < g.nx(jlat); jlon++) {
+                    int j = jlon + jlonMin_[jlat];
+                    if (j >= nlonsGlobal_[jlat]) {
+                        j -= nlonsGlobal_[jlat];
+                    }
+                    ATLAS_ASSERT(j < nlonsMaxGlobal_);
+                    gp_fields[jgp++] = fft_data_->out[j];
                 }
             }
         }
-#endif
     }
     else {
         throw_NotImplemented(
-            "Using dgemm in Fourier transform for reduced grids is extremely slow. Please install and use FFTW!",
+            "Using dgemm in Fourier transform for reduced grids is extremely slow.",
             Here());
     }
 }
