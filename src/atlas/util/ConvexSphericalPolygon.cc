@@ -272,13 +272,14 @@ double ConvexSphericalPolygon::SubTriangles::area() const {
     return area;
 }
 
-void ConvexSphericalPolygon::clip(const GreatCircleSegment& great_circle, std::ostream* out, double pointsSameEPS) {
-    ATLAS_ASSERT(valid_);
-    ATLAS_ASSERT(not approx_eq(great_circle.first(), great_circle.second()));
-    std::array<PointXYZ,ConvexSphericalPolygon::MAX_SIZE> clipped_sph_coords;
+
+template <class ClippedCoords>
+void ConvexSphericalPolygon::clip(const GreatCircleSegment& great_circle, ClippedCoords& clipped_sph_coords, const double& pointsSameEPS, std::ostream* out) {
     size_t clipped_sph_coords_size{0};
 #if DEBUG_OUTPUT
     int add_point_num = 0;
+    ATLAS_ASSERT(valid_);
+    ATLAS_ASSERT(not approx_eq(great_circle.first(), great_circle.second()));
 #endif
     bool first_in = great_circle.inLeftHemisphere(sph_coords_[0], -1.5 * EPS, out);
     for (int i = 0; i < size_; i++) {
@@ -327,7 +328,7 @@ void ConvexSphericalPolygon::clip(const GreatCircleSegment& great_circle, std::o
                 const GreatCircleSegment segment_n(sph_coords_[in], sph_coords_[inn]);
                 if (segment.inLeftHemisphere(ip, -1.5 * EPS, out) and
                     segment_n.inLeftHemisphere(ip, -1.5 * EPS, out) and
-                    (PointXYZ::distance(ip, sph_coords_[in]) > pointsSameEPS)) {
+                    (PointXYZ::distance2(ip, sph_coords_[in]) > pointsSameEPS * pointsSameEPS)) {
                 clipped_sph_coords[clipped_sph_coords_size++] = ip;
 #if DEBUG_OUTPUT
                     if (out) {
@@ -343,7 +344,7 @@ void ConvexSphericalPolygon::clip(const GreatCircleSegment& great_circle, std::o
 #endif
             }
             else {
-                if (PointXYZ::distance(ip, sph_coords_[i]) > pointsSameEPS) {
+                if (PointXYZ::distance2(ip, sph_coords_[i]) > pointsSameEPS * pointsSameEPS) {
                     clipped_sph_coords[clipped_sph_coords_size++] = ip;
 #if DEBUG_OUTPUT
                     if (out) {
@@ -384,8 +385,6 @@ ConvexSphericalPolygon ConvexSphericalPolygon::intersect(const ConvexSphericalPo
 
     ConvexSphericalPolygon intersection;
     const ConvexSphericalPolygon* intersector;
-    std::string intor_id = "P1";
-    std::string inted_id = "P2";
 
     bool this_intersector = (area() > plg.area());
     if (approx_eq(area(), plg.area())) {
@@ -399,13 +398,17 @@ ConvexSphericalPolygon ConvexSphericalPolygon::intersect(const ConvexSphericalPo
         intersection = plg;
     }
     else {
-        intor_id = "P2";
-        inted_id = "P1";
         intersector = &plg;
         intersection = *this;
     }
 
 #if DEBUG_OUTPUT
+    std::string intor_id = "P1";
+    std::string inted_id = "P2";
+    if (! this_intersector) {
+        intor_id = "P2";
+        inted_id = "P1";
+    }
     if (out) {
         *out << inted_id << " : ";
         print(*out);
@@ -415,6 +418,7 @@ ConvexSphericalPolygon ConvexSphericalPolygon::intersect(const ConvexSphericalPo
     }
 #endif
     if (intersection.valid_) {
+        std::array<PointXYZ, ConvexSphericalPolygon::MAX_SIZE> clipped_sph_coords;
         for (size_t i = 0; i < intersector->size_; i++) {
             const PointXYZ& s1 = intersector->sph_coords_[i];
             const PointXYZ& s2 = intersector->sph_coords_[(i != intersector->size_ - 1) ? i + 1 : 0];
@@ -424,7 +428,7 @@ ConvexSphericalPolygon ConvexSphericalPolygon::intersect(const ConvexSphericalPo
                     << (i+1) % intersector->size_ << "]" << std::endl;
             }
 #endif
-            intersection.clip(GreatCircleSegment(s1, s2), out, pointsSameEPS);
+            intersection.clip(GreatCircleSegment(s1, s2), clipped_sph_coords, pointsSameEPS, out);
             if (not intersection.valid_) {
                 restore_fpe();
                 return intersection;
