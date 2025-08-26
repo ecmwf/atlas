@@ -152,7 +152,8 @@ private:
 
     SubTriangles triangulate() const;
 
-    void clip(const GreatCircleSegment&, std::ostream* f = nullptr, double pointsSameEPS = std::numeric_limits<double>::epsilon());
+    template <class ClippedCoords>
+    void clip(const GreatCircleSegment&, ClippedCoords&, const double& pointsSameEPS = std::numeric_limits<double>::epsilon(), std::ostream* out = nullptr);
 
     // Set valid_ to true when polygon is convex
     void validate();
