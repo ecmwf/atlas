@@ -21,7 +21,7 @@
 #include "atlas/util/NormaliseLongitude.h"
 #include "atlas/library/FloatingPointExceptions.h"
 
-// #define DEBUG_OUTPUT 1
+#define DEBUG_OUTPUT 0
 
 namespace atlas {
 namespace util {
@@ -33,11 +33,15 @@ namespace {
 constexpr double EPS  = std::numeric_limits<double>::epsilon();
 constexpr double EPS2 = EPS * EPS;
 
-double distance2(const PointXYZ& p1, const PointXYZ& p2) {
+inline double distance2(const PointXYZ& p1, const PointXYZ& p2) {
     double dx = p2[0] - p1[0];
     double dy = p2[1] - p1[1];
     double dz = p2[2] - p1[2];
     return dx * dx + dy * dy + dz * dz;
+}
+
+inline double dot(const PointXYZ& p1, const PointXYZ& p2) {
+    return p1[0] * p2[0] + p1[1] * p2[1] + p1[2] * p2[2];
 }
 
 bool approx_eq(const double& v1, const double& v2) {
@@ -157,7 +161,9 @@ void ConvexSphericalPolygon::compute_centroid_and_area() const {
     computed_area_ = true;
 
     // Compute centroid based on triangles rather than on vertices of polygon
-    centroid_ = PointXYZ{0., 0., 0.};
+    centroid_[0] = 0.;
+    centroid_[1] = 0.;
+    centroid_[2] = 0.;
     if (area_ > 0.) {
         for (auto& triangle : triangles) {
             for (size_t i = 0; i < 3; ++i) {
@@ -183,7 +189,7 @@ void ConvexSphericalPolygon::validate() {
             int nni               = next(ni);
             const PointXYZ& P     = sph_coords_[i];
             const PointXYZ& nextP = sph_coords_[ni];
-            if( std::abs(PointXYZ::dot(P, P) - 1.) >= 10 * EPS ) {
+            if( std::abs(dot(P, P) - 1.) >= 10 * EPS ) {
                 valid_ = false;
                 break;
             }
@@ -252,8 +258,8 @@ ConvexSphericalPolygon::SubTriangles ConvexSphericalPolygon::triangulate() const
 //            triangles[itri].area     = 0.5 * PointXYZ::norm(PointXYZ::cross(b - a, c - b));
 //        }
 //        else {
-            auto abc            = PointXYZ::dot(a, b) + PointXYZ::dot(b, c) + PointXYZ::dot(c, a);
-            auto a_bc           = PointXYZ::dot(a, PointXYZ::cross(b, c));
+            auto abc            = dot(a, b) + dot(b, c) + dot(c, a);
+            auto a_bc           = dot(a, PointXYZ::cross(b, c));
             triangles[itri].area     = 2. * std::atan(std::abs(a_bc) / (1. + abc));
 //        }
         ++itri;
@@ -328,7 +334,7 @@ void ConvexSphericalPolygon::clip(const GreatCircleSegment& great_circle, Clippe
                 const GreatCircleSegment segment_n(sph_coords_[in], sph_coords_[inn]);
                 if (segment.inLeftHemisphere(ip, -1.5 * EPS, out) and
                     segment_n.inLeftHemisphere(ip, -1.5 * EPS, out) and
-                    (PointXYZ::distance2(ip, sph_coords_[in]) > pointsSameEPS * pointsSameEPS)) {
+                    (distance2(ip, sph_coords_[in]) > pointsSameEPS * pointsSameEPS)) {
                 clipped_sph_coords[clipped_sph_coords_size++] = ip;
 #if DEBUG_OUTPUT
                     if (out) {
@@ -344,7 +350,7 @@ void ConvexSphericalPolygon::clip(const GreatCircleSegment& great_circle, Clippe
 #endif
             }
             else {
-                if (PointXYZ::distance2(ip, sph_coords_[i]) > pointsSameEPS * pointsSameEPS) {
+                if (distance2(ip, sph_coords_[i]) > pointsSameEPS * pointsSameEPS) {
                     clipped_sph_coords[clipped_sph_coords_size++] = ip;
 #if DEBUG_OUTPUT
                     if (out) {
