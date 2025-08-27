@@ -212,8 +212,6 @@ ConservativeSphericalPolygonInterpolation::ConservativeSphericalPolygonInterpola
     config.get("matrix_free", matrix_free_ = false);
     config.get("src_cell_data", src_cell_data_ = true);
     config.get("tgt_cell_data", tgt_cell_data_ = true);
-
-
     config.get("statistics.intersection", statistics_intersection_ = false);
     config.get("statistics.conservation", statistics_conservation_ = false);
 
@@ -224,14 +222,14 @@ ConservativeSphericalPolygonInterpolation::ConservativeSphericalPolygonInterpola
     ATLAS_ASSERT(sharable_data_.use_count() == 2);
 }
 
-int ConservativeSphericalPolygonInterpolation::next_index(int current_index, int size, int offset) const {
-    ATLAS_ASSERT(current_index >= 0 && current_index < size);
-    ATLAS_ASSERT(offset >= 0 && offset <= size);
+inline int ConservativeSphericalPolygonInterpolation::next_index(int current_index, int size, int offset) const {
+    // ATLAS_ASSERT(current_index >= 0 && current_index < size);
+    // ATLAS_ASSERT(offset >= 0 && offset <= size);
     return (current_index < size - offset) ? current_index + offset : current_index + offset - size;
 }
-int ConservativeSphericalPolygonInterpolation::prev_index(int current_index, int size, int offset) const {
-    ATLAS_ASSERT(current_index >= 0 && current_index < size);
-    ATLAS_ASSERT(offset >= 0 && offset <= size);
+inline int ConservativeSphericalPolygonInterpolation::prev_index(int current_index, int size, int offset) const {
+    // ATLAS_ASSERT(current_index >= 0 && current_index < size);
+    // ATLAS_ASSERT(offset >= 0 && offset <= size);
     return (current_index >= offset) ? current_index - offset : current_index - offset + size;
 }
 
@@ -1048,9 +1046,9 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                 for (idx_t iscell = 0; iscell < src_cells.size(); ++iscell) {
                     auto scell        = src_cells[iscell].payload();
                     const auto& s_csp = std::get<0>(src_csp[scell]);
-                    if (s_csp.area() == 0.) {
-                        continue;
-                    }
+                    // if (s_csp.area() == 0.) {
+                    //     continue;
+                    // }
                     stopwatch_polygon_intersections.start();
                     ConvexSphericalPolygon csp_i = s_csp.intersect(t_csp, nullptr, pointsSameEPS);
                     stopwatch_polygon_intersections.stop();
