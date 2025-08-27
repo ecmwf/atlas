@@ -9,13 +9,11 @@
  */
 
 #include <fstream>
+#include <filesystem>
 #include <iomanip>
 #include <vector>
-#include <sys/stat.h> // for mkdir
 
 #include "ConservativeSphericalPolygonInterpolation.h"
-
-#include "eckit/log/ProgressTimer.h"
 
 #include "atlas/grid.h"
 #include "atlas/interpolation/Interpolation.h"
@@ -32,6 +30,7 @@
 #include "atlas/util/Topology.h"
 
 #include "eckit/log/Bytes.h"
+#include "eckit/log/ProgressTimer.h"
 
 #define PRINT_BAD_POLYGONS 0
 
@@ -1127,12 +1126,11 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
 
     const std::string polygon_intersection_folder = "polygon_intersection/";
     if (validate_ && mpi::rank() == 0) {
-        if (mkdir(polygon_intersection_folder.c_str(), 0777) != 0) {
-            Log::info() << "WARNING Polygon intersection relevant information is in the folder \e[1mpolygon_intersection\e[0m." << std::endl;
+        if (std::filesystem::exists(polygon_intersection_folder)) {
+            std::filesystem::remove_all(polygon_intersection_folder);
         }
-        else {
-            Log::info() << "WARNING Could not create the folder \e[1mpolygon_intersection\e[0m." << std::endl;
-        }
+        std::filesystem::create_directory(polygon_intersection_folder);
+        Log::info() << "WARNING Polygon intersection relevant information is in the folder \e[1mpolygon_intersection\e[0m." << std::endl;
     }
 
     if (validate_) {
