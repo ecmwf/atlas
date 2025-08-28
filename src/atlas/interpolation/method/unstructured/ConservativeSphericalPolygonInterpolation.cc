@@ -20,6 +20,7 @@
 #include "atlas/grid.h"
 #include "atlas/interpolation/Interpolation.h"
 #include "atlas/interpolation/method/MethodFactory.h"
+#include "atlas/library/FloatingPointExceptions.h"
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/mesh/actions/BuildNode2CellConnectivity.h"
 #include "atlas/meshgenerator.h"
@@ -1048,14 +1049,29 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
     // NOTE: polygon vertex points at distance < pointsSameEPS will be replaced with one point 
     constexpr double pointsSameEPS = 5.e6 * std::numeric_limits<double>::epsilon();
 
+    bool fpe_for_polygon = ConvexSphericalPolygon::fpe();
+    ConvexSphericalPolygon::fpe(false);
+    bool fpe_disabled = fpe_for_polygon ? atlas::library::disable_floating_point_exception(FE_INVALID) : false;
+    auto restore_fpe = [fpe_disabled, fpe_for_polygon] {
+        if (fpe_disabled) {
+            atlas::library::enable_floating_point_exception(FE_INVALID);
+        }
+        ConvexSphericalPolygon::fpe(fpe_for_polygon);
+    };
+
     eckit::Channel blackhole;
     Log::debug() << "Find intersections for " << src_csp.size() << " source polygons" << std::endl;
-    eckit::ProgressTimer progress("Intersecting polygons ", src_csp.size(), " cell", double(10),
+
+    {
+
+    eckit::ProgressTimer progress("Intersecting polygons ", 100, " percent", double(10),
                                   src_csp.size() > 50 ? Log::info() : blackhole);
-    for (idx_t scell = 0; scell < src_csp.size(); ++scell, ++progress) {
+    float last_progress_percent = 0.00;
+    for (idx_t scell = 0; scell < src_csp.size(); ++scell) {
         stopwatch_src_already_in.start();
         bool already_in = src_already_in((std::get<0>(src_csp[scell]).centroid()));
         stopwatch_src_already_in.stop();
+
         if (not already_in) {
             const auto& s_csp       = std::get<0>(src_csp[scell]);
             const double s_csp_area = s_csp.area();
@@ -1132,7 +1148,16 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                 num_pol[SRC_TGT_INTERSECT] += src_iparam_[scell].weights.size();
             }
         } // already in
+        if ( double(scell) / double(src_csp.size()) > last_progress_percent ) {
+            last_progress_percent += 0.01;
+            ++progress;
+        }
     }
+
+    }
+
+    restore_fpe();
+
     timings.polygon_intersections  = stopwatch_polygon_intersections.elapsed();
     timings.target_kdtree_search   = stopwatch_kdtree_search.elapsed();
     timings.source_polygons_filter = stopwatch_src_already_in.elapsed();

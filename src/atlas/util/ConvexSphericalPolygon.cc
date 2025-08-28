@@ -71,6 +71,8 @@ PointLonLat xyz2lonlat(const PointXYZ& xyz) {
 
 //------------------------------------------------------------------------------------------------------
 
+bool ConvexSphericalPolygon::fpe_ = true;
+
 ConvexSphericalPolygon::ConvexSphericalPolygon(const PointLonLat points[], size_t size): size_{size} {
     ATLAS_ASSERT(size_ > 2, "Polygon must have at least 3 points");
     ATLAS_ASSERT(size_ < MAX_SIZE, "Number of polygon points exceeds compile time MAX_SIZE");
@@ -351,7 +353,7 @@ void ConvexSphericalPolygon::clip(const GreatCircleSegment& great_circle, Clippe
 // @param[out] intersecting polygon
 ConvexSphericalPolygon ConvexSphericalPolygon::intersect(const ConvexSphericalPolygon& plg, std::ostream* out, double pointsSameEPS) const {
 
-    bool fpe_disabled = atlas::library::disable_floating_point_exception(FE_INVALID);
+    bool fpe_disabled = fpe_ ? atlas::library::disable_floating_point_exception(FE_INVALID) : false;
     auto restore_fpe = [fpe_disabled] {
         if (fpe_disabled) {
             atlas::library::enable_floating_point_exception(FE_INVALID);
