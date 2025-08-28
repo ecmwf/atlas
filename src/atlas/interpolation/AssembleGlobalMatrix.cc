@@ -139,7 +139,13 @@ linalg::SparseMatrixStorage assemble_global_matrix(const Interpolation& interpol
                 max_gidx = std::max(max_gidx, global_index(i));
             }
         }
+#if ATLAS_ECKIT_VERSION_AT_LEAST(1, 22, 2)
+        // eckit::mpi::Comm::reduceInPlace() was only added in eckit 1.22.2
         mpi_comm.reduceInPlace(max_gidx, eckit::mpi::max(), mpi_root);
+#else
+        mpi_comm.allReduceInPlace(max_gidx, eckit::mpi::max());
+        (void)mpi_root; // to silence unused lambda capture warning
+#endif
         return max_gidx;
     };
 
