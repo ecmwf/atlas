@@ -67,39 +67,6 @@ PointLonLat xyz2lonlat(const PointXYZ& xyz) {
 }
 #endif
 
-#if 0
-// NOTE: StackVector is not used
-template <typename T, size_t MAX_SIZE>
-struct StackVector {
-private:
-    using Wrapped = std::array<T,MAX_SIZE>;
-
-public:
-    using reference = typename Wrapped::reference;
-    StackVector()   = default;
-    StackVector(size_t size): size_(size) {}
-#if ATLAS_VECTOR_BOUNDS_CHECKING
-    reference operator[](size_t i) {
-        if (i >= size_) {
-            throw_OutOfRange(i, size_);
-        }
-        return wrapped_[i];
-    }
-#else
-    reference operator[](size_t i) { return wrapped_[i]; }
-#endif
-    void push_back(const T& value) {
-        wrapped_[size_++] = value;
-        ATLAS_ASSERT(size_ < MAX_SIZE);
-    }
-    size_t size() const { return size_; }
-
-private:
-    size_t size_{0};
-    Wrapped wrapped_;
-};
-#endif
-
 }  // namespace
 
 //------------------------------------------------------------------------------------------------------
