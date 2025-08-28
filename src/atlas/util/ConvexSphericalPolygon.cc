@@ -285,7 +285,7 @@ void ConvexSphericalPolygon::clip(const GreatCircleSegment& great_circle, Clippe
 #if DEBUG_OUTPUT
     int add_point_num = 0;
 #endif
-#ifndef NDEBUG
+#if ATLAS_BUILD_TYPE_DEBUG
     ATLAS_ASSERT(valid_);
     ATLAS_ASSERT(not approx_eq(great_circle.first(), great_circle.second()));
 #endif
