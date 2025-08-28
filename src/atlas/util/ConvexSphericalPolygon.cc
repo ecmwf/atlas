@@ -59,11 +59,13 @@ void xyz2lonlat(const PointXYZ& xyz, PointLonLat& lonlat) {
     eckit::geometry::Sphere::convertCartesianToSpherical(1., xyz, lonlat);
 }
 
+#if DEBUG_OUTPUT
 PointLonLat xyz2lonlat(const PointXYZ& xyz) {
     PointLonLat lonlat;
     eckit::geometry::Sphere::convertCartesianToSpherical(1., xyz, lonlat);
     return lonlat;
 }
+#endif
 
 #if 0
 // NOTE: StackVector is not used
