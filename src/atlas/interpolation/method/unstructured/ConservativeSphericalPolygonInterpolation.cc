@@ -1043,7 +1043,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
         eckit::ProgressTimer progress("Intersecting polygons ", 100, " percent", double(10),
                                     tgt_csp.size() > 50 ? Log::info() : blackhole);
         float last_progress_percent = 0.00;
-        for (idx_t tcell = 0; tcell < tgt_csp.size(); ++tcell, ++progress) {
+        for (idx_t tcell = 0; tcell < tgt_csp.size(); ++tcell) {
             if (std::get<1>(tgt_csp[tcell]) <= tgt_halo_intersection_depth) {
                 intersection_src_cell_idx.resize(0);
                 intersection_weights.resize(0);
@@ -1056,9 +1056,6 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                 for (idx_t iscell = 0; iscell < src_cells.size(); ++iscell) {
                     auto scell        = src_cells[iscell].payload();
                     const auto& s_csp = std::get<0>(src_csp[scell]);
-                    // if (s_csp.area() == 0.) {
-                    //     continue;
-                    // }
                     stopwatch_polygon_intersections.start();
                     ConvexSphericalPolygon csp_i = s_csp.intersect(t_csp, nullptr, pointsSameEPS);
                     stopwatch_polygon_intersections.stop();
