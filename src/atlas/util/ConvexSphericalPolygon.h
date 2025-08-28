@@ -18,7 +18,7 @@
 #include "atlas/util/Polygon.h"
 #include "atlas/runtime/Log.h"
 
-#define DEBUG_OUTPUT 1
+#define DEBUG_OUTPUT 0
 
 namespace atlas {
 namespace util {

@@ -21,8 +21,6 @@
 #include "atlas/util/NormaliseLongitude.h"
 #include "atlas/library/FloatingPointExceptions.h"
 
-#define DEBUG_OUTPUT 0
-
 namespace atlas {
 namespace util {
 
@@ -44,11 +42,11 @@ inline double dot(const PointXYZ& p1, const PointXYZ& p2) {
     return p1[0] * p2[0] + p1[1] * p2[1] + p1[2] * p2[2];
 }
 
-bool approx_eq(const double& v1, const double& v2) {
+inline bool approx_eq(const double& v1, const double& v2) {
     return std::abs(v1 - v2) <= EPS;
 }
 
-bool approx_eq(const PointXYZ& v1, const PointXYZ& v2) {
+inline bool approx_eq(const PointXYZ& v1, const PointXYZ& v2) {
     //return approx_eq( v1[0], v2[0], t ) && approx_eq( v1[1], v2[1], t ) && approx_eq( v1[2], v2[2], t );
     return distance2(v1, v2) <= EPS2;
 }
@@ -284,6 +282,8 @@ void ConvexSphericalPolygon::clip(const GreatCircleSegment& great_circle, Clippe
     size_t clipped_sph_coords_size{0};
 #if DEBUG_OUTPUT
     int add_point_num = 0;
+#endif
+#ifndef NDEBUG
     ATLAS_ASSERT(valid_);
     ATLAS_ASSERT(not approx_eq(great_circle.first(), great_circle.second()));
 #endif
