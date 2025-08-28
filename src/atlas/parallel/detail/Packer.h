@@ -16,6 +16,7 @@
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/SVector.h"
+#include "atlas/runtime/Exception.h"
 
 namespace atlas::parallel::detail {
 

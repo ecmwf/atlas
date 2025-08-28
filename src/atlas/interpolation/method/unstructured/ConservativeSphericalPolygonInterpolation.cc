@@ -18,6 +18,7 @@
 #include "atlas/grid.h"
 #include "atlas/interpolation/Interpolation.h"
 #include "atlas/interpolation/method/MethodFactory.h"
+#include "atlas/library/FloatingPointExceptions.h"
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/mesh/actions/BuildNode2CellConnectivity.h"
 #include "atlas/meshgenerator.h"
@@ -143,7 +144,7 @@ template <typename T>
 size_t memory_of(const std::vector<T>& vector) {
     return sizeof(T) * vector.capacity();
 }
- 
+
 template <typename T>
 size_t memory_of(const std::vector<std::vector<T>>& vector_of_vector) {
     size_t mem = 0;
@@ -1027,12 +1028,21 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
     std::vector<double> intersection_weights;
     std::vector<PointXYZ> intersection_src_centroids;
 
-    eckit::Channel blackhole;
-    ATLAS_TRACE_SCOPE("intersecting polygons") {
-        Log::debug() << "Find intersections for " << tgt_csp.size() << " target polygons" << std::endl;
-        eckit::ProgressTimer progress("Intersecting polygons ", tgt_csp.size(), " cell", double(10),
-                                    tgt_csp.size() > 50 ? Log::info() : blackhole);
+    bool fpe_for_polygon = ConvexSphericalPolygon::fpe();
+    ConvexSphericalPolygon::fpe(false);
+    bool fpe_disabled = fpe_for_polygon ? atlas::library::disable_floating_point_exception(FE_INVALID) : false;
+    auto restore_fpe = [fpe_disabled, fpe_for_polygon] {
+        if (fpe_disabled) {
+            atlas::library::enable_floating_point_exception(FE_INVALID);
+        }
+        ConvexSphericalPolygon::fpe(fpe_for_polygon);
+    };
 
+    ATLAS_TRACE_SCOPE("intersecting polygons") {
+        eckit::Channel blackhole;
+        eckit::ProgressTimer progress("Intersecting polygons ", 100, " percent", double(10),
+                                    tgt_csp.size() > 50 ? Log::info() : blackhole);
+        float last_progress_percent = 0.00;
         for (idx_t tcell = 0; tcell < tgt_csp.size(); ++tcell, ++progress) {
             if (std::get<1>(tgt_csp[tcell]) <= tgt_halo_intersection_depth) {
                 intersection_src_cell_idx.resize(0);
@@ -1109,8 +1119,15 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                     tgt_iparam_[tcell].centroids = intersection_src_centroids;
                 }
             }
+            if ( double(tcell) / double(tgt_csp.size()) > last_progress_percent ) {
+                last_progress_percent += 0.01;
+                ++progress;
+            }
         }
     }
+
+    restore_fpe();
+
     timings.polygon_intersections  = stopwatch_polygon_intersections.elapsed();
     timings.source_kdtree_search   = stopwatch_kdtree_search.elapsed();
     timings.source_polygons_filter = 0.; //stopwatch_src_already_in.elapsed();

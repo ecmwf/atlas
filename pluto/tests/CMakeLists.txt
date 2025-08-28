@@ -12,6 +12,7 @@ add_subdirectory(sandbox)
 
 ecbuild_add_test( TARGET pluto_test_memory_pool SOURCES pluto_test_memory_pool.cc LIBS pluto )
 ecbuild_add_test( TARGET pluto_test_alignment   SOURCES pluto_test_alignment.cc   LIBS pluto )
+ecbuild_add_test( TARGET pluto_test_mdspan      SOURCES pluto_test_mdspan.cc      LIBS pluto )
 
 if( HAVE_FORTRAN )
   ecbuild_add_test( TARGET pluto_test_fortran_memory_resource        SOURCES fortran/test_fortran_memory_resource.F90       LIBS pluto_f hic LINKER_LANGUAGE Fortran)

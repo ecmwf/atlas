@@ -21,8 +21,6 @@
 #include "atlas/util/NormaliseLongitude.h"
 #include "atlas/library/FloatingPointExceptions.h"
 
-#define DEBUG_OUTPUT 0
-
 namespace atlas {
 namespace util {
 
@@ -44,11 +42,11 @@ inline double dot(const PointXYZ& p1, const PointXYZ& p2) {
     return p1[0] * p2[0] + p1[1] * p2[1] + p1[2] * p2[2];
 }
 
-bool approx_eq(const double& v1, const double& v2) {
+inline bool approx_eq(const double& v1, const double& v2) {
     return std::abs(v1 - v2) <= EPS;
 }
 
-bool approx_eq(const PointXYZ& v1, const PointXYZ& v2) {
+inline bool approx_eq(const PointXYZ& v1, const PointXYZ& v2) {
     //return approx_eq( v1[0], v2[0], t ) && approx_eq( v1[1], v2[1], t ) && approx_eq( v1[2], v2[2], t );
     return distance2(v1, v2) <= EPS2;
 }
@@ -61,48 +59,19 @@ void xyz2lonlat(const PointXYZ& xyz, PointLonLat& lonlat) {
     eckit::geometry::Sphere::convertCartesianToSpherical(1., xyz, lonlat);
 }
 
+#if DEBUG_OUTPUT
 PointLonLat xyz2lonlat(const PointXYZ& xyz) {
     PointLonLat lonlat;
     eckit::geometry::Sphere::convertCartesianToSpherical(1., xyz, lonlat);
     return lonlat;
 }
-
-#if 0
-// NOTE: StackVector is not used
-template <typename T, size_t MAX_SIZE>
-struct StackVector {
-private:
-    using Wrapped = std::array<T,MAX_SIZE>;
-
-public:
-    using reference = typename Wrapped::reference;
-    StackVector()   = default;
-    StackVector(size_t size): size_(size) {}
-#if ATLAS_VECTOR_BOUNDS_CHECKING
-    reference operator[](size_t i) {
-        if (i >= size_) {
-            throw_OutOfRange(i, size_);
-        }
-        return wrapped_[i];
-    }
-#else
-    reference operator[](size_t i) { return wrapped_[i]; }
-#endif
-    void push_back(const T& value) {
-        wrapped_[size_++] = value;
-        ATLAS_ASSERT(size_ < MAX_SIZE);
-    }
-    size_t size() const { return size_; }
-
-private:
-    size_t size_{0};
-    Wrapped wrapped_;
-};
 #endif
 
 }  // namespace
 
 //------------------------------------------------------------------------------------------------------
+
+bool ConvexSphericalPolygon::fpe_ = true;
 
 ConvexSphericalPolygon::ConvexSphericalPolygon(const PointLonLat points[], size_t size): size_{size} {
     ATLAS_ASSERT(size_ > 2, "Polygon must have at least 3 points");
@@ -287,6 +256,10 @@ void ConvexSphericalPolygon::clip(const GreatCircleSegment& great_circle, Clippe
     ATLAS_ASSERT(valid_);
     ATLAS_ASSERT(not approx_eq(great_circle.first(), great_circle.second()));
 #endif
+#if ATLAS_BUILD_TYPE_DEBUG
+    ATLAS_ASSERT(valid_);
+    ATLAS_ASSERT(not approx_eq(great_circle.first(), great_circle.second()));
+#endif
     bool first_in = great_circle.inLeftHemisphere(sph_coords_[0], -1.5 * EPS, out);
     for (int i = 0; i < size_; i++) {
         int in = (i+1) % size_;
@@ -382,7 +355,7 @@ void ConvexSphericalPolygon::clip(const GreatCircleSegment& great_circle, Clippe
 // @param[out] intersecting polygon
 ConvexSphericalPolygon ConvexSphericalPolygon::intersect(const ConvexSphericalPolygon& plg, std::ostream* out, double pointsSameEPS) const {
 
-    bool fpe_disabled = atlas::library::disable_floating_point_exception(FE_INVALID);
+    bool fpe_disabled = fpe_ ? atlas::library::disable_floating_point_exception(FE_INVALID) : false;
     auto restore_fpe = [fpe_disabled] {
         if (fpe_disabled) {
             atlas::library::enable_floating_point_exception(FE_INVALID);

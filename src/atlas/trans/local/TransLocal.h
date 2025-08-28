@@ -19,8 +19,6 @@
 #include "atlas/linalg/dense/Backend.h"
 #include "atlas/trans/detail/TransImpl.h"
 
-#define TRANSLOCAL_DGEMM2 0
-
 //-----------------------------------------------------------------------------
 // Forward declarations
 
@@ -30,13 +28,17 @@ class FieldSet;
 class StructuredGrid;
 }  // namespace atlas
 
+namespace atlas::linalg {
+    class FFT;
+}
+
 //-----------------------------------------------------------------------------
 
 namespace atlas {
 namespace trans {
 
 namespace detail {
-struct FFTW_Data;
+struct FFT_Data;
 }
 
 class LegendreCacheCreatorLocal;
@@ -172,13 +174,9 @@ public:
                           double divergence_spectra[], const eckit::Configuration& = util::NoConfig()) const override;
 
 private:
-    int posMethod(const int jfld, const int imag, const int jlat, const int jm, const int nb_fields,
+    inline constexpr int posMethod(const int jfld, const int imag, const int jlat, const int jm, const int nb_fields,
                   const int nlats) const {
-#if !TRANSLOCAL_DGEMM2
         return imag + 2 * (jm + (truncation_ + 1) * (jlat + nlats * jfld));
-#else
-        return jfld + nb_fields * (jlat + nlats * (imag + 2 * (jm)));
-#endif
     }
 
     void invtrans_legendre(const int truncation, const int nlats, const int nb_fields, const int nb_vordiv_fields,
@@ -234,7 +232,6 @@ private:
     double* legendre_asym_;
     double* fourier_;
     double* fouriertp_;
-    std::vector<size_t> legendre_begin_;
     std::vector<size_t> legendre_sym_begin_;
     std::vector<size_t> legendre_asym_begin_;
 
@@ -245,9 +242,11 @@ private:
     const void* fft_cache_{nullptr};
     size_t fft_cachesize_{0};
 
-    std::unique_ptr<detail::FFTW_Data> fftw_;
+    std::unique_ptr<detail::FFT_Data> fft_data_;
+    std::unique_ptr<linalg::FFT> fft_;
 
     std::string linalg_backend_;
+    std::string fft_backend_;
     int warning_ = 0;
 };
 

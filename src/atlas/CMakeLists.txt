@@ -73,6 +73,7 @@ parallel/omp/sort.h
 util/Config.cc
 util/Config.h
 
+mdspan.h
 )
 
 list( APPEND atlas_grid_srcs
@@ -736,6 +737,10 @@ linalg/dense/MatrixMultiply.h
 linalg/dense/MatrixMultiply.tcc
 linalg/dense/MatrixMultiply_EckitLinalg.h
 linalg/dense/MatrixMultiply_EckitLinalg.cc
+linalg/fft.h
+linalg/fft/FFT.h
+linalg/fft/FFTW.cc
+linalg/fft/pocketfft.cc
 )
 
 
@@ -880,8 +885,6 @@ util/SphericalPolygon.cc
 util/SphericalPolygon.h
 util/UnitSphere.h
 util/vector.h
-util/mdspan.h
-util/detail/mdspan/mdspan.hpp
 util/VectorOfAbstract.h
 util/QhullSphericalTriangulation.h
 util/QhullSphericalTriangulation.cc
@@ -1032,6 +1035,7 @@ ecbuild_add_library( TARGET atlas
   PRIVATE_INCLUDES
     ${CGAL_INCLUDE_DIRS}
     ${FFTW_INCLUDES}
+    ${POCKETFFT_INCLUDE_DIRS}
     ${PROJ_INCLUDE_DIRS}
 
   PUBLIC_INCLUDES

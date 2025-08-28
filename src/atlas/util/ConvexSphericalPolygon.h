@@ -18,7 +18,7 @@
 #include "atlas/util/Polygon.h"
 #include "atlas/runtime/Log.h"
 
-#define DEBUG_OUTPUT 1
+#define DEBUG_OUTPUT 0
 
 namespace atlas {
 namespace util {
@@ -130,6 +130,8 @@ public:
 
     int next(const int index) const { return (index == size_ - 1) ? 0 : index + 1; };
 
+    static void fpe(bool v) { fpe_ = v; }
+    static bool fpe() { return fpe_; }
 private:
     struct SubTriangle {
         PointXYZ centroid;
@@ -168,6 +170,8 @@ private:
     mutable bool computed_centroid_{false};
     mutable bool computed_radius_{false};
     mutable bool computed_area_{false};
+
+    static bool fpe_;
 };
 
 //------------------------------------------------------------------------------------------------------
