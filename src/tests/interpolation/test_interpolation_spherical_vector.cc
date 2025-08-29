@@ -116,6 +116,8 @@ struct FunctionSpaceFixtures {
 struct FieldSpecFixtures {
   static const Config& get(const std::string& fixture) {
     static const auto fieldSpecs = std::map<std::string_view, Config>{
+        {"scalar", option::name("test field") | option::variables(1) |
+                        option::type("scalar")},
         {"2vector", option::name("test field") | option::variables(2) |
                         option::type("vector")},
         {"3vector", option::name("test field") | option::variables(3) |
@@ -308,6 +310,17 @@ void testInterpolation(const Config& config) {
   }
 }
 
+CASE("cubed sphere CS-LFR-48 scalar interpolation (3d-field, scalar)") {
+  const auto config =
+      Config("source_fixture", "cubedsphere_mesh")
+          .set("target_fixture", "gaussian_mesh")
+          .set("field_spec_fixture", "scalar")
+          .set("interp_fixture", "cubedsphere_bilinear_spherical")
+          .set("file_id", "spherical_vector_cs2")
+          .set("tol", 0.00018);
+
+  testInterpolation<Rank3dField>((config));
+}
 
 CASE("cubed sphere CS-LFR-48 vector interpolation (3d-field, 2-vector)") {
   const auto config =
