@@ -240,9 +240,13 @@ ConservativeSphericalPolygonInterpolation::ConservativeSphericalPolygonInterpola
     config.get("tgt_cell_data", tgt_cell_data_ = true);
 
 
-    config.get("statistics.intersection", statistics_timings_ = false);
+    config.get("statistics.timings", statistics_timings_ = false);
     config.get("statistics.intersection", statistics_intersection_ = false);
     config.get("statistics.conservation", statistics_conservation_ = false);
+    if (statistics_conservation_ && ! statistics_timings_) {
+        Log::info() << "statistics.conservation requested -> enabling statistics.timings";
+        statistics_timings_ = true;
+    }
 
     sharable_data_ = std::make_shared<Data>();
     cache_         = Cache(sharable_data_);
@@ -1826,12 +1830,14 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
     }
 
     auto& timings = data_->timings;
+    if (statistics_timings_) {
+        metadata.set("timings.target_kdtree_search", timings.target_kdtree_search);
+        metadata.set("timings.polygon_intersections", timings.polygon_intersections);
+    }
     metadata.set("timings.source_polygons_assembly", timings.source_polygons_assembly);
     metadata.set("timings.target_polygons_assembly", timings.target_polygons_assembly);
     metadata.set("timings.target_kdtree_assembly", timings.target_kdtree_assembly);
-    metadata.set("timings.target_kdtree_search", timings.target_kdtree_search);
     metadata.set("timings.source_polygons_filter", timings.source_polygons_filter);
-    metadata.set("timings.polygon_intersections", timings.polygon_intersections);
     metadata.set("timings.matrix_assembly", timings.matrix_assembly);
     metadata.set("timings.interpolation", stopwatch.elapsed());
 

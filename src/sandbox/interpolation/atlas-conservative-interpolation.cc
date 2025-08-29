@@ -81,6 +81,8 @@ public:
         add_option(new SimpleOption<bool>("matrix_free", "Do not store matrix for consecutive interpolations"));
 
         add_option(
+            new SimpleOption<bool>("statistics.timings", "Enable extra statistics on polygon intersections"));
+        add_option(
             new SimpleOption<bool>("statistics.intersection", "Enable extra statistics on polygon intersections"));
         add_option(new SimpleOption<bool>("statistics.accuracy",
                                           "Enable extra statistics, comparing result with initial condition"));
