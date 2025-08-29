@@ -107,60 +107,58 @@ bool executesOnDevice(const sparse::Backend& backend) {
     }
 }
 
-template<typename Container>
-void syncHost(const Container& c) {
-    if (c.hostNeedsUpdate()) {
-        if (c.deviceNeedsUpdate()) {
-            throw_AssertionFailed("Could not sync host", Here());
-        }
-        c.updateHost();
-    }
-}
-
-
-template<typename Container>
-void syncDevice(const Container& c) {
-    if (c.deviceNeedsUpdate()) {
-        if (c.hostNeedsUpdate()) {
-            throw_AssertionFailed("Could not sync device", Here());
-        }
-        c.updateDevice();
-    }
-}
-
 template<typename Value, int Rank>
-atlas::array::ArrayView<Value, Rank> make_device_view_updated(atlas::Field& f) {
-    syncDevice(f);
+atlas::array::ArrayView<Value, Rank> make_device_view_rw(atlas::Field& f) {
+    f.syncDevice();
     return atlas::array::make_device_view<Value, Rank>(f);
 }
 
 template<typename Value, int Rank>
-atlas::array::ArrayView<const Value, Rank> make_device_view_updated(const atlas::Field& f) {
-    syncDevice(f);
-    return atlas::array::make_device_view<const Value, Rank>(f);
+atlas::array::ArrayView<Value, Rank> make_device_view_w(atlas::Field& f) {
+    if (not f.deviceAllocated()) {
+        f.allocateDevice();
+    }
+    f.setDeviceNeedsUpdate(false); // as it will be written to here
+    return atlas::array::make_device_view<Value, Rank>(f);
 }
 
 template<typename Value, int Rank>
-atlas::array::ArrayView<Value, Rank> make_host_view_updated(atlas::Field& f) {
-    syncHost(f);
+atlas::array::ArrayView<const Value, Rank> make_device_view_r(const atlas::Field& f) {
+    f.syncDevice();
+    return atlas::array::make_device_view<const Value, Rank>(f);
+}
+
+
+template<typename Value, int Rank>
+atlas::array::ArrayView<Value, Rank> make_host_view_rw(atlas::Field& f) {
+    f.syncHost();
     return atlas::array::make_host_view<Value, Rank>(f);
 }
 
 template<typename Value, int Rank>
-atlas::array::ArrayView<const Value, Rank> make_host_view_updated(const atlas::Field& f) {
-    syncHost(f);
+atlas::array::ArrayView<const Value, Rank> make_host_view_r(const atlas::Field& f) {
+    f.syncHost();
     return atlas::array::make_host_view<const Value, Rank>(f);
 }
 
+template<typename Value, int Rank>
+atlas::array::ArrayView<Value, Rank> make_host_view_w(atlas::Field& f) {
+    f.setHostNeedsUpdate(false); // as it will be written to
+    return atlas::array::make_host_view<Value, Rank>(f);
+}
+
 template<typename Value, typename Index>
-atlas::linalg::SparseMatrixView<Value,Index> make_device_view_updated(const atlas::linalg::SparseMatrixStorage& m) {
-    syncDevice(m);
+atlas::linalg::SparseMatrixView<Value,Index> make_device_view_r(const atlas::linalg::SparseMatrixStorage& m) {
+    if (m.deviceNeedsUpdate()) {
+        ATLAS_TRACE("Copy interpolation matrix to device");
+        m.updateDevice();
+    }
     return make_device_view<Value, Index>(m);
 }
 
 template<typename Value, typename Index>
-atlas::linalg::SparseMatrixView<Value,Index> make_host_view_updated(const atlas::linalg::SparseMatrixStorage& m) {
-    syncHost(m);
+atlas::linalg::SparseMatrixView<Value,Index> make_host_view_r(const atlas::linalg::SparseMatrixStorage& m) {
+    m.syncHost();
     return make_host_view<Value, Index>(m);
 }
 
@@ -182,20 +180,20 @@ void Method::interpolate_field_rank1(const Field& src, Field& tgt, const Matrix&
     
     const auto on_device = executesOnDevice(backend);
 
-    auto src_v = on_device ? make_device_view_updated<Value, 1>(src) : make_host_view_updated<Value, 1>(src);
-    auto tgt_v = on_device ? make_device_view_updated<Value, 1>(tgt) : make_host_view_updated<Value, 1>(tgt);
+    auto src_v = on_device ? make_device_view_r<Value, 1>(src) : make_host_view_r<Value, 1>(src);
+    auto tgt_v = on_device ? make_device_view_w<Value, 1>(tgt) : make_host_view_w<Value, 1>(tgt);
 
     if (nonLinear_(src)) {
         eckit::linalg::SparseMatrix W_copy = atlas::linalg::make_eckit_sparse_matrix(W);
         nonLinear_->execute(W_copy, src);
         auto W_nl = make_sparse_matrix_storage(std::move(W_copy));
-        auto W_nl_v = on_device ? make_device_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W_nl) : 
-                                  make_host_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W_nl);
+        auto W_nl_v = on_device ? make_device_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(W_nl)
+                                : make_host_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(W_nl);
         sparse_matrix_multiply(W_nl_v, src_v, tgt_v, backend);
     }
     else {
-        auto W_v = on_device ? make_device_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W) : 
-                               make_host_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W);
+        auto W_v = on_device ? make_device_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(W)
+                             : make_host_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(W);
         sparse_matrix_multiply(W_v, src_v, tgt_v, backend);
     }
 
@@ -219,9 +217,6 @@ void Method::interpolate_field_rank2(const Field& src, Field& tgt, const Matrix&
     if (nonLinear_(src)) {
         // We cannot apply the same matrix to full columns as e.g. missing values could be present in only certain parts.
         
-        auto src_v = array::make_view<Value, 2>(src);
-        auto tgt_v = array::make_view<Value, 2>(tgt);
-
         // Allocate temporary rank-1 fields corresponding to one horizontal level
         auto src_slice = Field("s", array::make_datatype<Value>(), {src.shape(0)});
         auto tgt_slice = Field("t", array::make_datatype<Value>(), {tgt.shape(0)});
@@ -229,8 +224,11 @@ void Method::interpolate_field_rank2(const Field& src, Field& tgt, const Matrix&
         // Copy metadata to the source rank-1 field
         src_slice.metadata() = src.metadata();
 
-        auto src_slice_v = array::make_view<Value, 1>(src_slice);
-        auto tgt_slice_v = array::make_view<Value, 1>(tgt_slice);
+        auto src_v = make_host_view_r<Value,2>(src);
+        auto tgt_v = make_host_view_w<Value,2>(tgt);
+
+        auto src_slice_v = array::make_host_view<Value, 1>(src_slice);
+        auto tgt_slice_v = array::make_host_view<Value, 1>(tgt_slice);
 
         for (idx_t lev = 0; lev < src_v.shape(1); ++lev) {
             // Copy this level to temporary rank-1 field
@@ -242,22 +240,21 @@ void Method::interpolate_field_rank2(const Field& src, Field& tgt, const Matrix&
             interpolate_field_rank1<Value>(src_slice, tgt_slice, W);
 
             // Copy rank-1 field to this level in the rank-2 field
-            if (tgt_slice.hostNeedsUpdate()) {
-                tgt_slice.updateHost();
-            }
+            tgt_slice.syncHost();
             for (idx_t i = 0; i < tgt.shape(0); ++i) {
                 tgt_v(i, lev) = tgt_slice_v(i);
             }
-            tgt.setDeviceNeedsUpdate(true);
         }
+        tgt.setDeviceNeedsUpdate(true);
+        tgt.setHostNeedsUpdate(false);
     }
     else {
         const auto on_device = executesOnDevice(backend);
-        
-        auto W_v = on_device ? make_device_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W) : 
-                               make_host_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W);
-        auto src_dv = on_device ? make_device_view_updated<Value, 2>(src) : make_host_view_updated<Value, 2>(src);
-        auto tgt_dv = on_device ? make_device_view_updated<Value, 2>(tgt) : make_host_view_updated<Value, 2>(tgt);
+
+        auto W_v = on_device ? make_device_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(W)
+                             : make_host_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(W);
+        auto src_dv = on_device ? make_device_view_r<Value, 2>(src) : make_host_view_r<Value, 2>(src);
+        auto tgt_dv = on_device ? make_device_view_w<Value, 2>(tgt) : make_host_view_w<Value, 2>(tgt);
         
         sparse_matrix_multiply(W_v, src_dv, tgt_dv, backend);
 
@@ -280,13 +277,14 @@ void Method::interpolate_field_rank3(const Field& src, Field& tgt, const Matrix&
     }
 
     auto W_v = make_host_view<eckit::linalg::Scalar, eckit::linalg::Index>(W);
-    auto src_v = make_host_view_updated<Value, 3>(src);
-    auto tgt_v = make_host_view_updated<Value, 3>(tgt);
+    auto src_v = make_host_view_r<Value, 3>(src);
+    auto tgt_v = make_host_view_w<Value, 3>(tgt);
     if (not W.empty() && nonLinear_(src)) {
         ATLAS_ASSERT(false, "nonLinear interpolation not supported for rank-3 fields.");
     }
     sparse_matrix_multiply(W_v, src_v, tgt_v, backend);
 
+    tgt.setHostNeedsUpdate(false);
     tgt.setDeviceNeedsUpdate(true);
 }
 
@@ -305,10 +303,10 @@ void Method::adjoint_interpolate_field_rank1(Field& src, const Field& tgt, const
 
     const auto on_device = executesOnDevice(backend);
 
-    auto src_v = on_device ? make_device_view_updated<Value, 1>(src) : make_host_view_updated<Value, 1>(src);
-    auto tgt_v = on_device ? make_device_view_updated<Value, 1>(tgt) : make_host_view_updated<Value, 1>(tgt);
-    auto W_v = on_device ? make_device_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W) : 
-                           make_host_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W);
+    auto src_v = on_device ? make_device_view_rw<Value, 1>(src) : make_host_view_rw<Value, 1>(src);
+    auto tgt_v = on_device ? make_device_view_r<Value, 1>(tgt) : make_host_view_r<Value, 1>(tgt);
+    auto W_v = on_device ? make_device_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(W)
+                         : make_host_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(W);
 
     sparse_matrix_multiply_add(W_v, tgt_v, src_v, backend);
 
@@ -330,10 +328,10 @@ void Method::adjoint_interpolate_field_rank2(Field& src, const Field& tgt, const
 
     const auto on_device = executesOnDevice(backend);
 
-    auto src_v = on_device ? make_device_view_updated<Value, 2>(src) : make_host_view_updated<Value, 2>(src);
-    auto tgt_v = on_device ? make_device_view_updated<Value, 2>(tgt) : make_host_view_updated<Value, 2>(tgt);
-    auto W_v = on_device ? make_device_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W) : 
-                           make_host_view_updated<eckit::linalg::Scalar, eckit::linalg::Index>(W);
+    auto src_v = on_device ? make_device_view_rw<Value, 2>(src) : make_host_view_rw<Value, 2>(src);
+    auto tgt_v = on_device ? make_device_view_r<Value, 2>(tgt) : make_host_view_r<Value, 2>(tgt);
+    auto W_v = on_device ? make_device_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(W)
+                         : make_host_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(W);
 
     sparse_matrix_multiply_add(W_v, tgt_v, src_v, backend);
 
@@ -353,9 +351,9 @@ void Method::adjoint_interpolate_field_rank3(Field& src, const Field& tgt, const
         backend = sparse::backend::openmp();
     }
 
-    auto src_v = make_host_view_updated<Value, 3>(src);
-    auto tgt_v = make_host_view_updated<Value, 3>(tgt);
-    auto W_v = make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(W);
+    auto src_v = make_host_view_rw<Value, 3>(src);
+    auto tgt_v = make_host_view_r<Value, 3>(tgt);
+    auto W_v = make_host_view_r<eckit::linalg::Scalar,eckit::linalg::Index>(W);
 
     sparse_matrix_multiply_add(W_v, tgt_v, src_v, backend);
 
@@ -527,12 +525,8 @@ void Method::do_execute(const Field& src, Field& tgt, Metadata&) const {
     sparse::Backend backend{linalg_backend_};
 
     const bool on_device = executesOnDevice(backend);
-    
-    on_device ? src.updateDevice() : src.updateHost();
 
     haloExchange(src, on_device);
-    
-    on_device ? src.setHostNeedsUpdate(true) : src.setDeviceNeedsUpdate(true);
     
     if( matrix_ ) { // (matrix == nullptr) when a partition is empty
         if (src.datatype().kind() == array::DataType::KIND_REAL64) {
@@ -561,16 +555,19 @@ void Method::do_execute(const Field& src, Field& tgt, Metadata&) const {
         }
     }
 
-    // set missing values
+    // set missing values on host
     if (not missing_.empty()) {
-        if (tgt.hostNeedsUpdate()) {
+        if (on_device) {
             tgt.updateHost();
         }
         set_missing_values(tgt, missing_);
+        tgt.set_dirty();
         tgt.setDeviceNeedsUpdate(true);
     }
-
-    tgt.set_dirty();
+    else {
+        tgt.set_dirty();
+        on_device ? tgt.setHostNeedsUpdate(true) : tgt.setDeviceNeedsUpdate(true);
+    }
 }
 
 void Method::do_execute_adjoint(FieldSet& fieldsSource, const FieldSet& fieldsTarget, Metadata& metadata) const {
@@ -618,6 +615,7 @@ void Method::do_execute_adjoint(Field& src, const Field& tgt, Metadata&) const {
     }
 
     src.set_dirty();
+
     const bool on_device = executesOnDevice(backend);
 
     adjointHaloExchange(src, on_device);
@@ -648,7 +646,20 @@ void Method::haloExchange(const FieldSet& fields, bool on_device) const {
 }
 void Method::haloExchange(const Field& field, bool on_device) const {
     if (field.dirty() && allow_halo_exchange_) {
-        source().haloExchange(field, on_device);
+        ATLAS_TRACE("haloExchange");
+        if (on_device) {
+            if (field.deviceNeedsUpdate()) {
+                // Prefer halo exchange on host and copy to device
+                source().haloExchange(field); // on host
+                field.syncDevice();
+            }
+            else {
+                source().haloExchange(field, on_device); // on device
+            }
+        }
+        else {
+            source().haloExchange(field); // on host
+        }
     }
 }
 
@@ -659,7 +670,20 @@ void Method::adjointHaloExchange(const FieldSet& fields, bool on_device) const {
 }
 void Method::adjointHaloExchange(const Field& field, bool on_device) const {
     if (field.dirty() && allow_halo_exchange_) {
-        source().adjointHaloExchange(field, on_device);
+        ATLAS_TRACE("adjointHaloExchange");
+        if (on_device) {
+            if (field.deviceNeedsUpdate()) {
+                // Prefer halo exchange on host and copy to device
+                source().adjointHaloExchange(field); // on host
+                field.syncDevice();
+            }
+            else {
+                source().adjointHaloExchange(field, on_device); // on device
+            }
+        }
+        else {
+            source().adjointHaloExchange(field); // on host
+        }
     }
 }
 

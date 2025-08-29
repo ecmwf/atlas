@@ -85,7 +85,7 @@ FieldSet create_target_fields(FunctionSpace& fs, idx_t nb_fields, idx_t nb_level
     FieldSet fields_target;
     for (idx_t f = 0; f < nb_fields; ++f) {
         auto field_target = fields_target.add(fs.createField<Value>(option::levels(nb_levels)));
-        field_target.updateDevice();
+        field_target.allocateDevice();
     }
     return fields_target;
 }
