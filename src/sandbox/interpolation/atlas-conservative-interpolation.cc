@@ -84,7 +84,9 @@ public:
         add_option(new eckit::option::Separator("Interpolation statistics options"));
         add_option(new SimpleOption<bool>("statistics.all", "Enable all statistics"));
         add_option(
-            new SimpleOption<bool>("statistics.intersection", "Enable extra statistics on polygon intersections"));
+            new SimpleOption<bool>("statistics.timings", "Enable extra statistics on polygon intersection timings"));
+        add_option(
+            new SimpleOption<bool>("statistics.intersection", "Enable statistics on polygon intersections"));
         add_option(new SimpleOption<bool>("statistics.accuracy",
                                           "Enable extra statistics, comparing result with initial condition"));
         add_option(

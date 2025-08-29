@@ -213,6 +213,7 @@ ConservativeSphericalPolygonInterpolation::ConservativeSphericalPolygonInterpola
     config.get("matrix_free", matrix_free_ = false);
     config.get("src_cell_data", src_cell_data_ = true);
     config.get("tgt_cell_data", tgt_cell_data_ = true);
+<<<<<<< HEAD
     config.get("statistics.all", remap_stat_.all_ = false);
     config.get("statistics.timings", remap_stat_.timings_ = false);
     config.get("statistics.intersection", remap_stat_.intersection_ = false);
@@ -227,6 +228,15 @@ ConservativeSphericalPolygonInterpolation::ConservativeSphericalPolygonInterpola
         remap_stat_.timings_ = true;
     }
 
+=======
+    config.get("statistics.timings", statistics_timings_ = false);
+    config.get("statistics.intersection", statistics_intersection_ = false);
+    config.get("statistics.conservation", statistics_conservation_ = false);
+    if (statistics_conservation_ && ! statistics_timings_) {
+        Log::info() << "statistics.conservation requested -> enabling statistics.timings";
+        statistics_timings_ = true;
+    }
+>>>>>>> f31fa2654 (condition stopwatches in the intersection-of-polygon loop -> further performance gain)
     sharable_data_ = std::make_shared<Data>();
     cache_         = Cache(sharable_data_);
     data_          = sharable_data_.get();
@@ -1209,15 +1219,19 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                 intersection_src_centroids.resize(0);
                 const auto& t_csp       = std::get<0>(tgt_csp[tcell]);
                 double tgt_cover_area   = 0.;
-                stopwatch_kdtree_search.start();
+                if (statistics_timings_) {stopwatch_kdtree_search.start(); }
                 auto src_cells = kdt_search.closestPointsWithinRadius(t_csp.centroid(), t_csp.radius() + max_srccell_rad);
-                stopwatch_kdtree_search.stop();
+                if (statistics_timings_) {stopwatch_kdtree_search.stop(); }
                 for (idx_t iscell = 0; iscell < src_cells.size(); ++iscell) {
                     auto scell        = src_cells[iscell].payload();
                     const auto& s_csp = std::get<0>(src_csp[scell]);
+<<<<<<< HEAD
                     stopwatch_polygon_intersections.start();
+=======
+                    if (statistics_timings_) {stopwatch_polygon_intersections.start(); }
+>>>>>>> f31fa2654 (condition stopwatches in the intersection-of-polygon loop -> further performance gain)
                     ConvexSphericalPolygon csp_i = s_csp.intersect(t_csp, nullptr, pointsSameEPS);
-                    stopwatch_polygon_intersections.stop();
+                    if (statistics_timings_) {stopwatch_polygon_intersections.stop(); }
                     double csp_i_area            = csp_i.area();
                     if (validate_) {
                         int pout;
@@ -2060,12 +2074,14 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
     }
 
     auto& timings = data_->timings;
+    if (statistics_timings_) {
+        metadata.set("timings.source_kdtree_search", timings.source_kdtree_search);
+        metadata.set("timings.polygon_intersections", timings.polygon_intersections);
+    }
     metadata.set("timings.source_polygons_assembly", timings.source_polygons_assembly);
     metadata.set("timings.target_polygons_assembly", timings.target_polygons_assembly);
-    metadata.set("timings.target_kdtree_assembly", timings.source_kdtree_assembly);
-    metadata.set("timings.target_kdtree_search", timings.source_kdtree_search);
+    metadata.set("timings.source_kdtree_assembly", timings.source_kdtree_assembly);
     metadata.set("timings.source_polygons_filter", timings.source_polygons_filter);
-    metadata.set("timings.polygon_intersections", timings.polygon_intersections);
     metadata.set("timings.matrix_assembly", timings.matrix_assembly);
     metadata.set("timings.interpolation", stopwatch.elapsed());
 
