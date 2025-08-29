@@ -158,6 +158,24 @@ public:
         }
     }
 
+    void syncHost() const override {
+        if (not host_updated_) {
+            ATLAS_ASSERT(device_updated_,"Unexpected state when calling syncHost() because (deviceNeedsUpdate() and hostNeedsUpdate())");
+            updateHost();
+        }
+    }
+
+    void syncDevice() const override {
+        if (not device_updated_) {
+            ATLAS_ASSERT(host_updated_,"Unexpected state when calling syncDevice() because (deviceNeedsUpdate() and hostNeedsUpdate())");
+            if (not host_updated_) {
+                throw_AssertionFailed("Unexpected state when calling syncDevice() because (deviceNeedsUpdate() and hostNeedsUpdate())",
+                Here());
+            }
+            updateDevice();
+        }
+    }
+
     bool deviceAllocated() const override { return device_allocated_; }
 
     void allocateDevice() const override {
@@ -396,6 +414,20 @@ public:
         }
         else if (not host_updated_) {
             updateHost();
+        }
+    }
+
+    void syncHost() const override {
+        if (not host_updated_) {
+            ATLAS_ASSERT(device_updated_,"Unexpected state when calling syncHost() because (deviceNeedsUpdate() and hostNeedsUpdate())");
+            updateHost();
+        }
+    }
+
+    void syncDevice() const override {
+        if (not device_updated_) {
+            ATLAS_ASSERT(host_updated_,"Unexpected state when calling syncDevice() because (deviceNeedsUpdate() and hostNeedsUpdate())");
+            updateDevice();
         }
     }
 

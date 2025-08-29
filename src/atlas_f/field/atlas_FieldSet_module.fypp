@@ -105,6 +105,12 @@ contains
   procedure, public :: sync_host_device_idx
   procedure, public :: sync_host_device_name
   generic :: sync_host_device => sync_host_device_idx, sync_host_device_name
+  procedure, public :: sync_host_idx
+  procedure, public :: sync_host_name
+  generic :: sync_host => sync_host_idx, sync_host_name
+  procedure, public :: sync_device_idx
+  procedure, public :: sync_device_name
+  generic :: sync_device => sync_device_idx, sync_device_name
   procedure, public :: allocate_device_idx
   procedure, public :: allocate_device_name
   generic :: allocate_device => allocate_device_idx, allocate_device_name
@@ -553,6 +559,84 @@ subroutine sync_host_device_name(this, field_names)
   do i = 1, size(field_names)
     field = this%field(field_names(i))
     call atlas__Field__sync_host_device(field%CPTR_PGIBUG_A)
+  end do
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine sync_host_idx(this, field_indices)
+  use, intrinsic :: iso_c_binding, only : c_int
+  use atlas_field_c_binding
+  use atlas_Field_module, only: atlas_Field
+  class(atlas_FieldSet), intent(inout) :: this
+  integer, intent(in), optional :: field_indices(:)
+  type(atlas_Field) :: field
+  integer(c_int) :: i
+  if (present(field_indices)) then
+    do i = 1, size(field_indices)
+      field = this%field(field_indices(i))
+      call atlas__Field__sync_host(field%CPTR_PGIBUG_A)
+    end do
+  else
+    do i = 1, this%size()
+      field = this%field(i)
+      call atlas__Field__sync_host(field%CPTR_PGIBUG_A)
+    end do
+  end if
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine sync_host_name(this, field_names)
+  use, intrinsic :: iso_c_binding, only : c_int
+  use atlas_field_c_binding
+  use atlas_Field_module, only: atlas_Field
+  class(atlas_FieldSet), intent(inout) :: this
+  character(*), intent(in) :: field_names(:)
+  type(atlas_Field) :: field
+  integer(c_int) :: i
+  do i = 1, size(field_names)
+    field = this%field(field_names(i))
+    call atlas__Field__sync_host(field%CPTR_PGIBUG_A)
+  end do
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine sync_device_idx(this, field_indices)
+  use, intrinsic :: iso_c_binding, only : c_int
+  use atlas_field_c_binding
+  use atlas_Field_module, only: atlas_Field
+  class(atlas_FieldSet), intent(inout) :: this
+  integer, intent(in), optional :: field_indices(:)
+  type(atlas_Field) :: field
+  integer(c_int) :: i
+  if (present(field_indices)) then
+    do i = 1, size(field_indices)
+      field = this%field(field_indices(i))
+      call atlas__Field__sync_device(field%CPTR_PGIBUG_A)
+    end do
+  else
+    do i = 1, this%size()
+      field = this%field(i)
+      call atlas__Field__sync_device(field%CPTR_PGIBUG_A)
+    end do
+  end if
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine sync_device_name(this, field_names)
+  use, intrinsic :: iso_c_binding, only : c_int
+  use atlas_field_c_binding
+  use atlas_Field_module, only: atlas_Field
+  class(atlas_FieldSet), intent(inout) :: this
+  character(*), intent(in) :: field_names(:)
+  type(atlas_Field) :: field
+  integer(c_int) :: i
+  do i = 1, size(field_names)
+    field = this%field(field_names(i))
+    call atlas__Field__sync_device(field%CPTR_PGIBUG_A)
   end do
 end subroutine
 
