@@ -43,7 +43,7 @@ public:
                    << (PointXYZ::dot(cross(), P) >= offset) << std::endl;
            }
 #endif
-            return (PointXYZ::dot(cross(), P) >= offset); // has to have = included
+            return (cross_[0] * P[0] + cross_[1] * P[1] + cross_[2] * P[2]) >= offset; // has to have = included
         }
 
         PointXYZ intersect(const GreatCircleSegment&, std::ostream* f = NULL, double pointsSameEPS = std::numeric_limits<double>::epsilon()) const;
