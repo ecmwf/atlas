@@ -32,9 +32,18 @@ SparseMatrixStorage::SparseMatrixStorage(const SparseMatrixStorage& other) {
     nnz_   = other.nnz_;
     rows_  = other.rows_;
     cols_  = other.cols_;
-    outer_.reset(atlas::array::Array::create(other.outer_->datatype(), atlas::array::make_shape(other.outer_->size())));
-    inner_.reset(atlas::array::Array::create(other.inner_->datatype(), atlas::array::make_shape(other.inner_->size())));
-    value_.reset(atlas::array::Array::create(other.value_->datatype(), atlas::array::make_shape(other.value_->size())));
+    {
+        array::label label{"sparse_matrix.outer"};
+        outer_.reset(atlas::array::Array::create(other.outer_->datatype(), atlas::array::make_shape(other.outer_->size())));
+    }
+    {
+        array::label label{"sparse_matrix.inner"};
+        inner_.reset(atlas::array::Array::create(other.inner_->datatype(), atlas::array::make_shape(other.inner_->size())));
+    }
+    {
+        array::label label{"sparse_matrix.value"};
+        value_.reset(atlas::array::Array::create(other.value_->datatype(), atlas::array::make_shape(other.value_->size())));
+    }
     outer_->copy(*other.outer_);
     inner_->copy(*other.inner_);
     value_->copy(*other.value_);
@@ -61,9 +70,18 @@ SparseMatrixStorage& SparseMatrixStorage::operator=(const SparseMatrixStorage& o
     nnz_   = other.nnz_;
     rows_  = other.rows_;
     cols_  = other.cols_;
-    outer_.reset(atlas::array::Array::create(other.outer_->datatype(), atlas::array::make_shape(other.outer_->size())));
-    inner_.reset(atlas::array::Array::create(other.inner_->datatype(), atlas::array::make_shape(other.inner_->size())));
-    value_.reset(atlas::array::Array::create(other.value_->datatype(), atlas::array::make_shape(other.value_->size())));
+    {
+        array::label label{"sparse_matrix.outer"};
+        outer_.reset(atlas::array::Array::create(other.outer_->datatype(), atlas::array::make_shape(other.outer_->size())));
+    }
+    {
+        array::label label{"sparse_matrix.inner"};
+        inner_.reset(atlas::array::Array::create(other.inner_->datatype(), atlas::array::make_shape(other.inner_->size())));
+    }
+    {
+        array::label label{"sparse_matrix.value"};
+        value_.reset(atlas::array::Array::create(other.value_->datatype(), atlas::array::make_shape(other.value_->size())));
+    }
     outer_->copy(*other.outer_);
     inner_->copy(*other.inner_);
     value_->copy(*other.value_);

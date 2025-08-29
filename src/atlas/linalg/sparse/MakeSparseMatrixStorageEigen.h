@@ -48,9 +48,21 @@ SparseMatrixStorage make_sparse_matrix_storage(Eigen::SparseMatrix<Value, Eigen:
     std::size_t rows = m.rows();
     std::size_t cols = m.cols();
     std::size_t nnz  = m.nonZeros();
-    auto* outer = atlas::array::Array::wrap(const_cast<Index*>(m.outerIndexPtr()), atlas::array::make_shape(rows+1));
-    auto* inner = atlas::array::Array::wrap(const_cast<Index*>(m.innerIndexPtr()), atlas::array::make_shape(nnz));
-    auto* value = atlas::array::Array::wrap(const_cast<Value*>(m.valuePtr()),      atlas::array::make_shape(nnz));
+    array::Array* outer;
+    array::Array* inner;
+    array::Array* value;
+    {
+        array::label label{"sparse_matrix.outer"};
+        outer = atlas::array::Array::wrap(const_cast<Index*>(m.outerIndexPtr()), atlas::array::make_shape(rows+1));
+    }
+    {
+        array::label label{"sparse_matrix.inner"};
+        inner = atlas::array::Array::wrap(const_cast<Index*>(m.innerIndexPtr()), atlas::array::make_shape(nnz));
+    }
+    {
+        array::label label{"sparse_matrix.value"};
+        value = atlas::array::Array::wrap(const_cast<Value*>(m.valuePtr()),      atlas::array::make_shape(nnz));
+    }
 
     using EigenMatrix = Eigen::SparseMatrix<Value, Eigen::RowMajor, Index>;
     auto m_ptr = std::make_shared<EigenMatrix>();
@@ -75,9 +87,21 @@ SparseMatrixStorage make_sparse_matrix_storage(Eigen::SparseMatrix<Value, Eigen:
     std::size_t rows = m.rows();
     std::size_t cols = m.cols();
     std::size_t nnz  = m.nonZeros();
-    auto* outer = atlas::array::Array::create<index_type>(rows+1);
-    auto* inner = atlas::array::Array::create<index_type>(nnz);
-    auto* value = atlas::array::Array::create<value_type>(nnz);
+    array::Array* outer;
+    array::Array* inner;
+    array::Array* value;
+    {
+        array::label label{"sparse_matrix.outer"};
+        outer = atlas::array::Array::create<index_type>(rows+1);
+    }
+    {
+        array::label label{"sparse_matrix.inner"};
+        inner = atlas::array::Array::create<index_type>(nnz);
+    }
+    {
+        array::label label{"sparse_matrix.value"};
+        value = atlas::array::Array::create<value_type>(nnz);
+    }
 
     host_copy_eigen<index_type>(m.outerIndexPtr(), *outer);
     host_copy_eigen<index_type>(m.innerIndexPtr(), *inner);
@@ -97,9 +121,21 @@ SparseMatrixStorage make_sparse_matrix_storage(const Eigen::SparseMatrix<Value, 
     std::size_t rows = m.rows();
     std::size_t cols = m.cols();
     std::size_t nnz  = m.nonZeros();
-    auto* outer = atlas::array::Array::create<Index>(rows+1);
-    auto* inner = atlas::array::Array::create<Index>(nnz);
-    auto* value = atlas::array::Array::create<Value>(nnz);
+    array::Array* outer;
+    array::Array* inner;
+    array::Array* value;
+    {
+        array::label label{"sparse_matrix.outer"};
+        outer = atlas::array::Array::create<Index>(rows+1);
+    }
+    {
+        array::label label{"sparse_matrix.inner"};
+        inner = atlas::array::Array::create<Index>(nnz);
+    }
+    {
+        array::label label{"sparse_matrix.value"};
+        value = atlas::array::Array::create<Value>(nnz);
+    }
 
     host_copy_eigen<Index>(m.outerIndexPtr(), *outer);
     host_copy_eigen<Index>(m.innerIndexPtr(), *inner);
@@ -120,9 +156,21 @@ SparseMatrixStorage make_sparse_matrix_storage(const Eigen::SparseMatrix<Value, 
     std::size_t rows = m.rows();
     std::size_t cols = m.cols();
     std::size_t nnz  = m.nonZeros();
-    auto* outer = atlas::array::Array::create<index_type>(rows+1);
-    auto* inner = atlas::array::Array::create<index_type>(nnz);
-    auto* value = atlas::array::Array::create<value_type>(nnz);
+    array::Array* outer;
+    array::Array* inner;
+    array::Array* value;
+    {
+        array::label label{"sparse_matrix.outer"};
+        outer = atlas::array::Array::create<index_type>(rows+1);
+    }
+    {
+        array::label label{"sparse_matrix.inner"};
+        inner = atlas::array::Array::create<index_type>(nnz);
+    }
+    {
+        array::label label{"sparse_matrix.value"};
+        value = atlas::array::Array::create<value_type>(nnz);
+    }
     host_copy_eigen<index_type>(m.outerIndexPtr(), *outer);
     host_copy_eigen<index_type>(m.innerIndexPtr(), *inner);
     host_copy_eigen<value_type>(m.valuePtr(),      *value);
