@@ -30,6 +30,7 @@
 #include "atlas/library/config.h"
 #include "atlas/library/defines.h"
 #include "atlas/runtime/Exception.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/util/Object.h"
 
 namespace atlas {
@@ -149,12 +150,30 @@ public:
 
 template <typename DATA_TYPE, int RANK, typename ParallelDim>
 void HaloExchange::execute(array::Array& field, bool on_device) const {
-    ATLAS_TRACE("HaloExchange", {"halo-exchange"});
+    ATLAS_TRACE(std::string("HaloExchange::execute")+(on_device?"[device]":"[host]"), {std::string("halo-exchange"), std::string("halo-exchange")+(on_device?".device":".host")});
     if (!is_setup_) {
         throw_Exception("HaloExchange was not setup", Here());
     }
 
     on_device = on_device && devices() > 0;
+
+    bool update_device_at_end = false;
+    if (on_device) {
+        ATLAS_ASSERT(field.deviceNeedsUpdate() == false);
+
+        if (not ATLAS_HAVE_GPU_AWARE_MPI) {
+            // Without GPU aware MPI, we need to do halo exchange on host and copy back to device
+            update_device_at_end = on_device;
+            on_device = false;
+            field.syncHost();
+        }
+        else {
+            field.syncDevice();
+        }
+    }
+    else {
+        field.syncHost();
+    }
 
     auto array_view =
         on_device ? array::make_device_view<DATA_TYPE, RANK>(field) : array::make_host_view<DATA_TYPE, RANK>(field);
@@ -198,6 +217,11 @@ void HaloExchange::execute(array::Array& field, bool on_device) const {
 
     deallocate_buffer<DATA_TYPE>(inner_buffer, inner_size, on_device);
     deallocate_buffer<DATA_TYPE>(halo_buffer, halo_size, on_device);
+
+    on_device ? field.setHostNeedsUpdate(true) : field.setDeviceNeedsUpdate(true);
+    if (update_device_at_end) {
+        field.syncDevice();
+    }
 }
 
 template <typename DATA_TYPE, int RANK, typename ParallelDim>
@@ -205,10 +229,18 @@ void HaloExchange::execute_adjoint(array::Array& field, bool on_device) const {
     if (!is_setup_) {
         throw_Exception("HaloExchange was not setup", Here());
     }
-
-    ATLAS_TRACE("HaloExchange", {"halo-exchange-adjoint"});
+    ATLAS_TRACE(std::string("HaloExchange::execute_adjoint")+(on_device?"[device]":"[host]"), {std::string("halo-exchange-adjoint"),std::string("halo-exchange-adjoint")+(on_device?".device":".host")});
 
     on_device = on_device && devices() > 0;
+
+    // adjoint on device is not yet implemented!
+    // So copy to host and do halo-exchange there, and copy back to device
+    bool update_device_at_end = on_device;
+    if (on_device) {
+        ATLAS_ASSERT(field.deviceNeedsUpdate() == false);
+        field.syncHost();
+        on_device = false;
+    }
 
     auto array_view =
         on_device ? array::make_device_view<DATA_TYPE, RANK>(field) : array::make_host_view<DATA_TYPE, RANK>(field);
@@ -250,6 +282,11 @@ void HaloExchange::execute_adjoint(array::Array& field, bool on_device) const {
 
     deallocate_buffer<DATA_TYPE>(halo_buffer, halo_size, on_device);
     deallocate_buffer<DATA_TYPE>(inner_buffer, inner_size, on_device);
+
+    on_device ? field.setHostNeedsUpdate(true) : field.setDeviceNeedsUpdate(true);
+    if (update_device_at_end) {
+        field.syncDevice();
+    }
 }
 
 template <typename DATA_TYPE>
