@@ -71,31 +71,43 @@ SparseMatrixStorage& SparseMatrixStorage::operator=(const SparseMatrixStorage& o
 }
 
 
-void SparseMatrixStorage::updateDevice() const { 
+void SparseMatrixStorage::updateDevice() const {
     outer_->updateDevice();
     inner_->updateDevice();
     value_->updateDevice();
 }
 
-void SparseMatrixStorage::updateHost() const { 
+void SparseMatrixStorage::updateHost() const {
     outer_->updateHost();
     inner_->updateHost();
     value_->updateHost();
 }
 
-bool SparseMatrixStorage::hostNeedsUpdate() const { 
+void SparseMatrixStorage::syncDevice() const {
+    outer_->syncDevice();
+    inner_->syncDevice();
+    value_->syncDevice();
+}
+
+void SparseMatrixStorage::syncHost() const {
+    outer_->syncHost();
+    inner_->syncHost();
+    value_->syncHost();
+}
+
+bool SparseMatrixStorage::hostNeedsUpdate() const {
     return outer_->hostNeedsUpdate() ||
-            inner_->hostNeedsUpdate() ||
-            value_->hostNeedsUpdate();
+           inner_->hostNeedsUpdate() ||
+           value_->hostNeedsUpdate();
 }
 
-bool SparseMatrixStorage::deviceNeedsUpdate() const { 
+bool SparseMatrixStorage::deviceNeedsUpdate() const {
     return outer_->deviceNeedsUpdate() ||
-            inner_->deviceNeedsUpdate() ||
-            value_->deviceNeedsUpdate();
+           inner_->deviceNeedsUpdate() ||
+           value_->deviceNeedsUpdate();
 }
 
-void SparseMatrixStorage::setHostNeedsUpdate(bool v) const { 
+void SparseMatrixStorage::setHostNeedsUpdate(bool v) const {
     outer_->setHostNeedsUpdate(v);
     inner_->setHostNeedsUpdate(v);
     value_->setHostNeedsUpdate(v);
@@ -109,8 +121,8 @@ void SparseMatrixStorage::setDeviceNeedsUpdate(bool v) const {
 
 bool SparseMatrixStorage::deviceAllocated() const {
     return outer_->deviceAllocated() &&
-            inner_->deviceAllocated() &&
-            value_->deviceAllocated();
+           inner_->deviceAllocated() &&
+           value_->deviceAllocated();
 }
 
 void SparseMatrixStorage::allocateDevice() const {
@@ -119,7 +131,7 @@ void SparseMatrixStorage::allocateDevice() const {
     value_->allocateDevice();
 }
 
-void SparseMatrixStorage::deallocateDevice() const { 
+void SparseMatrixStorage::deallocateDevice() const {
     outer_->deallocateDevice();
     inner_->deallocateDevice();
     value_->deallocateDevice();
