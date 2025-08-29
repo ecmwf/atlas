@@ -197,6 +197,7 @@ private:
     int normalise_intersections_;
     int order_;
     bool matrix_free_;
+    bool statistics_timings_;
     bool statistics_intersection_;
     bool statistics_conservation_;
 
