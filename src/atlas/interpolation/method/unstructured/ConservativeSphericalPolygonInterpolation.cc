@@ -213,17 +213,18 @@ ConservativeSphericalPolygonInterpolation::ConservativeSphericalPolygonInterpola
     config.get("matrix_free", matrix_free_ = false);
     config.get("src_cell_data", src_cell_data_ = true);
     config.get("tgt_cell_data", tgt_cell_data_ = true);
-    config.get("statistics.all", statistics_all_ = false);
-    config.get("statistics.timings", statistics_timings_ = false);
-    config.get("statistics.intersection", statistics_intersection_ = false);
-    config.get("statistics.conservation", statistics_conservation_ = false);
-    config.get("statistics.conservation", statistics_conservation_ = false);
-    if (statistics_all_) {
-        Log::info() << "statistics.all required. Enabling statistics.timings, statistics.intersection, statistics.conservation, statistics.accuracy, and validate." << std::endl;
+    config.get("statistics.all", remap_stat_.all_ = false);
+    config.get("statistics.timings", remap_stat_.timings_ = false);
+    config.get("statistics.intersection", remap_stat_.intersection_ = false);
+    config.get("statistics.conservation", remap_stat_.conservation_ = false);
+    config.get("statistics.conservation", remap_stat_.conservation_ = false);
+    if (remap_stat_.all_) {
+        Log::info() << "WARNING statistics.all required. Enabling statistics.timings, statistics.intersection, statistics.conservation, statistics.accuracy, and validate." << std::endl;
         validate_ = true;
-        statistics.timings_ = true;
-        statistics.timings_ = true;
-        statistics.timings_ = true;
+        remap_stat_.accuracy_ = true;
+        remap_stat_.conservation_ = true;
+        remap_stat_.intersection_ = true;
+        remap_stat_.timings_ = true;
     }
 
     sharable_data_ = std::make_shared<Data>();
@@ -407,6 +408,31 @@ std::vector<idx_t> ConservativeSphericalPolygonInterpolation::get_node_neighbour
     }
     return nbr_nodes;
 }
+
+
+void ConservativeSphericalPolygonInterpolation::
+init_csp_index(bool cell_data, FunctionSpace fs, gidx_t& csp_index_size, std::vector<idx_t>& csp_index) {
+    auto mesh = extract_mesh(fs);
+    const auto& cell2node = mesh.cells().node_connectivity();
+    const auto cell_halo   = array::make_view<int, 1>(mesh.cells().halo());
+    csp_index_size = 0;
+    auto fs_halo = cell_data ? functionspace::CellColumns(fs).halo().size() : functionspace::NodeColumns(fs).halo().size();;
+    for (idx_t cell = 0; cell < mesh.cells().size(); ++cell) {
+        if( cell_halo(cell) > fs_halo ) {
+            continue;
+        }
+        csp_index_size += cell_data ? 1 : cell2node.cols(cell);
+    }
+    csp_index.resize(csp_index_size);
+    csp_index[0] = cell_data ? 1 : cell2node.cols(0);
+    for (idx_t cell = 1; cell < mesh.cells().size(); ++cell) {
+        if (cell_halo(cell) > fs_halo) {
+            continue;
+        }
+        csp_index[cell] = cell_data ? 1 + cell : csp_index[cell - 1] + cell2node.cols(cell);
+    }
+}
+
 
 // Create polygons for cell-centred data. Here, the polygons are mesh cells
 ConservativeSphericalPolygonInterpolation::CSPolygonArray
@@ -791,6 +817,9 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
     if (compute_cache) {
         intersect_polygons(src_csp, tgt_csp);
 
+        // init_csp_index(src_cell_data_, src_fs_, src_csp_index_size_, src_csp_index_);
+        // init_csp_index(tgt_cell_data_, tgt_fs_, tgt_csp_index_size_, tgt_csp_index_);
+
         auto& src_points_ = sharable_data_->src_points_;
         src_points_.resize(n_spoints_);
         sharable_data_->src_areas_.resize(n_spoints_);
@@ -930,7 +959,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
 
     data_->print(Log::debug());
 
-    if (statistics_intersection_) {
+    if (remap_stat_.intersection_) {
         setup_stat();
     }
 }
@@ -1102,13 +1131,13 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                 if (validate_ && tgt_cover_err_percent > 0.1) {
                     if (mpi::size() == 1) {
                         dump_intersection("Target cell not exactly covered", t_csp, src_csp, src_cells);
-                        if (statistics_intersection_) {
+                        if (remap_stat_.intersection_) {
                             area_coverage[TOTAL_TGT] += tgt_cover_err;
                             area_coverage[MAX_TGT] = std::max(area_coverage[MAX_TGT], tgt_cover_err);
                         }
                     }
                 }
-                if (intersection_src_cell_idx.size() == 0 and statistics_intersection_) {
+                if (intersection_src_cell_idx.size() == 0 and remap_stat_.intersection_) {
                     num_pol[TGT_NONINTERSECT]++;
                 }
                 if (normalise_intersections_ && tgt_cover_err_percent < 1.) {
@@ -1117,7 +1146,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                         intersection_weights[i] *= wfactor;
                     }
                 }
-                if (statistics_intersection_) {
+                if (remap_stat_.intersection_) {
                     num_pol[SRC_TGT_INTERSECT] += tgt_iparam_[tcell].weights.size();
                 }
                 tgt_iparam_[tcell].cell_idx = intersection_src_cell_idx;
@@ -1842,7 +1871,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
     }
 
     auto remap_stat = remap_stat_;
-    if (statistics_conservation_) {
+    if (remap_stat_.conservation_) {
         const auto src_cell_halo  = array::make_view<int, 1>(src_mesh_.cells().halo());
         const auto src_node_ghost = array::make_view<int, 1>(src_mesh_.nodes().ghost());
         const auto src_node_halo  = array::make_view<int, 1>(src_mesh_.nodes().halo());
@@ -1893,7 +1922,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
 
         metadata.set("conservation_error", remap_stat.errors[Statistics::Errors::REMAP_CONS]);
     }
-    if (statistics_intersection_) {
+    if (remap_stat_.intersection_) {
         metadata.set("polygons.source", remap_stat.counts[Statistics::Counts::SRC_PLG]);
         metadata.set("polygons.target", remap_stat.counts[Statistics::Counts::TGT_PLG]);
         metadata.set("polygons.intersections", remap_stat.counts[Statistics::Counts::INT_PLG]);
@@ -1906,7 +1935,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
         }
     }
 
-    if (statistics_intersection_ || statistics_conservation_) {
+    if (remap_stat_.intersection_ || remap_stat_.conservation_) {
         remap_stat.fillMetadata(metadata);
     }
 
@@ -1942,8 +1971,8 @@ void ConservativeSphericalPolygonInterpolation::print(std::ostream& out) const {
     out << ", target:" << (tgt_cell_data_ ? "cells(" : "nodes(") << tgt_mesh_.grid().name() << ",halo=" << halo << ")";
     out << ", normalise_intersections:" << normalise_intersections_;
     out << ", matrix_free:" << matrix_free_;
-    out << ", statistics.intersection:" << statistics_intersection_;
-    out << ", statistics.conservation:" << statistics_conservation_;
+    out << ", statistics.intersection:" << remap_stat_.intersection_;
+    out << ", statistics.conservation:" << remap_stat_.conservation_;
     out << ", cached_matrix:" << not(matrixAllocated() || matrix_free_);
     out << ", cached_data:" << bool(sharable_data_.use_count() == 0);
     size_t footprint{};
@@ -2108,7 +2137,7 @@ ConservativeSphericalPolygonInterpolation::Metadata
 ConservativeSphericalPolygonInterpolation::Statistics::accuracy(const Interpolation& interpolation,
                                                                 const Field target,
                                                                 std::function<double(const PointLonLat&)> func) {
-    if (! statistics_accuracy_) {
+    if (! accuracy_) {
         Log::info() << "Please enable statistics.accuracy in ConvexShpericalPolygonInterpolation.";
         return ConservativeSphericalPolygonInterpolation::Metadata();
     }

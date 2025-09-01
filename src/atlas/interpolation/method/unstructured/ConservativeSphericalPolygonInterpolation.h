@@ -118,6 +118,11 @@ public:
 
         double tgt_area_sum;
         double src_area_sum;
+        bool all_;
+        bool accuracy_;
+        bool conservation_;
+        bool intersection_;
+        bool timings_;
 
         void fillMetadata(Metadata&);
 
@@ -176,6 +181,7 @@ private:
     struct Workspace;
 
     std::vector<idx_t> get_node_neighbours(Mesh&, idx_t jcell, Workspace&) const;
+    void init_csp_index(bool cell_data, FunctionSpace fs, gidx_t& csp_index_size, std::vector<idx_t>& csp_index);
     CSPolygonArray get_polygons_celldata(FunctionSpace) const;
     CSPolygonArray get_polygons_nodedata(FunctionSpace, std::vector<idx_t>& csp2node,
                                          std::vector<std::vector<idx_t>>& node2csp,
@@ -197,13 +203,13 @@ private:
     int normalise_intersections_;
     int order_;
     bool matrix_free_;
-    bool statistics_all_;
-    bool statistics_accuracy_;
-    bool statistics_conservation_;
-    bool statistics_intersection_;
-    bool statistics_timings_;
 
     mutable Statistics remap_stat_;
+
+    gidx_t src_csp_index_size_;
+    gidx_t tgt_csp_index_size_;
+    std::vector<idx_t> src_csp_index_;
+    std::vector<idx_t> tgt_csp_index_;
 
     Cache cache_;                          // Storage of cache if any was passed to constructor
     std::shared_ptr<Data> sharable_data_;  // Storage of new data_, only allocated if cache is empty
