@@ -20,6 +20,7 @@
 #include "atlas/grid.h"
 #include "atlas/interpolation/Interpolation.h"
 #include "atlas/interpolation/method/MethodFactory.h"
+#include "atlas/library/FloatingPointExceptions.h"
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/mesh/actions/BuildNode2CellConnectivity.h"
 #include "atlas/meshgenerator.h"
@@ -137,7 +138,6 @@ void dump_polygons_to_json( const ConvexSphericalPolygon& t_csp,
 }
 
 constexpr double unit_sphere_area() {
-    // 4*pi*r^2  with r=1
     return 4. * M_PI;
 }
 
@@ -145,6 +145,7 @@ template <typename T>
 size_t memory_of(const std::vector<T>& vector) {
     return sizeof(T) * vector.capacity();
 }
+
 template <typename T>
 size_t memory_of(const std::vector<std::vector<T>>& vector_of_vector) {
     size_t mem = 0;
@@ -239,8 +240,13 @@ ConservativeSphericalPolygonInterpolation::ConservativeSphericalPolygonInterpola
     config.get("tgt_cell_data", tgt_cell_data_ = true);
 
 
+    config.get("statistics.timings", statistics_timings_ = false);
     config.get("statistics.intersection", statistics_intersection_ = false);
     config.get("statistics.conservation", statistics_conservation_ = false);
+    if (statistics_conservation_ && ! statistics_timings_) {
+        Log::info() << "statistics.conservation requested -> enabling statistics.timings";
+        statistics_timings_ = true;
+    }
 
     sharable_data_ = std::make_shared<Data>();
     cache_         = Cache(sharable_data_);
@@ -1048,14 +1054,29 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
     // NOTE: polygon vertex points at distance < pointsSameEPS will be replaced with one point 
     constexpr double pointsSameEPS = 5.e6 * std::numeric_limits<double>::epsilon();
 
+    bool fpe_for_polygon = ConvexSphericalPolygon::fpe();
+    ConvexSphericalPolygon::fpe(false);
+    bool fpe_disabled = fpe_for_polygon ? atlas::library::disable_floating_point_exception(FE_INVALID) : false;
+    auto restore_fpe = [fpe_disabled, fpe_for_polygon] {
+        if (fpe_disabled) {
+            atlas::library::enable_floating_point_exception(FE_INVALID);
+        }
+        ConvexSphericalPolygon::fpe(fpe_for_polygon);
+    };
+
     eckit::Channel blackhole;
     Log::debug() << "Find intersections for " << src_csp.size() << " source polygons" << std::endl;
-    eckit::ProgressTimer progress("Intersecting polygons ", src_csp.size(), " cell", double(10),
+
+    {
+
+    eckit::ProgressTimer progress("Intersecting polygons ", 100, " percent", double(10),
                                   src_csp.size() > 50 ? Log::info() : blackhole);
-    for (idx_t scell = 0; scell < src_csp.size(); ++scell, ++progress) {
+    float last_progress_percent = 0.00;
+    for (idx_t scell = 0; scell < src_csp.size(); ++scell) {
         stopwatch_src_already_in.start();
         bool already_in = src_already_in((std::get<0>(src_csp[scell]).centroid()));
         stopwatch_src_already_in.stop();
+
         if (not already_in) {
             const auto& s_csp       = std::get<0>(src_csp[scell]);
             const double s_csp_area = s_csp.area();
@@ -1064,16 +1085,16 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                 continue;
             }
             double src_cover_area   = 0.;
-            stopwatch_kdtree_search.start();
+            if (statistics_timings_) { stopwatch_kdtree_search.start(); }
             auto tgt_cells = kdt_search.closestPointsWithinRadius(s_csp.centroid(), s_csp.radius() + max_tgtcell_rad);
-            stopwatch_kdtree_search.stop();
+            if (statistics_timings_) { stopwatch_kdtree_search.stop(); }
             for (idx_t ttcell = 0; ttcell < tgt_cells.size(); ++ttcell) {
                 auto tcell        = tgt_cells[ttcell].payload();
                 const auto& t_csp = std::get<0>(tgt_csp[tcell]);
-                stopwatch_polygon_intersections.start();
+                if (statistics_timings_) { stopwatch_polygon_intersections.start(); }
                 ConvexSphericalPolygon csp_i = s_csp.intersect(t_csp, nullptr, pointsSameEPS);
                 double csp_i_area            = csp_i.area();
-                stopwatch_polygon_intersections.stop();
+                if (statistics_timings_) { stopwatch_polygon_intersections.stop(); }
                 if (validate_) {
                     int pout;
                     // TODO: this can be removed soon
@@ -1132,7 +1153,16 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                 num_pol[SRC_TGT_INTERSECT] += src_iparam_[scell].weights.size();
             }
         } // already in
+        if ( double(scell) / double(src_csp.size()) > last_progress_percent ) {
+            last_progress_percent += 0.01;
+            ++progress;
+        }
     }
+
+    }
+
+    restore_fpe();
+
     timings.polygon_intersections  = stopwatch_polygon_intersections.elapsed();
     timings.target_kdtree_search   = stopwatch_kdtree_search.elapsed();
     timings.source_polygons_filter = stopwatch_src_already_in.elapsed();
@@ -1800,12 +1830,14 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
     }
 
     auto& timings = data_->timings;
+    if (statistics_timings_) {
+        metadata.set("timings.target_kdtree_search", timings.target_kdtree_search);
+        metadata.set("timings.polygon_intersections", timings.polygon_intersections);
+    }
     metadata.set("timings.source_polygons_assembly", timings.source_polygons_assembly);
     metadata.set("timings.target_polygons_assembly", timings.target_polygons_assembly);
     metadata.set("timings.target_kdtree_assembly", timings.target_kdtree_assembly);
-    metadata.set("timings.target_kdtree_search", timings.target_kdtree_search);
     metadata.set("timings.source_polygons_filter", timings.source_polygons_filter);
-    metadata.set("timings.polygon_intersections", timings.polygon_intersections);
     metadata.set("timings.matrix_assembly", timings.matrix_assembly);
     metadata.set("timings.interpolation", stopwatch.elapsed());
 
