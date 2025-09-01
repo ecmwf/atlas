@@ -213,8 +213,18 @@ ConservativeSphericalPolygonInterpolation::ConservativeSphericalPolygonInterpola
     config.get("matrix_free", matrix_free_ = false);
     config.get("src_cell_data", src_cell_data_ = true);
     config.get("tgt_cell_data", tgt_cell_data_ = true);
+    config.get("statistics.all", statistics_all_ = false);
+    config.get("statistics.timings", statistics_timings_ = false);
     config.get("statistics.intersection", statistics_intersection_ = false);
     config.get("statistics.conservation", statistics_conservation_ = false);
+    config.get("statistics.conservation", statistics_conservation_ = false);
+    if (statistics_all_) {
+        Log::info() << "statistics.all required. Enabling statistics.timings, statistics.intersection, statistics.conservation, statistics.accuracy, and validate." << std::endl;
+        validate_ = true;
+        statistics.timings_ = true;
+        statistics.timings_ = true;
+        statistics.timings_ = true;
+    }
 
     sharable_data_ = std::make_shared<Data>();
     cache_         = Cache(sharable_data_);
@@ -2094,9 +2104,14 @@ Field ConservativeSphericalPolygonInterpolation::Statistics::diff(const Interpol
 }
 
 
-ConservativeSphericalPolygonInterpolation::Metadata ConservativeSphericalPolygonInterpolation::Statistics::accuracy(const Interpolation& interpolation,
-                                                                         const Field target,
-                                                                         std::function<double(const PointLonLat&)> func) {
+ConservativeSphericalPolygonInterpolation::Metadata
+ConservativeSphericalPolygonInterpolation::Statistics::accuracy(const Interpolation& interpolation,
+                                                                const Field target,
+                                                                std::function<double(const PointLonLat&)> func) {
+    if (! statistics_accuracy_) {
+        Log::info() << "Please enable statistics.accuracy in ConvexShpericalPolygonInterpolation.";
+        return ConservativeSphericalPolygonInterpolation::Metadata();
+    }
     auto tgt_vals             = array::make_view<double, 1>(target);
     auto cachable_data_       = ConservativeSphericalPolygonInterpolation::Cache(interpolation).get();
     auto tgt_mesh_            = extract_mesh(cachable_data_->src_fs_);
