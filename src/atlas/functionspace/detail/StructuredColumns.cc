@@ -808,22 +808,22 @@ struct FixupHaloForVectors<3> {
 
 
 template <int RANK>
-void dispatch_haloExchange(Field& field, const parallel::HaloExchange& halo_exchange, const StructuredColumns& fs) {
+void dispatch_haloExchange(Field& field, bool on_device, const parallel::HaloExchange& halo_exchange, const StructuredColumns& fs) {
     FixupHaloForVectors<RANK> fixup_halos(fs);
     if (field.datatype() == array::DataType::kind<int>()) {
-        halo_exchange.template execute<int, RANK>(field.array(), false);
+        halo_exchange.template execute<int, RANK>(field.array(), on_device);
         fixup_halos.template apply<int>(field);
     }
     else if (field.datatype() == array::DataType::kind<long>()) {
-        halo_exchange.template execute<long, RANK>(field.array(), false);
+        halo_exchange.template execute<long, RANK>(field.array(), on_device);
         fixup_halos.template apply<long>(field);
     }
     else if (field.datatype() == array::DataType::kind<float>()) {
-        halo_exchange.template execute<float, RANK>(field.array(), false);
+        halo_exchange.template execute<float, RANK>(field.array(), on_device);
         fixup_halos.template apply<float>(field);
     }
     else if (field.datatype() == array::DataType::kind<double>()) {
-        halo_exchange.template execute<double, RANK>(field.array(), false);
+        halo_exchange.template execute<double, RANK>(field.array(), on_device);
         fixup_halos.template apply<double>(field);
     }
     else {
@@ -834,24 +834,24 @@ void dispatch_haloExchange(Field& field, const parallel::HaloExchange& halo_exch
 
 
 template <int RANK>
-void dispatch_adjointHaloExchange(Field& field, const parallel::HaloExchange& halo_exchange,
+void dispatch_adjointHaloExchange(Field& field, bool on_device, const parallel::HaloExchange& halo_exchange,
                                   const StructuredColumns& fs) {
     FixupHaloForVectors<RANK> fixup_halos(fs);
     if (field.datatype() == array::DataType::kind<int>()) {
         fixup_halos.template apply<int>(field);
-        halo_exchange.template execute_adjoint<int, RANK>(field.array(), false);
+        halo_exchange.template execute_adjoint<int, RANK>(field.array(), on_device);
     }
     else if (field.datatype() == array::DataType::kind<long>()) {
         fixup_halos.template apply<long>(field);
-        halo_exchange.template execute_adjoint<long, RANK>(field.array(), false);
+        halo_exchange.template execute_adjoint<long, RANK>(field.array(), on_device);
     }
     else if (field.datatype() == array::DataType::kind<float>()) {
         fixup_halos.template apply<float>(field);
-        halo_exchange.template execute_adjoint<float, RANK>(field.array(), false);
+        halo_exchange.template execute_adjoint<float, RANK>(field.array(), on_device);
     }
     else if (field.datatype() == array::DataType::kind<double>()) {
         fixup_halos.template apply<double>(field);
-        halo_exchange.template execute_adjoint<double, RANK>(field.array(), false);
+        halo_exchange.template execute_adjoint<double, RANK>(field.array(), on_device);
     }
     else {
         throw_Exception("datatype not supported", Here());
@@ -860,21 +860,21 @@ void dispatch_adjointHaloExchange(Field& field, const parallel::HaloExchange& ha
 }
 }  // namespace
 
-void StructuredColumns::haloExchange(const FieldSet& fieldset, bool) const {
+void StructuredColumns::haloExchange(const FieldSet& fieldset, bool on_device) const {
     for (idx_t f = 0; f < fieldset.size(); ++f) {
         Field& field = const_cast<FieldSet&>(fieldset)[f];
         switch (field.rank()) {
             case 1:
-                dispatch_haloExchange<1>(field, halo_exchange(), *this);
+                dispatch_haloExchange<1>(field, on_device, halo_exchange(), *this);
                 break;
             case 2:
-                dispatch_haloExchange<2>(field, halo_exchange(), *this);
+                dispatch_haloExchange<2>(field, on_device, halo_exchange(), *this);
                 break;
             case 3:
-                dispatch_haloExchange<3>(field, halo_exchange(), *this);
+                dispatch_haloExchange<3>(field, on_device, halo_exchange(), *this);
                 break;
             case 4:
-                dispatch_haloExchange<4>(field, halo_exchange(), *this);
+                dispatch_haloExchange<4>(field, on_device, halo_exchange(), *this);
                 break;
             default:
                 throw_Exception("Rank not supported", Here());
@@ -882,21 +882,21 @@ void StructuredColumns::haloExchange(const FieldSet& fieldset, bool) const {
     }
 }
 
-void StructuredColumns::adjointHaloExchange(const FieldSet& fieldset, bool) const {
+void StructuredColumns::adjointHaloExchange(const FieldSet& fieldset, bool on_device) const {
     for (idx_t f = 0; f < fieldset.size(); ++f) {
         Field& field = const_cast<FieldSet&>(fieldset)[f];
         switch (field.rank()) {
             case 1:
-                dispatch_adjointHaloExchange<1>(field, halo_exchange(), *this);
+                dispatch_adjointHaloExchange<1>(field, on_device, halo_exchange(), *this);
                 break;
             case 2:
-                dispatch_adjointHaloExchange<2>(field, halo_exchange(), *this);
+                dispatch_adjointHaloExchange<2>(field, on_device, halo_exchange(), *this);
                 break;
             case 3:
-                dispatch_adjointHaloExchange<3>(field, halo_exchange(), *this);
+                dispatch_adjointHaloExchange<3>(field, on_device, halo_exchange(), *this);
                 break;
             case 4:
-                dispatch_adjointHaloExchange<4>(field, halo_exchange(), *this);
+                dispatch_adjointHaloExchange<4>(field, on_device, halo_exchange(), *this);
                 break;
             default:
                 throw_Exception("Rank not supported", Here());
@@ -904,16 +904,16 @@ void StructuredColumns::adjointHaloExchange(const FieldSet& fieldset, bool) cons
     }
 }
 
-void StructuredColumns::haloExchange(const Field& field, bool) const {
+void StructuredColumns::haloExchange(const Field& field, bool on_device) const {
     FieldSet fieldset;
     fieldset.add(field);
-    haloExchange(fieldset);
+    haloExchange(fieldset, on_device);
 }
 
-void StructuredColumns::adjointHaloExchange(const Field& field, bool) const {
+void StructuredColumns::adjointHaloExchange(const Field& field, bool on_device) const {
     FieldSet fieldset;
     fieldset.add(field);
-    adjointHaloExchange(fieldset);
+    adjointHaloExchange(fieldset, on_device);
 }
 
 size_t StructuredColumns::footprint() const {
