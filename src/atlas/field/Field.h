@@ -190,11 +190,15 @@ public:
     // -- Methods related to host-device synchronisation
     void updateHost() const;
     void updateDevice() const;
+    void syncHost() const;
+    void syncDevice() const;
     void syncHostDevice() const;
     bool hostNeedsUpdate() const;
     bool deviceNeedsUpdate() const;
     void setHostNeedsUpdate(bool) const;
     void setDeviceNeedsUpdate(bool) const;
+    void setHostNeedsUpdate() const;
+    void setDeviceNeedsUpdate() const;
     bool deviceAllocated() const;
     void allocateDevice();
     void deallocateDevice();
