@@ -69,10 +69,12 @@ inline void set_options(const Options& opts) {
 std::string format_bytes(std::size_t bytes);
 
 namespace log {
-void allocate(std::string_view label, void* ptr, std::size_t bytes, std::size_t alignment, std::string_view resource_name, memory_tracker* memory_tracker);
-void deallocate(std::string_view label, void* ptr, std::size_t bytes, std::size_t alignment, std::string_view resource_name, memory_tracker* memory_tracker);
-void allocate_async(std::string_view label, void* ptr, std::size_t bytes, std::size_t alignment, void* stream, std::string_view resource_name, memory_tracker* memory_tracker);
-void deallocate_async(std::string_view label, void* ptr, std::size_t bytes, std::size_t alignment, void* stream, std::string_view resource_name, memory_tracker* memory_tracker);
+void allocate(std::string_view label, const void* ptr, std::size_t bytes, std::size_t alignment, std::string_view resource_name, memory_tracker* memory_tracker);
+void deallocate(std::string_view label, const void* ptr, std::size_t bytes, std::size_t alignment, std::string_view resource_name, memory_tracker* memory_tracker);
+void allocate_async(std::string_view label, const void* ptr, std::size_t bytes, std::size_t alignment, const void* stream, std::string_view resource_name, memory_tracker* memory_tracker);
+void deallocate_async(std::string_view label, const void* ptr, std::size_t bytes, std::size_t alignment, const void* stream, std::string_view resource_name, memory_tracker* memory_tracker);
+void copy_host_to_device(std::string_view label, const void* dptr, const void* hptr, std::size_t bytes);
+void copy_device_to_host(std::string_view label, const void* hptr, const void* dptr, std::size_t bytes);
 }
 
 }  // namespace pluto::trace
