@@ -73,7 +73,7 @@ std::string format_bytes(std::size_t bytes) {
 }
 
 namespace log {
-void allocate(std::string_view label, void* ptr, std::size_t bytes, std::size_t alignment, std::string_view resource_name, memory_tracker* memory_tracker) {
+void allocate(std::string_view label, const void* ptr, std::size_t bytes, std::size_t alignment, std::string_view resource_name, memory_tracker* memory_tracker) {
     out << "PLUTO_TRACE " << resource_name << "::allocate(";
     if (not label.empty()) {
         out << "label="<<label<<", ";
@@ -84,7 +84,7 @@ void allocate(std::string_view label, void* ptr, std::size_t bytes, std::size_t 
     }
     out << '\n';
 }
-void allocate_async(std::string_view label, void* ptr, std::size_t bytes, std::size_t alignment, void* stream, std::string_view resource_name, memory_tracker* memory_tracker) {
+void allocate_async(std::string_view label, const void* ptr, std::size_t bytes, std::size_t alignment, const void* stream, std::string_view resource_name, memory_tracker* memory_tracker) {
     out << "PLUTO_TRACE " << resource_name << "::allocate_async(";
     if (not label.empty()) {
         out << "label="<<label<<", ";
@@ -96,7 +96,7 @@ void allocate_async(std::string_view label, void* ptr, std::size_t bytes, std::s
     out << '\n';
 }
 
-void deallocate(std::string_view label, void* ptr, std::size_t bytes, std::size_t alignment, std::string_view resource_name, memory_tracker*) {
+void deallocate(std::string_view label, const void* ptr, std::size_t bytes, std::size_t alignment, std::string_view resource_name, memory_tracker*) {
     out << "PLUTO_TRACE " << resource_name << "::deallocate(";
     if (not label.empty()) {
         out << "label="<<label<<", ";
@@ -104,12 +104,30 @@ void deallocate(std::string_view label, void* ptr, std::size_t bytes, std::size_
     out << "ptr="<<ptr<<", bytes="<<format_bytes(bytes)<<", alignment="<<alignment<<")";
     out << '\n';
 }
-void deallocate_async(std::string_view label, void* ptr, std::size_t bytes, std::size_t alignment, void* stream, std::string_view resource_name, memory_tracker*) {
+void deallocate_async(std::string_view label, const void* ptr, std::size_t bytes, std::size_t alignment, const void* stream, std::string_view resource_name, memory_tracker*) {
     out << "PLUTO_TRACE " << resource_name << "::deallocate_async(";
     if (not label.empty()) {
         out << "label="<<label<<", ";
     }
     out << "ptr="<<ptr<<", bytes="<<format_bytes(bytes)<<", alignment="<<alignment<<", stream="<<stream<<")";
+    out << '\n';
+}
+
+void copy_host_to_device(std::string_view label, const void* dptr, const void* hptr, std::size_t bytes) {
+    out << "PLUTO_TRACE copy_host_to_device(";
+    if (not label.empty()) {
+        out << "label="<<label<<", ";
+    }
+    out << "device_ptr="<<dptr<<", host_ptr="<<hptr<<", bytes="<<format_bytes(bytes)<<")";
+    out << '\n';
+}
+
+void copy_device_to_host(std::string_view label, const void* hptr, const void* dptr, std::size_t bytes) {
+    out << "PLUTO_TRACE copy_device_to_host(";
+    if (not label.empty()) {
+        out << "label="<<label<<", ";
+    }
+    out << "host_ptr="<<hptr<<", device_ptr="<<dptr<<", bytes="<<format_bytes(bytes)<<")";
     out << '\n';
 }
 }

@@ -39,9 +39,21 @@ inline SparseMatrixStorage make_sparse_matrix_storage(eckit::linalg::SparseMatri
     std::size_t rows = m.rows();
     std::size_t cols = m.cols();
     std::size_t nnz  = m.nonZeros();
-    auto* outer = array::Array::wrap(const_cast<Index*>(m.outer()), array::make_shape(rows+1));
-    auto* inner = array::Array::wrap(const_cast<Index*>(m.inner()), array::make_shape(nnz));
-    auto* value = array::Array::wrap(const_cast<Value*>(m.data()),  array::make_shape(nnz));
+    array::Array* outer;
+    array::Array* inner;
+    array::Array* value;
+    {
+        array::label label{"sparse_matrix.outer"};
+        outer = array::Array::wrap(const_cast<Index*>(m.outer()), array::make_shape(rows+1));
+    }
+    {
+        array::label label{"sparse_matrix.inner"};
+        inner = array::Array::wrap(const_cast<Index*>(m.inner()), array::make_shape(nnz));
+    }
+    {
+        array::label label{"sparse_matrix.value"};
+        value = array::Array::wrap(const_cast<Value*>(m.data()),  array::make_shape(nnz));
+    }
 
     // We now move the eckit::linalg::SparseMatrix into a generic storage so
     //   the wrapped array data does not go out of scope
@@ -63,9 +75,22 @@ SparseMatrixStorage make_sparse_matrix_storage(eckit::linalg::SparseMatrix&& m) 
     std::size_t rows = m.rows();
     std::size_t cols = m.cols();
     std::size_t nnz  = m.nonZeros();
-    auto* outer = array::Array::create<index_type>(rows+1);
-    auto* inner = array::Array::create<index_type>(nnz);
-    auto* value = array::Array::create<value_type>(nnz);
+
+    array::Array* outer;
+    array::Array* inner;
+    array::Array* value;
+    {
+        array::label label{"sparse_matrix.outer"};
+        outer = array::Array::create<index_type>(rows+1);
+    }
+    {
+        array::label label{"sparse_matrix.inner"};
+        inner = array::Array::create<index_type>(nnz);
+    }
+    {
+        array::label label{"sparse_matrix.value"};
+        value = array::Array::create<value_type>(nnz);
+    }
 
     host_copy_eckit<index_type>(m.outer(), *outer);
     host_copy_eckit<index_type>(m.inner(), *inner);
@@ -87,9 +112,22 @@ inline SparseMatrixStorage make_sparse_matrix_storage(const eckit::linalg::Spars
     std::size_t rows = m.rows();
     std::size_t cols = m.cols();
     std::size_t nnz  = m.nonZeros();
-    auto* outer = array::Array::create<Index>(rows+1);
-    auto* inner = array::Array::create<Index>(nnz);
-    auto* value = array::Array::create<Value>(nnz);
+
+    array::Array* outer;
+    array::Array* inner;
+    array::Array* value;
+    {
+        array::label label{"sparse_matrix.outer"};
+        outer = array::Array::create<Index>(rows+1);
+    }
+    {
+        array::label label{"sparse_matrix.inner"};
+        inner = array::Array::create<Index>(nnz);
+    }
+    {
+        array::label label{"sparse_matrix.value"};
+        value = array::Array::create<Value>(nnz);
+    }
 
     host_copy_eckit<Index>(m.outer(), *outer);
     host_copy_eckit<Index>(m.inner(), *inner);
@@ -109,9 +147,22 @@ SparseMatrixStorage make_sparse_matrix_storage(const eckit::linalg::SparseMatrix
     std::size_t rows = m.rows();
     std::size_t cols = m.cols();
     std::size_t nnz  = m.nonZeros();
-    auto* outer = array::Array::create<index_type>(rows+1);
-    auto* inner = array::Array::create<index_type>(nnz);
-    auto* value = array::Array::create<value_type>(nnz);
+
+    array::Array* outer;
+    array::Array* inner;
+    array::Array* value;
+    {
+        array::label label{"sparse_matrix.outer"};
+        outer = array::Array::create<index_type>(rows+1);
+    }
+    {
+        array::label label{"sparse_matrix.inner"};
+        inner = array::Array::create<index_type>(nnz);
+    }
+    {
+        array::label label{"sparse_matrix.value"};
+        value = array::Array::create<value_type>(nnz);
+    }
     host_copy_eckit<index_type>(m.outer(), *outer);
     host_copy_eckit<index_type>(m.inner(), *inner);
     host_copy_eckit<value_type>(m.data(),  *value);
