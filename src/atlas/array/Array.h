@@ -129,6 +129,10 @@ public:
 
     void syncHostDevice() const { data_store_->syncHostDevice(); }
 
+    void syncHost() const { data_store_->syncHost(); }
+
+    void syncDevice() const { data_store_->syncDevice(); }
+
     bool hostNeedsUpdate() const { return data_store_->hostNeedsUpdate(); }
 
     bool deviceNeedsUpdate() const { return data_store_->deviceNeedsUpdate(); }

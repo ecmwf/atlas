@@ -165,7 +165,11 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
               auto src = eckit::linalg::Vector(src_data.data(), src_data.size());
               auto tgt = eckit::linalg::Vector(tgt_data.data(), tgt_data.size());
               auto eckit_matrix = atlas::linalg::make_non_owning_eckit_sparse_matrix(matrix);
+#if ATLAS_ECKIT_VERSION_AT_LEAST(1, 19, 0)
               eckit::linalg::LinearAlgebraSparse::backend().spmv(eckit_matrix, src, tgt);
+#else
+              eckit::linalg::LinearAlgebra::backend().spmv(eckit_matrix, src, tgt);
+#endif
             }
             auto tfield_global_v = array::make_view<double,1>(tgt_field_global);
             for (gidx_t i = 0; i < tgt_data.size(); ++i) {
@@ -207,7 +211,11 @@ using SparseMatrixStorage = atlas::linalg::SparseMatrixStorage;
                 }
                 auto tgt = eckit::linalg::Vector(tgt_data.data(), tgt_data.size());
                 auto eckit_matrix = atlas::linalg::make_non_owning_eckit_sparse_matrix(gmatrix);
+#if ATLAS_ECKIT_VERSION_AT_LEAST(1, 19, 0)
                 eckit::linalg::LinearAlgebraSparse::backend().spmv(eckit_matrix, src, tgt);
+#else
+                eckit::linalg::LinearAlgebra::backend().spmv(eckit_matrix, src, tgt);
+#endif
             }
         }
 

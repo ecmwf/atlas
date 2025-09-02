@@ -227,6 +227,14 @@ std::string Library::dataPath() const {
     return join(paths, ":");
 }
 
+std::string atlas::Library::linalgFFTBackend() const {
+    auto resource = []() -> std::string {
+        return eckit::LibResource<std::string, Library>("atlas-linalg-fft-backend;$ATLAS_LINALG_FFT_BACKEND", "");
+    };
+    static std::string ATLAS_LINALG_FFT_BACKEND = resource();
+    return ATLAS_LINALG_FFT_BACKEND;
+}
+
 std::string atlas::Library::linalgSparseBackend() const {
     auto resource = []() -> std::string {
         return eckit::LibResource<std::string, Library>("atlas-linalg-sparse-backend;$ATLAS_LINALG_SPARSE_BACKEND", "");

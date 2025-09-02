@@ -74,7 +74,7 @@ else
   fi
 fi
 
-if [ -z "${ATLAS_RUN_NPROCS}" ]; then
+if [ -z "${ATLAS_RUN_NPROCS}" ] && [ -z "${ATLAS_RUN_NGPUS}" ]; then
   echo + export ECKIT_MPI_FORCE=serial
   export ECKIT_MPI_FORCE=serial
 fi

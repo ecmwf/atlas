@@ -275,6 +275,16 @@ void atlas__Field__update_host(FieldImpl* This) {
     This->updateHost();
 }
 
+void atlas__Field__sync_device(FieldImpl* This) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_Field");
+    This->syncDevice();
+}
+
+void atlas__Field__sync_host(FieldImpl* This) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_Field");
+    This->syncHost();
+}
+
 void atlas__Field__sync_host_device(FieldImpl* This) {
     ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_Field");
     This->syncHostDevice();

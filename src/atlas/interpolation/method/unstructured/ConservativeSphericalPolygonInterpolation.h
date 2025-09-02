@@ -94,9 +94,9 @@ public:
             SRC_PLG = 0,  // index, number of source polygons
             TGT_PLG,      // index, number of target polygons
             INT_PLG,      // index, number of intersection polygons
-            UNCVR_SRC     // index, number of uncovered source polygons
+            UNCVR_SRC,    // index, number of uncovered source polygons
+            COUNTS_ENUM_SIZE
         };
-        std::array<int, 4> counts;
         enum Errors
         {
             SRC_SUBPLG_L1 = 0,  // index, \sum_{cell of mesh} {cell.area - \sum_{subpol of cell} subpol.area}
@@ -113,6 +113,7 @@ public:
             REMAP_LINF,  // index, like REMAP_L2 but in L_infinity norm
             ERRORS_ENUM_SIZE
         };
+        std::array<int, COUNTS_ENUM_SIZE> counts;
         std::array<double, ERRORS_ENUM_SIZE> errors;
 
         double tgt_area_sum;
@@ -137,8 +138,9 @@ public:
 
     using Method::do_setup;
     void do_setup(const FunctionSpace& src_fs, const FunctionSpace& tgt_fs) override;
-    void do_setup(const Grid& src_grid, const Grid& tgt_grid, const interpolation::Cache&) override;
     void do_setup(const FunctionSpace& source, const FunctionSpace& target, const interpolation::Cache&) override;
+    void do_setup(const Grid& src_grid, const Grid& tgt_grid, const interpolation::Cache&) override;
+
     void do_execute(const Field& src_field, Field& tgt_field, Metadata&) const override;
     void do_execute(const FieldSet& src_fields, FieldSet& tgt_fields, Metadata&) const override;
 
@@ -195,6 +197,7 @@ private:
     int normalise_intersections_;
     int order_;
     bool matrix_free_;
+    bool statistics_timings_;
     bool statistics_intersection_;
     bool statistics_conservation_;
 
