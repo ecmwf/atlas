@@ -182,10 +182,14 @@ private:
 
     std::vector<idx_t> get_node_neighbours(Mesh&, idx_t jcell, Workspace&) const;
     void init_csp_index(bool cell_data, FunctionSpace fs, gidx_t& csp_index_size, std::vector<idx_t>& csp_index);
-    CSPolygonArray get_polygons_celldata(FunctionSpace) const;
+    ConvexSphericalPolygon get_csp(idx_t csp_id, Mesh mesh, bool cell_data, std::vector<idx_t>& csp2node,
+        std::vector<std::vector<idx_t>>& node2csp, gidx_t& csp_index_size, std::vector<idx_t>& csp_index);
+    CSPolygonArray get_polygons_celldata(FunctionSpace, std::vector<idx_t>& csp2node,
+                                         std::vector<std::vector<idx_t>>& node2csp,
+                                         gidx_t& csp_index_size, std::vector<idx_t>& csp_index);
     CSPolygonArray get_polygons_nodedata(FunctionSpace, std::vector<idx_t>& csp2node,
                                          std::vector<std::vector<idx_t>>& node2csp,
-                                         std::array<double, 2>& errors) const;
+                                         gidx_t& csp_index_size, std::vector<idx_t>& csp_index);
 
     int next_index(int current_index, int size, int offset = 1) const;
     int prev_index(int current_index, int size, int offset = 1) const;

@@ -416,60 +416,182 @@ init_csp_index(bool cell_data, FunctionSpace fs, gidx_t& csp_index_size, std::ve
     const auto& cell2node = mesh.cells().node_connectivity();
     const auto cell_halo   = array::make_view<int, 1>(mesh.cells().halo());
     csp_index_size = 0;
-    auto fs_halo = cell_data ? functionspace::CellColumns(fs).halo().size() : functionspace::NodeColumns(fs).halo().size();;
-    for (idx_t cell = 0; cell < mesh.cells().size(); ++cell) {
-        if( cell_halo(cell) > fs_halo ) {
-            continue;
+    auto fs_halo = cell_data ? functionspace::CellColumns(fs).halo().size() : functionspace::NodeColumns(fs).halo().size();
+    if (cell_data) {
+        for (idx_t cell = 0; cell < mesh.cells().size(); ++cell) {
+            if (cell_halo(cell) > fs_halo) {
+                continue;
+            }
+            csp_index.emplace_back(1 + cell);
         }
-        csp_index_size += cell_data ? 1 : cell2node.cols(cell);
+        csp_index_size = csp_index.size();
     }
-    csp_index.resize(csp_index_size);
-    csp_index[0] = cell_data ? 1 : cell2node.cols(0);
-    for (idx_t cell = 1; cell < mesh.cells().size(); ++cell) {
-        if (cell_halo(cell) > fs_halo) {
-            continue;
+    else {
+        const auto nodes_ll   = array::make_view<double, 2>(mesh.nodes().lonlat());
+        const auto node_flags = array::make_view<int, 1>(mesh.nodes().flags());
+        csp_index.emplace_back(cell2node.cols(0));
+        auto ll2xyz = [](const atlas::PointLonLat& p_ll) {
+            PointXYZ p_xyz;
+            eckit::geometry::Sphere::convertSphericalToCartesian(1., p_ll, p_xyz);
+            return p_xyz;
+        };
+        for (idx_t cell = 1; cell < mesh.cells().size(); ++cell) {
+            if (cell_halo(cell) > fs_halo) {
+                continue;
+            }
+            const idx_t n_nodes = cell2node.cols(cell);
+            for (idx_t inode = 0; inode < n_nodes; ++inode) {
+                idx_t node0             = cell2node(cell, inode);
+                idx_t node1             = cell2node(cell, next_index(inode, n_nodes));
+                const PointLonLat p0_ll = PointLonLat{nodes_ll(node0, 0), nodes_ll(node0, 1)};
+                const PointLonLat p1_ll = PointLonLat{nodes_ll(node1, 0), nodes_ll(node1, 1)};
+                PointXYZ p0             = ll2xyz(p0_ll);
+                PointXYZ p1             = ll2xyz(p1_ll);
+                if (PointXYZ::norm(p0 - p1) < 1e-14) {
+                    continue;  // skip this edge = a pole point
+                }
+                if (not valid_point(node0, node_flags)) {
+                    continue;
+                }
+            }
+            csp_index.emplace_back(csp_index[cell - 1] + cell2node.cols(cell));
         }
-        csp_index[cell] = cell_data ? 1 + cell : csp_index[cell - 1] + cell2node.cols(cell);
+        csp_index_size = csp_index.size();
     }
+}
+
+
+ConvexSphericalPolygon ConservativeSphericalPolygonInterpolation::
+get_csp(idx_t csp_id, Mesh mesh, bool cell_data, std::vector<idx_t>& csp2node, std::vector<std::vector<idx_t>>& node2csp,
+    gidx_t& csp_index_size, std::vector<idx_t>& csp_index) {
+    const auto& cell2node  = mesh.cells().node_connectivity();
+    std::vector<PointLonLat> pts_ll;
+
+    // find cell hosting the subcell
+    idx_t cell = std::upper_bound(csp_index.begin(), csp_index.end(), csp_id) - csp_index.begin();
+
+    const idx_t n_nodes = cell2node.cols(cell);
+    const auto nodes_ll   = array::make_view<double, 2>(mesh.nodes().lonlat());
+    pts_ll.clear();
+    pts_ll.resize(n_nodes);
+
+    if (cell_data) {
+        for (idx_t jnode = 0; jnode < n_nodes; ++jnode) {
+            idx_t inode   = cell2node(cell, jnode);
+            pts_ll[jnode] = PointLonLat{nodes_ll(inode, 0), nodes_ll(inode, 1)};
+        }
+        return ConvexSphericalPolygon(pts_ll);
+    }
+    else {
+        const auto node_flags = array::make_view<int, 1>(mesh.nodes().flags());
+        const auto& cell2node = mesh.cells().node_connectivity();
+
+        auto xyz2ll           = [](const atlas::PointXYZ& p_xyz) {
+            PointLonLat p_ll;
+            eckit::geometry::Sphere::convertCartesianToSpherical(1., p_xyz, p_ll);
+            return p_ll;
+        };
+        auto ll2xyz = [](const atlas::PointLonLat& p_ll) {
+            PointXYZ p_xyz;
+            eckit::geometry::Sphere::convertSphericalToCartesian(1., p_ll, p_xyz);
+            return p_xyz;
+        };
+
+        PointXYZ cell_mid(0., 0., 0.);  // cell centre
+        std::vector<PointXYZ> pts_xyz;
+        std::vector<int> pts_idx;
+        pts_xyz.clear();
+        pts_ll.clear();
+        pts_idx.clear();
+        pts_xyz.reserve(n_nodes);
+        pts_ll.reserve(n_nodes);
+        pts_idx.reserve(n_nodes);
+        for (idx_t inode = 0; inode < n_nodes; ++inode) {
+            idx_t node0             = cell2node(cell, inode);
+            if (not valid_point(node0, node_flags)) {
+                continue;
+            }
+            idx_t node1             = cell2node(cell, next_index(inode, n_nodes));
+            const PointLonLat p0_ll = PointLonLat{nodes_ll(node0, 0), nodes_ll(node0, 1)};
+            const PointLonLat p1_ll = PointLonLat{nodes_ll(node1, 0), nodes_ll(node1, 1)};
+            PointXYZ p0             = ll2xyz(p0_ll);
+            PointXYZ p1             = ll2xyz(p1_ll);
+            if (PointXYZ::norm(p0 - p1) < 1e-14) {
+                continue;  // skip this edge = a pole point
+            }
+            pts_xyz.emplace_back(p0);
+            pts_ll.emplace_back(p0_ll);
+            pts_idx.emplace_back(inode);
+            cell_mid = cell_mid + p0;
+            cell_mid = cell_mid + p1;
+        }
+        // cell_mid  = PointXYZ::div(cell_mid, PointXYZ::norm(cell_mid));
+        cell_mid  = PointXYZ::normalize(cell_mid);
+        // NOTE: It should not happen that we got less than 3 vertices
+        // if (pts_xyz.size() < 3) {
+        //     continue; // skip this cell
+        // }
+        idx_t index_in_cell = csp_id - (cell == 0 ? 0 : csp_index[cell - 1]);
+        PointLonLat cell_ll       = xyz2ll(cell_mid);
+        // get ConvexSphericalPolygon for each valid edge
+        for (int inode = 0; inode < pts_idx.size(); inode++) {
+            int inode_n        = next_index(inode, pts_idx.size());
+            if (index_in_cell > 0) {
+                --index_in_cell;
+                continue;
+            }
+            PointXYZ iedge_mid = pts_xyz[inode] + pts_xyz[inode_n];
+            iedge_mid          = PointXYZ::div(iedge_mid, PointXYZ::norm(iedge_mid));
+            // csp2node.emplace_back(node_n);
+            // node2csp[node_n].emplace_back(csp_id);
+            int inode_nn = next_index(inode_n, pts_idx.size());
+            if (PointXYZ::norm(pts_xyz[inode_nn] - pts_xyz[inode_n]) < 1e-14) {
+                ATLAS_THROW_EXCEPTION("Three cell vertices on a same great arc!");
+            }
+            PointXYZ jedge_mid;
+            jedge_mid = pts_xyz[inode_nn] + pts_xyz[inode_n];
+            jedge_mid = PointXYZ::div(jedge_mid, PointXYZ::norm(jedge_mid));
+            std::array<PointLonLat, 4> subpol_pts_ll;
+            subpol_pts_ll[0] = cell_ll;
+            subpol_pts_ll[1] = xyz2ll(iedge_mid);
+            subpol_pts_ll[2] = pts_ll[inode_n];
+            subpol_pts_ll[3] = xyz2ll(jedge_mid);
+
+            ConvexSphericalPolygon cspi(subpol_pts_ll);
+            return cspi;
+        }
+    }
+    return ConvexSphericalPolygon();
 }
 
 
 // Create polygons for cell-centred data. Here, the polygons are mesh cells
 ConservativeSphericalPolygonInterpolation::CSPolygonArray
-ConservativeSphericalPolygonInterpolation::get_polygons_celldata(FunctionSpace fs) const {
+ConservativeSphericalPolygonInterpolation::
+get_polygons_celldata(FunctionSpace fs, std::vector<idx_t>& csp2node, std::vector<std::vector<idx_t>>& node2csp,
+    gidx_t& csp_index_size, std::vector<idx_t>& csp_index) {
     ATLAS_TRACE("ConservativeSphericalPolygonInterpolation: get_polygons_celldata");
     CSPolygonArray cspolygons;
     auto mesh = extract_mesh(fs);
     const idx_t n_cells = mesh.cells().size();
     cspolygons.resize(n_cells);
-    const auto& cell2node  = mesh.cells().node_connectivity();
-    const auto lonlat      = array::make_view<double, 2>(mesh.nodes().lonlat());
     const auto cell_halo   = array::make_view<int, 1>(mesh.cells().halo());
     const auto& cell_flags = array::make_view<int, 1>(mesh.cells().flags());
     const auto& cell_part  = array::make_view<int, 1>(mesh.cells().partition());
-    std::vector<PointLonLat> pts_ll;
-    const int fs_halo = functionspace::CellColumns(fs).halo().size();
-    for (idx_t cell = 0; cell < n_cells; ++cell) {
-        if( cell_halo(cell) > fs_halo ) {
-            continue;
-        }
+    for(idx_t i = 0; i < csp_index_size; ++i) {
+        idx_t cell = csp_index[i] - 1;
         int halo_type       = cell_halo(cell);
-        const idx_t n_nodes = cell2node.cols(cell);
-        pts_ll.clear();
-        pts_ll.resize(n_nodes);
-        for (idx_t jnode = 0; jnode < n_nodes; ++jnode) {
-            idx_t inode   = cell2node(cell, jnode);
-            pts_ll[jnode] = PointLonLat{lonlat(inode, 0), lonlat(inode, 1)};
-        }
         const auto& bitflag = util::Bitflags::view(cell_flags(cell));
         if (bitflag.check(util::Topology::PERIODIC) and mpi::rank() == cell_part(cell)) {
             halo_type = -1;
         }
-        std::get<0>(cspolygons[cell]) = ConvexSphericalPolygon(pts_ll);
+        bool cell_data = true;
+        std::get<0>(cspolygons[cell]) = get_csp(i, mesh, cell_data, csp2node, node2csp, csp_index_size, csp_index);
         std::get<1>(cspolygons[cell]) = halo_type;
     }
     return cspolygons;
 }
+
 
 // Create polygons for cell-vertex data. Here, the polygons are subcells of mesh cells created as
 // 	 (cell_centre, edge_centre, cell_vertex, edge_centre)
@@ -477,7 +599,7 @@ ConservativeSphericalPolygonInterpolation::get_polygons_celldata(FunctionSpace f
 ConservativeSphericalPolygonInterpolation::CSPolygonArray
 ConservativeSphericalPolygonInterpolation::get_polygons_nodedata(FunctionSpace fs, std::vector<idx_t>& csp2node,
                                                                  std::vector<std::vector<idx_t>>& node2csp,
-                                                                 std::array<double, 2>& errors) const {
+                                                                 gidx_t& csp_index_size, std::vector<idx_t>& csp_index) {
     ATLAS_TRACE("ConservativeSphericalPolygonInterpolation: get_polygons_nodedata");
     CSPolygonArray cspolygons;
     csp2node.clear();
@@ -502,7 +624,6 @@ ConservativeSphericalPolygonInterpolation::get_polygons_nodedata(FunctionSpace f
     const auto node_part  = array::make_view<int, 1>(mesh.nodes().partition());
 
     idx_t cspol_id = 0;         // subpolygon enumeration
-    errors         = {0., 0.};  // over/undershoots in creation of subpolygons
     const int fs_halo = functionspace::NodeColumns(fs).halo().size();
 
     std::vector<PointXYZ> pts_xyz;
@@ -513,9 +634,11 @@ ConservativeSphericalPolygonInterpolation::get_polygons_nodedata(FunctionSpace f
         if( cell_halo(cell) > fs_halo ) {
             continue;
         }
-        ATLAS_ASSERT(cell < cell2node.rows());
         const idx_t n_nodes = cell2node.cols(cell);
+#if ATLAS_BUILD_TYPE_DEBUG
+        ATLAS_ASSERT(cell < cell2node.rows());
         ATLAS_ASSERT(n_nodes > 2);
+#endif
         PointXYZ cell_mid(0., 0., 0.);  // cell centre
         pts_xyz.clear();
         pts_ll.clear();
@@ -542,12 +665,11 @@ ConservativeSphericalPolygonInterpolation::get_polygons_nodedata(FunctionSpace f
             cell_mid = cell_mid + p0;
             cell_mid = cell_mid + p1;
         }
-        if (pts_xyz.size() < 3) {
-            continue; // skip this cell
-        }
+        // if (pts_xyz.size() < 3) {
+        //     continue; // skip this cell
+        // }
         cell_mid                  = PointXYZ::div(cell_mid, PointXYZ::norm(cell_mid));
         PointLonLat cell_ll       = xyz2ll(cell_mid);
-        double loc_csp_area_shoot = ConvexSphericalPolygon(pts_ll).area();
         // get ConvexSphericalPolygon for each valid edge
         int halo_type{0};
         for (int inode = 0; inode < pts_idx.size(); inode++) {
@@ -577,18 +699,11 @@ ConservativeSphericalPolygonInterpolation::get_polygons_nodedata(FunctionSpace f
             }
 
             ConvexSphericalPolygon cspi(subpol_pts_ll);
-            loc_csp_area_shoot -= cspi.area();
+            // bool cell_data = false;
+            // auto cspi = get_csp(cspol_id, mesh, cell_data, csp2node, node2csp, csp_index_size, csp_index);
             cspolygons.emplace_back(cspi, halo_type);
             cspol_id++;
         }
-        if (halo_type == 0) {
-            errors[0] += std::abs(loc_csp_area_shoot);
-            errors[1] = std::max(std::abs(loc_csp_area_shoot), errors[1]);
-        }
-    }
-    ATLAS_TRACE_MPI(ALLREDUCE) {
-        mpi::comm().allReduceInPlace(&errors[0], 1, eckit::mpi::sum());
-        mpi::comm().allReduceInPlace(&errors[1], 1, eckit::mpi::max());
     }
     return cspolygons;
 }
@@ -773,12 +888,14 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
         ATLAS_TRACE("Get source polygons");
         StopWatch stopwatch;
         stopwatch.start();
+        init_csp_index(src_cell_data_, src_fs_, src_csp_index_size_, src_csp_index_);
         if (src_cell_data_) {
-            src_csp = get_polygons_celldata(src_fs_);
+            src_csp = get_polygons_celldata(src_fs_, sharable_data_->src_csp2node_, sharable_data_->src_node2csp_,
+                src_csp_index_size_, src_csp_index_);
         }
         else {
-            src_csp =
-                get_polygons_nodedata(src_fs_, sharable_data_->src_csp2node_, sharable_data_->src_node2csp_, errors);
+            src_csp = get_polygons_nodedata(src_fs_, sharable_data_->src_csp2node_, sharable_data_->src_node2csp_,
+                src_csp_index_size_, src_csp_index_);
         }
         stopwatch.stop();
         sharable_data_->timings.source_polygons_assembly = stopwatch.elapsed();
@@ -789,12 +906,14 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
         errors = {0., 0.};
         ATLAS_TRACE("Get target polygons");
         stopwatch.start();
+        init_csp_index(tgt_cell_data_, tgt_fs_, tgt_csp_index_size_, tgt_csp_index_);
         if (tgt_cell_data_) {
-            tgt_csp = get_polygons_celldata(tgt_fs_);
+            tgt_csp = get_polygons_celldata(tgt_fs_, sharable_data_->tgt_csp2node_, sharable_data_->tgt_node2csp_,
+                tgt_csp_index_size_, tgt_csp_index_);
         }
         else {
-            tgt_csp =
-                get_polygons_nodedata(tgt_fs_, sharable_data_->tgt_csp2node_, sharable_data_->tgt_node2csp_, errors);
+            tgt_csp = get_polygons_nodedata(tgt_fs_, sharable_data_->tgt_csp2node_, sharable_data_->tgt_node2csp_,
+                tgt_csp_index_size_, tgt_csp_index_);
         }
         stopwatch.stop();
         sharable_data_->timings.target_polygons_assembly = stopwatch.elapsed();
@@ -816,9 +935,6 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
 
     if (compute_cache) {
         intersect_polygons(src_csp, tgt_csp);
-
-        // init_csp_index(src_cell_data_, src_fs_, src_csp_index_size_, src_csp_index_);
-        // init_csp_index(tgt_cell_data_, tgt_fs_, tgt_csp_index_size_, tgt_csp_index_);
 
         auto& src_points_ = sharable_data_->src_points_;
         src_points_.resize(n_spoints_);
