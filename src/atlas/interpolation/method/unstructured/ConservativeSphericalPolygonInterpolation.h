@@ -209,12 +209,9 @@ private:
     int normalise_intersections_;
     int order_;
     bool matrix_free_;
-<<<<<<< HEAD
-=======
     bool statistics_timings_;
     bool statistics_intersection_;
     bool statistics_conservation_;
->>>>>>> f31fa2654 (condition stopwatches in the intersection-of-polygon loop -> further performance gain)
 
     mutable Statistics remap_stat_;
 
