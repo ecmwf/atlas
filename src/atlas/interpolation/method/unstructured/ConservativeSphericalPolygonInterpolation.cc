@@ -542,15 +542,9 @@ get_csp(idx_t csp_id, Mesh mesh, bool cell_data, std::vector<idx_t>& csp2node, s
         // if (pts_xyz.size() < 3) {
         //     continue; // skip this cell
         // }
-        idx_t index_in_cell = offset;
         PointLonLat cell_ll = xyz2ll(cell_mid);
         ATLAS_ASSERT(offset < pts_idx.size());
-        // get ConvexSphericalPolygon for each valid edge
-        // for (int inode = 0; inode < pts_idx.size(); inode++) {
-        //     if (index_in_cell > 0) {
-        //         --index_in_cell;
-        //         continue;
-        //     }
+
         {
             idx_t inode = offset;
             int inode_n        = next_index(inode, pts_idx.size());
@@ -623,7 +617,6 @@ get_polygons_nodedata(FunctionSpace fs, std::vector<idx_t>& csp2node,
     node2csp.resize(mesh.nodes().size());
     const auto nodes_ll   = array::make_view<double, 2>(mesh.nodes().lonlat());
     const auto& cell2node = mesh.cells().node_connectivity();
-    const auto cell_halo  = array::make_view<int, 1>(mesh.cells().halo());
     auto xyz2ll           = [](const atlas::PointXYZ& p_xyz) {
         PointLonLat p_ll;
         eckit::geometry::Sphere::convertCartesianToSpherical(1., p_xyz, p_ll);
@@ -639,16 +632,10 @@ get_polygons_nodedata(FunctionSpace fs, std::vector<idx_t>& csp2node,
     const auto node_part  = array::make_view<int, 1>(mesh.nodes().partition());
 
     idx_t cspol_id = 0;         // subpolygon enumeration
-    const int fs_halo = functionspace::NodeColumns(fs).halo().size();
-
     std::vector<PointXYZ> pts_xyz;
     std::vector<PointLonLat> pts_ll;
     std::vector<int> pts_idx;
 
-    // for (idx_t cell = 0; cell < mesh.cells().size(); ++cell) {
-    //     if( cell_halo(cell) > fs_halo ) {
-    //         continue;
-    //     }
     for(idx_t i = 0; i < csp_index_size; ++i) {
         idx_t cell = csp_cell_index[i];
         const idx_t n_nodes = cell2node.cols(cell);
