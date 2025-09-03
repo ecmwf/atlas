@@ -181,15 +181,17 @@ private:
     struct Workspace;
 
     std::vector<idx_t> get_node_neighbours(Mesh&, idx_t jcell, Workspace&) const;
-    void init_csp_index(bool cell_data, FunctionSpace fs, gidx_t& csp_index_size, std::vector<idx_t>& csp_index);
+    void init_csp_index(bool cell_data, FunctionSpace fs, gidx_t& csp_index_size, std::vector<idx_t>& csp_cell_index,
+        std::vector<idx_t>& csp_index);
     ConvexSphericalPolygon get_csp(idx_t csp_id, Mesh mesh, bool cell_data, std::vector<idx_t>& csp2node,
-        std::vector<std::vector<idx_t>>& node2csp, gidx_t& csp_index_size, std::vector<idx_t>& csp_index);
+        std::vector<std::vector<idx_t>>& node2csp, gidx_t& csp_index_size, std::vector<idx_t>& csp_cell_index,
+        std::vector<idx_t>& csp_index);
     CSPolygonArray get_polygons_celldata(FunctionSpace, std::vector<idx_t>& csp2node,
                                          std::vector<std::vector<idx_t>>& node2csp,
-                                         gidx_t& csp_index_size, std::vector<idx_t>& csp_index);
+                                         gidx_t& csp_index_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index);
     CSPolygonArray get_polygons_nodedata(FunctionSpace, std::vector<idx_t>& csp2node,
                                          std::vector<std::vector<idx_t>>& node2csp,
-                                         gidx_t& csp_index_size, std::vector<idx_t>& csp_index);
+                                         gidx_t& csp_index_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index);
 
     int next_index(int current_index, int size, int offset = 1) const;
     int prev_index(int current_index, int size, int offset = 1) const;
@@ -212,7 +214,9 @@ private:
 
     gidx_t src_csp_index_size_;
     gidx_t tgt_csp_index_size_;
+    std::vector<idx_t> src_csp_cell_index_;
     std::vector<idx_t> src_csp_index_;
+    std::vector<idx_t> tgt_csp_cell_index_;
     std::vector<idx_t> tgt_csp_index_;
 
     Cache cache_;                          // Storage of cache if any was passed to constructor
