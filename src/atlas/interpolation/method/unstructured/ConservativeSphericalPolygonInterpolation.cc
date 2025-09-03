@@ -607,21 +607,10 @@ get_polygons_celldata(FunctionSpace fs, std::vector<idx_t>& csp2node, std::vecto
     ATLAS_TRACE("ConservativeSphericalPolygonInterpolation: get_polygons_celldata");
     MarkedPolygonArray cspolygons;
     auto mesh = extract_mesh(fs);
-    const idx_t n_cells = mesh.cells().size();
-    cspolygons.resize(n_cells);
-    const auto cell_halo   = array::make_view<int, 1>(mesh.cells().halo());
-    const auto& cell_flags = array::make_view<int, 1>(mesh.cells().flags());
-    const auto& cell_part  = array::make_view<int, 1>(mesh.cells().partition());
+    cspolygons.resize(csp_index_size);
     for(idx_t csp_id = 0; csp_id < csp_index_size; ++csp_id) {
-        idx_t cell = csp_cell_index[csp_id];
-        int halo_type       = cell_halo(cell);
-        const auto& bitflag = util::Bitflags::view(cell_flags(cell));
-        if (bitflag.check(util::Topology::PERIODIC) and mpi::rank() == cell_part(cell)) {
-            halo_type = -1;
-        }
         constexpr bool cell_data = true;
-        cspolygons[cell] = get_csp(csp_id, mesh, cell_data, csp2node, node2csp, csp_index_size, csp_cell_index, csp_index);
-        // cspolygons[cell].halo_type = halo_type;
+        cspolygons[csp_id] = get_csp(csp_id, mesh, cell_data, csp2node, node2csp, csp_index_size, csp_cell_index, csp_index);
     }
     return cspolygons;
 }
@@ -710,22 +699,7 @@ get_polygons_nodedata(FunctionSpace fs, std::vector<idx_t>& csp2node,
             if (PointXYZ::norm(pts_xyz[inode_nn] - pts_xyz[inode_n]) < 1e-14) {
                 ATLAS_THROW_EXCEPTION("Three cell vertices on a same great arc!");
             }
-            PointXYZ jedge_mid;
-            jedge_mid = pts_xyz[inode_nn] + pts_xyz[inode_n];
-            jedge_mid = PointXYZ::div(jedge_mid, PointXYZ::norm(jedge_mid));
-            std::array<PointLonLat,4> subpol_pts_ll;
-            subpol_pts_ll[0] = cell_ll;
-            subpol_pts_ll[1] = xyz2ll(iedge_mid);
-            subpol_pts_ll[2] = pts_ll[inode_n];
-            subpol_pts_ll[3] = xyz2ll(jedge_mid);
-            halo_type    = node_halo(node_n);
-            if (util::Bitflags::view(node_flags(node_n)).check(util::Topology::PERIODIC) and
-                node_part(node_n) == mpi::rank()) {
-                halo_type = -1;
-            }
             constexpr bool cell_data = false;
-            // auto cspi = get_csp(cspol_id, mesh, cell_data, csp2node, node2csp, csp_index_size, csp_cell_index, csp_index);
-            // cspolygons.emplace_back(MarkedPolygon{cspi, halo_type});
             cspolygons.emplace_back(get_csp(cspol_id, mesh, cell_data, csp2node, node2csp, csp_index_size, csp_cell_index, csp_index));
             cspol_id++;
         }
