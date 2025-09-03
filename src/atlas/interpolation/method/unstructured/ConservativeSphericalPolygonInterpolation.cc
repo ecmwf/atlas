@@ -486,7 +486,7 @@ init_csp_index(bool cell_data, FunctionSpace fs, gidx_t& csp_index_size, std::ve
 }
 
 
-ConvexSphericalPolygon ConservativeSphericalPolygonInterpolation::
+ConservativeSphericalPolygonInterpolation::MarkedPolygon ConservativeSphericalPolygonInterpolation::
 get_csp(idx_t csp_id, Mesh mesh, bool cell_data, std::vector<idx_t>& csp2node, std::vector<std::vector<idx_t>>& node2csp,
     gidx_t& csp_index_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index) {
     const auto& cell2node  = mesh.cells().node_connectivity();
@@ -508,7 +508,15 @@ get_csp(idx_t csp_id, Mesh mesh, bool cell_data, std::vector<idx_t>& csp2node, s
             idx_t inode   = cell2node(cell, jnode);
             pts_ll[jnode] = PointLonLat{nodes_ll(inode, 0), nodes_ll(inode, 1)};
         }
-        return ConvexSphericalPolygon(pts_ll);
+        const auto cell_halo   = array::make_view<int, 1>(mesh.cells().halo());
+        const auto& cell_flags = array::make_view<int, 1>(mesh.cells().flags());
+        const auto& cell_part  = array::make_view<int, 1>(mesh.cells().partition());
+        int halo_type       = cell_halo(cell);
+        const auto& bitflag = util::Bitflags::view(cell_flags(cell));
+        if (bitflag.check(util::Topology::PERIODIC) and mpi::rank() == cell_part(cell)) {
+            halo_type = -1;
+        }
+        return MarkedPolygon{ConvexSphericalPolygon(pts_ll), halo_type};
     }
     else {
         const auto node_flags = array::make_view<int, 1>(mesh.nodes().flags());
@@ -578,8 +586,15 @@ get_csp(idx_t csp_id, Mesh mesh, bool cell_data, std::vector<idx_t>& csp2node, s
         subpol_pts_ll[2] = pts_ll[inode_n];
         subpol_pts_ll[3] = xyz2ll(jedge_mid);
 
-        ConvexSphericalPolygon cspi(subpol_pts_ll);
-        return cspi;
+        const auto node_halo  = array::make_view<int, 1>(mesh.nodes().halo());
+        const auto node_part  = array::make_view<int, 1>(mesh.nodes().partition());
+        idx_t node_n       = cell2node(cell, inode_n);
+        int halo_type    = node_halo(node_n);
+        if (util::Bitflags::view(node_flags(node_n)).check(util::Topology::PERIODIC) and
+            node_part(node_n) == mpi::rank()) {
+            halo_type = -1;
+        }
+        return MarkedPolygon{ConvexSphericalPolygon(subpol_pts_ll), halo_type};
     }
 }
 
@@ -605,8 +620,8 @@ get_polygons_celldata(FunctionSpace fs, std::vector<idx_t>& csp2node, std::vecto
             halo_type = -1;
         }
         constexpr bool cell_data = true;
-        cspolygons[cell].polygon = get_csp(csp_id, mesh, cell_data, csp2node, node2csp, csp_index_size, csp_cell_index, csp_index);
-        cspolygons[cell].halo_type = halo_type;
+        cspolygons[cell] = get_csp(csp_id, mesh, cell_data, csp2node, node2csp, csp_index_size, csp_cell_index, csp_index);
+        // cspolygons[cell].halo_type = halo_type;
     }
     return cspolygons;
 }
@@ -709,8 +724,9 @@ get_polygons_nodedata(FunctionSpace fs, std::vector<idx_t>& csp2node,
                 halo_type = -1;
             }
             constexpr bool cell_data = false;
-            auto cspi = get_csp(cspol_id, mesh, cell_data, csp2node, node2csp, csp_index_size, csp_cell_index, csp_index);
-            cspolygons.emplace_back(MarkedPolygon{cspi, halo_type});
+            // auto cspi = get_csp(cspol_id, mesh, cell_data, csp2node, node2csp, csp_index_size, csp_cell_index, csp_index);
+            // cspolygons.emplace_back(MarkedPolygon{cspi, halo_type});
+            cspolygons.emplace_back(get_csp(cspol_id, mesh, cell_data, csp2node, node2csp, csp_index_size, csp_cell_index, csp_index));
             cspol_id++;
         }
     }
