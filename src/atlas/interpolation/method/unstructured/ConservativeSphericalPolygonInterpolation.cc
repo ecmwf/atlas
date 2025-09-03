@@ -493,7 +493,6 @@ get_csp(idx_t csp_id, Mesh mesh, bool cell_data, std::vector<idx_t>& csp2node, s
 
     // find cell hosting the subcell
     auto idx = std::upper_bound(csp_index.begin(), csp_index.end(), csp_id);
-
     idx_t pos = idx - csp_index.begin() - 1;
     idx_t cell = csp_cell_index[pos];
     idx_t offset = csp_id - csp_index[pos];
@@ -553,38 +552,33 @@ get_csp(idx_t csp_id, Mesh mesh, bool cell_data, std::vector<idx_t>& csp2node, s
             cell_mid = cell_mid + p0;
             cell_mid = cell_mid + p1;
         }
-        cell_mid  = PointXYZ::div(cell_mid, PointXYZ::norm(cell_mid));
-        // cell_mid  = PointXYZ::normalize(cell_mid);
-        // NOTE: It should not happen that we got less than 3 vertices
-        // if (pts_xyz.size() < 3) {
-        //     continue; // skip this cell
-        // }
+        cell_mid  = PointXYZ::normalize(cell_mid);
+#if ATLAS_BUILD_TYPE_DEBUG
+        ATLAS_ASSERT(pts_xyz.size() > 2);
+#endif
         PointLonLat cell_ll = xyz2ll(cell_mid);
         ATLAS_ASSERT(offset < pts_idx.size());
-
-        {
-            idx_t inode = offset;
-            int inode_n        = next_index(inode, pts_idx.size());
-            PointXYZ iedge_mid = pts_xyz[inode] + pts_xyz[inode_n];
-            iedge_mid          = PointXYZ::div(iedge_mid, PointXYZ::norm(iedge_mid));
-            // csp2node.emplace_back(node_n);
-            // node2csp[node_n].emplace_back(csp_id);
-            int inode_nn = next_index(inode_n, pts_idx.size());
-            if (PointXYZ::norm(pts_xyz[inode_nn] - pts_xyz[inode_n]) < 1e-14) {
-                ATLAS_THROW_EXCEPTION("Three cell vertices on a same great arc!");
-            }
-            PointXYZ jedge_mid;
-            jedge_mid = pts_xyz[inode_nn] + pts_xyz[inode_n];
-            jedge_mid = PointXYZ::div(jedge_mid, PointXYZ::norm(jedge_mid));
-            std::array<PointLonLat, 4> subpol_pts_ll;
-            subpol_pts_ll[0] = cell_ll;
-            subpol_pts_ll[1] = xyz2ll(iedge_mid);
-            subpol_pts_ll[2] = pts_ll[inode_n];
-            subpol_pts_ll[3] = xyz2ll(jedge_mid);
-
-            ConvexSphericalPolygon cspi(subpol_pts_ll);
-            return cspi;
+        idx_t inode = offset;
+        int inode_n        = next_index(inode, pts_idx.size());
+        PointXYZ iedge_mid = pts_xyz[inode] + pts_xyz[inode_n];
+        iedge_mid          = PointXYZ::div(iedge_mid, PointXYZ::norm(iedge_mid));
+        // csp2node.emplace_back(node_n);
+        // node2csp[node_n].emplace_back(csp_id);
+        int inode_nn = next_index(inode_n, pts_idx.size());
+        if (PointXYZ::norm(pts_xyz[inode_nn] - pts_xyz[inode_n]) < 1e-14) {
+            ATLAS_THROW_EXCEPTION("Three cell vertices on a same great arc!");
         }
+        PointXYZ jedge_mid;
+        jedge_mid = pts_xyz[inode_nn] + pts_xyz[inode_n];
+        jedge_mid = PointXYZ::div(jedge_mid, PointXYZ::norm(jedge_mid));
+        std::array<PointLonLat, 4> subpol_pts_ll;
+        subpol_pts_ll[0] = cell_ll;
+        subpol_pts_ll[1] = xyz2ll(iedge_mid);
+        subpol_pts_ll[2] = pts_ll[inode_n];
+        subpol_pts_ll[3] = xyz2ll(jedge_mid);
+
+        ConvexSphericalPolygon cspi(subpol_pts_ll);
+        return cspi;
     }
 }
 
@@ -609,7 +603,7 @@ get_polygons_celldata(FunctionSpace fs, std::vector<idx_t>& csp2node, std::vecto
         if (bitflag.check(util::Topology::PERIODIC) and mpi::rank() == cell_part(cell)) {
             halo_type = -1;
         }
-        bool cell_data = true;
+        constexpr bool cell_data = true;
         std::get<0>(cspolygons[cell]) = get_csp(csp_id, mesh, cell_data, csp2node, node2csp, csp_index_size, csp_cell_index, csp_index);
         std::get<1>(cspolygons[cell]) = halo_type;
     }
@@ -659,7 +653,7 @@ get_polygons_nodedata(FunctionSpace fs, std::vector<idx_t>& csp2node,
         ATLAS_ASSERT(cell < cell2node.rows());
         ATLAS_ASSERT(n_nodes > 2);
 #endif
-        PointXYZ cell_mid(0., 0., 0.);  // cell centre
+        PointXYZ cell_mid(0., 0., 0.);
         pts_xyz.clear();
         pts_ll.clear();
         pts_idx.clear();
@@ -685,9 +679,6 @@ get_polygons_nodedata(FunctionSpace fs, std::vector<idx_t>& csp2node,
             cell_mid = cell_mid + p0;
             cell_mid = cell_mid + p1;
         }
-        // if (pts_xyz.size() < 3) {
-        //     continue; // skip this cell
-        // }
         cell_mid                  = PointXYZ::div(cell_mid, PointXYZ::norm(cell_mid));
         PointLonLat cell_ll       = xyz2ll(cell_mid);
         // get ConvexSphericalPolygon for each valid edge
@@ -712,14 +703,11 @@ get_polygons_nodedata(FunctionSpace fs, std::vector<idx_t>& csp2node,
             subpol_pts_ll[2] = pts_ll[inode_n];
             subpol_pts_ll[3] = xyz2ll(jedge_mid);
             halo_type    = node_halo(node_n);
-
             if (util::Bitflags::view(node_flags(node_n)).check(util::Topology::PERIODIC) and
                 node_part(node_n) == mpi::rank()) {
                 halo_type = -1;
             }
-
-            // ConvexSphericalPolygon cspi(subpol_pts_ll);
-            bool cell_data = false;
+            constexpr bool cell_data = false;
             auto cspi = get_csp(cspol_id, mesh, cell_data, csp2node, node2csp, csp_index_size, csp_cell_index, csp_index);
             cspolygons.emplace_back(cspi, halo_type);
             cspol_id++;
