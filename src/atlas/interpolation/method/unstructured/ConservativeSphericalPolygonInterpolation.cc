@@ -86,15 +86,16 @@ std::string polygons_to_json(const It& begin, const It& end, int precision = 0) 
 }
 
 
-template<typename ConvexSphericalPolygonContainer>
-std::string polygons_to_json(const ConvexSphericalPolygonContainer& polygons, int precision = 0) {
+template<typename MarkedPolygons>
+std::string polygons_to_json(const MarkedPolygons& polygons, int precision = 0) {
     return polygons_to_json(polygons.begin(),polygons.end(),precision);
 }
 
 
+template<typename MarkedPolygons>
 void dump_polygons_to_json( const ConvexSphericalPolygon& t_csp,
                     double pointsSameEPS,
-                    const std::vector<std::tuple<ConvexSphericalPolygon, int>>& source_polygons,
+                    const MarkedPolygons& source_polygons,
                     const std::vector<idx_t>& source_polygons_considered_indices,
                     const std::string folder,
                     const std::string name) {
@@ -103,7 +104,7 @@ void dump_polygons_to_json( const ConvexSphericalPolygon& t_csp,
     std::vector<ConvexSphericalPolygon> intersections;
     int count = 1;
     for( auto& s_idx : source_polygons_considered_indices ) {
-        auto s_csp = std::get<0>(source_polygons[s_idx]);
+        auto s_csp = source_polygons[s_idx].polygon;
         csp_arr.emplace_back( s_csp );
         std::fstream file_plg_debug(folder + name + "_" + std::to_string(count++) + ".debug", std::ios::out);
         ConvexSphericalPolygon iplg = t_csp.intersect(s_csp, &file_plg_debug, pointsSameEPS);
@@ -584,12 +585,12 @@ get_csp(idx_t csp_id, Mesh mesh, bool cell_data, std::vector<idx_t>& csp2node, s
 
 
 // Create polygons for cell-centred data. Here, the polygons are mesh cells
-ConservativeSphericalPolygonInterpolation::CSPolygonArray
+ConservativeSphericalPolygonInterpolation::MarkedPolygonArray
 ConservativeSphericalPolygonInterpolation::
 get_polygons_celldata(FunctionSpace fs, std::vector<idx_t>& csp2node, std::vector<std::vector<idx_t>>& node2csp,
     gidx_t& csp_index_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index) {
     ATLAS_TRACE("ConservativeSphericalPolygonInterpolation: get_polygons_celldata");
-    CSPolygonArray cspolygons;
+    MarkedPolygonArray cspolygons;
     auto mesh = extract_mesh(fs);
     const idx_t n_cells = mesh.cells().size();
     cspolygons.resize(n_cells);
@@ -604,8 +605,8 @@ get_polygons_celldata(FunctionSpace fs, std::vector<idx_t>& csp2node, std::vecto
             halo_type = -1;
         }
         constexpr bool cell_data = true;
-        std::get<0>(cspolygons[cell]) = get_csp(csp_id, mesh, cell_data, csp2node, node2csp, csp_index_size, csp_cell_index, csp_index);
-        std::get<1>(cspolygons[cell]) = halo_type;
+        cspolygons[cell].polygon = get_csp(csp_id, mesh, cell_data, csp2node, node2csp, csp_index_size, csp_cell_index, csp_index);
+        cspolygons[cell].halo_type = halo_type;
     }
     return cspolygons;
 }
@@ -614,13 +615,13 @@ get_polygons_celldata(FunctionSpace fs, std::vector<idx_t>& csp2node, std::vecto
 // Create polygons for cell-vertex data. Here, the polygons are subcells of mesh cells created as
 // 	 (cell_centre, edge_centre, cell_vertex, edge_centre)
 // additionally, subcell-to-node and node-to-subcells mapping are computed
-ConservativeSphericalPolygonInterpolation::CSPolygonArray
+ConservativeSphericalPolygonInterpolation::MarkedPolygonArray
 ConservativeSphericalPolygonInterpolation::
 get_polygons_nodedata(FunctionSpace fs, std::vector<idx_t>& csp2node,
     std::vector<std::vector<idx_t>>& node2csp, gidx_t& csp_index_size,
     std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index) {
     ATLAS_TRACE("ConservativeSphericalPolygonInterpolation: get_polygons_nodedata");
-    CSPolygonArray cspolygons;
+    MarkedPolygonArray cspolygons;
     csp2node.clear();
     node2csp.clear();
     auto mesh = extract_mesh(fs);
@@ -709,7 +710,7 @@ get_polygons_nodedata(FunctionSpace fs, std::vector<idx_t>& csp2node,
             }
             constexpr bool cell_data = false;
             auto cspi = get_csp(cspol_id, mesh, cell_data, csp2node, node2csp, csp_index_size, csp_cell_index, csp_index);
-            cspolygons.emplace_back(cspi, halo_type);
+            cspolygons.emplace_back(MarkedPolygon{cspi, halo_type});
             cspol_id++;
         }
     }
@@ -889,8 +890,8 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
             Log::info() << "WARNING The halo size on target mesh should be at least 1 for the target NodeColumns.\n";
         }
     }
-    CSPolygonArray src_csp;
-    CSPolygonArray tgt_csp;
+    MarkedPolygonArray src_csp;
+    MarkedPolygonArray tgt_csp;
     if (compute_cache) {
         std::array<double, 2> errors = {0., 0.};
         ATLAS_TRACE("Get source polygons");
@@ -952,7 +953,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
             ATLAS_TRACE("Store src_areas and src_point");
             if (src_cell_data_) {
                 for (idx_t spt = 0; spt < n_spoints_; ++spt) {
-                    const auto& s_csp = std::get<0>(src_csp[spt]);
+                    const auto& s_csp = src_csp[spt].polygon;
                     src_points_[spt]  = s_csp.centroid();
                     src_areas_v[spt]  = s_csp.area();
                 }
@@ -974,7 +975,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
                     src_areas_v[spt] = 0.;
                     for (idx_t isubcell = 0; isubcell < src_node2csp_[spt].size(); ++isubcell) {
                         idx_t subcell     = src_node2csp_[spt][isubcell];
-                        const auto& s_csp = std::get<0>(src_csp[subcell]);
+                        const auto& s_csp = src_csp[subcell].polygon;
                         src_areas_v[spt] += s_csp.area();
                         src_points_[spt] = src_points_[spt] + PointXYZ::mul(s_csp.centroid(), s_csp.area());
                     }
@@ -986,7 +987,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
                         for (idx_t isubcell = 0; isubcell < src_node2csp_[spt].size(); ++isubcell) {
                             idx_t subcell     = src_node2csp_[spt][isubcell];
                             ATLAS_DEBUG_VAR(subcell);
-                            const auto& s_csp = std::get<0>(src_csp[subcell]);
+                            const auto& s_csp = src_csp[subcell].polygon;
                             s_csp.print(Log::info());
                             Log::info() << std::endl;
                             src_areas_v[spt] += s_csp.area();
@@ -1010,7 +1011,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
             ATLAS_TRACE("Store src_areas and src_point");
             if (tgt_cell_data_) {
                 for (idx_t tpt = 0; tpt < n_tpoints_; ++tpt) {
-                    const auto& t_csp = std::get<0>(tgt_csp[tpt]);
+                    const auto& t_csp = tgt_csp[tpt].polygon;
                     tgt_points_[tpt]  = t_csp.centroid();
                     tgt_areas_v[tpt]  = t_csp.area();
                 }
@@ -1032,7 +1033,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
                     tgt_areas_v[tpt] = 0.;
                     for (idx_t isubcell = 0; isubcell < tgt_node2csp_[tpt].size(); ++isubcell) {
                         idx_t subcell     = tgt_node2csp_[tpt][isubcell];
-                        const auto& t_csp = std::get<0>(tgt_csp[subcell]);
+                        const auto& t_csp = tgt_csp[subcell].polygon;
                         tgt_areas_v[tpt] += t_csp.area();
                         tgt_points_[tpt] = tgt_points_[tpt] + PointXYZ::mul(t_csp.centroid(), t_csp.area());
                     }
@@ -1041,7 +1042,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
                         for (idx_t isubcell = 0; isubcell < tgt_node2csp_[tpt].size(); ++isubcell) {
                             idx_t subcell     = tgt_node2csp_[tpt][isubcell];
                             ATLAS_DEBUG_VAR(subcell);
-                            const auto& t_csp = std::get<0>(tgt_csp[subcell]);
+                            const auto& t_csp = tgt_csp[subcell].polygon;
                             t_csp.print(Log::info());
                             Log::info() << std::endl;
                             tgt_areas_v[tpt] += t_csp.area();
@@ -1088,8 +1089,8 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
     }
 }
 
-void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolygonArray& src_csp,
-                                                                   const CSPolygonArray& tgt_csp) {
+void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedPolygonArray& src_csp,
+                                                                   const MarkedPolygonArray& tgt_csp) {
     ATLAS_TRACE();
     auto& timings = sharable_data_->timings;
 
@@ -1137,7 +1138,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
     ATLAS_TRACE_SCOPE("build kd-tree for source polygons") {
         kdt_search.reserve(src_csp.size());
         for (idx_t scell = 0; scell < src_csp.size(); ++scell) {
-            const auto& s_csp = std::get<0>(src_csp[scell]);
+            const auto& s_csp = src_csp[scell].polygon;
             if (not src_already_in((s_csp.centroid()))) {
                 kdt_search.insert(s_csp.centroid(), scell);
                 max_srccell_rad = std::max(max_srccell_rad, s_csp.radius());
@@ -1207,18 +1208,18 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                                     tgt_csp.size() > 50 ? Log::info() : blackhole);
         float last_progress_percent = 0.00;
         for (idx_t tcell = 0; tcell < tgt_csp.size(); ++tcell) {
-            if (std::get<1>(tgt_csp[tcell]) <= tgt_halo_intersection_depth) {
+            if (tgt_csp[tcell].halo_type <= tgt_halo_intersection_depth) {
                 intersection_src_cell_idx.resize(0);
                 intersection_weights.resize(0);
                 intersection_src_centroids.resize(0);
-                const auto& t_csp       = std::get<0>(tgt_csp[tcell]);
+                const auto& t_csp       = tgt_csp[tcell].polygon;
                 double tgt_cover_area   = 0.;
                 if (statistics_timings_) {stopwatch_kdtree_search.start(); }
                 auto src_cells = kdt_search.closestPointsWithinRadius(t_csp.centroid(), t_csp.radius() + max_srccell_rad);
                 if (statistics_timings_) {stopwatch_kdtree_search.stop(); }
                 for (idx_t iscell = 0; iscell < src_cells.size(); ++iscell) {
                     auto scell        = src_cells[iscell].payload();
-                    const auto& s_csp = std::get<0>(src_csp[scell]);
+                    const auto& s_csp = src_csp[scell].polygon;
                     if (statistics_timings_) {stopwatch_polygon_intersections.start(); }
                     ConvexSphericalPolygon csp_i = s_csp.intersect(t_csp, nullptr, pointsSameEPS);
                     if (statistics_timings_) {stopwatch_polygon_intersections.stop(); }
@@ -1313,11 +1314,11 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
             double geo_err_l1   = 0.;
             double geo_err_linf = -1.;
             for (idx_t tcell = 0; tcell < tgt_csp.size(); ++tcell) {
-                if (std::get<1>(tgt_csp[tcell]) != 0 ) {
+                if (tgt_csp[tcell].halo_type != 0 ) {
                     // skip periodic & halo cells
                     continue;
                 }
-                auto& t_csp = std::get<0>(tgt_csp[tcell]);
+                auto& t_csp = tgt_csp[tcell].polygon;
                 auto& tiparam = tgt_iparam_[tcell];
                 double tgt_cover_err = 0.;
                 for (idx_t icell = 0; icell < tiparam.weights.size(); ++icell) {
@@ -1367,11 +1368,11 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                 double geo_err_l1   = 0.;
                 double geo_err_linf = -1.;
                 for (idx_t scell = 0; scell < src_csp.size(); ++scell) {
-                    if (std::get<1>(src_csp[scell]) != 0) {
+                    if (src_csp[scell].halo_type != 0) {
                         // skip periodic & halo cells
                         continue;
                     }
-                    const auto& s_csp     = std::get<0>(src_csp[scell]);
+                    const auto& s_csp     = src_csp[scell].polygon;
                     auto diff_cell = s_csp.area();
                     const auto& siparam   = src_iparam[scell];
                     for (idx_t icell = 0; icell < siparam.weights.size(); ++icell) {
@@ -1431,7 +1432,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
                 << "\e[0m %. For details, check the file: worst_target_cell_overcover.info " << std::endl;
             if (rank_over == mpi::rank()) {
                 auto tcell = worst_tgt_overcover.first;
-                dump_polygons_to_json(std::get<0>(tgt_csp[tcell]), pointsSameEPS, src_csp, tgt_iparam_[tcell].cell_idx, polygon_intersection_folder, "worst_target_cell_overcover");
+                dump_polygons_to_json(tgt_csp[tcell].polygon, pointsSameEPS, src_csp, tgt_iparam_[tcell].cell_idx, polygon_intersection_folder, "worst_target_cell_overcover");
             }
             ATLAS_TRACE_MPI(ALLGATHER) {
                 mpi::comm().allGather(worst_tgt_undercover.first, first.begin(), first.end());
@@ -1445,7 +1446,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const CSPolyg
 
             if (rank_under == mpi::rank()) {
                 auto tcell = worst_tgt_undercover.first;
-                dump_polygons_to_json(std::get<0>(tgt_csp[tcell]), pointsSameEPS, src_csp, tgt_iparam_[tcell].cell_idx, polygon_intersection_folder, "worst_target_cell_undercover");
+                dump_polygons_to_json(tgt_csp[tcell].polygon, pointsSameEPS, src_csp, tgt_iparam_[tcell].cell_idx, polygon_intersection_folder, "worst_target_cell_undercover");
             }
         }
     }
@@ -2321,7 +2322,7 @@ ConservativeSphericalPolygonInterpolation::Statistics::accuracy(const Interpolat
 
 void ConservativeSphericalPolygonInterpolation::dump_intersection(const std::string msg,
                                                                   const ConvexSphericalPolygon& plg_1,
-                                                                  const CSPolygonArray& plg_2_array,
+                                                                  const MarkedPolygonArray& plg_2_array,
                                                                   const std::vector<idx_t>& plg_2_idx_array) const {
 #if PRINT_BAD_POLYGONS
     double plg_1_coverage = 0.;
@@ -2329,7 +2330,7 @@ void ConservativeSphericalPolygonInterpolation::dump_intersection(const std::str
     int_areas.resize(plg_2_idx_array.size());
     for (int i = 0; i < plg_2_idx_array.size(); ++i) {
         const auto plg_2_idx = plg_2_idx_array[i];
-        const auto& plg_2    = std::get<0>(plg_2_array[plg_2_idx]);
+        const auto& plg_2    = plg_2_array[plg_2_idx].polygon;
         auto iplg            = plg_1.intersect(plg_2, false, 1.e5 * std::numeric_limits<double>::epsilon());
         plg_1_coverage += iplg.area();
         int_areas[i] = iplg.area();
@@ -2345,7 +2346,7 @@ void ConservativeSphericalPolygonInterpolation::dump_intersection(const std::str
         plg_1_coverage = plg_1.area();
         for (int i = 0; i < plg_2_idx_array.size(); ++i) {
             const auto plg_2_idx = plg_2_idx_array[i];
-            const auto& plg_2    = std::get<0>(plg_2_array[plg_2_idx]);
+            const auto& plg_2    = plg_2_array[plg_2_idx].polygon;
             plg_2.print(Log::info());
             Log::info() << "\ninters:";
             plg_1_coverage -= int_areas[i];
@@ -2366,7 +2367,7 @@ void ConservativeSphericalPolygonInterpolation::dump_intersection(const std::str
 template <class TargetCellsIDs>
 void ConservativeSphericalPolygonInterpolation::dump_intersection(const std::string msg,
                                                                   const ConvexSphericalPolygon& plg_1,
-                                                                  const CSPolygonArray& plg_2_array,
+                                                                  const MarkedPolygonArray& plg_2_array,
                                                                   const TargetCellsIDs& plg_2_idx_array) const {
 #if PRINT_BAD_POLYGONS
     std::vector<idx_t> idx_array;

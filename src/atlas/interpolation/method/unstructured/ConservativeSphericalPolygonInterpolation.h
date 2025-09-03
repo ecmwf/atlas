@@ -161,18 +161,21 @@ public:
 
 private:
     using ConvexSphericalPolygon = util::ConvexSphericalPolygon;
-    using PolygonArray           = std::vector<std::pair<ConvexSphericalPolygon, int>>;
-    using CSPolygonArray         = std::vector<std::tuple<ConvexSphericalPolygon, int>>;
+    struct MarkedPolygon {
+        ConvexSphericalPolygon polygon;
+        int halo_type;
+    };
+    using MarkedPolygonArray           = std::vector<MarkedPolygon>;
 
     void do_setup_impl(const Grid& src_grid, const Grid& tgt_grid);
 
-    void intersect_polygons(const CSPolygonArray& src_csp, const CSPolygonArray& tgt_scp);
+    void intersect_polygons(const MarkedPolygonArray& src_csp, const MarkedPolygonArray& tgt_scp);
     Triplets compute_1st_order_triplets();
     Triplets compute_2nd_order_triplets();
-    void dump_intersection(const std::string, const ConvexSphericalPolygon& plg_1, const CSPolygonArray& plg_2_array,
+    void dump_intersection(const std::string, const ConvexSphericalPolygon& plg_1, const MarkedPolygonArray& plg_2_array,
                            const std::vector<idx_t>& plg_2_idx_array) const;
     template <class TargetCellsIDs>
-    void dump_intersection(const std::string, const ConvexSphericalPolygon& plg_1, const CSPolygonArray& plg_2_array,
+    void dump_intersection(const std::string, const ConvexSphericalPolygon& plg_1, const MarkedPolygonArray& plg_2_array,
                            const TargetCellsIDs& plg_2_idx_array) const;
     std::vector<idx_t> sort_cell_edges(Mesh& mesh, idx_t cell_id) const;
     std::vector<idx_t> sort_node_edges(Mesh& mesh, idx_t cell_id) const;
@@ -186,10 +189,10 @@ private:
     ConvexSphericalPolygon get_csp(idx_t csp_id, Mesh mesh, bool cell_data, std::vector<idx_t>& csp2node,
         std::vector<std::vector<idx_t>>& node2csp, gidx_t& csp_index_size, std::vector<idx_t>& csp_cell_index,
         std::vector<idx_t>& csp_index);
-    CSPolygonArray get_polygons_celldata(FunctionSpace, std::vector<idx_t>& csp2node,
+    MarkedPolygonArray get_polygons_celldata(FunctionSpace, std::vector<idx_t>& csp2node,
                                          std::vector<std::vector<idx_t>>& node2csp,
                                          gidx_t& csp_index_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index);
-    CSPolygonArray get_polygons_nodedata(FunctionSpace, std::vector<idx_t>& csp2node,
+    MarkedPolygonArray get_polygons_nodedata(FunctionSpace, std::vector<idx_t>& csp2node,
                                          std::vector<std::vector<idx_t>>& node2csp,
                                          gidx_t& csp_index_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index);
 
