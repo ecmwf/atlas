@@ -210,15 +210,19 @@ void testInterpolation(const Config& config) {
 
   auto sourceView = array::make_view<double, Rank>(sourceField);
   auto targetView = array::make_view<double, Rank>(targetField);
-
   ArrayForEach<0>::apply(
       std::tie(sourceLonLat, sourceView),
       [](auto&& lonLat, auto&& sourceColumn) {
         const auto setElems = [&](auto&& sourceElem) {
-          std::tie(sourceElem(0), sourceElem(1)) =
+          if (sourceElem.size() == 1) {
+            sourceElem(0) = vortexVertical(lonLat(0), lonLat(1));
+          }
+          else {
+            std::tie(sourceElem(0), sourceElem(1)) =
               vortexHorizontal(lonLat(0), lonLat(1));
-          if (sourceElem.size() == 3) {
-            sourceElem(2) = vortexVertical(lonLat(0), lonLat(1));
+            if (sourceElem.size() == 3) {
+              sourceElem(2) = vortexVertical(lonLat(0), lonLat(1));
+            }
           }
         };
         if constexpr (Rank == 2) {
@@ -249,10 +253,15 @@ void testInterpolation(const Config& config) {
         [&](auto&& lonLat, auto&& targetColumn, auto&& errorColumn) {
           const auto calcError = [&](auto&& targetElem, auto&& errorElem) {
             auto trueValue = std::vector<double>(targetElem.size());
-            std::tie(trueValue[0], trueValue[1]) =
-                vortexHorizontal(lonLat(0), lonLat(1));
-            if (targetElem.size() == 3) {
-              trueValue[2] = vortexVertical(lonLat(0), lonLat(1));
+            if (targetElem.size() == 1) {
+              trueValue[0] = vortexVertical(lonLat(0), lonLat(1));
+            }
+            else {
+              std::tie(trueValue[0], trueValue[1]) =
+                  vortexHorizontal(lonLat(0), lonLat(1));
+              if (targetElem.size() == 3) {
+                trueValue[2] = vortexVertical(lonLat(0), lonLat(1));
+              }
             }
 
             auto errorSqrd = 0.;
@@ -317,7 +326,7 @@ CASE("cubed sphere CS-LFR-48 scalar interpolation (3d-field, scalar)") {
           .set("field_spec_fixture", "scalar")
           .set("interp_fixture", "cubedsphere_bilinear_spherical")
           .set("file_id", "spherical_vector_cs2")
-          .set("tol", 0.00018);
+          .set("tol", 0.00096);
 
   testInterpolation<Rank3dField>((config));
 }
