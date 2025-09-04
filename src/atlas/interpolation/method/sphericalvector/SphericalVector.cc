@@ -71,13 +71,13 @@ void SphericalVector::do_setup(const FunctionSpace& source,
   setMatrix(Interpolation(interpolationScheme_, source_, target_));
 
   // Get matrix data.
-  const auto m = atlas::linalg::make_non_owning_eckit_sparse_matrix(matrix());
+  const auto m = atlas::linalg::make_host_view<eckit::linalg::Scalar>(matrix());
   const auto nRows = static_cast<Index>(m.rows());
   const auto nCols = static_cast<Index>(m.cols());
-  const auto nNonZeros = static_cast<std::size_t>(m.nonZeros());
+  const auto nNonZeros = static_cast<std::size_t>(m.nnz());
   const auto* outerIndices = m.outer();
   const auto* innerIndices = m.inner();
-  const auto* baseWeights  = m.data();
+  const auto* baseWeights  = m.value();
 
   // Note: need to store copy of weights as Eigen3 sorts compressed rows by j
   // whereas eckit does not.
