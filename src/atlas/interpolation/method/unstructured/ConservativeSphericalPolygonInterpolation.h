@@ -121,6 +121,7 @@ public:
         bool conservation_;
         bool intersection_;
         bool timings_;
+        Metadata metadata_;
 
         void fillMetadata(Metadata&);
 

@@ -841,6 +841,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
             src_csp = get_polygons_nodedata(src_fs_, sharable_data_->src_csp2node_, sharable_data_->src_node2csp_,
                 src_csp_size_, src_csp_cell_index_, src_csp_index_);
         }
+        remap_stat_.metadata_.set("memory.src_csp_polygons", memory_of(src_csp));
         stopwatch.stop();
         sharable_data_->timings.source_polygons_assembly = stopwatch.elapsed();
         remap_stat_.counts[Statistics::Counts::SRC_PLG]         = src_csp.size();
@@ -848,6 +849,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
         ATLAS_TRACE("Get target polygons");
         stopwatch.start();
         init_csp_index(tgt_cell_data_, tgt_fs_, sharable_data_->tgt_csp2node_, sharable_data_->tgt_node2csp_, tgt_csp_size_, tgt_csp_cell_index_, tgt_csp_index_);
+        remap_stat_.metadata_.set("memory.tgt_csp_polygons", 0);
         stopwatch.stop();
         sharable_data_->timings.target_polygons_assembly        = stopwatch.elapsed();
         remap_stat_.counts[Statistics::Counts::TGT_PLG]         = tgt_csp_size_;
@@ -2017,6 +2019,16 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
     metadata.set("memory.src_node2csp", memory_of(data_->src_node2csp_));
     metadata.set("memory.tgt_node2csp", memory_of(data_->tgt_node2csp_));
     metadata.set("memory.tgt_iparam", memory_of(data_->tgt_iparam_));
+    metadata.set("memory.src_csp_cell_index", memory_of(src_csp_cell_index_));
+    metadata.set("memory.src_csp_index", memory_of(src_csp_index_));
+    metadata.set("memory.tgt_csp_cell_index", memory_of(tgt_csp_cell_index_));
+    metadata.set("memory.tgt_csp_index", memory_of(tgt_csp_index_));
+    size_t mem_src_csp_polygons = 0;
+    remap_stat_.metadata_.get("memory.src_csp_polygons", mem_src_csp_polygons);
+    metadata.set("memory.src_csp_polygons", mem_src_csp_polygons);
+    size_t mem_tgt_csp_polygons = 0;
+    remap_stat_.metadata_.get("memory.tgt_csp_polygons", mem_tgt_csp_polygons);
+    metadata.set("memory.tgt_csp_polygons", mem_tgt_csp_polygons);
 }
 
 void ConservativeSphericalPolygonInterpolation::print(std::ostream& out) const {
