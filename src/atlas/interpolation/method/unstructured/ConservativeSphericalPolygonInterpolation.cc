@@ -233,7 +233,7 @@ ConservativeSphericalPolygonInterpolation::ConservativeSphericalPolygonInterpola
     config.get("statistics.conservation", remap_stat_.conservation_ = false);
     config.get("statistics.conservation", remap_stat_.conservation_ = false);
     if (remap_stat_.all_) {
-        Log::info() << "WARNING statistics.all required. Enabling statistics.timings, statistics.intersection, statistics.conservation, statistics.accuracy, and validate." << std::endl;
+        Log::warning() << "statistics.all required. Enabling statistics.timings, statistics.intersection, statistics.conservation, statistics.accuracy, and validate." << std::endl;
         validate_ = true;
         remap_stat_.accuracy_ = true;
         remap_stat_.conservation_ = true;
@@ -1284,8 +1284,8 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
             // NOTE: source cell at process boundary will not be covered by target cells, skip if MPI > 1
             // TODO: mark these source cells beforehand and compute error in them among the processes
             if (mpi::size() > 1) {
-                Log::info() << "WARNING The source cells at process boundaries are not covered by target cells.";
-                Log::info() << "        Skipping error computation in covering source cells. Please run in serial to gadge this error." << std::endl;
+                Log::warning() << "The source cells at process boundaries are not covered by target cells.";
+                Log::warning() << "\tSkipping error computation in covering source cells. Please run in serial to gadge this error." << std::endl;
                 remap_stat_.errors[Statistics::Errors::SRC_INTERSECTPLG_L1]   = -1;
                 remap_stat_.errors[Statistics::Errors::SRC_INTERSECTPLG_LINF] = -1;
             }
