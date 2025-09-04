@@ -569,8 +569,7 @@ get_csp(idx_t csp_id, Mesh mesh, bool cell_data, std::vector<idx_t>& csp2node, s
         ATLAS_ASSERT(offset < pts_idx.size());
         idx_t inode = offset;
         int inode_n        = next_index(inode, pts_idx.size());
-        PointXYZ iedge_mid = pts_xyz[inode] + pts_xyz[inode_n];
-        iedge_mid          = PointXYZ::div(iedge_mid, PointXYZ::norm(iedge_mid));
+        PointXYZ iedge_mid = PointXYZ::normalize(pts_xyz[inode] + pts_xyz[inode_n]);
         // csp2node.emplace_back(node_n);
         // node2csp[node_n].emplace_back(csp_id);
         int inode_nn = next_index(inode_n, pts_idx.size());
@@ -674,8 +673,7 @@ get_polygons_nodedata(FunctionSpace fs, std::vector<idx_t>& csp2node,
         for (int inode = 0; inode < pts_idx.size(); inode++) {
             int inode_n        = next_index(inode, pts_idx.size());
             idx_t node_n       = cell2node(cell, inode_n);
-            PointXYZ iedge_mid = pts_xyz[inode] + pts_xyz[inode_n];
-            iedge_mid          = PointXYZ::div(iedge_mid, PointXYZ::norm(iedge_mid));
+            PointXYZ iedge_mid = PointXYZ::normalize(pts_xyz[inode] + pts_xyz[inode_n]);
             csp2node.emplace_back(node_n);
             node2csp[node_n].emplace_back(cspol_id);
             int inode_nn = next_index(inode_n, pts_idx.size());
