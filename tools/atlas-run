@@ -48,7 +48,9 @@ if command_exists srun ; then
   if [ -z "${ATLAS_RUN_NPROCS}" ]; then
     LAUNCH="${LAUNCH} -n 1"
     if [ -n "${SLURM_GPUS}" ]; then
-      ATLAS_RUN_NGPUS=1
+      if [ "${SLURM_GPUS}" -gt 0 ]; then
+        ATLAS_RUN_NGPUS=1
+      fi
     fi
   else
     LAUNCH="${LAUNCH} -n ${ATLAS_RUN_NPROCS}"
