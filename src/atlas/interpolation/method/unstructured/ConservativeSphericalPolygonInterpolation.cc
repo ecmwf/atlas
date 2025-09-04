@@ -535,6 +535,10 @@ get_csp(idx_t csp_id, Mesh mesh, bool cell_data, std::vector<idx_t>& csp2node, s
         PointXYZ cell_mid(0., 0., 0.);  // cell centre
         std::vector<PointXYZ> pts_xyz;
         std::vector<int> pts_idx;
+#if ATLAS_BUILD_TYPE_DEBUG
+        ATLAS_ASSERT(cell < cell2node.rows());
+        ATLAS_ASSERT(n_nodes > 2);
+#endif
         pts_xyz.clear();
         pts_ll.clear();
         pts_idx.clear();
@@ -639,19 +643,12 @@ get_polygons_nodedata(FunctionSpace fs, std::vector<idx_t>& csp2node,
     const auto node_flags = array::make_view<int, 1>(mesh.nodes().flags());
 
     idx_t cspol_id = 0;         // subpolygon enumeration
-    std::vector<PointXYZ> pts_xyz;
     std::vector<int> pts_idx;
 
     for(idx_t i = 0; i < csp_cell_index.size(); ++i) {
         idx_t cell = csp_cell_index[i];
         const idx_t n_nodes = cell2node.cols(cell);
-#if ATLAS_BUILD_TYPE_DEBUG
-        ATLAS_ASSERT(cell < cell2node.rows());
-        ATLAS_ASSERT(n_nodes > 2);
-#endif
-        pts_xyz.clear();
         pts_idx.clear();
-        pts_xyz.reserve(n_nodes);
         pts_idx.reserve(n_nodes);
         for (idx_t inode = 0; inode < n_nodes; ++inode) {
             idx_t node0             = cell2node(cell, inode);
@@ -666,18 +663,10 @@ get_polygons_nodedata(FunctionSpace fs, std::vector<idx_t>& csp2node,
             if (not valid_point(node0, node_flags)) {
                 continue;
             }
-            pts_xyz.emplace_back(p0);
             pts_idx.emplace_back(inode);
         }
         // get ConvexSphericalPolygon for each valid edge
         for (int inode = 0; inode < pts_idx.size(); inode++) {
-            int inode_n        = next_index(inode, pts_idx.size());
-            idx_t node_n       = cell2node(cell, inode_n);
-            PointXYZ iedge_mid = PointXYZ::normalize(pts_xyz[inode] + pts_xyz[inode_n]);
-            int inode_nn = next_index(inode_n, pts_idx.size());
-            if (PointXYZ::norm(pts_xyz[inode_nn] - pts_xyz[inode_n]) < 1e-14) {
-                ATLAS_THROW_EXCEPTION("Three cell vertices on a same great arc!");
-            }
             constexpr bool cell_data = false;
             cspolygons.emplace_back(get_csp(cspol_id, mesh, cell_data, csp2node, node2csp, csp_size, csp_cell_index, csp_index));
             cspol_id++;
