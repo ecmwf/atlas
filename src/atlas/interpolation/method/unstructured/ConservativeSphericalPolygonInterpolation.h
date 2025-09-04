@@ -99,11 +99,7 @@ public:
         };
         enum Errors
         {
-            SRC_SUBPLG_L1 = 0,  // index, \sum_{cell of mesh} {cell.area - \sum_{subpol of cell} subpol.area}
-            SRC_SUBPLG_LINF,    // index, \max_-||-
-            TGT_SUBPLG_L1,      // see above
-            TGT_SUBPLG_LINF,    // see above
-            SRC_INTERSECTPLG_L1,      // index, \sum_{cell of src-mesh} {cell.area - \sum_{intersect of cell} intersect.area}
+            SRC_INTERSECTPLG_L1 = 0,  // index, \sum_{cell of src-mesh} {cell.area - \sum_{intersect of cell} intersect.area}
             SRC_INTERSECTPLG_LINF,    // index, \max_-||-
             TGT_INTERSECTPLG_L1,      // see above
             TGT_INTERSECTPLG_LINF,    // see above

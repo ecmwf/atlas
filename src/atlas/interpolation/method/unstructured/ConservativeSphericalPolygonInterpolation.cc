@@ -623,8 +623,7 @@ get_polygons_celldata(FunctionSpace fs, std::vector<idx_t>& csp2node, std::vecto
 ConservativeSphericalPolygonInterpolation::MarkedPolygonArray
 ConservativeSphericalPolygonInterpolation::
 get_polygons_nodedata(FunctionSpace fs, std::vector<idx_t>& csp2node,
-    std::vector<std::vector<idx_t>>& node2csp, gidx_t& csp_size,
-    std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index) {
+    std::vector<std::vector<idx_t>>& node2csp, gidx_t& csp_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index) {
     ATLAS_TRACE("ConservativeSphericalPolygonInterpolation: get_polygons_nodedata");
     MarkedPolygonArray cspolygons(csp_size);
     auto mesh = extract_mesh(fs);
@@ -728,6 +727,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const Grid& src_grid, c
     do_setup_impl(src_grid, tgt_grid);
 }
 
+
 void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& source, const FunctionSpace& target,
                                                          const interpolation::Cache& cache) {
     ATLAS_TRACE("ConservativeSphericalPolygonInterpolation: do_setup with function spaces");
@@ -815,7 +815,6 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
     MarkedPolygonArray src_csp;
     MarkedPolygonArray tgt_csp;
     if (compute_cache) {
-        std::array<double, 2> errors = {0., 0.};
         ATLAS_TRACE("Get source polygons");
         StopWatch stopwatch;
         stopwatch.start();
@@ -831,10 +830,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
         stopwatch.stop();
         sharable_data_->timings.source_polygons_assembly = stopwatch.elapsed();
         remap_stat_.counts[Statistics::Counts::SRC_PLG]         = src_csp.size();
-        remap_stat_.errors[Statistics::Errors::SRC_SUBPLG_L1]   = errors[0];
-        remap_stat_.errors[Statistics::Errors::SRC_SUBPLG_LINF] = errors[1];
 
-        errors = {0., 0.};
         ATLAS_TRACE("Get target polygons");
         stopwatch.start();
         init_csp_index(tgt_cell_data_, tgt_fs_, tgt_csp_size_, tgt_csp_cell_index_, tgt_csp_index_);
@@ -849,16 +845,10 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
         stopwatch.stop();
         sharable_data_->timings.target_polygons_assembly = stopwatch.elapsed();
         remap_stat_.counts[Statistics::Counts::TGT_PLG]         = tgt_csp.size();
-        remap_stat_.errors[Statistics::Errors::TGT_SUBPLG_L1]   = errors[0];
-        remap_stat_.errors[Statistics::Errors::TGT_SUBPLG_LINF] = errors[1];
     }
     else {
         remap_stat_.counts[Statistics::Counts::SRC_PLG]         = -1111;
-        remap_stat_.errors[Statistics::Errors::SRC_SUBPLG_L1]   = -1111.;
-        remap_stat_.errors[Statistics::Errors::SRC_SUBPLG_LINF] = -1111.;
         remap_stat_.counts[Statistics::Counts::TGT_PLG]         = -1111;
-        remap_stat_.errors[Statistics::Errors::TGT_SUBPLG_L1]   = -1111.;
-        remap_stat_.errors[Statistics::Errors::TGT_SUBPLG_LINF] = -1111.;
     }
 
     n_spoints_ = src_fs_.size();
@@ -1071,7 +1061,6 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
     stopwatch.stop();
     timings.source_kdtree_assembly = stopwatch.elapsed();
 
-    // StopWatch stopwatch_src_already_in;
     StopWatch stopwatch_kdtree_search;
     StopWatch stopwatch_polygon_intersections;
 
@@ -1375,6 +1364,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
         }
     }
 }
+
 
 ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygonInterpolation::compute_1st_order_triplets() {
     ATLAS_TRACE("ConservativeMethod::setup: build cons-1 interpolant matrix");
@@ -2342,10 +2332,6 @@ void ConservativeSphericalPolygonInterpolation::Data::print(std::ostream& out) c
 
 void ConservativeSphericalPolygonInterpolation::Statistics::fillMetadata(Metadata& metadata) {
     // errors
-    metadata.set("errors.SRC_SUBPLG_L1", errors[SRC_SUBPLG_L1]);
-    metadata.set("errors.SRC_SUBPLG_LINF", errors[SRC_SUBPLG_LINF]);
-    metadata.set("errors.TGT_SUBPLG_L1", errors[TGT_SUBPLG_L1]);
-    metadata.set("errors.TGT_SUBPLG_LINF", errors[TGT_SUBPLG_LINF]);
     metadata.set("errors.SRC_INTERSECTPLG_L1", errors[SRC_INTERSECTPLG_L1]);
     metadata.set("errors.SRC_INTERSECTPLG_LINF", errors[SRC_INTERSECTPLG_LINF]);
     metadata.set("errors.TGT_INTERSECTPLG_L1", errors[TGT_INTERSECTPLG_L1]);
@@ -2363,10 +2349,6 @@ ConservativeSphericalPolygonInterpolation::Statistics::Statistics() {
 
 ConservativeSphericalPolygonInterpolation::Statistics::Statistics(const Metadata& metadata): Statistics() {
     // errors
-    metadata.get("errors.SRC_SUBPLG_L1", errors[SRC_SUBPLG_L1]);
-    metadata.get("errors.SRC_SUBPLG_LINF", errors[SRC_SUBPLG_LINF]);
-    metadata.get("errors.TGT_SUBPLG_L1", errors[TGT_SUBPLG_L1]);
-    metadata.get("errors.TGT_SUBPLG_LINF", errors[TGT_SUBPLG_LINF]);
     metadata.get("errors.SRC_INTERSECTPLG_L1", errors[SRC_INTERSECTPLG_L1]);
     metadata.get("errors.SRC_INTERSECTPLG_LINF", errors[SRC_INTERSECTPLG_LINF]);
     metadata.get("errors.TGT_INTERSECTPLG_L1", errors[TGT_INTERSECTPLG_L1]);
