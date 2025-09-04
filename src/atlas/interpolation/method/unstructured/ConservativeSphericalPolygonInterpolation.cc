@@ -433,7 +433,8 @@ std::vector<idx_t> ConservativeSphericalPolygonInterpolation::get_node_neighbour
 
 
 void ConservativeSphericalPolygonInterpolation::
-init_csp_index(bool cell_data, FunctionSpace fs, gidx_t& csp_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index) {
+init_csp_index(bool cell_data, FunctionSpace fs, std::vector<idx_t>& csp2node, std::vector<std::vector<idx_t>>& node2csp,
+    gidx_t& csp_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index) {
     auto mesh = extract_mesh(fs);
     const auto& cell2node = mesh.cells().node_connectivity();
     const auto cell_halo   = array::make_view<int, 1>(mesh.cells().halo());
@@ -481,6 +482,9 @@ init_csp_index(bool cell_data, FunctionSpace fs, gidx_t& csp_size, std::vector<i
             csp_index.emplace_back(csp_size);
             csp_cell_index.emplace_back(cell);
         }
+        csp2node.resize(csp_size);
+        std::fill(csp2node.begin(), csp2node.end(), -1);
+        node2csp.resize(mesh.nodes().size());
     }
 }
 
@@ -594,8 +598,10 @@ get_csp(idx_t csp_id, Mesh mesh, bool cell_data, std::vector<idx_t>& csp2node, s
             node_part(node_n) == mpi::rank()) {
             halo_type = -1;
         }
-        csp2node[csp_id] = node_n;
-        node2csp[node_n].emplace_back(csp_id);
+        if (csp2node[csp_id] == -1) {
+            csp2node[csp_id] = node_n;
+            node2csp[node_n].emplace_back(csp_id);
+        }
         return MarkedPolygon{ConvexSphericalPolygon(subpol_pts_ll), halo_type};
     }
 }
@@ -627,8 +633,8 @@ get_polygons_nodedata(FunctionSpace fs, std::vector<idx_t>& csp2node,
     ATLAS_TRACE("ConservativeSphericalPolygonInterpolation: get_polygons_nodedata");
     MarkedPolygonArray cspolygons(csp_size);
     auto mesh = extract_mesh(fs);
-    csp2node.resize(csp_size);
-    node2csp.resize(mesh.nodes().size());
+    // csp2node.resize(csp_size);
+    // node2csp.resize(mesh.nodes().size());
 
     constexpr bool cell_data = false;
     for(idx_t i = 0; i < csp_size; ++i) {
@@ -818,7 +824,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
         ATLAS_TRACE("Get source polygons");
         StopWatch stopwatch;
         stopwatch.start();
-        init_csp_index(src_cell_data_, src_fs_, src_csp_size_, src_csp_cell_index_, src_csp_index_);
+        init_csp_index(src_cell_data_, src_fs_, sharable_data_->src_csp2node_, sharable_data_->src_node2csp_, src_csp_size_, src_csp_cell_index_, src_csp_index_);
         if (src_cell_data_) {
             src_csp = get_polygons_celldata(src_fs_, sharable_data_->src_csp2node_, sharable_data_->src_node2csp_,
                 src_csp_size_, src_csp_cell_index_, src_csp_index_);
@@ -833,7 +839,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
 
         ATLAS_TRACE("Get target polygons");
         stopwatch.start();
-        init_csp_index(tgt_cell_data_, tgt_fs_, tgt_csp_size_, tgt_csp_cell_index_, tgt_csp_index_);
+        init_csp_index(tgt_cell_data_, tgt_fs_, sharable_data_->tgt_csp2node_, sharable_data_->tgt_node2csp_, tgt_csp_size_, tgt_csp_cell_index_, tgt_csp_index_);
         if (tgt_cell_data_) {
             tgt_csp = get_polygons_celldata(tgt_fs_, sharable_data_->tgt_csp2node_, sharable_data_->tgt_node2csp_,
                 tgt_csp_size_, tgt_csp_cell_index_, tgt_csp_index_);
@@ -1119,8 +1125,11 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
                                     tgt_csp_size_ > 50 ? Log::info() : blackhole);
         float last_progress_percent = 0.00;
         for (idx_t tcell = 0; tcell < tgt_csp_size_; ++tcell) {
-            // auto tgt_csp = get_csp(tcell, tgt_mesh_, tgt_cell_data_, sharable_data_->tgt_csp2node_, sharable_data_->tgt_node2csp_,
-            //     tgt_csp_size_, tgt_csp_cell_index_, tgt_csp_index_);
+            auto tgt_qcsp = get_csp(tcell, tgt_mesh_, tgt_cell_data_, sharable_data_->tgt_csp2node_, sharable_data_->tgt_node2csp_,
+                tgt_csp_size_, tgt_csp_cell_index_, tgt_csp_index_);
+            if (tgt_qcsp.halo_type != tgt_csp[tcell].halo_type) {
+                Log::info() << "tcell halo not same" << std::endl;
+            }
             if (tgt_csp[tcell].halo_type <= tgt_halo_intersection_depth) {
                 intersection_src_cell_idx.resize(0);
                 intersection_weights.resize(0);

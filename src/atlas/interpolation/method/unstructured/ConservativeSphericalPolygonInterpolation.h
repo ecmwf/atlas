@@ -180,11 +180,10 @@ private:
     struct Workspace;
 
     std::vector<idx_t> get_node_neighbours(Mesh&, idx_t jcell, Workspace&) const;
-    void init_csp_index(bool cell_data, FunctionSpace fs, gidx_t& csp_index_size, std::vector<idx_t>& csp_cell_index,
-        std::vector<idx_t>& csp_index);
-    MarkedPolygon get_csp(idx_t csp_id, Mesh mesh, bool cell_data, std::vector<idx_t>& csp2node,
-        std::vector<std::vector<idx_t>>& node2csp, gidx_t& csp_index_size, std::vector<idx_t>& csp_cell_index,
-        std::vector<idx_t>& csp_index);
+    void init_csp_index(bool cell_data, FunctionSpace fs, std::vector<idx_t>& csp2node, std::vector<std::vector<idx_t>>& node2csp,
+        gidx_t& csp_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index);
+    MarkedPolygon get_csp(idx_t csp_id, Mesh mesh, bool cell_data, std::vector<idx_t>& csp2node, std::vector<std::vector<idx_t>>& node2csp,
+        gidx_t& csp_index_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index);
     MarkedPolygonArray get_polygons_celldata(FunctionSpace, std::vector<idx_t>& csp2node,
                                          std::vector<std::vector<idx_t>>& node2csp,
                                          gidx_t& csp_index_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index);
