@@ -95,35 +95,128 @@ void set_missing_values(Field& tgt, const std::vector<idx_t>& missing) {
     }
 }
 
+bool executesOnDevice(const sparse::Backend& backend) {
+    if (backend.type() == "eckit_linalg") {
+        return false;
+    } else if (backend.type() == "openmp") {
+        return false;
+    } else if (backend.type() == "hicsparse") {
+        return true;
+    } else {
+        ATLAS_NOTIMPLEMENTED;
+    }
+}
+
+template<typename Value, int Rank>
+atlas::array::ArrayView<Value, Rank> make_device_view_rw(atlas::Field& f) {
+    f.syncDevice();
+    return atlas::array::make_device_view<Value, Rank>(f);
+}
+
+template<typename Value, int Rank>
+atlas::array::ArrayView<Value, Rank> make_device_view_w(atlas::Field& f) {
+    if (not f.deviceAllocated()) {
+        f.allocateDevice();
+    }
+    f.setDeviceNeedsUpdate(false); // as it will be written to here
+    return atlas::array::make_device_view<Value, Rank>(f);
+}
+
+template<typename Value, int Rank>
+atlas::array::ArrayView<const Value, Rank> make_device_view_r(const atlas::Field& f) {
+    f.syncDevice();
+    return atlas::array::make_device_view<const Value, Rank>(f);
+}
+
+
+template<typename Value, int Rank>
+atlas::array::ArrayView<Value, Rank> make_host_view_rw(atlas::Field& f) {
+    f.syncHost();
+    return atlas::array::make_host_view<Value, Rank>(f);
+}
+
+template<typename Value, int Rank>
+atlas::array::ArrayView<const Value, Rank> make_host_view_r(const atlas::Field& f) {
+    f.syncHost();
+    return atlas::array::make_host_view<const Value, Rank>(f);
+}
+
+template<typename Value, int Rank>
+atlas::array::ArrayView<Value, Rank> make_host_view_w(atlas::Field& f) {
+    f.setHostNeedsUpdate(false); // as it will be written to
+    return atlas::array::make_host_view<Value, Rank>(f);
+}
+
+template<typename Value, typename Index>
+atlas::linalg::SparseMatrixView<Value,Index> make_device_view_r(const atlas::linalg::SparseMatrixStorage& m) {
+    if (m.deviceNeedsUpdate()) {
+        ATLAS_TRACE("Copy interpolation matrix to device");
+        m.updateDevice();
+    }
+    return make_device_view<Value, Index>(m);
+}
+
+template<typename Value, typename Index>
+atlas::linalg::SparseMatrixView<Value,Index> make_host_view_r(const atlas::linalg::SparseMatrixStorage& m) {
+    m.syncHost();
+    return make_host_view<Value, Index>(m);
+}
+
 }  // anonymous namespace
 
 
 template <typename Value>
 void Method::interpolate_field_rank1(const Field& src, Field& tgt, const Matrix& W) const {
-    auto backend = std::is_same<Value, float>::value ? sparse::backend::openmp() : sparse::Backend{linalg_backend_};
-    auto src_v   = array::make_view<Value, 1>(src);
-    auto tgt_v   = array::make_view<Value, 1>(tgt);
+    auto backend = sparse::Backend{linalg_backend_};
+    
+    if (backend.type() == "hicsparse" && !std::is_same<eckit::linalg::Scalar, Value>::value) {
+        ATLAS_NOTIMPLEMENTED; // hicsparse does not support mixed double-float
+    }
+
+    if (backend.type() == "eckit_linalg" && std::is_same<Value, float>::value) {
+        // Switch to OpenMP as eckit_linalg does not support float
+        backend = sparse::backend::openmp();
+    }
+    
+    const auto on_device = executesOnDevice(backend);
+
+    auto src_v = on_device ? make_device_view_r<Value, 1>(src) : make_host_view_r<Value, 1>(src);
+    auto tgt_v = on_device ? make_device_view_w<Value, 1>(tgt) : make_host_view_w<Value, 1>(tgt);
 
     if (nonLinear_(src)) {
-        eckit::linalg::SparseMatrix W_nl = atlas::linalg::make_eckit_sparse_matrix(W);
-        nonLinear_->execute(W_nl, src);
-        sparse_matrix_multiply(W_nl, src_v, tgt_v, backend);
+        eckit::linalg::SparseMatrix W_copy = atlas::linalg::make_eckit_sparse_matrix(W);
+        nonLinear_->execute(W_copy, src);
+        auto W_nl = make_sparse_matrix_storage(std::move(W_copy));
+        auto W_nl_v = on_device ? make_device_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(W_nl)
+                                : make_host_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(W_nl);
+        sparse_matrix_multiply(W_nl_v, src_v, tgt_v, backend);
     }
     else {
-        sparse_matrix_multiply(make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(W), src_v, tgt_v, backend);
+        auto W_v = on_device ? make_device_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(W)
+                             : make_host_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(W);
+        sparse_matrix_multiply(W_v, src_v, tgt_v, backend);
     }
+
+    on_device ? tgt.setHostNeedsUpdate(true) : tgt.setDeviceNeedsUpdate(true);
 }
 
 
 template <typename Value>
 void Method::interpolate_field_rank2(const Field& src, Field& tgt, const Matrix& W) const {
-    sparse::Backend backend{linalg_backend_};
-    auto src_v = array::make_view<Value, 2>(src);
-    auto tgt_v = array::make_view<Value, 2>(tgt);
+    auto backend = sparse::Backend{linalg_backend_};
+    
+    if (backend.type() == "hicsparse" && !std::is_same<eckit::linalg::Scalar, Value>::value) {
+        ATLAS_NOTIMPLEMENTED; // hicsparse does not support mixed double-float
+    }
+
+    if (backend.type() == "eckit_linalg") {
+        // Switch to OpenMP as eckit_linalg does not support this layout
+        backend = sparse::backend::openmp();
+    }
 
     if (nonLinear_(src)) {
         // We cannot apply the same matrix to full columns as e.g. missing values could be present in only certain parts.
-
+        
         // Allocate temporary rank-1 fields corresponding to one horizontal level
         auto src_slice = Field("s", array::make_datatype<Value>(), {src.shape(0)});
         auto tgt_slice = Field("t", array::make_datatype<Value>(), {tgt.shape(0)});
@@ -131,8 +224,11 @@ void Method::interpolate_field_rank2(const Field& src, Field& tgt, const Matrix&
         // Copy metadata to the source rank-1 field
         src_slice.metadata() = src.metadata();
 
-        auto src_slice_v = array::make_view<Value, 1>(src_slice);
-        auto tgt_slice_v = array::make_view<Value, 1>(tgt_slice);
+        auto src_v = make_host_view_r<Value,2>(src);
+        auto tgt_v = make_host_view_w<Value,2>(tgt);
+
+        auto src_slice_v = array::make_host_view<Value, 1>(src_slice);
+        auto tgt_slice_v = array::make_host_view<Value, 1>(tgt_slice);
 
         for (idx_t lev = 0; lev < src_v.shape(1); ++lev) {
             // Copy this level to temporary rank-1 field
@@ -144,13 +240,25 @@ void Method::interpolate_field_rank2(const Field& src, Field& tgt, const Matrix&
             interpolate_field_rank1<Value>(src_slice, tgt_slice, W);
 
             // Copy rank-1 field to this level in the rank-2 field
+            tgt_slice.syncHost();
             for (idx_t i = 0; i < tgt.shape(0); ++i) {
                 tgt_v(i, lev) = tgt_slice_v(i);
             }
         }
+        tgt.setDeviceNeedsUpdate(true);
+        tgt.setHostNeedsUpdate(false);
     }
     else {
-        sparse_matrix_multiply(make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(W), src_v, tgt_v, sparse::backend::openmp());
+        const auto on_device = executesOnDevice(backend);
+
+        auto W_v = on_device ? make_device_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(W)
+                             : make_host_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(W);
+        auto src_dv = on_device ? make_device_view_r<Value, 2>(src) : make_host_view_r<Value, 2>(src);
+        auto tgt_dv = on_device ? make_device_view_w<Value, 2>(tgt) : make_host_view_w<Value, 2>(tgt);
+        
+        sparse_matrix_multiply(W_v, src_dv, tgt_dv, backend);
+
+        on_device ? tgt.setHostNeedsUpdate(true) : tgt.setDeviceNeedsUpdate(true);
     }
 }
 
@@ -158,40 +266,98 @@ void Method::interpolate_field_rank2(const Field& src, Field& tgt, const Matrix&
 template <typename Value>
 void Method::interpolate_field_rank3(const Field& src, Field& tgt, const Matrix& W) const {
     sparse::Backend backend{linalg_backend_};
-    auto src_v = array::make_view<Value, 3>(src);
-    auto tgt_v = array::make_view<Value, 3>(tgt);
+
+    if (backend.type() == "hicsparse") {
+        ATLAS_NOTIMPLEMENTED; // hicsparse does not support rank-3 fields
+    }
+
+    if (backend.type() == "eckit_linalg") {
+        // Switch to OpenMP as eckit_linalg does not support rank-3 fields
+        backend = sparse::backend::openmp();
+    }
+
+    auto W_v = make_host_view<eckit::linalg::Scalar, eckit::linalg::Index>(W);
+    auto src_v = make_host_view_r<Value, 3>(src);
+    auto tgt_v = make_host_view_w<Value, 3>(tgt);
     if (not W.empty() && nonLinear_(src)) {
         ATLAS_ASSERT(false, "nonLinear interpolation not supported for rank-3 fields.");
     }
-    sparse_matrix_multiply(make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(W), src_v, tgt_v, sparse::backend::openmp());
+    sparse_matrix_multiply(W_v, src_v, tgt_v, backend);
+
+    tgt.setHostNeedsUpdate(false);
+    tgt.setDeviceNeedsUpdate(true);
 }
 
 template <typename Value>
 void Method::adjoint_interpolate_field_rank1(Field& src, const Field& tgt, const Matrix& W) const {
-    auto backend = std::is_same<Value, float>::value ? sparse::backend::openmp() : sparse::Backend{linalg_backend_};
+    auto backend = sparse::Backend{linalg_backend_};
+    
+    if (backend.type() == "hicsparse" && !std::is_same<eckit::linalg::Scalar, Value>::value) {
+        ATLAS_NOTIMPLEMENTED; // hicsparse does not support mixed double-float
+    }
 
-    auto src_v = array::make_view<Value, 1>(src);
-    auto tgt_v = array::make_view<Value, 1>(tgt);
+    if (backend.type() == "eckit_linalg" && std::is_same<Value, float>::value) {
+        // Switch to OpenMP as eckit_linalg does not support float
+        backend = sparse::backend::openmp();
+    }
 
-    sparse_matrix_multiply_add(make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(W), tgt_v, src_v, backend);
+    const auto on_device = executesOnDevice(backend);
+
+    auto src_v = on_device ? make_device_view_rw<Value, 1>(src) : make_host_view_rw<Value, 1>(src);
+    auto tgt_v = on_device ? make_device_view_r<Value, 1>(tgt) : make_host_view_r<Value, 1>(tgt);
+    auto W_v = on_device ? make_device_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(W)
+                         : make_host_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(W);
+
+    sparse_matrix_multiply_add(W_v, tgt_v, src_v, backend);
+
+    on_device ? src.setHostNeedsUpdate(true) : src.setDeviceNeedsUpdate(true);
 }
 
 template <typename Value>
 void Method::adjoint_interpolate_field_rank2(Field& src, const Field& tgt, const Matrix& W) const {
+    auto backend = sparse::Backend{linalg_backend_};
+    
+    if (backend.type() == "hicsparse" && !std::is_same<eckit::linalg::Scalar, Value>::value) {
+        ATLAS_NOTIMPLEMENTED; // hicsparse does not support mixed double-float
+    }
 
-    auto src_v = array::make_view<Value, 2>(src);
-    auto tgt_v = array::make_view<Value, 2>(tgt);
+    if (backend.type() == "eckit_linalg") {
+        // Switch to OpenMP as eckit_linalg does not support this layout
+        backend = sparse::backend::openmp();
+    }
 
-    sparse_matrix_multiply_add(make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(W), tgt_v, src_v, sparse::backend::openmp());
+    const auto on_device = executesOnDevice(backend);
+
+    auto src_v = on_device ? make_device_view_rw<Value, 2>(src) : make_host_view_rw<Value, 2>(src);
+    auto tgt_v = on_device ? make_device_view_r<Value, 2>(tgt) : make_host_view_r<Value, 2>(tgt);
+    auto W_v = on_device ? make_device_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(W)
+                         : make_host_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(W);
+
+    sparse_matrix_multiply_add(W_v, tgt_v, src_v, backend);
+
+    on_device ? src.setHostNeedsUpdate(true) : src.setDeviceNeedsUpdate(true);
 }
 
 template <typename Value>
 void Method::adjoint_interpolate_field_rank3(Field& src, const Field& tgt, const Matrix& W) const {
+    sparse::Backend backend{linalg_backend_};
 
-    auto src_v = array::make_view<Value, 3>(src);
-    auto tgt_v = array::make_view<Value, 3>(tgt);
+    if (backend.type() == "hicsparse") {
+        ATLAS_NOTIMPLEMENTED; // hicsparse does not support rank-3 fields
+    }
 
-    sparse_matrix_multiply_add(make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(W), tgt_v, src_v, sparse::backend::openmp());
+    if (backend.type() == "eckit_linalg") {
+        // Switch to OpenMP as eckit_linalg does not support rank-3 fields
+        backend = sparse::backend::openmp();
+    }
+
+    auto src_v = make_host_view_rw<Value, 3>(src);
+    auto tgt_v = make_host_view_r<Value, 3>(tgt);
+    auto W_v = make_host_view_r<eckit::linalg::Scalar,eckit::linalg::Index>(W);
+
+    sparse_matrix_multiply_add(W_v, tgt_v, src_v, backend);
+
+    src.setDeviceNeedsUpdate(true);
 }
 
 void Method::check_compatibility(const Field& src, const Field& tgt, const Matrix& W) const {
@@ -350,8 +516,18 @@ void Method::do_execute(const FieldSet& fieldsSource, FieldSet& fieldsTarget, Me
 void Method::do_execute(const Field& src, Field& tgt, Metadata&) const {
     ATLAS_TRACE("atlas::interpolation::method::Method::do_execute()");
 
-    haloExchange(src);
+     if (src.hostNeedsUpdate() && src.deviceNeedsUpdate()) {
+            throw_AssertionFailed("Inconsistent memory state flags - we will not be able to "
+                                  "determine which memory space to perform the halo exchange on",
+                                  Here());
+    }
 
+    sparse::Backend backend{linalg_backend_};
+
+    const bool on_device = executesOnDevice(backend);
+
+    haloExchange(src, on_device);
+    
     if( matrix_ ) { // (matrix == nullptr) when a partition is empty
         if (src.datatype().kind() == array::DataType::KIND_REAL64) {
             interpolate_field<double>(src, tgt, *matrix_);
@@ -379,10 +555,19 @@ void Method::do_execute(const Field& src, Field& tgt, Metadata&) const {
         }
     }
 
-    // set missing values
-    set_missing_values(tgt, missing_);
-
-    tgt.set_dirty();
+    // set missing values on host
+    if (not missing_.empty()) {
+        if (on_device) {
+            tgt.updateHost();
+        }
+        set_missing_values(tgt, missing_);
+        tgt.set_dirty();
+        tgt.setDeviceNeedsUpdate(true);
+    }
+    else {
+        tgt.set_dirty();
+        on_device ? tgt.setHostNeedsUpdate(true) : tgt.setDeviceNeedsUpdate(true);
+    }
 }
 
 void Method::do_execute_adjoint(FieldSet& fieldsSource, const FieldSet& fieldsTarget, Metadata& metadata) const {
@@ -398,6 +583,14 @@ void Method::do_execute_adjoint(FieldSet& fieldsSource, const FieldSet& fieldsTa
 
 void Method::do_execute_adjoint(Field& src, const Field& tgt, Metadata&) const {
     ATLAS_TRACE("atlas::interpolation::method::Method::do_execute_adjoint()");
+
+    if (src.hostNeedsUpdate() && src.deviceNeedsUpdate()) {
+            throw_AssertionFailed("Inconsistent memory state flags - we will not be able to "
+                                  "determine which memory space to perform the adjoint halo exchange on",
+                                  Here());
+    }
+
+    sparse::Backend backend{linalg_backend_};
 
     if (nonLinear_(src)) {
         throw_NotImplemented("Adjoint interpolation only works for interpolation schemes that are linear", Here());
@@ -423,7 +616,11 @@ void Method::do_execute_adjoint(Field& src, const Field& tgt, Metadata&) const {
 
     src.set_dirty();
 
-    adjointHaloExchange(src);
+    const bool on_device = executesOnDevice(backend);
+
+    adjointHaloExchange(src, on_device);
+    
+    on_device ? src.setHostNeedsUpdate(true) : src.setDeviceNeedsUpdate(true);
 }
 
 
@@ -442,25 +639,51 @@ void Method::normalise(Triplets& triplets) {
     }
 }
 
-void Method::haloExchange(const FieldSet& fields) const {
+void Method::haloExchange(const FieldSet& fields, bool on_device) const {
     for (auto& field : fields) {
-        haloExchange(field);
+        haloExchange(field, on_device);
     }
 }
-void Method::haloExchange(const Field& field) const {
+void Method::haloExchange(const Field& field, bool on_device) const {
     if (field.dirty() && allow_halo_exchange_) {
-        source().haloExchange(field);
+        ATLAS_TRACE("haloExchange");
+        if (on_device) {
+            if (field.deviceNeedsUpdate()) {
+                // Prefer halo exchange on host and copy to device
+                source().haloExchange(field); // on host
+                field.syncDevice();
+            }
+            else {
+                source().haloExchange(field, on_device); // on device
+            }
+        }
+        else {
+            source().haloExchange(field); // on host
+        }
     }
 }
 
-void Method::adjointHaloExchange(const FieldSet& fields) const {
+void Method::adjointHaloExchange(const FieldSet& fields, bool on_device) const {
     for (auto& field : fields) {
-        adjointHaloExchange(field);
+        adjointHaloExchange(field, on_device);
     }
 }
-void Method::adjointHaloExchange(const Field& field) const {
+void Method::adjointHaloExchange(const Field& field, bool on_device) const {
     if (field.dirty() && allow_halo_exchange_) {
-        source().adjointHaloExchange(field);
+        ATLAS_TRACE("adjointHaloExchange");
+        if (on_device) {
+            if (field.deviceNeedsUpdate()) {
+                // Prefer halo exchange on host and copy to device
+                source().adjointHaloExchange(field); // on host
+                field.syncDevice();
+            }
+            else {
+                source().adjointHaloExchange(field, on_device); // on device
+            }
+        }
+        else {
+            source().adjointHaloExchange(field); // on host
+        }
     }
 }
 

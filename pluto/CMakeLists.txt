@@ -8,7 +8,7 @@
 
 cmake_minimum_required( VERSION 3.18 FATAL_ERROR )
 
-find_package( ecbuild 3.8 REQUIRED HINTS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../ecbuild ${CMAKE_CURRENT_SOURCE_DIR}/../../ecbuild )
+find_package( ecbuild 3.4 REQUIRED HINTS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../ecbuild ${CMAKE_CURRENT_SOURCE_DIR}/../../ecbuild )
 
 if( NOT DEFINED atlas_VERSION )
   set( atlas_VERSION 0.0.0 )

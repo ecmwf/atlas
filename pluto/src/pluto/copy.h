@@ -11,9 +11,11 @@
 
 #include <cstddef>
 #include <memory>
+#include <string_view>
 
 #include "pluto/memcpy.h"
 #include "pluto/stream.h"
+#include "pluto/trace.h"
 
 namespace pluto {
 
@@ -21,8 +23,16 @@ namespace pluto {
 // Here follow templated copy functions that work with size instead of bytes
 
 template <class T>
-void copy_host_to_device(T* device, const T* host, std::size_t size) {
+void copy_host_to_device(std::string_view label, T* device, const T* host, std::size_t size) {
+    if (trace::enabled()) {
+        trace::log::copy_host_to_device(label, device, host, sizeof(T) * size);
+    }
     memcpy_host_to_device(device, host, sizeof(T) * size);
+}
+
+template <class T>
+void copy_host_to_device(T* device, const T* host, std::size_t size) {
+    copy_host_to_device(std::string_view{}, device, host, size);
 }
 
 template <class T>
@@ -100,10 +110,17 @@ void copy_host_to_device(T& device, const std::unique_ptr<T, D>& host, stream_vi
     copy_host_to_device(&device, host.get(), s);
 }
 
+template <class T>
+void copy_device_to_host(std::string_view label, T* host, const T* device, std::size_t size) {
+    if (trace::enabled()) {
+        trace::log::copy_device_to_host(label, host, device, sizeof(T) * size);
+    }
+    memcpy_device_to_host(host, device, sizeof(T) * size);
+}
 
 template <class T>
 void copy_device_to_host(T* host, const T* device, std::size_t size) {
-    memcpy_device_to_host(host, device, sizeof(T) * size);
+    copy_device_to_host(std::string_view{}, host, device, sizeof(T) * size);
 }
 
 template <class T>
@@ -183,13 +200,48 @@ void copy_device_to_host(T& host, const std::unique_ptr<T, D>& device, stream_vi
 
 template <class T>
 void copy_host_to_device_2D(
+    std::string_view label,
     T* device, std::size_t device_pitch,
     const T* host, std::size_t host_pitch,
     std::size_t width, std::size_t height) {
 
+    if (trace::enabled()) {
+        trace::log::copy_host_to_device(label, host, device, height * width * sizeof(T));
+    }
+
     memcpy_host_to_device_2D(
         device, device_pitch * sizeof(T),
         host, host_pitch * sizeof(T),
+        width * sizeof(T), height);
+}
+
+template <class T>
+void copy_host_to_device_2D(
+    T* device, std::size_t device_pitch,
+    const T* host, std::size_t host_pitch,
+    std::size_t width, std::size_t height) {
+
+    copy_host_to_device_2D(
+        std::string_view{},
+        device, device_pitch,
+        host, host_pitch,
+        width, height);
+}
+
+template <class T>
+void copy_device_to_host_2D(
+    std::string_view label,
+    T* host, std::size_t host_pitch,
+    const T* device, std::size_t device_pitch,
+    std::size_t width, std::size_t height) {
+
+    if (trace::enabled()) {
+        trace::log::copy_device_to_host(label, host, device, height * width * sizeof(T));
+    }
+
+    memcpy_device_to_host_2D(
+        host, host_pitch * sizeof(T),
+        device, device_pitch * sizeof(T),
         width * sizeof(T), height);
 }
 
@@ -199,10 +251,11 @@ void copy_device_to_host_2D(
     const T* device, std::size_t device_pitch,
     std::size_t width, std::size_t height) {
 
-    memcpy_device_to_host_2D(
-        host, host_pitch * sizeof(T),
-        device, device_pitch * sizeof(T),
-        width * sizeof(T), height);
+    copy_device_to_host_2D(
+        std::string_view{},
+        host, host_pitch,
+        device, device_pitch,
+        width, height);
 }
 
 }  // namespace pluto

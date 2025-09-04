@@ -32,9 +32,18 @@ SparseMatrixStorage::SparseMatrixStorage(const SparseMatrixStorage& other) {
     nnz_   = other.nnz_;
     rows_  = other.rows_;
     cols_  = other.cols_;
-    outer_.reset(atlas::array::Array::create(other.outer_->datatype(), atlas::array::make_shape(other.outer_->size())));
-    inner_.reset(atlas::array::Array::create(other.inner_->datatype(), atlas::array::make_shape(other.inner_->size())));
-    value_.reset(atlas::array::Array::create(other.value_->datatype(), atlas::array::make_shape(other.value_->size())));
+    {
+        array::label label{"sparse_matrix.outer"};
+        outer_.reset(atlas::array::Array::create(other.outer_->datatype(), atlas::array::make_shape(other.outer_->size())));
+    }
+    {
+        array::label label{"sparse_matrix.inner"};
+        inner_.reset(atlas::array::Array::create(other.inner_->datatype(), atlas::array::make_shape(other.inner_->size())));
+    }
+    {
+        array::label label{"sparse_matrix.value"};
+        value_.reset(atlas::array::Array::create(other.value_->datatype(), atlas::array::make_shape(other.value_->size())));
+    }
     outer_->copy(*other.outer_);
     inner_->copy(*other.inner_);
     value_->copy(*other.value_);
@@ -61,9 +70,18 @@ SparseMatrixStorage& SparseMatrixStorage::operator=(const SparseMatrixStorage& o
     nnz_   = other.nnz_;
     rows_  = other.rows_;
     cols_  = other.cols_;
-    outer_.reset(atlas::array::Array::create(other.outer_->datatype(), atlas::array::make_shape(other.outer_->size())));
-    inner_.reset(atlas::array::Array::create(other.inner_->datatype(), atlas::array::make_shape(other.inner_->size())));
-    value_.reset(atlas::array::Array::create(other.value_->datatype(), atlas::array::make_shape(other.value_->size())));
+    {
+        array::label label{"sparse_matrix.outer"};
+        outer_.reset(atlas::array::Array::create(other.outer_->datatype(), atlas::array::make_shape(other.outer_->size())));
+    }
+    {
+        array::label label{"sparse_matrix.inner"};
+        inner_.reset(atlas::array::Array::create(other.inner_->datatype(), atlas::array::make_shape(other.inner_->size())));
+    }
+    {
+        array::label label{"sparse_matrix.value"};
+        value_.reset(atlas::array::Array::create(other.value_->datatype(), atlas::array::make_shape(other.value_->size())));
+    }
     outer_->copy(*other.outer_);
     inner_->copy(*other.inner_);
     value_->copy(*other.value_);
@@ -71,31 +89,43 @@ SparseMatrixStorage& SparseMatrixStorage::operator=(const SparseMatrixStorage& o
 }
 
 
-void SparseMatrixStorage::updateDevice() const { 
+void SparseMatrixStorage::updateDevice() const {
     outer_->updateDevice();
     inner_->updateDevice();
     value_->updateDevice();
 }
 
-void SparseMatrixStorage::updateHost() const { 
+void SparseMatrixStorage::updateHost() const {
     outer_->updateHost();
     inner_->updateHost();
     value_->updateHost();
 }
 
-bool SparseMatrixStorage::hostNeedsUpdate() const { 
+void SparseMatrixStorage::syncDevice() const {
+    outer_->syncDevice();
+    inner_->syncDevice();
+    value_->syncDevice();
+}
+
+void SparseMatrixStorage::syncHost() const {
+    outer_->syncHost();
+    inner_->syncHost();
+    value_->syncHost();
+}
+
+bool SparseMatrixStorage::hostNeedsUpdate() const {
     return outer_->hostNeedsUpdate() ||
-            inner_->hostNeedsUpdate() ||
-            value_->hostNeedsUpdate();
+           inner_->hostNeedsUpdate() ||
+           value_->hostNeedsUpdate();
 }
 
-bool SparseMatrixStorage::deviceNeedsUpdate() const { 
+bool SparseMatrixStorage::deviceNeedsUpdate() const {
     return outer_->deviceNeedsUpdate() ||
-            inner_->deviceNeedsUpdate() ||
-            value_->deviceNeedsUpdate();
+           inner_->deviceNeedsUpdate() ||
+           value_->deviceNeedsUpdate();
 }
 
-void SparseMatrixStorage::setHostNeedsUpdate(bool v) const { 
+void SparseMatrixStorage::setHostNeedsUpdate(bool v) const {
     outer_->setHostNeedsUpdate(v);
     inner_->setHostNeedsUpdate(v);
     value_->setHostNeedsUpdate(v);
@@ -109,8 +139,8 @@ void SparseMatrixStorage::setDeviceNeedsUpdate(bool v) const {
 
 bool SparseMatrixStorage::deviceAllocated() const {
     return outer_->deviceAllocated() &&
-            inner_->deviceAllocated() &&
-            value_->deviceAllocated();
+           inner_->deviceAllocated() &&
+           value_->deviceAllocated();
 }
 
 void SparseMatrixStorage::allocateDevice() const {
@@ -119,7 +149,7 @@ void SparseMatrixStorage::allocateDevice() const {
     value_->allocateDevice();
 }
 
-void SparseMatrixStorage::deallocateDevice() const { 
+void SparseMatrixStorage::deallocateDevice() const {
     outer_->deallocateDevice();
     inner_->deallocateDevice();
     value_->deallocateDevice();

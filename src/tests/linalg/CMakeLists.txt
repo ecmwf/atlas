@@ -11,7 +11,7 @@ if( atlas_HAVE_ATLAS_FUNCTIONSPACE )
 ecbuild_add_test( TARGET atlas_test_linalg_sparse_gpu
     SOURCES test_linalg_sparse_gpu.cc
     LIBS    atlas
-    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_RUN_NGPUS=1
     CONDITION HAVE_CUDA OR HAVE_HIP
 )
 if( TARGET atlas_test_linalg_sparse_gpu )
@@ -34,7 +34,7 @@ ecbuild_add_test( TARGET atlas_test_linalg_sparse_matrix_gpu
   SOURCES test_linalg_sparse_matrix_gpu.cc
   LIBS    atlas hicsparse
   CONDITION HAVE_CUDA OR HAVE_HIP
-  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_RUN_NGPUS=1
 )
 if( TARGET atlas_test_linalg_sparse_matrix_gpu )
   set_tests_properties( atlas_test_linalg_sparse_matrix_gpu PROPERTIES LABELS "gpu")

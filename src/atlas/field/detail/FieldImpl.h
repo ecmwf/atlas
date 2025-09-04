@@ -207,6 +207,8 @@ public:  // Destructor
     void updateHost() const { array_->updateHost(); }
     void updateDevice() const { array_->updateDevice(); }
     void syncHostDevice() const { array_->syncHostDevice(); }
+    void syncHost() const { array_->syncHost(); }
+    void syncDevice() const { array_->syncDevice(); }
     bool deviceAllocated() const { return array_->deviceAllocated(); }
     void allocateDevice() const { array_->allocateDevice(); }
     void deallocateDevice() const { array_->deallocateDevice(); }

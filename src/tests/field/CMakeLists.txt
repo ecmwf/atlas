@@ -51,7 +51,7 @@ endif()
 ecbuild_add_test( TARGET atlas_test_field_acc
   SOURCES  test_field_acc.cc
   LIBS     atlas OpenACC::OpenACC_CXX
-  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_RUN_NGPUS=1
   CONDITION HAVE_ACC_CXX
 )
 ecbuild_add_test( TARGET atlas_test_field_acc_cpu

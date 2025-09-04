@@ -152,7 +152,10 @@ size_t memory_of(const std::vector<T>& vector) {
     return sizeof(T) * vector.capacity();
 }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> develop
 template <typename T>
 size_t memory_of(const std::vector<std::vector<T>>& vector_of_vector) {
     size_t mem = 0;
@@ -1214,7 +1217,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
 
     timings.polygon_intersections  = stopwatch_polygon_intersections.elapsed();
     timings.source_kdtree_search   = stopwatch_kdtree_search.elapsed();
-    timings.source_polygons_filter = 0.; //stopwatch_src_already_in.elapsed();
+    timings.source_polygons_filter = stopwatch_src_already_in.elapsed();
     num_pol[SRC]                   = src_csp.size();
     num_pol[TGT]                   = tgt_csp_size_;
     ATLAS_TRACE_MPI(ALLREDUCE) {
@@ -1918,8 +1921,12 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
 
     stopwatch.stop();
     {
-        ATLAS_TRACE("ConservativeMethod: halo exchange target");
+        ATLAS_TRACE("halo exchange target");
+        if (tgt_field.hostNeedsUpdate()) {
+            tgt_field.updateHost();
+        }
         tgt_field.haloExchange();
+        tgt_field.setDeviceNeedsUpdate(true);
     }
 
     auto remap_stat = remap_stat_;

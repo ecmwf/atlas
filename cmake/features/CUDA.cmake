@@ -29,9 +29,22 @@ endif()
 set( HAVE_CUDA ${atlas_HAVE_CUDA} )
 set( HAVE_HIP  ${atlas_HAVE_HIP} )
 set( HAVE_GPU  ${atlas_HAVE_GPU} )
-
 if( HAVE_GPU )
   ecbuild_info("GPU support enabled")
 else()
   ecbuild_info("GPU support not enabled")
+endif()
+
+if( HAVE_GPU )
+  set( GPU_AWARE_MPI_default ON )
+else()
+  set( GPU_AWARE_MPI_default OFF )
+endif()
+ecbuild_add_option( FEATURE GPU_AWARE_MPI
+                    DESCRIPTION "MPI supports GPU to GPU transfers"
+                    DEFAULT ${GPU_AWARE_MPI_default} )
+if( HAVE_GPU_AWARE_MPI )
+  ecbuild_info("GPU aware MPI support enabled")
+else()
+  ecbuild_info("GPU aware MPI support not enabled")
 endif()

@@ -239,6 +239,138 @@ void FieldSetImpl::deallocateDevice(std::initializer_list<int> findices) const {
     }
 }
 
+void FieldSetImpl::setDeviceNeedsUpdate(bool value) const {
+    for (auto field: *this) {
+        field.setDeviceNeedsUpdate(value);
+    }
+}
+
+void FieldSetImpl::setDeviceNeedsUpdate(bool value, std::initializer_list<std::string> fnames) const {
+    ATLAS_ASSERT(fnames.size() > 0);
+    for (int i = 0; i < fnames.size(); ++i) {
+        auto field = this->field(fnames.begin()[i]);
+        field.setDeviceNeedsUpdate(true);
+    }
+}
+
+void FieldSetImpl::setDeviceNeedsUpdate(bool value, std::initializer_list<int> findices) const {
+    ATLAS_ASSERT(findices.size() > 0);
+    for (int i = 0; i < findices.size(); ++i) {
+        auto field = this->field(findices.begin()[i]);
+        field.setDeviceNeedsUpdate(value);
+    }
+}
+
+void FieldSetImpl::setDeviceNeedsUpdate() const {
+    for (auto field: *this) {
+        field.setDeviceNeedsUpdate();
+    }
+}
+
+void FieldSetImpl::setDeviceNeedsUpdate(std::initializer_list<std::string> fnames) const {
+    ATLAS_ASSERT(fnames.size() > 0);
+    for (int i = 0; i < fnames.size(); ++i) {
+        auto field = this->field(fnames.begin()[i]);
+        field.setDeviceNeedsUpdate();
+    }
+}
+
+void FieldSetImpl::setDeviceNeedsUpdate(std::initializer_list<int> findices) const {
+    ATLAS_ASSERT(findices.size() > 0);
+    for (int i = 0; i < findices.size(); ++i) {
+        auto field = this->field(findices.begin()[i]);
+        field.setDeviceNeedsUpdate();
+    }
+}
+
+void FieldSetImpl::setHostNeedsUpdate(bool value) const {
+    for (auto field: *this) {
+        field.setHostNeedsUpdate(value);
+    }
+}
+
+void FieldSetImpl::setHostNeedsUpdate(bool value, std::initializer_list<std::string> fnames) const {
+    ATLAS_ASSERT(fnames.size() > 0);
+    for (int i = 0; i < fnames.size(); ++i) {
+        auto field = this->field(fnames.begin()[i]);
+        field.setHostNeedsUpdate(value);
+    }
+}
+
+void FieldSetImpl::setHostNeedsUpdate(bool value, std::initializer_list<int> findices) const {
+    ATLAS_ASSERT(findices.size() > 0);
+    for (int i = 0; i < findices.size(); ++i) {
+        auto field = this->field(findices.begin()[i]);
+        field.setHostNeedsUpdate(value);
+    }
+}
+
+void FieldSetImpl::setHostNeedsUpdate() const {
+    for (auto field: *this) {
+        field.setHostNeedsUpdate();
+    }
+}
+
+void FieldSetImpl::setHostNeedsUpdate(std::initializer_list<std::string> fnames) const {
+    ATLAS_ASSERT(fnames.size() > 0);
+    for (int i = 0; i < fnames.size(); ++i) {
+        auto field = this->field(fnames.begin()[i]);
+        field.setHostNeedsUpdate();
+    }
+}
+
+void FieldSetImpl::setHostNeedsUpdate(std::initializer_list<int> findices) const {
+    ATLAS_ASSERT(findices.size() > 0);
+    for (int i = 0; i < findices.size(); ++i) {
+        auto field = this->field(findices.begin()[i]);
+        field.setHostNeedsUpdate();
+    }
+}
+
+void FieldSetImpl::syncHost() const {
+    for (auto field: *this) {
+        field.syncHost();
+    }
+}
+
+void FieldSetImpl::syncHost(std::initializer_list<std::string> fnames) const {
+    ATLAS_ASSERT(fnames.size() > 0);
+    for (int i = 0; i < fnames.size(); ++i) {
+        auto field = this->field(fnames.begin()[i]);
+        field.syncHost();
+    }
+}
+
+void FieldSetImpl::syncHost(std::initializer_list<int> findices) const {
+    ATLAS_ASSERT(findices.size() > 0);
+    for (int i = 0; i < findices.size(); ++i) {
+        auto field = this->field(findices.begin()[i]);
+        field.syncHost();
+    }
+}
+
+void FieldSetImpl::syncDevice() const {
+    for (auto field: *this) {
+        field.syncDevice();
+    }
+}
+
+void FieldSetImpl::syncDevice(std::initializer_list<std::string> fnames) const {
+    ATLAS_ASSERT(fnames.size() > 0);
+    for (int i = 0; i < fnames.size(); ++i) {
+        auto field = this->field(fnames.begin()[i]);
+        field.syncDevice();
+    }
+}
+
+void FieldSetImpl::syncDevice(std::initializer_list<int> findices) const {
+    ATLAS_ASSERT(findices.size() > 0);
+    for (int i = 0; i < findices.size(); ++i) {
+        auto field = this->field(findices.begin()[i]);
+        field.syncDevice();
+    }
+}
+
 //-----------------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 extern "C" {

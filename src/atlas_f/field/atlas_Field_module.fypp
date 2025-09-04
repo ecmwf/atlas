@@ -109,6 +109,8 @@ contains
   procedure, public :: update_device
   procedure, public :: update_host
   procedure, public :: sync_host_device
+  procedure, public :: sync_host
+  procedure, public :: sync_device
 
   procedure, private :: dummy
 
@@ -777,6 +779,21 @@ subroutine sync_host_device(this)
   use atlas_field_c_binding
   class(atlas_Field), intent(inout) :: this
   call atlas__Field__sync_host_device(this%CPTR_PGIBUG_A)
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine sync_host(this)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(inout) :: this
+  call atlas__Field__sync_host(this%CPTR_PGIBUG_A)
+end subroutine
+
+!-------------------------------------------------------------------------------
+subroutine sync_device(this)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(inout) :: this
+  call atlas__Field__sync_device(this%CPTR_PGIBUG_A)
 end subroutine
 
 !-------------------------------------------------------------------------------
