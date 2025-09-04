@@ -19,11 +19,13 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
+using Indices = std::vector<idx_t>;
+
 
 class ConservativeSphericalPolygonInterpolation : public Method {
 public:
     struct InterpolationParameters {      // one polygon intersection
-        std::vector<idx_t> cell_idx;      // target cells used for intersection
+        Indices cell_idx;      // target cells used for intersection
         std::vector<PointXYZ> centroids;  // intersection cell centroids
         std::vector<double> weights;  // intersection cell areas
     };
@@ -47,10 +49,10 @@ private:
         std::vector<double> tgt_areas_;
 
         // indexing of subpolygons
-        std::vector<idx_t> src_csp2node_;
-        std::vector<idx_t> tgt_csp2node_;
-        std::vector<std::vector<idx_t>> src_node2csp_;
-        std::vector<std::vector<idx_t>> tgt_node2csp_;
+        Indices src_csp2node_;
+        Indices tgt_csp2node_;
+        std::vector<Indices> src_node2csp_;
+        std::vector<Indices> tgt_node2csp_;
 
         // Timings
         struct Timings {
@@ -169,7 +171,7 @@ private:
     Triplets compute_1st_order_triplets();
     Triplets compute_2nd_order_triplets();
     void dump_intersection(const std::string, const ConvexSphericalPolygon& plg_1, const MarkedPolygonArray& plg_2_array,
-                           const std::vector<idx_t>& plg_2_idx_array) const;
+                           const Indices& plg_2_idx_array) const;
     template <class TargetCellsIDs>
     void dump_intersection(const std::string, const ConvexSphericalPolygon& plg_1, const MarkedPolygonArray& plg_2_array,
                            const TargetCellsIDs& plg_2_idx_array) const;
@@ -180,16 +182,35 @@ private:
     struct Workspace;
 
     std::vector<idx_t> get_node_neighbours(Mesh&, idx_t jcell, Workspace&) const;
-    void init_csp_index(bool cell_data, FunctionSpace fs, std::vector<idx_t>& csp2node, std::vector<std::vector<idx_t>>& node2csp,
-        gidx_t& csp_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index);
-    MarkedPolygon get_csp(idx_t csp_id, Mesh mesh, bool cell_data, std::vector<idx_t>& csp2node, std::vector<std::vector<idx_t>>& node2csp,
-        gidx_t& csp_index_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index);
-    MarkedPolygonArray get_polygons_celldata(FunctionSpace, std::vector<idx_t>& csp2node,
-                                         std::vector<std::vector<idx_t>>& node2csp,
-                                         gidx_t& csp_index_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index);
-    MarkedPolygonArray get_polygons_nodedata(FunctionSpace, std::vector<idx_t>& csp2node,
-                                         std::vector<std::vector<idx_t>>& node2csp,
-                                         gidx_t& csp_index_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index);
+    void init_csp_index(bool cell_data, FunctionSpace fs, Indices& csp2node, std::vector<Indices>& node2csp,
+        gidx_t& csp_size, Indices& csp_cell_index, Indices& csp_index);
+    MarkedPolygon get_csp_celldata(idx_t csp_id, const Mesh mesh, gidx_t& csp_index_size, Indices& csp_index);
+    MarkedPolygon get_csp_nodedata(idx_t csp_id, const Mesh mesh, Indices& csp2node, std::vector<Indices>& node2csp,
+        gidx_t& csp_index_size, Indices& csp_cell_index, Indices& csp_index);
+    MarkedPolygon get_src_csp(idx_t csp_id) {
+        if (src_cell_data_) {
+            return get_csp_celldata(csp_id, src_mesh_, src_csp_size_, src_csp_index_);
+        }
+        else {
+            return get_csp_nodedata(csp_id, src_mesh_, sharable_data_->src_csp2node_, sharable_data_->src_node2csp_,
+                src_csp_size_, src_csp_cell_index_, src_csp_index_);
+        }
+    }
+    MarkedPolygon get_tgt_csp(idx_t csp_id) {
+        if (tgt_cell_data_) {
+            return get_csp_celldata(csp_id, tgt_mesh_, tgt_csp_size_, tgt_csp_index_);
+        }
+        else {
+            return get_csp_nodedata(csp_id, tgt_mesh_, sharable_data_->tgt_csp2node_, sharable_data_->tgt_node2csp_,
+                tgt_csp_size_, tgt_csp_cell_index_, tgt_csp_index_);
+        }
+    }
+    MarkedPolygonArray get_polygons_celldata(FunctionSpace, Indices& csp2node,
+                                         std::vector<Indices>& node2csp,
+                                         gidx_t& csp_index_size, Indices& csp_cell_index, Indices& csp_index);
+    MarkedPolygonArray get_polygons_nodedata(FunctionSpace, Indices& csp2node,
+                                         std::vector<Indices>& node2csp,
+                                         gidx_t& csp_index_size, Indices& csp_cell_index, Indices& csp_index);
 
     int next_index(int current_index, int size, int offset = 1) const;
     int prev_index(int current_index, int size, int offset = 1) const;
