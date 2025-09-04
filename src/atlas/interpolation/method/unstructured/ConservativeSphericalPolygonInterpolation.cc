@@ -152,10 +152,7 @@ size_t memory_of(const std::vector<T>& vector) {
     return sizeof(T) * vector.capacity();
 }
 
-<<<<<<< HEAD
 
-=======
->>>>>>> develop
 template <typename T>
 size_t memory_of(const std::vector<std::vector<T>>& vector_of_vector) {
     size_t mem = 0;
