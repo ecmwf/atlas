@@ -821,7 +821,6 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
         }
     }
     MarkedPolygonArray src_csp;
-    MarkedPolygonArray tgt_csp;
     if (compute_cache) {
         ATLAS_TRACE("Get source polygons");
         StopWatch stopwatch;
@@ -842,14 +841,6 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
         ATLAS_TRACE("Get target polygons");
         stopwatch.start();
         init_csp_index(tgt_cell_data_, tgt_fs_, sharable_data_->tgt_csp2node_, sharable_data_->tgt_node2csp_, tgt_csp_size_, tgt_csp_cell_index_, tgt_csp_index_);
-        if (tgt_cell_data_) {
-            tgt_csp = get_polygons_celldata(tgt_fs_, sharable_data_->tgt_csp2node_, sharable_data_->tgt_node2csp_,
-                tgt_csp_size_, tgt_csp_cell_index_, tgt_csp_index_);
-        }
-        else {
-            tgt_csp = get_polygons_nodedata(tgt_fs_, sharable_data_->tgt_csp2node_, sharable_data_->tgt_node2csp_,
-                tgt_csp_size_, tgt_csp_cell_index_, tgt_csp_index_);
-        }
         stopwatch.stop();
         sharable_data_->timings.target_polygons_assembly        = stopwatch.elapsed();
         remap_stat_.counts[Statistics::Counts::TGT_PLG]         = tgt_csp_size_;
@@ -863,7 +854,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
     n_tpoints_ = tgt_fs_.size();
 
     if (compute_cache) {
-        intersect_polygons(src_csp, tgt_csp);
+        intersect_polygons(src_csp);
 
         auto& src_points_ = sharable_data_->src_points_;
         src_points_.resize(n_spoints_);
@@ -1015,8 +1006,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
     }
 }
 
-void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedPolygonArray& src_csp,
-                                                                   const MarkedPolygonArray& tgt_csp) {
+void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedPolygonArray& src_csp) {
     ATLAS_TRACE();
     auto& timings = sharable_data_->timings;
 
@@ -1094,7 +1084,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
     std::array<double, 2> area_coverage{0., 0.};
 
     auto& tgt_iparam_ = sharable_data_->tgt_iparam_;
-    tgt_iparam_.resize(tgt_csp.size());
+    tgt_iparam_.resize(tgt_csp_size_);
 
     std::vector<InterpolationParameters> src_iparam;  // only used for debugging
     if (validate_) {

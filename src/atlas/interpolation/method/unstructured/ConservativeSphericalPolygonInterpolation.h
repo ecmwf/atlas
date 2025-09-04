@@ -165,7 +165,7 @@ private:
 
     void do_setup_impl(const Grid& src_grid, const Grid& tgt_grid);
 
-    void intersect_polygons(const MarkedPolygonArray& src_csp, const MarkedPolygonArray& tgt_scp);
+    void intersect_polygons(const MarkedPolygonArray& src_csp);
     Triplets compute_1st_order_triplets();
     Triplets compute_2nd_order_triplets();
     void dump_intersection(const std::string, const ConvexSphericalPolygon& plg_1, const MarkedPolygonArray& plg_2_array,
