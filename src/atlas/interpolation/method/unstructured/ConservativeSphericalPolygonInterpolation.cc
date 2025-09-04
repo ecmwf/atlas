@@ -819,14 +819,14 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
         ATLAS_TRACE("Get source polygons");
         StopWatch stopwatch;
         stopwatch.start();
-        init_csp_index(src_cell_data_, src_fs_, src_csp_index_size_, src_csp_cell_index_, src_csp_index_);
+        init_csp_index(src_cell_data_, src_fs_, src_csp_size_, src_csp_cell_index_, src_csp_index_);
         if (src_cell_data_) {
             src_csp = get_polygons_celldata(src_fs_, sharable_data_->src_csp2node_, sharable_data_->src_node2csp_,
-                src_csp_index_size_, src_csp_cell_index_, src_csp_index_);
+                src_csp_size_, src_csp_cell_index_, src_csp_index_);
         }
         else {
             src_csp = get_polygons_nodedata(src_fs_, sharable_data_->src_csp2node_, sharable_data_->src_node2csp_,
-                src_csp_index_size_, src_csp_cell_index_, src_csp_index_);
+                src_csp_size_, src_csp_cell_index_, src_csp_index_);
         }
         stopwatch.stop();
         sharable_data_->timings.source_polygons_assembly = stopwatch.elapsed();
@@ -837,14 +837,14 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
         errors = {0., 0.};
         ATLAS_TRACE("Get target polygons");
         stopwatch.start();
-        init_csp_index(tgt_cell_data_, tgt_fs_, tgt_csp_index_size_, tgt_csp_cell_index_, tgt_csp_index_);
+        init_csp_index(tgt_cell_data_, tgt_fs_, tgt_csp_size_, tgt_csp_cell_index_, tgt_csp_index_);
         if (tgt_cell_data_) {
             tgt_csp = get_polygons_celldata(tgt_fs_, sharable_data_->tgt_csp2node_, sharable_data_->tgt_node2csp_,
-                tgt_csp_index_size_, tgt_csp_cell_index_, tgt_csp_index_);
+                tgt_csp_size_, tgt_csp_cell_index_, tgt_csp_index_);
         }
         else {
             tgt_csp = get_polygons_nodedata(tgt_fs_, sharable_data_->tgt_csp2node_, sharable_data_->tgt_node2csp_,
-                tgt_csp_index_size_, tgt_csp_cell_index_, tgt_csp_index_);
+                tgt_csp_size_, tgt_csp_cell_index_, tgt_csp_index_);
         }
         stopwatch.stop();
         sharable_data_->timings.target_polygons_assembly = stopwatch.elapsed();
@@ -1127,9 +1127,11 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
     ATLAS_TRACE_SCOPE("intersecting polygons") {
         eckit::Channel blackhole;
         eckit::ProgressTimer progress("Intersecting polygons ", 100, " percent", double(10),
-                                    tgt_csp.size() > 50 ? Log::info() : blackhole);
+                                    tgt_csp_size_ > 50 ? Log::info() : blackhole);
         float last_progress_percent = 0.00;
-        for (idx_t tcell = 0; tcell < tgt_csp.size(); ++tcell) {
+        for (idx_t tcell = 0; tcell < tgt_csp_size_; ++tcell) {
+            // auto tgt_csp = get_csp(tcell, tgt_mesh_, tgt_cell_data_, sharable_data_->tgt_csp2node_, sharable_data_->tgt_node2csp_,
+            //     tgt_csp_size_, tgt_csp_cell_index_, tgt_csp_index_);
             if (tgt_csp[tcell].halo_type <= tgt_halo_intersection_depth) {
                 intersection_src_cell_idx.resize(0);
                 intersection_weights.resize(0);
@@ -1202,7 +1204,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
                     tgt_iparam_[tcell].centroids = intersection_src_centroids;
                 }
             }
-            if ( double(tcell) / double(tgt_csp.size()) > last_progress_percent ) {
+            if ( double(tcell) / double(tgt_csp_size_) > last_progress_percent ) {
                 last_progress_percent += 0.01;
                 ++progress;
             }

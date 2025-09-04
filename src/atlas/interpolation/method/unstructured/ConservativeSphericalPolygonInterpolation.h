@@ -218,8 +218,8 @@ private:
 
     mutable Statistics remap_stat_;
 
-    gidx_t src_csp_index_size_;
-    gidx_t tgt_csp_index_size_;
+    gidx_t src_csp_size_;
+    gidx_t tgt_csp_size_;
     std::vector<idx_t> src_csp_cell_index_;
     std::vector<idx_t> src_csp_index_;
     std::vector<idx_t> tgt_csp_cell_index_;
