@@ -632,19 +632,14 @@ get_polygons_nodedata(FunctionSpace fs, std::vector<idx_t>& csp2node,
     node2csp.resize(mesh.nodes().size());
     const auto nodes_ll   = array::make_view<double, 2>(mesh.nodes().lonlat());
     const auto& cell2node = mesh.cells().node_connectivity();
-    auto xyz2ll           = [](const atlas::PointXYZ& p_xyz) {
-        PointLonLat p_ll;
-        eckit::geometry::Sphere::convertCartesianToSpherical(1., p_xyz, p_ll);
-        return p_ll;
-    };
     auto ll2xyz = [](const atlas::PointLonLat& p_ll) {
         PointXYZ p_xyz;
         eckit::geometry::Sphere::convertSphericalToCartesian(1., p_ll, p_xyz);
         return p_xyz;
     };
-    const auto node_halo  = array::make_view<int, 1>(mesh.nodes().halo());
+    // const auto node_halo  = array::make_view<int, 1>(mesh.nodes().halo());
     const auto node_flags = array::make_view<int, 1>(mesh.nodes().flags());
-    const auto node_part  = array::make_view<int, 1>(mesh.nodes().partition());
+    // const auto node_part  = array::make_view<int, 1>(mesh.nodes().partition());
 
     idx_t cspol_id = 0;         // subpolygon enumeration
     std::vector<PointXYZ> pts_xyz;
@@ -658,7 +653,6 @@ get_polygons_nodedata(FunctionSpace fs, std::vector<idx_t>& csp2node,
         ATLAS_ASSERT(cell < cell2node.rows());
         ATLAS_ASSERT(n_nodes > 2);
 #endif
-        PointXYZ cell_mid(0., 0., 0.);
         pts_xyz.clear();
         pts_ll.clear();
         pts_idx.clear();
@@ -681,13 +675,8 @@ get_polygons_nodedata(FunctionSpace fs, std::vector<idx_t>& csp2node,
             pts_xyz.emplace_back(p0);
             pts_ll.emplace_back(p0_ll);
             pts_idx.emplace_back(inode);
-            cell_mid = cell_mid + p0;
-            cell_mid = cell_mid + p1;
         }
-        cell_mid                  = PointXYZ::div(cell_mid, PointXYZ::norm(cell_mid));
-        PointLonLat cell_ll       = xyz2ll(cell_mid);
         // get ConvexSphericalPolygon for each valid edge
-        int halo_type{0};
         for (int inode = 0; inode < pts_idx.size(); inode++) {
             int inode_n        = next_index(inode, pts_idx.size());
             idx_t node_n       = cell2node(cell, inode_n);
