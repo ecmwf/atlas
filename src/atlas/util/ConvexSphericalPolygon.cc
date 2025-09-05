@@ -121,8 +121,13 @@ ConvexSphericalPolygon::ConvexSphericalPolygon(const PointLonLat points[], size_
     }
     size_  = isp;
     valid_ = size_ > 2;
-    if (valid_) {
-        ATLAS_ASSERT(validate());
+    valid_ = valid_ && validate();
+    if (! valid_) {
+        Log::warning() << "Invalid polygon : ";
+        for (int i =0; i < size; ++i) {
+            Log::warning() << points[i] << ", ";
+        }
+        Log::warning() << std::endl;
     }
 }
 
@@ -146,8 +151,13 @@ ConvexSphericalPolygon::ConvexSphericalPolygon(const PointXYZ points[], size_t s
     }
     size_  = isp;
     valid_ = size_ > 2;
-    if (valid_) {
-        ATLAS_ASSERT(validate());
+    valid_ = valid_ && validate();
+    if (! valid_) {
+        Log::warning() << "Invalid polygon : ";
+        for (int i =0; i < size; ++i) {
+            Log::warning() << points[i] << ", ";
+        }
+        Log::warning() << std::endl;
     }
 }
 
