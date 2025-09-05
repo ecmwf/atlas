@@ -81,6 +81,7 @@ class SphericalVector : public Method {
   detail::RealMatrix realWeights_{};
   detail::ComplexMatrix complexWeightsAdjoint_{};
   detail::RealMatrix realWeightsAdjoint_{};
+  bool adjoint_;
 };
 
 }  // namespace method

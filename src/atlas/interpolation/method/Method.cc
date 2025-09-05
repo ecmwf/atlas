@@ -425,20 +425,30 @@ Method::Method(const Method::Config& config) {
         nonLinear_ = NonLinear(non_linear, config);
     }
 
-    config.get("adjoint", adjoint_);
+    config.get("adjoint", adjoint_ = false);
 }
 
 void Method::setup(const FunctionSpace& source, const FunctionSpace& target) {
     ATLAS_TRACE("atlas::interpolation::method::Method::setup(FunctionSpace, FunctionSpace)");
     this->do_setup(source, target);
+    if (adjoint_) {
+        adjoint_matrix();
+    }
+}
 
-    if (adjoint_ && target.size() > 0 && matrixAllocated()) {
-        if (not matrix_->empty()) {
+const Method::Matrix& Method::adjoint_matrix() const {
+    if (not matrix_transpose_) {
+        if (target().size() == 0) {
+            matrix_transpose_ = std::make_unique<Matrix>(); // Empty matrix
+        }
+        else {
+            ATLAS_ASSERT(matrix_);
             eckit::linalg::SparseMatrix matrix_copy = make_eckit_sparse_matrix(*matrix_); // Makes a copy!
             matrix_copy.transpose(); // transpose the copy in place
-            matrix_transpose_ = linalg::make_sparse_matrix_storage(std::move(matrix_copy)); // Move the copy into storage
+            matrix_transpose_ = std::make_unique<Matrix>(linalg::make_sparse_matrix_storage(std::move(matrix_copy))); // Move the copy into storage
         }
     }
+    return *matrix_transpose_;
 }
 
 void Method::setup(const Grid& source, const Grid& target) {
@@ -600,15 +610,11 @@ void Method::do_execute_adjoint(Field& src, const Field& tgt, Metadata&) const {
         throw_NotImplemented("Adjoint Interpolation does not work for fields that have missing data. ", Here());
     }
 
-    if (!adjoint_) {
-        throw_AssertionFailed("Need to set 'adjoint' to true in config for adjoint interpolation to work");
-    }
-
     if (src.datatype().kind() == array::DataType::KIND_REAL64) {
-        adjoint_interpolate_field<double>(src, tgt, matrix_transpose_);
+        adjoint_interpolate_field<double>(src, tgt, adjoint_matrix());
     }
     else if (src.datatype().kind() == array::DataType::KIND_REAL32) {
-        adjoint_interpolate_field<float>(src, tgt, matrix_transpose_);
+        adjoint_interpolate_field<float>(src, tgt, adjoint_matrix());
     }
     else {
         ATLAS_NOTIMPLEMENTED;

@@ -68,7 +68,12 @@ void SphericalVector::do_setup(const FunctionSpace& source,
     return;
   }
 
-  setMatrix(Interpolation(interpolationScheme_, source_, target_));
+  interpolationScheme_.set("adjoint", false); // The temporary interpolation object should not compute the adjoint
+  auto matrix_cache = MatrixCache(Interpolation(interpolationScheme_, source_, target_));
+  setMatrix(matrix_cache);
+  if (adjoint_) {
+    adjoint_matrix();
+  }
 
   // Get matrix data.
   const auto m = atlas::linalg::make_host_view<eckit::linalg::Scalar>(matrix());

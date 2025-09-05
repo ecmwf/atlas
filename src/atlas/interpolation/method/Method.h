@@ -133,7 +133,12 @@ protected:
 
     bool matrixAllocated() const { return matrix_shared_.use_count(); }
 
-    const Matrix& matrix() const { return *matrix_; }
+    const Matrix& matrix() const {
+        ATLAS_ASSERT(matrix_ != nullptr);
+        return *matrix_;
+    }
+
+    const Matrix& adjoint_matrix() const;
 
     virtual void do_setup(const FunctionSpace& source, const FunctionSpace& target) = 0;
     virtual void do_setup(const Grid& source, const Grid& target, const Cache&)     = 0;
@@ -174,10 +179,10 @@ private:
     interpolation::MatrixCache matrix_cache_;
     NonLinear nonLinear_;
     std::string linalg_backend_;
-    Matrix matrix_transpose_;
+    bool adjoint_{false};
+    mutable std::unique_ptr<Matrix> matrix_transpose_;
 
 protected:
-    bool adjoint_{false};
     bool allow_halo_exchange_{true};
     std::vector<idx_t> missing_;
 };
