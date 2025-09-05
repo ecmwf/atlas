@@ -497,7 +497,7 @@ init_csp_index(bool cell_data, FunctionSpace fs, std::vector<idx_t>& csp2node, s
 
 
 ConservativeSphericalPolygonInterpolation::MarkedPolygon ConservativeSphericalPolygonInterpolation::
-get_csp_celldata(idx_t csp_id, const Mesh mesh, gidx_t& csp_index_size, std::vector<idx_t>& csp_index) {
+get_csp_celldata(idx_t csp_id, const Mesh& mesh, gidx_t& csp_index_size, std::vector<idx_t>& csp_index) {
     const auto& cell2node  = mesh.cells().node_connectivity();
     std::vector<PointLonLat> pts_ll;
 
@@ -528,7 +528,7 @@ get_csp_celldata(idx_t csp_id, const Mesh mesh, gidx_t& csp_index_size, std::vec
 
 
 ConservativeSphericalPolygonInterpolation::MarkedPolygon ConservativeSphericalPolygonInterpolation::
-get_csp_nodedata(idx_t csp_id, const Mesh mesh, std::vector<idx_t>& csp2node, std::vector<std::vector<idx_t>>& node2csp,
+get_csp_nodedata(idx_t csp_id, const Mesh& mesh, std::vector<idx_t>& csp2node, std::vector<std::vector<idx_t>>& node2csp,
     gidx_t& csp_index_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index) {
     const auto& cell2node  = mesh.cells().node_connectivity();
     const auto node_flags = array::make_view<int, 1>(mesh.nodes().flags());
@@ -814,24 +814,21 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
     tgt_mesh_ = extract_mesh(tgt_fs_);
 
     {
-        // we need src_halo_size >= 2, tgt_halo_size >= 0 for CellColumns
-        // if target is NodeColumns, we need:
-        //      tgt_halo_size >= 1 and
-        //      src_halo_size large enough to cover the the target halo cells in the first row
         int halo_size = 0;
         src_mesh_.metadata().get("halo", halo_size);
-        if (halo_size < 2) {
-            Log::info() << "WARNING The halo size on source mesh should be at least 2.\n";
+        if (halo_size < 2 and order_ == 2) {
+            Log::warning() << "The halo size on source mesh should be at least 2 for the 2nd order CSP interpolation." << std::endl;
         }
         if (not tgt_cell_data_) {
-            Log::info() << "WARNING The source cells should cover the first row of the target halos.\n";
+            Log::warning() << "The source cells should cover the half of the first target halo row." << std::endl;
         }
         halo_size = 0;
         tgt_mesh_.metadata().get("halo", halo_size);
         if (not tgt_cell_data_ and halo_size == 0) {
-            Log::info() << "WARNING The halo size on target mesh should be at least 1 for the target NodeColumns.\n";
+            Log::warning() << "The halo size on target mesh should be at least 1 for the target NodeColumns." << std::endl;
         }
     }
+
     MarkedPolygonArray src_csp;
     if (compute_cache) {
         ATLAS_TRACE("Get source polygons");
@@ -1485,6 +1482,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
     return triplets;
 }
 
+
 ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygonInterpolation::compute_2nd_order_triplets() {
     ATLAS_TRACE("ConservativeMethod: build cons-2 interpolant matrix");
     Triplets triplets;
@@ -1741,6 +1739,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
     return triplets;
 }
 
+
 void ConservativeSphericalPolygonInterpolation::do_execute(const FieldSet& src_fields, FieldSet& tgt_fields,
                                                            Metadata& metadata) const {
     std::vector<Metadata> md_array;
@@ -1750,6 +1749,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const FieldSet& src_f
     }
     metadata = md_array[0]; // TODO: reduce metadata of a set of variables to a single metadata of a variable?
 }
+
 
 void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_field, Field& tgt_field,
                                                            Metadata& metadata) const {
@@ -2030,6 +2030,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
     metadata.set("memory_in_bytes.tgt_csp_cell_index", memory_of(tgt_csp_cell_index_));
 }
 
+
 void ConservativeSphericalPolygonInterpolation::print(std::ostream& out) const {
     out << "ConservativeMethod{";
     out << "order:" << order_;
@@ -2053,6 +2054,7 @@ void ConservativeSphericalPolygonInterpolation::print(std::ostream& out) const {
     out << "}";
 }
 
+
 Cache ConservativeSphericalPolygonInterpolation::createCache() const {
     interpolation::Cache cache;
     if (not matrix_free_) {
@@ -2061,6 +2063,7 @@ Cache ConservativeSphericalPolygonInterpolation::createCache() const {
     cache.add(cache_);
     return cache;
 }
+
 
 void ConservativeSphericalPolygonInterpolation::setup_stat() const {
     if (! remap_stat_.intersection) {
@@ -2108,7 +2111,102 @@ void ConservativeSphericalPolygonInterpolation::setup_stat() const {
     remap_stat_.src_area_sum = src_tgt_sums[0];
     remap_stat_.tgt_area_sum = src_tgt_sums[1];
     geo_create_err           = std::abs(src_tgt_sums[0] - src_tgt_sums[1]) / unit_sphere_area();
-    remap_stat_.errors[Statistics::SRCTGT_INTERSECTPLG_DIFF] = geo_create_err;
+    remap_stat_.errors[Statistics::Errors::SRCTGT_INTERSECTPLG_DIFF] = geo_create_err;
+}
+
+
+Field ConservativeSphericalPolygonInterpolation::Statistics::diff(const Interpolation& interpolation,
+                                                                  const Field source, const Field target) {
+    Field diff     = interpolation.source().createField(source, option::name("diff"));
+    auto diff_vals = array::make_view<double, 1>(diff);
+
+    const auto src_vals = array::make_view<double, 1>(source);
+    const auto tgt_vals = array::make_view<double, 1>(target);
+
+    auto cachable_data_       = ConservativeSphericalPolygonInterpolation::Cache(interpolation).get();
+    const auto& tgt_areas_v   = cachable_data_->tgt_areas_;
+    const auto& src_csp2node_ = cachable_data_->src_csp2node_;
+    const auto& tgt_node2csp_ = cachable_data_->tgt_node2csp_;
+    const auto& tgt_iparam_   = cachable_data_->tgt_iparam_;
+    const auto& src_mesh_     = extract_mesh(cachable_data_->src_fs_);
+    const auto& tgt_mesh_     = extract_mesh(cachable_data_->tgt_fs_);
+    const auto src_cell_data_ = bool(functionspace::CellColumns(interpolation.source()));
+    const auto tgt_cell_data_ = bool(functionspace::CellColumns(interpolation.target()));
+    const auto src_cell_halo  = array::make_view<int, 1>(src_mesh_.cells().halo());
+    const auto src_node_ghost = array::make_view<int, 1>(src_mesh_.nodes().ghost());
+    const auto tgt_node_halo  = array::make_view<int, 1>(tgt_mesh_.nodes().halo());
+    const auto tgt_cell_halo  = array::make_view<int, 1>(tgt_mesh_.cells().halo());
+    const auto tgt_node_ghost = array::make_view<int, 1>(tgt_mesh_.nodes().ghost());
+    if (tgt_cell_data_) {
+        for (idx_t tpt = 0; tpt < tgt_vals.size(); ++tpt) {
+            if (tgt_cell_halo(tpt)) {
+                continue;
+            }
+            double diff        = tgt_vals(tpt) * tgt_areas_v[tpt];
+            const auto& iparam = tgt_iparam_[tpt];
+            if (src_cell_data_) {
+                for (idx_t icell = 0; icell < iparam.weights.size(); ++icell) {
+                    idx_t scell = iparam.cell_idx[icell];
+                    if (src_cell_halo(scell) < 1) {
+                        diff -= src_vals(scell) * iparam.weights[icell];
+                    }
+                }
+            }
+            else {
+                for (idx_t icell = 0; icell < iparam.weights.size(); ++icell) {
+                    idx_t scell = iparam.cell_idx[icell];
+                    idx_t snode = src_csp2node_[scell];
+                    if (not src_node_ghost(snode)) {
+                        diff -= src_vals(snode) * iparam.weights[icell];
+                    }
+                }
+            }
+            if (tgt_areas_v[tpt] > 0.) {
+                diff_vals(tpt) = diff / tgt_areas_v[tpt];
+            }
+            else {
+                Log::info() << " at cell " << tpt << " cell-area: " << tgt_areas_v[tpt] << std::endl;
+                diff_vals(tpt) = std::numeric_limits<double>::max();
+            }
+        }
+    }
+    else {
+        for (idx_t tpt = 0; tpt < tgt_vals.size(); ++tpt) {
+            if (tgt_node_ghost(tpt) or tgt_node_halo(tpt) != 0) {
+                continue;
+            }
+            double diff          = tgt_vals(tpt) * tgt_areas_v[tpt];
+            const auto& node2csp = tgt_node2csp_[tpt];
+            for (idx_t subcell = 0; subcell < node2csp.size(); ++subcell) {
+                const auto& iparam = tgt_iparam_[node2csp[subcell]];
+                if (src_cell_data_) {
+                    for (idx_t icell = 0; icell < iparam.weights.size(); ++icell) {
+                        idx_t scell = iparam.cell_idx[icell];
+                        if (src_cell_halo(scell) < 1) {
+                            diff -= src_vals(scell) * iparam.weights[icell];
+                        }
+                    }
+                }
+                else {
+                    for (idx_t icell = 0; icell < iparam.weights.size(); ++icell) {
+                        idx_t scell = iparam.cell_idx[icell];
+                        idx_t snode = src_csp2node_[scell];
+                        if (not src_node_ghost(snode)) {
+                            diff -= src_vals(snode) * iparam.weights[icell];
+                        }
+                    }
+                }
+            }
+            if (tgt_areas_v[tpt] > 0.) {
+                diff_vals(tpt) = diff / tgt_areas_v[tpt];
+            }
+            else {
+                diff_vals(tpt) = std::numeric_limits<double>::max();
+                Log::info() << " at cell " << tpt << " cell-area: " << tgt_areas_v[tpt] << std::endl;
+            }
+        }
+    }
+    return diff;
 }
 
 

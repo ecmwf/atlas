@@ -179,8 +179,8 @@ private:
     std::vector<idx_t> get_node_neighbours(Mesh&, idx_t jcell, Workspace&) const;
     void init_csp_index(bool cell_data, FunctionSpace fs, Indices& csp2node, std::vector<Indices>& node2csp,
         gidx_t& csp_size, Indices& csp_cell_index, Indices& csp_index);
-    MarkedPolygon get_csp_celldata(idx_t csp_id, const Mesh mesh, gidx_t& csp_index_size, Indices& csp_index);
-    MarkedPolygon get_csp_nodedata(idx_t csp_id, const Mesh mesh, Indices& csp2node, std::vector<Indices>& node2csp,
+    MarkedPolygon get_csp_celldata(idx_t csp_id, const Mesh& mesh, gidx_t& csp_index_size, Indices& csp_index);
+    MarkedPolygon get_csp_nodedata(idx_t csp_id, const Mesh& mesh, Indices& csp2node, std::vector<Indices>& node2csp,
         gidx_t& csp_index_size, Indices& csp_cell_index, Indices& csp_index);
     MarkedPolygon get_src_csp(idx_t csp_id) {
         if (src_cell_data_) {
