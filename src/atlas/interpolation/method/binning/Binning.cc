@@ -135,6 +135,9 @@ void Binning::do_setup(const FunctionSpace& source,
 
   // 'binning matrix' (sparse matrix), B = N A^T W
   setMatrix(rows_tamx, cols_tamx, smx_binning_els);
+  if (adjoint_) {
+    adjoint_matrix();
+  }
 }
 
 
