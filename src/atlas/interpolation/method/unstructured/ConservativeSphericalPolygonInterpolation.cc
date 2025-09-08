@@ -1849,9 +1849,9 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
     }
     else if (order_ == 2) {
         if (matrix_free_) {
+            ATLAS_NOTIMPLEMENTED;
             /*
             if (not src_cell_data_ or not tgt_cell_data_) {
-                ATLAS_NOTIMPLEMENTED;
             }
             ATLAS_TRACE("matrix_free_order_2");
             const auto& src_iparam_ = data_->src_iparam_;
