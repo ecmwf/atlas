@@ -130,8 +130,6 @@ public:
         Statistics(const Metadata&);
 
         void compute_accuracy(const Interpolation& interpolation, const Field target, std::function<double(const PointLonLat&)> func, Metadata* metadata = nullptr);
-
-        Field compute_diff(const Interpolation&, const Field source, const Field target);
     };
 
 

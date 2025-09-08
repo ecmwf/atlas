@@ -263,11 +263,6 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {\
         if (config.getBool("statistics.accuracy", false) || config.getBool("statistics.all", false)) {
             stats.compute_accuracy(interpolation, tgt_field, get_init(config), &metadata);
         }
-        if (config.getBool("statistics.conservation", false) || config.getBool("statistics.all", false)) {
-            // src_conservation_field = stats.compute_diff(interpolation, src_field, tgt_field); // compute difference field
-            // src_conservation_field.set_dirty(true);
-            // src_conservation_field.haloExchange();
-        }
     }
 
     Log::info() << "interpolation metadata: \n";
