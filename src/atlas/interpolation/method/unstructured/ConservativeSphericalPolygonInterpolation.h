@@ -102,8 +102,6 @@ public:
         };
         enum Errors
         {
-            SRC_INTERSECTPLG_L1 = 0,  // index, \sum_{cell of src-mesh} {cell.area - \sum_{intersect of cell} intersect.area}
-            SRC_INTERSECTPLG_LINF,    // index, \max_-||-
             TGT_INTERSECTPLG_L1,      // see above
             TGT_INTERSECTPLG_LINF,    // see above
             SRCTGT_INTERSECTPLG_DIFF,    // index, 1/(unit_sphere.area) ( \sum_{scell} scell.area - \sum{tcell} tcell.area )
