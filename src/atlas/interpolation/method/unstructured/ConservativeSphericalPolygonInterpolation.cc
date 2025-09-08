@@ -1291,11 +1291,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
         ATLAS_TRACE_SCOPE("compute errors in covering source cells with intersections") {
             // NOTE: source cell at process boundary will not be covered by target cells, skip if MPI > 1
             // TODO: mark these source cells beforehand and compute error in them among the processes
-            if (mpi::size() > 1) {
-                Log::warning() << "The source cells at process boundaries are not covered by target cells.";
-                Log::warning() << "\tSkipping error computation in covering source cells. Please run in serial to gadge this error." << std::endl;
-            }
-            else if (remap_stat_.intersection) {
+            if (remap_stat_.intersection) {
                 // ATLAS_TRACE("computing covering source cells errors");
                 // double geo_err_l1   = 0.;
                 // double geo_err_linf = -1.;
@@ -1474,7 +1470,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
             }
         }
         for (size_t row = 0; row < n_tpoints_; ++row) {
-            if (std::abs(weight_sum[row] - 1.) > 1e-11) {
+            if (std::abs(weight_sum[row] - 1.) > 1e-10) {
                 Log::info() << "target weight in row " << row << " differs from 1 by " << std::abs(weight_sum[row] - 1.) << std::endl;
             }
         }
