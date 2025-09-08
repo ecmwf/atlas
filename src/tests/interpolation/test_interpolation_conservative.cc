@@ -79,7 +79,7 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
 
     // project source field to target mesh in 1st order
     remap_stat_1 = conservative_interpolation.execute(src_field, tgt_field);
-    remap_stat_1.accuracy(conservative_interpolation, tgt_field, func);
+    remap_stat_1.compute_accuracy(conservative_interpolation, tgt_field, func);
 
     ATLAS_TRACE_SCOPE("test caching") {
         // We can create the interpolation without polygon intersections
@@ -153,7 +153,7 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
         conservative_interpolation = Interpolation(config, src_grid, tgt_grid);
         Log::info() << conservative_interpolation << std::endl;
         remap_stat_2 = conservative_interpolation.execute(src_field, tgt_field);
-        remap_stat_2.accuracy(conservative_interpolation, tgt_field, func);
+        remap_stat_2.compute_accuracy(conservative_interpolation, tgt_field, func);
     }
 }
 

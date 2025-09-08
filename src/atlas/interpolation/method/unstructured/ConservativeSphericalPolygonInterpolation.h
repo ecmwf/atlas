@@ -128,12 +128,12 @@ public:
         Statistics();
         Statistics(const Metadata&);
 
-        Metadata accuracy(const Interpolation& interpolation, const Field target,
+        Metadata compute_accuracy(const Interpolation& interpolation, const Field target,
                           std::function<double(const PointLonLat&)> func);
 
 
         // compute difference field of source and target mass
-        Field diff(const Interpolation&, const Field source, const Field target);
+        Field compute_diff(const Interpolation&, const Field source, const Field target);
     };
 
 

@@ -2108,7 +2108,7 @@ void ConservativeSphericalPolygonInterpolation::setup_stat() const {
     remap_stat_.errors[Statistics::Errors::SRCTGT_INTERSECTPLG_DIFF] = geo_create_err;
 }
 
-Field ConservativeSphericalPolygonInterpolation::Statistics::diff(const Interpolation& interpolation,
+Field ConservativeSphericalPolygonInterpolation::Statistics::compute_diff(const Interpolation& interpolation,
                                                                   const Field source, const Field target) {
     Field diff     = interpolation.source().createField(source, option::name("diff"));
     auto diff_vals = array::make_view<double, 1>(diff);
@@ -2204,7 +2204,7 @@ Field ConservativeSphericalPolygonInterpolation::Statistics::diff(const Interpol
 
 
 ConservativeSphericalPolygonInterpolation::Metadata
-ConservativeSphericalPolygonInterpolation::Statistics::accuracy(const Interpolation& interpolation,
+ConservativeSphericalPolygonInterpolation::Statistics::compute_accuracy(const Interpolation& interpolation,
                                                                 const Field target,
                                                                 std::function<double(const PointLonLat&)> func) {
     if (! accuracy_) {

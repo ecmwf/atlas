@@ -179,14 +179,6 @@ std::function<double(const PointLonLat&)> get_init(const eckit::LocalConfigurati
 
 int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {\
     eckit::LocalConfiguration config(args);
-    if (config.getBool("statistics.all", false)) {
-        if (not config.getBool("validate", false)) {
-            Log::info() << "\nWARNING statistics.all is enabled. Set '--validate' to get all numbers correct in the statistics." << std::endl;
-        }
-        config.set("statistics.accuracy", true);
-        config.set("statistics.conservation", true);
-        config.set("statistics.intersection", true);
-    }
 
     auto get_grid = [](std::string grid_name) {
         int grid_number = std::atoi( grid_name.substr(1, grid_name.size()).c_str() );
@@ -264,23 +256,17 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {\
     auto metadata = interpolation.execute(src_field, tgt_field);
     timers.interpolation_execute.stop();
 
-    // API not yet acceptable
     Field src_conservation_field;
     {
         using Statistics = interpolation::method::ConservativeSphericalPolygonInterpolation::Statistics;
         Statistics stats(metadata);
-        if (config.getBool("accuracy", false)) {
-            metadata.set( stats.accuracy(interpolation, tgt_field, get_init(config) ) );
-        } else {
-            Log::info() << "\nINFO Skipping accuracy statistics" << std::endl;
+        if (config.getBool("statistics.accuracy", false) || config.getBool("statistics.all", false)) {
+            metadata.set( stats.compute_accuracy(interpolation, tgt_field, get_init(config) ) );
         }
-        if (config.getBool("conservation", false)) {
-            // compute difference field
-            src_conservation_field = stats.diff(interpolation, src_field, tgt_field);
+        if (config.getBool("statistics.conservation", false) || config.getBool("statistics.all", false)) {
+            src_conservation_field = stats.compute_diff(interpolation, src_field, tgt_field); // compute difference field
             src_conservation_field.set_dirty(true);
             src_conservation_field.haloExchange();
-        } else {
-            Log::info() << "\nINFO Skipping conservation statistics" << std::endl;
         }
     }
 
