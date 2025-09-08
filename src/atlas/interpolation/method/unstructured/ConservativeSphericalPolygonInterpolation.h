@@ -96,7 +96,8 @@ public:
             SRC_PLG = 0,  // index, number of source polygons
             TGT_PLG,      // index, number of target polygons
             INT_PLG,      // index, number of intersection polygons
-            UNCVR_TGT,    // index, number of uncovered target polygons
+            UNCVR_FULL_TGT,    // index, number of compelte non covered target polygons
+            UNCVR_PART_TGT,    // index, number of partially non covered target polygons
             COUNTS_ENUM_SIZE
         };
         enum Errors
