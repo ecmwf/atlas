@@ -32,6 +32,7 @@
 
 #include "eckit/log/Bytes.h"
 #include "eckit/log/ProgressTimer.h"
+#include "eckit/types/FloatCompare.h"
 
 #define PRINT_BAD_POLYGONS 0
 
@@ -1167,9 +1168,9 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
                             intersection_src_centroids.emplace_back(csp_i.centroid());
                         }
                         tgt_cover_area += csp_i_area;
-                        // if (std::abs(tgt_cover_area - tgt_csp.polygon.area()) <= std::numeric_limits<double>::epsilon()) {
-                        //     break;
-                        // }
+                        if (std::abs(1. - tgt_cover_area / tgt_csp.polygon.area()) <= 1e-10) {
+                            break;
+                        }
                         if (validate_) {
                             src_iparam[scell].cell_idx.emplace_back(tcell);
                             src_iparam[scell].weights.emplace_back(csp_i_area);
