@@ -116,12 +116,12 @@ public:
 
         double tgt_area_sum;
         double src_area_sum;
-        bool all_;
-        bool accuracy_;
-        bool conservation_;
-        bool intersection_;
-        bool timings_;
-        Metadata metadata_;
+        bool all;
+        bool accuracy;
+        bool conservation;
+        bool intersection;
+        bool timings;
+        Metadata metadata;
 
         void fillMetadata(Metadata&);
 
