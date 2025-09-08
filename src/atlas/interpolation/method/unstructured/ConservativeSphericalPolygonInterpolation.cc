@@ -840,7 +840,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
             src_csp = get_polygons_nodedata(src_fs_, sharable_data_->src_csp2node_, sharable_data_->src_node2csp_,
                 src_csp_size_, src_csp_cell_index_, src_csp_index_);
         }
-        remap_stat_.metadata.set("memory.src_csp_polygons", memory_of(src_csp));
+        remap_stat_.metadata.set("memory_in_bytes.src_csp_polygons", memory_of(src_csp));
         stopwatch.stop();
         sharable_data_->timings.source_polygons_assembly = stopwatch.elapsed();
         remap_stat_.counts[Statistics::Counts::SRC_PLG]         = src_csp.size();
@@ -848,7 +848,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
         ATLAS_TRACE("Get target polygons");
         stopwatch.start();
         init_csp_index(tgt_cell_data_, tgt_fs_, sharable_data_->tgt_csp2node_, sharable_data_->tgt_node2csp_, tgt_csp_size_, tgt_csp_cell_index_, tgt_csp_index_);
-        remap_stat_.metadata.set("memory.tgt_csp_polygons", 0);
+        remap_stat_.metadata.set("memory_in_bytes.tgt_csp_polygons", 0);
         stopwatch.stop();
         sharable_data_->timings.target_polygons_assembly        = stopwatch.elapsed();
         remap_stat_.counts[Statistics::Counts::TGT_PLG]         = tgt_csp_size_;
@@ -1288,7 +1288,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
                 remap_stat_.errors[Statistics::Errors::SRC_INTERSECTPLG_L1]   = -1;
                 remap_stat_.errors[Statistics::Errors::SRC_INTERSECTPLG_LINF] = -1;
             }
-            else {
+            else if (remap_stat_.intersection) {
                 ATLAS_TRACE("computing covering source cells errors");
                 double geo_err_l1   = 0.;
                 double geo_err_linf = -1.;
@@ -1308,6 +1308,10 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
                 }
                 remap_stat_.errors[Statistics::Errors::SRC_INTERSECTPLG_L1]   = geo_err_l1 / unit_sphere_area();
                 remap_stat_.errors[Statistics::Errors::SRC_INTERSECTPLG_LINF] = geo_err_linf;
+            }
+            else {
+                remap_stat_.errors[Statistics::Errors::SRC_INTERSECTPLG_L1]   = -1111.;
+                remap_stat_.errors[Statistics::Errors::SRC_INTERSECTPLG_LINF] = -1111.;
             }
 #if PRINT_BAD_POLYGONS
             // TODO: need environment variable to print out intersection of source cell with target polygons     
@@ -2000,33 +2004,35 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
         metadata.set("timings.source_kdtree_search", timings.source_kdtree_search);
         metadata.set("timings.polygon_intersections", timings.polygon_intersections);
     }
-    metadata.set("timings.source_polygons_assembly", timings.source_polygons_assembly);
-    metadata.set("timings.target_polygons_assembly", timings.target_polygons_assembly);
-    metadata.set("timings.source_kdtree_assembly", timings.source_kdtree_assembly);
-    metadata.set("timings.source_polygons_filter", timings.source_polygons_filter);
-    metadata.set("timings.matrix_assembly", timings.matrix_assembly);
-    metadata.set("timings.interpolation", stopwatch.elapsed());
+    metadata.set("timings_in_seconds.source_polygons_assembly", timings.source_polygons_assembly);
+    metadata.set("timings_in_seconds.target_polygons_assembly", timings.target_polygons_assembly);
+    metadata.set("timings_in_seconds.source_kdtree_assembly", timings.source_kdtree_assembly);
+    metadata.set("timings_in_seconds.source_polygons_filter", timings.source_polygons_filter);
+    metadata.set("timings_in_seconds.matrix_assembly", timings.matrix_assembly);
+    metadata.set("timings_in_seconds.interpolation", stopwatch.elapsed());
 
-    metadata.set("memory.matrix", matrix_free_ ? 0 : matrix().footprint());
-    metadata.set("memory.src_points", memory_of(data_->src_points_));
-    metadata.set("memory.tgt_points", memory_of(data_->tgt_points_));
-    metadata.set("memory.src_areas", memory_of(data_->src_points_));
-    metadata.set("memory.tgt_areas", memory_of(data_->tgt_areas_));
-    metadata.set("memory.src_csp2node", memory_of(data_->src_csp2node_));
-    metadata.set("memory.tgt_csp2node", memory_of(data_->tgt_csp2node_));
-    metadata.set("memory.src_node2csp", memory_of(data_->src_node2csp_));
-    metadata.set("memory.tgt_node2csp", memory_of(data_->tgt_node2csp_));
-    metadata.set("memory.tgt_iparam", memory_of(data_->tgt_iparam_));
-    metadata.set("memory.src_csp_cell_index", memory_of(src_csp_cell_index_));
-    metadata.set("memory.src_csp_index", memory_of(src_csp_index_));
-    metadata.set("memory.tgt_csp_cell_index", memory_of(tgt_csp_cell_index_));
-    metadata.set("memory.tgt_csp_index", memory_of(tgt_csp_index_));
+    metadata.set("memory_in_bytes.matrix", matrix_free_ ? 0 : matrix().footprint());
+    metadata.set("memory_in_bytes.src_points", memory_of(data_->src_points_));
+    metadata.set("memory_in_bytes.tgt_points", memory_of(data_->tgt_points_));
+    metadata.set("memory_in_bytes.src_areas", memory_of(data_->src_points_));
+    metadata.set("memory_in_bytes.tgt_areas", memory_of(data_->tgt_areas_));
+    metadata.set("memory_in_bytes.src_csp2node", memory_of(data_->src_csp2node_));
+    metadata.set("memory_in_bytes.tgt_csp2node", memory_of(data_->tgt_csp2node_));
+    metadata.set("memory_in_bytes.src_node2csp", memory_of(data_->src_node2csp_));
+    metadata.set("memory_in_bytes.tgt_node2csp", memory_of(data_->tgt_node2csp_));
+    metadata.set("memory_in_bytes.tgt_iparam", memory_of(data_->tgt_iparam_));
+    metadata.set("memory_in_bytes.src_csp_cell_index", memory_of(src_csp_cell_index_));
+    metadata.set("memory_in_bytes.src_csp_index", memory_of(src_csp_index_));
+    metadata.set("memory_in_bytes.tgt_csp_cell_index", memory_of(tgt_csp_cell_index_));
+    metadata.set("memory_in_bytes.tgt_csp_index", memory_of(tgt_csp_index_));
     size_t mem_src_csp_polygons = 0;
-    remap_stat_.metadata.get("memory.src_csp_polygons", mem_src_csp_polygons);
-    metadata.set("memory.src_csp_polygons", mem_src_csp_polygons);
+    remap_stat_.metadata.get("memory_in_bytes.src_csp_cell_index", mem_src_csp_polygons);
+    metadata.set("memory_in_bytes.src_csp_polygons", mem_src_csp_polygons);
+    metadata.set("memory_in_bytes.src_csp_cell_index", memory_of(src_csp_cell_index_));
     size_t mem_tgt_csp_polygons = 0;
-    remap_stat_.metadata.get("memory.tgt_csp_polygons", mem_tgt_csp_polygons);
-    metadata.set("memory.tgt_csp_polygons", mem_tgt_csp_polygons);
+    remap_stat_.metadata.get("memory_in_bytes.tgt_csp_cell_index", mem_tgt_csp_polygons);
+    metadata.set("memory_in_bytes.tgt_csp_polygons", mem_tgt_csp_polygons);
+    metadata.set("memory_in_bytes.tgt_csp_cell_index", memory_of(tgt_csp_cell_index_));
 }
 
 void ConservativeSphericalPolygonInterpolation::print(std::ostream& out) const {
@@ -2340,6 +2346,10 @@ size_t ConservativeSphericalPolygonInterpolation::Data::footprint() const {
     mem_total += memory_of(src_node2csp_);
     mem_total += memory_of(tgt_node2csp_);
     mem_total += memory_of(tgt_iparam_);
+    // mem_total += memory_of(src_csp_index_); // TODO need to be added
+    // mem_total += memory_of(src_csp_cell_index_);
+    // mem_total += memory_of(tgt_csp_index_);
+    // mem_total += memory_of(src_csp_cell_index_);
     return mem_total;
 }
 

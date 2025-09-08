@@ -67,7 +67,7 @@ private:
             double interpolation{0};
         } timings;
 
-        std::vector<InterpolationParameters> tgt_iparam_;  // TODO: remove after setup?
+        std::vector<InterpolationParameters> tgt_iparam_;
 
         // Reconstructible if need be
         FunctionSpace src_fs_;
