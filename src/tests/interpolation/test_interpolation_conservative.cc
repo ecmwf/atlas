@@ -109,7 +109,7 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
             interpolation.execute(src_field, tgt_field);
             Log::info() << std::endl;
         }
-        if (src_cell_data and tgt_cell_data) {
+        {
             ATLAS_TRACE("cached -> 1st order matrix-free");
             cfg.set("matrix_free", true);
             cfg.set("order", 1);
@@ -129,15 +129,15 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
             cache_2 = interpolation.createCache();
             Log::info() << std::endl;
         }
-        if (src_cell_data and tgt_cell_data) {
-            ATLAS_TRACE("cached -> 2nd order matrix-free");
-            cfg.set("matrix_free", true);
-            cfg.set("order", 2);
-            auto interpolation = Interpolation(cfg, src_grid, tgt_grid, cache);
-            Log::info() << interpolation << std::endl;
-            interpolation.execute(src_field, tgt_field);
-            Log::info() << std::endl;
-        }
+        // if (src_cell_data and tgt_cell_data) {
+        //     ATLAS_TRACE("cached -> 2nd order matrix-free");
+        //     cfg.set("matrix_free", true);
+        //     cfg.set("order", 2);
+        //     auto interpolation = Interpolation(cfg, src_grid, tgt_grid, cache);
+        //     Log::info() << interpolation << std::endl;
+        //     interpolation.execute(src_field, tgt_field);
+        //     Log::info() << std::endl;
+        // }
         {
             ATLAS_TRACE("cached -> 2nd order using cached matrix");
             cfg.set("matrix_free", false);
