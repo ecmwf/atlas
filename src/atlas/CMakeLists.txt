@@ -1056,3 +1056,4 @@ if( HAVE_ACC AND CMAKE_Fortran_COMPILER_ID MATCHES NVHPC )
 endif()
 
 target_compile_features( atlas PUBLIC cxx_std_17 )
+target_link_libraries( atlas PUBLIC stdc++fs )
