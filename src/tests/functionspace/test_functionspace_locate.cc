@@ -30,6 +30,8 @@ CASE("real test") {
     const gidx_t global_index_base = 1; // convention
     const int partition_base = 0;
 
+    Log::info() << "remote_index_base = " << remote_index_base << std::endl;
+
     int mpi_rank = mpi::comm().rank();
     int mpi_size = mpi::comm().size();
 
@@ -52,6 +54,9 @@ CASE("real test") {
             receive_gidx          = {989, 2781, 306, 3819, 29};
             expected_receive_part = {0,      1,   0,    2,  0};
             expected_receive_ridx = {988, 1030, 305,  319, 28};
+        }
+        for( auto& ridx: expected_receive_ridx ) {
+            ridx += remote_index_base;
         }
     }
     else {
