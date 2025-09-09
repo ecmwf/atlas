@@ -33,7 +33,7 @@ public:
         }
         fspan(const std::function<value_type(size_t)>* func, std::size_t size) :
             func_(func), size_(size) {
-            }
+        }
     private:
         const std::function<value_type(size_t)>* func_{nullptr};
         std::size_t size_{0};
