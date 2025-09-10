@@ -1018,37 +1018,44 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
 
 void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedPolygonArray& src_csp) {
     ATLAS_TRACE();
+    int mpi_rank = mpi::rank();
     auto& timings = sharable_data_->timings;
     StopWatch stopwatch;
     stopwatch.start();
     util::KDTree<idx_t> kdt_search;
     const auto node_part  = array::make_view<int, 1>(src_mesh_.nodes().partition());
-    const auto node_ghost  = array::make_view<int, 1>(src_mesh_.nodes().ghost());
     const auto node_ridx  = array::make_indexview<int, 1>(src_mesh_.nodes().remote_index());
     const auto cell_part  = array::make_view<int, 1>(src_mesh_.cells().partition());
     const auto cell_halo  = array::make_view<int, 1>(src_mesh_.cells().halo());
+    const auto& cell_flags = array::make_view<int, 1>(src_mesh_.cells().flags());
     const auto cell_ridx  = array::make_indexview<int, 1>(src_mesh_.cells().remote_index());
     double max_srccell_rad = 0.;
     ATLAS_TRACE_SCOPE("build kd-tree for source polygons") {
         kdt_search.reserve(src_csp.size());
-            int mpi_rank = mpi::rank();
-        auto consider_src = [&](int part, idx_t ridx, bool ghost) {
-            return (not ghost) || (ghost && part != mpi_rank);
+        auto consider_src = [&](int part, idx_t ridx, bool ghost, bool periodic) {
+            bool consider = (not ghost) || (ghost && part != mpi_rank);
+            return consider && (not periodic);
         };
+
         for (idx_t csp_id = 0; csp_id < src_csp.size(); ++csp_id) {
-            const auto& s_csp = src_csp[csp_id].polygon;
-            bool considering = false;
-            if (! src_cell_data_) {
-                idx_t snode = sharable_data_->src_csp2node_[csp_id];
-                considering = consider_src(node_part(snode), node_ridx(snode), node_ghost(snode));
-            }
-            else {
+            idx_t snode = sharable_data_->src_csp2node_[csp_id];
+            idx_t scell;
+            {
+                // get mesh cell containing this polygon
                 auto idx = std::upper_bound(src_csp_index_.begin(), src_csp_index_.end(), csp_id);
                 idx_t pos = idx - src_csp_index_.begin() - 1;
-                idx_t scell = src_csp_cell_index_[pos];
-                considering = consider_src(cell_part(scell), cell_ridx(scell), cell_halo(scell));
+                scell = src_csp_cell_index_[pos];
+            }
+            bool considering = false;
+            bool periodic_cell = util::Bitflags::view(cell_flags(scell)).check(util::Topology::PERIODIC);
+            if (src_cell_data_) {
+                considering = consider_src(cell_part(scell), cell_ridx(scell), cell_halo(scell), periodic_cell);
+            }
+            else {
+                considering = consider_src(node_part(snode), node_ridx(snode), cell_halo(scell) > 1, periodic_cell);
             }
             if (considering) {
+                const auto& s_csp = src_csp[csp_id].polygon;
                 kdt_search.insert(s_csp.centroid(), csp_id);
                 max_srccell_rad = std::max(max_srccell_rad, s_csp.radius());
             }
