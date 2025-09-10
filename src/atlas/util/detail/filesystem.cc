@@ -4,7 +4,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
-
+#include <string.h>
 #include "atlas/runtime/Exception.h"
 
 namespace atlas::filesystem {
@@ -49,7 +49,7 @@ static void remove_all(const char path[]) {
     }
 
     // the length of the path
-    path_len = strlen(path);
+    path_len = ::strlen(path);
 
     // iteration through entries in the directory
     while ((entry = readdir(dir)) != nullptr) {
