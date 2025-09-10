@@ -892,6 +892,8 @@ util/CGALSphericalTriangulation.h
 util/CGALSphericalTriangulation.cc
 util/detail/Cache.h
 util/detail/KDTree.h
+util/detail/filesystem.cc
+util/detail/filesystem.h
 util/function/MDPI_functions.h
 util/function/MDPI_functions.cc
 util/function/SolidBodyRotation.h
@@ -1056,6 +1058,3 @@ if( HAVE_ACC AND CMAKE_Fortran_COMPILER_ID MATCHES NVHPC )
 endif()
 
 target_compile_features( atlas PUBLIC cxx_std_17 )
-if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    target_link_libraries( atlas PUBLIC stdc++fs )
-endif()

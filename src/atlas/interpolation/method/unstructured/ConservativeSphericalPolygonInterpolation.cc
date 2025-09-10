@@ -9,7 +9,6 @@
  */
 
 #include <fstream>
-#include <filesystem>
 #include <iomanip>
 #include <vector>
 
@@ -29,6 +28,7 @@
 #include "atlas/util/ConvexSphericalPolygon.h"
 #include "atlas/util/KDTree.h"
 #include "atlas/util/Topology.h"
+#include "atlas/util/detail/filesystem.h"
 
 #include "eckit/log/Bytes.h"
 #include "eckit/log/ProgressTimer.h"
@@ -1224,10 +1224,10 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
 
     const std::string polygon_intersection_folder = "polygon_intersection/";
     if (validate_ && mpi::rank() == 0) {
-        if (std::filesystem::exists(polygon_intersection_folder)) {
-            std::filesystem::remove_all(polygon_intersection_folder);
+        if (filesystem::exists(polygon_intersection_folder)) {
+            filesystem::remove_all(polygon_intersection_folder);
         }
-        std::filesystem::create_directory(polygon_intersection_folder);
+        filesystem::create_directory(polygon_intersection_folder);
         Log::info() << "WARNING Polygon intersection relevant information is in the folder \e[1mpolygon_intersection\e[0m." << std::endl;
     }
 
