@@ -1024,11 +1024,11 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
     stopwatch.start();
     util::KDTree<idx_t> kdt_search;
     const auto node_part  = array::make_view<int, 1>(src_mesh_.nodes().partition());
-    const auto node_ridx  = array::make_indexview<gidx_t, 1>(src_mesh_.nodes().remote_index());
+    const auto node_ridx  = array::make_indexview<idx_t, 1>(src_mesh_.nodes().remote_index());
     const auto cell_part  = array::make_view<int, 1>(src_mesh_.cells().partition());
     const auto cell_halo  = array::make_view<int, 1>(src_mesh_.cells().halo());
     const auto& cell_flags = array::make_view<int, 1>(src_mesh_.cells().flags());
-    const auto cell_ridx  = array::make_indexview<gidx_t, 1>(src_mesh_.cells().remote_index());
+    const auto cell_ridx  = array::make_indexview<idx_t, 1>(src_mesh_.cells().remote_index());
     double max_srccell_rad = 0.;
     ATLAS_TRACE_SCOPE("build kd-tree for source polygons") {
         kdt_search.reserve(src_csp.size());
@@ -1228,7 +1228,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
             filesystem::remove_all(polygon_intersection_folder);
         }
         filesystem::create_directory(polygon_intersection_folder);
-        Log::info() << "WARNING Polygon intersection relevant information is in the folder \e[1mpolygon_intersection\e[0m." << std::endl;
+        Log::warning() << "The worst target polygon coverage on the task 0 is in the folder \e[1mpolygon_intersection\e[0m." << std::endl;
     }
 
     if (validate_) {
