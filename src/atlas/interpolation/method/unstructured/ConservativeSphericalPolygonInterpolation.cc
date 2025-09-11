@@ -1034,7 +1034,7 @@ namespace {
 
     using PartitionAndRemoteIndex = std::pair<int, idx_t>;
     struct HashPartitionAndRemoteIndex {
-        std::size_t operator()(const std::pair<int, idx_t>& pair) {
+        std::size_t operator()(const std::pair<int, idx_t>& pair) const {
             uint64_t h = 0;
             h = hash_combine(h, pair.first);
             h = hash_combine(h, pair.second);
