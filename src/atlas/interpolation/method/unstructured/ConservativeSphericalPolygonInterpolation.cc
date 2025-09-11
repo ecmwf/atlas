@@ -1016,29 +1016,23 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
     }
 }
 
-void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedPolygonArray& src_csp) {
-    ATLAS_TRACE();
-    int mpi_rank = mpi::rank();
-    auto& timings = sharable_data_->timings;
-    StopWatch stopwatch;
-    stopwatch.start();
-    util::KDTree<idx_t> kdt_search;
-    const auto node_part  = array::make_view<int, 1>(src_mesh_.nodes().partition());
-    const auto node_ridx  = array::make_indexview<idx_t, 1>(src_mesh_.nodes().remote_index());
-    const auto cell_part  = array::make_view<int, 1>(src_mesh_.cells().partition());
-    const auto cell_halo  = array::make_view<int, 1>(src_mesh_.cells().halo());
+
+void ConservativeSphericalPolygonInterpolation::
+build_source_kdtree(util::KDTree<idx_t>& kdt_search, double& max_srccell_rad, const MarkedPolygonArray& src_csp) const {
+    Log::warning() << "Building KDTree via mesh indices." << std::endl;
+    const auto& node_part  = array::make_view<int, 1>(src_mesh_.nodes().partition());
+    const auto& node_ridx  = array::make_indexview<idx_t, 1>(src_mesh_.nodes().remote_index());
+    const auto& cell_part  = array::make_view<int, 1>(src_mesh_.cells().partition());
+    const auto& cell_halo  = array::make_view<int, 1>(src_mesh_.cells().halo());
     const auto& cell_flags = array::make_view<int, 1>(src_mesh_.cells().flags());
-    const auto cell_ridx  = array::make_indexview<idx_t, 1>(src_mesh_.cells().remote_index());
-    double max_srccell_rad = 0.;
+    const auto& cell_ridx  = array::make_indexview<idx_t, 1>(src_mesh_.cells().remote_index());
+    auto mpi_rank = mpi::rank();
     ATLAS_TRACE_SCOPE("build kd-tree for source polygons") {
-        kdt_search.reserve(src_csp.size());
         auto consider_src = [&](int part, idx_t ridx, bool ghost, bool periodic) {
             bool consider = (not ghost) || (ghost && part != mpi_rank);
             return consider && (not periodic);
         };
-
         for (idx_t csp_id = 0; csp_id < src_csp.size(); ++csp_id) {
-            idx_t snode = sharable_data_->src_csp2node_[csp_id];
             idx_t scell;
             {
                 // get mesh cell containing this polygon
@@ -1052,6 +1046,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
                 considering = consider_src(cell_part(scell), cell_ridx(scell), cell_halo(scell), periodic_cell);
             }
             else {
+                idx_t snode = data_->src_csp2node_[csp_id];
                 considering = consider_src(node_part(snode), node_ridx(snode), cell_halo(scell) > 1, periodic_cell);
             }
             if (considering) {
@@ -1062,7 +1057,79 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
         }
         kdt_search.build();
     }
-    stopwatch.stop();
+}
+
+
+void ConservativeSphericalPolygonInterpolation::
+build_source_kdtree_centroid(util::KDTree<idx_t>& kdt_search, double& max_srccell_rad, const MarkedPolygonArray& src_csp) const {
+    Log::warning() << "Building KDTree via centroid (obsolete)." << std::endl;
+    // Treshold at which points are considered same
+    double compare_pointxyz_eps = 1.e8 * std::numeric_limits<double>::epsilon();
+    const char* ATLAS_COMPAREPOINTXYZ_EPS_FACTOR = ::getenv("ATLAS_COMPAREPOINTXYZ_EPS_FACTOR");
+    if (ATLAS_COMPAREPOINTXYZ_EPS_FACTOR != nullptr) {
+        compare_pointxyz_eps = std::atof(ATLAS_COMPAREPOINTXYZ_EPS_FACTOR) * std::numeric_limits<double>::epsilon();
+    }
+    auto compare_pointxyz = [eps=compare_pointxyz_eps] (const PointXYZ& f, const PointXYZ& s) -> bool {
+        if (f[0] < s[0] - eps) {
+            return true;
+        }
+        else if (std::abs(f[0] - s[0]) < eps) {
+            if (f[1] < s[1] - eps) {
+                return true;
+            }
+            else if (std::abs(f[1] - s[1]) < eps) {
+                if (f[2] < s[2] - eps) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+    std::set<PointXYZ, decltype(compare_pointxyz)> src_cent(compare_pointxyz);
+    auto src_already_in = [&](const PointXYZ& halo_cent) {
+        if (src_cent.find(halo_cent) == src_cent.end()) {
+            src_cent.insert(halo_cent);
+            return false;
+        }
+        return true;
+    };
+    ATLAS_TRACE_SCOPE("build kd-tree for source polygons") {
+        for (idx_t scell = 0; scell < src_csp.size(); ++scell) {
+            const auto& s_csp = src_csp[scell].polygon;
+            if (not src_already_in((s_csp.centroid()))) {
+                kdt_search.insert(s_csp.centroid(), scell);
+                max_srccell_rad = std::max(max_srccell_rad, s_csp.radius());
+            }
+        }
+        kdt_search.build();
+    }
+}
+
+
+void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedPolygonArray& src_csp) {
+    ATLAS_TRACE();
+    // int mpi_rank = mpi::rank();
+    auto& timings = sharable_data_->timings;
+
+    StopWatch stopwatch;
+    util::KDTree<idx_t> kdt_search;
+    double max_srccell_rad = 0.;
+    {
+        stopwatch.start();
+        kdt_search.reserve(src_csp.size());
+        int build_with_centroids = 0;
+        const char* ATLAS_BUILD_KDTREE_CENTROID = ::getenv("ATLAS_BUILD_KDTREE_CENTROID");
+        if (ATLAS_BUILD_KDTREE_CENTROID != nullptr) {
+                build_with_centroids = std::atof(ATLAS_BUILD_KDTREE_CENTROID);
+        }
+        if (build_with_centroids) {
+            build_source_kdtree_centroid(kdt_search, max_srccell_rad, src_csp);
+        }
+        else {
+            build_source_kdtree(kdt_search, max_srccell_rad, src_csp);
+        }
+        stopwatch.stop();
+    }
     timings.source_kdtree_assembly = stopwatch.elapsed();
 
     StopWatch stopwatch_kdtree_search;

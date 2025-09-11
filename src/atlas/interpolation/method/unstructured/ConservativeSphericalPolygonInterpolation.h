@@ -163,6 +163,8 @@ private:
 
     void do_setup_impl(const Grid& src_grid, const Grid& tgt_grid);
 
+    void build_source_kdtree(util::KDTree<idx_t>&, double& max_srccell_rad, const MarkedPolygonArray&) const;
+    void build_source_kdtree_centroid(util::KDTree<idx_t>&, double& max_srccell_rad, const MarkedPolygonArray&) const;
     void intersect_polygons(const MarkedPolygonArray& src_csp);
     Triplets compute_1st_order_triplets();
     Triplets compute_2nd_order_triplets();
