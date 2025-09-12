@@ -692,7 +692,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& so
             }
         }
         else {
-            Log::warning() << "Could not find matrix in cache" << std::endl;
+            Log::debug() << "Could not find matrix in cache" << std::endl;
         }
     }
 
@@ -741,7 +741,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
     src_mesh_ = extract_mesh(src_fs_);
     tgt_mesh_ = extract_mesh(tgt_fs_);
 
-    {
+    if (mpi::size() > 1) {
         // we need src_halo_size >= 2, tgt_halo_size >= 0 for CellColumns
         // if target is NodeColumns, we need:
         //      tgt_halo_size >= 1 and
