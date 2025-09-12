@@ -88,6 +88,9 @@ public:
     /// Copy assign from other SparseMatrixStorage, takes ownership!
     SparseMatrixStorage& operator=(const SparseMatrixStorage& other);
 
+    // Remove all storage, make empty
+    void clear();
+
     /// Empty if rows and cols are zero.
     bool empty() const { return rows_ == 0 && cols_ == 0; }
 
