@@ -51,6 +51,13 @@ ENABLE_IF_NON_CONST void ArrayView<Value, Rank>::assign(const ArrayView& other) 
 //------------------------------------------------------------------------------------------------------
 
 template <typename Value, int Rank>
+ENABLE_IF_NON_CONST void ArrayView<Value, Rank>::assign(const LocalView<Value, Rank>& other) {
+    helpers::array_copier<Value, Rank>::apply(other, *this);
+}
+
+//------------------------------------------------------------------------------------------------------
+
+template <typename Value, int Rank>
 void ArrayView<Value, Rank>::dump(std::ostream& os) const {
     os << "size: " << size() << " , values: ";
     os << "[ ";
@@ -91,7 +98,11 @@ namespace array {
     template void ArrayView<int, Rank>::assign<true, nullptr>(ArrayView<int, Rank> const&);             \
     template void ArrayView<long, Rank>::assign<true, nullptr>(ArrayView<long, Rank> const&);           \
     template void ArrayView<float, Rank>::assign<true, nullptr>(ArrayView<float, Rank> const&);         \
-    template void ArrayView<double, Rank>::assign<true, nullptr>(ArrayView<double, Rank> const&);
+    template void ArrayView<double, Rank>::assign<true, nullptr>(ArrayView<double, Rank> const&);       \
+    template void ArrayView<int, Rank>::assign<true, nullptr>(LocalView<int, Rank> const&);             \
+    template void ArrayView<long, Rank>::assign<true, nullptr>(LocalView<long, Rank> const&);           \
+    template void ArrayView<float, Rank>::assign<true, nullptr>(LocalView<float, Rank> const&);         \
+    template void ArrayView<double, Rank>::assign<true, nullptr>(LocalView<double, Rank> const&);
 
 // For each NDims in [1..9]
 EXPLICIT_TEMPLATE_INSTANTIATION(1)

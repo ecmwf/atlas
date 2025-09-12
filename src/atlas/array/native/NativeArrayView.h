@@ -307,6 +307,9 @@ public:
     ENABLE_IF_NON_CONST
     void assign(const ArrayView& other);
 
+    ENABLE_IF_NON_CONST
+    void assign(const LocalView<value_type,Rank>& other);
+
     void dump(std::ostream& os) const;
 
     /// @brief Obtain a slice from this view:  view.slice( Range, Range, ... )
