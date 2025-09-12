@@ -827,7 +827,7 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     auto cells_glb_idx      = array::make_view<gidx_t, 1>(mesh.cells().global_index());
     auto& node_connectivity = mesh.cells().node_connectivity();
 
-    idx_t cell_nodes[5];
+    std::array<idx_t,5> cell_nodes;
     int jquadcell = quad_begin;
     int jpentcell = pent_begin;
 
@@ -1024,13 +1024,24 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
 #endif
                 // add cell to the node connectivity table
                 if (pentagon) {
+                    if (south_hemisphere) {
+                        // Rotate by 2 so that output in 3d shows healpix quad when taking the first 4 nodes
+                        //
+                        //       5                                   3
+                        //    .´  `.                              .´  `.
+                        //   1      4    ----rotate-by-2--->     4      2
+                        //   |      |                            |      |
+                        //   2------3    --- south pole ---      5------1
+                        //
+                        std::rotate(cell_nodes.begin(),cell_nodes.begin()+2,cell_nodes.end());
+                    }
                     cells_part(jpentcell) = mypart;
-                    node_connectivity.set(jpentcell, cell_nodes);
+                    node_connectivity.set(jpentcell, cell_nodes.data());
                     ++jpentcell;
                 }
                 else {
                     cells_part(jquadcell) = mypart;
-                    node_connectivity.set(jquadcell, cell_nodes);
+                    node_connectivity.set(jquadcell, cell_nodes.data());
                     ++jquadcell;
                 }
             }
