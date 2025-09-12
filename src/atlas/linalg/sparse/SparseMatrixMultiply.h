@@ -28,6 +28,9 @@ template <typename Matrix, typename SourceView, typename TargetView>
 void sparse_matrix_multiply(const Matrix& matrix, const SourceView& src, TargetView& tgt);
 
 template <typename Matrix, typename SourceView, typename TargetView>
+void sparse_matrix_multiply(const Matrix& matrix, const SourceView& src, TargetView&& tgt);
+
+template <typename Matrix, typename SourceView, typename TargetView>
 void sparse_matrix_multiply(const Matrix& matrix, const SourceView& src, TargetView& tgt, const Configuration& config);
 
 template <typename Matrix, typename SourceView, typename TargetView>
