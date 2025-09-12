@@ -631,7 +631,10 @@ Field CellColumns::global_index() const {
 }
 
 Field CellColumns::ghost() const {
-    return mesh_.cells().field("ghost");
+    if (mesh_.cells().has_field("ghost")) {
+       return mesh_.cells().field("ghost");
+    }
+    return mesh_.cells().halo();
 }
 
 Field CellColumns::partition() const {
