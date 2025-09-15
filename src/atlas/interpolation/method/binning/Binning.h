@@ -49,7 +49,7 @@ class Binning : public Method {
   ///
 
   using ValueType = double;
-  using IndexType = int;
+  using IndexType = idx_t;
   using SparseMatrixStorage = linalg::SparseMatrixStorage;
   using SparseMatrixView = linalg::SparseMatrixView<ValueType, IndexType>;
 
