@@ -91,27 +91,55 @@ public:
     };
 
     struct Statistics {
-        enum Counts
-        {
-            SRC_PLG = 0,  // index, number of source polygons
-            TGT_PLG,      // index, number of target polygons
-            INT_PLG,      // index, number of intersection polygons
-            UNCVR_FULL_TGT,    // index, number of compelte non covered target polygons
-            UNCVR_PART_TGT,    // index, number of partially non covered target polygons
-            COUNTS_ENUM_SIZE
+        enum Counts {
+            NUM_SRC_PLG = 0,  // index, number of source polygons
+            NUM_TGT_PLG,      // index, number of target polygons
+            NUM_INT_PLG,      // index, number of intersection polygons
+            NUM_UNCVR_FULL_TGT,    // index, number of completely non covered target polygons
+            NUM_UNCVR_PART_TGT,    // index, number of partially non covered target polygons
+            NUM_ENUM_SIZE
         };
-        enum Errors
-        {
-            TGT_INTERSECTPLG_L1,      // see above
-            TGT_INTERSECTPLG_LINF,    // see above
-            SRCTGT_INTERSECTPLG_DIFF,    // index, 1/(unit_sphere.area) ( \sum_{scell} scell.area - \sum{tcell} tcell.area )
-            REMAP_CONS,  // index, error in mass conservation
-            REMAP_L2,    // index, error accuracy for given analytical function
-            REMAP_LINF,  // index, like REMAP_L2 but in L_infinity norm
-            ERRORS_ENUM_SIZE
+        enum Errors {
+            ERR_TGT_INTERSECTPLG_L1 = 0,      // see above
+            ERR_TGT_INTERSECTPLG_LINF,    // see above
+            ERR_SRCTGT_INTERSECTPLG_DIFF,    // index, 1/(unit_sphere.area) ( \sum_{scell} scell.area - \sum{tcell} tcell.area )
+            ERR_REMAP_CONS,  // index, error in mass conservation
+            ERR_REMAP_L2,    // index, error accuracy for given analytical function
+            ERR_REMAP_LINF,  // index, like REMAP_L2 but in L_infinity norm
+            ERR_ENUM_SIZE
         };
-        std::array<int, COUNTS_ENUM_SIZE> counts;
-        std::array<double, ERRORS_ENUM_SIZE> errors;
+        enum Timings {
+            TIME_SRC_PLG = 0,   // index, max time in second per task to build source polygons
+            TIME_TGT_PLG,       // index, max time in second per task to build target polygons
+            TIME_KDTREE_BUILD,  // index, max time in second per task to build kdtree of source polygons
+            TIME_KDTREE_SEARCH, // index, max time in second per task to compute kdtree searches for all target polygons
+            TIME_MATRIX,        // index, max time in second per task to assemble the interpolation matrix from the weights
+            TIME_INTERS,        // index, max time in second per task to compute intersection polygons
+            TIME_INTERP,        // index, max time in second per task to interpolate a source to a target field
+            TIME_ENUM_SIZE
+        };
+        enum Memory {
+            MEM_MATRIX = 0,  // index, max memory size per task of the interpolation matrix
+            MEM_SRC,         // index, max memory size per task of source point values
+            MEM_TGT,
+            MEM_SRC_AREAS,   // index, max memory size per task of source-area array
+            MEM_TGT_AREAS,
+            MEM_SRC_CSP2N,   // index, max memory size per task of source polygon-to-node index-array
+            MEM_SRC_N2CSP,   // index, max memory size per task of source node to polygon index-array
+            MEM_SRC_CSP2CI,  // index, max memory size per task of source polygon-to-cell-index lookup-array
+            MEM_SRC_CSP2C,   // index, max memory size per task of source polygon-to-cell lookup-array
+            MEM_SRC_PLG,     // index, max memory size per task of source polygon array
+            MEM_TGT_CSP2N,
+            MEM_TGT_N2CSP,
+            MEM_TGT_CSP2CI,
+            MEM_TGT_CSP2C,
+            MEM_IPARAM,      // index, max memory size per task of stored intersection parameters
+            MEM_ENUM_SIZE
+        };
+        std::array<int, NUM_ENUM_SIZE> counts;
+        std::array<double, ERR_ENUM_SIZE> errors;
+        std::array<size_t, MEM_ENUM_SIZE> memory;
+        std::array<double, TIME_ENUM_SIZE> time;
 
         double tgt_area_sum;
         double src_area_sum;
