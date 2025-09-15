@@ -33,7 +33,6 @@
 
 #include "eckit/log/Bytes.h"
 #include "eckit/log/ProgressTimer.h"
-#include "eckit/types/FloatCompare.h"
 
 #define PRINT_BAD_POLYGONS 0
 
@@ -517,8 +516,8 @@ get_csp_celldata(idx_t csp_id, const Mesh& mesh, gidx_t& csp_index_size, std::ve
         pts_ll[jnode] = PointLonLat{nodes_ll(inode, 0), nodes_ll(inode, 1)};
     }
     const auto cell_halo   = array::make_view<int, 1>(mesh.cells().halo());
-    const auto& cell_flags = array::make_view<int, 1>(mesh.cells().flags());
-    const auto& cell_part  = array::make_view<int, 1>(mesh.cells().partition());
+    const auto cell_flags  = array::make_view<int, 1>(mesh.cells().flags());
+    const auto cell_part   = array::make_view<int, 1>(mesh.cells().partition());
     int halo_type       = cell_halo(cell);
     const auto& bitflag = util::Bitflags::view(cell_flags(cell));
     if (bitflag.check(util::Topology::PERIODIC) and mpi::rank() == cell_part(cell)) {
@@ -844,15 +843,14 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
             src_csp = get_polygons_nodedata(src_fs_, sharable_data_->src_csp2node_, sharable_data_->src_node2csp_,
                 src_csp_size_, src_csp_cell_index_, src_csp_index_);
         }
-        remap_stat_.metadata.set("memory_in_bytes.src_csp_polygons", memory_of(src_csp));
         stopwatch.stop();
+        remap_stat_.metadata.set("memory_in_bytes.src_csp_polygons", memory_of(src_csp));
         sharable_data_->timings.source_polygons_assembly = stopwatch.elapsed();
         remap_stat_.counts[Statistics::Counts::SRC_PLG]         = src_csp.size();
 
         ATLAS_TRACE("Get target polygons");
         stopwatch.start();
         init_csp_index(tgt_cell_data_, tgt_fs_, sharable_data_->tgt_csp2node_, sharable_data_->tgt_node2csp_, tgt_csp_size_, tgt_csp_cell_index_, tgt_csp_index_);
-        remap_stat_.metadata.set("memory_in_bytes.tgt_csp_polygons", 0);
         stopwatch.stop();
         sharable_data_->timings.target_polygons_assembly        = stopwatch.elapsed();
         remap_stat_.counts[Statistics::Counts::TGT_PLG]         = tgt_csp_size_;
@@ -1047,12 +1045,12 @@ namespace {
 void ConservativeSphericalPolygonInterpolation::
 build_source_kdtree(util::KDTree<idx_t>& kdt_search, double& max_srccell_rad, const MarkedPolygonArray& src_csp) const {
     Log::warning() << "Building KDTree via mesh indices." << std::endl;
-    const auto& node_part  = array::make_view<int, 1>(src_mesh_.nodes().partition());
-    const auto& node_ridx  = array::make_indexview<idx_t, 1>(src_mesh_.nodes().remote_index());
-    const auto& node_ghost  = array::make_view<int, 1>(src_mesh_.nodes().ghost());
-    const auto& cell_part  = array::make_view<int, 1>(src_mesh_.cells().partition());
-    const auto& cell_halo  = array::make_view<int, 1>(src_mesh_.cells().halo());
-    const auto& cell_ridx  = array::make_indexview<idx_t, 1>(src_mesh_.cells().remote_index());
+    const auto node_part  = array::make_view<int, 1>(src_mesh_.nodes().partition());
+    const auto node_ridx  = array::make_indexview<idx_t, 1>(src_mesh_.nodes().remote_index());
+    const auto node_ghost = array::make_view<int, 1>(src_mesh_.nodes().ghost());
+    const auto cell_part  = array::make_view<int, 1>(src_mesh_.cells().partition());
+    const auto cell_halo  = array::make_view<int, 1>(src_mesh_.cells().halo());
+    const auto cell_ridx  = array::make_indexview<idx_t, 1>(src_mesh_.cells().remote_index());
     auto mpi_rank = mpi::rank();
     ATLAS_TRACE_SCOPE("build kd-tree for source polygons") {
         std::unordered_set<PartitionAndRemoteIndex, HashPartitionAndRemoteIndex> src_kdtree_set;
@@ -1180,7 +1178,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
         TOTAL_TGT,
         MAX_TGT
     };
-    std::array<size_t, Statistics::Counts::COUNTS_ENUM_SIZE> num_pol{0, 0, 0, 0};
+    std::array<size_t, Statistics::Counts::COUNTS_ENUM_SIZE> num_pol{0, 0, 0, 0, 0};
     std::array<double, 2> area_coverage{0., 0.};
 
     auto& tgt_iparam_ = sharable_data_->tgt_iparam_;
@@ -2174,8 +2172,8 @@ void ConservativeSphericalPolygonInterpolation::setup_stat() const {
             }
         }
     }
-    const auto& tgt_cell_halo  = array::make_view<int, 1>(tgt_mesh_.cells().halo());
-    const auto& tgt_node_ghost = array::make_view<int, 1>(tgt_mesh_.nodes().ghost());
+    const auto tgt_cell_halo  = array::make_view<int, 1>(tgt_mesh_.cells().halo());
+    const auto tgt_node_ghost = array::make_view<int, 1>(tgt_mesh_.nodes().ghost());
     if (tgt_cell_data_) {
         for (idx_t tpt = 0; tpt < tgt_areas_v.size(); ++tpt) {
             if (not tgt_cell_halo(tpt)) {

@@ -260,10 +260,6 @@ void ConvexSphericalPolygon::clip(const GreatCircleSegment& great_circle, Clippe
     ATLAS_ASSERT(valid_);
     ATLAS_ASSERT(not approx_eq(great_circle.first(), great_circle.second()));
 #endif
-#if ATLAS_BUILD_TYPE_DEBUG
-    ATLAS_ASSERT(valid_);
-    ATLAS_ASSERT(not approx_eq(great_circle.first(), great_circle.second()));
-#endif
     bool first_in = great_circle.inLeftHemisphere(sph_coords_[0], -1.5 * EPS, out);
     for (int i = 0; i < size_; i++) {
         int in = (i+1) % size_;
