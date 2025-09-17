@@ -11,6 +11,7 @@
 # TODO we duplicate information -- pyproject.toml's `name` and `packages` are derivable from $NAME and must stay consistent
 
 NAME="atlas"
-CMAKE_PARAMS="-Deckit_ROOT=/tmp/atlas/prereqs/eckitlib -DQhull_ROOT=/tmp/qhull/target -DENABLE_TESSELATION=1"
+CMAKE_PARAMS="-Deckit_ROOT=/tmp/atlas/prereqs/eckitlib -DQhull_ROOT=/tmp/qhull/target -DENABLE_TESSELATION=1 -DENABLE_FFTW=0"
+# -DFFTW_ROOT=/tmp/fftwInstall -DENABLE_FFTW=1 # we dont want fftw due to lic reasons => with enable=0, pocketfft gets picked up instead
 PYPROJECT_DIR="python/atlaslib-ecmwf"
 DEPENDENCIES='["eckitlib"]'
