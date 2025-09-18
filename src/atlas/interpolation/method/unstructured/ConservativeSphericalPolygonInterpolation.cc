@@ -234,7 +234,7 @@ ConservativeSphericalPolygonInterpolation::ConservativeSphericalPolygonInterpola
     config.get("statistics.intersection", remap_stat_.intersection = false);
     config.get("statistics.timings", remap_stat_.timings = false);
     if (remap_stat_.all) {
-        Log::warning() << "statistics.all required. Enabling vdalidate, statistics.timings, statistics.intersection, statistics.conservation, and statistics.accuracy." << std::endl;
+        Log::warning() << "statistics.all required. Enabling validate, statistics.timings, statistics.intersection, statistics.conservation, and statistics.accuracy." << std::endl;
         validate_ = true;
         remap_stat_.accuracy = true;
         remap_stat_.conservation = true;
@@ -2397,28 +2397,22 @@ void ConservativeSphericalPolygonInterpolation::Statistics::fillMetadata(Metadat
 ConservativeSphericalPolygonInterpolation::Statistics::Statistics() {
     std::fill(std::begin(counts), std::end(counts), -1);
     std::fill(std::begin(errors), std::end(errors), -1.);
+    std::fill(std::begin(memory), std::end(memory), -1);
+    std::fill(std::begin(time), std::end(time), -1.);
 }
 
 
 ConservativeSphericalPolygonInterpolation::Statistics::Statistics(const Metadata& metadata): Statistics() {
     if (intersection) {
-        metadata.get("errors.intersections_covering_tgt_cells_sum", errors[ERR_TGT_INTERSECTPLG_L1]);
-        metadata.get("errors.intersections_covering_tgt_cells_max", errors[ERR_TGT_INTERSECTPLG_LINF]);
-        metadata.get("errors.sum_src_areas_minus_sum_tgt_areas", errors[ERR_SRCTGT_INTERSECTPLG_DIFF]);
-        metadata.get("counts.sum_src_areas_minus_sum_tgt_areas", counts[ERR_SRCTGT_INTERSECTPLG_DIFF]);
-        metadata.get("polygons.number_of_src_polygons", counts[NUM_SRC_PLG]);
-        metadata.get("polygons.number_of_tgt_polygons", counts[NUM_TGT_PLG]);
         metadata.get("polygons.number_of_intersections", counts[NUM_INT_PLG]);
         metadata.get("polygons.number_of_full_noncovered_tgt_polygons", counts[NUM_UNCVR_FULL_TGT]);
         metadata.get("polygons.number_of_part_noncovered_tgt_polygons", counts[NUM_UNCVR_PART_TGT]);
     }
-    if (conservation) {
-        metadata.get("errors.conservation_error", errors[ERR_REMAP_CONS]);
-    }
-    if (accuracy) {
-        metadata.get("errors.to_solution_sum", errors[ERR_REMAP_L2]);
-        metadata.get("errors.to_solution_max", errors[ERR_REMAP_LINF]);
-    }
+    metadata.get("errors.intersections_covering_tgt_cells_sum", errors[ERR_TGT_INTERSECTPLG_L1]);
+    metadata.get("errors.intersections_covering_tgt_cells_max", errors[ERR_TGT_INTERSECTPLG_LINF]);
+    metadata.get("errors.sum_src_areas_minus_sum_tgt_areas", errors[ERR_SRCTGT_INTERSECTPLG_DIFF]);
+    metadata.get("polygons.number_of_src_polygons", counts[NUM_SRC_PLG]);
+    metadata.get("polygons.number_of_tgt_polygons", counts[NUM_TGT_PLG]);
 }
 
 

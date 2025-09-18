@@ -150,12 +150,11 @@ public:
         bool timings;
         Metadata metadata;
 
-        void fillMetadata(Metadata&);
-
         Statistics();
         Statistics(const Metadata&);
 
         void compute_accuracy(const Interpolation& interpolation, const Field target, std::function<double(const PointLonLat&)> func, Metadata* metadata = nullptr);
+        void fillMetadata(Metadata&);
     };
 
 
