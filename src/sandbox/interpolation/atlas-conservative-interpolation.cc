@@ -241,9 +241,7 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {\
         auto src_view     = array::make_view<double, 1>(src_field);
         auto f            = get_init(config);
         for (idx_t n = 0; n < lonlat.shape(0); ++n) {
-            // if (! std::isnan(lonlat(n, LON))) { // hacky, function space added halo cells to the lonlat field which are not assigned (lon, lat) values
-                src_view(n) = f(PointLonLat{lonlat(n, LON), lonlat(n, LAT)});
-            // }
+            src_view(n) = f(PointLonLat{lonlat(n, LON), lonlat(n, LAT)});
         }
         src_field.set_dirty(true);
         timers.initial_condition.stop();
@@ -257,6 +255,7 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {\
 
     timers.interpolation_execute.start();
     auto metadata = interpolation.execute(src_field, tgt_field);
+    tgt_field.haloExchange();
     timers.interpolation_execute.stop();
 
     Field src_conservation_field;

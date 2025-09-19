@@ -80,6 +80,7 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
     }
 
     remap_stat_1 = conservative_interpolation.execute(src_field, tgt_field);
+    tgt_field.haloExchange();
     consMethod.statistics().compute_accuracy(conservative_interpolation, tgt_field, func, &remap_stat_1);
 
     ATLAS_TRACE_SCOPE("test caching") {
@@ -159,6 +160,7 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
         Log::info() << conservative_interpolation << std::endl;
         remap_stat_2 = conservative_interpolation.execute(src_field, tgt_field);
         auto& consMethod_2 = dynamic_cast<ConservativeMethod&>(*conservative_interpolation.get());
+        tgt_field.haloExchange();
         consMethod_2.statistics().compute_accuracy(conservative_interpolation, tgt_field, func, &remap_stat_2);
     }
 }
@@ -212,12 +214,12 @@ CASE("test_interpolation_conservative") {
         bool src_cell_data = true;
         bool tgt_cell_data = true;
         do_remapping_test(Grid("O16"), Grid("H12"), func, remap_stat_1, remap_stat_2, src_cell_data, tgt_cell_data);
-        check(remap_stat_1, remap_stat_2, {1.0e-13, 1.0e-12, 0.0051919, 0.0025275, 1.0e-15, 1.5e-08});
+        check(remap_stat_1, remap_stat_2, {1.0e-13, 1.0e-12, 0.0051927, 0.0025275, 1.0e-15, 1.5e-08});
 
         src_cell_data = true;
         tgt_cell_data = false;
         do_remapping_test(Grid("O16"), Grid("H12"), func, remap_stat_1, remap_stat_2, src_cell_data, tgt_cell_data);
-        check(remap_stat_1, remap_stat_2, {1.0e-13, 1.0e-12, 0.0054397, 0.0028256, 1.0e-15, 5.0e-09});
+        check(remap_stat_1, remap_stat_2, {1.0e-13, 1.0e-12, 0.0054418, 0.0028355, 1.0e-15, 5.0e-09});
 
         src_cell_data = false;
         tgt_cell_data = true;
@@ -227,7 +229,7 @@ CASE("test_interpolation_conservative") {
         src_cell_data = false;
         tgt_cell_data = false;
         do_remapping_test(Grid("O16"), Grid("H12"), func, remap_stat_1, remap_stat_2, src_cell_data, tgt_cell_data);
-        check(remap_stat_1, remap_stat_2, {1.0e-12, 1.0e-12, 0.0064081, 0.0030195, 1.0e-15, 1.0e-12});
+        check(remap_stat_1, remap_stat_2, {1.0e-12, 1.0e-12, 0.0064164, 0.0030295, 1.0e-15, 1.0e-12});
     }
 }
 
