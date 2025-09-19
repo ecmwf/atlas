@@ -75,6 +75,7 @@ ecbuild_add_test( TARGET atlas_test_transgeneral_pocketfft
   SOURCES   test_transgeneral.cc
   LIBS      atlas ${atlas_test_transgeneral_extra_libs}
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_TRACE_REPORT=1 ATLAS_LINALG_FFT_BACKEND=pocketfft
+  CONDITION atlas_HAVE_POCKETFFT
 )
 
 ecbuild_add_test( TARGET atlas_test_trans_localcache

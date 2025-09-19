@@ -26,6 +26,7 @@
 #define ATLAS_HAVE_FORTRAN                   @atlas_HAVE_FORTRAN@
 #define ATLAS_HAVE_EIGEN                     @atlas_HAVE_EIGEN@
 #define ATLAS_HAVE_FFTW                      @atlas_HAVE_FFTW@
+#define ATLAS_HAVE_POCKETFFT                 @atlas_HAVE_POCKETFFT@
 #define ATLAS_HAVE_MPI                       @atlas_HAVE_MPI@
 #define ATLAS_HAVE_PROJ                      @atlas_HAVE_PROJ@
 #define ATLAS_BITS_GLOBAL                    @ATLAS_BITS_GLOBAL@
