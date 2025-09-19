@@ -205,10 +205,11 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {\
             }
         }
         if (type == "CellColumns") {
+            auto fspace = functionspace::CellColumns(mesh, option::halo(halo));
             if (! mesh.cells().has_field("lonlat")) {
                 mesh::actions::Build2DCellCentres{"lonlat"}(mesh);
             }
-            return functionspace::CellColumns(mesh, option::halo(halo));
+            return fspace;
         }
         else if (type == "NodeColumns") {
             return functionspace::NodeColumns(mesh, option::halo(std::max(1,halo)));
@@ -240,9 +241,9 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {\
         auto src_view     = array::make_view<double, 1>(src_field);
         auto f            = get_init(config);
         for (idx_t n = 0; n < lonlat.shape(0); ++n) {
-            if (! std::isnan(lonlat(n, LON))) { // hacky, function space added halo cells to the lonlat field which are not assigned (lon, lat) values
+            // if (! std::isnan(lonlat(n, LON))) { // hacky, function space added halo cells to the lonlat field which are not assigned (lon, lat) values
                 src_view(n) = f(PointLonLat{lonlat(n, LON), lonlat(n, LAT)});
-            }
+            // }
         }
         src_field.set_dirty(true);
         timers.initial_condition.stop();
