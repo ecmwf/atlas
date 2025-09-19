@@ -97,10 +97,10 @@ CASE("Test sparse matrix construction from triplets.") {
             // Row-wise iteration.
             auto ref_iter = ref_triplets.begin();
             for (std::size_t row = 0; row < matrix_view.rows(); ++row) {
-                sparse_matrix_for_each_triplet(row, matrix_view, [&](const TripletType& t) {
-                    ATLAS_ASSERT(t.row() == ref_iter->row());
-                    ATLAS_ASSERT(t.col() == ref_iter->col());
-                    ATLAS_ASSERT(t.value() == ref_iter->value());
+                sparse_matrix_for_each_triplet(row, matrix_view, [&](int row, int col, double value) {
+                    ATLAS_ASSERT(row == ref_iter->row());
+                    ATLAS_ASSERT(col == ref_iter->col());
+                    ATLAS_ASSERT(value == ref_iter->value());
                     ++ref_iter;
                 });
             }
@@ -108,10 +108,10 @@ CASE("Test sparse matrix construction from triplets.") {
         {
             // Full matrix iteration.
             auto ref_iter = ref_triplets.begin();
-            sparse_matrix_for_each_triplet(matrix_view, [&](const TripletType& t) {
-                ATLAS_ASSERT(t.row() == ref_iter->row());
-                ATLAS_ASSERT(t.col() == ref_iter->col());
-                ATLAS_ASSERT(t.value() == ref_iter->value());
+            sparse_matrix_for_each_triplet(matrix_view, [&](int row, int col, double value) {
+                ATLAS_ASSERT(row == ref_iter->row());
+                ATLAS_ASSERT(col == ref_iter->col());
+                ATLAS_ASSERT(value == ref_iter->value());
                 ++ref_iter;
             });
         }

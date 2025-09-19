@@ -120,18 +120,19 @@ void Binning::do_setup(const FunctionSpace& source, const FunctionSpace& target)
     auto triplets = std::vector<TripletType>{};
     triplets.reserve(transposeMatrixView.nnz());
 
+    const auto weightedValue = [&](IndexType col, ValueType value) {
+            return value * areaWeightsVector.at(col);
+    };
+
     // Area-weight and normalise rows.
     for (std::size_t rowIdx = 0; rowIdx < transposeRows; ++rowIdx) {
-        const auto weightedValue = [&](const TripletType& triplet) {
-            return triplet.value() * areaWeightsVector.at(triplet.col());
-        };
 
         ValueType rowSum = 0.;
         linalg::sparse_matrix_for_each_triplet(rowIdx, transposeMatrixView,
-                                               [&](const TripletType& triplet) { rowSum += weightedValue(triplet); });
+                                               [&](IndexType row, IndexType col, ValueType value) { rowSum += weightedValue(col, value); });
 
-        linalg::sparse_matrix_for_each_triplet(rowIdx, transposeMatrixView, [&](const TripletType& triplet) {
-            triplets.emplace_back(triplet.row(), triplet.col(), weightedValue(triplet) / rowSum);
+        linalg::sparse_matrix_for_each_triplet(rowIdx, transposeMatrixView, [&](IndexType row, IndexType col, ValueType value) {
+            triplets.emplace_back(row, col, weightedValue(col, value) / rowSum);
         });
     }
 
@@ -163,11 +164,9 @@ Binning::SparseMatrixStorage Binning::transposeAndHaloExchange(const SparseMatri
     auto triplets   = std::vector<TripletType>{};
     auto sendBuffer = MpiBuffer{};
 
-    linalg::sparse_matrix_for_each_triplet(interpMatrix, [&](const TripletType& triplet) {
+    linalg::sparse_matrix_for_each_triplet(interpMatrix, [&](IndexType row, IndexType col, ValueType weight) {
         // Swap row and column indices for transpose.
-        const IndexType row    = triplet.col();
-        const IndexType col    = triplet.row();
-        const ValueType weight = triplet.value();
+        std::swap(row, col);
 
 
         // Skip rows of interp matrix (i.e., cols of this transposed matrix) that are made redundant by halo exchanges.

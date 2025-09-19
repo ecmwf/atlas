@@ -18,6 +18,31 @@
 #include "atlas/linalg/sparse/SparseMatrixView.h"
 
 
+namespace atlas::linalg::detail {
+template <typename Iter, typename = void>
+struct iter_traits {
+    using category = void;
+    using reference = void;
+};
+
+template <typename Iter>
+struct iter_traits<Iter, std::void_t<typename std::iterator_traits<Iter>::iterator_category>> {
+    using category = typename std::iterator_traits<Iter>::iterator_category;
+    using reference = typename std::iterator_traits<Iter>::reference;
+};
+
+template <typename Iter>
+constexpr bool is_forward_iterator_v = std::is_base_of_v<std::forward_iterator_tag, typename iter_traits<Iter>::category>;
+
+template <typename Iter>
+constexpr bool is_random_access_iterator_v =
+    std::is_base_of_v<std::random_access_iterator_tag, typename iter_traits<Iter>::category>;
+
+template <typename Iter>
+constexpr bool is_const_iterator_v = std::is_const_v<typename iter_traits<Iter>::reference>;
+
+}  // namespace atlas::linalg::detail
+
 namespace atlas::linalg {
 
 /// @brief A triplet which represents a non-zero entry in a sparse matrix.
@@ -66,7 +91,7 @@ SparseMatrixStorage make_sparse_matrix_storage_from_triplets(Index n_rows, Index
     ATLAS_ASSERT(index == n_non_zero);
 
     outer_view(n_rows) = n_non_zero;
-    triplets.clear(); // Leave vector in empty state after move.
+    triplets.clear();  // Leave vector in empty state after move.
 
     return SparseMatrixStorage::make(n_rows, n_cols, n_non_zero, std::move(values_array), std::move(inner_array),
                                      std::move(outer_array), std::any());
@@ -74,22 +99,22 @@ SparseMatrixStorage make_sparse_matrix_storage_from_triplets(Index n_rows, Index
 
 // For-each iteration over all non-zero elements in row.
 template <typename Value, typename Index, typename Functor>
-std::enable_if_t<std::is_invocable_v<Functor, const Triplet<Value, Index>>> sparse_matrix_for_each_triplet(
+std::enable_if_t<std::is_invocable_v<Functor, Index, Index, Value>> sparse_matrix_for_each_triplet(
     std::size_t row, const SparseMatrixView<Value, Index>& matrix, Functor&& functor) {
     const Index* outer  = matrix.outer();
     const Index* inner  = matrix.inner();
     const Value* values = matrix.value();
 
     for (auto index = outer[row]; index < outer[row + 1]; ++index) {
-        Index column = inner[index];
-        Value value  = values[index];
-        functor(Triplet{static_cast<Index>(row), column, value});
+        const Index column = inner[index];
+        const Value value  = values[index];
+        functor(static_cast<Index>(row), column, value);
     }
 }
 
 // For-each iteration over all non-zero elements in matrix.
 template <typename Value, typename Index, typename Functor>
-std::enable_if_t<std::is_invocable_v<Functor, const Triplet<Value, Index>>> sparse_matrix_for_each_triplet(
+std::enable_if_t<std::is_invocable_v<Functor, Index, Index, Value>> sparse_matrix_for_each_triplet(
     const SparseMatrixView<Value, Index>& matrix, Functor&& functor) {
     for (std::size_t row = 0; row < matrix.rows(); ++row) {
         sparse_matrix_for_each_triplet(row, matrix, functor);
