@@ -764,7 +764,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& so
             }
         }
         else {
-            Log::warning() << "Could not find matrix in cache" << std::endl;
+            Log::debug() << "Could not find matrix in cache" << std::endl;
         }
     }
 
@@ -813,7 +813,11 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
     src_mesh_ = extract_mesh(src_fs_);
     tgt_mesh_ = extract_mesh(tgt_fs_);
 
-    {
+    if (mpi::size() > 1) {
+        // we need src_halo_size >= 2, tgt_halo_size >= 0 for CellColumns
+        // if target is NodeColumns, we need:
+        //      tgt_halo_size >= 1 and
+        //      src_halo_size large enough to cover the the target halo cells in the first row
         int halo_size = 0;
         src_mesh_.metadata().get("halo", halo_size);
         if (halo_size < 2 and order_ == 2) {
@@ -1999,15 +2003,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
     }
 
     stopwatch.stop();
-    {
-        ATLAS_TRACE("halo exchange target");
-        if (tgt_field.hostNeedsUpdate()) {
-            tgt_field.updateHost();
-        }
-        tgt_field.haloExchange();
-        tgt_field.setDeviceNeedsUpdate(true);
-    }
-
+    
     if (remap_stat_.conservation) {
         const auto src_cell_halo  = array::make_view<int, 1>(src_mesh_.cells().halo());
         const auto src_node_ghost = array::make_view<int, 1>(src_mesh_.nodes().ghost());

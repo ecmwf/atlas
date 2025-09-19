@@ -242,7 +242,7 @@ jobs:
 
     - name: Save cached dependencies
       # There seems to be a problem with cached NVHPC dependencies, leading to SIGILL perhaps due to slightly different architectures
-      if: matrix.caching && matrix.build_type == 'Debug'
+      if: matrix.caching && matrix.build_type == 'Debug' && github.ref_name == github.event.repository.default_branch
       id: deps-save-cache
       uses: actions/cache/save@v4
       with:

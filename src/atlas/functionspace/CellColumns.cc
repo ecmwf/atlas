@@ -516,6 +516,11 @@ std::string checksum_2d_field(const parallel::Checksum& checksum, const Field& f
     auto values = array::make_view<T, 2>(field);
     return checksum.execute(values.data(), field.stride(0));
 }
+template <typename T>
+std::string checksum_1d_field(const parallel::Checksum& checksum, const Field& field) {
+    auto values = array::make_view<T, 1>(field);
+    return checksum.execute(values.data(), 1);
+}
 
 }  // namespace
 
@@ -523,40 +528,71 @@ std::string CellColumns::checksum(const FieldSet& fieldset) const {
     eckit::MD5 md5;
     for (idx_t f = 0; f < fieldset.size(); ++f) {
         const Field& field = fieldset[f];
+        std::string field_checksum;
         if (field.datatype() == array::DataType::kind<int>()) {
-            if (field.levels()) {
-                md5 << checksum_3d_field<int>(checksum(), field);
+            if (field.rank()==3) {
+                field_checksum = checksum_3d_field<int>(checksum(), field);
+            }
+            else if (field.rank()==2) {
+                field_checksum = checksum_2d_field<int>(checksum(), field);
+            }
+            else if (field.rank()==1) {
+                field_checksum = checksum_1d_field<int>(checksum(), field);
             }
             else {
-                md5 << checksum_2d_field<int>(checksum(), field);
+                ATLAS_NOTIMPLEMENTED;
             }
         }
         else if (field.datatype() == array::DataType::kind<long>()) {
-            if (field.levels()) {
-                md5 << checksum_3d_field<long>(checksum(), field);
+            if (field.rank()==3) {
+                field_checksum = checksum_3d_field<long>(checksum(), field);
+            }
+            else if (field.rank()==2) {
+                field_checksum = checksum_2d_field<long>(checksum(), field);
+            }
+            else if (field.rank()==1) {
+                field_checksum = checksum_1d_field<long>(checksum(), field);
             }
             else {
-                md5 << checksum_2d_field<long>(checksum(), field);
+                ATLAS_NOTIMPLEMENTED;
             }
         }
         else if (field.datatype() == array::DataType::kind<float>()) {
-            if (field.levels()) {
-                md5 << checksum_3d_field<float>(checksum(), field);
+            if (field.rank()==3) {
+                field_checksum = checksum_3d_field<float>(checksum(), field);
+            }
+            else if (field.rank()==2) {
+                field_checksum = checksum_2d_field<float>(checksum(), field);
+            }
+            else if (field.rank()==1) {
+                field_checksum = checksum_1d_field<float>(checksum(), field);
             }
             else {
-                md5 << checksum_2d_field<float>(checksum(), field);
+                ATLAS_NOTIMPLEMENTED;
             }
         }
         else if (field.datatype() == array::DataType::kind<double>()) {
-            if (field.levels()) {
-                md5 << checksum_3d_field<double>(checksum(), field);
+            if (field.rank()==3) {
+                field_checksum = checksum_3d_field<double>(checksum(), field);
+            }
+            else if (field.rank()==2) {
+                field_checksum = checksum_2d_field<double>(checksum(), field);
+            }
+            else if (field.rank()==1) {
+                field_checksum = checksum_1d_field<double>(checksum(), field);
             }
             else {
-                md5 << checksum_2d_field<double>(checksum(), field);
+                ATLAS_NOTIMPLEMENTED;
             }
         }
         else {
             throw_Exception("datatype not supported", Here());
+        }
+        if (fieldset.size() == 1) {
+            return field_checksum;
+        }
+        else {
+            md5 << field_checksum;
         }
     }
     return md5;
@@ -631,7 +667,10 @@ Field CellColumns::global_index() const {
 }
 
 Field CellColumns::ghost() const {
-    return mesh_.cells().field("ghost");
+    if (mesh_.cells().has_field("ghost")) {
+       return mesh_.cells().field("ghost");
+    }
+    return mesh_.cells().halo();
 }
 
 Field CellColumns::partition() const {

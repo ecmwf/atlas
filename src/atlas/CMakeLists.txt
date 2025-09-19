@@ -514,6 +514,8 @@ functionspace/EdgeColumns.cc
 functionspace/FunctionSpace.h
 functionspace/FunctionSpace.cc
 functionspace/HaloDescription.h
+functionspace/Locate.cc
+functionspace/Locate.h
 functionspace/NodeColumns.h
 functionspace/NodeColumns.cc
 functionspace/StructuredColumns.h
@@ -829,6 +831,8 @@ list( APPEND atlas_parallel_srcs
   parallel/GatherScatter.h
   parallel/HaloExchange.cc
   parallel/HaloExchange.h
+  parallel/Locate.cc
+  parallel/Locate.h
   parallel/mpi/Buffer.h
   parallel/detail/Packer.h
   parallel/detail/Packer.cc

@@ -67,6 +67,7 @@ class Binning : public Method {
 
   FunctionSpace source_{};
   FunctionSpace target_{};
+  bool adjoint_;
 };
 
 

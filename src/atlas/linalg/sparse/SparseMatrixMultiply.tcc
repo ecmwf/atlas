@@ -189,6 +189,13 @@ void sparse_matrix_multiply( const Matrix& matrix, const SourceView& src, Target
 }
 
 template <typename Matrix, typename SourceView, typename TargetView>
+void sparse_matrix_multiply(const Matrix& matrix, const SourceView& src, TargetView&& tgt) {
+    auto& tgt_lvalue = tgt;
+    sparse_matrix_multiply( matrix, src, tgt_lvalue, Indexing::layout_left );
+}
+
+
+template <typename Matrix, typename SourceView, typename TargetView>
 void sparse_matrix_multiply_add( const Matrix& matrix, const SourceView& src, TargetView& tgt, Indexing indexing,
                                  const eckit::Configuration& config ) {
     std::string type = config.getString( "type", sparse::current_backend() );

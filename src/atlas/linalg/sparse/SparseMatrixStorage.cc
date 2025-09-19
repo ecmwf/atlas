@@ -88,6 +88,17 @@ SparseMatrixStorage& SparseMatrixStorage::operator=(const SparseMatrixStorage& o
     return *this;
 }
 
+void SparseMatrixStorage::clear() {
+    nnz_ = 0;
+    rows_ = 0;
+    cols_ = 0;
+    storage_.reset();
+    outer_.reset();
+    inner_.reset();
+    value_.reset();
+}
+
+
 
 void SparseMatrixStorage::updateDevice() const {
     outer_->updateDevice();
