@@ -1484,6 +1484,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
         }
     }
     triplets.reserve(triplets_size);
+    std::map<idx_t, double> tpoint_subweights;
 
     // assemble triplets to define the sparse matrix
     const auto& tgt_areas_v = data_->tgt_areas_;
@@ -1500,6 +1501,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
     else if (not tgt_cell_data_ && src_cell_data_) {
         auto& tgt_node2csp_ = data_->tgt_node2csp_;
         for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
+            tpoint_subweights.clear();
             for (idx_t isubcell = 0; isubcell < tgt_node2csp_[tnode].size(); ++isubcell) {
                 const idx_t subcell = tgt_node2csp_[tnode][isubcell];
                 const auto& iparam  = tgt_iparam[subcell];
@@ -1507,8 +1509,17 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                     idx_t scell = iparam.cell_idx[icell];
                     ATLAS_ASSERT(scell < n_spoints_);
                     double inv_tgt_weight = (tgt_areas_v[tnode] > 0. ? 1. / tgt_areas_v[tnode] : 0.);
-                    triplets.emplace_back(tnode, scell, iparam.weights[icell] * inv_tgt_weight);
+                    double w = iparam.weights[icell] * inv_tgt_weight;
+                    auto pair = tpoint_subweights.emplace(scell, w);
+                    bool inserted = pair.second;
+                    if (! inserted) {
+                        auto it = pair.first;
+                        it->second += w;
+                    }
                 }
+            }
+            for (auto& p : tpoint_subweights) {
+                triplets.emplace_back(tnode, p.first, p.second);
             }
         }
     }
@@ -1516,12 +1527,22 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
         auto& src_csp2node_ = data_->src_csp2node_;
         for (idx_t tcell = 0; tcell < n_tpoints_; ++tcell) {
             const auto& iparam = tgt_iparam[tcell];
+            tpoint_subweights.clear();
             for (idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell) {
                 idx_t scell            = iparam.cell_idx[icell];
                 idx_t snode            = src_csp2node_[scell];
                 ATLAS_ASSERT(snode < n_spoints_);
                 double inv_tgt_weight = (tgt_areas_v[tcell] > 0. ? 1. / tgt_areas_v[tcell] : 0.);
-                triplets.emplace_back(tcell, snode, iparam.weights[icell] * inv_tgt_weight);
+                double w = iparam.weights[icell] * inv_tgt_weight;
+                auto pair = tpoint_subweights.emplace(snode, w);
+                bool inserted = pair.second;
+                if (! inserted) {
+                    auto it = pair.first;
+                    it->second += w;
+                }
+            }
+            for (auto& p : tpoint_subweights) {
+                triplets.emplace_back(tcell, p.first, p.second);
             }
         }
     }
@@ -1529,6 +1550,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
         auto& tgt_node2csp_ = data_->tgt_node2csp_;
         auto& src_csp2node_ = data_->src_csp2node_;
         for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
+            tpoint_subweights.clear();
             for (idx_t isubcell = 0; isubcell < tgt_node2csp_[tnode].size(); ++isubcell) {
                 const idx_t subcell = tgt_node2csp_[tnode][isubcell];
                 const auto& iparam  = tgt_iparam[subcell];
@@ -1537,8 +1559,17 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                     idx_t snode            = src_csp2node_[scell];
                     ATLAS_ASSERT(snode < n_spoints_);
                     double inv_node_weight = (tgt_areas_v[tnode] > 0. ? 1. / tgt_areas_v[tnode] : 0.);
-                    triplets.emplace_back(tnode, snode, iparam.weights[icell] * inv_node_weight);
+                    double w = iparam.weights[icell] * inv_node_weight;
+                    auto pair = tpoint_subweights.emplace(snode, w);
+                    bool inserted = pair.second;
+                    if (! inserted) {
+                        auto it = pair.first;
+                        it->second += w;
+                    }
                 }
+            }
+            for (auto& p : tpoint_subweights) {
+                triplets.emplace_back(tnode, p.first, p.second);
             }
         }
     }
