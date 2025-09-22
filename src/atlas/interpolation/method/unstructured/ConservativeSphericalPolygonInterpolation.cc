@@ -1886,11 +1886,19 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
             const auto& tgt_areas = data_->tgt_areas_;
 
             if (tgt_cell_data_ && src_cell_data_) {
+                ATLAS_DEBUG_VAR(n_tpoints_);
+                ATLAS_DEBUG_VAR(tgt_vals.size());
+                ATLAS_DEBUG_VAR(src_vals.size());
+                ATLAS_ASSERT(n_tpoints_ <= tgt_vals.size());
                 for (idx_t tcell = 0; tcell < n_tpoints_; ++tcell) {
                     tgt_vals(tcell) = 0.;
                     const auto& iparam = tgt_iparam[tcell];
                     for (idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell) {
                         idx_t scell = iparam.cell_idx[icell];
+                        if( scell >= src_vals.size()) {
+                            ATLAS_DEBUG_VAR(scell);
+                        }
+                        ATLAS_ASSERT(scell < src_vals.size() );
                         tgt_vals(tcell) += iparam.weights[icell] * src_vals(scell);
                     }
                     if (tgt_areas[tcell] > 0.) {
@@ -2034,8 +2042,11 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
     }
 
     stopwatch.stop();
-    
+    ATLAS_DEBUG();
+
     if (remap_stat_.conservation) {
+        ATLAS_DEBUG();
+
         const auto src_cell_halo  = array::make_view<int, 1>(src_mesh_.cells().halo());
         const auto src_node_ghost = array::make_view<int, 1>(src_mesh_.nodes().ghost());
         const auto src_node_halo  = array::make_view<int, 1>(src_mesh_.nodes().halo());
@@ -2047,9 +2058,12 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
 
         const auto src_vals = array::make_view<double, 1>(src_field);
         const auto tgt_vals = array::make_view<double, 1>(tgt_field);
+ATLAS_DEBUG();
 
         double err_remap_cons     = 0.;
         if (src_cell_data_) {
+            ATLAS_DEBUG();
+
             for (idx_t spt = 0; spt < src_vals.size(); ++spt) {
                 if (src_cell_halo(spt)) {
                     continue;
@@ -2058,6 +2072,8 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
             }
         }
         else {
+            ATLAS_DEBUG();
+
             for (idx_t spt = 0; spt < src_vals.size(); ++spt) {
                 if (src_node_halo(spt) or src_node_ghost(spt)) {
                     continue;
@@ -2066,6 +2082,8 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
             }
         }
         if (tgt_cell_data_) {
+            ATLAS_DEBUG();
+
             for (idx_t tpt = 0; tpt < tgt_vals.size(); ++tpt) {
                 if (tgt_cell_halo(tpt)) {
                     continue;
@@ -2074,6 +2092,8 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
             }
         }
         else {
+            ATLAS_DEBUG();
+
             for (idx_t tpt = 0; tpt < tgt_vals.size(); ++tpt) {
                 if (tgt_node_halo(tpt) or tgt_node_ghost(tpt)) {
                     continue;
@@ -2085,7 +2105,9 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
         remap_stat_.errors[Statistics::ERR_REMAP_CONS] = err_remap_cons / unit_sphere_area();
     }
 
+ATLAS_DEBUG();
     if (remap_stat_.intersection) {
+ATLAS_DEBUG();
         metadata.set("polygons.number_of_src_polygons", remap_stat_.counts[Statistics::NUM_SRC_PLG]);
         metadata.set("polygons.number_of_tgt_polygons", remap_stat_.counts[Statistics::NUM_TGT_PLG]);
         metadata.set("polygons.number_of_intersections", remap_stat_.counts[Statistics::NUM_INT_PLG]);
@@ -2096,6 +2118,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
             metadata.set("errors.intersections_covering_tgt_cells_max", remap_stat_.errors[Statistics::ERR_TGT_INTERSECTPLG_LINF]);
         }
     }
+ATLAS_DEBUG();
 
     if (remap_stat_.intersection || remap_stat_.conservation) {
         remap_stat_.fillMetadata(metadata);
