@@ -2449,6 +2449,10 @@ ConservativeSphericalPolygonInterpolation::Statistics::Statistics() {
     std::fill(std::begin(errors), std::end(errors), -1.);
     std::fill(std::begin(memory), std::end(memory), -1);
     std::fill(std::begin(time), std::end(time), -1.);
+    intersection = false;
+    timings = false;
+    accuracy = false;
+    conservation = false;
 }
 
 
