@@ -136,7 +136,7 @@ void Binning::do_setup(const FunctionSpace& source, const FunctionSpace& target)
         });
     }
 
-    setMatrix(linalg::make_sparse_matrix_storage_from_triplets(transposeRows, transposeCols, std::move(triplets)));
+    setMatrix(linalg::make_sparse_matrix_storage_from_triplets(transposeRows, transposeCols, triplets));
 }
 
 
@@ -226,7 +226,7 @@ Binning::SparseMatrixStorage Binning::transposeAndHaloExchange(const SparseMatri
         }
     }
     return linalg::make_sparse_matrix_storage_from_triplets(
-        static_cast<IndexType>(target_.size()), static_cast<IndexType>(source_.size()), std::move(triplets));
+        static_cast<IndexType>(target_.size()), static_cast<IndexType>(source_.size()), triplets);
 }
 
 std::vector<double> Binning::getAreaWeights() const {

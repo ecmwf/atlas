@@ -17,36 +17,10 @@
 #include "atlas/linalg/sparse/SparseMatrixStorage.h"
 #include "atlas/linalg/sparse/SparseMatrixView.h"
 
-
-namespace atlas::linalg::detail {
-template <typename Iter, typename = void>
-struct iter_traits {
-    using category = void;
-    using reference = void;
-};
-
-template <typename Iter>
-struct iter_traits<Iter, std::void_t<typename std::iterator_traits<Iter>::iterator_category>> {
-    using category = typename std::iterator_traits<Iter>::iterator_category;
-    using reference = typename std::iterator_traits<Iter>::reference;
-};
-
-template <typename Iter>
-constexpr bool is_forward_iterator_v = std::is_base_of_v<std::forward_iterator_tag, typename iter_traits<Iter>::category>;
-
-template <typename Iter>
-constexpr bool is_random_access_iterator_v =
-    std::is_base_of_v<std::random_access_iterator_tag, typename iter_traits<Iter>::category>;
-
-template <typename Iter>
-constexpr bool is_const_iterator_v = std::is_const_v<typename iter_traits<Iter>::reference>;
-
-}  // namespace atlas::linalg::detail
-
 namespace atlas::linalg {
 
 /// @brief A triplet which represents a non-zero entry in a sparse matrix.
-template <typename Value, typename Index>
+template <typename Value, typename Index, typename = std::enable_if_t<std::is_integral_v<Index>>>
 class Triplet {
 public:
     Triplet() = default;
@@ -64,40 +38,85 @@ private:
     Value value_{};
 };
 
+namespace detail {
+// SFINAE types/variables in place of C++20 concepts.
+template <typename T>
+struct is_triplet : std::false_type {};
+
 template <typename Value, typename Index>
-SparseMatrixStorage make_sparse_matrix_storage_from_triplets(Index n_rows, Index n_cols,
-                                                             std::vector<Triplet<Value, Index>>&& triplets) {
-    const auto n_non_zero = triplets.size();
+struct is_triplet<Triplet<Value, Index>> : std::true_type {};
+
+template <typename Iter>
+constexpr bool is_triplet_iterator =
+    is_triplet<std::remove_const_t<typename std::iterator_traits<Iter>::value_type>>::value;
+
+template <typename Iter>
+constexpr bool is_random_access_iterator =
+    std::is_base_of_v<typename std::iterator_traits<Iter>::iterator_category, std::random_access_iterator_tag>;
+
+template <typename Iter>
+constexpr bool is_mutable_iterator = !std::is_const_v<typename std::iterator_traits<Iter>::reference>;
+}  // namespace detail
+
+/// @brief Construct a SparseMatrixStorage f   rom a range of triplets.
+template <typename Iter>
+std::enable_if_t<detail::is_triplet_iterator<Iter>, SparseMatrixStorage> make_sparse_matrix_storage_from_triplets(
+    std::size_t n_rows, std::size_t n_cols, Iter triplets_begin, Iter triplets_end) {
+    ATLAS_ASSERT(std::is_sorted(triplets_begin, triplets_end), "Triplet range must be sorted.");
+
+    using TripletType = typename std::iterator_traits<Iter>::value_type;
+    using Index       = decltype(std::declval<TripletType>().row());
+    using Value       = decltype(std::declval<TripletType>().value());
+
+    const auto n_non_zero = std::distance(triplets_begin, triplets_end);
     auto outer_array      = std::unique_ptr<array::Array>(array::Array::create<Index>(n_rows + 1));
-    auto inner_array      = std::unique_ptr<array::Array>(array::Array::create<Index>(triplets.size()));
-    auto values_array     = std::unique_ptr<array::Array>(array::Array::create<Value>(triplets.size()));
+    auto inner_array      = std::unique_ptr<array::Array>(array::Array::create<Index>(n_non_zero));
+    auto values_array     = std::unique_ptr<array::Array>(array::Array::create<Value>(n_non_zero));
     auto outer_view       = array::make_view<Index, 1>(*outer_array);
     auto inner_view       = array::make_view<Index, 1>(*inner_array);
     auto values_view      = array::make_view<Value, 1>(*values_array);
 
-    std::sort(triplets.begin(), triplets.end());
-    ATLAS_ASSERT(triplets.back().row() < n_rows);
-
     std::size_t index = 0;
-    for (Index row = 0; row < n_rows; ++row) {
+    auto tripletIter  = triplets_begin;
+    for (std::size_t row = 0; row < n_rows; ++row) {
         outer_view(row) = index;
-        while (index < triplets.size() && triplets[index].row() == row) {
-            ATLAS_ASSERT(triplets[index].col() < n_cols);
-            inner_view(index)  = triplets[index].col();
-            values_view(index) = triplets[index].value();
+        while (tripletIter != triplets_end && tripletIter->row() == static_cast<Index>(row)) {
+            ATLAS_ASSERT(tripletIter->col() < static_cast<Index>(n_cols));
+            inner_view(index)  = tripletIter->col();
+            values_view(index) = tripletIter->value();
             ++index;
+            ++tripletIter;
         }
     }
-    ATLAS_ASSERT(index == n_non_zero);
-
+    ATLAS_ASSERT(index == static_cast<std::size_t>(n_non_zero));
     outer_view(n_rows) = n_non_zero;
-    triplets.clear();  // Leave vector in empty state after move.
 
     return SparseMatrixStorage::make(n_rows, n_cols, n_non_zero, std::move(values_array), std::move(inner_array),
                                      std::move(outer_array), std::any());
 }
 
-// For-each iteration over all non-zero elements in row.
+/// @brief Construct a SparseMatrixStorage from a random-access range of triplets, sorting if necessary.
+template <typename Iter>
+std::enable_if_t<detail::is_triplet_iterator<Iter> && detail::is_random_access_iterator<Iter> &&
+                     detail::is_mutable_iterator<Iter>,
+                 SparseMatrixStorage>
+make_sparse_matrix_storage_from_triplets(std::size_t n_rows, std::size_t n_cols, std::size_t n_non_zero,
+                                         Iter triplets_begin, bool is_sorted = false) {
+    if (!is_sorted) {
+        std::sort(triplets_begin, triplets_begin + n_non_zero);
+    }
+    return make_sparse_matrix_storage_from_triplets(n_rows, n_cols, triplets_begin, triplets_begin + n_non_zero);
+}
+
+/// @brief Construct a SparseMatrixStorage from a vector of triplets, sorting if necessary.
+template <typename Value, typename Index>
+SparseMatrixStorage make_sparse_matrix_storage_from_triplets(std::size_t n_rows, std::size_t n_cols,
+                                                             std::vector<Triplet<Value, Index>>& triplets,
+                                                             bool is_sorted = false) {
+    return make_sparse_matrix_storage_from_triplets(n_rows, n_cols, triplets.size(), triplets.begin(), is_sorted);
+}
+
+/// @brief For-each iteration over all non-zero triplets in row.
 template <typename Value, typename Index, typename Functor>
 std::enable_if_t<std::is_invocable_v<Functor, Index, Index, Value>> sparse_matrix_for_each_triplet(
     std::size_t row, const SparseMatrixView<Value, Index>& matrix, Functor&& functor) {
@@ -105,14 +124,14 @@ std::enable_if_t<std::is_invocable_v<Functor, Index, Index, Value>> sparse_matri
     const Index* inner  = matrix.inner();
     const Value* values = matrix.value();
 
-    for (auto index = outer[row]; index < outer[row + 1]; ++index) {
+    for (Index index = outer[row]; index < outer[row + 1]; ++index) {
         const Index column = inner[index];
         const Value value  = values[index];
         functor(static_cast<Index>(row), column, value);
     }
 }
 
-// For-each iteration over all non-zero elements in matrix.
+/// @brief For-each iteration over all non-zero triplets in matrix.
 template <typename Value, typename Index, typename Functor>
 std::enable_if_t<std::is_invocable_v<Functor, Index, Index, Value>> sparse_matrix_for_each_triplet(
     const SparseMatrixView<Value, Index>& matrix, Functor&& functor) {
@@ -120,6 +139,5 @@ std::enable_if_t<std::is_invocable_v<Functor, Index, Index, Value>> sparse_matri
         sparse_matrix_for_each_triplet(row, matrix, functor);
     }
 }
-
 
 }  // namespace atlas::linalg

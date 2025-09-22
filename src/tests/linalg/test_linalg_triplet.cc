@@ -6,9 +6,16 @@
  */
 
 
+#include <list>
 #include <random>
+#include <set>
+#include <type_traits>
+#include <vector>
+
 #include "atlas/linalg/sparse/SparseMatrixStorage.h"
 #include "atlas/linalg/sparse/SparseMatrixTriplet.h"
+#include "atlas/runtime/Exception.h"
+#include "eckit/testing/Test.h"
 #include "tests/AtlasTestEnvironment.h"
 
 namespace atlas::test {
@@ -50,16 +57,10 @@ std::tuple<std::vector<TripletType>, int, int> make_test_triplets() {
             },
             4,
             3};
-};
+}
 
 CASE("Test sparse matrix construction from triplets.") {
-    SECTION("Test sparse matrix construction from triplets.") {
-        auto [triplets, n_rows, n_cols] = make_test_triplets();
-        // Triplets do not need to be sorted.
-        std::shuffle(triplets.begin(), triplets.end(), std::default_random_engine(0));
-
-        const auto matrix = make_sparse_matrix_storage_from_triplets(n_rows, n_cols, std::move(triplets));
-
+    const auto test_triplets = [](const SparseMatrixStorage& matrix) {
         ATLAS_ASSERT(matrix.rows() == 4);
         ATLAS_ASSERT(matrix.cols() == 3);
         ATLAS_ASSERT(matrix.nnz() == 5);
@@ -85,16 +86,73 @@ CASE("Test sparse matrix construction from triplets.") {
         ATLAS_ASSERT(values_view(2) == 3.);
         ATLAS_ASSERT(values_view(3) == 4.);
         ATLAS_ASSERT(values_view(4) == 5.);
+    };
+
+    const auto shuffle = [](const auto& begin, const auto& end) { std::shuffle(begin, end, std::mt19937{0}); };
+
+    SECTION("Test sparse matrix construction from std::vector<TripletType>.") {
+        auto [triplets, n_rows, n_cols] = make_test_triplets();
+        // Triplets do not need to be sorted.
+        test_triplets(make_sparse_matrix_storage_from_triplets(n_rows, n_cols, triplets, true));
+
+        shuffle(triplets.begin(), triplets.end());
+        // Triplets implicitly sorted.
+        test_triplets(make_sparse_matrix_storage_from_triplets(n_rows, n_cols, triplets));
+
+
+        // Should fail as triplets not sorted.
+        shuffle(triplets.begin(), triplets.end());
+        EXPECT_THROWS(make_sparse_matrix_storage_from_triplets(n_rows, n_cols, triplets, true));
     }
 
-    SECTION("Test 'for each triplet' method on sparse matrix.") {
+    SECTION("Test sparse matrix construction from TripletType[].") {
         auto [triplets, n_rows, n_cols] = make_test_triplets();
-        const auto ref_triplets         = triplets;
-        const auto matrix_storage       = make_sparse_matrix_storage_from_triplets(n_rows, n_cols, std::move(triplets));
-        const auto matrix_view          = make_host_view<double, int>(matrix_storage);
+        test_triplets(make_sparse_matrix_storage_from_triplets(n_rows, n_cols, triplets.size(), triplets.data(), true));
 
+        shuffle(triplets.begin(), triplets.end());
+        test_triplets(make_sparse_matrix_storage_from_triplets(n_rows, n_cols, triplets.size(), triplets.data()));
+
+        shuffle(triplets.begin(), triplets.end());
+        EXPECT_THROWS(make_sparse_matrix_storage_from_triplets(n_rows, n_cols, triplets.size(), triplets.data(), true));
+    }
+
+    SECTION("Test sparse matrix construction from non-random-access-containers.") {
+        auto [triplets, n_rows, n_cols] = make_test_triplets();
+
+        const auto list_triplets = std::list<TripletType>{triplets.begin(), triplets.end()};
+
+        shuffle(triplets.begin(), triplets.end());
+        const auto shuffled_list_triplets = std::list<TripletType>{triplets.begin(), triplets.end()};
+
+        // Note: std::set is sorted by construction.
+        const auto set_triplets = std::set<TripletType>{triplets.begin(), triplets.end()};
+
+        test_triplets(
+            make_sparse_matrix_storage_from_triplets(n_rows, n_cols, list_triplets.begin(), list_triplets.end()));
+
+        test_triplets(
+            make_sparse_matrix_storage_from_triplets(n_rows, n_cols, set_triplets.begin(), set_triplets.end()));
+
+        EXPECT_THROWS(make_sparse_matrix_storage_from_triplets(n_rows, n_cols, shuffled_list_triplets.begin(),
+                                                               shuffled_list_triplets.end()));
+    }
+
+    SECTION("Test incorrect rows/cols throw") {
+        auto [triplets, n_rows, n_cols] = make_test_triplets();
+        shuffle(triplets.begin(), triplets.end());
+        EXPECT_THROWS(make_sparse_matrix_storage_from_triplets(n_rows - 1, n_cols, triplets));
+        EXPECT_THROWS(make_sparse_matrix_storage_from_triplets(n_rows, n_cols - 1, triplets));
+    }
+}
+
+CASE("Test 'for each triplet' methods") {
+    auto [triplets, n_rows, n_cols] = make_test_triplets();
+    const auto ref_triplets         = triplets;
+    const auto matrix_storage       = make_sparse_matrix_storage_from_triplets(n_rows, n_cols, triplets);
+    const auto matrix_view          = make_host_view<double, int>(matrix_storage);
+
+    SECTION("Test 'for each triplet' on matrix row.") {
         {
-            // Row-wise iteration.
             auto ref_iter = ref_triplets.begin();
             for (std::size_t row = 0; row < matrix_view.rows(); ++row) {
                 sparse_matrix_for_each_triplet(row, matrix_view, [&](int row, int col, double value) {
@@ -105,8 +163,9 @@ CASE("Test sparse matrix construction from triplets.") {
                 });
             }
         }
+    }
+    SECTION("Test 'for each triplet' method on full matrix.") {
         {
-            // Full matrix iteration.
             auto ref_iter = ref_triplets.begin();
             sparse_matrix_for_each_triplet(matrix_view, [&](int row, int col, double value) {
                 ATLAS_ASSERT(row == ref_iter->row());
