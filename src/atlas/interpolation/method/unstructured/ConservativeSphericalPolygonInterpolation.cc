@@ -859,30 +859,32 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
 
     MarkedPolygonArray src_csp;
     if (compute_cache) {
-        ATLAS_TRACE("Get source polygons");
-        StopWatch stopwatch;
-        stopwatch.start();
-        init_csp_index(src_cell_data_, src_fs_, sharable_data_->src_csp2node_, sharable_data_->src_node2csp_, src_csp_size_, src_csp_cell_index_, src_csp_index_);
-        if (src_cell_data_) {
-            src_csp = get_polygons_celldata(src_fs_, sharable_data_->src_csp2node_, sharable_data_->src_node2csp_,
-                src_csp_size_, src_csp_cell_index_, src_csp_index_);
+        ATLAS_TRACE_SCOPE("Get source polygons") {
+            StopWatch stopwatch;
+            stopwatch.start();
+            init_csp_index(src_cell_data_, src_fs_, sharable_data_->src_csp2node_, sharable_data_->src_node2csp_, src_csp_size_, src_csp_cell_index_, src_csp_index_);
+            if (src_cell_data_) {
+                src_csp = get_polygons_celldata(src_fs_, sharable_data_->src_csp2node_, sharable_data_->src_node2csp_,
+                    src_csp_size_, src_csp_cell_index_, src_csp_index_);
+            }
+            else {
+                src_csp = get_polygons_nodedata(src_fs_, sharable_data_->src_csp2node_, sharable_data_->src_node2csp_,
+                    src_csp_size_, src_csp_cell_index_, src_csp_index_);
+            }
+            stopwatch.stop();
+            remap_stat_.memory[Statistics::MEM_SRC_PLG] = memory_of(src_csp);
+            sharable_data_->timings.source_polygons_assembly = stopwatch.elapsed();
+            remap_stat_.counts[Statistics::NUM_SRC_PLG] = src_csp.size();
         }
-        else {
-            src_csp = get_polygons_nodedata(src_fs_, sharable_data_->src_csp2node_, sharable_data_->src_node2csp_,
-                src_csp_size_, src_csp_cell_index_, src_csp_index_);
-        }
-        stopwatch.stop();
-        remap_stat_.memory[Statistics::MEM_SRC_PLG] = memory_of(src_csp);
-        sharable_data_->timings.source_polygons_assembly = stopwatch.elapsed();
-        remap_stat_.counts[Statistics::NUM_SRC_PLG]         = src_csp.size();
 
-        ATLAS_TRACE("Get target polygons");
-        stopwatch.reset();
-        stopwatch.start();
-        init_csp_index(tgt_cell_data_, tgt_fs_, sharable_data_->tgt_csp2node_, sharable_data_->tgt_node2csp_, tgt_csp_size_, tgt_csp_cell_index_, tgt_csp_index_);
-        stopwatch.stop();
-        sharable_data_->timings.target_polygons_assembly        = stopwatch.elapsed();
-        remap_stat_.counts[Statistics::NUM_TGT_PLG]         = tgt_csp_size_;
+        ATLAS_TRACE_SCOPE("Get target polygons") {
+            StopWatch stopwatch;
+            stopwatch.start();
+            init_csp_index(tgt_cell_data_, tgt_fs_, sharable_data_->tgt_csp2node_, sharable_data_->tgt_node2csp_, tgt_csp_size_, tgt_csp_cell_index_, tgt_csp_index_);
+            stopwatch.stop();
+            sharable_data_->timings.target_polygons_assembly = stopwatch.elapsed();
+            remap_stat_.counts[Statistics::NUM_TGT_PLG] = tgt_csp_size_;
+        }
     }
 
     n_spoints_ = src_fs_.size();
