@@ -55,14 +55,15 @@ constexpr bool is_random_access_iterator =
     std::is_base_of_v<typename std::iterator_traits<Iter>::iterator_category, std::random_access_iterator_tag>;
 
 template <typename Iter>
-constexpr bool is_mutable_iterator = !std::is_const_v<typename std::iterator_traits<Iter>::reference>;
+constexpr bool is_mutable_iterator =
+    !std::is_const_v<typename std::remove_reference_t<typename std::iterator_traits<Iter>::reference>>;
 }  // namespace detail
 
-/// @brief Construct a SparseMatrixStorage f   rom a range of triplets.
+/// @brief Construct a SparseMatrixStorage from a range of triplets.
 template <typename Iter>
 std::enable_if_t<detail::is_triplet_iterator<Iter>, SparseMatrixStorage> make_sparse_matrix_storage_from_triplets(
     std::size_t n_rows, std::size_t n_cols, Iter triplets_begin, Iter triplets_end) {
-    ATLAS_ASSERT(std::is_sorted(triplets_begin, triplets_end), "Triplet range must be sorted.");
+    ATLAS_ASSERT(std::is_sorted(triplets_begin, triplets_end));
 
     using TripletType = typename std::iterator_traits<Iter>::value_type;
     using Index       = decltype(std::declval<TripletType>().row());
@@ -77,7 +78,7 @@ std::enable_if_t<detail::is_triplet_iterator<Iter>, SparseMatrixStorage> make_sp
     auto values_view      = array::make_view<Value, 1>(*values_array);
 
     std::size_t index = 0;
-    auto tripletIter  = triplets_begin;
+    Iter tripletIter  = triplets_begin;
     for (std::size_t row = 0; row < n_rows; ++row) {
         outer_view(row) = index;
         while (tripletIter != triplets_end && tripletIter->row() == static_cast<Index>(row)) {

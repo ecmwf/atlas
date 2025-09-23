@@ -107,6 +107,7 @@ CASE("Test sparse matrix construction from triplets.") {
 
     SECTION("Test sparse matrix construction from TripletType[].") {
         auto [triplets, n_rows, n_cols] = make_test_triplets();
+        
         test_triplets(make_sparse_matrix_storage_from_triplets(n_rows, n_cols, triplets.size(), triplets.data(), true));
 
         shuffle(triplets.begin(), triplets.end());
