@@ -450,13 +450,20 @@ init_csp_index(
     auto mesh = extract_mesh(fs);
     const auto& cell2node = mesh.cells().node_connectivity();
     const auto cell_halo   = array::make_view<int, 1>(mesh.cells().halo());
-    csp_size = 0;
+    const auto cell_flags  = array::make_view<int, 1>(mesh.cells().flags());
+    const auto cell_invalid = [&cell_flags](idx_t cell) {
+        return util::Bitflags::view(cell_flags(cell)).check(util::Topology::INVALID);
+    };
     auto fs_halo = cell_data ? functionspace::CellColumns(fs).halo().size() : functionspace::NodeColumns(fs).halo().size();
+    auto skip_cell = [&](idx_t cell) {
+        return cell_halo(cell) > fs_halo || cell_invalid(cell);
+    };
+    csp_size = 0;
     csp_cell_index.reserve(mesh.cells().size());
     csp_index.reserve(mesh.cells().size());
     if (cell_data) {
         for (idx_t cell = 0; cell < mesh.cells().size(); ++cell) {
-            if (cell_halo(cell) > fs_halo) {
+            if (skip_cell(cell)) {
                 continue;
             }
             csp_cell_index.emplace_back(cell);
@@ -474,7 +481,7 @@ init_csp_index(
         };
         csp_index.emplace_back(0);
         for (idx_t cell = 0; cell < mesh.cells().size(); ++cell) {
-            if (cell_halo(cell) > fs_halo) {
+            if (skip_cell(cell)) {
                 continue;
             }
             const idx_t n_nodes = cell2node.cols(cell);
