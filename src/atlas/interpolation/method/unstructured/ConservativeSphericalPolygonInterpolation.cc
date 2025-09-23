@@ -221,7 +221,8 @@ inline bool valid_point(idx_t node_idx, const array::ArrayView<int, 1>& node_fla
 
 
 ConservativeSphericalPolygonInterpolation::ConservativeSphericalPolygonInterpolation(const Config& config):
-    Method(config) {
+    Method(config), validate_(false), src_cell_data_(true), tgt_cell_data_(true), normalise_intersections_(false),
+    order_(1), matrix_free_(false), n_spoints_(0), n_tpoints_(0) {
     config.get("validate", validate_ = false);
     config.get("order", order_ = 1);
     config.get("normalise_intersections", normalise_intersections_ = 0);
