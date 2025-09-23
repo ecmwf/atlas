@@ -499,6 +499,11 @@ init_csp_index(bool cell_data, FunctionSpace fs, std::vector<idx_t>& csp2node, s
 
 ConservativeSphericalPolygonInterpolation::MarkedPolygon ConservativeSphericalPolygonInterpolation::
 get_csp_celldata(idx_t csp_id, const Mesh& mesh, gidx_t& csp_index_size, std::vector<idx_t>& csp_index) {
+
+    // TODO: Performance optimisations:
+    //    - Do not extract array views, mesh connectivity for each csp_id
+    //    - pts_ll should also not be created/destroyed for each csp_id
+
     const auto& cell2node  = mesh.cells().node_connectivity();
     std::vector<PointLonLat> pts_ll;
 
@@ -516,12 +521,12 @@ get_csp_celldata(idx_t csp_id, const Mesh& mesh, gidx_t& csp_index_size, std::ve
         idx_t inode   = cell2node(cell, jnode);
         pts_ll[jnode] = PointLonLat{nodes_ll(inode, 0), nodes_ll(inode, 1)};
     }
-    const auto cell_halo   = array::make_view<int, 1>(mesh.cells().halo());
-    const auto cell_flags  = array::make_view<int, 1>(mesh.cells().flags());
-    const auto cell_part   = array::make_view<int, 1>(mesh.cells().partition());
+    auto cell_halo   = array::make_view<const int, 1>(mesh.cells().halo());
+    auto cell_flags  = array::make_view<const int, 1>(mesh.cells().flags());
+    auto cell_part   = array::make_view<const int, 1>(mesh.cells().partition());
+    auto cell_periodic = [&](idx_t cell) { return util::Bitflags::view(cell_flags(cell)).check(util::Topology::PERIODIC); };
     int halo_type       = cell_halo(cell);
-    const auto& bitflag = util::Bitflags::view(cell_flags(cell));
-    if (bitflag.check(util::Topology::PERIODIC) and mpi::rank() == cell_part(cell)) {
+    if (cell_periodic(cell) and cell_part(cell) == mpi::rank()) {
         halo_type = -1;
     }
     return MarkedPolygon{ConvexSphericalPolygon(pts_ll), halo_type};
@@ -531,6 +536,11 @@ get_csp_celldata(idx_t csp_id, const Mesh& mesh, gidx_t& csp_index_size, std::ve
 ConservativeSphericalPolygonInterpolation::MarkedPolygon ConservativeSphericalPolygonInterpolation::
 get_csp_nodedata(idx_t csp_id, const Mesh& mesh, std::vector<idx_t>& csp2node, std::vector<std::vector<idx_t>>& node2csp,
     gidx_t& csp_index_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index) {
+
+    // TODO: Performance optimisations:
+    //    - Do not extract array views, mesh connectivity for each csp_id
+    //    - pts_ll, pts_xyz, pts_idx, subpol_pts_ll should also not be created/destroyed for each csp_id
+
     const auto& cell2node  = mesh.cells().node_connectivity();
     const auto node_flags = array::make_view<int, 1>(mesh.nodes().flags());
     std::vector<PointLonLat> pts_ll;
