@@ -929,23 +929,10 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
                     }
                     double src_point_norm = PointXYZ::norm(src_points_[spt]);
                     if (src_point_norm == 0.) {
-                        ATLAS_DEBUG_VAR(src_point_norm);
-                        ATLAS_DEBUG_VAR(src_points_[spt]);
-                        ATLAS_DEBUG_VAR(src_node2csp_[spt].size());
-                        for (idx_t isubcell = 0; isubcell < src_node2csp_[spt].size(); ++isubcell) {
-                            idx_t subcell     = src_node2csp_[spt][isubcell];
-                            ATLAS_DEBUG_VAR(subcell);
-                            const auto& s_csp = src_csp[subcell].polygon;
-                            s_csp.print(Log::info());
-                            Log::info() << std::endl;
-                            src_areas_v[spt] += s_csp.area();
-                            ATLAS_DEBUG_VAR(s_csp.area());
-                            ATLAS_DEBUG_VAR(s_csp.centroid());
-                            src_points_[spt] = src_points_[spt] + PointXYZ::mul(s_csp.centroid(), s_csp.area());
-                        }
-                        Log::info().flush();
-                        // something went wrong, improvise
-                        src_point_norm = 1.;
+                        // Probably encountered degenerate subpolygons that lead to zero area. Can happen sometimes in ORCA grid
+                        auto p = PointLonLat{lonlat(spt, 0), lonlat(spt, 1)};
+                        eckit::geometry::Sphere::convertSphericalToCartesian(1., p, src_points_[spt]);
+                        src_point_norm = PointXYZ::norm(src_points_[spt]);
                     }
                     src_points_[spt] = PointXYZ::div(src_points_[spt], src_point_norm);
                 }
@@ -990,22 +977,10 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
                     }
                     double tgt_point_norm = PointXYZ::norm(tgt_points_[tpt]);
                     if (tgt_point_norm == 0.) {
-                        for (idx_t isubcell = 0; isubcell < tgt_node2csp_[tpt].size(); ++isubcell) {
-                            idx_t subcell     = tgt_node2csp_[tpt][isubcell];
-                            ATLAS_DEBUG_VAR(subcell);
-                            auto tgt_csp = get_csp_nodedata(subcell, tgt_mesh_, sharable_data_->tgt_csp2node_, sharable_data_->tgt_node2csp_,
-                                tgt_csp_size_, tgt_csp_cell_index_, tgt_csp_index_);
-                            const auto& t_csp = tgt_csp.polygon;
-                            t_csp.print(Log::info());
-                            Log::info() << std::endl;
-                            tgt_areas_v[tpt] += t_csp.area();
-                            ATLAS_DEBUG_VAR(t_csp.area());
-                            ATLAS_DEBUG_VAR(t_csp.centroid());
-                            tgt_points_[tpt] = tgt_points_[tpt] + PointXYZ::mul(t_csp.centroid(), t_csp.area());
-                        }
-                        Log::info().flush();
-                        // something went wrong, improvise
-                        tgt_point_norm = 1.;
+                        // Probably encountered degenerate subpolygons cells with zero area as can happen with ORCA sometimes
+                        auto p = PointLonLat{lonlat(tpt, 0), lonlat(tpt, 1)};
+                        eckit::geometry::Sphere::convertSphericalToCartesian(1., p, tgt_points_[tpt]);
+                        tgt_point_norm = PointXYZ::norm(tgt_points_[tpt]);
                     }
                     tgt_points_[tpt] = PointXYZ::div(tgt_points_[tpt], tgt_point_norm);
                 }
