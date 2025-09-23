@@ -441,13 +441,19 @@ std::vector<idx_t> ConservativeSphericalPolygonInterpolation::get_node_neighbour
 
 
 void ConservativeSphericalPolygonInterpolation::
-init_csp_index(bool cell_data, FunctionSpace fs, std::vector<idx_t>& csp2node, std::vector<std::vector<idx_t>>& node2csp,
+init_csp_index(
+    // input
+    bool cell_data, FunctionSpace fs,
+    // output
+    std::vector<idx_t>& csp2node, std::vector<std::vector<idx_t>>& node2csp,
     gidx_t& csp_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index) {
     auto mesh = extract_mesh(fs);
     const auto& cell2node = mesh.cells().node_connectivity();
     const auto cell_halo   = array::make_view<int, 1>(mesh.cells().halo());
     csp_size = 0;
     auto fs_halo = cell_data ? functionspace::CellColumns(fs).halo().size() : functionspace::NodeColumns(fs).halo().size();
+    csp_cell_index.reserve(mesh.cells().size());
+    csp_index.reserve(mesh.cells().size());
     if (cell_data) {
         for (idx_t cell = 0; cell < mesh.cells().size(); ++cell) {
             if (cell_halo(cell) > fs_halo) {
