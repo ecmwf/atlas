@@ -68,7 +68,7 @@ public:
                                                  "source functionspace, to override source grid default"));
         add_option(new SimpleOption<std::string>("target.functionspace",
                                                  "target functionspace, to override target grid default"));
-        add_option(new SimpleOption<long>("source.halo", "default=2"));
+        add_option(new SimpleOption<long>("source.halo", "default=1"));
         add_option(new SimpleOption<long>("target.halo", "default=0 for CellColumns and 1 for NodeColumns"));
 
         // Interpolation options
@@ -212,25 +212,27 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {\
             return fspace;
         }
         else if (type == "NodeColumns") {
-            return functionspace::NodeColumns(mesh, option::halo(std::max(1,halo)));
+            return functionspace::NodeColumns(mesh, option::halo(std::max(1, halo)));
         }
         ATLAS_THROW_EXCEPTION("FunctionSpace " << type << " is not recognized.");
     };
 
     timers.target_setup.start();
+    int tgt_halo = config.getLong("target.halo", 0);
     auto tgt_mesh = Mesh{tgt_grid, grid::Partitioner(config.getString("target.partitioner", "regular_bands"))};
     auto tgt_functionspace =
-        create_functionspace(tgt_mesh, config.getLong("target.halo", 0), config.getString("target.functionspace", ""));
+        create_functionspace(tgt_mesh, tgt_halo, config.getString("target.functionspace", ""));
     auto tgt_field = tgt_functionspace.createField<double>();
     timers.target_setup.stop();
 
     timers.source_setup.start();
+    int src_halo = config.getLong("source.halo", 1);
     auto src_meshgenerator =
-        MeshGenerator{src_grid.meshgenerator() | option::halo(2) | util::Config("pole_elements", "")};
+        MeshGenerator{src_grid.meshgenerator() | option::halo(src_halo) | util::Config("pole_elements", "")};
     auto src_partitioner = grid::MatchingPartitioner{tgt_mesh, util::Config("partitioner", config.getString("source.partitioner", "spherical-polygon"))};
     auto src_mesh        = src_meshgenerator.generate(src_grid, src_partitioner);
     auto src_functionspace =
-        create_functionspace(src_mesh, config.getLong("source.halo", 2), config.getString("source.functionspace", ""));
+        create_functionspace(src_mesh, src_halo, config.getString("source.functionspace", ""));
     auto src_field = src_functionspace.createField<double>();
     timers.source_setup.stop();
 
@@ -295,7 +297,7 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {\
         output.set("setup.target.grid", config.getString("target.grid"));
         output.set("setup.source.functionspace", src_functionspace.type());
         output.set("setup.target.functionspace", tgt_functionspace.type());
-        output.set("setup.source.halo", config.getLong("source.halo", 2));
+        output.set("setup.source.halo", config.getLong("source.halo", 1));
         output.set("setup.target.halo", config.getLong("target.halo", 0));
         output.set("setup.interpolation.order", config.getInt("order", 1));
         output.set("setup.interpolation.normalise_intersections", config.getBool("normalise_intersections", false));
