@@ -1090,10 +1090,11 @@ build_source_kdtree(util::KDTree<idx_t>& kdt_search, double& max_srccell_rad, co
             }
         }
         else {
-            for (idx_t scell = 0; scell < src_mesh_.cells().size(); ++scell) {
-                if (consider_src(cell_part(scell), cell_ridx(scell), cell_halo(scell))) {
-                    const auto& s_csp = src_csp[scell].polygon;
-                    kdt_search.insert(s_csp.centroid(), scell);
+            for (idx_t csp_id = 0; csp_id < src_csp_size_; ++csp_id) {
+                idx_t icell = src_csp_index_[csp_id];
+                if (consider_src(cell_part(icell), cell_ridx(icell), cell_halo(icell))) {
+                    const auto& s_csp = src_csp[csp_id].polygon;
+                    kdt_search.insert(s_csp.centroid(), icell);
                     max_srccell_rad = std::max(max_srccell_rad, s_csp.radius());
                 }
             }
