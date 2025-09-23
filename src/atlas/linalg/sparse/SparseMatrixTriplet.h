@@ -88,7 +88,7 @@ std::enable_if_t<detail::is_triplet_iterator<Iter>, SparseMatrixStorage> make_sp
             ++tripletIter;
         }
     }
-    ATLAS_ASSERT(index == static_cast<std::size_t>(n_non_zero));
+    ATLAS_ASSERT(index == n_non_zero);
     outer_view(n_rows) = n_non_zero;
 
     return SparseMatrixStorage::make(n_rows, n_cols, n_non_zero, std::move(values_array), std::move(inner_array),
