@@ -63,8 +63,6 @@ constexpr bool is_mutable_iterator =
 template <typename Iter>
 std::enable_if_t<detail::is_triplet_iterator<Iter>, SparseMatrixStorage> make_sparse_matrix_storage_from_triplets(
     std::size_t n_rows, std::size_t n_cols, Iter triplets_begin, Iter triplets_end) {
-    ATLAS_ASSERT(std::is_sorted(triplets_begin, triplets_end));
-
     using TripletType = typename std::iterator_traits<Iter>::value_type;
     using Index       = decltype(std::declval<TripletType>().row());
     using Value       = decltype(std::declval<TripletType>().value());
@@ -77,16 +75,18 @@ std::enable_if_t<detail::is_triplet_iterator<Iter>, SparseMatrixStorage> make_sp
     auto inner_view       = array::make_view<Index, 1>(*inner_array);
     auto values_view      = array::make_view<Value, 1>(*values_array);
 
-    std::size_t index = 0;
-    Iter tripletIter  = triplets_begin;
+    std::size_t index            = 0;
+    Iter triplet_iter            = triplets_begin;
+    TripletType previous_triplet = *triplet_iter;
     for (std::size_t row = 0; row < n_rows; ++row) {
         outer_view(row) = index;
-        while (tripletIter != triplets_end && tripletIter->row() == static_cast<Index>(row)) {
-            ATLAS_ASSERT(tripletIter->col() < static_cast<Index>(n_cols));
-            inner_view(index)  = tripletIter->col();
-            values_view(index) = tripletIter->value();
-            ++index;
-            ++tripletIter;
+        for (; triplet_iter != triplets_end && triplet_iter->row() == static_cast<Index>(row);
+             ++index, ++triplet_iter) {
+            ATLAS_ASSERT(!(*triplet_iter < previous_triplet), "Triplet range must be sorted.");
+            ATLAS_ASSERT(triplet_iter->col() < static_cast<Index>(n_cols));
+            inner_view(index)  = triplet_iter->col();
+            values_view(index) = triplet_iter->value();
+            previous_triplet   = *triplet_iter;
         }
     }
     ATLAS_ASSERT(index == n_non_zero);
