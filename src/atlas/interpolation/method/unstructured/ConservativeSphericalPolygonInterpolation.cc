@@ -1627,10 +1627,10 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                 }
             }
             else {
+                Workspace w;
                 for (idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell) {
                     const idx_t subcell = iparam.cell_idx[icell];
                     const idx_t snode = data_->src_csp2node_[subcell];
-                    Workspace w;
                     const auto src_neighbours = get_node_neighbours(src_mesh_, snode, w);
                     triplets_size += 2 * src_neighbours.size() + 1; 
                 }
@@ -1659,6 +1659,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
 #endif
             double tcell_area_inv = ( tgt_areas_v[tcell] > 0.) ? 1. / tgt_areas_v[tcell] : 0.; // dual_area_inv, even if protected, may still leads to FE_DIVBYZERO with Apple without volatile trick
 
+            Workspace w;
             for (idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell) {
                 Aik.resize(iparam.cell_idx.size());
                 const PointXYZ& Csk     = iparam.centroids[icell];
@@ -1671,7 +1672,6 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                     src_neighbours = get_cell_neighbours(src_mesh_, scell);
                 }
                 else {
-                    Workspace w;
                     idx_t snode    = data_->src_csp2node_[scell];
                     src_neighbours = get_node_neighbours(src_mesh_, snode, w);
                 }
@@ -1749,7 +1749,6 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                     for (idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell) {
                         const idx_t subcell = iparam.cell_idx[icell];
                         const idx_t snode = data_->src_csp2node_[subcell];
-                        Workspace w;
                         const auto src_neighbours = get_node_neighbours(src_mesh_, snode, w);
                         triplets_size += 2 * src_neighbours.size() + 1; 
                     }
@@ -1804,7 +1803,6 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                         src_neighbours = get_cell_neighbours(src_mesh_, scell);
                     }
                     else {
-                        Workspace w;
                         idx_t snode    = data_->src_csp2node_[scell];
                         src_neighbours = get_node_neighbours(src_mesh_, snode, w);
                     }
