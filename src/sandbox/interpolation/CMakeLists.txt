@@ -29,22 +29,9 @@ ecbuild_add_executable(
     NOINSTALL
 )
 
-# Overcome Cray linking problem where the C++ library is not linked with the C library
-list( APPEND NetCDF_CXX_EXTRA_LIBRARIES NetCDF::NetCDF_C )
-
-ecbuild_add_option( FEATURE NETCDF
-                    DESCRIPTION "Compile support the SCRIP format"
-                    REQUIRED_PACKAGES "NetCDF COMPONENTS C CXX" )
-
 ecbuild_add_executable(
-    TARGET  atlas-global-matrix
-    SOURCES atlas-global-matrix.cc
-            ScripIO.h
-            ScripIO.cc
+    TARGET  atlas-global-unmatched-matrix
+    SOURCES atlas-global-unmatched-matrix.cc
     LIBS    atlas
+    NOINSTALL
 )
-
-target_compile_definitions( atlas-global-matrix PRIVATE ATLAS_HAVE_NETCDF=${HAVE_NETCDF} )
-if( HAVE_NETCDF )
-    target_link_libraries( atlas-global-matrix NetCDF::NetCDF_CXX )
-endif()
