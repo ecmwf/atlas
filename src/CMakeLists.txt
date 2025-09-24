@@ -66,6 +66,12 @@ else()
   set( atlas_HAVE_FFTW 0 )
 endif()
 
+if( atlas_HAVE_POCKETFFT )
+  set( atlas_HAVE_POCKETFFT 1 )
+else()
+  set( atlas_HAVE_POCKETFFT 0 )
+endif()
+
 if( atlas_HAVE_BOUNDSCHECKING )
   set( atlas_HAVE_BOUNDSCHECKING 1 )
 else()
