@@ -1046,7 +1046,7 @@ namespace {
 
 void ConservativeSphericalPolygonInterpolation::
 build_source_kdtree(util::KDTree<idx_t>& kdt_search, double& max_srccell_rad, const MarkedPolygonArray& src_csp) const {
-    Log::warning() << "Building KDTree via mesh indices." << std::endl;
+    Log::debug() << "Building KDTree via mesh indices." << std::endl;
     const auto node_part  = array::make_view<int, 1>(src_mesh_.nodes().partition());
     const auto node_ridx  = array::make_indexview<idx_t, 1>(src_mesh_.nodes().remote_index());
     const auto node_ghost = array::make_view<int, 1>(src_mesh_.nodes().ghost());
