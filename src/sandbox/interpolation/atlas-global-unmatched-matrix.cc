@@ -15,6 +15,7 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/PointCloud.h"
 #include "atlas/functionspace/StructuredColumns.h"
+#include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Iterator.h"
 #include "atlas/interpolation.h"
@@ -32,7 +33,7 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/function/VortexRollup.h"
 #include "atlas/util/function/MDPI_functions.h"
-#include "atlas/util/Locate.h"
+#include "atlas/functionspace/Locate.h"
 #include "atlas/field/MissingValue.h"
 
 #include "atlas/io/atlas-io.h"
@@ -178,13 +179,19 @@ private:
                 collect_gidx[i] = global_index[i] + 1;
             }
             idx_t ridx_base = 0;
+            gidx_t gidx_base = 1;
+            int partition_base = 0;
 
             ATLAS_ASSERT(fs);
             ATLAS_ASSERT(src_distribution_);
             ATLAS_DEBUG_VAR(collect_size_);
             ATLAS_DEBUG_VAR(src_distribution_.size());
             ATLAS_DEBUG_VAR(fs.size());
-            util::locate(fs, src_distribution_, collect_gidx, collect_partition, collect_ridx, ridx_base);
+            functionspace::Locator locator(fs);
+            locator.locate( mdspan{collect_gidx.data(), collect_size_}, gidx_base,
+                            mdspan{collect_partition.data(), collect_size_}, partition_base,
+                            mdspan{collect_ridx.data(), collect_size_}, ridx_base );
+            // locate(fs, src_distribution_, collect_gidx, collect_partition, collect_ridx, ridx_base);
             collect_.setup(collect_size_, collect_partition.data(), collect_ridx.data(), ridx_base);
     }
 
