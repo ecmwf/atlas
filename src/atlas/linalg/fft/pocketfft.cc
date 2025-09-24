@@ -13,6 +13,10 @@
 #include <cstdlib>
 
 #include "atlas/library/defines.h"
+
+
+#if ATLAS_HAVE_POCKETFFT
+
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/Trace.h"
 
@@ -57,3 +61,22 @@ namespace atlas::linalg {
 
 }  // namespace atlas::linalg
 
+#else
+
+#include "atlas/runtime/Exception.h"
+#define THROW_ATLAS_POCKETFFT_NOT_SUPPORTED() throw_Exception("Atlas was not compiled with pocketfft support", Here())
+
+namespace atlas::linalg {
+
+    void pocketfft::do_plan_inverse_c2r(size_t /*size_out*/, std::complex<double>* /*in*/, double* /*out*/) const {}
+    void pocketfft::do_plan_inverse_c2r_many(size_t /*howmany*/, size_t /*size_in*/, size_t /*size_out*/, size_t /*dist_in*/, size_t /*dist_out*/, std::complex<double>* /*in*/, double* /*out*/) const {}
+    void pocketfft::do_inverse_c2r(const size_t /*size_out*/, std::complex<double>* /*in*/, double* /*out*/) const {
+        THROW_ATLAS_POCKETFFT_NOT_SUPPORTED();
+    }
+    void pocketfft::do_inverse_c2r_many(size_t howmany, size_t size_in, size_t size_out, size_t dist_in, size_t dist_out, std::complex<double>* in, double* out) const {
+        THROW_ATLAS_POCKETFFT_NOT_SUPPORTED();
+    }
+
+}  // namespace atlas::linalg
+
+#endif
