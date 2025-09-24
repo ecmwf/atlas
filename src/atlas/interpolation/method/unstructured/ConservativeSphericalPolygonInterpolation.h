@@ -204,9 +204,9 @@ private:
     std::vector<idx_t> sort_node_edges(Mesh& mesh, idx_t cell_id) const;
     std::vector<idx_t> get_cell_neighbours(Mesh&, idx_t jcell) const;
 
-    struct Workspace;
+    struct Workspace_get_node_neighbours;
 
-    std::vector<idx_t> get_node_neighbours(Mesh&, idx_t jcell, Workspace&) const;
+    std::vector<idx_t> get_node_neighbours(Mesh&, idx_t jcell, Workspace_get_node_neighbours&) const;
     void init_csp_index(bool cell_data, FunctionSpace fs, Indices& csp2node, std::vector<Indices>& node2csp,
         gidx_t& csp_size, Indices& csp_cell_index, Indices& csp_index);
     MarkedPolygon get_csp_celldata(idx_t csp_id, const Mesh& mesh, gidx_t& csp_index_size, Indices& csp_index);

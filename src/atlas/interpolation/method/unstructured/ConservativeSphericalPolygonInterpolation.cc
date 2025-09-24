@@ -318,14 +318,14 @@ std::vector<idx_t> ConservativeSphericalPolygonInterpolation::get_cell_neighbour
 }
 
 
-struct ConservativeSphericalPolygonInterpolation::Workspace {
+struct ConservativeSphericalPolygonInterpolation::Workspace_get_node_neighbours {
     std::vector<idx_t> nbr_nodes_od;
     std::vector< std::array<idx_t,2> > cnodes;
 };
 
 
 // get cyclically sorted node neighbours without using edge connectivity
-std::vector<idx_t> ConservativeSphericalPolygonInterpolation::get_node_neighbours(Mesh& mesh, idx_t node_id, Workspace& w) const {
+std::vector<idx_t> ConservativeSphericalPolygonInterpolation::get_node_neighbours(Mesh& mesh, idx_t node_id, Workspace_get_node_neighbours& w) const {
     const auto& cell2node = mesh.cells().node_connectivity();
     const auto node_flags = array::make_view<int, 1>(mesh.nodes().flags());
     if (mesh.nodes().cell_connectivity().rows() == 0) {
@@ -1614,6 +1614,8 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
 
     if (tgt_cell_data_) {
         const auto tgt_halo = array::make_view<int, 1>(tgt_mesh_.cells().halo());
+        Workspace_get_node_neighbours w;
+
         for (idx_t tcell = 0; tcell < n_tpoints_; ++tcell) {
             const auto& iparam = tgt_iparam_[tcell];
             if (iparam.cell_idx.size() == 0 || tgt_halo(tcell)) {
@@ -1627,7 +1629,6 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                 }
             }
             else {
-                Workspace w;
                 for (idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell) {
                     const idx_t subcell = iparam.cell_idx[icell];
                     const idx_t snode = data_->src_csp2node_[subcell];
@@ -1659,7 +1660,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
 #endif
             double tcell_area_inv = ( tgt_areas_v[tcell] > 0.) ? 1. / tgt_areas_v[tcell] : 0.; // dual_area_inv, even if protected, may still leads to FE_DIVBYZERO with Apple without volatile trick
 
-            Workspace w;
+            Workspace_get_node_neighbours w;
             for (idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell) {
                 Aik.resize(iparam.cell_idx.size());
                 const PointXYZ& Csk     = iparam.centroids[icell];
@@ -1726,7 +1727,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
     else {  // if ( not tgt_cell_data_ )
         const auto tgt_ghost = array::make_view<int, 1>(tgt_mesh_.nodes().ghost());
         auto& tgt_node2csp_ = data_->tgt_node2csp_;
-        Workspace w;
+        Workspace_get_node_neighbours w;
         triplets_size = 0;
         for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
             if (tgt_ghost(tnode)) {
