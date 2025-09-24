@@ -188,9 +188,10 @@ private:
             ATLAS_DEBUG_VAR(src_distribution_.size());
             ATLAS_DEBUG_VAR(fs.size());
             functionspace::Locator locator(fs);
-            locator.locate( mdspan{collect_gidx.data(), collect_size_}, gidx_base,
-                            mdspan{collect_partition.data(), collect_size_}, partition_base,
-                            mdspan{collect_ridx.data(), collect_size_}, ridx_base );
+            locator.locate(
+                parallel::Locator::span<const gidx_t>{collect_gidx.data(), collect_size_}, gidx_base,
+                parallel::Locator::span<int>{collect_partition.data(), collect_size_}, partition_base,
+                parallel::Locator::span<idx_t>{collect_ridx.data(), collect_size_}, ridx_base);
             // locate(fs, src_distribution_, collect_gidx, collect_partition, collect_ridx, ridx_base);
             collect_.setup(collect_size_, collect_partition.data(), collect_ridx.data(), ridx_base);
     }

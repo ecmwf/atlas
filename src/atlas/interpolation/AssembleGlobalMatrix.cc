@@ -19,6 +19,8 @@
 #include "atlas/linalg/sparse/SparseMatrixToTriplets.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/functionspace/NodeColumns.h"
+#include "atlas/grid/Distribution.h"
+
 
 namespace atlas::interpolation {
 
@@ -69,6 +71,8 @@ linalg::SparseMatrixStorage assemble_global_matrix(size_t nrows, size_t ncols, c
     std::vector<gidx_t> global_rows;
     std::vector<double> global_vals;
 
+    auto tgt_ghost = array::make_view<int, 1>(tgt_fs.ghost());
+
     // Compute global_cols, global_rows, global_vals
     {
         std::vector<gidx_t> local_cols;
@@ -86,7 +90,6 @@ linalg::SparseMatrixStorage assemble_global_matrix(size_t nrows, size_t ncols, c
             const auto src_global_index = array::make_view<gidx_t, 1>(src_fs.global_index());
             const auto tgt_global_index = array::make_view<gidx_t, 1>(tgt_fs.global_index());
             const auto src_part         = array::make_view<int, 1>(src_fs.partition());
-            const auto tgt_ghost        = array::make_view<int, 1>(tgt_fs.ghost());
 
             eckit::mpi::Buffer<gidx_t> recv_global_idx_buf(mpi_size);
             {
@@ -173,12 +176,10 @@ linalg::SparseMatrixStorage assemble_global_matrix(size_t nrows, size_t ncols, c
     return global_matrix;
 }
 
-template <typename ViewValue, typename ViewIndex, typename Value, typename Index> 
-void distribute_global_matrix(const linalg::SparseMatrixView<ViewValue,ViewIndex>& global_matrix,
-    const array::Array& partition, std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root) {
-    ATLAS_TRACE("distribute_global_matrix_lowlevel");
-
-    const auto tgt_part_glb = array::make_view<int,1>(partition);
+template <typename partition_t, typename ViewValue, typename ViewIndex, typename Value, typename Index>
+void distribute_global_matrix_as_triplets(partition_t tgt_partition, const linalg::SparseMatrixView<ViewValue,ViewIndex>& global_matrix,
+    std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root) {
+    ATLAS_TRACE("distribute_global_matrix_as_triplets");
     
     auto& mpi_comm = mpi::comm();
     auto mpi_size  = mpi_comm.size();
@@ -193,15 +194,8 @@ void distribute_global_matrix(const linalg::SparseMatrixView<ViewValue,ViewIndex
     const auto value  = global_matrix.value();
     if (mpi_rank == mpi_root) {
 
-        ATLAS_ASSERT(global_matrix.rows() <= tgt_part_glb.size());
         for(std::size_t r = 0; r < global_matrix.rows(); ++r) {
-            if (tgt_part_glb(r) >= mpi_size) {
-                    ATLAS_DEBUG_VAR(r);
-                    ATLAS_DEBUG_VAR(mpi_size);
-                    ATLAS_DEBUG_VAR(tgt_part_glb(r));
-                    ATLAS_ASSERT(tgt_part_glb(r) < nnz_per_task.size());
-            }
-            nnz_per_task[tgt_part_glb(r)] += outer[r+1] - outer[r];
+            nnz_per_task[tgt_partition[r]] += outer[r+1] - outer[r];
         }
         for (int jproc = 0; jproc < mpi::comm().size(); ++jproc) {
             if (jproc != mpi_root) {
@@ -228,7 +222,7 @@ void distribute_global_matrix(const linalg::SparseMatrixView<ViewValue,ViewIndex
             send_vals[jproc].reserve(nnz_per_task[jproc]);
         }
         for(std::size_t r = 0; r < global_matrix.rows(); ++r) {
-            int jproc = tgt_part_glb(r);
+            int jproc = tgt_partition[r];
             for (auto c = outer[r]; c < outer[r + 1]; ++c) {
                 auto col = inner[c];
                 send_rows[jproc].emplace_back(r);
@@ -256,27 +250,34 @@ void distribute_global_matrix(const linalg::SparseMatrixView<ViewValue,ViewIndex
     }
 }
 
-linalg::SparseMatrixStorage distribute_global_matrix(const FunctionSpace& src_fs, const FunctionSpace& tgt_fs, const linalg::SparseMatrixStorage& gmatrix, int mpi_root) {
-    ATLAS_TRACE("distribute_global_matrix");
-    Field field_tgt_part_glb = tgt_fs.createField(tgt_fs.partition(), option::global(mpi_root));
+template <typename ViewValue, typename ViewIndex, typename Value, typename Index>
+void distribute_global_matrix_as_triplets(
+    const array::Array& tgt_partition,
+    const linalg::SparseMatrixView<ViewValue,ViewIndex>& global_matrix,
+    std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root) {
+    distribute_global_matrix_as_triplets(array::make_view<int,1>(tgt_partition).data(), global_matrix, rows, cols, vals, mpi_root);
+}
 
-    // This should not be needed, but there's a problem with the NodeColumns functionspace for ORCA grids leading to uninitialized partitions
-    if (functionspace::NodeColumns(tgt_fs)) {
-        if (auto grid = functionspace::NodeColumns(tgt_fs).mesh().grid()) {
-            if (grid.type() == "ORCA") {
-                array::make_view<int,1>(field_tgt_part_glb).assign(0);
-            }
-        }
-    }
+template <typename ViewValue, typename ViewIndex, typename Value, typename Index>
+void distribute_global_matrix_as_triplets(
+    const grid::Distribution& tgt_distribution, const linalg::SparseMatrixView<ViewValue,ViewIndex>& global_matrix,
+    std::vector<Index>& rows, std::vector<Index>& cols, std::vector<Value>& vals, int mpi_root) {
+    struct partition_t {
+        partition_t(const grid::Distribution& d) : d_(d) {}
+        int operator[](idx_t i) const { return d_.partition(i); }
+        const grid::Distribution& d_;
+    } tgt_partition(tgt_distribution);
+    distribute_global_matrix_as_triplets(tgt_partition, global_matrix, rows, cols, vals, mpi_root);
+}
 
-    ATLAS_TRACE_SCOPE("gather partition") {
-        tgt_fs.gather(tgt_fs.partition(), field_tgt_part_glb);
-    }
+template<typename partition_t>
+linalg::SparseMatrixStorage distribute_global_matrix(partition_t tgt_partition, const FunctionSpace& src_fs, const FunctionSpace& tgt_fs, const linalg::SparseMatrixStorage& gmatrix, int mpi_root) {
+    ATLAS_TRACE("distribute_global_matrix <typename partition_t>");
     using Index = eckit::linalg::Index;
     using Value = eckit::linalg::Scalar;
     std::vector<Index> rows, cols;
     std::vector<Value> vals;
-    distribute_global_matrix(atlas::linalg::make_host_view<Value, Index>(gmatrix), field_tgt_part_glb, rows, cols, vals, mpi_root);
+    distribute_global_matrix_as_triplets(tgt_partition, atlas::linalg::make_host_view<Value, Index>(gmatrix), rows, cols, vals, mpi_root);
 
     // map global index to local index
     std::unordered_map<gidx_t, idx_t> to_local_rows;
@@ -286,14 +287,14 @@ linalg::SparseMatrixStorage distribute_global_matrix(const FunctionSpace& src_fs
         auto tgt_gidx_exchanged = tgt_fs.createField(tgt_fs.global_index());
         tgt_gidx_exchanged.array().copy(tgt_fs.global_index());
         tgt_fs.haloExchange(tgt_gidx_exchanged);
+        auto src_ghost = array::make_view<int,1>(src_fs.ghost());
+        auto tgt_ghost = array::make_view<int,1>(tgt_fs.ghost());
         const auto tgt_global_index = array::make_view<gidx_t, 1>(tgt_gidx_exchanged);
-        const auto tgt_ghost = array::make_view<int,1>(tgt_fs.ghost());
 
         auto src_gidx_exchanged = src_fs.createField(src_fs.global_index());
         src_gidx_exchanged.array().copy(src_fs.global_index());
         src_fs.haloExchange(src_gidx_exchanged);
         const auto src_global_index = array::make_view<gidx_t, 1>(src_gidx_exchanged);
-        const auto src_ghost = array::make_view<int,1>(src_fs.ghost());
 
         for (idx_t r = 0; r < tgt_global_index.size(); ++r) {
             auto gr = tgt_global_index(r);
@@ -321,6 +322,37 @@ linalg::SparseMatrixStorage distribute_global_matrix(const FunctionSpace& src_fs
     matrix = linalg::make_sparse_matrix_storage_from_rows_columns_values(tgt_fs.size(), src_fs.size(), rows, cols, vals, index_base, is_sorted);
 
     return matrix;
+}
+
+
+linalg::SparseMatrixStorage distribute_global_matrix(const FunctionSpace& src_fs, const FunctionSpace& tgt_fs, const linalg::SparseMatrixStorage& gmatrix, int mpi_root) {
+    ATLAS_TRACE("distribute_global_matrix");
+    Field field_tgt_part_glb = tgt_fs.createField(tgt_fs.partition(), option::global(mpi_root));
+    ATLAS_TRACE_SCOPE("gather partition") {
+        tgt_fs.gather(tgt_fs.partition(), field_tgt_part_glb);
+    }
+    return distribute_global_matrix(
+            array::make_view<int,1>(field_tgt_part_glb).data(),
+            src_fs,
+            tgt_fs,
+            gmatrix,
+            mpi_root);
+}
+
+linalg::SparseMatrixStorage distribute_global_matrix(const grid::Distribution& tgt_distribution, const FunctionSpace& src_fs, const FunctionSpace& tgt_fs, const linalg::SparseMatrixStorage& gmatrix, int mpi_root) {
+    ATLAS_TRACE("distribute_global_matrix(tgt_distribution)");
+    struct partition_t {
+        partition_t(const grid::Distribution& d) : d_(d) {}
+        int operator[](idx_t i) const { return d_.partition(i); }
+        const grid::Distribution& d_;
+    } tgt_partition(tgt_distribution);
+
+    return distribute_global_matrix(
+            tgt_partition,
+            src_fs,
+            tgt_fs,
+            gmatrix,
+            mpi_root);
 }
 
 
