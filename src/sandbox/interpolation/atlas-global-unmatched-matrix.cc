@@ -459,9 +459,9 @@ int AtlasGlobalUnmatchedMatrix::execute(const AtlasTool::Args& args) {
             }
             else {
                 for (idx_t i = 0; i < src_fs.size(); ++i) {
-                    src_field_v[i] = util::function::vortex_rollup(src_lonlat(i, 0), src_lonlat(i, 1), 1.);
+                    // src_field_v[i] = util::function::vortex_rollup(src_lonlat(i, 0), src_lonlat(i, 1), 1.);
                     // src_field_v[i] = util::function::MDPI_gulfstream(src_lonlat(i, 0), src_lonlat(i, 1));
-                    // src_field_v[i] = util::function::MDPI_vortex(src_lonlat(i, 0), src_lonlat(i, 1));
+                    src_field_v[i] = util::function::MDPI_vortex(src_lonlat(i, 0)-90., src_lonlat(i, 1));
                 }
             }
         }
