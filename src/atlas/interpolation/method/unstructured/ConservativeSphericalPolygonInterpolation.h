@@ -53,6 +53,12 @@ private:
         Indices tgt_csp2node_;
         std::vector<Indices> src_node2csp_;
         std::vector<Indices> tgt_node2csp_;
+        gidx_t src_csp_size_;
+        gidx_t tgt_csp_size_;
+        std::vector<idx_t> src_csp_cell_index_;
+        std::vector<idx_t> src_csp_index_;
+        std::vector<idx_t> tgt_csp_cell_index_;
+        std::vector<idx_t> tgt_csp_index_;
 
         // Timings
         struct Timings {
@@ -212,22 +218,32 @@ private:
     MarkedPolygon get_csp_celldata(idx_t csp_id, const Mesh& mesh, gidx_t& csp_index_size, Indices& csp_index);
     MarkedPolygon get_csp_nodedata(idx_t csp_id, const Mesh& mesh, Indices& csp2node, std::vector<Indices>& node2csp,
         gidx_t& csp_index_size, Indices& csp_cell_index, Indices& csp_index);
+    void get_owner_cell_celldata(idx_t csp_id, const Indices& csp_index, idx_t& cell_id) {
+        cell_id = csp_index[csp_id];
+    }
+    idx_t get_owner_cell_nodedata(idx_t csp_id, const Indices& csp_cell_index, const Indices& csp_index, idx_t& cell_id) {
+        auto idx = std::upper_bound(csp_index.begin(), csp_index.end(), csp_id);
+        idx_t pos = idx - csp_index.begin() - 1;
+        cell_id = csp_cell_index[pos];
+        idx_t offset = csp_id - csp_index[pos];
+        return offset;
+    }
     MarkedPolygon get_src_csp(idx_t csp_id) {
         if (src_cell_data_) {
-            return get_csp_celldata(csp_id, src_mesh_, src_csp_size_, src_csp_index_);
+            return get_csp_celldata(csp_id, src_mesh_, sharable_data_->src_csp_size_, sharable_data_->src_csp_index_);
         }
         else {
             return get_csp_nodedata(csp_id, src_mesh_, sharable_data_->src_csp2node_, sharable_data_->src_node2csp_,
-                src_csp_size_, src_csp_cell_index_, src_csp_index_);
+                sharable_data_->src_csp_size_, sharable_data_->src_csp_cell_index_, sharable_data_->src_csp_index_);
         }
     }
     MarkedPolygon get_tgt_csp(idx_t csp_id) {
         if (tgt_cell_data_) {
-            return get_csp_celldata(csp_id, tgt_mesh_, tgt_csp_size_, tgt_csp_index_);
+            return get_csp_celldata(csp_id, tgt_mesh_, sharable_data_->tgt_csp_size_, sharable_data_->tgt_csp_index_);
         }
         else {
             return get_csp_nodedata(csp_id, tgt_mesh_, sharable_data_->tgt_csp2node_, sharable_data_->tgt_node2csp_,
-                tgt_csp_size_, tgt_csp_cell_index_, tgt_csp_index_);
+                sharable_data_->tgt_csp_size_, sharable_data_->tgt_csp_cell_index_, sharable_data_->tgt_csp_index_);
         }
     }
     MarkedPolygonArray get_polygons_celldata(FunctionSpace, Indices& csp2node,
@@ -258,13 +274,6 @@ private:
     bool statistics_conservation_;
 
     mutable Statistics remap_stat_;
-
-    gidx_t src_csp_size_;
-    gidx_t tgt_csp_size_;
-    std::vector<idx_t> src_csp_cell_index_;
-    std::vector<idx_t> src_csp_index_;
-    std::vector<idx_t> tgt_csp_cell_index_;
-    std::vector<idx_t> tgt_csp_index_;
 
     Cache cache_;                          // Storage of cache if any was passed to constructor
     std::shared_ptr<Data> sharable_data_;  // Storage of new data_, only allocated if cache is empty
