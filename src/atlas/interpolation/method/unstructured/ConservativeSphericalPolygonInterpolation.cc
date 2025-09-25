@@ -255,21 +255,19 @@ ConservativeSphericalPolygonInterpolation::ConservativeSphericalPolygonInterpola
 }
 
 
-inline int ConservativeSphericalPolygonInterpolation::next_index(int current_index, int size, int offset) const {
+inline int ConservativeSphericalPolygonInterpolation::next_index(int current_index, int size) const {
 #if ATLAS_BUILD_TYPE_DEBUG
     ATLAS_ASSERT(current_index >= 0 && current_index < size);
-    ATLAS_ASSERT(offset >= 0 && offset <= size);
 #endif
-    return (current_index < size - offset) ? current_index + offset : current_index + offset - size;
+    return (current_index < size - 1) ? current_index + 1 : current_index + 1 - size;
 }
 
 
-inline int ConservativeSphericalPolygonInterpolation::prev_index(int current_index, int size, int offset) const {
+inline int ConservativeSphericalPolygonInterpolation::prev_index(int current_index, int size) const {
 #if ATLAS_BUILD_TYPE_DEBUG
     ATLAS_ASSERT(current_index >= 0 && current_index < size);
-    ATLAS_ASSERT(offset >= 0 && offset <= size);
 #endif
-    return (current_index >= offset) ? current_index - offset : current_index - offset + size;
+    return (current_index >= 1) ? current_index - 1 : current_index - 1 + size;
 }
 
 
@@ -559,8 +557,10 @@ get_csp_celldata(idx_t csp_id, const Mesh& mesh, gidx_t& csp_index_size, std::ve
 
 
 ConservativeSphericalPolygonInterpolation::MarkedPolygon ConservativeSphericalPolygonInterpolation::
-get_csp_nodedata(idx_t csp_id, const Mesh& mesh, std::vector<idx_t>& csp2node, std::vector<std::vector<idx_t>>& node2csp,
-    gidx_t& csp_index_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index) {
+get_csp_nodedata(idx_t csp_id, const Mesh& mesh, Data::MeshData& md ) {
+
+    std::vector<idx_t>& csp2node = md.csp2node;
+    std::vector<std::vector<idx_t>>& node2csp = md.node2csp;
 
     // TODO: Performance optimisations:
     //    - Do not extract array views, mesh connectivity for each csp_id
@@ -570,8 +570,11 @@ get_csp_nodedata(idx_t csp_id, const Mesh& mesh, std::vector<idx_t>& csp2node, s
     const auto node_flags = array::make_view<int, 1>(mesh.nodes().flags());
     std::vector<PointLonLat> pts_ll;
 
-    idx_t cell;
-    auto offset = get_owner_cell_nodedata(csp_id, csp_cell_index, csp_index, cell);
+    idx_t cell, isubcell;
+    std::tie(cell,isubcell) = csp_to_cell_and_subcell(csp_id, md);
+
+    // idx_t cell;
+    // auto isubcell = get_owner_cell_nodedata(csp_id, csp_cell_index, csp_index, cell);
 
     const idx_t n_nodes = cell2node.cols(cell);
     const auto nodes_ll   = array::make_view<double, 2>(mesh.nodes().lonlat());
@@ -624,10 +627,10 @@ get_csp_nodedata(idx_t csp_id, const Mesh& mesh, std::vector<idx_t>& csp2node, s
     cell_mid  = PointXYZ::normalize(cell_mid);
 #if ATLAS_BUILD_TYPE_DEBUG
     ATLAS_ASSERT(pts_xyz.size() > 2);
-    ATLAS_ASSERT(offset < pts_idx.size());
+    ATLAS_ASSERT(isubcell < pts_idx.size());
 #endif
     PointLonLat cell_ll = xyz2ll(cell_mid);
-    idx_t inode = offset;
+    idx_t inode = isubcell;
     int inode_n        = next_index(inode, pts_idx.size());
     PointXYZ iedge_mid = PointXYZ::normalize(pts_xyz[inode] + pts_xyz[inode_n]);
     int inode_nn = next_index(inode_n, pts_idx.size());
@@ -679,13 +682,12 @@ get_polygons_celldata(FunctionSpace fs, std::vector<idx_t>& csp2node, std::vecto
 // additionally, subcell-to-node and node-to-subcells mapping are computed
 ConservativeSphericalPolygonInterpolation::MarkedPolygonArray
 ConservativeSphericalPolygonInterpolation::
-get_polygons_nodedata(FunctionSpace fs, std::vector<idx_t>& csp2node,
-    std::vector<std::vector<idx_t>>& node2csp, gidx_t& csp_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index) {
+get_polygons_nodedata(FunctionSpace fs, Data::MeshData& md) {
     ATLAS_TRACE("ConservativeSphericalPolygonInterpolation: get_polygons_nodedata");
-    MarkedPolygonArray cspolygons(csp_size);
+    MarkedPolygonArray cspolygons(md.csp_size);
     auto mesh = extract_mesh(fs);
-    for(idx_t i = 0; i < csp_size; ++i) {
-        cspolygons[i] = get_csp_nodedata(i, mesh, csp2node, node2csp, csp_size, csp_cell_index, csp_index);
+    for(idx_t csp_id = 0; csp_id < md.csp_size; ++csp_id) {
+        cspolygons[csp_id] = get_csp_nodedata(csp_id, mesh, md);
     }
     return cspolygons;
 }
@@ -829,7 +831,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
     ATLAS_ASSERT(src_fs);
     ATLAS_ASSERT(tgt_fs);
 
-    bool compute_cache = data_->src_points_.empty();
+    bool compute_cache = data_->src_.points.empty();
 
     if (not data_->tgt_fs_) {
         tgt_fs_                 = tgt_fs;
@@ -871,14 +873,13 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
         ATLAS_TRACE_SCOPE("Get source polygons") {
             StopWatch stopwatch;
             stopwatch.start();
-            init_csp_index(src_cell_data_, src_fs_, sharable_data_->src_csp2node_, sharable_data_->src_node2csp_, sharable_data_->src_csp_size_, sharable_data_->src_csp_cell_index_, sharable_data_->src_csp_index_);
+            init_csp_index(src_cell_data_, src_fs_, sharable_data_->src_.csp2node, sharable_data_->src_.node2csp, sharable_data_->src_.csp_size, sharable_data_->src_.csp_cell_index, sharable_data_->src_.csp_index);
             if (src_cell_data_) {
-                src_csp = get_polygons_celldata(src_fs_, sharable_data_->src_csp2node_, sharable_data_->src_node2csp_,
-                    sharable_data_->src_csp_size_, sharable_data_->src_csp_cell_index_, sharable_data_->src_csp_index_);
+                src_csp = get_polygons_celldata(src_fs_, sharable_data_->src_.csp2node, sharable_data_->src_.node2csp,
+                    sharable_data_->src_.csp_size, sharable_data_->src_.csp_cell_index, sharable_data_->src_.csp_index);
             }
             else {
-                src_csp = get_polygons_nodedata(src_fs_, sharable_data_->src_csp2node_, sharable_data_->src_node2csp_,
-                    sharable_data_->src_csp_size_, sharable_data_->src_csp_cell_index_, sharable_data_->src_csp_index_);
+                src_csp = get_polygons_nodedata(src_fs_, sharable_data_->src_);
             }
             stopwatch.stop();
             remap_stat_.memory[Statistics::MEM_SRC_PLG] = memory_of(src_csp);
@@ -889,10 +890,10 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
         ATLAS_TRACE_SCOPE("Get target polygons") {
             StopWatch stopwatch;
             stopwatch.start();
-            init_csp_index(tgt_cell_data_, tgt_fs_, sharable_data_->tgt_csp2node_, sharable_data_->tgt_node2csp_, sharable_data_->tgt_csp_size_, sharable_data_->tgt_csp_cell_index_, sharable_data_->tgt_csp_index_);
+            init_csp_index(tgt_cell_data_, tgt_fs_, sharable_data_->tgt_.csp2node, sharable_data_->tgt_.node2csp, sharable_data_->tgt_.csp_size, sharable_data_->tgt_.csp_cell_index, sharable_data_->tgt_.csp_index);
             stopwatch.stop();
             sharable_data_->timings.target_polygons_assembly = stopwatch.elapsed();
-            remap_stat_.counts[Statistics::NUM_TGT_PLG] = sharable_data_->tgt_csp_size_;
+            remap_stat_.counts[Statistics::NUM_TGT_PLG] = sharable_data_->tgt_.csp_size;
         }
     }
 
@@ -902,96 +903,95 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
     if (compute_cache) {
         intersect_polygons(src_csp);
 
-        auto& src_points_ = sharable_data_->src_points_;
-        src_points_.resize(n_spoints_);
-        sharable_data_->src_areas_.resize(n_spoints_);
-        auto& src_areas_v = sharable_data_->src_areas_;
+        auto& src_points = sharable_data_->src_.points;
+        auto& src_areas  = sharable_data_->src_.areas;
+        src_points.resize(n_spoints_);
+        src_areas.resize(n_spoints_);
         {
             ATLAS_TRACE("Store src_areas and src_point");
             if (src_cell_data_) {
                 for (idx_t spt = 0; spt < n_spoints_; ++spt) {
                     const auto& s_csp = src_csp[spt].polygon;
-                    src_points_[spt]  = s_csp.centroid();
-                    src_areas_v[spt]  = s_csp.area();
+                    src_points[spt]  = s_csp.centroid();
+                    src_areas[spt]  = s_csp.area();
                 }
             }
             else {
-                auto& src_node2csp_ = sharable_data_->src_node2csp_;
+                auto& src_node2csp = sharable_data_->src_.node2csp;
                 const auto lonlat   = array::make_view<double, 2>(src_mesh_.nodes().lonlat());
                 for (idx_t spt = 0; spt < n_spoints_; ++spt) {
-                    if (src_node2csp_[spt].size() == 0) {
+                    if (src_node2csp[spt].size() == 0) {
                         // this is a node to which no subpolygon is associated
                         // maximal twice per mesh we end here, and that is only when mesh has nodes on poles
                         auto p = PointLonLat{lonlat(spt, 0), lonlat(spt, 1)};
-                        eckit::geometry::Sphere::convertSphericalToCartesian(1., p, src_points_[spt]);
+                        eckit::geometry::Sphere::convertSphericalToCartesian(1., p, src_points[spt]);
                     }
                     else {
                         // .. in the other case, start computing the barycentre
-                        src_points_[spt] = PointXYZ{0., 0., 0.};
+                        src_points[spt] = PointXYZ{0., 0., 0.};
                     }
-                    src_areas_v[spt] = 0.;
-                    for (idx_t isubcell = 0; isubcell < src_node2csp_[spt].size(); ++isubcell) {
-                        idx_t subcell     = src_node2csp_[spt][isubcell];
+                    src_areas[spt] = 0.;
+                    for (idx_t isubcell = 0; isubcell < src_node2csp[spt].size(); ++isubcell) {
+                        idx_t subcell     = src_node2csp[spt][isubcell];
                         const auto& s_csp = src_csp[subcell].polygon;
-                        src_areas_v[spt] += s_csp.area();
-                        src_points_[spt] = src_points_[spt] + PointXYZ::mul(s_csp.centroid(), s_csp.area());
+                        src_areas[spt] += s_csp.area();
+                        src_points[spt] = src_points[spt] + PointXYZ::mul(s_csp.centroid(), s_csp.area());
                     }
-                    double src_point_norm = PointXYZ::norm(src_points_[spt]);
+                    double src_point_norm = PointXYZ::norm(src_points[spt]);
                     if (src_point_norm == 0.) {
                         // Probably encountered degenerate subpolygons that lead to zero area. Can happen sometimes in ORCA grid
                         auto p = PointLonLat{lonlat(spt, 0), lonlat(spt, 1)};
-                        eckit::geometry::Sphere::convertSphericalToCartesian(1., p, src_points_[spt]);
-                        src_point_norm = PointXYZ::norm(src_points_[spt]);
+                        eckit::geometry::Sphere::convertSphericalToCartesian(1., p, src_points[spt]);
+                        src_point_norm = PointXYZ::norm(src_points[spt]);
                     }
-                    src_points_[spt] = PointXYZ::div(src_points_[spt], src_point_norm);
+                    src_points[spt] = PointXYZ::div(src_points[spt], src_point_norm);
                 }
             }
         }
-        auto& tgt_points_ = sharable_data_->tgt_points_;
-        tgt_points_.resize(n_tpoints_);
-        sharable_data_->tgt_areas_.resize(n_tpoints_);
-        auto& tgt_areas_v = sharable_data_->tgt_areas_;
+        auto& tgt_points = sharable_data_->tgt_.points;
+        auto& tgt_areas  = sharable_data_->tgt_.areas;
+        tgt_points.resize(n_tpoints_);
+        tgt_areas.resize(n_tpoints_);
         {
             ATLAS_TRACE("Store src_areas and src_point");
             if (tgt_cell_data_) {
                 for (idx_t tpt = 0; tpt < n_tpoints_; ++tpt) {
-                    auto tgt_csp = get_csp_celldata(tpt, tgt_mesh_, sharable_data_->tgt_csp_size_, sharable_data_->tgt_csp_index_);
+                    auto tgt_csp = get_csp_celldata(tpt, tgt_mesh_, sharable_data_->tgt_.csp_size, sharable_data_->tgt_.csp_index);
                     const auto& t_csp = tgt_csp.polygon;
-                    tgt_points_[tpt]  = t_csp.centroid();
-                    tgt_areas_v[tpt]  = t_csp.area();
+                    tgt_points[tpt]  = t_csp.centroid();
+                    tgt_areas[tpt]  = t_csp.area();
                 }
             }
             else {
-                auto& tgt_node2csp_ = sharable_data_->tgt_node2csp_;
+                auto& tgt_node2csp = sharable_data_->tgt_.node2csp;
                 const auto lonlat   = array::make_view<double, 2>(tgt_mesh_.nodes().lonlat());
                 for (idx_t tpt = 0; tpt < n_tpoints_; ++tpt) {
-                    if (tgt_node2csp_[tpt].size() == 0) {
+                    if (tgt_node2csp[tpt].size() == 0) {
                         // this is a node to which no subpolygon is associated
                         // maximal twice per mesh we end here, and that is only when mesh has nodes on poles
                         auto p = PointLonLat{lonlat(tpt, 0), lonlat(tpt, 1)};
-                        eckit::geometry::Sphere::convertSphericalToCartesian(1., p, tgt_points_[tpt]);
+                        eckit::geometry::Sphere::convertSphericalToCartesian(1., p, tgt_points[tpt]);
                     }
                     else {
                         // .. in the other case, start computing the barycentre
-                        tgt_points_[tpt] = PointXYZ{0., 0., 0.};
+                        tgt_points[tpt] = PointXYZ{0., 0., 0.};
                     }
-                    tgt_areas_v[tpt] = 0.;
-                    for (idx_t isubcell = 0; isubcell < tgt_node2csp_[tpt].size(); ++isubcell) {
-                        idx_t subcell     = tgt_node2csp_[tpt][isubcell];
-                        auto tgt_csp = get_csp_nodedata(subcell, tgt_mesh_, sharable_data_->tgt_csp2node_, sharable_data_->tgt_node2csp_,
-                            sharable_data_->tgt_csp_size_, sharable_data_->tgt_csp_cell_index_, sharable_data_->tgt_csp_index_);
+                    tgt_areas[tpt] = 0.;
+                    for (idx_t isubcell = 0; isubcell < tgt_node2csp[tpt].size(); ++isubcell) {
+                        idx_t subcell     = tgt_node2csp[tpt][isubcell];
+                        auto tgt_csp = get_csp_nodedata(subcell, tgt_mesh_, sharable_data_->tgt_);
                         const auto& t_csp = tgt_csp.polygon;
-                        tgt_areas_v[tpt] += t_csp.area();
-                        tgt_points_[tpt] = tgt_points_[tpt] + PointXYZ::mul(t_csp.centroid(), t_csp.area());
+                        tgt_areas[tpt] += t_csp.area();
+                        tgt_points[tpt] = tgt_points[tpt] + PointXYZ::mul(t_csp.centroid(), t_csp.area());
                     }
-                    double tgt_point_norm = PointXYZ::norm(tgt_points_[tpt]);
+                    double tgt_point_norm = PointXYZ::norm(tgt_points[tpt]);
                     if (tgt_point_norm == 0.) {
                         // Probably encountered degenerate subpolygons cells with zero area as can happen with ORCA sometimes
                         auto p = PointLonLat{lonlat(tpt, 0), lonlat(tpt, 1)};
-                        eckit::geometry::Sphere::convertSphericalToCartesian(1., p, tgt_points_[tpt]);
-                        tgt_point_norm = PointXYZ::norm(tgt_points_[tpt]);
+                        eckit::geometry::Sphere::convertSphericalToCartesian(1., p, tgt_points[tpt]);
+                        tgt_point_norm = PointXYZ::norm(tgt_points[tpt]);
                     }
-                    tgt_points_[tpt] = PointXYZ::div(tgt_points_[tpt], tgt_point_norm);
+                    tgt_points[tpt] = PointXYZ::div(tgt_points[tpt], tgt_point_norm);
                 }
             }
         }
@@ -1076,7 +1076,7 @@ build_source_kdtree(util::KDTree<idx_t>& kdt_search, double& max_srccell_rad, co
         };
         if (! src_cell_data_) {
             for (idx_t inode = 0; inode < src_mesh_.nodes().size(); ++inode) {
-                const auto& csp_ids = sharable_data_->src_node2csp_[inode];
+                const auto& csp_ids = sharable_data_->src_.node2csp[inode];
                 if (!csp_ids.empty()) {
                     if (consider_src(node_part(inode), node_ridx(inode), node_ghost(inode))) {
                         for (const auto& csp_id : csp_ids) {
@@ -1089,8 +1089,8 @@ build_source_kdtree(util::KDTree<idx_t>& kdt_search, double& max_srccell_rad, co
             }
         }
         else {
-            for (idx_t csp_id = 0; csp_id < sharable_data_->src_csp_size_; ++csp_id) {
-                idx_t icell = sharable_data_->src_csp_index_[csp_id];
+            for (idx_t csp_id = 0; csp_id < sharable_data_->src_.csp_size; ++csp_id) {
+                idx_t icell = sharable_data_->src_.csp_index[csp_id];
                 if (consider_src(cell_part(icell), cell_ridx(icell), cell_halo(icell))) {
                     const auto& s_csp = src_csp[csp_id].polygon;
                     kdt_search.insert(s_csp.centroid(), icell);
@@ -1194,8 +1194,8 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
     std::array<double, 2> area_coverage{0., 0.};
 
     auto& tgt_iparam_ = sharable_data_->tgt_iparam_;
-    auto& tgt_csp_size_ = sharable_data_->tgt_csp_size_;
-    tgt_iparam_.resize(tgt_csp_size_);
+    auto& tgt_csp_size = sharable_data_->tgt_.csp_size;
+    tgt_iparam_.resize(tgt_csp_size);
 
     std::vector<InterpolationParameters> src_iparam;  // only used for debugging
     if (validate_) {
@@ -1231,9 +1231,9 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
     ATLAS_TRACE_SCOPE("intersecting polygons") {
         eckit::Channel blackhole;
         eckit::ProgressTimer progress("Intersecting polygons ", 100, " percent", double(10),
-                                    tgt_csp_size_ > 50 ? Log::info() : blackhole);
+                                    tgt_csp_size > 50 ? Log::info() : blackhole);
         float last_progress_percent = 0.00;
-        for (idx_t tcsp_id = 0; tcsp_id < tgt_csp_size_; ++tcsp_id) {
+        for (idx_t tcsp_id = 0; tcsp_id < tgt_csp_size; ++tcsp_id) {
             auto tgt_csp = get_tgt_csp(tcsp_id);
             if (tgt_csp.halo_type <= tgt_halo_intersection_depth) {
                 intersection_src_cell_idx.resize(0);
@@ -1313,7 +1313,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
                     num_pol[Statistics::NUM_INT_PLG] += tgt_iparam_[tcsp_id].weights.size();
                 }
             }
-            if ( double(tcsp_id) / double(tgt_csp_size_) > last_progress_percent ) {
+            if ( double(tcsp_id) / double(tgt_csp_size) > last_progress_percent ) {
                 last_progress_percent += 0.01;
                 ++progress;
             }
@@ -1325,7 +1325,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
     timings.polygon_intersections  = stopwatch_polygon_intersections.elapsed();
     timings.source_kdtree_search   = stopwatch_kdtree_search.elapsed();
     num_pol[Statistics::NUM_SRC_PLG]                   = src_csp.size();
-    num_pol[Statistics::NUM_TGT_PLG]                   = tgt_csp_size_;
+    num_pol[Statistics::NUM_TGT_PLG]                   = tgt_csp_size;
     ATLAS_TRACE_MPI(ALLREDUCE) {
         mpi::comm().allReduceInPlace(num_pol.data(), num_pol.size(), eckit::mpi::sum());
     }
@@ -1346,7 +1346,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
         ATLAS_TRACE_SCOPE("compute errors in coverting target cells with intersections") {
             double geo_err_l1   = 0.;
             double geo_err_linf = -1.;
-            for (idx_t tcsp_id = 0; tcsp_id < tgt_csp_size_; ++tcsp_id) {
+            for (idx_t tcsp_id = 0; tcsp_id < tgt_csp_size; ++tcsp_id) {
                 auto tgt_csp = get_tgt_csp(tcsp_id);
                 if (tgt_csp.halo_type != 0 ) {
                     // skip periodic & halo cells
@@ -1482,47 +1482,47 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
     size_t triplets_size    = 0;
     // determine the size of array of triplets used to define the sparse matrix
     if (tgt_cell_data_) {
-        for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_csp_size_; ++tcsp_id) {
+        for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
             triplets_size += tgt_iparam[tcsp_id].cell_idx.size();
         }
     }
     else {
-        auto& tgt_node2csp_ = data_->tgt_node2csp_;
+        auto& tgt_node2csp = data_->tgt_.node2csp;
         for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
-            for (idx_t isubcell = 0; isubcell < tgt_node2csp_[tnode].size(); ++isubcell) {
-                idx_t subcell = tgt_node2csp_[tnode][isubcell];
+            for (idx_t isubcell = 0; isubcell < tgt_node2csp[tnode].size(); ++isubcell) {
+                idx_t subcell = tgt_node2csp[tnode][isubcell];
                 triplets_size += tgt_iparam[subcell].weights.size();
             }
         }
     }
-    Log::info() << "tgt_csp_size_ : " << data_->tgt_csp_size_ << std::endl;
+    Log::info() << "tgt_csp_size : " << data_->tgt_.csp_size << std::endl;
     Log::info() << "triplets_size : " << triplets_size << std::endl;
     triplets.reserve(triplets_size);
     std::map<idx_t, double> tpoint_subweights;
 
     // assemble triplets to define the sparse matrix
-    const auto& tgt_areas_v = data_->tgt_areas_;
+    const auto& tgt_areas = data_->tgt_.areas;
     if (tgt_cell_data_ && src_cell_data_) {
-        for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_csp_size_; ++tcsp_id) {
+        for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
             const auto& iparam = tgt_iparam[tcsp_id];
             for (idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell) {
                 idx_t scell = iparam.cell_idx[icell];
-                double inv_tgt_weight = (tgt_areas_v[tcsp_id] > 0. ? 1. / tgt_areas_v[tcsp_id] : 0.);
+                double inv_tgt_weight = (tgt_areas[tcsp_id] > 0. ? 1. / tgt_areas[tcsp_id] : 0.);
                 triplets.emplace_back(tcsp_id, scell, iparam.weights[icell] * inv_tgt_weight);
             }
         }
     }
     else if (not tgt_cell_data_ && src_cell_data_) {
-        auto& tgt_node2csp_ = data_->tgt_node2csp_;
+        auto& tgt_node2csp = data_->tgt_.node2csp;
         for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
             tpoint_subweights.clear();
-            for (idx_t isubcell = 0; isubcell < tgt_node2csp_[tnode].size(); ++isubcell) {
-                const idx_t subcell = tgt_node2csp_[tnode][isubcell];
+            for (idx_t isubcell = 0; isubcell < tgt_node2csp[tnode].size(); ++isubcell) {
+                const idx_t subcell = tgt_node2csp[tnode][isubcell];
                 const auto& iparam  = tgt_iparam[subcell];
                 for (idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell) {
                     idx_t scell = iparam.cell_idx[icell];
                     ATLAS_ASSERT(scell < n_spoints_);
-                    double inv_tgt_weight = (tgt_areas_v[tnode] > 0. ? 1. / tgt_areas_v[tnode] : 0.);
+                    double inv_tgt_weight = (tgt_areas[tnode] > 0. ? 1. / tgt_areas[tnode] : 0.);
                     double w = iparam.weights[icell] * inv_tgt_weight;
                     auto pair = tpoint_subweights.emplace(scell, w);
                     bool inserted = pair.second;
@@ -1538,15 +1538,15 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
         }
     }
     else if (tgt_cell_data_ && not src_cell_data_) {
-        auto& src_csp2node_ = data_->src_csp2node_;
-        for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_csp_size_; ++tcsp_id) {
+        auto& src_csp2node = data_->src_.csp2node;
+        for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
             const auto& iparam = tgt_iparam[tcsp_id];
             tpoint_subweights.clear();
             for (idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell) {
                 idx_t scell            = iparam.cell_idx[icell];
-                idx_t snode            = src_csp2node_[scell];
+                idx_t snode            = src_csp2node[scell];
                 ATLAS_ASSERT(snode < n_spoints_);
-                double inv_tgt_weight = (tgt_areas_v[tcsp_id] > 0. ? 1. / tgt_areas_v[tcsp_id] : 0.);
+                double inv_tgt_weight = (tgt_areas[tcsp_id] > 0. ? 1. / tgt_areas[tcsp_id] : 0.);
                 double w = iparam.weights[icell] * inv_tgt_weight;
                 auto pair = tpoint_subweights.emplace(snode, w);
                 bool inserted = pair.second;
@@ -1561,18 +1561,18 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
         }
     }
     else if (not tgt_cell_data_ && not src_cell_data_) {
-        auto& tgt_node2csp_ = data_->tgt_node2csp_;
-        auto& src_csp2node_ = data_->src_csp2node_;
+        auto& tgt_node2csp = data_->tgt_.node2csp;
+        auto& src_csp2node = data_->src_.csp2node;
         for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
             tpoint_subweights.clear();
-            for (idx_t isubcell = 0; isubcell < tgt_node2csp_[tnode].size(); ++isubcell) {
-                const idx_t subcell = tgt_node2csp_[tnode][isubcell];
+            for (idx_t isubcell = 0; isubcell < tgt_node2csp[tnode].size(); ++isubcell) {
+                const idx_t subcell = tgt_node2csp[tnode][isubcell];
                 const auto& iparam  = tgt_iparam[subcell];
                 for (idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell) {
-                    idx_t scell            = iparam.cell_idx[icell];
-                    idx_t snode            = src_csp2node_[scell];
+                    idx_t scell = iparam.cell_idx[icell];
+                    idx_t snode = src_csp2node[scell];
                     ATLAS_ASSERT(snode < n_spoints_);
-                    double inv_node_weight = (tgt_areas_v[tnode] > 0. ? 1. / tgt_areas_v[tnode] : 0.);
+                    double inv_node_weight = (tgt_areas[tnode] > 0. ? 1. / tgt_areas[tnode] : 0.);
                     double w = iparam.weights[icell] * inv_node_weight;
                     auto pair = tpoint_subweights.emplace(snode, w);
                     bool inserted = pair.second;
@@ -1616,10 +1616,10 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
     ATLAS_TRACE("ConservativeMethod: build cons-2 interpolant matrix");
     Triplets triplets;
     ATLAS_ASSERT(not matrix_free_);
-    const auto& src_points_ = data_->src_points_;
+    const auto& src_points = data_->src_.points;
     const auto& tgt_iparam_ = data_->tgt_iparam_;
     size_t triplets_size    = 0;
-    const auto& tgt_areas_v = data_->tgt_areas_;
+    const auto& tgt_areas = data_->tgt_.areas;
 
     // struct tripple{idx_t row; idx_t column; double value; };
     // std::vector<tripple> triplets;
@@ -1630,10 +1630,10 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
     if (tgt_cell_data_) {
         const auto tgt_halo = array::make_view<int, 1>(tgt_mesh_.cells().halo());
 
-        for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_csp_size_; ++tcsp_id) {
+        for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
             const auto& iparam = tgt_iparam_[tcsp_id];
             idx_t tcell;
-            get_owner_cell_celldata(tcsp_id, data_->tgt_csp_index_, tcell);
+            get_owner_cell_celldata(tcsp_id, data_->tgt_.csp_index, tcell);
             if (iparam.cell_idx.size() == 0 || tgt_halo(tcell)) {
                 continue;
             }
@@ -1647,7 +1647,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
             else {
                 for (idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell) {
                     const idx_t subcell = iparam.cell_idx[icell];
-                    const idx_t snode = data_->src_csp2node_[subcell];
+                    const idx_t snode = data_->src_.csp2node[subcell];
                     const auto src_neighbours = get_node_neighbours(src_mesh_, snode, w_node);
                     triplets_size += 2 * src_neighbours.size() + 1; 
                 }
@@ -1656,9 +1656,9 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
         triplets.reserve(triplets_size);
         std::vector<PointXYZ> Rsj;
         std::vector<PointXYZ> Aik;
-        for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_csp_size_; ++tcsp_id) {
+        for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
             idx_t tcell;
-            get_owner_cell_celldata(tcsp_id, data_->tgt_csp_index_, tcell);
+            get_owner_cell_celldata(tcsp_id, data_->tgt_.csp_index, tcell);
             const auto& iparam  = tgt_iparam_[tcsp_id];
             if (iparam.cell_idx.size() == 0 || tgt_halo(tcell)) {
                 continue;
@@ -1676,21 +1676,21 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
 #if defined(__APPLE__)
             volatile // On Apple, prevent FE_DIVBYZERO possibly triggered when inverting dual_area_inv a few lines below
 #endif
-            double tcell_area_inv = ( tgt_areas_v[tcell] > 0.) ? 1. / tgt_areas_v[tcell] : 0.; // dual_area_inv, even if protected, may still leads to FE_DIVBYZERO with Apple without volatile trick
+            double tcell_area_inv = ( tgt_areas[tcell] > 0.) ? 1. / tgt_areas[tcell] : 0.; // dual_area_inv, even if protected, may still leads to FE_DIVBYZERO with Apple without volatile trick
 
             for (idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell) {
                 Aik.resize(iparam.cell_idx.size());
                 const PointXYZ& Csk     = iparam.centroids[icell];
                 const idx_t scell       = iparam.cell_idx[icell];
-                const idx_t spt         = src_cell_data_ ? scell : data_->src_csp2node_[scell];
-                const PointXYZ& Cs      = src_points_[spt]; // !!! this is NOT barycentre of the subcell in case of NodeColumns
+                const idx_t spt         = src_cell_data_ ? scell : data_->src_.csp2node[scell];
+                const PointXYZ& Cs      = src_points[spt]; // !!! this is NOT barycentre of the subcell in case of NodeColumns
                 Aik[icell]              = Csk - Cs - PointXYZ::mul(Cs, PointXYZ::dot(Cs, Csk - Cs));
                 std::vector<idx_t> src_neighbours;
                 if (src_cell_data_) {
                     src_neighbours = get_cell_neighbours(src_mesh_, scell, w_cell);
                 }
                 else {
-                    idx_t snode    = data_->src_csp2node_[scell];
+                    idx_t snode    = data_->src_.csp2node[scell];
                     src_neighbours = get_node_neighbours(src_mesh_, snode, w_node);
                 }
                 Rsj.resize(src_neighbours.size());
@@ -1702,8 +1702,8 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                 for (idx_t j = 0; j < src_neighbours.size(); ++j) {
                     idx_t sj         = src_neighbours[j];
                     idx_t nsj        = src_neighbours[ next_index(j, src_neighbours.size()) ];
-                    const auto& Csj  = src_points_[sj];
-                    const auto& Cnsj = src_points_[nsj];
+                    const auto& Csj  = src_points[sj];
+                    const auto& Cnsj = src_points[nsj];
                     if (ConvexSphericalPolygon::GreatCircleSegment(Cs, Csj).inLeftHemisphere(Cnsj, -1e-16)) {
                         Rsj[j] = PointXYZ::cross(Cnsj, Csj);
                         dual_area_inv += ConvexSphericalPolygon({Cs, Csj, Cnsj}).area();
@@ -1728,7 +1728,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                     triplets.emplace_back(tcell, scell, iparam.weights[icell] * tcell_area_inv - PointXYZ::dot(Rs, Aik[icell]));
                 }
                 else {
-                    idx_t snode            = data_->src_csp2node_[scell];
+                    idx_t snode            = data_->src_.csp2node[scell];
                     for (idx_t j = 0; j < src_neighbours.size(); ++j) {
                         idx_t nj  = next_index(j, src_neighbours.size());
                         idx_t sj  = src_neighbours[j];
@@ -1743,15 +1743,15 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
     }
     else {  // if ( not tgt_cell_data_ )
         const auto tgt_ghost = array::make_view<int, 1>(tgt_mesh_.nodes().ghost());
-        auto& tgt_node2csp_ = data_->tgt_node2csp_;
+        auto& tgt_node2csp = data_->tgt_.node2csp;
         Workspace_get_node_neighbours w;
         triplets_size = 0;
         for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
             if (tgt_ghost(tnode)) {
                 continue;
             }
-            for (idx_t isubcell = 0; isubcell < tgt_node2csp_[tnode].size(); ++isubcell) {
-                const idx_t tsubcell = tgt_node2csp_[tnode][isubcell];
+            for (idx_t isubcell = 0; isubcell < tgt_node2csp[tnode].size(); ++isubcell) {
+                const idx_t tsubcell = tgt_node2csp[tnode][isubcell];
                 const auto& iparam = tgt_iparam_[tsubcell];
                 if (iparam.cell_idx.size() == 0) {
                     continue;
@@ -1766,7 +1766,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                 else {
                     for (idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell) {
                         const idx_t subcell = iparam.cell_idx[icell];
-                        const idx_t snode = data_->src_csp2node_[subcell];
+                        const idx_t snode = data_->src_.csp2node[subcell];
                         const auto src_neighbours = get_node_neighbours(src_mesh_, snode, w_node);
                         triplets_size += 2 * src_neighbours.size() + 1; 
                     }
@@ -1781,8 +1781,8 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
             if (tgt_ghost(tnode)) {
                 continue;
             }
-            for (idx_t isubcell = 0; isubcell < tgt_node2csp_[tnode].size(); ++isubcell) {
-                const idx_t tsubcell = tgt_node2csp_[tnode][isubcell];
+            for (idx_t isubcell = 0; isubcell < tgt_node2csp[tnode].size(); ++isubcell) {
+                const idx_t tsubcell = tgt_node2csp[tnode][isubcell];
                 const auto& iparam = tgt_iparam_[tsubcell];
                 if (iparam.cell_idx.size() == 0) {
                     continue;
@@ -1790,13 +1790,13 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
 #if defined(__APPLE__)
                 volatile
 #endif
-                auto tnode_area_inv = ( tgt_areas_v[tnode] > 0.) ? 1. / tgt_areas_v[tnode] : 0.;
+                auto tnode_area_inv = ( tgt_areas[tnode] > 0.) ? 1. / tgt_areas[tnode] : 0.;
 
                 // get the barycentre of the dual cell
                 // better conservation
                 // PointXYZ Cs = {0., 0., 0.};
-                // for ( idx_t isubcell = 0; isubcell < src_node2csp_[snode].size(); ++isubcell ) {
-                //     idx_t subcell      = src_node2csp_[snode][isubcell];
+                // for ( idx_t isubcell = 0; isubcell < src_.node2csp[snode].size(); ++isubcell ) {
+                //     idx_t subcell      = src_.node2csp[snode][isubcell];
                 //     const auto& iparam = src_iparam_[subcell];
                 //     for ( idx_t icell = 0; icell < iparam.cell_idx.size(); ++icell ) {
                 //         Cs = Cs + PointXYZ::mul( iparam.centroids[icell], iparam.weights[icell] );
@@ -1809,8 +1809,8 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                     Aik.resize(iparam.cell_idx.size());
                     const PointXYZ& Csk     = iparam.centroids[icell];
                     const idx_t scell       = iparam.cell_idx[icell];
-                    const idx_t spt         = src_cell_data_ ? scell : data_->src_csp2node_[scell];
-                    const PointXYZ& Cs      = src_points_[spt]; // !!! this is NOT barycentre of the subcell in case of NodeColumns
+                    const idx_t spt         = src_cell_data_ ? scell : data_->src_.csp2node[scell];
+                    const PointXYZ& Cs      = src_points[spt]; // !!! this is NOT barycentre of the subcell in case of NodeColumns
                     Aik[icell]              = Csk - Cs - PointXYZ::mul(Cs, PointXYZ::dot(Cs, Csk - Cs));
 #if defined(__APPLE__)
                     volatile
@@ -1821,7 +1821,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                         src_neighbours = get_cell_neighbours(src_mesh_, scell, w_cell);
                     }
                     else {
-                        idx_t snode    = data_->src_csp2node_[scell];
+                        idx_t snode    = data_->src_.csp2node[scell];
                         src_neighbours = get_node_neighbours(src_mesh_, snode, w);
                     }
                     Rsj.resize(src_neighbours.size());
@@ -1829,8 +1829,8 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                     for (idx_t j = 0; j < src_neighbours.size(); ++j) {
                         idx_t sj         = src_neighbours[j];
                         idx_t nsj        = src_neighbours[ next_index(j, src_neighbours.size()) ];
-                        const auto& Csj  = src_points_[sj];
-                        const auto& Cnsj = src_points_[nsj];
+                        const auto& Csj  = src_points[sj];
+                        const auto& Cnsj = src_points[nsj];
                         if (ConvexSphericalPolygon::GreatCircleSegment(Cs, Csj).inLeftHemisphere(Cnsj, -1e-16)) {
                             Rsj[j] = PointXYZ::cross(Cnsj, Csj);
                             dual_area_inv += ConvexSphericalPolygon({Cs, Csj, Cnsj}).area();
@@ -1855,7 +1855,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                         triplets.emplace_back(tnode, scell, iparam.weights[icell] * tnode_area_inv - PointXYZ::dot(Rs, Aik[icell]));
                     }
                     else {
-                        idx_t snode            = data_->src_csp2node_[scell];
+                        idx_t snode = data_->src_.csp2node[scell];
                         for (idx_t j = 0; j < src_neighbours.size(); ++j) {
                             idx_t nj  = next_index(j, src_neighbours.size());
                             idx_t sj  = src_neighbours[j];
@@ -1901,7 +1901,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
             const auto src_vals = array::make_view<double, 1>(src_field);
             auto tgt_vals       = array::make_view<double, 1>(tgt_field);
             const auto& tgt_iparam = data_->tgt_iparam_;
-            const auto& tgt_areas = data_->tgt_areas_;
+            const auto& tgt_areas = data_->tgt_.areas;
 
             if (tgt_cell_data_ && src_cell_data_) {
                 for (idx_t tcell = 0; tcell < n_tpoints_; ++tcell) {
@@ -1919,7 +1919,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                 }
             }
             else if (not tgt_cell_data_ && src_cell_data_) {
-                auto& tgt_node2csp = data_->tgt_node2csp_;
+                auto& tgt_node2csp = data_->tgt_.node2csp;
                 for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
                     tgt_vals(tnode) = 0.;
                     for (idx_t tnode_subcell = 0; tnode_subcell < tgt_node2csp[tnode].size(); ++tnode_subcell) {
@@ -1939,7 +1939,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                 }
             }
             else if (tgt_cell_data_ && not src_cell_data_) {
-                const auto& src_csp2node = data_->src_csp2node_;
+                const auto& src_csp2node = data_->src_.csp2node;
                 for (idx_t tcell = 0; tcell < n_tpoints_; ++tcell) {
                     tgt_vals(tcell) = 0.;
                     const auto& iparam  = tgt_iparam[tcell];
@@ -1957,8 +1957,8 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                 }
             }
             else if (not tgt_cell_data_ && not src_cell_data_) {
-                const auto& tgt_node2csp = data_->tgt_node2csp_;
-                const auto& src_csp2node = data_->src_csp2node_;
+                const auto& tgt_node2csp = data_->tgt_.node2csp;
+                const auto& src_csp2node = data_->src_.csp2node;
                 for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
                     tgt_vals(tnode) = 0.;
                     for (idx_t tnode_subcell = 0; tnode_subcell < tgt_node2csp[tnode].size(); ++tnode_subcell) {
@@ -1992,8 +1992,8 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
             }
             ATLAS_TRACE("matrix_free_order_2");
             const auto& src_iparam_ = data_->src_iparam_;
-            const auto& tgt_areas_v = data_->tgt_areas_;
-            auto& src_points_ = data_->src_points_;
+            const auto& tgt_.areas = data_->tgt_.areas;
+            auto& src_.points = data_->src_.points;
             const auto src_vals = array::make_view<double, 1>(src_field);
             auto tgt_vals       = array::make_view<double, 1>(tgt_field);
             const auto halo     = array::make_view<int, 1>(src_mesh_.cells().halo());
@@ -2005,7 +2005,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                 if (iparam.cell_idx.size() == 0 or halo(scell)) {
                     continue;
                 }
-                const PointXYZ& Cs       = src_points_[scell];
+                const PointXYZ& Cs       = src_.points[scell];
                 PointXYZ grad            = {0., 0., 0.};
                 PointXYZ src_barycenter  = {0., 0., 0.};
                 auto nb_cells = get_cell_neighbours(src_mesh_, scell);
@@ -2014,8 +2014,8 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                     idx_t nj    = next_index(j, nb_cells.size());
                     idx_t sj     = nb_cells[j];
                     idx_t nsj    = nb_cells[nj];
-                    const auto& Csj  = src_points_[sj];
-                    const auto& Cnsj = src_points_[nsj];
+                    const auto& Csj  = src_.points[sj];
+                    const auto& Cnsj = src_.points[nsj];
                     double val = 0.5 * (src_vals(nj) + src_vals(nsj)) - src_vals(j);
                     if (ConvexSphericalPolygon::GreatCircleSegment(Cs, Csj).inLeftHemisphere(Cnsj, -1e-16)) {
                         dual_area_inv += ConvexSphericalPolygon({Cs, Csj, Cnsj}).area();
@@ -2041,7 +2041,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                 }
             }
             for (idx_t tcell = 0; tcell < tgt_vals.size(); ++tcell) {
-                tgt_vals[tcell] /= tgt_areas_v[tcell];
+                tgt_vals[tcell] /= tgt_.areas[tcell];
             }
             */
         }
@@ -2060,8 +2060,8 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
         const auto tgt_cell_halo  = array::make_view<int, 1>(tgt_mesh_.cells().halo());
         const auto tgt_node_ghost = array::make_view<int, 1>(tgt_mesh_.nodes().ghost());
         const auto tgt_node_halo  = array::make_view<int, 1>(tgt_mesh_.nodes().halo());
-        const auto& src_areas_v   = data_->src_areas_;
-        const auto& tgt_areas_v   = data_->tgt_areas_;
+        const auto& src_areas   = data_->src_.areas;
+        const auto& tgt_areas   = data_->tgt_.areas;
 
         const auto src_vals = array::make_view<double, 1>(src_field);
         const auto tgt_vals = array::make_view<double, 1>(tgt_field);
@@ -2072,7 +2072,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                 if (src_cell_halo(spt)) {
                     continue;
                 }
-                err_remap_cons += src_vals(spt) * src_areas_v[spt];
+                err_remap_cons += src_vals(spt) * src_areas[spt];
             }
         }
         else {
@@ -2080,7 +2080,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                 if (src_node_halo(spt) or src_node_ghost(spt)) {
                     continue;
                 }
-                err_remap_cons += src_vals(spt) * src_areas_v[spt];
+                err_remap_cons += src_vals(spt) * src_areas[spt];
             }
         }
         if (tgt_cell_data_) {
@@ -2088,7 +2088,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                 if (tgt_cell_halo(tpt)) {
                     continue;
                 }
-                err_remap_cons -= tgt_vals(tpt) * tgt_areas_v[tpt];
+                err_remap_cons -= tgt_vals(tpt) * tgt_areas[tpt];
             }
         }
         else {
@@ -2096,7 +2096,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                 if (tgt_node_halo(tpt) or tgt_node_ghost(tpt)) {
                     continue;
                 }
-                err_remap_cons -= tgt_vals(tpt) * tgt_areas_v[tpt];
+                err_remap_cons -= tgt_vals(tpt) * tgt_areas[tpt];
             }
         }
         ATLAS_TRACE_MPI(ALLREDUCE) { mpi::comm().allReduceInPlace(&err_remap_cons, 1, eckit::mpi::sum()); }
@@ -2140,18 +2140,18 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
     metadata.set("max_timings_in_seconds_per_task.interpolation", stopwatch.elapsed());
 
     remap_stat_.memory[Statistics::MEM_MATRIX] = (matrix_free_ ? 0 : matrix().footprint());
-    remap_stat_.memory[Statistics::MEM_SRC] = memory_of(data_->src_points_);
-    remap_stat_.memory[Statistics::MEM_TGT] = memory_of(data_->tgt_points_);
-    remap_stat_.memory[Statistics::MEM_SRC_AREAS] = memory_of(data_->src_areas_);
-    remap_stat_.memory[Statistics::MEM_TGT_AREAS] = memory_of(data_->tgt_areas_);
-    remap_stat_.memory[Statistics::MEM_SRC_CSP2N] = memory_of(data_->src_csp2node_);
-    remap_stat_.memory[Statistics::MEM_SRC_N2CSP] = memory_of(data_->src_node2csp_);
-    remap_stat_.memory[Statistics::MEM_SRC_CSP2CI] = memory_of(data_->src_csp_cell_index_);
-    remap_stat_.memory[Statistics::MEM_SRC_CSP2C] = memory_of(data_->src_csp_index_);
-    remap_stat_.memory[Statistics::MEM_TGT_CSP2N] = memory_of(data_->tgt_csp2node_);
-    remap_stat_.memory[Statistics::MEM_TGT_N2CSP] = memory_of(data_->tgt_node2csp_);
-    remap_stat_.memory[Statistics::MEM_TGT_CSP2CI] = memory_of(data_->tgt_csp_cell_index_);
-    remap_stat_.memory[Statistics::MEM_TGT_CSP2C] = memory_of(data_->tgt_csp_index_);
+    remap_stat_.memory[Statistics::MEM_SRC] = memory_of(data_->src_.points);
+    remap_stat_.memory[Statistics::MEM_TGT] = memory_of(data_->tgt_.points);
+    remap_stat_.memory[Statistics::MEM_SRC_AREAS] = memory_of(data_->src_.areas);
+    remap_stat_.memory[Statistics::MEM_TGT_AREAS] = memory_of(data_->tgt_.areas);
+    remap_stat_.memory[Statistics::MEM_SRC_CSP2N] = memory_of(data_->src_.csp2node);
+    remap_stat_.memory[Statistics::MEM_SRC_N2CSP] = memory_of(data_->src_.node2csp);
+    remap_stat_.memory[Statistics::MEM_SRC_CSP2CI] = memory_of(data_->src_.csp_cell_index);
+    remap_stat_.memory[Statistics::MEM_SRC_CSP2C] = memory_of(data_->src_.csp_index);
+    remap_stat_.memory[Statistics::MEM_TGT_CSP2N] = memory_of(data_->tgt_.csp2node);
+    remap_stat_.memory[Statistics::MEM_TGT_N2CSP] = memory_of(data_->tgt_.node2csp);
+    remap_stat_.memory[Statistics::MEM_TGT_CSP2CI] = memory_of(data_->tgt_.csp_cell_index);
+    remap_stat_.memory[Statistics::MEM_TGT_CSP2C] = memory_of(data_->tgt_.csp_index);
     remap_stat_.memory[Statistics::MEM_IPARAM] = memory_of(data_->tgt_iparam_);
     ATLAS_TRACE_MPI(ALLREDUCE) {
         mpi::comm().allReduceInPlace(remap_stat_.memory.data(), remap_stat_.memory.size(), eckit::mpi::max());
@@ -2214,37 +2214,37 @@ void ConservativeSphericalPolygonInterpolation::setup_stat() const {
     }
     const auto src_cell_halo  = array::make_view<int, 1>(src_mesh_.cells().halo());
     const auto src_node_ghost = array::make_view<int, 1>(src_mesh_.nodes().ghost());
-    const auto& src_areas_v   = data_->src_areas_;
-    const auto& tgt_areas_v   = data_->tgt_areas_;
+    const auto& src_areas   = data_->src_.areas;
+    const auto& tgt_areas   = data_->tgt_.areas;
     double geo_create_err     = 0.;
     double src_tgt_sums[2]    = {0., 0.};
     if (src_cell_data_) {
-        for (idx_t spt = 0; spt < src_areas_v.size(); ++spt) {
+        for (idx_t spt = 0; spt < src_areas.size(); ++spt) {
             if (not src_cell_halo(spt)) {
-                src_tgt_sums[0] += src_areas_v[spt];
+                src_tgt_sums[0] += src_areas[spt];
             }
         }
     }
     else {
-        for (idx_t spt = 0; spt < src_areas_v.size(); ++spt) {
+        for (idx_t spt = 0; spt < src_areas.size(); ++spt) {
             if (not src_node_ghost(spt)) {
-                src_tgt_sums[0] += src_areas_v[spt];
+                src_tgt_sums[0] += src_areas[spt];
             }
         }
     }
     const auto tgt_cell_halo  = array::make_view<int, 1>(tgt_mesh_.cells().halo());
     const auto tgt_node_ghost = array::make_view<int, 1>(tgt_mesh_.nodes().ghost());
     if (tgt_cell_data_) {
-        for (idx_t tpt = 0; tpt < tgt_areas_v.size(); ++tpt) {
+        for (idx_t tpt = 0; tpt < tgt_areas.size(); ++tpt) {
             if (not tgt_cell_halo(tpt)) {
-                src_tgt_sums[1] += tgt_areas_v[tpt];
+                src_tgt_sums[1] += tgt_areas[tpt];
             }
         }
     }
     else {
-        for (idx_t tpt = 0; tpt < tgt_areas_v.size(); ++tpt) {
+        for (idx_t tpt = 0; tpt < tgt_areas.size(); ++tpt) {
             if (not tgt_node_ghost(tpt)) {
-                src_tgt_sums[1] += tgt_areas_v[tpt];
+                src_tgt_sums[1] += tgt_areas[tpt];
             }
         }
     }
@@ -2266,8 +2266,8 @@ compute_accuracy(const Interpolation& interpolation, const Field target, std::fu
     const auto tgt_cell_halo  = array::make_view<int, 1>(tgt_mesh_.cells().halo());
     const auto tgt_node_ghost = array::make_view<int, 1>(tgt_mesh_.nodes().ghost());
     const auto tgt_node_halo  = array::make_view<int, 1>(tgt_mesh_.nodes().halo());
-    const auto& tgt_areas_v   = cachable_data_->tgt_areas_;
-    auto& tgt_points_         = cachable_data_->tgt_points_;
+    const auto& tgt_areas     = cachable_data_->tgt_.areas;
+    auto& tgt_points          = cachable_data_->tgt_.points;
     double err_remap_l2       = 0.;
     double err_remap_linf     = 0.;
     if (tgt_cell_data_) {
@@ -2277,11 +2277,11 @@ compute_accuracy(const Interpolation& interpolation, const Field target, std::fu
             if (tgt_cell_halo(tpt)) {
                 continue;
             }
-            auto p = tgt_points_[tpt];
+            auto p = tgt_points[tpt];
             PointLonLat pll;
             eckit::geometry::Sphere::convertCartesianToSpherical(1., p, pll);
             double err_l = std::abs(tgt_vals(tpt) - func(pll));
-            err_remap_l2 += err_l * err_l * tgt_areas_v[tpt];
+            err_remap_l2 += err_l * err_l * tgt_areas[tpt];
             err_remap_linf = std::max(err_remap_linf, err_l);
         }
     }
@@ -2291,11 +2291,11 @@ compute_accuracy(const Interpolation& interpolation, const Field target, std::fu
             if (tgt_node_ghost(tpt) or tgt_node_halo(tpt)) {
                 continue;
             }
-            auto p = tgt_points_[tpt];
+            auto p = tgt_points[tpt];
             PointLonLat pll;
             eckit::geometry::Sphere::convertCartesianToSpherical(1., p, pll);
             double err_l = std::abs(tgt_vals(tpt) - func(pll));
-            err_remap_l2 += err_l * err_l * tgt_areas_v[tpt];
+            err_remap_l2 += err_l * err_l * tgt_areas[tpt];
             err_remap_linf = std::max(err_remap_linf, err_l);
         }
     }
@@ -2387,37 +2387,37 @@ ConservativeSphericalPolygonInterpolation::Cache::Cache(const Interpolation& int
 
 size_t ConservativeSphericalPolygonInterpolation::Data::footprint() const {
     size_t mem_total{0};
-    mem_total += memory_of(src_points_);
-    mem_total += memory_of(tgt_points_);
-    mem_total += memory_of(src_areas_);
-    mem_total += memory_of(tgt_areas_);
-    mem_total += memory_of(src_csp2node_);
-    mem_total += memory_of(tgt_csp2node_);
-    mem_total += memory_of(src_node2csp_);
-    mem_total += memory_of(tgt_node2csp_);
+    mem_total += memory_of(src_.points);
+    mem_total += memory_of(tgt_.points);
+    mem_total += memory_of(src_.areas);
+    mem_total += memory_of(tgt_.areas);
+    mem_total += memory_of(src_.csp2node);
+    mem_total += memory_of(tgt_.csp2node);
+    mem_total += memory_of(src_.node2csp);
+    mem_total += memory_of(tgt_.node2csp);
     mem_total += memory_of(tgt_iparam_);
-    // mem_total += memory_of(src_csp_index_); // TODO need to be added
-    // mem_total += memory_of(src_csp_cell_index_);
-    // mem_total += memory_of(tgt_csp_index_);
-    // mem_total += memory_of(src_csp_cell_index_);
+    // mem_total += memory_of(src_.csp_index); // TODO need to be added
+    // mem_total += memory_of(src_.csp_cell_index);
+    // mem_total += memory_of(tgt_.csp_index);
+    // mem_total += memory_of(src_.csp_cell_index);
     return mem_total;
 }
 
 
 void ConservativeSphericalPolygonInterpolation::Data::print(std::ostream& out) const {
     out << "Memory usage of ConservativeMethod: " << eckit::Bytes(footprint()) << "\n";
-    out << "- src_points_   \t" << eckit::Bytes(memory_of(src_points_)) << "\n";
-    out << "- tgt_points_   \t" << eckit::Bytes(memory_of(tgt_points_)) << "\n";
-    out << "- src_areas_    \t" << eckit::Bytes(memory_of(src_areas_)) << "\n";
-    out << "- tgt_areas_    \t" << eckit::Bytes(memory_of(tgt_areas_)) << "\n";
-    out << "- src_csp2node_ \t" << eckit::Bytes(memory_of(src_csp2node_)) << "\n";
-    out << "- tgt_csp2node_ \t" << eckit::Bytes(memory_of(tgt_csp2node_)) << "\n";
-    out << "- src_node2csp_ \t" << eckit::Bytes(memory_of(src_node2csp_)) << "\n";
-    out << "- tgt_node2csp_ \t" << eckit::Bytes(memory_of(tgt_node2csp_)) << "\n";
-    // out << "- src_csp_index_ \t" << eckit::Bytes(memory_of(src_csp_index_)) << "\n";
-    // out << "- src_csp_cellindex_ \t" << eckit::Bytes(memory_of(src_csp_cell_index_)) << "\n";
-    // out << "- tgt_csp_index_ \t" << eckit::Bytes(memory_of(tgt_csp_index_)) << "\n";
-    // out << "- tgt_csp_cellindex_ \t" << eckit::Bytes(memory_of(tgt_csp_cell_index_)) << "\n";
+    out << "- src_.points   \t" << eckit::Bytes(memory_of(src_.points)) << "\n";
+    out << "- tgt_.points   \t" << eckit::Bytes(memory_of(tgt_.points)) << "\n";
+    out << "- src_.areas    \t" << eckit::Bytes(memory_of(src_.areas)) << "\n";
+    out << "- tgt_.areas    \t" << eckit::Bytes(memory_of(tgt_.areas)) << "\n";
+    out << "- src_.csp2node \t" << eckit::Bytes(memory_of(src_.csp2node)) << "\n";
+    out << "- tgt_.csp2node \t" << eckit::Bytes(memory_of(tgt_.csp2node)) << "\n";
+    out << "- src_.node2csp \t" << eckit::Bytes(memory_of(src_.node2csp)) << "\n";
+    out << "- tgt_.node2csp \t" << eckit::Bytes(memory_of(tgt_.node2csp)) << "\n";
+    // out << "- src_.csp_index \t" << eckit::Bytes(memory_of(src_.csp_index)) << "\n";
+    // out << "- src_csp_cellindex_ \t" << eckit::Bytes(memory_of(src_.csp_cell_index)) << "\n";
+    // out << "- tgt_.csp_index \t" << eckit::Bytes(memory_of(tgt_.csp_index)) << "\n";
+    // out << "- tgt_csp_cellindex_ \t" << eckit::Bytes(memory_of(tgt_.csp_cell_index)) << "\n";
     out << "- tgt_iparam_   \t" << eckit::Bytes(memory_of(tgt_iparam_)) << "\n";
 }
 
@@ -2427,7 +2427,7 @@ void ConservativeSphericalPolygonInterpolation::Statistics::fillMetadata(Metadat
     if (intersection) {
         metadata.set("errors.intersections_covering_tgt_cells_sum", errors[ERR_TGT_INTERSECTPLG_L1]);
         metadata.set("errors.intersections_covering_tgt_cells_max", errors[ERR_TGT_INTERSECTPLG_LINF]);
-        metadata.set("errors.sum_src_areas_minus_sum_tgt_areas", errors[ERR_SRCTGT_INTERSECTPLG_DIFF]);
+        metadata.set("errors.sum_src_.areasminus_sum_tgt_areas", errors[ERR_SRCTGT_INTERSECTPLG_DIFF]);
     }
     if (conservation) {
         metadata.set("errors.conservation_error", errors[ERR_REMAP_CONS]);
@@ -2459,7 +2459,7 @@ ConservativeSphericalPolygonInterpolation::Statistics::Statistics(const Metadata
     }
     metadata.get("errors.intersections_covering_tgt_cells_sum", errors[ERR_TGT_INTERSECTPLG_L1]);
     metadata.get("errors.intersections_covering_tgt_cells_max", errors[ERR_TGT_INTERSECTPLG_LINF]);
-    metadata.get("errors.sum_src_areas_minus_sum_tgt_areas", errors[ERR_SRCTGT_INTERSECTPLG_DIFF]);
+    metadata.get("errors.sum_src_.areasminus_sum_tgt_areas", errors[ERR_SRCTGT_INTERSECTPLG_DIFF]);
     metadata.get("polygons.number_of_src_polygons", counts[NUM_SRC_PLG]);
     metadata.get("polygons.number_of_tgt_polygons", counts[NUM_TGT_PLG]);
 }
