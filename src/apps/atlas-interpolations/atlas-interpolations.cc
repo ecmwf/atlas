@@ -34,6 +34,7 @@
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Checksum.h"
 #include "atlas/util/function/VortexRollup.h"
+#include "atlas/util/function/MDPI_functions.h"
 
 #include "ScripIO.h"
 
@@ -515,7 +516,9 @@ void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, con
     ATLAS_TRACE_SCOPE("initialize source") {
         idx_t n{0};
         for (auto p : sgrid.lonlat()) {
-            sdata[n++] = util::function::vortex_rollup(p.lon(), p.lat(), 1.);
+            // sdata[n++] = util::function::vortex_rollup(p.lon(), p.lat(), 1.);
+            // sdata[n++] = util::function::MDPI_gulfstream(p.lon(), p.lat());
+            sdata[n++] = util::function::MDPI_vortex(p.lon()-90., p.lat());
         }
     }
 
