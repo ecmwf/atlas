@@ -903,6 +903,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
     if (compute_cache) {
         intersect_polygons(src_csp);
 
+        // These arrays correspond to functionspace!
         auto& src_points = sharable_data_->src_.points;
         auto& src_areas  = sharable_data_->src_.areas;
         src_points.resize(n_spoints_);
@@ -910,10 +911,12 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
         {
             ATLAS_TRACE("Store src_areas and src_point");
             if (src_cell_data_) {
-                for (idx_t spt = 0; spt < n_spoints_; ++spt) {
-                    const auto& s_csp = src_csp[spt].polygon;
-                    src_points[spt]  = s_csp.centroid();
-                    src_areas[spt]  = s_csp.area();
+                auto& src = sharable_data_->src_;
+                for (idx_t scsp_id = 0; scsp_id < src.csp_size; ++scsp_id) {
+                    const idx_t spt   = csp_to_cell(scsp_id, src);
+                    const auto& s_csp = src_csp[scsp_id].polygon;
+                    src_points[spt]   = s_csp.centroid();
+                    src_areas[spt]    = s_csp.area();
                 }
             }
             else {
@@ -1505,10 +1508,13 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
     if (tgt_cell_data_ && src_cell_data_) {
         for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
             const auto& iparam = tgt_iparam[tcsp_id];
-            for (idx_t icell = 0; icell < iparam.csp_ids.size(); ++icell) {
-                idx_t scell = iparam.csp_ids[icell];
+            for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                idx_t scsp_id = iparam.csp_ids[i_scsp];
                 double inv_tgt_weight = (tgt_areas[tcsp_id] > 0. ? 1. / tgt_areas[tcsp_id] : 0.);
-                triplets.emplace_back(tcsp_id, scell, iparam.weights[icell] * inv_tgt_weight);
+                double weight = iparam.weights[i_scsp] * inv_tgt_weight;
+                idx_t scell = csp_to_cell(scsp_id, data_->src_);
+                idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
+                triplets.emplace_back(tcell, scell, weight);
             }
         }
     }
@@ -1519,16 +1525,17 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
             for (idx_t isubcell = 0; isubcell < tgt_node2csp[tnode].size(); ++isubcell) {
                 const idx_t subcell = tgt_node2csp[tnode][isubcell];
                 const auto& iparam  = tgt_iparam[subcell];
-                for (idx_t icell = 0; icell < iparam.csp_ids.size(); ++icell) {
-                    idx_t scell = iparam.csp_ids[icell];
-                    ATLAS_ASSERT(scell < n_spoints_);
+                for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                    idx_t scsp_id = iparam.csp_ids[i_scsp];
+                    idx_t scell = csp_to_cell(scsp_id, data_->src_);
+                    ATLAS_ASSERT(scsp_id < n_spoints_);
                     double inv_tgt_weight = (tgt_areas[tnode] > 0. ? 1. / tgt_areas[tnode] : 0.);
-                    double w = iparam.weights[icell] * inv_tgt_weight;
-                    auto pair = tpoint_subweights.emplace(scell, w);
+                    double weight = iparam.weights[i_scsp] * inv_tgt_weight;
+                    auto pair = tpoint_subweights.emplace(scell, weight);
                     bool inserted = pair.second;
                     if (! inserted) {
                         auto it = pair.first;
-                        it->second += w;
+                        it->second += weight;
                     }
                 }
             }
@@ -1542,17 +1549,17 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
         for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
             const auto& iparam = tgt_iparam[tcsp_id];
             tpoint_subweights.clear();
-            for (idx_t icell = 0; icell < iparam.csp_ids.size(); ++icell) {
-                idx_t scell            = iparam.csp_ids[icell];
-                idx_t snode            = src_csp2node[scell];
+            for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                idx_t scsp_id = iparam.csp_ids[i_scsp];
+                idx_t snode   = src_csp2node[scsp_id];
                 ATLAS_ASSERT(snode < n_spoints_);
                 double inv_tgt_weight = (tgt_areas[tcsp_id] > 0. ? 1. / tgt_areas[tcsp_id] : 0.);
-                double w = iparam.weights[icell] * inv_tgt_weight;
-                auto pair = tpoint_subweights.emplace(snode, w);
+                double weight = iparam.weights[i_scsp] * inv_tgt_weight;
+                auto pair = tpoint_subweights.emplace(snode, weight);
                 bool inserted = pair.second;
                 if (! inserted) {
                     auto it = pair.first;
-                    it->second += w;
+                    it->second += weight;
                 }
             }
             for (auto& p : tpoint_subweights) {
@@ -1568,17 +1575,17 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
             for (idx_t isubcell = 0; isubcell < tgt_node2csp[tnode].size(); ++isubcell) {
                 const idx_t subcell = tgt_node2csp[tnode][isubcell];
                 const auto& iparam  = tgt_iparam[subcell];
-                for (idx_t icell = 0; icell < iparam.csp_ids.size(); ++icell) {
-                    idx_t scell = iparam.csp_ids[icell];
-                    idx_t snode = src_csp2node[scell];
+                for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                    idx_t scsp_id = iparam.csp_ids[i_scsp];
+                    idx_t snode   = src_csp2node[scsp_id];
                     ATLAS_ASSERT(snode < n_spoints_);
                     double inv_node_weight = (tgt_areas[tnode] > 0. ? 1. / tgt_areas[tnode] : 0.);
-                    double w = iparam.weights[icell] * inv_node_weight;
-                    auto pair = tpoint_subweights.emplace(snode, w);
+                    double weight = iparam.weights[i_scsp] * inv_node_weight;
+                    auto pair = tpoint_subweights.emplace(snode, weight);
                     bool inserted = pair.second;
                     if (! inserted) {
                         auto it = pair.first;
-                        it->second += w;
+                        it->second += weight;
                     }
                 }
             }
@@ -1637,16 +1644,16 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                 continue;
             }
             if (src_cell_data_) {
-                for (idx_t icell = 0; icell < iparam.csp_ids.size(); ++icell) {
-                    const idx_t scell = iparam.csp_ids[icell];
+                for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                    const idx_t scell = csp_to_cell(iparam.csp_ids[i_scsp], data_->src_);
                     const auto src_neighbours = get_cell_neighbours(src_mesh_, scell, w_cell);
                     triplets_size += 2 * src_neighbours.size() + 1;
                 }
             }
             else {
-                for (idx_t icell = 0; icell < iparam.csp_ids.size(); ++icell) {
-                    const idx_t subcell = iparam.csp_ids[icell];
-                    const idx_t snode = data_->src_.csp2node[subcell];
+                for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                    const idx_t scsp_id = iparam.csp_ids[i_scsp];
+                    const idx_t snode = data_->src_.csp2node[scsp_id];
                     const auto src_neighbours = get_node_neighbours(src_mesh_, snode, w_node);
                     triplets_size += 2 * src_neighbours.size() + 1; 
                 }
@@ -1676,19 +1683,20 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
 #endif
             double tcell_area_inv = ( tgt_areas[tcell] > 0.) ? 1. / tgt_areas[tcell] : 0.; // dual_area_inv, even if protected, may still leads to FE_DIVBYZERO with Apple without volatile trick
 
-            for (idx_t icell = 0; icell < iparam.csp_ids.size(); ++icell) {
-                Aik.resize(iparam.csp_ids.size());
-                const PointXYZ& Csk     = iparam.centroids[icell];
-                const idx_t scell       = iparam.csp_ids[icell];
-                const idx_t spt         = src_cell_data_ ? scell : data_->src_.csp2node[scell];
+            Aik.resize(iparam.csp_ids.size());
+            for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                const PointXYZ& Csk     = iparam.centroids[i_scsp];
+                const idx_t scsp_id     = iparam.csp_ids[i_scsp];
+                const idx_t spt         = src_cell_data_ ? csp_to_cell(scsp_id,data_->src_) : data_->src_.csp2node[scsp_id];
                 const PointXYZ& Cs      = src_points[spt]; // !!! this is NOT barycentre of the subcell in case of NodeColumns
-                Aik[icell]              = Csk - Cs - PointXYZ::mul(Cs, PointXYZ::dot(Cs, Csk - Cs));
+                Aik[i_scsp]             = Csk - Cs - PointXYZ::mul(Cs, PointXYZ::dot(Cs, Csk - Cs));
                 std::vector<idx_t> src_neighbours;
                 if (src_cell_data_) {
+                    idx_t scell = spt;
                     src_neighbours = get_cell_neighbours(src_mesh_, scell, w_cell);
                 }
                 else {
-                    idx_t snode    = data_->src_.csp2node[scell];
+                    idx_t snode    = spt;
                     src_neighbours = get_node_neighbours(src_mesh_, snode, w_node);
                 }
                 Rsj.resize(src_neighbours.size());
@@ -1713,28 +1721,29 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                     Rs = Rs + Rsj[j];
                 }
                 dual_area_inv = (dual_area_inv > 0.) ? 1. / dual_area_inv : 0.; // dual_area_inv, even if protected, may still leads to FE_DIVBYZERO with Apple without volatile trick
-                Aik[icell]    = PointXYZ::mul(Aik[icell], iparam.weights[icell] * tcell_area_inv * dual_area_inv);
+                Aik[i_scsp]    = PointXYZ::mul(Aik[i_scsp], iparam.weights[i_scsp] * tcell_area_inv * dual_area_inv);
 
                 if (src_cell_data_) {
                     for (idx_t j = 0; j < src_neighbours.size(); ++j) {
                         idx_t nj  = next_index(j, src_neighbours.size());
                         idx_t sj  = src_neighbours[j];
                         idx_t nsj = src_neighbours[nj];
-                        triplets.emplace_back(tcell, sj, 0.5 * PointXYZ::dot(Rsj[j], Aik[icell]));
-                        triplets.emplace_back(tcell, nsj, 0.5 * PointXYZ::dot(Rsj[j], Aik[icell]));
+                        triplets.emplace_back(tcell, sj, 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]));
+                        triplets.emplace_back(tcell, nsj, 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]));
                     }
-                    triplets.emplace_back(tcell, scell, iparam.weights[icell] * tcell_area_inv - PointXYZ::dot(Rs, Aik[icell]));
+                    idx_t scell = spt;
+                    triplets.emplace_back(tcell, scell, iparam.weights[i_scsp] * tcell_area_inv - PointXYZ::dot(Rs, Aik[i_scsp]));
                 }
                 else {
-                    idx_t snode            = data_->src_.csp2node[scell];
                     for (idx_t j = 0; j < src_neighbours.size(); ++j) {
                         idx_t nj  = next_index(j, src_neighbours.size());
                         idx_t sj  = src_neighbours[j];
                         idx_t nsj = src_neighbours[nj];
-                        triplets.emplace_back(tcell, sj, (0.5 * PointXYZ::dot(Rsj[j], Aik[icell])));
-                        triplets.emplace_back(tcell, nsj, (0.5 * PointXYZ::dot(Rsj[j], Aik[icell])));
+                        triplets.emplace_back(tcell, sj, (0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp])));
+                        triplets.emplace_back(tcell, nsj, (0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp])));
                     }
-                    triplets.emplace_back(tcell, snode, iparam.weights[icell] * tcell_area_inv - PointXYZ::dot(Rs, Aik[icell]));
+                    idx_t snode = spt;
+                    triplets.emplace_back(tcell, snode, iparam.weights[i_scsp] * tcell_area_inv - PointXYZ::dot(Rs, Aik[i_scsp]));
                 }
             }
         }
