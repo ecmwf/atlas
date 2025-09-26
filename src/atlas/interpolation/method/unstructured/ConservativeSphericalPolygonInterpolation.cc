@@ -655,8 +655,7 @@ get_csp_nodedata(idx_t csp_id, const Mesh& mesh, Data::PolygonsData& md ) {
     const auto node_part  = array::make_view<int, 1>(mesh.nodes().partition());
     idx_t node_n       = cell2node(cell, inode_n);
     int halo_type    = node_halo(node_n);
-    if (util::Bitflags::view(node_flags(node_n)).check(util::Topology::PERIODIC) and
-        node_part(node_n) == mpi::rank()) {
+    if (util::Bitflags::view(node_flags(node_n)).check(util::Topology::PERIODIC) and node_part(node_n) == mpi::rank()) {
         halo_type = -1;
     }
     if (csp2node[csp_id] == -1) {
@@ -1155,7 +1154,6 @@ build_source_kdtree_centroid(util::KDTree<idx_t>& kdt_search, double& max_srccel
 
 void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedPolygonArray& src_csp) {
     ATLAS_TRACE();
-    // int mpi_rank = mpi::rank();
     auto& timings = sharable_data_->timings;
 
     StopWatch stopwatch;
@@ -1216,7 +1214,6 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
 
     // NOTE: polygon vertex points at distance < pointsSameEPS will be replaced with one point 
     constexpr double pointsSameEPS = 5.e6 * std::numeric_limits<double>::epsilon();
-    const int tgt_halo_intersection_depth = (tgt_cell_data_ ? 0 : 1); // if target NodeColumns, one source halo required for subcells around source nodes
 
     std::vector<idx_t> intersection_scsp_ids;
     std::vector<double> intersection_weights;
@@ -1232,89 +1229,112 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const MarkedP
         ConvexSphericalPolygon::fpe(fpe_for_polygon);
     };
 
+    int mpi_rank = mpi::rank();
+    const auto& cell_halo   = array::make_view<const int, 1>(tgt_mesh_.cells().halo());
+    const auto& cell_flags  = array::make_view<const int, 1>(tgt_mesh_.cells().flags());
+    const auto& cell_part   = array::make_view<const int, 1>(tgt_mesh_.cells().partition());
+    auto skip_target_celldata = [&cell_halo, &cell_flags, &cell_part, &mpi_rank] (idx_t tcell) {
+        return (cell_halo(tcell) > 0) && (! util::Bitflags::view(cell_flags(tcell)).check(util::Topology::PERIODIC) || cell_part(tcell) != mpi_rank);
+    };
+    const auto& node_halo  = array::make_view<int, 1>(tgt_mesh_.nodes().halo());
+    const auto& node_flags = array::make_view<int, 1>(tgt_mesh_.nodes().flags());
+    const auto& node_part  = array::make_view<int, 1>(tgt_mesh_.nodes().partition());
+    auto skip_target_nodedata = [&node_halo, &node_flags, &node_part, &mpi_rank] (idx_t tnode) {
+        return (node_halo(tnode) > 1) && (! util::Bitflags::view(node_flags(tnode)).check(util::Topology::PERIODIC) || node_part(tnode) != mpi_rank);
+    };
+    auto skip_target = [&] (idx_t tcsp_id, bool tgt_cell_data) {
+        if (tgt_cell_data) {
+            auto tcell = csp_to_cell(tcsp_id, sharable_data_->tgt_);
+            return skip_target_celldata(tcell);
+        }
+        auto tnode = csp_to_cell(tcsp_id, sharable_data_->tgt_);
+        return skip_target_nodedata(tnode);
+    };
+
     ATLAS_TRACE_SCOPE("intersecting polygons") {
         eckit::Channel blackhole;
         eckit::ProgressTimer progress("Intersecting polygons ", 100, " percent", double(10),
                                     tgt_csp_size > 50 ? Log::info() : blackhole);
         float last_progress_percent = 0.00;
         for (idx_t tcsp_id = 0; tcsp_id < tgt_csp_size; ++tcsp_id) {
+            if (skip_target(tcsp_id, tgt_cell_data_)) {
+                continue;
+            }
             auto tgt_csp = get_tgt_csp(tcsp_id);
-            if (tgt_csp.halo_type <= tgt_halo_intersection_depth) {
-                intersection_scsp_ids.resize(0);
-                intersection_weights.resize(0);
-                intersection_src_centroids.resize(0);
-                const auto& t_csp       = tgt_csp.polygon;
-                double tgt_cover_area   = 0.;
-                if (remap_stat_.timings) {stopwatch_kdtree_search.start(); }
-                auto scsp_ids = kdt_search.closestPointsWithinRadius(t_csp.centroid(), t_csp.radius() + max_srccell_rad).payloads();
-                if (remap_stat_.timings) {stopwatch_kdtree_search.stop(); }
-                for (const auto& scsp_id: scsp_ids) {
-                    const auto& s_csp = src_csp[scsp_id].polygon;
-                    if (remap_stat_.timings) {stopwatch_polygon_intersections.start(); }
-                    ConvexSphericalPolygon csp_i = s_csp.intersect(t_csp, nullptr, pointsSameEPS);
-                    if (remap_stat_.timings) {stopwatch_polygon_intersections.stop(); }
-                    double csp_i_area = csp_i.area();
+            intersection_scsp_ids.resize(0);
+            intersection_weights.resize(0);
+            intersection_src_centroids.resize(0);
+            const auto& t_csp       = tgt_csp.polygon;
+            double tgt_cover_area   = 0.;
+            if (remap_stat_.timings) {stopwatch_kdtree_search.start(); }
+            auto scsp_ids = kdt_search.closestPointsWithinRadius(t_csp.centroid(), t_csp.radius() + max_srccell_rad).payloads();
+            if (remap_stat_.timings) {stopwatch_kdtree_search.stop(); }
+            for (const auto& scsp_id: scsp_ids) {
+                const auto& s_csp = src_csp[scsp_id].polygon;
+                if (remap_stat_.timings) {stopwatch_polygon_intersections.start(); }
+                ConvexSphericalPolygon csp_i = s_csp.intersect(t_csp, nullptr, pointsSameEPS);
+                if (remap_stat_.timings) {stopwatch_polygon_intersections.stop(); }
+                double csp_i_area = csp_i.area();
 #if ATLAS_BUILD_TYPE_DEBUG
-                    if (validate_) {
-                        int pout;
-                        if (inside_vertices(t_csp, s_csp, pout) > 2 && csp_i.area() < 3e-16) {
-                            dump_intersection("Zero area intersections with inside_vertices", t_csp, src_csp, scsp_ids);
-                        }
+                if (validate_) {
+                    int pout;
+                    if (inside_vertices(t_csp, s_csp, pout) > 2 && csp_i.area() < 3e-16) {
+                        dump_intersection("Zero area intersections with inside_vertices", t_csp, src_csp, scsp_ids);
                     }
+                }
 #endif
-                    if (csp_i_area > 0) {
-                        intersection_scsp_ids.emplace_back(scsp_id);
-                        intersection_weights.emplace_back(csp_i_area);
-                        if (order_ == 2 or not matrix_free_ or not matrixAllocated()) {
-                            intersection_src_centroids.emplace_back(csp_i.centroid());
+                if (csp_i_area > 0) {
+                    intersection_scsp_ids.emplace_back(scsp_id);
+                    intersection_weights.emplace_back(csp_i_area);
+                    if (order_ == 2 or not matrix_free_ or not matrixAllocated()) {
+                        intersection_src_centroids.emplace_back(csp_i.centroid());
+                    }
+                    tgt_cover_area += csp_i_area;
+                    if (std::abs(1. - tgt_cover_area / tgt_csp.polygon.area()) <= 1e-10) {
+                        break;
+                    }
+                    if (validate_) {
+                        src_iparam[scsp_id].csp_ids.emplace_back(tcsp_id);
+                        src_iparam[scsp_id].weights.emplace_back(csp_i_area);
+                        if (csp_i_area > 1.1 * t_csp.area()) {
+                            dump_intersection("Intersection larger than target", t_csp, src_csp, scsp_ids);
                         }
-                        tgt_cover_area += csp_i_area;
-                        if (std::abs(1. - tgt_cover_area / tgt_csp.polygon.area()) <= 1e-10) {
-                            break;
-                        }
-                        if (validate_) {
-                            src_iparam[scsp_id].csp_ids.emplace_back(tcsp_id);
-                            src_iparam[scsp_id].weights.emplace_back(csp_i_area);
-                            if (csp_i_area > 1.1 * t_csp.area()) {
-                                dump_intersection("Intersection larger than target", t_csp, src_csp, scsp_ids);
-                            }
-                            if (csp_i_area > 1.1 * s_csp.area()) {
-                                dump_intersection("Intersection larger than source", t_csp, src_csp, scsp_ids);
-                            }
+                        if (csp_i_area > 1.1 * s_csp.area()) {
+                            dump_intersection("Intersection larger than source", t_csp, src_csp, scsp_ids);
                         }
                     }
                 }
-                const double tgt_cover_err         = std::abs(t_csp.area() - tgt_cover_area);
-                const double tgt_cover_err_percent = 100. * tgt_cover_err / t_csp.area();
-                if (validate_ && tgt_cover_err_percent > 0.1) {
-                    if (mpi::size() == 1) {
-                        dump_intersection("Target cell not exactly covered", t_csp, src_csp, scsp_ids);
-                        if (remap_stat_.intersection) {
-                            area_coverage[TOTAL_TGT] += tgt_cover_err;
-                            area_coverage[MAX_TGT] = std::max(area_coverage[MAX_TGT], tgt_cover_err);
-                        }
+            }
+            const double tgt_cover_err         = std::abs(t_csp.area() - tgt_cover_area);
+            const double tgt_cover_err_percent = 100. * tgt_cover_err / t_csp.area();
+            if (validate_ && tgt_cover_err_percent > 0.1) {
+                if (mpi::size() == 1) {
+                    dump_intersection("Target cell not exactly covered", t_csp, src_csp, scsp_ids);
+                    if (remap_stat_.intersection) {
+                        area_coverage[TOTAL_TGT] += tgt_cover_err;
+                        area_coverage[MAX_TGT] = std::max(area_coverage[MAX_TGT], tgt_cover_err);
                     }
                 }
-                if (intersection_scsp_ids.size() == 0 and remap_stat_.intersection) {
-                    num_pol[Statistics::NUM_UNCVR_FULL_TGT]++;
+            }
+            if (intersection_scsp_ids.size() == 0 and remap_stat_.intersection) {
+                num_pol[Statistics::NUM_UNCVR_FULL_TGT]++;
+            }
+            else if (tgt_cover_err_percent > 0.1 && remap_stat_.intersection) {
+                num_pol[Statistics::NUM_UNCVR_PART_TGT]++;
+            }
+            if (normalise_intersections_ && tgt_cover_err_percent < 1.) {
+                double wfactor = t_csp.area() / (tgt_cover_area > 0. ? tgt_cover_area : 1.);
+                for (idx_t i = 0; i < intersection_weights.size(); i++) {
+                    intersection_weights[i] *= wfactor;
                 }
-                else if (tgt_cover_err_percent > 0.1 && remap_stat_.intersection) {
-                    num_pol[Statistics::NUM_UNCVR_PART_TGT]++;
-                }
-                if (normalise_intersections_ && tgt_cover_err_percent < 1.) {
-                    double wfactor = t_csp.area() / (tgt_cover_area > 0. ? tgt_cover_area : 1.);
-                    for (idx_t i = 0; i < intersection_weights.size(); i++) {
-                        intersection_weights[i] *= wfactor;
-                    }
-                }
-                tgt_iparam_[tcsp_id].csp_ids = intersection_scsp_ids;
-                tgt_iparam_[tcsp_id].weights = intersection_weights;
-                if (order_ == 2 or not matrix_free_ or not matrixAllocated()) {
-                    tgt_iparam_[tcsp_id].centroids = intersection_src_centroids;
-                }
-                if (remap_stat_.intersection) {
-                    num_pol[Statistics::NUM_INT_PLG] += tgt_iparam_[tcsp_id].weights.size();
-                }
+            }
+            tgt_iparam_[tcsp_id].csp_ids = intersection_scsp_ids;
+            tgt_iparam_[tcsp_id].weights = intersection_weights;
+            if (order_ == 2 or not matrix_free_ or not matrixAllocated()) {
+                tgt_iparam_[tcsp_id].centroids = intersection_src_centroids;
+            }
+            if (remap_stat_.intersection) {
+                num_pol[Statistics::NUM_INT_PLG] += tgt_iparam_[tcsp_id].weights.size();
             }
             if ( double(tcsp_id) / double(tgt_csp_size) > last_progress_percent ) {
                 last_progress_percent += 0.01;
@@ -1498,8 +1518,6 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
             }
         }
     }
-    Log::info() << "tgt_csp_size : " << data_->tgt_.csp_size << std::endl;
-    Log::info() << "triplets_size : " << triplets_size << std::endl;
     triplets.reserve(triplets_size);
     std::map<idx_t, double> tpoint_subweights;
 
