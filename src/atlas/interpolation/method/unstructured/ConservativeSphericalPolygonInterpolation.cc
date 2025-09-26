@@ -1751,7 +1751,6 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
     else {  // if ( not tgt_cell_data_ )
         const auto tgt_ghost = array::make_view<int, 1>(tgt_mesh_.nodes().ghost());
         auto& tgt_node2csp = data_->tgt_.node2csp;
-        Workspace_get_node_neighbours w;
         triplets_size = 0;
         for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
             if (tgt_ghost(tnode)) {
@@ -1827,12 +1826,12 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                     double dual_area_inv = 0.;
                     std::vector<idx_t> src_neighbours;
                     if (src_cell_data_) {
-                        idx_t scell = spt;
+                        idx_t scell = csp_to_cell(scsp_id, data_->src_);
                         src_neighbours = get_cell_neighbours(src_mesh_, scell, w_cell);
                     }
                     else {
-                        idx_t snode    = spt;
-                        src_neighbours = get_node_neighbours(src_mesh_, snode, w);
+                        idx_t snode    = data_->src_.csp2node[scsp_id];
+                        src_neighbours = get_node_neighbours(src_mesh_, snode, w_node);
                     }
                     Rsj.resize(src_neighbours.size());
                     PointXYZ Rs   = {0., 0., 0.};
