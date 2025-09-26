@@ -42,7 +42,7 @@ private:
     private:
         friend class ConservativeSphericalPolygonInterpolation;
 
-        struct MeshData {
+        struct PolygonsData {
             // position and effective area of data points
             std::vector<PointXYZ> points;
             std::vector<double>   areas;
@@ -53,6 +53,7 @@ private:
             gidx_t csp_size;
             std::vector<idx_t> csp_cell_index;
             std::vector<idx_t> csp_index;
+            bool cell_data;
         } src_, tgt_;
 
         // Timings
@@ -208,20 +209,26 @@ private:
     std::vector<idx_t> get_cell_neighbours(Mesh&, idx_t jcell, Workspace_get_cell_neighbours&) const;
 
     struct Workspace_get_node_neighbours;
-
     std::vector<idx_t> get_node_neighbours(Mesh&, idx_t jcell, Workspace_get_node_neighbours&) const;
 
-    void init_csp_index(bool cell_data, FunctionSpace fs, Data::MeshData& md);
+    void init_polygons_data(bool cell_data, FunctionSpace fs, Data::PolygonsData& md);
 
 
-    MarkedPolygon get_csp_celldata(idx_t csp_id, const Mesh& mesh, Data::MeshData& md);
-    MarkedPolygon get_csp_nodedata(idx_t csp_id, const Mesh& mesh, Data::MeshData& md);
+    MarkedPolygon get_csp_celldata(idx_t csp_id, const Mesh& mesh, const Data::PolygonsData& md);
+    MarkedPolygon get_csp_nodedata(idx_t csp_id, const Mesh& mesh, Data::PolygonsData& md);
 
-    idx_t csp_to_cell(idx_t csp_id, const Data::MeshData& md) {
-        return md.csp_index[csp_id];
+    idx_t csp_to_cell(idx_t csp_id, const Data::PolygonsData& md) const {
+        if (md.cell_data) {
+            return md.csp_index[csp_id];
+        }
+        else {
+            auto iterator_upper_bound = std::upper_bound(md.csp_index.begin(), md.csp_index.end(), csp_id);
+            idx_t idx = iterator_upper_bound-1 - md.csp_index.begin();
+            return md.csp_cell_index[idx];
+        }
     }
 
-    std::pair<idx_t, idx_t> csp_to_cell_and_subcell(idx_t csp_id, const Data::MeshData& md) {
+    std::pair<idx_t, idx_t> csp_to_cell_and_subcell(idx_t csp_id, const Data::PolygonsData& md) const {
         auto iterator_upper_bound = std::upper_bound(md.csp_index.begin(), md.csp_index.end(), csp_id);
         idx_t idx     = iterator_upper_bound-1 - md.csp_index.begin();
         idx_t cell    = md.csp_cell_index[idx];
@@ -230,7 +237,7 @@ private:
     }
 
     MarkedPolygon get_src_csp(idx_t csp_id) {
-        if (src_cell_data_) {
+        if (sharable_data_->src_.cell_data) {
             return get_csp_celldata(csp_id, src_mesh_, sharable_data_->src_);
         }
         else {
@@ -238,15 +245,18 @@ private:
         }
     }
     MarkedPolygon get_tgt_csp(idx_t csp_id) {
-        if (tgt_cell_data_) {
+        if (sharable_data_->tgt_.cell_data) {
             return get_csp_celldata(csp_id, tgt_mesh_, sharable_data_->tgt_);
         }
         else {
             return get_csp_nodedata(csp_id, tgt_mesh_, sharable_data_->tgt_);
         }
     }
-    MarkedPolygonArray get_polygons_celldata(FunctionSpace, Data::MeshData& md);
-    MarkedPolygonArray get_polygons_nodedata(FunctionSpace, Data::MeshData& md);
+    MarkedPolygonArray get_polygons_celldata(FunctionSpace, Data::PolygonsData&);
+    MarkedPolygonArray get_polygons_nodedata(FunctionSpace, Data::PolygonsData&);
+    MarkedPolygonArray get_polygons(FunctionSpace fs, Data::PolygonsData& md) {
+        return md.cell_data ? get_polygons_celldata(fs, md) : get_polygons_nodedata(fs, md);
+    }
 
 
     int next_index(int current_index, int size) const;

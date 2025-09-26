@@ -453,12 +453,12 @@ std::vector<idx_t> ConservativeSphericalPolygonInterpolation::get_node_neighbour
 
 
 void ConservativeSphericalPolygonInterpolation::
-init_csp_index(
+init_polygons_data(
     // input
     bool cell_data, FunctionSpace fs,
     // output
-    Data::MeshData& md) {
-
+    Data::PolygonsData& md) {
+    md.cell_data = cell_data;
     std::vector<idx_t>& csp2node = md.csp2node;
     std::vector<std::vector<idx_t>>& node2csp = md.node2csp;
     gidx_t& csp_size = md.csp_size;
@@ -505,6 +505,9 @@ init_csp_index(
             const idx_t n_nodes = cell2node.cols(cell);
             for (idx_t inode = 0; inode < n_nodes; ++inode) {
                 idx_t node0             = cell2node(cell, inode);
+                if (not valid_point(node0, node_flags)) {
+                    continue;
+                }
                 idx_t node1             = cell2node(cell, next_index(inode, n_nodes));
                 const PointLonLat p0_ll = PointLonLat{nodes_ll(node0, 0), nodes_ll(node0, 1)};
                 const PointLonLat p1_ll = PointLonLat{nodes_ll(node1, 0), nodes_ll(node1, 1)};
@@ -512,9 +515,6 @@ init_csp_index(
                 PointXYZ p1             = ll2xyz(p1_ll);
                 if (PointXYZ::norm(p0 - p1) < 1e-14) {
                     continue;  // skip this edge = a pole point
-                }
-                if (not valid_point(node0, node_flags)) {
-                    continue;
                 }
                 csp_size++;
             }
@@ -529,7 +529,7 @@ init_csp_index(
 
 
 ConservativeSphericalPolygonInterpolation::MarkedPolygon ConservativeSphericalPolygonInterpolation::
-get_csp_celldata(idx_t csp_id, const Mesh& mesh, Data::MeshData& md) {
+get_csp_celldata(idx_t csp_id, const Mesh& mesh, const Data::PolygonsData& md) {
 
     // TODO: Performance optimisations:
     //    - Do not extract array views, mesh connectivity for each csp_id
@@ -541,7 +541,7 @@ get_csp_celldata(idx_t csp_id, const Mesh& mesh, Data::MeshData& md) {
     idx_t cell = csp_to_cell(csp_id, md);
 
     const idx_t n_nodes = cell2node.cols(cell);
-    const auto nodes_ll   = array::make_view<double, 2>(mesh.nodes().lonlat());
+    const auto nodes_ll   = array::make_view<const double, 2>(mesh.nodes().lonlat());
     pts_ll.clear();
     pts_ll.resize(n_nodes);
 
@@ -562,7 +562,7 @@ get_csp_celldata(idx_t csp_id, const Mesh& mesh, Data::MeshData& md) {
 
 
 ConservativeSphericalPolygonInterpolation::MarkedPolygon ConservativeSphericalPolygonInterpolation::
-get_csp_nodedata(idx_t csp_id, const Mesh& mesh, Data::MeshData& md ) {
+get_csp_nodedata(idx_t csp_id, const Mesh& mesh, Data::PolygonsData& md ) {
 
     std::vector<idx_t>& csp2node = md.csp2node;
     std::vector<std::vector<idx_t>>& node2csp = md.node2csp;
@@ -670,7 +670,7 @@ get_csp_nodedata(idx_t csp_id, const Mesh& mesh, Data::MeshData& md ) {
 // Create polygons for cell-centred data. Here, the polygons are mesh cells
 ConservativeSphericalPolygonInterpolation::MarkedPolygonArray
 ConservativeSphericalPolygonInterpolation::
-get_polygons_celldata(FunctionSpace fs, Data::MeshData& md) {
+get_polygons_celldata(FunctionSpace fs, Data::PolygonsData& md) {
     //std::vector<idx_t>& csp2node, std::vector<std::vector<idx_t>>& node2csp,
     //gidx_t& csp_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index) {
     ATLAS_TRACE("ConservativeSphericalPolygonInterpolation: get_polygons_celldata");
@@ -688,7 +688,7 @@ get_polygons_celldata(FunctionSpace fs, Data::MeshData& md) {
 // additionally, subcell-to-node and node-to-subcells mapping are computed
 ConservativeSphericalPolygonInterpolation::MarkedPolygonArray
 ConservativeSphericalPolygonInterpolation::
-get_polygons_nodedata(FunctionSpace fs, Data::MeshData& md) {
+get_polygons_nodedata(FunctionSpace fs, Data::PolygonsData& md) {
     ATLAS_TRACE("ConservativeSphericalPolygonInterpolation: get_polygons_nodedata");
     MarkedPolygonArray cspolygons(md.csp_size);
     auto mesh = extract_mesh(fs);
@@ -879,13 +879,8 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
         ATLAS_TRACE_SCOPE("Get source polygons") {
             StopWatch stopwatch;
             stopwatch.start();
-            init_csp_index(src_cell_data_, src_fs_, sharable_data_->src_);
-            if (src_cell_data_) {
-                src_csp = get_polygons_celldata(src_fs_, sharable_data_->src_);
-            }
-            else {
-                src_csp = get_polygons_nodedata(src_fs_, sharable_data_->src_);
-            }
+            init_polygons_data(src_cell_data_, src_fs_, sharable_data_->src_);
+            src_csp = get_polygons(src_fs_, sharable_data_->src_);
             stopwatch.stop();
             remap_stat_.memory[Statistics::MEM_SRC_PLG] = memory_of(src_csp);
             sharable_data_->timings.source_polygons_assembly = stopwatch.elapsed();
@@ -895,7 +890,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
         ATLAS_TRACE_SCOPE("Get target polygons") {
             StopWatch stopwatch;
             stopwatch.start();
-            init_csp_index(tgt_cell_data_, tgt_fs_, sharable_data_->tgt_);
+            init_polygons_data(tgt_cell_data_, tgt_fs_, sharable_data_->tgt_);
             stopwatch.stop();
             sharable_data_->timings.target_polygons_assembly = stopwatch.elapsed();
             remap_stat_.counts[Statistics::NUM_TGT_PLG] = sharable_data_->tgt_.csp_size;
@@ -1080,8 +1075,9 @@ build_source_kdtree(util::KDTree<idx_t>& kdt_search, double& max_srccell_rad, co
             return false;
         };
         if (! src_cell_data_) {
+            const auto& node2csp = sharable_data_->src_.node2csp;
             for (idx_t inode = 0; inode < src_mesh_.nodes().size(); ++inode) {
-                const auto& csp_ids = sharable_data_->src_.node2csp[inode];
+                const auto& csp_ids = node2csp[inode];
                 if (!csp_ids.empty()) {
                     if (consider_src(node_part(inode), node_ridx(inode), node_ghost(inode))) {
                         for (const auto& csp_id : csp_ids) {
@@ -1095,7 +1091,7 @@ build_source_kdtree(util::KDTree<idx_t>& kdt_search, double& max_srccell_rad, co
         }
         else {
             for (idx_t csp_id = 0; csp_id < sharable_data_->src_.csp_size; ++csp_id) {
-                idx_t icell = sharable_data_->src_.csp_index[csp_id];
+                idx_t icell = csp_to_cell(csp_id, sharable_data_->src_);
                 if (consider_src(cell_part(icell), cell_ridx(icell), cell_halo(icell))) {
                     const auto& s_csp = src_csp[csp_id].polygon;
                     kdt_search.insert(s_csp.centroid(), icell);
