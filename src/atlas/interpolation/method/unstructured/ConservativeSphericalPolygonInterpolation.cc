@@ -1869,11 +1869,11 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                     double dual_area_inv = 0.;
                     std::vector<idx_t> src_neighbours;
                     if (src_cell_data_) {
-                        idx_t scell = csp_to_cell(scsp_id, src);
+                        idx_t scell = spt;
                         src_neighbours = get_cell_neighbours(src_mesh_, scell, w_cell);
                     }
                     else {
-                        idx_t snode    = data_->src_.csp2node[scsp_id];
+                        idx_t snode    = spt;
                         src_neighbours = get_node_neighbours(src_mesh_, snode, w_node);
                     }
                     Rsj.resize(src_neighbours.size());
