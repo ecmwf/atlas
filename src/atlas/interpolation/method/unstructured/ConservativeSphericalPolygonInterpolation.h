@@ -51,8 +51,8 @@ private:
             Indices csp2node;
             std::vector<Indices> node2csp;
             gidx_t csp_size;
-            std::vector<idx_t> csp_cell_index;
-            std::vector<idx_t> csp_index;
+            Indices csp_cell_index;
+            Indices csp_index;
             bool cell_data;
         } src_, tgt_;
 
@@ -183,21 +183,17 @@ public:
     interpolation::Cache createCache() const override;
 
 private:
-    using ConvexSphericalPolygon = util::ConvexSphericalPolygon;
-    struct MarkedPolygon {
-        ConvexSphericalPolygon polygon;
-        int halo_type;
-    };
-    using MarkedPolygonArray           = std::vector<MarkedPolygon>;
+    using Polygon = util::ConvexSphericalPolygon;
+    using PolygonArray = std::vector<util::ConvexSphericalPolygon>;
 
     void do_setup_impl(const Grid& src_grid, const Grid& tgt_grid);
 
-    void build_source_kdtree(util::KDTree<idx_t>&, double& max_srccell_rad, const MarkedPolygonArray&) const;
-    void build_source_kdtree_centroid(util::KDTree<idx_t>&, double& max_srccell_rad, const MarkedPolygonArray&) const;
-    void intersect_polygons(const MarkedPolygonArray& src_csp);
+    void build_source_kdtree(util::KDTree<idx_t>&, double& max_srccell_rad, const PolygonArray&) const;
+    void build_source_kdtree_centroid(util::KDTree<idx_t>&, double& max_srccell_rad, const PolygonArray&) const;
+    void intersect_polygons(const PolygonArray& src_csp);
     Triplets compute_1st_order_triplets();
     Triplets compute_2nd_order_triplets();
-    void dump_intersection(const std::string, const ConvexSphericalPolygon& plg_1, const MarkedPolygonArray& plg_2_array,
+    void dump_intersection(const std::string, const Polygon& plg_1, const PolygonArray& plg_2_array,
                            const Indices& plg_2_idx_array) const;
     std::vector<idx_t> sort_cell_edges(Mesh& mesh, idx_t cell_id) const;
     std::vector<idx_t> sort_node_edges(Mesh& mesh, idx_t cell_id) const;
@@ -211,8 +207,8 @@ private:
     void init_polygons_data(bool cell_data, FunctionSpace fs, Data::PolygonsData& md);
 
 
-    MarkedPolygon get_csp_celldata(idx_t csp_id, const Mesh& mesh, const Data::PolygonsData& md);
-    MarkedPolygon get_csp_nodedata(idx_t csp_id, const Mesh& mesh, Data::PolygonsData& md);
+    Polygon get_csp_celldata(idx_t csp_id, const Mesh& mesh, const Data::PolygonsData& md);
+    Polygon get_csp_nodedata(idx_t csp_id, const Mesh& mesh, Data::PolygonsData& md);
 
     idx_t csp_to_cell(idx_t csp_id, const Data::PolygonsData& md) const {
         if (md.cell_data) {
@@ -233,7 +229,7 @@ private:
         return std::make_pair(cell, subcell);
     }
 
-    MarkedPolygon get_src_csp(idx_t csp_id) {
+    Polygon get_src_csp(idx_t csp_id) {
         if (sharable_data_->src_.cell_data) {
             return get_csp_celldata(csp_id, src_mesh_, sharable_data_->src_);
         }
@@ -241,7 +237,7 @@ private:
             return get_csp_nodedata(csp_id, src_mesh_, sharable_data_->src_);
         }
     }
-    MarkedPolygon get_tgt_csp(idx_t csp_id) {
+    Polygon get_tgt_csp(idx_t csp_id) {
         if (sharable_data_->tgt_.cell_data) {
             return get_csp_celldata(csp_id, tgt_mesh_, sharable_data_->tgt_);
         }
@@ -249,9 +245,9 @@ private:
             return get_csp_nodedata(csp_id, tgt_mesh_, sharable_data_->tgt_);
         }
     }
-    MarkedPolygonArray get_polygons_celldata(FunctionSpace, Data::PolygonsData&);
-    MarkedPolygonArray get_polygons_nodedata(FunctionSpace, Data::PolygonsData&);
-    MarkedPolygonArray get_polygons(FunctionSpace fs, Data::PolygonsData& md) {
+    PolygonArray get_polygons_celldata(FunctionSpace, Data::PolygonsData&);
+    PolygonArray get_polygons_nodedata(FunctionSpace, Data::PolygonsData&);
+    PolygonArray get_polygons(FunctionSpace fs, Data::PolygonsData& md) {
         return md.cell_data ? get_polygons_celldata(fs, md) : get_polygons_nodedata(fs, md);
     }
 
