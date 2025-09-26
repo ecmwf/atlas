@@ -25,9 +25,9 @@ using Indices = std::vector<idx_t>;
 class ConservativeSphericalPolygonInterpolation : public Method {
 public:
     struct InterpolationParameters {      // one polygon intersection
-        Indices cell_idx;      // target cells used for intersection
+        Indices csp_ids;                  // target cells used for intersection
         std::vector<PointXYZ> centroids;  // intersection cell centroids
-        std::vector<double> weights;  // intersection cell areas
+        std::vector<double> weights;      // intersection cell areas
     };
 
 private:
@@ -199,9 +199,6 @@ private:
     Triplets compute_2nd_order_triplets();
     void dump_intersection(const std::string, const ConvexSphericalPolygon& plg_1, const MarkedPolygonArray& plg_2_array,
                            const Indices& plg_2_idx_array) const;
-    template <class TargetCellsIDs>
-    void dump_intersection(const std::string, const ConvexSphericalPolygon& plg_1, const MarkedPolygonArray& plg_2_array,
-                           const TargetCellsIDs& plg_2_idx_array) const;
     std::vector<idx_t> sort_cell_edges(Mesh& mesh, idx_t cell_id) const;
     std::vector<idx_t> sort_node_edges(Mesh& mesh, idx_t cell_id) const;
 
