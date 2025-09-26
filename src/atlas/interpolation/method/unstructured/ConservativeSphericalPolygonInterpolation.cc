@@ -1917,79 +1917,81 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
             const auto& tgt_iparam = data_->tgt_iparam_;
             const auto& tgt_areas = data_->tgt_.areas;
 
+            // CASE: CELL TO CELL
             if (tgt_cell_data_ && src_cell_data_) {
-                for (idx_t tcell = 0; tcell < n_tpoints_; ++tcell) {
-                    tgt_vals(tcell) = 0.;
-                    const auto& iparam = tgt_iparam[tcell];
-                    for (idx_t icell = 0; icell < iparam.csp_ids.size(); ++icell) {
-                        idx_t scell = iparam.csp_ids[icell];
-                        tgt_vals(tcell) += iparam.weights[icell] * src_vals(scell);
+                for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
+                    idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
+                    double tgt_val = 0.;
+                    const auto& iparam = tgt_iparam[tcsp_id];
+                    for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                        idx_t scsp_id = iparam.csp_ids[i_scsp];
+                        idx_t scell   = csp_to_cell(scsp_id, data_->src_);
+                        tgt_val += iparam.weights[i_scsp] * src_vals(scell);
                     }
                     if (tgt_areas[tcell] > 0.) {
-                        tgt_vals(tcell) /= tgt_areas[tcell];
-                        continue;
+                        tgt_val /= tgt_areas[tcell];
                     }
-                    tgt_vals(tcell) = 0.;
+                    tgt_vals(tcell) = tgt_val;
                 }
             }
+
+            // CASE: NODE TO CELL
             else if (not tgt_cell_data_ && src_cell_data_) {
                 auto& tgt_node2csp = data_->tgt_.node2csp;
                 for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
-                    tgt_vals(tnode) = 0.;
-                    for (idx_t tnode_subcell = 0; tnode_subcell < tgt_node2csp[tnode].size(); ++tnode_subcell) {
-                        const idx_t tsubcell = tgt_node2csp[tnode][tnode_subcell];
-                        const auto& iparam  = tgt_iparam[tsubcell];
-                        for (idx_t icell = 0; icell < iparam.csp_ids.size(); ++icell) {
-                            idx_t scell = iparam.csp_ids[icell];
-                            ATLAS_ASSERT(scell < n_spoints_);
-                            tgt_vals(tnode) += iparam.weights[icell] * src_vals(scell);
+                    double tgt_val = 0.;
+                    for( const auto& tcsp_id: tgt_node2csp[tnode]) {
+                        const auto& iparam  = tgt_iparam[tcsp_id];
+                        for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                            idx_t scsp_id = iparam.csp_ids[i_scsp];
+                            idx_t scell   = csp_to_cell(scsp_id, data_->src_);
+                            tgt_val += iparam.weights[i_scsp] * src_vals(scell);
                         }
                     }
                     if (tgt_areas[tnode] > 0.) {
-                        tgt_vals(tnode) /= tgt_areas[tnode];
-                        continue;
+                        tgt_val /= tgt_areas[tnode];
                     }
-                    tgt_vals(tnode) = 0.;
+                    tgt_vals(tnode) = tgt_val;
                 }
             }
+
+            // CASE: CELL TO NODE
             else if (tgt_cell_data_ && not src_cell_data_) {
                 const auto& src_csp2node = data_->src_.csp2node;
-                for (idx_t tcell = 0; tcell < n_tpoints_; ++tcell) {
-                    tgt_vals(tcell) = 0.;
-                    const auto& iparam  = tgt_iparam[tcell];
-                    for (idx_t icell = 0; icell < iparam.csp_ids.size(); ++icell) {
-                        idx_t ssubcell     = iparam.csp_ids[icell];
-                        idx_t snode        = src_csp2node[ssubcell];
-                        ATLAS_ASSERT(snode < n_spoints_);
-                        tgt_vals(tcell) += iparam.weights[icell] * src_vals(snode);
+                for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
+                    idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
+                    double tgt_val = 0.;
+                    const auto& iparam  = tgt_iparam[tcsp_id];
+                    for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                        idx_t scsp_id = iparam.csp_ids[i_scsp];
+                        idx_t snode   = src_csp2node[scsp_id];
+                        tgt_val += iparam.weights[i_scsp] * src_vals(snode);
                     }
                     if (tgt_areas[tcell] > 0.) {
-                        tgt_vals(tcell) /= tgt_areas[tcell];
-                        continue;
+                        tgt_val /= tgt_areas[tcell];
                     }
-                    tgt_vals(tcell) = 0.;
+                    tgt_vals(tcell) = tgt_val;
                 }
             }
+
+            // CASE: NODE TO NODE
             else if (not tgt_cell_data_ && not src_cell_data_) {
                 const auto& tgt_node2csp = data_->tgt_.node2csp;
                 const auto& src_csp2node = data_->src_.csp2node;
                 for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
-                    tgt_vals(tnode) = 0.;
-                    for (idx_t tnode_subcell = 0; tnode_subcell < tgt_node2csp[tnode].size(); ++tnode_subcell) {
-                        const idx_t tsubcell = tgt_node2csp[tnode][tnode_subcell];
-                        const auto& iparam  = tgt_iparam[tsubcell];
-                        for (idx_t icell = 0; icell < iparam.csp_ids.size(); ++icell) {
-                            idx_t ssubcell     = iparam.csp_ids[icell];
-                            idx_t snode        = src_csp2node[ssubcell];
-                            ATLAS_ASSERT(snode < n_spoints_);
-                            tgt_vals(tnode) += iparam.weights[icell] * src_vals(snode);
+                    double tgt_val = 0.;
+                    for( const auto& tcsp_id: tgt_node2csp[tnode]) {
+                        const auto& iparam = tgt_iparam[tcsp_id];
+                        for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                            idx_t scsp_id = iparam.csp_ids[i_scsp];
+                            idx_t snode   = src_csp2node[scsp_id];
+                            tgt_val += iparam.weights[i_scsp] * src_vals(snode);
                         }
                     }
                     if (tgt_areas[tnode] > 0.) {
-                        tgt_vals(tnode) /= tgt_areas[tnode];
-                        continue;
+                        tgt_val /= tgt_areas[tnode];
                     }
-                    tgt_vals(tnode) = 0.;
+                    tgt_vals(tnode) = tgt_val;
                 }
             }
         }
