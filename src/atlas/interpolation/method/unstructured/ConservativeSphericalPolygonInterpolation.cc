@@ -457,8 +457,14 @@ init_csp_index(
     // input
     bool cell_data, FunctionSpace fs,
     // output
-    std::vector<idx_t>& csp2node, std::vector<std::vector<idx_t>>& node2csp,
-    gidx_t& csp_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index) {
+    Data::MeshData& md) {
+
+    std::vector<idx_t>& csp2node = md.csp2node;
+    std::vector<std::vector<idx_t>>& node2csp = md.node2csp;
+    gidx_t& csp_size = md.csp_size;
+    std::vector<idx_t>& csp_cell_index = md.csp_cell_index;
+    std::vector<idx_t>& csp_index = md.csp_index;
+
     auto mesh = extract_mesh(fs);
     const auto& cell2node = mesh.cells().node_connectivity();
     const auto cell_halo   = array::make_view<int, 1>(mesh.cells().halo());
@@ -523,7 +529,7 @@ init_csp_index(
 
 
 ConservativeSphericalPolygonInterpolation::MarkedPolygon ConservativeSphericalPolygonInterpolation::
-get_csp_celldata(idx_t csp_id, const Mesh& mesh, gidx_t& csp_index_size, std::vector<idx_t>& csp_index) {
+get_csp_celldata(idx_t csp_id, const Mesh& mesh, Data::MeshData& md) {
 
     // TODO: Performance optimisations:
     //    - Do not extract array views, mesh connectivity for each csp_id
@@ -532,8 +538,7 @@ get_csp_celldata(idx_t csp_id, const Mesh& mesh, gidx_t& csp_index_size, std::ve
     const auto& cell2node  = mesh.cells().node_connectivity();
     std::vector<PointLonLat> pts_ll;
 
-    idx_t cell;
-    get_owner_cell_celldata(csp_id, csp_index, cell);
+    idx_t cell = csp_to_cell(csp_id, md);
 
     const idx_t n_nodes = cell2node.cols(cell);
     const auto nodes_ll   = array::make_view<double, 2>(mesh.nodes().lonlat());
@@ -665,13 +670,14 @@ get_csp_nodedata(idx_t csp_id, const Mesh& mesh, Data::MeshData& md ) {
 // Create polygons for cell-centred data. Here, the polygons are mesh cells
 ConservativeSphericalPolygonInterpolation::MarkedPolygonArray
 ConservativeSphericalPolygonInterpolation::
-get_polygons_celldata(FunctionSpace fs, std::vector<idx_t>& csp2node, std::vector<std::vector<idx_t>>& node2csp,
-    gidx_t& csp_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index) {
+get_polygons_celldata(FunctionSpace fs, Data::MeshData& md) {
+    //std::vector<idx_t>& csp2node, std::vector<std::vector<idx_t>>& node2csp,
+    //gidx_t& csp_size, std::vector<idx_t>& csp_cell_index, std::vector<idx_t>& csp_index) {
     ATLAS_TRACE("ConservativeSphericalPolygonInterpolation: get_polygons_celldata");
-    MarkedPolygonArray cspolygons(csp_size);
+    MarkedPolygonArray cspolygons(md.csp_size);
     auto mesh = extract_mesh(fs);
-    for(idx_t i = 0; i < csp_size; ++i) {
-        cspolygons[i] = get_csp_celldata(i, mesh, csp_size, csp_index);
+    for(idx_t i = 0; i < md.csp_size; ++i) {
+        cspolygons[i] = get_csp_celldata(i, mesh, md);
     }
     return cspolygons;
 }
@@ -873,10 +879,9 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
         ATLAS_TRACE_SCOPE("Get source polygons") {
             StopWatch stopwatch;
             stopwatch.start();
-            init_csp_index(src_cell_data_, src_fs_, sharable_data_->src_.csp2node, sharable_data_->src_.node2csp, sharable_data_->src_.csp_size, sharable_data_->src_.csp_cell_index, sharable_data_->src_.csp_index);
+            init_csp_index(src_cell_data_, src_fs_, sharable_data_->src_);
             if (src_cell_data_) {
-                src_csp = get_polygons_celldata(src_fs_, sharable_data_->src_.csp2node, sharable_data_->src_.node2csp,
-                    sharable_data_->src_.csp_size, sharable_data_->src_.csp_cell_index, sharable_data_->src_.csp_index);
+                src_csp = get_polygons_celldata(src_fs_, sharable_data_->src_);
             }
             else {
                 src_csp = get_polygons_nodedata(src_fs_, sharable_data_->src_);
@@ -890,7 +895,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
         ATLAS_TRACE_SCOPE("Get target polygons") {
             StopWatch stopwatch;
             stopwatch.start();
-            init_csp_index(tgt_cell_data_, tgt_fs_, sharable_data_->tgt_.csp2node, sharable_data_->tgt_.node2csp, sharable_data_->tgt_.csp_size, sharable_data_->tgt_.csp_cell_index, sharable_data_->tgt_.csp_index);
+            init_csp_index(tgt_cell_data_, tgt_fs_, sharable_data_->tgt_);
             stopwatch.stop();
             sharable_data_->timings.target_polygons_assembly = stopwatch.elapsed();
             remap_stat_.counts[Statistics::NUM_TGT_PLG] = sharable_data_->tgt_.csp_size;
@@ -956,7 +961,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
             ATLAS_TRACE("Store src_areas and src_point");
             if (tgt_cell_data_) {
                 for (idx_t tpt = 0; tpt < n_tpoints_; ++tpt) {
-                    auto tgt_csp = get_csp_celldata(tpt, tgt_mesh_, sharable_data_->tgt_.csp_size, sharable_data_->tgt_.csp_index);
+                    auto tgt_csp = get_csp_celldata(tpt, tgt_mesh_, sharable_data_->tgt_);
                     const auto& t_csp = tgt_csp.polygon;
                     tgt_points[tpt]  = t_csp.centroid();
                     tgt_areas[tpt]  = t_csp.area();
@@ -1632,8 +1637,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
 
         for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
             const auto& iparam = tgt_iparam_[tcsp_id];
-            idx_t tcell;
-            get_owner_cell_celldata(tcsp_id, data_->tgt_.csp_index, tcell);
+            idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
             if (iparam.cell_idx.size() == 0 || tgt_halo(tcell)) {
                 continue;
             }
@@ -1657,8 +1661,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
         std::vector<PointXYZ> Rsj;
         std::vector<PointXYZ> Aik;
         for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
-            idx_t tcell;
-            get_owner_cell_celldata(tcsp_id, data_->tgt_.csp_index, tcell);
+            idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
             const auto& iparam  = tgt_iparam_[tcsp_id];
             if (iparam.cell_idx.size() == 0 || tgt_halo(tcell)) {
                 continue;
