@@ -195,8 +195,6 @@ private:
     Triplets compute_2nd_order_triplets();
     void dump_intersection(const std::string, const Polygon& plg_1, const PolygonArray& plg_2_array,
                            const Indices& plg_2_idx_array) const;
-    std::vector<idx_t> sort_cell_edges(Mesh& mesh, idx_t cell_id) const;
-    std::vector<idx_t> sort_node_edges(Mesh& mesh, idx_t cell_id) const;
 
     struct Workspace_get_cell_neighbours;
     std::vector<idx_t> get_cell_neighbours(Mesh&, idx_t jcell, Workspace_get_cell_neighbours&) const;
@@ -204,7 +202,7 @@ private:
     struct Workspace_get_node_neighbours;
     std::vector<idx_t> get_node_neighbours(Mesh&, idx_t jcell, Workspace_get_node_neighbours&) const;
 
-    void init_polygons_data(bool cell_data, FunctionSpace fs, Data::PolygonsData& md);
+    void init_polygons_data(FunctionSpace fs, Data::PolygonsData& md);
 
 
     Polygon get_csp_celldata(idx_t csp_id, const Mesh& mesh, const Data::PolygonsData& md);
@@ -229,14 +227,14 @@ private:
         return std::make_pair(cell, subcell);
     }
 
-    Polygon get_src_csp(idx_t csp_id) {
-        if (sharable_data_->src_.cell_data) {
-            return get_csp_celldata(csp_id, src_mesh_, sharable_data_->src_);
-        }
-        else {
-            return get_csp_nodedata(csp_id, src_mesh_, sharable_data_->src_);
-        }
-    }
+    // Polygon get_src_csp(idx_t csp_id) {
+    //     if (sharable_data_->src_.cell_data) {
+    //         return get_csp_celldata(csp_id, src_mesh_, sharable_data_->src_);
+    //     }
+    //     else {
+    //         return get_csp_nodedata(csp_id, src_mesh_, sharable_data_->src_);
+    //     }
+    // }
     Polygon get_tgt_csp(idx_t csp_id) {
         if (sharable_data_->tgt_.cell_data) {
             return get_csp_celldata(csp_id, tgt_mesh_, sharable_data_->tgt_);
@@ -268,9 +266,6 @@ private:
     bool normalise_;
     int order_;
     bool matrix_free_;
-    bool statistics_timings_;
-    bool statistics_intersection_;
-    bool statistics_conservation_;
 
     mutable Statistics remap_stat_;
 
