@@ -265,7 +265,7 @@ private:
     FunctionSpace tgt_fs_;
     mutable Mesh src_mesh_;
     mutable Mesh tgt_mesh_;
-    int normalise_intersections_;
+    bool normalise_;
     int order_;
     bool matrix_free_;
     bool statistics_timings_;

@@ -219,12 +219,14 @@ Config get_interpolation_config(const Grid& sgrid, const Grid& tgrid, const Atla
         c.set("order", 1);
         c.set("src_cell_data", gridpoints_are_cells(sgrid));
         c.set("tgt_cell_data", gridpoints_are_cells(tgrid));
+        c.set("normalise", true);
     }
     else if (type == "cons2") {
         c.set("type", "conservative-spherical-polygon");
         c.set("order", 2);
         c.set("src_cell_data", gridpoints_are_cells(sgrid));
         c.set("tgt_cell_data", gridpoints_are_cells(tgrid));
+        c.set("normalise", true);
     }
     else {
         c.set("type", type);

@@ -222,11 +222,11 @@ inline bool valid_point(idx_t node_idx, const array::ArrayView<int, 1>& node_fla
 
 
 ConservativeSphericalPolygonInterpolation::ConservativeSphericalPolygonInterpolation(const Config& config):
-    Method(config), validate_(false), src_cell_data_(true), tgt_cell_data_(true), normalise_intersections_(false),
+    Method(config), validate_(false), src_cell_data_(true), tgt_cell_data_(true), normalise_(false),
     order_(1), matrix_free_(false), n_spoints_(0), n_tpoints_(0) {
     config.get("validate", validate_ = false);
     config.get("order", order_ = 1);
-    config.get("normalise_intersections", normalise_intersections_ = 0);
+    config.get("normalise", normalise_ = false);
     config.get("matrix_free", matrix_free_ = false);
     config.get("src_cell_data", src_cell_data_ = true);
     config.get("tgt_cell_data", tgt_cell_data_ = true);
@@ -1309,12 +1309,12 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const Polygon
             else if (tgt_cover_err_percent > 0.1 && remap_stat_.intersection) {
                 num_pol[Statistics::NUM_UNCVR_PART_TGT]++;
             }
-            if (normalise_intersections_ && tgt_cover_err_percent < 1.) {
-                double wfactor = t_csp.area() / (tgt_cover_area > 0. ? tgt_cover_area : 1.);
-                for (idx_t i = 0; i < intersection_weights.size(); i++) {
-                    intersection_weights[i] *= wfactor;
-                }
-            }
+            // if (normalise_intersections_ && tgt_cover_err_percent < 1.) {
+            //     double wfactor = t_csp.area() / (tgt_cover_area > 0. ? tgt_cover_area : 1.);
+            //     for (idx_t i = 0; i < intersection_weights.size(); i++) {
+            //         intersection_weights[i] *= wfactor;
+            //     }
+            // }
             tgt_iparam_[tcsp_id].csp_ids = intersection_scsp_ids;
             tgt_iparam_[tcsp_id].weights = intersection_weights;
             if (order_ == 2 or not matrix_free_ or not matrixAllocated()) {
@@ -1505,27 +1505,78 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
         }
     }
     triplets.reserve(triplets_size);
-    std::map<idx_t, double> tpoint_subweights;
+
+    struct TargetTriplets {
+        bool normalise_;
+        int t;
+        std::map<idx_t, double> tpoint_subweights;
+        void add (idx_t s, double w) {
+            auto pair = tpoint_subweights.emplace(s, w);
+            bool inserted = pair.second;
+            if (! inserted) {
+                auto it = pair.first;
+                it->second += w;
+            }
+        }
+        void emplace_in(Triplets& triplets) {
+            if (tpoint_subweights.size()) {
+                double wfactor = 1.;
+                if (normalise_) {
+                    volatile double sum_of_weights{0.};
+                    for (auto& p : tpoint_subweights) {
+                        sum_of_weights += p.second;
+                    }
+                    ATLAS_ASSERT(sum_of_weights > 0.);
+                    wfactor = 1./sum_of_weights;
+                }
+                for (auto& p : tpoint_subweights) {
+                    triplets.emplace_back(t, p.first, p.second * wfactor);
+                }
+            }
+        }
+        void reset(int _t) {
+            tpoint_subweights.clear();
+            t = _t;
+        }
+        size_t size() const { return tpoint_subweights.size(); }
+        TargetTriplets(bool normalise) : normalise_(normalise) {}
+    } target_triplets(normalise_);
+
+    struct ScopedDisableFPE {
+        ScopedDisableFPE() {
+            fpe_disabled = atlas::library::disable_floating_point_exception(FE_DIVBYZERO);
+        }
+        ~ScopedDisableFPE() {
+            if (fpe_disabled) {
+                atlas::library::enable_floating_point_exception(FE_DIVBYZERO);
+            }
+        }
+        bool fpe_disabled;
+    } disable_fpe;
 
     // assemble triplets to define the sparse matrix
     const auto& tgt_areas = data_->tgt_.areas;
+
     if (tgt_cell_data_ && src_cell_data_) {
         for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
+            idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
+            double inv_tgt_weight = (tgt_areas[tcell] > 0. ? 1. / tgt_areas[tcell] : 0.);
             const auto& iparam = tgt_iparam[tcsp_id];
+            target_triplets.reset(tcell);
             for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
                 idx_t scsp_id = iparam.csp_ids[i_scsp];
-                double inv_tgt_weight = (tgt_areas[tcsp_id] > 0. ? 1. / tgt_areas[tcsp_id] : 0.);
-                double weight = iparam.weights[i_scsp] * inv_tgt_weight;
                 idx_t scell = csp_to_cell(scsp_id, data_->src_);
-                idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
-                triplets.emplace_back(tcell, scell, weight);
+                double weight = iparam.weights[i_scsp] * inv_tgt_weight;
+                target_triplets.add(scell, weight);
             }
+            target_triplets.emplace_in(triplets);
         }
     }
     else if (not tgt_cell_data_ && src_cell_data_) {
         auto& tgt_node2csp = data_->tgt_.node2csp;
         for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
-            tpoint_subweights.clear();
+            double inv_tgt_weight = (tgt_areas[tnode] > 0. ? 1. / tgt_areas[tnode] : 0.);
+            target_triplets.reset(tnode);
             for (idx_t isubcell = 0; isubcell < tgt_node2csp[tnode].size(); ++isubcell) {
                 const idx_t subcell = tgt_node2csp[tnode][isubcell];
                 const auto& iparam  = tgt_iparam[subcell];
@@ -1533,69 +1584,47 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                     idx_t scsp_id = iparam.csp_ids[i_scsp];
                     idx_t scell = csp_to_cell(scsp_id, data_->src_);
                     ATLAS_ASSERT(scsp_id < n_spoints_);
-                    double inv_tgt_weight = (tgt_areas[tnode] > 0. ? 1. / tgt_areas[tnode] : 0.);
-                    double weight = iparam.weights[i_scsp] * inv_tgt_weight;
-                    auto pair = tpoint_subweights.emplace(scell, weight);
-                    bool inserted = pair.second;
-                    if (! inserted) {
-                        auto it = pair.first;
-                        it->second += weight;
-                    }
+                    volatile double weight = iparam.weights[i_scsp] * inv_tgt_weight;
+                    target_triplets.add(scell, weight);
                 }
             }
-            for (auto& p : tpoint_subweights) {
-                triplets.emplace_back(tnode, p.first, p.second);
-            }
+            target_triplets.emplace_in(triplets);
         }
     }
     else if (tgt_cell_data_ && not src_cell_data_) {
         auto& src_csp2node = data_->src_.csp2node;
         for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
+            idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
+            double inv_tgt_weight = (tgt_areas[tcell] > 0. ? 1. / tgt_areas[tcell] : 0.);
             const auto& iparam = tgt_iparam[tcsp_id];
-            tpoint_subweights.clear();
+            target_triplets.reset(tcell);
             for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
                 idx_t scsp_id = iparam.csp_ids[i_scsp];
                 idx_t snode   = src_csp2node[scsp_id];
                 ATLAS_ASSERT(snode < n_spoints_);
-                double inv_tgt_weight = (tgt_areas[tcsp_id] > 0. ? 1. / tgt_areas[tcsp_id] : 0.);
                 double weight = iparam.weights[i_scsp] * inv_tgt_weight;
-                auto pair = tpoint_subweights.emplace(snode, weight);
-                bool inserted = pair.second;
-                if (! inserted) {
-                    auto it = pair.first;
-                    it->second += weight;
-                }
+                target_triplets.add(snode, weight);
             }
-            for (auto& p : tpoint_subweights) {
-                triplets.emplace_back(tcsp_id, p.first, p.second);
-            }
+            target_triplets.emplace_in(triplets);
         }
     }
     else if (not tgt_cell_data_ && not src_cell_data_) {
         auto& tgt_node2csp = data_->tgt_.node2csp;
         auto& src_csp2node = data_->src_.csp2node;
         for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
-            tpoint_subweights.clear();
-            for (idx_t isubcell = 0; isubcell < tgt_node2csp[tnode].size(); ++isubcell) {
-                const idx_t subcell = tgt_node2csp[tnode][isubcell];
-                const auto& iparam  = tgt_iparam[subcell];
+            double inv_tgt_weight = (tgt_areas[tnode] > 0. ? 1. / tgt_areas[tnode] : 0.);
+            target_triplets.reset(tnode);
+            for (const auto& tcsp_id: tgt_node2csp[tnode]) {
+                const auto& iparam  = tgt_iparam[tcsp_id];
                 for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
                     idx_t scsp_id = iparam.csp_ids[i_scsp];
                     idx_t snode   = src_csp2node[scsp_id];
                     ATLAS_ASSERT(snode < n_spoints_);
-                    double inv_node_weight = (tgt_areas[tnode] > 0. ? 1. / tgt_areas[tnode] : 0.);
-                    double weight = iparam.weights[i_scsp] * inv_node_weight;
-                    auto pair = tpoint_subweights.emplace(snode, weight);
-                    bool inserted = pair.second;
-                    if (! inserted) {
-                        auto it = pair.first;
-                        it->second += weight;
-                    }
+                    double weight = iparam.weights[i_scsp] * inv_tgt_weight;
+                    target_triplets.add(snode, weight);
                 }
             }
-            for (auto& p : tpoint_subweights) {
-                triplets.emplace_back(tnode, p.first, p.second);
-            }
+            target_triplets.emplace_in(triplets);
         }
     }
     if (validate_) {
@@ -2197,7 +2226,7 @@ void ConservativeSphericalPolygonInterpolation::print(std::ostream& out) const {
     out << ", source:" << (src_cell_data_ ? "cells(" : "nodes(") << src_mesh_.grid().name() << ",halo=" << halo << ")";
     tgt_mesh_.metadata().get("halo", halo);
     out << ", target:" << (tgt_cell_data_ ? "cells(" : "nodes(") << tgt_mesh_.grid().name() << ",halo=" << halo << ")";
-    out << ", normalise_intersections:" << normalise_intersections_;
+    out << ", normalise:" << normalise_;
     out << ", matrix_free:" << matrix_free_;
     out << ", statistics.intersection:" << remap_stat_.intersection;
     out << ", statistics.conservation:" << remap_stat_.conservation;
