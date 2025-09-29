@@ -20,8 +20,10 @@
 namespace atlas::linalg {
 
 /// @brief A triplet which represents a non-zero entry in a sparse matrix.
-template <typename Value, typename Index, typename = std::enable_if_t<std::is_integral_v<Index>>>
+template <typename Value, typename Index>
 class Triplet {
+    static_assert(std::is_integral_v<Index>, "Index must be an integral type");
+
 public:
     Triplet() = default;
     Triplet(Index row, Index column, Value value): row_{row}, column_{column}, value_{value} {}
@@ -47,8 +49,7 @@ template <typename Value, typename Index>
 struct is_triplet<Triplet<Value, Index>> : std::true_type {};
 
 template <typename Iter>
-constexpr bool is_triplet_iterator =
-    is_triplet<std::remove_const_t<typename std::iterator_traits<Iter>::value_type>>::value;
+constexpr bool is_triplet_iterator = is_triplet<typename std::iterator_traits<Iter>::value_type>::value;
 
 template <typename Iter>
 constexpr bool is_random_access_iterator =
@@ -57,6 +58,9 @@ constexpr bool is_random_access_iterator =
 template <typename Iter>
 constexpr bool is_mutable_iterator =
     !std::is_const_v<typename std::remove_reference_t<typename std::iterator_traits<Iter>::reference>>;
+
+template <typename Iter>
+constexpr bool is_sortable_iterator = is_random_access_iterator<Iter> && is_mutable_iterator<Iter>;
 }  // namespace detail
 
 /// @brief Construct a SparseMatrixStorage from a range of triplets.
@@ -67,13 +71,13 @@ std::enable_if_t<detail::is_triplet_iterator<Iter>, SparseMatrixStorage> make_sp
     using Index       = decltype(std::declval<TripletType>().row());
     using Value       = decltype(std::declval<TripletType>().value());
 
-    const auto n_non_zero = std::distance(triplets_begin, triplets_end);
-    auto outer_array      = std::unique_ptr<array::Array>(array::Array::create<Index>(n_rows + 1));
-    auto inner_array      = std::unique_ptr<array::Array>(array::Array::create<Index>(n_non_zero));
-    auto values_array     = std::unique_ptr<array::Array>(array::Array::create<Value>(n_non_zero));
-    auto outer_view       = array::make_view<Index, 1>(*outer_array);
-    auto inner_view       = array::make_view<Index, 1>(*inner_array);
-    auto values_view      = array::make_view<Value, 1>(*values_array);
+    const std::size_t n_non_zero = std::distance(triplets_begin, triplets_end);
+    auto outer_array             = std::unique_ptr<array::Array>(array::Array::create<Index>(n_rows + 1));
+    auto inner_array             = std::unique_ptr<array::Array>(array::Array::create<Index>(n_non_zero));
+    auto values_array            = std::unique_ptr<array::Array>(array::Array::create<Value>(n_non_zero));
+    auto outer_view              = array::make_view<Index, 1>(*outer_array);
+    auto inner_view              = array::make_view<Index, 1>(*inner_array);
+    auto values_view             = array::make_view<Value, 1>(*values_array);
 
     std::size_t index            = 0;
     Iter triplet_iter            = triplets_begin;
@@ -83,13 +87,13 @@ std::enable_if_t<detail::is_triplet_iterator<Iter>, SparseMatrixStorage> make_sp
         for (; triplet_iter != triplets_end && triplet_iter->row() == static_cast<Index>(row);
              ++index, ++triplet_iter) {
             ATLAS_ASSERT(!(*triplet_iter < previous_triplet), "Triplet range must be sorted.");
-            ATLAS_ASSERT(triplet_iter->col() < static_cast<Index>(n_cols));
+            ATLAS_ASSERT(static_cast<std::size_t>(triplet_iter->col()) < n_cols, "Triplet column index out of bounds.");
             inner_view(index)  = triplet_iter->col();
             values_view(index) = triplet_iter->value();
             previous_triplet   = *triplet_iter;
         }
     }
-    ATLAS_ASSERT(index == n_non_zero);
+    ATLAS_ASSERT(index == n_non_zero, "Triplet row index out of bounds.");
     outer_view(n_rows) = n_non_zero;
 
     return SparseMatrixStorage::make(n_rows, n_cols, n_non_zero, std::move(values_array), std::move(inner_array),
@@ -98,9 +102,7 @@ std::enable_if_t<detail::is_triplet_iterator<Iter>, SparseMatrixStorage> make_sp
 
 /// @brief Construct a SparseMatrixStorage from a random-access range of triplets, sorting if necessary.
 template <typename Iter>
-std::enable_if_t<detail::is_triplet_iterator<Iter> && detail::is_random_access_iterator<Iter> &&
-                     detail::is_mutable_iterator<Iter>,
-                 SparseMatrixStorage>
+std::enable_if_t<detail::is_triplet_iterator<Iter> && detail::is_sortable_iterator<Iter>, SparseMatrixStorage>
 make_sparse_matrix_storage_from_triplets(std::size_t n_rows, std::size_t n_cols, std::size_t n_non_zero,
                                          Iter triplets_begin, bool is_sorted = false) {
     if (!is_sorted) {
