@@ -128,10 +128,10 @@ void Binning::do_setup(const FunctionSpace& source, const FunctionSpace& target)
     for (std::size_t rowIdx = 0; rowIdx < transposeRows; ++rowIdx) {
 
         ValueType rowSum = 0.;
-        linalg::sparse_matrix_for_each_triplet(rowIdx, transposeMatrixView,
-                                               [&](IndexType row, IndexType col, ValueType value) { rowSum += weightedValue(col, value); });
+        linalg::sparse_matrix_for_each_row(rowIdx, transposeMatrixView,
+                                           [&](IndexType row, IndexType col, ValueType value) { rowSum += weightedValue(col, value); });
 
-        linalg::sparse_matrix_for_each_triplet(rowIdx, transposeMatrixView, [&](IndexType row, IndexType col, ValueType value) {
+        linalg::sparse_matrix_for_each_row(rowIdx, transposeMatrixView, [&](IndexType row, IndexType col, ValueType value) {
             triplets.emplace_back(row, col, weightedValue(col, value) / rowSum);
         });
     }
@@ -164,7 +164,7 @@ Binning::SparseMatrixStorage Binning::transposeAndHaloExchange(const SparseMatri
     auto triplets   = std::vector<TripletType>{};
     auto sendBuffer = MpiBuffer{};
 
-    linalg::sparse_matrix_for_each_triplet(interpMatrix, [&](IndexType row, IndexType col, ValueType weight) {
+    linalg::sparse_matrix_for_each(interpMatrix, [&](IndexType row, IndexType col, ValueType weight) {
         // Swap row and column indices for transpose.
         std::swap(row, col);
 

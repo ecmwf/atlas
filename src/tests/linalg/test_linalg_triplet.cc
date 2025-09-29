@@ -155,8 +155,8 @@ CASE("Test 'for each triplet' methods") {
     SECTION("Test 'for each triplet' on matrix row.") {
         {
             auto ref_iter = ref_triplets.begin();
-            for (std::size_t row = 0; row < matrix_view.rows(); ++row) {
-                sparse_matrix_for_each_triplet(row, matrix_view, [&](int row, int col, double value) {
+            for (std::size_t r = 0; r < matrix_view.rows(); ++r) {
+                sparse_matrix_for_each_row(r, matrix_view, [&](int row, int col, double value) {
                     ATLAS_ASSERT(row == ref_iter->row());
                     ATLAS_ASSERT(col == ref_iter->col());
                     ATLAS_ASSERT(value == ref_iter->value());
@@ -168,7 +168,7 @@ CASE("Test 'for each triplet' methods") {
     SECTION("Test 'for each triplet' method on full matrix.") {
         {
             auto ref_iter = ref_triplets.begin();
-            sparse_matrix_for_each_triplet(matrix_view, [&](int row, int col, double value) {
+            sparse_matrix_for_each(matrix_view, [&](int row, int col, double value) {
                 ATLAS_ASSERT(row == ref_iter->row());
                 ATLAS_ASSERT(col == ref_iter->col());
                 ATLAS_ASSERT(value == ref_iter->value());

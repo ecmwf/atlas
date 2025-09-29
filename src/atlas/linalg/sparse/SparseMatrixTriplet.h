@@ -121,7 +121,7 @@ SparseMatrixStorage make_sparse_matrix_storage_from_triplets(std::size_t n_rows,
 
 /// @brief For-each iteration over all non-zero triplets in row.
 template <typename Value, typename Index, typename Functor>
-std::enable_if_t<std::is_invocable_v<Functor, Index, Index, Value>> sparse_matrix_for_each_triplet(
+std::enable_if_t<std::is_invocable_v<Functor, Index, Index, Value>> sparse_matrix_for_each_row(
     std::size_t row, const SparseMatrixView<Value, Index>& matrix, Functor&& functor) {
     const Index* outer  = matrix.outer();
     const Index* inner  = matrix.inner();
@@ -136,10 +136,10 @@ std::enable_if_t<std::is_invocable_v<Functor, Index, Index, Value>> sparse_matri
 
 /// @brief For-each iteration over all non-zero triplets in matrix.
 template <typename Value, typename Index, typename Functor>
-std::enable_if_t<std::is_invocable_v<Functor, Index, Index, Value>> sparse_matrix_for_each_triplet(
+std::enable_if_t<std::is_invocable_v<Functor, Index, Index, Value>> sparse_matrix_for_each(
     const SparseMatrixView<Value, Index>& matrix, Functor&& functor) {
     for (std::size_t row = 0; row < matrix.rows(); ++row) {
-        sparse_matrix_for_each_triplet(row, matrix, functor);
+        sparse_matrix_for_each_row(row, matrix, functor);
     }
 }
 
