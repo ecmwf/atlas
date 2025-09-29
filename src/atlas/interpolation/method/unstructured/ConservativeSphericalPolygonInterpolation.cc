@@ -572,8 +572,6 @@ get_csp_celldata(idx_t csp_id, const Mesh& mesh, const Data::PolygonsData& md) {
 
 ConservativeSphericalPolygonInterpolation::Polygon ConservativeSphericalPolygonInterpolation::
 get_csp_nodedata(idx_t csp_id, const Mesh& mesh, Data::PolygonsData& md ) {
-    using Context = Data::PolygonsData::Context;
-
     std::vector<idx_t>& csp2node = md.csp2node;
     std::vector<std::vector<idx_t>>& node2csp = md.node2csp;
 
@@ -1657,7 +1655,11 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                 }
             }
         }
+        auto ghost = array::make_view<int,1>( data_->tgt_.cell_data ? tgt_mesh_.cells().halo() : tgt_mesh_.nodes().ghost() );
         for (size_t row = 0; row < n_tpoints_; ++row) {
+            if (ghost(row)) {
+                continue;
+            }
             if (std::abs(weight_sum[row] - 1.) > 1e-10) {
                 Log::info() << "target weight in row " << row << " differs from 1 by " << std::abs(weight_sum[row] - 1.) << std::endl;
             }
