@@ -1519,41 +1519,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
     }
     triplets.reserve(triplets_size);
 
-    struct TargetTriplets {
-        bool normalise_;
-        int t;
-        std::map<idx_t, double> tpoint_subweights;
-        void add (idx_t s, double w) {
-            auto pair = tpoint_subweights.emplace(s, w);
-            bool inserted = pair.second;
-            if (! inserted) {
-                auto it = pair.first;
-                it->second += w;
-            }
-        }
-        void emplace_in(Triplets& triplets) {
-            if (tpoint_subweights.size()) {
-                double wfactor = 1.;
-                if (normalise_) {
-                    volatile double sum_of_weights{0.};
-                    for (auto& p : tpoint_subweights) {
-                        sum_of_weights += p.second;
-                    }
-                    ATLAS_ASSERT(sum_of_weights > 0.);
-                    wfactor = 1./sum_of_weights;
-                }
-                for (auto& p : tpoint_subweights) {
-                    triplets.emplace_back(t, p.first, p.second * wfactor);
-                }
-            }
-        }
-        void reset(int _t) {
-            tpoint_subweights.clear();
-            t = _t;
-        }
-        size_t size() const { return tpoint_subweights.size(); }
-        TargetTriplets(bool normalise) : normalise_(normalise) {}
-    } target_triplets(normalise_);
+    TargetTriplets target_triplets(normalise_);
 
     struct ScopedDisableFPE {
         ScopedDisableFPE() {
@@ -1685,6 +1651,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
 
     Workspace_get_cell_neighbours w_cell;
     Workspace_get_node_neighbours w_node;
+    TargetTriplets target_triplets(normalise_);
 
     if (tgt_cell_data_) {
         const auto tgt_halo = array::make_view<int, 1>(tgt_mesh_.cells().halo());
@@ -1720,6 +1687,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
             if (iparam.csp_ids.size() == 0 || tgt_halo(tcell)) {
                 continue;
             }
+            target_triplets.reset(tcell);
             // better conservation after Kritsikis et al. (2017)
             // NOTE: ommited here at cost of conservation due to more involved implementation in parallel
             // TEMP: use barycentre computed based on the source polygon's vertices, rather then
@@ -1780,24 +1748,31 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                         idx_t nj  = next_index(j, src_neighbours.size());
                         idx_t sj  = src_neighbours[j];
                         idx_t nsj = src_neighbours[nj];
-                        triplets.emplace_back(tcell, sj, 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]));
-                        triplets.emplace_back(tcell, nsj, 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]));
+                        target_triplets.add(sj, 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]));
+                        target_triplets.add(nsj, 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]));
+                        // triplets.emplace_back(tcell, sj, 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]));
+                        // triplets.emplace_back(tcell, nsj, 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]));
                     }
                     idx_t scell = spt;
-                    triplets.emplace_back(tcell, scell, iparam.weights[i_scsp] * tcell_area_inv - PointXYZ::dot(Rs, Aik[i_scsp]));
+                    target_triplets.add(scell, iparam.weights[i_scsp] * tcell_area_inv - PointXYZ::dot(Rs, Aik[i_scsp]));
+                    // triplets.emplace_back(tcell, scell, iparam.weights[i_scsp] * tcell_area_inv - PointXYZ::dot(Rs, Aik[i_scsp]));
                 }
                 else {
                     for (idx_t j = 0; j < src_neighbours.size(); ++j) {
                         idx_t nj  = next_index(j, src_neighbours.size());
                         idx_t sj  = src_neighbours[j];
                         idx_t nsj = src_neighbours[nj];
-                        triplets.emplace_back(tcell, sj, (0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp])));
-                        triplets.emplace_back(tcell, nsj, (0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp])));
+                        target_triplets.add(sj, (0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp])));
+                        target_triplets.add(nsj, (0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp])));
+                        // triplets.emplace_back(tcell, sj, (0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp])));
+                        // triplets.emplace_back(tcell, nsj, (0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp])));
                     }
                     idx_t snode = spt;
-                    triplets.emplace_back(tcell, snode, iparam.weights[i_scsp] * tcell_area_inv - PointXYZ::dot(Rs, Aik[i_scsp]));
+                    target_triplets.add(snode, iparam.weights[i_scsp] * tcell_area_inv - PointXYZ::dot(Rs, Aik[i_scsp]));
+                    // triplets.emplace_back(tcell, snode, iparam.weights[i_scsp] * tcell_area_inv - PointXYZ::dot(Rs, Aik[i_scsp]));
                 }
             }
+            target_triplets.emplace_in(triplets);
         }
     }
     else {  // if ( not tgt_cell_data_ )
@@ -1841,6 +1816,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
             if (tgt_ghost(tnode)) {
                 continue;
             }
+            target_triplets.reset(tnode);
             for (idx_t i_tcsp = 0; i_tcsp < tgt_node2csp[tnode].size(); ++i_tcsp) {
                 const idx_t tcsp_id = tgt_node2csp[tnode][i_tcsp];
                 const auto& iparam = tgt_iparam_[tcsp_id];
@@ -1910,8 +1886,10 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                             idx_t nj  = next_index(j, src_neighbours.size());
                             idx_t sj  = src_neighbours[j];
                             idx_t nsj = src_neighbours[nj];
-                            triplets.emplace_back(tnode, sj, 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]));
-                            triplets.emplace_back(tnode, nsj, 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]));
+                            target_triplets.add(sj, 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]));
+                            target_triplets.add(nsj, 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]));
+                            // triplets.emplace_back(tnode, sj, 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]));
+                            // triplets.emplace_back(tnode, nsj, 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]));
                         }
                         idx_t scell = spt;
                         triplets.emplace_back(tnode, scell, iparam.weights[i_scsp] * tnode_area_inv - PointXYZ::dot(Rs, Aik[i_scsp]));
@@ -1921,14 +1899,18 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                             idx_t nj  = next_index(j, src_neighbours.size());
                             idx_t sj  = src_neighbours[j];
                             idx_t nsj = src_neighbours[nj];
-                            triplets.emplace_back(tnode, sj, (0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp])));
-                            triplets.emplace_back(tnode, nsj, (0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp])));
+                            target_triplets.add(sj, (0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp])));
+                            target_triplets.add(nsj, (0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp])));
+                            // triplets.emplace_back(tnode, sj, (0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp])));
+                            // triplets.emplace_back(tnode, nsj, (0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp])));
                         }
                         idx_t snode = spt;
-                        triplets.emplace_back(tnode, snode, iparam.weights[i_scsp] * tnode_area_inv - PointXYZ::dot(Rs, Aik[i_scsp]));
+                        target_triplets.add(snode, iparam.weights[i_scsp] * tnode_area_inv - PointXYZ::dot(Rs, Aik[i_scsp]));
+                        // triplets.emplace_back(tnode, snode, iparam.weights[i_scsp] * tnode_area_inv - PointXYZ::dot(Rs, Aik[i_scsp]));
                     }
                 }
             }
+            target_triplets.emplace_in(triplets);
         }
     }
     return triplets;

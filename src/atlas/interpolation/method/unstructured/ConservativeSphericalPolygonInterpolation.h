@@ -79,6 +79,43 @@ private:
         FunctionSpace tgt_fs_;
     };
 
+
+    struct TargetTriplets {
+        bool normalise_;
+        int t;
+        std::map<idx_t, double> tpoint_subweights;
+        void add (idx_t s, double w) {
+            auto pair = tpoint_subweights.emplace(s, w);
+            bool inserted = pair.second;
+            if (! inserted) {
+                auto it = pair.first;
+                it->second += w;
+            }
+        }
+        void emplace_in(Triplets& triplets) {
+            if (tpoint_subweights.size()) {
+                double wfactor = 1.;
+                if (normalise_) {
+                    volatile double sum_of_weights{0.};
+                    for (auto& p : tpoint_subweights) {
+                        sum_of_weights += p.second;
+                    }
+                    ATLAS_ASSERT(sum_of_weights > 0.);
+                    wfactor = 1./sum_of_weights;
+                }
+                for (auto& p : tpoint_subweights) {
+                    triplets.emplace_back(t, p.first, p.second * wfactor);
+                }
+            }
+        }
+        void reset(int _t) {
+            tpoint_subweights.clear();
+            t = _t;
+        }
+        size_t size() const { return tpoint_subweights.size(); }
+        TargetTriplets(bool normalise) : normalise_(normalise) {}
+    }; //target_triplets(bool normalise_);
+
 public:
     class Cache final : public interpolation::Cache {
     public:
