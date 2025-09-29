@@ -114,7 +114,7 @@ private:
         }
         size_t size() const { return tpoint_subweights.size(); }
         TargetTriplets(bool normalise) : normalise_(normalise) {}
-    }; //target_triplets(bool normalise_);
+    };
 
 public:
     class Cache final : public interpolation::Cache {

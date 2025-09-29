@@ -1649,6 +1649,19 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
     // struct tripple{idx_t row; idx_t column; double value; };
     // std::vector<tripple> triplets;
 
+    struct ScopedDisableFPE {
+        ScopedDisableFPE() {
+            fpe_disabled = atlas::library::disable_floating_point_exception(FE_DIVBYZERO);
+        }
+        ~ScopedDisableFPE() {
+            if (fpe_disabled) {
+                atlas::library::enable_floating_point_exception(FE_DIVBYZERO);
+            }
+        }
+        bool fpe_disabled;
+    } disable_fpe;
+
+
     Workspace_get_cell_neighbours w_cell;
     Workspace_get_node_neighbours w_node;
     TargetTriplets target_triplets(normalise_);
@@ -1698,10 +1711,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
             // for ( idx_t icell = 0; icell < iparam.csp_ids.size(); ++icell ) {
             //     Cs = Cs + PointXYZ::mul( iparam.centroids[icell], iparam.weights[icell] );
             // }
-#if defined(__APPLE__)
-            volatile // On Apple, prevent FE_DIVBYZERO possibly triggered when inverting dual_area_inv a few lines below
-#endif
-            double tcell_area_inv = ( tgt_areas[tcell] > 0.) ? 1. / tgt_areas[tcell] : 0.; // dual_area_inv, even if protected, may still leads to FE_DIVBYZERO with Apple without volatile trick
+            double tcell_area_inv = ( tgt_areas[tcell] > 0.) ? 1. / tgt_areas[tcell] : 0.;
 
             Aik.resize(iparam.csp_ids.size());
             for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
@@ -1721,9 +1731,6 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                 }
                 Rsj.resize(src_neighbours.size());
                 PointXYZ Rs   = {0., 0., 0.};
-#if defined(__APPLE__)
-                volatile
-#endif
                 double dual_area_inv = 0.;
                 for (idx_t j = 0; j < src_neighbours.size(); ++j) {
                     idx_t sj         = src_neighbours[j];
@@ -1740,7 +1747,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                     }
                     Rs = Rs + Rsj[j];
                 }
-                dual_area_inv = (dual_area_inv > 0.) ? 1. / dual_area_inv : 0.; // dual_area_inv, even if protected, may still leads to FE_DIVBYZERO with Apple without volatile trick
+                dual_area_inv = (dual_area_inv > 0.) ? 1. / dual_area_inv : 0.;
                 Aik[i_scsp]    = PointXYZ::mul(Aik[i_scsp], iparam.weights[i_scsp] * tcell_area_inv * dual_area_inv);
 
                 if (src_cell_data_) {
@@ -1748,28 +1755,24 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                         idx_t nj  = next_index(j, src_neighbours.size());
                         idx_t sj  = src_neighbours[j];
                         idx_t nsj = src_neighbours[nj];
-                        target_triplets.add(sj, 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]));
-                        target_triplets.add(nsj, 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]));
-                        // triplets.emplace_back(tcell, sj, 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]));
-                        // triplets.emplace_back(tcell, nsj, 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]));
+                        double w =  0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]);
+                        target_triplets.add(sj, w);
+                        target_triplets.add(nsj, w);
                     }
                     idx_t scell = spt;
                     target_triplets.add(scell, iparam.weights[i_scsp] * tcell_area_inv - PointXYZ::dot(Rs, Aik[i_scsp]));
-                    // triplets.emplace_back(tcell, scell, iparam.weights[i_scsp] * tcell_area_inv - PointXYZ::dot(Rs, Aik[i_scsp]));
                 }
                 else {
                     for (idx_t j = 0; j < src_neighbours.size(); ++j) {
                         idx_t nj  = next_index(j, src_neighbours.size());
                         idx_t sj  = src_neighbours[j];
                         idx_t nsj = src_neighbours[nj];
-                        target_triplets.add(sj, (0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp])));
-                        target_triplets.add(nsj, (0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp])));
-                        // triplets.emplace_back(tcell, sj, (0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp])));
-                        // triplets.emplace_back(tcell, nsj, (0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp])));
+                        double w = 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]);
+                        target_triplets.add(sj, w);
+                        target_triplets.add(nsj, w);
                     }
                     idx_t snode = spt;
                     target_triplets.add(snode, iparam.weights[i_scsp] * tcell_area_inv - PointXYZ::dot(Rs, Aik[i_scsp]));
-                    // triplets.emplace_back(tcell, snode, iparam.weights[i_scsp] * tcell_area_inv - PointXYZ::dot(Rs, Aik[i_scsp]));
                 }
             }
             target_triplets.emplace_in(triplets);
@@ -1823,9 +1826,6 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                 if (iparam.csp_ids.size() == 0) {
                     continue;
                 }
-#if defined(__APPLE__)
-                volatile
-#endif
                 auto tnode_area_inv = ( tgt_areas[tnode] > 0.) ? 1. / tgt_areas[tnode] : 0.;
 
                 // get the barycentre of the dual cell
@@ -1848,9 +1848,6 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                     const idx_t spt         = src_cell_data_ ? csp_to_cell(scsp_id, src) : src.csp2node[scsp_id];
                     const PointXYZ& Cs      = src_points[spt]; // !!! this is NOT barycentre of the subcell in case of NodeColumns
                     Aik[i_scsp]             = Csk - Cs - PointXYZ::mul(Cs, PointXYZ::dot(Cs, Csk - Cs));
-#if defined(__APPLE__)
-                    volatile
-#endif
                     double dual_area_inv = 0.;
                     std::vector<idx_t> src_neighbours;
                     if (src_cell_data_) {
@@ -1878,7 +1875,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                         }
                         Rs = Rs + Rsj[j];
                     }
-                    dual_area_inv = (dual_area_inv > 0.) ? 1. / dual_area_inv : 0.; // dual_area_inv, even if protected, may still leads to FE_DIVBYZERO with Apple without volatile trick
+                    dual_area_inv = (dual_area_inv > 0.) ? 1. / dual_area_inv : 0.;
                     Aik[i_scsp]    = PointXYZ::mul(Aik[i_scsp], iparam.weights[i_scsp] * tnode_area_inv * dual_area_inv);
 
                     if (src_cell_data_) {
