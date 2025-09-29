@@ -122,6 +122,7 @@ public:
         add_option(new SimpleOption<std::string>("matrix.format", "format of the remapping matrix: eckit, SCRIP"));
         add_option(new SimpleOption<std::string>("gmsh.coordinates", "Choose the coordinates in gmsh output: {lonlat, xyz}"));
         add_option(new SimpleOption<std::string>("checksum", "Path of files for checksums"));
+        add_option(new SimpleOption<bool>("i.normalise", "Normalise weights"));
     }
 };
 
@@ -219,14 +220,18 @@ Config get_interpolation_config(const Grid& sgrid, const Grid& tgrid, const Atla
         c.set("order", 1);
         c.set("src_cell_data", gridpoints_are_cells(sgrid));
         c.set("tgt_cell_data", gridpoints_are_cells(tgrid));
-        c.set("normalise", true);
+        bool normalise = true;
+        args.get("i.normalise", normalise);
+        c.set("normalise", normalise);
     }
     else if (type == "cons2") {
         c.set("type", "conservative-spherical-polygon");
         c.set("order", 2);
         c.set("src_cell_data", gridpoints_are_cells(sgrid));
         c.set("tgt_cell_data", gridpoints_are_cells(tgrid));
-        c.set("normalise", true);
+        bool normalise = true;
+        args.get("i.normalise", normalise);
+        c.set("normalise", normalise);
     }
     else {
         c.set("type", type);

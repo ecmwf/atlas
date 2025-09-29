@@ -43,6 +43,8 @@ private:
         friend class ConservativeSphericalPolygonInterpolation;
 
         struct PolygonsData {
+            enum class Context { SOURCE, TARGET } context;
+
             // position and effective area of data points
             std::vector<PointXYZ> points;
             std::vector<double>   areas;
@@ -54,7 +56,8 @@ private:
             Indices csp_cell_index;
             Indices csp_index;
             bool cell_data;
-        } src_, tgt_;
+            PolygonsData(PolygonsData::Context ctx) : context(ctx) {}
+        } src_{PolygonsData::Context::SOURCE}, tgt_{PolygonsData::Context::TARGET};
 
         // Timings
         struct Timings {
