@@ -47,4 +47,10 @@ ecbuild_add_test( TARGET atlas_test_linalg_dense
     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
 
+ecbuild_add_test( TARGET atlas_test_linalg_triplet
+    SOURCES test_linalg_triplet.cc
+    LIBS    atlas
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  )
+
 endif()
