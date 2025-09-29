@@ -459,6 +459,8 @@ init_polygons_data(
     FunctionSpace fs,
     // output
     Data::PolygonsData& md) {
+    using Context = Data::PolygonsData::Context;
+
     md.cell_data = functionspace::CellColumns(fs);
     std::vector<idx_t>& csp2node = md.csp2node;
     std::vector<std::vector<idx_t>>& node2csp = md.node2csp;
@@ -474,13 +476,18 @@ init_polygons_data(
         return util::Bitflags::view(cell_flags(cell)).check(util::Topology::INVALID);
     };
     auto fs_halo = md.cell_data ? functionspace::CellColumns(fs).halo().size() : functionspace::NodeColumns(fs).halo().size();
-    auto skip_cell = [&](idx_t cell) {
-        return cell_halo(cell) > fs_halo || cell_invalid(cell);
-    };
     csp_size = 0;
     csp_cell_index.reserve(mesh.cells().size());
     csp_index.reserve(mesh.cells().size());
     if (md.cell_data) {
+        auto skip_cell = [&](idx_t cell) {
+            if (md.context == Context::SOURCE) {
+                return cell_halo(cell) > fs_halo || cell_invalid(cell);
+            }
+            else {
+                return cell_halo(cell) > 0;
+            }
+        };
         for (idx_t cell = 0; cell < mesh.cells().size(); ++cell) {
             if (skip_cell(cell)) {
                 continue;
@@ -491,6 +498,15 @@ init_polygons_data(
         }
     }
     else {
+        auto skip_cell = [&](idx_t cell) {
+            if (md.context == Context::SOURCE) {
+                return cell_halo(cell) > fs_halo || cell_invalid(cell);
+            }
+            else {
+                return cell_halo(cell) > 1 || cell_invalid(cell);
+            }
+        };
+
         const auto nodes_ll   = array::make_view<double, 2>(mesh.nodes().lonlat());
         const auto node_flags = array::make_view<int, 1>(mesh.nodes().flags());
         auto ll2xyz = [](const atlas::PointLonLat& p_ll) {
@@ -556,6 +572,7 @@ get_csp_celldata(idx_t csp_id, const Mesh& mesh, const Data::PolygonsData& md) {
 
 ConservativeSphericalPolygonInterpolation::Polygon ConservativeSphericalPolygonInterpolation::
 get_csp_nodedata(idx_t csp_id, const Mesh& mesh, Data::PolygonsData& md ) {
+    using Context = Data::PolygonsData::Context;
 
     std::vector<idx_t>& csp2node = md.csp2node;
     std::vector<std::vector<idx_t>>& node2csp = md.node2csp;
