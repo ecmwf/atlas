@@ -732,7 +732,6 @@ linalg/sparse/SparseMatrixStorage.cc
 linalg/sparse/SparseMatrixStorage.h
 linalg/sparse/SparseMatrixToTriplets.h
 linalg/sparse/SparseMatrixView.h
-linalg/sparse/SparseMatrixTriplet.h
 linalg/dense.h
 linalg/dense/Backend.h
 linalg/dense/Backend.cc
@@ -907,6 +906,8 @@ util/function/SphericalHarmonic.h
 util/function/SphericalHarmonic.cc
 util/function/VortexRollup.h
 util/function/VortexRollup.cc
+util/function/XStep_function.h
+util/function/XStep_function.cc
 )
 
 

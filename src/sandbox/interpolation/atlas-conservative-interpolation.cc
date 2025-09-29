@@ -34,6 +34,7 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/util/Config.h"
+#include "atlas/util/function/XStep_function.h"
 #include "atlas/util/function/MDPI_functions.h"
 #include "atlas/util/function/SolidBodyRotation.h"
 #include "atlas/util/function/SphericalHarmonic.h"
@@ -105,7 +106,7 @@ public:
         // Initial condition options
         add_option(new eckit::option::Separator("Initial condition options"));
         add_option(new SimpleOption<std::string>(
-            "init", "Setup initial source field [ constant, spherical_harmonic, vortex_rollup (default), solid_body_rotation_wind_magnitude ]"));
+            "init", "Setup initial source field [ constant, spherical_harmonic, vortex_rollup (default), solid_body_rotation_wind_magnitude, xstep ]"));
         add_option(new SimpleOption<double>("solid_body_rotation.angle", "Angle of solid body rotation (default = 0.)"));
         add_option(new SimpleOption<double>("vortex_rollup.t", "Value that controls vortex rollup (default = 0.5)"));
         add_option(new SimpleOption<double>("constant.value", "Value that is assigned in case init==constant)"));
@@ -166,6 +167,10 @@ std::function<double(const PointLonLat&)> get_init(const eckit::LocalConfigurati
     }
     else if (init == "MDPI_gulfstream") {
         auto sbr = util::function::MDPI_gulfstream;
+        return [sbr](const PointLonLat& p) { return sbr(p.lon(), p.lat()); };
+    }
+    else if (init == "xstep") {
+        auto sbr = util::function::XStep;
         return [sbr](const PointLonLat& p) { return sbr(p.lon(), p.lat()); };
     }
     else {
