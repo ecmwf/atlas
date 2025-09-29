@@ -49,16 +49,16 @@ function( atlas_test_app_atlas_interpolations case nprocs )
                 ecbuild_add_test( TARGET ${test_name}
                     COMMAND atlas-interpolations
                     ARGS    --display-name=${test_name}
+                            --interpolate
                             --s.grid=${sgrid}
                             --t.grid=${tgrid}
                             --i.type=${itype}
                             --matrix.name=${case_name}
                             --matrix.format=eckit
-                            --test-output
-                            --gmsh.coordinates=lonlat
-                            --test-interpolator
+                            --output-gmsh
                             --test-matrix
-                            --write-matrix
+                            --test-interpolator
+                            --output-matrix
                             --i.knn=4 # just in case itype==knn
                             --checksum=${test_name}.checksum
                     MPI ${n}
@@ -70,14 +70,15 @@ function( atlas_test_app_atlas_interpolations case nprocs )
                 ecbuild_add_test( TARGET ${test_name}
                     COMMAND atlas-interpolations
                     ARGS    --display-name=${test_name}
+                            --interpolate
                             --s.grid=${sgrid}
                             --t.grid=${tgrid}
                             --i.type=${itype}
                             --matrix.name=${case_name}
                             --matrix.format=eckit
-                            --test-output
+                            --output-gmsh
                             --gmsh.coordinates=lonlat
-                            --read-matrix
+                            --output-matrix
                             --test-matrix
                             --test-interpolator
                             --i.knn=4 # just in case itype==knn
