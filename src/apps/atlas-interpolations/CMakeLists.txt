@@ -53,14 +53,16 @@ function( atlas_test_app_atlas_interpolations case nprocs )
                             --s.grid=${sgrid}
                             --t.grid=${tgrid}
                             --i.type=${itype}
+                            --test-matrix
+                            --output-matrix
                             --matrix.name=${case_name}
                             --matrix.format=eckit
                             --output-gmsh
-                            --test-matrix
+                            --gmsh.coordinates=lonlat
                             --test-interpolator
-                            --output-matrix
                             --i.knn=4 # just in case itype==knn
-                            --checksum=${test_name}.checksum
+                            --output-checksum
+                            --checksum.file=${test_name}.checksum
                     MPI ${n}
                     OMP ${t}
                     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
@@ -74,15 +76,15 @@ function( atlas_test_app_atlas_interpolations case nprocs )
                             --s.grid=${sgrid}
                             --t.grid=${tgrid}
                             --i.type=${itype}
+                            --test-matrix
+                            --read-matrix
                             --matrix.name=${case_name}
                             --matrix.format=eckit
-                            --output-gmsh
-                            --gmsh.coordinates=lonlat
-                            --output-matrix
-                            --test-matrix
                             --test-interpolator
+                            --output-gmsh
                             --i.knn=4 # just in case itype==knn
-                            --checksum=${test_name}.checksum
+                            --output-checksum
+                            --checksum.file=${test_name}.checksum
                     MPI ${n}
                     OMP ${t}
                     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
