@@ -1222,27 +1222,16 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const Polygon
         Polygon::fpe(fpe_for_polygon);
     };
 
-    int mpi_rank = mpi::rank();
-    const auto& cell_halo   = array::make_view<const int, 1>(tgt_mesh_.cells().halo());
-    const auto& cell_flags  = array::make_view<const int, 1>(tgt_mesh_.cells().flags());
-    const auto& cell_part   = array::make_view<const int, 1>(tgt_mesh_.cells().partition());
-    auto skip_target_celldata = [&cell_halo, &cell_flags, &cell_part, &mpi_rank] (idx_t tcell) {
-        return (cell_halo(tcell) > 0) && (! util::Bitflags::view(cell_flags(tcell)).check(util::Topology::PERIODIC) || cell_part(tcell) != mpi_rank);
-    };
-    const auto& node_halo  = array::make_view<int, 1>(tgt_mesh_.nodes().halo());
-    const auto& node_flags = array::make_view<int, 1>(tgt_mesh_.nodes().flags());
-    const auto& node_part  = array::make_view<int, 1>(tgt_mesh_.nodes().partition());
-    auto skip_target_nodedata = [&node_halo, &node_flags, &node_part, &mpi_rank] (idx_t tnode) {
-        return (node_halo(tnode) > 1) && (! util::Bitflags::view(node_flags(tnode)).check(util::Topology::PERIODIC) || node_part(tnode) != mpi_rank);
-    };
-    auto skip_target = [&] (idx_t tcsp_id) {
-        if (tgt_cell_data_) {
+    const auto cell_halo   = array::make_view<const int, 1>(tgt_mesh_.cells().halo());
+    const auto node_ghost  = array::make_view<int, 1>(tgt_mesh_.nodes().ghost());
+    auto skip_target = [&] (idx_t tcsp_id) -> bool {
+        if (tgt.cell_data) {
             auto tcell = csp_to_cell(tcsp_id, tgt);
-            return skip_target_celldata(tcell);
+            return cell_halo(tcell);
         }
         else {
-            auto tnode = csp_to_cell(tcsp_id, tgt);
-            return skip_target_nodedata(tnode);
+            auto tnode = tgt.csp2node[tcsp_id];
+            return node_ghost(tnode);
         }
     };
 
@@ -1252,10 +1241,11 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const Polygon
                                     tgt_csp_size > 50 ? Log::info() : blackhole);
         float last_progress_percent = 0.00;
         for (idx_t tcsp_id = 0; tcsp_id < tgt_csp_size; ++tcsp_id) {
+            auto tgt_csp = get_tgt_csp(tcsp_id); // This needs to be before 'skip_target' because it fills in tgt.csp2node node-data
+                                                 // A bit unfortunate... to be improved!
             if (skip_target(tcsp_id)) {
                 continue;
             }
-            auto tgt_csp = get_tgt_csp(tcsp_id);
             intersection_scsp_ids.resize(0);
             intersection_weights.resize(0);
             intersection_src_centroids.resize(0);

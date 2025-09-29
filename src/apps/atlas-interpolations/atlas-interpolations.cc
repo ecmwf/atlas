@@ -288,7 +288,7 @@ std::pair<FunctionSpace,FunctionSpace> get_fs(const Grid& sgrid, const Grid& tgr
         target_follows_source = false;
         sfs_type = gridpoints_are_cells(sgrid) ? fs_type::cells : fs_type::nodes;
         tfs_type = gridpoints_are_cells(tgrid) ? fs_type::cells : fs_type::nodes;
-        if (tfs_type == fs_type::nodes && mpi::size() > 1) {
+        if (tfs_type == fs_type::nodes) {
             thalo = 1;
         }
         if (mpi::size() == 1 && (order == 2 || sfs_type == fs_type::nodes)) {
