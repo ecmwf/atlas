@@ -1883,27 +1883,24 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                             idx_t nj  = next_index(j, src_neighbours.size());
                             idx_t sj  = src_neighbours[j];
                             idx_t nsj = src_neighbours[nj];
-                            target_triplets.add(sj, 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]));
-                            target_triplets.add(nsj, 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]));
-                            // triplets.emplace_back(tnode, sj, 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]));
-                            // triplets.emplace_back(tnode, nsj, 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]));
+                            double w = 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]);
+                            target_triplets.add(sj, w);
+                            target_triplets.add(nsj, w);
                         }
                         idx_t scell = spt;
-                        triplets.emplace_back(tnode, scell, iparam.weights[i_scsp] * tnode_area_inv - PointXYZ::dot(Rs, Aik[i_scsp]));
+                        target_triplets.add(scell, iparam.weights[i_scsp] * tnode_area_inv - PointXYZ::dot(Rs, Aik[i_scsp]));
                     }
                     else {
                         for (idx_t j = 0; j < src_neighbours.size(); ++j) {
                             idx_t nj  = next_index(j, src_neighbours.size());
                             idx_t sj  = src_neighbours[j];
                             idx_t nsj = src_neighbours[nj];
-                            target_triplets.add(sj, (0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp])));
-                            target_triplets.add(nsj, (0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp])));
-                            // triplets.emplace_back(tnode, sj, (0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp])));
-                            // triplets.emplace_back(tnode, nsj, (0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp])));
+                            double w = 0.5 * PointXYZ::dot(Rsj[j], Aik[i_scsp]);
+                            target_triplets.add(sj, w);
+                            target_triplets.add(nsj, w);
                         }
                         idx_t snode = spt;
                         target_triplets.add(snode, iparam.weights[i_scsp] * tnode_area_inv - PointXYZ::dot(Rs, Aik[i_scsp]));
-                        // triplets.emplace_back(tnode, snode, iparam.weights[i_scsp] * tnode_area_inv - PointXYZ::dot(Rs, Aik[i_scsp]));
                     }
                 }
             }
