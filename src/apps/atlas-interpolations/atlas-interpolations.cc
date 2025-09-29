@@ -58,7 +58,7 @@ std::vector<double> tgt_ref;
 // 1) list all available interpolators
 //      atlas-interpolations --list
 // 2) compute and store the global interpolation matrix to disk:
-//      atlas-interpolations --s.grid=<sgrid> --t.grid=<tgrid> --i.type=<interp> --write-matrix --matrix.format=<fmt>
+//      atlas-interpolations --s.grid=<sgrid> --t.grid=<tgrid> --i.type=<interp> --output-matrix --matrix.format=<fmt>
 // 3) read in a stored global interpolation matrix from the disk:
 //      atlas-interpolations --s.grid=<sgrid> --t.grid=<tgrid> --i.type=<interp> --read-matrix --matrix.format=<fmt>
 //
@@ -102,26 +102,41 @@ class AtlasInterpolations : public AtlasTool {
 public:
     AtlasInterpolations(int argc, char* argv[]): AtlasTool(argc, argv) {
         // Commands
-        add_option(new SimpleOption<bool>("list", "List available interpolation types"));
-        add_option(new SimpleOption<bool>("write-matrix", "Write interpolation matrix"));
-        add_option(new SimpleOption<bool>("read-matrix", "Read matrix to speed up interpolator"));
-        add_option(new SimpleOption<bool>("test-matrix", "Test matrix in serial"));
-        add_option(new SimpleOption<bool>("test-interpolator", "Test interpolator in parallel"));
-        add_option(new SimpleOption<bool>("test-output", "Set to enable gmsh output for tests"));
+        add_option(new eckit::option::Separator("Commands"));
+        add_option(new SimpleOption<bool>("list",  "List available interpolation types"));
+        add_option(new SimpleOption<bool>("interpolate", "Test an interpolation type"));
+
         // Configuration
+        add_option(new eckit::option::Separator("Interpolation options"));
+        add_option(new SimpleOption<std::string>("i.knn", "number of nearest neighbours in case i.type=knn or k-nearest-neighbours. (default=1)"));
+        add_option(new SimpleOption<bool>("i.normalise", "Normalise weights"));
         add_option(new SimpleOption<std::string>("s.grid", "source grid"));
         add_option(new SimpleOption<std::string>("t.grid", "target grid"));
+        add_option(new SimpleOption<std::string>("i.type", "interpolation type"));
+
+        add_option(new eckit::option::Separator("Advanced configuration"));
         add_option(new SimpleOption<std::string>("s.fs", "source function space [structured, nodes, cells, points]"));
         add_option(new SimpleOption<std::string>("t.fs", "target function space [structured, nodes, cells, points]"));
         add_option(new SimpleOption<long>("s.halo", "override default source halo"));
         add_option(new SimpleOption<long>("t.halo", "override default target halo"));
-        add_option(new SimpleOption<std::string>("i.type", "interpolation type"));
-        add_option(new SimpleOption<std::string>("i.knn", "number of nearest neighbours in case i.type=knn or k-nearest-neighbours. (default=1)"));
         add_option(new SimpleOption<std::string>("p.type", "partitioner type"));
-        add_option(new SimpleOption<std::string>("matrix.name", "name of the remapping matrix"));
-        add_option(new SimpleOption<std::string>("matrix.format", "format of the remapping matrix: eckit, SCRIP"));
+
+        add_option(new eckit::option::Separator("Advanced commands"));
+        add_option(new SimpleOption<bool>("read-matrix", "Read matrix to speed up interpolator"));
+        add_option(new SimpleOption<bool>("test-matrix", "Test matrix in serial"));
+        add_option(new SimpleOption<bool>("test-interpolator", "Test interpolator in parallel"));
+
+        add_option(new eckit::option::Separator("Output options"));
+        add_option(new SimpleOption<bool>("output-matrix", "Write interpolation matrix"));
+        add_option(new SimpleOption<std::string>("matrix.name", "Name of the remapping matrix. If not provided a default unique name will be chosen"));
+        add_option(new SimpleOption<std::string>("matrix.format", "Format of the remapping matrix: eckit, SCRIP"));
+
+        add_option(new SimpleOption<bool>("output-gmsh", "Set to enable gmsh output for tests"));
         add_option(new SimpleOption<std::string>("gmsh.coordinates", "Choose the coordinates in gmsh output: {lonlat, xyz}"));
-        add_option(new SimpleOption<std::string>("checksum", "Path of files for checksums"));
+
+        add_option(new SimpleOption<bool>("output-checksum", "Compute checksums"));
+        add_option(new SimpleOption<std::string>("checksum.file", "Path of files for checksums [default='checksum']"));
+
     }
 };
 
@@ -219,12 +234,18 @@ Config get_interpolation_config(const Grid& sgrid, const Grid& tgrid, const Atla
         c.set("order", 1);
         c.set("src_cell_data", gridpoints_are_cells(sgrid));
         c.set("tgt_cell_data", gridpoints_are_cells(tgrid));
+        bool normalise = true;
+        args.get("i.normalise", normalise);
+        c.set("normalise", normalise);
     }
     else if (type == "cons2") {
         c.set("type", "conservative-spherical-polygon");
         c.set("order", 2);
         c.set("src_cell_data", gridpoints_are_cells(sgrid));
         c.set("tgt_cell_data", gridpoints_are_cells(tgrid));
+        bool normalise = true;
+        args.get("i.normalise", normalise);
+        c.set("normalise", normalise);
     }
     else {
         c.set("type", type);
@@ -281,7 +302,7 @@ std::pair<FunctionSpace,FunctionSpace> get_fs(const Grid& sgrid, const Grid& tgr
         target_follows_source = false;
         sfs_type = gridpoints_are_cells(sgrid) ? fs_type::cells : fs_type::nodes;
         tfs_type = gridpoints_are_cells(tgrid) ? fs_type::cells : fs_type::nodes;
-        if (tfs_type == fs_type::nodes && mpi::size() > 1) {
+        if (tfs_type == fs_type::nodes) {
             thalo = 1;
         }
         if (mpi::size() == 1 && (order == 2 || sfs_type == fs_type::nodes)) {
@@ -500,7 +521,7 @@ void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, con
     Log::info() << "Serial sparse-matrix non-zero entries\t: " << matrix.nnz() << std::endl;
 
 
-    if (args.has("checksum")) {
+    if (args.getBool("output-checksum",false)) {
         size_t min_size = std::min(tgt_ref.size(), tdata.size());
         for (size_t i=0; i<min_size; ++i) {
             if (std::abs(tgt_ref[i] - tdata[i]) < 1.e-14) {
@@ -508,16 +529,16 @@ void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, con
             }
         }
 
-        std::ofstream checksum_file(args.getString("checksum"),std::ios::app);
+        std::ofstream checksum_file(args.getString("checksum.file","checksum"),std::ios::app);
         auto target_checksum = atlas::util::checksum(tdata.data(), matrix.rows());
-        checksum_file << std::setw(8) << target_checksum << "    [test-matrix]  checksum of target field" << std::endl;
+        checksum_file << std::setw(8) << target_checksum << "    [test-matrix]   checksum of target field" << std::endl;
     }
 
     // atlas::array::make_view<double,1>(tdata.data(), matrix.rows()).dump(Log::info());
     // Log::info() << std::endl;
 
 
-    if (args.getBool("test-output",false)) {
+    if (args.getBool("output-gmsh",false)) {
         ATLAS_TRACE_SCOPE("Gmsh serial output") {
             std::string sname = "test_matrix_source_" + get_matrix_name(args);
             gmsh_output(sname, sgrid, atlas::array::make_view<double,1>(sdata.data(), matrix.cols()), args);
@@ -549,13 +570,14 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
         return success();
     }
 
-    if (args.has("checksum")) {
-        eckit::PathName checksum_file(args.getString("checksum"));
+    bool output_checksum = args.getBool("output-checksum",false);
+    std::string checksum_file_path = args.getString("checksum.file","checksum");
+    if (output_checksum) {
+        eckit::PathName checksum_file(checksum_file_path);
         if (checksum_file.exists()) {
             checksum_file.unlink();
         }
     }
-
 
     auto sgrid = get_sgrid(args);
     auto tgrid = get_tgrid(args);
@@ -579,15 +601,15 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
                 Log::info() << "Global matrix read timer\t: " << elapsed_ms(timers.global_matrix_read,true) << " [ms]"  << std::endl;
                 print_matrix(matrix, Log::info());
                 Log::info() << std::endl;
-                if (args.has("checksum")) {
-                    std::ofstream checksum_file(args.getString("checksum"),std::ios::app);
+                if (output_checksum) {
+                    std::ofstream checksum_file(checksum_file_path ,std::ios::app);
                     auto matrix_view = linalg::make_host_view<double,int>(matrix);
                     auto outer_checksum = util::checksum(matrix_view.inner(), matrix_view.inner_size());
                     auto inner_checksum = util::checksum(matrix_view.outer(), matrix_view.outer_size());
                     auto value_checksum = util::checksum(matrix_view.value(), matrix_view.value_size());
-                    checksum_file << std::setw(8) << outer_checksum << "    [read-matrix]  checksum of matrix.outer()" << std::endl;
-                    checksum_file << std::setw(8) << inner_checksum << "    [read-matrix]  checksum of matrix.inner()" << std::endl;
-                    checksum_file << std::setw(8) << value_checksum << "    [read-matrix]  checksum of matrix.value()" << std::endl;
+                    checksum_file << std::setw(8) << outer_checksum << "    [read-matrix]   checksum of matrix.outer()" << std::endl;
+                    checksum_file << std::setw(8) << inner_checksum << "    [read-matrix]   checksum of matrix.inner()" << std::endl;
+                    checksum_file << std::setw(8) << value_checksum << "    [read-matrix]   checksum of matrix.value()" << std::endl;
                 }
             }
         }
@@ -622,7 +644,7 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
 
     matrix.clear();
 
-    if (args.getBool("write-matrix",false) || args.getBool("test-interpolator",false) || (args.getBool("test-matrix",false) && !matrix_tested)) {
+    if (args.getBool("interpolate",false) || args.getBool("output-matrix",false) || args.getBool("test-interpolator",false) || (args.getBool("test-matrix",false) && !matrix_tested)) {
         ATLAS_TRACE_SCOPE("Setup source and target") {
             timers.functionspace_setup.start();
             // create_fspaces(config, sgrid, tgrid, src_fs, tgt_fs);
@@ -663,15 +685,15 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
             Log::info() << "Interpolation execute timer     : " << elapsed_ms(timers.interpolation_exe) << " [ms]"  << std::endl;
 
             Field tgt_field_global;
-            if (args.has("checksum")) {
+            if (output_checksum) {
                 tgt_field_global = tgt_fs.createField(tgt_field, option::global());
                 auto tgt_field_global_v = array::make_view<double,1>(tgt_field_global);
                 tgt_fs.gather(tgt_field, tgt_field_global);
 
                 if (mpi::rank() == 0) {
                     auto target_checksum = util::checksum(tgt_field_global_v.data(), tgt_field_global_v.size());
-                    std::ofstream checksum_file(args.getString("checksum"),std::ios::app);
-                    checksum_file << std::setw(8) << target_checksum << "    [test-interp]  checksum of target field" << std::endl;
+                    std::ofstream checksum_file(checksum_file_path, std::ios::app);
+                    checksum_file << std::setw(8) << target_checksum << "    [test-interp]   checksum of target field" << std::endl;
 
                     // for further comparison with test-matrix
                     tgt_ref.resize(tgt_field_global_v.size());
@@ -681,7 +703,7 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
                 }
             }
 
-            if (args.getBool("test-output",false)) {
+            if (args.getBool("output-gmsh",false)) {
                 Mesh tmesh;
                 if (auto fs = NodeColumns(tgt_fs)) { tmesh = fs.mesh(); }
                 if (auto fs = CellColumns(tgt_fs)) { tmesh = fs.mesh(); }
@@ -701,21 +723,21 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
         }
     }
 
-    if (args.getBool("write-matrix",false) || (args.getBool("test-matrix",false) && !matrix_tested)) {
+    if (args.getBool("output-matrix",false) || (args.getBool("test-matrix",false) && !matrix_tested)) {
         matrix = interpolation::assemble_global_matrix(interpolator);
         if (mpi::comm().rank() == 0) {
-            if (args.getBool("write-matrix",false)) {
+            if (args.getBool("output-matrix",false)) {
                 write_matrix(matrix, matrix_name, matrix_format);
                 print_matrix(matrix, Log::info());
-                if (args.has("checksum")) {
-                    std::ofstream checksum_file(args.getString("checksum"),std::ios::app);
+                if (output_checksum) {
+                    std::ofstream checksum_file(checksum_file_path ,std::ios::app);
                     auto matrix_view = linalg::make_host_view<double,int>(matrix);
                     auto outer_checksum = util::checksum(matrix_view.inner(), matrix_view.inner_size());
                     auto inner_checksum = util::checksum(matrix_view.outer(), matrix_view.outer_size());
                     auto value_checksum = util::checksum(matrix_view.value(), matrix_view.value_size());
-                    checksum_file << std::setw(8) << outer_checksum << "    [write-matrix] checksum of matrix.outer()" << std::endl;
-                    checksum_file << std::setw(8) << inner_checksum << "    [write-matrix] checksum of matrix.inner()" << std::endl;
-                    checksum_file << std::setw(8) << value_checksum << "    [write-matrix] checksum of matrix.value()" << std::endl;
+                    checksum_file << std::setw(8) << outer_checksum << "    [output-matrix] checksum of matrix.outer()" << std::endl;
+                    checksum_file << std::setw(8) << inner_checksum << "    [output-matrix] checksum of matrix.inner()" << std::endl;
+                    checksum_file << std::setw(8) << value_checksum << "    [output-matrix] checksum of matrix.value()" << std::endl;
                 }
 
             }
@@ -727,8 +749,8 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
 
     mpi::comm().barrier();
     if (mpi::rank() == 0) {
-        if (args.has("checksum")) {
-            auto checksum_file = eckit::PathName(args.getString("checksum"));
+        if (output_checksum) {
+            auto checksum_file = eckit::PathName(checksum_file_path);
             if (checksum_file.exists()) {
                 std::ifstream f(checksum_file);
                 if (f.is_open()) {

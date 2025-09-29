@@ -49,18 +49,20 @@ function( atlas_test_app_atlas_interpolations case nprocs )
                 ecbuild_add_test( TARGET ${test_name}
                     COMMAND atlas-interpolations
                     ARGS    --display-name=${test_name}
+                            --interpolate
                             --s.grid=${sgrid}
                             --t.grid=${tgrid}
                             --i.type=${itype}
+                            --test-matrix
+                            --output-matrix
                             --matrix.name=${case_name}
                             --matrix.format=eckit
-                            --test-output
+                            --output-gmsh
                             --gmsh.coordinates=lonlat
                             --test-interpolator
-                            --test-matrix
-                            --write-matrix
                             --i.knn=4 # just in case itype==knn
-                            --checksum=${test_name}.checksum
+                            --output-checksum
+                            --checksum.file=${test_name}.checksum
                     MPI ${n}
                     OMP ${t}
                     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
@@ -70,18 +72,19 @@ function( atlas_test_app_atlas_interpolations case nprocs )
                 ecbuild_add_test( TARGET ${test_name}
                     COMMAND atlas-interpolations
                     ARGS    --display-name=${test_name}
+                            --interpolate
                             --s.grid=${sgrid}
                             --t.grid=${tgrid}
                             --i.type=${itype}
+                            --test-matrix
+                            --read-matrix
                             --matrix.name=${case_name}
                             --matrix.format=eckit
-                            --test-output
-                            --gmsh.coordinates=lonlat
-                            --read-matrix
-                            --test-matrix
                             --test-interpolator
+                            --output-gmsh
                             --i.knn=4 # just in case itype==knn
-                            --checksum=${test_name}.checksum
+                            --output-checksum
+                            --checksum.file=${test_name}.checksum
                     MPI ${n}
                     OMP ${t}
                     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
