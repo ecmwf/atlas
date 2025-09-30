@@ -14,7 +14,7 @@
 #include "atlas/util/Constants.h"
 #include "atlas/util/Earth.h"
 
-#include "atlas/util/function/XStep_function.h"
+#include "atlas/util/function/SlottedCylinder_function.h"
 
 namespace atlas {
 
@@ -22,24 +22,22 @@ namespace util {
 
 namespace function {
 
-double XStep(double lon, double lat) {
+double SlottedCylinder(double lon, double lat) {
     lon *= Constants::degreesToRadians();
     lat *= Constants::degreesToRadians();
-    double x1 = lon - M_PI;
-    double x2 = -lon + M_PI;
-    if ((lat > x1) && (lat < x2)) {
+    double x = lon - M_PI;
+    double y = lat;
+    double r2 = x * x + y * y;
+    if (r2 <= 1.5 && (std::abs(x) >= 0.25 || y >= 1.)) {
         return 1.;
-    }
-    if ((lat < x1) && (lat > x2)) {
-        return -1.;
     }
     return 0.;
 }
 
 
 extern "C" {
-    double atlas__functions__XStep(double& lon, double& lat) {
-        return XStep(lon, lat);
+    double atlas__functions__SlottedCylinder(double& lon, double& lat) {
+        return SlottedCylinder(lon, lat);
     }
 }
 

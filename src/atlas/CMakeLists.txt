@@ -900,6 +900,8 @@ util/detail/filesystem.cc
 util/detail/filesystem.h
 util/function/MDPI_functions.h
 util/function/MDPI_functions.cc
+util/function/SlottedCylinder_function.h
+util/function/SlottedCylinder_function.cc
 util/function/SolidBodyRotation.h
 util/function/SolidBodyRotation.cc
 util/function/SphericalHarmonic.h
