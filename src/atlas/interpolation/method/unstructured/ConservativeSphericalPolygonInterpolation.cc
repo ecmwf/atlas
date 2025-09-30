@@ -222,11 +222,12 @@ inline bool valid_point(idx_t node_idx, const array::ArrayView<int, 1>& node_fla
 
 
 ConservativeSphericalPolygonInterpolation::ConservativeSphericalPolygonInterpolation(const Config& config):
-    Method(config), validate_(false), src_cell_data_(true), tgt_cell_data_(true), normalise_(false),
+    Method(config), validate_(false), src_cell_data_(true), tgt_cell_data_(true), normalise_(false), limit_(false),
     order_(1), matrix_free_(false), n_spoints_(0), n_tpoints_(0) {
     config.get("validate", validate_ = false);
     config.get("order", order_ = 1);
     config.get("normalise", normalise_ = false);
+    config.get("limit", limit_ = false);
     config.get("matrix_free", matrix_free_ = false);
     config.get("src_cell_data", src_cell_data_ = true);
     config.get("tgt_cell_data", tgt_cell_data_ = true);
@@ -1204,12 +1205,12 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const Polygon
     std::array<double, 2> area_coverage{0., 0.};
 
     auto& tgt_iparam_ = sharable_data_->tgt_iparam_;
+    auto& src_iparam_ = sharable_data_->src_iparam_;
     auto& tgt_csp_size = tgt.csp_size;
     tgt_iparam_.resize(tgt_csp_size);
 
-    std::vector<InterpolationParameters> src_iparam;  // only used for debugging
-    if (validate_) {
-        src_iparam.resize(src_csp.size());
+    if (validate_ || limit_) {
+        src_iparam_.resize(src_csp.size());
     }
 
     // the worst target polygon coverage for analysis of intersection
@@ -1293,15 +1294,17 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const Polygon
                     if (std::abs(1. - tgt_cover_area / tgt_csp.area()) <= 1e-10) {
                         break;
                     }
-                    if (validate_) {
-                        src_iparam[scsp_id].csp_ids.emplace_back(tcsp_id);
-                        src_iparam[scsp_id].weights.emplace_back(csp_i_area);
+                    if (validate_ || limit_) {
+                        src_iparam_[scsp_id].csp_ids.emplace_back(tcsp_id);
+                        src_iparam_[scsp_id].weights.emplace_back(csp_i_area);
+#if ATLAS_BUILD_TYPE_DEBUG
                         if (csp_i_area > 1.1 * t_csp.area()) {
                             dump_intersection("Intersection larger than target", t_csp, src_csp, scsp_ids);
                         }
                         if (csp_i_area > 1.1 * s_csp.area()) {
                             dump_intersection("Intersection larger than source", t_csp, src_csp, scsp_ids);
                         }
+#endif
                     }
                 }
             }
@@ -1423,7 +1426,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const Polygon
                 //     }
                 //     const auto& s_csp     = src_csp[scell];
                 //     auto diff_cell = s_csp.area();
-                //     const auto& siparam   = src_iparam[scell];
+                //     const auto& siparam   = src_iparam_[scell];
                 //     for (idx_t icell = 0; icell < siparam.weights.size(); ++icell) {
                 //         diff_cell -= siparam.weights[icell];
                 //     }
@@ -2088,6 +2091,42 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
         else {
             ATLAS_TRACE("matrix_order_2");
             Method::do_execute(src_field, tgt_field, metadata);
+
+            if (limit_) {
+                const auto src_vals = array::make_view<double, 1>(src_field);
+                auto tgt_vals       = array::make_view<double, 1>(tgt_field);
+                const auto& tgt_iparam = data_->tgt_iparam_;
+                const auto& src_iparam = data_->src_iparam_;
+                if (tgt_cell_data_ && src_cell_data_) {
+                    for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
+                        idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
+                        const auto& iparam = tgt_iparam[tcsp_id];
+                        double smax = std::numeric_limits<double>::min();
+                        double smin = std::numeric_limits<double>::max();
+                        double eps = 1e4 * std::numeric_limits<double>::epsilon();
+                        for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                            idx_t scsp_id = iparam.csp_ids[i_scsp];
+                            idx_t scell   = csp_to_cell(scsp_id, data_->src_);
+                            smax = std::max(smax, src_vals(scell));
+                            smin = std::min(smin, src_vals(scell));
+                        }
+                        if (tgt_vals(tcell) < smin - eps || tgt_vals(tcell) > smax + eps) {
+                            tgt_vals(tcell) = -100.;
+                            for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                                idx_t scsp_id = iparam.csp_ids[i_scsp];
+                                idx_t scell   = csp_to_cell(scsp_id, data_->src_);
+                                auto& siparam = src_iparam[scsp_id];
+                                for (idx_t i_tcsp = 0; i_tcsp < siparam.csp_ids.size(); ++i_tcsp) {
+                                    // correct contribution to target cells to correspond to grad(scell) = 0
+                                }
+                            }
+                        }
+                    }
+                }
+                else {
+                    ATLAS_NOTIMPLEMENTED;
+                }
+            }
         }
     }
 
@@ -2222,6 +2261,7 @@ void ConservativeSphericalPolygonInterpolation::print(std::ostream& out) const {
     tgt_mesh_.metadata().get("halo", halo);
     out << ", target:" << (tgt_cell_data_ ? "cells(" : "nodes(") << tgt_mesh_.grid().name() << ",halo=" << halo << ")";
     out << ", normalise:" << normalise_;
+    out << ", limit:" << limit_;
     out << ", matrix_free:" << matrix_free_;
     out << ", statistics.intersection:" << remap_stat_.intersection;
     out << ", statistics.conservation:" << remap_stat_.conservation;
