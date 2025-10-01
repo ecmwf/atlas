@@ -107,6 +107,25 @@ public:
             return true;
         }();
         ATLAS_ASSERT(contiguous);
+
+        /////////// Experiment to see if there's a problem with rowmajor vs colmajor
+        // if constexpr( data.rank() == 3) {
+        //     std::vector<T> raw(size());
+        //     auto status = H5Dread(dataset_id, to_h5_datatype(make_datatype<T>()), H5S_ALL, H5S_ALL, H5P_DEFAULT, raw.data());
+        //     ATLAS_ASSERT(status >= 0);
+        //     int Ni = data.extent(0);
+        //     int Nj = data.extent(1);
+        //     int Nk = data.extent(2);
+        //     for( int i=0; i<Ni; ++i ) {
+        //         for( int j=0; j<Nj; ++j ) {
+        //            for( int k=0; k<Nk; ++k ) {
+        //               data(i,j,k) = raw[i + Ni*j + Ni*Nj*k];
+        //            }
+        //         }
+        //     }
+        // }
+        ////////////
+
         auto status = H5Dread(dataset_id, to_h5_datatype(make_datatype<T>()), H5S_ALL, H5S_ALL, H5P_DEFAULT, data.data_handle());
         ATLAS_ASSERT(status >= 0);
     }
@@ -209,6 +228,7 @@ public:
     }
 
     HDF5_Dataset dataset(const std::string& dataset_name) {
+        ATLAS_ASSERT(is_open());
         return HDF5_Dataset(file_id, dataset_name);
     }
 

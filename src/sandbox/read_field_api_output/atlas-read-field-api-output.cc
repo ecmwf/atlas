@@ -15,6 +15,12 @@
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/runtime/Exception.h"
 
+#include "atlas/grid.h"
+#include "atlas/mesh.h"
+#include "atlas/output/Gmsh.h"
+#include "atlas/functionspace/BlockStructuredColumns.h"
+#include "atlas/functionspace/NodeColumns.h"
+
 namespace atlas {
 
 class Program : public AtlasTool {
@@ -30,14 +36,16 @@ class Program : public AtlasTool {
 public:
     Program(int argc, char* argv[]): AtlasTool(argc, argv) {
         add_option(new SimpleOption<std::string>("file", "input file"));
-        add_option(new SimpleOption<std::string>("variable", "dataset"));
+        add_option(new SimpleOption<std::string>("dataset", "dataset"));
+        add_option(new SimpleOption<long>("index", "dataset"));
     }
 
 };
 
 int Program::execute(const AtlasTool::Args& args) {
     std::string input_file   = args.getString("file");
-    std::string dataset_name = args.getString("variable");
+    std::string dataset_name = args.getString("dataset");
+    int field_index = int(args.getLong("index", 0));
 
     // Open the HDF5 file
     HDF5_File h5_file(input_file);
@@ -64,7 +72,17 @@ int Program::execute(const AtlasTool::Args& args) {
     Log::info() << "field.shape    : " << field.shape() << '\n';
     Log::info() << "field.datatype : " << field.datatype().str() << '\n';
 
+    int nproma = field.shape(field.rank()-1);
+    int nblk   = field.shape(0);
+    int nfld   = field.rank() == 3 ? field.shape(1) : 1;
+
+    Log::info() << "nproma : " << nproma << '\n';
+    Log::info() << "nblk   : " << nblk << '\n';
+    Log::info() << "nfld   : " << nfld << '\n';
+    Log::info() << "nblk * nproma : " << nblk * nproma << '\n';
+
     // Print
+    if (false)
     {
         if (field.rank() == 1 && field.datatype().kind() == DataType::KIND_REAL64) {
             array::make_view<double,1>(field).dump(Log::info());
@@ -77,6 +95,62 @@ int Program::execute(const AtlasTool::Args& args) {
         }
     }
 
+    std::string gridname;
+    if (nproma * nblk == 2048) {
+        gridname = "F16";
+    }
+    if (nproma * nblk == 35720) {
+        gridname = "N80"; // Grid has actually size 35718, but nproma*nblk contains padding
+    }
+    if (gridname.empty()) {
+        Log::error() << "ERROR: Could not detect grid" << std::endl;
+        return failed();
+    }
+    Log::info() << "gridname = " << gridname << std::endl;
+    auto grid = Grid(gridname);
+    auto mesh = Mesh(grid);
+    auto fs = functionspace::BlockStructuredColumns(grid, util::Config("nproma",nproma));
+    ATLAS_ASSERT(fs.nproma() == nproma);
+    ATLAS_ASSERT(fs.nblks() == nblk);
+
+    Log::info() << "Field for a single index:" << std::endl;
+    auto f   = fs.createField(option::name("f")  | option::datatype(field.datatype()));
+    auto fg  = fs.createField(option::name("fg") | option::datatype(field.datatype()) | option::global());
+    Log::info() << "  f.shape() = " << f.shape() << std::endl;
+    // Log::info() << "  fg.shape() = " << fg.shape() << std::endl;
+
+    auto make_view = [](Field field, int field_index) {
+        if (field.rank() == 3) {
+            return array::make_view<double,3>(field).slice(array::Range::all(), field_index, array::Range::all());
+        }
+        else {
+            return array::make_view<double,2>(field).slice(array::Range::all(),array::Range::all());
+        }
+    };
+
+    if (true) {
+        auto fieldv = make_view(field, field_index);
+        auto fv     = array::make_view<double,2>(f);
+        fv.assign(fieldv);
+        fs.gather(f, fg);
+    }
+    else {
+        auto fieldv = make_view(field, field_index);
+        auto fgv    = array::make_view<double,1>(fg);
+        int nmax = fg.size();
+        for (int jblk=0; jblk<nblk; ++jblk) {
+            for (int jrof=0; jrof<nproma; ++jrof) {
+                int n = jblk*nproma + jrof;
+                if (n < nmax) {
+                    fgv(n) = fieldv(jblk, jrof);
+                }
+            }
+        }
+    }
+
+    auto gmsh = output::Gmsh("mesh.msh");
+    gmsh.write(mesh);
+    gmsh.write(fg, functionspace::StructuredColumns(grid));
     return success();
 }
 
