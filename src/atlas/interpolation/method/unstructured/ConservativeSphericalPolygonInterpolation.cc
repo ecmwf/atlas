@@ -1983,18 +1983,18 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
     StopWatch stopwatch;
     stopwatch.start();
 
+    const auto& tgt_iparam = data_->tgt_iparam_;
+    std::vector<PointXYZ> src_grads;
+    const auto& tgt_areas = data_->tgt_.areas;
+    const auto& src_iparam = data_->src_iparam_;
+    const auto& src_points = data_->src_.points;
+    const auto src_vals = array::make_view<double, 1>(src_field);
+    auto tgt_vals       = array::make_view<double, 1>(tgt_field);
+
     if (! matrix_free_) {
         Method::do_execute(src_field, tgt_field, metadata);
     }
     else {
-        std::vector<PointXYZ> src_grads;
-        const auto& tgt_iparam = data_->tgt_iparam_;
-        const auto& tgt_areas = data_->tgt_.areas;
-        const auto& src_iparam = data_->src_iparam_;
-        const auto& src_points = data_->src_.points;
-        const auto src_vals = array::make_view<double, 1>(src_field);
-        auto tgt_vals       = array::make_view<double, 1>(tgt_field);
-
         if (order_ == 1) {
             ATLAS_TRACE("matrix_free_order_1");
 
@@ -2184,43 +2184,40 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                 }
             }
         }
-        else {
+    }
 
-        }
-
-        if (limit_) {
-            if (tgt_cell_data_ && src_cell_data_) {
-                for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
-                    idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
-                    const auto& iparam = tgt_iparam[tcsp_id];
-                    double smax = std::numeric_limits<double>::min();
-                    double smin = std::numeric_limits<double>::max();
-                    double eps = 1e4 * std::numeric_limits<double>::epsilon();
+    if (limit_) {
+        if (tgt_cell_data_ && src_cell_data_) {
+            for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
+                idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
+                const auto& iparam = tgt_iparam[tcsp_id];
+                double smax = std::numeric_limits<double>::min();
+                double smin = std::numeric_limits<double>::max();
+                double eps = 1e4 * std::numeric_limits<double>::epsilon();
+                for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                    idx_t scsp_id = iparam.csp_ids[i_scsp];
+                    idx_t scell   = csp_to_cell(scsp_id, data_->src_);
+                    smax = std::max(smax, src_vals(scell));
+                    smin = std::min(smin, src_vals(scell));
+                }
+                if (tgt_vals(tcell) < smin - eps || tgt_vals(tcell) > smax + eps) {
+                    tgt_vals(tcell) = -100.;
                     for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
                         idx_t scsp_id = iparam.csp_ids[i_scsp];
                         idx_t scell   = csp_to_cell(scsp_id, data_->src_);
-                        smax = std::max(smax, src_vals(scell));
-                        smin = std::min(smin, src_vals(scell));
-                    }
-                    if (tgt_vals(tcell) < smin - eps || tgt_vals(tcell) > smax + eps) {
-                        tgt_vals(tcell) = -100.;
-                        for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
-                            idx_t scsp_id = iparam.csp_ids[i_scsp];
-                            idx_t scell   = csp_to_cell(scsp_id, data_->src_);
-                            auto& siparam = src_iparam[scsp_id];
-                            for (idx_t i_tcsp = 0; i_tcsp < siparam.csp_ids.size(); ++i_tcsp) {
-                                auto tcsp_id_2 = siparam.csp_ids[i_tcsp];
-                                auto tcell_2 = csp_to_cell(tcsp_id_2, data_->tgt_);
-                                double scell_grad_contribution = 0; // TODO: to be computed via source cell gradient
-                                tgt_vals(tcell_2) += (iparam.weights[scsp_id] - scell_grad_contribution) * src_vals(scell);
-                            }
+                        auto& siparam = src_iparam[scsp_id];
+                        for (idx_t i_tcsp = 0; i_tcsp < siparam.csp_ids.size(); ++i_tcsp) {
+                            auto tcsp_id_2 = siparam.csp_ids[i_tcsp];
+                            auto tcell_2 = csp_to_cell(tcsp_id_2, data_->tgt_);
+                            double scell_grad_contribution = 0; // TODO: to be computed via source cell gradient
+                            tgt_vals(tcell_2) += (iparam.weights[scsp_id] - scell_grad_contribution) * src_vals(scell);
                         }
                     }
                 }
             }
-            else {
-                ATLAS_NOTIMPLEMENTED;
-            }
+        }
+        else {
+            ATLAS_NOTIMPLEMENTED;
         }
     }
 
