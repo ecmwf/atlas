@@ -1983,15 +1983,20 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
     StopWatch stopwatch;
     stopwatch.start();
 
-    std::vector<PointXYZ> src_grads;
+    if (! matrix_free_) {
+        Method::do_execute(src_field, tgt_field, metadata);
+    }
+    else {
+        std::vector<PointXYZ> src_grads;
+        const auto& tgt_iparam = data_->tgt_iparam_;
+        const auto& tgt_areas = data_->tgt_.areas;
+        const auto& src_iparam = data_->src_iparam_;
+        const auto& src_points = data_->src_.points;
+        const auto src_vals = array::make_view<double, 1>(src_field);
+        auto tgt_vals       = array::make_view<double, 1>(tgt_field);
 
-    if (order_ == 1) {
-        if (matrix_free_) {
+        if (order_ == 1) {
             ATLAS_TRACE("matrix_free_order_1");
-            const auto src_vals = array::make_view<double, 1>(src_field);
-            auto tgt_vals       = array::make_view<double, 1>(tgt_field);
-            const auto& tgt_iparam = data_->tgt_iparam_;
-            const auto& tgt_areas = data_->tgt_.areas;
 
             // CASE: CELL TO CELL
             if (tgt_cell_data_ && src_cell_data_) {
@@ -2071,36 +2076,21 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                 }
             }
         }
-        else {
-            ATLAS_TRACE("matrix_order_1");
-            Method::do_execute(src_field, tgt_field, metadata);
-        }
-    }
-    else if (order_ == 2) {
-        const auto src_vals = array::make_view<double, 1>(src_field);
-        auto tgt_vals = array::make_view<double, 1>(tgt_field);
-        if (matrix_free_ || limit_) {
-            ATLAS_TRACE("Compute source gradients");
-            src_grads.resize(src_vals.size());
-            if (src_cell_data_) {
-                for (idx_t scell = 0; scell < src_vals.size(); ++scell) {
-                    src_grads[scell] = src_gradient_celldata(scell, src_vals);
+        else if (order_ == 2) {
+            ATLAS_TRACE_SCOPE("Compute source gradients") {
+                src_grads.resize(src_vals.size());
+                if (src_cell_data_) {
+                    for (idx_t scell = 0; scell < src_vals.size(); ++scell) {
+                        src_grads[scell] = src_gradient_celldata(scell, src_vals);
+                    }
+                }
+                else {
+                    for (idx_t snode = 0; snode < src_vals.size(); ++snode) {
+                        src_grads[snode] = src_gradient_nodedata(snode, src_vals);
+                    }
                 }
             }
-            else {
-                for (idx_t snode = 0; snode < src_vals.size(); ++snode) {
-                    src_grads[snode] = src_gradient_nodedata(snode, src_vals);
-                }
-            }
-        }
-        if (matrix_free_) {
             ATLAS_TRACE("matrix_free_order_2");
-            const auto& tgt_iparam = data_->tgt_iparam_;
-            const auto& tgt_areas = data_->tgt_.areas;
-            auto& src_points = data_->src_.points;
-            for (idx_t tcell = 0; tcell < tgt_vals.size(); ++tcell) {
-                tgt_vals(tcell) = 0.;
-            }
 
             // CASE: CELL TO CELL
             if (tgt_cell_data_ && src_cell_data_){
@@ -2195,15 +2185,10 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
             }
         }
         else {
-            ATLAS_TRACE("matrix_order_2");
-            Method::do_execute(src_field, tgt_field, metadata);
+
         }
 
         if (limit_) {
-            const auto src_vals = array::make_view<double, 1>(src_field);
-            auto tgt_vals       = array::make_view<double, 1>(tgt_field);
-            const auto& tgt_iparam = data_->tgt_iparam_;
-            const auto& src_iparam = data_->src_iparam_;
             if (tgt_cell_data_ && src_cell_data_) {
                 for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
                     idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
