@@ -199,7 +199,7 @@ private:
             case DataType::KIND_REAL32:
                 return H5T_NATIVE_FLOAT;
             case DataType::KIND_REAL64:
-                return H5T_NATIVE_FLOAT;
+                return H5T_NATIVE_DOUBLE;
             default:
                 ATLAS_THROW_EXCEPTION("Unsupported datatype " << dt.str());
         }
