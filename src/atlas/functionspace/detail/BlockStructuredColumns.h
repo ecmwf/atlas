@@ -122,6 +122,8 @@ public:
     std::string checksum(const FieldSet&) const;
     std::string checksum(const Field&) const;
 
+    const util::PartitionPolygon& polygon(idx_t halo = 0) const override { return structuredcolumns_->polygon(halo); }
+
 private:  // methods
     array::ArrayShape config_shape(const eckit::Configuration&) const;
     array::ArrayAlignment config_alignment(const eckit::Configuration&) const;
