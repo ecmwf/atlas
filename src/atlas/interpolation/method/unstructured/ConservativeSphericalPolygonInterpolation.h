@@ -244,8 +244,6 @@ private:
     std::vector<idx_t> get_node_neighbours(Mesh&, idx_t jcell, Workspace_get_node_neighbours&) const;
 
     void init_polygons_data(FunctionSpace fs, Data::PolygonsData& md);
-
-
     Polygon get_csp_celldata(idx_t csp_id, const Mesh& mesh, const Data::PolygonsData& md);
     Polygon get_csp_nodedata(idx_t csp_id, const Mesh& mesh, Data::PolygonsData& md);
 
@@ -290,7 +288,7 @@ private:
         return md.cell_data ? get_polygons_celldata(fs, md) : get_polygons_nodedata(fs, md);
     }
 
-
+    PointXYZ src_gradient(idx_t scell, const array::ArrayView<double, 1>& src_vals) const;
     int next_index(int current_index, int size) const;
     int prev_index(int current_index, int size) const;
 

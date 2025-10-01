@@ -1711,17 +1711,17 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
             // TODO: for a given source cell, collect the centroids of all its intersections with target cells
             //       to compute the numerical barycentre of the cell bases on intersection.
             // PointXYZ Cs = {0., 0., 0.};
-            // for ( idx_t icell = 0; icell < iparam.csp_ids.size(); ++icell ) {
+            // for (idx_t icell = 0; icell < iparam.csp_ids.size(); ++icell) {
             //     Cs = Cs + PointXYZ::mul( iparam.centroids[icell], iparam.weights[icell] );
             // }
+            // Cs = PointXYZ::normalize(Cs);
             double tcell_area_inv = ( tgt_areas[tcell] > 0.) ? 1. / tgt_areas[tcell] : 0.;
-
             Aik.resize(iparam.csp_ids.size());
             for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
                 const PointXYZ& Csk     = iparam.centroids[i_scsp];
                 const idx_t scsp_id     = iparam.csp_ids[i_scsp];
                 const idx_t spt         = src_cell_data_ ? csp_to_cell(scsp_id, src) : src.csp2node[scsp_id];
-                const PointXYZ& Cs      = src_points[spt]; // !!! this is NOT barycentre of the subcell in case of NodeColumns
+                const PointXYZ& Cs      = src_points[spt]; // !!! this is centroid and NOT numerically consistent barycentre with the computed source cell intersections
                 Aik[i_scsp]             = Csk - Cs - PointXYZ::mul(Cs, PointXYZ::dot(Cs, Csk - Cs));
                 std::vector<idx_t> src_neighbours;
                 if (src_cell_data_) {
@@ -1799,7 +1799,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                     for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
                         const idx_t scsp_id = iparam.csp_ids[i_scsp];
                         // const idx_t scell = csp_to_cell(scsp_id, data_->src_);
-                        const idx_t scell = scsp_id;
+                        const idx_t scell = scsp_id; // !!! TODO: Does this work with meshes with invalid cells ?
                         const auto src_neighbours = get_cell_neighbours(src_mesh_, scell, w_cell);
                         triplets_size += 2 * src_neighbours.size() + 1;
                     }
@@ -1840,9 +1840,7 @@ ConservativeSphericalPolygonInterpolation::Triplets ConservativeSphericalPolygon
                 //     for ( idx_t icell = 0; icell < iparam.csp_ids.size(); ++icell ) {
                 //         Cs = Cs + PointXYZ::mul( iparam.centroids[icell], iparam.weights[icell] );
                 //     }
-                //     const double Cs_norm = PointXYZ::norm( Cs );
-                //     ATLAS_ASSERT( Cs_norm > 0. );
-                //     Cs = PointXYZ::div( Cs, Cs_norm );
+                //     Cs = PointXYZ::normalize(Cs);
                 // }
                 Aik.resize(iparam.csp_ids.size());
                 for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
@@ -1922,6 +1920,34 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const FieldSet& src_f
         do_execute(src_fields[i], tgt_fields[i], md_array[i]);
     }
     metadata = md_array[0]; // TODO: reduce metadata of a set of variables to a single metadata of a variable?
+}
+
+
+PointXYZ ConservativeSphericalPolygonInterpolation::src_gradient(idx_t scell, const array::ArrayView<double, 1>& src_vals) const{
+    if (! src_cell_data_) {
+        Log::error() << "src_gradient works only on source cell data." << std::endl;
+        ATLAS_NOTIMPLEMENTED;
+    }
+    const auto& src = data_->src_;
+    const auto& src_points = src.points;
+    PointXYZ grad            = {0., 0., 0.};
+    Workspace_get_cell_neighbours w_cell;
+    auto nb_cells = get_cell_neighbours(src_mesh_, scell, w_cell);
+    volatile double dual_area_inv     = 0.;
+    const PointXYZ& Cs       = src_points[scell];
+    for (idx_t j = 0; j < nb_cells.size(); ++j) {
+        idx_t nj    = next_index(j, nb_cells.size());
+        idx_t sj     = nb_cells[j];
+        idx_t nsj    = nb_cells[nj];
+        const auto& Csj  = src_points[sj];
+        const auto& Cnsj = src_points[nsj];
+        double val = 0.5 * (src_vals(nj) + src_vals(nsj)) - src_vals(j);
+        bool left_orientation = Polygon::GreatCircleSegment(Cs, Csj).inLeftHemisphere(Cnsj, -1e-16);
+        dual_area_inv += (left_orientation ? Polygon({Cs, Csj, Cnsj}).area() : Polygon({Cs, Cnsj, Csj}).area());
+        grad = grad + PointXYZ::mul(PointXYZ::cross(Csj, Cnsj), val);
+    }
+    dual_area_inv = ((dual_area_inv > 0.) ? 1. / dual_area_inv : 0.);
+    return PointXYZ::mul(grad, dual_area_inv);
 }
 
 
@@ -2029,64 +2055,48 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
     }
     else if (order_ == 2) {
         if (matrix_free_) {
-            ATLAS_NOTIMPLEMENTED;
-            /*
-            if (not src_cell_data_ or not tgt_cell_data_) {
-            }
             ATLAS_TRACE("matrix_free_order_2");
-            const auto& src_iparam_ = data_->src_iparam_;
-            const auto& tgt_.areas = data_->tgt_.areas;
-            auto& src_.points = data_->src_.points;
+            if (! (tgt_cell_data_ && src_cell_data_) ){
+                Log::error() << "2nd order matrix free is only available for cell centred data." << std::endl;
+                ATLAS_NOTIMPLEMENTED;
+            }
             const auto src_vals = array::make_view<double, 1>(src_field);
             auto tgt_vals       = array::make_view<double, 1>(tgt_field);
-            const auto halo     = array::make_view<int, 1>(src_mesh_.cells().halo());
+            const auto& tgt_iparam = data_->tgt_iparam_;
+            const auto& tgt_areas = data_->tgt_.areas;
+            auto& src_points = data_->src_.points;
+            const auto tgt_halo     = array::make_view<int, 1>(tgt_mesh_.cells().halo());
             for (idx_t tcell = 0; tcell < tgt_vals.size(); ++tcell) {
                 tgt_vals(tcell) = 0.;
             }
-            for (idx_t scell = 0; scell < src_vals.size(); ++scell) {
-                const auto& iparam       = src_iparam_[scell];
-                if (iparam.csp_ids.size() == 0 or halo(scell)) {
-                    continue;
-                }
-                const PointXYZ& Cs       = src_.points[scell];
-                PointXYZ grad            = {0., 0., 0.};
-                PointXYZ src_barycenter  = {0., 0., 0.};
-                auto nb_cells = get_cell_neighbours(src_mesh_, scell);
-                double dual_area_inv     = 0.;
-                for (idx_t j = 0; j < nb_cells.size(); ++j) {
-                    idx_t nj    = next_index(j, nb_cells.size());
-                    idx_t sj     = nb_cells[j];
-                    idx_t nsj    = nb_cells[nj];
-                    const auto& Csj  = src_.points[sj];
-                    const auto& Cnsj = src_.points[nsj];
-                    double val = 0.5 * (src_vals(nj) + src_vals(nsj)) - src_vals(j);
-                    if (Polygon::GreatCircleSegment(Cs, Csj).inLeftHemisphere(Cnsj, -1e-16)) {
-                        dual_area_inv += Polygon({Cs, Csj, Cnsj}).area();
-                    }
-                    else {
-                        //val *=  -1;
-                        dual_area_inv += Polygon({Cs, Cnsj, Csj}).area();
-                    }
-                    grad = grad + PointXYZ::mul(PointXYZ::cross(Csj, Cnsj), val);
-                }
-                dual_area_inv = ((dual_area_inv > 0.) ? 1. / dual_area_inv : 0.);
-                grad = PointXYZ::mul(grad, dual_area_inv);
-                for (idx_t icell = 0; icell < iparam.csp_ids.size(); ++icell) {
-                    src_barycenter = src_barycenter + PointXYZ::mul(iparam.centroids[icell], iparam.weights[icell]);
-                }
-                src_barycenter = PointXYZ::div(src_barycenter, PointXYZ::norm(src_barycenter));
-                grad           = grad - PointXYZ::mul(src_barycenter, PointXYZ::dot(grad, src_barycenter));
-                ATLAS_ASSERT(std::abs(PointXYZ::dot(grad, src_barycenter)) < 1e-14);
-                for (idx_t icell = 0; icell < iparam.csp_ids.size(); ++icell) {
-                    tgt_vals(iparam.csp_ids[icell]) +=
-                        iparam.weights[icell] *
-                        (src_vals(scell) + PointXYZ::dot(grad, iparam.centroids[icell] - src_barycenter));
+            std::vector<PointXYZ> src_grads(src_vals.size());
+            ATLAS_TRACE_SCOPE("Compute source cell gradients") {
+                for (idx_t scell = 0; scell < src_vals.size(); ++scell) {
+                    src_grads[scell] = src_gradient(scell, src_vals);
                 }
             }
             for (idx_t tcell = 0; tcell < tgt_vals.size(); ++tcell) {
-                tgt_vals[tcell] /= tgt_.areas[tcell];
+                const auto& iparam = tgt_iparam[tcell];
+                if (iparam.csp_ids.size() == 0 or tgt_halo(tcell)) {
+                    continue;
+                }
+                for (idx_t iscell = 0; iscell < iparam.csp_ids.size(); ++iscell) {
+                    idx_t scell = iparam.csp_ids[iscell];
+                    const PointXYZ& src_barycentre       = src_points[scell];
+                    PointXYZ grad            = src_grads[scell];
+                    // PointXYZ src_barycenter  = {0., 0., 0.};
+                    // for (idx_t iscell = 0; iscell < iparam.csp_ids.size(); ++iscell) {
+                    //     src_barycentre = src_barycenter + PointXYZ::mul(iparam.centroids[iscell], iparam.weights[iscell]);
+                    // }
+                    // src_barycentre = PointXYZ::normalize(src_barycentre);
+                    grad           = grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(grad, src_barycentre));
+#if ATLAS_BUILD_DEBUG_TYPE
+                    ATLAS_ASSERT(std::abs(PointXYZ::dot(grad, src_barycenter)) < 1e-14);
+#endif
+                    tgt_vals(tcell) += iparam.weights[iscell] * (src_vals(scell) + PointXYZ::dot(grad, iparam.centroids[iscell] - src_barycentre));
+                }
+                tgt_vals[tcell] /= tgt_areas[tcell];
             }
-            */
         }
         else {
             ATLAS_TRACE("matrix_order_2");
@@ -2117,7 +2127,10 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                                 idx_t scell   = csp_to_cell(scsp_id, data_->src_);
                                 auto& siparam = src_iparam[scsp_id];
                                 for (idx_t i_tcsp = 0; i_tcsp < siparam.csp_ids.size(); ++i_tcsp) {
-                                    // correct contribution to target cells to correspond to grad(scell) = 0
+                                    auto tcsp_id_2 = siparam.csp_ids[i_tcsp];
+                                    auto tcell_2 = csp_to_cell(tcsp_id_2, data_->tgt_);
+                                    double scell_grad_contribution = 0; // TODO: to be computed via source cell gradient
+                                    tgt_vals(tcell_2) += (iparam.weights[scsp_id] - scell_grad_contribution) * src_vals(scell);
                                 }
                             }
                         }

@@ -129,19 +129,15 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
             cache_2 = interpolation.createCache();
             Log::info() << std::endl;
         }
-        // TODO: With the PR 318 we switch to interating over target elements, which in return requires a lot of changes.
-        // The following code requires reimplementation of the matrix-free 2nd order method which will come after this PR.
-        // Hence, we temporary disable this code.
-        //
-        // if (src_cell_data and tgt_cell_data) {
-        //     ATLAS_TRACE("cached -> 2nd order matrix-free");
-        //     cfg.set("matrix_free", true);
-        //     cfg.set("order", 2);
-        //     auto interpolation = Interpolation(cfg, src_grid, tgt_grid, cache);
-        //     Log::info() << interpolation << std::endl;
-        //     interpolation.execute(src_field, tgt_field);
-        //     Log::info() << std::endl;
-        // }
+        if (src_cell_data and tgt_cell_data) {
+            ATLAS_TRACE("cached -> 2nd order matrix-free");
+            cfg.set("matrix_free", true);
+            cfg.set("order", 2);
+            auto interpolation = Interpolation(cfg, src_grid, tgt_grid, cache);
+            Log::info() << interpolation << std::endl;
+            interpolation.execute(src_field, tgt_field);
+            Log::info() << std::endl;
+        }
         {
             ATLAS_TRACE("cached -> 2nd order using cached matrix");
             cfg.set("matrix_free", false);
